@@ -1,0 +1,24 @@
+From 8f1bc6760777a41cbb78349182ff05ab8bbadfa2 Mon Sep 17 00:00:00 2001
+From: Wim Taymans <wtaymans@redhat.com>
+Date: Tue, 10 Oct 2017 12:11:17 +0200
+Subject: [PATCH] Fix size of struct
+
+---
+ libAACenc/src/dyn_bits.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/libAACenc/src/dyn_bits.h b/libAACenc/src/dyn_bits.h
+index 3c757aa..a96b7ca 100644
+--- a/libAACenc/src/dyn_bits.h
++++ b/libAACenc/src/dyn_bits.h
+@@ -124,6 +124,7 @@ typedef struct
+   INT sideInfoBits;             /* sectioning bits       */
+   INT huffmanBits;              /* huffman    coded bits */
+   INT scalefacBits;             /* scalefac   coded bits */
++  INT dummy;
+   INT firstScf;                 /* first scf to be coded */
+ } SECTION_DATA;
+ 
+-- 
+2.16.2
+

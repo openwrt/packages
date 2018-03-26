@@ -1,0 +1,2484 @@
+From c03bbedc1597f451f5d3c63add2e63a41c61b5f2 Mon Sep 17 00:00:00 2001
+From: Wim Taymans <wtaymans@redhat.com>
+Date: Tue, 10 Oct 2017 09:49:40 +0200
+Subject: [PATCH] Remove TNS
+
+---
+ Makefile.am                       |    1 -
+ Makefile.vc                       |    4 -
+ libAACenc/src/aacEnc_rom.cpp      |   31 -
+ libAACenc/src/aacEnc_rom.h        |    8 -
+ libAACenc/src/aacenc.cpp          |    6 +-
+ libAACenc/src/aacenc.h            |    1 -
+ libAACenc/src/aacenc_lib.cpp      |    3 -
+ libAACenc/src/aacenc_tns.cpp      | 1344 -------------------------------------
+ libAACenc/src/aacenc_tns.h        |  202 ------
+ libAACenc/src/bitenc.cpp          |  144 +---
+ libAACenc/src/bitenc.h            |    1 -
+ libAACenc/src/dyn_bits.h          |    1 -
+ libAACenc/src/interface.h         |    2 -
+ libAACenc/src/psy_configuration.h |    3 -
+ libAACenc/src/psy_const.h         |    2 -
+ libAACenc/src/psy_main.cpp        |  199 ------
+ libAACenc/src/psy_main.h          |    3 -
+ libAACenc/src/qc_main.cpp         |    1 -
+ libAACenc/src/tns_func.h          |  145 ----
+ 19 files changed, 8 insertions(+), 2093 deletions(-)
+ delete mode 100644 libAACenc/src/aacenc_tns.cpp
+ delete mode 100644 libAACenc/src/aacenc_tns.h
+ delete mode 100644 libAACenc/src/tns_func.h
+
+diff --git a/Makefile.am b/Makefile.am
+index fe998e5..f54fd06 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -73,7 +73,6 @@ AACENC_SRC = \
+     libAACenc/src/sf_estim.cpp \
+     libAACenc/src/transform.cpp \
+     libAACenc/src/aacenc_lib.cpp \
+-    libAACenc/src/aacenc_tns.cpp \
+     libAACenc/src/bit_cnt.cpp \
+     libAACenc/src/chaosmeasure.cpp \
+     libAACenc/src/line_pe.cpp \
+diff --git a/Makefile.vc b/Makefile.vc
+index 42dc764..1af4687 100644
+--- a/Makefile.vc
++++ b/Makefile.vc
+@@ -61,19 +61,15 @@ AACENC_SRC = \
+     libAACenc/src/sf_estim.cpp \
+     libAACenc/src/transform.cpp \
+     libAACenc/src/aacenc_lib.cpp \
+-    libAACenc/src/aacenc_tns.cpp \
+     libAACenc/src/bit_cnt.cpp \
+     libAACenc/src/chaosmeasure.cpp \
+     libAACenc/src/line_pe.cpp \
+-    libAACenc/src/noisedet.cpp \
+     libAACenc/src/psy_main.cpp \
+     libAACenc/src/spreading.cpp \
+-    libAACenc/src/aacenc_pns.cpp \
+     libAACenc/src/adj_thr.cpp \
+     libAACenc/src/bitenc.cpp \
+     libAACenc/src/dyn_bits.cpp \
+     libAACenc/src/metadata_compressor.cpp \
+-    libAACenc/src/pnsparam.cpp \
+     libAACenc/src/qc_main.cpp
+ 
+ FDK_SRC = \
+diff --git a/libAACenc/src/aacEnc_rom.cpp b/libAACenc/src/aacEnc_rom.cpp
+index c6477e3..ca2af9d 100644
+--- a/libAACenc/src/aacEnc_rom.cpp
++++ b/libAACenc/src/aacEnc_rom.cpp
+@@ -648,37 +648,6 @@ const SFB_PARAM_SHORT p_FDKaacEnc_96000_short_128 = {
+ };
+ 
+ 
+-/*
+-  TNS filter coefficients
+-*/
+-
+-/*
+-  3 bit resolution
+-*/
+-const FIXP_DBL FDKaacEnc_tnsEncCoeff3[8]=
+-{
+-  (FIXP_DBL)0x81f1d201, (FIXP_DBL)0x91261481, (FIXP_DBL)0xadb92301, (FIXP_DBL)0xd438af00, (FIXP_DBL)0x00000000, (FIXP_DBL)0x37898080, (FIXP_DBL)0x64130dff, (FIXP_DBL)0x7cca6fff
+-};
+-const FIXP_DBL FDKaacEnc_tnsCoeff3Borders[8]={
+-  (FIXP_DBL)0x80000001 /*-4*/,  (FIXP_DBL)0x87b826df /*-3*/,  (FIXP_DBL)0x9df24154 /*-2*/,  (FIXP_DBL)0xbfffffe5 /*-1*/,
+-  (FIXP_DBL)0xe9c5e578 /* 0*/,  (FIXP_DBL)0x1c7b90f0 /* 1*/,  (FIXP_DBL)0x4fce83a9 /* 2*/,  (FIXP_DBL)0x7352f2c3 /* 3*/
+-};
+-
+-/*
+-  4 bit resolution
+-*/
+-const FIXP_DBL FDKaacEnc_tnsEncCoeff4[16]=
+-{
+-  (FIXP_DBL)0x808bc881, (FIXP_DBL)0x84e2e581, (FIXP_DBL)0x8d6b4a01, (FIXP_DBL)0x99da9201, (FIXP_DBL)0xa9c45701, (FIXP_DBL)0xbc9dde81, (FIXP_DBL)0xd1c2d500, (FIXP_DBL)0xe87ae540,
+-  (FIXP_DBL)0x00000000, (FIXP_DBL)0x1a9cd9c0, (FIXP_DBL)0x340ff240, (FIXP_DBL)0x4b3c8bff, (FIXP_DBL)0x5f1f5e7f, (FIXP_DBL)0x6ed9eb7f, (FIXP_DBL)0x79bc387f, (FIXP_DBL)0x7f4c7e7f
+-};
+-const FIXP_DBL FDKaacEnc_tnsCoeff4Borders[16]=
+-{
+-  (FIXP_DBL)0x80000001 /*-8*/,  (FIXP_DBL)0x822deff0 /*-7*/,  (FIXP_DBL)0x88a4bfe6 /*-6*/,  (FIXP_DBL)0x932c159d /*-5*/,
+-  (FIXP_DBL)0xa16827c2 /*-4*/,  (FIXP_DBL)0xb2dcde27 /*-3*/,  (FIXP_DBL)0xc6f20b91 /*-2*/,  (FIXP_DBL)0xdcf89c64 /*-1*/,
+-  (FIXP_DBL)0xf4308ce1 /* 0*/,  (FIXP_DBL)0x0d613054 /* 1*/,  (FIXP_DBL)0x278dde80 /* 2*/,  (FIXP_DBL)0x4000001b /* 3*/,
+-  (FIXP_DBL)0x55a6127b /* 4*/,  (FIXP_DBL)0x678dde8f /* 5*/,  (FIXP_DBL)0x74ef0ed7 /* 6*/,  (FIXP_DBL)0x7d33f0da /* 7*/
+-};
+ const FIXP_DBL FDKaacEnc_mTab_4_3Elc[512]={
+   FL2FXCONST_DBL(0.3968502629920499),FL2FXCONST_DBL(0.3978840634868335),FL2FXCONST_DBL(0.3989185359354711),FL2FXCONST_DBL(0.3999536794661432),
+   FL2FXCONST_DBL(0.4009894932098531),FL2FXCONST_DBL(0.4020259763004115),FL2FXCONST_DBL(0.4030631278744227),FL2FXCONST_DBL(0.4041009470712695),
+diff --git a/libAACenc/src/aacEnc_rom.h b/libAACenc/src/aacEnc_rom.h
+index 862417f..79f9780 100644
+--- a/libAACenc/src/aacEnc_rom.h
++++ b/libAACenc/src/aacEnc_rom.h
+@@ -184,14 +184,6 @@ extern const SFB_PARAM_LONG  p_FDKaacEnc_96000_long_1024;
+ extern const SFB_PARAM_SHORT p_FDKaacEnc_96000_short_128;
+ 
+ 
+-/*
+-  TNS filter coefficients
+-*/
+-extern const FIXP_DBL FDKaacEnc_tnsEncCoeff3[8];
+-extern const FIXP_DBL FDKaacEnc_tnsCoeff3Borders[8];
+-extern const FIXP_DBL FDKaacEnc_tnsEncCoeff4[16];
+-extern const FIXP_DBL FDKaacEnc_tnsCoeff4Borders[16];
+-
+ #define WTC0 WTC
+ #define WTC1 WTC
+ #define WTC2 WTC
+diff --git a/libAACenc/src/aacenc.cpp b/libAACenc/src/aacenc.cpp
+index d018eb0..b3ca15d 100644
+--- a/libAACenc/src/aacenc.cpp
++++ b/libAACenc/src/aacenc.cpp
+@@ -97,7 +97,6 @@ amm-info@iis.fraunhofer.de
+ #include "qc_main.h"
+ #include "bandwidth.h"
+ #include "channel_map.h"
+-#include "tns_func.h"
+ #include "aacEnc_ram.h"
+ 
+ #include "genericStds.h"
+@@ -312,7 +311,6 @@ void FDKaacEnc_AacInitDefaultConfig(AACENC_CONFIG *config)
+     config->averageBits     = -1;                   /* instead of bitrate/s we can configure bits/superframe */
+     config->bitrateMode     = 0;
+     config->bandWidth       = 0;                    /* get bandwidth from table */
+-    config->useTns          = TNS_ENABLE_MASK;      /* tns enabled completly */
+     config->useIS           = 1;                    /* Intensity Stereo Configuration */
+     config->framelength     = -1;                   /* Framesize not configured */
+     config->syntaxFlags     = 0;                    /* default syntax with no specialities */
+@@ -414,7 +412,7 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(HANDLE_AAC_ENC      hAacEnc,
+                                        ULONG               initFlags)
+ {
+   AAC_ENCODER_ERROR ErrorStatus;
+-  INT psyBitrate, tnsMask; //INT profile = 1;
++  INT psyBitrate; //INT profile = 1;
+   CHANNEL_MAPPING   *cm = NULL;
+ 
+   INT qmbfac, qbw;
+@@ -559,7 +557,6 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(HANDLE_AAC_ENC      hAacEnc,
+ 
+   hAacEnc->bandwidth90dB = (INT)hAacEnc->config->bandWidth;
+ 
+-  tnsMask = config->useTns ? TNS_ENABLE_MASK : 0x0;
+   psyBitrate = config->bitRate - config->ancDataBitRate;
+ 
+   ErrorStatus = FDKaacEnc_psyInit(hAacEnc->psyKernel,
+@@ -577,7 +574,6 @@ AAC_ENCODER_ERROR FDKaacEnc_Initialize(HANDLE_AAC_ENC      hAacEnc,
+                                       config->sampleRate,
+                                       config->framelength,
+                                       psyBitrate,
+-                                      tnsMask,
+                                       hAacEnc->bandwidth90dB,
+                                       config->useIS,
+                                       config->syntaxFlags,
+diff --git a/libAACenc/src/aacenc.h b/libAACenc/src/aacenc.h
+index 75bbe8e..cf729cd 100644
+--- a/libAACenc/src/aacenc.h
++++ b/libAACenc/src/aacenc.h
+@@ -212,7 +212,6 @@ struct AACENC_CONFIG {
+ 
+   UINT  sbrRatio;               /* sbr sampling rate ratio: dual- or single-rate */
+ 
+-  UCHAR useTns;                 /* flag: use temporal noise shaping */
+   UCHAR useIS;                  /* flag: use intensity coding */
+ 
+   UCHAR useRequant;             /* flag: use afterburner */
+diff --git a/libAACenc/src/aacenc_lib.cpp b/libAACenc/src/aacenc_lib.cpp
+index eef7878..4af9419 100644
+--- a/libAACenc/src/aacenc_lib.cpp
++++ b/libAACenc/src/aacenc_lib.cpp
+@@ -153,7 +153,6 @@ typedef struct {
+     UINT              userAncDataRate;
+     UINT              userPeakBitrate;
+ 
+-    UCHAR             userTns;               /*!< Use TNS coding. */
+     UCHAR             userIntensity;         /*!< Use Intensity coding. */
+ 
+     TRANSPORT_TYPE    userTpType;            /*!< Transport type */
+@@ -427,7 +426,6 @@ AAC_ENCODER_ERROR aacEncDefaultConfig(HANDLE_AACENC_CONFIG hAacConfig,
+     config->userBitrateMode = hAacConfig->bitrateMode;
+     config->userPeakBitrate = (UINT)-1;
+     config->userBandwidth   = hAacConfig->bandWidth;
+-    config->userTns         = hAacConfig->useTns;
+     config->userIntensity   = hAacConfig->useIS;
+     config->userAfterburner = hAacConfig->useRequant;
+     config->userFramelength = (UINT)-1;
+@@ -526,7 +524,6 @@ AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
+ 
+     /* Encoder settings update. */
+     hAacConfig->sampleRate      = config->userSamplerate;
+-    hAacConfig->useTns          = config->userTns;
+     hAacConfig->useIS           = config->userIntensity;
+     hAacConfig->bitRate         = config->userBitrate;
+     hAacConfig->channelMode     = config->userChannelMode;
+diff --git a/libAACenc/src/aacenc_tns.cpp b/libAACenc/src/aacenc_tns.cpp
+deleted file mode 100644
+index 3026d69..0000000
+--- a/libAACenc/src/aacenc_tns.cpp
++++ /dev/null
+@@ -1,1344 +0,0 @@
+-
+-/* -----------------------------------------------------------------------------------------------------------
+-Software License for The Fraunhofer FDK AAC Codec Library for Android
+-
+-© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+-  All rights reserved.
+-
+- 1.    INTRODUCTION
+-The Fraunhofer FDK AAC Codec Library for Android ("FDK AAC Codec") is software that implements
+-the MPEG Advanced Audio Coding ("AAC") encoding and decoding scheme for digital audio.
+-This FDK AAC Codec software is intended to be used on a wide variety of Android devices.
+-
+-AAC's HE-AAC and HE-AAC v2 versions are regarded as today's most efficient general perceptual
+-audio codecs. AAC-ELD is considered the best-performing full-bandwidth communications codec by
+-independent studies and is widely deployed. AAC has been standardized by ISO and IEC as part
+-of the MPEG specifications.
+-
+-Patent licenses for necessary patent claims for the FDK AAC Codec (including those of Fraunhofer)
+-may be obtained through Via Licensing (www.vialicensing.com) or through the respective patent owners
+-individually for the purpose of encoding or decoding bit streams in products that are compliant with
+-the ISO/IEC MPEG audio standards. Please note that most manufacturers of Android devices already license
+-these patent claims through Via Licensing or directly from the patent owners, and therefore FDK AAC Codec
+-software may already be covered under those patent licenses when it is used for those licensed purposes only.
+-
+-Commercially-licensed AAC software libraries, including floating-point versions with enhanced sound quality,
+-are also available from Fraunhofer. Users are encouraged to check the Fraunhofer website for additional
+-applications information and documentation.
+-
+-2.    COPYRIGHT LICENSE
+-
+-Redistribution and use in source and binary forms, with or without modification, are permitted without
+-payment of copyright license fees provided that you satisfy the following conditions:
+-
+-You must retain the complete text of this software license in redistributions of the FDK AAC Codec or
+-your modifications thereto in source code form.
+-
+-You must retain the complete text of this software license in the documentation and/or other materials
+-provided with redistributions of the FDK AAC Codec or your modifications thereto in binary form.
+-You must make available free of charge copies of the complete source code of the FDK AAC Codec and your
+-modifications thereto to recipients of copies in binary form.
+-
+-The name of Fraunhofer may not be used to endorse or promote products derived from this library without
+-prior written permission.
+-
+-You may not charge copyright license fees for anyone to use, copy or distribute the FDK AAC Codec
+-software or your modifications thereto.
+-
+-Your modified versions of the FDK AAC Codec must carry prominent notices stating that you changed the software
+-and the date of any change. For modified versions of the FDK AAC Codec, the term
+-"Fraunhofer FDK AAC Codec Library for Android" must be replaced by the term
+-"Third-Party Modified Version of the Fraunhofer FDK AAC Codec Library for Android."
+-
+-3.    NO PATENT LICENSE
+-
+-NO EXPRESS OR IMPLIED LICENSES TO ANY PATENT CLAIMS, including without limitation the patents of Fraunhofer,
+-ARE GRANTED BY THIS SOFTWARE LICENSE. Fraunhofer provides no warranty of patent non-infringement with
+-respect to this software.
+-
+-You may use this FDK AAC Codec software or modifications thereto only for purposes that are authorized
+-by appropriate patent licenses.
+-
+-4.    DISCLAIMER
+-
+-This FDK AAC Codec software is provided by Fraunhofer on behalf of the copyright holders and contributors
+-"AS IS" and WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, including but not limited to the implied warranties
+-of merchantability and fitness for a particular purpose. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+-CONTRIBUTORS BE LIABLE for any direct, indirect, incidental, special, exemplary, or consequential damages,
+-including but not limited to procurement of substitute goods or services; loss of use, data, or profits,
+-or business interruption, however caused and on any theory of liability, whether in contract, strict
+-liability, or tort (including negligence), arising in any way out of the use of this software, even if
+-advised of the possibility of such damage.
+-
+-5.    CONTACT INFORMATION
+-
+-Fraunhofer Institute for Integrated Circuits IIS
+-Attention: Audio and Multimedia Departments - FDK AAC LL
+-Am Wolfsmantel 33
+-91058 Erlangen, Germany
+-
+-www.iis.fraunhofer.de/amm
+-amm-info@iis.fraunhofer.de
+------------------------------------------------------------------------------------------------------------ */
+-
+-/******************************** MPEG Audio Encoder **************************
+-
+-   Initial author:       Alex Groeschel, Tobias Chalupka
+-   contents/description: Temporal noise shaping
+-
+-******************************************************************************/
+-
+-#include "aacenc_tns.h"
+-#include "psy_const.h"
+-#include "psy_configuration.h"
+-#include "tns_func.h"
+-#include "aacEnc_rom.h"
+-#include "aacenc_tns.h"
+-
+-#define FILTER_DIRECTION 0 /* 0 = up, 1 = down */
+-
+-static const FIXP_DBL acfWindowLong[12+3+1] = {
+-  0x7fffffff,0x7fb80000,0x7ee00000,0x7d780000,0x7b800000,0x78f80000,0x75e00000,0x72380000,
+-  0x6e000000,0x69380000,0x63e00000,0x5df80000,0x57800000,0x50780000,0x48e00000,0x40b80000
+-};
+-
+-static const FIXP_DBL acfWindowShort[4+3+1] = {
+-  0x7fffffff,0x7e000000,0x78000000,0x6e000000,0x60000000,0x4e000000,0x38000000,0x1e000000
+-};
+-
+-typedef struct{
+-  INT                      bitRateFrom[2];  /* noneSbr=0, useSbr=1 */
+-  INT                      bitRateTo[2];    /* noneSbr=0, useSbr=1 */
+-  TNS_PARAMETER_TABULATED  paramTab[2];     /* mono=0, stereo=1 */
+-
+-} TNS_INFO_TAB;
+-
+-#define TNS_TIMERES_SCALE    (1)
+-#define FL2_TIMERES_FIX(a)   ( FL2FXCONST_DBL(a/(float)(1<<TNS_TIMERES_SCALE)) )
+-
+-static const TNS_INFO_TAB tnsInfoTab[] =
+-{
+-  {
+-    {  16000,  13500},
+-    {  32000,  28000},
+-    {
+-      { {1, 1}, {1437, 1500}, {1400, 600}, {12, 12}, {FILTER_DIRECTION, FILTER_DIRECTION}, {3, 1}, {FL2_TIMERES_FIX(0.4f), FL2_TIMERES_FIX(1.2f)}, 1 },
+-      { {1, 1}, {1437, 1500}, {1400, 600}, {12, 12}, {FILTER_DIRECTION, FILTER_DIRECTION}, {3, 1}, {FL2_TIMERES_FIX(0.4f), FL2_TIMERES_FIX(1.2f)}, 1 }
+-    }
+-  },
+-  {
+-    {  32001,  28001},
+-    {  60000,  52000},
+-    {
+-      { {1, 1}, {1437, 1500}, {1400, 600}, {12, 10}, {FILTER_DIRECTION, FILTER_DIRECTION}, {3, 1}, {FL2_TIMERES_FIX(0.4f), FL2_TIMERES_FIX(1.0f)}, 1 },
+-      { {1, 1}, {1437, 1500}, {1400, 600}, {12, 10}, {FILTER_DIRECTION, FILTER_DIRECTION}, {3, 1}, {FL2_TIMERES_FIX(0.4f), FL2_TIMERES_FIX(1.0f)}, 1 }
+-    }
+-  },
+-  {
+-    {  60001,  52001},
+-    { 384000, 384000},
+-    {
+-      { {1, 1}, {1437, 1500}, {1400, 600}, {12,  8}, {FILTER_DIRECTION, FILTER_DIRECTION}, {3, 1}, {FL2_TIMERES_FIX(0.4f), FL2_TIMERES_FIX(1.0f)}, 1 },
+-      { {1, 1}, {1437, 1500}, {1400, 600}, {12,  8}, {FILTER_DIRECTION, FILTER_DIRECTION}, {3, 1}, {FL2_TIMERES_FIX(0.4f), FL2_TIMERES_FIX(1.0f)}, 1 }
+-    }
+-  }
+-};
+-
+-typedef struct {
+-  INT   samplingRate;
+-  SCHAR maxBands[2]; /* long=0; short=1 */
+-
+-} TNS_MAX_TAB_ENTRY;
+-
+-static const TNS_MAX_TAB_ENTRY tnsMaxBandsTab1024[] =
+-{
+-  { 96000, { 31,  9}},
+-  { 88200, { 31,  9}},
+-  { 64000, { 34, 10}},
+-  { 48000, { 40, 14}},
+-  { 44100, { 42, 14}},
+-  { 32000, { 51, 14}},
+-  { 24000, { 46, 14}},
+-  { 22050, { 46, 14}},
+-  { 16000, { 42, 14}},
+-  { 12000, { 42, 14}},
+-  { 11025, { 42, 14}},
+-  { 8000,  { 39, 14}}
+-};
+-
+-static const TNS_MAX_TAB_ENTRY tnsMaxBandsTab480[] =
+-{
+-  { 48000, { 31, -1}},
+-  { 44100, { 32, -1}},
+-  { 32000, { 37, -1}},
+-  { 24000, { 30, -1}},
+-  { 22050, { 30, -1}}
+-};
+-
+-static const TNS_MAX_TAB_ENTRY tnsMaxBandsTab512[] =
+-{
+-  { 48000, { 31, -1}},
+-  { 44100, { 32, -1}},
+-  { 32000, { 37, -1}},
+-  { 24000, { 31, -1}},
+-  { 22050, { 31, -1}}
+-};
+-
+-static INT FDKaacEnc_AutoToParcor(
+-        FIXP_DBL *RESTRICT input,
+-        FIXP_DBL *RESTRICT reflCoeff,
+-        const INT numOfCoeff
+-        );
+-
+-static void FDKaacEnc_Parcor2Index(
+-        const FIXP_DBL *parcor,
+-        INT *RESTRICT index,
+-        const INT order,
+-        const INT bitsPerCoeff
+-        );
+-
+-static void FDKaacEnc_Index2Parcor(
+-        const INT *index,
+-        FIXP_DBL *RESTRICT parcor,
+-        const INT order,
+-        const INT bitsPerCoeff
+-        );
+-
+-static INT FDKaacEnc_ParcorToLpc(
+-        const FIXP_DBL *reflCoeff,
+-        FIXP_DBL *RESTRICT LpcCoeff,
+-        const INT numOfCoeff,
+-        FIXP_DBL *RESTRICT workBuffer
+-        );
+-
+-static void FDKaacEnc_AnalysisFilter(
+-        FIXP_DBL *RESTRICT signal,
+-        const INT numOfLines,
+-        const FIXP_DBL *predictorCoeff,
+-        const INT order,
+-        const INT lpcGainFactor
+-        );
+-
+-static void FDKaacEnc_CalcGaussWindow(
+-        FIXP_DBL *win,
+-        const int winSize,
+-        const INT samplingRate,
+-        const INT transformResolution,
+-        const FIXP_DBL timeResolution,
+-        const INT timeResolution_e
+-        );
+-
+-static const TNS_PARAMETER_TABULATED* FDKaacEnc_GetTnsParam(
+-        const INT bitRate,
+-        const INT channels,
+-        const INT sbrLd
+-        )
+-{
+-  int i;
+-  const TNS_PARAMETER_TABULATED *tnsConfigTab = NULL;
+-
+-  for (i = 0; i < (int) (sizeof(tnsInfoTab)/sizeof(TNS_INFO_TAB)); i++) {
+-    if ((bitRate >= tnsInfoTab[i].bitRateFrom[sbrLd?1:0]) &&
+-         bitRate <= tnsInfoTab[i].bitRateTo[sbrLd?1:0])
+-    {
+-      tnsConfigTab = &tnsInfoTab[i].paramTab[(channels==1)?0:1];
+-    }
+-  }
+-
+-  return tnsConfigTab;
+-}
+-
+-
+-static INT getTnsMaxBands(
+-        const INT sampleRate,
+-        const INT granuleLength,
+-        const INT isShortBlock
+-        )
+-{
+-  int i;
+-  INT numBands = -1;
+-  const TNS_MAX_TAB_ENTRY *pMaxBandsTab = NULL;
+-  int maxBandsTabSize = 0;
+-
+-  switch (granuleLength) {
+-    case 1024:
+-      pMaxBandsTab = tnsMaxBandsTab1024;
+-      maxBandsTabSize = sizeof(tnsMaxBandsTab1024)/sizeof(TNS_MAX_TAB_ENTRY);
+-      break;
+-    case 480:
+-      pMaxBandsTab = tnsMaxBandsTab480;
+-      maxBandsTabSize = sizeof(tnsMaxBandsTab480)/sizeof(TNS_MAX_TAB_ENTRY);
+-      break;
+-    case 512:
+-      pMaxBandsTab = tnsMaxBandsTab512;
+-      maxBandsTabSize = sizeof(tnsMaxBandsTab512)/sizeof(TNS_MAX_TAB_ENTRY);
+-      break;
+-    default:
+-      numBands = -1;
+-  }
+-
+-  if (pMaxBandsTab!=NULL) {
+-    for (i=0; i<maxBandsTabSize; i++) {
+-      numBands = pMaxBandsTab[i].maxBands[(!isShortBlock)?0:1];
+-      if (sampleRate >= pMaxBandsTab[i].samplingRate) {
+-        break;
+-      }
+-    }
+-  }
+-
+-  return numBands;
+-}
+-
+-/***************************************************************************/
+-/*!
+-  \brief     FDKaacEnc_FreqToBandWithRounding
+-
+-  Returns index of nearest band border
+-
+-  \param frequency
+-  \param sampling frequency
+-  \param total number of bands
+-  \param pointer to table of band borders
+-
+-  \return band border
+-****************************************************************************/
+-
+-INT FDKaacEnc_FreqToBandWithRounding(
+-        const INT freq,
+-        const INT fs,
+-        const INT numOfBands,
+-        const INT *bandStartOffset
+-        )
+-{
+-  INT lineNumber, band;
+-
+-  /*  assert(freq >= 0);  */
+-  lineNumber = (freq*bandStartOffset[numOfBands]*4/fs+1)/2;
+-
+-  /* freq > fs/2 */
+-  if (lineNumber >= bandStartOffset[numOfBands])
+-    return numOfBands;
+-
+-  /* find band the line number lies in */
+-  for (band=0; band<numOfBands; band++) {
+-    if (bandStartOffset[band+1]>lineNumber) break;
+-  }
+-
+-  /* round to nearest band border */
+-  if (lineNumber - bandStartOffset[band] >
+-      bandStartOffset[band+1] - lineNumber )
+-    {
+-      band++;
+-    }
+-
+-  return(band);
+-}
+-
+-
+-/*****************************************************************************
+-
+-    functionname: FDKaacEnc_InitTnsConfiguration
+-    description:  fill TNS_CONFIG structure with sensible content
+-    returns:
+-    input:        bitrate, samplerate, number of channels,
+-                  blocktype (long or short),
+-                  TNS Config struct (modified),
+-                  psy config struct,
+-                  tns active flag
+-    output:
+-
+-*****************************************************************************/
+-AAC_ENCODER_ERROR FDKaacEnc_InitTnsConfiguration(INT bitRate,
+-                                                 INT sampleRate,
+-                                                 INT channels,
+-                                                 INT blockType,
+-                                                 INT granuleLength,
+-                                                 INT isLowDelay,
+-                                                 INT ldSbrPresent,
+-                                                 TNS_CONFIG *tC,
+-                                                 PSY_CONFIGURATION *pC,
+-                                                 INT active,
+-                                                 INT useTnsPeak)
+-{
+-  int i;
+-  //float acfTimeRes   = (blockType == SHORT_WINDOW) ? 0.125f : 0.046875f;
+-
+-  if (channels <= 0)
+-    return (AAC_ENCODER_ERROR)1;
+-
+-  tC->isLowDelay = isLowDelay;
+-
+-  /* initialize TNS filter flag, order, and coefficient resolution (in bits per coeff) */
+-  tC->tnsActive      = (active) ? TRUE : FALSE;
+-  tC->maxOrder       = (blockType == SHORT_WINDOW) ? 5 : 12;  /* maximum: 7, 20 */
+-  if (bitRate < 16000)
+-    tC->maxOrder -= 2;
+-  tC->coefRes        = (blockType == SHORT_WINDOW) ? 3 : 4;
+-
+-  /* LPC stop line: highest MDCT line to be coded, but do not go beyond TNS_MAX_BANDS! */
+-  tC->lpcStopBand = getTnsMaxBands(sampleRate, granuleLength, (blockType == SHORT_WINDOW) ? 1 : 0);
+-
+-  if (tC->lpcStopBand < 0) {
+-    return (AAC_ENCODER_ERROR)1;
+-  }
+-
+-  tC->lpcStopBand = FDKmin(tC->lpcStopBand, pC->sfbActive);
+-  tC->lpcStopLine    = pC->sfbOffset[tC->lpcStopBand];
+-
+-  switch (granuleLength) {
+-    case 1024:
+-      /* TNS start line: skip lower MDCT lines to prevent artifacts due to filter mismatch */
+-      tC->lpcStartBand[LOFILT]   = (blockType == SHORT_WINDOW) ? 0 : ((sampleRate <= 8000) ? 2 : ((sampleRate < 18783) ? 4 : 8));
+-      tC->lpcStartLine[LOFILT]   = pC->sfbOffset[tC->lpcStartBand[LOFILT]];
+-
+-      i = tC->lpcStopBand;
+-      while (pC->sfbOffset[i] > (tC->lpcStartLine[LOFILT] + (tC->lpcStopLine - tC->lpcStartLine[LOFILT]) / 4)) i--;
+-      tC->lpcStartBand[HIFILT]   = i;
+-      tC->lpcStartLine[HIFILT]   = pC->sfbOffset[i];
+-
+-      tC->confTab.threshOn[HIFILT] = 1437;
+-      tC->confTab.threshOn[LOFILT] = 1500;
+-
+-      tC->confTab.tnsLimitOrder[HIFILT] = tC->maxOrder;
+-      tC->confTab.tnsLimitOrder[LOFILT] = tC->maxOrder - 7;
+-
+-      tC->confTab.tnsFilterDirection[HIFILT] = FILTER_DIRECTION;
+-      tC->confTab.tnsFilterDirection[LOFILT] = FILTER_DIRECTION;
+-
+-      tC->confTab.acfSplit[HIFILT] = -1;  /* signal Merged4to2QuartersAutoCorrelation in FDKaacEnc_MergedAutoCorrelation*/
+-      tC->confTab.acfSplit[LOFILT] = -1;  /* signal Merged4to2QuartersAutoCorrelation in FDKaacEnc_MergedAutoCorrelation */
+-
+-      tC->confTab.filterEnabled[HIFILT] = 1;
+-      tC->confTab.filterEnabled[LOFILT] = 1;
+-      tC->confTab.seperateFiltersAllowed = 1;
+-
+-      /* compute autocorrelation window based on maximum filter order for given block type */
+-      /* for (i = 0; i <= tC->maxOrder + 3; i++) {
+-           float acfWinTemp = acfTimeRes * i;
+-           acfWindow[i] = FL2FXCONST_DBL(1.0f - acfWinTemp * acfWinTemp);
+-         }
+-      */
+-      if (blockType == SHORT_WINDOW) {
+-        FDKmemcpy(tC->acfWindow[HIFILT], acfWindowShort, FDKmin(sizeof(acfWindowShort), sizeof(tC->acfWindow[HIFILT])));
+-        FDKmemcpy(tC->acfWindow[LOFILT], acfWindowShort, FDKmin(sizeof(acfWindowShort), sizeof(tC->acfWindow[HIFILT])));
+-      }
+-      else {
+-        FDKmemcpy(tC->acfWindow[HIFILT], acfWindowLong, FDKmin(sizeof(acfWindowLong), sizeof(tC->acfWindow[HIFILT])));
+-        FDKmemcpy(tC->acfWindow[LOFILT], acfWindowLong, FDKmin(sizeof(acfWindowLong), sizeof(tC->acfWindow[HIFILT])));
+-      }
+-      break;
+-    case 480:
+-    case 512:
+-      {
+-        const TNS_PARAMETER_TABULATED* pCfg = FDKaacEnc_GetTnsParam(bitRate, channels, ldSbrPresent);
+-
+-        if ( pCfg != NULL ) {
+-
+-          FDKmemcpy(&(tC->confTab), pCfg, sizeof(tC->confTab));
+-
+-          tC->lpcStartBand[HIFILT]         = FDKaacEnc_FreqToBandWithRounding(pCfg->filterStartFreq[HIFILT], sampleRate, pC->sfbCnt, pC->sfbOffset);
+-          tC->lpcStartLine[HIFILT]         = pC->sfbOffset[tC->lpcStartBand[HIFILT]];
+-          tC->lpcStartBand[LOFILT]         = FDKaacEnc_FreqToBandWithRounding(pCfg->filterStartFreq[LOFILT], sampleRate, pC->sfbCnt, pC->sfbOffset);
+-          tC->lpcStartLine[LOFILT]         = pC->sfbOffset[tC->lpcStartBand[LOFILT]];
+-
+-          FDKaacEnc_CalcGaussWindow(tC->acfWindow[HIFILT], tC->maxOrder+1, sampleRate, granuleLength, pCfg->tnsTimeResolution[HIFILT], TNS_TIMERES_SCALE);
+-          FDKaacEnc_CalcGaussWindow(tC->acfWindow[LOFILT], tC->maxOrder+1, sampleRate, granuleLength, pCfg->tnsTimeResolution[LOFILT], TNS_TIMERES_SCALE);
+-        }
+-        else {
+-          tC->tnsActive = FALSE; /* no configuration available, disable tns tool */
+-        }
+-      }
+-      break;
+-    default:
+-      tC->tnsActive = FALSE; /* no configuration available, disable tns tool */
+-  }
+-
+-  return AAC_ENC_OK;
+-
+-}
+-
+-/***************************************************************************/
+-/*!
+-  \brief     FDKaacEnc_ScaleUpSpectrum
+-
+-  Scales up spectrum lines in a given frequency section
+-
+-  \param scaled spectrum
+-  \param original spectrum
+-  \param frequency line to start scaling
+-  \param frequency line to enc scaling
+-
+-  \return scale factor
+-
+-****************************************************************************/
+-static inline INT FDKaacEnc_ScaleUpSpectrum(
+-        FIXP_DBL                 *dest,
+-        const FIXP_DBL           *src,
+-        const INT                 startLine,
+-        const INT                 stopLine
+-        )
+-{
+-    INT i, scale;
+-
+-    FIXP_DBL maxVal = FL2FXCONST_DBL(0.f);
+-
+-    /* Get highest value in given spectrum */
+-    for (i=startLine; i<stopLine; i++) {
+-      maxVal = fixMax(maxVal,fixp_abs(src[i]));
+-    }
+-    scale = CountLeadingBits(maxVal);
+-
+-    /* Scale spectrum according to highest value */
+-    for (i=startLine; i<stopLine; i++) {
+-      dest[i] = src[i]<<scale;
+-    }
+-
+-    return scale;
+-}
+-
+-/***************************************************************************/
+-/*!
+-  \brief     FDKaacEnc_CalcAutoCorrValue
+-
+-  Calculate autocorellation value for one lag
+-
+-  \param pointer to spectrum
+-  \param start line
+-  \param stop line
+-  \param lag to be calculated
+-  \param scaling of the lag
+-
+-****************************************************************************/
+-static inline FIXP_DBL FDKaacEnc_CalcAutoCorrValue(
+-        const FIXP_DBL           *spectrum,
+-        const INT                 startLine,
+-        const INT                 stopLine,
+-        const INT                 lag,
+-        const INT                 scale
+-        )
+-{
+-    int i;
+-    FIXP_DBL result = FL2FXCONST_DBL(0.f);
+-
+-    if (lag==0) {
+-      for (i=startLine; i<stopLine; i++) {
+-        result += (fPow2(spectrum[i])>>scale);
+-      }
+-    }
+-    else {
+-      for (i=startLine; i<(stopLine-lag); i++) {
+-        result += (fMult(spectrum[i], spectrum[i+lag])>>scale);
+-      }
+-    }
+-
+-    return result;
+-}
+-
+-/***************************************************************************/
+-/*!
+-  \brief     FDKaacEnc_AutoCorrNormFac
+-
+-  Autocorrelation function for 1st and 2nd half of the spectrum
+-
+-  \param pointer to spectrum
+-  \param pointer to autocorrelation window
+-  \param filter start line
+-
+-****************************************************************************/
+-static inline FIXP_DBL FDKaacEnc_AutoCorrNormFac(
+-        const FIXP_DBL            value,
+-        const INT                 scale,
+-        INT                      *sc
+-        )
+-{
+-    #define HLM_MIN_NRG 0.0000000037252902984619140625f /* 2^-28 */
+-    #define MAX_INV_NRGFAC (1.f/HLM_MIN_NRG)
+-
+-    FIXP_DBL retValue;
+-    FIXP_DBL A, B;
+-
+-    if (scale>=0) {
+-      A = value;
+-      B = FL2FXCONST_DBL(HLM_MIN_NRG)>>fixMin(DFRACT_BITS-1,scale);
+-    }
+-    else {
+-      A = value>>fixMin(DFRACT_BITS-1,(-scale));
+-      B = FL2FXCONST_DBL(HLM_MIN_NRG);
+-    }
+-
+-    if (A > B) {
+-      int shift = 0;
+-      FIXP_DBL tmp = invSqrtNorm2(value,&shift);
+-
+-      retValue = fMult(tmp,tmp);
+-      *sc += (2*shift);
+-    }
+-    else {
+-      /* MAX_INV_NRGFAC*FDKpow(2,-28) = 1/2^-28 * 2^-28 = 1.0 */
+-      retValue = /*FL2FXCONST_DBL(MAX_INV_NRGFAC*FDKpow(2,-28))*/ (FIXP_DBL)MAXVAL_DBL;
+-      *sc += scale+28;
+-    }
+-
+-    return retValue;
+-}
+-
+-static void FDKaacEnc_MergedAutoCorrelation(
+-        const FIXP_DBL           *spectrum,
+-        const INT                 isLowDelay,
+-        const FIXP_DBL            acfWindow[MAX_NUM_OF_FILTERS][TNS_MAX_ORDER+3+1],
+-        const INT                 lpcStartLine[MAX_NUM_OF_FILTERS],
+-        const INT                 lpcStopLine,
+-        const INT                 maxOrder,
+-        const INT                 acfSplit[MAX_NUM_OF_FILTERS],
+-        FIXP_DBL                 *_rxx1,
+-        FIXP_DBL                 *_rxx2
+-        )
+-{
+-    int i, idx0, idx1, idx2, idx3, idx4, lag;
+-    FIXP_DBL rxx1_0, rxx2_0, rxx3_0, rxx4_0;
+-
+-    /* buffer for temporal spectrum */
+-    C_ALLOC_SCRATCH_START(pSpectrum, FIXP_DBL, (1024));
+-
+-    /* pre-initialization output */
+-    FDKmemclear(&_rxx1[0], sizeof(FIXP_DBL)*(maxOrder+1));
+-    FDKmemclear(&_rxx2[0], sizeof(FIXP_DBL)*(maxOrder+1));
+-
+-    idx0 = idx1 = idx2 = idx3 = idx4 = 0;
+-
+-    /* MDCT line indices separating the 1st, 2nd, 3rd, and 4th analysis quarters */
+-    if ( (acfSplit[LOFILT]==-1) || (acfSplit[HIFILT]==-1) ) {
+-      /* autocorrelation function for 1st, 2nd, 3rd, and 4th quarter of the spectrum */
+-      idx0 = lpcStartLine[LOFILT];
+-      i    = lpcStopLine - lpcStartLine[LOFILT];
+-      idx1 = idx0 + i / 4;
+-      idx2 = idx0 + i / 2;
+-      idx3 = idx0 + i * 3 / 4;
+-      idx4 = lpcStopLine;
+-    }
+-    else {
+-      FDK_ASSERT(acfSplit[LOFILT]==1);
+-      FDK_ASSERT(acfSplit[HIFILT]==3);
+-      i    = (lpcStopLine - lpcStartLine[HIFILT]) / 3;
+-      idx0 = lpcStartLine[LOFILT];
+-      idx1 = lpcStartLine[HIFILT];
+-      idx2 = idx1 + i;
+-      idx3 = idx2 + i;
+-      idx4 = lpcStopLine;
+-    }
+-
+-    /* copy spectrum to temporal buffer and scale up as much as possible */
+-    INT sc1 = FDKaacEnc_ScaleUpSpectrum(pSpectrum, spectrum, idx0, idx1);
+-    INT sc2 = FDKaacEnc_ScaleUpSpectrum(pSpectrum, spectrum, idx1, idx2);
+-    INT sc3 = FDKaacEnc_ScaleUpSpectrum(pSpectrum, spectrum, idx2, idx3);
+-    INT sc4 = FDKaacEnc_ScaleUpSpectrum(pSpectrum, spectrum, idx3, idx4);
+-
+-    /* get scaling values for summation */
+-    INT nsc1, nsc2, nsc3, nsc4;
+-    for (nsc1=1; (1<<nsc1)<(idx1-idx0); nsc1++);
+-    for (nsc2=1; (1<<nsc2)<(idx2-idx1); nsc2++);
+-    for (nsc3=1; (1<<nsc3)<(idx3-idx2); nsc3++);
+-    for (nsc4=1; (1<<nsc4)<(idx4-idx3); nsc4++);
+-
+-    /* compute autocorrelation value at lag zero, i. e. energy, for each quarter */
+-    rxx1_0 = FDKaacEnc_CalcAutoCorrValue(pSpectrum, idx0, idx1, 0, nsc1);
+-    rxx2_0 = FDKaacEnc_CalcAutoCorrValue(pSpectrum, idx1, idx2, 0, nsc2);
+-    rxx3_0 = FDKaacEnc_CalcAutoCorrValue(pSpectrum, idx2, idx3, 0, nsc3);
+-    rxx4_0 = FDKaacEnc_CalcAutoCorrValue(pSpectrum, idx3, idx4, 0, nsc4);
+-
+-    /* compute energy normalization factors, i. e. 1/energy (saves some divisions) */
+-    if (rxx1_0 != FL2FXCONST_DBL(0.f))
+-    {
+-      INT sc_fac1 = -1;
+-      FIXP_DBL fac1 = FDKaacEnc_AutoCorrNormFac(rxx1_0, ((-2*sc1)+nsc1), &sc_fac1);
+-      _rxx1[0] = scaleValue(fMult(rxx1_0,fac1),sc_fac1);
+-
+-      if (isLowDelay)
+-      {
+-        for (lag = 1; lag <= maxOrder; lag++) {
+-          /* compute energy-normalized and windowed autocorrelation values at this lag */
+-          FIXP_DBL x1 = FDKaacEnc_CalcAutoCorrValue(pSpectrum, idx0, idx1, lag, nsc1);
+-          _rxx1[lag] = fMult(scaleValue(fMult(x1,fac1),sc_fac1), acfWindow[LOFILT][lag]);
+-        }
+-      }
+-      else
+-      {
+-        for (lag = 1; lag <= maxOrder; lag++) {
+-          if ((3 * lag) <= maxOrder + 3) {
+-              FIXP_DBL x1 = FDKaacEnc_CalcAutoCorrValue(pSpectrum, idx0, idx1, lag, nsc1);
+-              _rxx1[lag] = fMult(scaleValue(fMult(x1,fac1),sc_fac1), acfWindow[LOFILT][3*lag]);
+-          }
+-        }
+-      }
+-    }
+-
+-    /* auto corr over upper 3/4 of spectrum */
+-    if ( !((rxx2_0 == FL2FXCONST_DBL(0.f)) && (rxx3_0 == FL2FXCONST_DBL(0.f)) && (rxx4_0 == FL2FXCONST_DBL(0.f))) )
+-    {
+-        FIXP_DBL fac2, fac3, fac4;
+-        fac2 = fac3 = fac4 = FL2FXCONST_DBL(0.f);
+-        INT sc_fac2, sc_fac3, sc_fac4;
+-        sc_fac2 = sc_fac3 = sc_fac4 = 0;
+-
+-        if (rxx2_0!=FL2FXCONST_DBL(0.f)) {
+-          fac2 = FDKaacEnc_AutoCorrNormFac(rxx2_0, ((-2*sc2)+nsc2), &sc_fac2);
+-          sc_fac2 -= 2;
+-        }
+-        if (rxx3_0!=FL2FXCONST_DBL(0.f)) {
+-          fac3 = FDKaacEnc_AutoCorrNormFac(rxx3_0, ((-2*sc3)+nsc3), &sc_fac3);
+-          sc_fac3 -= 2;
+-        }
+-        if (rxx4_0!=FL2FXCONST_DBL(0.f)) {
+-          fac4 = FDKaacEnc_AutoCorrNormFac(rxx4_0, ((-2*sc4)+nsc4), &sc_fac4);
+-          sc_fac4 -= 2;
+-        }
+-
+-        _rxx2[0] = scaleValue(fMult(rxx2_0,fac2),sc_fac2) +
+-                   scaleValue(fMult(rxx3_0,fac3),sc_fac3) +
+-                   scaleValue(fMult(rxx4_0,fac4),sc_fac4);
+-
+-        for (lag = 1; lag <= maxOrder; lag++) {
+-          /* merge quarters 2, 3, 4 into one autocorrelation; quarter 1 stays separate */
+-          FIXP_DBL x2 = scaleValue(fMult(FDKaacEnc_CalcAutoCorrValue(pSpectrum, idx1, idx2, lag, nsc2), fac2),sc_fac2) +
+-                        scaleValue(fMult(FDKaacEnc_CalcAutoCorrValue(pSpectrum, idx2, idx3, lag, nsc3), fac3),sc_fac3) +
+-                        scaleValue(fMult(FDKaacEnc_CalcAutoCorrValue(pSpectrum, idx3, idx4, lag, nsc4), fac4),sc_fac4);
+-
+-          _rxx2[lag] = fMult(x2, acfWindow[HIFILT][lag]);
+-        }
+-    }
+-
+-    C_ALLOC_SCRATCH_END(pSpectrum, FIXP_DBL, (1024));
+-}
+-
+-
+-/*****************************************************************************
+-    functionname: FDKaacEnc_TnsDetect
+-    description:  do decision, if TNS shall be used or not
+-    returns:
+-    input:        tns data structure (modified),
+-                  tns config structure,
+-                  scalefactor size and table,
+-                  spectrum,
+-                  subblock num, blocktype,
+-                  sfb-wise energy.
+-
+-*****************************************************************************/
+-INT FDKaacEnc_TnsDetect(
+-              TNS_DATA *tnsData,
+-              const TNS_CONFIG *tC,
+-              TNS_INFO* tnsInfo,
+-              INT sfbCnt,
+-              FIXP_DBL *spectrum,
+-              INT subBlockNumber,
+-              INT blockType
+-              )
+-{
+-  /* autocorrelation function for 1st, 2nd, 3rd, and 4th quarter of the spectrum. */
+-  FIXP_DBL rxx1[TNS_MAX_ORDER+1]; /* higher part */
+-  FIXP_DBL rxx2[TNS_MAX_ORDER+1]; /* lower part */
+-  FIXP_DBL parcor_tmp[TNS_MAX_ORDER];
+-
+-  int i;
+-
+-  TNS_SUBBLOCK_INFO *tsbi = (blockType == SHORT_WINDOW)
+-    ? &tnsData->dataRaw.Short.subBlockInfo[subBlockNumber]
+-    : &tnsData->dataRaw.Long.subBlockInfo;
+-
+-  tnsData->filtersMerged  = FALSE;
+-
+-  tsbi->tnsActive[HIFILT]         = FALSE;
+-  tsbi->predictionGain[HIFILT]    = 1000;
+-  tsbi->tnsActive[LOFILT]         = FALSE;
+-  tsbi->predictionGain[LOFILT]    = 1000;
+-
+-  tnsInfo->numOfFilters[subBlockNumber] = 0;
+-  tnsInfo->coefRes[subBlockNumber]      = tC->coefRes;
+-  for (i = 0; i < tC->maxOrder; i++) {
+-    tnsInfo->coef[subBlockNumber][HIFILT][i] = tnsInfo->coef[subBlockNumber][LOFILT][i] = 0;
+-  }
+-
+-  tnsInfo->length[subBlockNumber][HIFILT] = tnsInfo->length[subBlockNumber][LOFILT] = 0;
+-  tnsInfo->order [subBlockNumber][HIFILT] = tnsInfo->order [subBlockNumber][LOFILT] = 0;
+-
+-  if ( (tC->tnsActive) && (tC->maxOrder>0) )
+-  {
+-    int sumSqrCoef;
+-
+-    FDKaacEnc_MergedAutoCorrelation(
+-          spectrum,
+-          tC->isLowDelay,
+-          tC->acfWindow,
+-          tC->lpcStartLine,
+-          tC->lpcStopLine,
+-          tC->maxOrder,
+-          tC->confTab.acfSplit,
+-          rxx1,
+-          rxx2);
+-
+-    /* compute higher TNS filter in lattice (ParCor) form with LeRoux-Gueguen algorithm */
+-    tsbi->predictionGain[HIFILT] = FDKaacEnc_AutoToParcor(rxx2, parcor_tmp, tC->confTab.tnsLimitOrder[HIFILT]);
+-
+-    /* non-linear quantization of TNS lattice coefficients with given resolution */
+-    FDKaacEnc_Parcor2Index(
+-            parcor_tmp,
+-            tnsInfo->coef[subBlockNumber][HIFILT],
+-            tC->confTab.tnsLimitOrder[HIFILT],
+-            tC->coefRes);
+-
+-    /* reduce filter order by truncating trailing zeros, compute sum(abs(coefs)) */
+-    for (i = tC->confTab.tnsLimitOrder[HIFILT] - 1; i >= 0; i--) {
+-      if (tnsInfo->coef[subBlockNumber][HIFILT][i] != 0) {
+-        break;
+-      }
+-    }
+-
+-    tnsInfo->order[subBlockNumber][HIFILT] = i + 1;
+-
+-    sumSqrCoef = 0;
+-    for (; i >= 0; i--) {
+-      sumSqrCoef += tnsInfo->coef[subBlockNumber][HIFILT][i] * tnsInfo->coef[subBlockNumber][HIFILT][i];
+-    }
+-
+-    tnsInfo->direction[subBlockNumber][HIFILT] = tC->confTab.tnsFilterDirection[HIFILT];
+-    tnsInfo->length[subBlockNumber][HIFILT] = sfbCnt - tC->lpcStartBand[HIFILT];
+-
+-    /* disable TNS if predictionGain is less than 3dB or sumSqrCoef is too small */
+-    if ((tsbi->predictionGain[HIFILT] > tC->confTab.threshOn[HIFILT]) || (sumSqrCoef > (tC->confTab.tnsLimitOrder[HIFILT]/2 + 2)))
+-    {
+-      tsbi->tnsActive[HIFILT] = TRUE;
+-      tnsInfo->numOfFilters[subBlockNumber]++;
+-
+-      /* compute second filter for lower quarter; only allowed for long windows! */
+-      if ( (blockType != SHORT_WINDOW) &&
+-           (tC->confTab.filterEnabled[LOFILT]) && (tC->confTab.seperateFiltersAllowed) )
+-      {
+-        /* compute second filter for lower frequencies */
+-
+-        /* compute TNS filter in lattice (ParCor) form with LeRoux-Gueguen algorithm */
+-        INT predGain = FDKaacEnc_AutoToParcor(rxx1, parcor_tmp, tC->confTab.tnsLimitOrder[LOFILT]);
+-
+-        /* non-linear quantization of TNS lattice coefficients with given resolution */
+-        FDKaacEnc_Parcor2Index(
+-                parcor_tmp,
+-                tnsInfo->coef[subBlockNumber][LOFILT],
+-                tC->confTab.tnsLimitOrder[LOFILT],
+-                tC->coefRes);
+-
+-        /* reduce filter order by truncating trailing zeros, compute sum(abs(coefs)) */
+-        for (i = tC->confTab.tnsLimitOrder[LOFILT] - 1; i >= 0; i--) {
+-          if (tnsInfo->coef[subBlockNumber][LOFILT][i] != 0) {
+-            break;
+-          }
+-        }
+-        tnsInfo->order[subBlockNumber][LOFILT] = i + 1;
+-
+-        sumSqrCoef = 0;
+-        for (; i >= 0; i--) {
+-          sumSqrCoef += tnsInfo->coef[subBlockNumber][LOFILT][i] * tnsInfo->coef[subBlockNumber][LOFILT][i];
+-        }
+-
+-        tnsInfo->direction[subBlockNumber][LOFILT] = tC->confTab.tnsFilterDirection[LOFILT];
+-        tnsInfo->length[subBlockNumber][LOFILT] = tC->lpcStartBand[HIFILT] - tC->lpcStartBand[LOFILT];
+-
+-        /* filter lower quarter if gain is high enough, but not if it's too high */
+-        if ( ( (predGain > tC->confTab.threshOn[LOFILT]) && (predGain < (16000 * tC->confTab.tnsLimitOrder[LOFILT])) )
+-          || ( (sumSqrCoef > 9)  && (sumSqrCoef < 22 * tC->confTab.tnsLimitOrder[LOFILT]) ) )
+-        {
+-          /* compare lower to upper filter; if they are very similar, merge them */
+-          tsbi->tnsActive[LOFILT] = TRUE;
+-          sumSqrCoef = 0;
+-          for (i = 0; i < tC->confTab.tnsLimitOrder[LOFILT]; i++) {
+-            sumSqrCoef += FDKabs(tnsInfo->coef[subBlockNumber][HIFILT][i] - tnsInfo->coef[subBlockNumber][LOFILT][i]);
+-          }
+-          if ( (sumSqrCoef < 2) &&
+-               (tnsInfo->direction[subBlockNumber][LOFILT] == tnsInfo->direction[subBlockNumber][HIFILT]) )
+-          {
+-            tnsData->filtersMerged = TRUE;
+-            tnsInfo->length[subBlockNumber][HIFILT] = sfbCnt - tC->lpcStartBand[LOFILT];
+-            for (; i < tnsInfo->order[subBlockNumber][HIFILT]; i++) {
+-              if (FDKabs(tnsInfo->coef[subBlockNumber][HIFILT][i]) > 1) {
+-                break;
+-              }
+-            }
+-            for (i--; i >= 0; i--) {
+-              if (tnsInfo->coef[subBlockNumber][HIFILT][i] != 0) {
+-                break;
+-              }
+-            }
+-            if (i < tnsInfo->order[subBlockNumber][HIFILT]) {
+-              tnsInfo->order[subBlockNumber][HIFILT] = i + 1;
+-            }
+-          }
+-          else {
+-            tnsInfo->numOfFilters[subBlockNumber]++;
+-          }
+-        } /* filter lower part */
+-        tsbi->predictionGain[LOFILT]=predGain;
+-
+-      } /* second filter allowed  */
+-    } /* if predictionGain > 1437 ... */
+-  } /* maxOrder > 0 && tnsActive */
+-
+-  return 0;
+-
+-}
+-
+-
+-/***************************************************************************/
+-/*!
+-  \brief     FDKaacLdEnc_TnsSync
+-
+-  synchronize TNS parameters when TNS gain difference small (relative)
+-
+-  \param pointer to TNS data structure (destination)
+-  \param pointer to TNS data structure (source)
+-  \param pointer to TNS config structure
+-  \param number of sub-block
+-  \param block type
+-
+-  \return void
+-****************************************************************************/
+-void FDKaacEnc_TnsSync(
+-             TNS_DATA *tnsDataDest,
+-             const TNS_DATA *tnsDataSrc,
+-             TNS_INFO *tnsInfoDest,
+-             TNS_INFO *tnsInfoSrc,
+-             const INT blockTypeDest,
+-             const INT blockTypeSrc,
+-             const TNS_CONFIG *tC
+-             )
+-{
+-  int i, w, absDiff, nWindows;
+-  TNS_SUBBLOCK_INFO *sbInfoDest;
+-  const TNS_SUBBLOCK_INFO *sbInfoSrc;
+-
+-  /* if one channel contains short blocks and the other not, do not synchronize */
+-  if ( (blockTypeSrc == SHORT_WINDOW && blockTypeDest != SHORT_WINDOW) ||
+-       (blockTypeDest == SHORT_WINDOW && blockTypeSrc != SHORT_WINDOW) )
+-  {
+-    return;
+-  }
+-
+-  if (blockTypeDest != SHORT_WINDOW) {
+-    sbInfoDest = &tnsDataDest->dataRaw.Long.subBlockInfo;
+-    sbInfoSrc  = &tnsDataSrc->dataRaw.Long.subBlockInfo;
+-    nWindows   = 1;
+-  } else {
+-    sbInfoDest = &tnsDataDest->dataRaw.Short.subBlockInfo[0];
+-    sbInfoSrc  = &tnsDataSrc->dataRaw.Short.subBlockInfo[0];
+-    nWindows   = 8;
+-  }
+-
+-  for (w=0; w<nWindows; w++) {
+-      const TNS_SUBBLOCK_INFO *pSbInfoSrcW  = sbInfoSrc  + w;
+-      TNS_SUBBLOCK_INFO       *pSbInfoDestW = sbInfoDest + w;
+-      INT doSync = 1, absDiffSum = 0;
+-
+-      /* if TNS is active in at least one channel, check if ParCor coefficients of higher filter are similar */
+-      if (pSbInfoDestW->tnsActive[HIFILT] || pSbInfoSrcW->tnsActive[HIFILT]) {
+-        for (i = 0; i < tC->maxOrder; i++) {
+-          absDiff = FDKabs(tnsInfoDest->coef[w][HIFILT][i] - tnsInfoSrc->coef[w][HIFILT][i]);
+-          absDiffSum += absDiff;
+-          /* if coefficients diverge too much between channels, do not synchronize */
+-          if ((absDiff > 1) || (absDiffSum > 2)) {
+-            doSync = 0;
+-            break;
+-          }
+-        }
+-
+-        if (doSync) {
+-            /* if no significant difference was detected, synchronize coefficient sets */
+-            if (pSbInfoSrcW->tnsActive[HIFILT]) {
+-              /* no dest filter, or more dest than source filters: use one dest filter */
+-              if ((!pSbInfoDestW->tnsActive[HIFILT]) ||
+-                  ((pSbInfoDestW->tnsActive[HIFILT]) && (tnsInfoDest->numOfFilters[w] > tnsInfoSrc->numOfFilters[w])))
+-              {
+-                pSbInfoDestW->tnsActive[HIFILT] = tnsInfoDest->numOfFilters[w] = 1;
+-              }
+-              tnsDataDest->filtersMerged = tnsDataSrc->filtersMerged;
+-              tnsInfoDest->order       [w][HIFILT] = tnsInfoSrc->order       [w][HIFILT];
+-              tnsInfoDest->length      [w][HIFILT] = tnsInfoSrc->length      [w][HIFILT];
+-              tnsInfoDest->direction   [w][HIFILT] = tnsInfoSrc->direction   [w][HIFILT];
+-              tnsInfoDest->coefCompress[w][HIFILT] = tnsInfoSrc->coefCompress[w][HIFILT];
+-
+-              for (i = 0; i < tC->maxOrder; i++) {
+-                tnsInfoDest->coef[w][HIFILT][i] = tnsInfoSrc->coef[w][HIFILT][i];
+-              }
+-            }
+-            else
+-              pSbInfoDestW->tnsActive[HIFILT] = tnsInfoDest->numOfFilters[w] = 0;
+-            }
+-        }
+-
+-    }
+-}
+-
+-/***************************************************************************/
+-/*!
+-  \brief     FDKaacEnc_TnsEncode
+-
+-  perform TNS encoding
+-
+-  \param pointer to TNS info structure
+-  \param pointer to TNS data structure
+-  \param number of sfbs
+-  \param pointer to TNS config structure
+-  \param low-pass line
+-  \param pointer to spectrum
+-  \param number of sub-block
+-  \param block type
+-
+-  \return ERROR STATUS
+-****************************************************************************/
+-INT FDKaacEnc_TnsEncode(
+-        TNS_INFO* tnsInfo,
+-        TNS_DATA* tnsData,
+-        const INT numOfSfb,
+-        const TNS_CONFIG *tC,
+-        const INT lowPassLine,
+-        FIXP_DBL* spectrum,
+-        const INT subBlockNumber,
+-        const INT blockType
+-        )
+-{
+-    INT i, startLine, stopLine;
+-
+-    if ( ( (blockType == SHORT_WINDOW) && (!tnsData->dataRaw.Short.subBlockInfo[subBlockNumber].tnsActive[HIFILT]) )
+-      || ( (blockType != SHORT_WINDOW) && (!tnsData->dataRaw.Long.subBlockInfo.tnsActive[HIFILT]) ) )
+-    {
+-      return 1;
+-    }
+-
+-    startLine = (tnsData->filtersMerged) ? tC->lpcStartLine[LOFILT] : tC->lpcStartLine[HIFILT];
+-    stopLine  = tC->lpcStopLine;
+-
+-    for (i=0; i<tnsInfo->numOfFilters[subBlockNumber]; i++) {
+-
+-        INT lpcGainFactor;
+-        FIXP_DBL LpcCoeff[TNS_MAX_ORDER];
+-        FIXP_DBL workBuffer[TNS_MAX_ORDER];
+-        FIXP_DBL parcor_tmp[TNS_MAX_ORDER];
+-
+-        FDKaacEnc_Index2Parcor(
+-                tnsInfo->coef[subBlockNumber][i],
+-                parcor_tmp,
+-                tnsInfo->order[subBlockNumber][i],
+-                tC->coefRes);
+-
+-        lpcGainFactor = FDKaacEnc_ParcorToLpc(
+-                parcor_tmp,
+-                LpcCoeff,
+-                tnsInfo->order[subBlockNumber][i],
+-                workBuffer);
+-
+-        FDKaacEnc_AnalysisFilter(
+-                &spectrum[startLine],
+-                stopLine - startLine,
+-                LpcCoeff,
+-                tnsInfo->order[subBlockNumber][i],
+-                lpcGainFactor);
+-
+-        /* update for second filter */
+-        startLine = tC->lpcStartLine[LOFILT];
+-        stopLine  = tC->lpcStartLine[HIFILT];
+-    }
+-
+-    return(0);
+-
+-}
+-
+-static void FDKaacEnc_CalcGaussWindow(
+-        FIXP_DBL *win,
+-        const int winSize,
+-        const INT samplingRate,
+-        const INT transformResolution,
+-        const FIXP_DBL timeResolution,
+-        const INT timeResolution_e
+-        )
+-{
+-  #define PI_E           (2)
+-  #define PI_M           FL2FXCONST_DBL(3.1416f/(float)(1<<PI_E))
+-
+-  #define EULER_E        (2)
+-  #define EULER_M        FL2FXCONST_DBL(2.7183/(float)(1<<EULER_E))
+-
+-  #define COEFF_LOOP_SCALE (4)
+-
+-  INT i, e1, e2, gaussExp_e;
+-  FIXP_DBL gaussExp_m;
+-
+-  /* calc. window exponent from time resolution:
+-   *
+-   *   gaussExp = PI * samplingRate * 0.001f * timeResolution / transformResolution;
+-   *   gaussExp = -0.5f * gaussExp * gaussExp;
+-   */
+-  gaussExp_m = fMultNorm(timeResolution, fMult(PI_M, fDivNorm( (FIXP_DBL)(samplingRate), (FIXP_DBL)(LONG)(transformResolution*1000.f), &e1)), &e2);
+-  gaussExp_m = -fPow2Div2(gaussExp_m);
+-  gaussExp_e = 2*(e1+e2+timeResolution_e+PI_E);
+-
+-  FDK_ASSERT( winSize < (1<<COEFF_LOOP_SCALE) );
+-
+-  /* calc. window coefficients
+-   *   win[i] = (float)exp( gaussExp * (i+0.5) * (i+0.5) );
+-   */
+-  for( i=0; i<winSize; i++) {
+-
+-    win[i] = fPow(
+-            EULER_M,
+-            EULER_E,
+-            fMult(gaussExp_m, fPow2((i*FL2FXCONST_DBL(1.f/(float)(1<<COEFF_LOOP_SCALE)) + FL2FXCONST_DBL(.5f/(float)(1<<COEFF_LOOP_SCALE))))),
+-            gaussExp_e + 2*COEFF_LOOP_SCALE,
+-           &e1);
+-
+-    win[i] = scaleValueSaturate(win[i], e1);
+-  }
+-}
+-
+-
+-/***************************************************************************/
+-/*!
+-  \brief     FDKaacEnc_AutoToParcor
+-
+-  conversion autocorrelation to reflection coefficients
+-
+-  \param pointer to input (acf)
+-  \param pointer to output (reflection coefficients)
+-  \param number of coefficients
+-
+-  \return prediction gain
+-****************************************************************************/
+-static INT FDKaacEnc_AutoToParcor(
+-        FIXP_DBL *RESTRICT input,
+-        FIXP_DBL *RESTRICT reflCoeff,
+-        const INT numOfCoeff
+-        )
+-{
+-  INT       i, j, scale=0;
+-  FIXP_DBL  tmp, parcorWorkBuffer[TNS_MAX_ORDER];
+-  INT       predictionGain = (INT)(TNS_PREDGAIN_SCALE);
+-
+-  FIXP_DBL *RESTRICT workBuffer = parcorWorkBuffer;
+-  const FIXP_DBL  autoCorr_0 = input[0];
+-
+-  FDKmemclear(reflCoeff,numOfCoeff*sizeof(FIXP_DBL));
+-
+-  if((FIXP_DBL)input[0] == FL2FXCONST_DBL(0.0)) {
+-    return(predictionGain);
+-  }
+-
+-  FDKmemcpy(workBuffer,&input[1],numOfCoeff*sizeof(FIXP_DBL));
+-  for(i=0; i<numOfCoeff; i++) {
+-    LONG sign = ((LONG)workBuffer[0] >> (DFRACT_BITS-1));
+-    tmp = (FIXP_DBL)((LONG)workBuffer[0]^sign);
+-
+-    if(input[0]<tmp)
+-      break;
+-
+-    tmp = (FIXP_DBL)((LONG)schur_div(tmp, input[0], FRACT_BITS)^(~sign));
+-    reflCoeff[i] = tmp;
+-
+-    for(j=numOfCoeff-i-1; j>=0; j--) {
+-      FIXP_DBL accu1 = fMult(tmp, input[j]);
+-      FIXP_DBL accu2 = fMult(tmp, workBuffer[j]);
+-      workBuffer[j] += accu1;
+-      input[j] += accu2;
+-    }
+-
+-    workBuffer++;
+-  }
+-
+-  if (input[0] == 0)
+-    input[0] = 1;
+-
+-  tmp = fMult((FIXP_DBL)((LONG)TNS_PREDGAIN_SCALE<<21), fDivNorm(fAbs(autoCorr_0), fAbs(input[0]), &scale));
+-  if ( fMultDiv2(autoCorr_0, input[0])<FL2FXCONST_DBL(0.0f) ) {
+-    tmp = -tmp;
+-  }
+-  predictionGain = (LONG)scaleValue(tmp,scale-21);
+-
+-  return (predictionGain);
+-}
+-
+-
+-static INT FDKaacEnc_Search3(FIXP_DBL parcor)
+-{
+-  INT i, index=0;
+-
+-  for(i=0;i<8;i++){
+-    if(parcor > FDKaacEnc_tnsCoeff3Borders[i])
+-      index=i;
+-  }
+-  return(index-4);
+-}
+-
+-static INT FDKaacEnc_Search4(FIXP_DBL parcor)
+-{
+-  INT i, index=0;
+-
+-  for(i=0;i<16;i++){
+-    if(parcor > FDKaacEnc_tnsCoeff4Borders[i])
+-      index=i;
+-  }
+-  return(index-8);
+-}
+-
+-
+-/*****************************************************************************
+-
+-    functionname: FDKaacEnc_Parcor2Index
+-
+-*****************************************************************************/
+-static void FDKaacEnc_Parcor2Index(
+-        const FIXP_DBL *parcor,
+-        INT *RESTRICT index,
+-        const INT order,
+-        const INT bitsPerCoeff
+-        )
+-{
+-  INT i;
+-  for(i=0; i<order; i++) {
+-    if(bitsPerCoeff == 3)
+-      index[i] = FDKaacEnc_Search3(parcor[i]);
+-    else
+-      index[i] = FDKaacEnc_Search4(parcor[i]);
+-  }
+-}
+-
+-
+-/*****************************************************************************
+-
+-    functionname: FDKaacEnc_Index2Parcor
+-    description:  inverse quantization for reflection coefficients
+-    returns:      -
+-    input:        quantized values, ptr. to reflection coefficients,
+-                  no. of coefficients, resolution
+-    output:       reflection coefficients
+-
+-*****************************************************************************/
+-static void FDKaacEnc_Index2Parcor(
+-        const INT *index,
+-        FIXP_DBL *RESTRICT parcor,
+-        const INT order,
+-        const INT bitsPerCoeff
+-        )
+-{
+-  INT i;
+-  for(i=0; i<order; i++)
+-    parcor[i] = bitsPerCoeff == 4 ? FDKaacEnc_tnsEncCoeff4[index[i]+8] : FDKaacEnc_tnsEncCoeff3[index[i]+4];
+-}
+-
+-
+-/*****************************************************************************
+-
+-    functionname: FDKaacEnc_ParcorToLpc
+-    description:  conversion reflection coefficients to LPC coefficients
+-    returns:      Gain factor
+-    input:        reflection coefficients, no. of reflection coefficients <order>,
+-                  ptr. to work buffer (required size: order)
+-    output:       <order> LPC coefficients
+-
+-*****************************************************************************/
+-static INT FDKaacEnc_ParcorToLpc(
+-        const FIXP_DBL *reflCoeff,
+-        FIXP_DBL *RESTRICT LpcCoeff,
+-        const INT numOfCoeff,
+-        FIXP_DBL *RESTRICT workBuffer
+-        )
+-{
+-  INT i, j;
+-  INT shiftval, par2LpcShiftVal = 6;  /* 6 should be enough, bec. max(numOfCoeff) = 20 */
+-  FIXP_DBL maxVal = FL2FXCONST_DBL(0.0f);
+-
+-  LpcCoeff[0] = reflCoeff[0] >> par2LpcShiftVal;
+-  for(i=1; i<numOfCoeff; i++) {
+-    for(j=0; j<i; j++) {
+-        workBuffer[j] = LpcCoeff[i-1-j];
+-    }
+-
+-    for(j=0; j<i; j++) {
+-        LpcCoeff[j] += fMult(reflCoeff[i],workBuffer[j]);
+-    }
+-
+-    LpcCoeff[i] = reflCoeff[i] >> par2LpcShiftVal;
+-  }
+-
+-  /* normalize LpcCoeff and calc shiftfactor */
+-  for(i=0; i<numOfCoeff; i++) {
+-      maxVal = fixMax(maxVal,(FIXP_DBL)fixp_abs(LpcCoeff[i]));
+-  }
+-
+-  shiftval = CountLeadingBits(maxVal);
+-  shiftval = (shiftval>=par2LpcShiftVal) ? par2LpcShiftVal : shiftval;
+-
+-  for(i=0; i<numOfCoeff; i++)
+-      LpcCoeff[i] = LpcCoeff[i]<<shiftval;
+-
+-  return (par2LpcShiftVal - shiftval);
+-}
+-
+-/***************************************************************************/
+-/*!
+-  \brief     FDKaacEnc_AnalysisFilter
+-
+-  TNS analysis filter (all-zero filter)
+-
+-  \param pointer to signal spectrum
+-  \param number of lines
+-  \param pointer to lpc coefficients
+-  \param filter order
+-  \param lpc gain factor
+-
+-  \return void
+-****************************************************************************/
+-/* Note: in-place computation possible */
+-static void FDKaacEnc_AnalysisFilter(
+-        FIXP_DBL *RESTRICT signal,
+-        const INT numOfLines,
+-        const FIXP_DBL *predictorCoeff,
+-        const INT order,
+-        const INT lpcGainFactor
+-        )
+-{
+-  FIXP_DBL statusVar[TNS_MAX_ORDER];
+-  INT i, j;
+-  const INT shift = lpcGainFactor + 1;      /* +1, because fMultDiv2 */
+-  FIXP_DBL tmp;
+-
+-  if (order>0) {
+-
+-    INT idx = 0;
+-
+-    /* keep filter coefficients twice and save memory copy operation in
+-       modulo state buffer */
+-#if defined(ARCH_PREFER_MULT_32x16)
+-    FIXP_SGL  coeff[2*TNS_MAX_ORDER];
+-    const FIXP_SGL *pCoeff;
+-    for(i=0;i<order;i++) {
+-      coeff[i]       = FX_DBL2FX_SGL(predictorCoeff[i]);
+-    }
+-    FDKmemcpy(&coeff[order], coeff, order*sizeof(FIXP_SGL));
+-#else
+-    FIXP_DBL  coeff[2*TNS_MAX_ORDER];
+-    const FIXP_DBL *pCoeff;
+-    FDKmemcpy(&coeff[0],     predictorCoeff, order*sizeof(FIXP_DBL));
+-    FDKmemcpy(&coeff[order], predictorCoeff, order*sizeof(FIXP_DBL));
+-#endif
+-    FDKmemclear(statusVar, order*sizeof(FIXP_DBL));
+-
+-    for(j=0; j<numOfLines; j++) {
+-      pCoeff = &coeff[(order-idx)];
+-      tmp = FL2FXCONST_DBL(0);
+-      for(i=0; i<order; i++) {
+-          tmp = fMultAddDiv2(tmp, pCoeff[i], statusVar[i]) ;
+-      }
+-
+-      if(--idx<0) { idx = order-1; }
+-      statusVar[idx] = signal[j];
+-
+-      FDK_ASSERT(lpcGainFactor>=0);
+-      signal[j] = (tmp<<shift) + signal[j];
+-    }
+-  }
+-}
+-
+-
+diff --git a/libAACenc/src/aacenc_tns.h b/libAACenc/src/aacenc_tns.h
+deleted file mode 100644
+index 2824cbc..0000000
+--- a/libAACenc/src/aacenc_tns.h
++++ /dev/null
+@@ -1,202 +0,0 @@
+-
+-/* -----------------------------------------------------------------------------------------------------------
+-Software License for The Fraunhofer FDK AAC Codec Library for Android
+-
+-© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+-  All rights reserved.
+-
+- 1.    INTRODUCTION
+-The Fraunhofer FDK AAC Codec Library for Android ("FDK AAC Codec") is software that implements
+-the MPEG Advanced Audio Coding ("AAC") encoding and decoding scheme for digital audio.
+-This FDK AAC Codec software is intended to be used on a wide variety of Android devices.
+-
+-AAC's HE-AAC and HE-AAC v2 versions are regarded as today's most efficient general perceptual
+-audio codecs. AAC-ELD is considered the best-performing full-bandwidth communications codec by
+-independent studies and is widely deployed. AAC has been standardized by ISO and IEC as part
+-of the MPEG specifications.
+-
+-Patent licenses for necessary patent claims for the FDK AAC Codec (including those of Fraunhofer)
+-may be obtained through Via Licensing (www.vialicensing.com) or through the respective patent owners
+-individually for the purpose of encoding or decoding bit streams in products that are compliant with
+-the ISO/IEC MPEG audio standards. Please note that most manufacturers of Android devices already license
+-these patent claims through Via Licensing or directly from the patent owners, and therefore FDK AAC Codec
+-software may already be covered under those patent licenses when it is used for those licensed purposes only.
+-
+-Commercially-licensed AAC software libraries, including floating-point versions with enhanced sound quality,
+-are also available from Fraunhofer. Users are encouraged to check the Fraunhofer website for additional
+-applications information and documentation.
+-
+-2.    COPYRIGHT LICENSE
+-
+-Redistribution and use in source and binary forms, with or without modification, are permitted without
+-payment of copyright license fees provided that you satisfy the following conditions:
+-
+-You must retain the complete text of this software license in redistributions of the FDK AAC Codec or
+-your modifications thereto in source code form.
+-
+-You must retain the complete text of this software license in the documentation and/or other materials
+-provided with redistributions of the FDK AAC Codec or your modifications thereto in binary form.
+-You must make available free of charge copies of the complete source code of the FDK AAC Codec and your
+-modifications thereto to recipients of copies in binary form.
+-
+-The name of Fraunhofer may not be used to endorse or promote products derived from this library without
+-prior written permission.
+-
+-You may not charge copyright license fees for anyone to use, copy or distribute the FDK AAC Codec
+-software or your modifications thereto.
+-
+-Your modified versions of the FDK AAC Codec must carry prominent notices stating that you changed the software
+-and the date of any change. For modified versions of the FDK AAC Codec, the term
+-"Fraunhofer FDK AAC Codec Library for Android" must be replaced by the term
+-"Third-Party Modified Version of the Fraunhofer FDK AAC Codec Library for Android."
+-
+-3.    NO PATENT LICENSE
+-
+-NO EXPRESS OR IMPLIED LICENSES TO ANY PATENT CLAIMS, including without limitation the patents of Fraunhofer,
+-ARE GRANTED BY THIS SOFTWARE LICENSE. Fraunhofer provides no warranty of patent non-infringement with
+-respect to this software.
+-
+-You may use this FDK AAC Codec software or modifications thereto only for purposes that are authorized
+-by appropriate patent licenses.
+-
+-4.    DISCLAIMER
+-
+-This FDK AAC Codec software is provided by Fraunhofer on behalf of the copyright holders and contributors
+-"AS IS" and WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, including but not limited to the implied warranties
+-of merchantability and fitness for a particular purpose. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+-CONTRIBUTORS BE LIABLE for any direct, indirect, incidental, special, exemplary, or consequential damages,
+-including but not limited to procurement of substitute goods or services; loss of use, data, or profits,
+-or business interruption, however caused and on any theory of liability, whether in contract, strict
+-liability, or tort (including negligence), arising in any way out of the use of this software, even if
+-advised of the possibility of such damage.
+-
+-5.    CONTACT INFORMATION
+-
+-Fraunhofer Institute for Integrated Circuits IIS
+-Attention: Audio and Multimedia Departments - FDK AAC LL
+-Am Wolfsmantel 33
+-91058 Erlangen, Germany
+-
+-www.iis.fraunhofer.de/amm
+-amm-info@iis.fraunhofer.de
+------------------------------------------------------------------------------------------------------------ */
+-
+-/******************************** MPEG Audio Encoder **************************
+-
+-   Initial author:       Alex Groeschel
+-   contents/description: Temporal noise shaping
+-
+-******************************************************************************/
+-
+-#ifndef _TNS_H
+-#define _TNS_H
+-
+-#include "common_fix.h"
+-
+-#include "psy_const.h"
+-
+-
+-#ifndef PI
+-#define PI            3.1415926535897931f
+-#endif
+-
+-/**
+- * TNS_ENABLE_MASK
+- * This bitfield defines which TNS features are enabled
+- *   The TNS mask is composed of 4 bits.
+- *   tnsMask |= 0x1; activate TNS short blocks
+- *   tnsMask |= 0x2; activate TNS for long blocks
+- *   tnsMask |= 0x4; activate TNS PEAK tool for short blocks
+- *   tnsMask |= 0x8; activate TNS PEAK tool for long blocks
+- */
+-#define TNS_ENABLE_MASK 0xf
+-
+-/* TNS max filter order for Low Complexity MPEG4 profile */
+-#define TNS_MAX_ORDER 12
+-
+-
+-#define MAX_NUM_OF_FILTERS 2
+-
+-#define HIFILT 0           /* index of higher filter   */
+-#define LOFILT 1           /* index of lower filter    */
+-
+-
+-typedef struct{ /* stuff that is tabulated dependent on bitrate etc. */
+-  INT      filterEnabled[MAX_NUM_OF_FILTERS];
+-  INT      threshOn[MAX_NUM_OF_FILTERS];                /* min. prediction gain for using tns TABUL*/
+-  INT      filterStartFreq[MAX_NUM_OF_FILTERS];         /* lowest freq for lpc TABUL*/
+-  INT      tnsLimitOrder[MAX_NUM_OF_FILTERS];           /* Limit for TNS order TABUL*/
+-  INT      tnsFilterDirection[MAX_NUM_OF_FILTERS];      /* Filtering direction, 0=up, 1=down TABUL */
+-  INT      acfSplit[MAX_NUM_OF_FILTERS];
+-  FIXP_DBL tnsTimeResolution[MAX_NUM_OF_FILTERS];       /* TNS max. time resolution TABUL. Should be fract but MSVC won't compile then */
+-  INT      seperateFiltersAllowed;
+-} TNS_PARAMETER_TABULATED;
+-
+-
+-typedef struct {   /*assigned at InitTime*/
+-  TNS_PARAMETER_TABULATED confTab;
+-  INT isLowDelay;
+-  INT tnsActive;
+-  INT maxOrder;                /* max. order of tns filter */
+-  INT coefRes;
+-  FIXP_DBL acfWindow[MAX_NUM_OF_FILTERS][TNS_MAX_ORDER+3+1];
+-  /* now some things that only probably can be done at Init time;
+-     could be they have to be split up for each individual (short) window or
+-     even filter.  */
+-  INT lpcStartBand[MAX_NUM_OF_FILTERS];
+-  INT lpcStartLine[MAX_NUM_OF_FILTERS];
+-  INT lpcStopBand;
+-  INT lpcStopLine;
+-
+-}TNS_CONFIG;
+-
+-
+-typedef struct {
+-  INT   tnsActive[MAX_NUM_OF_FILTERS];
+-  INT   predictionGain[MAX_NUM_OF_FILTERS];
+-} TNS_SUBBLOCK_INFO;
+-
+-typedef struct{   /*changed at runTime*/
+-  TNS_SUBBLOCK_INFO subBlockInfo[TRANS_FAC];
+-  FIXP_DBL ratioMultTable[TRANS_FAC][MAX_SFB_SHORT];
+-} TNS_DATA_SHORT;
+-
+-typedef struct{   /*changed at runTime*/
+-  TNS_SUBBLOCK_INFO subBlockInfo;
+-  FIXP_DBL ratioMultTable[MAX_SFB_LONG];
+-} TNS_DATA_LONG;
+-
+-/* can be implemented as union */
+-typedef shouldBeUnion{
+-  TNS_DATA_LONG Long;
+-  TNS_DATA_SHORT Short;
+-}TNS_DATA_RAW;
+-
+-typedef struct{
+-  INT numOfSubblocks;
+-  TNS_DATA_RAW dataRaw;
+-  INT tnsMaxScaleSpec;
+-  INT filtersMerged;
+-}TNS_DATA;
+-
+-typedef struct{
+-  INT numOfFilters[TRANS_FAC];
+-  INT coefRes[TRANS_FAC];
+-  INT length[TRANS_FAC][MAX_NUM_OF_FILTERS];
+-  INT order[TRANS_FAC][MAX_NUM_OF_FILTERS];
+-  INT direction[TRANS_FAC][MAX_NUM_OF_FILTERS];
+-  INT coefCompress[TRANS_FAC][MAX_NUM_OF_FILTERS];
+-    /* for Long: length TNS_MAX_ORDER (12 for LC) is required -> 12 */
+-    /* for Short: length TRANS_FAC*TNS_MAX_ORDER (only 5 for short LC) is required -> 8*5=40 */
+-    /* Currently TRANS_FAC*TNS_MAX_ORDER = 8*12 = 96 (for LC) is used (per channel)! Memory could be saved here! */
+-  INT coef[TRANS_FAC][MAX_NUM_OF_FILTERS][TNS_MAX_ORDER];
+-}TNS_INFO;
+-
+-INT FDKaacEnc_FreqToBandWithRounding(
+-        const INT freq,
+-        const INT fs,
+-        const INT numOfBands,
+-        const INT *bandStartOffset
+-        );
+-
+-#endif /* _TNS_H */
+diff --git a/libAACenc/src/bitenc.cpp b/libAACenc/src/bitenc.cpp
+index 3ed3b2f..50b7807 100644
+--- a/libAACenc/src/bitenc.cpp
++++ b/libAACenc/src/bitenc.cpp
+@@ -421,27 +421,11 @@ static INT FDKaacEnc_encodeMSInfo(INT            sfbCnt,
+     output:
+ 
+ *****************************************************************************/
+-static INT FDKaacEnc_encodeTnsDataPresent(TNS_INFO *tnsInfo,
+-                                          INT blockType,
+-                                          HANDLE_FDK_BITSTREAM hBitStream)
++static INT FDKaacEnc_encodeTnsDataPresent(HANDLE_FDK_BITSTREAM hBitStream)
+ {
+-  if ( (hBitStream!=NULL) && (tnsInfo!=NULL) )
++  if ( (hBitStream!=NULL) )
+   {
+-    INT i, tnsPresent = 0;
+-    INT numOfWindows = (blockType==SHORT_WINDOW?TRANS_FAC:1);
+-
+-    for (i=0; i<numOfWindows; i++) {
+-      if (tnsInfo->numOfFilters[i]!=0) {
+-        tnsPresent=1;
+-        break;
+-      }
+-    }
+-
+-    if (tnsPresent==0) {
+-      FDKwriteBits(hBitStream,0,1);
+-    } else {
+-      FDKwriteBits(hBitStream,1,1);
+-    }
++    FDKwriteBits(hBitStream,0,1);
+   }
+   return (1);
+ }
+@@ -455,117 +439,9 @@ static INT FDKaacEnc_encodeTnsDataPresent(TNS_INFO *tnsInfo,
+     output:
+ 
+ *****************************************************************************/
+-static INT FDKaacEnc_encodeTnsData(TNS_INFO *tnsInfo,
+-                                   INT blockType,
+-                                   HANDLE_FDK_BITSTREAM hBitStream)
++static INT FDKaacEnc_encodeTnsData(HANDLE_FDK_BITSTREAM hBitStream)
+ {
+-  INT tnsBits = 0;
+-
+-  if (tnsInfo!=NULL) {
+-
+-    INT i,j,k;
+-    INT tnsPresent = 0;
+-    INT coefBits;
+-    INT numOfWindows=(blockType==SHORT_WINDOW?TRANS_FAC:1);
+-
+-    for (i=0; i<numOfWindows; i++) {
+-      if (tnsInfo->numOfFilters[i]!=0) {
+-        tnsPresent=1;
+-      }
+-    }
+-
+-    if (hBitStream != NULL)
+-    {
+-      if (tnsPresent==1) { /* there is data to be written*/
+-        for (i=0; i<numOfWindows; i++) {
+-          FDKwriteBits(hBitStream,tnsInfo->numOfFilters[i],(blockType==SHORT_WINDOW?1:2));
+-          tnsBits += (blockType==SHORT_WINDOW?1:2);
+-          if (tnsInfo->numOfFilters[i]) {
+-            FDKwriteBits(hBitStream,(tnsInfo->coefRes[i]==4?1:0),1);
+-            tnsBits += 1;
+-          }
+-          for (j=0; j<tnsInfo->numOfFilters[i]; j++) {
+-            FDKwriteBits(hBitStream,tnsInfo->length[i][j],(blockType==SHORT_WINDOW?4:6));
+-            tnsBits += (blockType==SHORT_WINDOW?4:6);
+-            FDK_ASSERT(tnsInfo->order[i][j] <= 12);
+-            FDKwriteBits(hBitStream,tnsInfo->order[i][j],(blockType==SHORT_WINDOW?3:5));
+-            tnsBits += (blockType==SHORT_WINDOW?3:5);
+-            if (tnsInfo->order[i][j]){
+-              FDKwriteBits(hBitStream,tnsInfo->direction[i][j],1);
+-              tnsBits +=1; /*direction*/
+-              if(tnsInfo->coefRes[i] == 4) {
+-                coefBits = 3;
+-                for(k=0; k<tnsInfo->order[i][j]; k++) {
+-                  if (tnsInfo->coef[i][j][k]> 3 ||
+-                    tnsInfo->coef[i][j][k]< -4) {
+-                    coefBits = 4;
+-                    break;
+-                  }
+-                }
+-              } else {
+-                coefBits = 2;
+-                for(k=0; k<tnsInfo->order[i][j]; k++) {
+-                  if ( tnsInfo->coef[i][j][k]> 1
+-                    || tnsInfo->coef[i][j][k]< -2) {
+-                    coefBits = 3;
+-                    break;
+-                  }
+-                }
+-              }
+-              FDKwriteBits(hBitStream,-(coefBits - tnsInfo->coefRes[i]),1); /*coef_compres*/
+-              tnsBits +=1; /*coef_compression */
+-              for (k=0; k<tnsInfo->order[i][j]; k++ ) {
+-                static const INT rmask[] = {0,1,3,7,15};
+-                FDKwriteBits(hBitStream,tnsInfo->coef[i][j][k] & rmask[coefBits],coefBits);
+-                tnsBits += coefBits;
+-              }
+-            }
+-          }
+-        }
+-      }
+-    }
+-    else {
+-      if (tnsPresent != 0) {
+-        for (i=0; i<numOfWindows; i++) {
+-          tnsBits += (blockType==SHORT_WINDOW?1:2);
+-          if (tnsInfo->numOfFilters[i]) {
+-            tnsBits += 1;
+-            for (j=0; j<tnsInfo->numOfFilters[i]; j++) {
+-              tnsBits += (blockType==SHORT_WINDOW?4:6);
+-              tnsBits += (blockType==SHORT_WINDOW?3:5);
+-              if (tnsInfo->order[i][j]) {
+-                tnsBits +=1; /*direction*/
+-                tnsBits +=1; /*coef_compression */
+-                if (tnsInfo->coefRes[i] == 4) {
+-                  coefBits=3;
+-                  for (k=0; k<tnsInfo->order[i][j]; k++) {
+-                    if (tnsInfo->coef[i][j][k]> 3 || tnsInfo->coef[i][j][k]< -4) {
+-                      coefBits = 4;
+-                      break;
+-                    }
+-                  }
+-                }
+-                else {
+-                  coefBits = 2;
+-                  for (k=0; k<tnsInfo->order[i][j]; k++) {
+-                    if (tnsInfo->coef[i][j][k]> 1 || tnsInfo->coef[i][j][k]< -2) {
+-                      coefBits = 3;
+-                      break;
+-                    }
+-                  }
+-                }
+-                for (k=0; k<tnsInfo->order[i][j]; k++) {
+-                  tnsBits += coefBits;
+-                }
+-              }
+-            }
+-          }
+-        }
+-      }
+-    }
+-  } /* (tnsInfo!=NULL) */
+-
+-  return (tnsBits);
++  return (0);
+ }
+ 
+ /*****************************************************************************
+@@ -1018,7 +894,6 @@ AAC_ENCODER_ERROR FDKaacEnc_ChannelElementWrite( HANDLE_TRANSPORTENC  hTpEnc,
+     SECTION_DATA *pChSectionData = NULL;
+     INT  *pChScf           = NULL;
+     UINT *pChMaxValueInSfb = NULL;
+-    TNS_INFO *pTnsInfo     = NULL;
+     INT   chGlobalGain     = 0;
+     INT   chBlockType      = 0;
+     INT   chMaxSfbPerGrp   = 0;
+@@ -1044,7 +919,6 @@ AAC_ENCODER_ERROR FDKaacEnc_ChannelElementWrite( HANDLE_TRANSPORTENC  hTpEnc,
+         chSfbPerGrp    = psyOutChannel[ch]->sfbPerGroup;
+         chMaxSfbPerGrp = psyOutChannel[ch]->maxSfbPerGroup;
+       }
+-      pTnsInfo = &psyOutChannel[ch]->tnsInfo;
+     } /* minCnt==0 */
+ 
+     if ( qcOutChannel==NULL ) {
+@@ -1152,15 +1026,11 @@ AAC_ENCODER_ERROR FDKaacEnc_ChannelElementWrite( HANDLE_TRANSPORTENC  hTpEnc,
+ 
+     case tns_data_present:
+       /* Write TNS data present flag */
+-      bitDemand += FDKaacEnc_encodeTnsDataPresent(pTnsInfo,
+-                                                  chBlockType,
+-                                                  hBitStream);
++      bitDemand += FDKaacEnc_encodeTnsDataPresent(hBitStream);
+       break;
+     case tns_data:
+       /* Write TNS data */
+-      bitDemand += FDKaacEnc_encodeTnsData(pTnsInfo,
+-                                           chBlockType,
+-                                           hBitStream);
++      bitDemand += FDKaacEnc_encodeTnsData(hBitStream);
+       break;
+ 
+     case gain_control_data:
+diff --git a/libAACenc/src/bitenc.h b/libAACenc/src/bitenc.h
+index 498be7c..8c4a5a3 100644
+--- a/libAACenc/src/bitenc.h
++++ b/libAACenc/src/bitenc.h
+@@ -93,7 +93,6 @@ amm-info@iis.fraunhofer.de
+ 
+ 
+ #include "qc_data.h"
+-#include "aacenc_tns.h"
+ #include "channel_map.h"
+ #include "interface.h"    /* obsolete, when PSY_OUT is thrown out of the WritBS-call! */
+ #include "FDK_audio.h"
+diff --git a/libAACenc/src/dyn_bits.h b/libAACenc/src/dyn_bits.h
+index 045c8c4..3c757aa 100644
+--- a/libAACenc/src/dyn_bits.h
++++ b/libAACenc/src/dyn_bits.h
+@@ -94,7 +94,6 @@ amm-info@iis.fraunhofer.de
+ #include "common_fix.h"
+ 
+ #include "psy_const.h"
+-#include "aacenc_tns.h"
+ 
+ #define MAX_SECTIONS          MAX_GROUPED_SFB
+ #define SECT_ESC_VAL_LONG    31
+diff --git a/libAACenc/src/interface.h b/libAACenc/src/interface.h
+index 3f9493b..2d641ff 100644
+--- a/libAACenc/src/interface.h
++++ b/libAACenc/src/interface.h
+@@ -95,7 +95,6 @@ amm-info@iis.fraunhofer.de
+ #include "FDK_audio.h"
+ 
+ #include "psy_data.h"
+-#include "aacenc_tns.h"
+ 
+ enum
+ {
+@@ -127,7 +126,6 @@ typedef struct  {
+   INT       mdctScale;                      /* number of transform shifts */
+   INT       groupLen[MAX_NO_OF_GROUPS];
+ 
+-  TNS_INFO  tnsInfo;
+   INT       isBook[MAX_GROUPED_SFB];
+   INT       isScale[MAX_GROUPED_SFB];
+ 
+diff --git a/libAACenc/src/psy_configuration.h b/libAACenc/src/psy_configuration.h
+index 15ecccb..e2f1ffa 100644
+--- a/libAACenc/src/psy_configuration.h
++++ b/libAACenc/src/psy_configuration.h
+@@ -96,7 +96,6 @@ amm-info@iis.fraunhofer.de
+ #include "common_fix.h"
+ 
+ #include "psy_const.h"
+-#include "aacenc_tns.h"
+ 
+ #define THR_SHIFTBITS         4
+ #define PCM_QUANT_THR_SCALE  16
+@@ -129,8 +128,6 @@ typedef struct{
+ 
+   FIXP_DBL  sfbMinSnrLdData[MAX_SFB];                /* minimum snr (formerly known as bmax) */
+ 
+-  TNS_CONFIG tnsConf;
+-
+   INT        granuleLength;
+   INT        allowIS;
+ 
+diff --git a/libAACenc/src/psy_const.h b/libAACenc/src/psy_const.h
+index d9c9f43..ec359d8 100644
+--- a/libAACenc/src/psy_const.h
++++ b/libAACenc/src/psy_const.h
+@@ -153,8 +153,6 @@ enum
+ #define NORM_PCM_ENERGY       (NORM_PCM*NORM_PCM)
+ #define LOG_NORM_PCM          -15
+ 
+-#define TNS_PREDGAIN_SCALE    (1000)
+-
+ #define LFE_LOWPASS_LINE      12
+ 
+ #endif /* _PSYCONST_H */
+diff --git a/libAACenc/src/psy_main.cpp b/libAACenc/src/psy_main.cpp
+index 6dc810f..f40fb86 100644
+--- a/libAACenc/src/psy_main.cpp
++++ b/libAACenc/src/psy_main.cpp
+@@ -101,7 +101,6 @@ amm-info@iis.fraunhofer.de
+ #include "interface.h"
+ #include "psy_main.h"
+ #include "grp_data.h"
+-#include "tns_func.h"
+ #include "aacEnc_ram.h"
+ #include "intensity.h"
+ 
+@@ -300,7 +299,6 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMainInit(PSY_INTERNAL *hPsy,
+                                         INT sampleRate,
+                                         INT granuleLength,
+                                         INT bitRate,
+-                                        INT tnsMask,
+                                         INT bandwidth,
+                                         INT useIS,
+                                         UINT syntaxFlags,
+@@ -309,17 +307,9 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMainInit(PSY_INTERNAL *hPsy,
+   AAC_ENCODER_ERROR ErrorStatus;
+   int i, ch;
+   int channelsEff = cm->nChannelsEff;
+-  int tnsChannels = 0;
+   FB_TYPE filterBank;
+ 
+ 
+-  switch(FDKaacEnc_GetMonoStereoMode(cm->encMode)) {
+-    /* ... and map to tnsChannels */
+-    case EL_MODE_MONO:   tnsChannels = 1; break;
+-    case EL_MODE_STEREO: tnsChannels = 2; break;
+-    default:             tnsChannels = 0;
+-  }
+-
+   switch (audioObjectType)
+   {
+     default: filterBank = FB_LC;  break;
+@@ -333,43 +323,11 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMainInit(PSY_INTERNAL *hPsy,
+   if (ErrorStatus != AAC_ENC_OK)
+     return ErrorStatus;
+ 
+-  ErrorStatus = FDKaacEnc_InitTnsConfiguration(
+-        (bitRate*tnsChannels)/channelsEff,
+-        sampleRate,
+-        tnsChannels,
+-        LONG_WINDOW,
+-        hPsy->granuleLength,
+-        isLowDelay(audioObjectType),
+-        (syntaxFlags&AC_SBR_PRESENT)?1:0,
+-       &(hPsy->psyConf[0].tnsConf),
+-       &hPsy->psyConf[0],
+-        (INT)(tnsMask&2),
+-        (INT)(tnsMask&8) );
+-
+-  if (ErrorStatus != AAC_ENC_OK)
+-    return ErrorStatus;
+-
+   if (granuleLength > 512) {
+     ErrorStatus = FDKaacEnc_InitPsyConfiguration(bitRate/channelsEff, sampleRate, bandwidth, SHORT_WINDOW, hPsy->granuleLength, useIS, &hPsy->psyConf[1], filterBank);
+     if (ErrorStatus != AAC_ENC_OK)
+       return ErrorStatus;
+ 
+-    ErrorStatus = FDKaacEnc_InitTnsConfiguration(
+-            (bitRate*tnsChannels)/channelsEff,
+-            sampleRate,
+-            tnsChannels,
+-            SHORT_WINDOW,
+-            hPsy->granuleLength,
+-            isLowDelay(audioObjectType),
+-            (syntaxFlags&AC_SBR_PRESENT)?1:0,
+-           &hPsy->psyConf[1].tnsConf,
+-           &hPsy->psyConf[1],
+-            (INT)(tnsMask&1),
+-            (INT)(tnsMask&4) );
+-
+-    if (ErrorStatus != AAC_ENC_OK)
+-    return ErrorStatus;
+-
+   }
+ 
+ 
+@@ -443,7 +401,6 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT                 channels,
+     PSY_STATIC        **RESTRICT psyStatic = psyElement->psyStatic;
+ 
+     PSY_DATA           *RESTRICT psyData[(2)];
+-    TNS_DATA           *RESTRICT tnsData[(2)];
+ 
+     INT zeroSpec = TRUE; /* means all spectral lines are zero */
+ 
+@@ -474,8 +431,6 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT                 channels,
+     for(ch = 0; ch < channels; ch++)
+     {
+         psyData[ch] = &psyDynamic->psyData[ch];
+-        tnsData[ch] = &psyDynamic->tnsData[ch];
+-
+         psyData[ch]->mdctSpectrum = psyOutChannel[ch]->mdctSpectrum;
+     }
+ 
+@@ -739,160 +694,6 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMain(INT                 channels,
+         }
+     }
+ 
+-    /* Advance psychoacoustics: Tonality and TNS */
+-    if (psyStatic[0]->isLFE) {
+-        tnsData[0]->dataRaw.Long.subBlockInfo.tnsActive[HIFILT] = 0;
+-        tnsData[0]->dataRaw.Long.subBlockInfo.tnsActive[LOFILT] = 0;
+-    }
+-    else
+-    {
+-
+-        if (hPsyConfLong->tnsConf.tnsActive || hPsyConfShort->tnsConf.tnsActive) {
+-            INT tnsActive[TRANS_FAC];
+-            INT nrgScaling[2] = {0,0};
+-            INT tnsSpecShift = 0;
+-
+-            for(ch = 0; ch < channels; ch++) {
+-                for(w = 0; w < nWindows[ch]; w++) {
+-
+-                    wOffset = w*windowLength[ch];
+-                    /* TNS */
+-                    FDKaacEnc_TnsDetect(
+-                                tnsData[ch],
+-                                &hThisPsyConf[ch]->tnsConf,
+-                                &psyOutChannel[ch]->tnsInfo,
+-                                hThisPsyConf[ch]->sfbCnt,
+-                                psyData[ch]->mdctSpectrum+wOffset,
+-                                w,
+-                                psyStatic[ch]->blockSwitchingControl.lastWindowSequence
+-                                );
+-                }
+-            }
+-
+-            if (channels == 2) {
+-              FDKaacEnc_TnsSync(
+-                      tnsData[1],
+-                      tnsData[0],
+-                      &psyOutChannel[1]->tnsInfo,
+-                      &psyOutChannel[0]->tnsInfo,
+-
+-                      psyStatic[1]->blockSwitchingControl.lastWindowSequence,
+-                      psyStatic[0]->blockSwitchingControl.lastWindowSequence,
+-                      &hThisPsyConf[1]->tnsConf);
+-            }
+-
+-            FDK_ASSERT(1==commonWindow); /* all checks for TNS do only work for common windows (which is always set)*/
+-            for(w = 0; w < nWindows[0]; w++)
+-            {
+-                if (isShortWindow[0])
+-                    tnsActive[w] = tnsData[0]->dataRaw.Short.subBlockInfo[w].tnsActive[HIFILT] ||
+-                    tnsData[0]->dataRaw.Short.subBlockInfo[w].tnsActive[LOFILT] ||
+-                    tnsData[channels-1]->dataRaw.Short.subBlockInfo[w].tnsActive[HIFILT] ||
+-                    tnsData[channels-1]->dataRaw.Short.subBlockInfo[w].tnsActive[LOFILT];
+-                else
+-                    tnsActive[w] = tnsData[0]->dataRaw.Long.subBlockInfo.tnsActive[HIFILT] ||
+-                    tnsData[0]->dataRaw.Long.subBlockInfo.tnsActive[LOFILT] ||
+-                    tnsData[channels-1]->dataRaw.Long.subBlockInfo.tnsActive[HIFILT] ||
+-                    tnsData[channels-1]->dataRaw.Long.subBlockInfo.tnsActive[LOFILT];
+-            }
+-
+-            for(ch = 0; ch < channels; ch++) {
+-                if (tnsActive[0] && !isShortWindow[ch]) {
+-                    /* Scale down spectrum if tns is active in one of the two channels with same lastWindowSequence */
+-                    /* first part of threshold calculation; it's not necessary to update sfbMaxScaleSpec */
+-                    INT shift = 1;
+-                    for(sfb=0; sfb<hThisPsyConf[ch]->lowpassLine; sfb++) {
+-                        psyData[ch]->mdctSpectrum[sfb] = psyData[ch]->mdctSpectrum[sfb] >> shift;
+-                    }
+-
+-                    /* update thresholds */
+-                    for (sfb=0; sfb<psyData[ch]->sfbActive; sfb++) {
+-                        pSfbThreshold[ch][sfb] >>= (2*shift);
+-                    }
+-
+-                    psyData[ch]->mdctScale += shift; /* update mdctScale */
+-
+-                    /* calc sfbEnergies after tnsEncode again ! */
+-
+-                }
+-            }
+-
+-            for(ch = 0; ch < channels; ch++) {
+-              for(w = 0; w < nWindows[ch]; w++)
+-                {
+-                    wOffset = w*windowLength[ch];
+-                    FDKaacEnc_TnsEncode(
+-                                &psyOutChannel[ch]->tnsInfo,
+-                                tnsData[ch],
+-                                hThisPsyConf[ch]->sfbCnt,
+-                                &hThisPsyConf[ch]->tnsConf,
+-                                hThisPsyConf[ch]->sfbOffset[psyData[ch]->sfbActive],/*hThisPsyConf[ch]->lowpassLine*/ /* filter stops before that line ! */
+-                                psyData[ch]->mdctSpectrum+wOffset,
+-                                w,
+-                                psyStatic[ch]->blockSwitchingControl.lastWindowSequence);
+-
+-                    if(tnsActive[w]) {
+-                            /* Calc sfb-bandwise mdct-energies for left and right channel again, */
+-                            /* if tns active in current channel or in one channel with same lastWindowSequence left and right */
+-                            FDKaacEnc_CalcSfbMaxScaleSpec(psyData[ch]->mdctSpectrum+wOffset,
+-                                                hThisPsyConf[ch]->sfbOffset,
+-                                                pSfbMaxScaleSpec[ch]+w*maxSfb[ch],
+-                                                psyData[ch]->sfbActive);
+-                    }
+-                }
+-            }
+-
+-            for(ch = 0; ch < channels; ch++) {
+-              for(w = 0; w < nWindows[ch]; w++) {
+-
+-                if (tnsActive[w]) {
+-
+-                  if (isShortWindow[ch]) {
+-                    FDKaacEnc_CalcBandEnergyOptimShort(psyData[ch]->mdctSpectrum+w*windowLength[ch],
+-                                             pSfbMaxScaleSpec[ch]+w*maxSfb[ch],
+-                                             hThisPsyConf[ch]->sfbOffset,
+-                                             psyData[ch]->sfbActive,
+-                                             pSfbEnergy[ch]+w*maxSfb[ch]);
+-                  }
+-                  else {
+-                    nrgScaling[ch] =        /* with tns, energy calculation can overflow; -> scaling */
+-                    FDKaacEnc_CalcBandEnergyOptimLong(psyData[ch]->mdctSpectrum,
+-                                           pSfbMaxScaleSpec[ch],
+-                                           hThisPsyConf[ch]->sfbOffset,
+-                                           psyData[ch]->sfbActive,
+-                                           pSfbEnergy[ch],
+-                                           pSfbEnergyLdData[ch]);
+-                    tnsSpecShift = fixMax(tnsSpecShift, nrgScaling[ch]);       /* nrgScaling is set only if nrg would have an overflow */
+-                  }
+-                } /* if tnsActive */
+-              }
+-            } /* end channel loop */
+-
+-            /* adapt scaling to prevent nrg overflow, only for long blocks */
+-            for(ch = 0; ch < channels; ch++) {
+-              if ( (tnsSpecShift!=0) && !isShortWindow[ch] ) {
+-                /* scale down spectrum, nrg's and thresholds, if there was an overflow in sfbNrg calculation after tns */
+-                for(line=0; line<hThisPsyConf[ch]->lowpassLine; line++) {
+-                  psyData[ch]->mdctSpectrum[line] >>= tnsSpecShift;
+-                }
+-                INT scale = (tnsSpecShift-nrgScaling[ch])<<1;
+-                for(sfb=0; sfb<psyData[ch]->sfbActive; sfb++) {
+-                  pSfbEnergyLdData[ch][sfb]   -= scale*FL2FXCONST_DBL(1.0/LD_DATA_SCALING);
+-                  pSfbEnergy[ch][sfb]        >>= scale;
+-                  pSfbThreshold[ch][sfb]     >>= (tnsSpecShift<<1);
+-                }
+-                psyData[ch]->mdctScale += tnsSpecShift;  /* update mdctScale; not necessary to update sfbMaxScaleSpec */
+-
+-              }
+-            } /* end channel loop */
+-
+-        } /* TNS active */
+-    }  /* !isLFE */
+-
+-
+-
+-
+-
+ 
+     /* Advance thresholds */
+     for(ch = 0; ch < channels; ch++) {
+diff --git a/libAACenc/src/psy_main.h b/libAACenc/src/psy_main.h
+index 54c0bbb..c7d7638 100644
+--- a/libAACenc/src/psy_main.h
++++ b/libAACenc/src/psy_main.h
+@@ -107,8 +107,6 @@ typedef struct  {
+ typedef struct  {
+ 
+   PSY_DATA           psyData[(2)];
+-  TNS_DATA           tnsData[(2)];
+-
+ }PSY_DYNAMIC;
+ 
+ 
+@@ -149,7 +147,6 @@ AAC_ENCODER_ERROR FDKaacEnc_psyMainInit(PSY_INTERNAL *hPsy,
+                                         INT sampleRate,
+                                         INT granuleLength,
+                                         INT bitRate,
+-                                        INT tnsMask,
+                                         INT bandwidth,
+                                         INT useIS,
+                                         UINT syntaxFlags,
+diff --git a/libAACenc/src/qc_main.cpp b/libAACenc/src/qc_main.cpp
+index 00da236..f19e1be 100644
+--- a/libAACenc/src/qc_main.cpp
++++ b/libAACenc/src/qc_main.cpp
+@@ -1544,7 +1544,6 @@ static void FDKaacEnc_crashRecovery(INT               nChannels,
+     psyChannel[ch]->maxSfbPerGroup = sfb ;
+     /* when no spectrum is coded save tools info in bitstream */
+     if(sfb==0) {
+-      FDKmemclear(&psyChannel[ch]->tnsInfo, sizeof(TNS_INFO));
+       FDKmemclear(&psyOutElement->toolsInfo, sizeof(TOOLSINFO));
+     }
+   }
+diff --git a/libAACenc/src/tns_func.h b/libAACenc/src/tns_func.h
+deleted file mode 100644
+index 5e5265d..0000000
+--- a/libAACenc/src/tns_func.h
++++ /dev/null
+@@ -1,145 +0,0 @@
+-
+-/* -----------------------------------------------------------------------------------------------------------
+-Software License for The Fraunhofer FDK AAC Codec Library for Android
+-
+-© Copyright  1995 - 2015 Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.
+-  All rights reserved.
+-
+- 1.    INTRODUCTION
+-The Fraunhofer FDK AAC Codec Library for Android ("FDK AAC Codec") is software that implements
+-the MPEG Advanced Audio Coding ("AAC") encoding and decoding scheme for digital audio.
+-This FDK AAC Codec software is intended to be used on a wide variety of Android devices.
+-
+-AAC's HE-AAC and HE-AAC v2 versions are regarded as today's most efficient general perceptual
+-audio codecs. AAC-ELD is considered the best-performing full-bandwidth communications codec by
+-independent studies and is widely deployed. AAC has been standardized by ISO and IEC as part
+-of the MPEG specifications.
+-
+-Patent licenses for necessary patent claims for the FDK AAC Codec (including those of Fraunhofer)
+-may be obtained through Via Licensing (www.vialicensing.com) or through the respective patent owners
+-individually for the purpose of encoding or decoding bit streams in products that are compliant with
+-the ISO/IEC MPEG audio standards. Please note that most manufacturers of Android devices already license
+-these patent claims through Via Licensing or directly from the patent owners, and therefore FDK AAC Codec
+-software may already be covered under those patent licenses when it is used for those licensed purposes only.
+-
+-Commercially-licensed AAC software libraries, including floating-point versions with enhanced sound quality,
+-are also available from Fraunhofer. Users are encouraged to check the Fraunhofer website for additional
+-applications information and documentation.
+-
+-2.    COPYRIGHT LICENSE
+-
+-Redistribution and use in source and binary forms, with or without modification, are permitted without
+-payment of copyright license fees provided that you satisfy the following conditions:
+-
+-You must retain the complete text of this software license in redistributions of the FDK AAC Codec or
+-your modifications thereto in source code form.
+-
+-You must retain the complete text of this software license in the documentation and/or other materials
+-provided with redistributions of the FDK AAC Codec or your modifications thereto in binary form.
+-You must make available free of charge copies of the complete source code of the FDK AAC Codec and your
+-modifications thereto to recipients of copies in binary form.
+-
+-The name of Fraunhofer may not be used to endorse or promote products derived from this library without
+-prior written permission.
+-
+-You may not charge copyright license fees for anyone to use, copy or distribute the FDK AAC Codec
+-software or your modifications thereto.
+-
+-Your modified versions of the FDK AAC Codec must carry prominent notices stating that you changed the software
+-and the date of any change. For modified versions of the FDK AAC Codec, the term
+-"Fraunhofer FDK AAC Codec Library for Android" must be replaced by the term
+-"Third-Party Modified Version of the Fraunhofer FDK AAC Codec Library for Android."
+-
+-3.    NO PATENT LICENSE
+-
+-NO EXPRESS OR IMPLIED LICENSES TO ANY PATENT CLAIMS, including without limitation the patents of Fraunhofer,
+-ARE GRANTED BY THIS SOFTWARE LICENSE. Fraunhofer provides no warranty of patent non-infringement with
+-respect to this software.
+-
+-You may use this FDK AAC Codec software or modifications thereto only for purposes that are authorized
+-by appropriate patent licenses.
+-
+-4.    DISCLAIMER
+-
+-This FDK AAC Codec software is provided by Fraunhofer on behalf of the copyright holders and contributors
+-"AS IS" and WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, including but not limited to the implied warranties
+-of merchantability and fitness for a particular purpose. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+-CONTRIBUTORS BE LIABLE for any direct, indirect, incidental, special, exemplary, or consequential damages,
+-including but not limited to procurement of substitute goods or services; loss of use, data, or profits,
+-or business interruption, however caused and on any theory of liability, whether in contract, strict
+-liability, or tort (including negligence), arising in any way out of the use of this software, even if
+-advised of the possibility of such damage.
+-
+-5.    CONTACT INFORMATION
+-
+-Fraunhofer Institute for Integrated Circuits IIS
+-Attention: Audio and Multimedia Departments - FDK AAC LL
+-Am Wolfsmantel 33
+-91058 Erlangen, Germany
+-
+-www.iis.fraunhofer.de/amm
+-amm-info@iis.fraunhofer.de
+------------------------------------------------------------------------------------------------------------ */
+-
+-/******************************** MPEG Audio Encoder **************************
+-
+-   Initial author:       Alex Goeschel
+-   contents/description: Temporal noise shaping
+-
+-******************************************************************************/
+-
+-#ifndef _TNS_FUNC_H
+-#define _TNS_FUNC_H
+-
+-#include "common_fix.h"
+-
+-#include "psy_configuration.h"
+-
+-AAC_ENCODER_ERROR FDKaacEnc_InitTnsConfiguration(INT bitrate,
+-                         INT samplerate,
+-                         INT channels,
+-                         INT blocktype,
+-                         INT granuleLength,
+-                         INT isLowDelay,
+-                         INT ldSbrPresent,
+-                         TNS_CONFIG *tnsConfig,
+-                         PSY_CONFIGURATION *psyConfig,
+-                         INT active,
+-                         INT useTnsPeak );
+-
+-INT FDKaacEnc_TnsDetect(
+-              TNS_DATA *tnsData,
+-              const TNS_CONFIG *tC,
+-              TNS_INFO* tnsInfo,
+-              INT sfbCnt,
+-              FIXP_DBL *spectrum,
+-              INT subBlockNumber,
+-              INT blockType
+-              );
+-
+-
+-
+-void FDKaacEnc_TnsSync(
+-             TNS_DATA *tnsDataDest,
+-             const TNS_DATA *tnsDataSrc,
+-             TNS_INFO *tnsInfoDest,
+-             TNS_INFO *tnsInfoSrc,
+-             const INT blockTypeDest,
+-             const INT blockTypeSrc,
+-             const TNS_CONFIG *tC
+-             );
+-
+-INT FDKaacEnc_TnsEncode(
+-              TNS_INFO* tnsInfo,
+-              TNS_DATA* tnsData,
+-              const INT numOfSfb,
+-              const TNS_CONFIG *tC,
+-              const INT lowPassLine,
+-              FIXP_DBL* spectrum,
+-              const INT subBlockNumber,
+-              const INT blockType
+-              );
+-
+-
+-
+-#endif /* _TNS_FUNC_H */
+-- 
+2.16.2
+
