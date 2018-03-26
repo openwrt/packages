@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
-PKG_VERSION:=9.6.6
+PKG_VERSION:=9.6.8
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=\
 	http://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
 	ftp://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
 
-PKG_HASH:=399cdffcb872f785ba67e25d275463d74521566318cfef8fe219050d063c8154
+PKG_HASH:=eafdb3b912e9ec34bdd28b651d00226a6253ba65036cb9a41cad2d9e82e3eb70
 
 PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
@@ -30,7 +30,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libpq
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+zlib +libreadline +libpthread +libncursesw
+  DEPENDS:=+libpthread
   TITLE:=PostgreSQL client library
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -43,7 +43,7 @@ endef
 define Package/pgsql-cli
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq +librt
+  DEPENDS:=+libncursesw +libpq +libreadline +librt +zlib
   TITLE:=Command Line Interface (CLI) to PostgreSQL databases
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -56,7 +56,7 @@ endef
 define Package/pgsql-cli-extra
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq +librt
+  DEPENDS:=+libncursesw +libpq +libreadline +librt +zlib
   TITLE:=Command Line extras for PostgreSQL databases
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -69,7 +69,7 @@ endef
 define Package/pgsql-server
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq +librt +pgsql-cli
+  DEPENDS:=+pgsql-cli
   TITLE:=PostgreSQL databases Server
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -153,9 +153,7 @@ CONFIGURE_ARGS += \
 			--without-tcl \
 			--with-zlib="yes" \
 			--enable-depend \
-			$(if $(CONFIG_TARGET_avr32),--disable-spinlocks)
-
-EXTRA_CFLAGS:= -I$(PKG_BUILD_DIR)/src/include/
+			$(if $(CONFIG_arc),--disable-spinlocks)
 
 # Need a native ecpg, pg_config and zic for build
 define Host/Compile
@@ -178,8 +176,6 @@ define Build/Configure
 	$(Build/Configure/Default)
 	$(SED) 's@ECPG = ../../preproc/ecpg@ECPG = $(STAGING_DIR_HOSTPKG)/bin/ecpg@' $(PKG_BUILD_DIR)/src/interfaces/ecpg/test/Makefile.regress
 endef
-
-TARGET_CFLAGS += $(FPIC) -lpthread
 
 # because PROFILE means something else in the project Makefile
 unexport PROFILE
