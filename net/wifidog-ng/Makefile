@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wifidog-ng
-PKG_VERSION:=1.3.0
+PKG_VERSION:=1.4.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE_URL=https://github.com/zhaojh329/wifidog-ng.git
-PKG_MIRROR_HASH:=a65ecad48dd3668a1f7416fd7882386a57b8bccf503e353224dbca54c398f052
+PKG_MIRROR_HASH:=f9c48e09baff777c3437363068f31bc47b943ef4768d68fb8530ea855b5d9997
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_SOURCE_SUBDIR)
 
@@ -32,7 +32,7 @@ define Package/wifidog-ng/default
   CATEGORY:=Network
   TITLE:=Next generation WifiDog
   DEPENDS:=+kmod-wifidog-ng +libuci +libuclient +libblobmsg-json +libubus +libcares \
-	  +ipset +libpcap
+	  +libipset +libpcap
 endef
 
 define Package/wifidog-ng-nossl
@@ -67,12 +67,14 @@ define Package/wifidog-ng-mbedtls
 endef
 
 define Package/wifidog-ng/default/install
-	$(INSTALL_DIR) $(1)/usr/bin $(1)/etc/init.d $(1)/etc/config $(1)/etc/wifidog-ng
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/etc/init.d $(1)/etc/config \
+		$(1)/etc/wifidog-ng $(1)//etc/hotplug.d/dhcp
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/wifidog-ng $(1)/usr/bin
 	$(INSTALL_BIN) ./files/wifidog-ng.init $(1)/etc/init.d/wifidog-ng
 	$(INSTALL_CONF) ./files/wifidog-ng.config $(1)/etc/config/wifidog-ng
 	$(INSTALL_CONF) ./files/wifidog-ng.key $(1)/etc/wifidog-ng
 	$(INSTALL_CONF) ./files/wifidog-ng.crt $(1)/etc/wifidog-ng
+	$(INSTALL_DATA) ./files/wifidog-ng.hotplug $(1)/etc/hotplug.d/dhcp/00-wifidog-ng
 endef
 
 Package/wifidog-ng-nossl/install = $(Package/wifidog-ng/default/install)

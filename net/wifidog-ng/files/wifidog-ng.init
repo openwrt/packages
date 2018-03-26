@@ -5,32 +5,38 @@ START=95
 
 BIN=/usr/bin/wifidog-ng
 
-parse_whitelist() {
+parse_whitelist_mac() {
     local cfg="$1"
-    local domain mac
+    local mac
 
     uci_validate_section wifidog-ng whitelist "${1}" \
-        'domain:list(host)' \
-        'mac:list(macaddr)'
+        'mac:macaddr'
 
     [ $? -ne 0 ] && {
-        echo "validation failed" >&2
+        echo "validation whitelist_mac failed" >&2
         exit 1
     }
+}
 
-    for m in $mac; do
-        echo "!$m" > /proc/wifidog-ng/term
-    done
+parse_whitelist_domain() {
+    local cfg="$1"
+    local domain
+
+    uci_validate_section wifidog-ng whitelist "${1}" \
+        'domain:host'
+
+    [ $? -ne 0 ] && {
+        echo "validation whitelist_domain failed" >&2
+        exit 1
+    }
 }
 
 start_service() {
     modprobe wifidog-ng
 
-    ipset create wifidog-ng-mac hash:mac
-    ipset create wifidog-ng-ip hash:ip timeout 10000
-
     config_load wifidog-ng
-    config_foreach parse_whitelist whitelist
+    config_foreach parse_whitelist_mac whitelist_mac
+    config_foreach parse_whitelist_domain whitelist_domain
 
     procd_open_instance
     procd_set_param command $BIN
@@ -40,7 +46,4 @@ start_service() {
 
 stop_service() {
     rmmod wifidog-ng
-
-    ipset destroy wifidog-ng-mac
-    ipset destroy wifidog-ng-ip
 }
