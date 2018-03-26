@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=i2c-tools
-PKG_VERSION:=3.1.2
+PKG_VERSION:=4.0
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://dl.lm-sensors.org/i2c-tools/releases/ \
-                http://fossies.org/linux/misc/
+PKG_SOURCE_URL:=@KERNEL/software/utils/i2c-tools
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=db5e69f2e2a6e3aa2ecdfe6a5f490b149c504468770f58921c8c5b8a7860a441
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_HASH:=d900ca1c11c51ea20caa50b096f948008b8a7ad832311b23353e21baa7af28d6
 
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=PACKAGE_python-smbus:python
+PKG_ASLR_PIE:=1
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPLv2
@@ -29,7 +29,7 @@ include ../../lang/python/python-package.mk
 include ../../lang/python/python3-package.mk
 
 define Package/i2c/Default
-  URL:=http://lm-sensors.org/wiki/I2CTools
+  URL:=https://i2c.wiki.kernel.org/index.php/I2C_Tools
   TITLE:=I2C
 endef
 
@@ -96,8 +96,10 @@ define Build/Compile
 		LINUX="$(LINUX_DIR)" \
 		CC="$(TARGET_CC)" \
 		STAGING_DIR="$(STAGING_DIR)" \
-		LDFLAGS="$(TARGET_LDFLAGS)" \
-		CFLAGS="$(TARGET_CFLAGS)"
+		LDFLAGS="$(TARGET_LDFLAGS)" fPIC \
+		CFLAGS="$(TARGET_CFLAGS)" -fPIC \
+		BUILD_DYNAMIC_LIB=0 \
+		USE_STATIC_LIB=1
 	$(Build/Compile/python-smbus)
 	$(Build/Compile/python3-smbus)
 endef

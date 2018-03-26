@@ -1,0 +1,66 @@
+From 02b19e7ad11785e04116e258c82f593809e44c8e Mon Sep 17 00:00:00 2001
+From: Jean Delvare <jdelvare@suse.de>
+Date: Thu, 2 Nov 2017 16:17:50 +0100
+Subject: [PATCH 01/10] i2c-tools: i2cbusses: Avoid buffer overflows in sysfs
+ paths
+
+sprintf isn't safe, use snprintf instead.
+---
+ CHANGES           |  3 +++
+ tools/i2cbusses.c | 10 +++++-----
+ 2 files changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/CHANGES b/CHANGES
+index 15ff761..539adb0 100644
+--- a/CHANGES
++++ b/CHANGES
+@@ -1,6 +1,9 @@
+ i2c-tools CHANGES
+ -----------------
+ 
++master
++  tools: Fix potential buffer overflows in i2cbusses
++
+ 4.0 (2017-10-30)
+   tools: Fix build with recent compilers (gcc 4.6+)
+          Add examples to the manual pages
+diff --git a/tools/i2cbusses.c b/tools/i2cbusses.c
+index dad22ea..cb78cc7 100644
+--- a/tools/i2cbusses.c
++++ b/tools/i2cbusses.c
+@@ -220,18 +220,18 @@ struct i2c_adap *gather_i2c_busses(void)
+ 
+ 		/* this should work for kernels 2.6.5 or higher and */
+ 		/* is preferred because is unambiguous */
+-		sprintf(n, "%s/%s/name", sysfs, de->d_name);
++		snprintf(n, NAME_MAX, "%s/%s/name", sysfs, de->d_name);
+ 		f = fopen(n, "r");
+ 		/* this seems to work for ISA */
+ 		if(f == NULL) {
+-			sprintf(n, "%s/%s/device/name", sysfs, de->d_name);
++			snprintf(n, NAME_MAX, "%s/%s/device/name", sysfs, de->d_name);
+ 			f = fopen(n, "r");
+ 		}
+ 		/* non-ISA is much harder */
+ 		/* and this won't find the correct bus name if a driver
+ 		   has more than one bus */
+ 		if(f == NULL) {
+-			sprintf(n, "%s/%s/device", sysfs, de->d_name);
++			snprintf(n, NAME_MAX, "%s/%s/device", sysfs, de->d_name);
+ 			if(!(ddir = opendir(n)))
+ 				continue;
+ 			while ((dde = readdir(ddir)) != NULL) {
+@@ -240,8 +240,8 @@ struct i2c_adap *gather_i2c_busses(void)
+ 				if (!strcmp(dde->d_name, ".."))
+ 					continue;
+ 				if ((!strncmp(dde->d_name, "i2c-", 4))) {
+-					sprintf(n, "%s/%s/device/%s/name",
+-						sysfs, de->d_name, dde->d_name);
++					snprintf(n, NAME_MAX, "%s/%s/device/%s/name",
++						 sysfs, de->d_name, dde->d_name);
+ 					if((f = fopen(n, "r")))
+ 						goto found;
+ 				}
+-- 
+2.17.0
+
