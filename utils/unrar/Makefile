@@ -6,17 +6,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unrar
-PKG_VERSION:=5.5.8
+PKG_VERSION:=5.6.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=unrarsrc-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.rarlab.com/rar
-PKG_HASH:=9b66e4353a9944bc140eb2a919ff99482dd548f858f5e296d809e8f7cdb2fcf4
+PKG_SOURCE_URL:=https://www.rarlab.com/rar
+PKG_HASH:=67c339dffa95f6c1bedcca40045e99de5852919dbfaa06e4a9c8f18cd5064e70
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>, \
 		Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=UnRAR
 PKG_LICENSE_FILES:=license.txt
+PKG_CPE_ID:=cpe:/a:rarlab:unrar
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-$(BUILD_VARIANT)/unrar
 PKG_INSTALL:=1
@@ -27,7 +28,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/unrar/Default
   TITLE:=UnRAR
   SUBMENU:=Compression
-  URL:=http://www.rarlab.com/
+  URL:=https://www.rarlab.com/
   DEPENDS:=$(CXX_DEPENDS) +libpthread
 endef
 
