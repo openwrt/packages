@@ -25,7 +25,7 @@ define Package/acpid
   CATEGORY:=Utilities
   TITLE:=The ACPI Daemon (acpid) With Netlink Support
   URL:=http://tedfelix.com/linux/acpid-netlink.html
-  DEPENDS:=@(TARGET_x86||TARGET_x86_64) +kmod-input-evdev 
+  DEPENDS:=+kmod-input-evdev 
 endef
 
 define Package/acpid/description
