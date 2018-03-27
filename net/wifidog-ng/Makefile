@@ -32,7 +32,7 @@ define Package/wifidog-ng/default
   CATEGORY:=Network
   TITLE:=Next generation WifiDog
   DEPENDS:=+kmod-wifidog-ng +libuci +libuclient +libblobmsg-json +libubus +libcares \
-	  +libipset +libpcap
+	  +ipset +libpcap
 endef
 
 define Package/wifidog-ng-nossl
