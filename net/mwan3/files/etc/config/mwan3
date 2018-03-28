@@ -1,6 +1,7 @@
 
 config globals 'globals'
-	option enabled '1'
+	option mmx_mask '0xff00'
+	option local_source 'lan'
 	
 config interface 'wan'
 	option enabled '1'
