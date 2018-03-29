@@ -1,0 +1,31 @@
+--- a/src/chilli.c
++++ b/src/chilli.c
+@@ -4297,8 +4297,10 @@ static int chilliauth_cb(struct radius_t
+ 	    while (!differ && r1 > 0 && r2 > 0);
+ 	  }
+ 	  
+-	  if (newfd) safe_close(newfd); newfd=0;
+-	  if (oldfd) safe_close(oldfd); oldfd=0;
++	  if (newfd) safe_close(newfd);
++	  newfd=0;
++	  if (oldfd) safe_close(oldfd);
++	  oldfd=0;
+ 	  
+ 	  if (differ) {
+ 	    log_dbg("Writing out new hs.conf file with administraive-user settings");
+--- a/src/redir.c
++++ b/src/redir.c
+@@ -3176,9 +3176,11 @@ pid_t redir_fork(int in, int out) {
+     }
+ 
+ #if defined(F_DUPFD)
+-    if (fcntl(in,F_GETFL,0) == -1) return -1; safe_close(0);
++    if (fcntl(in,F_GETFL,0) == -1) return -1;
++    safe_close(0);
+     if (fcntl(in,F_DUPFD,0) == -1) return -1;
+-    if (fcntl(out,F_GETFL,1) == -1) return -1; safe_close(1);
++    if (fcntl(out,F_GETFL,1) == -1) return -1;
++    safe_close(1);
+     if (fcntl(out,F_DUPFD,1) == -1) return -1;
+ #else
+     if (dup2(in,0) == -1) return -1;
