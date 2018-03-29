@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2006-2016 OpenWrt.org
-# Copyright (C) 2017 Luiz Angelo Daros de Luca <luizluca@gmail.com>
+# Copyright (C) 2017-2018 Luiz Angelo Daros de Luca <luizluca@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -11,7 +11,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
-PKG_VERSION:=2.4.3
+PKG_VERSION:=2.4.4
 PKG_RELEASE:=1
 
 # First two numbes
@@ -19,7 +19,7 @@ PKG_ABI_VERSION:=$(subst $(space),.,$(wordlist 1, 2, $(subst .,$(space),$(PKG_VE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://cache.ruby-lang.org/pub/ruby/$(PKG_ABI_VERSION)/
-PKG_HASH:=23677d40bf3b7621ba64593c978df40b1e026d8653c74a0599f0ead78ed92b51
+PKG_HASH:=1d0034071d675193ca769f64c91827e5f54cb3a7962316a41d5217c7bc6949f0
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
