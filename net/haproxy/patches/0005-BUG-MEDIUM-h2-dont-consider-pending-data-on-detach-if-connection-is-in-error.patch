@@ -1,0 +1,39 @@
+From 58cef63f20cc40248cd1cd113571cae588943d06 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Thu, 29 Mar 2018 15:41:32 +0200
+Subject: [PATCH] BUG/MEDIUM: h2: don't consider pending data on detach if
+ connection is in error
+
+Interrupting an h2load test shows that some connections remain active till
+the client timeout. This is due to the fact that h2_detach() immediately
+returns if the h2s flags indicate that the h2s is still waiting for some
+buffer room in the output mux (possibly to emit a response or to send some
+window updates). If the connection is broken, these data will never leave
+and must not prevent the stream from being terminated nor the connection
+from being released.
+
+This fix must be backported to 1.8.
+
+(cherry picked from commit 3041fcc2fde3f3f33418c9f579b657d993b0006d)
+Signed-off-by: Willy Tarreau <w@1wt.eu>
+---
+ src/mux_h2.c |    3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/mux_h2.c b/src/mux_h2.c
+index 92fae06..4d30f91 100644
+--- a/src/mux_h2.c
++++ b/src/mux_h2.c
+@@ -2487,7 +2487,8 @@ static void h2_detach(struct conn_stream *cs)
+ 	/* this stream may be blocked waiting for some data to leave (possibly
+ 	 * an ES or RST frame), so orphan it in this case.
+ 	 */
+-	if (h2s->flags & (H2_SF_BLK_MBUSY | H2_SF_BLK_MROOM | H2_SF_BLK_MFCTL))
++	if (!(cs->conn->flags & CO_FL_ERROR) &&
++	    (h2s->flags & (H2_SF_BLK_MBUSY | H2_SF_BLK_MROOM | H2_SF_BLK_MFCTL)))
+ 		return;
+ 
+ 	if ((h2c->flags & H2_CF_DEM_BLOCK_ANY && h2s->id == h2c->dsi) ||
+-- 
+1.7.10.4
+

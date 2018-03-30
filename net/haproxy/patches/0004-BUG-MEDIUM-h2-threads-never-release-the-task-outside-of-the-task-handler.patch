@@ -1,0 +1,91 @@
+From 4f2bd42ed3870dbaf143701f0cfbd64966d44252 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Thu, 29 Mar 2018 15:22:59 +0200
+Subject: [PATCH] BUG/MEDIUM: h2/threads: never release the task outside of
+ the task handler
+
+Currently, h2_release() will release all resources assigned to the h2
+connection, including the timeout task if any. But since the multi-threaded
+scheduler, the timeout task could very well be queued in the thread-local
+list of running tasks without any way to remove it, so task_delete() will
+have no effect and task_free() will cause this undefined object to be
+dereferenced.
+
+In order to prevent this from happening, we never release the task in
+h2_release(), instead we wake it up after marking its context NULL so that
+the task handler can release the task.
+
+Future improvements could consist in modifying the scheduler so that a
+task_wakeup() has to be done on any task having to be killed, letting
+the scheduler take care of it.
+
+This fix must be backported to 1.8. This bug was apparently not reported
+so far.
+
+(cherry picked from commit 0975f11d554baf30602ce4be3faf0b9741711a80)
+Signed-off-by: Willy Tarreau <w@1wt.eu>
+---
+ src/mux_h2.c |   30 +++++++++++++++++-------------
+ 1 file changed, 17 insertions(+), 13 deletions(-)
+
+diff --git a/src/mux_h2.c b/src/mux_h2.c
+index 3c076d2..92fae06 100644
+--- a/src/mux_h2.c
++++ b/src/mux_h2.c
+@@ -484,8 +484,8 @@ static void h2_release(struct connection *conn)
+ 		HA_SPIN_UNLOCK(BUF_WQ_LOCK, &buffer_wq_lock);
+ 
+ 		if (h2c->task) {
+-			task_delete(h2c->task);
+-			task_free(h2c->task);
++			h2c->task->context = NULL;
++			task_wakeup(h2c->task, TASK_WOKEN_OTHER);
+ 			h2c->task = NULL;
+ 		}
+ 
+@@ -2369,9 +2369,18 @@ static struct task *h2_timeout_task(struct task *t)
+ 	struct h2c *h2c = t->context;
+ 	int expired = tick_is_expired(t->expire, now_ms);
+ 
+-	if (!expired)
++	if (!expired && h2c)
+ 		return t;
+ 
++	task_delete(t);
++	task_free(t);
++
++	if (!h2c) {
++		/* resources were already deleted */
++		return NULL;
++	}
++
++	h2c->task = NULL;
+ 	h2c_error(h2c, H2_ERR_NO_ERROR);
+ 	h2_wake_some_streams(h2c, 0, 0);
+ 
+@@ -2388,17 +2397,12 @@ static struct task *h2_timeout_task(struct task *t)
+ 	if (h2c->mbuf->o && !(h2c->flags & H2_CF_GOAWAY_FAILED) && conn_xprt_ready(h2c->conn))
+ 		h2c->conn->xprt->snd_buf(h2c->conn, h2c->mbuf, 0);
+ 
+-	if (!eb_is_empty(&h2c->streams_by_id))
+-		goto wait;
+-
+-	h2_release(h2c->conn);
+-	return NULL;
++	/* either we can release everything now or it will be done later once
++	 * the last stream closes.
++	 */
++	if (eb_is_empty(&h2c->streams_by_id))
++		h2_release(h2c->conn);
+ 
+- wait:
+-	/* the streams have been notified, we must let them finish and close */
+-	h2c->task = NULL;
+-	task_delete(t);
+-	task_free(t);
+ 	return NULL;
+ }
+ 
+-- 
+1.7.10.4
+
