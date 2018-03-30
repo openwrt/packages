@@ -34,7 +34,7 @@ define Package/libgpiod
   CATEGORY:=Libraries
   URL:=https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git
   TITLE:=Library for interacting with Linux's GPIO character device
-  DEPENDS:=@GPIO_SUPPORT
+  DEPENDS:=@GPIO_SUPPORT @(LINUX_4_9||LINUX_4_14)
 endef
 
 define Package/libgpiod/description
