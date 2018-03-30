@@ -1,0 +1,71 @@
+From cf2ab4d22d977b172cf155e14060cf0f785f8404 Mon Sep 17 00:00:00 2001
+From: Willy Tarreau <w@1wt.eu>
+Date: Wed, 28 Mar 2018 11:29:04 +0200
+Subject: [PATCH] BUG/MAJOR: h2: remove orphaned streams from the send list
+ before closing
+
+Several people reported very strange occasional crashes when using H2.
+Every time it appeared that either an h2s or a task was corrupted. The
+outcome is that a missing LIST_DEL() when removing an orphaned stream
+from the list in h2_wake_some_streams() can cause this stream to
+remain present in the send list after it was freed. This may happen
+when receiving a GOAWAY frame for example. In the mean time the send
+list may be processed due to pending streams, and the just released
+stream is still found. If due to a buffer full condition we left the
+h2_process_demux() loop before being able to process the pending
+stream, the pool entry may be reassigned somewhere else. Either another
+h2 connection will get it, or a task, since they are the same size and
+are shared. Then upon next pass in h2_process_mux(), the stream is
+processed again. Either it crashes here due to modifications, or the
+contents are harmless to it and its last changes affect the other object
+reasigned to this area (typically a struct task). In the case of a
+collision with struct task, the LIST_DEL operation performed on h2s
+corrupts the task's wait queue's leaf_p pointer, thus all the wait
+queue's structure.
+
+The fix consists in always performing the LIST_DEL in h2s_detach().
+It will also make h2s_stream_new() more robust against a possible
+future situation where stream_create_from_cs() could have sent data
+before failing.
+
+Many thanks to all the reporters who provided extremely valuable
+information, traces and/or cores, namely Thierry Fournier, Yves Lafon,
+Holger Amann, Peter Lindegaard Hansen, and discourse user "slawekc".
+
+This fix must be backported to 1.8. It is probably better to also
+backport the following code cleanups with it as well to limit the
+divergence between master and 1.8-stable :
+
+  00dd078 CLEANUP: h2: rename misleading h2c_stream_close() to h2s_close()
+  0a10de6 MINOR: h2: provide and use h2s_detach() and h2s_free()
+
+(cherry picked from commit 4a333d3d53af786fe09df2f83b4e5db38cfef004)
+Signed-off-by: Willy Tarreau <w@1wt.eu>
+---
+ src/mux_h2.c |    3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/mux_h2.c b/src/mux_h2.c
+index ff1de8c..ac5e34f 100644
+--- a/src/mux_h2.c
++++ b/src/mux_h2.c
+@@ -645,6 +645,8 @@ static inline void h2s_close(struct h2s *h2s)
+ static void h2s_detach(struct h2s *h2s)
+ {
+ 	h2s_close(h2s);
++	LIST_DEL(&h2s->list);
++	LIST_INIT(&h2s->list);
+ 	eb32_delete(&h2s->by_id);
+ }
+ 
+@@ -2495,6 +2497,7 @@ static void h2_detach(struct conn_stream *cs)
+ 
+ 	/* the stream could be in the send list */
+ 	LIST_DEL(&h2s->list);
++	LIST_INIT(&h2s->list);
+ 
+ 	if ((h2c->flags & H2_CF_DEM_BLOCK_ANY && h2s->id == h2c->dsi) ||
+ 	    (h2c->flags & H2_CF_MUX_BLOCK_ANY && h2s->id == h2c->msi)) {
+-- 
+1.7.10.4
+
