@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ldbus
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MIRROR_HASH:=0e39a80e126a77a937226e49ae0246e1fd4600a03dee6bdee5ac822963a234e1
 
 PKG_SOURCE_PROTO:=git
@@ -16,8 +16,6 @@ PKG_SOURCE_DATE:=2017-10-03
 PKG_SOURCE_URL=https://github.com/daurnimator/ldbus
 PKG_MAINTAINER:=Enrico Mioso <mrkiko.rs@gmail.com>
 PKG_LICENSE:=MIT
-
-PKG_FLAGS := nonshared
 
 PKG_BUILD_DEPENDS:=luarocks/host
 
