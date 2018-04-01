@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlite
-PKG_VERSION:=3210000
-PKG_RELEASE:=3
+PKG_VERSION:=3230100
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_VERSION).tar.gz
-PKG_HASH:=d7dd516775005ad87a57f428b6f86afd206cb341722927f104d3f0cf65fbbbe3
-PKG_SOURCE_URL:=http://www.sqlite.org/2017/
+PKG_HASH:=92842b283e5e744eff5da29ed3c69391de7368fccc4d0ee6bf62490ce555ef25
+PKG_SOURCE_URL:=http://www.sqlite.org/2018/
 
 PKG_LICENSE:=PUBLICDOMAIN
 PKG_LICENSE_FILES:=
@@ -46,7 +46,7 @@ define Package/libsqlite3
   $(call Package/sqlite3/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libpthread
+  DEPENDS:=+libpthread +zlib
   TITLE+= (library)
 endef
 
