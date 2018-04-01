@@ -1,0 +1,31 @@
+Fix builint command jobs
+
+Patch was taken from https://git.alpinelinux.org/cgit/aports/tree/main/bash/fix-jobs.patch
+
+See also "Bash 4.4.12-r2 jobs hangs on arm (alpine 3.7)", https://bugs.alpinelinux.org/issues/8447
+diff --git a/jobs.c b/jobs.c
+index cef3c79..bf99266 100644
+--- a/jobs.c
++++ b/jobs.c
+@@ -4166,10 +4166,8 @@ initialize_job_control (force)
+   if (js.c_childmax < 0)
+     js.c_childmax = DEFAULT_CHILD_MAX;
+ 
+-#if 0
+   if (js.c_childmax > MAX_CHILD_MAX)
+     js.c_childmax = MAX_CHILD_MAX;
+-#endif
+ 
+   return job_control;
+ }
+@@ -4547,10 +4545,8 @@ mark_dead_jobs_as_notified (force)
+   if (js.c_childmax < 0)
+     js.c_childmax = DEFAULT_CHILD_MAX;
+ 
+-#if 0
+   if (js.c_childmax > MAX_CHILD_MAX)
+     js.c_childmax = MAX_CHILD_MAX;
+-#endif
+ 
+   /* Don't do anything if the number of dead processes is less than CHILD_MAX
+      and we're not forcing a cleanup. */
