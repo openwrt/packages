@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 Ian Leonard <antonlacon@gmail.com>
+# Copyright (C) 2017-2018 Ian Leonard <antonlacon@gmail.com>
 # Copyright (C) 2018 Ted Hess <thess@kitschensync.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=3.2.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
@@ -202,9 +202,14 @@ FFMPEG_PATENTED_DECODERS:= \
 	hevc \
 	vc1 \
 
+FFMPEG_PATENTED_ENCODERS:=$(FFMPEG_PATENDED_DECODERS)
+
 FFMPEG_PATENTED_MUXERS:= \
 	h264 \
 	hevc \
+	vc1 \
+
+FFMPEG_PATENTED_DEMUXERS:=$(FFMPEG_PATENTED_MUXERS)
 
 FFMPEG_PATENTED_PARSERS:= \
 	h264 \
@@ -452,7 +457,9 @@ ifeq ($(BUILD_VARIANT),full)
 		--enable-avresample \
 		$(if $(CONFIG_BUILD_PATENTED),, \
 			$(call FFMPEG_DISABLE,decoder,$(FFMPEG_PATENTED_DECODERS)) \
+			$(call FFMPEG_DISABLE,encoder,$(FFMPEG_PATENTED_ENCODERS)) \
 			$(call FFMPEG_DISABLE,muxer,$(FFMPEG_PATENTED_MUXERS)) \
+			$(call FFMPEG_DISABLE,demuxer,$(FFMPEG_PATENTED_DEMUXERS)) \
 			$(call FFMPEG_DISABLE,parser,$(FFMPEG_PATENTED_PARSERS))) \
 		$(if $(CONFIG_PACKAGE_libopus),--enable-libopus)
   ifeq ($(CONFIG_SOFT_FLOAT),y)
@@ -469,7 +476,7 @@ ifeq ($(BUILD_VARIANT),full)
 	FFMPEG_CONFIGURE+= \
 		--enable-gpl \
 		$(if $(CONFIG_PACKAGE_lame-lib),--enable-libmp3lame) \
-		$(if $(CONFIG_PACKAGE_libx264),--enable-libx264 --enable-nonfree)
+		$(if $(CONFIG_PACKAGE_libx264),--enable-libx264)
   endif
 endif
 
