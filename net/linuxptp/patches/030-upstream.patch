@@ -1,0 +1,37 @@
+From d14f11fd329a7da94c0d0190a169f743eb91031b Mon Sep 17 00:00:00 2001
+From: Richard Cochran <richardcochran@gmail.com>
+Date: Mon, 2 Apr 2018 20:19:51 -0700
+Subject: [PATCH] msg: Append multiple TLVs correctly.
+
+The logic that adds TLVs to the end of a message mixes up the 'L'
+length in "TLV" with the total TLV length.  As a result, the second
+and subsequent TLVs will corrupt the previous TLV in the buffer.  This
+patch corrects the code to find the correct offset for the second and
+following appended TLVs.
+
+Note that the stack does not currently trigger this latent bug because
+only single TLVs are appended.
+
+Fixes: 4a8877f90462 ("msg: Introduce method for appending multiple TLVs on transmit.")
+
+Signed-off-by: Richard Cochran <richardcochran@gmail.com>
+---
+ msg.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/msg.c b/msg.c
+index b7e1053..c004568 100644
+--- a/msg.c
++++ b/msg.c
+@@ -151,6 +151,8 @@ static struct tlv_extra *msg_tlv_prepare(struct ptp_message *msg, int length)
+ 	tmp = TAILQ_LAST(&msg->tlv_list, tlv_list);
+ 	if (tmp) {
+ 		ptr = (uint8_t *) tmp->tlv;
++		ptr += sizeof(tmp->tlv->type);
++		ptr += sizeof(tmp->tlv->length);
+ 		ptr += tmp->tlv->length;
+ 	}
+ 
+-- 
+2.7.4
+
