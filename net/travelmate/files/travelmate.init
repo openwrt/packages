@@ -8,6 +8,7 @@ EXTRA_HELP="	status	Print runtime information"
 
 trm_init="/etc/init.d/travelmate"
 trm_script="/usr/bin/travelmate.sh"
+trm_pidfile="/var/run/travelmate.pid"
 
 boot()
 {
@@ -25,6 +26,12 @@ start_service()
         procd_set_param stderr 1
         procd_close_instance
     fi
+}
+
+reload_service()
+{
+    [ -s "${trm_pidfile}" ] && return 1
+    "${trm_init}" restart
 }
 
 stop_service()
@@ -59,15 +66,10 @@ status()
 
 service_triggers()
 {
-    local auto="$(uci_get travelmate global trm_automatic)"
+    local trigger="$(uci_get travelmate global trm_iface)"
+    local delay="$(uci_get travelmate global trm_triggerdelay)"
 
-    if [ "${auto}" = "0" ]
-    then
-        local trigger="$(uci_get travelmate global trm_iface)"
-        local delay="$(uci_get travelmate global trm_triggerdelay)"
-
-        PROCD_RELOAD_DELAY=$((${delay:-2} * 1000))
-        procd_add_interface_trigger "interface.*.down" "${trigger}" "${trm_init}" start
-    fi
+    PROCD_RELOAD_DELAY=$((${delay:-2} * 1000))
+    procd_add_interface_trigger "interface.*.down" "${trigger}" "${trm_init}" reload
     procd_add_reload_trigger "travelmate"
 }
