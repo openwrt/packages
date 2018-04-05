@@ -10,11 +10,10 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.1.3"
+trm_ver="1.2.0"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
-trm_automatic=1
 trm_captive=1
 trm_captiveurl="http://captive.apple.com"
 trm_minquality=35
@@ -27,6 +26,8 @@ trm_rtfile="/tmp/trm_runtime.json"
 trm_fetch="$(command -v uclient-fetch)"
 trm_iwinfo="$(command -v iwinfo)"
 trm_wpa="$(command -v wpa_supplicant)"
+trm_action="${1:-"start"}"
+trm_pidfile="/var/run/travelmate.pid"
 
 # load travelmate environment
 #
@@ -68,6 +69,10 @@ f_envload()
     if [ ${trm_enabled} -ne 1 ]
     then
         f_log "info" "travelmate is currently disabled, please set 'trm_enabled' to '1' to use this service"
+        config_load wireless
+        config_foreach f_prep wifi-iface
+        uci_commit wireless
+        ubus call network reload
         exit 0
     fi
 
@@ -166,7 +171,7 @@ f_check()
                 fi
             elif [ "${mode}" = "rev" ]
             then
-                wait=$((${trm_maxwait}/3))
+                wait=$(( ${trm_maxwait} / 3 ))
                 sleep ${wait}
                 break
             else
@@ -194,7 +199,7 @@ f_check()
                 fi
                 if [ "${mode}" = "initial" ] && [ "${trm_captive}" -eq 1 ] && [ "${trm_ifstatus}" = "true" ]
                 then
-                    result="$(${trm_fetch} --timeout=$((${trm_maxwait}/3)) --spider "${trm_captiveurl}" 2>&1 | awk '/^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|^Connection error/{printf "%s" "net nok";exit}')"
+                    result="$(${trm_fetch} --timeout=$(( ${trm_maxwait} / 3 )) --spider "${trm_captiveurl}" 2>&1 | awk '/^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|^Connection error/{printf "%s" "net nok";exit}')"
                     if [ -n "${result}" ] && ([ -z "${trm_connection}" ] || [ "${result}" != "${trm_connection%/*}" ])
                     then
                         trm_connection="${result}/${trm_ifquality}"
@@ -204,10 +209,10 @@ f_check()
                 break
             fi
         fi
-        wait=$((wait+1))
+        wait=$(( wait + 1 ))
         sleep 1
     done
-    f_log "debug" "f_check::: mode: ${mode}, name: ${ifname:-"-"}, status: ${trm_ifstatus}, quality: ${trm_ifquality}, connection: ${trm_connection:-"-"}, wait: ${wait}, max_wait: ${trm_maxwait}, min_quality: ${trm_minquality}, captive: ${trm_captive}, automatic: ${trm_automatic}"
+    f_log "debug" "f_check::: mode: ${mode}, name: ${ifname:-"-"}, status: ${trm_ifstatus}, quality: ${trm_ifquality}, connection: ${trm_connection:-"-"}, wait: ${wait}, max_wait: ${trm_maxwait}, min_quality: ${trm_minquality}, captive: ${trm_captive}"
 }
 
 # update runtime information
@@ -335,7 +340,6 @@ f_main()
                                         then
                                             uci_commit wireless
                                             f_log "info" "interface '${sta_iface}' on '${sta_radio}' connected to uplink '${sta_essid:-"-"}/${sta_bssid:-"-"}' (${trm_sysver})"
-                                            f_check "initial"
                                             return 0
                                         elif [ ${cnt} -eq ${trm_maxretry} ]
                                         then
@@ -366,8 +370,8 @@ f_main()
                         IFS=" "
                     done
                 fi
-                cnt=$((cnt+1))
-                sleep $((${trm_maxwait}/6))
+                cnt=$(( cnt + 1 ))
+                sleep $(( ${trm_maxwait} / 6 ))
             done
         done
         if [ ! -s "${trm_rtfile}" ]
@@ -393,12 +397,17 @@ fi
 
 # control travelmate actions
 #
-f_envload
-f_main
-while [ ${trm_automatic} -eq 1 ]
+while true
 do
-    sleep ${trm_timeout}
+    if [ -z "${trm_action}" ]
+    then
+        > "${trm_pidfile}"
+        sleep ${trm_timeout}
+    else
+        printf '%s' "${$}" > "${trm_pidfile}"
+        trm_action=""
+    fi
     f_envload
     f_main
 done
-exit 0
+
