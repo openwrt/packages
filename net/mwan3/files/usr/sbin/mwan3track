@@ -99,6 +99,7 @@ main() {
 		score=0
 	else
 		echo "online" > /var/run/mwan3track/$1/STATUS
+		env -i ACTION="connected" INTERFACE="$1" DEVICE="$2" /sbin/hotplug-call iface
 	fi
 	while true; do
 
@@ -169,7 +170,6 @@ main() {
 			if [ $score -eq $up ]; then
 				$LOG notice "Interface $1 ($2) is online"
 				echo "online" > /var/run/mwan3track/$1/STATUS
-				env -i ACTION="connected" INTERFACE="$1" DEVICE="$2" /sbin/hotplug-call iface
 				env -i ACTION=ifup INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
 				exit 0
 			fi
