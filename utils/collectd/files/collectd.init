@@ -1,15 +1,17 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2006-2016 OpenWrt.org
+# Copyright (C) 2006-2018 OpenWrt.org
 
 START=80
 STOP=10
 
 USE_PROCD=1
+NICEPRIO=19
 
 start_service() {
 	mkdir -m 0755 -p /var/lib/collectd
 	procd_open_instance
 	procd_set_param command /usr/sbin/collectd -f
+	procd_set_param nice "$NICEPRIO"
 	procd_close_instance
 }
 
