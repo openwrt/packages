@@ -86,6 +86,10 @@ main() {
 	config_get failure_interval $1 failure_interval $interval
 	config_get_bool keep_failure_interval $1 keep_failure_interval 0
 	config_get recovery_interval $1 recovery_interval $interval
+	config_get max_latency $1 max_latency $max_latency
+	config_get min_latency $1 min_latency $min_latency
+	config_get max_loss $1 max_loss $max_loss
+	config_get min_loss $1 min_loss $min_loss
 
 	local score=$(($down+$up))
 	local track_ips=$(echo $* | cut -d ' ' -f 5-99)
@@ -93,6 +97,9 @@ main() {
 	local lost=0
 	local sleep_time=0
 	local turn=0
+	local ping_result
+	local loss
+	local latency
 
 	if [ "$STATUS" = "unknown" ]; then
 		echo "unknown" > /var/run/mwan3track/$1/STATUS
@@ -108,22 +115,39 @@ main() {
 			if [ $host_up_count -lt $reliability ]; then
 				case "$track_method" in
 					ping)
-						ping -I $DEVICE -c $count -W $timeout -s $size -q $track_ip &> /dev/null ;;
+						ping_result=`ping -I $DEVICE -c $count -W $timeout -s $size -q $track_ip | tail -2`
+						loss=`echo "$ping_result" | grep "packet loss" |  cut -d "," -f3 | awk '{print $1}' | sed -e 's/%//'`	
+						latency=`echo "$ping_result" | grep -E 'rtt|round-trip' | cut -d "=" -f2 | cut -d "/" -f2 | cut -d "." -f1`
+						$LOG debug "$1 $track_ip: latency = $latency, loss = $loss"
+					;;
 					arping)
 						arping -I $DEVICE -c $count -w $timeout -q $track_ip &> /dev/null ;;
 					httping)
 						httping -y $SRC_IP -c $count -t $timeout -q $track_ip &> /dev/null ;;
 				esac
-				if [ $? -eq 0 ]; then
-					let host_up_count++
-					echo "up" > /var/run/mwan3track/$1/TRACK_${track_ip}
+				if [ $track_method != "ping" ]; then
+					if [ $? -eq 0 ]; then
+						let host_up_count++
+						echo "up" > /var/run/mwan3track/$1/TRACK_${track_ip}
+					else
+						let lost++
+						echo "down" > /var/run/mwan3track/$1/TRACK_${track_ip}
+					fi
 				else
-					let lost++
-					echo "down" > /var/run/mwan3track/$1/TRACK_${track_ip}
+					if [ "$loss" -gt "$max_loss" -o "$latency" -gt "$max_latency" ]; then
+						let lost++
+						echo "down" > /var/run/mwan3track/$1/TRACK_${track_ip}
+					elif [ "$loss" -lt "$min_loss" -a "$latency" -lt "$min_latency" ]; then
+						let host_up_count++
+						echo "up" > /var/run/mwan3track/$1/TRACK_${track_ip}
+					else
+						echo "skipped" > /var/run/mwan3track/$1/TRACK_${track_ip}
+					fi
 				fi
 			else
 				echo "skipped" > /var/run/mwan3track/$1/TRACK_${track_ip}
 			fi
+
 		done
 
 		if [ $host_up_count -lt $reliability ]; then
