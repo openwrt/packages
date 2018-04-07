@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libvorbis
-PKG_VERSION:=1.3.5
-PKG_RELEASE:=2
+PKG_VERSION:=1.3.6
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://downloads.xiph.org/releases/vorbis/
-PKG_HASH:=54f94a9527ff0a88477be0a71c0bab09a4c3febe0ed878b24824906cd4b0e1d1
+PKG_HASH:=af00bb5a784e7c9e69f56823de4637c350643deedaf333d0fa86ecdba6fcb415
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=BSD-3-Clause
