@@ -41,6 +41,12 @@ software entity may make full use of the format without license
 fee, royalty or patent concerns.
 endef
 
+ifneq ($(findstring arm,$(CONFIG_ARCH)),)
+	TARGET_CFLAGS += -flto
+	TARGET_CXX_FLAGS += -flto
+	TARGET_LDFLAGS += -flto
+endif
+
 CONFIGURE_ARGS+= \
 	--disable-oggtest \
 
