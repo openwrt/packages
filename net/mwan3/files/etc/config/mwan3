@@ -17,7 +17,7 @@ config interface 'wan'
 	option down '3'
 	option up '8'
 	option max_latency '500'
-	option min_latency '100'
+	option min_latency '80'
 	option max_loss '25'
 	option min_loss '5'
 
