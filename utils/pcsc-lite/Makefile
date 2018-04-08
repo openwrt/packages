@@ -12,7 +12,7 @@ PKG_VERSION:=1.8.23
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://alioth.debian.org/frs/download.php/file/4235
+PKG_SOURCE_URL:=https://pcsclite.apdu.fr/files/
 PKG_HASH:=5a27262586eff39cfd5c19aadc8891dd71c0818d3d629539bd631b958be689c9
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3-Clause
@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/pcsc-lite/Default
   TITLE:=Access a smart card using SCard API (PC/SC)
-  URL:=http://pcsclite.alioth.debian.org/
+  URL:=https://pcsclite.apdu.fr/
 endef
 
 define Package/pcsc-lite/Default/description

@@ -107,6 +107,7 @@ main() {
 		score=0
 	else
 		echo "online" > /var/run/mwan3track/$1/STATUS
+		env -i ACTION="connected" INTERFACE="$1" DEVICE="$2" /sbin/hotplug-call iface
 	fi
 
 	if [ "$check_quality" -eq 1 ]; then
@@ -133,7 +134,6 @@ main() {
 							else
 								latency=`echo "$ping_result" | grep -E 'rtt|round-trip' | cut -d "=" -f2 | cut -d "/" -f2 | cut -d "." -f1`
 							fi
-							$LOG debug "$1 $track_ip: latency=$latency ms, loss=$loss%"
 						fi
 					;;
 					arping)
@@ -141,21 +141,34 @@ main() {
 					httping)
 						httping -y $SRC_IP -c $count -t $timeout -q $track_ip &> /dev/null ;;
 				esac
+
 				if [ $check_quality -eq 0 ]; then
 					if [ $? -eq 0 ]; then
 						let host_up_count++
 						echo "up" > /var/run/mwan3track/$1/TRACK_${track_ip}
+						if [ $score -le $up ]; then
+							$LOG info "Check ($track_method) success for target \"$track_ip\" on interface $1 ($2)"
+						fi
 					else
 						let lost++
 						echo "down" > /var/run/mwan3track/$1/TRACK_${track_ip}
+						if [ $score -gt $up ]; then
+							$LOG info "Check ($track_method) failed for target \"$track_ip\" on interface $1 ($2)"
+						fi
 					fi
 				else
 					if [ "$loss" -ge "$max_loss" -o "$latency" -ge "$max_latency" ]; then
 						let lost++
 						echo "down" > /var/run/mwan3track/$1/TRACK_${track_ip}
+						if [ $score -le $up ]; then
+							$LOG info "Failed: Latency=$latency ms Loss=$loss% for target \"$track_ip\" on interface $1 ($2)"
+						fi
 					elif [ "$loss" -le "$min_loss" -a "$latency" -le "$min_latency" ]; then
 						let host_up_count++
 						echo "up" > /var/run/mwan3track/$1/TRACK_${track_ip}
+						if [ $score -gt $up ]; then
+							$LOG info "Success: Latency=$latency ms Loss=$loss% for target \"$track_ip\" on interface $1 ($2)"
+						fi
 					else
 						echo "skipped" > /var/run/mwan3track/$1/TRACK_${track_ip}
 					fi
@@ -203,7 +216,6 @@ main() {
 			if [ $score -eq $up ]; then
 				$LOG notice "Interface $1 ($2) is online"
 				echo "online" > /var/run/mwan3track/$1/STATUS
-				env -i ACTION="connected" INTERFACE="$1" DEVICE="$2" /sbin/hotplug-call iface
 				env -i ACTION=ifup INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
 				exit 0
 			fi
