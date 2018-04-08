@@ -262,9 +262,8 @@ write_log() {
 	[ $VERBOSE -gt 0 -o $__EXIT -gt 0 ] && echo -e "$__MSG"
 	# write to logfile
 	if [ ${use_logfile:-1} -eq 1 -o $VERBOSE -gt 1 ]; then
-		printf "%s\n" "$__MSG" | \
-			sed -e "s/$password/*password*/g; \
-				s/$URL_PASS/*URL_PASS*/g" >> $LOGFILE
+		[ -n "$password" ] && (printf "%s\n" "$__MSG" | sed -e "s/$password/*password*/g" >> $LOGFILE)
+		[ -n "$URL_PASS" ] && (printf "%s\n" "$__MSG" | sed -e "s/$URL_PASS/*URL_PASS*/g" >> $LOGFILE)
 		# VERBOSE > 1 then NO loop so NO truncate log to $ddns_loglines lines
 		[ $VERBOSE -gt 1 ] || sed -i -e :a -e '$q;N;'$ddns_loglines',$D;ba' $LOGFILE
 	fi
