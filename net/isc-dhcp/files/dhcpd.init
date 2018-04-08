@@ -122,7 +122,7 @@ static_hosts() {
 
 typeof() {
 	echo "$1" | awk '
-/^\d+\.\d+\.\d+\.d+$/		{ print "ip\n"; next; }
+/^\d+\.\d+\.\d+\.\d+$/		{ print "ip\n"; next; }
 /^(true|false)$/		{ print "bool\n"; next; }
 /^\d+$/				{ print "integer\n"; next; }
 /^"[^"]*"$/			{ print "string\n"; next; }
