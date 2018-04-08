@@ -86,6 +86,11 @@ main() {
 	config_get failure_interval $1 failure_interval $interval
 	config_get_bool keep_failure_interval $1 keep_failure_interval 0
 	config_get recovery_interval $1 recovery_interval $interval
+	config_get_bool check_quality $1 check_quality 0
+	config_get max_latency $1 max_latency $max_latency
+	config_get min_latency $1 min_latency $min_latency
+	config_get max_loss $1 max_loss $max_loss
+	config_get min_loss $1 min_loss $min_loss
 
 	local score=$(($down+$up))
 	local track_ips=$(echo $* | cut -d ' ' -f 5-99)
@@ -93,6 +98,9 @@ main() {
 	local lost=0
 	local sleep_time=0
 	local turn=0
+	local ping_result
+	local loss=0
+	local latency=0
 
 	if [ "$STATUS" = "unknown" ]; then
 		echo "unknown" > /var/run/mwan3track/$1/STATUS
@@ -100,6 +108,13 @@ main() {
 	else
 		echo "online" > /var/run/mwan3track/$1/STATUS
 	fi
+
+	if [ "$check_quality" -eq 1 ]; then
+		$LOG info "Link quality check is enabled for interface $1 ($2)."
+	else
+		$LOG info "Link quality check is disabled for interface $1 ($2)."
+	fi
+
 	while true; do
 
 		sleep_time=$interval
@@ -108,22 +123,47 @@ main() {
 			if [ $host_up_count -lt $reliability ]; then
 				case "$track_method" in
 					ping)
-						ping -I $DEVICE -c $count -W $timeout -s $size -q $track_ip &> /dev/null ;;
+						if [ $check_quality -eq 0 ]; then
+							ping -I $DEVICE -c $count -W $timeout -s $size -q $track_ip &> /dev/null
+						else
+							ping_result=`ping -I $DEVICE -c $count -W $timeout -s $size -q $track_ip | tail -2`
+							loss=`echo "$ping_result" | grep "packet loss" |  cut -d "," -f3 | awk '{print $1}' | sed -e 's/%//'`	
+							if [ "$loss" -eq 100 ]; then
+								latency=999999
+							else
+								latency=`echo "$ping_result" | grep -E 'rtt|round-trip' | cut -d "=" -f2 | cut -d "/" -f2 | cut -d "." -f1`
+							fi
+							$LOG debug "$1 $track_ip: latency=$latency ms, loss=$loss%"
+						fi
+					;;
 					arping)
 						arping -I $DEVICE -c $count -w $timeout -q $track_ip &> /dev/null ;;
 					httping)
 						httping -y $SRC_IP -c $count -t $timeout -q $track_ip &> /dev/null ;;
 				esac
-				if [ $? -eq 0 ]; then
-					let host_up_count++
-					echo "up" > /var/run/mwan3track/$1/TRACK_${track_ip}
+				if [ $check_quality -eq 0 ]; then
+					if [ $? -eq 0 ]; then
+						let host_up_count++
+						echo "up" > /var/run/mwan3track/$1/TRACK_${track_ip}
+					else
+						let lost++
+						echo "down" > /var/run/mwan3track/$1/TRACK_${track_ip}
+					fi
 				else
-					let lost++
-					echo "down" > /var/run/mwan3track/$1/TRACK_${track_ip}
+					if [ "$loss" -ge "$max_loss" -o "$latency" -ge "$max_latency" ]; then
+						let lost++
+						echo "down" > /var/run/mwan3track/$1/TRACK_${track_ip}
+					elif [ "$loss" -le "$min_loss" -a "$latency" -le "$min_latency" ]; then
+						let host_up_count++
+						echo "up" > /var/run/mwan3track/$1/TRACK_${track_ip}
+					else
+						echo "skipped" > /var/run/mwan3track/$1/TRACK_${track_ip}
+					fi
 				fi
 			else
 				echo "skipped" > /var/run/mwan3track/$1/TRACK_${track_ip}
 			fi
+
 		done
 
 		if [ $host_up_count -lt $reliability ]; then
