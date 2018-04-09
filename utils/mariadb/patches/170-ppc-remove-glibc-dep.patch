@@ -1,0 +1,75 @@
+From f5cf70d9d1dc7f4cbeffb7fb75cbbe08720e3873 Mon Sep 17 00:00:00 2001
+From: Gustavo Romero <gromero@br.ibm.com>
+Date: Sun, 26 Mar 2017 15:08:15 +0000
+Subject: [PATCH] Remove dependency on glibc on PPC
+
+Remove dependency on glibc by using gcc builtin function and no glibc
+wrappers.
+
+Currently there are no surrogates in musl for:
+
+  __ppc_get_timebase()
+  __ppc_set_ppr_low()
+  __ppc_set_ppr_med()
+
+however glibc __ppc_get_timebase() is just a wrapper for GCC builtin
+__builtin_get_timebase() available since GCC 4.8 [1], so assuming that
+aports on ppc64le will never be built using GCC < 4.8 we can just
+switch directly to the GCC builtin function.
+
+Also __ppc_set_ppr_{low,med}() are not available on musl but both
+are simple glibc wrappers on a single asm instruction, hence there
+is no harm in using asm directly instead. Actually, using asm
+directly was the first solution adopted in MariaDB [2].
+
+[1] https://goo.gl/jxLV6O
+[2] https://goo.gl/9bjuVC
+
+--- a/storage/xtradb/include/ut0ut.h
++++ b/storage/xtradb/include/ut0ut.h
+@@ -86,8 +86,7 @@ private:
+    independent way by using YieldProcessor. */
+ #  define UT_RELAX_CPU() YieldProcessor()
+ # elif defined(__powerpc__)
+-#include <sys/platform/ppc.h>
+-#  define UT_RELAX_CPU() __ppc_get_timebase()
++#  define UT_RELAX_CPU() __builtin_ppc_get_timebase()
+ # else
+ #  define UT_RELAX_CPU() ((void)0) /* avoid warning for an empty statement */
+ # endif
+@@ -101,9 +100,8 @@ private:
+ #endif
+ 
+ # if defined(HAVE_HMT_PRIORITY_INSTRUCTION)
+-#include <sys/platform/ppc.h>
+-#  define UT_LOW_PRIORITY_CPU() __ppc_set_ppr_low()
+-#  define UT_RESUME_PRIORITY_CPU() __ppc_set_ppr_med()
++#  define UT_LOW_PRIORITY_CPU() __asm__ __volatile__ ("or 1,1,1")
++#  define UT_RESUME_PRIORITY_CPU() __asm__ __volatile__ ("or 2,2,2")
+ # else
+ #  define UT_LOW_PRIORITY_CPU() ((void)0)
+ #  define UT_RESUME_PRIORITY_CPU() ((void)0)
+--- a/storage/innobase/include/ut0ut.h
++++ b/storage/innobase/include/ut0ut.h
+@@ -89,8 +89,7 @@ private:
+    independent way by using YieldProcessor. */
+ #  define UT_RELAX_CPU() YieldProcessor()
+ # elif defined(__powerpc__)
+-#include <sys/platform/ppc.h>
+-#  define UT_RELAX_CPU() __ppc_get_timebase()
++#  define UT_RELAX_CPU() __builtin_ppc_get_timebase()
+ # else
+ #  define UT_RELAX_CPU() ((void)0) /* avoid warning for an empty statement */
+ # endif
+@@ -104,9 +103,8 @@ private:
+ #endif
+ 
+ # if defined(HAVE_HMT_PRIORITY_INSTRUCTION)
+-#include <sys/platform/ppc.h>
+-#  define UT_LOW_PRIORITY_CPU() __ppc_set_ppr_low()
+-#  define UT_RESUME_PRIORITY_CPU() __ppc_set_ppr_med()
++#  define UT_LOW_PRIORITY_CPU() __asm__  __volatile__ ("or 1,1,1")
++#  define UT_RESUME_PRIORITY_CPU() __asm__ __volatile__ ("or 2,2,2")
+ # else
+ #  define UT_LOW_PRIORITY_CPU() ((void)0)
+ #  define UT_RESUME_PRIORITY_CPU() ((void)0)
