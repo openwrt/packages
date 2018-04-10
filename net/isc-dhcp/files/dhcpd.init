@@ -112,6 +112,7 @@ static_host_add() {
 		if [ -n "$gateway" ] ; then
 			echo " option routers $gateway;"
 		fi
+		config_list_foreach "$cfg" "dhcp_option" append_dhcp_options
 		echo "}"
 	done
 }
