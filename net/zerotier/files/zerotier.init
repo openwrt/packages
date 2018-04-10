@@ -28,7 +28,7 @@ start_instance() {
 	rm -rf $CONFIG_PATH
 
 	# Create link from CONFIG_PATH to config_path
-	if [ -n "$config_path" -a $config_path != $CONFIG_PATH ]; then
+	if [ -n "$config_path" -a "$config_path" != $CONFIG_PATH ]; then
 		if [ ! -d "$config_path" ]; then
 			echo "ZeroTier config_path does not exist: $config_path"
 			return
