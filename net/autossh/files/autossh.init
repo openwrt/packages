@@ -10,6 +10,9 @@ start_instance() {
 	config_get gatetime "$section" 'gatetime'
 	config_get monitorport "$section" 'monitorport'
 	config_get poll "$section" 'poll'
+	config_get_bool enabled "$section" 'enabled' '1'
+
+	[ "$enabled" = 1 ] || exit 0
 
 	export AUTOSSH_GATETIME="${gatetime:-30}"
 	export AUTOSSH_POLL="${poll:-600}"
