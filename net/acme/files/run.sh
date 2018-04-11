@@ -143,6 +143,7 @@ issue_cert()
     local moved_staging=0
     local failed_dir
     local webroot
+    local dns
 
     config_get_bool enabled "$section" enabled 0
     config_get_bool use_staging "$section" use_staging
@@ -150,6 +151,7 @@ issue_cert()
     config_get domains "$section" domains
     config_get keylength "$section" keylength
     config_get webroot "$section" webroot
+    config_get dns "$section" dns
 
     [ "$enabled" -eq "1" ] || return
 
@@ -158,7 +160,7 @@ issue_cert()
     set -- $domains
     main_domain=$1
 
-    [ -n "$webroot" ] || pre_checks "$main_domain" || return 1
+    [ -n "$webroot" ] || [ -n "$dns" ] || pre_checks "$main_domain" || return 1
 
     log "Running ACME for $main_domain"
 
@@ -180,7 +182,10 @@ issue_cert()
     [ -n "$ACCOUNT_EMAIL" ] && acme_args="$acme_args --accountemail $ACCOUNT_EMAIL"
     [ "$use_staging" -eq "1" ] && acme_args="$acme_args --staging"
 
-    if [ -z "$webroot" ]; then
+    if [ -n "$dns" ]; then
+        log "Using dns mode"
+        acme_args="$acme_args --dns $dns"
+    elif [ -z "$webroot" ]; then
         log "Using standalone mode"
         acme_args="$acme_args --standalone"
     else
@@ -191,6 +196,12 @@ issue_cert()
         log "Using webroot dir: $webroot"
         acme_args="$acme_args --webroot $webroot"
     fi
+
+    handle_credentials() {
+        local credential="$1"
+        eval export $credential
+    }
+    config_list_foreach "$section" credentials handle_credentials
 
     if ! $ACME --home "$STATE_DIR" --issue $acme_args; then
         failed_dir="$STATE_DIR/${main_domain}.failed-$(date +%s)"
