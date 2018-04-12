@@ -17,7 +17,10 @@ start_instance() {
 	local port secret config_path
 	local ARGS=""
 
-	section_enabled "$cfg" || return 1
+	if ! section_enabled "$cfg"; then
+		echo "disabled in config"
+		return 1
+	fi
 
 	config_get config_path $cfg 'config_path'
 	config_get_bool port $cfg 'port'
