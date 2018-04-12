@@ -44,10 +44,13 @@ start_instance() {
 
 	if [ "$secret" = "generate" ]; then
 		echo "Generate secret - please wait..."
-		local tmp="/tmp/zt.$cfg.secret"
-		zerotier-idtool generate "$tmp" > /dev/null
-		secret="$(cat $tmp)"
-		rm "$tmp"
+		local sf="/tmp/zt.$cfg.secret"
+
+		zerotier-idtool generate "$sf" > /dev/null
+		[ $? -ne 0 ] && return 1
+
+		secret="$(cat $sf)"
+		rm "$sf"
 
 		uci set zerotier.$cfg.secret="$secret"
 		uci commit zerotier
