@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acme
 PKG_VERSION:=2.7.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPLv3
 
 PKG_SOURCE_PROTO:=git
@@ -56,6 +56,22 @@ define Package/acme/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/acme.sh $(1)/usr/lib/acme/acme.sh
 endef
 
+define Package/acme-dnsapi
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=+acme
+  TITLE:=DNS API integration for ACME (Letsencrypt) client
+endef
+
+define Package/acme-dnsapi/description
+ This package provides DNS API integration for ACME (Letsencrypt) client.
+endef
+
+define Package/acme-dnsapi/install
+	$(INSTALL_DIR) $(1)/usr/lib/acme/dnsapi
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/dnsapi/*.sh $(1)/usr/lib/acme/dnsapi
+endef
+
 define Package/luci-app-acme
   SECTION:=luci
   CATEGORY:=LuCI
@@ -93,4 +109,5 @@ endef
 
 
 $(eval $(call BuildPackage,acme))
+$(eval $(call BuildPackage,acme-dnsapi))
 $(eval $(call BuildPackage,luci-app-acme))
