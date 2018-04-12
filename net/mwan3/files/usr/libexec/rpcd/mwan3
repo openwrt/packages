@@ -74,60 +74,65 @@ get_mwan3_status() {
 	fi
 }
 
-case "$1" in
-	list)
-		json_init
-		json_add_object "status"
-		json_add_string "section" "x"
-		json_add_string "interface" "x"
-		json_close_object
-		json_dump
-		;;
-	call)
-		case "$2" in
-		status)
-			local section iface
-			read input;
-			json_load "$input"
-			json_get_var section section
-			json_get_var iface interface
+main () {
 
-			config_load mwan3
+	case "$1" in
+		list)
 			json_init
-			case "$section" in
-				interfaces)
-					json_add_object interfaces
-					config_foreach get_mwan3_status interface "${iface}"
-					json_close_object
-					;;
-				connected)
-					json_add_object connected
-					json_add_array ipv4
-					report_connected_v4
-					json_close_array
-					json_add_array ipv6
-					report_connected_v6
-					json_close_array
-					json_close_object
-					;;
-				*)
-					# interfaces
-					json_add_object interfaces
-					config_foreach get_mwan3_status interface
-					json_close_object
-					# connected
-					json_add_object connected
-					json_add_array ipv4
-					report_connected_v4
-					json_close_array
-					json_add_array ipv6
-					report_connected_v6
-					json_close_array
-					json_close_object
-					;;
-			esac
+			json_add_object "status"
+			json_add_string "section" "x"
+			json_add_string "interface" "x"
+			json_close_object
 			json_dump
 			;;
-		esac
-		;;
-esac
+		call)
+			case "$2" in
+			status)
+				local section iface
+				read input;
+				json_load "$input"
+				json_get_var section section
+				json_get_var iface interface
+
+				config_load mwan3
+				json_init
+				case "$section" in
+					interfaces)
+						json_add_object interfaces
+						config_foreach get_mwan3_status interface "${iface}"
+						json_close_object
+						;;
+					connected)
+						json_add_object connected
+						json_add_array ipv4
+						report_connected_v4
+						json_close_array
+						json_add_array ipv6
+						report_connected_v6
+						json_close_array
+						json_close_object
+						;;
+					*)
+						# interfaces
+						json_add_object interfaces
+						config_foreach get_mwan3_status interface
+						json_close_object
+						# connected
+						json_add_object connected
+						json_add_array ipv4
+						report_connected_v4
+						json_close_array
+						json_add_array ipv6
+						report_connected_v6
+						json_close_array
+						json_close_object
+						;;
+				esac
+				json_dump
+				;;
+			esac
+			;;
+	esac
+}
+
+main "$@"
