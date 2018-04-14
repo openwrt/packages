@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=subversion
 PKG_RELEASE:=1
-PKG_VERSION:=1.9.7
+PKG_VERSION:=1.10.0
 PKG_SOURCE_URL:=@APACHE/subversion
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=c3b118333ce12e501d509e66bb0a47bcc34d053990acab45559431ac3e491623
+PKG_HASH:=2cf23f3abb837dea0585a6b0ebd70e80e01f95bddef7c1aa097c18e3eaa6b584
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
@@ -93,7 +93,9 @@ CONFIGURE_ARGS += \
 	--without-junit \
 	--without-berkeley-db \
 	--without-apxs \
-	--without-sasl
+	--without-sasl \
+	--with-lz4=internal \
+	--with-utf8proc=internal
 
 ifdef $(INTL_FULL)
 	CONFIGURE_ARGS += --enable-nls
