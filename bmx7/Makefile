@@ -33,7 +33,7 @@ PKG_SOURCE_URL:=git://github.com/bmx-routing/bmx7.git
 PKG_REV:=f78db8298dd8b3658f6fcfa90df2644a15b99924
 PKG_MIRROR_HASH:=80ca8e04603d824e4dede0055030c765bd9e69f7945c01ffb953de37b228028e
 PKG_VERSION:=r2018030903
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE_VERSION:=$(PKG_REV)
@@ -141,6 +141,7 @@ endef
 
 define Package/bmx7-uci-config/conffiles
 /etc/config/bmx7
+/etc/bmx7
 endef
 
 define Package/bmx7-uci-config/install
