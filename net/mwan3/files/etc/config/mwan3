@@ -1,7 +1,7 @@
 
 config globals 'globals'
 	option mmx_mask '0x3F00'
-	option local_source 'lan'
+	option local_source 'none'
 
 config interface 'wan'
 	option enabled '1'

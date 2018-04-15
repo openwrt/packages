@@ -1,0 +1,27 @@
+#!/bin/sh
+
+. /lib/functions.sh
+. /lib/mwan3/mwan3.sh
+
+LOG="logger -t $(basename "$0")[$$] -p"
+
+clean_up() {
+	$LOG notice "Stopping mwan3rtmon..."
+	exit 0
+}
+
+rtchange() {
+	$LOG info "Detect rtchange event."
+}
+
+main() {
+	trap clean_up TERM
+	trap rtchange USR1
+
+	sleep 3
+	while mwan3_rtmon_ipv4 || mwan3_rtmon_ipv6; do
+		sleep 5
+	done
+}
+
+main "$@"
