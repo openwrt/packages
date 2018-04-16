@@ -1,0 +1,26 @@
+From 14a8fe1f7cdef1f1e0c0842f6fedde154cf4ab57 Mon Sep 17 00:00:00 2001
+From: Moritz Warning <moritzwarning@web.de>
+Date: Thu, 12 Apr 2018 17:09:16 +0200
+Subject: [PATCH 5/5] remove -pie
+
+this prevents immediate segfault on start
+---
+ make-linux.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/make-linux.mk b/make-linux.mk
+index f5b3d8df..8589e5d6 100644
+--- a/make-linux.mk
++++ b/make-linux.mk
+@@ -67,7 +67,7 @@ else
+ 	override CFLAGS+=-Wall -fPIE -pthread $(INCLUDES) -DNDEBUG $(DEFS)
+ 	CXXFLAGS?=-O3 -fstack-protector
+ 	override CXXFLAGS+=-Wall -Wno-unused-result -Wreorder -fPIE -std=c++11 -pthread $(INCLUDES) -DNDEBUG $(DEFS)
+-	override LDFLAGS+=-pie -Wl,-z,relro,-z,now
++	override LDFLAGS+=-Wl,-z,relro,-z,now
+ 	STRIP?=strip
+ 	STRIP+=--strip-all
+ endif
+-- 
+2.16.3
+
