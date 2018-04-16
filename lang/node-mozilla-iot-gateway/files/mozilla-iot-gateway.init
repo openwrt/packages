@@ -1,0 +1,12 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+_npm=/usr/bin/npm
+
+start()
+{
+	mkdir -p /tmp/mozilla-iot/gateway/
+	cd /opt/mozilla-iot/gateway/
+	$_npm start &> /tmp/mozilla-iot/gateway/run-app.log &
+}
