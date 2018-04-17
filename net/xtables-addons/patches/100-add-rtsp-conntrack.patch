@@ -235,7 +235,7 @@
 +#endif /* _NETFILTER_MIME_H */
 --- /dev/null
 +++ b/extensions/rtsp/nf_conntrack_rtsp.c
-@@ -0,0 +1,576 @@
+@@ -0,0 +1,604 @@
 +/*
 + * RTSP extension for IP connection tracking
 + * (C) 2003 by Tom Marshall <tmarshall at real.com>
@@ -250,7 +250,10 @@
 + * 2013-03-04: Il'inykh Sergey <sergeyi at inango-sw.com>. Inango Systems Ltd
 + *	- fixed rtcp nat mapping and other port mapping fixes
 + *	- simple TEARDOWN request handling
-+ *	- codestyle fixes and other less significant bug fixes 
++ *	- codestyle fixes and other less significant bug fixes
++ * 2018-04-17: Alin Nastac <alin.nastac at gmail.com>
++ *             Hans Dedecker <dedeckeh at gmail.com>
++ *       - use IP address read from SETUP URI in expected connections
 + *
 + * based on ip_conntrack_irc.c
 + *
@@ -543,6 +546,7 @@
 +		uint transoff = 0;
 +		uint translen = 0;
 +		uint off;
++		union nf_inet_addr srvaddr;
 +		
 +		if (!rtsp_parse_message(pdata, datalen, &dataoff,
 +					&hdrsoff, &hdrslen,
@@ -558,6 +562,32 @@
 +
 +		if (strncmp(pdata+cmdoff, "SETUP ", 6) != 0)
 +			continue;   /* not a SETUP message */
++
++		srvaddr = ct->tuplehash[!dir].tuple.src.u3;
++
++		/* try to get RTP media source from SETUP URI */
++		off = cmdoff + 6;
++		while (off < datalen) {
++			if (strncmp(pdata+off, "://", 3) == 0) {
++				off += 3;
++				cmdoff = off;
++
++				while (off < datalen) {
++					if (pdata[off] == ':' ||
++					    pdata[off] == '/' ||
++					    pdata[off] == ' ') {
++						in4_pton(pdata + cmdoff,
++							 off - cmdoff,
++							 (u8 *)&srvaddr.in,
++							 -1, NULL);
++						break;
++					}
++					off++;
++				}
++				break;
++			}
++			off++;
++		}
 +
 +		pr_debug("found a setup message\n");
 +
@@ -583,8 +613,7 @@
 +		}
 +
 +		nf_ct_expect_init(rtp_exp, NF_CT_EXPECT_CLASS_DEFAULT,
-+				  nf_ct_l3num(ct),
-+				  NULL, /* &ct->tuplehash[!dir].tuple.src.u3, */
++				  nf_ct_l3num(ct), &srvaddr,
 +				  &ct->tuplehash[!dir].tuple.dst.u3,
 +				  IPPROTO_UDP, NULL, &be_loport);
 +
@@ -601,8 +630,7 @@
 +			}
 +
 +			nf_ct_expect_init(rtcp_exp, NF_CT_EXPECT_CLASS_DEFAULT,
-+					  nf_ct_l3num(ct),
-+					  NULL, /* &ct->tuplehash[!dir].tuple.src.u3, */
++					  nf_ct_l3num(ct), &srvaddr,
 +					  &ct->tuplehash[!dir].tuple.dst.u3,
 +					  IPPROTO_UDP, NULL, &be_hiport);
 +
