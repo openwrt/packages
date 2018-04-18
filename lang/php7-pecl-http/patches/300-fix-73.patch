@@ -1,0 +1,55 @@
+From 8158548a80733b3af9539356b47527d960a13287 Mon Sep 17 00:00:00 2001
+From: Michael Wallner <mike@php.net>
+Date: Thu, 1 Feb 2018 14:36:09 +0100
+Subject: [PATCH] fix #73
+
+include idna.h prior idn2.h to ensure INDA_H is defined and libidn2 does
+not try to define the idna compat layer
+---
+ src/php_http.c     | 6 +++---
+ src/php_http_url.c | 6 +++---
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/src/php_http.c b/src/php_http.c
+index 207c248..bc9166a 100644
+--- a/src/php_http.c
++++ b/src/php_http.c
+@@ -31,12 +31,12 @@
+ #if PHP_HTTP_HAVE_LIBICU
+ #	include <unicode/uversion.h>
+ #endif
+-#if PHP_HTTP_HAVE_LIBIDN2
+-#	include <idn2.h>
+-#endif
+ #if PHP_HTTP_HAVE_LIBIDN
+ #	include <idna.h>
+ #endif
++#if PHP_HTTP_HAVE_LIBIDN2
++#	include <idn2.h>
++#endif
+ #if PHP_HTTP_HAVE_LIBIDNKIT2 || PHP_HTTP_HAVE_LIBIDNKIT
+ #include "idn/version.h"
+ #endif
+diff --git a/src/php_http_url.c b/src/php_http_url.c
+index 029e6a8..361e61c 100644
+--- a/src/php_http_url.c
++++ b/src/php_http_url.c
+@@ -12,12 +12,12 @@
+ 
+ #include "php_http_api.h"
+ 
+-#if PHP_HTTP_HAVE_LIBIDN2
+-#	include <idn2.h>
+-#endif
+ #if PHP_HTTP_HAVE_LIBIDN
+ #	include <idna.h>
+ #endif
++#if PHP_HTTP_HAVE_LIBIDN2
++#	include <idn2.h>
++#endif
+ #if PHP_HTTP_HAVE_LIBICU
+ #	include <unicode/uidna.h>
+ #endif
+-- 
+2.7.4
+
