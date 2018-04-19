@@ -7,13 +7,17 @@ USE_PROCD=1
 
 pppoe_triggers() {
     local cfg="$1"
-    local interface
+    local enabled interface
+    config_get_bool enabled "$cfg" enabled 1
+    [ "$enabled" -gt 0 ] || return 0
     config_get interface "$cfg" interface
 }
 
 pppoe_instance() {
     local cfg="$1"
-    local interface ac_name service_names service_name maxsessionsperpeer localip firstremoteip maxsessions optionsfiles randomsession unit offset timeout mss sync OPTIONS
+    local enabled interface ac_name service_names service_name maxsessionsperpeer localip firstremoteip maxsessions optionsfiles randomsession unit offset timeout mss sync OPTIONS
+    config_get_bool enabled "$cfg" enabled 1
+    [ "$enabled" -gt 0 ] || return 0
     config_get interface "$cfg" interface
     config_get ac_name "$cfg" ac_name
     config_get service_names "$cfg" service_name
@@ -28,7 +32,7 @@ pppoe_instance() {
     config_get timeout "$cfg" timeout
     config_get mss "$cfg" mss
     config_get_bool sync "$cfg" sync 0
-    config_get use_non_uci_config "$cfg" use_non_uci_config 0
+    config_get_bool use_non_uci_config "$cfg" use_non_uci_config 0
 
     if [ "$use_non_uci_config" -gt 0 ]; then
 	. /etc/default/pppoe-server
