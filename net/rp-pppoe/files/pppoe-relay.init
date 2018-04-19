@@ -7,7 +7,9 @@ USE_PROCD=1
 
 pppoe_triggers() {
     local cfg="$1"
-    local interface server_interfaces client_interfaces both_interfaces
+    local enabled interface server_interfaces client_interfaces both_interfaces
+    config_get_bool enabled "$cfg" enabled 1
+    [ "$enabled" -gt 0 ] || return 0
     config_get server_interfaces "$cfg" server_interface
     config_get client_interfaces "$cfg" client_interface
     config_get both_interfaces "$cfg" both_interfaces
@@ -24,7 +26,9 @@ pppoe_triggers() {
 
 pppoe_relay_instance() {
     local cfg="$1"
-    local interface server_interfaces client_interfaces both_interfaces maxsessions timeout OPTIONS
+    local enabled interface server_interfaces client_interfaces both_interfaces maxsessions timeout OPTIONS
+    config_get_bool enabled "$cfg" enabled 1
+    [ "$enabled" -gt 0 ] || return 0
     config_get server_interfaces "$cfg" server_interface
     config_get client_interfaces "$cfg" client_interface
     config_get both_interfaces "$cfg" both_interfaces
