@@ -25,8 +25,8 @@ add_bool(){
 	local name=$2
 	local rename=$(echo "$name" | tr "_" "-")
 	config_get value $cfg $name
-	[ "$value" == "0" ] && echo "$rename = false" >> $INI
-	[ "$value" == "1" ] && echo "$rename = true" >> $INI
+	[ "$value" = "0" ] && echo "$rename = false" >> $INI
+	[ "$value" = "1" ] && echo "$rename = true" >> $INI
 }
 
 add_driver() {
@@ -44,25 +44,25 @@ add_driver() {
 	add_str $cfg send_timeout
 	add_str $cfg debug
 	#ip
-	if [ "$driver" == "ip" ] ; then
+	if [ "$driver" = "ip" ]; then
 		add_str $cfg multicast_address
 		add_str $cfg port
 	fi
-	if [ "$driver" == "ip" ] \
-	|| [ "$driver" == "usb" ] ; then
+	if [ "$driver" = "ip" \
+	-o "$driver" = "usb" ]; then
 		add_str $cfg interface
 	fi
-	if [ "$driver" == "ipt" ] \
-	|| [ "$driver" == "iptn" ] \
-	|| [ "$driver" == "tpuarttcp" ] \
-	|| [ "$driver" == "ncn5120tcp" ] \
-	|| [ "$driver" == "ft12tcp" ] \
-	|| [ "$driver" == "ft12cemitcp" ] ; then
+	if [ "$driver" = "ipt" \
+	-o "$driver" = "iptn" \
+	-o "$driver" = "tpuarttcp" \
+	-o "$driver" = "ncn5120tcp" \
+	-o "$driver" = "ft12tcp" \
+	-o "$driver" = "ft12cemitcp" ]; then
 		add_str $cfg ip_address
 		add_str $cfg dest_port
 	fi
-	if [ "$driver" == "ipt" ] \
-	|| [ "$driver" == "iptn" ] ; then
+	if [ "$driver" = "ipt" \
+	-o "$driver" = "iptn" ]; then
 		add_str $cfg src_port
 		add_bool $cfg nat
 		add_str $cfg heartbeat_timer
@@ -70,22 +70,22 @@ add_driver() {
 		add_str $cfg nat_ip
 		add_str $cfg data_port
 	fi
-	if [ "$driver" == "usb" ] \
-	|| [ "$driver" == "tpuart" ] \
-	|| [ "$driver" == "ncn5120" ] ; then
+	if [ "$driver" = "usb" \
+	-o "$driver" = "tpuart" \
+	-o "$driver" = "ncn5120" ]; then
 		add_str $cfg device
 	fi
-	if [ "$driver" == "usb" ] ; then
+	if [ "$driver" = "usb" ]; then
 		add_str $cfg bus
 		add_str $cfg config
 		add_str $cfg setting
 		add_str $cfg version
 		add_str $cfg send_retries
 	fi
-	if [ "$driver" == "tpuart" ] \
-	|| [ "$driver" == "ncn5120" ] \
-	|| [ "$driver" == "ft12" ] \
-	|| [ "$driver" == "ft12cemi" ] ; then
+	if [ "$driver" = "tpuart" \
+	-o "$driver" = "ncn5120" \
+	-o "$driver" = "ft12" \
+	-o "$driver" = "ft12cemi" ]; then
 		add_str $cfg baudrate
 	fi
 	#More common options
@@ -109,15 +109,15 @@ add_server() {
 	add_str $cfg max_retry
 	add_str $cfg send_timeout
 	add_str $cfg debug
-	if [ "$server" == "knxd_tcp" ] \
-	|| [ "$server" == "ets_router" ] ; then
+	if [ "$server" = "knxd_tcp" \
+	-o "$server" = "ets_router" ]; then
 		add_str $cfg port
 		add_str $cfg interface
 	fi
-	if [ "$server" == "knxd_tcp" ] ; then
+	if [ "$server" = "knxd_tcp" ]; then
 		add_str $cfg ip_address
 	fi
-	if [ "$server" == "ets_router" ] ; then
+	if [ "$server" = "ets_router" ]; then
 		add_str $cfg multicast_address
 		add_str $cfg tunnel
 		add_str $cfg router
@@ -125,11 +125,11 @@ add_server() {
 		add_bool $cfg multi_port
 		add_str $cfg name
 	fi
-	if [ "$server" == "knxd_unix" ] ; then
+	if [ "$server" = "knxd_unix" ]; then
 		add_str $cfg path
 	fi
-	if [ "$server" == "knxd_unix" ] \
-	|| [ "$server" == "knxd_tcp" ] ; then
+	if [ "$server" = "knxd_unix" \
+	-o "$server" = "knxd_tcp" ]; then
 		add_bool $cfg systemd_ignore
 	fi
 }
@@ -162,7 +162,7 @@ start_service() {
 	>$INI
 	config_load knxd
 	config_get cfg_source args cfg_source
-	if [ "$cfg_source" == "file" ] ; then
+	if [ "$cfg_source" = "file" ]; then
 		config_get INI args cfg_path
 	else
 		config_foreach add_driver driver
