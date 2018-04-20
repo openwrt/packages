@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnurl
 PKG_VERSION:=7.57.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnunet.org/sites/default/files
@@ -42,7 +42,7 @@ define Package/libgnurl
   $(call Package/gnurl/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libgnutls +libidn +zlib
+  DEPENDS:=+libgnutls +libidn2 +zlib
   TITLE:=A client-side HTTP/HTTPS transfer library
 endef
 
