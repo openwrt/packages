@@ -1,0 +1,25 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2009-2018 OpenWrt.org
+
+START=99
+STOP=80
+
+SERVICE_USE_PID=1
+
+NUSTER_BIN="/usr/sbin/nuster"
+NUSTER_CONFIG="/etc/nuster.cfg"
+NUSTER_PID="/var/run/nuster.pid"
+
+start() {
+	service_start $NUSTER_BIN -q -D -f "$NUSTER_CONFIG" -p "$NUSTER_PID"
+}
+
+stop() {
+	kill -9 $(cat $NUSTER_PID | tr "\n" " ")
+	service_stop $NUSTER_BIN
+}
+
+reload() {
+	$NUSTER_BIN -D -q -f $NUSTER_CONFIG -p $NUSTER_PID -sf $(cat $NUSTER_PID | tr "\n" " ")	
+	#$NUSTER_BIN -D -q -f $NUSTER_CONFIG -p $NUSTER_PID -sf $(cat $NUSTER_PID)
+}

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [ "$ACTION" = add ]; then
+
+	/etc/init.d/nuster enabled && \
+		/etc/init.d/nuster start
+fi
+
