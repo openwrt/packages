@@ -25,5 +25,5 @@ while true; do
     killall -HUP dnsmasq
 
     # block until originators changes
-    inotifywait -e create -e delete -q /var/run/bmx7/json/originators/
+    inotifywait -e create -e delete -q /var/run/bmx7/json/originators/ || sleep 10
 done
