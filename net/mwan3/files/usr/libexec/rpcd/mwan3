@@ -66,6 +66,8 @@ get_mwan3_status() {
 				json_add_object
 				json_add_string ip "${track}"
 				json_add_string status "$(cat "${file}")"
+				json_add_int latency "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LATENCY_${track}")"
+				json_add_int packetloss "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LOSS_${track}")"
 				json_close_object
 			fi
 		done
