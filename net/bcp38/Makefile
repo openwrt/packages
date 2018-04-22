@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bcp38
 PKG_VERSION:=5
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_LICENCE:=GPL-3.0+
 
 include $(INCLUDE_DIR)/package.mk
@@ -50,6 +50,8 @@ define Package/bcp38/install
 	$(INSTALL_BIN) ./files/run.sh $(1)/usr/lib/bcp38/run.sh
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/bcp38.defaults $(1)/etc/uci-defaults/bcp38
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/bcp38.init $(1)/etc/init.d/bcp38
 endef
 
 define Package/bcp38/postinst

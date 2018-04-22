@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=getdns
 PKG_VERSION:=1.4.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -22,7 +22,7 @@ PKG_INSTALL:=1
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_GETDNS_ENABLE_STUB_ONLY \
-	CONFIG_GETDNS_ENABLE_IDN_LIBIDN 
+	CONFIG_GETDNS_ENABLE_IDN_LIBIDN2 
 	
 include $(INCLUDE_DIR)/package.mk
 
@@ -36,7 +36,7 @@ define Package/getdns
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE+= (library)
-	DEPENDS+= +libopenssl +!GETDNS_ENABLE_STUB_ONLY:libunbound +GETDNS_ENABLE_IDN_LIBIDN:libidn
+	DEPENDS+= +libopenssl +!GETDNS_ENABLE_STUB_ONLY:libunbound +GETDNS_ENABLE_IDN_LIBIDN2:libidn2
 	MENU:=1
 endef
 
@@ -51,8 +51,8 @@ endef
 
 CONFIGURE_ARGS += \
 		$(if $(CONFIG_GETDNS_ENABLE_STUB_ONLY), --enable-stub-only, ) \
-		$(if $(CONFIG_GETDNS_ENABLE_IDN_LIBIDN), , --without-libidn ) \
-		--without-libidn2 \
+		--without-libidn \
+		$(if $(CONFIG_GETDNS_ENABLE_IDN_LIBIDN2), , --without-libidn2 ) \
 		--with-ssl="$(STAGING_DIR)/usr" \
 
 define Build/InstallDev

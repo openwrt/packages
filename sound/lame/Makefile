@@ -63,8 +63,7 @@ TARGET_CFLAGS+=-msse
 endif
 
 ifeq ($(CONFIG_LAME-LIB_OPTIMIZE_SPEED),y)
-	TARGET_CFLAGS += $(TARGET_CFLAGS) -O3 -ffast-math
-	TARGET_CFLAGS := $(filter-out -Os,$(TARGET_CFLAGS))
+	TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS)) -O3 -ffast-math
 endif
 
 CONFIGURE_ARGS += --disable-gtktest --disable-static

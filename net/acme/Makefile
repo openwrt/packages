@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acme
-PKG_SOURCE_VERSION:=db3264ab8c8ee1aee1a84407702db4375f67765b
-PKG_VERSION:=1.6
-PKG_RELEASE:=4
+PKG_VERSION:=2.7.8
+PKG_RELEASE:=2
 PKG_LICENSE:=GPLv3
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE).tar.xz
-PKG_MIRROR_HASH:=a881b86fef2b754739fc0024efdf061312fecaf613502434770b18191bda741d
-PKG_SOURCE_URL:=git://github.com/Neilpang/acme.sh.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE)
-PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE)
+PKG_SOURCE_URL:=https://github.com/Neilpang/acme.sh
+PKG_SOURCE_VERSION:=521d8c4b1f374c52ab1452d399a4d4910465e9fe
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE).tar.xz
+PKG_MIRROR_HASH:=03e24eb41513b4d28dc42f5ae5c91be0030094149cbdbf9cdf9b6f87db9e36c0
+PKG_MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
+
 LUCI_DIR:=/usr/lib/lua/luci
 
 include $(INCLUDE_DIR)/package.mk
@@ -28,8 +28,6 @@ define Package/acme
   CATEGORY:=Network
   DEPENDS:=+curl +ca-bundle +openssl-util +netcat
   TITLE:=ACME (Letsencrypt) client
-  PKGARCH:=all
-  MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
 endef
 
 define Package/acme/description
@@ -58,12 +56,26 @@ define Package/acme/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/acme.sh $(1)/usr/lib/acme/acme.sh
 endef
 
+define Package/acme-dnsapi
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=+acme
+  TITLE:=DNS API integration for ACME (Letsencrypt) client
+endef
+
+define Package/acme-dnsapi/description
+ This package provides DNS API integration for ACME (Letsencrypt) client.
+endef
+
+define Package/acme-dnsapi/install
+	$(INSTALL_DIR) $(1)/usr/lib/acme/dnsapi
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/dnsapi/*.sh $(1)/usr/lib/acme/dnsapi
+endef
+
 define Package/luci-app-acme
   SECTION:=luci
   CATEGORY:=LuCI
   TITLE:=ACME package - LuCI interface
-  MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
-  PKGARCH:=all
   DEPENDS:= lua luci-base +acme luci-app-uhttpd
   SUBMENU:=3. Applications
 endef
@@ -97,4 +109,5 @@ endef
 
 
 $(eval $(call BuildPackage,acme))
+$(eval $(call BuildPackage,acme-dnsapi))
 $(eval $(call BuildPackage,luci-app-acme))
