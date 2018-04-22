@@ -86,6 +86,11 @@ main() {
 	config_get failure_interval $1 failure_interval $interval
 	config_get_bool keep_failure_interval $1 keep_failure_interval 0
 	config_get recovery_interval $1 recovery_interval $interval
+	config_get_bool check_quality $1 check_quality 0
+	config_get failure_latency $1 failure_latency 1000
+	config_get recovery_latency $1 recovery_latency 500
+	config_get failure_loss $1 failure_loss 40
+	config_get recovery_loss $1 recovery_loss 10
 
 	local score=$(($down+$up))
 	local track_ips=$(echo $* | cut -d ' ' -f 5-99)
@@ -93,6 +98,10 @@ main() {
 	local lost=0
 	local sleep_time=0
 	local turn=0
+	local result
+	local ping_result
+	local loss=0
+	local latency=0
 
 	if [ "$STATUS" = "unknown" ]; then
 		echo "unknown" > /var/run/mwan3track/$1/STATUS
@@ -109,23 +118,64 @@ main() {
 			if [ $host_up_count -lt $reliability ]; then
 				case "$track_method" in
 					ping)
-						ping -I $DEVICE -c $count -W $timeout -s $size -q $track_ip &> /dev/null ;;
+							if [ $check_quality -eq 0 ]; then
+								ping -I $DEVICE -c $count -W $timeout -s $size -q $track_ip &> /dev/null
+								result=$?
+								$LOG info "ping check result $track_ip on $1 ($2): $result"
+							else
+								ping_result=`ping -I $DEVICE -c $count -W $timeout -s $size -q $track_ip | tail -2`
+								loss=`echo "$ping_result" | grep "packet loss" |  cut -d "," -f3 | awk '{print $1}' | sed -e 's/%//'`
+								if [ "$loss" -eq 100 ]; then
+									latency=999999
+								else
+									latency=`echo "$ping_result" | grep -E 'rtt|round-trip' | cut -d "=" -f2 | cut -d "/" -f2 | cut -d "." -f1`
+								fi	
+							fi
+					;;
 					arping)
-						arping -I $DEVICE -c $count -w $timeout -q $track_ip &> /dev/null ;;
+						arping -I $DEVICE -c $count -w $timeout -q $track_ip &> /dev/null
+						result=$?
+					;;
 					httping)
-						httping -y $SRC_IP -c $count -t $timeout -q $track_ip &> /dev/null ;;
+						httping -y $SRC_IP -c $count -t $timeout -q $track_ip &> /dev/null
+						result=$?
+					;;
 				esac
-				if [ $? -eq 0 ]; then
-					let host_up_count++
-					echo "up" > /var/run/mwan3track/$1/TRACK_${track_ip}
-					if [ $score -le $up ]; then
-						$LOG info "Check ($track_method) success for target \"$track_ip\" on interface $1 ($2)"
+				if [ $check_quality -eq 0 ]; then
+					if [ $result -eq 0 ]; then
+						let host_up_count++
+						echo "up" > /var/run/mwan3track/$1/TRACK_${track_ip}
+						if [ $score -le $up ]; then
+							$LOG info "Check ($track_method) success for target \"$track_ip\" on interface $1 ($2)"
+						fi
+					else
+						let lost++
+						echo "down" > /var/run/mwan3track/$1/TRACK_${track_ip}
+						if [ $score -gt $up ]; then
+							$LOG info "Check ($track_method) failed for target \"$track_ip\" on interface $1 ($2)"
+						fi
 					fi
 				else
-					let lost++
-					echo "down" > /var/run/mwan3track/$1/TRACK_${track_ip}
-					if [ $score -gt $up ]; then
-						$LOG info "Check ($track_method) failed for target \"$track_ip\" on interface $1 ($2)"
+					if [ "$loss" -ge "$failure_loss" -o "$latency" -ge "$failure_latency" ]; then
+						let lost++
+						echo "down" > /var/run/mwan3track/$1/TRACK_${track_ip}
+						echo "$latency" > /var/run/mwan3track/$1/LATENCY_${track_ip}
+						echo "$loss" > /var/run/mwan3track/$1/LOSS_${track_ip}
+
+						if [ $score -gt $up ]; then
+							$LOG info "Failed: Latency=$latency ms Loss=$loss% for target \"$track_ip\" on interface $1 ($2)"
+						fi
+					elif [ "$loss" -le "$recovery_loss" -a "$latency" -le "$recovery_latency" ]; then
+						let host_up_count++
+						echo "up" > /var/run/mwan3track/$1/TRACK_${track_ip}
+						echo "$latency" > /var/run/mwan3track/$1/LATENCY_${track_ip}
+						echo "$loss" > /var/run/mwan3track/$1/LOSS_${track_ip}
+
+						if [ $score -le $up ]; then
+							$LOG info "Success: Latency=$latency ms Loss=$loss% for target \"$track_ip\" on interface $1 ($2)"
+						fi
+					else
+						echo "skipped" > /var/run/mwan3track/$1/TRACK_${track_ip}
 					fi
 				fi
 			else
