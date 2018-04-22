@@ -1,0 +1,25 @@
+From b2f2558fdbc05e5c9554bdff24f2f162a230220c Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Wed, 25 Apr 2018 16:09:18 -0700
+Subject: [PATCH] Fix Travis
+
+---
+ src/besside-ng-crawler.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/besside-ng-crawler.c b/src/besside-ng-crawler.c
+index 4ef3761..44b77c0 100644
+--- a/src/besside-ng-crawler.c
++++ b/src/besside-ng-crawler.c
+@@ -30,7 +30,7 @@
+  *  files in the program, then also delete it here.
+  */
+ 
+-#include <stdio.h>
++//#include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+ #include <inttypes.h>
+-- 
+2.7.4
+

@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aircrack-ng
-PKG_VERSION:=1.2-rc1
-PKG_RELEASE:=2
+PKG_VERSION:=1.2
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://download.aircrack-ng.org/ \
-		http://archive.aircrack-ng.org/aircrack-ng/$(PKG_VERSION)/
-PKG_HASH:=cf3134521e1c3d7aed4e384e3e5e7b6959e2d485bd1554474608a3a9328e35fd
+PKG_SOURCE_URL:=https://download.aircrack-ng.org
+PKG_HASH:=794ffed5400f35cb78f3466eabb47546f050e0ac35287c174acce60763a0fa7c
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 PKG_MAINTAINER:=Rick Farina <zerochaos@gentoo.org>
 
@@ -51,13 +51,10 @@ define Package/airmon-ng/description
   Bash script designed to turn wireless cards into monitor mode.
 endef
 
-TARGET_CFLAGS += -std=gnu89
-
-MAKE_FLAGS += prefix=/usr \
-	libnl=true \
-	sqlite=false \
-	unstable=false \
-	OSNAME=Linux
+CONFIGURE_ARGS += \
+	--with-gnu-ld \
+	--without-sqlite3 \
+	--without-opt
 
 define Package/aircrack-ng/install
 	$(INSTALL_DIR) $(1)/usr/bin
