@@ -164,7 +164,7 @@ main() {
 						echo "$loss" > /var/run/mwan3track/$1/LOSS_${track_ip}
 
 						if [ $score -le $up ]; then
-							$LOG info "Failed: Latency=$latency ms Loss=$loss% for target \"$track_ip\" on interface $1 ($2)"
+							$LOG info "Failure ($track_method): Latency=$latency ms Loss=$loss% for target \"$track_ip\" on interface $1 ($2)"
 						fi
 					elif [ "$loss" -le "$min_loss" -a "$latency" -le "$min_latency" ]; then
 						let host_up_count++
@@ -173,7 +173,7 @@ main() {
 						echo "$loss" > /var/run/mwan3track/$1/LOSS_${track_ip}
 
 						if [ $score -gt $up ]; then
-							$LOG info "Success: Latency=$latency ms Loss=$loss% for target \"$track_ip\" on interface $1 ($2)"
+							$LOG info "Success ($track_method): Latency=$latency ms Loss=$loss% for target \"$track_ip\" on interface $1 ($2)"
 						fi
 					else
 						echo "skipped" > /var/run/mwan3track/$1/TRACK_${track_ip}
