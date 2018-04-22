@@ -160,12 +160,18 @@ main() {
 					if [ "$loss" -ge "$max_loss" -o "$latency" -ge "$max_latency" ]; then
 						let lost++
 						echo "down" > /var/run/mwan3track/$1/TRACK_${track_ip}
+						echo "$latency" > /var/run/mwan3track/$1/LATENCY_${track_ip}
+						echo "$loss" > /var/run/mwan3track/$1/LOSS_${track_ip}
+
 						if [ $score -le $up ]; then
 							$LOG info "Failed: Latency=$latency ms Loss=$loss% for target \"$track_ip\" on interface $1 ($2)"
 						fi
 					elif [ "$loss" -le "$min_loss" -a "$latency" -le "$min_latency" ]; then
 						let host_up_count++
 						echo "up" > /var/run/mwan3track/$1/TRACK_${track_ip}
+						echo "$latency" > /var/run/mwan3track/$1/LATENCY_${track_ip}
+						echo "$loss" > /var/run/mwan3track/$1/LOSS_${track_ip}
+
 						if [ $score -gt $up ]; then
 							$LOG info "Success: Latency=$latency ms Loss=$loss% for target \"$track_ip\" on interface $1 ($2)"
 						fi
