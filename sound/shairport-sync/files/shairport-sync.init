@@ -126,6 +126,9 @@ start_instance() {
 	procd_set_param command /usr/bin/shairport-sync
 	procd_append_param command -c $conf_file
 
+	config_get aux "$cfg" 'alsa_mixer_index' '0'
+	[ $conf_custom -ne 1 ] && [ "$aux" -gt 0 ] && procd_append_param command -- -i $aux
+
 	config_get_bool aux "$cfg" 'respawn' '0'
 	[ "$aux" = 1 ] && procd_set_param respawn
 
