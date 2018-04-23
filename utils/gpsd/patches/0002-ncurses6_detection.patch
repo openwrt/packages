@@ -2,10 +2,10 @@ Index: gpsd-3.16/SConstruct
 ===================================================================
 --- gpsd-3.16.orig/SConstruct
 +++ gpsd-3.16/SConstruct
-@@ -543,6 +543,10 @@ else:
-             ncurseslibs = pkg_config('ncurses')
- 	    if config.CheckPKG('tinfo'):
- 		ncurseslibs += pkg_config('tinfo')
+@@ -672,6 +672,10 @@ else:
+                 ncurseslibs += pkg_config('tinfo', rpath_hack=True)
+         # It's not yet known whether rpath_hack is appropriate for
+         # ncurses5-config.
 +        elif WhereIs('ncurses6-config'):
 +            ncurseslibs = ['!ncurses6-config --libs --cflags']
 +        elif WhereIs('ncursesw6-config'):
