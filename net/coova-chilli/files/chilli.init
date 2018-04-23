@@ -55,7 +55,6 @@ stop() {
     ls /var/run/chilli*.pid 2>/dev/null && {
        kill $(cat /var/run/chilli*.pid)
        sleep 1
-       killall -9 chilli
        rm -f /var/run/chilli*
     }
 }
