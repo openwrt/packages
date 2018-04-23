@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=3.2.10
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
@@ -345,7 +345,8 @@ $(call Package/libffmpeg/Default)
  ifeq ($(CONFIG_SOFT_FLOAT),y)
 	DEPENDS+= +PACKAGE_shine:shine
  else
-	DEPENDS+= +PACKAGE_lame-lib:lame-lib +PACKAGE_libx264:libx264
+	DEPENDS+= +PACKAGE_lame-lib:lame-lib +PACKAGE_libx264:libx264 +PACKAGE_fdk-aac:fdk-aac
+
  endif
  VARIANT:=full
 endef
@@ -473,10 +474,16 @@ ifeq ($(BUILD_VARIANT),full)
 	else
 		FFMPEG_CONFIGURE+= --enable-small
 	endif
-	FFMPEG_CONFIGURE+= \
-		--enable-gpl \
-		$(if $(CONFIG_PACKAGE_lame-lib),--enable-libmp3lame) \
-		$(if $(CONFIG_PACKAGE_libx264),--enable-libx264)
+	FFMPEG_CONFIGURE+= $(if $(CONFIG_PACKAGE_lame-lib),--enable-libmp3lame)
+	# x264 support and fdk-aac support can't coexist and be distributed.
+	# Prioritize x264 over fdk-aac in default builds (maintain status-quo).
+	ifeq ($(CONFIG_PACKAGE_libx264),y)
+		FFMPEG_CONFIGURE+= \
+			--enable-gpl \
+			--enable-libx264
+	else
+		FFMPEG_CONFIGURE+= $(if $(CONFIG_PACKAGE_fdk-aac),--enable-libfdk-aac)
+	endif
   endif
 endif
 
@@ -625,7 +632,7 @@ define Build/InstallDev/custom
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib{avcodec,avdevice,avformat,avutil}.pc $(1)/usr/lib/pkgconfig/
 endef
 
-# Soft float is LGPL (no libpostproc); Hard float is GPL (yes libpostproc)
+# Only ffmpeg with libx264 is GPL (yes libpostproc); all other builds are lgpl (no libpostproc)
 define Build/InstallDev/full
 	$(INSTALL_DIR) $(1)/usr/include
 	$(INSTALL_DIR) $(1)/usr/lib
@@ -633,7 +640,7 @@ define Build/InstallDev/full
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/lib{avcodec,avdevice,avfilter,avformat,avresample,avutil,swresample,swscale} $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avresample,avutil,swresample,swscale}.{a,so*} $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib{avcodec,avdevice,avfilter,avformat,avresample,avutil,swresample,swscale}.pc $(1)/usr/lib/pkgconfig/
-ifneq ($(CONFIG_SOFT_FLOAT),y)
+ifeq ($(CONFIG_PACKAGE_libx264),y)
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libpostproc $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpostproc.{a,so*} $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libpostproc.pc $(1)/usr/lib/pkgconfig/
@@ -695,11 +702,11 @@ define Package/libffmpeg-custom/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avformat,avutil}.so.* $(1)/usr/lib/
 endef
 
-# Soft float is LGPL (no libpostproc); Hard float is GPL (yes libpostproc)
+# Only ffmpeg with libx264 is GPL (yes libpostproc); all other builds are lgpl (no libpostproc)
 define Package/libffmpeg-full/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avresample,avutil,swresample,swscale}.so.* $(1)/usr/lib/
-ifneq ($(CONFIG_SOFT_FLOAT),y)
+ifeq ($(CONFIG_PACKAGE_libx264),y)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpostproc.so.* $(1)/usr/lib/
 endif
 endef
