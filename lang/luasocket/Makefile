@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=luasocket
 PKG_SOURCE_VERSION:=6d5e40c324c84d9c1453ae88e0ad5bdd0a631448
 PKG_VERSION:=3.0-rc1-20130909
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/diegonehab/luasocket.git
