@@ -268,7 +268,8 @@ define PyPackage/python/filespec
 endef
 
 HOST_LDFLAGS += \
-	$$$$(pkg-config --static --libs libcrypto libssl)
+	$$$$(pkg-config --static --libs libcrypto libssl) \
+	-lz
 
 ifeq ($(HOST_OS),Linux)
 HOST_LDFLAGS += \
