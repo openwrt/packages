@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
-PKG_VERSION:=1.4.45
-PKG_RELEASE:=3
+PKG_VERSION:=1.4.48
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://download.lighttpd.net/lighttpd/releases-1.4.x
-PKG_MD5SUM:=a128e1eda76899ce3fd115efae5fe631
+PKG_MD5SUM:=1e3a9eb5078f481e3a8a1d0aaac8c3c8
 
 PKG_LICENSE:=BSD-3c
 PKG_LICENSE_FILES:=COPYING
@@ -185,4 +185,4 @@ $(eval $(call BuildPlugin,status,Server status display,,30))
 $(eval $(call BuildPlugin,userdir,User directory,,30))
 $(eval $(call BuildPlugin,usertrack,User tracking,,30))
 $(eval $(call BuildPlugin,webdav,WebDAV,+PACKAGE_lighttpd-mod-webdav:libsqlite3 +PACKAGE_lighttpd-mod-webdav:libuuid +PACKAGE_lighttpd-mod-webdav:libxml2,30))
-
+$(eval $(call BuildPlugin,wstunnel,Websocket tunneling,,30))
