@@ -23,6 +23,13 @@ TARGET_LANGUAGES:="c,c++"
 BUGURL=https://dev.openwrt.org/
 PKGVERSION=OpenWrt GCC $(PKG_VERSION)
 
+# this flag needs to be prepended, so I'll add it to CXX
+TARGET_CXX+= -std=gnu++03
+TARGET_CPPFLAGS+= -D_GLIBCXX_INCLUDE_NEXT_C_HEADERS
+CONFIGURE_ARGS+= \
+	CXX_FOR_TARGET="$(TARGET_CXX)" \
+	CXXFLAGS_FOR_TARGET="-g -O2 -D_GLIBCXX_INCLUDE_NEXT_C_HEADERS"
+
 # not using sstrip here as this fucks up the .so's somehow
 STRIP:=$(TOOLCHAIN_DIR)/bin/$(TARGET_CROSS)strip
 RSTRIP:= \
