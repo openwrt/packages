@@ -1,0 +1,11 @@
+--- a/include/my_context.h   2017-09-09 12:03:19.159007527 +0300
++++ b/include/my_context.h   2017-09-09 12:04:48.101508363 +0300
+@@ -31,8 +31,6 @@
+ #define MY_CONTEXT_USE_X86_64_GCC_ASM
+ #elif defined(__GNUC__) && __GNUC__ >= 3 && defined(__i386__)
+ #define MY_CONTEXT_USE_I386_GCC_ASM
+-#elif defined(HAVE_UCONTEXT_H)
+-#define MY_CONTEXT_USE_UCONTEXT
+ #else
+ #define MY_CONTEXT_DISABLE
+ #endif

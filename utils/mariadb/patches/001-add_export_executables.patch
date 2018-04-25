@@ -1,0 +1,100 @@
+From cdc38712e4d359348346758e47e1ebc7d1743f82 Mon Sep 17 00:00:00 2001
+From: James Le Cuirot <chewi@aura-online.co.uk>
+Date: Sun, 27 Apr 2014 00:02:19 +0100
+Subject: [PATCH] MySQL Bug #61340: Use CMake EXPORT feature to aid
+ cross-compiling.
+
+This technique is documented at:
+http://www.cmake.org/Wiki/CMake_Cross_Compiling#Using_executables_in_the_build_created_during_the_build
+
+Basic steps are:
+# mkdir native cross
+# cd native
+# cmake /path/to/maria
+# make IMPORT_EXECUTABLES
+# cd ../cross
+# cmake -DCMAKE_TOOLCHAIN_FILE=foo -DIMPORT_EXECUTABLES=/path/to/native/import_executables.cmake /path/to/maria
+# make
+---
+ CMakeLists.txt      | 10 ++++++++++
+ dbug/CMakeLists.txt | 16 +++++++++-------
+ sql/CMakeLists.txt  |  4 +++-
+ 3 files changed, 22 insertions(+), 8 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index f8ebddc..20067ad 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -364,6 +364,11 @@ ELSEIF(MYSQL_MAINTAINER_MODE MATCHES "AUTO")
+   SET(CMAKE_CXX_FLAGS_DEBUG "${MY_MAINTAINER_CXX_WARNINGS} ${CMAKE_CXX_FLAGS_DEBUG}")
+ ENDIF()
+ 
++IF(CMAKE_CROSSCOMPILING)
++  SET(IMPORT_EXECUTABLES "IMPORT_EXECUTABLES_NOT_SET" CACHE FILEPATH "Path to import_executables.cmake from a native build")
++  INCLUDE(${IMPORT_EXECUTABLES})
++ENDIF()
++
+ IF(WITH_UNIT_TESTS)
+  ENABLE_TESTING()
+  ADD_SUBDIRECTORY(unittest/mytap)
+@@ -428,6 +433,11 @@ IF(WIN32)
+ ENDIF()
+ ADD_SUBDIRECTORY(packaging/solaris)
+ 
++IF(NOT CMAKE_CROSSCOMPILING)
++  ADD_CUSTOM_TARGET(IMPORT_EXECUTABLES DEPENDS comp_err comp_sql factorial gen_lex_hash)
++  EXPORT(TARGETS comp_err comp_sql factorial gen_lex_hash FILE ${CMAKE_BINARY_DIR}/import_executables.cmake)
++ENDIF()
++
+ CONFIGURE_FILE(config.h.cmake   ${CMAKE_BINARY_DIR}/include/my_config.h)
+ CONFIGURE_FILE(config.h.cmake   ${CMAKE_BINARY_DIR}/include/config.h)
+ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/include/mysql_version.h.in
+diff --git a/dbug/CMakeLists.txt b/dbug/CMakeLists.txt
+index fddf234..bc4288c 100644
+--- a/dbug/CMakeLists.txt
++++ b/dbug/CMakeLists.txt
+@@ -24,8 +24,10 @@ TARGET_LINK_LIBRARIES(dbug mysys)
+ ADD_EXECUTABLE(tests tests.c)
+ TARGET_LINK_LIBRARIES(tests dbug)
+ 
+-ADD_EXECUTABLE(factorial my_main.c factorial.c)
+-TARGET_LINK_LIBRARIES(factorial dbug)
++IF(NOT CMAKE_CROSSCOMPILING)
++  ADD_EXECUTABLE(factorial my_main.c factorial.c)
++  TARGET_LINK_LIBRARIES(factorial dbug)
++ENDIF()
+ 
+ IF(NOT WIN32 AND NOT CMAKE_GENERATOR MATCHES Xcode)
+   FIND_PROGRAM(GROFF groff)
+@@ -36,11 +38,11 @@ IF(NOT WIN32 AND NOT CMAKE_GENERATOR MATCHES Xcode)
+   SET(SOURCE_INC factorial.r main.r example1.r example2.r example3.r)
+   ADD_CUSTOM_COMMAND(OUTPUT ${OUTPUT_INC}
+                      DEPENDS factorial
+-                     COMMAND ./factorial 1 2 3 4 5 > output1.r
+-                     COMMAND ./factorial -\#t:o 2 3 > output2.r
+-                     COMMAND ./factorial -\#d:t:o 3 > output3.r
+-                     COMMAND ./factorial -\#d,result:o 4 > output4.r
+-                     COMMAND ./factorial -\#d:f,factorial:F:L:o 3 > output5.r)
++                     COMMAND factorial 1 2 3 4 5 > output1.r
++                     COMMAND factorial -\#t:o 2 3 > output2.r
++                     COMMAND factorial -\#d:t:o 3 > output3.r
++                     COMMAND factorial -\#d,result:o 4 > output4.r
++                     COMMAND factorial -\#d:f,factorial:F:L:o 3 > output5.r)
+   FOREACH(file ${SOURCE_INC})
+     STRING(REGEX REPLACE "\\.r" ".c" srcfile ${file})
+     ADD_CUSTOM_COMMAND(OUTPUT ${file} DEPENDS ${srcfile}
+diff --git a/sql/CMakeLists.txt b/sql/CMakeLists.txt
+index ad4b128..7d2b329 100644
+--- a/sql/CMakeLists.txt
++++ b/sql/CMakeLists.txt
+@@ -218,7 +218,9 @@ RUN_BISON(
+ )
+ 
+ # Gen_lex_hash
+-ADD_EXECUTABLE(gen_lex_hash gen_lex_hash.cc)
++IF(NOT CMAKE_CROSSCOMPILING)
++  ADD_EXECUTABLE(gen_lex_hash gen_lex_hash.cc)
++ENDIF()
+ 
+ ADD_CUSTOM_COMMAND(
+   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lex_hash.h
