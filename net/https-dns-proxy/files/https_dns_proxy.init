@@ -15,6 +15,7 @@ start_instance() {
 	config_get group "$cfg" group
 	config_get subnet_addr "$cfg" subnet_addr
 	config_get proxy_server "$cfg" proxy_server
+	config_get url_prefix "$cfg" url_prefix
 
 	if [ -n "$subnet_addr" ]; then
 		subnet_param="-e $subnet_addr"
@@ -24,10 +25,15 @@ start_instance() {
 		proxy_param="-t $proxy_server"
 	fi
 
+	if [ -z "$url_prefix" ]; then
+		url_prefix="https://dns.google.com/resolve?"
+	fi
+
 	procd_open_instance
 	procd_set_param command ${PROG} \
 		-a "$listen_addr" -p "$listen_port" \
-		-u "$user" -g "$group" $subnet_param $proxy_param
+		-u "$user" -g "$group" $subnet_param $proxy_param \
+		-r "$url_prefix"
 	procd_set_param respawn
 	procd_close_instance
 }
