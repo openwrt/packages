@@ -1,0 +1,47 @@
+Index: libyang-0.14.53-2698bd6484526facbf82b1263810b938b82a2f23/src/extensions.c
+===================================================================
+--- libyang-0.14.53-2698bd6484526facbf82b1263810b938b82a2f23.orig/src/extensions.c
++++ libyang-0.14.53-2698bd6484526facbf82b1263810b938b82a2f23/src/extensions.c
+@@ -123,11 +123,14 @@ lyext_load_plugins(void)
+ 
+         /* and construct the filepath */
+         asprintf(&str, "%s/%s", pluginsdir, file->d_name);
+-
+-        /* load the plugin - first, try if it is already loaded... */
+-        dlhandler = dlopen(str, RTLD_NOW | RTLD_NOLOAD);
+-        dlerror();    /* Clear any existing error */
+-        if (dlhandler) {
++        /* load the plugin */
++        dlhandler = dlopen(str, RTLD_NOW);
++        if (!dlhandler) {
++            LOGERR(LY_ESYS, "Loading \"%s\" as a plugin failed (%s).", str, dlerror());
++            free(str);
++            continue;
++        }
++        if (ly_set_contains(&dlhandlers, dlhandler) != -1) {
+             /* the plugin is already loaded */
+             LOGVRB("Extension plugin \"%s\" already loaded.", str);
+             free(str);
+@@ -137,14 +140,6 @@ lyext_load_plugins(void)
+             continue;
+         }
+ 
+-        /* ... and if not, load it */
+-        dlhandler = dlopen(str, RTLD_NOW);
+-        if (!dlhandler) {
+-            LOGERR(LY_ESYS, "Loading \"%s\" as an extension plugin failed (%s).", str, dlerror());
+-            free(str);
+-            continue;
+-        }
+-        LOGVRB("Extension plugin \"%s\" successfully loaded.", str);
+         free(str);
+         dlerror();    /* Clear any existing error */
+ 
+@@ -156,6 +151,7 @@ lyext_load_plugins(void)
+             dlclose(dlhandler);
+             continue;
+         }
++        LOGVRB("Plugin \"%s\" successfully loaded.", str)
+ 
+         for(u = 0; plugin[u].name; u++) {
+             /* check extension implementations for collisions */
