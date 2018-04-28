@@ -1,0 +1,11 @@
+--- a/cmake/pcre.cmake
++++ b/cmake/pcre.cmake
+@@ -14,6 +14,8 @@ MACRO (CHECK_PCRE)
+         return -pcre_exec(NULL, NULL, NULL, -999, -999, 0, NULL, 0) < 256;
+         }"  PCRE_STACK_SIZE_OK)
+       SET(CMAKE_REQUIRED_LIBRARIES)
++    ELSE()
++      SET(PCRE_STACK_SIZE_OK TRUE)
+     ENDIF()
+   ENDIF()
+   IF(NOT HAVE_PCRE_STACK_GUARD OR NOT PCRE_STACK_SIZE_OK OR

@@ -1,7 +1,7 @@
 --- a/scripts/mysql_install_db.sh
 +++ b/scripts/mysql_install_db.sh
-@@ -322,7 +322,7 @@ then
- fi
+@@ -379,7 +379,7 @@ fi
+ 
  
  # Try to determine the hostname
 -hostname=`@HOSTNAME@`
