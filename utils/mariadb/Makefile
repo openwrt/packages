@@ -24,7 +24,8 @@ PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 HOST_BUILD_DEPENDS:=libxml2/host
-PKG_BUILD_DEPENDS:=mariadb/host
+# Without libevent2 tests/async_queries sporadically fails on the bots
+PKG_BUILD_DEPENDS:=libevent2 mariadb/host
 
 CMAKE_INSTALL:=1
 
