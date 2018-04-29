@@ -1,0 +1,87 @@
+commit e0f6d4a4e8696140d1fcff812fb287d534d702e9
+Author: Tim Duesterhus <tim@bastelstu.be>
+Date:   Tue Apr 24 19:20:43 2018 +0200
+
+    BUG/MAJOR: channel: Fix crash when trying to read from a closed socket
+    
+    When haproxy is compiled using GCC <= 3.x or >= 5.x the `unlikely`
+    macro performs a comparison with zero: `(x) != 0`, thus returning
+    either 0 or 1.
+    
+    In `int co_getline_nc()` this macro was accidentally applied to
+    the variable `retcode` itself, instead of the result of the
+    comparison `retcode <= 0`. As a result any negative `retcode`
+    is converted to `1` for purposes of the comparison.
+    Thus never taking the branch (and exiting the function) for
+    negative values.
+    
+    This in turn leads to reads of uninitialized memory in the for-loop
+    below:
+    
+      ==12141== Conditional jump or move depends on uninitialised value(s)
+      ==12141==    at 0x4EB6B4: co_getline_nc (channel.c:346)
+      ==12141==    by 0x421CA4: hlua_socket_receive_yield (hlua.c:1713)
+      ==12141==    by 0x421F6F: hlua_socket_receive (hlua.c:1896)
+      ==12141==    by 0x529B08F: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x52A7EFC: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x529B497: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x529711A: lua_pcallk (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x52ABDF0: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x529B08F: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x52A7EFC: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x529A9F1: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x529B523: lua_resume (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==
+      ==12141== Use of uninitialised value of size 8
+      ==12141==    at 0x4EB6B9: co_getline_nc (channel.c:346)
+      ==12141==    by 0x421CA4: hlua_socket_receive_yield (hlua.c:1713)
+      ==12141==    by 0x421F6F: hlua_socket_receive (hlua.c:1896)
+      ==12141==    by 0x529B08F: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x52A7EFC: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x529B497: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x529711A: lua_pcallk (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x52ABDF0: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x529B08F: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x52A7EFC: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x529A9F1: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x529B523: lua_resume (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==
+      ==12141== Invalid read of size 1
+      ==12141==    at 0x4EB6B9: co_getline_nc (channel.c:346)
+      ==12141==    by 0x421CA4: hlua_socket_receive_yield (hlua.c:1713)
+      ==12141==    by 0x421F6F: hlua_socket_receive (hlua.c:1896)
+      ==12141==    by 0x529B08F: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x52A7EFC: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x529B497: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x529711A: lua_pcallk (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x52ABDF0: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x529B08F: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x52A7EFC: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x529A9F1: ??? (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==    by 0x529B523: lua_resume (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==12141==  Address 0x8637171e928bb500 is not stack'd, malloc'd or (recently) free'd
+    
+    Fix this bug by correctly applying the `unlikely` macro to the result of the comparison.
+    
+    This bug exists as of commit ca16b038132444dea06e6d83953034128a812bce
+    which is the first commit adding this function.
+    
+    v1.6-dev1 is the first tag containing this commit, the fix should
+    be backported to haproxy 1.6 and newer.
+    
+    (cherry picked from commit 45be38c9c7ba2b20806f2b887876db4fb5b9457c)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/channel.c b/src/channel.c
+index bd5c4de0..3770502c 100644
+--- a/src/channel.c
++++ b/src/channel.c
+@@ -340,7 +340,7 @@ int co_getline_nc(const struct channel *chn,
+ 	int l;
+ 
+ 	retcode = co_getblk_nc(chn, blk1, len1, blk2, len2);
+-	if (unlikely(retcode) <= 0)
++	if (unlikely(retcode <= 0))
+ 		return retcode;
+ 
+ 	for (l = 0; l < *len1 && (*blk1)[l] != '\n'; l++);

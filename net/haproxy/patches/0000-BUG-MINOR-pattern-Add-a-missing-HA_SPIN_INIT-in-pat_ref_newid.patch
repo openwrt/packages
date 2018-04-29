@@ -1,0 +1,26 @@
+commit 6c9efc8219e35f4eb17e94b364f4c371cfb56cca
+Author: Aurélien Nephtali <aurelien.nephtali@corp.ovh.com>
+Date:   Thu Apr 19 16:56:07 2018 +0200
+
+    BUG/MINOR: pattern: Add a missing HA_SPIN_INIT() in pat_ref_newid()
+    
+    pat_ref_newid() is lacking a spinlock init. It was probably forgotten
+    in b5997f740b ("MAJOR: threads/map: Make acls/maps thread safe").
+    
+    Signed-off-by: Aurélien Nephtali <aurelien.nephtali@corp.ovh.com>
+    (cherry picked from commit 564d15a71ecb3ae3372767866335cfbc068c4b48)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/pattern.c b/src/pattern.c
+index fe672f12..2eb82650 100644
+--- a/src/pattern.c
++++ b/src/pattern.c
+@@ -1906,7 +1906,7 @@ struct pat_ref *pat_ref_newid(int unique_id, const char *display, unsigned int f
+ 	ref->unique_id = unique_id;
+ 	LIST_INIT(&ref->head);
+ 	LIST_INIT(&ref->pat);
+-
++	HA_SPIN_INIT(&ref->lock);
+ 	LIST_ADDQ(&pattern_reference, &ref->list);
+ 
+ 	return ref;

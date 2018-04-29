@@ -1,0 +1,48 @@
+commit 17f3e16826e5b1a3f79b7421d69bb85be09a4ad9
+Author: Tim Duesterhus <tim@bastelstu.be>
+Date:   Tue Apr 24 13:56:01 2018 +0200
+
+    BUG/MEDIUM: lua: Fix segmentation fault if a Lua task exits
+    
+    PiBa-NL reported that haproxy crashes with a segmentation fault
+    if a function registered using `core.register_task` returns.
+    
+    An example Lua script that reproduces the bug is:
+    
+      mytask = function()
+            core.Info("Stopping task")
+      end
+      core.register_task(mytask)
+    
+    The Valgrind output is as follows:
+    
+      ==6759== Process terminating with default action of signal 11 (SIGSEGV)
+      ==6759==  Access not within mapped region at address 0x20
+      ==6759==    at 0x5B60AA9: lua_sethook (in /usr/lib/x86_64-linux-gnu/liblua5.3.so.0.0.0)
+      ==6759==    by 0x430264: hlua_ctx_resume (hlua.c:1009)
+      ==6759==    by 0x43BB68: hlua_process_task (hlua.c:5525)
+      ==6759==    by 0x4FED0A: process_runnable_tasks (task.c:231)
+      ==6759==    by 0x4B2256: run_poll_loop (haproxy.c:2397)
+      ==6759==    by 0x4B2256: run_thread_poll_loop (haproxy.c:2459)
+      ==6759==    by 0x41A7E4: main (haproxy.c:3049)
+    
+    Add the missing `task = NULL` for the `HLUA_E_OK` case. The error cases
+    have been fixed as of 253e53e661c49fb9723535319cf511152bf09bc7 which
+    first was included in haproxy v1.8-dev3. This bugfix should be backported
+    to haproxy 1.8.
+    
+    (cherry picked from commit cd235c60425dbe66c9015a357369afacc4880211)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/hlua.c b/src/hlua.c
+index 4e759c7c..d4b7ce91 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -5528,6 +5528,7 @@ static struct task *hlua_process_task(struct task *task)
+ 		hlua_ctx_destroy(hlua);
+ 		task_delete(task);
+ 		task_free(task);
++		task = NULL;
+ 		break;
+ 
+ 	case HLUA_E_AGAIN: /* co process or timeout wake me later. */
