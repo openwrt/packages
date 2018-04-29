@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
 PKG_VERSION:=2017.12.08
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Christian Simon <simon@swine.de>
 PKG_LICENSE:=Apache-2.0
@@ -70,6 +70,12 @@ define Package/prometheus-node-exporter-lua-bmx7
   DEPENDS:=prometheus-node-exporter-lua bmx7 +lua-cjson +bmx7-json
 endef
 
+define Package/prometheus-node-exporter-lua-textfile
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (textfile collector)
+  DEPENDS:=prometheus-node-exporter-lua +luci-lib-nixio
+endef
+
 Build/Compile=
 
 define Package/prometheus-node-exporter-lua/install
@@ -119,6 +125,11 @@ define Package/prometheus-node-exporter-lua-bmx7/install
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/bmx7.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
+define Package/prometheus-node-exporter-lua-textfile/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/textfile.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-nat_traffic))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-netstat))
@@ -126,3 +137,4 @@ $(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi_stations))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx6))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx7))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-textfile))
