@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
 PKG_VERSION:=5.8.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
@@ -366,7 +366,7 @@ $(eval $(call BuildPlugin,match-hashed,hashed match,match_hashed,))
 $(eval $(call BuildPlugin,match-regex,regex match,match_regex,))
 $(eval $(call BuildPlugin,match-timediff,timediff match,match_timediff,))
 $(eval $(call BuildPlugin,match-value,value match,match_value,))
-#$(eval $(call BuildPlugin,mysql,MySQL status input,mysql,+PACKAGE_collectd-mod-mysql:libmysqlclient-r))
+$(eval $(call BuildPlugin,mysql,MySQL status input,mysql,+PACKAGE_collectd-mod-mysql:libmysqlclient-r))
 $(eval $(call BuildPlugin,memory,physical memory usage input,memory,))
 $(eval $(call BuildPlugin,modbus,read variables through libmodbus,modbus,+PACKAGE_collectd-mod-modbus:libmodbus))
 $(eval $(call BuildPlugin,mqtt,transmit data with MQTT,mqtt,+PACKAGE_collectd-mod-mqtt:libmosquitto))
