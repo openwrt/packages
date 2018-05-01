@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sbc
 PKG_VERSION:=1.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://www.kernel.org/pub/linux/bluetooth/
+PKG_SOURCE_URL:=@KERNEL/linux/bluetooth/
 PKG_HASH:=e61022cf576f14190241e7071753fdacdce5d1dea89ffd704110fc50be689309
 
 PKG_LICENSE:=LGPL-2.1+
@@ -36,6 +36,9 @@ define Package/sbc/description
   Low Complexity Subband Coding for bluetooth audio profiles encoding and decoding.
   Needed for A2DP support.
 endef
+
+TARGET_CFLAGS += -flto
+TARGET_LDFLAGS += -flto
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/sbc
