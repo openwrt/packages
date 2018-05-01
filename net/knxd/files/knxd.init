@@ -15,8 +15,9 @@ add_sec(){
 add_str(){
 	local cfg=$1
 	local name=$2
+	local value=$3
 	local rename=$(echo "$name" | tr "_" "-")
-	config_get value $cfg $name
+	[ -z "$value" ] && config_get value $cfg $name
 	[ -z "$value" ] || echo "$rename = $value" >> $INI
 }
 
@@ -42,15 +43,15 @@ add_driver() {
 	add_str $cfg retry_delay
 	add_str $cfg max_retry
 	add_str $cfg send_timeout
+	add_str $cfg send_retries
 	add_str $cfg debug
 	#ip
 	if [ "$driver" = "ip" ]; then
 		add_str $cfg multicast_address
 		add_str $cfg port
-	fi
-	if [ "$driver" = "ip" \
-	-o "$driver" = "usb" ]; then
-		add_str $cfg interface
+		config_get interface $cfg ip_interface
+		[ -z "$interface" ] || network_get_device ifname "$interface"
+		add_str $cfg interface $ifname
 	fi
 	if [ "$driver" = "ipt" \
 	-o "$driver" = "iptn" \
@@ -64,28 +65,38 @@ add_driver() {
 	if [ "$driver" = "ipt" \
 	-o "$driver" = "iptn" ]; then
 		add_str $cfg src_port
-		add_bool $cfg nat
 		add_str $cfg heartbeat_timer
 		add_str $cfg heartbeat_retries
+	fi
+	if [ "$driver" = "iptn" ]; then
+		add_bool $cfg nat
 		add_str $cfg nat_ip
 		add_str $cfg data_port
 	fi
-	if [ "$driver" = "usb" \
-	-o "$driver" = "tpuart" \
+	if [ "$driver" = "tpuart" \
 	-o "$driver" = "ncn5120" ]; then
 		add_str $cfg device
 	fi
 	if [ "$driver" = "usb" ]; then
-		add_str $cfg bus
-		add_str $cfg config
-		add_str $cfg setting
-		add_str $cfg version
-		add_str $cfg send_retries
+		config_get bus $cfg usb_bus
+		add_str $cfg bus $bus
+		config_get device $cfg usb_device
+		add_str $cfg device $device
+		config_get config $cfg usb_config
+		add_str $cfg config $config
+		config_get interface $cfg usb_interface
+		add_str $cfg interface $interface
+		config_get setting $cfg usb_setting
+		add_str $cfg setting $setting
+		config_get version $cfg usb_version
+		add_str $cfg version $version
 	fi
 	if [ "$driver" = "tpuart" \
 	-o "$driver" = "ncn5120" \
 	-o "$driver" = "ft12" \
 	-o "$driver" = "ft12cemi" ]; then
+		config_get device $cfg tty_device
+		add_str $cfg device $device
 		add_str $cfg baudrate
 	fi
 	#More common options
@@ -112,7 +123,9 @@ add_server() {
 	if [ "$server" = "knxd_tcp" \
 	-o "$server" = "ets_router" ]; then
 		add_str $cfg port
-		add_str $cfg interface
+		config_get interface $cfg interface
+		[ -z "$interface" ] || network_get_device ifname "$interface"
+		add_str $cfg interface $ifname
 	fi
 	if [ "$server" = "knxd_tcp" ]; then
 		add_str $cfg ip_address
@@ -127,10 +140,6 @@ add_server() {
 	fi
 	if [ "$server" = "knxd_unix" ]; then
 		add_str $cfg path
-	fi
-	if [ "$server" = "knxd_unix" \
-	-o "$server" = "knxd_tcp" ]; then
-		add_bool $cfg systemd_ignore
 	fi
 }
 
