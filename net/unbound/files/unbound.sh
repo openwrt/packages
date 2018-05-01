@@ -408,16 +408,18 @@ bundle_private_interface() {
 ##############################################################################
 
 unbound_mkdir() {
-  local dhcp_origin=$( uci_get dhcp.@odhcpd[0].leasefile )
-  local dhcp_dir=$( dirname $dhcp_origin )
   local filestuff
 
+  if [ "$UNBOUND_D_DHCP_LINK" = "odhcpd" ] ; then
+    local dhcp_origin=$( uci_get dhcp.@odhcpd[0].leasefile )
+    local dhcp_dir=$( dirname $dhcp_origin )
 
-  if [ "$UNBOUND_D_DHCP_LINK" = "odhcpd" -a ! -d "$dhcp_dir" ] ; then
-    # make sure odhcpd has a directory to write (not done itself, yet)
-    mkdir -p "$dhcp_dir"
+
+    if [ ! -d "$dhcp_dir" ] ; then
+      # make sure odhcpd has a directory to write (not done itself, yet)
+      mkdir -p "$dhcp_dir"
+    fi
   fi
-
 
   if [ -f $UNBOUND_KEYFILE ] ; then
     filestuff=$( cat $UNBOUND_KEYFILE )
