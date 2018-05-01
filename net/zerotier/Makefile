@@ -6,18 +6,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zerotier
-PKG_VERSION:=1.2.4
-PKG_RELEASE:=4
+PKG_VERSION:=1.2.8
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPL-3.0
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/zerotier/ZeroTierOne
-PKG_SOURCE_SUBDIR:=ZeroTierOne-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=fe5257df81c4ec4b5d48f707eb794de0748b7ac0
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=131436529d26f8eb975a0a8705b489cc22a1139c323755895c1776db579003bc
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
+PKG_SOURCE_URL:=https://codeload.github.com/zerotier/ZeroTierOne/tar.gz/$(PKG_VERSION)?
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_HASH:=08e2df34550d6bb68e106eaac48babb481160046818b0944ec41f1e158548a47
+PKG_BUILD_DIR:=$(BUILD_DIR)/ZeroTierOne-$(PKG_VERSION)
+
 
 PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
@@ -53,6 +51,10 @@ ifeq ($(CONFIG_ZEROTIER_ENABLE_SELFTEST),y)
 	$(call Build/Compile/Default,selftest)
 endif
 endef
+
+# Make binary smaller
+TARGET_CFLAGS += -ffunction-sections -fdata-sections
+TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Package/zerotier/install
 	$(INSTALL_DIR) $(1)/usr/bin
