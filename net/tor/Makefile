@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2016 OpenWrt.org
+# Copyright (C) 2008-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -67,7 +67,7 @@ endef
 
 define Package/tor-resolve/description
 $(call Package/tor/Default/description)
- Resolve a hostname to an IP address via tor 
+ Resolve a hostname to an IP address via tor
 endef
 
 define Package/tor-geoip
