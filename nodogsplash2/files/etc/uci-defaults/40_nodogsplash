@@ -1,0 +1,9 @@
+#!/bin/sh
+
+uci batch <<-EOT
+	delete firewall.nodogsplash2
+	set firewall.nodogsplash2=include
+	set firewall.nodogsplash2.type=script
+	set firewall.nodogsplash2.path=/usr/lib/nodogsplash/restart.sh
+	commit firewall
+EOF
