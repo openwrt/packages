@@ -1,0 +1,67 @@
+From 12f6ca15b1b80f7fedb3ae3cf9067a8045a9a8fd Mon Sep 17 00:00:00 2001
+From: Moritz Warning <moritzwarning@web.de>
+Date: Wed, 2 May 2018 19:54:37 +0200
+Subject: [PATCH] LFLAGS => LDFLAGS
+
+---
+ Makefile | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 62be30a..ae994fc 100644
+--- a/Makefile
++++ b/Makefile
+@@ -2,7 +2,7 @@
+ CC ?= gcc
+ CFLAGS ?= -Os -Wall -Wwrite-strings -pedantic
+ CFLAGS += -std=gnu99 -I/usr/local/include
+-LFLAGS += -L/usr/local/lib -lc
++LDFLAGS += -L/usr/local/lib -lc
+ FEATURES ?= dns lpd tls bob cmd debug nss #natpmp upnp
+ 
+ OBJS = build/searches.o build/kad.o build/log.o \
+@@ -30,7 +30,7 @@ endif
+ ifeq ($(findstring bob,$(FEATURES)),bob)
+   OBJS += build/ext-bob.o
+   CFLAGS += -DBOB
+-  LFLAGS += -lmbedtls -lmbedx509 -lmbedcrypto
++  LDFLAGS += -lmbedtls -lmbedx509 -lmbedcrypto
+ endif
+ 
+ ifeq ($(findstring cmd,$(FEATURES)),cmd)
+@@ -56,20 +56,20 @@ endif
+ ifeq ($(findstring tls,$(FEATURES)),tls)
+   OBJS += build/ext-tls-client.o build/ext-tls-server.o
+   CFLAGS += -DTLS
+-  LFLAGS += -lmbedtls -lmbedx509 -lmbedcrypto
++  LDFLAGS += -lmbedtls -lmbedx509 -lmbedcrypto
+ endif
+ 
+ ifeq ($(findstring upnp,$(FEATURES)),upnp)
+   OBJS += build/upnp.o
+   CFLAGS += -DFWD_UPNP
+-  LFLAGS += -Wl,-Bdynamic -lminiupnpc
++  LDFLAGS += -Wl,-Bdynamic -lminiupnpc
+   ENABLE_FORWARDING = 1
+ endif
+ 
+ ifeq ($(findstring natpmp,$(FEATURES)),natpmp)
+   OBJS += build/natpmp.o
+   CFLAGS += -DFWD_NATPMP
+-  LFLAGS += -Wl,-Bdynamic -lnatpmp
++  LDFLAGS += -Wl,-Bdynamic -lnatpmp
+   ENABLE_FORWARDING = 1
+ endif
+ 
+@@ -94,7 +94,7 @@ libkadnode.so: build/libkadnode.o $(OBJS)
+ 	$(CC) -shared $(OBJS) build/libkadnode.o -o build/libkadnode.so
+ 
+ kadnode: build/main.o $(OBJS) $(EXTRA)
+-	$(CC) build/main.o $(OBJS) -o build/kadnode $(LFLAGS)
++	$(CC) build/main.o $(OBJS) -o build/kadnode $(LDFLAGS)
+ 	ln -s kadnode build/kadnode-ctl 2> /dev/null || true
+ 
+ clean:
+-- 
+2.17.0
+
