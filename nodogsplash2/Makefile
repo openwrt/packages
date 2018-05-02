@@ -54,6 +54,12 @@ define Package/nodogsplash2/install
 	$(CP) $(PKG_BUILD_DIR)/resources/splash.jpg $(1)/etc/nodogsplash/htdocs/images/
 endef
 
+define Package/nodogsplash2/postrm
+#!/bin/sh
+uci delete firewall.nodogsplash2
+uci commit firewall
+endef
+
 define Package/nodogsplash2/conffiles
 /etc/nodogsplash/nodogsplash.conf
 endef

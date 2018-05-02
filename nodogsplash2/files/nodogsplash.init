@@ -248,10 +248,42 @@ create_instance() {
   procd_close_instance
 }
 
+depends() {
+  if [ "$1" = "iptables" ] ; then
+    if [ $(uci get nodogsplash.@nodogsplash[0].fwhook_enabled) = "1" ] ; then
+      if $WD_DIR/ndsctl status > /dev/null; then
+       echo " * Restarting NodogSplash" 
+       /etc/init.d/nodogsplash restart
+      fi
+    else
+      echo " * NodogSplash fwhook is disabled"
+    fi
+  fi
+}
+
 start_service() {
   include /lib/functions
-
   mkdir -p /tmp/etc/
+  
+  if [ $(uci get nodogsplash.@nodogsplash[0].fwhook_enabled) = "1" ] ; then
+    if ! uci get firewall.nodogsplash2.path &> /dev/null ; then
+      if [ -f '/tmp/etc/ndshook.include' ] ; then
+        rm /tmp/etc/ndshook.include
+      fi
+      uci delete firewall.nodogsplash2 2> /dev/null
+      uci set firewall.nodogsplash2=include
+      uci set firewall.nodogsplash2.type=script
+      uci set firewall.nodogsplash2.path='/tmp/etc/ndshook.include'
+      uci commit firewall
+      /etc/init.d/firewall restart  2>&1 | logger
+    fi
+
+    if [ ! -f '/tmp/etc/ndshook.include' ] ; then
+      printf "if [ -f '/etc/init.d/nodogsplash' ] ; then /etc/init.d/nodogsplash depends iptables ; fi\n" > /tmp/etc/ndshook.include
+      chmod +x /tmp/etc/ndshook.include
+    fi
+  fi
+  
   config_load nodogsplash
 
   config_foreach create_instance nodogsplash
