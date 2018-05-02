@@ -10,12 +10,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nuster
-PKG_VERSION:=1.7.9.9
+PKG_VERSION:=1.7.10.1
 PKG_RELEASE:=01
 
 PKG_SOURCE:=nuster-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/jiangwenyuan/nuster/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=1ff2e701acd436a457ec3a7ff41d56a58c3fb7c6e09f4f0d9f9cbcedc2adab4b
+PKG_HASH:=0cf75205ef39db10700abc4307cab5fa410d612c8b096d14adb99cd8775b22d1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_LICENSE:=GPL-2.0
