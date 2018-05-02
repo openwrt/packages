@@ -116,7 +116,6 @@ CONFIGURE_VARS += \
 define Package/tor/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/tor $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/torify $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/tor.init $(1)/etc/init.d/tor
 	$(INSTALL_DIR) $(1)/etc/tor
