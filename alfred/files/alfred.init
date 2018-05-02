@@ -46,11 +46,11 @@ wait_for_ll_address()
 	for i in $(seq $timeout); do
 		# We look for
 		# - the link-local address (starts with fe80)
-		# - without tentative flag (bit 0x40 in the flags field; the first char of the flags field begins 38 columns after the fe80 prefix
+		# - without tentative flag (bit 0x40 in the flags field; the first char of the fifth field is evaluated)
 		# - on interface $iface
 		if awk '
 			BEGIN { RET=1 }
-			/^fe80.{37} [012389ab]/ { if ($6 == "'"$iface"'") RET=0 }
+			$1 ~ /^fe80/ && $5 ~ /^[012389ab]/ && $6 == "'"$iface"'" { RET=0 }
 			END { exit RET }
 		' /proc/net/if_inet6; then
 			return
