@@ -1,6 +1,6 @@
 --- a/Lib/py_compile.py
 +++ b/Lib/py_compile.py
-@@ -108,6 +108,7 @@ def compile(file, cfile=None, dfile=None, doraise=False):
+@@ -108,6 +108,7 @@ def compile(file, cfile=None, dfile=None
              timestamp = long(os.fstat(f.fileno()).st_mtime)
          except AttributeError:
              timestamp = long(os.stat(file).st_mtime)
