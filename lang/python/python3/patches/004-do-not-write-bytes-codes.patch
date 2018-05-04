@@ -9,12 +9,3 @@
  int Py_NoUserSiteDirectory = 0; /* for -s and site.py */
  int Py_UnbufferedStdioFlag = 0; /* Unbuffered binary std{in,out,err} */
  int Py_HashRandomizationFlag = 0; /* for -R and PYTHONHASHSEED */
-@@ -329,7 +329,7 @@ _Py_InitializeEx_Private(int install_sig
-     if ((p = Py_GETENV("PYTHONOPTIMIZE")) && *p != '\0')
-         Py_OptimizeFlag = add_flag(Py_OptimizeFlag, p);
-     if ((p = Py_GETENV("PYTHONDONTWRITEBYTECODE")) && *p != '\0')
--        Py_DontWriteBytecodeFlag = add_flag(Py_DontWriteBytecodeFlag, p);
-+        Py_DontWriteBytecodeFlag = atoi(p);
-     /* The variable is only tested for existence here; _PyRandom_Init will
-        check its value further. */
-     if ((p = Py_GETENV("PYTHONHASHSEED")) && *p != '\0')
