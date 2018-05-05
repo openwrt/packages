@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lftp
 PKG_VERSION:=4.8.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://lftp.tech/ftp/ \
 		https://mirror.csclub.uwaterloo.ca/gentoo-distfiles/distfiles/
@@ -46,7 +46,7 @@ CONFIGURE_ARGS += \
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
 	--without-gnutls \
-	--without-libidn \
+	--without-libidn2 \
 	--without-libresolv \
 	--with-openssl="$(STAGING_DIR)/usr" \
 	--with-readline="$(STAGING_DIR)/usr" \
