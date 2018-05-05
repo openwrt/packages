@@ -1,0 +1,18 @@
+#!/bin/sh /etc/rc.common
+
+START=70
+
+USE_PROCD=1
+
+PROG=/usr/bin/bluealsa
+
+start_service() {
+	procd_open_instance
+	procd_set_param command "$PROG" -i hci0
+	procd_close_instance
+}
+
+stop() {
+	service_stop /usr/bin/bluealsa
+}
+
