@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
 PKG_VERSION:=10.1.32
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
@@ -417,11 +417,12 @@ define Host/Install
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(2)/bin $(1)/usr/bin $(1)/usr/include $(1)/usr/lib/pkgconfig $(1)/usr/share/aclocal
+	$(INSTALL_DIR) $(2)/bin $(1)/usr/bin $(1)/usr/include $(1)/usr/lib/mysql $(1)/usr/lib/pkgconfig $(1)/usr/share/aclocal
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mysql_config $(1)/usr/bin/
 	$(LN) $(STAGING_DIR)/usr/bin/mysql_config $(2)/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/mysql $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmysqlclient*.so* $(1)/usr/lib/
+	$(LN) --relative $(1)/usr/lib/libmysqlclient*.so* $(1)/usr/lib/mysql/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/pkgconfig/mariadb.pc $(1)/usr/lib/pkgconfig
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/aclocal/mysql.m4 $(1)/usr/share/aclocal
 endef
