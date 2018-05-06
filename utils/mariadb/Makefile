@@ -422,7 +422,7 @@ define Build/InstallDev
 	$(LN) $(STAGING_DIR)/usr/bin/mysql_config $(2)/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/mysql $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmysqlclient*.so* $(1)/usr/lib/
-	$(LN) --relative $(1)/usr/lib/libmysqlclient*.so* $(1)/usr/lib/mysql/
+	cd $(1)/usr/lib/mysql; $(LN) ../libmysqlclient*.so* .
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/pkgconfig/mariadb.pc $(1)/usr/lib/pkgconfig
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/aclocal/mysql.m4 $(1)/usr/share/aclocal
 endef
