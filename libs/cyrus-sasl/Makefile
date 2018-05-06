@@ -8,14 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cyrus-sasl
-PKG_VERSION:=2.1.26
-PKG_RELEASE:=3
+PKG_VERSION_BASE:=2.1.27
+PKG_VERSION:=$(PKG_VERSION_BASE)-rc7
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://ftp.cyrusimap.org/cyrus-sasl/
-PKG_HASH:=8fbc5136512b59bb793657f36fadda6359cae3b08f01fd16b3d406f1345b7bc3
+PKG_SOURCE_URL:=https://www.cyrusimap.org/releases/
+PKG_HASH:=c1846b80e80286c94941a1e27974bba759b171ccad25d5b49bd8d9deab10f54b
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION_BASE)
 
 PKG_LICENSE:=BSD-4c BSD
 PKG_LICENSE_FILES:=COPYING cmulocal/COPYING saslauthd/COPYING
