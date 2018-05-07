@@ -9,15 +9,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=klish
-PKG_VERSION:=2.1.3
-PKG_RELEASE:=2
+PKG_VERSION:=2.1.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://libcode.org/attachments/download/66/
+PKG_SOURCE_URL:=http://libcode.org/attachments/download/70/
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENCE
 PKG_MAINTAINER:=Takashi Umeno <umeno.takashi@gmail.com>
-PKG_HASH:=70528039da9c5fdfadaea325ab6243cdabef627da0398335312e08d90ab415f8
+PKG_HASH:=a89dd1027dce713407b6d68e836c8fdead56406dcfc650da84da8e0b92c9b2e5
 
 PKG_INSTALL:=1
 
