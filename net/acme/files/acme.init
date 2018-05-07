@@ -25,7 +25,8 @@ stop_service() {
 }
 
 boot() {
-    $SCRIPT check_cron
+    touch "/var/run/acme_boot"
+    start
 }
 
 service_triggers()

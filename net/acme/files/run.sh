@@ -234,6 +234,7 @@ load_vars()
 
 check_cron
 [ -n "$CHECK_CRON" ] && exit 0
+[ -e "/var/run/acme_boot" ] && rm -f "/var/run/acme_boot" && exit 0
 
 config_load acme
 config_foreach load_vars acme
