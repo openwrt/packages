@@ -136,7 +136,7 @@ define Package/tor-geoip/install
 	$(INSTALL_DIR) $(1)/usr/share/tor
 	$(INSTALL_DATA) \
 	  $(PKG_INSTALL_DIR)/usr/share/tor/geoip \
-	  $(PKG_INSTALL_DIR)/usr/share/tor/geoip6 \
+	  $(if $(CONFIG_IPV6),$(PKG_INSTALL_DIR)/usr/share/tor/geoip6) \
 	$(1)/usr/share/tor/
 endef
 
