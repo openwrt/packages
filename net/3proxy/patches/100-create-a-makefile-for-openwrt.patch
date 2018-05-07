@@ -1,0 +1,66 @@
+From 9b67a396d19cc44c7628f5ffcda6224f59fcf8e7 Mon Sep 17 00:00:00 2001
+From: Daniel Engberg <daniel.engberg.lists@pyret.net>
+Date: Sun, 6 May 2018 22:27:29 +0200
+Subject: [PATCH 1/1] Create a Makefile for OpenWrt
+
+3proxy doesn't have a default Makefile so we need to create one
+
+Signed-off-by: Daniel Engberg <daniel.engberg.lists@pyret.net>
+---
+ Makefile.Linux => Makefile | 17 +++++++++--------
+ 1 file changed, 9 insertions(+), 8 deletions(-)
+ rename Makefile.Linux => Makefile (91%)
+
+diff --git a/Makefile.Linux b/Makefile
+similarity index 91%
+rename from Makefile.Linux
+rename to Makefile
+index 54b8e1f..36187e1 100644
+--- a/Makefile.Linux
++++ b/Makefile
+@@ -8,13 +8,13 @@
+ # library support. Add -DSAFESQL for poorely written ODBC library / drivers.
+ 
+ BUILDDIR = ../bin/
+-CC = gcc
++#CC = gcc
+ 
+-CFLAGS = -g -O2 -fno-strict-aliasing -c -pthread -DWITHSPLICE -DGETHOSTBYNAME_R -D_THREAD_SAFE -D_REENTRANT -DNOODBC -DWITH_STD_MALLOC -DFD_SETSIZE=4096 -DWITH_POLL -DWITH_NETFILTER
++#CFLAGS = -g -O2 -fno-strict-aliasing -c -pthread -DWITHSPLICE -DGETHOSTBYNAME_R -D_THREAD_SAFE -D_REENTRANT -DNOODBC -DWITH_STD_MALLOC -DFD_SETSIZE=4096 -DWITH_POLL -DWITH_NETFILTER
+ COUT = -o 
+-LN = gcc
+-DCFLAGS = -fpic
+-LDFLAGS = -O2 -fno-strict-aliasing -pthread
++LN = $(CC)
++#DCFLAGS = -fpic
++#LDFLAGS = -O2 -fno-strict-aliasing -pthread
+ DLFLAGS = -shared
+ DLSUFFICS = .ld.so
+ # -lpthreads may be reuqired on some platforms instead of -pthreads
+@@ -28,13 +28,14 @@ COMPFILES = *~
+ REMOVECOMMAND = rm -f
+ TYPECOMMAND = cat
+ COMPATLIBS =
+-MAKEFILE = Makefile.Linux
++MAKEFILE = Makefile
+ # PamAuth requires libpam, you may require pam-devel package to be installed
+ # SSLPlugin requires  -lcrypto -lssl
+ #LIBS = -lcrypto -lssl -ldl 
+ LIBS = -ldl 
+ #PLUGINS = SSLPlugin StringsPlugin TrafficPlugin PCREPlugin TransparentPlugin PamAuth
+-PLUGINS = StringsPlugin TrafficPlugin PCREPlugin TransparentPlugin
++#PLUGINS = StringsPlugin TrafficPlugin PCREPlugin TransparentPlugin
++PLUGINS = StringsPlugin TransparentPlugin
+ 
+ include Makefile.inc
+ 
+@@ -158,4 +159,4 @@ install: install-chroot-dir install-bin install-etc install-log install-man inst
+ 	@if [ -f /usr/sbin/service ]; then \
+ 	 /usr/sbin/service 3proxy stop ;\
+ 	 /usr/sbin/service 3proxy start ;\
+-	fi
+\ No newline at end of file
++	fi
+-- 
+2.11.0
+
