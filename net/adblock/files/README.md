@@ -101,7 +101,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 
 ## Installation & Usage
 * install 'adblock' (_opkg install adblock_)
-* at minimum configure the appropriate dns backend ('dnsmasq' by default), the donwload utility and enable the adblock service in _/etc/config/adblock_
+* at minimum configure the appropriate dns backend ('dnsmasq' by default), the download utility and enable the adblock service in _/etc/config/adblock_
 * control the adblock service manually with _/etc/init.d/adblock_ start/stop/restart/reload/suspend/resume/status or use the LuCI frontend
 
 ## LuCI adblock companion package
