@@ -1,0 +1,62 @@
+From 11a29e071019645967ee748d410954ec5f73866f Mon Sep 17 00:00:00 2001
+From: Rob Peters <ROb@DVBControl.com>
+Date: Wed, 24 Jan 2018 12:03:24 +0100
+Subject: [PATCH] Make compatible with boost 1.66
+
+---
+ msbuild/domoticz.vcxproj  | 2 +-
+ webserver/proxyclient.cpp | 2 +-
+ webserver/server.cpp      | 4 ++--
+ 3 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/msbuild/domoticz.vcxproj b/msbuild/domoticz.vcxproj
+index e4aa595..1aa9e7a 100755
+--- a/msbuild/domoticz.vcxproj
++++ b/msbuild/domoticz.vcxproj
+@@ -58,7 +58,7 @@
+       <PrecompiledHeader>Use</PrecompiledHeader>
+       <WarningLevel>Level3</WarningLevel>
+       <Optimization>Disabled</Optimization>
+-      <PreprocessorDefinitions>WIN32;ENABLE_PYTHON;_DEBUG;PTW32_STATIC_LIB;WITH_OPENZWAVE;OPENZWAVE_USEDLL;WWW_ENABLE_SSL;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <PreprocessorDefinitions>WIN32;ENABLE_PYTHON;_DEBUG;PTW32_STATIC_LIB;WITH_OPENZWAVE;OPENZWAVE_USEDLL;WWW_ENABLE_SSL;_CONSOLE;BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <AdditionalIncludeDirectories>./Windows Libraries/Boost/boost_1_63_0;./libusb;../MQTT;..\hardware\openzwave;./Windows Libraries/openssl;./Windows Libraries/Curl;./Windows Libraries/pthread;../hardware/plugins/Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+       <EnablePREfast>false</EnablePREfast>
+diff --git a/webserver/proxyclient.cpp b/webserver/proxyclient.cpp
+index 203ee61..efc9815 100644
+--- a/webserver/proxyclient.cpp
++++ b/webserver/proxyclient.cpp
+@@ -639,7 +639,7 @@ namespace http {
+ 		void CProxyManager::StartThread()
+ 		{
+ 			try {
+-				boost::asio::ssl::context ctx(io_service, boost::asio::ssl::context::sslv23);
++				boost::asio::ssl::context ctx(boost::asio::ssl::context::sslv23);
+ 				ctx.set_verify_mode(boost::asio::ssl::verify_none);
+ 
+ 				proxyclient.reset(new CProxyClient(io_service, ctx, m_pWebEm));
+diff --git a/webserver/server.cpp b/webserver/server.cpp
+index 5255aa3..0c1af08 100644
+--- a/webserver/server.cpp
++++ b/webserver/server.cpp
+@@ -148,7 +148,7 @@ void server::handle_accept(const boost::system::error_code& e) {
+ ssl_server::ssl_server(const ssl_server_settings & ssl_settings, request_handler & user_request_handler) :
+ 		server_base(ssl_settings, user_request_handler),
+ 		settings_(ssl_settings),
+-		context_(io_service_, ssl_settings.get_ssl_method())
++		context_(ssl_settings.get_ssl_method())
+ {
+ #ifdef DEBUG_WWW
+ 	_log.Log(LOG_STATUS, "[web:%s] create ssl_server using ssl_server_settings : %s", ssl_settings.listening_port.c_str(), ssl_settings.to_string().c_str());
+@@ -161,7 +161,7 @@ ssl_server::ssl_server(const ssl_server_settings & ssl_settings, request_handler
+ ssl_server::ssl_server(const server_settings & settings, request_handler & user_request_handler) :
+ 		server_base(settings, user_request_handler),
+ 		settings_(dynamic_cast<ssl_server_settings const &>(settings)),
+-		context_(io_service_, dynamic_cast<ssl_server_settings const &>(settings).get_ssl_method()) {
++		context_(dynamic_cast<ssl_server_settings const &>(settings).get_ssl_method()) {
+ #ifdef DEBUG_WWW
+ 	_log.Log(LOG_STATUS, "[web:%s] create ssl_server using server_settings : %s", settings.listening_port.c_str(), settings.to_string().c_str());
+ #endif
+-- 
+2.7.4
+
