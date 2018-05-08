@@ -1,6 +1,7 @@
 #!/bin/sh
 
 . /lib/functions.sh
+. /usr/share/libubox/jshn.sh
 . /lib/functions/network.sh
 . /lib/mwan3/mwan3.sh
 
@@ -42,7 +43,7 @@ ifdown()
 
 ifup()
 {
-	local device enabled
+	local device enabled up l3_device
 
 	config_load mwan3
 
@@ -60,12 +61,14 @@ ifup()
 		exit 0
 	}
 
+	json_load $(ubus -S call network.interface.$1 status)
+	json_get_vars up l3_device
 	config_get enabled "$1" enabled 0
 
-	device=$(uci -p /var/state get network.$1.ifname) &> /dev/null
-
-	if [ -n "$device" ] ; then
-		[ "$enabled" -eq 1 ] && ACTION=ifup INTERFACE=$1 DEVICE=$device /sbin/hotplug-call iface
+	if [ "$up" -eq 1 ] \
+		&& [ -n "$l3_device" ] \
+		&& [ "$enabled" -eq 1 ]; then
+		ACTION=ifup INTERFACE=$1 DEVICE=$l3_device /sbin/hotplug-call iface
 	fi
 }
 
