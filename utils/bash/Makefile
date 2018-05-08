@@ -7,22 +7,21 @@
 
 include $(TOPDIR)/rules.mk
 
-BASE_VERSION:=4.4
-
 PKG_NAME:=bash
-PKG_VERSION:=$(BASE_VERSION).12
+PKG_VERSION:=4.4.18
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(BASE_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/bash
-PKG_HASH:=d86b3392c1202e8ff5a423b302e6284db7f8f435ea9f39b5b1b20fd3ac36dfcb
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BASE_VERSION)
+PKG_HASH:=604d9eec5e4ed5fd2180ee44dd756ddca92e0b6aa4217bbab2b6227380317f23
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
-PKG_CHECK_FORMAT_SECURITY:=0
+PKG_INSTALL:=1
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/bash
@@ -30,7 +29,7 @@ define Package/bash
   CATEGORY:=Utilities
   SUBMENU:=Shells
   TITLE:=The GNU Bourne Again SHell
-  DEPENDS:=+libncurses
+  DEPENDS:=+libncurses +libreadline
   URL:=http://www.gnu.org/software/bash/
 endef
 
@@ -40,22 +39,21 @@ define Package/bash/description
   incorporates useful features from the Korn and C shells (ksh and csh).
 endef
 
+CONFIGURE_VARS += \
+	ac_cv_rl_prefix="$(STAGING_DIR)/usr" \
+	ac_cv_rl_version="7.0" \
+	bash_cv_getcwd_malloc=yes \
+	bash_cv_job_control_missing=present \
+	bash_cv_sys_named_pipes=present \
+	bash_cv_func_sigsetjmp=present \
+	bash_cv_printf_a_format=yes
 
-define Build/Configure
-	$(call Build/Configure/Default, \
-		--without-bash-malloc \
-                --bindir=/bin \
-	)
-endef
-
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR)/builtins LDFLAGS_FOR_BUILD= mkbuiltins
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
-		SHELL="/bin/bash" \
-		all install
-endef
+CONFIGURE_ARGS+= \
+	--without-bash-malloc \
+	--bindir=/bin \
+	--disable-rpath \
+	--with-curses \
+	--with-installed-readline="$(STAGING_DIR)/usr"
 
 define Package/bash/postinst
 #!/bin/sh
