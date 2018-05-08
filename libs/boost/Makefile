@@ -18,10 +18,10 @@ include $(INCLUDE_DIR)/target.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.67.0
 PKG_SOURCE_VERSION:=1_67_0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://sourceforge.net/projects/boost/files/boost/$(PKG_VERSION)
+PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_SOURCE_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)_$(PKG_SOURCE_VERSION)
 PKG_HASH:=2684c972994ee57fc5632e03bf044746f6eb45d4920c343937a465fd67a5adba
@@ -63,6 +63,7 @@ This package provides the following run-time libraries:
  - chrono
  - container
  - context
+ - contract (new in 1.67.0)
  - coroutine (Deprecated - use Coroutine2)
  - - coroutine2 (Requires GCC v5 and up)
  - date_time
