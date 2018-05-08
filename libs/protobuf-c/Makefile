@@ -18,6 +18,8 @@ PKG_SOURCE_URL:=git://github.com/protobuf-c/protobuf-c.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 
+PKG_BUILD_DEPENDS:=protobuf-c/host
+
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
 
@@ -26,6 +28,7 @@ PKG_LICENSE:=BSD-2c
 PKG_MAINTAINER:=Jacob Siverskog <jacob@teenageengineering.com>
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 define Package/libprotobuf-c
   TITLE:=Protocol Buffers library
@@ -61,3 +64,5 @@ define Package/libprotobuf-c/install
 endef
 
 $(eval $(call BuildPackage,libprotobuf-c))
+$(eval $(call HostBuild))
+
