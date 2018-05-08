@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpd
-PKG_VERSION:=2.0.20180422
+PKG_VERSION:=2.0.20180503
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://miniupnp.free.fr/files
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=fe73dd48cbd2eeb30b1ae4f2b6ff46922f214019a50b9a8dd447849b42c9e90d
+PKG_HASH:=b61bed16865f8692803a9f155523ca7c6e01c65db20362b6173226b08ce12a0c
 
 PKG_MAINTAINER:=Kevin Darbyshire-Bryant <ldir@darbyshire-bryant.me.uk>
 PKG_LICENSE:=BSD-3-Clause
