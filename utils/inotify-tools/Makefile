@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=inotify-tools
-PKG_VERSION:=3.14
-PKG_HASH:=222bcca8893d7bf8a1ce207fb39ceead5233b5015623d099392e95197676c92f
+PKG_VERSION:=3.20.1
+PKG_HASH:=a433cc1dedba851078276db69b0e97f9fe41e4ba3336d2971adfca4b3a6242ac
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=https://github.com/downloads/rvoicilas/inotify-tools/
+PKG_SOURCE_URL:=https://codeload.github.com/rvoicilas/inotify-tools/tar.gz/$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
@@ -13,6 +13,7 @@ PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
