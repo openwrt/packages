@@ -53,11 +53,7 @@ endef
 TARGET_LDFLAGS += -lxml2 -lz
 TARGET_CFLAGS += -D_XOPEN_SOURCE=500
 
-define Build/Configure
-	$(call Build/Configure/Default, \
-		--with-libxml2 \
-	)
-endef
+CONFIGURE_ARGS += --with-libxml2
 
 define Package/klish/install
 	$(INSTALL_DIR) $(1)/usr/bin
