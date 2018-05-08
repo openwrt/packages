@@ -492,11 +492,9 @@ mwan3_track_signal()
 	local pid
 
 	pid="$(pgrep -f "mwan3track $1 $2")"
-	if [ "${pid}" != "" ]; then
+	[ "${pid}" != "" ] && {
 		kill -USR1 "${pid}"
-	else
-		$LOG warn "Unable to send signal USR1 to mwan3track on interface $1 with pid ${pid}"
-	fi
+	}
 }
 
 mwan3_set_policy()
