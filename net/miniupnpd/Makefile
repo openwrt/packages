@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpd
 PKG_VERSION:=2.0.20180503
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://miniupnp.free.fr/files
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -39,6 +39,8 @@ define Build/Prepare
 	echo "$(VERSION_NUMBER)" | tr '() ' '_' >$(PKG_BUILD_DIR)/os.openwrt
 endef
 
+TARGET_CFLAGS += -flto -ffunction-sections -fdata-sections
+TARGET_LDFLAGS += -flto -Wl,--gc-sections
 MAKE_FLAGS += \
 	TARGET_OPENWRT=1 TEST=0 LIBS="" \
 	CC="$(TARGET_CC) -DIPTABLES_143 -lip4tc -luuid \
