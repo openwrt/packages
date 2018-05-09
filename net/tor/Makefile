@@ -20,6 +20,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
