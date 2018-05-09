@@ -102,8 +102,8 @@ CONFIGURE_ARGS += \
 	--with-tor-user=tor \
 	--with-tor-group=tor
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections
-TARGET_LDFLAGS += -Wl,--gc-sections
+TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
+TARGET_LDFLAGS += -Wl,--gc-sections -flto
 EXTRA_CFLAGS += -std=gnu99
 
 ifneq ($(CONFIG_SSP_SUPPORT),y)
