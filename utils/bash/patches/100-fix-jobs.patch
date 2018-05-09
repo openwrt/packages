@@ -1,4 +1,4 @@
-Fix builint command jobs
+Fix job control
 
 Patch was taken from https://git.alpinelinux.org/cgit/aports/tree/main/bash/fix-jobs.patch
 

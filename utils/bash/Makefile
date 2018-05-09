@@ -84,7 +84,7 @@ endef
 define Package/bash/install
 	$(INSTALL_DIR) $(1)/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/bash $(1)/bin/
-	ln -sf bash $(1)/bin/rbash
+	$(LN) bash $(1)/bin/rbash
 endef
 
 
