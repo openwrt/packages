@@ -1,0 +1,41 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -33,8 +33,8 @@ rust_ldadd=
+ endif
+ 
+ include src/include.am
+-include doc/include.am
+-include contrib/include.am
++#include doc/include.am
++#include contrib/include.am
+ 
+ EXTRA_DIST+= \
+ 	ChangeLog					\
+--- a/src/include.am
++++ b/src/include.am
+@@ -2,10 +2,10 @@ include src/ext/include.am
+ include src/trunnel/include.am
+ include src/common/include.am
+ include src/or/include.am
+-include src/rust/include.am
+-include src/test/include.am
++#include src/rust/include.am
++#include src/test/include.am
+ include src/tools/include.am
+-include src/win32/include.am
++#include src/win32/include.am
+ include src/config/include.am
+-include src/test/fuzz/include.am
+-include src/trace/include.am
++#include src/test/fuzz/include.am
++#include src/trace/include.am
+--- a/src/or/include.am
++++ b/src/or/include.am
+@@ -133,7 +133,6 @@ src_or_tor_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@ @TOR_LDFLAGS_libev
+ src_or_tor_LDADD = src/or/libtor.a src/common/libor.a src/common/libor-ctime.a \
+ 	src/common/libor-crypto.a $(LIBKECCAK_TINY) $(LIBDONNA) \
+ 	src/common/libor-event.a src/trunnel/libor-trunnel.a \
+-	src/trace/libor-trace.a \
+ 	$(rust_ldadd) \
+ 	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ @TOR_OPENSSL_LIBS@ \
+ 	@TOR_LIB_WS32@ @TOR_LIB_GDI@ @TOR_LIB_USERENV@ \
