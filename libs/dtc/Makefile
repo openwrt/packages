@@ -8,10 +8,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dtc
-PKG_VERSION:=1.4.2
-PKG_RELEASE:=2
+PKG_VERSION:=1.4.6
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=13456ee9840abbbcb956d0711c580d28524e2ee17840e556e744311f2d8afaac
+PKG_HASH:=382302bfcc3c40734be80ac620983971d911ec4cde798f551873f3eb008c7b7e
 PKG_SOURCE_URL:=https://www.kernel.org/pub/software/utils/dtc
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=GPL
@@ -59,8 +59,10 @@ endef
 TARGET_CFLAGS += \
 	$(FPIC)
 
+# NO_PYTHON is for disabling pylibfdt
 MAKE_FLAGS += \
 	PREFIX= \
+	NO_PYTHON=1 \
 	CFLAGS="$(TARGET_CFLAGS)"
 
 define Build/InstallDev
