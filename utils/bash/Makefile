@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bash
 PKG_VERSION:=4.4.18
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/bash
@@ -75,9 +75,10 @@ CONFIGURE_ARGS+= \
 
 define Package/bash/postinst
 #!/bin/sh
-grep bash $${IPKG_INSTROOT}/etc/shells || \
-	echo "/bin/bash" >> $${IPKG_INSTROOT}/etc/shells
-	echo "/bin/rbash" >> $${IPKG_INSTROOT}/etc/shells
+grep -q bash "$${IPKG_INSTROOT}/etc/shells" || {
+	echo /bin/bash >> "$${IPKG_INSTROOT}/etc/shells"
+	echo /bin/rbash >> "$${IPKG_INSTROOT}/etc/shells"
+}
 endef
 
 define Package/bash/install
