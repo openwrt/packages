@@ -1,0 +1,31 @@
+commit 335bc7b74eee84f0a3bcb615cadd23fe01d1336c
+Author: PiBa-NL <PiBa.NL.dev@gmail.com>
+Date:   Wed May 2 22:27:14 2018 +0200
+
+    BUG/MINOR: lua: Put tasks to sleep when waiting for data
+    
+    If a lua socket is waiting for data it currently spins at 100% cpu usage.
+    This because the TICK_ETERNITY returned by the socket is ignored when
+    setting the 'expire' time of the task.
+    
+    Fixed by removing the check for yields that return TICK_ETERNITY.
+    
+    This should be backported to at least 1.8.
+    
+    (cherry picked from commit fe971b35aeca9994f3823112c783aa796e74075a)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/hlua.c b/src/hlua.c
+index bd0b87e3..0100e7cf 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -5536,8 +5536,7 @@ static struct task *hlua_process_task(struct task *task)
+ 
+ 	case HLUA_E_AGAIN: /* co process or timeout wake me later. */
+ 		notification_gc(&hlua->com);
+-		if (hlua->wake_time != TICK_ETERNITY)
+-			task->expire = hlua->wake_time;
++		task->expire = hlua->wake_time;
+ 		break;
+ 
+ 	/* finished with error. */
