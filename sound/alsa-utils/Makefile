@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alsa-utils
-PKG_VERSION:=1.1.0
+PKG_VERSION:=1.1.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.alsa-project.org/pub/utils/ \
-		http://alsa.cybermirror.org/utils/
-PKG_HASH:=3b1c3135b76e14532d3dd23fb15759ddd7daf9ffbc183f7a9a0a3a86374748f1
+		http://distfiles.gentoo.org/distfiles/
+PKG_HASH:=155caecc40b2220f686f34ba3655a53e3bdbc0586adb1056733949feaaf7d36e
 PKG_INSTALL:=1
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
@@ -49,6 +49,7 @@ CONFIGURE_ARGS+= \
 		--disable-alsatest \
 		--disable-bat \
 		--disable-xmlto \
+		--disable-rst2man \
 		--with-curses=ncursesw
 
 define Package/alsa-utils/install
@@ -71,6 +72,10 @@ define Package/alsa-utils-seq/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/amidi $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/aplaymidi $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/arecordmidi $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/iecset $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/alsaloop $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/alsatplg $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/alsaucm $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/aseqdump $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/aseqnet $(1)/usr/bin/
 endef
