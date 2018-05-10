@@ -13,9 +13,9 @@ start_service() {
 	}
 	[ -d /var/lib/tor ] || {
 		mkdir -m 0755 -p /var/lib/tor
-		chmod 0700 /var/lib/tor
-		chown tor:tor /var/lib/tor
 	}
+	chmod -R 0700 /var/lib/tor
+	chown -R tor:tor /var/lib/tor
 	[ -d /var/log/tor ] || {
 		mkdir -m 0755 -p /var/log/tor
 		chown tor:tor /var/log/tor
