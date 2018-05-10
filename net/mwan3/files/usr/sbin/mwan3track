@@ -87,10 +87,10 @@ main() {
 	config_get_bool keep_failure_interval $1 keep_failure_interval 0
 	config_get recovery_interval $1 recovery_interval $interval
 	config_get_bool check_quality $1 check_quality 0
-	config_get failure_latency $1 failure_latency $failure_latency
-	config_get recovery_latency $1 recovery_latency $recovery_latency
-	config_get failure_loss $1 failure_loss $failure_loss
-	config_get recovery_loss $1 recovery_loss $recovery_loss
+	config_get failure_latency $1 failure_latency 1000
+	config_get recovery_latency $1 recovery_latency 500
+	config_get failure_loss $1 failure_loss 40
+	config_get recovery_loss $1 recovery_loss 10
 
 	local score=$(($down+$up))
 	local track_ips=$(echo $* | cut -d ' ' -f 5-99)
