@@ -1,0 +1,42 @@
+commit edb5a1efd22eb9918574d962640cd2ae3bb45ad3
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Wed May 2 12:12:45 2018 +0200
+
+    BUG/MINOR: checks: Fix check->health computation for flapping servers
+    
+    This patch fixes an old bug introduced in the commit 7b1d47ce ("MAJOR: checks:
+    move health checks changes to set_server_check_status()"). When a DOWN server is
+    flapping, everytime a check succeds, check->health is incremented. But when a
+    check fails, it is decremented only when it is higher than the rise value. So if
+    only one check succeds for a DOWN server, check->health will remain set to 1 for
+    all subsequent failing checks.
+    
+    So, at first glance, it seems not that terrible because the server remains
+    DOWN. But it is reported in the transitional state "DOWN server, going up". And
+    it will remain in this state until it is UP again. And there is also an
+    insidious side effect. If a DOWN server is flapping time to time, It will end to
+    be considered UP after a uniq successful check, , regardless the rise threshold,
+    because check->health will be increased slowly and never decreased.
+    
+    To fix the bug, we just need to reset check->health to 0 when a check fails for
+    a DOWN server. To do so, we just need to relax the condition to handle a failure
+    in the function set_server_check_status.
+    
+    This patch must be backported to haproxy 1.5 and newer.
+    
+    (cherry picked from commit b119a79fc336f2b6074de1c3113b1682c717985c)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/checks.c b/src/checks.c
+index 80a9c70d..d07a82f8 100644
+--- a/src/checks.c
++++ b/src/checks.c
+@@ -243,7 +243,7 @@ static void set_server_check_status(struct check *check, short status, const cha
+ 		 */
+ 		if ((!(check->state & CHK_ST_AGENT) ||
+ 		    (check->status >= HCHK_STATUS_L57DATA)) &&
+-		    (check->health >= check->rise)) {
++		    (check->health > 0)) {
+ 			HA_ATOMIC_ADD(&s->counters.failed_checks, 1);
+ 			report = 1;
+ 			check->health--;
