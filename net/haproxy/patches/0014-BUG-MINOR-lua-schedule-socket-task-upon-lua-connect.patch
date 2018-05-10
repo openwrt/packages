@@ -1,0 +1,48 @@
+commit 52ec3578c3ddc688ae14da3cd3e7e351494603d8
+Author: PiBa-NL <PiBa.NL.dev@gmail.com>
+Date:   Sat May 5 23:51:42 2018 +0200
+
+    BUG/MINOR: lua: schedule socket task upon lua connect()
+    
+    The parameters like server-address, port and timeout should be set before
+    process_stream task is called to avoid the stream being 'closed' before it
+    got initialized properly. This is most clearly visible when running with
+    tune.lua.forced-yield=1.. So scheduling the task should not be done when
+    creating the lua socket, but when connect is called. The error
+    "socket: not yet initialised, you can't set timeouts." would then appear.
+    
+    Below code for example also shows this issue, as the sleep will
+    yield the lua code:
+      local con = core.tcp()
+      core.sleep(1)
+      con:settimeout(10)
+    
+    (cherry picked from commit 706d5ee0c366787536213ccd6dea264d20b76a22)
+    [wt: must be backported to 1.7 and 1.6 as well with a different patch,
+     see https://www.mail-archive.com/haproxy@formilux.org/msg29924.html]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/hlua.c b/src/hlua.c
+index 0100e7cf..5cc918c9 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -2415,6 +2415,10 @@ __LJMP static int hlua_socket_connect(struct lua_State *L)
+ 		WILL_LJMP(luaL_error(L, "out of memory"));
+ 	}
+ 	xref_unlock(&socket->xref, peer);
++
++	task_wakeup(s->task, TASK_WOKEN_INIT);
++	/* Return yield waiting for connection. */
++
+ 	WILL_LJMP(hlua_yieldk(L, 0, 0, hlua_socket_connect_yield, TICK_ETERNITY, 0));
+ 
+ 	return 0;
+@@ -2566,8 +2570,6 @@ __LJMP static int hlua_socket_new(lua_State *L)
+ 	strm->flags |= SF_DIRECT | SF_ASSIGNED | SF_ADDR_SET | SF_BE_ASSIGNED;
+ 	strm->target = &socket_tcp.obj_type;
+ 
+-	task_wakeup(strm->task, TASK_WOKEN_INIT);
+-	/* Return yield waiting for connection. */
+ 	return 1;
+ 
+  out_fail_stream:
