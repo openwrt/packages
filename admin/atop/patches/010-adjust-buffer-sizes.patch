@@ -1,0 +1,44 @@
+diff --git a/photosyst.c b/photosyst.c
+index 38828ec..82e482a 100644
+--- a/photosyst.c
++++ b/photosyst.c
+@@ -1433,7 +1433,7 @@ lvmmapname(unsigned int major, unsigned int minor,
+ 		DIR		*dirp;
+ 		struct dirent	*dentry;
+ 		struct stat	statbuf;
+-		char		path[64];
++		char		path[BUFSIZ];
+ 
+ 		if ( (dirp = opendir(MAPDIR)) )
+ 		{
+diff --git a/showsys.c b/showsys.c
+index db51154..8dff062 100644
+--- a/showsys.c
++++ b/showsys.c
+@@ -1714,7 +1714,7 @@ sysprt_NETNAME(void *p, void *q, int badness, int *color)
+         count_t ival = sstat->intf.intf[as->index].rbyte/125/as->nsecs;
+         count_t oval = sstat->intf.intf[as->index].sbyte/125/as->nsecs;
+ 
+-        static char buf[16] = "ethxxxx ----";
++        static char buf[32] = "ethxxxx ----";
+                       //       012345678901
+ 
+ 	*color = -1;
+@@ -1801,7 +1801,7 @@ sys_printdef syspdef_NETPCKO = {"NETPCKO", sysprt_NETPCKO};
+ char *makenetspeed(count_t val, int nsecs)
+ {
+         char 		c;
+-        static char	buf[16]="si      ?bps";
++        static char	buf[32]="si      ?bps";
+                               // 012345678901
+ 
+         val=val/125/nsecs;	// convert to Kbps
+@@ -1836,7 +1836,7 @@ sysprt_NETSPEEDMAX(void *p, void *q, int badness, int *color)
+ {
+         struct sstat *sstat = p;
+         extraparam *as = q;
+-        static char buf[16];
++        static char buf[32];
+         count_t speed = sstat->intf.intf[as->index].speed;
+ 
+ 	*color = -1;
