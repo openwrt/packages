@@ -1,0 +1,11 @@
+--- a/MQTT/net_mosq.c	2017-07-30 12:19:41.000000000 +0200
++++ b/MQTT/net_mosq.c	2018-05-05 22:28:01.738812566 +0200
+@@ -111,7 +111,7 @@
+ void _mosquitto_net_cleanup(void)
+ {
+ #ifdef WITH_TLS
+-	ERR_remove_state(0);
++	ERR_remove_thread_state(NULL);
+ 	ENGINE_cleanup();
+ 	CONF_modules_unload(1);
+ 	ERR_free_strings();
