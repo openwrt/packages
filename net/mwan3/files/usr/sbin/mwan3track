@@ -122,12 +122,12 @@ main() {
 								ping -I $DEVICE -c $count -W $timeout -s $size -q $track_ip &> /dev/null
 								result=$?
 							else
-								ping_result=`ping -I $DEVICE -c $count -W $timeout -s $size -q $track_ip | tail -2`
-								loss=`echo "$ping_result" | grep "packet loss" |  cut -d "," -f3 | awk '{print $1}' | sed -e 's/%//'`
+								ping_result="$(ping -I $DEVICE -c $count -W $timeout -s $size -q $track_ip | tail -2)"
+								loss="$(echo "$ping_result" | grep "packet loss" |  cut -d "," -f3 | awk '{print $1}' | sed -e 's/%//')"
 								if [ "$loss" -eq 100 ]; then
 									latency=999999
 								else
-									latency=`echo "$ping_result" | grep -E 'rtt|round-trip' | cut -d "=" -f2 | cut -d "/" -f2 | cut -d "." -f1`
+									latency="$(echo "$ping_result" | grep -E 'rtt|round-trip' | cut -d "=" -f2 | cut -d "/" -f2 | cut -d "." -f1)"
 								fi	
 							fi
 					;;
