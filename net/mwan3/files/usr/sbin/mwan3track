@@ -53,7 +53,8 @@ validate_track_method() {
 main() {
 	local reliability count timeout interval failure_interval
 	local recovery_interval down up size
-	local keep_failure_interval
+	local keep_failure_interval check_quality failure_latency
+	local recovery_latency failure_loss recovery_loss
 
 	[ -z "$5" ] && echo "Error: should not be started manually" && exit 0
 
