@@ -1,0 +1,25 @@
+From 05bce5263735b77f91078a930ec55b9cf181d999 Mon Sep 17 00:00:00 2001
+From: Willem Toorop <willem@nlnetlabs.nl>
+Date: Sun, 13 May 2018 11:59:14 +0200
+Subject: [PATCH] Bugfix #399: Reinclude <linux/sysctl.h> in getentropy_linux.c
+
+---
+ src/compat/getentropy_linux.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/compat/getentropy_linux.c b/src/compat/getentropy_linux.c
+index 744783c..abb28f4 100644
+--- a/src/compat/getentropy_linux.c
++++ b/src/compat/getentropy_linux.c
+@@ -62,6 +62,7 @@
+ 
+ #include <linux/types.h>
+ #include <linux/random.h>
++#include <linux/sysctl.h>
+ #ifdef HAVE_GETAUXVAL
+ #include <sys/auxv.h>
+ #endif
+-- 
+2.14.1
+
+
