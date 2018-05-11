@@ -11,19 +11,29 @@ tls_query_padding_blocksize: 128
 
 edns_client_subnet_private : 0
 
+round_robin_upstreams: 0
+
 idle_timeout: 10000
 
 listen_addresses:
   - 127.0.0.1@5453
   -  0::1@5453
 
-round_robin_upstreams: 0
-
 upstream_recursive_servers:
-# Quad 9 IPv6
-  - address_data: 2620:fe::10
-    tls_auth_name: "dns.quad9.net"
+# IPv6 addresses
+# # Cloudflare IPv6
+  - address_data: 2606:4700:4700::1111
+    tls_auth_name: "cloudflare-dns.com"
+
+# # Quad 9 IPv6
+#  - address_data: 2620:fe::10
+#    tls_auth_name: "dns.quad9.net"
+
 # IPv4 addresses
+# # Cloudflare servers
+  - address_data: 1.1.1.1
+    tls_auth_name: "cloudflare-dns.com"
+
 # Quad 9 service
-  - address_data: 9.9.9.10
-    tls_auth_name: "dns.quad9.net"
+#  - address_data: 9.9.9.10
+#    tls_auth_name: "dns.quad9.net"
