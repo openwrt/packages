@@ -239,4 +239,3 @@ $(eval $(call BuildPlugin,userdir,User directory,,30))
 $(eval $(call BuildPlugin,usertrack,User tracking,,30))
 $(eval $(call BuildPlugin,webdav,WebDAV,+PACKAGE_lighttpd-mod-webdav:libsqlite3 +PACKAGE_lighttpd-mod-webdav:libuuid +PACKAGE_lighttpd-mod-webdav:libxml2,30))
 $(eval $(call BuildPlugin,wstunnel,Websocket tunneling,,30))
-
