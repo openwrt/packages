@@ -121,7 +121,6 @@ main() {
 							if [ $check_quality -eq 0 ]; then
 								ping -I $DEVICE -c $count -W $timeout -s $size -q $track_ip &> /dev/null
 								result=$?
-								$LOG info "ping check result $track_ip on $1 ($2): $result"
 							else
 								ping_result=`ping -I $DEVICE -c $count -W $timeout -s $size -q $track_ip | tail -2`
 								loss=`echo "$ping_result" | grep "packet loss" |  cut -d "," -f3 | awk '{print $1}' | sed -e 's/%//'`
