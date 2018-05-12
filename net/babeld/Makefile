@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=babeld
-PKG_VERSION:=1.8.1
+PKG_VERSION:=1.8.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.irif.fr/~jch/software/files/
-PKG_MD5SUM:=a57caa5be996c61bd6a1616fdc01d807
+PKG_MD5SUM:=eec395ade02524b3f351507a21742939
+PKG_HASH:=07edecb132386d5561a767482bc5200e04239b18e48c2f0f47ae1c78d60fe5dc
 PKG_LICENSE:=MIT
 
 include $(INCLUDE_DIR)/package.mk
