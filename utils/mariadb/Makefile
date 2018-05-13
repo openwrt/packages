@@ -8,13 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.1.32
-PKG_RELEASE:=2
+PKG_VERSION:=10.1.33
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
+PKG_SOURCE_URL := \
+	https://mirror.netcologne.de/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
+	https://mirror.lstn.net/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
+	https://ftp.yz.yamagata-u.ac.jp/pub/dbms/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
+	https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=0e2aae6a6a190d07c8e36e87dd43377057fa82651ca3c583462563f3e9369096
+PKG_HASH:=94312c519f2c0c25e1964c64e22aff0036fb22dfb2685638f43a6b2211395d2d
 PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -398,7 +402,7 @@ CMAKE_HOST_OPTIONS += \
 # the whole host package, only the "import_executables" target.
 # -DIMPORT_EXECUTABLES=$(HOST_BUILD_DIR)/import_executables.cmake
 # must then be passed to cmake during target build.
-# see also https://mariadb.com/kb/en/mariadb/cross-compiling-mariadb/
+# See also https://mariadb.com/kb/en/mariadb/cross-compiling-mariadb/
 
 CMAKE_OPTIONS += -DIMPORT_EXECUTABLES=$(STAGING_DIR_HOSTPKG)/share/mariadb/import_executables.cmake
 
@@ -418,10 +422,10 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(2)/bin $(1)/usr/bin $(1)/usr/include $(1)/usr/lib/mysql $(1)/usr/lib/pkgconfig $(1)/usr/share/aclocal
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mysql_config $(1)/usr/bin/
-	$(LN) $(STAGING_DIR)/usr/bin/mysql_config $(2)/bin/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/mysql $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmysqlclient*.so* $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mysql_config $(1)/usr/bin
+	$(LN) $(STAGING_DIR)/usr/bin/mysql_config $(2)/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/mysql $(1)/usr/include
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmysqlclient*.so* $(1)/usr/lib
 	cd $(1)/usr/lib/mysql; $(LN) ../libmysqlclient*.so* .
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/pkgconfig/mariadb.pc $(1)/usr/lib/pkgconfig
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/aclocal/mysql.m4 $(1)/usr/share/aclocal
@@ -429,7 +433,7 @@ endef
 
 define Package/libmariadbclient/install
 	$(INSTALL_DIR) $(1)$(PLUGIN_DIR)
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmysqlclient*.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmysqlclient*.so* $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/dialog.so $(1)$(PLUGIN_DIR)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/mysql_clear_password.so $(1)$(PLUGIN_DIR)
 endef
@@ -452,19 +456,19 @@ endef
 define Package/mariadb-server/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(foreach b,$(MARIADB_SERVER),$(call Package/mariadb/install/bin,$(1),$(b));)
-	$(INSTALL_DIR) $(1)/etc/init.d/
-	$(INSTALL_DIR) $(1)/etc/mysql
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/etc/mysql/conf.d
 	$(INSTALL_BIN) files/mysqld.init $(1)/etc/init.d/mysqld
 	$(INSTALL_CONF) conf/my.cnf $(1)/etc/mysql
 	$(INSTALL_DIR) $(1)$(PLUGIN_DIR)
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/daemon_example.ini $(1)$(PLUGIN_DIR)
 	$(INSTALL_DIR) $(1)/usr/share/mysql/english
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/english/errmsg.sys $(1)/usr/share/mysql/english
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/fill_help_tables.sql $(1)/usr/share/mysql/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/maria_add_gis_sp_bootstrap.sql $(1)/usr/share/mysql/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/mysql_performance_tables.sql $(1)/usr/share/mysql/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/mysql_system_tables.sql $(1)/usr/share/mysql/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/mysql_system_tables_data.sql $(1)/usr/share/mysql/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/fill_help_tables.sql $(1)/usr/share/mysql
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/maria_add_gis_sp_bootstrap.sql $(1)/usr/share/mysql
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/mysql_performance_tables.sql $(1)/usr/share/mysql
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/mysql_system_tables.sql $(1)/usr/share/mysql
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/mysql_system_tables_data.sql $(1)/usr/share/mysql
 endef
 
 define Package/mariadb-server-extra/install
