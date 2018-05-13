@@ -453,7 +453,7 @@ define Package/mariadb-server/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(foreach b,$(MARIADB_SERVER),$(call Package/mariadb/install/bin,$(1),$(b));)
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_DIR) $(1)/etc/mysql
+	$(INSTALL_DIR) $(1)/etc/mysql/conf.d
 	$(INSTALL_BIN) files/mysqld.init $(1)/etc/init.d/mysqld
 	$(INSTALL_CONF) conf/my.cnf $(1)/etc/mysql
 	$(INSTALL_DIR) $(1)$(PLUGIN_DIR)
