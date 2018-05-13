@@ -10,7 +10,7 @@ SERVICE_STOP_TIME=9
 PROG='/usr/bin/mysqld'
 
 start() {
-	local conf='/etc/my.cnf'
+	local conf='/etc/mysql/my.cnf'
 	local datadir="$( sed -nE "s/^\s*datadir\s*=\s*('([^']*)'|\x22([^\x22]*)\x22|(.*\S))\s*$/\2\3\4/p" "$conf" )"
 
 	[ -d "$datadir" ] || {
