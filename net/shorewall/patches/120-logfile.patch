@@ -9,7 +9,7 @@
  
  BLACKLIST_LOG_LEVEL=
  
-@@ -101,7 +101,7 @@ RESTOREFILE=restore
+@@ -103,7 +103,7 @@ RESTOREFILE=restore
  
  SHOREWALL_SHELL=/bin/sh
  
