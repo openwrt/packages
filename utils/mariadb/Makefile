@@ -12,7 +12,11 @@ PKG_VERSION:=10.1.33
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
+PKG_SOURCE_URL := \
+	https://mirror.netcologne.de/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
+	https://mirror.lstn.net/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
+	https://ftp.yz.yamagata-u.ac.jp/pub/dbms/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
+	https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
 
 PKG_HASH:=94312c519f2c0c25e1964c64e22aff0036fb22dfb2685638f43a6b2211395d2d
 PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
