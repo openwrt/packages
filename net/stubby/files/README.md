@@ -32,32 +32,15 @@ Additionally, due to the slight overhead involved with DNS-over-TLS, it is recom
 
 ### Round Robin Upstream Setting Changed
 
-The default stubby config list multiple upstream resolvers, and because of this, it makes sense to "load balance" between them. However, in this package's default stubby config, the only upstream service listed is quad9. One entry is for ipv6 and one for ipv4.
+The default stubby config list multiple upstream resolvers, and because of this, it makes sense to "load balance" between them. However, in this package's default stubby config, the only upstream service listed is Cloudflare. One entry is for ipv6 and one for ipv4.
 
-By setting the "round_robin_upstreams" value to 0, we are simply forcing stubby to try and use ipv6 connectivity to quad9 first, and if not available, simply use the ipv4 service.
+By setting the "round_robin_upstreams" value to 0, we are simply forcing stubby to try and use ipv6 connectivity to Cloudflare first, and if not available, simply use the ipv4 service.
 
-quad9 is an Anycast DNS service. This should take care of any needed "failover" in the event that one of quad9's nodes goes down.
+Cloudflare is an Anycast DNS service. This should take care of any needed "failover" in the event that one of Cloudflare's nodes goes down.
 
 ### Upstream Resolvers Changed
 
-Most of the default resolvers for stubby are in Europe. To provide a better experience for a larger number of users, this package defaults to using quad9's DNS service.
+Most of the default resolvers for stubby are in Europe. To provide a better experience for a larger number of users, this package defaults to using Cloudflare's DNS service. Cloudflare's DNS service has been ranked number one in speed against many other top resolvers.
 
-Note: quad9 has multiple IPs available for their service. The "features" applied are based on the endpoint your DNS client connects to. For this package, the default resolvers are set to the non-filtering, EDNS Client-Subnet capable endpoints.
-
-https://www.quad9.net/faq/#Is_there_a_service_that_Quad9_offers_that_does_not_have_the_blocklist_or_other_security
-
-https://www.quad9.net/faq/#Does_Quad9_support_DNS_over_TLS
-
-``````
-
-# IPv6 addresses 
-# Quad 9 IPv6
-  - address_data: 2620:fe::10
-    tls_auth_name: "dns.quad9.net"
-
-# IPv4 addresses
-# Quad 9 service
-  - address_data: 9.9.9.10
-    tls_auth_name: "dns.quad9.net"
-
-``````
+https://developers.Cloudflare.com/1.1.1.1/commitment-to-privacy/
+https://www.dnsperf.com/dns-resolver/1-1-1-1
