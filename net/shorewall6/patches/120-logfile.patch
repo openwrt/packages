@@ -11,7 +11,7 @@ Index: shorewall6-5.1.4.1/configfiles/shorewall6.conf
  
  BLACKLIST_LOG_LEVEL=
  
-@@ -98,7 +98,7 @@
+@@ -100,7 +100,7 @@
  
  SHOREWALL_SHELL=/bin/sh
  
