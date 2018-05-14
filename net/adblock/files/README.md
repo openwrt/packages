@@ -46,11 +46,15 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * [reg_ru](https://code.google.com/p/ruadlist)
     * => regional blocklist for Russia, weekly updates, approx. 2.000 entries
     * [shallalist](http://www.shallalist.de) (categories "adv" "costtraps" "spyware" "tracker" "warez" enabled by default)
-    * => daily updates, approx. 32.000 entries (a short description of all shallalist categories can be found [online](http://www.shallalist.de/categories.html))
+    * => daily updates, approx. 32.000 entries (a short description of all categories can be found [online](http://www.shallalist.de/categories.html))
     * [spam404](http://www.spam404.com)
     * => infrequent updates, approx. 5.000 entries
     * [sysctl/cameleon](http://sysctl.org/cameleon)
     * => weekly updates, approx. 21.000 entries
+    * [ut_capitole](https://dsi.ut-capitole.fr/blacklists) (categories "cryptojacking" "ddos" "malware" "phishing" "warez" enabled by default)
+    * => daily updates, approx. 64.000 entries (a short description of all categories can be found [online](https://dsi.ut-capitole.fr/blacklists/index_en.php))
+    * [urlhaus](https://urlhaus.abuse.ch)
+    * => numerous updates on the same day, approx. 3.500 entries
     * [whocares](http://someonewhocares.org)
     * => weekly updates, approx. 12.000 entries
     * [winhelp](http://winhelp2002.mvps.org)
