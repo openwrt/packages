@@ -76,7 +76,6 @@ define host_python_pip_install
 	$(HOST_PYTHON_PIP) install \
 		--root=$(1) \
 		--prefix=$(2) \
-		--ignore-installed \
 		$(3)
 endef
 
