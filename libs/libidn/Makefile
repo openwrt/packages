@@ -8,18 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libidn
-PKG_VERSION:=1.33
-PKG_RELEASE:=2
-
+PKG_VERSION:=1.35
+PKG_RELEASE:=1
+PKG_MAINTAINER:=Kevin Darbyshire-Bryant <kevin@darbyshire-bryant.me.uk>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/libidn
-PKG_HASH:=44a7aab635bb721ceef6beecc4d49dfd19478325e1b47f3196f7d2acc4930e19
+PKG_HASH:=f11af1005b46b7b15d057d7f107315a1ad46935c7fcdf243c16e46ec14f0fe1e
 
 PKG_LICENSE:=GPL-2.0+ GPL-3.0+ LGPL-2.1+ LGPL-3.0+ Apache-2.0
 PKG_LICENSE_FILES:=COPYING COPYINGv2 COPYINGv3 COPYING.LESSERv2 COPYING.LESSERv3 java/LICENSE-2.0.txt
 
-PKG_FIXUP:=autoreconf
-PKG_REMOVE_FILES:=GNUmakefile aclocal.m4
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -28,7 +26,6 @@ define Package/idn/Default
   SECTION:=net
   CATEGORY:=Network
   URL:=http://www.gnu.org/software/libidn/
-  MAINTAINER:=Kevin Darbyshire-Bryant <kevin@darbyshire-bryant.me.uk>
 endef
 
 define Package/idn/Default/description
@@ -68,11 +65,8 @@ endef
 TARGET_CFLAGS += $(FPIC)
 
 CONFIGURE_ARGS += \
-	--enable-shared \
-	--enable-static \
-
-MAKE_FLAGS += \
-	CC="$(TARGET_CC)" \
+        --disable-rpath \
+        --disable-doc
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
