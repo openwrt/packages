@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.5.1"
+adb_ver="3.5.2"
 adb_sysver="unknown"
 adb_enabled=0
 adb_debug=0
@@ -354,7 +354,7 @@ f_count()
     then
         if [ "${adb_dns}" = "named" ] || [ "${adb_dns}" = "kresd" ]
         then
-            adb_cnt="$(( ($(wc -l 2>/dev/null < "${adb_dnsdir}/${adb_dnsfile}") - $(printf "%s" "${adb_dnsheader}" | grep -c "^")) / 2 ))"
+            adb_cnt="$(( ($(wc -l 2>/dev/null < "${adb_dnsdir}/${adb_dnsfile}") - $(printf '%s' "${adb_dnsheader}" | grep -c "^")) / 2 ))"
         else
             adb_cnt="$(wc -l 2>/dev/null < "${adb_dnsdir}/${adb_dnsfile}")"
         fi
@@ -406,15 +406,17 @@ f_extconf()
 
     uci_config="firewall"
     if [ ${adb_enabled} -eq 1 ] && [ ${adb_forcedns} -eq 1 ] && \
-       [ -z "$(uci -q get firewall.adblock_dns)" ] && [ $(/etc/init.d/firewall enabled; printf "%u" ${?}) -eq 0 ]
+       [ -z "$(uci -q get firewall.adblock_dns)" ] && [ $(/etc/init.d/firewall enabled; printf '%u' ${?}) -eq 0 ]
     then
-        uci -q set firewall.adblock_dns="redirect"
-        uci -q set firewall.adblock_dns.name="Adblock DNS"
-        uci -q set firewall.adblock_dns.src="lan"
-        uci -q set firewall.adblock_dns.proto="tcp udp"
-        uci -q set firewall.adblock_dns.src_dport="53"
-        uci -q set firewall.adblock_dns.dest_port="53"
-        uci -q set firewall.adblock_dns.target="DNAT"
+		uci -q batch <<-EOF
+			set firewall.adblock_dns="redirect"
+			set firewall.adblock_dns.name="Adblock DNS"
+			set firewall.adblock_dns.src="lan"
+			set firewall.adblock_dns.proto="tcp udp"
+			set firewall.adblock_dns.src_dport="53"
+			set firewall.adblock_dns.dest_port="53"
+			set firewall.adblock_dns.target="DNAT"
+		EOF
     elif [ -n "$(uci -q get firewall.adblock_dns)" ] && ([ ${adb_enabled} -eq 0 ] || [ ${adb_forcedns} -eq 0 ])
     then
         uci -q delete firewall.adblock_dns
@@ -672,7 +674,7 @@ f_query()
 
     if [ -z "${domain}" ] || [ "${domain}" = "${tld}" ]
     then
-        printf "%s\n" "::: invalid domain input, please submit a single domain, e.g. 'doubleclick.net'"
+        printf '%s\n' "::: invalid domain input, please submit a single domain, e.g. 'doubleclick.net'"
     else
         case "${adb_dns}" in
             dnsmasq)
@@ -686,8 +688,8 @@ f_query()
         do
             search="${domain//./\.}"
             result="$(awk -F '/|\"| ' "/^($search|[^\*].*[\/\"\. ]+${search})/{i++;{printf(\"  + %s\n\",\$${field})};if(i>9){printf(\"  + %s\n\",\"[...]\");exit}}" "${adb_dnsdir}/${adb_dnsfile}")"
-            printf "%s\n" "::: results for domain '${domain}'"
-            printf "%s\n" "${result:-"  - no match"}"
+            printf '%s\n' "::: results for domain '${domain}'"
+            printf '%s\n' "${result:-"  - no match"}"
             domain="${tld}"
             tld="${domain#*.}"
         done
@@ -778,7 +780,7 @@ f_log()
 #
 f_main()
 {
-    local tmp_load tmp_file src_name src_rset src_arc src_log mem_total mem_free enabled url cnt=1
+    local tmp_load tmp_file src_name src_rset src_url src_log src_arc src_cat cat list entry suffix mem_total mem_free enabled cnt=1
 
     mem_total="$(awk '/^MemTotal/ {print int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
     mem_free="$(awk '/^MemFree/ {print int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
@@ -820,16 +822,17 @@ f_main()
     #
     for src_name in ${adb_sources}
     do
-        eval "enabled=\"\${enabled_${src_name}}\""
-        eval "url=\"\${adb_src_${src_name}}\""
-        eval "src_rset=\"\${adb_src_rset_${src_name}}\""
+        enabled="$(eval printf '%s' \"\${enabled_${src_name}\}\")"
+        src_url="$(eval printf '%s' \"\${adb_src_${src_name}\}\")"
+        src_rset="$(eval printf '%s' \"\${adb_src_rset_${src_name}\}\")"
+        src_cat="$(eval printf '%s' \"\${adb_src_cat_${src_name}\}\")"
         adb_tmpload="${tmp_load}.${src_name}"
         adb_tmpfile="${tmp_file}.${src_name}"
 
         # basic pre-checks
         #
         f_log "debug" "f_main ::: name: ${src_name}, enabled: ${enabled}"
-        if [ "${enabled}" != "1" ] || [ -z "${url}" ] || [ -z "${src_rset}" ]
+        if [ "${enabled}" != "1" ] || [ -z "${src_url}" ] || [ -z "${src_rset}" ]
         then
             f_list remove
             continue
@@ -854,10 +857,10 @@ f_main()
         #
         if [ "${src_name}" = "blacklist" ]
         then
-            if [ -s "${url}" ]
+            if [ -s "${src_url}" ]
             then
                 (
-                  src_log="$(cat "${url}" > "${adb_tmpload}" 2>&1)"
+                  src_log="$(cat "${src_url}" > "${adb_tmpload}" 2>&1)"
                   adb_rc=${?}
                   if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpload}" ]
                   then
@@ -874,32 +877,38 @@ f_main()
                       fi
                   else
                       src_log="$(printf '%s' "${src_log}" | awk '{ORS=" ";print $0}')"
-                      f_log "debug" "f_main ::: name: ${src_name}, url: ${url}, rc: ${adb_rc}, log: ${src_log:-"-"}"
+                      f_log "debug" "f_main ::: name: ${src_name}, url: ${src_url}, rc: ${adb_rc}, log: ${src_log:-"-"}"
                   fi
                 ) &
             else
                 continue
             fi
-        elif [ "${src_name}" = "shalla" ]
+        elif [ -n "${src_cat}" ]
         then
             (
-              src_arc="${adb_tmpdir}"/shallalist.tar.gz
-              src_log="$("${adb_fetchutil}" ${adb_fetchparm} "${src_arc}" "${url}" 2>&1)"
+              src_arc="${adb_tmpdir}/${src_url##*/}"
+              src_log="$("${adb_fetchutil}" ${adb_fetchparm} "${src_arc}" "${src_url}" 2>&1)"
               adb_rc=${?}
               if [ ${adb_rc} -eq 0 ] && [ -s "${src_arc}" ]
               then
-                  for category in ${adb_src_cat_shalla}
+                  list="$(tar -tzf "${src_arc}")"
+                  suffix="$(eval printf '%s' \"\${adb_src_suffix_${src_name}:-\"domains\"\}\")"
+                  for cat in ${src_cat}
                   do
-                      tar -xOzf "${src_arc}" "BL/${category}/domains" >> "${adb_tmpload}"
-                      adb_rc=${?}
-                      if [ ${adb_rc} -ne 0 ]
+                      entry="$(printf '%s' "${list}" | grep -E "[\^/]+${cat}/${suffix}")"
+                      if [ -n "${entry}" ]
                       then
-                          break
+                          tar -xOzf "${src_arc}" "${entry}" >> "${adb_tmpload}"
+                          adb_rc=${?}
+                          if [ ${adb_rc} -ne 0 ]
+                          then
+                              break
+                          fi
                       fi
                   done
               else
                   src_log="$(printf '%s' "${src_log}" | awk '{ORS=" ";print $0}')"
-                  f_log "debug" "f_main ::: name: ${src_name}, url: ${url}, rc: ${adb_rc}, log: ${src_log:-"-"}"
+                  f_log "debug" "f_main ::: name: ${src_name}, url: ${src_url}, rc: ${adb_rc}, log: ${src_log:-"-"}"
               fi
               if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpload}" ]
               then
@@ -929,7 +938,7 @@ f_main()
             ) &
         else
             (
-              src_log="$("${adb_fetchutil}" ${adb_fetchparm} "${adb_tmpload}" "${url}" 2>&1)"
+              src_log="$("${adb_fetchutil}" ${adb_fetchparm} "${adb_tmpload}" "${src_url}" 2>&1)"
               adb_rc=${?}
               if [ ${adb_rc} -eq 0 ] && [ -s "${adb_tmpload}" ]
               then
@@ -953,7 +962,7 @@ f_main()
                   fi
               else
                   src_log="$(printf '%s' "${src_log}" | awk '{ORS=" ";print $0}')"
-                  f_log "debug" "f_main ::: name: ${src_name}, url: ${url}, rc: ${adb_rc}, log: ${src_log:-"-"}"
+                  f_log "debug" "f_main ::: name: ${src_name}, url: ${src_url}, rc: ${adb_rc}, log: ${src_log:-"-"}"
                   if [ ${adb_backup} -eq 1 ]
                   then
                       f_list restore
