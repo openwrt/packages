@@ -1,6 +1,7 @@
 #!/bin/sh
 
 . /lib/functions.sh
+. /usr/share/libubox/jshn.sh
 . /lib/functions/network.sh
 . /lib/mwan3/mwan3.sh
 
@@ -42,7 +43,7 @@ ifdown()
 
 ifup()
 {
-	local device enabled
+	local device enabled up l3_device
 
 	config_load mwan3
 
@@ -60,12 +61,14 @@ ifup()
 		exit 0
 	}
 
+	json_load $(ubus -S call network.interface.$1 status)
+	json_get_vars up l3_device
 	config_get enabled "$1" enabled 0
 
-	device=$(uci -p /var/state get network.$1.ifname) &> /dev/null
-
-	if [ -n "$device" ] ; then
-		[ "$enabled" -eq 1 ] && ACTION=ifup INTERFACE=$1 DEVICE=$device /sbin/hotplug-call iface
+	if [ "$up" -eq 1 ] \
+		&& [ -n "$l3_device" ] \
+		&& [ "$enabled" -eq 1 ]; then
+		ACTION=ifup INTERFACE=$1 DEVICE=$l3_device /sbin/hotplug-call iface
 	fi
 }
 
@@ -118,7 +121,7 @@ status()
 
 start()
 {
-	local enabled
+	local enabled src_ip local_source
 
 	config_load mwan3
 	config_get_bool enabled globals 'enabled' 0
@@ -127,12 +130,30 @@ start()
 		exit 0
 	}
 
+	config_get local_source globals local_source 'none'
+	[ "${local_source}" = "none" ] || {
+		src_ip=$(uci_get_state mwan3 globals src_ip)
+		[ "${src_ip}" != "" ] && {
+			ip route del default via "${src_ip}" dev lo 1>/dev/null 2>&1
+			ip addr del "${src_ip}/32" dev lo 1>/dev/null 2>&1
+		}
+
+		network_get_ipaddr src_ip "${local_source}"
+		if [ "${src_ip}" = "" ]; then
+			$LOG warn "Unable to set source ip for own initiated traffic (${local_source})"
+		else
+			ip addr add "${src_ip}/32" dev lo
+			ip route add default via "${src_ip}" dev lo
+			uci_toggle_state mwan3 globals src_ip "${src_ip}"
+		fi
+	}
+
 	config_foreach ifup interface
 }
 
 stop()
 {
-	local ipset route rule table IP IPT pid
+	local ipset route rule table IP IPT pid src_ip
 
 	for pid in $(pgrep -f "mwan3track"); do
 		kill -TERM "$pid" > /dev/null 2>&1
@@ -178,6 +199,12 @@ stop()
 
 	mwan3_lock_clean
 	rm -rf $MWAN3_STATUS_DIR $MWAN3TRACK_STATUS_DIR
+
+	src_ip=$(uci_get_state mwan3 globals src_ip)
+	[ "${src_ip}" = "" ] || {
+		ip route del default via "${src_ip}" dev lo 1>/dev/null 2>&1
+		ip addr del "${src_ip}/32" dev lo 1>/dev/null 2>&1
+	}
 }
 
 restart() {
