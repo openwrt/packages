@@ -73,6 +73,10 @@ NODEJS_CPU:=$(subst powerpc,ppc,$(subst aarch64,arm64,$(subst x86_64,x64,$(subst
 MAKE_VARS+= \
 	DESTCPU=$(NODEJS_CPU)
 
+CONFIGURE_VARS:= \
+	CC="$(TARGET_CC) $(TARGET_OPTIMIZATION)" \
+	CC_host="$(HOSTCC)"
+
 CONFIGURE_ARGS:= \
 	--dest-cpu=$(NODEJS_CPU) \
 	--dest-os=linux \
