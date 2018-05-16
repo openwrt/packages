@@ -1,0 +1,28 @@
+diff --git a/Makefile.in b/Makefile.in
+index c8168bb..eb6cc5c 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -21,11 +21,6 @@ INSTALL=@INSTALL@
+ INSTALL_PROGRAM=@INSTALL_PROGRAM@
+ INSTALL_DATA=@INSTALL_DATA@
+ 
+-git-label:=$(strip $(shell git describe --always --dirty=-x 2>/dev/null))
+-ifneq ($(git-label),)
+-        CFLAGS += -DGIT_LABEL="$(git-label)"
+-endif
+-
+ client=$(addprefix $(exedir)/,@CLIENT@)
+ daemon=$(exedir)/bird
+ protocols=@protocols@
+@@ -42,6 +37,11 @@ srcdir := @srcdir@
+ objdir := @objdir@
+ exedir := @exedir@
+ 
++git-label:=$(strip $(shell cd $(srcdir) && [ "$$(git rev-parse --show-toplevel)" = "$$(readlink -f .)" ] && git describe --always --dirty=-x 2>/dev/null))
++ifneq ($(git-label),)
++        CFLAGS += -DGIT_LABEL="$(git-label)"
++endif
++
+ ifeq ($(objdir),.)
+   objdir := $(realpath .)
+ endif

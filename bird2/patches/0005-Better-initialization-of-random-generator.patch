@@ -1,0 +1,30 @@
+From eaf63d314d50cba5b2cfa8f18de64a91d3131b94 Mon Sep 17 00:00:00 2001
+From: "Ondrej Zajicek (work)" <santiago@crfreenet.org>
+Date: Thu, 3 May 2018 17:07:39 +0200
+Subject: [PATCH 2/2] Better initialization of random generator
+
+Use full time precision to initialize random generator. The old
+code was prone to initialize it to the same values in specific
+circumstances (boot without RTC, multiple VMs starting at once).
+---
+ sysdep/unix/io.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/sysdep/unix/io.c b/sysdep/unix/io.c
+index 012deaf0..11a0d6f1 100644
+--- a/sysdep/unix/io.c
++++ b/sysdep/unix/io.c
+@@ -2144,7 +2144,9 @@ io_init(void)
+   // XXX init_times();
+   // XXX update_times();
+   boot_time = current_time();
+-  srandom((uint) (current_real_time() TO_S));
++
++  u64 now = (u64) current_real_time();
++  srandom((uint) (now ^ (now >> 32)));
+ }
+ 
+ static int short_loops = 0;
+-- 
+2.17.0
+

@@ -1,0 +1,118 @@
+From 70fab17837dbb4c5848681e4c6b9b90891891130 Mon Sep 17 00:00:00 2001
+From: "Ondrej Zajicek (work)" <santiago@crfreenet.org>
+Date: Thu, 3 May 2018 16:55:11 +0200
+Subject: [PATCH 1/2] Babel: Add option to randomize router ID
+
+When a Babel node restarts, it loses its sequence number, which can cause
+its routes to be rejected by peers until the state is cleared out by other
+nodes in the network (which can take on the order of minutes).
+
+There are two ways to fix this: Having stable storage to keep the sequence
+number across restarts, or picking a different router ID each time.
+
+This implements the latter, by introducing a new option that will cause
+BIRD to randomize a high 32 bits of router ID every time it starts up.
+This avoids the problem at the cost of not having stable router IDs in
+the network.
+
+Thanks to Toke Hoiland-Jorgensen for the patch.
+---
+ doc/bird.sgml        | 10 ++++++++++
+ proto/babel/babel.c  | 11 +++++++++++
+ proto/babel/babel.h  |  1 +
+ proto/babel/config.Y |  3 ++-
+ 4 files changed, 24 insertions(+), 1 deletion(-)
+
+diff --git a/doc/bird.sgml b/doc/bird.sgml
+index 1191fa03..ae308d4c 100644
+--- a/doc/bird.sgml
++++ b/doc/bird.sgml
+@@ -1691,6 +1691,7 @@ supports the following per-interface configuration options:
+ protocol babel [<name>] {
+ 	ipv4 { <channel config> };
+ 	ipv6 [sadr] { <channel config> };
++        randomize router id <switch>;
+ 	interface <interface pattern> {
+ 		type <wired|wireless>;
+ 		rxcost <number>;
+@@ -1713,6 +1714,15 @@ protocol babel [<name>] {
+       <tag><label id="babel-channel">ipv4 | ipv6 [sadr] <m/channel config/</tag>
+       The supported channels are IPv4, IPv6, and IPv6 SADR.
+ 
++      <tag><label id="babel-random-router-id">randomize router id <m/switch/</tag>
++      If enabled, Bird will randomize the top 32 bits of its router ID whenever
++      the protocol instance starts up. If a Babel node restarts, it loses its
++      sequence number, which can cause its routes to be rejected by peers until
++      the state is cleared out by other nodes in the network (which can take on
++      the order of minutes). Enabling this option causes Bird to pick a random
++      router ID every time it starts up, which avoids this problem at the cost
++      of not having stable router IDs in the network. Default: no.
++
+       <tag><label id="babel-type">type wired|wireless </tag>
+       This option specifies the interface type: Wired or wireless. On wired
+       interfaces a neighbor is considered unreachable after a small number of
+diff --git a/proto/babel/babel.c b/proto/babel/babel.c
+index 797a83d4..ce05191c 100644
+--- a/proto/babel/babel.c
++++ b/proto/babel/babel.c
+@@ -2226,6 +2226,14 @@ babel_init(struct proto_config *CF)
+   return P;
+ }
+ 
++static inline void
++babel_randomize_router_id(struct babel_proto *p)
++{
++  p->router_id &= (u64) 0xffffffff;
++  p->router_id |= ((u64) random()) << 32;
++  TRACE(D_EVENTS, "Randomized router ID to %lR", p->router_id);
++}
++
+ static int
+ babel_start(struct proto *P)
+ {
+@@ -2244,6 +2252,9 @@ babel_start(struct proto *P)
+   p->update_seqno = 1;
+   p->router_id = proto_get_router_id(&cf->c);
+ 
++  if (cf->randomize_router_id)
++    babel_randomize_router_id(p);
++
+   p->route_slab = sl_new(P->pool, sizeof(struct babel_route));
+   p->source_slab = sl_new(P->pool, sizeof(struct babel_source));
+   p->msg_slab = sl_new(P->pool, sizeof(struct babel_msg_node));
+diff --git a/proto/babel/babel.h b/proto/babel/babel.h
+index b194ce30..e5c9cd5b 100644
+--- a/proto/babel/babel.h
++++ b/proto/babel/babel.h
+@@ -112,6 +112,7 @@ struct babel_config {
+   struct proto_config c;
+   list iface_list;			/* List of iface configs (struct babel_iface_config) */
+   uint hold_time;			/* Time to hold stale entries and unreachable routes */
++  u8 randomize_router_id;
+ 
+   struct channel_config *ip4_channel;
+   struct channel_config *ip6_channel;
+diff --git a/proto/babel/config.Y b/proto/babel/config.Y
+index 7adfb4bb..205b4e4f 100644
+--- a/proto/babel/config.Y
++++ b/proto/babel/config.Y
+@@ -25,7 +25,7 @@ CF_DECLS
+ CF_KEYWORDS(BABEL, INTERFACE, METRIC, RXCOST, HELLO, UPDATE, INTERVAL, PORT,
+ 	TYPE, WIRED, WIRELESS, RX, TX, BUFFER, PRIORITY, LENGTH, CHECK, LINK,
+ 	NEXT, HOP, IPV4, IPV6, BABEL_METRIC, SHOW, INTERFACES, NEIGHBORS,
+-	ENTRIES)
++	ENTRIES, RANDOMIZE, ROUTER, ID)
+ 
+ CF_GRAMMAR
+ 
+@@ -42,6 +42,7 @@ babel_proto_item:
+    proto_item
+  | proto_channel
+  | INTERFACE babel_iface
++ | RANDOMIZE ROUTER ID bool { BABEL_CFG->randomize_router_id = $4; }
+  ;
+ 
+ babel_proto_opts:
+-- 
+2.17.0
+

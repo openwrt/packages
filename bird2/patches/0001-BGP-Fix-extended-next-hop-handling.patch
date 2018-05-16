@@ -1,0 +1,29 @@
+From f3a8cf050e6181e158dcde2fe885d7bf220eedc3 Mon Sep 17 00:00:00 2001
+From: "Ondrej Zajicek (work)" <santiago@crfreenet.org>
+Date: Thu, 12 Apr 2018 16:55:56 +0200
+Subject: [PATCH] BGP: Fix extended next hop handling
+
+For IPv4 with extended next hop, we use MP-BGP format and therefore no
+independent NEXT_HOP attribute.
+
+Thanks to Arvin Gan for the bugreport.
+---
+ proto/bgp/attrs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/proto/bgp/attrs.c b/proto/bgp/attrs.c
+index 0f41f818..9003feb2 100644
+--- a/proto/bgp/attrs.c
++++ b/proto/bgp/attrs.c
+@@ -295,7 +295,7 @@ bgp_encode_next_hop(struct bgp_write_state *s, eattr *a, byte *buf, uint size)
+    * store it and encode it later by AFI-specific hooks.
+    */
+ 
+-  if (s->channel->afi == BGP_AF_IPV4)
++  if ((s->channel->afi == BGP_AF_IPV4) && !s->channel->ext_next_hop)
+   {
+     ASSERT(a->u.ptr->length == sizeof(ip_addr));
+ 
+-- 
+2.17.0
+
