@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
 PKG_VERSION:=1.8.8
-PKG_RELEASE:=03
+PKG_RELEASE:=04
 
 PKG_SOURCE:=haproxy-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.haproxy.org/download/1.8/src/

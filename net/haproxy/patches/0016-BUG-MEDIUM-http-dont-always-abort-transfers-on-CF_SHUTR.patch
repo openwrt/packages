@@ -1,0 +1,70 @@
+commit 1c10e5b1b95142bb3ac385be1e60d8b180b2e99e
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Wed May 16 11:35:05 2018 +0200
+
+    BUG/MEDIUM: http: don't always abort transfers on CF_SHUTR
+    
+    Pawel Karoluk reported on Discourse[1] that HTTP/2 breaks url_param.
+    
+    Christopher managed to track it down to the HTTP_MSGF_WAIT_CONN flag
+    which is set there to ensure the connection is validated before sending
+    the headers, as we may need to rewind the stream and hash again upon
+    redispatch. What happens is that in the forwarding code we refrain
+    from forwarding when this flag is set and the connection is not yet
+    established, and for this we go through the missing_data_or_waiting
+    path. This exit path was initially designed only to wait for data
+    from the client, so it rightfully checks whether or not the client
+    has already closed since in that case it must not wait for more data.
+    But it also has the side effect of aborting such a transfer if the
+    client has closed after the request, which is exactly what happens
+    in H2.
+    
+    A study on the code reveals that this whole combined check should
+    be revisited : while it used to be true that waiting had the same
+    error conditions as missing data, it's not true anymore. Some other
+    corner cases were identified, such as the risk to report a server
+    close instead of a client timeout when waiting for the client to
+    read the last chunk of data if the shutr is already present, or
+    the risk to fail a redispatch when a client uploads some data and
+    closes before the connection establishes. The compression seems to
+    be at risk of rare issues there if a write to a full buffer is not
+    yet possible but a shutr is already queued.
+    
+    At the moment these risks are extremely unlikely but they do exist,
+    and their impact is very minor since it mostly concerns an issue not
+    being optimally handled, and the fixes risk to cause more serious
+    issues. Thus this patch only focuses on how the HTTP_MSGF_WAIT_CONN
+    is handled and leaves the rest untouched.
+    
+    This patch needs to be backported to 1.8, and could be backported to
+    earlier versions to properly take care of HTTP/1 requests passing via
+    url_param which are closed immediately after the headers, though this
+    is unlikely as this behaviour is only exhibited by scripts.
+    
+    [1] https://discourse.haproxy.org/t/haproxy-1-8-x-url-param-issue-in-http2/2482/13
+    
+    (cherry picked from commit ba20dfc50161ba705a746d54ebc1a0a45c46beab)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index 4c18a27c..b384cef1 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -4865,7 +4865,8 @@ int http_request_forward_body(struct stream *s, struct channel *req, int an_bit)
+ 		if (!(s->res.flags & CF_READ_ATTACHED)) {
+ 			channel_auto_connect(req);
+ 			req->flags |= CF_WAKE_CONNECT;
+-			goto missing_data_or_waiting;
++			channel_dont_close(req); /* don't fail on early shutr */
++			goto waiting;
+ 		}
+ 		msg->flags &= ~HTTP_MSGF_WAIT_CONN;
+ 	}
+@@ -4949,6 +4950,7 @@ int http_request_forward_body(struct stream *s, struct channel *req, int an_bit)
+ 		goto return_bad_req_stats_ok;
+ 	}
+ 
++ waiting:
+ 	/* waiting for the last bits to leave the buffer */
+ 	if (req->flags & CF_SHUTW)
+ 		goto aborted_xfer;
