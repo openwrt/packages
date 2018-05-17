@@ -17,14 +17,15 @@
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
-BIRD := bird4
-PKG_NAME := $(BIRD)-openwrt
+BIRD := bird6
+BIRD_PKG := bird1-ipv6
+PKG_NAME := $(BIRD_PKG)-openwrt
 PKG_VERSION := 0.3
 PKG_RELEASE := 1
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 PKG_LICENSE := GPL-3.0+
-uci := $(BIRD)-uci
-luci := luci-app-$(BIRD)
+uci := $(BIRD_PKG)-uci
+luci := luci-app-$(BIRD_PKG)
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -34,17 +35,17 @@ define Build/Compile
 endef
 
 define Package/$(uci)
-  TITLE:=The BIRD UCI module
+  TITLE:=The BIRD UCI module (v1.6) (IPv6)
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Routing and Redirection
   MAINTAINER:=Eloi Carbo <eloicaso@openmailbox.org>
   URL:=https://github.com/eloicaso/bird-openwrt/
-  DEPENDS:=+$(BIRD) +libuci +uci
+  DEPENDS:=+$(BIRD_PKG) +libuci +uci
 endef
 
 define Package/$(uci)/description
-$(BIRD) UCI integration module
+$(BIRD_PKG) UCI integration module
 endef
 
 define Package/$(uci)/conffiles
@@ -77,13 +78,13 @@ endef
 $(eval $(call BuildPackage,$(uci)))
 
 define Package/$(luci)
-  TITLE:=LuCI support for $(BIRD)
+  TITLE:=LuCI support for $(BIRD_PKG)
   SECTION:=luci
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   MAINTAINER:=Eloi Carbo <eloicaso@openmailbox.org>
   URL:=https://github.com/eloicaso/bird-openwrt/
-  DEPENDS:=+$(BIRD)-uci +luci-base
+  DEPENDS:=+$(BIRD_PKG)-uci +luci-base
 endef
 
 define Package/$(luci)/description

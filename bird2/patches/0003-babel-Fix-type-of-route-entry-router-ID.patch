@@ -1,0 +1,33 @@
+From 40e7bd0e39849a03bd3f6f44d6719a5f8b1dd291 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Toke=20H=C3=B8iland-J=C3=B8rgensen?= <toke@toke.dk>
+Date: Mon, 30 Apr 2018 16:29:20 +0200
+Subject: [PATCH] babel: Fix type of route entry router ID
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The router ID being assigned to routes was a uint, which discards the upper
+32 bits. This also has the nice side effect of echoing the wrong router ID
+back to other routers.
+
+Signed-off-by: Toke Høiland-Jørgensen <toke@toke.dk>
+---
+ proto/babel/babel.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/proto/babel/babel.c b/proto/babel/babel.c
+index 4fd88042..a8eb5ea8 100644
+--- a/proto/babel/babel.c
++++ b/proto/babel/babel.c
+@@ -2140,7 +2140,7 @@ babel_rt_notify(struct proto *P, struct channel *c UNUSED, struct network *net,
+     uint internal = (new->attrs->src->proto == P);
+     uint rt_seqno = internal ? new->u.babel.seqno : p->update_seqno;
+     uint rt_metric = ea_get_int(attrs, EA_BABEL_METRIC, 0);
+-    uint rt_router_id = internal ? new->u.babel.router_id : p->router_id;
++    u64 rt_router_id = internal ? new->u.babel.router_id : p->router_id;
+ 
+     if (rt_metric > BABEL_INFINITY)
+     {
+-- 
+2.17.0
+
