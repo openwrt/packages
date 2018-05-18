@@ -1,0 +1,45 @@
+commit f571613244e4c02ca7aada30c89a6244d09d58d4
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Thu May 17 10:56:47 2018 +0200
+
+    BUG/MEDIUM: ssl: properly protect SSL cert generation
+    
+    Commit 821bb9b ("MAJOR: threads/ssl: Make SSL part thread-safe") added
+    insufficient locking to the cert lookup and generation code : it uses
+    lru64_lookup(), which will automatically remove and add a list element
+    to the LRU list. It cannot be simply read-locked.
+    
+    A long-term improvement should consist in using a lockless mechanism
+    in lru64_lookup() to safely move the list element at the head. For now
+    let's simply use a write lock during the lookup. The effect will be
+    minimal since it's used only in conjunction with automatically generated
+    certificates, which are much more expensive and rarely used.
+    
+    This fix must be backported to 1.8.
+    
+    (cherry picked from commit 03f4ec47d9ffff629b07dcba9f0f134a7c7e44b2)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 1196d111..9fb2bb15 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -1812,15 +1812,15 @@ ssl_sock_assign_generated_cert(unsigned int key, struct bind_conf *bind_conf, SS
+ 	struct lru64 *lru = NULL;
+ 
+ 	if (ssl_ctx_lru_tree) {
+-		HA_RWLOCK_RDLOCK(SSL_GEN_CERTS_LOCK, &ssl_ctx_lru_rwlock);
++		HA_RWLOCK_WRLOCK(SSL_GEN_CERTS_LOCK, &ssl_ctx_lru_rwlock);
+ 		lru = lru64_lookup(key, ssl_ctx_lru_tree, bind_conf->ca_sign_cert, 0);
+ 		if (lru && lru->domain) {
+ 			if (ssl)
+ 				SSL_set_SSL_CTX(ssl, (SSL_CTX *)lru->data);
+-			HA_RWLOCK_RDUNLOCK(SSL_GEN_CERTS_LOCK, &ssl_ctx_lru_rwlock);
++			HA_RWLOCK_WRUNLOCK(SSL_GEN_CERTS_LOCK, &ssl_ctx_lru_rwlock);
+ 			return (SSL_CTX *)lru->data;
+ 		}
+-		HA_RWLOCK_RDUNLOCK(SSL_GEN_CERTS_LOCK, &ssl_ctx_lru_rwlock);
++		HA_RWLOCK_WRUNLOCK(SSL_GEN_CERTS_LOCK, &ssl_ctx_lru_rwlock);
+ 	}
+ 	return NULL;
+ }
