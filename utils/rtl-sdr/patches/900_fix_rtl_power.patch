@@ -1,0 +1,11 @@
+--- a/src/rtl_power.c	2015-06-09 01:53:23.000000000 +0200
++++ b/src/rtl_power.c	2018-05-19 21:54:14.861499443 +0200
+@@ -256,6 +256,8 @@ inline int16_t FIX_MPY(int16_t a, int16_
+ 	b = c & 0x01;
+ 	return (c >> 1) + b;
+ }
++int16_t FIX_MPY(int16_t a, int16_t b);
++
+ 
+ int fix_fft(int16_t iq[], int m)
+ /* interleaved iq[], 0 <= n < 2**m, changes in place */
