@@ -1,0 +1,31 @@
+--- a/src/csr.c
++++ b/src/csr.c
+@@ -38,7 +38,7 @@ static LUA_FUNCTION(openssl_csr_read)
+   return openssl_pushresult(L, 0);
+ }
+ 
+-
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ static X509 *X509_REQ_to_X509_ex(X509_REQ *r, int days, EVP_PKEY *pkey, const EVP_MD* md)
+ {
+   X509 *ret = NULL;
+@@ -91,14 +91,19 @@ static X509 *X509_REQ_to_X509_ex(X509_RE
+   }
+   return (ret);
+ }
++#endif
+ 
+ static LUA_FUNCTION(openssl_csr_to_x509)
+ {
+   X509_REQ * csr  = CHECK_OBJECT(1, X509_REQ, "openssl.x509_req");
+   EVP_PKEY * pkey = CHECK_OBJECT(2, EVP_PKEY, "openssl.evp_pkey");
+   int days = luaL_optint(L, 3, 365);
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+   const EVP_MD* md = get_digest(L, 4, "sha256");
+   X509* cert = X509_REQ_to_X509_ex(csr, days, pkey, md);
++#else
++  X509* cert = X509_REQ_to_X509(csr, days, pkey);
++#endif
+   if (cert)
+   {
+     PUSH_OBJECT(cert, "openssl.x509");
