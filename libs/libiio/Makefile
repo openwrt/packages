@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libiio
-PKG_VERSION:=0.14
-PKG_RELEASE:=2
+PKG_VERSION:=0.15
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/analogdevicesinc/libiio/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=12063db7a9366aa00bfd789db30afaddb29686bc29b3ce1e5d4adfe1c3b42527
+PKG_HASH:=a729f8ff48137ad271a3e2951f322b35c1bf2ec075b488d75c8bd071c693fd19
 
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING.txt
