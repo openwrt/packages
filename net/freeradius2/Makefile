@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius2
-PKG_VERSION:=2.2.9
+PKG_VERSION:=2.2.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=freeradius-server-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=\
 	ftp://ftp.freeradius.org/pub/freeradius/ \
 	ftp://ftp.freeradius.org/pub/freeradius/old/
-PKG_MD5SUM:=d1398327ba4e23c75da06d8a0e01096b
+PKG_MD5SUM:=f1ce12d2b8258585cb3d525f5bdfeb17
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYRIGHT LICENSE
