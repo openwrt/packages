@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2018 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -37,9 +35,14 @@ define Package/sed/description
   sed (stream editor) is a non-interactive command-line text editor.
 endef
 
+CONFIGURE_ARGS += \
+	--enable-threads=pth \
+	--disable-i18n \
+	--disable-rpath
+
 define Package/sed/install
 	$(INSTALL_DIR) $(1)/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/sed $(1)/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/sed $(1)/bin/gsed
 endef
 
 $(eval $(call BuildPackage,sed))
