@@ -13,6 +13,7 @@ start_domoticz() {
 	config_get sslcert "$section" "sslcert"
 	config_get sslkey "$section" "sslkey"
 	config_get sslpass "$section" "sslpass"
+	config_get ssldhparam "$section" "ssldhparam"
 	config_get sslwww "$section" "sslwww"
 	config_get syslog "$section" "syslog"
 	config_get userdata "$section" "userdata"
@@ -30,6 +31,7 @@ start_domoticz() {
 		procd_append_param command -sslwww "$sslwww"
 		[ -n "$sslkey" ] && procd_append_param command -sslkey "$sslkey"
 		[ -n "$sslpass" ] && procd_append_param command -sslpass "$sslpass"
+		[ -n "$ssldhparam" ] && procd_append_param command -ssldhparam "$ssldhparam"
 	} || procd_append_param command -sslwww 0
 }
 
