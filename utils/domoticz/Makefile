@@ -62,7 +62,8 @@ CMAKE_OPTIONS += \
 	-DUSE_STATIC_OPENZWAVE=no \
 	-DUSE_PYTHON=no
 
-TARGET_CXXFLAGS+=-DWITH_GPIO
+TARGET_CFLAGS+=-flto
+TARGET_CXXFLAGS+=-DWITH_GPIO -flto
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
