@@ -1,0 +1,13 @@
+--- a/hwaccess.h
++++ b/hwaccess.h
+@@ -208,6 +208,10 @@ cpu_to_be(64)
+  * that a Linux system's libc has a suitable sys/io.h or (on non-Linux) we depend on glibc to offer it. */
+ #if defined(__ANDROID__)
+ #include <sys/glibc-syscalls.h>
++#elif defined(__linux__) && defined(__GLIBC__) && defined(__MIPS__)
++/* glibc doesn't have sys/io.h on mips, let's use syscall */
++#define ioperm(x,y,z) syscall(SYS_ioperm, x, y, z)
++#define iopl(x) syscall(SYS_iopl, x)
+ #elif defined(__linux__) || defined(__GLIBC__)
+ #include <sys/io.h>
+ #endif
