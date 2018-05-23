@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NPM_NAME:=mozilla-iot-gateway
 PKG_NAME:=node-$(PKG_NPM_NAME)
 PKG_VERSION:=0.3.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/mozilla-iot/gateway.git
@@ -20,6 +20,14 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MIRROR_HASH:=ba05bc3e93c36768244df922434e7132c2dae85a1ff9e3213beea087a4844d11
 
 PKG_BUILD_DEPENDS:=node/host openzwave
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_INSTALL_DIR:=$(BUILD_DIR)/$(PKG_NAME)/ipkg-install
+
+URSA_VERSION:=0.9.4
+URSA_SOURCE:=ursa-$(URSA_VERSION).tgz
+URSA_SUBDIR:=ursa-$(URSA_VERSION)
+URSA_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(URSA_SUBDIR)
+URSA_TGZ:=$(BUILD_DIR)/$(PKG_NAME)/$(URSA_SOURCE)
 
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 PKG_LICENSE:=MPL-2.0
@@ -44,6 +52,33 @@ define Package/node-mozilla-iot-gateway/description
   and defining a standard data model and APIs to make them interoperable.
 endef
 
+define Download/ursa
+  FILE:=$(URSA_SOURCE)
+  URL:=https://registry.yarnpkg.com/ursa/-/$(FILE)
+  HASH:=65516fc99958011572ef26ef02a3c84a004e47aabfd5b8aa46abb10481ae7153
+endef
+$(eval $(call Download,ursa))
+
+define Build/Prepare
+	$(PKG_UNPACK)
+	$(Build/Patch)
+	$(RM) -r "$(URSA_BUILD_DIR)" "$(BUILD_DIR)/$(PKG_NAME)/package"
+	( \
+	  cd $(PKG_BUILD_DIR)/.. && \
+	  $(TAR) -xzf $(DL_DIR)/$(URSA_SOURCE) && \
+	  mv package $(URSA_SUBDIR) \
+	)
+	cat ./files/ursa.patch | ( cd $(URSA_BUILD_DIR) && patch -p1 )
+	cat ./files/gateway.patch | ( cd $(PKG_BUILD_DIR) && patch -p1 )
+	sed -i -e 's!@@URSA_TGZ@@!$(URSA_TGZ)!' $(PKG_BUILD_DIR)/package.json
+	( \
+	  cd $(PKG_BUILD_DIR)/.. && \
+	  tar -czf $(PKG_SOURCE) $(PKG_NAME)-$(PKG_VERSION); \
+	  tar -czf $(URSA_SOURCE) $(URSA_SUBDIR) \
+	)
+endef
+
+EXTRA_CFLAGS += -Wno-error=format-security
 CPU:=$(subst powerpc,ppc,$(subst aarch64,arm64,$(subst x86_64,x64,$(subst i386,ia32,$(ARCH)))))
 
 define Build/Compile
@@ -54,7 +89,12 @@ define Build/Compile
 	npm_config_cache=$(TMP_DIR)/npm-cache \
 	npm_config_tmp=$(TMP_DIR)/npm-tmp \
 	PREFIX="$(PKG_INSTALL_DIR)/usr/" \
-	$(STAGING_DIR_HOSTPKG)/bin/npm install --build-from-source --target_arch=$(CPU) -g $(DL_DIR)/$(PKG_SOURCE)
+	$(STAGING_DIR_HOSTPKG)/bin/npm install --build-from-source --target_arch=$(CPU) -g \
+		$(PKG_BUILD_DIR)/../$(PKG_SOURCE)
+endef
+
+define Build/Clean
+	$(RM) -r "$(BUILD_DIR)/$(PKG_NAME)/"
 endef
 
 define Package/node-mozilla-iot-gateway/install
