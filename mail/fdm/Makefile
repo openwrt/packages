@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fdm
 PKG_VERSION:=1.9
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=BSD-2-Clause
 
 PKG_SOURCE:=$(PKG_VERSION).zip
