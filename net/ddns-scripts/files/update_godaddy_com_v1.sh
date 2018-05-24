@@ -18,7 +18,7 @@
 #
 
 # check parameters
-[ -z "$CURL_SSL" ] && write_log 14 "GoDaddy communication require cURL with SSL support. Please install"
+[ -z "$CURL" ] && [ -z "$CURL_SSL" ] && write_log 14 "GoDaddy communication require cURL with SSL support. Please install"
 [ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing key as 'username'"
 [ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing secret as 'password'"
 [ $use_https -eq 0 ] && use_https=1	# force HTTPS
