@@ -72,21 +72,17 @@ KNOT_HOST=$(which khost)
 DRILL=$(which drill)
 HOSTIP=$(which hostip)
 NSLOOKUP=$(which nslookup)
-NSLOOKUP_MUSL=$($(which nslookup) localhost 2>&1 | grep -F "(null)")	# not empty busybox compiled with musl
 
 # Transfer Programs
 WGET=$(which wget)
 WGET_SSL=$(which wget-ssl)
 
 CURL=$(which curl)
-# CURL_SSL not empty then SSL support available
-CURL_SSL=$($(which curl) -V 2>/dev/null | grep "Protocols:" | grep -F "https")
+
 # CURL_PROXY not empty then Proxy support available
 CURL_PROXY=$(find /lib /usr/lib -name libcurl.so* -exec strings {} 2>/dev/null \; | grep -im1 "all_proxy")
 
 UCLIENT_FETCH=$(which uclient-fetch)
-# UCLIENT_FETCH_SSL not empty then SSL support available
-UCLIENT_FETCH_SSL=$(find /lib /usr/lib -name libustream-ssl.so* 2>/dev/null)
 
 # Global configuration settings
 # allow NON-public IP's
@@ -723,6 +719,8 @@ do_transfer() {
 	# 2nd choice is cURL IPv4/IPv6/HTTPS
 	# libcurl might be compiled without Proxy or HTTPS Support
 	elif [ -n "$CURL" ]; then
+		# CURL_SSL not empty then SSL support available
+		CURL_SSL=$($(which curl) -V 2>/dev/null | grep "Protocols:" | grep -F "https")
 		__PROG="$CURL -RsS -o $DATFILE --stderr $ERRFILE"
 		# check HTTPS support
 		[ -z "$CURL_SSL" -a $use_https -eq 1 ] && \
@@ -765,6 +763,8 @@ do_transfer() {
 
 	# uclient-fetch possibly with ssl support if /lib/libustream-ssl.so installed
 	elif [ -n "$UCLIENT_FETCH" ]; then
+		# UCLIENT_FETCH_SSL not empty then SSL support available
+		UCLIENT_FETCH_SSL=$(find /lib /usr/lib -name libustream-ssl.so* 2>/dev/null)
 		__PROG="$UCLIENT_FETCH -q -O $DATFILE"
 		# force network/ip not supported
 		[ -n "$__BINDIP" ] && \
@@ -1108,6 +1108,7 @@ get_registered_ip() {
 		__RUNPROG="$__PROG $lookup_host >$DATFILE 2>$ERRFILE"
 		__PROG="hostip"
 	elif [ -n "$NSLOOKUP" ]; then	# last use BusyBox nslookup
+		NSLOOKUP_MUSL=$($(which nslookup) localhost 2>&1 | grep -F "(null)")	# not empty busybox compiled with musl
 		[ $force_dnstcp -ne 0 ] && \
 			write_log 14 "Busybox nslookup - no support for 'DNS over TCP'"
 		[ -n "$NSLOOKUP_MUSL" -a -n "$dns_server" ] && \
