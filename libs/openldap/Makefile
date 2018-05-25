@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openldap
-PKG_VERSION:=2.4.45
+PKG_VERSION:=2.4.46
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=ftp://ftp.openldap.org/pub/OpenLDAP/openldap-release/ \
 	ftp://sunsite.cnlab-switch.ch/mirror/OpenLDAP/openldap-release/ \
 	ftp://ftp.nl.uu.net/pub/unix/db/openldap/openldap-release/ \
 	ftp://ftp.plig.org/pub/OpenLDAP/openldap-release/
-PKG_MD5SUM:=00ff8301277cdfd0af728a6927042a13
+PKG_MD5SUM:=829016c5a9f45c51adc50073ac6f9fd7
 
 PKG_FIXUP:=autoreconf
 
