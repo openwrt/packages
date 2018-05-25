@@ -20,6 +20,7 @@ PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 
 PKG_BUILD_DEPENDS:=libiconv
 PKG_CONFIG_DEPENDS:= \
+	CONFIG_DOVECOT_GSSAPI \
 	CONFIG_DOVECOT_LDAP \
 	CONFIG_DOVECOT_MYSQL \
 	CONFIG_DOVECOT_PGSQL \
@@ -34,7 +35,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/dovecot
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+DOVECOT_LDAP:libopenldap +DOVECOT_MYSQL:libmysqlclient +DOVECOT_PGSQL:libpq +DOVECOT_SQLITE:libsqlite3 +libopenssl +librt +zlib +libbz2 +libcap +DOVECOT_ICU:icu
+  DEPENDS:=+DOVECOT_GSSAPI:krb5-libs +DOVECOT_LDAP:libopenldap +DOVECOT_MYSQL:libmysqlclient +DOVECOT_PGSQL:libpq +DOVECOT_SQLITE:libsqlite3 +libopenssl +librt +zlib +libbz2 +libcap +DOVECOT_ICU:icu
   TITLE:=An IMAP and POP3 daemon
   URL:=http://www.dovecot.org/
   USERID:=dovecot=59:dovecot=59
@@ -48,6 +49,11 @@ endef
 define Package/dovecot/config
         menu "Select dovecot build options"
                 depends on PACKAGE_dovecot
+                config DOVECOT_GSSAPI
+                        bool "GSSAPI support"
+                        default n
+                        help
+                          Implements GSSAPI support in dovecot.
                 config DOVECOT_LDAP
                         bool "LDAP support"
                         default n
@@ -89,12 +95,12 @@ define Package/dovecot-utils
 endef
 
 CONFIGURE_ARGS += \
-	--without-gssapi \
 	--without-pam \
 	--with-moduledir=/usr/lib/dovecot/modules \
 	--with-notify=dnotify \
 	--without-lzma \
 	--without-lz4 \
+	$(if $(CONFIG_DOVECOT_GSSAPI),--with-gssapi=yes,--with-gssapi=no) \
 	$(if $(CONFIG_DOVECOT_LDAP),--with-ldap=yes,--with-ldap=no) \
 	$(if $(CONFIG_DOVECOT_MYSQL),--with-mysql=yes,--with-mysql=no) \
 	$(if $(CONFIG_DOVECOT_PGSQL),--with-pgsql=yes,--with-pgsql=no) \
