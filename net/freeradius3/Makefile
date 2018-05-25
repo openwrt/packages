@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius3
-PKG_VERSION:=release_3_0_11
-PKG_RELEASE:=3
+PKG_VERSION:=release_3_0_17
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/FreeRADIUS/freeradius-server/archive
-PKG_HASH:=f0b32edb90368c3b9523e2baa792a1794d8bad662407f0d210a6c460541379b7
+PKG_HASH:=5b2382f08c0d9d064298281c1fb8348fc13df76550ce7a5cfc47ea91361fad91
 
 PKG_MAINTAINER:=Lucile Quirion <lucile.quirion@savoirfairelinux.com>
 PKG_LICENSE:=GPL-2.0
@@ -486,6 +486,13 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-ldap),)
 		--with-rlm_ldap-lib-dir="$(STAGING_DIR)/usr/lib"
 else
   CONFIGURE_ARGS+= --without-rlm_ldap
+endif
+
+ifeq ($(CONFIG_USE_GLIBC),y)
+  TARGET_CFLAGS+= -DLIBBSD_OVERLAY -I$(STAGING_DIR)/usr/include/bsd \
+	-D_RPC_NETDB_H
+	#^^^^^^^^^^^^^ avoid inclusion of librpc's netdb.h
+  CONFIGURE_LIBS+= -Wl,--push-state,--as-needed -lbsd -Wl,--pop-state
 endif
 
 CONFIGURE_VARS+= \
