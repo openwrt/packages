@@ -2,7 +2,9 @@ config global
 #	option uci_enabled '1'
 
 config network
-#	option network 'wan'	# takes precedence over config.PCAP_INTF
+	# Logical network dependency, fully tracked, fwknopd gets restarted when
+	# necessary. Specifying network takes precedence over config.PCAP_INTF
+#	option network 'wan'
 
 config access
 	option SOURCE 'ANY'
@@ -10,3 +12,6 @@ config access
 	option KEY 'CHANGEME'
 
 config config
+	# Alternative direct physical interface definition, but untracked - you
+	# are on your own to correctly start/stop the service when needed
+#	option PCAP_INTF 'eth0'
