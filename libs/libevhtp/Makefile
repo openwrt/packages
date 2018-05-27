@@ -12,7 +12,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libevhtp
 PKG_VERSION:=1.1.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE_PROTO:=git
