@@ -55,6 +55,7 @@ endef
 
 CONFIGURE_ARGS += \
 	--with-openssl \
+	$(if $(CONFIG_IPV6),--with-ipv6) \
 	--sysconfdir=/etc/conserver \
 	--with-port=3109 \
 	--with-logfile=/var/log/conserver/server.log
