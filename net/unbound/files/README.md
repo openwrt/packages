@@ -204,7 +204,7 @@ config unbound
     into MTU issues. Use this size in bytes to manage drop outs.
 
   option extended_luci '0'
-    Boolean. Extends a tab hierarchy in LuCI for advanced congfiguration.
+    Boolean. Extends a tab hierarchy in LuCI for advanced configuration.
 
   option extended_stats '0'
     Boolean. extended statistics are printed from unbound-control.
@@ -227,10 +227,11 @@ config unbound
 
   option protocol 'mixed'
     Unbound can limit its protocol used for recursive queries.
-    Set 'ip4_only' to avoid issues if you do not have native IP6.
-    Set 'ip6_prefer' to possibly improve performance as well as
-    not consume NAT paths for the client computers.
-    Do not use 'ip6_only' unless testing.
+    ip4_only - limit issues if you do not have native IPv6
+    ip6_only - test environment only; could cauase problems
+    ip6_prefer - both IPv4 and IPv6 but try IPv6 first
+    mixed - both IPv4 and IPv6
+    default - Unbound built-in defaults
 
   option query_minimize '0'
     Boolean. Enable a minor privacy option. Don't let each server know
@@ -257,15 +258,18 @@ config unbound
     3 - Plus DHCP-PD range passed down interfaces (not implemented)
 
   option recursion 'passive'
-    Unbound has numerous options for how it recurses. This UCI combines
-    them into "passive," "aggressive," or Unbound's own "default."
-    Passive is easy on resources, but slower until cache fills.
+    Unbound has many options for recrusion but UCI is bundled for simplicity.
+    passive - slower until cache fills but kind on CPU load
+    default - Unbound built-in defaults
+    aggressive - uses prefetching to handle more requests quickly
 
   option resource 'small'
-    Unbound has numerous options for resources. This UCI gives "tiny,"
-    "small," "medium," and "large." Medium is most like the compiled
-    defaults with a bit of balancing. Tiny is close to the published
-    memory restricted configuration. Small 1/2 medium, and large 2x.
+    Unbound has many options for resources but UCI is bundled for simplicity.
+    tiny - similar to published memory restricted configuration
+    small - about half of medium
+    medium - similar to default, but fixed for consistency
+    default - Unbound built-in defaults
+    large - about double of medium
 
   option root_age '9'
     Days. >90 Disables. Age limit for Unbound root data like root
