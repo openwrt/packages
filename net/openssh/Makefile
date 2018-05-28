@@ -236,6 +236,7 @@ define Package/openssh-server/install
 	chmod 0700 $(1)/etc/ssh
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/ssh/sshd_config $(1)/etc/ssh/
 	sed -r -i 's,^#(HostKey /etc/ssh/ssh_host_(rsa|ecdsa|ed25519)_key)$$$$,\1,' $(1)/etc/ssh/sshd_config
+	sed -i 's/^#PermitRootLogin.*/PermitRootLogin yes/' $(1)/etc/ssh/sshd_config
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/sshd.init $(1)/etc/init.d/sshd
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -246,6 +247,7 @@ define Package/openssh-server-pam/install
 	$(call Package/openssh-server/install,$(1))
 	sed -i 's,#PasswordAuthentication yes,PasswordAuthentication no,g' $(1)/etc/ssh/sshd_config
 	sed -i 's,#UsePAM no,UsePAM yes,g' $(1)/etc/ssh/sshd_config
+	sed -i 's/^#PermitRootLogin.*/PermitRootLogin yes/' $(1)/etc/ssh/sshd_config
 	$(INSTALL_DIR) $(1)/etc/pam.d
 	$(INSTALL_DATA) ./files/sshd.pam $(1)/etc/pam.d/sshd
 	$(INSTALL_DIR) $(1)/etc/security
