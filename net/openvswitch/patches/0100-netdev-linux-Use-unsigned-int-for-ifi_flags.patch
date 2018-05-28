@@ -10,11 +10,9 @@ Signed-off-by: Helmut Schaa <helmut.schaa@googlemail.com>
  lib/netdev-linux.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/lib/netdev-linux.c b/lib/netdev-linux.c
-index c0471be15..0750e5f2c 100644
 --- a/lib/netdev-linux.c
 +++ b/lib/netdev-linux.c
-@@ -2788,7 +2788,7 @@ update_flags(struct netdev_linux *netdev, enum netdev_flags off,
+@@ -2810,7 +2810,7 @@ update_flags(struct netdev_linux *netdev
               enum netdev_flags on, enum netdev_flags *old_flagsp)
      OVS_REQUIRES(netdev->mutex)
  {
@@ -23,6 +21,3 @@ index c0471be15..0750e5f2c 100644
      int error = 0;
  
      old_flags = netdev->ifi_flags;
--- 
-2.16.2
-
