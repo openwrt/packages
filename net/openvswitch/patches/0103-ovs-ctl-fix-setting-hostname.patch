@@ -13,11 +13,9 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  utilities/ovs-ctl.in | 4 +---
  1 file changed, 1 insertion(+), 3 deletions(-)
 
-diff --git a/utilities/ovs-ctl.in b/utilities/ovs-ctl.in
-index 4ddc450fb..52018e6d3 100755
 --- a/utilities/ovs-ctl.in
 +++ b/utilities/ovs-ctl.in
-@@ -68,9 +68,7 @@ ovs_vsctl () {
+@@ -64,9 +64,7 @@ insert_mod_if_required () {
  }
  
  set_hostname () {
@@ -28,6 +26,3 @@ index 4ddc450fb..52018e6d3 100755
  }
  
  set_system_ids () {
--- 
-2.16.2
-
