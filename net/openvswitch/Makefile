@@ -111,7 +111,7 @@ endef
 
 OVS_BIN_TOOLS:= \
 	ovsdb-client ovs-l3ping ovs-dpctl-top \
-	ovs-tcpdump ovs-tcpundump ovs-pcap ovs-parse-backtrace
+	ovs-tcpdump ovs-tcpundump ovs-pcap
 define Package/openvswitch
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Userspace Package
@@ -275,7 +275,6 @@ $(eval $(call OvsBinUtility,openvswitch-base,ovs-pki,OpenFlow public key infrast
 $(eval $(call OvsBinUtility,openvswitch-base,ovs-tcpdump,Dump traffic from an Open vSwitch port using tcpdump))
 $(eval $(call OvsBinUtility,openvswitch-base,ovs-tcpundump,Convert ``tcpdump -xx`` output to hex strings))
 $(eval $(call OvsBinUtility,openvswitch-base,ovs-pcap,Print packets from a pcap file as hex))
-$(eval $(call OvsBinUtility,openvswitch-base,ovs-parse-backtrace,parses ovs-appctl backtrace output))
 
 $(eval $(call OvsBinUtility,openvswitch-ovn-base,ovn-controller,Open Virtual Network local controller))
 $(eval $(call OvsBinUtility,openvswitch-ovn-base,ovn-controller-vtep,Open Virtual Network local controller for vtep enabled physical switches,+openvswitch-vtep))
