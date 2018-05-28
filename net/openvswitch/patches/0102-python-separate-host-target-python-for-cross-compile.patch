@@ -12,11 +12,9 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  m4/openvswitch.m4 | 12 ++++--------
  2 files changed, 5 insertions(+), 9 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 31d633179..4b9e8d491 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -59,7 +59,7 @@ endif
+@@ -60,7 +60,7 @@ endif
  # foo/__init__.pyc will cause Python to ignore foo.py.
  run_python = \
  	PYTHONPATH=$(top_srcdir)/python$(psep)$$PYTHONPATH \
@@ -25,11 +23,9 @@ index 31d633179..4b9e8d491 100644
  
  ALL_LOCAL =
  BUILT_SOURCES =
-diff --git a/m4/openvswitch.m4 b/m4/openvswitch.m4
-index 00ffad35f..52f207bda 100644
 --- a/m4/openvswitch.m4
 +++ b/m4/openvswitch.m4
-@@ -347,20 +347,16 @@ else:
+@@ -351,20 +351,16 @@ else:
     if test $ovs_cv_python = no; then
       AC_MSG_ERROR([cannot find python 2.7 or higher.])
     fi
@@ -54,6 +50,3 @@ index 00ffad35f..52f207bda 100644
  
  dnl Checks for Python 3.x, x >= 4.
  AC_DEFUN([OVS_CHECK_PYTHON3],
--- 
-2.16.2
-
