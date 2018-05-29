@@ -225,6 +225,11 @@ config unbound
     Boolean. Skip all this UCI nonsense. Manually edit the
     configuration. Make changes to /etc/unbound/unbound.conf.
 
+  option prefetch_root '0'
+    Boolean. Enable Unbound authority zone clauses for "." (root), "arpa,"
+    "in-addr.arpa," and "ip6.arpa" and obtain complete zone files from public
+    servers using http or AXFR (gTLD are unfortunately not as public).
+
   option protocol 'mixed'
     Unbound can limit its protocol used for recursive queries.
     ip4_only - limit issues if you do not have native IPv6
