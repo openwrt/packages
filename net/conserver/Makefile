@@ -8,13 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=conserver
-PKG_VERSION:=8.2.1
+PKG_VERSION:=8.2.2
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Bjørn Mork <bjorn@mork.no>
 
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/conserver/conserver.git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.conserver.com/
-PKG_HASH:=251ae01997e8f3ee75106a5b84ec6f2a8eb5ff2f8092438eba34384a615153d0
+PKG_MIRROR_HASH:=27d92e6c04e97cd0884774eace0b44f30087695927bcce8addc11dba9c090d7c
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
