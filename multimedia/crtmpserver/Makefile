@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=crtmpserver
 PKG_REV:=b6fdcdb953d1e99c48a0c37a8c80f2cad2db443b
 PKG_VERSION:=2012-07-18+git-$(PKG_REV)
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_BUILD_PARALLEL:=2
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=GPL-3.0
@@ -63,7 +63,7 @@ define Build/Configure
 		$(SED) 's,^TOOLCHAIN_BASE[[:space:]]*=.*,TOOLCHAIN_BASE=$(TS_BASE),' \
 			-e 's,^TOOLCHAIN_PREFIX[[:space:]]*=.*,TOOLCHAIN_PREFIX=$(TARGET_CROSS),' \
 			-e 's,^CCOMPILER[[:space:]]*=.*,CCOMPILER=$(TARGET_CC),' \
-			-e 's,^CXXCOMPILER[[:space:]]*=.*,CXXCOMPILER=$(TARGET_CXX),' \
+			-e 's,^CXXCOMPILER[[:space:]]*=.*,CXXCOMPILER=$(TARGET_CXX) -std=gnu++03,' \
 			-e 's,^OPTIMIZATIONS[[:space:]]*=.*,OPTIMIZATIONS=-O2,' \
 			-e 's,^SSL_BASE[[:space:]]*=.*,SSL_BASE=$(STAGING_DIR)/usr,' \
 			linux-openwrt-uclibc.mk)

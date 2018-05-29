@@ -1,18 +1,19 @@
---- a/configure.ac
-+++ b/configure.ac
-@@ -488,9 +488,9 @@ have_ioloop=no
+diff -u --recursive dovecot-2.2.35-vanilla/configure.ac dovecot-2.2.35/configure.ac
+--- dovecot-2.2.35-vanilla/configure.ac	2018-03-19 08:22:42.000000000 -0400
++++ dovecot-2.2.35/configure.ac	2018-05-25 10:41:36.122503480 -0400
+@@ -490,9 +490,10 @@
  
  if test "$ioloop" = "best" || test "$ioloop" = "epoll"; then
    AC_CACHE_CHECK([whether we can use epoll],i_cv_epoll_works,[
 -    AC_TRY_RUN([
 +    AC_TRY_LINK([
        #include <sys/epoll.h>
--  
+   
 +    ], [
        int main()
        {
  	return epoll_create(5) < 1;
-@@ -594,7 +594,7 @@ fi
+@@ -596,7 +597,7 @@
  dnl * Old glibcs have broken posix_fallocate(). Make sure not to use it.
  dnl * It may also be broken in AIX.
  AC_CACHE_CHECK([whether posix_fallocate() works],i_cv_posix_fallocate_works,[
@@ -21,7 +22,7 @@
      #define _XOPEN_SOURCE 600
      #include <stdio.h>
      #include <stdlib.h>
-@@ -603,6 +603,7 @@ AC_CACHE_CHECK([whether posix_fallocate(
+@@ -605,6 +606,7 @@
      #if defined(__GLIBC__) && (__GLIBC__ < 2 || __GLIBC_MINOR__ < 7)
        possibly broken posix_fallocate
      #endif
@@ -29,3 +30,20 @@
      int main() {
        int fd = creat("conftest.temp", 0600);
        int ret;
+@@ -2059,7 +2061,7 @@
+ 
+ 				# does the kerberos library support SPNEGO?
+ 				AC_CACHE_CHECK([whether GSSAPI supports SPNEGO],i_cv_gssapi_spnego,[
+-				  AC_TRY_RUN([
++				  AC_TRY_LINK([
+ 				    #ifdef HAVE_GSSAPI_H
+ 				    #  include <gssapi.h>
+ 				    #else
+@@ -2067,6 +2069,7 @@
+ 				    #endif
+ 				    #include <krb5.h>
+ 				    #include <string.h>
++                                  ], [
+ 				    int main(void) {
+ 				      OM_uint32 minor_status;
+ 				      gss_OID_set mech_set;

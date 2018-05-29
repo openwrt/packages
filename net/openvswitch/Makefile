@@ -75,7 +75,6 @@ define Package/openvswitch-ovn-base/description
 endef
 
 OVN_BIN_TOOLS:=ovn-controller ovn-controller-vtep ovn-detrace \
-	ovn-docker-overlay-driver ovn-docker-underlay-driver \
 	ovn-nbctl ovn-sbctl ovn-trace
 define Package/openvswitch-ovn
   $(call Package/openvswitch/Default)
@@ -112,7 +111,7 @@ endef
 
 OVS_BIN_TOOLS:= \
 	ovsdb-client ovs-l3ping ovs-dpctl-top \
-	ovs-tcpdump ovs-tcpundump ovs-pcap ovs-parse-backtrace
+	ovs-tcpdump ovs-tcpundump ovs-pcap
 define Package/openvswitch
   $(call Package/openvswitch/Default)
   TITLE:=Open vSwitch Userspace Package
@@ -271,19 +270,15 @@ $(eval $(call OvsBinUtility,openvswitch-base,ovs-dpctl,Open vSwitch datapath man
 $(eval $(call OvsBinUtility,openvswitch-base,ovs-vsctl,Open vSwitch ovs-vswitchd management utility))
 $(eval $(call OvsBinUtility,openvswitch-base,ovsdb-client,Open vSwitch database JSON-RPC client))
 $(eval $(call OvsBinUtility,openvswitch-base,ovs-l3ping,Check network deployment for L3 tunneling problems))
-$(eval $(call OvsBinUtility,openvswitch-base,ovs-docker,Open vSwitch docker tool))
 $(eval $(call OvsBinUtility,openvswitch-base,ovs-dpctl-top,Top like behavior for ovs-dpctl dump-flows))
 $(eval $(call OvsBinUtility,openvswitch-base,ovs-pki,OpenFlow public key infrastructure management utility))
 $(eval $(call OvsBinUtility,openvswitch-base,ovs-tcpdump,Dump traffic from an Open vSwitch port using tcpdump))
 $(eval $(call OvsBinUtility,openvswitch-base,ovs-tcpundump,Convert ``tcpdump -xx`` output to hex strings))
 $(eval $(call OvsBinUtility,openvswitch-base,ovs-pcap,Print packets from a pcap file as hex))
-$(eval $(call OvsBinUtility,openvswitch-base,ovs-parse-backtrace,parses ovs-appctl backtrace output))
 
 $(eval $(call OvsBinUtility,openvswitch-ovn-base,ovn-controller,Open Virtual Network local controller))
 $(eval $(call OvsBinUtility,openvswitch-ovn-base,ovn-controller-vtep,Open Virtual Network local controller for vtep enabled physical switches,+openvswitch-vtep))
 $(eval $(call OvsBinUtility,openvswitch-ovn-base,ovn-detrace,Convert ``ovs-appctl ofproto/trace`` output to combine OVN logical flow information))
-$(eval $(call OvsBinUtility,openvswitch-ovn-base,ovn-docker-overlay-driver,OVN Docker overlay driver utility))
-$(eval $(call OvsBinUtility,openvswitch-ovn-base,ovn-docker-underlay-driver,OVN Docker underlay driver utility))
 $(eval $(call OvsBinUtility,openvswitch-ovn-base,ovn-nbctl,Open Virtual Network northbound db management utility))
 $(eval $(call OvsBinUtility,openvswitch-ovn-base,ovn-sbctl,Utility for querying and configuring OVN_Southbound data‐base))
 $(eval $(call OvsBinUtility,openvswitch-ovn-base,ovn-trace,Open Virtual Network logical network tracing utility))
