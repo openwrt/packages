@@ -7,9 +7,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
-PKG_VERSION:=2.3.1
+PKG_VERSION:=2.3.2
 PKG_RELEASE:=1
-PKG_HASH:=ca92f1ab86b2af4dcd62d7716d46a6cdec268e83fe8d564cd8ff1464cc495989
+PKG_HASH:=1748a046e452ceb2285cc07b61ec0f85af7c92ac443e111a6c8a1061254ca717
 
 PKG_SOURCE_URL:=@SF/nfs
 PKG_SOURCE:=nfs-utils-$(PKG_VERSION).tar.bz2
@@ -68,8 +68,10 @@ define Package/nfs-utils/description
   Updated mount.nfs command - allows mounting nfs4 volumes
 endef
 
-TARGET_CFLAGS += -I$(PKG_BUILD_DIR)/lib -I$(STAGING_DIR)/usr/include/libevent \
-		 -I$(STAGING_DIR)/usr/include/ -Drpc_uint=uint
+TARGET_CFLAGS += -Wno-error=implicit-function-declaration \
+		 -Wno-error=strict-prototypes \
+		 -Wno-error=incompatible-pointer-types \
+		 -Wno-error=undef
 TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib $(LIBRPC) \
 		  -L$(STAGING_DIR)/usr/lib/libevent
 
@@ -81,8 +83,7 @@ CONFIGURE_ARGS += \
 	--enable-static \
 	--enable-shared \
 	--disable-caps \
-	--disable-tirpc \
-	--disable-nfsdcld
+	--disable-tirpc
 
 CONFIGURE_VARS += \
 	libblkid_cv_is_recent=yes \
