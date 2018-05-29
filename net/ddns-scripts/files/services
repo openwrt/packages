@@ -35,6 +35,7 @@
 #
 #.cloudflare.com-v1	!!! Please install additional package "ddns-scripts_cloudflare"
 #.cloudflare.com-v4	!!! Please install additional package "ddns-scripts_cloudflare.com-v4"
+#.FreeDNS.42.pl 	!!! Please install additional package "ddns-scripts_freedns_42_pl"
 #.godaddy.com-v1	!!! Please install additional package "ddns-scripts_godaddy.com-v1"
 #.no-ip.com / noip.com	!!! Please install additional package "ddns-scripts_no-ip_com"
 #.route53-v1		!!! Please install additional package "ddns-scripts_route53-v1"
