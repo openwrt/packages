@@ -1,0 +1,36 @@
+menu "Configuration"
+	depends on PACKAGE_suricata
+
+config SURICATA_LOGROTATE
+	bool "Copy Suricata logrotate file"
+	default n
+
+config SURICATA_DEBUG
+	bool "Enable debug output"
+	default n
+
+config SURICATA_LUA
+	bool "Enable Lua support"
+	default n
+
+config SURICATA_MAGIC
+	bool "Enable Libmagic support"
+	default y
+
+config SURICATA_NFLOG
+	bool "Enable libnetfilter_log support"
+	default n
+
+config SURICATA_NFQ
+	bool "Enable NFQUEUE support for inline IDP"
+	default y
+
+config SURICATA_PIE
+	bool "Enable compiling as a position independent executable"
+	default n
+
+config SURICATA_SOCKET
+	bool "Enable Unix Socket"
+	default n
+
+endmenu
