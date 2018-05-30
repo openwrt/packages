@@ -4,7 +4,6 @@ local __DUMMY
 local __URL="https://freedns.42.pl/xmlrpc.php"
 [ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing 'username'"
 [ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing 'password'"
-[ $use_ipv6 -eq 0 ] && __DUMMY="127.0.0.1" || __DUMMY="::1"
 [ $ip_dynamic -eq 1 ] && __IP='\&lt;dynamic\&gt;'
 PROG="$(which curl) -sk"
 write_log 7 "sending update to freedns.42.pl with ip $__IP"
