@@ -15,4 +15,3 @@ write_log 7 "'freedns.42.pl' answered:\n$(cat $DATFILE)"
 grep "<fault>" $DATFILE > /dev/null 2>&1 && return 1
 grep '<name>serial</name>' $DATFILE >/dev/null 2>&1
 return $?
-
