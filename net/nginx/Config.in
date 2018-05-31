@@ -201,5 +201,19 @@ config NGINX_HTTP_SECURE_LINK
 	bool
 	prompt "Enable HTTP secure link module"
 	default n
+	
+config NGINX_HEADERS_MORE
+	bool
+	prompt "Enable Headers_more module"
+	help
+		Set and clear input and output headers...more than "add"!
+	default y
+	
+config NGINX_HTTP_BROTLI
+	bool
+	prompt "Enable Brotli compression module"
+	help
+		Add support for brotli compression module.
+	default n
 
 endmenu
