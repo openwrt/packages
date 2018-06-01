@@ -11,9 +11,9 @@ PKG_NAME:=fcgi
 PKG_VERSION:=2.4.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.fastcgi.com/dist/
-PKG_HASH:=66fc45c6b36a21bf2fbbb68e90f780cc21a9da1fffbae75e76d2b4402d3f05b9
+PKG_SOURCE:=$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/FastCGI-Archives/fcgi2/archive/
+PKG_HASH:=b152df7f301847b2bcf8b65672bfb212ed0cee640a5917aecaa36baa05f6f283
 
 PKG_FIXUP:=libtool-ucxx
 
@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/fcgi/Default
   SECTION:=libs
   CATEGORY:=Libraries
-  URL:=http://www.fastcgi.com/
+  URL:=https://github.com/FastCGI-Archives/fcgi2
 endef
 
 define Package/fcgi
