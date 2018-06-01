@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
-PKG_VERSION:=3.2.7
-PKG_RELEASE:=2
+PKG_VERSION:=3.4.10
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=3ea0c299bd69bc728177128740f0476bc1a2c1de438330df5bbd8f5fc6090712
+PKG_HASH:=cdee0fd44e11ae214b2cc252974da22f3627c326ea2c61a0315af95165c52d1b
 PKG_SOURCE_URL:=@SF/zabbix
 
 PKG_LICENSE:=GPL-2.0
@@ -33,7 +33,7 @@ define Package/zabbix/Default
   SUBMENU:=zabbix
   MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
   USERID:=zabbix=53:zabbix=53
-  DEPENDS += $(ICONV_DEPENDS)
+  DEPENDS += $(ICONV_DEPENDS) +libpcre
 endef
 
 define Package/zabbix-agentd
@@ -72,31 +72,31 @@ endef
 define Package/zabbix-server
   $(call Package/zabbix/Default)
   TITLE+= server
-  DEPENDS += +libsqlite3
+  DEPENDS += +pgsql-cli +libevent2
 endef
 
 define Package/zabbix-proxy
   $(call Package/zabbix/Default)
   TITLE+= proxy
-  DEPENDS += +libsqlite3
+  DEPENDS += +pgsql-cli
 endef
 
 define Package/zabbix-extra-mac80211/description
 An extra package for zabbix-agentd that adds a discovery rule for mac80211 wifi phy and many userparameters.
 It contains an suid helper to allow zabbix-agentd to still run as zabbix user and not as root.
-See http://wiki.openwrt.org/doc/howto/zabbix for ready to use zabbix templates.
+See https://openwrt.org/docs/guide-user/services/network_monitoring/zabbix for ready to use zabbix templates.
 endef
 
 define Package/zabbix-extra-network/description
 An extra package for zabbix-agentd that adds a discovery rule for openwrt network interfaces.
 The idea here is to discover only interfaces listed in /etc/config/network (discover br-lan and not eth0.1 and wlan0)
-See http://wiki.openwrt.org/doc/howto/zabbix for ready to use zabbix templates.
+See https://openwrt.org/docs/guide-user/services/network_monitoring/zabbix for ready to use zabbix templates.
 endef
 
 define Package/zabbix-extra-wifi/description
 An extra package for zabbix-agentd that adds a discovery rule for wifi interfaces and many userparameters.
 As it uses libiwinfo, it works with all wifi devices supported by openwrt.
-See http://wiki.openwrt.org/doc/howto/zabbix for ready to use zabbix templates.
+See https://openwrt.org/docs/guide-user/services/network_monitoring/zabbix for ready to use zabbix templates.
 endef
 
 CONFIGURE_ARGS+= \
@@ -105,7 +105,9 @@ CONFIGURE_ARGS+= \
 	--enable-proxy \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	--disable-java \
-	--with-sqlite3="$(STAGING_DIR)/usr"
+	--with-postgresql \
+	--with-libevent=$(STAGING_DIR)/usr/include/libevent \
+	--with-libpcre=$(STAGING_DIR)/usr/include
 
 MAKE_FLAGS += ARCH="linux"
 
