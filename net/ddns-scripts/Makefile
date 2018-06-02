@@ -12,7 +12,7 @@ PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.7.7
 # Release == build
 # increase on changes of services files or tld_names.dat
-PKG_RELEASE:=6
+PKG_RELEASE:=8
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
@@ -66,7 +66,7 @@ endef
 ###### *************************************************************************
 define Package/ddns-scripts_cloudflare.com-v4
     $(call Package/ddns-scripts/Default)
-    TITLE:=CloudFlare.com API v4 (require cURL)
+    TITLE:=CloudFlare.com API v4 (requires cURL)
     DEPENDS:=ddns-scripts +curl
 endef
 define Package/ddns-scripts_cloudflare.com-v4/description
@@ -76,8 +76,8 @@ endef
 ###### *************************************************************************
 define Package/ddns-scripts_freedns_42_pl
     $(call Package/ddns-scripts/Default)
-    TITLE:=DDNS extension for freedns.42.pl
-    DEPENDS:=ddns-scripts
+    TITLE:=DDNS extension for FreeDNS.42.pl (requires cURL)
+    DEPENDS:=ddns-scripts +curl
 endef
 define Package/ddns-scripts_freedns_42_pl/description
     Dynamic DNS Client scripts extension for freedns.42.pl
