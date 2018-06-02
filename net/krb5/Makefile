@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=krb5
 PKG_VERSION:=1.16
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -67,6 +67,7 @@ CONFIGURE_PATH = ./src
 CONFIGURE_VARS += \
 	cross_compiling=yes \
 	krb5_cv_attr_constructor_destructor=yes,yes \
+	krb5_cv_sys_rcdir=/tmp \
 	ac_cv_func_regcomp=yes \
 	ac_cv_printf_positional=yes \
 	ac_cv_file__etc_environment=no \
