@@ -113,6 +113,8 @@ CONFIGURE_ARGS += \
 	--disable-dsa \
 	--disable-gost \
 	--enable-allsymbols \
+	--enable-tfo-client \
+	--enable-tfo-server \
 	--with-libexpat="$(STAGING_DIR)/usr" \
 	--with-ssl="$(STAGING_DIR)/usr" \
 	--with-pidfile=/var/run/unbound.pid \
