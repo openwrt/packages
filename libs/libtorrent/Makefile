@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtorrent
 PKG_VERSION:=0.13.6-git-1
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_RELEASE=$(PKG_SOURCE_VERSION).1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/rakshasa/libtorrent.git

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openldap
 PKG_VERSION:=2.4.45
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=ftp://ftp.openldap.org/pub/OpenLDAP/openldap-release/ \
@@ -82,7 +82,8 @@ define Package/openldap-server/conffiles
 /etc/openldap/slapd.conf
 endef
 
-TARGET_CFLAGS += $(FPIC) -lpthread
+TARGET_CFLAGS += $(FPIC) -lpthread \
+	-DURANDOM_DEVICE=\\\"/dev/urandom\\\"
 
 CONFIGURE_ARGS += \
 	--enable-shared \
