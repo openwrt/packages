@@ -8,16 +8,16 @@ include $(TOPDIR)/rules.mk
  
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/mpromonet/v4l2rtspserver.git
-PKG_SOURCE_VERSION:=d7e8dd4d35a802219222642a2e3b28f2dc5069c1
-PKG_DATE:=2017-12-20
+PKG_SOURCE_VERSION:=7ead7613fe6719b6004d229130f7d62aa0a149e7
+PKG_DATE:=2018-05-26
 
 PKG_NAME:=v4l2rtspserver
 PKG_VERSION:=$(PKG_DATE)-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Roger Dammit <rogerdammit@gmail.com>
 
-LIVE555_VERSION:=2017.10.28
-LIVE555_MD5SUM:=a5acd14c4fa7b50f7270304d3b4a70ae
+LIVE555_VERSION:=2018.04.25
+LIVE555_MD5SUM:=9b58a5d62659eb29b9bd85d1b29c3a75
 LIVE555_FILE:=live.$(LIVE555_VERSION).tar.gz
 
 CMAKE_INSTALL:=1 
@@ -67,13 +67,21 @@ define Build/Prepare
 	$(MAKE) $(MAKE_FLAGS) -C $(PKG_BUILD_DIR)/v4l2wrapper CFLAGS="$(TARGET_CFLAGS) -I $(PKG_BUILD_DIR)/v4l2wrapper/inc"
 	$(CP) $(PKG_BUILD_DIR)/v4l2wrapper/libv4l2wrapper.a $(PKG_BUILD_DIR)
 
-	# patch cmake file
-	$(SED) 's/DEBUG/RELEASE/' $(PKG_BUILD_DIR)/CMakeLists.txt
+	# cmake patches (these are very hacky and should be a lot cleaner)
+
+	# prevent root path override 
+	$(SED) 's/SET(CMAKE_FIND_ROOT_PATH/#SET(CMAKE_FIND_ROOT_PATH/' $(PKG_BUILD_DIR)/CMakeLists.txt
+
+	# set search path for v4l2wrapper to current build dir
+	$(SED) 's/V4L2WRAPPER_LIBRARY libv4l2wrapper.a/V4L2WRAPPER_LIBRARY libv4l2wrapper.a PATHS "." NO_CMAKE_FIND_ROOT_PATH/' $(PKG_BUILD_DIR)/CMakeLists.txt
+
+	# disable ALSA
+	$(SED) 's/find_package(ALSA QUIET)//' $(PKG_BUILD_DIR)/CMakeLists.txt
 endef
 
 define Package/v4l2rtspserver/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/v4l2rtspserver-$(PKG_VERSION) $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/v4l2rtspserver-$(PKG_VERSION) $(1)/usr/bin/
 	mv $(1)/usr/bin/v4l2rtspserver-$(PKG_VERSION) $(1)/usr/bin/v4l2rtspserver
 
 	$(INSTALL_DIR) $(1)/etc/init.d
