@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uwsgi-cgi
 PKG_VERSION:=2.0.17
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/unbit/uwsgi
@@ -23,7 +23,7 @@ define Package/uwsgi-cgi
   SUBMENU:=Web Servers/Proxies
   TITLE:=The uWSGI server
   URL:=http://unbit.com/
-  DEPENDS:=+python +libopenssl +libpcre +jansson
+  DEPENDS:=+python +libopenssl +libpcre +jansson +libuuid
 endef
 
 define Package/uwsgi-cgi/description
