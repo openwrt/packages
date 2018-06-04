@@ -1,0 +1,25 @@
+From a3fc79d9cdab61ed58dafc4c49b295ec1bbe1d84 Mon Sep 17 00:00:00 2001
+From: Damien Miller <djm@mindrot.org>
+Date: Thu, 13 Sep 2018 19:05:48 +1000
+Subject: [PATCH 5/5] add compat header
+
+---
+ regress/unittests/sshkey/common.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/regress/unittests/sshkey/common.c b/regress/unittests/sshkey/common.c
+index 548da684..e63465c4 100644
+--- a/regress/unittests/sshkey/common.c
++++ b/regress/unittests/sshkey/common.c
+@@ -27,6 +27,8 @@
+ # include <openssl/ec.h>
+ #endif
+ 
++#include "openbsd-compat/openssl-compat.h"
++
+ #include "../test_helper/test_helper.h"
+ 
+ #include "ssherr.h"
+-- 
+2.16.4
+
