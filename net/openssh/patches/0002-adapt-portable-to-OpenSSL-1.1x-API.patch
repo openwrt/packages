@@ -1,0 +1,1232 @@
+From a294365f8524e6cc3bb82bdcb459e95d65226fce Mon Sep 17 00:00:00 2001
+From: Damien Miller <djm@mindrot.org>
+Date: Thu, 13 Sep 2018 12:13:50 +1000
+Subject: [PATCH 2/5] adapt -portable to OpenSSL 1.1x API
+
+Polyfill missing API with replacement functions extracted from LibreSSL
+---
+ auth-pam.c                           |   4 +
+ cipher.c                             |  38 ---
+ configure.ac                         | 112 +++++-
+ dh.c                                 |   2 +
+ kexdh.c                              |   2 +
+ kexdhc.c                             |   2 +
+ kexdhs.c                             |   2 +
+ kexgex.c                             |   2 +
+ kexgexc.c                            |   2 +
+ kexgexs.c                            |   2 +
+ monitor.c                            |   4 +-
+ openbsd-compat/Makefile.in           |   1 +
+ openbsd-compat/libressl-api-compat.c | 636 +++++++++++++++++++++++++++++++++++
+ openbsd-compat/openssl-compat.h      | 136 ++++++++
+ ssh-dss.c                            |   2 +
+ ssh-ecdsa.c                          |   2 +
+ ssh-pkcs11-client.c                  |   2 +
+ ssh-pkcs11.c                         |   1 +
+ ssh-rsa.c                            |   2 +
+ sshkey.c                             |   3 +-
+ 20 files changed, 916 insertions(+), 41 deletions(-)
+ create mode 100644 openbsd-compat/libressl-api-compat.c
+
+diff --git a/auth-pam.c b/auth-pam.c
+index 8c013836..1dec53e9 100644
+--- a/auth-pam.c
++++ b/auth-pam.c
+@@ -128,6 +128,10 @@ extern u_int utmp_len;
+ typedef pthread_t sp_pthread_t;
+ #else
+ typedef pid_t sp_pthread_t;
++#define pthread_exit	fake_pthread_exit
++#define pthread_create	fake_pthread_create
++#define pthread_cancel	fake_pthread_cancel
++#define pthread_join	fake_pthread_join
+ #endif
+ 
+ struct pam_ctxt {
+diff --git a/cipher.c b/cipher.c
+index df43826e..12c59888 100644
+--- a/cipher.c
++++ b/cipher.c
+@@ -525,41 +525,3 @@ cipher_set_keyiv(struct sshcipher_ctx *cc, const u_char *iv, size_t len)
+ #endif
+ 	return 0;
+ }
+-
+-#ifdef WITH_OPENSSL
+-#define EVP_X_STATE(evp)	(evp)->cipher_data
+-#define EVP_X_STATE_LEN(evp)	(evp)->cipher->ctx_size
+-#endif
+-
+-int
+-cipher_get_keycontext(const struct sshcipher_ctx *cc, u_char *dat)
+-{
+-#if defined(WITH_OPENSSL) && !defined(OPENSSL_NO_RC4)
+-	const struct sshcipher *c = cc->cipher;
+-	int plen = 0;
+-
+-	if (c->evptype == EVP_rc4) {
+-		plen = EVP_X_STATE_LEN(cc->evp);
+-		if (dat == NULL)
+-			return (plen);
+-		memcpy(dat, EVP_X_STATE(cc->evp), plen);
+-	}
+-	return (plen);
+-#else
+-	return 0;
+-#endif
+-}
+-
+-void
+-cipher_set_keycontext(struct sshcipher_ctx *cc, const u_char *dat)
+-{
+-#if defined(WITH_OPENSSL) && !defined(OPENSSL_NO_RC4)
+-	const struct sshcipher *c = cc->cipher;
+-	int plen;
+-
+-	if (c->evptype == EVP_rc4) {
+-		plen = EVP_X_STATE_LEN(cc->evp);
+-		memcpy(EVP_X_STATE(cc->evp), dat, plen);
+-	}
+-#endif
+-}
+diff --git a/configure.ac b/configure.ac
+index 83e53075..c0e120fe 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -2602,9 +2602,10 @@ if test "x$openssl" = "xyes" ; then
+ 					AC_MSG_ERROR([OpenSSL >= 1.0.1 required (have "$ssl_library_ver")])
+ 			                ;;
+ 				100*)   ;; # 1.0.x
++				101*)   ;; # 1.1.x
+ 				200*)   ;; # LibreSSL
+ 			        *)
+-					AC_MSG_ERROR([OpenSSL >= 1.1.0 is not yet supported (have "$ssl_library_ver")])
++					AC_MSG_ERROR([OpenSSL > 1.1.x is not yet supported (have "$ssl_library_ver")])
+ 			                ;;
+ 			esac
+ 			AC_MSG_RESULT([$ssl_library_ver])
+@@ -2777,6 +2778,115 @@ if test "x$openssl" = "xyes" ; then
+ 		[AC_DEFINE([HAVE_EVP_CIPHER_CTX_CTRL], [1],
+ 		    [Define if libcrypto has EVP_CIPHER_CTX_ctrl])])
+ 
++	# LibreSSL/OpenSSL 1.1x API
++	AC_SEARCH_LIBS([DH_get0_key], [crypto],
++		[AC_DEFINE([HAVE_DH_GET0_KEY], [1],
++		    [Define if libcrypto has DH_get0_key])])
++	AC_SEARCH_LIBS([DH_get0_pqg], [crypto],
++		[AC_DEFINE([HAVE_DH_GET0_PQG], [1],
++		    [Define if libcrypto has DH_get0_pqg])])
++	AC_SEARCH_LIBS([DH_set0_key], [crypto],
++		[AC_DEFINE([HAVE_DH_SET0_KEY], [1],
++		    [Define if libcrypto has DH_set0_key])])
++	AC_SEARCH_LIBS([DH_set_length], [crypto],
++		[AC_DEFINE([HAVE_DH_SET_LENGTH], [1],
++		    [Define if libcrypto has DH_set_length])])
++	AC_SEARCH_LIBS([DH_set0_pqg], [crypto],
++		[AC_DEFINE([HAVE_DH_SET0_PQG], [1],
++		    [Define if libcrypto has DH_set0_pqg])])
++
++	AC_SEARCH_LIBS([DSA_get0_key], [crypto],
++		[AC_DEFINE([HAVE_DSA_GET0_KEY], [1],
++		    [Define if libcrypto has DSA_get0_key])])
++	AC_SEARCH_LIBS([DSA_get0_pqg], [crypto],
++		[AC_DEFINE([HAVE_DSA_GET0_PQG], [1],
++		    [Define if libcrypto has DSA_get0_pqg])])
++	AC_SEARCH_LIBS([DSA_set0_key], [crypto],
++		[AC_DEFINE([HAVE_DSA_SET0_KEY], [1],
++		    [Define if libcrypto has DSA_set0_key])])
++	AC_SEARCH_LIBS([DSA_set0_pqg], [crypto],
++		[AC_DEFINE([HAVE_DSA_SET0_PQG], [1],
++		    [Define if libcrypto has DSA_set0_pqg])])
++
++	AC_SEARCH_LIBS([DSA_SIG_get0], [crypto],
++		[AC_DEFINE([HAVE_DSA_SIG_GET0], [1],
++		    [Define if libcrypto has DSA_SIG_get0])])
++	AC_SEARCH_LIBS([DSA_SIG_set0], [crypto],
++		[AC_DEFINE([HAVE_DSA_SIG_SET0], [1],
++		    [Define if libcrypto has DSA_SIG_set0])])
++
++	AC_SEARCH_LIBS([ECDSA_SIG_get0], [crypto],
++		[AC_DEFINE([HAVE_ECDSA_SIG_GET0], [1],
++		    [Define if libcrypto has ECDSA_SIG_get0])])
++	AC_SEARCH_LIBS([ECDSA_SIG_set0], [crypto],
++		[AC_DEFINE([HAVE_ECDSA_SIG_SET0], [1],
++		    [Define if libcrypto has ECDSA_SIG_set0])])
++
++	AC_SEARCH_LIBS([EVP_CIPHER_CTX_iv], [crypto],
++		[AC_DEFINE([HAVE_EVP_CIPHER_CTX_IV], [1],
++		    [Define if libcrypto has EVP_CIPHER_CTX_iv])])
++	AC_SEARCH_LIBS([EVP_CIPHER_CTX_iv_noconst], [crypto],
++		[AC_DEFINE([HAVE_EVP_CIPHER_CTX_IV_NOCONST], [1],
++		    [Define if libcrypto has EVP_CIPHER_CTX_iv_noconst])])
++	AC_SEARCH_LIBS([EVP_CIPHER_CTX_get_iv], [crypto],
++		[AC_DEFINE([HAVE_EVP_CIPHER_CTX_GET_IV], [1],
++		    [Define if libcrypto has EVP_CIPHER_CTX_get_iv])])
++	AC_SEARCH_LIBS([EVP_CIPHER_CTX_set_iv], [crypto],
++		[AC_DEFINE([HAVE_EVP_CIPHER_CTX_GET_IV], [1],
++		    [Define if libcrypto has EVP_CIPHER_CTX_set_iv])])
++
++	AC_SEARCH_LIBS([RSA_get0_crt_params], [crypto],
++		[AC_DEFINE([HAVE_RSA_GET0_CRT_PARAMS], [1],
++		    [Define if libcrypto has RSA_get0_crt_params])])
++	AC_SEARCH_LIBS([RSA_get0_factors], [crypto],
++		[AC_DEFINE([HAVE_RSA_GET0_FACTORS], [1],
++		    [Define if libcrypto has RSA_get0_factors])])
++	AC_SEARCH_LIBS([RSA_get0_key], [crypto],
++		[AC_DEFINE([HAVE_RSA_GET0_KEY], [1],
++		    [Define if libcrypto has RSA_get0_key])])
++	AC_SEARCH_LIBS([RSA_set0_crt_params], [crypto],
++		[AC_DEFINE([HAVE_RSA_SET0_CRT_PARAMS], [1],
++		    [Define if libcrypto has RSA_get0_srt_params])])
++	AC_SEARCH_LIBS([RSA_set0_factors], [crypto],
++		[AC_DEFINE([HAVE_RSA_SET0_FACTORS], [1],
++		    [Define if libcrypto has RSA_set0_factors])])
++	AC_SEARCH_LIBS([RSA_set0_key], [crypto],
++		[AC_DEFINE([HAVE_RSA_SET0_KEY], [1],
++		    [Define if libcrypto has RSA_set0_key])])
++
++	AC_SEARCH_LIBS([RSA_meth_free], [crypto],
++		[AC_DEFINE([HAVE_RSA_METH_FREE], [1],
++		    [Define if libcrypto has RSA_meth_free])])
++	AC_SEARCH_LIBS([RSA_meth_dup], [crypto],
++		[AC_DEFINE([HAVE_RSA_METH_DUP], [1],
++		    [Define if libcrypto has RSA_meth_dup])])
++	AC_SEARCH_LIBS([RSA_meth_set1_name], [crypto],
++		[AC_DEFINE([HAVE_RSA_METH_SET1_NAME], [1],
++		    [Define if libcrypto has RSA_meth_set1_name])])
++	AC_SEARCH_LIBS([RSA_meth_get_finish], [crypto],
++		[AC_DEFINE([HAVE_RSA_METH_GET_FINISH], [1],
++		    [Define if libcrypto has RSA_meth_get_finish])])
++	AC_SEARCH_LIBS([RSA_meth_set_priv_enc], [crypto],
++		[AC_DEFINE([HAVE_RSA_METH_SET_PRIV_ENC], [1],
++		    [Define if libcrypto has RSA_meth_set_priv_enc])])
++	AC_SEARCH_LIBS([RSA_meth_set_priv_dec], [crypto],
++		[AC_DEFINE([HAVE_RSA_METH_SET_PRIV_DEC], [1],
++		    [Define if libcrypto has RSA_meth_set_priv_dec])])
++	AC_SEARCH_LIBS([RSA_meth_set_finish], [crypto],
++		[AC_DEFINE([HAVE_RSA_METH_SET_FINISH], [1],
++		    [Define if libcrypto has RSA_meth_set_finish])])
++
++	AC_SEARCH_LIBS([EVP_PKEY_get0_RSA], [crypto],
++		[AC_DEFINE([HAVE_EVP_PKEY_GET0_RSA], [1],
++		    [Define if libcrypto has EVP_PKEY_get0_RSA])])
++
++	AC_SEARCH_LIBS([EVP_MD_CTX_new], [crypto],
++		[AC_DEFINE([HAVE_EVP_MD_CTX_NEW], [1],
++		    [Define if libcrypto has EVP_MD_CTX_new])])
++	AC_SEARCH_LIBS([EVP_MD_CTX_free], [crypto],
++		[AC_DEFINE([HAVE_EVP_MD_CTX_FREE], [1],
++		    [Define if libcrypto has EVP_MD_CTX_free])])
++
+ 	AC_MSG_CHECKING([if EVP_DigestUpdate returns an int])
+ 	AC_LINK_IFELSE(
+ 		[AC_LANG_PROGRAM([[
+diff --git a/dh.c b/dh.c
+index d0d4527b..f3ed3882 100644
+--- a/dh.c
++++ b/dh.c
+@@ -43,6 +43,8 @@
+ #include "misc.h"
+ #include "ssherr.h"
+ 
++#include "openbsd-compat/openssl-compat.h"
++
+ static int
+ parse_prime(int linenum, char *line, struct dhgroup *dhg)
+ {
+diff --git a/kexdh.c b/kexdh.c
+index 0bf0dc13..e6925b18 100644
+--- a/kexdh.c
++++ b/kexdh.c
+@@ -33,6 +33,8 @@
+ 
+ #include <openssl/evp.h>
+ 
++#include "openbsd-compat/openssl-compat.h"
++
+ #include "ssh2.h"
+ #include "sshkey.h"
+ #include "cipher.h"
+diff --git a/kexdhc.c b/kexdhc.c
+index a8b74247..8b56377a 100644
+--- a/kexdhc.c
++++ b/kexdhc.c
+@@ -36,6 +36,8 @@
+ #include <string.h>
+ #include <signal.h>
+ 
++#include "openbsd-compat/openssl-compat.h"
++
+ #include "sshkey.h"
+ #include "cipher.h"
+ #include "digest.h"
+diff --git a/kexdhs.c b/kexdhs.c
+index 8367c6c3..337aab5b 100644
+--- a/kexdhs.c
++++ b/kexdhs.c
+@@ -35,6 +35,8 @@
+ 
+ #include <openssl/dh.h>
+ 
++#include "openbsd-compat/openssl-compat.h"
++
+ #include "sshkey.h"
+ #include "cipher.h"
+ #include "digest.h"
+diff --git a/kexgex.c b/kexgex.c
+index 8b0d8333..3ca4bd37 100644
+--- a/kexgex.c
++++ b/kexgex.c
+@@ -33,6 +33,8 @@
+ #include <openssl/evp.h>
+ #include <signal.h>
+ 
++#include "openbsd-compat/openssl-compat.h"
++
+ #include "sshkey.h"
+ #include "cipher.h"
+ #include "kex.h"
+diff --git a/kexgexc.c b/kexgexc.c
+index 955bc837..0d07f73c 100644
+--- a/kexgexc.c
++++ b/kexgexc.c
+@@ -37,6 +37,8 @@
+ #include <string.h>
+ #include <signal.h>
+ 
++#include "openbsd-compat/openssl-compat.h"
++
+ #include "sshkey.h"
+ #include "cipher.h"
+ #include "digest.h"
+diff --git a/kexgexs.c b/kexgexs.c
+index 2a4aa7e8..ce934f88 100644
+--- a/kexgexs.c
++++ b/kexgexs.c
+@@ -36,6 +36,8 @@
+ 
+ #include <openssl/dh.h>
+ 
++#include "openbsd-compat/openssl-compat.h"
++
+ #include "sshkey.h"
+ #include "cipher.h"
+ #include "digest.h"
+diff --git a/monitor.c b/monitor.c
+index b30813b4..531b2993 100644
+--- a/monitor.c
++++ b/monitor.c
+@@ -29,7 +29,6 @@
+ 
+ #include <sys/types.h>
+ #include <sys/socket.h>
+-#include "openbsd-compat/sys-tree.h"
+ #include <sys/wait.h>
+ 
+ #include <errno.h>
+@@ -60,7 +59,10 @@
+ #include <openssl/dh.h>
+ #endif
+ 
++#include "openbsd-compat/sys-tree.h"
+ #include "openbsd-compat/sys-queue.h"
++#include "openbsd-compat/openssl-compat.h"
++
+ #include "atomicio.h"
+ #include "xmalloc.h"
+ #include "ssh.h"
+diff --git a/openbsd-compat/Makefile.in b/openbsd-compat/Makefile.in
+index 2fd9b952..c1e14cbd 100644
+--- a/openbsd-compat/Makefile.in
++++ b/openbsd-compat/Makefile.in
+@@ -85,6 +85,7 @@ COMPAT=	arc4random.o \
+ 	getrrsetbyname-ldns.o \
+ 	kludge-fd_set.o \
+ 	openssl-compat.o \
++	libressl-api-compat.o \
+ 	xcrypt.o
+ 
+ PORTS=	port-aix.o \
+diff --git a/openbsd-compat/libressl-api-compat.c b/openbsd-compat/libressl-api-compat.c
+new file mode 100644
+index 00000000..de3e64a6
+--- /dev/null
++++ b/openbsd-compat/libressl-api-compat.c
+@@ -0,0 +1,636 @@
++/* $OpenBSD: dsa_lib.c,v 1.29 2018/04/14 07:09:21 tb Exp $ */
++/* $OpenBSD: rsa_lib.c,v 1.37 2018/04/14 07:09:21 tb Exp $ */
++/* $OpenBSD: evp_lib.c,v 1.17 2018/09/12 06:35:38 djm Exp $ */
++/* $OpenBSD: dh_lib.c,v 1.32 2018/05/02 15:48:38 tb Exp $ */
++/* $OpenBSD: p_lib.c,v 1.24 2018/05/30 15:40:50 tb Exp $ */
++/* $OpenBSD: digest.c,v 1.30 2018/04/14 07:09:21 tb Exp $ */
++/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
++ * All rights reserved.
++ *
++ * This package is an SSL implementation written
++ * by Eric Young (eay@cryptsoft.com).
++ * The implementation was written so as to conform with Netscapes SSL.
++ * 
++ * This library is free for commercial and non-commercial use as long as
++ * the following conditions are aheared to.  The following conditions
++ * apply to all code found in this distribution, be it the RC4, RSA,
++ * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
++ * included with this distribution is covered by the same copyright terms
++ * except that the holder is Tim Hudson (tjh@cryptsoft.com).
++ * 
++ * Copyright remains Eric Young's, and as such any Copyright notices in
++ * the code are not to be removed.
++ * If this package is used in a product, Eric Young should be given attribution
++ * as the author of the parts of the library used.
++ * This can be in the form of a textual message at program startup or
++ * in documentation (online or textual) provided with the package.
++ * 
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ * 3. All advertising materials mentioning features or use of this software
++ *    must display the following acknowledgement:
++ *    "This product includes cryptographic software written by
++ *     Eric Young (eay@cryptsoft.com)"
++ *    The word 'cryptographic' can be left out if the rouines from the library
++ *    being used are not cryptographic related :-).
++ * 4. If you include any Windows specific code (or a derivative thereof) from 
++ *    the apps directory (application code) you must include an acknowledgement:
++ *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
++ * 
++ * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
++ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
++ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
++ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
++ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
++ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
++ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
++ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
++ * SUCH DAMAGE.
++ * 
++ * The licence and distribution terms for any publically available version or
++ * derivative of this code cannot be changed.  i.e. this code cannot simply be
++ * copied and put under another distribution licence
++ * [including the GNU Public Licence.]
++ */
++
++/* $OpenBSD: dsa_asn1.c,v 1.22 2018/06/14 17:03:19 jsing Exp $ */
++/* $OpenBSD: ecs_asn1.c,v 1.9 2018/03/17 15:24:44 tb Exp $ */
++/* $OpenBSD: digest.c,v 1.30 2018/04/14 07:09:21 tb Exp $ */
++/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
++ * project 2000.
++ */
++/* ====================================================================
++ * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ *
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer. 
++ *
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in
++ *    the documentation and/or other materials provided with the
++ *    distribution.
++ *
++ * 3. All advertising materials mentioning features or use of this
++ *    software must display the following acknowledgment:
++ *    "This product includes software developed by the OpenSSL Project
++ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
++ *
++ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
++ *    endorse or promote products derived from this software without
++ *    prior written permission. For written permission, please contact
++ *    licensing@OpenSSL.org.
++ *
++ * 5. Products derived from this software may not be called "OpenSSL"
++ *    nor may "OpenSSL" appear in their names without prior written
++ *    permission of the OpenSSL Project.
++ *
++ * 6. Redistributions of any form whatsoever must retain the following
++ *    acknowledgment:
++ *    "This product includes software developed by the OpenSSL Project
++ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
++ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
++ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
++ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
++ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
++ * OF THE POSSIBILITY OF SUCH DAMAGE.
++ * ====================================================================
++ *
++ * This product includes cryptographic software written by Eric Young
++ * (eay@cryptsoft.com).  This product includes software written by Tim
++ * Hudson (tjh@cryptsoft.com).
++ *
++ */
++
++/*	$OpenBSD: rsa_meth.c,v 1.2 2018/09/12 06:35:38 djm Exp $	*/
++/*
++ * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
++ *
++ * Permission to use, copy, modify, and distribute this software for any
++ * purpose with or without fee is hereby granted, provided that the above
++ * copyright notice and this permission notice appear in all copies.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
++ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
++ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
++ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
++ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
++ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
++ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ */
++
++#include "includes.h"
++
++#ifdef WITH_OPENSSL
++
++#include <sys/types.h>
++
++#include <stdlib.h>
++#include <string.h>
++
++#include <openssl/err.h>
++#include <openssl/bn.h>
++#include <openssl/dsa.h>
++#include <openssl/rsa.h>
++#include <openssl/evp.h>
++#include <openssl/ecdsa.h>
++#include <openssl/dh.h>
++
++#ifndef HAVE_DSA_GET0_PQG
++void
++DSA_get0_pqg(const DSA *d, const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
++{
++	if (p != NULL)
++		*p = d->p;
++	if (q != NULL)
++		*q = d->q;
++	if (g != NULL)
++		*g = d->g;
++}
++#endif /* HAVE_DSA_GET0_PQG */
++
++#ifndef HAVE_DSA_SET0_PQG
++int
++DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
++{
++	if ((d->p == NULL && p == NULL) || (d->q == NULL && q == NULL) ||
++	    (d->g == NULL && g == NULL))
++		return 0;
++
++	if (p != NULL) {
++		BN_free(d->p);
++		d->p = p;
++	}
++	if (q != NULL) {
++		BN_free(d->q);
++		d->q = q;
++	}
++	if (g != NULL) {
++		BN_free(d->g);
++		d->g = g;
++	}
++
++	return 1;
++}
++#endif /* HAVE_DSA_SET0_PQG */
++
++#ifndef HAVE_DSA_GET0_KEY
++void
++DSA_get0_key(const DSA *d, const BIGNUM **pub_key, const BIGNUM **priv_key)
++{
++	if (pub_key != NULL)
++		*pub_key = d->pub_key;
++	if (priv_key != NULL)
++		*priv_key = d->priv_key;
++}
++#endif /* HAVE_DSA_GET0_KEY */
++
++#ifndef HAVE_DSA_SET0_KEY
++int
++DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
++{
++	if (d->pub_key == NULL && pub_key == NULL)
++		return 0;
++
++	if (pub_key != NULL) {
++		BN_free(d->pub_key);
++		d->pub_key = pub_key;
++	}
++	if (priv_key != NULL) {
++		BN_free(d->priv_key);
++		d->priv_key = priv_key;
++	}
++
++	return 1;
++}
++#endif /* HAVE_DSA_SET0_KEY */
++
++#ifndef HAVE_RSA_GET0_KEY
++void
++RSA_get0_key(const RSA *r, const BIGNUM **n, const BIGNUM **e, const BIGNUM **d)
++{
++	if (n != NULL)
++		*n = r->n;
++	if (e != NULL)
++		*e = r->e;
++	if (d != NULL)
++		*d = r->d;
++}
++#endif /* HAVE_RSA_GET0_KEY */
++
++#ifndef HAVE_RSA_SET0_KEY
++int
++RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
++{
++	if ((r->n == NULL && n == NULL) || (r->e == NULL && e == NULL))
++		return 0;
++
++	if (n != NULL) {
++		BN_free(r->n);
++		r->n = n;
++	}
++	if (e != NULL) {
++		BN_free(r->e);
++		r->e = e;
++	}
++	if (d != NULL) {
++		BN_free(r->d);
++		r->d = d;
++	}
++
++	return 1;
++}
++#endif /* HAVE_RSA_SET0_KEY */
++
++#ifndef HAVE_RSA_GET0_CRT_PARAMS
++void
++RSA_get0_crt_params(const RSA *r, const BIGNUM **dmp1, const BIGNUM **dmq1,
++    const BIGNUM **iqmp)
++{
++	if (dmp1 != NULL)
++		*dmp1 = r->dmp1;
++	if (dmq1 != NULL)
++		*dmq1 = r->dmq1;
++	if (iqmp != NULL)
++		*iqmp = r->iqmp;
++}
++#endif /* HAVE_RSA_GET0_CRT_PARAMS */
++
++#ifndef HAVE_RSA_SET0_CRT_PARAMS
++int
++RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
++{
++	if ((r->dmp1 == NULL && dmp1 == NULL) ||
++	    (r->dmq1 == NULL && dmq1 == NULL) ||
++	    (r->iqmp == NULL && iqmp == NULL))
++	       	return 0;
++
++	if (dmp1 != NULL) {
++		BN_free(r->dmp1);
++		r->dmp1 = dmp1;
++	}
++	if (dmq1 != NULL) {
++		BN_free(r->dmq1);
++		r->dmq1 = dmq1;
++	}
++	if (iqmp != NULL) {
++		BN_free(r->iqmp);
++		r->iqmp = iqmp;
++	}
++
++	return 1;
++}
++#endif /* HAVE_RSA_SET0_CRT_PARAMS */
++
++#ifndef HAVE_RSA_GET0_FACTORS
++void
++RSA_get0_factors(const RSA *r, const BIGNUM **p, const BIGNUM **q)
++{
++	if (p != NULL)
++		*p = r->p;
++	if (q != NULL)
++		*q = r->q;
++}
++#endif /* HAVE_RSA_GET0_FACTORS */
++
++#ifndef HAVE_RSA_SET0_FACTORS
++int
++RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
++{
++	if ((r->p == NULL && p == NULL) || (r->q == NULL && q == NULL))
++		return 0;
++
++	if (p != NULL) {
++		BN_free(r->p);
++		r->p = p;
++	}
++	if (q != NULL) {
++		BN_free(r->q);
++		r->q = q;
++	}
++
++	return 1;
++}
++#endif /* HAVE_RSA_SET0_FACTORS */
++
++#ifndef HAVE_EVP_CIPHER_CTX_GET_IV
++int
++EVP_CIPHER_CTX_get_iv(const EVP_CIPHER_CTX *ctx, unsigned char *iv, size_t len)
++{
++	if (ctx == NULL)
++		return 0;
++	if (EVP_CIPHER_CTX_iv_length(ctx) < 0)
++		return 0;
++	if (len != (size_t)EVP_CIPHER_CTX_iv_length(ctx))
++		return 0;
++	if (len > EVP_MAX_IV_LENGTH)
++		return 0; /* sanity check; shouldn't happen */
++	/*
++	 * Skip the memcpy entirely when the requested IV length is zero,
++	 * since the iv pointer may be NULL or invalid.
++	 */
++	if (len != 0) {
++		if (iv == NULL)
++			return 0;
++# ifdef HAVE_EVP_CIPHER_CTX_IV
++		memcpy(iv, EVP_CIPHER_CTX_iv(ctx), len);
++# else
++		memcpy(iv, ctx->iv, len);
++# endif /* HAVE_EVP_CIPHER_CTX_IV */
++	}
++	return 1;
++}
++#endif /* HAVE_EVP_CIPHER_CTX_GET_IV */
++
++#ifndef HAVE_EVP_CIPHER_CTX_SET_IV
++int
++EVP_CIPHER_CTX_set_iv(EVP_CIPHER_CTX *ctx, const unsigned char *iv, size_t len)
++{
++	if (ctx == NULL)
++		return 0;
++	if (EVP_CIPHER_CTX_iv_length(ctx) < 0)
++		return 0;
++	if (len != (size_t)EVP_CIPHER_CTX_iv_length(ctx))
++		return 0;
++	if (len > EVP_MAX_IV_LENGTH)
++		return 0; /* sanity check; shouldn't happen */
++	/*
++	 * Skip the memcpy entirely when the requested IV length is zero,
++	 * since the iv pointer may be NULL or invalid.
++	 */
++	if (len != 0) {
++		if (iv == NULL)
++			return 0;
++# ifdef HAVE_EVP_CIPHER_CTX_IV_NOCONST
++		memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), iv, len);
++# else
++		memcpy(ctx->iv, iv, len);
++# endif /* HAVE_EVP_CIPHER_CTX_IV_NOCONST */
++	}
++	return 1;
++}
++#endif /* HAVE_EVP_CIPHER_CTX_SET_IV */
++
++#ifndef HAVE_DSA_SIG_GET0
++void
++DSA_SIG_get0(const DSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
++{
++	if (pr != NULL)
++		*pr = sig->r;
++	if (ps != NULL)
++		*ps = sig->s;
++}
++#endif /* HAVE_DSA_SIG_GET0 */
++
++#ifndef HAVE_DSA_SIG_SET0
++int
++DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
++{
++	if (r == NULL || s == NULL)
++		return 0;
++
++	BN_clear_free(sig->r);
++	sig->r = r;
++	BN_clear_free(sig->s);
++	sig->s = s;
++
++	return 1;
++}
++#endif /* HAVE_DSA_SIG_SET0 */
++
++#ifndef HAVE_ECDSA_SIG_GET0
++void
++ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
++{
++	if (pr != NULL)
++		*pr = sig->r;
++	if (ps != NULL)
++		*ps = sig->s;
++}
++#endif /* HAVE_ECDSA_SIG_GET0 */
++
++#ifndef HAVE_ECDSA_SIG_SET0
++int
++ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
++{
++	if (r == NULL || s == NULL)
++		return 0;
++
++	BN_clear_free(sig->r);
++	BN_clear_free(sig->s);
++	sig->r = r;
++	sig->s = s;
++	return 1;
++}
++#endif /* HAVE_ECDSA_SIG_SET0 */
++
++#ifndef HAVE_DH_GET0_PQG
++void
++DH_get0_pqg(const DH *dh, const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
++{
++	if (p != NULL)
++		*p = dh->p;
++	if (q != NULL)
++		*q = dh->q;
++	if (g != NULL)
++		*g = dh->g;
++}
++#endif /* HAVE_DH_GET0_PQG */
++
++#ifndef HAVE_DH_SET0_PQG
++int
++DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
++{
++	if ((dh->p == NULL && p == NULL) || (dh->g == NULL && g == NULL))
++		return 0;
++
++	if (p != NULL) {
++		BN_free(dh->p);
++		dh->p = p;
++	}
++	if (q != NULL) {
++		BN_free(dh->q);
++		dh->q = q;
++	}
++	if (g != NULL) {
++		BN_free(dh->g);
++		dh->g = g;
++	}
++
++	return 1;
++}
++#endif /* HAVE_DH_SET0_PQG */
++
++#ifndef HAVE_DH_GET0_KEY
++void
++DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key)
++{
++	if (pub_key != NULL)
++		*pub_key = dh->pub_key;
++	if (priv_key != NULL)
++		*priv_key = dh->priv_key;
++}
++#endif /* HAVE_DH_GET0_KEY */
++
++#ifndef HAVE_DH_SET0_KEY
++int
++DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
++{
++	if (pub_key != NULL) {
++		BN_free(dh->pub_key);
++		dh->pub_key = pub_key;
++	}
++	if (priv_key != NULL) {
++		BN_free(dh->priv_key);
++		dh->priv_key = priv_key;
++	}
++
++	return 1;
++}
++#endif /* HAVE_DH_SET0_KEY */
++
++#ifndef HAVE_DH_SET_LENGTH
++int
++DH_set_length(DH *dh, long length)
++{
++	if (length < 0 || length > INT_MAX)
++		return 0;
++
++	dh->length = length;
++	return 1;
++}
++#endif /* HAVE_DH_SET_LENGTH */
++
++#ifndef HAVE_RSA_METH_FREE
++void
++RSA_meth_free(RSA_METHOD *meth)
++{
++	if (meth != NULL) {
++		free((char *)meth->name);
++		free(meth);
++	}
++}
++#endif /* HAVE_RSA_METH_FREE */
++
++#ifndef HAVE_RSA_METH_DUP
++RSA_METHOD *
++RSA_meth_dup(const RSA_METHOD *meth)
++{
++	RSA_METHOD *copy;
++
++	if ((copy = calloc(1, sizeof(*copy))) == NULL)
++		return NULL;
++	memcpy(copy, meth, sizeof(*copy));
++	if ((copy->name = strdup(meth->name)) == NULL) {
++		free(copy);
++		return NULL;
++	}
++
++	return copy;
++}
++#endif /* HAVE_RSA_METH_DUP */
++
++#ifndef HAVE_RSA_METH_SET1_NAME
++int
++RSA_meth_set1_name(RSA_METHOD *meth, const char *name)
++{
++	char *copy;
++
++	if ((copy = strdup(name)) == NULL)
++		return 0;
++	free((char *)meth->name);
++	meth->name = copy;
++	return 1;
++}
++#endif /* HAVE_RSA_METH_SET1_NAME */
++
++#ifndef HAVE_RSA_METH_GET_FINISH
++int
++(*RSA_meth_get_finish(const RSA_METHOD *meth))(RSA *rsa)
++{
++	return meth->finish;
++}
++#endif /* HAVE_RSA_METH_GET_FINISH */
++
++#ifndef HAVE_RSA_METH_SET_PRIV_ENC
++int
++RSA_meth_set_priv_enc(RSA_METHOD *meth, int (*priv_enc)(int flen,
++    const unsigned char *from, unsigned char *to, RSA *rsa, int padding))
++{
++	meth->rsa_priv_enc = priv_enc;
++	return 1;
++}
++#endif /* HAVE_RSA_METH_SET_PRIV_ENC */
++
++#ifndef HAVE_RSA_METH_SET_PRIV_DEC
++int
++RSA_meth_set_priv_dec(RSA_METHOD *meth, int (*priv_dec)(int flen,
++    const unsigned char *from, unsigned char *to, RSA *rsa, int padding))
++{
++	meth->rsa_priv_dec = priv_dec;
++	return 1;
++}
++#endif /* HAVE_RSA_METH_SET_PRIV_DEC */
++
++#ifndef HAVE_RSA_METH_SET_FINISH
++int
++RSA_meth_set_finish(RSA_METHOD *meth, int (*finish)(RSA *rsa))
++{
++	meth->finish = finish;
++	return 1;
++}
++#endif /* HAVE_RSA_METH_SET_FINISH */
++
++#ifndef HAVE_EVP_PKEY_GET0_RSA
++RSA *
++EVP_PKEY_get0_RSA(EVP_PKEY *pkey)
++{
++	if (pkey->type != EVP_PKEY_RSA) {
++		/* EVPerror(EVP_R_EXPECTING_AN_RSA_KEY); */
++		return NULL;
++	}
++	return pkey->pkey.rsa;
++}
++#endif /* HAVE_EVP_PKEY_GET0_RSA */
++
++#ifndef HAVE_EVP_MD_CTX_NEW
++EVP_MD_CTX *
++EVP_MD_CTX_new(void)
++{
++	return calloc(1, sizeof(EVP_MD_CTX));
++}
++#endif /* HAVE_EVP_MD_CTX_NEW */
++
++#ifndef HAVE_EVP_MD_CTX_FREE
++void
++EVP_MD_CTX_free(EVP_MD_CTX *ctx)
++{
++	if (ctx == NULL)
++		return;
++
++	EVP_MD_CTX_cleanup(ctx);
++
++	free(ctx);
++}
++#endif /* HAVE_EVP_MD_CTX_FREE */
++
++#endif /* WITH_OPENSSL */
+diff --git a/openbsd-compat/openssl-compat.h b/openbsd-compat/openssl-compat.h
+index 2ae42bac..9e0264c0 100644
+--- a/openbsd-compat/openssl-compat.h
++++ b/openbsd-compat/openssl-compat.h
+@@ -24,6 +24,8 @@
+ #include <openssl/evp.h>
+ #include <openssl/rsa.h>
+ #include <openssl/dsa.h>
++#include <openssl/ecdsa.h>
++#include <openssl/dh.h>
+ 
+ int ssh_compatible_openssl(long, long);
+ 
+@@ -96,5 +98,139 @@ void ssh_OpenSSL_add_all_algorithms(void);
+ 
+ #endif	/* SSH_DONT_OVERLOAD_OPENSSL_FUNCS */
+ 
++/* LibreSSL/OpenSSL 1.1x API compat */
++#ifndef HAVE_DSA_GET0_PQG
++void DSA_get0_pqg(const DSA *d, const BIGNUM **p, const BIGNUM **q,
++    const BIGNUM **g);
++#endif /* HAVE_DSA_GET0_PQG */
++
++#ifndef HAVE_DSA_SET0_PQG
++int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g);
++#endif /* HAVE_DSA_SET0_PQG */
++
++#ifndef HAVE_DSA_GET0_KEY
++void DSA_get0_key(const DSA *d, const BIGNUM **pub_key,
++    const BIGNUM **priv_key);
++#endif /* HAVE_DSA_GET0_KEY */
++
++#ifndef HAVE_DSA_SET0_KEY
++int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key);
++#endif /* HAVE_DSA_SET0_KEY */
++
++#ifndef HAVE_EVP_CIPHER_CTX_GET_IV
++int EVP_CIPHER_CTX_get_iv(const EVP_CIPHER_CTX *ctx,
++    unsigned char *iv, size_t len);
++#endif /* HAVE_EVP_CIPHER_CTX_GET_IV */
++
++#ifndef HAVE_EVP_CIPHER_CTX_SET_IV
++int EVP_CIPHER_CTX_set_iv(EVP_CIPHER_CTX *ctx,
++    const unsigned char *iv, size_t len);
++#endif /* HAVE_EVP_CIPHER_CTX_SET_IV */
++
++#ifndef HAVE_RSA_GET0_KEY
++void RSA_get0_key(const RSA *r, const BIGNUM **n, const BIGNUM **e,
++    const BIGNUM **d);
++#endif /* HAVE_RSA_GET0_KEY */
++
++#ifndef HAVE_RSA_SET0_KEY
++int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d);
++#endif /* HAVE_RSA_SET0_KEY */
++
++#ifndef HAVE_RSA_GET0_CRT_PARAMS
++void RSA_get0_crt_params(const RSA *r, const BIGNUM **dmp1, const BIGNUM **dmq1,
++    const BIGNUM **iqmp);
++#endif /* HAVE_RSA_GET0_CRT_PARAMS */
++
++#ifndef HAVE_RSA_SET0_CRT_PARAMS
++int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp);
++#endif /* HAVE_RSA_SET0_CRT_PARAMS */
++
++#ifndef HAVE_RSA_GET0_FACTORS
++void RSA_get0_factors(const RSA *r, const BIGNUM **p, const BIGNUM **q);
++#endif /* HAVE_RSA_GET0_FACTORS */
++
++#ifndef HAVE_RSA_SET0_FACTORS
++int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q);
++#endif /* HAVE_RSA_SET0_FACTORS */
++
++#ifndef DSA_SIG_GET0
++void DSA_SIG_get0(const DSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
++#endif /* DSA_SIG_GET0 */
++
++#ifndef DSA_SIG_SET0
++int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s);
++#endif /* DSA_SIG_SET0 */
++
++#ifndef HAVE_ECDSA_SIG_GET0
++void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
++#endif /* HAVE_ECDSA_SIG_GET0 */
++
++#ifndef HAVE_ECDSA_SIG_SET0
++int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s);
++#endif /* HAVE_ECDSA_SIG_SET0 */
++
++#ifndef HAVE_DH_GET0_PQG
++void DH_get0_pqg(const DH *dh, const BIGNUM **p, const BIGNUM **q,
++    const BIGNUM **g);
++#endif /* HAVE_DH_GET0_PQG */
++
++#ifndef HAVE_DH_SET0_PQG
++int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
++#endif /* HAVE_DH_SET0_PQG */
++
++#ifndef HAVE_DH_GET0_KEY
++void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key);
++#endif /* HAVE_DH_GET0_KEY */
++
++#ifndef HAVE_DH_SET0_KEY
++int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key);
++#endif /* HAVE_DH_SET0_KEY */
++
++#ifndef HAVE_DH_SET_LENGTH
++int DH_set_length(DH *dh, long length);
++#endif /* HAVE_DH_SET_LENGTH */
++
++#ifndef HAVE_RSA_METH_FREE
++void RSA_meth_free(RSA_METHOD *meth);
++#endif /* HAVE_RSA_METH_FREE */
++
++#ifndef HAVE_RSA_METH_DUP
++RSA_METHOD *RSA_meth_dup(const RSA_METHOD *meth);
++#endif /* HAVE_RSA_METH_DUP */
++
++#ifndef HAVE_RSA_METH_SET1_NAME
++int RSA_meth_set1_name(RSA_METHOD *meth, const char *name);
++#endif /* HAVE_RSA_METH_SET1_NAME */
++
++#ifndef HAVE_RSA_METH_GET_FINISH
++int (*RSA_meth_get_finish(const RSA_METHOD *meth))(RSA *rsa);
++#endif /* HAVE_RSA_METH_GET_FINISH */
++
++#ifndef HAVE_RSA_METH_SET_PRIV_ENC
++int RSA_meth_set_priv_enc(RSA_METHOD *meth, int (*priv_enc)(int flen,
++    const unsigned char *from, unsigned char *to, RSA *rsa, int padding));
++#endif /* HAVE_RSA_METH_SET_PRIV_ENC */
++
++#ifndef HAVE_RSA_METH_SET_PRIV_DEC
++int RSA_meth_set_priv_dec(RSA_METHOD *meth, int (*priv_dec)(int flen,
++    const unsigned char *from, unsigned char *to, RSA *rsa, int padding));
++#endif /* HAVE_RSA_METH_SET_PRIV_DEC */
++
++#ifndef HAVE_RSA_METH_SET_FINISH
++int RSA_meth_set_finish(RSA_METHOD *meth, int (*finish)(RSA *rsa));
++#endif /* HAVE_RSA_METH_SET_FINISH */
++
++#ifndef HAVE_EVP_PKEY_GET0_RSA
++RSA *EVP_PKEY_get0_RSA(EVP_PKEY *pkey);
++#endif /* HAVE_EVP_PKEY_GET0_RSA */
++
++#ifndef HAVE_EVP_MD_CTX_new
++EVP_MD_CTX *EVP_MD_CTX_new(void);
++#endif /* HAVE_EVP_MD_CTX_new */
++
++#ifndef HAVE_EVP_MD_CTX_free
++void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
++#endif /* HAVE_EVP_MD_CTX_free */
++
+ #endif /* WITH_OPENSSL */
+ #endif /* _OPENSSL_COMPAT_H */
+diff --git a/ssh-dss.c b/ssh-dss.c
+index 631b1571..a23c383d 100644
+--- a/ssh-dss.c
++++ b/ssh-dss.c
+@@ -43,6 +43,8 @@
+ #define SSHKEY_INTERNAL
+ #include "sshkey.h"
+ 
++#include "openbsd-compat/openssl-compat.h"
++
+ #define INTBLOB_LEN	20
+ #define SIGBLOB_LEN	(2*INTBLOB_LEN)
+ 
+diff --git a/ssh-ecdsa.c b/ssh-ecdsa.c
+index 9e92af04..2f553175 100644
+--- a/ssh-ecdsa.c
++++ b/ssh-ecdsa.c
+@@ -43,6 +43,8 @@
+ #define SSHKEY_INTERNAL
+ #include "sshkey.h"
+ 
++#include "openbsd-compat/openssl-compat.h"
++
+ /* ARGSUSED */
+ int
+ ssh_ecdsa_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
+diff --git a/ssh-pkcs11-client.c b/ssh-pkcs11-client.c
+index bcc18c6b..d1241ce6 100644
+--- a/ssh-pkcs11-client.c
++++ b/ssh-pkcs11-client.c
+@@ -32,6 +32,8 @@
+ 
+ #include <openssl/rsa.h>
+ 
++#include "openbsd-compat/openssl-compat.h"
++
+ #include "pathnames.h"
+ #include "xmalloc.h"
+ #include "sshbuf.h"
+diff --git a/ssh-pkcs11.c b/ssh-pkcs11.c
+index c35f9415..775de964 100644
+--- a/ssh-pkcs11.c
++++ b/ssh-pkcs11.c
+@@ -30,6 +30,7 @@
+ #include <dlfcn.h>
+ 
+ #include "openbsd-compat/sys-queue.h"
++#include "openbsd-compat/openssl-compat.h"
+ 
+ #include <openssl/x509.h>
+ 
+diff --git a/ssh-rsa.c b/ssh-rsa.c
+index 2788f334..9b14f9a9 100644
+--- a/ssh-rsa.c
++++ b/ssh-rsa.c
+@@ -35,6 +35,8 @@
+ #include "digest.h"
+ #include "log.h"
+ 
++#include "openbsd-compat/openssl-compat.h"
++
+ static int openssh_RSA_verify(int, u_char *, size_t, u_char *, size_t, RSA *);
+ 
+ static const char *
+diff --git a/sshkey.c b/sshkey.c
+index a5e6e60e..18b253d9 100644
+--- a/sshkey.c
++++ b/sshkey.c
+@@ -60,6 +60,8 @@
+ 
+ #include "xmss_fast.h"
+ 
++#include "openbsd-compat/openssl-compat.h"
++
+ /* openssh private key file format */
+ #define MARK_BEGIN		"-----BEGIN OPENSSH PRIVATE KEY-----\n"
+ #define MARK_END		"-----END OPENSSH PRIVATE KEY-----\n"
+@@ -1727,7 +1729,6 @@ int
+ sshkey_from_private(const struct sshkey *k, struct sshkey **pkp)
+ {
+ 	struct sshkey *n = NULL;
+-	int ret = SSH_ERR_INTERNAL_ERROR;
+ 	int r = SSH_ERR_INTERNAL_ERROR;
+ #ifdef WITH_OPENSSL
+ 	const BIGNUM *rsa_n, *rsa_e;
+-- 
+2.16.4
+
