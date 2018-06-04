@@ -1,0 +1,29 @@
+From: Antonio Quartulli <a@unstable.cc>
+Date: Sat, 12 May 2018 03:02:44 +0800
+Subject: [PATCH] batman-adv: don't implement skb_postpush_rcsum() for linux >=4.4.47
+
+skb_postpush_rcsum() has been implemented in 4.4.47 therefore
+our compat code has to be changed to prevent this function to
+be implemented when using those kernels.
+
+Signed-off-by: Antonio Quartulli <a@unstable.cc>
+Signed-off-by: Sven Eckelmann <sven@narfation.org>
+
+Origin: upstream, https://git.open-mesh.org/batman-adv.git/commit/b4693d107e0869bf11956fd2d3be4fd0a8671b46
+---
+ compat-include/linux/skbuff.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/compat-include/linux/skbuff.h b/compat-include/linux/skbuff.h
+index 6f73946496ac15f2fdb856357f16e4e2d8a6e6cd..371bb561eecaf605a5c96f9417546f6bb817724d 100644
+--- a/compat-include/linux/skbuff.h
++++ b/compat-include/linux/skbuff.h
+@@ -77,7 +77,7 @@ struct sk_buff *skb_checksum_trimmed(struct sk_buff *skb,
+ 
+ #endif /* < KERNEL_VERSION(4, 2, 0) */
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 5, 0)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 4, 47)
+ 
+ static inline void skb_postpush_rcsum(struct sk_buff *skb,
+ 				      const void *start, unsigned int len)

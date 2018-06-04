@@ -1,0 +1,45 @@
+From: Sven Eckelmann <sven@narfation.org>
+Date: Sat, 2 Jun 2018 17:26:35 +0200
+Subject: [PATCH] batman-adv: Fix bat_v best gw refcnt after netlink dump
+
+A reference for the best gateway is taken when the list of gateways in the
+mesh is sent via netlink. This is necessary to check whether the currently
+dumped entry is the currently selected gateway or not. This information is
+then transferred as flag BATADV_ATTR_FLAG_BEST.
+
+After the comparison of the current entry is done,
+batadv_v_gw_dump_entry() has to decrease the reference counter again.
+Otherwise the reference will be held and thus prevents a proper shutdown of
+the batman-adv interfaces (and some of the interfaces enslaved in it).
+
+Fixes: 15315a94ad98 ("batman-adv: add B.A.T.M.A.N. V bat_gw_dump implementations")
+Signed-off-by: Sven Eckelmann <sven@narfation.org>
+Acked-by: Marek Lindner <mareklindner@neomailbox.ch>
+
+Origin: upstream, https://git.open-mesh.org/batman-adv.git/commit/2b422b5808183d1084b450b89d9a085a13dd6d2c
+---
+ net/batman-adv/bat_v.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/net/batman-adv/bat_v.c b/net/batman-adv/bat_v.c
+index ec93337ee2597738e46b87dd72724d5becf3f48e..6baec4e68898c6e992e7522d2ee8c78ce62a1b08 100644
+--- a/net/batman-adv/bat_v.c
++++ b/net/batman-adv/bat_v.c
+@@ -927,7 +927,7 @@ static int batadv_v_gw_dump_entry(struct sk_buff *msg, u32 portid, u32 seq,
+ {
+ 	struct batadv_neigh_ifinfo *router_ifinfo = NULL;
+ 	struct batadv_neigh_node *router;
+-	struct batadv_gw_node *curr_gw;
++	struct batadv_gw_node *curr_gw = NULL;
+ 	int ret = 0;
+ 	void *hdr;
+ 
+@@ -995,6 +995,8 @@ static int batadv_v_gw_dump_entry(struct sk_buff *msg, u32 portid, u32 seq,
+ 	ret = 0;
+ 
+ out:
++	if (curr_gw)
++		batadv_gw_node_put(curr_gw);
+ 	if (router_ifinfo)
+ 		batadv_neigh_ifinfo_put(router_ifinfo);
+ 	if (router)
