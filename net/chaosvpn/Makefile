@@ -49,7 +49,6 @@ define Package/chaosvpn/install
 		$(INSTALL_BIN) $(PKG_BUILD_DIR)/chaosvpn $(1)/usr/sbin/
 		$(INSTALL_BIN) ./files/chaosvpn.init $(1)/etc/init.d/chaosvpn
 		$(INSTALL_BIN) ./files/chaosvpn.hotplug $(1)/etc/hotplug.d/iface/40-chaosvpn
-		sed  -i -e 's/"\/sbin\/ip /"\/usr\/sbin\/ip /' $(PKG_BUILD_DIR)/chaosvpn.conf
 		$(INSTALL_CONF) $(PKG_BUILD_DIR)/chaosvpn.conf $(1)/etc/tinc/chaosvpn.conf
 endef
 
