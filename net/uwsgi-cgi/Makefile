@@ -23,7 +23,7 @@ define Package/uwsgi-cgi
   SUBMENU:=Web Servers/Proxies
   TITLE:=The uWSGI server
   URL:=http://unbit.com/
-  DEPENDS:=+python +libopenssl +libpcre
+  DEPENDS:=+python +libopenssl +libpcre +jansson
 endef
 
 define Package/uwsgi-cgi/description
