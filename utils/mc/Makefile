@@ -6,14 +6,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
-PKG_VERSION:=4.8.20
-PKG_RELEASE:=2
+PKG_VERSION:=4.8.21
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 PKG_LICENSE:=GPL-3.0+
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ftp.midnight-commander.org/
-PKG_HASH:=017ee7f4f8ae420a04f4d6fcebaabe5b494661075c75442c76e9c8b1923d501c
+PKG_HASH:=8f37e546ac7c31c9c203a03b1c1d6cb2d2f623a300b86badfd367e5559fe148c
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf gettext-version
 
