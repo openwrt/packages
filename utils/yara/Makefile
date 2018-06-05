@@ -41,7 +41,7 @@ define Package/yara/description
 endef
 
 CONFIGURE_ARGS += \
-	--disable-dotnet \
+	$(if $(CONFIG_YARA_module_dotnet),--enable,--disable)-dotnet \
 	$(if $(CONFIG_YARA_module_magic),--enable,--disable)-magic \
 	$(if $(CONFIG_YARA_module_cuckoo),--enable,--disable)-cuckoo
 
