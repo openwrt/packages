@@ -42,8 +42,8 @@ endef
 
 CONFIGURE_ARGS += \
 	--disable-dotnet \
-	$(if $(YARA_module_magic),--enable,--disable)-magic \
-	$(if $(YARA_module_cuckoo),--enable,--disable)-cuckoo
+	$(if $(CONFIG_YARA_module_magic),--enable,--disable)-magic \
+	$(if $(CONFIG_YARA_module_cuckoo),--enable,--disable)-cuckoo
 
 define Package/yara/config
 	source "$(SOURCE)/Config.in"
