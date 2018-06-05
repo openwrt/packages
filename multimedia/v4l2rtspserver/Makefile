@@ -38,7 +38,7 @@ define Package/v4l2rtspserver/description
 endef
 
 define Package/v4l2rtspserver/conffiles
-	/etc/config/v4l2rtspserver
+/etc/config/v4l2rtspserver
 endef
 
 define Download/live555
