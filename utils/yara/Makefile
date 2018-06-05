@@ -29,7 +29,7 @@ define Package/yara
   URL:=http://virustotal.github.io/yara/
   MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
   DEPENDS:= +libopenssl
-  DEPENDS+= +YARA_module_magic:libmagic
+  DEPENDS+= +YARA_module_magic:file
   DEPENDS+= +YARA_module_cuckoo:jansson
   MENU:=1
 endef
