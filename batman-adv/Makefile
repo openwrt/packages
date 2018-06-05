@@ -27,7 +27,7 @@ define KernelPackage/batman-adv
   DEPENDS:=+KMOD_BATMAN_ADV_BLA:kmod-lib-crc16 +kmod-crypto-crc32c +kmod-lib-crc32c +kmod-cfg80211
   TITLE:=B.A.T.M.A.N. Adv
   FILES:=$(PKG_BUILD_DIR)/net/batman-adv/batman-adv.$(LINUX_KMOD_SUFFIX)
-  AUTOLOAD:=$(call AutoLoad,50,cfg80211 batman-adv)
+  AUTOLOAD:=$(call AutoProbe,batman-adv)
 endef
 
 define KernelPackage/batman-adv/description
