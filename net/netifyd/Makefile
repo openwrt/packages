@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 # Name, version and release number
 # The name and version of your package are used to define the variable to point to the build directory of your package: $(PKG_BUILD_DIR)
 PKG_NAME:=netifyd
-PKG_VERSION:=2.63
+PKG_VERSION:=2.64
 PKG_RELEASE:=1
 
 PKG_INSTALL:=1
@@ -21,10 +21,10 @@ PKG_LICENSE:=GPL-3.0+
 
 # Disable the following and enable SOURCE_DIR below for local test builds.
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/eglooca/netify-daemon.git
-PKG_SOURCE_DATE:=2018-05-29
-PKG_SOURCE_VERSION:=37ad3212ea9d7da9585d7d2626600e072cebc2c5
-PKG_MIRROR_HASH:=caedb66cf6dcbdcee0d1525923e203d003ef15f34a13a328686794666f16171f
+PKG_SOURCE_URL:=https://bitbucket.org/eglooca/netify-daemon.git
+PKG_SOURCE_DATE:=2018-06-05
+PKG_SOURCE_VERSION:=4aa933a603a338be4cd7d0634def2cbeb78c85c1
+PKG_MIRROR_HASH:=849e8c7eb7c6e7f774172abf535fa3fc9315679cab03b5bcb7288ad60ea58593
 
 # Local source builds (create symlink to source here)
 #SOURCE_DIR:=$(TOPDIR)/netify-daemon
@@ -44,7 +44,7 @@ endef
 # Package description
 define Package/netifyd/description
 Netify provides visibility into the traffic on your network along with the
-option to take an active role (on supported devices) in stopping/shaping
+option to take an active role (on supported devices) in blocking or shaping
 undesirable traffic from recurring on your network.
 
 endef
@@ -84,11 +84,13 @@ endef
 
 # Package install
 define Package/netifyd/install
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/netifyd.init $(1)/etc/init.d/netifyd
 	$(INSTALL_DIR) $(1)/usr/sbin
-	#$(INSTALL_DIR) $(1)/etc/init.d
-	#$(INSTALL_DIR) $(1)/etc/config
-	#$(INSTALL_DIR) $(1)/var/lib/netifyd
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/netifyd $(1)/usr/sbin
+	#$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DIR) $(1)/var/lib/netifyd
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/deploy/app-custom-match.conf $(1)/var/lib/netifyd
 endef
 
 # Get the job done
