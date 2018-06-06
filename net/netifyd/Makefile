@@ -24,7 +24,7 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://bitbucket.org/eglooca/netify-daemon.git
 PKG_SOURCE_DATE:=2018-06-05
 PKG_SOURCE_VERSION:=4aa933a603a338be4cd7d0634def2cbeb78c85c1
-PKG_MIRROR_HASH:=whatever
+PKG_MIRROR_HASH:=849e8c7eb7c6e7f774172abf535fa3fc9315679cab03b5bcb7288ad60ea58593
 
 # Local source builds (create symlink to source here)
 #SOURCE_DIR:=$(TOPDIR)/netify-daemon
