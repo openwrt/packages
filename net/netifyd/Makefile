@@ -18,7 +18,16 @@ PKG_MAINTAINER:=Darryl Sokoloski <darryl@egloo.ca>
 PKG_LICENSE:=GPL-3.0+
 
 # Source settings
-SOURCE_DIR:=$(TOPDIR)/netify-daemon
+
+# Disable the following and enable SOURCE_DIR below for local test builds.
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/eglooca/netify-daemon.git
+PKG_SOURCE_DATE:=2018-05-29
+PKG_SOURCE_VERSION:=37ad3212ea9d7da9585d7d2626600e072cebc2c5
+PKG_MIRROR_HASH:=caedb66cf6dcbdcee0d1525923e203d003ef15f34a13a328686794666f16171f
+
+# Local source builds (create symlink to source here)
+#SOURCE_DIR:=$(TOPDIR)/netify-daemon
 
 #include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
