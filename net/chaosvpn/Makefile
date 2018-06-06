@@ -11,7 +11,7 @@ PKG_NAME:=chaosvpn
 
 PKG_REV:=2eb24810b5aa0b2d56f21562e52927020dc3090a
 PKG_VERSION:=2014-01-24
-PKG_RELEASE=1
+PKG_RELEASE=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ryd/chaosvpn.git
@@ -49,7 +49,6 @@ define Package/chaosvpn/install
 		$(INSTALL_BIN) $(PKG_BUILD_DIR)/chaosvpn $(1)/usr/sbin/
 		$(INSTALL_BIN) ./files/chaosvpn.init $(1)/etc/init.d/chaosvpn
 		$(INSTALL_BIN) ./files/chaosvpn.hotplug $(1)/etc/hotplug.d/iface/40-chaosvpn
-		sed  -i -e 's/"\/sbin\/ip /"\/usr\/sbin\/ip /' $(PKG_BUILD_DIR)/chaosvpn.conf
 		$(INSTALL_CONF) $(PKG_BUILD_DIR)/chaosvpn.conf $(1)/etc/tinc/chaosvpn.conf
 endef
 
