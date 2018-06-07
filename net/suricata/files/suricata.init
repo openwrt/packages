@@ -21,7 +21,7 @@ start_service() {
 	[ -f /var/run/suricata.pid -a -z $(pgrep suricata) ] && rm /var/run/suricata.pid && logger -t suricata[init_script] -p daemon.alert -s "Suricata was not closed properly or it has crashed. Successfully removed the previous /var/run/suricata.pid"
 	procd_open_instance
 	procd_set_param command /usr/bin/suricata
-    [ "$verbose" -gt 0 ] && {
+	[ "$verbose" -gt 0 ] && {
 		procd_append_param command -$(printf 'v%.0s' $(seq 1 $verbose))
 		procd_set_param stdout 1
 		procd_set_param stderr 1
