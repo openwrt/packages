@@ -29,7 +29,9 @@ define Package/suricata
  SUBMENU:=Firewall
  SECTION:=net
  CATEGORY:=Network
- DEPENDS:=+jansson +libiconv-full +libpcap +libpcre +libpthread +libyaml +zlib +SURICATA_LOGROTATE:logrotate +SURICATA_LUA:lua +SURICATA_MAGIC:file +SURICATA_NFLOG:libnetfilter-log +SURICATA_NFQ:kmod-ipt-nfqueue +SURICATA_NFQ:libnetfilter-queue
+ DEPENDS:=+jansson +libiconv-full +libpcap +libpcre +libpthread +libyaml 
+ DEPENDS+=+zlib +SURICATA_LOGROTATE:logrotate +SURICATA_LUA:lua +SURICATA_MAGIC:file 
+ DEPENDS+=+SURICATA_NFLOG:libnetfilter-log +SURICATA_NFQ:kmod-ipt-nfqueue +SURICATA_NFQ:libnetfilter-queue
  TITLE:=Network IDS, IPS and NSM engine
  URL:=https://github.com/OISF/suricata
 endef
