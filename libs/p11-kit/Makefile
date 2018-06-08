@@ -8,14 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=p11-kit
-PKG_VERSION:=0.23.10
+PKG_VERSION:=0.23.12
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=f9212a3f225ef543e13fae9945527d66c0cbb67246320035dd94fab2bce5ae43
+PKG_HASH:=58bae22f19db1de1a1103e7ca4149eed6e303e727878c2cd5ea9e6fe445fd403
 PKG_SOURCE_URL:=https://github.com/p11-glue/$(PKG_NAME)/releases/download/$(PKG_VERSION)
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
