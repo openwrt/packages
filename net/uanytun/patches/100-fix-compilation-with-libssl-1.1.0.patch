@@ -1,0 +1,126 @@
+--- a/src/auth_algo.c
++++ b/src/auth_algo.c
+@@ -167,8 +167,13 @@ int auth_algo_sha1_init(auth_algo_t* aa)
+ 
+ #if defined(USE_SSL_CRYPTO)
+   auth_algo_sha1_param_t* params = aa->params_;
+-  HMAC_CTX_init(&params->ctx_);
+-  HMAC_Init_ex(&params->ctx_, NULL, 0, EVP_sha1(), NULL);
++# if OPENSSL_VERSION_NUMBER >= 0x10100000L
++  params->ctx_ = HMAC_CTX_new();
++# else
++  params->ctx_ = malloc(sizeof HMAC_CTX);
++  HMAC_CTX_init(params->ctx_);
++# endif
++  HMAC_Init_ex(params->ctx_, NULL, 0, EVP_sha1(), NULL);
+ #elif defined(USE_NETTLE)
+   // nothing here
+ #else  // USE_GCRYPT is the default
+@@ -191,7 +196,12 @@ void auth_algo_sha1_close(auth_algo_t* a
+   if(aa->params_) {
+ #if defined(USE_SSL_CRYPTO)
+     auth_algo_sha1_param_t* params = aa->params_;
+-    HMAC_CTX_cleanup(&params->ctx_);
++# if OPENSSL_VERSION_NUMBER >= 0x10100000L
++    HMAC_CTX_free(params->ctx_);
++# else
++    HMAC_CTX_cleanup(params->ctx_);
++    free(params->ctx);
++# endif
+ #elif defined(USE_NETTLE)
+     // nothing here
+ #else  // USE_GCRYPT is the default
+@@ -225,11 +235,11 @@ void auth_algo_sha1_generate(auth_algo_t
+     return;
+ 
+ #if defined(USE_SSL_CRYPTO)
+-  HMAC_Init_ex(&params->ctx_, aa->key_.buf_, aa->key_.length_, EVP_sha1(), NULL);
++  HMAC_Init_ex(params->ctx_, aa->key_.buf_, aa->key_.length_, EVP_sha1(), NULL);
+ 
+   u_int8_t hmac[SHA1_LENGTH];
+-  HMAC_Update(&params->ctx_, encrypted_packet_get_auth_portion(packet), encrypted_packet_get_auth_portion_length(packet));
+-  HMAC_Final(&params->ctx_, hmac, NULL);
++  HMAC_Update(params->ctx_, encrypted_packet_get_auth_portion(packet), encrypted_packet_get_auth_portion_length(packet));
++  HMAC_Final(params->ctx_, hmac, NULL);
+ #elif defined(USE_NETTLE)
+   hmac_sha1_set_key(&params->ctx_, aa->key_.length_, aa->key_.buf_);
+ 
+@@ -279,11 +289,11 @@ int auth_algo_sha1_check_tag(auth_algo_t
+     return 0;
+ 
+ #if defined(USE_SSL_CRYPTO)
+-  HMAC_Init_ex(&params->ctx_, aa->key_.buf_, aa->key_.length_, EVP_sha1(), NULL);
++  HMAC_Init_ex(params->ctx_, aa->key_.buf_, aa->key_.length_, EVP_sha1(), NULL);
+ 
+   u_int8_t hmac[SHA1_LENGTH];
+-  HMAC_Update(&params->ctx_, encrypted_packet_get_auth_portion(packet), encrypted_packet_get_auth_portion_length(packet));
+-  HMAC_Final(&params->ctx_, hmac, NULL);
++  HMAC_Update(params->ctx_, encrypted_packet_get_auth_portion(packet), encrypted_packet_get_auth_portion_length(packet));
++  HMAC_Final(params->ctx_, hmac, NULL);
+ #elif defined(USE_NETTLE)
+   hmac_sha1_set_key(&params->ctx_, aa->key_.length_, aa->key_.buf_);
+ 
+--- a/src/auth_algo.h
++++ b/src/auth_algo.h
+@@ -82,7 +82,7 @@ int auth_algo_check_tag(auth_algo_t* aa,
+ 
+ struct auth_algo_sha1_param_struct {
+ #if defined(USE_SSL_CRYPTO)
+-  HMAC_CTX ctx_;
++  HMAC_CTX *ctx_;
+ #elif defined(USE_NETTLE)
+   struct hmac_sha1_ctx ctx_;
+ #else  // USE_GCRYPT is the default
+--- a/src/cipher.c
++++ b/src/cipher.c
+@@ -338,7 +338,8 @@ int32_t cipher_aesctr_crypt(cipher_t* c,
+   }
+   u_int32_t num = 0;
+   memset(params->ecount_buf_, 0, AES_BLOCK_SIZE);
+-  AES_ctr128_encrypt(in, out, (ilen < olen) ? ilen : olen, &params->aes_key_, params->ctr_.buf_, params->ecount_buf_, &num);
++  CRYPTO_ctr128_encrypt(in, out, (ilen < olen) ? ilen : olen, &params->aes_key_, params->ctr_.buf_,
++  			params->ecount_buf_, &num, (block128_f)AES_encrypt);
+ #elif defined(USE_NETTLE)
+   if(C_AESCTR_CTR_LENGTH != AES_BLOCK_SIZE) {
+     log_printf(ERROR, "failed to set cipher CTR: size doesn't fit");
+--- a/src/cipher.h
++++ b/src/cipher.h
+@@ -51,7 +51,9 @@
+ 
+ #ifndef NO_CRYPT
+ #if defined(USE_SSL_CRYPTO)
++#include <openssl/crypto.h>
+ #include <openssl/aes.h>
++#include <openssl/modes.h>
+ #elif defined(USE_NETTLE)
+ #include <nettle/aes.h>
+ #else  // USE_GCRYPT is the default
+--- a/src/key_derivation.c
++++ b/src/key_derivation.c
+@@ -51,7 +51,9 @@
+ #include "key_derivation.h"
+ 
+ #if defined(USE_SSL_CRYPTO)
++#include <openssl/crypto.h>
+ #include <openssl/sha.h>
++#include <openssl/modes.h>
+ #elif defined(USE_NETTLE)
+ #include <nettle/sha1.h>
+ #include <nettle/sha2.h>
+@@ -467,13 +469,13 @@ int key_derivation_aesctr_generate(key_d
+ 
+ #if defined(USE_SSL_CRYPTO)
+   if(KD_AESCTR_CTR_LENGTH != AES_BLOCK_SIZE) {
+-    log_printf(ERROR, "failed to set key derivation CTR: size don't fits");
++    log_printf(ERROR, "failed to set key derivation CTR: size doesn't fit");
+     return -1;
+   }
+   u_int32_t num = 0;
+-  memset(params->ecount_buf_, 0, AES_BLOCK_SIZE);
+   memset(key, 0, len);
+-  AES_ctr128_encrypt(key, key, len, &params->aes_key_, params->ctr_.buf_, params->ecount_buf_, &num);
++  memset(params->ecount_buf_, 0, AES_BLOCK_SIZE);
++  CRYPTO_ctr128_encrypt(key, key, len, &params->aes_key_, params->ctr_.buf_, params->ecount_buf_, &num, (block128_f)AES_encrypt);
+ #elif defined(USE_NETTLE)
+   if(KD_AESCTR_CTR_LENGTH != AES_BLOCK_SIZE) {
+     log_printf(ERROR, "failed to set cipher CTR: size doesn't fit");
