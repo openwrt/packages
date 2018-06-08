@@ -1,0 +1,12 @@
+--- squid-4.0.21.orig/src/tools.cc
++++ squid-4.0.21/src/tools.cc
+@@ -581,7 +581,8 @@
+     }
+ #else
+ 
+-    setuid(0);
++    if (setuid(0) < 0)
++	debugs(50, 1, "no_suid: setuid (0)");
+ #endif
+ #if HAVE_PRCTL && defined(PR_SET_DUMPABLE)
+     /* Set Linux DUMPABLE flag */

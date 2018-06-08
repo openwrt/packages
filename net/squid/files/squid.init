@@ -22,6 +22,11 @@ validate_squid_section() {
 		'mime_table:string:/etc/squid/mime.conf'
 }
 
+create_squid_user() {
+	user_exists squid || user_add squid $USERID
+	group_exists squid || group_add squid $USERID && group_add_user squid squid
+}
+
 start_service() {
 	local config_file http_port http_port_options ssldb ssldb_options coredump_dir visible_hostname pinger_enable
 
