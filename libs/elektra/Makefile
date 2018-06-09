@@ -14,13 +14,13 @@ PKG_MAINTAINER:=Harald Geyer <harald@ccbib.org>
 PKG_NAME:=elektra
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.md
-PKG_VERSION:=0.8.21
+PKG_VERSION:=0.8.23
 PKG_RELEASE:=1
 
 # Use this for official releasees
-PKG_HASH:=51892570f18d1667d0da4d0908a091e41b41c20db9835765677109a3d150cd26
+PKG_HASH:=f1d3cd4888ba3ef47c1327cbddf21dff7be289f94217f12e5e93105273ca6c48
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://ftp.libelektra.org/ftp/elektra/releases
+PKG_SOURCE_URL:=https://www.libelektra.org/ftp/elektra/releases
 
 # Use this to test versions still under development
 #PKG_SOURCE_PROTO:=git
