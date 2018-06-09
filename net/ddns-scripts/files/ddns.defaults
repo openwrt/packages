@@ -178,6 +178,8 @@ update_config() {
 								$uc_uci set $g_cfgfile.$uc_name.$uc_var="dyn.com";;
 							free\.editdns\.net)
 								$uc_uci set $g_cfgfile.$uc_name.$uc_var="editdns.net";;
+							FreeDNS\.42\.pl)
+								$uc_uci set $g_cfgfile.$uc_name.$uc_var="freedns.42.pl";;
 							domains\.google\.com)
 								$uc_uci set $g_cfgfile.$uc_name.$uc_var="google.com";;
 							loopia\.com)
