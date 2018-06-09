@@ -12,12 +12,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uanytun
-PKG_VERSION:=0.3.5
-PKG_RELEASE:=2
+PKG_VERSION:=0.3.7
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.anytun.org/download/
-PKG_HASH:=8edeed2ce185cc1add8a53de9f9192dfa65a48b559cccae6393faf2a1cd6f093
+PKG_HASH:=076318c771c908386c4408dda0769171542da701785302903641ce23fd33a295
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
 PKG_LICENSE:=GPL-3.0+
@@ -101,8 +101,7 @@ define Build/Configure
     echo '#ifndef UANYTUN_version_h_INCLUDED' > version.h; \
     echo '#define UANYTUN_version_h_INCLUDED' >> version.h; \
     echo '' >> version.h; \
-    echo '#define VERSION_STRING_0 "uanytun version '`cat $(PKG_BUILD_DIR)/version`'"' >> version.h; \
-    echo '#define VERSION_STRING_1 "built on '`hostname`', '`date +"%d.%m.%Y %H:%M:%S %Z"`'"' >> version.h; \
+    echo '#define VERSION_STRING "uanytun version '`cat $(PKG_BUILD_DIR)/version`'"' >> version.h; \
     echo '' >> version.h; \
     echo '#endif' >> version.h \
   )
@@ -113,22 +112,22 @@ VARIANT_LDFLAGS:=-ldl
 VARIANT_MAKE_OPTS:=
 
 ifeq ($(BUILD_VARIANT),gcrypt)
-VARIANT_CFLAGS+=-DUSE_GCRYPT
+VARIANT_CFLAGS+=-DUSE_GCRYPT -DCRYPTO_LIB_NAME=\\\"libgcrypt\\\"
 VARIANT_LDFLAGS+=-lgpg-error -lgcrypt
 endif
 
 ifeq ($(BUILD_VARIANT),nettle)
-VARIANT_CFLAGS+=-DUSE_NETTLE
+VARIANT_CFLAGS+=-DUSE_NETTLE -DCRYPTO_LIB_NAME=\\\"Nettle\\\"
 VARIANT_LDFLAGS+=-lnettle
 endif
 
 ifeq ($(BUILD_VARIANT),sslcrypt)
-VARIANT_CFLAGS+=-DUSE_SSL_CRYPTO
+VARIANT_CFLAGS+=-DUSE_SSL_CRYPTO -DCRYPTO_LIB_NAME=\\\"OpenSSL\\\"
 VARIANT_LDFLAGS+=-lcrypto
 endif
 
 ifeq ($(BUILD_VARIANT),nocrypt)
-VARIANT_CFLAGS+=-DNO_CRYPT
+VARIANT_CFLAGS+=-DNO_CRYPT -DCRYPTO_LIB_NAME=\\\"none\\\"
 VARIANT_MAKE_OPTS+=NO_CRYPT_OBJ=1
 endif
 
