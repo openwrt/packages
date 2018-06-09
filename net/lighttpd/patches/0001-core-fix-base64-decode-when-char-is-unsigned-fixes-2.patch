@@ -1,0 +1,43 @@
+From d4083effab0f9bf76528d5c47198b17e7471ed13 Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Thu, 21 Dec 2017 17:41:17 -0500
+Subject: [PATCH] [core] fix base64 decode when char is unsigned (fixes #2848)
+
+thx, codehero
+
+x-ref:
+  "buffer_append_base64_decode() broken on compilers where char is assumed unsigned"
+  https://redmine.lighttpd.net/issues/2848
+---
+ src/base64.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+--- a/src/base64.c
++++ b/src/base64.c
+@@ -11,7 +11,7 @@
+ 
+ /* BASE64_STANDARD: "A-Z a-z 0-9 + /" maps to 0-63, pad with "=" */
+ static const char base64_standard_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+-static const char base64_standard_reverse_table[] = {
++static const signed char base64_standard_reverse_table[] = {
+ /*	 0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F */
+ 	-1, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, /* 0x00 - 0x0F */
+ 	-2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, /* 0x10 - 0x1F */
+@@ -25,7 +25,7 @@ static const char base64_standard_revers
+ 
+ /* BASE64_URL: "A-Z a-z 0-9 - _" maps to 0-63, pad with "." */
+ static const char base64_url_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.";
+-static const char base64_url_reverse_table[] = {
++static const signed char base64_url_reverse_table[] = {
+ /*	 0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F */
+ 	-1, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, /* 0x00 - 0x0F */
+ 	-2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, /* 0x10 - 0x1F */
+@@ -42,7 +42,7 @@ unsigned char* buffer_append_base64_deco
+ 	size_t out_pos = 0; /* current output character (position) that is decoded. can contain partial result */
+ 	unsigned int group = 0; /* how many base64 digits in the current group were decoded already. each group has up to 4 digits */
+ 	size_t i;
+-	const char *base64_reverse_table;
++	const signed char *base64_reverse_table;
+ 
+ 	switch (charset) {
+ 	case BASE64_STANDARD:
