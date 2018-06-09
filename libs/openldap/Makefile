@@ -12,10 +12,10 @@ PKG_VERSION:=2.4.46
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=ftp://ftp.openldap.org/pub/OpenLDAP/openldap-release/ \
-	ftp://sunsite.cnlab-switch.ch/mirror/OpenLDAP/openldap-release/ \
-	ftp://ftp.nl.uu.net/pub/unix/db/openldap/openldap-release/ \
-	ftp://ftp.plig.org/pub/OpenLDAP/openldap-release/
+PKG_SOURCE_URL:=https://gpl.savoirfairelinux.net/pub/mirrors/openldap/openldap-release/ \
+	http://mirror.eu.oneandone.net/software/openldap/openldap-release/ \
+	http://mirror.switch.ch/ftp/software/mirror/OpenLDAP/openldap-release/ \
+	https://www.openldap.org/software/download/OpenLDAP/openldap-release/
 PKG_HASH:=9a90dcb86b99ae790ccab93b7585a31fbcbeec8c94bf0f7ab0ca0a87ea0c4b2d
 PKG_LICENSE:=OLDAP-2.8
 PKG_LICENSE_FILES:=LICENSE
