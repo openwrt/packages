@@ -139,7 +139,7 @@ config unbound
 ### Hybrid Manual/UCI
 You like the UCI. Yet, you need to add some difficult to standardize options, or just are not ready to make a UCI request yet. The files `/etc/unbound/unbound_srv.conf` and `/etc/unbound/unbound_ext.conf` will be copied to Unbounds chroot directory and included during auto generation.
 
-The former will be added to the end of the `server:` clause. The later will be added to the end of the file for extended `forward:` and `view:` clauses. You can also disable unbound-control in the UCI which only allows "localhost" connections unencrypted, and then add an encrypted remote `control:` clause.
+The file `unbound_srv.conf` will be added into the `server:` clause. The file `unbound_ext.conf` will be added to the end of all configuration. It is for extended `forward-zone:`, `stub-zone:`, `auth-zone:`, and `view:` clauses. You can also disable unbound-control in the UCI which only allows "localhost" connections unencrypted, and then add an encrypted remote `control:` clause.
 
 ## Complete List of UCI Options
 **/etc/config/unbound**:
@@ -196,8 +196,11 @@ config unbound
 
   option domain_type 'static'
     Unbound local-zone: <domain> <type>. This allows you to lock
-    down or allow forwarding of your domain, your router host name
-    without suffix, and leakage of RFC6762 "local."
+    down or allow forwarding of the local zone. Notable types:
+    static - typical single router setup much like OpenWrt dnsmasq default
+    refuse - to answer overtly with DNS code REFUSED
+    deny - to drop queries for the local zone
+    transparent - to use your manually added forward-zone: or stub-zone: clause
 
   option edns_size '1280'
     Bytes. Extended DNS is necessary for DNSSEC. However, it can run
@@ -226,9 +229,9 @@ config unbound
     configuration. Make changes to /etc/unbound/unbound.conf.
 
   option prefetch_root '0'
-    Boolean. Enable Unbound authority zone clauses for "." (root), "arpa,"
-    "in-addr.arpa," and "ip6.arpa" and obtain complete zone files from public
-    servers using http or AXFR (gTLD are unfortunately not as public).
+    Boolean. Cache the entire root. Enable Unbound `auth-zone:` clauses for
+    "." (root), "arpa," "in-addr.arpa," and "ip6.arpa." Obtain complete zone
+    files from public servers using http or AXFR. (see RFC7706)
 
   option protocol 'mixed'
     Unbound can limit its protocol used for recursive queries.

@@ -63,12 +63,18 @@ UNBOUND_TXT_HOSTNAME=thisrouter
 
 UNBOUND_LIST_FORWARD=""
 UNBOUND_LIST_INSECURE=""
-UNBOUND_LIST_PRV_SUBNET=""
 
 ##############################################################################
 
-# keep track of local-domain: assignments during inserted resource records
+# keep track of assignments during inserted resource records
 UNBOUND_LIST_DOMAINS=""
+UNBOUND_LIST_IFACE=""
+UNBOUND_LIST_PRV_IP6GLA=""
+UNBOUND_LIST_LAN_NET=""
+
+# Similar default SOA / NS RR as Unbound uses for private ARPA zones
+UNBOUND_XSOA="3600 IN SOA localhost. nobody.invalid. 1 3600 1200 7200 600"
+UNBOUND_XNS="3600 IN NS localhost."
 
 ##############################################################################
 
@@ -82,34 +88,13 @@ UNBOUND_LIST_DOMAINS=""
 
 ##############################################################################
 
-copy_dash_update() {
-  # TODO: remove this function and use builtins when this issues is resovled.
-  # Due to OpenWrt/LEDE divergence "cp -u" isn't yet universally available.
-  local filetime keeptime
-
-
-  if [ -f $UNBOUND_KEYFILE.keep ] ; then
-    # root.key.keep is reused if newest
-    filetime=$( date -r $UNBOUND_KEYFILE +%s )
-    keeptime=$( date -r $UNBOUND_KEYFILE.keep +%s )
-
-
-    if [ $keeptime -gt $filetime ] ; then
-      cp $UNBOUND_KEYFILE.keep $UNBOUND_KEYFILE
-    fi
-
-
-    rm -f $UNBOUND_KEYFILE.keep
-  fi
-}
-
-##############################################################################
-
 create_interface_dns() {
   local cfg="$1"
   local ipcommand logint ignore ifname ifdashname
   local name names address addresses
-  local ulaprefix if_fqdn host_fqdn mode mode_ptr
+  local ulaprefix if_fqdn host_fqdn
+  local mode_ptr="$UNBOUND_TXT_HOSTNAME"
+  local names="$UNBOUND_TXT_HOSTNAME"
 
   # Create local-data: references for this hosts interfaces (router).
   config_get logint "$cfg" interface
@@ -124,45 +109,60 @@ create_interface_dns() {
   if_fqdn="$ifdashname.$host_fqdn"
 
 
-  if [ -z "${ulaprefix%%:/*}" ] ; then
-    # Nonsense so this option isn't globbed below
-    ulaprefix="fdno:such:addr::/48"
-  fi
+  if [ -z "$ifdashname" ] ; then
+    # race conditions at init can rarely cause a blank device return
+    # the record format is invalid and Unbound won't load the conf file
+    mode=0
 
+  elif [ -n "$UNBOUND_LIST_IFACE" ] ; then
+    case "$UNBOUND_LIST_IFACE" in
+    *$ifdashname*)
+      # repeat such as dual WAN (eth0-1) and WAN6 (eth0-1)
+      mode=0
+      ;;
 
-  if [ "$ignore" -gt 0 ] ; then
-    mode="$UNBOUND_D_WAN_FQDN"
+    *)
+      mode=1
+      ;;
+    esac
+
   else
-    mode="$UNBOUND_D_LAN_FQDN"
+    mode=1
   fi
 
 
-  case "$mode" in
-  3)
-    mode_ptr="$host_fqdn"
-    names="$host_fqdn  $UNBOUND_TXT_HOSTNAME"
-    ;;
+  if [ $mode -gt 0 ] ; then
+    UNBOUND_LIST_IFACE="$UNBOUND_LIST_IFACE $ifdashname"
 
-  4)
-    if [ -z "$ifdashname" ] ; then
-      # race conditions at init can rarely cause a blank device return
-      # the record format is invalid and Unbound won't load the conf file
-      mode_ptr="$host_fqdn"
-      names="$host_fqdn  $UNBOUND_TXT_HOSTNAME"
-    else
-      mode_ptr="$if_fqdn"
-      names="$if_fqdn  $host_fqdn  $UNBOUND_TXT_HOSTNAME"
+
+    if [ -z "${ulaprefix%%:/*}" ] ; then
+      # Nonsense so this option isn't globbed below
+      ulaprefix="fdno:such:addr::/48"
     fi
-    ;;
 
-  *)
-    mode_ptr="$UNBOUND_TXT_HOSTNAME"
-    names="$UNBOUND_TXT_HOSTNAME"
-    ;;
-  esac
+
+    if [ "$ignore" -gt 0 ] ; then
+      mode="$UNBOUND_D_WAN_FQDN"
+    else
+      mode="$UNBOUND_D_LAN_FQDN"
+    fi
+  fi
 
 
   if [ "$mode" -gt 1 ] ; then
+    case "$mode" in
+    3)
+      mode_ptr="$host_fqdn"
+      names="$host_fqdn  $UNBOUND_TXT_HOSTNAME"
+      ;;
+
+    4)
+      mode_ptr="$if_fqdn"
+      names="$if_fqdn  $host_fqdn  $UNBOUND_TXT_HOSTNAME"
+      ;;
+    esac
+
+
     {
       for address in $addresses ; do
         case $address in
@@ -385,21 +385,37 @@ bundle_domain_insecure() {
 ##############################################################################
 
 bundle_private_interface() {
-  local ipcommand ifsubnet ifsubnets ifname
+  local ipcommand ifsubnet ifsubnets ifname validip4
 
   network_get_device ifname $1
 
+
   if [ -n "$ifname" ] ; then
-    ipcommand="ip -6 -o address show $ifname"
-    ifsubnets=$( $ipcommand | awk '/inet6/{ print $4 }' )
+    ipcommand="ip -o address show $ifname"
+    ifsubnets=$( $ipcommand | awk '/inet/{ print $4 }' )
 
 
     if [ -n "$ifsubnets" ] ; then
       for ifsubnet in $ifsubnets ; do
         case $ifsubnet in
-        [1-9]*:*[0-9a-f])
+        [1-9][0-9a-f][0-9a-f][0-9a-f]:*[0-9a-f])
           # Special GLA protection for local block; ULA protected as a catagory
-          UNBOUND_LIST_PRV_SUBNET="$UNBOUND_LIST_PRV_SUBNET $ifsubnet" ;;
+          UNBOUND_LIST_PRV_IP6GLA="$UNBOUND_LIST_PRV_IP6GLA $ifsubnet"
+          ;;
+
+        f[dc][0-9a-f][0-9a-f]:*[0-9a-f])
+          # Used to configure specific local-zone: data
+          UNBOUND_LIST_LAN_NET="$UNBOUND_LIST_LAN_NET $ifsubnet"
+          ;;
+
+        *)
+          validip4=$( valid_subnet4 $ifsubnet )
+
+
+          if [ "$validip4" = "ok" ] ; then
+            UNBOUND_LIST_LAN_NET="$UNBOUND_LIST_LAN_NET $ifsubnet"
+          fi
+          ;;
         esac
       done
     fi
@@ -411,6 +427,7 @@ bundle_private_interface() {
 unbound_mkdir() {
   local filestuff
 
+
   if [ "$UNBOUND_D_DHCP_LINK" = "odhcpd" ] ; then
     local dhcp_origin=$( uci_get dhcp.@odhcpd[0].leasefile )
     local dhcp_dir=$( dirname $dhcp_origin )
@@ -421,6 +438,7 @@ unbound_mkdir() {
       mkdir -p "$dhcp_dir"
     fi
   fi
+
 
   if [ -f $UNBOUND_KEYFILE ] ; then
     filestuff=$( cat $UNBOUND_KEYFILE )
@@ -469,7 +487,11 @@ unbound_mkdir() {
   fi
 
 
-  copy_dash_update
+  if [ -f $UNBOUND_KEYFILE.keep ] ; then
+    # root.key.keep is reused if newest
+    cp -u $UNBOUND_KEYFILE.keep $UNBOUND_KEYFILE
+    rm -f $UNBOUND_KEYFILE.keep
+  fi
 
 
   # Ensure access and prepare to jail
@@ -809,6 +831,7 @@ unbound_conf() {
     logger -t unbound -s "default memory configuration"
   fi
 
+
   # Assembly of module-config: options is tricky; order matters
   modulestring="iterator"
 
@@ -941,8 +964,8 @@ unbound_conf() {
   fi
 
 
-  if  [ -n "$UNBOUND_LIST_PRV_SUBNET" -a "$UNBOUND_D_PRIV_BLCK" -gt 1 ] ; then
-    for ifsubnet in $UNBOUND_LIST_PRV_SUBNET ; do
+  if  [ -n "$UNBOUND_LIST_PRV_IP6GLA" -a "$UNBOUND_D_PRIV_BLCK" -gt 1 ] ; then
+    for ifsubnet in $UNBOUND_LIST_PRV_IP6GLA ; do
       # Remove global DNS responses with your local network IP6 GLA
       echo "  private-address: $ifsubnet" >> $UNBOUND_CONFFILE
     done
@@ -1019,6 +1042,7 @@ unbound_adblock() {
   # TODO: Unbound 1.6.0 added "tags" and "views"; lets work with adblock team
   local adb_enabled adb_file
 
+
   if [ ! -x /usr/bin/adblock.sh -o ! -x /etc/init.d/adblock ] ; then
     adb_enabled=0
   else
@@ -1040,30 +1064,89 @@ unbound_adblock() {
 ##############################################################################
 
 unbound_hostname() {
+  local ifsubnet ifarpa
+
+
   if [ -n "$UNBOUND_TXT_DOMAIN" ] ; then
     {
-      # TODO: Unbound 1.6.0 added "tags" and "views" and we could make
-      # domains by interface to prevent DNS from "guest" to "home"
-      echo "  local-zone: $UNBOUND_TXT_DOMAIN. $UNBOUND_D_DOMAIN_TYPE"
-      echo "  domain-insecure: $UNBOUND_TXT_DOMAIN"
-      echo "  private-domain: $UNBOUND_TXT_DOMAIN"
-      echo
-      echo "  local-zone: $UNBOUND_TXT_HOSTNAME. $UNBOUND_D_DOMAIN_TYPE"
+      # Hostname as TLD works, but not transparent through recursion
       echo "  domain-insecure: $UNBOUND_TXT_HOSTNAME"
       echo "  private-domain: $UNBOUND_TXT_HOSTNAME"
+      echo "  local-zone: $UNBOUND_TXT_HOSTNAME. static"
+      echo "  local-data: \"$UNBOUND_TXT_HOSTNAME. $UNBOUND_XSOA\""
+      echo "  local-data: \"$UNBOUND_TXT_HOSTNAME. $UNBOUND_XNS\""
       echo
     } >> $UNBOUND_CONFFILE
 
 
     case "$UNBOUND_D_DOMAIN_TYPE" in
     deny|inform_deny|refuse|static)
+      if  [ -n "$UNBOUND_LIST_PRV_IP6GLA" \
+            -a "$UNBOUND_D_PRIV_BLCK" -gt 1 ] ; then
+        for ifsubnet in $UNBOUND_LIST_PRV_IP6GLA ; do
+          ifarpa=$( domain_ptr_any "$ifsubnet" )
+
+
+          if [ -n "$ifarpa" ] ; then
+            {
+              # Do NOT forward queries with your GLA ip6.arpa
+              echo "  domain-insecure: $ifarpa"
+              echo "  local-zone: $ifarpa. $UNBOUND_D_DOMAIN_TYPE"
+              echo "  local-data: \"$ifarpa. $UNBOUND_XSOA\""
+              echo "  local-data: \"$ifarpa. $UNBOUND_XNS\""
+              echo
+            } >> $UNBOUND_CONFFILE
+          fi
+        done
+      fi
+
+
+      if  [ -n "$UNBOUND_LIST_LAN_NET" \
+            -a "$UNBOUND_D_PRIV_BLCK" -gt 0 ] ; then
+        for ifsubnet in $UNBOUND_LIST_LAN_NET ; do
+          ifarpa=$( domain_ptr_any "$ifsubnet" )
+
+
+          if [ -n "$ifarpa" ] ; then
+            {
+              # Do NOT forward queries with your ULA ip6.arpa or in-addr.arpa
+              echo "  domain-insecure: $ifarpa"
+              echo "  local-zone: $ifarpa. $UNBOUND_D_DOMAIN_TYPE"
+              echo "  local-data: \"$ifarpa. $UNBOUND_XSOA\""
+              echo "  local-data: \"$ifarpa. $UNBOUND_XNS\""
+              echo
+            } >> $UNBOUND_CONFFILE
+          fi
+        done
+      fi
+
+
       {
-        # avoid upstream involvement in RFC6762 like responses (link only)
-        echo "  local-zone: local. $UNBOUND_D_DOMAIN_TYPE"
+        # avoid upstream involvement in RFC6762
         echo "  domain-insecure: local"
         echo "  private-domain: local"
+        echo "  local-zone: local. $UNBOUND_D_DOMAIN_TYPE"
+        echo "  local-data: \"local. $UNBOUND_XSOA\""
+        echo "  local-data: \"local. $UNBOUND_XNS\""
+        echo "  local-data: \"local. 3600 IN TXT RFC6762\""
+        echo
+        # type static means only this router has your domain
+        # type transparent will permit forward-zone: or stub-zone: clauses
+        echo "  domain-insecure: $UNBOUND_TXT_DOMAIN"
+        echo "  private-domain: $UNBOUND_TXT_DOMAIN"
+        echo "  local-zone: $UNBOUND_TXT_DOMAIN. $UNBOUND_D_DOMAIN_TYPE"
+        echo "  local-data: \"$UNBOUND_TXT_DOMAIN. $UNBOUND_XSOA\""
+        echo "  local-data: \"$UNBOUND_TXT_DOMAIN. $UNBOUND_XNS\""
         echo
       } >> $UNBOUND_CONFFILE
+      ;;
+
+    *)
+      # likely transparent domain with fordward-zone: clause to next router
+      echo "  domain-insecure: $UNBOUND_TXT_DOMAIN"
+      echo "  private-domain: $UNBOUND_TXT_DOMAIN"
+      echo "  local-zone: $UNBOUND_TXT_DOMAIN. $UNBOUND_D_DOMAIN_TYPE"
+      echo
       ;;
     esac
 
@@ -1227,6 +1310,7 @@ unbound_resolv_setup() {
     return
   fi
 
+
   if [ -x /etc/init.d/dnsmasq ] && /etc/init.d/dnsmasq enabled \
   && nslookup localhost 127.0.0.1#53 >/dev/null 2>&1 ; then
     # unbound is configured for port 53, but dnsmasq is enabled and a resolver
@@ -1236,6 +1320,7 @@ unbound_resolv_setup() {
     #   nslookup that times out when no resolver listens on localhost:53.
     return
   fi
+
 
   # unbound is designated to listen on 127.0.0.1#53,
   #   set resolver file to local.
