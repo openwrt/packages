@@ -1,0 +1,165 @@
+--- a/extra/yassl/include/openssl/ssl.h
++++ b/extra/yassl/include/openssl/ssl.h
+@@ -541,7 +541,7 @@ void MD5_Final(unsigned char*, MD5_CTX*)
+ 
+ /* yaSSL extensions */
+ int SSL_set_compression(SSL*);   /* turn on yaSSL zlib compression */
+-char *yaSSL_ASN1_TIME_to_string(ASN1_TIME *time, char *buf, size_t len);
++char *yaSSL_ASN1_TIME_to_string(const ASN1_TIME *time, char *buf, size_t len);
+ 
+ #include "transport_types.h"
+ 
+--- a/extra/yassl/src/ssl.cpp
++++ b/extra/yassl/src/ssl.cpp
+@@ -1735,7 +1735,7 @@ unsigned long ERR_get_error()
+ 
+     // end stunnel needs
+ 
+-    char *yaSSL_ASN1_TIME_to_string(ASN1_TIME *time, char *buf, size_t len)
++    char *yaSSL_ASN1_TIME_to_string(const ASN1_TIME *time, char *buf, size_t len)
+     {
+       tm t;
+       static const char *month_names[12]=
+--- a/include/ssl_compat.h
++++ b/include/ssl_compat.h
+@@ -25,8 +25,8 @@
+ 
+ #if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
+ #define HAVE_OPENSSL11 1
++#define SSL_LIBRARY OpenSSL_version(OPENSSL_VERSION)
+ #define ERR_remove_state(X) ERR_clear_error()
+-#define EVP_MD_CTX_cleanup(X) EVP_MD_CTX_reset(X)
+ #define EVP_CIPHER_CTX_SIZE 168
+ #define EVP_MD_CTX_SIZE 48
+ #undef EVP_MD_CTX_init
+@@ -34,8 +34,23 @@
+ #undef EVP_CIPHER_CTX_init
+ #define EVP_CIPHER_CTX_init(X) do { bzero((X), EVP_CIPHER_CTX_SIZE); EVP_CIPHER_CTX_reset(X); } while(0)
+ 
++/*
++  Macros below are deprecated. OpenSSL 1.1 may define them or not,
++  depending on how it was built.
++*/
++#undef ERR_free_strings
++#define ERR_free_strings()
++#undef EVP_cleanup
++#define EVP_cleanup()
++#undef CRYPTO_cleanup_all_ex_data
++#define CRYPTO_cleanup_all_ex_data()
++#undef SSL_load_error_strings
++#define SSL_load_error_strings()
++
+ #else
+ #define HAVE_OPENSSL10 1
++#define SSL_LIBRARY SSLeay_version(SSLEAY_VERSION)
++
+ /*
+   Unfortunately RAND_bytes manual page does not provide any guarantees
+   in relation to blocking behavior. Here we explicitly use SSLeay random
+@@ -51,6 +66,7 @@
+ #endif /* HAVE_OPENSSL11 */
+ 
+ #elif defined(HAVE_YASSL)
++#define SSL_LIBRARY "YaSSL " YASSL_VERSION
+ #define BN_free(X) do { } while(0)
+ #endif /* !defined(HAVE_YASSL) */
+ 
+@@ -62,6 +78,11 @@
+ #define EVP_CIPHER_CTX_encrypting(ctx)  ((ctx)->encrypt)
+ #define EVP_CIPHER_CTX_SIZE             sizeof(EVP_CIPHER_CTX)
+ #define EVP_MD_CTX_SIZE                 sizeof(EVP_MD_CTX)
++
++#define EVP_MD_CTX_reset(X) EVP_MD_CTX_cleanup(X)
++#define EVP_CIPHER_CTX_reset(X) EVP_CIPHER_CTX_cleanup(X)
++#define X509_get0_notBefore(X) X509_get_notBefore(X)
++#define X509_get0_notAfter(X) X509_get_notAfter(X)
+ #endif
+ 
+ #ifdef	__cplusplus
+--- a/mysys_ssl/my_crypt.cc
++++ b/mysys_ssl/my_crypt.cc
+@@ -43,7 +43,7 @@ public:
+   }
+   virtual ~MyCTX()
+   {
+-    EVP_CIPHER_CTX_cleanup(ctx);
++    EVP_CIPHER_CTX_reset(ctx);
+     ERR_remove_state(0);
+   }
+ 
+--- a/mysys_ssl/my_md5.cc
++++ b/mysys_ssl/my_md5.cc
+@@ -71,7 +71,7 @@ static void md5_input(EVP_MD_CTX *contex
+ static void md5_result(EVP_MD_CTX *context, uchar digest[MD5_HASH_SIZE])
+ {
+   EVP_DigestFinal_ex(context, digest, NULL);
+-  EVP_MD_CTX_cleanup(context);
++  EVP_MD_CTX_reset(context);
+ }
+ 
+ #endif /* HAVE_YASSL */
+--- a/sql/mysqld.cc
++++ b/sql/mysqld.cc
+@@ -8081,7 +8081,7 @@ static int show_ssl_get_cipher_list(THD
+ #ifdef HAVE_YASSL
+ 
+ static char *
+-my_asn1_time_to_string(ASN1_TIME *time, char *buf, size_t len)
++my_asn1_time_to_string(const ASN1_TIME *time, char *buf, size_t len)
+ {
+   return yaSSL_ASN1_TIME_to_string(time, buf, len);
+ }
+@@ -8089,7 +8089,7 @@ my_asn1_time_to_string(ASN1_TIME *time,
+ #else /* openssl */
+ 
+ static char *
+-my_asn1_time_to_string(ASN1_TIME *time, char *buf, size_t len)
++my_asn1_time_to_string(const ASN1_TIME *time, char *buf, size_t len)
+ {
+   int n_read;
+   char *res= NULL;
+@@ -8137,7 +8137,7 @@ show_ssl_get_server_not_before(THD *thd,
+   {
+     SSL *ssl= (SSL*) thd->net.vio->ssl_arg;
+     X509 *cert= SSL_get_certificate(ssl);
+-    ASN1_TIME *not_before= X509_get_notBefore(cert);
++    const ASN1_TIME *not_before= X509_get0_notBefore(cert);
+ 
+     var->value= my_asn1_time_to_string(not_before, buff,
+                                        SHOW_VAR_FUNC_BUFF_SIZE);
+@@ -8171,7 +8171,7 @@ show_ssl_get_server_not_after(THD *thd,
+   {
+     SSL *ssl= (SSL*) thd->net.vio->ssl_arg;
+     X509 *cert= SSL_get_certificate(ssl);
+-    ASN1_TIME *not_after= X509_get_notAfter(cert);
++    const ASN1_TIME *not_after= X509_get0_notAfter(cert);
+ 
+     var->value= my_asn1_time_to_string(not_after, buff,
+                                        SHOW_VAR_FUNC_BUFF_SIZE);
+--- a/sql/sys_vars.cc
++++ b/sql/sys_vars.cc
+@@ -62,6 +62,7 @@
+ #include "sql_repl.h"
+ #include "opt_range.h"
+ #include "rpl_parallel.h"
++#include <ssl_compat.h>
+ 
+ /*
+   The rule for this file: everything should be 'static'. When a sys_var
+@@ -3421,16 +3422,6 @@ static Sys_var_charptr Sys_malloc_librar
+        READ_ONLY GLOBAL_VAR(malloc_library), CMD_LINE_HELP_ONLY,
+        IN_SYSTEM_CHARSET, DEFAULT(MALLOC_LIBRARY));
+ 
+-#ifdef HAVE_YASSL
+-#include <openssl/ssl.h>
+-#define SSL_LIBRARY "YaSSL " YASSL_VERSION
+-#elif HAVE_OPENSSL
+-#include <openssl/crypto.h>
+-#define SSL_LIBRARY SSLeay_version(SSLEAY_VERSION)
+-#else
+-#error No SSL?
+-#endif
+-
+ static char *ssl_library;
+ static Sys_var_charptr Sys_ssl_library(
+        "version_ssl_library", "Version of the used SSL library",

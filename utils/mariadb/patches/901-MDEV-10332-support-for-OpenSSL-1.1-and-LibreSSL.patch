@@ -1,0 +1,796 @@
+From 29a0ff35d520b3b57f90045509a48132fda75bfe Mon Sep 17 00:00:00 2001
+From: Georg Richter <georg@mariadb.com>
+Date: Wed, 8 Mar 2017 17:39:47 +0100
+Subject: [PATCH 1/5] MDEV-10332  support for OpenSSL 1.1 and LibreSSL
+
+Initial support
+
+tested against OpenSSL 1.0.1, 1.0.2, 1.1.0, Yassl and LibreSSL
+not working on Windows with native SChannel support, due to wrong cipher
+mapping: Latter one requires push of CONC-241 fixes.
+Please note that OpenSSL 0.9.8 and OpenSSL 1.1.0 will not work: Even if
+the build succeeds, test cases will fail with various errors, especially
+when using different tls libraries or versions for client and server.
+---
+ extra/yassl/src/handshake.cpp                 |  10 +++
+ include/my_crypt.h                            |  15 ++++
+ include/violite.h                             |   9 +-
+ mysql-test/include/require_openssl_client.inc |   5 ++
+ mysql-test/mysql-test-run.pl                  |   5 ++
+ mysql-test/r/openssl_6975,tlsv10.result       |   8 +-
+ mysql-test/r/openssl_6975,tlsv12.result       |   8 +-
+ mysql-test/t/openssl_6975.test                |   8 +-
+ mysql-test/t/ssl_7937.test                    |   1 +
+ mysql-test/t/ssl_8k_key.test                  |   1 +
+ mysys_ssl/my_crypt.cc                         | 115 ++++++++++++++++++--------
+ mysys_ssl/my_md5.cc                           |  39 ++++++---
+ mysys_ssl/yassl.cc                            |  15 ++++
+ sql-common/client.c                           |   6 +-
+ sql/mysqld.cc                                 |  14 +++-
+ sql/slave.cc                                  |  13 +++
+ vio/viosslfactories.c                         |  54 ++++++++----
+ 17 files changed, 246 insertions(+), 80 deletions(-)
+ create mode 100644 mysql-test/include/require_openssl_client.inc
+
+--- a/include/my_crypt.h
++++ b/include/my_crypt.h
+@@ -21,4 +21,19 @@
+ #include <my_config.h> /* HAVE_EncryptAes128{Ctr,Gcm} */
+ #include <mysql/service_my_crypt.h>
+ 
++/* OpenSSL version specific definitions */
++#if !defined(HAVE_YASSL) && defined(OPENSSL_VERSION_NUMBER)
++#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
++#define ERR_remove_state(X)
++#else
++#define EVP_CIPHER_CTX_reset(X) EVP_CIPHER_CTX_cleanup(X)
++#define RAND_OpenSSL() RAND_SSLeay();
++#if defined(HAVE_ERR_remove_thread_state)
++#define ERR_remove_state(X) ERR_remove_thread_state(NULL)
++#endif
++#endif
++#elif defined(HAVE_YASSL)
++#define EVP_CIPHER_CTX_reset(X) EVP_CIPHER_CTX_cleanup(X)
++#endif /* !defined(HAVE_YASSL) */
++
+ #endif /* MY_CRYPT_INCLUDED */
+--- a/include/violite.h
++++ b/include/violite.h
+@@ -146,14 +146,15 @@ typedef my_socket YASSL_SOCKET_T;
+ #include <openssl/ssl.h>
+ #include <openssl/err.h>
+ 
+-#ifdef HAVE_ERR_remove_thread_state
++#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
++#define ERR_remove_state(X)
++#elif defined(HAVE_ERR_remove_thread_state)
+ #define ERR_remove_state(X) ERR_remove_thread_state(NULL)
+ #endif
+-
+ enum enum_ssl_init_error
+ {
+-  SSL_INITERR_NOERROR= 0, SSL_INITERR_CERT, SSL_INITERR_KEY, 
+-  SSL_INITERR_NOMATCH, SSL_INITERR_BAD_PATHS, SSL_INITERR_CIPHERS, 
++  SSL_INITERR_NOERROR= 0, SSL_INITERR_CERT, SSL_INITERR_KEY,
++  SSL_INITERR_NOMATCH, SSL_INITERR_BAD_PATHS, SSL_INITERR_CIPHERS,
+   SSL_INITERR_MEMFAIL, SSL_INITERR_DH, SSL_INITERR_LASTERR
+ };
+ const char* sslGetErrString(enum enum_ssl_init_error err);
+--- /dev/null
++++ b/mysql-test/include/require_openssl_client.inc
+@@ -0,0 +1,5 @@
++if ($CLIENT_TLS_LIBRARY != "OpenSSL") {
++  if ($CLIENT_TLS_LIBRARY != "LibreSSL") {
++    skip "Test requires Connector/C with OpenSSL library";
++  }
++}
+--- a/mysql-test/mysql-test-run.pl
++++ b/mysql-test/mysql-test-run.pl
+@@ -2307,6 +2307,11 @@ sub environment_setup {
+   $ENV{'MYSQL_PLUGIN'}=             $exe_mysql_plugin;
+   $ENV{'MYSQL_EMBEDDED'}=           $exe_mysql_embedded;
+ 
++  my $client_config_exe=
++    native_path("$bindir/libmariadb/mariadb_config$opt_vs_config/mariadb_config");
++  my $tls_info= `$client_config_exe --tlsinfo`;
++  ($ENV{CLIENT_TLS_LIBRARY},$ENV{CLIENT_TLS_LIBRARY_VERSION})=
++    split(/ /, $tls_info, 2);
+   my $exe_mysqld= find_mysqld($basedir);
+   $ENV{'MYSQLD'}= $exe_mysqld;
+   my $extra_opts= join (" ", @opt_extra_mysqld_opt);
+--- a/mysql-test/r/openssl_6975,tlsv10.result
++++ b/mysql-test/r/openssl_6975,tlsv10.result
+@@ -3,11 +3,11 @@ grant select on test.* to ssl_sslv3@loca
+ create user ssl_tls12@localhost;
+ grant select on test.* to ssl_tls12@localhost require cipher "AES128-SHA256";
+ TLS1.2 ciphers: user is ok with any cipher
+-ERROR 2026 (HY000): SSL connection error: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure
+-ERROR 2026 (HY000): SSL connection error: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure
++ERROR 2026 (HY000): SSL connection error: sslv3 alert handshake failure
++ERROR 2026 (HY000): SSL connection error: sslv3 alert handshake failure
+ TLS1.2 ciphers: user requires SSLv3 cipher AES128-SHA
+-ERROR 2026 (HY000): SSL connection error: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure
+-ERROR 2026 (HY000): SSL connection error: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure
++ERROR 2026 (HY000): SSL connection error: sslv3 alert handshake failure
++ERROR 2026 (HY000): SSL connection error: sslv3 alert handshake failure
+ TLS1.2 ciphers: user requires TLSv1.2 cipher AES128-SHA256
+ ERROR 2026 (HY000): SSL connection error: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure
+ ERROR 2026 (HY000): SSL connection error: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure
+--- a/mysql-test/r/openssl_6975,tlsv12.result
++++ b/mysql-test/r/openssl_6975,tlsv12.result
+@@ -15,11 +15,11 @@ Variable_name	Value
+ Ssl_cipher	AES128-SHA256
+ ERROR 1045 (28000): Access denied for user 'ssl_tls12'@'localhost' (using password: NO)
+ SSLv3 ciphers: user is ok with any cipher
+-ERROR 2026 (HY000): SSL connection error: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure
+-ERROR 2026 (HY000): SSL connection error: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure
++ERROR 2026 (HY000): SSL connection error: sslv3 alert handshake failure
++ERROR 2026 (HY000): SSL connection error: sslv3 alert handshake failure
+ SSLv3 ciphers: user requires SSLv3 cipher AES128-SHA
+-ERROR 2026 (HY000): SSL connection error: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure
+-ERROR 2026 (HY000): SSL connection error: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure
++ERROR 2026 (HY000): SSL connection error: sslv3 alert handshake failure
++ERROR 2026 (HY000): SSL connection error: sslv3 alert handshake failure
+ SSLv3 ciphers: user requires TLSv1.2 cipher AES128-SHA256
+ ERROR 2026 (HY000): SSL connection error: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure
+ ERROR 2026 (HY000): SSL connection error: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure
+--- a/mysql-test/t/openssl_6975.test
++++ b/mysql-test/t/openssl_6975.test
+@@ -4,6 +4,7 @@
+ # test SSLv3 and TLSv1.2 ciphers when OpenSSL is restricted to SSLv3 or TLSv1.2
+ #
+ source include/have_ssl_communication.inc;
++source include/require_openssl_client.inc;
+ 
+ # this is OpenSSL test.
+ 
+@@ -18,8 +19,9 @@ let $mysql=$MYSQL --ssl-key=$MYSQL_TEST_
+ disable_abort_on_error;
+ echo TLS1.2 ciphers: user is ok with any cipher;
+ exec $mysql                  --ssl-cipher=AES128-SHA256;
+---replace_result DHE-RSA-CHACHA20-POLY1305 DHE-RSA-AES256-GCM-SHA384 ECDHE-RSA-AES256-GCM-SHA384 DHE-RSA-AES256-GCM-SHA384
+-exec $mysql                  --ssl-cipher=TLSv1.2;
++--replace_result DHE-RSA-CHACHA20-POLY1305 DHE-RSA-AES256-GCM-SHA384
++--replace_result ECDHE-RSA-AES256-GCM-SHA384 DHE-RSA-AES256-GCM-SHA384
++exec $mysql                  --ssl-cipher=TLSv1.2
+ echo TLS1.2 ciphers: user requires SSLv3 cipher AES128-SHA;
+ exec $mysql --user ssl_sslv3 --ssl-cipher=AES128-SHA256;
+ exec $mysql --user ssl_sslv3 --ssl-cipher=TLSv1.2;
+@@ -29,7 +31,7 @@ exec $mysql --user ssl_tls12 --ssl-ciphe
+ 
+ echo SSLv3 ciphers: user is ok with any cipher;
+ exec $mysql                  --ssl-cipher=AES256-SHA;
+-exec $mysql                  --ssl-cipher=SSLv3;
++exec $mysql                  --ssl-cipher=DHE-RSA-AES256-SHA
+ echo SSLv3 ciphers: user requires SSLv3 cipher AES128-SHA;
+ exec $mysql --user ssl_sslv3 --ssl-cipher=AES128-SHA;
+ exec $mysql --user ssl_sslv3 --ssl-cipher=SSLv3;
+--- a/mysql-test/t/ssl_7937.test
++++ b/mysql-test/t/ssl_7937.test
+@@ -26,6 +26,7 @@ create procedure have_ssl()
+ # we fake the test result for yassl
+ let yassl=`select variable_value='Unknown' from information_schema.session_status where variable_name='Ssl_session_cache_mode'`;
+ if (!$yassl) {
++  --replace_result "self signed certificate in certificate chain" "Failed to verify the server certificate" "Error in the certificate." "Failed to verify the server certificate"
+   --exec $MYSQL --ssl --ssl-verify-server-cert -e "call test.have_ssl()" 2>&1
+ }
+ if ($yassl) {
+--- a/mysql-test/t/ssl_8k_key.test
++++ b/mysql-test/t/ssl_8k_key.test
+@@ -1,4 +1,5 @@
+ # This test should work in embedded server after we fix mysqltest
++-- source include/require_openssl_client.inc
+ -- source include/not_embedded.inc
+ 
+ -- source include/have_ssl_communication.inc
+--- a/mysys_ssl/my_crypt.cc
++++ b/mysys_ssl/my_crypt.cc
+@@ -17,7 +17,6 @@
+ 
+ #include <my_global.h>
+ #include <string.h>
+-#include <my_crypt.h>
+ 
+ #ifdef HAVE_YASSL
+ #include "yassl.cc"
+@@ -28,42 +27,49 @@
+ #include <openssl/err.h>
+ #include <openssl/rand.h>
+ 
+-#ifdef HAVE_ERR_remove_thread_state
+-#define ERR_remove_state(X) ERR_remove_thread_state(NULL)
+ #endif
++#include <my_crypt.h>
+ 
+-#endif
++#define MY_CIPHER_CTX_SIZE 384
+ 
+ class MyCTX
+ {
+ public:
+-  EVP_CIPHER_CTX ctx;
+-  MyCTX() { EVP_CIPHER_CTX_init(&ctx); }
+-  virtual ~MyCTX() { EVP_CIPHER_CTX_cleanup(&ctx); ERR_remove_state(0); }
++  EVP_CIPHER_CTX *ctx;
++  const uchar *key;
++  unsigned int klen;
++  MyCTX() {
++            ctx= EVP_CIPHER_CTX_new();
++          }
++  virtual ~MyCTX() {
++                     EVP_CIPHER_CTX_free(ctx);
++                     ERR_remove_state(0);
++                    }
+ 
+   virtual int init(const EVP_CIPHER *cipher, int encrypt, const uchar *key,
+                    uint klen, const uchar *iv, uint ivlen)
+   {
++    compile_time_assert(MY_AES_CTX_SIZE >= sizeof(MyCTX));
+     if (unlikely(!cipher))
+       return MY_AES_BAD_KEYSIZE;
+ 
+-    if (!EVP_CipherInit_ex(&ctx, cipher, NULL, key, iv, encrypt))
++    if (!EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, encrypt))
+       return MY_AES_OPENSSL_ERROR;
+ 
+-    DBUG_ASSERT(EVP_CIPHER_CTX_key_length(&ctx) == (int)klen);
+-    DBUG_ASSERT(EVP_CIPHER_CTX_iv_length(&ctx) <= (int)ivlen);
++    DBUG_ASSERT(EVP_CIPHER_CTX_key_length(ctx) == (int)klen);
++    DBUG_ASSERT(EVP_CIPHER_CTX_iv_length(ctx) <= (int)ivlen);
+ 
+     return MY_AES_OK;
+   }
+   virtual int update(const uchar *src, uint slen, uchar *dst, uint *dlen)
+   {
+-    if (!EVP_CipherUpdate(&ctx, dst, (int*)dlen, src, slen))
++    if (!EVP_CipherUpdate(ctx, dst, (int*)dlen, src, slen))
+       return MY_AES_OPENSSL_ERROR;
+     return MY_AES_OK;
+   }
+   virtual int finish(uchar *dst, uint *dlen)
+   {
+-    if (!EVP_CipherFinal_ex(&ctx, dst, (int*)dlen))
++    if (!EVP_CipherFinal_ex(ctx, dst, (int*)dlen))
+       return MY_AES_BAD_DATA;
+     return MY_AES_OK;
+   }
+@@ -72,11 +78,9 @@ public:
+ class MyCTX_nopad : public MyCTX
+ {
+ public:
+-  const uchar *key;
+-  int klen;
+-
+   MyCTX_nopad() : MyCTX() { }
+   ~MyCTX_nopad() { }
++  unsigned int buf_len;
+ 
+   int init(const EVP_CIPHER *cipher, int encrypt, const uchar *key, uint klen,
+            const uchar *iv, uint ivlen)
+@@ -84,16 +88,39 @@ public:
+     compile_time_assert(MY_AES_CTX_SIZE >= sizeof(MyCTX_nopad));
+     this->key= key;
+     this->klen= klen;
++    this->buf_len= 0;
++    /* FIX-ME:
++       For the sake of backward compatibility we do some strange hack here:
++       Since ECB doesn't need an IV (and therefore is considered kind of
++       insecure) we need to store the specified iv.
++       The last nonpadding block will be encrypted with an additional
++       expensive crypt_call in ctr mode instead
++       of encrypting the entire plain text in ctr-mode */
++#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
++    const unsigned char *oiv= EVP_CIPHER_CTX_original_iv(ctx);
++#else
++    const unsigned char *oiv= ctx->oiv;
++#endif
++    memcpy((char *)oiv, iv, ivlen);
++
+     int res= MyCTX::init(cipher, encrypt, key, klen, iv, ivlen);
+-    memcpy(ctx.oiv, iv, ivlen); // in ECB mode OpenSSL doesn't do that itself
+-    EVP_CIPHER_CTX_set_padding(&ctx, 0);
++
++    EVP_CIPHER_CTX_set_padding(ctx, 0);
+     return res;
+   }
+ 
++  int update(const uchar *src, uint slen, uchar *dst, uint *dlen)
++  {
++    buf_len= slen % MY_AES_BLOCK_SIZE;
++    return MyCTX::update(src, slen, dst, dlen);
++  }
++
+   int finish(uchar *dst, uint *dlen)
+   {
+-    if (ctx.buf_len)
++    if (buf_len)
+     {
++      const uchar *org_iv;
++      unsigned char *buf;
+       /*
+         Not much we can do, block ciphers cannot encrypt data that aren't
+         a multiple of the block length. At least not without padding.
+@@ -102,14 +129,22 @@ public:
+       uchar mask[MY_AES_BLOCK_SIZE];
+       uint mlen;
+ 
++#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
++      org_iv= EVP_CIPHER_CTX_original_iv(ctx);
++      buf= EVP_CIPHER_CTX_buf_noconst(ctx);
++#else
++      org_iv= ctx->oiv;
++      buf= ctx->buf;
++#endif
++
+       my_aes_crypt(MY_AES_ECB, ENCRYPTION_FLAG_ENCRYPT | ENCRYPTION_FLAG_NOPAD,
+-                   ctx.oiv, sizeof(mask), mask, &mlen, key, klen, 0, 0);
++                   org_iv, sizeof(mask), mask, &mlen, key, klen, 0, 0);
+       DBUG_ASSERT(mlen == sizeof(mask));
+ 
+-      for (int i=0; i < ctx.buf_len; i++)
+-        dst[i]= ctx.buf[i] ^ mask[i];
++      for (uint i=0; i < buf_len; i++)
++        dst[i]= buf[i] ^ mask[i];
+     }
+-    *dlen= ctx.buf_len;
++    *dlen= buf_len;
+     return MY_AES_OK;
+   }
+ };
+@@ -143,8 +178,9 @@ make_aes_dispatcher(gcm)
+ class MyCTX_gcm : public MyCTX
+ {
+ public:
+-  const uchar *aad;
++  const uchar *aad= NULL;
+   int aadlen;
++  my_bool encrypt;
+   MyCTX_gcm() : MyCTX() { }
+   ~MyCTX_gcm() { }
+ 
+@@ -153,9 +189,10 @@ public:
+   {
+     compile_time_assert(MY_AES_CTX_SIZE >= sizeof(MyCTX_gcm));
+     int res= MyCTX::init(cipher, encrypt, key, klen, iv, ivlen);
+-    int real_ivlen= EVP_CIPHER_CTX_iv_length(&ctx);
++    int real_ivlen= EVP_CIPHER_CTX_iv_length(ctx);
+     aad= iv + real_ivlen;
+     aadlen= ivlen - real_ivlen;
++    this->encrypt= encrypt;
+     return res;
+   }
+ 
+@@ -167,15 +204,15 @@ public:
+       before decrypting the data. it can encrypt data piecewise, like, first
+       half, then the second half, but it must decrypt all at once
+     */
+-    if (!ctx.encrypt)
++    if (!this->encrypt)
+     {
+       slen-= MY_AES_BLOCK_SIZE;
+-      if(!EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_TAG, MY_AES_BLOCK_SIZE,
++      if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, MY_AES_BLOCK_SIZE,
+                               (void*)(src + slen)))
+         return MY_AES_OPENSSL_ERROR;
+     }
+-    int unused;
+-    if (aadlen && !EVP_CipherUpdate(&ctx, NULL, &unused, aad, aadlen))
++    int unused= 0;
++    if (aadlen && !EVP_CipherUpdate(ctx, NULL, &unused, aad, aadlen))
+       return MY_AES_OPENSSL_ERROR;
+     aadlen= 0;
+     return MyCTX::update(src, slen, dst, dlen);
+@@ -183,14 +220,14 @@ public:
+ 
+   int finish(uchar *dst, uint *dlen)
+   {
+-    int fin;
+-    if (!EVP_CipherFinal_ex(&ctx, dst, &fin))
++    int fin= 0;
++    if (!EVP_CipherFinal_ex(ctx, dst, &fin))
+       return MY_AES_BAD_DATA;
+     DBUG_ASSERT(fin == 0);
+ 
+-    if (ctx.encrypt)
++    if (this->encrypt)
+     {
+-      if(!EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_GET_TAG, MY_AES_BLOCK_SIZE, dst))
++      if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, MY_AES_BLOCK_SIZE, dst))
+         return MY_AES_OPENSSL_ERROR;
+       *dlen= MY_AES_BLOCK_SIZE;
+     }
+@@ -258,12 +295,20 @@ int my_aes_crypt(enum my_aes_mode mode,
+ {
+   void *ctx= alloca(MY_AES_CTX_SIZE);
+   int res1, res2;
+-  uint d1, d2;
++  uint d1= 0, d2= 0;
+   if ((res1= my_aes_crypt_init(ctx, mode, flags, key, klen, iv, ivlen)))
+     return res1;
+   res1= my_aes_crypt_update(ctx, src, slen, dst, &d1);
+   res2= my_aes_crypt_finish(ctx, dst + d1, &d2);
+   *dlen= d1 + d2;
++  /* in case of failure clear error queue */
++#ifndef HAVE_YASSL
++  /* since we don't check the crypto error messages we need to
++     clear the error queue - otherwise subsequent crypto or tls/ssl
++     calls will fail */
++  if (!*dlen)
++    ERR_clear_error();
++#endif
+   return res1 ? res1 : res2;
+ }
+ 
+--- a/mysys_ssl/my_md5.cc
++++ b/mysys_ssl/my_md5.cc
+@@ -27,6 +27,8 @@
+ #include <my_md5.h>
+ #include <stdarg.h>
+ 
++#define MA_HASH_CTX_SIZE 512
++
+ #if defined(HAVE_YASSL)
+ #include "md5.hpp"
+ 
+@@ -57,11 +59,18 @@ static void md5_result(MD5_CONTEXT *cont
+ }
+ 
+ #elif defined(HAVE_OPENSSL)
++
++
+ #include <openssl/evp.h>
++
++#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
++#define EVP_MD_CTX_reset(X) EVP_MD_CTX_cleanup(X)
++#endif
+ typedef EVP_MD_CTX MD5_CONTEXT;
+ 
+ static void md5_init(MD5_CONTEXT *context)
+ {
++  memset(context, 0, my_md5_context_size());
+   EVP_MD_CTX_init(context);
+ #ifdef EVP_MD_CTX_FLAG_NON_FIPS_ALLOW
+   /* Ok to ignore FIPS: MD5 is not used for crypto here */
+@@ -83,7 +92,7 @@ static void md5_input(MD5_CONTEXT *conte
+ static void md5_result(MD5_CONTEXT *context, uchar digest[MD5_HASH_SIZE])
+ {
+   EVP_DigestFinal_ex(context, digest, NULL);
+-  EVP_MD_CTX_cleanup(context);
++  EVP_MD_CTX_reset(context);
+ }
+ 
+ #endif /* HAVE_YASSL */
+@@ -99,11 +108,14 @@ static void md5_result(MD5_CONTEXT *cont
+ */
+ void my_md5(uchar *digest, const char *buf, size_t len)
+ {
++#ifdef HAVE_YASSL
+   MD5_CONTEXT md5_context;
+-
+-  md5_init_fast(&md5_context);
+-  md5_input(&md5_context, (const uchar *)buf, len);
+-  md5_result(&md5_context, digest);
++#else
++  unsigned char md5_context[MA_HASH_CTX_SIZE];
++#endif
++  md5_init_fast((MD5_CONTEXT *)&md5_context);
++  md5_input((MD5_CONTEXT *)&md5_context, (const uchar *)buf, len);
++  md5_result((MD5_CONTEXT *)&md5_context, digest);
+ }
+ 
+ 
+@@ -122,22 +134,25 @@ void my_md5(uchar *digest, const char *b
+ void my_md5_multi(uchar *digest, ...)
+ {
+   va_list args;
+-  va_start(args, digest);
+-
+-  MD5_CONTEXT md5_context;
+   const uchar *str;
++#ifdef HAVE_YASSL
++  MD5_CONTEXT md5_context;
++#else
++  unsigned char md5_context[MA_HASH_CTX_SIZE];
++#endif
++  va_start(args, digest);
+ 
+-  md5_init_fast(&md5_context);
++  md5_init_fast((MD5_CONTEXT *)&md5_context);
+   for (str= va_arg(args, const uchar*); str; str= va_arg(args, const uchar*))
+-    md5_input(&md5_context, str, va_arg(args, size_t));
++    md5_input((MD5_CONTEXT *)&md5_context, str, va_arg(args, size_t));
+ 
+-  md5_result(&md5_context, digest);
++  md5_result((MD5_CONTEXT *)&md5_context, digest);
+   va_end(args);
+ }
+ 
+ size_t my_md5_context_size()
+ {
+-  return sizeof(MD5_CONTEXT);
++  return MA_HASH_CTX_SIZE;
+ }
+ 
+ void my_md5_init(void *context)
+--- a/mysys_ssl/yassl.cc
++++ b/mysys_ssl/yassl.cc
+@@ -24,6 +24,7 @@
+ 
+ #include <openssl/ssl.h>
+ #include "aes.hpp"
++#include <my_sys.h>
+ 
+ using yaSSL::yaERR_remove_state;
+ using yaSSL::yaRAND_bytes;
+@@ -76,12 +77,26 @@ static void EVP_CIPHER_CTX_init(EVP_CIPH
+   ctx->final_used= ctx->buf_len= ctx->flags= 0;
+ }
+ 
++static EVP_CIPHER_CTX *EVP_CIPHER_CTX_new()
++{
++  EVP_CIPHER_CTX *ctx= (EVP_CIPHER_CTX *)my_malloc(sizeof(EVP_CIPHER_CTX), MYF(0));
++  if (ctx)
++    EVP_CIPHER_CTX_init(ctx);
++  return ctx;
++}
++
+ static int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *ctx)
+ {
+   TAO(ctx)->~AES();
+   return 1;
+ }
+ 
++static void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
++{
++  EVP_CIPHER_CTX_cleanup(ctx);
++  my_free(ctx);
++}
++
+ static int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
+ {
+   if (pad)
+--- a/sql-common/client.c
++++ b/sql-common/client.c
+@@ -104,6 +104,10 @@ my_bool	net_flush(NET *net);
+ #define CONNECT_TIMEOUT 0
+ #endif
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER) || defined(HAVE_YASSL)
++#define ASN1_STRING_get0_data(X) ASN1_STRING_data(X)
++#endif
++
+ #include "client_settings.h"
+ #include <sql_common.h>
+ #include <mysql/client_plugin.h>
+@@ -1853,7 +1857,7 @@ static int ssl_verify_server_cert(Vio *v
+     goto error;
+   }
+ 
+-  cn= (char *) ASN1_STRING_data(cn_asn1);
++  cn= (char *) ASN1_STRING_get0_data(cn_asn1);
+ 
+   if ((size_t)ASN1_STRING_length(cn_asn1) != strlen(cn))
+   {
+--- a/sql/mysqld.cc
++++ b/sql/mysqld.cc
+@@ -112,6 +112,7 @@
+ #endif
+ 
+ #include <my_service_manager.h>
++#include <my_crypt.h>
+ 
+ #define mysqld_charset &my_charset_latin1
+ 
+@@ -121,6 +122,7 @@
+ #define HAVE_CLOSE_SERVER_SOCK 1
+ #endif
+ 
++
+ extern "C" {					// Because of SCO 3.2V4.2
+ #include <sys/stat.h>
+ #ifndef __GNU_LIBRARY__
+@@ -1458,6 +1460,8 @@ scheduler_functions *thread_scheduler= &
+ #ifdef HAVE_OPENSSL
+ #include <openssl/crypto.h>
+ #ifndef HAVE_YASSL
++
++#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+ typedef struct CRYPTO_dynlock_value
+ {
+   mysql_rwlock_t lock;
+@@ -1469,6 +1473,7 @@ static void openssl_dynlock_destroy(open
+ static void openssl_lock_function(int, int, const char *, int);
+ static void openssl_lock(int, openssl_lock_t *, const char *, int);
+ #endif
++#endif
+ char *des_key_file;
+ #ifndef EMBEDDED_LIBRARY
+ struct st_VioSSLFd *ssl_acceptor_fd;
+@@ -2245,9 +2250,11 @@ static void clean_up_mutexes()
+ #ifdef HAVE_OPENSSL
+   mysql_mutex_destroy(&LOCK_des_key_file);
+ #ifndef HAVE_YASSL
++#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+   for (int i= 0; i < CRYPTO_num_locks(); ++i)
+     mysql_rwlock_destroy(&openssl_stdlocks[i].lock);
+   OPENSSL_free(openssl_stdlocks);
++#endif
+ #endif /* HAVE_YASSL */
+ #endif /* HAVE_OPENSSL */
+ #ifdef HAVE_REPLICATION
+@@ -4605,6 +4612,7 @@ static int init_thread_environment()
+   mysql_mutex_init(key_LOCK_des_key_file,
+                    &LOCK_des_key_file, MY_MUTEX_INIT_FAST);
+ #ifndef HAVE_YASSL
++#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+   openssl_stdlocks= (openssl_lock_t*) OPENSSL_malloc(CRYPTO_num_locks() *
+                                                      sizeof(openssl_lock_t));
+   for (int i= 0; i < CRYPTO_num_locks(); ++i)
+@@ -4615,6 +4623,7 @@ static int init_thread_environment()
+   CRYPTO_set_locking_callback(openssl_lock_function);
+ #endif
+ #endif
++#endif
+   mysql_rwlock_init(key_rwlock_LOCK_sys_init_connect, &LOCK_sys_init_connect);
+   mysql_rwlock_init(key_rwlock_LOCK_sys_init_slave, &LOCK_sys_init_slave);
+   mysql_rwlock_init(key_rwlock_LOCK_grant, &LOCK_grant);
+@@ -4648,6 +4657,7 @@ static int init_thread_environment()
+ 
+ 
+ #if defined(HAVE_OPENSSL) && !defined(HAVE_YASSL)
++#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+ static openssl_lock_t *openssl_dynlock_create(const char *file, int line)
+ {
+   openssl_lock_t *lock= new openssl_lock_t;
+@@ -4707,6 +4717,7 @@ static void openssl_lock(int mode, opens
+     abort();
+   }
+ }
++#endif
+ #endif /* HAVE_OPENSSL */
+ 
+ 
+@@ -4736,8 +4747,9 @@ static void init_ssl()
+       while ((err= ERR_get_error()))
+         sql_print_warning("SSL error: %s", ERR_error_string(err, NULL));
+     }
+-    else
++    else {
+       ERR_remove_state(0);
++    }
+   }
+   else
+   {
+--- a/sql/slave.cc
++++ b/sql/slave.cc
+@@ -60,6 +60,11 @@
+ #include "debug_sync.h"
+ #include "rpl_parallel.h"
+ 
++#if OPENSSL_VERSION_NUMBER >= 0x10100000L
++#define ERR_remove_state(X)
++#elif defined(HAVE_ERR_remove_thread_state)
++#define ERR_remove_state(X) ERR_remove_thread_state(NULL)
++#endif
+ 
+ #define FLAGSTR(V,F) ((V)&(F)?#F" ":"")
+ 
+@@ -4507,7 +4512,11 @@ err_during_init:
+   DBUG_LEAVE;                                   // Must match DBUG_ENTER()
+   my_thread_end();
+ #ifdef HAVE_OPENSSL
++#if OPENSSL_VERSION_NUMBER < 0x10000000L
+   ERR_remove_state(0);
++#elif OPENSSL_VERSION_NUMBER < 0x10100000L
++  ERR_remove_thread_state(0);
++#endif
+ #endif
+   pthread_exit(0);
+   return 0;                                     // Avoid compiler warnings
+@@ -5168,7 +5177,11 @@ err_during_init:
+   DBUG_LEAVE;                                   // Must match DBUG_ENTER()
+   my_thread_end();
+ #ifdef HAVE_OPENSSL
++#if OPENSSL_VERSION_NUMBER < 0x10000000L
+   ERR_remove_state(0);
++#elif OPENSSL_VERSION_NUMBER < 0x10100000L
++  ERR_remove_thread_state(0);
++#endif
+ #endif
+   pthread_exit(0);
+   return 0;                                     // Avoid compiler warnings
+--- a/vio/viosslfactories.c
++++ b/vio/viosslfactories.c
+@@ -17,17 +17,27 @@
+ #include "vio_priv.h"
+ 
+ #ifdef HAVE_OPENSSL
+-#ifndef HAVE_YASSL
++#if defined(HAVE_YASSL) || defined(LIBRESSL_VERSION_NUMBER)
++#define OPENSSL_init_ssl(X,Y) SSL_library_init()
++#else
+ #include <openssl/dh.h>
+ #include <openssl/bn.h>
++
++#if OPENSSL_VERSION_NUMBER >= 0x10100000L
++#define ERR_remove_state(X)
++#else
++#define OPENSSL_init_ssl(X,Y) SSL_library_init()
++#endif
++
+ #endif
+ 
+ static my_bool     ssl_algorithms_added    = FALSE;
+ static my_bool     ssl_error_strings_loaded= FALSE;
+ 
+ /* the function below was generated with "openssl dhparam -2 -C 2048" */
+-static
+-DH *get_dh2048()
++
++/* {{{ get_dh_2048 */
++static DH *get_dh_2048()
+ {
+   static unsigned char dh2048_p[]={
+     0xA1,0xBB,0x7C,0x20,0xC5,0x5B,0xC0,0x7B,0x21,0x8B,0xD6,0xA8,
+@@ -57,18 +67,32 @@ DH *get_dh2048()
+     0x02,
+   };
+   DH *dh;
+-
+-  if ((dh=DH_new()) == NULL) return(NULL);
+-  dh->p=BN_bin2bn(dh2048_p,sizeof(dh2048_p),NULL);
+-  dh->g=BN_bin2bn(dh2048_g,sizeof(dh2048_g),NULL);
+-  if ((dh->p == NULL) || (dh->g == NULL))
+-  { DH_free(dh); return(NULL); }
+-  return(dh);
++  if ((dh=DH_new()) == NULL)
++    return(NULL);
++#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
++  (dh)->p=BN_bin2bn(dh2048_p,sizeof(dh2048_p),NULL);
++  (dh)->g=BN_bin2bn(dh2048_g,sizeof(dh2048_g),NULL);
++  if ((dh)->p == NULL || (dh)->g == NULL)
++  { DH_free(dh); return NULL; }
++#else
++  {
++    BIGNUM *dhp_bn= BN_bin2bn(dh2048_p,sizeof(dh2048_p),NULL),
++           *dhg_bn= BN_bin2bn(dh2048_g,sizeof(dh2048_g),NULL);
++    if (dhp_bn == NULL || dhg_bn == NULL ||
++        !DH_set0_pqg(dh, dhp_bn, NULL, dhg_bn))
++    {
++      DH_free(dh);
++      BN_free(dhp_bn);
++      BN_free(dhg_bn);
++      return NULL;
++    }
++  }
++#endif
++  return dh;
+ }
+ 
+-
+ static const char*
+-ssl_error_string[] = 
++ssl_error_string[] =
+ {
+   "No error",
+   "Unable to get certificate",
+@@ -148,9 +172,7 @@ static void check_ssl_init()
+   if (!ssl_algorithms_added)
+   {
+     ssl_algorithms_added= TRUE;
+-    SSL_library_init();
+-    OpenSSL_add_all_algorithms();
+-
++    OPENSSL_init_ssl(0, NULL);
+   }
+ 
+   if (!ssl_error_strings_loaded)
+@@ -265,7 +287,7 @@ new_VioSSLFd(const char *key_file, const
+   /* DH stuff */
+   if (!is_client_method)
+   {
+-    dh=get_dh2048();
++    dh=get_dh_2048();
+     if (!SSL_CTX_set_tmp_dh(ssl_fd->ssl_context, dh))
+     {
+       *error= SSL_INITERR_DH;

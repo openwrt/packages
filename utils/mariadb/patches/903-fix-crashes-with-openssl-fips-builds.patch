@@ -1,0 +1,35 @@
+From 4f9c2f363ead24e82ae7bfac2731e15bbb144978 Mon Sep 17 00:00:00 2001
+From: Sergei Golubchik <serg@mariadb.org>
+Date: Wed, 10 May 2017 01:28:01 +0200
+Subject: [PATCH 3/5] fix crashes with openssl fips builds
+
+Apparently openssl ignores CRYPTO_set_mem_functions() in fips mode,
+so we cannot detect structure sizes. Don't freak out when
+no mallocs were detected.
+---
+ mysys_ssl/openssl.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/mysys_ssl/openssl.c b/mysys_ssl/openssl.c
+index a3f1ca29ec1..2587c5ece1d 100644
+--- a/mysys_ssl/openssl.c
++++ b/mysys_ssl/openssl.c
+@@ -56,13 +56,13 @@ int check_openssl_compatibility()
+   allocated_size= allocated_count= 0;
+   evp_ctx= EVP_CIPHER_CTX_new();
+   EVP_CIPHER_CTX_free(evp_ctx);
+-  if (allocated_count != 1 || allocated_size > EVP_CIPHER_CTX_SIZE)
++  if (allocated_count > 1 || allocated_size > EVP_CIPHER_CTX_SIZE)
+     return 1;
+ 
+   allocated_size= allocated_count= 0;
+   md5_ctx= EVP_MD_CTX_create();
+   EVP_MD_CTX_destroy(md5_ctx);
+-  if (allocated_count != 1 || allocated_size > EVP_MD_CTX_SIZE)
++  if (allocated_count > 1 || allocated_size > EVP_MD_CTX_SIZE)
+     return 1;
+ 
+   CRYPTO_set_mem_functions(CRYPTO_malloc, CRYPTO_realloc, CRYPTO_free);
+-- 
+2.13.3
+
