@@ -1,0 +1,24 @@
+From fac6f63a52a2f4cbb3748cd5687eca5409093904 Mon Sep 17 00:00:00 2001
+From: Marko Ratkaj <marko.ratkaj@sartura.hr>
+Date: Thu, 20 Apr 2017 15:15:50 +0200
+Subject: [PATCH] foo
+
+Signed-off-by: Marko Ratkaj <marko.ratkaj@sartura.hr>
+---
+ src/Makefile.in | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+Index: squid-4.0.21/src/Makefile.in
+===================================================================
+--- squid-4.0.21.orig/src/Makefile.in
++++ squid-4.0.21/src/Makefile.in
+@@ -7642,7 +7642,8 @@ cache_cf.o: cf_parser.cci
+ 
+ # cf_gen builds the configuration files.
+ cf_gen$(EXEEXT): $(cf_gen_SOURCES) $(cf_gen_DEPENDENCIES) cf_gen_defines.cci
+-	$(BUILDCXX) $(BUILDCXXFLAGS) -o $@ $(srcdir)/cf_gen.cc -I$(srcdir) -I$(top_builddir)/include/ -I$(top_builddir)/src
++	g++ -o $@ $(srcdir)/cf_gen.cc -I$(srcdir) -I$(top_builddir)/include/ -I$(top_builddir)/src
++
+ 
+ # squid.conf.default is built by cf_gen when making cf_parser.cci
+ squid.conf.default squid.conf.documented: cf_parser.cci

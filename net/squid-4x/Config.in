@@ -1,0 +1,71 @@
+if PACKAGE_squid-4x
+
+	comment "Optional features"
+
+	config SQUID_enable-ipv6
+		bool "Enable support for IP version 6"
+		default y
+
+	config SQUID_enable-snmp
+		bool "Enable SNMP monitoring support"
+		default n
+
+	config SQUID_enable-icmp
+		bool "Enable ICMP pinging and Network Measurement"
+		default n
+
+	config SQUID_enable-icap-client
+		bool "Enable ICAP client support"
+		default n
+
+	config SQUID_enable-dlmalloc
+		bool "Compile & use the malloc package by Doug Lea"
+		default y
+
+	config SQUID_enable-ssl-crtd
+		bool "Enable dynamic SSL certificate generation "
+		depends on !SQUID_use-gnutls
+		default n
+
+	config SQUID_auth-basic
+		bool "Enable the Basic authentication scheme"
+		default n
+
+	config SQUID_auth-digest
+		bool "Enable the Digest authentication scheme"
+		default n
+
+	config SQUID_auth-negotiate
+		bool "Enable the Negotiate authentication scheme"
+		default n
+
+	config SQUID_auth-ntlm
+		bool "Enable the NTLM authentication scheme"
+		default n
+
+	comment "Optional packages"
+
+	config SQUID_use-gnutls
+		bool "Use GnuTLS instead of OpenSSL"
+		default n
+
+	config SQUID_with-libcap
+		bool "Use libcap - Linux capabilities library"
+		default n
+
+	config SQUID_with-nettle
+		bool "Use nettle - GNU crypto library"
+		default n
+
+	config SQUID_with-expat
+		bool "Use expat - XML parsing library"
+		default n
+
+	config SQUID_with-libxml2
+		bool "Use libxml2 - Gnome XML library"
+		default n
+
+	comment "Additional tools"
+
+endif
+
