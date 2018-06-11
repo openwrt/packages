@@ -15,18 +15,32 @@ PKG_MAINTAINER:=Ansuel Smith <ansuelsmth@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/ariang
+define Package/ariang/default
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Download Manager
-  DEPENDS:=+uhttpd +aria2
-  TITLE:=AriaNg is a web frontend making aria2 easier to use.
+  DEPENDS:=+aria2
+  TITLE:=AriaNg webui
   URL:=https://github.com/mayswind/AriaNg
   PKGARCH:=all
 endef
 
 define Package/ariang/description
 	AriaNg is a web frontend making aria2 easier to use. AriaNg is written in pure html & javascript, thus it does not need any compilers or runtime environment.
+endef
+
+Package/ariang-nginx/description = $(Package/ariang/description)
+
+define Package/ariang
+  $(Package/ariang/default)
+  DEPENDS += +uhttpd
+  TITLE += for uhttpd webserver
+endef
+
+define Package/ariang-nginx
+  $(Package/ariang/default)
+  DEPENDS += +nginx
+  TITLE += for nginx webserver
 endef
 
 define Build/Compile
@@ -45,4 +59,7 @@ define Package/ariang/install
 		$(1)/www/ariang
 endef
 
+Package/ariang-nginx/install = $(Package/ariang/install)
+
 $(eval $(call BuildPackage,ariang))
+$(eval $(call BuildPackage,ariang-nginx))
