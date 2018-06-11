@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-idna
-PKG_VERSION:=2.6
-PKG_RELEASE:=2
+PKG_VERSION:=2.7
+PKG_RELEASE:=1
 
 PKG_SOURCE:=idna-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/f4/bd/0467d62790828c23c47fc1dfa1b1f052b24efdf5290f071c7a91d0d82fd3
-PKG_HASH:=2c6a5de3089009e3da7c5dde64a141dbc8551d5b7f6cf4ed7c2568d0cc520a8f
+PKG_SOURCE_URL:=https://pypi.io/packages/source/i/idna
+PKG_HASH:=684a38a6f903c1d71d6d5fac066b58d7768af4de2b832e426ec79c30daa94a16
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.rst
