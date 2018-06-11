@@ -17,7 +17,7 @@ config KMOD_BATMAN_ADV_DAT
 config KMOD_BATMAN_ADV_DEBUGFS
 	bool "enable debugfs support"
 	depends on PACKAGE_kmod-batman-adv
-	default y
+	default n
 
 config KMOD_BATMAN_ADV_MCAST
 	bool "enable multicast transmission optimization"
