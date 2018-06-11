@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-asn1crypto
-PKG_VERSION:=0.23.0
+PKG_VERSION:=0.24.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=asn1crypto-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/31/53/8bca924b30cb79d6d70dbab6a99e8731d1e4dd3b090b7f3d8412a8d8ffbc
-PKG_HASH:=0874981329cfebb366d6584c3d16e913f2a0eb026c9463efcc4aaf42a9d94d70
+PKG_SOURCE_URL:=https://pypi.io/packages/source/a/asn1crypto
+PKG_HASH:=9d5c20441baf0cb60a4ac34cc447c6c189024b6b4c6cd7877034f4965c464e49
 
 PKG_LICENSE:=MIT
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
