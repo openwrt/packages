@@ -6,13 +6,15 @@
 
 include $(TOPDIR)/rules.mk
 
+PKG_SOURCE_VERSION:=8bd996400d087028ba56b724abc1f5b378eaa77f
+
 PKG_NAME:=crconf
-PKG_VERSION:=pre2
+PKG_VERSION:=pre2-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/crconf
-PKG_HASH:=15d39b599acda93a50f473190e702d593ba13613b6ed31711f3584b5726b81b8
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://git.code.sf.net/p/crconf/code
+PKG_MIRROR_HASH:=f772306c0b005c18f481b73e3be193dba5ebb9f6f3bf20cb3f67c4a80dac0613
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
