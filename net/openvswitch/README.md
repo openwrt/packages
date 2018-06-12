@@ -27,13 +27,3 @@ mainly a wrapper around `ovs-ctl` and `ovn-ctl` with simple knobs from
 	/etc/init.d/openvswitch status
 
 Use `ovs-ctl` and `ovn-ctl` directly for more functionalities
-
-# TODO
-
-ovn
-
- - controller init
- - ls, lsp, lr, lrp
- - qos
- - nat
- - ovsdb cluster
