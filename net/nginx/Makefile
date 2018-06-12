@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.12.2
+PKG_VERSION:=1.14.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
-PKG_HASH:=305f379da1d5fb5aefa79e45c829852ca6983c7cd2a79328f8e084a324cf0416
+PKG_HASH:=5d15becbf69aba1fe33f8d416d97edd95ea8919ea9ac519eff9bafebb6022cb5
+
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=2-clause BSD-like license
 
@@ -60,7 +61,9 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_NAXSI \
 	CONFIG_NGINX_LUA \
 	CONFIG_NGINX_HTTP_REAL_IP \
-	CONFIG_NGINX_HTTP_SECURE_LINK
+	CONFIG_NGINX_HTTP_SECURE_LINK \
+	CONFIG_NGINX_HTTP_BROTLI \
+	CONFIG_NGINX_HEADERS_MORE
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -208,6 +211,12 @@ endif
 ifeq ($(CONFIG_NGINX_HTTP_SECURE_LINK),y)
   ADDITIONAL_MODULES += --with-http_secure_link_module
 endif
+ifeq ($(CONFIG_NGINX_HEADERS_MORE),y)
+  ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/nginx-headers-more
+endif
+ifeq ($(CONFIG_NGINX_HTTP_BROTLI),y)
+  ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/nginx-brotli
+endif
 
 TARGET_CFLAGS += -fvisibility=hidden -ffunction-sections -fdata-sections -DNGX_LUA_NO_BY_LUA_BLOCK
 TARGET_LDFLAGS += -Wl,--gc-sections
@@ -254,10 +263,38 @@ define Build/Prepare
 	$(call Build/Prepare/Default)
 	$(if $(CONFIG_NGINX_NAXSI),$(call Prepare/nginx-naxsi))
 	$(if $(CONFIG_NGINX_LUA),$(call Prepare/lua-nginx))
+	$(if $(CONFIG_NGINX_HTTP_BROTLI),$(call Prepare/nginx-brotli))
+	$(if $(CONFIG_NGINX_HEADERS_MORE),$(call Prepare/nginx-headers-more))
+endef
+
+define Download/nginx-headers-more
+	VERSION:=a9f7c7e86cc7441d04e2f11f01c2e3a9c4b0301d
+	SUBDIR:=nginx-headers-more
+	FILE:=headers-more-nginx-module-$(PKG_VERSION)-$$(VERSION).tar.gz
+	URL:=https://github.com/openresty/headers-more-nginx-module.git
+	PROTO:=git
+endef
+
+define  Prepare/nginx-headers-more
+	$(eval $(call Download,nginx-headers-more))
+	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+endef
+
+define Download/nginx-brotli
+	VERSION:=37ab9b2933a0b756ba3447000b7f31d432ed8228
+	SUBDIR:=nginx-brotli
+	FILE:=ngx-brotli-module-$(PKG_VERSION)-$$(VERSION).tar.gz
+	URL:=https://github.com/eustas/ngx_brotli.git
+	PROTO:=git
+endef
+
+define  Prepare/nginx-brotli
+	$(eval $(call Download,nginx-brotli))
+	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
 endef
 
 define Download/nginx-naxsi
-	VERSION:=cf73f9c8664127252c2a4958d2e169516d3845a1
+	VERSION:=fc4740f9734cabc1ce4c9d4cddc4b472eab1cc4b
 	SUBDIR:=nginx-naxsi
 	FILE:=nginx-naxsi-module-$(PKG_VERSION)-$$(VERSION).tar.gz
 	URL:=https://github.com/nbs-system/naxsi.git
@@ -270,7 +307,7 @@ define  Prepare/nginx-naxsi
 endef
 
 define Download/lua-nginx
-	VERSION:=cdd2ae921f67bf396c743406493127be496e57ce
+	VERSION:=55743aeba3075b34a250380b32bad6366eae6c30
 	SUBDIR:=lua-nginx
 	FILE:=lua-nginx-module-$(PKG_VERSION)-$$(VERSION).tar.gz
 	URL:=https://github.com/openresty/lua-nginx-module.git
