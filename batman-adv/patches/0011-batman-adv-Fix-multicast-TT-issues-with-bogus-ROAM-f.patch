@@ -1,0 +1,46 @@
+From: Linus Lüssing <linus.luessing@c0d3.blue>
+Date: Thu, 7 Jun 2018 00:46:24 +0200
+Subject: [PATCH] batman-adv: Fix multicast TT issues with bogus ROAM flags
+
+When a (broken) node wrongly sends multicast TT entries with a ROAM
+flag then this causes any receiving node to drop all entries for the
+same multicast MAC address announced by other nodes, leading to
+packet loss.
+
+Fix this DoS vector by only storing TT sync flags. For multicast TT
+non-sync'ing flag bits like ROAM are unused so far anyway.
+
+Fixes: 405cc1e5a81e ("batman-adv: Modified forwarding behaviour for multicast packets")
+Reported-by: Leonardo Mörlein <me@irrelefant.net>
+Signed-off-by: Linus Lüssing <linus.luessing@c0d3.blue>
+Signed-off-by: Sven Eckelmann <sven@narfation.org>
+
+Origin: upstream, https://git.open-mesh.org/batman-adv.git/commit/c7054ffae0c3b08bb4bef3cffee1e0a543e14096
+---
+ net/batman-adv/translation-table.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/net/batman-adv/translation-table.c b/net/batman-adv/translation-table.c
+index 61ce300091f328fd78dafa5c4fd09f6cf924b025..12a2b7d21376721d15c6a31f3e794e4270d74b5c 100644
+--- a/net/batman-adv/translation-table.c
++++ b/net/batman-adv/translation-table.c
+@@ -1705,7 +1705,8 @@ static bool batadv_tt_global_add(struct batadv_priv *bat_priv,
+ 		ether_addr_copy(common->addr, tt_addr);
+ 		common->vid = vid;
+ 
+-		common->flags = flags & (~BATADV_TT_SYNC_MASK);
++		if (!is_multicast_ether_addr(common->addr))
++			common->flags = flags & (~BATADV_TT_SYNC_MASK);
+ 
+ 		tt_global_entry->roam_at = 0;
+ 		/* node must store current time in case of roaming. This is
+@@ -1769,7 +1770,8 @@ static bool batadv_tt_global_add(struct batadv_priv *bat_priv,
+ 		 * TT_CLIENT_TEMP, therefore they have to be copied in the
+ 		 * client entry
+ 		 */
+-		common->flags |= flags & (~BATADV_TT_SYNC_MASK);
++		if (!is_multicast_ether_addr(common->addr))
++			common->flags |= flags & (~BATADV_TT_SYNC_MASK);
+ 
+ 		/* If there is the BATADV_TT_CLIENT_ROAM flag set, there is only
+ 		 * one originator left in the list and we previously received a

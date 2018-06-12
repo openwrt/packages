@@ -1,0 +1,37 @@
+From: Linus Lüssing <linus.luessing@c0d3.blue>
+Date: Thu, 7 Jun 2018 00:46:23 +0200
+Subject: [PATCH] batman-adv: Avoid storing non-TT-sync flags on singular entries too
+
+Since commit 382d020fe3fa ("batman-adv: fix TT sync flag inconsistencies")
+TT sync flags and TT non-sync'd flags are supposed to be stored
+separately.
+
+The previous patch missed to apply this separation on a TT entry with
+only a single TT orig entry.
+
+This is a minor fix because with only a single TT orig entry the DDoS
+issue the former patch solves does not apply.
+
+Fixes: 382d020fe3fa ("batman-adv: fix TT sync flag inconsistencies")
+Signed-off-by: Linus Lüssing <linus.luessing@c0d3.blue>
+Signed-off-by: Sven Eckelmann <sven@narfation.org>
+
+Origin: upstream, https://git.open-mesh.org/batman-adv.git/commit/beb6246b2339852b6a429ae9259a8eb30a685041
+---
+ net/batman-adv/translation-table.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/net/batman-adv/translation-table.c b/net/batman-adv/translation-table.c
+index 3986551397caa5ffb6ba7338eeb4769c8b8f99fb..61ce300091f328fd78dafa5c4fd09f6cf924b025 100644
+--- a/net/batman-adv/translation-table.c
++++ b/net/batman-adv/translation-table.c
+@@ -1705,7 +1705,8 @@ static bool batadv_tt_global_add(struct batadv_priv *bat_priv,
+ 		ether_addr_copy(common->addr, tt_addr);
+ 		common->vid = vid;
+ 
+-		common->flags = flags;
++		common->flags = flags & (~BATADV_TT_SYNC_MASK);
++
+ 		tt_global_entry->roam_at = 0;
+ 		/* node must store current time in case of roaming. This is
+ 		 * needed to purge this entry out on timeout (if nobody claims
