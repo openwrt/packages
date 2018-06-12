@@ -9,16 +9,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
-PKG_VERSION:=1.8.4
-PKG_RELEASE:=01
+PKG_VERSION:=1.8.9
+PKG_RELEASE:=00
 
 PKG_SOURCE:=haproxy-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.haproxy.org/download/1.8/src/
-PKG_HASH:=e305b0a4e7dec08072841eef6ac6dcd1b5586b1eff09c2d51e152a912e8884a6
+PKG_HASH:=436b77927cd85bcd4c2cb3cbf7fb539a5362d9686fdcfa34f37550ca1f5db102
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_LICENSE:=GPL-2.0
 MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
+
+ifneq ($(PKG_RELEASE),00)
+	BUILD_VERSION:=-patch$(PKG_RELEASE)
+endif
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -94,13 +98,6 @@ endef
 ENABLE_LUA:=y
 ENABLE_REGPARM:=n
 
-ifeq ($(CONFIG_mips),y)
-  ENABLE_LUA:=n
-endif
-ifeq ($(CONFIG_mipsel),y)
-  ENABLE_LUA:=n
-endif
-
 ifeq ($(CONFIG_TARGET_x86),y)
   ENABLE_REGPARM:=y
 endif
@@ -150,8 +147,9 @@ define Build/Compile
 		SMALL_OPTS="-DBUFSIZE=16384 -DMAXREWRITE=1030 -DSYSTEM_MAXCONN=165530 " \
 		USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 USE_TFO=1 \
 		USE_ZLIB=yes USE_PCRE=1 USE_PCRE_JIT=1 USE_GETADDRINFO=1 \
-		VERSION="$(PKG_VERSION)-patch$(PKG_RELEASE)" \
+		VERSION="$(PKG_VERSION)$(BUILD_VERSION)" \
 		$(ADDON) \
+		CFLAGS="$(TARGET_CFLAGS)" \
 		LD="$(TARGET_CC)" \
 		LDFLAGS="$(TARGET_LDFLAGS) -latomic" \
 		IGNOREGIT=1
