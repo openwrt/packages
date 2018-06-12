@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=file
 PKG_VERSION:=5.33
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://sources.lede-project.org/ \
@@ -52,6 +52,7 @@ endef
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
+	--disable-libseccomp
 
 MAKE_PATH := src
 
