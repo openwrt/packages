@@ -43,7 +43,9 @@ odhcpd_zonedata() {
   local dhcp_origin=$( uci_get dhcp.@odhcpd[0].leasefile )
 
 
-  if [ "$dhcp_link" = "odhcpd" -a -f "$dhcp_origin" ] ; then
+  if [ "$dhcp_link" = "odhcpd" \
+      -a -f "$dhcp_origin" \
+      -a -n "$dhcp_domain" ] ; then
     # Capture the lease file which could be changing often
     sort $dhcp_origin > $dhcp_ls_new
 
