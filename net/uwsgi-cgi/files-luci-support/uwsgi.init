@@ -1,0 +1,34 @@
+#!/bin/sh /etc/rc.common 
+
+START=79
+
+start() {
+	core_number=$(grep -c ^processor /proc/cpuinfo)
+	/usr/sbin/uwsgi --ini /etc/uwsgi/uwsgi.conf --threads $core_number --processes $(($core_number * 2))
+	logger -ts "Uwsgi" "Starting Uwsgi process"
+}                 
+ 
+stop() {
+	pidfile="/var/run/uwsgi.pid"
+	if [ -n "$(pgrep uwsgi)" ]; then
+		if [ -f $pidfile ]; then
+			logger -t "Uwsgi" "Stopping Uwsgi process"
+			kill $( cat $pidfile )
+		else
+			for pid in $(pgrep uwsgi); do
+				if [ -n "$(pgrep uwsgi)" ]; then
+					#Keep trying to kill until the master process is found
+					kill -KILL $pid
+				fi
+			done
+		fi
+	else 
+		logger -t "Uwsgi" "Uwsgi not running!"
+	fi
+}
+
+reload() {
+	/usr/sbin/uwsgi --reload /var/run/uwsgi.pid
+}
+
+
