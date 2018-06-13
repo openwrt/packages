@@ -1,0 +1,257 @@
+This is a backport of the following commit
+>From 582cad8bff9ae4ceb64f7742a0c7f97418720f70 Mon Sep 17 00:00:00 2001
+>From: Robert Edmonds <edmonds@users.noreply.github.com>
+>Date: Sat, 29 Jul 2017 18:52:28 -0400
+>Subject: [PATCH] Fix namespace errors when compiled with latest protobuf
+>MIME-Version: 1.0
+>Content-Type: text/plain; charset=UTF-8
+>Content-Transfer-Encoding: 8bit
+>
+>The protobuf project removed "using namespace std" namespace pollution
+>from their stubs/common.h header file. This caused build failures for us
+>since we relied on their namespace pollution.
+>
+>This commit updates protobuf-c to convert:
+>
+> 'map' → 'std::map'
+> 'set' → 'std::set'
+> 'back_insert_iterator' → 'std::back_insert_iterator'
+>---
+> protoc-c/c_bytes_field.cc     | 2 +-
+> protoc-c/c_bytes_field.h      | 2 +-
+> protoc-c/c_enum.cc            | 8 ++++----
+> protoc-c/c_enum_field.cc      | 2 +-
+> protoc-c/c_enum_field.h       | 2 +-
+> protoc-c/c_field.cc           | 2 +-
+> protoc-c/c_helpers.cc         | 6 +++---
+> protoc-c/c_message.cc         | 2 +-
+> protoc-c/c_message_field.cc   | 2 +-
+> protoc-c/c_primitive_field.cc | 4 ++--
+> protoc-c/c_service.h          | 2 +-
+> protoc-c/c_string_field.cc    | 2 +-
+> protoc-c/c_string_field.h     | 2 +-
+> 13 files changed, 19 insertions(+), 19 deletions(-)
+
+diff --git a/protoc-c/c_bytes_field.cc b/protoc-c/c_bytes_field.cc
+index 603a2ca..716e6a8 100644
+--- a/protoc-c/c_bytes_field.cc
++++ b/protoc-c/c_bytes_field.cc
+@@ -74,7 +74,7 @@ namespace c {
+ using internal::WireFormat;
+ 
+ void SetBytesVariables(const FieldDescriptor* descriptor,
+-                        map<string, string>* variables) {
++                        std::map<string, string>* variables) {
+   (*variables)["name"] = FieldName(descriptor);
+   (*variables)["default"] =
+     "\"" + CEscape(descriptor->default_value_string()) + "\"";
+diff --git a/protoc-c/c_bytes_field.h b/protoc-c/c_bytes_field.h
+index e4b3fa0..c4a71e8 100644
+--- a/protoc-c/c_bytes_field.h
++++ b/protoc-c/c_bytes_field.h
+@@ -86,7 +86,7 @@ class BytesFieldGenerator : public FieldGenerator {
+   void GenerateStaticInit(io::Printer* printer) const;
+ 
+  private:
+-  map<string, string> variables_;
++  std::map<string, string> variables_;
+ 
+   GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(BytesFieldGenerator);
+ };
+diff --git a/protoc-c/c_enum.cc b/protoc-c/c_enum.cc
+index d86366e..fa2789a 100644
+--- a/protoc-c/c_enum.cc
++++ b/protoc-c/c_enum.cc
+@@ -81,7 +81,7 @@ EnumGenerator::EnumGenerator(const EnumDescriptor* descriptor,
+ EnumGenerator::~EnumGenerator() {}
+ 
+ void EnumGenerator::GenerateDefinition(io::Printer* printer) {
+-  map<string, string> vars;
++  std::map<string, string> vars;
+   vars["classname"] = FullNameToC(descriptor_->full_name());
+   vars["shortname"] = descriptor_->name();
+   vars["uc_name"] = FullNameToUpper(descriptor_->full_name());
+@@ -126,7 +126,7 @@ void EnumGenerator::GenerateDefinition(io::Printer* printer) {
+ }
+ 
+ void EnumGenerator::GenerateDescriptorDeclarations(io::Printer* printer) {
+-  map<string, string> vars;
++  std::map<string, string> vars;
+   if (dllexport_decl_.empty()) {
+     vars["dllexport"] = "";
+   } else {
+@@ -149,7 +149,7 @@ struct ValueIndex
+ void EnumGenerator::GenerateValueInitializer(io::Printer *printer, int index)
+ {
+   const EnumValueDescriptor *vd = descriptor_->value(index);
+-  map<string, string> vars;
++  std::map<string, string> vars;
+   bool optimize_code_size = descriptor_->file()->options().has_optimize_for() &&
+     descriptor_->file()->options().optimize_for() ==
+     FileOptions_OptimizeMode_CODE_SIZE;
+@@ -182,7 +182,7 @@ static int compare_value_indices_by_name(const void *a, const void *b)
+ }
+ 
+ void EnumGenerator::GenerateEnumDescriptor(io::Printer* printer) {
+-  map<string, string> vars;
++  std::map<string, string> vars;
+   vars["fullname"] = descriptor_->full_name();
+   vars["lcclassname"] = FullNameToLower(descriptor_->full_name());
+   vars["cname"] = FullNameToC(descriptor_->full_name());
+diff --git a/protoc-c/c_enum_field.cc b/protoc-c/c_enum_field.cc
+index aabad8d..c99583d 100644
+--- a/protoc-c/c_enum_field.cc
++++ b/protoc-c/c_enum_field.cc
+@@ -75,7 +75,7 @@ using internal::WireFormat;
+ // TODO(kenton):  Factor out a "SetCommonFieldVariables()" to get rid of
+ //   repeat code between this and the other field types.
+ void SetEnumVariables(const FieldDescriptor* descriptor,
+-                      map<string, string>* variables) {
++                      std::map<string, string>* variables) {
+ 
+   (*variables)["name"] = FieldName(descriptor);
+   (*variables)["type"] = FullNameToC(descriptor->enum_type()->full_name());
+diff --git a/protoc-c/c_enum_field.h b/protoc-c/c_enum_field.h
+index ad03e83..11df682 100644
+--- a/protoc-c/c_enum_field.h
++++ b/protoc-c/c_enum_field.h
+@@ -84,7 +84,7 @@ class EnumFieldGenerator : public FieldGenerator {
+   void GenerateStaticInit(io::Printer* printer) const;
+ 
+  private:
+-  map<string, string> variables_;
++  std::map<string, string> variables_;
+ 
+   GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(EnumFieldGenerator);
+ };
+diff --git a/protoc-c/c_field.cc b/protoc-c/c_field.cc
+index 0e9b1f9..9fa56ef 100644
+--- a/protoc-c/c_field.cc
++++ b/protoc-c/c_field.cc
+@@ -106,7 +106,7 @@ void FieldGenerator::GenerateDescriptorInitializerGeneric(io::Printer* printer,
+ 							  const string &type_macro,
+ 							  const string &descriptor_addr) const
+ {
+-  map<string, string> variables;
++  std::map<string, string> variables;
+   variables["LABEL"] = CamelToUpper(GetLabelName(descriptor_->label()));
+   variables["TYPE"] = type_macro;
+   variables["classname"] = FullNameToC(FieldScope(descriptor_)->full_name());
+diff --git a/protoc-c/c_helpers.cc b/protoc-c/c_helpers.cc
+index 8398b50..b79b5b0 100644
+--- a/protoc-c/c_helpers.cc
++++ b/protoc-c/c_helpers.cc
+@@ -268,7 +268,7 @@ const char* const kKeywordList[] = {
+ };
+ 
+ std::set<string> MakeKeywordsMap() {
+-  set<string> result;
++  std::set<string> result;
+   for (int i = 0; i < GOOGLE_ARRAYSIZE(kKeywordList); i++) {
+     result.insert(kKeywordList[i]);
+   }
+@@ -365,7 +365,7 @@ string GetLabelName(FieldDescriptor::Label label) {
+ unsigned
+ WriteIntRanges(io::Printer* printer, int n_values, const int *values, const string &name)
+ {
+-  map<string, string> vars;
++  std::map<string, string> vars;
+   vars["name"] = name;
+   if (n_values > 0) {
+     int n_ranges = 1;
+@@ -504,7 +504,7 @@ void SplitStringToIteratorUsing(const string& full,
+ void SplitStringUsing(const string& full,
+                       const char* delim,
+                       vector<string>* result) {
+-  back_insert_iterator< vector<string> > it(*result);
++  std::back_insert_iterator< vector<string> > it(*result);
+   SplitStringToIteratorUsing(full, delim, it);
+ }
+ 
+diff --git a/protoc-c/c_message.cc b/protoc-c/c_message.cc
+index 4c27cd1..6b22c71 100755
+--- a/protoc-c/c_message.cc
++++ b/protoc-c/c_message.cc
+@@ -388,7 +388,7 @@ GenerateHelperFunctionDefinitions(io::Printer* printer, bool is_submessage)
+ 
+ void MessageGenerator::
+ GenerateMessageDescriptor(io::Printer* printer) {
+-    map<string, string> vars;
++    std::map<string, string> vars;
+     vars["fullname"] = descriptor_->full_name();
+     vars["classname"] = FullNameToC(descriptor_->full_name());
+     vars["lcclassname"] = FullNameToLower(descriptor_->full_name());
+diff --git a/protoc-c/c_message_field.cc b/protoc-c/c_message_field.cc
+index a538ca1..148cc9a 100644
+--- a/protoc-c/c_message_field.cc
++++ b/protoc-c/c_message_field.cc
+@@ -83,7 +83,7 @@ MessageFieldGenerator::~MessageFieldGenerator() {}
+ 
+ void MessageFieldGenerator::GenerateStructMembers(io::Printer* printer) const
+ {
+-  map<string, string> vars;
++  std::map<string, string> vars;
+   vars["name"] = FieldName(descriptor_);
+   vars["type"] = FullNameToC(descriptor_->message_type()->full_name());
+   vars["deprecated"] = FieldDeprecated(descriptor_);
+diff --git a/protoc-c/c_primitive_field.cc b/protoc-c/c_primitive_field.cc
+index a3fb1ae..dfbc47c 100644
+--- a/protoc-c/c_primitive_field.cc
++++ b/protoc-c/c_primitive_field.cc
+@@ -80,7 +80,7 @@ PrimitiveFieldGenerator::~PrimitiveFieldGenerator() {}
+ void PrimitiveFieldGenerator::GenerateStructMembers(io::Printer* printer) const
+ {
+   string c_type;
+-  map<string, string> vars;
++  std::map<string, string> vars;
+   switch (descriptor_->type()) {
+     case FieldDescriptor::TYPE_SINT32  : 
+     case FieldDescriptor::TYPE_SFIXED32: 
+@@ -149,7 +149,7 @@ string PrimitiveFieldGenerator::GetDefaultValue() const
+ }
+ void PrimitiveFieldGenerator::GenerateStaticInit(io::Printer* printer) const
+ {
+-  map<string, string> vars;
++  std::map<string, string> vars;
+   if (descriptor_->has_default_value()) {
+     vars["default_value"] = GetDefaultValue();
+   } else {
+diff --git a/protoc-c/c_service.h b/protoc-c/c_service.h
+index 1eb982e..6f1798c 100644
+--- a/protoc-c/c_service.h
++++ b/protoc-c/c_service.h
+@@ -99,7 +99,7 @@ class ServiceGenerator {
+   void GenerateCallersImplementations(io::Printer* printer);
+ 
+   const ServiceDescriptor* descriptor_;
+-  map<string, string> vars_;
++  std::map<string, string> vars_;
+ 
+   GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(ServiceGenerator);
+ };
+diff --git a/protoc-c/c_string_field.cc b/protoc-c/c_string_field.cc
+index 4075db1..2ed448b 100644
+--- a/protoc-c/c_string_field.cc
++++ b/protoc-c/c_string_field.cc
+@@ -74,7 +74,7 @@ namespace c {
+ using internal::WireFormat;
+ 
+ void SetStringVariables(const FieldDescriptor* descriptor,
+-                        map<string, string>* variables) {
++                        std::map<string, string>* variables) {
+   (*variables)["name"] = FieldName(descriptor);
+   (*variables)["default"] = FullNameToLower(descriptor->full_name())
+ 	+ "__default_value";
+diff --git a/protoc-c/c_string_field.h b/protoc-c/c_string_field.h
+index c8f4ee5..68f0d25 100644
+--- a/protoc-c/c_string_field.h
++++ b/protoc-c/c_string_field.h
+@@ -86,7 +86,7 @@ class StringFieldGenerator : public FieldGenerator {
+   void GenerateStaticInit(io::Printer* printer) const;
+ 
+  private:
+-  map<string, string> variables_;
++  std::map<string, string> variables_;
+ 
+   GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(StringFieldGenerator);
+ };
