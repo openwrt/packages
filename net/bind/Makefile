@@ -9,7 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
-PKG_VERSION:=9.11.2-P1
+PKG_VERSION:=9.11.3
 PKG_RELEASE:=1
 USERID:=bind=57:bind=57
 
@@ -20,7 +20,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 	http://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION) \
 	http://ftp.isc.org/isc/bind9/$(PKG_VERSION)
-PKG_HASH:=cec31548832fca3f85d95178d4019b7d702039e8595d4c93914feba337df1212
+PKG_HASH:=0d9dde14b2ec7f9cdc3b69f19540c7a2e4eee7b6c727965dfae48810965876f5
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
@@ -125,6 +125,7 @@ CONFIGURE_ARGS += \
 	--with-gost=no \
 	--with-gssapi=no \
 	--with-ecdsa=$(if $(CONFIG_OPENSSL_WITH_EC),yes,no) \
+	--with-eddsa=$(if $(CONFIG_BIND_ENABLE_EDDSA),yes,no) \
 	--with-readline=no \
 	--sysconfdir=/etc/bind
 

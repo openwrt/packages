@@ -34,4 +34,14 @@ config BIND_LIBXML2
 		format. Building with libjson support will require the
 		libxml2 package to be installed as well.
 
+config BIND_ENABLE_EDDSA
+    bool
+    default n
+    prompt "Include Edwards Curve DNSSEC signature support"
+    help
+        Enable BIND support for Edwards Curve DNSSEC signing algorithms
+        described in RFC 8080.
+
+        Note that this requires OpenSSL 1.1, which is not currently
+        the available in OpenWRT, so it is disabled by default.
 endif
