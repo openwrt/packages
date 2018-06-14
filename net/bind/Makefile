@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 USERID:=bind=57:bind=57
 
 PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
-PKG_LICENSE := BSD-3-Clause
+PKG_LICENSE := MPL-2.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
