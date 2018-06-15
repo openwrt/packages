@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=domoticz
-PKG_VERSION_MAJOR:=3
-PKG_VERSION_PATCH:=9571
-PKG_COMMIT:=dfb39a9e739a0a07ab865577ed44e0b6aa9e7bdc
+PKG_VERSION_MAJOR:=4
+PKG_VERSION_PATCH:=9700
+PKG_COMMIT:=
 PKG_VERSION:=$(PKG_VERSION_MAJOR).$(PKG_VERSION_PATCH)
 PKG_RELEASE:=1
 
@@ -22,11 +22,12 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_COMMIT).tar.gz
 PKG_SOURCE_URL:=https://github.com/domoticz/domoticz/archive/$(PKG_COMMIT)/$(PKG_SOURCE)
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_COMMIT)
 endif
-PKG_HASH:=7e77a8ea87216f65c2f279535eb43d957e22ca14ccebfb1ef2054f9bc797a5c3
+PKG_HASH:=c31f185a1ffac01b86a77bf33e059a4403d814e826c9d6639c63c2e9afa55a46
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=License.txt
 
+PKG_BUILD_DEPENDS:=python3
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
@@ -68,7 +69,7 @@ CMAKE_OPTIONS += \
 	-DUSE_STATIC_LIBSTDCXX=no \
 	-DUSE_STATIC_OPENZWAVE=no \
 	-DUSE_OPENSSL_STATIC=no \
-	-DUSE_PYTHON=no \
+	-DUSE_PYTHON=yes \
 	-DWITH_LIBUSB=no
 
 TARGET_CFLAGS+=-flto
@@ -106,7 +107,7 @@ endif
 endef
 
 define Package/domoticz/install
-	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/hotplug.d/tty $(1)/etc/init.d $(1)/etc/domoticz
+	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/hotplug.d/tty $(1)/etc/init.d $(1)/etc/domoticz/plugins
 	$(INSTALL_BIN) ./files/domoticz.hotplug $(1)/etc/hotplug.d/tty/domoticz
 	$(INSTALL_BIN) ./files/domoticz.init $(1)/etc/init.d/domoticz
 	$(INSTALL_CONF) ./files/domoticz.config $(1)/etc/config/domoticz
@@ -121,7 +122,9 @@ define Package/domoticz/install
 	# compress static web content
 	find $(1)/usr/share/domoticz/www -name "*.css" -exec gzip -9 {} \;
 	find $(1)/usr/share/domoticz/www -name "*.js" -exec gzip -9 {} \;
-	find $(1)/usr/share/domoticz/www -name "*.html" -exec sh -c 'grep -q "<\!--#embed" {} || gzip -9 {}' \;
+	gzip -9 $(1)/usr/share/domoticz/www/*.html
+	gzip -9 $(1)/usr/share/domoticz/www/secpanel/*.html
+	find $(1)/usr/share/domoticz/www/views -name "*.html" -exec sh -c 'grep -q "<\!--#embed" {} || gzip -9 {}' \;
 endef
 
 define Package/domoticz/conffiles
