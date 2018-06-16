@@ -8,23 +8,23 @@ include $(TOPDIR)/rules.mk
 # Name, version and release number
 # The name and version of your package are used to define the variable to point to the build directory of your package: $(PKG_BUILD_DIR)
 PKG_NAME:=netifyd
-PKG_VERSION:=2.64
+PKG_VERSION:=2.65
 PKG_RELEASE:=1
-
-PKG_INSTALL:=1
-#PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
 PKG_MAINTAINER:=Darryl Sokoloski <darryl@egloo.ca>
 PKG_LICENSE:=GPL-3.0+
+
+PKG_BUILD_PARALLEL:=1
+PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
 
 # Source settings
 
 # Disable the following and enable SOURCE_DIR below for local test builds.
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://bitbucket.org/eglooca/netify-daemon.git
-PKG_SOURCE_DATE:=2018-06-05
-PKG_SOURCE_VERSION:=4aa933a603a338be4cd7d0634def2cbeb78c85c1
-PKG_MIRROR_HASH:=849e8c7eb7c6e7f774172abf535fa3fc9315679cab03b5bcb7288ad60ea58593
+PKG_SOURCE_DATE:=2018-06-15
+PKG_SOURCE_VERSION:=5dee5fa1f69cca0ae3d2174616608b722339676a
+PKG_MIRROR_HASH:=whatever
 
 # Local source builds (create symlink to source here)
 #SOURCE_DIR:=$(TOPDIR)/netify-daemon
@@ -70,16 +70,24 @@ CONFIGURE_VARS += \
 	LIBNETFILTER_CONNTRACK_CFLAGS="-I $(STAGING_DIR)/usr/include" \
 	LIBNETFILTER_CONNTRACK_LDFLAGS="-L $(STAGING_DIR)/usr/lib"
 
+# Package preparation
+#define Build/Prepare
+#	mkdir -p $(PKG_BUILD_DIR)
+#	cp -a $(SOURCE_DIR)/. $(PKG_BUILD_DIR)/
+#	$(Build/Patch)
+#endef
+
+# Package configure
+
 CONFIGURE_ARGS += \
 	--disable-inotify \
 	--disable-ncurses \
 	--without-systemdsystemunitdir
 
-# Package preparation
-define Build/Prepare
-	mkdir -p $(PKG_BUILD_DIR)
-	cp -a $(SOURCE_DIR)/. $(PKG_BUILD_DIR)/
-	$(Build/Patch)
+
+define Build/Configure
+	(cd $(PKG_BUILD_DIR); ./autogen.sh)
+	$(call Build/Configure/Default,$CONFIGURE_ARGS)
 endef
 
 # Package install
