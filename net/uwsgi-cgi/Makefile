@@ -26,6 +26,15 @@ define Package/uwsgi-cgi
   DEPENDS:=+libopenssl +libpcre +jansson +libuuid +libxml2
 endef
 
+define Package/uwsgi-cgi-luci-support
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=Web Servers/Proxies
+  TITLE:=Support files for LuCI on Nginx
+  URL:=http://unbit.com/
+  DEPENDS:=+uwsgi-cgi
+endef
+
 define Package/uwsgi-cgi/description
 	The uWSGI project build with cgi profile
 endef
@@ -39,4 +48,13 @@ define Package/uwsgi-cgi/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/uwsgi $(1)/usr/sbin/
 endef
 
+define Package/uwsgi-cgi-luci-support/install
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files-luci-support/uwsgi.init $(1)/etc/init.d/uwsgi
+	$(INSTALL_DIR) $(1)/etc/uwsgi
+	$(INSTALL_BIN) ./files-luci-support/uwsgi.conf $(1)/etc/uwsgi/uwsgi.conf
+	$(INSTALL_DIR) $(1)/etc/nginx
+endef
+
 $(eval $(call BuildPackage,uwsgi-cgi))
+$(eval $(call BuildPackage,uwsgi-cgi-luci-support))
