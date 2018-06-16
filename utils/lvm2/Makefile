@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2009-2010 Stefan Monnier
-# Copyright (C) 2011-2014 OpenWrt.org
+# Copyright (C) 2011-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v3+.
 # See /LICENSE for more information.
@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=LVM2
 PKG_VERSION:=2.02.177
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0 LGPL-2.1
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tgz
@@ -50,7 +50,12 @@ define Package/lvm2/description
  LVM toolset.
 endef
 
-CONFIGURE_ARGS += --disable-o_direct
+CONFIGURE_ARGS += \
+  --disable-o_direct \
+  --with-default-pid-dir=/var/run \
+  --with-default-dm-run-dir=/var/run \
+  --with-default-run-dir=/var/run/lvm \
+  --with-default-locking-dir=/var/lock/lvm
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
