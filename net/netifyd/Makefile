@@ -23,7 +23,7 @@ PKG_INSTALL:=1
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://bitbucket.org/eglooca/netify-daemon.git
 PKG_SOURCE_DATE:=2018-06-15
-PKG_SOURCE_VERSION:=5dee5fa1f69cca0ae3d2174616608b722339676a
+PKG_SOURCE_VERSION:=fcd60c000ac72987441b073c0aa2cee7e9a9e7e0
 PKG_MIRROR_HASH:=whatever
 
 # Local source builds (create symlink to source here)
@@ -82,6 +82,7 @@ CONFIGURE_VARS += \
 CONFIGURE_ARGS += \
 	--disable-inotify \
 	--disable-ncurses \
+	--disable-libtcmalloc \
 	--without-systemdsystemunitdir
 
 
