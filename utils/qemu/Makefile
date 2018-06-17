@@ -110,6 +110,20 @@ define Package/qemu-img/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/qemu-img $(1)/usr/bin/qemu-img
 endef
 
+define Package/qemu-nbd
+ SECTION:=utils
+ CATEGORY:=Utilities
+ SUBMENU:=Virtualization
+ TITLE:=QEMU Network Block Device Utility
+ URL:=http://www.qemu.org
+ DEPENDS:=+glib2 $(CXX_DEPENDS) $(QEMU_DEPS_IN_HOST) +kmod-nbd
+endef
+
+define Package/qemu-nbd/install
+	$(INSTALL_DIR) $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/qemu-nbd $(1)/usr/sbin/qemu-nbd
+endef
+
 PKG_CONFIG_DEPENDS += CONFIG_PACKAGE_qemu-ga
 
 # Naming rules used in qemu Makefile.target
@@ -261,6 +275,7 @@ QEMU_MAKE_TARGETS := \
 	$(if $(CONFIG_PACKAGE_qemu-ga),qemu-ga) \
 	$(if $(CONFIG_PACKAGE_qemu-bridge-helper),qemu-bridge-helper) \
 	$(if $(CONFIG_PACKAGE_qemu-img),qemu-img) \
+	$(if $(CONFIG_PACKAGE_qemu-nbd),qemu-nbd) \
 	$(foreach target,$(QEMU_TARGET_LIST),$(if $(CONFIG_PACKAGE_qemu-$(target)),subdir-$(target))) \
 
 define Build/Compile
@@ -271,6 +286,7 @@ $(eval $(call BuildPackage,virtio-console-helper))
 $(eval $(call BuildPackage,qemu-ga))
 $(eval $(call BuildPackage,qemu-bridge-helper))
 $(eval $(call BuildPackage,qemu-img))
+$(eval $(call BuildPackage,qemu-nbd))
 $(eval $(call BuildPackage,qemu-blobs))
 $(foreach target,$(QEMU_TARGET_LIST), \
   $(eval $(call BuildPackage,qemu-$(target))) \
