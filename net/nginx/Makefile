@@ -74,7 +74,6 @@ define Package/nginx
   TITLE:=Nginx web server
   URL:=http://nginx.org/
   DEPENDS:=+NGINX_PCRE:libpcre +(NGINX_SSL||NGINX_HTTP_CACHE||NGINX_HTTP_AUTH_BASIC):libopenssl +NGINX_HTTP_GZIP:zlib +NGINX_LUA:liblua +libpthread
-  MENU:=1
 endef
 
 define Package/nginx/description
@@ -218,6 +217,32 @@ ifeq ($(CONFIG_NGINX_HTTP_BROTLI),y)
   ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/nginx-brotli
 endif
 
+define Package/nginx-mod-luci
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=Web Servers/Proxies
+  TITLE:=Support file for Nginx
+  URL:=http://nginx.org/
+  DEPENDS:=nginx +uwsgi-cgi +uwsgi-cgi-luci-support
+endef
+
+define Package/nginx-mod-luci/description
+ Support file for LuCI in nginx (include custom nginx configuration, autostart script for uwsgi)
+endef
+
+define Package/nginx-mod-luci-ssl
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=Web Servers/Proxies
+  TITLE:=Support file for Nginx (SSL)
+  URL:=http://nginx.org/
+  DEPENDS:=nginx +nginx-mod-luci
+endef
+
+define Package/nginx-mod-luci-ssl/description
+ Support file for LuCI in nginx (include custom nginx configuration, autostart script for uwsgi, redirect from http to https)
+endef
+
 TARGET_CFLAGS += -fvisibility=hidden -ffunction-sections -fdata-sections -DNGX_LUA_NO_BY_LUA_BLOCK
 TARGET_LDFLAGS += -Wl,--gc-sections
 
@@ -241,6 +266,21 @@ define Build/Configure
 			--with-ld-opt="$(TARGET_LDFLAGS)" \
 			--without-http_upstream_zone_module \
 	)
+endef
+
+define Package/nginx-mod-luci/install
+	$(INSTALL_DIR) $(1)/etc/nginx
+	$(INSTALL_BIN) ./files-luci-support/luci_uwsgi.conf $(1)/etc/nginx/luci_uwsgi.conf
+	$(INSTALL_BIN) ./files-luci-support/luci_nginx.conf $(1)/etc/nginx/luci_nginx.conf
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files-luci-support/60_nginx-luci-support $(1)/etc/uci-defaults/60_nginx-luci-support
+endef
+
+define Package/nginx-mod-luci-ssl/install
+	$(INSTALL_DIR) $(1)/etc/nginx
+	$(INSTALL_BIN) ./files-luci-support/luci_nginx_ssl.conf $(1)/etc/nginx/luci_nginx_ssl.conf
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files-luci-support/70_nginx-luci-support-ssl $(1)/etc/uci-defaults/70_nginx-luci-support-ssl
 endef
 
 define Package/nginx/install
@@ -321,3 +361,5 @@ define  Prepare/lua-nginx
 endef
 
 $(eval $(call BuildPackage,nginx))
+$(eval $(call BuildPackage,nginx-mod-luci))
+$(eval $(call BuildPackage,nginx-mod-luci-ssl))
