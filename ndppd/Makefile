@@ -8,14 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ndppd
-PKG_VERSION:=0.2.3
+PKG_VERSION:=0.2.5
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_VERSION).tar.gz
-
 # Latest release
-PKG_SOURCE_URL:=https://github.com/DanielAdolfsson/ndppd/archive
-PKG_MD5SUM:=1391c063db64b47541e58da12e5ae60d
+PKG_SOURCE_URL:=https://codeload.github.com/DanielAdolfsson/ndppd/tar.gz/$(PKG_VERSION)?
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_HASH:=ee934167f8357f0bd0015e201a77fbe4d028c59e89dc98113805c6855e1c3992
 PKG_LICENSE:=GPL-3.0+
 
 # Development snapshot
