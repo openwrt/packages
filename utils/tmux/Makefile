@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tmux
 PKG_VERSION:=2.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/tmux/tmux/releases/download/$(PKG_VERSION)
@@ -36,6 +36,10 @@ endef
 
 define Package/tmux/description
   tmux is a modern, BSD-licensed alternative to GNU screen.
+endef
+
+define Package/tmux/conffiles
+/etc/tmux.conf
 endef
 
 define Package/tmux/install
