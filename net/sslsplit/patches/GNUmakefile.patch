@@ -1,0 +1,12 @@
+diff -r -u sslsplit/GNUmakefile sslsplit_new/GNUmakefile
+--- sslsplit/GNUmakefile	2018-06-15 16:31:26.206724177 +0500
++++ sslsplit_new/GNUmakefile	2018-06-15 17:13:47.900160437 +0500
+@@ -304,6 +304,8 @@
+ TPKG_LDFLAGS+=	-L$(CHECK_FOUND)/lib
+ TPKG_LIBS+=	-lcheck
+ endif
++# Additional flags for compilation with musl-fts
++PKG_LIBS+=	-lfts
+ 
+ ifneq (,$(strip $(PKGS)))
+ PKG_CFLAGS+=	$(shell $(PKGCONFIG) $(PCFLAGS) --cflags-only-other $(PKGS))
