@@ -9,8 +9,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zoneinfo
-PKG_VERSION:=2015d
-PKG_VERSION_CODE:=2015d
+PKG_VERSION:=2018e
+PKG_VERSION_CODE:=2018e
 PKG_RELEASE:=1
 
 #As i couldn't find real license used "Public Domain"
@@ -20,20 +20,20 @@ PKG_LICENSE:=Public Domain
 PKG_SOURCE:=tzdata$(PKG_VERSION).tar.gz
 PKG_SOURCE_CODE:=tzcode$(PKG_VERSION_CODE).tar.gz
 PKG_SOURCE_URL:=http://www.iana.org/time-zones/repository/releases
-PKG_MD5SUM:=b595bdc4474b8fc1a15cffc67c66025b
+PKG_MD5SUM:=97d654f4d7253173b3eeb76a836dd65e
 
 include $(INCLUDE_DIR)/package.mk
 
 define Download/tzcode
    FILE=$(PKG_SOURCE_CODE)
    URL=$(PKG_SOURCE_URL)
-   MD5SUM:=4008a3abc025a398697b2587c48258b9
+   MD5SUM:=c4d7df0fff7ba5588b32c5f27e2caf97
 endef
 
 $(eval $(call Download,tzcode))
 
 define Package/zoneinfo/Default
-  SUBMENU:=zoneinfo
+  SUBMENU:=Zoneinfo
   TITLE:=Zone Information
   SECTION:=utils
   CATEGORY:=Utilities
@@ -110,7 +110,7 @@ define Build/Compile
 		$(HOST_CONFIGURE_OPTS) \
 		CC="$(HOSTCC)" \
 		LD="\$$$$(CC)" \
-		CPPFLAGS="$(HOST_CPPFLAGS)" \
+		CPPFLAGS="$(HOST_CPPFLAGS) -DHAVE_SNPRINTF=1" \
 		LDFLAGS="$(HOST_LDFLAGS)" \
 		TOPDIR="$(PKG_INSTALL_DIR)" \
 		TZDIR="$(PKG_INSTALL_DIR)/zoneinfo" \
