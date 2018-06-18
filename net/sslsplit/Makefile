@@ -1,5 +1,4 @@
-#
-# Copyright (C) 2016-2018 OpenWrt.org
+
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -13,10 +12,9 @@ PKG_RELEASE:=1
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE LICENSE.contrib LICENSE.third
 
-PKG_SOURCE:=sslsplit.tar.gz
-PKG_SOURCE_URL:=https://github.com/droe/sslsplit.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=0.5.2
+PKG_SOURCE:=sslsplit-0.5.2.tar.bz2
+PKG_SOURCE_URL:=https://mirror.roe.ch/rel/sslsplit/
+PKG_HASH:=f32c7fd760a45bb521adb8d96c819173fcaed1964bf114e666fcd7cf7ff043a8
 
 PKG_INSTALL:=1
 
@@ -45,3 +43,4 @@ define Package/sslsplit/install
 endef
 
 $(eval $(call BuildPackage,sslsplit))
+
