@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxml2
-PKG_VERSION:=2.9.2
-PKG_RELEASE:=3
+PKG_VERSION:=2.9.8
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://gd.tuwien.ac.at/languages/libxml/ \
-	http://xmlsoft.org/sources/ \
-	ftp://fr.rpmfind.net/pub/libxml/
-PKG_MD5SUM:=9e6a9aca9d155737868b3dc5fd82f788
+PKG_SOURCE_URL:=http://xmlsoft.org/sources/
+PKG_MD5SUM:=b786e353e2aa1b872d70d5d1ca0c740d
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -24,7 +22,7 @@ PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
+PKG_BUILD_PARALLEL:=0
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -128,6 +126,11 @@ endef
 define Package/libxml2/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libxml2.so* $(1)/usr/lib/
+endef
+
+define Host/Install
+	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(HOST_BUILD_DIR)/xml2-config
+	$(call Host/Install/Default)
 endef
 
 $(eval $(call HostBuild))
