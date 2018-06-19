@@ -23,8 +23,8 @@ PKG_INSTALL:=1
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://bitbucket.org/eglooca/netify-daemon.git
 PKG_SOURCE_DATE:=2018-06-18
-PKG_SOURCE_VERSION:=eae0d779d2c51bdd3f51835fb5ef081ea8a7e29a
-PKG_MIRROR_HASH:=aed23001f59e16dd13711cf2b6bf5ed8d2b1efe1ffd9aa2e7a4137a878398c0e
+PKG_SOURCE_VERSION:=64ffc4796ad4a24752e41af5e42dc8b3c965eb43
+PKG_MIRROR_HASH:=whatever
 
 # Local source builds (create symlink to source here)
 #SOURCE_DIR:=$(TOPDIR)/netify-daemon
@@ -80,6 +80,7 @@ CONFIGURE_VARS += \
 # Package configure
 
 CONFIGURE_ARGS += \
+	--sharedstatedir=/var/lib \
 	--disable-inotify \
 	--disable-ncurses \
 	--disable-libtcmalloc \
@@ -101,7 +102,7 @@ define Package/netifyd/install
 	$(INSTALL_DIR) $(1)/etc/netify.d
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/app-custom-match.conf $(1)/etc/netify.d/netify-sink.conf
 	$(INSTALL_DIR) $(1)/usr/libexec/netifyd
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/function.sh $(1)/usr/libexec/netifyd
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/functions.sh $(1)/usr/libexec/netifyd
 endef
 
 # Get the job done
