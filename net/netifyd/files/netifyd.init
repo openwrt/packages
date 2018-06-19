@@ -9,13 +9,25 @@ STOP=50
 
 USE_PROCD=1
 PROG=/usr/sbin/netifyd
+NETIFYD_AUTODETECT=yes
 
 start_service() {
-	procd_open_instance
-	procd_set_param command $PROG # -- flags
-	procd_close_instance
+    mkdir -p /var/lib/netifyd
+    mkdir -p /var/run/netifyd
+    if [ -f /usr/libexec/netifyd/functions.sh ]; then
+        source /usr/libexec/netifyd/functions.sh
+        NETIFYD_OPTS=$(auto_detect_options)
+
+        load_modules
+    fi
+
+    procd_open_instance
+    echo $PROG $NETIFYD_OPTS
+    procd_set_param command $PROG $NETIFYD_OPTS
+    procd_set_param respawn
+    procd_close_instance
 }
 
 shutdown() {
-	stop
+    stop
 }

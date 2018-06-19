@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 # Name, version and release number
 # The name and version of your package are used to define the variable to point to the build directory of your package: $(PKG_BUILD_DIR)
 PKG_NAME:=netifyd
-PKG_VERSION:=2.65
+PKG_VERSION:=2.66
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Darryl Sokoloski <darryl@egloo.ca>
 PKG_LICENSE:=GPL-3.0+
@@ -22,8 +22,8 @@ PKG_INSTALL:=1
 # Disable the following and enable SOURCE_DIR below for local test builds.
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://bitbucket.org/eglooca/netify-daemon.git
-PKG_SOURCE_DATE:=2018-06-15
-PKG_SOURCE_VERSION:=fcd60c000ac72987441b073c0aa2cee7e9a9e7e0
+PKG_SOURCE_DATE:=2018-06-18
+PKG_SOURCE_VERSION:=eae0d779d2c51bdd3f51835fb5ef081ea8a7e29a
 PKG_MIRROR_HASH:=whatever
 
 # Local source builds (create symlink to source here)
@@ -85,7 +85,6 @@ CONFIGURE_ARGS += \
 	--disable-libtcmalloc \
 	--without-systemdsystemunitdir
 
-
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); ./autogen.sh)
 	$(call Build/Configure/Default,$CONFIGURE_ARGS)
@@ -98,8 +97,11 @@ define Package/netifyd/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/netifyd $(1)/usr/sbin
 	#$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DIR) $(1)/var/lib/netifyd
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/deploy/app-custom-match.conf $(1)/var/lib/netifyd
+	#$(INSTALL_DIR) $(1)/var/lib/netifyd
+	$(INSTALL_DIR) $(1)/etc/netify.d
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/app-custom-match.conf $(1)/etc/netify.d/netify-sink.conf
+	$(INSTALL_DIR) $(1)/usr/libexec/netifyd
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/function.sh $(1)/usr/libexec/netifyd
 endef
 
 # Get the job done
