@@ -18,4 +18,3 @@ config 'mesh' 'bat0'
 
 # yet another batX instance
 # config 'mesh' 'bat5'
-#	option 'interfaces' 'second_mesh'
