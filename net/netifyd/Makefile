@@ -23,7 +23,7 @@ PKG_INSTALL:=1
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://bitbucket.org/eglooca/netify-daemon.git
 PKG_SOURCE_DATE:=2018-06-18
-PKG_SOURCE_VERSION:=64ffc4796ad4a24752e41af5e42dc8b3c965eb43
+PKG_SOURCE_VERSION:=4057e81fd862b63b21ddef2cb6556086fb9d30f8
 PKG_MIRROR_HASH:=whatever
 
 # Local source builds (create symlink to source here)
@@ -93,6 +93,8 @@ endef
 
 # Package install
 define Package/netifyd/install
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/netifyd.conf $(1)/etc
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/netifyd.init $(1)/etc/init.d/netifyd
 	$(INSTALL_DIR) $(1)/usr/sbin
