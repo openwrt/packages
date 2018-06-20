@@ -20,5 +20,9 @@ start_service() {
 }
 
 reload_service() {
-    $BIN -c configReload
+    "$BIN" -c configReload
+}
+
+service_triggers() {
+    procd_add_reload_trigger "bmx7"
 }
