@@ -12,8 +12,8 @@ diff --git a/src/node_crypto.cc b/src/node_crypto.cc
 index 7c0f65a5735..0aa4adbd467 100644
 --- a/src/node_crypto.cc
 +++ b/src/node_crypto.cc
-@@ -44,9 +44,9 @@
- #include "StartComAndWoSignData.inc"
+@@ -36,9 +36,9 @@
+ #include "v8.h"
  
  #include <algorithm>
 +#include <cmath>
