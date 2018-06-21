@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ola
 PKG_VERSION:=0.10.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/OpenLightingProject/ola.git
@@ -54,7 +54,7 @@ CONFIGURE_ARGS += \
 	--disable-unittests \
 	--disable-http \
 	--without-dns-sd \
-	 --with-ola-protoc-plugin=$(HOST_BUILD_DIR)/protoc/ola_protoc_plugin
+	--with-ola-protoc-plugin=$(STAGING_DIR_HOSTPKG)/bin/ola_protoc_plugin
 
 HOST_CONFIGURE_ARGS += \
 	--disable-all-plugins \
@@ -75,8 +75,9 @@ define Host/Compile
 		$(MAKE) protoc/ola_protoc_plugin
 endef
 
-# nothing to install for host part
 define Host/Install
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin
+	$(CP) $(HOST_BUILD_DIR)/protoc/ola_protoc_plugin $(STAGING_DIR_HOSTPKG)/bin
 endef
 
 
