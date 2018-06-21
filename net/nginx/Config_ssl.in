@@ -6,14 +6,7 @@
 #
 
 menu "Configuration"
-        depends on PACKAGE_nginx
-
-config NGINX_SSL
-	bool
-	prompt "Enable SSL module"
-	help
-		Enable HTTPS/SSL support.
-	default n
+        depends on PACKAGE_nginx-ssl
 
 config NGINX_DAV
 	bool
@@ -219,7 +212,6 @@ config NGINX_HTTP_BROTLI
 config NGINX_RTMP_MODULE
 	bool
 	prompt "Enable RTMP module"
-	depends on NGINX_SSL
 	help
 		Add support for NGINX-based Media Streaming Server module.
 	default n
