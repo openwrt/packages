@@ -239,8 +239,10 @@ main() {
 		wait
 
 		if [ "${IFDOWN_EVENT}" -eq 1 ]; then
-			score=0
 			echo "offline" > /var/run/mwan3track/$1/STATUS
+			$LOG notice "Interface $1 ($2) is offline"
+			env -i ACTION="disconnected" INTERFACE="$1" DEVICE="$2" /sbin/hotplug-call iface
+			score=0
 			IFDOWN_EVENT=0
 		fi
 	done
