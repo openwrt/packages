@@ -1,0 +1,75 @@
+From e2940b173e31253aaa160d2ec9a27c8fb92a9b6d Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Sat, 11 Aug 2018 11:53:01 -0700
+Subject: [PATCH] simd: mips: Don't compile float code on softfloat targets
+
+Doing so causes opcode errors.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ simd/mips/jsimd.c       | 4 ++++
+ simd/mips/jsimd_dspr2.S | 4 ++++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/simd/mips/jsimd.c b/simd/mips/jsimd.c
+index af886f6..09d2758 100644
+--- a/simd/mips/jsimd.c
++++ b/simd/mips/jsimd.c
+@@ -709,7 +709,9 @@ GLOBAL(void)
+ jsimd_convsamp_float(JSAMPARRAY sample_data, JDIMENSION start_col,
+                      FAST_FLOAT *workspace)
+ {
++#ifndef __mips_soft_float
+   jsimd_convsamp_float_dspr2(sample_data, start_col, workspace);
++#endif
+ }
+ 
+ GLOBAL(int)
+@@ -821,7 +823,9 @@ GLOBAL(void)
+ jsimd_quantize_float(JCOEFPTR coef_block, FAST_FLOAT *divisors,
+                      FAST_FLOAT *workspace)
+ {
++#ifndef __mips_soft_float
+   jsimd_quantize_float_dspr2(coef_block, divisors, workspace);
++#endif
+ }
+ 
+ GLOBAL(int)
+diff --git a/simd/mips/jsimd_dspr2.S b/simd/mips/jsimd_dspr2.S
+index 2ec543e..6fa79ab 100644
+--- a/simd/mips/jsimd_dspr2.S
++++ b/simd/mips/jsimd_dspr2.S
+@@ -2810,6 +2810,7 @@ LEAF_DSPR2(jsimd_quantize_dspr2)
+ END(jsimd_quantize_dspr2)
+ 
+ 
++#ifndef __mips_soft_float
+ /*****************************************************************************/
+ LEAF_DSPR2(jsimd_quantize_float_dspr2)
+ /*
+@@ -2889,6 +2890,7 @@ LEAF_DSPR2(jsimd_quantize_float_dspr2)
+      nop
+ 
+ END(jsimd_quantize_float_dspr2)
++#endif
+ 
+ 
+ /*****************************************************************************/
+@@ -4110,6 +4112,7 @@ LEAF_DSPR2(jsimd_convsamp_dspr2)
+ END(jsimd_convsamp_dspr2)
+ 
+ 
++#ifndef __mips_soft_float
+ /*****************************************************************************/
+ LEAF_DSPR2(jsimd_convsamp_float_dspr2)
+ /*
+@@ -4467,5 +4470,6 @@ LEAF_DSPR2(jsimd_convsamp_float_dspr2)
+      nop
+ 
+ END(jsimd_convsamp_float_dspr2)
++#endif
+ 
+ /*****************************************************************************/
+-- 
+2.7.4
+
