@@ -13,8 +13,13 @@ PKG_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PAT
 PKG_RELEASE:=1
 
 PKG_SOURCE:=go$(PKG_VERSION).src.tar.gz
-PKG_SOURCE_URL:=https://golang.org/dl/
-PKG_HASH:=f3de49289405fda5fd1483a8fe6bd2fa5469e005fd567df64485c4fa000c7f24
+PKG_SOURCE_URL:=https://golang.org/dl/ \
+                https://dl.google.com/go/ \
+                https://fossies.org/linux/misc/ \
+                http://distfiles.gentoo.org/distfiles/ \
+                https://ftp.netbsd.org/pub/pkgsrc/distfiles/ \
+                https://distfiles.macports.org/go/
+PKG_HASH:=567b1cc66c9704d1c019c50bef946272e911ec6baf244310f87f4e678be155f2
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -52,7 +57,7 @@ HOST_GO_VALID_OS_ARCH:= \
   linux_ppc64 linux_ppc64le linux_mips linux_mipsle linux_mips64 linux_mips64le
 
 BOOTSTRAP_SOURCE_PROTO:=git
-BOOTSTRAP_SOURCE_URL:=https://go.googlesource.com/go
+BOOTSTRAP_SOURCE_URL:=https://github.com/golang/go.git
 BOOTSTRAP_SOURCE_VERSION:=4d5426a570c2820c5894a61b52e3dc147e4e7925
 BOOTSTRAP_SOURCE_DATE:=20170926
 BOOTSTRAP_MIRROR_HASH:=a3e26ee7c96486c841d29cbea3bf548ce2d999b9235275091cbe60ae6efa4cb1
