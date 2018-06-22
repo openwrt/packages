@@ -29,9 +29,11 @@ define Package/seafile-seahub
     MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
     URL:=http://seafile.com/
     DEPENDS:=+simplejson +python +pillow +chardet +django +django-appconf \
-		+django-compressor +django-constance +django-jsonfield +django-picklefield \
-		+django-postoffice +django-restframework +django-statici18n +et_xmlfile \
-		+flup +gunicorn +jdcal +openpyxl +python-dateutil +python-mysql +pytz +rcssmin
+		+django-compressor +django-constance +django-formtools +django-jsonfield \
+		+django-picklefield +django-postoffice +django-restframework \
+		+django-simple-captcha +django-statici18n +django-webpack-loader +et_xmlfile \
+		+flup +gunicorn +jdcal +openpyxl +python-dateutil +python-mysql \
+		+python-qrcode +python-requests +python-requests-oauthlib +pytz +rcssmin
 endef
 
 define Build/Configure
