@@ -46,14 +46,14 @@ index 7cca150..23abb82 100644
 +	private = RSA_new();
 +	e = BN_new();
 +	if (private == NULL || e == NULL || !BN_set_word(e, 35) ||
-+	    !RSA_generate_key_ex(private, bits, e, NULL)) {
++		!RSA_generate_key_ex(private, bits, e, NULL)) {
++		RSA_free(private);
 +		BN_free(e);
-+		return private;
++		g_error ("rsa_generate_private_key: key generation failed.");
++		return NULL;
 +	}
 +	BN_free(e);
-+	RSA_free(private);
-+	g_error ("rsa_generate_private_key: key generation failed.");
-+	return NULL;
++	return private;
  }
 diff --git a/net/common/processors/keepalive-proc.c b/net/common/processors/keepalive-proc.c
 index 609d102..42a0c23 100644
