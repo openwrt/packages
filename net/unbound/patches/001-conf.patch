@@ -1,32 +1,19 @@
 diff --git a/doc/example.conf.in b/doc/example.conf.in
-index 5396029..cbb51ec 100644
+index be83bda..7317b23 100644
 --- a/doc/example.conf.in
 +++ b/doc/example.conf.in
-@@ -1,9 +1,10 @@
--#
--# Example configuration file.
--#
--# See unbound.conf(5) man page, version 1.7.1.
--#
--# this is a comment.
-+##############################################################################
-+# MEMORY CONTROL EXAMPLE
-+# In the example config settings below memory usage is reduced. Some ser-
-+# vice levels are lower, notable very large data and a high TCP load are
-+# no longer supported ... are exceptional for the DNS.
-+# (http://unbound.net/documentation/unbound.conf.html)
-+##############################################################################
-
- #Use this to include other text into the file.
- #include: "otherfile.conf"
-@@ -12,9 +13,71 @@
- server:
- 	# whitespace is not necessary, but looks cleaner.
-
--	# verbosity number, 0 is least verbose. 1 is default.
-+	# verbosity 1 is default
+@@ -15,6 +15,76 @@ server:
+ 	# verbosity number, 0 is least verbose. 1 is default.
  	verbosity: 1
 
++	############################################################################
++	# MEMORY CONTROL EXAMPLE
++	# In the example config settings below memory usage is reduced. Some ser-
++	# vice levels are lower, notable very large data and a high TCP load are
++	# no longer supported ... are exceptional for the DNS.
++	# (http://unbound.net/documentation/unbound.conf.html)
++	############################################################################
++
 +	# Self jail Unbound with user "unbound" to /var/lib/unbound
 +	# The script /etc/init.d/unbound will setup the location
 +	username: "unbound"
@@ -85,9 +72,9 @@ index 5396029..cbb51ec 100644
 +	# have power off clock (reboot), then you may need this work around.
 +	#domain-insecure: "pool.ntp.org"
 +
-+##############################################################################
-+# Resume Stock example.conf.in
-+##############################################################################
++	############################################################################
++	# Resume Stock example.conf.in
++	############################################################################
 +
  	# print statistics to the log (for every thread) every N seconds.
  	# Set to "" or 0 to disable. Default is disabled.

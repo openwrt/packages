@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unbound
-PKG_VERSION:=1.7.1
-PKG_RELEASE:=2
+PKG_VERSION:=1.7.3
+PKG_RELEASE:=1
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -17,7 +17,7 @@ PKG_MAINTAINER:=Eric Luehrsen <ericluehrsen@hotmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.unbound.net/downloads
-PKG_HASH:=56e085ef582c5372a20207de179d0edb4e541e59f87be7d4ee1d00d12008628d
+PKG_HASH:=c11de115d928a6b48b2165e0214402a7a7da313cd479203a7ce7a8b62cba602d
 
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
@@ -113,6 +113,8 @@ CONFIGURE_ARGS += \
 	--disable-dsa \
 	--disable-gost \
 	--enable-allsymbols \
+	--enable-tfo-client \
+	--enable-tfo-server \
 	--with-libexpat="$(STAGING_DIR)/usr" \
 	--with-ssl="$(STAGING_DIR)/usr" \
 	--with-pidfile=/var/run/unbound.pid \
