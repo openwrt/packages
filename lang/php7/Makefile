@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=7.2.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -74,7 +74,6 @@ define Package/php7/config
 	config PHP7_SYSTEMTZDATA
 		bool "Use system timezone data instead of php's built-in database"
 		depends on PACKAGE_php7-cli || PACKAGE_php7-cgi
-		select PACKAGE_zoneinfo-core
 		default y
 		help
 			Enabling this feature automatically selects the zoneinfo-core package
@@ -86,7 +85,8 @@ define Package/php7
   $(call Package/php7/Default)
 
   DEPENDS:=+libpcre +zlib \
-           +PHP7_LIBXML:libxml2
+           +PHP7_LIBXML:libxml2 \
+           +PHP7_SYSTEMTZDATA:zoneinfo-core
 endef
 
 define Package/php7/description
