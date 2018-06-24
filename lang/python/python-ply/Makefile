@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-ply
-PKG_VERSION:=3.10
-PKG_RELEASE:=2
+PKG_VERSION:=3.11
+PKG_RELEASE:=1
 
 PKG_SOURCE:=ply-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.dabeaz.com/ply
-PKG_HASH:=96e94af7dd7031d8d6dd6e2a8e0de593b511c211a86e28a9c9621c275ac8bacb
+PKG_SOURCE_URL:=http://www.dabeaz.com/ply \
+                https://files.pythonhosted.org/packages/source/p/ply
+PKG_HASH:=00c7c1aaa88358b9c765b6d3000c6eec0ba42abca5351b095321aef446081da3
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-ply-$(PKG_VERSION)
 
@@ -36,14 +37,14 @@ endef
 
 define Package/python-ply
 $(call Package/python-ply/Default)
-  TITLE:=python-ply
+  TITLE:=lex and yacc for Python
   DEPENDS:=+PACKAGE_python-ply:python-light
   VARIANT:=python
 endef
 
 define Package/python3-ply
 $(call Package/python-ply/Default)
-  TITLE:=python3-ply
+  TITLE:=lex and yacc for Python
   DEPENDS:=+PACKAGE_python3-ply:python3-light
   VARIANT:=python3
 endef
