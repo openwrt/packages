@@ -26,5 +26,5 @@
 -        'm2r',
 -    ],
      install_requires=[
-         "attrs",
+         "attrs>=16.1.0",
          "six",
