@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-ipaddress
-PKG_VERSION:=1.0.19
-PKG_RELEASE:=2
+PKG_VERSION:=1.0.22
+PKG_RELEASE:=1
 
 PKG_SOURCE:=ipaddress-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/f0/ba/860a4a3e283456d6b7e2ab39ce5cf11a3490ee1a363652ac50abf9f0f5df
-PKG_HASH:=200d8686011d470b5e4de207d803445deee427455cd0cb7c982b68cf82524f81
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/i/ipaddress
+PKG_HASH:=b146c751ea45cad6188dd6cf2d9b757f6f4f8d6ffb96a023e6f2e26eea02a72c
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-ipaddress-$(PKG_VERSION)
 
@@ -34,7 +34,7 @@ endef
 
 define Package/python-ipaddress
 $(call Package/python-ipaddress/Default)
-  TITLE:=python-ipaddress
+  TITLE:=Python 3.3+'s ipaddress
   DEPENDS:=+PACKAGE_python-ipaddress:python-light
   VARIANT:=python
 endef
