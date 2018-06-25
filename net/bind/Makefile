@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
 PKG_VERSION:=9.11.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 USERID:=bind=57:bind=57
 
 PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
@@ -54,7 +54,7 @@ endef
 define Package/bind-libs
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libopenssl +zlib
+  DEPENDS:=+libatomic +libopenssl +zlib
   TITLE:=bind shared libraries
   URL:=https://www.isc.org/software/bind
 ifdef CONFIG_BIND_LIBJSON
