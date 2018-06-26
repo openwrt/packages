@@ -1,0 +1,3 @@
+config syncthing 'syncthing'
+    option gui_address 'http://127.0.0.1:8384'
+    option home '/etc/syncthing/'
