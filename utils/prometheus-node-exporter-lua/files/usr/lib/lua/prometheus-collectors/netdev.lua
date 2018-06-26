@@ -1,9 +1,23 @@
 
-local netdevsubstat = {"receive_bytes", "receive_packets", "receive_errs",
-                   "receive_drop", "receive_fifo", "receive_frame", "receive_compressed",
-                   "receive_multicast", "transmit_bytes", "transmit_packets",
-                   "transmit_errs", "transmit_drop", "transmit_fifo", "transmit_colls",
-                   "transmit_carrier", "transmit_compressed"}
+local netdevsubstat = {
+    "receive_bytes_total",
+    "receive_packets_total",
+    "receive_errs_total",
+    "receive_drop_total",
+    "receive_fifo_total",
+    "receive_frame_total",
+    "receive_compressed_total",
+    "receive_multicast_total",
+    "transmit_bytes_total",
+    "transmit_packets_total",
+    "transmit_errs_total",
+    "transmit_drop_total",
+    "transmit_fifo_total",
+    "transmit_colls_total",
+    "transmit_carrier_total",
+    "transmit_compressed_total"
+}
+
 local pattern = "([^%s:]+):%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)"
 
 local function scrape()
