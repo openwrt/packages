@@ -2,19 +2,19 @@
 #
 #.Distributed under the terms of the GNU General Public License (GPL) version 2.0
 #
-# script for sending updates to cloudflare.com
+# script for sending updates to Cloudflare.com
 #.based on Ben Kulbertis cloudflare-update-record.sh found at http://gist.github.com/benkulbertis
 #.and on George Johnson's cf-ddns.sh found at https://github.com/gstuartj/cf-ddns.sh
 #.2016-2018 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
-# CloudFlare API documentation at https://api.cloudflare.com/
+# Cloudflare API documentation at https://api.cloudflare.com/
 #
 # This script is parsed by dynamic_dns_functions.sh inside send_update() function
 #
 # using following options from /etc/config/ddns
-# option username  - your cloudflare e-mail
-# option password  - cloudflare api key, you can get it from cloudflare.com/my-account/
+# option username  - your Cloudflare e-mail
+# option password  - Cloudflare api key, you can get it from https://dash.cloudflare.com/profile
 # option domain    - "hostname@yourdomain.TLD"	# syntax changed to remove split_FQDN() function and tld_names.dat.gz
-# option param_opt - Whether the record is receiving the performance and security benefits of Cloudflare (not empty => false)
+# option param_opt - Whether the record is receiving the performance and security benefits of Cloudflare (true, false or empty)
 #
 # variable __IP already defined with the ip-address to use for update
 #
@@ -84,7 +84,7 @@ cloudflare_transfer() {
 
 	# check for error
 	grep -q '"success":true' $DATFILE || {
-		write_log 4 "CloudFlare reported an error:"
+		write_log 4 "Cloudflare reported an error:"
 		write_log 7 "$(cat $DATFILE)"		# report error
 		return 1	# HTTP-Fehler
 	}
@@ -163,12 +163,12 @@ __DATA=$(grep -o '"content":"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
 		expand_ipv6 $__IP __IPV6
 		expand_ipv6 $__DATA __DATA
 		[ "$__DATA" = "$__IPV6" ] && {		# IPv6 no update needed
-			write_log 7 "IPv6 at CloudFlare.com already up to date"
+			write_log 7 "IPv6 at Cloudflare.com already up to date"
 			return 0
 		}
 	else
 		[ "$__DATA" = "$__IP" ] && {		# IPv4 no update needed
-			write_log 7 "IPv4 at CloudFlare.com already up to date"
+			write_log 7 "IPv4 at Cloudflare.com already up to date"
 			return 0
 		}
 	fi
@@ -176,20 +176,22 @@ __DATA=$(grep -o '"content":"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
 
 # update is needed
 # let's build data to send
-# set proxied parameter (default "true")
-[ -z "$param_opt" ] && __PROXIED="true" || {
-	__PROXIED="false"
-	write_log 7 "Cloudflare 'proxied' disabled"
-}
+# set proxied parameter (default to no change)
+if [ "$param_opt" = "true" -o "$param_opt" = "false" ]; then
+	__PROXIED=",\"proxied\":$param_opt"
+	write_log 7 "Cloudflare 'proxied' set to $param_opt"
+else
+	__PROXIED=""
+	write_log 7 "Cloudflare 'proxied' not changed"
+fi
 
 # use file to work around " needed for json
 cat > $DATFILE << EOF
-{"id":"$__ZONEID","type":"$__TYPE","name":"$__HOST","content":"$__IP","proxied":$__PROXIED}
+{"id":"$__ZONEID","type":"$__TYPE","name":"$__HOST","content":"$__IP"$__PROXIED}
 EOF
 
 # let's complete transfer command
-__RUNPROG="$__PRGBASE --request PUT --data @$DATFILE '$__URLBASE/zones/$__ZONEID/dns_records/$__RECID'"
+__RUNPROG="$__PRGBASE --request PATCH --data @$DATFILE '$__URLBASE/zones/$__ZONEID/dns_records/$__RECID'"
 cloudflare_transfer || return 1
 
 return 0
-
