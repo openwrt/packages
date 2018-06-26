@@ -249,7 +249,7 @@ create_local_zone() {
     # New Zone! Bundle local-zones: by first two name tiers "abcd.tld."
     partial=$( echo "$target" | awk -F. '{ j=NF ; i=j-1; print $i"."$j }' )
     UNBOUND_LIST_DOMAINS="$UNBOUND_LIST_DOMAINS $partial"
-    echo "  local-zone: $partial. transparent" >> $UNBOUND_CONFFILE
+    echo "  local-zone: \"$partial.\" transparent" >> $UNBOUND_CONFFILE
   fi
 }
 
@@ -1070,9 +1070,9 @@ unbound_hostname() {
   if [ -n "$UNBOUND_TXT_DOMAIN" ] ; then
     {
       # Hostname as TLD works, but not transparent through recursion
-      echo "  domain-insecure: $UNBOUND_TXT_HOSTNAME"
-      echo "  private-domain: $UNBOUND_TXT_HOSTNAME"
-      echo "  local-zone: $UNBOUND_TXT_HOSTNAME. static"
+      echo "  domain-insecure: \"$UNBOUND_TXT_HOSTNAME\""
+      echo "  private-domain: \"$UNBOUND_TXT_HOSTNAME\""
+      echo "  local-zone: \"$UNBOUND_TXT_HOSTNAME.\" static"
       echo "  local-data: \"$UNBOUND_TXT_HOSTNAME. $UNBOUND_XSOA\""
       echo "  local-data: \"$UNBOUND_TXT_HOSTNAME. $UNBOUND_XNS\""
       echo
@@ -1090,8 +1090,8 @@ unbound_hostname() {
           if [ -n "$ifarpa" ] ; then
             {
               # Do NOT forward queries with your GLA ip6.arpa
-              echo "  domain-insecure: $ifarpa"
-              echo "  local-zone: $ifarpa. $UNBOUND_D_DOMAIN_TYPE"
+              echo "  domain-insecure: \"$ifarpa\""
+              echo "  local-zone: \"$ifarpa.\" $UNBOUND_D_DOMAIN_TYPE"
               echo "  local-data: \"$ifarpa. $UNBOUND_XSOA\""
               echo "  local-data: \"$ifarpa. $UNBOUND_XNS\""
               echo
@@ -1110,8 +1110,8 @@ unbound_hostname() {
           if [ -n "$ifarpa" ] ; then
             {
               # Do NOT forward queries with your ULA ip6.arpa or in-addr.arpa
-              echo "  domain-insecure: $ifarpa"
-              echo "  local-zone: $ifarpa. $UNBOUND_D_DOMAIN_TYPE"
+              echo "  domain-insecure: \"$ifarpa\""
+              echo "  local-zone: \"$ifarpa.\" $UNBOUND_D_DOMAIN_TYPE"
               echo "  local-data: \"$ifarpa. $UNBOUND_XSOA\""
               echo "  local-data: \"$ifarpa. $UNBOUND_XNS\""
               echo
@@ -1123,18 +1123,18 @@ unbound_hostname() {
 
       {
         # avoid upstream involvement in RFC6762
-        echo "  domain-insecure: local"
-        echo "  private-domain: local"
-        echo "  local-zone: local. $UNBOUND_D_DOMAIN_TYPE"
+        echo "  domain-insecure: \"local\""
+        echo "  private-domain: \"local\""
+        echo "  local-zone: \"local.\" $UNBOUND_D_DOMAIN_TYPE"
         echo "  local-data: \"local. $UNBOUND_XSOA\""
         echo "  local-data: \"local. $UNBOUND_XNS\""
         echo "  local-data: \"local. 3600 IN TXT RFC6762\""
         echo
         # type static means only this router has your domain
         # type transparent will permit forward-zone: or stub-zone: clauses
-        echo "  domain-insecure: $UNBOUND_TXT_DOMAIN"
-        echo "  private-domain: $UNBOUND_TXT_DOMAIN"
-        echo "  local-zone: $UNBOUND_TXT_DOMAIN. $UNBOUND_D_DOMAIN_TYPE"
+        echo "  domain-insecure: \"$UNBOUND_TXT_DOMAIN\""
+        echo "  private-domain: \"$UNBOUND_TXT_DOMAIN\""
+        echo "  local-zone: \"$UNBOUND_TXT_DOMAIN.\" $UNBOUND_D_DOMAIN_TYPE"
         echo "  local-data: \"$UNBOUND_TXT_DOMAIN. $UNBOUND_XSOA\""
         echo "  local-data: \"$UNBOUND_TXT_DOMAIN. $UNBOUND_XNS\""
         echo
@@ -1143,9 +1143,9 @@ unbound_hostname() {
 
     *)
       # likely transparent domain with fordward-zone: clause to next router
-      echo "  domain-insecure: $UNBOUND_TXT_DOMAIN"
-      echo "  private-domain: $UNBOUND_TXT_DOMAIN"
-      echo "  local-zone: $UNBOUND_TXT_DOMAIN. $UNBOUND_D_DOMAIN_TYPE"
+      echo "  domain-insecure: \"$UNBOUND_TXT_DOMAIN\""
+      echo "  private-domain: \"$UNBOUND_TXT_DOMAIN\""
+      echo "  local-zone: \"$UNBOUND_TXT_DOMAIN.\" $UNBOUND_D_DOMAIN_TYPE"
       echo
       ;;
     esac
