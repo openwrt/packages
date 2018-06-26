@@ -1,0 +1,13 @@
+--- a/backend/ipp.c
++++ b/backend/ipp.c
+@@ -1787,6 +1787,10 @@ main(int  argc,				/* I - Number of comm
+ 	  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD,
+ 		       "compression", NULL, compression);
+ 
++        if (compression)
++	  ippAddString(request, IPP_TAG_OPERATION, IPP_TAG_KEYWORD,
++		       "compression", NULL, compression);
++
+ 	fprintf(stderr, "DEBUG: Sending file %d using chunking...\n", i + 1);
+ 	fprintf(stderr, "DEBUG: IPP/%d.%d %s #%d\n", version / 10, version % 10, ippOpString(ippGetOperation(request)), ippGetRequestId(request));
+ 	debug_attributes(request);
