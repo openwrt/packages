@@ -249,7 +249,7 @@ create_local_zone() {
     # New Zone! Bundle local-zones: by first two name tiers "abcd.tld."
     partial=$( echo "$target" | awk -F. '{ j=NF ; i=j-1; print $i"."$j }' )
     UNBOUND_LIST_DOMAINS="$UNBOUND_LIST_DOMAINS $partial"
-    echo "  local-zone: $partial. transparent" >> $UNBOUND_CONFFILE
+    echo "  local-zone: $partial transparent" >> $UNBOUND_CONFFILE
   fi
 }
 
@@ -561,10 +561,10 @@ unbound_control() {
       echo "  control-use-cert: yes"
       echo "  control-interface: 127.0.0.1"
       echo "  control-interface: ::1"
-      echo "  server-key-file: \"$UNBOUND_SRVKEY_FILE\""
-      echo "  server-cert-file: \"$UNBOUND_SRVPEM_FILE\""
-      echo "  control-key-file: \"$UNBOUND_CTLKEY_FILE\""
-      echo "  control-cert-file: \"$UNBOUND_CTLPEM_FILE\""
+      echo "  server-key-file: $UNBOUND_SRVKEY_FILE"
+      echo "  server-cert-file: $UNBOUND_SRVPEM_FILE"
+      echo "  control-key-file: $UNBOUND_CTLKEY_FILE"
+      echo "  control-cert-file: $UNBOUND_CTLPEM_FILE"
       echo
     } >> $UNBOUND_CONFFILE
     ;;
@@ -579,10 +579,10 @@ unbound_control() {
       echo "  control-use-cert: yes"
       echo "  control-interface: 0.0.0.0"
       echo "  control-interface: ::0"
-      echo "  server-key-file: \"$UNBOUND_SRVKEY_FILE\""
-      echo "  server-cert-file: \"$UNBOUND_SRVPEM_FILE\""
-      echo "  control-key-file: \"$UNBOUND_CTLKEY_FILE\""
-      echo "  control-cert-file: \"$UNBOUND_CTLPEM_FILE\""
+      echo "  server-key-file: $UNBOUND_SRVKEY_FILE"
+      echo "  server-cert-file: $UNBOUND_SRVPEM_FILE"
+      echo "  control-key-file: $UNBOUND_CTLKEY_FILE"
+      echo "  control-cert-file: $UNBOUND_CTLPEM_FILE"
       echo
     } >> $UNBOUND_CONFFILE
     ;;
@@ -615,7 +615,7 @@ unbound_forward() {
       for fdomain in $UNBOUND_LIST_FORWARD ; do
         {
           echo "forward-zone:"
-          echo "  name: \"$fdomain.\""
+          echo "  name: $fdomain"
           for fresolver in $resolvers ; do
           echo "  forward-addr: $fresolver"
           done
@@ -650,15 +650,15 @@ unbound_auth_root() {
 
       {
         echo "auth-zone:"
-        echo "  name: \"$realzone\""
+        echo "  name: $realzone"
         for server in $axfrservers ; do
-          echo "  master: \"$server\""
+          echo "  master: $server"
         done
-        echo "  url: \"$httpserver$zone.zone\""
+        echo "  url: $httpserver$zone.zone"
         echo "  fallback-enabled: yes"
         echo "  for-downstream: no"
         echo "  for-upstream: yes"
-        echo "  zonefile: \"$zone.zone\""
+        echo "  zonefile: $zone.zone"
         echo
       } >> $UNBOUND_CONFFILE
     done
@@ -680,9 +680,9 @@ unbound_conf() {
     echo
     echo "server:"
     echo "  username: unbound"
-    echo "  chroot: \"$UNBOUND_VARDIR\""
-    echo "  directory: \"$UNBOUND_VARDIR\""
-    echo "  pidfile: \"$UNBOUND_PIDFILE\""
+    echo "  chroot: $UNBOUND_VARDIR"
+    echo "  directory: $UNBOUND_VARDIR"
+    echo "  pidfile: $UNBOUND_PIDFILE"
     echo
     # No threading
     echo "  num-threads: 1"
@@ -783,13 +783,13 @@ unbound_conf() {
 
   if [ -f "$UNBOUND_HINTFILE" ] ; then
     # Optional hints if found
-    echo "  root-hints: \"$UNBOUND_HINTFILE\"" >> $UNBOUND_CONFFILE
+    echo "  root-hints: $UNBOUND_HINTFILE" >> $UNBOUND_CONFFILE
   fi
 
 
   if [ "$UNBOUND_B_DNSSEC" -gt 0 -a -f "$UNBOUND_KEYFILE" ] ; then
     {
-      echo "  auto-trust-anchor-file: \"$UNBOUND_KEYFILE\""
+      echo "  auto-trust-anchor-file: $UNBOUND_KEYFILE"
       echo
     } >> $UNBOUND_CONFFILE
 
@@ -989,7 +989,7 @@ unbound_conf() {
   if  [ -n "$UNBOUND_LIST_INSECURE" ] ; then
     for domain in $UNBOUND_LIST_INSECURE ; do
       # Except and accept domains without (DNSSEC); work around broken domains
-      echo "  domain-insecure: \"$domain\"" >> $UNBOUND_CONFFILE
+      echo "  domain-insecure: $domain" >> $UNBOUND_CONFFILE
     done
 
 
@@ -1072,7 +1072,7 @@ unbound_hostname() {
       # Hostname as TLD works, but not transparent through recursion
       echo "  domain-insecure: $UNBOUND_TXT_HOSTNAME"
       echo "  private-domain: $UNBOUND_TXT_HOSTNAME"
-      echo "  local-zone: $UNBOUND_TXT_HOSTNAME. static"
+      echo "  local-zone: $UNBOUND_TXT_HOSTNAME static"
       echo "  local-data: \"$UNBOUND_TXT_HOSTNAME. $UNBOUND_XSOA\""
       echo "  local-data: \"$UNBOUND_TXT_HOSTNAME. $UNBOUND_XNS\""
       echo
@@ -1091,7 +1091,7 @@ unbound_hostname() {
             {
               # Do NOT forward queries with your GLA ip6.arpa
               echo "  domain-insecure: $ifarpa"
-              echo "  local-zone: $ifarpa. $UNBOUND_D_DOMAIN_TYPE"
+              echo "  local-zone: $ifarpa $UNBOUND_D_DOMAIN_TYPE"
               echo "  local-data: \"$ifarpa. $UNBOUND_XSOA\""
               echo "  local-data: \"$ifarpa. $UNBOUND_XNS\""
               echo
@@ -1111,7 +1111,7 @@ unbound_hostname() {
             {
               # Do NOT forward queries with your ULA ip6.arpa or in-addr.arpa
               echo "  domain-insecure: $ifarpa"
-              echo "  local-zone: $ifarpa. $UNBOUND_D_DOMAIN_TYPE"
+              echo "  local-zone: $ifarpa $UNBOUND_D_DOMAIN_TYPE"
               echo "  local-data: \"$ifarpa. $UNBOUND_XSOA\""
               echo "  local-data: \"$ifarpa. $UNBOUND_XNS\""
               echo
@@ -1125,7 +1125,7 @@ unbound_hostname() {
         # avoid upstream involvement in RFC6762
         echo "  domain-insecure: local"
         echo "  private-domain: local"
-        echo "  local-zone: local. $UNBOUND_D_DOMAIN_TYPE"
+        echo "  local-zone: local $UNBOUND_D_DOMAIN_TYPE"
         echo "  local-data: \"local. $UNBOUND_XSOA\""
         echo "  local-data: \"local. $UNBOUND_XNS\""
         echo "  local-data: \"local. 3600 IN TXT RFC6762\""
@@ -1134,7 +1134,7 @@ unbound_hostname() {
         # type transparent will permit forward-zone: or stub-zone: clauses
         echo "  domain-insecure: $UNBOUND_TXT_DOMAIN"
         echo "  private-domain: $UNBOUND_TXT_DOMAIN"
-        echo "  local-zone: $UNBOUND_TXT_DOMAIN. $UNBOUND_D_DOMAIN_TYPE"
+        echo "  local-zone: $UNBOUND_TXT_DOMAIN $UNBOUND_D_DOMAIN_TYPE"
         echo "  local-data: \"$UNBOUND_TXT_DOMAIN. $UNBOUND_XSOA\""
         echo "  local-data: \"$UNBOUND_TXT_DOMAIN. $UNBOUND_XNS\""
         echo
@@ -1145,7 +1145,7 @@ unbound_hostname() {
       # likely transparent domain with fordward-zone: clause to next router
       echo "  domain-insecure: $UNBOUND_TXT_DOMAIN"
       echo "  private-domain: $UNBOUND_TXT_DOMAIN"
-      echo "  local-zone: $UNBOUND_TXT_DOMAIN. $UNBOUND_D_DOMAIN_TYPE"
+      echo "  local-zone: $UNBOUND_TXT_DOMAIN $UNBOUND_D_DOMAIN_TYPE"
       echo
       ;;
     esac
