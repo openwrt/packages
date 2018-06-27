@@ -1,0 +1,26 @@
+--- a/tools/seafile-admin
++++ b/tools/seafile-admin
+@@ -831,7 +831,22 @@ def setup_seafile(args):
+     conf[CONF_SEAFILE_CENTRAL_CONF_DIR] = os.path.join(cwd, 'conf')
+     config_ccnet_seafile()
+     init_ccnet_seafile()
+-    init_seahub()
++
++    # make sure ccnet-server is running to avoid an error creating django superuser
++    if not is_running('ccnet-server'):
++        argv = [
++            'ccnet-server',
++            '-F',
++            conf[CONF_SEAFILE_CENTRAL_CONF_DIR],
++	    '-c',
++	    conf[CONF_CCNET_DIR],
++	    '-d'
++        ]
++        run_argv(argv)
++        init_seahub()
++        pkill('ccnet-server')
++    else:
++        init_seahub()
+ 
+     print
+     print '-----------------------------------------------------------------'
