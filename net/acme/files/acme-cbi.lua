@@ -61,7 +61,7 @@ wr = cs:option(Value, "webroot", translate("Webroot directory"),
                translate("Webserver root directory. Set this to the webserver " ..
                          "document root to run Acme in webroot mode. The web " ..
                          "server must be accessible from the internet on port 80."))
-wr.rmempty = false
+wr.optional = true
 
 dom = cs:option(DynamicList, "domains", translate("Domain names"),
                 translate("Domain names to include in the certificate. " ..
@@ -75,7 +75,7 @@ dns = cs:option(Value, "dns", translate("DNS API"),
                           "In DNS mode, the domain name does not have to resolve to the router IP. " ..
                           "DNS mode is also the only mode that supports wildcard certificates. " ..
                           "Using this mode requires the acme-dnsapi package to be installed."))
-dns.rmempty = false
+dns.optional = true
 
 cred = cs:option(DynamicList, "credentials", translate("DNS API credentials"),
                  translate("The credentials for the DNS API mode selected above. " ..
