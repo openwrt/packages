@@ -54,7 +54,7 @@ endef
 define Package/bind-libs
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libopenssl +zlib
+  DEPENDS:=+libopenssl +zlib +libatomic
   TITLE:=bind shared libraries
   URL:=https://www.isc.org/software/bind
 ifdef CONFIG_BIND_LIBJSON
