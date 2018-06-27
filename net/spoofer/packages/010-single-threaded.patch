@@ -1,0 +1,13 @@
+Index: spoofer-1.3.2/openwrt-files/initscript.in
+===================================================================
+--- spoofer-1.3.2.orig/openwrt-files/initscript.in
++++ spoofer-1.3.2/openwrt-files/initscript.in
+@@ -20,7 +20,7 @@ LOGFILE="/var/run/spoofer.log"
+ # Command to record last-run timestamp
+ REMEMBER="uci set $LASTOPT=\$(date +'%s') && uci commit"
+ 
+-PROBER_ARGS="--cafile /usr/share/spoofer/gd_bundle.crt @PROBER_ARGS@"
++PROBER_ARGS="--cafile /usr/share/spoofer/gd_bundle.crt -1 @PROBER_ARGS@"
+ 
+ CMD="/usr/bin/spoofer-prober $PROBER_ARGS >$LOGFILE 2>&1; $REMEMBER"
+ 
