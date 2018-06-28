@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
 PKG_VERSION:=9.11.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 USERID:=bind=57:bind=57
 
 PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
@@ -127,6 +127,7 @@ CONFIGURE_ARGS += \
 	--with-ecdsa=$(if $(CONFIG_OPENSSL_WITH_EC),yes,no) \
 	--with-eddsa=$(if $(CONFIG_BIND_ENABLE_EDDSA),yes,no) \
 	--with-readline=no \
+	--enable-atomic=no \
 	--sysconfdir=/etc/bind
 
 ifdef CONFIG_BIND_ENABLE_FILTER_AAAA
