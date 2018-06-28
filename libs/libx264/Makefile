@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=x264
 PKG_VERSION:=snapshot-20180401-2245
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.videolan.org/x264/snapshots/
@@ -38,9 +38,9 @@ ifneq ($(CONFIG_SOFT_FLOAT)$(findstring $(call qstrip,$(CONFIG_CPU_TYPE)),$(CPU_
   CONFIGURE_ARGS += --disable-asm
 else
 ifneq ($(CONFIG_TARGET_x86),)
-ifeq ($(CONFIG_YASM),y)
-  CONFIGURE_VARS+= AS=yasm
-  MAKE_FLAGS+= AS=yasm
+ifeq ($(CONFIG_NASM),y)
+  CONFIGURE_VARS+= AS=nasm
+  MAKE_FLAGS+= AS=nasm
 else
   CONFIGURE_VARS+= AS= 
   MAKE_FLAGS+= AS= 
