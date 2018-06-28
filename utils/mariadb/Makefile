@@ -442,6 +442,10 @@ endef
 define Package/mariadb-client/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(foreach b,$(MARIADB_CLIENT),$(call Package/mariadb/install/bin,$(1),$(b));)
+	# Install convenience links for mysqlcheck multi-call binary
+	cd $(1)/usr/bin; $(LN) mysqlcheck mysqlanalyze
+	cd $(1)/usr/bin; $(LN) mysqlcheck mysqlrepair
+	cd $(1)/usr/bin; $(LN) mysqlcheck mysqloptimize
 endef
 
 define Package/mariadb-client-extra/install
