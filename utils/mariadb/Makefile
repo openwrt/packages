@@ -341,6 +341,7 @@ CMAKE_OPTIONS += \
 	-DINSTALL_SCRIPTDIR=bin \
 	-DINSTALL_SQLBENCHDIR="" \
 	-DINSTALL_SUPPORTFILESDIR=share/mysql \
+	-DINSTALL_UNIX_ADDRDIR=/var/run/mysqld.sock \
 	-DMYSQLD_USER=root \
 	-DMYSQL_DATADIR=/var/lib/mysql \
 	-DMYSQL_UNIX_ADDR=/var/run/mysqld.sock \
