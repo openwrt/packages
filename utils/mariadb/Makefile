@@ -265,6 +265,7 @@ define Package/mariadb-server
   TITLE:=MariaDB database core server binaries
   MENU:=1
   PROVIDES:=mysql-server
+  USERID:=mariadb=376:mariadb=376
 endef
 
 define Package/mariadb-server/description
@@ -341,10 +342,10 @@ CMAKE_OPTIONS += \
 	-DINSTALL_SCRIPTDIR=bin \
 	-DINSTALL_SQLBENCHDIR="" \
 	-DINSTALL_SUPPORTFILESDIR=share/mysql \
-	-DINSTALL_UNIX_ADDRDIR=/var/run/mysqld.sock \
-	-DMYSQLD_USER=root \
+	-DINSTALL_UNIX_ADDRDIR=/var/run/mysqld/mysqld.sock \
+	-DMYSQLD_USER=mariadb \
 	-DMYSQL_DATADIR=/var/lib/mysql \
-	-DMYSQL_UNIX_ADDR=/var/run/mysqld.sock \
+	-DMYSQL_UNIX_ADDR=/var/run/mysqld/mysqld.sock \
 	-DSKIP_TESTS=ON \
 	-DWITH_ASAN=OFF \
 	-DWITH_EMBEDDED_SERVER=OFF \
@@ -461,10 +462,12 @@ endef
 define Package/mariadb-server/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(foreach b,$(MARIADB_SERVER),$(call Package/mariadb/install/bin,$(1),$(b));)
+	$(INSTALL_DIR) $(1)/etc/default
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/mysql/conf.d
 	$(INSTALL_BIN) files/mysqld.init $(1)/etc/init.d/mysqld
 	$(INSTALL_CONF) conf/my.cnf $(1)/etc/mysql
+	$(INSTALL_CONF) conf/mysqld.default $(1)/etc/default/mysqld
 	$(INSTALL_DIR) $(1)$(PLUGIN_DIR)
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/daemon_example.ini $(1)$(PLUGIN_DIR)
 	$(INSTALL_DIR) $(1)/usr/share/mysql/english
@@ -482,6 +485,7 @@ define Package/mariadb-server-extra/install
 endef
 
 define Package/mariadb-server/conffiles
+/etc/default/mysqld
 /etc/mysql/my.cnf
 $(PLUGIN_DIR)/daemon_example.ini
 endef
