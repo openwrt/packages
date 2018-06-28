@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 # Name, version and release number
 # The name and version of your package are used to define the variable to point to the build directory of your package: $(PKG_BUILD_DIR)
 PKG_NAME:=netifyd
-PKG_VERSION:=2.66
+PKG_VERSION:=2.67
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Darryl Sokoloski <darryl@egloo.ca>
 PKG_LICENSE:=GPL-3.0+
@@ -17,14 +17,16 @@ PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
+PKG_CONFIG_DEPENDS:=CONFIG_LIBCURL_ZLIB
+
 # Source settings
 
 # Disable the following and enable SOURCE_DIR below for local test builds.
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://bitbucket.org/eglooca/netify-daemon.git
-PKG_SOURCE_DATE:=2018-06-18
-PKG_SOURCE_VERSION:=4057e81fd862b63b21ddef2cb6556086fb9d30f8
-PKG_MIRROR_HASH:=aed23001f59e16dd13711cf2b6bf5ed8d2b1efe1ffd9aa2e7a4137a878398c0e
+PKG_SOURCE_DATE:=2018-06-28
+PKG_SOURCE_VERSION:=f076ac5fb9aa16d78f7ed8fce6569a3ce053d951
+PKG_MIRROR_HASH:=whatever
 
 # Local source builds (create symlink to source here)
 #SOURCE_DIR:=$(TOPDIR)/netify-daemon
