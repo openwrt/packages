@@ -60,6 +60,8 @@ MARIADB_SERVER_PLUGINS := \
 	ha_example \
 	ha_federated \
 	ha_federatedx \
+	ha_sequence \
+	ha_sphinx \
 	ha_spider \
 	ha_test_sql_discovery \
 	handlersocket \
@@ -101,6 +103,8 @@ plugin-ha_connect               := PLUGIN_CONNECT
 plugin-ha_example               := PLUGIN_EXAMPLE
 plugin-ha_federated             := PLUGIN_FEDERATED
 plugin-ha_federatedx            := PLUGIN_FEDERATEDX
+plugin-ha_sequence              := PLUGIN_SEQUENCE
+plugin-ha_sphinx                := PLUGIN_SPHINX
 plugin-ha_spider                := PLUGIN_SPIDER
 plugin-ha_test_sql_discovery    := PLUGIN_TEST_SQL_DISCOVERY
 plugin-handlersocket            := PLUGIN_HANDLERSOCKET
@@ -368,7 +372,6 @@ CMAKE_OPTIONS += \
 	-DPLUGIN_MROONGA=NO \
 	-DPLUGIN_OQGRAPH=NO \
 	-DPLUGIN_ROCKSDB=NO \
-	-DPLUGIN_SPHINX=NO \
 	-DPLUGIN_TOKUDB=NO \
 	-DPLUGIN_AUTH_PAM=NO \
 	-DPLUGIN_AUTH_GSSAPI=NO \
@@ -522,8 +525,11 @@ $(eval $(call BuildPlugin,file_key_management,))
 $(eval $(call BuildPlugin,ha_archive,))
 $(eval $(call BuildPlugin,ha_blackhole,))
 $(eval $(call BuildPlugin,ha_connect,+libxml2))
+$(eval $(call BuildPlugin,ha_example,))
 $(eval $(call BuildPlugin,ha_federated,))
 $(eval $(call BuildPlugin,ha_federatedx,))
+$(eval $(call BuildPlugin,ha_sequence,))
+$(eval $(call BuildPlugin,ha_sphinx,))
 $(eval $(call BuildPlugin,ha_spider,))
 $(eval $(call BuildPlugin,ha_test_sql_discovery,))
 $(eval $(call BuildPlugin,handlersocket,))
