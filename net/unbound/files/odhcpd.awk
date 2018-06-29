@@ -64,15 +64,15 @@
 
 
     if ( bconf == 1 ) {
-      x = ( "local-data: \"" fqdn ". 120 IN A " adr "\"" ) ;
-      y = ( "local-data-ptr: \"" adr " 120 " fqdn "\"" ) ;
+      x = ( "local-data: \"" fqdn ". 300 IN A " adr "\"" ) ;
+      y = ( "local-data-ptr: \"" adr " 300 " fqdn "\"" ) ;
       print ( x "\n" y "\n" ) > hostfile ;
     }
 
     else {
       for( i=1; i<=4; i++ ) { qpr = ( ptr[i] "." qpr) ; }
-      x = ( fqdn ". 120 IN A " adr ) ;
-      y = ( qpr "in-addr.arpa. 120 IN PTR " fqdn ) ;
+      x = ( fqdn ". 300 IN A " adr ) ;
+      y = ( qpr "in-addr.arpa. 300 IN PTR " fqdn ) ;
       print ( x "\n" y ) > hostfile ;
     }
 
@@ -98,15 +98,15 @@
 
 
           if ( bconf == 1 ) {
-            x = ( "local-data: \"" fqdn ". 120 IN AAAA " adr "\"" ) ;
-            y = ( "local-data-ptr: \"" adr " 120 " fqdn "\"" ) ;
+            x = ( "local-data: \"" fqdn ". 300 IN AAAA " adr "\"" ) ;
+            y = ( "local-data-ptr: \"" adr " 300 " fqdn "\"" ) ;
             print ( x "\n" y "\n" ) > hostfile ;
           }
 
           else {
             qpr = ipv6_ptr( adr ) ;
-            x = ( fqdn ". 120 IN AAAA " adr ) ;
-            y = ( qpr ". 120 IN PTR " fqdn ) ;
+            x = ( fqdn ". 300 IN AAAA " adr ) ;
+            y = ( qpr ". 300 IN PTR " fqdn ) ;
             print ( x "\n" y ) > hostfile ;
           }
         }
@@ -120,32 +120,32 @@
   else if ((cls != "ipv4") && (hst != "-") && (9 <= NF) && (NF <= 10)) {
     if (cdr == 128) {
       if ( bconf == 1 ) {
-        x = ( "local-data: \"" fqdn ". 120 IN AAAA " adr "\"" ) ;
-        y = ( "local-data-ptr: \"" adr " 120 " fqdn "\"" ) ;
+        x = ( "local-data: \"" fqdn ". 300 IN AAAA " adr "\"" ) ;
+        y = ( "local-data-ptr: \"" adr " 300 " fqdn "\"" ) ;
         print ( x "\n" y "\n" ) > hostfile ;
       }
 
       else {
         # only for provided hostnames and full /128 assignments
         qpr = ipv6_ptr( adr ) ;
-        x = ( fqdn ". 120 IN AAAA " adr ) ;
-        y = ( qpr ". 120 IN PTR " fqdn ) ;
+        x = ( fqdn ". 300 IN AAAA " adr ) ;
+        y = ( qpr ". 300 IN PTR " fqdn ) ;
         print ( x "\n" y ) > hostfile ;
       }
     }
 
     if (cdr2 == 128) {
       if ( bconf == 1 ) {
-        x = ( "local-data: \"" fqdn ". 120 IN AAAA " adr2 "\"" ) ;
-        y = ( "local-data-ptr: \"" adr2 " 120 " fqdn "\"" ) ;
+        x = ( "local-data: \"" fqdn ". 300 IN AAAA " adr2 "\"" ) ;
+        y = ( "local-data-ptr: \"" adr2 " 300 " fqdn "\"" ) ;
         print ( x "\n" y "\n" ) > hostfile ;
       }
 
       else {
         # odhcp puts GA and ULA on the same line (position 9 and 10)
         qpr2 = ipv6_ptr( adr2 ) ;
-        x = ( fqdn ". 120 IN AAAA " adr2 ) ;
-        y = ( qpr2 ". 120 IN PTR " fqdn ) ;
+        x = ( fqdn ". 300 IN AAAA " adr2 ) ;
+        y = ( qpr2 ". 300 IN PTR " fqdn ) ;
         print ( x "\n" y ) > hostfile ;
       }
     }
