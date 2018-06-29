@@ -160,3 +160,25 @@ domain_ptr_any() {
 
 ##############################################################################
 
+host_ptr_any() {
+  local subnet=$1
+  local arpa validip4 validip6
+
+  validip4=$( valid_subnet4 $subnet )
+  validip6=$( valid_subnet6 $subnet )
+
+
+  if [ "$validip4" = "ok" ] ; then
+    arpa=$( host_ptr_ip4 "$subnet" )
+  elif [ "$validip6" = "ok" ] ; then
+    arpa=$( host_ptr_ip6 "$subnet" )
+  fi
+
+
+  if [ -n "$arpa" ] ; then
+    echo $arpa
+  fi
+}
+
+##############################################################################
+
