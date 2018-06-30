@@ -1,0 +1,32 @@
+--- a/src/rtl_adsb.c	2015-06-09 01:53:23.000000000 +0200
++++ b/src/rtl_adsb.c	2018-05-19 22:02:11.154133195 +0200
+@@ -222,16 +222,21 @@ inline uint16_t single_manchester(uint16
+ 		return 0;}
+ 	return BADSAMPLE;
+ }
++uint16_t single_manchester(uint16_t a, uint16_t b, uint16_t c, uint16_t d);
++
+ 
+ inline uint16_t min16(uint16_t a, uint16_t b)
+ {
+ 	return a<b ? a : b;
+ }
++uint16_t min16(uint16_t a, uint16_t b);
+ 
+ inline uint16_t max16(uint16_t a, uint16_t b)
+ {
+ 	return a>b ? a : b;
+ }
++uint16_t max16(uint16_t a, uint16_t b);
++
+ 
+ inline int preamble(uint16_t *buf, int i)
+ /* returns 0/1 for preamble at index i */
+@@ -258,6 +263,7 @@ inline int preamble(uint16_t *buf, int i
+ 	}
+ 	return 1;
+ }
++int preamble(uint16_t *buf, int i);
+ 
+ void manchester(uint16_t *buf, int len)
+ /* overwrites magnitude buffer with valid bits (BADSAMPLE on errors) */
