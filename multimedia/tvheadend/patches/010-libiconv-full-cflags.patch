@@ -1,0 +1,31 @@
+Index: tvheadend/Makefile
+
+This patch is based on this commit: https://tvheadend.org/projects/tvheadend/repository/revisions/511fddc480c11ba55c9078e54884b584430dc41e/
+If the patch is not applied then the missing $(CFLAGS) will cause linking of libiconv-full to fail.
+
+===================================================================
+--- tvheadend.orig/Makefile
++++ tvheadend/Makefile
+@@ -687,11 +687,11 @@ $(BUILDDIR)/timestamp.c: FORCE
+ 	@echo 'const char* build_timestamp = "'$(BUILD_DATE)'";' >> $@
+ 
+ $(BUILDDIR)/timestamp.o: $(BUILDDIR)/timestamp.c
+-	$(pCC) -c -o $@ $<
++	$(pCC) $(CFLAGS) -c -o $@ $<
+ 
+ $(BUILDDIR)/build.o: $(BUILDDIR)/build.c
+ 	@mkdir -p $(dir $@)
+-	$(pCC) -c -o $@ $<
++	$(pCC) $(CFLAGS) -c -o $@ $<
+ 
+ # Documentation
+ $(BUILDDIR)/docs-timestamp: $(I18N-DOCS) support/doc/md_to_c.py
+@@ -751,7 +751,7 @@ src/tvh_locale_inc.c: $(PO-FILES)
+ # Bundle files
+ $(BUILDDIR)/bundle.o: $(BUILDDIR)/bundle.c
+ 	@mkdir -p $(dir $@)
+-	$(pCC) -I${ROOTDIR}/src -c -o $@ $<
++	$(pCC) $(CFLAGS) -I${ROOTDIR}/src -c -o $@ $<
+ 
+ $(BUILDDIR)/bundle.c: $(DVBSCAN-yes) make_webui
+ 	@mkdir -p $(dir $@)
