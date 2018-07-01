@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl
-PKG_VERSION:=5.26.2
+PKG_VERSION:=5.28.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=\
@@ -19,7 +19,7 @@ PKG_SOURCE_URL:=\
 		https://mirrors.sonic.net/cpan/src/5.0 \
 		https://www.cpan.org/src/5.0
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=0f8c0fb1b0db4681adb75c3ba0dd77a0472b1b359b9e80efd79fc27b4352132c
+PKG_HASH:=059b3cb69970d8c8c5964caced0335b4af34ac990c8e61f7e3f90cd1c2d11e49
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_LICENSE_FILES:=Copying Artistic README
