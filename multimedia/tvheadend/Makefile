@@ -8,13 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tvheadend
-PKG_VERSION:=4.0.10
+PKG_VERSION:=4.2.6
 PKG_RELEASE:=1
 
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.xz
-PKG_MIRROR_HASH:=afe42bcf683e8576ca8ccd4755ea308f79195e92f7c30fc5961973e238f49105
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/tvheadend/tvheadend.git
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
@@ -33,7 +31,7 @@ define Package/tvheadend
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=Tvheadend is a TV streaming server for Linux
-  DEPENDS:=+libopenssl +librt +zlib +TVHEADEND_AVAHI_SUPPORT:libavahi-client $(ICONV_DEPENDS)
+  DEPENDS:=+libopenssl +librt +zlib +TVHEADEND_AVAHI_SUPPORT:libavahi-client $(ICONV_DEPENDS) 
   URL:=https://tvheadend.org
   MAINTAINER:=Jan Čermák <jan.cermak@nic.cz>
 endef
@@ -43,6 +41,10 @@ define Package/tvheadend/description
   supporting DVB-S, DVB-S2, DVB-C, DVB-T, ATSC, IPTV, SAT>IP and HDHomeRun as input sources.
 
   Tvheadend offers the HTTP (VLC, MPlayer), HTSP (Kodi, Movian) and SAT>IP streaming.
+ 
+  As of Tvheadend 2.4, the Tvheadend 'bundle' (the web front-end) requires CONFIG_BUILD_NLS (i.e., native language support) to be enabled.
+  This allows the correct version of libiconv to be built and linked.
+  Tvheadend will function without the bundle being enabled, and therefore without CONFIG_BUILD_NLS, you will just see a blank page if you attempt to log into the front-end.
 endef
 
 define Package/tvheadend/config
@@ -51,6 +53,13 @@ define Package/tvheadend/config
   source "$(SOURCE)/Config.in"
   endmenu
 endef
+
+ifeq ($(CONFIG_BUILD_NLS),y)
+  ifeq ($(CONFIG_TVHEADEND_ENABLE_BUNDLE),y)
+    CONFIGURE_ARGS += --enable-bundle
+    TARGET_LDFLAGS += $(if $(ICONV_FULL),-liconv)
+  endif
+endif
 
 ifeq ($(CONFIG_TVHEADEND_CWC_SUPPORT),)
   CONFIGURE_ARGS += --disable-cwc
@@ -70,11 +79,37 @@ else
   CONFIGURE_ARGS += --enable-avahi
 endif
 
+ifeq ($(CONFIG_TVHEADEND_HDHOMERUN_CLIENT_SUPPORT),y)
+  CONFIGURE_ARGS += --enable-hdhomerun_client
+else
+  CONFIGURE_ARGS += --disable-hdhomerun_static
+endif
+
+ifeq ($(CONFIG_TVHEADEND_DISABLE_SATIP_SERVER_SUPPORT),y)
+  CONFIGURE_ARGS += --disable-satip_server
+endif
+
+ifeq ($(CONFIG_TVHEADEND_DISABLE_SATIP_CLIENT_SUPPORT),y)
+  CONFIGURE_ARGS += --disable-satip_client
+endif
+
 CONFIGURE_ARGS += \
 	--arch=$(ARCH) \
 	--disable-dbus_1 \
 	--disable-libav \
-	--enable-bundle
+	--disable-ffmpeg_static \
+ 	--disable-libx264 \
+        --disable-libx264_static \
+        --disable-libx265 \
+        --disable-libx265_static \
+        --disable-libvpx \
+        --disable-libvpx_static \
+        --disable-libtheora \
+        --disable-libtheora_static \
+        --disable-libvorbis \
+        --disable-libvorbis_static \
+        --disable-libfdkaac \
+        --disable-libfdkaac_static \
 
 TARGET_CFLAGS += -Wno-error=pointer-compare
 
