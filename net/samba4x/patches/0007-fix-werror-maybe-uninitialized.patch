@@ -1,0 +1,206 @@
+--- a/lib/tdb/common/check.c
++++ b/lib/tdb/common/check.c
+@@ -336,6 +336,7 @@ _PUBLIC_ int tdb_check(struct tdb_contex
+ 	tdb_len_t dead;
+ 	bool locked;
+ 
++	memset((void *)&recovery_start, 0, sizeof(tdb_off_t));
+ 	/* Read-only databases use no locking at all: it's best-effort.
+ 	 * We may have a write lock already, so skip that case too. */
+ 	if (tdb->read_only || tdb->allrecord_lock.count != 0) {
+--- a/lib/tdb/common/freelist.c
++++ b/lib/tdb/common/freelist.c
+@@ -480,6 +480,9 @@ static tdb_off_t tdb_allocate_from_freel
+ 		tdb_off_t left_ptr;
+ 		struct tdb_record left_rec;
+ 
++		memset((void*)&left_ptr, 0, sizeof(tdb_off_t));
++		memset((void*)&left_rec, 0, sizeof(struct tdb_record));
++
+ 		if (tdb_rec_free_read(tdb, rec_ptr, rec) == -1) {
+ 			return 0;
+ 		}
+--- a/lib/tdb/common/transaction.c
++++ b/lib/tdb/common/transaction.c
+@@ -836,6 +836,7 @@ static int transaction_setup_recovery(st
+ 	uint32_t magic, tailer;
+ 	int i;
+ 
++	memset((void *)&recovery_offset, 0, sizeof(tdb_off_t));
+ 	/*
+ 	  check that the recovery area has enough space
+ 	*/
+--- a/source4/dsdb/samdb/cracknames.c
++++ b/source4/dsdb/samdb/cracknames.c
+@@ -188,7 +188,7 @@ static WERROR DsCrackNameSPNAlias(struct
+ 	krb5_principal principal;
+ 	const krb5_data *component;
+ 	const char *service, *dns_name;
+-	char *new_service;
++	char *new_service = NULL;
+ 	char *new_princ;
+ 	enum drsuapi_DsNameStatus namestatus;
+ 
+--- a/source3/smbd/notifyd/notifyd.c
++++ b/source3/smbd/notifyd/notifyd.c
+@@ -378,7 +378,7 @@ static bool notifyd_apply_rec_change(
+ 	struct notifyd_instance *instances;
+ 	size_t num_instances;
+ 	size_t i;
+-	struct notifyd_instance *instance;
++	struct notifyd_instance *instance = NULL;
+ 	TDB_DATA value;
+ 	NTSTATUS status;
+ 	bool ok = false;
+@@ -439,7 +439,7 @@ static bool notifyd_apply_rec_change(
+ 		}
+ 	}
+ 
+-	if (i < num_instances) {
++	if (instance && i < num_instances) {
+ 		instance->instance = *chg;
+ 	} else {
+ 		/*
+--- a/source3/smbd/lanman.c
++++ b/source3/smbd/lanman.c
+@@ -3250,7 +3250,7 @@ static bool api_WPrintQueueCtrl(struct s
+ 	struct spoolss_SetPrinterInfoCtr info_ctr;
+ 	struct spoolss_DevmodeContainer devmode_ctr;
+ 	struct sec_desc_buf secdesc_ctr;
+-	enum spoolss_PrinterControl command;
++	enum spoolss_PrinterControl command = SPOOLSS_PRINTER_CONTROL_UNPAUSE;
+ 
+ 	if (!str1 || !str2 || !QueueName) {
+ 		return False;
+--- a/source3/smbd/oplock_linux.c
++++ b/source3/smbd/oplock_linux.c
+@@ -75,7 +75,7 @@ int linux_set_lease_sighandler(int fd)
+ int linux_setlease(int fd, int leasetype)
+ {
+ 	int ret;
+-	int saved_errno;
++	int saved_errno = 0;
+ 
+ 	/*
+ 	 * Ensure the lease owner is root to allow
+--- a/source3/rpc_client/cli_winreg_spoolss.c
++++ b/source3/rpc_client/cli_winreg_spoolss.c
+@@ -3670,7 +3670,7 @@ WERROR winreg_get_driver(TALLOC_CTX *mem
+ 	struct policy_handle hive_hnd, key_hnd;
+ 	struct spoolss_DriverInfo8 i8, *info8;
+ 	struct spoolss_PrinterEnumValues *enum_values = NULL;
+-	struct spoolss_PrinterEnumValues *v;
++	struct spoolss_PrinterEnumValues *v = NULL;
+ 	uint32_t num_values = 0;
+ 	TALLOC_CTX *tmp_ctx;
+ 	WERROR result;
+@@ -3928,11 +3928,15 @@ WERROR winreg_get_driver(TALLOC_CTX *mem
+ 		CHECK_ERROR(result);
+ 	}
+ 
+-	if (!W_ERROR_IS_OK(result)) {
++	if (v && !W_ERROR_IS_OK(result)) {
+ 		DEBUG(0, ("winreg_enumval_to_TYPE() failed "
+ 			  "for %s: %s\n", v->value_name,
+ 			  win_errstr(result)));
+ 		goto done;
++	} else if (!v) {
++		DEBUG(0, ("winreg_enumval_to_TYPE() failed "
++			  "for unknown: %s\n", win_errstr(result)));
++		goto done;
+ 	}
+ 
+ 	*_info8 = talloc_steal(mem_ctx, info8);
+@@ -4139,7 +4143,7 @@ WERROR winreg_get_core_driver(TALLOC_CTX
+ 	struct policy_handle hive_hnd, key_hnd;
+ 	struct spoolss_CorePrinterDriver *c;
+ 	struct spoolss_PrinterEnumValues *enum_values = NULL;
+-	struct spoolss_PrinterEnumValues *v;
++	struct spoolss_PrinterEnumValues *v = NULL;
+ 	uint32_t num_values = 0;
+ 	TALLOC_CTX *tmp_ctx;
+ 	WERROR result;
+@@ -4266,11 +4270,15 @@ WERROR winreg_get_core_driver(TALLOC_CTX
+ 		CHECK_ERROR(result);
+ 	}
+ 
+-	if (!W_ERROR_IS_OK(result)) {
++	if (v && !W_ERROR_IS_OK(result)) {
+ 		DEBUG(0, ("winreg_enumval_to_TYPE() failed "
+ 			  "for %s: %s\n", v->value_name,
+ 			  win_errstr(result)));
+ 		goto done;
++	} else if (!v) {
++		DEBUG(0, ("winreg_enumval_to_TYPE() failed "
++			  "for unknown: %s\n", win_errstr(result)));
++		goto done;
+ 	}
+ 
+ 	*_core_printer_driver = talloc_steal(mem_ctx, c);
+@@ -4474,7 +4482,7 @@ WERROR winreg_get_driver_package(TALLOC_
+ 	uint32_t access_mask = SEC_FLAG_MAXIMUM_ALLOWED;
+ 	struct policy_handle hive_hnd, key_hnd;
+ 	struct spoolss_PrinterEnumValues *enum_values = NULL;
+-	struct spoolss_PrinterEnumValues *v;
++	struct spoolss_PrinterEnumValues *v = NULL;
+ 	uint32_t num_values = 0;
+ 	TALLOC_CTX *tmp_ctx;
+ 	WERROR result;
+@@ -4572,11 +4580,15 @@ WERROR winreg_get_driver_package(TALLOC_
+ 		CHECK_ERROR(result);
+ 	}
+ 
+-	if (!W_ERROR_IS_OK(result)) {
++	if (v && !W_ERROR_IS_OK(result)) {
+ 		DEBUG(0, ("winreg_enumval_to_TYPE() failed "
+ 			  "for %s: %s\n", v->value_name,
+ 			  win_errstr(result)));
+ 		goto done;
++	} else if (!v) {
++		DEBUG(0, ("winreg_enumval_to_TYPE() failed "
++			  "for unknown: %s\n", win_errstr(result)));
++		goto done;
+ 	}
+ 
+ 	result = WERR_OK;
+--- a/source4/torture/smb2/dir.c
++++ b/source4/torture/smb2/dir.c
+@@ -116,7 +116,7 @@ static bool test_find(struct torture_con
+ 	NTSTATUS status;
+ 	bool ret = true;
+ 	unsigned int count;
+-	int i, j, file_count = 0;
++	int i, j = 0, file_count = 0;
+ 
+ 	status = populate_tree(tctx, mem_ctx, tree, files, NFILES, &h);
+ 
+@@ -1276,7 +1276,7 @@ static bool test_large_files(struct tort
+ 	struct smb2_find f;
+ 	struct smb2_handle h = {{0}};
+ 	union smb_search_data *d;
+-	int i, j, file_count = 0;
++	int i, j = 0, file_count = 0;
+ 	char **strs = NULL;
+ 	unsigned count;
+ 
+--- a/source4/torture/smb2/ioctl.c
++++ b/source4/torture/smb2/ioctl.c
+@@ -5372,7 +5372,7 @@ static bool test_ioctl_trim_simple(struc
+ 	struct smb2_handle fh;
+ 	NTSTATUS status;
+ 	union smb_ioctl ioctl;
+-	bool trim_supported;
++	bool trim_supported = false;
+ 	TALLOC_CTX *tmp_ctx = talloc_new(tree);
+ 	struct fsctl_file_level_trim_req trim_req;
+ 	struct fsctl_file_level_trim_rsp trim_rsp;
+--- a/testsuite/headers/test_headers.c
++++ b/testsuite/headers/test_headers.c
+@@ -31,6 +31,7 @@
+ #include <stdlib.h>
+ #include <stdint.h>
+ #include <stdbool.h>
++#include <time.h>
+ 
+ /* pre-include some of the public headers to avoid ordering issues */
+ #include "core/ntstatus.h"

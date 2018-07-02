@@ -1,0 +1,12 @@
+--- a/source4/auth/ntlm/auth_unix.c
++++ b/source4/auth/ntlm/auth_unix.c
+@@ -144,7 +144,8 @@ static NTSTATUS talloc_getpwnam(TALLOC_C
+ }
+ 
+ 
+-#ifdef HAVE_SECURITY_PAM_APPL_H
++#if defined(HAVE_SECURITY_PAM_APPL_H) && defined(WITH_PAM)
++
+ #include <security/pam_appl.h>
+ 
+ struct smb_pam_user_info {

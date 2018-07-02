@@ -1,0 +1,134 @@
+--- a/third_party/resolv_wrapper/resolv_wrapper.c
++++ b/third_party/resolv_wrapper/resolv_wrapper.c
+@@ -1052,6 +1052,17 @@ typedef int (*__libc_res_ninit)(struct _
+ typedef int (*__libc___res_ninit)(struct __res_state *state);
+ typedef void (*__libc_res_nclose)(struct __res_state *state);
+ typedef void (*__libc___res_nclose)(struct __res_state *state);
++/* musl library fixup for res_nquery and res_nsearchs */
++typedef int (*__libc_res_query)(const char *dname,
++				 int class,
++				 int type,
++				 unsigned char *answer,
++				 int anslen);
++typedef int (*__libc_res_search)(const char *dname,
++				  int class,
++				  int type,
++				  unsigned char *answer,
++				  int anslen);
+ typedef int (*__libc_res_nquery)(struct __res_state *state,
+ 				 const char *dname,
+ 				 int class,
+@@ -1088,8 +1099,10 @@ struct rwrap_libc_symbols {
+ 	RWRAP_SYMBOL_ENTRY(__res_ninit);
+ 	RWRAP_SYMBOL_ENTRY(res_nclose);
+ 	RWRAP_SYMBOL_ENTRY(__res_nclose);
++	RWRAP_SYMBOL_ENTRY(res_query); /* musl fixup */
+ 	RWRAP_SYMBOL_ENTRY(res_nquery);
+ 	RWRAP_SYMBOL_ENTRY(__res_nquery);
++	RWRAP_SYMBOL_ENTRY(res_search); /* musl fixup */
+ 	RWRAP_SYMBOL_ENTRY(res_nsearch);
+ 	RWRAP_SYMBOL_ENTRY(__res_nsearch);
+ };
+@@ -1264,7 +1277,8 @@ static int libc_res_ninit(struct __res_s
+ 
+ 	return rwrap.libc.symbols._libc___res_ninit.f(state);
+ #else
+-#error "No res_ninit function"
++#warning "No res_ninit function"
++	return 0; /* In musl library, res_init() just return 0 */
+ #endif
+ }
+ 
+@@ -1289,7 +1303,8 @@ static void libc_res_nclose(struct __res
+ 
+ 	rwrap.libc.symbols._libc___res_nclose.f(state);
+ #else
+-#error "No res_nclose function"
++	/* Only glibc has res_close() and res_nclose() functions ? */
++#warning "No res_nclose function"
+ #endif
+ }
+ 
+@@ -1318,6 +1333,14 @@ static int libc_res_nquery(struct __res_
+ 							    type,
+ 							    answer,
+ 							    anslen);
++#elif defined(HAVE_RES_QUERY)
++	rwrap_bind_symbol_libresolv(res_query);
++
++	return rwrap.libresolv.symbols._libc_res_query.f(dname,
++							    class,
++							    type,
++							    answer,
++							    anslen);
+ #else
+ #error "No res_nquery function"
+ #endif
+@@ -1348,6 +1371,14 @@ static int libc_res_nsearch(struct __res
+ 							     type,
+ 							     answer,
+ 							     anslen);
++#elif defined(HAVE_RES_SEARCH)
++	rwrap_bind_symbol_libresolv(res_search);
++
++	return rwrap.libresolv.symbols._libc_res_search.f(dname,
++							     class,
++							     type,
++							     answer,
++							     anslen);
+ #else
+ #error "No res_nsearch function"
+ #endif
+@@ -1504,7 +1535,7 @@ static int rwrap_res_ninit(struct __res_
+ 
+ #if !defined(res_ninit) && defined(HAVE_RES_NINIT)
+ int res_ninit(struct __res_state *state)
+-#elif defined(HAVE___RES_NINIT)
++#elif defined(HAVE___RES_NINIT) || defined(HAVE_RES_INIT)
+ int __res_ninit(struct __res_state *state)
+ #endif
+ {
+@@ -1558,7 +1589,11 @@ static void rwrap_res_nclose(struct __re
+ 
+ #if !defined(res_nclose) && defined(HAVE_RES_NCLOSE)
+ void res_nclose(struct __res_state *state)
+-#elif defined(HAVE___RES_NCLOSE)
++#else
++/*
++ * FIXME: res_close and res_nclose only exist in glibc ?
++ */
++#define HAVE___RES_NCLOSE 1
+ void __res_nclose(struct __res_state *state)
+ #endif
+ {
+@@ -1576,7 +1611,11 @@ static void rwrap_res_close(void)
+ 
+ #if defined(HAVE_RES_CLOSE)
+ void res_close(void)
+-#elif defined(HAVE___RES_CLOSE)
++#else
++/*
++ * FIXME: res_close and res_nclose only exist in glibc ?
++ */
++#define HAVE___RES_CLOSE 1
+ void __res_close(void)
+ #endif
+ {
+@@ -1636,7 +1675,7 @@ int res_nquery(struct __res_state *state
+ 	       int type,
+ 	       unsigned char *answer,
+ 	       int anslen)
+-#elif defined(HAVE___RES_NQUERY)
++#elif defined(HAVE___RES_NQUERY) || defined(HAVE_RES_QUERY)
+ int __res_nquery(struct __res_state *state,
+ 		 const char *dname,
+ 		 int class,
+@@ -1744,7 +1783,7 @@ int res_nsearch(struct __res_state *stat
+ 		int type,
+ 		unsigned char *answer,
+ 		int anslen)
+-#elif defined(HAVE___RES_NSEARCH)
++#elif defined(HAVE___RES_NSEARCH) || defined(HAVE_RES_SEARCH)
+ int __res_nsearch(struct __res_state *state,
+ 		  const char *dname,
+ 		  int class,

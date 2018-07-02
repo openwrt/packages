@@ -1,0 +1,49 @@
+From a8449b78339834c639af9aeabe89e4b7b598bad2 Mon Sep 17 00:00:00 2001
+From: BangLang Huang <banglang.huang@foxmail.com>
+Date: Thu, 14 Sep 2017 10:55:27 +0800
+Subject: [PATCH 5/5] fix compilation error for getpwent_r and getgrent_r
+ function
+
+Signed-off-by: BangLang Huang <banglang.huang@foxmail.com>
+---
+ source4/torture/local/nss_tests.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+--- a/source4/torture/local/nss_tests.c
++++ b/source4/torture/local/nss_tests.c
+@@ -346,6 +346,7 @@ static bool test_enum_r_passwd(struct to
+ 	torture_comment(tctx, "Testing setpwent\n");
+ 	setpwent();
+ 
++#if defined(HAVE_GETPWENT_R)
+ 	while (1) {
+ 		torture_comment(tctx, "Testing getpwent_r\n");
+ 
+@@ -368,6 +369,9 @@ static bool test_enum_r_passwd(struct to
+ 			num_pwd++;
+ 		}
+ 	}
++#else /* defined(HAVE_GETPWENT_R) */
++	torture_comment(tctx, "getpwent_r not defined\n");
++#endif /* defined(HAVE_GETPWENT_R) */
+ 
+ 	torture_comment(tctx, "Testing endpwent\n");
+ 	endpwent();
+@@ -544,6 +548,7 @@ static bool test_enum_r_group(struct tor
+ 	torture_comment(tctx, "Testing setgrent\n");
+ 	setgrent();
+ 
++#if defined(HAVE_GETGRENT_R)
+ 	while (1) {
+ 		torture_comment(tctx, "Testing getgrent_r\n");
+ 
+@@ -566,6 +571,9 @@ static bool test_enum_r_group(struct tor
+ 			num_grp++;
+ 		}
+ 	}
++#else /* defined(HAVE_GETGRENT_R) */
++	torture_comment(tctx, "getgrent_r not defined\n");
++#endif /* defined(HAVE_GETGRENT_R) */
+ 
+ 	torture_comment(tctx, "Testing endgrent\n");
+ 	endgrent();

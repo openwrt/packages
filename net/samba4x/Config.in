@@ -1,0 +1,148 @@
+if PACKAGE_samba4x-common
+
+config SAMBA4X_AVAHI
+    bool
+    default n
+    prompt "Build with avahi support"
+
+config SAMBA4X_CEPHFS
+    bool
+    default n
+    prompt "Build with cephfs support"
+
+config SAMBA4X_CUPS
+    bool
+    default n
+    prompt "Build with cups support"
+
+config SAMBA4X_FAULT_HANDLING
+    bool
+    default n
+    prompt "Build with fault handler support"
+
+config SAMBA4X_GLUSTERFS
+    bool
+    default n
+    prompt "Build with glusterfs support"
+
+config SAMBA4X_IPRINT
+    bool
+    default n
+    prompt "Build with iprint support"
+
+config SAMBA4X_PTHREADPOOL
+    bool
+    default n
+    prompt "Build with pthreadpool support"
+
+config SAMBA4X_PYTHON
+    bool
+    default n
+    prompt "Build with python modules"
+
+config SAMBA4X_RPATH
+    bool
+    default n
+    prompt "Enable use of rpath for build binaries"
+
+config SAMBA4X_RPATH_INSTALL
+    bool
+    default n
+    prompt "Enable use of rpath for library path in installed files"
+
+config SAMBA4X_RPATH_PRIVATE_INSTALL
+    bool
+    default n
+    prompt "Enable use of rpath for private library path in installed files"
+
+config SAMBA4X_ACL
+    bool
+    default n
+    prompt "Build with acl support"
+
+config SAMBA4X_ADS
+    bool
+    default n
+    prompt "Build with ads support"
+
+config SAMBA4X_AD_DC
+    bool
+    default n
+    prompt "Enable AD DC functionality (enables only Samba FS (File Server, Winbind, NMBD) and client utilities"
+
+config SAMBA4X_AUTOMOUNT
+    bool
+    default n
+    prompt "Build with automount support"
+
+config SAMBA4X_DMAPI
+    bool
+    default n
+    prompt "Build with dmapi support"
+
+config SAMBA4X_DNSUPDATE
+    bool
+    default n
+    prompt "Build with dnsupdate support"
+
+config SAMBA4X_FAM
+    bool
+    default n
+    prompt "Build with fam support"
+
+config SAMBA4X_ICONV
+    bool
+    default n
+    prompt "Build with iconv support"
+
+config SAMBA4X_LDAP
+    bool
+    default n
+    prompt "Build with ldap support"
+
+config SAMBA4X_LIBARCHIVE
+    bool
+    default n
+    prompt "Build with libarchive support"
+
+config SAMBA4X_LTTNG
+    bool
+    default n
+    prompt "Enable lttng integration"
+
+config SAMBA4X_PAM
+    bool
+    default n
+    prompt "Build with pam support"
+
+config SAMBA4X_QUOTAS
+    bool
+    default n
+    prompt "Build with quotas support"
+
+config SAMBA4X_REGEDIT
+    bool
+    default n
+    prompt "Build with regedit support"
+
+config SAMBA4X_RELRO
+    bool
+    default n
+    prompt "Build with full RELocation Read-Only(RELRO) support"
+
+config SAMBA4X_SYSTEMD
+    bool
+    default n
+    prompt "Build with systemd integration"
+
+config SAMBA4X_UTMP
+    bool
+    default n
+    prompt "Build with utmp support"
+
+config SAMBA4X_WINBIND
+    bool
+    default n
+    prompt "Build with winbind support"
+
+endif

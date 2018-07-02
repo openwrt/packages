@@ -1,0 +1,27 @@
+--- a/source3/wscript_build
++++ b/source3/wscript_build
+@@ -1320,13 +1320,7 @@ bld.RECURSE('passdb')
+ bld.RECURSE('rpc_server')
+ bld.RECURSE('script')
+ bld.RECURSE('winbindd')
+-bld.RECURSE('../examples/auth')
+-bld.RECURSE('../examples/libsmbclient')
+-bld.RECURSE('../examples/pdb')
+-bld.RECURSE('../examples/VFS')
+-bld.RECURSE('../examples/fuse')
+ bld.RECURSE('lib/netapi/tests')
+-bld.RECURSE('lib/netapi/examples')
+ bld.RECURSE('smbd/notifyd')
+ bld.RECURSE('rpcclient')
+ bld.RECURSE('utils')
+--- a/wscript
++++ b/wscript
+@@ -114,8 +114,6 @@ def configure(conf):
+     conf.env.replace_add_global_pthread = True
+     conf.RECURSE('lib/replace')
+ 
+-    conf.RECURSE('examples/fuse')
+-
+     conf.SAMBA_CHECK_PERL(mandatory=True)
+     conf.find_program('xsltproc', var='XSLTPROC')
+ 

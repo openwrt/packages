@@ -1,0 +1,625 @@
+From ae8d2117a9257f847f00101361e6184ca580f6f4 Mon Sep 17 00:00:00 2001
+From: BangLang Huang <banglang.huang@foxmail.com>
+Date: Thu, 14 Sep 2017 10:50:09 +0800
+Subject: [PATCH 1/5] fix compilation error of heimdal module when cross
+ compile
+
+Signed-off-by: BangLang Huang <banglang.huang@foxmail.com>
+---
+ buildtools/wafsamba/generic_cc.py               | 14 ++++++++++++
+ buildtools/wafsamba/samba_autoconf.py           |  7 +++++-
+ buildtools/wafsamba/samba_deps.py               |  7 +++++-
+ buildtools/wafsamba/samba_optimisation.py       |  6 ++---
+ buildtools/wafsamba/samba_utils.py              |  4 ++--
+ buildtools/wafsamba/wafsamba.py                 |  1 +
+ source4/heimdal_build/wscript_build             | 15 ++++++++++---
+ third_party/waf/wafadmin/3rdparty/batched_cc.py |  4 ++--
+ third_party/waf/wafadmin/3rdparty/gccdeps.py    |  6 +++--
+ third_party/waf/wafadmin/3rdparty/valadoc.py    |  2 +-
+ third_party/waf/wafadmin/Tools/cc.py            | 26 ++++++++++++++++------
+ third_party/waf/wafadmin/Tools/ccroot.py        | 29 +++++++++++++------------
+ third_party/waf/wafadmin/Tools/config_c.py      |  4 ++++
+ third_party/waf/wafadmin/Tools/gcc.py           | 10 +++++++++
+ third_party/waf/wafadmin/Tools/intltool.py      |  2 +-
+ third_party/waf/wafadmin/Tools/libtool.py       |  2 +-
+ 16 files changed, 101 insertions(+), 38 deletions(-)
+
+--- a/buildtools/wafsamba/generic_cc.py
++++ b/buildtools/wafsamba/generic_cc.py
+@@ -25,6 +25,18 @@ def find_generic_cc(conf):
+     v['CC_NAME'] = 'generic'
+ 
+ @conftest
++def find_host_cc(conf):
++    v = conf.env
++    hcc = None
++    if v['HOSTCC']: hcc = v['HOSTCC']
++    elif 'HOSTCC' in conf.environ: hcc = conf.environ['HOSTCC']
++    if not hcc: hcc = conf.find_program('cc', var='HOSTCC')
++    if not hcc: conf.fatal('host_cc was not found, maybe --hostcc is not specified')
++    hcc = conf.cmd_to_list(hcc)
++    v['HOSTCC']  = hcc
++    v['HOSTCC_NAME'] = 'host'
++
++@conftest
+ def generic_cc_common_flags(conf):
+     v = conf.env
+ 
+@@ -34,6 +46,7 @@ def generic_cc_common_flags(conf):
+ 
+     # linker
+     if not v['LINK_CC']: v['LINK_CC'] = v['CC']
++    if not v['LINK_HOSTCC']: v['LINK_HOSTCC'] = v['HOSTCC']
+     v['CCLNK_SRC_F']         = ''
+     v['CCLNK_TGT_F']         = ['-o', '']
+ 
+@@ -61,6 +74,7 @@ def generic_cc_common_flags(conf):
+ 
+ detect = '''
+ find_generic_cc
++find_host_cc
+ find_cpp
+ find_ar
+ generic_cc_common_flags
+--- a/buildtools/wafsamba/samba_autoconf.py
++++ b/buildtools/wafsamba/samba_autoconf.py
+@@ -77,14 +77,17 @@ def nolink(self):
+     pass
+ 
+ 
+-def CHECK_HEADER(conf, h, add_headers=False, lib=None):
++def CHECK_HEADER(conf, h, add_headers=False, lib=None, check_for_host=False):
+     '''check for a header'''
+     if h in missing_headers and lib is None:
+         return False
+     d = h.upper().replace('/', '_')
+     d = d.replace('.', '_')
+     d = d.replace('-', '_')
+-    d = 'HAVE_%s' % d
++    if check_for_host:
++        d = 'HAVE_HOST_%s' % d
++    else:
++        d = 'HAVE_%s' % d
+     if CONFIG_SET(conf, d):
+         if add_headers:
+             if not h in conf.env.hlist:
+@@ -845,13 +848,18 @@ def CURRENT_CFLAGS(bld, target, cflags,
+ 
+ @conf
+ def CHECK_CC_ENV(conf):
+-    """trim whitespaces from 'CC'.
++    """trim whitespaces from 'CC' and 'HOSTCC'.
+     The build farm sometimes puts a space at the start"""
+     if os.environ.get('CC'):
+         conf.env.CC = TO_LIST(os.environ.get('CC'))
+         if len(conf.env.CC) == 1:
+             # make for nicer logs if just a single command
+             conf.env.CC = conf.env.CC[0]
++    if os.environ.get('HOSTCC'):
++        conf.env.HOSTCC = TO_LIST(os.environ.get('HOSTCC'))
++        if len(conf.env.HOSTCC) == 1:
++            # make for nicer logs if just a single command
++            conf.env.HOSTCC = conf.env.HOSTCC[0]
+ 
+ 
+ @conf
+--- a/buildtools/wafsamba/samba_deps.py
++++ b/buildtools/wafsamba/samba_deps.py
+@@ -225,7 +225,12 @@ def add_init_functions(self):
+     sentinel = getattr(self, 'init_function_sentinel', 'NULL')
+ 
+     targets    = LOCAL_CACHE(bld, 'TARGET_TYPE')
+-    cflags = getattr(self, 'samba_cflags', [])[:]
++    tmp_cflags = getattr(self, 'samba_cflags', [])[:]
++    if tmp_cflags is None:
++        cflags = tmp_cflags
++    else:
++        cflags = []
++        cflags.extend(tmp_cflags)
+ 
+     if modules == []:
+         sname = sname.replace('-','_')
+--- a/buildtools/wafsamba/samba_optimisation.py
++++ b/buildtools/wafsamba/samba_optimisation.py
+@@ -11,7 +11,7 @@ import Build, Utils, Node
+ from TaskGen import feature, after, before
+ import preproc
+ 
+-@feature('c', 'cc', 'cxx')
++@feature('c', 'cc', 'hostcc', 'cxx')
+ @after('apply_type_vars', 'apply_lib_vars', 'apply_core')
+ def apply_incpaths(self):
+     lst = []
+@@ -59,7 +59,7 @@ def apply_incpaths(self):
+         if node:
+             self.env.append_value('INC_PATHS', node)
+ 
+-@feature('c', 'cc')
++@feature('c', 'cc', 'hostcc')
+ @after('apply_incpaths')
+ def apply_obj_vars_cc(self):
+     """after apply_incpaths for INC_PATHS"""
+@@ -187,7 +187,7 @@ def shared_ancestors(self):
+         return ret
+ TaskGen.task_gen.shared_ancestors = shared_ancestors
+ 
+-@feature('c', 'cc', 'cxx')
++@feature('c', 'cc', 'hostcc', 'cxx')
+ @after('apply_link', 'init_cc', 'init_cxx', 'apply_core')
+ def apply_lib_vars(self):
+     """after apply_link because of 'link_task'
+@@ -230,7 +230,7 @@ def apply_lib_vars(self):
+             link_name = y.target[y.target.rfind('/') + 1:]
+             if 'cstaticlib' in y.features:
+                 app('STATICLIB', link_name)
+-            elif 'cshlib' in y.features or 'cprogram' in y.features:
++            elif 'cshlib' in y.features or 'cprogram' in y.features or 'host_cprogram' in y.features:
+                 # WARNING some linkers can link against programs
+                 app('LIB', link_name)
+ 
+--- a/buildtools/wafsamba/samba_utils.py
++++ b/buildtools/wafsamba/samba_utils.py
+@@ -127,7 +127,7 @@ def ADD_COMMAND(opt, name, function):
+ Options.Handler.ADD_COMMAND = ADD_COMMAND
+ 
+ 
+-@feature('c', 'cc', 'cshlib', 'cprogram')
++@feature('c', 'cc', 'hostcc', 'cshlib', 'cprogram', 'host_cprogram')
+ @before('apply_core','exec_rule')
+ def process_depends_on(self):
+     '''The new depends_on attribute for build rules
+@@ -648,7 +648,7 @@ def AD_DC_BUILD_IS_ENABLED(self):
+ 
+ Build.BuildContext.AD_DC_BUILD_IS_ENABLED = AD_DC_BUILD_IS_ENABLED
+ 
+-@feature('cprogram', 'cshlib', 'cstaticlib')
++@feature('cprogram', 'host_cprogram', 'cshlib', 'cstaticlib')
+ @after('apply_lib_vars')
+ @before('apply_obj_vars')
+ def samba_before_apply_obj_vars(self):
+--- a/buildtools/wafsamba/wafsamba.py
++++ b/buildtools/wafsamba/wafsamba.py
+@@ -377,7 +377,10 @@ def SAMBA_BINARY(bld, binname, source,
+     if not SET_TARGET_TYPE(bld, binname, 'BINARY'):
+         return
+ 
+-    features = 'c cprogram symlink_bin install_bin'
++    if bld.env.CROSS_COMPILE and use_hostcc:
++        features = 'hostcc host_cprogram symlink_bin install_bin'
++    else:
++        features = 'c cprogram symlink_bin install_bin'
+     if pyembed:
+         features += ' pyembed'
+ 
+@@ -604,7 +607,10 @@ def SAMBA_SUBSYSTEM(bld, modname, source
+ 
+     bld.SET_BUILD_GROUP(group)
+ 
+-    features = 'c'
++    if bld.env.CROSS_COMPILE and use_hostcc:
++        features = 'hostcc'
++    else:
++        features = 'c'
+     if pyext:
+         features += ' pyext'
+     if pyembed:
+@@ -969,6 +975,7 @@ def link_display(self):
+     fname = self.outputs[0].bldpath(self.env)
+     return progress_display(self, 'Linking', fname)
+ Task.TaskBase.classes['cc_link'].display = link_display
++Task.TaskBase.classes['hostcc_link'].display = link_display
+ 
+ def samba_display(self):
+     if Options.options.progress_bar != 0:
+--- a/source4/heimdal_build/wscript_build
++++ b/source4/heimdal_build/wscript_build
+@@ -276,8 +276,13 @@ def HEIMDAL_SUBSYSTEM(modname, source,
+ 
+     bld.set_group(group)
+ 
++    if bld.env.CROSS_COMPILE and use_hostcc:
++        features = 'hostcc'
++    else:
++        features = 'c'
++
+     return bld(
+-        features       = 'c',
++        features       = features,
+         source         = source,
+         target         = modname,
+         samba_cflags   = CURRENT_CFLAGS(bld, modname, cflags, allow_warnings=True),
+@@ -306,7 +311,10 @@ def HEIMDAL_BINARY(binname, source,
+     if not SET_TARGET_TYPE(bld, binname, 'BINARY'):
+         return
+ 
+-    features = 'c cprogram symlink_bin install_bin'
++    if bld.env.CROSS_COMPILE and use_hostcc:
++        features = 'hostcc host_cprogram symlink_bin install_bin'
++    else:
++        features = 'c cprogram symlink_bin install_bin'
+ 
+     obj_target = binname + '.objlist'
+ 
+@@ -342,7 +350,8 @@ def HEIMDAL_BINARY(binname, source,
+         local_include  = True,
+         top            = True,
+         install_path   = None,
+-        samba_install  = install
++        samba_install  = install,
++        samba_use_hostcc = use_hostcc
+         )
+ 
+ 
+--- a/third_party/waf/wafadmin/3rdparty/batched_cc.py
++++ b/third_party/waf/wafadmin/3rdparty/batched_cc.py
+@@ -40,7 +40,7 @@ class batch_task(Task.Task):
+ 	color = 'RED'
+ 
+ 	after = 'cc cxx'
+-	before = 'cc_link cxx_link static_link'
++	before = 'cc_link hostcc_link cxx_link static_link'
+ 
+ 	def __str__(self):
+ 		return '(batch compilation for %d slaves)\n' % len(self.slaves)
+@@ -147,7 +147,7 @@ cxx_hook = wrap(cxx.cxx_hook)
+ extension(cxx.EXT_CXX)(cxx_hook)
+ 
+ 
+-@feature('cprogram', 'cshlib', 'cstaticlib')
++@feature('cprogram', 'host_cprogram', 'cshlib', 'cstaticlib')
+ @after('apply_link')
+ def link_after_masters(self):
+ 	if getattr(self, 'allmasters', None):
+--- a/third_party/waf/wafadmin/3rdparty/gccdeps.py
++++ b/third_party/waf/wafadmin/3rdparty/gccdeps.py
+@@ -15,11 +15,13 @@ lock = threading.Lock()
+ 
+ preprocessor_flag = '-MD'
+ 
+-@feature('cc', 'c')
++@feature('hostcc', 'cc', 'c')
+ @before('apply_core')
+ def add_mmd_cc(self):
+ 	if self.env.get_flat('CCFLAGS').find(preprocessor_flag) < 0:
+ 		self.env.append_value('CCFLAGS', preprocessor_flag)
++	if self.env.get_flat('HOST_CCFLAGS').find(preprocessor_flag) < 0:
++		self.env.append_value('HOST_CCFLAGS', preprocessor_flag)
+ 
+ @feature('cxx')
+ @before('apply_core')
+@@ -116,7 +118,7 @@ def sig_implicit_deps(self):
+ 	except Utils.WafError:
+ 		return Constants.SIG_NIL
+ 
+-for name in 'cc cxx'.split():
++for name in 'hostcc cc cxx'.split():
+ 	try:
+ 		cls = Task.TaskBase.classes[name]
+ 	except KeyError:
+--- a/third_party/waf/wafadmin/3rdparty/valadoc.py
++++ b/third_party/waf/wafadmin/3rdparty/valadoc.py
+@@ -14,7 +14,7 @@ class valadoc_task(Task.Task):
+ 
+   vars = ['VALADOC', 'VALADOCFLAGS']
+   color = 'BLUE'
+-  after = 'cxx_link cc_link'
++  after = 'cxx_link hostcc_link cc_link'
+   quiet = True
+ 
+   output_dir = ''
+--- a/third_party/waf/wafadmin/Tools/cc.py
++++ b/third_party/waf/wafadmin/Tools/cc.py
+@@ -23,7 +23,7 @@ g_cc_type_vars = ['CCFLAGS', 'LINKFLAGS'
+ class cc_taskgen(ccroot.ccroot_abstract):
+ 	pass
+ 
+-@feature('c', 'cc')
++@feature('c', 'cc', 'hostcc')
+ @before('apply_type_vars')
+ @after('default_cc')
+ def init_cc(self):
+@@ -33,7 +33,7 @@ def init_cc(self):
+ 	if not self.env['CC_NAME']:
+ 		raise Utils.WafError("At least one compiler (gcc, ..) must be selected")
+ 
+-@feature('c', 'cc')
++@feature('c', 'cc', 'hostcc')
+ @after('apply_incpaths')
+ def apply_obj_vars_cc(self):
+ 	"""after apply_incpaths for INC_PATHS"""
+@@ -51,7 +51,7 @@ def apply_obj_vars_cc(self):
+ 	for i in env['CPPPATH']:
+ 		app('_CCINCFLAGS', cpppath_st % i)
+ 
+-@feature('c', 'cc')
++@feature('c', 'cc', 'hostcc')
+ @after('apply_lib_vars')
+ def apply_defines_cc(self):
+ 	"""after uselib is set for CCDEFINES"""
+@@ -75,17 +75,19 @@ def apply_defines_cc(self):
+ 
+ @extension(EXT_CC)
+ def c_hook(self, node):
+-	# create the compilation task: cpp or cc
++	# create the compilation task: cpp, hostcc or cc
+ 	if getattr(self, 'obj_ext', None):
+ 		obj_ext = self.obj_ext
+ 	else:
+ 		obj_ext = '_%d.o' % self.idx
+-
+-	task = self.create_task('cc', node, node.change_ext(obj_ext))
++	if 'hostcc' in self.features:
++		task = self.create_task('hostcc', node, node.change_ext(obj_ext))
++	else:
++		task = self.create_task('cc', node, node.change_ext(obj_ext))
+ 	try:
+ 		self.compiled_tasks.append(task)
+ 	except AttributeError:
+-		raise Utils.WafError('Have you forgotten to set the feature "cc" on %s?' % str(self))
++		raise Utils.WafError('Have you forgotten to set the feature "cc" or "hostcc" on %s?' % str(self))
+ 	return task
+ 
+ cc_str = '${CC} ${CCFLAGS} ${CPPFLAGS} ${_CCINCFLAGS} ${_CCDEFFLAGS} ${CC_SRC_F}${SRC} ${CC_TGT_F}${TGT}'
+@@ -93,7 +95,17 @@ cls = Task.simple_task_type('cc', cc_str
+ cls.scan = ccroot.scan
+ cls.vars.append('CCDEPS')
+ 
++hostcc_str = '${HOSTCC} ${HOST_CCFLAGS} ${HOST_CPPFLAGS} ${_CCINCFLAGS} ${_CCDEFFLAGS} ${CC_SRC_F}${SRC} ${CC_TGT_F}${TGT}'
++cls = Task.simple_task_type('hostcc', hostcc_str, 'GREEN', ext_out='.o', ext_in='.c', shell=False)
++cls.scan = ccroot.scan
++cls.vars.append('CCDEPS')
++
+ link_str = '${LINK_CC} ${CCLNK_SRC_F}${SRC} ${CCLNK_TGT_F}${TGT[0].abspath(env)} ${LINKFLAGS}'
+ cls = Task.simple_task_type('cc_link', link_str, color='YELLOW', ext_in='.o', ext_out='.bin', shell=False)
+ cls.maxjobs = 1
+ cls.install = Utils.nada
++
++host_link_str = '${LINK_HOSTCC} ${CCLNK_SRC_F}${SRC} ${CCLNK_TGT_F}${TGT[0].abspath(env)} ${HOST_LINKFLAGS}'
++cls = Task.simple_task_type('hostcc_link', host_link_str, color='YELLOW', ext_in='.o', ext_out='.bin', shell=False)
++cls.maxjobs = 1
++cls.install = Utils.nada
+--- a/third_party/waf/wafadmin/Tools/ccroot.py
++++ b/third_party/waf/wafadmin/Tools/ccroot.py
+@@ -190,7 +190,7 @@ def get_target_name(self):
+ 
+ 	return os.path.join(dir, pattern % name)
+ 
+-@feature('c', 'cc', 'cxx')
++@feature('c', 'cc', 'hostcc', 'cxx')
+ @before('apply_core')
+ def default_cc(self):
+ 	"""compiled_tasks attribute must be set before the '.c->.o' tasks can be created"""
+@@ -217,7 +217,7 @@ def default_cc(self):
+ 	if not self.env.BINDIR: self.env.BINDIR = Utils.subst_vars('${PREFIX}/bin', self.env)
+ 	if not self.env.LIBDIR: self.env.LIBDIR = Utils.subst_vars('${PREFIX}/lib${LIB_EXT}', self.env)
+ 
+-@feature('cprogram', 'dprogram', 'cstaticlib', 'dstaticlib', 'cshlib', 'dshlib')
++@feature('host_cprogram', 'cprogram', 'dprogram', 'cstaticlib', 'dstaticlib', 'cshlib', 'dshlib')
+ def apply_verif(self):
+ 	"""no particular order, used for diagnostic"""
+ 	if not (self.source or getattr(self, 'add_objects', None) or getattr(self, 'uselib_local', None) or getattr(self, 'obj_files', None)):
+@@ -227,7 +227,7 @@ def apply_verif(self):
+ 
+ # TODO reference the d programs, shlibs in d.py, not here
+ 
+-@feature('cprogram', 'dprogram')
++@feature('host_cprogram', 'cprogram', 'dprogram')
+ @after('default_cc')
+ @before('apply_core')
+ def vars_target_cprogram(self):
+@@ -245,7 +245,7 @@ def vars_target_cshlib(self):
+ 	else:
+ 		self.default_install_path = self.env.LIBDIR
+ 
+-@feature('cprogram', 'dprogram', 'cstaticlib', 'dstaticlib', 'cshlib', 'dshlib')
++@feature('host_cprogram', 'cprogram', 'dprogram', 'cstaticlib', 'dstaticlib', 'cshlib', 'dshlib')
+ @after('apply_link', 'vars_target_cprogram', 'vars_target_cshlib')
+ def default_link_install(self):
+ 	"""you may kill this method to inject your own installation for the first element
+@@ -253,7 +253,7 @@ def default_link_install(self):
+ 	if self.install_path:
+ 		self.bld.install_files(self.install_path, self.link_task.outputs[0], env=self.env, chmod=self.chmod)
+ 
+-@feature('c', 'cc', 'cxx')
++@feature('c', 'cc', 'hostcc', 'cxx')
+ @after('apply_type_vars', 'apply_lib_vars', 'apply_core')
+ def apply_incpaths(self):
+ 	"""used by the scanner
+@@ -297,7 +297,7 @@ def apply_incpaths(self):
+ 	if USE_TOP_LEVEL:
+ 		self.env.append_value('INC_PATHS', self.bld.srcnode)
+ 
+-@feature('c', 'cc', 'cxx')
++@feature('c', 'cc', 'hostcc', 'cxx')
+ @after('init_cc', 'init_cxx')
+ @before('apply_lib_vars')
+ def apply_type_vars(self):
+@@ -305,7 +305,7 @@ def apply_type_vars(self):
+ 	after init_cc and init_cxx because web need p_type_vars
+ 	"""
+ 	for x in self.features:
+-		if not x in ['cprogram', 'cstaticlib', 'cshlib']:
++		if not x in ['cprogram', 'host_cprogram', 'cstaticlib', 'cshlib']:
+ 			continue
+ 		x = x.lstrip('c')
+ 
+@@ -321,7 +321,7 @@ def apply_type_vars(self):
+ 			value = self.env[compvar]
+ 			if value: self.env.append_value(var, value)
+ 
+-@feature('cprogram', 'cshlib', 'cstaticlib')
++@feature('cprogram', 'host_cprogram', 'cshlib', 'cstaticlib')
+ @after('apply_core')
+ def apply_link(self):
+ 	"""executes after apply_core for collecting 'compiled_tasks'
+@@ -330,6 +330,7 @@ def apply_link(self):
+ 	if not link:
+ 		if 'cstaticlib' in self.features: link = 'static_link'
+ 		elif 'cxx' in self.features: link = 'cxx_link'
++		elif 'host_cprogram' in self.features: link = 'hostcc_link'
+ 		else: link = 'cc_link'
+ 
+ 	tsk = self.create_task(link)
+@@ -339,7 +340,7 @@ def apply_link(self):
+ 
+ 	self.link_task = tsk
+ 
+-@feature('c', 'cc', 'cxx')
++@feature('c', 'cc', 'hostcc', 'cxx')
+ @after('apply_link', 'init_cc', 'init_cxx', 'apply_core')
+ def apply_lib_vars(self):
+ 	"""after apply_link because of 'link_task'
+@@ -371,7 +372,7 @@ def apply_lib_vars(self):
+ 		# object has ancestors to process (shared libraries): add them to the end of the list
+ 		if getattr(y, 'uselib_local', None):
+ 			lst = y.to_list(y.uselib_local)
+-			if 'cshlib' in y.features or 'cprogram' in y.features:
++			if 'cshlib' in y.features or 'cprogram' in y.features or 'host_cprogram' in y.features:
+ 				lst = [x for x in lst if not 'cstaticlib' in self.name_to_obj(x).features]
+ 			tmp.extend(lst)
+ 
+@@ -381,7 +382,7 @@ def apply_lib_vars(self):
+ 			link_name = y.target[y.target.rfind(os.sep) + 1:]
+ 			if 'cstaticlib' in y.features:
+ 				env.append_value('STATICLIB', link_name)
+-			elif 'cshlib' in y.features or 'cprogram' in y.features:
++			elif 'cshlib' in y.features or 'cprogram' in y.features or 'host_cprogram' in y.features:
+ 				# WARNING some linkers can link against programs
+ 				env.append_value('LIB', link_name)
+ 
+@@ -417,7 +418,7 @@ def apply_lib_vars(self):
+ 			val = self.env[v + '_' + x]
+ 			if val: self.env.append_value(v, val)
+ 
+-@feature('cprogram', 'cstaticlib', 'cshlib')
++@feature('cprogram', 'host_cprogram', 'cstaticlib', 'cshlib')
+ @after('init_cc', 'init_cxx', 'apply_link')
+ def apply_objdeps(self):
+ 	"add the .o files produced by some other object files in the same manner as uselib_local"
+@@ -456,7 +457,7 @@ def apply_objdeps(self):
+ 		for t in y.compiled_tasks:
+ 			self.link_task.inputs.extend(t.outputs)
+ 
+-@feature('cprogram', 'cshlib', 'cstaticlib')
++@feature('cprogram', 'host_cprogram', 'cshlib', 'cstaticlib')
+ @after('apply_lib_vars')
+ def apply_obj_vars(self):
+ 	"""after apply_lib_vars for uselib"""
+@@ -523,7 +524,7 @@ c_attrs = {
+ 'frameworkpath' : 'FRAMEWORKPATH'
+ }
+ 
+-@feature('c', 'cc', 'cxx')
++@feature('c', 'cc', 'cxx', 'hostcc')
+ @before('init_cxx', 'init_cc')
+ @before('apply_lib_vars', 'apply_obj_vars', 'apply_incpaths', 'init_cc')
+ def add_extra_flags(self):
+--- a/third_party/waf/wafadmin/Tools/config_c.py
++++ b/third_party/waf/wafadmin/Tools/config_c.py
+@@ -734,6 +734,8 @@ def find_cpp(conf):
+ def cc_add_flags(conf):
+ 	conf.add_os_flags('CFLAGS', 'CCFLAGS')
+ 	conf.add_os_flags('CPPFLAGS')
++	conf.add_os_flags('HOST_CCFLAGS')
++	conf.add_os_flags('HOST_CPPFLAGS')
+ 
+ @conftest
+ def cxx_add_flags(conf):
+@@ -744,6 +746,8 @@ def cxx_add_flags(conf):
+ def link_add_flags(conf):
+ 	conf.add_os_flags('LINKFLAGS')
+ 	conf.add_os_flags('LDFLAGS', 'LINKFLAGS')
++	conf.add_os_flags('HOST_LINKFLAGS')
++	conf.add_os_flags('HOST_LDFLAGS', 'HOST_LINKFLAGS')
+ 
+ @conftest
+ def cc_load_tools(conf):
+--- a/third_party/waf/wafadmin/Tools/gcc.py
++++ b/third_party/waf/wafadmin/Tools/gcc.py
+@@ -18,6 +18,14 @@ def find_gcc(conf):
+ 	conf.env.CC      = cc
+ 
+ @conftest
++def find_host_gcc(conf):
++	hcc = conf.find_program(['gcc', 'cc'], var='HOSTCC', mandatory=True)
++	hcc = conf.cmd_to_list(hcc)
++	ccroot.get_cc_version(conf, hcc, gcc=True)
++	conf.env.HOSTCC_NAME = 'host gcc'
++	conf.env.HOSTCC      = hcc
++
++@conftest
+ def gcc_common_flags(conf):
+ 	v = conf.env
+ 
+@@ -33,6 +41,7 @@ def gcc_common_flags(conf):
+ 
+ 	# linker
+ 	if not v['LINK_CC']: v['LINK_CC'] = v['CC']
++	if not v['LINK_HOSTCC']: v['LINK_HOSTCC'] = v['HOSTCC']
+ 	v['CCLNK_SRC_F']         = ''
+ 	v['CCLNK_TGT_F']         = ['-o', ''] # shell hack for -MD
+ 
+@@ -129,6 +138,7 @@ def gcc_modifier_platform(conf):
+ 
+ def detect(conf):
+ 	conf.find_gcc()
++	conf.find_host_gcc()
+ 	conf.find_cpp()
+ 	conf.find_ar()
+ 	conf.gcc_common_flags()
+--- a/third_party/waf/wafadmin/Tools/intltool.py
++++ b/third_party/waf/wafadmin/Tools/intltool.py
+@@ -91,7 +91,7 @@ def apply_intltool_po(self):
+ Task.simple_task_type('po', '${POCOM} -o ${TGT} ${SRC}', color='BLUE', shell=False)
+ Task.simple_task_type('intltool',
+ 	'${INTLTOOL} ${INTLFLAGS} ${INTLCACHE} ${INTLPODIR} ${SRC} ${TGT}',
+-	color='BLUE', after="cc_link cxx_link", shell=False)
++	color='BLUE', after="cc_link hostcc_link cxx_link", shell=False)
+ 
+ def detect(conf):
+ 	pocom = conf.find_program('msgfmt')
+--- a/third_party/waf/wafadmin/Tools/libtool.py
++++ b/third_party/waf/wafadmin/Tools/libtool.py
+@@ -112,7 +112,7 @@ def apply_libtool(self):
+ 				continue
+ 			self.env.append_unique('LINKFLAGS', v)
+ 
+-Task.task_type_from_func('fakelibtool', vars=fakelibtool_vardeps, func=fakelibtool_build, color='BLUE', after="cc_link cxx_link static_link")
++Task.task_type_from_func('fakelibtool', vars=fakelibtool_vardeps, func=fakelibtool_build, color='BLUE', after="cc_link hostcc_link cxx_link static_link")
+ 
+ class libtool_la_file:
+ 	def __init__ (self, la_filename):
+--- a/lib/replace/system/filesys.h
++++ b/lib/replace/system/filesys.h
+@@ -115,11 +115,19 @@
+ #define VXFS_QUOTA
+ #endif
+ 
++#if defined(_CROSS_COMPILE_)
++#if HAVE_HOST_SYS_ATTRIBUTES_H
++#include <sys/attributes.h>
++#elif HAVE_HOST_ATTR_ATTRIBUTES_H
++#include <attr/attributes.h>
++#endif
++#else /* !defined(_CROSS_COMPILE_) */
+ #if HAVE_SYS_ATTRIBUTES_H
+ #include <sys/attributes.h>
+ #elif HAVE_ATTR_ATTRIBUTES_H
+ #include <attr/attributes.h>
+ #endif
++#endif /* defined(_CROSS_COMPILE_) */
+ 
+ /* mutually exclusive (SuSE 8.2) */
+ #if HAVE_ATTR_XATTR_H
+--- a/wscript
++++ b/wscript
+@@ -102,6 +102,9 @@ def configure(conf):
+     conf.DEFINE('_SAMBA_BUILD_', version.MAJOR, add_to_cflags=True)
+     conf.DEFINE('HAVE_CONFIG_H', 1, add_to_cflags=True)
+ 
++    if Options.options.CROSS_COMPILE:
++        conf.DEFINE('_CROSS_COMPILE_', 1, add_to_cflags=True)
++
+     if Options.options.developer:
+         conf.ADD_CFLAGS('-DDEVELOPER -DDEBUG_PASSWORD')
+         conf.env.DEVELOPER = True
