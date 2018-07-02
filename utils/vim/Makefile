@@ -115,7 +115,8 @@ CONFIGURE_ARGS += \
 	--disable-gpm \
 	--disable-acl \
 	--with-tlib=ncurses \
-	--with-compiledby="non-existent-hostname-compiled"
+	--with-compiledby="non-existent-hostname-compiled" \
+	--disable-darwin
 
 CONFIGURE_VARS += \
 	vim_cv_getcwd_broken=no \
