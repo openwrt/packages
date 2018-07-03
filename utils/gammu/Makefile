@@ -31,7 +31,7 @@ define Package/gammu
 	URL:=http://dl.cihar.com/gammu/releases/
 	DEPENDS:=+libpthread +libcurl +glib2 $(ICONV_DEPENDS) $(INTL_DEPENDS)
 	DEPENDS+=+PACKAGE_python:python +PACKAGE_bluez-libs:bluez-libs
-	DEPENDS+=+PACKAGE_libmariadbclient:libmariadbclient +PACKAGE_unixodbc:unixodbc +PACKAGE_libpq:libpq
+	DEPENDS+=+PACKAGE_libmariadb:libmariadb +PACKAGE_unixodbc:unixodbc +PACKAGE_libpq:libpq
 	DEPENDS+=+PACKAGE_libusb-1.0:libusb-1.0
 endef
 
