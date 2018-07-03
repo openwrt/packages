@@ -22,7 +22,7 @@ start_service() {
     fi
 
     procd_open_instance
-    procd_set_param command $PROG $NETIFYD_OPTS
+    procd_set_param command $PROG -R $NETIFYD_OPTS
     procd_set_param file /etc/netifyd.conf
     procd_set_param respawn
     procd_close_instance
