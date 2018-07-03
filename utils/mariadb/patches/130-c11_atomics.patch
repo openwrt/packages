@@ -14,7 +14,7 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
      ${LIBM} ${LIBNSL} ${LIBBIND} ${LIBCRYPT} ${LIBSOCKET} ${LIBDL} ${CMAKE_THREAD_LIBS_INIT} ${LIBRT} ${LIBEXECINFO})
    # Need explicit pthread for gcc -fsanitize=address
    IF(CMAKE_USE_PTHREADS_INIT AND CMAKE_C_FLAGS MATCHES "-fsanitize=")
-@@ -1038,7 +1038,26 @@ ELSEIF(NOT WITH_ATOMIC_OPS)
+@@ -952,7 +952,26 @@ ELSEIF(NOT WITH_ATOMIC_OPS)
      long long int *ptr= &var;
      return (int)__atomic_load_n(ptr, __ATOMIC_SEQ_CST);
    }"
@@ -73,29 +73,9 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
  #ifdef MY_ATOMIC_MODE_DUMMY
  #define make_atomic_load_body(S)   ret= *a
  #define make_atomic_store_body(S)  *a= v
---- a/include/atomic/nolock.h
-+++ b/include/atomic/nolock.h
-@@ -17,7 +17,7 @@
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA */
- 
- #if defined(__i386__) || defined(_MSC_VER) || defined(__x86_64__)   \
--    || defined(HAVE_GCC_ATOMIC_BUILTINS) \
-+    || defined(HAVE_GCC_ATOMIC_BUILTINS) || defined(HAVE_GCC_C11_ATOMICS) \
-     || defined(HAVE_SOLARIS_ATOMIC)
- 
- #  ifdef MY_ATOMIC_MODE_DUMMY
-@@ -41,7 +41,7 @@
- #  elif __GNUC__
- #    if defined(HAVE_SOLARIS_ATOMIC)
- #      include "solaris.h"
--#    elif defined(HAVE_GCC_ATOMIC_BUILTINS)
-+#    elif defined(HAVE_GCC_ATOMIC_BUILTINS) || defined(HAVE_GCC_C11_ATOMICS)
- #      include "gcc_builtins.h"
- #    elif defined(__i386__) || defined(__x86_64__)
- #      include "x86-gcc.h"
 --- a/mysys/CMakeLists.txt
 +++ b/mysys/CMakeLists.txt
-@@ -78,6 +78,10 @@ IF(HAVE_BFD_H)
+@@ -80,6 +80,10 @@ IF(HAVE_BFD_H)
    TARGET_LINK_LIBRARIES(mysys bfd)  
  ENDIF(HAVE_BFD_H)
  
@@ -108,7 +88,7 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
  ENDIF(WIN32)
 --- a/sql/CMakeLists.txt
 +++ b/sql/CMakeLists.txt
-@@ -165,6 +165,10 @@ TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATI
+@@ -170,6 +170,10 @@ TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATI
    ${SSL_LIBRARIES}
    ${LIBSYSTEMD})
  
@@ -119,3 +99,14 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
  IF(WIN32)
    SET(MYSQLD_SOURCE main.cc nt_servc.cc message.rc)
    TARGET_LINK_LIBRARIES(sql psapi)
+--- a/include/my_atomic.h
++++ b/include/my_atomic.h
+@@ -126,7 +126,7 @@
+ #include "atomic/generic-msvc.h"
+ #elif defined(HAVE_SOLARIS_ATOMIC)
+ #include "atomic/solaris.h"
+-#elif defined(HAVE_GCC_ATOMIC_BUILTINS)
++#elif defined(HAVE_GCC_ATOMIC_BUILTINS) || defined(HAVE_GCC_C11_ATOMICS)
+ #include "atomic/gcc_builtins.h"
+ #elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+ #include "atomic/x86-gcc.h"
