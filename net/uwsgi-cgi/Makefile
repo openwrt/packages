@@ -23,7 +23,7 @@ define Package/uwsgi-cgi
   SUBMENU:=Web Servers/Proxies
   TITLE:=The uWSGI server
   URL:=http://unbit.com/
-  DEPENDS:=+libopenssl +libpcre +jansson +libuuid +libxml2
+  DEPENDS:=+libcap +libopenssl +libpcre +jansson +libuuid +libxml2
 endef
 
 define Package/uwsgi-cgi-luci-support
@@ -38,6 +38,9 @@ endef
 define Package/uwsgi-cgi/description
 	The uWSGI project build with cgi profile
 endef
+
+MAKE_VARS+=\
+	CPP=$(TARGET_CROSS)cpp
 
 define Build/Compile
 	$(call Build/Compile/Default,PROFILE=cgi)
