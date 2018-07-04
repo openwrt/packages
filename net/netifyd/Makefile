@@ -23,10 +23,10 @@ PKG_CONFIG_DEPENDS:=CONFIG_LIBCURL_ZLIB
 
 # Disable the following and enable SOURCE_DIR below for local test builds.
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://bitbucket.org/eglooca/netify-daemon.git
+PKG_SOURCE_URL:=https://gitlab.com/netify.ai/public/netify-agent.git
 PKG_SOURCE_DATE:=2018-07-03
-PKG_SOURCE_VERSION:=242234f856acebe9ddfd4b3311be63709c01eb08
-PKG_MIRROR_HASH:=f05a608d61b5b72e4564d9f124d724d7a0afa207d5e05fff8e235c199f814a05
+PKG_SOURCE_VERSION:=c9f44afd43e21e4dcc80f278fcae167bfb297478
+PKG_MIRROR_HASH:=whatever
 
 # Local source builds (create symlink to source here)
 #SOURCE_DIR:=$(TOPDIR)/netify-daemon
