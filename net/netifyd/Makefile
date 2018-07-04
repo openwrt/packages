@@ -26,7 +26,7 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.com/netify.ai/public/netify-agent.git
 PKG_SOURCE_DATE:=2018-07-03
 PKG_SOURCE_VERSION:=b47cd92b6d9ad5d377c19ed3457490eef4e8a970
-PKG_MIRROR_HASH:=whatever
+PKG_MIRROR_HASH:=aff279e417d4edb755ab2560e6672bb1e9694340f2efc3dafa8da35244ae6018
 
 # Local source builds (create symlink to source here)
 #SOURCE_DIR:=$(TOPDIR)/netify-daemon
