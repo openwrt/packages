@@ -28,7 +28,7 @@ define Package/gitolite
   DEPENDS:=+perlbase-essential +perlbase-sys +perlbase-data +perlbase-digest +perlbase-env +perlbase-time +git +perlbase-findbin +perlbase-storable +perlbase-text +perlbase-getopt +perlbase-utf8 +openssh-keygen +openssh-server +openssh-moduli perl
   TITLE:=Easy administration of git repositories
   URL:=http://gitolite.com/gitlolite
-  MAINTAINER:=Daniel Dickinson <lede@cshore.thecshore.com>
+  MAINTAINER:=Daniel Dickinson <cshored@thecshore.com>
   USERID:=git=382:git=382
 endef
 
