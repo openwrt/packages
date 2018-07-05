@@ -43,6 +43,15 @@ Index: netopeer2-0.4.13-ae560bef2e70d274f6d028b59e3cb398ea2a621d/keystored/CMake
  
  project(keystored C)
  include(GNUInstallDirs)
+@@ -140,7 +140,7 @@ if (SSH_KEY_INSTALL)
+         execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/ssh-key-import.sh)")
+ endif()
+ 
+-add_custom_target(install-scripts-ide
++add_custom_target(install-scripts-ide-keystored
+     scripts/model-install.sh
+     scripts/ssh-key-import.sh
+ )
 Index: netopeer2-0.4.13-ae560bef2e70d274f6d028b59e3cb398ea2a621d/server/CMakeLists.txt
 ===================================================================
 --- netopeer2-0.4.13-ae560bef2e70d274f6d028b59e3cb398ea2a621d.orig/server/CMakeLists.txt
@@ -56,3 +65,10 @@ Index: netopeer2-0.4.13-ae560bef2e70d274f6d028b59e3cb398ea2a621d/server/CMakeLis
  
  project(netopeer2-server C)
  include(GNUInstallDirs)
+@@ -176,7 +176,7 @@ if (ENABLE_CONFIGURATION)
+         execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/model-install.sh)")
+ endif()
+ 
+-add_custom_target(install-scripts-ide
++add_custom_target(install-scripts-ide-server
+     scripts/model-install.sh
