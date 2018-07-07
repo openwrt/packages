@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libfmt
-PKG_VERSION:=5.0.0
+PKG_VERSION:=5.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
