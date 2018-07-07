@@ -1,0 +1,32 @@
+From f6c656c5c0368b2fb4284af0484c3bedfc7ae42c Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Tue, 26 Jun 2018 14:14:34 -0700
+Subject: [PATCH] Fix compile with OpenSSL 1.1.0
+
+OpenSSL 1.1.0 deprecared SSL_library_init and SSL_load_error_strings.
+They're part of OPENSSL_init_ssl now.
+---
+ fdm.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/fdm.c b/fdm.c
+index cdf8383..9355b91 100644
+--- a/fdm.c
++++ b/fdm.c
+@@ -717,8 +717,13 @@ retry:
+ 	}
+ 	conf.lock_file = lock;
+ 
++
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	SSL_library_init();
+ 	SSL_load_error_strings();
++#else
++	OPENSSL_init_ssl(0, NULL);
++#endif
+ 
+ 	/* Filter account list. */
+ 	TAILQ_INIT(&actaq);
+-- 
+2.17.1
+
