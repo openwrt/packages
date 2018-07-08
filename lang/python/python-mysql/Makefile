@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE:=mysqlclient-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/m/$(PKG_NAME)
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/m/mysqlclient
 PKG_HASH:=2d9ec33de39f4d9c64ad7322ede0521d85829ce36a76f9dd3d6ab76a9c8648e5
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-mysql-$(PKG_VERSION)
