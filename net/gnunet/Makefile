@@ -5,7 +5,7 @@ PKG_SOURCE_VERSION:=2b99bddcb6961cfda34087138acdda4b8b9ccb9f
 PKG_MIRROR_HASH:=7b1567d4d4b316ed4b70372bbcfc2039a93d6a7bbf24c2b3036b2c7f3bccc9b4
 
 PKG_VERSION:=0.10.2-git-20180607-$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -70,6 +70,13 @@ define Package/gnunet/description
  This package provides the core components of GNUnet including the
  CADET routing engine, a DHT implementation and basic transports as
  well as their helpers.
+endef
+
+define Package/gnunet/config
+config GNUNET_HAS_ICONV_SUPPORT
+	depends on PACKAGE_gnunet && (!USE_UCLIBC || (USE_UCLIBC && BUILD_NLS))
+	bool
+	default y
 endef
 
 define BuildComponent
@@ -280,7 +287,7 @@ DEPENDS_fs-heap:=+gnunet-datastore
 PLUGIN_fs-heap:=datastore_heap
 CONFLICTS_fs-heap:=gnunet-fs-mysql gnunet-fs-pgsql gnunet-fs-sqlite
 
-DEPENDS_mysql:=+libmysqlclient
+DEPENDS_mysql:=+libmysqlclient @GNUNET_HAS_ICONV_SUPPORT
 LIB_mysql:=mysql my
 
 DEPENDS_social-mysql:=+gnunet-mysql +gnunet-social
