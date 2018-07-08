@@ -31,9 +31,9 @@ define Package/tvheadend
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=Tvheadend is a TV streaming server for Linux
-  DEPENDS:=+libopenssl +librt +zlib +TVHEADEND_AVAHI_SUPPORT:libavahi-client $(ICONV_DEPENDS) 
+  DEPENDS:=+libopenssl +librt +zlib +TVHEADEND_AVAHI_SUPPORT:libavahi-client $(ICONV_DEPENDS)
   URL:=https://tvheadend.org
-  MAINTAINER:=Jan Čermák <jan.cermak@nic.cz>
+  MAINTAINER:=Jan Čermák <jan.cermak@nic.cz>, Sandy Gould <sjjgould@gmail.com>
 endef
 
 define Package/tvheadend/description
