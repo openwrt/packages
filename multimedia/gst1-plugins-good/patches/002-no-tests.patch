@@ -1,7 +1,7 @@
-diff -u --recursive gst-plugins-good-1.12.4-vanilla/configure.ac gst-plugins-good-1.12.4/configure.ac
---- gst-plugins-good-1.12.4-vanilla/configure.ac	2018-02-11 10:36:40.335391048 -0500
-+++ gst-plugins-good-1.12.4/configure.ac	2018-02-11 10:37:22.304475546 -0500
-@@ -1061,20 +1061,6 @@
+diff -u --recursive gst-plugins-good-1.14.1-vanilla/configure.ac gst-plugins-good-1.14.1/configure.ac
+--- gst-plugins-good-1.14.1-vanilla/configure.ac	2018-07-07 18:56:53.008234372 -0400
++++ gst-plugins-good-1.14.1/configure.ac	2018-07-07 18:57:24.886355477 -0400
+@@ -1292,22 +1292,6 @@
  sys/v4l2/Makefile
  sys/waveform/Makefile
  sys/ximage/Makefile
@@ -11,9 +11,11 @@ diff -u --recursive gst-plugins-good-1.12.4-vanilla/configure.ac gst-plugins-goo
 -tests/examples/audiofx/Makefile
 -tests/examples/cairo/Makefile
 -tests/examples/equalizer/Makefile
+-tests/examples/gtk/Makefile
 -tests/examples/jack/Makefile
 -tests/examples/level/Makefile
 -tests/examples/rtp/Makefile
+-tests/examples/rtsp/Makefile
 -tests/examples/shapewipe/Makefile
 -tests/examples/spectrum/Makefile
 -tests/examples/v4l2/Makefile
@@ -22,9 +24,9 @@ diff -u --recursive gst-plugins-good-1.12.4-vanilla/configure.ac gst-plugins-goo
  common/Makefile
  common/m4/Makefile
  m4/Makefile
-diff -u --recursive gst-plugins-good-1.12.4-vanilla/Makefile.am gst-plugins-good-1.12.4/Makefile.am
---- gst-plugins-good-1.12.4-vanilla/Makefile.am	2018-02-11 10:36:40.335391048 -0500
-+++ gst-plugins-good-1.12.4/Makefile.am	2018-02-11 10:37:37.242505621 -0500
+diff -u --recursive gst-plugins-good-1.14.1-vanilla/Makefile.am gst-plugins-good-1.14.1/Makefile.am
+--- gst-plugins-good-1.14.1-vanilla/Makefile.am	2018-07-07 18:56:53.008234372 -0400
++++ gst-plugins-good-1.14.1/Makefile.am	2018-07-07 18:57:30.015374957 -0400
 @@ -2,7 +2,6 @@
  
  ALWAYS_SUBDIRS =		\
