@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libzdb
 PKG_VERSION:=3.1
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -22,6 +22,14 @@ PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=libzdb/host
 
 include $(INCLUDE_DIR)/package.mk
+
+# Help libzdb find libiconv.so when using uClibc.
+ifneq ($(CONFIG_USE_UCLIBC),)
+TARGET_CPPFLAGS+= \
+	-I$(STAGING_DIR)/usr/lib/libiconv-full/include
+TARGET_LDFLAGS += \
+	-L$(STAGING_DIR)/usr/lib/libiconv-full/lib
+endif
 
 define Package/libzdb
     SECTION:=libs

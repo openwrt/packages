@@ -40,7 +40,7 @@ diff -rupN libzdb-3.1.orig/configure.ac libzdb-3.1/configure.ac
 -                DBCPPFLAGS="$DBCPPFLAGS `$MYSQLCONFIG --include`"
 -                DBLDFLAGS="$DBLDFLAGS `$MYSQLCONFIG --libs`"
 +                DBCPPFLAGS="$DBCPPFLAGS -I$STAGING_DIR/usr/include/mysql"
-+                DBLDFLAGS="$DBLDFLAGS -L$STAGING_DIR/usr/lib/mysql -L$STAGING_DIR/usr/lib -lmysqlclient -lz -lcrypt -lm"
++                DBLDFLAGS="$DBLDFLAGS -L$STAGING_DIR/usr/lib/mysql -L$STAGING_DIR/usr/lib -lmysqlclient -liconv -lz -lcrypt -lm"
                  AC_DEFINE([HAVE_LIBMYSQLCLIENT], 1, [Define to 1 to enable mysql])
          else
                  CPPFLAGS=$svd_CPPFLAGS
