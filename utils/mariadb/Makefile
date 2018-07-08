@@ -174,6 +174,10 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+# Pass CPPFLAGS in the CFLAGS as otherwise the build system will
+# ignore them.
+TARGET_CFLAGS+=$(TARGET_CPPFLAGS)
+
 define Package/mariadb/install/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(2) $(1)/usr/bin
 endef
