@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libantlr3c
-PKG_VERSION:=3.2
+PKG_VERSION:=3.4
 PKG_RELEASE:=1
-PKG_HASH:=2ccfb8a8bdd3d6c1d60742ff3a5a954af6d5a8d7f8901c87229fc6fa540ac99a
+PKG_HASH:=ca914a97f1a2d2f2c8e1fca12d3df65310ff0286d35c48b7ae5f11dcc8b2eb52
 
-PKG_SOURCE_URL:=http://www.antlr3.org/download/C
+PKG_SOURCE_URL:=https://www.antlr3.org/download/C
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 PKG_MAINTAINER:=Espen Jürgensen <espenjurgensen+openwrt@gmail.com>
@@ -26,7 +27,7 @@ define Package/libantlr3c
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=libantlr3c
-  URL:=http://www.antlr3.org/
+  URL:=https://www.antlr3.org/
 endef
 
 define Package/libantlr3c/description
