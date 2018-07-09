@@ -272,6 +272,12 @@ ifneq ($(BUILD_VARIANT),all-module)
     ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/nginx-ts
   endif
 else
+  CONFIG_NGINX_HEADERS_MORE:=y
+  CONFIG_NGINX_HTTP_BROTLI:=y
+  CONFIG_NGINX_RTMP_MODULE:=y
+  CONFIG_NGINX_TS_MODULE:=y
+  CONFIG_NGINX_NAXSI:=y
+  CONFIG_NGINX_LUA:=y
   ADDITIONAL_MODULES += --with-http_ssl_module --add-module=$(PKG_BUILD_DIR)/nginx-naxsi/naxsi_src \
     --add-module=$(PKG_BUILD_DIR)/lua-nginx --with-ipv6 --with-http_stub_status_module --with-http_flv_module \
 	--with-http_dav_module --with-http_auth_request_module --with-http_v2_module --with-http_realip_module \
@@ -370,102 +376,117 @@ Package/nginx-ssl/install = $(Package/nginx/install)
 Package/nginx-all-module/install = $(Package/nginx/install)
 
 define Build/Prepare
-  $(call Build/Prepare/Default)
-  ifneq ($(BUILD_VARIANT),all-module)
-    $(if $(CONFIG_NGINX_NAXSI),$(call Prepare/nginx-naxsi))
-    $(if $(CONFIG_NGINX_LUA),$(call Prepare/lua-nginx))
-    $(if $(CONFIG_NGINX_HTTP_BROTLI),$(call Prepare/nginx-brotli))
-    $(if $(CONFIG_NGINX_HEADERS_MORE),$(call Prepare/nginx-headers-more))
-	$(if $(CONFIG_NGINX_RTMP_MODULE),$(call Prepare/nginx-rtmp))
-	$(if $(CONFIG_NGINX_TS_MODULE),$(call Prepare/nginx-ts))
-  else
-    $(call Prepare/nginx-naxsi)
-    $(call Prepare/lua-nginx)
-    $(call Prepare/nginx-brotli)
-    $(call Prepare/nginx-headers-more)
-	$(call Prepare/nginx-rtmp)
-	$(call Prepare/nginx-ts)
-  endif
+	$(Build/Prepare/Default)
+	$(Prepare/nginx-naxsi)
+	$(Prepare/lua-nginx)
+	$(Prepare/nginx-brotli)
+	$(Prepare/nginx-headers-more)
+	$(Prepare/nginx-rtmp)
+	$(Prepare/nginx-ts)
 endef
 
-define Download/nginx-headers-more
-	VERSION:=a9f7c7e86cc7441d04e2f11f01c2e3a9c4b0301d
-	SUBDIR:=nginx-headers-more
-	FILE:=headers-more-nginx-module-$(PKG_VERSION)-$$(VERSION).tar.gz
-	URL:=https://github.com/openresty/headers-more-nginx-module.git
-	PROTO:=git
-endef
 
-define  Prepare/nginx-headers-more
-	$(eval $(call Download,nginx-headers-more))
+ifeq ($(CONFIG_NGINX_HEADERS_MORE),y)
+  define Download/nginx-headers-more
+    VERSION:=a9f7c7e86cc7441d04e2f11f01c2e3a9c4b0301d
+    SUBDIR:=nginx-headers-more
+    FILE:=headers-more-nginx-module-$(PKG_VERSION)-$$(VERSION).tar.gz
+    URL:=https://github.com/openresty/headers-more-nginx-module.git
+    PROTO:=git
+  endef
+  $(eval $(call Download,nginx-headers-more))
+
+  define Prepare/nginx-headers-more
+	$(eval $(Download/nginx-headers-more))
 	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
-endef
+  endef
+endif
 
-define Download/nginx-brotli
-	VERSION:=e26248ee361c04e25f581b92b85d95681bdffb39
-	SUBDIR:=nginx-brotli
-	FILE:=ngx-brotli-module-$(PKG_VERSION)-$$(VERSION).tar.gz
-	URL:=https://github.com/eustas/ngx_brotli.git
-	PROTO:=git
-endef
 
-define  Prepare/nginx-brotli
-	$(eval $(call Download,nginx-brotli))
+ifeq ($(CONFIG_NGINX_HTTP_BROTLI),y)
+  define Download/nginx-brotli
+    VERSION:=e26248ee361c04e25f581b92b85d95681bdffb39
+    SUBDIR:=nginx-brotli
+    FILE:=ngx-brotli-module-$(PKG_VERSION)-$$(VERSION).tar.gz
+    URL:=https://github.com/eustas/ngx_brotli.git
+    PROTO:=git
+  endef
+  $(eval $(call Download,nginx-brotli))
+
+  define Prepare/nginx-brotli
+	$(eval $(Download/nginx-brotli))
 	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
-endef
+  endef
+endif
 
-define Download/nginx-rtmp
-	VERSION:=791b6136f02bc9613daf178723ac09f4df5a3bbf
-	SUBDIR:=nginx-rtmp
-	FILE:=ngx-rtmp-module-$(PKG_VERSION)-$$(VERSION).tar.gz
-	URL:=https://github.com/arut/nginx-rtmp-module.git
-	PROTO:=git
-endef
 
-define  Prepare/nginx-rtmp
+ifeq ($(CONFIG_NGINX_RTMP_MODULE),y)
+  define Download/nginx-rtmp
+    VERSION:=791b6136f02bc9613daf178723ac09f4df5a3bbf
+    SUBDIR:=nginx-rtmp
+    FILE:=ngx-rtmp-module-$(PKG_VERSION)-$$(VERSION).tar.gz
+    URL:=https://github.com/arut/nginx-rtmp-module.git
+    PROTO:=git
+  endef
+  $(eval $(call Download,nginx-rtmp))
+
+  define  Prepare/nginx-rtmp
 	$(eval $(call Download,nginx-rtmp))
 	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
-endef
+  endef
+endif
 
-define Download/nginx-ts
-	VERSION:=ef2f874d95cc75747eb625a292524a702aefb0fd
-	SUBDIR:=nginx-ts
-	FILE:=ngx-ts-module-$(PKG_VERSION)-$$(VERSION).tar.gz
-	URL:=https://github.com/arut/nginx-ts-module.git
-	PROTO:=git
-endef
 
-define  Prepare/nginx-ts
+ifeq ($(CONFIG_NGINX_TS_MODULE),y)
+  define Download/nginx-ts
+    VERSION:=ef2f874d95cc75747eb625a292524a702aefb0fd
+    SUBDIR:=nginx-ts
+    FILE:=ngx-ts-module-$(PKG_VERSION)-$$(VERSION).tar.gz
+    URL:=https://github.com/arut/nginx-ts-module.git
+    PROTO:=git
+  endef
+  $(eval $(call Download,nginx-ts))
+
+  define  Prepare/nginx-ts
 	$(eval $(call Download,nginx-ts))
 	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
-endef
+  endef
+endif
 
-define Download/nginx-naxsi
-	VERSION:=951123ad456bdf5ac94e8d8819342fe3d49bc002
-	SUBDIR:=nginx-naxsi
-	FILE:=nginx-naxsi-module-$(PKG_VERSION)-$$(VERSION).tar.gz
-	URL:=https://github.com/nbs-system/naxsi.git
-	PROTO:=git
-endef
 
-define  Prepare/nginx-naxsi
-	$(eval $(call Download,nginx-naxsi))
+ifeq ($(CONFIG_NGINX_NAXSI),y)
+  define Download/nginx-naxsi
+    VERSION:=951123ad456bdf5ac94e8d8819342fe3d49bc002
+    SUBDIR:=nginx-naxsi
+    FILE:=nginx-naxsi-module-$(PKG_VERSION)-$$(VERSION).tar.gz
+    URL:=https://github.com/nbs-system/naxsi.git
+    PROTO:=git
+  endef
+  $(eval $(call Download,nginx-naxsi))
+
+  define Prepare/nginx-naxsi
+	$(eval $(Download/nginx-naxsi))
 	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
-endef
+  endef
+endif
 
-define Download/lua-nginx
-	VERSION:=576a10d246daf81c0ce1b959c50ee807769c01a8
-	SUBDIR:=lua-nginx
-	FILE:=lua-nginx-module-$(PKG_VERSION)-$$(VERSION).tar.gz
-	URL:=https://github.com/openresty/lua-nginx-module.git
-	PROTO:=git
-endef
 
-define  Prepare/lua-nginx
-	$(eval $(call Download,lua-nginx))
+ifeq ($(CONFIG_NGINX_LUA),y)
+  define Download/lua-nginx
+    VERSION:=576a10d246daf81c0ce1b959c50ee807769c01a8
+    SUBDIR:=lua-nginx
+    FILE:=lua-nginx-module-$(PKG_VERSION)-$$(VERSION).tar.gz
+    URL:=https://github.com/openresty/lua-nginx-module.git
+    PROTO:=git
+  endef
+  $(eval $(call Download,lua-nginx))
+
+  define Prepare/lua-nginx
+	$(eval $(Download/lua-nginx))
 	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
 	$(call PatchDir,$(PKG_BUILD_DIR),./patches-lua-nginx)
-endef
+  endef
+endif
 
 $(eval $(call BuildPackage,nginx))
 $(eval $(call BuildPackage,nginx-ssl))
