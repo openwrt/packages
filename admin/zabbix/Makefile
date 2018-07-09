@@ -39,6 +39,7 @@ endef
 define Package/zabbix-agentd
   $(call Package/zabbix/Default)
   TITLE+= agentd
+  DEPENDS+= +libopenssl
 endef
 
 define Package/zabbix-extra-mac80211
@@ -62,23 +63,25 @@ endef
 define Package/zabbix-sender
   $(call Package/zabbix/Default)
   TITLE+= sender
+  DEPENDS += +libopenssl 
 endef
 
 define Package/zabbix-get
   $(call Package/zabbix/Default)
   TITLE+= get
+  DEPENDS += +libopenssl
 endef
 
 define Package/zabbix-server
   $(call Package/zabbix/Default)
   TITLE+= server
-  DEPENDS += +libsqlite3
+  DEPENDS += +libsqlite3 +libopenssl
 endef
 
 define Package/zabbix-proxy
   $(call Package/zabbix/Default)
   TITLE+= proxy
-  DEPENDS += +libsqlite3
+  DEPENDS += +libsqlite3 +libopenssl
 endef
 
 define Package/zabbix-extra-mac80211/description
@@ -100,6 +103,7 @@ See http://wiki.openwrt.org/doc/howto/zabbix for ready to use zabbix templates.
 endef
 
 CONFIGURE_ARGS+= \
+	--with-openssl="$(STAGING_DIR)/usr" \
 	--enable-agent \
 	--enable-server \
 	--enable-proxy \
