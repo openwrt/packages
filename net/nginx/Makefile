@@ -392,6 +392,7 @@ ifeq ($(CONFIG_NGINX_HEADERS_MORE),y)
     SUBDIR:=nginx-headers-more
     FILE:=headers-more-nginx-module-$(PKG_VERSION)-$$(VERSION).tar.gz
     URL:=https://github.com/openresty/headers-more-nginx-module.git
+    MIRROR_HASH:=432609015719aaa7241e5166c7cda427acbe004f725887f78ef629d51bd9cb3f
     PROTO:=git
   endef
   $(eval $(call Download,nginx-headers-more))
@@ -409,6 +410,7 @@ ifeq ($(CONFIG_NGINX_HTTP_BROTLI),y)
     SUBDIR:=nginx-brotli
     FILE:=ngx-brotli-module-$(PKG_VERSION)-$$(VERSION).tar.gz
     URL:=https://github.com/eustas/ngx_brotli.git
+    MIRROR_HASH:=76b891ba49f82f0cfbc9cba875646e26ee986b522373e0aa2698a9923a4adcdb
     PROTO:=git
   endef
   $(eval $(call Download,nginx-brotli))
@@ -426,6 +428,7 @@ ifeq ($(CONFIG_NGINX_RTMP_MODULE),y)
     SUBDIR:=nginx-rtmp
     FILE:=ngx-rtmp-module-$(PKG_VERSION)-$$(VERSION).tar.gz
     URL:=https://github.com/arut/nginx-rtmp-module.git
+    MIRROR_HASH:=8db3f7b545ce98f47415e0436e12dfb55ae787afd3cd9515b5642c7b9dc0ef00
     PROTO:=git
   endef
   $(eval $(call Download,nginx-rtmp))
@@ -443,6 +446,7 @@ ifeq ($(CONFIG_NGINX_TS_MODULE),y)
     SUBDIR:=nginx-ts
     FILE:=ngx-ts-module-$(PKG_VERSION)-$$(VERSION).tar.gz
     URL:=https://github.com/arut/nginx-ts-module.git
+    MIRROR_HASH:=31ecc9968b928886b54884138eafe2fa747648bca5094d4c3132e8ae9509d1d3
     PROTO:=git
   endef
   $(eval $(call Download,nginx-ts))
@@ -460,6 +464,7 @@ ifeq ($(CONFIG_NGINX_NAXSI),y)
     SUBDIR:=nginx-naxsi
     FILE:=nginx-naxsi-module-$(PKG_VERSION)-$$(VERSION).tar.gz
     URL:=https://github.com/nbs-system/naxsi.git
+    MIRROR_HASH:=7ab791f2ff38096f48013141bbfe20ba213d5e04dcac08ca82e0cac07d5c30f0
     PROTO:=git
   endef
   $(eval $(call Download,nginx-naxsi))
@@ -477,6 +482,7 @@ ifeq ($(CONFIG_NGINX_LUA),y)
     SUBDIR:=lua-nginx
     FILE:=lua-nginx-module-$(PKG_VERSION)-$$(VERSION).tar.gz
     URL:=https://github.com/openresty/lua-nginx-module.git
+    MIRROR_HASH:=85ab2fc752d4e09f266209fdec507b30c57bb966c34bbff148cf3459ae5cac80
     PROTO:=git
   endef
   $(eval $(call Download,lua-nginx))
