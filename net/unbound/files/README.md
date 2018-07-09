@@ -151,6 +151,25 @@ You like the UCI. Yet, you need to add some difficult to standardize options, or
 
 The former will be added to the end of the `server:` clause. The later will be added to the end of the file for extended `forward:` and `view:` clauses. You can also disable unbound-control in the UCI which only allows "localhost" connections unencrypted, and then add an encrypted remote `control:` clause.
 
+#### DNS over TLS
+Some public servers are now offering DNS over TLS. Unbound supports acting as DNS over TLS forwarding client. You can use the override files to enable this funciton. Unbound will connect TLS without verifying keys unless you include the PEM path and install `ca-bundle` package. No connection or connection without verification will occur unless you use complete syntax with "@" and "#". See `forward-addr: 1.1.1.1@853#cloudflare-dns.com` for example. Unbound makes a new TLS connection for each query. You limit this effect using large resource and aggressive recursion setting (big cache and prefetching). You can also set memory and recursion to default and edit `unbound_srv.conf` to suit your needs. UCI improvements are in progress but not ready in OpenWrt 18.06.
+
+**/etc/unbound/unbound_srv.conf**:
+```
+  tls-service-pem: /etc/ssl/certs/ca-certificates.crt
+```
+
+**/etc/unbound/unbound_ext.conf**:
+```
+forward-zone:
+  name: .
+  forward-addr: 1.1.1.1@853#cloudflare-dns.com
+  forward-addr: 1.0.0.1@853#cloudflare-dns.com
+  forward-addr: 2606:4700:4700::1111@853#cloudflare-dns.com
+  forward-addr: 2606:4700:4700::1001@853#cloudflare-dns.com
+  forward-tls-upstream: yes
+```
+
 ## Complete List of UCI Options
 **/etc/config/unbound**:
 ```
