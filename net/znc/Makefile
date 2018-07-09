@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=znc
-PKG_VERSION:=1.6.6
+PKG_VERSION:=1.7.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://znc.in/releases \
 		https://znc.in/releases/archive
-PKG_HASH:=7fb841bc71dc1749b1dc081e9eaf22ceb56ebb03c6b1d8804a4f9eb8bbd59525
+PKG_HASH:=c07e31439ac6b948a577bd61a9d5f61a6d191d387423779b937aa1404051b96f
 
 PKG_MAINTAINER:=Jonas Gorski <jogo@openwrt.org>
 PKG_LICENSE:=Apache-2.0
@@ -277,26 +277,22 @@ $(eval $(call webskin,ice))
 PKG_CONFIG_DEPENDS += $(patsubst %,CONFIG_PACKAGE_%,$(ZNC_MODULES))
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
+
+CMAKE_OPTIONS += $(if $(CONFIG_ZNC_ICU), WANT_ICU=TRUE, WANT_ICU=FALSE) \
+	WANT_CYRUS=FALSE \
+	WANT_PERL=FALSE \
+	WANT_PYTHON=FALSE \
+	WANT_SWIG=FALSE \
+	WANT_TCL=FALSE \
+	WANT_OPENSSL=TRUE \
+	WANT_ZLIB=TRUE
 
 CONFIGURE_VARS += \
-	CXXFLAGS="$(TARGET_CFLAGS) -fno-builtin -fno-rtti" \
+	CXXFLAGS="$(TARGET_CFLAGS) -fno-builtin" \
 	CPPFLAGS="-I$(STAGING_DIR)/usr/include -I$(STAGING_DIR)/include" \
 	LDFLAGS="-nodefaultlibs -lc -L$(STAGING_DIR)/usr/lib -L$(STAGING_DIR)/lib" \
 	LIBS="-lstdc++ -lm -lssl -lcrypto $(LIBGCC_S) -lc"
-
-CONFIGURE_ARGS += \
-	$(if $(CONFIG_ZNC_ICU), --enable-charset, --disable-charset) \
-	--disable-cyrus \
-	--disable-debug \
-	--enable-largefile \
-	--disable-perl \
-	--enable-poll \
-	--disable-python \
-	--enable-ssl \
-	--disable-swig \
-	--disable-tcl \
-	--enable-tdns \
-	--enable-zlib
 
 define Build/Configure
 	$(call Build/Configure/Default,)
