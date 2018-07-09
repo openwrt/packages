@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=talloc
-PKG_VERSION:=2.1.11
+PKG_VERSION:=2.1.13
 MAJOR_VERSION:=2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.samba.org/ftp/talloc/
-PKG_HASH:=639eb35556a0af999123c4d883e79be05ff9f00ab4f9e4ac2e5775f9c5eeeed3
+PKG_SOURCE_URL:=https://www.samba.org/ftp/talloc
+PKG_HASH:=84f399dbf0ad97006a2b4953ea99452d033faac15aabfddd4ba61734764c6047
 
 PKG_MAINTAINER:=Lucile Quirion <lucile.quirion@savoirfairelinux.com>
 PKG_LICENSE:=LGPL-3.0+
