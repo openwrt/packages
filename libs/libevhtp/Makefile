@@ -11,17 +11,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libevhtp
-PKG_VERSION:=1.1.6
-PKG_RELEASE:=2
+PKG_VERSION:=1.2.16
+PKG_RELEASE:=1
+PKG_MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/criticalstack/libevhtp/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=4c3f510b15873e9fc29299de0c5d4d257d1d910710e104e33439a17c27fc414b
+
 PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILE:=LICENSE
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://chromium.googlesource.com/external/github.com/ellzey/libevhtp
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=91071e2f20749cd469b87ac2ef1c158dc2a6806f
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=c9c4415539e78ac9021a8507cd16b9101564dd03286bc84428cc1ee11f0df1fd
-
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -31,7 +32,7 @@ define Package/libevhtp
     CATEGORY:=Libraries
     TITLE:=A more flexible replacement for libevent's httpd API
     MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
-    URL:=https://github.com/ellzey/libevhtp
+    URL:=https://github.com/criticalstack/libevhtp
     DEPENDS:=+libevent2 +libevent2-openssl +libevent2-pthreads +libopenssl +libpthread
 endef
 
