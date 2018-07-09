@@ -8,12 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgpg-error
-PKG_VERSION:=1.12
+PKG_VERSION:=1.31
 PKG_RELEASE:=1
 
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=ftp://ftp.gnupg.org/gcrypt/libgpg-error
-PKG_HASH:=cafc9ed6a87c53a35175d5a1220a96ca386696eef2fa059cc0306211f246e55f
+PKG_SOURCE_URL:=https://www.gnupg.org/ftp/gcrypt/libgpg-error
+PKG_HASH:=40d0a823c9329478063903192a1f82496083b277265904878f4bc09e0db7a4ef
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=COPYING
 
@@ -26,8 +28,7 @@ define Package/libgpg-error
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=GnuPG error handling helper library
-  URL:=http://www.gnupg.org/related_software/libgpg-error/
-  MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+  URL:=https://www.gnupg.org/related_software/libgpg-error
 endef
 
 define Package/libgpg-error/description
@@ -41,9 +42,16 @@ endef
 TARGET_CFLAGS += $(FPIC)
 
 CONFIGURE_ARGS += \
+	--target=$(GNU_TARGET_NAME) \
+	--host=$(GNU_TARGET_NAME) \
+	--build=$(GNU_HOST_NAME) \
 	--enable-shared \
 	--enable-static \
-	--disable-rpath
+	--disable-rpath \
+	--disable-nls \
+	--disable-languages \
+	--disable-doc \
+	--disable-tests
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(2)/bin $(1)/usr/bin
