@@ -4,21 +4,37 @@
 [Unbound](https://www.unbound.net/) is a validating, recursive, and caching DNS resolver. The C implementation of Unbound is developed and maintained by [NLnet Labs](https://www.nlnetlabs.nl/). It is based on ideas and algorithms taken from a java prototype developed by Verisign labs, Nominet, Kirei and ep.net. Unbound is designed as a set of modular components, so that also DNSSEC (secure DNS) validation and stub-resolvers (that do not run as a server, but are linked into an application) are easily possible.
 
 ## Package Overview
-Unbound may be useful on consumer grade embedded hardware. It is _intended_ to be a recursive resolver only. [NLnet Labs NSD](https://www.nlnetlabs.nl/projects/nsd/) is _intended_ for the authoritative task. This is different than [ISC Bind](https://www.isc.org/downloads/bind/) and its inclusive functions. Unbound configuration effort and memory consumption may be easier to control. A consumer could have their own recursive resolver with 8/64 MB router, and remove potential issues from forwarding resolvers outside of their control.
+OpenWrt default build uses [dnsmasq](http://www.thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html) for DNS forwarding and DHCP. With a forward only resolver, dependence on the upstream recursors may be cause for concern. They are often provided by the ISP, and some users have switched to public DNS providers. Either way may result in problems due to performance, "snoop-vertising", hijacking (MiM), and other causes. Running a recursive resolver or resolver capable of TLS may be a solution.
+
+Unbound may be useful on consumer grade embedded hardware. It is fully DNSSEC and TLS capable. It is _intended_ to be a recursive resolver only. [NLnet Labs NSD](https://www.nlnetlabs.nl/projects/nsd/) is _intended_ for the authoritative task. This is different than [ISC Bind](https://www.isc.org/downloads/bind/) and its inclusive functions. Unbound configuration effort and memory consumption may be easier to control. A consumer could have their own recursive resolver with 8/64 MB router, and remove potential issues from forwarding resolvers outside of their control.
 
 This package builds on Unbounds capabilities with OpenWrt UCI. Not every Unbound option is in UCI, but rather, UCI simplifies the combination of related options. Unbounds native options are bundled and balanced within a smaller set of choices. Options include resources, DNSSEC, access control, and some TTL tweaking. The UCI also provides an escape option and works at the raw "unbound.conf" level.
 
-## HOW TO Ad Blocking
-The UCI scripts will work with [net/adblock 2.3+](https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md), if it is installed and enabled. Its all detected and integrated automatically. In brief, the adblock scripts create distinct local-zone files that are simply included in the unbound conf file during UCI generation. If you don't want this, then disable adblock or reconfigure adblock to not send these files to Unbound.
+## HOW TO: Ad Blocking
+The UCI scripts will work with [net/adblock](https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md), if it is installed and enabled. Its all detected and integrated automatically. In brief, the adblock scripts create distinct local-zone files that are simply included in the unbound conf file during UCI generation. If you don't want this, then disable adblock or reconfigure adblock to not send these files to Unbound.
 
-## HOW TO Integrate with DHCP
+A few tweaks may be needed to enhance the realiability and effectiveness. Ad Block option for delay time may need to be set for upto one minute (adb_triggerdelay), because of boot up race conditions with interfaces calling Unbound restarts. Also many smart devices (TV, microwave, or refigerator) will also use public DNS servers either as a bypass or for certain connections in general. If you wish to force exclusive DNS to your router, then you will need a firewall rule for example:
+
+**/etc/config/firewall**:
+```
+config rule
+	option name 'Block-Public-DNS'
+	option enabled '1'
+	option src 'lan'
+	option dest 'wan'
+	option dest_port '53 853 5353'
+	option proto 'tcpudp'
+	option family 'any'
+	option target 'REJECT'
+```
+
+## HOW TO: Integrate with DHCP
 Some UCI options and scripts help Unbound to work with DHCP servers to load the local DNS. The examples provided here are serial dnsmasq-unbound, parallel dnsmasq-unbound, and unbound scripted with odhcpd.
 
 ### Serial dnsmasq
-In this case, dnsmasq is not changed *much* with respect to the default OpenWrt/LEDE configuration. Here dnsmasq is forced to use the local Unbound instance as the lone upstream DNS server, instead of your ISP. This may be the easiest implementation, but performance degradation can occur in high volume networks. dnsmasq and Unbound effectively have the same information in memory, and all transfers are double handled.
+In this case, dnsmasq is not changed *much* with respect to the default [OpenWrt configuration](https://openwrt.org/docs/guide-user/base-system/dns_configuration). Here dnsmasq is forced to use the local Unbound instance as the lone upstream DNS server, instead of your ISP. This may be the easiest implementation, but performance degradation can occur in high volume networks. dnsmasq and Unbound effectively have the same information in memory, and all transfers are double handled.
 
 **/etc/config/unbound**:
-
 ```
 config unbound
   option add_local_fqdn '0'
@@ -32,7 +48,6 @@ config unbound
 ```
 
 **/etc/config/dhcp**:
-
 ```
 config dnsmasq
   option domain 'yourdomain'
@@ -48,7 +63,6 @@ config dnsmasq
 In this case, Unbound serves your local network directly for all purposes. It will look over to dnsmasq for DHCP-DNS resolution. Unbound is generally accessible on port 53, and dnsmasq is only accessed at 127.0.0.1:1053 by Unbound. Although you can dig/drill/nslookup remotely with the proper directives.
 
 **/etc/config/unbound**:
-
 ```
 config unbound
   option dhcp_link 'dnsmasq'
@@ -57,7 +71,6 @@ config unbound
 ```
 
 **/etc/config/dhcp**:
-
 ```
 config dnsmasq
   option domain 'yourdomain'
@@ -73,7 +86,7 @@ config dhcp 'lan'
 ```
 
 ### Unbound and odhcpd
-You may ask, "can Unbound replace dnsmasq?" You can have DHCP-DNS records with Unbound and odhcpd only. The UCI scripts will allow Unbound to act like dnsmasq. When odhcpd configures each DHCP lease, it will call a script. The script provided with Unbound will read the lease file for DHCP-DNS records. The unbound-control application is required, because simply rewriting conf-files and restarting unbound is too much overhead.
+You may ask, "can Unbound replace dnsmasq?" You can have DHCP-DNS records with Unbound and [odhcpd](https://github.com/openwrt/odhcpd/blob/master/README) only. The UCI scripts will allow Unbound to act like dnsmasq. When odhcpd configures each DHCP lease, it will call a script. The script provided with Unbound will read the lease file for DHCP-DNS records. The unbound-control application is required, because simply rewriting conf-files and restarting unbound is too much overhead.
 - Default OpenWrt has dnsmasq+odhcpd with `odhcpd-ipv6only` limited to DHCPv6.
 - If you use dnsmasq+odhcpd together, then use dnsmasq serial or parallel methods above.
 - You must install package `odhcpd` (full) to use odhcpd alone.
@@ -81,7 +94,6 @@ You may ask, "can Unbound replace dnsmasq?" You can have DHCP-DNS records with U
 - Remember to uninstall (or disable) dnsmasq when you won't use it.
 
 **/etc/config/unbound**:
-
 ```
 config unbound
   # name your router in DNS
@@ -100,7 +112,6 @@ config unbound
 ```
 
 **/etc/config/dhcp**:
-
 ```
 config dhcp 'lan'
   option dhcpv4 'server'
@@ -119,7 +130,7 @@ config odhcpd 'odhcpd'
   option leasetrigger '/usr/lib/unbound/odhcpd.sh'
 ```
 
-## HOW TO Manual Override
+## HOW TO: Manual Override
 Yes, there is a UCI to disable the rest of Unbound UCI. However, OpenWrt or LEDE are targeted at embedded machines with flash ROM. The initialization scripts do a few things to protect flash ROM.
 
 ### Completely Manual (almost)
@@ -128,7 +139,6 @@ All of `/etc/unbound` (persistent, ROM) is copied to `/var/lib/unbound` (tmpfs, 
 Keep the DNSKEY updated with your choice of flash activity. `root.key` maintenance for DNSKEY RFC5011 would be hard on flash. Unbound natively updates frequently. It also creates and destroys working files in the process. In `/var/lib/unbound` this is no problem, but it would be gone at the next reboot. If you have DNSSEC (validator) active, then you should consider the age UCI option. Choose how many days to copy from `/var/lib/unbound/root.key` (tmpfs) to `/etc/unbound/root.key` (flash).
 
 **/etc/config/unbound**:
-
 ```
 config unbound
   option manual_conf '1'
@@ -141,9 +151,27 @@ You like the UCI. Yet, you need to add some difficult to standardize options, or
 
 The file `unbound_srv.conf` will be added into the `server:` clause. The file `unbound_ext.conf` will be added to the end of all configuration. It is for extended `forward-zone:`, `stub-zone:`, `auth-zone:`, and `view:` clauses. You can also disable unbound-control in the UCI which only allows "localhost" connections unencrypted, and then add an encrypted remote `control:` clause.
 
+#### DNS over TLS
+Some public servers are now offering DNS over TLS. Unbound supports acting as DNS over TLS forwarding client. You can use the override files to enable this funciton. Unbound will connect TLS without verifying keys unless you include the PEM path and install `ca-bundle` package. No connection or connection without verification will occur unless you use complete syntax with "@" and "#". See `forward-addr: 1.1.1.1@853#cloudflare-dns.com` for example. Unbound makes a new TLS connection for each query. You limit this effect using large resource and aggressive recursion setting (big cache and prefetching). You can also set memory and recursion to default and edit `unbound_srv.conf` to suit your needs. UCI improvements are in progress but not ready in OpenWrt 18.06.
+
+**/etc/unbound/unbound_srv.conf**:
+```
+  tls-service-pem: /etc/ssl/certs/ca-certificates.crt
+```
+
+**/etc/unbound/unbound_ext.conf**:
+```
+forward-zone:
+  name: .
+  forward-addr: 1.1.1.1@853#cloudflare-dns.com
+  forward-addr: 1.0.0.1@853#cloudflare-dns.com
+  forward-addr: 2606:4700:4700::1111@853#cloudflare-dns.com
+  forward-addr: 2606:4700:4700::1001@853#cloudflare-dns.com
+  forward-tls-upstream: yes
+```
+
 ## Complete List of UCI Options
 **/etc/config/unbound**:
-
 ```
 config unbound
   Currently only one instance is supported.
@@ -327,5 +355,4 @@ config unbound
     cause netifd to execute procd interface reload. Limit Unbound procd
     triggers to LAN and WAN (IP4 only) to prevent restart @2-3 minutes.
 ```
-
 
