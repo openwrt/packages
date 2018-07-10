@@ -22,6 +22,10 @@ PKG_SOURCE:=gst-plugins-good-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-good/
 PKG_HASH:=34ec062ddb766a32377532e039781f4a16fbc3e8b449e642605bacab26a99172
 
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_PACKAGE_gst1-mod-lame \
+	CONFIG_PACKAGE_gst1-mod-mpg123 \
+
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
@@ -85,9 +89,14 @@ define Package/gstreamer1-plugins-good/config
 
 endef
 
+GST_COND_SELECT = $(patsubst %,$(if $(CONFIG_PACKAGE_gst1-mod-$(1)),--enable,--disable)-%,$(1))
+
 GST_VERSION:=1.0
 
 CONFIGURE_ARGS += \
+	$(call GST_COND_SELECT,lame) \
+        $(call GST_COND_SELECT,mpg123) \
+	\
 	--disable-debug \
 	--disable-examples \
 	\
@@ -197,8 +206,10 @@ $(eval $(call GstBuildPlugin,interleave,audio interleave,audio,,))
 $(eval $(call GstBuildPlugin,isomp4,isomp4 support,audio pbutils riff rtp tag video,,))
 #$(eval $(call GstBuildPlugin,jack,jack support,audio,,))
 $(eval $(call GstBuildPlugin,jpeg,jpeg support,video,,+libjpeg))
+$(eval $(call GstBuildPlugin,lame,MP3 encoder (using LAME),audio,,+lame-lib))
 $(eval $(call GstBuildPlugin,level,audio level,audio,,))
 $(eval $(call GstBuildPlugin,matroska,matroska support,audio pbutils riff tag video,,))
+$(eval $(call GstBuildPlugin,mpg123,MP3 decoder (using mpg123),audio tag,,+libid3tag +mpg123))
 $(eval $(call GstBuildPlugin,mulaw,mulaw support,audio,,))
 $(eval $(call GstBuildPlugin,multifile,multiple files access,video,,))
 $(eval $(call GstBuildPlugin,multipart,multipart stream handling,,,))
