@@ -1,7 +1,7 @@
 --- a/setup.py
 +++ b/setup.py
-@@ -512,16 +512,9 @@ class PyBuildExt(build_ext):
-             return ['m']
+@@ -537,16 +537,9 @@ class PyBuildExt(build_ext):
+             os.unlink(tmpfile)
  
      def detect_modules(self):
 -        # Ensure that /usr/local is always used, but the local build
