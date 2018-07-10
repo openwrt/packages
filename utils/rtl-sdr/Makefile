@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,16 +7,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtl-sdr
-PKG_VERSION:=0.5.3-20150608-$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=3
+PKG_DATE:=20180728
+PKG_SOURCE_VERSION:=9047eef701f50d8bc4748233a31d65a0519ed86c
+PKG_VERSION:=0.6git-$(PKG_DATE)-$(PKG_SOURCE_VERSION)
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://git.osmocom.org/rtl-sdr.git
-PKG_SOURCE_VERSION:=e3c03f738f5aef4dc51e2b741fbdb542b9cc1bb1
+PKG_SOURCE_URL:=https://github.com/osmocom/rtl-sdr.git
 
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz
-PKG_MIRROR_HASH:=6b1a3ae95e6d9e896ec4f8dcca46b7cf5741533bb549d429ac3fd46c76e2d595
+PKG_MIRROR_HASH:=ed27bd6f5f3179c78f262c945ab55a099d4e5a19d399e0fe3e71d09cdf22c78e
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 PKG_BUILD_PARALLEL:=1
 
