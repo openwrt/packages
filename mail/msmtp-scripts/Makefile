@@ -19,18 +19,21 @@ PKG_HASH:=2aec48d47b02facf2a33cf97a7434e969c1a054224406e6c55320d825c7902b2
 
 PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Daniel Dickinson <cshoreded@thecshore.com>
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/msmtp-scripts/Default
   SECTION:=mail
   CATEGORY:=Mail
-  TITLE:=Simple sendmail SMTP queueing and forwarding
+  TITLE:=DEPRECATED: Simple sendmail SMTP queueing and forwarding
   URL:=http://msmtp-scripts.sourceforge.net/
 endef
 
 define Package/msmtp-scripts/Default/description
+ DEPRECATED: SourceForge project is abandonded; and upstream (on GitHub)
+ has deprecated this project. See:
+ https://github.com/cshore-history/msmtp-scripts#deprecation-notice
+
  msmtp-scripts are scripts wrappers around the msmtp SMTP client that
  add queueing, logging to syslog or file, a subset of sendmail/postfix
  mailq/postsuper/postqueue commands implemented in a compatible fashion.
