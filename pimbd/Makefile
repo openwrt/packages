@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pimbd
-PKG_SOURCE_VERSION:=68f5fc803119e4b33a88b35c096f4d6ac28b6de5
-PKG_VERSION:=2015-08-18-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_VERSION:=dbf4e5913b06e3160f506df15e6a047a403a5f21
+PKG_VERSION:=2018-06-19-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -17,7 +17,8 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 # Spammy debug builds for now
-CMAKE_OPTIONS += -DL_LEVEL=7
+CMAKE_OPTIONS += -DL_LEVEL=7 \
+		 -DWITH_LIBUBOX=1
 
 define Package/pimbd
   SECTION:=net
