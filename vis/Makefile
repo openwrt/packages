@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=vis
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://git.open-mesh.org/vis.git
+PKG_SOURCE_URL:=https://git.open-mesh.org/vis.git
 PKG_REV:=e141311c6a4fc824efbad536c137ed279905d825
 PKG_VERSION:=1440
 PKG_RELEASE:=0

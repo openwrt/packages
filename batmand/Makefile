@@ -11,7 +11,7 @@ include $(INCLUDE_DIR)/kernel.mk
 PKG_NAME:=batmand
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://git.open-mesh.org/batmand.git
+PKG_SOURCE_URL:=https://git.open-mesh.org/batmand.git
 PKG_REV:=b67a7087b51d7a5e90d27ac39116d1f57257c86e
 PKG_VERSION:=1440
 PKG_RELEASE:=0

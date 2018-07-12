@@ -10,7 +10,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.pps.univ-paris-diderot.fr/~jch/software/files/
-PKG_MD5SUM:=40d4931986913f5f8d9b5b70abf6fda5
+PKG_HASH:=c411430bb102f08d3d68d2fb5010b5da0149908b671ac0fb12abd8c8ee6380c5
 
 include $(INCLUDE_DIR)/package.mk
 

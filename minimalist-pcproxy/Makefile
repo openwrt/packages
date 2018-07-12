@@ -12,7 +12,7 @@ PKG_VERSION:=2015-01-12-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/fingon/minimalist-pcproxy.git
+PKG_SOURCE_URL:=https://github.com/fingon/minimalist-pcproxy.git
 PKG_MAINTAINER:=Markus Stenberg <fingon@iki.fi>
 PKG_LICENSE:=GPL-2.0
 

@@ -27,8 +27,7 @@ PKG_NAME:=bmx7
 
 PKG_SOURCE_PROTO:=git
 
-PKG_SOURCE_URL:=git://github.com/bmx-routing/bmx7.git
-#PKG_SOURCE_URL:=file:///usr/src/bmx-routing/bmx7.git
+PKG_SOURCE_URL:=https://github.com/bmx-routing/bmx7.git
 
 PKG_REV:=9883383dc26df16da67b9ef7ba99efe62f79c4e7
 PKG_MIRROR_HASH:=012178aba42016d3e0961715f99bf1e322c2c6c22b1cc6635375468360cb4d68

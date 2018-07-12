@@ -13,7 +13,7 @@ PKG_VERSION:=2017-08-24-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/mcproxy/mcproxy.git
+PKG_SOURCE_URL:=https://github.com/mcproxy/mcproxy.git
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=GPL-2.0+
 

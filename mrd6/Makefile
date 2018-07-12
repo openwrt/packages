@@ -13,7 +13,7 @@ PKG_VERSION:=2013-11-30-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/hugosantos/mrd6.git
+PKG_SOURCE_URL:=https://github.com/hugosantos/mrd6.git
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=GPL-2.0+
 
