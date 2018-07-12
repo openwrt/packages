@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
 PKG_VERSION:=10.2.16
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := \
@@ -34,13 +34,6 @@ PKG_BUILD_DEPENDS:=libevent2 mariadb/host
 CMAKE_INSTALL:=1
 
 PLUGIN_DIR:=/usr/lib/mysql/plugin
-
-MARIADB_COMMON_DEPENDS := \
-	+USE_UCLIBC:libiconv-full \
-	+libatomic \
-	+libopenssl \
-	+libstdcpp \
-	+zlib
 
 MARIADB_SERVER_PLUGINS := \
 	adt_null \
@@ -174,6 +167,14 @@ MARIADB_SERVER_EXTRA := \
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
+include $(INCLUDE_DIR)/nls.mk
+
+MARIADB_COMMON_DEPENDS := \
+	$(ICONV_DEPENDS) \
+	+libatomic \
+	+libopenssl \
+	+libstdcpp \
+	+zlib
 
 # Pass CPPFLAGS in the CFLAGS as otherwise the build system will
 # ignore them.
@@ -385,12 +386,13 @@ CMAKE_OPTIONS += \
 	-DPLUGIN_AUTH_GSSAPI_CLIENT=NO \
 	-DPLUGIN_CRACKLIB_PASSWORD_CHECK=NO
 
-# musl and glibc include their own iconv, but uclibc does not
-ifneq ($(CONFIG_USE_UCLIBC),)
+# Help MariaDB find the correct libiconv.
+# nls.mk sets it up so that with CONFIG_BUILD_NLS libiconv-full would be used,
+# otherwise libiconv-stub (independent of the selected libc). MariaDB needs a
+# leg up to find/pick the right lib.
 CMAKE_OPTIONS += \
-	-DICONV_INCLUDE_DIR=$(STAGING_DIR)/usr/lib/libiconv-full/include \
-	-DICONV_LIBRARIES=$(STAGING_DIR)/usr/lib/libiconv-full/lib/libiconv.so
-endif
+	-DICONV_INCLUDE_DIR=$(ICONV_PREFIX)/include \
+	-DICONV_LIBRARIES=$(ICONV_PREFIX)/lib/libiconv.$(if $(CONFIG_BUILD_NLS),so,a)
 
 CMAKE_OPTIONS += \
 	$(foreach p,$(MARIADB_SERVER_PLUGINS),-D$(plugin-$(p))=$(if $(CONFIG_PACKAGE_$(PKG_NAME)-server-plugin-$(subst _,-,$(p))),DYNAMIC,NO))
@@ -438,14 +440,13 @@ endef
 # from libiconv_open() to iconv_open()]. But in OpenWrt this variable is not set
 # when building libiconv-full. So when mariadb sets LIBICONV_PLUG it expects
 # iconv_open() to be available for example, which is not the case - only
-# libiconv_open() is. To address this do not set the variable when building
-# against libiconv-full.
+# libiconv_open() is. To address this prevent the variable from being set.
+# libiconv-stub does not use this variable, so there is no harm in always doing
+# this.
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
-ifneq ($(CONFIG_USE_UCLIBC),)
 	$(SED) '/ADD_DEFINITIONS(-DLIBICONV_PLUG)/d' $(PKG_BUILD_DIR)/libmariadb/libmariadb/CMakeLists.txt
-endif
 endef
 
 define Build/InstallDev
