@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -92,7 +92,7 @@ else
   CONFIGURE_ARGS+= --without-ldap
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_lighttpd-mod-authn_mysql),)
+ifneq ($(SDK)$(CONFIG_PACKAGE_lighttpd-mod-authn_mysql)$(CONFIG_PACKAGE_lighttpd-mod-mysql_vhost),)
   CONFIGURE_ARGS+= --with-mysql
 else
   CONFIGURE_ARGS+= --without-mysql
@@ -108,12 +108,6 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_lighttpd-mod-cml)$(CONFIG_PACKAGE_lighttpd-mod-mag
   CONFIGURE_ARGS+= --with-lua
 else
   CONFIGURE_ARGS+= --without-lua
-endif
-
-ifneq ($(SDK)$(CONFIG_PACKAGE_lighttpd-mod-mysql_vhost),)
-  CONFIGURE_ARGS+= --with-mysql
-else
-  CONFIGURE_ARGS+= --without-mysql
 endif
 
 #ifneq ($(SDK)$(CONFIG_PACKAGE_lighttpd-mod-cml)$(CONFIG_PACKAGE_lighttpd-mod-trigger_b4_dl),)
