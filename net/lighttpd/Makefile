@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
 PKG_VERSION:=1.4.49
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.lighttpd.net/lighttpd/releases-1.4.x
@@ -26,6 +26,8 @@ REBUILD_MODULES=authn_gssapi authn_ldap authn_mysql cml magnet mysql_vhost trigg
 PKG_CONFIG_DEPENDS:=CONFIG_LIGHTTPD_SSL $(patsubst %,CONFIG_PACKAGE_lighttpd-mod-%,$(REBUILD_MODULES))
 
 include $(INCLUDE_DIR)/package.mk
+# iconv is required for lighttpd's mysql plugin
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/lighttpd/Default
   SUBMENU:=Web Servers/Proxies
