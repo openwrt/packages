@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
 PKG_VERSION:=5.8.0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
@@ -184,6 +184,8 @@ PKG_CONFIG_DEPENDS:= \
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/kernel.mk
+# collectd-mod-mysql needs iconv
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/collectd/Default
   SECTION:=utils
