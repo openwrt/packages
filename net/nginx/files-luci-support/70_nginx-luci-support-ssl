@@ -2,7 +2,7 @@
 
 
 if [ -f "/etc/nginx/luci_nginx_ssl.conf" ] && [ -f "/etc/nginx/nginx.conf" ]; then
-	if [ ! "$(cat '/etc/nginx/nginx.conf' | grep -q 'return 301 https://$host$request_uri;')" ]; then
+	if [ ! "$(cat '/etc/nginx/nginx.conf' | grep 'return 301 https://$host$request_uri;')" ]; then
 		if [ -f "/etc/nginx/nginx.conf_old" ]; then
 			rm /etc/nginx/nginx.conf
 		else
@@ -16,6 +16,8 @@ if [ -f "/etc/nginx/luci_nginx_ssl.conf" ] && [ -f "/etc/nginx/nginx.conf" ]; th
 		else
 			/etc/init.d/nginx start
 		fi
+	else
+		rm /etc/nginx/luci_nginx_ssl.conf
 	fi
 fi
 
