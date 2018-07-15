@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pulseaudio
-PKG_VERSION:=12.0
+PKG_VERSION:=12.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://freedesktop.org/software/pulseaudio/releases/
-PKG_HASH:=6e422dbdc9fd11c0cb6af869e5eda73dc24a8be3c14725440edd51ce6b464444
+PKG_HASH:=5f5dfb5e2c376e8c974b80f93b983ed77088ade7fb8b9325a575c45aa35977f3
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=GPL LICENSE
 
@@ -50,7 +50,6 @@ endef
 define Package/pulseaudio-daemon-avahi
   $(call Package/pulseaudio/Default)
   DEPENDS+=+dbus +libavahi-client +sbc
-#  DEPENDS+=+avahi-daemon 
   TITLE+= (avahi/bluez)
   VARIANT:=avahi
 endef
@@ -124,7 +123,6 @@ CONFIGURE_ARGS += \
 	--without-fftw \
 	--without-soxr \
 	--without-speex
-# --disable-bluez
 
 ifeq ($(BUILD_VARIANT),avahi)
 CONFIGURE_ARGS += \
@@ -140,9 +138,6 @@ endif
 
 CONFIGURE_VARS += \
 	PKG_CONFIG_LIBDIR="$(STAGING_DIR)/usr/lib/pkgconfig"
-
-#SUPP_LIBS:=-L$(INTL_PREFIX)/lib -L$(ICONV_PREFIX)/lib
-TARGET_CFLAGS += -std=gnu99
 
 define Build/InstallDev
 	$(INSTALL_DIR) \
