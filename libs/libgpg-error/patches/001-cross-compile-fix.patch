@@ -1,0 +1,22 @@
+diff -u --recursive libgpg-error-1.32-vanilla/configure.ac libgpg-error-1.32/configure.ac
+--- libgpg-error-1.32-vanilla/configure.ac	2018-07-15 01:23:30.028462129 -0400
++++ libgpg-error-1.32/configure.ac	2018-07-15 01:25:32.214267179 -0400
+@@ -74,6 +74,18 @@
+ AC_CANONICAL_HOST
+ AB_INIT
+ 
++case "${host}" in
++    x86_64-openwrt-linux-gnu|i?86-openwrt-linux-gnu)
++        host=$(echo $host | sed 's/openwrt/pc/g')
++        ;;
++    arm-openwrt-linux-gnu)
++        host=arm-unknown-linux-gnueabi
++        ;;
++    *)
++        host=$(echo $host | sed 's/openwrt/unknown/g')
++        ;;
++esac
++
+ # Checks for programs.
+ AC_PROG_CC
+ AM_PROG_CC_C_O
