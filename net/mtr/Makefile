@@ -8,21 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mtr
-PKG_REV:=dd2b75080bc5406ba0b438953b36b72204ba114b
-PKG_VERSION:=0.85+newdns-$(PKG_REV)
-PKG_RELEASE:=2
+PKG_VERSION:=0.92
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/traviscross/mtr.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=4911c96ee4b3c31692664a845dccddabdfef107646d4861b21fd4053bd2b76e8
+PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/traviscross/mtr/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=568a52911a8933496e60c88ac6fea12379469d7943feb9223f4337903e4bc164
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 PKG_FIXUP:=autoreconf
 
@@ -34,7 +33,6 @@ define Package/mtr
   DEPENDS:=+libncurses
   TITLE:=Full screen ncurses traceroute tool
   URL:=http://www.bitwizard.nl/mtr/
-  PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 endef
 
 define Package/mtr/description
