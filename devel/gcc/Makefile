@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gcc
 PKG_VERSION:=5.4.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_SOURCE_URL:=@GNU/gcc/gcc-$(PKG_VERSION)
 PKG_HASH:=608df76dec2d34de6558249d8af4cbee21eceddbcb580d666f7a5a583ca3303a
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -22,6 +22,7 @@ include $(INCLUDE_DIR)/package.mk
 TARGET_LANGUAGES:="c,c++"
 BUGURL=https://dev.openwrt.org/
 PKGVERSION=OpenWrt GCC $(PKG_VERSION)
+TARGET_CPPFLAGS += -D_GLIBCXX_INCLUDE_NEXT_C_HEADERS
 
 # not using sstrip here as this fucks up the .so's somehow
 STRIP:=$(TOOLCHAIN_DIR)/bin/$(TARGET_CROSS)strip
@@ -92,6 +93,8 @@ define Build/Prepare
 	cp $(PKG_BUILD_DIR)/config.sub $(PKG_BUILD_DIR)/mpc/
 endef
 
+TARGET_CXX += -std=gnu++03
+CONFIGURE_ARGS += CXX_FOR_TARGET="$(TARGET_CXX)" CXXFLAGS_FOR_TARGET="-g -O2 -D_GLIBCXX_INCLUDE_NEXT_C_HEADERS"
 
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); rm -f config.cache; \
