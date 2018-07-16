@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-mysql
 PKG_VERSION:=1.3.12
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE:=mysqlclient-$(PKG_VERSION).tar.gz
@@ -21,16 +21,10 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-mysql-$(PKG_VERSION)
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
+# python-mysql needs iconv
+include $(INCLUDE_DIR)/nls.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
-
-# Help python-mysql find libiconv.so when using uClibc.
-ifneq ($(CONFIG_USE_UCLIBC),)
-TARGET_CPPFLAGS+= \
-	-I$(STAGING_DIR)/usr/lib/libiconv-full/include
-TARGET_LDFLAGS += \
-	-L$(STAGING_DIR)/usr/lib/libiconv-full/lib
-endif
 
 define Package/python-mysql/Default
   SUBMENU:=Python
