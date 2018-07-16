@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=https://znc.in/releases \
 		https://znc.in/releases/archive
 PKG_HASH:=44cfea7158ea05dc2547c7c6bc22371e66c869def90351de0ab90a9c200d39c4
 
-PKG_MAINTAINER:=Jonas Gorski <jogo@openwrt.org>
+PKG_MAINTAINER:=Jonas Gorski <jonas.gorski@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
