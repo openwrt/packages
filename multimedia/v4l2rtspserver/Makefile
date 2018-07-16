@@ -5,23 +5,21 @@
 # See /LICENSE for more information.
 
 include $(TOPDIR)/rules.mk
- 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/mpromonet/v4l2rtspserver.git
-PKG_MIRROR_HASH:=ccd2424b94feb7c52e53700b8613e16291463e3717aff598385d8439ad8c81af
-PKG_SOURCE_VERSION:=7ead7613fe6719b6004d229130f7d62aa0a149e7
-PKG_DATE:=2018-05-26
 
 PKG_NAME:=v4l2rtspserver
-PKG_VERSION:=$(PKG_DATE)-$(PKG_SOURCE_VERSION)
+PKG_VERSION:=0.0.8
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Roger Dammit <rogerdammit@gmail.com>
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/mpromonet/v4l2rtspserver/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=bb4f82ca916b78cbcaeb4093c4bcded3ed89c79568ee4214c9d5a4d654c7f78e
 
 LIVE555_VERSION:=2018.04.25
 LIVE555_MD5SUM:=9b58a5d62659eb29b9bd85d1b29c3a75
 LIVE555_FILE:=live.$(LIVE555_VERSION).tar.gz
 
-CMAKE_INSTALL:=1 
+CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -32,7 +30,7 @@ define Package/v4l2rtspserver
 	TITLE:=v4l2rtspserver
 	DEPENDS:=+libstdcpp
 	URL:=https://github.com/mpromonet/v4l2rtspserver
-endef  
+endef
 
 define Package/v4l2rtspserver/description
 	RTSP server for v4L2 video sources
@@ -61,7 +59,7 @@ define Build/Prepare
 	$(CP) files/config.openwrt $(PKG_BUILD_DIR)/live555
 	( cd $(PKG_BUILD_DIR)/live555; ./genMakefiles openwrt )
 
-	$(MAKE) $(MAKE_FLAGS) -C $(PKG_BUILD_DIR)/live555 
+	$(MAKE) $(MAKE_FLAGS) -C $(PKG_BUILD_DIR)/live555
 	$(MAKE) -C $(PKG_BUILD_DIR)/live555 PREFIX="$(STAGING_DIR)/usr/" install
 
 	# build v4l2wrapper
@@ -89,6 +87,6 @@ define Package/v4l2rtspserver/install
 	$(INSTALL_BIN) files/v4l2rtspserver.init $(1)/etc/init.d/v4l2rtspserver
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) files/v4l2rtspserver.config $(1)/etc/config/v4l2rtspserver
-endef 
+endef
 
 $(eval $(call BuildPackage,v4l2rtspserver))
