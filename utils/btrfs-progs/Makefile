@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btrfs-progs
-PKG_VERSION:=4.16.1
+PKG_VERSION:=4.17
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs/
-PKG_HASH:=013403fb67b17975b21408fa9eb7523b0ecf94f84f8a4397cf972e8e254d2246
+PKG_HASH:=82ca0ecf76350a1e3c6543fe220c0910e240511e663d51fc79c32bd0052c117c
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 
@@ -53,6 +53,9 @@ CONFIGURE_ARGS += \
 	--disable-documentation \
 	--disable-python \
 	--disable-zstd
+
+TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
+TARGET_LDFLAGS += -Wl,--gc-sections -flto
 
 EXTRA_CFLAGS=$(TARGET_CPPFLAGS)
 
