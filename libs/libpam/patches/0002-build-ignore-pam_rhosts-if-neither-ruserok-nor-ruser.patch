@@ -19,7 +19,7 @@ diff --git a/configure.ac b/configure.ac
 index 306b6e2..084071a 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -534,7 +534,10 @@ AC_CHECK_FUNCS(fseeko getdomainname gethostname gettimeofday lckpwdf mkdir selec
+@@ -524,7 +524,10 @@ AC_CHECK_FUNCS(fseeko getdomainname gethostname gettimeofday lckpwdf mkdir selec
  AC_CHECK_FUNCS(strcspn strdup strspn strstr strtol uname)
  AC_CHECK_FUNCS(getutent_r getpwnam_r getpwuid_r getgrnam_r getgrgid_r getspnam_r)
  AC_CHECK_FUNCS(getgrouplist getline getdelim)

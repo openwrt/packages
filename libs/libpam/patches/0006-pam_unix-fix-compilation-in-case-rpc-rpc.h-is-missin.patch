@@ -15,7 +15,7 @@ diff --git a/modules/pam_unix/pam_unix_passwd.c b/modules/pam_unix/pam_unix_pass
 index 2d330e5..970724a 100644
 --- a/modules/pam_unix/pam_unix_passwd.c
 +++ b/modules/pam_unix/pam_unix_passwd.c
-@@ -336,7 +336,7 @@ static int _do_setpass(pam_handle_t* pamh, const char *forwho,
+@@ -410,7 +410,7 @@ static int _do_setpass(pam_handle_t* pamh, const char *forwho,
  	}
  
  	if (on(UNIX_NIS, ctrl) && _unix_comesfromsource(pamh, forwho, 0, 1)) {
