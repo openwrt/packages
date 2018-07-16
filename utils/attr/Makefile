@@ -8,16 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=attr
-PKG_REV:=cfd8e6ef491a7a5ff900ba2ba3deff7d0bebb0a6
-PKG_VERSION:=20170915
+PKG_VERSION:=2.4.48
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://git.savannah.gnu.org/git/attr.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_MIRROR_HASH:=3c4f9331fd73192801a30071a379f07b48699adffe0d560133a740ade029a04c
+PKG_SOURCE_URL:=http://git.savannah.nongnu.org/cgit/attr.git/snapshot
+PKG_HASH:=095699f71230ace37e5bc680c6f9d15cf8e53eb38d00b2c46db5cc7e0712e5f3
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 
 PKG_LICENSE:=LGPL-2.1 GPL-2.0
