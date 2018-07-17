@@ -22,7 +22,7 @@ If you want a more robust AdBlocking, supporting free memory detection and compl
 
 
 ## Screenshot (luci-app-simple-adblock)
-![screenshot](https://raw.githubusercontent.com/stangri/screenshots/master/simple-adblock/screenshot04.png "screenshot")
+![screenshot](https://raw.githubusercontent.com/stangri/openwrt_packages/master/screenshots/simple-adblock/screenshot06.png "screenshot")
 
 
 ## Requirements
@@ -54,12 +54,12 @@ If you are running a development (trunk/snapshot) build of OpenWrt/LEDE Project 
 
 
 ## How to install
-Install ```simple-adblock``` and  ```luci-app-simple-adblock``` packages from Web UI or run the following in the command line:
+Install ```simple-adblock``` and ```luci-app-simple-adblock``` packages from Web UI or run the following in the command line:
 ```sh
 opkg update; opkg install simple-adblock luci-app-simple-adblock
 ```
 
-If ```simple-adblock``` and  ```luci-app-simple-adblock``` packages are not found in the official feed/repo for your version of OpenWrt/LEDE Project, you will need to [add a custom repo to your router](#add-custom-repo-to-your-router) first.
+If ```simple-adblock``` and ```luci-app-simple-adblock``` packages are not found in the official feed/repo for your version of OpenWrt/LEDE Project, you will need to [add a custom repo to your router](#add-custom-repo-to-your-router) first.
 
 
 #### Add custom repo to your router
@@ -68,15 +68,17 @@ If your router is not set up with the access to repository containing these pack
 ###### OpenWrt 15.05.1
 ```sh
 opkg update; opkg install ca-certificates wget libopenssl
-echo -e -n 'untrusted comment: public key 7ffc7517c4cc0c56\nRWR//HUXxMwMVnx7fESOKO7x8XoW4/dRidJPjt91hAAU2L59mYvHy0Fa\n' > /tmp/stangri-repo.pub && opkg-key add /tmp/stangri-repo.pub
+echo -e -n 'untrusted comment: LEDE usign key of Stan Grishin\nRWR//HUXxMwMVnx7fESOKO7x8XoW4/dRidJPjt91hAAU2L59mYvHy0Fa\n' > /tmp/stangri-repo.pub && opkg-key add /tmp/stangri-repo.pub
 ! grep -q 'stangri_repo' /etc/opkg/customfeeds.conf && echo 'src/gz stangri_repo https://raw.githubusercontent.com/stangri/openwrt-repo/master' >> /etc/opkg/customfeeds.conf
 opkg update
 ```
 
 ###### LEDE Project and OpenWrt 18.xx or later
 ```sh
-opkg update; opkg install uclient-fetch libustream-mbedtls
-echo -e -n 'untrusted comment: public key 7ffc7517c4cc0c56\nRWR//HUXxMwMVnx7fESOKO7x8XoW4/dRidJPjt91hAAU2L59mYvHy0Fa\n' > /tmp/stangri-repo.pub && opkg-key add /tmp/stangri-repo.pub
+opkg update
+opkg list-installed | grep -q uclient-fetch || opkg install uclient-fetch
+opkg list-installed | grep -q libustream || opkg install libustream-mbedtls
+echo -e -n 'untrusted comment: LEDE usign key of Stan Grishin\nRWR//HUXxMwMVnx7fESOKO7x8XoW4/dRidJPjt91hAAU2L59mYvHy0Fa\n' > /tmp/stangri-repo.pub && opkg-key add /tmp/stangri-repo.pub
 ! grep -q 'stangri_repo' /etc/opkg/customfeeds.conf && echo 'src/gz stangri_repo https://raw.githubusercontent.com/stangri/openwrt-repo/master' >> /etc/opkg/customfeeds.conf
 opkg update
 ```
@@ -106,7 +108,7 @@ If you specify ```google.com``` as a domain to be whitelisted, you will have acc
 In general, whatever domain is specified to be whitelisted; it, along with with its subdomains will be whitelisted, but not any fake domains containing it.
 
 ## Documentation / Discussion
-Please head to [OpenWrt Forum](https://forum.openwrt.org/viewtopic.php?pid=307950) or [LEDE Project Forum](https://forum.lede-project.org/t/simple-adblock-fast-lean-and-fully-uci-luci-configurable-adblocking/1327/) for discussion of this package.
+Please head [LEDE Project Forum](https://forum.lede-project.org/t/simple-adblock-fast-lean-and-fully-uci-luci-configurable-adblocking/1327/) for discussion of this package.
 
 ## What's New
 1.5.8:
