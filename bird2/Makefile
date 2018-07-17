@@ -96,7 +96,7 @@ protocols, telling BIRD to show various information, telling it to show
 a routing table filtered by a filter, or asking BIRD to reconfigure.
 endef
 
-CONFIGURE_ARGS += --with-linux-headers="$(LINUX_DIR)"
+CONFIGURE_ARGS += --with-linux-headers="$(LINUX_DIR)"  --disable-libssh
 
 define Package/bird2/conffiles
 /etc/bird.conf
