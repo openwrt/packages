@@ -85,10 +85,6 @@ define Build/Compile
 		modules
 endef
 
-define Build/Clean
-        rm -rf $(BUILD_DIR)/$(PKG_NAME)/
-endef
-
 define KernelPackage/batman-adv/install
 	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/hotplug.d/net $(1)/etc/hotplug.d/iface $(1)/lib/batman-adv $(1)/usr/sbin $(1)/lib/netifd/proto
 	$(INSTALL_DATA) ./files/etc/config/batman-adv $(1)/etc/config
