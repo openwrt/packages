@@ -85,11 +85,6 @@ define Build/Compile
 		modules
 endef
 
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	$(CP) ./files/compat-hacks.h $(PKG_BUILD_DIR)/
-endef
-
 define Build/Clean
         rm -rf $(BUILD_DIR)/$(PKG_NAME)/
 endef
