@@ -69,10 +69,6 @@ define Build/Compile
 	$(MAKE_BATCTL_ENV) $(MAKE) -C "$(PKG_BUILD_DIR)" $(MAKE_BATCTL_ARGS)
 endef
 
-define Build/Clean
-	rm -rf $(BUILD_DIR)/$(PKG_NAME)/
-endef
-
 define Package/batctl/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/batctl $(1)/usr/sbin/
