@@ -97,6 +97,7 @@ define Package/nginx-ssl
   TITLE += with SSL support
   DEPENDS +=+libopenssl
   VARIANT:=ssl
+  PROVIDES:=nginx
 endef
 
 Package/nginx-ssl/description = $(Package/nginx/description) \
@@ -108,6 +109,7 @@ define Package/nginx-all-module
   TITLE += with ALL module selected
   DEPENDS:=+libpcre +libopenssl +zlib +liblua +libpthread
   VARIANT:=all-module
+  PROVIDES:=nginx
 endef
 
 Package/nginx-all-module/description = $(Package/nginx/description) \
