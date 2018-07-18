@@ -76,7 +76,7 @@ define Package/luci-app-acme
   SECTION:=luci
   CATEGORY:=LuCI
   TITLE:=ACME package - LuCI interface
-  DEPENDS:= lua luci-base +acme luci-app-uhttpd
+  DEPENDS:= lua luci-base +acme 
   SUBMENU:=3. Applications
 endef
 
