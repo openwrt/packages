@@ -1,0 +1,11 @@
+--- a/conf/options/charon.conf
++++ b/conf/options/charon.conf
+@@ -126,7 +126,7 @@ charon {
+ 
+     # A comma-separated list of network interfaces that should be ignored, if
+     # interfaces_use is specified this option has no effect.
+-    # interfaces_ignore =
++    interfaces_ignore = lo
+ 
+     # A comma-separated list of network interfaces that should be used by
+     # charon. All other interfaces are ignored.
