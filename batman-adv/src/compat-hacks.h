@@ -11,25 +11,7 @@
 
 #endif /* < KERNEL_VERSION(4, 1, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
-
-/* Linux 3.15 misses the uapi include.... */
-#include <uapi/linux/nl80211.h>
-
-#endif /* < KERNEL_VERSION(3, 16, 0) */
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0)
-
-#include <linux/netdevice.h>
-
-#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info, extack) ({\
-	BUILD_BUG_ON(upper_priv != NULL); \
-	BUILD_BUG_ON(upper_info != NULL); \
-	BUILD_BUG_ON(extack != NULL); \
-	netdev_set_master(dev, upper_dev); \
-})
-
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 5, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 5, 0)
 
 #include <linux/netdevice.h>
 
@@ -98,6 +80,7 @@ struct batadv_ethtool_link_ksettings {
 	struct {
 		__u32	speed;
 		__u8	duplex;
+		__u8    autoneg;
 	} base;
 };
 
@@ -119,6 +102,7 @@ batadv_ethtool_get_link_ksettings(struct net_device *dev,
 
 	link_ksettings->base.duplex = cmd.duplex;
 	link_ksettings->base.speed = ethtool_cmd_speed(&cmd);
+	link_ksettings->base.autoneg = cmd.autoneg;
 
 	return 0;
 }

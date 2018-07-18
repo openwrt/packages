@@ -9,9 +9,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batman-adv
 
-PKG_VERSION:=2018.1
-PKG_RELEASE:=2
-PKG_HASH:=b866b28dbbe5c9238abbdf5abbc30fc526dea56898ce4c1bd76d5c017843048b
+PKG_VERSION:=2018.2
+PKG_RELEASE:=0
+PKG_HASH:=d8e35626673e19f5e26860d49af897878975515a5abe6917f339dd8aeca2b8c9
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -27,7 +27,7 @@ define KernelPackage/batman-adv
   DEPENDS:=+KMOD_BATMAN_ADV_BLA:kmod-lib-crc16 +kmod-crypto-crc32c +kmod-lib-crc32c +kmod-cfg80211
   TITLE:=B.A.T.M.A.N. Adv
   FILES:=$(PKG_BUILD_DIR)/net/batman-adv/batman-adv.$(LINUX_KMOD_SUFFIX)
-  AUTOLOAD:=$(call AutoLoad,50,cfg80211 batman-adv)
+  AUTOLOAD:=$(call AutoProbe,batman-adv)
 endef
 
 define KernelPackage/batman-adv/description
@@ -85,22 +85,8 @@ define Build/Compile
 		modules
 endef
 
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	$(CP) ./files/compat-hacks.h $(PKG_BUILD_DIR)/
-endef
-
-define Build/Clean
-        rm -rf $(BUILD_DIR)/$(PKG_NAME)/
-endef
-
 define KernelPackage/batman-adv/install
-	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/hotplug.d/net $(1)/etc/hotplug.d/iface $(1)/lib/batman-adv $(1)/usr/sbin $(1)/lib/netifd/proto
-	$(INSTALL_DATA) ./files/etc/config/batman-adv $(1)/etc/config
-	$(INSTALL_DATA) ./files/lib/batman-adv/config.sh $(1)/lib/batman-adv
-	$(INSTALL_BIN) ./files/etc/hotplug.d/net/99-batman-adv $(1)/etc/hotplug.d/net
-	$(INSTALL_BIN) ./files/lib/netifd/proto/batadv.sh $(1)/lib/netifd/proto
-	$(INSTALL_BIN) ./files/lib/netifd/proto/batadv_vlan.sh $(1)/lib/netifd/proto
+	$(CP) ./files/. $(1)/
 endef
 
 $(eval $(call KernelPackage,batman-adv))
