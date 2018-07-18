@@ -7,20 +7,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=jool
-PKG_VERSION:=2018.01.17
-PKG_RELEASE:=2
+PKG_VERSION:=3.5.7
+PKG_RELEASE:=1
+
+PKG_MAINTAINER:=Dan Luedtke <mail@danrl.com>
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/NICMx/Jool.git
-PKG_SOURCE_VERSION:=9dfaf22e49f7905d94af9b73f9bee22c26d7dd4a
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_SOURCE_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.xz
-PKG_MIRROR_HASH:=79b558561f06f3df01a541b1d39b7d3d88f91d0ee6b8ce3abf91ebbed737225a
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/NICMx/Jool/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=b8e95d1526cd2434dedbae292afd2d17f0780ac2dca2be21264712b41eb76a3d
 
-PKG_BUILD_DIR=$(KERNEL_BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
+PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=USE_UCLIBC:argp-standalone USE_MUSL:argp-standalone
 
@@ -54,7 +53,6 @@ define Package/jool/Default
   SECTION:=net
   CATEGORY:=Network
   URL:=https://www.jool.mx
-  MAINTAINER:=Dan Luedtke <mail@danrl.com>
 endef
 
 define Package/jool/Default/description
