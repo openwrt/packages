@@ -1,0 +1,37 @@
+Index: libuhttpd-2.1.0/src/CMakeLists.txt
+===================================================================
+--- libuhttpd-2.1.0.orig/src/CMakeLists.txt
++++ libuhttpd-2.1.0/src/CMakeLists.txt
+@@ -8,7 +8,7 @@ set(UHTTPD_VERSION_PATCH 0)
+ 
+ # Check the third party Libraries
+ find_package(Libubox REQUIRED)
+-find_package(Lua)
++find_package(Lua51)
+ 
+ include_directories(${CMAKE_CURRENT_BINARY_DIR} ${LIBUBOX_INCLUDE_DIR})
+ 
+@@ -20,9 +20,9 @@ option(UHTTPD_SSL_SUPPORT "SSL support"
+ 
+ 
+ set(LUA_SUPPORT_DEFAULT "ON")
+-if (NOT LUA_FOUND)
++if (NOT LUA51_FOUND)
+     set(LUA_SUPPORT_DEFAULT "OFF")
+-endif (NOT LUA_FOUND)
++endif (NOT LUA51_FOUND)
+ 
+ set(UHTTPD_LUA_SUPPORT_CONFIG 1)
+ option(UHTTPD_LUA_SUPPORT "LUA support" ${LUA_SUPPORT_DEFAULT})
+@@ -34,9 +34,9 @@ else ()
+ endif ()
+ 
+ if (UHTTPD_LUA_SUPPORT)
+-    if (NOT LUA_FOUND)
++    if (NOT LUA51_FOUND)
+         message(FATAL_ERROR "Lua was not found on your system")
+-    endif (NOT LUA_FOUND)
++    endif (NOT LUA51_FOUND)
+ 
+     include_directories(${LUA_INCLUDE_DIR})
+     list(APPEND EXTRA_LIBS ${LUA_LIBRARY})
