@@ -149,6 +149,17 @@ define Package/php7-mod-gd/config
 	default y
 endef
 
+define Package/php7-mysqlnd
+  $(call Package/php7/Default)
+  DEPENDS+= @(!PACKAGE_php7-mod-mysqli)
+  TITLE:=Mysql native driver
+endef
+
+define Package/php7-mysqlnd/description
+  Enable mysql native driver for php7.
+  https://secure.php.net/manual/en/mysqlinfo.library.choosing.php
+endef
+
 # not everything groks --disable-nls
 DISABLE_NLS:=
 
@@ -291,10 +302,14 @@ else
   CONFIGURE_ARGS+= --disable-mbstring
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-mysqli),)
-  CONFIGURE_ARGS+= --with-mysqli=shared,"$(STAGING_DIR)/usr/bin/mysql_config"
+ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mysqlnd),)
+  CONFIGURE_ARGS+= --with-mysqli=mysqlnd --with-mysql=mysqlnd
 else
-  CONFIGURE_ARGS+= --without-mysqli
+  ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-mysqli),)
+    CONFIGURE_ARGS+= --with-mysqli=shared,"$(STAGING_DIR)/usr/bin/mysql_config"
+  else
+    CONFIGURE_ARGS+= --without-mysqli
+  endif
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-opcache),)
@@ -319,19 +334,22 @@ else
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-pdo),)
-  CONFIGURE_ARGS+= --enable-pdo=shared
-  ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-pdo-mysql),)
-    CONFIGURE_ARGS+= --with-pdo-mysql=shared,"$(STAGING_DIR)/usr"
+  ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mysqlnd),)
+    CONFIGURE_ARGS+= --enable-pdo --with-pdo-mysql=mysqlnd
   else
-    CONFIGURE_ARGS+= --without-pdo-mysql
+    ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-pdo-mysql),)
+      CONFIGURE_ARGS+= --enable-pdo=shared --with-pdo-mysql=shared,"$(STAGING_DIR)/usr"
+    else
+      CONFIGURE_ARGS+= --without-pdo-mysql
+    endif
   endif
   ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-pdo-pgsql),)
-    CONFIGURE_ARGS+= --with-pdo-pgsql=shared,"$(STAGING_DIR)/usr"
+    CONFIGURE_ARGS+= --enable-pdo=shared --with-pdo-pgsql=shared,"$(STAGING_DIR)/usr"
   else
     CONFIGURE_ARGS+= --without-pdo-pgsql
   endif
   ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-pdo-sqlite),)
-    CONFIGURE_ARGS+= --with-pdo-sqlite=shared,"$(STAGING_DIR)/usr"
+    CONFIGURE_ARGS+= --enable-pdo=shared --with-pdo-sqlite=shared,"$(STAGING_DIR)/usr"
   else
     CONFIGURE_ARGS+= --without-pdo-sqlite
   endif
@@ -518,6 +536,10 @@ define Package/php7-fpm/install
 	$(INSTALL_BIN) ./files/php7-fpm.init $(1)/etc/init.d/php7-fpm
 endef
 
+define Package/php7-mysqlnd/install
+	$(INSTALL_DIR) $(1)/etc/php7
+endef
+
 define Package/php7-fpm/conffiles
 /etc/php7-fpm.conf
 /etc/php7-fpm.d/
@@ -564,7 +586,7 @@ define BuildModule
 
   define Package/php7-mod-$(1)/install
 	$(INSTALL_DIR) $$(1)/usr/lib/php
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/modules/$(subst -,_,$(1)).so $$(1)/usr/lib/php/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/modules/$(subst -,_,$(1)).so $$(1)/usr/lib/php/ || true
 	$(INSTALL_DIR) $$(1)/etc/php7
       ifeq ($(5),zend)
 	echo "zend_extension=/usr/lib/php/$(subst -,_,$(1)).so" > $$(1)/etc/php7/$(if $(4),$(4),20)_$(subst -,_,$(1)).ini
@@ -582,6 +604,7 @@ $(eval $(call BuildPackage,php7-cgi))
 $(eval $(call BuildPackage,php7-cli))
 $(eval $(call BuildPackage,php7-fastcgi))
 $(eval $(call BuildPackage,php7-fpm))
+$(eval $(call BuildPackage,php7-mysqlnd))
 
 #$(eval $(call BuildModule,NAME,TITLE[,PKG DEPENDS]))
 $(eval $(call BuildModule,calendar,Calendar))
