@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.5.3"
+adb_ver="3.5.4"
 adb_sysver="unknown"
 adb_enabled=0
 adb_debug=0
@@ -263,7 +263,7 @@ f_envcheck()
     f_log "info" "start adblock processing (${adb_action})"
 }
 
-# create temporay files and directories
+# create temporary files and directories
 #
 f_temp()
 {
@@ -279,7 +279,7 @@ f_temp()
     fi
 }
 
-# remove temporay files and directories
+# remove temporary files and directories
 #
 f_rmtemp()
 {
@@ -402,8 +402,8 @@ f_extconf()
 		set firewall.adblock_dns.name="Adblock DNS"
 		set firewall.adblock_dns.src="lan"
 		set firewall.adblock_dns.proto="tcp udp"
-		set firewall.adblock_dns.src_dport="53"
-		set firewall.adblock_dns.dest_port="53"
+		set firewall.adblock_dns.src_dport="53 853 5353"
+		set firewall.adblock_dns.dest_port="53 853 5353"
 		set firewall.adblock_dns.target="DNAT"
 	EOF
     elif [ -n "$(uci -q get firewall.adblock_dns)" ] && ([ ${adb_enabled} -eq 0 ] || [ ${adb_forcedns} -eq 0 ])
