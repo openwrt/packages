@@ -202,6 +202,11 @@ config NGINX_HTTP_SECURE_LINK
 	prompt "Enable HTTP secure link module"
 	default n
 	
+config NGINX_HTTP_SUB
+	bool
+	prompt "Enable HTTP sub module"
+	default n
+	
 config NGINX_HEADERS_MORE
 	bool
 	prompt "Enable Headers_more module"
