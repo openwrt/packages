@@ -6,6 +6,6 @@
  
 -  Canvas(int x = 0, int y = 0, int width = 0, int height = 0);
 +  Canvas(int x = 0, int y = 0, int width = 1, int height = 1);
-   ~Canvas() { delwin(m_window); }
+   ~Canvas() { if (!m_isDaemon) { delwin(m_window); } }
  
-   void                refresh()                                               { wnoutrefresh(m_window); }
+   void                refresh()                                               { if (!m_isDaemon) { wnoutrefresh(m_window); } }
