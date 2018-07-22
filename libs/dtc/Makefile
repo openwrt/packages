@@ -25,7 +25,7 @@ define Package/dtc
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Device Tree Compiler
-  URL:=http://devicetree.org/Device_Tree_Compiler
+  URL:=https://git.kernel.org/pub/scm/utils/dtc/dtc.git
 endef
 
 define Package/dtc/description
@@ -45,7 +45,7 @@ define Package/fdt-utils
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Flat Device Tree Utilities
-  URL:=http://devicetree.org/Device_Tree_Compiler
+  URL:=https://git.kernel.org/pub/scm/utils/dtc/dtc.git
 endef
 
 define Package/fdt-utils/install
@@ -62,7 +62,7 @@ define Package/libfdt
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=a utility library for reading and manipulating dtb files
-  URL:=http://devicetree.org/Device_Tree_Compiler
+  URL:=https://git.kernel.org/pub/scm/utils/dtc/dtc.git
 endef
 
 define Package/libfdt/description
