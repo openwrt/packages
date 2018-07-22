@@ -1,0 +1,18 @@
+--- a/iotop/data.py.orig	2018-07-22 04:16:06.854506921 -0700
++++ b/iotop/data.py	2018-07-22 04:16:25.982269454 -0700
+@@ -193,7 +193,14 @@
+     result_dict = {}
+     try:
+         for line in open('/proc/%d/status' % pid):
+-            key, value = line.split(':\t', 1)
++            try:
++                key, value = line.split(':', 1)
++            except ValueError:
++                # Ignore lines that are not formatted correctly as
++                # some downstream kernels may have weird lines and
++                # the need
++                # the needed fields are probably formatted correctly.
++                continue
+             result_dict[key] = value.strip()
+     except IOError:
+         pass  # No such process
