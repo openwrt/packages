@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lksctp-tools
-PKG_VERSION:=1.0.16
+PKG_VERSION:=1.0.17
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/lksctp
-PKG_HASH:=0903dd526b7f30a89d5031aa2c82757612becc38ed7bc6e4f972f8deae351f26
+PKG_HASH:=1aeb204cdb2befc94d9eb3037d1609c9d1d2cd5379d6dd2c0a8ca9b10533aa15
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
-PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -54,6 +54,8 @@ $(call Package/lksctp-tools/Default)
   URL:=http://lksctp.sourceforge.net
   DEPENDS:=+libsctp
 endef
+
+TARGET_CFLAGS+=--disable-tests
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
