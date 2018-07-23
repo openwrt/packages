@@ -5,9 +5,9 @@
 config nodogsplash
   # Set to 0 to disable nodogsplash
   option enabled 1
-  
-  # Set to 0 to disable hook that makes Firewall restart nodogsplash when Firewall restarts
-  # This hook is needed as a restart of Firewall overwrites nodogsplash iptables entries
+
+  # Set to 0 to disable hook that makes nodogsplash restart when the firewall restarts.
+  # This hook is needed as a restart of Firewall overwrites nodogsplash iptables entries.
   option fwhook_enabled '1'
 
   # Serve the file splash.html from this directory
@@ -16,25 +16,19 @@ config nodogsplash
   # Use plain configuration file
   #option config '/etc/nodogsplash/nodogsplash.conf'
 
-  # Use this option to set the network interface the users are connected to
-  # Must not be used with option gatewayinterface
-  # This option automatically identifies the active lan device for nodogsplash to bind to
-  # This option may fail if the device configured for this interface is not up when nodogsplash starts at boot time
-  # You may change this to any valid virtual lan interface that has been defined, eg lan, lan2, public_lan wlan2 etc
-  # option network 'lan'
-  
-  # Use this option to set the device nogogsplash will bind to
-  # Must not be used with option network
-  # The nodogsplash init script will wait for this device to be up before loading the nodogsplash service
-  # You may change this to any valid lan device eg br-lan, wlan0, eth0.1 etc
+  # Use this option to set the device nogogsplash will bind to.
+  # The value may be an interface section in /etc/config/network or a device name such as br-lan.
   option gatewayinterface 'br-lan'
-  
+
   option gatewayname 'OpenWrt Nodogsplash'
   option maxclients '250'
+
+  # Enables debug output (0-7)
+  #option debuglevel '7'
+
   # Client timeouts in minutes
   option clientidletimeout '120'
   option clientforcetimeout '1440'
-
 
   # Your router may have several interfaces, and you
   # probably want to keep them private from the network/gatewayinterface.
@@ -50,7 +44,6 @@ config nodogsplash
   #list authenticated_users 'allow tcp port 443'
   # Or for happy customers allow all
   list authenticated_users 'allow all'
-
 
   # For preauthenticated users to resolve IP addresses in their
   # initial request not using the router itself as a DNS server,

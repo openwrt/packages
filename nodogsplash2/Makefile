@@ -38,14 +38,11 @@ define Package/nodogsplash2/description
 endef
 
 define Package/nodogsplash2/install
+	$(CP) ./files/* $(1)/
+
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/nodogsplash $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ndsctl $(1)/usr/bin/
-
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) files/nodogsplash.init $(1)/etc/init.d/nodogsplash
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) files/nodogsplash.config $(1)/etc/config/nodogsplash
 
 	$(INSTALL_DIR) $(1)/etc/nodogsplash/htdocs/images
 	$(CP) $(PKG_BUILD_DIR)/resources/splash.html $(1)/etc/nodogsplash/htdocs/
