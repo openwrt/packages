@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.5.4"
+adb_ver="3.5.4-2"
 adb_sysver="unknown"
 adb_enabled=0
 adb_debug=0
@@ -360,7 +360,7 @@ f_count()
 #
 f_extconf()
 {
-    local uci_config
+    local uci_config port port_list="53 853 5353"
 
     case "${adb_dns}" in
         dnsmasq)
@@ -395,20 +395,24 @@ f_extconf()
 
     uci_config="firewall"
     if [ ${adb_enabled} -eq 1 ] && [ ${adb_forcedns} -eq 1 ] && \
-       [ -z "$(uci -q get firewall.adblock_dns)" ] && [ $(/etc/init.d/firewall enabled; printf '%u' ${?}) -eq 0 ]
+       [ -z "$(uci -q get firewall.adblock_dns_53)" ] && [ $(/etc/init.d/firewall enabled; printf '%u' ${?}) -eq 0 ]
     then
-	uci -q batch <<-EOF
-		set firewall.adblock_dns="redirect"
-		set firewall.adblock_dns.name="Adblock DNS"
-		set firewall.adblock_dns.src="lan"
-		set firewall.adblock_dns.proto="tcp udp"
-		set firewall.adblock_dns.src_dport="53 853 5353"
-		set firewall.adblock_dns.dest_port="53 853 5353"
-		set firewall.adblock_dns.target="DNAT"
-	EOF
-    elif [ -n "$(uci -q get firewall.adblock_dns)" ] && ([ ${adb_enabled} -eq 0 ] || [ ${adb_forcedns} -eq 0 ])
+        for port in ${port_list}
+        do
+            uci_add firewall "redirect" "adblock_dns_${port}"
+            uci_set firewall "adblock_dns_${port}" "name" "Adblock DNS, port ${port}"
+            uci_set firewall "adblock_dns_${port}" "src" "lan"
+            uci_set firewall "adblock_dns_${port}" "proto" "tcp udp"
+            uci_set firewall "adblock_dns_${port}" "src_dport" "${port}"
+            uci_set firewall "adblock_dns_${port}" "dest_port" "${port}"
+            uci_set firewall "adblock_dns_${port}" "target" "DNAT"
+        done
+    elif [ -n "$(uci -q get firewall.adblock_dns_53)" ] && ([ ${adb_enabled} -eq 0 ] || [ ${adb_forcedns} -eq 0 ])
     then
-        uci -q delete firewall.adblock_dns
+        for port in ${port_list}
+        do
+            uci_remove firewall "adblock_dns_${port}"
+        done
     fi
     f_uci "${uci_config}"
 }
