@@ -178,7 +178,7 @@ __DATA=$(grep -o '"content":"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
 # update is needed
 # let's build data to send
 # set proxied parameter
-__PROXIED=$(grep -o '"proxiable":[^",]*' $DATFILE | grep -o '[^:]*$')
+__PROXIED=$(grep -o '"proxied":[^",]*' $DATFILE | grep -o '[^:]*$')
 
 # use file to work around " needed for json
 cat > $DATFILE << EOF
