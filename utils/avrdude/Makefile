@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avrdude
 PKG_VERSION:=6.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SAVANNAH/$(PKG_NAME)
@@ -31,7 +31,7 @@ define Package/avrdude
   SUBMENU:=Microcontroller programming
   TITLE:=AVR Downloader/UploaDEr
   URL:=http://www.nongnu.org/avrdude/
-  DEPENDS:=+libncurses +libreadline +libusb-compat +libftdi1 +libelf1
+  DEPENDS:=+libncurses +libreadline +libusb-compat +libftdi1 +libelf1 +zlib
 endef
 
 define Package/avrdude/description
@@ -45,6 +45,9 @@ CONFIGURE_ARGS+= \
 
 TARGET_CFLAGS+= \
 	-D_GNU_SOURCE \
+
+TARGET_LDFLAGS+= \
+	-lz \
 
 define Package/avrdude/conffiles
 /etc/avrdude.conf
