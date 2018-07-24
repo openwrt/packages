@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=3.4.14
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=7443873cc970672d3c884230d3aeb082f2d8afcc2b757506c2d684ffdd12d77e
@@ -23,8 +23,31 @@ PKG_INSTALL:=1
 
 PKG_FIXUP:=autoreconf
 
+PKG_CONFIG_DEPENDS:= \
+  CONFIG_ZABBIX_GNUTLS \
+  CONFIG_ZABBIX_OPENSSL
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+
+define Package/zabbix-agentd/config
+comment "SSL support"
+
+choice
+        prompt "Selected SSL library"
+        default ZABBIX_NOSSL
+
+        config ZABBIX_OPENSSL
+                bool "OpenSSL"
+
+        config ZABBIX_GNUTLS
+                bool "GnuTLS"
+
+        config ZABBIX_NOSSL
+                bool "No SSL support"
+
+endchoice
+endef
 
 define Package/zabbix/Default
   SECTION:=admin
@@ -34,7 +57,7 @@ define Package/zabbix/Default
   SUBMENU:=zabbix
   MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
   USERID:=zabbix=53:zabbix=53
-  DEPENDS += $(ICONV_DEPENDS) +libpcre
+  DEPENDS += $(ICONV_DEPENDS) +libpcre +ZABBIX_GNUTLS:libgnutls +ZABBIX_OPENSSL:libopenssl
 endef
 
 define Package/zabbix-agentd
@@ -108,7 +131,9 @@ CONFIGURE_ARGS+= \
 	--disable-java \
 	--with-postgresql \
 	--with-libevent=$(STAGING_DIR)/usr/include/libevent \
-	--with-libpcre=$(STAGING_DIR)/usr/include
+	--with-libpcre=$(STAGING_DIR)/usr/include \
+	$(if $(CONFIG_ZABBIX_GNUTLS),--with-gnutls="$(STAGING_DIR)/usr") \
+	$(if $(CONFIG_ZABBIX_OPENSSL),--with-openssl="$(STAGING_DIR)/usr")
 
 MAKE_FLAGS += ARCH="linux"
 
