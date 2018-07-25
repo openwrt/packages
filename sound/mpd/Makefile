@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.20.9
-PKG_RELEASE:=2
+PKG_VERSION:=0.20.20
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.20/
-PKG_HASH:=cd77a2869e32354b004cc6b34fcb0bee56114caa2d9ed862aaa8071441e34eb7
+PKG_HASH:=a9e458c6e07cdf62649de7722e1e5a7f13aa82eeb397bfbbebc07cf5cf273584
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2.0
@@ -35,7 +35,7 @@ define Package/mpd/Default
   TITLE:=Music Player Daemon
   URL:=http://www.musicpd.org/
   DEPENDS:= +zlib +libcurl +libpthread +libmpdclient +libstdcpp $(ICONV_DEPENDS) \
-	    +AUDIO_SUPPORT:alsa-lib +boost +boost-container +libexpat
+	    +AUDIO_SUPPORT:alsa-lib +boost +boost-container +libexpat +libflac
 endef
 
 define Package/mpd/Default/description
@@ -66,7 +66,7 @@ endef
 define Package/mpd-mini
 $(call Package/mpd/Default)
   TITLE+= (mini)
-  DEPENDS+= +libflac +libmpg123 +libvorbisidec
+  DEPENDS+= +libmpg123 +libvorbisidec
   PROVIDES:=mpd
   VARIANT:=mini
 endef
@@ -162,7 +162,6 @@ ifeq ($(BUILD_VARIANT),full)
   CONFIGURE_ARGS += \
 	--enable-upnp \
 	--enable-ffmpeg \
-	--disable-flac \
 	--enable-id3 \
 	--enable-mms \
 	--disable-mpg123 \
