@@ -7,7 +7,7 @@ PKG_NAME:=prometheus-node-exporter-lua
 PKG_VERSION:=2018.06.26
 PKG_RELEASE:=1
 
-PKG_MAINTAINER:=Christian Simon <simon@swine.de>
+PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 PKG_LICENSE:=Apache-2.0
 
 include $(INCLUDE_DIR)/package.mk
