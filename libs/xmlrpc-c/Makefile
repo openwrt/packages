@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xmlrpc-c
 PKG_VERSION:=1.39.13
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=@SF/xmlrpc-c/Xmlrpc-c%20Super%20Stable/$(PKG_VERSION)
@@ -105,9 +105,10 @@ CONFIGURE_ARGS+= \
 	--disable-wininet-client \
 	--disable-libwww-client \
 	--disable-abyss-server \
+	--disable-cgi-server \
 	--disable-cplusplus \
 	--disable-abyss-threads \
-	--disable-cgi-server
+	--without-libwww-ssl
 
 ifeq ($(BUILD_VARIANT),libxml2)
 	CONFIGURE_ARGS += \
