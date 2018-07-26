@@ -29,11 +29,14 @@ define Package/libpsl
   CATEGORY:=Libraries
   TITLE:=C library to handle the Public Suffix List
   URL:=https://github.com/rockdaboot/libpsl
+  DEPENDS:=+libidn2 +libunistring
 endef
 
 define Package/libpsl/description
   C library to handle the Public Suffix List
 endef
+
+CONFIGURE_ARGS += --disable-rpath
 
 define Build/InstallDev
 	$(INSTALL_DIR) \
