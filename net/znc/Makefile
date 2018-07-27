@@ -277,22 +277,26 @@ $(eval $(call webskin,ice))
 PKG_CONFIG_DEPENDS += $(patsubst %,CONFIG_PACKAGE_%,$(ZNC_MODULES))
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
-
-CMAKE_OPTIONS += $(if $(CONFIG_ZNC_ICU), WANT_ICU=TRUE, WANT_ICU=FALSE) \
-	WANT_CYRUS=FALSE \
-	WANT_PERL=FALSE \
-	WANT_PYTHON=FALSE \
-	WANT_SWIG=FALSE \
-	WANT_TCL=FALSE \
-	WANT_OPENSSL=TRUE \
-	WANT_ZLIB=TRUE
 
 CONFIGURE_VARS += \
 	CXXFLAGS="$(TARGET_CFLAGS) -fno-builtin" \
 	CPPFLAGS="-I$(STAGING_DIR)/usr/include -I$(STAGING_DIR)/include" \
 	LDFLAGS="-nodefaultlibs -lc -L$(STAGING_DIR)/usr/lib -L$(STAGING_DIR)/lib" \
 	LIBS="-lstdc++ -lm -lssl -lcrypto $(LIBGCC_S) -lc"
+
+CONFIGURE_ARGS += \
+	$(if $(CONFIG_ZNC_ICU), --enable-charset, --disable-charset) \
+	--disable-cyrus \
+	--disable-debug \
+	--enable-largefile \
+	--disable-perl \
+	--enable-poll \
+	--disable-python \
+	--enable-ssl \
+	--disable-swig \
+	--disable-tcl \
+	--enable-tdns \
+	--enable-zlib
 
 define Build/Configure
 	$(call Build/Configure/Default,)
