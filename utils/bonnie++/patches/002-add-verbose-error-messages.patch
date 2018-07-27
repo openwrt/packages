@@ -1,6 +1,6 @@
 --- a/bon_file.cpp
 +++ b/bon_file.cpp
-@@ -464,25 +464,37 @@ int COpenTest::delete_sequential(BonTime
+@@ -469,25 +469,37 @@ int COpenTest::delete_sequential(BonTime
      }
      if(m_number_directories != 1)
      {
