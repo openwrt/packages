@@ -56,13 +56,13 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 <pre><code>
 ~# /etc/init.d/travelmate status
 ::: travelmate runtime information
-  + travelmate_status  : connected (net ok/37)
-  + travelmate_version : 1.2.0
-  + station_id         : blackhole/01:02:03:04:05:06
+  + travelmate_status  : connected (net ok/78)
+  + travelmate_version : 1.2.1
+  + station_id         : radio1/blackhole/01:02:03:04:05:06
   + station_interface  : trm_wwan
-  + station_radio      : radio0
-  + last_rundate       : 04.04.2018 13:00:24
-  + system             : GL.iNet GL-AR750, OpenWrt SNAPSHOT r6588-16efb0c1c6
+  + faulty_stations    : 
+  + last_rundate       : 28.07.2018 21:17:45
+  + system             : TP-LINK RE450, OpenWrt SNAPSHOT r7540+5-20c4819c7b
 </code></pre>
 
 ## Manual Setup
@@ -123,8 +123,8 @@ edit /etc/config/travelmate and set 'trm_enabled' to '1'
 </code></pre>
 
 ## FAQ
-**Q:** What happen with misconfigured uplinks, e.g. due to outdated wlan passwords?  
-**A:** Travelmate tries n times (default 3) to connect, then the respective uplink SSID will be marked / renamed to '_SSID_\_err' and travelmate no longer attends this uplink. In this case use the builtin wireless station manager to update your wireless credentials.  
+**Q:** What happen with misconfigured, faulty uplinks, e.g. due to outdated wlan passwords?  
+**A:** Travelmate tries n times (default 3) to connect, then the respective uplink will be marked as "faulty" in the JSON runtime file and hereafter ignored. To reset the JSON runtime file, simply restart travelmate.  
 **Q:** How to connect to hidden uplinks?  
 **A:** See 'example\_hidden' STA configuration above, option 'SSID' and 'BSSID' must be specified for successful connections.  
 
