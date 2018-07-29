@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.2.0"
+trm_ver="1.2.1"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -219,7 +219,7 @@ f_check()
 #
 f_jsnup()
 {
-    local config sta_iface sta_radio sta_essid sta_bssid dev_status status="${trm_ifstatus}"
+    local config sta_iface sta_radio sta_essid sta_bssid dev_status status="${trm_ifstatus}" faulty_list faulty_station="${1}"
 
     if [ "${status}" = "true" ]
     then
@@ -245,18 +245,24 @@ f_jsnup()
         fi
     fi
 
-    json_init
-    json_add_object "data"
+    json_get_var faulty_list "faulty_stations"
+    if [ -n "${faulty_station}" ]
+    then
+        if [ -z "$(printf "%s" "${faulty_list}" | grep -Fo "${faulty_station}")" ]
+        then
+            faulty_list="${faulty_list} ${faulty_station}"
+        fi
+    fi
     json_add_string "travelmate_status" "${status}"
     json_add_string "travelmate_version" "${trm_ver}"
-    json_add_string "station_id" "${sta_essid:-"-"}/${sta_bssid:-"-"}"
+    json_add_string "station_id" "${sta_radio:-"-"}/${sta_essid:-"-"}/${sta_bssid:-"-"}"
     json_add_string "station_interface" "${sta_iface:-"-"}"
-    json_add_string "station_radio" "${sta_radio:-"-"}"
+    json_add_string "faulty_stations" "${faulty_list}"
     json_add_string "last_rundate" "$(/bin/date "+%d.%m.%Y %H:%M:%S")"
     json_add_string "system" "${trm_sysver}"
-    json_close_object
     json_dump > "${trm_rtfile}"
-    f_log "debug" "f_jsnup::: config: ${config:-"-"}, status: ${status:-"-"}, sta_iface: ${sta_iface:-"-"}, sta_radio: ${sta_radio:-"-"}, sta_essid: ${sta_essid:-"-"}, sta_bssid: ${sta_bssid:-"-"}"
+
+    f_log "debug" "f_jsnup::: config: ${config:-"-"}, status: ${status:-"-"}, sta_iface: ${sta_iface:-"-"}, sta_radio: ${sta_radio:-"-"}, sta_essid: ${sta_essid:-"-"}, sta_bssid: ${sta_bssid:-"-"}, faulty_list: ${faulty_list:-"-"}"
 }
 
 # write to syslog
@@ -283,7 +289,7 @@ f_log()
 #
 f_main()
 {
-    local cnt dev config scan scan_list scan_essid scan_bssid scan_quality sta sta_essid sta_bssid sta_radio sta_iface IFS=" "
+    local cnt dev config scan scan_list scan_essid scan_bssid scan_quality sta sta_essid sta_bssid sta_radio sta_iface IFS=" " faulty_list
 
     f_check "initial"
     if [ "${trm_ifstatus}" != "true" ]
@@ -292,7 +298,11 @@ f_main()
         config_foreach f_prep wifi-iface
         uci_commit wireless
         f_check "dev" "running"
-        f_log "debug" "f_main ::: iwinfo: ${trm_iwinfo}, dev_list: ${trm_devlist}, sta_list: ${trm_stalist:0:800}"
+        if [ -s "${trm_rtfile}" ]
+        then
+            json_get_var faulty_list "faulty_stations"
+        fi
+        f_log "debug" "f_main ::: iwinfo: ${trm_iwinfo}, dev_list: ${trm_devlist}, sta_list: ${trm_stalist:0:800}, faulty_list: ${faulty_list:-"-"}"
         for dev in ${trm_devlist}
         do
             if [ -z "$(printf "%s" "${trm_stalist}" | grep -Fo "_${dev}")" ]
@@ -313,6 +323,10 @@ f_main()
                         sta_essid="$(uci_get wireless "${config}" ssid)"
                         sta_bssid="$(uci_get wireless "${config}" bssid)"
                         sta_iface="$(uci_get wireless "${config}" network)"
+                        if [ -n "$(printf "%s" "${faulty_list}" | grep -Fo "${sta_radio}/${sta_essid}/${sta_bssid}")" ]
+                        then
+                            continue
+                        fi
                         IFS=","
                         for scan in ${scan_list}
                         do
@@ -344,19 +358,14 @@ f_main()
                                         elif [ ${cnt} -eq ${trm_maxretry} ]
                                         then
                                             uci_set wireless "${config}" disabled 1
-                                            if [ -n "${sta_essid}" ]
-                                            then
-                                                uci_set wireless "${config}" ssid "${sta_essid}_err"
-                                            fi
-                                            if [ -n "${sta_bssid}" ]
-                                            then
-                                                uci_set wireless "${config}" bssid "${sta_bssid}_err"
-                                            fi
                                             uci_commit wireless
+                                            faulty_station="${sta_radio}/${sta_essid}/${sta_bssid}"
+                                            f_jsnup "${faulty_station}"
                                             f_log "info" "can't connect to uplink '${sta_essid:-"-"}/${sta_bssid:-"-"}', uplink disabled (${trm_sysver})"
                                             f_check "rev"
                                         else
                                             uci -q revert wireless
+                                            f_jsnup
                                             f_log "info" "can't connect to uplink '${sta_essid:-"-"}/${sta_bssid:-"-"}' (${trm_sysver})"
                                             f_check "rev"
                                         fi
@@ -393,6 +402,17 @@ then
     . "/usr/share/libubox/jshn.sh"
 else
     f_log "err" "system libraries not found"
+fi
+
+# initialize json runtime file
+#
+if [ ! -s "${trm_rtfile}" ]
+then
+    json_init
+    json_add_object "data"
+else
+    json_load_file "${trm_rtfile}"
+    json_select data
 fi
 
 # control travelmate actions
