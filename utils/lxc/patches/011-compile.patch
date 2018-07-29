@@ -1,0 +1,12 @@
+--- a/src/lxc/nl.c	2017-10-19 10:08:34.000000000 -0700
++++ b/src/lxc/nl.c	2018-07-11 09:05:30.881733183 -0700
+@@ -61,7 +61,8 @@
+ 	rta = NLMSG_TAIL(nlmsg->nlmsghdr);
+ 	rta->rta_type = attr;
+ 	rta->rta_len = rtalen;
+-	memcpy(RTA_DATA(rta), data, len);
++	if (len)
++		memcpy(RTA_DATA(rta), data, len);
+ 	nlmsg->nlmsghdr->nlmsg_len = tlen;
+ 	return 0;
+ }
