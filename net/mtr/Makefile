@@ -30,7 +30,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/mtr
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libncurses
+  DEPENDS:=+libcap +libncurses
   TITLE:=Full screen ncurses traceroute tool
   URL:=http://www.bitwizard.nl/mtr/
 endef
