@@ -1,0 +1,27 @@
+--- a/third_party/resolv_wrapper/resolv_wrapper.c
++++ b/third_party/resolv_wrapper/resolv_wrapper.c
+@@ -350,7 +350,11 @@ static ssize_t rwrap_fake_header(uint8_t
+ 	memset(hb, 0, NS_HFIXEDSZ);
+ 
+ 	h = (HEADER *) hb;
++#ifdef HAVE_RES_RANDOMID
+ 	h->id = res_randomid();		/* random query ID */
++#else
++	h->id = (0xffff & getpid());		/* random query ID */
++#endif /* HAVE_RES_RANDOMID */
+ 	h->qr = 1;			/* response flag */
+ 	h->rd = 1;			/* recursion desired */
+ 	h->ra = 1;			/* recursion available */
+--- a/third_party/resolv_wrapper/wscript
++++ b/third_party/resolv_wrapper/wscript
+@@ -57,6 +57,10 @@ def configure(conf):
+                                     headers='resolv.h',
+                                     define='HAVE_RESOLV_IPV6_NSADDRS')
+ 
++        conf.CHECK_FUNCS_IN('res_randomid', 'resolv')
++        if conf.CONFIG_SET('HAVE_RES_RANDOMID'):
++            conf.DEFINE('HAVE_RES_RANDOMID_IN_LIBRESOLV', 1)
++
+         conf.CHECK_FUNCS_IN('res_ninit', 'resolv')
+         if conf.CONFIG_SET('HAVE_RES_NINIT'):
+             conf.DEFINE('HAVE_RES_NINIT_IN_LIBRESOLV', 1)

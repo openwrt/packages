@@ -1,0 +1,25 @@
+From 866ebeca19871c0becac568dead4624af4ac8693 Mon Sep 17 00:00:00 2001
+From: BangLang Huang <banglang.huang@foxmail.com>
+Date: Thu, 14 Sep 2017 10:54:53 +0800
+Subject: [PATCH 4/5] fix compilation error for NETDB_XXX macros
+
+Signed-off-by: BangLang Huang <banglang.huang@foxmail.com>
+---
+ nsswitch/winbind_nss.h | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+--- a/nsswitch/winbind_nss.h
++++ b/nsswitch/winbind_nss.h
+@@ -79,4 +79,12 @@ typedef enum
+ 
+ #endif
+ 
++#ifndef NETDB_INTERNAL
++#define NETDB_INTERNAL -1 /* See errno. */
++#endif  /* NETDB_INTERNAL */
++
++#ifndef NETDB_SUCCESS
++#define NETDB_SUCCESS 0 /* No problem. */
++#endif  /* NETDB_SUCCESS */
++
+ #endif /* _NSSWITCH_NSS_H */
