@@ -13,12 +13,12 @@
 ##############################################################################
 
 # Common file location definitions
-. /usr/lib/unbound/unbound.sh
+. /usr/lib/unbound/defaults.sh
 
 ##############################################################################
 
-if [ "$ACTION" = stratum -a ! -f "$UNBOUND_TIMEFILE" ] ; then
-  echo "ntpd: $( date )" > $UNBOUND_TIMEFILE
+if [ ! -f "$UB_TIME_FILE" -a "$ACTION" = stratum ] ; then
+  date -Is > $UB_TIME_FILE
   /etc/init.d/unbound enabled && /etc/init.d/unbound restart
   # Yes, hard RESTART. We need to be absolutely sure to enable DNSSEC.
 fi
