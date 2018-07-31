@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
 PKG_VERSION:=1.4.49
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.lighttpd.net/lighttpd/releases-1.4.x
@@ -26,6 +26,8 @@ REBUILD_MODULES=authn_gssapi authn_ldap authn_mysql cml magnet mysql_vhost trigg
 PKG_CONFIG_DEPENDS:=CONFIG_LIGHTTPD_SSL $(patsubst %,CONFIG_PACKAGE_lighttpd-mod-%,$(REBUILD_MODULES))
 
 include $(INCLUDE_DIR)/package.mk
+# iconv is required for lighttpd's mysql plugin
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/lighttpd/Default
   SUBMENU:=Web Servers/Proxies
@@ -92,7 +94,7 @@ else
   CONFIGURE_ARGS+= --without-ldap
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_lighttpd-mod-authn_mysql),)
+ifneq ($(SDK)$(CONFIG_PACKAGE_lighttpd-mod-authn_mysql)$(CONFIG_PACKAGE_lighttpd-mod-mysql_vhost),)
   CONFIGURE_ARGS+= --with-mysql
 else
   CONFIGURE_ARGS+= --without-mysql
@@ -108,12 +110,6 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_lighttpd-mod-cml)$(CONFIG_PACKAGE_lighttpd-mod-mag
   CONFIGURE_ARGS+= --with-lua
 else
   CONFIGURE_ARGS+= --without-lua
-endif
-
-ifneq ($(SDK)$(CONFIG_PACKAGE_lighttpd-mod-mysql_vhost),)
-  CONFIGURE_ARGS+= --with-mysql
-else
-  CONFIGURE_ARGS+= --without-mysql
 endif
 
 #ifneq ($(SDK)$(CONFIG_PACKAGE_lighttpd-mod-cml)$(CONFIG_PACKAGE_lighttpd-mod-trigger_b4_dl),)
