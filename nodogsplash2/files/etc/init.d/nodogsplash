@@ -174,11 +174,6 @@ create_instance() {
 
   generate_uci_config "$cfg"
 
-  if ! test_module; then
-    echo "Nodogsplash is missing some kernel modules." >&2
-    exit 1
-  fi
-
   procd_open_instance $cfg
   procd_set_param command /usr/bin/nodogsplash -c "/tmp/etc/nodogsplash_$cfg.conf" $OPTIONS
   procd_set_param respawn
