@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
 PKG_VERSION:=4.8.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-3.0-only
@@ -49,7 +49,8 @@ define Package/samba4-libs
   $(call Package/samba4/Default)
   TITLE+= libs
   DEPENDS:= +zlib +libtirpc +krb5-libs +libpopt \
-	+PACKAGE_libcap:libcap +PACKAGE_jansson:jansson +PACKAGE_libpthread:libpthread +PACKAGE_libnettle:libnettle +PACKAGE_libarchive:libarchive \
+	+PACKAGE_libcap:libcap +PACKAGE_jansson:jansson +PACKAGE_libpthread:libpthread +PACKAGE_libnettle:libnettle \
+	+PACKAGE_libarchive:libarchive +PACKAGE_libgcrypt:libgcrypt +PACKAGE_libpam:libpam \
 	+SAMBA4_SERVER_ACL:acl +SAMBA4_SERVER_ACL:attr \
 	+SAMBA4_SERVER_AVAHI:libavahi-client \
 	+SAMBA4_SERVER_AD_DC:python-base +SAMBA4_SERVER_AD_DC:libopenssl +SAMBA4_SERVER_AD_DC:libgnutls +SAMBA4_SERVER_AD_DC:libopenldap
