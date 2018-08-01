@@ -2,6 +2,7 @@
 config globals 'globals'
 	option mmx_mask '0x3F00'
 	option local_source 'none'
+	option rtmon_interval '5'
 
 config interface 'wan'
 	option enabled '1'

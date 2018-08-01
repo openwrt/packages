@@ -15,12 +15,17 @@ rtchange() {
 }
 
 main() {
+	local rtmon_interval
 	trap clean_up TERM
 	trap rtchange USR1
 
+	config_load mwan3
+	config_get rtmon_interval globals rtmon_interval '5'
+
 	sleep 3
 	while mwan3_rtmon_ipv4 || mwan3_rtmon_ipv6; do
-		sleep 5
+		[ "$rtmon_interval" = "0" ] && break
+		sleep $rtmon_interval
 	done
 }
 
