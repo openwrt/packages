@@ -13,7 +13,7 @@ PKG_VERSION=2016-10-06-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://git.code.sf.net/p/net-tools/code
+PKG_SOURCE_URL:=https://git.code.sf.net/p/net-tools/code
 PKG_SOURCE_VERSION:=115f1af2494ded1fcd21c8419d5e289bc4df380f
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz

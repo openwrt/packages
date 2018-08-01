@@ -11,7 +11,7 @@ PKG_VERSION:=0.5.3-20150608-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://git.osmocom.org/rtl-sdr.git
+PKG_SOURCE_URL:=https://git.osmocom.org/rtl-sdr
 PKG_SOURCE_VERSION:=e3c03f738f5aef4dc51e2b741fbdb542b9cc1bb1
 
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)

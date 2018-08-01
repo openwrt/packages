@@ -20,7 +20,7 @@ PKG_LICENSE_FILES:=COPYING
 
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/wifidog/wifidog-gateway.git
+PKG_SOURCE_URL:=https://github.com/wifidog/wifidog-gateway.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=1.3.0
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz

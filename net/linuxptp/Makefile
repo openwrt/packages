@@ -14,7 +14,7 @@ PKG_REV:=891d56e4292653c5c19ac8345159a1f1f5b2df26
 
 PKG_MAINTAINER:=Wojciech Dubowik <Wojciech.Dubowik@neratec.com>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=git://git.code.sf.net/p/linuxptp/code
+PKG_SOURCE_URL:=https://git.code.sf.net/p/linuxptp/code
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE_PROTO:=git

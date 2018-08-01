@@ -12,7 +12,7 @@ PKG_VERSION:=2016-01-01
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/juhovh/shairplay.git
+PKG_SOURCE_URL:=https://github.com/juhovh/shairplay.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=ce80e005908f41d0e6fde1c4a21e9cb8ee54007b
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
