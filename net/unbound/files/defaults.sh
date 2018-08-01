@@ -41,6 +41,7 @@ UB_TLS_ETC_FILE=/etc/ssl/certs/ca-certificates.crt
 UB_RKEY_FILE=$UB_VARDIR/root.key
 UB_RHINT_FILE=$UB_VARDIR/root.hints
 UB_TIME_FILE=$UB_VARDIR/hotplug.time
+UB_SKIP_FILE=$UB_VARDIR/skip.time
 
 # control app keys
 UB_CTLKEY_FILE=$UB_VARDIR/unbound_control.key
@@ -50,7 +51,7 @@ UB_SRVPEM_FILE=$UB_VARDIR/unbound_server.pem
 
 # similar default SOA / NS RR as Unbound uses for private ARPA zones
 UB_XSER=$(( $( date +%s ) / 60 ))
-UB_XSOA="7200 IN SOA localhost. nobody.invalid. $UB_XSER 3600 1200 9600 600"
+UB_XSOA="7200 IN SOA localhost. nobody.invalid. $UB_XSER 3600 1200 9600 300"
 UB_XNS="7200 IN NS localhost."
 UB_XTXT="7200 IN TXT \"comment=local intranet dns zone\""
 UB_MTXT="7200 IN TXT \"comment=masked internet dns zone\""
