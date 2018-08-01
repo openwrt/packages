@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=privoxy
 PKG_VERSION:=3.0.26
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=privoxy-$(PKG_VERSION)-stable-src.tar.gz
 PKG_SOURCE_URL:=@SF/ijbswa
