@@ -8,15 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=crelay
-PKG_VERSION:=0.10.1
+PKG_VERSION:=0.12
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/ondrej1024/crelay
-PKG_SOURCE_VERSION:=V$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=e7cae6dcc299cbec86e6cbc79dd155a1489d97c9a46b3b4e5179a6ca11cc4b8b
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://codeload.github.com/ondrej1024/crelay/tar.gz/V$(PKG_VERSION)?
+PKG_HASH:=84b2523107bb3e7263d0be1c3c367de1956b41711293e108f4ce483f5e66913f
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=GPL-2.0
@@ -29,7 +26,7 @@ define Package/crelay
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=USB relay remote control daemon
-  URL:=http://github.com/ondrej1024/crelay
+  URL:=https://github.com/ondrej1024/crelay
   DEPENDS:=+libftdi1 +hidapi +libusb-1.0
 endef
 
