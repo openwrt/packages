@@ -14,13 +14,14 @@
 # option username  - your cloudflare e-mail
 # option password  - cloudflare api key, you can get it from cloudflare.com/my-account/
 # option domain    - "hostname@yourdomain.TLD"	# syntax changed to remove split_FQDN() function and tld_names.dat.gz
-# option param_opt - Whether the record is receiving the performance and security benefits of Cloudflare (not empty => false)
+#
+# The proxy status would not be changed by this script. Please change it in Cloudflare dashboard manually. 
 #
 # variable __IP already defined with the ip-address to use for update
 #
 
 # check parameters
-[ -z "$CURL_SSL" ] && write_log 14 "Cloudflare communication require cURL with SSL support. Please install"
+[ -z "$CURL" ] && [ -z "$CURL_SSL" ] && write_log 14 "Cloudflare communication require cURL with SSL support. Please install"
 [ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing key as 'username'"
 [ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing secret as 'password'"
 [ $use_https -eq 0 ] && use_https=1	# force HTTPS
@@ -176,11 +177,8 @@ __DATA=$(grep -o '"content":"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
 
 # update is needed
 # let's build data to send
-# set proxied parameter (default "true")
-[ -z "$param_opt" ] && __PROXIED="true" || {
-	__PROXIED="false"
-	write_log 7 "Cloudflare 'proxied' disabled"
-}
+# set proxied parameter
+__PROXIED=$(grep -o '"proxied":[^",]*' $DATFILE | grep -o '[^:]*$')
 
 # use file to work around " needed for json
 cat > $DATFILE << EOF

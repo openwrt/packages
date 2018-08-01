@@ -43,6 +43,6 @@ EOF
 $__PROG -d $__TCP $DATFILE >$ERRFILE 2>&1
 
 # nsupdate always return success
-write_log 7 "(k)nsupdate reports:\n$(cat $ERRFILE)"
+write_log 7 "(k)nsupdate reports:${N}$(cat $ERRFILE)"
 
 return 0
