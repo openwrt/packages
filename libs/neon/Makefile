@@ -12,7 +12,7 @@ PKG_VERSION:=0.30.2
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.webdav.org/neon
+PKG_SOURCE_URL:=https://web.archive.org/web/20170923042221/http://webdav.org:80/neon/
 PKG_HASH:=db0bd8cdec329b48f53a6f00199c92d5ba40b0f015b153718d1b15d3d967fbca
 
 PKG_INSTALL:=1
@@ -23,7 +23,7 @@ define Package/libneon
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=HTTP and WebDAV client library
-  URL:=http://www.webdav.org/neon/
+  URL:=https://web.archive.org/web/20170923042221/http://webdav.org:80/neon/
   DEPENDS:=+libopenssl +libexpat +zlib
   MAINTAINER:=Federico Di Marco <fededim@gmail.com>
 endef
