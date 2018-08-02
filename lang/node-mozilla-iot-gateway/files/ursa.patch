@@ -1,0 +1,106 @@
+--- a/src/ursaNative.cc	2016-05-09 21:28:14.000000000 -0300
++++ b/src/ursaNative.cc	2018-04-20 17:18:48.000000000 -0300
+@@ -386,8 +386,12 @@
+         obj->rsa = RSA_new();
+     }
+ 
++#if OPENSSL_VERSION_NUMBER >= 0x10100000L
++    RSA_set0_key(obj->rsa, BN_bin2bn(data_n, n_length, NULL), BN_bin2bn(data_e, e_length, NULL), NULL);
++#else
+     obj->rsa->n = BN_bin2bn(data_n, n_length, NULL);
+     obj->rsa->e = BN_bin2bn(data_e, e_length, NULL);
++#endif
+     free(data_n);
+     free(data_e);
+     NanReturnUndefined();
+@@ -404,7 +408,15 @@
+ 
+     // The "d" field should always be set on a private key and never
+     // set on a public key.
++#if OPENSSL_VERSION_NUMBER >= 0x10100000L
++    const BIGNUM *d;
++    if (obj != NULL) {
++	RSA_get0_key(obj->rsa, NULL, NULL, &d);
++    }
++    if ((obj == NULL) || (d != NULL)) {
++#else
+     if ((obj == NULL) || (obj->rsa->d != NULL)) {
++#endif
+         return obj;
+     }
+ 
+@@ -533,7 +545,13 @@
+     obj = expectSet(obj);
+     if (obj == NULL) { NanReturnUndefined(); }
+ 
++#if OPENSSL_VERSION_NUMBER >= 0x10100000L
++    BIGNUM *e;
++    RSA_get0_key(obj->rsa, NULL, (const BIGNUM**) &e, NULL);
++    bignumToBuffer(args, e);
++#else
+     bignumToBuffer(args, obj->rsa->e);
++#endif
+ }
+ 
+ /**
+@@ -549,7 +567,13 @@
+     obj = expectPrivateKey(obj);
+     if (obj == NULL) { NanReturnUndefined(); }
+ 
++#if OPENSSL_VERSION_NUMBER >= 0x10100000L
++    BIGNUM *d;
++    RSA_get0_key(obj->rsa, NULL, NULL, (const BIGNUM**) &d);
++    bignumToBuffer(args, d);
++#else
+     bignumToBuffer(args, obj->rsa->d);
++#endif
+ }
+ 
+ /**
+@@ -564,7 +588,13 @@
+     obj = expectSet(obj);
+     if (obj == NULL) { NanReturnUndefined(); }
+ 
++#if OPENSSL_VERSION_NUMBER >= 0x10100000L
++    BIGNUM *n;
++    RSA_get0_key(obj->rsa, (const BIGNUM**) &n, NULL, NULL);
++    bignumToBuffer(args, n);
++#else
+     bignumToBuffer(args, obj->rsa->n);
++#endif
+ }
+ 
+ /**
+@@ -1215,6 +1245,11 @@
+     }
+ 
+     if (ok) {
++#if OPENSSL_VERSION_NUMBER >= 0x10100000L
++	RSA_set0_key(obj->rsa, modulus, exponent, d);
++	RSA_set0_factors(obj->rsa, p, q);
++	RSA_set0_crt_params(obj->rsa, dp, dq, inverseQ);
++#else
+         obj->rsa->n = modulus;
+         obj->rsa->e = exponent;
+         obj->rsa->p = p;
+@@ -1223,6 +1258,7 @@
+         obj->rsa->dmq1 = dq;
+         obj->rsa->iqmp = inverseQ;
+         obj->rsa->d = d;
++#endif
+     } else {
+         if (modulus) { BN_free(modulus); }
+         if (exponent) { BN_free(exponent); }
+@@ -1267,8 +1303,12 @@
+     }
+ 
+     if (ok) {
++#if OPENSSL_VERSION_NUMBER >= 0x10100000L
++	RSA_set0_key(obj->rsa, modulus, exponent, NULL);
++#else
+         obj->rsa->n = modulus;
+         obj->rsa->e = exponent;
++#endif
+     } else {
+         if (modulus) { BN_free(modulus); }
+         if (exponent) { BN_free(exponent); }

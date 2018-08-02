@@ -1,0 +1,10 @@
+--- a/package.json
++++ b/package.json
+@@ -25,6 +25,7 @@
+   },
+   "homepage": "https://iot.mozilla.org",
+   "dependencies": {
++    "ursa": "file:@@URSA_TGZ@@",
+     "asn1.js": "^5.0.0",
+     "bcryptjs": "^2.4.3",
+     "body-parser": "^1.17.1",
