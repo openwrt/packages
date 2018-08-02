@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pciutils
-PKG_VERSION:=3.5.6
+PKG_VERSION:=3.6.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/utils/pciutils
-PKG_HASH:=f346eeb90cce0910c05b877fe49eadc760fa084c0455fd313e39d4b2c2d4bb21
+PKG_HASH:=fcc0431cc951c3563f1e4f946d27c8e2161cfd81f25316e6bd783fa6118469e0
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=GPL-2.0
@@ -37,13 +37,13 @@ define Package/pciutils/description
  of PCI devices
 endef
 
-PCI_IDS_REV:=91cfa8a0c994634ba9a4a8639aa2ac6dff8453b9
+PCI_IDS_REV:=4ad9327b147ce7bb6ae27b68efe0c1d89d9eb9a1
 PCI_IDS_FILE:=pci.ids.$(PCI_IDS_REV)
 define Download/pci_ids
   FILE:=$(PCI_IDS_FILE)
   URL_FILE:=pci.ids
   URL:=@GITHUB/pciutils/pciids/$(PCI_IDS_REV)
-  HASH:=798528092d1c58eeac99c6505033ec4ce8fe3e19d7e0c41b06790d58753a89b6
+  HASH:=f8386c74ecc74f3c410b2f0f4885e7705c5dfcacd52fe924a931a63b246c8793
 endef
 $(eval $(call Download,pci_ids))
 
