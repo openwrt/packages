@@ -338,6 +338,7 @@ start_service() {
 
 stop_service() {
 	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
+	procd_set_config_changed firewall
 }
 
 service_triggers(){
@@ -349,4 +350,8 @@ service_triggers(){
 	procd_close_trigger
 
 	procd_add_reload_trigger 'snmpd'
+}
+
+service_started() {
+	procd_set_config_changed firewall
 }
