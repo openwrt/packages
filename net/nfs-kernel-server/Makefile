@@ -71,7 +71,9 @@ endef
 TARGET_CFLAGS += -Wno-error=implicit-function-declaration \
 		 -Wno-error=strict-prototypes \
 		 -Wno-error=incompatible-pointer-types \
+		 -Wno-error=format-security \
 		 -Wno-error=undef
+
 TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib $(LIBRPC) \
 		  -L$(STAGING_DIR)/usr/lib/libevent
 
