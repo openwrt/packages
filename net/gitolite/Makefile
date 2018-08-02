@@ -42,6 +42,7 @@ endef
 define Package/gitolite/postinst
 sed -i -e 's,/var/run/git,/srv/git,' $${IPKG_INSTROOT}/etc/passwd
 sed -i -e 's,git:\(.*\):/bin/false,git:\1:/bin/ash,' $${IPKG_INSTROOT}/etc/passwd
+sed -i -e 's,git:x:0:\(.*\)$$,git:x:99999:\1,' $${IPKG_INSTROOT}/etc/shadow
 endef
 
 define Build/Configure
