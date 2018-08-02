@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2015 OpenWrt.org
+# Copyright (C) 2012-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
 PKG_VERSION:=5.6.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_HASH:=c3c7dc8201f40625bba92ffd32eb602a8909210d8b3fac4d214c737ce079bf24
@@ -103,6 +103,8 @@ PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+# strongswan-mod-mysql needs iconv
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/strongswan/Default
   SUBMENU:=VPN
