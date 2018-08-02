@@ -126,8 +126,11 @@ nut_upsmon_add() {
 	local password
 	local system
 
-	# If no core config, use defaults
-	[ -r $UPSMON_C ] || nut_upsmon_conf ""
+	# if UPSMON_C is a symlink we're only doing generated config
+	[ -L $UPSMON_C ] && {
+		rm -f $UPSMON_C
+		nut_upsmon_conf ""
+	}
 
 	config_get upsname "$cfg" upsname
 	config_get hostname "$cfg" hostname localhost
@@ -143,7 +146,8 @@ nut_upsmon_add() {
 }
 
 start_service() {
-	rm -f $UPSMON_C
+	mkdir -p "$(dirname "$UPSMON_C")"
+	chmod 750 "$(dirname "$UPSMON_C")"
 
 	config_load nut_monitor
 
@@ -156,20 +160,22 @@ start_service() {
 	chmod 640 $UPSMON_C
 	chmod 640 /var/etc/nut/nut.conf
 
+	chown ${runas:-root}:$(id -gn ${runas:-root}) /var/etc/nut
+	chown ${runas:-root}:$(id -gn ${runas:-root}) /var/etc/nut/nut.conf
+	chown ${runas:-root}:$(id -gn ${runas:-root}) $UPSMON_C
+
 	[ -d /var/run/nut ] || {
 		mkdir -m 0750 -p /var/run/nut
 		chown ${runas:-root}:$(id -gn ${runas:-root}) /var/run/nut
 	}
 
-	chown ${runas:-root}:$(id -gn ${runas:-root}) $UPSMON_C
-	$DEBUG /usr/sbin/upsmon $UPSMON_OPTIONS
+	exec $DEBUG /usr/sbin/upsmon $UPSMON_OPTIONS
 }
 
 stop_service() {
-	[ -r $PID_F ] && /usr/sbin/upsmon -c stop
-	rm -f $UPSMON_C
+	exec /usr/sbin/upsmon -c stop
 }
 
 reload_service() {
-	upsmon -c reload
+	exec /usr/sbin/upsmon -c reload
 }
