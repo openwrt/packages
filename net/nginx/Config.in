@@ -236,4 +236,11 @@ config NGINX_TS_MODULE
 		Add support for MPEG-TS Live Module module.
 	default n
 
+config NGINX_STREAM_CORE_MODULE
+        bool
+        prompt "Enable stream support"
+        help
+                Add support for NGINX request streaming.
+        default n
+
 endmenu

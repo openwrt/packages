@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.15.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
@@ -68,6 +68,7 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_HEADERS_MORE \
 	CONFIG_NGINX_RTMP_MODULE \
 	CONFIG_NGINX_TS_MODULE \
+	CONFIG_NGINX_STREAM_CORE_MODULE \
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -497,6 +498,10 @@ ifeq ($(CONFIG_NGINX_LUA),y)
 	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
 	$(call PatchDir,$(PKG_BUILD_DIR),./patches-lua-nginx)
   endef
+endif
+
+ifneq ($(CONFIG_NGINX_STREAM_CORE_MODULE),y)
+  ADDITIONAL_MODULES += --with-stream
 endif
 
 $(eval $(call BuildPackage,nginx))
