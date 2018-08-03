@@ -69,8 +69,7 @@ ifup()
 
 	config_get enabled "$1" enabled 0
 
-
-	if [ "$up" == "1" ] \
+	if [ "$up" = "1" ] \
 		&& [ -n "$l3_device" ] \
 		&& [ "$enabled" == "1" ]; then
 		ACTION=ifup INTERFACE=$1 DEVICE=$l3_device /sbin/hotplug-call iface
