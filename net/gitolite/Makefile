@@ -37,6 +37,7 @@ define Package/gitolite/description
   Gitolite is a system for managing access to git repositories.  Note you will need to make
   sure dropbear does not interfere with OpenSSH as gitolite depends on feature not in
   dropbear (to my knowledge).
+  See https://openwrt.org/docs/guide-user/services/gitolite for a guide on installation.
 endef
 
 define Package/gitolite/postinst
