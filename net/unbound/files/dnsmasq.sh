@@ -206,6 +206,7 @@ dnsmasq_local_arpa() {
 dnsmasq_inactive() {
   local record
 
+
   if [ "$UB_D_EXTRA_DNS" -gt 0 ] ; then
     # Parasite from the uci.dhcp.domain clauses
     DM_LIST_KNOWN_ZONES="$DM_LIST_KNOWN_ZONES $UB_TXT_DOMAIN"
