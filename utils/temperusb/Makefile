@@ -27,13 +27,12 @@ define Package/temperusb
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=+libusb-compat
-  TITLE:=USB Thermometer TEMPer reader
-  URL:=https://pcsensor.com/usb-thermometers/gold-temper.html
+  TITLE:=USB Thermometer RDing TEMPer v1.4 reader
 endef
 
 define Package/temperusb/description
-  TEMPer v1.4 USB thermometer are cheap devices that can be sourced everywhere on 
-  the Internet. This package allow to operate them from user space
+  RDing TEMPer v1.4 USB thermometer are cheap devices that can be sourced everywhere on
+  the Internet. This package allow to operate them from user space.
 endef
 
 # Package build instructions; invoke the target-specific compiler to first compile the source file, and then to link the file into the final executable
