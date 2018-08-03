@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unbound
 PKG_VERSION:=1.7.3
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -36,7 +36,7 @@ define Package/unbound
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
-  USERID:=unbound=553:unbound=553
+  USERID:=unbound:unbound
   TITLE+= (daemon)
   DEPENDS+= +libunbound
 endef
@@ -117,8 +117,10 @@ CONFIGURE_ARGS += \
 	--enable-tfo-server \
 	--with-libexpat="$(STAGING_DIR)/usr" \
 	--with-ssl="$(STAGING_DIR)/usr" \
-	--with-pidfile=/var/run/unbound.pid \
-	--with-user=unbound
+	--with-user=unbound \
+	--with-run-dir=/var/lib/unbound \
+	--with-conf-file=/var/lib/unbound/unbound.conf \
+	--with-pidfile=/var/run/unbound.pid
 
 define Package/unbound/conffiles
 /etc/config/unbound
@@ -142,7 +144,7 @@ define Package/unbound/install
 		$(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/unbound
 	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/etc/unbound/unbound.conf \
+		$(PKG_INSTALL_DIR)/var/lib/unbound/unbound.conf \
 		$(1)/etc/unbound/unbound.conf
 	$(INSTALL_DATA) ./files/root.key $(1)/etc/unbound/root.key
 	$(INSTALL_DATA) ./files/unbound_ext.conf $(1)/etc/unbound/unbound_ext.conf
