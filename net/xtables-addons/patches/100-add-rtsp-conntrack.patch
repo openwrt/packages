@@ -235,7 +235,7 @@
 +#endif /* _NETFILTER_MIME_H */
 --- /dev/null
 +++ b/extensions/rtsp/nf_conntrack_rtsp.c
-@@ -0,0 +1,732 @@
+@@ -0,0 +1,735 @@
 +/*
 + * RTSP extension for IP connection tracking
 + * (C) 2003 by Tom Marshall <tmarshall at real.com>
@@ -287,6 +287,7 @@
 +#include <net/netfilter/nf_conntrack.h>
 +#include <net/netfilter/nf_conntrack_expect.h>
 +#include <net/netfilter/nf_conntrack_helper.h>
++#include <net/netfilter/nf_conntrack_zones.h>
 +#include "nf_conntrack_rtsp.h"
 +
 +#define NF_NEED_STRNCASECMP
@@ -877,6 +878,8 @@
 +#else
 +		ret = help_in(skb, rb_ptr, datalen, ct, ctinfo);
 +#endif
++		break;
++	default:
 +		break;
 +	}
 +
