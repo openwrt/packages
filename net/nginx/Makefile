@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.15.1
-PKG_RELEASE:=3
+PKG_VERSION:=1.15.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
-PKG_HASH:=c7206858d7f832b8ef73a45c9b8f8e436bcb1ee88db2bc85b8e438ecec9d5460
+PKG_HASH:=eeba09aecfbe8277ac33a5a2486ec2d6731739f3c1c701b42a0c3784af67ad90
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Ansuel Smith <ansuelsmth@gmail.com>
@@ -483,11 +483,11 @@ endif
 
 ifeq ($(CONFIG_NGINX_LUA),y)
   define Download/lua-nginx
-    VERSION:=576a10d246daf81c0ce1b959c50ee807769c01a8
+    VERSION:=e94f2e5d64daa45ff396e262d8dab8e56f5f10e0
     SUBDIR:=lua-nginx
     FILE:=lua-nginx-module-$(PKG_VERSION)-$$(VERSION).tar.gz
     URL:=https://github.com/openresty/lua-nginx-module.git
-    MIRROR_HASH:=85ab2fc752d4e09f266209fdec507b30c57bb966c34bbff148cf3459ae5cac80
+    MIRROR_HASH:=ae439f9a8b3c34d7240735b844db72ee721af4791bbaff5692bca20e6785f541
     PROTO:=git
   endef
   $(eval $(call Download,lua-nginx))

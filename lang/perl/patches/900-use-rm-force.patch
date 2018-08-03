@@ -1,6 +1,6 @@
 --- a/Makefile.SH	2017-10-17 11:59:52.938763142 -0600
 +++ b/Makefile.SH	2017-10-17 12:13:46.202555604 -0600
-@@ -270,6 +270,7 @@ LNS = $lns
+@@ -275,6 +275,7 @@ LNS = $lns
  # NOTE: some systems don't grok "cp -f". XXX Configure test needed?
  CPS = $cp
  RMS = rm -f
@@ -8,7 +8,7 @@
  ranlib = $ranlib
  
  # The following are mentioned only to make metaconfig include the
-@@ -731,7 +731,7 @@ bitcount.h: generate_uudmap$(HOST_EXE_EX
+@@ -736,7 +737,7 @@ bitcount.h: generate_uudmap$(HOST_EXE_EX
  	./generate_uudmap$(HOST_EXE_EXT) $(generated_headers)
  
  generate_uudmap$(HOST_EXE_EXT): generate_uudmap$(OBJ_EXT)
@@ -17,7 +17,7 @@
  	$(LNS) $(HOST_GENERATE) generate_uudmap$(HOST_EXE_EXT)
  
  !NO!SUBS!
-@@ -871,26 +872,26 @@ mydtrace.h: $(DTRACE_H)
+@@ -876,26 +877,26 @@ mydtrace.h: $(DTRACE_H)
  	define)
  		$spitshell >>$Makefile <<'!NO!SUBS!'
  $(DTRACE_MINI_O): perldtrace.d $(miniperl_objs_nodt)
@@ -48,7 +48,7 @@
  
  !NO!SUBS!
  		;;
-@@ -901,13 +902,13 @@ $(LIBPERL): $& $(perllib_dep) $(DYNALOAD
+@@ -906,13 +907,13 @@ $(LIBPERL): $& $(perllib_dep) $(DYNALOAD
  	case "$useshrplib" in
  	true)
  		$spitshell >>$Makefile <<'!NO!SUBS!'
@@ -64,7 +64,7 @@
  	mv $@ libperl$(OBJ_EXT)
  	$(AR) qv $(LIBPERL) libperl$(OBJ_EXT)
  !NO!SUBS!
-@@ -916,7 +917,7 @@ $(LIBPERL): $& $(perllib_dep) $(DYNALOAD
+@@ -921,7 +922,7 @@ $(LIBPERL): $& $(perllib_dep) $(DYNALOAD
  		;;
  	*)
  		$spitshell >>$Makefile <<'!NO!SUBS!'
@@ -73,7 +73,7 @@
  	$(AR) rc $(LIBPERL) $(perllib_objs) $(DYNALOADER)
  	@$(ranlib) $(LIBPERL)
  !NO!SUBS!
-@@ -949,7 +950,7 @@ $(MINIPERL_EXE): lib/buildcustomize.pl
+@@ -954,7 +955,7 @@ $(MINIPERL_EXE): lib/buildcustomize.pl
  	amigaos*)
  		$spitshell >>$Makefile <<'!NO!SUBS!'
  lib/buildcustomize.pl: $& $(miniperl_objs) write_buildcustomize.pl
@@ -82,7 +82,7 @@
  	$(CC) $(CLDFLAGS) -o $(MINIPERL_EXE) \
  	    $(miniperl_objs) $(libs)
  #	$(LDLIBPTH) ./miniperl$(HOST_EXE_EXT) -w -Ilib -Idist/Exporter/lib -MExporter -e '<?>' || sh -c 'echo >&2 Failed to build miniperl.  Please run make minitest; exit 1'
-@@ -987,7 +988,7 @@ NAMESPACEFLAGS = -force_flat_namespace
+@@ -992,7 +993,7 @@ NAMESPACEFLAGS = -force_flat_namespace
  		esac
  		$spitshell >>$Makefile <<'!NO!SUBS!'
  lib/buildcustomize.pl: $& $(miniperl_objs) write_buildcustomize.pl
@@ -91,7 +91,7 @@
  	$(CC) $(CLDFLAGS) $(NAMESPACEFLAGS) -o $(MINIPERL_EXE) \
  	    $(miniperl_objs) $(libs)
  	$(LDLIBPTH) ./miniperl$(HOST_EXE_EXT) -w -Ilib -Idist/Exporter/lib -MExporter -e '<?>' || sh -c 'echo >&2 Failed to build miniperl.  Please run make minitest; exit 1'
-@@ -998,8 +999,8 @@ lib/buildcustomize.pl: $& $(miniperl_obj
+@@ -1003,8 +1004,8 @@ lib/buildcustomize.pl: $& $(miniperl_obj
  		if test "X$hostperl" != X; then
  			$spitshell >>$Makefile <<!GROK!THIS!
  lib/buildcustomize.pl: \$& \$(miniperl_dep) write_buildcustomize.pl
@@ -102,7 +102,7 @@
  	\$(LNS) \$(HOST_PERL) \$(MINIPERL_EXE)
  	\$(LDLIBPTH) ./miniperl\$(HOST_EXE_EXT) -w -Ilib -Idist/Exporter/lib -MExporter -e '<?>' || sh -c 'echo >&2 Failed to build miniperl.  Please run make minitest; exit 1'
  	\$(MINIPERL) -f write_buildcustomize.pl 'osname' "$osname"
-@@ -1007,7 +1008,7 @@ lib/buildcustomize.pl: \$& \$(miniperl_d
+@@ -1012,7 +1013,7 @@ lib/buildcustomize.pl: \$& \$(miniperl_d
  		else
  			$spitshell >>$Makefile <<'!NO!SUBS!'
  lib/buildcustomize.pl: $& $(miniperl_dep) write_buildcustomize.pl
@@ -111,7 +111,7 @@
  	$(CC) $(CLDFLAGS) -o $(MINIPERL_EXE) \
  	    $(miniperl_objs) $(libs)
  	$(LDLIBPTH) ./miniperl$(HOST_EXE_EXT) -w -Ilib -Idist/Exporter/lib -MExporter -e '<?>' || sh -c 'echo >&2 Failed to build miniperl.  Please run make minitest; exit 1'
-@@ -1020,7 +1021,7 @@ lib/buildcustomize.pl: $& $(miniperl_dep
+@@ -1025,7 +1026,7 @@ lib/buildcustomize.pl: $& $(miniperl_dep
  	$spitshell >>$Makefile <<'!NO!SUBS!'
  
  $(PERL_EXE): $& $(perlmain_dep) $(LIBPERL) $(static_ext) ext.libs $(PERLEXPORT) write_buildcustomize.pl
@@ -120,8 +120,8 @@
  !NO!SUBS!
  
          case $osname in
-@@ -1114,8 +1115,8 @@ pod/perl5261delta.pod: pod/perldelta.pod
- 	$(LNS) perldelta.pod pod/perl5261delta.pod
+@@ -1119,8 +1120,8 @@ pod/perl5280delta.pod: pod/perldelta.pod
+ 	$(LNS) perldelta.pod pod/perl5280delta.pod
  
  extra.pods: $(MINIPERL_EXE)
 -	-@test ! -f extra.pods || rm -f `cat extra.pods`
@@ -131,7 +131,7 @@
  	-@for x in `grep -l '^=[a-z]' README.* | grep -v README.vms` ; do \
  	    nx=`echo $$x | sed -e "s/README\.//"`; \
  	    $(LNS) ../$$x "pod/perl"$$nx".pod" ; \
-@@ -1332,11 +1333,11 @@ realclean:	_realcleaner _mopup
+@@ -1340,11 +1341,11 @@ realclean:	_realcleaner _mopup
  	@echo "Note that '$(MAKE) realclean' does not delete config.sh or Policy.sh"
  
  _clobber:
@@ -148,7 +148,7 @@
  
  clobber:	_realcleaner _mopup _clobber
  
-@@ -1344,23 +1345,23 @@ distclean:	clobber
+@@ -1352,23 +1353,23 @@ distclean:	clobber
  
  # Like distclean but also removes emacs backups and *.orig.
  veryclean:	_verycleaner _mopup _clobber
@@ -183,7 +183,7 @@
  	-cd pod; $(LDLIBPTH) $(MAKE) $(CLEAN)
  	-cd utils; $(LDLIBPTH) $(MAKE) $(CLEAN)
  	-@if test -f $(MINIPERL_EXE) ; then \
-@@ -1370,31 +1371,31 @@ _cleaner1:
+@@ -1378,31 +1379,31 @@ _cleaner1:
  	else \
  	sh $(CLEAN).sh ; \
  	fi
@@ -233,7 +233,7 @@
  	-rmdir lib/version lib/threads lib/inc/ExtUtils lib/inc lib/encoding
  	-rmdir lib/autodie/exception lib/autodie/Scope lib/autodie lib/XS
  	-rmdir lib/Win32API lib/VMS lib/Unicode/Collate/Locale
-@@ -1443,11 +1444,11 @@ _realcleaner:
+@@ -1452,11 +1453,11 @@ _realcleaner:
  _verycleaner:
  	@$(LDLIBPTH) $(MAKE) _cleaner1 CLEAN=veryclean
  	@$(LDLIBPTH) $(MAKE) _cleaner2
@@ -247,16 +247,16 @@
  	lint $(lintflags) -DPERL_CORE -D_REENTRANT -DDEBUGGING -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 $(c)
  
  cscopeflags = -Rb  # Recursive, build-only.
-@@ -1505,7 +1506,7 @@ case "$targethost" in
+@@ -1514,7 +1515,7 @@ case "$targethost" in
  '') $spitshell >>$Makefile <<'!NO!SUBS!'
  test_prep test-prep: test_prep_pre $(MINIPERL_EXE) $(unidatafiles) $(PERL_EXE) \
- 	$(dynamic_ext) $(TEST_PERL_DLL) runtests $(generated_pods)
+ 	$(dynamic_ext) $(TEST_PERL_DLL) runtests $(generated_pods) common_build
 -	cd t && (rm -f $(PERL_EXE); $(LNS) ../$(PERL_EXE) $(PERL_EXE))
 +	cd t && ($(RMS) $(PERL_EXE); $(LNS) ../$(PERL_EXE) $(PERL_EXE))
  
  !NO!SUBS!
  ;;
-@@ -1555,7 +1556,7 @@ test_prep test-prep: test_prep_pre \$(MI
+@@ -1564,7 +1565,7 @@ test_prep test-prep: test_prep_pre \$(MI
  	$to config.sh
  # --- For lib/diagnostics.t with -Duseshrplib
  	$to \$(PERL_EXE)
@@ -265,7 +265,7 @@
  	$to t/\$(PERL_EXE)
  
  !GROK!THIS!
-@@ -1565,7 +1566,7 @@ esac
+@@ -1574,7 +1575,7 @@ esac
  $spitshell >>$Makefile <<'!NO!SUBS!'
  test_prep_reonly: $(MINIPERL_EXE) $(PERL_EXE) $(dynamic_ext_re) $(TEST_PERL_DLL)
  	$(MINIPERL) make_ext.pl $(dynamic_ext_re) MAKE="$(MAKE)" LIBPERL_A=$(LIBPERL) LINKTYPE=dynamic
@@ -274,7 +274,7 @@
  !NO!SUBS!
  
  case "$targethost" in
-@@ -1620,7 +1621,7 @@ minitest_prep:
+@@ -1629,7 +1630,7 @@ minitest_prep:
  	@echo "You may see some irrelevant test failures if you have been unable"
  	@echo "to build lib/Config.pm, or the Unicode data files."
  	@echo " "

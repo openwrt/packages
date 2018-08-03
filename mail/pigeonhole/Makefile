@@ -11,7 +11,7 @@ PKG_NAME:=dovecot-pigeonhole
 PKG_VERSION_PLUGIN:=0.5.2
 PKG_VERSION_DOVECOT:=$(shell make --no-print-directory -C ../dovecot/ val.PKG_VERSION V=s)
 PKG_VERSION:=$(PKG_VERSION_DOVECOT)-$(PKG_VERSION_PLUGIN)
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 DOVECOT_VERSION:=2.3
 
@@ -25,6 +25,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/dovecot-$(DOVECOT_VERSION)-pigeonhole-$(PKG_VERSION_
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/dovecot-pigeonhole
   SECTION:=mail
