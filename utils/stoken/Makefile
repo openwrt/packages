@@ -8,22 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stoken
-PKG_VERSION:=0.8
-PKG_REV:=c4d79ffbf5053e44be4b64da22b1b7fb6a51daf2
-PKG_RELEASE:=2
+PKG_VERSION:=0.92
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/cernekee/stoken.git
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=@SF/stoken
+PKG_HASH:=aa2b481b058e4caf068f7e747a2dcf5772bcbf278a4f89bc9efcbf82bcc9ef5a
 
-PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_REV).tar.gz
-PKG_MIRROR_HASH:=2f77c42b14a0b6b1e4d44dfd4d66b63ce6ed7484ca97debec0344f5c966e2e5c
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
 PKG_LICENSE:=LGPL-2.1
 PKG_INSTALL:=1
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 
 PKG_FIXUP:=autoreconf
 
@@ -31,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/stoken/Default
   TITLE:=tokencode generator compatible with RSA SecurID 128-bit (AES)
-  URL:=http://sourceforge.net/p/stoken/
+  URL:=https://sourceforge.net/p/stoken/wiki/Home/
   DEPENDS:= +libxml2 +libnettle
 endef
 
