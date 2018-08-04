@@ -9,17 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xl2tpd
 PKG_VERSION:=1.3.12
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/xelerance/xl2tpd.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=271d40aaf97a07e4c1bbcfb9c0081f2fc848fa7ef6d69c43c141a4e5a749831d
+PKG_SOURCE_URL:=https://codeload.github.com/xelerance/xl2tpd/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=6f0ac50a76500d5cc56a67451b61e5f561b3309357176b39deabb1705e8745fd
 
 PKG_BUILD_DEPENDS:=libpcap
 
@@ -31,7 +28,7 @@ define Package/xl2tpd
   SECTION:=net
   CATEGORY:=Network
   TITLE:=An L2TP (Layer 2 Tunneling Protocol) daemon
-  URL:=http://www.xelerance.com/software/xl2tpd/
+  URL:=http://www.xelerance.com
   SUBMENU:=VPN
   DEPENDS:=+ppp-mod-pppol2tp +resolveip
 endef
