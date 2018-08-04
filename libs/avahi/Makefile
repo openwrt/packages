@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avahi
 PKG_VERSION:=0.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/lathiat/avahi/releases/download/v$(PKG_VERSION) \
@@ -152,6 +152,23 @@ endef
 
 define Package/avahi-daemon-service-ssh/conffiles
 /etc/avahi/services/ssh.service
+endef
+
+define Package/avahi-daemon-service-samba
+  $(call Package/avahi/Default)
+  SUBMENU:=IP Addresses and Names
+  DEPENDS:=+avahi-daemon
+  TITLE:=Announce Samba 4/Time Machine service
+endef
+
+define Package/avahi-daemon-service-samba/description
+$(call Package/avahi/Default/description)
+ .
+ This package contains the service definition for announcing Samba 4/Time Machine service.
+endef
+
+define Package/avahi-daemon-service-samba/conffiles
+/etc/avahi/services/samba.service
 endef
 
 define Package/avahi-dnsconfd
@@ -389,6 +406,11 @@ define Package/avahi-daemon-service-ssh/install
 	$(INSTALL_DATA) ./files/service-ssh $(1)/etc/avahi/services/ssh.service
 endef
 
+define Package/avahi-daemon-service-samba/install
+	$(INSTALL_DIR) $(1)/etc/avahi/services
+	$(INSTALL_DATA) ./files/service-samba $(1)/etc/avahi/services/samba.service
+endef
+
 define Package/avahi-dnsconfd/install
 	$(INSTALL_DIR) $(1)/etc/avahi
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/etc/avahi/avahi-dnsconfd.action $(1)/etc/avahi/
@@ -406,4 +428,5 @@ $(eval $(call BuildPackage,avahi-dbus-daemon))
 $(eval $(call BuildPackage,avahi-nodbus-daemon))
 $(eval $(call BuildPackage,avahi-daemon-service-http))
 $(eval $(call BuildPackage,avahi-daemon-service-ssh))
+$(eval $(call BuildPackage,avahi-daemon-service-samba))
 $(eval $(call BuildPackage,avahi-dnsconfd))
