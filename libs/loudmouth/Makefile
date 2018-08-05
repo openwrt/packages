@@ -31,7 +31,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/loudmouth
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+glib2 +libopenssl
+  DEPENDS:=+glib2 +libopenssl +PACKAGE_krb5-libs:krb5-libs
   TITLE:=loudmouth
   URL:=https://github.com/mcabber/loudmouth
 endef
