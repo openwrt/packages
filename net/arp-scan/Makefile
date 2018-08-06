@@ -8,17 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=arp-scan
-PKG_VERSION:=1.9-40-g69b2f70
+PKG_VERSION:=1.9.5
 PKG_RELEASE:=1
-PKG_LICENSE:=GPL-3.0
-PKG_MAINTAINER:=Sergey Urushkin <urusha.v1.0@gmail.com>
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/royhills/arp-scan.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=69b2f70588565385f3a61d9b1f100f01747cd5e1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=1cfb670ddd1763dbf5c712aaefe4d6c4f825011969e36484e6c442794324f721
+PKG_SOURCE_URL:=https://codeload.github.com/royhills/arp-scan/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=aa9498af84158a315b7e0ea6c2cddfa746660ca3987cbe7e32c0c90f5382d9d2
+
+PKG_MAINTAINER:=Sergey Urushkin <urusha.v1.0@gmail.com>
+PKG_LICENSE:=GPL-3.0
 
 PKG_FIXUP:=autoreconf
 
