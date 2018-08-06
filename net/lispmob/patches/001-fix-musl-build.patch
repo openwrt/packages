@@ -1,31 +1,42 @@
---- a/lispd/lispd_output.c
-+++ b/lispd/lispd_output.c
-@@ -26,6 +26,7 @@
-  *    Alberto Rodriguez Natal <arnatal@ac.upc.edu>
-  */
+diff --git a/lispd/data-plane/tun/tun_input.c b/lispd/data-plane/tun/tun_input.c
+index d484989..669361f 100644
+--- a/lispd/data-plane/tun/tun_input.c
++++ b/lispd/data-plane/tun/tun_input.c
+@@ -60,7 +60,7 @@ tun_read_and_decap_pkt(int sock, lbuf_t *b)
  
-+#define _GNU_SOURCE 1
+     /* FILTER UDP: with input RAW UDP sockets, we receive all UDP packets,
+      * we only want LISP data ones */
+-    if (ntohs(udph->dest) != LISP_DATA_PORT) {
++    if (ntohs(udph->uh_dport) != LISP_DATA_PORT) {
+         return (ERR_NOT_LISP);
+     }
  
- 
- #include <assert.h>
---- a/lispd/lispd_input.c
-+++ b/lispd/lispd_input.c
-@@ -26,6 +26,7 @@
-  *    Alberto Rodriguez Natal <arnatal@ac.upc.edu>
-  */
- 
-+#define _GNU_SOURCE 1
- 
- #include "lispd_input.h"
- #include "lispd_map_notify.h"
---- a/lispd/lispd_pkt_lib.c
-+++ b/lispd/lispd_pkt_lib.c
-@@ -28,6 +28,8 @@
+diff --git a/lispd/lispd_api.c b/lispd/lispd_api.c
+index ca00a8f..3fb39fd 100644
+--- a/lispd/lispd_api.c
++++ b/lispd/lispd_api.c
+@@ -17,6 +17,8 @@
   *
   */
  
 +#define _GNU_SOURCE 1
 +
- #include "lispd_afi.h"
- #include "lispd_pkt_lib.h"
- #include "lispd_lib.h"
+ #include <assert.h>
+ #include <stdio.h>
+ #include <string.h>
+diff --git a/lispd/lispd_api_internals.c b/lispd/lispd_api_internals.c
+index 3768fd7..3ce82a4 100644
+--- a/lispd/lispd_api_internals.c
++++ b/lispd/lispd_api_internals.c
+@@ -29,8 +29,10 @@
+ #include <stdio.h>
+ #include <unistd.h>
+ #include <string.h>
+-#include <assert.h>
+ 
++#define _GNU_SOURCE 1
++
++#include <assert.h>
+ 
+ lisp_addr_t * lxml_lcaf_get_lisp_addr (xmlNodePtr xml_lcaf);
+ 
