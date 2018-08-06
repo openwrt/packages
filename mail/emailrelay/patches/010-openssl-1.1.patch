@@ -1,0 +1,43 @@
+diff --git a/src/gssl/gssl_openssl.cpp b/src/gssl/gssl_openssl.cpp
+index 0e9b73b..49927db 100644
+--- a/src/gssl/gssl_openssl.cpp
++++ b/src/gssl/gssl_openssl.cpp
+@@ -52,10 +52,14 @@ GSsl::OpenSSL::LibraryImp::LibraryImp( G::StringArray & library_config , Library
+ 	m_verbose(verbose) ,
+ 	m_config(library_config)
+ {
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	SSL_load_error_strings() ;
+ 	SSL_library_init() ;
+-	int rc = RAND_status() ; G_IGNORE_VARIABLE(rc) ;
+ 	OpenSSL_add_all_digests() ;
++#else
++	OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL) ;
++#endif
++	int rc = RAND_status() ; G_IGNORE_VARIABLE(rc) ;
+ 
+ 	// allocate a slot for a pointer from SSL to ProtocolImp
+ 	m_index = SSL_get_ex_new_index( 0 , nullptr , nullptr , nullptr , nullptr ) ;
+@@ -73,15 +77,21 @@ GSsl::OpenSSL::LibraryImp::~LibraryImp()
+ 
+ void GSsl::OpenSSL::LibraryImp::cleanup()
+ {
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	// ffs...
+ 	ERR_free_strings() ;
+ 	RAND_cleanup() ;
+-	CRYPTO_cleanup_all_ex_data();
++	CRYPTO_cleanup_all_ex_data() ;
++#endif
+ }
+ 
+ std::string GSsl::OpenSSL::LibraryImp::sid()
+ {
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	return G::Str::printable( SSLeay_version(SSLEAY_VERSION) ) ;
++#else
++	return G::Str::printable( OpenSSL_version(OPENSSL_VERSION) ) ;
++#endif
+ }
+ 
+ std::string GSsl::OpenSSL::LibraryImp::id() const
