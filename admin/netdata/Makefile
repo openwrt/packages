@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netdata
 PKG_VERSION:=1.10.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
@@ -50,6 +50,8 @@ define Package/netdata/install
 	mkdir -p $(1)/etc/netdata
 	$(CP) $(PKG_INSTALL_DIR)/etc/netdata $(1)/etc
 	$(CP) ./files/netdata.conf $(1)/etc/netdata
+	mkdir -p $(1)/etc/netdata/custom-plugins.d
+
 	mkdir -p $(1)/usr/share/netdata
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/netdata $(1)/usr/share
 	rm -rf $(1)/usr/share/netdata/web/images
@@ -58,12 +60,15 @@ define Package/netdata/install
 	rm $(1)/usr/share/netdata/web/fonts/*.svg
 	rm $(1)/usr/share/netdata/web/fonts/*.ttf
 	rm $(1)/usr/share/netdata/web/fonts/*.woff
+
 	mkdir -p $(1)/usr/lib/netdata
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/netdata $(1)/usr/lib
 	rm $(1)/usr/lib/netdata/python.d/python-modules-installer.sh
 	chmod 4755 $(1)/usr/lib/netdata/plugins.d/apps.plugin
+
 	mkdir -p $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/netdata.init $(1)/etc/init.d/netdata
+
 	mkdir -p $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/netdata $(1)/usr/sbin
 endef
