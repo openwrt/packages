@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=libupm
 PKG_VERSION:=0.4.0
 
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_RELEASE=$(PKG_SOURCE_VERSION)-1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/intel-iot-devkit/upm.git
@@ -38,7 +38,7 @@ UPM_MODULES:= \
 
 CMAKE_OPTIONS=-DBUILDARCH=$(CONFIG_ARCH) \
 	-DNODE_EXECUTABLE=$(STAGING_DIR_HOSTPKG)/bin/node \
-	-DSWIG_DIR=$(STAGING_DIR_HOSTPKG)/bin
+	-DPython_ADDITIONAL_VERSIONS=2.7
 
 define Package/libupm/Default
   SECTION:=libs
