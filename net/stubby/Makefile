@@ -46,7 +46,7 @@ define Package/stubby/description
 endef
 
 define Package/stubby/conffiles
-	/etc/stubby/stubby.yml
+/etc/stubby/stubby.yml
 endef
 
 define Package/stubby/install
