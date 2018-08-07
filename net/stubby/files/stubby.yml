@@ -24,8 +24,14 @@ upstream_recursive_servers:
 # # Cloudflare IPv6
   - address_data: 2606:4700:4700::1111
     tls_auth_name: "cloudflare-dns.com"
+    tls_pubkey_pinset:
+      - digest: "sha256"
+        value: yioEpqeR4WtDwE9YxNVnCEkTxIjx6EEIwFSQW+lJsbc=
   - address_data: 2606:4700:4700::1001
     tls_auth_name: "cloudflare-dns.com"
+    tls_pubkey_pinset:
+      - digest: "sha256"
+        value: yioEpqeR4WtDwE9YxNVnCEkTxIjx6EEIwFSQW+lJsbc=
 
 # # Quad 9 IPv6
 #  - address_data: 2620:fe::10
@@ -35,8 +41,14 @@ upstream_recursive_servers:
 # # Cloudflare servers
   - address_data: 1.1.1.1
     tls_auth_name: "cloudflare-dns.com"
+    tls_pubkey_pinset:
+      - digest: "sha256"
+        value: yioEpqeR4WtDwE9YxNVnCEkTxIjx6EEIwFSQW+lJsbc=
   - address_data: 1.0.0.1
     tls_auth_name: "cloudflare-dns.com"
+    tls_pubkey_pinset:
+      - digest: "sha256"
+        value: yioEpqeR4WtDwE9YxNVnCEkTxIjx6EEIwFSQW+lJsbc=
 
 # Quad 9 service
 #  - address_data: 9.9.9.10
