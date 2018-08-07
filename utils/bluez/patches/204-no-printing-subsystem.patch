@@ -1,5 +1,3 @@
-diff --git a/src/bluetooth.conf b/src/bluetooth.conf
-index 0c0b221..013cf97 100644
 --- a/src/bluetooth.conf
 +++ b/src/bluetooth.conf
 @@ -26,10 +26,10 @@

@@ -1,5 +1,5 @@
---- a/src/shared/util.h.old	2016-09-26 07:29:00.000000000 -0500
-+++ b/src/shared/util.h	2017-12-27 22:49:50.538716424 -0600
+--- a/src/shared/util.h
++++ b/src/shared/util.h
 @@ -26,6 +26,7 @@
  #include <alloca.h>
  #include <byteswap.h>
