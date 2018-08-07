@@ -20,10 +20,10 @@ This package has some modifications that makes it differ from the default upstre
 ### General Cleanup
 Comments are removed, etc.
 
-### EDNS Client-Subnet Option Changed to 0
+### EDNS Client-Subnet Option
 The value of "edns_client_subnet_private" is '1' in the upstream default config. This informs the upstream resolver to NOT forward your connection's IP to any other upstream servers. This is good for privacy, but could result in sub-optimal routing to CDNs, etc.
 
-To give a more "comparable" DNS experience similar to google/opendns, this package disables this option.
+We retain the upstream value since privacy is a key user motivation for using DNS-over-TLS, but note users encountering poor routing may consider changing it.
 
 ### Default Listening Ports Changed
 The value of "listen_addresses" in the default config does not list port numbers, which will cause stubby to default to port 53. However, Openwrt defaults to dnsmasq as the main name server daemon, which runs on port 53. By setting the listening ports to non-standard values, this allows users to keep the main name server daemon in place (dnsmasq/unbound/etc.) and have that name server forward to stubby.
