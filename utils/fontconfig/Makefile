@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fontconfig
-PKG_VERSION:=2.11.1
+PKG_VERSION:=2.13.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://fontconfig.org/release/
-PKG_HASH:=dc62447533bca844463a3c3fd4083b57c90f18a70506e7a9f4936b5a1e516a99
+PKG_SOURCE_URL:=https://www.freedesktop.org/software/fontconfig/release
+PKG_HASH:=91dde8492155b7f34bb95079e79be92f1df353fcc682c19be90762fd3e12eeb9
 
 PKG_FIXUP:=libtool
 PKG_INSTALL:=1
@@ -25,8 +25,8 @@ define Package/fontconfig
   CATEGORY:=Xorg
   SUBMENU:=font-utils
   TITLE:=fontconfig
-  DEPENDS:=+libpthread +libexpat +libfreetype
-  URL:=http://fontconfig.org/
+  DEPENDS:=+libpthread +libexpat +libfreetype +libuuid
+  URL:=https://www.freedesktop.org/wiki/Software/fontconfig/
 endef
 
 #TODO: better put cache on persistent storage for faster boot time?
