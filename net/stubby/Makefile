@@ -29,12 +29,6 @@ define Package/stubby/Default
 	URL:=https://dnsprivacy.org/wiki/display/DP/DNS+Privacy+Daemon+-+Stubby
 endef
 
-define Package/stubby/description
-	This package contains the Stubby daemon (which utilizes the getdns library).
-
-	See https://github.com/openwrt/packages/blob/master/net/stubby/files/README.md for more details.
-endef
-
 define Package/stubby
 	$(call Package/stubby/Default)
 	SECTION:=net
@@ -45,6 +39,16 @@ define Package/stubby
 	DEPENDS:= +libyaml +getdns +ca-certificates
 endef
 
+define Package/stubby/description
+	This package contains the Stubby daemon (which utilizes the getdns library).
+
+	See https://github.com/openwrt/packages/blob/master/net/stubby/files/README.md for more details.
+endef
+
+define Package/stubby/conffiles
+	/etc/stubby/stubby.yml
+endef
+
 define Package/stubby/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/stubby $(1)/usr/sbin/stubby
@@ -53,11 +57,6 @@ define Package/stubby/install
 	$(INSTALL_DIR) $(1)/etc/stubby
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/stubby/stubby.yml $(1)/etc/stubby/stubby.yml.default
 	$(INSTALL_DATA) ./files/stubby.yml $(1)/etc/stubby/stubby.yml
-endef
-
-
-define Package/stubby/conffiles
-	/etc/stubby/stubby.yml
 endef
 
 $(eval $(call BuildPackage,stubby))
