@@ -9,7 +9,7 @@ tls_authentication: GETDNS_AUTHENTICATION_REQUIRED
 
 tls_query_padding_blocksize: 128
 
-edns_client_subnet_private : 0
+edns_client_subnet_private : 1
 
 round_robin_upstreams: 0
 
