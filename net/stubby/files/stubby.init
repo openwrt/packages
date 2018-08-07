@@ -13,8 +13,6 @@ start_service() {
 
   procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
 
-  procd_set_param limits core="unlimited"
-
   procd_set_param file /etc/stubby/stubby.yml
 
   procd_set_param stdout 1
