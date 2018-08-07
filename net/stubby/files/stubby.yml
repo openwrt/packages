@@ -24,6 +24,8 @@ upstream_recursive_servers:
 # # Cloudflare IPv6
   - address_data: 2606:4700:4700::1111
     tls_auth_name: "cloudflare-dns.com"
+  - address_data: 2606:4700:4700::1001
+    tls_auth_name: "cloudflare-dns.com"
 
 # # Quad 9 IPv6
 #  - address_data: 2620:fe::10
@@ -32,6 +34,8 @@ upstream_recursive_servers:
 # IPv4 addresses
 # # Cloudflare servers
   - address_data: 1.1.1.1
+    tls_auth_name: "cloudflare-dns.com"
+  - address_data: 1.0.0.1
     tls_auth_name: "cloudflare-dns.com"
 
 # Quad 9 service
