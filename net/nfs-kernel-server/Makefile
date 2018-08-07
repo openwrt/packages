@@ -72,7 +72,8 @@ TARGET_CFLAGS += -Wno-error=implicit-function-declaration \
 		 -Wno-error=strict-prototypes \
 		 -Wno-error=incompatible-pointer-types \
 		 -Wno-error=format-security \
-		 -Wno-error=undef
+		 -Wno-error=undef \
+		 -Wno-error=missing-include-dirs
 
 TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib $(LIBRPC) \
 		  -L$(STAGING_DIR)/usr/lib/libevent
@@ -100,7 +101,8 @@ MAKE_FLAGS += \
 	RPCGEN_PATH=$(STAGING_DIR_HOSTPKG)/bin/rpcgen \
 	RPCGEN=$(STAGING_DIR_HOSTPKG)/bin/rpcgen
 
-HOST_CFLAGS += -Dlinux
+HOST_CFLAGS += -Dlinux \
+	-Wno-error=missing-include-dirs
 
 HOST_CONFIGURE_ARGS += \
 	--disable-gss \
@@ -117,6 +119,7 @@ HOST_CONFIGURE_VARS += \
 	ac_cv_header_event_h=yes \
 	ac_cv_header_nfsidmap_h=yes \
 	ac_cv_header_blkid_blkid_h=yes \
+	ac_cv_lib_resolv___res_querydomain=yes \
 	GSSGLUE_CFLAGS=" " \
 	GSSGLUE_LIBS=" " \
 	RPCSECGSS_CFLAGS=" " \
