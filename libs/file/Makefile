@@ -8,20 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=file
-PKG_VERSION:=5.33
-PKG_RELEASE:=2
+PKG_VERSION:=5.34
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://sources.lede-project.org/ \
-	http://pkgs.fedoraproject.org/lookaside/pkgs/file/ \
+PKG_SOURCE_URL:=https://pkgs.fedoraproject.org/lookaside/pkgs/file/ \
 	http://download.openpkg.org/components/cache/file/ \
 	ftp://ftp.astron.com/pub/file/
-PKG_HASH:=1c52c8c3d271cd898d5511c36a68059cda94036111ab293f01f83c3525b737c6
+PKG_HASH:=f15a50dbbfa83fec0bd1161e8e191b092ec832720e30cd14536e044ac623b20a
 
 PKG_LICENSE:=BSD-2c
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -29,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/file/Default
   TITLE:=File type determination
-  URL:=ftp://ftp.astron.com/pub/file/
+  URL:=https://darwinsys.com/file/
   MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 endef
 
