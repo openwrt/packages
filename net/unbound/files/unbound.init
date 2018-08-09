@@ -64,10 +64,9 @@ service_triggers() {
   if [ ! -f "$UB_TOTAL_CONF" -o -n "$UB_BOOT" ] ; then
     # Unbound is can be a bit heavy, so wait some on first start but any
     # interface coming up affects the trigger and delay so guarantee start
-    procd_add_raw_trigger "interface.*.up" 5000 /etc/init.d/unbound restart
+    procd_add_raw_trigger "interface.*.up" 3000 /etc/init.d/unbound restart
 
   elif [ -n "$triggers" ] ; then
-    PROCD_RELOAD_DELAY=2000
     procd_add_reload_trigger "unbound" "dhcp"
 
 
@@ -77,7 +76,6 @@ service_triggers() {
     done
 
   else
-    PROCD_RELOAD_DELAY=2000
     procd_add_reload_trigger "unbound" "dhcp"
   fi
 }

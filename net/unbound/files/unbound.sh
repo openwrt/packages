@@ -85,9 +85,8 @@ UB_LIST_ZONE_NAMES=""
 
 bundle_all_networks() {
   local cfg="$1"
-  local ifname ifdashname
+  local ifname ifdashname validip
   local subnet subnets subnets4 subnets6
-  local validip4 validip6
 
   network_get_subnets  subnets4 "$cfg"
   network_get_subnets6 subnets6 "$cfg"
@@ -99,11 +98,10 @@ bundle_all_networks() {
 
   if [ -n "$subnets" ] ; then
     for subnet in $subnets ; do
-      validip4=$( valid_subnet4 $subnet )
-      validip6=$( valid_subnet6 $subnet )
+      validip=$( valid_subnet_any $subnet )
 
 
-      if [ "$validip4" = "ok" -o "$validip6" = "ok" ] ; then
+      if [ "$validip" = "ok" ] ; then
         UB_LIST_NETW_ALL="$UB_LIST_NETW_ALL $ifdashname@$subnet"
       fi
     done
@@ -375,8 +373,10 @@ unbound_control() {
 
 unbound_zone() {
   local cfg=$1
+  local servers_ip=""
+  local servers_host=""
   local zone_sym zone_name zone_type zone_enabled zone_file
-  local tls_upstream fallback proivder
+  local tls_upstream fallback
   local server port tls_port tls_index tls_suffix url_dir
 
   if [ ! -f "$UB_ZONE_CONF" ] ; then
@@ -464,17 +464,50 @@ unbound_zone() {
 
 
       if [ -n "$UB_LIST_ZONE_NAMES" -a -n "$UB_LIST_ZONE_SERVERS" ] ; then
+        for server in $UB_LIST_ZONE_SERVERS ; do
+          if [ "$( valid_subnet_any $server )" = "not" ] ; then
+            case $server in
+              *@[0-9]*)
+                # unique Unbound option for server host name
+                servers_host="$servers_host $server"
+                ;;
+
+              *)
+                if [ "$tls_upstream" = "yes" ] ; then
+                  servers_host="$servers_host $server${tls_port:+@${tls_port}}"
+                else
+                  servers_host="$servers_host $server${port:+@${port}}"
+                fi
+            esac
+
+          else
+            case $server in
+              *[0-9]@[0-9]*)
+                # unique Unbound option for server address
+                servers_ip="$servers_ip $server"
+                ;;
+
+              *)
+                if [ "$tls_upstream" = "yes" ] ; then
+                  servers_ip="$servers_ip $server$tls_suffix"
+                else
+                  servers_ip="$servers_ip $server${port:+@${port}}"
+                fi
+            esac
+          fi
+        done
+
+
         for zonename in $UB_LIST_ZONE_NAMES ; do
           {
             # generate a forward-zone with or without tls
             echo "forward-zone:"
             echo "  name: $zonename"
-            for server in $UB_LIST_ZONE_SERVERS ; do
-              if [ "$tls_upstream" = "yes" ] ; then
-                echo "  forward-addr: $server${tls_suffix}"
-              else
-                echo "  forward-addr: $server${port:+@${port}}"
-              fi
+            for server in $servers_host ; do
+              echo "  forward-host: $server"
+            done
+            for server in $servers_ip ; do
+              echo "  forward-addr: $server"
             done
             echo "  forward-first: $fallback"
             echo "  forward-tls-upstream: $tls_upstream"

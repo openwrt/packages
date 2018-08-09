@@ -124,6 +124,20 @@ valid_subnet4() {
 
 ##############################################################################
 
+valid_subnet_any() {
+  local subnet=$1
+  local validip4=$( valid_subnet4 $subnet )
+  local validip6=$( valid_subnet6 $subnet )
+
+
+  if [ "$validip4" = "ok" -o "$validip6" = "ok" ] ; then
+    echo "ok"
+  else
+    echo "not"
+  fi
+}
+##############################################################################
+
 private_subnet() {
   case "$1" in
     10"."*) echo "ok" ;;
