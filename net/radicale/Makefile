@@ -7,19 +7,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=radicale
-PKG_VERSION:=1.1.6
+PKG_VERSION:=2.1.9
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
 
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/Kozea/Radicale/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=e28d8fdfe5a7962492fddcc3a5911df1fe73e04a355313c97ffaddbe28a19a92
+PKG_BUILD_DIR:=$(BUILD_DIR)/Radicale-$(PKG_VERSION)
+
+PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
-
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=https://github.com/Kozea/Radicale
-PKG_SOURCE_VERSION:=7568ec39f09a753217fb2d525c5f8db64f4d98f4
-PKG_MIRROR_HASH:=73de51e296479f860d4d8cd383a6aa34e8c702d9fca63b0499c7fcc2e794e6df
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_SUBDIR=$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python-package.mk
@@ -32,7 +30,7 @@ define Package/radicale/Default
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
-  URL:=http://radicale.org/
+  URL:=https://radicale.org/
   TITLE:=Radicale CalDAV/CardDAV server
   PKGARCH:=all
   USERID:=radicale=5232:radicale=5232
