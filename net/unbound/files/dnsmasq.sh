@@ -80,7 +80,7 @@ create_host_record() {
 
 
     case $ip in
-      fe80:*|169.254.*)
+      fe[89ab][0-9a-f]:*|169.254.*)
         debug_ip="$ip@$host"
         ;;
 
