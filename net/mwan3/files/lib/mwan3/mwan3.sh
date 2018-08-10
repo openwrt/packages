@@ -261,6 +261,12 @@ mwan3_set_connected_iptables()
 	$IPS -! create mwan3_connected list:set
 	$IPS -! add mwan3_connected mwan3_connected_v4
 	$IPS -! add mwan3_connected mwan3_connected_v6
+
+	$IPS -! create mwan3_dynamic_v4 hash:net
+	$IPS -! add mwan3_connected mwan3_dynamic_v4
+
+	$IPS -! create mwan3_dynamic_v6 hash:net family inet6
+	$IPS -! add mwan3_connected mwan3_dynamic_v6
 }
 
 mwan3_set_general_rules()
