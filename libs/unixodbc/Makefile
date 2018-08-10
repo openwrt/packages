@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unixodbc
-PKG_VERSION:=2.3.4
-PKG_RELEASE:=5
+PKG_VERSION:=2.3.6
+PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=ftp://ftp.unixodbc.org/pub/unixODBC/
+PKG_SOURCE_URL:=http://www.unixodbc.org
 PKG_SOURCE:=unixODBC-$(PKG_VERSION).tar.gz
-PKG_HASH:=2e1509a96bb18d248bf08ead0d74804957304ff7c6f8b2e5965309c632421e39
+PKG_HASH:=88b637f647c052ecc3861a3baa275c3b503b193b6a49ff8c28b2568656d14d69
 PKG_BUILD_DIR:=$(BUILD_DIR)/unixODBC-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/unixODBC-$(PKG_VERSION)
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
@@ -36,7 +36,7 @@ CONFIGURE_ARGS += \
 define Package/unixodbc/Default
   SUBMENU:=database
   TITLE:=unixODBC
-  URL:=http://www.unixodbc.org/
+  URL:=http://www.unixodbc.org
 endef
 
 define Package/unixodbc
