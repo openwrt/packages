@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grep
-PKG_VERSION:=2.26
+PKG_VERSION:=3.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/grep
-PKG_HASH:=246a8fb37e82aa33d495b07c22fdab994c039ab0f818538eac81b01e78636870
+PKG_HASH:=db625c7ab3bb3ee757b3926a5cfa8d9e1c3991ad24707a83dde8a5ef2bf7a07e
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
@@ -24,14 +24,12 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-TARGET_CFLAGS+=--std=gnu99
-
 define Package/grep
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=grep search utility - full version
   DEPENDS:=+libpcre
-  URL:=http://www.gnu.org/software/grep/
+  URL:=https://www.gnu.org/software/grep/
 endef
 
 define Package/grep/description
