@@ -166,11 +166,9 @@ config zone
 ```
 
 ## HOW TO: TLS Over DNS
-Unbound has the ability to be client and server in TLS mode. UCI can configure Unbound to be a client forwarding queries in TLS mode for selected domains. (Server is more complex to setup and needs to be done manually). This may be desired for privacy against stealth market tracking in some cases. Some public DNS servers seem to advertise help in this quest.
+Unbound can use TLS as a client or server. UCI supports Unbound as a forwarding client with TLS. Servers are more complex and need manual configuration. This may be desired for privacy against stealth tracking. Some public DNS servers seem to advertise help in this quest. If your looking for a better understanding, then some information can be found at [Cloudflare](https://www.cloudflare.com/) DNS [1.1.1.1](https://1.1.1.1/). The following is a generic example. You can mix providers by using complete server specificaiton to override the zones common port and certificate domain index.
 
-Unbound will make TLS connections without validation unless you install the 'ca-bundle' package. Do **not**  however forget to maintain the certification bundle. The validation chain otherwise will expire and connections will go dead. Unbound makes and breaks TCP connections per connection. To reduce the lag from TLS handshaking it may help to use more cache memory `resource`, increase record exirations `ttl_min`, enable `aggressive` searching, or manually enable prefetch options.
-
-The following is a generic example. If your looking for a better understanding, then some information can be found at [Cloudflare](https://www.cloudflare.com/) DNS [1.1.1.1](https://1.1.1.1/) for one place.
+**NOTICE:** Unbound requires openssl-1.1.0 to verify host certificates. OpenWrt at present is configured with openssl-1.0.2. Connections will be over TLS, but theoretically, certificates may not be from a trusted source. See report [Unbound #658](https://www.nlnetlabs.nl/bugs-script/show_bug.cgi?id=658). When this is resolved, it will be recommended again to install `ca-bundle`, maintain it, and be sure to include the TLS certificate domain index with the host addresses.
 
 **/etc/config/unbound**:
 ```
@@ -179,10 +177,14 @@ config zone
   # question: do you want to recurse when TLS fails or not?
   option fallback '0'
   option tls_index 'dns.example.net'
+  option tls_port '853'
   option tls_upstream '1'
   option zone_type 'forward_zone'
+  # these servers assume a common TLS port/index
   list server '192.0.2.53'
   list server '2001:db8::53'
+  # this alternate server is fully specified inline
+  list server '192.0.2.153@443#dns.alternate.example.org'
   list zone_name '.'
 ```
 
