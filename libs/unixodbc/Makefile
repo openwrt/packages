@@ -8,17 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unixodbc
-PKG_VERSION:=2.3.4
-PKG_RELEASE:=5
+PKG_VERSION:=2.3.7
+PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=ftp://ftp.unixodbc.org/pub/unixODBC/
 PKG_SOURCE:=unixODBC-$(PKG_VERSION).tar.gz
-PKG_HASH:=2e1509a96bb18d248bf08ead0d74804957304ff7c6f8b2e5965309c632421e39
-PKG_BUILD_DIR:=$(BUILD_DIR)/unixODBC-$(PKG_VERSION)
-HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/unixODBC-$(PKG_VERSION)
+PKG_SOURCE_URL:=http://www.unixodbc.org
+PKG_HASH:=45f169ba1f454a72b8fcbb82abd832630a3bf93baa84731cf2949f449e1e3e77
+
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=prog GPL libs LGPL
+PKG_CPE_ID:=cpe:/a:unixodbc:unixodbc
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/unixODBC-$(PKG_VERSION)
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/unixODBC-$(PKG_VERSION)
 HOST_BUILD_DEPENDS:=unixodbc
+
+PKG_FIXUP:=autoreconf
 
 # if your other package depends on unixodbc and needs
 # odbc_config, add to your other Makefile
@@ -36,7 +41,7 @@ CONFIGURE_ARGS += \
 define Package/unixodbc/Default
   SUBMENU:=database
   TITLE:=unixODBC
-  URL:=http://www.unixodbc.org/
+  URL:=http://www.unixodbc.org
 endef
 
 define Package/unixodbc
