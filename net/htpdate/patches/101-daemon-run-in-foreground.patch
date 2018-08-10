@@ -1,6 +1,6 @@
 --- a/htpdate.c
 +++ b/htpdate.c
-@@ -395,6 +395,7 @@ Usage: htpdate [-046abdhlqstxD] [-i pid
+@@ -423,6 +423,7 @@ Usage: htpdate [-046abdhlqstxD] [-i pid file] [-m minpoll] [-M maxpoll]\n\
    -b    burst mode\n\
    -d    debug mode\n\
    -D    daemon mode\n\
@@ -8,7 +8,7 @@
    -h    help\n\
    -i    pid file\n\
    -l    use syslog for output\n\
-@@ -510,7 +511,7 @@ int main( int argc, char *argv[] ) {
+@@ -539,7 +540,7 @@ int main( int argc, char *argv[] ) {
  
  
  	/* Parse the command line switches and arguments */
@@ -17,7 +17,7 @@
  	switch( param ) {
  
  		case '0':			/* HTTP/1.0 */
-@@ -593,6 +594,9 @@ int main( int argc, char *argv[] ) {
+@@ -622,6 +623,9 @@ int main( int argc, char *argv[] ) {
  			daemonize = 1;
  			logmode = 1;
  			break;
@@ -27,7 +27,7 @@
  		case 'M':			/* maximum poll interval */
  			if ( ( maxsleep = atoi(optarg) ) <= 0 ) {
  				fputs( "Invalid sleep time\n", stderr );
-@@ -631,7 +635,9 @@ int main( int argc, char *argv[] ) {
+@@ -660,7 +664,9 @@ int main( int argc, char *argv[] ) {
  
  	/* Run as a daemonize when -D is set */
  	if ( daemonize ) {
