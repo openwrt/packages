@@ -9,12 +9,12 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=lsof
-PKG_VERSION:=4.89
-PKG_RELEASE:=2
+PKG_VERSION:=4.91
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.mirrorservice.org/sites/lsof.itap.purdue.edu/pub/tools/unix/lsof/ ftp://sunsite.ualberta.ca/pub/Mirror/lsof/ ftp://ftp.fu-berlin.de/pub/unix/tools/lsof
-PKG_HASH:=81ac2fc5fdc944793baf41a14002b6deb5a29096b387744e28f8c30a360a3718
+PKG_HASH:=c9da946a525fbf82ff80090b6d1879c38df090556f3fe0e6d782cb44172450a3
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION)
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=Unique
@@ -22,12 +22,10 @@ PKG_LICENSE_FILES:=00README
 
 include $(INCLUDE_DIR)/package.mk
 
-TARGET_LDFLAGS += $(LIBRPC)
-
 define Package/lsof
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=$(LIBRPC_DEPENDS)
+  DEPENDS:=+libtirpc
   TITLE:=LiSt Open Files - a diagnostic tool
   URL:=http://people.freebsd.org/~abe/
 endef
@@ -38,6 +36,9 @@ else
   LINUX_CLIB_IPV6=
 endif
 
+TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include/tirpc
+TARGET_LDFLAGS += -ltirpc
+
 define Build/Prepare
 	$(PKG_UNPACK)
 	(cd $(PKG_BUILD_DIR) && tar -xf $(PKG_NAME)_$(PKG_VERSION)_src.tar && mv $(PKG_NAME)_$(PKG_VERSION)_src/* .)
@@ -45,6 +46,7 @@ define Build/Prepare
 endef
 
 define Build/Configure
+	$(SED) 's/rpc\/rpc/\/tirpc\/rpc\/rpc/g' $(PKG_BUILD_DIR)/Configure
 	cd $(PKG_BUILD_DIR); \
 		LINUX_CLIB="-DGLIBCV=2 $(LINUX_CLIB_IPV6)" \
 		LSOF_CC="$(TARGET_CC)" \
@@ -53,6 +55,7 @@ define Build/Configure
 		LSOF_CFGL="$(TARGET_LDFLAGS)" \
 		LSOF_AR="$(TARGET_CROSS)ar cr" \
 		LSOF_RANLIB="$(TARGET_CROSS)ranlib" \
+		LSOF_INCLUDE="$(STAGING_DIR)/usr/include" \
 		./Configure -n linux
 endef
 
