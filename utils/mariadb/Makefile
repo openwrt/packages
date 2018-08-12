@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.1.34
+PKG_VERSION:=10.1.35
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -18,7 +18,7 @@ PKG_SOURCE_URL := \
 	https://ftp.yz.yamagata-u.ac.jp/pub/dbms/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
 	https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=c7e0719fd08790c096585bf867fe87e084b310f2f3679e059e3b10b9fd6d5548
+PKG_HASH:=9e91d985ed4f662126e3e5791fe91ec8a2f44ec811113c2b6fbc72fa14553c4d
 PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -175,6 +175,10 @@ MARIADB_SERVER_EXTRA := \
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
+
+# Pass CPPFLAGS in the CFLAGS as otherwise the build system will
+# ignore them.
+TARGET_CFLAGS+=$(TARGET_CPPFLAGS)
 
 define Package/mariadb/install/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(2) $(1)/usr/bin
