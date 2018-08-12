@@ -214,6 +214,13 @@ config NGINX_HTTP_BROTLI
 		Add support for brotli compression module.
 	default n
 
+config NGINX_STREAM_CORE_MODULE
+	bool
+	prompt "Enable stream support"
+	help
+		Add support for NGINX request streaming.
+	default n
+
 config NGINX_RTMP_MODULE
 	bool
 	prompt "Enable RTMP module"
