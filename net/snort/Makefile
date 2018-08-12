@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort
 PKG_VERSION:=2.9.11.1
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -19,7 +19,7 @@ PKG_SOURCE_URL:=https://www.snort.org/downloads/snort/ \
 	@SF/$(PKG_NAME)
 PKG_HASH:=9f6b3aeac5a109f55504bd370564ac431cb1773507929dc461626898f33f46cd
 
-PKG_BUILD_DEPENDS:=librpc
+PKG_BUILD_DEPENDS:=libtirpc
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -71,6 +71,8 @@ CONFIGURE_VARS += \
 
 MAKE_FLAGS += \
 	extra_incl=""
+	
+TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include/tirpc
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/include/snort/dynamic_preproc
