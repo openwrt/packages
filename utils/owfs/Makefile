@@ -120,7 +120,6 @@ endef
 define Package/owshell
   $(call Package/owfs/Utility)
   TITLE:=OWFS - shell utilities
-  DEPENDS+= +USE_UCLIBC:librpc
 endef
 
 define Package/owshell/description
