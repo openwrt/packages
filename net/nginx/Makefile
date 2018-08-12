@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.15.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
@@ -439,7 +439,7 @@ ifeq ($(CONFIG_NGINX_RTMP_MODULE),y)
   $(eval $(call Download,nginx-rtmp))
 
   define  Prepare/nginx-rtmp
-	$(eval $(call Download,nginx-rtmp))
+	$(eval $(Download/nginx-rtmp))
 	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
   endef
 endif
@@ -457,7 +457,7 @@ ifeq ($(CONFIG_NGINX_TS_MODULE),y)
   $(eval $(call Download,nginx-ts))
 
   define  Prepare/nginx-ts
-	$(eval $(call Download,nginx-ts))
+	$(eval $(Download/nginx-ts))
 	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
   endef
 endif
