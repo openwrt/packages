@@ -14,7 +14,7 @@ diff --git a/src/lib/Gitolite/Conf/Store.pm b/src/lib/Gitolite/Conf/Store.pm
 index 5568b3f..aac90d4 100644
 --- a/src/lib/Gitolite/Conf/Store.pm
 +++ b/src/lib/Gitolite/Conf/Store.pm
-@@ -363,6 +363,7 @@ sub store_common {
+@@ -366,6 +366,7 @@ sub store_common {
              chmod 0755, "$rc{GL_ADMIN_BASE}/hooks/gitolite-admin/post-update";
              $hook_reset++;
          }
