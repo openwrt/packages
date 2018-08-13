@@ -78,7 +78,8 @@ WGET=$(which wget)
 WGET_SSL=$(which wget-ssl)
 
 CURL=$(which curl)
-
+# CURL_SSL not empty then SSL support available
+CURL_SSL=$($(which curl) -V 2>/dev/null | grep "Protocols:" | grep -F "https")
 # CURL_PROXY not empty then Proxy support available
 CURL_PROXY=$(find /lib /usr/lib -name libcurl.so* -exec strings {} 2>/dev/null \; | grep -im1 "all_proxy")
 
@@ -726,8 +727,6 @@ do_transfer() {
 	# 2nd choice is cURL IPv4/IPv6/HTTPS
 	# libcurl might be compiled without Proxy or HTTPS Support
 	elif [ -n "$CURL" ]; then
-		# CURL_SSL not empty then SSL support available
-		CURL_SSL=$($(which curl) -V 2>/dev/null | grep "Protocols:" | grep -F "https")
 		__PROG="$CURL -RsS -o $DATFILE --stderr $ERRFILE"
 		# check HTTPS support
 		[ -z "$CURL_SSL" -a $use_https -eq 1 ] && \
