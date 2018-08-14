@@ -2,8 +2,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.8.3
-PKG_RELEASE:=3
+PKG_VERSION:=4.8.4
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-3.0-only
@@ -11,10 +11,10 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE_URL:=https://download.samba.org/pub/samba/stable/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=e0569a8a605d5dfb49f1fdd11db796f4d36fe0351c4a7f21387ef253010b82ed
+PKG_HASH:=f5044d149e01894a08b1d114b8b69aed78171a7bb19608bd1fd771453b9a5406
 
 # Buildroot bug? Can't add target deps via '+SAMBA4_SERVER_AD_DC:python-crypto' (as work-around we select via config.in)
-PKG_BUILD_DEPENDS:=perl/host python/host SAMBA4_SERVER_AD_DC:python-crypto nfs-kernel-server/host
+PKG_BUILD_DEPENDS:=SAMBA4_SERVER_AD_DC:python-crypto nfs-kernel-server/host
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_SAMBA4_SERVER_NETBIOS \
@@ -52,7 +52,7 @@ define Package/samba4-libs
   TITLE+= libs
   DEPENDS:= +zlib +libtirpc +krb5-libs +libpopt \
 	+PACKAGE_libcap:libcap +PACKAGE_jansson:jansson +PACKAGE_libpthread:libpthread +PACKAGE_libnettle:libnettle \
-	+PACKAGE_libarchive:libarchive +PACKAGE_libgcrypt:libgcrypt +PACKAGE_libpam:libpam \
+	+PACKAGE_libarchive:libarchive +PACKAGE_libgcrypt:libgcrypt +PACKAGE_libpam:libpam +PACKAGE_dbus:dbus +PACKAGE_libavahi-client:libavahi-client \
 	+SAMBA4_SERVER_VFS:attr \
 	+SAMBA4_SERVER_ACL:acl +SAMBA4_SERVER_ACL:attr \
 	+SAMBA4_SERVER_AVAHI:libavahi-client \
@@ -369,10 +369,6 @@ endif
 ifeq ($(CONFIG_SAMBA4_SERVER_ACL),y)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/sharesec $(1)/usr/bin/
 endif
-ifeq ($(CONFIG_SAMBA4_SERVER_AVAHI),y)
-	$(INSTALL_DIR) $(1)/etc/avahi/services
-	$(INSTALL_DATA) ./files/samba.service $(1)/etc/avahi/services/
-endif
 	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/samba $(1)/etc/init.d
 	$(INSTALL_DATA) ./files/samba.config $(1)/etc/config/samba4
 	$(INSTALL_DATA) ./files/smb.conf.template $(1)/etc/samba
@@ -389,7 +385,6 @@ define Package/samba4-server/conffiles
 /etc/samba/idmap.ldb
 /etc/samba/lmhosts
 /etc/nsswitch.conf
-/etc/avahi/services/samba.service
 endef
 
 $(eval $(call BuildPackage,samba4-libs))
