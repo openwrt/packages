@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2016 OpenWrt.org
+# Copyright (C) 2006-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,8 +7,10 @@
 
 include $(TOPDIR)/rules.mk
 
+include perlver.mk
+
 PKG_NAME:=perl
-PKG_VERSION:=5.28.0
+PKG_VERSION:=$(PERL_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=\
