@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
-PKG_VERSION:=9.5.10
-PKG_RELEASE:=4
+PKG_VERSION:=9.5.14
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
 
@@ -18,7 +18,7 @@ PKG_SOURCE_URL:=\
 	https://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
 	http://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
 	ftp://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
-PKG_MD5SUM:=945d7ade094dded6b95495d8f1561a12ac9608276858ed30adf3c3658275f281
+PKG_MD5SUM:=3e2cd5ea0117431f72c9917c1bbad578ea68732cb284d1691f37356ca0301a4d
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
