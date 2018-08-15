@@ -374,6 +374,8 @@ endef
 
 # Strip off FPU notation
 REAL_CPU_TYPE:=$(firstword $(subst +, ,$(CONFIG_CPU_TYPE)))
+# Fixup cpu types recogized by ffmpeg configure
+REAL_CPU_TYPE:=$(subst octeonplus,octeon+,$(REAL_CPU_TYPE))
 
 FFMPEG_CONFIGURE:= \
 	CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) $(FPIC)" \
@@ -422,6 +424,10 @@ FFMPEG_CONFIGURE+= \
 else ifneq ($(findstring powerpc,$(CONFIG_ARCH)),)
 FFMPEG_CONFIGURE+= \
 	--disable-altivec
+# libavcode/mips/aacdec_mips.c build problem
+else ifneq ($(findstring 24kf,$(CONFIG_CPU_TYPE)),)
+FFMPEG_CONFIGURE+= \
+	--disable-inline-asm
 endif
 
 # selectively disable optimizations according to arch/cpu type
@@ -446,9 +452,14 @@ ifeq ($(ARCH),x86_64)
 	FFMPEG_CONFIGURE+= --enable-lto
 endif
 
-ifneq ($(CONFIG_YASM),y)
-FFMPEG_CONFIGURE+= --disable-yasm
-
+ifneq ($(CONFIG_TARGET_x86),)
+ifeq ($(CONFIG_NASM),y)
+  # Set yasmexe to anything but YASM/NASM (ffmpeg configure will then find NASM correctly)
+  # Newer ffmpeg packages will use --enable-x86asm (with NASM default)
+  FFMPEG_CONFIGURE += --yasmexe=xyzzy
+else
+  FFMPEG_CONFIGURE += --disable-yasm
+endif
 endif
 
 ifeq ($(BUILD_VARIANT),full)
