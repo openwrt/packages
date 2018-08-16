@@ -136,13 +136,12 @@ generate_uci_config() {
 
   addline "GatewayInterface $ifname"
 
-  for option in authenticateimmediately binvoucher checkinterval clientforcetimeout \
-    clientidletimeout debuglevel decongesthttpdthreads downloadlimit enablepreauth \
-    forcevoucher fw_mark_authenticated fw_mark_blocked fw_mark_trusted gatewayaddress \
-    gatewayiprange gatewayname gatewayport httpdthreaddelayms httpdthreadthreshold imagedir \
-    macmechanism maxclients pagesdir password passwordattempts passwordauthentication \
-    redirecturl remoteauthenticatoraction splashpage syslogfacility uploadlimit \
-    username usernameauthentication webroot
+  for option in binauth daemon debuglevel maxclients gatewayname \
+    gatewayinterface gatewayiprange gatewayaddress gatewayport webroot \
+    splashpage statuspage imagesdir pagesdir redirecturl preauthidletimeout \
+    authidletimeout checkinterval setmss mssvalue trafficcontrol \
+    downloadlimit uploadlimit downloadimq uploadimq syslogfacility \
+    ndsctlsocket fw_mark_authenticated fw_mark_blocked fw_mark_trusted
   do
     config_get val "$cfg" "$option"
 

@@ -27,8 +27,8 @@ config nodogsplash
   #option debuglevel '7'
 
   # Client timeouts in minutes
-  option clientidletimeout '120'
-  option clientforcetimeout '1440'
+  option preauthidletimeout '10'
+  option authidletimeout '120'
 
   # Your router may have several interfaces, and you
   # probably want to keep them private from the network/gatewayinterface.
