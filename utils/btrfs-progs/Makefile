@@ -8,23 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btrfs-progs
-PKG_VERSION:=4.17
+PKG_VERSION:=4.17.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs/
-PKG_HASH:=82ca0ecf76350a1e3c6543fe220c0910e240511e663d51fc79c32bd0052c117c
-PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
+PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs
+PKG_HASH:=bf0b34f1538c0b6e88f959937b0419678cadbf2ba7044336dcbfb2bcdc28cd74
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 
+PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=acl
-
-PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -34,7 +32,7 @@ define Package/btrfs-progs
   SUBMENU:=Filesystem
   DEPENDS:=+libattr +libuuid +zlib +libblkid +liblzo +libpthread
   TITLE:=Btrfs filesystems utilities
-  URL:=http://btrfs.wiki.kernel.org/
+  URL:=https://btrfs.wiki.kernel.org/
 endef
 
 define Package/btrfs-progs/description
