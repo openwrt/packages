@@ -11,12 +11,12 @@ PKG_LICENSE:=ASL-2.0
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 
 PKG_NAME:=go-ethereum
-PKG_VERSION:=1.8.12
+PKG_VERSION:=1.8.13
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ethereum/go-ethereum/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=53cfd6ff2f82f7a42fa5175e2a795aada4425a22353e5d46008cd566bfb5e239
+PKG_HASH:=c0c211172c1bc80855d19387300321fe233708bf8af1e4839ccf3b7de447bfb1
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
