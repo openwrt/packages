@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
 PKG_VERSION:=4.8.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-3.0-only
@@ -275,10 +275,9 @@ BUILD_TARGETS_ADMIN :=net,smbcontrol,profiles,rpcclient,smbcacls,smbcquotas
 BUILD_TARGETS_UTILS :=smbstatus,smbtree,smbget,mvxattr,nmblookup
 
 # lib bundling
-# NOTE: Compile some unique libs into related bins, so we end-up with a unified samba4-libs base, mainly to allow package separation (server, client, admin, utils)
-CONFIGURE_ARGS += --builtin-libraries=smbclient,netapi,samba-passdb,ads,auth,cli-spoolss,libcli-lsa3,gpext,talloc,tevent,texpect,tdb,ldb,tdr,cmocka,replace
-#CONFIGURE_ARGS += --nonshared-binary=$(BUILD_TARGETS_SERVER)
 # NOTE: bundle + make private, we want to avoid version configuration (build, link) conflicts
+CONFIGURE_ARGS += --builtin-libraries=talloc,tevent,texpect,tdb,ldb,tdr,cmocka,replace
+#CONFIGURE_ARGS += --nonshared-binary=$(BUILD_TARGETS_SERVER)
 ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
 CONFIGURE_ARGS += --bundled-libraries=talloc,tevent,texpect,tdb,ldb,tdr,cmocka,replace,pytalloc-util,pyldb-util,NONE
 else
