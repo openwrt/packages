@@ -235,7 +235,7 @@
 +#endif /* _NETFILTER_MIME_H */
 --- /dev/null
 +++ b/extensions/rtsp/nf_conntrack_rtsp.c
-@@ -0,0 +1,732 @@
+@@ -0,0 +1,761 @@
 +/*
 + * RTSP extension for IP connection tracking
 + * (C) 2003 by Tom Marshall <tmarshall at real.com>
@@ -257,6 +257,9 @@
 + * 2018-04-18: Hans Dedecker <dedeckeh at gmail.com>
 + *       - update RTP expected connection source IP based on SOURCE
 + *         in the SETUP reply message
++ * 2018-08-03: Alin Nastac <alin.nastac at gmail.com>
++ *             Hans Dedecker <dedeckeh at gmail.com>
++ *       - parse non-standard destination=address:port format
 + *
 + * based on ip_conntrack_irc.c
 + *
@@ -287,6 +290,7 @@
 +#include <net/netfilter/nf_conntrack.h>
 +#include <net/netfilter/nf_conntrack_expect.h>
 +#include <net/netfilter/nf_conntrack_helper.h>
++#include <net/netfilter/nf_conntrack_zones.h>
 +#include "nf_conntrack_rtsp.h"
 +
 +#define NF_NEED_STRNCASECMP
@@ -500,6 +504,29 @@
 +					     -1, NULL))
 +					pr_debug("source found : %pI4\n",
 +						 &prtspexp->srvaddr.ip);
++			} else if (nextfieldoff - off > 12 && strncmp(ptran+off, "destination=", 12) == 0) {
++				const char *psep;
++				u_int16_t   port;
++
++				off += 12;
++
++				if (in4_pton(ptran+off, nextfieldoff - off - 1, (u8 *)&prtspexp->cltaddr.in, -1, NULL)) {
++					pr_debug("destination found : %pI4\n", &prtspexp->cltaddr.ip);
++
++					/*
++					 * Some RTSP clients(mostly STBs) use non-standard destination parameters:
++					 * destination=address:port
++					 */
++					psep = memchr(ptran+off, ':', nextfieldoff-off);
++					if (psep != NULL && nf_strtou16(psep + 1, &port)) {
++						if (prtspexp->loport != 0 && prtspexp->loport != port)
++							pr_debug("multiple ports found, port %hu ignored\n", port);
++						else {
++							pr_debug("lo port found : %hu\n", port);
++							prtspexp->loport = prtspexp->hiport = port;
++						}
++					}
++				}
 +			}
 +			
 +			/*
@@ -878,6 +905,8 @@
 +		ret = help_in(skb, rb_ptr, datalen, ct, ctinfo);
 +#endif
 +		break;
++	default:
++		break;
 +	}
 +
 +	spin_unlock_bh(&rtsp_buffer_lock);
@@ -970,7 +999,7 @@
 +module_exit(fini);
 --- /dev/null
 +++ b/extensions/rtsp/nf_conntrack_rtsp.h
-@@ -0,0 +1,73 @@
+@@ -0,0 +1,74 @@
 +/*
 + * RTSP extension for IP connection tracking.
 + * (C) 2003 by Tom Marshall <tmarshall at real.com>
@@ -1022,6 +1051,7 @@
 +    u_int16_t          loport;     /* Port that was requested, low or first */
 +    u_int16_t          hiport;     /* Port that was requested, high or second */
 +    union nf_inet_addr srvaddr;    /* src address in SETUP reply */
++    union nf_inet_addr cltaddr;    /* destination address */
 +#if 0
 +    uint               method;     /* RTSP method */
 +    uint               cseq;       /* CSeq from request */
@@ -1046,7 +1076,7 @@
 +#endif /* _IP_CONNTRACK_RTSP_H */
 --- /dev/null
 +++ b/extensions/rtsp/nf_nat_rtsp.c
-@@ -0,0 +1,617 @@
+@@ -0,0 +1,634 @@
 +/*
 + * RTSP extension for TCP NAT alteration
 + * (C) 2003 by Tom Marshall <tmarshall at real.com>
@@ -1206,9 +1236,9 @@
 +	struct nf_conntrack_tuple *rtp_t;
 +
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0)
-+	char szextaddr[INET6_ADDRSTRLEN];
++	char szextaddr[INET6_ADDRSTRLEN + 16];
 +#else
-+	char szextaddr[INET_ADDRSTRLEN];
++	char szextaddr[INET_ADDRSTRLEN + 16];
 +#endif
 +	uint extaddrlen;
 +	int  is_stun;
@@ -1341,8 +1371,9 @@
 +
 +			pfieldend = memchr(ptran+off, ';', nextparamoff-off);
 +			nextfieldoff = (pfieldend == NULL) ? nextparamoff : pfieldend-ptran+1;
++			SKIP_WSPACE(ptran, nextfieldoff, off);
 +
-+			if (dstact != DSTACT_NONE && strncmp(ptran+off, "destination=", 12) == 0) {
++			if (dstact != DSTACT_NONE && nextfieldoff - off > 12 && strncmp(ptran+off, "destination=", 12) == 0) {
 +				if (strncmp(ptran+off+12, szextaddr, extaddrlen) == 0)
 +					is_stun = 1;
 +
@@ -1353,12 +1384,28 @@
 +					uint dstreplen = 0;
 +					diff = dstlen;
 +					if (dstact == DSTACT_AUTO && !is_stun) {
-+						pr_debug("RTSP: replace dst addr\n");
++						const char* psep = memchr(ptran+off, ':', dstlen);
++						u_int16_t port;
++
 +						dstoff += 12;
 +						dstlen -= 13;
 +						pdstrep = szextaddr;
-+						dstreplen = extaddrlen;
-+						diff = nextfieldoff-off-13-extaddrlen;
++
++						if (psep != NULL && nf_strtou16(psep + 1, &port)) {
++							pr_debug("RTSP: replace dst addr&port\n");
++
++							if (port != prtspexp->loport) {
++								pr_debug("multiple ports found, port %hu ignored\n", port);
++								dstreplen = extaddrlen;
++							} else {
++								sprintf(szextaddr+extaddrlen, ":%s", rbuf1);
++								dstreplen = extaddrlen+1+rbuf1len;
++							}
++						} else {
++							pr_debug("RTSP: replace dst addr\n");
++							dstreplen = extaddrlen;
++						}
++						diff = nextfieldoff-off-13-dstreplen;
 +					}
 +
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0)
@@ -1396,7 +1443,7 @@
 +			pfieldend = memchr(ptran+off, ';', nextparamoff-off);
 +			nextfieldoff = (pfieldend == NULL) ? nextparamoff : pfieldend-ptran+1;
 +
-+			if (strncmp(ptran+off, "client_port=", 12) == 0) {
++			if (nextfieldoff - off > 12 && strncmp(ptran+off, "client_port=", 12) == 0) {
 +				u_int16_t port;
 +				uint	  numlen;
 +				uint      origoff;
