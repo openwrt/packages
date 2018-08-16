@@ -247,6 +247,15 @@ esac
 # without lookup host and possibly other required options we can do nothing for you
 [ -z "$lookup_host" ] && write_log 14 "Service section not configured correctly! Missing 'lookup_host'"
 
+# verify validity of variables
+[ -n "$lookup_host" ] && sanitize_variable lookup_host "$DNS_CHARSET" ""
+[ -n "$dns_server" ] && sanitize_variable dns_server "$DNS_CHARSET" ""
+[ -n "$domain" ] && sanitize_variable domain "$DNS_CHARSET" ""
+
+# Filter shell escape characters, if these are required in the URL, they
+# can still be passed url encoded
+[ -n "$param_opt" ] && sanitize_variable param_opt "" "$SHELL_ESCAPE"
+
 [ -n "$update_url" ] && {
 	# only check if update_url is given, update_scripts have to check themselves
 	[ -z "$domain" ] && $(echo "$update_url" | grep "\[DOMAIN\]" >/dev/null 2>&1) && \
