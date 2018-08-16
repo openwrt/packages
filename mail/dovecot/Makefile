@@ -98,8 +98,8 @@ define Package/dovecot-utils
 endef
 
 CONFIGURE_ARGS += \
+	--libexecdir=/usr/libexec \
 	--without-pam \
-	--with-moduledir=/usr/lib/dovecot/modules \
 	--with-notify=dnotify \
 	--without-lzma \
 	--without-lz4 \
@@ -137,10 +137,12 @@ define Package/dovecot/install
 			$(1)/etc/dovecot \
 			$(1)/usr/share/doc/dovecot \
 			$(1)/usr/lib/dovecot \
+			$(1)/usr/libexec/dovecot \
 			$(1)/usr/bin \
 			$(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/etc/dovecot/* $(1)/etc/dovecot/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/dovecot/* $(1)/usr/lib/dovecot/
+	$(CP) $(PKG_INSTALL_DIR)/usr/libexec/dovecot/* $(1)/usr/libexec/dovecot/
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/doc/dovecot/example-config $(1)/usr/share/doc/dovecot/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/doveconf $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin/
