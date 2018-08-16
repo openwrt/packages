@@ -50,9 +50,10 @@ CONFIGURE_VARS += \
   CPPFLAGS="$(TARGET_CPPFLAGS) -I$(STAGING_DIR)/usr/include/dovecot/"
 
 define Package/dovecot-pigeonhole/install
-	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/dovecot/
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/dovecot/ $(1)/usr/libexec/dovecot/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/dovecot/* $(1)/usr/lib/dovecot/
+	$(CP) $(PKG_INSTALL_DIR)/usr/libexec/dovecot/* $(1)/usr/libexec/dovecot/
 	find $(1)/usr/lib/dovecot/ -name "*.a" -o -name "*.la" | xargs rm
 endef
 
