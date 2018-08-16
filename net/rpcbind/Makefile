@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rpcbind
 PKG_VERSION:=0.2.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=@SF/rpcbind
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -25,7 +25,7 @@ define Package/rpcbind
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=+libtirpc +RPCBIND_LIBWRAP:libwrap
-  TITLE:=Universal addresses to RPC mapper 
+  TITLE:=Universal addresses to RPC mapper
   URL:=http://libtirpc.sourceforge.net/
   USERID:=rpc=65533:rpc=65533
 endef
@@ -33,12 +33,12 @@ endef
 define Package/rpcbind/description
   The rpcbind utility is a server that converts RPC program numbers into universal addresses.
   It must be running on the host to be able to make RPC calls on a server on that machine.
-  
+
   Rpcbind replaces portmap for NFS v2/v3. It has more features, like ipv6 support.
   Note: Nfs4 only configurations can run without it.
 endef
 
-define Package/rpcbind/config 
+define Package/rpcbind/config
 if PACKAGE_rpcbind
 	config RPCBIND_LIBWRAP
 		bool "Enable libwrap (TCP wrappers) support."
@@ -48,7 +48,7 @@ if PACKAGE_rpcbind
 		bool "Enable warmstarts support"
 		default y
 		help
-		  The warmstart feature saves RPC registrations on termination. 
+		  The warmstart feature saves RPC registrations on termination.
 endif
 endef
 
@@ -58,11 +58,13 @@ CONFIGURE_ARGS += \
 
 ifeq ($(CONFIG_RPCBIND_LIBWRAP),y)
 	CONFIGURE_ARGS += --enable-libwrap
+else
+	CONFIGURE_ARGS += --disable-libwrap
 endif
 ifeq ($(CONFIG_RPCBIND_WARMSTARTS),y)
 	CONFIGURE_ARGS += --enable-warmstarts
 endif
-	
+
 define Package/rpcbind/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/{rpcbind,rpcinfo} $(1)/usr/bin/
