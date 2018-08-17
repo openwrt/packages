@@ -29,6 +29,7 @@ define Package/nodogsplash
 	DEPENDS:=+libpthread +iptables-mod-ipopt +libmicrohttpd-no-ssl
 	TITLE:=Open public network gateway daemon
 	URL:=https://github.com/nodogsplash/nodogsplash
+	CONFLICTS:=nodogsplash2
 endef
 
 define Package/nodogsplash/description

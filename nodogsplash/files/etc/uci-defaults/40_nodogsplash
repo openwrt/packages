@@ -1,6 +1,6 @@
 #!/bin/sh
 
-uci batch <<-EOT
+uci -q batch <<-EOF
 	delete firewall.nodogsplash
 	set firewall.nodogsplash=include
 	set firewall.nodogsplash.type=script
