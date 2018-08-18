@@ -9,7 +9,7 @@ PKG_VERSION:=0.4.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/fd/a6/4ae8ec46a256444f65d745a92827c05fe6d4f3f4e1a40289a58ac37fe2b9
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/python-gnupg
 PKG_HASH:=2d158dfc6b54927752b945ebe57e6a0c45da27747fa3b9ae66eccc0d2147ac0d
 
 PKG_LICENSE:=GPL-3.0+
@@ -17,7 +17,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-$(PKG_NAME)-$(PKG_VERSION)
-PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
+PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
