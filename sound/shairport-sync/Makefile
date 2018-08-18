@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shairport-sync
 PKG_VERSION:=3.2.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/mikebrady/shairport-sync.git
@@ -113,7 +113,7 @@ define Package/shairport-sync/default/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/shairport-sync.init $(1)/etc/init.d/shairport-sync
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/shairport-sync.config $(1)/etc/config/shairport-sync
+	$(INSTALL_CONF) ./files/shairport-sync.config $(1)/etc/config/shairport-sync
 endef
 
 Package/shairport-sync-openssl/install = $(Package/shairport-sync/default/install)
