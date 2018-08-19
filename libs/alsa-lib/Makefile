@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.alsa-project.org/pub/lib/ \
-		http://distfiles.gentoo.org/distfiles/
+		https://distfiles.gentoo.org/distfiles/
 
 PKG_HASH:=5f2cd274b272cae0d0d111e8a9e363f08783329157e8dd68b3de0c096de6d724
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
@@ -21,6 +21,7 @@ PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 
 PKG_LICENSE:=LGPLv2.1 GPLv2
 PKG_LICENSE_FILES:=COPYING aserver/COPYING
+PKG_CPE_ID:=cpe:/o:alsa:alsa-lib
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -33,7 +34,7 @@ define Package/alsa-lib
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=ALSA (Advanced Linux Sound Architecture) library
-  URL:=http://www.alsa-project.org/
+  URL:=https://www.alsa-project.org/
   DEPENDS:=@AUDIO_SUPPORT +kmod-sound-core +libpthread +librt
 endef
 
