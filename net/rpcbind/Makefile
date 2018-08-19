@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rpcbind
-PKG_VERSION:=0.2.4
-PKG_RELEASE:=2
+PKG_VERSION:=1.2.5
+PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=@SF/rpcbind
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=074a9a530dc7c11e0d905aa59bcb0847c009313f02e98d3d798aa9568f414c66
+PKG_HASH:=2ce360683963b35c19c43f0ee2c7f18aa5b81ef41c3fdbd15ffcb00b8bffda7a
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -26,7 +26,7 @@ define Package/rpcbind
   CATEGORY:=Network
   DEPENDS:=+libtirpc +RPCBIND_LIBWRAP:libwrap
   TITLE:=Universal addresses to RPC mapper
-  URL:=http://libtirpc.sourceforge.net/
+  URL:=http://rpcbind.sourceforge.net/
   USERID:=rpc=65533:rpc=65533
 endef
 
@@ -67,7 +67,9 @@ endif
 
 define Package/rpcbind/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/{rpcbind,rpcinfo} $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/rpcinfo $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/rpcbind $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/rpcbind.init $(1)/etc/init.d/rpcbind
 endef
