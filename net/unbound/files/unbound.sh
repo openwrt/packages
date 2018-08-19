@@ -61,6 +61,9 @@ UB_TXT_HOSTNAME=thisrouter
 
 ##############################################################################
 
+# reset as a combo with UB_B_NTP_BOOT and some time stamp files
+UB_B_READY=1
+
 # keep track of assignments during inserted resource records
 UB_LIST_NETW_ALL=""
 UB_LIST_NETW_LAN=""
@@ -82,9 +85,8 @@ UB_LIST_ZONE_NAMES=""
 
 bundle_all_networks() {
   local cfg="$1"
-  local ifname ifdashname
+  local ifname ifdashname validip
   local subnet subnets subnets4 subnets6
-  local validip4 validip6
 
   network_get_subnets  subnets4 "$cfg"
   network_get_subnets6 subnets6 "$cfg"
@@ -96,11 +98,10 @@ bundle_all_networks() {
 
   if [ -n "$subnets" ] ; then
     for subnet in $subnets ; do
-      validip4=$( valid_subnet4 $subnet )
-      validip6=$( valid_subnet6 $subnet )
+      validip=$( valid_subnet_any $subnet )
 
 
-      if [ "$validip4" = "ok" -o "$validip6" = "ok" ] ; then
+      if [ "$validip" = "ok" ] ; then
         UB_LIST_NETW_ALL="$UB_LIST_NETW_ALL $ifdashname@$subnet"
       fi
     done
@@ -219,7 +220,7 @@ unbound_mkdir() {
       # Debian-like package dns-root-data
       cp -p /usr/share/dns/root.hints $UB_RHINT_FILE
 
-    elif [ ! -f "$UB_TIME_FILE" ] ; then
+    elif [ "$UB_B_READY" -eq 0 ] ; then
       logger -t unbound -s "default root hints (built in root-servers.net)"
     fi
   fi
@@ -233,7 +234,7 @@ unbound_mkdir() {
     elif [ -x $UB_ANCHOR ] ; then
       $UB_ANCHOR -a $UB_RKEY_FILE
 
-    elif [ ! -f "$UB_TIME_FILE" ] ; then
+    elif [ "$UB_B_READY" -eq 0 ] ; then
       logger -t unbound -s "default trust anchor (built in root DS record)"
     fi
   fi
@@ -285,9 +286,21 @@ unbound_mkdir() {
   fi
 
 
-  if [ "$UB_B_NTP_BOOT" -eq 0 ] ; then
-    # time is considered okay on this device (skip /etc/hotplug/ntpd/unbound)
+  if [ -f "$UB_TIME_FILE" ] ; then
+    # NTP is done so its like you actually had an RTC
+    UB_B_READY=1
+    UB_B_NTP_BOOT=0
+
+  elif [ "$UB_B_NTP_BOOT" -eq 0 ] ; then
+    # time is considered okay on this device (ignore /etc/hotplug/ntpd/unbound)
     date -Is > $UB_TIME_FILE
+    UB_B_READY=0
+    UB_B_NTP_BOOT=0
+
+  else
+    # DNSSEC-TIME will not reconcile
+    UB_B_READY=0
+    UB_B_NTP_BOOT=1
   fi
 }
 
@@ -360,8 +373,10 @@ unbound_control() {
 
 unbound_zone() {
   local cfg=$1
+  local servers_ip=""
+  local servers_host=""
   local zone_sym zone_name zone_type zone_enabled zone_file
-  local tls_upstream fallback proivder
+  local tls_upstream fallback
   local server port tls_port tls_index tls_suffix url_dir
 
   if [ ! -f "$UB_ZONE_CONF" ] ; then
@@ -407,8 +422,8 @@ unbound_zone() {
 
   case $zone_type in
     auth_zone)
-      if [ -n "$UB_LIST_ZONE_NAMES" ] \
-      && [ -n "$url_dir" -o -n "$UB_LIST_ZONE_SERVERS" ] ; then
+      if [ -n "$UB_LIST_ZONE_NAMES" \
+           -a \( -n "$url_dir" -o -n "$UB_LIST_ZONE_SERVERS" \) ] ; then
         for zone_name in $UB_LIST_ZONE_NAMES ; do
           if [ "$zone_name" = "." ] ; then
             zone_sym=.
@@ -449,17 +464,50 @@ unbound_zone() {
 
 
       if [ -n "$UB_LIST_ZONE_NAMES" -a -n "$UB_LIST_ZONE_SERVERS" ] ; then
+        for server in $UB_LIST_ZONE_SERVERS ; do
+          if [ "$( valid_subnet_any $server )" = "not" ] ; then
+            case $server in
+              *@[0-9]*)
+                # unique Unbound option for server host name
+                servers_host="$servers_host $server"
+                ;;
+
+              *)
+                if [ "$tls_upstream" = "yes" ] ; then
+                  servers_host="$servers_host $server${tls_port:+@${tls_port}}"
+                else
+                  servers_host="$servers_host $server${port:+@${port}}"
+                fi
+            esac
+
+          else
+            case $server in
+              *[0-9]@[0-9]*)
+                # unique Unbound option for server address
+                servers_ip="$servers_ip $server"
+                ;;
+
+              *)
+                if [ "$tls_upstream" = "yes" ] ; then
+                  servers_ip="$servers_ip $server$tls_suffix"
+                else
+                  servers_ip="$servers_ip $server${port:+@${port}}"
+                fi
+            esac
+          fi
+        done
+
+
         for zonename in $UB_LIST_ZONE_NAMES ; do
           {
             # generate a forward-zone with or without tls
             echo "forward-zone:"
             echo "  name: $zonename"
-            for server in $UB_LIST_ZONE_SERVERS ; do
-              if [ "$tls_upstream" = "yes" ] ; then
-                echo "  forward-addr: $server${tls_suffix}"
-              else
-                echo "  forward-addr: $server${port:+@${port}}"
-              fi
+            for server in $servers_host ; do
+              echo "  forward-host: $server"
+            done
+            for server in $servers_ip ; do
+              echo "  forward-addr: $server"
             done
             echo "  forward-first: $fallback"
             echo "  forward-tls-upstream: $tls_upstream"
@@ -626,7 +674,7 @@ unbound_conf() {
       ;;
 
     *)
-      if [ ! -f "$UB_TIME_FILE" ] ; then
+      if [ "$UB_B_READY" -eq 0 ] ; then
         logger -t unbound -s "default protocol configuration"
       fi
 
@@ -686,7 +734,7 @@ unbound_conf() {
       echo
     } >> $UB_CORE_CONF
 
-  elif [ ! -f "$UB_TIME_FILE" ] ; then
+  elif [ "$UB_B_READY" -eq 0 ] ; then
     logger -t unbound -s "default memory configuration"
   fi
 
@@ -696,7 +744,7 @@ unbound_conf() {
 
 
   if [ "$UB_B_DNSSEC" -gt 0 ] ; then
-    if [ ! -f "$UB_TIME_FILE" -a "$UB_B_NTP_BOOT" -gt 0 ] ; then
+    if [ "$UB_B_NTP_BOOT" -gt 0 ] ; then
       # DNSSEC chicken and egg with getting NTP time
       echo "  val-override-date: -1" >> $UB_CORE_CONF
     fi
@@ -777,7 +825,7 @@ unbound_conf() {
       ;;
 
     *)
-      if [ ! -f "$UB_TIME_FILE" ] ; then
+      if [ "$UB_B_READY" -eq 0 ] ; then
         logger -t unbound -s "default recursion configuration"
       fi
       ;;
@@ -898,8 +946,8 @@ unbound_hostname() {
       echo
     } >> $UB_HOST_CONF
 
-  elif [ -n "$UB_TXT_DOMAIN" ] \
-    && [ "$UB_D_WAN_FQDN" -gt 0 -o "$UB_D_LAN_FQDN" -gt 0 ] ; then
+  elif [ -n "$UB_TXT_DOMAIN" \
+         -a \( "$UB_D_WAN_FQDN" -gt 0 -o "$UB_D_LAN_FQDN" -gt 0 \) ] ; then
     case "$UB_D_DOMAIN_TYPE" in
       deny|inform_deny|refuse|static)
         {
@@ -947,180 +995,178 @@ unbound_hostname() {
     } >> $UB_HOST_CONF
 
 
-    if [ -f "$UB_TIME_FILE" ] ; then
-      if [ -n "$UB_LIST_NETW_WAN" ] ; then
-        for ifsubnet in $UB_LIST_NETW_WAN ; do
-          ifaddr=${ifsubnet#*@}
-          ifaddr=${ifaddr%/*}
-          ifarpa=$( host_ptr_any "$ifaddr" )
+    if [ -n "$UB_LIST_NETW_WAN" ] ; then
+      for ifsubnet in $UB_LIST_NETW_WAN ; do
+        ifaddr=${ifsubnet#*@}
+        ifaddr=${ifaddr%/*}
+        ifarpa=$( host_ptr_any "$ifaddr" )
 
 
-          if [ -n "$ifarpa" ] ; then
-            if [ "$UB_D_WAN_FQDN" -gt 0 ] ; then
-              {
-                # Create a static zone for WAN host record only (singular)
-                echo "  domain-insecure: $ifarpa"
-                echo "  private-address: $ifaddr"
-                echo "  local-zone: $ifarpa static"
-                echo "  local-data: \"$ifarpa. $UB_XSOA\""
-                echo "  local-data: \"$ifarpa. $UB_XNS\""
-                echo "  local-data: '$ifarpa. $UB_MTXT'"
-                echo
-              } >> $UB_HOST_CONF
+        if [ -n "$ifarpa" ] ; then
+          if [ "$UB_D_WAN_FQDN" -gt 0 ] ; then
+            {
+              # Create a static zone for WAN host record only (singular)
+              echo "  domain-insecure: $ifarpa"
+              echo "  private-address: $ifaddr"
+              echo "  local-zone: $ifarpa static"
+              echo "  local-data: \"$ifarpa. $UB_XSOA\""
+              echo "  local-data: \"$ifarpa. $UB_XNS\""
+              echo "  local-data: '$ifarpa. $UB_MTXT'"
+              echo
+            } >> $UB_HOST_CONF
 
-            elif [ "$zonetype" -gt 0 ] ; then
-              {
-                echo "  local-zone: $ifarpa transparent"
-                echo
-              } >> $UB_HOST_CONF
-            fi
+          elif [ "$zonetype" -gt 0 ] ; then
+            {
+              echo "  local-zone: $ifarpa transparent"
+              echo
+            } >> $UB_HOST_CONF
           fi
-        done
-      fi
+        fi
+      done
+    fi
 
 
-      if  [ -n "$UB_LIST_NETW_LAN" ] ; then
-        for ifsubnet in $UB_LIST_NETW_LAN ; do
-          ifarpa=$( domain_ptr_any "${ifsubnet#*@}" )
+    if  [ -n "$UB_LIST_NETW_LAN" ] ; then
+      for ifsubnet in $UB_LIST_NETW_LAN ; do
+        ifarpa=$( domain_ptr_any "${ifsubnet#*@}" )
 
 
-          if [ -n "$ifarpa" ] ; then
-            if [ "$zonetype" -eq 2 ] ; then
-              {
-                # Do NOT forward queries with your ip6.arpa or in-addr.arpa
-                echo "  domain-insecure: $ifarpa"
-                echo "  local-zone: $ifarpa static"
-                echo "  local-data: \"$ifarpa. $UB_XSOA\""
-                echo "  local-data: \"$ifarpa. $UB_XNS\""
-                echo "  local-data: '$ifarpa. $UB_XTXT'"
-                echo
-              } >> $UB_HOST_CONF
+        if [ -n "$ifarpa" ] ; then
+          if [ "$zonetype" -eq 2 ] ; then
+            {
+              # Do NOT forward queries with your ip6.arpa or in-addr.arpa
+              echo "  domain-insecure: $ifarpa"
+              echo "  local-zone: $ifarpa static"
+              echo "  local-data: \"$ifarpa. $UB_XSOA\""
+              echo "  local-data: \"$ifarpa. $UB_XNS\""
+              echo "  local-data: '$ifarpa. $UB_XTXT'"
+              echo
+            } >> $UB_HOST_CONF
 
-            elif [ "$zonetype" -eq 1 -a "$UB_D_PRIV_BLCK" -eq 0 ] ; then
-              {
-                echo "  local-zone: $ifarpa transparent"
-                echo
-              } >> $UB_HOST_CONF
-            fi
+          elif [ "$zonetype" -eq 1 -a "$UB_D_PRIV_BLCK" -eq 0 ] ; then
+            {
+              echo "  local-zone: $ifarpa transparent"
+              echo
+            } >> $UB_HOST_CONF
           fi
-        done
-      fi
+        fi
+      done
+    fi
 
 
-      ulaprefix=$( uci_get network.@globals[0].ula_prefix )
-      ulaprefix=${ulaprefix%%:/*}
-      hostfqdn="$UB_TXT_HOSTNAME.$UB_TXT_DOMAIN"
+    ulaprefix=$( uci_get network.@globals[0].ula_prefix )
+    ulaprefix=${ulaprefix%%:/*}
+    hostfqdn="$UB_TXT_HOSTNAME.$UB_TXT_DOMAIN"
 
 
-      if [ -z "$ulaprefix" ] ; then
-        # Nonsense so this option isn't globbed below
-        ulaprefix="fdno:such:addr::"
-      fi
+    if [ -z "$ulaprefix" ] ; then
+      # Nonsense so this option isn't globbed below
+      ulaprefix="fdno:such:addr::"
+    fi
 
 
-      if [ "$UB_LIST_NETW_LAN" -a "$UB_D_LAN_FQDN" -gt 0 ] ; then
-        for ifsubnet in $UB_LIST_NETW_LAN ; do
-          ifaddr=${ifsubnet#*@}
-          ifaddr=${ifaddr%/*}
-          ifname=${ifsubnet%@*}
-          iffqdn="$ifname.$hostfqdn"
+    if [ "$UB_LIST_NETW_LAN" -a "$UB_D_LAN_FQDN" -gt 0 ] ; then
+      for ifsubnet in $UB_LIST_NETW_LAN ; do
+        ifaddr=${ifsubnet#*@}
+        ifaddr=${ifaddr%/*}
+        ifname=${ifsubnet%@*}
+        iffqdn="$ifname.$hostfqdn"
 
 
-          if [ "$UB_D_LAN_FQDN" -eq 4 ] ; then
-            names="$iffqdn $hostfqdn $UB_TXT_HOSTNAME"
-            ptrrec="  local-data-ptr: \"$ifaddr 300 $iffqdn\""
-            echo "$ptrrec" >> $UB_HOST_CONF
+        if [ "$UB_D_LAN_FQDN" -eq 4 ] ; then
+          names="$iffqdn $hostfqdn $UB_TXT_HOSTNAME"
+          ptrrec="  local-data-ptr: \"$ifaddr 300 $iffqdn\""
+          echo "$ptrrec" >> $UB_HOST_CONF
 
-          elif [ "$UB_D_LAN_FQDN" -eq 3 ] ; then
-            names="$hostfqdn $UB_TXT_HOSTNAME"
-            ptrrec="  local-data-ptr: \"$ifaddr 300 $hostfqdn\""
-            echo "$ptrrec" >> $UB_HOST_CONF
+        elif [ "$UB_D_LAN_FQDN" -eq 3 ] ; then
+          names="$hostfqdn $UB_TXT_HOSTNAME"
+          ptrrec="  local-data-ptr: \"$ifaddr 300 $hostfqdn\""
+          echo "$ptrrec" >> $UB_HOST_CONF
 
-          else
-            names="$UB_TXT_HOSTNAME"
-            ptrrec="  local-data-ptr: \"$ifaddr 300 $UB_TXT_HOSTNAME\""
-            echo "$ptrrec" >> $UB_HOST_CONF
-          fi
-
-
-          for name in $names ; do
-            case $ifaddr in
-              "${ulaprefix}"*)
-                # IP6 ULA only is assigned for OPTION 1
-                namerec="  local-data: \"$name. 300 IN AAAA $ifaddr\""
-                echo "$namerec" >> $UB_HOST_CONF
-                ;;
-
-              [1-9]*.*[0-9])
-                namerec="  local-data: \"$name. 300 IN A $ifaddr\""
-                echo "$namerec" >> $UB_HOST_CONF
-                ;;
-
-              *)
-                if [ "$UB_D_LAN_FQDN" -gt 1 ] ; then
-                  # IP6 GLA is assigned for higher options
-                  namerec="  local-data: \"$name. 300 IN AAAA $ifaddr\""
-                  echo "$namerec" >> $UB_HOST_CONF
-                fi
-                ;;
-            esac
-          done
-          echo >> $UB_HOST_CONF
-        done
-      fi
+        else
+          names="$UB_TXT_HOSTNAME"
+          ptrrec="  local-data-ptr: \"$ifaddr 300 $UB_TXT_HOSTNAME\""
+          echo "$ptrrec" >> $UB_HOST_CONF
+        fi
 
 
-      if [ -n "$UB_LIST_NETW_WAN" -a "$UB_D_WAN_FQDN" -gt 0 ] ; then
-        for ifsubnet in $UB_LIST_NETW_WAN ; do
-          ifaddr=${ifsubnet#*@}
-          ifaddr=${ifaddr%/*}
-          ifname=${ifsubnet%@*}
-          iffqdn="$ifname.$hostfqdn"
-
-
-          if [ "$UB_D_WAN_FQDN" -eq 4 ] ; then
-            names="$iffqdn $hostfqdn $UB_TXT_HOSTNAME"
-            ptrrec="  local-data-ptr: \"$ifaddr 300 $iffqdn\""
-            echo "$ptrrec" >> $UB_HOST_CONF
-
-          elif [ "$UB_D_WAN_FQDN" -eq 3 ] ; then
-            names="$hostfqdn $UB_TXT_HOSTNAME"
-            ptrrec="  local-data-ptr: \"$ifaddr 300 $hostfqdn\""
-            echo "$ptrrec" >> $UB_HOST_CONF
-
-          else
-            names="$UB_TXT_HOSTNAME"
-            ptrrec="  local-data-ptr: \"$ifaddr 300 $UB_TXT_HOSTNAME\""
-            echo "$ptrrec" >> $UB_HOST_CONF
-          fi
-
-
-          for name in $names ; do
-            case $ifaddr in
-              "${ulaprefix}"*)
-                # IP6 ULA only is assigned for OPTION 1
-                namerec="  local-data: \"$name. 300 IN AAAA $ifaddr\""
-                echo "$namerec" >> $UB_HOST_CONF
-                ;;
-
-              [1-9]*.*[0-9])
-                namerec="  local-data: \"$name. 300 IN A $ifaddr\""
-                echo "$namerec" >> $UB_HOST_CONF
-                ;;
-
-              *)
-                if [ "$UB_D_WAN_FQDN" -gt 1 ] ; then
-                  # IP6 GLA is assigned for higher options
-                  namerec="  local-data: \"$name. 300 IN AAAA $ifaddr\""
-                  echo "$namerec" >> $UB_HOST_CONF
-                fi
+        for name in $names ; do
+          case $ifaddr in
+            "${ulaprefix}"*)
+              # IP6 ULA only is assigned for OPTION 1
+              namerec="  local-data: \"$name. 300 IN AAAA $ifaddr\""
+              echo "$namerec" >> $UB_HOST_CONF
               ;;
-            esac
-          done
-          echo >> $UB_HOST_CONF
+
+            [1-9]*.*[0-9])
+              namerec="  local-data: \"$name. 300 IN A $ifaddr\""
+              echo "$namerec" >> $UB_HOST_CONF
+              ;;
+
+            *)
+              if [ "$UB_D_LAN_FQDN" -gt 1 ] ; then
+                # IP6 GLA is assigned for higher options
+                namerec="  local-data: \"$name. 300 IN AAAA $ifaddr\""
+                echo "$namerec" >> $UB_HOST_CONF
+              fi
+              ;;
+          esac
         done
-      fi
-    fi # end if time file
+        echo >> $UB_HOST_CONF
+      done
+    fi
+
+
+    if [ -n "$UB_LIST_NETW_WAN" -a "$UB_D_WAN_FQDN" -gt 0 ] ; then
+      for ifsubnet in $UB_LIST_NETW_WAN ; do
+        ifaddr=${ifsubnet#*@}
+        ifaddr=${ifaddr%/*}
+        ifname=${ifsubnet%@*}
+        iffqdn="$ifname.$hostfqdn"
+
+
+        if [ "$UB_D_WAN_FQDN" -eq 4 ] ; then
+          names="$iffqdn $hostfqdn $UB_TXT_HOSTNAME"
+          ptrrec="  local-data-ptr: \"$ifaddr 300 $iffqdn\""
+          echo "$ptrrec" >> $UB_HOST_CONF
+
+        elif [ "$UB_D_WAN_FQDN" -eq 3 ] ; then
+          names="$hostfqdn $UB_TXT_HOSTNAME"
+          ptrrec="  local-data-ptr: \"$ifaddr 300 $hostfqdn\""
+          echo "$ptrrec" >> $UB_HOST_CONF
+
+        else
+          names="$UB_TXT_HOSTNAME"
+          ptrrec="  local-data-ptr: \"$ifaddr 300 $UB_TXT_HOSTNAME\""
+          echo "$ptrrec" >> $UB_HOST_CONF
+        fi
+
+
+        for name in $names ; do
+          case $ifaddr in
+            "${ulaprefix}"*)
+              # IP6 ULA only is assigned for OPTION 1
+              namerec="  local-data: \"$name. 300 IN AAAA $ifaddr\""
+              echo "$namerec" >> $UB_HOST_CONF
+              ;;
+
+            [1-9]*.*[0-9])
+              namerec="  local-data: \"$name. 300 IN A $ifaddr\""
+              echo "$namerec" >> $UB_HOST_CONF
+              ;;
+
+            *)
+              if [ "$UB_D_WAN_FQDN" -gt 1 ] ; then
+                # IP6 GLA is assigned for higher options
+                namerec="  local-data: \"$name. 300 IN AAAA $ifaddr\""
+                echo "$namerec" >> $UB_HOST_CONF
+              fi
+            ;;
+          esac
+        done
+        echo >> $UB_HOST_CONF
+      done
+    fi
   fi # end if uci valid
 }
 
@@ -1178,7 +1224,7 @@ unbound_uci() {
       UB_D_DHCP_LINK=dnsmasq
 
 
-      if [ ! -f "$UB_TIME_FILE" ] ; then
+      if [ "$UB_B_READY" -eq 0 ] ; then
         logger -t unbound -s "Please use 'dhcp_link' selector instead"
       fi
     fi
@@ -1193,7 +1239,7 @@ unbound_uci() {
     fi
 
 
-    if [ ! -f "$UB_TIME_FILE" -a "$UB_D_DHCP_LINK" = "none" ] ; then
+    if [ "$UB_B_READY" -eq 0 -a "$UB_D_DHCP_LINK" = "none" ] ; then
       logger -t unbound -s "cannot forward to dnsmasq"
     fi
   fi
@@ -1207,7 +1253,7 @@ unbound_uci() {
     fi
 
 
-    if [ ! -f "$UB_TIME_FILE" -a "$UB_D_DHCP_LINK" = "none" ] ; then
+    if [ "$UB_B_READY" -eq 0 -a "$UB_D_DHCP_LINK" = "none" ] ; then
       logger -t unbound -s "cannot receive records from odhcpd"
     fi
   fi
@@ -1220,8 +1266,8 @@ unbound_uci() {
   fi
 
 
-  if [ "$UB_N_RX_PORT" -ne 53 ] \
-  && [ "$UB_N_RX_PORT" -lt 1024 -o 10240 -lt "$UB_N_RX_PORT" ] ; then
+  if [ "$UB_N_RX_PORT" -ne 53 \
+      -a \( "$UB_N_RX_PORT" -lt 1024 -o 10240 -lt "$UB_N_RX_PORT" \) ] ; then
     logger -t unbound -s "privileged port or in 5 digits, using default"
     UB_N_RX_PORT=53
   fi
@@ -1264,7 +1310,7 @@ unbound_include() {
   fi
 
 
-  if [ -f "$UB_TIME_FILE" -a -f "$UB_DHCP_CONF" ] ; then
+  if [ -f "$UB_DHCP_CONF" ] ; then
     {
       # Seed DHCP records because dhcp scripts trigger externally
       # Incremental Unbound restarts may drop unbound-control records
@@ -1274,8 +1320,8 @@ unbound_include() {
   fi
 
 
-  if [ ! -f "$UB_TIME_FILE" -o -z "$adb_files" \
-      -o  ! -x /usr/bin/adblock.sh -o ! -x /etc/init.d/adblock ] ; then
+  if [ -z "$adb_files" \
+       -o  ! -x /usr/bin/adblock.sh -o ! -x /etc/init.d/adblock ] ; then
     adb_enabled=0
 
   elif /etc/init.d/adblock enabled ; then

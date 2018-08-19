@@ -8,18 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coova-chilli
-PKG_VERSION:=1.3.0+20141128
+PKG_VERSION:=1.4
 PKG_MAINTAINER:=Jaehoon You <teslamint@gmail.com>
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
 PKG_RELEASE:=6
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/coova/coova-chilli
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=b93de20a288c01c2ba28e96e31ad6da01627f45f
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=89c9b313881c658a0f6b91329a78bb1a0151878b19bc99b315976081c6355557
+PKG_SOURCE_URL:=https://codeload.github.com/coova/coova-chilli/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=987647a4c8efe7b1e2d7108d56068e3bd7830d326680f0eaa2c705e4c59c46d9
 
 PKG_INSTALL:=1
 
@@ -43,7 +40,7 @@ define Package/coova-chilli
   CATEGORY:=Network
   DEPENDS:=+kmod-tun +librt +COOVACHILLI_CYASSL:libcyassl +COOVACHILLI_OPENSSL:libopenssl
   TITLE:=Wireless LAN HotSpot controller (Coova Chilli Version)
-  URL:=http://www.coova.org/CoovaChilli
+  URL:=https://coova.github.io/
   MENU:=1
 endef
 

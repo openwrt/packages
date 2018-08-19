@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luajit
 PKG_VERSION:=2017-01-17-71ff7ef
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Morteza Milani <milani@pichak.co>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYRIGHT
@@ -59,7 +59,7 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/luajit-2.1
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/luajit-2.1/*.h $(1)/usr/include/luajit-2.1
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/luajit-2.1/*.{h,hpp} $(1)/usr/include/luajit-2.1
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
@@ -69,7 +69,7 @@ endef
 
 define Package/luajit/install
 	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/luajit-2.1.0-beta2 $(1)/usr/bin/$(PKG_NAME)
 endef

@@ -2,7 +2,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.8.3
+PKG_VERSION:=4.8.4
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
@@ -11,10 +11,10 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE_URL:=https://download.samba.org/pub/samba/stable/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=e0569a8a605d5dfb49f1fdd11db796f4d36fe0351c4a7f21387ef253010b82ed
+PKG_HASH:=f5044d149e01894a08b1d114b8b69aed78171a7bb19608bd1fd771453b9a5406
 
 # Buildroot bug? Can't add target deps via '+SAMBA4_SERVER_AD_DC:python-crypto' (as work-around we select via config.in)
-PKG_BUILD_DEPENDS:=perl/host python/host qemu-userspace/host SAMBA4_SERVER_AD_DC:python-crypto
+PKG_BUILD_DEPENDS:=SAMBA4_SERVER_AD_DC:python-crypto nfs-kernel-server/host
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_SAMBA4_SERVER_NETBIOS \
@@ -29,6 +29,8 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_kmod-fs-xfs
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/kernel.mk
+include $(INCLUDE_DIR)/version.mk
 
 define Package/samba4/Default
   SECTION:=net
@@ -49,7 +51,9 @@ define Package/samba4-libs
   $(call Package/samba4/Default)
   TITLE+= libs
   DEPENDS:= +zlib +libtirpc +krb5-libs +libpopt \
-	+PACKAGE_libcap:libcap +PACKAGE_jansson:jansson +PACKAGE_libpthread:libpthread +PACKAGE_libnettle:libnettle +PACKAGE_libarchive:libarchive \
+	+PACKAGE_libcap:libcap +PACKAGE_jansson:jansson +PACKAGE_libpthread:libpthread +PACKAGE_libnettle:libnettle \
+	+PACKAGE_libarchive:libarchive +PACKAGE_libgcrypt:libgcrypt +PACKAGE_libpam:libpam +PACKAGE_dbus:dbus +PACKAGE_libavahi-client:libavahi-client \
+	+SAMBA4_SERVER_VFS:attr \
 	+SAMBA4_SERVER_ACL:acl +SAMBA4_SERVER_ACL:attr \
 	+SAMBA4_SERVER_AVAHI:libavahi-client \
 	+SAMBA4_SERVER_AD_DC:python-base +SAMBA4_SERVER_AD_DC:libopenssl +SAMBA4_SERVER_AD_DC:libgnutls +SAMBA4_SERVER_AD_DC:libopenldap
@@ -129,7 +133,7 @@ CONFIGURE_ARGS:=$(filter-out	\
 CONFIGURE_ARGS += \
 		--hostcc="$(HOSTCC)" \
 		--cross-compile \
-		--cross-execute="qemu-$(ARCH) -L $(STAGING_DIR_ROOT)" \
+		--cross-answers=cross-answers.txt \
 		--disable-cups \
 		--disable-iprint \
 		--disable-cephfs \
@@ -205,13 +209,13 @@ SAMBA4_PDB_MODULES :=pdb_smbpasswd,pdb_tdbsam,
 SAMBA4_AUTH_MODULES :=auth_builtin,auth_sam,auth_unix,auth_script,
 SAMBA4_VFS_MODULES :=vfs_default,
 ifeq ($(CONFIG_SAMBA4_SERVER_VFS),y)
-	SAMBA4_VFS_MODULES :=$(SAMBA4_VFS_MODULES)vfs_fruit,vfs_shadow_copy2,vfs_recycle,vfs_fake_perms,vfs_readonly,vfs_cap,vfs_offline,vfs_crossrename,
+	SAMBA4_VFS_MODULES :=$(SAMBA4_VFS_MODULES)vfs_fruit,vfs_shadow_copy2,vfs_recycle,vfs_fake_perms,vfs_readonly,vfs_cap,vfs_offline,vfs_crossrename,vfs_catia,vfs_streams_xattr,
 ifeq ($(CONFIG_PACKAGE_kmod-fs-btrfs),y)
 	SAMBA4_VFS_MODULES :=$(SAMBA4_VFS_MODULES)vfs_btrfs,
 endif
 endif
 ifeq ($(CONFIG_SAMBA4_SERVER_VFSX),y)
-	SAMBA4_VFS_MODULES :=$(SAMBA4_VFS_MODULES)vfs_virusfilter,vfs_shell_snap,vfs_commit,vfs_worm,vfs_xattr_tdb,vfs_streams_xattr,vfs_aio_fork,vfs_aio_pthread,vfs_netatalk,vfs_dirsort,vfs_fileid,vfs_catia,
+	SAMBA4_VFS_MODULES :=$(SAMBA4_VFS_MODULES)vfs_virusfilter,vfs_shell_snap,vfs_commit,vfs_worm,vfs_xattr_tdb,vfs_aio_fork,vfs_aio_pthread,vfs_netatalk,vfs_dirsort,vfs_fileid,
 ifeq ($(CONFIG_PACKAGE_kmod-fs-xfs),y)
 	SAMBA4_VFS_MODULES :=$(SAMBA4_VFS_MODULES)vfs_linux_xfs_sgid,
 endif
@@ -289,6 +293,12 @@ endif
 endef
 
 define Build/Configure
+	$(CP) ./waf-cross-answers/$(ARCH).txt $(PKG_BUILD_DIR)/cross-answers.txt
+	echo 'Checking uname machine type: "$(ARCH)"' >> $(PKG_BUILD_DIR)/cross-answers.txt
+	echo 'Checking uname release type: "$(LINUX_VERSION)"' >> $(PKG_BUILD_DIR)/cross-answers.txt
+	echo 'Checking uname version type: "$(VERSION_DIST) Linux-$(LINUX_VERSION) $(shell date +%Y-%m-%d)"' >> $(PKG_BUILD_DIR)/cross-answers.txt
+	# NOTE: For some unknown reason this answer is not needed on some hosts/distros, yet needed on others?
+	echo 'Checking whether POSIX capabilities are available: OK' >> $(PKG_BUILD_DIR)/cross-answers.txt
 	$(call Build/Configure/Default,configure)
 endef
 

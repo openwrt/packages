@@ -21,7 +21,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.7.7-2"
+VERSION="2.7.8-1"
 SECTION_ID=""		# hold config's section name
 VERBOSE=0		# default mode is log to console, but easily changed with parameter
 MYPROG=$(basename $0)	# my program call name
@@ -62,6 +62,12 @@ PID_SLEEP=0		# ProcessID of current background "sleep"
 IPV4_REGEX="[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}"
 # IPv6       ( ( 0-9a-f  1-4char ":") min 1x) ( ( 0-9a-f  1-4char   )optional) ( (":" 0-9a-f 1-4char  ) min 1x)
 IPV6_REGEX="\(\([0-9A-Fa-f]\{1,4\}:\)\{1,\}\)\(\([0-9A-Fa-f]\{1,4\}\)\{0,1\}\)\(\(:[0-9A-Fa-f]\{1,4\}\)\{1,\}\)"
+
+# characters that are dangerous to pass to a shell command line
+SHELL_ESCAPE="[\"\'\`\$\!();><{}?|\[\]\*\\\\]"
+
+# dns character set
+DNS_CHARSET="[@a-zA-Z0-9._-]"
 
 # detect if called by ddns-lucihelper.sh script, disable retrys (empty variable == false)
 LUCI_HELPER=$(printf %s "$MYPROG" | grep -i "luci")
@@ -224,7 +230,7 @@ stop_daemon_for_all_ddns_sections() {
 #	value +10 will exit the scripts
 # $2..n	text to report
 write_log() {
-	local __LEVEL __EXIT __CMD __MSG
+	local __LEVEL __EXIT __CMD __MSG __MSE
 	local __TIME=$(date +%H%M%S)
 	[ $1 -ge 10 ] && {
 		__LEVEL=$(($1-10))
@@ -258,8 +264,15 @@ write_log() {
 	[ $VERBOSE -gt 0 -o $__EXIT -gt 0 ] && echo -e "$__MSG"
 	# write to logfile
 	if [ ${use_logfile:-1} -eq 1 -o $VERBOSE -gt 1 ]; then
-		[ -n "$password" ] && __MSG=$( printf "%s" "$__MSG" | sed -e "s/$password/*password*/g" )
-		[ -n "$URL_PASS" ] && __MSG=$( printf "%s" "$__MSG" | sed -e "s/$URL_PASS/*URL_PASS*/g" )
+		if [ -n "$password" ]; then
+			# url encode __MSG, password already done
+			urlencode __MSE "$__MSG"
+			# replace encoded password inside encoded message
+			# and url decode (newline was encoded as %00)
+			__MSG=$( echo -e "$__MSE" \
+				| sed -e "s/$URL_PASS/***PW***/g" \
+				| sed -e "s/+/ /g; s/%00/\n/g; s/%/\\\\x/g" | xargs -0 printf "%b" )
+		fi
 		printf "%s\n" "$__MSG" >> $LOGFILE
 		# VERBOSE > 1 then NO loop so NO truncate log to $ddns_loglines lines
 		[ $VERBOSE -gt 1 ] || sed -i -e :a -e '$q;N;'$ddns_loglines',$D;ba' $LOGFILE
@@ -467,6 +480,27 @@ timeout() {
 	return $status
 }
 
+# sanitize a variable
+# $1	variable name
+# $2	allowed shell pattern
+# $3	disallowed shell pattern
+sanitize_variable() {
+	local __VAR=$1
+	eval __VALUE=\$$__VAR
+	local __ALLOWED=$2
+	local __REJECT=$3
+
+	# removing all allowed should give empty string
+	if [ -n "$__ALLOWED" ]; then
+		[ -z "${__VALUE//$__ALLOWED}" ] || write_log 12 "sanitize on $__VAR found characters outside allowed subset"
+	fi
+
+	# removing rejected pattern should give the same string as the input
+	if [ -n "$__REJECT" ]; then
+		[ "$__VALUE" = "${__VALUE//$__REJECT}" ] || write_log 12 "sanitize on $__VAR found rejected characters"
+	fi
+}
+
 # verify given host and port is connectable
 # $1	Host/IP to verify
 # $2	Port to verify
@@ -508,7 +542,10 @@ verify_host_port() {
 			__RUNPROG="$NSLOOKUP $__HOST >$DATFILE 2>$ERRFILE"
 		fi
 		write_log 7 "#> $__RUNPROG"
-		eval $__RUNPROG
+		(
+			set -o noglob
+			eval $__RUNPROG
+		)
 		__ERR=$?
 		# command error
 		[ $__ERR -gt 0 ] && {
@@ -561,7 +598,10 @@ verify_host_port() {
 	if [ -n "$__NCEXT" ]; then	# BusyBox nc compiled with extensions (timeout support)
 		__RUNPROG="$__NC -w 1 $__IP $__PORT </dev/null >$DATFILE 2>$ERRFILE"
 		write_log 7 "#> $__RUNPROG"
-		eval $__RUNPROG
+		(
+			set -o noglob
+			eval $__RUNPROG
+		)
 		__ERR=$?
 		[ $__ERR -eq 0 ] && return 0
 		write_log 3 "Connect error - BusyBox nc (netcat) Error '$__ERR'"
@@ -570,7 +610,10 @@ verify_host_port() {
 	else		# nc compiled without extensions (no timeout support)
 		__RUNPROG="timeout 2 -- $__NC $__IP $__PORT </dev/null >$DATFILE 2>$ERRFILE"
 		write_log 7 "#> $__RUNPROG"
-		eval $__RUNPROG
+		(
+			set -o noglob
+			eval $__RUNPROG
+		)
 		__ERR=$?
 		[ $__ERR -eq 0 ] && return 0
 		write_log 3 "Connect error - BusyBox nc (netcat) timeout Error '$__ERR'"
@@ -689,7 +732,7 @@ do_transfer() {
 			local __BINDIP
 			# set correct program to detect IP
 			[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" || __RUNPROG="network_get_ipaddr6"
-			eval "$__RUNPROG __BINDIP $bind_network" || \
+			( set -o noglob ; eval "$__RUNPROG __BINDIP $bind_network" ) || \
 				write_log 13 "Can not detect local IP using '$__RUNPROG $bind_network' - Error: '$?'"
 			write_log 7 "Force communication via IP '$__BINDIP'"
 			__PROG="$__PROG --bind-address=$__BINDIP"
@@ -815,7 +858,10 @@ do_transfer() {
 
 	while : ; do
 		write_log 7 "#> $__RUNPROG"
-		eval $__RUNPROG			# DO transfer
+		(
+			set -o noglob
+			eval $__RUNPROG			# DO transfer
+		)
 		__ERR=$?			# save error code
 		[ $__ERR -eq 0 ] && return 0	# no error leave
 		[ -n "$LUCI_HELPER" ] && return 1	# no retry if called by LuCI helper script
@@ -877,7 +923,7 @@ send_update() {
 
 		do_transfer "$__URL" || return 1
 
-		write_log 7 "DDNS Provider answered:\n$(cat $DATFILE)"
+		write_log 7 "DDNS Provider answered:${N}$(cat $DATFILE)"
 
 		[ -z "$UPD_ANSWER" ] && return 0	# not set then ignore
 
@@ -900,7 +946,7 @@ get_local_ip () {
 			network_flush_cache	# force re-read data from ubus
 			[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" \
 					    || __RUNPROG="network_get_ipaddr6"
-			eval "$__RUNPROG __DATA $ip_network" || \
+			( set -o noglob ; eval "$__RUNPROG __DATA $ip_network" ) || \
 				write_log 13 "Can not detect local IP using $__RUNPROG '$ip_network' - Error: '$?'"
 			[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on network '$ip_network'"
 		elif [ -n "$ip_interface" ]; then
@@ -984,7 +1030,10 @@ get_local_ip () {
 			[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on interface '$ip_interface'"
 		elif [ -n "$ip_script" ]; then
 			write_log 7 "#> $ip_script >$DATFILE 2>$ERRFILE"
-			eval $ip_script >$DATFILE 2>$ERRFILE
+			(
+				set -o noglob
+				eval $ip_script >$DATFILE 2>$ERRFILE
+			)
 			__ERR=$?
 			if [ $__ERR -eq 0 ]; then
 				__DATA=$(cat $DATFILE)
@@ -1124,7 +1173,10 @@ get_registered_ip() {
 
 	while : ; do
 		write_log 7 "#> $__RUNPROG"
-		eval $__RUNPROG
+		(
+			set -o noglob
+			eval $__RUNPROG
+		)
 		__ERR=$?
 		if [ $__ERR -ne 0 ]; then
 			write_log 3 "$__PROG error: '$__ERR'"
@@ -1197,17 +1249,17 @@ trap_handler() {
 
 	case $1 in
 		 0)	if [ $__ERR -eq 0 ]; then
-				write_log 5 "PID '$$' exit normal at $(eval $DATE_PROG)\n"
+				write_log 5 "PID '$$' exit normal at $(eval $DATE_PROG)${N}"
 			else
-				write_log 4 "PID '$$' exit WITH ERROR '$__ERR' at $(eval $DATE_PROG)\n"
+				write_log 4 "PID '$$' exit WITH ERROR '$__ERR' at $(eval $DATE_PROG)${N}"
 			fi ;;
 		 1)	write_log 6 "PID '$$' received 'SIGHUP' at $(eval $DATE_PROG)"
 			# reload config via starting the script again
 			/usr/lib/ddns/dynamic_dns_updater.sh -v "0" -S "$__SECTIONID" -- start || true
 			exit 0 ;;	# and leave this one
-		 2)	write_log 5 "PID '$$' terminated by 'SIGINT' at $(eval $DATE_PROG)\n";;
-		 3)	write_log 5 "PID '$$' terminated by 'SIGQUIT' at $(eval $DATE_PROG)\n";;
-		15)	write_log 5 "PID '$$' terminated by 'SIGTERM' at $(eval $DATE_PROG)\n";;
+		 2)	write_log 5 "PID '$$' terminated by 'SIGINT' at $(eval $DATE_PROG)${N}";;
+		 3)	write_log 5 "PID '$$' terminated by 'SIGQUIT' at $(eval $DATE_PROG)${N}";;
+		15)	write_log 5 "PID '$$' terminated by 'SIGTERM' at $(eval $DATE_PROG)${N}";;
 		 *)	write_log 13 "Unhandled signal '$1' in 'trap_handler()'";;
 	esac
 

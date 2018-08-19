@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=scapy
-PKG_VERSION:=2.3.1
+PKG_VERSION:=2.4.0
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=PKG-INFO
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).zip
-PKG_SOURCE_URL:=https://bitbucket.org/secdev/scapy/downloads/
-PKG_HASH:=8972c02e39a826a10c02c2bdd5025f7251dce9589c57befd9bb55c65f02e4934
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/secdev/scapy/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=3836c62c33dd3f7c1ae30f5c2c1ab8078e4e32f5bf9c8be758dbaafe1c6a580e
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python-package.mk
@@ -25,7 +25,7 @@ define Package/scapy
   CATEGORY:=Network
   TITLE:=Interactive packet manipulation tool and network scanner
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-  URL:=http://www.secdev.org/projects/scapy/
+  URL:=https://scapy.net/
   DEPENDS:=+python
 endef
 

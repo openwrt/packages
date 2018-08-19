@@ -11,7 +11,7 @@ XMLDATA="<?xml version='1.0'?><methodCall><methodName>xname.updateArecord</metho
 XMLDATA=$(echo $XMLDATA | sed -e "s#\[USERNAME\]#$URL_USER#g" -e "s#\[PASSWORD\]#$URL_PASS#g" \
 -e "s#\[ZONENAME\]#$zone#g" -e "s#\[RECORDNAME\]#$record#g" -e "s#\[IP\]#$__IP#g")
 $PROG -d "$XMLDATA" -o $DATFILE $__URL || return 1
-write_log 7 "'freedns.42.pl' answered:\n$(cat $DATFILE)"
+write_log 7 "'freedns.42.pl' answered:${N}$(cat $DATFILE)"
 grep "<fault>" $DATFILE > /dev/null 2>&1 && return 1
 grep '<name>serial</name>' $DATFILE >/dev/null 2>&1
 return $?

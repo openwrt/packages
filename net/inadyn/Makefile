@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=inadyn
-PKG_VERSION:=2.3
+PKG_VERSION:=2.3.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0
@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/troglobit/inadyn/releases/download/v$(PKG_VERSION)
-PKG_HASH:=4a98b80d8565b9e4cb32b19b7a8b06a22a7d9a6f4f03a5298a8d441b6187c760
+PKG_HASH:=81c942db6eab27fa16e868175bdb7aff963eeee06d48bc5443e0dcd6f7c2da40
 
 PKG_FIXUP:=autoreconf
 

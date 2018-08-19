@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=3.2.10
-PKG_RELEASE:=4
+PKG_VERSION:=3.2.12
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
-PKG_HASH:=3c1626220c7b68ff6be7312559f77f3c65ff6809daf645d4470ac0189926bdbc
+PKG_HASH:=8985cea7b1b3b2e0e2b2a8ac6187a7fb022fe8aa9d35101760a000205c59c412
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Ian Leonard <antonlacon@gmail.com>
 
@@ -372,6 +372,11 @@ $(call Package/ffmpeg/Default/description)
 endef
 
 
+# Strip off FPU notation
+REAL_CPU_TYPE:=$(firstword $(subst +, ,$(CONFIG_CPU_TYPE)))
+# Fixup cpu types recogized by ffmpeg configure
+REAL_CPU_TYPE:=$(subst octeonplus,octeon+,$(REAL_CPU_TYPE))
+
 FFMPEG_CONFIGURE:= \
 	CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) $(FPIC)" \
 	LDFLAGS="$(TARGET_LDFLAGS)" \
@@ -379,6 +384,7 @@ FFMPEG_CONFIGURE:= \
 	--enable-cross-compile \
 	--cross-prefix="$(TARGET_CROSS)" \
 	--arch="$(ARCH)" \
+	$(if $(REAL_CPU_TYPE),--cpu=$(call qstrip,$(REAL_CPU_TYPE)),) \
 	--target-os=linux \
 	--prefix="/usr" \
 	--pkg-config="pkg-config" \
@@ -418,6 +424,10 @@ FFMPEG_CONFIGURE+= \
 else ifneq ($(findstring powerpc,$(CONFIG_ARCH)),)
 FFMPEG_CONFIGURE+= \
 	--disable-altivec
+# libavcode/mips/aacdec_mips.c build problem
+else ifneq ($(findstring 24kf,$(CONFIG_CPU_TYPE)),)
+FFMPEG_CONFIGURE+= \
+	--disable-inline-asm
 endif
 
 # selectively disable optimizations according to arch/cpu type
@@ -444,7 +454,9 @@ endif
 
 ifneq ($(CONFIG_TARGET_x86),)
 ifeq ($(CONFIG_NASM),y)
-  FFMPEG_CONFIGURE += --yasmexe=nasm
+  # Set yasmexe to anything but YASM/NASM (ffmpeg configure will then find NASM correctly)
+  # Newer ffmpeg packages will use --enable-x86asm (with NASM default)
+  FFMPEG_CONFIGURE += --yasmexe=xyzzy
 else
   FFMPEG_CONFIGURE += --disable-yasm
 endif

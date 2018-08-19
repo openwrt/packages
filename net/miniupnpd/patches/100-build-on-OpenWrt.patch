@@ -28,7 +28,7 @@
  if [ -z "$V6SOCKETS_ARE_V6ONLY" ] ; then
 --- a/Makefile.linux
 +++ b/Makefile.linux
-@@ -73,7 +73,10 @@ CPPFLAGS += -DIPTABLES_143
+@@ -74,7 +74,10 @@ CPPFLAGS += -DIPTABLES_143
  endif
  
  CFLAGS  += $(shell $(PKG_CONFIG) --cflags libiptc)
@@ -39,7 +39,7 @@
  LDFLAGS += $(shell $(PKG_CONFIG) --libs-only-L libiptc)
  LDFLAGS += $(shell $(PKG_CONFIG) --libs-only-other libiptc)
  else
-@@ -153,6 +156,8 @@ LDLIBS += $(shell $(PKG_CONFIG) --static
+@@ -154,6 +157,8 @@ LDLIBS += $(shell $(PKG_CONFIG) --static
  LDLIBS += $(shell $(PKG_CONFIG) --static --libs-only-l libnetfilter_conntrack)
  endif # ($(TEST),1)
  
@@ -48,7 +48,7 @@
  LDLIBS += $(shell $(PKG_CONFIG) --static --libs-only-l libssl)
  
  TEST := $(shell $(PKG_CONFIG) --exists uuid && echo 1)
-@@ -161,6 +166,7 @@ LDLIBS += $(shell $(PKG_CONFIG) --static
+@@ -162,6 +167,7 @@ LDLIBS += $(shell $(PKG_CONFIG) --static
  else
  $(info please install uuid-dev package / libuuid)
  endif # ($(TEST),1)
