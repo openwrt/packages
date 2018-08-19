@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
-PKG_VERSION:=2.56.1
+PKG_VERSION:=2.56.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_BUILD_DIR:=$(BUILD_DIR)/glib-$(PKG_VERSION)
 PKG_SOURCE_URL:=@GNOME/glib/2.56
-PKG_HASH:=40ef3f44f2c651c7a31aedee44259809b6f03d3d20be44545cd7d177221c0b8d
+PKG_HASH:=d64abd16813501c956c4e123ae79f47f1b58de573df9fdd3b0795f1e2c1aa789
 
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
@@ -53,10 +53,12 @@ HOST_CONFIGURE_ARGS += \
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
-	--enable-debug=no \
+	--disable-debug \
 	--disable-selinux \
-	--enable-libmount=no \
+	--disable-libmount \
 	--disable-fam \
+	--disable-gtk-doc-html \
+	--disable-man \
 	--with-libiconv=gnu \
 	--with-pcre=internal
 
