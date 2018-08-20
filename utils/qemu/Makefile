@@ -256,12 +256,8 @@ CONFIGURE_ARGS +=			\
 	--disable-strip			\
 	--disable-werror		\
 
-QEMU_CONFIGURE_TARGET_LIST := $(foreach target,$(QEMU_TARGET_LIST),$(if $(CONFIG_PACKAGE_qemu-$(target)),$(target)))
-CONFIGURE_ARGS += --target-list='$(QEMU_CONFIGURE_TARGET_LIST)'
-
-ifneq ($(CONFIG_PACKAGE_qemu-ga),)
-CONFIGURE_ARGS += --enable-guest-agent
-endif
+CONFIGURE_ARGS += --target-list='$(foreach target,$(QEMU_TARGET_LIST),$(if $(CONFIG_PACKAGE_qemu-$(target)),$(target)))'
+CONFIGURE_ARGS += $(if $(CONFIG_PACKAGE_qemu-ga),--enable-guest-agent)
 
 TARGET_LDFLAGS += -Wl,--as-needed
 MAKE_VARS += V=s
