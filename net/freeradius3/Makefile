@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius3
 PKG_VERSION:=release_3_0_17
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/FreeRADIUS/freeradius-server/archive
@@ -74,6 +74,7 @@ define Package/freeradius3-default
 +freeradius3-mod-eap-peap \
 +freeradius3-mod-eap-tls \
 +freeradius3-mod-eap-ttls \
++freeradius3-mod-eap-pwd \
 +freeradius3-mod-exec \
 +freeradius3-mod-expiration \
 +freeradius3-mod-expr \
@@ -181,6 +182,12 @@ define Package/freeradius3-mod-eap-ttls
   $(call Package/freeradius3/Default)
   DEPENDS:=freeradius3-mod-eap-tls
   TITLE:=EAP/TTLS module
+endef
+
+define Package/freeradius3-mod-eap-pwd
+  $(call Package/freeradius3/Default)
+  DEPENDS:=freeradius3-mod-eap @FREERADIUS3_OPENSSL
+  TITLE:=EAP/PWD module
 endef
 
 define Package/freeradius3-mod-exec
@@ -397,7 +404,6 @@ CONFIGURE_ARGS+= \
 	--without-rlm_couchbase \
 	--without-rlm_counter \
 	--without-rlm_eap_ikev2 \
-	--without-rlm_eap_pwd \
 	--without-rlm_eap_sim \
 	--without-rlm_eap_tnc \
 	--without-rlm_example \
@@ -466,6 +472,16 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-eap-ttls),)
   CONFIGURE_LIBS+= -lcrypto -lssl
 else
   CONFIGURE_ARGS+= --without-rlm_eap_ttls
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-eap-pwd),)
+  CONFIGURE_ARGS+= \
+		--with-rlm_eap_pwd \
+		--with-rlm_eap_pwd-include-dir="$(STAGING_DIR)/usr/include" \
+		--with-rlm_eap_pwd-lib-dir="$(STAGING_DIR)/usr/lib"
+  CONFIGURE_LIBS+= -lcrypto -lssl
+else
+  CONFIGURE_ARGS+= --without-rlm_eap_pwd
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-radutmp),)
@@ -605,6 +621,7 @@ $(eval $(call BuildPlugin,freeradius3-mod-eap-peap,rlm_eap_peap,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap,rlm_eap,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap-tls,rlm_eap_tls,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap-ttls,rlm_eap_ttls,))
+$(eval $(call BuildPlugin,freeradius3-mod-eap-pwd,rlm_eap_pwd,))
 $(eval $(call BuildPlugin,freeradius3-mod-exec,rlm_exec,))
 $(eval $(call BuildPlugin,freeradius3-mod-expiration,rlm_expiration,))
 $(eval $(call BuildPlugin,freeradius3-mod-expr,rlm_expr,))
