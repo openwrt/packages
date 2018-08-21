@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.15.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
@@ -78,7 +78,7 @@ define Package/nginx/default
   TITLE:=Nginx web server
   URL:=http://nginx.org/
   DEPENDS:=+NGINX_PCRE:libpcre +(NGINX_SSL||NGINX_HTTP_CACHE||NGINX_HTTP_AUTH_BASIC):libopenssl \
-     +NGINX_HTTP_GZIP:zlib +NGINX_LUA:liblua +libpthread
+	+NGINX_HTTP_GZIP:zlib +NGINX_LUA:liblua +libpthread +NGINX_DAV:libexpat
 endef
 
 define Package/nginx/description
@@ -107,7 +107,7 @@ Package/nginx-ssl/description = $(Package/nginx/description) \
 define Package/nginx-all-module
   $(Package/nginx/default)
   TITLE += with ALL module selected
-  DEPENDS:=+libpcre +libopenssl +zlib +liblua +libpthread
+  DEPENDS:=+libpcre +libopenssl +zlib +liblua +libpthread +libexpat
   VARIANT:=all-module
   PROVIDES:=nginx
 endef
@@ -247,7 +247,7 @@ ifneq ($(BUILD_VARIANT),all-module)
     ADDITIONAL_MODULES += --with-http_flv_module
   endif
   ifeq ($(CONFIG_NGINX_DAV),y)
-    ADDITIONAL_MODULES += --with-http_dav_module
+    ADDITIONAL_MODULES += --with-http_dav_module --add-module=$(PKG_BUILD_DIR)/nginx-dav-ext-module
   endif
   ifeq ($(CONFIG_NGINX_HTTP_AUTH_REQUEST),y)
     ADDITIONAL_MODULES += --with-http_auth_request_module
@@ -283,9 +283,11 @@ else
   CONFIG_NGINX_TS_MODULE:=y
   CONFIG_NGINX_NAXSI:=y
   CONFIG_NGINX_LUA:=y
+  CONFIG_NGINX_DAV:=y
   ADDITIONAL_MODULES += --with-http_ssl_module --add-module=$(PKG_BUILD_DIR)/nginx-naxsi/naxsi_src \
     --add-module=$(PKG_BUILD_DIR)/lua-nginx --with-ipv6 --with-http_stub_status_module --with-http_flv_module \
-	--with-http_dav_module --with-http_auth_request_module --with-http_v2_module --with-http_realip_module \
+	--with-http_dav_module --add-module=$(PKG_BUILD_DIR)/nginx-dav-ext-module \
+	--with-http_auth_request_module --with-http_v2_module --with-http_realip_module \
 	--with-http_secure_link_module --with-http_sub_module --add-module=$(PKG_BUILD_DIR)/nginx-headers-more \
 	--add-module=$(PKG_BUILD_DIR)/nginx-brotli --add-module=$(PKG_BUILD_DIR)/nginx-rtmp \
 	--add-module=$(PKG_BUILD_DIR)/nginx-ts
@@ -388,6 +390,7 @@ define Build/Prepare
 	$(Prepare/nginx-headers-more)
 	$(Prepare/nginx-rtmp)
 	$(Prepare/nginx-ts)
+	$(Prepare/nginx-dav-ext-module)
 endef
 
 
@@ -496,6 +499,24 @@ ifeq ($(CONFIG_NGINX_LUA),y)
 	$(eval $(Download/lua-nginx))
 	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
 	$(call PatchDir,$(PKG_BUILD_DIR),./patches-lua-nginx)
+  endef
+endif
+
+
+ifeq ($(CONFIG_NGINX_DAV),y)
+  define Download/nginx-dav-ext-module
+    VERSION:=430fd774fe838a04f1a5defbf1dd571d42300cf9
+    SUBDIR:=nginx-dav-ext-module
+    FILE:=nginx-dav-ext-module-$(PKG_VERSION)-$$(VERSION).tar.gz
+    URL:=https://github.com/arut/nginx-dav-ext-module.git
+    MIRROR_HASH:=0566053a8756423ecab455fd9d218cec1e017598fcbb3d6415a06f816851611e
+    PROTO:=git
+  endef
+  $(eval $(call Download,nginx-dav-ext-module))
+
+  define Prepare/nginx-dav-ext-module
+	$(eval $(Download/nginx-dav-ext-module))
+	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
   endef
 endif
 
