@@ -86,8 +86,8 @@ define Package/nut-common
 	DEPENDS:= nut \
 		+NUT_DRIVER_SNMP:libnetsnmp \
 		+NUT_DRIVER_USB:libusb-compat \
-		+NUT_SSL:libopenssl \
-		+PACKAGE_libwrap:libwrap
+		+NUT_SSL:libopenssl
+
 endef
 
 define Package/nut-common/description
