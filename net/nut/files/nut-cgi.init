@@ -32,7 +32,6 @@ start() {
 
 	rm -f "$UPSCGI_C"
 	config_load nut_cgi
-
 	config_foreach nut_upscgi_add host
 
 	chmod 640 "$UPSCGI_C"
@@ -41,4 +40,3 @@ start() {
 stop() {
 	rm -f "$UPSCGI_C"
 }
-
