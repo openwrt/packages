@@ -84,12 +84,10 @@ build_config() {
         mkdir -p "$(dirname "$UPSD_C")"
         chmod 750 "$(dirname "$UPSD_C")"
 
-	rm -f $UPSD_C
 	rm -f $USERS_C
 	rm -f $UPSD_C
 	rm -f /var/etc/nut/nut.conf
 
-	echo "# Config file automatically generated from UCI config" > $UPS_C
 	echo "# Config file automatically generated from UCI config" > $USERS_C
 	echo "# Config file automatically generated from UCI config" > $UPSD_C
 
@@ -97,14 +95,13 @@ build_config() {
 	    if [ "$1" != "driver" ]; then
 		in_driver=
 	    else
-		echo "[$2]" >> $UPS_C
 		in_driver=true
 		have_drivers=true
 	    fi
 	}
 	option_cb() {
 	    if [ "$in_driver" = "true" ]; then
-		echo " $1 = $2" >> $UPS_C
+		[ "$1" = "runas" ] && runas="$2"
 	    fi
 	}
 
@@ -117,7 +114,6 @@ build_config() {
 	echo "MODE=netserver" >>/var/etc/nut/nut.conf
 
 	chmod 0640 $USERS_C
-	chmod 0640 $UPS_C
 	chmod 0640 $UPSD_C
 	chmod 0640 /var/etc/nut/nut.conf
 	[ -d "${statepath:-/var/run/nut}" ] || {
@@ -138,7 +134,6 @@ start() {
 
 	if [ "$have_drivers" = "true" ]; then
 	    $DEBUG /usr/sbin/upsd ${runas:+-u $runas} $OPTIONS
-	    $DEBUG /usr/sbin/upsdrvctl ${runas:+-u $runas} start
 	fi
 }
 

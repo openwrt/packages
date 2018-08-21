@@ -69,6 +69,7 @@ define Package/nut-server/install
 	$(INSTALL_DIR) $(1)/usr/share/nut
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/nut-server.init $(1)/etc/init.d/nut-server
+	$(INSTALL_BIN) ./files/nut-driver.init $(1)/etc/init.d/nut-driver
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsd $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsdrvctl $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/cmdvartab $(1)/usr/share/nut/
