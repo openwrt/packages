@@ -141,7 +141,7 @@ nut_upsmon_add() {
 	config_get password "$cfg" password
 	system="$upsname@$hostname"
 	if [ -n "$port" ]; then
-	    system="$system:$port";
+	    system="$system:$port"
 	fi
 	echo "MONITOR $system $powervalue $username $password $type" >> $UPSMON_C
 }

@@ -5,7 +5,6 @@
 #
 START=51
 
-DEFAULT=/etc/default/nut
 UPSCGI_C=/var/etc/nut/hosts.conf
 
 nut_upscgi_add() {
