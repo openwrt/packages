@@ -25,7 +25,7 @@ nut_upscgi_add() {
 	    system="$system:$port";
 	fi
 	config_get displayname "$cfg" displayname
-	echo "MONITOR $system \"$displayname\"" >> $UPSCGI_C
+	echo "MONITOR $system \"$displayname\"" >> "$UPSCGI_C"
 }
 
 start() {
