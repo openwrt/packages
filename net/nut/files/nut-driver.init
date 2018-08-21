@@ -3,7 +3,7 @@
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
-START=49
+START=
 STOP=20
 
 RUN_D=/var/run/nut
