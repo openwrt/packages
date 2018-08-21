@@ -141,6 +141,7 @@ nut_upsmon_add() {
 	echo "MONITOR $system $powervalue $username $password $type" >> $UPSMON_C
 }
 
+build_config() {
 	local runas
 
 	mkdir -p "$(dirname "$UPSMON_C")"
@@ -170,8 +171,9 @@ nut_upsmon_add() {
 		mkdir -m 0750 -p /var/run/nut
 		chown ${runas:-root}:$(id -gn ${runas:-root}) /var/run/nut
 	}
+}
 
-	exec $DEBUG /usr/sbin/upsmon $UPSMON_OPTIONS
+service_start() {
 }
 
 stop_service() {

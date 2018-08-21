@@ -77,8 +77,8 @@ nut_user_add() {
 	fi
 }
 
-start_service() {
-	local runas statepath
+build_config() {
+	local runas statepath in_driver
 
         mkdir -p "$(dirname "$UPSD_C")"
         chmod 750 "$(dirname "$UPSD_C")"
@@ -92,7 +92,6 @@ start_service() {
 	echo "# Config file automatically generated from UCI config" > $USERS_C
 	echo "# Config file automatically generated from UCI config" > $UPSD_C
 
-        local in_driver have_drivers
 	config_cb() {
 	    if [ "$1" != "driver" ]; then
 		in_driver=
@@ -128,6 +127,13 @@ start_service() {
 	if [ -n "$runas" ]; then
 		chown -R $runas:$(id -gn $runas) "$(dirname "$UPSD_C")"
 	fi
+}
+
+
+start_service() {
+	local have_drivers
+
+	build_config
 
 	if [ "$have_drivers" = "true" ]; then
 	    $DEBUG /usr/sbin/upsd ${runas:+-u $runas} $OPTIONS
@@ -153,5 +159,11 @@ stop_service() {
 }
 
 reload_service() {
-	upsd -c reload
+	local have_drivers
+
+	build_config
+
+	if [ "$have_drivers" = "true" ]; then
+		upsd -c reload
+	fi
 }
