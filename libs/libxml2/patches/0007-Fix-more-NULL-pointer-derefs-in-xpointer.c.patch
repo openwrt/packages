@@ -1,0 +1,50 @@
+From e905f08123e4a6e7731549e6f09dadff4cab65bd Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sun, 26 Jun 2016 12:38:28 +0200
+Subject: [PATCH] Fix more NULL pointer derefs in xpointer.c
+
+Found with afl-fuzz.
+---
+ xpointer.c | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/xpointer.c b/xpointer.c
+index 694d120..e643ee9 100644
+--- a/xpointer.c
++++ b/xpointer.c
+@@ -542,7 +542,7 @@ xmlXPtrNewRangeNodeObject(xmlNodePtr start, xmlXPathObjectPtr end) {
+ 	    /*
+ 	     * Empty set ...
+ 	     */
+-	    if (end->nodesetval->nodeNr <= 0)
++	    if ((end->nodesetval == NULL) || (end->nodesetval->nodeNr <= 0))
+ 		return(NULL);
+ 	    endNode = end->nodesetval->nodeTab[end->nodesetval->nodeNr - 1];
+ 	    endIndex = -1;
+@@ -1361,7 +1361,7 @@ xmlXPtrEval(const xmlChar *str, xmlXPathContextPtr ctx) {
+ 		     */
+ 		    xmlNodeSetPtr set;
+ 		    set = tmp->nodesetval;
+-		    if ((set->nodeNr != 1) ||
++		    if ((set == NULL) || (set->nodeNr != 1) ||
+ 			(set->nodeTab[0] != (xmlNodePtr) ctx->doc))
+ 			stack++;
+ 		} else
+@@ -2034,9 +2034,11 @@ xmlXPtrRangeFunction(xmlXPathParserContextPtr ctxt, int nargs) {
+ 	xmlXPathFreeObject(set);
+         XP_ERROR(XPATH_MEMORY_ERROR);
+     }
+-    for (i = 0;i < oldset->locNr;i++) {
+-	xmlXPtrLocationSetAdd(newset,
+-		xmlXPtrCoveringRange(ctxt, oldset->locTab[i]));
++    if (oldset != NULL) {
++        for (i = 0;i < oldset->locNr;i++) {
++            xmlXPtrLocationSetAdd(newset,
++                    xmlXPtrCoveringRange(ctxt, oldset->locTab[i]));
++        }
+     }
+ 
+     /*
+-- 
+2.1.4
+

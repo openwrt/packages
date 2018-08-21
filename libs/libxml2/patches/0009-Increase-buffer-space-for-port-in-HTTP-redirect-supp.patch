@@ -1,0 +1,34 @@
+From: Daniel Veillard <veillard@redhat.com>
+Date: Fri, 7 Apr 2017 17:13:28 +0200
+Subject: Increase buffer space for port in HTTP redirect support
+Origin: https://git.gnome.org/browse/libxml2/commit/?id=5dca9eea1bd4263bfa4d037ab2443de1cd730f7e
+Bug: https://bugzilla.gnome.org/show_bug.cgi?id=780690
+Bug-Debian: https://bugs.debian.org/870865
+Bug-Debian-Security: https://security-tracker.debian.org/tracker/CVE-2017-7376
+
+For https://bugzilla.gnome.org/show_bug.cgi?id=780690
+
+nanohttp.c: the code wrongly assumed a short int port value.
+---
+ nanohttp.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/nanohttp.c b/nanohttp.c
+index e109ad75..373425de 100644
+--- a/nanohttp.c
++++ b/nanohttp.c
+@@ -1423,9 +1423,9 @@ retry:
+     if (ctxt->port != 80) {
+ 	/* reserve space for ':xxxxx', incl. potential proxy */
+ 	if (proxy)
+-	    blen += 12;
++	    blen += 17;
+ 	else
+-	    blen += 6;
++	    blen += 11;
+     }
+     bp = (char*)xmlMallocAtomic(blen);
+     if ( bp == NULL ) {
+-- 
+2.11.0
+

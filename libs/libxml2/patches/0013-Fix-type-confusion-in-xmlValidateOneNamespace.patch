@@ -1,0 +1,46 @@
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Tue, 6 Jun 2017 12:56:28 +0200
+Subject: Fix type confusion in xmlValidateOneNamespace
+Origin: https://git.gnome.org/browse/libxml2/commit/?id=92b9e8c8b3787068565a1820ba575d042f9eec66
+Bug: https://bugzilla.gnome.org/show_bug.cgi?id=780228
+Bug-Debian: https://bugs.debian.org/870870
+Bug-Debian-Security: https://security-tracker.debian.org/tracker/CVE-2017-0663
+
+Comment out code that casts xmlNsPtr to xmlAttrPtr. ID types on
+namespace declarations make no practical sense anyway.
+
+Fixes bug 780228.
+
+Found with libFuzzer and ASan.
+---
+ valid.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/valid.c b/valid.c
+index 8075d3a0..c51ea290 100644
+--- a/valid.c
++++ b/valid.c
+@@ -4627,6 +4627,12 @@ xmlNodePtr elem, const xmlChar *prefix, xmlNsPtr ns, const xmlChar *value) {
+ 	}
+     }
+ 
++    /*
++     * Casting ns to xmlAttrPtr is wrong. We'd need separate functions
++     * xmlAddID and xmlAddRef for namespace declarations, but it makes
++     * no practical sense to use ID types anyway.
++     */
++#if 0
+     /* Validity Constraint: ID uniqueness */
+     if (attrDecl->atype == XML_ATTRIBUTE_ID) {
+         if (xmlAddID(ctxt, doc, value, (xmlAttrPtr) ns) == NULL)
+@@ -4638,6 +4644,7 @@ xmlNodePtr elem, const xmlChar *prefix, xmlNsPtr ns, const xmlChar *value) {
+         if (xmlAddRef(ctxt, doc, value, (xmlAttrPtr) ns) == NULL)
+ 	    ret = 0;
+     }
++#endif
+ 
+     /* Validity Constraint: Notation Attributes */
+     if (attrDecl->atype == XML_ATTRIBUTE_NOTATION) {
+-- 
+2.11.0
+

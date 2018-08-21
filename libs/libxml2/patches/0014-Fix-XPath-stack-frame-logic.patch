@@ -1,0 +1,39 @@
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 1 Jun 2017 23:12:19 +0200
+Subject: Fix XPath stack frame logic
+Origin: https://git.gnome.org/browse/libxml2/commit/?id=0f3b843b3534784ef57a4f9b874238aa1fda5a73
+Bug-Debian: https://bugs.debian.org/883790
+Bug: https://bugzilla.gnome.org/show_bug.cgi?id=783160
+Bug-Debian-Security: https://security-tracker.debian.org/tracker/CVE-2017-15412
+
+Move the calls to xmlXPathSetFrame and xmlXPathPopFrame around in
+xmlXPathCompOpEvalPositionalPredicate to make sure that the context
+object on the stack is actually protected. Otherwise, memory corruption
+can occur when calling sloppily coded XPath extension functions.
+
+Fixes bug 783160.
+---
+ xpath.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/xpath.c b/xpath.c
+index 94815075..b816bd36 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -11932,11 +11932,11 @@ xmlXPathCompOpEvalPositionalPredicate(xmlXPathParserContextPtr ctxt,
+ 		}
+ 	    }
+
+-            frame = xmlXPathSetFrame(ctxt);
+ 	    valuePush(ctxt, contextObj);
++            frame = xmlXPathSetFrame(ctxt);
+ 	    res = xmlXPathCompOpEvalToBoolean(ctxt, exprOp, 1);
+-            tmp = valuePop(ctxt);
+             xmlXPathPopFrame(ctxt, frame);
++            tmp = valuePop(ctxt);
+
+ 	    if ((ctxt->error != XPATH_EXPRESSION_OK) || (res == -1)) {
+                 while (tmp != contextObj) {
+--
+2.15.1
+

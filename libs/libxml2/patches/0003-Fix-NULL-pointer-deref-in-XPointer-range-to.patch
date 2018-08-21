@@ -1,0 +1,53 @@
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Sat, 25 Jun 2016 12:35:50 +0200
+Subject: Fix NULL pointer deref in XPointer range-to
+
+- Check for errors after evaluating first operand.
+- Add sanity check for empty stack.
+
+Found with afl-fuzz.
+---
+ result/XPath/xptr/viderror | 4 ++++
+ test/XPath/xptr/viderror   | 1 +
+ xpath.c                    | 7 ++++++-
+ 3 files changed, 11 insertions(+), 1 deletion(-)
+ create mode 100644 result/XPath/xptr/viderror
+ create mode 100644 test/XPath/xptr/viderror
+
+diff --git a/result/XPath/xptr/viderror b/result/XPath/xptr/viderror
+new file mode 100644
+index 0000000..d589882
+--- /dev/null
++++ b/result/XPath/xptr/viderror
+@@ -0,0 +1,4 @@
++
++========================
++Expression: xpointer(non-existing-fn()/range-to(id('chapter2')))
++Object is empty (NULL)
+diff --git a/test/XPath/xptr/viderror b/test/XPath/xptr/viderror
+new file mode 100644
+index 0000000..da8c53b
+--- /dev/null
++++ b/test/XPath/xptr/viderror
+@@ -0,0 +1 @@
++xpointer(non-existing-fn()/range-to(id('chapter2')))
+diff --git a/xpath.c b/xpath.c
+index 113bce6..751665b 100644
+--- a/xpath.c
++++ b/xpath.c
+@@ -14005,9 +14005,14 @@ xmlXPathCompOpEval(xmlXPathParserContextPtr ctxt, xmlXPathStepOpPtr op)
+                 xmlNodeSetPtr oldset;
+                 int i, j;
+ 
+-                if (op->ch1 != -1)
++                if (op->ch1 != -1) {
+                     total +=
+                         xmlXPathCompOpEval(ctxt, &comp->steps[op->ch1]);
++                    CHECK_ERROR0;
++                }
++                if (ctxt->value == NULL) {
++                    XP_ERROR0(XPATH_INVALID_OPERAND);
++                }
+                 if (op->ch2 == -1)
+                     return (total);
+ 
