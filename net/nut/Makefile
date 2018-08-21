@@ -75,7 +75,6 @@ define Package/nut-server/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/driver.list $(1)/usr/share/nut/
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nut_server $(1)/etc/config/nut_server
-	ln -sf /var/etc/nut/nut.conf $(1)/etc/nut/nut.conf
 	ln -sf /var/etc/nut/ups.conf $(1)/etc/nut/ups.conf
 	ln -sf /var/etc/nut/upsd.users  $(1)/etc/nut/upsd.users
 	ln -sf /var/etc/nut/upsd.conf $(1)/etc/nut/upsd.conf
@@ -94,6 +93,10 @@ endef
 define Package/nut-common/description
 $(call Package/nut/description/Default)
 This package contains the common files.
+endef
+
+define Package/nut-common/conffiles
+/etc/nut/nut.conf
 endef
 
 define Package/nut-common/install
@@ -120,6 +123,9 @@ endef
 
 define Package/nut-server/conffiles
 /etc/config/nut_server
+/etc/nut/ups.conf
+/etc/nut/upsd.conf
+/etc/nut/upsd.users
 endef
 
 define Package/nut-upsmon
@@ -141,6 +147,7 @@ endef
 
 define Package/nut-upsmon/conffiles
 /etc/config/nut_monitor
+/etc/nut/upsmon.conf
 endef
 
 define Package/nut-upsmon/install
