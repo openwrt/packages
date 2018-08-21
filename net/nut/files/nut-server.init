@@ -80,8 +80,8 @@ nut_user_add() {
 start_service() {
 	local runas statepath
 
-        mkdir -p /var/etc/nut
-	chmod -R 750 /var/etc/nut
+        mkdir -p "$(dirname "$UPSD_C")"
+        chmod 750 "$(dirname "$UPSD_C")"
 
 	rm -f $UPSD_C
 	rm -f $USERS_C
@@ -126,7 +126,7 @@ start_service() {
 	}
 
 	if [ -n "$runas" ]; then
-		chown -R $runas:$(id -gn $runas) /var/etc/nut
+		chown -R $runas:$(id -gn $runas) "$(dirname "$UPSD_C")"
 	fi
 
 	if [ "$have_drivers" = "true" ]; then

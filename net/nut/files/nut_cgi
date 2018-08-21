@@ -1,4 +1,4 @@
-#config host
+config host
 #	option upsname upsname
 #	option hostname localhost
 #	option port # optional port number

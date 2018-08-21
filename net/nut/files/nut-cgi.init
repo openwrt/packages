@@ -27,16 +27,18 @@ nut_upscgi_add() {
 }
 
 start() {
-	rm -f $UPSCGI_C
+	mkdir -p "$(dirname "$UPSCGI_C")"
+	chmod 750 "$(dirname "$UPSCGI_C")"
 
+	rm -f "$UPSCGI_C"
 	config_load nut_cgi
 
 	config_foreach nut_upscgi_add host
 
-	chmod 640 /var/etc/nut/hosts.conf
+	chmod 640 "$UPSCGI_C"
 }
 
 stop() {
-	rm -f $UPSCGI_C
+	rm -f "$UPSCGI_C"
 }
 
