@@ -9,7 +9,7 @@ NAME=emailrelay
 
 emailrelay_instance()
 {
-	local enabled mode port remote_clients server_tls server_auth extra_cmdline smarthost client_tls client_auth
+	local enabled mode port remote_clients server_tls server_auth extra_cmdline smarthost client_tls client_auth address_verifier domain anonymous
 
 	config_get_bool enabled "$1" enabled
 	config_get mode "$1" mode
@@ -21,7 +21,9 @@ emailrelay_instance()
 	config_get smarthost "$1" smarthost
 	config_get_bool client_tls "$1" client_tls
 	config_get client_auth "$1" client_auth
-
+	config_get address_verifier "$1" address_verifier
+	config_get domain "$1" domain
+	config_get_bool anonymous "$1" anonymous
 
 	[ "$enabled" = 0 ] && return 1
 
@@ -39,6 +41,9 @@ emailrelay_instance()
 			[ -n "$server_auth" ] && procd_append_param command --server-auth "$server_auth"
 			[ "$client_tls" = 1 ] && procd_append_param command --client-tls
 			[ -n "$client_auth" ] && procd_append_param command --client-auth "$client_auth"
+			[ -n "$address_verifier" ] && procd_append_param command --address-verifier "$address_verifier"
+			[ -n "$domain" ] && procd_append_param command --domain "$domain"
+			[ "$anonymous" = 1 ] && procd_append_param command --anonymous
 			;;
 		"cmdline")
 			# empty by intention (just append extra_cmdline)
