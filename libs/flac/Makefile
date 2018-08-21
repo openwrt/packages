@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=flac
 PKG_VERSION:=1.3.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://downloads.xiph.org/releases/flac/
+PKG_SOURCE_URL:=https://downloads.xiph.org/releases/flac/
 PKG_HASH:=91cfc3ed61dc40f47f050a109b08610667d73477af6ef36dcad31c31a4a8d53f
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
@@ -20,6 +20,7 @@ PKG_INSTALL:=1
 
 PKG_LICENSE:=GFDL-1.2 GPL-2 LGPL-2.1 BSD-3-Clause
 PKG_LICENSE_FILES:=README COPYING.FDL COPYING.GPL COPYING.LGPL COPYING.Xiph
+PKG_CPE_ID:=cpe:/a:flac_project:flac
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=autogen.sh aclocal.m4
