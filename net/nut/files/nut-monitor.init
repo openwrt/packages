@@ -3,6 +3,7 @@
 START=60
 USE_PROCD=1
 UPSMON_C=/var/etc/nut/upsmon.conf
+UPSMON_P=/var/run/nut/upsmon.pid
 
 nut_upsmon_conf() {
 	local cfg="$1"
@@ -178,4 +179,8 @@ stop_service() {
 
 reload_service() {
 	exec /usr/sbin/upsmon -c reload
+}
+
+running() {
+	[ -r "$UPSMON_P" ] && ps | awk '{ print $1 }' | grep -q "^$(cat $UPSMON_P)\$"
 }

@@ -518,6 +518,7 @@ CONFIGURE_ARGS += \
 	--$(if $(CONFIG_NUT_SSL),with,without)-ssl $(if $(CONFIG_NUT_SSL),--with-openssl) \
 	--without-libltdl \
 	--with-statepath=/var/run/nut \
+	--with-pidpath=/var/run/nut \
 	--with-drvpath=/lib/nut \
 	--with-user=root \
 	--with-group=root
