@@ -1,0 +1,280 @@
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Mon, 5 Jun 2017 15:37:17 +0200
+Subject: Fix handling of parameter-entity references
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Origin: https://git.gnome.org/browse/libxml2/commit/?id=e26630548e7d138d2c560844c43820b6767251e3
+Bug: https://bugzilla.gnome.org/show_bug.cgi?id=781205
+Bug-Debian: https://bugs.debian.org/863019
+Bug-Debian-Security: https://security-tracker.debian.org/tracker/CVE-2017-9049
+Bug: https://bugzilla.gnome.org/show_bug.cgi?id=781361
+Bug-Debian: https://bugs.debian.org/863018
+Bug-Debian-Security: https://security-tracker.debian.org/tracker/CVE-2017-9050
+
+There were two bugs where parameter-entity references could lead to an
+unexpected change of the input buffer in xmlParseNameComplex and
+xmlDictLookup being called with an invalid pointer.
+
+Percent sign in DTD Names
+=========================
+
+The NEXTL macro used to call xmlParserHandlePEReference. When parsing
+"complex" names inside the DTD, this could result in entity expansion
+which created a new input buffer. The fix is to simply remove the call
+to xmlParserHandlePEReference from the NEXTL macro. This is safe because
+no users of the macro require expansion of parameter entities.
+
+- xmlParseNameComplex
+- xmlParseNCNameComplex
+- xmlParseNmtoken
+
+The percent sign is not allowed in names, which are grammatical tokens.
+
+- xmlParseEntityValue
+
+Parameter-entity references in entity values are expanded but this
+happens in a separate step in this function.
+
+- xmlParseSystemLiteral
+
+Parameter-entity references are ignored in the system literal.
+
+- xmlParseAttValueComplex
+- xmlParseCharDataComplex
+- xmlParseCommentComplex
+- xmlParsePI
+- xmlParseCDSect
+
+Parameter-entity references are ignored outside the DTD.
+
+- xmlLoadEntityContent
+
+This function is only called from xmlStringLenDecodeEntities and
+entities are replaced in a separate step immediately after the function
+call.
+
+This bug could also be triggered with an internal subset and double
+entity expansion.
+
+This fixes bug 766956 initially reported by Wei Lei and independently by
+Chromium's ClusterFuzz, Hanno Böck, and Marco Grassi. Thanks to everyone
+involved.
+
+xmlParseNameComplex with XML_PARSE_OLD10
+========================================
+
+When parsing Names inside an expanded parameter entity with the
+XML_PARSE_OLD10 option, xmlParseNameComplex would call xmlGROW via the
+GROW macro if the input buffer was exhausted. At the end of the
+parameter entity's replacement text, this function would then call
+xmlPopInput which invalidated the input buffer.
+
+There should be no need to invoke GROW in this situation because the
+buffer is grown periodically every XML_PARSER_CHUNK_SIZE characters and,
+at least for UTF-8, in xmlCurrentChar. This also matches the code path
+executed when XML_PARSE_OLD10 is not set.
+
+This fixes bugs 781205 (CVE-2017-9049) and 781361 (CVE-2017-9050).
+Thanks to Marcel Böhme and Thuan Pham for the report.
+
+Additional hardening
+====================
+
+A separate check was added in xmlParseNameComplex to validate the
+buffer size.
+---
+ Makefile.am                     | 18 ++++++++++++++++++
+ parser.c                        | 18 ++++++++++--------
+ result/errors10/781205.xml      |  0
+ result/errors10/781205.xml.err  | 21 +++++++++++++++++++++
+ result/errors10/781361.xml      |  0
+ result/errors10/781361.xml.err  | 13 +++++++++++++
+ result/valid/766956.xml         |  0
+ result/valid/766956.xml.err     |  9 +++++++++
+ result/valid/766956.xml.err.rdr | 10 ++++++++++
+ runtest.c                       |  3 +++
+ test/errors10/781205.xml        |  3 +++
+ test/errors10/781361.xml        |  3 +++
+ test/valid/766956.xml           |  2 ++
+ test/valid/dtds/766956.dtd      |  2 ++
+ 14 files changed, 94 insertions(+), 8 deletions(-)
+ create mode 100644 result/errors10/781205.xml
+ create mode 100644 result/errors10/781205.xml.err
+ create mode 100644 result/errors10/781361.xml
+ create mode 100644 result/errors10/781361.xml.err
+ create mode 100644 result/valid/766956.xml
+ create mode 100644 result/valid/766956.xml.err
+ create mode 100644 result/valid/766956.xml.err.rdr
+ create mode 100644 test/errors10/781205.xml
+ create mode 100644 test/errors10/781361.xml
+ create mode 100644 test/valid/766956.xml
+ create mode 100644 test/valid/dtds/766956.dtd
+
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -422,6 +422,24 @@ Errtests : xmllint$(EXEEXT)
+ 	      if [ -n "$$log" ] ; then echo $$name result ; echo $$log ; fi ; \
+ 	      rm result.$$name error.$$name ; \
+ 	  fi ; fi ; done)
++	@echo "## Error cases regression tests (old 1.0)"
++	-@(for i in $(srcdir)/test/errors10/*.xml ; do \
++	  name=`basename $$i`; \
++	  if [ ! -d $$i ] ; then \
++	  if [ ! -f $(srcdir)/result/errors10/$$name ] ; then \
++	      echo New test file $$name ; \
++	      $(CHECKER) $(top_builddir)/xmllint --oldxml10 $$i \
++	         2> $(srcdir)/result/errors10/$$name.err \
++		 > $(srcdir)/result/errors10/$$name ; \
++	      grep "MORY ALLO" .memdump  | grep -v "MEMORY ALLOCATED : 0"; \
++	  else \
++	      log=`$(CHECKER) $(top_builddir)/xmllint --oldxml10 $$i 2> error.$$name > result.$$name ; \
++	      grep "MORY ALLO" .memdump  | grep -v "MEMORY ALLOCATED : 0"; \
++	      diff $(srcdir)/result/errors10/$$name result.$$name ; \
++	      diff $(srcdir)/result/errors10/$$name.err error.$$name` ; \
++	      if [ -n "$$log" ] ; then echo $$name result ; echo "$$log" ; fi ; \
++	      rm result.$$name error.$$name ; \
++	  fi ; fi ; done)
+ 	@echo "## Error cases stream regression tests"
+ 	-@(for i in $(srcdir)/test/errors/*.xml ; do \
+ 	  name=`basename $$i`; \
+--- a/parser.c
++++ b/parser.c
+@@ -2115,7 +2115,6 @@ static void xmlGROW (xmlParserCtxtPtr ct
+ 	ctxt->input->line++; ctxt->input->col = 1;			\
+     } else ctxt->input->col++;						\
+     ctxt->input->cur += l;				\
+-    if (*ctxt->input->cur == '%') xmlParserHandlePEReference(ctxt);	\
+   } while (0)
+ 
+ #define CUR_CHAR(l) xmlCurrentChar(ctxt, &l)
+@@ -3406,13 +3405,6 @@ xmlParseNameComplex(xmlParserCtxtPtr ctx
+ 	    len += l;
+ 	    NEXTL(l);
+ 	    c = CUR_CHAR(l);
+-	    if (c == 0) {
+-		count = 0;
+-		GROW;
+-                if (ctxt->instate == XML_PARSER_EOF)
+-                    return(NULL);
+-		c = CUR_CHAR(l);
+-	    }
+ 	}
+     }
+     if ((len > XML_MAX_NAME_LENGTH) &&
+@@ -3420,6 +3412,16 @@ xmlParseNameComplex(xmlParserCtxtPtr ctx
+         xmlFatalErr(ctxt, XML_ERR_NAME_TOO_LONG, "Name");
+         return(NULL);
+     }
++    if (ctxt->input->cur - ctxt->input->base < len) {
++        /*
++         * There were a couple of bugs where PERefs lead to to a change
++         * of the buffer. Check the buffer size to avoid passing an invalid
++         * pointer to xmlDictLookup.
++         */
++        xmlFatalErr(ctxt, XML_ERR_INTERNAL_ERROR,
++                    "unexpected change of input buffer");
++        return (NULL);
++    }
+     if ((*ctxt->input->cur == '\n') && (ctxt->input->cur[-1] == '\r'))
+         return(xmlDictLookup(ctxt->dict, ctxt->input->cur - (len + 1), len));
+     return(xmlDictLookup(ctxt->dict, ctxt->input->cur - len, len));
+--- /dev/null
++++ b/result/errors10/781205.xml.err
+@@ -0,0 +1,21 @@
++Entity: line 1: parser error : internal error: xmlParseInternalSubset: error detected in Markup declaration
++
++ %a; 
++    ^
++Entity: line 1: 
++<:0000
++^
++Entity: line 1: parser error : DOCTYPE improperly terminated
++ %a; 
++    ^
++Entity: line 1: 
++<:0000
++^
++namespace error : Failed to parse QName ':0000'
++ %a; 
++    ^
++<:0000
++      ^
++./test/errors10/781205.xml:4: parser error : Couldn't find end of Start Tag :0000 line 1
++
++^
+--- /dev/null
++++ b/result/errors10/781361.xml.err
+@@ -0,0 +1,13 @@
++./test/errors10/781361.xml:4: parser error : xmlParseElementDecl: 'EMPTY', 'ANY' or '(' expected
++
++^
++./test/errors10/781361.xml:4: parser error : internal error: xmlParseInternalSubset: error detected in Markup declaration
++
++
++^
++./test/errors10/781361.xml:4: parser error : DOCTYPE improperly terminated
++
++^
++./test/errors10/781361.xml:4: parser error : Start tag expected, '<' not found
++
++^
+--- /dev/null
++++ b/result/valid/766956.xml.err
+@@ -0,0 +1,9 @@
++test/valid/dtds/766956.dtd:2: parser error : PEReference: expecting ';'
++%ä%ent;
++   ^
++Entity: line 1: parser error : Content error in the external subset
++ %ent; 
++      ^
++Entity: line 1: 
++value
++^
+--- /dev/null
++++ b/result/valid/766956.xml.err.rdr
+@@ -0,0 +1,10 @@
++test/valid/dtds/766956.dtd:2: parser error : PEReference: expecting ';'
++%ä%ent;
++   ^
++Entity: line 1: parser error : Content error in the external subset
++ %ent; 
++      ^
++Entity: line 1: 
++value
++^
++./test/valid/766956.xml : failed to parse
+--- a/runtest.c
++++ b/runtest.c
+@@ -4202,6 +4202,9 @@ testDesc testDescriptions[] = {
+     { "Error cases regression tests",
+       errParseTest, "./test/errors/*.xml", "result/errors/", "", ".err",
+       0 },
++    { "Error cases regression tests (old 1.0)",
++      errParseTest, "./test/errors10/*.xml", "result/errors10/", "", ".err",
++      XML_PARSE_OLD10 },
+ #ifdef LIBXML_READER_ENABLED
+     { "Error cases stream regression tests",
+       streamParseTest, "./test/errors/*.xml", "result/errors/", NULL, ".str",
+--- /dev/null
++++ b/test/errors10/781205.xml
+@@ -0,0 +1,3 @@
++<!DOCTYPE D [
++  <!ENTITY % a "<:0000">
++  %a;
+--- /dev/null
++++ b/test/errors10/781361.xml
+@@ -0,0 +1,3 @@
++<!DOCTYPE doc [
++  <!ENTITY % elem "<!ELEMENT e0000000000">
++  %elem;
+--- /dev/null
++++ b/test/valid/766956.xml
+@@ -0,0 +1,2 @@
++<!DOCTYPE test SYSTEM "dtds/766956.dtd">
++<test/>
+--- /dev/null
++++ b/test/valid/dtds/766956.dtd
+@@ -0,0 +1,2 @@
++<!ENTITY % ent "value">
++%ä%ent;

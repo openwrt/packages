@@ -1,0 +1,38 @@
+From: Neel Mehta <nmehta@google.com>
+Date: Fri, 7 Apr 2017 17:43:02 +0200
+Subject: Prevent unwanted external entity reference
+Origin: https://git.gnome.org/browse/libxml2/commit/?id=90ccb58242866b0ba3edbef8fe44214a101c2b3e
+Bug: https://bugzilla.gnome.org/show_bug.cgi?id=780691
+Bug-Debian: https://bugs.debian.org/870867
+Bug-Debian-Security: https://security-tracker.debian.org/tracker/CVE-2017-7375
+
+For https://bugzilla.gnome.org/show_bug.cgi?id=780691
+
+* parser.c: add a specific check to avoid PE reference
+---
+ parser.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/parser.c b/parser.c
+index 609a2703..c2c812de 100644
+--- a/parser.c
++++ b/parser.c
+@@ -8123,6 +8123,15 @@ xmlParsePEReference(xmlParserCtxtPtr ctxt)
+ 	    if (xmlPushInput(ctxt, input) < 0)
+ 		return;
+ 	} else {
++	    if ((entity->etype == XML_EXTERNAL_PARAMETER_ENTITY) &&
++	        ((ctxt->options & XML_PARSE_NOENT) == 0) &&
++		((ctxt->options & XML_PARSE_DTDVALID) == 0) &&
++		((ctxt->options & XML_PARSE_DTDLOAD) == 0) &&
++		((ctxt->options & XML_PARSE_DTDATTR) == 0) &&
++		(ctxt->replaceEntities == 0) &&
++		(ctxt->validate == 0))
++		return;
++
+ 	    /*
+ 	     * TODO !!!
+ 	     * handle the extra spaces added before and after
+-- 
+2.11.0
+
