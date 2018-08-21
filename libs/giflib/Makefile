@@ -19,6 +19,7 @@ PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:giflib_project:giflib
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=autogen.sh aclocal.m4
