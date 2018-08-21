@@ -4,6 +4,7 @@
 # See /LICENSE for more information.
 #
 START=50
+STOP=19
 
 RUN_D=/var/run
 PID_F=$RUN_D/upsd.pid
@@ -11,7 +12,7 @@ UPS_C=/var/etc/nut/ups.conf
 USERS_C=/var/etc/nut/upsd.users
 UPSD_C=/var/etc/nut/upsd.conf
 
-USE_PROCD=1
+EXTRA_COMMANDS="${EXTRA_COMMANDS} running"
 
 listen_address() {
     local cfg="$1"
@@ -130,7 +131,7 @@ build_config() {
 }
 
 
-start_service() {
+start() {
 	local have_drivers
 
 	build_config
@@ -142,23 +143,15 @@ start_service() {
 }
 
 
-nut_driver_stop() {
-	local cfg="$1"
-	local driver
-
-	config_get driver "$cfg" driver
-
-	[ -r ${statepath:-/var/run/nut}/$driver-$cfg ] && /usr/sbin/upsdrvctl stop $cfg
+stop() {
+	[ -r $PID_F ] && /usr/sbin/upsd -c stop && rm -f $PID_F
 }
 
-stop_service() {
-	[ -r $PID_F ] && /usr/sbin/upsd -c stop
-	config_load ups
-	config_foreach upsd_statepath upsd
-	config_foreach nut_driver_stop driver
+running() {
+	[ -r $PID_F ] && ps | awk '{ print $1 }' | greq -q "^$(< $PID_F)\$"
 }
 
-reload_service() {
+reload() {
 	local have_drivers
 
 	build_config

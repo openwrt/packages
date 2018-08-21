@@ -1,10 +1,11 @@
 #!/bin/sh /etc/rc.common
 
 START=60
-USE_PROCD=1
 UPSMON_E=/etc/nut/upsmon.conf
 UPSMON_C=/var/"$UPSMON_E"
 UPSMON_P=/var/run/nut/upsmon.pid
+
+EXTRA_COMMANDS="${EXTRA_COMMANDS} running"
 
 nut_upsmon_conf() {
 	local cfg="$1"
@@ -173,15 +174,20 @@ build_config() {
 	}
 }
 
-service_start() {
+start() {
+	build_config
+
+	$DEBUG /usr/sbin/upsmon $UPSMON_OPTIONS
 }
 
-stop_service() {
-	exec /usr/sbin/upsmon -c stop
+stop() {
+	/usr/sbin/upsmon -c stop
 }
 
-reload_service() {
-	exec /usr/sbin/upsmon -c reload
+reload() {
+	build_config
+
+	/usr/sbin/upsmon -c reload
 }
 
 running() {
