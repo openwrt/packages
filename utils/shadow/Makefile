@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadow
-PKG_VERSION:=4.2.1
-PKG_RELEASE:=8
+PKG_VERSION:=4.6
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://pkg-shadow.alioth.debian.org/releases
-PKG_HASH:=3b0893d1476766868cd88920f4f1231c4795652aa407569faff802bcda0f3d41
+PKG_SOURCE_URL:=https://github.com/shadow-maint/shadow/releases/download/$(PKG_VERSION)
+PKG_HASH:=0998c8d84242a231ab0acb7f8613927ff5bcff095f8aa6b79478893a03f05583
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=BSD-3-Clause
 
@@ -44,7 +44,7 @@ define Package/shadow/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=The PLD Linux shadow utilities
-  URL:=http://pkg-shadow.alioth.debian.org/
+  URL:=https://github.com/shadow-maint/shadow
 endef
 
 define Package/shadow
