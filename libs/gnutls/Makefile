@@ -18,6 +18,7 @@ PKG_HASH:=0924dec90c37c05f49fec966eba3672dab4d336d879e5c06e06e13325cbfec25
 #PKG_FIXUP:=autoreconf gettext-version
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <nmav@gnutls.org>
 PKG_LICENSE:=LGPLv2.1+
+PKG_CPE_ID:=cpe:/a:gnu:gnutls
 
 PKG_INSTALL:=1
 PKG_LIBTOOL_PATHS:=. lib
