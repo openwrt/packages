@@ -1,3 +1,10 @@
+#
+# Copyright (C) 2006,2015 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v3.
+# See /LICENSE for more information.
+#
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apfree-wifidog
@@ -12,7 +19,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/liudf0716/apfree_wifidog.git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MIRROR_HASH:=dc1a052bd61c1224dda9548475c1feda9332c40fc2190ca6e4901d432379b51c
 
 PKG_INSTALL:=1
