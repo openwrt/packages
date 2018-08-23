@@ -52,6 +52,7 @@ define Package/libiio
   TITLE:=Library for interfacing with Linux IIO devices
   URL:=https://github.com/analogdevicesinc/libiio
   DEPENDS:=\
+           +zlib \
            +LIBIIO_USB_BACKEND:libusb-1.0 \
            +LIBIIO_NETWORK_BACKEND:libavahi-client \
            +LIBIIO_XML_BACKEND:libxml2
