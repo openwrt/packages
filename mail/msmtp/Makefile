@@ -9,18 +9,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msmtp
-PKG_VERSION:=1.6.6
+PKG_VERSION:=1.6.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@SF/msmtp
-PKG_HASH:=da15db1f62bd0201fce5310adb89c86188be91cd745b7cb3b62b81a501e7fb5e
+PKG_SOURCE_URL:=https://marlam.de/msmtp/releases
+PKG_HASH:=55ff95a304d888b56d07d9c62327ab9bfe26532c9c2a2ed6aefc43bea1b659fb
 
 PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
+PKG_MAINTAINER:=
 
-PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
@@ -33,7 +33,7 @@ define Package/msmtp/Default
   CATEGORY:=Mail
   DEPENDS:=$(INTL_DEPENDS)
   TITLE:=Simple sendmail SMTP forwarding
-  URL:=http://msmtp.sourceforge.net/
+  URL:=https://marlam.de/msmtp
 endef
 
 define Package/msmtp/Default/description
