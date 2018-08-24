@@ -1,0 +1,38 @@
+#!/bin/sh
+
+perform_libhid_action() {
+	[ "$ACTION" = "add" ] && {
+		. /lib/functions.sh
+
+		local in_driver have_drivers statepath
+		config_cb() {
+			if [ "$1" != "driver" ]; then
+				in_driver=
+			else
+				in_driver=true
+				have_drivers=true
+			fi
+		}
+
+		option_cb() {
+			if [ "$in_driver" = "true" ]; then
+				[ "$1" = "runas" ] && runas="$2"
+			fi
+		}
+
+		config_load nut_server
+
+		[ -n "$DEVNAME" ] && {
+			chmod 0660 /dev/"$DEVNAME"
+			chown ${runas:-root}:${runas:-root} /dev/"$DEVNAME"
+		}
+
+		/etc/init.d/nut-driver start
+	}
+
+	[ "$ACTION" = "remove" ] && {
+		/etc/init.d/nut-driver stop
+	}
+}
+
+[ -n "$PRODUCT" ] && case "$PRODUCT" in

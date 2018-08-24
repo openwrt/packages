@@ -1,10 +1,10 @@
 #!/bin/sh /etc/rc.common
-# Copyright © 2012 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
 START=50
+STOP=19
 
 RUN_D=/var/run
 PID_F=$RUN_D/upsd.pid
@@ -12,7 +12,7 @@ UPS_C=/var/etc/nut/ups.conf
 USERS_C=/var/etc/nut/upsd.users
 UPSD_C=/var/etc/nut/upsd.conf
 
-USE_PROCD=1
+EXTRA_COMMANDS="${EXTRA_COMMANDS} running"
 
 listen_address() {
     local cfg="$1"
@@ -78,34 +78,30 @@ nut_user_add() {
 	fi
 }
 
-start_service() {
-	local runas statepath
+build_config() {
+	local runas statepath in_driver
 
-        mkdir -p /var/etc/nut
-	chmod -R 750 /var/etc/nut
+        mkdir -p "$(dirname "$UPSD_C")"
+        chmod 750 "$(dirname "$UPSD_C")"
 
-	rm -f $UPSD_C
 	rm -f $USERS_C
 	rm -f $UPSD_C
 	rm -f /var/etc/nut/nut.conf
 
-	echo "# Config file automatically generated from UCI config" > $UPS_C
 	echo "# Config file automatically generated from UCI config" > $USERS_C
 	echo "# Config file automatically generated from UCI config" > $UPSD_C
 
-        local in_driver have_drivers
 	config_cb() {
 	    if [ "$1" != "driver" ]; then
 		in_driver=
 	    else
-		echo "[$2]" >> $UPS_C
 		in_driver=true
 		have_drivers=true
 	    fi
 	}
 	option_cb() {
 	    if [ "$in_driver" = "true" ]; then
-		echo " $1 = $2" >> $UPS_C
+		[ "$1" = "runas" ] && runas="$2"
 	    fi
 	}
 
@@ -118,7 +114,6 @@ start_service() {
 	echo "MODE=netserver" >>/var/etc/nut/nut.conf
 
 	chmod 0640 $USERS_C
-	chmod 0640 $UPS_C
 	chmod 0640 $UPSD_C
 	chmod 0640 /var/etc/nut/nut.conf
 	[ -d "${statepath:-/var/run/nut}" ] || {
@@ -127,32 +122,36 @@ start_service() {
 	}
 
 	if [ -n "$runas" ]; then
-		chown -R $runas:$(id -gn $runas) /var/etc/nut
+		chown -R $runas:$(id -gn $runas) "$(dirname "$UPSD_C")"
 	fi
+}
+
+
+start() {
+	local have_drivers
+
+	build_config
 
 	if [ "$have_drivers" = "true" ]; then
 	    $DEBUG /usr/sbin/upsd ${runas:+-u $runas} $OPTIONS
-	    $DEBUG /usr/sbin/upsdrvctl ${runas:+-u $runas} start
 	fi
 }
 
 
-nut_driver_stop() {
-	local cfg="$1"
-	local driver
-
-	config_get driver "$cfg" driver
-
-	[ -r ${statepath:-/var/run/nut}/$driver-$cfg ] && /usr/sbin/upsdrvctl stop $cfg
+stop() {
+	[ -r $PID_F ] && /usr/sbin/upsd -c stop && rm -f $PID_F
 }
 
-stop_service() {
-	[ -r $PID_F ] && /usr/sbin/upsd -c stop
-	config_load ups
-	config_foreach upsd_statepath upsd
-	config_foreach nut_driver_stop driver
+running() {
+	[ -r $PID_F ] && ps | awk '{ print $1 }' | greq -q "^$(< $PID_F)\$"
 }
 
-reload_service() {
-	upsd -c reload
+reload() {
+	local have_drivers
+
+	build_config
+
+	if [ "$have_drivers" = "true" ]; then
+		upsd -c reload
+	fi
 }

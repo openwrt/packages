@@ -11,11 +11,11 @@
 #	list instcmd optional-instant-command
 #	option upsmon slave|master
 
-#config listen_address
+config listen_address
 #	option address ::1
 #	option port 3493
 
-#config upsd 'upsd'
+config upsd 'upsd'
 #	option maxage 15
 #	option statepath /var/run/nut
 #	option maxconn 1024

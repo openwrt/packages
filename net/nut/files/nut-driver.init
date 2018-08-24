@@ -1,0 +1,115 @@
+#!/bin/sh /etc/rc.common
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+START=
+STOP=20
+
+RUN_D=/var/run/nut
+UPS_C=/var/etc/nut/ups.conf
+
+EXTRA_COMMAND="running shutdown"
+
+upsd_statepath() {
+    local cfg="$1"
+    config_get statepath "$cfg" statepath
+}
+
+start() {
+	local runas statepath
+
+        mkdir -p "$(dirname "$UPS_C")"
+        chown 750 "$(dirname "$UPS_C")"
+
+	rm -f $UPS_C
+
+	echo "# Config file automatically generated from UCI config" > $UPS_C
+
+        local in_driver have_drivers
+	config_cb() {
+	    if [ "$1" != "driver" ]; then
+		in_driver=
+	    else
+		echo "[$2]" >> $UPS_C
+		in_driver=true
+		have_drivers=true
+	    fi
+	}
+	option_cb() {
+	    if [ "$in_driver" = "true" ]; then
+		[ "$1" = "runas" ] && runas="$2" || echo " $1 = $2" >> $UPS_C
+	    fi
+	}
+
+	config_load nut_server
+
+	config_foreach upsd_statepath upsd
+
+	chmod 0640 $UPS_C
+
+	[ -d "${statepath:-/var/run/nut}" ] || {
+		mkdir -m 0750 -p "${statepath:-/var/run/nut}"
+		chown $runas:$(id -gn $runas) "${statepath:-/var/run/nut}"
+	}
+
+	if [ -n "$runas" ]; then
+		chown -R $runas:$(id -gn $runas) /var/etc/nut
+	fi
+
+	if [ "$have_drivers" = "true" ]; then
+	    $DEBUG /usr/sbin/upsdrvctl ${runas:+-u $runas} start
+	fi
+}
+
+
+nut_driver_stop() {
+	local cfg="$1"
+	local driver
+
+	config_get driver "$cfg" driver
+
+	[ -r ${statepath:-/var/run/nut}/$driver-$cfg ] && /usr/sbin/upsdrvctl stop $cfg
+}
+
+nut_driver_shutdown() {
+	local cfg="$1"
+	local driver
+
+	config_get driver "$cfg" driver
+
+	[ -r ${statepath:-/var/run/nut}/$driver-$cfg ] && /usr/sbin/upsdrvctl shutdown $cfg
+}
+
+nut_driver_running() {
+	local cfg="$1"
+	local driver
+
+	config_get driver "$cfg" driver
+	driver_pid="${statepath:-/var/run/nut}/$driver-$cfg"
+
+	[ -r "$driver_pid" ] && ps | awk '{ print $1 }' | grep -q "^$(< "$driver_id")\$" || driver_running=1
+
+}
+
+stop() {
+	config_load nut_server
+	config_foreach upsd_statepath upsd
+	config_foreach nut_driver_stop driver
+}
+
+running() {
+	local driver_running=0
+
+	config_load nut_server
+	config_foreach upsd_statepath upsd
+	config_foreach nut_driver_running driver
+
+	return $driver_running
+}
+
+shutdown() {
+	config_load nut_server
+	config_foreach upsd_statepath upsd
+	config_foreach nut_driver_shutdown driver
+}

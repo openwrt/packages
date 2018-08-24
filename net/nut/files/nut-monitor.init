@@ -1,8 +1,11 @@
 #!/bin/sh /etc/rc.common
 
 START=60
-USE_PROCD=1
-UPSMON_C=/var/etc/nut/upsmon.conf
+UPSMON_E=/etc/nut/upsmon.conf
+UPSMON_C=/var/"$UPSMON_E"
+UPSMON_P=/var/run/nut/upsmon.pid
+
+EXTRA_COMMANDS="${EXTRA_COMMANDS} running"
 
 nut_upsmon_conf() {
 	local cfg="$1"
@@ -126,12 +129,6 @@ nut_upsmon_add() {
 	local password
 	local system
 
-	# if UPSMON_C is a symlink we're only doing generated config
-	[ -L $UPSMON_C ] && {
-		rm -f $UPSMON_C
-		nut_upsmon_conf ""
-	}
-
 	config_get upsname "$cfg" upsname
 	config_get hostname "$cfg" hostname localhost
 	config_get port "$cfg" port
@@ -140,14 +137,21 @@ nut_upsmon_add() {
 	config_get password "$cfg" password
 	system="$upsname@$hostname"
 	if [ -n "$port" ]; then
-	    system="$system:$port";
+	    system="$system:$port"
 	fi
 	echo "MONITOR $system $powervalue $username $password $type" >> $UPSMON_C
 }
 
-start_service() {
+build_config() {
+	local runas
+
 	mkdir -p "$(dirname "$UPSMON_C")"
 	chmod 750 "$(dirname "$UPSMON_C")"
+
+	# if UPSMON_E is a symlink we're doing generated config
+	[ -L "$UPSMON_E" ] && {
+		rm -f "$UPSMON_C"
+	}
 
 	config_load nut_monitor
 
@@ -168,14 +172,24 @@ start_service() {
 		mkdir -m 0750 -p /var/run/nut
 		chown ${runas:-root}:$(id -gn ${runas:-root}) /var/run/nut
 	}
-
-	exec $DEBUG /usr/sbin/upsmon $UPSMON_OPTIONS
 }
 
-stop_service() {
-	exec /usr/sbin/upsmon -c stop
+start() {
+	build_config
+
+	$DEBUG /usr/sbin/upsmon $UPSMON_OPTIONS
 }
 
-reload_service() {
-	exec /usr/sbin/upsmon -c reload
+stop() {
+	/usr/sbin/upsmon -c stop
+}
+
+reload() {
+	build_config
+
+	/usr/sbin/upsmon -c reload
+}
+
+running() {
+	[ -r "$UPSMON_P" ] && ps | awk '{ print $1 }' | grep -q "^$(cat $UPSMON_P)\$"
 }

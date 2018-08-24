@@ -1,12 +1,10 @@
 #!/bin/sh /etc/rc.common
-# Copyright © 2012 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
 START=51
 
-DEFAULT=/etc/default/nut
 UPSCGI_C=/var/etc/nut/hosts.conf
 
 nut_upscgi_add() {
@@ -29,16 +27,16 @@ nut_upscgi_add() {
 }
 
 start() {
-	rm -f $UPSCGI_C
+	mkdir -p "$(dirname "$UPSCGI_C")"
+	chmod 750 "$(dirname "$UPSCGI_C")"
 
+	rm -f "$UPSCGI_C"
 	config_load nut_cgi
-
 	config_foreach nut_upscgi_add host
 
-	chmod 640 /var/etc/nut/hosts.conf
+	chmod 640 "$UPSCGI_C"
 }
 
 stop() {
-	rm -f $UPSCGI_C
+	rm -f "$UPSCGI_C"
 }
-

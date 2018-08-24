@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
 PKG_VERSION:=2.7.4
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.networkupstools.org/source/2.7/
@@ -69,13 +69,13 @@ define Package/nut-server/install
 	$(INSTALL_DIR) $(1)/usr/share/nut
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/nut-server.init $(1)/etc/init.d/nut-server
+	$(INSTALL_BIN) ./files/nut-driver.init $(1)/etc/init.d/nut-driver
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsd $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsdrvctl $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/cmdvartab $(1)/usr/share/nut/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/driver.list $(1)/usr/share/nut/
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nut_server $(1)/etc/config/nut_server
-	ln -sf /var/etc/nut/nut.conf $(1)/etc/nut/nut.conf
 	ln -sf /var/etc/nut/ups.conf $(1)/etc/nut/ups.conf
 	ln -sf /var/etc/nut/upsd.users  $(1)/etc/nut/upsd.users
 	ln -sf /var/etc/nut/upsd.conf $(1)/etc/nut/upsd.conf
@@ -87,13 +87,17 @@ define Package/nut-common
 	DEPENDS:= nut \
 		+NUT_DRIVER_SNMP:libnetsnmp \
 		+NUT_DRIVER_USB:libusb-compat \
-		+NUT_SSL:libopenssl \
-		+PACKAGE_libwrap:libwrap
+		+NUT_SSL:libopenssl
+
 endef
 
 define Package/nut-common/description
 $(call Package/nut/description/Default)
 This package contains the common files.
+endef
+
+define Package/nut-common/conffiles
+/etc/nut/nut.conf
 endef
 
 define Package/nut-common/install
@@ -120,6 +124,9 @@ endef
 
 define Package/nut-server/conffiles
 /etc/config/nut_server
+/etc/nut/ups.conf
+/etc/nut/upsd.conf
+/etc/nut/upsd.users
 endef
 
 define Package/nut-upsmon
@@ -141,6 +148,7 @@ endef
 
 define Package/nut-upsmon/conffiles
 /etc/config/nut_monitor
+/etc/nut/upsmon.conf
 endef
 
 define Package/nut-upsmon/install
@@ -511,6 +519,7 @@ CONFIGURE_ARGS += \
 	--$(if $(CONFIG_NUT_SSL),with,without)-ssl $(if $(CONFIG_NUT_SSL),--with-openssl) \
 	--without-libltdl \
 	--with-statepath=/var/run/nut \
+	--with-pidpath=/var/run/nut \
 	--with-drvpath=/lib/nut \
 	--with-user=root \
 	--with-group=root
