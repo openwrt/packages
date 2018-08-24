@@ -1,0 +1,49 @@
+diff -Nurb dfu-util-0.9/src/dfuse.c dfu-util-0.9-l4/src/dfuse.c
+--- dfu-util-0.9/src/dfuse.c	2016-01-18 23:28:00.000000000 +0000
++++ dfu-util-0.9-l4/src/dfuse.c	2018-01-08 16:40:32.672442374 +0000
+@@ -171,6 +171,7 @@
+ 	int ret;
+ 	struct dfu_status dst;
+ 	int firstpoll = 1;
++	int retries = 0;
+ 
+ 	if (command == ERASE_PAGE) {
+ 		struct memsegment *segment;
+@@ -215,8 +216,14 @@
+ 			dfuse_command_name[command]);
+ 	}
+ 	do {
++retry:
+ 		ret = dfu_get_status(dif, &dst);
+ 		if (ret < 0) {
++			if (++retries < 10) {
++				usleep(10);
++				goto retry;
++			}
++
+ 			errx(EX_IOERR, "Error during special command \"%s\" get_status",
+ 			     dfuse_command_name[command]);
+ 		}
+@@ -256,6 +263,7 @@
+ 	int bytes_sent;
+ 	struct dfu_status dst;
+ 	int ret;
++	int retries = 0;
+ 
+ 	ret = dfuse_download(dif, size, size ? data : NULL, transaction);
+ 	if (ret < 0) {
+@@ -265,8 +273,14 @@
+ 	bytes_sent = ret;
+ 
+ 	do {
++retry:
+ 		ret = dfu_get_status(dif, &dst);
+ 		if (ret < 0) {
++			if (++retries < 10) {
++				usleep(10);
++				goto retry;
++			}
++
+ 			errx(EX_IOERR, "Error during download get_status");
+ 			return ret;
+ 		}
