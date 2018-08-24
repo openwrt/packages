@@ -52,6 +52,13 @@
 	## disable loading of all printcap printers by default (iprint, cups, lpstat)
 	load printers = No
 	printcap name = /dev/null
+
+	## Enabling this parameter will disable Samba's support for the SPOOLSS set of MS-RPC's.
+	disable spoolss = yes
+	
+	## This parameters controls how printer status information is interpreted on your system.
+	## (BSD, AIX, LPRNG, PLP, SYSV, HPUX, QNX, SOFTQ)
+	printing = bsd
 	
 	## Disable that nmbd is acting as a WINS server for unknow netbios names
 	#dns proxy = No
