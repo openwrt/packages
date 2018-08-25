@@ -1,0 +1,48 @@
+commit a1110e24e5be53ba5fe9ab82372c02a60da06cf9
+Author: Emeric Brun <ebrun@haproxy.com>
+Date:   Tue Jul 17 09:47:07 2018 -0400
+
+    BUG/MINOR: map: fix map_regm with backref
+    
+    Due to a cascade of get_trash_chunk calls the sample is
+    corrupted when we want to read it.
+    
+    The fix consist to use a temporary chunk to copy the sample
+    value and use it.
+    
+    (cherry picked from commit 271022150d7961b9aa39dbfd88e0c6a4bc48c3ee)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/map.c b/src/map.c
+index a9a1e53c..da399088 100644
+--- a/src/map.c
++++ b/src/map.c
+@@ -184,10 +184,27 @@ static int sample_conv_map(const struct arg *arg_p, struct sample *smp, void *pr
+ 		if (pat->data) {
+ 			/* In the regm case, merge the sample with the input. */
+ 			if ((long)private == PAT_MATCH_REGM) {
++				struct chunk *tmptrash;
++
++				/* Copy the content of the sample because it could
++				   be scratched by incoming get_trash_chunk */
++				tmptrash = alloc_trash_chunk();
++				if (!tmptrash)
++					return 0;
++
++				tmptrash->len = smp->data.u.str.len;
++				if (tmptrash->len > (tmptrash->size-1))
++					tmptrash->len = tmptrash->size-1;
++
++				memcpy(tmptrash->str, smp->data.u.str.str, tmptrash->len);
++				tmptrash->str[tmptrash->len] = 0;
++
+ 				str = get_trash_chunk();
+-				str->len = exp_replace(str->str, str->size, smp->data.u.str.str,
++				str->len = exp_replace(str->str, str->size, tmptrash->str,
+ 				                       pat->data->u.str.str,
+ 				                       (regmatch_t *)smp->ctx.a[0]);
++
++				free_trash_chunk(tmptrash);
+ 				if (str->len == -1)
+ 					return 0;
+ 				smp->data.u.str = *str;

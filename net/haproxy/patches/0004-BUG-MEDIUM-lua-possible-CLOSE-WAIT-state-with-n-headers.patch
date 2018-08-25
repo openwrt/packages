@@ -1,0 +1,72 @@
+commit d804e5e6b76bfd34576305ff33fe32aacb1fa5b7
+Author: Thierry FOURNIER <thierry.fournier@ozon.io>
+Date:   Sat Jun 30 10:37:33 2018 +0200
+
+    BUG/MEDIUM: lua: possible CLOSE-WAIT state with '\n' headers
+    
+    The Lua parser doesn't takes in account end-of-headers containing
+    only '\n'. It expects always '\r\n'. If a '\n' is processes the Lua
+    parser considers it miss 1 byte, and wait indefinitely for new data.
+    
+    When the client reaches their timeout, it closes the connection.
+    This close is not detected and the connection keep in CLOSE-WAIT
+    state.
+    
+    I guess that this patch fix only a visible part of the problem.
+    If the Lua HTTP parser wait for data, the timeout server or the
+    connectio closed by the client may stop the applet.
+    
+    How reproduce the problem:
+    
+    HAProxy conf:
+    
+       global
+          lua-load bug38.lua
+       frontend frt
+          timeout client 2s
+          timeout server 2s
+          mode http
+          bind *:8080
+          http-request use-service lua.donothing
+    
+    Lua conf
+    
+       core.register_service("donothing", "http", function(applet) end)
+    
+    Client request:
+    
+       echo -ne 'GET / HTTP/1.1\n\n' | nc 127.0.0.1 8080
+    
+    Look for CLOSE-WAIT in the connection with "netstat" or "ss". I
+    use this script:
+    
+       while sleep 1; do ss | grep CLOSE-WAIT; done
+    
+    This patch must be backported in 1.6, 1.7 and 1.8
+    
+    Workaround: enable the "hard-stop-after" directive, and perform
+    periodic reload.
+    
+    (cherry picked from commit 70d318ccb760ee25f166a75d163f38545f074ff1)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/hlua.c b/src/hlua.c
+index 54064860..4e50fa64 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -6594,13 +6594,13 @@ static void hlua_applet_http_fct(struct appctx *ctx)
+ 			len2 = 0;
+ 		if (ret == 0)
+ 			len1 = 0;
+-		if (len1 + len2 < strm->txn->req.eoh + 2) {
++		if (len1 + len2 < strm->txn->req.eoh + strm->txn->req.eol) {
+ 			si_applet_cant_get(si);
+ 			return;
+ 		}
+ 
+ 		/* skip the requests bytes. */
+-		co_skip(si_oc(si), strm->txn->req.eoh + 2);
++		co_skip(si_oc(si), strm->txn->req.eoh + strm->txn->req.eol);
+ 	}
+ 
+ 	/* Executes The applet if it is not done. */

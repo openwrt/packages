@@ -1,0 +1,41 @@
+commit ad84851746243d85f9be59703e9bee0f5c5f8eba
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Wed Feb 14 14:16:28 2018 +0100
+
+    BUG/MEDIUM: threads: fix the double CAS implementation for ARMv7
+    
+    Commit f61f0cb ("MINOR: threads: Introduce double-width CAS on x86_64
+    and arm.") introduced the double CAS. But the ARMv7 version is bogus,
+    it uses the value of the pointers instead of dereferencing them. When
+    lucky, it simply doesn't build due to impossible registers combinations.
+    Otherwise it will immediately crash at run time when facing traffic.
+    
+    No backport is needed, this bug was introduced in 1.9-dev.
+    
+    (cherry picked from commit 41ccb194d1d14669e0592e5373ef5776f099e82a)
+    [wt: backported only to keep safe code eventhough we don't use
+     this function in 1.8]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/include/common/hathreads.h b/include/common/hathreads.h
+index 543ab95c..4e72848e 100644
+--- a/include/common/hathreads.h
++++ b/include/common/hathreads.h
+@@ -766,7 +766,7 @@ __ha_barrier_full(void)
+ 	__asm __volatile("dmb" ::: "memory");
+ }
+ 
+-static __inline int __ha_cas_dw(void *target, void *compare, void *set)
++static __inline int __ha_cas_dw(void *target, void *compare, const void *set)
+ {
+ 	uint64_t previous;
+ 	int tmp;
+@@ -780,7 +780,7 @@ static __inline int __ha_cas_dw(void *target, void *compare, void *set)
+ 			 "cmpeq %1, #1;"
+ 			 "beq 1b;"
+ 			 : "=&r" (previous), "=&r" (tmp)
+-			 : "r" (compare), "r" (set), "r" (target)
++			 : "r" (*(uint64_t *)compare), "r" (*(uint64_t *)set), "r" (target)
+ 			 : "memory", "cc");
+ 	tmp = (previous == *(uint64_t *)compare);
+ 	*(uint64_t *)compare = previous;
