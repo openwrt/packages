@@ -1,0 +1,43 @@
+commit 8c2e3b35a951c41b80efe4c3368d1244bab2bea4
+Author: Emeric Brun <ebrun@haproxy.com>
+Date:   Thu Aug 16 11:36:40 2018 +0200
+
+    BUG/MINOR: ssl: empty connections reported as errors.
+    
+    Empty connection is reported as handshake error
+    even if dont-log-null is specified.
+    
+    This bug affect is a regression du to:
+    
+    BUILD: ssl: fix to build (again) with boringssl
+    
+    New openssl 1.1.1 defines OPENSSL_NO_HEARTBEATS as boring ssl
+    so the test was replaced by OPENSSL_IS_BORINGSSL
+    
+    This fix should be backported on 1.8
+    
+    (cherry picked from commit 77e8919fc6f382f3a7facdc814b8618b8987200f)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 7edfb799..49389f01 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -5121,7 +5121,7 @@ int ssl_sock_handshake(struct connection *conn, unsigned int flag)
+ 				if (!errno && conn->flags & CO_FL_WAIT_L4_CONN)
+ 					conn->flags &= ~CO_FL_WAIT_L4_CONN;
+ 				if (!conn->err_code) {
+-#ifdef OPENSSL_NO_HEARTBEATS  /* BoringSSL */
++#ifdef OPENSSL_IS_BORINGSSL /* BoringSSL */
+ 					conn->err_code = CO_ER_SSL_HANDSHAKE;
+ #else
+ 					int empty_handshake;
+@@ -5205,7 +5205,7 @@ check_error:
+ 			if (!errno && conn->flags & CO_FL_WAIT_L4_CONN)
+ 				conn->flags &= ~CO_FL_WAIT_L4_CONN;
+ 			if (!conn->err_code) {
+-#ifdef OPENSSL_NO_HEARTBEATS  /* BoringSSL */
++#ifdef OPENSSL_IS_BORINGSSL  /* BoringSSL */
+ 				conn->err_code = CO_ER_SSL_HANDSHAKE;
+ #else
+ 				int empty_handshake;

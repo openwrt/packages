@@ -1,0 +1,27 @@
+commit 9923082f94e0af83d03e030f4274d3db374b248c
+Author: Emeric Brun <ebrun@haproxy.com>
+Date:   Thu Aug 16 15:11:12 2018 +0200
+
+    BUG/MEDIUM: ssl: fix missing error loading a keytype cert from a bundle.
+    
+    If there was an issue loading a keytype's part of a bundle, the bundle
+    was implicitly ignored without errors.
+    
+    This patch should be backported in 1.8 (and perhaps 1.7)
+    
+    (cherry picked from commit eb155b6ca6c1a8aaffa30285d453909b97979f5f)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 49389f01..9f0ff1f0 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -3475,7 +3475,7 @@ int ssl_sock_load_cert(char *path, struct bind_conf *bind_conf, char **err)
+ 						}
+ 
+ 						snprintf(fp, sizeof(fp), "%s/%s", path, dp);
+-						ssl_sock_load_multi_cert(fp, bind_conf, NULL, NULL, 0, err);
++						cfgerr += ssl_sock_load_multi_cert(fp, bind_conf, NULL, NULL, 0, err);
+ 
+ 						/* Successfully processed the bundle */
+ 						goto ignore_entry;
