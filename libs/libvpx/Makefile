@@ -19,6 +19,7 @@ PKG_SOURCE_URL:=https://chromium.googlesource.com/webm/libvpx
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_CPE_ID:=cpe:/a:john_koleszar:libvpx
 
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 
