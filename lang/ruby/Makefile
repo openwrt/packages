@@ -23,6 +23,7 @@ PKG_HASH:=886ac5eed41e3b5fc699be837b0087a6a5a3d10f464087560d2d21b3e71b754d
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:ruby-lang:ruby
 
 PKG_BUILD_DEPENDS:=ruby/host
 PKG_INSTALL:=1
