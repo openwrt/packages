@@ -11,8 +11,8 @@ PKG_NAME:=quassel-irssi
 
 # quassel-irssi upstream doesn't release versions (at least, at the moment),
 # so use commit date for PKG_VERSION and embed commit hash into PKG_RELEASE.
-PKG_VERSION:=2016-09-11
-PKG_SOURCE_VERSION:=cbd9bd7f4ac44260d9fcafb809fdf153cde193e5
+PKG_VERSION:=2017-11-30
+PKG_SOURCE_VERSION:=079be662dde374a383646256108a4974c2bc7796
 PKG_RELEASE:=1.$(PKG_SOURCE_VERSION)
 
 PKG_LICENSE:=GPL-3.0+
@@ -21,10 +21,11 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/phhusson/quassel-irssi
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.bz2
-PKG_MIRROR_HASH:=fd13b2497e3b0d0779e0ce3d8b27c37e207d2a73b5b6dc0cb2799bd4472fc5e1
+PKG_MIRROR_HASH:=2236a879e6c21f030392b6883348eb49be4390dbb4f2c8ec5ae6068781b4a4a9
 
 PKG_MAINTAINER:=Ben Rosser <rosser.bjr@gmail.com>
 
+PKG_BUILD_PARALLEL:=0
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
