@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pianod
 PKG_VERSION:=174.07
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://github.com/thess/pianod-sc/releases/download/$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -59,6 +59,7 @@ define Package/pianod-client/description
 endef
 
 CONFIGURE_ARGS+= --with-mbedtls
+CONFIGURE_VARS+= ac_cv_search_fgetln=no ac_cv_search_getprogname=no
 
 PIANOD_CLIENT:=pianod-client-compiled-51.tar.gz
 
