@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=LVM2
 PKG_VERSION:=2.02.181
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0 LGPL-2.1
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tgz
@@ -40,7 +40,7 @@ define Package/lvm2
   SUBMENU:=Disc
   TITLE:=The Linux Logical Volume Manager
   URL:=https://sourceware.org/lvm2/
-  DEPENDS:=+libdevmapper +libblkid +libreadline +libncurses +libaio
+  DEPENDS:=+libdevmapper +libblkid +libreadline +libncurses +libaio +@KERNEL_AIO
 endef
 
 define Package/lvm2/description
