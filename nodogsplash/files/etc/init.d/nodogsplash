@@ -136,11 +136,11 @@ generate_uci_config() {
 
   addline "GatewayInterface $ifname"
 
-  for option in binauth daemon debuglevel maxclients gatewayname \
-    gatewayinterface gatewayiprange gatewayaddress gatewayport webroot \
-    splashpage statuspage imagesdir pagesdir redirecturl preauthidletimeout \
-    authidletimeout checkinterval setmss mssvalue trafficcontrol \
-    downloadlimit uploadlimit downloadimq uploadimq syslogfacility \
+  for option in binauth fasport fasremoteip faspath fas_secure_enabled \
+    daemon debuglevel maxclients gatewayname gatewayinterface gatewayiprange \
+    gatewayaddress gatewayport webroot splashpage statuspage imagesdir pagesdir \
+    redirecturl preauthidletimeout authidletimeout checkinterval setmss mssvalue \
+    trafficcontrol downloadlimit uploadlimit downloadimq uploadimq syslogfacility \
     ndsctlsocket fw_mark_authenticated fw_mark_blocked fw_mark_trusted
   do
     config_get val "$cfg" "$option"
