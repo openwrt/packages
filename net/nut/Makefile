@@ -63,6 +63,7 @@ define Package/nut/install
 endef
 
 define Package/nut-server/install
+	# Server portion
 	$(INSTALL_DIR) $(1)/etc/nut
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/etc/init.d
@@ -70,14 +71,15 @@ define Package/nut-server/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/nut-server.init $(1)/etc/init.d/nut-server
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsd $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsdrvctl $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/cmdvartab $(1)/usr/share/nut/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/driver.list $(1)/usr/share/nut/
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nut_server $(1)/etc/config/nut_server
-	ln -sf /var/etc/nut/ups.conf $(1)/etc/nut/ups.conf
 	ln -sf /var/etc/nut/upsd.users  $(1)/etc/nut/upsd.users
 	ln -sf /var/etc/nut/upsd.conf $(1)/etc/nut/upsd.conf
+	# Driver common portion
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsdrvctl $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/driver.list $(1)/usr/share/nut/
+	ln -sf /var/etc/nut/ups.conf $(1)/etc/nut/ups.conf
 endef
 
 define Package/nut-common
@@ -110,6 +112,7 @@ define Package/nut-server
 	$(call Package/nut/Default)
 	TITLE+= (server)
 	DEPENDS:=nut +nut-common
+	USERID:=nut=113:nut=113
 endef
 
 define Package/nut-server/description
@@ -123,9 +126,9 @@ endef
 
 define Package/nut-server/conffiles
 /etc/config/nut_server
-/etc/nut/ups.conf
 /etc/nut/upsd.conf
 /etc/nut/upsd.users
+/etc/nut/ups.conf
 endef
 
 define Package/nut-upsmon
@@ -349,7 +352,7 @@ define DriverPackage
         define Package/nut-driver-$(2)
 		$(call Package/nut/Default)
 		TITLE:=$(2) (NUT $(1) driver)
-		DEPENDS:=nut +nut-common
+		DEPENDS:=nut +nut-server
 		$(if $(filter $(1),snmp),DEPENDS+= @NUT_DRIVER_SNMP)
 		$(if $(filter $(1),usb),DEPENDS+= @NUT_DRIVER_USB)
 		$(if $(filter $(1),serial),DEPENDS+= @NUT_DRIVER_SERIAL)
