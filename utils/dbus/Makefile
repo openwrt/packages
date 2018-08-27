@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dbus
-PKG_VERSION:=1.12.8
+PKG_VERSION:=1.12.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dbus.freedesktop.org/releases/dbus/
-PKG_HASH:=e2dc99e7338303393b6663a98320aba6a63421bcdaaf571c8022f815e5896eb3
-PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+PKG_HASH:=4b693d24976258c3f2fa9cc33ad9288c5fbfa7a16481dbd9a8a429f7aa8cdcf7
+PKG_MAINTAINER:=
 PKG_LICENSE:=AFL-2.1
 
 PKG_BUILD_PARALLEL:=1
