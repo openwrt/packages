@@ -5,7 +5,7 @@
 	 socks5                                     ss              plain
 	--------> tcp:local_address:local_port ----> ss server -------> dest
 
-`ss-redir`.  The REDIRECT and TPROXY part are to be provided by `ss-rules` script.  REDIRECT only works for tcp traffic (see also darkk/redsocks).  TPROXY is used to proxy udp messages, but it's only available in the PREROUTING chain and as such cannot proxy local out traffic.
+`ss-redir`.  The REDIRECT and TPROXY part are to be provided by `ss-rules` script.  REDIRECT is for tcp traffic (`SO_ORIGINAL_DST` only supports TCP).  TPROXY is for udp messages, but it's only available in the PREROUTING chain and as such cannot proxy local out traffic.
 
 	  plain             plain                                 ss              plain
 	---------> REDIRECT ------> tcp:local_address:local_port ----> ss server -----> original dest
