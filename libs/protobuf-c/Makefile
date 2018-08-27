@@ -17,7 +17,7 @@ PKG_HASH:=51472d3a191d6d7b425e32b612e477c06f73fe23e07f6a6a839b11808e9d2267
 PKG_BUILD_DIR:=$(BUILD_DIR)/protobuf-c-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/protobuf-c-$(PKG_VERSION)
 
-PKG_MAINTAINER:=Jacob Siverskog <jacob@teenageengineering.com>
+PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=BSD-2c
 
 PKG_BUILD_DEPENDS:=protobuf-c/host
