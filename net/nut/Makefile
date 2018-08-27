@@ -68,7 +68,6 @@ define Package/nut-server/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/usr/share/nut
-	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/nut-server.init $(1)/etc/init.d/nut-server
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsd $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/cmdvartab $(1)/usr/share/nut/
@@ -99,7 +98,6 @@ define Package/nut-common
 		+NUT_DRIVER_SNMP:libnetsnmp \
 		+NUT_DRIVER_USB:libusb-compat \
 		+NUT_SSL:libopenssl
-
 endef
 
 define Package/nut-common/description
