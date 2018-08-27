@@ -9,16 +9,17 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-crypto
 PKG_VERSION:=2.6.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=pycrypto-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://ftp.dlitz.net/pub/dlitz/crypto/pycrypto/
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pycrypto
 PKG_HASH:=f2ce1e989b272cfcb677616763e0a2e7ec659effa67a88aa92b3a65528f60a3c
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-crypto-$(PKG_VERSION)
 
 PKG_LICENSE:=Public Domain
 PKG_LICENSE_FILES:=COPYRIGHT
+PKG_CPE_ID:=cpe:/a:dlitz:pycrypto
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
@@ -31,7 +32,7 @@ define Package/python-crypto/Default
   SECTION:=lang-python
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=http://www.pycrypto.org/
+  URL:=https://www.dlitz.net/software/pycrypto/
 endef
 
 define Package/python-crypto
