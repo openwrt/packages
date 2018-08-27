@@ -145,7 +145,7 @@ define Package/nut-upsmon
   $(call Package/nut/Default)
 	TITLE+= (monitor)
 	DEPENDS:=nut +nut-common
-	USERID:=nut=113:nut=113
+	USERID:=nutmon=114:nutmon=114
 endef
 
 define Package/nut-upsmon/description
