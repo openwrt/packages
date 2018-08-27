@@ -35,8 +35,7 @@ nut_upsmon_conf() {
 	config_get val "$cfg" deadtime 15
 	echo "DEADTIME $val" >> $UPSMON_C
 
-	config_get val "$cfg" powerdownflag /var/run/killpower
-	echo "POWERDOWNFLAG $val" >> $UPSMON_C
+	echo "POWERDOWNFLAG /var/run/killpower" >> $UPSMON_C
 
 	config_get val "$cfg" onlinemsg
 	[ -n "$val" ] && echo "NOTIFYMSG ONLINE \"$val\"" >> $UPSMON_C
