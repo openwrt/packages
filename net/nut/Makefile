@@ -80,6 +80,16 @@ define Package/nut-server/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsdrvctl $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/driver.list $(1)/usr/share/nut/
 	ln -sf /var/etc/nut/ups.conf $(1)/etc/nut/ups.conf
+	# Mangle libhid.usermap into a format (hotplug shell script) useful for OpenWrt
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
+	$(INSTALL_BIN) ./files/30-libhid-ups.head $(1)/etc/hotplug.d/usb/30-libhid-ups
+	$(CP) $(PKG_INSTALL_DIR)/etc/hotplug/usb/libhid.usermap $(PKG_BUILD_DIR)/30-libhid-ups.middle
+	$(SED) '/^$$$$/d' \
+		-e '/^#/d' \
+		-E -e 's:^[^ ][^ ]*  *0x0003  *0x0{0,3}([^ ][^ ]*)  *0x{0,3}*([^ ][^ ]*).*:\1/\2/* | \\:' \
+		$(PKG_BUILD_DIR)/30-libhid-ups.middle
+	tail -n+2 $(PKG_BUILD_DIR)/30-libhid-ups.middle >>$(1)/etc/hotplug.d/usb/30-libhid-ups
+	cat ./files/30-libhid-ups.tail >>$(1)/etc/hotplug.d/usb/30-libhid-ups
 endef
 
 define Package/nut-common
@@ -515,6 +525,7 @@ CONFIGURE_ARGS += \
 	--without-neon \
 	--without-powerman \
 	--without-wrap \
+	--with-hotplug-dir=/etc/hotplug \
 	--with-cgi \
 	--without-ipmi \
 	--without-freeipmi \
