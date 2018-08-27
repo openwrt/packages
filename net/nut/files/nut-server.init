@@ -43,7 +43,7 @@ listen_address() {
 
     config_get address "$cfg" address "::1"
     config_get port "$cfg" port
-    echo "LISTEN $address $port" >>$UPSD_C
+    echo "LISTEN $address $port" >>"$UPSD_C"
 }
 
 upsd_config() {
@@ -59,17 +59,17 @@ upsd_config() {
     STATEPATH="$statepath"
 
     config_get maxage "$cfg" maxage
-    [ -n "$maxage" ] && echo "MAXAGE $maxage" >>$UPSD_C
+    [ -n "$maxage" ] && echo "MAXAGE $maxage" >>"$UPSD_C"
 
     config_get statepath "$cfg" statepath
-    [ -n "$statepath" ] && echo "STATEPATH $statepath" >>$UPSD_C
+    [ -n "$statepath" ] && echo "STATEPATH $statepath" >>"$UPSD_C"
 
     config_get maxconn "$cfg" maxconn
-    [ -n "$maxconn" ] && echo "MAXCONN $maxconn" >>$UPSD_C
+    [ -n "$maxconn" ] && echo "MAXCONN $maxconn" >>"$UPSD_C"
 
     #NOTE: certs only apply to SSL-enabled version
     config_get certfile "$cfg" certfile
-    [ -n "$certfile" ] && echo "CERTFILE $certfile" >>$UPSD_C
+    [ -n "$certfile" ] && echo "CERTFILE $certfile" >>"$UPSD_C"
 }
 
 nut_user_add() {
@@ -78,26 +78,26 @@ nut_user_add() {
 	local val
 
 	config_get val "$cfg" username "$1"
-	echo "[$val]" >> $USERS_C
+	echo "[$val]" >> "$USERS_C"
 
 	config_get val "$cfg" password
-	echo "  password = $val" >> $USERS_C
+	echo "  password = $val" >> "$USERS_C"
 
 	config_get val "$cfg" actions
 	for a in $val; do
-	    echo "  actions = $a" >> $USERS_C
+	    echo "  actions = $a" >> "$USERS_C"
 	done
 
 	instcmd() {
 		local val="$1"
-		echo "  instcmds = $val" >> $USERS_C
+		echo "  instcmds = $val" >> "$USERS_C"
 	}
 
 	config_list_foreach "$cfg" instcmd instcmd
 
 	config_get val "$cfg" upsmon
 	if [ -n "$val" ]; then
-	    echo "  upsmon $val" >> $USERS_C
+	    echo "  upsmon $val" >> "$USERS_C"
 	fi
 }
 
@@ -107,17 +107,16 @@ build_server_config() {
 	rm -f "$UPSD_C"
 	rm -f /var/etc/nut/nut.conf
 
-	echo "# Config file automatically generated from UCI config" > $USERS_C
-	echo "# Config file automatically generated from UCI config" > $UPSD_C
+	echo "# Config file automatically generated from UCI config" > "$USERS_C"
+	echo "# Config file automatically generated from UCI config" > "$UPSD_C"
 
 	config_foreach nut_user_add user
 	config_foreach listen_address listen_address
 	config_foreach upsd_config upsd
 	echo "MODE=netserver" >>/var/etc/nut/nut.conf
 
-	chmod 0640 $USERS_C
-	chmod 0640 $UPS_C
-	chmod 0640 $UPSD_C
+	chmod 0640 "$USERS_C"
+	chmod 0640 "$UPSD_C"
 	chmod 0640 /var/etc/nut/nut.conf
 
 	[ -d "${STATEPATH}" ] || {
