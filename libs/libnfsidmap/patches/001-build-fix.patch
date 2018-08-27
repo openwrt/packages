@@ -1,0 +1,55 @@
+diff -u --recursive libnfsidmap-0.25-vanilla/cfg.c libnfsidmap-0.25/cfg.c
+--- libnfsidmap-0.25-vanilla/cfg.c	2011-12-05 15:28:10.000000000 -0500
++++ libnfsidmap-0.25/cfg.c	2018-08-25 10:12:18.692796675 -0400
+@@ -70,10 +70,10 @@
+ /*
+  * Radix-64 Encoding.
+  */
+-const u_int8_t bin2asc[]
++const uint8_t bin2asc[]
+   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+ 
+-const u_int8_t asc2bin[] =
++const uint8_t asc2bin[] =
+ {
+   255, 255, 255, 255, 255, 255, 255, 255,
+   255, 255, 255, 255, 255, 255, 255, 255,
+@@ -106,10 +106,10 @@
+ 
+ static char *conf_addr;
+ 
+-static __inline__ u_int8_t
++static __inline__ uint8_t
+ conf_hash (char *s)
+ {
+-  u_int8_t hash = 0;
++  uint8_t hash = 0;
+ 
+   while (*s)
+     {
+@@ -554,10 +554,10 @@
+ 
+ /* Decode a PEM encoded buffer.  */
+ int
+-conf_decode_base64 (u_int8_t *out, u_int32_t *len, u_char *buf)
++conf_decode_base64 (uint8_t *out, uint32_t *len, uint8_t *buf)
+ {
+-  u_int32_t c = 0;
+-  u_int8_t c1, c2, c3, c4;
++  uint32_t c = 0;
++  uint8_t c1, c2, c3, c4;
+ 
+   while (*buf)
+     {
+diff -u --recursive libnfsidmap-0.25-vanilla/cfg.h libnfsidmap-0.25/cfg.h
+--- libnfsidmap-0.25-vanilla/cfg.h	2011-12-05 15:28:10.000000000 -0500
++++ libnfsidmap-0.25/cfg.h	2018-08-25 10:12:31.851839893 -0400
+@@ -48,7 +48,7 @@
+ extern char    *conf_path;
+ 
+ extern int      conf_begin(void);
+-extern int      conf_decode_base64(u_int8_t *, u_int32_t *, u_char *);
++extern int      conf_decode_base64(uint8_t *, uint32_t *, uint8_t *);
+ extern int      conf_end(int, int);
+ extern void     conf_free_list(struct conf_list *);
+ extern struct sockaddr *conf_get_address(char *, char *);
