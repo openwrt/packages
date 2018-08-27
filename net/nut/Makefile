@@ -526,6 +526,7 @@ CONFIGURE_ARGS += \
 	--without-avahi \
 	--$(if $(CONFIG_NUT_DRIVER_SNMP),with,without)-snmp \
 	--$(if $(CONFIG_NUT_DRIVER_SERIAL),with,without)-serial \
+	--without-doc \
 	--without-neon \
 	--without-powerman \
 	--without-wrap \
