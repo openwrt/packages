@@ -8,7 +8,6 @@
 #	option pollfreqalert 5
 # 	option hostsync 15
 #	option deadtime 15
-#	option powerdownflags /var/run/killpower
 #	option onlinemsg "online message"
 #	option onbattmsg "on battery message"
 #	option lowbattmsg "low battery message"
