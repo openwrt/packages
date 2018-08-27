@@ -6,11 +6,13 @@ UPSMON_C=/var/etc/nut/upsmon.conf
 
 nut_upsmon_conf() {
 	local cfg="$1"
+	local RUNAS val optval
 
 	echo "# Config file automatically generated from UCI config" > $UPSMON_C
 
-	config_get runas "$cfg" runas "nut"
-	[ -n "$runas" ] && echo "RUN_AS_USER $runas" >> $UPSMON_C
+	config_get RUNAS "$cfg" runas "nutmon"
+	[ -n "$RUNAS" ] && echo "RUN_AS_USER $RUNAS" >> "$UPSMON_C"
+	runas=$RUNAS
 
 	config_get val "$cfg" minsupplies 1
 	echo "MINSUPPLIES $val" >> $UPSMON_C
