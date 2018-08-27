@@ -203,7 +203,7 @@ define Package/nut-upsc/description
 $(call Package/nut/description/Default)
 upsc is provided as a quick way to poll the status of a UPS server. It
 can be used inside shell scripts and other programs that need UPS data
-but don not want to include the full interface.
+but do not want to include the full interface.
 endef
 
 define Package/nut-upsc/install
