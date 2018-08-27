@@ -21,7 +21,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.7.8-1"
+VERSION="2.7.8-3"
 SECTION_ID=""		# hold config's section name
 VERBOSE=0		# default mode is log to console, but easily changed with parameter
 MYPROG=$(basename $0)	# my program call name
@@ -85,7 +85,7 @@ WGET_SSL=$(which wget-ssl)
 
 CURL=$(which curl)
 # CURL_SSL not empty then SSL support available
-CURL_SSL=$($(which curl) -V 2>/dev/null | grep "Protocols:" | grep -F "https")
+CURL_SSL=$($CURL -V 2>/dev/null | grep -F "https")
 # CURL_PROXY not empty then Proxy support available
 CURL_PROXY=$(find /lib /usr/lib -name libcurl.so* -exec strings {} 2>/dev/null \; | grep -im1 "all_proxy")
 
@@ -543,10 +543,7 @@ verify_host_port() {
 			__RUNPROG="$NSLOOKUP $__HOST >$DATFILE 2>$ERRFILE"
 		fi
 		write_log 7 "#> $__RUNPROG"
-		(
-			set -o noglob
-			eval $__RUNPROG
-		)
+		eval $__RUNPROG
 		__ERR=$?
 		# command error
 		[ $__ERR -gt 0 ] && {
@@ -599,10 +596,7 @@ verify_host_port() {
 	if [ -n "$__NCEXT" ]; then	# BusyBox nc compiled with extensions (timeout support)
 		__RUNPROG="$__NC -w 1 $__IP $__PORT </dev/null >$DATFILE 2>$ERRFILE"
 		write_log 7 "#> $__RUNPROG"
-		(
-			set -o noglob
-			eval $__RUNPROG
-		)
+		eval $__RUNPROG
 		__ERR=$?
 		[ $__ERR -eq 0 ] && return 0
 		write_log 3 "Connect error - BusyBox nc (netcat) Error '$__ERR'"
@@ -611,10 +605,7 @@ verify_host_port() {
 	else		# nc compiled without extensions (no timeout support)
 		__RUNPROG="timeout 2 -- $__NC $__IP $__PORT </dev/null >$DATFILE 2>$ERRFILE"
 		write_log 7 "#> $__RUNPROG"
-		(
-			set -o noglob
-			eval $__RUNPROG
-		)
+		eval $__RUNPROG
 		__ERR=$?
 		[ $__ERR -eq 0 ] && return 0
 		write_log 3 "Connect error - BusyBox nc (netcat) timeout Error '$__ERR'"
@@ -733,7 +724,7 @@ do_transfer() {
 			local __BINDIP
 			# set correct program to detect IP
 			[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" || __RUNPROG="network_get_ipaddr6"
-			( set -o noglob ; eval "$__RUNPROG __BINDIP $bind_network" ) || \
+			eval "$__RUNPROG __BINDIP $bind_network" || \
 				write_log 13 "Can not detect local IP using '$__RUNPROG $bind_network' - Error: '$?'"
 			write_log 7 "Force communication via IP '$__BINDIP'"
 			__PROG="$__PROG --bind-address=$__BINDIP"
@@ -857,10 +848,7 @@ do_transfer() {
 
 	while : ; do
 		write_log 7 "#> $__RUNPROG"
-		(
-			set -o noglob
-			eval $__RUNPROG			# DO transfer
-		)
+		eval $__RUNPROG			# DO transfer
 		__ERR=$?			# save error code
 		[ $__ERR -eq 0 ] && return 0	# no error leave
 		[ -n "$LUCI_HELPER" ] && return 1	# no retry if called by LuCI helper script
@@ -945,7 +933,7 @@ get_local_ip () {
 			network_flush_cache	# force re-read data from ubus
 			[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" \
 					    || __RUNPROG="network_get_ipaddr6"
-			( set -o noglob ; eval "$__RUNPROG __DATA $ip_network" ) || \
+			eval "$__RUNPROG __DATA $ip_network" || \
 				write_log 13 "Can not detect local IP using $__RUNPROG '$ip_network' - Error: '$?'"
 			[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on network '$ip_network'"
 		elif [ -n "$ip_interface" ]; then
@@ -1029,10 +1017,7 @@ get_local_ip () {
 			[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on interface '$ip_interface'"
 		elif [ -n "$ip_script" ]; then
 			write_log 7 "#> $ip_script >$DATFILE 2>$ERRFILE"
-			(
-				set -o noglob
-				eval $ip_script >$DATFILE 2>$ERRFILE
-			)
+			eval $ip_script >$DATFILE 2>$ERRFILE
 			__ERR=$?
 			if [ $__ERR -eq 0 ]; then
 				__DATA=$(cat $DATFILE)
@@ -1172,10 +1157,7 @@ get_registered_ip() {
 
 	while : ; do
 		write_log 7 "#> $__RUNPROG"
-		(
-			set -o noglob
-			eval $__RUNPROG
-		)
+		eval $__RUNPROG
 		__ERR=$?
 		if [ $__ERR -ne 0 ]; then
 			write_log 3 "$__PROG error: '$__ERR'"
