@@ -9,9 +9,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bluelog
 PKG_VERSION:=1.1.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=Bluelog-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/MS3FGX/Bluelog/tar.gz/$(PKG_VERSION)?
 PKG_HASH:=ebbc1357e14bc46cbddd8390cdbd29c0131b09b8ab680a1c382164ef076cb53e
 PKG_BUILD_DIR:=$(BUILD_DIR)/Bluelog-$(PKG_VERSION)
