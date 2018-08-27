@@ -1,7 +1,7 @@
 #config upsmon 'upsmon'
 #	option runas run-as-user
 #	option minsupplies 1
-#	option shutdowncmd /sbin/halt
+#	option shutdowncmd '/usr/sbin/nutshutdown'
 #	option notifycmd /path/to/cmd
 #	list defaultnotify SYSLOG
 #	option pollfreq 5

@@ -15,7 +15,7 @@ nut_upsmon_conf() {
 	config_get val "$cfg" minsupplies 1
 	echo "MINSUPPLIES $val" >> $UPSMON_C
 
-	config_get val "$cfg" shutdowncmd "/sbin/halt"
+	config_get val "$cfg" shutdowncmd "/usr/sbin/nutshutdown"
 	echo "SHUTDOWNCMD \"$val\"" >> $UPSMON_C
 
 	config_get val "$cfg" notifycmd
