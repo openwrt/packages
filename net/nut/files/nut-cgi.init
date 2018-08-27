@@ -8,6 +8,20 @@ START=51
 
 DEFAULT=/etc/default/nut
 UPSCGI_C=/var/etc/nut/hosts.conf
+UPSCGI_S=/var/etc/nut/upsset.conf
+
+nut_upscgi_upsset() {
+	local cfg="$1"
+	local enable
+
+	config_get_bool enable "$cfg" enable 0
+
+	[ $enable -eq 1 ] && {
+		ln -sf /etc/nut/upsset.conf.enable "$UPSCGI_S"
+	} || {
+		ln -sf /etc/nut/upsset.conf.disable "$UPSCGI_S"
+	}
+}
 
 nut_upscgi_add() {
 	local cfg="$1"
@@ -30,15 +44,20 @@ nut_upscgi_add() {
 
 start() {
 	rm -f $UPSCGI_C
+	rm -f "$UPSCGI_S"
+	mkdir -m 0755 -p "$(dirname "$UPSCGI_C")"
 
 	config_load nut_cgi
 
 	config_foreach nut_upscgi_add host
+	config_foreach nut_upscgi_upsset upsset
 
 	chmod 640 /var/etc/nut/hosts.conf
 }
 
 stop() {
 	rm -f $UPSCGI_C
+	rm -f "$UPSCGI_S"
+	ln -sf /etc/nut/upsset.conf.disable "$UPSCGI_S"
 }
 

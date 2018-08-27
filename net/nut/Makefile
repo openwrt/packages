@@ -329,12 +329,15 @@ define Package/nut-web-cgi/install
 	$(INSTALL_CONF) ./files/add_nut_httpd_conf $(1)/etc/uci-defaults/add_nut_httpd_conf
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsstats.html.sample $(1)/etc/nut/upsstats.html
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsstats-single.html.sample $(1)/etc/nut/upsstats-single.html
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsset.conf.sample $(1)/etc/nut/upsset.conf
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsset.conf.sample $(1)/etc/nut/upsset.conf.disable
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/nut/upsset.conf.sample $(1)/etc/nut/upsset.conf.enable
+	$(SED) 's/### \?//' $(1)/etc/nut/upsset.conf.enable
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nut_cgi $(1)/etc/config/nut_cgi
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/nut-cgi.init $(1)/etc/init.d/nut-cgi
 	ln -sf /var/etc/nut/hosts.conf $(1)/etc/nut/hosts.conf
+	ln -sf /var/etc/nut/upsset.conf $(1)/etc/nut/upsset.conf
 endef
 
 define Package/nut-avahi-service
