@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006,2015 OpenWrt.org
+# Copyright (C) 2015,2018 KunTeng.org.cn
 #
 # This is free software, licensed under the GNU General Public License v3.
 # See /LICENSE for more information.
@@ -34,7 +34,7 @@ define Package/$(PKG_NAME)
   CATEGORY:=Network
   DEPENDS:=+zlib +iptables-mod-extra +iptables-mod-ipopt +kmod-ipt-nat +iptables-mod-nat-extra \
            +libpthread +libopenssl +@OPENSSL_WITH_EC +@OPENSSL_WITH_DEPRECATED +@OPENSSL_WITH_PSK +libjson-c +ipset +libip4tc +libevent2 +libevent2-openssl \
-		   +fping +libmosquitto +libuci
+	   +fping +libmosquitto +libuci
   TITLE:=Apfree's wireless captive portal solution
   URL:=http://www.kunteng.org.cn
 endef
