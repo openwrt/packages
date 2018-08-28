@@ -30,11 +30,62 @@ config nodogsplash
   option preauthidletimeout '10'
   option authidletimeout '120'
 
+  # Enable BinAuth Support.
+  # If set, a program is called with several parameters on authentication (request) and deauthentication.
+  # Request for authentication:
+  # $<BinAuth> auth_client <client_mac> '<username>' '<password>'
+  #
+  # The username and password values may be empty strings and are URL encoded.
+  # The program is expected to output the number of seconds the client
+  # is to be authenticated. Zero or negative seconds will cause the authentification request
+  # to be rejected. The same goes for an exit code that is not 0.
+  # The output may contain a user specific download and upload limit in KBit/s:
+  # <seconds> <upload> <download>
+  #
+  # Called on authentication or deauthentication:
+  # $<BinAuth> <*auth|*deauth> <incoming_bytes> <outgoing_bytes> <session_start> <session_end>
+  #
+  # "client_auth": Client authenticated via this script.
+  # "client_deauth": Client deauthenticated by the client via splash page.
+  # "idle_deauth": Client was deauthenticated because of inactivity.
+  # "timeout_deauth": Client was deauthenticated because the session timed out.
+  # "ndsctl_auth": Client was authenticated manually by the ndsctl tool.
+  # "ndsctl_deauth": Client was deauthenticated by the ndsctl tool.
+  # "shutdown_deauth": Client was deauthenticated by Nodogsplash terminating.
+  #
+  # Values session_start and session_start are in seconds since 1970 or 0 for unknown/unlimited.
+  #
+  #option binauth '/bin/myauth.sh'
+
+  # Enable Forwarding Authentication Service (FAS)
+  # If set redirection is changed from splash.html to a FAS (provided by the system administrator)
+  # The value is the IP port number of the FAS
+  #option fasport '80'
+
+  # Option: fasremoteip
+  # Default: GatewayAddress (the IP of NDS)
+  # If set, this is the remote ip address of the FAS.
+  #option fasremoteip '46.32.240.41'
+
+  # Option: faspath
+  # Default: /
+  # This is the path from the FAS Web Root to the FAS login page
+  # (not the file system root).
+  #option faspath '/onboard-wifi.net/nodog/fas.php'
+
+  # Option: fas_secure_enabled
+  # Default: 1
+  # If set to "1", authaction and the client token are not revealed and it is the responsibility
+  # of the FAS to request the token from NDSCTL.
+  # If set to "0", the client token is sent to the FAS in clear text in the query string of the
+  # redirect along with authaction and redir.
+  #option fas_secure_enabled '0'
+
   # Your router may have several interfaces, and you
   # probably want to keep them private from the network/gatewayinterface.
   # If so, you should block the entire subnets on those interfaces, e.g.:
-  # list authenticated_users 'block to 192.168.0.0/16'
-  # list authenticated_users 'block to 10.0.0.0/8'
+  #list authenticated_users 'block to 192.168.0.0/16'
+  #list authenticated_users 'block to 10.0.0.0/8'
 
   # Typical ports you will probably want to open up.
   #list authenticated_users 'allow tcp port 22'
@@ -69,7 +120,20 @@ config nodogsplash
   # MAC addresses that do not need to authenticate
   #list trustedmac '00:00:C0:01:D0:1D'
 
-  # Set FW_MARK for compatibilty with other OpenWrt Packages eg mwan3, sqm etc.
-  list fw_mark_authenticated '30000'
-  list fw_mark_trusted '20000'
-  list fw_mark_blocked '10000'
+  # Nodogsplash uses specific HEXADECIMAL values to mark packets used by iptables as a bitwise mask.
+  # This mask can conflict with the requirements of other packages such as mwan3, sqm etc
+  # Any values set here are interpreted as in hex format.
+  #
+  # List: fw_mark_authenticated
+  # Default: 30000 (0011|0000|0000|0000|0000 binary)
+  #
+  # List: fw_mark_trusted
+  # Default: 20000 (0010|0000|0000|0000|0000 binary)
+  #
+  # List: fw_mark_blocked
+  # Default: 10000 (0001|0000|0000|0000|0000 binary)
+  #
+  #list fw_mark_authenticated '30000'
+  #list fw_mark_trusted '20000'
+  #list fw_mark_blocked '10000'
+
