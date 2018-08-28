@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.20.20
+PKG_VERSION:=0.20.21
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.20/
-PKG_HASH:=a9e458c6e07cdf62649de7722e1e5a7f13aa82eeb397bfbbebc07cf5cf273584
+PKG_HASH:=8322764dc265c20f05c8c8fdfdd578b0722e74626bef56fcd8eebfb01acc58dc
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2.0
@@ -144,8 +144,7 @@ CONFIGURE_ARGS += \
 	--disable-vorbis-encoder \
 	--enable-wave-encoder \
 	--disable-wavpack \
-	--disable-webdav \
-	--disable-wildmidi \
+	--enable-webdav \
 	--disable-zzip \
 	--with-zeroconf=no \
 	--disable-soxr \
