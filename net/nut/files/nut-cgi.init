@@ -5,6 +5,7 @@
 # See /LICENSE for more information.
 #
 START=51
+USE_PROCD=1
 
 DEFAULT=/etc/default/nut
 UPSCGI_C=/var/etc/nut/hosts.conf
@@ -42,10 +43,10 @@ nut_upscgi_add() {
 	echo "MONITOR $system \"$displayname\"" >> $UPSCGI_C
 }
 
-start() {
-	rm -f $UPSCGI_C
-	rm -f "$UPSCGI_S"
+service_reload() {
 	mkdir -m 0755 -p "$(dirname "$UPSCGI_C")"
+	rm -f "$UPSCGI_C"
+	rm -f "$UPSCGI_S"
 
 	config_load nut_cgi
 
@@ -55,9 +56,16 @@ start() {
 	chmod 640 /var/etc/nut/hosts.conf
 }
 
-stop() {
-	rm -f $UPSCGI_C
+start_service() {
+	service_reload
+}
+
+stop_service() {
+	rm -f "$UPSCGI_C"
 	rm -f "$UPSCGI_S"
 	ln -sf /etc/nut/upsset.conf.disable "$UPSCGI_S"
 }
 
+service_triggers() {
+	procd_add_reload_trigger "nut_cgi"
+}
