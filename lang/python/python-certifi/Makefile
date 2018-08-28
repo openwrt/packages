@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-certifi
-PKG_VERSION:=2018.4.16
+PKG_VERSION:=2018.8.24
 PKG_RELEASE:=1
 PKG_LICENSE:=MPL-2.0
 
 PKG_SOURCE:=certifi-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/4d/9c/46e950a6f4d6b4be571ddcae21e7bc846fcbb88f1de3eff0f6dd0a6be55d
-PKG_HASH:=13e698f54293db9f89122b0581843a782ad0934a4fe0172d2a980ba77fc61bb7
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/c/certifi
+PKG_HASH:=376690d6f16d32f9d1fe8932551d80b23e9d393a8578c5633a2ed39a64861638
 PKG_BUILD_DIR:=$(BUILD_DIR)/certifi-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
