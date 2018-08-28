@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2006 OpenWrt.org
+# Copyright (C) 2018 KunTeng.org.cn
 START=65
 
 USE_PROCD=1
