@@ -68,6 +68,8 @@ CONFIGURE_VARS += \
 	sc_cv_sys_crdly_shift=9 \
 	sc_cv_sys_tabdly_shift=11 \
 	sc_cv_sys_csize_shift=4 \
+	ac_cv_header_bsd_libutil_h=no \
+	ac_cv_lib_bsd_openpty=no \
 	BUILD_DATE=$(SOURCE_DATE_EPOCH)
 
 define Package/socat/install
