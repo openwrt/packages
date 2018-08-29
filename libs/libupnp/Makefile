@@ -1,22 +1,16 @@
-#
-# Copyright (C) 2006-2014 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libupnp
-PKG_VERSION:=1.6.19
-PKG_RELEASE:=2
+PKG_VERSION:=1.6.25
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/pupnp
-PKG_HASH:=b3142b39601243b50532eec90f4a27dba85eb86f58d4b849ac94edeb29d9b22a
+PKG_HASH:=c5a300b86775435c076d58a79cc0d5a977d76027d2a7d721590729b7f369fa43
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
