@@ -1,0 +1,10 @@
+--- a/plugins/irqstats	2007-11-30 11:39:08.000000000 +0100
++++ b/plugins/irqstats	2018-08-29 08:20:50.809468406 +0200
+@@ -1,6 +1,6 @@
+ config_irqstats() {
+   echo "graph_title Individual interrupts
+-graph_args --base 1000 -l 0;
++graph_args --base 1000 -l 0
+ graph_vlabel interrupts / \${graph_period}
+ graph_category system"
+   CPUS=$(grep 'CPU[0-9]' /proc/interrupts | wc -w)
