@@ -1,7 +1,7 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2014 OpenWrt.org
 
-START=50
+START=72
 STOP=50
 EXTRA_COMMANDS="status abort flush postinst"
 EXTRA_HELP="	status	Display the service status
