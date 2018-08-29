@@ -582,8 +582,10 @@ mwan3_set_policy()
 				$IPT4 -I mwan3_policy_$policy -m mark --mark 0x0/$MMX_MASK $probability -m comment --comment "$iface $weight $total_weight_v4" -j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
 			fi
 		else
-			$IPT4 -S mwan3_policy_$policy | grep -q '.*--comment ".* [0-9]* [0-9]*"' || \
-				$IPT4 -I mwan3_policy_$policy -o $device -m mark --mark 0x0/$MMX_MASK -m comment --comment "out $iface $device" -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
+			[ -n "$device" ] && {
+				$IPT4 -S mwan3_policy_$policy | grep -q '.*--comment ".* [0-9]* [0-9]*"' || \
+					$IPT4 -I mwan3_policy_$policy -o $device -m mark --mark 0x0/$MMX_MASK -m comment --comment "out $iface $device" -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
+			}
 		fi
 	fi
 
@@ -618,8 +620,10 @@ mwan3_set_policy()
 				$IPT6 -I mwan3_policy_$policy -m mark --mark 0x0/$MMX_MASK $probability -m comment --comment "$iface $weight $total_weight_v6" -j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
 			fi
 		else
-			$IPT6 -S mwan3_policy_$policy | grep -q '.*--comment ".* [0-9]* [0-9]*"' || \
-				$IPT6 -I mwan3_policy_$policy -o $device -m mark --mark 0x0/$MMX_MASK -m comment --comment "out $iface $device" -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
+			[ -n "$device" ] && {
+				$IPT6 -S mwan3_policy_$policy | grep -q '.*--comment ".* [0-9]* [0-9]*"' || \
+					$IPT6 -I mwan3_policy_$policy -o $device -m mark --mark 0x0/$MMX_MASK -m comment --comment "out $iface $device" -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
+			}
 		fi
 	fi
 }
