@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE_URL:=https://codeload.github.com/arduino/YunBridge/tar.gz/$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=9e5ffc7a0d0cc2c92e972e425adcc49b77cf39da075d31728e7755d316d910d8
-PKG_BUILD_DIR:=YunBridge-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/YunBridge-$(PKG_VERSION)
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=GPL-2.0
