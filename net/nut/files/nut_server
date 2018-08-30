@@ -19,5 +19,6 @@
 #	option maxage 15
 #	option statepath /var/run/nut
 #	option maxconn 1024
+#	option runas nut
 # NB: certificates only apply to SSL-enabled version
 #       option certfile /usr/local/etc/upsd.pem
