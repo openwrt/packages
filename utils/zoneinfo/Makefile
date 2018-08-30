@@ -100,6 +100,24 @@ $(call Package/zoneinfo/Default)
   TITLE:=Zone Information (India)
 endef
 
+define Package/zoneinfo-all
+$(call Package/zoneinfo/Default)
+  TITLE:=Zone Information (all zones)
+  DEPENDS:= \
+	+zoneinfo-simple \
+	+zoneinfo-core \
+	+zoneinfo-africa \
+	+zoneinfo-northamerica \
+	+zoneinfo-southamerica \
+	+zoneinfo-poles \
+	+zoneinfo-asia \
+	+zoneinfo-atlantic \
+	+zoneinfo-australia-nz \
+	+zoneinfo-pacific \
+	+zoneinfo-europe \
+	+zoneinfo-india
+endef
+
 define Build/Prepare
 	(cd $(PKG_BUILD_DIR) && tar -xzf $(DL_DIR)/$(PKG_SOURCE_CODE) && tar -xzf $(DL_DIR)/$(PKG_SOURCE))
 endef
@@ -240,3 +258,4 @@ $(eval $(call BuildPackage,zoneinfo-australia-nz))
 $(eval $(call BuildPackage,zoneinfo-pacific))
 $(eval $(call BuildPackage,zoneinfo-europe))
 $(eval $(call BuildPackage,zoneinfo-india))
+$(eval $(call BuildPackage,zoneinfo-all))
