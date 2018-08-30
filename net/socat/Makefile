@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -9,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=socat
 PKG_VERSION:=1.7.3.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.dest-unreach.org/socat/download
@@ -63,11 +61,23 @@ ifneq ($(CONFIG_SOCAT_SSL),y)
   CONFIGURE_ARGS+= --disable-openssl
 endif
 
+# PowerPC has different TERMIOS bits
+ifneq ($(findstring powerpc,$(CONFIG_ARCH)),)
+  CONFIGURE_VARS += \
+	  sc_cv_sys_crdly_shift=12 \
+	  sc_cv_sys_tabdly_shift=10 \
+	  sc_cv_sys_csize_shift=8
+else
+  CONFIGURE_VARS += \
+	  sc_cv_sys_crdly_shift=9 \
+	  sc_cv_sys_tabdly_shift=11 \
+	  sc_cv_sys_csize_shift=4
+endif
+
 CONFIGURE_VARS += \
 	sc_cv_termios_ispeed="no" \
-	sc_cv_sys_crdly_shift=9 \
-	sc_cv_sys_tabdly_shift=11 \
-	sc_cv_sys_csize_shift=4 \
+	ac_cv_header_bsd_libutil_h=no \
+	ac_cv_lib_bsd_openpty=no \
 	BUILD_DATE=$(SOURCE_DATE_EPOCH)
 
 define Package/socat/install
