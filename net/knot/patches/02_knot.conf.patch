@@ -1,24 +1,13 @@
 diff --git a/samples/knot.sample.conf.in b/samples/knot.sample.conf.in
-index e07c8a7..8e057b0 100644
+index 10302f958..75082f537 100644
 --- a/samples/knot.sample.conf.in
 +++ b/samples/knot.sample.conf.in
-@@ -9,7 +9,7 @@ server:
-     # Listen on all configured IPv6 interfaces.
-     listen: ::@53
-     # User for running the server.
--    # user: knot:knot
-+    user: knot:knot
- 
- log:
-     # Log info and more serious events to syslog.
-@@ -33,7 +33,9 @@ acl:
- #    action: notify
- 
- template:
--#  - id: default
-+   - id: default
-+     max-journal-db-size: 20M
-+     max-timer-db-size: 5M
- #    storage: "@storage_dir@"
+@@ -30,6 +30,8 @@ template:
+   - id: default
+     storage: "@storage_dir@"
+     file: "%s.zone"
++    max-journal-db-size: 20M
++    max-timer-db-size: 5M
  
  zone:
+ #    # Master zone
