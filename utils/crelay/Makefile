@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=crelay
-PKG_VERSION:=0.12
+PKG_VERSION:=0.13
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ondrej1024/crelay/tar.gz/V$(PKG_VERSION)?
-PKG_HASH:=84b2523107bb3e7263d0be1c3c367de1956b41711293e108f4ce483f5e66913f
+PKG_HASH:=d9919fe91e8641352f0b4705a37acc7ba4b3c4286ca78a629968f16f343cfdc4
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=GPL-2.0
