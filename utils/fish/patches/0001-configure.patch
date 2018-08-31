@@ -1,0 +1,11 @@
+--- a/configure.ac	2017-02-01 15:09:24.399387241 -0500
++++ b/configure.ac	2017-02-01 15:09:09.899387310 -0500
+@@ -236,7 +236,7 @@
+ # information about running processes.
+ #
+ 
+-AC_CHECK_FILES([/proc/self/stat])
++#AC_CHECK_FILES([/proc/self/stat])
+ 
+ # Disable curses macros that conflict with the STL
+ AC_DEFINE([NCURSES_NOMACROS], [1], [Define to 1 to disable ncurses macros that conflict with the STL])
