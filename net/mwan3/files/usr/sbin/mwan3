@@ -155,6 +155,12 @@ stop()
 {
 	local ipset route rule table IP IPT pid src_ip
 
+	for pid in $(pgrep -f "mwan3rtmon"); do
+		kill -TERM "$pid" > /dev/null 2>&1
+		sleep 1
+		kill -KILL "$pid" > /dev/null 2>&1
+	done
+
 	for pid in $(pgrep -f "mwan3track"); do
 		kill -TERM "$pid" > /dev/null 2>&1
 		sleep 1
