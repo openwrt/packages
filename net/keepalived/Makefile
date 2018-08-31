@@ -38,7 +38,9 @@ define Package/keepalived
     +libxtables \
     +kmod-macvlan \
     +libmagic \
-    +libnl-route
+    +libnl-route \
+    +libnfnetlink \
+    +kmod-nf-ipvs
 endef
 
 define Package/keepalived/description
@@ -53,8 +55,6 @@ endef
 
 CONFIGURE_ARGS+= \
 	--enable-sha1 \
-	--disable-lvs \
-	--disable-lvs-syncd \
 	--disable-snmp \
 	--with-kernel-dir="$(LINUX_DIR)/$(LINUX_UAPI_DIR)"
 
