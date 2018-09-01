@@ -9,21 +9,18 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mtr
 PKG_VERSION:=0.92
-PKG_RELEASE:=2
-
-PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/traviscross/mtr/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=568a52911a8933496e60c88ac6fea12379469d7943feb9223f4337903e4bc164
+PKG_SOURCE_URL:=https://www.bitwizard.nl/mtr/files
+PKG_HASH:=f2979db9e2f41aa8e6574e7771767c9afe111d9213814eb47f5e1e71876e4382
 
+PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-
-PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -50,8 +47,9 @@ CONFIGURE_ARGS += \
 	--without-gtk \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6)
 
+CONFIGURE_VARS += ac_cv_lib_cap_cap_set_proc=no
+
 define Build/Configure
-	echo $(PKG_VERSION) > .tarball-version
 	$(call Build/Configure/Default)
 endef
 
