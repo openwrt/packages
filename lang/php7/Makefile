@@ -23,6 +23,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 PHP7_MODULES = \
+	bcmath \
 	calendar ctype curl \
 	fileinfo \
 	dom \
@@ -171,6 +172,12 @@ CONFIGURE_ARGS+= \
 	--with-pcre-regex="$(STAGING_DIR)/usr" \
 	--with-zlib="$(STAGING_DIR)/usr" \
 	  --with-zlib-dir="$(STAGING_DIR)/usr"
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-bcmath),)
+  CONFIGURE_ARGS+= --enable-bcmath=shared
+else
+  CONFIGURE_ARGS+= --disable-bcmath
+endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-calendar),)
   CONFIGURE_ARGS+= --enable-calendar=shared
@@ -590,6 +597,7 @@ $(eval $(call BuildPackage,php7-fastcgi))
 $(eval $(call BuildPackage,php7-fpm))
 
 #$(eval $(call BuildModule,NAME,TITLE[,PKG DEPENDS]))
+$(eval $(call BuildModule,bcmath,Bcmath))
 $(eval $(call BuildModule,calendar,Calendar))
 $(eval $(call BuildModule,ctype,Ctype))
 $(eval $(call BuildModule,curl,cURL,+PACKAGE_php7-mod-curl:libcurl))
