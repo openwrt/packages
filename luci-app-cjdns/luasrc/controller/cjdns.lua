@@ -51,15 +51,16 @@ function act_peers()
 		end
 
 		for i,peer in pairs(response.peers) do
-			peer.ipv6 = publictoip6(peer.publicKey)
-			if peer.user == nil then
-				peer.user = ''
-				uci.cursor():foreach("cjdns", "udp_peer", function(udp_peer)
-					if peer.publicKey == udp_peer.public_key then
-						peer.user = udp_peer.user
-					end
-				end)
-			end
+			local peertable = peerstats_join(peer.addr)
+			peer.ipv6 = peertable['ipv6']
+			peer.version = peertable['version']
+			peer.label = peertable['label']
+			peer.pubkey = peertable['pubkey']
+			uci.cursor():foreach("cjdns", "udp_peer", function(udp_peer)
+				if peer.pubkey == udp_peer.public_key then
+					peer.user = udp_peer.user
+				end
+			end)
 			peers[#peers + 1] = peer
 		end
 
@@ -97,9 +98,13 @@ function act_ping()
 	luci.http.write_json(response)
 end
 
-function publictoip6(publicKey)
-	local process = io.popen("/usr/bin/publictoip6 " .. publicKey, "r")
-	local ipv6    = process:read()
-	process:close()
-	return ipv6
+function peerstats_join(addrLine)
+    local pubkey = addrLine:sub(addrLine:len() - 53)
+    local process = io.popen("/usr/bin/publictoip6 " .. pubkey, "r")
+    local ipv6 = process:read()
+    local label = 'label'
+    process:close()
+    local version = addrLine:match("^(v%w+)%.") or 'v0'
+    local label = addrLine:sub(version:len() + 2, version:len() + 20)
+    return { pubkey=pubkey, ipv6=ipv6, label=label, version=version }
 end

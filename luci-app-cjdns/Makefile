@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014,2015 Hyperboria.net
+# Copyright (C) 2014,2018 Hyperboria.net
 #
 # You may redistribute this program and/or modify it under the terms of
 # the GNU General Public License as published by the Free Software Foundation,
@@ -18,7 +18,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-cjdns
 PKG_VERSION:=1.3
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_LICENSE:=GPL-3.0
 
@@ -29,7 +29,7 @@ define Package/luci-app-cjdns
 	CATEGORY:=LuCI
 	SUBMENU:=3. Applications
 	TITLE:=Encrypted near-zero-conf mesh routing protocol
-	URL:=https://github.com/hyperboria/cjdns
+	URL:=https://github.com/cjdelisle/cjdns
 	MAINTAINER:=Lars Gierth <larsg@systemli.org>
 	DEPENDS:=+cjdns +luci-base
 endef
