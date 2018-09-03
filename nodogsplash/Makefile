@@ -7,12 +7,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nodogsplash
 PKG_FIXUP:=autoreconf
-PKG_VERSION:=3.1.0
+PKG_VERSION:=3.2.0
 PKG_RELEASE:=0
 
 PKG_SOURCE_URL:=https://codeload.github.com/nodogsplash/nodogsplash/tar.gz/v$(PKG_VERSION)?
 PKG_SOURCE:=nodogsplash-$(PKG_VERSION).tar.gz
-PKG_HASH:=07363f76de6ca5bde5e98f5218e67150164174d2117936b3d57ac7ab01e7b413
+PKG_HASH:=c9712c21c2cc88724a8104fa63edd4f69d31af24db0fad84db6105fae2d65809
 PKG_BUILD_DIR:=$(BUILD_DIR)/nodogsplash-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Moritz Warning <moritzwarning@web.de>
@@ -33,8 +33,11 @@ define Package/nodogsplash
 endef
 
 define Package/nodogsplash/description
-	Nodogsplash offers a simple way to open a free hotspot providing
-	restricted access to an internet connection.
+	Nodogsplash is a Captive Portal that offers a simple way to
+	provide restricted access to the Internet by showing a splash
+	page to the user before Internet access is granted.
+	It also incorporates an API that allows the creation of
+	sophisticated authentication applications.
 endef
 
 define Package/nodogsplash/install
