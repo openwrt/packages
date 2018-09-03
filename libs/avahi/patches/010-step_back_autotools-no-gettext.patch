@@ -1,3 +1,5 @@
+diff --git a/Makefile.am b/Makefile.am
+index 8234d69..156d4c4 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -75,8 +75,7 @@ SUBDIRS = \
@@ -10,6 +12,8 @@
  
  DX_INPUT = \
  	$(srcdir)/avahi-common/address.h \
+diff --git a/avahi-python/avahi-discover/Makefile.am b/avahi-python/avahi-discover/Makefile.am
+index 5fc4b25..4c39d3d 100644
 --- a/avahi-python/avahi-discover/Makefile.am
 +++ b/avahi-python/avahi-discover/Makefile.am
 @@ -38,7 +38,6 @@ if HAVE_GDBM
@@ -28,9 +32,11 @@
  avahi_discover_PYTHON += __init__.py
  endif
  
+diff --git a/avahi-ui/Makefile.am b/avahi-ui/Makefile.am
+index 238d43a..65a147a 100644
 --- a/avahi-ui/Makefile.am
 +++ b/avahi-ui/Makefile.am
-@@ -78,7 +78,6 @@ endif
+@@ -80,7 +80,6 @@ endif
  
  bin_PROGRAMS = bssh
  desktop_DATA += bssh.desktop bvnc.desktop
@@ -38,16 +44,18 @@
  
  bssh_SOURCES = bssh.c
  
-@@ -106,6 +105,4 @@ endif # HAVE_GLIB
+@@ -108,6 +107,4 @@ endif # HAVE_GLIB
  endif
  endif
  
 -@INTLTOOL_DESKTOP_RULE@
 -
  CLEANFILES = $(desktop_DATA) $(desktop_DATA_in)
+diff --git a/configure.ac b/configure.ac
+index 6678971..00dac6e 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -23,7 +23,7 @@ AC_INIT([avahi],[0.6.29],[avahi (at) lis
+@@ -23,7 +23,7 @@ AC_INIT([avahi],[0.7],[avahi (at) lists (dot) freedesktop (dot) org])
  AC_CONFIG_SRCDIR([avahi-core/server.c])
  AC_CONFIG_MACRO_DIR([common])
  AC_CONFIG_HEADERS([config.h])
@@ -65,7 +73,7 @@
  AC_CHECK_PROG([STOW], [stow], [yes], [no])
  
  AS_IF([test "x$STOW" = "xyes" && test -d /usr/local/stow], [
-@@ -412,12 +410,6 @@ if test "x$have_kqueue" = "xyes" ; then
+@@ -413,12 +411,6 @@ if test "x$have_kqueue" = "xyes" ; then
      AC_DEFINE([HAVE_KQUEUE], 1, [Enable BSD kqueue() usage])
  fi
  

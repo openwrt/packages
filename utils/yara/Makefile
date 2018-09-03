@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yara
-PKG_VERSION:=3.7.0
+PKG_VERSION:=3.7.1
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/VirusTotal/yara/archive/v$(PKG_VERSION)/
-PKG_HASH:=01f0841e7387918c2b6d0b7fb48014bda41d1487be1cabf718a0576018969641
+PKG_HASH:=df077a29b0fffbf4e7c575f838a440f42d09b215fcb3971e6fb6360318a64892
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -29,7 +29,7 @@ define Package/yara
   URL:=http://virustotal.github.io/yara/
   MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
   DEPENDS:= +libopenssl
-  DEPENDS+= +YARA_module_magic:libmagic
+  DEPENDS+= +YARA_module_magic:file
   DEPENDS+= +YARA_module_cuckoo:jansson
   MENU:=1
 endef
@@ -41,9 +41,9 @@ define Package/yara/description
 endef
 
 CONFIGURE_ARGS += \
-	--disable-dotnet \
-	$(if $(YARA_module_magic),--enable,--disable)-magic \
-	$(if $(YARA_module_cuckoo),--enable,--disable)-cuckoo
+	$(if $(CONFIG_YARA_module_dotnet),--enable,--disable)-dotnet \
+	$(if $(CONFIG_YARA_module_magic),--enable,--disable)-magic \
+	$(if $(CONFIG_YARA_module_cuckoo),--enable,--disable)-cuckoo
 
 define Package/yara/config
 	source "$(SOURCE)/Config.in"

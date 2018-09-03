@@ -1,0 +1,48 @@
+#!/bin/sh
+
+
+if [ -f "/etc/nginx/luci_nginx_ssl.conf" ] && [ -f "/etc/nginx/nginx.conf" ]; then
+	if [ ! "$(cat '/etc/nginx/nginx.conf' | grep 'return 301 https://$host$request_uri;')" ]; then
+		if [ -f "/etc/nginx/nginx.conf_old" ]; then
+			rm /etc/nginx/nginx.conf
+		else
+			mv /etc/nginx/nginx.conf /etc/nginx/nginx.conf_old
+		fi
+		mv /etc/nginx/luci_nginx_ssl.conf /etc/nginx/nginx.conf
+		core_number=$(grep -c ^processor /proc/cpuinfo)
+		sed -i "3s/.*/worker_processes  "$core_number";/" /etc/nginx/nginx.conf
+		if [ -n "$(pgrep nginx)" ]; then
+			/etc/init.d/nginx restart
+		else
+			/etc/init.d/nginx start
+		fi
+	else
+		rm /etc/nginx/luci_nginx_ssl.conf
+	fi
+fi
+
+
+if [ ! -f "/etc/nginx/nginx.key" ]; then
+	
+	NGINX_KEY=/etc/nginx/nginx.key
+	NGINX_CER=/etc/nginx/nginx.cer
+	OPENSSL_BIN=/usr/bin/openssl
+	PX5G_BIN=/usr/sbin/px5g
+	
+	# Prefer px5g for certificate generation (existence evaluated last)
+	GENKEY_CMD=""
+	UNIQUEID=$(dd if=/dev/urandom bs=1 count=4 | hexdump -e '1/1 "%02x"')
+	[ -x "$OPENSSL_BIN" ] && GENKEY_CMD="$OPENSSL_BIN req -x509 -nodes"
+	[ -x "$PX5G_BIN" ] && GENKEY_CMD="$PX5G_BIN selfsigned"
+	[ -n "$GENKEY_CMD" ] && {
+		$GENKEY_CMD \
+			-days 730 -newkey rsa:2048 -keyout "${NGINX_KEY}.new" -out "${NGINX_CER}.new" \
+			-subj /C="ZZ"/ST="Somewhere"/L="Unknown"/O="OpenWrt""$UNIQUEID"/CN="OpenWrt"
+		sync
+		mv "${NGINX_KEY}.new" "${NGINX_KEY}"
+		mv "${NGINX_CER}.new" "${NGINX_CER}"
+	}
+fi
+
+
+exit 0

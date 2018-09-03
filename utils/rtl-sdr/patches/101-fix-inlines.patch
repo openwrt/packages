@@ -1,0 +1,66 @@
+From 6c01778cf7ff81d9a571291fee615b65961ca1d5 Mon Sep 17 00:00:00 2001
+From: David Woodhouse <dwmw2@infradead.org>
+Date: Thu, 28 Jun 2018 16:21:11 +0100
+Subject: [PATCH] Fix inline functions to use 'static inline'
+
+With just 'inline', if the compiler decides not to inline them, it isn't
+required to emit them at all. For some targets with -Os that is causing
+build failures.
+
+Perhaps we might consider using '__attribute__((always_inline))' for
+GCC builds, but 'static inline' is a good start.
+---
+ src/rtl_adsb.c  | 8 ++++----
+ src/rtl_power.c | 2 +-
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/src/rtl_adsb.c b/src/rtl_adsb.c
+index 9087de4..7aea8dd 100644
+--- a/src/rtl_adsb.c
++++ b/src/rtl_adsb.c
+@@ -183,7 +183,7 @@ int magnitute(uint8_t *buf, int len)
+ 	return len/2;
+ }
+ 
+-inline uint16_t single_manchester(uint16_t a, uint16_t b, uint16_t c, uint16_t d)
++static inline uint16_t single_manchester(uint16_t a, uint16_t b, uint16_t c, uint16_t d)
+ /* takes 4 consecutive real samples, return 0 or 1, BADSAMPLE on error */
+ {
+ 	int bit, bit_p;
+@@ -224,17 +224,17 @@ inline uint16_t single_manchester(uint16_t a, uint16_t b, uint16_t c, uint16_t d
+ 	return BADSAMPLE;
+ }
+ 
+-inline uint16_t min16(uint16_t a, uint16_t b)
++static inline uint16_t min16(uint16_t a, uint16_t b)
+ {
+ 	return a<b ? a : b;
+ }
+ 
+-inline uint16_t max16(uint16_t a, uint16_t b)
++static inline uint16_t max16(uint16_t a, uint16_t b)
+ {
+ 	return a>b ? a : b;
+ }
+ 
+-inline int preamble(uint16_t *buf, int i)
++static inline int preamble(uint16_t *buf, int i)
+ /* returns 0/1 for preamble at index i */
+ {
+ 	int i2;
+diff --git a/src/rtl_power.c b/src/rtl_power.c
+index 00f4d9f..625d818 100644
+--- a/src/rtl_power.c
++++ b/src/rtl_power.c
+@@ -250,7 +250,7 @@ void sine_table(int size)
+ 	}
+ }
+ 
+-inline int16_t FIX_MPY(int16_t a, int16_t b)
++static inline int16_t FIX_MPY(int16_t a, int16_t b)
+ /* fixed point multiply and scale */
+ {
+ 	int c = ((int)a * (int)b) >> 14;
+-- 
+2.7.4
+

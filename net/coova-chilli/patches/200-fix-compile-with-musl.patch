@@ -1,0 +1,30 @@
+--- a/src/system.h
++++ b/src/system.h
+@@ -112,6 +112,11 @@
+ #include <signal.h>
+ #endif
+ 
++#ifdef HAVE_SYS_SYSINFO_H
++#define _LINUX_SYSINFO_H
++#include <sys/sysinfo.h>
++#endif
++
+ #ifdef HAVE_INTTYPES_H
+ #define __STDC_FORMAT_MACROS
+ #include <inttypes.h>
+@@ -129,15 +134,6 @@
+ #include <linux/un.h>
+ #endif
+ 
+-#ifdef HAVE_SYS_SYSINFO_H
+-#include <sys/sysinfo.h>
+-#else
+-#ifdef HAVE_LINUX_SYSINFO_H
+-#define _LINUX_KERNEL_H
+-#include <linux/sysinfo.h>
+-#endif
+-#endif
+-
+ #elif defined (__FreeBSD__)  || defined (__APPLE__) || defined (__OpenBSD__) || defined (__NetBSD__)
+ #include <net/if.h>
+ #include <net/bpf.h>

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libzdb
 PKG_VERSION:=3.1
-PKG_RELEASE:=4
+PKG_RELEASE:=6
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -22,6 +22,8 @@ PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=libzdb/host
 
 include $(INCLUDE_DIR)/package.mk
+# libzdb needs to find iconv when linking to libmariadb
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/libzdb
     SECTION:=libs

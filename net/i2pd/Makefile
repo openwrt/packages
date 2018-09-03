@@ -9,16 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=i2pd
-PKG_VERSION:=2.18.0
+PKG_VERSION:=2.19.0
 PKG_RELEASE:=1
 PKG_BUILD_PARALLEL:=1
 
-PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://codeload.github.com/PurpleI2P/i2pd/tar.gz/$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=1a04826b54e649ebb341d3feacdd05c0415335679d1aa787a74ea5995d419378
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/PurpleI2P/i2pd.git
-PKG_SOURCE_VERSION:=$(PKG_VERSION)
+PKG_HASH:=7202497ffc3db632d0f7fed93eafaf39aa75efea199705dae7d022249b069eb9
 PKG_LICENSE:=BSD-3-clause
 
 include $(INCLUDE_DIR)/package.mk
@@ -55,8 +52,6 @@ define Package/i2pd/install
 	$(INSTALL_DIR) $(1)/usr/share/i2pd
 	$(CP) $(PKG_BUILD_DIR)/contrib/certificates  $(1)/usr/share/i2pd
 	$(INSTALL_DIR) $(1)/etc/i2pd
-	$(LN) /usr/share/i2pd/certificates $(1)/etc/i2pd/certificates
-	$(LN) /var/lib/i2pd/peerProfiles $(1)/etc/i2pd/peerProfiles
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/contrib/i2pd.conf $(1)/etc/i2pd
 	$(SED) ' \
 		s/127.0.0.1/192.168.1.1/g; \

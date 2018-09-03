@@ -1,7 +1,13 @@
 # This makefile simplifies perl module builds.
 #
 
-PERL_VERSION:=5.26
+include ../perl/perlver.mk
+
+ifneq ($(PKG_NAME),perl)
+  PKG_VERSION:=$(PKG_VERSION)+perl$(PERL_VERSION2)
+endif
+
+PERL_VERSION:=$(PERL_VERSION2)
 
 # Build environment
 HOST_PERL_PREFIX:=$(STAGING_DIR_HOSTPKG)/usr
@@ -9,7 +15,7 @@ ifneq ($(CONFIG_USE_GLIBC),)
 	EXTRA_LIBS:=bsd
 	EXTRA_LIBDIRS:=$(STAGING_DIR)/lib
 endif
-PERL_CMD:=$(STAGING_DIR_HOSTPKG)/usr/bin/perl$(PERL_VERSION).0
+PERL_CMD:=$(STAGING_DIR_HOSTPKG)/usr/bin/perl$(PERL_VERSION3)
 
 MOD_CFLAGS_PERL:=-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 $(TARGET_CFLAGS) $(TARGET_CPPFLAGS)
 ifdef CONFIG_PERL_THREADS

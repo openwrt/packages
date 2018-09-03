@@ -9,15 +9,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gammu
-PKG_VERSION:=1.38.4
-PKG_RELEASE:=2
+PKG_VERSION:=1.39.0
+PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://dl.cihar.com/gammu/releases/
+PKG_SOURCE_URL:=https://dl.cihar.com/gammu/releases
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=a8ba1dc52ee82562abd57e9546c409f2f887f45187aae012fe43af0b730611ae
+PKG_HASH:=66d1d991d7a993fdf254d4c425f0fdd38c9cca15b1735936695a486067a6a9f8
+
 PKG_MAINTAINER:=Vitaly Protsko <villy@sft.ru>
 PKG_LICENCE:=GPL-2.0
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -28,10 +30,10 @@ define Package/gammu
 	SECTION:=utils
 	CATEGORY:=Utilities
 	TITLE:=Cell phone/modem SMS and control tool
-	URL:=http://dl.cihar.com/gammu/releases/
+	URL:=https://wammu.eu/gammu/
 	DEPENDS:=+libpthread +libcurl +glib2 $(ICONV_DEPENDS) $(INTL_DEPENDS)
 	DEPENDS+=+PACKAGE_python:python +PACKAGE_bluez-libs:bluez-libs
-	DEPENDS+=+PACKAGE_libmariadbclient:libmariadbclient +PACKAGE_unixodbc:unixodbc +PACKAGE_libpq:libpq
+	DEPENDS+=+PACKAGE_libmariadb:libmariadb +PACKAGE_unixodbc:unixodbc +PACKAGE_libpq:libpq
 	DEPENDS+=+PACKAGE_libusb-1.0:libusb-1.0
 endef
 

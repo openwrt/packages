@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squid
-PKG_VERSION:=3.5.27
+PKG_VERSION:=4.0.24
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www3.us.squid-cache.org/Versions/v3/3.5/ \
-	http://www2.pl.squid-cache.org/Versions/v3/3.5/ \
-	http://www.squid-cache.org/Versions/v3/3.5/
-PKG_HASH:=5ddb4367f2dc635921f9ca7a59d8b87edb0412fa203d1543393ac3c7f9fef0ec
+PKG_SOURCE_URL:=http://www3.us.squid-cache.org/Versions/v4/ \
+	http://www2.pl.squid-cache.org/Versions/v4/ \
+	http://www.squid-cache.org/Versions/v4/
+PKG_HASH:=091da0d763307dcc0f5c784ab07ea0c5a093f6dfac60f17ff26e2a6d50f76a07
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -30,12 +30,18 @@ define Package/squid/Default
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   URL:=http://www.squid-cache.org/
-  MENU:=1
 endef
 
 define Package/squid
   $(call Package/squid/Default)
-  DEPENDS:=+libopenssl +libpthread +librt +libltdl +libstdcpp
+  MENU:=1
+  DEPENDS:=+libpthread +librt +libltdl +libstdcpp +libatomic +USE_GLIBC:libbsd
+  DEPENDS+= +SQUID_use-gnutls:libgnutls +!SQUID_use-gnutls:libopenssl
+  DEPENDS+= +SQUID_with-libcap:libcap
+  DEPENDS+= +SQUID_with-nettle:libnettle
+  DEPENDS+= +SQUID_with-expat:libexpat
+  DEPENDS+= +SQUID_with-libxml2:libxml2
+  USERID:=squid=137:squid=137
   TITLE:=full-featured Web proxy cache
 endef
 
@@ -43,6 +49,14 @@ define Package/squid/description
   Squid is a caching proxy for the Web supporting HTTP, HTTPS, FTP, and more.
   It reduces bandwidth and improves response times by caching and reusing
   frequently-requested web pages.
+endef
+
+define Package/squid/config
+  source "$(SOURCE)/Config.in"
+endef
+
+define Package/squid/conffiles
+  /etc/squid/squid.conf
 endef
 
 define Package/squid-mod-cachemgr
@@ -58,13 +72,9 @@ CONFIGURE_ARGS += \
 	--sysconfdir=/etc/squid \
 	--enable-shared \
 	--disable-static \
-	--enable-icmp \
 	--enable-delay-pools \
-	--enable-icap-client \
 	--enable-kill-parent-hack \
-	--disable-snmp \
 	--enable-ssl \
-	--enable-ssl-crtd \
 	--enable-cache-digests \
 	--enable-linux-netfilter \
 	--disable-unlinkd \
@@ -73,28 +83,36 @@ CONFIGURE_ARGS += \
 	--disable-auto-locale \
 	--with-dl \
 	--with-pthreads \
-	--without-expat \
-	--without-libxml2 \
-	--without-gnutls \
-	--without-nettle \
-	--with-openssl=$(STAGING_DIR)/usr \
 	--enable-epoll \
-	--with-maxfd=4096 \
+	--with-maxfd=2048 \
+	--disable-ecap \
 	--disable-external-acl-helpers \
-	--disable-auth-negotiate \
-	--disable-auth-ntlm \
-	--disable-auth-digest \
-	--disable-auth-basic \
 	--disable-arch-native \
 	--with-krb5-config=no \
 	--without-mit-krb5 \
-	--without-libcap \
-	--without-netfilter-conntrack
+	--without-netfilter-conntrack \
+	--disable-ident-lookups \
+	$(if $(CONFIG_SQUID_auth-basic),--enable,--disable)-auth-basic \
+	$(if $(CONFIG_SQUID_auth-digest),--enable,--disable)-auth-digest \
+	$(if $(CONFIG_SQUID_auth-ntlm),--enable,--disable)-auth-ntlm \
+	$(if $(CONFIG_SQUID_auth-negotiate),--enable,--disable)-auth-negotiate \
+	$(if $(CONFIG_SQUID_enable-ipv6),--enable,--disable)-dlmalloc \
+	$(if $(CONFIG_SQUID_enable-ipv6),--enable,--disable)-ipv6 \
+	$(if $(CONFIG_SQUID_enable-ssl-crtd),--enable-ssl-crtd) \
+	$(if $(CONFIG_SQUID_use-gnutls),--with,--without)-gnutls \
+	$(if $(CONFIG_SQUID_use-gnutls),--without-openssl) \
+	$(if $(CONFIG_SQUID_use-gnutls),,--with-openssl="$(STAGING_DIR)/usr") \
+	$(if $(CONFIG_SQUID_enable-icmp),--enable,--disable)-icmp \
+	$(if $(CONFIG_SQUID_enable-icap-client),--enable,--disable)-icap-client \
+	$(if $(CONFIG_SQUID_enable-snmp),--enable,--disable)-snmp \
+	$(if $(CONFIG_SQUID_with-libcap),--with,--without)-libcap \
+	$(if $(CONFIG_SQUID_with-nettle),--with,--without)-nettle \
+	$(if $(CONFIG_SQUID_with-expat),--with,--without)-expat \
+	$(if $(CONFIG_SQUID_with-libxml2),--with,--without)-libxml2
 
 CONFIGURE_VARS += \
 	ac_cv_header_linux_netfilter_ipv4_h=yes \
-	ac_cv_epoll_works=yes \
-	squid_cv_gnu_atomics=no
+	ac_cv_epoll_works=yes
 
 define Build/Compile
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/lib all
@@ -108,13 +126,13 @@ define Package/squid/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/squid $(1)/usr/sbin/
 
 	$(INSTALL_DIR) $(1)/usr/lib/squid
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/squid/ssl_crtd $(1)/usr/lib/squid
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/squid/* $(1)/usr/lib/squid/
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/squid.config $(1)/etc/config/squid
 
 	$(INSTALL_DIR) $(1)/etc/squid
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/squid/mime.conf $(1)/etc/squid/
+	$(CP) $(PKG_INSTALL_DIR)/etc/squid/* $(1)/etc/squid/
 	$(INSTALL_CONF) ./files/squid.conf $(1)/etc/squid/
 
 	$(INSTALL_DIR) $(1)/etc/init.d/
@@ -122,6 +140,7 @@ define Package/squid/install
 
 	$(INSTALL_DIR) $(1)/usr/share/squid/icons/
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/squid/icons/* $(1)/usr/share/squid/icons/
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/squid/mib.txt $(1)/usr/share/squid/
 
 	$(INSTALL_DIR) $(1)/usr/share/squid/errors/templates/
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/squid/errors/templates/* $(1)/usr/share/squid/errors/templates/

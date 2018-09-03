@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-zope-interface
-PKG_VERSION:=4.4.3
-PKG_RELEASE:=2
+PKG_VERSION:=4.5.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=zope.interface-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/bd/d2/25349ed41f9dcff7b3baf87bd88a4c82396cf6e02f1f42bb68657a3132af
-PKG_HASH:=d6d26d5dfbfd60c65152938fcb82f949e8dada37c041f72916fef6621ba5c5ce
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/z/zope.interface
+PKG_HASH:=57c38470d9f57e37afb460c399eb254e7193ac7fb8042bd09bdc001981a9c74c
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-zope-interface-$(PKG_VERSION)
 
@@ -36,14 +36,14 @@ endef
 
 define Package/python-zope-interface
 $(call Package/python-zope-interface/Default)
-  TITLE:=python-zope-interface
+  TITLE:=Interfaces for Python
   DEPENDS:=+PACKAGE_python-zope-interface:python-light
   VARIANT:=python
 endef
 
 define Package/python3-zope-interface
 $(call Package/python-zope-interface/Default)
-  TITLE:=python3-zope-interface
+  TITLE:=Interfaces for Python
   DEPENDS:=+PACKAGE_python3-zope-interface:python3-light
   VARIANT:=python3
 endef
@@ -59,18 +59,6 @@ define Package/python3-zope-interface/description
 $(call Package/python-zope-interface/description)
 .
 (Variant for Python3)
-endef
-
-define PyPackage/python-zope-interface/filespec
-+|$(PYTHON_PKG_DIR)
--|$(PYTHON_PKG_DIR)/zope/interface/common/tests
--|$(PYTHON_PKG_DIR)/zope/interface/tests
-endef
-
-define Py3Package/python3-zope-interface/filespec
-+|$(PYTHON3_PKG_DIR)
--|$(PYTHON3_PKG_DIR)/zope/interface/common/tests
--|$(PYTHON3_PKG_DIR)/zope/interface/tests
 endef
 
 $(eval $(call PyPackage,python-zope-interface))

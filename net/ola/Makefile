@@ -9,20 +9,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ola
-PKG_VERSION:=0.10.5
-PKG_RELEASE:=2
+PKG_VERSION:=0.10.7
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/OpenLightingProject/ola.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=32db3c49d435398d017c6b5c0b25e02a7a831f5c
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=11ed6540bd667c1662d91de93a260a9a63a98725851f768647e2b9b2efe1ae34
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/OpenLightingProject/ola/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=95b5e99775f700a9cdf6e2219eccfc8c037fa8841f87cb00344359c4b8c7bf26
+
 PKG_LICENSE:=LGPL-2.1+
 
 PKG_FIXUP:=libtool
-PKG_INSTALL:=1
 
+PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
@@ -38,7 +36,7 @@ define Package/ola
   TITLE:=Open Lighting Architecture Daemon
   URL:=https://www.openlighting.org/
   MAINTAINER:=Christian Beier <dontmind@freeshell.org>
-  DEPENDS:=+protobuf +libusb-1.0 +libuuid +libstdcpp +libpthread +librt +zlib +libncurses +liblo
+  DEPENDS:=+protobuf +libusb-1.0 +libuuid +libstdcpp +libpthread +librt +zlib +libncurses +liblo +libmicrohttpd
 endef
 
 define Package/ola/description
@@ -52,9 +50,8 @@ CONFIGURE_ARGS += \
 	--disable-static \
 	--disable-fatal-warnings \
 	--disable-unittests \
-	--disable-http \
 	--without-dns-sd \
-	 --with-ola-protoc-plugin=$(HOST_BUILD_DIR)/protoc/ola_protoc_plugin
+	--with-ola-protoc-plugin=$(STAGING_DIR_HOSTPKG)/bin/ola_protoc_plugin
 
 HOST_CONFIGURE_ARGS += \
 	--disable-all-plugins \
@@ -75,8 +72,9 @@ define Host/Compile
 		$(MAKE) protoc/ola_protoc_plugin
 endef
 
-# nothing to install for host part
 define Host/Install
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin
+	$(CP) $(HOST_BUILD_DIR)/protoc/ola_protoc_plugin $(STAGING_DIR_HOSTPKG)/bin
 endef
 
 
@@ -101,6 +99,9 @@ define Package/ola/install
 
 	$(INSTALL_DIR) $(1)/usr/share/ola/pids
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/ola/pids/* $(1)/usr/share/ola/pids
+
+	$(INSTALL_DIR) $(1)/usr/share/olad/www
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/olad/www/* $(1)/usr/share/olad/www
 endef
 
 define Package/ola/postinst

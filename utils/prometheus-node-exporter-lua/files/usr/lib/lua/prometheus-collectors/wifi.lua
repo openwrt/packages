@@ -4,8 +4,8 @@ local iwinfo = require "iwinfo"
 local function scrape()
   local metric_wifi_network_quality = metric("wifi_network_quality","gauge")
   local metric_wifi_network_bitrate = metric("wifi_network_bitrate","gauge")
-  local metric_wifi_network_noise = metric("wifi_network_noise","gauge")
-  local metric_wifi_network_signal = metric("wifi_network_signal","gauge")
+  local metric_wifi_network_noise = metric("wifi_network_noise_dbm","gauge")
+  local metric_wifi_network_signal = metric("wifi_network_signal_dbm","gauge")
 
   local u = ubus.connect()
   local status = u:call("network.wireless", "status", {})

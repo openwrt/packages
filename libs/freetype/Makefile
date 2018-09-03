@@ -8,15 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freetype
-PKG_VERSION:=2.9
+PKG_VERSION:=2.9.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/freetype
-PKG_HASH:=e6ffba3c8cef93f557d1f767d7bc3dee860ac7a3aaff588a521e081bc36f4c8a
+PKG_HASH:=db8d87ea720ea9d5edc5388fc7a0497bb11ba9fe972245e0f7f4c7e8b1e1e84d
 
 PKG_LICENSE:=FTL GPL-2.0 MIT ZLIB
 PKG_LICENSE_FILES:=docs/LICENSE.TXT docs/FTL.TXT docs/GPLv2.TXT src/bdf/README src/pcf/README src/gzip/zlib.h
+PKG_CPE_ID:=cpe:/a:freetype:freetype2
 PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
 
 PKG_FIXUP:=autoreconf
@@ -30,7 +31,7 @@ define Package/libfreetype
   CATEGORY:=Libraries
   TITLE:=A free, high-quality and portable font engine
   URL:=http://www.freetype.org/
-  DEPENDS:=+zlib +libbz2 +libpng
+  DEPENDS:=+zlib +libpng
 endef
 
 define Package/libfreetype/description
@@ -43,9 +44,10 @@ endef
 TARGET_CFLAGS += $(FPIC)
 
 CONFIGURE_ARGS += \
+	--enable-freetype-config \
 	--enable-shared \
 	--enable-static \
-	--with-bzip2=yes \
+	--with-bzip2=no \
 	--with-zlib=yes \
 	--with-png=yes
 

@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2016 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,15 +6,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=talloc
-PKG_VERSION:=2.1.11
+PKG_VERSION:=2.1.14
 MAJOR_VERSION:=2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.samba.org/ftp/talloc/
-PKG_HASH:=639eb35556a0af999123c4d883e79be05ff9f00ab4f9e4ac2e5775f9c5eeeed3
+PKG_SOURCE_URL:=https://www.samba.org/ftp/talloc
+PKG_HASH:=b185602756a628bac507fa8af8b9df92ace69d27c0add5dab93190ad7c3367ce
 
-PKG_MAINTAINER:=Lucile Quirion <lucile.quirion@savoirfairelinux.com>
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=LGPL-3.0+
 
 PKG_BUILD_PARALLEL:=0
@@ -28,7 +26,7 @@ define Package/libtalloc
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Core memory allocator used in Samba
-  DEPENDS:=+USE_GLIBC:libbsd $(ICONV_DEPENDS) +libattr
+  DEPENDS:=$(ICONV_DEPENDS) +libattr
   URL:=https://talloc.samba.org/talloc/doc/html/index.html
 endef
 

@@ -30,6 +30,7 @@ start_domoticz() {
 	# By default, ${userdata}/scripts is a symlink to /etc/domoticz/scripts
 	# and the two dzVents directories under there which Domoticz will actually
 	# write to at runtime are symlinked back to /var/lib again.
+	[ -d "${userdata}/plugins" ] || ln -sf /etc/domoticz/plugins "${userdata}/plugins"
 	[ -d "${userdata}/scripts" ] || ln -sf /etc/domoticz/scripts "${userdata}/scripts"
 	for DIR in data generated_scripts; do
 		[ -d /var/lib/domoticz/dzVents/$DIR ] || {

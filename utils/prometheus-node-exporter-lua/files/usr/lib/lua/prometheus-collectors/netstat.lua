@@ -1,10 +1,20 @@
+local netsubstat = {
+    "IcmpMsg",
+    "Icmp",
+    "IpExt",
+    "Ip",
+    "TcpExt",
+    "Tcp",
+    "UdpLite",
+    "Udp"
+}
+
 local function scrape()
   -- NOTE: Both of these are missing in OpenWRT kernels.
   --       See: https://dev.openwrt.org/ticket/15781
   local netstat = get_contents("/proc/net/netstat") .. get_contents("/proc/net/snmp")
 
   -- all devices
-  local netsubstat = {"IcmpMsg", "Icmp", "IpExt", "Ip", "TcpExt", "Tcp", "UdpLite", "Udp"}
   for i, nss in ipairs(netsubstat) do
     local substat_s = string.match(netstat, nss .. ": ([A-Z][A-Za-z0-9 ]+)")
     if substat_s then

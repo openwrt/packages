@@ -10,11 +10,15 @@ include ../golang-version.mk
 
 PKG_NAME:=golang
 PKG_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
-PKG_RELEASE:=1
+PKG_RELEASE:=2
+
+GO_SOURCE_URLS:=https://dl.google.com/go/ \
+                https://mirrors.ustc.edu.cn/golang/ \
+                https://mirrors.nju.edu.cn/golang/
 
 PKG_SOURCE:=go$(PKG_VERSION).src.tar.gz
-PKG_SOURCE_URL:=https://golang.org/dl/
-PKG_HASH:=f3de49289405fda5fd1483a8fe6bd2fa5469e005fd567df64485c4fa000c7f24
+PKG_SOURCE_URL:=$(GO_SOURCE_URLS)
+PKG_HASH:=567b1cc66c9704d1c019c50bef946272e911ec6baf244310f87f4e678be155f2
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -51,15 +55,9 @@ HOST_GO_VALID_OS_ARCH:= \
   \
   linux_ppc64 linux_ppc64le linux_mips linux_mipsle linux_mips64 linux_mips64le
 
-BOOTSTRAP_SOURCE_PROTO:=git
-BOOTSTRAP_SOURCE_URL:=https://go.googlesource.com/go
-BOOTSTRAP_SOURCE_VERSION:=4d5426a570c2820c5894a61b52e3dc147e4e7925
-BOOTSTRAP_SOURCE_DATE:=20170926
-BOOTSTRAP_MIRROR_HASH:=a3e26ee7c96486c841d29cbea3bf548ce2d999b9235275091cbe60ae6efa4cb1
-
-BOOTSTRAP_VERSION:=$(BOOTSTRAP_SOURCE_DATE)-$(call version_abbrev,$(BOOTSTRAP_SOURCE_VERSION))
-BOOTSTRAP_SOURCE_SUBDIR:=golang-bootstrap-$(BOOTSTRAP_VERSION)
-BOOTSTRAP_SOURCE:=$(BOOTSTRAP_SOURCE_SUBDIR).tar.xz
+BOOTSTRAP_SOURCE:=go1.4-bootstrap-20171003.tar.gz
+BOOTSTRAP_SOURCE_URL:=$(GO_SOURCE_URLS)
+BOOTSTRAP_HASH:=f4ff5b5eb3a3cae1c993723f3eab519c5bae18866b5e5f96fe1102f0cb5c3e52
 
 BOOTSTRAP_BUILD_DIR:=$(HOST_BUILD_DIR)/.go_bootstrap
 
@@ -81,7 +79,7 @@ include ../golang-package.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 HOST_UNPACK:=$(HOST_TAR) -C $(HOST_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
-BOOTSTRAP_UNPACK:=$(HOST_TAR) -C $(BOOTSTRAP_BUILD_DIR) --strip-components=1 -xJf $(DL_DIR)/$(BOOTSTRAP_SOURCE)
+BOOTSTRAP_UNPACK:=$(HOST_TAR) -C $(BOOTSTRAP_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(BOOTSTRAP_SOURCE)
 
 # don't strip ELF executables in test data (and go itself)
 RSTRIP:=:
@@ -148,10 +146,7 @@ endef
 define Download/golang-bootstrap
   FILE:=$(BOOTSTRAP_SOURCE)
   URL:=$(BOOTSTRAP_SOURCE_URL)
-  SUBDIR:=$(BOOTSTRAP_SOURCE_SUBDIR)
-  PROTO:=$(BOOTSTRAP_SOURCE_PROTO)
-  MIRROR_HASH:=$(BOOTSTRAP_MIRROR_HASH)
-  VERSION:=$(BOOTSTRAP_SOURCE_VERSION)
+  HASH:=$(BOOTSTRAP_HASH)
 endef
 $(eval $(call Download,golang-bootstrap))
 

@@ -195,6 +195,13 @@ ERR_LAST=$?	# save return code - equal 0 if SECTION_ID found
 [ "$ip_source" = "web" -a -z "$ip_url" -a $use_ipv6 -eq 1 ] && ip_url="http://checkipv6.dyndns.com"
 [ "$ip_source" = "interface" -a -z "$ip_interface" ] && ip_interface="eth1"
 
+# url encode username (might be email or something like this)
+# and password (might have special chars for security reason)
+# and optional parameter "param_enc"
+[ -n "$username" ] && urlencode URL_USER "$username"
+[ -n "$password" ] && urlencode URL_PASS "$password"
+[ -n "$param_enc" ] && urlencode URL_PENC "$param_enc"
+
 # SECTION_ID does not exists
 [ $ERR_LAST -ne 0 ] && {
 	[ $VERBOSE -le 1 ] && VERBOSE=2		# force console out and logfile output
@@ -202,14 +209,14 @@ ERR_LAST=$?	# save return code - equal 0 if SECTION_ID found
 	write_log  7 "************ ************** ************** **************"
 	write_log  5 "PID '$$' started at $(eval $DATE_PROG)"
 	write_log  7 "ddns version  : $VERSION"
-	write_log  7 "uci configuration:\n$(uci -q show ddns | grep '=service' | sort)"
+	write_log  7 "uci configuration:${N}$(uci -q show ddns | grep '=service' | sort)"
 	write_log 14 "Service section '$SECTION_ID' not defined"
 }
 
 write_log 7 "************ ************** ************** **************"
 write_log 5 "PID '$$' started at $(eval $DATE_PROG)"
 write_log 7 "ddns version  : $VERSION"
-write_log 7 "uci configuration:\n$(uci -q show ddns.$SECTION_ID | sort)"
+write_log 7 "uci configuration:${N}$(uci -q show ddns.$SECTION_ID | sort)"
 # write_log 7 "ddns version  : $(opkg list-installed ddns-scripts | cut -d ' ' -f 3)"
 case $VERBOSE in
 	0) write_log  7 "verbose mode  : 0 - run normal, NO console output";;
@@ -240,6 +247,15 @@ esac
 # without lookup host and possibly other required options we can do nothing for you
 [ -z "$lookup_host" ] && write_log 14 "Service section not configured correctly! Missing 'lookup_host'"
 
+# verify validity of variables
+[ -n "$lookup_host" ] && sanitize_variable lookup_host "$DNS_CHARSET" ""
+[ -n "$dns_server" ] && sanitize_variable dns_server "$DNS_CHARSET" ""
+[ -n "$domain" ] && sanitize_variable domain "$DNS_CHARSET" ""
+
+# Filter shell escape characters, if these are required in the URL, they
+# can still be passed url encoded
+[ -n "$param_opt" ] && sanitize_variable param_opt "" "$SHELL_ESCAPE"
+
 [ -n "$update_url" ] && {
 	# only check if update_url is given, update_scripts have to check themselves
 	[ -z "$domain" ] && $(echo "$update_url" | grep "\[DOMAIN\]" >/dev/null 2>&1) && \
@@ -253,13 +269,6 @@ esac
 	[ -z "$param_opt" ] && $(echo "$update_url" | grep "\[PARAMOPT\]" >/dev/null 2>&1) && \
 		write_log 14 "Service section not configured correctly! Missing 'param_opt'"
 }
-
-# url encode username (might be email or something like this)
-# and password (might have special chars for security reason)
-# and optional parameter "param_enc"
-[ -n "$username" ] && urlencode URL_USER "$username"
-[ -n "$password" ] && urlencode URL_PASS "$password"
-[ -n "$param_enc" ] && urlencode URL_PENC "$param_enc"
 
 # verify ip_source 'script' if script is configured and executable
 if [ "$ip_source" = "script" ]; then

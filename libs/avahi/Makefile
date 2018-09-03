@@ -8,16 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avahi
-PKG_VERSION:=0.6.32
-PKG_RELEASE:=3
+PKG_VERSION:=0.7
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/lathiat/avahi/releases/download/v$(PKG_VERSION)
-PKG_HASH:=d54991185d514a0aba54ebeb408d7575b60f5818a772e28fa0e18b98bc1db454
+PKG_SOURCE_URL:=https://github.com/lathiat/avahi/releases/download/v$(PKG_VERSION) \
+		https://avahi.org/download
+PKG_HASH:=57a99b5dfe7fdae794e3d1ee7a62973a368e91e414bd0dfa5d84434de5b14804
+
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_CPE_ID:=cpe:/a:avahi:avahi
 
 PKG_BUILD_DEPENDS:=intltool/host
-
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=autogen.sh
 

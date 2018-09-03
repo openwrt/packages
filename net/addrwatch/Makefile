@@ -8,15 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=addrwatch
-PKG_VERSION:=0.8
-PKG_RELEASE:=2
+PKG_VERSION:=1.0.1
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-master.tar.gz
-PKG_SOURCE_URL:=https://github.com/fln/addrwatch/releases/download/$(PKG_VERSION)/
-PKG_HASH:=0455bd8d2e18a793e1182712bf4df3e54a5b7575f82f5b79b60deef19ff93df8
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/fln/addrwatch/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=be70150a357558481de8488665da1d6efdfa5dc37666d9fa68e8e73a8b59ade6
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-master
 PKG_FIXUP:=autoreconf
 PKG_BUILD_DEPENDS:=USE_UCLIBC:argp-standalone USE_MUSL:argp-standalone
 
@@ -32,7 +31,7 @@ define Package/addrwatch
 endef
 
 define Package/addrwatch/description
-  This is a tool similar to arpwatch. It main purpose is to monitor network and 
+  This is a tool similar to arpwatch. It main purpose is to monitor network and
   log discovered ethernet/ip pairings. Addrwatch is extremely useful in networks
   with IPv6 autoconfiguration (RFC4862) enabled. It allows to track IPv6
   addresses of hosts using IPv6 privacy extensions (RFC4941).

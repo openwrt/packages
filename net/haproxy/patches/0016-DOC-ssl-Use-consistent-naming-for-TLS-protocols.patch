@@ -1,0 +1,49 @@
+commit 54aecf18aeabe09bccf8db5e34b99bc36d468088
+Author: Bertrand Jacquin <bertrand@jacquin.bzh>
+Date:   Tue Aug 14 00:56:13 2018 +0100
+
+    DOC: ssl: Use consistent naming for TLS protocols
+    
+    In most cases, "TLSv1.x" naming is used across and documentation, lazy
+    people tend to grep too much and may not find what they are looking for.
+    
+    Fixing people is hard.
+    
+    (cherry picked from commit a25282bb399bfad8ed04b494b567fe97f0a58d65)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/doc/configuration.txt b/doc/configuration.txt
+index 1973bbf2..43e28785 100644
+--- a/doc/configuration.txt
++++ b/doc/configuration.txt
+@@ -10447,7 +10447,7 @@ accept-proxy
+   setting of which client is allowed to use the protocol.
+ 
+ allow-0rtt
+-  Allow receiving early data when using TLS 1.3. This is disabled by default,
++  Allow receiving early data when using TLSv1.3. This is disabled by default,
+   due to security considerations.
+ 
+ alpn <protocols>
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 9be2fc4c..0b49e0b4 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -1986,7 +1986,7 @@ static void ctx_set_TLSv12_func(SSL_CTX *ctx, set_context_func c) {
+ 		: SSL_CTX_set_ssl_version(ctx, TLSv1_2_client_method());
+ #endif
+ }
+-/* TLS 1.2 is the last supported version in this context. */
++/* TLSv1.2 is the last supported version in this context. */
+ static void ctx_set_TLSv13_func(SSL_CTX *ctx, set_context_func c) {}
+ /* Unusable in this context. */
+ static void ssl_set_SSLv3_func(SSL *ssl, set_context_func c) {}
+@@ -2187,7 +2187,7 @@ static int ssl_sock_switchctx_cbk(SSL *ssl, int *al, void *arg)
+ 				break;
+ 		}
+ 	} else {
+-		/* without TLSEXT_TYPE_signature_algorithms extension (< TLS 1.2) */
++		/* without TLSEXT_TYPE_signature_algorithms extension (< TLSv1.2) */
+ 		has_rsa = 1;
+ 	}
+ 	if (has_ecdsa_sig) {  /* in very rare case: has ecdsa sign but not a ECDSA cipher */

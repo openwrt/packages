@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
-PKG_VERSION:=v8.10.0
-PKG_RELEASE:=2
+PKG_VERSION:=v8.11.3
+PKG_RELEASE:=1
 PKG_SOURCE:=node-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://nodejs.org/dist/${PKG_VERSION}
-PKG_HASH:=b72d4e71618d6bcbd039b487b51fa7543631a4ac3331d7caf69bdf55b5b2901a
+PKG_HASH:=577c751fdca91c46c60ffd8352e5b465881373bfdde212c17c3a3c1bd2616ee0
 
 HOST_BUILD_DEPENDS:=python/host
 PKG_BUILD_DEPENDS:=python/host
@@ -73,55 +73,26 @@ NODEJS_CPU:=$(subst powerpc,ppc,$(subst aarch64,arm64,$(subst x86_64,x64,$(subst
 MAKE_VARS+= \
 	DESTCPU=$(NODEJS_CPU)
 
+CONFIGURE_VARS:= \
+	CC="$(TARGET_CC) $(TARGET_OPTIMIZATION)" \
+	CXX="$(TARGET_CXX) $(TARGET_OPTIMIZATION)" \
+	CC_host="$(HOSTCC)" \
+	CXX_host="$(HOSTCXX)"
+
 CONFIGURE_ARGS:= \
 	--dest-cpu=$(NODEJS_CPU) \
 	--dest-os=linux \
 	--without-snapshot \
 	--shared-zlib \
 	--shared-openssl \
+	--with-intl=$(if $(CONFIG_NODEJS_ICU),system-icu,none) \
+	$(if $(findstring mips,$(NODEJS_CPU)), \
+		$(if $(CONFIG_SOFT_FLOAT),--with-mips-float-abi=soft)) \
+	$(if $(findstring +neon,$(CONFIG_CPU_TYPE)),--with-arm-fpu=neon) \
+	$(if $(findstring +vfp",$(CONFIG_CPU_TYPE)),--with-arm-fpu=vfp) \
+	$(if $(findstring +vfpv3",$(CONFIG_CPU_TYPE)),--with-arm-fpu=vfpv3-d16) \
+	$(if $(findstring +vfpv4",$(CONFIG_CPU_TYPE)),--with-arm-fpu=vfpv3) \
 	--prefix=/usr
-
-ifneq ($(findstring arm,$(NODEJS_CPU)),)
-ifeq ($(CONFIG_SOFT_FLOAT),y)
-CONFIGURE_ARGS+= --with-arm-float-abi=softfp
-else
-
-CONFIGURE_ARGS+= --with-arm-float-abi=hard
-
-ifneq ($(findstring vfp,$(CONFIG_CPU_TYPE)),)
-ARM_FPU=vfp
-endif
-
-ifneq ($(findstring vfpv3,$(CONFIG_CPU_TYPE)),)
-ARM_FPU=vfpv3
-endif
-
-ifneq ($(findstring vfpv3-d16,$(CONFIG_CPU_TYPE)),)
-ARM_FPU=vfpv3-d16
-endif
-
-ifneq ($(findstring neon,$(CONFIG_CPU_TYPE)),)
-ARM_FPU=neon
-endif
-
-CONFIGURE_ARGS+= --with-arm-fpu=$(ARM_FPU)
-endif
-endif
-
-ifneq ($(findstring mips,$(NODEJS_CPU)),)
-ifeq ($(CONFIG_SOFT_FLOAT),y)
-CONFIGURE_ARGS+= \
-	--with-mips-float-abi=soft
-endif
-endif
-
-ifeq ($(CONFIG_NODEJS_ICU),y)
-CONFIGURE_ARGS+= \
-	--with-intl=system-icu
-else
-CONFIGURE_ARGS+= \
-	--with-intl=none
-endif
 
 HOST_CONFIGURE_VARS:=
 

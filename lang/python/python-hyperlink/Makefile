@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-hyperlink
-PKG_VERSION:=17.3.1
+PKG_VERSION:=18.0.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=hyperlink-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/h/hyperlink
-PKG_HASH:=bc4ffdbde9bdad204d507bd8f554f16bba82dd356f6130cb16f41422909c33bc
+PKG_HASH:=f01b4ff744f14bc5d0a22a6b9f1525ab7d6312cb0ff967f59414bbac52f0a306
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-hyperlink-$(PKG_VERSION)
 
@@ -37,14 +37,18 @@ endef
 define Package/python-hyperlink
 $(call Package/python-hyperlink/Default)
   TITLE:=Pure-Python immutable URLs
-  DEPENDS:=+PACKAGE_python-hyperlink:python-light
+  DEPENDS:= \
+      +PACKAGE_python-hyperlink:python-light \
+      +PACKAGE_python-hyperlink:python-idna
   VARIANT:=python
 endef
 
 define Package/python3-hyperlink
 $(call Package/python-hyperlink/Default)
   TITLE:=Pure-Python immutable URLs
-  DEPENDS:=+PACKAGE_python3-hyperlink:python3-light
+  DEPENDS:= \
+      +PACKAGE_python3-hyperlink:python3-light \
+      +PACKAGE_python3-hyperlink:python3-idna
   VARIANT:=python3
 endef
 

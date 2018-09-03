@@ -16,7 +16,7 @@
      return 0;
  }
  
-@@ -40,7 +45,7 @@ eval "$ngx_test >> $NGX_AUTOCONF_ERR 2>&
+@@ -40,7 +46,7 @@ eval "$ngx_test >> $NGX_AUTOCONF_ERR 2>&
  
  
  if [ -x $NGX_AUTOTEST ]; then

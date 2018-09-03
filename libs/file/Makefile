@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=file
-PKG_VERSION:=5.25
+PKG_VERSION:=5.33
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=https://sources.lede-project.org/ \
 	http://pkgs.fedoraproject.org/lookaside/pkgs/file/ \
 	http://download.openpkg.org/components/cache/file/ \
 	ftp://ftp.astron.com/pub/file/
-PKG_HASH:=3735381563f69fb4239470b8c51b876a80425348b8285a7cded8b61d6b890eca
+PKG_HASH:=1c52c8c3d271cd898d5511c36a68059cda94036111ab293f01f83c3525b737c6
 
 PKG_LICENSE:=BSD-2c
 PKG_LICENSE_FILES:=COPYING
@@ -52,6 +52,7 @@ endef
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
+	--disable-libseccomp
 
 MAKE_PATH := src
 
@@ -86,9 +87,6 @@ define Package/file/install
 	$(SED) "/^#/d" $(PKG_INSTALL_DIR)/usr/share/file/magic
 	$(SED) "/^$$$$/d" $(PKG_INSTALL_DIR)/usr/share/file/magic
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/file/magic $(1)/usr/share/misc/
-
-	# For some reason both "magic" and "magic.mgc" MUST exist
-	ln -sf magic $(1)/usr/share/misc/magic.mgc
 endef
 
 define Package/libmagic/install

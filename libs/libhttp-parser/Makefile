@@ -8,19 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libhttp-parser
-PKG_VERSION:=2.8.0
-PKG_RELEASE=1
+PKG_VERSION:=2.8.1
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Ramanathan Sivagurunathan <ramzthecoder@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE-MIT
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=83acea397da4cdb9192c27abbd53a9eb8e5a9e1bcea2873b499f7ccc0d68f518
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=git://github.com/nodejs/http-parser.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/nodejs/http-parser/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=51615f68b8d67eadfd2482decc63b3e55d749ce0055502bbb5b0032726d22d96
+PKG_BUILD_DIR:=$(BUILD_DIR)/http-parser-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -33,15 +30,15 @@ endef
 
 define Package/libhttp-parser/description
   A parser for HTTP messages written in C. It parses both requests and responses. 
-  The parser is designed to be used in performance HTTP applications. 
-  It does not make any syscalls nor allocations, it does not buffer data, 
-  it can be interrupted at anytime. Depending on your architecture, 
-  it only requires about 40 bytes of data per message stream 
+  The parser is designed to be used in performance HTTP applications.
+  It does not make any syscalls nor allocations, it does not buffer data,
+  it can be interrupted at anytime. Depending on your architecture,
+  it only requires about 40 bytes of data per message stream
   (in a web server that is per connection).
 endef
 
 define Build/Compile
-	$(call Build/Compile/Default, library) 
+	$(call Build/Compile/Default, library)
 endef
 
 define Build/InstallDev

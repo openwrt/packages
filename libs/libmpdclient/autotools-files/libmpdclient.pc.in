@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libmpdclient
+Description: Music Player Daemon client library
+Version: @VERSION@
+Libs: -L${libdir} -lmpdclient
+Cflags: -I${includedir}

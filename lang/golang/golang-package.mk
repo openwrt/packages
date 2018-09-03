@@ -211,6 +211,7 @@ define GoPackage/Build/Configure
 	)
 endef
 
+# $(1) additional arguments for go command line (optional)
 define GoPackage/Build/Compile
 	( \
 		cd $(GO_PKG_BUILD_DIR) ; \
@@ -228,7 +229,7 @@ define GoPackage/Build/Compile
 		done ; \
 		\
 		if [ "$(GO_PKG_GO_GENERATE)" = 1 ]; then \
-			go generate -v $$$$targets ; \
+			go generate -v $(1) $$$$targets ; \
 		fi ; \
 		\
 		if [ "$(GO_PKG_SOURCE_ONLY)" != 1 ]; then \
@@ -238,7 +239,14 @@ define GoPackage/Build/Compile
 			esac ; \
 			trimpath="all=-trimpath=$(GO_PKG_BUILD_DIR)" ; \
 			ldflags="all=-linkmode external -extldflags '$(TARGET_LDFLAGS)'" ; \
-			go install $$$$installsuffix -gcflags "$$$$trimpath" -asmflags "$$$$trimpath" -ldflags "$$$$ldflags" -v $$$$targets ; \
+			go install \
+				$$$$installsuffix \
+				-gcflags "$$$$trimpath" \
+				-asmflags "$$$$trimpath" \
+				-ldflags "$$$$ldflags" \
+				-v \
+				$(1) \
+				$$$$targets ; \
 			retval=$$$$? ; \
 			\
 			if [ "$$$$retval" -eq 0 ] && [ -z "$(call GoPackage/has_binaries)" ]; then \

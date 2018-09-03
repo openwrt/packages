@@ -8,23 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btrfs-progs
-PKG_VERSION:=4.16.1
+PKG_VERSION:=4.17.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs/
-PKG_HASH:=013403fb67b17975b21408fa9eb7523b0ecf94f84f8a4397cf972e8e254d2246
-PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
+PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs
+PKG_HASH:=bf0b34f1538c0b6e88f959937b0419678cadbf2ba7044336dcbfb2bcdc28cd74
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 
+PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=acl
-
-PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -34,7 +32,7 @@ define Package/btrfs-progs
   SUBMENU:=Filesystem
   DEPENDS:=+libattr +libuuid +zlib +libblkid +liblzo +libpthread
   TITLE:=Btrfs filesystems utilities
-  URL:=http://btrfs.wiki.kernel.org/
+  URL:=https://btrfs.wiki.kernel.org/
 endef
 
 define Package/btrfs-progs/description
@@ -53,6 +51,9 @@ CONFIGURE_ARGS += \
 	--disable-documentation \
 	--disable-python \
 	--disable-zstd
+
+TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
+TARGET_LDFLAGS += -Wl,--gc-sections -flto
 
 EXTRA_CFLAGS=$(TARGET_CPPFLAGS)
 

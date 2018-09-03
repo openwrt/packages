@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openssh
-PKG_VERSION:=7.7p1
+PKG_VERSION:=7.8p1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
 		https://ftp.spline.de/pub/OpenBSD/OpenSSH/portable/ \
 		https://anorien.csc.warwick.ac.uk/pub/OpenBSD/OpenSSH/portable/
-PKG_HASH:=d73be7e684e99efcd024be15a30bffcbe41b012b2f7b3c9084aed621775e6b8f
+PKG_HASH:=1a484bb15152c183bb2514e112aa30dd34138c3cfb032eee5490a66c507144ca
 
 PKG_LICENSE:=BSD ISC
 PKG_LICENSE_FILES:=LICENCE
@@ -49,6 +49,10 @@ endef
 define Package/openssh-client
 	$(call Package/openssh/Default)
 	TITLE+= client
+	ALTERNATIVES:=\
+		200:/usr/bin/ssh:/usr/bin/openssh-ssh \
+		200:/usr/bin/scp:/usr/bin/openssh-scp \
+
 endef
 
 define Package/openssh-client/description
@@ -202,24 +206,6 @@ define Build/Compile
 		all install
 endef
 
-define Package/openssh-client/preinst
-#!/bin/sh
-if [ -L $${IPKG_INSTROOT}/usr/bin/ssh ] && [ -L $${IPKG_INSTROOT}/usr/bin/scp ]; then
-	rm -f $${IPKG_INSTROOT}/usr/bin/ssh $${IPKG_INSTROOT}/usr/bin/scp;
-fi
-exit 0
-endef
-
-define Package/openssh-client/postrm
-#!/bin/sh
-rm -f $${IPKG_INSTROOT}/usr/bin/ssh $${IPKG_INSTROOT}/usr/bin/scp;
-if [ -x $${IPKG_INSTROOT}/usr/sbin/dropbear ] ; then
-	ln -s /usr/sbin/dropbear $${IPKG_INSTROOT}/usr/bin/ssh;
-	ln -s /usr/sbin/dropbear $${IPKG_INSTROOT}/usr/bin/scp;
-fi
-exit 0
-endef
-
 define Package/openssh-moduli/install
 	$(INSTALL_DIR) $(1)/etc/ssh
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/ssh/moduli $(1)/etc/ssh/
@@ -230,8 +216,8 @@ define Package/openssh-client/install
 	chmod 0700 $(1)/etc/ssh
 	$(CP) $(PKG_INSTALL_DIR)/etc/ssh/ssh_config $(1)/etc/ssh/
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/scp $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh $(1)/usr/bin/openssh-ssh
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/scp $(1)/usr/bin/openssh-scp
 endef
 
 define Package/openssh-client-utils/install

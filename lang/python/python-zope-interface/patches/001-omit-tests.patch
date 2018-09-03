@@ -1,0 +1,21 @@
+diff --git a/setup.py b/setup.py
+index 0eb36ea..2e64aae 100644
+--- a/setup.py
++++ b/setup.py
+@@ -121,7 +121,7 @@ setup(name='zope.interface',
+         "Framework :: Zope3",
+         "Topic :: Software Development :: Libraries :: Python Modules",
+       ],
+-      packages=find_packages('src'),
++      packages=find_packages('src', exclude=["*.tests", "*.tests.*"]),
+       package_dir={'': 'src'},
+       namespace_packages=["zope"],
+       cmdclass={
+@@ -129,6 +129,7 @@ setup(name='zope.interface',
+       },
+       test_suite='zope.interface.tests',
+       include_package_data=True,
++      exclude_package_data={'':['tests/*']},
+       zip_safe=False,
+       tests_require=tests_require,
+       install_requires=['setuptools'],

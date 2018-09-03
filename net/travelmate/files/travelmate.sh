@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.2.0"
+trm_ver="1.2.2"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -52,9 +52,7 @@ f_envload()
 
     # (re-)initialize global list variables
     #
-    trm_devlist=""
-    trm_stalist=""
-    trm_radiolist=""
+    unset trm_devlist trm_stalist trm_radiolist
 
     # load config and check 'enabled' option
     #
@@ -69,10 +67,6 @@ f_envload()
     if [ ${trm_enabled} -ne 1 ]
     then
         f_log "info" "travelmate is currently disabled, please set 'trm_enabled' to '1' to use this service"
-        config_load wireless
-        config_foreach f_prep wifi-iface
-        uci_commit wireless
-        ubus call network reload
         exit 0
     fi
 
@@ -134,7 +128,7 @@ f_prep()
 #
 f_check()
 {
-    local ifname radio dev_status config sta_essid sta_bssid result wait=1 mode="${1}" status="${2:-"false"}" IFS=" "
+    local IFS ifname radio dev_status config sta_essid sta_bssid result wait=1 mode="${1}" status="${2:-"false"}"
 
     trm_ifquality=0
     trm_ifstatus="false"
@@ -167,7 +161,7 @@ f_check()
                     ifname="${trm_devlist}"
                     break
                 else
-                    trm_devlist=""
+                    unset trm_devlist
                 fi
             elif [ "${mode}" = "rev" ]
             then
@@ -219,13 +213,13 @@ f_check()
 #
 f_jsnup()
 {
-    local config sta_iface sta_radio sta_essid sta_bssid dev_status status="${trm_ifstatus}"
+    local config sta_iface sta_radio sta_essid sta_bssid dev_status status="${trm_ifstatus}" faulty_list faulty_station="${1}"
 
     if [ "${status}" = "true" ]
     then
         status="connected (${trm_connection:-"-"})"
     else
-        trm_connection=""
+        unset trm_connection
         if [ "${status}" = "false" ]
         then
             status="not connected"
@@ -245,18 +239,23 @@ f_jsnup()
         fi
     fi
 
-    json_init
-    json_add_object "data"
+    json_get_var faulty_list "faulty_stations"
+    if [ -n "${faulty_station}" ]
+    then
+        if [ -z "$(printf "%s" "${faulty_list}" | grep -Fo "${faulty_station}")" ]
+        then
+            faulty_list="${faulty_list} ${faulty_station}"
+        fi
+    fi
     json_add_string "travelmate_status" "${status}"
     json_add_string "travelmate_version" "${trm_ver}"
-    json_add_string "station_id" "${sta_essid:-"-"}/${sta_bssid:-"-"}"
+    json_add_string "station_id" "${sta_radio:-"-"}/${sta_essid:-"-"}/${sta_bssid:-"-"}"
     json_add_string "station_interface" "${sta_iface:-"-"}"
-    json_add_string "station_radio" "${sta_radio:-"-"}"
+    json_add_string "faulty_stations" "${faulty_list}"
     json_add_string "last_rundate" "$(/bin/date "+%d.%m.%Y %H:%M:%S")"
     json_add_string "system" "${trm_sysver}"
-    json_close_object
     json_dump > "${trm_rtfile}"
-    f_log "debug" "f_jsnup::: config: ${config:-"-"}, status: ${status:-"-"}, sta_iface: ${sta_iface:-"-"}, sta_radio: ${sta_radio:-"-"}, sta_essid: ${sta_essid:-"-"}, sta_bssid: ${sta_bssid:-"-"}"
+    f_log "debug" "f_jsnup::: config: ${config:-"-"}, status: ${status:-"-"}, sta_iface: ${sta_iface:-"-"}, sta_radio: ${sta_radio:-"-"}, sta_essid: ${sta_essid:-"-"}, sta_bssid: ${sta_bssid:-"-"}, faulty_list: ${faulty_list:-"-"}"
 }
 
 # write to syslog
@@ -268,12 +267,12 @@ f_log()
 
     if [ -n "${log_msg}" ] && ([ "${class}" != "debug" ] || [ ${trm_debug} -eq 1 ])
     then
-        logger -p "${class}" -t "travelmate-[${trm_ver}]" "${log_msg}"
+        logger -p "${class}" -t "travelmate-${trm_ver}[${$}]" "${log_msg}"
         if [ "${class}" = "err" ]
         then
             trm_ifstatus="error"
             f_jsnup
-            logger -p "${class}" -t "travelmate-[${trm_ver}]" "Please check 'https://github.com/openwrt/packages/blob/master/net/travelmate/files/README.md' (${trm_sysver})"
+            logger -p "${class}" -t "travelmate-${trm_ver}[${$}]" "Please check 'https://github.com/openwrt/packages/blob/master/net/travelmate/files/README.md' (${trm_sysver})"
             exit 1
         fi
     fi
@@ -283,7 +282,7 @@ f_log()
 #
 f_main()
 {
-    local cnt dev config scan scan_list scan_essid scan_bssid scan_quality sta sta_essid sta_bssid sta_radio sta_iface IFS=" "
+    local IFS cnt dev config scan scan_list scan_essid scan_bssid scan_quality sta sta_essid sta_bssid sta_radio sta_iface faulty_list
 
     f_check "initial"
     if [ "${trm_ifstatus}" != "true" ]
@@ -292,7 +291,8 @@ f_main()
         config_foreach f_prep wifi-iface
         uci_commit wireless
         f_check "dev" "running"
-        f_log "debug" "f_main ::: iwinfo: ${trm_iwinfo}, dev_list: ${trm_devlist}, sta_list: ${trm_stalist:0:800}"
+        json_get_var faulty_list "faulty_stations"
+        f_log "debug" "f_main ::: iwinfo: ${trm_iwinfo}, dev_list: ${trm_devlist}, sta_list: ${trm_stalist:0:800}, faulty_list: ${faulty_list:-"-"}"
         for dev in ${trm_devlist}
         do
             if [ -z "$(printf "%s" "${trm_stalist}" | grep -Fo "_${dev}")" ]
@@ -300,7 +300,7 @@ f_main()
                 continue
             fi
             cnt=1
-            while [ ${trm_maxretry} -eq 0 ] || [ ${cnt} -le ${trm_maxretry} ]
+            while [ ${cnt} -le ${trm_maxretry} ]
             do
                 scan_list="$(${trm_iwinfo} "${dev}" scan 2>/dev/null | awk 'BEGIN{FS="[/ ]"}/Address:/{var1=$NF}/ESSID:/{var2="";for(i=12;i<=NF;i++)if(var2==""){var2=$i}else{var2=var2" "$i}}/Quality:/{printf "%i,%s,%s\n",(100/$NF*$(NF-1)),var1,var2}' | sort -rn | awk '{ORS=",";print $0}')"
                 f_log "debug" "f_main ::: dev: ${dev}, scan_list: ${scan_list:0:800}, cnt: ${cnt}, max_cnt: ${trm_maxretry}"
@@ -313,6 +313,11 @@ f_main()
                         sta_essid="$(uci_get wireless "${config}" ssid)"
                         sta_bssid="$(uci_get wireless "${config}" bssid)"
                         sta_iface="$(uci_get wireless "${config}" network)"
+                        json_get_var faulty_list "faulty_stations"
+                        if [ -n "$(printf "%s" "${faulty_list}" | grep -Fo "${sta_radio}/${sta_essid}/${sta_bssid}")" ]
+                        then
+                            continue
+                        fi
                         IFS=","
                         for scan in ${scan_list}
                         do
@@ -339,35 +344,31 @@ f_main()
                                         if [ "${trm_ifstatus}" = "true" ]
                                         then
                                             uci_commit wireless
-                                            f_log "info" "interface '${sta_iface}' on '${sta_radio}' connected to uplink '${sta_essid:-"-"}/${sta_bssid:-"-"}' (${trm_sysver})"
+                                            f_check "initial"
+                                            f_log "info" "connected to uplink '${sta_radio}/${sta_essid}/${sta_bssid:-"-"}' (${trm_sysver})"
                                             return 0
                                         elif [ ${cnt} -eq ${trm_maxretry} ]
                                         then
                                             uci_set wireless "${config}" disabled 1
-                                            if [ -n "${sta_essid}" ]
-                                            then
-                                                uci_set wireless "${config}" ssid "${sta_essid}_err"
-                                            fi
-                                            if [ -n "${sta_bssid}" ]
-                                            then
-                                                uci_set wireless "${config}" bssid "${sta_bssid}_err"
-                                            fi
                                             uci_commit wireless
-                                            f_log "info" "can't connect to uplink '${sta_essid:-"-"}/${sta_bssid:-"-"}', uplink disabled (${trm_sysver})"
+                                            faulty_station="${sta_radio}/${sta_essid}/${sta_bssid:-"-"}"
+                                            f_jsnup "${faulty_station}"
+                                            f_log "info" "can't connect to uplink '${sta_radio}/${sta_essid}/${sta_bssid:-"-"}', uplink disabled (${trm_sysver})"
                                             f_check "rev"
+                                            break
                                         else
                                             uci -q revert wireless
-                                            f_log "info" "can't connect to uplink '${sta_essid:-"-"}/${sta_bssid:-"-"}' (${trm_sysver})"
+                                            f_jsnup
+                                            f_log "info" "can't connect to uplink '${sta_radio}/${sta_essid}/${sta_bssid:-"-"}' (${trm_sysver})"
                                             f_check "rev"
+                                            break
                                         fi
                                     fi
                                 fi
-                                scan_quality=""
-                                scan_bssid=""
-                                scan_essid=""
+                                unset scan_quality scan_bssid scan_essid
                             fi
                         done
-                        IFS=" "
+                        unset IFS scan_quality scan_bssid scan_essid
                     done
                 fi
                 cnt=$(( cnt + 1 ))
@@ -395,19 +396,33 @@ else
     f_log "err" "system libraries not found"
 fi
 
+# initialize json runtime file
+#
+if [ ! -s "${trm_rtfile}" ]
+then
+    json_init
+    json_add_object "data"
+else
+    json_load_file "${trm_rtfile}"
+    json_select data
+fi
+
 # control travelmate actions
 #
 while true
 do
     if [ -z "${trm_action}" ]
     then
-        > "${trm_pidfile}"
         sleep ${trm_timeout}
+    elif [ "${trm_action}" = "stop" ]
+    then
+        > "${trm_rtfile}"
+        f_log "info" "travelmate instance stopped ::: action: ${trm_action}, pid: $(cat ${trm_pidfile} 2>/dev/null)"
+        exit 0
     else
-        printf '%s' "${$}" > "${trm_pidfile}"
-        trm_action=""
+        f_log "info" "travelmate instance started ::: action: ${trm_action}, pid: ${$}"
+        unset trm_action
     fi
     f_envload
     f_main
 done
-
