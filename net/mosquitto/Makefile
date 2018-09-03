@@ -197,6 +197,15 @@ define Build/InstallDev
 	$(CP) $(PKG_BUILD_DIR)/lib/cpp/libmosquittopp.so.1 $(1)/usr/lib/
 	$(LN) libmosquitto.so.1 $(1)/usr/lib/libmosquitto.so
 	$(LN) libmosquittopp.so.1 $(1)/usr/lib/libmosquittopp.so
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_BUILD_DIR)/libmosquitto.pc.in $(1)/usr/lib/pkgconfig/libmosquitto.pc
+	sed -i -e "s#@CMAKE_INSTALL_PREFIX@#/usr#" \
+	       -e "s#@VERSION@#$(PKG_VERSION)#" \
+	    $(1)/usr/lib/pkgconfig/libmosquitto.pc
+	$(CP) $(PKG_BUILD_DIR)/libmosquittopp.pc.in $(1)/usr/lib/pkgconfig/libmosquittopp.pc
+	sed -i -e "s#@CMAKE_INSTALL_PREFIX@#/usr#" \
+	       -e "s#@VERSION@#$(PKG_VERSION)#" \
+	    $(1)/usr/lib/pkgconfig/libmosquittopp.pc
 endef
 
 # This installs files on the target.  Compare with Build/InstallDev
