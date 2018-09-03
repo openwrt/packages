@@ -1,0 +1,42 @@
+commit 947a3f71ad9733dde6645edb91b6becb3ee51e7c
+Author: Cyril Bonté <cyril.bonte@free.fr>
+Date:   Fri Aug 17 23:51:02 2018 +0200
+
+    BUG/MEDIUM: lua: socket timeouts are not applied
+    
+    Sachin Shetty reported that socket timeouts set in LUA code have no effect.
+    Indeed, connect timeout is never modified and is always set to its default,
+    set to 5 seconds. Currently, this patch will apply the specified timeout
+    value to the connect timeout.
+    For the read and write timeouts, the issue is that the timeout is updated but
+    the expiration dates were not updated.
+    
+    This patch should be backported up to the 1.6 branch.
+    
+    (cherry picked from commit 7bb634549794298fc701d33efd93c7289dcf9cb7)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/hlua.c b/src/hlua.c
+index 4e50fa64..daf775fc 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -2566,10 +2566,19 @@ __LJMP static int hlua_socket_settimeout(struct lua_State *L)
+ 	si = appctx->owner;
+ 	s = si_strm(si);
+ 
++	s->sess->fe->timeout.connect = tmout;
+ 	s->req.rto = tmout;
+ 	s->req.wto = tmout;
+ 	s->res.rto = tmout;
+ 	s->res.wto = tmout;
++	s->req.rex = tick_add_ifset(now_ms, tmout);
++	s->req.wex = tick_add_ifset(now_ms, tmout);
++	s->res.rex = tick_add_ifset(now_ms, tmout);
++	s->res.wex = tick_add_ifset(now_ms, tmout);
++
++	s->task->expire = tick_add_ifset(now_ms, tmout);
++	task_queue(s->task);
++
+ 	xref_unlock(&socket->xref, peer);
+ 
+ 	lua_pushinteger(L, 1);

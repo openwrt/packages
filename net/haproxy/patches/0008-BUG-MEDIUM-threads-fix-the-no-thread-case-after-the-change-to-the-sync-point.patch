@@ -1,0 +1,31 @@
+commit 7607ec0917c33ce511d46b791dfa5550451dd538
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Tue Aug 7 10:07:15 2018 +0200
+
+    BUG/MEDIUM: threads: fix the no-thread case after the change to the sync point
+    
+    In commit 0c026f4 ("MINOR: threads: add more consistency between certain
+    variables in no-thread case"), we ensured that we don't have all_threads_mask
+    zeroed anymore. But one test was missed for the write() to the sync pipe.
+    This results in a situation where when running single-threaded, once a
+    server status changes, a wake-up message is written to the pipe and never
+    consumed, showing a 100% CPU usage.
+    
+    No backport is needed.
+    (cherry picked from commit ab657ce2511c4e19b0191fbe1c98cfd823a3c5d6)
+    [wt: the offending patch was just backported as the previous one]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/hathreads.c b/src/hathreads.c
+index 238cbb80..ba05fe27 100644
+--- a/src/hathreads.c
++++ b/src/hathreads.c
+@@ -71,7 +71,7 @@ void thread_sync_enable(void)
+  */
+ void thread_want_sync()
+ {
+-	if (all_threads_mask) {
++	if (all_threads_mask & (all_threads_mask - 1)) {
+ 		if (threads_want_sync & tid_bit)
+ 			return;
+ 		if (HA_ATOMIC_OR(&threads_want_sync, tid_bit) == tid_bit)
