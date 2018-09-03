@@ -1,0 +1,12 @@
+diff --git a/common/sock_any.h b/common/sock_any.h
+index 77c3841..1e30974 100644
+--- a/common/sock_any.h
++++ b/common/sock_any.h
+@@ -39,7 +39,6 @@
+ #ifndef __SOCK_ANY_H__
+ #define __SOCK_ANY_H__
+ 
+-#include <sys/socket.h>
+ #include <sys/un.h>
+ #include <netinet/in.h>
+ 
