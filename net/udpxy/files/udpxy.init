@@ -38,7 +38,7 @@ start_instance() {
 	procd_set_param command /usr/bin/udpxy
 	procd_append_param command "-T"
 
-	append_bool "$cfg" verbose "-V"
+	append_bool "$cfg" verbose "-v"
 	append_bool "$cfg" status "-S"
 	append_arg "$cfg" bind "-a"
 	append_arg "$cfg" port "-p"
