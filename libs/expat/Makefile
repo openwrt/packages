@@ -44,6 +44,9 @@ CONFIGURE_ARGS += \
 	--enable-static \
 	--without-docbook
 
+HOST_CONFIGURE_ARGS += \
+	--without-docbook
+
 define Host/Install
 	$(MAKE) -C $(HOST_BUILD_DIR) install
 endef
