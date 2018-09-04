@@ -1,4 +1,4 @@
-# 
+#
 # Copyright (C) 2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -8,14 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mailman
+PKG_VERSION:=2.1.29
 PKG_RELEASE:=1
-PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
-PKG_VERSION:=2.1.23
-PKG_HASH:=b022ca6f8534621c9dbe50c983948688bc4623214773b580c2c78e4a7ae43e69
+
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
+PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
+PKG_HASH:=838872713601e8a124146e550f53709482c1ef168f1e16d201465c651cbf0d2c
+
 PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=gnu-COPYING-GPL
+PKG_CPE_ID:=cpe:2.3:a:gnu:mailman
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -23,7 +26,7 @@ define Package/mailman
   SECTION:=mail
   CATEGORY:=Mail
   TITLE:=The GNU Mailing List Manager
-  URL:=http://www.gnu.org/software/mailman/
+  URL:=https://www.gnu.org/software/mailman/
   DEPENDS:=+postfix +python +uhttpd +python-dns
 endef
 
