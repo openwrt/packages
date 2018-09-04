@@ -2,7 +2,8 @@
 
 
 if [ -f "/etc/nginx/nginx.conf" ] && [ -f "/etc/nginx/ariang.conf" ]; then
-	if [ ! "$(cat '/etc/nginx/nginx.conf' | grep -q 'server_name  localhost;')" ]; then
+	if [ "$( grep 'server_name  localhost;' < /etc/nginx/nginx.conf)" ] && 
+	[ ! "$( grep 'include ariang.conf;' < /etc/nginx/nginx.conf)" ]; then
 		sed -i '/server_name  localhost;/a \\t\tinclude ariang.conf;' /etc/nginx/nginx.conf
 		if [ -f /var/run/nginx.pid ]; then
 			/etc/init.d/nginx restart
@@ -11,3 +12,4 @@ if [ -f "/etc/nginx/nginx.conf" ] && [ -f "/etc/nginx/ariang.conf" ]; then
 fi
 
 exit 0
+
