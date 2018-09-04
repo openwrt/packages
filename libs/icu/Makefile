@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=icu4c
 PKG_VERSION:=62.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-62_1-src.tgz
 PKG_SOURCE_URL:=http://download.icu-project.org/files/$(PKG_NAME)/$(PKG_VERSION)
@@ -40,6 +40,37 @@ define Package/icu
   DEPENDS:=+libstdcpp +libpthread
 endef
 
+define Package/icu/description
+  ICU is a mature, widely used set of C/C++ and Java libraries providing Unicode and Globalization support for software applications. ICU is widely portable and gives applications the same results on all platforms and between C/C++ and Java software.
+  This package supports C/C++.
+endef
+
+define Package/icu-full-data
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=Full ICU Data
+  URL:=http://icu-project.org
+  DEPENDS:=+icu
+endef
+
+define Package/icu-full-data/description
+  ICU makes use of a wide variety of data tables to provide many of its services. Examples include converter mapping tables, collation rules, transliteration rules, break iterator rules and dictionaries, and other locale data.
+  This package contains the complete data library provided by ICU.
+  A custom data library can be generated at http://apps.icu-project.org/datacustom/
+endef
+
+define Package/icu-data-tools
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=ICU Data manipulation tools
+  URL:=http://icu-project.org
+  DEPENDS:=+icu
+endef
+
+define Package/icu-data-tools/description
+ This package provides tools for manipulating ICU data.
+endef
+
 CONFIGURE_CMD:= ./runConfigureICU
 CONFIGURE_ARGS:= \
 	Linux/gcc \
@@ -57,7 +88,7 @@ CONFIGURE_ARGS:= \
 	--disable-tracing \
 	--disable-extras \
 	--enable-dyload \
-	--disable-tools \
+	--with-data-packaging=archive \
 	--disable-tests \
 	--disable-samples \
 	--with-cross-build="$(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)" \
@@ -105,5 +136,20 @@ define Package/icu/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
 endef
 
-$(eval $(call BuildPackage,icu))
+define Package/icu-full-data/install
+	$(INSTALL_DIR)  $(1)/usr/share/icu/$(PKG_VERSION)
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/icu/$(PKG_VERSION)/icudt*.dat \
+		$(1)/usr/share/icu/$(PKG_VERSION)/
+endef
+
+define Package/icu-data-tools/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin/
+endef
+
 $(eval $(call HostBuild))
+$(eval $(call BuildPackage,icu))
+$(eval $(call BuildPackage,icu-full-data))
+$(eval $(call BuildPackage,icu-data-tools))
