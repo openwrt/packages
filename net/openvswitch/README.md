@@ -27,3 +27,36 @@ mainly a wrapper around `ovs-ctl` and `ovn-ctl` with simple knobs from
 	/etc/init.d/openvswitch status
 
 Use `ovs-ctl` and `ovn-ctl` directly for more functionalities
+
+# Open vSwitch in-tree Linux datapath modules
+
+The Open vSwitch build system uses regexp and conditional-compilation
+heuristics to support building the shipped kernel module source code against a
+wide range of kernels, as of openvswitch-2.10, the list is supposed to include
+vanilla linux 3.10 to 4.15, plus a few distro kernels.
+
+It may NOT work
+
+ - Sometimes the code does not compile
+ - Sometimes the code compiles but insmod will fail
+ - Sometimes modules are loaded okay but actually does not function right
+
+For these reasons, the in-tree datapath modules are NOT visible/enabled by
+default.
+
+Building and using in-tree datapath modules requires some level of devel
+abilities to proceed.  You are expected to configure build options and build
+the code on your own
+
+E.g. pair openvswitch userspace with in-tree datapath module
+
+	CONFIG_DEVEL=y
+	CONFIG_PACKAGE_openvswitch=y
+	# CONFIG_PACKAGE_kmod-openvswitch is not set
+	CONFIG_PACKAGE_kmod-openvswitch-intree=y
+
+E.g. replace in-tree datapath module with upstream version
+
+	opkg remove --force-depends kmod-openvswitch-intree
+	opkg install kmod-openvswitch
+	ovs-ctl force-reload-kmod
