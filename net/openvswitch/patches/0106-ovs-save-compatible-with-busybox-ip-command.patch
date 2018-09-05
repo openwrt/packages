@@ -1,0 +1,26 @@
+From 2a59f2b60e8a22dc93d48c511b5c4255b429ff66 Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <zhouyousong@yunionyun.com>
+Date: Wed, 5 Sep 2018 12:32:54 +0000
+Subject: [PATCH 106/106] ovs-save: compatible with busybox ip command
+
+Busybox ip command will have exit code 1 for `ip -V` or `ip help` etc.,
+use `ip rule list` to cover both iproute2 and busybox ip command
+
+Signed-off-by: Yousong Zhou <zhouyousong@yunionyun.com>
+---
+ utilities/ovs-save | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/utilities/ovs-save b/utilities/ovs-save
+index ea8fb6a45..72d460df4 100755
+--- a/utilities/ovs-save
++++ b/utilities/ovs-save
+@@ -38,7 +38,7 @@ EOF
+ }
+ 
+ save_interfaces () {
+-    if (ip -V) > /dev/null 2>&1; then :; else
++    if (ip rule list) > /dev/null 2>&1; then :; else
+         echo "$0: ip not found in $PATH" >&2
+         exit 1
+     fi
