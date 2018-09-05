@@ -1,7 +1,7 @@
-From a3eabe1e639c98ce8537df4ac4187a8c047dac59 Mon Sep 17 00:00:00 2001
+From 9f4775d9a2541e8128ea99f3b02925cc1ee05374 Mon Sep 17 00:00:00 2001
 From: Helmut Schaa <helmut.schaa@googlemail.com>
 Date: Wed, 8 Jan 2014 13:48:49 +0100
-Subject: [PATCH 101/105] netdev-linux: Let interface flag survive internal
+Subject: [PATCH 101/106] netdev-linux: Let interface flag survive internal
  port setup
 
 Due to a race condition when bringing up an internal port on Linux
