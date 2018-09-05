@@ -11,7 +11,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=openvswitch
 PKG_VERSION:=2.10.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
 PKG_HASH:=64f7cdcfffc73b2e09980d04ee22731eadd6453698b92d7397c9e45c7c174050
@@ -105,7 +105,7 @@ define OvsPackageTemplate
      URL:=https://www.openvswitch.org
      TITLE:=$(ovs_$(1)_title)
      HIDDEN:=$(ovs_$(1)_hidden)
-     DEPENDS:=$(ovs_$(1)_depends)
+     DEPENDS:=$(ovs_$(1)_depends) +libunbound
   endef
 
   define Package/$(call ovs_package_name,$(1))/install
