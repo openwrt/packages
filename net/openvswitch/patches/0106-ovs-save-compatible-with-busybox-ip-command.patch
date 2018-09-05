@@ -1,7 +1,7 @@
 From 2a59f2b60e8a22dc93d48c511b5c4255b429ff66 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <zhouyousong@yunionyun.com>
 Date: Wed, 5 Sep 2018 12:32:54 +0000
-Subject: [PATCH 106/106] ovs-save: compatible with busybox ip command
+Subject: [PATCH 106/107] ovs-save: compatible with busybox ip command
 
 Busybox ip command will have exit code 1 for `ip -V` or `ip help` etc.,
 use `ip rule list` to cover both iproute2 and busybox ip command
