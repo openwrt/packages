@@ -61,7 +61,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => infrequent updates, approx. 15.000 entries
     * [winspy](https://github.com/crazy-max/WindowsSpyBlocker)
     * => infrequent updates, approx. 120 entries
-    * [youtube]https://api.hackertarget.com/hostsearch/?q=googlevideo.com
+    * [youtube](https://api.hackertarget.com/hostsearch/?q=googlevideo.com)
     * => dynamic request API to filter "random" youtube ad domains (experimental!), approx. 150 entries
     * [yoyo](http://pgl.yoyo.org/adservers)
     * => weekly updates, approx. 2.500 entries (enabled by default)

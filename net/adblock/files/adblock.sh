@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.5.5"
+adb_ver="3.5.5-2"
 adb_sysver="unknown"
 adb_enabled=0
 adb_debug=0
@@ -357,29 +357,29 @@ f_extconf()
 	case "${adb_dns}" in
 		dnsmasq)
 			uci_config="dhcp"
-			if [ ${adb_enabled} -eq 1 ] && [ -z "$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}].serversfile" | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
+			if [ ${adb_enabled} -eq 1 ] && [ -z "$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}]" serversfile | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
 			then
-				uci_set dhcp "@dnsmasq[${adb_dnsinstance}].serversfile" "${adb_dnsdir}/${adb_dnsfile}"
-			elif [ ${adb_enabled} -eq 0 ] && [ -n "$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}].serversfile" | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
+				uci_set dhcp "@dnsmasq[${adb_dnsinstance}]" serversfile "${adb_dnsdir}/${adb_dnsfile}"
+			elif [ ${adb_enabled} -eq 0 ] && [ -n "$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}]" serversfile | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
 			then
-				uci_remove dhcp "@dnsmasq[${adb_dnsinstance}].serversfile"
+				uci_remove dhcp "@dnsmasq[${adb_dnsinstance}]" serversfile
 			fi
 		;;
 		kresd)
 			uci_config="resolver"
-			if [ ${adb_enabled} -eq 1 ] && [ -z "$(uci_get resolver kresd.rpz_file | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
+			if [ ${adb_enabled} -eq 1 ] && [ -z "$(uci_get resolver kresd rpz_file | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
 			then
 				uci -q add_list resolver.kresd.rpz_file="${adb_dnsdir}/${adb_dnsfile}"
-			elif [ ${adb_enabled} -eq 0 ] && [ -n "$(uci_get resolver kresd.rpz_file | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
+			elif [ ${adb_enabled} -eq 0 ] && [ -n "$(uci_get resolver kresd rpz_file | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
 			then
 				uci -q del_list resolver.kresd.rpz_file="${adb_dnsdir}/${adb_dnsfile}"
 			fi
-			if [ ${adb_enabled} -eq 1 ] && [ ${adb_dnsflush} -eq 0 ] && [ "$(uci_get resolver "kresd.keep_cache")" != "1" ]
+			if [ ${adb_enabled} -eq 1 ] && [ ${adb_dnsflush} -eq 0 ] && [ "$(uci_get resolver kresd keep_cache)" != "1" ]
 			then
-				uci_set resolver "kresd.keep_cache" "1"
-			elif [ ${adb_enabled} -eq 0 ] || ([ ${adb_dnsflush} -eq 1 ] && [ "$(uci_get resolver "kresd.keep_cache")" = "1" ])
+				uci_set resolver kresd keep_cache "1"
+			elif [ ${adb_enabled} -eq 0 ] || ([ ${adb_dnsflush} -eq 1 ] && [ "$(uci_get resolver kresd keep_cache)" = "1" ])
 			then
-				uci_set resolver "kresd.keep_cache" "0"
+				uci_set resolver kresd keep_cache "0"
 			fi
 		;;
 	esac
