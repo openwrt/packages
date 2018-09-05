@@ -11,7 +11,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=openvswitch
 PKG_VERSION:=2.10.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
 PKG_HASH:=64f7cdcfffc73b2e09980d04ee22731eadd6453698b92d7397c9e45c7c174050
@@ -173,6 +173,7 @@ ovs_common_depends:=+librt +openvswitch-libopenvswitch +openvswitch-libofproto +
 ovs_common_files:= \
 	usr/share/openvswitch/scripts/ovs-lib \
 	usr/share/openvswitch/scripts/ovs-ctl \
+	usr/share/openvswitch/scripts/ovs-kmod-ctl \
 	usr/share/openvswitch/scripts/ovs-save \
 	$(foreach b,ovs-appctl ovs-dpctl ovs-ofctl ovs-vsctl ovsdb-client ovsdb-tool,usr/bin/$(b))
 define ovs_common_install
@@ -184,6 +185,7 @@ define ovs_common_install
 	$$(INSTALL_DIR) $$(1)/usr/share/openvswitch/scripts
 	$$(INSTALL_BIN) ./files/ovs-ctl-wrapper $$(1)/usr/share/openvswitch/scripts/
 	$$(LN) /usr/share/openvswitch/scripts/ovs-ctl-wrapper $$(1)/usr/bin/ovs-ctl
+	$$(LN) /usr/share/openvswitch/scripts/ovs-ctl-wrapper $$(1)/usr/bin/ovs-kmod-ctl
 endef
 define Package/openvswitch-common/conffiles
 /etc/openvswitch

@@ -1,7 +1,7 @@
-From f5c6e5d4c567f3705de503b7271d384d1aad88ab Mon Sep 17 00:00:00 2001
+From d0cad5ac122aca722dc2013c1f53fda44c477cf2 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <zhouyousong@yunionyun.com>
 Date: Tue, 21 Aug 2018 13:02:21 +0000
-Subject: [PATCH 105/105] build: disable building tests
+Subject: [PATCH 105/106] build: disable building tests
 
 Signed-off-by: Yousong Zhou <zhouyousong@yunionyun.com>
 ---

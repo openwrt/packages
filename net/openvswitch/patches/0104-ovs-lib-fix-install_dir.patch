@@ -1,7 +1,7 @@
-From 97107da940da7814c3e9e947aee1c247cd7b95db Mon Sep 17 00:00:00 2001
+From 940441e2982cb35765830060e8203e5dd1a0f967 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Wed, 14 Mar 2018 16:44:13 +0800
-Subject: [PATCH 104/105] ovs-lib: fix install_dir()
+Subject: [PATCH 104/106] ovs-lib: fix install_dir()
 
 The command "install" is not available in OpenWrt by default
 
