@@ -1,0 +1,28 @@
+From 1e859f407b94a0f549fc41fceec11ca12653878b Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <zhouyousong@yunionyun.com>
+Date: Thu, 6 Sep 2018 11:48:20 +0000
+Subject: [PATCH 107/107] datapath: use KARCH when building linux datapath
+ modules
+
+Signed-off-by: Yousong Zhou <zhouyousong@yunionyun.com>
+---
+ datapath/linux/Makefile.main.in | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/datapath/linux/Makefile.main.in b/datapath/linux/Makefile.main.in
+index 7d18253be..039485d16 100644
+--- a/datapath/linux/Makefile.main.in
++++ b/datapath/linux/Makefile.main.in
+@@ -68,10 +68,10 @@ ifeq (,$(wildcard $(CONFIG_FILE)))
+ endif
+ 
+ default:
+-	$(MAKE) -C $(KSRC) M=$(builddir) modules
++	$(MAKE) -C $(KSRC) $(if @KARCH@,ARCH=@KARCH@) M=$(builddir) modules
+ 
+ modules_install:
+-	$(MAKE) -C $(KSRC) M=$(builddir) modules_install
++	$(MAKE) -C $(KSRC) $(if @KARCH@,ARCH=@KARCH@) M=$(builddir) modules_install
+ 	depmod `sed -n 's/#define UTS_RELEASE "\([^"]*\)"/\1/p' $(KSRC)/include/generated/utsrelease.h`
+ endif
+ 
