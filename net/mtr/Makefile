@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mtr
 PKG_VERSION:=0.92
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.bitwizard.nl/mtr/files
@@ -21,6 +21,8 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -48,10 +50,6 @@ CONFIGURE_ARGS += \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6)
 
 CONFIGURE_VARS += ac_cv_lib_cap_cap_set_proc=no
-
-define Build/Configure
-	$(call Build/Configure/Default)
-endef
 
 define Package/mtr/install
 	$(INSTALL_DIR) $(1)/usr/sbin
