@@ -13,7 +13,7 @@ PKG_NAME:=quassel-irssi
 # so use commit date for PKG_VERSION and embed commit hash into PKG_RELEASE.
 PKG_VERSION:=2016-09-11
 PKG_SOURCE_VERSION:=cbd9bd7f4ac44260d9fcafb809fdf153cde193e5
-PKG_RELEASE:=1.$(PKG_SOURCE_VERSION)
+PKG_RELEASE:=2.$(PKG_SOURCE_VERSION)
 
 PKG_LICENSE:=GPL-3.0+
 

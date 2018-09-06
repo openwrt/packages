@@ -1,0 +1,54 @@
+--- a/core/quasselc-connector.c
++++ b/core/quasselc-connector.c
+@@ -145,6 +145,7 @@
+ 			highlight=0;
+ 			if(!fnc)
+ 				fnc="MarkBufferAsRead";
++			__attribute__((fallthrough));
+ 		case Displayed:
+ 			if(!fnc)
+ 				fnc="BufferDisplayed";
+@@ -155,6 +156,7 @@
+ 		case Removed:
+ 			if(!fnc)
+ 				fnc="BufferRemoved";
++			__attribute__((fallthrough));
+ 		case TempRemoved:
+ 			if(!fnc)
+ 				fnc="BufferTempRemoved";
+@@ -210,6 +212,7 @@
+ 		case AddUserMode:
+ 			if(!fnc)
+ 				fnc="AddUserMode";
++			__attribute__((fallthrough));
+ 		case RemoveUserMode:
+ 			if(!fnc)
+ 				fnc="RemoveUserMode";
+@@ -223,6 +226,7 @@
+ 		case SetNick2:
+ 			if(!fnc)
+ 				fnc="SetNick";
++			__attribute__((fallthrough));
+ 		case Quit:
+ 			if(!fnc)
+ 				fnc="Quit";
+@@ -233,9 +233,11 @@
+ 		case SetNick:
+ 			if(!fnc)
+ 				fnc="SetNick";
++			__attribute__((fallthrough));
+ 		case SetServer:
+ 			if(!fnc)
+ 				fnc="SetServer";
++			__attribute__((fallthrough));
+ 		case SetRealName:
+ 			if(!fnc)
+ 				fnc="SetRealName";
+@@ -239,6 +243,7 @@
+ 		case SetRealName:
+ 			if(!fnc)
+ 				fnc="SetRealName";
++			__attribute__((fallthrough));
+ 		case PartChannel:
+ 			if(!fnc)
+ 				fnc="PartChannel";
