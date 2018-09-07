@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=7.2.9
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -148,6 +148,22 @@ define Package/php7-mod-gd/config
 	bool "Enable Freetype 2 support in php7-mod-gd"
 	depends on PACKAGE_php7-mod-gd
 	default y
+endef
+
+define Package/php7-mod-intl/config
+  config PHP7_FULLICUDATA
+	bool "Add dependency to full ICU Data"
+	depends on PACKAGE_php7-mod-intl
+	default n
+endef
+
+define Package/php7-mod-intl/description
+  Note that this package depends in ICU library which is built without data
+  by default. This is to satisfy programs build and run dependencies but to
+  keep the installed footprint small on the target system(s).
+  However, the data is required to make the ICU library useful - and thus
+  directly affects PHPs ICU extension, too - so consider to also
+  select/install package 'icu-full-data'.
 endef
 
 # not everything groks --disable-nls
@@ -611,7 +627,7 @@ $(eval $(call BuildModule,gmp,GMP,+PACKAGE_php7-mod-gmp:libgmp))
 $(eval $(call BuildModule,hash,Hash))
 $(eval $(call BuildModule,iconv,iConv,$(ICONV_DEPENDS)))
 $(eval $(call BuildModule,imap,IMAP,+PACKAGE_php7-mod-imap:libopenssl +PACKAGE_libpam:libpam +PACKAGE_php7-mod-imap:uw-imap))
-$(eval $(call BuildModule,intl,Internationalization Functions,+PACKAGE_php7-mod-intl:icu))
+$(eval $(call BuildModule,intl,Internationalization Functions,+PACKAGE_php7-mod-intl:icu +PHP7_FULLICUDATA:icu-full-data))
 $(eval $(call BuildModule,json,JSON))
 $(eval $(call BuildModule,ldap,LDAP,+PACKAGE_php7-mod-ldap:libopenldap +PACKAGE_php7-mod-ldap:libsasl2))
 $(eval $(call BuildModule,mbstring,MBString))
