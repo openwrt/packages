@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mutt
-PKG_VERSION:=1.10.0
+PKG_VERSION:=1.10.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=ftp://ftp.mutt.org/pub/mutt/ \
 		https://bitbucket.org/mutt/mutt/downloads/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=0215b5f90ef9cc33441a6ca842379b64412ed7f8da83ed68bfaa319179f5535b
+PKG_HASH:=734a3883158ec3d180cf6538d8bd7f685ce641d2cdef657aa0038f76e79a54a0
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=GPL
