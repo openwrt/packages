@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtty
-PKG_VERSION:=5.1.0
-PKG_RELEASE:=2
+PKG_VERSION:=6.2.0
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_SOURCE_URL=https://github.com/zhaojh329/rtty.git
-PKG_MIRROR_HASH:=0d81595305abae252b2914e53d0aa8e64de433357c147fd6391363a223c694d8
+PKG_SOURCE_URL=https://codeload.github.com/zhaojh329/rtty/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=c6476ecfe8b039eb39c68bafa82af7a8fc27991d767c477ddbdd7a9669a92b02
+CMAKE_INSTALL:=1
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_SOURCE_SUBDIR)
 
@@ -26,68 +27,30 @@ PKG_MAINTAINER:=Jianhui Zhao <jianhuizhao329@gmail.com>
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-define Package/rtty/default
+define Package/rtty/Default
+  TITLE:=Access your terminals from anywhere via the web
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Terminal
-  TITLE:=A reverse proxy WebTTY
-  DEPENDS:=+libprotobuf-c
+  URL:=https://github.com/zhaojh329/rtty
+  DEPENDS:=+libprotobuf-c $(2)
+  VARIANT:=$(1)
+  PROVIDES:=rtty
 endef
 
-define Package/rtty/default/description
-A reverse proxy WebTTY. This is the client part running on devices to be managed.
-endef
+Package/rtty-openssl=$(call Package/rtty/Default,openssl,+PACKAGE_rtty-openssl:libuwsc-openssl)
+Package/rtty-wolfssl=$(call Package/rtty/Default,wolfssl,+PACKAGE_rtty-wolfssl:libuwsc-wolfssl)
+Package/rtty-mbedtls=$(call Package/rtty/Default,mbedtls,+PACKAGE_rtty-mbedtls:libuwsc-mbedtls)
+Package/rtty-nossl=$(call Package/rtty/Default,nossl,+PACKAGE_rtty-nossl:libuwsc-nossl)
 
-define Package/rtty-nossl
-  $(Package/rtty/default)
-  TITLE += (NO SSL)
-  DEPENDS += +libuwsc-nossl
-  VARIANT:=nossl
-  CONFLICTS:=rtty-openssl rtty-wolfssl rtty-mbedtls
-endef
-
-define Package/rtty-openssl
-  $(Package/rtty/default)
-  TITLE += (openssl)
-  DEPENDS += +libuwsc-openssl
-  VARIANT:=openssl
-  CONFLICTS:=rtty-wolfssl rtty-mbedtls
-endef
-
-define Package/rtty-wolfssl
-  $(Package/rtty/default)
-  TITLE += (wolfssl)
-  DEPENDS += +libuwsc-wolfssl
-  VARIANT:=wolfssl
-  CONFLICTS:=rtty-mbedtls
-endef
-
-define Package/rtty-mbedtls
-  $(Package/rtty/default)
-  TITLE += (mbedtls)
-  DEPENDS += +libuwsc-mbedtls
-  VARIANT:=mbedtls
-endef
-
-Package/rtty-nossl/description = $(Package/rtty/default/description)
-Package/rtty-openssl/description = $(Package/rtty/default/description)
-Package/rtty-wolfssl/description = $(Package/rtty/default/description)
-Package/rtty-mbedtls/description = $(Package/rtty/default/description)
-
-define Package/rtty/default/install
+define Package/rtty-$(BUILD_VARIANT)/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d $(1)/etc/config
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/rtty $(1)/usr/sbin
 	$(INSTALL_BIN) ./files/rtty.init $(1)/etc/init.d/rtty
 	$(INSTALL_CONF) ./files/rtty.config $(1)/etc/config/rtty
 endef
 
-Package/rtty-nossl/install = $(Package/rtty/default/install)
-Package/rtty-openssl/install = $(Package/rtty/default/install)
-Package/rtty-wolfssl/install = $(Package/rtty/default/install)
-Package/rtty-mbedtls/install = $(Package/rtty/default/install)
-
-$(eval $(call BuildPackage,rtty-nossl))
-$(eval $(call BuildPackage,rtty-mbedtls))
-$(eval $(call BuildPackage,rtty-wolfssl))
 $(eval $(call BuildPackage,rtty-openssl))
-
+$(eval $(call BuildPackage,rtty-wolfssl))
+$(eval $(call BuildPackage,rtty-mbedtls))
+$(eval $(call BuildPackage,rtty-nossl))
