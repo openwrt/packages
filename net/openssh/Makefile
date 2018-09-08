@@ -193,6 +193,7 @@ CONFIGURE_VARS += LD="$(TARGET_CC)"
 
 ifeq ($(BUILD_VARIANT),with-pam)
 TARGET_LDFLAGS += -lpthread
+TARGET_CFLAGS += -DUNSUPPORTED_POSIX_THREADS_HACK
 endif
 
 define Build/Compile
