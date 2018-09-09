@@ -8,7 +8,8 @@ config zerotier sample_config
 	#option port '9993'
 
 	# Generate secret on first start
-	option secret 'generate'
+	option secret ''
 
 	# Join a public network called Earth
 	list join '8056c2e21c000001'
+	#list join '<other_network>'
