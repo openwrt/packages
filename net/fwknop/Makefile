@@ -12,7 +12,7 @@ PKG_VERSION:=2.6.9
 PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://www.cipherdyne.org/fwknop/download
+PKG_SOURCE_URL:=https://www.cipherdyne.org/fwknop/download
 PKG_HASH:=5bf47fe1fd30e862d29464f762c0b8bf89b5e298665c37624d6707826da956d4
 PKG_MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>
 PKG_LICENSE:=GPLv2
@@ -22,7 +22,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/fwknop/Default
   TITLE:=FireWall KNock OPerator
-  URL:=http://www.cipherdyne.org/fwknop/
+  URL:=https://www.cipherdyne.org/fwknop/
 endef
 
 define Package/fwknop/Default/description
