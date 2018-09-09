@@ -21,7 +21,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.7.8-3"
+VERSION="2.7.8-4"
 SECTION_ID=""		# hold config's section name
 VERBOSE=0		# default mode is log to console, but easily changed with parameter
 MYPROG=$(basename $0)	# my program call name
@@ -928,7 +928,7 @@ get_local_ip () {
 	write_log 7 "Detect local IP on '$ip_source'"
 
 	while : ; do
-		if [ -n "$ip_network" ]; then
+		if [ -n "$ip_network" -a "$ip_source" = "network" ]; then
 			# set correct program
 			network_flush_cache	# force re-read data from ubus
 			[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" \
@@ -936,7 +936,7 @@ get_local_ip () {
 			eval "$__RUNPROG __DATA $ip_network" || \
 				write_log 13 "Can not detect local IP using $__RUNPROG '$ip_network' - Error: '$?'"
 			[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on network '$ip_network'"
-		elif [ -n "$ip_interface" ]; then
+		elif [ -n "$ip_interface" -a "$ip_source" = "interface" ]; then
 			local __DATA4=""; local __DATA6=""
 			if [ -n "$(which ip)" ]; then		# ip program installed
 				write_log 7 "#> ip -o addr show dev $ip_interface scope global >$DATFILE 2>$ERRFILE"
@@ -1015,7 +1015,7 @@ get_local_ip () {
 			fi
 			[ $use_ipv6 -eq 0 ] && __DATA="$__DATA4" || __DATA="$__DATA6"
 			[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on interface '$ip_interface'"
-		elif [ -n "$ip_script" ]; then
+		elif [ -n "$ip_script" -a "$ip_source" = "script" ]; then
 			write_log 7 "#> $ip_script >$DATFILE 2>$ERRFILE"
 			eval $ip_script >$DATFILE 2>$ERRFILE
 			__ERR=$?
@@ -1026,7 +1026,7 @@ get_local_ip () {
 				write_log 3 "$ip_script Error: '$__ERR'"
 				write_log 7 "$(cat $ERRFILE)"		# report error
 			fi
-		elif [ -n "$ip_url" ]; then
+		elif [ -n "$ip_url" -a "$ip_source" = "web" ]; then
 			do_transfer "$ip_url"
 			# use correct regular expression
 			[ $use_ipv6 -eq 0 ] \
