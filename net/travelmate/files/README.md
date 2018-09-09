@@ -20,7 +20,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * optional: the LuCI frontend shows the WiFi QR codes from all configured Access Points. It allows you to connect your Android or iOS devices to your router’s WiFi using the QR code
 
 ## Prerequisites
-* [OpenWrt](https://openwrt.org), tested with the stable release series (17.01.x) and with the latest OpenWrt snapshot
+* [OpenWrt](https://openwrt.org), tested with the stable release series (18.06.x) and with the latest OpenWrt snapshot
 * iwinfo for wlan scanning, uclient-fetch for captive portal detection
 * optional: qrencode 4.x for QR code support
 
@@ -57,12 +57,12 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 ~# /etc/init.d/travelmate status
 ::: travelmate runtime information
   + travelmate_status  : connected (net ok/78)
-  + travelmate_version : 1.2.1
+  + travelmate_version : 1.2.3
   + station_id         : radio1/blackhole/01:02:03:04:05:06
   + station_interface  : trm_wwan
   + faulty_stations    : 
-  + last_rundate       : 28.07.2018 21:17:45
-  + system             : TP-LINK RE450, OpenWrt SNAPSHOT r7540+5-20c4819c7b
+  + last_rundate       : 07.09.2018 17:22:37
+  + system             : TP-LINK RE450, OpenWrt SNAPSHOT r8018-42f158314e
 </code></pre>
 
 ## Manual Setup
@@ -127,6 +127,8 @@ edit /etc/config/travelmate and set 'trm_enabled' to '1'
 **A:** Travelmate tries n times (default 3) to connect, then the respective uplink will be marked as "faulty" in the JSON runtime file and hereafter ignored. To reset the JSON runtime file, simply restart travelmate.  
 **Q:** How to connect to hidden uplinks?  
 **A:** See 'example\_hidden' STA configuration above, option 'SSID' and 'BSSID' must be specified for successful connections.  
+**Q:** Any recommendations regarding suitable DNS settings to easily connect to captive portals?  
+**A:** Use a simple DNS forwarder like dnsmasq and disable the option 'rebind_protection'.  
 
 ## Support
 Please join the travelmate discussion in this [forum thread](https://forum.lede-project.org/t/travelmate-support-thread/5155) or contact me by [mail](mailto:dev@brenken.org)  
