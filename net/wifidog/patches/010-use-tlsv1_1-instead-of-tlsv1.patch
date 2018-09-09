@@ -1,0 +1,22 @@
+--- a/src/simple_http.c
++++ b/src/simple_http.c
+@@ -163,7 +163,7 @@
+         CyaSSL_Init();
+         /* Create the CYASSL_CTX */
+         /* Allow TLSv1.0 up to TLSv1.2 */
+-        if ((cyassl_ctx = CyaSSL_CTX_new(CyaTLSv1_client_method())) == NULL) {
++        if ((cyassl_ctx = CyaSSL_CTX_new(CyaTLSv1_1_client_method())) == NULL) {
+             debug(LOG_ERR, "Could not create CYASSL context.");
+             UNLOCK_CYASSL_CTX();
+             return NULL;
+--- a/configure.in
++++ b/configure.in
+@@ -97,7 +97,7 @@
+         # AC_SEARCH_LIBS
+         AC_CHECK_HEADERS(cyassl/ssl.h)
+         AC_SEARCH_LIBS([CyaTLSv1_client_method], [cyassl], [], [
+-            AC_SEARCH_LIBS([wolfTLSv1_client_method], [wolfssl], [], [
++            AC_SEARCH_LIBS([wolfTLSv1_1_client_method], [wolfssl], [], [
+                             AC_MSG_ERROR([unable to locate SSL lib: either wolfSSL or CyaSSL needed.])
+             ])
+         ])
