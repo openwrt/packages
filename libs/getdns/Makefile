@@ -55,6 +55,9 @@ CONFIGURE_ARGS += \
 		$(if $(CONFIG_GETDNS_ENABLE_IDN_LIBIDN2), , --without-libidn2 ) \
 		--with-ssl="$(STAGING_DIR)/usr" \
 
+# This will make 'configure' think that our libbsd.so is missing the
+# functions inet_pton, inet_ntop, strlcpy and use the builtin. This 
+# removes the libbsd dependency
 CONFIGURE_VARS += LIBBSD_LIBS=-lc
 
 define Build/InstallDev
