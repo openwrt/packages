@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fio
-PKG_VERSION:=3.8
+PKG_VERSION:=3.9
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Dragan Stancevic <ds@codeminutia.com>
 PKG_LICENSE:=GPL-2.0+
@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE_URL:=http://brick.kernel.dk/snaps
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=7868c4332aab98b88b7ebbb3ecfebc86cbc68b74ac0104575fa4f66bb7874a0e
+PKG_HASH:=74737319addca4eb33051a07e481b425757c54a69999b7cd9884bc3b8c54c4b5
 
 include $(INCLUDE_DIR)/package.mk
 
