@@ -69,7 +69,7 @@
 	## Allows the server name that is advertised through MDNS to be set to the hostname rather than the Samba NETBIOS name.
 	## This allows an administrator to make Samba registered MDNS records match the case of the hostname rather than being in all capitals.
 	## (netbios, mdns)
-	#mdns name = mdns
+	mdns name = mdns
 	
 	## Clients that only support netbios won't be able to see your samba server when netbios support is disabled.
 	#disable netbios = Yes
