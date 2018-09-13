@@ -27,8 +27,13 @@ config nodogsplash
   #option debuglevel '7'
 
   # Client timeouts in minutes
-  option preauthidletimeout '10'
+  option preauthidletimeout '30'
   option authidletimeout '120'
+  # Session Timeout is the interval after which clients are forced out (a value of 0 means never)
+  option sessiontimeout '1200'
+
+  # The interval in seconds at which nodogsplash checks client timeout status
+  option checkinterval '600'
 
   # Enable BinAuth Support.
   # If set, a program is called with several parameters on authentication (request) and deauthentication.
