@@ -21,7 +21,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.7.8-4"
+VERSION="2.7.8-5"
 SECTION_ID=""		# hold config's section name
 VERBOSE=0		# default mode is log to console, but easily changed with parameter
 MYPROG=$(basename $0)	# my program call name
@@ -267,7 +267,9 @@ write_log() {
 	if [ ${use_logfile:-1} -eq 1 -o $VERBOSE -gt 1 ]; then
 		if [ -n "$password" ]; then
 			# url encode __MSG, password already done
-			urlencode __MSE "$__MSG"
+			if [ -n "$__MSG" ]; then
+				urlencode __MSE "$__MSG"
+			fi
 			# replace encoded password inside encoded message
 			# and url decode (newline was encoded as %00)
 			__MSG=$( echo -e "$__MSE" \
