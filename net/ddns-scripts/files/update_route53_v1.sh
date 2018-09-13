@@ -7,7 +7,7 @@
 [ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing secret as 'password'"
 [ -z "$domain" ] && write_log 14 "Service section not configured correctly! Missing zone id as 'domain'"
 
-set -euo pipefail
+#set -euo pipefail
 IFS=$'\n\t'
 
 ENDPOINT="route53.amazonaws.com"
@@ -82,16 +82,16 @@ signature=$(sign "$signing_key" "$sigmsg")
 
 authorization="AWS4-HMAC-SHA256 Credential=${AWS_ACCESS_KEY_ID}/${credential}, SignedHeaders=${signed_headers}, Signature=${signature}"
 
-ANSWER=$(curl \
+ANSWER="$(curl \
     -X "POST" \
     -H "Host: route53.amazonaws.com" \
     -H "X-Amz-Date: ${fulldate}" \
     -H "Authorization: ${authorization}" \
     -H "Content-Type: text/xml" \
     -d "$request_body" \
-    "https://${ENDPOINT}${API_PATH}")
+    "https://${ENDPOINT}${API_PATH}")"
 write_log 7 "${ANSWER}"
 
-echo ${ANSWER} | grep Error >/dev/null && return 1
-echo ${ANSWER} | grep ChangeInfo >/dev/null && return 0
+echo "${ANSWER}" | grep -F "Error" >/dev/null && return 1
+echo "${ANSWER}" | grep -F "ChangeInfo" >/dev/null && return 0
 return 2
