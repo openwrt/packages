@@ -21,7 +21,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.7.8-4"
+VERSION="2.7.8-5"
 SECTION_ID=""		# hold config's section name
 VERBOSE=0		# default mode is log to console, but easily changed with parameter
 MYPROG=$(basename $0)	# my program call name
@@ -301,32 +301,15 @@ write_log() {
 urlencode() {
 	# $1	Name of Variable to store encoded string to
 	# $2	string to encode
-	local __STR __LEN __CHAR __OUT
+	local __STR
 	local __ENC=""
-	local __POS=1
 
 	[ $# -ne 2 ] && write_log 12 "Error calling 'urlencode()' - wrong number of parameters"
 
 	__STR="$2"		# read string to encode
-	__LEN=${#__STR}		# get string length
 
-	while [ $__POS -le $__LEN ]; do
-		# read one chat of the string
-		__CHAR=$(expr substr "$__STR" $__POS 1)
-
-		case "$__CHAR" in
-		        [-_.~a-zA-Z0-9] )
-				# standard char
-				__OUT="${__CHAR}"
-				;;
-		        * )
-				# special char get %hex code
-		               __OUT=$(printf '%%%02x' "'$__CHAR" )
-				;;
-		esac
-		__ENC="${__ENC}${__OUT}"	# append to encoded string
-		__POS=$(( $__POS + 1 ))		# increment position
-	done
+	__ENC="$(awk -v url="$__STR" 'BEGIN{ORS="";for(i=32;i<=127;i++)lookup[sprintf("%c",i)]=i
+		for(i=1;i<=length(url);++i){enc=substr(url,i,1);if(enc!~"[-_.~a-zA-Z0-9]")enc=sprintf("%%%02x", lookup[enc]);print enc}}')"
 
 	eval "$1=\"$__ENC\""	# transfer back to variable
 	return 0

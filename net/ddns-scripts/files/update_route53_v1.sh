@@ -92,6 +92,6 @@ ANSWER=$(curl \
     "https://${ENDPOINT}${API_PATH}")
 write_log 7 "${ANSWER}"
 
-echo ${ANSWER} | grep Error >/dev/null && return 1
-echo ${ANSWER} | grep ChangeInfo >/dev/null && return 0
+echo "${ANSWER}" | grep -F "Error" >/dev/null && return 1
+echo "${ANSWER}" | grep -F "ChangeInfo" >/dev/null && return 0
 return 2
