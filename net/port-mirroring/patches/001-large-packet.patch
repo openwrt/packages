@@ -1,0 +1,108 @@
+Index: port-mirroring-1.4.2/port-mirroring.c
+===================================================================
+--- port-mirroring-1.4.2.orig/port-mirroring.c
++++ port-mirroring-1.4.2/port-mirroring.c
+@@ -34,6 +34,7 @@
+ #include <sys/socket.h>
+ #include <sys/types.h>
+ #include <sys/ioctl.h>
++#include <sys/stat.h>
+ #include <netinet/in.h>
+ #include <net/if.h>
+ #include <net/if_arp.h>
+@@ -67,6 +68,8 @@
+ #define ERRTIMEOUT  	20
+ #define MACADDRLEN  	6
+ #define BUFSIZE 	8192
++#define PM_BFSIZE	2048	/* Initial buffer size for packet processing    */
++#define PM_BFR_RESERVE 1024 /* Additional headers space for buffer packet   */
+ 
+ typedef enum
+ {
+@@ -739,10 +742,8 @@ int initSendHandle()
+     return 0;
+ }
+ 
+-void packet_handler_ex(const struct pcap_pkthdr* header, const u_char* pkt_data)
++void packet_handler_ex(const struct pcap_pkthdr* header, const u_char* pkt_data, uint8_t* buf)
+ {
+-    static char buf[2048];
+-
+     if (header->len <= 2 * MACADDRLEN)
+     {
+         return;
+@@ -853,14 +854,18 @@ void packet_handler_ex(const struct pcap
+                 pHead->type   = 0x00;
+                 pHead->proto  = htons(0x01);
+                 pHead->tagend = 0x01;
+-                if (header->len < sizeof(buf) - sizeof(TZSP_HEAD))
++                //Due re-alloc mechanism now is not necessary to
++                //strip the packet. Buffer always fit
++                dataLen = header->len;
++
++/*              if (header->len < sizeof(buf) - sizeof(TZSP_HEAD))
+                 {
+                     dataLen = header->len;
+                 }
+                 else
+                 {
+                     dataLen = sizeof(buf) - sizeof(TZSP_HEAD);
+-                }
++                }*/
+                 if (dataLen > 0)
+                 {
+                     memcpy(buf + sizeof(TZSP_HEAD), pkt_data, dataLen);
+@@ -901,6 +906,9 @@ void * start_mirroring(void* dev)
+     int                 res = 0;
+     struct pcap_pkthdr* header;
+     const u_char*       pkt_data;
++    uint8_t*            buffer = 0;
++    uint32_t            buffer_size = PM_BFSIZE+PM_BFR_RESERVE;
++
+ #ifdef  _ENABLE_THREADS
+     sigset_t mask;
+ 
+@@ -908,7 +916,12 @@ void * start_mirroring(void* dev)
+     sigaddset(&mask, SIGTERM);
+     pthread_sigmask(SIG_BLOCK, &mask, NULL);
+ #endif
+-
++    //Initial buffer allocation
++    buffer = malloc(buffer_size);
++    if (buffer == NULL) {
++        writeLog(MYLOG_ERROR, "not enough memory to allocate packet buffer (%u)\n", (unsigned int) buffer_size);
++        return NULL;
++    }
+ start_handle:
+     handle = pcap_open_live((const char *)dev, 65536, opt_promiscuous, 100, errbuf);
+     if (handle == NULL)
+@@ -934,10 +947,27 @@ start_handle:
+     }
+     //start the capture
+     while (handle != NULL) {
+-        res = pcap_next_ex(handle, &header, &pkt_data);
++        res = pcap_next_ex(handle, &header, &pkt_data );
+         if (res > 0)
+         {
+-            packet_handler_ex(header, pkt_data);
++            //Buffer must have reserve for TZSP operations always
++            //otherwise we can write out of buffer boundaries
++            if (header->len > (buffer_size - PM_BFR_RESERVE)) {
++                //realloc
++                if (opt_debug)
++                {
++                    writeLog(MYLOG_INFO, "Large packet (size %u) detected, reallocating buffer\n", (unsigned int)header->len);
++                }
++                uint8_t* buffer_tmp = realloc(buffer, header->len + PM_BFR_RESERVE);
++                if (buffer_tmp) {
++                    buffer = buffer_tmp;
++                    buffer_size = header->len + PM_BFR_RESERVE;
++                } else {
++                    writeLog(MYLOG_ERROR, "Unable to reallocate packet buffer to size %u - skipping packet\n", (unsigned int)(header->len + PM_BFR_RESERVE));
++                    continue;
++                }
++            }
++            packet_handler_ex(header, pkt_data, buffer);
+         }
+         else if (res == 0)              // Timeout elapsed
+         {
