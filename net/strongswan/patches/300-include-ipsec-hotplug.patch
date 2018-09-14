@@ -9,7 +9,7 @@
 +# This files/scripts are executed by the openwrt hotplug functionality on
 +# ipsec events.
 +
-+exec /sbin/hotplug-call ipsec "$1"
++/sbin/hotplug-call ipsec "$1"
 +
  #      PLUTO_VERSION
  #              indicates  what  version of this interface is being
