@@ -273,8 +273,9 @@ config unbound
 
   option protocol 'mixed'
     Unbound can limit its protocol used for recursive queries.
-    ip4_only - limit issues if you do not have native IPv6
+    ip4_only - old fashioned IPv4 upstream and downstream
     ip6_only - test environment only; could cauase problems
+    ip6_local - upstream IPv4 only and local network IPv4 and IPv6
     ip6_prefer - both IPv4 and IPv6 but try IPv6 first
     mixed - both IPv4 and IPv6
     default - Unbound built-in defaults
