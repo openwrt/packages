@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
 PKG_VERSION:=4.9.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-3.0-only
@@ -235,7 +235,7 @@ endif
 ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
 	SAMBA4_PDB_MODULES :=$(SAMBA4_PDB_MODULES)pdb_samba_dsdb,
 	SAMBA4_AUTH_MODULES :=$(SAMBA4_AUTH_MODULES)auth_samba4,
-	SAMBA4_VFS_MODULES :=$(SAMBA4_VFS_MODULES)vfs_audit,vfs_ext_audit,vfs_full_audit,
+	SAMBA4_VFS_MODULES :=$(SAMBA4_VFS_MODULES)vfs_audit,vfs_extd_audit,vfs_full_audit,
 endif
 ifeq ($(CONFIG_SAMBA4_SERVER_WINBIND),y)
 	SAMBA4_IDMAP_MODULES :=$(SAMBA4_IDMAP_MODULES)idmap_passdb,idmap_nss,idmap_tdb,idmap_tdb2,idmap_script,nss_info_template,
