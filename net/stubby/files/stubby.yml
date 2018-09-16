@@ -11,7 +11,7 @@ tls_query_padding_blocksize: 128
 
 edns_client_subnet_private : 0
 
-round_robin_upstreams: 0
+round_robin_upstreams: 1
 
 idle_timeout: 10000
 
