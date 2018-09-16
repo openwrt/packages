@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsyslog
 PKG_VERSION:=8.37.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.rsyslog.com/files/download/rsyslog/
 PKG_HASH:=295c289b4c8abd8f8f3fe35a83249b739cedabe82721702b910255f9faf147e7
 
-PKG_MAINTAINER:=Dov Murik <dmurik@us.ibm.com>
+PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
 
@@ -38,7 +38,9 @@ endef
 
 CONFIGURE_ARGS+= \
 	--disable-libgcrypt \
-	--disable-liblogging-stdlog
+	--disable-fmhttp \
+	--disable-default-tests \
+	--disable-libsystemd
 
 define Package/rsyslog/install
 	$(INSTALL_DIR) $(1)/usr/sbin
