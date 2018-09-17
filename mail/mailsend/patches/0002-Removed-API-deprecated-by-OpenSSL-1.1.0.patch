@@ -1,12 +1,13 @@
-From 2d585baa473314f79d492c0876b3bbf96758562c Mon Sep 17 00:00:00 2001
+From cc9dbd4bcd9ab3133d771c94c0466356703276a8 Mon Sep 17 00:00:00 2001
 From: Eneas U de Queiroz <cote2004-github@yahoo.com>
 Date: Fri, 8 Jun 2018 14:41:23 -0300
 Subject: [PATCH] Removed API deprecated by OpenSSL 1.1.0
 
 Signed-off-by: Eneas U de Queiroz <cote2004-github@yahoo.com>
 ---
- main.c | 10 +++++++++-
- 1 file changed, 9 insertions(+), 1 deletion(-)
+ main.c  | 10 +++++++++-
+ utils.c |  6 +++++-
+ 2 files changed, 14 insertions(+), 2 deletions(-)
 
 diff --git a/main.c b/main.c
 index d275e6a..51bfb1d 100755
@@ -39,6 +40,34 @@ index d275e6a..51bfb1d 100755
  #endif /* ! HAVE_OPENSSL */
                  rc = 0;
                  goto ExitProcessing;
+diff --git a/utils.c b/utils.c
+index abfb86e..02366c5 100755
+--- a/utils.c
++++ b/utils.c
+@@ -440,10 +440,12 @@ void initialize_openssl(char *cipher)
+     static const char rnd_seed[]="my huge entropy for rng.. blah";
+     SSL_CTX *ssl_ctx=(SSL_CTX *) NULL;
+     SSL *ssl=NULL;
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+     SSL_library_init();
+     SSL_load_error_strings();
+-    RAND_seed(rnd_seed,sizeof(rnd_seed));
+     OpenSSL_add_all_algorithms();
++#endif
++    RAND_seed(rnd_seed,sizeof(rnd_seed));
+     ssl_ctx=SSL_CTX_new(SSLv23_client_method());
+     if (ssl_ctx == NULL)
+     {
+@@ -825,7 +827,9 @@ char *encode_cram_md5(char *challenge,char *user,char *secret)
+         return(NULL);
+ 
+     showVerbose("Server Challenge: %s\n",challenge);
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+     OpenSSL_add_all_digests();
++#endif
+ 
+     /* decode the challenge */
+     data=mutils_decode_base64((unsigned char *) challenge,strlen(challenge),&data_len);
 -- 
-2.16.4
+2.19.1
 
