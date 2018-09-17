@@ -36,8 +36,8 @@ handle_allow() {
 	elif [ "$wan6_iface" = "$iface" ]; then
 		echo allow ::/0
 	else
-		network_get_subnets subnets $iface || \
-			network_get_subnets subnets6 $iface || continue
+		network_get_subnets subnets $iface
+		network_get_subnets6 subnets6 $iface
 		for subnet in $subnets $subnets6; do
 			echo allow $subnet
 		done
