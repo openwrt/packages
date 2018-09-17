@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=jdcal
-PKG_VERSION:=1.3
+PKG_VERSION:=1.4
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/9b/fa/40beb2aa43a13f740dd5be367a10a03270043787833409c61b79e69f1dfd/
-PKG_HASH:=b760160f8dc8cc51d17875c6b663fafe64be699e10ce34b6a95184b5aa0fdc9e
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/j/jdcal
+PKG_HASH:=ea0a5067c5f0f50ad4c7bdc80abad3d976604f6fb026b0b3a17a9d84bb9046c9
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
@@ -25,7 +25,7 @@ define Package/jdcal
   CATEGORY:=Languages
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
   TITLE:=Julian dates from proleptic Gregorian and Julian calendars.
-  URL:=http://github.com/phn/jdcal
+  URL:=https://github.com/phn/jdcal
   DEPENDS:=+python
 endef
 
