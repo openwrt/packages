@@ -34,7 +34,6 @@ define Package/seafile-ccnet
     DEPENDS:=+libsearpc +libevent2 +libopenssl \
 		+glib2 +python +libzdb +libuuid \
 		+libpthread +libsqlite3 +jansson $(ICONV_DEPENDS)
-    EXTRA_DEPENDS:=libsearpc (=3.0.8-12a01268825e9c7e17794c58c367e3b4db912ad9-1)
 endef
 
 define Package/seafile-ccnet/description
