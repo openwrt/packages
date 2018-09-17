@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pytz
-PKG_VERSION:=2018.3
+PKG_VERSION:=2018.5
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/1b/50/4cdc62fc0753595fc16c8f722a89740f487c6e5670c644eb8983946777be/
-PKG_HASH:=410bcd1d6409026fbaa65d9ed33bf6dd8b1e94a499e32168acfc7b332e4095c0
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pytz
+PKG_HASH:=ffb9ef1de172603304d9d2819af6f5ece76f2e85ec10692a524dd876e72bf277
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
