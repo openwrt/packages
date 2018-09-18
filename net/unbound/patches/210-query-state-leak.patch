@@ -1,0 +1,38 @@
+Unbound (trunk):
+Fix that with harden-below-nxdomain and qname minisation enabled
+some iterator states for nonresponsive domains can get into a
+state where they waited for an empty list.
+Stop UDP to TCP failover after timeouts that causes the ping count
+to be reset by the TCP time measurement (that exists for TLS),
+because that causes the UDP part to not be measured as timeout.
+
+Index: iterator/iterator.c
+===================================================================
+--- a/iterator/iterator.c
++++ b/iterator/iterator.c
+@@ -2752,6 +2752,12 @@ processQueryResponse(struct module_qstate* qstate, struct iter_qstate* iq,
+ 						verbose(VERB_ALGO,
+ 						"could not validate NXDOMAIN "
+ 						"response");
++					outbound_list_clear(&iq->outlist);
++					iq->num_current_queries = 0;
++					fptr_ok(fptr_whitelist_modenv_detach_subs(
++						qstate->env->detach_subs));
++					(*qstate->env->detach_subs)(qstate);
++					iq->num_target_queries = 0;
+ 				}
+ 			}
+ 			return next_state(iq, QUERYTARGETS_STATE);
+Index: services/outside_network.c
+===================================================================
+--- a/services/outside_network.c
++++ b/services/outside_network.c
+@@ -1979,7 +1979,7 @@ serviced_udp_callback(struct comm_point* c, void* arg, int error,
+ 			return 0;
+ 		}
+ 		if(rto >= RTT_MAX_TIMEOUT) {
+-			fallback_tcp = 1;
++			/* fallback_tcp = 1; */
+ 			/* UDP does not work, fallback to TCP below */
+ 		} else {
+ 			serviced_callbacks(sq, NETEVENT_TIMEOUT, c, rep);
