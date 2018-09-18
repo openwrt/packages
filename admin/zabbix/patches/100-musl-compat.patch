@@ -9,4 +9,3 @@
    sys/socket.h sys/loadavg.h arpa/inet.h \
    sys/vmmeter.h strings.h vm/vm_param.h \
    sys/time.h kstat.h sys/syscall.h sys/sysmacros.h \
-
