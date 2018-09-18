@@ -1,5 +1,4 @@
 #
-# Copyright (C) 2015-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -18,7 +17,7 @@ include $(INCLUDE_DIR)/target.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.68.0
 PKG_SOURCE_VERSION:=1_68_0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
@@ -28,7 +27,7 @@ PKG_HASH:=7f6130bc3cf65f56a618888ce9d5ea704fa10b462be126ad053e80e553d6d8b7
 PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 
-PKG_BUILD_PARALLEL:=0
+PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
@@ -256,8 +255,8 @@ define Package/boost/config
 			prompt "Boost $(lib) library."
 			default m if ALL
 			$(if $(findstring locale,$(lib)),depends on BUILD_NLS,)\
-			$(if $(findstring python,$(lib)),depends on PACKAGE_$(lib),)
-
+			$(if $(findstring python,$(lib)),depends on PACKAGE_$(lib),)\
+			$(if $(findstring fiber,$(lib)),depends on CPU_TYPE!=mips32 && CPU_TYPE!=mips64,)
 		)
 	endmenu
 
@@ -361,7 +360,7 @@ endif
 comma := ,
 
 define Build/Compile
-	$(info Selected Boost API $(BOOST_ABI) for architecture $(ARCH) and cpu $(CPU_TYPE) $(CPU_SUBTYPE))
+	$(info Selected Boost API $(BOOST_ABI) for architecture $(ARCH) and cpu $(CONFIG_CPU_TYPE) and cpu subtype $(CONFIG_CPU_SUBTYPE))
 	( cd $(PKG_BUILD_DIR) ; \
 		echo "using gcc : $(ARCH) : $(GNU_TARGET_NAME)-gcc : <compileflags>\"$(TARGET_CFLAGS)\" <cxxflags>\"$(TARGET_CXXFLAGS) $(EXTRA_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > tools/build/src/user-config.jam ; \
 		$(if $(CONFIG_PACKAGE_boost-python3), \
