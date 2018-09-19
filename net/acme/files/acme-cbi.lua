@@ -61,7 +61,7 @@ kl.datatype = "and(uinteger,min(2048))"
 if uhttpd_presence then
 u = cs:option(Flag, "update_uhttpd", translate("Use for uhttpd"),
               translate("Update the uhttpd config with this certificate once issued " ..
-                        "(only select this for one certificate)." .. 
+                        "(only select this for one certificate)." ..
                         "Is also available luci-app-uhttpd to configure uhttpd form the LuCI interface."))
 u.rmempty = false
 end
@@ -69,8 +69,9 @@ end
 if nginx_presence then
 u = cs:option(Flag, "update_nginx", translate("Use for nginx"),
               translate("Update the nginx config with this certificate once issued " ..
-                        "(only select this for one certificate)." .. 
-                        "Nginx must support ssl, if not it won't start as it needs to be compiled with ssl support to use cert options"))
+                        "(only select this for one certificate)." ..
+                        "Nginx must support ssl, if not it won't start as it needs to be " ..
+                        "compiled with ssl support to use cert options"))
 u.rmempty = false
 end
 
