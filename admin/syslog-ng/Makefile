@@ -2,7 +2,7 @@ include  $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
 PKG_VERSION:=3.16.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -54,7 +54,8 @@ CONFIGURE_ARGS += \
          --disable-linux-caps \
 	 --disable-smtp \
 	 --disable-redis \
-         --enable-prce \
+	 --enable-prce \
+	 --disable-tests \
 
 TARGET_CPPFLAGS += \
   -I$(STAGING_DIR)/usr/include/eventlog
