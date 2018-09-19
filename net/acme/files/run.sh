@@ -67,19 +67,19 @@ pre_checks()
     for listener in $(get_listeners); do
         pid="${listener%/*}"
         cmd="${listener#*/}"
-        
+
         case "$cmd" in
             uhttpd)
                 debug "Found uhttpd listening on port 80; trying to disable."
-    
+
                 UHTTPD_LISTEN_HTTP=$(uci get uhttpd.main.listen_http)
-    
+
                 if [ -z "$UHTTPD_LISTEN_HTTP" ]; then
                     err "$main_domain: Unable to find uhttpd listen config."
                     err "Manually disable uhttpd or set webroot to continue."
                     return 1
                 fi
-    
+
                 uci set uhttpd.main.listen_http=''
                 uci commit uhttpd || return 1
                 if ! /etc/init.d/uhttpd reload ; then
@@ -189,7 +189,7 @@ issue_cert()
     config_get keylength "$section" keylength
     config_get webroot "$section" webroot
     config_get dns "$section" dns
-    
+
     UPDATE_NGINX=$update_nginx
     UPDATE_UHTTPD=$update_uhttpd
 
