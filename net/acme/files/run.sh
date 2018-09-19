@@ -99,7 +99,7 @@ pre_checks()
                         return 1
                     fi
                     debug "Waiting for nginx to stop..."
-                    tries=$tries+1
+                    tries=$((tries + 1))
                     sleep 1
                 done
             ;;
