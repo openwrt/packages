@@ -10,6 +10,12 @@ Copyright 2016 Toke Høiland-Jørgensen <toke@toke.dk>
 
 ]]--
 
+local ipkg = require "luci.model.ipkg"
+
+local nginx_presence = ipkg.installed("nginx-all-module") or ipkg.installed("nginx-ssl") or false
+
+local uhttpd_presence = ipkg.installed("uhttpd") or false
+
 m = Map("acme", translate("ACME certificates"),
 	translate("This configures ACME (Letsencrypt) automatic certificate installation. " ..
                   "Simply fill out this to have the router configured with Letsencrypt-issued " ..
@@ -52,10 +58,22 @@ kl = cs:option(Value, "keylength", translate("Key length"),
 kl.rmempty = false
 kl.datatype = "and(uinteger,min(2048))"
 
+if uhttpd_presence then
 u = cs:option(Flag, "update_uhttpd", translate("Use for uhttpd"),
               translate("Update the uhttpd config with this certificate once issued " ..
-                        "(only select this for one certificate)."))
+                        "(only select this for one certificate)." ..
+                        "Is also available luci-app-uhttpd to configure uhttpd form the LuCI interface."))
 u.rmempty = false
+end
+
+if nginx_presence then
+u = cs:option(Flag, "update_nginx", translate("Use for nginx"),
+              translate("Update the nginx config with this certificate once issued " ..
+                        "(only select this for one certificate)." ..
+                        "Nginx must support ssl, if not it won't start as it needs to be " ..
+                        "compiled with ssl support to use cert options"))
+u.rmempty = false
+end
 
 wr = cs:option(Value, "webroot", translate("Webroot directory"),
                translate("Webserver root directory. Set this to the webserver " ..
