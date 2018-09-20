@@ -252,6 +252,8 @@ aria2_start() {
 	if [ ."$check_certificate" = ."true" ]; then
 		append_setting "check-certificate=true"
 		append_options "ca_certificate"
+	elif [ ."$check_certificate" = ."false" ]; then
+		append_setting "check-certificate=false"
 	fi
 
 	if [ ."$enable_dht" = ."true" ]; then
