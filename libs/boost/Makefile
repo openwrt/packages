@@ -234,6 +234,11 @@ define Package/boost/config
 			select boost-coroutine2
 			select boost-graph-parallel
 
+		# Invisible config dependency
+		config boost-fiber-exclude
+			bool
+			default y if (CPU_TYPE=mips32 || CPU_TYPE=mips64)
+
 		config boost-test-pkg
 			bool "Boost test package."
 			default m if ALL
@@ -256,7 +261,7 @@ define Package/boost/config
 			default m if ALL
 			$(if $(findstring locale,$(lib)),depends on BUILD_NLS,)\
 			$(if $(findstring python,$(lib)),depends on PACKAGE_$(lib),)\
-			$(if $(findstring fiber,$(lib)),depends on CPU_TYPE!=mips32 && CPU_TYPE!=mips64,)
+			$(if $(findstring fiber,$(lib)),depends on (CPU_TYPE!=mips32 && CPU_TYPE!=mips64),)
 		)
 	endmenu
 
@@ -305,7 +310,7 @@ $(eval $(call DefineBoostLibrary,contract,system,))
 $(eval $(call DefineBoostLibrary,coroutine,system chrono context thread,))
 $(eval $(call DefineBoostLibrary,date_time,,))
 #$(eval $(call DefineBoostLibrary,exception,,))
-$(eval $(call DefineBoostLibrary,fiber,coroutine filesystem,,))
+$(eval $(call DefineBoostLibrary,fiber,coroutine filesystem,,!boost-fiber-exclude))
 $(eval $(call DefineBoostLibrary,filesystem,system,))
 $(eval $(call DefineBoostLibrary,graph,regex,))
 $(eval $(call DefineBoostLibrary,iostreams,,+zlib +liblzma +libbz2))
