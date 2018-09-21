@@ -1,5 +1,4 @@
 #
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -17,7 +16,7 @@ include $(INCLUDE_DIR)/target.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.68.0
 PKG_SOURCE_VERSION:=1_68_0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
