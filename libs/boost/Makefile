@@ -16,7 +16,7 @@ include $(INCLUDE_DIR)/target.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.68.0
 PKG_SOURCE_VERSION:=1_68_0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
@@ -429,9 +429,13 @@ define Build/Compile
 					$(if $(CONFIG_boost-runtime-static-and-shared),runtime-link=shared$(comma)static,) \
 					$(if $(CONFIG_boost-single-thread),threading=single,) \
 					threading=multi \
+					--without-mpi \
 					$(foreach lib,$(BOOST_LIBS), \
 						$(if $(findstring python,$(lib)), \
 							$(if $(CONFIG_PACKAGE_boost-python3),python=3.6,), \
+								$(if $(CONFIG_PACKAGE_boost-$(lib)),, \
+									$(if $(findstring $(lib),wserialization),,--without-$(lib)) \
+								) \
 						) \
 					) \
 				install ;\
