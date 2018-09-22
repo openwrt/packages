@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=git
 PKG_VERSION:=2.19.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/scm/git/
@@ -112,8 +112,8 @@ define Package/git/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/git-* $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/usr/lib/git-core
 	ln $(1)/usr/bin/git $(1)/usr/lib/git-core/git
+	ln $(1)/usr/bin/git $(1)/usr/lib/git-core/git-upload-pack
 	ln $(1)/usr/bin/git-shell $(1)/usr/lib/git-core/git-shell
-	ln $(1)/usr/bin/git-upload-pack $(1)/usr/lib/git-core/git-upload-pack
 	$(INSTALL_DIR) $(1)/usr/share/git-core/templates
 	( cd $(PKG_INSTALL_DIR); $(TAR) \
 		--exclude=usr/lib/git-core/git-http-backend \
