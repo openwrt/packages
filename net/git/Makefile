@@ -106,14 +106,11 @@ define Build/Compile
 endef
 
 define Package/git/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/git $(1)/usr/bin
 	$(RM) $(PKG_INSTALL_DIR)/usr/bin/git-cvsserver
+	$(RM) $(PKG_INSTALL_DIR)/usr/bin/git-shell
+	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/git-* $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/usr/lib/git-core
-	ln $(1)/usr/bin/git $(1)/usr/lib/git-core/git
-	ln $(1)/usr/bin/git $(1)/usr/lib/git-core/git-upload-pack
-	ln $(1)/usr/bin/git-shell $(1)/usr/lib/git-core/git-shell
 	$(INSTALL_DIR) $(1)/usr/share/git-core/templates
 	( cd $(PKG_INSTALL_DIR); $(TAR) \
 		--exclude=usr/lib/git-core/git-http-backend \
@@ -122,13 +119,12 @@ define Package/git/install
 		--exclude=usr/lib/git-core/git-remote-ftps \
 		--exclude=usr/lib/git-core/git-remote-http \
 		--exclude=usr/lib/git-core/git-remote-https \
-		--exclude=usr/lib/git-core/git \
-		--exclude=usr/lib/git-core/git-shell \
-		--exclude=usr/lib/git-core/git-upload-pack \
 		-cf - \
 		usr/lib/git-core \
 		usr/share/git-core/templates \
 	) | ( cd $(1); $(TAR) -xf - )
+	ln $(1)/usr/lib/git-core/git $(1)/usr/bin/git
+	ln $(1)/usr/lib/git-core/git-shell $(1)/usr/bin/git-shell
 endef
 
 define Package/git-http/install
