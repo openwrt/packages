@@ -25,27 +25,27 @@ mwan3_rtmon_ipv4()
 	local tid=1
 	local idx=0
 	local ret=1
-	main_tbsum=$($IP4 route list table main  | grep -v ^default | md5sum | head -c32)
+	mkdir -p /tmp/mwan3rtmon
+	($IP4 route list table main  | grep -v ^default | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv4.main
 	while uci get mwan3.@interface[$idx] >/dev/null 2>&1 ; do
 		idx=$((idx+1))
 		tid=$idx
 		[ "$(uci get mwan3.@interface[$((idx-1))].family)" = "ipv4" ] && {
 			if $IP4 route list table $tid | grep -q ^default; then
-				tbsum=$($IP4 route list table $tid  | grep -v ^default | md5sum | head -c32)
-				if [ "$tbsum" != "$main_tbsum" ]; then
-					$IP4 route list table $tid | grep -v ^default | while read line; do
-						$IP4 route del table $tid $line
-					done
-					$IP4 route list table main  | grep -v ^default | while read line; do
-						$IP4 route add table $tid $line
-					done
-				fi
+				($IP4 route list table $tid  | grep -v ^default | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv4.$tid
+				cat /tmp/mwan3rtmon/ipv4.$tid | grep -v -x -F -f /tmp/mwan3rtmon/ipv4.main | while read line; do
+					$IP4 route del table $tid $line
+				done
+				cat /tmp/mwan3rtmon/ipv4.main | grep -v -x -F -f /tmp/mwan3rtmon/ipv4.$tid | while read line; do
+					$IP4 route add table $tid $line
+				done
 			fi
 		}
 		if [ "$(uci get mwan3.@interface[$((idx-1))].enabled)" = "1" ]; then
 			ret=0
 		fi
 	done
+	rm -f /tmp/mwan3rtmon/ipv4.*
 	return $ret
 }
 
@@ -54,27 +54,27 @@ mwan3_rtmon_ipv6()
 	local tid=1
 	local idx=0
 	local ret=1
-	main_tbsum=$($IP6 route list table main  | grep -v "^default\|^::/" | md5sum | head -c32)
+	mkdir -p /tmp/mwan3rtmon
+	($IP6 route list table main  | grep -v "^default\|^::/0\|^unreachable" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv6.main
 	while uci get mwan3.@interface[$idx] >/dev/null 2>&1 ; do
 		idx=$((idx+1))
 		tid=$idx
 		[ "$(uci get mwan3.@interface[$((idx-1))].family)" = "ipv6" ] && {
-			if $IP6 route list table $tid | grep -q ^::/0; then
-				tbsum=$($IP6 route list table $tid  | grep -v "^default\|^::/" | md5sum | head -c32)
-				if [ "$tbsum" != "$main_tbsum" ]; then
-					$IP6 route list table $tid | grep -v "^default\|^::/" | while read line; do
-						$IP6 route del table $tid $line
-					done
-					$IP6 route list table main  | grep -v "^default\|^::/" | while read line; do
-						$IP6 route add table $tid $line
-					done
-				fi
+			if $IP6 route list table $tid | grep -q "^default\|^::/0"; then
+				($IP6 route list table $tid  | grep -v "^default\|^::/0\|^unreachable" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv6.$tid
+				cat /tmp/mwan3rtmon/ipv6.$tid | grep -v -x -F -f /tmp/mwan3rtmon/ipv6.main | while read line; do
+					$IP6 route del table $tid $line
+				done
+				cat /tmp/mwan3rtmon/ipv6.main | grep -v -x -F -f /tmp/mwan3rtmon/ipv6.$tid | while read line; do
+					$IP6 route add table $tid $line
+				done
 			fi
 		}
 		if [ "$(uci get mwan3.@interface[$((idx-1))].enabled)" = "1" ]; then
 			ret=0
 		fi
 	done
+	rm -f /tmp/mwan3rtmon/ipv6.*
 	return $ret
 }
 
