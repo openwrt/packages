@@ -1,14 +1,14 @@
 include  $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
-PKG_VERSION:=3.16.1
-PKG_RELEASE:=2
+PKG_VERSION:=3.17.2
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/balabit/syslog-ng/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
-PKG_HASH:=c7ee6f1d5e98d86f191964e580111bfa71081ecbb3275cea035bbba177b73a29
+PKG_HASH:=73601f7ca13c6b534318d5b0648ec1833aa9ca0516d6c3f90085b090d548c50b
 
 PKG_INSTALL:=1
 
@@ -54,8 +54,7 @@ CONFIGURE_ARGS += \
          --disable-linux-caps \
 	 --disable-smtp \
 	 --disable-redis \
-	 --enable-prce \
-	 --disable-tests \
+         --enable-prce \
 
 TARGET_CPPFLAGS += \
   -I$(STAGING_DIR)/usr/include/eventlog
