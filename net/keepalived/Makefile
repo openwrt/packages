@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
-PKG_VERSION:=1.4.4
+PKG_VERSION:=2.0.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.keepalived.org/software
-PKG_HASH:=147c2b3b782223128551fd0a1564eaa30ed84a94b68c50ec5087747941314704
+PKG_HASH:=bce45d6d5cf3620bfd88472ec839a75b5a14a54fda12d09e890670244873b8ab
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
@@ -36,7 +36,11 @@ define Package/keepalived
     +libip4tc \
     +IPV6:libip6tc \
     +libxtables \
-    +kmod-macvlan
+    +kmod-macvlan \
+    +libmagic \
+    +libnl-route \
+    +libnfnetlink \
+    +kmod-nf-ipvs
 endef
 
 define Package/keepalived/description
@@ -51,8 +55,6 @@ endef
 
 CONFIGURE_ARGS+= \
 	--enable-sha1 \
-	--disable-lvs \
-	--disable-lvs-syncd \
 	--disable-snmp \
 	--with-kernel-dir="$(LINUX_DIR)/$(LINUX_UAPI_DIR)"
 
