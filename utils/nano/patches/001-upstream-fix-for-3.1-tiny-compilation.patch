@@ -1,0 +1,29 @@
+From 368ec04870a366b19f1c5801a6868786547968b0 Mon Sep 17 00:00:00 2001
+From: Benno Schulenberg <bensberg@telfort.nl>
+Date: Wed, 19 Sep 2018 20:36:39 +0200
+Subject: build: fix compilation again when configured with --enable-tiny
+
+Reported-by: Jordi Mallach <jordi@mallach.net>
+---
+ src/nano.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/nano.c b/src/nano.c
+index ebb1f11..01f92a1 100644
+--- a/src/nano.c
++++ b/src/nano.c
+@@ -1756,7 +1756,10 @@ int do_input(bool allow_funcs)
+ 	if (shortcut == NULL)
+ 		pletion_line = NULL;
+ 	else {
+-		if (ISSET(VIEW_MODE) && shortcut->func != do_toggle_void &&
++		if (ISSET(VIEW_MODE) &&
++#ifndef NANO_TINY
++								shortcut->func != do_toggle_void &&
++#endif
+ 								!okay_for_view(shortcut)) {
+ 			print_view_warning();
+ 			return ERR;
+-- 
+cgit v1.0-41-gc330
+
