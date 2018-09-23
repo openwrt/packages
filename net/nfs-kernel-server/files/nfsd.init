@@ -7,12 +7,14 @@ STOP=60
 USE_PROCD=1
 
 NFS_D=/var/lib/nfs
+RECOVERY_D=$NFS_D/v4recovery
 LOCK_D=/var/lib/nfs/sm
 
 start_service() {
 	grep -q /proc/fs/nfsd /proc/mounts || \
 		mount -t nfsd nfsd /proc/fs/nfsd
 	mkdir -p $NFS_D
+	mkdir -p $RECOVERY_D
 	mkdir -p $LOCK_D
 	touch $NFS_D/rmtab
 
