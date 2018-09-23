@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=krb5
 PKG_VERSION:=1.16.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -71,7 +71,8 @@ CONFIGURE_VARS += \
 	ac_cv_func_regcomp=yes \
 	ac_cv_printf_positional=yes \
 	ac_cv_file__etc_environment=no \
-	ac_cv_file__etc_TIMEZONE=no
+	ac_cv_file__etc_TIMEZONE=no \
+	ac_cv_header_keyutils_h=no
 
 CONFIGURE_ARGS += \
 	--localstatedir=/etc \
