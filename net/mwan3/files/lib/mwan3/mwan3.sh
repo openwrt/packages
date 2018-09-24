@@ -346,7 +346,7 @@ mwan3_delete_iface_iptables()
 
 mwan3_create_iface_route()
 {
-	local id route_args
+	local id route_args metric
 
 	config_get family $1 family ipv4
 	mwan3_get_iface_id id $1
@@ -366,6 +366,11 @@ mwan3_create_iface_route()
 			route_args=""
 		fi
 
+		network_get_metric metric $1
+		if [ -n "$metric" -a "$metric" != "0" ]; then
+			route_args="$route_args metric $metric"
+		fi
+
 		$IP4 route flush table $id
 		$IP4 route add table $id default $route_args dev $2
 		mwan3_rtmon_ipv4
@@ -382,6 +387,11 @@ mwan3_create_iface_route()
 			route_args="via $route_args"
 		else
 			route_args=""
+		fi
+
+		network_get_metric metric $1
+		if [ -n "$metric" -a "$metric" != "0" ]; then
+			route_args="$route_args metric $metric"
 		fi
 
 		$IP6 route flush table $id
