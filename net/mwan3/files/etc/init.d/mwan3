@@ -3,15 +3,7 @@
 START=19
 
 reload() {
-	local enabled
-
-	config_load mwan3
-	config_get_bool enabled globals 'enabled' 0
-	[ ${enabled} -gt 0 ] || {
-		echo "Warning: mwan3 is global disabled. Usage: /etc/init.d/mwan3 start"
-		exit 0
-	}
-	mwan3 restart
+	/usr/sbin/mwan3 restart
 }
 
 boot() {
@@ -20,13 +12,9 @@ boot() {
 }
 
 start() {
-	. /lib/config/uci.sh
-	uci_toggle_state mwan3 globals enabled "1"
-	mwan3 start
+	/usr/sbin/mwan3 start
 }
 
 stop() {
-	. /lib/config/uci.sh
-	uci_toggle_state mwan3 globals enabled "0"
-	mwan3 stop
+	/usr/sbin/mwan3 stop
 }
