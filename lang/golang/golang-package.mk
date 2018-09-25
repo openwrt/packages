@@ -165,6 +165,7 @@ define GoPackage/Build/Configure
 		fi ; \
 		\
 		echo "Copying files from $(PKG_BUILD_DIR) into $(GO_PKG_BUILD_DIR)/src/$(GO_PKG)" ; \
+		IFS=$$$$'\n'; \
 		for file in $$$$files; do \
 			echo $$$$file ; \
 			dest=$(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/$$$$file ; \
