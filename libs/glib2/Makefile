@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
-PKG_VERSION:=2.56.3
+PKG_VERSION:=2.58.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_BUILD_DIR:=$(BUILD_DIR)/glib-$(PKG_VERSION)
-PKG_SOURCE_URL:=@GNOME/glib/2.56
-PKG_HASH:=a9a4c5b4c81b6c75bc140bdf5e32120ef3ce841b7413214ecf5f987acec74cb2
+PKG_SOURCE_URL:=@GNOME/glib/2.58
+PKG_HASH:=97d6a9d926b6aa3dfaadad3077cfb43eec74432ab455dff14250c769d526d7d6
 
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
@@ -44,11 +44,13 @@ define Package/glib2/description
   The GLib library of C routines
 endef
 
+TARGET_CFLAGS += -Wno-error=implicit-function-declaration
+
 HOST_CONFIGURE_ARGS += \
 	--disable-selinux \
 	--with-libiconv=gnu \
 	--with-pcre=internal \
-	--enable-libmount=no
+	--disable-libmount
 
 CONFIGURE_ARGS += \
 	--enable-shared \
