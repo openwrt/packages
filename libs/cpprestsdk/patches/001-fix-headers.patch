@@ -1,0 +1,18 @@
+Index: cpprestsdk-2018-09-24/Release/include/cpprest/asyncrt_utils.h
+===================================================================
+--- cpprestsdk-2018-09-24.orig/Release/include/cpprest/asyncrt_utils.h
++++ cpprestsdk-2018-09-24/Release/include/cpprest/asyncrt_utils.h
+@@ -33,10 +33,12 @@
+ /* Systems using glibc: xlocale.h has been removed from glibc 2.26
+    The above include of locale.h is sufficient
+    Further details: https://sourceware.org/git/?p=glibc.git;a=commit;h=f0be25b6336db7492e47d2e8e72eb8af53b5506d */
+-#include <xlocale.h>
++//#include <xlocale.h>
+ #endif
+ #endif
+ 
++#include <sys/time.h>
++
+ /// Various utilities for string conversions and date and time manipulation.
+ namespace utility
+ {
