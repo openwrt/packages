@@ -29,7 +29,6 @@ define Package/libsndfile
   TITLE:=Library for reading/writing audio files
   URL:=http://www.mega-nerd.com/libsndfile/
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
-  DEPENDS:=@!avr32
 endef
 
 define Package/libsndfile/description

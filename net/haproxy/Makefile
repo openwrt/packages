@@ -100,11 +100,7 @@ ifeq ($(CONFIG_TARGET_x86),y)
   ENABLE_REGPARM:=y
 endif
 
-ifeq ($(CONFIG_avr32),y)
-  LINUX_TARGET:=linux26
-else
-  LINUX_TARGET:=linux2628
-endif
+LINUX_TARGET:=linux2628
 
 ifeq ($(BUILD_VARIANT),ssl)
 	ADDON+=USE_OPENSSL=1
