@@ -23,3 +23,19 @@ start_service() {
   procd_close_instance
 }
 
+st_load_interfaces() {
+  local d
+  config_get d $1 ifname
+  [ "$1" == "wan" -o "$1" == "wan6" -o "$d" != "${d/tun}" -o "$d" != "${d/tap}" ] && ifaces=" ${1} ${ifaces}"
+}
+
+service_triggers() {
+  local ifaces n
+  config_load network
+  config_foreach st_load_interfaces interface
+  procd_open_trigger
+  for n in $ifaces; do
+    procd_add_interface_trigger "interface.*" $n /etc/init.d/stubby restart
+  done
+  procd_close_trigger
+}
