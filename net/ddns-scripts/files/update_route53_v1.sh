@@ -7,9 +7,6 @@
 [ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing secret as 'password'"
 [ -z "$domain" ] && write_log 14 "Service section not configured correctly! Missing zone id as 'domain'"
 
-set -euo pipefail
-IFS=$'\n\t'
-
 ENDPOINT="route53.amazonaws.com"
 RECORD_TTL=300
 RECORD_NAME="$lookup_host".
@@ -24,24 +21,27 @@ AWS_SECRET_ACCESS_KEY="$password"
 AWS_REGION='us-east-1'
 AWS_SERVICE='route53'
 
-hash() {
+hash() (
+    set -euo pipefail
     msg=$1
     echo -en "$msg" | openssl dgst -sha256 | sed 's/^.* //'
-}
+)
 
-sign_plain() {
+sign_plain() (
     # Sign message using a plaintext key
+    set -euo pipefail
     key=$1
     msg=$2
     echo -en "$msg" | openssl dgst -hex -sha256 -hmac "$key" | sed 's/^.* //'
-}
+)
 
-sign() {
+sign() (
     # Sign message using a hex formatted key
+    set -euo pipefail
     key=$1
     msg=$2
     echo -en "$msg" | openssl dgst -hex -sha256 -mac HMAC -macopt "hexkey:${key}" | sed 's/^.* //'
-}
+)
 
 request_body="<?xml version=\"1.0\" encoding=\"UTF-8\"?> \
 <ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2013-04-01/\"> \
@@ -82,16 +82,16 @@ signature=$(sign "$signing_key" "$sigmsg")
 
 authorization="AWS4-HMAC-SHA256 Credential=${AWS_ACCESS_KEY_ID}/${credential}, SignedHeaders=${signed_headers}, Signature=${signature}"
 
-ANSWER=$(curl \
+ANSWER="$(curl \
     -X "POST" \
     -H "Host: route53.amazonaws.com" \
     -H "X-Amz-Date: ${fulldate}" \
     -H "Authorization: ${authorization}" \
     -H "Content-Type: text/xml" \
     -d "$request_body" \
-    "https://${ENDPOINT}${API_PATH}")
+    "https://${ENDPOINT}${API_PATH}")"
 write_log 7 "${ANSWER}"
 
-echo ${ANSWER} | grep Error >/dev/null && return 1
-echo ${ANSWER} | grep ChangeInfo >/dev/null && return 0
+echo "${ANSWER}" | grep -F "Error" >/dev/null && return 1
+echo "${ANSWER}" | grep -F "ChangeInfo" >/dev/null && return 0
 return 2
