@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hamlib
 PKG_VERSION:=3.0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_HASH:=3fec97ea326d02aa8f35834c4af34194a3f544e6212f391397d788c566b44e32
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -57,7 +57,7 @@ endef
 
 define Package/libhamlib
   $(call Package/libhamlib/Default)
-  DEPENDS:=+libusb-1.0
+  DEPENDS:=+libusb-compat
   MENU:=1
 endef
 
@@ -82,9 +82,6 @@ CONFIGURE_ARGS+= \
 	--without-readline \
 	--without-cxx-binding \
 	--with-pic \
-
-CONFIGURE_VARS+= \
-	LIBUSB_LIBS="-lusb-1.0" \
 
 define Package/hamlib/install
 	$(INSTALL_DIR) $(1)/usr/bin
