@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ola
 PKG_VERSION:=0.10.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/OpenLightingProject/ola/tar.gz/$(PKG_VERSION)?
@@ -36,7 +36,7 @@ define Package/ola
   TITLE:=Open Lighting Architecture Daemon
   URL:=https://www.openlighting.org/
   MAINTAINER:=Christian Beier <dontmind@freeshell.org>
-  DEPENDS:=+protobuf +libusb-1.0 +libuuid +libstdcpp +libpthread +librt +zlib +libncurses +liblo +libmicrohttpd
+  DEPENDS:=+protobuf +libftdi1 +libusb-1.0 +libuuid +libstdcpp +libpthread +librt +zlib +libncurses +liblo +libmicrohttpd
 endef
 
 define Package/ola/description
@@ -59,7 +59,6 @@ HOST_CONFIGURE_ARGS += \
 	--disable-osc \
 	--disable-uart \
 	--disable-libusb \
-	--disable-libftdi \
 	--disable-http  \
 	--disable-examples \
 	--disable-unittests \
