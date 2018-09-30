@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stubby
 PKG_VERSION:=0.2.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
@@ -57,6 +57,14 @@ define Package/stubby/install
 	$(INSTALL_DIR) $(1)/etc/stubby
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/stubby/stubby.yml $(1)/etc/stubby/stubby.yml.default
 	$(INSTALL_DATA) ./files/stubby.yml $(1)/etc/stubby/stubby.yml
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/stubby.conf $(1)/etc/config/stubby
+endef
+
+
+define Package/stubby/conffiles
+	/etc/stubby/stubby.yml
+	/etc/config/stubby
 endef
 
 $(eval $(call BuildPackage,stubby))
