@@ -19,6 +19,8 @@ listen_addresses:
   - 127.0.0.1@5453
   -  0::1@5453
 
+appdata_dir: "/tmp/stubby"
+
 upstream_recursive_servers:
 # IPv6 addresses
 # # Cloudflare IPv6
