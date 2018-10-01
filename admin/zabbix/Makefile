@@ -17,6 +17,7 @@ PKG_SOURCE_URL:=@SF/zabbix
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:zabbix:zabbix
 
 PKG_INSTALL:=1
 
@@ -29,7 +30,7 @@ define Package/zabbix/Default
   SECTION:=admin
   CATEGORY:=Administration
   TITLE:=Zabbix
-  URL:=http://www.zabbix.com/
+  URL:=https://www.zabbix.com/
   SUBMENU:=zabbix
   MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
   USERID:=zabbix=53:zabbix=53
