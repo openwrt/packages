@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnurl
 PKG_VERSION:=7.61.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://git.taler.net/gnurl
@@ -68,7 +68,7 @@ CONFIGURE_ARGS += \
 	--without-nghttp2 \
 	--without-nss \
 	--without-cyassl \
-	--without-psl \
+	--without-libpsl \
 	--without-polarssl \
 	--without-ssl \
 	--without-winssl \
