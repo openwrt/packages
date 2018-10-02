@@ -33,7 +33,7 @@ define Package/libpfring
   CATEGORY:=Libraries
   TITLE:=Library for PR_RING (package process framework)
   URL:=https://github.com/ntop/pf_ring
-  DEPENDS:=+kmod-pfring +libpcap +libpthread
+  DEPENDS:=+kmod-pf-ring +libpcap +libpthread
 endef
 
 define Package/libpfring/description
