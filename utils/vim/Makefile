@@ -13,7 +13,10 @@ PKG_RELEASE:=1
 VIMVER:=81
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=ftp://ftp.vim.org/pub/vim/unix/
+PKG_SOURCE_URL:=\
+	http://mirrors-usa.go-parts.com/pub/vim/unix/ \
+	http://ftp.kaist.ac.kr/vim/unix/ \
+	http://ftp.vim.org/pub/vim/unix/
 PKG_HASH:=8b69fbd01c877dd8ecbbeca1dc66e5e927228d631ac4c2174b9307eb5c827c86
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
