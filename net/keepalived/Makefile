@@ -31,7 +31,6 @@ define Package/keepalived
   TITLE:=Failover and monitoring daemon for LVS clusters
   URL:=http://www.keepalived.org/
   DEPENDS:= \
-    +PACKAGE_libnl-genl:libnl-genl \
     +libopenssl \
     +libip4tc \
     +IPV6:libip6tc \
@@ -54,6 +53,7 @@ define Package/keepalived/conffiles
 endef
 
 CONFIGURE_ARGS+= \
+	--disable-libnl \
 	--enable-sha1 \
 	--disable-snmp \
 	--with-kernel-dir="$(LINUX_DIR)/$(LINUX_UAPI_DIR)"
