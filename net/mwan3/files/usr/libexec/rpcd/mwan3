@@ -36,7 +36,8 @@ get_mwan3_status() {
 	local iface_select="${2}"
 	local running="0"
 	local age=0
-	local pid device time_p time_n
+	local uptime=0
+	local pid device time_p time_n time_u
 
 	network_get_device device $1
 
@@ -52,8 +53,15 @@ get_mwan3_status() {
 			let age=time_n-time_p
 		}
 
+		time_u="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/UPTIME")"
+		[ -z "${time_u}" ] || [ "${time_u}" = "0" ] || {
+			time_n="$(get_uptime)"
+			let uptime=time_n-time_u
+		}
+
 		json_add_object "${iface}"
 		json_add_int age "$age"
+		json_add_int uptime "${uptime}"
 		json_add_int "score" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/SCORE")"
 		json_add_int "lost" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LOST")"
 		json_add_int "turn" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/TURN")"
