@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opus-tools
-PKG_VERSION:=0.1.10
+PKG_VERSION:=0.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://downloads.xiph.org/releases/opus/
-PKG_HASH:=a2357532d19471b70666e0e0ec17d514246d8b3cb2eb168f68bb0f6fd372b28c
+PKG_SOURCE_URL:=https://downloads.xiph.org/releases/opus/
+PKG_HASH:=b4e56cb00d3e509acfba9a9b627ffd8273b876b4e2408642259f6da28fa0ff86
 
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
@@ -27,7 +27,7 @@ define Package/opus-tools
   CATEGORY:=Sound
   DEPENDS:=+libogg +libopus
   TITLE:=OPUS Codec tools
-  URL:=http://opus-codec.org/
+  URL:=https://opus-codec.org/
 endef
 
 define Package/opus-tools/description
