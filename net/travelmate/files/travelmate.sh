@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.2.3"
+trm_ver="1.2.4"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -101,10 +101,12 @@ f_prep()
 	local disabled="$(uci_get wireless "${config}" disabled)"
 	local eaptype="$(uci_get wireless "${config}" eap_type)"
 
-	if ([ -z "${trm_radio}" ] || [ "${trm_radio}" = "${radio}" ]) && \
-		[ -z "$(printf "%s" "${trm_radiolist}" | grep -Fo " ${radio}")" ]
+	if [ -z "${trm_radio}" ] && [ -z "$(printf "%s" "${trm_radiolist}" | grep -Fo " ${radio}")" ]
 	then
 		trm_radiolist="${trm_radiolist} ${radio}"
+	elif [ -n "${trm_radio}" ] && [ -z "${trm_radiolist}" ]
+	then
+		trm_radiolist="$(printf "%s" "${trm_radio}" | awk '{while(match(tolower($0),/radio[0-9]/)){ORS=" ";print substr(tolower($0),RSTART,RLENGTH);$0=substr($0,RSTART+RLENGTH)}}')"
 	fi
 	if [ "${mode}" = "sta" ] && [ "${network}" = "${trm_iface}" ]
 	then
