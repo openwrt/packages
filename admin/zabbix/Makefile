@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=3.4.14
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=7443873cc970672d3c884230d3aeb082f2d8afcc2b757506c2d684ffdd12d77e
@@ -25,7 +25,9 @@ PKG_FIXUP:=autoreconf
 
 PKG_CONFIG_DEPENDS:= \
   CONFIG_ZABBIX_GNUTLS \
-  CONFIG_ZABBIX_OPENSSL
+  CONFIG_ZABBIX_OPENSSL \
+  CONFIG_ZABBIX_MYSQL \
+  CONFIG_ZABBIX_POSTGRESQL
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -45,6 +47,22 @@ choice
 
         config ZABBIX_NOSSL
                 bool "No SSL support"
+
+endchoice
+endef
+
+define Package/zabbix-server/config
+comment "Database Software"
+
+choice
+        prompt "Selected Database Software"
+        default ZABBIX_MYSQL
+
+        config ZABBIX_MYSQL
+                bool "MySQL/MariaDB"
+
+        config ZABBIX_POSTGRESQL
+                bool "PostgreSQL"
 
 endchoice
 endef
@@ -96,13 +114,13 @@ endef
 define Package/zabbix-server
   $(call Package/zabbix/Default)
   TITLE+= server
-  DEPENDS += +pgsql-cli +libevent2
+  DEPENDS += +ZABBIX_POSTGRESQL:pgsql-cli +ZABBIX_MYSQL:libmariadbclient +libevent2
 endef
 
 define Package/zabbix-proxy
   $(call Package/zabbix/Default)
   TITLE+= proxy
-  DEPENDS += +pgsql-cli
+  DEPENDS += +ZABBIX_POSTGRESQL:pgsql-cli +ZABBIX_MYSQL:libmariadbclient
 endef
 
 define Package/zabbix-extra-mac80211/description
@@ -129,7 +147,8 @@ CONFIGURE_ARGS+= \
 	--enable-proxy \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	--disable-java \
-	--with-postgresql \
+	$(if $(CONFIG_ZABBIX_MYSQL),--with-mysql) \
+	$(if $(CONFIG_ZABBIX_POSTGRESQL),--with-postgresql) \
 	--with-libevent=$(STAGING_DIR)/usr/include/libevent \
 	--with-libpcre=$(STAGING_DIR)/usr/include \
 	$(if $(CONFIG_ZABBIX_GNUTLS),--with-gnutls="$(STAGING_DIR)/usr") \
