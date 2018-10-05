@@ -1,0 +1,322 @@
+From 511563ce763b1e98e3fb3b3e3addfef550ff99b2 Mon Sep 17 00:00:00 2001
+From: Tobias Brunner <tobias@strongswan.org>
+Date: Tue, 28 Aug 2018 11:26:24 +0200
+Subject: [PATCH] gmp: Don't parse PKCS1 v1.5 RSA signatures to verify them
+
+Instead we generate the expected signature encoding and compare it to the
+decrypted value.
+
+Due to the lenient nature of the previous parsing code (minimum padding
+length was not enforced, the algorithmIdentifier/OID parser accepts arbitrary
+data after OIDs and in the parameters field etc.) it was susceptible to
+Daniel Bleichenbacher's low-exponent attack (from 2006!), which allowed
+forging signatures for keys that use low public exponents (i.e. e=3).
+
+Since the public exponent is usually set to 0x10001 (65537) since quite a
+while, the flaws in the previous code should not have had that much of a
+practical impact in recent years.
+
+Fixes: CVE-2018-16151, CVE-2018-16152
+---
+ .../plugins/gmp/gmp_rsa_private_key.c              |  66 +++++----
+ src/libstrongswan/plugins/gmp/gmp_rsa_public_key.c | 156 ++-------------------
+ 2 files changed, 52 insertions(+), 170 deletions(-)
+
+diff --git a/src/libstrongswan/plugins/gmp/gmp_rsa_private_key.c b/src/libstrongswan/plugins/gmp/gmp_rsa_private_key.c
+index 241ef7d3b12b..edc178e96a4f 100644
+--- a/src/libstrongswan/plugins/gmp/gmp_rsa_private_key.c
++++ b/src/libstrongswan/plugins/gmp/gmp_rsa_private_key.c
+@@ -264,14 +264,15 @@ static chunk_t rsasp1(private_gmp_rsa_private_key_t *this, chunk_t data)
+ }
+ 
+ /**
+- * Build a signature using the PKCS#1 EMSA scheme
++ * Hashes the data and builds the plaintext signature value with EMSA
++ * PKCS#1 v1.5 padding.
++ *
++ * Allocates the signature data.
+  */
+-static bool build_emsa_pkcs1_signature(private_gmp_rsa_private_key_t *this,
+-									   hash_algorithm_t hash_algorithm,
+-									   chunk_t data, chunk_t *signature)
++bool gmp_emsa_pkcs1_signature_data(hash_algorithm_t hash_algorithm,
++								   chunk_t data, size_t keylen, chunk_t *em)
+ {
+ 	chunk_t digestInfo = chunk_empty;
+-	chunk_t em;
+ 
+ 	if (hash_algorithm != HASH_UNKNOWN)
+ 	{
+@@ -295,43 +296,56 @@ static bool build_emsa_pkcs1_signature(private_gmp_rsa_private_key_t *this,
+ 		/* build DER-encoded digestInfo */
+ 		digestInfo = asn1_wrap(ASN1_SEQUENCE, "mm",
+ 						asn1_algorithmIdentifier(hash_oid),
+-						asn1_simple_object(ASN1_OCTET_STRING, hash)
+-					  );
+-		chunk_free(&hash);
++						asn1_wrap(ASN1_OCTET_STRING, "m", hash));
++
+ 		data = digestInfo;
+ 	}
+ 
+-	if (data.len > this->k - 3)
++	if (data.len > keylen - 11)
+ 	{
+-		free(digestInfo.ptr);
+-		DBG1(DBG_LIB, "unable to sign %d bytes using a %dbit key", data.len,
+-			 mpz_sizeinbase(this->n, 2));
++		chunk_free(&digestInfo);
++		DBG1(DBG_LIB, "signature value of %zu bytes is too long for key of "
++			 "%zu bytes", data.len, keylen);
+ 		return FALSE;
+ 	}
+ 
+-	/* build chunk to rsa-decrypt:
+-	 * EM = 0x00 || 0x01 || PS || 0x00 || T.
+-	 * PS = 0xFF padding, with length to fill em
++	/* EM = 0x00 || 0x01 || PS || 0x00 || T.
++	 * PS = 0xFF padding, with length to fill em (at least 8 bytes)
+ 	 * T = encoded_hash
+ 	 */
+-	em.len = this->k;
+-	em.ptr = malloc(em.len);
++	*em = chunk_alloc(keylen);
+ 
+ 	/* fill em with padding */
+-	memset(em.ptr, 0xFF, em.len);
++	memset(em->ptr, 0xFF, em->len);
+ 	/* set magic bytes */
+-	*(em.ptr) = 0x00;
+-	*(em.ptr+1) = 0x01;
+-	*(em.ptr + em.len - data.len - 1) = 0x00;
+-	/* set DER-encoded hash */
+-	memcpy(em.ptr + em.len - data.len, data.ptr, data.len);
++	*(em->ptr) = 0x00;
++	*(em->ptr+1) = 0x01;
++	*(em->ptr + em->len - data.len - 1) = 0x00;
++	/* set encoded hash */
++	memcpy(em->ptr + em->len - data.len, data.ptr, data.len);
++
++	chunk_clear(&digestInfo);
++	return TRUE;
++}
++
++/**
++ * Build a signature using the PKCS#1 EMSA scheme
++ */
++static bool build_emsa_pkcs1_signature(private_gmp_rsa_private_key_t *this,
++									   hash_algorithm_t hash_algorithm,
++									   chunk_t data, chunk_t *signature)
++{
++	chunk_t em;
++
++	if (!gmp_emsa_pkcs1_signature_data(hash_algorithm, data, this->k, &em))
++	{
++		return FALSE;
++	}
+ 
+ 	/* build signature */
+ 	*signature = rsasp1(this, em);
+ 
+-	free(digestInfo.ptr);
+-	free(em.ptr);
+-
++	chunk_free(&em);
+ 	return TRUE;
+ }
+ 
+diff --git a/src/libstrongswan/plugins/gmp/gmp_rsa_public_key.c b/src/libstrongswan/plugins/gmp/gmp_rsa_public_key.c
+index 52bc9fb38046..ce9a80fadf2a 100644
+--- a/src/libstrongswan/plugins/gmp/gmp_rsa_public_key.c
++++ b/src/libstrongswan/plugins/gmp/gmp_rsa_public_key.c
+@@ -70,7 +70,9 @@ struct private_gmp_rsa_public_key_t {
+ /**
+  * Shared functions defined in gmp_rsa_private_key.c
+  */
+-extern chunk_t gmp_mpz_to_chunk(const mpz_t value);
++chunk_t gmp_mpz_to_chunk(const mpz_t value);
++bool gmp_emsa_pkcs1_signature_data(hash_algorithm_t hash_algorithm,
++								   chunk_t data, size_t keylen, chunk_t *em);
+ 
+ /**
+  * RSAEP algorithm specified in PKCS#1.
+@@ -115,26 +117,13 @@ static chunk_t rsavp1(private_gmp_rsa_public_key_t *this, chunk_t data)
+ }
+ 
+ /**
+- * ASN.1 definition of digestInfo
+- */
+-static const asn1Object_t digestInfoObjects[] = {
+-	{ 0, "digestInfo",			ASN1_SEQUENCE,		ASN1_OBJ  }, /*  0 */
+-	{ 1,   "digestAlgorithm",	ASN1_EOC,			ASN1_RAW  }, /*  1 */
+-	{ 1,   "digest",			ASN1_OCTET_STRING,	ASN1_BODY }, /*  2 */
+-	{ 0, "exit",				ASN1_EOC,			ASN1_EXIT }
+-};
+-#define DIGEST_INFO					0
+-#define DIGEST_INFO_ALGORITHM		1
+-#define DIGEST_INFO_DIGEST			2
+-
+-/**
+  * Verification of an EMSA PKCS1 signature described in PKCS#1
+  */
+ static bool verify_emsa_pkcs1_signature(private_gmp_rsa_public_key_t *this,
+ 										hash_algorithm_t algorithm,
+ 										chunk_t data, chunk_t signature)
+ {
+-	chunk_t em_ori, em;
++	chunk_t em_expected, em;
+ 	bool success = FALSE;
+ 
+ 	/* remove any preceding 0-bytes from signature */
+@@ -148,140 +137,19 @@ static bool verify_emsa_pkcs1_signature(private_gmp_rsa_public_key_t *this,
+ 		return FALSE;
+ 	}
+ 
+-	/* unpack signature */
+-	em_ori = em = rsavp1(this, signature);
+-
+-	/* result should look like this:
+-	 * EM = 0x00 || 0x01 || PS || 0x00 || T.
+-	 * PS = 0xFF padding, with length to fill em
+-	 * T = oid || hash
+-	 */
+-
+-	/* check magic bytes */
+-	if (em.len < 2 || *(em.ptr) != 0x00 || *(em.ptr+1) != 0x01)
++	/* generate expected signature value */
++	if (!gmp_emsa_pkcs1_signature_data(algorithm, data, this->k, &em_expected))
+ 	{
+-		goto end;
+-	}
+-	em = chunk_skip(em, 2);
+-
+-	/* find magic 0x00 */
+-	while (em.len > 0)
+-	{
+-		if (*em.ptr == 0x00)
+-		{
+-			/* found magic byte, stop */
+-			em = chunk_skip(em, 1);
+-			break;
+-		}
+-		else if (*em.ptr != 0xFF)
+-		{
+-			/* bad padding, decryption failed ?!*/
+-			goto end;
+-		}
+-		em = chunk_skip(em, 1);
+-	}
+-
+-	if (em.len == 0)
+-	{
+-		/* no digestInfo found */
+-		goto end;
+-	}
+-
+-	if (algorithm == HASH_UNKNOWN)
+-	{   /* IKEv1 signatures without digestInfo */
+-		if (em.len != data.len)
+-		{
+-			DBG1(DBG_LIB, "hash size in signature is %u bytes instead of"
+-				 " %u bytes", em.len, data.len);
+-			goto end;
+-		}
+-		success = memeq_const(em.ptr, data.ptr, data.len);
++		return FALSE;
+ 	}
+-	else
+-	{   /* IKEv2 and X.509 certificate signatures */
+-		asn1_parser_t *parser;
+-		chunk_t object;
+-		int objectID;
+-		hash_algorithm_t hash_algorithm = HASH_UNKNOWN;
+-
+-		DBG2(DBG_LIB, "signature verification:");
+-		parser = asn1_parser_create(digestInfoObjects, em);
+ 
+-		while (parser->iterate(parser, &objectID, &object))
+-		{
+-			switch (objectID)
+-			{
+-				case DIGEST_INFO:
+-				{
+-					if (em.len > object.len)
+-					{
+-						DBG1(DBG_LIB, "digestInfo field in signature is"
+-							 " followed by %u surplus bytes",
+-							 em.len - object.len);
+-						goto end_parser;
+-					}
+-					break;
+-				}
+-				case DIGEST_INFO_ALGORITHM:
+-				{
+-					int hash_oid = asn1_parse_algorithmIdentifier(object,
+-										 parser->get_level(parser)+1, NULL);
+-
+-					hash_algorithm = hasher_algorithm_from_oid(hash_oid);
+-					if (hash_algorithm == HASH_UNKNOWN || hash_algorithm != algorithm)
+-					{
+-						DBG1(DBG_LIB, "expected hash algorithm %N, but found"
+-							 " %N (OID: %#B)", hash_algorithm_names, algorithm,
+-							 hash_algorithm_names, hash_algorithm,  &object);
+-						goto end_parser;
+-					}
+-					break;
+-				}
+-				case DIGEST_INFO_DIGEST:
+-				{
+-					chunk_t hash;
+-					hasher_t *hasher;
+-
+-					hasher = lib->crypto->create_hasher(lib->crypto, hash_algorithm);
+-					if (hasher == NULL)
+-					{
+-						DBG1(DBG_LIB, "hash algorithm %N not supported",
+-							 hash_algorithm_names, hash_algorithm);
+-						goto end_parser;
+-					}
+-
+-					if (object.len != hasher->get_hash_size(hasher))
+-					{
+-						DBG1(DBG_LIB, "hash size in signature is %u bytes"
+-							 " instead of %u bytes", object.len,
+-							 hasher->get_hash_size(hasher));
+-						hasher->destroy(hasher);
+-						goto end_parser;
+-					}
+-
+-					/* build our own hash and compare */
+-					if (!hasher->allocate_hash(hasher, data, &hash))
+-					{
+-						hasher->destroy(hasher);
+-						goto end_parser;
+-					}
+-					hasher->destroy(hasher);
+-					success = memeq_const(object.ptr, hash.ptr, hash.len);
+-					free(hash.ptr);
+-					break;
+-				}
+-				default:
+-					break;
+-			}
+-		}
++	/* unpack signature */
++	em = rsavp1(this, signature);
+ 
+-end_parser:
+-		success &= parser->success(parser);
+-		parser->destroy(parser);
+-	}
++	success = chunk_equals_const(em_expected, em);
+ 
+-end:
+-	free(em_ori.ptr);
++	chunk_free(&em_expected);
++	chunk_free(&em);
+ 	return success;
+ }
+ 
+-- 
+2.7.4
+
