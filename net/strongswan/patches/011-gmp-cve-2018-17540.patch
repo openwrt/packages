@@ -1,0 +1,38 @@
+From 129ab919a8c3abfc17bea776f0774e0ccf33ca09 Mon Sep 17 00:00:00 2001
+From: Tobias Brunner <tobias@strongswan.org>
+Date: Tue, 25 Sep 2018 14:50:08 +0200
+Subject: [PATCH] gmp: Fix buffer overflow with very small RSA keys
+
+Because `keylen` is unsigned the subtraction results in an integer
+underflow if the key length is < 11 bytes.
+
+This is only a problem when verifying signatures with a public key (for
+private keys the plugin enforces a minimum modulus length) and to do so
+we usually only use trusted keys.  However, the x509 plugin actually
+calls issued_by() on a parsed certificate to check if it is self-signed,
+which is the reason this issue was found by OSS-Fuzz in the first place.
+So, unfortunately, this can be triggered by sending an invalid client
+cert to a peer.
+
+Fixes: 5955db5b124a ("gmp: Don't parse PKCS1 v1.5 RSA signatures to verify them")
+Fixes: CVE-2018-17540
+---
+ src/libstrongswan/plugins/gmp/gmp_rsa_private_key.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/libstrongswan/plugins/gmp/gmp_rsa_private_key.c b/src/libstrongswan/plugins/gmp/gmp_rsa_private_key.c
+index e9a83fdf49a1..a255a40abce2 100644
+--- a/src/libstrongswan/plugins/gmp/gmp_rsa_private_key.c
++++ b/src/libstrongswan/plugins/gmp/gmp_rsa_private_key.c
+@@ -301,7 +301,7 @@ bool gmp_emsa_pkcs1_signature_data(hash_algorithm_t hash_algorithm,
+ 		data = digestInfo;
+ 	}
+ 
+-	if (data.len > keylen - 11)
++	if (keylen < 11 || data.len > keylen - 11)
+ 	{
+ 		chunk_free(&digestInfo);
+ 		DBG1(DBG_LIB, "signature value of %zu bytes is too long for key of "
+-- 
+2.7.4
+
