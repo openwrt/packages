@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtty
-PKG_VERSION:=6.2.0
+PKG_VERSION:=6.3.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE_URL=https://codeload.github.com/zhaojh329/rtty/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=c6476ecfe8b039eb39c68bafa82af7a8fc27991d767c477ddbdd7a9669a92b02
+PKG_HASH:=8129cc3f2d83db618afb6bfc93e018adf03de156d7e15e087e9ae52ac9dcae2b
 CMAKE_INSTALL:=1
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_SOURCE_SUBDIR)
@@ -33,7 +33,7 @@ define Package/rtty/Default
   CATEGORY:=Utilities
   SUBMENU:=Terminal
   URL:=https://github.com/zhaojh329/rtty
-  DEPENDS:=+libprotobuf-c $(2)
+  DEPENDS:=$(2)
   VARIANT:=$(1)
   PROVIDES:=rtty
 endef
