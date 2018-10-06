@@ -8,20 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtirpc
-PKG_VERSION:=1.0.3
+PKG_VERSION:=1.1.4
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=@SF/libtirpc
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=86c3a78fc1bddefa96111dd233124c703b22a78884203c55c3e06b3be6a0fd5e
+PKG_HASH:=2ca529f02292e10c158562295a1ffd95d2ce8af97820e3534fe1b0e3aec7561d
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_FIXUP:=autoreconf
+PKG_REMOVE_FILES:=autogen.sh aclocal.m4
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 define Package/libtirpc
   SECTION:=libs
@@ -32,18 +34,16 @@ define Package/libtirpc
 endef
 
 CONFIGURE_ARGS += --disable-gssapi
-# Info from Buildroot Makefile
-# getrpcby{number,name} are only provided if 'GQ' is defined
-TARGET_CFLAGS += -DGQ
-#CONFIGURE_VARS += \
-#	GSSGLUE_LIBS="-lkrb5 -lk5crypto -l:libcom_err.so.3 -lkeyutils -lresolv -gssapi_krb5" \
-#	GSSGLUE_CFLAGS=-I$(STAGING_DIR)/usr/include/krb5/
+HOST_CONFIGURE_ARGS += --disable-gssapi
 
-#EXTRA_LDFLAGS := -lgssapi_krb5
+TARGET_CFLAGS += -DGQ
+HOST_CFLAGS += -DGQ
 
 define Package/libtirpc/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libtirpc.so* $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libtirpc.so* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/netconfig $(1)/etc/
 endef
 
 define Build/InstallDev
@@ -56,4 +56,5 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libtirpc.pc $(1)/usr/lib/pkgconfig/libtirpc.pc
 endef
 
+$(eval $(call HostBuild))
 $(eval $(call BuildPackage,libtirpc))

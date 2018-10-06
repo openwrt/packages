@@ -1,14 +1,14 @@
 include  $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
-PKG_VERSION:=3.9.1
-PKG_RELEASE:=3
+PKG_VERSION:=3.17.2
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/balabit/syslog-ng/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
-PKG_HASH:=5678856a550ae790618fabde9d1447f932ce7a9080d55dca8fc5df1202c70a17
+PKG_HASH:=73601f7ca13c6b534318d5b0648ec1833aa9ca0516d6c3f90085b090d548c50b
 
 PKG_INSTALL:=1
 
@@ -18,7 +18,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/syslog-ng
   SECTION:=admin
   CATEGORY:=Administration
-  DEPENDS:=+libpcre +glib2 +libeventlog +libopenssl +libuuid +libcurl
+  DEPENDS:=+libpcre +glib2 +libopenssl +libuuid +libcurl
   TITLE:=A powerful syslog daemon
   URL:=http://www.balabit.com/network-security/syslog-ng/opensource-logging-system/
 endef

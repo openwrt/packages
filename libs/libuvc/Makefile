@@ -8,19 +8,18 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libuvc
 
-PKG_VERSION=0.0.5-20140812-$(PKG_SOURCE_VERSION)
+PKG_VERSION:=0.0.6
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/ktossell/libuvc.git
-PKG_SOURCE_VERSION:=2c6403405872aa865999b95ba15944295adf6c38
-
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=93f33620e00276989211d9c129a6d8b5e0f45df8d23235ff0c53c823c52a5ef5
-PKG_LICENSE:=BSD
+PKG_SOURCE_URL:=https://codeload.github.com/ktossell/libuvc/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=42175a53c1c704365fdc782b44233925e40c9344fbb7f942181c1090f06e2873
 
+PKG_LICENSE:=BSD
+PKG_LICENSE_FILES:=LICENSE.txt
+
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 CMAKE_INSTALL:=1
 
@@ -32,11 +31,11 @@ define Package/libuvc
 	CATEGORY:=Libraries
 	TITLE:=libuvc
 	DEPENDS:=+libusb-1.0 +libjpeg
-       URL:=https://int80k.com/libuvc
+	URL:=https://int80k.com/libuvc
 endef
 
 define Package/libuvc/description
- This package contains libuvc is a cross-platform library for USB video devices, 
+ This package contains libuvc is a cross-platform library for USB video devices,
  built atop libusb.
 endef
 

@@ -1,0 +1,13 @@
+Author: Marcus Meissner <meissner@suse.de>
+Description: Added 2 cifs helpers to request-key.conf (for CIFS DFS support)
+
+diff -Naurp keyutils.orig/request-key.conf keyutils/request-key.conf
+--- keyutils.orig/request-key.conf	2011-08-22 11:46:30.332025250 +0200
++++ keyutils/request-key.conf	2011-08-22 11:49:40.096967441 +0200
+@@ -38,4 +38,6 @@ create  user    debug:*         expired
+ create  user    debug:*         revoked         /bin/keyctl reject %k 30 %c %S
+ create	user	debug:loop:*	*		|/bin/cat
+ create	user	debug:*		*		/usr/share/keyutils/request-key-debug.sh %k %d %c %S
++create	cifs.spnego	*	*		/usr/sbin/cifs.upcall -c %k
++create	dns_resolver	*	*		/usr/sbin/cifs.upcall %k
+ negate	*	*		*		/bin/keyctl negate %k 30 %S

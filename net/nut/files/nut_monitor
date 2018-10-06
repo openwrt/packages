@@ -1,14 +1,13 @@
 #config upsmon 'upsmon'
-#	option runas run-as-user
+#	option runas nutmon
 #	option minsupplies 1
-#	option shutdowncmd /sbin/halt
+#	option shutdowncmd '/usr/sbin/nutshutdown'
 #	option notifycmd /path/to/cmd
 #	list defaultnotify SYSLOG
 #	option pollfreq 5
 #	option pollfreqalert 5
 # 	option hostsync 15
 #	option deadtime 15
-#	option powerdownflags /var/run/killpower
 #	option onlinemsg "online message"
 #	option onbattmsg "on battery message"
 #	option lowbattmsg "low battery message"
@@ -51,4 +50,3 @@
 #	option powervalue 1
 #	option username upsuser
 #	option password upspassword
-

@@ -17,6 +17,7 @@ PKG_HASH:=db8d87ea720ea9d5edc5388fc7a0497bb11ba9fe972245e0f7f4c7e8b1e1e84d
 
 PKG_LICENSE:=FTL GPL-2.0 MIT ZLIB
 PKG_LICENSE_FILES:=docs/LICENSE.TXT docs/FTL.TXT docs/GPLv2.TXT src/bdf/README src/pcf/README src/gzip/zlib.h
+PKG_CPE_ID:=cpe:/a:freetype:freetype2
 PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
 
 PKG_FIXUP:=autoreconf

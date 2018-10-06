@@ -8,13 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnurl
-PKG_VERSION:=7.57.0
+PKG_VERSION:=7.61.1
 PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://gnunet.org/sites/default/files
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=git://git.taler.net/gnurl
+PKG_SOURCE_VERSION:=64adbb00957f178bb7b9b1dbf0d0de1f5c45949d
 
-PKG_HASH:=2ccd2a641a9815df924b6a79ee47d12a27ee43bd05a3c6ba958108564580d3b7
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_MIRROR_HASH:=6f6c993a13fe30989cb918c987604ca96c178f4bb682c298ab345257e4aab284
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -57,6 +60,7 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--without-axtls \
+	--without-brotli \
 	--without-libssh2 \
 	--without-libmetalink \
 	--without-winidn \
@@ -64,13 +68,16 @@ CONFIGURE_ARGS += \
 	--without-nghttp2 \
 	--without-nss \
 	--without-cyassl \
+	--without-libpsl \
 	--without-polarssl \
 	--without-ssl \
 	--without-winssl \
 	--without-darwinssl \
 	--disable-ares \
 	--disable-sspi \
+	--disable-crypto-auth \
 	--disable-ntlm-wb \
+	--disable-tls-srp \
 	--disable-ldap \
 	--disable-ldaps \
 	--disable-rtsp \

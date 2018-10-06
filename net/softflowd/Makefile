@@ -26,7 +26,7 @@ define Package/softflowd
   CATEGORY:=Network
   DEPENDS:=+libpcap
   TITLE:=softflowd
-  URL:=http://code.google.com/p/softflowd/
+  URL:=https://code.google.com/archive/p/softflowd/
 endef
 
 define Package/softflowd/description

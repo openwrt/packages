@@ -8,15 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtorrent
-PKG_VERSION:=0.13.6-git-1
-PKG_RELEASE=$(PKG_SOURCE_VERSION).1
+PKG_VERSION:=0.13.7
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/rakshasa/libtorrent.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=14e793b75dac95c51ad64ff9cd2dc6772b68c625
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=0971c21d0e6b7028bc319e97c82bdb213c17dfc503fc0f89b809e5ed7ce98142
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/rakshasa/libtorrent/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=86b4b1753385aaddf9e59ad94f1292eee5102139eb57520e84d1af2f04693708
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -28,9 +24,9 @@ define Package/libtorrent
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Rakshasa's BitTorrent library
-  URL:=http://libtorrent.rakshasa.no/
+  URL:=https://rakshasa.github.io/rtorrent/
   DEPENDS:=+libopenssl +libsigcxx +zlib
-  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
+  MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 endef
 
 define Package/libtorrent/description

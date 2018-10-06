@@ -7,10 +7,10 @@
 +#include <limits.h>
  #include <sys/types.h>
  #include <sys/stat.h>
- 
+ #include <ctype.h>
 --- a/common.c
 +++ b/common.c
-@@ -30,6 +30,7 @@
+@@ -32,6 +32,7 @@
  #include <dirent.h>
  #include <ctype.h>
  #include <libgen.h>

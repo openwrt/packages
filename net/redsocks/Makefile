@@ -8,15 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=redsocks
-PKG_VERSION:=0.4-20150907
+PKG_VERSION:=0.5
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=30ced050c58cbdd39732921a794b053127e9c45ebdcdd4a6023bdc5e434607da
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/darkk/redsocks.git
-PKG_SOURCE_VERSION:=2118c616b4970a0436eceaa57a6e3451ec98ad2b
+PKG_SOURCE:=$(PKG_NAME)-release-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/darkk/redsocks/tar.gz/release-$(PKG_VERSION)?
+PKG_HASH:=bbeb531d7f1986d7102f1bd6733dacce41d3f3ba7d604f1aab61c63e0ba2ee62
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-release-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Johannes Morgenroth <jm@m-network.de>
 PKG_LICENSE:=Apache-2.0
@@ -26,7 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/redsocks
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libevent2
+  DEPENDS:=+libevent2-core
   TITLE:=Redirect any TCP connection to a SOCKS or HTTPS proxy server
 endef
 
@@ -40,10 +38,10 @@ define Package/redsocks/description
  uses the system firewall's redirection facility to intercept TCP connections,
  thus the redirection is system-wide, with fine-grained control, and does
  not depend on LD_PRELOAD libraries.
- 
+
  Redsocks supports tunneling TCP connections and UDP packets. It has
  authentication support for both, SOCKS and HTTP proxies.
- 
+
  Also included is a small DNS server returning answers with the "truncated" flag
  set for any UDP query, forcing the resolver to use TCP.
 endef

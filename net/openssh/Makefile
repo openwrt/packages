@@ -8,20 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openssh
-PKG_VERSION:=7.7p1
+PKG_VERSION:=7.8p1
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
 		https://ftp.spline.de/pub/OpenBSD/OpenSSH/portable/ \
 		https://anorien.csc.warwick.ac.uk/pub/OpenBSD/OpenSSH/portable/
-PKG_HASH:=d73be7e684e99efcd024be15a30bffcbe41b012b2f7b3c9084aed621775e6b8f
+PKG_HASH:=1a484bb15152c183bb2514e112aa30dd34138c3cfb032eee5490a66c507144ca
 
 PKG_LICENSE:=BSD ISC
 PKG_LICENSE_FILES:=LICENCE
 
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_REMOVE_FILES:=
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 

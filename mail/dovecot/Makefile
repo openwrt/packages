@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dovecot
-PKG_VERSION:=2.3.1
+PKG_VERSION:=2.3.2.1
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.dovecot.org/releases/2.3
-PKG_HASH:=0883821b97fd02a084a84b9469a681f7e6edc56541d854b5419d98891c51fb93
+PKG_HASH:=4a65118508dc7a562e5f90dd7c3f56219fff22367c496f17d77cd0c7e2724e34
 PKG_LICENSE:=LGPL-2.1 MIT BSD-3-Clause Unique
 PKG_LICENSE_FILES:=COPYING COPYING.LGPL COPYING.MIT
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
@@ -31,11 +31,14 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+# iconv is needed when compiling with MySQL support. iconv will also be used by
+# dovecot itself.
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/dovecot
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+DOVECOT_GSSAPI:krb5-libs +DOVECOT_LDAP:libopenldap +DOVECOT_MYSQL:libmysqlclient +DOVECOT_PGSQL:libpq +DOVECOT_SQLITE:libsqlite3 +libopenssl +librt +zlib +libbz2 +libcap +DOVECOT_ICU:icu
+  DEPENDS:=+DOVECOT_GSSAPI:krb5-libs +DOVECOT_LDAP:libopenldap +DOVECOT_MYSQL:libmysqlclient +DOVECOT_PGSQL:libpq +DOVECOT_SQLITE:libsqlite3 +libopenssl +librt +zlib +libbz2 +libcap +DOVECOT_ICU:icu $(ICONV_DEPENDS)
   TITLE:=An IMAP and POP3 daemon
   URL:=https://www.dovecot.org/
   USERID:=dovecot=59:dovecot=59
@@ -95,8 +98,8 @@ define Package/dovecot-utils
 endef
 
 CONFIGURE_ARGS += \
+	--libexecdir=/usr/libexec \
 	--without-pam \
-	--with-moduledir=/usr/lib/dovecot/modules \
 	--with-notify=dnotify \
 	--without-lzma \
 	--without-lz4 \
@@ -134,10 +137,12 @@ define Package/dovecot/install
 			$(1)/etc/dovecot \
 			$(1)/usr/share/doc/dovecot \
 			$(1)/usr/lib/dovecot \
+			$(1)/usr/libexec/dovecot \
 			$(1)/usr/bin \
 			$(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/etc/dovecot/* $(1)/etc/dovecot/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/dovecot/* $(1)/usr/lib/dovecot/
+	$(CP) $(PKG_INSTALL_DIR)/usr/libexec/dovecot/* $(1)/usr/libexec/dovecot/
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/doc/dovecot/example-config $(1)/usr/share/doc/dovecot/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/doveconf $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin/

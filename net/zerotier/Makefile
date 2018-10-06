@@ -6,14 +6,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zerotier
-PKG_VERSION:=1.2.10
-PKG_RELEASE:=1
+PKG_VERSION:=1.2.12
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE_URL:=https://codeload.github.com/zerotier/ZeroTierOne/tar.gz/$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=1c79ec57e67764079a77704b336e642ae3cf221dc8088b0cf9e9c81e0a9c0c57
+PKG_HASH:=212799bfaeb5e7dff20f2cd83f15742c8e13b8e9535606cfb85abcfb5fb6fed4
 PKG_BUILD_DIR:=$(BUILD_DIR)/ZeroTierOne-$(PKG_VERSION)
 
 
@@ -66,10 +66,7 @@ ifeq ($(CONFIG_ZEROTIER_ENABLE_SELFTEST),y)
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/zerotier-selftest $(1)/usr/bin/
 endif
 
-	$(INSTALL_DIR) $(1)/etc/init.d/
-	$(INSTALL_BIN) files/zerotier.init $(1)/etc/init.d/zerotier
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) files/zerotier.config $(1)/etc/config/zerotier
+	$(CP) ./files/* $(1)/
 endef
 
 $(eval $(call BuildPackage,zerotier))

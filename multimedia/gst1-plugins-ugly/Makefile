@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-ugly
-PKG_VERSION:=1.12.4
+PKG_VERSION:=1.14.2
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -20,12 +20,10 @@ PKG_LICENSE_FILES:=COPYING
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-ugly-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-ugly-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-ugly/
-PKG_HASH:=1c165b8d888ed350acd8e6ac9f6fe06508e6fcc0a3afc6ccc9fbeb30df9be522
+PKG_HASH:=55e097d9d93921fdcf7abb0ff92d23b21dd9098e632f1ba433603b3bd1cf3d69
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_gst1-mod-asf \
-	CONFIG_PACKAGE_gst1-mod-lame \
-	CONFIG_PACKAGE_gst1-mod-mpg123 \
 	CONFIG_PACKAGE_gst1-mod-mpeg2dec \
 
 PKG_FIXUP:=autoreconf
@@ -108,8 +106,6 @@ CONFIGURE_ARGS += \
 	--disable-dvdread \
 	--disable-dvdsub \
 	--disable-iec958 \
-	$(call GST_COND_SELECT,lame) \
-	$(call GST_COND_SELECT,mpg123) \
 	$(call GST_COND_SELECT,mpeg2dec) \
 	--disable-mpegaudioparse \
 	--disable-mpegstream \
@@ -168,8 +164,6 @@ define GstBuildPlugin
 endef
 
 $(eval $(call GstBuildPlugin,asf,ASF demuxer,audio video riff rtp rtsp sdp tag,,))
-$(eval $(call GstBuildPlugin,lame,MP3 encoder (using LAME),audio,,+lame-lib))
-$(eval $(call GstBuildPlugin,mpg123,MP3 decoder (using mpg123),audio tag,,+libid3tag +mpg123))
 $(eval $(call GstBuildPlugin,mpeg2dec,MPEG decoder,video,,+libmpeg2))
 
 $(eval $(call BuildPackage,gstreamer1-plugins-ugly))

@@ -1,7 +1,7 @@
-From a6df8dd455c8be7c0c2ba79f35cf5390e892b39e Mon Sep 17 00:00:00 2001
+From 9f4775d9a2541e8128ea99f3b02925cc1ee05374 Mon Sep 17 00:00:00 2001
 From: Helmut Schaa <helmut.schaa@googlemail.com>
 Date: Wed, 8 Jan 2014 13:48:49 +0100
-Subject: [PATCH 101/104] netdev-linux: Let interface flag survive internal
+Subject: [PATCH 101/107] netdev-linux: Let interface flag survive internal
  port setup
 
 Due to a race condition when bringing up an internal port on Linux
@@ -17,9 +17,11 @@ Signed-off-by: Helmut Schaa <helmut.schaa@googlemail.com>
  lib/netdev-linux.c | 8 +++++++-
  1 file changed, 7 insertions(+), 1 deletion(-)
 
+diff --git a/lib/netdev-linux.c b/lib/netdev-linux.c
+index 5ada9a21f..bb8275cfa 100644
 --- a/lib/netdev-linux.c
 +++ b/lib/netdev-linux.c
-@@ -2813,7 +2813,13 @@ update_flags(struct netdev_linux *netdev
+@@ -3118,7 +3118,13 @@ update_flags(struct netdev_linux *netdev, enum netdev_flags off,
      unsigned int old_flags, new_flags;
      int error = 0;
  

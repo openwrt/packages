@@ -13,14 +13,14 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * support all kinds of uplinks, incl. hidden and enterprise uplinks
 * continuously checks the existing uplink connection (quality), e.g. for conditional uplink (dis-) connections
 * captive portal detection with internet online check and a 'heartbeat' function to keep the uplink connection up & running
-* support of devices with multiple radios
+* support devices with multiple radios in any order
 * procd init and hotplug support
 * runtime information available via LuCI & via 'status' init command
 * status & debug logging to syslog
 * optional: the LuCI frontend shows the WiFi QR codes from all configured Access Points. It allows you to connect your Android or iOS devices to your router’s WiFi using the QR code
 
 ## Prerequisites
-* [OpenWrt](https://openwrt.org), tested with the stable release series (17.01.x) and with the latest OpenWrt snapshot
+* [OpenWrt](https://openwrt.org), tested with the stable release series (18.06.x) and with the latest OpenWrt snapshot
 * iwinfo for wlan scanning, uclient-fetch for captive portal detection
 * optional: qrencode 4.x for QR code support
 
@@ -46,7 +46,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
     * trm\_maxwait => how long (in seconds) should travelmate wait for a successful wlan interface reload action (int/default: '30', valid range: 20-40)
     * trm\_maxretry => how many times should travelmate try to connect to an uplink (int/default: '3', valid range: 1-10)
     * trm\_timeout => overall retry timeout in seconds (int/default: '60', valid range: 30-300)
-    * trm\_radio => limit travelmate to a dedicated radio, e.g. 'radio0' (default: not set, use all radios)
+    * trm\_radio => limit travelmate to a single radio (e.g. 'radio1') or change the overall scanning order (e.g. 'radio1 radio2 radio0') (default: not set, use all radios 0-n)
     * trm\_iface => main uplink / procd trigger network interface (default: trm_wwan)
     * trm\_triggerdelay => additional trigger delay in seconds before travelmate processing begins (int/default: '2')
 
@@ -56,13 +56,13 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 <pre><code>
 ~# /etc/init.d/travelmate status
 ::: travelmate runtime information
-  + travelmate_status  : connected (net ok/37)
-  + travelmate_version : 1.2.0
-  + station_id         : blackhole/01:02:03:04:05:06
+  + travelmate_status  : connected (net ok/78)
+  + travelmate_version : 1.2.3
+  + station_id         : radio1/blackhole/01:02:03:04:05:06
   + station_interface  : trm_wwan
-  + station_radio      : radio0
-  + last_rundate       : 04.04.2018 13:00:24
-  + system             : GL.iNet GL-AR750, OpenWrt SNAPSHOT r6588-16efb0c1c6
+  + faulty_stations    : 
+  + last_rundate       : 07.09.2018 17:22:37
+  + system             : TP-LINK RE450, OpenWrt SNAPSHOT r8018-42f158314e
 </code></pre>
 
 ## Manual Setup
@@ -123,10 +123,12 @@ edit /etc/config/travelmate and set 'trm_enabled' to '1'
 </code></pre>
 
 ## FAQ
-**Q:** What happen with misconfigured uplinks, e.g. due to outdated wlan passwords?  
-**A:** Travelmate tries n times (default 3) to connect, then the respective uplink SSID will be marked / renamed to '_SSID_\_err' and travelmate no longer attends this uplink. In this case use the builtin wireless station manager to update your wireless credentials.  
+**Q:** What happen with misconfigured, faulty uplinks, e.g. due to outdated wlan passwords?  
+**A:** Travelmate tries n times (default 3) to connect, then the respective uplink will be marked as "faulty" in the JSON runtime file and hereafter ignored. To reset the JSON runtime file, simply restart travelmate.  
 **Q:** How to connect to hidden uplinks?  
 **A:** See 'example\_hidden' STA configuration above, option 'SSID' and 'BSSID' must be specified for successful connections.  
+**Q:** Any recommendations regarding suitable DNS settings to easily connect to captive portals?  
+**A:** Use a simple DNS forwarder like dnsmasq and disable the option 'rebind_protection'.  
 
 ## Support
 Please join the travelmate discussion in this [forum thread](https://forum.lede-project.org/t/travelmate-support-thread/5155) or contact me by [mail](mailto:dev@brenken.org)  

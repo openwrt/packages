@@ -8,15 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acme
-PKG_VERSION:=2.7.8
+PKG_VERSION:=2.7.9
 PKG_RELEASE:=4
 PKG_LICENSE:=GPLv3
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/Neilpang/acme.sh
-PKG_SOURCE_VERSION:=521d8c4b1f374c52ab1452d399a4d4910465e9fe
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE).tar.xz
-PKG_MIRROR_HASH:=03e24eb41513b4d28dc42f5ae5c91be0030094149cbdbf9cdf9b6f87db9e36c0
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/Neilpang/acme.sh/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=25f8eef1a53584e3ebc653e1ae7763362ca97c40bb476ab7fee01aa50fa3a101
+PKG_BUILD_DIR:=$(BUILD_DIR)/acme.sh-$(PKG_VERSION)
 PKG_MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
 
 LUCI_DIR:=/usr/lib/lua/luci
@@ -26,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/acme
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+curl +ca-bundle +openssl-util +netcat
+  DEPENDS:=+curl +ca-bundle +openssl-util +socat
   TITLE:=ACME (Letsencrypt) client
 endef
 
@@ -76,7 +75,7 @@ define Package/luci-app-acme
   SECTION:=luci
   CATEGORY:=LuCI
   TITLE:=ACME package - LuCI interface
-  DEPENDS:= lua luci-base +acme luci-app-uhttpd
+  DEPENDS:= lua luci-base +acme
   SUBMENU:=3. Applications
 endef
 

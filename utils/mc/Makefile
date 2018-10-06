@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
 PKG_VERSION:=4.8.21
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 PKG_LICENSE:=GPL-3.0+
 
@@ -16,6 +16,7 @@ PKG_SOURCE_URL:=http://ftp.midnight-commander.org/
 PKG_HASH:=8f37e546ac7c31c9c203a03b1c1d6cb2d2f623a300b86badfd367e5559fe148c
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf gettext-version
+PKG_BUILD_DEPENDS:=MC_VFS:libtirpc
 
 PKG_CONFIG_DEPENDS := \
 	CONFIG_PACKAGE_MC \
@@ -33,7 +34,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/mc
 	SECTION:=utils
 	CATEGORY:=Utilities
-	DEPENDS:=+glib2 +libncurses +libmount +MC_VFS:libssh2 $(LIBRPC_DEPENDS) $(ICONV_DEPENDS)
+	DEPENDS:=+glib2 +libncurses +libmount +MC_VFS:libssh2 $(ICONV_DEPENDS)
 	TITLE:=Midnight Commander - a powerful visual file manager
 	URL:=https://www.midnight-commander.org/
 	MENU:=1
@@ -57,7 +58,6 @@ CONFIGURE_ARGS += \
 	--disable-doxygen-doc \
 	--with-homedir=/etc/mc \
 	--with-screen=ncurses \
-	--without-gpm-mouse \
 	--without-x \
 
 CONFIGURE_VARS += \
@@ -89,6 +89,8 @@ endif
 
 ifeq ($(CONFIG_MC_VFS),)
 CONFIGURE_ARGS += --disable-vfs
+else
+TARGET_CPPFLAGS += -I$(STAGING_DIR)/usr/include/tirpc
 endif
 
 define Package/mc/install

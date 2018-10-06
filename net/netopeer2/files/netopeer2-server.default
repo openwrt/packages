@@ -34,6 +34,16 @@ if [ -x /bin/sysrepoctl ]; then
 		fi
 	fi
 
+	match=$(sysrepoctl -l | grep "ietf-netconf-monitoring ")
+	if [ ! "$match" ]; then
+		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-netconf-monitoring@2010-10-04.yang -o root:root -p 600
+	fi
+
+	match=$(sysrepoctl -l | grep "ietf-netconf-with-defaults ")
+	if [ ! "$match" ]; then
+		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-netconf-with-defaults@2011-06-01.yang -o root:root -p 600
+	fi
+
 	match=$(sysrepoctl -l | grep "ietf-system ")
 	if [ ! "$match" ]; then
 		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-system@2014-08-06.yang -o root:root -p 600

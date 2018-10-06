@@ -1,8 +1,8 @@
-diff -u --recursive gst-plugins-base-1.12.4-vanilla/configure.ac gst-plugins-base-1.12.4/configure.ac
---- gst-plugins-base-1.12.4-vanilla/configure.ac	2018-02-11 09:54:25.065243893 -0500
-+++ gst-plugins-base-1.12.4/configure.ac	2018-02-11 09:55:12.112340832 -0500
-@@ -942,24 +942,6 @@
- pkgconfig/gstreamer-video-uninstalled.pc
+diff -u --recursive gst-plugins-base-1.14.1-vanilla/configure.ac gst-plugins-base-1.14.1/configure.ac
+--- gst-plugins-base-1.14.1-vanilla/configure.ac	2018-07-07 18:10:49.601305039 -0400
++++ gst-plugins-base-1.14.1/configure.ac	2018-07-07 18:11:03.465363471 -0400
+@@ -992,40 +992,6 @@
+ pkgconfig/gstreamer-gl-uninstalled.pc
  pkgconfig/gstreamer-plugins-base.pc
  pkgconfig/gstreamer-plugins-base-uninstalled.pc
 -tests/Makefile
@@ -15,6 +15,22 @@ diff -u --recursive gst-plugins-base-1.12.4-vanilla/configure.ac gst-plugins-bas
 -tests/examples/encoding/Makefile
 -tests/examples/fft/Makefile
 -tests/examples/gio/Makefile
+-tests/examples/gl/Makefile
+-tests/examples/gl/generic/Makefile
+-tests/examples/gl/generic/cube/Makefile
+-tests/examples/gl/generic/doublecube/Makefile
+-tests/examples/gl/generic/recordgraphic/Makefile
+-tests/examples/gl/generic/cubeyuv/Makefile
+-tests/examples/gl/qt/Makefile
+-tests/examples/gl/gtk/Makefile
+-tests/examples/gl/gtk/fxtest/Makefile
+-tests/examples/gl/gtk/3dvideo/Makefile
+-tests/examples/gl/gtk/switchvideooverlay/Makefile
+-tests/examples/gl/gtk/filternovideooverlay/Makefile
+-tests/examples/gl/gtk/filtervideooverlay/Makefile
+-tests/examples/gl/cocoa/Makefile
+-tests/examples/gl/sdl/Makefile
+-tests/examples/gl/clutter/Makefile
 -tests/examples/overlay/Makefile
 -tests/examples/seek/Makefile
 -tests/examples/snapshot/Makefile
@@ -26,9 +42,9 @@ diff -u --recursive gst-plugins-base-1.12.4-vanilla/configure.ac gst-plugins-bas
  docs/Makefile
  docs/libs/Makefile
  docs/plugins/Makefile
-diff -u --recursive gst-plugins-base-1.12.4-vanilla/Makefile.am gst-plugins-base-1.12.4/Makefile.am
---- gst-plugins-base-1.12.4-vanilla/Makefile.am	2018-02-11 09:54:25.091243946 -0500
-+++ gst-plugins-base-1.12.4/Makefile.am	2018-02-11 09:55:19.994357073 -0500
+diff -u --recursive gst-plugins-base-1.14.1-vanilla/Makefile.am gst-plugins-base-1.14.1/Makefile.am
+--- gst-plugins-base-1.14.1-vanilla/Makefile.am	2018-07-07 18:10:49.601305039 -0400
++++ gst-plugins-base-1.14.1/Makefile.am	2018-07-07 18:11:09.186387585 -0400
 @@ -11,7 +11,6 @@
  	gst-libs 		\
  	gst sys $(SUBDIRS_EXT) 	\

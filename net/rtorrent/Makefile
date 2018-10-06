@@ -8,15 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtorrent
-PKG_VERSION:=0.9.6-git-1
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_VERSION:=0.9.7
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/rakshasa/rtorrent.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=62cb5a4605c0664bc522e0e0da9c72f09cf643a9
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=3c6834b12ebfa8d62618f6e9dbc06dfa593861fa0b435d2fd1bddb0e886fc77b
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/rakshasa/rtorrent/releases/download/v$(PKG_VERSION)
+PKG_HASH:=5d9842fe48c9582fbea2c7bf9f51412c1ccbba07d059b257039ad53b863fe8bb
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -36,7 +33,7 @@ define Package/rtorrent/Default
   TITLE:=BitTorrent client for ncurses
   URL:=http://libtorrent.rakshasa.no/
   DEPENDS:=+libcurl +libtorrent +libncursesw +libsigcxx +libpthread
-  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
+  MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 endef
 
 define Package/rtorrent/Default/description

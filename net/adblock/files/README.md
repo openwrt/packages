@@ -61,6 +61,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => infrequent updates, approx. 15.000 entries
     * [winspy](https://github.com/crazy-max/WindowsSpyBlocker)
     * => infrequent updates, approx. 120 entries
+    * [youtube](https://api.hackertarget.com/hostsearch/?q=googlevideo.com)
+    * => dynamic request API to filter "random" youtube ad domains (experimental!), approx. 150 entries
     * [yoyo](http://pgl.yoyo.org/adservers)
     * => weekly updates, approx. 2.500 entries (enabled by default)
     * [zeus tracker](https://zeustracker.abuse.ch)
@@ -96,7 +98,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * optional: add new adblock sources on your own, see example below
 
 ## Prerequisites
-* [OpenWrt](https://openwrt.org), tested with the stable release series (17.01.x) and with the latest OpenWrt snapshot
+* [OpenWrt](https://openwrt.org), tested with the stable release series (18.06) and with the latest snapshot
 * a usual setup with an enabled dns backend at minimum - dump AP modes without a working dns backend are _not_ supported
 * a download utility:
     * to support all blocklist sources a full version (with ssl support) of 'wget', 'uclient-fetch' with one of the 'libustream-*' ssl libraries, 'aria2c' or 'curl' is required
@@ -109,7 +111,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * control the adblock service manually with _/etc/init.d/adblock_ start/stop/restart/reload/suspend/resume/status or use the LuCI frontend
 
 ## LuCI adblock companion package
-* for easy management of the various blocklist sources and all other adblock options you should use the provided LuCI frontend
+* for easy management of the various blocklist sources and adblock runtime options you should use the provided LuCI frontend
 * install 'luci-app-adblock' (_opkg install luci-app-adblock_)
 * the application is located in LuCI under 'Services' menu
 
@@ -143,7 +145,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_forcedns => force dns requests to local resolver (bool/default: '0', disabled)
     * adb\_forcesrt => force overall sort on low memory devices with less than 64 MB RAM (bool/default: '0', disabled)
     * adb\_backup_mode => do not automatically update blocklists during startup, use backups instead (bool/default: '0', disabled)
-    * adb\maxqueue => size of the download queue to handle downloads & list processing in parallel (int/default: '4')
+    * adb\_maxqueue => size of the download queue to handle downloads & list processing in parallel (int/default: '4')
     * adb\_jail => builds an additional 'Jail' list (/tmp/adb_list.jail) to block access to all domains except those listed in the whitelist file (bool/default: '0', disabled)
     * adb\_dnsflush => flush DNS cache after adblock processing, i.e. enable the old restart behavior (bool/default: '0', disabled)
     * adb\_notify => send notification emails in case of a processing error or if the overall domain count is &le; 0 (bool/default: '0', disabled)
@@ -216,12 +218,12 @@ Finally make this file executable via 'chmod' and test it directly. If no more e
 /etc/init.d/adblock status
 ::: adblock runtime information
   + adblock_status  : enabled
-  + adblock_version : 3.5.0
-  + overall_domains : 102324 (normal mode)
-  + fetch_utility   : /usr/bin/wget (built-in)
-  + dns_backend     : kresd (/etc/kresd)
-  + last_rundate    : 30.01.2018 21:24:11
-  + system_release  : Turris Omnia, OpenWrt omnia 15.05/3.9.4
+  + adblock_version : 3.5.5
+  + overall_domains : 97199 (backup mode)
+  + fetch_utility   : /bin/uclient-fetch (libustream-ssl)
+  + dns_backend     : unbound (/var/lib/unbound)
+  + last_rundate    : 01.09.2018 07:09:16
+  + system_release  : PC Engines APU, OpenWrt SNAPSHOT r7986-dc9388ac55
 </code></pre>
   
 **cronjob for a regular block list update (/etc/crontabs/root):**

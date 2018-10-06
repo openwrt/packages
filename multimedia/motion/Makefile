@@ -8,22 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=motion
-PKG_VERSION=3.4.0-20141018-$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=3
+PKG_VERSION:=4.1.1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=COPYING
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/Mr-Dave/motion.git
-PKG_SOURCE_VERSION:=9479d910f2149b5558788bb86f97f26522794212
+PKG_SOURCE:=$(PKG_NAME)-release-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/Motion-Project/motion/tar.gz/release-$(PKG_VERSION)?
+PKG_HASH:=2074b935bdfe28f84c2c3233274b06908336778f303bb13530d4299c3f8aa4e2
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-release-$(PKG_VERSION)
 
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.gz
-PKG_MIRROR_HASH:=02602c775ec3829dac59aed16ea6b0d78f77a435b9c360db1a05cb27227da97e
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 PKG_BUILD_PARALLEL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -32,7 +30,7 @@ define Package/motion
   CATEGORY:=Multimedia
   DEPENDS:=+libjpeg +libpthread
   TITLE:=webcam motion sensing and logging
-  URL:=http://www.lavrsen.dk/twiki/bin/view/Motion/WebHome
+  URL:=https://motion-project.github.io/
 endef
 
 define Package/motion/conffiles

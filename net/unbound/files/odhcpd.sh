@@ -30,12 +30,12 @@
 
 odhcpd_zonedata() {
   local longconf dateconf
-  local dns_ls_add=$UNBOUND_VARDIR/dhcp_dns.add
-  local dns_ls_del=$UNBOUND_VARDIR/dhcp_dns.del
-  local dhcp_ls_new=$UNBOUND_VARDIR/dhcp_lease.new
-  local dhcp_ls_old=$UNBOUND_VARDIR/dhcp_lease.old
-  local dhcp_ls_add=$UNBOUND_VARDIR/dhcp_lease.add
-  local dhcp_ls_del=$UNBOUND_VARDIR/dhcp_lease.del
+  local dns_ls_add=$UB_VARDIR/dhcp_dns.add
+  local dns_ls_del=$UB_VARDIR/dhcp_dns.del
+  local dhcp_ls_new=$UB_VARDIR/dhcp_lease.new
+  local dhcp_ls_old=$UB_VARDIR/dhcp_lease.old
+  local dhcp_ls_add=$UB_VARDIR/dhcp_lease.add
+  local dhcp_ls_del=$UB_VARDIR/dhcp_lease.del
 
   local dhcp_link=$( uci_get unbound.@unbound[0].dhcp_link )
   local dhcp4_slaac6=$( uci_get unbound.@unbound[0].dhcp4_slaac6 )
@@ -43,18 +43,17 @@ odhcpd_zonedata() {
   local dhcp_origin=$( uci_get dhcp.@odhcpd[0].leasefile )
 
 
-  if [ "$dhcp_link" = "odhcpd" \
-      -a -f "$dhcp_origin" \
-      -a -n "$dhcp_domain" ] ; then
+  if [ -f "$UB_TOTAL_CONF" -a -f "$dhcp_origin" \
+       -a "$dhcp_link" = "odhcpd" -a -n "$dhcp_domain" ] ; then
     # Capture the lease file which could be changing often
     sort $dhcp_origin > $dhcp_ls_new
 
 
-    if [ ! -f $UNBOUND_DHCP_CONF -o ! -f $dhcp_ls_old ] ; then
+    if [ ! -f $UB_DHCP_CONF -o ! -f $dhcp_ls_old ] ; then
       longconf=2
 
     else
-      dateconf=$(( $( date +%s ) - $( date -r $UNBOUND_DHCP_CONF +%s ) ))
+      dateconf=$(( $( date +%s ) - $( date -r $UB_DHCP_CONF +%s ) ))
 
 
       if [ $dateconf > 150 ] ; then
@@ -68,7 +67,7 @@ odhcpd_zonedata() {
     if [ $longconf -gt 0 ] ; then
       # Go through the messy business of coding up A, AAAA, and PTR records
       # This static conf will be available if Unbound restarts asynchronously
-      awk -v hostfile=$UNBOUND_DHCP_CONF -v domain=$dhcp_domain \
+      awk -v hostfile=$UB_DHCP_CONF -v domain=$dhcp_domain \
           -v bslaac=$dhcp4_slaac6 -v bisolt=0 -v bconf=1 \
           -f /usr/lib/unbound/odhcpd.awk $dhcp_ls_new
     fi
@@ -95,12 +94,12 @@ odhcpd_zonedata() {
 
 
     if [ -f "$dns_ls_del" ] ; then
-      cat $dns_ls_del | $UNBOUND_CONTROL_CFG local_datas_remove
+      cat $dns_ls_del | $UB_CONTROL_CFG local_datas_remove
     fi
 
 
     if [ -f "$dns_ls_add" ] ; then
-      cat $dns_ls_add | $UNBOUND_CONTROL_CFG local_datas
+      cat $dns_ls_add | $UB_CONTROL_CFG local_datas
     fi
 
 

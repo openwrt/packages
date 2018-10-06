@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-good
-PKG_VERSION:=1.12.4
+PKG_VERSION:=1.14.2
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -20,7 +20,11 @@ PKG_LICENSE_FILES:=COPYING
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-good-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-good-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-good/
-PKG_HASH:=649f49bec60892d47ee6731b92266974c723554da1c6649f21296097715eb957
+PKG_HASH:=c0575e2811860bfff59b865b8d125153859a01f0615fa41e279b64d88d25caad
+
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_PACKAGE_gst1-mod-lame \
+	CONFIG_PACKAGE_gst1-mod-mpg123 \
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -85,9 +89,14 @@ define Package/gstreamer1-plugins-good/config
 
 endef
 
+GST_COND_SELECT = $(patsubst %,$(if $(CONFIG_PACKAGE_gst1-mod-$(1)),--enable,--disable)-%,$(1))
+
 GST_VERSION:=1.0
 
 CONFIGURE_ARGS += \
+	$(call GST_COND_SELECT,lame) \
+        $(call GST_COND_SELECT,mpg123) \
+	\
 	--disable-debug \
 	--disable-examples \
 	\
@@ -197,8 +206,10 @@ $(eval $(call GstBuildPlugin,interleave,audio interleave,audio,,))
 $(eval $(call GstBuildPlugin,isomp4,isomp4 support,audio pbutils riff rtp tag video,,))
 #$(eval $(call GstBuildPlugin,jack,jack support,audio,,))
 $(eval $(call GstBuildPlugin,jpeg,jpeg support,video,,+libjpeg))
+$(eval $(call GstBuildPlugin,lame,MP3 encoder (using LAME),audio,,+lame-lib))
 $(eval $(call GstBuildPlugin,level,audio level,audio,,))
 $(eval $(call GstBuildPlugin,matroska,matroska support,audio pbutils riff tag video,,))
+$(eval $(call GstBuildPlugin,mpg123,MP3 decoder (using mpg123),audio tag,,+libid3tag +mpg123))
 $(eval $(call GstBuildPlugin,mulaw,mulaw support,audio,,))
 $(eval $(call GstBuildPlugin,multifile,multiple files access,video,,))
 $(eval $(call GstBuildPlugin,multipart,multipart stream handling,,,))

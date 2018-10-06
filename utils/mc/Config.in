@@ -49,11 +49,11 @@ config MC_CHARSET
 
 config MC_VFS
 	bool "Enable virtual filesystem support"
-	default n
+	default y
 	help
            This option enables the Virtual File System switch code to get
            transparent access to the following file systems:
-           cpio, tar, fish, sfs, ftp, sftp, extfs, smb.
-           Disabled by default.
+           cpio, tar, fish, sfs, ftp, sftp, extfs.
+           Enabled by default.
 
 endmenu

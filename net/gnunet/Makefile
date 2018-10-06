@@ -1,10 +1,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=2b99bddcb6961cfda34087138acdda4b8b9ccb9f
-PKG_MIRROR_HASH:=7b1567d4d4b316ed4b70372bbcfc2039a93d6a7bbf24c2b3036b2c7f3bccc9b4
+PKG_SOURCE_VERSION:=13274f4bd2009dd928e91f0b6e056cee7f7975a5
+PKG_MIRROR_HASH:=fb80259245a496bc238117c7ac36f9338dc3612a99eef2bc5be2a042de8cdee1
 
-PKG_VERSION:=0.10.2-git-20180607-$(PKG_SOURCE_VERSION)
+PKG_VERSION:=0.10.2-git-20180929-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -134,7 +134,7 @@ define Package/gnunet/install
 	$(INSTALL_DIR) $(1)/usr/share/gnunet/config.d $(1)/usr/share/gnunet/hellos
 
 	( for bin in arm ats cadet core config ecc identity nat nat-auto nat-server nse \
-	    peerinfo revocation scalarproduct statistics transport uri; do \
+	    peerinfo revocation scalarproduct scrypt statistics transport uri; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gnunet-$$$$bin $(1)/usr/bin/ ; \
 	done )
 
@@ -145,8 +145,7 @@ define Package/gnunet/install
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnunet$$$$lib.so* $(1)/usr/lib/ ; \
 	done )
 
-	( for plug in ats_proportional block_dht block_regex block_revocation  \
-	    transport_tcp transport_udp transport_unix; do \
+	( for plug in ats_proportional block_dht block_regex block_revocation transport_unix; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libgnunet_plugin_$$$$plug*.so $(1)/usr/lib/gnunet ; \
 	done )
 
@@ -195,18 +194,33 @@ CONF_conversation:=conversation
 BIN_dht-cli:=dht-get dht-put dht-monitor
 PLUGIN_dht-cli:=block_test
 
-DEPENDS_hostlist:=+libmicrohttpd +libgnurl +ca-certificates
+DEPENDS_curl:=+libgnurl +jansson
+LIB_curl:=curl
+
+DEPENDS_hostlist:=+libmicrohttpd +gnunet-curl +ca-certificates
 LIBEXEC_hostlist:=daemon-hostlist
 CONF_hostlist:=hostlist
 
-DEPENDS_transport-http_client:=+libgnurl +ca-certificates
+DEPENDS_transport-bluetooth:=+bluez-libs
+PLUGIN_transport-bluetooth:=transport_bluetooth
+LIBEXEC_transport-bluetooth:=helper-transport-bluetooth
+
+DEPENDS_transport-http_client:=+gnunet-curl +ca-certificates
 PLUGIN_transport-http_client:=transport_http_client transport_https_client
 
 DEPENDS_transport-http_server:=+libmicrohttpd
 PLUGIN_transport-http_server:=transport_http_server transport_https_server
 
+PLUGIN_transport-tcp:=transport_tcp
+
+PLUGIN_transport-udp:=transport_udp
+
 PLUGIN_transport-wlan:=transport_wlan
 LIBEXEC_transport-wlan:=helper-transport-wlan
+
+PLUGIN_transport-xt:=transport_xt
+
+PLUGIN_transport-xu:=transport_xu
 
 DEPENDS_experiments:=+libglpk
 PLUGIN_experiments:=ats_mlp ats_ril
@@ -226,7 +240,7 @@ CONF_fs:=fs
 
 DEPENDS_gns:=+gnunet-vpn +iptables-mod-extra
 USERID_gns:=gnunet=958:gnunetdns=452
-BIN_gns:=gns gns-import.sh namecache namestore resolver
+BIN_gns:=gns gns-import.sh namecache namestore resolver zoneimport
 LIB_gns:=gns gnsrecord namecache namestore
 PLUGIN_gns:=block_dns block_gns gnsrecord_conversation gnsrecord_dns gnsrecord_gns
 LIBEXEC_gns:=dns2gns helper-dns service-dns service-gns service-namecache service-namestore service-resolver service-zonemaster
@@ -235,7 +249,7 @@ CONF_gns:=dns gns namecache namestore resolver zonemaster
 DEPENDS_namestore-fcfsd:=+gnunet-gns +libmicrohttpd
 LIBEXEC_namestore-fcfsd:=namestore-fcfsd
 
-DEPENDS_gns-proxy:=+gnunet-gns +libgnurl +libmicrohttpd
+DEPENDS_gns-proxy:=+gnunet-gns +gnunet-curl +libmicrohttpd
 LIBEXEC_gns-proxy:=gns-proxy
 
 DEPENDS_datastore:=+gnunet-gns
@@ -250,8 +264,8 @@ LIBEXEC_peerstore:=service-peerstore
 CONF_peerstore:=peerstore
 
 DEPENDS_rest:=+gnunet-gns +gnunet-social +libmicrohttpd +jansson
-LIB_rest:=rest json jsonapi jsonapiutils
-PLUGIN_rest:=rest_gns rest_identity rest_identity_provider rest_namestore
+LIB_rest:=rest json
+PLUGIN_rest:=rest_copying rest_gns rest_identity rest_namestore rest_peerinfo rest_openid_connect rest_reclaim
 LIBEXEC_rest:=rest-server
 CONF_rest:=rest
 
@@ -260,12 +274,12 @@ LIB_rps:=rps
 LIBEXEC_rps:=service-rps
 CONF_rps:=rps
 
-DEPENDS_social:=+gnunet-gns +libmicrohttpd +jansson
-BIN_social:=identity-token multicast social
-LIB_social:=consensus identityprovider multicast psyc psycstore psycutil secretsharing social
-LIBEXEC_social:=service-consensus service-evil-consensus service-identity-provider service-multicast service-psyc service-psycstore service-secretsharing service-social
-CONF_social:=consensus multicast psyc psycstore secretsharing social
-PLUGINS_social:=block_consensus
+DEPENDS_social:=+gnunet-gns +libmicrohttpd +jansson +libpbc +libgabe
+BIN_social:=credential identity-token multicast reclaim social
+LIB_social:=abe consensus credential identityprovider multicast psyc psycstore psycutil reclaim reclaimattribute secretsharing social
+LIBEXEC_social:=service-consensus service-credential service-evil-consensus service-identity-provider service-multicast service-psyc service-psycstore service-reclaim service-secretsharing service-social
+CONF_social:=consensus credential multicast psyc psycstore reclaim secretsharing social
+PLUGIN_social:=block_consensus gnsrecord_credential gnsrecord_reclaim reclaim_attribute_gnuid
 
 PLUGIN_dhtcache-heap:=datacache_heap
 CONFLICTS_dhtcache-heap:=gnunet-dhtcache-pgsql gnunet-dhtcache-sqlite
@@ -327,12 +341,9 @@ PLUGIN_dhtcache-sqlite:=datacache_sqlite
 DEPENDS_fs-sqlite:=+gnunet-datastore +gnunet-sqlite
 PLUGIN_fs-sqlite:=datastore_sqlite
 
-DEPENDS_social-sqlite:=+gnunet-social  +gnunet-sqlite
-PLUGIN_social-sqlite:=psycstore_sqlite
+DEPENDS_social-sqlite:=+gnunet-social +gnunet-sqlite
+PLUGIN_social-sqlite:=psycstore_sqlite reclaim_sqlite
 
-DEPENDS_transport-bluetooth:=+bluez-libs
-PLUGIN_transport-bluetooth:=transport_bluetooth
-LIBEXEC_transport-bluetooth:=helper-transport-bluetooth
 
 DEPENDS_utils:=+certtool +openssl-util
 BIN_utils:=gns-proxy-setup-ca transport-certificate-creation
@@ -390,6 +401,7 @@ $(eval $(call PostInstFixSUIDPerms,gnunet-vpn))
 
 $(eval $(call BuildPackage,gnunet))
 $(eval $(call BuildComponent,conversation,conversation component,))
+$(eval $(call BuildComponent,curl,cURL wrapper component,))
 $(eval $(call BuildComponent,datastore,data storage components,))
 $(eval $(call BuildComponent,dht-cli,DHT command line clients,))
 # $(eval $(call BuildComponent,dv,distance-vector routing component,y))
@@ -424,6 +436,10 @@ $(eval $(call BuildComponent,social-sqlite,libsqlite3 social plugins,))
 $(eval $(call BuildComponent,transport-bluetooth,bluetooth transport,))
 $(eval $(call BuildComponent,transport-http_client,HTTP/HTTPS client transport,y))
 $(eval $(call BuildComponent,transport-http_server,HTTP/HTTPS server transport,))
+$(eval $(call BuildComponent,transport-tcp,TCP transport,y))
+$(eval $(call BuildComponent,transport-udp,UDP transport,y))
 $(eval $(call BuildComponent,transport-wlan,WLAN transport,y))
+$(eval $(call BuildComponent,transport-xt,xt transport,))
+$(eval $(call BuildComponent,transport-xu,xu transport,))
 $(eval $(call BuildComponent,utils,administration utililties,))
 $(eval $(call BuildComponent,vpn,vpn components,y))

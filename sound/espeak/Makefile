@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2014 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -9,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=espeak
 PKG_VERSION:=1.48.04
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-source.zip
 PKG_SOURCE_URL:=@SF/espeak
@@ -44,6 +42,12 @@ MAKE_FLAGS+= \
 	LDFLAGS="$(TARGET_LDFLAGS)" \
 
 MAKE_PATH:=./src
+
+# Use system header for portaudio
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	rm $(PKG_BUILD_DIR)/src/portaudio.h
+endef
 
 define Package/espeak/install
 	$(INSTALL_DIR) $(1)/usr/bin

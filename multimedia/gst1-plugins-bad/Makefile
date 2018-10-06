@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
-PKG_VERSION:=1.12.4
+PKG_VERSION:=1.14.2
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -20,7 +20,7 @@ PKG_LICENSE_FILES:=COPYING.LIB COPYING
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-bad-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-bad/
-PKG_HASH:=0c7857be16686d5c1ba6e34bd338664d3d4599d32714a8eca5c8a41a101e2d08
+PKG_HASH:=34fab7da70994465a64468330b2168a4a0ed90a7de7e4c499b6d127c6c1b1eaf
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -200,7 +200,6 @@ $(eval $(call GstBuildLibrary,adaptivedemux,adaptivedemux,app uridownloader,))
 $(eval $(call GstBuildLibrary,photography,photography,,))
 $(eval $(call GstBuildLibrary,basecamerabinsrc,basecamerabinsrc,app,))
 $(eval $(call GstBuildLibrary,uridownloader,uridownloader,,))
-$(eval $(call GstBuildLibrary,badbase,badbase,,))
 
 # 1: short name
 # 2: description
@@ -257,7 +256,7 @@ $(eval $(call GstBuildPlugin,mpegpsdemux,mpegpsdemux support,pbutils,,))
 $(eval $(call GstBuildPlugin,mpegpsmux,mpegpsmux support,,,))
 #$(eval $(call GstBuildPlugin,mpegtsdemux,mpegtsdemux support,mpegts pbutils,,))
 #$(eval $(call GstBuildPlugin,mpegtsmux,mpegtsmux support,video,,))
-$(eval $(call GstBuildPlugin,mxf,mxf support,badbase audio video,,))
+$(eval $(call GstBuildPlugin,mxf,mxf support,audio video,,))
 $(eval $(call GstBuildPlugin,opusparse,OPUS streams library,pbutils,,+libopus))
 $(eval $(call GstBuildPlugin,pcapparse,pcapparse support,,,))
 $(eval $(call GstBuildPlugin,pnm,pnm support,video,,))

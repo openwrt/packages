@@ -1,7 +1,7 @@
-From 05a6fa94778f9d6c54ca676de80708d03d6c365a Mon Sep 17 00:00:00 2001
+From 6b9732c8851c5466f2a363d88b5acae320801efe Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Wed, 14 Mar 2018 16:40:01 +0800
-Subject: [PATCH 103/104] ovs-ctl: fix setting hostname
+Subject: [PATCH 103/107] ovs-ctl: fix setting hostname
 
 The command "hostname" is not available in OpenWrt by default.
 
@@ -13,9 +13,11 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  utilities/ovs-ctl.in | 4 +---
  1 file changed, 1 insertion(+), 3 deletions(-)
 
+diff --git a/utilities/ovs-ctl.in b/utilities/ovs-ctl.in
+index 43c8f32b7..6203ecff5 100755
 --- a/utilities/ovs-ctl.in
 +++ b/utilities/ovs-ctl.in
-@@ -64,9 +64,7 @@ insert_mod_if_required () {
+@@ -36,9 +36,7 @@ insert_mod_if_required () {
  }
  
  set_hostname () {

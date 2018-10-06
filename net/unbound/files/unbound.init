@@ -17,14 +17,14 @@ PROG=/usr/sbin/unbound
 ##############################################################################
 
 boot() {
-  UNBOUND_BOOT=1
+  UB_BOOT=1
   start "$@"
 }
 
 ##############################################################################
 
 start_service() {
-  if [ -n "$UNBOUND_BOOT" ] ; then
+  if [ -n "$UB_BOOT" ] ; then
     # Load procd triggers (rc) and use event IFUP to really start
     return 0
   fi
@@ -35,7 +35,7 @@ start_service() {
 
   # standard procd clause
   procd_open_instance "unbound"
-  procd_set_param command $PROG -d -c $UNBOUND_CONFFILE
+  procd_set_param command $PROG -d -c $UB_TOTAL_CONF
   procd_set_param respawn
   procd_close_instance
 }
@@ -44,7 +44,7 @@ start_service() {
 
 stop_service() {
   # clean up
-  . /usr/lib/unbound/unbound.sh
+  . /usr/lib/unbound/stopping.sh
   unbound_stop
 
   # Wait! on restart Unbound may take time writing closure stats to syslog
@@ -54,22 +54,29 @@ stop_service() {
 ##############################################################################
 
 service_triggers() {
-  local trigger
   local legacy=$( uci_get unbound.@unbound[0].trigger )
   local triggers=$( uci_get unbound.@unbound[0].trigger_interface )
+  local trigger="$triggers $legacy"
 
-  triggers="$triggers $legacy"
-  PROCD_RELOAD_DELAY=2000
-  procd_add_reload_trigger "unbound"
+  . /usr/lib/unbound/defaults.sh
 
 
-  if [ -n "$triggers" ] ; then
+  if [ ! -f "$UB_TOTAL_CONF" -o -n "$UB_BOOT" ] ; then
+    # Unbound is can be a bit heavy, so wait some on first start but any
+    # interface coming up affects the trigger and delay so guarantee start
+    procd_add_raw_trigger "interface.*.up" 3000 /etc/init.d/unbound restart
+
+  elif [ -n "$triggers" ] ; then
+    procd_add_reload_trigger "unbound" "dhcp"
+
+
     for trigger in $triggers ; do
-      # due to some netifd/procd interactions with IP6, limit interfaces
+      # User selected triggers to restart at any other time
       procd_add_reload_interface_trigger "$trigger"
     done
+
   else
-    procd_add_raw_trigger "interface.*.up" 2000 /etc/init.d/unbound reload
+    procd_add_reload_trigger "unbound" "dhcp"
   fi
 }
 

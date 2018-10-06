@@ -1,17 +1,19 @@
-From b3cc748d502f7f87aeb103b3f69573b0e640e2ba Mon Sep 17 00:00:00 2001
-From: Yousong Zhou <yszhou4tech@gmail.com>
-Date: Wed, 28 Feb 2018 13:42:44 +0800
-Subject: [PATCH 102/104] python: separate host/target python for cross-compile
+From e451d74788c73e8679e6a2268185a08901ac7f8c Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <zhouyousong@yunionyun.com>
+Date: Tue, 21 Aug 2018 12:21:05 +0000
+Subject: [PATCH 102/107] python: separate host/target python for cross-compile
 
 At the moment, python-six is a requirement for openvswitch python
 library on target machine.
 
 Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
 ---
- Makefile.am       |  2 +-
- m4/openvswitch.m4 | 12 ++++--------
- 2 files changed, 5 insertions(+), 9 deletions(-)
+ Makefile.am       | 2 +-
+ m4/openvswitch.m4 | 2 ++
+ 2 files changed, 3 insertions(+), 1 deletion(-)
 
+diff --git a/Makefile.am b/Makefile.am
+index 788972804..cd90cc176 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -60,7 +60,7 @@ endif
@@ -23,30 +25,17 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  
  ALL_LOCAL =
  BUILT_SOURCES =
+diff --git a/m4/openvswitch.m4 b/m4/openvswitch.m4
+index 5743f83ce..acb6b140e 100644
 --- a/m4/openvswitch.m4
 +++ b/m4/openvswitch.m4
-@@ -351,20 +351,16 @@ else:
-    if test $ovs_cv_python = no; then
-      AC_MSG_ERROR([cannot find python 2.7 or higher.])
-    fi
--   AM_MISSING_PROG([PYTHON], [python])
-+   AC_SUBST([PYTHON])
-    PYTHON=$ovs_cv_python
-+   AM_MISSING_PROG([PYTHON_HOST], [python])
-+   PYTHON_HOST=$ovs_cv_python_host
+@@ -449,7 +449,9 @@ AC_DEFUN([OVS_CHECK_PYTHON],
+       fi])
+     AC_SUBST([PYTHON])
+     PYTHON=$ovs_cv_python
++    PYTHON_HOST=$ovs_cv_python_host
+     AC_SUBST([HAVE_PYTHON])
++    AM_MISSING_PROG([PYTHON_HOST], [python])
+     HAVE_PYTHON=yes
+     AM_CONDITIONAL([HAVE_PYTHON], [test "$HAVE_PYTHON" = yes])])
  
-    # HAVE_PYTHON is always true.  (Python has not always been a build
-    # requirement, so this variable is now obsolete.)
-    AC_SUBST([HAVE_PYTHON])
-    HAVE_PYTHON=yes
--   AM_CONDITIONAL([HAVE_PYTHON], [test "$HAVE_PYTHON" = yes])
--
--   AC_MSG_CHECKING([whether $PYTHON has six library])
--   if ! $PYTHON -c 'import six ; six.moves.range' >&AS_MESSAGE_LOG_FD 2>&1; then
--     AC_MSG_ERROR([Missing Python six library or version too old.])
--   fi
--   AC_MSG_RESULT([yes])])
-+   AM_CONDITIONAL([HAVE_PYTHON], [test "$HAVE_PYTHON" = yes])])
- 
- dnl Checks for Python 3.x, x >= 4.
- AC_DEFUN([OVS_CHECK_PYTHON3],

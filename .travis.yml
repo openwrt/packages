@@ -1,5 +1,7 @@
 git:
   depth: 10
+  quiet: true
+
 language: c
 dist: trusty
 sudo: false

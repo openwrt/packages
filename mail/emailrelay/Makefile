@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=emailrelay
-PKG_VERSION:=1.9
-PKG_RELEASE:=5
+PKG_VERSION:=2.0
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-src.tar.gz
 PKG_SOURCE_URL:=@SF/emailrelay/$(PKG_VERSION)
-PKG_HASH:=869a3e2d053237d7f63784acc25e748af2dbf2d9b9c5c48e4a5269d4e4b5bda0
+PKG_HASH:=0b3a98edfdc8deaf2b3d14e2d2a7fa8402f6703d83ac7458653994124de6a587
 PKG_MAINTAINER:=Federico Di Marco <fededim@gmail.com>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
@@ -74,21 +74,28 @@ endef
 
 
 CONFIGURE_ARGS += \
-	--with-pam=no \
-	--enable-testing=no
+	--without-doxygen \
+	--without-man2html \
+	--without-mbedtls \
+	--without-pam \
+	--disable-bsd \
+	--disable-gui \
+	--disable-mac \
+	--disable-testing \
+	--disable-windows
 
+# Workaround for https://sourceforge.net/p/emailrelay/bugs/38/
+# This should be fixed in the next release.
 CONFIGURE_VARS += \
-	CXXFLAGS="$$$$CXXFLAGS -fno-rtti"
-
+	ac_cv_search_pam_end=no
 
 ifeq ($(CONFIG_EMAILRELAY_SSL),y)
 	CONFIGURE_ARGS += \
 		--with-openssl
 else
 	CONFIGURE_ARGS += \
-		--with-openssl=no
+		--without-openssl
 endif
-
 
 ifeq ($(CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG),y)
 	CONFIGURE_ARGS += \
@@ -105,7 +112,6 @@ define Package/emailrelay/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-filter-copy $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-passwd $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-poke $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-submit $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DATA) files/$(PKG_NAME).auth $(1)/etc/

@@ -21,7 +21,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.7.7-2"
+VERSION="2.7.8-5"
 SECTION_ID=""		# hold config's section name
 VERBOSE=0		# default mode is log to console, but easily changed with parameter
 MYPROG=$(basename $0)	# my program call name
@@ -63,6 +63,12 @@ IPV4_REGEX="[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}"
 # IPv6       ( ( 0-9a-f  1-4char ":") min 1x) ( ( 0-9a-f  1-4char   )optional) ( (":" 0-9a-f 1-4char  ) min 1x)
 IPV6_REGEX="\(\([0-9A-Fa-f]\{1,4\}:\)\{1,\}\)\(\([0-9A-Fa-f]\{1,4\}\)\{0,1\}\)\(\(:[0-9A-Fa-f]\{1,4\}\)\{1,\}\)"
 
+# characters that are dangerous to pass to a shell command line
+SHELL_ESCAPE="[\"\'\`\$\!();><{}?|\[\]\*\\\\]"
+
+# dns character set
+DNS_CHARSET="[@a-zA-Z0-9._-]"
+
 # detect if called by ddns-lucihelper.sh script, disable retrys (empty variable == false)
 LUCI_HELPER=$(printf %s "$MYPROG" | grep -i "luci")
 
@@ -78,7 +84,8 @@ WGET=$(which wget)
 WGET_SSL=$(which wget-ssl)
 
 CURL=$(which curl)
-
+# CURL_SSL not empty then SSL support available
+CURL_SSL=$($CURL -V 2>/dev/null | grep -F "https")
 # CURL_PROXY not empty then Proxy support available
 CURL_PROXY=$(find /lib /usr/lib -name libcurl.so* -exec strings {} 2>/dev/null \; | grep -im1 "all_proxy")
 
@@ -224,7 +231,7 @@ stop_daemon_for_all_ddns_sections() {
 #	value +10 will exit the scripts
 # $2..n	text to report
 write_log() {
-	local __LEVEL __EXIT __CMD __MSG
+	local __LEVEL __EXIT __CMD __MSG __MSE
 	local __TIME=$(date +%H%M%S)
 	[ $1 -ge 10 ] && {
 		__LEVEL=$(($1-10))
@@ -258,8 +265,15 @@ write_log() {
 	[ $VERBOSE -gt 0 -o $__EXIT -gt 0 ] && echo -e "$__MSG"
 	# write to logfile
 	if [ ${use_logfile:-1} -eq 1 -o $VERBOSE -gt 1 ]; then
-		[ -n "$password" ] && __MSG=$( printf "%s" "$__MSG" | sed -e "s/$password/*password*/g" )
-		[ -n "$URL_PASS" ] && __MSG=$( printf "%s" "$__MSG" | sed -e "s/$URL_PASS/*URL_PASS*/g" )
+		if [ -n "$password" ]; then
+			# url encode __MSG, password already done
+			urlencode __MSE "$__MSG"
+			# replace encoded password inside encoded message
+			# and url decode (newline was encoded as %00)
+			__MSG=$( echo -e "$__MSE" \
+				| sed -e "s/$URL_PASS/***PW***/g" \
+				| sed -e "s/+/ /g; s/%00/\n/g; s/%/\\\\x/g" | xargs -0 printf "%b" )
+		fi
 		printf "%s\n" "$__MSG" >> $LOGFILE
 		# VERBOSE > 1 then NO loop so NO truncate log to $ddns_loglines lines
 		[ $VERBOSE -gt 1 ] || sed -i -e :a -e '$q;N;'$ddns_loglines',$D;ba' $LOGFILE
@@ -268,11 +282,11 @@ write_log() {
 	[ $__LEVEL -eq 7 ] && return	# no syslog for debug messages
 	__CMD=$(echo -e "$__CMD" | tr -d '\n' | tr '\t' '     ')        # remove \n \t chars
 	[ $__EXIT  -eq 1 ] && {
-		$__CMD		# force syslog before exit
+		eval "$__CMD"	# force syslog before exit
 		exit 1
 	}
 	[ $use_syslog -eq 0 ] && return
-	[ $((use_syslog + __LEVEL)) -le 7 ] && $__CMD
+	[ $((use_syslog + __LEVEL)) -le 7 ] && eval "$__CMD"
 
 	return
 }
@@ -287,32 +301,12 @@ write_log() {
 urlencode() {
 	# $1	Name of Variable to store encoded string to
 	# $2	string to encode
-	local __STR __LEN __CHAR __OUT
-	local __ENC=""
-	local __POS=1
+	local __ENC
 
 	[ $# -ne 2 ] && write_log 12 "Error calling 'urlencode()' - wrong number of parameters"
 
-	__STR="$2"		# read string to encode
-	__LEN=${#__STR}		# get string length
-
-	while [ $__POS -le $__LEN ]; do
-		# read one chat of the string
-		__CHAR=$(expr substr "$__STR" $__POS 1)
-
-		case "$__CHAR" in
-		        [-_.~a-zA-Z0-9] )
-				# standard char
-				__OUT="${__CHAR}"
-				;;
-		        * )
-				# special char get %hex code
-		               __OUT=$(printf '%%%02x' "'$__CHAR" )
-				;;
-		esac
-		__ENC="${__ENC}${__OUT}"	# append to encoded string
-		__POS=$(( $__POS + 1 ))		# increment position
-	done
+	__ENC="$(awk -v str="$2" 'BEGIN{ORS="";for(i=32;i<=127;i++)lookup[sprintf("%c",i)]=i
+		for(k=1;k<=length(str);++k){enc=substr(str,k,1);if(enc!~"[-_.~a-zA-Z0-9]")enc=sprintf("%%%02x", lookup[enc]);print enc}}')"
 
 	eval "$1=\"$__ENC\""	# transfer back to variable
 	return 0
@@ -465,6 +459,27 @@ timeout() {
 	# /bin/ps j  # uncomment to show if abort "sleep" is still sleeping
 
 	return $status
+}
+
+# sanitize a variable
+# $1	variable name
+# $2	allowed shell pattern
+# $3	disallowed shell pattern
+sanitize_variable() {
+	local __VAR=$1
+	eval __VALUE=\$$__VAR
+	local __ALLOWED=$2
+	local __REJECT=$3
+
+	# removing all allowed should give empty string
+	if [ -n "$__ALLOWED" ]; then
+		[ -z "${__VALUE//$__ALLOWED}" ] || write_log 12 "sanitize on $__VAR found characters outside allowed subset"
+	fi
+
+	# removing rejected pattern should give the same string as the input
+	if [ -n "$__REJECT" ]; then
+		[ "$__VALUE" = "${__VALUE//$__REJECT}" ] || write_log 12 "sanitize on $__VAR found rejected characters"
+	fi
 }
 
 # verify given host and port is connectable
@@ -719,8 +734,6 @@ do_transfer() {
 	# 2nd choice is cURL IPv4/IPv6/HTTPS
 	# libcurl might be compiled without Proxy or HTTPS Support
 	elif [ -n "$CURL" ]; then
-		# CURL_SSL not empty then SSL support available
-		CURL_SSL=$($(which curl) -V 2>/dev/null | grep "Protocols:" | grep -F "https")
 		__PROG="$CURL -RsS -o $DATFILE --stderr $ERRFILE"
 		# check HTTPS support
 		[ -z "$CURL_SSL" -a $use_https -eq 1 ] && \
@@ -877,7 +890,7 @@ send_update() {
 
 		do_transfer "$__URL" || return 1
 
-		write_log 7 "DDNS Provider answered:\n$(cat $DATFILE)"
+		write_log 7 "DDNS Provider answered:${N}$(cat $DATFILE)"
 
 		[ -z "$UPD_ANSWER" ] && return 0	# not set then ignore
 
@@ -895,7 +908,7 @@ get_local_ip () {
 	write_log 7 "Detect local IP on '$ip_source'"
 
 	while : ; do
-		if [ -n "$ip_network" ]; then
+		if [ -n "$ip_network" -a "$ip_source" = "network" ]; then
 			# set correct program
 			network_flush_cache	# force re-read data from ubus
 			[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" \
@@ -903,7 +916,7 @@ get_local_ip () {
 			eval "$__RUNPROG __DATA $ip_network" || \
 				write_log 13 "Can not detect local IP using $__RUNPROG '$ip_network' - Error: '$?'"
 			[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on network '$ip_network'"
-		elif [ -n "$ip_interface" ]; then
+		elif [ -n "$ip_interface" -a "$ip_source" = "interface" ]; then
 			local __DATA4=""; local __DATA6=""
 			if [ -n "$(which ip)" ]; then		# ip program installed
 				write_log 7 "#> ip -o addr show dev $ip_interface scope global >$DATFILE 2>$ERRFILE"
@@ -982,7 +995,7 @@ get_local_ip () {
 			fi
 			[ $use_ipv6 -eq 0 ] && __DATA="$__DATA4" || __DATA="$__DATA6"
 			[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on interface '$ip_interface'"
-		elif [ -n "$ip_script" ]; then
+		elif [ -n "$ip_script" -a "$ip_source" = "script" ]; then
 			write_log 7 "#> $ip_script >$DATFILE 2>$ERRFILE"
 			eval $ip_script >$DATFILE 2>$ERRFILE
 			__ERR=$?
@@ -993,7 +1006,7 @@ get_local_ip () {
 				write_log 3 "$ip_script Error: '$__ERR'"
 				write_log 7 "$(cat $ERRFILE)"		# report error
 			fi
-		elif [ -n "$ip_url" ]; then
+		elif [ -n "$ip_url" -a "$ip_source" = "web" ]; then
 			do_transfer "$ip_url"
 			# use correct regular expression
 			[ $use_ipv6 -eq 0 ] \
@@ -1197,17 +1210,17 @@ trap_handler() {
 
 	case $1 in
 		 0)	if [ $__ERR -eq 0 ]; then
-				write_log 5 "PID '$$' exit normal at $(eval $DATE_PROG)\n"
+				write_log 5 "PID '$$' exit normal at $(eval $DATE_PROG)${N}"
 			else
-				write_log 4 "PID '$$' exit WITH ERROR '$__ERR' at $(eval $DATE_PROG)\n"
+				write_log 4 "PID '$$' exit WITH ERROR '$__ERR' at $(eval $DATE_PROG)${N}"
 			fi ;;
 		 1)	write_log 6 "PID '$$' received 'SIGHUP' at $(eval $DATE_PROG)"
 			# reload config via starting the script again
 			/usr/lib/ddns/dynamic_dns_updater.sh -v "0" -S "$__SECTIONID" -- start || true
 			exit 0 ;;	# and leave this one
-		 2)	write_log 5 "PID '$$' terminated by 'SIGINT' at $(eval $DATE_PROG)\n";;
-		 3)	write_log 5 "PID '$$' terminated by 'SIGQUIT' at $(eval $DATE_PROG)\n";;
-		15)	write_log 5 "PID '$$' terminated by 'SIGTERM' at $(eval $DATE_PROG)\n";;
+		 2)	write_log 5 "PID '$$' terminated by 'SIGINT' at $(eval $DATE_PROG)${N}";;
+		 3)	write_log 5 "PID '$$' terminated by 'SIGQUIT' at $(eval $DATE_PROG)${N}";;
+		15)	write_log 5 "PID '$$' terminated by 'SIGTERM' at $(eval $DATE_PROG)${N}";;
 		 *)	write_log 13 "Unhandled signal '$1' in 'trap_handler()'";;
 	esac
 

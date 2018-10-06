@@ -51,14 +51,14 @@
 +#undef encrypt
 --- a/src/libcharon/plugins/kernel_netlink/kernel_netlink_ipsec.c
 +++ b/src/libcharon/plugins/kernel_netlink/kernel_netlink_ipsec.c
-@@ -19,6 +19,7 @@
+@@ -40,6 +40,7 @@
   */
  
  #define _GNU_SOURCE
 +#include <musl.h>
  #include <sys/types.h>
  #include <sys/socket.h>
- #include <stdint.h>
+ #include <sys/ioctl.h>
 --- a/src/libcharon/plugins/kernel_netlink/kernel_netlink_net.c
 +++ b/src/libcharon/plugins/kernel_netlink/kernel_netlink_net.c
 @@ -37,6 +37,8 @@

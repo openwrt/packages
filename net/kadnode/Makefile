@@ -2,14 +2,14 @@ include $(TOPDIR)/rules.mk
 
 
 PKG_NAME:=kadnode
-PKG_VERSION:=2.2.3
+PKG_VERSION:=2.2.5
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MIT
 
 PKG_SOURCE_URL:=https://codeload.github.com/mwarning/KadNode/tar.gz/v$(PKG_VERSION)?
 PKG_SOURCE:=kadnode-$(PKG_VERSION).tar.gz
-PKG_HASH:=1f5538a4b904fd2a624a2046f9320f72357af619190188f14bfdb15b5e5f8488
+PKG_HASH:=a72dc54d1869e47e374935cf44aa888a9b13c9dc017ae22e29cf13ead38a506b
 PKG_BUILD_DIR:=$(BUILD_DIR)/KadNode-$(PKG_VERSION)
 
 

@@ -14,11 +14,11 @@ PKG_NAME:=netopeer2
 PKG_LICENSE:=BSD-3-Clause
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 
-PKG_VERSION:=0.4.13
+PKG_VERSION:=0.5.26
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=ae560bef2e70d274f6d028b59e3cb398ea2a621d
-PKG_MIRROR_HASH:=43b7f9c436afc76de539a7426b1462249326318b9b836f1d49282106a730a6b8
+PKG_SOURCE_VERSION:=3b99e99c9d507ddc89d21d7f1cbded494e6aa72e
+PKG_MIRROR_HASH:=d29b501d56bf9a2480759cc55368c842f69b07722afb3a0a70f05d6088f72574
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/CESNET/Netopeer2.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION)
@@ -86,6 +86,8 @@ define Package/netopeer2-server/install
 	$(INSTALL_DATA) $(PKG_BUILD_ROOT)/modules/iana-crypt-hash.yang $(1)/etc/sysrepo/yang/iana-crypt-hash@2014-08-06.yang
 	$(INSTALL_DATA) $(PKG_BUILD_ROOT)/modules/ietf-x509-cert-to-name.yang $(1)/etc/sysrepo/yang/ietf-x509-cert-to-name@2014-12-10.yang
 	$(INSTALL_DATA) $(PKG_BUILD_ROOT)/modules/ietf-netconf-server.yang $(1)/etc/sysrepo/yang/ietf-netconf-server@2016-11-02.yang
+	$(INSTALL_DATA) $(PKG_BUILD_ROOT)/modules/ietf-netconf-monitoring.yang $(1)/etc/sysrepo/yang/ietf-netconf-monitoring@2010-10-04.yang
+	$(INSTALL_DATA) $(PKG_BUILD_ROOT)/modules/ietf-netconf-with-defaults.yang $(1)/etc/sysrepo/yang/ietf-netconf-with-defaults@2011-06-01.yang
 	$(INSTALL_DATA) $(PKG_BUILD_ROOT)/modules/ietf-system.yang $(1)/etc/sysrepo/yang/ietf-system@2014-08-06.yang
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults

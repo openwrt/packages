@@ -20,6 +20,63 @@ MM_BLACKHOLE=""
 MMX_UNREACHABLE=""
 MM_UNREACHABLE=""
 
+mwan3_rtmon_ipv4()
+{
+	local tid=1
+	local idx=0
+	local ret=1
+	mkdir -p /tmp/mwan3rtmon
+	($IP4 route list table main  | grep -v ^default | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv4.main
+	while uci get mwan3.@interface[$idx] >/dev/null 2>&1 ; do
+		idx=$((idx+1))
+		tid=$idx
+		[ "$(uci get mwan3.@interface[$((idx-1))].family)" = "ipv4" ] && {
+			if $IP4 route list table $tid | grep -q ^default; then
+				($IP4 route list table $tid  | grep -v ^default | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv4.$tid
+				cat /tmp/mwan3rtmon/ipv4.$tid | grep -v -x -F -f /tmp/mwan3rtmon/ipv4.main | while read line; do
+					$IP4 route del table $tid $line
+				done
+				cat /tmp/mwan3rtmon/ipv4.main | grep -v -x -F -f /tmp/mwan3rtmon/ipv4.$tid | while read line; do
+					$IP4 route add table $tid $line
+				done
+			fi
+		}
+		if [ "$(uci get mwan3.@interface[$((idx-1))].enabled)" = "1" ]; then
+			ret=0
+		fi
+	done
+	rm -f /tmp/mwan3rtmon/ipv4.*
+	return $ret
+}
+
+mwan3_rtmon_ipv6()
+{
+	local tid=1
+	local idx=0
+	local ret=1
+	mkdir -p /tmp/mwan3rtmon
+	($IP6 route list table main  | grep -v "^default\|^::/0\|^unreachable" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv6.main
+	while uci get mwan3.@interface[$idx] >/dev/null 2>&1 ; do
+		idx=$((idx+1))
+		tid=$idx
+		[ "$(uci get mwan3.@interface[$((idx-1))].family)" = "ipv6" ] && {
+			if $IP6 route list table $tid | grep -q "^default\|^::/0"; then
+				($IP6 route list table $tid  | grep -v "^default\|^::/0\|^unreachable" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv6.$tid
+				cat /tmp/mwan3rtmon/ipv6.$tid | grep -v -x -F -f /tmp/mwan3rtmon/ipv6.main | while read line; do
+					$IP6 route del table $tid $line
+				done
+				cat /tmp/mwan3rtmon/ipv6.main | grep -v -x -F -f /tmp/mwan3rtmon/ipv6.$tid | while read line; do
+					$IP6 route add table $tid $line
+				done
+			fi
+		}
+		if [ "$(uci get mwan3.@interface[$((idx-1))].enabled)" = "1" ]; then
+			ret=0
+		fi
+	done
+	rm -f /tmp/mwan3rtmon/ipv6.*
+	return $ret
+}
 
 # counts how many bits are set to 1
 # n&(n-1) clears the lowest bit set to 1
@@ -188,10 +245,6 @@ mwan3_set_general_iptables()
 			$IPT -A mwan3_connected -m set --match-set mwan3_connected dst -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
 		fi
 
-		if ! $IPT -S mwan3_ifaces_out &> /dev/null; then
-			$IPT -N mwan3_ifaces_out
-		fi
-
 		if ! $IPT -S mwan3_rules &> /dev/null; then
 			$IPT -N mwan3_rules
 		fi
@@ -209,7 +262,6 @@ mwan3_set_general_iptables()
 			$IPT -A mwan3_hook -j CONNMARK --restore-mark --nfmask $MMX_MASK --ctmask $MMX_MASK
 			$IPT -A mwan3_hook -m mark --mark 0x0/$MMX_MASK -j mwan3_ifaces_in
 			$IPT -A mwan3_hook -m mark --mark 0x0/$MMX_MASK -j mwan3_connected
-			$IPT -A mwan3_hook -m mark --mark 0x0/$MMX_MASK -j mwan3_ifaces_out
 			$IPT -A mwan3_hook -m mark --mark 0x0/$MMX_MASK -j mwan3_rules
 			$IPT -A mwan3_hook -j CONNMARK --save-mark --nfmask $MMX_MASK --ctmask $MMX_MASK
 			$IPT -A mwan3_hook -m mark ! --mark $MMX_DEFAULT/$MMX_MASK -j mwan3_connected
@@ -241,16 +293,8 @@ mwan3_create_iface_iptables()
 			$IPT4 -N mwan3_ifaces_in
 		fi
 
-		if ! $IPT4 -S mwan3_ifaces_out &> /dev/null; then
-			$IPT4 -N mwan3_ifaces_out
-		fi
-
 		if ! $IPT4 -S mwan3_iface_in_$1 &> /dev/null; then
 			$IPT4 -N mwan3_iface_in_$1
-		fi
-
-		if ! $IPT4 -S mwan3_iface_out_$1 &> /dev/null; then
-			$IPT4 -N mwan3_iface_out_$1
 		fi
 
 		$IPT4 -F mwan3_iface_in_$1
@@ -259,12 +303,6 @@ mwan3_create_iface_iptables()
 
 		$IPT4 -D mwan3_ifaces_in -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_in_$1 &> /dev/null
 		$IPT4 -A mwan3_ifaces_in -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_in_$1
-
-		$IPT4 -F mwan3_iface_out_$1
-		$IPT4 -A mwan3_iface_out_$1 -o $2 -m mark --mark 0x0/$MMX_MASK -m comment --comment "$1" -j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
-
-		$IPT4 -D mwan3_ifaces_out -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_out_$1 &> /dev/null
-		$IPT4 -A mwan3_ifaces_out -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_out_$1
 	fi
 
 	if [ "$family" == "ipv6" ]; then
@@ -274,16 +312,8 @@ mwan3_create_iface_iptables()
 			$IPT6 -N mwan3_ifaces_in
 		fi
 
-		if ! $IPT6 -S mwan3_ifaces_out &> /dev/null; then
-			$IPT6 -N mwan3_ifaces_out
-		fi
-
 		if ! $IPT6 -S mwan3_iface_in_$1 &> /dev/null; then
 			$IPT6 -N mwan3_iface_in_$1
-		fi
-
-		if ! $IPT6 -S mwan3_iface_out_$1 &> /dev/null; then
-			$IPT6 -N mwan3_iface_out_$1
 		fi
 
 		$IPT6 -F mwan3_iface_in_$1
@@ -292,12 +322,6 @@ mwan3_create_iface_iptables()
 
 		$IPT6 -D mwan3_ifaces_in -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_in_$1 &> /dev/null
 		$IPT6 -A mwan3_ifaces_in -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_in_$1
-
-		$IPT6 -F mwan3_iface_out_$1
-		$IPT6 -A mwan3_iface_out_$1 -o $2 -m mark --mark 0x0/$MMX_MASK -m comment --comment "$1" -j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
-
-		$IPT6 -D mwan3_ifaces_out -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_out_$1 &> /dev/null
-		$IPT6 -A mwan3_ifaces_out -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_out_$1
 	fi
 }
 
@@ -310,10 +334,6 @@ mwan3_delete_iface_iptables()
 		$IPT4 -D mwan3_ifaces_in -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_in_$1 &> /dev/null
 		$IPT4 -F mwan3_iface_in_$1 &> /dev/null
 		$IPT4 -X mwan3_iface_in_$1 &> /dev/null
-
-		$IPT4 -D mwan3_ifaces_out -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_out_$1 &> /dev/null
-		$IPT4 -F mwan3_iface_out_$1 &> /dev/null
-		$IPT4 -X mwan3_iface_out_$1 &> /dev/null
 	fi
 
 	if [ "$family" == "ipv6" ]; then
@@ -321,10 +341,6 @@ mwan3_delete_iface_iptables()
 		$IPT6 -D mwan3_ifaces_in -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_in_$1 &> /dev/null
 		$IPT6 -F mwan3_iface_in_$1 &> /dev/null
 		$IPT6 -X mwan3_iface_in_$1 &> /dev/null
-
-		$IPT6 -D mwan3_ifaces_out -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_out_$1 &> /dev/null
-		$IPT6 -F mwan3_iface_out_$1 &> /dev/null
-		$IPT6 -X mwan3_iface_out_$1 &> /dev/null
 	fi
 }
 
@@ -352,6 +368,7 @@ mwan3_create_iface_route()
 
 		$IP4 route flush table $id
 		$IP4 route add table $id default $route_args dev $2
+		mwan3_rtmon_ipv4
 	fi
 
 	if [ "$family" == "ipv6" ]; then
@@ -369,6 +386,7 @@ mwan3_create_iface_route()
 
 		$IP6 route flush table $id
 		$IP6 route add table $id default $route_args dev $2
+		mwan3_rtmon_ipv6
 	fi
 }
 
@@ -409,7 +427,7 @@ mwan3_create_iface_rules()
 			$IP4 rule del pref $(($id+2000))
 		done
 
-		$IP4 rule add pref $(($id+1000)) iif $2 lookup main
+		$IP4 rule add pref $(($id+1000)) iif $2 lookup $id
 		$IP4 rule add pref $(($id+2000)) fwmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK lookup $id
 	fi
 
@@ -423,7 +441,7 @@ mwan3_create_iface_rules()
 			$IP6 rule del pref $(($id+2000))
 		done
 
-		$IP6 rule add pref $(($id+1000)) iif $2 lookup main
+		$IP6 rule add pref $(($id+1000)) iif $2 lookup $id
 		$IP6 rule add pref $(($id+2000)) fwmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK lookup $id
 	fi
 }
@@ -475,6 +493,16 @@ mwan3_delete_iface_ipset_entries()
 	done
 }
 
+mwan3_rtmon()
+{
+	pid="$(pgrep -f mwan3rtmon)"
+	if [ "${pid}" != "" ]; then
+		kill -USR1 "${pid}"
+	else
+		[ -x /usr/sbin/mwan3rtmon ] && /usr/sbin/mwan3rtmon &
+	fi
+}
+
 mwan3_track()
 {
 	local track_ip track_ips pid
@@ -507,13 +535,14 @@ mwan3_track_signal()
 
 mwan3_set_policy()
 {
-	local iface_count id iface family metric probability weight
+	local iface_count id iface family metric probability weight device
 
 	config_get iface $1 interface
 	config_get metric $1 metric 1
 	config_get weight $1 weight 1
 
 	[ -n "$iface" ] || return 0
+	network_get_device device $iface
 	[ "$metric" -gt $DEFAULT_LOWEST_METRIC ] && $LOG warn "Member interface $iface has >$DEFAULT_LOWEST_METRIC metric. Not appending to policy" && return 0
 
 	mwan3_get_iface_id id $iface
@@ -552,6 +581,11 @@ mwan3_set_policy()
 
 				$IPT4 -I mwan3_policy_$policy -m mark --mark 0x0/$MMX_MASK $probability -m comment --comment "$iface $weight $total_weight_v4" -j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
 			fi
+		else
+			[ -n "$device" ] && {
+				$IPT4 -S mwan3_policy_$policy | grep -q '.*--comment ".* [0-9]* [0-9]*"' || \
+					$IPT4 -I mwan3_policy_$policy -o $device -m mark --mark 0x0/$MMX_MASK -m comment --comment "out $iface $device" -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
+			}
 		fi
 	fi
 
@@ -585,6 +619,11 @@ mwan3_set_policy()
 
 				$IPT6 -I mwan3_policy_$policy -m mark --mark 0x0/$MMX_MASK $probability -m comment --comment "$iface $weight $total_weight_v6" -j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
 			fi
+		else
+			[ -n "$device" ] && {
+				$IPT6 -S mwan3_policy_$policy | grep -q '.*--comment ".* [0-9]* [0-9]*"' || \
+					$IPT6 -I mwan3_policy_$policy -o $device -m mark --mark 0x0/$MMX_MASK -m comment --comment "out $iface $device" -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
+			}
 		fi
 	fi
 }
@@ -649,7 +688,7 @@ mwan3_set_sticky_iptables()
 			[ -n "$id" ] || return 0
 
 			for IPT in "$IPT4" "$IPT6"; do
-				if [ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" -a -n "$($IPT -S mwan3_iface_out_$1 2> /dev/null)" ]; then
+				if [ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ]; then
 					$IPT -I mwan3_rule_$rule -m mark --mark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK -m set ! --match-set mwan3_sticky_$rule src,src -j MARK --set-xmark 0x0/$MMX_MASK
 					$IPT -I mwan3_rule_$rule -m mark --mark 0/$MMX_MASK -j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
 				fi
@@ -822,9 +861,9 @@ mwan3_report_iface_status()
 
 	if [ -z "$id" -o -z "$device" ]; then
 		result="unknown"
-	elif [ -n "$($IP rule | awk '$1 == "'$(($id+1000)):'"')" -a -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" -a -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" -a -n "$($IPT -S mwan3_iface_out_$1 2> /dev/null)" -a -n "$($IP route list table $id default dev $device 2> /dev/null)" ]; then
+	elif [ -n "$($IP rule | awk '$1 == "'$(($id+1000)):'"')" -a -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" -a -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" -a -n "$($IP route list table $id default dev $device 2> /dev/null)" ]; then
 		result="$(mwan3_get_iface_hotplug_state $1)"
-	elif [ -n "$($IP rule | awk '$1 == "'$(($id+1000)):'"')" -o -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" -o -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" -o -n "$($IPT -S mwan3_iface_out_$1 2> /dev/null)" -o -n "$($IP route list table $id default dev $device 2> /dev/null)" ]; then
+	elif [ -n "$($IP rule | awk '$1 == "'$(($id+1000)):'"')" -o -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" -o -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" -o -n "$($IP route list table $id default dev $device 2> /dev/null)" ]; then
 		result="error"
 	elif [ "$enabled" == "1" ]; then
 		result="offline"
@@ -858,16 +897,16 @@ mwan3_report_policies_v4()
 	for policy in $($IPT4 -S | awk '{print $2}' | grep mwan3_policy_ | sort -u); do
 		echo "$policy:" | sed 's/mwan3_policy_//'
 
-		[ -n "$total_weight" ] || total_weight=$($IPT4 -S $policy | cut -s -d'"' -f2 | head -1 | awk '{print $3}')
+		[ -n "$total_weight" ] || total_weight=$($IPT4 -S $policy | grep -v '.*--comment "out .*" .*$' | cut -s -d'"' -f2 | head -1 | awk '{print $3}')
 
 		if [ ! -z "${total_weight##*[!0-9]*}" ]; then
-			for iface in $($IPT4 -S $policy | cut -s -d'"' -f2 | awk '{print $1}'); do
-				weight=$($IPT4 -S $policy | cut -s -d'"' -f2 | awk '$1 == "'$iface'"' | awk '{print $2}')
+			for iface in $($IPT4 -S $policy | grep -v '.*--comment "out .*" .*$' | cut -s -d'"' -f2 | awk '{print $1}'); do
+				weight=$($IPT4 -S $policy | grep -v '.*--comment "out .*" .*$' | cut -s -d'"' -f2 | awk '$1 == "'$iface'"' | awk '{print $2}')
 				percent=$(($weight*100/$total_weight))
 				echo " $iface ($percent%)"
 			done
 		else
-			echo " $($IPT4 -S $policy | sed '/.*--comment \([^ ]*\) .*$/!d;s//\1/;q')"
+			echo " $($IPT4 -S $policy | grep -v '.*--comment "out .*" .*$' | sed '/.*--comment \([^ ]*\) .*$/!d;s//\1/;q')"
 		fi
 
 		unset total_weight
@@ -883,16 +922,16 @@ mwan3_report_policies_v6()
 	for policy in $($IPT6 -S | awk '{print $2}' | grep mwan3_policy_ | sort -u); do
 		echo "$policy:" | sed 's/mwan3_policy_//'
 
-		[ -n "$total_weight" ] || total_weight=$($IPT6 -S $policy | cut -s -d'"' -f2 | head -1 | awk '{print $3}')
+		[ -n "$total_weight" ] || total_weight=$($IPT6 -S $policy | grep -v '.*--comment "out .*" .*$' | cut -s -d'"' -f2 | head -1 | awk '{print $3}')
 
 		if [ ! -z "${total_weight##*[!0-9]*}" ]; then
-			for iface in $($IPT6 -S $policy | cut -s -d'"' -f2 | awk '{print $1}'); do
-				weight=$($IPT6 -S $policy | cut -s -d'"' -f2 | awk '$1 == "'$iface'"' | awk '{print $2}')
+			for iface in $($IPT6 -S $policy | grep -v '.*--comment "out .*" .*$' | cut -s -d'"' -f2 | awk '{print $1}'); do
+				weight=$($IPT6 -S $policy | grep -v '.*--comment "out .*" .*$' | cut -s -d'"' -f2 | awk '$1 == "'$iface'"' | awk '{print $2}')
 				percent=$(($weight*100/$total_weight))
 				echo " $iface ($percent%)"
 			done
 		else
-			echo " $($IPT6 -S $policy | sed '/.*--comment \([^ ]*\) .*$/!d;s//\1/;q')"
+			echo " $($IPT6 -S $policy | grep -v '.*--comment "out .*" .*$' | sed '/.*--comment \([^ ]*\) .*$/!d;s//\1/;q')"
 		fi
 
 		unset total_weight

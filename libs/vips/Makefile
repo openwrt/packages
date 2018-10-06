@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vips
-PKG_VERSION:=8.6.1
-PKG_RELEASE:=2
+PKG_VERSION:=8.6.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/jcupitt/libvips/releases/download/v8.6.1/
-PKG_HASH:=f9ba6235ebc3e4d20af5f1604436bcd9686a3fecbe40838325d542f0c21a9270
+PKG_SOURCE_URL:=https://github.com/jcupitt/libvips/releases/download/v8.6.5/
+PKG_HASH:=8702af0e340e220e0c08f8ded6c8248b18e7043938d9e8a2426631fd37a9d5db
 PKG_FIXUP:=autoreconf
 PKG_CHECK_FORMAT_SECURITY:=0
 

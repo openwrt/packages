@@ -46,6 +46,12 @@ ifup()
 	local device enabled up l3_device
 
 	config_load mwan3
+	config_get_bool enabled globals 'enabled' 0
+	[ ${enabled} -gt 0 ] || {
+		echo "The service mwan3 is global disabled."
+		echo "Please execute \"/etc/init.d/mwan3 start\" first."
+		exit 1
+	}
 
 	if [ -z "$1" ]; then
 		echo "Expecting interface. Usage: mwan3 ifup <interface>" && exit 0
@@ -123,12 +129,7 @@ start()
 {
 	local enabled src_ip local_source
 
-	config_load mwan3
-	config_get_bool enabled globals 'enabled' 0
-	[ ${enabled} -gt 0 ] || {
-		echo "Warning: mwan3 is global disabled. Usage: /etc/init.d/mwan3 start"
-		exit 0
-	}
+	uci_toggle_state mwan3 globals enabled "1"
 
 	config_get local_source globals local_source 'none'
 	[ "${local_source}" = "none" ] || {
@@ -154,6 +155,12 @@ start()
 stop()
 {
 	local ipset route rule table IP IPT pid src_ip
+
+	for pid in $(pgrep -f "mwan3rtmon"); do
+		kill -TERM "$pid" > /dev/null 2>&1
+		sleep 1
+		kill -KILL "$pid" > /dev/null 2>&1
+	done
 
 	for pid in $(pgrep -f "mwan3track"); do
 		kill -TERM "$pid" > /dev/null 2>&1
@@ -205,6 +212,8 @@ stop()
 		ip route del default via "${src_ip}" dev lo 1>/dev/null 2>&1
 		ip addr del "${src_ip}/32" dev lo 1>/dev/null 2>&1
 	}
+
+	uci_toggle_state mwan3 globals enabled "0"
 }
 
 restart() {
