@@ -12,7 +12,7 @@ PKG_VERSION:=1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://download.flashrom.org/releases
+PKG_SOURCE_URL:=https://download.flashrom.org/releases
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_HASH:=3702fa215ba5fb5af8e54c852d239899cfa1389194c1e51cb2a170c4dc9dee64
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
@@ -37,7 +37,7 @@ define Package/flashrom/default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=FlashROM Utility
-  URL:=http://www.flashrom.org/
+  URL:=https://www.flashrom.org/
 endef
 
 define Package/flashrom

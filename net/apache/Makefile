@@ -40,7 +40,7 @@ define Package/apache/Default
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=The Apache Web Server
-  URL:=http://httpd.apache.org/
+  URL:=https://httpd.apache.org/
 endef
 
 define Package/apache/Default/description

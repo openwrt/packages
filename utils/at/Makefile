@@ -26,7 +26,7 @@ define Package/at
   CATEGORY:=Utilities
   DEPENDS:=+libelf1
   TITLE:=Delayed job execution and batch processing
-  URL:=http://packages.debian.org/stable/at
+  URL:=https://packages.debian.org/stable/at
 endef
 
 define Package/at/description

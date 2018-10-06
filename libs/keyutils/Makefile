@@ -10,7 +10,7 @@ PKG_VERSION:=1.5.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://people.redhat.com/dhowells/keyutils/
+PKG_SOURCE_URL:=https://people.redhat.com/dhowells/keyutils/
 PKG_HASH:=115c3deae7f181778fd0e0ffaa2dad1bf1fe2f5677cf2e0e348cdb7a1c93afb6
 
 PKG_FIXUP:=libtool
@@ -21,7 +21,7 @@ define Package/libkeyutils
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Key utilities library
-  URL:=http://people.redhat.com/dhowells/keyutils/
+  URL:=https://people.redhat.com/dhowells/keyutils/
 endef
 
 define Package/keyutils/description

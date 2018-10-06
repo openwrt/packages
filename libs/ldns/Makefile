@@ -12,7 +12,7 @@ PKG_VERSION:=1.7.0
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.nlnetlabs.nl/downloads/ldns
+PKG_SOURCE_URL:=https://www.nlnetlabs.nl/downloads/ldns
 PKG_HASH:=c19f5b1b4fb374cfe34f4845ea11b1e0551ddc67803bd6ddd5d2a20f0997a6cc
 
 PKG_LICENSE:=BSD-3-Clause
@@ -25,7 +25,7 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libldns/Default
-  URL:=http://www.nlnetlabs.nl/projects/ldns/
+  URL:=https://www.nlnetlabs.nl/projects/ldns/
   DEPENDS:=+libopenssl
 endef
 

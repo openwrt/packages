@@ -9,7 +9,7 @@ PKG_VERSION:=1.7.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.freedesktop.org/software/libinput/
+PKG_SOURCE_URL:=https://www.freedesktop.org/software/libinput/
 PKG_HASH:=096d612d2711f0caa2de544976ff3729e6233511ab373808644cc2dd5affcb1d
 
 PKG_LICENSE:=MIT
@@ -29,7 +29,7 @@ define Package/libinput
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=a library to handle input devices
-  URL:=http://freedesktop.org/wiki/Software/libinput/
+  URL:=https://freedesktop.org/wiki/Software/libinput/
   DEPENDS:=+libevdev +mtdev +libudev-fbsd
 endef
 

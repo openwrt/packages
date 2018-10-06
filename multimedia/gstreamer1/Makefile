@@ -19,7 +19,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/gstreamer-$(PKG_VERSION)
 PKG_SOURCE:=gstreamer-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gstreamer/
+PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gstreamer/
 PKG_HASH:=4bd6127299f3f29379046bbd58a526e6353b569e0e72f7b4df2ae70df6882e09
 
 PKG_FIXUP:=autoreconf
@@ -34,7 +34,7 @@ define Package/gstreamer1/Default
   CATEGORY:=Multimedia
   SECTION:=multimedia
   TITLE:=GStreamer
-  URL:=http://gstreamer.freedesktop.org/
+  URL:=https://gstreamer.freedesktop.org/
   DEPENDS:= $(ICONV_DEPENDS) $(INTL_DEPENDS)
 endef
 

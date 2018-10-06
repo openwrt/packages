@@ -31,7 +31,7 @@ define Package/libsoup
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=libsoup
-  URL:=http://live.gnome.org/LibSoup
+  URL:=https://live.gnome.org/LibSoup
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
   DEPENDS:=+glib2 +libxml2 +libgnutls +libsqlite3 +libpsl $(ICONV_DEPENDS) $(INTL_DEPENDS)
 endef

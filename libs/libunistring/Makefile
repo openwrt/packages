@@ -27,7 +27,7 @@ define Package/libunistring
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=libunistring
-  URL:=http://www.gnu.org/software/libunistring/
+  URL:=https://www.gnu.org/software/libunistring/
 endef
 
 define Package/libunistring/description

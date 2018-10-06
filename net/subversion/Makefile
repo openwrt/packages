@@ -32,7 +32,7 @@ define Package/subversion/Default
   TITLE:=A compelling replacement for CVS
   DEPENDS:=+zlib +libsqlite3 +PACKAGE_unixodbc:unixodbc +libapr +libaprutil +libmagic \
   	$(ICONV_DEPENDS) $(INTL_DEPENDS)
-  URL:=http://subversion.apache.org/
+  URL:=https://subversion.apache.org/
 endef
 
 define Package/subversion/Default/description

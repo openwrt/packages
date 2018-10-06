@@ -27,7 +27,7 @@ define Package/hdparm
   CATEGORY:=Utilities
   SUBMENU:=Disc
   TITLE:=Hard disk drive configuration utilitity
-  URL:=http://sourceforge.net/projects/hdparm/
+  URL:=https://sourceforge.net/projects/hdparm/
 endef
 
 define Package/hdparm/description

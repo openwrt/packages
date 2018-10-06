@@ -26,7 +26,7 @@ define Package/diffutils
   CATEGORY:=Development
   DEPENDS:=+USE_GLIBC:librt
   TITLE:=diffutils
-  URL:=http://www.gnu.org/software/diffutils/
+  URL:=https://www.gnu.org/software/diffutils/
 endef
 
 define Package/diffutils/description

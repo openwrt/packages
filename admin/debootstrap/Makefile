@@ -27,7 +27,7 @@ define Package/debootstrap
   SECTION:=admin
   CATEGORY:=Administration
   TITLE:=Bootstrap a basic Debian system
-  URL:=http://wiki.debian.org/Debootstrap
+  URL:=https://wiki.debian.org/Debootstrap
   DEPENDS:= +coreutils +coreutils-chroot +coreutils-sha1sum +ar +xz
 endef
 

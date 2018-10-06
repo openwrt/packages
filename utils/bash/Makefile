@@ -29,7 +29,7 @@ define Package/bash
   SUBMENU:=Shells
   TITLE:=The GNU Bourne Again SHell
   DEPENDS:=+libncurses +libreadline
-  URL:=http://www.gnu.org/software/bash/
+  URL:=https://www.gnu.org/software/bash/
 endef
 
 define Package/bash/description

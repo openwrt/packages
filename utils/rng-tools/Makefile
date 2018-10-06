@@ -27,7 +27,7 @@ define Package/rng-tools
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Daemon for adding entropy to kernel entropy pool
-  URL:=http://sourceforge.net/projects/gkernel/
+  URL:=https://sourceforge.net/projects/gkernel/
 endef
 
 define Package/rng-tools/description

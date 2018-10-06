@@ -26,7 +26,7 @@ define Package/libpam
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=the Linux-PAM libraries and modules.
-  URL:=http://www.kernel.org/pub/linux/libs/pam
+  URL:=https://www.kernel.org/pub/linux/libs/pam
 endef
 
 define Package/libpam/description

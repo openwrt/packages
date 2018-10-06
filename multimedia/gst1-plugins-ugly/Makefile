@@ -19,7 +19,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-ugly-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-ugly-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-ugly/
+PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-ugly/
 PKG_HASH:=55e097d9d93921fdcf7abb0ff92d23b21dd9098e632f1ba433603b3bd1cf3d69
 
 PKG_CONFIG_DEPENDS:= \
@@ -38,7 +38,7 @@ define Package/gstreamer1-ugly/Default
   CATEGORY:=Multimedia
   SECTION:=multimedia
   TITLE:=GStreamer
-  URL:=http://gstreamer.freedesktop.org/
+  URL:=https://gstreamer.freedesktop.org/
   DEPENDS:= +libgstreamer1 $(ICONV_DEPENDS)
 endef
 

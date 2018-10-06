@@ -25,7 +25,7 @@ define Package/django-appconf
   CATEGORY:=Languages
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
   TITLE:=A helper class for handling configuration defaults of packaged apps gracefully.
-  URL:=http://django-appconf.readthedocs.org/
+  URL:=https://django-appconf.readthedocs.org/
   DEPENDS:=+python +django
 endef
 

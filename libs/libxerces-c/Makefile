@@ -41,7 +41,7 @@ define Package/libxerces-c
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Validating XML parser library for C++
-  URL:=http://xerces.apache.org/
+  URL:=https://xerces.apache.org/
   DEPENDS:=$(CXX_DEPENDS) $(ICONV_DEPENDS) +libc +libpthread
 endef
 
@@ -49,7 +49,7 @@ define Package/libxerces-c-samples
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Validating XML parser library for C++ (samples)
-  URL:=http://xerces.apache.org/
+  URL:=https://xerces.apache.org/
   DEPENDS:=+libxerces-c
 endef
 

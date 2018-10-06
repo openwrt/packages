@@ -27,7 +27,7 @@ define Package/vim/Default
   CATEGORY:=Utilities
   DEPENDS:=+libncurses
   TITLE:=Vi IMproved - enhanced vi editor
-  URL:=http://www.vim.org/
+  URL:=https://www.vim.org/
   SUBMENU:=Editors
 endef
 
@@ -61,7 +61,7 @@ define Package/xxd
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=make a hexdump or do the reverse
-  URL:=http://www.vim.org/
+  URL:=https://www.vim.org/
 endef
 
 define Package/vim-full/conffiles

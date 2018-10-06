@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://dist.libuv.org/dist/v$(PKG_VERSION)/
+PKG_SOURCE_URL:=https://dist.libuv.org/dist/v$(PKG_VERSION)/
 PKG_HASH:=3bb7aad916c7a5fd0053dcb6adee49905360a2a160f4a59bc62dbe4370328579
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)

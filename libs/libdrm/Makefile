@@ -9,7 +9,7 @@ PKG_NAME:=libdrm
 PKG_VERSION:=2.4.70
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://dri.freedesktop.org/libdrm
+PKG_SOURCE_URL:=https://dri.freedesktop.org/libdrm
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_HASH:=b17d4b39ed97ca0e4cffa0db06ff609e617bac94646ec38e8e0579d530540e7b
 
@@ -22,7 +22,7 @@ define Package/libdrm
   CATEGORY:=Libraries
   DEPENDS:=
   TITLE:=libdrm
-  URL:=http://dri.freedesktop.org/
+  URL:=https://dri.freedesktop.org/
 endef
 
 CONFIGURE_ARGS += \

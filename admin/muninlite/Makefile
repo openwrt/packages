@@ -24,7 +24,7 @@ define Package/muninlite
   CATEGORY:=Administration
   DEPENDS:=+xinetd
   TITLE:=Munin node implemented in shell
-  URL:=http://sourceforge.net/projects/muninlite/
+  URL:=https://sourceforge.net/projects/muninlite/
   PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 endef
 

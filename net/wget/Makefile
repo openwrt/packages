@@ -28,7 +28,7 @@ define Package/wget/Default
   DEPENDS:=+libpcre +zlib
   SUBMENU:=File Transfer
   TITLE:=Non-interactive network downloader
-  URL:=http://www.gnu.org/software/wget/index.html
+  URL:=https://www.gnu.org/software/wget/index.html
 endef
 
 define Package/wget/Default/description

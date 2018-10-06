@@ -36,7 +36,7 @@ define Package/python-cffi/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=http://cffi.readthedocs.org/
+  URL:=https://cffi.readthedocs.org/
   DEPENDS:=+libffi
 endef
 

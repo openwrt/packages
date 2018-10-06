@@ -32,7 +32,7 @@ define Package/madplay/default
   DEPENDS:=+libid3tag +libmad $(INTL_DEPENDS) $(2)
   TITLE:=MPEG audio player in fixed point - $(1)
   VARIANT:=$(1)
-  URL:=http://sourceforge.net/projects/mad
+  URL:=https://sourceforge.net/projects/mad
 endef
 
 Package/madplay-alsa=$(call Package/madplay/default,alsa,+alsa-lib)

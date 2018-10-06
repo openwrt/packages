@@ -28,7 +28,7 @@ define Package/libnetfilter-acct
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=API to extended accounting infrastructure
-  URL:=http://www.netfilter.org/projects/libnetfilter_acct/
+  URL:=https://www.netfilter.org/projects/libnetfilter_acct/
   DEPENDS:=+libmnl
 endef
 

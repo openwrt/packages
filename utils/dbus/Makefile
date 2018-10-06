@@ -27,7 +27,7 @@ define Package/dbus/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Simple interprocess messaging system
-  URL:=http://dbus.freedesktop.org/
+  URL:=https://dbus.freedesktop.org/
 endef
 
 define Package/dbus/Default/description

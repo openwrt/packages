@@ -26,7 +26,7 @@ define Package/django-compressor
   CATEGORY:=Languages
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
   TITLE:=Compresses linked and inline JavaScript or CSS into single cached files.
-  URL:=http://django-compressor.readthedocs.org/
+  URL:=https://django-compressor.readthedocs.org/
   DEPENDS:=+python +django
 endef
 

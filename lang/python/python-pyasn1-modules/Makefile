@@ -31,7 +31,7 @@ define Package/python-pyasn1-modules/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=http://sourceforge.net/projects/pyasn1/
+  URL:=https://sourceforge.net/projects/pyasn1/
 endef
 
 define Package/python-pyasn1-modules

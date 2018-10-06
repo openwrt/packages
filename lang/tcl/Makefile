@@ -32,7 +32,7 @@ define Package/tcl
   CATEGORY:=Languages
   DEPENDS:=+libpthread @BROKEN
   TITLE:=The Tcl language
-  URL:=http://www.tcl.tk/
+  URL:=https://www.tcl.tk/
 endef
 
 define Package/tcl/description

@@ -27,7 +27,7 @@ define Package/libcap
   TITLE:=Linux capabilities library
   SECTION:=libs
   CATEGORY:=Libraries
-  URL:=http://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/
+  URL:=https://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/
 endef
 
 define Package/libcap/config

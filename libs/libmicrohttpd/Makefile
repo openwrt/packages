@@ -31,7 +31,7 @@ define Package/libmicrohttpd/Default
    SECTION:=libs
    CATEGORY:=Libraries
    TITLE:=GNU libmicrohttpd is a library that runs an HTTP server.
-   URL:=http://www.gnu.org/software/libmicrohttpd/
+   URL:=https://www.gnu.org/software/libmicrohttpd/
 endef
 
 define Package/libmicrohttpd

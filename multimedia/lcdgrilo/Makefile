@@ -31,7 +31,7 @@ define Package/lcdgrilo
   CATEGORY:=Multimedia
   DEPENDS:=+grilo +grilo-plugins +libgee +libgstreamer1
   TITLE:=lcdgrilo
-  URL:=http://www.flyn.org/projects/lcdgrilo/
+  URL:=https://www.flyn.org/projects/lcdgrilo/
 endef
 
 define Package/lcdgrilo/decription

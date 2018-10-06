@@ -28,7 +28,7 @@ define Package/hplip/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=HP Linux Imaging and Printing
-  URL:=http://sourceforge.net/projects/hplip/
+  URL:=https://sourceforge.net/projects/hplip/
 endef
 
 define Package/hplip/Default/description

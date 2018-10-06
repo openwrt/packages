@@ -38,7 +38,7 @@ define Package/nmap/default
   SUBMENU:=NMAP Suite
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://nmap.org/
+  URL:=https://nmap.org/
 endef
 
 define Package/nmap

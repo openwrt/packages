@@ -12,7 +12,7 @@ PKG_VERSION:=4.1.13
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.nlnetlabs.nl/downloads/nsd
+PKG_SOURCE_URL:=https://www.nlnetlabs.nl/downloads/nsd
 PKG_HASH:=c45cd4ba2101a027e133b2be44db9378e27602e05f09a5ef25019e1ae45291af
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -28,7 +28,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/nsd/default
   TITLE:=NSD Name Server Daemon
-  URL:=http://www.nlnetlabs.nl/projects/nsd/
+  URL:=https://www.nlnetlabs.nl/projects/nsd/
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names

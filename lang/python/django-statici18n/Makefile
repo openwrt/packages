@@ -25,7 +25,7 @@ define Package/django-statici18n
   CATEGORY:=Languages
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
   TITLE:=A Django app that provides helper for generating JavaScript catalog to static files.
-  URL:=http://django-statici18n.readthedocs.org/
+  URL:=https://django-statici18n.readthedocs.org/
   DEPENDS:=+python +django
 endef
 

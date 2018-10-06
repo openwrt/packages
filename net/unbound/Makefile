@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Eric Luehrsen <ericluehrsen@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.unbound.net/downloads
+PKG_SOURCE_URL:=https://www.unbound.net/downloads
 PKG_HASH:=78f79d6d3b643fdcd74a14fc76542250da886c82f82bc55b51e189663d61b83f
 
 PKG_BUILD_PARALLEL:=1
@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/unbound/Default
   TITLE:=Validating Recursive DNS Server
-  URL:=http://www.unbound.net/
+  URL:=https://www.unbound.net/
   DEPENDS:=+libopenssl
 endef
 

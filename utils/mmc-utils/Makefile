@@ -29,7 +29,7 @@ define Package/mmc-utils
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Userspace tools for MMC/SD devices
-  URL:=http://git.kernel.org/cgit/linux/kernel/git/cjb/mmc-utils.git
+  URL:=https://git.kernel.org/cgit/linux/kernel/git/cjb/mmc-utils.git
 endef
 
 define Package/mmc-utils/description

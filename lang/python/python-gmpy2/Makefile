@@ -31,7 +31,7 @@ define Package/python-gmpy2/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=http://code.google.com/p/gmpy/
+  URL:=https://code.google.com/p/gmpy/
 endef
 
 define Package/python-gmpy2

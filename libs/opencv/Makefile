@@ -13,7 +13,7 @@ PKG_VERSION:=3.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).zip
-PKG_SOURCE_URL:=http://sourceforge.net/projects/opencvlibrary/files/opencv-unix/$(PKG_VERSION)/
+PKG_SOURCE_URL:=https://sourceforge.net/projects/opencvlibrary/files/opencv-unix/$(PKG_VERSION)/
 PKG_HASH:=1f6990249fdb82804fff40e96fa6d99949023ab0e3277eae4bd459b374e622a4
 
 PKG_LICENSE:=BSD-3-Clause

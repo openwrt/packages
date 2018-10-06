@@ -27,7 +27,7 @@ define Package/lsof
   CATEGORY:=Utilities
   DEPENDS:=+libtirpc
   TITLE:=LiSt Open Files - a diagnostic tool
-  URL:=http://people.freebsd.org/~abe/
+  URL:=https://people.freebsd.org/~abe/
 endef
 
 ifneq ($(CONFIG_IPV6),n)

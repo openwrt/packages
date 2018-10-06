@@ -29,7 +29,7 @@ define Package/yajl
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Yet Another JSON Library
-  URL:=http://lloyd.github.io/yajl
+  URL:=https://lloyd.github.io/yajl
 endef
 
 define Package/yajl/description

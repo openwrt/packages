@@ -27,7 +27,7 @@ define Package/libopus
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=OPUS Audio Codec
-  URL:=http://opus-codec.org/
+  URL:=https://opus-codec.org/
 endef
 
 define Package/libopus/description

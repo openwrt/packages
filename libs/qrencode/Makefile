@@ -12,7 +12,7 @@ PKG_VERSION:=4.0.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://fukuchi.org/works/qrencode/
+PKG_SOURCE_URL:=https://fukuchi.org/works/qrencode/
 PKG_HASH:=c90035e16921117d4086a7fdee65aab85be32beb4a376f6b664b8a425d327d0b
 PKG_MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>
 PKG_LICENSE:=LGPL-2.1+
@@ -25,7 +25,7 @@ define Package/libqrencode
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Library for encoding data in a QR Code symbol
-  URL:=http://fukuchi.org/works/qrencode/
+  URL:=https://fukuchi.org/works/qrencode/
 endef
 
 define Package/libqrencode/description
@@ -39,7 +39,7 @@ define Package/qrencode
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=qrencode binary for producing qr codes
-  URL:=http://fukuchi.org/works/qrencode/
+  URL:=https://fukuchi.org/works/qrencode/
   DEPENDS:=+libqrencode
 endef
 

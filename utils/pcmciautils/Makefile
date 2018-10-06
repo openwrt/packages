@@ -26,7 +26,7 @@ define Package/pcmciautils
   CATEGORY:=Utilities
   DEPENDS:=+libsysfs @PCMCIA_SUPPORT
   TITLE:=PCMCIA Utilities
-  URL:=http://www.kernel.org/pub/linux/utils/kernel/pcmcia/pcmcia.html
+  URL:=https://www.kernel.org/pub/linux/utils/kernel/pcmcia/pcmcia.html
 endef
 
 define Build/Compile

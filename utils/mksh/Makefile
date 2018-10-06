@@ -17,7 +17,7 @@ PKG_MAINTAINER:=Thorsten Glaser <tg@mirbsd.org>, \
 PKG_LICENSE:=MirOS
 
 PKG_SOURCE:=$(PKG_NAME)-R$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://www.mirbsd.org/MirOS/dist/mir/mksh \
+PKG_SOURCE_URL:=https://www.mirbsd.org/MirOS/dist/mir/mksh \
 		http://pub.allbsd.org/MirOS/dist/mir/mksh
 PKG_HASH:=dd86ebc421215a7b44095dc13b056921ba81e61b9f6f4cdab08ca135d02afb77
 

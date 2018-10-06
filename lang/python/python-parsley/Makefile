@@ -31,7 +31,7 @@ define Package/python-parsley/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=http://launchpad.net/parsley
+  URL:=https://launchpad.net/parsley
 endef
 
 define Package/python-parsley

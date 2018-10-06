@@ -13,7 +13,7 @@ PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_HASH:=c3c7dc8201f40625bba92ffd32eb602a8909210d8b3fac4d214c737ce079bf24
-PKG_SOURCE_URL:=http://download.strongswan.org/ http://download2.strongswan.org/
+PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
 
@@ -111,7 +111,7 @@ define Package/strongswan/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=StrongSwan
-  URL:=http://www.strongswan.org/
+  URL:=https://www.strongswan.org/
 endef
 
 define Package/strongswan/description/Default

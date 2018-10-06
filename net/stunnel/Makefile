@@ -35,7 +35,7 @@ define Package/stunnel
   CATEGORY:=Network
   DEPENDS:=+libopenssl +zlib +libpthread
   TITLE:=SSL TCP Wrapper
-  URL:=http://www.stunnel.org/
+  URL:=https://www.stunnel.org/
 endef
 
 define Package/stunnel/description

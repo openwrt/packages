@@ -28,7 +28,7 @@ define Package/libgcrypt
   CATEGORY:=Libraries
   DEPENDS:=+libgpg-error
   TITLE:=GNU crypto library
-  URL:=http://directory.fsf.org/security/libgcrypt.html
+  URL:=https://directory.fsf.org/security/libgcrypt.html
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 endef
 

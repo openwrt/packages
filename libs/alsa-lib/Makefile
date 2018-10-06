@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.alsa-project.org/pub/lib/ \
-		http://distfiles.gentoo.org/distfiles/
+		https://gentoo.osuosl.org/distfiles/
 
 PKG_HASH:=5f2cd274b272cae0d0d111e8a9e363f08783329157e8dd68b3de0c096de6d724
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \

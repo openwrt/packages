@@ -36,7 +36,7 @@ define Package/libtins
 	SECTION:=net
 	CATEGORY:=Libraries
 	TITLE:=libtins 
-	URL:=http://libtins.github.io/
+	URL:=https://libtins.github.io/
 	DEPENDS:=+libstdcpp +libpcap 
 endef
 

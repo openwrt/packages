@@ -26,7 +26,7 @@ define Package/classpath
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=GNU Classpath
-  URL:=http://www.gnu.org/software/classpath/
+  URL:=https://www.gnu.org/software/classpath/
   DEPENDS:=+alsa-lib +libgmp +libmagic
 endef
 
@@ -40,7 +40,7 @@ define Package/classpath-tools
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=GNU Classpath tools
-  URL:=http://www.gnu.org/software/classpath/
+  URL:=https://www.gnu.org/software/classpath/
 endef
 
 define Download/antlr

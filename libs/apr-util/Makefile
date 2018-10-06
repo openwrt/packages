@@ -30,7 +30,7 @@ define Package/libaprutil
   CATEGORY:=Libraries
   DEPENDS:=+libapr +libexpat +libsqlite3 +libuuid $(ICONV_DEPENDS)
   TITLE:=Apache Portable Runtime Utility Library
-  URL:=http://apr.apache.org/
+  URL:=https://apr.apache.org/
 endef
 
 TARGET_CFLAGS += $(FPIC)

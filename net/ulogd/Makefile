@@ -28,7 +28,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/ulogd/Default
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://www.netfilter.org/projects/ulogd/index.html
+  URL:=https://www.netfilter.org/projects/ulogd/index.html
 endef
 
 define Package/ulogd

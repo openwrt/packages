@@ -30,7 +30,7 @@ define Package/fossil
   CATEGORY:=Network
   SUBMENU:=Version Control Systems
   TITLE:=Simple distributed software configuration management
-  URL:=http://www.fossil-scm.org
+  URL:=https://www.fossil-scm.org/
   DEPENDS:=+zlib
 endef
 

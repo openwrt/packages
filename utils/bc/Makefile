@@ -24,7 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/bc/Default
   SECTION:=utils
   CATEGORY:=Utilities
-  URL:=http://packages.debian.org/bc
+  URL:=https://packages.debian.org/bc
 endef
 
 define Package/bc

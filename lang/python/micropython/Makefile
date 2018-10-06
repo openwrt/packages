@@ -32,7 +32,7 @@ define Package/micropython
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Micro Python
-  URL:=http://micropython.org
+  URL:=https://micropython.org/
   DEPENDS:=+libffi
 endef
 

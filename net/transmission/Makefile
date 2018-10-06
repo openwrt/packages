@@ -31,7 +31,7 @@ define Package/transmission/template
   SECTION:=net
   CATEGORY:=Network
   TITLE:=BitTorrent client
-  URL:=http://www.transmissionbt.com
+  URL:=https://www.transmissionbt.com/
   DEPENDS:=+libcurl +libevent2 +libminiupnpc +libnatpmp +libpthread +librt +zlib
 endef
 

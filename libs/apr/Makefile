@@ -29,7 +29,7 @@ define Package/libapr
   CATEGORY:=Libraries
   DEPENDS:=+libpthread +librt +libuuid
   TITLE:=Apache Portable Runtime Library
-  URL:=http://apr.apache.org/
+  URL:=https://apr.apache.org/
 endef
 
 TARGET_CFLAGS += $(FPIC)

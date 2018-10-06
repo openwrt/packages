@@ -20,7 +20,7 @@ define Package/syslog-ng
   CATEGORY:=Administration
   DEPENDS:=+libpcre +glib2 +libopenssl +libuuid +libcurl
   TITLE:=A powerful syslog daemon
-  URL:=http://www.balabit.com/network-security/syslog-ng/opensource-logging-system/
+  URL:=https://www.balabit.com/network-security/syslog-ng/opensource-logging-system/
 endef
 
 define Package/syslog-ng/description

@@ -27,7 +27,7 @@ define Package/lua-penlight
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Penlight
-  URL:=http://stevedonovan.github.io/Penlight/api/manual/01-introduction.md.html
+  URL:=https://stevedonovan.github.io/Penlight/api/manual/01-introduction.md.html
   DEPENDS:=+luafilesystem
   MAINTAINER:=Karl Palsson <karlp@etactica.com>
 endef

@@ -19,7 +19,7 @@ PKG_LICENSE_FILES:=COPYING.LIB COPYING
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-bad-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-bad/
+PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-bad/
 PKG_HASH:=34fab7da70994465a64468330b2168a4a0ed90a7de7e4c499b6d127c6c1b1eaf
 
 PKG_FIXUP:=autoreconf
@@ -35,7 +35,7 @@ define Package/gstreamer1-bad/Default
   CATEGORY:=Multimedia
   SECTION:=multimedia
   TITLE:=GStreamer
-  URL:=http://gstreamer.freedesktop.org/
+  URL:=https://gstreamer.freedesktop.org/
   DEPENDS:= +gst1-plugins-base +libgstreamer1 +libgst1pbutils $(ICONV_DEPENDS)
 endef
 

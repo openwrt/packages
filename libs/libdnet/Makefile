@@ -29,7 +29,7 @@ define Package/libdnet
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Low-level network library
-  URL:=http://sourceforge.net/projects/libdnet/
+  URL:=https://sourceforge.net/projects/libdnet/
 endef
 
 define Package/libdnet/description

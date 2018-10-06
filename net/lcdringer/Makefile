@@ -17,7 +17,7 @@ PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.flyn.org/projects/lcdringer
+PKG_SOURCE_URL:=https://www.flyn.org/projects/lcdringer
 PKG_HASH:=34f8a5325cb20bf404ac1a10fe63d013a077a12814c4558df4e55d95262ff618
 PKG_BUILD_DEPENDS:=vala
 
@@ -31,7 +31,7 @@ define Package/lcdringer
   CATEGORY:=Network
   DEPENDS:=+libgee +libgstreamer1 +loudmouth @TARGET_brcm2708
   TITLE:=lcdringer
-  URL:=http://www.flyn.org/projects/lcdringer/
+  URL:=https://www.flyn.org/projects/lcdringer/
 endef
 
 define Package/lcdringer/decription

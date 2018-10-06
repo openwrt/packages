@@ -12,7 +12,7 @@ PKG_VERSION:=576.30.4
 PKG_RELEASE:=2
 
 PKG_SOURCE:=mDNSResponder-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://opensource.apple.com/tarballs/mDNSResponder/
+PKG_SOURCE_URL:=https://opensource.apple.com/tarballs/mDNSResponder/
 PKG_HASH:=4737cb51378377e11d0edb7bcdd1bec79cbdaa7b27ea09c13e3006e58f8d92c0
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=Apache-2.0
@@ -32,7 +32,7 @@ define Package/mDNSResponder/Default
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
   TITLE:=mDNS
-  URL:=http://developer.apple.com/networking/bonjour/
+  URL:=https://developer.apple.com/networking/bonjour/
 endef
 
 define Package/mDNSResponder/Default/description

@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_VERSION).tar.gz
 PKG_HASH:=d9d14e88c6fb6d68de9ca0d1f9797477d82fc3aed613558f87ffbdbbc5ceb74a
-PKG_SOURCE_URL:=http://www.sqlite.org/2018/
+PKG_SOURCE_URL:=https://www.sqlite.org/2018/
 
 PKG_LICENSE:=PUBLICDOMAIN
 PKG_LICENSE_FILES:=
@@ -33,7 +33,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/sqlite3/Default
   SUBMENU:=database
   TITLE:=SQLite (v3.x) database engine
-  URL:=http://www.sqlite.org/
+  URL:=https://www.sqlite.org/
   MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 endef
 

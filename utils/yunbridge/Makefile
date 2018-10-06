@@ -25,7 +25,7 @@ define Package/yunbridge
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Arduino YUN bridge library
-  URL:=http://arduino.cc/
+  URL:=https://arduino.cc/
   DEPENDS:=+python
 endef
 

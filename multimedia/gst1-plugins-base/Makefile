@@ -19,7 +19,7 @@ PKG_LICENSE_FILES:=COPYING.LIB COPYING
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-base-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-base-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-base/
+PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-base/
 PKG_HASH:=a4b7e80ba869f599307449b17c9e00b5d1e94d3ba1d8a1a386b8770b2ef01c7c
 
 PKG_CONFIG_DEPENDS:= \
@@ -52,7 +52,7 @@ define Package/gstreamer1-base/Default
   CATEGORY:=Multimedia
   SECTION:=multimedia
   TITLE:=GStreamer
-  URL:=http://gstreamer.freedesktop.org/
+  URL:=https://gstreamer.freedesktop.org/
   DEPENDS:= +libgstreamer1 $(ICONV_DEPENDS)
 endef
 

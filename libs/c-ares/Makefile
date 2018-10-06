@@ -29,7 +29,7 @@ define Package/libcares
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Library for asyncronous DNS Requests (including name resolves)
-  URL:=http://c-ares.haxx.se/
+  URL:=https://c-ares.haxx.se/
   MAINTAINER:=Karl Palsson <karlp@etactica.com>
 endef
 

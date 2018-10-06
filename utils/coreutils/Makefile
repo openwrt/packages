@@ -48,7 +48,7 @@ define Package/coreutils/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=The GNU core utilities
-  URL:=http://www.gnu.org/software/coreutils/
+  URL:=https://www.gnu.org/software/coreutils/
 endef
 
 define Package/coreutils

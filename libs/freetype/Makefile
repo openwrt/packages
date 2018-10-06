@@ -30,7 +30,7 @@ define Package/libfreetype
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=A free, high-quality and portable font engine
-  URL:=http://www.freetype.org/
+  URL:=https://www.freetype.org/
   DEPENDS:=+zlib +libpng
 endef
 

@@ -14,7 +14,7 @@ PKG_HASH:=a3b0e5493b5cd209ab780ee54733667293d369e6b7052b4a7dab9dd0def46ac6
 
 PKG_NAME:=php7-pecl-mcrypt
 PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://pecl.php.net/get/
+PKG_SOURCE_URL:=https://pecl.php.net/get/
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 

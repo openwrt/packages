@@ -27,7 +27,7 @@ define Package/opus-tools
   CATEGORY:=Sound
   DEPENDS:=+libogg +libopus
   TITLE:=OPUS Codec tools
-  URL:=http://opus-codec.org/
+  URL:=https://opus-codec.org/
 endef
 
 define Package/opus-tools/description

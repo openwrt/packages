@@ -29,7 +29,7 @@ define Package/libogg
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=libogg
-  URL:=http://xiph.org/ogg/
+  URL:=https://xiph.org/ogg/
 endef
 
 define Package/libogg/description

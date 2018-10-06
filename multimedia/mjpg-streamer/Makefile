@@ -53,7 +53,7 @@ CAMBOZOLA:=cambozola-0.936.tar.gz
 # Using the OpenWrt mirror provides a stable version
 #      orig-URL:=http://www.andywilcock.com/code/cambozola
 define Download/cambozola
-  URL:=http://mirror2.openwrt.org/sources
+  URL:=https://mirror2.openwrt.org/sources
   FILE:=$(CAMBOZOLA)
   MD5SUM:=35c45188aa9635aef2b745c35c311396
 endef

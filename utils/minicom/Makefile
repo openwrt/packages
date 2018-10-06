@@ -29,7 +29,7 @@ define Package/minicom
   CATEGORY:=Utilities
   DEPENDS:=$(ICONV_DEPENDS) $(INTL_DEPENDS) +libncurses
   TITLE:=Terminal emulation program
-  URL:=http://alioth.debian.org/projects/minicom/
+  URL:=https://alioth.debian.org/projects/minicom/
   SUBMENU:=Terminal
 endef
 

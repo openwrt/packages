@@ -26,7 +26,7 @@ define Package/ssmtp
 	CATEGORY:=Mail
 	DEPENDS:=+libopenssl
 	TITLE:=A minimal and secure mail sender with ssl support
-	URL:=http://packages.debian.org/ssmtp
+	URL:=https://packages.debian.org/ssmtp
 endef
 
 define Package/ssmtp/description

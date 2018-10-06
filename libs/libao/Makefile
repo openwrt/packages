@@ -30,7 +30,7 @@ define Package/libao
   DEPENDS:=+alsa-lib
   CATEGORY:=Libraries
   TITLE:=A cross platform audio library
-  URL:=http://www.xiph.org/ao/
+  URL:=https://www.xiph.org/ao/
 endef
 
 define Package/libao/description

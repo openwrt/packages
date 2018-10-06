@@ -24,7 +24,7 @@ define Package/ipmitool
   CATEGORY:=Administration
   DEPENDS:=+libopenssl +libncurses +libreadline
   TITLE:=Command-line interface to IPMI-enabled devices
-  URL:=http://sourceforge.net/projects/ipmitool/
+  URL:=https://sourceforge.net/projects/ipmitool/
   MAINTAINER:=Alexander Couzens <lynxis@fe80.eu>
 endef
 

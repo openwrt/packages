@@ -27,7 +27,7 @@ define Package/git/Default
   CATEGORY:=Network
   SUBMENU:=Version Control Systems
   DEPENDS:=+libopenssl +libpthread +librt +zlib
-  URL:=http://git-scm.com
+  URL:=https://git-scm.com/
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 

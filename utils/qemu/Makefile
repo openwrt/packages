@@ -13,7 +13,7 @@ PKG_VERSION:=3.0.0
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_HASH:=8d7af64fe8bd5ea5c3bdf17131a8b858491bcce1ee3839425a6d91fb821b5713
-PKG_SOURCE_URL:=http://download.qemu.org/
+PKG_SOURCE_URL:=https://download.qemu.org/
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
@@ -48,7 +48,7 @@ define Package/qemu-ga
   CATEGORY:=Utilities
   SUBMENU:=Virtualization
   TITLE:=QEMU Guest Agent
-  URL:=http://www.qemu.org
+  URL:=https://www.qemu.org/
   DEPENDS:= +glib2 +virtio-console-helper $(CXX_DEPENDS) $(QEMU_DEPS_IN_GUEST)
 endef
 
@@ -71,7 +71,7 @@ define Package/qemu-blobs
   CATEGORY:=Utilities
   SUBMENU:=Virtualization
   TITLE:=QEMU blobs of BIOS, VGA BIOS and keymaps
-  URL:=http://www.qemu.org
+  URL:=https://www.qemu.org/
   DEPENDS:=$(QEMU_DEPS_IN_HOST)
 endef
 
@@ -85,7 +85,7 @@ define Package/qemu-bridge-helper
   CATEGORY:=Utilities
   SUBMENU:=Virtualization
   TITLE:=QEMU bridge helper
-  URL:=http://www.qemu.org
+  URL:=https://www.qemu.org/
   DEPENDS:=+glib2 $(CXX_DEPENDS) $(QEMU_DEPS_IN_HOST)
 endef
 
@@ -101,7 +101,7 @@ define Package/qemu-img
  CATEGORY:=Utilities
  SUBMENU:=Virtualization
  TITLE:=QEMU Image utility
- URL:=http://www.qemu.org
+ URL:=https://www.qemu.org/
  DEPENDS:=+glib2 $(CXX_DEPENDS) $(QEMU_DEPS_IN_HOST)
 endef
 
@@ -115,7 +115,7 @@ define Package/qemu-nbd
  CATEGORY:=Utilities
  SUBMENU:=Virtualization
  TITLE:=QEMU Network Block Device Utility
- URL:=http://www.qemu.org
+ URL:=https://www.qemu.org/
  DEPENDS:=+glib2 $(CXX_DEPENDS) $(QEMU_DEPS_IN_HOST) +kmod-nbd
 endef
 
@@ -150,7 +150,7 @@ define qemu-target
     CATEGORY:=Utilities
     SUBMENU:=Virtualization
     TITLE:=QEMU target $(1)
-    URL:=http://www.qemu.org
+    URL:=https://www.qemu.org/
     DEPENDS:= +glib2 +libpthread +zlib $(CXX_DEPENDS) $(QEMU_DEPS_IN_HOST) \
 	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +pixman +qemu-blobs)
   endef

@@ -23,7 +23,7 @@ define Package/patch
   SECTION:=devel
   CATEGORY:=Development
   TITLE:=patch
-  URL:=http://www.gnu.org/
+  URL:=https://www.gnu.org/
   MAINTAINER:=Russell Senior <russell@personaltelco.net>
 endef
 

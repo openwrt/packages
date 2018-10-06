@@ -12,7 +12,7 @@ PKG_VERSION:=1.15.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://nginx.org/download/
+PKG_SOURCE_URL:=https://nginx.org/download/
 PKG_HASH:=3324776c800d974ceae8797ab9102ca26a8c3656f5c6fb3f31f2cb1e719458e7
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
@@ -76,7 +76,7 @@ define Package/nginx/default
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=Nginx web server
-  URL:=http://nginx.org/
+  URL:=https://nginx.org/
   DEPENDS:=+NGINX_PCRE:libpcre +(NGINX_SSL||NGINX_HTTP_CACHE||NGINX_HTTP_AUTH_BASIC):libopenssl \
 	+NGINX_HTTP_GZIP:zlib +NGINX_LUA:liblua +libpthread +NGINX_DAV:libexpat
 endef
@@ -300,7 +300,7 @@ define Package/nginx-mod-luci/default
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=Support file for Nginx
-  URL:=http://nginx.org/
+  URL:=https://nginx.org/
   DEPENDS:=+uwsgi-cgi +uwsgi-cgi-luci-support
 endef
 

@@ -36,7 +36,7 @@ define Package/ddns-scripts
 endef
 # shown in LuCI package description
 define Package/ddns-scripts/description
-    Dynamic DNS Client scripts (with IPv6 support) - Info: http://wiki.openwrt.org/doc/howto/ddns.client
+    Dynamic DNS Client scripts (with IPv6 support) - Info: https://wiki.openwrt.org/doc/howto/ddns.client
 endef
 # shown in menuconfig <Help>
 define Package/ddns-scripts/config
@@ -50,7 +50,7 @@ define Package/ddns-scripts/config
 		  - log file support
 		  - support to run once
 		Version: $(PKG_VERSION)-$(PKG_RELEASE)
-		Info   : http://wiki.openwrt.org/doc/howto/ddns.client
+		Info   : https://wiki.openwrt.org/doc/howto/ddns.client
 endef
 
 ###### *************************************************************************

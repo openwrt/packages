@@ -31,7 +31,7 @@ define Package/giflib
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=GIF libraries
-  URL:=http://sourceforge.net/projects/giflib
+  URL:=https://sourceforge.net/projects/giflib
 endef
 
 define Package/giflib/description

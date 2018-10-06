@@ -12,7 +12,7 @@ PKG_VERSION:=0.9.12
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://prosody.im/downloads/source
+PKG_SOURCE_URL:=https://prosody.im/downloads/source
 PKG_HASH:=1a59a322b71928a21985522aa00d0eab3552208d7bf9ecb318542a1b2fee3e8d
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=MIT/X11
@@ -27,7 +27,7 @@ define Package/prosody
   SUBMENU:=Instant Messaging
   DEPENDS:=+luafilesystem +libidn +luaexpat +luasec +libopenssl +libidn +liblua 
   TITLE:=XMPP server
-  URL:=http://prosody.im/
+  URL:=https://prosody.im/
   USERID:=prosody=54:prosody=54
 endef
 

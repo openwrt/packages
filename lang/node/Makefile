@@ -11,7 +11,7 @@ PKG_NAME:=node
 PKG_VERSION:=v8.11.3
 PKG_RELEASE:=1
 PKG_SOURCE:=node-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://nodejs.org/dist/${PKG_VERSION}
+PKG_SOURCE_URL:=https://nodejs.org/dist/${PKG_VERSION}
 PKG_HASH:=577c751fdca91c46c60ffd8352e5b465881373bfdde212c17c3a3c1bd2616ee0
 
 HOST_BUILD_DEPENDS:=python/host
@@ -35,7 +35,7 @@ define Package/node
   CATEGORY:=Languages
   SUBMENU:=Node.js
   TITLE:=Node.js is a platform built on Chrome's JavaScript runtime
-  URL:=http://nodejs.org/
+  URL:=https://nodejs.org/
   DEPENDS:=@(HAS_FPU||KERNEL_MIPS_FPU_EMULATOR) +libstdcpp +libopenssl +zlib +USE_UCLIBC:libpthread +USE_UCLIBC:librt +NODEJS_ICU:icu
 endef
 
@@ -50,7 +50,7 @@ define Package/node-npm
   CATEGORY:=Languages
   SUBMENU:=Node.js
   TITLE:=NPM stands for Node Package Manager
-  URL:=http://npmjs.com/
+  URL:=https://npmjs.com/
   DEPENDS:=+node
 endef
 

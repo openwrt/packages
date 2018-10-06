@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_LICENSE:=LGPLv2.1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.kismetwireless.net/code
+PKG_SOURCE_URL:=https://www.kismetwireless.net/code
 PKG_HASH:=bdb21f153311f1ff3b16621bf0d6740f66369bf0982b0a289c9a12af8847e237
 
 include $(INCLUDE_DIR)/uclibc++.mk
@@ -26,7 +26,7 @@ define Package/kismet/Default
   TITLE:=Kismet
   MAINTAINER:=Jean-Michel lacroix <lacroix@lepine-lacroix.info>
   DEPENDS:= $(CXX_DEPENDS) +libnl
-  URL:=http://www.kismetwireless.net/
+  URL:=https://www.kismetwireless.net/
   SUBMENU:=wireless
 endef
 

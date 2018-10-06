@@ -72,7 +72,7 @@ define Package/klish-xml-files
   CATEGORY:=Utilities
   DEPENDS:=klish
   TITLE:=klish sample XML files
-  URL:=http://code.google.com/p/klish/
+  URL:=https://code.google.com/p/klish/
 endef
 
 define Package/klish-xml-files/description

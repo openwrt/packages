@@ -28,7 +28,7 @@ define Package/gperf
   CATEGORY:=Libraries
   TITLE:=GNU gperf
   BUILDONLY:=1
-  URL:=http://www.gnu.org/software/gperf
+  URL:=https://www.gnu.org/software/gperf
 endef
 
 define Package/gperf/description

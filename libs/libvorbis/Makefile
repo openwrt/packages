@@ -26,7 +26,7 @@ define Package/libvorbis
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=libvorbis
-  URL:=http://xiph.org/vorbis/
+  URL:=https://xiph.org/vorbis/
   DEPENDS:=+libogg
 endef
 

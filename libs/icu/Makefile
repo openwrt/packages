@@ -56,7 +56,7 @@ endef
 define Package/icu-full-data/description
   ICU makes use of a wide variety of data tables to provide many of its services. Examples include converter mapping tables, collation rules, transliteration rules, break iterator rules and dictionaries, and other locale data.
   This package contains the complete data library provided by ICU.
-  A custom data library can be generated at http://apps.icu-project.org/datacustom/
+  A custom data library can be generated at https://ssl.icu-project.org/datacustom/
 endef
 
 define Package/icu-data-tools

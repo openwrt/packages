@@ -31,7 +31,7 @@ define Package/clamav/Default
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=ClamAV
-  URL:=http://www.clamav.net/
+  URL:=https://www.clamav.net/
 endef
 
 define Package/clamav

@@ -33,7 +33,7 @@ define Package/lighttpd/Default
   SUBMENU:=Web Servers/Proxies
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://www.lighttpd.net/
+  URL:=https://www.lighttpd.net/
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 endef
 

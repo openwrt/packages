@@ -33,7 +33,7 @@ define Package/openssh/Default
 	DEPENDS:=+libopenssl +zlib
 	TITLE:=OpenSSH
 	MAINTAINER:=Peter Wagner <tripolar@gmx.at>
-	URL:=http://www.openssh.com/
+	URL:=https://www.openssh.com/
 	SUBMENU:=SSH
 	VARIANT:=without-pam
 endef

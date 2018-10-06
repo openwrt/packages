@@ -35,7 +35,7 @@ endef
 define Package/freeradius3/Default
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://freeradius.org/
+  URL:=https://freeradius.org/
   SUBMENU:=FreeRADIUS (version 3)
 endef
 

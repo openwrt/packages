@@ -29,7 +29,7 @@ define Package/lua-xavante
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Xavante Web Server
-  URL:=http://keplerproject.github.io/xavante/
+  URL:=https://keplerproject.github.io/xavante/
   DEPENDS:= +lua
 endef
 

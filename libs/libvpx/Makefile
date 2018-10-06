@@ -36,7 +36,7 @@ define Package/libvpx
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=libvpx
-  URL:=http://www.webmproject.org/
+  URL:=https://www.webmproject.org/
   DEPENDS:=+libpthread
   ABI_VERSION:=$(PKG_ABI_VERSION)
 endef

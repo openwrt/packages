@@ -11,7 +11,7 @@ PKG_VERSION:=8.15.2
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://artfiles.org/sendmail.org/pub/sendmail/ \
+PKG_SOURCE_URL:=https://artfiles.org/sendmail.org/pub/sendmail/ \
 ftp://ftp.cs.berkeley.edu/ucb/sendmail/ \
 http://www.netgull.com/sendmail/
 PKG_HASH:=24f94b5fd76705f15897a78932a5f2439a32b1a2fdc35769bb1a5f5d9b4db439

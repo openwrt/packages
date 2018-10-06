@@ -25,7 +25,7 @@ define Package/simplejson
   CATEGORY:=Languages
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
   TITLE:=Simple, fast, extensible JSON encoder/decoder for Python
-  URL:=http://simplejson.readthedocs.org/
+  URL:=https://simplejson.readthedocs.org/
   DEPENDS:=+python
 endef
 

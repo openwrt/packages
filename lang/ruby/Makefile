@@ -102,7 +102,7 @@ define Package/ruby/Default
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Ruby scripting language
-  URL:=http://www.ruby-lang.org/
+  URL:=https://www.ruby-lang.org/
 endef
 
 define Package/ruby/Default/description

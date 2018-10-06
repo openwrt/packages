@@ -29,7 +29,7 @@ define Package/dfu-programmer
   CATEGORY:=Utilities
   SUBMENU:=Microcontroller programming
   TITLE:=USB programmer for Atmel microcontrollers
-  URL:=http://dfu-programmer.github.io/
+  URL:=https://dfu-programmer.github.io/
   DEPENDS:=+libusb-1.0
 endef
 

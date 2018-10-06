@@ -30,7 +30,7 @@ include $(INCLUDE_DIR)/nls.mk
 
 define Package/libv4l/Default
   TITLE:=Video 4 Linux
-  URL:=http://www.linuxtv.org/
+  URL:=https://www.linuxtv.org/
 endef
 
 define Package/libv4l/Default/description

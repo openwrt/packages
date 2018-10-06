@@ -28,7 +28,7 @@ define Package/libgpg-error
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=GnuPG error handling helper library
-  URL:=http://www.gnupg.org/related_software/libgpg-error/
+  URL:=https://www.gnupg.org/related_software/libgpg-error/
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 endef
 

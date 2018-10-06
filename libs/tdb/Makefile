@@ -30,7 +30,7 @@ define Package/tdb
   CATEGORY:=Libraries
   TITLE:=Trivial Database
   DEPNEDS:=+libattr
-  URL:=http://sourceforge.net/projects/tdb/
+  URL:=https://sourceforge.net/projects/tdb/
   MAINTAINER:=Dmitry V. Zimin <pfzim@mail.ru>
 endef
 

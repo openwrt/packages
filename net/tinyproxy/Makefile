@@ -12,7 +12,7 @@ PKG_VERSION:=1.8.3
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://www.banu.com/pub/tinyproxy/1.8/
+PKG_SOURCE_URL:=https://www.banu.com/pub/tinyproxy/1.8/
 PKG_HASH:=be559b54eb4772a703ad35239d1cb59d32f7cf8a739966742622d57df88b896e
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 

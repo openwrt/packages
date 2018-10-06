@@ -31,7 +31,7 @@ define Package/libgdbm
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=GNU database manager
-  URL:=http://www.gnu.org/software/gdbm/
+  URL:=https://www.gnu.org/software/gdbm/
 endef
 
 define Package/libgdbm/description

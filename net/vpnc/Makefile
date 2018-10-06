@@ -13,7 +13,7 @@ PKG_VERSION:=0.5.3.r$(PKG_REV)
 PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://svn.unix-ag.uni-kl.de/vpnc/trunk/
+PKG_SOURCE_URL:=https://svn.unix-ag.uni-kl.de/vpnc/trunk/
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE_PROTO:=svn
@@ -39,7 +39,7 @@ define Package/vpnc
   CATEGORY:=Network
   DEPENDS:=+libgpg-error +libgcrypt +kmod-tun +VPNC_OPENSSL:libopenssl +VPNC_GNUTLS:libgnutls +vpnc-scripts +resolveip
   TITLE:=VPN client for Cisco EasyVPN
-  URL:=http://www.unix-ag.uni-kl.de/~massar/vpnc/
+  URL:=https://www.unix-ag.uni-kl.de/~massar/vpnc/
   SUBMENU:=VPN
 endef
 

@@ -20,7 +20,7 @@ PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.co
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_SOURCE_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)_$(PKG_SOURCE_VERSION)
 PKG_HASH:=7f6130bc3cf65f56a618888ce9d5ea704fa10b462be126ad053e80e553d6d8b7
-PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
+PKG_LICENSE:=Boost Software License <https://www.boost.org/users/license.html>
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 
 PKG_BUILD_PARALLEL:=1
@@ -33,7 +33,7 @@ define Package/boost/Default
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Boost C++ source library
-  URL:=http://www.boost.org
+  URL:=https://www.boost.org/
   DEPENDS:=+libstdcpp +libpthread +librt
 endef
 
@@ -85,7 +85,7 @@ This package provides the following run-time libraries:
  - wave
 
 There are many more header-only libraries supported by Boost.
-See more at http://www.boost.org/doc/libs/1_67_0/
+See more at https://www.boost.org/doc/libs/1_67_0/
 endef
 
 PKG_BUILD_DEPENDS:=boost/host PACKAGE_python:python PACKAGE_python3:python3

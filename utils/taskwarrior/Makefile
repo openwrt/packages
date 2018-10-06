@@ -31,7 +31,7 @@ define Package/taskwarrior
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=+libstdcpp +libuuid +libgnutls
-  URL:=http://taskwarrior.org/
+  URL:=https://taskwarrior.org/
 endef
 
 TARGET_LDFLAGS += -ldl

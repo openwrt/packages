@@ -12,7 +12,7 @@ PKG_NAME:=sane-backends
 PKG_VERSION:=1.0.27
 PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://fossies.org/linux/misc \
+PKG_SOURCE_URL:=https://fossies.org/linux/misc \
     https://alioth.debian.org/frs/download.php/file/4146/
 PKG_HASH:=293747bf37275c424ebb2c833f8588601a60b2f9653945d5a3194875355e36c9
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>

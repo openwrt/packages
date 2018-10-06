@@ -67,7 +67,7 @@ CONFIGURE_ARGS +=\
 	--with-libintl-prefix="$(INTL_PREFIX)" \
 	--with-os-name="OpenWrt Linux" \
 	--with-os-version="$(LINUX_VERSION)" \
-	--with-os-url="http://openwrt.org/" \
+	--with-os-url="https://openwrt.org/" \
 	--with-db-path="/var/run/minidlna" \
 	--with-log-path="/var/log" \
 

@@ -28,7 +28,7 @@ define Package/gnupg/Default
   SUBMENU:=Encryption
   DEPENDS:=+zlib +libncurses +libreadline
   TITLE:=GNU privacy guard - a free PGP replacement
-  URL:=http://www.gnupg.org/
+  URL:=https://www.gnupg.org/
 endef
 
 define Package/gnupg
