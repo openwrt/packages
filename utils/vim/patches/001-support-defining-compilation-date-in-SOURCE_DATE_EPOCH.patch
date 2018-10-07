@@ -54,9 +54,9 @@ index e287124..5a16797 100644
 +  AC_DEFINE_UNQUOTED(BUILD_DATE, ["$BUILD_DATE"])
 +fi
 +
- dnl Check for the flag that fails if stuff are missing.
- 
- AC_MSG_CHECKING(--enable-fail-if-missing argument)
+ dnl Check that the C99 features that Vim uses are supported:
+ if test x"$ac_cv_prog_cc_c99" != xno; then
+   dnl If the compiler doesn't explicitly support C99, then check
 diff --git a/src/version.c b/src/version.c
 index 65f5a4b..9422657 100644
 --- a/src/version.c
