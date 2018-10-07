@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=batctl
 
 PKG_VERSION:=2018.3
-PKG_RELEASE:=0
+PKG_RELEASE:=1
 PKG_HASH:=24e32d3fe8268ce0951903546e71b925b78b17acc8809ba899940f48a5e892e6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -62,7 +62,8 @@ MAKE_BATCTL_ARGS += \
         REVISION="$(PKG_BATCTL_SHORTREV)" \
         CC="$(TARGET_CC)" \
         DESTDIR="$(PKG_INSTALL_DIR)" \
-        batctl install
+        batctl install \
+        REVISION="openwrt-$(PKG_VERSION)-$(PKG_RELEASE)"
 
 
 define Build/Compile
