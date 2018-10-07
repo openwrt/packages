@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=batman-adv
 
 PKG_VERSION:=2018.3
-PKG_RELEASE:=0
+PKG_RELEASE:=1
 PKG_HASH:=33f3f942203732e0568a6bc0226a0fe8eb147c961f0d0c13b2e6b16237d412ff
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -69,7 +69,8 @@ NOSTDINC_FLAGS = \
 	-I$(STAGING_DIR)/usr/include/mac80211/uapi \
 	-I$(PKG_BUILD_DIR)/include/ \
 	-include backport/backport.h \
-	-include $(PKG_BUILD_DIR)/compat-hacks.h
+	-include $(PKG_BUILD_DIR)/compat-hacks.h \
+	-DBATADV_SOURCE_VERSION=\\\"openwrt-$(PKG_VERSION)-$(PKG_RELEASE)\\\"
 
 COMPAT_SOURCES = \
 	$(if $(CONFIG_KMOD_BATMAN_ADV_MCAST),../../compat-sources/net/core/skbuff.o,) \
