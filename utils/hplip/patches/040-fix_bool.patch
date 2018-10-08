@@ -11,7 +11,7 @@ https://bugs.launchpad.net/hplip/+bug/1778626
  
  /* 
  ********************************************* Helper Routines **************************
-@@ -343,7 +343,7 @@ bool PCLmGenerator::addKids(sint32 kidOb
+@@ -343,7 +343,7 @@ bool PCLmGenerator::addKids(sint32 kidObj)
  	return(true);
  }
  
@@ -20,7 +20,7 @@ https://bugs.launchpad.net/hplip/+bug/1778626
  {
  	FILE *outputFile;
  	char outFileName[MAX_FILE_PATH_LEN];
-@@ -1074,7 +1074,7 @@ void PCLmGenerator::writePDFGrammarPage(
+@@ -1074,7 +1074,7 @@ void PCLmGenerator::writePDFGrammarPage(int imageWidth, int imageHeight, int num
  * Limitations:
  *   - 
  *****************************************************************************************/
