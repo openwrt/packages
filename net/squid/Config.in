@@ -45,9 +45,33 @@ if PACKAGE_squid
 
 	comment "Optional packages"
 
-	config SQUID_use-gnutls
-		bool "Use GnuTLS instead of OpenSSL"
-		default n
+	choice
+		prompt "Choose SSL Library"
+		default SQUID_use-openssl
+
+		config SQUID_use-openssl
+		bool "Use OpenSSL (default)"
+
+		config SQUID_use-gnutls
+		bool "Use GnuTLS (experimental, see help)"
+		help
+			Use GnuTLS in place of OpenSSL for the core features of receiving
+			TLS connections from clients and making TLS connections to servers.
+			The GnuTLS support is still very much experimental and should be
+			tested before use.
+
+			SSL-Bump and certificate generation features are not yet supported
+			by GnuTLS builds. Nor are many other less commonly used Squid
+			TLS/SSL features.
+
+			squid.conf directives and configuration options which have undergone
+			name changes from 'ssl' to 'tls' prefix in Squid-4 have GnuTLS
+			support, unless explicitly stated otherwise.
+
+			Advanced configuration with specific selection of ciphers and
+			similar settings should still work, but needs the GnuTLS Priority
+			Strings instead of the OpenSSL options when using GnuTLS.
+	endchoice
 
 	config SQUID_with-libcap
 		bool "Use libcap - Linux capabilities library"
