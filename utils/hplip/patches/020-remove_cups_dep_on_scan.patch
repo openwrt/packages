@@ -1,3 +1,14 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -71,7 +71,7 @@ else
+ libsane_hpaio_la_LDFLAGS = -version-info 1:0:0
+ endif
+ # The following is a interlibrary dependency that must be compiled first.
+-libsane_hpaio_la_LIBADD = libhpip.la libhpmud.la libhpipp.la $(DBUS_LIBS) -lcups -ldl
++libsane_hpaio_la_LIBADD = libhpip.la libhpmud.la libhpipp.la $(DBUS_LIBS) -ldl
+ #libsane_hpaio_la_CFLAGS = -DWITH_NONAMESPACES -DSOAP_DEBUG
+ libsane_hpaio_la_CFLAGS = $(DBUS_CFLAGS) -Iprotocol
+ 
 --- a/scan/sane/hpaio.c
 +++ b/scan/sane/hpaio.c
 @@ -34,7 +34,6 @@
@@ -6,9 +17,9 @@
  #include <string.h>
 -#include <cups/cups.h>
  #include "hpmud.h"
- #include "hpip.h"
  #include "hp_ipp.h"
-@@ -144,98 +143,6 @@ static int GetUriLine(char *buf, char *u
+ #include "soap.h"
+@@ -145,98 +144,6 @@ static int GetUriLine(char *buf, char *uri, char **tail)
     return i;
  }
  
@@ -107,7 +118,7 @@
  static int AddDevice(char *uri)
  {
      struct hpmud_model_attributes ma;
-@@ -264,7 +171,6 @@ static int DevDiscovery(int localOnly)
+@@ -289,7 +196,6 @@ static int DevDiscovery(int localOnly)
      char uri[HPMUD_LINE_SIZE];
      char *tail = message;
      int i, scan_type, cnt=0, total=0, bytes_read;
@@ -115,7 +126,7 @@
      char* token = NULL;
      enum HPMUD_RESULT stat;
  
-@@ -279,34 +185,6 @@ static int DevDiscovery(int localOnly)
+@@ -304,34 +210,6 @@ static int DevDiscovery(int localOnly)
          total += AddDevice(uri);
      }
  
@@ -150,14 +161,3 @@
  bugout:
     return total;
  }
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -67,7 +67,7 @@ else
- libsane_hpaio_la_LDFLAGS = -version-info 1:0:0
- endif
- # The following is a interlibrary dependency that must be compiled first.
--libsane_hpaio_la_LIBADD = libhpip.la libhpmud.la libhpipp.la $(DBUS_LIBS) -lcups -ldl
-+libsane_hpaio_la_LIBADD = libhpip.la libhpmud.la libhpipp.la $(DBUS_LIBS) -ldl
- #libsane_hpaio_la_CFLAGS = -DWITH_NONAMESPACES -DSOAP_DEBUG
- libsane_hpaio_la_CFLAGS = $(DBUS_CFLAGS) -Iprotocol
- 
