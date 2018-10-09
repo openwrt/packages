@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
 PKG_VERSION:=10.2.17
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := \
@@ -493,10 +493,12 @@ define Package/mariadb-server/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/mysql/conf.d
 	$(INSTALL_BIN) files/mysqld.init $(1)/etc/init.d/mysqld
-	$(INSTALL_CONF) conf/my.cnf $(1)/etc/mysql
+	# DATA because spomebody thought giving CONF 0600 rights is a good idea
+	$(INSTALL_DATA) conf/my.cnf $(1)/etc/mysql
 	$(INSTALL_CONF) conf/mysqld.default $(1)/etc/default/mysqld
 	$(INSTALL_DIR) $(1)$(PLUGIN_DIR)
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/daemon_example.ini $(1)$(PLUGIN_DIR)
+	# DATA because spomebody thought giving CONF 0600 rights is a good idea
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/daemon_example.ini $(1)$(PLUGIN_DIR)
 	$(INSTALL_DIR) $(1)/usr/share/mysql/english
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/english/errmsg.sys $(1)/usr/share/mysql/english
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/fill_help_tables.sql $(1)/usr/share/mysql

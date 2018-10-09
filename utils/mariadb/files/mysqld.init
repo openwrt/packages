@@ -12,6 +12,7 @@ MYSQLD=mysqld
 
 DEFAULT=/etc/default/$MYSQLD
 LOGGER="/usr/bin/logger -p user.err -s -t $MYSQLD"
+[ -x /usr/bin/logger ] || LOGGER=echo
 PROG=/usr/bin/$MYSQLD
 
 unset MY_ARGS MY_GROUP MY_USER
@@ -22,11 +23,13 @@ my_user="${MY_USER:-mariadb}"
 my_group="${MY_GROUP:-mariadb}"
 
 start_service() {
-	local conf='/etc/mysql/my.cnf'
-	local datadir="$( sed -nE "s/^\s*datadir\s*=\s*('([^']*)'|\x22([^\x22]*)\x22|(.*\S))\s*$/\2\3\4/p" "$conf" )"
+	local datadir="$(/usr/bin/mysqld --help --verbose | sed -n 's|^[[:blank:]]*datadir[[:blank:]]*/|/|p')"
+	local tmpdir="$(/usr/bin/mysqld --help --verbose | sed -n 's|^[[:blank:]]*tmpdir[[:blank:]]*/|/|p')"
+	local pidfile="$(/usr/bin/mysqld --help --verbose | sed -n 's|^[[:blank:]]*pid-file[[:blank:]]*/|/|p')"
+	local socketfile="$(/usr/bin/mysqld --help --verbose | sed -n 's|^[[:blank:]]*socket[[:blank:]]*/|/|p')"
 
 	[ -d "$datadir" ] || {
-		$LOGGER "datadir '$datadir' in '$conf' does not exist"
+		$LOGGER "datadir '$datadir' does not exist"
 		return 1
 	}
 
@@ -36,18 +39,17 @@ start_service() {
 		return 1
 	}
 
-	mkdir -p /var/lib/mysql
-	chown "$my_user":"$my_group" /var/lib/mysql
-
-	mkdir -p /var/run/mysqld
-	chown "$my_user":"$my_group" /var/run/mysqld
+	for i in /var/lib/mysql "$datadir" "$tmpdir" "$(dirname "$pidfile")" "$(dirname "$socketfile")"; do
+		mkdir -p "$i"
+		chown "$my_user":"$my_group" "$i"
+	done
 
 	procd_open_instance
 
 	procd_set_param command $PROG $MY_ARGS
-	procd_set_param pidfile /var/run/mysqld.pid
 	# forward stderr to logd
 	procd_set_param stderr 1
+	procd_set_param user "$my_user"
 
 	procd_close_instance
 }
