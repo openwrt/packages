@@ -26,13 +26,13 @@ mwan3_rtmon_ipv4()
 	local idx=0
 	local ret=1
 	mkdir -p /tmp/mwan3rtmon
-	($IP4 route list table main  | grep -v ^default | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv4.main
+	($IP4 route list table main  | grep -v "^default\|linkdown" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv4.main
 	while uci get mwan3.@interface[$idx] >/dev/null 2>&1 ; do
 		idx=$((idx+1))
 		tid=$idx
 		[ "$(uci get mwan3.@interface[$((idx-1))].family)" = "ipv4" ] && {
 			if $IP4 route list table $tid | grep -q ^default; then
-				($IP4 route list table $tid  | grep -v ^default | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv4.$tid
+				($IP4 route list table $tid  | grep -v "^default\|linkdown" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv4.$tid
 				cat /tmp/mwan3rtmon/ipv4.$tid | grep -v -x -F -f /tmp/mwan3rtmon/ipv4.main | while read line; do
 					$IP4 route del table $tid $line
 				done
