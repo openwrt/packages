@@ -138,27 +138,83 @@ build_driver_config() {
 
 	get_write_driver_config "$cfg" driver "usbhid-ups"
 	get_write_driver_config "$cfg" port "auto"
+	get_write_driver_config "$cfg" sdorder
+	get_write_driver_config "$cfg" desc
+	get_write_driver_config "$cfg" nolock 0 1
+	get_write_driver_config "$cfg" ignorelb 0 1
 	get_write_driver_config "$cfg" mfr
 	get_write_driver_config "$cfg" model
 	get_write_driver_config "$cfg" serial
 	get_write_driver_config "$cfg" sdtime
-	get_write_driver_config "$cfg" offdelay 20
-	get_write_driver_config "$cfg" ondelay 30
-	get_write_driver_config "$cfg" pollfreq 30
+	get_write_driver_config "$cfg" offdelay
+	get_write_driver_config "$cfg" ondelay
+	get_write_driver_config "$cfg" pollfreq
 	get_write_driver_config "$cfg" vendor
 	get_write_driver_config "$cfg" product
 	get_write_driver_config "$cfg" bus
 	get_write_driver_config "$cfg" interruptonly 0 1
-	get_write_driver_config "$cfg" interruptsize 0
+	get_write_driver_config "$cfg" interruptsize
 	get_write_driver_config "$cfg" maxreport
 	get_write_driver_config "$cfg" vendorid
 	get_write_driver_config "$cfg" productid
 	get_write_driver_config "$cfg" community
 	get_write_driver_config "$cfg" snmp_version
-	get_write_driver_config "$cfg" snmp_retries 0
-	get_write_driver_config "$cfg" snmp_timeout 0
+	get_write_driver_config "$cfg" snmp_retries
+	get_write_driver_config "$cfg" snmp_timeout
 	get_write_driver_config "$cfg" notransferoids 0 1
+	get_write_driver_config "$cfg" maxstartdelay
+	get_write_driver_config "$cfg" retrydelay
+	get_write_driver_config "$cfg" synchronous
 	get_write_driver_config "$cfg" other
+	get_write_driver_config "$cfg" otherflag
+
+	defoverride() {
+		local overvar="$1"
+		local defover="$2"
+		local overtype="$(echo "$overvar" | tr '.' '_')"
+
+		config_get overval "${defover}_${overtype}" value
+		[ -n "$overval" ] && echo "${defover}.${overvar} = $overval" >>"$UPS_C"
+	}
+
+	config_list_foreach "$cfg" override defoverride override
+	config_list_foreach "$cfg" default defoverride default
+
+	other() {
+		local othervar="$1"
+		local othervarflag="$2"
+
+		if [ "$othervarflag" = "otherflag" ]; then
+			config_get_bool otherval "${othervarflag}_${overtype}" value
+			[ "$otherval" = "1" ] && echo "${othervarflag}_${othervar}" >>"$UPS_C"
+		else
+			config_get otherval "${othervarflag}_${overtype}" value
+			[ -n "$otherval" ] && echo "${othervarflag}_${othervar} = $otherval" >>"$UPS_C"
+		fi
+	}
+
+	config_list_foreach "$cfg" override defoverride override
+	config_list_foreach "$cfg" default defoverride default
+	config_list_foreach "$cfg" default other other
+	config_list_foreach "$cfg" default other otherflag
+	echo "" >>$UPS_C
+	havedriver=1
+}
+
+build_global_driver_config() {
+	local cfg="$1"
+
+	# Global driver config
+	get_write_driver_config "$cfg" chroot
+	get_write_driver_config "$cfg" driverpath
+	get_write_driver_config "$cfg" maxstartdelay
+	get_write_driver_config "$cfg" maxretry
+	get_write_driver_config "$cfg" retrydelay
+	get_write_driver_config "$cfg" pollinterval
+	get_write_dirver_config "$cfg" synchronous
+	config_get runas "$cfg" user "nut"
+	RUNAS="$runas"
+
 	echo "" >>$UPS_C
 }
 
