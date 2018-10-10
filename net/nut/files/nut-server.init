@@ -61,7 +61,6 @@ upsd_config() {
     config_get maxage "$cfg" maxage
     [ -n "$maxage" ] && echo "MAXAGE $maxage" >>"$UPSD_C"
 
-    config_get statepath "$cfg" statepath
     [ -n "$statepath" ] && echo "STATEPATH $statepath" >>"$UPSD_C"
 
     config_get maxconn "$cfg" maxconn
