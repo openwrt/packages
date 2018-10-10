@@ -116,8 +116,7 @@ CONFIGURE_ARGS += \
 	--disable-gpm \
 	--disable-acl \
 	--with-tlib=ncurses \
-	--with-compiledby="non-existent-hostname-compiled" \
-	--disable-darwin
+	--with-compiledby="non-existent-hostname-compiled"
 
 CONFIGURE_VARS += \
 	vim_cv_getcwd_broken=no \
@@ -128,6 +127,10 @@ CONFIGURE_VARS += \
 	vim_cv_toupper_broken=no \
 	vim_cv_tty_group=root \
 	vim_cv_tty_mode=0620
+
+ifneq ($(HOST_OS),Linux)
+  TARGET_PATH_PKG:=$(CURDIR)/scripts:$(TARGET_PATH_PKG)
+endif
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
