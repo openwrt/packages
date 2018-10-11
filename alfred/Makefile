@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alfred
 PKG_VERSION:=2018.3
-PKG_RELEASE:=0
+PKG_RELEASE:=1
 PKG_HASH:=6265b8a3e99186ecb6e0cf7dde84fe8b67c66d9fefa6286f9f12110e98f28b1a
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -59,7 +59,8 @@ MAKE_ALFRED_FLAGS=\
 	CONFIG_ALFRED_GPSD=$(if $(CONFIG_PACKAGE_ALFRED_GPSD),y,n) \
 	CONFIG_ALFRED_CAPABILITIES=n \
         LIBNL_NAME="libnl-tiny" \
-        LIBNL_GENL_NAME="libnl-tiny"
+        LIBNL_GENL_NAME="libnl-tiny" \
+        REVISION="openwrt-$(PKG_VERSION)-$(PKG_RELEASE)"
 
 TARGET_CFLAGS  += -ffunction-sections -fdata-sections -flto
 TARGET_LDFLAGS += -Wl,--gc-sections -fuse-linker-plugin
