@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-statici18n
-PKG_VERSION:=1.6.1
+PKG_VERSION:=1.8.2
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/0a/24/1bed254529fc492ee5daf4cba18cf188b059866049889ecf1f178f25a2c2/
-PKG_HASH:=47d30939d52bcbbf1cbfe56b786bc2f2ea874266a8315cb027c061f320c4e2f6
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/d/django-statici18n
+PKG_HASH:=ba9eeb3c4517027922645999359f8335fbb9fea04c457123cfbd6b4a36cbeda4
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
@@ -25,7 +25,7 @@ define Package/django-statici18n
   CATEGORY:=Languages
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
   TITLE:=A Django app that provides helper for generating JavaScript catalog to static files.
-  URL:=http://django-statici18n.readthedocs.org/
+  URL:=https://django-statici18n.readthedocs.org/
   DEPENDS:=+python +django
 endef
 
