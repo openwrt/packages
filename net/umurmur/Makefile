@@ -8,14 +8,12 @@ PKG_NAME:=umurmur
 PKG_VERSION:=0.2.17
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=d41db898c826077735d48ec1d1ff9ed200d6520f46ae3dbb0a89dfaad49310cd
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/umurmur/umurmur.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=c4f6b1f6d27f7d7a556d30aedee73a675b5a6c48
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/umurmur/umurmur/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=e77b7b6616768f4a1c07442afe49a772692f667b00c23cc85909d4dd0ce206d2
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 
 PKG_MAINTAINER:=Martin Johansson <martin@fatbob.nu>
