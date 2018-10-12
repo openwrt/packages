@@ -15,7 +15,7 @@ if [ -x /bin/sysrepoctl ]; then
 
 	match=$(sysrepoctl -l | grep "ietf-netconf-acm ")
 	if [ ! "$match" ]; then
-		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-netconf-acm@2012-02-22.yang -p 644
+		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-netconf-acm@2018-02-14.yang -p 644
 	fi
 
 	match=$(sysrepoctl -l | grep "ietf-netconf-notifications ")
