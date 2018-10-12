@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-picklefield
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/e8/69/232d78ef16cad8dd4c2f871b0f44d87bcde36ed6a90597416e903034600b/
-PKG_HASH:=61e3ba7f6df82d8df9e6be3a8c55ef589eb3bf926c3d25d2b7949b07eae78354
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/d/django-picklefield
+PKG_HASH:=ce7fee5c6558fe5dc8924993d994ccde75bb75b91cd82787cbd4c92b95a69f9c
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
@@ -25,7 +25,7 @@ define Package/django-picklefield
   CATEGORY:=Languages
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
   TITLE:=Pickled object field for Django
-  URL:=http://github.com/gintas/django-picklefield/
+  URL:=https://github.com/gintas/django-picklefield
   DEPENDS:=+python +django
 endef
 
