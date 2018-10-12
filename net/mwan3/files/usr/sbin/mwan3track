@@ -108,9 +108,13 @@ main() {
 
 	if [ "$STATUS" = "unknown" ]; then
 		echo "unknown" > /var/run/mwan3track/$1/STATUS
+		echo "0" > /var/run/mwan3track/$1/UPTIME
+		echo "$(get_uptime)" > /var/run/mwan3track/$1/DOWNTIME
 		score=0
 	else
 		echo "online" > /var/run/mwan3track/$1/STATUS
+		echo "0" > /var/run/mwan3track/$1/DOWNTIME
+		echo "$(get_uptime)" > /var/run/mwan3track/$1/UPTIME
 		env -i ACTION="connected" INTERFACE="$1" DEVICE="$2" /sbin/hotplug-call iface
 	fi
 	while true; do
@@ -199,6 +203,8 @@ main() {
 
 			if [ $score -eq $up ]; then
 				echo "offline" > /var/run/mwan3track/$1/STATUS
+				echo "0" > /var/run/mwan3track/$1/UPTIME
+				echo "$(get_uptime)" > /var/run/mwan3track/$1/DOWNTIME
 				$LOG notice "Interface $1 ($2) is offline"
 				env -i ACTION=ifdown INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
 				env -i ACTION="disconnected" INTERFACE="$1" DEVICE="$2" /sbin/hotplug-call iface
@@ -240,6 +246,8 @@ main() {
 
 		if [ "${IFDOWN_EVENT}" -eq 1 ]; then
 			echo "offline" > /var/run/mwan3track/$1/STATUS
+			echo "$(get_uptime)" > /var/run/mwan3track/$1/DOWNTIME
+			echo "0" > /var/run/mwan3track/$1/UPTIME
 			$LOG notice "Interface $1 ($2) is offline"
 			env -i ACTION="disconnected" INTERFACE="$1" DEVICE="$2" /sbin/hotplug-call iface
 			score=0

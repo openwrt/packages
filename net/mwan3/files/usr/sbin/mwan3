@@ -43,7 +43,7 @@ ifdown()
 
 ifup()
 {
-	local device enabled up l3_device
+	local device enabled up l3_device status
 
 	config_load mwan3
 	config_get_bool enabled globals 'enabled' 0
@@ -67,13 +67,18 @@ ifup()
 		exit 0
 	}
 
-	json_load $(ubus -S call network.interface.$1 status)
-	json_get_vars up l3_device
+	status=$(ubus -S call network.interface.$1 status)
+	[ -n "$status" ] && {
+		json_load $status
+		json_get_vars up l3_device 
+	}
+
 	config_get enabled "$1" enabled 0
 
-	if [ "$up" -eq 1 ] \
+
+	if [ "$up" = "1" ] \
 		&& [ -n "$l3_device" ] \
-		&& [ "$enabled" -eq 1 ]; then
+		&& [ "$enabled" = "1" ]; then
 		ACTION=ifup INTERFACE=$1 DEVICE=$l3_device /sbin/hotplug-call iface
 	fi
 }
