@@ -129,6 +129,7 @@ define GoPackage/Environment
 	GO386=$(GO_386) \
 	GOARM=$(GO_ARM) \
 	GOMIPS=$(GO_MIPS) \
+	GOMIPS64=$(GO_MIPS64) \
 	CGO_ENABLED=1 \
 	CGO_CFLAGS="$(filter-out $(GO_CFLAGS_TO_REMOVE),$(TARGET_CFLAGS))" \
 	CGO_CPPFLAGS="$(TARGET_CPPFLAGS)" \
@@ -234,8 +235,9 @@ define GoPackage/Build/Compile
 		\
 		if [ "$(GO_PKG_SOURCE_ONLY)" != 1 ]; then \
 			case $(GO_ARCH) in \
-			arm)         installsuffix="-installsuffix v$(GO_ARM)" ;; \
-			mips|mipsle) installsuffix="-installsuffix $(GO_MIPS)" ;; \
+			arm)             installsuffix="-installsuffix v$(GO_ARM)" ;; \
+			mips|mipsle)     installsuffix="-installsuffix $(GO_MIPS)" ;; \
+			mips64|mips64le) installsuffix="-installsuffix $(GO_MIPS64)" ;; \
 			esac ; \
 			trimpath="all=-trimpath=$(GO_PKG_BUILD_DIR)" ; \
 			ldflags="all=-linkmode external -extldflags '$(TARGET_LDFLAGS)'" ; \

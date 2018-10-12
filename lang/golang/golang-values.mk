@@ -20,7 +20,7 @@ unexport \
   CGO_CXXFLAGS CGO_CXXFLAGS_ALLOW CGO_CXXFLAGS_DISALLOW \
   CGO_FFLAGS CGO_FFLAGS_ALLOW CGO_FFLAGS_DISALLOW \
   CGO_LDFLAGS CGO_LDFLAGS_ALLOW CGO_LDFLAGS_DISALLOW \
-  GOARM GO386 GOMIPS \
+  GOARM GO386 GOMIPS GOMIPS64 \
   GOROOT_FINAL GO_EXTLINK_ENABLED GIT_ALLOW_PROTOCOL \
   CC_FOR_TARGET CXX_FOR_TARGET GO_DISTFLAGS GO_GCFLAGS GO_LDFLAGS GOBUILDTIMELOGFILE GOROOT_BOOTSTRAP \
   BOOT_GO_GCFLAGS GOEXPERIMENT GOBOOTSTRAP_TOOLEXEC
@@ -57,15 +57,15 @@ GO_ARM:=$(if $(CONFIG_arm_v7),7,$(if $(CONFIG_arm_v6),6,$(if $(findstring $(GO_A
 
 GO_MIPS:=$(if $(filter $(GO_ARCH),mips mipsle),$(if $(CONFIG_HAS_FPU),hardfloat,softfloat),)
 
+GO_MIPS64:=$(if $(filter $(GO_ARCH),mips64 mips64le),$(if $(CONFIG_HAS_FPU),hardfloat,softfloat),)
+
 # -fno-plt: causes "unexpected GOT reloc for non-dynamic symbol" errors
 # -mips32r2: conflicts with -march=mips32 set by go
 GO_CFLAGS_TO_REMOVE:=$(if \
 $(filter $(GO_ARCH),386),-fno-plt,$(if \
 $(filter $(GO_ARCH),mips mipsle),-mips32r2,))
 
-# mips64 / mips64el doesn't have softfloat support yet
-# https://github.com/golang/go/issues/14635
-GO_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||mips||mipsel||powerpc64||x86_64)
+GO_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||mips||mips64||mips64el||mipsel||powerpc64||x86_64)
 
 GO_TARGET_PREFIX:=/usr
 GO_TARGET_VERSION_ID:=$(GO_VERSION_MAJOR_MINOR)
