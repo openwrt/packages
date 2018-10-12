@@ -1,7 +1,26 @@
-diff -u --recursive gstreamer-1.12.4-vanilla/configure.ac gstreamer-1.12.4/configure.ac
---- gstreamer-1.12.4-vanilla/configure.ac	2018-02-10 17:43:59.957864211 -0500
-+++ gstreamer-1.12.4/configure.ac	2018-02-10 17:44:19.772930084 -0500
-@@ -1083,20 +1083,6 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -7,7 +7,7 @@ aclocaldir = $(datadir)/aclocal
+ aclocal_DATA = gst-element-check-1.0.m4
+ 
+ SUBDIRS = pkgconfig \
+-	gst libs plugins tests \
++	gst libs plugins \
+ 	docs \
+ 	m4 \
+ 	common \
+@@ -19,7 +19,7 @@ endif
+ 
+ # These are all the possible subdirs
+ DIST_SUBDIRS = pkgconfig \
+-	gst libs plugins tools tests \
++	gst libs plugins tools \
+ 	docs \
+ 	m4 \
+ 	common \
+--- a/configure.ac
++++ b/configure.ac
+@@ -1086,20 +1086,6 @@ libs/gst/net/Makefile
  plugins/Makefile
  plugins/elements/Makefile
  plugins/tracers/Makefile
@@ -22,24 +41,3 @@ diff -u --recursive gstreamer-1.12.4-vanilla/configure.ac gstreamer-1.12.4/confi
  tools/Makefile
  common/Makefile
  common/m4/Makefile
-diff -u --recursive gstreamer-1.12.4-vanilla/Makefile.am gstreamer-1.12.4/Makefile.am
---- gstreamer-1.12.4-vanilla/Makefile.am	2018-02-10 17:43:59.959864217 -0500
-+++ gstreamer-1.12.4/Makefile.am	2018-02-10 17:44:30.298965075 -0500
-@@ -7,7 +7,7 @@
- aclocal_DATA = gst-element-check-@GST_API_VERSION@.m4
- 
- SUBDIRS = pkgconfig \
--	gst libs plugins tests \
-+	gst libs plugins \
- 	docs \
- 	m4 \
- 	common \
-@@ -19,7 +19,7 @@
- 
- # These are all the possible subdirs
- DIST_SUBDIRS = pkgconfig \
--	gst libs plugins tools tests \
-+	gst libs plugins tools \
- 	docs \
- 	m4 \
- 	common \
