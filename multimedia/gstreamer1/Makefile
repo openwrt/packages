@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gstreamer1
-PKG_VERSION:=1.14.2
+PKG_VERSION:=1.14.4
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -19,8 +19,8 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/gstreamer-$(PKG_VERSION)
 PKG_SOURCE:=gstreamer-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gstreamer/
-PKG_HASH:=4bd6127299f3f29379046bbd58a526e6353b569e0e72f7b4df2ae70df6882e09
+PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gstreamer
+PKG_HASH:=f94f6696c5f05a3b3a9183e39c5f5c0b779f75a04c0efa497e7920afa985ffc7
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=autogen.sh aclocal.m4
@@ -112,20 +112,24 @@ define Package/libgstreamer1/description
  .
  This package contains the GStreamer core library.
 endef
-  
+
 
 GST_VERSION:=1.0
 
 CONFIGURE_ARGS += \
 	--enable-static \
+	--disable-benchmarks \
 	--disable-examples \
+	--disable-failing-tests \
+	--disable-fatal-warnings \
+	--disable-introspection \
+	--disable-gst-tracer-hooks \
+	--disable-gtk-doc-html \
 	--disable-tests \
 	--disable-valgrind \
-	--disable-gst-tracer-hooks \
-	--with-unwind=no \
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
-	--without-x \
+	--without-unwind
 
 EXTRA_LDFLAGS+= \
 	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib \
