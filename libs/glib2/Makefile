@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
 PKG_VERSION:=2.58.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_BUILD_DIR:=$(BUILD_DIR)/glib-$(PKG_VERSION)
@@ -73,6 +73,11 @@ CONFIGURE_VARS += \
 	ac_cv_func_posix_getgrgid_r=yes
 
 define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/bin/* \
+		$(1)/usr/bin/
+
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/glib-2.0 \
