@@ -27,16 +27,19 @@ define KernelPackage/batman-adv
   URL:=https://www.open-mesh.org/
   MAINTAINER:=Simon Wunderlich <sw@simonwunderlich.de>
   SUBMENU:=Network Support
-  DEPENDS:=+KMOD_BATMAN_ADV_BLA:kmod-lib-crc16 +kmod-crypto-crc32c +kmod-lib-crc32c +kmod-cfg80211
+  DEPENDS:=+kmod-crypto-crc32c +kmod-lib-crc32c +kmod-cfg80211
   TITLE:=B.A.T.M.A.N. Adv
   FILES:=$(PKG_BUILD_DIR)/net/batman-adv/batman-adv.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoProbe,batman-adv)
 endef
 
 define KernelPackage/batman-adv/description
-B.A.T.M.A.N. advanced is a kernel module which allows to
-build layer 2 mesh networks. This package builds
-version $(PKG_VERSION) of the kernel module.
+B.A.T.M.A.N. (better approach to mobile ad-hoc networking) is
+a routing protocol for multi-hop ad-hoc mesh networks. The
+networks may be wired or wireless. See
+https://www.open-mesh.org/ for more information and user space
+tools. This package builds version $(PKG_VERSION) of the kernel
+module.
 endef
 
 define KernelPackage/batman-adv/config
