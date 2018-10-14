@@ -2,6 +2,7 @@
 config KMOD_BATMAN_ADV_DEBUG_LOG
 	bool "enable verbose debug logging"
 	depends on PACKAGE_kmod-batman-adv
+	depends on KMOD_BATMAN_ADV_DEBUGFS
 	default n
 
 config KMOD_BATMAN_ADV_BLA
