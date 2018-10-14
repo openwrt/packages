@@ -1,9 +1,8 @@
 
-config KMOD_BATMAN_ADV_DEBUG_LOG
-	bool "enable verbose debug logging"
+config KMOD_BATMAN_ADV_BATMAN_V
+	bool "enable batman v routing algorithm"
 	depends on PACKAGE_kmod-batman-adv
-	depends on KMOD_BATMAN_ADV_DEBUGFS
-	default n
+	default y
 
 config KMOD_BATMAN_ADV_BLA
 	bool "enable bridge loop avoidance"
@@ -15,8 +14,8 @@ config KMOD_BATMAN_ADV_DAT
 	depends on PACKAGE_kmod-batman-adv
 	default y
 
-config KMOD_BATMAN_ADV_DEBUGFS
-	bool "enable debugfs support"
+config KMOD_BATMAN_ADV_NC
+	bool "enable network coding [requires promisc mode support]"
 	depends on PACKAGE_kmod-batman-adv
 	default n
 
@@ -25,12 +24,13 @@ config KMOD_BATMAN_ADV_MCAST
 	depends on PACKAGE_kmod-batman-adv
 	default y
 
-config KMOD_BATMAN_ADV_NC
-	bool "enable network coding [requires promisc mode support]"
+config KMOD_BATMAN_ADV_DEBUGFS
+	bool "enable debugfs support"
 	depends on PACKAGE_kmod-batman-adv
 	default n
 
-config KMOD_BATMAN_ADV_BATMAN_V
-	bool "enable batman v routing algorithm"
+config KMOD_BATMAN_ADV_DEBUG_LOG
+	bool "enable verbose debug logging"
 	depends on PACKAGE_kmod-batman-adv
-	default y
+	depends on KMOD_BATMAN_ADV_DEBUGFS
+	default n
