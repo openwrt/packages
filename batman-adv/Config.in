@@ -22,7 +22,6 @@ config KMOD_BATMAN_ADV_NC
 config KMOD_BATMAN_ADV_MCAST
 	bool "enable multicast transmission optimization"
 	depends on PACKAGE_kmod-batman-adv
-	default y
 
 config KMOD_BATMAN_ADV_DEBUGFS
 	bool "enable debugfs support"
