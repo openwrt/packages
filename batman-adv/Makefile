@@ -52,13 +52,13 @@ endef
 
 PKG_EXTRA_KCONFIG:= \
 	CONFIG_BATMAN_ADV=m \
-	CONFIG_BATMAN_ADV_DEBUG=$(if $(CONFIG_KMOD_BATMAN_ADV_DEBUG_LOG),y,n) \
-	CONFIG_BATMAN_ADV_DEBUGFS=$(if $(CONFIG_KMOD_BATMAN_ADV_DEBUGFS),y,n) \
-	CONFIG_BATMAN_ADV_BLA=$(if $(CONFIG_KMOD_BATMAN_ADV_BLA),y,n) \
-	CONFIG_BATMAN_ADV_DAT=$(if $(CONFIG_KMOD_BATMAN_ADV_DAT),y,n) \
-	CONFIG_BATMAN_ADV_MCAST=$(if $(CONFIG_KMOD_BATMAN_ADV_MCAST),y,n) \
-	CONFIG_BATMAN_ADV_NC=$(if $(CONFIG_KMOD_BATMAN_ADV_NC),y,n) \
-	CONFIG_BATMAN_ADV_BATMAN_V=$(if $(CONFIG_KMOD_BATMAN_ADV_BATMAN_V),y,n) \
+	CONFIG_BATMAN_ADV_DEBUG=$(if $(CONFIG_BATMAN_ADV_DEBUG),y,n) \
+	CONFIG_BATMAN_ADV_DEBUGFS=$(if $(CONFIG_BATMAN_ADV_DEBUGFS),y,n) \
+	CONFIG_BATMAN_ADV_BLA=$(if $(CONFIG_BATMAN_ADV_BLA),y,n) \
+	CONFIG_BATMAN_ADV_DAT=$(if $(CONFIG_BATMAN_ADV_DAT),y,n) \
+	CONFIG_BATMAN_ADV_MCAST=$(if $(CONFIG_BATMAN_ADV_MCAST),y,n) \
+	CONFIG_BATMAN_ADV_NC=$(if $(CONFIG_BATMAN_ADV_NC),y,n) \
+	CONFIG_BATMAN_ADV_BATMAN_V=$(if $(CONFIG_BATMAN_ADV_BATMAN_V),y,n) \
 
 PKG_EXTRA_CFLAGS:= \
 	$(patsubst CONFIG_%, -DCONFIG_%=1, $(patsubst %=m,%,$(filter %=m,$(PKG_EXTRA_KCONFIG)))) \
@@ -76,9 +76,9 @@ NOSTDINC_FLAGS = \
 	-DBATADV_SOURCE_VERSION=\\\"openwrt-$(PKG_VERSION)-$(PKG_RELEASE)\\\"
 
 COMPAT_SOURCES = \
-	$(if $(CONFIG_KMOD_BATMAN_ADV_MCAST),../../compat-sources/net/core/skbuff.o,) \
-	$(if $(CONFIG_KMOD_BATMAN_ADV_MCAST),../../compat-sources/net/ipv4/igmp.o,) \
-	$(if $(CONFIG_KMOD_BATMAN_ADV_MCAST),../../compat-sources/net/ipv6/mcast_snoop.o,) \
+	$(if $(CONFIG_BATMAN_ADV_MCAST),../../compat-sources/net/core/skbuff.o,) \
+	$(if $(CONFIG_BATMAN_ADV_MCAST),../../compat-sources/net/ipv4/igmp.o,) \
+	$(if $(CONFIG_BATMAN_ADV_MCAST),../../compat-sources/net/ipv6/mcast_snoop.o,) \
 
 define Build/Compile
 	+env "batman-adv-y=$(COMPAT_SOURCES)" \
