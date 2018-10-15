@@ -188,6 +188,46 @@ mwan3_get_iface_id()
 	export "$1=$_tmp"
 }
 
+mwan3_set_custom_ipset_v4()
+{
+	local custom_network_v4
+
+	for custom_network_v4 in $($IP4 route list table "$1" | awk '{print $1}' | egrep '[0-9]{1,3}(\.[0-9]{1,3}){3}'); do
+		$LOG notice "Adding network $custom_network_v4 from table $1 to mwan3_custom_v4 ipset"
+		$IPS -! add mwan3_custom_v4_temp $custom_network_v4
+	done
+}
+
+mwan3_set_custom_ipset_v6()
+{
+	local custom_network_v6
+
+	for custom_network_v6 in $($IP6 route list table "$1" | awk '{print $1}' | egrep "$IPv6_REGEX"); do
+		$LOG notice "Adding network $custom_network_v6 from table $1 to mwan3_custom_v6 ipset"
+		$IPS -! add mwan3_custom_v6_temp $custom_network_v6
+	done
+}
+
+mwan3_set_custom_ipset()
+{
+	$IPS -! create mwan3_custom_v4 hash:net
+	$IPS create mwan3_custom_v4_temp hash:net
+	config_list_foreach "globals" "rt_table_lookup" mwan3_set_custom_ipset_v4
+	$IPS swap mwan3_custom_v4_temp mwan3_custom_v4
+	$IPS destroy mwan3_custom_v4_temp
+
+
+	$IPS -! create mwan3_custom_v6 hash:net family inet6
+	$IPS create mwan3_custom_v6_temp hash:net family inet6
+	config_list_foreach "globals" "rt_table_lookup" mwan3_set_custom_ipset_v6
+	$IPS swap mwan3_custom_v6_temp mwan3_custom_v6
+	$IPS destroy mwan3_custom_v6_temp
+
+	$IPS -! create mwan3_connected list:set
+	$IPS -! add mwan3_connected mwan3_custom_v4
+	$IPS -! add mwan3_connected mwan3_custom_v6
+}
+
 mwan3_set_connected_iptables()
 {
 	local connected_network_v4 connected_network_v6
