@@ -242,7 +242,9 @@ mwan3_set_general_iptables()
 		if ! $IPT -S mwan3_connected &> /dev/null; then
 			$IPT -N mwan3_connected
 			$IPS -! create mwan3_connected list:set
-			$IPT -A mwan3_connected -m set --match-set mwan3_connected dst -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
+			$IPT -A mwan3_connected \
+				-m set --match-set mwan3_connected dst \
+				-j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
 		fi
 
 		if ! $IPT -S mwan3_rules &> /dev/null; then
@@ -253,18 +255,43 @@ mwan3_set_general_iptables()
 			$IPT -N mwan3_hook
 			# do not mangle ipv6 ra service
 			if [ "$IPT" = "$IPT6" ]; then
-				$IPT6 -A mwan3_hook -p ipv6-icmp -m icmp6 --icmpv6-type 133 -j RETURN
-				$IPT6 -A mwan3_hook -p ipv6-icmp -m icmp6 --icmpv6-type 134 -j RETURN
-				$IPT6 -A mwan3_hook -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j RETURN
-				$IPT6 -A mwan3_hook -p ipv6-icmp -m icmp6 --icmpv6-type 136 -j RETURN
-				$IPT6 -A mwan3_hook -p ipv6-icmp -m icmp6 --icmpv6-type 137 -j RETURN
+				$IPT6 -A mwan3_hook \
+					-p ipv6-icmp \
+					-m icmp6 --icmpv6-type 133 \
+					-j RETURN
+				$IPT6 -A mwan3_hook \
+					-p ipv6-icmp \
+					-m icmp6 --icmpv6-type 134 \
+					-j RETURN
+				$IPT6 -A mwan3_hook \
+					-p ipv6-icmp \
+					-m icmp6 --icmpv6-type 135 \
+					-j RETURN
+				$IPT6 -A mwan3_hook \
+					-p ipv6-icmp \
+					-m icmp6 --icmpv6-type 136 \
+					-j RETURN
+				$IPT6 -A mwan3_hook \
+					-p ipv6-icmp \
+					-m icmp6 --icmpv6-type 137 \
+					-j RETURN
 			fi
-			$IPT -A mwan3_hook -j CONNMARK --restore-mark --nfmask $MMX_MASK --ctmask $MMX_MASK
-			$IPT -A mwan3_hook -m mark --mark 0x0/$MMX_MASK -j mwan3_ifaces_in
-			$IPT -A mwan3_hook -m mark --mark 0x0/$MMX_MASK -j mwan3_connected
-			$IPT -A mwan3_hook -m mark --mark 0x0/$MMX_MASK -j mwan3_rules
-			$IPT -A mwan3_hook -j CONNMARK --save-mark --nfmask $MMX_MASK --ctmask $MMX_MASK
-			$IPT -A mwan3_hook -m mark ! --mark $MMX_DEFAULT/$MMX_MASK -j mwan3_connected
+			$IPT -A mwan3_hook \
+				-j CONNMARK --restore-mark --nfmask $MMX_MASK --ctmask $MMX_MASK
+			$IPT -A mwan3_hook \
+				-m mark --mark 0x0/$MMX_MASK \
+				-j mwan3_ifaces_in
+			$IPT -A mwan3_hook \
+				-m mark --mark 0x0/$MMX_MASK \
+				-j mwan3_connected
+			$IPT -A mwan3_hook \
+				-m mark --mark 0x0/$MMX_MASK \
+				-j mwan3_rules
+			$IPT -A mwan3_hook \
+				-j CONNMARK --save-mark --nfmask $MMX_MASK --ctmask $MMX_MASK
+			$IPT -A mwan3_hook \
+				-m mark ! --mark $MMX_DEFAULT/$MMX_MASK \
+				-j mwan3_connected
 		fi
 
 		if ! $IPT -S PREROUTING | grep mwan3_hook &> /dev/null; then
@@ -298,11 +325,24 @@ mwan3_create_iface_iptables()
 		fi
 
 		$IPT4 -F mwan3_iface_in_$1
-		$IPT4 -A mwan3_iface_in_$1 -i $2 -m set --match-set mwan3_connected src -m mark --mark 0x0/$MMX_MASK -m comment --comment "default" -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
-		$IPT4 -A mwan3_iface_in_$1 -i $2 -m mark --mark 0x0/$MMX_MASK -m comment --comment "$1" -j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
+		$IPT4 -A mwan3_iface_in_$1 \
+			-i $2 \
+			-m set --match-set mwan3_connected src \
+			-m mark --mark 0x0/$MMX_MASK \
+			-m comment --comment "default" \
+			-j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
+		$IPT4 -A mwan3_iface_in_$1 \
+			-i $2 \
+			-m mark --mark 0x0/$MMX_MASK \
+			-m comment --comment "$1" \
+			-j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
 
-		$IPT4 -D mwan3_ifaces_in -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_in_$1 &> /dev/null
-		$IPT4 -A mwan3_ifaces_in -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_in_$1
+		$IPT4 -D mwan3_ifaces_in \
+			-m mark --mark 0x0/$MMX_MASK \
+			-j mwan3_iface_in_$1 &> /dev/null
+		$IPT4 -A mwan3_ifaces_in \
+			-m mark --mark 0x0/$MMX_MASK \
+			-j mwan3_iface_in_$1
 	fi
 
 	if [ "$family" == "ipv6" ]; then
@@ -317,11 +357,21 @@ mwan3_create_iface_iptables()
 		fi
 
 		$IPT6 -F mwan3_iface_in_$1
-		$IPT6 -A mwan3_iface_in_$1 -i $2 -m set --match-set mwan3_connected_v6 src -m mark --mark 0x0/$MMX_MASK -m comment --comment "default" -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
-		$IPT6 -A mwan3_iface_in_$1 -i $2 -m mark --mark 0x0/$MMX_MASK -m comment --comment "$1" -j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
+		$IPT6 -A mwan3_iface_in_$1 -i $2 \
+			-m set --match-set mwan3_connected_v6 src \
+			-m mark --mark 0x0/$MMX_MASK \
+			-m comment --comment "default" \
+			-j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
+		$IPT6 -A mwan3_iface_in_$1 -i $2 -m mark --mark 0x0/$MMX_MASK \
+			-m comment --comment "$1" \
+			-j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
 
-		$IPT6 -D mwan3_ifaces_in -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_in_$1 &> /dev/null
-		$IPT6 -A mwan3_ifaces_in -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_in_$1
+		$IPT6 -D mwan3_ifaces_in \
+			-m mark --mark 0x0/$MMX_MASK \
+			-j mwan3_iface_in_$1 &> /dev/null
+		$IPT6 -A mwan3_ifaces_in \
+			-m mark --mark 0x0/$MMX_MASK \
+			-j mwan3_iface_in_$1
 	fi
 }
 
@@ -331,14 +381,18 @@ mwan3_delete_iface_iptables()
 
 	if [ "$family" == "ipv4" ]; then
 
-		$IPT4 -D mwan3_ifaces_in -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_in_$1 &> /dev/null
+		$IPT4 -D mwan3_ifaces_in \
+			-m mark --mark 0x0/$MMX_MASK \
+			-j mwan3_iface_in_$1 &> /dev/null
 		$IPT4 -F mwan3_iface_in_$1 &> /dev/null
 		$IPT4 -X mwan3_iface_in_$1 &> /dev/null
 	fi
 
 	if [ "$family" == "ipv6" ]; then
 
-		$IPT6 -D mwan3_ifaces_in -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_in_$1 &> /dev/null
+		$IPT6 -D mwan3_ifaces_in \
+			-m mark --mark 0x0/$MMX_MASK \
+			-j mwan3_iface_in_$1 &> /dev/null
 		$IPT6 -F mwan3_iface_in_$1 &> /dev/null
 		$IPT6 -X mwan3_iface_in_$1 &> /dev/null
 	fi
@@ -568,7 +622,10 @@ mwan3_set_policy()
 
 				total_weight_v4=$weight
 				$IPT4 -F mwan3_policy_$policy
-				$IPT4 -A mwan3_policy_$policy -m mark --mark 0x0/$MMX_MASK -m comment --comment "$iface $weight $weight" -j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
+				$IPT4 -A mwan3_policy_$policy \
+					-m mark --mark 0x0/$MMX_MASK \
+					-m comment --comment "$iface $weight $weight" \
+					-j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
 
 				lowest_metric_v4=$metric
 
@@ -589,12 +646,19 @@ mwan3_set_policy()
 
 				probability="-m statistic --mode random --probability $probability"
 
-				$IPT4 -I mwan3_policy_$policy -m mark --mark 0x0/$MMX_MASK $probability -m comment --comment "$iface $weight $total_weight_v4" -j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
+				$IPT4 -I mwan3_policy_$policy \
+					-m mark --mark 0x0/$MMX_MASK $probability \
+					-m comment --comment "$iface $weight $total_weight_v4" \
+					-j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
 			fi
 		else
 			[ -n "$device" ] && {
 				$IPT4 -S mwan3_policy_$policy | grep -q '.*--comment ".* [0-9]* [0-9]*"' || \
-					$IPT4 -I mwan3_policy_$policy -o $device -m mark --mark 0x0/$MMX_MASK -m comment --comment "out $iface $device" -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
+					$IPT4 -I mwan3_policy_$policy \
+					-o $device \
+					-m mark --mark 0x0/$MMX_MASK \
+					-m comment --comment "out $iface $device" \
+					-j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
 			}
 		fi
 	fi
@@ -606,7 +670,10 @@ mwan3_set_policy()
 
 				total_weight_v6=$weight
 				$IPT6 -F mwan3_policy_$policy
-				$IPT6 -A mwan3_policy_$policy -m mark --mark 0x0/$MMX_MASK -m comment --comment "$iface $weight $weight" -j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
+				$IPT6 -A mwan3_policy_$policy \
+					-m mark --mark 0x0/$MMX_MASK \
+					-m comment --comment "$iface $weight $weight" \
+					-j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
 
 				lowest_metric_v6=$metric
 
@@ -627,12 +694,20 @@ mwan3_set_policy()
 
 				probability="-m statistic --mode random --probability $probability"
 
-				$IPT6 -I mwan3_policy_$policy -m mark --mark 0x0/$MMX_MASK $probability -m comment --comment "$iface $weight $total_weight_v6" -j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
+				$IPT6 -I mwan3_policy_$policy \
+					-m mark --mark 0x0/$MMX_MASK \
+					$probability \
+					-m comment --comment "$iface $weight $total_weight_v6" \
+					-j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
 			fi
 		else
 			[ -n "$device" ] && {
 				$IPT6 -S mwan3_policy_$policy | grep -q '.*--comment ".* [0-9]* [0-9]*"' || \
-					$IPT6 -I mwan3_policy_$policy -o $device -m mark --mark 0x0/$MMX_MASK -m comment --comment "out $iface $device" -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
+					$IPT6 -I mwan3_policy_$policy \
+					-o $device \
+					-m mark --mark 0x0/$MMX_MASK \
+					-m comment --comment "out $iface $device" \
+					-j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
 			}
 		fi
 	fi
@@ -660,13 +735,22 @@ mwan3_create_policies_iptables()
 
 		case "$last_resort" in
 			blackhole)
-				$IPT -A mwan3_policy_$1 -m mark --mark 0x0/$MMX_MASK -m comment --comment "blackhole" -j MARK --set-xmark $MMX_BLACKHOLE/$MMX_MASK
+				$IPT -A mwan3_policy_$1 \
+					-m mark --mark 0x0/$MMX_MASK \
+					-m comment --comment "blackhole" \
+					-j MARK --set-xmark $MMX_BLACKHOLE/$MMX_MASK
 			;;
 			default)
-				$IPT -A mwan3_policy_$1 -m mark --mark 0x0/$MMX_MASK -m comment --comment "default" -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
+				$IPT -A mwan3_policy_$1 \
+					-m mark --mark 0x0/$MMX_MASK \
+					-m comment --comment "default" \
+					-j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
 			;;
 			*)
-				$IPT -A mwan3_policy_$1 -m mark --mark 0x0/$MMX_MASK -m comment --comment "unreachable" -j MARK --set-xmark $MMX_UNREACHABLE/$MMX_MASK
+				$IPT -A mwan3_policy_$1 \
+					-m mark --mark 0x0/$MMX_MASK \
+					-m comment --comment "unreachable" \
+					-j MARK --set-xmark $MMX_UNREACHABLE/$MMX_MASK
 			;;
 		esac
 	done
@@ -699,8 +783,13 @@ mwan3_set_sticky_iptables()
 
 			for IPT in "$IPT4" "$IPT6"; do
 				if [ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ]; then
-					$IPT -I mwan3_rule_$rule -m mark --mark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK -m set ! --match-set mwan3_sticky_$rule src,src -j MARK --set-xmark 0x0/$MMX_MASK
-					$IPT -I mwan3_rule_$rule -m mark --mark 0/$MMX_MASK -j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
+					$IPT -I mwan3_rule_$rule \
+						-m mark --mark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK \
+						-m set ! --match-set mwan3_sticky_$rule src,src \
+						-j MARK --set-xmark 0x0/$MMX_MASK
+					$IPT -I mwan3_rule_$rule \
+						-m mark --mark 0/$MMX_MASK \
+						-j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
 				fi
 			done
 		fi
@@ -756,8 +845,12 @@ mwan3_set_user_iptables_rule()
 					$IPT -F mwan3_rule_$1
 				done
 
-				$IPS -! create mwan3_sticky_v4_$rule hash:ip,mark markmask $MMX_MASK timeout $timeout
-				$IPS -! create mwan3_sticky_v6_$rule hash:ip,mark markmask $MMX_MASK timeout $timeout family inet6
+				$IPS -! create mwan3_sticky_v4_$rule \
+					hash:ip,mark markmask $MMX_MASK \
+					timeout $timeout
+				$IPS -! create mwan3_sticky_v6_$rule \
+					hash:ip,mark markmask $MMX_MASK \
+					timeout $timeout family inet6
 				$IPS -! create mwan3_sticky_$rule list:set
 				$IPS -! add mwan3_sticky_$rule mwan3_sticky_v4_$rule
 				$IPS -! add mwan3_sticky_$rule mwan3_sticky_v6_$rule
@@ -765,9 +858,15 @@ mwan3_set_user_iptables_rule()
 				config_foreach mwan3_set_sticky_iptables interface
 
 				for IPT in "$IPT4" "$IPT6"; do
-					$IPT -A mwan3_rule_$1 -m mark --mark 0/$MMX_MASK -j $policy
-					$IPT -A mwan3_rule_$1 -m mark ! --mark 0xfc00/0xfc00 -j SET --del-set mwan3_sticky_$rule src,src
-					$IPT -A mwan3_rule_$1 -m mark ! --mark 0xfc00/0xfc00 -j SET --add-set mwan3_sticky_$rule src,src
+					$IPT -A mwan3_rule_$1 \
+						-m mark --mark 0/$MMX_MASK \
+						-j $policy
+					$IPT -A mwan3_rule_$1 \
+						-m mark ! --mark 0xfc00/0xfc00 \
+						-j SET --del-set mwan3_sticky_$rule src,src
+					$IPT -A mwan3_rule_$1 \
+						-m mark ! --mark 0xfc00/0xfc00 \
+						-j SET --add-set mwan3_sticky_$rule src,src
 				done
 
 				policy="mwan3_rule_$1"
@@ -788,10 +887,24 @@ mwan3_set_user_iptables_rule()
 			for IPT in "$IPT4" "$IPT6"; do
 				case $proto in
 					tcp|udp)
-					$IPT -A mwan3_rules -p $proto -s $src_ip -d $dest_ip $ipset -m multiport --sports $src_port -m multiport --dports $dest_port -m mark --mark 0/$MMX_MASK -m comment --comment "$1" -j $policy &> /dev/null
+					$IPT -A mwan3_rules \
+						-p $proto \
+						-s $src_ip \
+						-d $dest_ip $ipset \
+						-m multiport --sports $src_port \
+						-m multiport --dports $dest_port \
+						-m mark --mark 0/$MMX_MASK \
+						-m comment --comment "$1" \
+						-j $policy &> /dev/null
 					;;
 					*)
-					$IPT -A mwan3_rules -p $proto -s $src_ip -d $dest_ip $ipset -m mark --mark 0/$MMX_MASK -m comment --comment "$1" -j $policy &> /dev/null
+					$IPT -A mwan3_rules \
+						-p $proto \
+						-s $src_ip \
+						-d $dest_ip $ipset \
+						-m mark --mark 0/$MMX_MASK \
+						-m comment --comment "$1" \
+						-j $policy &> /dev/null
 					;;
 				esac
 			done
@@ -800,10 +913,24 @@ mwan3_set_user_iptables_rule()
 
 			case $proto in
 				tcp|udp)
-				$IPT4 -A mwan3_rules -p $proto -s $src_ip -d $dest_ip $ipset -m multiport --sports $src_port -m multiport --dports $dest_port -m mark --mark 0/$MMX_MASK -m comment --comment "$1" -j $policy &> /dev/null
+				$IPT4 -A mwan3_rules \
+					-p $proto \
+					-s $src_ip \
+					-d $dest_ip $ipset \
+					-m multiport --sports $src_port \
+					-m multiport --dports $dest_port \
+					-m mark --mark 0/$MMX_MASK \
+					-m comment --comment "$1" \
+					-j $policy &> /dev/null
 				;;
 				*)
-				$IPT4 -A mwan3_rules -p $proto -s $src_ip -d $dest_ip $ipset -m mark --mark 0/$MMX_MASK -m comment --comment "$1" -j $policy &> /dev/null
+				$IPT4 -A mwan3_rules \
+					-p $proto \
+					-s $src_ip \
+					-d $dest_ip $ipset \
+					-m mark --mark 0/$MMX_MASK \
+					-m comment --comment "$1" \
+					-j $policy &> /dev/null
 				;;
 			esac
 
@@ -811,10 +938,24 @@ mwan3_set_user_iptables_rule()
 
 			case $proto in
 				tcp|udp)
-				$IPT6 -A mwan3_rules -p $proto -s $src_ip -d $dest_ip $ipset -m multiport --sports $src_port -m multiport --dports $dest_port -m mark --mark 0/$MMX_MASK -m comment --comment "$1" -j $policy &> /dev/null
+				$IPT6 -A mwan3_rules \
+					-p $proto \
+					-s $src_ip \
+					-d $dest_ip $ipset \
+					-m multiport --sports $src_port \
+					-m multiport --dports $dest_port \
+					-m mark --mark 0/$MMX_MASK \
+					-m comment --comment "$1" \
+					-j $policy &> /dev/null
 				;;
 				*)
-				$IPT6 -A mwan3_rules -p $proto -s $src_ip -d $dest_ip $ipset -m mark --mark 0/$MMX_MASK -m comment --comment "$1" -j $policy &> /dev/null
+				$IPT6 -A mwan3_rules \
+					-p $proto \
+					-s $src_ip \
+					-d $dest_ip $ipset \
+					-m mark --mark 0/$MMX_MASK \
+					-m comment --comment "$1" \
+					-j $policy &> /dev/null
 				;;
 			esac
 		fi
@@ -871,9 +1012,15 @@ mwan3_report_iface_status()
 
 	if [ -z "$id" -o -z "$device" ]; then
 		result="unknown"
-	elif [ -n "$($IP rule | awk '$1 == "'$(($id+1000)):'"')" -a -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" -a -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" -a -n "$($IP route list table $id default dev $device 2> /dev/null)" ]; then
+	elif [ -n "$($IP rule | awk '$1 == "'$(($id+1000)):'"')" ] && \
+		[ -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" ] && \
+		[ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] && \
+		[ -n "$($IP route list table $id default dev $device 2> /dev/null)" ]; then
 		result="$(mwan3_get_iface_hotplug_state $1)"
-	elif [ -n "$($IP rule | awk '$1 == "'$(($id+1000)):'"')" -o -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" -o -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" -o -n "$($IP route list table $id default dev $device 2> /dev/null)" ]; then
+	elif [ -n "$($IP rule | awk '$1 == "'$(($id+1000)):'"')" ] || \
+		[ -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" ] || \
+		[ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] || \
+		[ -n "$($IP route list table $id default dev $device 2> /dev/null)" ]; then
 		result="error"
 	elif [ "$enabled" == "1" ]; then
 		result="offline"
