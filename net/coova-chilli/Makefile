@@ -12,7 +12,7 @@ PKG_VERSION:=1.4
 PKG_MAINTAINER:=Jaehoon You <teslamint@gmail.com>
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/coova/coova-chilli/tar.gz/$(PKG_VERSION)?
@@ -108,6 +108,7 @@ define Build/Configure
 	$(if $(CONFIG_COOVACHILLI_USERAGENT),--enable,--disable)-useragent \
 	$(if $(CONFIG_COOVACHILLI_LARGELIMITS),--enable,--disable)-largelimits \
 	$(if $(CONFIG_COOVACHILLI_UAMDOMAINFILE),--enable,--disable)-uamdomainfile \
+	$(if $(CONFIG_IPV6),--with,--without)-ipv6 \
 	$(if $(CONFIG_COOVACHILLI_CYASSL),--with,--without)-cyassl \
 	$(if $(CONFIG_COOVACHILLI_OPENSSL),--with,--without)-openssl \
 	$(if $(CONFIG_PACKAGE_kmod-ipt-coova),--with-nfcoova) \
