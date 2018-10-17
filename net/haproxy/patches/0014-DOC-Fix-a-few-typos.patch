@@ -1,0 +1,56 @@
+commit c6eb147201c1d05afaadc5fd248b17be91f97331
+Author: Bertrand Jacquin <bertrand@jacquin.bzh>
+Date:   Sat Oct 13 16:06:18 2018 +0100
+
+    DOC: Fix a few typos
+    
+    these are mostly spelling mistakes, some of them might be candidate for
+    backporting as well.
+    
+    (cherry picked from commit d5e4de8e5f99108e31dc7a23a0e91c4231e37974)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/CONTRIBUTING b/CONTRIBUTING
+index b2c2b493..cd97e69b 100644
+--- a/CONTRIBUTING
++++ b/CONTRIBUTING
+@@ -309,7 +309,7 @@ do not think about them anymore after a few patches.
+    A good rule of thumb is that if your identifiers start to contain more than
+    3 words or more than 15 characters, they can become confusing. For function
+    names it's less important especially if these functions are rarely used or
+-   are used in a complex context where it is important to differenciate between
++   are used in a complex context where it is important to differentiate between
+    their multiple variants.
+ 
+ 9) Unified diff only
+@@ -318,7 +318,7 @@ do not think about them anymore after a few patches.
+    that you have committed your patch to a local branch, with an appropriate
+    subject line and a useful commit message explaining what the patch attempts
+    to do. It is not strictly required to use git, but what is strictly required
+-   is to have all these elements in the same mail, easily distinguishible, and
++   is to have all these elements in the same mail, easily distinguishable, and
+    a patch in "diff -up" format (which is also the format used by Git). This
+    means the "unified" diff format must be used exclusively, and with the
+    function name printed in the diff header of each block. That significantly
+@@ -761,7 +761,7 @@ sent to the mailing list : haproxy@formilux.org and CCed to relevant subsystem
+ maintainers or authors of the modified files if their address appears at the
+ top of the file.
+ 
+-Please don't send pull-requests, they are really unconvenient. First, a pull
++Please don't send pull-requests, they are really inconvenient. First, a pull
+ implies a merge operation and the code doesn't move fast enough to justify the
+ use of merges. Second, pull requests are not easily commented on by the
+ project's participants, contrary to e-mails where anyone is allowed to have an
+diff --git a/include/types/connection.h b/include/types/connection.h
+index 5e8af3e7..b9e46048 100644
+--- a/include/types/connection.h
++++ b/include/types/connection.h
+@@ -45,7 +45,7 @@ struct server;
+ struct pipe;
+ 
+ 
+-/* A connection handle is how we differenciate two connections on the lower
++/* A connection handle is how we differentiate two connections on the lower
+  * layers. It usually is a file descriptor but can be a connection id.
+  */
+ union conn_handle {

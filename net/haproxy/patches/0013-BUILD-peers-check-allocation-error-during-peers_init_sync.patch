@@ -1,0 +1,77 @@
+commit d28afe3631e20a9fcca47efde031d62e501eff48
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Mon Oct 15 11:18:03 2018 +0200
+
+    BUILD: peers: check allocation error during peers_init_sync()
+    
+    peers_init_sync() doesn't check task_new()'s return value and doesn't
+    return any result to indicate success or failure. Let's make it return
+    an int and check it from the caller.
+    
+    This can be backported as far as 1.6.
+    
+    (cherry picked from commit d944344f01d9ea914d94c45f6ac7c224c6143fc9)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/include/proto/peers.h b/include/proto/peers.h
+index 782b66e4..9d4aaff2 100644
+--- a/include/proto/peers.h
++++ b/include/proto/peers.h
+@@ -28,7 +28,7 @@
+ #include <types/stream.h>
+ #include <types/peers.h>
+ 
+-void peers_init_sync(struct peers *peers);
++int peers_init_sync(struct peers *peers);
+ void peers_register_table(struct peers *, struct stktable *table);
+ void peers_setup_frontend(struct proxy *fe);
+ 
+diff --git a/src/cfgparse.c b/src/cfgparse.c
+index d1474d4b..7414b60d 100644
+--- a/src/cfgparse.c
++++ b/src/cfgparse.c
+@@ -9111,7 +9111,12 @@ out_uri_auth_compat:
+ 				curpeers->peers_fe = NULL;
+ 			}
+ 			else {
+-				peers_init_sync(curpeers);
++				if (!peers_init_sync(curpeers)) {
++					ha_alert("Peers section '%s': out of memory, giving up on peers.\n",
++						 curpeers->id);
++					cfgerr++;
++					break;
++				}
+ 				last = &curpeers->next;
+ 				continue;
+ 			}
+diff --git a/src/peers.c b/src/peers.c
+index c56ed3af..0cd56da3 100644
+--- a/src/peers.c
++++ b/src/peers.c
+@@ -2159,9 +2159,9 @@ static struct task *process_peer_sync(struct task * task)
+ 
+ 
+ /*
+- *
++ * returns 0 in case of error.
+  */
+-void peers_init_sync(struct peers *peers)
++int peers_init_sync(struct peers *peers)
+ {
+ 	struct peer * curpeer;
+ 	struct listener *listener;
+@@ -2173,10 +2173,14 @@ void peers_init_sync(struct peers *peers)
+ 	list_for_each_entry(listener, &peers->peers_fe->conf.listeners, by_fe)
+ 		listener->maxconn = peers->peers_fe->maxconn;
+ 	peers->sync_task = task_new(MAX_THREADS_MASK);
++	if (!peers->sync_task)
++		return 0;
++
+ 	peers->sync_task->process = process_peer_sync;
+ 	peers->sync_task->context = (void *)peers;
+ 	peers->sighandler = signal_register_task(0, peers->sync_task, 0);
+ 	task_wakeup(peers->sync_task, TASK_WOKEN_INIT);
++	return 1;
+ }
+ 
+ 

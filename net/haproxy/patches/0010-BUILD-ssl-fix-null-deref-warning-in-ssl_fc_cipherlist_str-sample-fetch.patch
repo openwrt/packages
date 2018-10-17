@@ -1,0 +1,29 @@
+commit d332b12b262ad7df1c8bdda52dad100f40399d24
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Mon Oct 15 11:01:59 2018 +0200
+
+    BUILD: ssl: fix null-deref warning in ssl_fc_cipherlist_str sample fetch
+    
+    Gcc 6.4 detects a potential null-deref warning in smp_fetch_ssl_fc_cl_str().
+    This one is not real since already addressed a few lines above. Let's use
+    __objt_conn() instead of objt_conn() to avoid the extra test that confuses
+    it.
+    
+    This could be backported to 1.8.
+    
+    (cherry picked from commit b729077710b14c75936909409e27a4fa0badcb54)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 6eed8022..4577fef4 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -6929,7 +6929,7 @@ smp_fetch_ssl_fc_cl_str(const struct arg *args, struct sample *smp, const char *
+ #if defined(OPENSSL_IS_BORINGSSL)
+ 		cipher = SSL_get_cipher_by_value(id);
+ #else
+-		struct connection *conn = objt_conn(smp->sess->origin);
++		struct connection *conn = __objt_conn(smp->sess->origin);
+ 		cipher = SSL_CIPHER_find(conn->xprt_ctx, bin);
+ #endif
+ 		str = SSL_CIPHER_get_name(cipher);
