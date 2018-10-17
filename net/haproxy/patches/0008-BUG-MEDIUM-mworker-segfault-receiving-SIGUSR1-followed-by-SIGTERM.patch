@@ -1,0 +1,52 @@
+commit df4822ea169adc5c7c987fa077438f0ded1ac39b
+Author: Emeric Brun <ebrun@haproxy.com>
+Date:   Thu Oct 11 15:27:07 2018 +0200
+
+    BUG/MEDIUM: mworker: segfault receiving SIGUSR1 followed by SIGTERM.
+    
+    This bug appeared only if nbthread > 1. Handling the pipe with the
+    master, multiple threads of the same worker could process the deinit().
+    
+    In addition, deinit() was called while some other threads were still
+    performing some tasks.
+    
+    This patch assign the handler of the pipe with master to only the first
+    thread and removes the call to deinit() before exiting with an error.
+    
+    This patch should be backported in v1.8.
+    
+    (cherry picked from commit c8c0ed91cb4436491efd2ce2c4b4b1694aeeccca)
+    [wt: adjusted context]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/haproxy.c b/src/haproxy.c
+index e0186ff9..1959dd0f 100644
+--- a/src/haproxy.c
++++ b/src/haproxy.c
+@@ -2349,7 +2349,13 @@ void mworker_pipe_handler(int fd)
+ 		break;
+ 	}
+ 
+-	deinit();
++	/* At this step the master is down before
++	 * this worker perform a 'normal' exit.
++	 * So we want to exit with an error but
++	 * other threads could currently process
++	 * some stuff so we can't perform a clean
++	 * deinit().
++	 */
+ 	exit(EXIT_FAILURE);
+ 	return;
+ }
+@@ -2364,7 +2370,10 @@ void mworker_pipe_register()
+ 	fcntl(mworker_pipe[0], F_SETFL, O_NONBLOCK);
+ 	fdtab[mworker_pipe[0]].owner = mworker_pipe;
+ 	fdtab[mworker_pipe[0]].iocb = mworker_pipe_handler;
+-	fd_insert(mworker_pipe[0], MAX_THREADS_MASK);
++	/* In multi-tread, we need only one thread to process
++	 * events on the pipe with master
++	 */
++	fd_insert(mworker_pipe[0], 1);
+ 	fd_want_recv(mworker_pipe[0]);
+ }
+ 

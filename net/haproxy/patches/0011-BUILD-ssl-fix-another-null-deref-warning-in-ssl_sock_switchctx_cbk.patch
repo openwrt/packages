@@ -1,0 +1,28 @@
+commit 892c21240adb9ac230d4bd27cc8be4767b4902aa
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Mon Oct 15 13:20:07 2018 +0200
+
+    BUILD: ssl: fix another null-deref warning in ssl_sock_switchctx_cbk()
+    
+    This null-deref cannot happen either as there necesarily is a listener
+    where this function is called. Let's use __objt_listener() to address
+    this.
+    
+    This may be backported to 1.8.
+    
+    (cherry picked from commit a8825520b785d592467c45e183ad8213cb7bf891)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 4577fef4..cfbc38b7 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -2113,7 +2113,7 @@ static int ssl_sock_switchctx_cbk(SSL *ssl, int *al, void *arg)
+ 	int i;
+ 
+ 	conn = SSL_get_ex_data(ssl, ssl_app_data_index);
+-	s = objt_listener(conn->target)->bind_conf;
++	s = __objt_listener(conn->target)->bind_conf;
+ 
+ 	if (s->ssl_conf.early_data)
+ 		allow_early = 1;

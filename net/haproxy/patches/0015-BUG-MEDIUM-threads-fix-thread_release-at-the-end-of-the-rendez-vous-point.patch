@@ -1,0 +1,36 @@
+commit 75795017480da0f0a1157e945043249fe625f92f
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Tue Oct 16 16:11:56 2018 +0200
+
+    BUG/MEDIUM: threads: fix thread_release() at the end of the rendez-vous point
+    
+    There is a bug in this function used to release other threads. It leaves
+    the current thread marked as harmless. If after this another thread does
+    a thread_isolate(), but before the first one reaches poll(), the second
+    thread will believe it's alone while it's not.
+    
+    This must be backported to 1.8 since the rendez-vous point was merged
+    into 1.8.14.
+    
+    (cherry picked from commit a9c0252b2e8ff7bb728b84d977ac6e9581ea12f8)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/hathreads.c b/src/hathreads.c
+index 9dba4356..0a7c12f7 100644
+--- a/src/hathreads.c
++++ b/src/hathreads.c
+@@ -221,12 +221,8 @@ void thread_isolate()
+  */
+ void thread_release()
+ {
+-	while (1) {
+-		HA_ATOMIC_AND(&threads_want_rdv_mask, ~tid_bit);
+-		if (!(threads_want_rdv_mask & all_threads_mask))
+-			break;
+-		thread_harmless_till_end();
+-	}
++	HA_ATOMIC_AND(&threads_want_rdv_mask, ~tid_bit);
++	thread_harmless_end();
+ }
+ 
+ __attribute__((constructor))
