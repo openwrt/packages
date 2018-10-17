@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openpyxl
-PKG_VERSION:=2.5.7
+PKG_VERSION:=2.5.8
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/o/openpyxl
-PKG_HASH:=d3da4d6a78077d6f9fb1a1ec12d4aa500f7caa4661b8528538503b24ed72d632
+PKG_HASH:=22904d7bdfaaab33d65d50a0915a65eeb2f29c85d9ec53081563850678a29927
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
