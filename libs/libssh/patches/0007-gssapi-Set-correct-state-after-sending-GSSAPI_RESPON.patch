@@ -1,0 +1,24 @@
+From 103973215443f6e02e010114a3f7ac19eb6f3c8c Mon Sep 17 00:00:00 2001
+From: Meng Tan <mtan@wallix.com>
+Date: Thu, 25 Oct 2018 17:06:06 +0200
+Subject: [PATCH 7/8] gssapi: Set correct state after sending GSSAPI_RESPONSE
+ (select mechanism OID)
+
+Signed-off-by: Meng Tan <mtan@wallix.com>
+Reviewed-by: Andreas Schneider <asn@cryptomilk.org>
+(cherry picked from commit bce8d567053232debd6ec490af5a7d27e1160f39)
+Signed-off-by: Kevin Darbyshire-Bryant <ldir@darbyshire-bryant.me.uk>
+---
+ src/gssapi.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/src/gssapi.c
++++ b/src/gssapi.c
+@@ -120,6 +120,7 @@ static int ssh_gssapi_send_response(ssh_
+         ssh_set_error_oom(session);
+         return SSH_ERROR;
+     }
++    session->auth_state = SSH_AUTH_STATE_GSSAPI_TOKEN;
+ 
+     packet_send(session);
+     SSH_LOG(SSH_LOG_PACKET,
