@@ -21,9 +21,7 @@ smb_header() {
 
 	local workgroup description charset
 	# we dont use netbios anymore as default and wsd/avahi is dns based
-	local hostname="$(uci get system.@system[0].hostname)"
-	local domain="$(uci get dhcp.@dnsmasq[0].domain)"
-	[ -n "$domain" ] && hostname="$hostname.$domain"
+	local hostname="$(cat /proc/sys/kernel/hostname)"
 
 	config_get workgroup		$1 workgroup	"WORKGROUP"
 	config_get description		$1 description	"Samba on OpenWrt"
