@@ -1,0 +1,117 @@
+diff --git a/configure.in b/configure.in
+index aa6fd6e..317d5a1 100755
+--- a/configure.in
++++ b/configure.in
+@@ -291,7 +291,7 @@ if test "${with_tcl+set}" = set ; then
+ fi
+ 
+ # these are the other subdirectories we need to configure
+-AC_CONFIG_SUBDIRS(testsuite)
++dnl AC_CONFIG_SUBDIRS(testsuite)
+ 
+ AC_TYPE_PID_T
+ 
+@@ -481,7 +481,8 @@ main() {
+ ,
+ 	AC_MSG_RESULT(no)
+ ,
+-	AC_MSG_ERROR([Expect can't be cross compiled])
++	AC_MSG_RESULT(no)
++	dnl AC_MSG_ERROR([Expect can't be cross compiled])
+ )
+ 
+ AC_MSG_CHECKING([if any value exists for WNOHANG])
+@@ -506,7 +507,9 @@ main() {
+ 	AC_MSG_RESULT(no)
+ 	AC_DEFINE(WNOHANG_BACKUP_VALUE, 1)
+ ,
+-	AC_MSG_ERROR([Expect can't be cross compiled])
++	AC_MSG_RESULT(yes)
++	AC_DEFINE(WNOHANG_BACKUP_VALUE, 1)
++	dnl AC_MSG_ERROR([Expect can't be cross compiled])
+ )
+ 
+ #
+@@ -574,7 +577,9 @@ main()
+ 	AC_DEFINE(REARM_SIG)
+ ,
+ 	AC_MSG_RESULT(no)
+-, AC_MSG_WARN([Expect can't be cross compiled])
++,
++	AC_MSG_RESULT(no)
++	dnl AC_MSG_WARN([Expect can't be cross compiled])
+ )
+ 
+ # HPUX7 has trouble with the big cat so split it
+@@ -725,7 +730,8 @@ main()
+ ,
+         AC_MSG_RESULT(no)
+ ,
+-	AC_MSG_ERROR([Expect can't be cross compiled])
++        AC_MSG_RESULT(no)
++        dnl AC_MSG_ERROR([Expect can't be cross compiled])
+ )
+ 
+ # mach systems have include files for unimplemented features
+@@ -749,7 +755,8 @@ if test $mach -eq 0 ; then
+ ,
+         AC_MSG_RESULT(no)
+ ,
+-	AC_MSG_ERROR([Expect can't be cross compiled])
++    AC_MSG_RESULT(no)
++    dnl AC_MSG_ERROR([Expect can't be cross compiled])
+ )
+ 
+   # now check for the new style ttys (not yet posix)
+@@ -771,7 +778,10 @@ if test $mach -eq 0 ; then
+   ,
+         AC_MSG_RESULT(no)
+   ,
+-	AC_MSG_ERROR([Expect can't be cross compiled])
++        AC_DEFINE(HAVE_TERMIOS)
++        PTY_TYPE=termios
++        AC_MSG_RESULT(yes)
++        dnl AC_MSG_ERROR([Expect can't be cross compiled])
+   )
+ fi
+ 
+@@ -794,7 +804,8 @@ main() {
+ ,
+ 	AC_MSG_RESULT(no)
+ ,
+-	AC_MSG_ERROR([Expect can't be cross compiled])
++    AC_MSG_RESULT(no)
++    dnl AC_MSG_ERROR([Expect can't be cross compiled])
+ )
+ 
+ AC_MSG_CHECKING([if TIOCGWINSZ in termios.h])
+@@ -816,7 +827,8 @@ main() {
+ ,
+ 	AC_MSG_RESULT(no)
+ ,
+-	AC_MSG_ERROR([Expect can't be cross compiled])
++	AC_MSG_RESULT(no)
++	dnl AC_MSG_ERROR([Expect can't be cross compiled])
+ )
+ 
+ # finally check for Cray style ttys
+@@ -837,7 +849,8 @@ main(){
+ ,
+ 	AC_MSG_RESULT(no)
+ ,
+-	AC_MSG_ERROR([Expect can't be cross compiled])
++	AC_MSG_RESULT(no)
++	dnl AC_MSG_ERROR([Expect can't be cross compiled])
+ )
+ 
+ #
+@@ -889,7 +902,8 @@ main()
+ 	AC_MSG_RESULT(yes),
+ 	AC_MSG_RESULT(no)
+ ,
+-	AC_MSG_ERROR([Expect can't be cross compiled])
++	AC_MSG_RESULT(yes)
++	dnl AC_MSG_ERROR([Expect can't be cross compiled])
+ )
+ 
+ 

@@ -1,0 +1,36 @@
+diff --git a/Makefile.in b/Makefile.in
+index 2d36791..fb34d34 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -172,6 +172,11 @@ TCLSH_ENV	= TCL_LIBRARY=`@CYGPATH@ $(TCL_SRC_DIR)/library` \
+ TCLSH_PROG	= @TCLSH_PROG@
+ TCLSH		= $(TCLSH_ENV) $(TCLSH_PROG)
+ SHARED_BUILD	= @SHARED_BUILD@
++ifeq ($(SHARED_BUILD),1)
++RANLIB_CMD  = :
++else
++RANLIB_CMD  = $(RANLIB)
++endif
+ 
+ INCLUDES	= @PKG_INCLUDES@ @TCL_INCLUDES@
+ 
+@@ -290,7 +295,7 @@ depend:
+ $(PKG_LIB_FILE): $(PKG_OBJECTS)
+ 	-rm -f $(PKG_LIB_FILE)
+ 	${MAKE_LIB}
+-	$(RANLIB) $(PKG_LIB_FILE)
++	$(RANLIB_CMD) $(PKG_LIB_FILE)
+ 
+ $(PKG_STUB_LIB_FILE): $(PKG_STUB_OBJECTS)
+ 	-rm -f $(PKG_STUB_LIB_FILE)
+@@ -534,8 +539,8 @@ install-lib-binaries:
+ 		echo " $(RANLIB_STUB) $(DESTDIR)$(pkglibdir)/$$p"; \
+ 		$(RANLIB_STUB) $(DESTDIR)$(pkglibdir)/$$p; \
+ 	    else \
+-		echo " $(RANLIB) $(DESTDIR)$(pkglibdir)/$$p"; \
+-		$(RANLIB) $(DESTDIR)$(pkglibdir)/$$p; \
++		echo " $(RANLIB_CMD) $(DESTDIR)$(pkglibdir)/$$p"; \
++		$(RANLIB_CMD) $(DESTDIR)$(pkglibdir)/$$p; \
+ 	    fi; \
+ 	    ext=`echo $$p|sed -e "s/.*\.//"`; \
+ 	    if test "x$$ext" = "xdll"; then \
