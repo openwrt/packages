@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=mDNSResponder-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://opensource.apple.com/tarballs/mDNSResponder/
 PKG_HASH:=cdd03171ca05f16ea987bba1f8b0c4847d3035283ea0f5fa0ade75f64ec83ed5
-PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+PKG_MAINTAINER:=
 PKG_LICENSE:=Apache-2.0
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/mDNSResponder-$(PKG_VERSION)
