@@ -32,7 +32,7 @@ define Package/libssh
   CATEGORY:=Libraries
   URL:=$(PKG_SOURCE_URL)
   TITLE:=SSH library
-  DEPENDS:=+libpthread +librt +zlib +libopenssl
+  DEPENDS:=+libpthread +librt +zlib +libopenssl @BROKEN
 endef
 
 define Package/libssh/description
