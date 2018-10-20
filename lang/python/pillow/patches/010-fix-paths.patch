@@ -1,32 +1,34 @@
-diff -rupN pillow-3.3.1.orig/setup.py pillow-3.3.1/setup.py
---- pillow-3.3.1.orig/setup.py	2016-08-22 17:45:05.000000000 +0200
-+++ pillow-3.3.1/setup.py	2016-08-22 18:09:51.947745155 +0200
-@@ -111,12 +111,12 @@ except (ImportError, OSError):
+diff --git a/setup.py b/setup.py
+index 15d81e4..ee6dba6 100755
+--- a/setup.py
++++ b/setup.py
+@@ -136,12 +136,12 @@ except (ImportError, OSError):
  
  NAME = 'Pillow'
- PILLOW_VERSION = '3.3.1'
+ PILLOW_VERSION = get_version()
 -JPEG_ROOT = None
-+JPEG_ROOT = _lib_include(os.environ['STAGING_DIR'] + "/usr")
++JPEG_ROOT = os.path.join(os.environ['STAGING_DIR'], "/usr/lib")
  JPEG2K_ROOT = None
 -ZLIB_ROOT = None
-+ZLIB_ROOT = _lib_include(os.environ['STAGING_DIR'] + "/usr")
++ZLIB_ROOT = os.path.join(os.environ['STAGING_DIR'], "/usr/lib")
  IMAGEQUANT_ROOT = None
 -TIFF_ROOT = None
 -FREETYPE_ROOT = None
-+TIFF_ROOT = _lib_include(os.environ['STAGING_DIR'] + "/usr")
-+FREETYPE_ROOT = _lib_include(os.environ['STAGING_DIR'] + "/usr")
++TIFF_ROOT = os.path.join(os.environ['STAGING_DIR'], "/usr/lib")
++FREETYPE_ROOT = os.path.join(os.environ['STAGING_DIR'], "/usr/lib")
  LCMS_ROOT = None
  
  
-@@ -221,161 +221,6 @@ class pil_build_ext(build_ext):
+@@ -289,159 +289,6 @@ class pil_build_ext(build_ext):
+             _add_directory(library_dirs, os.path.join(prefix, "lib"))
              _add_directory(include_dirs, os.path.join(prefix, "include"))
  
-         #
+-        #
 -        # add platform directories
 -
 -        if self.disable_platform_guessing:
 -            pass
--        
+-
 -        elif sys.platform == "cygwin":
 -            # pythonX.Y.dll.a is in the /usr/lib/pythonX.Y/config directory
 -            _add_directory(library_dirs,
@@ -48,7 +50,7 @@ diff -rupN pillow-3.3.1.orig/setup.py pillow-3.3.1/setup.py
 -            try:
 -                prefix = subprocess.check_output(['brew', '--prefix']).strip(
 -                ).decode('latin1')
--            except:
+-            except Exception:
 -                # Homebrew not installed
 -                prefix = None
 -
@@ -73,61 +75,59 @@ diff -rupN pillow-3.3.1.orig/setup.py pillow-3.3.1/setup.py
 -
 -        elif sys.platform.startswith("linux"):
 -            arch_tp = (plat.processor(), plat.architecture()[0])
--            if arch_tp == ("x86_64", "32bit"):
--                # 32-bit build on 64-bit machine.
+-            # This should be correct on debian derivatives.
+-            if os.path.exists('/etc/debian_version'):
+-                # If this doesn't work, don't just silently patch
+-                # downstream because it's going to break when people
+-                # try to build pillow from source instead of
+-                # installing from the system packages.
+-                self.add_multiarch_paths()
+-
+-            elif arch_tp == ("x86_64", "32bit"):
+-                # Special Case: 32-bit build on 64-bit machine.
 -                _add_directory(library_dirs, "/usr/lib/i386-linux-gnu")
 -            else:
+-                libdirs = {
+-                    'x86_64':  ["/lib64", "/usr/lib64",
+-                                "/usr/lib/x86_64-linux-gnu"],
+-                    '64bit':   ["/lib64", "/usr/lib64",
+-                                "/usr/lib/x86_64-linux-gnu"],
+-                    'i386':    ["/usr/lib/i386-linux-gnu"],
+-                    'i686':    ["/usr/lib/i386-linux-gnu"],
+-                    '32bit':   ["/usr/lib/i386-linux-gnu"],
+-                    'aarch64': ["/usr/lib64", "/usr/lib/aarch64-linux-gnu"],
+-                    'arm':     ["/usr/lib/arm-linux-gnueabi"],
+-                    'armv71':  ["/usr/lib/arm-linux-gnueabi"],
+-                    'armv7l':  ["/usr/lib"],
+-                    'ppc64':   ["/usr/lib64", "/usr/lib/ppc64-linux-gnu",
+-                                "/usr/lib/powerpc64-linux-gnu"],
+-                    'ppc64le':   ["/usr/lib64"],
+-                    'ppc':     ["/usr/lib/ppc-linux-gnu",
+-                                "/usr/lib/powerpc-linux-gnu"],
+-                    's390x':   ["/usr/lib64", "/usr/lib/s390x-linux-gnu"],
+-                    's390':    ["/usr/lib/s390-linux-gnu"],
+-                    }
+-
 -                for platform_ in arch_tp:
--
--                    if not platform_:
+-                    dirs = libdirs.get(platform_, None)
+-                    if not dirs:
 -                        continue
+-                    for path in dirs:
+-                        _add_directory(library_dirs, path)
+-                    break
 -
--                    if platform_ in ["x86_64", "64bit"]:
--                        _add_directory(library_dirs, "/lib64")
--                        _add_directory(library_dirs, "/usr/lib64")
--                        _add_directory(library_dirs,
--                                       "/usr/lib/x86_64-linux-gnu")
--                        break
--                    elif platform_ in ["i386", "i686", "32bit"]:
--                        _add_directory(library_dirs, "/usr/lib/i386-linux-gnu")
--                        break
--                    elif platform_ in ["aarch64"]:
--                        _add_directory(library_dirs, "/usr/lib64")
--                        _add_directory(library_dirs,
--                                       "/usr/lib/aarch64-linux-gnu")
--                        break
--                    elif platform_ in ["arm", "armv7l"]:
--                        _add_directory(library_dirs,
--                                       "/usr/lib/arm-linux-gnueabi")
--                        break
--                    elif platform_ in ["ppc64"]:
--                        _add_directory(library_dirs, "/usr/lib64")
--                        _add_directory(library_dirs,
--                                       "/usr/lib/ppc64-linux-gnu")
--                        _add_directory(library_dirs,
--                                       "/usr/lib/powerpc64-linux-gnu")
--                        break
--                    elif platform_ in ["ppc"]:
--                        _add_directory(library_dirs, "/usr/lib/ppc-linux-gnu")
--                        _add_directory(library_dirs,
--                                       "/usr/lib/powerpc-linux-gnu")
--                        break
--                    elif platform_ in ["s390x"]:
--                        _add_directory(library_dirs, "/usr/lib64")
--                        _add_directory(library_dirs,
--                                       "/usr/lib/s390x-linux-gnu")
--                        break
--                    elif platform_ in ["s390"]:
--                        _add_directory(library_dirs, "/usr/lib/s390-linux-gnu")
--                        break
 -                else:
 -                    raise ValueError(
 -                        "Unable to identify Linux platform: `%s`" % platform_)
 -
--                # XXX Kludge. Above /\ we brute force support multiarch. Here we
--                # try Barry's more general approach. Afterward, something should
--                # work ;-)
--                self.add_multiarch_paths()
+-                # termux support for android.
+-                # system libraries (zlib) are installed in /system/lib
+-                # headers are at $PREFIX/include
+-                # user libs are at $PREFIX/lib
+-                if os.environ.get('ANDROID_ROOT', None):
+-                    _add_directory(library_dirs,
+-                                   os.path.join(os.environ['ANDROID_ROOT'],
+-                                                'lib'))
 -
 -        elif sys.platform.startswith("gnu"):
 -            self.add_multiarch_paths()
@@ -164,8 +164,8 @@ diff -rupN pillow-3.3.1.orig/setup.py pillow-3.3.1/setup.py
 -            best_path = None
 -            for name in os.listdir(program_files):
 -                if name.startswith('OpenJPEG '):
--                    version = tuple([int(x) for x in name[9:].strip().split(
--                        '.')])
+-                    version = tuple(int(x) for x in
+-                                    name[9:].strip().split('.'))
 -                    if version > best_version:
 -                        best_version = version
 -                        best_path = os.path.join(program_files, name)
@@ -176,7 +176,6 @@ diff -rupN pillow-3.3.1.orig/setup.py pillow-3.3.1/setup.py
 -                _add_directory(include_dirs,
 -                               os.path.join(best_path, 'include'))
 -
--        #
+         #
          # insert new dirs *before* default libs, to avoid conflicts
          # between Python PYD stub libs and real libraries
- 
