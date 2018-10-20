@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=3.4.14
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=7443873cc970672d3c884230d3aeb082f2d8afcc2b757506c2d684ffdd12d77e
@@ -233,6 +233,15 @@ endef
 
 define Package/zabbix-extra-wifi/install
 	$(call Package/zabbix/install/zabbix.conf.d,$(1),wifi)
+	$(INSTALL_DIR) $(1)/usr/share/acl.d
+	$(INSTALL_DATA) ./files/zabbix-wifi-ubus-acl.json $(1)/usr/share/acl.d/zabbix-wifi.json
+endef
+
+define Package/zabbix-extra-wifi/postinst
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	killall -HUP ubusd
+fi
 endef
 
 define Package/zabbix-sender/install
