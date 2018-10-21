@@ -1,10 +1,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=13274f4bd2009dd928e91f0b6e056cee7f7975a5
-PKG_MIRROR_HASH:=fb80259245a496bc238117c7ac36f9338dc3612a99eef2bc5be2a042de8cdee1
+PKG_SOURCE_VERSION:=e0785bb1b2af91a38d161bda7a4075338579441a
+PKG_MIRROR_HASH:=4cbb9cf48f18fa87aa7c81bcff2372fc9c04c3688fb8dd4b2b57da258050179b
 
-PKG_VERSION:=0.10.2-git-20180929-$(PKG_SOURCE_VERSION)
+PKG_VERSION:=0.10.2-git-20181021-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -285,7 +285,7 @@ PLUGIN_dhtcache-heap:=datacache_heap
 CONFLICTS_dhtcache-heap:=gnunet-dhtcache-pgsql gnunet-dhtcache-sqlite
 
 DEPENDS_gns-flat:=+gnunet-gns
-PLUGIN_gns-flat:=namecache_flat namestore_flat
+PLUGIN_gns-flat:=namecache_flat namestore_heap
 
 DEPENDS_peerstore-flat:=+gnunet-peerstore
 PLUGIN_peerstore-flat:=peerstore_flat
