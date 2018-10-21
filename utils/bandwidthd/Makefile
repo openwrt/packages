@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bandwidthd
 PKG_VERSION:=2.0.1-34
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/NethServer/bandwidthd/archive/$(PKG_VERSION)
@@ -140,6 +140,7 @@ CONFIGURE_ARGS += \
 	ac_cv_lib_sqlite3_sqlite3_open=no
 endif
 
+TARGET_CFLAGS += -std=gnu89
 EXTRA_CFLAGS+= $(TARGET_CPPFLAGS)
 EXTRA_LDFLAGS+= $(TARGET_LDFLAGS) -Wl,-rpath-link,$(STAGING_DIR)/usr/lib
 
