@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=batman-adv
 
 PKG_VERSION:=2018.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_HASH:=33f3f942203732e0568a6bc0226a0fe8eb147c961f0d0c13b2e6b16237d412ff
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -27,7 +27,7 @@ define KernelPackage/batman-adv
   URL:=https://www.open-mesh.org/
   MAINTAINER:=Simon Wunderlich <sw@simonwunderlich.de>
   SUBMENU:=Network Support
-  DEPENDS:=+kmod-lib-crc32c +kmod-cfg80211
+  DEPENDS:=+BATMAN_ADV_BLA:kmod-lib-crc16 +kmod-lib-crc32c +kmod-cfg80211
   TITLE:=B.A.T.M.A.N. Adv
   FILES:=$(PKG_BUILD_DIR)/net/batman-adv/batman-adv.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoProbe,batman-adv)
