@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=3.4.14
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=7443873cc970672d3c884230d3aeb082f2d8afcc2b757506c2d684ffdd12d77e
@@ -74,7 +74,7 @@ endef
 define Package/zabbix-extra-network
   $(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for network
-  DEPENDS = +zabbix-agentd +libuci-lua +lua
+  DEPENDS = +zabbix-agentd +libubus-lua +lua
 endef
 
 define Package/zabbix-extra-wifi
@@ -229,6 +229,15 @@ endef
 
 define Package/zabbix-extra-network/install
 	$(call Package/zabbix/install/zabbix.conf.d,$(1),network)
+	$(INSTALL_DIR) $(1)/usr/share/acl.d
+	$(INSTALL_DATA) ./files/zabbix-network-ubus-acl.json $(1)/usr/share/acl.d/zabbix-network.json
+endef
+
+define Package/zabbix-extra-network/postinst
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	killall -HUP ubusd
+fi
 endef
 
 define Package/zabbix-extra-wifi/install
