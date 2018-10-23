@@ -9,15 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rcssmin
 PKG_VERSION:=1.0.6
-PKG_RELEASE=1
+PKG_RELEASE=2
 PKG_LICENSE:=Apache-2.0
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/ndparker/rcssmin.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=4764e3bc47ca8d44be3198892e73c51d8a0a9970
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=a52728cc5653bf3c2a2f92954c6001338442a6e589bd364c497ba615c4365211
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/r/rcssmin
+PKG_HASH:=ca87b695d3d7864157773a61263e5abb96006e9ff0e021eff90cbe0e1ba18270
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
