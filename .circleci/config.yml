@@ -50,7 +50,7 @@ jobs:
                  make "package/$PKG/check" V=s
              done
              for PKG in $PKGS ; do
-                 make "package/$PKG/compile" -j3
+                 make "package/$PKG/compile" -j3 V=s
              done
 
       - store_artifacts:
