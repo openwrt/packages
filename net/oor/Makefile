@@ -16,27 +16,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oor
-PKG_REV:=e74e35daa23c4993b2b38e4ac3e867526bc65e70
-PKG_VERSION:=1.2.1
+PKG_VERSION:=1.2.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=git://github.com/OpenOverlayRouter/oor.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=$(PKG_REV)
+
+PKG_SOURCE_URL=https://github.com/OpenOverlayRouter/oor/releases/download/$(PKG_VERSION)/
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_MD5SUM:=6702348fa314c2691f28c7e71337bb84
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_MAINTAINER:=Albert Lopez <alopez@ac.upc.edu>
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-
-
-define Package/oor/default
-  MAINTAINER:=Albert Lopez <alopez@ac.upc.edu>
-  URL:=http://www.openoverlayrouter.org
-endef
 
 define Package/oor
   SECTION:=net
@@ -51,11 +44,9 @@ define Package/oor/description
   This packet provides support for the Locator-ID Separation Protocol, VXLAN-GPE.
 endef
 
-
 define Build/Compile
 	$(call Build/Compile/Default,platform=openwrt)
 endef
-
 
 define Package/oor/install
 	$(INSTALL_DIR) $(1)/usr/sbin
