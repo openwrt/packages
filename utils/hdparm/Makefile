@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hdparm
-PKG_VERSION:=9.56
+PKG_VERSION:=9.57
 PKG_RELEASE:=1
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
-PKG_HASH:=6ff9ed695f1017396eec4101f990f114b7b0e0a04c5aa6369c0394053d16e4da
+PKG_HASH:=9d568db955a5428797f0b1677ef7cc8bab7756c6e7ff39f6c4a2b2c3640fe870
+
 PKG_MAINTAINER:=Richard Kunze <richard.kunze@web.de>
 PKG_LICENSE:=BSD-Style Open Source License
 
@@ -27,7 +28,7 @@ define Package/hdparm
   CATEGORY:=Utilities
   SUBMENU:=Disc
   TITLE:=Hard disk drive configuration utilitity
-  URL:=http://sourceforge.net/projects/hdparm/
+  URL:=https://sourceforge.net/projects/hdparm/
 endef
 
 define Package/hdparm/description
