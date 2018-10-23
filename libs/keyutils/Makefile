@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keyutils
-PKG_VERSION:=1.5.10
+PKG_VERSION:=1.5.11
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://people.redhat.com/dhowells/keyutils/
-PKG_HASH:=115c3deae7f181778fd0e0ffaa2dad1bf1fe2f5677cf2e0e348cdb7a1c93afb6
+PKG_HASH:=11584488206edc30736263eb855bf7793f16e661987241d333d3cb5ea479b1b5
 
 PKG_FIXUP:=libtool
 
@@ -21,6 +21,7 @@ define Package/libkeyutils
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Key utilities library
+  DEPENDS:=+krb5
   URL:=http://people.redhat.com/dhowells/keyutils/
 endef
 
