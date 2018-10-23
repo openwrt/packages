@@ -80,7 +80,7 @@ endef
 define Package/zabbix-extra-wifi
   $(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for wifi
-  DEPENDS = +zabbix-agentd +libiwinfo-lua +libuci-lua +lua
+  DEPENDS = +zabbix-agentd +libiwinfo-lua +libubus-lua +lua
 endef
 
 define Package/zabbix-sender
