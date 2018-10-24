@@ -22,11 +22,16 @@ unset MY_ARGS MY_GROUP MY_USER
 my_user="${MY_USER:-mariadb}"
 my_group="${MY_GROUP:-mariadb}"
 
+mysql_get_var() {
+	echo "$MYSQL_VARS_OUTPUT" | sed -n 's|^'"$1"'[[:blank:]]\+||p'
+}
+
 start_service() {
-	local datadir="$(/usr/bin/mysqld --help --verbose | sed -n 's|^[[:blank:]]*datadir[[:blank:]]*/|/|p')"
-	local tmpdir="$(/usr/bin/mysqld --help --verbose | sed -n 's|^[[:blank:]]*tmpdir[[:blank:]]*/|/|p')"
-	local pidfile="$(/usr/bin/mysqld --help --verbose | sed -n 's|^[[:blank:]]*pid-file[[:blank:]]*/|/|p')"
-	local socketfile="$(/usr/bin/mysqld --help --verbose | sed -n 's|^[[:blank:]]*socket[[:blank:]]*/|/|p')"
+	MYSQL_VARS_OUTPUT="$(/usr/bin/mysqld --help --verbose | grep '^[a-z]')"
+	local datadir="$(mysql_get_var datadir)"
+	local tmpdir="$(mysql_get_var tmpdir)"
+	local pidfile="$(mysql_get_var pid-file)"
+	local socketfile="$(mysql_get_var socket)"
 
 	[ -d "$datadir" ] || {
 		$LOGGER "datadir '$datadir' does not exist"
