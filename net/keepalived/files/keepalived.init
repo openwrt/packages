@@ -10,6 +10,8 @@ KEEPALIVED_CONF=/tmp/keepalived.conf
 
 INDENT_1=\\t
 INDENT_2=$INDENT_1$INDENT_1
+INDENT_3=$INDENT_1$INDENT_1$INDENT_1
+INDENT_4=$INDENT_1$INDENT_1$INDENT_1$INDENT_1
 
 config_section_open() {
 	local tag=$1
@@ -366,6 +368,113 @@ vrrp_script() {
 	config_section_close
 }
 
+url() {
+	local url="$2"
+
+	local name path digest
+
+	config_get name $1 name
+	[ "$url" = "$name" ] || return 0
+
+	config_get path $1 path
+	config_get digest $1 digest
+
+	[ -n "$digest" -a -n "$path" ] && {
+		printf "${INDENT_3}url {\n" >> $KEEPALIVED_CONF
+		printf "${INDENT_4}path "$path"\n" >> $KEEPALIVED_CONF
+		printf "${INDENT_4}digest $digest\n" >> $KEEPALIVED_CONF
+		printf "${INDENT_3}}\n" >> $KEEPALIVED_CONF
+	}
+}
+
+url_list() {
+	config_foreach url url "$1"
+}
+
+real_server() {
+	local server="$2"
+
+	local enabled name weight ipaddr port check
+
+	config_get_bool enabled $1 enabled 1
+	[ "$enabled" -eq 1 ] || return 0
+
+	config_get name $1 name
+	[ "$server" = "$name" ] || return 0
+
+	config_get weight $1 weight
+	[ -n "$weight" ] || return 0
+
+	config_get ipaddr $1 ipaddr
+	config_get port $1 port
+	config_get check $1 check
+
+	[ -n "$ipaddr" -a -n "$port" ] && {
+		printf "${INDENT_1}real_server $ipaddr $port {\n" >> $KEEPALIVED_CONF
+		printf "${INDENT_2}weight $weight\n" >> $KEEPALIVED_CONF
+		case "$check" in
+			TCP_CHECK)
+				printf "${INDENT_2}${check} {\n" >> $KEEPALIVED_CONF
+				print_elems_indent $1 $INDENT_3 connect_timeout \
+					connect_port
+				printf "${INDENT_2}}\n" >> $KEEPALIVED_CONF
+				;;
+			MISC_CHECK)
+				printf "${INDENT_2}${check} {\n" >> $KEEPALIVED_CONF
+				print_elems_indent $1 $INDENT_3 misc_path
+				printf "${INDENT_2}}\n" >> $KEEPALIVED_CONF
+				;;
+			HTTP_GET | SSL_GET)
+				printf "${INDENT_2}${check} {\n" >> $KEEPALIVED_CONF
+				print_elems_indent $1 $INDENT_3 connect_timeout \
+					connect_port nb_get_retry delay_before_retry
+				# Handle url list
+				config_list_foreach $1 url url_list
+				printf "${INDENT_2}}\n" >> $KEEPALIVED_CONF
+				;;
+		esac
+		printf "${INDENT_1}}\n" >> $KEEPALIVED_CONF
+	}
+}
+
+real_server_list() {
+	config_foreach real_server real_server "$1"
+}
+
+virtual_server() {
+	local enabled ipaddr port lb_algo sorry_server_ip sorry_server_port
+
+	config_get_bool enabled $1 enabled 1
+	[ "$enabled" -eq 1 ] || return 0
+
+	config_get ipaddr $1 ipaddr
+	[ -z "$ipaddr" ] && return 0
+	config_get port $1 port
+	[ -z "$port" ] && return 0
+
+	config_section_open "virtual_server" "$ipaddr $port"
+
+	print_elems_indent $1 $INDENT_1 fwmark delay_loop \
+		lb_kind persistence_timeout persistence_granularity \
+		virtualhost protocol
+
+	config_get lb_algo $1 lb_algo
+	[ -z "$lb_algo" ] && lb_algo="rr"
+	modprobe ip_vs_${lb_algo} 2>&1 1>/dev/null
+	printf "${INDENT_1}lb_algo ${lb_algo}\n" >> $KEEPALIVED_CONF
+
+	config_get sorry_server_ip $1 sorry_server_ip
+	config_get sorry_server_port $1 sorry_server_port
+	[ -n "$sorry_server_ip" -a -n "$sorry_server_port" ] && {
+		printf "${INDENT_1}sorry_server $sorry_server_ip $sorry_server_port\n" >> $KEEPALIVED_CONF
+	}
+
+	# Handle real_server list
+	config_list_foreach $1 real_server real_server_list
+
+	config_section_close
+}
+
 process_config() {
 	local alt_config_file
 
@@ -401,6 +510,7 @@ process_config() {
 	config_foreach_wrapper vrrp_script
 	config_foreach_wrapper vrrp_sync_group
 	config_foreach_wrapper vrrp_instance
+	config_foreach_wrapper virtual_server
 	return 0
 }
 
