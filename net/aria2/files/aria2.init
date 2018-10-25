@@ -224,7 +224,7 @@ aria2_start() {
 			append_setting "rpc-secret=${rpc_secret}"
 		elif [ -n "$rpc_user" ]; then
 			append_setting "rpc-user=${rpc_user}"
-			append_setting "rcp-passwd=${rcp-passwd}"
+			append_setting "rpc-passwd=${rpc_passwd}"
 		else
 			_info "It is recommand to set RPC secret."
 		fi
@@ -235,9 +235,9 @@ aria2_start() {
 			unset_auth_method
 		fi
 	elif [ "$rpc_auth_method" = "user_pass" ]; then
-		if [ -n "$rcp_user" ]; then
+		if [ -n "$rpc_user" ]; then
 			append_setting "rpc-user=${rpc_user}"
-			append_setting "rcp-passwd=${rcp-passwd}"
+			append_setting "rpc-passwd=${rpc_passwd}"
 		else
 			_info "Please set RPC user."
 			unset_auth_method
