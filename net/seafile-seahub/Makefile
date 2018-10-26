@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-seahub
-PKG_VERSION:=6.3.0
-PKG_RELEASE=$(PKG_SOURCE_VERSION)-1
+PKG_VERSION:=6.3.4
+PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/haiwen/seahub.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=d1ab146a936a6ea1e1581bf3f194e86742f0d3cd
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=21c2ed3886d0c87853f9720704b14c0a0dce8215e7346af775e306f80b29fa0d
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/haiwen/seahub/tar.gz/v$(PKG_VERSION)-server?
+PKG_HASH:=53a9efdb6791fd3a2a191e89cb0f133632056046ec08adbb2ad72088e6161430
+PKG_BUILD_DIR:=$(BUILD_DIR)/seahub-$(PKG_VERSION)-server
+
+PKG_BUILD_DEPENDS:=pytz/host
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python-package.mk
@@ -27,7 +27,7 @@ define Package/seafile-seahub
     CATEGORY:=Network
     TITLE:=Seafile server - seahub component
     MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
-    URL:=http://seafile.com/
+    URL:=https://seafile.com/
     DEPENDS:=+simplejson +python +pillow +chardet +django +django-appconf \
 		+django-compressor +django-constance +django-formtools +django-jsonfield \
 		+django-picklefield +django-postoffice +django-restframework \
