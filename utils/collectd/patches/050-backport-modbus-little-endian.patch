@@ -152,7 +152,7 @@ diff --git a/src/collectd.conf.pod b/src/collectd.conf.pod
 index dfd785a2c8..e9715126e6 100644
 --- a/src/collectd.conf.pod
 +++ b/src/collectd.conf.pod
-@@ -4128,11 +4128,19 @@ Configures the base register to read from the device. If the option
+@@ -4139,11 +4139,19 @@ Configures the base register to read from the device. If the option
  B<RegisterType> has been set to B<Uint32> or B<Float>, this and the next
  register will be read (the register number is increased by one).
  

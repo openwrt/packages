@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
-PKG_VERSION:=5.8.0
-PKG_RELEASE:=6
+PKG_VERSION:=5.8.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
 	https://github.com/collectd/collectd/releases/download/collectd-$(PKG_VERSION)
-PKG_HASH:=b06ff476bbf05533cb97ae6749262cc3c76c9969f032bd8496690084ddeb15c9
+PKG_HASH:=e796fda27ce06377f491ad91aa286962a68c2b54076aa77a29673d53204453da
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libltdl/aclocal.m4
