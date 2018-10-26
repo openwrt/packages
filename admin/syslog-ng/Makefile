@@ -2,7 +2,7 @@ include  $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
 PKG_VERSION:=3.17.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -72,6 +72,21 @@ define Package/syslog-ng/install
 	$(INSTALL_DATA) ./files/syslog-ng.conf $(1)/etc
 	$(INSTALL_DIR) $(1)/etc/syslog-ng.d/
 	$(call libtool_remove_files,$(1))
+endef
+
+define Package/syslog-ng/prerm
+	#!/bin/sh
+	# check if we are on real system
+	if [ -z "$${IPKG_INSTROOT}" ]; then
+		# wish we had pidof unconditionally
+		pid=$(ps | grep syslog | grep -v grep | awk '{ print $$1; }')
+		[ -n "$$pid" ] && /etc/init.d/syslog-ng stop
+		[ "$${PKG_UPGRADE}" != "1" ] && {
+			echo "Removing rc.d symlink for syslog-ng"
+			/etc/init.d/syslog-ng disable
+		}
+	fi
+	exit 0
 endef
 
 $(eval $(call BuildPackage,syslog-ng))
