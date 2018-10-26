@@ -8,14 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-requests
-PKG_VERSION:=2.19.1
+PKG_VERSION:=2.20.0
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 
 PKG_SOURCE:=requests-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/54/1f/782a5734931ddf2e1494e4cd615a51ff98e1879cbe9eecbdfeaf09aa75e9
-PKG_HASH:=ec22d826a36ed72a7358ff3fe56cbd4ba69dd7a6718ffd450ff0e9df7a47ce6a
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/r/requests
+PKG_HASH:=99dcfdaaeb17caf6e526f32b6a7b780461512ab3f1d992187801694cba42770c
 PKG_BUILD_DIR:=$(BUILD_DIR)/requests-$(PKG_VERSION)
+
+PKG_CPE_ID:=cpe:/a:python-requests:requests
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
