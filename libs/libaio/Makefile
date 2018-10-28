@@ -8,18 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libaio
-PKG_VERSION:=0.3.111
+PKG_VERSION:=0.3.110
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://releases.pagure.org/libaio
-PKG_HASH:=62cf871ad8fd09eb3418f00aca7a7d449299b8e1de31c65f28bf6a2ef1fa502a
-
-PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
+PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
+PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/liba/libaio/
+PKG_HASH:=e019028e631725729376250e32b473012f7cb68e1f7275bfc1bbcdd0f8745f7e
+PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=LGPL-2.1
-
-PKG_ASLR_PIE:=1
-PKG_BUILD_PARALLEL:=1
 
 PKG_USE_MIPS16:=0
 
@@ -28,7 +24,6 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libaio
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+@KERNEL_AIO
   TITLE:=Linux kernel AIO interface access library
   URL:=http://lse.sourceforge.net/io/aio.html
 endef
@@ -37,6 +32,8 @@ define Build/Configure
 endef
 
 LIBAIO_CFLAGS:=-nostdlib -nostartfiles -I. $(TARGET_CFLAGS) $(TARGET_CPPFLAGS) $(FPIC)
+
+TARGET_CFLAGS += $(FPIC)
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
