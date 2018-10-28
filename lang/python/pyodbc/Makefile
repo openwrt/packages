@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pyodbc
-PKG_VERSION:=4.0.21
+PKG_VERSION:=4.0.24
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/0f/04/c5638a4636fb8117fdc45685f489864459d193b1d892b61dce785ddf58f9
-PKG_HASH:=9655f84ca9e5cb2dfffff705601017420c840d55271ba62dd44f05383eff0329
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pyodbc
+PKG_HASH:=4326abb737dec36156998d52324921673d30f575e1e0998f0c5edd7de20e61d4
 PKG_BUILD_DEPENDS:=python python3 unixodbc
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
