@@ -1,6 +1,6 @@
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -47,13 +47,6 @@ pkcs11_la_LIBADD = $(libp11_la_OBJECTS)
+@@ -49,13 +49,6 @@ pkcs11_la_LIBADD = $(libp11_la_OBJECTS) $(OPENSSL_LIBS)
  pkcs11_la_LDFLAGS = $(AM_LDFLAGS) -module -shared -shrext $(SHARED_EXT) \
  	-avoid-version -export-symbols "$(srcdir)/pkcs11.exports"
  
@@ -16,7 +16,7 @@
  mylibdir=$(libdir)
 --- a/src/Makefile.in
 +++ b/src/Makefile.in
-@@ -844,7 +844,7 @@ distdir: $(DISTFILES)
+@@ -872,7 +872,7 @@ distdir: $(DISTFILES)
  	  fi; \
  	done
  check-am: all-am
@@ -25,7 +25,7 @@
  check: check-am
  all-am: Makefile $(LTLIBRARIES) $(DATA) $(HEADERS) config.h
  installdirs:
-@@ -915,7 +915,7 @@ install-dvi-am:
+@@ -944,7 +944,7 @@ install-dvi-am:
  
  install-exec-am: install-enginesexecLTLIBRARIES install-libLTLIBRARIES
  	@$(NORMAL_INSTALL)
@@ -34,7 +34,7 @@
  install-html: install-html-am
  
  install-html-am:
-@@ -960,7 +960,7 @@ uninstall-am: uninstall-enginesexecLTLIB
+@@ -989,7 +989,7 @@ uninstall-am: uninstall-enginesexecLTLIBRARIES \
  
  .MAKE: all check-am install-am install-exec-am install-strip
  
@@ -43,7 +43,7 @@
  	clean-enginesexecLTLIBRARIES clean-generic \
  	clean-libLTLIBRARIES clean-libtool cscopelist-am ctags \
  	ctags-am distclean distclean-compile distclean-generic \
-@@ -968,7 +968,7 @@ uninstall-am: uninstall-enginesexecLTLIB
+@@ -997,7 +997,7 @@ uninstall-am: uninstall-enginesexecLTLIBRARIES \
  	dvi-am html html-am info info-am install install-am \
  	install-data install-data-am install-dvi install-dvi-am \
  	install-enginesexecLTLIBRARIES install-exec install-exec-am \
