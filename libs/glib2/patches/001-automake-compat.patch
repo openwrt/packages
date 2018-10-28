@@ -1,11 +1,8 @@
---- a/gtk-doc.make
+diff --git a/gtk-doc.make b/gtk-doc.make
+new file mode 100644
+index 0000000..14f18fd
+--- /dev/null
 +++ b/gtk-doc.make
-@@ -298,7 +298,7 @@ uninstall-local:
- #
- # Require gtk-doc when making dist
- #
--if HAVE_GTK_DOC
-+if ENABLE_GTK_DOC
- dist-check-gtkdoc: docs
- else
- dist-check-gtkdoc:
+@@ -0,0 +1,2 @@
++EXTRA_DIST =
++CLEANFILES =
