@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hiredis
-PKG_VERSION:=0.13.3
-PKG_RELEASE:=2
+PKG_VERSION:=0.14.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/redis/hiredis/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=717e6fc8dc2819bef522deaca516de9e51b9dfa68fe393b7db5c3b6079196f78
+PKG_HASH:=042f965e182b80693015839a9d0278ae73fae5d5d09d8bf6d0e6a39a8c4393bd
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
