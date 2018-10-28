@@ -1,4 +1,4 @@
-# 
+#
 # Copyright (C) 2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -8,16 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsoup
-PKG_VERSION:=2.63.2
+PKG_VERSION:=2.65.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/$(PKG_NAME)/2.63
-PKG_HASH:=3931f8ae282f010fa0d6c31841751d7c4bff72f116d13f34a5bf98a96550a4f9
+PKG_SOURCE_URL:=@GNOME/$(PKG_NAME)/2.65
+PKG_HASH:=3f3718623338f1bd7d7899dae2bdb613348212d59999a27432120afc1435ff04
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:gnome:libsoup
 
+PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
@@ -31,20 +33,20 @@ define Package/libsoup
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=libsoup
-  URL:=http://live.gnome.org/LibSoup
+  URL:=https://wiki.gnome.org/Projects/libsoup
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
   DEPENDS:=+glib2 +libxml2 +libgnutls +libsqlite3 +libpsl $(ICONV_DEPENDS) $(INTL_DEPENDS)
 endef
 
 define Build/Configure
 	$(call Build/Configure/Default, \
-		--enable-ssl \
 		--disable-glibtest \
+		--disable-gtk-doc-html \
+		--disable-more-warnings \
+		--disable-vala \
 		--without-apache-httpd \
 		--without-gnome \
 		--without-gssapi \
-		--enable-vala=no \
-		--disable-more-warnings \
 	)
 endef
 
