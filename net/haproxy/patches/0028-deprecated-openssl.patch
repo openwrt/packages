@@ -1,0 +1,122 @@
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index cfbc38b..025a144 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -39,6 +39,7 @@
+ #include <netdb.h>
+ #include <netinet/tcp.h>
+ 
++#include <openssl/bn.h>
+ #include <openssl/crypto.h>
+ #include <openssl/ssl.h>
+ #include <openssl/x509.h>
+@@ -229,6 +230,7 @@ unsigned long ssl_id_function(void)
+ 
+ void ssl_locking_function(int mode, int n, const char * file, int line)
+ {
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	if (mode & CRYPTO_LOCK) {
+ 		if (mode & CRYPTO_READ)
+ 			HA_RWLOCK_RDLOCK(SSL_LOCK, &ssl_rwlocks[n]);
+@@ -241,10 +243,12 @@ void ssl_locking_function(int mode, int n, const char * file, int line)
+ 		else
+ 			HA_RWLOCK_WRUNLOCK(SSL_LOCK, &ssl_rwlocks[n]);
+ 	}
++#endif
+ }
+ 
+ static int ssl_locking_init(void)
+ {
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	int i;
+ 
+ 	ssl_rwlocks = malloc(sizeof(HA_RWLOCK_T)*CRYPTO_num_locks());
+@@ -256,7 +260,7 @@ static int ssl_locking_init(void)
+ 
+ 	CRYPTO_set_id_callback(ssl_id_function);
+ 	CRYPTO_set_locking_callback(ssl_locking_function);
+-
++#endif
+ 	return 0;
+ }
+ 
+@@ -1702,8 +1706,13 @@ ssl_sock_do_create_cert(const char *servername, struct bind_conf *bind_conf, SSL
+ 	ASN1_INTEGER_set(X509_get_serialNumber(newcrt), HA_ATOMIC_ADD(&ssl_ctx_serial, 1));
+ 
+ 	/* Set duration for the certificate */
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	if (!X509_gmtime_adj(X509_get_notBefore(newcrt), (long)-60*60*24) ||
+ 	    !X509_gmtime_adj(X509_get_notAfter(newcrt),(long)60*60*24*365))
++#else
++	if (!X509_gmtime_adj(X509_getm_notBefore(newcrt), (long)-60*60*24) ||
++	    !X509_gmtime_adj(X509_getm_notAfter(newcrt),(long)60*60*24*365))
++#endif
+ 		goto mkcert_error;
+ 
+ 	/* set public key in the certificate */
+@@ -6276,7 +6285,11 @@ smp_fetch_ssl_x_notafter(const struct arg *args, struct sample *smp, const char
+ 		goto out;
+ 
+ 	smp_trash = get_trash_chunk();
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	if (ssl_sock_get_time(X509_get_notAfter(crt), smp_trash) <= 0)
++#else
++	if (ssl_sock_get_time(X509_getm_notAfter(crt), smp_trash) <= 0)
++#endif
+ 		goto out;
+ 
+ 	smp->data.u.str = *smp_trash;
+@@ -6376,7 +6389,11 @@ smp_fetch_ssl_x_notbefore(const struct arg *args, struct sample *smp, const char
+ 		goto out;
+ 
+ 	smp_trash = get_trash_chunk();
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	if (ssl_sock_get_time(X509_get_notBefore(crt), smp_trash) <= 0)
++#else
++	if (ssl_sock_get_time(X509_getm_notBefore(crt), smp_trash) <= 0)
++#endif
+ 		goto out;
+ 
+ 	smp->data.u.str = *smp_trash;
+@@ -8926,7 +8943,11 @@ static void __ssl_sock_init(void)
+ #endif
+ 
+ 	xprt_register(XPRT_SSL, &ssl_sock);
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	SSL_library_init();
++#else
++	OPENSSL_init_ssl(0, NULL);
++#endif
+ 	cm = SSL_COMP_get_compression_methods();
+ 	sk_SSL_COMP_zero(cm);
+ #ifdef USE_THREAD
+@@ -8958,8 +8979,13 @@ static void __ssl_sock_init(void)
+ #else /* OPENSSL_IS_BORINGSSL */
+ 	        OPENSSL_VERSION_TEXT
+ 		"\nRunning on OpenSSL version : %s%s",
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	       SSLeay_version(SSLEAY_VERSION),
+ 	       ((OPENSSL_VERSION_NUMBER ^ SSLeay()) >> 8) ? " (VERSIONS DIFFER!)" : "");
++#else
++	       OpenSSL_version(OPENSSL_VERSION),
++	       ((OPENSSL_VERSION_NUMBER ^ OpenSSL_version_num()) >> 8) ? " (VERSIONS DIFFER!)" : "");
++#endif
+ #endif
+ 	memprintf(&ptr, "%s\nOpenSSL library supports TLS extensions : "
+ #if OPENSSL_VERSION_NUMBER < 0x00907000L
+@@ -9051,11 +9077,14 @@ static void __ssl_sock_deinit(void)
+ #endif
+ 
+         ERR_remove_state(0);
++
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+         ERR_free_strings();
+ 
+         EVP_cleanup();
++#endif
+ 
+-#if OPENSSL_VERSION_NUMBER >= 0x00907000L
++#if OPENSSL_VERSION_NUMBER >= 0x00907000L && OPENSSL_VERSION_NUMBER < 0x10100000L
+         CRYPTO_cleanup_all_ex_data();
+ #endif
+ }
