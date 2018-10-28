@@ -1,0 +1,29 @@
+commit 4805c249aabc45cd59386694f962e19ab50e8ca9
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Tue Oct 16 16:57:40 2018 +0200
+
+    BUG/MEDIUM: threads: make sure threads_want_sync is marked volatile
+    
+    The threads_want_sync variable is not volatile, which allows the compiler
+    to cache old copies of it for long parts of code and possibly optimize
+    some tests away. This could result in deadlocks when using heavy queue
+    activity or health check state changes.
+    
+    There is no upstream commit for this fix because the sync point was
+    completely removed from 1.9. This fix is exclusively for 1.8.
+    
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/hathreads.c b/src/hathreads.c
+index 0a7c12f7..730ebee4 100644
+--- a/src/hathreads.c
++++ b/src/hathreads.c
+@@ -29,7 +29,7 @@ void thread_sync_io_handler(int fd)
+ 
+ static HA_SPINLOCK_T sync_lock;
+ static int           threads_sync_pipe[2] = {-1, -1};
+-static unsigned long threads_want_sync = 0;
++volatile static unsigned long threads_want_sync = 0;
+ volatile unsigned long threads_want_rdv_mask = 0;
+ volatile unsigned long threads_harmless_mask = 0;
+ volatile unsigned long all_threads_mask  = 1; // nbthread 1 assumed by default

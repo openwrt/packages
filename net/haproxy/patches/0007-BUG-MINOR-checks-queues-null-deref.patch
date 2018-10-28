@@ -1,0 +1,33 @@
+commit 8a6c4ff3f407b916bc08da4e76ed7813768ac937
+Author: mildis <me@mildis.org>
+Date:   Tue Oct 2 16:46:34 2018 +0200
+
+    BUG/MINOR: checks: queues null-deref
+    
+    queues can be null if calloc() failed.
+    Bypass free* calls when calloc did fail.
+    
+    (cherry picked from commit 5ab01cb01114065a3573570a48e84815e751bf14)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/checks.c b/src/checks.c
+index 098ddecf..74958b2d 100644
+--- a/src/checks.c
++++ b/src/checks.c
+@@ -3182,7 +3182,7 @@ int init_email_alert(struct mailers *mls, struct proxy *p, char **err)
+ 
+ 	if ((queues = calloc(mls->count, sizeof(*queues))) == NULL) {
+ 		memprintf(err, "out of memory while allocating mailer alerts queues");
+-		goto error;
++		goto fail_no_queue;
+ 	}
+ 
+ 	for (mailer = mls->mailer_list; mailer; i++, mailer = mailer->next) {
+@@ -3239,6 +3239,7 @@ int init_email_alert(struct mailers *mls, struct proxy *p, char **err)
+ 		free_check(check);
+ 	}
+ 	free(queues);
++  fail_no_queue:
+ 	return 1;
+ }
+ 

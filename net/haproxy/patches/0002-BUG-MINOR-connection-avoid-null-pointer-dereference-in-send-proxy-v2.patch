@@ -1,0 +1,47 @@
+commit f6d20e718131aa2b468ff0a6c42e20c0b900e58b
+Author: Ilya Shipitsin <chipitsine@gmail.com>
+Date:   Sat Sep 15 00:50:05 2018 +0500
+
+    BUG/MINOR: connection: avoid null pointer dereference in send-proxy-v2
+    
+    found by coverity.
+    
+    [wt: this bug was introduced by commit 404d978 ("MINOR: add ALPN
+     information to send-proxy-v2"). It might be triggered by a health
+     check on a server using ppv2 or by an applet making use of such a
+     server, if at all configurable].
+    
+    This needs to be backported to 1.8.
+    
+    (cherry picked from commit ca56fce8bd271928b18d38b439bd35bd273fe8d4)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/connection.c b/src/connection.c
+index 8c5af156..7403e8ae 100644
+--- a/src/connection.c
++++ b/src/connection.c
+@@ -874,6 +874,7 @@ int conn_recv_netscaler_cip(struct connection *conn, int flag)
+ 	return 0;
+ }
+ 
++/* Note: <remote> is explicitly allowed to be NULL */
+ int make_proxy_line(char *buf, int buf_len, struct server *srv, struct connection *remote)
+ {
+ 	int ret = 0;
+@@ -985,6 +986,7 @@ static int make_tlv(char *dest, int dest_len, char type, uint16_t length, const
+ 	return length + sizeof(*tlv);
+ }
+ 
++/* Note: <remote> is explicitly allowed to be NULL */
+ int make_proxy_line_v2(char *buf, int buf_len, struct server *srv, struct connection *remote)
+ {
+ 	const char pp2_signature[] = PP2_SIGNATURE;
+@@ -1060,7 +1062,7 @@ int make_proxy_line_v2(char *buf, int buf_len, struct server *srv, struct connec
+ 		}
+ 	}
+ 
+-	if (conn_get_alpn(remote, &value, &value_len)) {
++	if (remote && conn_get_alpn(remote, &value, &value_len)) {
+ 		if ((buf_len - ret) < sizeof(struct tlv))
+ 			return 0;
+ 		ret += make_tlv(&buf[ret], (buf_len - ret), PP2_TYPE_ALPN, value_len, value);

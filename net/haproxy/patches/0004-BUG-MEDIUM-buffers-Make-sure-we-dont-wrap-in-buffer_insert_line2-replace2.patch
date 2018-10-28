@@ -1,0 +1,40 @@
+commit 45e9f3c660c872e93588cf1c0b74c192f2c8c3d5
+Author: Olivier Houchard <ohouchard@haproxy.com>
+Date:   Wed Sep 26 15:09:58 2018 +0200
+
+    BUG/MEDIUM: buffers: Make sure we don't wrap in buffer_insert_line2/replace2.
+    
+    In buffer_insert_line2() and buffer_replace2(), we can't afford to wrap,
+    so don't use b_tail to check if we do, directly use b->p + b->i instead.
+    
+    This should be backported to previous versions.
+    
+    (cherry picked from commit 363c745569b6ffd8f095d2b7758131d08aa27219)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    
+    [cf: This patch was adapted and its commit message too. Because of the
+    refactoring of the buffer's API in 1.9, the original patch fixes same bug in
+    ci_insert_line2/b_rep_blk.]
+
+diff --git a/src/buffer.c b/src/buffer.c
+index 167b75ae..6ad38a02 100644
+--- a/src/buffer.c
++++ b/src/buffer.c
+@@ -107,7 +107,7 @@ int buffer_replace2(struct buffer *b, char *pos, char *end, const char *str, int
+ 
+ 	delta = len - (end - pos);
+ 
+-	if (bi_end(b) + delta > b->data + b->size)
++	if (b->p + b->i + delta > b->data + b->size)
+ 		return 0;  /* no space left */
+ 
+ 	if (buffer_not_empty(b) &&
+@@ -146,7 +146,7 @@ int buffer_insert_line2(struct buffer *b, char *pos, const char *str, int len)
+ 
+ 	delta = len + 2;
+ 
+-	if (bi_end(b) + delta >= b->data + b->size)
++	if (b->p + b->i + delta >= b->data + b->size)
+ 		return 0;  /* no space left */
+ 
+ 	if (buffer_not_empty(b) &&

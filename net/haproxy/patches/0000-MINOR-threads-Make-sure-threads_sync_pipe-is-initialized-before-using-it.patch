@@ -1,0 +1,38 @@
+commit 14844e448b637fea2770bcb03a43a010c4c8176d
+Author: Olivier Houchard <ohouchard@haproxy.com>
+Date:   Thu Sep 27 14:55:34 2018 +0200
+
+    MINOR: threads: Make sure threads_sync_pipe is initialized before using it.
+    
+    thread_want_sync() might be called before thread_sync_init() was called,
+    at least when reading the server state file, as apply_server_state() is called
+    before thread_sync_init(). So make sure the threads_sync_pipe was initialized
+    before writing to it, if it was not, there's no thread, so no need to sync
+    anything anyway, and if we don't check it we'll end up writing a 'S' on
+    stdin.
+    
+    this only applies to 1.8.
+
+diff --git a/src/hathreads.c b/src/hathreads.c
+index 97ed31c5..9dba4356 100644
+--- a/src/hathreads.c
++++ b/src/hathreads.c
+@@ -28,7 +28,7 @@ void thread_sync_io_handler(int fd)
+ #ifdef USE_THREAD
+ 
+ static HA_SPINLOCK_T sync_lock;
+-static int           threads_sync_pipe[2];
++static int           threads_sync_pipe[2] = {-1, -1};
+ static unsigned long threads_want_sync = 0;
+ volatile unsigned long threads_want_rdv_mask = 0;
+ volatile unsigned long threads_harmless_mask = 0;
+@@ -76,7 +76,8 @@ void thread_want_sync()
+ 	if (all_threads_mask & (all_threads_mask - 1)) {
+ 		if (threads_want_sync & tid_bit)
+ 			return;
+-		if (HA_ATOMIC_OR(&threads_want_sync, tid_bit) == tid_bit)
++		if (HA_ATOMIC_OR(&threads_want_sync, tid_bit) == tid_bit &&
++		    threads_sync_pipe[1] != -1)
+ 			shut_your_big_mouth_gcc(write(threads_sync_pipe[1], "S", 1));
+ 	}
+ 	else {
