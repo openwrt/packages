@@ -1,10 +1,5 @@
---- /dev/null
-+++ b/.gitignore
-@@ -0,0 +1,4 @@
-+Clients/build
-+mDNSPosix/build
-+mDNSPosix/objects
-+
+diff --git a/Clients/Makefile b/Clients/Makefile
+index 383af31..925c20e 100755
 --- a/Clients/Makefile
 +++ b/Clients/Makefile
 @@ -36,7 +36,7 @@ TARGETS = build/dns-sd build/dns-sd64
@@ -16,6 +11,8 @@
  endif
  
  all: $(TARGETS)
+diff --git a/mDNSPosix/PosixDaemon.c b/mDNSPosix/PosixDaemon.c
+index 88b3292..e86a6c7 100644
 --- a/mDNSPosix/PosixDaemon.c
 +++ b/mDNSPosix/PosixDaemon.c
 @@ -37,6 +37,11 @@
@@ -81,50 +78,11 @@
      if (mStatus_NoError == err)
          err = MainLoop(&mDNSStorage);
  
---- a/mDNSPosix/Responder.c
-+++ b/mDNSPosix/Responder.c
-@@ -603,7 +603,8 @@ static mStatus RegisterServicesInFile(co
-         status = mStatus_UnknownErr;
-     }
- 
--    assert(0 == fclose(fp));
-+    int rv = fclose(fp);
-+    assert(0 == rv);
- 
-     return status;
- }
+diff --git a/mDNSPosix/mDNSPosix.c b/mDNSPosix/mDNSPosix.c
+index 6effa12..7c1d6eb 100755
 --- a/mDNSPosix/mDNSPosix.c
 +++ b/mDNSPosix/mDNSPosix.c
-@@ -138,7 +138,7 @@ mDNSlocal void SockAddrTomDNSAddr(const
- 
- // mDNS core calls this routine when it needs to send a packet.
- mDNSexport mStatus mDNSPlatformSendUDP(const mDNS *const m, const void *const msg, const mDNSu8 *const end,
--                                       mDNSInterfaceID InterfaceID, UDPSocket *src, const mDNSAddr *dst, 
-+                                       mDNSInterfaceID InterfaceID, UDPSocket *src, const mDNSAddr *dst,
-                                        mDNSIPPort dstPort, mDNSBool useBackgroundTrafficClass)
- {
-     int err = 0;
-@@ -583,9 +583,17 @@ mDNSlocal void FreePosixNetworkInterface
- {
-     assert(intf != NULL);
-     if (intf->intfName != NULL) free((void *)intf->intfName);
--    if (intf->multicastSocket4 != -1) assert(close(intf->multicastSocket4) == 0);
-+    if (intf->multicastSocket4 != -1)
-+      {
-+        int rv = close(intf->multicastSocket4);
-+        assert(rv == 0);
-+      }
- #if HAVE_IPV6
--    if (intf->multicastSocket6 != -1) assert(close(intf->multicastSocket6) == 0);
-+    if (intf->multicastSocket6 != -1)
-+      {
-+        int rv = close(intf->multicastSocket6);
-+        assert(rv == 0);
-+      }
- #endif
- 
-     // Move interface to the RecentInterfaces list for a minute
-@@ -724,6 +732,29 @@ mDNSlocal int SetupSocket(struct sockadd
+@@ -733,6 +741,29 @@ mDNSlocal int SetupSocket(struct sockaddr *intfAddr, mDNSIPPort port, int interf
              if (err < 0) { err = errno; perror("setsockopt - IP_MULTICAST_TTL"); }
          }
  
@@ -154,7 +112,7 @@
          // And start listening for packets
          if (err == 0)
          {
-@@ -805,6 +836,29 @@ mDNSlocal int SetupSocket(struct sockadd
+@@ -814,6 +845,29 @@ mDNSlocal int SetupSocket(struct sockaddr *intfAddr, mDNSIPPort port, int interf
              if (err < 0) { err = errno; perror("setsockopt - IPV6_MULTICAST_HOPS"); }
          }
  
@@ -184,21 +142,7 @@
          // And start listening for packets
          if (err == 0)
          {
-@@ -836,7 +890,12 @@ mDNSlocal int SetupSocket(struct sockadd
-     }
- 
-     // Clean up
--    if (err != 0 && *sktPtr != -1) { assert(close(*sktPtr) == 0); *sktPtr = -1; }
-+    if (err != 0 && *sktPtr != -1)
-+      {
-+        int rv = close(*sktPtr);
-+        assert(rv == 0);
-+        *sktPtr = -1;
-+      }
-     assert((err == 0) == (*sktPtr != -1));
-     return err;
- }
-@@ -942,19 +1001,14 @@ mDNSlocal int SetupInterfaceList(mDNS *c
+@@ -958,19 +1017,14 @@ mDNSlocal int SetupInterfaceList(mDNS *const m)
      int err            = 0;
      struct ifi_info *intfList      = get_ifi_info(AF_INET, mDNStrue);
      struct ifi_info *firstLoopback = NULL;
@@ -221,7 +165,7 @@
  #endif
  
      if (err == 0)
-@@ -1030,7 +1084,7 @@ mDNSlocal mStatus OpenIfNotifySocket(int
+@@ -1046,7 +1100,7 @@ mDNSlocal mStatus OpenIfNotifySocket(int *pFD)
      /* Subscribe the socket to Link & IP addr notifications. */
      mDNSPlatformMemZero(&snl, sizeof snl);
      snl.nl_family = AF_NETLINK;
@@ -230,7 +174,7 @@
      ret = bind(sock, (struct sockaddr *) &snl, sizeof snl);
      if (0 == ret)
          *pFD = sock;
-@@ -1108,11 +1162,18 @@ mDNSlocal mDNSu32       ProcessRoutingNo
+@@ -1124,11 +1178,18 @@ mDNSlocal mDNSu32       ProcessRoutingNotification(int sd)
          PrintNetLinkMsg(pNLMsg);
  #endif
  
@@ -251,7 +195,7 @@
  
          // Advance pNLMsg to the next message in the buffer
          if ((pNLMsg->nlmsg_flags & NLM_F_MULTI) != 0 && pNLMsg->nlmsg_type != NLMSG_DONE)
-@@ -1283,8 +1344,12 @@ mDNSexport mStatus mDNSPlatformInit(mDNS
+@@ -1299,8 +1360,12 @@ mDNSexport mStatus mDNSPlatformInit(mDNS *const m)
      if (err == mStatus_NoError) err = SetupSocket(&sa, zeroIPPort, 0, &m->p->unicastSocket6);
  #endif
  
@@ -264,43 +208,8 @@
  
      // Tell mDNS core about DNS Servers
      mDNS_Lock(m);
-@@ -1317,9 +1382,17 @@ mDNSexport void mDNSPlatformClose(mDNS *
- {
-     assert(m != NULL);
-     ClearInterfaceList(m);
--    if (m->p->unicastSocket4 != -1) assert(close(m->p->unicastSocket4) == 0);
-+    if (m->p->unicastSocket4 != -1)
-+      {
-+        int rv = close(m->p->unicastSocket4);
-+        assert(rv == 0);
-+      }
- #if HAVE_IPV6
--    if (m->p->unicastSocket6 != -1) assert(close(m->p->unicastSocket6) == 0);
-+    if (m->p->unicastSocket6 != -1)
-+      {
-+        int rv = close(m->p->unicastSocket6);
-+        assert(rv == 0);
-+      }
- #endif
- }
- 
-@@ -1575,14 +1648,14 @@ mDNSexport mStatus    mDNSPlatformClearS
- mDNSexport mDNSu16 mDNSPlatformGetUDPPort(UDPSocket *sock)
- {
-     (void) sock; // unused
-- 
-+
-     return (mDNSu16)-1;
- }
- 
- mDNSexport mDNSBool mDNSPlatformInterfaceIsD2D(mDNSInterfaceID InterfaceID)
- {
-     (void) InterfaceID; // unused
--    
-+
-     return mDNSfalse;
- }
- 
+diff --git a/mDNSPosix/mDNSUNP.c b/mDNSPosix/mDNSUNP.c
+index b392fc7..f551ad5 100755
 --- a/mDNSPosix/mDNSUNP.c
 +++ b/mDNSPosix/mDNSUNP.c
 @@ -63,6 +63,7 @@
@@ -311,16 +220,16 @@
  
  /* Converts a prefix length to IPv6 network mask */
  void plen_to_mask(int plen, char *addr) {
-@@ -86,7 +87,7 @@ struct ifi_info *get_ifi_info_linuxv6(in
-     FILE *fp;
+@@ -86,7 +87,7 @@ struct ifi_info *get_ifi_info_linuxv6(int family, int doaliases)
+     FILE *fp = NULL;
      char addr[8][5];
      int flags, myflags, index, plen, scope;
 -    char ifname[9], lastname[IFNAMSIZ];
 +    char ifname[IFNAMSIZ], lastname[IFNAMSIZ];
      char addr6[32+7+1]; /* don't forget the seven ':' */
      struct addrinfo hints, *res0;
-     struct sockaddr_in6 *sin6;
-@@ -94,7 +95,8 @@ struct ifi_info *get_ifi_info_linuxv6(in
+     int err;
+@@ -92,7 +93,8 @@ struct ifi_info *get_ifi_info_linuxv6(int family, int doaliases)
      int err;
      int sockfd = -1;
      struct ifreq ifr;
@@ -330,7 +239,7 @@
      res0=NULL;
      ifihead = NULL;
      ifipnext = &ifihead;
-@@ -106,11 +108,12 @@ struct ifi_info *get_ifi_info_linuxv6(in
+@@ -104,11 +106,12 @@ struct ifi_info *get_ifi_info_linuxv6(int family, int doaliases)
              goto gotError;
          }
          while (fscanf(fp,
@@ -344,19 +253,8 @@
              myflags = 0;
              if (strncmp(lastname, ifname, IFNAMSIZ) == 0) {
                  if (doaliases == 0)
-@@ -204,8 +207,11 @@ gotError:
-         res0=NULL;
-     }
- done:
-+    if (fp)
-+      fclose(fp);
-     if (sockfd != -1) {
--        assert(close(sockfd) == 0);
-+      int rv = close(sockfd);
-+      assert(rv == 0);
-     }
-     return(ifihead);    /* pointer to first structure in linked list */
- }
+diff --git a/mDNSShared/dnsextd_parser.y b/mDNSShared/dnsextd_parser.y
+index 18c5990..d4b63ce 100644
 --- a/mDNSShared/dnsextd_parser.y
 +++ b/mDNSShared/dnsextd_parser.y
 @@ -15,6 +15,8 @@
@@ -377,7 +275,7 @@
  int  yylex(void);
  
  
-@@ -378,7 +380,7 @@ int yywrap(void);
+@@ -409,7 +419,7 @@ int yywrap(void);
  
  extern int yylineno;
  
