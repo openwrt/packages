@@ -1,0 +1,48 @@
+commit 8019e88dd1ac73a3baa71e9acfbc1b7a3fbc7442
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Tue Oct 16 17:37:12 2018 +0200
+
+    BUILD: lua: silence some compiler warnings about potential null derefs (#2)
+    
+    Here we make sure that appctx is always taken from the unchecked value
+    since we know it's an appctx, which explains why it's immediately
+    dereferenced. A missing test was added to ensure that task_new() does
+    not return a NULL.
+    
+    This may be backported to 1.8.
+    
+    (cherry picked from commit e09101e8d92b0c0ef8674fbc791e309112ab7f1c)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/hlua.c b/src/hlua.c
+index 64102e8a..ad9238ef 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -2361,7 +2361,7 @@ __LJMP static int hlua_socket_connect_yield(struct lua_State *L, int status, lua
+ 		return 2;
+ 	}
+ 
+-	appctx = objt_appctx(s->si[0].end);
++	appctx = __objt_appctx(s->si[0].end);
+ 
+ 	/* Check for connection established. */
+ 	if (appctx->ctx.hlua_cosocket.connected) {
+@@ -2473,7 +2473,7 @@ __LJMP static int hlua_socket_connect(struct lua_State *L)
+ 	}
+ 
+ 	hlua = hlua_gethlua(L);
+-	appctx = objt_appctx(s->si[0].end);
++	appctx = __objt_appctx(s->si[0].end);
+ 
+ 	/* inform the stream that we want to be notified whenever the
+ 	 * connection completes.
+@@ -5693,6 +5693,9 @@ static int hlua_register_task(lua_State *L)
+ 		WILL_LJMP(luaL_error(L, "lua out of memory error."));
+ 
+ 	task = task_new(MAX_THREADS_MASK);
++	if (!task)
++		WILL_LJMP(luaL_error(L, "Lua out of memory error."));
++
+ 	task->context = hlua;
+ 	task->process = hlua_process_task;
+ 

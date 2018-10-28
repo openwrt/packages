@@ -1,0 +1,41 @@
+commit 0820ab24974cd2bad84c8ec5a90f7ce0e1681cf0
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Wed Oct 3 09:40:22 2018 +0200
+
+    BUILD: Makefile: add a "make opts" target to simply show the build options
+    
+    We're often missing an easy way to map input variables to output ones.
+    The "opts" build target will simply show the input variables and the ones
+    passed to the compiler and linker. This way it's easier to quickly see
+    what a given build script or package will use, or the detected warnings
+    supported by the compiler.
+    
+    (cherry picked from commit a8b12c6bb73b924f6429c3ae4d20b96992e92c2e)
+    [wt: this is not needed but significantly helps for packaging]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/Makefile b/Makefile
+index 5d170041..d3615060 100644
+--- a/Makefile
++++ b/Makefile
+@@ -996,3 +996,20 @@ update-version:
+ 	echo "$(VERSION)" > VERSION
+ 	echo "$(SUBVERS)" > SUBVERS
+ 	echo "$(VERDATE)" > VERDATE
++
++# just display the build options
++opts:
++	@echo -n 'Using: '
++	@echo -n 'TARGET="$(strip $(TARGET))" '
++	@echo -n 'ARCH="$(strip $(ARCH))" '
++	@echo -n 'CPU="$(strip $(CPU))" '
++	@echo -n 'CC="$(strip $(CC))" '
++	@echo -n 'ARCH_FLAGS="$(strip $(ARCH_FLAGS))" '
++	@echo -n 'CPU_CFLAGS="$(strip $(CPU_CFLAGS))" '
++	@echo -n 'DEBUG_CFLAGS="$(strip $(DEBUG_CFLAGS))" '
++	@echo "$(strip $(BUILD_OPTIONS))"
++	@echo 'COPTS="$(strip $(COPTS))"'
++	@echo 'LDFLAGS="$(strip $(LDFLAGS))"'
++	@echo 'LDOPTS="$(strip $(LDOPTS))"'
++	@echo 'OPTIONS_OBJS="$(strip $(OPTIONS_OBJS))"'
++	@echo 'OBJS="$(strip $(OBJS))"'
