@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dmidecode
-PKG_VERSION:=3.1
+PKG_VERSION:=3.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SAVANNAH/$(PKG_NAME)
-PKG_HASH:=d766ce9b25548c59b1e7e930505b4cad9a7bb0b904a1a391fbb604d529781ac0
+PKG_HASH:=077006fa2da0d06d6383728112f2edef9684e9c8da56752e97cd45a11f838edd
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=GPL-2.0
@@ -28,7 +28,7 @@ define Package/dmidecode
   CATEGORY:=Utilities
   DEPENDS:=@(TARGET_x86||TARGET_x86_64)
   TITLE:=Displays BIOS informations.
-  URL:=http://www.nongnu.org/dmidecode/
+  URL:=https://www.nongnu.org/dmidecode/
 endef
 
 define Package/dmidecode/description
