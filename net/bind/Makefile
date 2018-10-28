@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
 PKG_VERSION:=9.11.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 USERID:=bind=57:bind=57
 
 PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
@@ -68,7 +68,6 @@ endef
 define Package/bind-server
   $(call Package/bind/Default)
   TITLE+= DNS server
-  DEPENDS+= +@OPENSSL_WITH_DEPRECATED
 endef
 
 define Package/bind-server/config
