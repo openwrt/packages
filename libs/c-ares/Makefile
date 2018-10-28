@@ -12,6 +12,7 @@ PKG_NAME:=c-ares
 PKG_VERSION:=1.14.0
 PKG_RELEASE:=4
 PKG_LICENSE:=MIT
+PKG_CPE_ID:=cpe:/a:c-ares_project:c-ares
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://c-ares.haxx.se/download
