@@ -1,8 +1,8 @@
-Index: bind-9.10.4-P3/configure.in
+Index: bind-9.11.5/configure.in
 ===================================================================
---- bind-9.10.4-P3.orig/configure.in
-+++ bind-9.10.4-P3/configure.in
-@@ -157,26 +157,11 @@ esac
+--- bind-9.11.5.orig/configure.in
++++ bind-9.11.5/configure.in
+@@ -181,26 +181,11 @@ esac
  #
  AC_CONFIG_FILES([make/rules make/includes])
  
