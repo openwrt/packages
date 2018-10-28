@@ -8,20 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcre2
-PKG_VERSION:=10.31
+PKG_VERSION:=10.32
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=@SF/$(PKG_NAME) \
-		ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre
-PKG_HASH:=e07d538704aa65e477b6a392b32ff9fc5edf75ab9a40ddfc876186c4ff4d68ac
-PKG_MAINTAINER:=Shane Peelar <lookatyouhacker@gmail.com>
+PKG_SOURCE_URL:=@SF/pcre/$(PKG_NAME)/$(PKG_VERSION)
+PKG_HASH:=f29e89cc5de813f45786580101aaee3984a65818631d4ddbda7b32f699b87c2e
 
+PKG_MAINTAINER:=Shane Peelar <lookatyouhacker@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENCE
 
 PKG_FIXUP:=autoreconf
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libpcre2/default
   SECTION:=libs
   CATEGORY:=Libraries
-  URL:=http://www.pcre.org/
+  URL:=https://www.pcre.org/
 endef
 
 define Package/libpcre2
