@@ -6,8 +6,6 @@ jobs:
     environment:
       - SDK_BASE_URL: "https://downloads.lede-project.org/snapshots/targets/ar71xx/generic"
       - SDK_FILE: "openwrt-sdk-ar71xx-generic_gcc-7.3.0_musl.Linux-x86_64.tar.xz"
-    branches:
-      ignore: master
     steps:
       - run:
           name: Download the SDK
@@ -59,3 +57,11 @@ jobs:
       - store_artifacts:
           path: ~/build_dir/bin
 
+workflows:
+  version: 2
+  buildpr:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore: master
