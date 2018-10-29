@@ -178,6 +178,7 @@ define Package/bind-server/install
 		./files/bind/db.255 \
 		./files/bind/db.local \
 		./files/bind/db.root \
+		./files/bind/bind.keys \
 		$(1)/etc/bind/
 	$(CP) ./files/bind/named.conf.example $(1)/etc/bind/named.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
