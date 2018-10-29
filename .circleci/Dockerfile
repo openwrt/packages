@@ -8,6 +8,7 @@ gettext \
 git \
 libncurses5-dev \
 libssl-dev \
+python \
 subversion \
 zlib1g-dev \
 && rm -rf /var/lib/apt/lists/*
