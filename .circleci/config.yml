@@ -43,7 +43,7 @@ jobs:
           name: Download & check & compile
           working_directory: ~/build_dir
           command: |
-             PKGS=$(cd ~/openwrt_packages; git diff --diff-filter=d --name-only "origin/master" | grep 'Makefile$' | grep -v '/files/' | awk -F/ '{ print $(NF-1) }')
+             PKGS=$(cd ~/openwrt_packages; git diff --diff-filter=d --name-only "origin/master..." | grep 'Makefile$' | grep -v '/files/' | awk -F/ '{ print $(NF-1) }')
              echo "Packages: $PKGS"
              for PKG in $PKGS ; do
                  make "package/$PKG/download" V=s
