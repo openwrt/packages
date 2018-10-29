@@ -1,0 +1,24 @@
+From 9d5cf209df4c260546e1468cc15fbbbfba3097c6 Mon Sep 17 00:00:00 2001
+From: Andreas Schneider <asn@cryptomilk.org>
+Date: Sat, 27 Oct 2018 22:15:56 +0200
+Subject: [PATCH 8/8] libcrypto: Fix memory leak in evp_final()
+
+Fixes T116
+
+Signed-off-by: Andreas Schneider <asn@cryptomilk.org>
+(cherry picked from commit a2807474621e51b386ea26ce2a01d2b1aa295c7b)
+Signed-off-by: Kevin Darbyshire-Bryant <ldir@darbyshire-bryant.me.uk>
+---
+ src/libcrypto.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/src/libcrypto.c
++++ b/src/libcrypto.c
+@@ -165,6 +165,7 @@ void evp_update(EVPCTX ctx, const void *
+ void evp_final(EVPCTX ctx, unsigned char *md, unsigned int *mdlen)
+ {
+     EVP_DigestFinal(ctx, md, mdlen);
++    EVP_MD_CTX_free(ctx);
+ }
+ #endif
+ 
