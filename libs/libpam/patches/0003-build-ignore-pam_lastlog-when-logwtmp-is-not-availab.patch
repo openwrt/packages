@@ -16,7 +16,7 @@ diff --git a/configure.ac b/configure.ac
 index 084071a..ca4bf5b 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -536,8 +536,10 @@ AC_CHECK_FUNCS(getutent_r getpwnam_r getpwuid_r getgrnam_r getgrgid_r getspnam_r
+@@ -526,8 +526,10 @@ AC_CHECK_FUNCS(getutent_r getpwnam_r getpwuid_r getgrnam_r getgrgid_r getspnam_r
  AC_CHECK_FUNCS(getgrouplist getline getdelim)
  AC_CHECK_FUNCS(inet_ntop inet_pton innetgr)
  AC_CHECK_FUNCS([ruserok_af ruserok], [break])
