@@ -13,6 +13,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * support all kinds of uplinks, incl. hidden and enterprise uplinks
 * continuously checks the existing uplink connection (quality), e.g. for conditional uplink (dis-) connections
 * captive portal detection with internet online check and a 'heartbeat' function to keep the uplink connection up & running
+* proactively scan and switch to a higher prioritized uplink, despite of an already existing connection
 * support devices with multiple radios in any order
 * procd init and hotplug support
 * runtime information available via LuCI & via 'status' init command
@@ -42,11 +43,12 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
     * trm\_enabled => main switch to enable/disable the travelmate service (bool/default: '0', disabled)
     * trm\_debug => enable/disable debug logging (bool/default: '0', disabled)
     * trm\_captive => enable/disable the captive portal detection (bool/default: '1', enabled)
+    * trm\_proactive => enable/disable the proactive uplink switch (bool/default: '1', enabled)
     * trm\_minquality => minimum signal quality threshold as percent for conditional uplink (dis-) connections (int/default: '35', valid range: 20-80)
     * trm\_maxwait => how long (in seconds) should travelmate wait for a successful wlan interface reload action (int/default: '30', valid range: 20-40)
     * trm\_maxretry => how many times should travelmate try to connect to an uplink (int/default: '3', valid range: 1-10)
     * trm\_timeout => overall retry timeout in seconds (int/default: '60', valid range: 30-300)
-    * trm\_radio => limit travelmate to a single radio (e.g. 'radio1') or change the overall scanning order (e.g. 'radio1 radio2 radio0') (default: not set, use all radios 0-n)
+    * trm\_radio => limit travelmate to a single radio (e.g. 'radio1') or change the overall scanning priority (e.g. 'radio1 radio2 radio0') (default: not set, use all radios 0-n)
     * trm\_iface => main uplink / procd trigger network interface (default: trm_wwan)
     * trm\_triggerdelay => additional trigger delay in seconds before travelmate processing begins (int/default: '2')
 
