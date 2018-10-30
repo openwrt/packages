@@ -6,6 +6,7 @@ jobs:
     environment:
       - SDK_BASE_URL: "https://downloads.lede-project.org/snapshots/targets/ar71xx/generic"
       - SDK_FILE: "openwrt-sdk-ar71xx-generic_gcc-7.3.0_musl.Linux-x86_64.tar.xz"
+      - BRANCH: "master"
     steps:
       - run:
           name: Download the SDK
@@ -41,7 +42,7 @@ jobs:
           name: Download & check & compile
           working_directory: ~/build_dir
           command: |
-             PKGS=$(cd ~/openwrt_packages; git diff --diff-filter=d --name-only "origin/master..." | grep 'Makefile$' | grep -v '/files/' | awk -F/ '{ print $(NF-1) }')
+             PKGS=$(cd ~/openwrt_packages; git diff --diff-filter=d --name-only "origin/$BRANCH..." | grep 'Makefile$' | grep -v '/files/' | awk -F/ '{ print $(NF-1) }')
              echo "Packages: $PKGS"
              for PKG in $PKGS ; do
                  make "package/$PKG/download" V=s
