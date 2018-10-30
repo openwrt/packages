@@ -23,12 +23,14 @@ PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
+PKG_CONFIG_DEPENDS := CONFIG_OPENSSL_WITH_EC
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/unbound/Default
   TITLE:=Validating Recursive DNS Server
   URL:=http://www.unbound.net/
-  DEPENDS:=+libopenssl
+  DEPENDS:=+libopenssl +@OPENSSL_WITH_DEPRECATED
 endef
 
 define Package/unbound
@@ -115,6 +117,7 @@ CONFIGURE_ARGS += \
 	--enable-allsymbols \
 	--enable-tfo-client \
 	--enable-tfo-server \
+	$(if $(CONFIG_OPENSSL_WITH_EC),--enable-ecdsa,--disable-ecdsa) \
 	--with-libexpat="$(STAGING_DIR)/usr" \
 	--with-ssl="$(STAGING_DIR)/usr" \
 	--with-user=unbound \
