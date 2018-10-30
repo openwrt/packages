@@ -9,8 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zoneinfo
-PKG_VERSION:=2018f
-PKG_VERSION_CODE:=2018f
+PKG_VERSION:=2018g
 PKG_RELEASE:=1
 
 #As i couldn't find real license used "Public Domain"
@@ -18,16 +17,16 @@ PKG_RELEASE:=1
 PKG_LICENSE:=Public Domain
 
 PKG_SOURCE:=tzdata$(PKG_VERSION).tar.gz
-PKG_SOURCE_CODE:=tzcode$(PKG_VERSION_CODE).tar.gz
+PKG_SOURCE_CODE:=tzcode$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.iana.org/time-zones/repository/releases
-PKG_HASH:=0af6a85fc4ea95832f76524f35696a61abb3992fd3f8db33e5a1f95653e043f2
+PKG_HASH:=02dfde534872f6513ae4553a3388fdae579441e31b862ea99170dfc447f46a16
 
 include $(INCLUDE_DIR)/package.mk
 
 define Download/tzcode
    FILE=$(PKG_SOURCE_CODE)
    URL=$(PKG_SOURCE_URL)
-   HASH:=4ec74f8a84372570135ea4be16a042442fafe100f5598cb1017bfd30af6aaa70
+   HASH:=aa53f4fb6570f02081be61dc11ade19ea5a280c23822a5b4016ce0c6be23c427
 endef
 
 $(eval $(call Download,tzcode))
@@ -155,7 +154,7 @@ define Package/zoneinfo-simple/install
 		America/Chicago     America/New_York    America/Caracas  \
 		America/Sao_Paulo   Europe/London       Europe/Paris     \
 		Africa/Cairo        Europe/Moscow       Asia/Dubai       \
-		Asia/Karachi        Asia/Dhaka          Asia/Bankok      \
+		Asia/Karachi        Asia/Dhaka          Asia/Bangkok      \
 		Asia/Hong_Kong      Asia/Tokyo          Australia/Darwin \
 		Australia/Adelaide  Australia/Brisbane  Australia/Sydney \
 		Australia/Perth     Pacific/Noumea ; do \
