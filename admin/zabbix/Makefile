@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=3.4.14
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=7443873cc970672d3c884230d3aeb082f2d8afcc2b757506c2d684ffdd12d77e
@@ -115,6 +115,14 @@ define Package/zabbix-server
   $(call Package/zabbix/Default)
   TITLE+= server
   DEPENDS += +ZABBIX_POSTGRESQL:libpq +ZABBIX_MYSQL:libmariadbclient +libevent2
+endef
+
+define Package/zabbix-server-frontend
+  $(call Package/zabbix/Default)
+  TITLE+= server-frontend
+  DEPENDS += +php7 +php7-cgi +ZABBIX_POSTGRESQL:php7-mod-pgsql +ZABBIX_MYSQL:php7-mod-mysqli \
+  +php7-mod-gd +php7-mod-bcmath +php7-mod-ctype +php7-mod-xmlreader +php7-mod-xmlwriter \
+  +php7-mod-session +php7-mod-sockets +php7-mod-mbstring +php7-mod-gettext
 endef
 
 define Package/zabbix-proxy
@@ -285,6 +293,11 @@ define Package/zabbix-server/install
 	$(call Package/zabbix/install/etc,$(1),server)
 endef
 
+define Package/zabbix-server-frontend/install
+	$(INSTALL_DIR) $(1)/www/zabbix
+	$(CP) $(PKG_BUILD_DIR)/frontends/php/* $(1)/www/zabbix
+endef
+
 define Package/zabbix-proxy/install
 	$(call Package/zabbix/install/sbin,$(1),proxy)
 	$(call Package/zabbix/install/etc,$(1),proxy)
@@ -296,5 +309,6 @@ $(eval $(call BuildPackage,zabbix-extra-network))
 $(eval $(call BuildPackage,zabbix-extra-wifi))
 $(eval $(call BuildPackage,zabbix-sender))
 $(eval $(call BuildPackage,zabbix-server))
+$(eval $(call BuildPackage,zabbix-server-frontend))
 $(eval $(call BuildPackage,zabbix-proxy))
 $(eval $(call BuildPackage,zabbix-get))
