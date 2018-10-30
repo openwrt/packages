@@ -1,0 +1,68 @@
+version: 2.0
+jobs:
+  build:
+    docker:
+      - image: champtar/openwrtpackagesci@sha256:4d8bea09b6fd51e015f417a8f0056b914d0db6aa9829b0049065a077f52a91e9
+    environment:
+      - SDK_BASE_URL: "https://downloads.lede-project.org/releases/18.06.1/targets/ar71xx/generic"
+      - SDK_FILE: "openwrt-sdk-18.06.1-ar71xx-generic_gcc-7.3.0_musl.Linux-x86_64.tar.xz"
+      - BRANCH: "openwrt-18.06"
+    steps:
+      - run:
+          name: Download the SDK
+          working_directory: ~/sdk
+          command: |
+             curl "$SDK_BASE_URL/sha256sums" -sS -o sha256sums
+             curl "$SDK_BASE_URL/sha256sums.asc" -sS -o sha256sums.asc
+             gpg --with-fingerprint --verify sha256sums.asc sha256sums
+             curl "$SDK_BASE_URL/$SDK_FILE" -sS -o "$SDK_FILE"
+             sha256sum -c --ignore-missing sha256sums
+
+      - checkout:
+          path: ~/openwrt_packages
+
+      - run:
+          name: Prepare build_dir
+          working_directory: ~/build_dir
+          command: |
+             tar Jxf ~/sdk/$SDK_FILE --strip=1
+             cat > feeds.conf <<EOF
+             src-git base https://github.com/lede-project/source.git
+             src-link packages $HOME/openwrt_packages
+             src-git luci https://github.com/openwrt/luci.git
+             EOF
+             cat feeds.conf
+             # enable BUILD_LOG
+             sed -i '1s/^/config BUILD_LOG\n\tbool\n\tdefault y\n\n/' Config-build.in
+             ./scripts/feeds update -a > /dev/null
+             ./scripts/feeds install -a > /dev/null
+             make defconfig > /dev/null
+
+      - run:
+          name: Download & check & compile
+          working_directory: ~/build_dir
+          command: |
+             PKGS=$(cd ~/openwrt_packages; git diff --diff-filter=d --name-only "origin/$BRANCH..." | grep 'Makefile$' | grep -v '/files/' | awk -F/ '{ print $(NF-1) }')
+             echo "Packages: $PKGS"
+             for PKG in $PKGS ; do
+                 make "package/$PKG/download" V=s
+                 make "package/$PKG/check" V=s
+             done
+             for PKG in $PKGS ; do
+                 make "package/$PKG/compile" -j3 V=s
+             done
+
+      - store_artifacts:
+          path: ~/build_dir/logs
+
+      - store_artifacts:
+          path: ~/build_dir/bin
+
+workflows:
+  version: 2
+  buildpr:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore: master
