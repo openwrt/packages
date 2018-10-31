@@ -31,21 +31,18 @@ PKG_MAINTAINER:=Albert Lopez <alopez@ac.upc.edu>
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
+MAKE_FLAGS += platform=openwrt
+
 define Package/oor
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Open Overlay Router
   URL:=https://github.com/OpenOverlayRouter
   DEPENDS:= +librt +confuse +kmod-tun +uci @IPV6
-  $(call Package/oor/default)
 endef
 
 define Package/oor/description
   This packet provides support for the Locator-ID Separation Protocol, VXLAN-GPE.
-endef
-
-define Build/Compile
-	$(call Build/Compile/Default,platform=openwrt)
 endef
 
 define Package/oor/install
