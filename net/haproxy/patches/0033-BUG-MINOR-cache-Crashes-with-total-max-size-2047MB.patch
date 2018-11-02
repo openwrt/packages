@@ -1,0 +1,55 @@
+commit bf7b382e528ab62a9f695b07e659d2f77545e93d
+Author: Frédéric Lécaille <flecaille@haproxy.com>
+Date:   Thu Oct 25 20:17:45 2018 +0200
+
+    BUG/MINOR: cache: Crashes with "total-max-size" > 2047(MB).
+    
+    With this patch we support cache size larger than 2047 (MB) and prevent haproxy from crashing when "total-max-size" is parsed as negative values by atoi().
+    
+    The limit at parsing time is 4095 MB (UINT_MAX >> 20).
+    
+    May be backported to 1.8.
+    
+    (cherry picked from commit b9b8b6b6beb84b6b942d24eda56bfbe3812cc294)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/cache.c b/src/cache.c
+index 39e0bad4..df3649ea 100644
+--- a/src/cache.c
++++ b/src/cache.c
+@@ -770,17 +770,32 @@ int cfg_parse_cache(const char *file, int linenum, char **args, int kwm)
+ 			tmp_cache_config->maxblocks = 0;
+ 		}
+ 	} else if (strcmp(args[0], "total-max-size") == 0) {
+-		int maxsize;
++		unsigned long int maxsize;
++		char *err;
+ 
+ 		if (alertif_too_many_args(1, file, linenum, args, &err_code)) {
+ 			err_code |= ERR_ABORT;
+ 			goto out;
+ 		}
+ 
++		maxsize = strtoul(args[1], &err, 10);
++		if (err == args[1] || *err != '\0') {
++			ha_warning("parsing [%s:%d]: total-max-size wrong value '%s'\n",
++			           file, linenum, args[1]);
++			err_code |= ERR_ABORT;
++			goto out;
++		}
++
++		if (maxsize > (UINT_MAX >> 20)) {
++			ha_warning("parsing [%s:%d]: \"total-max-size\" (%s) must not be greater than %u\n",
++			           file, linenum, args[1], UINT_MAX >> 20);
++			err_code |= ERR_ABORT;
++			goto out;
++		}
++
+ 		/* size in megabytes */
+-		maxsize = atoi(args[1]) * 1024 * 1024 / CACHE_BLOCKSIZE;
++		maxsize *= 1024 * 1024 / CACHE_BLOCKSIZE;
+ 		tmp_cache_config->maxblocks = maxsize;
+-
+ 	} else if (strcmp(args[0], "max-age") == 0) {
+ 		if (alertif_too_many_args(1, file, linenum, args, &err_code)) {
+ 			err_code |= ERR_ABORT;

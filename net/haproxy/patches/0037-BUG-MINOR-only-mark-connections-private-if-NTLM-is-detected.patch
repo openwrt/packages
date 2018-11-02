@@ -1,0 +1,94 @@
+commit 7b728d616e417f0a8cd25375f70b8a332ad23a71
+Author: Lukas Tribus <lukas@ltri.eu>
+Date:   Sat Oct 27 20:06:59 2018 +0200
+
+    BUG/MINOR: only mark connections private if NTLM is detected
+    
+    Instead of marking all connections that see a 401/407 response private
+    (for connection reuse), this patch detects a RFC4559/NTLM authentication
+    scheme and restricts the private setting to those connections.
+    
+    This is so we can reuse connections with 401/407 responses with
+    deterministic load balancing algorithms later (which requires another fix).
+    
+    This fixes the problem reported here by Elliot Barlas :
+    
+      https://discourse.haproxy.org/t/unable-to-configure-load-balancing-per-request-over-persistent-connection/3144
+    
+    Should be backported to 1.8.
+    
+    (cherry picked from commit fd9b68c48ecdba5e7971899f4eec315c8e3a3cfe)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/doc/configuration.txt b/doc/configuration.txt
+index 09980248..43b1b822 100644
+--- a/doc/configuration.txt
++++ b/doc/configuration.txt
+@@ -4798,10 +4798,8 @@ http-reuse { never | safe | aggressive | always }
+     - connections sent to a server with a TLS SNI extension are marked private
+       and are never shared;
+ 
+-    - connections receiving a status code 401 or 407 expect some authentication
+-      to be sent in return. Due to certain bogus authentication schemes (such
+-      as NTLM) relying on the connection, these connections are marked private
+-      and are never shared;
++    - connections with certain bogus authentication schemes (relying on the
++      connection) like NTLM are detected, marked private and are never shared;
+ 
+   No connection pool is involved, once a session dies, the last idle connection
+   it was attached to is deleted at the same time. This ensures that connections
+diff --git a/src/proto_http.c b/src/proto_http.c
+index 8f86422d..cde2dbf7 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -4388,8 +4388,6 @@ void http_end_txn_clean_session(struct stream *s)
+ 		 * it's better to do it (at least it helps with debugging).
+ 		 */
+ 		s->txn->flags |= TX_PREFER_LAST;
+-		if (srv_conn)
+-			srv_conn->flags |= CO_FL_PRIVATE;
+ 	}
+ 
+ 	/* Never ever allow to reuse a connection from a non-reuse backend */
+@@ -5053,10 +5051,13 @@ int http_wait_for_response(struct stream *s, struct channel *rep, int an_bit)
+ 	struct http_txn *txn = s->txn;
+ 	struct http_msg *msg = &txn->rsp;
+ 	struct hdr_ctx ctx;
++	struct connection *srv_conn;
+ 	int use_close_only;
+ 	int cur_idx;
+ 	int n;
+ 
++	srv_conn = cs_conn(objt_cs(s->si[1].end));
++
+ 	DPRINTF(stderr,"[%u] %s: stream=%p b=%p, exp(r,w)=%u,%u bf=%08x bh=%d analysers=%02x\n",
+ 		now_ms, __FUNCTION__,
+ 		s,
+@@ -5588,6 +5589,27 @@ int http_wait_for_response(struct stream *s, struct channel *rep, int an_bit)
+ 		msg->body_len = msg->chunk_len = cl;
+ 	}
+ 
++	/* check for NTML authentication headers in 401 (WWW-Authenticate) and
++	 * 407 (Proxy-Authenticate) responses and set the connection to private
++	 */
++	if (srv_conn && txn->status == 401) {
++	    /* check for Negotiate/NTLM WWW-Authenticate headers */
++	    ctx.idx = 0;
++	    while (http_find_header2("WWW-Authenticate", 16, rep->buf->p, &txn->hdr_idx, &ctx)) {
++	            if ((ctx.vlen >= 9 && word_match(ctx.line + ctx.val, ctx.vlen, "Negotiate", 9)) ||
++	                  (ctx.vlen >= 4 && word_match(ctx.line + ctx.val, ctx.vlen, "NTLM", 4)))
++				srv_conn->flags |= CO_FL_PRIVATE;
++	    }
++	} else if (srv_conn && txn->status == 407) {
++	    /* check for Negotiate/NTLM Proxy-Authenticate headers */
++	    ctx.idx = 0;
++	    while (http_find_header2("Proxy-Authenticate", 18, rep->buf->p, &txn->hdr_idx, &ctx)) {
++	            if ((ctx.vlen >= 9 && word_match(ctx.line + ctx.val, ctx.vlen, "Negotiate", 9)) ||
++	                  (ctx.vlen >= 4 && word_match(ctx.line + ctx.val, ctx.vlen, "NTLM", 4)))
++				srv_conn->flags |= CO_FL_PRIVATE;
++	    }
++	}
++
+  skip_content_length:
+ 	/* Now we have to check if we need to modify the Connection header.
+ 	 * This is more difficult on the response than it is on the request,

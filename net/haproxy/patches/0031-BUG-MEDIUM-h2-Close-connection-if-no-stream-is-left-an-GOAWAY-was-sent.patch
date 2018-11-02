@@ -1,0 +1,28 @@
+commit 105abe2f7a2e518afda9eb3bda5cceb60f6fd1b2
+Author: Olivier Houchard <cognet@ci0.org>
+Date:   Sun Oct 21 03:01:20 2018 +0200
+
+    BUG/MEDIUM: h2: Close connection if no stream is left an GOAWAY was sent.
+    
+    When we're closing a stream, is there's no stream left and a goaway was sent,
+    close the connection, there's no reason to keep it open.
+    
+    [wt: it's likely that this is needed in 1.8 as well, though it's unclear
+     how to trigger this issue, some tests are needed]
+    
+    (cherry picked from commit 52b946686c28891a4359e9361676dc62af4fffad)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/mux_h2.c b/src/mux_h2.c
+index b1b039fe..6881302b 100644
+--- a/src/mux_h2.c
++++ b/src/mux_h2.c
+@@ -2540,7 +2540,7 @@ static void h2_detach(struct conn_stream *cs)
+ 	if (eb_is_empty(&h2c->streams_by_id) &&     /* don't close if streams exist */
+ 	    ((h2c->conn->flags & CO_FL_ERROR) ||    /* errors close immediately */
+ 	     (h2c->st0 >= H2_CS_ERROR && !h2c->task) || /* a timeout stroke earlier */
+-	     (h2c->flags & H2_CF_GOAWAY_FAILED) ||
++	     (h2c->flags & (H2_CF_GOAWAY_FAILED | H2_CF_GOAWAY_SENT)) ||
+ 	     (!h2c->mbuf->o &&  /* mux buffer empty, also process clean events below */
+ 	      (conn_xprt_read0_pending(h2c->conn) ||
+ 	       (h2c->last_sid >= 0 && h2c->max_id >= h2c->last_sid))))) {
