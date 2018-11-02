@@ -1,0 +1,26 @@
+commit 49f82640bf3c9a9c808568344bfa94d279c95b7e
+Author: Frédéric Lécaille <flecaille@haproxy.com>
+Date:   Thu Oct 25 20:22:46 2018 +0200
+
+    BUG/MINOR: ssl: Wrong usage of shctx_init().
+    
+    With this patch we check that shctx_init() does not return 0.
+    
+    Must be backported to 1.8.
+    
+    (cherry picked from commit 4c8aa117f9bda3b5253f03ad5a7135a9165060f5)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index cfbc38b7..19e41743 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -4768,7 +4768,7 @@ int ssl_sock_prepare_bind_conf(struct bind_conf *bind_conf)
+ 		                       sizeof(struct sh_ssl_sess_hdr) + SHSESS_BLOCK_MIN_SIZE,
+ 		                       sizeof(*sh_ssl_sess_tree),
+ 		                       ((global.nbthread > 1) || (!global_ssl.private_cache && (global.nbproc > 1))) ? 1 : 0);
+-		if (alloc_ctx < 0) {
++		if (alloc_ctx <= 0) {
+ 			if (alloc_ctx == SHCTX_E_INIT_LOCK)
+ 				ha_alert("Unable to initialize the lock for the shared SSL session cache. You can retry using the global statement 'tune.ssl.force-private-cache' but it could increase CPU usage due to renegotiations if nbproc > 1.\n");
+ 			else
