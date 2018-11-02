@@ -1,0 +1,46 @@
+commit e1b3aa5613a5edbb52a44d69b3e6007d9d631981
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Mon Oct 22 06:22:46 2018 +0200
+
+    BUILD: Makefile: add the new ERR variable to force -Werror
+    
+    Instead of having to fiddle with the CFLAGS, let's have ERR=1 to enable
+    -Werror.
+    
+    (cherry picked from commit 23cd43e2d6fa2b6892a786a1a720c5f24e657f10)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/Makefile b/Makefile
+index 6ffc1b06..94e04738 100644
+--- a/Makefile
++++ b/Makefile
+@@ -57,6 +57,7 @@
+ #   DEP may be cleared to ignore changes to include files during development
+ #   SMALL_OPTS may be used to specify some options to shrink memory usage.
+ #   DEBUG may be used to set some internal debugging options.
++#   ERR may be set to non-empty to pass -Werror to the compiler
+ #   ADDINC may be used to complete the include path in the form -Ipath.
+ #   ADDLIB may be used to complete the library list in the form -Lpath -llib.
+ #   DEFINE may be used to specify any additional define, which will be reported
+@@ -143,6 +144,9 @@ LD = $(CC)
+ # Those flags only feed CFLAGS so it is not mandatory to use this form.
+ DEBUG_CFLAGS = -g
+ 
++#### Add -Werror when set to non-empty
++ERR =
++
+ #### Compiler-specific flags that may be used to disable some negative over-
+ # optimization or to silence some warnings. -fno-strict-aliasing is needed with
+ # gcc >= 4.4.
+@@ -807,6 +811,11 @@ EBTREE_DIR := ebtree
+ #### Global compile options
+ VERBOSE_CFLAGS = $(CFLAGS) $(TARGET_CFLAGS) $(SMALL_OPTS) $(DEFINE)
+ COPTS  = -Iinclude -I$(EBTREE_DIR) -Wall
++
++ifneq ($(ERR),)
++COPTS += -Werror
++endif
++
+ COPTS += $(CFLAGS) $(TARGET_CFLAGS) $(SMALL_OPTS) $(DEFINE) $(SILENT_DEFINE)
+ COPTS += $(DEBUG) $(OPTIONS_CFLAGS) $(ADDINC)
+ 
