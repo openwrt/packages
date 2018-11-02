@@ -1,0 +1,24 @@
+commit 9c416cf3cc449fd46880d5a7c3fdd1bb98447b68
+Author: Frédéric Lécaille <flecaille@haproxy.com>
+Date:   Thu Oct 25 10:46:40 2018 +0200
+
+    DOC: cache: Missing information about "total-max-size"
+    
+    (cherry picked from commit e3c83d80e3aadb7b2641b861725c9d1dd7dc6713)
+    [wt: this only retrieves from the original patch the part related to
+         the max configurable size for total-max-size]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/doc/configuration.txt b/doc/configuration.txt
+index 7a268386..09980248 100644
+--- a/doc/configuration.txt
++++ b/doc/configuration.txt
+@@ -17132,7 +17132,7 @@ cache <name>
+ 
+ total-max-size <megabytes>
+   Define the size in RAM of the cache in megabytes. This size is split in
+-  blocks of 1kB which are used by the cache entries.
++  blocks of 1kB which are used by the cache entries. Its maximum value is 4095.
+ 
+ max-age <seconds>
+   Define the maximum expiration duration. The expiration is set has the lowest

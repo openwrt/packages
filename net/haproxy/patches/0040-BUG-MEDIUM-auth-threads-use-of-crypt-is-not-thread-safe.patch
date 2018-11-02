@@ -1,0 +1,77 @@
+commit a873c161d251abd025008034c0ddef8cd7f39511
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Mon Oct 29 18:02:54 2018 +0100
+
+    BUG/MEDIUM: auth/threads: use of crypt() is not thread-safe
+    
+    It was reported here that authentication may fail when threads are
+    enabled :
+    
+        https://bugzilla.redhat.com/show_bug.cgi?id=1643941
+    
+    While I couldn't reproduce the issue, it's obvious that there is a
+    problem with the use of the non-reentrant crypt() function there.
+    On Linux systems there's crypt_r() but not on the vast majority of
+    other ones. Thus a first approach consists in placing a lock around
+    this crypt() call. Another patch may relax it when crypt_r() is
+    available.
+    
+    This fix must be backported to 1.8. Thanks to Ryan O'Hara for the
+    quick notification.
+    
+    (cherry picked from commit 34d4b525a129baa6f52a930ae629ddb1ba4255c2)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/include/common/hathreads.h b/include/common/hathreads.h
+index 44bd66d1..24fb1d1a 100644
+--- a/include/common/hathreads.h
++++ b/include/common/hathreads.h
+@@ -373,6 +373,7 @@ enum lock_label {
+ 	START_LOCK,
+ 	TLSKEYS_REF_LOCK,
+ 	PENDCONN_LOCK,
++	AUTH_LOCK,
+ 	LOCK_LABELS
+ };
+ struct lock_stat {
+@@ -495,6 +496,7 @@ static inline const char *lock_label(enum lock_label label)
+ 	case START_LOCK:           return "START";
+ 	case TLSKEYS_REF_LOCK:     return "TLSKEYS_REF";
+ 	case PENDCONN_LOCK:        return "PENDCONN";
++	case AUTH_LOCK:            return "AUTH";
+ 	case LOCK_LABELS:          break; /* keep compiler happy */
+ 	};
+ 	/* only way to come here is consecutive to an internal bug */
+diff --git a/src/auth.c b/src/auth.c
+index a2c689f7..e0fb1352 100644
+--- a/src/auth.c
++++ b/src/auth.c
+@@ -28,6 +28,7 @@
+ #include <types/global.h>
+ #include <common/config.h>
+ #include <common/errors.h>
++#include <common/hathreads.h>
+ 
+ #include <proto/acl.h>
+ #include <proto/log.h>
+@@ -37,6 +38,10 @@
+ 
+ struct userlist *userlist = NULL;    /* list of all existing userlists */
+ 
++#ifdef CONFIG_HAP_CRYPT
++__decl_hathreads(static HA_SPINLOCK_T auth_lock);
++#endif
++
+ /* find targets for selected gropus. The function returns pointer to
+  * the userlist struct ot NULL if name is NULL/empty or unresolvable.
+  */
+@@ -245,7 +250,9 @@ check_user(struct userlist *ul, const char *user, const char *pass)
+ 
+ 	if (!(u->flags & AU_O_INSECURE)) {
+ #ifdef CONFIG_HAP_CRYPT
++		HA_SPIN_LOCK(AUTH_LOCK, &auth_lock);
+ 		ep = crypt(pass, u->pass);
++		HA_SPIN_UNLOCK(AUTH_LOCK, &auth_lock);
+ #else
+ 		return 0;
+ #endif
