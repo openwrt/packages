@@ -95,7 +95,7 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
  #      include "x86-gcc.h"
 --- a/mysys/CMakeLists.txt
 +++ b/mysys/CMakeLists.txt
-@@ -78,6 +78,10 @@ IF(HAVE_BFD_H)
+@@ -79,6 +79,10 @@ IF(HAVE_BFD_H)
    TARGET_LINK_LIBRARIES(mysys bfd)  
  ENDIF(HAVE_BFD_H)
  
