@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ldns
 PKG_VERSION:=1.7.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.nlnetlabs.nl/downloads/ldns
@@ -20,6 +20,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=
 
 PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
