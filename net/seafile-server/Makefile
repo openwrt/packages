@@ -34,7 +34,7 @@ define Package/seafile-server
     DEPENDS:=+libarchive +libopenssl +glib2 +libsearpc +seafile-ccnet +seafile-seahub +sqlite3-cli +python-mysql +python-urllib3 \
 		+jansson +libevent2 +libevent2-openssl +zlib +libzdb +libsqlite3 +libmysqlclient \
 		+libpthread +libuuid +bash +procps-ng +procps-ng-pkill +SEAFILE_FUSE_SUPPORT:libfuse $(ICONV_DEPENDS)
-    EXTRA_DEPENDS:=seafile-ccnet (=6.3.0-614926b161623b267b4fb77fa1861718da406103-1), seafile-seahub (=6.3.0-d1ab146a936a6ea1e1581bf3f194e86742f0d3cd-1)
+    EXTRA_DEPENDS:=seafile-seahub (=6.3.0-d1ab146a936a6ea1e1581bf3f194e86742f0d3cd-1)
     MENU:=1
 endef
 
