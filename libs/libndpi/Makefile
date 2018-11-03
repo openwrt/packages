@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libndpi
 PKG_VERSION:=2.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ntop/nDPI/tar.gz/$(PKG_VERSION)?
@@ -19,9 +19,9 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/nDPI-$(PKG_VERSION)
 PKG_MAINTAINER:=Banglang Huang <banglang.huang@foxmail.com>
 PKG_LICENSE:=LGPLv3
 
+PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
-PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -46,7 +46,7 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/include/libndpi-$(PKG_VERSION).0/libndpi \
+		$(PKG_INSTALL_DIR)/usr/include/ndpi \
 		$(1)/usr/include/
 
 	$(INSTALL_DIR) $(1)/usr/lib
@@ -56,7 +56,7 @@ define Build/InstallDev
 
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libndpi.pc \
+		$(PKG_INSTALL_DIR)/usr/local/libdata/pkgconfig/libndpi.pc \
 		$(1)/usr/lib/pkgconfig/
 endef
 
@@ -67,7 +67,7 @@ define Package/libndpi/install
 		$(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/bin/ndpiReader \
+		$(PKG_INSTALL_DIR)/usr/local/bin/ndpiReader \
 		$(1)/usr/bin/
 endef
 
