@@ -10,6 +10,7 @@ libncurses5-dev \
 libssl-dev \
 python \
 subversion \
+time \
 zlib1g-dev \
 && rm -rf /var/lib/apt/lists/*
 
