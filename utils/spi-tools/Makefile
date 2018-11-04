@@ -8,21 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=spi-tools
-PKG_VERSION:=1
+PKG_VERSION:=0.8.3
+PKG_RELEASE:=1
 
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
-
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/cpb-/spi-tools.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=cc6a41fdcec60610703ba6db488c621c64952898
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=3c37fde79ab09e9a590f4cdb55751083017197d0037a7c0dce56fceef5e05a21
+PKG_SOURCE_URL:=https://codeload.github.com/cpb-/spi-tools/tar.gz/$(PKG_VERSION)?
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_HASH:=1f29548187c5a57ca5902d260b01ca9ce04d93e4406ff77f317e1d6423ed3610
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
-
 PKG_LICENSE:=GPL-2.0
-PKG_LICENSE_FILES:=
+PKG_LICENSE_FILES:=LICENSE
+
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -31,8 +28,6 @@ define Package/spi-tools
   CATEGORY:=Utilities
   TITLE:=Command line SPI tools
 endef
-
-EXTRA_CFLAGS+=-DVERSION=\"$(PKG_SOURCE_VERSION)\"
 
 define Build/Compile
 	cd $(PKG_BUILD_DIR) ; \
