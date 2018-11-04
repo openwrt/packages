@@ -157,7 +157,6 @@ start_service() {
     local manual
     local log_level
     local command_line_arguments
-    local stubby_args
 
     mkdir -p "$stubby_config_dir"
 
@@ -173,16 +172,9 @@ start_service() {
         mv "$config_file_tmp" "$stubby_config"
     fi
 
-    stubby_args=""
     config_get command_line_arguments "global" command_line_arguments ""
-    if [ -n "$command_line_arguments" ]; then
-        stubby_args="$command_line_arguments"
-    fi
 
     config_get log_level "global" log_level ""
-    if [ -n "$log_level" ]; then
-        stubby_args="$stubby_args -v$log_level"
-    fi
 
     if [ $("${stubby_init}" enabled; printf "%u" ${?}) -eq 0 ]; then
         if [ -n "${stubby_boot}" ]; then
@@ -192,7 +184,13 @@ start_service() {
             fi
         fi
         procd_open_instance "stubby"
-        procd_set_param command "$stubby" "$stubby_args" -C "$stubby_config"
+        procd_set_param command "$stubby" -C "$stubby_config"
+        if [ -n "$log_level" ]; then
+            procd_append_param command -v "$log_level"
+        fi
+        if [ -n "$command_line_arguments" ]; then
+            procd_append_param command "$command_line_arguments"
+        fi
         procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
         procd_set_param file "$stubby_config"
         procd_set_param stdout 1
