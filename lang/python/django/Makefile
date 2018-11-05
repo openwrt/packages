@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django
-PKG_VERSION:=1.11.15
+PKG_VERSION:=1.11.16
 PKG_RELEASE=1
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=Django-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/D/Django
-PKG_HASH:=b18235d82426f09733d2de9910cee975cf52ff05e5f836681eb957d105a05a40
+PKG_HASH:=29268cc47816a44f27308e60f71da635f549c47d8a1d003b28de55141df75791
 PKG_BUILD_DIR=$(BUILD_DIR)/Django-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
