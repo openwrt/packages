@@ -1,0 +1,106 @@
+diff --git a/btrfs.c b/btrfs.c
+index 2d39f2c..78c468d 100644
+--- a/btrfs.c
++++ b/btrfs.c
+@@ -210,7 +210,7 @@ static int handle_global_options(int argc, char **argv)
+ 	return shift;
+ }
+ 
+-void handle_special_globals(int shift, int argc, char **argv)
++static void handle_special_globals(int shift, int argc, char **argv)
+ {
+ 	int has_help = 0;
+ 	int has_full = 0;
+diff --git a/extent-tree.c b/extent-tree.c
+index cd98633..8c9cdef 100644
+--- a/extent-tree.c
++++ b/extent-tree.c
+@@ -3749,7 +3749,7 @@ static void __get_extent_size(struct btrfs_root *root, struct btrfs_path *path,
+  * Return >0 for not found.
+  * Return <0 for err
+  */
+-int btrfs_search_overlap_extent(struct btrfs_root *root,
++static int btrfs_search_overlap_extent(struct btrfs_root *root,
+ 				struct btrfs_path *path, u64 bytenr, u64 len)
+ {
+ 	struct btrfs_key key;
+diff --git a/free-space-tree.c b/free-space-tree.c
+index 6641cdf..65d101f 100644
+--- a/free-space-tree.c
++++ b/free-space-tree.c
+@@ -780,7 +780,7 @@ out:
+ 	return ret;
+ }
+ 
+-int __remove_from_free_space_tree(struct btrfs_trans_handle *trans,
++static int __remove_from_free_space_tree(struct btrfs_trans_handle *trans,
+ 				  struct btrfs_block_group_cache *block_group,
+ 				  struct btrfs_path *path, u64 start, u64 size)
+ {
+@@ -1420,7 +1420,7 @@ out:
+ 	return ret;
+ }
+ 
+-struct btrfs_root *btrfs_create_tree(struct btrfs_trans_handle *trans,
++static struct btrfs_root *btrfs_create_tree(struct btrfs_trans_handle *trans,
+ 				     struct btrfs_fs_info *fs_info,
+ 				     u64 objectid)
+ {
+diff --git a/kernel-lib/bitops.h b/kernel-lib/bitops.h
+index b1fd6f5..4aadf91 100644
+--- a/kernel-lib/bitops.h
++++ b/kernel-lib/bitops.h
+@@ -178,9 +178,9 @@ static inline unsigned long find_next_zero_bit(const unsigned long *addr,
+ static inline unsigned long ext2_swab(const unsigned long y)
+ {
+ #if BITS_PER_LONG == 64
+-	return (unsigned long) bswap64((u64) y);
++	return (unsigned long) bswap_64((u64) y);
+ #elif BITS_PER_LONG == 32
+-	return (unsigned long) bswap32((u32) y);
++	return (unsigned long) bswap_32((u32) y);
+ #else
+ #error BITS_PER_LONG not defined
+ #endif
+@@ -218,14 +218,14 @@ static inline unsigned long _find_next_bit_le(const unsigned long *addr1,
+ 	return min(start + __ffs(ext2_swab(tmp)), nbits);
+ }
+ 
+-unsigned long find_next_zero_bit_le(const void *addr, unsigned long size,
++static unsigned long find_next_zero_bit_le(const void *addr, unsigned long size,
+ 		unsigned long offset)
+ {
+ 	return _find_next_bit_le(addr, NULL, size, offset, ~0UL);
+ }
+ 
+ 
+-unsigned long find_next_bit_le(const void *addr, unsigned long size,
++static unsigned long find_next_bit_le(const void *addr, unsigned long size,
+ 		unsigned long offset)
+ {
+ 	return _find_next_bit_le(addr, NULL, size, offset, 0UL);
+diff --git a/kernel-lib/rbtree.h b/kernel-lib/rbtree.h
+index 47b662a..ebb4145 100644
+--- a/kernel-lib/rbtree.h
++++ b/kernel-lib/rbtree.h
+@@ -52,7 +52,7 @@ struct rb_root {
+ 
+ #define rb_parent(r)   ((struct rb_node *)((r)->__rb_parent_color & ~3))
+ 
+-#define RB_ROOT	(struct rb_root) { NULL, }
++#define RB_ROOT	(struct rb_root) {}
+ #define	rb_entry(ptr, type, member) container_of(ptr, type, member)
+ 
+ #define RB_EMPTY_ROOT(root)  ((root)->rb_node == NULL)
+diff --git a/utils.h b/utils.h
+index b6c00cf..7c5eb79 100644
+--- a/utils.h
++++ b/utils.h
+@@ -29,6 +29,7 @@
+ #include "sizes.h"
+ #include "messages.h"
+ #include "ioctl.h"
++#include "fsfeatures.h"
+ 
+ #define BTRFS_SCAN_MOUNTED	(1ULL << 0)
+ #define BTRFS_SCAN_LBLKID	(1ULL << 1)
