@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tmux
-PKG_VERSION:=2.7
-PKG_RELEASE:=2
+PKG_VERSION:=2.8
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/tmux/tmux/releases/download/$(PKG_VERSION)
-PKG_HASH:=9ded7d100313f6bc5a87404a4048b3745d61f2332f99ec1400a7c4ed9485d452
+PKG_HASH:=7f6bf335634fafecff878d78de389562ea7f73a7367f268b66d37ea13617a2ba
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 
 PKG_LICENSE:=ISC
