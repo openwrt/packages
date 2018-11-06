@@ -1,0 +1,43 @@
+From 8d5cf617d53d0545a0d141abf94396c28ca7e736 Mon Sep 17 00:00:00 2001
+From: Andreas Schneider <asn@cryptomilk.org>
+Date: Sun, 29 Oct 2017 16:06:14 +0100
+Subject: [PATCH] pki_crypto: Don't use deprecated function with newer
+ OpenSSL
+
+Signed-off-by: Andreas Schneider <asn@cryptomilk.org>
+---
+ src/pki_crypto.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/src/pki_crypto.c b/src/pki_crypto.c
+index 9e27436c..34d6e81c 100644
+--- a/src/pki_crypto.c
++++ b/src/pki_crypto.c
+@@ -451,11 +451,24 @@ int pki_key_generate_rsa(ssh_key key, int parameter){
+ 
+ int pki_key_generate_dss(ssh_key key, int parameter){
+     int rc;
++#if OPENSSL_VERSION_NUMBER > 0x10100000L
++    rc = DSA_generate_parameters_ex(key->dsa,
++                                    parameter,
++                                    NULL,  /* seed */
++                                    0,     /* seed_len */
++                                    NULL,  /* counter_ret */
++                                    NULL,  /* h_ret */
++                                    NULL); /* cb */
++    if (rc != 1) {
++        return SSH_ERROR;
++    }
++#else
+     key->dsa = DSA_generate_parameters(parameter, NULL, 0, NULL, NULL,
+             NULL, NULL);
+     if(key->dsa == NULL){
+         return SSH_ERROR;
+     }
++#endif
+     rc = DSA_generate_key(key->dsa);
+     if (rc != 1){
+         DSA_free(key->dsa);
+-- 
+2.19.1
+
