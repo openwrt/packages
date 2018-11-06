@@ -1,0 +1,26 @@
+diff --git a/evhtp.c b/evhtp.c
+index 24687be..b646925 100644
+--- a/evhtp.c
++++ b/evhtp.c
+@@ -1667,9 +1667,9 @@ _evhtp_accept_cb(evserv_t * serv, int fd, struct sockaddr * s, int sl, void * ar
+ 
+ #ifndef EVHTP_DISABLE_SSL
+ #ifndef EVHTP_DISABLE_EVTHR
+-static unsigned long
+-_evhtp_ssl_get_thread_id(void) {
+-    return (unsigned long)pthread_self();
++static void
++_evhtp_ssl_get_thread_id(CRYPTO_THREADID *id) {
++    CRYPTO_THREADID_set_numeric(id, (unsigned long)pthread_self());
+ }
+ 
+ static void
+@@ -2999,7 +2999,7 @@ evhtp_ssl_use_threads(void) {
+         pthread_mutex_init(&(ssl_locks[i]), NULL);
+     }
+ 
+-    CRYPTO_set_id_callback(_evhtp_ssl_get_thread_id);
++    CRYPTO_THREADID_set_callback(_evhtp_ssl_get_thread_id);
+     CRYPTO_set_locking_callback(_evhtp_ssl_thread_lock);
+ 
+     return 0;
