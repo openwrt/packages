@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libndpi
 PKG_VERSION:=2.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ntop/nDPI/tar.gz/$(PKG_VERSION)?
@@ -20,6 +20,7 @@ PKG_MAINTAINER:=Banglang Huang <banglang.huang@foxmail.com>
 PKG_LICENSE:=LGPLv3
 
 PKG_FIXUP:=autoreconf
+PKG_BUILD_DEPENDS:=libpcap
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
@@ -34,7 +35,7 @@ define Package/libndpi
 endef
 
 define Package/libndpi/description
-  nDPI is an open source LGPLv3 library for deep-packet inspection. 
+  nDPI is an open source LGPLv3 library for deep-packet inspection.
   Based on OpenDPI it includes ntop extensions.
 endef
 
@@ -46,28 +47,28 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/include/ndpi \
+		$(PKG_INSTALL_DIR)/usr/local/include/ndpi \
 		$(1)/usr/include/
 
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libndpi.so* \
+		$(PKG_INSTALL_DIR)/usr/local/lib/libndpi.so \
 		$(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/local/libdata/pkgconfig/libndpi.pc \
+		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libndpi.pc \
 		$(1)/usr/lib/pkgconfig/
 endef
 
 define Package/libndpi/install
 	$(INSTALL_DIR) $(1)/usr/lib/
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libndpi.so* \
+		$(PKG_INSTALL_DIR)/usr/local/lib/libndpi.so \
 		$(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/local/bin/ndpiReader \
+		$(PKG_INSTALL_DIR)/usr/bin/ndpiReader \
 		$(1)/usr/bin/
 endef
 

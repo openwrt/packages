@@ -1,0 +1,60 @@
+From ba72865f23cd0d52f373573308e0e05c5bd37ba8 Mon Sep 17 00:00:00 2001
+From: Luca Deri <deri@ntop.org>
+Date: Wed, 19 Sep 2018 11:11:15 +0200
+Subject: [PATCH 4/9] Added missing ndpi_protocol2id() prototype Fixed error
+ when crearing symlink in Makefile
+
+---
+ src/include/ndpi_api.h | 15 ++++++++++++++-
+ src/lib/Makefile.in    |  2 +-
+ 2 files changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/src/include/ndpi_api.h b/src/include/ndpi_api.h
+index 3fefc8e..56c5436 100644
+--- a/src/include/ndpi_api.h
++++ b/src/include/ndpi_api.h
+@@ -420,7 +420,7 @@ extern "C" {
+ 			char *bigram_to_match);
+ 
+   /**
+-   * Write the protocol name in the buffer -buf- as master_protocol.protocol
++   * Write the protocol name in the buffer -buf- as master_protocol.protocol (string)
+    *
+    * @par     ndpi_mod      = the detection module
+    * @par     proto         = the struct ndpi_protocol contain the protocols name
+@@ -432,6 +432,19 @@ extern "C" {
+   char* ndpi_protocol2name(struct ndpi_detection_module_struct *ndpi_mod,
+ 			   ndpi_protocol proto, char *buf, u_int buf_len);
+ 
++  /**
++   * Write the protocol name in the buffer -buf- as master_protocol.protocol (number)
++   *
++   * @par     ndpi_mod      = the detection module
++   * @par     proto         = the struct ndpi_protocol contain the protocols name
++   * @par     buf           = the buffer to write the name of the protocols
++   * @par     buf_len       = the length of the buffer
++   * @return  the buffer contains the master_protocol and protocol name
++   *
++   */
++  char* ndpi_protocol2id(struct ndpi_detection_module_struct *ndpi_mod,
++			 ndpi_protocol proto, char *buf, u_int buf_len);
++
+   /**
+    * Find out if a given category is custom/user-defined
+    *
+diff --git a/src/lib/Makefile.in b/src/lib/Makefile.in
+index ca29001..cbbc54b 100644
+--- a/src/lib/Makefile.in
++++ b/src/lib/Makefile.in
+@@ -38,7 +38,7 @@ $(NDPI_LIB_STATIC): $(OBJECTS)
+ 
+ $(NDPI_LIB_SHARED): $(OBJECTS)
+ 	$(CC) -shared -fPIC -o $@ $(OBJECTS)
+-	ln -Fs $(NDPI_LIB_SHARED) $(NDPI_LIB_SHARED_BASE)
++	ln -fs $(NDPI_LIB_SHARED) $(NDPI_LIB_SHARED_BASE)
+ 
+ %.o: %.c $(HEADERS) Makefile
+ 	$(CC) $(CFLAGS) -c $< -o $@
+-- 
+2.19.1
+
