@@ -1,0 +1,75 @@
+From 91ac4e4beed953fc9d2185ca2e6813dde47e8d5a Mon Sep 17 00:00:00 2001
+From: Guido Falsi <mad@madpilot.net>
+Date: Mon, 27 Aug 2018 17:52:56 +0200
+Subject: [PATCH 1/9] Move the configure include file inclusion and code
+ depending on it in code protected by the NDPI_LIB_COMPILATION define, this
+ should avoid it polluting the environment when including this file from
+ ntopng, version against stable branch.
+
+---
+ src/include/ndpi_typedefs.h | 15 ++++++++++-----
+ src/lib/ndpi_main.c         |  7 -------
+ 2 files changed, 10 insertions(+), 12 deletions(-)
+
+diff --git a/src/include/ndpi_typedefs.h b/src/include/ndpi_typedefs.h
+index 6a61b44..386b217 100644
+--- a/src/include/ndpi_typedefs.h
++++ b/src/include/ndpi_typedefs.h
+@@ -26,9 +26,6 @@
+ 
+ #include "ndpi_define.h"
+ 
+-/* Needed to have access to HAVE_* defines */
+-#include "ndpi_config.h"
+-
+ /* NDPI_LOG_LEVEL */
+ typedef enum {
+   NDPI_LOG_ERROR,
+@@ -854,7 +851,17 @@ typedef struct ndpi_proto {
+ #define NUM_CUSTOM_CATEGORIES      5
+ #define CUSTOM_CATEGORY_LABEL_LEN 32
+ 
++#ifdef NDPI_LIB_COMPILATION
++
++/* Needed to have access to HAVE_* defines */
++#include "ndpi_define.h"
++
+ #ifdef HAVE_HYPERSCAN
++struct hs {
++  hs_database_t *database;
++  hs_scratch_t  *scratch;
++};
++
+ struct hs_list {
+   char *expression;
+   unsigned int id;
+@@ -862,8 +869,6 @@ struct hs_list {
+ };
+ #endif
+ 
+-#ifdef NDPI_LIB_COMPILATION
+-
+ struct ndpi_detection_module_struct {
+   NDPI_PROTOCOL_BITMASK detection_bitmask;
+   NDPI_PROTOCOL_BITMASK generic_http_packet_bitmask;
+diff --git a/src/lib/ndpi_main.c b/src/lib/ndpi_main.c
+index b002126..8061aa1 100644
+--- a/src/lib/ndpi_main.c
++++ b/src/lib/ndpi_main.c
+@@ -51,13 +51,6 @@
+ #include <hs/hs.h>
+ #endif
+ 
+-#ifdef HAVE_HYPERSCAN
+-struct hs {
+-  hs_database_t *database;
+-  hs_scratch_t  *scratch;
+-};
+-#endif
+-
+ #define NDPI_CONST_GENERIC_PROTOCOL_NAME  "GenericProtocol"
+ 
+ static int _ndpi_debug_callbacks = 0;
+-- 
+2.19.1
+
