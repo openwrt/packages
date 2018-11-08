@@ -1,0 +1,83 @@
+diff --git a/configure b/configure
+index 18c5005..908fc09 100755
+--- a/configure
++++ b/configure
+@@ -4746,6 +4746,7 @@ $as_echo_n "checking whether openssl is usable... " >&6; }
+ 
+ 
+ 				#include <openssl/ssl.h>
++				#include <openssl/dh.h>
+ 
+ int
+ main ()
+diff --git a/configure.ac b/configure.ac
+index c94833e..b46a53d 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -368,6 +368,7 @@ if test "x$SSL" != "xno"; then
+ 		AC_LINK_IFELSE([
+ 			AC_LANG_PROGRAM([[
+ 				#include <openssl/ssl.h>
++				#include <openssl/dh.h>
+ 			]], [[
+ 				SSL_CTX* ctx = SSL_CTX_new(TLSv1_method());
+ 				SSL* ssl = SSL_new(ctx);
+diff --git a/src/Utils.cpp b/src/Utils.cpp
+index cced568..425831a 100644
+--- a/src/Utils.cpp
++++ b/src/Utils.cpp
+@@ -27,6 +27,8 @@
+ #include <znc/Message.h>
+ #ifdef HAVE_LIBSSL
+ #include <openssl/ssl.h>
++#include <openssl/bn.h>
++#include <openssl/rsa.h>
+ #endif /* HAVE_LIBSSL */
+ #include <memory>
+ #include <unistd.h>
+diff --git a/src/main.cpp b/src/main.cpp
+index 7d4e209..8d458a9 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -46,8 +46,8 @@ static void locking_callback(int mode, int type, const char* file, int line) {
+     }
+ }
+ 
+-static unsigned long thread_id_callback() {
+-    return (unsigned long)pthread_self();
++static void thread_id_callback(CRYPTO_THREADID *id) {
++    CRYPTO_THREADID_set_numeric(id, (unsigned long)pthread_self());
+ }
+ 
+ static CRYPTO_dynlock_value* dyn_create_callback(const char* file, int line) {
+@@ -78,7 +78,7 @@ static void thread_setup() {
+     for (std::unique_ptr<CMutex>& mtx : lock_cs)
+         mtx = std::unique_ptr<CMutex>(new CMutex());
+ 
+-    CRYPTO_set_id_callback(&thread_id_callback);
++    CRYPTO_THREADID_set_callback(&thread_id_callback);
+     CRYPTO_set_locking_callback(&locking_callback);
+ 
+     CRYPTO_set_dynlock_create_callback(&dyn_create_callback);
+diff --git a/third_party/Csocket/Csocket.cc b/third_party/Csocket/Csocket.cc
+index 46a3bfd..017d22f 100644
+--- a/third_party/Csocket/Csocket.cc
++++ b/third_party/Csocket/Csocket.cc
+@@ -47,10 +47,16 @@
+ #include <stdio.h>
+ #include <openssl/ssl.h>
+ #include <openssl/conf.h>
+-#include <openssl/engine.h>
++#include <openssl/bn.h>
++#include <openssl/dh.h>
++#include <openssl/dsa.h>
++#include <openssl/rsa.h>
+ #ifndef OPENSSL_NO_COMP
+ #include <openssl/comp.h>
+ #endif
++#ifndef OPENSSL_NO_ENGINE
++#include <openssl/engine.h>
++#endif
+ #define HAVE_ERR_REMOVE_STATE
+ #ifdef OPENSSL_VERSION_NUMBER
+ # if OPENSSL_VERSION_NUMBER >= 0x10000000
