@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=3.2.12
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
@@ -278,7 +278,7 @@ endef
 
 
 define Package/ffserver
-$(call Package/ffserver/Default)
+$(call Package/ffmpeg/Default)
  SECTION:=multimedia
  CATEGORY:=Multimedia
  TITLE+= streaming server
@@ -343,9 +343,9 @@ define Package/libffmpeg-full
 $(call Package/libffmpeg/Default)
  TITLE+= (full)
  DEPENDS+= +alsa-lib +PACKAGE_libopus:libopus \
-    $(if $$(CONFIG_SOFT_FLOAT),\
-	+PACKAGE_shine:shine,\
-	+PACKAGE_lame-lib:lame-lib +PACKAGE_libx264:libx264 +PACKAGE_fdk-aac:fdk-aac)
+    +SOFT_FLOAT:shine \
+    +!SOFT_FLOAT:lame-lib \
+    +!SOFT_FLOAT:libx264
  VARIANT:=full
 endef
 
