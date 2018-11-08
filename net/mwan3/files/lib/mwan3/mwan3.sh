@@ -1219,25 +1219,3 @@ mwan3_track_clean()
 		fi
 	}
 }
-
-mwan3_online_metric_clean() {
-	local iface="$1"
-
-	local online_metric ifname
-
-	config_get family $iface family ipv4
-	config_get online_metric $iface online_metric ""
-	ifname=$(uci_get_state network $iface ifname)
-
-	if [ "$family" == "ipv4" ] \
-		&& [ "$online_metric" != "" ] \
-		&& [ "$ifname" != "" ]; then
-		$IP4 route del default dev $ifname proto static metric $online_metric 1>/dev/null 2>&1
-	fi
-
-	if [ "$family" == "ipv6" ] \
-		&& [ "$online_metric" != "" ] \
-		&& [ "$ifname" != "" ]; then
-		$IP6 route del default dev $ifname proto static metric $online_metric 1>/dev/null 2>&1
-	fi
-}
