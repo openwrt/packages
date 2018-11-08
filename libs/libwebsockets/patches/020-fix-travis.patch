@@ -2,7 +2,7 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
 index b260969..ece281d 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1050,9 +1050,9 @@ if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_C_COMPILER_ID
+@@ -1055,9 +1055,9 @@ if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_C_COMPILER_ID
      endif()
  
      if (UNIX AND NOT LWS_WITH_ESP32)
