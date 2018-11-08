@@ -1,0 +1,28 @@
+From b4b7a810697145b718a9a3b6d8a39e700613a640 Mon Sep 17 00:00:00 2001
+From: Hank Leininger <hlein@korelogic.com>
+Date: Mon, 8 Oct 2018 21:22:41 -0600
+Subject: [PATCH 9/9] Correct the include file path in -I CFLAGS argument.
+
+src/lib/Makefile.in install headers into ${prefix}/include/ndpi,
+but the shipped libndpi.pc.in specifies a different path.  Therefore
+anything trying to build using $(pkg-config --cflags libndpi) will
+fail to find the nDPI headers.
+
+This patch simply makes libndpi.pc.in agree with src/lib/Makefile.in.
+---
+ libndpi.pc.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libndpi.pc.in b/libndpi.pc.in
+index 291429c..5e1cde7 100644
+--- a/libndpi.pc.in
++++ b/libndpi.pc.in
+@@ -7,4 +7,4 @@ Name: libndpi
+ Description: deep packet inspection library
+ Version: @VERSION@
+ Libs: -L${libdir} -lndpi
+-Cflags: -I${includedir}/libndpi-@VERSION@
++Cflags: -I${includedir}/ndpi
+-- 
+2.19.1
+
