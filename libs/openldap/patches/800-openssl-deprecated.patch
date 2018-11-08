@@ -1,0 +1,26 @@
+From d7a778004b0e0c7453075f1c7d429537162df436 Mon Sep 17 00:00:00 2001
+From: Howard Chu <hyc@openldap.org>
+Date: Fri, 21 Sep 2018 18:41:20 +0100
+Subject: [PATCH] ITS#8809 add missing includes
+
+---
+ libraries/libldap/tls_o.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/libraries/libldap/tls_o.c b/libraries/libldap/tls_o.c
+index 010f311d7..99626ec15 100644
+--- a/libraries/libldap/tls_o.c
++++ b/libraries/libldap/tls_o.c
+@@ -43,6 +43,9 @@
+ #include <openssl/err.h>
+ #include <openssl/rand.h>
+ #include <openssl/safestack.h>
++#include <openssl/bn.h>
++#include <openssl/rsa.h>
++#include <openssl/dh.h>
+ #elif defined( HAVE_SSL_H )
+ #include <ssl.h>
+ #endif
+-- 
+2.19.1
+
