@@ -31,6 +31,44 @@ report_connected_v6() {
 	fi
 }
 
+report_policies() {
+	local ipt="$1"
+	local policy="$2"
+
+	local percent total_weight weight iface
+
+	total_weight=$($ipt -S $policy | grep -v '.*--comment "out .*" .*$' | cut -s -d'"' -f2 | head -1 | awk '{print $3}')
+
+	for iface in $($ipt -S $policy | grep -v '.*--comment "out .*" .*$' | cut -s -d'"' -f2 | awk '{print $1}'); do
+		weight=$($ipt -S $policy | grep -v '.*--comment "out .*" .*$' | cut -s -d'"' -f2 | awk '$1 == "'$iface'"' | awk '{print $2}')
+		percent=$(($weight*100/$total_weight))
+		json_add_object
+		json_add_string interface "$iface"
+		json_add_int percent "$percent"
+		json_close_object
+	done
+}
+
+report_policies_v4() {
+	local policy
+
+	for policy in $($IPT4 -S | awk '{print $2}' | grep mwan3_policy_ | sort -u); do
+		json_add_array "${policy##*mwan3_policy_}"
+		report_policies "$IPT4" "$policy"
+		json_close_array
+	done
+}
+
+report_policies_v6() {
+	local policy
+
+	for policy in $($IPT6 -S | awk '{print $2}' | grep mwan3_policy_ | sort -u); do
+		json_add_array "${policy##*mwan3_policy_}"
+		report_policies "$IPT6" "$policy"
+		json_close_array
+	done
+}
+
 get_mwan3_status() {
 	local iface="${1}"
 	local iface_select="${2}"
@@ -100,6 +138,7 @@ main () {
 			json_add_object "status"
 			json_add_string "section" "x"
 			json_add_string "interface" "x"
+			json_add_string "policies" "x"
 			json_close_object
 			json_dump
 			;;
@@ -130,6 +169,16 @@ main () {
 						json_close_array
 						json_close_object
 						;;
+					policies)
+						json_add_object policies
+						json_add_object ipv4
+						report_policies_v4
+						json_close_object
+						json_add_object ipv6
+						report_policies_v6
+						json_close_object
+						json_close_object
+						;;
 					*)
 						# interfaces
 						json_add_object interfaces
@@ -143,6 +192,15 @@ main () {
 						json_add_array ipv6
 						report_connected_v6
 						json_close_array
+						json_close_object
+						# policies
+						json_add_object policies
+						json_add_object ipv4
+						report_policies_v4
+						json_close_object
+						json_add_object ipv6
+						report_policies_v6
+						json_close_object
 						json_close_object
 						;;
 				esac
