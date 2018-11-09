@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.15.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
@@ -432,11 +432,11 @@ endif
 
 ifeq ($(CONFIG_NGINX_RTMP_MODULE),y)
   define Download/nginx-rtmp
-    VERSION:=791b6136f02bc9613daf178723ac09f4df5a3bbf
+    VERSION:=c0e7c000ed860ef547a59ecf31f775db63f92b56
     SUBDIR:=nginx-rtmp
     FILE:=ngx-rtmp-module-$(PKG_VERSION)-$$(VERSION).tar.gz
-    URL:=https://github.com/arut/nginx-rtmp-module.git
-    MIRROR_HASH:=8db3f7b545ce98f47415e0436e12dfb55ae787afd3cd9515b5642c7b9dc0ef00
+    URL:=https://github.com/ut0mt8/nginx-rtmp-module.git
+    MIRROR_HASH:=ceb8264d920f3ce2fe96af97af824d6800095e3b3ff00e61f088bef9873f421e
     PROTO:=git
   endef
   $(eval $(call Download,nginx-rtmp))

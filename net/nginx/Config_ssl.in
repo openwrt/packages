@@ -219,6 +219,7 @@ config NGINX_RTMP_MODULE
 	prompt "Enable RTMP module"
 	help
 		Add support for NGINX-based Media Streaming Server module.
+		DASH enhanced - https://github.com/ut0mt8/nginx-rtmp-module
 	default n
 
 config NGINX_TS_MODULE
