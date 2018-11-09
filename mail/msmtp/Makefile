@@ -74,7 +74,7 @@ endef
 define Package/msmtp-mta
 $(call Package/msmtp/Default)
   TITLE+= (as MTA)
-  DEPENDS+=@(PACKAGE_msmtp||PACAKGE_msmtp-nossl)
+  DEPENDS+=@(PACKAGE_msmtp||PACKAGE_msmtp-nossl)
 endef
 
 define Package/msmtp-mta/description
