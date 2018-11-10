@@ -1,6 +1,6 @@
 --- a/upnpcommands.c
 +++ b/upnpcommands.c
-@@ -370,7 +370,7 @@ UPNP_AddPortMapping(const char * control
+@@ -371,7 +371,7 @@ UPNP_AddPortMapping(const char * control
  	AddPortMappingArgs[5].elt = "NewEnabled";
  	AddPortMappingArgs[5].val = "1";
  	AddPortMappingArgs[6].elt = "NewPortMappingDescription";
