@@ -8,21 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmraa
-PKG_VERSION:=0.9.0
+PKG_VERSION:=2.0.0
+PKG_RELEASE:=1
 
-PKG_RELEASE=$(PKG_SOURCE_VERSION)-1
-
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/intel-iot-devkit/mraa.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=049ba5fa9f2d18ac0ec6729c46916b34998d3c5f
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=0c81cff6dcfe401ead0d8976c6f9a6a86b75ab38413a45a40b7eb20b639d78e4
-PKG_BUILD_DEPENDS:=node python/host swig/host node/host
-CMAKE_INSTALL:=1
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/intel-iot-devkit/mraa/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=c9f3c3741c6894be5516adecfe6b55a38960b6718b268a9afd645f7955e5a716
+PKG_BUILD_DIR:=$(BUILD_DIR)/mraa-$(PKG_VERSION)
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=LGPL-2.1
+
+PKG_BUILD_DEPENDS:=node python/host swig/host node/host
+CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -36,7 +34,7 @@ TARGET_CFLAGS+=-I$(STAGING_DIR)/usr/include/node
 define Package/libmraa
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+python +libstdcpp
+  DEPENDS:=+python +libstdcpp +libjson-c
   TITLE:=Intel IoT lowlevel IO library
 endef
 
