@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpc
-PKG_VERSION:=2.0.20170509
+PKG_VERSION:=2.1
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://miniupnp.free.fr/files
+PKG_SOURCE_URL:=https://miniupnp.tuxfamily.org/files
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=d3c368627f5cdfb66d3ebd64ca39ba54d6ff14a61966dbecb8dd296b7039f16a
+PKG_HASH:=e19fb5e01ea5a707e2a8cb96f537fbd9f3a913d53d804a3265e3aeab3d2064c6
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 
 PKG_INSTALL:=1
@@ -22,7 +22,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/miniupnpc/Default
   TITLE:=Lightweight UPnP
-  URL:=http://miniupnp.tuxfamily.org/
+  URL:=https://miniupnp.tuxfamily.org
 endef
 
 define Package/miniupnpc
