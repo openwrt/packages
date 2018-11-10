@@ -297,7 +297,7 @@ CONFIGURE_VARS += \
 	KARCH=$(LINUX_KARCH) \
 
 ovs_intree_kmod_configs:=CONFIG_PACKAGE_kmod-openvswitch-intree
-ovs_intree_kmod_enabled:=$(strip $(foreach c,$(ovs_intree_kmod_configs),$(c)))
+ovs_intree_kmod_enabled:=$(strip $(foreach c,$(ovs_intree_kmod_configs),$($(c))))
 PKG_CONFIG_DEPENDS+=$(ovs_intree_kmod_configs)
 ifneq ($(ovs_intree_kmod_enabled),)
   CONFIGURE_ARGS += --with-linux=$(LINUX_DIR)
