@@ -16,7 +16,6 @@ PKG_SOURCE_URL:=https://codeload.github.com/NICMx/Jool/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=b8e95d1526cd2434dedbae292afd2d17f0780ac2dca2be21264712b41eb76a3d
 PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/Jool-$(PKG_VERSION)
 
-PKG_MAINTAINER:=Dan Luedtke <mail@danrl.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
