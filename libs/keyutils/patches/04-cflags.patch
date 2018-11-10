@@ -1,12 +1,10 @@
-Author: Nobuhiro Iwamatsu <iwamatsu@debian.org>
-Description: Avoid setting Intel Architecture specific CFLAGS (Closes: #638925).
-
-diff -Naurp keyutils.orig/Makefile keyutils/Makefile
---- keyutils.orig/Makefile	2011-08-22 11:51:20.521464216 +0200
-+++ keyutils/Makefile	2011-08-24 19:17:09.855361713 +0200
-@@ -56,12 +56,10 @@ BUILDFOR	:= $(shell file /usr/bin/make |
- LNS		:= ln -sf
+diff --git a/Makefile b/Makefile
+index 5ce6746..c25c0c5 100644
+--- a/Makefile
++++ b/Makefile
+@@ -66,12 +66,10 @@ BUILDFOR	:= $(shell file /usr/bin/make | sed -e 's!.*ELF \(32\|64\)-bit.*!\1!')-
  
+ ifeq ($(origin CFLAGS),undefined)
  ifeq ($(BUILDFOR),32-bit)
 -CFLAGS		+= -m32
  LIBDIR		:= /lib
