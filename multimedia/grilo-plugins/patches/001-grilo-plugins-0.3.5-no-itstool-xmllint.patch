@@ -1,7 +1,6 @@
-diff -u --recursive grilo-plugins-0.3.5-vanilla/configure grilo-plugins-0.3.5/configure
---- grilo-plugins-0.3.5-vanilla/configure	2018-01-07 21:45:18.874540074 -0500
-+++ grilo-plugins-0.3.5/configure	2018-01-07 21:46:31.145749381 -0500
-@@ -638,8 +638,6 @@
+--- a/configure
++++ b/configure
+@@ -638,8 +638,6 @@ am__EXEEXT_TRUE
  LTLIBOBJS
  LIBOBJS
  YELP_HELP_RULES
@@ -10,7 +9,7 @@ diff -u --recursive grilo-plugins-0.3.5-vanilla/configure grilo-plugins-0.3.5/co
  HELP_DIR
  YELP_LC_DIST
  YELP_LC_MEDIA_LINKS
-@@ -1084,9 +1082,7 @@
+@@ -1084,9 +1082,7 @@ MEDIAART_LIBS
  GOM_CFLAGS
  GOM_LIBS
  TRACKER_SPARQL_CFLAGS
@@ -21,7 +20,7 @@ diff -u --recursive grilo-plugins-0.3.5-vanilla/configure grilo-plugins-0.3.5/co
  
  
  # Initialize some variables set by options.
-@@ -1855,8 +1851,6 @@
+@@ -1855,8 +1851,6 @@ Some influential environment variables:
                C compiler flags for TRACKER_SPARQL, overriding pkg-config
    TRACKER_SPARQL_LIBS
                linker flags for TRACKER_SPARQL, overriding pkg-config
@@ -30,7 +29,7 @@ diff -u --recursive grilo-plugins-0.3.5-vanilla/configure grilo-plugins-0.3.5/co
  
  Use these variables to override the choices made by `configure' or to help
  it to find libraries and programs with nonstandard names/locations.
-@@ -16976,89 +16970,6 @@
+@@ -16975,89 +16969,6 @@ HELP_DIR="$with_help_dir"
  
  
  
