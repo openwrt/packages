@@ -1,6 +1,6 @@
 --- a/server/Makefile.in
 +++ b/server/Makefile.in
-@@ -26,7 +26,10 @@ gen_test_char: $(gen_test_char_OBJECTS)
+@@ -29,7 +29,10 @@ gen_test_char: $(gen_test_char_OBJECTS)
  	$(LINK) $(EXTRA_LDFLAGS) $(gen_test_char_OBJECTS) $(EXTRA_LIBS)
  
  test_char.h: gen_test_char
