@@ -193,6 +193,8 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_BUILD_DIR)/lib/mosquitto.h $(1)/usr/include
 	$(CP) $(PKG_BUILD_DIR)/lib/cpp/mosquittopp.h $(1)/usr/include
+	$(CP) $(PKG_BUILD_DIR)/src/mosquitto_plugin.h $(1)/usr/include
+	$(CP) $(PKG_BUILD_DIR)/src/mosquitto_broker.h $(1)/usr/include
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/lib/libmosquitto.so.1 $(1)/usr/lib/
 	$(CP) $(PKG_BUILD_DIR)/lib/cpp/libmosquittopp.so.1 $(1)/usr/lib/
