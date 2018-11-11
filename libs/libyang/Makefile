@@ -9,6 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libyang
 PKG_VERSION:=0.16-r2
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
@@ -50,6 +51,7 @@ TARGET_LDFLAGS += -lm
 
 CMAKE_OPTIONS += \
 	-DCMAKE_INSTALL_PREFIX:PATH=/usr \
+	-DENABLE_LYD_PRIV:BOOL=ON \
 	-DCMAKE_BUILD_TYPE:STRING=Release
 
 define Build/InstallDev
