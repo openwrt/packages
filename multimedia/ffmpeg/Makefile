@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=3.2.12
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
@@ -345,7 +345,7 @@ $(call Package/libffmpeg/Default)
  DEPENDS+= +alsa-lib +PACKAGE_libopus:libopus \
     +SOFT_FLOAT:shine \
     +!SOFT_FLOAT:lame-lib \
-    +!SOFT_FLOAT:libx264
+    +PACKAGE_libx264:libx264
  VARIANT:=full
 endef
 
@@ -488,15 +488,15 @@ ifeq ($(BUILD_VARIANT),full)
 		FFMPEG_CONFIGURE+= --enable-small
 	endif
 	FFMPEG_CONFIGURE+= $(if $(CONFIG_PACKAGE_lame-lib),--enable-libmp3lame)
-	# x264 support and fdk-aac support can't coexist and be distributed.
-	# Prioritize x264 over fdk-aac in default builds (maintain status-quo).
-	ifneq ($(CONFIG_PACKAGE_libx264),)
-		FFMPEG_CONFIGURE+= \
-			--enable-gpl \
-			--enable-libx264
-	else
-		FFMPEG_CONFIGURE+= $(if $(CONFIG_PACKAGE_fdk-aac),--enable-libfdk-aac)
-	endif
+  endif
+  # x264 support and fdk-aac support can't coexist and be distributed.
+  # Prioritize x264 over fdk-aac in default builds (maintain status-quo).
+  ifneq ($(CONFIG_PACKAGE_libx264),)
+	FFMPEG_CONFIGURE+= \
+		--enable-gpl \
+		--enable-libx264
+  else
+	FFMPEG_CONFIGURE+= $(if $(CONFIG_PACKAGE_fdk-aac),--enable-libfdk-aac)
   endif
 endif
 
@@ -653,12 +653,10 @@ define Build/InstallDev/full
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/lib{avcodec,avdevice,avfilter,avformat,avresample,avutil,swresample,swscale} $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avresample,avutil,swresample,swscale}.{a,so*} $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib{avcodec,avdevice,avfilter,avformat,avresample,avutil,swresample,swscale}.pc $(1)/usr/lib/pkgconfig/
-ifneq ($(CONFIG_SOFT_FLOAT),y)
 ifneq ($(CONFIG_PACKAGE_libx264),)
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libpostproc $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpostproc.{a,so*} $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libpostproc.pc $(1)/usr/lib/pkgconfig/
-endif
 endif
 endef
 
@@ -721,10 +719,8 @@ endef
 define Package/libffmpeg-full/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avfilter,avformat,avresample,avutil,swresample,swscale}.so.* $(1)/usr/lib/
-ifneq ($(CONFIG_SOFT_FLOAT),y)
 ifneq ($(CONFIG_PACKAGE_libx264),)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpostproc.so.* $(1)/usr/lib/
-endif
 endif
 endef
 
