@@ -1,4 +1,4 @@
-# 
+#
 # Copyright (C) 2010 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -40,7 +40,7 @@ stream (live or recorded) in the following technologies:
  * To and from embedded devices: iPhone, Android
  * From surveillance cameras
  * IP-TV using MPEG-TS and RTSP/RTCP/RTP protocols
-                
+
 Also, crtmpserver can be used as a high performance rendes-vous
 server. For example, it enables you to do:
  * Audio/Video conferencing
