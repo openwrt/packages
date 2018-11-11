@@ -1,0 +1,39 @@
+From c45b4a774b6d1404a080a1c1759f780fa78f223b Mon Sep 17 00:00:00 2001
+From: Sergey Vojtovich <svoj@mariadb.org>
+Date: Fri, 21 Sep 2018 16:04:16 +0400
+Subject: [PATCH] MDEV-17200 - pthread_detach called for already detached
+ threads
+
+pthread_detach_this_thread() was intended to be defined to something
+meaningful only on some ancient unixes, which don't have
+pthread_attr_setdetachstate() defined. Otherwise, on normal unixes,
+threads are created detached in the first place.
+
+This was broken in 0f01bf267680244ec488adaf65a42838756ed48e so that
+we started calling pthread_detach() for already detached threads.
+Intention was to detach aria checkpoint thread.
+
+However in 87007dc2f71634cc460271eb277ad851ec69c04b aria service threads
+were made joinable with appropriate handling, which makes breaking
+revision unneccessary.
+
+Revert remnants of 0f01bf267680244ec488adaf65a42838756ed48e, so that
+pthread_detach_this_thread() is meaningful only on some ancient unixes
+again.
+---
+ include/my_pthread.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/my_pthread.h b/include/my_pthread.h
+index 6b830ca36d24..ae2f912f979b 100644
+--- a/include/my_pthread.h
++++ b/include/my_pthread.h
+@@ -184,7 +184,7 @@ int pthread_cancel(pthread_t thread);
+ #define pthread_key(T,V) pthread_key_t V
+ #define my_pthread_getspecific_ptr(T,V) my_pthread_getspecific(T,(V))
+ #define my_pthread_setspecific_ptr(T,V) pthread_setspecific(T,(void*) (V))
+-#define pthread_detach_this_thread() { pthread_t tmp=pthread_self() ; pthread_detach(tmp); }
++#define pthread_detach_this_thread()
+ #define pthread_handler_t EXTERNC void *
+ typedef void *(* pthread_handler)(void *);
+ 
