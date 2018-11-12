@@ -56,7 +56,7 @@ qosdef_flush_dynamic() {
 # init dynamic qos
 qosdef_init_dynamic() {
 	local dynamic_bw_up dynamic_bw_down limit_enable limit_type
-	local hook_ul="input" hook_dl="postrouting"
+	local hook_ul="prerouting" hook_dl="postrouting"
 
 	uci_validate_section nft-qos default default \
 		'limit_enable:bool:0' \
@@ -79,7 +79,7 @@ qosdef_init_dynamic() {
 
 	[ -z "$NFT_QOS_HAS_BRIDGE" ] && {
 		hook_ul="postrouting"
-		hook_dl="input"
+		hook_dl="prerouting"
 	}
 
 	qosdef_appendx "table $NFT_QOS_INET_FAMILY nft-qos-dynamic {\n"
