@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apache
 PKG_VERSION:=2.4.37
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE_NAME:=httpd
 
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.bz2
@@ -121,6 +121,7 @@ define Build/Configure
 		--with-openssl="$(STAGING_DIR)/usr" \
 		--enable-ssl \
 		--enable-proxy \
+		--disable-md \
 		--disable-disk-cache \
 		--enable-maintainer-mode \
 		--with-mpm=prefork \
