@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=clamsmtp
 PKG_VERSION:=1.10
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=http://thewalter.net/stef/software/clamsmtp/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
