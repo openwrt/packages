@@ -1,5 +1,3 @@
-# 
-# Copyright (C) 2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -18,14 +16,13 @@ PKG_MD5SUM:=73b1fb774de16c29b380f87016f9f9dd
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
+PKG_BUILD_DEPENDS:=intltool/host
+PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-
-TARGET_LDFLAGS+=\
-	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib $(if $(ICONV_FULL),-liconv)
 
 define Package/libsoup
   SECTION:=libs
@@ -36,17 +33,14 @@ define Package/libsoup
   DEPENDS:=+glib2 +libxml2 +libgnutls +libsqlite3 $(ICONV_DEPENDS) $(INTL_DEPENDS)
 endef
 
-define Build/Configure
-	$(call Build/Configure/Default, \
+CONFIGURE_ARGS += \
 		--enable-ssl \
 		--disable-glibtest \
 		--without-apache-httpd \
 		--without-gnome \
 		--without-gssapi \
 		--enable-vala=no \
-		--disable-more-warnings \
-	)
-endef
+		--disable-more-warnings
 
 define package/libsoup/decription
 Libsoup is an HTTP library implementation in C
