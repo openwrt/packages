@@ -75,7 +75,7 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
  #define make_atomic_store_body(S)  *a= v
 --- a/mysys/CMakeLists.txt
 +++ b/mysys/CMakeLists.txt
-@@ -80,6 +80,10 @@ IF(HAVE_BFD_H)
+@@ -81,6 +81,10 @@ IF(HAVE_BFD_H)
    TARGET_LINK_LIBRARIES(mysys bfd)  
  ENDIF(HAVE_BFD_H)
  
