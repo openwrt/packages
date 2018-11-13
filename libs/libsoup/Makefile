@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2014 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -9,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsoup
 PKG_VERSION:=2.65.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/$(PKG_NAME)/2.65
@@ -19,15 +17,13 @@ PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gnome:libsoup
 
+PKG_BUILD_DEPENDS:=intltool/host
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-
-TARGET_LDFLAGS+=\
-	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib $(if $(ICONV_FULL),-liconv)
 
 define Package/libsoup
   SECTION:=libs
@@ -38,17 +34,14 @@ define Package/libsoup
   DEPENDS:=+glib2 +libxml2 +libgnutls +libsqlite3 +libpsl $(ICONV_DEPENDS) $(INTL_DEPENDS)
 endef
 
-define Build/Configure
-	$(call Build/Configure/Default, \
+CONFIGURE_ARGS += \
 		--disable-glibtest \
 		--disable-gtk-doc-html \
 		--disable-more-warnings \
 		--disable-vala \
 		--without-apache-httpd \
 		--without-gnome \
-		--without-gssapi \
-	)
-endef
+		--without-gssapi
 
 define package/libsoup/decription
 Libsoup is an HTTP library implementation in C
