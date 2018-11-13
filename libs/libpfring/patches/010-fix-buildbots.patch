@@ -1,0 +1,10 @@
+diff --git a/userland/nbpf/Makefile.in b/userland/nbpf/Makefile.in
+index b0d8181..8221e41 100644
+--- a/userland/nbpf/Makefile.in
++++ b/userland/nbpf/Makefile.in
+@@ -1,4 +1,4 @@
+-LEX = lex
++LEX = flex
+ YACC = bison
+ INCLUDE = -I../lib -I../../kernel
+ LIBS=`../lib/pfring_config --libs` -lpthread #@NDPI_LIB@
