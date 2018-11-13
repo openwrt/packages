@@ -43,9 +43,11 @@ start_service() {
 		return 1
 	}
 
-	for i in /var/lib/mysql "$datadir" "$tmpdir" "$(dirname "$pidfile")" "$(dirname "$socketfile")"; do
-		mkdir -p "$i"
-		chown "$my_user":"$my_group" "$i"
+	for i in /var/lib/mysql "$tmpdir" "$(dirname "$pidfile")" "$(dirname "$socketfile")"; do
+		if [ \! -d "$i" ]; then
+			mkdir -p "$i"
+			chown "$my_user":"$my_group" "$i"
+		fi
 	done
 
 	procd_open_instance
