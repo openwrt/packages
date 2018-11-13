@@ -4,7 +4,7 @@ jobs:
     docker:
       - image: champtar/openwrtpackagesci@sha256:d46da22bc628f4b369147eebfa1b032e4066510da42a073b22acbf6b6595b77f
     environment:
-      - SDK_BASE_URL: "https://downloads.lede-project.org/releases/18.06.1/targets/ar71xx/generic"
+      - SDK_BASE_URL: "https://downloads.openwrt.org/releases/18.06.1/targets/ar71xx/generic"
       - SDK_FILE: "openwrt-sdk-18.06.1-ar71xx-generic_gcc-7.3.0_musl.Linux-x86_64.tar.xz"
       - BRANCH: "openwrt-18.06"
     steps:
@@ -27,9 +27,9 @@ jobs:
           command: |
              tar Jxf ~/sdk/$SDK_FILE --strip=1
              cat > feeds.conf <<EOF
-             src-git base https://github.com/lede-project/source.git
+             src-git base https://github.com/openwrt/openwrt.git;$BRANCH
              src-link packages $HOME/openwrt_packages
-             src-git luci https://github.com/openwrt/luci.git
+             src-git luci https://github.com/openwrt/luci.git;$BRANCH
              EOF
              cat feeds.conf
              # enable BUILD_LOG
