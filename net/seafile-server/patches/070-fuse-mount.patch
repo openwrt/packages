@@ -1,6 +1,5 @@
-diff -rupN seafile-server-5.1.1.orig/scripts/seaf-fuse.sh seafile-server-5.1.1/scripts/seaf-fuse.sh
---- seafile-server-5.1.1.orig/scripts/seaf-fuse.sh	2016-05-29 08:43:19.000000000 +0200
-+++ seafile-server-5.1.1/scripts/seaf-fuse.sh	2016-05-29 09:13:06.286680653 +0200
+--- a/scripts/seaf-fuse.sh
++++ b/scripts/seaf-fuse.sh
 @@ -7,7 +7,7 @@ INSTALLPATH=$(dirname "${SCRIPT}")
  TOPDIR=$(dirname "${INSTALLPATH}")
  default_ccnet_conf_dir=${TOPDIR}/ccnet
