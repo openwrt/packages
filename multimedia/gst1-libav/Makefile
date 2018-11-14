@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-libav
-PKG_VERSION:=1.14.2
+PKG_VERSION:=1.14.4
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
 		Ted Hess <thess@kitschensync.net>
 
 PKG_SOURCE:=gst-libav-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-libav
-PKG_HASH:=8a351c39c5cfc2bbd31ca434ec4a290a730a26efbdea962fdd8306dce5c576de
+PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-libav
+PKG_HASH:=dfd78591901df7853eab7e56a86c34a1b03635da0d3d56b89aa577f1897865da
 
 PKG_LICENSE:=GPL-2.0 LGPL-2.0
 PKG_LICENSE_FILES:=COPYING COPYING.LIB
@@ -116,7 +116,7 @@ define Package/gst1-libav
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=GStreamer Libav plugin
-  URL:=http://www.gstreamer.net/modules/gst-libav.html
+  URL:=https://www.gstreamer.net/modules/gst-libav.html
   DEPENDS:= +libgstreamer1 +gstreamer1-plugins-base \
 	    +gst1-mod-alsa +libgst1audio +libgst1pbutils +libgst1video \
 	    +libbz2 +liblzma
