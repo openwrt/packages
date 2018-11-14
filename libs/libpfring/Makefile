@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpfring
 PKG_VERSION:=7.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Banglang Huang <banglang.huang@foxmail.com>
 
 PKG_LICENSE:=LGPL-2.1
