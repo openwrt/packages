@@ -175,7 +175,6 @@ stop()
 
 	config_load mwan3
 	config_foreach mwan3_track_clean interface
-	config_foreach mwan3_online_metric_clean interface
 
 	for IP in "$IP4" "$IP6"; do
 
