@@ -1,19 +1,5 @@
-diff -u --recursive gst-plugins-ugly-1.12.4-vanilla/configure.ac gst-plugins-ugly-1.12.4/configure.ac
---- gst-plugins-ugly-1.12.4-vanilla/configure.ac	2018-02-11 20:19:47.318617668 -0500
-+++ gst-plugins-ugly-1.12.4/configure.ac	2018-02-11 20:19:56.171599652 -0500
-@@ -467,9 +467,6 @@
- ext/sidplay/Makefile
- ext/twolame/Makefile
- ext/x264/Makefile
--docs/Makefile
--docs/plugins/Makefile
--docs/version.entities
- m4/Makefile
- pkgconfig/Makefile
- pkgconfig/gstreamer-plugins-ugly-uninstalled.pc
-diff -u --recursive gst-plugins-ugly-1.12.4-vanilla/Makefile.am gst-plugins-ugly-1.12.4/Makefile.am
---- gst-plugins-ugly-1.12.4-vanilla/Makefile.am	2018-02-11 20:19:47.318617668 -0500
-+++ gst-plugins-ugly-1.12.4/Makefile.am	2018-02-11 20:20:03.662584407 -0500
+--- a/Makefile.am
++++ b/Makefile.am
 @@ -1,7 +1,7 @@
  DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-doc
  
@@ -23,3 +9,15 @@ diff -u --recursive gst-plugins-ugly-1.12.4-vanilla/Makefile.am gst-plugins-ugly
  	
  EXTRA_DIST = \
  	depcomp \
+--- a/configure.ac
++++ b/configure.ac
+@@ -420,9 +420,6 @@ ext/dvdread/Makefile
+ ext/mpeg2dec/Makefile
+ ext/sidplay/Makefile
+ ext/x264/Makefile
+-docs/Makefile
+-docs/plugins/Makefile
+-docs/version.entities
+ m4/Makefile
+ pkgconfig/Makefile
+ pkgconfig/gstreamer-plugins-ugly-uninstalled.pc
