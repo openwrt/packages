@@ -1,0 +1,67 @@
+--- a/Modules/_ssl.c
++++ b/Modules/_ssl.c
+@@ -94,13 +94,13 @@ struct py_ssl_library_code {
+ #include "_ssl_data.h"
+ 
+ #if (OPENSSL_VERSION_NUMBER >= 0x10100000L) && !defined(LIBRESSL_VERSION_NUMBER)
+-#  define OPENSSL_VERSION_1_1 1
+-#  define PY_OPENSSL_1_1_API 1
++# define OPENSSL_VERSION_1_1 1
++# define PY_OPENSSL_1_1_API 1
+ #endif
+ 
+ /* LibreSSL 2.7.0 provides necessary OpenSSL 1.1.0 APIs */
+ #if defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER >= 0x2070000fL
+-#  define PY_OPENSSL_1_1_API 1
++# define PY_OPENSSL_1_1_API 1
+ #endif
+ 
+ /* Openssl comes with TLSv1.1 and TLSv1.2 between 1.0.0h and 1.0.1
+@@ -162,6 +162,11 @@ struct py_ssl_library_code {
+ 
+ #define ASN1_STRING_get0_data ASN1_STRING_data
+ #define TLS_method SSLv23_method
++#define X509_getm_notBefore X509_get_notBefore
++#define X509_getm_notAfter X509_get_notAfter
++#define OpenSSL_version_num SSLeay
++#define OpenSSL_version SSLeay_version
++#define OPENSSL_VERSION SSLEAY_VERSION
+ 
+ static int X509_NAME_ENTRY_set(const X509_NAME_ENTRY *ne)
+ {
+@@ -1327,7 +1332,7 @@ _decode_certificate(X509 *certificate) {
+     Py_DECREF(sn_obj);
+ 
+     (void) BIO_reset(biobuf);
+-    notBefore = X509_get_notBefore(certificate);
++    notBefore = X509_getm_notBefore(certificate);
+     ASN1_TIME_print(biobuf, notBefore);
+     len = BIO_gets(biobuf, buf, sizeof(buf)-1);
+     if (len < 0) {
+@@ -1344,7 +1349,7 @@ _decode_certificate(X509 *certificate) {
+     Py_DECREF(pnotBefore);
+ 
+     (void) BIO_reset(biobuf);
+-    notAfter = X509_get_notAfter(certificate);
++    notAfter = X509_getm_notAfter(certificate);
+     ASN1_TIME_print(biobuf, notAfter);
+     len = BIO_gets(biobuf, buf, sizeof(buf)-1);
+     if (len < 0) {
+@@ -4584,7 +4589,7 @@ init_ssl(void)
+     /* SSLeay() gives us the version of the library linked against,
+        which could be different from the headers version.
+     */
+-    libver = SSLeay();
++    libver = OpenSSL_version_num();
+     r = PyLong_FromUnsignedLong(libver);
+     if (r == NULL)
+         return;
+@@ -4594,7 +4599,7 @@ init_ssl(void)
+     r = Py_BuildValue("IIIII", major, minor, fix, patch, status);
+     if (r == NULL || PyModule_AddObject(m, "OPENSSL_VERSION_INFO", r))
+         return;
+-    r = PyString_FromString(SSLeay_version(SSLEAY_VERSION));
++    r = PyString_FromString(OpenSSL_version(OPENSSL_VERSION));
+     if (r == NULL || PyModule_AddObject(m, "OPENSSL_VERSION", r))
+         return;
+ 
