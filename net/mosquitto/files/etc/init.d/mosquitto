@@ -50,6 +50,17 @@ append_optional_bool() {
     fi
 }
 
+filter_and_set_auth_opts() {
+	local name
+	local value
+	case $2 in
+		CONFIG_$1_auth_opt_*)
+			name=${2##CONFIG_$1_}
+			name=${name%%=*}
+			value=${2##CONFIG_$1_$name=}
+			echo "$name $value" >> $TCONF
+	esac
+}
 
 convert_mosq_general() {
 	local cfg="$1"
@@ -91,6 +102,7 @@ convert_mosq_general() {
 	append_if "$1" sys_interval
 	append_if "$1" upgrade_outgoing_qos
 	append_if "$1" user
+	append_optional_bool "$1" per_listener_settings
 }
 
 convert_persistence() {
@@ -144,6 +156,8 @@ add_listener() {
     append_optional_bool "$1" use_identity_as_username
     append_optional_bool "$1" use_subject_as_username
     append_if "$1" psk_hint
+    append_if "$1" auth_plugin
+    eval "$(set | sed 's/^/filter_and_set_auth_opts $1 /')"
 }
 
 add_topic() {
