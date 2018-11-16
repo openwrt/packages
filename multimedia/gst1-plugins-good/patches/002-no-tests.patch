@@ -1,7 +1,16 @@
-diff -u --recursive gst-plugins-good-1.14.1-vanilla/configure.ac gst-plugins-good-1.14.1/configure.ac
---- gst-plugins-good-1.14.1-vanilla/configure.ac	2018-07-07 18:56:53.008234372 -0400
-+++ gst-plugins-good-1.14.1/configure.ac	2018-07-07 18:57:24.886355477 -0400
-@@ -1292,22 +1292,6 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -2,7 +2,6 @@ DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-doc
+ 
+ ALWAYS_SUBDIRS =		\
+ 	gst sys ext 		\
+-	tests			\
+ 	docs			\
+ 	common			\
+ 	m4			\
+--- a/configure.ac
++++ b/configure.ac
+@@ -1292,22 +1292,6 @@ sys/osxvideo/Makefile
  sys/v4l2/Makefile
  sys/waveform/Makefile
  sys/ximage/Makefile
@@ -24,14 +33,3 @@ diff -u --recursive gst-plugins-good-1.14.1-vanilla/configure.ac gst-plugins-goo
  common/Makefile
  common/m4/Makefile
  m4/Makefile
-diff -u --recursive gst-plugins-good-1.14.1-vanilla/Makefile.am gst-plugins-good-1.14.1/Makefile.am
---- gst-plugins-good-1.14.1-vanilla/Makefile.am	2018-07-07 18:56:53.008234372 -0400
-+++ gst-plugins-good-1.14.1/Makefile.am	2018-07-07 18:57:30.015374957 -0400
-@@ -2,7 +2,6 @@
- 
- ALWAYS_SUBDIRS =		\
- 	gst sys ext 		\
--	tests			\
- 	docs			\
- 	common			\
- 	m4			\

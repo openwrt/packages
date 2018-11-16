@@ -1,7 +1,24 @@
-diff -u --recursive gst-plugins-base-1.14.1-vanilla/configure.ac gst-plugins-base-1.14.1/configure.ac
---- gst-plugins-base-1.14.1-vanilla/configure.ac	2018-07-07 18:10:49.601305039 -0400
-+++ gst-plugins-base-1.14.1/configure.ac	2018-07-07 18:11:03.465363471 -0400
-@@ -992,40 +992,6 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -11,7 +11,6 @@ SUBDIRS = 			\
+ 	gst-libs 		\
+ 	gst sys $(SUBDIRS_EXT) 	\
+ 	tools 			\
+-	tests 			\
+ 	docs			\
+ 	common 			\
+ 	m4
+@@ -22,7 +21,6 @@ DIST_SUBDIRS = 			\
+ 	gst-libs		\
+ 	gst sys ext		\
+ 	tools 			\
+-	tests 			\
+ 	common 			\
+ 	m4
+ 
+--- a/configure.ac
++++ b/configure.ac
+@@ -992,40 +992,6 @@ pkgconfig/gstreamer-gl.pc
  pkgconfig/gstreamer-gl-uninstalled.pc
  pkgconfig/gstreamer-plugins-base.pc
  pkgconfig/gstreamer-plugins-base-uninstalled.pc
@@ -42,22 +59,3 @@ diff -u --recursive gst-plugins-base-1.14.1-vanilla/configure.ac gst-plugins-bas
  docs/Makefile
  docs/libs/Makefile
  docs/plugins/Makefile
-diff -u --recursive gst-plugins-base-1.14.1-vanilla/Makefile.am gst-plugins-base-1.14.1/Makefile.am
---- gst-plugins-base-1.14.1-vanilla/Makefile.am	2018-07-07 18:10:49.601305039 -0400
-+++ gst-plugins-base-1.14.1/Makefile.am	2018-07-07 18:11:09.186387585 -0400
-@@ -11,7 +11,6 @@
- 	gst-libs 		\
- 	gst sys $(SUBDIRS_EXT) 	\
- 	tools 			\
--	tests 			\
- 	docs			\
- 	common 			\
- 	m4
-@@ -22,7 +21,6 @@
- 	gst-libs		\
- 	gst sys ext		\
- 	tools 			\
--	tests 			\
- 	common 			\
- 	m4
- 

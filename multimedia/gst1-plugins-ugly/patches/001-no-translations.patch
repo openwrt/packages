@@ -1,17 +1,5 @@
-diff -u --recursive gst-plugins-ugly-1.12.4-vanilla/configure.ac gst-plugins-ugly-1.12.4/configure.ac
---- gst-plugins-ugly-1.12.4-vanilla/configure.ac	2018-02-11 20:18:05.152825587 -0500
-+++ gst-plugins-ugly-1.12.4/configure.ac	2018-02-11 20:18:33.859767165 -0500
-@@ -474,7 +474,6 @@
- tests/check/Makefile
- tests/files/Makefile
- m4/Makefile
--po/Makefile.in
- pkgconfig/Makefile
- pkgconfig/gstreamer-plugins-ugly-uninstalled.pc
- )
-diff -u --recursive gst-plugins-ugly-1.12.4-vanilla/Makefile.am gst-plugins-ugly-1.12.4/Makefile.am
---- gst-plugins-ugly-1.12.4-vanilla/Makefile.am	2018-02-11 20:18:05.157825577 -0500
-+++ gst-plugins-ugly-1.12.4/Makefile.am	2018-02-11 20:18:23.491788265 -0500
+--- a/Makefile.am
++++ b/Makefile.am
 @@ -1,7 +1,7 @@
  DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-doc
  
@@ -21,3 +9,13 @@ diff -u --recursive gst-plugins-ugly-1.12.4-vanilla/Makefile.am gst-plugins-ugly
  	
  EXTRA_DIST = \
  	depcomp \
+--- a/configure.ac
++++ b/configure.ac
+@@ -427,7 +427,6 @@ tests/Makefile
+ tests/check/Makefile
+ tests/files/Makefile
+ m4/Makefile
+-po/Makefile.in
+ pkgconfig/Makefile
+ pkgconfig/gstreamer-plugins-ugly-uninstalled.pc
+ )
