@@ -1,0 +1,26 @@
+From 7d4caa6a60af0e584dc5c3dc44437117744f6f84 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jelmer=20Vernoo=C4=B3?= <jelmer@jelmer.uk>
+Date: Sat, 14 Jan 2017 20:55:00 +0000
+Subject: [PATCH] Use sys/socket.h rather than asm/socket.h.
+
+The latter is not available on some platforms.
+---
+ core/quasselc-connector.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/quasselc-connector.c b/core/quasselc-connector.c
+index 08a3718..77e8d7a 100644
+--- a/core/quasselc-connector.c
++++ b/core/quasselc-connector.c
+@@ -16,7 +16,7 @@
+  */
+ 
+ #define _GNU_SOURCE
+-#include <asm/socket.h>
++#include <sys/socket.h>
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <sys/wait.h>
+-- 
+2.19.1
+
