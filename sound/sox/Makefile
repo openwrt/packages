@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sox
 PKG_VERSION:=14.4.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/sox
@@ -29,7 +29,7 @@ define Package/sox
   SECTION:=sound
   CATEGORY:=Sound
   DEPENDS:=+lame-lib +libmad +libid3tag +libmagic \
-		+libvorbis +alsa-lib +libflac
+		+libvorbis +alsa-lib +libflac +libopusfile
   TITLE:=Sox is a general purpose sound converter/player/recorder
   URL:=http://sox.sourceforge.net/
 endef
