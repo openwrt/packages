@@ -1,7 +1,22 @@
-diff -u --recursive gst-plugins-bad-1.14.1-vanilla/configure.ac gst-plugins-bad-1.14.1/configure.ac
---- gst-plugins-bad-1.14.1-vanilla/configure.ac	2018-07-08 22:17:07.553492088 -0400
-+++ gst-plugins-bad-1.14.1/configure.ac	2018-07-08 22:17:38.866597074 -0400
-@@ -2600,24 +2600,6 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -2,11 +2,11 @@ DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-doc
+ 
+ SUBDIRS = \
+ 	gst-libs gst sys ext pkgconfig \
+-	m4 common docs tests tools
++	m4 common docs tools
+ 
+ DIST_SUBDIRS = \
+ 	gst gst-libs sys ext pkgconfig \
+-	m4 common docs tests tools
++	m4 common docs tools
+ 
+ EXTRA_DIST = \
+ 	depcomp \
+--- a/configure.ac
++++ b/configure.ac
+@@ -2600,24 +2600,6 @@ sys/vdpau/Makefile
  sys/wasapi/Makefile
  sys/winks/Makefile
  sys/winscreencap/Makefile
@@ -26,20 +41,3 @@ diff -u --recursive gst-plugins-bad-1.14.1-vanilla/configure.ac gst-plugins-bad-
  ext/voamrwbenc/Makefile
  ext/voaacenc/Makefile
  ext/assrender/Makefile
-diff -u --recursive gst-plugins-bad-1.14.1-vanilla/Makefile.am gst-plugins-bad-1.14.1/Makefile.am
---- gst-plugins-bad-1.14.1-vanilla/Makefile.am	2018-07-08 22:17:07.553492088 -0400
-+++ gst-plugins-bad-1.14.1/Makefile.am	2018-07-08 22:17:51.278638694 -0400
-@@ -2,11 +2,11 @@
- 
- SUBDIRS = \
- 	gst-libs gst sys ext pkgconfig \
--	m4 common docs tests tools
-+	m4 common docs tools
- 
- DIST_SUBDIRS = \
- 	gst gst-libs sys ext pkgconfig \
--	m4 common docs tests tools
-+	m4 common docs tools
- 
- EXTRA_DIST = \
- 	depcomp \
