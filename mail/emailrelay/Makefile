@@ -102,11 +102,6 @@ ifeq ($(CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG),y)
 		--enable-debug=yes
 endif
 
-ifeq ($(CONFIG_OPENSSL_WITH_SSL3),y)
-	CONFIGURE_VARS += \
-		CXXFLAGS="$$$$CXXFLAGS -DSSL3_SUPPORT"
-endif
-
 define Package/emailrelay/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay $(1)/usr/bin/
