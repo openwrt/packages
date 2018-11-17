@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=twisted
-PKG_VERSION:=18.4.0
-PKG_RELEASE:=2
+PKG_VERSION:=18.9.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=Twisted-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/T/Twisted
-PKG_HASH:=a4cc164a781859c74de47f17f0e85f4bce8a3321a9d0892c015c8f80c4158ad9
+PKG_HASH:=294be2c6bf84ae776df2fc98e7af7d6537e1c5e60a46d33c3ce2a197677da395
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-twisted-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=libtirpc
@@ -39,6 +39,7 @@ $(call Package/twisted/Default)
   TITLE:=Python networking engine
   DEPENDS:= \
       +PACKAGE_twisted:python-light \
+      +PACKAGE_twisted:python-attrs \
       +PACKAGE_twisted:python-automat \
       +PACKAGE_twisted:python-constantly \
       +PACKAGE_twisted:python-incremental \
