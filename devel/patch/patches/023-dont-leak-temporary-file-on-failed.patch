@@ -1,0 +1,74 @@
+From 369dcccdfa6336e5a873d6d63705cfbe04c55727 Mon Sep 17 00:00:00 2001
+From: Jean Delvare <jdelvare@suse.de>
+Date: Mon, 7 May 2018 15:14:45 +0200
+Subject: [PATCH] Don't leak temporary file on failed multi-file ed-style patch
+
+The previous fix worked fine with single-file ed-style patches, but
+would still leak temporary files in the case of multi-file ed-style
+patch. Fix that case as well, and extend the test case to check for
+it.
+
+* src/patch.c (main): Unlink TMPEDNAME if needed before moving to
+  the next file in a patch.
+
+This closes bug #53820:
+https://savannah.gnu.org/bugs/index.php?53820
+
+Fixes: 123eaff0d5d1 ("Fix arbitrary command execution in ed-style patches (CVE-2018-1000156)")
+Fixes: 19599883ffb6 ("Don't leak temporary file on failed ed-style patch")
+---
+ src/patch.c    |  1 +
+ tests/ed-style | 31 +++++++++++++++++++++++++++++++
+ 2 files changed, 32 insertions(+)
+
+diff --git a/src/patch.c b/src/patch.c
+index 9146597..81c7a02 100644
+--- a/src/patch.c
++++ b/src/patch.c
+@@ -236,6 +236,7 @@ main (int argc, char **argv)
+ 	    }
+ 	  remove_if_needed (TMPOUTNAME, &TMPOUTNAME_needs_removal);
+ 	}
++      remove_if_needed (TMPEDNAME, &TMPEDNAME_needs_removal);
+ 
+       if (! skip_rest_of_patch && ! file_type)
+ 	{
+diff --git a/tests/ed-style b/tests/ed-style
+index 6b6ef9d..504e6e5 100644
+--- a/tests/ed-style
++++ b/tests/ed-style
+@@ -39,3 +39,34 @@ EOF
+ check 'cat foo' <<EOF
+ foo
+ EOF
++
++# Test the case where one ed-style patch modifies several files
++
++cat > ed3.diff <<EOF
++--- foo
+++++ foo
++1c
++bar
++.
++--- baz
+++++ baz
++0a
++baz
++.
++EOF
++
++# Apparently we can't create a file with such a patch, while it works fine
++# when the file name is provided on the command line
++cat > baz <<EOF
++EOF
++
++check 'patch -e -i ed3.diff' <<EOF
++EOF
++
++check 'cat foo' <<EOF
++bar
++EOF
++
++check 'cat baz' <<EOF
++baz
++EOF
