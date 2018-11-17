@@ -8,6 +8,60 @@ jobs:
       - SDK_FILE: "openwrt-sdk-ar71xx-generic_gcc-7.3.0_musl.Linux-x86_64.tar.xz"
       - BRANCH: "master"
     steps:
+      - checkout:
+          path: ~/openwrt_packages
+
+      - run:
+          name: Check changes / verify commits
+          working_directory: ~/openwrt_packages
+          command: |
+             cat >> $BASH_ENV <<EOF
+             echo_red()   { printf "\033[1;31m\$*\033[m\n"; }
+             echo_green() { printf "\033[1;32m\$*\033[m\n"; }
+             echo_blue()  { printf "\033[1;34m\$*\033[m\n"; }
+             EOF
+             source $BASH_ENV
+
+             # Figure out commit_range ($COMMIT_RANGE returned)
+             .circleci/get_commit_range.sh
+             source $BASH_ENV
+
+             RET=0
+             for commit in $(git rev-list $COMMIT_RANGE); do
+               echo_blue "=== Checking commit '$commit'"
+               if git show --format='%P' -s $commit | grep -qF ' '; then
+                 echo_red "Pull request should not include merge commits"
+                 RET=1
+               fi
+
+               author="$(git show -s --format=%aN $commit)"
+               if echo $author | grep -q '\S\+\s\+\S\+'; then
+                 echo_green "Author name ($author) seems ok"
+               else
+                 echo_red "Author name ($author) need to be your real name 'firstname lastname'"
+                 RET=1
+               fi
+
+               subject="$(git show -s --format=%s $commit)"
+               if echo "$subject" | grep -q -e '^[0-9A-Za-z,/_-]\+: ' -e '^Revert '; then
+                 echo_green "Commit subject line seems ok ($subject)"
+               else
+                 echo_red "Commit subject line MUST start with '<package name>: ' ($subject)"
+                 RET=1
+               fi
+
+               body="$(git show -s --format=%b $commit)"
+               sob="$(git show -s --format='Signed-off-by: %aN <%aE>' $commit)"
+               if echo "$body" | grep -qF "$sob"; then
+                 echo_green "Signed-off-by match author"
+               else
+                 echo_red "Signed-off-by is missing or doesn't match author (should be '$sob')"
+                 RET=1
+               fi
+             done
+
+             exit $RET
+
       - run:
           name: Download the SDK
           working_directory: ~/sdk
@@ -18,18 +72,15 @@ jobs:
              curl "$SDK_BASE_URL/$SDK_FILE" -sS -o "$SDK_FILE"
              sha256sum -c --ignore-missing sha256sums
 
-      - checkout:
-          path: ~/openwrt_packages
-
       - run:
           name: Prepare build_dir
           working_directory: ~/build_dir
           command: |
              tar Jxf ~/sdk/$SDK_FILE --strip=1
              cat > feeds.conf <<EOF
-             src-git base https://github.com/openwrt/openwrt.git
+             src-git base https://github.com/openwrt/openwrt.git;$BRANCH
              src-link packages $HOME/openwrt_packages
-             src-git luci https://github.com/openwrt/luci.git
+             src-git luci https://github.com/openwrt/luci.git;$BRANCH
              EOF
              cat feeds.conf
              # enable BUILD_LOG
@@ -39,17 +90,25 @@ jobs:
              make defconfig > /dev/null
 
       - run:
-          name: Download & check & compile
+          name: Download source/check/compile
           working_directory: ~/build_dir
           command: |
-             PKGS=$(cd ~/openwrt_packages; git diff --diff-filter=d --name-only "origin/$BRANCH..." | grep 'Makefile$' | grep -v '/files/' | awk -F/ '{ print $(NF-1) }')
-             echo "Packages: $PKGS"
+             PKGS=$(cd ~/openwrt_packages; git diff --diff-filter=d --name-only "$COMMIT_RANGE" | grep 'Makefile$' | grep -v '/files/' | awk -F/ '{ print $(NF-1) }')
+             if [ -z "$PKGS" ] ; then
+                 echo_blue "WARNING: No new or modified packages found!"
+                 exit 0
+             fi
+
+             echo_blue "=== Found new/modified packages: $PKGS"
              for PKG in $PKGS ; do
+                 echo_blue "===+ Download/check: $PKG"
                  make "package/$PKG/download" V=s
                  make "package/$PKG/check" V=s
              done
+
              for PKG in $PKGS ; do
-                 make "package/$PKG/compile" -j3 V=s
+                 echo_blue "===+ Building: $PKG"
+                 make "package/$PKG/compile" -j$(getconf _NPROCESSORS_ONLN) V=s
              done
 
       - store_artifacts:
