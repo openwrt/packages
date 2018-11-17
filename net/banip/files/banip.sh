@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-ban_ver="0.0.5"
+ban_ver="0.0.6"
 ban_sysver="unknown"
 ban_enabled=0
 ban_automatic="1"
@@ -18,6 +18,7 @@ ban_iface=""
 ban_debug=0
 ban_maxqueue=8
 ban_fetchutil="uclient-fetch"
+ban_ip="$(command -v ip)"
 ban_ipt="$(command -v iptables)"
 ban_ipt_save="$(command -v iptables-save)"
 ban_ipt_restore="$(command -v iptables-restore)"
@@ -114,7 +115,7 @@ f_envload()
 #
 f_envcheck()
 {
-	local ssl_lib
+	local ssl_lib tmp
 
 	# check fetch utility
 	#
@@ -165,14 +166,31 @@ f_envcheck()
 			network_find_wan6 ban_iface
 		fi
 	fi
-	network_get_device ban_dev "${ban_iface}"
-	network_get_subnets ban_subnets "${ban_iface}"
-	network_get_subnets6 ban_subnets6 "${ban_iface}"
+
+	for iface in ${ban_iface}
+	do
+		network_get_physdev tmp "${iface}"
+		if [ -n "${tmp}" ]
+		then
+			ban_dev="${ban_dev} ${tmp}"
+		fi
+		network_get_subnets tmp "${iface}"
+		if [ -n "${tmp}" ]
+		then
+			ban_subnets="${ban_subnets} ${tmp}"
+		fi
+		network_get_subnets6 tmp "${iface}"
+		if [ -n "${tmp}" ]
+		then
+			ban_subnets6="${ban_subnets6} ${tmp}"
+		fi
+	done
 
 	if [ -z "${ban_iface}" ] || [ -z "${ban_dev}" ]
 	then
-		f_log "err" "wan interface/device (${ban_iface:-"-"}/${ban_dev:-"-"}) not found, please please check your configuration"
+		f_log "err" "wan interface(s)/device(s) (${ban_iface:-"-"}/${ban_dev:-"-"}) not found, please please check your configuration"
 	fi
+	ban_dev_all="$(${ban_ip} link show | awk 'BEGIN{FS="[@: ]"}/^[0-9:]/{if(($3!="lo")&&($3!="br-lan")){print $3}}')"
 	uci_set banip global ban_iface "${ban_iface}"
 	uci_commit banip
 
@@ -238,10 +256,13 @@ f_iptrule()
 #
 f_iptadd()
 {
-	local rm="${1}"
+	local rm="${1}" dev
 
-	f_iptrule "-D" "${ban_chain} -i ${ban_dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} src -j ${target_src}"
-	f_iptrule "-D" "${ban_chain} -o ${ban_dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} dst -j ${target_dst}"
+	for dev in ${ban_dev_all}
+	do
+		f_iptrule "-D" "${ban_chain} -i ${dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} src -j ${target_src}"
+		f_iptrule "-D" "${ban_chain} -o ${dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} dst -j ${target_dst}"
+	done
 
 	if [ -z "${rm}" ] && [ ${cnt} -gt 0 ]
 	then
@@ -256,7 +277,10 @@ f_iptadd()
 			fi
 			f_iptrule "-A" "${wan_input} -j ${ban_chain}"
 			f_iptrule "-A" "${wan_forward} -j ${ban_chain}"
-			f_iptrule "${action:-"-A"}" "${ban_chain} -i ${ban_dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} src -j ${target_src}"
+			for dev in ${ban_dev}
+			do
+				f_iptrule "${action:-"-A"}" "${ban_chain} -i ${dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} src -j ${target_src}"
+			done
 		fi
 		if [ "${src_ruletype}" != "src" ]
 		then
@@ -269,7 +293,10 @@ f_iptadd()
 			fi
 			f_iptrule "-A" "${lan_input} -j ${ban_chain}"
 			f_iptrule "-A" "${lan_forward} -j ${ban_chain}"
-			f_iptrule "${action:-"-A"}" "${ban_chain} -o ${ban_dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} dst -j ${target_dst}"
+			for dev in ${ban_dev}
+			do
+				f_iptrule "${action:-"-A"}" "${ban_chain} -o ${dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} dst -j ${target_dst}"
+			done
 		fi
 	else
 		if [ -n "$("${ban_ipset}" -n list "${src_name}" 2>/dev/null)" ]
@@ -432,7 +459,7 @@ f_main()
 
 	mem_total="$(awk '/^MemTotal/ {print int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
 	mem_free="$(awk '/^MemFree/ {print int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
-	f_log "debug" "f_main  ::: fetch_util: ${ban_fetchinfo:-"-"}, fetch_parm: ${ban_fetchparm:-"-"}, iface: ${ban_iface:-"-"}, dev: ${ban_dev:-"-"}, mem_total: ${mem_total:-0}, mem_free: ${mem_free:-0}, max_queue: ${ban_maxqueue}"
+	f_log "debug" "f_main  ::: fetch_util: ${ban_fetchinfo:-"-"}, fetch_parm: ${ban_fetchparm:-"-"}, interface(s): ${ban_iface:-"-"}, device(s): ${ban_dev:-"-"}, all_devices: ${ban_dev_all:-"-"}, mem_total: ${mem_total:-0}, mem_free: ${mem_free:-0}, max_queue: ${ban_maxqueue}"
 
 	f_ipset initial
 
@@ -482,6 +509,10 @@ f_main()
 			[ -z "${src_settype}" ] || [ -z "${src_ruletype}" ]
 		then
 			f_ipset flush
+			continue
+		elif [ "${ban_action}" = "refresh" ]
+		then
+			f_ipset refresh
 			continue
 		fi
 
@@ -664,7 +695,7 @@ case "${ban_action}" in
 		f_ipset destroy
 		f_rmtemp
 	;;
-	start|restart|reload)
+	start|restart|reload|refresh)
 		f_envcheck
 		f_main
 	;;

@@ -9,4 +9,4 @@ then
 	exit 0
 fi
 
-/etc/init.d/banip start
+/etc/init.d/banip refresh
