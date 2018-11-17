@@ -4,8 +4,9 @@
 START=30
 USE_PROCD=1
 
-EXTRA_COMMANDS="status"
-EXTRA_HELP="	status	Print runtime information"
+EXTRA_COMMANDS="refresh status"
+EXTRA_HELP="	refresh	Refresh ipsets only (no new download!)
+	status	Print runtime information"
 
 ban_init="/etc/init.d/banip"
 ban_script="/usr/bin/banip.sh"
@@ -40,6 +41,11 @@ stop_service()
 {
 	rc_procd "${ban_script}" stop
 	rc_procd start_service
+}
+
+refresh()
+{
+	rc_procd start_service "refresh"
 }
 
 status()
