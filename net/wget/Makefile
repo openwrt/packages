@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wget
 PKG_VERSION:=1.19.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
@@ -28,7 +28,7 @@ define Package/wget/Default
   DEPENDS:=+libpcre +zlib
   SUBMENU:=File Transfer
   TITLE:=Non-interactive network downloader
-  URL:=http://www.gnu.org/software/wget/index.html
+  URL:=https://www.gnu.org/software/wget/index.html
 endef
 
 define Package/wget/Default/description
