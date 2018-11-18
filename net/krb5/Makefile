@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=krb5
-PKG_VERSION:=1.16.1
-PKG_RELEASE:=4
+PKG_VERSION:=1.16.2
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -17,12 +17,11 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=NOTICE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://web.mit.edu/kerberos/dist/krb5/1.16/
-PKG_HASH:=214ffe394e3ad0c730564074ec44f1da119159d94281bbec541dc29168d21117
+PKG_SOURCE_URL:=https://web.mit.edu/kerberos/dist/krb5/1.16
+PKG_HASH:=9f721e1fe593c219174740c71de514c7228a97d23eb7be7597b2ae14e487f027
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
-PKG_CHECK_FORMAT_SECURITY:=0
 PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
@@ -33,7 +32,7 @@ define Package/krb5/Default
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Kerberos
-	URL:=http://web.mit.edu/kerberos/
+	URL:=https://web.mit.edu/kerberos/
 endef
 
 define Package/krb5-libs
