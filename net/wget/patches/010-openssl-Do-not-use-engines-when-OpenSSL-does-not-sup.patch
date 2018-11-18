@@ -1,0 +1,42 @@
+From a3643c6076e60f778e069340100e86bec5786e5f Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Thu, 8 Nov 2018 16:01:05 -0800
+Subject: [PATCH] openssl: Do not use engines when OpenSSL does not support
+
+* src/openssl.c: Check for OPENSSL_NO_ENGINE before
+ including openssl/engine.h and before calling ENGINE_load_builtin_engines()
+
+Fixes compilation with no engines compiled.
+
+Copyright-paperwork-exempt: Yes
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ src/openssl.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/openssl.c b/src/openssl.c
+index 6cf4afe9..73e7f0f4 100644
+--- a/src/openssl.c
++++ b/src/openssl.c
+@@ -43,8 +43,10 @@ as that of the covered work.  */
+ #include <openssl/bio.h>
+ #if OPENSSL_VERSION_NUMBER >= 0x00907000
+ #include <openssl/conf.h>
++#ifndef OPENSSL_NO_ENGINE
+ #include <openssl/engine.h>
+ #endif
++#endif
+ 
+ #include "utils.h"
+ #include "connect.h"
+@@ -193,7 +195,9 @@ ssl_init (void)
+ 
+ #if OPENSSL_VERSION_NUMBER >= 0x00907000
+   OPENSSL_load_builtin_modules();
++#ifndef OPENSSL_NO_ENGINE
+   ENGINE_load_builtin_engines();
++#endif
+   CONF_modules_load_file(NULL, NULL,
+       CONF_MFLAGS_DEFAULT_SECTION|CONF_MFLAGS_IGNORE_MISSING_FILE);
+ #endif
+
