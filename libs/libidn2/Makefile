@@ -10,7 +10,6 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=libidn2
 PKG_VERSION:=2.0.5
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Kevin Darbyshire-Bryant <ldir@darbyshire-bryant.me.uk>
 PKG_LICENSE:=GPL-2.0-or-later LGPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING COPYINGv2 COPYING.LESSERv3
 
