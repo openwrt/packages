@@ -1,6 +1,6 @@
 --- a/make.tmpl.in
 +++ b/make.tmpl.in
-@@ -25,7 +25,7 @@ SHELL = @SHELL@
+@@ -29,7 +29,7 @@ SHELL = @SHELL@
  
  # Allow environment to override any built-in default value for CC.
  # If there is a built-in default, CC is NOT set to @CC@ here.
