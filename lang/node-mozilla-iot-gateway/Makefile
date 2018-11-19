@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NPM_NAME:=mozilla-iot-gateway
 PKG_NAME:=node-$(PKG_NPM_NAME)
 PKG_VERSION:=0.6.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_REV:=df2d06def2051238bde7b8e5ee306262235d4c9f
 
 PKG_SOURCE_PROTO:=git
