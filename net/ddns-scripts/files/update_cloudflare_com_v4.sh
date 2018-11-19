@@ -34,8 +34,8 @@ local __URLBASE="https://api.cloudflare.com/client/v4"
 # given data:
 # @example.com for "domain record"
 # host.sub@example.com for a "host record"
-__HOST=$(printf %s "$domain" | cut -d@ -f1)
-__DOMAIN=$(printf %s "$domain" | cut -d@ -f2)
+__HOST=$(printf %s "$domain" | sed -E 's/\.[^.]+\.[^.]+$//g')
+__DOMAIN=$(printf %s "$domain" | grep -oE '[^.]+\.[^.]+$')
 
 # Cloudflare v4 needs:
 # __DOMAIN = the base domain i.e. example.com
