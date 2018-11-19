@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtl-sdr
-PKG_VERSION:=0.5.4
+PKG_VERSION:=0.6.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://git.osmocom.org/rtl-sdr/snapshot
-PKG_HASH:=f38da8a230de5fc997f83a19cff7f8c1a66b62a9cf70ddc997d44696b97ea1df
+PKG_HASH:=ee10a76fe0c6601102367d4cdf5c26271e9442d0491aa8df27e5a9bf639cff7c
 
 PKG_BUILD_PARALLEL:=1
 CMAKE_INSTALL:=1
