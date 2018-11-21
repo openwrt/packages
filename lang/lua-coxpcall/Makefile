@@ -8,18 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-coxpcall
-PKG_VERSION:=1.15.0
+PKG_VERSION:=1.17.0
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
-PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=2a99faec759aeb858eca3691a40609dd2710255497011e5754c4a2282232154b
-PKG_SOURCE_URL:=https://github.com/keplerproject/coxpcall.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=979257892884816c97391dfd7b0a7b30dcc8f479
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://codeload.github.com/keplerproject/coxpcall/tar.gz/v1_17_0?
+PKG_HASH:=6044f70fcc01f50cae3a191cba13c252dcf9e6f169502e3d9c4a151934c46be0
+PKG_BUILD_DIR:=$(BUILD_DIR)/coxpcall-1_17_0
 
+PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=doc/license.html
+
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -37,10 +38,6 @@ define Package/lua-coxpcall/description
   Coxpcall encapsulates the protected calls with a coroutine based loop,
   so errors can be dealed without the usual pcall/xpcall issues with coroutines.
 endef
-
-TARGET_CFLAGS += $(FPIC)
-# add make variable overrides here
-MAKE_FLAGS +=
 
 define Build/Configure
 endef
