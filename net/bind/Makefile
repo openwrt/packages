@@ -18,8 +18,8 @@ PKG_LICENSE := MPL-2.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
-	http://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION) \
-	http://ftp.isc.org/isc/bind9/$(PKG_VERSION)
+	https://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION) \
+	https://ftp.isc.org/isc/bind9/$(PKG_VERSION)
 PKG_HASH:=a4cae11dad954bdd4eb592178f875bfec09fcc7e29fe0f6b7a4e5b5c6bc61322
 
 PKG_FIXUP:=autoreconf
