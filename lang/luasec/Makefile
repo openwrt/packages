@@ -8,18 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luasec
-PKG_VERSION:=0.6
-PKG_RELEASE:=2
+PKG_VERSION:=0.7
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/brunoos/luasec/archive/
-PKG_HASH:=cef3a35c18beb8a54d9c8ce6260a4cabbd9a386de8711320d084daffad0aed5d
+PKG_SOURCE_URL:=https://codeload.github.com/brunoos/luasec/tar.gz/luasec-$(PKG_VERSION)?
+PKG_HASH:=2176e95b1d2a72a3235ede5d2aa9838050feee55dade8fdbde4be7fdc66f3a31
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_NAME)-$(PKG_VERSION)
 
 MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
