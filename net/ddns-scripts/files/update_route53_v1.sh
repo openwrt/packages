@@ -80,7 +80,7 @@ signature="$(sign "${signing_key}" "${sigmsg}")"
 
 authorization="AWS4-HMAC-SHA256 Credential=${AWS_ACCESS_KEY_ID}/${credential}, SignedHeaders=${signed_headers}, Signature=${signature}"
 
-ANSWER="$(curl \
+ANSWER="$(flock /tmp/$(basename -s .sh "$0").lock curl \
     -X "POST" \
     -H "Host: route53.amazonaws.com" \
     -H "X-Amz-Date: ${fulldate}" \
