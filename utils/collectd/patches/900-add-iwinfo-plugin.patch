@@ -54,7 +54,7 @@
  #@BUILD_PLUGIN_JAVA_TRUE@LoadPlugin java
  @BUILD_PLUGIN_LOAD_TRUE@@BUILD_PLUGIN_LOAD_TRUE@LoadPlugin load
  #@BUILD_PLUGIN_LPAR_TRUE@LoadPlugin lpar
-@@ -720,6 +721,12 @@
+@@ -721,6 +722,12 @@
  #	IgnoreSelected true
  #</Plugin>
  
@@ -69,7 +69,7 @@
  #	JVMArg "-Djava.class.path=@prefix@/share/collectd/java/collectd-api.jar"
 --- a/src/collectd.conf.pod
 +++ b/src/collectd.conf.pod
-@@ -3503,6 +3503,27 @@ and all other interrupts are collected.
+@@ -3521,6 +3521,27 @@ and all other interrupts are collected.
  
  =back
  
@@ -262,7 +262,7 @@
  # Legacy types
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -983,6 +983,14 @@ irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+@@ -997,6 +997,14 @@ irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  irq_la_LIBADD = libignorelist.la
  endif
  
