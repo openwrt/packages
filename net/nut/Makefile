@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
 PKG_VERSION:=2.7.4
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.networkupstools.org/source/2.7/
@@ -85,7 +85,7 @@ define Package/nut-server/install
 	$(CP) $(PKG_INSTALL_DIR)/etc/hotplug/usb/libhid.usermap $(PKG_BUILD_DIR)/30-libhid-ups.middle
 	$(SED) '/^$$$$/d' \
 		-e '/^#/d' \
-		-E -e 's:^[^ ][^ ]*  *0x0003  *0x0{0,3}([^ ][^ ]*)  *0x{0,3}*([^ ][^ ]*).*:\1/\2/* | \\:' \
+		-E -e 's:^[^ ][^ ]*  *0x0003  *0x0{0,3}([^ ][^ ]*)  *0x0{0,3}*([^ ][^ ]*).*:\1/\2/* | \\:' \
 		$(PKG_BUILD_DIR)/30-libhid-ups.middle
 	tail -n+2 $(PKG_BUILD_DIR)/30-libhid-ups.middle >>$(1)/etc/hotplug.d/usb/30-libhid-ups
 	cat ./files/30-libhid-ups.tail >>$(1)/etc/hotplug.d/usb/30-libhid-ups
