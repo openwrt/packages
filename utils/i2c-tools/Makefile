@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=i2c-tools
-PKG_VERSION:=3.1.2
+PKG_VERSION:=4.0
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=@KERNEL/software/utils/i2c-tools
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=6d6079153cd49a62d4addacef4c092db1a46ba60b2807070a3fbe050262aef87
+PKG_SOURCE_URL:=@KERNEL/software/utils/i2c-tools
+PKG_HASH:=d900ca1c11c51ea20caa50b096f948008b8a7ad832311b23353e21baa7af28d6
 
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=PACKAGE_python-smbus:python
@@ -27,8 +27,15 @@ include ../../lang/python/python-package.mk
 include ../../lang/python/python3-package.mk
 
 define Package/i2c/Default
-  URL:=http://lm-sensors.org/wiki/I2CTools
+  URL:=https://i2c.wiki.kernel.org/index.php/I2C_Tools
   TITLE:=I2C
+endef
+
+define Package/libi2c
+  $(call Package/i2c/Default)
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE+=library for i2c-tools
 endef
 
 define Package/i2c-tools
@@ -36,6 +43,7 @@ define Package/i2c-tools
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE+=tools for Linux
+  DEPENDS:=+libi2c
 endef
 
 define Package/python-smbus
@@ -44,7 +52,7 @@ define Package/python-smbus
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Python bindings for the SMBUS
-  DEPENDS:=+python-light
+  DEPENDS:=+libi2c +python-light
 endef
 
 define Package/python3-smbus
@@ -53,7 +61,11 @@ define Package/python3-smbus
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Python bindings for the SMBUS
-  DEPENDS:=+python3-light
+  DEPENDS:=+libi2c +python3-light
+endef
+
+define Package/libi2c/description
+ This package contains i2c functionality needed by i2c-tools.
 endef
 
 define Package/i2c-tools/description
@@ -100,6 +112,11 @@ define Build/Compile
 	$(Build/Compile/python3-smbus)
 endef
 
+define Package/libi2c/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/libi2c.so* $(1)/usr/lib/
+endef
+
 define Package/i2c-tools/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tools/i2cdetect $(1)/usr/sbin/
@@ -116,6 +133,7 @@ define PyPackage/python3-smbus/filespec
 +|$(PYTHON3_PKG_DIR)
 endef
 
+$(eval $(call BuildPackage,libi2c))
 $(eval $(call BuildPackage,i2c-tools))
 $(eval $(call PyPackage,python-smbus))
 $(eval $(call BuildPackage,python-smbus))
