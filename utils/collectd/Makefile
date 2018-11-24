@@ -213,10 +213,6 @@ define Package/collectd/config
 	select PACKAGE_collectd-mod-network
 endef
 
-ifneq ($(CONFIG_avr32),)
-  TARGET_CFLAGS += -fsigned-char
-endif
-
 # common configure args
 CONFIGURE_ARGS+= \
 	--disable-werror \
@@ -393,7 +389,7 @@ $(eval $(call BuildPlugin,tail,tail input,tail,))
 $(eval $(call BuildPlugin,tail-csv,tail CSV input,tail_csv,))
 $(eval $(call BuildPlugin,table,table-like structured file input,table,))
 $(eval $(call BuildPlugin,teamspeak2,TeamSpeak2 input,teamspeak2,))
-$(eval $(call BuildPlugin,ted,The Energy Detective input,ted,@((!TARGET_avr32)||BROKEN))) # fails on avr32 because of warnings treated as errors
+$(eval $(call BuildPlugin,ted,The Energy Detective input,ted,))
 $(eval $(call BuildPlugin,tcpconns,TCP connection tracking input,tcpconns,))
 $(eval $(call BuildPlugin,thermal,system temperatures input,thermal,))
 $(eval $(call BuildPlugin,unixsock,unix socket output,unixsock,))
