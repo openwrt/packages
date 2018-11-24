@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hwloc
 PKG_VERSION:=2.0.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.open-mpi.org/release/$(PKG_NAME)/v2.0
@@ -43,7 +43,7 @@ $(call Package/hwloc/Default)
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE+= utilities
-  DEPENDS+= +libhwloc
+  DEPENDS+= +libhwloc +libncurses
 endef
 
 define Package/hwloc-utils/description
