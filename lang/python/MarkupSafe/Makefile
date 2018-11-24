@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=MarkupSafe
-PKG_VERSION:=1.0
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/4d/de/32d741db316d8fdb7680822dd37001ef7a448255de9699ab4bfcbdf4172b/
-PKG_HASH:=a6be69091dac236ea9c6bc7d012beab42010fa914c459791d627dad4910eb665
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/M/MarkupSafe
+PKG_HASH:=4e97332c9ce444b0c2c38dd22ddc61c743eb208d916e4265a2a3b575bdccb1d3
 PKG_BUILD_DEPENDS:=python python3
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -26,7 +26,7 @@ define Package/python3-markupsafe
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=http://github.com/pallets/markupsafe/
+  URL:=https://github.com/pallets/markupsafe/
   TITLE:=python3-markupsafe
   DEPENDS:=+python3-light
   VARIANT:=python3
