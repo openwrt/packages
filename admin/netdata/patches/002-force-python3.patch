@@ -1,5 +1,3 @@
-diff --git a/collectors/python.d.plugin/python.d.plugin.in b/collectors/python.d.plugin/python.d.plugin.in
-index 7ac03fd..d0a3f19 100755
 --- a/collectors/python.d.plugin/python.d.plugin.in
 +++ b/collectors/python.d.plugin/python.d.plugin.in
 @@ -1,6 +1,4 @@
