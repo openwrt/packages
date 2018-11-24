@@ -15,22 +15,23 @@ nut_driver_config() {
 		chown ${runas:-root}:$(id -gn "${runas:-root}") /dev/"$DEVNAME"
 	}
 
-	if [ "$(printf "%04x" 0x"$pvendid")" = "$vendorid" ] && \
-		[ "$(printf "%04x" 0x"$pprodid")" = "$productid" ]; then
-			[ "$ACTION" = "add" ] && {
-				/etc/init.d/nut-server start "$cfg"
-			}
-			[ "$ACTION" = "remove" ] && {
-				/etc/init.d/nut-server stop "$cfg"
-			}
-			found=1
-	elif [ "$nomatch" = "1" ]; then
+	if [ "$nomatch" = "1" ]; then
 		[ "$ACTION" = "add" ] && {
 			/etc/init.d/nut-server start "$cfg"
 		}
 		[ "$ACTION" = "remove" ] && {
 			/etc/init.d/nut-server stop "$cfg"
 		}
+	elif [ "$(printf "%04x" 0x"$pvendid")" = "$vendorid" ] && \
+		[ "$(printf "%04x" 0x"$pprodid")" = "$productid" ]; then
+			[ "$ACTION" = "add" ] && {
+				/etc/init.d/nut-server start "$cfg"
+				/etc/init.d/nut-server reload upsd
+			}
+			[ "$ACTION" = "remove" ] && {
+				/etc/init.d/nut-server stop "$cfg"
+			}
+			found=1
 	fi
 }
 

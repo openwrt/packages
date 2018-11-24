@@ -61,7 +61,6 @@ upsd_config() {
     config_get maxage "$cfg" maxage
     [ -n "$maxage" ] && echo "MAXAGE $maxage" >>"$UPSD_C"
 
-    config_get statepath "$cfg" statepath
     [ -n "$statepath" ] && echo "STATEPATH $statepath" >>"$UPSD_C"
 
     config_get maxconn "$cfg" maxconn
@@ -117,7 +116,7 @@ build_server_config() {
 
 	chmod 0640 "$USERS_C"
 	chmod 0640 "$UPSD_C"
-	chmod 0640 /var/etc/nut/nut.conf
+	chmod 0644 /var/etc/nut/nut.conf
 
 	[ -d "${STATEPATH}" ] || {
 		mkdir -m 0750 -p "${STATEPATH}"
@@ -128,50 +127,109 @@ build_server_config() {
 		chgrp $(id -gn $RUNAS) "$USERS_C"
 		chgrp $(id -gn $RUNAS) "$UPSD_C"
 	fi
+	haveserver=1
 }
 
 build_driver_config() {
 	local cfg="$1"
-	local runas
 
 	echo "[$cfg]" >>"$UPS_C"
 
-	config_get runas "$cfg" runas "nut"
-	RUNAS="$runas"
-
 	get_write_driver_config "$cfg" driver "usbhid-ups"
 	get_write_driver_config "$cfg" port "auto"
+	get_write_driver_config "$cfg" sdorder
+	get_write_driver_config "$cfg" desc
+	get_write_driver_config "$cfg" nolock 0 1
+	get_write_driver_config "$cfg" ignorelb 0 1
 	get_write_driver_config "$cfg" mfr
 	get_write_driver_config "$cfg" model
 	get_write_driver_config "$cfg" serial
 	get_write_driver_config "$cfg" sdtime
-	get_write_driver_config "$cfg" offdelay 20
-	get_write_driver_config "$cfg" ondelay 30
-	get_write_driver_config "$cfg" pollfreq 30
+	get_write_driver_config "$cfg" offdelay
+	get_write_driver_config "$cfg" ondelay
+	get_write_driver_config "$cfg" pollfreq
 	get_write_driver_config "$cfg" vendor
 	get_write_driver_config "$cfg" product
 	get_write_driver_config "$cfg" bus
 	get_write_driver_config "$cfg" interruptonly 0 1
-	get_write_driver_config "$cfg" interruptsize 0
+	get_write_driver_config "$cfg" interruptsize
 	get_write_driver_config "$cfg" maxreport
 	get_write_driver_config "$cfg" vendorid
 	get_write_driver_config "$cfg" productid
 	get_write_driver_config "$cfg" community
 	get_write_driver_config "$cfg" snmp_version
-	get_write_driver_config "$cfg" snmp_retries 0
-	get_write_driver_config "$cfg" snmp_timeout 0
+	get_write_driver_config "$cfg" snmp_retries
+	get_write_driver_config "$cfg" snmp_timeout
 	get_write_driver_config "$cfg" notransferoids 0 1
+	get_write_driver_config "$cfg" maxstartdelay
+	get_write_driver_config "$cfg" retrydelay
+	get_write_driver_config "$cfg" synchronous
 	get_write_driver_config "$cfg" other
+	get_write_driver_config "$cfg" otherflag
+
+	defoverride() {
+		local overvar="$1"
+		local defover="$2"
+		local overtype="$(echo "$overvar" | tr '.' '_')"
+
+		config_get overval "${defover}_${overtype}" value
+		[ -n "$overval" ] && echo "${defover}.${overvar} = $overval" >>"$UPS_C"
+	}
+
+	config_list_foreach "$cfg" override defoverride override
+	config_list_foreach "$cfg" default defoverride default
+
+	other() {
+		local othervar="$1"
+		local othervarflag="$2"
+
+		if [ "$othervarflag" = "otherflag" ]; then
+			config_get_bool otherval "${othervarflag}_${overtype}" value
+			[ "$otherval" = "1" ] && echo "${othervarflag}_${othervar}" >>"$UPS_C"
+		else
+			config_get otherval "${othervarflag}_${overtype}" value
+			[ -n "$otherval" ] && echo "${othervarflag}_${othervar} = $otherval" >>"$UPS_C"
+		fi
+	}
+
+	config_list_foreach "$cfg" override defoverride override
+	config_list_foreach "$cfg" default defoverride default
+	config_list_foreach "$cfg" default other other
+	config_list_foreach "$cfg" default other otherflag
+	echo "" >>$UPS_C
+	havedriver=1
+}
+
+build_global_driver_config() {
+	local cfg="$1"
+
+	# Global driver config
+	get_write_driver_config "$cfg" chroot
+	get_write_driver_config "$cfg" driverpath
+	get_write_driver_config "$cfg" maxstartdelay
+	get_write_driver_config "$cfg" maxretry
+	get_write_driver_config "$cfg" retrydelay
+	get_write_driver_config "$cfg" pollinterval
+	get_write_dirver_config "$cfg" synchronous
+	config_get runas "$cfg" user "nut"
+	RUNAS="$runas"
+
 	echo "" >>$UPS_C
 }
 
 build_config() {
+	local RUNAS=nut
+	local STATEPATH=/var/run/nut
+
         mkdir -m 0755 -p "$(dirname "$UPS_C")"
 	rm -f "$UPS_C"
 	echo "# Config file automatically generated from UCI config" > "$UPS_C"
 	chmod 0640 "$UPS_C"
 
 	config_load nut_server
+	config_foreach upsd_statepath upsd
+
+	config_foreach build_global_driver_config driver_global
 	config_foreach build_driver_config driver
 	[ -n "$RUNAS" ] && chgrp $(id -gn $RUNAS) "$UPS_C"
 
@@ -181,16 +239,18 @@ build_config() {
 start_driver_instance() {
 	local cfg="$1"
 	local requested="$2"
-	local RUNAS=nut
 	local driver
+	local STATEPATH=/var/run/nut
+	local RUNAS=nut
+
+	[ "$havedriver" != 1 ] && return
 
 	# If wanting a specific instance, only start it
-	[ "$requested" != "$cfg" ] && [ x"$requested" != x"" ] && return 0
+	[ "$requested" != "$cfg" ] && [ x"$requested" != x ] && return 0
 
 	mkdir -m 0755 -p "$(dirname "$UPS_C")"
 
 	[ ! -s "$UPS_C" ] && build_config
-
 
 	# Avoid hotplug inadvertenly restarting driver during
 	# forced shutdown
@@ -198,9 +258,10 @@ start_driver_instance() {
 	[ -d /var/run/nut ] && [ -f /var/run/nut/disable-hotplug ] && return 0
 
 
+	config_foreach upsd_statepath upsd
+
 	if [ -n "$RUNAS" ]; then
 		chown $RUNAS:$(id -gn $RUNAS) "${STATEPATH}"
-		chown $RUNAS:$(id -gn $RUNAS) "$(dirname "$UPS_C")"
 	fi
 
 	config_get driver "$cfg" driver "usbhid-ups"
@@ -213,8 +274,10 @@ start_driver_instance() {
 }
 
 start_server_instance() {
-	local RUNAS STATEPATH
+	local RUNAS
 	build_config
+
+	[ "$haveserver" != 1 ] && return
 
 	procd_open_instance "upsd"
 	procd_set_param respawn
@@ -225,30 +288,26 @@ start_server_instance() {
 }
 
 start_service() {
+	local havedriver haveserver
 	local STATEPATH=/var/run/nut
 
 	# Avoid hotplug inadvertenly restarting driver during
 	# forced shutdown
 	[ -f /var/run/killpower ] && return 0
-	[ -d /var/run/nut ] && [ -f /var/run/nut/disable-hotplug ] && return 0
+	[ -f /var/run/nut/disable-hotplug ] && return 0
 
 	config_load nut_server
-	config_foreach upsd_statepath upsd
-
-	[ -d "${STATEPATH}" ] || {
-		mkdir -m 0750 -p "${STATEPATH}"
-	}
 
 	build_config
 	config_foreach start_driver_instance driver "$@"
 
-	[ "$1" != "upsd" ] && [ x"$1" != x"" ] && return 0
 	start_server_instance "upsd"
 }
 
 reload_service() {
 	stop
 	sleep 2
+	local havedriver haveserver
 	start
 }
 
