@@ -2,6 +2,7 @@ FROM debian:9
 
 RUN apt update && apt install -y \
 build-essential \
+curl \
 jq \
 gawk \
 gettext \
@@ -11,6 +12,7 @@ libssl-dev \
 python \
 subversion \
 time \
+wget \
 zlib1g-dev \
 && rm -rf /var/lib/apt/lists/*
 
