@@ -119,11 +119,13 @@ end
 
 col_mods = {}
 col_names = {}
-for c in io.popen("ls -1 /usr/lib/lua/prometheus-collectors/*.lua"):lines() do
+ls_fd = io.popen("ls -1 /usr/lib/lua/prometheus-collectors/*.lua")
+for c in ls_fd:lines() do
   c = c:match("([^/]+)%.lua$")
   col_mods[c] = require('prometheus-collectors.'..c)
   col_names[#col_names+1] = c
 end
+ls_fd:close()
 
 if port then
   server = assert(socket.bind(bind, port))
