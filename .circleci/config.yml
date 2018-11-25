@@ -2,7 +2,7 @@ version: 2.0
 jobs:
   build:
     docker:
-      - image: champtar/openwrtpackagesci@sha256:d46da22bc628f4b369147eebfa1b032e4066510da42a073b22acbf6b6595b77f
+      - image: docker.io/champtar/openwrtpackagesci@sha256:96ef72edc70cba371ea5676fba15ee25b3a94f538f648a27454b699edce61da0
     environment:
       - SDK_BASE_URL: "https://downloads.openwrt.org/snapshots/targets/ar71xx/generic"
       - SDK_FILE: "openwrt-sdk-ar71xx-generic_gcc-7.3.0_musl.Linux-x86_64.tar.xz"
