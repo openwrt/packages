@@ -1,17 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadowsocks-client
-PKG_VERSION:=0.6
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_VERSION:=0.6.1
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/zhao-gang/shadowsocks-tiny.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=b59d754f838213d60b908aed0b7d4d5a81f273e2
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=55da440f514507359ccc86aa07ee97cecfa3ad2c65db92e031b1dc7a27eac494
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/zhao-gang/shadowsocks-tiny/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=a5083fd26054a7f0e597ead640dc97fc9d57f25f7607e9a582c74b2b4226c261
+PKG_BUILD_DIR:=$(BUILD_DIR)/shadowsocks-tiny-$(PKG_VERSION)
+
 PKG_MAINTAINER:=Gang Zhao <gang.zhao.42@gmail.com>
-
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 
