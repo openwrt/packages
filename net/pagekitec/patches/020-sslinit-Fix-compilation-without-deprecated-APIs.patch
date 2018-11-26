@@ -1,0 +1,36 @@
+From 68b777ca3bb4cfc1ed4b3e168f74716a5f2b7b90 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 23 Nov 2018 19:47:40 -0800
+Subject: [PATCH] sslinit: Fix compilation without deprecated APIs
+
+All of the removed APIs are either removed or unnecessary.
+---
+ libpagekite/pkcommon.h | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/libpagekite/pkcommon.h b/libpagekite/pkcommon.h
+index babd117..36bdc67 100644
+--- a/libpagekite/pkcommon.h
++++ b/libpagekite/pkcommon.h
+@@ -143,6 +143,7 @@ typedef unsigned int              uint32_t;
+ #    define SSL_OP_NO_COMPRESSION 0
+ #  endif
+ #  define PKS_DEFAULT_CIPHERS "HIGH:!aNULL:!eNULL:!LOW:!MD5:!EXP:!PSK:!SRP:!DSS"
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ #  define PKS_SSL_INIT(ctx) {\
+               SSL_load_error_strings(); \
+               ERR_load_BIO_strings(); \
+@@ -153,6 +154,13 @@ typedef unsigned int              uint32_t;
+               SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION); \
+               SSL_CTX_set_mode(ctx, SSL_MODE_RELEASE_BUFFERS); }
+ #else
++#  define PKS_SSL_INIT(ctx) {\
++              sk_SSL_COMP_zero(SSL_COMP_get_compression_methods()); \
++              ctx = SSL_CTX_new(TLS_method()); \
++              SSL_CTX_set_options(ctx, SSL_OP_NO_COMPRESSION); \
++              SSL_CTX_set_mode(ctx, SSL_MODE_RELEASE_BUFFERS); }
++#endif
++#else
+ #  define SSL_CTX                   void
+ #  define PKS_DEFAULT_CIPHERS       NULL
+ #  define PKS_SSL_INIT(ctx)         { ctx = NULL; }
