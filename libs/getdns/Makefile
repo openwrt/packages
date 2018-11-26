@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=getdns
 PKG_VERSION:=1.4.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -54,6 +54,7 @@ CONFIGURE_ARGS += \
 		--without-libidn \
 		$(if $(CONFIG_GETDNS_ENABLE_IDN_LIBIDN2), , --without-libidn2 ) \
 		--with-ssl="$(STAGING_DIR)/usr" \
+		--disable-gost
 
 # This will make 'configure' think that our libbsd.so is missing the
 # functions inet_pton, inet_ntop, strlcpy and use the builtin. This 
