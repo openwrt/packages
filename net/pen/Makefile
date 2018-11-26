@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pen
 PKG_VERSION:=0.34.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://siag.nu/pub/pen/
@@ -17,8 +17,9 @@ PKG_HASH:=2b640795029df9d1672e17202c109cc5d42538f6754a6070dc27da640881e864
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
+PKG_MAINTAINER:=
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -28,7 +29,7 @@ define Package/pen
   CATEGORY:=Network
   DEPENDS:=+libopenssl
   TITLE:=Simple TCP load balancer
-  URL:=http://morestuff.siag.nu/category/pen/
+  URL:=http://siag.nu/pen/
 endef
 
 define Package/pen/description
