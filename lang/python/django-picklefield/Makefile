@@ -8,13 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-picklefield
-PKG_VERSION:=1.1.0
+PKG_VERSION:=2.0
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/d/django-picklefield
-PKG_HASH:=ce7fee5c6558fe5dc8924993d994ccde75bb75b91cd82787cbd4c92b95a69f9c
+PKG_HASH:=f1733a8db1b6046c0d7d738e785f9875aa3c198215de11993463a9339aa4ea24
+
+PKG_BUILD_DEPENDS:=python/host pytz/host
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
