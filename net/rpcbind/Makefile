@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rpcbind
 PKG_VERSION:=1.2.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=@SF/rpcbind
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -16,7 +16,6 @@ PKG_REMOVE_FILES:=autogen.sh aclocal.m4
 PKG_INSTALL:=1
 
 PKG_CONFIG_DEPENDS:= \
-	CONFIG_RPCBIND_LIBWRAP \
 	CONFIG_RPCBIND_WARMSTARTS
 
 include $(INCLUDE_DIR)/package.mk
@@ -24,7 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/rpcbind
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libtirpc +RPCBIND_LIBWRAP:libwrap
+  DEPENDS:=+libtirpc
   TITLE:=Universal addresses to RPC mapper
   URL:=http://rpcbind.sourceforge.net/
   USERID:=rpc=65533:rpc=65533
@@ -40,10 +39,6 @@ endef
 
 define Package/rpcbind/config
 if PACKAGE_rpcbind
-	config RPCBIND_LIBWRAP
-		bool "Enable libwrap (TCP wrappers) support."
-		default y
-
 	config RPCBIND_WARMSTARTS
 		bool "Enable warmstarts support"
 		default y
@@ -54,13 +49,9 @@ endef
 
 CONFIGURE_ARGS += \
 	--with-rpcuser=rpc \
-	--without-systemdsystemunitdir
+	--without-systemdsystemunitdir \
+	--disable-libwrap
 
-ifeq ($(CONFIG_RPCBIND_LIBWRAP),y)
-	CONFIGURE_ARGS += --enable-libwrap
-else
-	CONFIGURE_ARGS += --disable-libwrap
-endif
 ifeq ($(CONFIG_RPCBIND_WARMSTARTS),y)
 	CONFIGURE_ARGS += --enable-warmstarts
 endif
