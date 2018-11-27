@@ -23,7 +23,7 @@ export_bool () {
 	config_get_bool _loctmp "$section" "$option"
 	if [ -n "$_loctmp" ]; then
 		if [ 1 -eq "$_loctmp" ]; then
-			CONFIGSTRING="$CONFIGSTRING${_keystr} "
+			CONFIGSTR="$CONFIGSTR${_keystr} "
 		fi
 	fi
 }
