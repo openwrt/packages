@@ -1,6 +1,6 @@
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -63,7 +63,7 @@ SHELL = @SHELL@
+@@ -62,7 +62,7 @@ SHELL = @SHELL@
  SED = @SED@
  
  INSTALL = $(SHELL) $(top_srcdir)/install-sh -c
