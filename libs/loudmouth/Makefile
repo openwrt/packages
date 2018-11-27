@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=loudmouth
 PKG_VERSION:=1.5.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -41,8 +41,10 @@ define Package/loudmouth/description
 endef
 
 CONFIGURE_ARGS += \
-	--with-ssl=openssl \
-	--with-idn=no
+	--disable-debug \
+	--without-compile-warnings \
+	--without-idn \
+	--with-ssl=openssl
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
