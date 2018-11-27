@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=loudmouth
 PKG_VERSION:=1.5.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -45,6 +45,10 @@ CONFIGURE_ARGS += \
 	--without-compile-warnings \
 	--without-idn \
 	--with-ssl=openssl
+
+CONFIGURE_VARS += \
+	ac_cv_lib_crypto_BIO_f_base64=yes \
+	ac_cv_lib_ssl_SSL_new=yes
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
