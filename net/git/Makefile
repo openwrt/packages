@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=git
 PKG_VERSION:=2.19.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/scm/git/
@@ -26,7 +26,7 @@ define Package/git/Default
   CATEGORY:=Network
   SUBMENU:=Version Control Systems
   DEPENDS:=+libopenssl +libpthread +librt +zlib
-  URL:=http://git-scm.com
+  URL:=https://git-scm.com
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
