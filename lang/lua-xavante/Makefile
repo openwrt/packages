@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-xavante
-PKG_VERSION:=2.3.0
+PKG_VERSION:=2.4.0
 PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/keplerproject/xavante/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=0e4f49dd96cb092cd5d80cc66a5204dcb22a14f80897a121f2f0d1dceb1c7ba5
+PKG_BUILD_DIR:=$(BUILD_DIR)/xavante-$(PKG_VERSION)
+
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=0ab254d4bb8ce9556ad8fc2a1b4aef739ec3bb3e1f343400b20435e2ab8e686f
-PKG_SOURCE_URL:=https://github.com/keplerproject/xavante.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=9825b905133e14d37a4c179f2d02367ab93f1ef6
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -29,7 +29,7 @@ define Package/lua-xavante
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Xavante Web Server
-  URL:=http://keplerproject.github.io/xavante/
+  URL:=https://keplerproject.github.io/xavante/
   DEPENDS:= +lua
 endef
 
