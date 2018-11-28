@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-wsapi
-PKG_VERSION:=1.6.1
+PKG_VERSION:=1.7
 PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/keplerproject/wsapi/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=48dc7aba0fd2e96a3e5ef51045b5d923964f6ae299de761aa0467031ad44e987
+PKG_BUILD_DIR:=$(BUILD_DIR)/wsapi-$(PKG_VERSION)
+
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=0e52ca377c135c8db1f824841e1a36c1ef7e4b4a594a5b70a2f402586901ca1f
-PKG_SOURCE_URL:=https://github.com/keplerproject/wsapi.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=eed8338401196cc155e59280adbe58d78933ead0
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
