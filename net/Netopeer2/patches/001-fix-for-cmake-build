@@ -65,10 +65,11 @@ Index: Netopeer2-0.4.13-ae560bef2e70d274f6d028b59e3cb398ea2a621d/server/CMakeLis
  
  project(netopeer2-server C)
  include(GNUInstallDirs)
-@@ -176,7 +176,7 @@ if (ENABLE_CONFIGURATION)
-         execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/model-install.sh)")
+@@ -204,7 +204,7 @@ if (ENABLE_CONFIGURATION)
+         execute_process(COMMAND ${PROJECT_BINARY_DIR}/model-install.sh)")
  endif()
- 
+
 -add_custom_target(install-scripts-ide
 +add_custom_target(install-scripts-ide-server
-     scripts/model-install.sh
+     ${PROJECT_BINARY_DIR}/model-install.sh
+ )
