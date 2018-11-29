@@ -10,14 +10,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=Netopeer2
-PKG_VERSION:=0.6-r1
+PKG_VERSION:=0.7-r1
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/CESNET/Netopeer2/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=5f38db43f6021e389cf1f3c5c70e432586d8ba7f2d64ed5bd2bea8c7ea6b39e6
+PKG_HASH:=040013d1e315c62c496b704475665165578c374ffb387cbbff422cf8898d3a12
 
 CMAKE_INSTALL:=1
 
