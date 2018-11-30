@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
-PKG_VERSION:=3.4.14
-PKG_RELEASE:=6
+PKG_VERSION:=4.0.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=7443873cc970672d3c884230d3aeb082f2d8afcc2b757506c2d684ffdd12d77e
+PKG_HASH:=1cef52e89dc8d20343d8b9c3881490bf86e98102de2229a3b852009f1659780c
 PKG_SOURCE_URL:=@SF/zabbix
 
 PKG_LICENSE:=GPL-2.0
@@ -75,7 +75,7 @@ define Package/zabbix/Default
   SUBMENU:=zabbix
   MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
   USERID:=zabbix=53:zabbix=53
-  DEPENDS += $(ICONV_DEPENDS) +libpcre +ZABBIX_GNUTLS:libgnutls +ZABBIX_OPENSSL:libopenssl
+  DEPENDS += $(ICONV_DEPENDS) +libpcre +zlib +ZABBIX_GNUTLS:libgnutls +ZABBIX_OPENSSL:libopenssl
 endef
 
 define Package/zabbix-agentd
