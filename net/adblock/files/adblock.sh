@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.5.5-2"
+adb_ver="3.5.5-4"
 adb_sysver="unknown"
 adb_enabled=0
 adb_debug=0
@@ -337,7 +337,11 @@ f_count()
 	adb_cnt=0
 	if [ -s "${adb_dnsdir}/${adb_dnsfile}" ] && ([ -z "${mode}" ] || [ "${mode}" = "final" ])
 	then
-		adb_cnt="$(( $(wc -l 2>/dev/null < "${adb_dnsdir}/${adb_dnsfile}") - $(wc -l 2>/dev/null < "${adb_tmpdir}/tmp.add_whitelist") ))"
+		adb_cnt="$(( $(wc -l 2>/dev/null < "${adb_dnsdir}/${adb_dnsfile}") ))"
+		if [ -s "${adb_tmpdir}/tmp.add_whitelist" ]
+		then
+			adb_cnt="$(( ${adb_cnt} - $(wc -l 2>/dev/null < "${adb_tmpdir}/tmp.add_whitelist") ))"
+		fi
 		if [ "${adb_dns}" = "named" ] || [ "${adb_dns}" = "kresd" ]
 		then
 			adb_cnt="$(( (${adb_cnt} - $(printf '%s' "${adb_dnsheader}" | grep -c "^")) / 2 ))"
@@ -622,20 +626,29 @@ f_hash()
 #
 f_switch()
 {
-	local mode="${1}"
+	local status cnt mode="${1}"
 
-	if [ ! -s "${adb_dnsdir}/.${adb_dnsfile}" ] && [ "${mode}" = "suspend" ]
+	json_get_var status "adblock_status"
+	json_get_var cnt "overall_domains"
+
+	if [ "${mode}" = "suspend" ] && [ "${status}" = "enabled" ]
 	then
-		f_hash
-		cat "${adb_dnsdir}/${adb_dnsfile}" > "${adb_dnsdir}/.${adb_dnsfile}"
-		printf '%s\n' "${adb_dnsheader}" > "${adb_dnsdir}/${adb_dnsfile}"
-		f_hash
-	elif [ -s "${adb_dnsdir}/.${adb_dnsfile}" ] && [ "${mode}" = "resume" ]
+		if [ ${cnt%% *} -gt 0 ] && [ -s "${adb_dnsdir}/${adb_dnsfile}" ]
+		then
+			f_hash
+			cat "${adb_dnsdir}/${adb_dnsfile}" > "${adb_dnsdir}/.${adb_dnsfile}"
+			printf '%s\n' "${adb_dnsheader}" > "${adb_dnsdir}/${adb_dnsfile}"
+			f_hash
+		fi
+	elif [ "${mode}" = "resume" ] && [ "${status}" = "paused" ]
 	then
-		f_hash
-		cat "${adb_dnsdir}/.${adb_dnsfile}" > "${adb_dnsdir}/${adb_dnsfile}"
-		> "${adb_dnsdir}/.${adb_dnsfile}"
-		f_hash
+		if [ ${cnt%% *} -gt 0 ] && [ -s "${adb_dnsdir}/.${adb_dnsfile}" ]
+		then
+			f_hash
+			cat "${adb_dnsdir}/.${adb_dnsfile}" > "${adb_dnsdir}/${adb_dnsfile}"
+			> "${adb_dnsdir}/.${adb_dnsfile}"
+			f_hash
+		fi
 	fi
 	if [ ${?} -eq 1 ]
 	then
