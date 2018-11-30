@@ -11,14 +11,14 @@ PKG_NAME:=libyaml-cpp
 PKG_VERSION:=0.6.2
 PKG_RELEASE:=1
 
-PKG_MAINTAINER:= Steven Hessing <steven.hessing@gmail.com>
-
 PKG_SOURCE:=yaml-cpp-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/jbeder/yaml-cpp/tar.gz/yaml-cpp-$(PKG_VERSION)?
 PKG_HASH:=e4d8560e163c3d875fd5d9e5542b5fd5bec810febdcba61481fe5fc4e6b1fd05
 
+PKG_MAINTAINER:= Steven Hessing <steven.hessing@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:yaml-cpp_project:yaml-cpp
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/yaml-cpp-yaml-cpp-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
