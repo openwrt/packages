@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.3.0"
+trm_ver="1.3.1"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -207,10 +207,10 @@ f_check()
 				then
 					f_jsnup
 				fi
-				if [ "${mode}" = "initial" ] && [ "${trm_captive}" -eq 1 ] && [ "${trm_ifstatus}" = "true" ]
+				if [ "${mode}" = "initial" ] && [ ${trm_captive} -eq 1 ] && [ "${trm_ifstatus}" = "true" ]
 				then
-					result="$(${trm_fetch} --timeout=$(( ${trm_maxwait} / 3 )) --spider "${trm_captiveurl}" 2>&1 | \
-							awk '/^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|^Connection error/{printf "%s" "net nok";exit}')"
+					result="$(${trm_fetch} --timeout=$(( ${trm_maxwait} / 3 )) "${trm_captiveurl}" -O /dev/null 2>&1 | \
+						awk '/^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|^Connection error/{printf "%s" "net nok";exit}')"
 					if [ -n "${result}" ] && ([ -z "${trm_connection}" ] || [ "${result}" != "${trm_connection%/*}" ])
 					then
 						trm_connection="${result}/${trm_ifquality}"
@@ -223,7 +223,7 @@ f_check()
 		wait=$(( wait + 1 ))
 		sleep 1
 	done
-	f_log "debug" "f_check::: mode: ${mode}, name: ${ifname:-"-"}, status: ${trm_ifstatus}, quality: ${trm_ifquality}, connection: ${trm_connection:-"-"}, wait: ${wait}, max_wait: ${trm_maxwait}, min_quality: ${trm_minquality}, captive: ${trm_captive}"
+	f_log "debug" "f_check::: mode: ${mode}, name: ${ifname:-"-"}, status: ${trm_ifstatus}, quality: ${trm_ifquality}, result: ${result:-"-"}, connection: ${trm_connection:-"-"}, wait: ${wait}, max_wait: ${trm_maxwait}, min_quality: ${trm_minquality}, captive: ${trm_captive}"
 }
 
 # update runtime information
