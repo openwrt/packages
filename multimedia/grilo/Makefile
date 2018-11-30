@@ -46,10 +46,10 @@ endef
 
 CONFIGURE_ARGS += \
 	--disable-compile-warnings \
+	--disable-debug \
 	--disable-gtk-doc-html \
 	--disable-introspection \
 	--disable-test-ui \
-	--disable-tests \
 	--disable-vala
 
 define Build/InstallDev
