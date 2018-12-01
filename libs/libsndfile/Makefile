@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsndfile
-PKG_VERSION:=1.0.28
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.mega-nerd.com/libsndfile/files/
-PKG_HASH:=1ff33929f042fa333aed1e8923aa628c3ee9e1eb85512686c55092d1e5a9dfa9
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/erikd/libsndfile.git
+PKG_SOURCE_VERSION:=b4bd397ca74f4c72b9cabaae66fef0c3d5a8c527
+PKG_MIRROR_HASH:=8e7cb3da240888c9c0e17d066e904d720c94dd379d3e5105df69797e2b321016
 
 PKG_LICENSE:=LGPLv2.1
 PKG_LICENSE_FILES:=COPYING
