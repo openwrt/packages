@@ -1,6 +1,6 @@
 --- a/setup.py
 +++ b/setup.py
-@@ -235,6 +235,7 @@ class DummyPyTest(test):
+@@ -243,6 +243,7 @@ class DummyPyTest(test):
  with open(os.path.join(base_dir, "README.rst")) as f:
      long_description = f.read()
  
