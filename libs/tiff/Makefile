@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tiff
-PKG_VERSION:=4.0.9
-PKG_RELEASE:=2
+PKG_VERSION:=4.0.10
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://download.osgeo.org/libtiff
-PKG_MD5SUM:=54bad211279cc93eb4fca31ba9bfdc79
+PKG_SOURCE_URL:=https://download.osgeo.org/libtiff
+PKG_HASH:=2c52d11ccaf767457db0c46795d9c7d1a8d8f76f68b0b800a3dfe45786b996e4
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=autogen.sh aclocal.m4
@@ -30,7 +30,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/tiff/Default
   TITLE:=TIFF
-  URL:=http://www.remotesensing.org/libtiff/
+  URL:=http://simplesystems.org/libtiff/
   MAINTAINER:=Jiri Slachta <jiri@slachta.eu>
 endef
 
@@ -79,6 +79,8 @@ define Build/Configure
 		--enable-jpeg \
 		--disable-old-jpeg \
 		--disable-jbig \
+		--disable-webp \
+		--disable-zstd \
 		--without-x \
 	)
 endef
