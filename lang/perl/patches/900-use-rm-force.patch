@@ -1,5 +1,5 @@
---- a/Makefile.SH	2017-10-17 11:59:52.938763142 -0600
-+++ b/Makefile.SH	2017-10-17 12:13:46.202555604 -0600
+--- a/Makefile.SH
++++ b/Makefile.SH
 @@ -275,6 +275,7 @@ LNS = $lns
  # NOTE: some systems don't grok "cp -f". XXX Configure test needed?
  CPS = $cp
@@ -120,8 +120,8 @@
  !NO!SUBS!
  
          case $osname in
-@@ -1119,8 +1120,8 @@ pod/perl5280delta.pod: pod/perldelta.pod
- 	$(LNS) perldelta.pod pod/perl5280delta.pod
+@@ -1119,8 +1120,8 @@ pod/perl5281delta.pod: pod/perldelta.pod
+ 	$(LNS) perldelta.pod pod/perl5281delta.pod
  
  extra.pods: $(MINIPERL_EXE)
 -	-@test ! -f extra.pods || rm -f `cat extra.pods`

@@ -1,6 +1,6 @@
---- a/Makefile.SH	2017-10-15 18:57:08.436234652 -0600
-+++ b/Makefile.SH	2017-10-15 19:02:47.587658819 -0600
-@@ -328,7 +328,7 @@ PATH_SEP = $p_
+--- a/Makefile.SH
++++ b/Makefile.SH
+@@ -333,7 +333,7 @@ PATH_SEP = $p_
  # Macros to invoke a copy of miniperl during the build.  Targets which
  # are built using these macros should depend on \$(MINIPERL_EXE)
  MINIPERL_EXE = miniperl\$(EXE_EXT)
@@ -9,7 +9,7 @@
  
  # Macros to invoke sort the MANIFEST during build
  MANIFEST_SRT = MANIFEST.srt
-@@ -991,7 +991,7 @@ NAMESPACEFLAGS = -force_flat_namespace
+@@ -996,7 +996,7 @@ lib/buildcustomize.pl: $& $(miniperl_obj
  	@$(RMS) miniperl.xok
  	$(CC) $(CLDFLAGS) $(NAMESPACEFLAGS) -o $(MINIPERL_EXE) \
  	    $(miniperl_objs) $(libs)
@@ -18,7 +18,7 @@
  	$(MINIPERL) -f write_buildcustomize.pl
  !NO!SUBS!
  		;;
-@@ -1002,16 +1002,16 @@ lib/buildcustomize.pl: $& $(miniperl_obj
+@@ -1007,7 +1007,7 @@ lib/buildcustomize.pl: \$& \$(miniperl_d
  	@\$(RMS) miniperl.xok
  	@\$(RMS) \$(MINIPERL_EXE)
  	\$(LNS) \$(HOST_PERL) \$(MINIPERL_EXE)
@@ -27,8 +27,7 @@
  	\$(MINIPERL) -f write_buildcustomize.pl 'osname' "$osname"
  !GROK!THIS!
  		else
- 			$spitshell >>$Makefile <<'!NO!SUBS!'
- lib/buildcustomize.pl: $& $(miniperl_dep) write_buildcustomize.pl
+@@ -1016,7 +1016,7 @@ lib/buildcustomize.pl: $& $(miniperl_dep
  	@$(RMS) miniperl.xok
  	$(CC) $(CLDFLAGS) -o $(MINIPERL_EXE) \
  	    $(miniperl_objs) $(libs)

@@ -7,11 +7,9 @@ Date:   Wed May 23 15:32:47 2018 -0600
     Several problems with this compile option were not caught before 5.28
     was frozen.
 
-diff --git a/embed.fnc b/embed.fnc
-index 0f06e38..36f9f97 100644
 --- a/embed.fnc
 +++ b/embed.fnc
-@@ -2765,9 +2765,11 @@ s	|bool	|isa_lookup	|NN HV *stash|NN const char * const name \
+@@ -2793,9 +2793,11 @@ s	|bool	|isa_lookup	|NN HV *stash|NN con
  #endif
  
  #if defined(PERL_IN_LOCALE_C)
@@ -23,11 +21,9 @@ index 0f06e38..36f9f97 100644
  #  ifdef HAS_NL_LANGINFO
  sn	|const char*|my_nl_langinfo|const nl_item item|bool toggle
  #  else
-diff --git a/embed.h b/embed.h
-index cf3ad9e..fb66c26 100644
 --- a/embed.h
 +++ b/embed.h
-@@ -1724,16 +1724,16 @@
+@@ -1796,16 +1796,16 @@
  #define unshare_hek_or_pvn(a,b,c,d)	S_unshare_hek_or_pvn(aTHX_ a,b,c,d)
  #  endif
  #  if defined(PERL_IN_LOCALE_C)
@@ -47,8 +43,6 @@ index cf3ad9e..fb66c26 100644
  #      if defined(USE_POSIX_2008_LOCALE)
  #define emulate_setlocale	S_emulate_setlocale
  #      endif
-diff --git a/locale.c b/locale.c
-index 7653340..f8f77fb 100644
 --- a/locale.c
 +++ b/locale.c
 @@ -1264,6 +1264,7 @@ S_locking_setlocale(pTHX_
@@ -59,7 +53,7 @@ index 7653340..f8f77fb 100644
  
  STATIC void
  S_set_numeric_radix(pTHX_ const bool use_locale)
-@@ -1299,6 +1300,10 @@ S_set_numeric_radix(pTHX_ const bool use_locale)
+@@ -1299,6 +1300,10 @@ S_set_numeric_radix(pTHX_ const bool use
      }
  
  #  endif
@@ -87,7 +81,7 @@ index 7653340..f8f77fb 100644
  #ifdef WIN32
  
  STATIC char *
-@@ -2139,11 +2145,20 @@ Perl_setlocale(const int category, const char * locale)
+@@ -2139,11 +2145,20 @@ Perl_setlocale(const int category, const
  {
      /* This wraps POSIX::setlocale() */
  
@@ -109,7 +103,7 @@ index 7653340..f8f77fb 100644
  
  #ifdef USE_LOCALE_NUMERIC
  
-@@ -2262,6 +2277,8 @@ Perl_setlocale(const int category, const char * locale)
+@@ -2262,6 +2277,8 @@ Perl_setlocale(const int category, const
  
      return retval;
  
@@ -118,7 +112,7 @@ index 7653340..f8f77fb 100644
  }
  
  PERL_STATIC_INLINE const char *
-@@ -2414,13 +2431,16 @@ S_my_nl_langinfo(const int item, bool toggle)
+@@ -2414,13 +2431,16 @@ S_my_nl_langinfo(const int item, bool to
      dTHX;
      const char * retval;
  
@@ -137,7 +131,7 @@ index 7653340..f8f77fb 100644
  
  #if defined(HAS_NL_LANGINFO) /* nl_langinfo() is available.  */
  #  if   ! defined(HAS_THREAD_SAFE_NL_LANGINFO_L)      \
-@@ -2468,6 +2488,8 @@ S_my_nl_langinfo(const int item, bool toggle)
+@@ -2468,6 +2488,8 @@ S_my_nl_langinfo(const int item, bool to
              do_free = TRUE;
          }
  
@@ -146,7 +140,7 @@ index 7653340..f8f77fb 100644
          if (toggle) {
              if (PL_underlying_numeric_obj) {
                  cur = PL_underlying_numeric_obj;
-@@ -2478,6 +2500,8 @@ S_my_nl_langinfo(const int item, bool toggle)
+@@ -2478,6 +2500,8 @@ S_my_nl_langinfo(const int item, bool to
              }
          }
  
@@ -176,7 +170,7 @@ index 7653340..f8f77fb 100644
  
      SAVEFREEPV(errstr);
      return errstr;
-@@ -5301,10 +5324,17 @@ L<C<Perl_switch_to_global_locale>|perlapi/switch_to_global_locale>.
+@@ -5301,10 +5324,17 @@ L<C<Perl_switch_to_global_locale>|perlap
  bool
  Perl_sync_locale()
  {
@@ -267,8 +261,6 @@ index 7653340..f8f77fb 100644
  }
  
  #if defined(DEBUGGING) && defined(USE_LOCALE)
-diff --git a/makedef.pl b/makedef.pl
-index dbd756d..661b71d 100644
 --- a/makedef.pl
 +++ b/makedef.pl
 @@ -574,6 +574,9 @@ unless ($define{USE_LOCALE_COLLATE}) {
@@ -291,11 +283,9 @@ index dbd756d..661b71d 100644
  			 );
  }
  
-diff --git a/perl.h b/perl.h
-index 3e1f6cd..d457776 100644
 --- a/perl.h
 +++ b/perl.h
-@@ -5657,6 +5657,9 @@ typedef struct am_table_short AMTS;
+@@ -5656,6 +5656,9 @@ typedef struct am_table_short AMTS;
  #  define IN_LC_COMPILETIME(category)      0
  #  define IN_LC_RUNTIME(category)          0
  #  define IN_LC(category)                  0
@@ -305,11 +295,9 @@ index 3e1f6cd..d457776 100644
  #endif
  
  
-diff --git a/proto.h b/proto.h
-index 3e027ab..558c33a 100644
 --- a/proto.h
 +++ b/proto.h
-@@ -4669,8 +4669,6 @@ PERL_CALLCONV SV*	Perl_hfree_next_entry(pTHX_ HV *hv, STRLEN *indexp);
+@@ -4886,8 +4886,6 @@ PERL_CALLCONV SV*	Perl_hfree_next_entry(
  	assert(hv); assert(indexp)
  #endif
  #if defined(PERL_IN_LOCALE_C)
@@ -318,7 +306,7 @@ index 3e027ab..558c33a 100644
  #ifndef PERL_NO_INLINE_FUNCTIONS
  PERL_STATIC_INLINE const char *	S_save_to_buffer(const char * string, char **buf, Size_t *buf_size, const Size_t offset)
  			__attribute__warn_unused_result__;
-@@ -4678,17 +4676,19 @@ PERL_STATIC_INLINE const char *	S_save_to_buffer(const char * string, char **buf
+@@ -4895,17 +4893,19 @@ PERL_STATIC_INLINE const char *	S_save_t
  	assert(buf_size)
  #endif
  
@@ -339,11 +327,9 @@ index 3e027ab..558c33a 100644
  #    if defined(USE_POSIX_2008_LOCALE)
  STATIC const char*	S_emulate_setlocale(const int category, const char* locale, unsigned int index, const bool is_index_valid);
  #    endif
-diff --git a/sv.c b/sv.c
-index 07865bb..81223ca 100644
 --- a/sv.c
 +++ b/sv.c
-@@ -13330,10 +13330,15 @@ Perl_sv_vcatpvfn_flags(pTHX_ SV *const sv, const char *const pat, const STRLEN p
+@@ -13330,10 +13330,15 @@ Perl_sv_vcatpvfn_flags(pTHX_ SV *const s
  
      SvTAINT(sv);
  
@@ -359,11 +345,9 @@ index 07865bb..81223ca 100644
  }
  
  /* =========================================================================
-diff --git a/t/lib/warnings/regexec b/t/lib/warnings/regexec
-index 900dd6e..b9e53c9 100644
 --- a/t/lib/warnings/regexec
 +++ b/t/lib/warnings/regexec
-@@ -215,6 +215,10 @@ Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at -
+@@ -215,6 +215,10 @@ Use of \b{} or \B{} for non-UTF-8 locale
  Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 17.
  ########
  # NAME (?[ ]) in non-UTF-8 locale
