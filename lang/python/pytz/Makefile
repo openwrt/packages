@@ -9,12 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pytz
 PKG_VERSION:=2018.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pytz
 PKG_HASH:=31cb35c89bd7d333cd32c5f278fca91b523b0834369e757f4c5641ea252236ca
+
+PKG_BUILD_DEPENDS:=python/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
