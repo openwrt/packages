@@ -8,21 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwebsockets
-PKG_VERSION:=3.0.1
-PKG_RELEASE:=2
+PKG_VERSION:=3.1.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://codeload.github.com/warmcat/libwebsockets/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=cb0cdd8d0954fcfd97a689077568f286cdbb44111883e0a85d29860449c47cbf
+PKG_HASH:=db948be74c78fc13f1f1a55e76707d7baae3a1c8f62b625f639e8f2736298324
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_SOURCE_SUBDIR)
-
+PKG_MAINTAINER:=Karl Palsson <karlp@etactica.com>
 PKG_LICENSE:=LGPL-2.1+exception
 PKG_LICENSE_FILES:=LICENSE
 
+PKG_BUILD_PARALLEL:=1
 CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -44,7 +42,6 @@ define Package/libwebsockets/Default
 	TITLE:=libwebsockets
 	DEPENDS:=+zlib +libcap
 	URL:=https://libwebsockets.org
-	MAINTAINER:=Karl Palsson <karlp@etactica.com>
 	PROVIDES:= libwebsockets
 endef
 

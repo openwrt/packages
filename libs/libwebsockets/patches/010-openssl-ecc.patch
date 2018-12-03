@@ -1,0 +1,47 @@
+From 4edd5cad508951b5fe0730c1c4b194b13bd54e0f Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Tue, 27 Nov 2018 13:25:05 -0800
+Subject: [PATCH] OpenSSL: fix ECC support build-time check
+
+With at least OpenSSL 1.1.0, checking the header is not enough. OpenSSL
+does provide a way to check it directly though.
+
+Fixes compilation without ECC support.
+---
+ lib/tls/openssl/openssl-server.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/lib/tls/openssl/openssl-server.c b/lib/tls/openssl/openssl-server.c
+index 4def4dd3..87af0607 100644
+--- a/lib/tls/openssl/openssl-server.c
++++ b/lib/tls/openssl/openssl-server.c
+@@ -147,7 +147,7 @@ lws_tls_server_certs_load(struct lws_vhost *vhost, struct lws *wsi,
+ 			  const char *mem_cert, size_t len_mem_cert,
+ 			  const char *mem_privkey, size_t mem_privkey_len)
+ {
+-#if defined(LWS_HAVE_OPENSSL_ECDH_H)
++#if !defined(OPENSSL_NO_EC)
+ 	const char *ecdh_curve = "prime256v1";
+ #if !defined(LWS_WITH_BORINGSSL) && defined(LWS_HAVE_SSL_EXTRA_CHAIN_CERTS)
+ 	STACK_OF(X509) *extra_certs = NULL;
+@@ -263,7 +263,7 @@ check_key:
+ 		return 1;
+ 	}
+ 
+-#if defined(LWS_HAVE_OPENSSL_ECDH_H)
++#if !defined(OPENSSL_NO_EC)
+ 	if (vhost->tls.ecdh_curve[0])
+ 		ecdh_curve = vhost->tls.ecdh_curve;
+ 
+@@ -333,7 +333,7 @@ check_key:
+ #else
+ 	lwsl_notice(" OpenSSL doesn't support ECDH\n");
+ #endif
+-#if defined(LWS_HAVE_OPENSSL_ECDH_H) && !defined(LWS_WITH_BORINGSSL)
++#if !defined(OPENSSL_NO_EC) && !defined(LWS_WITH_BORINGSSL)
+ post_ecdh:
+ #endif
+ 	vhost->tls.skipped_certs = 0;
+-- 
+2.19.2
+
