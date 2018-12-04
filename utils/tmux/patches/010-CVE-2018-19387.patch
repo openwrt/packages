@@ -1,0 +1,141 @@
+From 749f67b7d801eed03345fef9c04206fbd079c3cb Mon Sep 17 00:00:00 2001
+From: nicm <nicm>
+Date: Mon, 19 Nov 2018 13:35:40 +0000
+Subject: [PATCH] evbuffer_new and bufferevent_new can both fail (when malloc
+ fails) and return NULL. GitHub issue 1547.
+
+---
+ cmd-pipe-pane.c  | 2 ++
+ control-notify.c | 2 ++
+ format.c         | 4 ++++
+ input.c          | 2 ++
+ job.c            | 2 ++
+ server-client.c  | 6 ++++++
+ tty.c            | 4 ++++
+ window.c         | 2 ++
+ 8 files changed, 24 insertions(+)
+
+diff --git a/cmd-pipe-pane.c b/cmd-pipe-pane.c
+index 199dd5754..4650959ce 100644
+--- a/cmd-pipe-pane.c
++++ b/cmd-pipe-pane.c
+@@ -166,6 +166,8 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmdq_item *item)
+ 		    cmd_pipe_pane_write_callback,
+ 		    cmd_pipe_pane_error_callback,
+ 		    wp);
++		if (wp->pipe_event == NULL)
++			fatalx("out of memory");
+ 		if (out)
+ 			bufferevent_enable(wp->pipe_event, EV_WRITE);
+ 		if (in)
+diff --git a/control-notify.c b/control-notify.c
+index 492914830..7b28e8f0a 100644
+--- a/control-notify.c
++++ b/control-notify.c
+@@ -47,6 +47,8 @@ control_notify_input(struct client *c, struct window_pane *wp,
+ 	 */
+ 	if (winlink_find_by_window(&c->session->windows, wp->window) != NULL) {
+ 		message = evbuffer_new();
++		if (message == NULL)
++			fatalx("out of memory");
+ 		evbuffer_add_printf(message, "%%output %%%u ", wp->id);
+ 		for (i = 0; i < len; i++) {
+ 			if (buf[i] < ' ' || buf[i] == '\\')
+diff --git a/format.c b/format.c
+index 213654579..77f5f59d9 100644
+--- a/format.c
++++ b/format.c
+@@ -573,6 +573,8 @@ format_cb_pane_tabs(struct format_tree *ft, struct format_entry *fe)
+ 		return;
+ 
+ 	buffer = evbuffer_new();
++	if (buffer == NULL)
++		fatalx("out of memory");
+ 	for (i = 0; i < wp->base.grid->sx; i++) {
+ 		if (!bit_test(wp->base.tabs, i))
+ 			continue;
+@@ -603,6 +605,8 @@ format_cb_session_group_list(struct format_tree *ft, struct format_entry *fe)
+ 		return;
+ 
+ 	buffer = evbuffer_new();
++	if (buffer == NULL)
++		fatalx("out of memory");
+ 	TAILQ_FOREACH(loop, &sg->sessions, gentry) {
+ 		if (EVBUFFER_LENGTH(buffer) > 0)
+ 			evbuffer_add(buffer, ",", 1);
+diff --git a/input.c b/input.c
+index 41cdfb70f..d9f419fe2 100644
+--- a/input.c
++++ b/input.c
+@@ -767,6 +767,8 @@ input_init(struct window_pane *wp)
+ 	ictx->input_buf = xmalloc(INPUT_BUF_START);
+ 
+ 	ictx->since_ground = evbuffer_new();
++	if (ictx->since_ground == NULL)
++		fatalx("out of memory");
+ 
+ 	evtimer_set(&ictx->timer, input_timer_callback, ictx);
+ 
+diff --git a/job.c b/job.c
+index 66315bd2c..73f62359f 100644
+--- a/job.c
++++ b/job.c
+@@ -155,6 +155,8 @@ job_run(const char *cmd, struct session *s, const char *cwd,
+ 
+ 	job->event = bufferevent_new(job->fd, job_read_callback,
+ 	    job_write_callback, job_error_callback, job);
++	if (job->event == NULL)
++		fatalx("out of memory");
+ 	bufferevent_enable(job->event, EV_READ|EV_WRITE);
+ 
+ 	log_debug("run job %p: %s, pid %ld", job, job->cmd, (long) job->pid);
+diff --git a/server-client.c b/server-client.c
+index 3d939163b..94cc9e925 100644
+--- a/server-client.c
++++ b/server-client.c
+@@ -186,8 +186,14 @@ server_client_create(int fd)
+ 	TAILQ_INIT(&c->queue);
+ 
+ 	c->stdin_data = evbuffer_new();
++	if (c->stdin_data == NULL)
++		fatalx("out of memory");
+ 	c->stdout_data = evbuffer_new();
++	if (c->stdout_data == NULL)
++		fatalx("out of memory");
+ 	c->stderr_data = evbuffer_new();
++	if (c->stderr_data == NULL)
++		fatalx("out of memory");
+ 
+ 	c->tty.fd = -1;
+ 	c->title = NULL;
+diff --git a/tty.c b/tty.c
+index 6b63aa3bd..df47c9726 100644
+--- a/tty.c
++++ b/tty.c
+@@ -258,9 +258,13 @@ tty_open(struct tty *tty, char **cause)
+ 	event_set(&tty->event_in, tty->fd, EV_PERSIST|EV_READ,
+ 	    tty_read_callback, tty);
+ 	tty->in = evbuffer_new();
++	if (tty->in == NULL)
++		fatal("out of memory");
+ 
+ 	event_set(&tty->event_out, tty->fd, EV_WRITE, tty_write_callback, tty);
+ 	tty->out = evbuffer_new();
++	if (tty->out == NULL)
++		fatal("out of memory");
+ 
+ 	evtimer_set(&tty->timer, tty_timer_callback, tty);
+ 
+diff --git a/window.c b/window.c
+index 6e76b480d..530d95743 100644
+--- a/window.c
++++ b/window.c
+@@ -997,6 +997,8 @@ window_pane_spawn(struct window_pane *wp, int argc, char **argv,
+ 
+ 	wp->event = bufferevent_new(wp->fd, window_pane_read_callback, NULL,
+ 	    window_pane_error_callback, wp);
++	if (wp->event == NULL)
++		fatalx("out of memory");
+ 
+ 	bufferevent_setwatermark(wp->event, EV_READ, 0, READ_SIZE);
+ 	bufferevent_enable(wp->event, EV_READ|EV_WRITE);
