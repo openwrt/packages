@@ -48,7 +48,8 @@ CONFIGURE_ARGS+= \
 	--without-bktr
 
 define Package/motion/install
-	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/motion.init $(1)/etc/init.d/motion
 	$(CP) $(PKG_BUILD_DIR)/motion-dist.conf $(1)/etc/motion.conf
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/motion $(1)/usr/bin/
