@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=motion
 PKG_VERSION:=4.2.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 PKG_LICENSE:=GPLv2
@@ -35,6 +35,7 @@ define Package/motion
 endef
 
 define Package/motion/conffiles
+/etc/config/motion
 /etc/motion.conf
 endef
 
@@ -50,7 +51,9 @@ CONFIGURE_ARGS+= \
 	--without-webp
 
 define Package/motion/install
-	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
+	$(INSTALL_CONF) ./files/motion.conf $(1)/etc/config/motion
+	$(INSTALL_BIN) ./files/motion.init $(1)/etc/init.d/motion
 	$(CP) $(PKG_BUILD_DIR)/motion-dist.conf $(1)/etc/motion.conf
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/motion $(1)/usr/bin/
