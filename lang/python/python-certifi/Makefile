@@ -8,26 +8,39 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-certifi
-PKG_VERSION:=2018.10.15
+PKG_VERSION:=2018.11.29
 PKG_RELEASE:=1
 PKG_LICENSE:=MPL-2.0
 
 PKG_SOURCE:=certifi-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/c/certifi
-PKG_HASH:=6d58c986d22b038c8c0df30d639f23a3e6d172a05c3583e766f4c0b785c0986a
-PKG_BUILD_DIR:=$(BUILD_DIR)/certifi-$(PKG_VERSION)
+PKG_HASH:=47f9c83ef4c0c621eaef743f133f09fa8a74a9b75f037e8624f83bd1b6626cb7
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-certifi-$(PKG_VERSION)
+PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
+include ../python3-package.mk
 
-define Package/python-certifi
+define Package/python-certifi/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
   TITLE:=Python package for providing Mozilla's CA Bundle.
   URL:=http://certifi.io/
-  DEPENDS:=+python
+endef
+
+define Package/python-certifi
+  $(call Package/python-certifi/Default)
+  DEPENDS:=+PACKAGE_python-certifi:python-light
+  VARIANT:=python
+endef
+
+define Package/python3-certifi
+  $(call Package/python-certifi/Default)
+  DEPENDS:=+PACKAGE_python3-certifi:python3-light
+  VARIANT:=python3
 endef
 
 define Package/python-certifi/description
@@ -35,15 +48,16 @@ define Package/python-certifi/description
   trustworthiness of SSL certificates while verifying the identity of TLS hosts.
 endef
 
-define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
+define Package/python3-certifi/description
+$(call Package/python-certifi/description)
+.
+(Variant for Python3)
 endef
 
-define Package/python-certifi/install
-	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
-	$(CP) \
-	    $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
-	    $(1)$(PYTHON_PKG_DIR)
-endef
-
+$(eval $(call PyPackage,python-certifi))
 $(eval $(call BuildPackage,python-certifi))
+$(eval $(call BuildPackage,python-certifi-src))
+
+$(eval $(call Py3Package,python3-certifi))
+$(eval $(call BuildPackage,python3-certifi))
+$(eval $(call BuildPackage,python3-certifi-src))
