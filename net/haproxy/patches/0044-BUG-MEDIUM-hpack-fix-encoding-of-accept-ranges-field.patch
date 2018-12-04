@@ -1,0 +1,32 @@
+commit 64a7cbf4ea3276b72ffb121acab676542cebde1b
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Tue Nov 20 04:47:38 2018 +0100
+
+    BUG/MEDIUM: hpack: fix encoding of "accept-ranges" field
+    
+    James Brown reported that when an "accept-ranges" header field is sent
+    through haproxy and converted from HTTP/1.1 to H2, it's mis-encoded as
+    "accept-language". It happens that it's one of the few very common header
+    fields encoded using its index value and that this index value was misread
+    in the spec as 17 instead of 18, resulting in the wrong name being sent.
+    Thanks to Lukas for spotting the issue in the HPACK encoder itself.
+    
+    This fix must be backported to 1.8.
+    
+    (cherry picked from commit 4bf194cbdbcda8ec4ce83d7f12d2fe9b08483c94)
+    [wla: buffer API edit]
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+
+diff --git a/src/hpack-enc.c b/src/hpack-enc.c
+index d1f68c58..99c73103 100644
+--- a/src/hpack-enc.c
++++ b/src/hpack-enc.c
+@@ -101,7 +101,7 @@ int hpack_encode_header(struct chunk *out, const struct ist n, const struct ist
+ 	else if (isteq(n, ist("last-modified")))
+ 		out->str[len++] = 0x6c; // literal with indexing -- name="last-modified" (idx 44)
+ 	else if (isteq(n, ist("accept-ranges")))
+-		out->str[len++] = 0x51; // literal with indexing -- name="accept-ranges" (idx 17)
++		out->str[len++] = 0x52; // literal with indexing -- name="accept-ranges" (idx 18)
+ 	else if (isteq(n, ist("cache-control")))
+ 		out->str[len++] = 0x58; // literal with indexing -- name="cache-control" (idx 24)
+ 	else if (isteq(n, ist("content-length")))

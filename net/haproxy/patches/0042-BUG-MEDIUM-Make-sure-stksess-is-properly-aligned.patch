@@ -1,0 +1,61 @@
+commit 5b259db1160fa12820cc5ba6399e4dbcefa6ab22
+Author: Olivier Houchard <ohouchard@haproxy.com>
+Date:   Wed Nov 14 17:54:36 2018 +0100
+
+    BUG/MEDIUM: Make sure stksess is properly aligned.
+    
+    When we allocate struct stksess, we also allocate memory to store the
+    associated data before the struct itself.
+    As the data can be of different types, they can have different size. However,
+    we need the struct stksess to be properly aligned, as it can do 64bits
+    load/store (including atomic load/stores) on 64bits platforms, and some of
+    them doesn't support unaligned access.
+    So, when allocating the struct stksess, round the size up to the next
+    multiple of sizeof(void *), and make sure the struct stksess itself is
+    properly aligned.
+    Many thanks to Paul Martin for investigating and reporting that bug.
+    
+    This should be backported to earlier releases.
+    
+    (cherry picked from commit 52dabbc4fad338233c7f0c96f977a43f8f81452a)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+
+diff --git a/src/stick_table.c b/src/stick_table.c
+index f1442603..0a238378 100644
+--- a/src/stick_table.c
++++ b/src/stick_table.c
+@@ -44,6 +44,7 @@
+ /* structure used to return a table key built from a sample */
+ static THREAD_LOCAL struct stktable_key static_table_key;
+ 
++#define round_ptr_size(i) (((i) + (sizeof(void *) - 1)) &~ (sizeof(void *) - 1))
+ /*
+  * Free an allocated sticky session <ts>, and decrease sticky sessions counter
+  * in table <t>.
+@@ -51,7 +52,7 @@ static THREAD_LOCAL struct stktable_key static_table_key;
+ void __stksess_free(struct stktable *t, struct stksess *ts)
+ {
+ 	t->current--;
+-	pool_free(t->pool, (void *)ts - t->data_size);
++	pool_free(t->pool, (void *)ts - round_ptr_size(t->data_size));
+ }
+ 
+ /*
+@@ -229,7 +230,7 @@ struct stksess *__stksess_new(struct stktable *t, struct stktable_key *key)
+ 	ts = pool_alloc(t->pool);
+ 	if (ts) {
+ 		t->current++;
+-		ts = (void *)ts + t->data_size;
++		ts = (void *)ts + round_ptr_size(t->data_size);
+ 		__stksess_init(t, ts);
+ 		if (key)
+ 			stksess_setkey(t, ts, key);
+@@ -597,7 +598,7 @@ int stktable_init(struct stktable *t)
+ 		t->updates = EB_ROOT_UNIQUE;
+ 		HA_SPIN_INIT(&t->lock);
+ 
+-		t->pool = create_pool("sticktables", sizeof(struct stksess) + t->data_size + t->key_size, MEM_F_SHARED);
++		t->pool = create_pool("sticktables", sizeof(struct stksess) + round_ptr_size(t->data_size) + t->key_size, MEM_F_SHARED);
+ 
+ 		t->exp_next = TICK_ETERNITY;
+ 		if ( t->expire ) {
