@@ -1,8 +1,6 @@
-Index: perl-5.26.1/perl.c
-===================================================================
---- perl-5.26.1.orig/perl.c
-+++ perl-5.26.1/perl.c
-@@ -1878,16 +1878,6 @@ S_Internals_V(pTHX_ CV *cv)
+--- a/perl.c
++++ b/perl.c
+@@ -1987,16 +1987,6 @@ S_Internals_V(pTHX_ CV *cv)
      PUSHs(Perl_newSVpvn_flags(aTHX_ non_bincompat_options,
  			      sizeof(non_bincompat_options) - 1, SVs_TEMP));
  

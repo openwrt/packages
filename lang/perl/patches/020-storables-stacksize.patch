@@ -8,8 +8,6 @@ Subject: (perl #133411) don't try to load Storable with -Dusecrosscompile
  dist/Storable/stacksize   | 10 +++++++---
  2 files changed, 15 insertions(+), 4 deletions(-)
 
-diff --git a/dist/Storable/Makefile.PL b/dist/Storable/Makefile.PL
-index a5d9e66891..db420ab30b 100644
 --- a/dist/Storable/Makefile.PL
 +++ b/dist/Storable/Makefile.PL
 @@ -90,12 +90,19 @@ sub depend {
@@ -33,8 +31,6 @@ index a5d9e66891..db420ab30b 100644
  
  release : dist
  	git tag \$(VERSION)
-diff --git a/dist/Storable/stacksize b/dist/Storable/stacksize
-index 7abd3a84cc..14e0739734 100644
 --- a/dist/Storable/stacksize
 +++ b/dist/Storable/stacksize
 @@ -7,6 +7,9 @@ use Cwd;
@@ -68,6 +64,3 @@ index 7abd3a84cc..14e0739734 100644
  if ($^O eq "MSWin32") {
      require Win32;
      my ($str, $major, $minor) = Win32::GetOSVersion();
--- 
-2.11.0
-
