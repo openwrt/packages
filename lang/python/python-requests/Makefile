@@ -30,21 +30,13 @@ define Package/python-requests
   TITLE:=HTTP library for Python
   URL:=http://python-requests.org/
   DEPENDS:=+python +chardet +python-idna +python-urllib3 +python-certifi
+  VARIANT:=python
 endef
 
 define Package/python-requests/description
   Requests is the only Non-GMO HTTP library for Python, safe for human consumption.
 endef
 
-define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
-endef
-
-define Package/python-requests/install
-	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
-	$(CP) \
-	    $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
-	    $(1)$(PYTHON_PKG_DIR)
-endef
-
+$(eval $(call PyPackage,python-requests))
 $(eval $(call BuildPackage,python-requests))
+$(eval $(call BuildPackage,python-requests-src))
