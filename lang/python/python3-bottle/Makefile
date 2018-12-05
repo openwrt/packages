@@ -30,6 +30,7 @@ define Package/python3-bottle
 	TITLE:=Bottle is a fast, simple and lightweight WSGI micro web-framework for Python
 	URL:=https://bottlepy.org
 	DEPENDS:=+python3
+	VARIANT:=python3
 endef
 
 define Package/python3-bottle/description
@@ -38,15 +39,6 @@ define Package/python3-bottle/description
  Python Standard Library.
 endef
 
-define Build/Configure
-endef
-
-define Build/Compile
-endef
-
-define Package/python3-bottle/install
-	$(INSTALL_DIR) $(1)$(PYTHON3_PKG_DIR)
-	$(CP) $(PKG_BUILD_DIR)/bottle.py $(1)$(PYTHON3_PKG_DIR)
-endef
-
+$(eval $(call Py3Package,python3-bottle))
 $(eval $(call BuildPackage,python3-bottle))
+$(eval $(call BuildPackage,python3-bottle-src))
