@@ -1,5 +1,5 @@
-diff --git a/daemon/daemon.c b/daemon/daemon.c
-index 4c3d5f1..50f5060 100644
+Index: daemon/daemon.c
+===================================================================
 --- a/daemon/daemon.c
 +++ b/daemon/daemon.c
 @@ -769,7 +769,7 @@ daemon_delete(struct daemon* daemon)
@@ -11,8 +11,8 @@ index 4c3d5f1..50f5060 100644
  	ENGINE_cleanup();
  #  endif
  	CONF_modules_free();
-diff --git a/util/net_help.c b/util/net_help.c
-index 91368c8..a932010 100644
+Index: util/net_help.c
+===================================================================
 --- a/util/net_help.c
 +++ b/util/net_help.c
 @@ -1006,10 +1006,10 @@ void* outgoing_ssl_fd(void* sslctx, int fd)
