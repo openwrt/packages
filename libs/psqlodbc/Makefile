@@ -6,8 +6,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=psqlodbc
 PKG_RELEASE:=1
-PKG_VERSION:=09.06.0310
-PKG_HASH:=6c42078af094d61baca2c8bd1dc4d137a77377198ef94e4eda5989bdce3474c3
+PKG_VERSION:=10.03.0000
+PKG_HASH:=0d2ff2d10d9347ef6ce83c7ca24f4cb20b4044eeef9638c8ae3bc8107e9e92f8
 
 PKG_SOURCE_URL:=https://ftp.postgresql.org/pub/odbc/versions/src/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -21,7 +21,7 @@ PKG_BUILD_DEPENDS:=unixodbc/host
 include $(INCLUDE_DIR)/package.mk
 
 CONFIGURE_ARGS += \
-	--with-unixodbc=$(STAGING_DIR)/usr \
+	--with-unixodbc=$(STAGING_DIR_HOST)/bin/odbc_config \
 	--with-libpq=$(STAGING_DIR)/usr
 
 define Package/psqlodbc/Default
