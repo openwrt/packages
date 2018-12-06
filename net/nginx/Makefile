@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.15.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
@@ -444,6 +444,7 @@ ifeq ($(CONFIG_NGINX_RTMP_MODULE),y)
   define  Prepare/nginx-rtmp
 	$(eval $(Download/nginx-rtmp))
 	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+	$(call PatchDir,$(PKG_BUILD_DIR)/nginx-rtmp,./patches-nginx-rtmp)
   endef
 endif
 
