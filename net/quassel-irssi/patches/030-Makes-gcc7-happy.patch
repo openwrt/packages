@@ -1,0 +1,64 @@
+From ab0dc71822b3e769b4be2a990bc6c87347016cfd Mon Sep 17 00:00:00 2001
+From: Pierre-Hugues Husson <phh@archos.com>
+Date: Tue, 12 Sep 2017 17:42:46 +0200
+Subject: [PATCH] Makes gcc7 happy
+
+---
+ core/quasselc-connector.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/core/quasselc-connector.c b/core/quasselc-connector.c
+index 77e8d7a..d28fa5e 100644
+--- a/core/quasselc-connector.c
++++ b/core/quasselc-connector.c
+@@ -145,6 +145,7 @@ void handle_sync(void* irssi_arg, object_t o, function_t f, ...) {
+ 			highlight=0;
+ 			if(!fnc)
+ 				fnc="MarkBufferAsRead";
++		/* Falls through */
+ 		case Displayed:
+ 			if(!fnc)
+ 				fnc="BufferDisplayed";
+@@ -155,6 +156,7 @@ void handle_sync(void* irssi_arg, object_t o, function_t f, ...) {
+ 		case Removed:
+ 			if(!fnc)
+ 				fnc="BufferRemoved";
++		/* Falls through */
+ 		case TempRemoved:
+ 			if(!fnc)
+ 				fnc="BufferTempRemoved";
+@@ -210,6 +212,7 @@ void handle_sync(void* irssi_arg, object_t o, function_t f, ...) {
+ 		case AddUserMode:
+ 			if(!fnc)
+ 				fnc="AddUserMode";
++		/* Falls through */
+ 		case RemoveUserMode:
+ 			if(!fnc)
+ 				fnc="RemoveUserMode";
+@@ -223,6 +226,7 @@ void handle_sync(void* irssi_arg, object_t o, function_t f, ...) {
+ 		case SetNick2:
+ 			if(!fnc)
+ 				fnc="SetNick";
++		/* Falls through */
+ 		case Quit:
+ 			if(!fnc)
+ 				fnc="Quit";
+@@ -233,12 +237,15 @@ void handle_sync(void* irssi_arg, object_t o, function_t f, ...) {
+ 		case SetNick:
+ 			if(!fnc)
+ 				fnc="SetNick";
++		/* Falls through */
+ 		case SetServer:
+ 			if(!fnc)
+ 				fnc="SetServer";
++		/* Falls through */
+ 		case SetRealName:
+ 			if(!fnc)
+ 				fnc="SetRealName";
++		/* Falls through */
+ 		case PartChannel:
+ 			if(!fnc)
+ 				fnc="PartChannel";
+-- 
+2.19.1
+
