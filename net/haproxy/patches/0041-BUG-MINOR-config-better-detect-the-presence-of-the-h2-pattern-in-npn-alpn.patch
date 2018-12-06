@@ -1,0 +1,43 @@
+commit c990c7fe448248c4e2a34b84b593cc1b3536b328
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Sun Nov 11 10:36:25 2018 +0100
+
+    BUG/MINOR: config: better detect the presence of the h2 pattern in npn/alpn
+    
+    In 1.8, commit 45a66cc ("MEDIUM: config: ensure that tune.bufsize is at
+    least 16384 when using HTTP/2") tried to avoid an annoying issue making
+    H2 fail when haproxy is built with default buffer sizes smaller than 16kB,
+    which used to be the case for a very long time. Sadly, the test only sees
+    when NPN/ALPN exactly match "h2" and not when it's combined like
+    "h2,http/1.1" nor "http/1.1,h2". We can safely use strstr() there because
+    the string is prefixed by the token's length (0x02) which is unambiguous
+    as it cannot be part of any other token.
+    
+    This fix should be backported to 1.8 as a safety guard against bad
+    configurations.
+    
+    (cherry picked from commit 4db49c0704898e51892a176505299de3e022c5ea)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+
+diff --git a/src/cfgparse.c b/src/cfgparse.c
+index 87a4d803..618ffd39 100644
+--- a/src/cfgparse.c
++++ b/src/cfgparse.c
+@@ -7629,7 +7629,7 @@ int check_config_validity()
+ 			if (curproxy->mode == PR_MODE_HTTP && global.tune.bufsize < 16384) {
+ #ifdef OPENSSL_NPN_NEGOTIATED
+ 				/* check NPN */
+-				if (bind_conf->ssl_conf.npn_str && strcmp(bind_conf->ssl_conf.npn_str, "\002h2") == 0) {
++				if (bind_conf->ssl_conf.npn_str && strstr(bind_conf->ssl_conf.npn_str, "\002h2")) {
+ 					ha_alert("config : HTTP frontend '%s' enables HTTP/2 via NPN at [%s:%d], so global.tune.bufsize must be at least 16384 bytes (%d now).\n",
+ 						 curproxy->id, bind_conf->file, bind_conf->line, global.tune.bufsize);
+ 					cfgerr++;
+@@ -7637,7 +7637,7 @@ int check_config_validity()
+ #endif
+ #ifdef TLSEXT_TYPE_application_layer_protocol_negotiation
+ 				/* check ALPN */
+-				if (bind_conf->ssl_conf.alpn_str && strcmp(bind_conf->ssl_conf.alpn_str, "\002h2") == 0) {
++				if (bind_conf->ssl_conf.alpn_str && strstr(bind_conf->ssl_conf.alpn_str, "\002h2")) {
+ 					ha_alert("config : HTTP frontend '%s' enables HTTP/2 via ALPN at [%s:%d], so global.tune.bufsize must be at least 16384 bytes (%d now).\n",
+ 						 curproxy->id, bind_conf->file, bind_conf->line, global.tune.bufsize);
+ 					cfgerr++;
