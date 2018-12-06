@@ -32,6 +32,7 @@ if [ -x /bin/sysrepoctl ]; then
 		sysrepoctl -m ietf-netconf-server -e call-home
 		sysrepoctl -m ietf-netconf-server -e ssh-call-home
 		sysrepoctl -m ietf-netconf-server -e tls-call-home
+		sysrepoctl -m ietf-netconf -e url
 		if [ -x /bin/sysrepocfg ]; then
 			sysrepocfg -f xml -d startup -i /usr/share/netopeer2-server/stock_config.xml ietf-netconf-server
 			rm /usr/share/netopeer2-server/stock_config.xml
