@@ -210,7 +210,7 @@ build_global_driver_config() {
 	get_write_driver_config "$cfg" maxretry
 	get_write_driver_config "$cfg" retrydelay
 	get_write_driver_config "$cfg" pollinterval
-	get_write_dirver_config "$cfg" synchronous
+	get_write_driver_config "$cfg" synchronous
 	config_get runas "$cfg" user "nut"
 	RUNAS="$runas"
 
