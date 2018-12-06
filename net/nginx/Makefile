@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.15.6
-PKG_RELEASE:=3
+PKG_VERSION:=1.15.7
+PKG_RELEASE:=1
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
-PKG_HASH:=a3d8c67c2035808c7c0d475fffe263db8c353b11521aa7ade468b780ed826cc6
+PKG_HASH:=8f22ea2f6c0e0a221b6ddc02b6428a3ff708e2ad55f9361102b1c9f4142bdf93
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Ansuel Smith <ansuelsmth@gmail.com>
@@ -66,6 +66,7 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_HTTP_SECURE_LINK \
 	CONFIG_NGINX_HTTP_BROTLI \
 	CONFIG_NGINX_HEADERS_MORE \
+	CONFIG_NGINX_STREAM_CORE_MODULE \
 	CONFIG_NGINX_RTMP_MODULE \
 	CONFIG_NGINX_TS_MODULE \
 
@@ -264,6 +265,9 @@ ifneq ($(BUILD_VARIANT),all-module)
   ifeq ($(CONFIG_NGINX_HTTP_SUB),y)
 	ADDITIONAL_MODULES += --with-http_sub_module
   endif
+  ifeq ($(CONFIG_NGINX_STREAM_CORE_MODULE),y)
+    ADDITIONAL_MODULES += --with-stream
+  endif
   ifeq ($(CONFIG_NGINX_HEADERS_MORE),y)
     ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/nginx-headers-more
   endif
@@ -289,6 +293,7 @@ else
 	--with-http_dav_module --add-module=$(PKG_BUILD_DIR)/nginx-dav-ext-module \
 	--with-http_auth_request_module --with-http_v2_module --with-http_realip_module \
 	--with-http_secure_link_module --with-http_sub_module --add-module=$(PKG_BUILD_DIR)/nginx-headers-more \
+	--with-stream \
 	--add-module=$(PKG_BUILD_DIR)/nginx-brotli --add-module=$(PKG_BUILD_DIR)/nginx-rtmp \
 	--add-module=$(PKG_BUILD_DIR)/nginx-ts
   config_files += koi-utf koi-win win-utf fastcgi_params 
@@ -432,11 +437,11 @@ endif
 
 ifeq ($(CONFIG_NGINX_RTMP_MODULE),y)
   define Download/nginx-rtmp
-    VERSION:=c0e7c000ed860ef547a59ecf31f775db63f92b56
+    VERSION:=f0ea62342a4eca504b311cd5df910d026c3ea4cf
     SUBDIR:=nginx-rtmp
     FILE:=ngx-rtmp-module-$(PKG_VERSION)-$$(VERSION).tar.gz
     URL:=https://github.com/ut0mt8/nginx-rtmp-module.git
-    MIRROR_HASH:=ceb8264d920f3ce2fe96af97af824d6800095e3b3ff00e61f088bef9873f421e
+    MIRROR_HASH:=9ba7625718d21f658c4878729271832a07bd989165f1d1c720b3a9b54cf738cc
     PROTO:=git
   endef
   $(eval $(call Download,nginx-rtmp))
@@ -444,7 +449,6 @@ ifeq ($(CONFIG_NGINX_RTMP_MODULE),y)
   define  Prepare/nginx-rtmp
 	$(eval $(Download/nginx-rtmp))
 	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
-	$(call PatchDir,$(PKG_BUILD_DIR)/nginx-rtmp,./patches-nginx-rtmp)
   endef
 endif
 
