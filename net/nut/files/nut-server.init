@@ -38,6 +38,16 @@ upsd_statepath() {
 	STATEPATH="$statepath"
 }
 
+upsd_runas() {
+	local cfg="$1"
+	local runas
+
+	[ -n "$RUNAS" ] && return
+
+	config_get runas "$cfg" runas "nut"
+	RUNAS="$runas"
+}
+
 listen_address() {
     local cfg="$1"
 
@@ -213,6 +223,7 @@ build_global_driver_config() {
 	get_write_driver_config "$cfg" synchronous
 	config_get runas "$cfg" user "nut"
 	RUNAS="$runas"
+	upsd_runas
 
 	echo "" >>$UPS_C
 }
