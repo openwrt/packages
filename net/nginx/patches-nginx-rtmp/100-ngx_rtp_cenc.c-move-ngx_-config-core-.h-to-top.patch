@@ -1,0 +1,26 @@
+From df4113fb4d9177c7cfb0639b5e92b1fadfd4c174 Mon Sep 17 00:00:00 2001
+From: Eneas U de Queiroz <cote2004-github@yahoo.com>
+Date: Thu, 6 Dec 2018 15:54:23 -0200
+Subject: [PATCH] ngx_rtp_cenc.c: move ngx_{config,core}.h to top
+
+Fixes compilation error: unknown type name 'cpu_set_t'
+
+Signed-off-by: Eneas U de Queiroz <cote2004-github@yahoo.com>
+
+diff --git a/dash/ngx_rtmp_cenc.c b/dash/ngx_rtmp_cenc.c
+index f0b81e7..e4af2b1 100644
+--- a/dash/ngx_rtmp_cenc.c
++++ b/dash/ngx_rtmp_cenc.c
+@@ -1,10 +1,10 @@
+ 
+ 
++#include <ngx_config.h>
++#include <ngx_core.h>
+ #include <openssl/aes.h>
+ #include <openssl/rand.h>
+ #include <openssl/evp.h>
+-#include <ngx_config.h>
+-#include <ngx_core.h>
+ #include <ngx_rtmp.h>
+ #include "ngx_rtmp_cenc.h"
+ 
