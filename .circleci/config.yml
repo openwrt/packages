@@ -2,7 +2,7 @@ version: 2.0
 jobs:
   build:
     docker:
-      - image: docker.io/champtar/openwrtpackagesci@sha256:96ef72edc70cba371ea5676fba15ee25b3a94f538f648a27454b699edce61da0
+      - image: docker.io/openwrtorg/packages-cci:v1.0.1
     environment:
       - SDK_BASE_URL: "https://downloads.openwrt.org/snapshots/targets/ar71xx/generic"
       - SDK_FILE: "openwrt-sdk-ar71xx-generic_gcc-7.3.0_musl.Linux-x86_64.tar.xz"
@@ -89,6 +89,7 @@ jobs:
           name: Download source/check/compile
           working_directory: ~/build_dir
           command: |
+             set +o pipefail
              PKGS=$(cd ~/openwrt_packages; git diff --diff-filter=d --name-only "origin/$BRANCH..." | grep 'Makefile$' | grep -v '/files/' | awk -F/ '{ print $(NF-1) }')
              if [ -z "$PKGS" ] ; then
                  echo_blue "WARNING: No new or modified packages found!"
