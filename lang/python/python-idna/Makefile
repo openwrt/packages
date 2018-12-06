@@ -8,18 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-idna
-PKG_VERSION:=2.7
+PKG_VERSION:=2.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=idna-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.io/packages/source/i/idna
-PKG_HASH:=684a38a6f903c1d71d6d5fac066b58d7768af4de2b832e426ec79c30daa94a16
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/i/idna
+PKG_HASH:=c357b3f628cf53ae2c4c05627ecc484553142ca23264e593d327bcde5e9c3407
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-idna-$(PKG_VERSION)
 
+PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.rst
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-idna-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
