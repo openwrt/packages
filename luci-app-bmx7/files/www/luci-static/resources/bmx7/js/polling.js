@@ -41,35 +41,41 @@
 	In the code st is the data obtained from the json call
 */
 
-function TablePooler (time, jsonurl, getparams, table_id, callback) {
-	this.table = document.getElementById(table_id);
+function TablePooler (time, jsonurl, getparams, div_id, callback) {
+	this.div_id = div_id;
+	this.div = document.getElementById(div_id);
 	this.callback = callback;
 	this.jsonurl = jsonurl;
 	this.getparams = getparams;
 	this.time = time;
 
-	/* clear all rows */
-	this.clear = function(){
-		while( this.table.rows.length > 1 ) this.table.deleteRow(1);
-	}
-
 	this.start = function(){
 		XHR.poll(this.time, this.jsonurl, this.getparams, function(x, st){
 			var data = this.callback(st);
-			var content, tr, td;
-			this.clear();
+			var content;
 			for (var i = 0; i < data.length; i++){
-				tr = this.table.insertRow(-1);
-				tr.className = 'cbi-section-table-row cbi-rowstyle-' + ((i % 2) + 1);
-
+				rowId = "trDiv_" + this.div_id + i;
+				rowDiv = document.getElementById(rowId);
+				if (rowDiv === null) {
+					rowDiv = document.createElement("div");
+					rowDiv.id = rowId;
+					rowDiv.className = "tr";
+					this.div.appendChild(rowDiv);
+				}
 				for (var j = 0; j < data[i].length; j++){
-					td = tr.insertCell(-1);
-					if (data[i][j].length == 2) {
-						td.colSpan = data[i][j][1];
-						content = data[i][j][0];
+					cellId = "tdDiv_" + this.div_id + i + j;
+					cellDiv = document.getElementById(cellId);
+					if (cellDiv === null) {
+						cellDiv = document.createElement("div");
+						cellDiv.id = cellId;
+						cellDiv.className = "td";
+						rowDiv.appendChild(cellDiv);
+					}
+					if (typeof data[i][j] !== 'undefined' && data[i][j].length == 2) {
+						content = data[i][j][0] + "/" + data[i][j][1];
 					}
 					else content = data[i][j];
-					td.innerHTML = content;
+					cellDiv.innerHTML = content;
 				}
 			}
 		}.bind(this));
