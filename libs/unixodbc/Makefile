@@ -127,6 +127,7 @@ endef
 define Host/Configure
 	$(call Host/Configure/Default)
 	cp $(PKG_BUILD_DIR)/config.h $(HOST_BUILD_DIR)
+	sed -i -e 's!\(LIB_PREFIX \).*$$$$!\1"$(STAGING_DIR)/usr/lib"!' $(HOST_BUILD_DIR)/config.h
 	cp $(PKG_BUILD_DIR)/unixodbc_conf.h $(HOST_BUILD_DIR)
 endef
 
