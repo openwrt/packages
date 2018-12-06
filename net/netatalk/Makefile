@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netatalk
 PKG_VERSION:=3.1.11
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/netatalk
@@ -18,6 +18,8 @@ PKG_HASH:=3434472ba96d3bbe3b024274438daad83b784ced720f7662a4c1d0a1078799a6
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
+
+PKG_BUILD_DEPENDS:=libevent2
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -50,6 +52,7 @@ CONFIGURE_ARGS += \
 	--disable-tcp-wrappers \
 	--with-cnid-default-backend=dbd \
 	--with-bdb="$(STAGING_DIR)/usr/" \
+	--with-libevent=no \
 	--with-libgcrypt-dir="$(STAGING_DIR)/usr" \
 	--with-ssl-dir="$(STAGING_DIR)/usr" \
 	--with-uams-path="/usr/lib/uams" \
