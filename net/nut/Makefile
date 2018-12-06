@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
 PKG_VERSION:=2.7.4
-PKG_RELEASE:=11
+PKG_RELEASE:=12
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.networkupstools.org/source/2.7/
@@ -81,6 +81,8 @@ define Package/nut-server/install
 	ln -sf /var/etc/nut/ups.conf $(1)/etc/nut/ups.conf
 	# Mangle libhid.usermap into a format (hotplug shell script) useful for OpenWrt
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/tty
+	$(INSTALL_BIN) ./files/nut_serial.hotplug $(1)/etc/hotplug.d/tty/40-nut_serial
 	$(INSTALL_BIN) ./files/30-libhid-ups.head $(1)/etc/hotplug.d/usb/30-libhid-ups
 	$(CP) $(PKG_INSTALL_DIR)/etc/hotplug/usb/libhid.usermap $(PKG_BUILD_DIR)/30-libhid-ups.middle
 	$(SED) '/^$$$$/d' \
