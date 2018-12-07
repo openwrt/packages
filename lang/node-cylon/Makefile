@@ -65,12 +65,13 @@ endef
 EXTRA_LDFLAGS="-L$(TOOLCHAIN_DIR)/lib/ -Wl,-rpath-link $(TOOLCHAIN_DIR)/lib/" \
 
 define Build/Compile
+	cd $(PKG_BUILD_DIR) ; \
 	$(MAKE_FLAGS) \
 	npm_config_arch=$(CONFIG_ARCH) \
 	npm_config_nodedir=$(BUILD_DIR)/node-$(PKG_NODE_VERSION)/ \
 	npm_config_cache=$(BUILD_DIR)/node-$(PKG_NODE_VERSION)/npm-cache \
 	PREFIX="$(PKG_INSTALL_DIR)/usr/" \
-	npm install -g $(PKG_BUILD_DIR)
+	npm install -g `npm pack $(PKG_BUILD_DIR) | tail -n 1`
 endef
 
 define Package/node-cylon/install
