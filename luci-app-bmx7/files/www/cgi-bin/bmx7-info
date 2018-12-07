@@ -82,7 +82,7 @@ print_query() {
 	}
 
 	# If the query is a file, just printing the file
-	[ -f "$BMX7_DIR/$1" ] && cat "$BMX7_DIR/$1";
+	[ -f "$BMX7_DIR/$1" ] && [ -s "$BMX7_DIR/$1" ] && cat "$BMX7_DIR/$1" && return 0 || return 1
 }
 
 if [ "${QUERY##*/}" == "all" ]; then
@@ -94,10 +94,8 @@ if [ "$QUERY" == '$info' ]; then
 	echo '{ "info": [ '
 	print_query status
 	echo -n ","
-	print_query interfaces
-	echo -n ","
-	print_query links
-	echo -n ","
+	print_query interfaces && echo -n "," || echo -n '{ "interfaces": "" },'
+	print_query links && echo -n "," || echo -n '{ "links": "" },'
 	print_mem
 	echo "] }"
 fi
