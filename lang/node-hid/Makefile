@@ -34,7 +34,7 @@ define Package/node-hid
   CATEGORY:=Languages
   TITLE:=Node.js package to access HID devices
   URL:=https://github.com/node-hid/node-hid
-  DEPENDS:=+node +node-npm +libusb-1.0 +hidapi +libstdcpp
+  DEPENDS:=+node +node-npm +libusb-1.0 +hidapi +libstdcpp +libudev-fbsd
 endef
 
 define Package/node-hid/description
@@ -47,13 +47,15 @@ EXTRA_CFLAGS+=-I$(STAGING_DIR)/usr/include/libusb-1.0
 
 define Build/Compile
 	git init $(PKG_BUILD_DIR)
+	cd $(PKG_BUILD_DIR) ; \
 	$(MAKE_VARS) \
 	$(MAKE_FLAGS) \
 	npm_config_arch=$(CONFIG_ARCH) \
 	npm_config_nodedir=$(BUILD_DIR)/node-$(PKG_NODE_VERSION)/ \
 	npm_config_cache=$(BUILD_DIR)/node-$(PKG_NODE_VERSION)/npm-cache \
 	PREFIX="$(PKG_INSTALL_DIR)/usr/" \
-	npm install --build-from-source --target_arch=$(CPU) -g $(PKG_BUILD_DIR)
+	npm install --build-from-source --target_arch=$(CPU) -g \
+		`npm pack $(PKG_BUILD_DIR) | tail -n 1`
 endef
 
 define Package/node-hid/install
