@@ -59,9 +59,19 @@ function index()
 	entry(place,call("action_status_j"),"Status",0)
 	table.remove(place)
 
-	-- Nodes list
+	-- Topology
+	table.insert(place,"Topology")
+	entry(place,call("topology"),"Topology",1)
+	table.remove(place)
+
+	-- Nodes
 	table.insert(place,"Nodes")
-	entry(place,call("action_nodes_j"),"Nodes",1)
+	entry(place,call("action_nodes_j"),"Nodes",2)
+	table.remove(place)
+
+	-- Tunnels
+	table.insert(place,"Gateways")
+	entry(place,call("action_tunnels_j"),"Gateways",3)
 	table.remove(place)
 end
 
@@ -70,8 +80,14 @@ function action_status_j()
 	luci.template.render("bmx7/status_j", {})
 end
 
+function action_tunnels_j()
+	luci.template.render("bmx7/tunnels_j", {})
+end
+
+function topology()
+	luci.template.render("bmx7/topology", {})
+end
+
 function action_nodes_j()
-	local http = require "luci.http"
-	local link_non_js = "/cgi-bin/luci" .. http.getenv("PATH_INFO") .. '/nodes_nojs'
-	luci.template.render("bmx7/nodes_j", {link_non_js=link_non_js})
+	luci.template.render("bmx7/nodes_j", {})
 end

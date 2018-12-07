@@ -21,7 +21,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-bmx7
-PKG_RELEASE:=0.0-alpha
+PKG_RELEASE:=0.1-alpha
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 PKG_LICENSE:=GPL-2.0+
@@ -33,8 +33,8 @@ define Package/luci-app-bmx7
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:= LuCI support for BMX7
-  DEPENDS:=+luci-lib-json +luci-mod-admin-full +luci-lib-httpclient +bmx7
-  MAINTAINER:= Roger Pueyo Centelles <roger.pueyo@guifi.net>
+  DEPENDS:=+luci-lib-json +luci-mod-admin-full +bmx7 +bmx7-json
+  MAINTAINER:= Roger Pueyo <roger.pueyo@guifi.net> and Pau Escrich <p4u@dabax.net>
 endef
 
 define Package/luci-app-bmx7/description

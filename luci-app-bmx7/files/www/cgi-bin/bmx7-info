@@ -1,7 +1,7 @@
 #!/bin/sh
 #    Copyright © 2011 Pau Escrich
 #    Contributors Jo-Philipp Wich <xm@subsignal.org>
-#                 Roger Pueyo Centelles <roger.pueyo@guifi.net>
+#		 Roger Pueyo Centelles <roger.pueyo@guifi.net>
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -34,13 +34,12 @@ else
 	QUERY="${QUERY_STRING%%=*}"
 	echo "Content-type: application/json"
 	echo ""
-
 fi
 
 check_path() {
-        [ -d "$1" ] && path=$(cd $1; pwd)
-        [ -f "$1" ] && path=$(cd $1/..; pwd)
-        [ $(echo "$path" | grep -c "^$BMX7_DIR") -ne 1 ] && exit 1
+	[ -d "$1" ] && path=$(cd $1; pwd)
+	[ -f "$1" ] && path=$(cd $1/..; pwd)
+	[ $(echo "$path" | grep -c "^$BMX7_DIR") -ne 1 ] && exit 1
 }
 
 print_mem() {
@@ -52,19 +51,19 @@ print_mem() {
 print_query() {
 	# If the query is a directory
 	[ -d "$BMX7_DIR/$1" ] &&
-        {
+	{
 	# If /all has not been specified
 		[ -z "$QALL" ] &&
 		{
 		total=$(ls $BMX7_DIR/$1 | wc -w)
 		i=1
-        	echo -n "{ \"$1\": [ "
-	        for f in $(ls $BMX7_DIR/$1); do
+		echo -n "{ \"$1\": [ "
+		for f in $(ls $BMX7_DIR/$1); do
 			echo -n "{ \"name\": \"$f\" }"
 			[ $i -lt $total ]  && echo -n ','
 			i=$(( $i + 1 ))
-        	done
-	        echo -n " ] }"
+		done
+		echo -n " ] }"
 
 	# If /all has been specified, printing all the files together
 		} || {
@@ -80,10 +79,10 @@ print_query() {
 		done
 		echo -n " ]"
 		}
-        }
+	}
 
 	# If the query is a file, just printing the file
-	[ -f "$BMX7_DIR/$1" ] && cat "$BMX7_DIR/$1";
+	[ -f "$BMX7_DIR/$1" ] && [ -s "$BMX7_DIR/$1" ] && cat "$BMX7_DIR/$1" && return 0 || return 1
 }
 
 if [ "${QUERY##*/}" == "all" ]; then
@@ -95,10 +94,8 @@ if [ "$QUERY" == '$info' ]; then
 	echo '{ "info": [ '
 	print_query status
 	echo -n ","
-	print_query interfaces
-	echo -n ","
-	print_query links
-	echo -n ","
+	print_query interfaces && echo -n "," || echo -n '{ "interfaces": "" },'
+	print_query links && echo -n "," || echo -n '{ "links": "" },'
 	print_mem
 	echo "] }"
 fi
