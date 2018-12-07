@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glog
 PKG_VERSION:=0.3.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/google/glog/tar.gz/v$(PKG_VERSION)?
@@ -32,7 +32,7 @@ define Package/glog/description
   module.  Documentation for the implementation is in doc/.
 endef
 
-CONFIGURE_VARS+=ac_cv_have_libunwind_h=0
+CONFIGURE_VARS+=ac_cv_header_libunwind_h=0
 
 TARGET_CXXFLAGS+=-std=c++11
 TARGET_LDFLAGS+=-lpthread
