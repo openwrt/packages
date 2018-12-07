@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glog
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/google/glog.git
 PKG_SOURCE_VERSION:=v0.3.5
@@ -27,6 +27,8 @@ define Package/glog/description
   This repository contains a C++ implementation of the Google logging
   module.  Documentation for the implementation is in doc/.
 endef
+
+CONFIGURE_VARS+=ac_cv_header_libunwind_h=0
 
 TARGET_CXXFLAGS+=-std=c++11
 TARGET_LDFLAGS+=-lpthread
