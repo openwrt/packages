@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libndpi
 PKG_VERSION:=2.4
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ntop/nDPI/tar.gz/$(PKG_VERSION)?
@@ -52,7 +52,7 @@ define Build/InstallDev
 
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/local/lib/libndpi.so \
+		$(PKG_INSTALL_DIR)/usr/local/lib/libndpi.so* \
 		$(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
@@ -64,7 +64,7 @@ endef
 define Package/libndpi/install
 	$(INSTALL_DIR) $(1)/usr/lib/
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/local/lib/libndpi.so \
+		$(PKG_INSTALL_DIR)/usr/local/lib/libndpi.so* \
 		$(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(CP) \
