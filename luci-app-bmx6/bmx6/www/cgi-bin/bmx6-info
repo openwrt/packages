@@ -43,7 +43,7 @@ print_query() {
         i=$(( $i + 1 ))
       done
       echo -n " ] }"
-      
+
       # If /all has been specified, printing all the files together
       } || {
       comma=""
@@ -77,7 +77,7 @@ if [ "$QUERY" == 'myself' ]; then
   echo -n "{\"myself\":{\"hostname\":\"$hostname\",\"ip6\":\"$ip6\",\"ip4\":\"$ip4\",\"net6\":\"$cidr6\",\"net4\":\"$cidr4\"}}"
   exit 0
 fi
-    
+
 if [ "$QUERY" == 'info' ]; then
   echo -n '{ "info": [ '
   print_query status
@@ -100,7 +100,12 @@ if [ "$QUERY" == 'neighbours' ]; then
 fi
 
 if [ "$QUERY" == 'tunnels' ]; then
-  bmx6 -c --jshow tunnels /r=0
+  tunnels=$(bmx6 -c --jshow tunnels /r=0)
+  if [ -z $tunnels ]; then
+    echo '{ "tunnels" : [] }'
+  else
+    echo $tunnels
+  fi
   exit 0
 fi
 
