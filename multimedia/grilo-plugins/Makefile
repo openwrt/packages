@@ -53,6 +53,8 @@ CONFIGURE_ARGS += \
         --without-libintl-prefix \
         --without-x \
 
+MAKE_FLAGS += \
+        GLIB_COMPILE_RESOURCES="$(STAGING_DIR_HOSTPKG)/bin/glib-compile-resources"
 define Package/grilo-plugins/install
 	$(INSTALL_DIR) $(1)/usr/lib/grilo-0.3
 endef
