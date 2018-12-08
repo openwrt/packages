@@ -48,7 +48,7 @@ function init() {
 
   divwait = document.getElementById("wait");
 
-  XHR.get('/cgi-bin/luci/status/bmx6/topology', null, function(nodesRequest, nodesData) {
+  XHR.get('/cgi-bin/luci/admin/network/BMX6/topology', null, function(nodesRequest, nodesData) {
     nodes = nodesData;
 
     XHR.get('/cgi-bin/bmx6-info?$myself&', null, function(myselfRequest, myselfData) {
