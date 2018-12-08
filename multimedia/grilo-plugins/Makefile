@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grilo-plugins
 PKG_VERSION:=0.3.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPLv2.1
@@ -66,6 +66,8 @@ CONFIGURE_ARGS += \
         --disable-tmdb \
         --disable-freebox
 
+MAKE_FLAGS += \
+        GLIB_COMPILE_RESOURCES="$(STAGING_DIR_HOSTPKG)/bin/glib-compile-resources"
 define Package/grilo-plugins/install
 	$(INSTALL_DIR) $(1)/usr/lib/grilo-0.3
 endef
