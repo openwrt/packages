@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=znc
 PKG_VERSION:=1.7.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://znc.in/releases \
@@ -19,6 +19,9 @@ PKG_HASH:=44cfea7158ea05dc2547c7c6bc22371e66c869def90351de0ab90a9c200d39c4
 PKG_MAINTAINER:=Jonas Gorski <jonas.gorski@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:znc:znc
+
+PKG_FIXUP:=autoreconf
 
 PKG_USE_MIPS16:=0
 PKG_BUILD_PARALLEL:=1
