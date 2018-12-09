@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grilo
 PKG_VERSION:=0.3.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -20,7 +20,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/grilo/0.3/
 PKG_HASH:=1e65ca82dd58020451417fde79310d4b940adc3f63ab59997419c52ed3bc9c91
 
-PKG_BUILD_DEPENDS:=glib2 libsoup libxml2 perl-xml-parser
+PKG_BUILD_DEPENDS:=glib2 libsoup libxml2
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
