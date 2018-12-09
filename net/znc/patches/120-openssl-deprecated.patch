@@ -1,29 +1,30 @@
-diff --git a/configure b/configure
-index 18c5005..908fc09 100755
---- a/configure
-+++ b/configure
-@@ -4746,6 +4746,7 @@ $as_echo_n "checking whether openssl is usable... " >&6; }
- 
- 
- 				#include <openssl/ssl.h>
-+				#include <openssl/dh.h>
- 
- int
- main ()
-diff --git a/configure.ac b/configure.ac
-index c94833e..b46a53d 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -368,6 +368,7 @@ if test "x$SSL" != "xno"; then
+@@ -368,8 +368,9 @@ if test "x$SSL" != "xno"; then
  		AC_LINK_IFELSE([
  			AC_LANG_PROGRAM([[
  				#include <openssl/ssl.h>
 +				#include <openssl/dh.h>
  			]], [[
- 				SSL_CTX* ctx = SSL_CTX_new(TLSv1_method());
+-				SSL_CTX* ctx = SSL_CTX_new(TLSv1_method());
++				SSL_CTX* ctx = SSL_CTX_new(SSLv23_method());
  				SSL* ssl = SSL_new(ctx);
-diff --git a/src/Utils.cpp b/src/Utils.cpp
-index cced568..425831a 100644
+ 				DH* dh = DH_new();
+ 				DH_free(dh);
+--- a/include/znc/Utils.h
++++ b/include/znc/Utils.h
+@@ -219,6 +219,11 @@ class CTable : protected std::vector<std::vector<CString>> {
+ #include <openssl/aes.h>
+ #include <openssl/blowfish.h>
+ #include <openssl/md5.h>
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++#define X509_getm_notBefore X509_get_notBefore
++#define X509_getm_notAfter X509_get_notAfter
++#endif
++
+ //! does Blowfish w/64 bit feedback, no padding
+ class CBlowfish {
+   public:
 --- a/src/Utils.cpp
 +++ b/src/Utils.cpp
 @@ -27,6 +27,8 @@
@@ -35,8 +36,17 @@ index cced568..425831a 100644
  #endif /* HAVE_LIBSSL */
  #include <memory>
  #include <unistd.h>
-diff --git a/src/main.cpp b/src/main.cpp
-index 7d4e209..8d458a9 100644
+@@ -93,8 +95,8 @@ void CUtils::GenerateCert(FILE* pOut, const CString& sHost) {
+ 
+     X509_set_version(pCert.get(), 2);
+     ASN1_INTEGER_set(X509_get_serialNumber(pCert.get()), serial);
+-    X509_gmtime_adj(X509_get_notBefore(pCert.get()), 0);
+-    X509_gmtime_adj(X509_get_notAfter(pCert.get()),
++    X509_gmtime_adj(X509_getm_notBefore(pCert.get()), 0);
++    X509_gmtime_adj(X509_getm_notAfter(pCert.get()),
+                     (long)60 * 60 * 24 * days * years);
+     X509_set_pubkey(pCert.get(), pKey.get());
+ 
 --- a/src/main.cpp
 +++ b/src/main.cpp
 @@ -46,8 +46,8 @@ static void locking_callback(int mode, int type, const char* file, int line) {
@@ -59,8 +69,6 @@ index 7d4e209..8d458a9 100644
      CRYPTO_set_locking_callback(&locking_callback);
  
      CRYPTO_set_dynlock_create_callback(&dyn_create_callback);
-diff --git a/third_party/Csocket/Csocket.cc b/third_party/Csocket/Csocket.cc
-index 46a3bfd..017d22f 100644
 --- a/third_party/Csocket/Csocket.cc
 +++ b/third_party/Csocket/Csocket.cc
 @@ -47,10 +47,16 @@
@@ -81,3 +89,30 @@ index 46a3bfd..017d22f 100644
  #define HAVE_ERR_REMOVE_STATE
  #ifdef OPENSSL_VERSION_NUMBER
  # if OPENSSL_VERSION_NUMBER >= 0x10000000
+@@ -594,9 +600,11 @@ void ShutdownCsocket()
+ #ifndef OPENSSL_IS_BORINGSSL
+ 	CONF_modules_unload( 1 );
+ #endif
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	ERR_free_strings();
+ 	EVP_cleanup();
+ 	CRYPTO_cleanup_all_ex_data();
++#endif
+ #endif /* HAVE_LIBSSL */
+ #ifdef HAVE_C_ARES
+ #if ARES_VERSION >= CREATE_ARES_VER( 1, 6, 1 )
+@@ -611,12 +619,14 @@ void ShutdownCsocket()
+ #ifdef HAVE_LIBSSL
+ bool InitSSL( ECompType eCompressionType )
+ {
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	SSL_load_error_strings();
+ 	if( SSL_library_init() != 1 )
+ 	{
+ 		CS_DEBUG( "SSL_library_init() failed!" );
+ 		return( false );
+ 	}
++#endif
+ 
+ #ifndef _WIN32
+ 	if( access( "/dev/urandom", R_OK ) == 0 )
