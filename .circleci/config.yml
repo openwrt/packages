@@ -79,14 +79,14 @@ jobs:
              src-git luci https://github.com/openwrt/luci.git;$BRANCH
              EOF
              cat feeds.conf
-             # enable BUILD_LOG
-             sed -i '1s/^/config BUILD_LOG\n\tbool\n\tdefault y\n\n/' Config-build.in
              ./scripts/feeds update -a > /dev/null
              ./scripts/feeds install -a > /dev/null
              make defconfig > /dev/null
+             # enable BUILD_LOG
+             sed -i 's/# CONFIG_BUILD_LOG is not set/CONFIG_BUILD_LOG=y/' .config
 
       - run:
-          name: Download source/check/compile
+          name: Download source, check package, compile
           working_directory: ~/build_dir
           command: |
              set +o pipefail
@@ -98,9 +98,26 @@ jobs:
 
              echo_blue "=== Found new/modified packages: $PKGS"
              for PKG in $PKGS ; do
-                 echo_blue "===+ Download/check: $PKG"
+                 echo_blue "===+ Download: $PKG"
                  make "package/$PKG/download" V=s
-                 make "package/$PKG/check" V=s
+
+                 echo_blue "===+ Check package: $PKG"
+                 make "package/$PKG/check" V=s 2>&1 | tee logtmp
+                 RET=${PIPESTATUS[0]}
+
+                 if [ $RET -ne 0 ]; then
+                     echo_red   "=> Package check failed: $RET)"
+                     exit $RET
+                 fi
+
+                 badhash_msg="HASH does not match "
+                 badhash_msg+="|HASH uses deprecated hash,"
+                 badhash_msg+="|HASH is missing,"
+                 if grep -qE "$badhash_msg" logtmp; then
+                     echo_red   "=> Package HASH check failed"
+                     exit 1
+                 fi
+                 echo_green "=> Package check OK"
              done
 
              for PKG in $PKGS ; do
