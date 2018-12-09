@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=golang-github-dchest-siphash
+PKG_VERSION:=1.2.1
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/dchest/siphash.git
-PKG_SOURCE_VERSION:=4ebf1de738443ea7f45f02dc394c4df1942a126d
-PKG_SOURCE_DATE:=20160831
-PKG_MIRROR_HASH:=57da99437a6dba8c0b34bb09da48c0b8b1e70391ae0e3563453206794defe051
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/dchest/siphash/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=90c5e8ba62b64b2f76ed58c87dd50456171610049bef51fd71bc593c1744fad2
+PKG_BUILD_DIR:=$(BUILD_DIR)/siphash-$(PKG_VERSION)
 
+PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=CC0-1.0
 PKG_LICENSE_FILES:=README.md
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
