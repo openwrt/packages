@@ -1,0 +1,6 @@
+config prometheus-statsd-exporter 'main'
+	option web_listen_address '127.0.0.1:9102'
+	option web_telemetry_path '/metrics'
+	option statsd_listen_udp '127.0.0.1:9125'
+	option statsd_listen_tcp '127.0.0.1:9125'
+	option statsd_mapping_config '/etc/prometheus-statsd-exporter.yml'
