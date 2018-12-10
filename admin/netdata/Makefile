@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netdata
-PKG_VERSION:=1.11.0
+PKG_VERSION:=1.11.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=
-PKG_LICENSE:=GPL-3.0
+PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/netdata/netdata/releases/download/v$(PKG_VERSION)
-PKG_HASH:=c42c8411c22c72e3e52fed38d7b9537bcfaf568d01e9c1e35ec645490627619d
+PKG_HASH:=0150b2a060da0e5cc844bd9540d6704cd352c434ea1bb9d5268131830a815736
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)_rolling
 
 PKG_INSTALL:=1
@@ -74,7 +74,6 @@ define Package/netdata/install
 	$(INSTALL_DIR) $(1)/usr/share/netdata
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/netdata $(1)/usr/share
 	rm -rf $(1)/usr/share/netdata/web/images
-	rm -rf $(1)/usr/share/netdata/web/old
 	rm $(1)/usr/share/netdata/web/demo*html
 	rm $(1)/usr/share/netdata/web/fonts/*.svg
 	rm $(1)/usr/share/netdata/web/fonts/*.ttf
