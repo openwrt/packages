@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yara
 PKG_VERSION:=3.8.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
