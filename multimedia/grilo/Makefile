@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grilo
 PKG_VERSION:=0.3.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -26,9 +26,6 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-
-TARGET_LDFLAGS+= \
-	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib
 
 define Package/grilo
   SECTION:=multimedia
@@ -56,13 +53,13 @@ define Build/InstallDev
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc \
 		$(1)/usr/lib/pkgconfig/
-	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/share/vala-0.30/vapi/
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/share/vala/vapi/
 	# Note: this are compiled elsewhere because grilo refuses to
 	# generate VAPI files unless gobject-introspection exists;
 	# OpenWrt does not yet have a gobject-introspection package.
 	$(INSTALL_DATA) \
 		./files/*.vapi \
-		$(STAGING_DIR_HOSTPKG)/share/vala-0.30/vapi
+		$(STAGING_DIR_HOSTPKG)/share/vala/vapi
 endef
 
 define Package/grilo/install
