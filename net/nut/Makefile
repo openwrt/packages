@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
 PKG_VERSION:=2.7.4
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.networkupstools.org/source/2.7/
@@ -63,22 +63,22 @@ define Package/nut/install
 endef
 
 define Package/nut-server/install
+	# Server portion
 	$(INSTALL_DIR) $(1)/etc/nut
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/usr/share/nut
-	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/nut-server.init $(1)/etc/init.d/nut-server
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsd $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsdrvctl $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/cmdvartab $(1)/usr/share/nut/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/driver.list $(1)/usr/share/nut/
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nut_server $(1)/etc/config/nut_server
-	ln -sf /var/etc/nut/nut.conf $(1)/etc/nut/nut.conf
-	ln -sf /var/etc/nut/ups.conf $(1)/etc/nut/ups.conf
 	ln -sf /var/etc/nut/upsd.users  $(1)/etc/nut/upsd.users
 	ln -sf /var/etc/nut/upsd.conf $(1)/etc/nut/upsd.conf
+	# Driver common portion
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsdrvctl $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/driver.list $(1)/usr/share/nut/
+	ln -sf /var/etc/nut/ups.conf $(1)/etc/nut/ups.conf
 endef
 
 define Package/nut-common
@@ -96,6 +96,10 @@ $(call Package/nut/description/Default)
 This package contains the common files.
 endef
 
+define Package/nut-common/conffiles
+/etc/nut/nut.conf
+endef
+
 define Package/nut-common/install
 	$(INSTALL_DIR) $(1)/etc/nut
 	$(INSTALL_DIR) $(1)/usr/lib
@@ -107,6 +111,7 @@ define Package/nut-server
 	$(call Package/nut/Default)
 	TITLE+= (server)
 	DEPENDS:=nut +nut-common
+	USERID:=nut=113:nut=113
 endef
 
 define Package/nut-server/description
@@ -120,6 +125,9 @@ endef
 
 define Package/nut-server/conffiles
 /etc/config/nut_server
+/etc/nut/upsd.conf
+/etc/nut/upsd.users
+/etc/nut/ups.conf
 endef
 
 define Package/nut-upsmon
@@ -141,6 +149,7 @@ endef
 
 define Package/nut-upsmon/conffiles
 /etc/config/nut_monitor
+/etc/nut/upsmon.conf
 endef
 
 define Package/nut-upsmon/install
@@ -149,6 +158,7 @@ define Package/nut-upsmon/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/nut-monitor.init $(1)/etc/init.d/nut-monitor
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsmon $(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/nutshutdown $(1)/usr/sbin/nutshutdown
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nut_monitor $(1)/etc/config/nut_monitor
 	ln -sf /var/etc/nut/upsmon.conf $(1)/etc/nut/upsmon.conf
@@ -342,7 +352,7 @@ define DriverPackage
         define Package/nut-driver-$(2)
 		$(call Package/nut/Default)
 		TITLE:=$(2) (NUT $(1) driver)
-		DEPENDS:=nut +nut-common
+		DEPENDS:=nut +nut-server
 		$(if $(filter $(1),snmp),DEPENDS+= @NUT_DRIVER_SNMP)
 		$(if $(filter $(1),usb),DEPENDS+= @NUT_DRIVER_USB)
 		$(if $(filter $(1),serial),DEPENDS+= @NUT_DRIVER_SERIAL)
