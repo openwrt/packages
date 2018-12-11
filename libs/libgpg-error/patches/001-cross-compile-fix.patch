@@ -1,7 +1,6 @@
-diff -u --recursive libgpg-error-1.32-vanilla/configure.ac libgpg-error-1.32/configure.ac
---- libgpg-error-1.32-vanilla/configure.ac	2018-07-15 01:23:30.028462129 -0400
-+++ libgpg-error-1.32/configure.ac	2018-07-15 01:25:32.214267179 -0400
-@@ -74,6 +74,18 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -74,6 +74,18 @@ AM_SILENT_RULES
  AC_CANONICAL_HOST
  AB_INIT
  
