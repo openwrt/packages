@@ -9,21 +9,18 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cryptsetup
 PKG_VERSION:=2.0.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/cryptsetup/v2.0
 PKG_HASH:=7c51fae0f0e7ea9af0f515b2ac77009fb2969a6619ebab47d097dca38b083d30
-
-PKG_LICENSE:=GPL-2.0+ LGPL-2.1+
-PKG_LICENSE_FILES:=COPYING COPYING.LGPL
-PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
-
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
-include $(INCLUDE_DIR)/package.mk
+PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_LICENSE:=GPL-2.0+ LGPL-2.1+
+PKG_LICENSE_FILES:=COPYING COPYING.LGPL
 
-TARGET_LDFLAGS+=-Wl,-rpath-link=$(STAGING_DIR)/usr/lib
+include $(INCLUDE_DIR)/package.mk
 
 define Package/cryptsetup/Default
   SECTION:=utils
@@ -36,8 +33,8 @@ endef
 
 define Package/cryptsetup
 $(call Package/cryptsetup/Default)
-  DEPENDS+=+libgcrypt
-  VARIANT:=gcrypt
+  DEPENDS+=+kmod-crypto-user
+  VARIANT:=kernel
 endef
 
 define Package/cryptsetup-openssl
@@ -53,7 +50,7 @@ endef
 
 define Package/cryptsetup/description
 $(call Package/cryptsetup/Default/description)
-linked against libgcrypt
+linked against kernel crypto API
 endef
 
 
@@ -62,9 +59,21 @@ $(call Package/cryptsetup/Default/description)
 linked against openssl
 endef
 
+CONFIGURE_ARGS += \
+	--disable-cryptsetup-reencrypt \
+	--disable-integritysetup \
+	--disable-selinux \
+	--disable-rpath \
+	--disable-veritysetup \
+	--disable-udev \
+	--with-default-luks-format=LUKS2
+
 ifeq ($(BUILD_VARIANT),openssl)
-CONFIGURE_ARGS+= \
+CONFIGURE_ARGS += \
         --with-crypto_backend=openssl
+else
+CONFIGURE_ARGS += \
+	--with-crypto_backend=kernel
 endif
 
 define Package/cryptsetup/install
