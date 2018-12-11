@@ -171,6 +171,7 @@ define GoPackage/Build/Configure
 			mkdir -p $$$$(dirname $$$$dest) ; \
 			$(CP) $$$$file $$$$dest ; \
 		done ; \
+		echo ; \
 		\
 		link_contents() { \
 			local src=$$$$1 ; \
@@ -209,6 +210,7 @@ define GoPackage/Build/Configure
 		else \
 			echo "Not building binaries, skipping symlinks" ; \
 		fi ; \
+		echo ; \
 	)
 endef
 
@@ -224,16 +226,21 @@ define GoPackage/Build/Compile
 			CXX=$(TARGET_CXX) \
 			$(call GoPackage/Environment) ; \
 		\
+		echo "Finding targets" ; \
 		targets=$$$$(go list $(GO_PKG_BUILD_PKG)) ; \
 		for pattern in $(GO_PKG_EXCLUDES); do \
 			targets=$$$$(echo "$$$$targets" | grep -v "$$$$pattern") ; \
 		done ; \
+		echo ; \
 		\
 		if [ "$(GO_PKG_GO_GENERATE)" = 1 ]; then \
+			echo "Calling go generate" ; \
 			go generate -v $(1) $$$$targets ; \
+			echo ; \
 		fi ; \
 		\
 		if [ "$(GO_PKG_SOURCE_ONLY)" != 1 ]; then \
+			echo "Building targets" ; \
 			case $(GO_ARCH) in \
 			arm)             installsuffix="-installsuffix v$(GO_ARM)" ;; \
 			mips|mipsle)     installsuffix="-installsuffix $(GO_MIPS)" ;; \
@@ -250,10 +257,16 @@ define GoPackage/Build/Compile
 				$(1) \
 				$$$$targets ; \
 			retval=$$$$? ; \
+			echo ; \
 			\
 			if [ "$$$$retval" -eq 0 ] && [ -z "$(call GoPackage/has_binaries)" ]; then \
 				echo "No binaries were generated, consider adding GO_PKG_SOURCE_ONLY:=1 to Makefile" ; \
+				echo ; \
 			fi ; \
+			\
+			echo "Cleaning module download cache (golang/go#27455)" ; \
+			go clean -modcache ; \
+			echo ; \
 		fi ; \
 		exit $$$$retval ; \
 	)
