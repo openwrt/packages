@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=open-plc-utils
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/qca/open-plc-utils.git
@@ -61,7 +61,7 @@ OPEN_PLC_UTILS_APPS:=efbu efeu efru efsu edru edsu nics \
 		     int6kmdio2 int6kmod int6kstat int6ktest int6krate \
 		     int6krule int6ktone int6kwait CMEncrypt sada \
 		     coqos_add coqos_info coqos_man coqos_mod coqos_rel \
-		     mdustats ampboot amphost ampID amplist amprate \
+		     mdustats ampboot amphost ampID amplist amprate amprule \
 		     ampstat amptest amptool amptone ampwait \
 		     plcboot plchost plcID plclist plcrate plcrule \
 		     plcstat plctest plctool plctone \
@@ -69,7 +69,8 @@ OPEN_PLC_UTILS_APPS:=efbu efeu efru efsu edru edsu nics \
 		     plcdevs plclog plcmdio16 plcmdio32 \
 		     config2cfg sdram \
 		     int6kuart int6kbaud ttysig ptsctl weeder ttysend \
-		     ttyrecv ttycat int6kdetect
+		     ttyrecv ttycat int6kdetect \
+		     pev evse
 
 $(foreach a,$(OPEN_PLC_UTILS_APPS),$(eval $(call GenPlugin,$(a))))
 
