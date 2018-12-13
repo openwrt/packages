@@ -23,6 +23,7 @@ PKG_HASH:=7c6964053b42574c2f14715d2392a02ea5cbace955eb73e067c77aa3e43b066e
 PKG_BUILD_DEPENDS:=glib2 libsoup libxml2
 
 PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=vala/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -53,13 +54,13 @@ define Build/InstallDev
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc \
 		$(1)/usr/lib/pkgconfig/
-	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/share/vala/vapi/
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/share/vala-`$(STAGING_DIR_HOSTPKG)/bin/valac --api-version`/vapi/
 	# Note: this are compiled elsewhere because grilo refuses to
 	# generate VAPI files unless gobject-introspection exists;
 	# OpenWrt does not yet have a gobject-introspection package.
 	$(INSTALL_DATA) \
 		./files/*.vapi \
-		$(STAGING_DIR_HOSTPKG)/share/vala/vapi
+		$(STAGING_DIR_HOSTPKG)/share/vala-`$(STAGING_DIR_HOSTPKG)/bin/valac --api-version`/vapi
 endef
 
 define Package/grilo/install
