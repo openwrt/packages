@@ -1,0 +1,71 @@
+From a9d47c87115bf69c19e9263efb90d5753456f1b9 Mon Sep 17 00:00:00 2001
+From: Eneas U de Queiroz <cote2004-github@yahoo.com>
+Date: Thu, 13 Dec 2018 00:20:57 -0200
+Subject: [PATCH] dtls.c: Update openssl API to 1.1.0
+
+Use shims for compatiblity with previous versions.
+
+Signed-off-by: Eneas U de Queiroz <cote2004-github@yahoo.com>
+---
+ src/dtls.c | 20 +++++++++++++++++---
+ 1 file changed, 17 insertions(+), 3 deletions(-)
+
+diff --git a/src/dtls.c b/src/dtls.c
+index ed5d408..511f724 100644
+--- a/src/dtls.c
++++ b/src/dtls.c
+@@ -38,6 +38,7 @@
+ #include <string.h>
+ #include <openssl/crypto.h>
+ #include <openssl/err.h>
++#include <openssl/opensslv.h>
+ #include <openssl/ssl.h>
+ #include <openssl/rand.h>
+ #include <libubox/list.h>
+@@ -168,6 +169,19 @@ static dtls_limits_s _default_limits = {
+ 
+ static bool _ssl_initialized = false;
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L \
++ || (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x20700000L)
++static inline void *X509_STORE_get_ex_data(X509_STORE *ctx, int idx)
++{
++  return CRYPTO_get_ex_data(&ctx->ex_data, idx);
++}
++
++static inline int X509_STORE_set_ex_data(X509_STORE *ctx, int idx, void *data)
++{
++  return CRYPTO_set_ex_data(&ctx->ex_data, idx, data);
++}
++#endif
++
+ static bool _drain_errors()
+ {
+   if (!ERR_peek_error())
+@@ -863,7 +877,7 @@ ssize_t dtls_send(dtls d,
+ 
+ static int _verify_cert_cb(int ok, X509_STORE_CTX *ctx)
+ {
+-  dtls d = CRYPTO_get_ex_data(&ctx->ctx->ex_data, 0);
++  dtls d = X509_STORE_get_ex_data(X509_STORE_CTX_get0_store(ctx), 0);
+ 
+   if (!d)
+     {
+@@ -916,7 +930,7 @@ bool dtls_set_local_cert(dtls d, const char *certfile, const char *pkfile)
+                      |SSL_VERIFY_FAIL_IF_NO_PEER_CERT
+ #endif /* DTLS_OPENSSL */
+                      , _verify_cert_cb);
+-  CRYPTO_set_ex_data(&d->ssl_server_ctx->cert_store->ex_data, 0, d);
++  X509_STORE_set_ex_data(SSL_CTX_get_cert_store(d->ssl_server_ctx), 0, d);
+ 
+ #ifndef USE_ONE_CONTEXT
+   R1("client cert",
+@@ -928,7 +942,7 @@ bool dtls_set_local_cert(dtls d, const char *certfile, const char *pkfile)
+                      |SSL_VERIFY_PEER_FAIL_IF_NO_PEER_CERT
+ #endif /* DTLS_OPENSSL */
+                      , _verify_cert_cb);
+-  CRYPTO_set_ex_data(&d->ssl_client_ctx->cert_store->ex_data, 0, d);
++  X509_STORE_set_ex_data(SSL_CTX_get_cert_store(d->ssl_client_ctx), 0, d);
+ #endif /* !USE_ONE_CONTEXT */
+ 
+   return true;
