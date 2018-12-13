@@ -43,9 +43,9 @@ define GenPlugin
     TITLE:=Utility $(1) from the Open PLC utilities
   endef
 
-   define Package/$(addprefix open-plc-utils-,$(1))/description
-     Utility $(1) from the Open PLC utilities package.
-   endef
+  define Package/$(addprefix open-plc-utils-,$(1))/description
+    Utility $(1) from the Open PLC utilities package.
+  endef
 endef
 
 OPEN_PLC_UTILS_APPS:=efbu efeu efru efsu edru edsu nics \
@@ -91,7 +91,7 @@ endef
 
 define BuildPlugin
   define Package/$(1)/install
-  	$(INSTALL_DIR) $$(1)/usr/bin
+	$(INSTALL_DIR) $$(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/local/bin/$(subst open-plc-utils-,,$(1)) \
 		$$(1)/usr/bin/
   endef
