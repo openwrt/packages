@@ -40,7 +40,7 @@ index cfbc38b..025a144 100644
  	return 0;
  }
  
-@@ -1702,8 +1706,13 @@ ssl_sock_do_create_cert(const char *servername, struct bind_conf *bind_conf, SSL
+@@ -1711,8 +1715,13 @@ ssl_sock_do_create_cert(const char *servername, struct bind_conf *bind_conf, SSL
  	ASN1_INTEGER_set(X509_get_serialNumber(newcrt), HA_ATOMIC_ADD(&ssl_ctx_serial, 1));
  
  	/* Set duration for the certificate */
@@ -54,7 +54,7 @@ index cfbc38b..025a144 100644
  		goto mkcert_error;
  
  	/* set public key in the certificate */
-@@ -6276,7 +6285,11 @@ smp_fetch_ssl_x_notafter(const struct arg *args, struct sample *smp, const char
+@@ -6285,7 +6294,11 @@ smp_fetch_ssl_x_notafter(const struct arg *args, struct sample *smp, const char
  		goto out;
  
  	smp_trash = get_trash_chunk();
@@ -66,7 +66,7 @@ index cfbc38b..025a144 100644
  		goto out;
  
  	smp->data.u.str = *smp_trash;
-@@ -6376,7 +6389,11 @@ smp_fetch_ssl_x_notbefore(const struct arg *args, struct sample *smp, const char
+@@ -6385,7 +6398,11 @@ smp_fetch_ssl_x_notbefore(const struct arg *args, struct sample *smp, const char
  		goto out;
  
  	smp_trash = get_trash_chunk();
@@ -78,7 +78,7 @@ index cfbc38b..025a144 100644
  		goto out;
  
  	smp->data.u.str = *smp_trash;
-@@ -8926,7 +8943,11 @@ static void __ssl_sock_init(void)
+@@ -8935,7 +8952,11 @@ static void __ssl_sock_init(void)
  #endif
  
  	xprt_register(XPRT_SSL, &ssl_sock);
@@ -90,7 +90,7 @@ index cfbc38b..025a144 100644
  	cm = SSL_COMP_get_compression_methods();
  	sk_SSL_COMP_zero(cm);
  #ifdef USE_THREAD
-@@ -8958,8 +8979,13 @@ static void __ssl_sock_init(void)
+@@ -8967,8 +8988,13 @@ static void __ssl_sock_init(void)
  #else /* OPENSSL_IS_BORINGSSL */
  	        OPENSSL_VERSION_TEXT
  		"\nRunning on OpenSSL version : %s%s",
@@ -104,7 +104,7 @@ index cfbc38b..025a144 100644
  #endif
  	memprintf(&ptr, "%s\nOpenSSL library supports TLS extensions : "
  #if OPENSSL_VERSION_NUMBER < 0x00907000L
-@@ -9051,11 +9077,14 @@ static void __ssl_sock_deinit(void)
+@@ -9060,11 +9086,14 @@ static void __ssl_sock_deinit(void)
  #endif
  
          ERR_remove_state(0);
