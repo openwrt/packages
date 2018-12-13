@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NPM_NAME:=serialport
 PKG_NAME:=node-$(PKG_NPM_NAME)
 PKG_VERSION:=6.1.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NPM_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=http://registry.npmjs.org/$(PKG_NPM_NAME)/-/
@@ -51,8 +51,8 @@ define Build/Compile
 	cd $(PKG_BUILD_DIR) ; \
 	$(MAKE_FLAGS) \
 	npm_config_arch=$(CONFIG_ARCH) \
-	npm_config_nodedir=$(BUILD_DIR)/node-$(PKG_NODE_VERSION)/ \
-	npm_config_cache=$(BUILD_DIR)/node-$(PKG_NODE_VERSION)/npm-cache \
+	npm_config_nodedir=$(STAGING_DIR)/usr \
+	npm_config_cache=$(TMP_DIR)/npm-cache \
 	PREFIX="$(PKG_INSTALL_DIR)/usr/" \
 	npm install --build-from-source --target_arch=$(CPU) -g \
 		`npm pack $(PKG_BUILD_DIR) | tail -n 1`
