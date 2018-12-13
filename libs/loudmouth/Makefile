@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=loudmouth
 PKG_VERSION:=1.5.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mcabber/loudmouth/tar.gz/$(PKG_VERSION)?
@@ -38,9 +38,14 @@ define Package/loudmouth/description
 endef
 
 CONFIGURE_ARGS += \
+	--disable-debug \
 	--without-compile-warnings \
 	--without-idn \
 	--with-ssl=openssl
+
+CONFIGURE_VARS += \
+	ac_cv_lib_crypto_BIO_f_base64=yes \
+	ac_cv_lib_ssl_SSL_new=yes
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
