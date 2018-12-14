@@ -8,16 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsigc++
-PKG_VERSION:=2.5.4
+PKG_VERSION:=2.10.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/libsigc++/2.5
-PKG_HASH:=ecf55f53d6058ba6e41985b862f2e95fb5c2b31c008caa16984e790547337ea7
-PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
-PKG_LICENSE:=LGPL-2.1
+PKG_SOURCE_URL:=@GNOME/libsigc++/2.10
+PKG_HASH:=c9a25f26178c6cbb147f9904d8c533b5a5c5111a41ac2eb781eb734eea446003
+
+PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
+PKG_LICENSE:=LGPL-3.0+
+PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -36,14 +39,13 @@ define Package/libsigcxx/description
  whether it is static or virtual.
 endef
 
-TARGET_CFLAGS += $(FPIC)
-
-TARGET_CPPFLAGS +=  \
-	-fno-strict-aliasing -fno-inline \
-
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
+	--disable-benchmark \
+	--disable-documentation \
+	--disable-deprecated-api \
+	--disable-warnings
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
