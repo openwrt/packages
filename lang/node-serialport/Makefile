@@ -61,11 +61,11 @@ endef
 define Package/node-serialport/install
 	mkdir -p $(1)/usr/lib/node/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/* $(1)/usr/lib/node/
-	$(RM) -rf $(1)/usr/lib/node/node-hid/patches \
-		  $(1)/usr/lib/node/node-hid/.p* \
-		  $(1)/usr/lib/node/node-hid/.quilt* \
-		  $(1)/usr/lib/node/node-hid/.built* \
-		  $(1)/usr/lib/node/node-hid/.config*
+	$(RM) -rf $(1)/usr/lib/node/node-serialport/patches \
+		  $(1)/usr/lib/node/node-serialport/.p* \
+		  $(1)/usr/lib/node/node-serialport/.quilt* \
+		  $(1)/usr/lib/node/node-serialport/.built* \
+		  $(1)/usr/lib/node/node-serialport/.config*
 	# Strip PKG_BUILD_DIR from useless metadata inserted by npm install
 	# https://github.com/npm/npm/issues/10393
 	# https://github.com/npm/npm/issues/12110
