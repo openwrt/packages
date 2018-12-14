@@ -8,7 +8,7 @@ PKG_SOURCE:=pam_yubico-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://developers.yubico.com/yubico-pam/Releases
 PKG_HASH:=2de96495963fefd72b98243952ca5d5ec513e702c596e54bc667ef6b5e252966
 PKG_MAINTAINER:=Stuart B. Wilkins <stuwilkins@mac.com>
-PKG_BUILD_DEPENDS:=ykclient ykpers libyubikey
+PKG_BUILD_DEPENDS:=ykclient ykpers libyubikey libpam
 PKG_LICENSE_FILES:=COPYING
 PKG_LICENSE:=BSD-2-Clause
 
