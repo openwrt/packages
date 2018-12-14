@@ -1,0 +1,31 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -258,16 +258,18 @@ else
+    AC_MSG_WARN(ALSA library not available)
+ fi
+ 
+-PKG_CHECK_MODULES(libudev, libudev, have_libudev=yes, have_libudev=no)
+-if test "x$have_libudev" = "xyes"; then
+-	AC_DEFINE([HAVE_LIBUDEV], [], [Use libudev])
+-	LIBUDEV_CFLAGS="$libudev_CFLAGS"
+-	LIBUDEV_LIBS="$libudev_LIBS"
+-	AC_SUBST(LIBUDEV_CFLAGS)
+-	AC_SUBST(LIBUDEV_LIBS)
+-else
+-   AC_MSG_WARN(udev library not available)
+-fi
++# Build without libudev
++havelibudev=no
++#PKG_CHECK_MODULES(libudev, libudev, have_libudev=yes, have_libudev=no)
++#if test "x$have_libudev" = "xyes"; then
++#	AC_DEFINE([HAVE_LIBUDEV], [], [Use libudev])
++#	LIBUDEV_CFLAGS="$libudev_CFLAGS"
++#	LIBUDEV_LIBS="$libudev_LIBS"
++#	AC_SUBST(LIBUDEV_CFLAGS)
++#	AC_SUBST(LIBUDEV_LIBS)
++#else
++#   AC_MSG_WARN(udev library not available)
++#fi
+ 
+ AC_SUBST([JPEG_LIBS])
+ 
