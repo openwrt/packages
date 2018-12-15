@@ -301,20 +301,6 @@ This package includes shared files, for example $(CONF_DIR)/my.cnf.
 
 endef
 
-define Package/mariadb-extra-charsets
-  $(call Package/mariadb/Default)
-  TITLE:=MariaDB database extra character sets
-  DEPENDS:=mariadb-server
-endef
-
-define Package/mariadb-extra-charsets/description
-$(call Package/mariadb/description/Default)
-
-This package contains single Byte character sets and collations that can
-be added at run time.
-
-endef
-
 define Package/mariadb-server
   $(call Package/mariadb/Default)
   DEPENDS:=mariadb-server-base
@@ -406,8 +392,6 @@ CMAKE_OPTIONS += \
 	-DCONNECT_WITH_JDBC=NO \
 	-DCONNECT_WITH_LIBXML2=system \
 	-DCONNECT_WITH_ODBC=NO \
-	-DDEFAULT_CHARSET=utf8 \
-	-DDEFAULT_COLLATION=utf8_general_ci \
 	-DDISABLE_SHARED=NO \
 	-DENABLED_PROFILING=OFF \
 	-DENABLE_STATIC_LIBS=OFF \
@@ -428,7 +412,6 @@ CMAKE_OPTIONS += \
 	-DSKIP_TESTS=ON \
 	-DWITH_ASAN=OFF \
 	-DWITH_EMBEDDED_SERVER=OFF \
-	-DWITH_EXTRA_CHARSETS=complex \
 	-DWITH_INNODB_BZIP2=OFF \
 	-DWITH_INNODB_LZ4=OFF \
 	-DWITH_INNODB_LZMA=ON \
@@ -561,11 +544,6 @@ define Package/mariadb-common/install
 	$(INSTALL_CONF) conf/my.cnf $(1)$(CONF_DIR)
 endef
 
-define Package/mariadb-extra-charsets/install
-	$(INSTALL_DIR) $(1)$(SHARE_DIR)/charsets
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/charsets/* $(1)$(SHARE_DIR)/charsets
-endef
-
 define Package/mariadb-server/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(foreach b,$(MARIADB_SERVER),$(call Package/mariadb/install/bin,$(1),$(b));)
@@ -573,12 +551,14 @@ endef
 
 define Package/mariadb-server-base/install
 	$(INSTALL_DIR) $(1)$(CONF_DIR)/conf.d
+	$(INSTALL_DIR) $(1)$(SHARE_DIR)/charsets
 	$(INSTALL_DIR) $(1)$(SHARE_DIR)/english
 	$(INSTALL_DIR) $(1)/etc/default
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/mysqld.init $(1)/etc/init.d/mysqld
 	$(INSTALL_CONF) conf/50-server.cnf $(1)$(CONF_DIR)/conf.d
 	$(INSTALL_CONF) conf/mysqld.default $(1)/etc/default/mysqld
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/charsets/* $(1)$(SHARE_DIR)/charsets
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/english/errmsg.sys $(1)$(SHARE_DIR)/english
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/fill_help_tables.sql $(1)$(SHARE_DIR)
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/maria_add_gis_sp_bootstrap.sql $(1)$(SHARE_DIR)
@@ -617,7 +597,6 @@ $(eval $(call BuildPackage,mariadb-client))
 $(eval $(call BuildPackage,mariadb-client-base))
 $(eval $(call BuildPackage,mariadb-client-extra))
 $(eval $(call BuildPackage,mariadb-common))
-$(eval $(call BuildPackage,mariadb-extra-charsets))
 $(eval $(call BuildPackage,mariadb-server))
 $(eval $(call BuildPackage,mariadb-server-base))
 $(eval $(call BuildPackage,mariadb-server-extra))
