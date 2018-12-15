@@ -157,8 +157,6 @@ MARIADB_SERVER_EXTRA := \
 	mysql_tzinfo_to_sql \
 	mysqlbinlog \
 	mysqld_multi \
-	mysqld_safe \
-	mysqld_safe_helper \
 	mysqldumpslow \
 	mysqlhotcopy \
 	perror \
@@ -379,7 +377,7 @@ CMAKE_OPTIONS += -DCMAKE_CROSSCOMPILING=1
 # Explicitly disable dtrace to avoid detection of a host version
 CMAKE_OPTIONS += -DENABLE_DTRACE=0
 
-# Prevent mariadb from messing with OpenWrt's C(XX)FLAGS
+# Prevent MariaDB from messing with OpenWrt's C(XX)FLAGS
 CMAKE_OPTIONS += -DSECURITY_HARDENED=OFF
 
 ifeq ($(CONFIG_PACKAGE_mariadb-server),)
@@ -393,12 +391,14 @@ endif
 CMAKE_OPTIONS += \
 	-DCONNECT_WITH_JDBC=NO \
 	-DCONNECT_WITH_LIBXML2=system \
+	-DCONNECT_WITH_MONGO=NO \
 	-DCONNECT_WITH_ODBC=NO \
 	-DDISABLE_SHARED=NO \
 	-DENABLED_PROFILING=OFF \
 	-DENABLE_STATIC_LIBS=OFF \
 	-DINSTALL_DOCDIR=share/doc/mariadb \
 	-DINSTALL_DOCREADMEDIR=share/doc/mariadb \
+	-DINSTALL_INFODIR=share/info \
 	-DINSTALL_MANDIR=share/man \
 	-DINSTALL_MYSQLSHAREDIR=share/mariadb \
 	-DINSTALL_MYSQLTESTDIR="" \
@@ -408,20 +408,19 @@ CMAKE_OPTIONS += \
 	-DINSTALL_SQLBENCHDIR="" \
 	-DINSTALL_SUPPORTFILESDIR=share/mariadb \
 	-DINSTALL_UNIX_ADDRDIR=/var/run/mysqld/mysqld.sock \
-	-DMYSQLD_USER=mariadb \
 	-DMYSQL_DATADIR=/var/lib/mysql \
 	-DMYSQL_UNIX_ADDR=/var/run/mysqld/mysqld.sock \
 	-DSKIP_TESTS=ON \
-	-DWITH_ASAN=OFF \
+	-DWITH_DEBUG=OFF \
 	-DWITH_EMBEDDED_SERVER=OFF \
 	-DWITH_INNODB_BZIP2=OFF \
 	-DWITH_INNODB_LZ4=OFF \
 	-DWITH_INNODB_LZMA=ON \
 	-DWITH_INNODB_LZO=OFF \
 	-DWITH_INNODB_SNAPPY=OFF \
-	-DWITH_LIBNUMA=NO \
+	-DWITH_JEMALLOC=OFF \
+	-DWITH_LIBARCHIVE=OFF \
 	-DWITH_LIBWRAP=OFF \
-	-DWITH_LIBWSEP=OFF \
 	-DWITH_MARIABACKUP=ON \
 	-DWITH_PCRE=system \
 	-DWITH_SAFEMALLOC=OFF \
@@ -456,7 +455,7 @@ CMAKE_HOST_OPTIONS += \
 	-DCMAKE_SKIP_RPATH=FALSE \
 	-DWITHOUT_SERVER=OFF
 
-# Some helpers must be compiled for host in order to crosscompile mariadb for
+# Some helpers must be compiled for host in order to crosscompile MariaDB for
 # the target. They are then included by import_executables.cmake which is
 # generated during the build of the host helpers. It is not necessary to build
 # the whole host package, only the "import_executables" target.
@@ -489,7 +488,7 @@ endef
 
 # LIBICONV_PLUG is used in GNU's libiconv for redefinition of exports [e.g.
 # from libiconv_open() to iconv_open()]. But in OpenWrt this variable is not set
-# when building libiconv-full. So when mariadb sets LIBICONV_PLUG it expects
+# when building libiconv-full. So when MariaDB sets LIBICONV_PLUG it expects
 # iconv_open() to be available for example, which is not the case - only
 # libiconv_open() is. To address this prevent the variable from being set.
 # libiconv-stub does not use this variable, so there is no harm in always doing
@@ -632,3 +631,4 @@ $(eval $(call BuildPlugin,mariadb-server,server_audit,))
 $(eval $(call BuildPlugin,mariadb-server,simple_password_check,))
 $(eval $(call BuildPlugin,mariadb-server,sql_errlog,))
 $(eval $(call BuildPlugin,mariadb-server,wsrep_info,))
+
