@@ -219,7 +219,7 @@ define Package/mariadb-client
   TITLE:=MariaDB database core client binaries
   DEPENDS:= \
 	  $(MARIADB_COMMON_DEPENDS) \
-	  +libncursesw
+	  +libedit
 endef
 
 define Package/mariadb-client/description
@@ -361,13 +361,11 @@ CMAKE_OPTIONS += \
 	-DWITH_INNODB_LZMA=ON \
 	-DWITH_INNODB_LZO=OFF \
 	-DWITH_INNODB_SNAPPY=OFF \
-	-DWITH_LIBEDIT=OFF \
 	-DWITH_LIBNUMA=NO \
 	-DWITH_LIBWRAP=OFF \
 	-DWITH_LIBWSEP=OFF \
 	-DWITH_MARIABACKUP=ON \
 	-DWITH_PCRE=system \
-	-DWITH_READLINE=OFF \
 	-DWITH_SAFEMALLOC=OFF \
 	-DWITH_SSL=system \
 	-DWITH_SYSTEMD=no \
