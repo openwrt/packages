@@ -35,37 +35,46 @@ CMAKE_INSTALL:=1
 
 PLUGIN_DIR:=/usr/lib/mysql/plugin
 
-MARIADB_SERVER_PLUGINS := \
-	adt_null \
-	auth_0x0100 \
-	auth_ed25519 \
-	auth_socket \
-	auth_test_plugin \
-	client_ed25519 \
+MARIADB_DISABLE_ENGINES := \
+	cassandra \
+	example \
+	mroonga \
+	oqgraph \
+	rocksdb \
+	test_sql_discovery \
+	tokudb
+
+MARIADB_DISABLE_PLUGINS := \
+	audit_null \
+	auth_examples \
+	aws_key_management \
+	cracklib_password_check \
+	daemon_example \
 	debug_key_management \
-	dialog_examples \
-	disks \
 	example_key_management \
+	fulltext
+
+MARIADB_LIB_PLUGINS := \
+	auth_gssapi_client
+
+MARIADB_SERVER_PLUGINS := \
+	auth_ed25519 \
+	auth_gssapi \
+	auth_pam \
+	client_ed25519 \
+	disks \
 	feedback \
 	file_key_management \
 	ha_archive \
 	ha_blackhole \
 	ha_connect \
-	ha_example \
 	ha_federated \
 	ha_federatedx \
-	ha_sequence \
 	ha_sphinx \
 	ha_spider \
-	ha_test_sql_discovery \
 	handlersocket \
-	libdaemon_example \
 	locales \
 	metadata_lock_info \
-	mypluglib \
-	qa_auth_client \
-	qa_auth_interface \
-	qa_auth_server \
 	query_cache_info \
 	query_response_time \
 	semisync_master \
@@ -76,39 +85,29 @@ MARIADB_SERVER_PLUGINS := \
 	wsrep_info
 
 PKG_CONFIG_DEPENDS := \
+	$(patsubst %,CONFIG_PACKAGE_lib$(PKG_NAME)-plugin-%,$(subst _,-,$(MARIADB_LIB_PLUGINS))) \
 	$(patsubst %,CONFIG_PACKAGE_$(PKG_NAME)-server-plugin-%,$(subst _,-,$(MARIADB_SERVER_PLUGINS))) \
 	CONFIG_PACKAGE_mariadb-server
 
-plugin-adt_null                 := PLUGIN_AUDIT_NULL
-plugin-auth_0x0100              := PLUGIN_AUTH_0X0100
+plugin-auth_gssapi_client       := PLUGIN_AUTH_GSSAPI_CLIENT
+
 plugin-auth_ed25519             := PLUGIN_AUTH_ED25519
-plugin-auth_socket              := PLUGIN_AUTH_SOCKET
-plugin-auth_test_plugin         := PLUGIN_AUTH_TEST_PLUGIN
+plugin-auth_gssapi              := PLUGIN_AUTH_GSSAPI
+plugin-auth_pam                 := PLUGIN_AUTH_PAM
 plugin-client_ed25519           := PLUGIN_CLIENT_ED25519
-plugin-debug_key_management     := PLUGIN_DEBUG_KEY_MANAGEMENT
-plugin-dialog_examples          := PLUGIN_DIALOG_EXAMPLES
 plugin-disks                    := PLUGIN_DISKS
-plugin-example_key_management   := PLUGIN_EXAMPLE_KEY_MANAGEMENT
 plugin-feedback                 := PLUGIN_FEEDBACK
 plugin-file_key_management      := PLUGIN_FILE_KEY_MANAGEMENT
 plugin-ha_archive               := PLUGIN_ARCHIVE
 plugin-ha_blackhole             := PLUGIN_BLACKHOLE
 plugin-ha_connect               := PLUGIN_CONNECT
-plugin-ha_example               := PLUGIN_EXAMPLE
 plugin-ha_federated             := PLUGIN_FEDERATED
 plugin-ha_federatedx            := PLUGIN_FEDERATEDX
-plugin-ha_sequence              := PLUGIN_SEQUENCE
 plugin-ha_sphinx                := PLUGIN_SPHINX
 plugin-ha_spider                := PLUGIN_SPIDER
-plugin-ha_test_sql_discovery    := PLUGIN_TEST_SQL_DISCOVERY
 plugin-handlersocket            := PLUGIN_HANDLERSOCKET
-plugin-libdaemon_example        := PLUGIN_DAEMON_EXAMPLE
 plugin-locales                  := PLUGIN_LOCALES
 plugin-metadata_lock_info       := PLUGIN_METADATA_LOCK_INFO
-plugin-mypluglib                := PLUGIN_FTEXAMPLE
-plugin-qa_auth_client           := PLUGIN_QA_AUTH_CLIENT
-plugin-qa_auth_interface        := PLUGIN_QA_AUTH_INTERFACE
-plugin-qa_auth_server           := PLUGIN_QA_AUTH_SERVER
 plugin-query_cache_info         := PLUGIN_QUERY_CACHE_INFO
 plugin-query_response_time      := PLUGIN_QUERY_RESPONSE_TIME
 plugin-semisync_master          := PLUGIN_SEMISYNC_MASTER
@@ -180,8 +179,20 @@ MARIADB_COMMON_DEPENDS := \
 # ignore them.
 TARGET_CFLAGS+=$(TARGET_CPPFLAGS)
 
+define Package/mariadb/disable/engine
+	echo > $(1)/storage/$(2)/CMakeLists.txt
+endef
+
+define Package/mariadb/disable/plugin
+	echo > $(1)/plugin/$(2)/CMakeLists.txt
+endef
+
 define Package/mariadb/install/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(2) $(1)/usr/bin
+endef
+
+define Package/mariadb/install/plugin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/$(2).so $(1)$(PLUGIN_DIR)
 endef
 
 define Package/mariadb/description/Default
@@ -191,12 +202,17 @@ database query language in the world. The main goals of MariaDB are
 speed, robustness and ease of use.
 endef
 
-define Package/libmariadb
+define Package/libmariadb/Default
   SECTION:=libs
   CATEGORY:=Libraries
+  URL:=https://mariadb.org/
+endef
+
+define Package/libmariadb
+$(call Package/libmariadb/Default)
   DEPENDS:=$(MARIADB_COMMON_DEPENDS)
   TITLE:=MariaDB database client library
-  URL:=https://mariadb.org/
+  MENU:=1
   PROVIDES:=libmariadbclient libmysqlclient libmysqlclient-r
 endef
 
@@ -310,10 +326,6 @@ CMAKE_OPTIONS += -DWITH_UNIT_TESTS=0
 # time.
 CMAKE_OPTIONS += -DSTACK_DIRECTION=-1
 
-# Jemalloc was added for TokuDB. Since its configure script seems somewhat broken
-# when it comes to cross-compilation we shall disable it and also disable TokuDB.
-CMAKE_OPTIONS += -DWITH_JEMALLOC=no -DWITHOUT_TOKUDB=1
-
 # Make it explicit that we are cross-compiling
 CMAKE_OPTIONS += -DCMAKE_CROSSCOMPILING=1
 
@@ -326,7 +338,9 @@ CMAKE_OPTIONS += -DSECURITY_HARDENED=OFF
 ifeq ($(CONFIG_PACKAGE_mariadb-server),)
 CMAKE_OPTIONS += -DWITHOUT_SERVER=ON
 else
-CMAKE_OPTIONS += -DWITHOUT_SERVER=OFF
+# Enable the auth_socket plugin and let unix user root access MariaDB without a
+# separate password.
+CMAKE_OPTIONS += -DWITHOUT_SERVER=OFF -DPLUGIN_AUTH_SOCKET=STATIC
 endif
 
 CMAKE_OPTIONS += \
@@ -372,18 +386,6 @@ CMAKE_OPTIONS += \
 	-DWITH_VALGRIND=OFF \
 	-DWITH_ZLIB=system
 
-# Default-disable some modules
-CMAKE_OPTIONS += \
-	-DPLUGIN_CASSANDRA=NO \
-	-DPLUGIN_MROONGA=NO \
-	-DPLUGIN_OQGRAPH=NO \
-	-DPLUGIN_ROCKSDB=NO \
-	-DPLUGIN_TOKUDB=NO \
-	-DPLUGIN_AUTH_PAM=NO \
-	-DPLUGIN_AUTH_GSSAPI=NO \
-	-DPLUGIN_AUTH_GSSAPI_CLIENT=OFF \
-	-DPLUGIN_CRACKLIB_PASSWORD_CHECK=NO
-
 # Help MariaDB find the correct libiconv.
 # nls.mk sets it up so that with CONFIG_BUILD_NLS libiconv-full would be used,
 # otherwise libiconv-stub (independent of the selected libc). MariaDB needs a
@@ -393,6 +395,7 @@ CMAKE_OPTIONS += \
 	-DICONV_LIBRARIES=$(ICONV_PREFIX)/lib/libiconv.$(if $(CONFIG_BUILD_NLS),so,a)
 
 CMAKE_OPTIONS += \
+	$(foreach p,$(MARIADB_LIB_PLUGINS),-D$(plugin-$(p))=$(if $(CONFIG_PACKAGE_lib$(PKG_NAME)-plugin-$(subst _,-,$(p))),DYNAMIC,OFF)) \
 	$(foreach p,$(MARIADB_SERVER_PLUGINS),-D$(plugin-$(p))=$(if $(CONFIG_PACKAGE_$(PKG_NAME)-server-plugin-$(subst _,-,$(p))),DYNAMIC,NO))
 
 # Set CMAKE_FIND_ROOT_PATH_MODE_INCLUDE and CMAKE_FIND_ROOT_PATH_MODE_LIBRARY
@@ -407,8 +410,7 @@ CMAKE_HOST_OPTIONS += \
 	-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=BOTH \
 	-DCMAKE_INSTALL_RPATH="$(STAGING_DIR_HOSTPKG)/lib" \
 	-DCMAKE_SKIP_RPATH=FALSE \
-	-DWITHOUT_SERVER=OFF \
-	-DWITHOUT_TOKUDB=1
+	-DWITHOUT_SERVER=OFF
 
 # Some helpers must be compiled for host in order to crosscompile mariadb for
 # the target. They are then included by import_executables.cmake which is
@@ -419,6 +421,13 @@ CMAKE_HOST_OPTIONS += \
 # See also https://mariadb.com/kb/en/mariadb/cross-compiling-mariadb/
 
 CMAKE_OPTIONS += -DIMPORT_EXECUTABLES=$(STAGING_DIR_HOSTPKG)/share/mariadb/import_executables.cmake
+
+# Disable some engines/plugins here as well - decreases the number of cmake checks.
+define Host/Prepare
+	$(call Host/Prepare/Default)
+	$(foreach e,$(MARIADB_DISABLE_ENGINES),$(call Package/mariadb/disable/engine,$(HOST_BUILD_DIR),$(e));)
+	$(foreach p,$(MARIADB_DISABLE_PLUGINS),$(call Package/mariadb/disable/plugin,$(HOST_BUILD_DIR),$(p));)
+endef
 
 define Host/Compile
 	$(call Host/Compile/Default,import_executables)
@@ -445,6 +454,8 @@ endef
 define Build/Prepare
 	$(call Build/Prepare/Default)
 	$(SED) '/ADD_DEFINITIONS(-DLIBICONV_PLUG)/d' $(PKG_BUILD_DIR)/libmariadb/libmariadb/CMakeLists.txt
+	$(foreach e,$(MARIADB_DISABLE_ENGINES),$(call Package/mariadb/disable/engine,$(PKG_BUILD_DIR),$(e));)
+	$(foreach p,$(MARIADB_DISABLE_PLUGINS),$(call Package/mariadb/disable/plugin,$(PKG_BUILD_DIR),$(p));)
 endef
 
 define Build/InstallDev
@@ -494,8 +505,6 @@ define Package/mariadb-server/install
 	$(INSTALL_BIN) files/mysqld.init $(1)/etc/init.d/mysqld
 	$(INSTALL_CONF) conf/my.cnf $(1)/etc/mysql
 	$(INSTALL_CONF) conf/mysqld.default $(1)/etc/default/mysqld
-	$(INSTALL_DIR) $(1)$(PLUGIN_DIR)
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/daemon_example.ini $(1)$(PLUGIN_DIR)
 	$(INSTALL_DIR) $(1)/usr/share/mysql/english
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/english/errmsg.sys $(1)/usr/share/mysql/english
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/fill_help_tables.sql $(1)/usr/share/mysql
@@ -513,28 +522,25 @@ endef
 define Package/mariadb-server/conffiles
 /etc/default/mysqld
 /etc/mysql/my.cnf
-$(PLUGIN_DIR)/daemon_example.ini
 endef
 
 define BuildPlugin
-  define Package/$(PKG_NAME)-server-plugin-$(subst _,-,$(1))
-    $$(call Package/mariadb/Default)
-    TITLE:=MariaDB database plugin
-    DEPENDS:=mariadb-server $(patsubst +%,+PACKAGE_$(PKG_NAME)-server-plugin-$(subst _,-,$(1)):%,$(2))
+  define Package/$(1)-plugin-$(subst _,-,$(2))
+    $(call Package/$(subst mariadb-server,mariadb,$(1))/Default)
+    TITLE:=$(1) plugin
+    DEPENDS:=$(1) $(patsubst +%,+PACKAGE_$(1)-plugin-$(subst _,-,$(2)):%,$(3))
   endef
-  define Package/$(PKG_NAME)-server-plugin-$(subst _,-,$(1))/description
-    $$(call Package/mariadb/description/Default)
+  define Package/$(1)-plugin-$(subst _,-,$(2))/description
+    $(call Package/mariadb/description/Default)
 
-This package provides the $(1) plugin.
+This package provides the $(2) plugin.
 
   endef
-  define Package/$(PKG_NAME)-server-plugin-$(subst _,-,$(1))/install
-  	$(INSTALL_DIR) $$(1)$(PLUGIN_DIR)
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)$(PLUGIN_DIR)/$(1).so \
-		$$(1)$(PLUGIN_DIR)
+  define Package/$(1)-plugin-$(subst _,-,$(2))/install
+	  $(INSTALL_DIR) $$(1)$(PLUGIN_DIR)
+	  $(call Package/mariadb/install/plugin,$$(1),$(2))
   endef
-  $$(eval $$(call BuildPackage,$(PKG_NAME)-server-plugin-$(subst _,-,$(1))))
+  $$(eval $$(call BuildPackage,$(1)-plugin-$(subst _,-,$(2))))
 endef
 
 $(eval $(call HostBuild))
@@ -545,41 +551,29 @@ $(eval $(call BuildPackage,mariadb-extra-charsets))
 $(eval $(call BuildPackage,mariadb-server))
 $(eval $(call BuildPackage,mariadb-server-extra))
 
-$(eval $(call BuildPlugin,adt_null,))
-$(eval $(call BuildPlugin,auth_0x0100,))
-$(eval $(call BuildPlugin,auth_ed25519,))
-$(eval $(call BuildPlugin,auth_socket,))
-$(eval $(call BuildPlugin,auth_test_plugin,))
-$(eval $(call BuildPlugin,client_ed25519,))
-$(eval $(call BuildPlugin,debug_key_management,))
-$(eval $(call BuildPlugin,dialog_examples,))
-$(eval $(call BuildPlugin,disks,))
-$(eval $(call BuildPlugin,example_key_management,))
-$(eval $(call BuildPlugin,feedback,))
-$(eval $(call BuildPlugin,file_key_management,))
-$(eval $(call BuildPlugin,ha_archive,))
-$(eval $(call BuildPlugin,ha_blackhole,))
-$(eval $(call BuildPlugin,ha_connect,+libxml2))
-$(eval $(call BuildPlugin,ha_example,))
-$(eval $(call BuildPlugin,ha_federated,))
-$(eval $(call BuildPlugin,ha_federatedx,))
-$(eval $(call BuildPlugin,ha_sequence,))
-$(eval $(call BuildPlugin,ha_sphinx,))
-$(eval $(call BuildPlugin,ha_spider,))
-$(eval $(call BuildPlugin,ha_test_sql_discovery,))
-$(eval $(call BuildPlugin,handlersocket,))
-$(eval $(call BuildPlugin,libdaemon_example,))
-$(eval $(call BuildPlugin,locales,))
-$(eval $(call BuildPlugin,metadata_lock_info,))
-$(eval $(call BuildPlugin,mypluglib,))
-$(eval $(call BuildPlugin,qa_auth_client,))
-$(eval $(call BuildPlugin,qa_auth_interface,))
-$(eval $(call BuildPlugin,qa_auth_server,))
-$(eval $(call BuildPlugin,query_cache_info,))
-$(eval $(call BuildPlugin,query_response_time,))
-$(eval $(call BuildPlugin,semisync_master,))
-$(eval $(call BuildPlugin,semisync_slave,))
-$(eval $(call BuildPlugin,server_audit,))
-$(eval $(call BuildPlugin,simple_password_check,))
-$(eval $(call BuildPlugin,sql_errlog,))
-$(eval $(call BuildPlugin,wsrep_info,))
+$(eval $(call BuildPlugin,libmariadb,auth_gssapi_client,+krb5-libs))
+$(eval $(call BuildPlugin,mariadb-server,auth_ed25519,))
+$(eval $(call BuildPlugin,mariadb-server,auth_gssapi,+krb5-libs))
+$(eval $(call BuildPlugin,mariadb-server,auth_pam,+libpam))
+$(eval $(call BuildPlugin,mariadb-server,client_ed25519,))
+$(eval $(call BuildPlugin,mariadb-server,disks,))
+$(eval $(call BuildPlugin,mariadb-server,feedback,))
+$(eval $(call BuildPlugin,mariadb-server,file_key_management,))
+$(eval $(call BuildPlugin,mariadb-server,ha_archive,))
+$(eval $(call BuildPlugin,mariadb-server,ha_blackhole,))
+$(eval $(call BuildPlugin,mariadb-server,ha_connect,+libxml2))
+$(eval $(call BuildPlugin,mariadb-server,ha_federated,))
+$(eval $(call BuildPlugin,mariadb-server,ha_federatedx,))
+$(eval $(call BuildPlugin,mariadb-server,ha_sphinx,))
+$(eval $(call BuildPlugin,mariadb-server,ha_spider,))
+$(eval $(call BuildPlugin,mariadb-server,handlersocket,))
+$(eval $(call BuildPlugin,mariadb-server,locales,))
+$(eval $(call BuildPlugin,mariadb-server,metadata_lock_info,))
+$(eval $(call BuildPlugin,mariadb-server,query_cache_info,))
+$(eval $(call BuildPlugin,mariadb-server,query_response_time,))
+$(eval $(call BuildPlugin,mariadb-server,semisync_master,))
+$(eval $(call BuildPlugin,mariadb-server,semisync_slave,))
+$(eval $(call BuildPlugin,mariadb-server,server_audit,))
+$(eval $(call BuildPlugin,mariadb-server,simple_password_check,))
+$(eval $(call BuildPlugin,mariadb-server,sql_errlog,))
+$(eval $(call BuildPlugin,mariadb-server,wsrep_info,))
