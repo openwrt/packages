@@ -1,0 +1,39 @@
+From 9977cc5a4b35809bed04be543cf38e32d8f175c5 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Sat, 15 Dec 2018 15:02:34 -0800
+Subject: [PATCH] Add a few missing headers
+
+Helps to compile with alternative c++ libraries.
+---
+ inc/DeviceSource.h     | 2 ++
+ inc/MemoryBufferSink.h | 1 +
+ 2 files changed, 3 insertions(+)
+
+diff --git a/inc/DeviceSource.h b/inc/DeviceSource.h
+index 7d4aa18..0e2f996 100755
+--- a/inc/DeviceSource.h
++++ b/inc/DeviceSource.h
+@@ -18,6 +18,8 @@
+ #include <iostream>
+ #include <iomanip>
+ 
++#include <pthread.h>
++
+ // live555
+ #include <liveMedia.hh>
+ 
+diff --git a/inc/MemoryBufferSink.h b/inc/MemoryBufferSink.h
+index 97e1db1..fc6de20 100644
+--- a/inc/MemoryBufferSink.h
++++ b/inc/MemoryBufferSink.h
+@@ -12,6 +12,7 @@
+ #pragma once
+ 
+ #include <map>
++#include <string>
+ 
+ #include "MediaSink.hh"
+ 
+-- 
+2.20.1
+
