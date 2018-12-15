@@ -33,7 +33,9 @@ PKG_BUILD_DEPENDS:=libevent2 mariadb/host
 
 CMAKE_INSTALL:=1
 
-PLUGIN_DIR:=/usr/lib/mysql/plugin
+CONF_DIR:=/etc/mysql
+PLUGIN_DIR:=/usr/lib/mariadb/plugin
+SHARE_DIR:=/usr/share/mariadb
 
 MARIADB_DISABLE_ENGINES := \
 	cassandra \
@@ -355,13 +357,13 @@ CMAKE_OPTIONS += \
 	-DINSTALL_DOCDIR=share/doc/mariadb \
 	-DINSTALL_DOCREADMEDIR=share/doc/mariadb \
 	-DINSTALL_MANDIR=share/man \
-	-DINSTALL_MYSQLSHAREDIR=share/mysql \
+	-DINSTALL_MYSQLSHAREDIR=share/mariadb \
 	-DINSTALL_MYSQLTESTDIR="" \
-	-DINSTALL_PLUGINDIR=lib/mysql/plugin \
+	-DINSTALL_PLUGINDIR=lib/mariadb/plugin \
 	-DINSTALL_SBINDIR=bin \
 	-DINSTALL_SCRIPTDIR=bin \
 	-DINSTALL_SQLBENCHDIR="" \
-	-DINSTALL_SUPPORTFILESDIR=share/mysql \
+	-DINSTALL_SUPPORTFILESDIR=share/mariadb \
 	-DINSTALL_UNIX_ADDRDIR=/var/run/mysqld/mysqld.sock \
 	-DMYSQLD_USER=mariadb \
 	-DMYSQL_DATADIR=/var/lib/mysql \
@@ -492,8 +494,8 @@ define Package/mariadb-client-extra/install
 endef
 
 define Package/mariadb-extra-charsets/install
-	$(INSTALL_DIR) $(1)/usr/share/mysql/charsets
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/charsets/* $(1)/usr/share/mysql/charsets
+	$(INSTALL_DIR) $(1)$(SHARE_DIR)/charsets
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/charsets/* $(1)$(SHARE_DIR)/charsets
 endef
 
 define Package/mariadb-server/install
@@ -501,17 +503,17 @@ define Package/mariadb-server/install
 	$(foreach b,$(MARIADB_SERVER),$(call Package/mariadb/install/bin,$(1),$(b));)
 	$(INSTALL_DIR) $(1)/etc/default
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_DIR) $(1)/etc/mysql/conf.d
+	$(INSTALL_DIR) $(1)$(CONF_DIR)/conf.d
 	$(INSTALL_BIN) files/mysqld.init $(1)/etc/init.d/mysqld
-	$(INSTALL_CONF) conf/my.cnf $(1)/etc/mysql
+	$(INSTALL_CONF) conf/my.cnf $(1)$(CONF_DIR)
 	$(INSTALL_CONF) conf/mysqld.default $(1)/etc/default/mysqld
-	$(INSTALL_DIR) $(1)/usr/share/mysql/english
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/english/errmsg.sys $(1)/usr/share/mysql/english
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/fill_help_tables.sql $(1)/usr/share/mysql
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/maria_add_gis_sp_bootstrap.sql $(1)/usr/share/mysql
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/mysql_performance_tables.sql $(1)/usr/share/mysql
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/mysql_system_tables.sql $(1)/usr/share/mysql
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/mysql_system_tables_data.sql $(1)/usr/share/mysql
+	$(INSTALL_DIR) $(1)$(SHARE_DIR)/english
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/english/errmsg.sys $(1)$(SHARE_DIR)/english
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/fill_help_tables.sql $(1)$(SHARE_DIR)
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/maria_add_gis_sp_bootstrap.sql $(1)$(SHARE_DIR)
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/mysql_performance_tables.sql $(1)$(SHARE_DIR)
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/mysql_system_tables.sql $(1)$(SHARE_DIR)
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/mysql_system_tables_data.sql $(1)$(SHARE_DIR)
 endef
 
 define Package/mariadb-server-extra/install
@@ -521,7 +523,7 @@ endef
 
 define Package/mariadb-server/conffiles
 /etc/default/mysqld
-/etc/mysql/my.cnf
+$(CONF_DIR)/my.cnf
 endef
 
 define BuildPlugin
