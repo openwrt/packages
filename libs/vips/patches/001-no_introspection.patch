@@ -1,7 +1,6 @@
-diff -u --recursive vips-8.6.1-vanilla/configure.ac vips-8.6.1/configure.ac
---- vips-8.6.1-vanilla/configure.ac	2018-01-13 17:27:19.375813474 -0500
-+++ vips-8.6.1/configure.ac	2018-01-13 17:27:38.486871756 -0500
-@@ -53,9 +53,6 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -53,9 +53,6 @@ AC_SUBST(LIBRARY_CURRENT)
  AC_SUBST(LIBRARY_REVISION)
  AC_SUBST(LIBRARY_AGE)
  
@@ -11,10 +10,9 @@ diff -u --recursive vips-8.6.1-vanilla/configure.ac vips-8.6.1/configure.ac
  # gir needs a list of source files to scan for introspection
  #
  # build with a glob and a list of files to exclude from scanning
-diff -u --recursive vips-8.6.1-vanilla/libvips/Makefile.am vips-8.6.1/libvips/Makefile.am
---- vips-8.6.1-vanilla/libvips/Makefile.am	2018-01-13 17:27:19.366813446 -0500
-+++ vips-8.6.1/libvips/Makefile.am	2018-01-13 17:27:57.256929001 -0500
-@@ -70,56 +70,3 @@
+--- a/libvips/Makefile.am
++++ b/libvips/Makefile.am
+@@ -68,56 +68,3 @@ install-exec-hook:
  	echo "#define VIPS_SONAME \"$$dlname\"" >> soname.h && \
  	cp soname.h $(DESTDIR)$(pkgincludedir) && \
  	rm soname.h
