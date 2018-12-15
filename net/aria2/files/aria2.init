@@ -312,9 +312,9 @@ aria2_start() {
 
 	if [ -n "$user" ]; then
 		if ( user_exists "$user" && _change_owner "$user" "$config_dir" "$log" ); then
-				_info "Aria2 will run with uer '${user}'."
+				_info "Aria2 will run with user '${user}'."
 				if [ "$user" != "root" ]; then
-					_info "Please make sure user '${user}' has write access to downlod dir: ${dir}"
+					_info "Please make sure user '${user}' has write access to download dir: ${dir}"
 				fi
 		else
 			_info "Set run user to '${user}' failed, default user will be used."
