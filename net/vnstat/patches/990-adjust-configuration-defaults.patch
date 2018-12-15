@@ -9,8 +9,8 @@ Signed-off-by: Jo-Philipp Wich <jo@mein.io>
 
 --- a/cfg/vnstat.conf
 +++ b/cfg/vnstat.conf
-@@ -87,13 +87,13 @@ DaemonUser ""
- DaemonGroup ""
+@@ -95,13 +95,13 @@ YearlyYears    -1
+ TopDayEntries  20
  
  # how often (in seconds) interface data is updated
 -UpdateInterval 30
@@ -20,7 +20,7 @@ Signed-off-by: Jo-Philipp Wich <jo@mein.io>
 -PollInterval 5
 +PollInterval 30
  
- # how often (in minutes) data is saved to file
+ # how often (in minutes) data is saved to database
 -SaveInterval 5
 +SaveInterval 30
  

@@ -8,16 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vnstat
-PKG_VERSION:=1.18
-PKG_RELEASE:=2
+PKG_VERSION:=2.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://humdi.net/vnstat
-PKG_HASH:=d7193592b9e7445fa5cbe8af7d3b39982f165ee8fc58041ff41f509b37c687d5
+PKG_SOURCE_URL:=https://humdi.net/vnstat
+PKG_HASH:=d12cc8deb3d6ecac59a6554efce5df9e80e750f4de2b48b56e66b8f496e9607a
+
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
-
 PKG_BUILD_DEPENDS:=libgd
 PKG_BUILD_PARALLEL:=1
 
@@ -26,12 +28,13 @@ include $(INCLUDE_DIR)/package.mk
 define Package/vnstat/Default
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://humdi.net/vnstat/
+  URL:=https://humdi.net/vnstat/
 endef
 
 define Package/vnstat
 $(call Package/vnstat/Default)
   TITLE:=Console-based network traffic monitor
+  DEPENDS:=+libsqlite3
 endef
 
 define Package/vnstat/description
