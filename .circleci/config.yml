@@ -5,7 +5,7 @@ jobs:
       - image: docker.io/openwrtorg/packages-cci:v1.0.1
     environment:
       - SDK_BASE_URL: "https://downloads.openwrt.org/snapshots/targets/ar71xx/generic"
-      - SDK_FILE: "openwrt-sdk-ar71xx-generic_gcc-7.3.0_musl.Linux-x86_64.tar.xz"
+      - SDK_FILE: "openwrt-sdk-ar71xx-generic_gcc-7.4.0_musl.Linux-x86_64.tar.xz"
       - BRANCH: "master"
     steps:
       - checkout:
