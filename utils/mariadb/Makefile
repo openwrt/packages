@@ -163,7 +163,8 @@ MARIADB_SERVER_EXTRA := \
 	mysqlhotcopy \
 	perror \
 	replace \
-	resolve_stack_dump
+	resolve_stack_dump \
+	wsrep_sst_*
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -332,6 +333,7 @@ endef
 
 define Package/mariadb-server-base/conffiles
 $(CONF_DIR)/conf.d/50-server.cnf
+$(CONF_DIR)/conf.d/60-galera.cnf
 /etc/default/mysqld
 endef
 
@@ -556,6 +558,8 @@ define Package/mariadb-server-base/install
 	$(INSTALL_DIR) $(1)/etc/default
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/mysqld.init $(1)/etc/init.d/mysqld
+	$(SED) '/^[a-z]/s/^/#/' $(PKG_INSTALL_DIR)$(SHARE_DIR)/wsrep.cnf
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)$(SHARE_DIR)/wsrep.cnf $(1)$(CONF_DIR)/conf.d/60-galera.cnf
 	$(INSTALL_CONF) conf/50-server.cnf $(1)$(CONF_DIR)/conf.d
 	$(INSTALL_CONF) conf/mysqld.default $(1)/etc/default/mysqld
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/charsets/* $(1)$(SHARE_DIR)/charsets
@@ -569,6 +573,7 @@ endef
 
 define Package/mariadb-server-extra/install
 	$(INSTALL_DIR) $(1)/usr/bin
+	$(SED) 's,/bin/bash,/bin/sh,g' $(PKG_INSTALL_DIR)/usr/bin/wsrep_sst_*
 	$(foreach b,$(MARIADB_SERVER_EXTRA),$(call Package/mariadb/install/bin,$(1),$(b));)
 endef
 
