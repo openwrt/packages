@@ -211,7 +211,7 @@ define Package/libmariadb/Default
 endef
 
 define Package/libmariadb
-$(call Package/libmariadb/Default)
+  $(call Package/libmariadb/Default)
   DEPENDS:=$(MARIADB_COMMON_DEPENDS)
   TITLE:=MariaDB database client library
   MENU:=1
@@ -234,10 +234,9 @@ endef
 
 define Package/mariadb-client
   $(call Package/mariadb/Default)
-  TITLE:=MariaDB database core client binaries
-  DEPENDS:= \
-	  $(MARIADB_COMMON_DEPENDS) \
-	  +libedit
+  TITLE:=MariaDB database client
+  MENU:=1
+  DEPENDS:=mariadb-client-base
 endef
 
 define Package/mariadb-client/description
@@ -249,9 +248,30 @@ $(subst $(space),$(newline),$(MARIADB_CLIENT))
 
 endef
 
+define Package/mariadb-client-base
+  $(call Package/mariadb/Default)
+  TITLE:=MariaDB database client base
+  DEPENDS:=mariadb-common \
+	  $(MARIADB_COMMON_DEPENDS) \
+	  +libedit
+endef
+
+define Package/mariadb-client-base/conffiles
+$(CONF_DIR)/conf.d/50-client.cnf
+$(CONF_DIR)/conf.d/50-mysql-clients.cnf
+endef
+
+define Package/mariadb-client-base/description
+$(call Package/mariadb/description/Default)
+
+This package provides the foundation for mariadb-client. It installs the
+configuration and the dependencies.
+
+endef
+
 define Package/mariadb-client-extra
   $(call Package/mariadb/Default)
-  TITLE:=MariaDB database extra client binaries
+  TITLE:=MariaDB database client extra
   DEPENDS:=mariadb-client
 endef
 
@@ -261,6 +281,23 @@ $(call Package/mariadb/description/Default)
 This package includes the following extra client binaries:
 
 $(subst $(space),$(newline),$(MARIADB_CLIENT_EXTRA))
+
+endef
+
+define Package/mariadb-common
+  $(call Package/mariadb/Default)
+  TITLE:=MariaDB database common files
+  DEPENDS:=
+endef
+
+define Package/mariadb-common/conffiles
+$(CONF_DIR)/my.cnf
+endef
+
+define Package/mariadb-common/description
+$(call Package/mariadb/description/Default)
+
+This package includes shared files, for example $(CONF_DIR)/my.cnf.
 
 endef
 
@@ -280,16 +317,10 @@ endef
 
 define Package/mariadb-server
   $(call Package/mariadb/Default)
-  DEPENDS:= \
-	  $(MARIADB_COMMON_DEPENDS) \
-	  +!arc:libaio \
-	  +liblzma \
-	  +libpcre \
-	  +resolveip
-  TITLE:=MariaDB database core server binaries
+  DEPENDS:=mariadb-server-base
+  TITLE:=MariaDB database server
   MENU:=1
   PROVIDES:=mysql-server
-  USERID:=mariadb=376:mariadb=376
 endef
 
 define Package/mariadb-server/description
@@ -301,9 +332,35 @@ $(subst $(space),$(newline),$(MARIADB_SERVER))
 
 endef
 
+define Package/mariadb-server-base
+  $(call Package/mariadb/Default)
+  DEPENDS:=mariadb-common \
+	  $(MARIADB_COMMON_DEPENDS) \
+	  +!arc:libaio \
+	  +liblzma \
+	  +libpcre \
+	  +resolveip
+  TITLE:=MariaDB database server base
+  USERID:=mariadb=376:mariadb=376
+endef
+
+define Package/mariadb-server-base/conffiles
+$(CONF_DIR)/conf.d/50-server.cnf
+/etc/default/mysqld
+endef
+
+define Package/mariadb-server-base/description
+$(call Package/mariadb/description/Default)
+
+This package provides the foundation for mariadb-server. It installs the
+init script, support files (configuration etc.), the user "mariadb" and
+the dependencies.
+
+endef
+
 define Package/mariadb-server-extra
   $(call Package/mariadb/Default)
-  TITLE:=MariaDB database extra server binaries
+  TITLE:=MariaDB database server extra
   DEPENDS:=mariadb-server
 endef
 
@@ -488,9 +545,20 @@ define Package/mariadb-client/install
 	cd $(1)/usr/bin; $(LN) mysqlcheck mysqloptimize
 endef
 
+define Package/mariadb-client-base/install
+	$(INSTALL_DIR) $(1)$(CONF_DIR)/conf.d
+	$(INSTALL_CONF) conf/50-client.cnf $(1)$(CONF_DIR)/conf.d
+	$(INSTALL_CONF) conf/50-mysql-clients.cnf $(1)$(CONF_DIR)/conf.d
+endef
+
 define Package/mariadb-client-extra/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(foreach b,$(MARIADB_CLIENT_EXTRA),$(call Package/mariadb/install/bin,$(1),$(b));)
+endef
+
+define Package/mariadb-common/install
+	$(INSTALL_DIR) $(1)$(CONF_DIR)
+	$(INSTALL_CONF) conf/my.cnf $(1)$(CONF_DIR)
 endef
 
 define Package/mariadb-extra-charsets/install
@@ -501,13 +569,16 @@ endef
 define Package/mariadb-server/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(foreach b,$(MARIADB_SERVER),$(call Package/mariadb/install/bin,$(1),$(b));)
+endef
+
+define Package/mariadb-server-base/install
+	$(INSTALL_DIR) $(1)$(CONF_DIR)/conf.d
+	$(INSTALL_DIR) $(1)$(SHARE_DIR)/english
 	$(INSTALL_DIR) $(1)/etc/default
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_DIR) $(1)$(CONF_DIR)/conf.d
 	$(INSTALL_BIN) files/mysqld.init $(1)/etc/init.d/mysqld
-	$(INSTALL_CONF) conf/my.cnf $(1)$(CONF_DIR)
+	$(INSTALL_CONF) conf/50-server.cnf $(1)$(CONF_DIR)/conf.d
 	$(INSTALL_CONF) conf/mysqld.default $(1)/etc/default/mysqld
-	$(INSTALL_DIR) $(1)$(SHARE_DIR)/english
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/english/errmsg.sys $(1)$(SHARE_DIR)/english
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/fill_help_tables.sql $(1)$(SHARE_DIR)
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/maria_add_gis_sp_bootstrap.sql $(1)$(SHARE_DIR)
@@ -519,11 +590,6 @@ endef
 define Package/mariadb-server-extra/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(foreach b,$(MARIADB_SERVER_EXTRA),$(call Package/mariadb/install/bin,$(1),$(b));)
-endef
-
-define Package/mariadb-server/conffiles
-/etc/default/mysqld
-$(CONF_DIR)/my.cnf
 endef
 
 define BuildPlugin
@@ -548,9 +614,12 @@ endef
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,libmariadb))
 $(eval $(call BuildPackage,mariadb-client))
+$(eval $(call BuildPackage,mariadb-client-base))
 $(eval $(call BuildPackage,mariadb-client-extra))
+$(eval $(call BuildPackage,mariadb-common))
 $(eval $(call BuildPackage,mariadb-extra-charsets))
 $(eval $(call BuildPackage,mariadb-server))
+$(eval $(call BuildPackage,mariadb-server-base))
 $(eval $(call BuildPackage,mariadb-server-extra))
 
 $(eval $(call BuildPlugin,libmariadb,auth_gssapi_client,+krb5-libs))
