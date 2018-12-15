@@ -8,46 +8,94 @@ USE_PROCD=1
 
 #PROCD_DEBUG=1
 
-MYSQLD=mysqld
+NAME=mysqld
 
-DEFAULT=/etc/default/$MYSQLD
-LOGGER="/usr/bin/logger -p user.err -s -t $MYSQLD"
-PROG=/usr/bin/$MYSQLD
+LOGGER="/usr/bin/logger -p user.err -s -t $NAME"
+COMMAND=/usr/bin/$NAME
 
-unset MY_ARGS MY_GROUP MY_USER
-
-[ -f $DEFAULT ] && . $DEFAULT
-
-my_user="${MY_USER:-mariadb}"
-my_group="${MY_GROUP:-mariadb}"
+mysqld_get_param() {
+	$COMMAND --print-defaults \
+		| tr " " "\n" \
+		| grep -- "--$1" \
+		| tail -n 1 \
+		| cut -d= -f2
+}
 
 start_service() {
-	local conf='/etc/mysql/my.cnf'
-	local datadir="$( sed -nE "s/^\s*datadir\s*=\s*('([^']*)'|\x22([^\x22]*)\x22|(.*\S))\s*$/\2\3\4/p" "$conf" )"
+	local conf=/etc/mysql/my.cnf
+	local dir
+	local user=mariadb
 
-	[ -d "$datadir" ] || {
-		$LOGGER "datadir '$datadir' in '$conf' does not exist"
-		return 1
-	}
+	local datadir
+	local logdir=/var/log/mysql
+	local rundir=/var/run/mysqld
+	local tmpdir
 
-	[ -f "$datadir/mysql/tables_priv.MYD" ] || {
+	local enabled
+	local log_stderr
+	local log_stdout
+	local options
+
+	if [ ! -x $COMMAND ]; then
+		$LOGGER $COMMAND is missing
+		exit 1
+	fi
+
+	if [ ! -r $conf ]; then
+		$LOGGER $conf cannot be read
+		exit 1
+	fi
+
+	config_load $NAME
+
+	config_get_bool enabled general enabled 0
+	if [ $enabled -eq 0 ]; then
+		$LOGGER service not enabled in /etc/config/$NAME
+		exit 1
+	fi
+
+	config_get_bool log_stderr general log_stderr 1
+	config_get_bool log_stdout general log_stdout 1
+
+	config_get options general options
+
+	datadir=$(mysqld_get_param datadir)
+	tmpdir=$(mysqld_get_param tmpdir)
+
+	if [ -z "$datadir" ]; then
+		$LOGGER datadir is not set
+		exit 1
+	fi
+
+	if [ -z "$tmpdir" ]; then
+		$LOGGER tmpdir is not set.
+		exit 1
+	fi
+
+	[ -e "$datadir" ] || mkdir -p "$datadir"
+
+	for dir in "$logdir" "$rundir" "$tmpdir"; do
+		if [ ! -e "$dir" ]; then
+			mkdir -p "$dir"
+			chown $user "$dir"
+		fi
+	done
+
+	if [ ! -f "$datadir/mysql/tables_priv.MYD" ]; then
 		$LOGGER "cannot detect privileges table, you might need to"
 		$LOGGER "run 'mysql_install_db --force' to initialize the system tables"
-		return 1
-	}
-
-	mkdir -p /var/lib/mysql
-	chown "$my_user":"$my_group" /var/lib/mysql
-
-	mkdir -p /var/run/mysqld
-	chown "$my_user":"$my_group" /var/run/mysqld
+		exit 1
+	fi
 
 	procd_open_instance
 
-	procd_set_param command $PROG $MY_ARGS
-	procd_set_param pidfile /var/run/mysqld.pid
+	procd_set_param command $COMMAND $options
+
 	# forward stderr to logd
-	procd_set_param stderr 1
+	procd_set_param stderr $log_stderr
+	# same for stdout
+	procd_set_param stdout $log_stdout
 
 	procd_close_instance
 }
+
