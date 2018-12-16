@@ -9,12 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcl
 TCL_MAJOR_VERSION:=8.6
-PKG_VERSION:=${TCL_MAJOR_VERSION}.8
+PKG_VERSION:=${TCL_MAJOR_VERSION}.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)$(PKG_VERSION)-src.tar.gz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
-PKG_HASH:=c43cb0c1518ce42b00e7c8f6eaddd5195c53a98f94adc717234a65cbcfd3f96a
+PKG_HASH:=ad0cd2de2c87b9ba8086b43957a0de3eb2eb565c7159d5f53ccbba3feb915f4e
 PKG_LICENSE:=TCL
 PKG_LICENSE_FILES:=license.terms
 PKG_MAINTAINER:=Joe Mistachkin <joe@mistachkin.com>
@@ -34,7 +34,7 @@ define Package/tcl
   CATEGORY:=Languages
   DEPENDS:=+libpthread +zlib
   TITLE:=The Tcl language
-  URL:=http://www.tcl.tk/
+  URL:=https://www.tcl.tk/
 endef
 
 define Package/tcl/description
