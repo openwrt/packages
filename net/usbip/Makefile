@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=usbip
-PKG_RELEASE:=10
+PKG_RELEASE:=11
 PKG_LICENSE:=GPL-2.0
 
 # Since kernel 2.6.39.1 userspace tools are inside the kernel tree
@@ -81,20 +81,20 @@ endef
 CONFIGURE_VARS+= $(if $(CONFIG_USE_GLIBC),LIBS='-lbsd -lpthread')
 CFLAGS+="$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include"
 
-USB_IDS_REV:=0a6be488b4c1485d30c9efee1cc895af5d4a1383
-USB_IDS_FILE:=usb.ids.$(USB_IDS_REV)
+USB_IDS_VER:=0.318
+USB_IDS_FILE:=usb.ids.$(USB_IDS_VER)
 define Download/usb.ids
   FILE:=$(USB_IDS_FILE)
   URL_FILE:=usb.ids
-  URL:=@GITHUB/gentoo/hwids/$(USB_IDS_REV)
-  HASH:=2d0403ffccc0ff7150e32c0bf8e2878816b76ba08d2c3bb1059f33627a3da30f
+  URL:=@GITHUB/vcrhonek/hwdata/v$(USB_IDS_VER)
+  HASH:=84bc5452e4e45c2250e01bc74e03528b2a53c4724b2c4a5feaea76a922f83915
 endef
 
 define Package/usbip/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libusbip.so.* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/share/hwdata
-	$(CP) $(DL_DIR)/usb.ids.$(USB_IDS_REV) $(1)/usr/share/hwdata/usb.ids
+	$(CP) $(DL_DIR)/usb.ids.$(USB_IDS_VER) $(1)/usr/share/hwdata/usb.ids
 endef
 
 define Package/usbip-client/install
