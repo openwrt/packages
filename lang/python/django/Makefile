@@ -8,14 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django
-PKG_VERSION:=1.11.16
+PKG_VERSION:=1.11.17
 PKG_RELEASE=1
-PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=Django-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/D/Django
-PKG_HASH:=29268cc47816a44f27308e60f71da635f549c47d8a1d003b28de55141df75791
+PKG_HASH:=a787ee66f4b4cf8ed753661cabcec603989677fa3a107fcb7f15511a44bdb483
 PKG_BUILD_DIR=$(BUILD_DIR)/Django-$(PKG_VERSION)
+
+PKG_MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=LICENSE LICENSE.python
+PKG_CPE_ID:=cpe:/a:djangoproject:django
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
@@ -25,7 +29,6 @@ define Package/django
     SECTION:=lang
     CATEGORY:=Languages
     TITLE:=The web framework for perfectionists with deadlines.
-    MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
     URL:=https://www.djangoproject.com/
     DEPENDS:=+python
 endef
