@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.15.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
@@ -67,6 +67,8 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_HTTP_BROTLI \
 	CONFIG_NGINX_HEADERS_MORE \
 	CONFIG_NGINX_STREAM_CORE_MODULE \
+	CONFIG_NGINX_STREAM_SSL_MODULE \
+	CONFIG_NGINX_STREAM_SSL_PREREAD_MODULE \
 	CONFIG_NGINX_RTMP_MODULE \
 	CONFIG_NGINX_TS_MODULE \
 
@@ -268,6 +270,12 @@ ifneq ($(BUILD_VARIANT),all-module)
   ifeq ($(CONFIG_NGINX_STREAM_CORE_MODULE),y)
     ADDITIONAL_MODULES += --with-stream
   endif
+  ifeq ($(CONFIG_NGINX_STREAM_SSL_MODULE),y)
+    ADDITIONAL_MODULES += --with-stream_ssl_module
+  endif
+  ifeq ($(CONFIG_NGINX_STREAM_SSL_PREREAD_MODULE),y)
+    ADDITIONAL_MODULES += --with-stream_ssl_preread_module
+  endif
   ifeq ($(CONFIG_NGINX_HEADERS_MORE),y)
     ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/nginx-headers-more
   endif
@@ -293,7 +301,7 @@ else
 	--with-http_dav_module --add-module=$(PKG_BUILD_DIR)/nginx-dav-ext-module \
 	--with-http_auth_request_module --with-http_v2_module --with-http_realip_module \
 	--with-http_secure_link_module --with-http_sub_module --add-module=$(PKG_BUILD_DIR)/nginx-headers-more \
-	--with-stream \
+	--with-stream --with-stream_ssl_module --with-stream_ssl_preread_module \
 	--add-module=$(PKG_BUILD_DIR)/nginx-brotli --add-module=$(PKG_BUILD_DIR)/nginx-rtmp \
 	--add-module=$(PKG_BUILD_DIR)/nginx-ts
   config_files += koi-utf koi-win win-utf fastcgi_params 
