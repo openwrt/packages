@@ -1,15 +1,42 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -2,9 +2,7 @@ SUBDIRS = \
+ 	src \
+ 	data \
+ 	etc \
+-	docs \
+-	m4macros \
+-	tests
++	m4macros
+ 
+ # tools want this on a single line
+ ACLOCAL_AMFLAGS = -I m4macros
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -343,9 +343,7 @@ SUBDIRS = \
+ 	src \
+ 	data \
+ 	etc \
+-	docs \
+-	m4macros \
+-	tests
++	m4macros
+ 
+ 
+ # tools want this on a single line
 --- a/configure
 +++ b/configure
-@@ -6815,59 +6815,8 @@ fi
+@@ -6119,56 +6119,8 @@ else
+   HAVE_XSLTPROC_FALSE=
+ fi
  
- 
- 
+-
 -# Check for asciidoc
 -# Extract the first word of "a2x", so it can be a program name with args.
 -set dummy a2x; ac_word=$2
 -{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 -$as_echo_n "checking for $ac_word... " >&6; }
--if test "${ac_cv_path_A2X+set}" = set; then :
+-if ${ac_cv_path_A2X+:} false; then :
 -  $as_echo_n "(cached) " >&6
 -else
 -  case $A2X in
@@ -23,7 +50,7 @@
 -  IFS=$as_save_IFS
 -  test -z "$as_dir" && as_dir=.
 -    for ac_exec_ext in '' $ac_executable_extensions; do
--  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
 -    ac_cv_path_A2X="$as_dir/$ac_word$ac_exec_ext"
 -    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
 -    break 2
@@ -53,34 +80,6 @@
    HAVE_A2X_TRUE='#'
    HAVE_A2X_FALSE=
 -fi
--
--if test x"$A2X" = x"no"; then
--  as_fn_error $? "Test for asciidoc failed. See the file 'INSTALL' for help." "$LINENO" 5
--fi
- 
- ac_config_files="$ac_config_files Makefile src/Makefile data/Makefile data/templates/Makefile etc/Makefile docs/Makefile docs/man5/Makefile docs/man5/tinyproxy.conf.txt docs/man8/Makefile docs/man8/tinyproxy.txt m4macros/Makefile tests/Makefile tests/scripts/Makefile"
- 
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -2,9 +2,7 @@ SUBDIRS = \
- 	src \
- 	data \
- 	etc \
--	docs \
- 	m4macros \
--	tests
- 
- # tools want this on a single line
- ACLOCAL_AMFLAGS = -I m4macros
---- a/Makefile.in
-+++ b/Makefile.in
-@@ -222,9 +222,7 @@ SUBDIRS = \
- 	src \
- 	data \
- 	etc \
--	docs \
- 	m4macros \
--	tests
  
  
- # tools want this on a single line
+ # checking xmllint
