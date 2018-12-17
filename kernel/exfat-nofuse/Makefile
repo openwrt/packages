@@ -11,11 +11,11 @@ include $(INCLUDE_DIR)/kernel.mk
 PKG_NAME:=exfat-nofuse
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=https://github.com/dorimanx/exfat-nofuse.git
+PKG_SOURCE_URL:=https://github.com/coolshou/exfat.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2018-04-17
-PKG_SOURCE_VERSION:=01c30ad52625a7261e1b0d874553b6ca7af25966
-PKG_MIRROR_HASH:=47e3b6b8384e4beaa07dc762f4e0cce9a067750cbb4b2fb4ba18d2348038c270
+PKG_SOURCE_DATE:=2018-11-06
+PKG_SOURCE_VERSION:=2ac42ac44af6e8307e2cdb38febbb6e2b6f9918c
+PKG_MIRROR_HASH:=2086f6e6c621390b2ad481f29d60534c6a70a98db97e6e98d1c086b572d2cc4f
 
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 PKG_LICENSE:=GPL-2.0
@@ -26,8 +26,10 @@ include $(INCLUDE_DIR)/package.mk
 define KernelPackage/fs-exfat
 	SUBMENU:=Filesystems
 	TITLE:=ExFAT Kernel driver
-	FILES:=$(PKG_BUILD_DIR)/exfat.ko
-	AUTOLOAD:=$(call AutoLoad,30,exfat,1)
+	FILES:= \
+		$(PKG_BUILD_DIR)/exfat_core.ko \
+		$(PKG_BUILD_DIR)/exfat_fs.ko
+	AUTOLOAD:=$(call AutoLoad,30,exfat_fs,1)
 	DEPENDS:=+kmod-nls-base @BUILD_PATENTED
 endef
 
