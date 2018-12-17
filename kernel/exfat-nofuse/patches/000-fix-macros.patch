@@ -1,0 +1,29 @@
+diff --git a/exfat_config.h b/exfat_config.h
+index e831666..185ba0e 100644
+--- a/exfat_config.h
++++ b/exfat_config.h
+@@ -46,9 +46,9 @@ extern "C" {
+ #define FFS_CONFIG_SUPPORT_CP949        1
+ #define FFS_CONFIG_SUPPORT_CP950        1
+ #define FFS_CONFIG_SUPPORT_UTF8         1
+-#define EXFAT_CONFIG_DISCARD		1
++#define CONFIG_EXFAT_DISCARD		1
+ #define EXFAT_CONFIG_KERNEL_DEBUG	1
+-#define EXFAT_CONFIG_DEBUG_MSG		0
++#define CONFIG_EXFAT_KERNEL_DEBUG	1
+ 
+ #ifdef __cplusplus
+ }
+diff --git a/exfat_data.h b/exfat_data.h
+index b625a44..d0fa090 100644
+--- a/exfat_data.h
++++ b/exfat_data.h
+@@ -33,6 +33,8 @@ extern "C" {
+ #define BUF_CACHE_HASH_SIZE     64
+ #define DEFAULT_CODEPAGE        437
+ #define DEFAULT_IOCHARSET       "utf8"
++#define CONFIG_EXFAT_DEFAULT_CODEPAGE 437
++#define CONFIG_EXFAT_DEFAULT_IOCHARSET "utf8"
+ #ifdef __cplusplus
+ }
+ #endif
