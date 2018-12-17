@@ -4,8 +4,9 @@ jobs:
     docker:
       - image: docker.io/openwrtorg/packages-cci:v1.0.1
     environment:
-      - SDK_BASE_URL: "https://downloads.openwrt.org/snapshots/targets/ar71xx/generic"
-      - SDK_FILE: "openwrt-sdk-ar71xx-generic_gcc-7.4.0_musl.Linux-x86_64.tar.xz"
+      - SDK_HOST: "downloads.openwrt.org"
+      - SDK_PATH: "snapshots/targets/ar71xx/generic"
+      - SDK_FILE: "openwrt-sdk-ar71xx-generic_*.Linux-x86_64.tar.xz"
       - BRANCH: "master"
     steps:
       - checkout:
@@ -62,10 +63,10 @@ jobs:
           name: Download the SDK
           working_directory: ~/sdk
           command: |
-             curl "$SDK_BASE_URL/sha256sums" -sS -o sha256sums
-             curl "$SDK_BASE_URL/sha256sums.asc" -sS -o sha256sums.asc
+             curl "https://$SDK_HOST/$SDK_PATH/sha256sums" -sS -o sha256sums
+             curl "https://$SDK_HOST/$SDK_PATH/sha256sums.asc" -sS -o sha256sums.asc
              gpg --with-fingerprint --verify sha256sums.asc sha256sums
-             curl "$SDK_BASE_URL/$SDK_FILE" -sS -o "$SDK_FILE"
+             rsync -av "$SDK_HOST::downloads/$SDK_PATH/$SDK_FILE" .
              sha256sum -c --ignore-missing sha256sums
 
       - run:
