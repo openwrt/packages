@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=logrotate
-PKG_VERSION:=3.14.0
+PKG_VERSION:=3.15.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:= https://github.com/logrotate/logrotate/releases/download/$(PKG_VERSION)
-PKG_HASH:=4703bdc0e2df3b322f9dff0aafc99aa9172c9e4acae28b7c924cc7d4e5b29d55
+PKG_HASH:=313612c4776a305393454c874ef590d8acf84c9ffa648717731dfe902284ff8f
 PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
