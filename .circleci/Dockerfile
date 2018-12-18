@@ -1,5 +1,11 @@
 FROM debian:9
 
+
+# Configuration version history
+# v1.0   - Initial version by Etienne Champetier
+# v1.0.1 - Run as non-root, add unzip, xz-utils
+# v1.0.2 - Add bzr
+
 RUN apt update && apt install -y \
 build-essential \
 curl \
@@ -11,6 +17,7 @@ libncurses5-dev \
 libssl-dev \
 python \
 subversion \
+bzr \
 time \
 wget \
 zlib1g-dev \
