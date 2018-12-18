@@ -53,8 +53,8 @@ define Build/Compile
 	npm_config_arch=$(CONFIG_ARCH) \
 	npm_config_nodedir=$(STAGING_DIR)/usr \
 	npm_config_cache=$(TMP_DIR)/npm-cache \
-	PREFIX="$(PKG_INSTALL_DIR)/usr/" \
 	npm install --build-from-source --target_arch=$(CPU) -g \
+		--prefix="$(PKG_INSTALL_DIR)/usr/" \
 		`npm pack $(PKG_BUILD_DIR) | tail -n 1`
 endef
 
