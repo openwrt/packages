@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlite
-PKG_VERSION:=3250300
+PKG_VERSION:=3260000
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_VERSION).tar.gz
-PKG_HASH:=00ebf97be13928941940cc71de3d67e9f852698233cd98ce2d178fd08092f3dd
-PKG_SOURCE_URL:=http://www.sqlite.org/2018/
+PKG_HASH:=5daa6a3fb7d1e8c767cd59c4ded8da6e4b00c61d3b466d0685e35c4dd6d7bf5d
+PKG_SOURCE_URL:=https://www.sqlite.org/2018/
 
 PKG_LICENSE:=PUBLICDOMAIN
 PKG_LICENSE_FILES:=
@@ -75,7 +75,7 @@ $(call Package/sqlite3/Default/description)
  formats.
 endef
 
-TARGET_CFLAGS += $(FPIC) \
+TARGET_CFLAGS += \
 	-DSQLITE_ENABLE_UNLOCK_NOTIFY=1 \
 	-DHAVE_ISNAN=1 \
 	-DHAVE_MALLOC_USABLE_SIZE=1
