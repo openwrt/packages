@@ -1,0 +1,76 @@
+Must be rebased for 8.16
+
+--- a/sendmail/main.c
++++ b/sendmail/main.c
+@@ -17,6 +17,9 @@
+ #include <sm/xtrap.h>
+ #include <sm/signal.h>
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++#define OpenSSL_version_num SSLeay
++#endif
+ #ifndef lint
+ SM_UNUSED(static char copyright[]) =
+ "@(#) Copyright (c) 1998-2013 Proofpoint, Inc. and its suppliers.\n\
+@@ -650,7 +653,7 @@ main(argc, argv, envp)
+ 		sm_dprintf("       OpenSSL: compiled 0x%08x\n",
+ 			   (uint) OPENSSL_VERSION_NUMBER);
+ 		sm_dprintf("       OpenSSL: linked   0x%08x\n",
+-			   (uint) SSLeay());
++			   (uint) OpenSSL_version_num());
+ 	}
+ #endif /* STARTTLS */
+ 
+--- a/sendmail/tls.c
++++ b/sendmail/tls.c
+@@ -16,9 +16,25 @@ SM_RCSID("@(#)$Id: tls.c,v 8.127 2013-11-27 02:51:11 gshapiro Exp $")
+ # include <openssl/err.h>
+ # include <openssl/bio.h>
+ # include <openssl/pem.h>
++# include <openssl/bn.h>
++# include <openssl/dh.h>
++# include <openssl/dsa.h>
++# include <openssl/rsa.h>
+ # ifndef HASURANDOMDEV
+ #  include <openssl/rand.h>
+ # endif /* ! HASURANDOMDEV */
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++#define OpenSSL_version_num SSLeay
++#endif
++
++#ifndef CRYPTO_thread_id
++#define CRYPTO_thread_id() (0UL)
++#endif
++
++#ifndef SSL_CTX_set_tmp_rsa_callback
++#define SSL_CTX_set_tmp_rsa_callback(ctx, cb) while(0) (cb)(NULL, 0, 0)
++#endif
++
+ # if !TLS_NO_RSA
+ static RSA *rsa_tmp = NULL;	/* temporary RSA key */
+ static RSA *tmp_rsa_key __P((SSL *, int, int));
+@@ -380,6 +396,7 @@ init_tls_library(fipsmode)
+ {
+ 	bool bv;
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	/* basic TLS initialization, ignore result for now */
+ 	SSL_library_init();
+ 	SSL_load_error_strings();
+@@ -388,6 +405,7 @@ init_tls_library(fipsmode)
+ 	/* this is currently a macro for SSL_library_init */
+ 	SSLeay_add_ssl_algorithms();
+ # endif /* 0 */
++#endif /* OPENSSL_VERSION_NUMBER */
+ 
+ 	bv = tls_rand_init(RandFile, 7);
+ # if _FFR_FIPSMODE
+@@ -1207,7 +1225,7 @@ inittls(ctx, req, options, srv, certfile, keyfile, cacertpath, cacertfile, dhpar
+ 	**  just the compile time version.
+ 	*/
+ 
+-	rt_version = SSLeay();
++	rt_version = OpenSSL_version_num();
+ 	if (rt_version >= 0x00908000L && rt_version <= 0x0090802fL)
+ 	{
+ 		comp_methods = SSL_COMP_get_compression_methods();

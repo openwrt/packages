@@ -13,7 +13,7 @@ APPENDDEF(`confLIBSEARCH', `crypt')
 define(`confMTCCOPTS', `-D_REENTRANT')
 define(`confMTLDOPTS', `-lpthread')
 define(`confLDOPTS_SO', `-shared')
-define(`confSONAME',`-soname')
+define(`confSONAME',`-Wl,-soname')
 
 define(`currentuser', esyscmd(`id -nu'))
 define(`currentgroup', esyscmd(`id -ng'))
