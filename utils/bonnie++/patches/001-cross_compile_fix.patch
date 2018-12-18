@@ -1,7 +1,7 @@
-Index: bonnie++-1.97.1/configure
+Index: bonnie++-1.97.3/configure
 ===================================================================
---- bonnie++-1.97.1.orig/configure
-+++ bonnie++-1.97.1/configure
+--- bonnie++-1.97.3.orig/configure
++++ bonnie++-1.97.3/configure
 @@ -3955,9 +3955,7 @@ rm -f core conftest.err conftest.$ac_obj
  
  if test "$cross_compiling" = yes; then :
@@ -13,10 +13,10 @@ Index: bonnie++-1.97.1/configure
  else
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
  /* end confdefs.h.  */
-Index: bonnie++-1.97.1/Makefile
+Index: bonnie++-1.97.3/Makefile
 ===================================================================
---- bonnie++-1.97.1.orig/Makefile
-+++ bonnie++-1.97.1/Makefile
+--- bonnie++-1.97.3.orig/Makefile
++++ bonnie++-1.97.3/Makefile
 @@ -1,5 +1,7 @@
  EXES=bonnie++ zcav getc_putc getc_putc_helper
  EXE=bon_csv2html generate_randfile

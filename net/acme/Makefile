@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acme
 PKG_VERSION:=2.7.9
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 PKG_LICENSE:=GPLv3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -75,7 +75,7 @@ define Package/luci-app-acme
   SECTION:=luci
   CATEGORY:=LuCI
   TITLE:=ACME package - LuCI interface
-  DEPENDS:= lua luci-base +acme luci-app-uhttpd
+  DEPENDS:= lua luci-base +acme
   SUBMENU:=3. Applications
 endef
 

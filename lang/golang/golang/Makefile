@@ -10,7 +10,7 @@ include ../golang-version.mk
 
 PKG_NAME:=golang
 PKG_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 GO_SOURCE_URLS:=https://dl.google.com/go/ \
                 https://mirrors.ustc.edu.cn/golang/ \
@@ -18,7 +18,7 @@ GO_SOURCE_URLS:=https://dl.google.com/go/ \
 
 PKG_SOURCE:=go$(PKG_VERSION).src.tar.gz
 PKG_SOURCE_URL:=$(GO_SOURCE_URLS)
-PKG_HASH:=567b1cc66c9704d1c019c50bef946272e911ec6baf244310f87f4e678be155f2
+PKG_HASH:=042fba357210816160341f1002440550e952eb12678f7c9e7e9d389437942550
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -180,6 +180,8 @@ endef
 # when go compiles a program, it will use the host std lib
 # so remove it now and force go to rebuild std for target later
 define Host/Install
+	$(call Host/Uninstall)
+
 	$(call GoCompiler/Host/Install/Bin,)
 	$(call GoCompiler/Host/Install/Src,)
 

@@ -7,7 +7,7 @@
 -    <hostname>localhost</hostname>
 +    <hostname>OpenWrt</hostname>
  
-     <!-- You may have multiple <listener> elements -->
+     <!-- You may have multiple <listen-socket> elements -->
      <listen-socket>
 @@ -234,11 +234,9 @@
  

@@ -6,10 +6,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-gnupg
 PKG_VERSION:=0.4.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/fd/a6/4ae8ec46a256444f65d745a92827c05fe6d4f3f4e1a40289a58ac37fe2b9
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/python-gnupg
 PKG_HASH:=2d158dfc6b54927752b945ebe57e6a0c45da27747fa3b9ae66eccc0d2147ac0d
 
 PKG_LICENSE:=GPL-3.0+

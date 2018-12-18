@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=spoofer
-PKG_VERSION:=1.3.3
+PKG_VERSION:=1.4.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.caida.org/projects/spoofer/downloads
-PKG_HASH:=376f9a4b2d0404de3c37df645672a954b4916ad56508fadfe3f99120e5b0f87e
+PKG_HASH:=e6d9e954709a15dc55187a962e8698d880f3df3ce8b914097c576a3a1f852d0d
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=LICENSE
 
+PKG_USE_MIPS16:=0
 HOST_BUILD_DEPENDS:=protobuf/host
 
 include $(INCLUDE_DIR)/host-build.mk

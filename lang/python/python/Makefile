@@ -12,7 +12,7 @@ include ../python-version.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
@@ -268,7 +268,7 @@ define PyPackage/python/filespec
 endef
 
 HOST_LDFLAGS += \
-	$$$$(pkg-config --static --libs libcrypto libssl)
+	$$$$(pkg-config --static --libs libcrypto libssl) -Wl$(comma)-rpath=$(STAGING_DIR_HOSTPKG)/lib
 
 ifeq ($(HOST_OS),Linux)
 HOST_LDFLAGS += \

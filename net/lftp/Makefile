@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lftp
-PKG_VERSION:=4.8.3
+PKG_VERSION:=4.8.4
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://lftp.tech/ftp/ \
 		https://mirror.csclub.uwaterloo.ca/gentoo-distfiles/distfiles/
 		
-PKG_HASH:=de7aee451afaa1aa391f7076b5f602922c2da0e05524a8d8fea413eda83cc78b
+PKG_HASH:=4ebc271e9e5cea84a683375a0f7e91086e5dac90c5d51bb3f169f75386107a62
 
 
 PKG_LICENSE:=GPL-3.0+

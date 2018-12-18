@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -13,7 +13,7 @@
+@@ -13,7 +13,7 @@ endif
  
  DOCBOOK2XMAN=xsltproc --param man.authors.section.enabled 0 $(DOCBOOKXSL)/manpages/docbook.xsl
  
@@ -8,8 +8,8 @@
 +all: $(BINS)
  
  clean:
- 	rm -f $(BINS) $(MANS) dump.c errnos.h errno.o
-@@ -27,9 +27,6 @@
+ 	rm -f $(BINS) $(MANS) dump.c errnos.h errno.o \
+@@ -28,9 +28,6 @@ install:
  	$(INSTALL_BIN) $(BINS) $(DESTDIR)$(PREFIX)/bin
  	install $(PERLSCRIPTS) $(DESTDIR)$(PREFIX)/bin
  

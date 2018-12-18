@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gunicorn
-PKG_VERSION:=19.7.1
+PKG_VERSION:=19.9.0
 PKG_RELEASE=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/30/3a/10bb213cede0cc4d13ac2263316c872a64bf4c819000c8ccd801f1d5f822/
-PKG_HASH:=eee1169f0ca667be05db3351a0960765620dad53f53434262ff8901b68a1b622
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/g/gunicorn
+PKG_HASH:=fa2662097c66f920f53f70621c6c58ca4a3c4d3434205e608e121b5b3b71f4f3
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
@@ -25,7 +25,7 @@ define Package/gunicorn
     CATEGORY:=Languages
     TITLE:=WSGI HTTP Server for UNIX
     MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
-    URL:=http://gunicorn.org/
+    URL:=https://gunicorn.org
     DEPENDS:=+python +python-setuptools
 endef
 

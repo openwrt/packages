@@ -8,15 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zsh
-PKG_VERSION:=5.5.1
+PKG_VERSION:=5.6.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/zsh
-PKG_HASH:=774caa89e7aea5f33c3033cbffd93e28707f72ba5149c79709e48e6c2d2ee080
+PKG_HASH:=a50bd66c0557e8eca3b8fa24e85d0de533e775d7a22df042da90488623752e9e
+
 PKG_MAINTAINER:=Vadim A. Misbakh-Soloviov <openwrt-zsh@mva.name>
 PKG_LICENSE:=ZSH
+PKG_LICENSE_FILES:=LICENCE
+PKG_CPE_ID:=cpe:/a:zsh_project:zsh
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -27,7 +31,7 @@ define Package/zsh
   SUBMENU:=Shells
   TITLE:=The Z shell
   DEPENDS:=+libcap +libncurses +libncursesw +libpcre +librt
-  URL:=http://www.zsh.org/
+  URL:=https://www.zsh.org/
 endef
 
 define Package/zsh/description

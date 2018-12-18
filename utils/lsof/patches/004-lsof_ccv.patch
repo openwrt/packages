@@ -2,7 +2,7 @@ diff --git a/Configure b/Configure
 index 3a6e78b..a2946c6 100755
 --- a/Configure
 +++ b/Configure
-@@ -2788,6 +2788,9 @@ LOCKF_OWNER4
+@@ -2841,6 +2841,9 @@ LOCKF_OWNER4
      if test "X$LSOF_CC" = "X"	# {
      then
        LSOF_CC=cc

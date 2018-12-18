@@ -15,11 +15,11 @@ include $(INCLUDE_DIR)/kernel.mk
 #  - Check and update kmod dependencies when necessary (runtime module load check in the least)
 #
 PKG_NAME:=openvswitch
-PKG_VERSION:=2.10.0
-PKG_RELEASE:=4
+PKG_VERSION:=2.10.1
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
-PKG_HASH:=64f7cdcfffc73b2e09980d04ee22731eadd6453698b92d7397c9e45c7c174050
+PKG_HASH:=4f93c764295952848a924271250d7c6a6a53747d0019ef6ff880aa8ea6897c80
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -297,7 +297,7 @@ CONFIGURE_VARS += \
 	KARCH=$(LINUX_KARCH) \
 
 ovs_intree_kmod_configs:=CONFIG_PACKAGE_kmod-openvswitch-intree
-ovs_intree_kmod_enabled:=$(strip $(foreach c,$(ovs_intree_kmod_configs),$(c)))
+ovs_intree_kmod_enabled:=$(strip $(foreach c,$(ovs_intree_kmod_configs),$($(c))))
 PKG_CONFIG_DEPENDS+=$(ovs_intree_kmod_configs)
 ifneq ($(ovs_intree_kmod_enabled),)
   CONFIGURE_ARGS += --with-linux=$(LINUX_DIR)

@@ -8,12 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rng-tools
-PKG_VERSION:=5
-PKG_RELEASE:=6
+PKG_VERSION:=6.6
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/gkernel/rng-tools/$(PKG_VERSION)/
-PKG_HASH:=60a102b6603bbcce2da341470cad42eeaa9564a16b4490e7867026ca11a3078e
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/nhorman/rng-tools.git
+PKG_SOURCE_VERSION:=4ebc21d6f387bb7b4b3f6badc429e27b21c0a6ee
+PKG_MIRROR_HASH:=d942283b7482337d40a4933f7b24a5d1361518dacf9c87928f5ea06d492e95b0
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
 PKG_LICENSE:=GPLv2
 PKG_MAINTAINER:=Nathaniel Wesley Filardo <nwfilardo@gmail.com>
 
@@ -27,7 +29,8 @@ define Package/rng-tools
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Daemon for adding entropy to kernel entropy pool
-  URL:=http://sourceforge.net/projects/gkernel/
+  URL:=https://github.com/nhorman/rng-tools
+  DEPENDS:=+libsysfs
 endef
 
 define Package/rng-tools/description
@@ -47,7 +50,13 @@ CONFIGURE_VARS += \
 endif
 
 CONFIGURE_ARGS += \
-	--without-libgcrypt
+	--without-libgcrypt \
+	--without-nistbeacon
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	(cd $(PKG_BUILD_DIR); ln -s README.md README)
+endef
 
 define Package/rng-tools/install
 	$(INSTALL_DIR) $(1)/etc/init.d

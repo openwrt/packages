@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -1297,7 +1297,7 @@ else
+@@ -1312,7 +1312,7 @@ else
  	endif
  	curl_check := $(shell (echo 072200; $(CURL_CONFIG) --vernum | sed -e '/^70[BC]/s/^/0/') 2>/dev/null | sort -r | sed -ne 2p)
  	ifeq "$(curl_check)" "072200"

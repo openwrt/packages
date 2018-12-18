@@ -10,7 +10,6 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=libidn
 PKG_VERSION:=1.35
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Kevin Darbyshire-Bryant <kevin@darbyshire-bryant.me.uk>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/libidn
 PKG_HASH:=f11af1005b46b7b15d057d7f107315a1ad46935c7fcdf243c16e46ec14f0fe1e

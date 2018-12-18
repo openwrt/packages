@@ -25,7 +25,7 @@ define Package/fish
   CATEGORY:=Utilities
   SUBMENU:=Shells
   TITLE:=A smart and user-friendly command line shell
-  DEPENDS:=+libncurses +libstdcpp +librt
+  DEPENDS:=+libncurses +libstdcpp +librt +libpcre2-32
   URL:=https://fishshell.com
 endef
 

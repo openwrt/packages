@@ -8,16 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django
-PKG_VERSION:=1.8.18
+PKG_VERSION:=1.11.16
 PKG_RELEASE=1
 PKG_LICENSE:=BSD-3-Clause
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/django/django.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=2d4bc5a60aa8a076689667c550ded96b87bc463e
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=c82c2cc338ae46ba8572d9960fc98dca932edc43a00f011fed102810a86185ae
+PKG_SOURCE:=Django-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/D/Django
+PKG_HASH:=29268cc47816a44f27308e60f71da635f549c47d8a1d003b28de55141df75791
+PKG_BUILD_DIR=$(BUILD_DIR)/Django-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk

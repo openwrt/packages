@@ -4,7 +4,7 @@
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
-START=51
+START=60
 USE_PROCD=1
 
 DEFAULT=/etc/default/nut
@@ -53,10 +53,14 @@ service_reload() {
 	config_foreach nut_upscgi_add host
 	config_foreach nut_upscgi_upsset upsset
 
-	chmod 640 /var/etc/nut/hosts.conf
+	[ -s "$UPSCGI_C" ] && chmod 640 "$UPSCGI_C"
 }
 
 start_service() {
+	service_reload
+}
+
+reload_service() {
 	service_reload
 }
 

@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squid
-PKG_VERSION:=4.0.24
+PKG_VERSION:=4.4
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
@@ -18,10 +18,11 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www3.us.squid-cache.org/Versions/v4/ \
 	http://www2.pl.squid-cache.org/Versions/v4/ \
 	http://www.squid-cache.org/Versions/v4/
-PKG_HASH:=091da0d763307dcc0f5c784ab07ea0c5a093f6dfac60f17ff26e2a6d50f76a07
+PKG_HASH:=4905e6da7f5574d2583ba36f398bb062a12d51e70d67035078b6e85b09e9ee82
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -36,7 +37,7 @@ define Package/squid
   $(call Package/squid/Default)
   MENU:=1
   DEPENDS:=+libpthread +librt +libltdl +libstdcpp +libatomic +USE_GLIBC:libbsd
-  DEPENDS+= +SQUID_use-gnutls:libgnutls +!SQUID_use-gnutls:libopenssl
+  DEPENDS+= +SQUID_use-gnutls:libgnutls +SQUID_use-openssl:libopenssl
   DEPENDS+= +SQUID_with-libcap:libcap
   DEPENDS+= +SQUID_with-nettle:libnettle
   DEPENDS+= +SQUID_with-expat:libexpat
@@ -66,6 +67,8 @@ define Package/squid-mod-cachemgr
 endef
 
 CONFIGURE_ARGS += \
+	BUILDCXX=$(HOSTCXX) \
+	BUILDCXXFLAGS=$(if $(HOST_CXXFLAGS),$(HOST_CXXFLAGS),-O2) \
 	--config-cache \
 	--datadir=/usr/share/squid \
 	--libexecdir=/usr/lib/squid \

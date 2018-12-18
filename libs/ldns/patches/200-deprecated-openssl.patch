@@ -1,0 +1,78 @@
+--- a/dnssec.c
++++ b/dnssec.c
+@@ -23,6 +23,9 @@
+ #include <openssl/rand.h>
+ #include <openssl/err.h>
+ #include <openssl/md5.h>
++#include <openssl/bn.h>
++#include <openssl/rsa.h>
++#include <openssl/dsa.h>
+ #endif
+ 
+ ldns_rr *
+--- a/dnssec_sign.c
++++ b/dnssec_sign.c
+@@ -17,6 +17,9 @@
+ #include <openssl/rand.h>
+ #include <openssl/err.h>
+ #include <openssl/md5.h>
++#include <openssl/bn.h>
++#include <openssl/rsa.h>
++#include <openssl/dsa.h>
+ #endif /* HAVE_SSL */
+ 
+ ldns_rr *
+--- a/dnssec_verify.c
++++ b/dnssec_verify.c
+@@ -594,7 +594,9 @@ ldns_dnssec_trust_tree_print_sm_fmt(FILE
+ 						if (tree->parent_status[i]
+ 						    == LDNS_STATUS_SSL_ERR) {
+ 							printf("; SSL Error: ");
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 							ERR_load_crypto_strings();
++#endif
+ 							ERR_print_errors_fp(stdout);
+ 							printf("\n");
+ 						}
+--- a/drill/drill.c
++++ b/drill/drill.c
+@@ -1013,7 +1013,7 @@ main(int argc, char *argv[])
+ 	xfree(tsig_data);
+ 	xfree(tsig_algorithm);
+ 
+-#ifdef HAVE_SSL
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	CRYPTO_cleanup_all_ex_data();
+ 	ERR_free_strings();
+ 	EVP_cleanup();
+--- a/host2str.c
++++ b/host2str.c
+@@ -28,6 +28,12 @@
+ #include <time.h>
+ #include <sys/time.h>
+ 
++#ifdef HAVE_SSL
++#include <openssl/bn.h>
++#include <openssl/rsa.h>
++#include <openssl/dsa.h>
++#endif
++
+ #ifndef INET_ADDRSTRLEN
+ #define INET_ADDRSTRLEN 16
+ #endif
+--- a/keys.c
++++ b/keys.c
+@@ -16,8 +16,12 @@
+ 
+ #ifdef HAVE_SSL
+ #include <openssl/ssl.h>
+-#include <openssl/engine.h>
+ #include <openssl/rand.h>
++#include <openssl/bn.h>
++#include <openssl/rsa.h>
++#include <openssl/dsa.h>
++#include <openssl/engine.h>
++#include <openssl/ui.h>
+ #endif /* HAVE_SSL */
+ 
+ ldns_lookup_table ldns_signing_algorithms[] = {

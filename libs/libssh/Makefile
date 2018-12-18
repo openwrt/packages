@@ -11,17 +11,18 @@ PKG_LICENSE:=LGPL-2.1+ BSD-2-Clause
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 
 PKG_NAME:=libssh
-PKG_VERSION:=0.7.5
+PKG_VERSION:=0.7.6
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://red.libssh.org/attachments/download/218/
-PKG_HASH:=54e86dd5dc20e5367e58f3caab337ce37675f863f80df85b6b1614966a337095
+PKG_SOURCE_URL:=https://www.libssh.org/files/0.7/
+PKG_HASH:=1d607d3859274f755942324afb0f887ee22edd157f9596a2e69e3a28ec6d1092
+
+PKG_CPE_ID:=cpe:/a:libssh:libssh
 
 CMAKE_INSTALL:=1
 
 PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
@@ -41,8 +42,6 @@ define Package/libssh/description
 endef
 
 CMAKE_OPTIONS = \
-	-DCMAKE_INSTALL_PREFIX:PATH=/usr \
-	-DCMAKE_BUILD_TYPE:STRING=Release \
 	-DHAVE_STRTOULL=1 \
 	-DHAVE_GETADDRINFO=1 \
 	-DHAVE_TERMIOS_H=1 \

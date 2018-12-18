@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sox
 PKG_VERSION:=14.4.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/sox
@@ -51,6 +51,7 @@ CONFIGURE_ARGS += \
 		--without-ladspa \
 		--without-png \
 		--without-sndfile \
+		--without-opus \
 		--with-lame \
 		--with-id3tag \
 		--disable-openmp

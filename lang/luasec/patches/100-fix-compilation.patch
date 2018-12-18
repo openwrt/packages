@@ -1,0 +1,19 @@
+diff --git a/src/Makefile b/src/Makefile
+index 9be2f14..93d1dc4 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -33,10 +33,10 @@ LDFLAGS += $(MYLDFLAGS)
+ all:
+ 
+ install: $(CMOD) $(LMOD)
+-	$(INSTALL) -d $(DESTDIR)$(LUAPATH)/ssl $(DESTDIR)$(LUACPATH)
+-	$(INSTALL) $(CMOD) $(DESTDIR)$(LUACPATH)
+-	$(INSTALL) -m644 $(LMOD) $(DESTDIR)$(LUAPATH)
+-	$(INSTALL) -m644 https.lua $(DESTDIR)$(LUAPATH)/ssl
++	$(INSTALL) -d $(LUAPATH)/ssl $(LUACPATH)
++	$(INSTALL) $(CMOD) $(LUACPATH)
++	$(INSTALL) -m644 $(LMOD) $(LUAPATH)
++	$(INSTALL) -m644 https.lua $(LUAPATH)/ssl
+ 
+ linux:
+ 	@$(MAKE) $(CMOD) MYCFLAGS="$(LNX_CFLAGS)" MYLDFLAGS="$(LNX_LDFLAGS)" EXTRA="$(EXTRA)"

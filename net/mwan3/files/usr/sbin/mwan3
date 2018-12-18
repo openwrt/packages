@@ -43,9 +43,15 @@ ifdown()
 
 ifup()
 {
-	local device enabled up l3_device
+	local device enabled up l3_device status
 
 	config_load mwan3
+	config_get_bool enabled globals 'enabled' 0
+	[ ${enabled} -gt 0 ] || {
+		echo "The service mwan3 is global disabled."
+		echo "Please execute \"/etc/init.d/mwan3 start\" first."
+		exit 1
+	}
 
 	if [ -z "$1" ]; then
 		echo "Expecting interface. Usage: mwan3 ifup <interface>" && exit 0
@@ -61,13 +67,18 @@ ifup()
 		exit 0
 	}
 
-	json_load $(ubus -S call network.interface.$1 status)
-	json_get_vars up l3_device
+	status=$(ubus -S call network.interface.$1 status)
+	[ -n "$status" ] && {
+		json_load $status
+		json_get_vars up l3_device 
+	}
+
 	config_get enabled "$1" enabled 0
 
-	if [ "$up" -eq 1 ] \
+
+	if [ "$up" = "1" ] \
 		&& [ -n "$l3_device" ] \
-		&& [ "$enabled" -eq 1 ]; then
+		&& [ "$enabled" = "1" ]; then
 		ACTION=ifup INTERFACE=$1 DEVICE=$l3_device /sbin/hotplug-call iface
 	fi
 }
@@ -123,12 +134,7 @@ start()
 {
 	local enabled src_ip local_source
 
-	config_load mwan3
-	config_get_bool enabled globals 'enabled' 0
-	[ ${enabled} -gt 0 ] || {
-		echo "Warning: mwan3 is global disabled. Usage: /etc/init.d/mwan3 start"
-		exit 0
-	}
+	uci_toggle_state mwan3 globals enabled "1"
 
 	config_get local_source globals local_source 'none'
 	[ "${local_source}" = "none" ] || {
@@ -211,6 +217,8 @@ stop()
 		ip route del default via "${src_ip}" dev lo 1>/dev/null 2>&1
 		ip addr del "${src_ip}/32" dev lo 1>/dev/null 2>&1
 	}
+
+	uci_toggle_state mwan3 globals enabled "0"
 }
 
 restart() {

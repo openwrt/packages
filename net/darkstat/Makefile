@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -9,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=darkstat
 PKG_VERSION:=3.0.719
-PKG_RELEASE:=1
+PKG_RELEASE:=4
 
 PKG_MAINTAINER:=Jean-Michel Lacroix <lacroix@lepine-lacroix.info>
 
@@ -27,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/darkstat
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpcap +zlib +USE_GLIBC:libbsd
+  DEPENDS:=+libpcap +zlib
   TITLE:=Network bandwidth monitor
   URL:=http://unix4lyfe.org/darkstat/
 endef
@@ -46,7 +44,10 @@ CONFIGURE_ARGS += \
 	--disable-debug \
 	--with-chroot-dir=/var/empty
 
-TARGET_CFLAGS += -std=gnu99
+CONFIGURE_VARS += \
+	ac_cv_search_setproctitle=no \
+	ac_cv_search_strlcpy=no \
+	ac_cv_search_strlcat=no
 
 define Build/Compile
 	$(HOSTCC) $(PKG_BUILD_DIR)/static/c-ify.c \

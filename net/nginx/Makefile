@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.15.3
-PKG_RELEASE:=1
+PKG_VERSION:=1.15.7
+PKG_RELEASE:=3
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nginx.org/download/
-PKG_HASH:=9391fb91c3e2ebd040a4e3ac2b2f0893deb6232edc30a8e16fcc9c3fa9d6be85
+PKG_HASH:=8f22ea2f6c0e0a221b6ddc02b6428a3ff708e2ad55f9361102b1c9f4142bdf93
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Ansuel Smith <ansuelsmth@gmail.com>
@@ -66,6 +66,9 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_HTTP_SECURE_LINK \
 	CONFIG_NGINX_HTTP_BROTLI \
 	CONFIG_NGINX_HEADERS_MORE \
+	CONFIG_NGINX_STREAM_CORE_MODULE \
+	CONFIG_NGINX_STREAM_SSL_MODULE \
+	CONFIG_NGINX_STREAM_SSL_PREREAD_MODULE \
 	CONFIG_NGINX_RTMP_MODULE \
 	CONFIG_NGINX_TS_MODULE \
 
@@ -264,6 +267,15 @@ ifneq ($(BUILD_VARIANT),all-module)
   ifeq ($(CONFIG_NGINX_HTTP_SUB),y)
 	ADDITIONAL_MODULES += --with-http_sub_module
   endif
+  ifeq ($(CONFIG_NGINX_STREAM_CORE_MODULE),y)
+    ADDITIONAL_MODULES += --with-stream
+  endif
+  ifeq ($(CONFIG_NGINX_STREAM_SSL_MODULE),y)
+    ADDITIONAL_MODULES += --with-stream_ssl_module
+  endif
+  ifeq ($(CONFIG_NGINX_STREAM_SSL_PREREAD_MODULE),y)
+    ADDITIONAL_MODULES += --with-stream_ssl_preread_module
+  endif
   ifeq ($(CONFIG_NGINX_HEADERS_MORE),y)
     ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/nginx-headers-more
   endif
@@ -289,6 +301,7 @@ else
 	--with-http_dav_module --add-module=$(PKG_BUILD_DIR)/nginx-dav-ext-module \
 	--with-http_auth_request_module --with-http_v2_module --with-http_realip_module \
 	--with-http_secure_link_module --with-http_sub_module --add-module=$(PKG_BUILD_DIR)/nginx-headers-more \
+	--with-stream --with-stream_ssl_module --with-stream_ssl_preread_module \
 	--add-module=$(PKG_BUILD_DIR)/nginx-brotli --add-module=$(PKG_BUILD_DIR)/nginx-rtmp \
 	--add-module=$(PKG_BUILD_DIR)/nginx-ts
   config_files += koi-utf koi-win win-utf fastcgi_params 
@@ -432,11 +445,11 @@ endif
 
 ifeq ($(CONFIG_NGINX_RTMP_MODULE),y)
   define Download/nginx-rtmp
-    VERSION:=791b6136f02bc9613daf178723ac09f4df5a3bbf
+    VERSION:=f0ea62342a4eca504b311cd5df910d026c3ea4cf
     SUBDIR:=nginx-rtmp
     FILE:=ngx-rtmp-module-$(PKG_VERSION)-$$(VERSION).tar.gz
-    URL:=https://github.com/arut/nginx-rtmp-module.git
-    MIRROR_HASH:=8db3f7b545ce98f47415e0436e12dfb55ae787afd3cd9515b5642c7b9dc0ef00
+    URL:=https://github.com/ut0mt8/nginx-rtmp-module.git
+    MIRROR_HASH:=9ba7625718d21f658c4878729271832a07bd989165f1d1c720b3a9b54cf738cc
     PROTO:=git
   endef
   $(eval $(call Download,nginx-rtmp))

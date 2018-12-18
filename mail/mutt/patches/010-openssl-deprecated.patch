@@ -1,0 +1,80 @@
+--- a/mutt_ssl.c
++++ b/mutt_ssl.c
+@@ -28,6 +28,14 @@
+ #include <openssl/rand.h>
+ #include <openssl/evp.h>
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++#define X509_get0_notBefore X509_get_notBefore
++#define X509_get0_notAfter X509_get_notAfter
++#define X509_getm_notBefore X509_get_notBefore
++#define X509_getm_notAfter X509_get_notAfter
++#define X509_STORE_CTX_get0_chain X509_STORE_CTX_get_chain
++#endif
++
+ #undef _
+ 
+ #include <string.h>
+@@ -121,8 +129,8 @@ static int ssl_load_certificates (SSL_CTX *ctx)
+ 
+   while (NULL != PEM_read_X509 (fp, &cert, NULL, NULL))
+   {
+-    if ((X509_cmp_current_time (X509_get_notBefore (cert)) >= 0) ||
+-        (X509_cmp_current_time (X509_get_notAfter (cert)) <= 0))
++    if ((X509_cmp_current_time (X509_get0_notBefore (cert)) >= 0) ||
++        (X509_cmp_current_time (X509_get0_notAfter (cert)) <= 0))
+     {
+       dprint (2, (debugfile, "ssl_load_certificates: filtering expired cert: %s\n",
+               X509_NAME_oneline (X509_get_subject_name (cert), buf, sizeof (buf))));
+@@ -331,10 +339,12 @@ static int ssl_init (void)
+     }
+   }
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+   /* I don't think you can do this just before reading the error. The call
+    * itself might clobber the last SSL error. */
+   SSL_load_error_strings();
+   SSL_library_init();
++#endif
+   init_complete = 1;
+   return 0;
+ }
+@@ -811,7 +821,7 @@ static int check_certificate_expiration (X509 *peercert, int silent)
+ {
+   if (option (OPTSSLVERIFYDATES) != MUTT_NO)
+   {
+-    if (X509_cmp_current_time (X509_get_notBefore (peercert)) >= 0)
++    if (X509_cmp_current_time (X509_get0_notBefore (peercert)) >= 0)
+     {
+       if (!silent)
+       {
+@@ -821,7 +831,7 @@ static int check_certificate_expiration (X509 *peercert, int silent)
+       }
+       return 0;
+     }
+-    if (X509_cmp_current_time (X509_get_notAfter (peercert)) <= 0)
++    if (X509_cmp_current_time (X509_get0_notAfter (peercert)) <= 0)
+     {
+       if (!silent)
+       {
+@@ -1069,7 +1079,7 @@ static int ssl_verify_callback (int preverify_ok, X509_STORE_CTX *ctx)
+ 
+   cert = X509_STORE_CTX_get_current_cert (ctx);
+   pos = X509_STORE_CTX_get_error_depth (ctx);
+-  len = sk_X509_num (X509_STORE_CTX_get_chain (ctx));
++  len = sk_X509_num (X509_STORE_CTX_get0_chain (ctx));
+ 
+   dprint (1, (debugfile,
+               "ssl_verify_callback: checking cert chain entry %s (preverify: %d skipmode: %d)\n",
+@@ -1198,9 +1208,9 @@ static int interactive_check_cert (X509 *cert, int idx, int len, SSL *ssl, int a
+   row++;
+   snprintf (menu->dialog[row++], SHORT_STRING, "%s", _("This certificate is valid"));
+   snprintf (menu->dialog[row++], SHORT_STRING, _("   from %s"),
+-      asn1time_to_string (X509_get_notBefore (cert)));
++      asn1time_to_string (X509_getm_notBefore (cert)));
+   snprintf (menu->dialog[row++], SHORT_STRING, _("     to %s"),
+-      asn1time_to_string (X509_get_notAfter (cert)));
++      asn1time_to_string (X509_getm_notAfter (cert)));
+ 
+   row++;
+   buf[0] = '\0';

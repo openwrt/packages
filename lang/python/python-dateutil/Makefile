@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-dateutil
-PKG_VERSION:=2.6.1
+PKG_VERSION:=2.7.5
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-2-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/54/bb/f1db86504f7a49e1d9b9301531181b00a1c7325dc85a29160ee3eaa73a54/
-PKG_HASH:=891c38b2a02f5bb1be3e4793866c8df49c7d19baabf9c1bad62547e0b4866aca
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/python-dateutil
+PKG_HASH:=88f9287c0174266bb0d8cedd395cfba9c58e87e5ad86b2ce58859bc11be3cf02
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk

@@ -15,7 +15,7 @@ report_connected_v4() {
 	local address
 
 	if [ -n "$($IPT4 -S mwan3_connected 2> /dev/null)" ]; then
-		for address in $($IPS list mwan3_connected_v4 | tail -n +8); do
+		for address in $($IPS -o save list mwan3_connected_v4 | grep add | cut -d " " -f 3); do
 			json_add_string "" "${address}"
 		done
 	fi
@@ -25,10 +25,48 @@ report_connected_v6() {
 	local address
 
 	if [ -n "$($IPT6 -S mwan3_connected 2> /dev/null)" ]; then
-		for address in $($IPS list mwan3_connected_v6 | tail -n +8); do
+		for address in $($IPS -o save list mwan3_connected_v6 | grep add | cut -d " " -f 3); do
 			json_add_string "" "${address}"
 		done
 	fi
+}
+
+report_policies() {
+	local ipt="$1"
+	local policy="$2"
+
+	local percent total_weight weight iface
+
+	total_weight=$($ipt -S $policy | grep -v '.*--comment "out .*" .*$' | cut -s -d'"' -f2 | head -1 | awk '{print $3}')
+
+	for iface in $($ipt -S $policy | grep -v '.*--comment "out .*" .*$' | cut -s -d'"' -f2 | awk '{print $1}'); do
+		weight=$($ipt -S $policy | grep -v '.*--comment "out .*" .*$' | cut -s -d'"' -f2 | awk '$1 == "'$iface'"' | awk '{print $2}')
+		percent=$(($weight*100/$total_weight))
+		json_add_object
+		json_add_string interface "$iface"
+		json_add_int percent "$percent"
+		json_close_object
+	done
+}
+
+report_policies_v4() {
+	local policy
+
+	for policy in $($IPT4 -S | awk '{print $2}' | grep mwan3_policy_ | sort -u); do
+		json_add_array "${policy##*mwan3_policy_}"
+		report_policies "$IPT4" "$policy"
+		json_close_array
+	done
+}
+
+report_policies_v6() {
+	local policy
+
+	for policy in $($IPT6 -S | awk '{print $2}' | grep mwan3_policy_ | sort -u); do
+		json_add_array "${policy##*mwan3_policy_}"
+		report_policies "$IPT6" "$policy"
+		json_close_array
+	done
 }
 
 get_mwan3_status() {
@@ -36,7 +74,9 @@ get_mwan3_status() {
 	local iface_select="${2}"
 	local running="0"
 	local age=0
-	local pid device time_p time_n
+	local uptime=0
+	local downtime=0
+	local pid device time_p time_n time_u time_d
 
 	network_get_device device $1
 
@@ -52,8 +92,22 @@ get_mwan3_status() {
 			let age=time_n-time_p
 		}
 
+		time_u="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/UPTIME")"
+		[ -z "${time_u}" ] || [ "${time_u}" = "0" ] || {
+			time_n="$(get_uptime)"
+			let uptime=time_n-time_u
+		}
+
+		time_d="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/DOWNTIME")"
+		[ -z "${time_d}" ] || [ "${time_d}" = "0" ] || {
+			time_n="$(get_uptime)"
+			let downtime=time_n-time_d
+		}
+
 		json_add_object "${iface}"
 		json_add_int age "$age"
+		json_add_int uptime "${uptime}"
+		json_add_int downtime "${downtime}"
 		json_add_int "score" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/SCORE")"
 		json_add_int "lost" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LOST")"
 		json_add_int "turn" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/TURN")"
@@ -84,6 +138,7 @@ main () {
 			json_add_object "status"
 			json_add_string "section" "x"
 			json_add_string "interface" "x"
+			json_add_string "policies" "x"
 			json_close_object
 			json_dump
 			;;
@@ -114,6 +169,16 @@ main () {
 						json_close_array
 						json_close_object
 						;;
+					policies)
+						json_add_object policies
+						json_add_object ipv4
+						report_policies_v4
+						json_close_object
+						json_add_object ipv6
+						report_policies_v6
+						json_close_object
+						json_close_object
+						;;
 					*)
 						# interfaces
 						json_add_object interfaces
@@ -127,6 +192,15 @@ main () {
 						json_add_array ipv6
 						report_connected_v6
 						json_close_array
+						json_close_object
+						# policies
+						json_add_object policies
+						json_add_object ipv4
+						report_policies_v4
+						json_close_object
+						json_add_object ipv6
+						report_policies_v6
+						json_close_object
 						json_close_object
 						;;
 				esac

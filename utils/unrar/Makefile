@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unrar
-PKG_VERSION:=5.6.5
+PKG_VERSION:=5.6.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=unrarsrc-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.rarlab.com/rar
-PKG_HASH:=eba36a421bf41491818dee9507d934064622bc0bd9db6bbb8422a4706f200898
+PKG_HASH:=a4cc0ac14a354827751912d2af4a0a09e2c2129df5766576fa7e151791dd3dff
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>, \
 		Ted Hess <thess@kitschensync.net>
 

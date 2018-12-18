@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apr
-PKG_VERSION:=1.6.3
-PKG_RELEASE:=1
+PKG_VERSION:=1.6.5
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/apr/
-PKG_HASH:=131f06d16d7aabd097fa992a33eec2b6af3962f93e6d570a9bd4d85e95993172
+PKG_HASH:=a67ca9fcf9c4ff59bce7f428a323c8b5e18667fdea7b0ebad47d194371b0a105
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=Apache License
 
@@ -29,7 +29,7 @@ define Package/libapr
   CATEGORY:=Libraries
   DEPENDS:=+libpthread +librt +libuuid
   TITLE:=Apache Portable Runtime Library
-  URL:=http://apr.apache.org/
+  URL:=https://apr.apache.org/
 endef
 
 TARGET_CFLAGS += $(FPIC)

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort
 PKG_VERSION:=2.9.11.1
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>

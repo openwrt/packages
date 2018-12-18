@@ -30,7 +30,8 @@ define Package/jamvm
   CATEGORY:=Languages
   TITLE:=A compact Java Virtual Machine
   URL:=http://sourceforge.net/projects/jamvm
-  DEPENDS:=+zlib +libpthread +librt +classpath @!avr32
+  DEPENDS:=+zlib +libpthread +librt +classpath \
+	  @(i386||i686||x86_64||arm||armeb||mips||mipsel||powerpc||powerpc64) +CONFIG_powerpc64:libffi
 endef
 
 define Package/jamvm/description

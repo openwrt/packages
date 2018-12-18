@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bonnie++
-PKG_VERSION:=1.97
+PKG_VERSION:=1.97.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://www.coker.com.au/bonnie++/experimental/
-PKG_HASH:=44f5a05937648a6526ba99354555d7d15f2dd392e55d3436f6746da6f6c35982
+PKG_SOURCE_URL:=http://www.coker.com.au/bonnie++/
+PKG_HASH:=e27b386ae0dc054fa7b530aab6bdead7aea6337a864d1f982bc9ebacb320746e
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=copyright.txt
 PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION).1
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 

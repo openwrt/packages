@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=simplejson
-PKG_VERSION:=3.11.1
+PKG_VERSION:=3.16.0
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/08/48/c97b668d6da7d7bebe7ea1817a6f76394b0ec959cb04214ca833c34359df/
-PKG_HASH:=01a22d49ddd9a168b136f26cac87d9a335660ce07aa5c630b8e3607d6f4325e7
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/s/simplejson
+PKG_HASH:=b1f329139ba647a9548aa05fb95d046b4a677643070dc2afc05fa2e975d09ca5
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
@@ -25,7 +25,7 @@ define Package/simplejson
   CATEGORY:=Languages
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
   TITLE:=Simple, fast, extensible JSON encoder/decoder for Python
-  URL:=http://simplejson.readthedocs.org/
+  URL:=https://simplejson.readthedocs.org/
   DEPENDS:=+python
 endef
 

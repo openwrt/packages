@@ -1,0 +1,26 @@
+diff --git a/src/lib-dcrypt/dcrypt-openssl.c b/src/lib-dcrypt/dcrypt-openssl.c
+index c2dbd30..201ab40 100644
+--- a/src/lib-dcrypt/dcrypt-openssl.c
++++ b/src/lib-dcrypt/dcrypt-openssl.c
+@@ -20,6 +20,7 @@
+ #include <openssl/engine.h>
+ #include <openssl/hmac.h>
+ #include <openssl/objects.h>
++#include <openssl/bn.h>
+ #include "dcrypt.h"
+ #include "dcrypt-private.h"
+ 
+diff --git a/src/lib-ssl-iostream/iostream-openssl-context.c b/src/lib-ssl-iostream/iostream-openssl-context.c
+index e3c902e..ad6a9c1 100644
+--- a/src/lib-ssl-iostream/iostream-openssl-context.c
++++ b/src/lib-ssl-iostream/iostream-openssl-context.c
+@@ -6,6 +6,9 @@
+ #include "dovecot-openssl-common.h"
+ 
+ #include <openssl/crypto.h>
++#include <openssl/rsa.h>
++#include <openssl/dh.h>
++#include <openssl/bn.h>
+ #include <openssl/x509.h>
+ #include <openssl/pem.h>
+ #include <openssl/ssl.h>

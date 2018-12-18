@@ -19,6 +19,7 @@ config_get_bool enabled globals 'enabled' '0'
 mwan3_lock
 mwan3_init
 mwan3_set_connected_iptables
+mwan3_set_custom_ipset
 mwan3_unlock
 
 config_get enabled $INTERFACE enabled 0

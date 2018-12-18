@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
 PKG_VERSION:=2018.07.23
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -82,6 +82,12 @@ define Package/prometheus-node-exporter-lua-openwrt
   DEPENDS:=prometheus-node-exporter-lua
 endef
 
+define Package/prometheus-node-exporter-lua-ltq-dsl
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (lantiq dsl collector)
+  DEPENDS:=prometheus-node-exporter-lua @(PACKAGE_ltq-adsl-app||PACKAGE_ltq-vdsl-app)
+endef
+
 Build/Compile=
 
 define Package/prometheus-node-exporter-lua/install
@@ -142,6 +148,11 @@ define Package/prometheus-node-exporter-lua-openwrt/install
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/openwrt.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
+define Package/prometheus-node-exporter-lua-ltq-dsl/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/ltq-dsl.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-nat_traffic))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-netstat))
@@ -151,3 +162,4 @@ $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx6))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx7))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-textfile))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-openwrt))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-ltq-dsl))

@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 
-START=60
+START=51
 USE_PROCD=1
 UPSMON_C=/var/etc/nut/upsmon.conf
 
@@ -114,6 +114,8 @@ nut_upsmon_conf() {
 
 	config_get_bool val "$cfg" forcessl 0
 	if [ -n "$val" ]; then echo "FORCESSL $val" >> "$UPSMON_C"; fi
+
+	havemon=1
 }
 
 nut_upsmon_add() {
@@ -138,6 +140,8 @@ nut_upsmon_add() {
 	    system="$system:$port";
 	fi
 	echo "MONITOR $system $powervalue $username $password $type" >> "$UPSMON_C"
+
+	havems=1
 }
 
 build_config() {
@@ -149,19 +153,24 @@ build_config() {
 	config_foreach nut_upsmon_add master master
 	config_foreach nut_upsmon_add slave slave
 
-	[ -z "$(cat /var/etc/nut/nut.conf)" ] && {
+	[ ! -s "$(cat /var/etc/nut/nut.conf)" ] && {
 		echo "MODE=netclient" >>/var/etc/nut/nut.conf
 		chmod 640 /var/etc/nut/nut.conf
 		chgrp $(id -gn ${runas:-root}) /var/etc/nut/nut.conf
 	}
 
-	chmod 640 "$UPSMON_C"
-	chgrp $(id -gn ${runas:-root}) "$UPSMON_C"
+	[ -s "$UPSMON_C" ] && chmod 640 "$UPSMON_C"
+	[ -s "$UPSMON_C" ] && chgrp $(id -gn ${runas:-root}) "$UPSMON_C"
 }
 
 start_service() {
+	local havemon havems
 	build_config
-	procd_open_instance
+
+	[ "$havemon" != 1 ] && return
+	[ "$havems" != 1 ] && return
+
+	procd_open_instance "upsmon"
 	procd_set_param respawn
 	procd_set_param stderr 0
 	procd_set_param stdout 1
@@ -172,14 +181,14 @@ start_service() {
 reload_service() {
 	if pgrep upsmon >/dev/null 2>/dev/null; then
 		build_config
-		upsmon -c reload
+		/usr/sbin/upsmon -c reload
 	else
 		stop
-		sleep 1
-		start
+		sleep 2
+		start_service
 	fi
 }
 
 service_triggers() {
-	procd_add_reload_trigger nut_monitor
+	procd_add_reload_trigger "nut_monitor"
 }

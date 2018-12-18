@@ -422,8 +422,10 @@ unbound_zone() {
 
   case $zone_type in
     auth_zone)
-      if [ -n "$UB_LIST_ZONE_NAMES" \
+      if [ "$UB_B_NTP_BOOT" -eq 0 -a -n "$UB_LIST_ZONE_NAMES" \
            -a \( -n "$url_dir" -o -n "$UB_LIST_ZONE_SERVERS" \) ] ; then
+        # Note AXFR may have large downloads. If NTP restart is configured,
+        # then this can cause procd to force a process kill.
         for zone_name in $UB_LIST_ZONE_NAMES ; do
           if [ "$zone_name" = "." ] ; then
             zone_sym=.
@@ -619,7 +621,6 @@ unbound_conf() {
         echo "  port: $UB_N_RX_PORT"
         echo "  outgoing-port-permit: 10240-65535"
         echo "  interface: 0.0.0.0"
-        echo "  interface: ::0"
         echo "  outgoing-interface: 0.0.0.0"
         echo "  do-ip4: yes"
         echo "  do-ip6: no"
@@ -632,10 +633,23 @@ unbound_conf() {
         echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
         echo "  port: $UB_N_RX_PORT"
         echo "  outgoing-port-permit: 10240-65535"
-        echo "  interface: 0.0.0.0"
         echo "  interface: ::0"
         echo "  outgoing-interface: ::0"
         echo "  do-ip4: no"
+        echo "  do-ip6: yes"
+        echo
+      } >> $UB_CORE_CONF
+      ;;
+
+   ip6_local)
+      {
+        echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
+        echo "  port: $UB_N_RX_PORT"
+        echo "  outgoing-port-permit: 10240-65535"
+        echo "  interface: 0.0.0.0"
+        echo "  interface: ::0"
+        echo "  outgoing-interface: 0.0.0.0"
+        echo "  do-ip4: yes"
         echo "  do-ip6: yes"
         echo
       } >> $UB_CORE_CONF
@@ -692,27 +706,15 @@ unbound_conf() {
   esac
 
 
-  {
-    # Other harding and options for an embedded router
-    echo "  harden-short-bufsize: yes"
-    echo "  harden-large-queries: yes"
-    echo "  harden-glue: yes"
-    echo "  harden-below-nxdomain: no"
-    echo "  harden-referral-path: no"
-    echo "  use-caps-for-id: no"
-    echo
-  } >> $UB_CORE_CONF
-
-
   case "$UB_D_RESOURCE" in
     # Tiny - Unbound's recommended cheap hardware config
     tiny)   rt_mem=1  ; rt_conn=2  ; rt_buff=1 ;;
     # Small - Half RRCACHE and open ports
     small)  rt_mem=8  ; rt_conn=10 ; rt_buff=2 ;;
     # Medium - Nearly default but with some added balancintg
-    medium) rt_mem=16 ; rt_conn=20 ; rt_buff=4 ;;
+    medium) rt_mem=16 ; rt_conn=15 ; rt_buff=4 ;;
     # Large - Double medium
-    large)  rt_mem=32 ; rt_conn=40 ; rt_buff=4 ;;
+    large)  rt_mem=32 ; rt_conn=20 ; rt_buff=4 ;;
     # Whatever unbound does
     *) rt_mem=0 ; rt_conn=0 ;;
   esac
@@ -720,10 +722,16 @@ unbound_conf() {
 
   if [ "$rt_mem" -gt 0 ] ; then
     {
+      # Other harding and options for an embedded router
+      echo "  harden-short-bufsize: yes"
+      echo "  harden-large-queries: yes"
+      echo "  harden-glue: yes"
+      echo "  use-caps-for-id: no"
+      echo
       # Set memory sizing parameters
       echo "  msg-buffer-size: $(($rt_buff*8192))"
-      echo "  outgoing-range: $(($rt_conn*64))"
-      echo "  num-queries-per-thread: $(($rt_conn*32))"
+      echo "  outgoing-range: $(($rt_conn*32))"
+      echo "  num-queries-per-thread: $(($rt_conn*16))"
       echo "  outgoing-num-tcp: $(($rt_conn))"
       echo "  incoming-num-tcp: $(($rt_conn))"
       echo "  rrset-cache-size: $(($rt_mem*256))k"

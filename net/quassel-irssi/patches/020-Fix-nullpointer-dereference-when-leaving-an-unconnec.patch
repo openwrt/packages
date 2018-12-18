@@ -1,0 +1,28 @@
+From 525ff7ec3bafe9ccbf5802559e2664a25cf925e1 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Bastian=20M=C3=BCller?= <db1bm@gmx.de>
+Date: Sat, 12 Aug 2017 10:24:49 +0200
+Subject: [PATCH] Fix nullpointer dereference when leaving an unconnected
+ window
+
+---
+ core/quassel-fe-level.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/core/quassel-fe-level.c b/core/quassel-fe-level.c
+index 3d69202..3382ddc 100644
+--- a/core/quassel-fe-level.c
++++ b/core/quassel-fe-level.c
+@@ -62,6 +62,10 @@ static void sig_created(WINDOW_REC *winrec, int automatic) {
+ 		return;
+ 	}
+ 
++	if (!winrec->active_server) {
++		return;
++	}
++
+ 	CHANNEL_REC *_chanrec = channel_find(winrec->active_server, winrec->active->visible_name);
+ 	if(_chanrec->chat_type != Quassel_PROTOCOL)
+ 		return;
+-- 
+2.19.1
+

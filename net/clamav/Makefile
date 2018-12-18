@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=clamav
-PKG_VERSION:=0.100.1
-PKG_RELEASE:=2
+PKG_VERSION:=0.101.0
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr> \
 		Lucian Cristian <lucian.cristian@gmail.com>
+PKG_CPE_ID:=cpe:/a:clamav:clamav
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.clamav.net/downloads/production/
-PKG_HASH:=84e026655152247de7237184ee13003701c40be030dd68e0316111049f58a59f
+PKG_HASH:=f12a5ad86bc4e0bde6cad2d30c49c7daab184cba7ce631909434b5d9533a5ad2
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -31,7 +32,7 @@ define Package/clamav/Default
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=ClamAV
-  URL:=http://www.clamav.net/
+  URL:=https://www.clamav.net/
 endef
 
 define Package/clamav
@@ -67,7 +68,7 @@ define Build/Configure
 		--prefix=/usr/ \
 		--exec-prefix=/usr/ \
 		--enable-milter \
-		--disable-xml \
+		--with-xml=no \
 		--disable-bzip2 \
 		--with-user nobody \
 		--with-group nogroup \

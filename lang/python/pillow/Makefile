@@ -7,17 +7,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pillow
-PKG_VERSION:=3.3.1
-PKG_RELEASE=1
+PKG_VERSION:=5.3.0
+PKG_RELEASE:=1
+
+PKG_SOURCE:=Pillow-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/P/Pillow
+PKG_HASH:=2ea3517cd5779843de8a759c2349a3cd8d3893e03ab47053b66d5ec6f8bc4f93
+PKG_BUILD_DIR:=$(BUILD_DIR)/Pillow-$(PKG_VERSION)
+
 PKG_LICENSE:=CUSTOM
 PKG_LICENSE_FILES:=LICENSE
-
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/python-pillow/Pillow.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=aab33141f381d5577cdef9033b7fdff79122a10c
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=e7c36bcf89614337d9abc4d07780da0b346a745be7a9aa55b398fa427549273c
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
@@ -42,12 +41,9 @@ endef
 
 define Package/pillow/install
 	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
-	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) \
 		$(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
 		$(1)$(PYTHON_PKG_DIR)/
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin
-	$(CP) $(PKG_BUILD_DIR)/LICENSE $(1)$(PYTHON_PKG_DIR)/PIL/
 endef
 
 $(eval $(call BuildPackage,pillow))

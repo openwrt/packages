@@ -18,7 +18,7 @@ start_rtty() {
         'host:host' \
         'port:port' \
         'ssl:bool:0' \
-        'ping:uinteger:5'
+        'keepalive:uinteger:5'
     
     [ $? -ne 0 ] && {
         echo "validation failed" >&2
@@ -43,7 +43,7 @@ start_rtty() {
     }
 
     procd_open_instance
-    procd_set_param command $BIN -h $host -p $port -a -P $ping
+    procd_set_param command $BIN -h $host -p $port -a -k $keepalive
     [ -n "$ifname" ] && procd_append_param command -i "$ifname"
     [ -n "$id" ] && procd_append_param command -I "$id"
     [ -n "$description" ] && procd_append_param command -d "$description"

@@ -1,0 +1,70 @@
+#!/bin/sh
+
+# Warning, problems can occur if the device restarts in the middle of this uci-default script
+
+if [ -x /bin/sysrepoctl ]; then
+	match=$(sysrepoctl -l | grep "ietf-ssh-server ")
+	if [ ! "$match" ]; then
+		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-ssh-server@2016-11-02.yang -p 600
+	fi
+
+	match=$(sysrepoctl -l | grep "ietf-tls-server ")
+	if [ ! "$match" ]; then
+		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-tls-server@2016-11-02.yang -p 600
+	fi
+
+	match=$(sysrepoctl -l | grep "iana-crypt-hash ")
+	if [ ! "$match" ]; then
+		sysrepoctl --install --yang=/etc/sysrepo/yang/iana-crypt-hash@2014-08-06.yang -p 600
+	fi
+
+	match=$(sysrepoctl -l | grep "ietf-x509-cert-to-name ")
+	if [ ! "$match" ]; then
+		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-x509-cert-to-name@2014-12-10.yang -p 600
+	fi
+
+	match=$(sysrepoctl -l | grep "ietf-netconf-server ")
+	if [ ! "$match" ]; then
+		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-netconf-server@2016-11-02.yang -o root:root -p 600
+		sysrepoctl -m ietf-netconf-server -e listen
+		sysrepoctl -m ietf-netconf-server -e ssh-listen
+		sysrepoctl -m ietf-netconf-server -e tls-listen
+		sysrepoctl -m ietf-netconf-server -e call-home
+		sysrepoctl -m ietf-netconf-server -e ssh-call-home
+		sysrepoctl -m ietf-netconf-server -e tls-call-home
+		sysrepoctl -m ietf-netconf -e url
+		if [ -x /bin/sysrepocfg ]; then
+			sysrepocfg -f xml -d startup -i /usr/share/netopeer2-server/stock_config.xml ietf-netconf-server
+			rm /usr/share/netopeer2-server/stock_config.xml
+		fi
+	fi
+
+	match=$(sysrepoctl -l | grep "ietf-netconf-monitoring ")
+	if [ ! "$match" ]; then
+		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-netconf-monitoring@2010-10-04.yang -o root:root -p 600
+	fi
+
+	match=$(sysrepoctl -l | grep "ietf-netconf-with-defaults ")
+	if [ ! "$match" ]; then
+		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-netconf-with-defaults@2011-06-01.yang -o root:root -p 600
+	fi
+
+	match=$(sysrepoctl -l | grep "ietf-system ")
+	if [ ! "$match" ]; then
+		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-system@2014-08-06.yang -o root:root -p 600
+		sysrepoctl -m ietf-system -e authentication
+		sysrepoctl -m ietf-system -e local-users
+	fi
+
+	match=$(sysrepoctl -l | grep "ietf-datastores ")
+	if [ ! "$match" ]; then
+		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-datastores@2017-08-17.yang -o root:root -p 600
+	fi
+
+	match=$(sysrepoctl -l | grep "ietf-yang-library ")
+	if [ ! "$match" ]; then
+		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-yang-library@2018-01-17.yang -o root:root -p 600
+	fi
+fi
+
+exit 0

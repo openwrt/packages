@@ -224,7 +224,7 @@ aria2_start() {
 			append_setting "rpc-secret=${rpc_secret}"
 		elif [ -n "$rpc_user" ]; then
 			append_setting "rpc-user=${rpc_user}"
-			append_setting "rcp-passwd=${rcp-passwd}"
+			append_setting "rpc-passwd=${rpc_passwd}"
 		else
 			_info "It is recommand to set RPC secret."
 		fi
@@ -235,9 +235,9 @@ aria2_start() {
 			unset_auth_method
 		fi
 	elif [ "$rpc_auth_method" = "user_pass" ]; then
-		if [ -n "$rcp_user" ]; then
+		if [ -n "$rpc_user" ]; then
 			append_setting "rpc-user=${rpc_user}"
-			append_setting "rcp-passwd=${rcp-passwd}"
+			append_setting "rpc-passwd=${rpc_passwd}"
 		else
 			_info "Please set RPC user."
 			unset_auth_method
@@ -252,6 +252,8 @@ aria2_start() {
 	if [ ."$check_certificate" = ."true" ]; then
 		append_setting "check-certificate=true"
 		append_options "ca_certificate"
+	elif [ ."$check_certificate" = ."false" ]; then
+		append_setting "check-certificate=false"
 	fi
 
 	if [ ."$enable_dht" = ."true" ]; then
@@ -310,9 +312,9 @@ aria2_start() {
 
 	if [ -n "$user" ]; then
 		if ( user_exists "$user" && _change_owner "$user" "$config_dir" "$log" ); then
-				_info "Aria2 will run with uer '${user}'."
+				_info "Aria2 will run with user '${user}'."
 				if [ "$user" != "root" ]; then
-					_info "Please make sure user '${user}' has write access to downlod dir: ${dir}"
+					_info "Please make sure user '${user}' has write access to download dir: ${dir}"
 				fi
 		else
 			_info "Set run user to '${user}' failed, default user will be used."

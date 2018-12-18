@@ -1,0 +1,37 @@
+--- a/src/ne_openssl.c
++++ b/src/ne_openssl.c
+@@ -35,6 +35,10 @@
+ #include <openssl/x509v3.h>
+ #include <openssl/rand.h>
+ #include <openssl/opensslv.h>
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++#define X509_get0_notBefore X509_get_notBefore
++#define X509_get0_notAfter X509_get_notAfter
++#endif
+ 
+ #ifdef NE_HAVE_TS_SSL
+ #include <stdlib.h> /* for abort() */
+@@ -226,10 +230,10 @@ void ne_ssl_cert_validity_time(const ne_ssl_certificate *cert,
+                                time_t *from, time_t *until)
+ {
+     if (from) {
+-        *from = asn1time_to_timet(X509_get_notBefore(cert->subject));
++        *from = asn1time_to_timet(X509_get0_notBefore(cert->subject));
+     }
+     if (until) {
+-        *until = asn1time_to_timet(X509_get_notAfter(cert->subject));
++        *until = asn1time_to_timet(X509_get0_notAfter(cert->subject));
+     }
+ }
+ 
+--- a/src/ne_socket.c
++++ b/src/ne_socket.c
+@@ -27,7 +27,7 @@
+ #include "config.h"
+ 
+ #include <sys/types.h>
+-#ifdef HAVE_SYS_UIO_h
++#ifdef HAVE_SYS_UIO_H
+ #include <sys/uio.h> /* writev(2) */
+ #endif
+ #ifdef HAVE_SYS_TIME_H

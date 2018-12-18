@@ -6,11 +6,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stubby
 PKG_VERSION:=0.2.3
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=David Mora <iamperson347+public@gmail.com>
+PKG_MAINTAINER:=David Mora <iamperson347+public@gmail.com>, Jonathan Underwood <jonathan.underwood@gmail.com>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -29,12 +29,6 @@ define Package/stubby/Default
 	URL:=https://dnsprivacy.org/wiki/display/DP/DNS+Privacy+Daemon+-+Stubby
 endef
 
-define Package/stubby/description
-	This package contains the Stubby daemon (which utilizes the getdns library).
-
-	See https://github.com/openwrt/packages/blob/master/net/stubby/files/README.md for more details.
-endef
-
 define Package/stubby
 	$(call Package/stubby/Default)
 	SECTION:=net
@@ -42,7 +36,17 @@ define Package/stubby
 	SUBMENU:=IP Addresses and Names
 	TITLE+= - (daemon that uses getdns)
 	USERID:=stubby=410:stubby=410
-	DEPENDS:= +libyaml +getdns
+	DEPENDS:= +libyaml +getdns +ca-certificates
+endef
+
+define Package/stubby/description
+	This package contains the Stubby daemon (which utilizes the getdns library).
+
+	See https://github.com/openwrt/packages/blob/master/net/stubby/files/README.md for more details.
+endef
+
+define Package/stubby/conffiles
+/etc/stubby/stubby.yml
 endef
 
 define Package/stubby/install
@@ -53,11 +57,14 @@ define Package/stubby/install
 	$(INSTALL_DIR) $(1)/etc/stubby
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/stubby/stubby.yml $(1)/etc/stubby/stubby.yml.default
 	$(INSTALL_DATA) ./files/stubby.yml $(1)/etc/stubby/stubby.yml
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/stubby.conf $(1)/etc/config/stubby
 endef
 
 
 define Package/stubby/conffiles
 	/etc/stubby/stubby.yml
+	/etc/config/stubby
 endef
 
 $(eval $(call BuildPackage,stubby))

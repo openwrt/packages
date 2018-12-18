@@ -8,17 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unixodbc
-PKG_VERSION:=2.3.4
-PKG_RELEASE:=5
+PKG_VERSION:=2.3.7
+PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=ftp://ftp.unixodbc.org/pub/unixODBC/
 PKG_SOURCE:=unixODBC-$(PKG_VERSION).tar.gz
-PKG_HASH:=2e1509a96bb18d248bf08ead0d74804957304ff7c6f8b2e5965309c632421e39
-PKG_BUILD_DIR:=$(BUILD_DIR)/unixODBC-$(PKG_VERSION)
-HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/unixODBC-$(PKG_VERSION)
+PKG_SOURCE_URL:=http://www.unixodbc.org
+PKG_HASH:=45f169ba1f454a72b8fcbb82abd832630a3bf93baa84731cf2949f449e1e3e77
+
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=prog GPL libs LGPL
+PKG_CPE_ID:=cpe:/a:unixodbc:unixodbc
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/unixODBC-$(PKG_VERSION)
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/unixODBC-$(PKG_VERSION)
 HOST_BUILD_DEPENDS:=unixodbc
+
+PKG_FIXUP:=autoreconf
 
 # if your other package depends on unixodbc and needs
 # odbc_config, add to your other Makefile
@@ -36,7 +41,7 @@ CONFIGURE_ARGS += \
 define Package/unixodbc/Default
   SUBMENU:=database
   TITLE:=unixODBC
-  URL:=http://www.unixodbc.org/
+  URL:=http://www.unixodbc.org
 endef
 
 define Package/unixodbc
@@ -92,6 +97,11 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/$(STAGING_DIR)/usr/include/*.h $(1)/usr/include/
+	# Save autoconf config.h file for host build
+	# copy target autoconf config.h and unixodbc_conf.h file for host build
+	$(INSTALL_DIR) $(1)/tmp/unixodbc
+	$(CP) $(PKG_BUILD_DIR)/config.h $(1)/tmp/unixodbc/
+	$(CP) $(PKG_BUILD_DIR)/unixodbc_conf.h $(1)/tmp/unixodbc/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/etc
@@ -126,8 +136,9 @@ endef
 
 define Host/Configure
 	$(call Host/Configure/Default)
-	cp $(PKG_BUILD_DIR)/config.h $(HOST_BUILD_DIR)
-	cp $(PKG_BUILD_DIR)/unixodbc_conf.h $(HOST_BUILD_DIR)
+	cp $(STAGING_DIR)/tmp/unixodbc/config.h $(HOST_BUILD_DIR)
+	sed -i -e 's!\(LIB_PREFIX \).*$$$$!\1"$(STAGING_DIR)/usr/lib"!' $(HOST_BUILD_DIR)/config.h
+	cp $(STAGING_DIR)/tmp/unixodbc/unixodbc_conf.h $(HOST_BUILD_DIR)
 endef
 
 define Host/Compile

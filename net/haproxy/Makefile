@@ -10,12 +10,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
-PKG_VERSION:=1.8.13
+PKG_VERSION:=1.8.15
 PKG_RELEASE:=2
 
 PKG_SOURCE:=haproxy-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.haproxy.org/download/1.8/src/
-PKG_HASH:=2bf5dafbb5f1530c0e67ab63666565de948591f8e0ee2a1d3c84c45e738220f1
+PKG_HASH:=7113862f1146d7de8b8e64f45826ab3533c7f7f7b7767e24c08f7c762202a032
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_LICENSE:=GPL-2.0
@@ -55,8 +55,7 @@ define Package/haproxy/Default/description
 endef
 
 define Package/haproxy
-  DEPENDS+= +libpcre +libltdl +zlib +libpthread +libopenssl +libncursesw +libreadline +libatomic +@OPENSSL_WITH_DEPRECATED +@OPENSSL_WITH_EC +@OPENSSL_WITH_EC2M  +@OPENSSL_WITH_DTLS +@OPENSSL_WITH_COMPRESSION +@OPENSSL_WITH_NPN  +@OPENSSL_WITH_PSK +@OPENSSL_WITH_SRP +@OPENSSL_ENGINE_DIGEST +@OPENSSL_ENGINE_CRYPTO
-
+  DEPENDS+= +libpcre +libltdl +zlib +libpthread +libopenssl +libncursesw +libreadline +libatomic
   TITLE+= (with SSL support)
   VARIANT:=ssl
 $(call Package/haproxy/Default)
@@ -100,11 +99,7 @@ ifeq ($(CONFIG_TARGET_x86),y)
   ENABLE_REGPARM:=y
 endif
 
-ifeq ($(CONFIG_avr32),y)
-  LINUX_TARGET:=linux26
-else
-  LINUX_TARGET:=linux2628
-endif
+LINUX_TARGET:=linux2628
 
 ifeq ($(BUILD_VARIANT),ssl)
 	ADDON+=USE_OPENSSL=1
@@ -142,20 +137,20 @@ define Build/Compile
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		CC="$(TARGET_CC)" \
 		PCREDIR="$(STAGING_DIR)/usr/" \
-		SMALL_OPTS="-DBUFSIZE=16384 -DMAXREWRITE=1030 -DSYSTEM_MAXCONN=165530 " \
+		SMALL_OPTS="-DBUFSIZE=16384 -DMAXREWRITE=1030 -DSYSTEM_MAXCONN=165530" \
 		USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 USE_TFO=1 \
 		USE_ZLIB=yes USE_PCRE=1 USE_PCRE_JIT=1 USE_GETADDRINFO=1 \
-		VERSION="$(PKG_VERSION)-$(PKG_RELEASE)" \
+		VERSION="$(PKG_VERSION)" SUBVERS="-$(PKG_RELEASE)" \
+		VERDATE="$(shell date -d @$(SOURCE_DATE_EPOCH) '+%Y/%m/%d')" IGNOREGIT=1 \
 		$(ADDON) \
 		CFLAGS="$(TARGET_CFLAGS)" \
 		LD="$(TARGET_CC)" \
-		LDFLAGS="$(TARGET_LDFLAGS) -latomic" \
-		IGNOREGIT=1
+		LDFLAGS="$(TARGET_LDFLAGS) -latomic"
 
 	$(MAKE_VARS) $(MAKE) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		LD="$(TARGET_CC)" \
-                LDFLAGS="$(TARGET_LDFLAGS)" \
+		LDFLAGS="$(TARGET_LDFLAGS)" \
 		$(MAKE_FLAGS) \
 		install
 
@@ -163,7 +158,6 @@ define Build/Compile
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		$(MAKE_FLAGS) \
 		ADDLIB="-lcrypto" \
-		VERSION="$(PKG_VERSION)-$(PKG_RELEASE)" \
 		halog
 endef
 

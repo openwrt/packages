@@ -1,0 +1,80 @@
+#!/bin/sh /etc/rc.common
+#
+
+START=30
+USE_PROCD=1
+
+EXTRA_COMMANDS="refresh status"
+EXTRA_HELP="	refresh	Refresh ipsets only (no new download!)
+	status	Print runtime information"
+
+ban_init="/etc/init.d/banip"
+ban_script="/usr/bin/banip.sh"
+ban_pidfile="/var/run/banip.pid"
+
+boot()
+{
+	ban_boot="1"
+	rc_procd start_service
+}
+
+start_service()
+{
+	if [ $("${ban_init}" enabled; printf "%u" ${?}) -eq 0 ]
+	then
+		if [ "${ban_boot}" = "1" ]
+		then
+			return 0
+		fi
+		local nice="$(uci_get banip extra ban_nice)"
+		procd_open_instance "banip"
+		procd_set_param command "${ban_script}" "${@}"
+		procd_set_param pidfile "${ban_pidfile}"
+		procd_set_param nice ${nice:-0}
+		procd_set_param stdout 1
+		procd_set_param stderr 1
+		procd_close_instance
+	fi
+}
+
+stop_service()
+{
+	rc_procd "${ban_script}" stop
+	rc_procd start_service
+}
+
+refresh()
+{
+	rc_procd start_service "refresh"
+}
+
+status()
+{
+	local key keylist value rtfile="$(uci_get banip global ban_rtfile)"
+
+	rtfile="${rtfile:-"/tmp/ban_runtime.json"}"
+	json_load_file "${rtfile}" >/dev/null 2>&1
+	json_select data >/dev/null 2>&1
+	if [ ${?} -eq 0 ]
+	then
+		printf "%s\n" "::: banIP runtime information"
+		json_get_keys keylist
+		for key in ${keylist}
+		do
+			json_get_var value "${key}"
+			printf "  + %-10s : %s\n" "${key}" "${value}"
+		done
+	else
+		printf "%s\n" "::: no banIP runtime information available"
+	fi
+}
+
+service_triggers()
+{
+	local iface="$(uci_get banip global ban_iface)"
+	local delay="$(uci_get banip extra ban_triggerdelay)"
+
+	PROCD_RELOAD_DELAY=$((${delay:-2} * 1000))
+	procd_add_interface_trigger "interface.*.up" "${iface:-"wan"}" "${ban_init}" start
+	procd_add_reload_trigger "banip" "firewall"
+}

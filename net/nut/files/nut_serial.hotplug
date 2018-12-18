@@ -1,0 +1,21 @@
+#!/bin/sh
+
+nut_serial() {
+	local cfg="$cfg"
+	config_get runas upsd runas "nut"
+	config_get_bool enable_usb_serial "$cfg" enable_usb_serial 0
+}
+
+[ "$ACTION" = "add" ] && [ -n "$DEVNAME" ] && [ -z "${DEVNAME%ttyUSB*}" ] && {
+	config load nut_server
+	config_foreach nut_serial driver
+
+	[ -z "$RUNAS" ] && {
+		RUNAS="$runas"
+	}
+
+	[ "$enable_usb_serial" -eq 1 ] && {
+			chown "${RUNAS:-nut}" /dev/$DEVNAME
+			chmod g+rw /dev/$DEVNAME
+	}
+}

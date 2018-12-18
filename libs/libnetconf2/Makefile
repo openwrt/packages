@@ -8,26 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libnetconf2
+PKG_VERSION:=0.12-r1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 
-PKG_VERSION:=0.11.37
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/CESNET/libnetconf2/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=86269d3f1bc85bb17d8823d214f9a676ee3b14ee18a0b87a230380df8503e8f5
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=46d56e08b161eb60f37410dae4d5e1a8a1bedd58
-PKG_MIRROR_HASH:=e12007b69eee42d1eb9925a93bcac7a71139583a76a59c78039b48cc20fc431f
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
-PKG_SOURCE_URL:=https://github.com/cesnet/libnetconf2/
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION)
-
-PKG_BUILD_ROOT:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
-PKG_BUILD_DIR:=$(PKG_BUILD_ROOT)
+CMAKE_INSTALL:=1
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
-
-CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -37,7 +31,7 @@ define Package/libnetconf2
   CATEGORY:=Libraries
   TITLE:=NETCONF library
   URL:=$(PKG_SOURCE_URL)
-  DEPENDS:= +libyang +libssh +libopenssl
+  DEPENDS:= +libyang +libssh +libopenssl +libpthread
 endef
 
 define Package/libnetconf2/description

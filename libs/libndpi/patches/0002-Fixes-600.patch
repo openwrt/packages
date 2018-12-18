@@ -1,0 +1,286 @@
+From 6be5188ff93780a7f2acd48f41c4ac1846597091 Mon Sep 17 00:00:00 2001
+From: Luca <deri@ntop.org>
+Date: Tue, 11 Sep 2018 10:02:34 +0300
+Subject: [PATCH 2/9] Fixes #600 Backport of recent fixes (e.g. #601)
+
+---
+ Makefile.am                        |  5 ++-
+ autogen.sh                         |  2 +-
+ configure.seed                     | 13 +++++--
+ src/lib/Makefile                   | 26 --------------
+ src/lib/Makefile.in                | 54 ++++++++++++++++++++++++++++++
+ src/lib/ndpi_main.c                |  2 --
+ src/lib/protocols/ssl.c            | 36 ++++++++++++++------
+ src/lib/third_party/include/hash.h |  1 +
+ 8 files changed, 94 insertions(+), 45 deletions(-)
+ delete mode 100644 src/lib/Makefile
+ create mode 100644 src/lib/Makefile.in
+
+diff --git a/Makefile.am b/Makefile.am
+index 17c6748..37f0849 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -1,8 +1,7 @@
+ ACLOCAL_AMFLAGS = -I m4
+-
+ SUBDIRS = src/lib example tests
+ 
+-pkgconfigdir = $(libdir)/pkgconfig
++pkgconfigdir = $(prefix)/libdata/pkgconfig
+ pkgconfig_DATA = libndpi.pc
+ 
+-EXTRA_DIST = libndpi.sym autogen.sh
++EXTRA_DIST = autogen.sh
+diff --git a/autogen.sh b/autogen.sh
+index 6596b2f..efeffc4 100755
+--- a/autogen.sh
++++ b/autogen.sh
+@@ -5,7 +5,7 @@ NDPI_MINOR="4"
+ NDPI_PATCH="0"
+ NDPI_VERSION_SHORT="$NDPI_MAJOR.$NDPI_MINOR.$NDPI_PATCH"
+ 
+-rm -f configure config.h config.h.in src/lib/Makefile.in
++rm -f configure config.h config.h.in
+ 
+ AUTOCONF=$(command -v autoconf)
+ AUTOMAKE=$(command -v automake)
+diff --git a/configure.seed b/configure.seed
+index 6b85c66..8f8817f 100644
+--- a/configure.seed
++++ b/configure.seed
+@@ -10,6 +10,7 @@ AC_PROG_CC
+ AM_PROG_CC_C_O
+ AX_PTHREAD
+ 
++NDPI_VERSION_SHORT="@NDPI_VERSION_SHORT@"
+ NDPI_MAJOR="@NDPI_MAJOR@"
+ NDPI_MINOR="@NDPI_MINOR@"
+ NDPI_PATCH="@NDPI_PATCH@"
+@@ -51,11 +52,16 @@ else
+      AC_CHECK_LIB([numa], [numa_available], [LIBNUMA="-lnuma"])
+ fi
+ 
+-
++if test -z `which clang`; then
++CC=gcc
++else
++CC=clang
++fi
++ 
+ HS_LIB=
+ HS_INC=
+ 
+-AC_ARG_WITH(hyperscan,          [  --with-hyperscan          Enable nDPI build with Intel Hyperscan])
++AC_ARG_WITH(hyperscan,          [  --with-hyperscan        Enable nDPI build with Intel Hyperscan])
+ 
+ if test "${with_hyperscan+set}" = set; then
+      BKP=$LIBS
+@@ -127,12 +133,13 @@ AC_ARG_ENABLE([debug-messages],
+ 
+ AC_CHECK_LIB(pthread, pthread_setaffinity_np, AC_DEFINE_UNQUOTED(HAVE_PTHREAD_SETAFFINITY_NP, 1, [libc has pthread_setaffinity_np]))
+ 
+-AC_CONFIG_FILES([Makefile example/Makefile tests/Makefile libndpi.pc src/include/ndpi_define.h])
++AC_CONFIG_FILES([Makefile example/Makefile tests/Makefile libndpi.pc src/include/ndpi_define.h src/lib/Makefile])
+ AC_CONFIG_HEADERS(src/include/ndpi_config.h)
+ AC_SUBST(GIT_RELEASE)
+ AC_SUBST(NDPI_MAJOR)
+ AC_SUBST(NDPI_MINOR)
+ AC_SUBST(NDPI_PATCH)
++AC_SUBST(NDPI_VERSION_SHORT)
+ AC_SUBST(SVN_DATE)
+ AC_SUBST(JSON_C_LIB)
+ AC_SUBST(PCAP_INC)
+diff --git a/src/lib/Makefile b/src/lib/Makefile
+deleted file mode 100644
+index 19c6f1c..0000000
+--- a/src/lib/Makefile
++++ /dev/null
+@@ -1,26 +0,0 @@
+-#
+-# Simple non-autotools dependent makefile
+-#
+-# ./autogen.sh
+-# cd src/lib
+-# make -f Makefile.simple
+-#
+-CFLAGS += -fPIC -DPIC -I../include -Ithird_party/include -DNDPI_LIB_COMPILATION -g
+-RANLIB  = ranlib
+-
+-OBJECTS = $(patsubst protocols/%.c, protocols/%.o, $(wildcard protocols/*.c)) $(patsubst third_party/src/%.c, third_party/src/%.o, $(wildcard third_party/src/*.c)) ndpi_main.o
+-HEADERS = $(wildcard ../include/*.h)
+-
+-all: libndpi.a
+-
+-ndpi_main.c: ndpi_content_match.c.inc
+-
+-libndpi.a: $(OBJECTS)
+-	   ar rc $@ $(OBJECTS)
+-	   $(RANLIB) $@	       
+-
+-%.o: %.c $(HEADERS) Makefile
+-	$(CC) $(CFLAGS) -c $< -o $@
+-
+-clean:
+-	/bin/rm -f libndpi.a $(OBJECTS)
+diff --git a/src/lib/Makefile.in b/src/lib/Makefile.in
+new file mode 100644
+index 0000000..ca29001
+--- /dev/null
++++ b/src/lib/Makefile.in
+@@ -0,0 +1,54 @@
++#
++# Simple non-autotools dependent makefile
++#
++# ./autogen.sh
++# cd src/lib
++# make Makefile
++#
++
++
++#
++# Installation directories
++#
++prefix     = /usr/local
++libdir     = ${prefix}/lib
++includedir = ${prefix}/include/ndpi
++CC         = @CC@
++CFLAGS     += -fPIC -DPIC -I../include -Ithird_party/include -DNDPI_LIB_COMPILATION -O2 # -g
++RANLIB     = ranlib
++
++OBJECTS   = $(patsubst protocols/%.c, protocols/%.o, $(wildcard protocols/*.c)) $(patsubst third_party/src/%.c, third_party/src/%.o, $(wildcard third_party/src/*.c)) ndpi_main.o
++HEADERS   = $(wildcard ../include/*.h)
++NDPI_LIB_STATIC      = libndpi.a
++NDPI_LIB_SHARED_BASE = libndpi.so
++NDPI_LIB_SHARED      = $(NDPI_LIB_SHARED_BASE).@NDPI_VERSION_SHORT@
++NDPI_LIBS            = $(NDPI_LIB_STATIC) $(NDPI_LIB_SHARED)
++
++ifeq ($(OS),Darwin)
++CC=clang
++endif
++
++all: $(NDPI_LIBS)
++
++ndpi_main.c: ndpi_content_match.c.inc
++
++$(NDPI_LIB_STATIC): $(OBJECTS)
++	   ar rc $@ $(OBJECTS)
++	   $(RANLIB) $@	       
++
++$(NDPI_LIB_SHARED): $(OBJECTS)
++	$(CC) -shared -fPIC -o $@ $(OBJECTS)
++	ln -Fs $(NDPI_LIB_SHARED) $(NDPI_LIB_SHARED_BASE)
++
++%.o: %.c $(HEADERS) Makefile
++	$(CC) $(CFLAGS) -c $< -o $@
++
++clean:
++	/bin/rm -f $(NDPI_LIB_STATIC) $(OBJECTS) *.o *.so *.lo
++
++install: $(NDPI_LIBS)
++	mkdir -p $(DESTDIR)$(libdir)
++	cp $(NDPI_LIBS) $(DESTDIR)$(libdir)/
++	ln -Fs $(DESTDIR)$(libdir)/$(NDPI_LIB_SHARED) $(DESTDIR)$(libdir)/$(NDPI_LIB_SHARED_BASE)
++	mkdir -p $(DESTDIR)$(includedir)
++	cp ../include/*.h $(DESTDIR)$(includedir)
+diff --git a/src/lib/ndpi_main.c b/src/lib/ndpi_main.c
+index 8061aa1..540e158 100644
+--- a/src/lib/ndpi_main.c
++++ b/src/lib/ndpi_main.c
+@@ -43,9 +43,7 @@
+ 
+ #include "ndpi_content_match.c.inc"
+ #include "third_party/include/ndpi_patricia.h"
+-#include "third_party/src/ndpi_patricia.c"
+ #include "third_party/include/hash.h"
+-#include "third_party/src/hash.c"
+ 
+ #ifdef HAVE_HYPERSCAN
+ #include <hs/hs.h>
+diff --git a/src/lib/protocols/ssl.c b/src/lib/protocols/ssl.c
+index b8c3697..59aedcb 100644
+--- a/src/lib/protocols/ssl.c
++++ b/src/lib/protocols/ssl.c
+@@ -27,7 +27,7 @@
+ 
+ #include "ndpi_api.h"
+ 
+-/* #define CERTIFICATE_DEBUG 1 */
++// #define CERTIFICATE_DEBUG 1
+ #define NDPI_MAX_SSL_REQUEST_SIZE 10000
+ 
+ /* Skype.c */
+@@ -246,28 +246,43 @@ int getSSLcertificate(struct ndpi_detection_module_struct *ndpi_struct,
+ 		u_int16_t compression_len;
+ 		u_int16_t extensions_len;
+ 
+-		compression_len = packet->payload[offset+1];
+-		offset += compression_len + 3;
++		offset++;
++		compression_len = packet->payload[offset];
++		offset++;
++		
++#ifdef CERTIFICATE_DEBUG
++		printf("SSL [compression_len: %u]\n", compression_len);
++#endif
++
++		// offset += compression_len + 3;
++		offset += compression_len;
+ 
+ 		if(offset < total_len) {
+-		  extensions_len = packet->payload[offset];
++		  extensions_len = ntohs(*((u_int16_t*)&packet->payload[offset]));
++		  offset += 2;
++		  
++#ifdef CERTIFICATE_DEBUG
++		  printf("SSL [extensions_len: %u]\n", extensions_len);
++#endif
+ 
+-		  if((extensions_len+offset) < total_len) {
++		  if((extensions_len+offset) <= total_len) {
+ 		    /* Move to the first extension
+ 		       Type is u_int to avoid possible overflow on extension_len addition */
+-		    u_int extension_offset = 1;
++		    u_int extension_offset = 0;
+ 
+ 		    while(extension_offset < extensions_len) {
+ 		      u_int16_t extension_id, extension_len;
+ 
+-		      memcpy(&extension_id, &packet->payload[offset+extension_offset], 2);
++		      extension_id = ntohs(*((u_int16_t*)&packet->payload[offset+extension_offset]));
+ 		      extension_offset += 2;
+ 
+-		      memcpy(&extension_len, &packet->payload[offset+extension_offset], 2);
++		      extension_len = ntohs(*((u_int16_t*)&packet->payload[offset+extension_offset]));
+ 		      extension_offset += 2;
+ 
+-		      extension_id = ntohs(extension_id), extension_len = ntohs(extension_len);
+-
++#ifdef CERTIFICATE_DEBUG
++		      printf("SSL [extension_id: %u][extension_len: %u]\n", extension_id, extension_len);
++#endif
++		      
+ 		      if(extension_id == 0) {
+ 			u_int begin = 0,len;
+ 			char *server_name = (char*)&packet->payload[offset+extension_offset];
+@@ -316,6 +331,7 @@ int sslTryAndRetrieveServerCertificate(struct ndpi_detection_module_struct *ndpi
+   if((packet->payload_packet_len > 9) && (packet->payload[0] == 0x16)) {
+     char certificate[64];
+     int rc;
++    
+     certificate[0] = '\0';
+     rc = getSSLcertificate(ndpi_struct, flow, certificate, sizeof(certificate));
+     packet->ssl_certificate_num_checks++;
+diff --git a/src/lib/third_party/include/hash.h b/src/lib/third_party/include/hash.h
+index 4f53e5a..2251706 100644
+--- a/src/lib/third_party/include/hash.h
++++ b/src/lib/third_party/include/hash.h
+@@ -25,5 +25,6 @@ extern int ht_hash( hashtable_t *hashtable, char *key );
+ extern entry_t *ht_newpair( char *key, u_int16_t value );
+ extern void ht_set( hashtable_t *hashtable, char *key, u_int16_t value );
+ extern u_int16_t ht_get( hashtable_t *hashtable, char *key );
++extern void ht_free( hashtable_t *hashtable );
+ 
+ #endif /* _HASH_H_ */
+-- 
+2.19.1
+

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpam
-PKG_VERSION:=1.2.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.3.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=Linux-PAM-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.linux-pam.org/library/
-PKG_HASH:=cd8beac5961e942e9c73b32a3cd1a3457755f8fb35d07c9ec64511e19e135ea4
+PKG_HASH:=241aed1ef522f66ed672719ecf2205ec513fd0075ed80cda8e086a5b1a01d1bb
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>

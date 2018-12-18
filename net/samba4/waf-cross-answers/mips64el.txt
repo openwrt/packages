@@ -16,6 +16,7 @@ Checking value of NSIG: "128"
 Checking value of _NSIG: "128"
 Checking value of SIGRTMAX: "127"
 Checking value of SIGRTMIN: "35"
+Checking for a 64-bit host to support lmdb: NO
 Checking whether the WRFILE -keytab is supported: OK
 Checking errno of iconv for illegal multibyte sequence: OK
 Checking for kernel change notify support: OK

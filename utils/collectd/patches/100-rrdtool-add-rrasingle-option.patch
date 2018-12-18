@@ -17,7 +17,7 @@
      /* consolidation_functions = */ NULL,
      /* consolidation_functions_num = */ 0,
  
-@@ -950,6 +953,12 @@ static int rrd_config(const char *key, c
+@@ -949,6 +952,12 @@ static int rrd_config(const char *key, c
            /* compar = */ rrd_compare_numeric);
  
      free(value_copy);

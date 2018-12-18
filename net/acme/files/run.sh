@@ -17,6 +17,9 @@ UHTTPD_LISTEN_HTTP=
 STATE_DIR='/etc/acme'
 ACCOUNT_EMAIL=
 DEBUG=0
+NGINX_WEBSERVER=0
+UPDATE_NGINX=0
+UPDATE_UHTTPD=0
 
 . /lib/functions.sh
 
@@ -42,9 +45,13 @@ debug()
     [ "$DEBUG" -eq "1" ] && logger -t acme -s -p daemon.debug "$@"
 }
 
-get_listeners()
-{
-    netstat -nptl 2>/dev/null | awk 'match($4, /:80$/){split($7, parts, "/"); print parts[2];}' | uniq | tr "\n" " "
+get_listeners() {
+    local proto rq sq listen remote state program
+    netstat -nptl 2>/dev/null | while read proto rq sq listen remote state program; do
+        case "$proto#$listen#$program" in
+            tcp#*:80#[0-9]*/*) echo -n "${program%% *} " ;;
+        esac
+    done
 }
 
 pre_checks()
@@ -54,37 +61,58 @@ pre_checks()
     log "Running pre checks for $main_domain."
 
     listeners="$(get_listeners)"
+
     debug "port80 listens: $listeners"
 
-    case "$listeners" in
-        "uhttpd")
-            debug "Found uhttpd listening on port 80; trying to disable."
+    for listener in $(get_listeners); do
+        pid="${listener%/*}"
+        cmd="${listener#*/}"
 
-            UHTTPD_LISTEN_HTTP=$(uci get uhttpd.main.listen_http)
+        case "$cmd" in
+            uhttpd)
+                debug "Found uhttpd listening on port 80; trying to disable."
 
-            if [ -z "$UHTTPD_LISTEN_HTTP" ]; then
-                err "$main_domain: Unable to find uhttpd listen config."
-                err "Manually disable uhttpd or set webroot to continue."
+                UHTTPD_LISTEN_HTTP=$(uci get uhttpd.main.listen_http)
+
+                if [ -z "$UHTTPD_LISTEN_HTTP" ]; then
+                    err "$main_domain: Unable to find uhttpd listen config."
+                    err "Manually disable uhttpd or set webroot to continue."
+                    return 1
+                fi
+
+                uci set uhttpd.main.listen_http=''
+                uci commit uhttpd || return 1
+                if ! /etc/init.d/uhttpd reload ; then
+                    uci set uhttpd.main.listen_http="$UHTTPD_LISTEN_HTTP"
+                    uci commit uhttpd
+                    return 1
+                fi
+            ;;
+            nginx*)
+                debug "Found nginx listening on port 80; trying to disable."
+                NGINX_WEBSERVER=1
+                local tries=0
+                while grep -sq "$cmd" "/proc/$pid/cmdline" && kill -0 "$pid"; do
+                /etc/init.d/nginx stop
+                    if [ $tries -gt 10 ]; then
+                        debug "Can't stop nginx. Terminating script."
+                        return 1
+                    fi
+                    debug "Waiting for nginx to stop..."
+                    tries=$((tries + 1))
+                    sleep 1
+                done
+            ;;
+            "")
+                debug "Nothing listening on port 80."
+            ;;
+            *)
+                err "$main_domain: Cannot run in standalone mode; another daemon is listening on port 80."
+                err "Disable other daemon or set webroot to continue."
                 return 1
-            fi
-
-            uci set uhttpd.main.listen_http=''
-            uci commit uhttpd || return 1
-            if ! /etc/init.d/uhttpd reload ; then
-                uci set uhttpd.main.listen_http="$UHTTPD_LISTEN_HTTP"
-                uci commit uhttpd
-                return 1
-            fi
             ;;
-        "")
-            debug "Nothing listening on port 80."
-            ;;
-        *)
-            err "$main_domain: Cannot run in standalone mode; another daemon is listening on port 80."
-            err "Disable other daemon or set webroot to continue."
-            return 1
-            ;;
-    esac
+        esac
+    done
 
     iptables -I input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" || return 1
     ip6tables -I input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" || return 1
@@ -101,11 +129,18 @@ post_checks()
     iptables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
     ip6tables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
 
-    if [ -e /etc/init.d/uhttpd ] && [ -n "$UHTTPD_LISTEN_HTTP" ]; then
-        uci set uhttpd.main.listen_http="$UHTTPD_LISTEN_HTTP"
-        uci commit uhttpd
+    if [ -e /etc/init.d/uhttpd ] && ( [ -n "$UHTTPD_LISTEN_HTTP" ] || [ $UPDATE_UHTTPD -eq 1 ] ); then
+        if [ -n "$UHTTPD_LISTEN_HTTP" ]; then
+            uci set uhttpd.main.listen_http="$UHTTPD_LISTEN_HTTP"
+            uci commit uhttpd
+            UHTTPD_LISTEN_HTTP=
+        fi
         /etc/init.d/uhttpd reload
-        UHTTPD_LISTEN_HTTP=
+    fi
+
+    if [ -e /etc/init.d/nginx ] && ( [ "$NGINX_WEBSERVER" -eq 1 ] || [ $UPDATE_NGINX -eq 1 ] ); then
+        NGINX_WEBSERVER=0
+        /etc/init.d/nginx restart
     fi
 }
 
@@ -137,6 +172,7 @@ issue_cert()
     local enabled
     local use_staging
     local update_uhttpd
+    local update_nginx
     local keylength
     local domains
     local main_domain
@@ -148,10 +184,14 @@ issue_cert()
     config_get_bool enabled "$section" enabled 0
     config_get_bool use_staging "$section" use_staging
     config_get_bool update_uhttpd "$section" update_uhttpd
+    config_get_bool update_nginx "$section" update_nginx
     config_get domains "$section" domains
     config_get keylength "$section" keylength
     config_get webroot "$section" webroot
     config_get dns "$section" dns
+
+    UPDATE_NGINX=$update_nginx
+    UPDATE_UHTTPD=$update_uhttpd
 
     [ "$enabled" -eq "1" ] || return
 
@@ -215,9 +255,15 @@ issue_cert()
         return 1
     fi
 
-    if [ "$update_uhttpd" -eq "1" ]; then
+    if [ -e /etc/init.d/uhttpd ] && [ "$update_uhttpd" -eq "1" ]; then
         uci set uhttpd.main.key="$STATE_DIR/${main_domain}/${main_domain}.key"
         uci set uhttpd.main.cert="$STATE_DIR/${main_domain}/fullchain.cer"
+        # commit and reload is in post_checks
+    fi
+
+    if [ -e /etc/init.d/nginx ] && [ "$update_nginx" -eq "1" ]; then
+        sed -i "s#ssl_certificate\ .*#ssl_certificate $STATE_DIR/${main_domain}/fullchain.cer;#g" /etc/nginx/nginx.conf
+        sed -i "s#ssl_certificate_key\ .*#ssl_certificate_key $STATE_DIR/${main_domain}/${main_domain}.key;#g" /etc/nginx/nginx.conf
         # commit and reload is in post_checks
     fi
 

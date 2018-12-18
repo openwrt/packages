@@ -1,0 +1,65 @@
+From 8349ff1ec3d001aa85cc94a9004509cca8ebf036 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Wed, 7 Nov 2018 17:17:53 -0800
+Subject: [PATCH] crypto: Fix compilation for OpenSSL without deprecated
+ APIs
+
+Added missing bn.h include.
+
+Made engine.h include conditional, otherwise it would fail.
+
+DSA_generate_parameters was deprecated long before 1.1.0.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ src/libcrypto-compat.c | 5 ++++-
+ src/libcrypto-compat.h | 1 +
+ src/pki_crypto.c       | 2 +-
+ 3 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/src/libcrypto-compat.c b/src/libcrypto-compat.c
+index 4b1f36a5..b8b4f11a 100644
+--- a/src/libcrypto-compat.c
++++ b/src/libcrypto-compat.c
+@@ -8,9 +8,12 @@
+  */
+ 
+ #include <string.h>
+-#include <openssl/engine.h>
+ #include "libcrypto-compat.h"
+ 
++#ifndef OPENSSL_NO_ENGINE
++#include <openssl/engine.h>
++#endif
++
+ static void *OPENSSL_zalloc(size_t num)
+ {
+     void *ret = OPENSSL_malloc(num);
+diff --git a/src/libcrypto-compat.h b/src/libcrypto-compat.h
+index 21542c65..00e4f2a3 100644
+--- a/src/libcrypto-compat.h
++++ b/src/libcrypto-compat.h
+@@ -10,6 +10,7 @@
+ #include <openssl/dh.h>
+ #include <openssl/evp.h>
+ #include <openssl/hmac.h>
++#include <openssl/bn.h>
+ 
+ int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d);
+ int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q);
+diff --git a/src/pki_crypto.c b/src/pki_crypto.c
+index d9f7753a..c1aac409 100644
+--- a/src/pki_crypto.c
++++ b/src/pki_crypto.c
+@@ -451,7 +451,7 @@ int pki_key_generate_rsa(ssh_key key, int parameter){
+ 
+ int pki_key_generate_dss(ssh_key key, int parameter){
+     int rc;
+-#if OPENSSL_VERSION_NUMBER > 0x10100000L
++#if OPENSSL_VERSION_NUMBER > 0x00908000L
+     key->dsa = DSA_new();
+     if (key->dsa == NULL) {
+         return SSH_ERROR;
+-- 
+2.19.1
+

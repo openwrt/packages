@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libp11
-PKG_VERSION:=0.4.7
+PKG_VERSION:=0.4.9
 PKG_RELEASE:=1
-PKG_HASH:=32e486d4279e09174b63eb263bc840016ebfa80b0b154390c0539b211aec0452
+
+PKG_SOURCE_URL:=https://github.com/OpenSC/libp11/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_HASH:=9d1c76d74c21ca224f96204982097ebc6b956f645b2b0b5f9c502a20e9ffcfd8
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=COPYING
 
-PKG_SOURCE_URL:=https://github.com/OpenSC/libp11/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-
+PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=libtool
 PKG_INSTALL:=1
 

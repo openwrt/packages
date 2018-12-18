@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot
-PKG_VERSION:=2.6.8
+PKG_VERSION:=2.7.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-dns/
-PKG_HASH:=0daee8efd6262f10c54ee6f5fb99ca4d0f72e275513ec0902032af594cac1b15
+PKG_HASH:=acebe2fbcd8f67b0cb8969376114855316fe831df08321b795147502a5e9fd74
 
 PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
-PKG_LICENSE:=GPL-3.0 LGPL-2.0 0BSD MIT OLDAP-2.8
+PKG_LICENSE:=GPL-3.0 LGPL-2.0 0BSD BSD-3-Clause OLDAP-2.8
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_FIXUP:=autoreconf
@@ -161,10 +161,7 @@ endef
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)
-	$(MAKE) -C $(PKG_BUILD_DIR)/libtap check
-	$(MAKE) -C $(PKG_BUILD_DIR)/src/dnssec/tests check-compile
 	$(MAKE) -C $(PKG_BUILD_DIR)/tests check-compile
-	$(MAKE) -C $(PKG_BUILD_DIR)/src/zscanner check-compile
 endef
 
 define Build/InstallDev
@@ -174,11 +171,11 @@ define Build/InstallDev
 	$(INSTALL_DIR)						$(1)/usr/include/libknot
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libknot/*		$(1)/usr/include/libknot/
 
-	$(INSTALL_DIR)						$(1)/usr/include/dnssec
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/dnssec/*		$(1)/usr/include/dnssec/
+	$(INSTALL_DIR)						$(1)/usr/include/libdnssec
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/libdnssec/*	$(1)/usr/include/libdnssec/
 
-	$(INSTALL_DIR)						$(1)/usr/include/zscanner
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/zscanner/*		$(1)/usr/include/zscanner/
+	$(INSTALL_DIR)						$(1)/usr/include/libzscanner
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/libzscanner/*	$(1)/usr/include/libzscanner/
 
 	$(INSTALL_DIR)							$(1)/usr/lib/pkgconfig
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc	$(1)/usr/lib/pkgconfig/
@@ -238,25 +235,17 @@ define Package/knot-tests/install
 	$(INSTALL_BIN) ./files/runtests.sh			$(1)/usr/share/knot/
 
 	$(INSTALL_DIR) 						$(1)/usr/share/knot/tap
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/libtap/runtests		$(1)/usr/share/knot/tap/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/libtap/tap/libtap.sh	$(1)/usr/share/knot/tap/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tests/tap/runtests	$(1)/usr/share/knot/tap/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tests/tap/libtap.sh	$(1)/usr/share/knot/tap/
 
 	$(INSTALL_DIR)								$(1)/usr/share/knot/tests
 
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/zscanner/tests/.libs/zscanner-tool	$(1)/usr/share/knot/tests/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/zscanner/tests/unittests		$(1)/usr/share/knot/tests/test_zscanner
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/zscanner/tests/TESTS		$(1)/usr/share/knot/tests/
-	cp -a $(PKG_BUILD_DIR)/src/zscanner/tests/data				$(1)/usr/share/knot/tests/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tests/libzscanner/.libs/zscanner-tool	$(1)/usr/share/knot/tests/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tests/libzscanner/test_zscanner		$(1)/usr/share/knot/tests/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/tests/libzscanner/TESTS		$(1)/usr/share/knot/tests/
+	cp -a $(PKG_BUILD_DIR)/tests/libzscanner/data				$(1)/usr/share/knot/tests/
 
-	find $(PKG_BUILD_DIR)/src/dnssec/tests -maxdepth 1 -executable -type f | \
-		xargs -I{} basename {} | \
-		xargs -I{} $(INSTALL_BIN) -T $(PKG_BUILD_DIR)/src/dnssec/tests/{}	$(1)/usr/share/knot/tests/dnssec_test_{}
-
-	find $(PKG_BUILD_DIR)/tests/.libs -maxdepth 1 -executable -type f | \
-		xargs -I{} basename {} | \
-		xargs -I{} $(INSTALL_BIN) -T $(PKG_BUILD_DIR)/tests/.libs/{}		$(1)/usr/share/knot/tests/{}
-
-	for module in contrib libknot modules utils; do \
+	for module in contrib knot libdnssec libknot modules utils; do \
 		find $(PKG_BUILD_DIR)/tests/$$$${module}/.libs -maxdepth 1 -executable -type f | \
 			xargs -I{} basename {} | \
 			xargs -I{} $(INSTALL_BIN) -T $(PKG_BUILD_DIR)/tests/$$$${module}/.libs/{} \
