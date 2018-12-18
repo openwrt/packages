@@ -1,0 +1,98 @@
+From 5e0e401dc69b9c25e5f85de7484a70ea97862e16 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Wed, 12 Dec 2018 13:45:59 -0800
+Subject: [PATCH 2/2] Fix compilation without deprecated OpenSSL APIs
+
+This is an optional part of OpenWrt designed to save space.
+---
+ src/connection.c | 4 ++--
+ src/connection.h | 4 ++++
+ src/net_setup.c  | 1 +
+ src/tincd.c      | 5 +++++
+ 4 files changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/src/connection.c b/src/connection.c
+index 38b3ccfe..d137af12 100644
+--- a/src/connection.c
++++ b/src/connection.c
+@@ -96,13 +96,13 @@ void free_connection_partially(connection_t *c) {
+ 	c->outbudget = 0;
+ 
+ 	if(c->inctx) {
+-		EVP_CIPHER_CTX_cleanup(c->inctx);
++		EVP_CIPHER_CTX_reset(c->inctx);
+ 		free(c->inctx);
+ 		c->inctx = NULL;
+ 	}
+ 
+ 	if(c->outctx) {
+-		EVP_CIPHER_CTX_cleanup(c->outctx);
++		EVP_CIPHER_CTX_reset(c->outctx);
+ 		free(c->outctx);
+ 		c->outctx = NULL;
+ 	}
+diff --git a/src/connection.h b/src/connection.h
+index 629e16b9..4f554672 100644
+--- a/src/connection.h
++++ b/src/connection.h
+@@ -24,6 +24,10 @@
+ #include <openssl/rsa.h>
+ #include <openssl/evp.h>
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++#define EVP_CIPHER_CTX_reset(c)	EVP_CIPHER_CTX_cleanup(c)
++#endif
++
+ #include "avl_tree.h"
+ 
+ #define OPTION_INDIRECT         0x0001
+diff --git a/src/net_setup.c b/src/net_setup.c
+index cac7455d..f26007bd 100644
+--- a/src/net_setup.c
++++ b/src/net_setup.c
+@@ -27,6 +27,7 @@
+ #include <openssl/rand.h>
+ #include <openssl/err.h>
+ #include <openssl/evp.h>
++#include <openssl/bn.h>
+ 
+ #include "avl_tree.h"
+ #include "conf.h"
+diff --git a/src/tincd.c b/src/tincd.c
+index bdac0c9d..e8a60449 100644
+--- a/src/tincd.c
++++ b/src/tincd.c
+@@ -40,6 +40,7 @@
+ #ifndef OPENSSL_NO_ENGINE
+ #include <openssl/engine.h>
+ #endif
++#include <openssl/bn.h>
+ 
+ #ifdef HAVE_LZO
+ #include LZO1X_H
+@@ -692,7 +693,9 @@ int main(int argc, char **argv) {
+ 	ENGINE_register_all_complete();
+ #endif
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	OpenSSL_add_all_algorithms();
++#endif
+ 
+ 	if(generate_keys) {
+ 		read_server_config();
+@@ -811,10 +814,12 @@ end:
+ 
+ 	free(priority);
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	EVP_cleanup();
+ 	ERR_free_strings();
+ #ifndef OPENSSL_NO_ENGINE
+ 	ENGINE_cleanup();
++#endif
+ #endif
+ 
+ 	exit_configuration(&config_tree);
+-- 
+2.20.0
+
