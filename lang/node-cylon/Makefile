@@ -70,8 +70,9 @@ define Build/Compile
 	npm_config_arch=$(CONFIG_ARCH) \
 	npm_config_nodedir=$(STAGING_DIR)/usr \
 	npm_config_cache=$(TMP_DIR)/npm-cache \
-	PREFIX="$(PKG_INSTALL_DIR)/usr/" \
-	npm install -g `npm pack $(PKG_BUILD_DIR) | tail -n 1`
+	npm install -g \
+		--prefix="$(PKG_INSTALL_DIR)/usr/" \
+		`npm pack $(PKG_BUILD_DIR) | tail -n 1`
 endef
 
 define Package/node-cylon/install
