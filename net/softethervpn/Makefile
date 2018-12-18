@@ -25,19 +25,13 @@ PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_DEPENDS:=softethervpn/host
+HOST_BUILD_DEPENDS:=readline/host
 
 HAMCORE_SE2:=$(STAGING_DIR_HOST)/share/softethervpn/hamcore.se2
 
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
-
-
-# Override CC to add fake libreadline to linker search path
-HOSTCC += -L./src/readline
-
-# Add defines to turn add_history() and readline() calls into no-ops
-HOSTCC += -D'add_history(x)' -D'readline(x)=\"\"'
 
 # Execute in host build directory
 HOST_MAKE_FLAGS += -C $(HOST_BUILD_DIR)
@@ -50,15 +44,10 @@ define Host/Configure
 endef
 
 define Host/Compile
-	# Prepare fake readline headers and library
-	mkdir -p $(HOST_BUILD_DIR)/src/readline
-	touch $(HOST_BUILD_DIR)/src/readline/readline.h
-	touch $(HOST_BUILD_DIR)/src/readline/history.h
-	ar rcs $(HOST_BUILD_DIR)/src/readline/libreadline.a
-
 	# Build hamcorebuilder using host compiler and let it generate
 	# the hamcore.se2 archive file
-	CC="$(HOSTCC)" $(MAKE) $(HOST_MAKE_FLAGS) \
+	# CFLAGS, CPPFLAGS & LDFLAGS need to be passed with CC because they are being ingored
+	CC="$(HOSTCC) $(HOST_CFLAGS) $(HOST_CPPFLAGS) $(HOST_LDFLAGS)" $(MAKE) $(HOST_MAKE_FLAGS) \
 		src/bin/BuiltHamcoreFiles/unix/hamcore.se2
 endef
 
