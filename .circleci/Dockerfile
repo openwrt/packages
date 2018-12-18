@@ -16,6 +16,7 @@ wget \
 zlib1g-dev \
 unzip \
 xz-utils \
+bzr \
 && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -c "OpenWrt Builder" -m -d /home/build -s /bin/bash build
