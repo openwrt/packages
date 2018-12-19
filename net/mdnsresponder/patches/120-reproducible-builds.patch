@@ -1,6 +1,6 @@
 --- a/Clients/dns-sd.c
 +++ b/Clients/dns-sd.c
-@@ -2288,7 +2288,7 @@ Fail:
+@@ -2281,7 +2281,7 @@ Fail:
  
  // NOT static -- otherwise the compiler may optimize it out
  // The "@(#) " pattern is a special prefix the "what" command looks for
@@ -48,5 +48,5 @@
  
  // NOT static -- otherwise the compiler may optimize it out
  // The "@(#) " pattern is a special prefix the "what" command looks for
--const char VersionString_SCCS_libdnssd[] = "@(#) libdns_sd " STRINGIFY(mDNSResponderVersion) " (" __DATE__ " " __TIME__ ")";
-+const char VersionString_SCCS_libdnssd[] = "@(#) libdns_sd " STRINGIFY(mDNSResponderVersion);
+-const char VersionString_SCCS_libdnssd[] DNSSD_USED = "@(#) libdns_sd " STRINGIFY(mDNSResponderVersion) " (" __DATE__ " " __TIME__ ")";
++const char VersionString_SCCS_libdnssd[] DNSSD_USED = "@(#) libdns_sd " STRINGIFY(mDNSResponderVersion);
