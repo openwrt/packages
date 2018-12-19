@@ -220,39 +220,15 @@ index b392fc7..f551ad5 100755
  
  /* Converts a prefix length to IPv6 network mask */
  void plen_to_mask(int plen, char *addr) {
-@@ -86,7 +87,7 @@ struct ifi_info *get_ifi_info_linuxv6(int family, int doaliases)
-     FILE *fp = NULL;
-     char addr[8][5];
-     int flags, myflags, index, plen, scope;
--    char ifname[9], lastname[IFNAMSIZ];
-+    char ifname[IFNAMSIZ], lastname[IFNAMSIZ];
-     char addr6[32+7+1]; /* don't forget the seven ':' */
-     struct addrinfo hints, *res0;
-     int err;
-@@ -92,7 +93,8 @@ struct ifi_info *get_ifi_info_linuxv6(int family, int doaliases)
-     int err;
-     int sockfd = -1;
-     struct ifreq ifr;
--
-+    char mask[64] = "%4s%4s%4s%4s%4s%4s%4s%4s %02x %02x %02x %02x %";
-+    sprintf(mask+strlen(mask), "%ds\n", IFNAMSIZ);
-     res0=NULL;
-     ifihead = NULL;
-     ifipnext = &ifihead;
-@@ -104,11 +106,12 @@ struct ifi_info *get_ifi_info_linuxv6(int family, int doaliases)
-             goto gotError;
-         }
-         while (fscanf(fp,
--                      "%4s%4s%4s%4s%4s%4s%4s%4s %02x %02x %02x %02x %8s\n",
-+                      mask,
-                       addr[0],addr[1],addr[2],addr[3],
-                       addr[4],addr[5],addr[6],addr[7],
-                       &index, &plen, &scope, &flags, ifname) != EOF) {
+@@ -127,6 +128,8 @@
+             nitems = fscanf(fp, ifnameFmt, ifname);
+             if (nitems != 1) break;
  
 +            if (flags & IFA_F_DEPRECATED) continue;
-             myflags = 0;
-             if (strncmp(lastname, ifname, IFNAMSIZ) == 0) {
++
+             if (strcmp(lastname, ifname) == 0) {
                  if (doaliases == 0)
+                     continue;   /* already processed this interface */
 diff --git a/mDNSShared/dnsextd_parser.y b/mDNSShared/dnsextd_parser.y
 index 18c5990..d4b63ce 100644
 --- a/mDNSShared/dnsextd_parser.y
