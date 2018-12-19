@@ -11,15 +11,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=boost
-PKG_VERSION:=1.68.0
-PKG_SOURCE_VERSION:=1_68_0
-PKG_RELEASE:=4
+PKG_VERSION:=1.69.0
+PKG_SOURCE_VERSION:=1_69_0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_SOURCE_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)_$(PKG_SOURCE_VERSION)
-PKG_HASH:=7f6130bc3cf65f56a618888ce9d5ea704fa10b462be126ad053e80e553d6d8b7
+PKG_HASH:=8f32d4617390d1c2d16f26a27ab60d97807b35440d45891fa340fc2648b04406
 PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 
@@ -38,7 +38,7 @@ define Package/boost/Default
 endef
 
 define Package/boost/description
-This package provides the Boost v1.68.0 libraries.
+This package provides the Boost v1.69.0 libraries.
 Boost is a set of free, peer-reviewed, portable C++ source libraries.
 
 -----------------------------------------------------------------------------
@@ -76,7 +76,6 @@ This package provides the following run-time libraries:
  - random
  - regex
  - serialization and wserialization
- - signals
  - stackstrace
  - system
  - thread
@@ -85,7 +84,7 @@ This package provides the following run-time libraries:
  - wave
 
 There are many more header-only libraries supported by Boost.
-See more at http://www.boost.org/doc/libs/1_67_0/
+See more at http://www.boost.org/doc/libs/1_69_0/
 endef
 
 PKG_BUILD_DEPENDS:=boost/host PACKAGE_python:python PACKAGE_python3:python3
@@ -128,6 +127,35 @@ define Package/boost/config
 	menu "Select Boost Options"
 		depends on PACKAGE_boost
 		comment "Boost compilation options."
+
+		choice
+			prompt "Compile Visibility."
+				default boost-compile-visibility-hidden
+				help
+					Choose Boost symbols compilation visibility.
+					-> Global:
+						- a.k.a. "default" in gcc documentation. Global symbols are considered public,
+						 they are exported from shared libraries and can be redefined by another
+						 shared library or executable.
+					-> Protected:
+						- a.k.a. "symbolic". Protected symbols are exported from shared libraries but
+						 cannot be redefined by another shared library or executable. This mode is
+						 not supported on some platforms, for example OS X.
+					-> Hidden:
+						- Hidden symbols are not exported from shared libraries and cannot be 
+						 redefined by a different shared library or executable loaded in a process.
+						 In this mode, public symbols have to be explicitly marked in the source code
+						 to be exported from shared libraries. This is the recommended mode.
+
+			config boost-compile-visibility-global
+				bool "Global"
+			
+			config boost-compile-visibility-protected
+				bool "Protected"
+			
+			config boost-compile-visibility-hidden
+				bool "Hidden"
+		endchoice
 
 		choice
 			prompt "Compile Boost libraries."
@@ -326,7 +354,6 @@ $(eval $(call DefineBoostLibrary,random,system,))
 $(eval $(call DefineBoostLibrary,regex,,))
 $(eval $(call DefineBoostLibrary,serialization,,))
 $(eval $(call DefineBoostLibrary,wserialization,serialization,))
-$(eval $(call DefineBoostLibrary,signals,,))
 $(eval $(call DefineBoostLibrary,stacktrace,,))
 $(eval $(call DefineBoostLibrary,system,,))
 $(eval $(call DefineBoostLibrary,thread,system chrono atomic,))
@@ -374,6 +401,9 @@ define Build/Compile
 			--ignore-site-config \
 			--toolset=gcc-$(ARCH) abi=$(BOOST_ABI) \
 			--disable-long-double \
+			$(if $(CONFIG_boost-compile-visibility-global), visibility=global,) \
+			$(if $(CONFIG_boost-compile-visibility-protected), visibility=protected,) \
+			$(if $(CONFIG_boost-compile-visibility-hidden), visibility=hidden,) \
 			$(if $(CONFIG_boost-variant-release), variant=release,) \
 			$(if $(CONFIG_boost-variant-debug), variant=debug,) \
 			$(if $(CONFIG_boost-variant-profile), variant=profile,) \
