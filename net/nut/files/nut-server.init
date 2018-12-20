@@ -160,8 +160,6 @@ build_driver_config() {
 	get_write_driver_config "$cfg" notransferoids 0 1
 	get_write_driver_config "$cfg" offdelay
 	get_write_driver_config "$cfg" ondelay
-	get_write_driver_config "$cfg" other
-	get_write_driver_config "$cfg" otherflag
 	get_write_driver_config "$cfg" pollfreq
 	get_write_driver_config "$cfg" port "auto"
 	get_write_driver_config "$cfg" product
@@ -202,8 +200,6 @@ build_driver_config() {
 		fi
 	}
 
-	config_list_foreach "$cfg" override defoverride override
-	config_list_foreach "$cfg" default defoverride default
 	config_list_foreach "$cfg" default other other
 	config_list_foreach "$cfg" default other otherflag
 	echo "" >>$UPS_C
