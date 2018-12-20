@@ -145,37 +145,37 @@ build_driver_config() {
 
 	echo "[$cfg]" >>"$UPS_C"
 
-	get_write_driver_config "$cfg" driver "usbhid-ups"
-	get_write_driver_config "$cfg" port "auto"
-	get_write_driver_config "$cfg" sdorder
-	get_write_driver_config "$cfg" desc
-	get_write_driver_config "$cfg" nolock 0 1
-	get_write_driver_config "$cfg" ignorelb 0 1
-	get_write_driver_config "$cfg" mfr
-	get_write_driver_config "$cfg" model
-	get_write_driver_config "$cfg" serial
-	get_write_driver_config "$cfg" sdtime
-	get_write_driver_config "$cfg" offdelay
-	get_write_driver_config "$cfg" ondelay
-	get_write_driver_config "$cfg" pollfreq
-	get_write_driver_config "$cfg" vendor
-	get_write_driver_config "$cfg" product
 	get_write_driver_config "$cfg" bus
+	get_write_driver_config "$cfg" community
+	get_write_driver_config "$cfg" desc
+	get_write_driver_config "$cfg" driver "usbhid-ups"
+	get_write_driver_config "$cfg" ignorelb 0 1
 	get_write_driver_config "$cfg" interruptonly 0 1
 	get_write_driver_config "$cfg" interruptsize
 	get_write_driver_config "$cfg" maxreport
-	get_write_driver_config "$cfg" vendorid
+	get_write_driver_config "$cfg" maxstartdelay
+	get_write_driver_config "$cfg" mfr
+	get_write_driver_config "$cfg" model
+	get_write_driver_config "$cfg" nolock 0 1
+	get_write_driver_config "$cfg" notransferoids 0 1
+	get_write_driver_config "$cfg" offdelay
+	get_write_driver_config "$cfg" ondelay
+	get_write_driver_config "$cfg" other
+	get_write_driver_config "$cfg" otherflag
+	get_write_driver_config "$cfg" pollfreq
+	get_write_driver_config "$cfg" port "auto"
+	get_write_driver_config "$cfg" product
 	get_write_driver_config "$cfg" productid
-	get_write_driver_config "$cfg" community
+	get_write_driver_config "$cfg" retrydelay
+	get_write_driver_config "$cfg" sdorder
+	get_write_driver_config "$cfg" sdtime
+	get_write_driver_config "$cfg" serial
 	get_write_driver_config "$cfg" snmp_version
 	get_write_driver_config "$cfg" snmp_retries
 	get_write_driver_config "$cfg" snmp_timeout
-	get_write_driver_config "$cfg" notransferoids 0 1
-	get_write_driver_config "$cfg" maxstartdelay
-	get_write_driver_config "$cfg" retrydelay
 	get_write_driver_config "$cfg" synchronous
-	get_write_driver_config "$cfg" other
-	get_write_driver_config "$cfg" otherflag
+	get_write_driver_config "$cfg" vendor
+	get_write_driver_config "$cfg" vendorid
 
 	defoverride() {
 		local overvar="$1"
