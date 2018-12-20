@@ -192,16 +192,16 @@ build_driver_config() {
 		local othervarflag="$2"
 
 		if [ "$othervarflag" = "otherflag" ]; then
-			config_get_bool otherval "${othervarflag}_${overtype}" value
-			[ "$otherval" = "1" ] && echo "${othervarflag}_${othervar}" >>"$UPS_C"
+			config_get_bool otherval "${othervarflag}_${othervar}" value
+			[ "$otherval" = "1" ] && echo "${othervar}" >>"$UPS_C"
 		else
-			config_get otherval "${othervarflag}_${overtype}" value
-			[ -n "$otherval" ] && echo "${othervarflag}_${othervar} = $otherval" >>"$UPS_C"
+			config_get otherval "${othervarflag}_${othervar}" value
+			[ -n "$otherval" ] && echo "${othervar} = $otherval" >>"$UPS_C"
 		fi
 	}
 
-	config_list_foreach "$cfg" default other other
-	config_list_foreach "$cfg" default other otherflag
+	config_list_foreach "$cfg" other other
+	config_list_foreach "$cfg" other otherflag
 	echo "" >>$UPS_C
 	havedriver=1
 }
