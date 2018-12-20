@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlite
 PKG_VERSION:=3260000
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_VERSION).tar.gz
 PKG_HASH:=5daa6a3fb7d1e8c767cd59c4ded8da6e4b00c61d3b466d0685e35c4dd6d7bf5d
@@ -34,7 +34,7 @@ define Package/sqlite3/Default
   SUBMENU:=database
   TITLE:=SQLite (v3.x) database engine
   URL:=http://www.sqlite.org/
-  MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
+  MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
 endef
 
 define Package/sqlite3/Default/description
@@ -75,7 +75,7 @@ $(call Package/sqlite3/Default/description)
  formats.
 endef
 
-TARGET_CFLAGS += $(FPIC) \
+TARGET_CFLAGS += \
 	-DSQLITE_ENABLE_UNLOCK_NOTIFY=1 \
 	-DHAVE_ISNAN=1 \
 	-DHAVE_MALLOC_USABLE_SIZE=1
