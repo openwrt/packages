@@ -39,6 +39,7 @@ HOST_MAKE_FLAGS += -C $(HOST_BUILD_DIR)
 # Select 32 or 64 bit Makefile for host build depending on host architecture
 HOST_MAKE_FLAGS += -f src/makefiles/linux_$(if $(shell uname -m | grep 64),64,32)bit.mak
 
+HOST_LDFLAGS += -Wl,-rpath="$(STAGING_DIR_HOSTPKG)/lib"
 # Prevent calling upstream configure
 define Host/Configure
 endef
