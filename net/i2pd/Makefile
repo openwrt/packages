@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=i2pd
 PKG_VERSION:=2.22.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_BUILD_PARALLEL:=1
 
 PKG_SOURCE_URL:=https://codeload.github.com/PurpleI2P/i2pd/tar.gz/$(PKG_VERSION)?
@@ -59,6 +59,7 @@ define Package/i2pd/install
 	' $(1)/etc/i2pd/i2pd.conf
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/contrib/subscriptions.txt $(1)/etc/i2pd
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/contrib/tunnels.conf $(1)/etc/i2pd
+	$(INSTALL_BIN) ./files/i2pd.default $(1)/etc/i2pd
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/i2pd.init $(1)/etc/init.d/i2pd
 endef
