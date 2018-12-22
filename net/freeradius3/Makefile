@@ -349,7 +349,75 @@ define Package/freeradius3-mod-realm/conffiles
 /etc/freeradius3/mods-enabled/realm
 endef
 
-# SQL support has not been ported
+define Package/freeradius3-mod-sql
+  $(call Package/freeradius3/Default)
+  DEPENDS:=freeradius3
+  TITLE:=Radius generic SQL front-end
+endef
+
+define Package/freeradius3-mod-sql/conffiles
+/etc/freeradius3/mods-available/sql
+endef
+
+define Package/freeradius3-mod-sql-mysql
+  $(call Package/freeradius3/Default)
+  DEPENDS:=freeradius3-mod-sql +libmysqlclient
+  TITLE:=Radius MySQL back-end drivers
+endef
+
+define Package/freeradius3-mod-sql-mysql/conffiles
+/etc/freeradius3/mods-config/sql/main/mysql
+endef
+
+define Package/freeradius3-mod-sql-null
+  $(call Package/freeradius3/Default)
+  DEPENDS:=freeradius3-mod-sql
+  TITLE:=Radius Dummy SQL back-end drivers
+endef
+
+define Package/freeradius3-mod-sql-postgresql
+  $(call Package/freeradius3/Default)
+  DEPENDS:=freeradius3-mod-sql +libpq
+  TITLE:=Radius PostgreSQL back-end drivers
+endef
+
+define Package/freeradius3-mod-sql-mysql/conffiles
+/etc/freeradius3/mods-config/sql/main/postgresql
+endef
+
+define Package/freeradius3-mod-sql-sqlite
+  $(call Package/freeradius3/Default)
+  DEPENDS:=freeradius3-mod-sql +libsqlite3
+  TITLE:=Radius SQLite back-end drivers
+endef
+
+define Package/freeradius3-mod-sql-mysql/conffiles
+/etc/freeradius3/mods-config/sql/main/sqlite
+endef
+
+define Package/freeradius3-mod-sqlcounter
+  $(call Package/freeradius3/Default)
+  DEPENDS:=+freeradius3-mod-sql
+  TITLE:=Packet counter using accounting records written into an SQL database
+endef
+
+define Package/freeradius3-mod-sqlcounter/conffiles
+/etc/freeradius3/mods-config/sql/counter
+/etc/freeradius3/mods-available/sqlcounter
+endef
+
+define Package/freeradius3-mod-sqlippool
+  $(call Package/freeradius3/Default)
+  DEPENDS:=+freeradius3-mod-sql
+  TITLE:=Radius SQL Based IP Pool module
+endef
+
+define Package/freeradius3-mod-sqlippool/conffiles
+/etc/freeradius3/mods-config/sql/ippool
+/etc/freeradius3/mods-config/sql/ippool-dhcp
+/etc/freeradius3/mods-available/dhcp_sqlippool
+/etc/freeradius3/mods-available/sqlippool
+endef
 
 define Package/freeradius3-mod-radutmp
   $(call Package/freeradius3/Default)
@@ -427,19 +495,12 @@ CONFIGURE_ARGS+= \
 	--without-rlm_ruby \
 	--without-rlm_securid \
 	--without-rlm_smsotp \
-	--without-rlm_sql \
 	--without-rlm_sql_db2 \
 	--without-rlm_sql_firebird \
 	--without-rlm_sql_freetds \
 	--without-rlm_sql_iodbc \
-	--without-rlm_sql_mysql \
 	--without-rlm_sql_oracle \
-	--without-rlm_sql_postgresql \
-	--without-rlm_sql_sqlite \
 	--without-rlm_sql_unixodbc \
-	--without-rlm_sqlcounter \
-	--without-rlm_sqlhpwippool \
-	--without-rlm_sqlippool \
 	--without-rlm_unbound \
 	--without-rlm_yubikey \
 
@@ -489,6 +550,44 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-eap-pwd),)
   CONFIGURE_LIBS+= -lcrypto -lssl
 else
   CONFIGURE_ARGS+= --without-rlm_eap_pwd
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-sql),)
+  CONFIGURE_ARGS+= --with-rlm_sql
+else
+  CONFIGURE_ARGS+= --without-rlm_sql
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-sql-mysql),)
+  CONFIGURE_ARGS+= \
+		--with-rlm_sql_mysql \
+		--with-mysql-include-dir="$(STAGING_DIR)/usr/include/mysql"
+else
+  CONFIGURE_ARGS+= --without-rlm_sql_mysql
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-sql-postgresql),)
+  CONFIGURE_ARGS+= --with-rlm_sql_postgresql
+else
+  CONFIGURE_ARGS+= --without-rlm_sql_postgresql
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-sql-sqlite),)
+  CONFIGURE_ARGS+= --with-rlm_sql_sqlite
+else
+  CONFIGURE_ARGS+= --without-rlm_sql_sqlite
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-sqlcounter),)
+  CONFIGURE_ARGS+= --with-rlm_sqlcounter
+else
+  CONFIGURE_ARGS+= --without-rlm_sqlcounter
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-sqlippool),)
+  CONFIGURE_ARGS+= --with-rlm_sqlippool
+else
+  CONFIGURE_ARGS+= --without-rlm_sqlippool
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-radutmp),)
@@ -641,5 +740,12 @@ $(eval $(call BuildPlugin,freeradius3-mod-passwd,rlm_passwd,))
 $(eval $(call BuildPlugin,freeradius3-mod-preprocess,rlm_preprocess,))
 $(eval $(call BuildPlugin,freeradius3-mod-radutmp,rlm_radutmp,))
 $(eval $(call BuildPlugin,freeradius3-mod-realm,rlm_realm,))
+$(eval $(call BuildPlugin,freeradius3-mod-sql,rlm_sql,))
+$(eval $(call BuildPlugin,freeradius3-mod-sql-mysql,rlm_sql_mysql,))
+$(eval $(call BuildPlugin,freeradius3-mod-sql-null,rlm_sql_null,))
+$(eval $(call BuildPlugin,freeradius3-mod-sql-postgresql,rlm_sql_postgresql,))
+$(eval $(call BuildPlugin,freeradius3-mod-sql-sqlite,rlm_sql_sqlite,))
+$(eval $(call BuildPlugin,freeradius3-mod-sqlcounter,rlm_sqlcounter,))
+$(eval $(call BuildPlugin,freeradius3-mod-sqlippool,rlm_sqlippool,))
 $(eval $(call BuildPlugin,freeradius3-mod-unix,rlm_unix,))
 $(eval $(call BuildPackage,freeradius3-utils))
