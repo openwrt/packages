@@ -14,10 +14,13 @@ PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.libarchive.org/downloads
 PKG_HASH:=ba7eb1781c9fbbae178c4c6bad1c6eb08edab9a1496c64833d1715d022b30e2e
+
 PKG_MAINTAINER:=Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
 PKG_LICENSE:=BSD-2-Clause
+PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:libarchive:libarchive
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
 
@@ -59,14 +62,18 @@ define Package/bsdtar/description
 endef
 
 CONFIGURE_ARGS += \
-	--disable-bsdcpio \
 	--enable-bsdtar=shared \
+	--disable-bsdcpio \
+	--disable-rpath \
 	--disable-acl \
 	--disable-xattr \
+	--without-cng \
+	--without-iconv \
+	--without-lz4 \
+	--without-lzo2 \
 	--without-nettle \
 	--without-xml2 \
-	--without-lz4 \
-	--without-cng \
+	--without-zstd
 
 ifeq ($(BUILD_VARIANT),noopenssl)
 	CONFIGURE_ARGS += --without-openssl
