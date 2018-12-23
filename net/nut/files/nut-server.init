@@ -225,7 +225,6 @@ build_global_driver_config() {
 }
 
 build_config() {
-	local RUNAS=nut
 	local STATEPATH=/var/run/nut
 
         mkdir -m 0755 -p "$(dirname "$UPS_C")"
@@ -281,7 +280,7 @@ start_driver_instance() {
 }
 
 start_server_instance() {
-	local RUNAS
+	local RUNAS=nut
 	build_config
 
 	[ "$haveserver" != 1 ] && return
