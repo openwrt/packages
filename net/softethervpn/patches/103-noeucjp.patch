@@ -10,12 +10,12 @@
  void *iconv_cache_wide_to_str = 0;
  void *iconv_cache_str_to_wide = 0;
 @@ -938,7 +938,7 @@ void InitInternational()
- #ifdef	UNIX_MACOS
+ #if defined (UNIX_MACOS) || defined (UNIX_LINUX_MUSL)
  		StrCpy(charset, sizeof(charset), "utf-8");
- #else	// UNIX_MACOS
+ #else // defined (UNIX_MACOS) || defined (UNIX_LINUX_MUSL) 
 -		StrCpy(charset, sizeof(charset), "EUCJP");
 +		StrCpy(charset, sizeof(charset), "utf-8");
- #endif	// UNIX_MACOS
+ #endif // defined (UNIX_MACOS) || defined (UNIX_LINUX_MUSL) 
  		d = IconvWideToStrInternal();
  		if (d == (void *)-1)
 @@ -1198,7 +1198,7 @@ void GetCurrentCharSet(char *name, UINT
