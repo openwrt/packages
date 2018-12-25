@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
 PKG_VERSION:=1.5.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_CPE_ID:=cpe:/a:eclipse:mosquitto
@@ -143,6 +143,7 @@ define Package/libmosquitto-nossl/description
     This package is built without SSL support
 endef
 
+#libstdcpp must be used as there will be a linking error with Domoticz
 define Package/libmosquittopp
     SECTION:=libs
     CATEGORY:=Libraries

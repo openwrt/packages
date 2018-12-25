@@ -1,0 +1,87 @@
+From e7e69eadb712d45a3319be05938ae9cd39062f4c Mon Sep 17 00:00:00 2001
+From: "Roger A. Light" <roger@atchoo.org>
+Date: Thu, 10 Jan 2019 17:44:46 +0000
+Subject: [PATCH] Fix compilation when openssl deprecated APIs are not
+ available.
+
+Closes #1094. Thanks to Rosen Penev.
+---
+ lib/net_mosq.c         | 20 ++++++++++++--------
+ lib/util_mosq.c        |  3 +++
+ src/mosquitto_passwd.c |  2 ++
+ 3 files changed, 17 insertions(+), 8 deletions(-)
+
+diff --git a/lib/net_mosq.c b/lib/net_mosq.c
+index 09a2604..6ff60a9 100644
+--- a/lib/net_mosq.c
++++ b/lib/net_mosq.c
+@@ -87,9 +87,11 @@ int net__init(void)
+ #endif
+ 
+ #ifdef WITH_TLS
++#  if OPENSSL_VERSION_NUMBER < 0x10100000L || OPENSSL_API_COMPAT < 0x10100000L
+ 	SSL_load_error_strings();
+ 	SSL_library_init();
+ 	OpenSSL_add_all_algorithms();
++#  endif
+ 	if(tls_ex_index_mosq == -1){
+ 		tls_ex_index_mosq = SSL_get_ex_new_index(0, "client context", NULL, NULL, NULL);
+ 	}
+@@ -100,16 +102,18 @@ int net__init(void)
+ void net__cleanup(void)
+ {
+ #ifdef WITH_TLS
+-	#if OPENSSL_VERSION_NUMBER < 0x10100000L
+-		ERR_remove_state(0);
+-	#endif
+-	#ifndef OPENSSL_NO_ENGINE
+-		ENGINE_cleanup();
+-	#endif
+-	CONF_modules_unload(1);
++#  if OPENSSL_VERSION_NUMBER < 0x10100000L || OPENSSL_API_COMPAT < 0x10100000L
++	CRYPTO_cleanup_all_ex_data();
+ 	ERR_free_strings();
++	ERR_remove_state(0);
+ 	EVP_cleanup();
+-	CRYPTO_cleanup_all_ex_data();
++
++#    if !defined(OPENSSL_NO_ENGINE)
++	ENGINE_cleanup();
++#    endif
++#  endif
++
++	CONF_modules_unload(1);
+ #endif
+ 
+ #ifdef WITH_SRV
+diff --git a/lib/util_mosq.c b/lib/util_mosq.c
+index d98bbde..7266687 100644
+--- a/lib/util_mosq.c
++++ b/lib/util_mosq.c
+@@ -28,6 +28,9 @@ Contributors:
+ #  include <sys/stat.h>
+ #endif
+ 
++#ifdef WITH_TLS
++#  include <openssl/bn.h>
++#endif
+ 
+ #ifdef WITH_BROKER
+ #include "mosquitto_broker_internal.h"
+diff --git a/src/mosquitto_passwd.c b/src/mosquitto_passwd.c
+index 5b303c1..c9d5cbe 100644
+--- a/src/mosquitto_passwd.c
++++ b/src/mosquitto_passwd.c
+@@ -387,7 +387,9 @@ int main(int argc, char *argv[])
+ 	signal(SIGINT, handle_sigint);
+ 	signal(SIGTERM, handle_sigint);
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L || OPENSSL_API_COMPAT < 0x10100000L
+ 	OpenSSL_add_all_digests();
++#endif
+ 
+ 	if(argc == 1){
+ 		print_usage();
+-- 
+2.17.1
+
