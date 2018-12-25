@@ -61,12 +61,6 @@ ifup()
 		echo "Too many arguments. Usage: mwan3 ifup <interface>" && exit 0
 	fi
 
-	config_get_bool enabled globals 'enabled' 0
-	[ ${enabled} -gt 0 ] || {
-		echo "Warning: mwan3 is global disabled. Usage: /etc/init.d/mwan3 start"
-		exit 0
-	}
-
 	status=$(ubus -S call network.interface.$1 status)
 	[ -n "$status" ] && {
 		json_load $status
@@ -74,7 +68,6 @@ ifup()
 	}
 
 	config_get enabled "$1" enabled 0
-
 
 	if [ "$up" = "1" ] \
 		&& [ -n "$l3_device" ] \
