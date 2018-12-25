@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=klish
 PKG_VERSION:=2.1.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://libcode.org/attachments/download/70/
@@ -21,6 +21,7 @@ PKG_HASH:=a89dd1027dce713407b6d68e836c8fdead56406dcfc650da84da8e0b92c9b2e5
 
 PKG_INSTALL:=1
 
+include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/klish/default
@@ -33,7 +34,7 @@ endef
 
 define Package/klish
 $(call Package/klish/default,main tool)
-  DEPENDS:=+libstdcpp +libxml2
+  DEPENDS:=$(CXX_DEPENDS) +libxml2
 endef
 
 define Package/klish/description
