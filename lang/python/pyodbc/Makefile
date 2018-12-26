@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pyodbc
 PKG_VERSION:=4.0.26
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pyodbc
@@ -21,6 +21,7 @@ PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$
 
 PKG_BUILD_DEPENDS:=unixodbc/host
 
+include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
@@ -30,7 +31,7 @@ define Package/python-pyodbc/Default
   CATEGORY:=Languages
   SUBMENU:=Python
   URL:=https://github.com/mkleehammer/pyodbc
-  DEPENDS:=+unixodbc +libstdcpp
+  DEPENDS:=+unixodbc $(CXX_DEPENDS)
 endef
 
 define Package/python-pyodbc
