@@ -9,27 +9,26 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libplist
 PKG_VERSION:=2.0.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://www.libimobiledevice.org/downloads
+PKG_HASH:=3a7e9694c2d9a85174ba1fa92417cfabaea7f6d19631e544948dc7e17e82f602
 
 PKG_MAINTAINER:=Lukasz Baj <l.baj@radytek.com>
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=COPYING.LESSER
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/libimobiledevice/libplist.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=62ec804736435fa34e37e66e228e17e2aacee1d7
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=0b6a7656b431f78b0f11370938e577bc16f30d2255ad675bf4b63a96876fb290
-
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
+include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libplist/Default
   TITLE:=Apple property list
-  URL:=http://www.libimobiledevice.org/
+  URL:=https://www.libimobiledevice.org/
 endef
 
 define Package/libplist/Default/description
@@ -52,7 +51,7 @@ define Package/libplistcxx
   $(call Package/libplist/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libplist +libstdcpp
+  DEPENDS:=+libplist $(CXX_DEPENDS)
   TITLE+= C++ library
 endef
 
