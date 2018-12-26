@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcre
 PKG_VERSION:=8.42
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
@@ -23,12 +23,13 @@ PKG_FIXUP:=autoreconf
 
 PKG_INSTALL:=1
 
+include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libpcre/default
   SECTION:=libs
   CATEGORY:=Libraries
-  URL:=http://www.pcre.org/
+  URL:=https://www.pcre.org/
 endef
 
 define Package/libpcre
@@ -44,7 +45,7 @@ endef
 define Package/libpcrecpp
   $(call Package/libpcre/default)
   TITLE:=C++ wrapper for Perl Compatible Regular Expression library
-  DEPENDS:=+libpcre +libstdcpp
+  DEPENDS:=+libpcre $(CXX_DEPENDS)
 endef
 
 TARGET_CFLAGS += $(FPIC)
