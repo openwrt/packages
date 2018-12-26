@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpng
-PKG_VERSION:=1.6.35
+PKG_VERSION:=1.6.36
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/libpng
-PKG_HASH:=23912ec8c9584917ed9b09c5023465d71709dce089be503c7867fec68a93bcd7
-PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
+PKG_HASH:=eceb924c1fa6b79172fdfd008d335f0e59172a86a66481e09d4089df872aa319
 
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=Libpng GPL-2.0+ BSD-3-Clause
 PKC_LICENSE_FILES:=LICENSE contrib/gregbook/COPYING contrib/gregbook/LICENSE
 PKG_CPE_ID:=cpe:/a:libpng:libpng
