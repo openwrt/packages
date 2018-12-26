@@ -1,0 +1,13 @@
+diff --git a/setup.py b/setup.py
+index 4da69bc..165059b 100644
+--- a/setup.py
++++ b/setup.py
+@@ -28,7 +28,7 @@ if sys.platform == 'win32':
+             library_dirs.append(r'c:\wpdpack\Lib')
+     libraries = ['wpcap', 'packet', 'ws2_32']
+ else:
+-    libraries = ['pcap', 'stdc++']
++    libraries = ['pcap']
+ 
+ 
+ # end of user configurable parameters

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pcapy
 PKG_VERSION:=0.11.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=pcapy-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pcapy
@@ -19,6 +19,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/pcapy-$(PKG_VERSION)
 PKG_MAINTAINER:=Andrew McConachie <andrew@depht.com>
 PKG_LICENSE:=Apache-1.1
 
+include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 
@@ -28,7 +29,7 @@ define Package/python-pcapy
 	SUBMENU:=Python
 	TITLE:=python-pcapy
 	URL:=https://www.coresecurity.com/corelabs-research/open-source-tools/pcapy
-	DEPENDS:=+python +libpcap +libstdcpp
+	DEPENDS:=+python +libpcap $(CXX_DEPENDS)
 endef
 
 define Package/python-pcapy/description
