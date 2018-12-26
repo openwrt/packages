@@ -8,15 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gitolite
-PKG_VERSION:=3.6.8
+PKG_VERSION:=3.6.10
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=652d3b3f8ed93b8ef56153337465cc7260974e5cd2653e949da1bb97a8421ea0
-
-PKG_SOURCE_URL:=https://github.com/sitaramc/gitolite.git
-PKG_SOURCE_VERSION:=e126e97a4d5575821f89ae80dac402b017db94aa
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_HASH:=0ae3bea637b25cff13826e5ecd181c7b74a6eff377cf4c2243d85c2b0a290d3f
+PKG_SOURCE_URL:=https://codeload.github.com/sitaramc/gitolite/tar.gz/v$(PKG_VERSION)?
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 
@@ -28,7 +25,7 @@ define Package/gitolite
   SUBMENU:=Version Control Systems
   DEPENDS:=+perlbase-essential +perlbase-sys +perlbase-data +perlbase-digest +perlbase-env +perlbase-time +git +perlbase-findbin +perlbase-storable +perlbase-text +perlbase-getopt +perlbase-utf8 +openssh-keygen +openssh-server +openssh-moduli perl
   TITLE:=Easy administration of git repositories
-  URL:=http://gitolite.com/gitlolite
+  URL:=http://gitolite.com/gitolite
   MAINTAINER:=Daniel Dickinson <cshored@thecshore.com>
   USERID:=git=382:git=382
 endef
