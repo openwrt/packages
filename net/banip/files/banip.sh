@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-ban_ver="0.0.6"
+ban_ver="0.0.7"
 ban_sysver="unknown"
 ban_enabled=0
 ban_automatic="1"
@@ -169,10 +169,16 @@ f_envcheck()
 
 	for iface in ${ban_iface}
 	do
-		network_get_physdev tmp "${iface}"
+		network_get_device tmp "${iface}"
 		if [ -n "${tmp}" ]
 		then
 			ban_dev="${ban_dev} ${tmp}"
+		else
+			network_get_physdev tmp "${iface}"
+			if [ -n "${tmp}" ]
+			then
+				ban_dev="${ban_dev} ${tmp}"
+			fi
 		fi
 		network_get_subnets tmp "${iface}"
 		if [ -n "${tmp}" ]
