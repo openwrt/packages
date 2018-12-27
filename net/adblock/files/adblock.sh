@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.6.0"
+adb_ver="3.6.1"
 adb_sysver="unknown"
 adb_enabled=0
 adb_debug=0
@@ -37,6 +37,7 @@ adb_hashold=""
 adb_hashnew=""
 adb_report=0
 adb_repiface="br-lan"
+adb_replisten="53"
 adb_repdir="/tmp"
 adb_reputil="$(command -v tcpdump)"
 adb_repchunkcnt="5"
@@ -749,19 +750,22 @@ f_jsnup()
 	fi
 
 	json_load_file "${adb_rtfile}" >/dev/null 2>&1
-	json_select "data"
-	if [ -z "${adb_fetchinfo}" ]
+	json_select "data" >/dev/null 2>&1
+	if [ ${?} -eq 0 ]
 	then
-		json_get_var adb_fetchinfo "fetch_utility"
-	fi
-	if [ -z "${adb_cnt}" ]
-	then
-		json_get_var adb_cnt "overall_domains"
-		adb_cnt="${adb_cnt%% *}"
-	fi
-	if [ -z "${run_time}" ]
-	then
-		json_get_var run_time "last_rundate"
+		if [ -z "${adb_fetchinfo}" ]
+		then
+			json_get_var adb_fetchinfo "fetch_utility"
+		fi
+		if [ -z "${adb_cnt}" ]
+		then
+			json_get_var adb_cnt "overall_domains"
+			adb_cnt="${adb_cnt%% *}"
+		fi
+		if [ -z "${run_time}" ]
+		then
+			json_get_var run_time "last_rundate"
+		fi
 	fi
 
 	> "${adb_rtfile}"
@@ -1053,7 +1057,7 @@ f_main()
 #
 f_report()
 {
-	local bg_pid total blocked percent rep_clients rep_domains rep_blocked index hold cnt=0 print="${1:-"true"}"
+	local bg_pid total blocked percent rep_clients rep_domains rep_blocked index hold ports cnt=0 print="${1:-"true"}"
 
 	if [ ! -x "${adb_reputil}" ]
 	then
@@ -1062,17 +1066,30 @@ f_report()
 	fi
 
 	bg_pid="$(pgrep -f "^${adb_reputil}.*adb_report\.pcap$" | awk '{ORS=" "; print $1}')"
-	if [ ${adb_report} -eq 0 ] || ([ -n "${bg_pid}" ] && [ "${adb_action}" = "stop" ])
+	if [ ${adb_report} -eq 0 ] || ([ -n "${bg_pid}" ] && ([ "${adb_action}" = "stop" ] || [ "${adb_action}" = "restart" ]))
 	then
 		if [ -n "${bg_pid}" ]
 		then
 			kill -HUP ${bg_pid}
+			while $(kill -0 ${bg_pid} 2>/dev/null)
+			do
+				sleep 1
+			done
+			unset bg_pid
 		fi
-		return 0
 	fi
-	if [ -z "${bg_pid}" ] && [ "${adb_action}" != "report" ]
+	if [ -z "${bg_pid}" ] && [ "${adb_action}" != "report" ] && [ "${adb_action}" != "stop" ]
 	then
-		("${adb_reputil}" -nn -s0 -l -i ${adb_repiface} port 53 -C${adb_repchunksize} -W${adb_repchunkcnt} -w "${adb_repdir}/adb_report.pcap" >/dev/null 2>&1 &)
+		for port in ${adb_replisten}
+		do
+			if [ -z "${ports}" ]
+			then
+				ports="port ${port}"
+			else
+				ports="${ports} or port ${port}"
+			fi
+		done
+		("${adb_reputil}" -nn -s0 -l -i ${adb_repiface} ${ports} -C${adb_repchunksize} -W${adb_repchunkcnt} -w "${adb_repdir}/adb_report.pcap" >/dev/null 2>&1 &)
 	fi
 	if [ "${adb_action}" = "report" ]
 	then
@@ -1211,7 +1228,7 @@ f_report()
 			fi
 		fi
 	fi
-	f_log "debug" "f_report ::: action: ${adb_action}, report: ${adb_report}, print: ${print}, reputil: ${adb_reputil}, repdir: ${adb_repdir}, repiface: ${adb_repiface}, repchunksize: ${adb_repchunksize}, repchunkcnt: ${adb_repchunkcnt}, bg_pid: ${bg_pid}"
+	f_log "debug" "f_report ::: action: ${adb_action}, report: ${adb_report}, print: ${print}, reputil: ${adb_reputil}, repdir: ${adb_repdir}, repiface: ${adb_repiface}, replisten: ${adb_replisten}, repchunksize: ${adb_repchunksize}, repchunkcnt: ${adb_repchunkcnt}, bg_pid: ${bg_pid}"
 }
 
 # source required system libraries
