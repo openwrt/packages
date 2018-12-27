@@ -145,37 +145,35 @@ build_driver_config() {
 
 	echo "[$cfg]" >>"$UPS_C"
 
-	get_write_driver_config "$cfg" driver "usbhid-ups"
-	get_write_driver_config "$cfg" port "auto"
-	get_write_driver_config "$cfg" sdorder
-	get_write_driver_config "$cfg" desc
-	get_write_driver_config "$cfg" nolock 0 1
-	get_write_driver_config "$cfg" ignorelb 0 1
-	get_write_driver_config "$cfg" mfr
-	get_write_driver_config "$cfg" model
-	get_write_driver_config "$cfg" serial
-	get_write_driver_config "$cfg" sdtime
-	get_write_driver_config "$cfg" offdelay
-	get_write_driver_config "$cfg" ondelay
-	get_write_driver_config "$cfg" pollfreq
-	get_write_driver_config "$cfg" vendor
-	get_write_driver_config "$cfg" product
 	get_write_driver_config "$cfg" bus
+	get_write_driver_config "$cfg" community
+	get_write_driver_config "$cfg" desc
+	get_write_driver_config "$cfg" driver "usbhid-ups"
+	get_write_driver_config "$cfg" ignorelb 0 1
 	get_write_driver_config "$cfg" interruptonly 0 1
 	get_write_driver_config "$cfg" interruptsize
 	get_write_driver_config "$cfg" maxreport
-	get_write_driver_config "$cfg" vendorid
+	get_write_driver_config "$cfg" maxstartdelay
+	get_write_driver_config "$cfg" mfr
+	get_write_driver_config "$cfg" model
+	get_write_driver_config "$cfg" nolock 0 1
+	get_write_driver_config "$cfg" notransferoids 0 1
+	get_write_driver_config "$cfg" offdelay
+	get_write_driver_config "$cfg" ondelay
+	get_write_driver_config "$cfg" pollfreq
+	get_write_driver_config "$cfg" port "auto"
+	get_write_driver_config "$cfg" product
 	get_write_driver_config "$cfg" productid
-	get_write_driver_config "$cfg" community
+	get_write_driver_config "$cfg" retrydelay
+	get_write_driver_config "$cfg" sdorder
+	get_write_driver_config "$cfg" sdtime
+	get_write_driver_config "$cfg" serial
 	get_write_driver_config "$cfg" snmp_version
 	get_write_driver_config "$cfg" snmp_retries
 	get_write_driver_config "$cfg" snmp_timeout
-	get_write_driver_config "$cfg" notransferoids 0 1
-	get_write_driver_config "$cfg" maxstartdelay
-	get_write_driver_config "$cfg" retrydelay
 	get_write_driver_config "$cfg" synchronous
-	get_write_driver_config "$cfg" other
-	get_write_driver_config "$cfg" otherflag
+	get_write_driver_config "$cfg" vendor
+	get_write_driver_config "$cfg" vendorid
 
 	defoverride() {
 		local overvar="$1"
@@ -194,18 +192,16 @@ build_driver_config() {
 		local othervarflag="$2"
 
 		if [ "$othervarflag" = "otherflag" ]; then
-			config_get_bool otherval "${othervarflag}_${overtype}" value
-			[ "$otherval" = "1" ] && echo "${othervarflag}_${othervar}" >>"$UPS_C"
+			config_get_bool otherval "${othervarflag}_${othervar}" value
+			[ "$otherval" = "1" ] && echo "${othervar}" >>"$UPS_C"
 		else
-			config_get otherval "${othervarflag}_${overtype}" value
-			[ -n "$otherval" ] && echo "${othervarflag}_${othervar} = $otherval" >>"$UPS_C"
+			config_get otherval "${othervarflag}_${othervar}" value
+			[ -n "$otherval" ] && echo "${othervar} = $otherval" >>"$UPS_C"
 		fi
 	}
 
-	config_list_foreach "$cfg" override defoverride override
-	config_list_foreach "$cfg" default defoverride default
-	config_list_foreach "$cfg" default other other
-	config_list_foreach "$cfg" default other otherflag
+	config_list_foreach "$cfg" other other
+	config_list_foreach "$cfg" other otherflag
 	echo "" >>$UPS_C
 	havedriver=1
 }
@@ -229,7 +225,6 @@ build_global_driver_config() {
 }
 
 build_config() {
-	local RUNAS=nut
 	local STATEPATH=/var/run/nut
 
         mkdir -m 0755 -p "$(dirname "$UPS_C")"
@@ -285,7 +280,7 @@ start_driver_instance() {
 }
 
 start_server_instance() {
-	local RUNAS
+	local RUNAS=nut
 	build_config
 
 	[ "$haveserver" != 1 ] && return
