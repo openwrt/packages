@@ -8,16 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lualanes
-PKG_REV:=aa9bfcf2dd49f55f11b27e7c21d5b75d81ccfc7e
-PKG_VERSION:=3.9.4
-PKG_RELEASE=1
+PKG_VERSION:=3.13.0
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_REV).tar.gz
-PKG_MIRROR_HASH:=e9b053e627edaf7ef229af176177bf2bd0edd31b69690ba7c1e6be41041ffd07
-PKG_SOURCE_URL:=https://github.com/LuaLanes/lanes.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/LuaLanes/lanes/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=53a17d7ee11f17ca0543ae5aa640208dcb62d37862a0d0ea450455fae12c8ff1
+PKG_BUILD_DIR:=$(BUILD_DIR)/lanes-$(PKG_VERSION)
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -45,7 +42,7 @@ define Build/Compile
         CC="$(TARGET_CC)" \
         LUA="$(STAGING_DIR_HOSTPKG)/bin/lua" \
         LUAC="$(STAGING_DIR_HOSTPKG)/bin/luac" \
-        OPT_FLAGS="$(TARGET_CFLAGS) --std=c99 -Dpthread_yield=sched_yield"
+        OPT_FLAGS="$(TARGET_CFLAGS) -Dpthread_yield=sched_yield"
 endef
 
 define Package/lualanes/install
