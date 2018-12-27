@@ -30,6 +30,8 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_SQLITE3_FTS4 \
 	CONFIG_SQLITE3_FTS5 \
 	CONFIG_SQLITE3_JSON1 \
+	CONFIG_SQLITE3_LIBEDIT \
+	CONFIG_SQLITE3_READLINE \
 	CONFIG_SQLITE3_RTREE \
 	CONFIG_SQLITE3_SESSION \
 	CONFIG_SQLITE3_THREADSAFE
@@ -70,7 +72,11 @@ define Package/sqlite3-cli
   $(call Package/sqlite3/Default)
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libsqlite3 +libncurses +libreadline
+  DEPENDS := \
+	  +libsqlite3 \
+	  +SQLITE3_LIBEDIT:libedit \
+	  +SQLITE3_READLINE:libreadline \
+	  +SQLITE3_READLINE:libncursesw
   TITLE+= (cli)
 endef
 
@@ -81,6 +87,10 @@ $(call Package/sqlite3/Default/description)
  formats.
 endef
 
+define Package/sqlite3-cli/config
+  source "$(SOURCE)/Config-cli.in"
+endef
+
 TARGET_CFLAGS += \
 	-DHAVE_ISNAN=1 \
 	-DHAVE_MALLOC_USABLE_SIZE=1 \
@@ -89,7 +99,6 @@ TARGET_CFLAGS += \
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
-	--disable-editline \
 	--disable-static-shell \
 	$(if $(CONFIG_SQLITE3_DYNAMIC_EXTENSIONS),--enable-dynamic-extensions,--disable-dynamic-extensions) \
 	$(if $(CONFIG_SQLITE3_FTS3),--enable-fts3,--disable-fts3) \
@@ -99,6 +108,14 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_SQLITE3_RTREE),--enable-rtree,--disable-rtree) \
 	$(if $(CONFIG_SQLITE3_SESSION),--enable-session,--disable-session) \
 	$(if $(CONFIG_SQLITE3_THREADSAFE),--enable-threadsafe,--disable-threadsafe)
+
+ifeq ($(CONFIG_SQLITE3_LIBEDIT),y)
+CONFIGURE_ARGS+=--disable-readline
+else ifeq ($(CONFIG_SQLITE3_READLINE),y)
+CONFIGURE_ARGS+=--disable-editline
+else
+CONFIGURE_ARGS+=--disable-editline --disable-readline
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
