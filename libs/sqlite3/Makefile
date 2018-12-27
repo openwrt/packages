@@ -25,8 +25,14 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 PKG_CONFIG_DEPENDS := \
-	CONFIG_SQLITE_FTS3 \
-	CONFIG_SQLITE_RTREE
+	CONFIG_SQLITE3_DYNAMIC_EXTENSIONS \
+	CONFIG_SQLITE3_FTS3 \
+	CONFIG_SQLITE3_FTS4 \
+	CONFIG_SQLITE3_FTS5 \
+	CONFIG_SQLITE3_JSON1 \
+	CONFIG_SQLITE3_RTREE \
+	CONFIG_SQLITE3_SESSION \
+	CONFIG_SQLITE3_THREADSAFE
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -57,7 +63,7 @@ $(call Package/sqlite3/Default/description)
 endef
 
 define Package/libsqlite3/config
-  source "$(SOURCE)/Config.in"
+  source "$(SOURCE)/Config-lib.in"
 endef
 
 define Package/sqlite3-cli
@@ -80,19 +86,19 @@ TARGET_CFLAGS += \
 	-DHAVE_MALLOC_USABLE_SIZE=1 \
 	-DSQLITE_ENABLE_UNLOCK_NOTIFY=1
 
-ifneq ($(CONFIG_SQLITE_FTS3),y)
-TARGET_CFLAGS += -USQLITE_ENABLE_FTS3
-endif
-
-ifneq ($(CONFIG_SQLITE_RTREE),y)
-TARGET_CFLAGS += -USQLITE_ENABLE_RTREE
-endif
-
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-editline \
-	--disable-static-shell
+	--disable-static-shell \
+	$(if $(CONFIG_SQLITE3_DYNAMIC_EXTENSIONS),--enable-dynamic-extensions,--disable-dynamic-extensions) \
+	$(if $(CONFIG_SQLITE3_FTS3),--enable-fts3,--disable-fts3) \
+	$(if $(CONFIG_SQLITE3_FTS3),--enable-fts4,--disable-fts4) \
+	$(if $(CONFIG_SQLITE3_FTS3),--enable-fts5,--disable-fts5) \
+	$(if $(CONFIG_SQLITE3_JSON1),--enable-json1,--disable-json1) \
+	$(if $(CONFIG_SQLITE3_RTREE),--enable-rtree,--disable-rtree) \
+	$(if $(CONFIG_SQLITE3_SESSION),--enable-session,--disable-session) \
+	$(if $(CONFIG_SQLITE3_THREADSAFE),--enable-threadsafe,--disable-threadsafe)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
