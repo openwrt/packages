@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
 PKG_VERSION:=2.0.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.keepalived.org/software
@@ -53,6 +53,7 @@ define Package/keepalived/conffiles
 endef
 
 CONFIGURE_ARGS+= \
+	--disable-libipset \
 	--disable-libnl \
 	--enable-sha1 \
 	--disable-snmp \
