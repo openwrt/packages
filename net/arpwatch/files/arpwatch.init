@@ -1,0 +1,10 @@
+#!/bin/sh /etc/rc.common
+START=90
+
+start () {
+	arpwatch -f /etc/arpwatch/arp.dat -i br-lan
+}
+
+stop() {
+	killall arpwatch
+}
