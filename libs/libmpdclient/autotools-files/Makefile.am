@@ -16,6 +16,7 @@ mpdinclude_HEADERS = \
 	include/mpd/idle.h \
 	include/mpd/list.h \
 	include/mpd/mixer.h \
+	include/mpd/mount.h \
 	include/mpd/parser.h \
 	include/mpd/password.h \
 	include/mpd/player.h \
@@ -44,6 +45,7 @@ lib_LTLIBRARIES = src/libmpdclient.la
 
 src_libmpdclient_la_SOURCES = \
 	src/async.c src/iasync.h \
+	src/audio_format.c \
 	src/buffer.h \
 	src/internal.h \
 	src/ierror.c src/ierror.h \
@@ -64,6 +66,8 @@ src_libmpdclient_la_SOURCES = \
 	src/kvlist.c \
 	src/list.c \
 	src/mixer.c \
+	src/mount.c \
+	src/cmount.c \
 	src/parser.c \
 	src/password.c \
 	src/player.c \
