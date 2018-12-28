@@ -1,16 +1,6 @@
 --- a/userland/configure
 +++ b/userland/configure
-@@ -3296,14 +3296,16 @@ fi
- done
- 
- 
--MACHINE=`uname -m`
-+if test -z "$MACHINE"; then
-+  MACHINE=`uname -m`
-+fi
- CFLAGS=""
- SYS_LIBS=""
- 
+@@ -3291,7 +3291,7 @@ SYS_LIBS=""
  VER=`cat ../kernel/linux/pf_ring.h | grep RING_VERSION | head -1 | cut -d '"' -f 2`
  MAJOR_VER=`cat ../kernel/linux/pf_ring.h | grep RING_VERSION | head -1 | cut -d '"' -f 2 | cut -d '.' -f 1`
  
