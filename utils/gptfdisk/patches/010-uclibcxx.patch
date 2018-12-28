@@ -1,0 +1,10 @@
+--- a/gptcurses.cc
++++ b/gptcurses.cc
+@@ -22,6 +22,7 @@
+ #include <iostream>
+ #include <string>
+ #include <sstream>
++#include <clocale>
+ #include <ncurses.h>
+ #include "gptcurses.h"
+ #include "support.h"

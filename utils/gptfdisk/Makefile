@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gptfdisk
 PKG_VERSION:=1.0.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Alif M. Ahmad <alive4ever@live.com>
 PKG_LICENSE:=GPL-2.0
@@ -20,6 +20,7 @@ PKG_HASH:=b663391a6876f19a3cd901d862423a16e2b5ceaa2f4a3b9bb681e64b9c7ba78d
 
 PKG_BUILD_PARALLEL:=1
 
+include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 
@@ -28,7 +29,7 @@ define Package/gptfdisk/Default
   CATEGORY:=Utilities
   SUBMENU:=Disc
   URL:=http://www.rodsbooks.com/gdisk
-  DEPENDS:= +libstdcpp
+  DEPENDS:=$(CXX_DEPENDS)
 endef
 
 define Package/gdisk
