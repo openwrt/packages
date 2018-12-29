@@ -15,7 +15,7 @@ PKG_MAINTAINER:=Michel Belleau <michel.belleau@malaiwah.com>
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://ftp.free.fr/.mirrors1/ftp.gentoo.org/distfiles/
+PKG_SOURCE_URL:=http://distfiles.gentoo.org/distfiles/
 PKG_MD5SUM:=cebfeb99c4a7c2a6cee2564770415fe7
 
 include $(INCLUDE_DIR)/package.mk
