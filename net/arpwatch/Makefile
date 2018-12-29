@@ -12,7 +12,7 @@ PKG_VERSION:=2.1a15
 PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michel Belleau <michel.belleau@malaiwah.com>
-PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE:=BSD-4-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://distfiles.gentoo.org/distfiles/
