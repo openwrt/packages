@@ -16,7 +16,7 @@ PKG_LICENSE:=BSD-4-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://distfiles.gentoo.org/distfiles/
-PKG_MD5SUM:=cebfeb99c4a7c2a6cee2564770415fe7
+PKG_HASH:=c1df9737e208a96a61fa92ddad83f4b4d9be66f8992f3c917e9edf4b05ff5898
 
 include $(INCLUDE_DIR)/package.mk
 
