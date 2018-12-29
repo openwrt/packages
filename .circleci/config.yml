@@ -91,7 +91,7 @@ jobs:
           working_directory: ~/build_dir
           command: |
              set +o pipefail
-             PKGS=$(cd ~/openwrt_packages; git diff --diff-filter=d --name-only "origin/$BRANCH..." | grep 'Makefile$' | grep -v '/files/' | awk -F/ '{ print $(NF-1) }')
+             PKGS=$(cd ~/openwrt_packages; git diff --diff-filter=d --name-only "origin/$BRANCH..." | grep 'Makefile$' | grep -Ev '/files/|/src/' | awk -F/ '{ print $(NF-1) }')
              if [ -z "$PKGS" ] ; then
                  echo_blue "WARNING: No new or modified packages found!"
                  exit 0
