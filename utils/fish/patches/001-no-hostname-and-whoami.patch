@@ -1,16 +1,13 @@
 diff --git a/share/functions/prompt_hostname.fish b/share/functions/prompt_hostname.fish
-index 4348bce2..8502ce3f 100644
+index 225f437c..dc7f1cf8 100644
 --- a/share/functions/prompt_hostname.fish
 +++ b/share/functions/prompt_hostname.fish
-@@ -2,7 +2,7 @@
- # hostname command uses. So cache the answer so including it in the prompt doesn't make fish seem
- # slow.
- if not set -q __fish_prompt_hostname
--    set -g __fish_prompt_hostname (hostname | string split '.')[1]
-+    set -g __fish_prompt_hostname (uname -n | string split '.')[1]
- end
- 
+@@ -1,4 +1,4 @@
  function prompt_hostname
+     # return the short hostname only by default (#4804)
+-    string replace -r "\..*" "" $hostname
++    string replace -r "\..*" "" (uname -n)
+ end
 diff --git a/share/tools/web_config/sample_prompts/pythonista.fish b/share/tools/web_config/sample_prompts/pythonista.fish
 index 9529035c..57ffaf86 100644
 --- a/share/tools/web_config/sample_prompts/pythonista.fish
