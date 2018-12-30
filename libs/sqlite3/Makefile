@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlite
 PKG_VERSION:=3260000
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_VERSION).tar.gz
 PKG_HASH:=5daa6a3fb7d1e8c767cd59c4ded8da6e4b00c61d3b466d0685e35c4dd6d7bf5d
@@ -19,6 +19,10 @@ PKG_LICENSE:=PUBLICDOMAIN
 PKG_LICENSE_FILES:=
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-autoconf-$(PKG_VERSION)
+
+PKG_BUILD_PARALLEL:=1
+
+PKG_CPE_ID:=cpe:/a:sqlite:sqlite
 
 PKG_FIXUP:=autoreconf
 
@@ -92,14 +96,15 @@ define Package/sqlite3-cli/config
 endef
 
 TARGET_CFLAGS += \
-	-DHAVE_ISNAN=1 \
-	-DHAVE_MALLOC_USABLE_SIZE=1 \
-	-DSQLITE_ENABLE_UNLOCK_NOTIFY=1
+	-DHAVE_ISNAN \
+	-DHAVE_MALLOC_USABLE_SIZE \
+	-DSQLITE_ENABLE_UNLOCK_NOTIFY
 
 CONFIGURE_ARGS += \
+	--disable-debug \
+	--disable-static-shell \
 	--enable-shared \
 	--enable-static \
-	--disable-static-shell \
 	$(if $(CONFIG_SQLITE3_DYNAMIC_EXTENSIONS),--enable-dynamic-extensions,--disable-dynamic-extensions) \
 	$(if $(CONFIG_SQLITE3_FTS3),--enable-fts3,--disable-fts3) \
 	$(if $(CONFIG_SQLITE3_FTS3),--enable-fts4,--disable-fts4) \
@@ -119,10 +124,9 @@ endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/sqlite3{,ext}.h $(1)/usr/include/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsqlite3.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/sqlite3{,ext}.h $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsqlite3.{a,so*} $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/sqlite3.pc $(1)/usr/lib/pkgconfig/
 endef
 
