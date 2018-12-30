@@ -26,7 +26,7 @@ index 3db4e37..5e6592a 100644
 +++ b/Makefile.am
 @@ -4,7 +4,10 @@
  
- AUTOMAKE_OPTIONS = 1.9 gnu dist-bzip2 check-news
+ AUTOMAKE_OPTIONS = 1.9 gnu dist-bzip2 dist-xz check-news
  
 -SUBDIRS = libpam tests libpamc libpam_misc modules po conf doc examples xtests
 +if ENABLE_REGENERATE_MAN

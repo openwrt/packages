@@ -23,13 +23,14 @@ index 0ab6548..2fbab4f 100644
    pid_t pid;
    int fds[2];
    int stdout_fds[2];
-@@ -178,11 +178,11 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
+@@ -180,12 +180,12 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
+ 	      if (resp)
+ 		{
+ 		  pam_set_item (pamh, PAM_AUTHTOK, resp);
+-		  authtok = strndupa (resp, PAM_MAX_RESP_SIZE);
++		  strcpy (authtok, resp);
+ 		  _pam_drop (resp);
  		}
- 
- 	      pam_set_item (pamh, PAM_AUTHTOK, resp);
--	      authtok = strndupa (resp, PAM_MAX_RESP_SIZE);
-+	      strcpy (authtok, resp);
- 	      _pam_drop (resp);
  	    }
  	  else
 -	    authtok = strndupa (void_pass, PAM_MAX_RESP_SIZE);
@@ -37,7 +38,7 @@ index 0ab6548..2fbab4f 100644
  
  	  if (pipe(fds) != 0)
  	    {
-@@ -222,23 +222,14 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
+@@ -225,23 +225,14 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
  
        if (expose_authtok) /* send the password to the child */
  	{
