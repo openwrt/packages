@@ -56,7 +56,7 @@ endef
 define Package/lxc-auto
   $(call Package/lxc/Default)
   TITLE:= (initscript)
-  DEPENDS:=+lxc-start +lxc-stop
+  DEPENDS:=lxc +lxc-start +lxc-stop
 endef
 
 define Package/lxc-auto/description
@@ -73,7 +73,7 @@ endef
 define Package/lxc-unprivileged
   $(call Package/lxc/Default)
   TITLE:=Helper script for unprivileged containers support
-  DEPENDS:=+shadow-utils +shadow-newuidmap +shadow-newgidmap
+  DEPENDS:=lxc +shadow-utils +shadow-newuidmap +shadow-newgidmap
 endef
 
 define Package/lxc-unprivileged/description
@@ -135,7 +135,7 @@ endef
 
 define Package/lxc-init
   $(call Package/lxc/Default)
-  TITLE:=LXC Lua bindings
+  TITLE:=LXC internal init helper
   DEPENDS:= lxc +liblxc
 endef
 
