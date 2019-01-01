@@ -141,8 +141,13 @@ endef
 
 CONFIGURE_ARGS += \
 	--disable-gnutls \
+	--disable-api-docs \
 	--disable-apparmor \
+	--disable-bash \
 	--disable-doc \
+	--disable-examples \
+	--disable-selinux \
+	--disable-cgmanager \
 	--disable-examples \
 	--enable-lua=yes \
 	--with-lua-pc="$(STAGING_DIR)/usr/lib/pkgconfig/lua.pc"
