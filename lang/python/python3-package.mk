@@ -20,6 +20,10 @@ PYTHON3:=python$(PYTHON3_VERSION)
 
 PYTHON3PATH:=$(PYTHON3_LIB_DIR):$(STAGING_DIR)/$(PYTHON3_PKG_DIR):$(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
 
+ifeq ($(PYTHON3_PKG_OLD),)
+PYTHON3_PKG_OLD:=1
+endif # PYTHON3_PKG_OLD
+
 # These configure args are needed in detection of path to Python header files
 # using autotools.
 CONFIGURE_ARGS += \
@@ -34,8 +38,45 @@ ifdef CONFIG_USE_MIPS16
   TARGET_CFLAGS += -mno-mips16 -mno-interlink-mips16
 endif
 
-define Py3Package
+ifeq ($(PYTHON3_PKG_OLD),)
+PYTHON3_PKG_OLD:=1
+endif # PYTHON3_PKG_OLD
 
+# $(1) => build subdir
+# $(2) => additional arguments to setup.py
+# $(3) => additional variables
+define Build/Setup/Py3Mod
+	$(if $(strip $(2)),$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR),true)
+	$(if $(strip $(2)),$(call Build/Compile/HostPy3RunTarget, \
+		cd $(PKG_BUILD_DIR)/$(strip $(1)), \
+		./setup.py $(2), \
+		$(3)),true)
+	$(if $(strip $(2)),find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f,true)
+endef
+
+Build/Compile/Py3Mod=$(Build/Setup/Py3Mod)
+
+PYTHON3_PKG_SETUP_ARGS:=--single-version-externally-managed
+
+ifeq ($(PYTHON3_PKG_OLD),1)
+PYTHON3_PKG_build_ext_ARGS:= \
+		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
+		$(PYTHON3_PKG_SETUP_ARGS)
+PYTHON3_PKG_build_ext_VARS:=$(PYTHON3_PKG_SETUP_VARS)
+PYTHON3_PKG_install_ARGS:=
+else
+PYTHON3_PKG_build_ext_ARGS:= \
+		build_ext
+PYTHON3_PKG_build_ext_VARS:=
+PYTHON3_PKG_install_ARGS:= \
+		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
+		--no-compile --single-version-externally-managed
+endif # !PYTHON3_PKG_OLD
+PYTHON3_PKG_install_SUBDIR:=
+PYTHON3_PKG_install_VARS:=
+PYTHON3_PKG_build_ext_SUBDIR:=
+
+define Py3Package
   define Package/$(1)-src
     $(call Package/$(1))
     DEPENDS:=
@@ -67,6 +108,11 @@ define Py3Package
   $(call shexport,Py3Package/$(1)/filespec)
 
   define Package/$(1)/install
+	$(if $(strip $(filter $(Py3Build/Compile/Default),$(Py3Build/Compile))),\
+		$$(call Build/Setup/Py3Mod,$$(PYTHON3_PKG_install_SUBDIR), \
+		$$(PYTHON3_PKG_install_ARGS), \
+		$$(PYTHON3_PKG_install_VARS) \
+	))
 	$(call Py3Package/$(1)/install,$$(1))
 	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
 	$(SHELL) $(python3_mk_path)python-package-install.sh "3" \
@@ -103,33 +149,17 @@ define Build/Compile/HostPy3RunTarget
 	)
 endef
 
-# $(1) => build subdir
-# $(2) => additional arguments to setup.py
-# $(3) => additional variables
-define Build/Compile/Py3Mod
-	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
-	$(call Build/Compile/HostPy3RunTarget, \
-		cd $(PKG_BUILD_DIR)/$(strip $(1)), \
-		./setup.py $(2), \
-		$(3))
-	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
-endef
-
-PYTHON3_PKG_SETUP_ARGS:=--single-version-externally-managed
-PYTHON3_PKG_SETUP_VARS:=
-
 define Py3Build/Compile/Default
 	$(foreach pkg,$(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS),
 		$(call host_python3_pip_install_host,$(pkg))
 	)
-	$(call Build/Compile/Py3Mod,, \
-		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
-		$(PYTHON3_PKG_SETUP_ARGS), \
-		$(PYTHON3_PKG_SETUP_VARS) \
+	$$(call Build/Setup/Py3Mod,$$(PYTHON3_PKG_build_ext_SUBDIR), \
+		$$(PYTHON3_PKG_build_ext_ARGS), \
+		$$(PYTHON3_PKG_build_ext_VARS) \
 	)
 endef
 
-Py3Build/Compile=$(Py3Build/Compile/Default)
+Py3Build/Compile:=$(Py3Build/Compile/Default)
 
 ifeq ($(BUILD_VARIANT),python3)
 define Build/Compile

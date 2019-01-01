@@ -21,6 +21,8 @@ PKG_HASH:=22d9b1ac5b26135ad2b8c2901a9413537e08749a753356ee913c84dbd2df5574
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
 
+PYTHON_PKG_OLD:=0
+
 # This file provides the necsessary host build variables
 include ../python-host.mk
 
@@ -238,6 +240,9 @@ define PyPackage/python-base/filespec
 +|/usr/bin/python$(PYTHON_VERSION)
 $(subst $(space),$(newline),$(foreach lib_file,$(PYTHON_BASE_LIB_FILES),+|$(lib_file)))
 endef
+
+PYTHON_PKG_install_ARGS:=
+PYTHON_PKG_build_ext_ARGS:=
 
 define PyPackage/python-light/filespec
 +|/usr/lib/python$(PYTHON_VERSION)
