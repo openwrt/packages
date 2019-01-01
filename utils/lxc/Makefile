@@ -153,6 +153,18 @@ else
 CONFIGURE_ARGS += --disable-seccomp
 endif
 
+ifeq ($(CONFIG_LXC_PYTHON),y)
+CONFIGURE_ARGS += --enable-python=yes
+
+CONFIGURE_VARS += \
+	PYTHONDEV_CFLAGS="$(TARGET_CFLAGS) -I$(PYTHON_INC_DIR) \
+		-iremap$(PKG_BUILD_DIR)/src/include:lxc" \
+	CFLAGS="$(TARGET_CFLAGS) -Wno-error=deprecated-declarations" \
+	PYTHONDEV_LIBS="$(TARGET_LDFLAGS) -L$(STAGING_DIR)/usr/lib $(TARGET_LIBS) -lpython$(PYTHON3_VERSION)"
+else
+CONFIGURE_ARGS += --disable-python
+endif
+
 MAKE_FLAGS += \
 	LUA_INSTALL_CMOD="/usr/lib/lua" \
 	LUA_INSTALL_LMOD="/usr/lib/lua"

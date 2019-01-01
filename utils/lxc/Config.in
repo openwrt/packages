@@ -50,4 +50,10 @@ config LXC_NETWORKING
 	help
 	  Enable "veth pair device" and "macvlan"
 
+config LXC_PYTHON
+	bool "Allow building Python3 bindings"
+        default y
+	help
+	  Enable "Allow building Python3 bindings"
+
 endmenu
