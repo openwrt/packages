@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
 PKG_VERSION:=2.1.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=LGPL-2.1+ BSD-2-Clause GPL-2.0
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
@@ -278,6 +278,14 @@ define GenPlugin
   $$(eval $$(call BuildPackage,lxc-$(1)))
 endef
 
+define Package/lxc-autostart/install
+	$(INSTALL_DIR) $$(1)$(3)
+	$(INSTALL_BIN) \
+		$(PKG_INSTALL_DIR)$(3)/lxc-$(1) \
+		$$(1)$(3)/
+	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/lxc-autostart.init $(1)/etc/init.d/lxc-autostart
+endef
 
 $(eval $(call BuildPackage,lxc))
 $(eval $(call BuildPackage,lxc-common))

@@ -1,0 +1,21 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=00
+
+boot() {
+	lxc-autostart -g "onboot"
+	lxc-autostart -a
+}
+
+start() {
+	lxc-autostart -a
+}
+
+restart() {
+	lxc-autostart -r -a
+}
+
+stop() {
+	lxc-autostart -s -a -t 240
+}
