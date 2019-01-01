@@ -21,6 +21,10 @@ PYTHON:=python$(PYTHON_VERSION)
 
 PYTHONPATH:=$(PYTHON_LIB_DIR):$(STAGING_DIR)/$(PYTHON_PKG_DIR):$(PKG_INSTALL_DIR)/$(PYTHON_PKG_DIR)
 
+ifeq ($(strip $(PYTHON_PKG_OLD)),)
+PYTHON_PKG_OLD:=1
+endif # PYTHON_PKG_OLD
+
 # These configure args are needed in detection of path to Python header files
 # using autotools.
 CONFIGURE_ARGS += \
@@ -35,8 +39,40 @@ ifdef CONFIG_USE_MIPS16
   TARGET_CFLAGS += -mno-mips16 -mno-interlink-mips16
 endif
 
-define PyPackage
+# $(1) => build subdir
+# $(2) => additional arguments to setup.py
+# $(3) => additional variables
+define Build/Setup/PyMod
+	$(if $(strip $(2)),$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON_PKG_DIR))
+	$(if $(strip $(2)),$(call Build/Compile/HostPyRunTarget, \
+		cd $(PKG_BUILD_DIR)/$(strip $(1)), \
+		./setup.py $(2), \
+		$(3)))
+	$(if $(strip $(2)),find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f,true)
+endef
 
+Build/Compile/PyMod=$(Build/Setup/PyMod)
+
+PYTHON_PKG_SETUP_ARGS:=--single-version-externally-managed
+
+ifeq ($(PYTHON_PKG_OLD),1)
+PYTHON_PKG_build_ext_ARGS:= \
+		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
+		$(PYTHON_PKG_SETUP_ARGS)
+PYTHON_PKG_build_ext_VARS:=$(PYTHON_PKG_SETUP_VARS)
+else
+PYTHON_PKG_build_ext_ARGS:= \
+		build_ext
+PYTHON_PKG_build_ext_VARS:=
+PYTHON_PKG_install_ARGS:= \
+		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
+		--no-compile --single-version-externally-managed
+endif # !PYTHON_PKG_OLD
+PYTHON_PKG_install_SUBDIR:=
+PYTHON_PKG_install_VARS:=
+PYTHON_PKG_build_ext_SUBDIR:=
+
+define PyPackage
   define Package/$(1)-src
     $(call Package/$(1))
     DEPENDS:=
@@ -68,6 +104,11 @@ define PyPackage
   $(call shexport,PyPackage/$(1)/filespec)
 
   define Package/$(1)/install
+	$(if $(strip $(filter "$(PyBuild/Compile/Default)","$(PyBuild/Compile)")),\
+		$$(call Build/Setup/PyMod,$$(PYTHON_PKG_install_SUBDIR), \
+		$$(PYTHON_PKG_install_ARGS), \
+		$$(PYTHON_PKG_install_VARS) \
+	))
 	$(call PyPackage/$(1)/install,$$(1))
 	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
 	$(SHELL) $(python_mk_path)python-package-install.sh "2" \
@@ -104,33 +145,17 @@ define Build/Compile/HostPyRunTarget
 	)
 endef
 
-# $(1) => build subdir
-# $(2) => additional arguments to setup.py
-# $(3) => additional variables
-define Build/Compile/PyMod
-	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON_PKG_DIR)
-	$(call Build/Compile/HostPyRunTarget, \
-		cd $(PKG_BUILD_DIR)/$(strip $(1)), \
-		./setup.py $(2), \
-		$(3))
-	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
-endef
-
-PYTHON_PKG_SETUP_ARGS:=--single-version-externally-managed
-PYTHON_PKG_SETUP_VARS:=
-
 define PyBuild/Compile/Default
 	$(foreach pkg,$(HOST_PYTHON_PACKAGE_BUILD_DEPENDS),
 		$(call host_python_pip_install_host,$(pkg))
 	)
-	$(call Build/Compile/PyMod,, \
-		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
-		$(PYTHON_PKG_SETUP_ARGS), \
-		$(PYTHON_PKG_SETUP_VARS) \
+	$$(call Build/Setup/PyMod,$$(PYTHON_PKG_build_ext_SUBDIR), \
+		$$(PYTHON_PKG_build_ext_ARGS), \
+		$$(PYTHON_PKG_build_ext_VARS) \
 	)
 endef
 
-PyBuild/Compile=$(PyBuild/Compile/Default)
+PyBuild/Compile:=$(PyBuild/Compile/Default)
 
 ifeq ($(BUILD_VARIANT),python)
 define Build/Compile

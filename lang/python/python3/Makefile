@@ -24,9 +24,10 @@ PKG_HASH:=d83fe8ce51b1bb48bbcf0550fd265b9a75cdfdfa93f916f9e700aef8444bf1bb
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
 
+PYTHON3_PKG_OLD:=0
+
 # This file provides the necsessary host build variables
 include ../python3-host.mk
-
 # For Py3Package
 include ../python3-package.mk
 
@@ -97,6 +98,10 @@ PYTHON3_LIB_FILES_DEL:=
 PYTHON3_PACKAGES:=
 PYTHON3_SO_SUFFIX:=cpython-$(PYTHON3_VERSION_MAJOR)$(PYTHON3_VERSION_MINOR).so
 PYTHON3_PACKAGES_DEPENDS:=
+
+PYTHON3_PKG_install_ARGS:=
+PYTHON3_PKG_build_ext_ARGS:=
+
 define Py3BasePackage
   PYTHON3_PACKAGES+=$(1)
   ifeq ($(3),)
