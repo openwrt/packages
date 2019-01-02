@@ -1,0 +1,38 @@
+From d3b1558dcba6130140428a0736fe42aa39435c66 Mon Sep 17 00:00:00 2001
+From: Howard Chu <hyc@openldap.org>
+Date: Wed, 2 Jan 2019 10:16:40 +0000
+Subject: [PATCH] ITS#8353 CRYPTO_set_id_callback deprecated in OpenSSL 0.9.9
+
+---
+ libraries/libldap/tls_o.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/libraries/libldap/tls_o.c b/libraries/libldap/tls_o.c
+index 99626ec15a..4a091faa10 100644
+--- a/libraries/libldap/tls_o.c
++++ b/libraries/libldap/tls_o.c
+@@ -89,6 +89,13 @@ static void tlso_locking_cb( int mode, int type, const char *file, int line )
+ 	}
+ }
+ 
++#if OPENSSL_VERSION_NUMBER >= 0x0909000
++static void tlso_thread_self( CRYPTO_THREADID *id )
++{
++	CRYPTO_THREADID_set_pointer( id, (void *)ldap_pvt_thread_self() );
++}
++#define CRYPTO_set_id_callback(foo)	CRYPTO_THREADID_set_callback(foo)
++#else
+ static unsigned long tlso_thread_self( void )
+ {
+ 	/* FIXME: CRYPTO_set_id_callback only works when ldap_pvt_thread_t
+@@ -101,6 +108,7 @@ static unsigned long tlso_thread_self( void )
+ 
+ 	return (unsigned long) ldap_pvt_thread_self();
+ }
++#endif
+ 
+ static void tlso_thr_init( void )
+ {
+-- 
+2.17.1
+
