@@ -1,0 +1,67 @@
+--- a/daemon/I2PControl.cpp
++++ b/daemon/I2PControl.cpp
+@@ -569,8 +569,8 @@ namespace client
+ 			EVP_PKEY_assign_RSA (pkey, rsa);
+ 			X509 * x509 = X509_new ();
+ 			ASN1_INTEGER_set (X509_get_serialNumber (x509), 1);
+-			X509_gmtime_adj (X509_get_notBefore (x509), 0);
+-			X509_gmtime_adj (X509_get_notAfter (x509), I2P_CONTROL_CERTIFICATE_VALIDITY*24*60*60); // expiration
++			X509_gmtime_adj (X509_getm_notBefore (x509), 0);
++			X509_gmtime_adj (X509_getm_notAfter (x509), I2P_CONTROL_CERTIFICATE_VALIDITY*24*60*60); // expiration
+ 			X509_set_pubkey (x509, pkey); // public key
+ 			X509_NAME * name = X509_get_subject_name (x509);
+ 			X509_NAME_add_entry_by_txt (name, "C",  MBSTRING_ASC, (unsigned char *)"A1", -1, -1, 0); // country (Anonymous proxy)
+diff --git a/libi2pd/Crypto.cpp b/libi2pd/Crypto.cpp
+index ffd3c4e..bb19244 100644
+--- a/libi2pd/Crypto.cpp
++++ b/libi2pd/Crypto.cpp
+@@ -9,7 +9,7 @@
+ #include "TunnelBase.h"
+ #include <openssl/ssl.h>
+ #include "Crypto.h"
+-#if LEGACY_OPENSSL
++#if LEGACY_OPENSSL || defined(OPENSSL_NO_CHACHA) || defined(OPENSSL_NO_POLY1305)
+ #include "ChaCha20.h"
+ #include "Poly1305.h"
+ #endif
+@@ -1086,7 +1086,7 @@ namespace crypto
+ 		if (len < msgLen) return false;
+ 		if (encrypt && len < msgLen + 16) return false;
+ 		bool ret = true;
+-#if LEGACY_OPENSSL
++#if LEGACY_OPENSSL || defined(OPENSSL_NO_CHACHA) || defined(OPENSSL_NO_POLY1305)
+ 		// generate one time poly key
+ 		uint8_t polyKey[64];
+ 		memset(polyKey, 0, sizeof(polyKey));
+@@ -1192,7 +1192,9 @@ namespace crypto
+ 	void InitCrypto (bool precomputation)
+ 	{
+ 		i2p::cpu::Detect ();
++#if LEGACY_OPENSSL
+ 		SSL_library_init ();
++#endif
+ /*		auto numLocks = CRYPTO_num_locks();
+ 		for (int i = 0; i < numLocks; i++)
+ 			m_OpenSSLMutexes.emplace_back (new std::mutex);
+--- a/libi2pd/Crypto.h
++++ b/libi2pd/Crypto.h
+@@ -22,6 +22,8 @@
+ // recognize openssl version and features
+ #if ((OPENSSL_VERSION_NUMBER < 0x010100000) || defined(LIBRESSL_VERSION_NUMBER)) // 1.0.2 and below or LibreSSL
+ #   define LEGACY_OPENSSL 1
++#   define X509_getm_notBefore X509_get_notBefore
++#   define X509_getm_notAfter X509_get_notAfter
+ #else
+ #   define LEGACY_OPENSSL 0
+ #   if (OPENSSL_VERSION_NUMBER >= 0x010101000) // 1.1.1
+diff --git a/libi2pd/Gost.cpp b/libi2pd/Gost.cpp
+index 5773fe1..c401f8b 100644
+--- a/libi2pd/Gost.cpp
++++ b/libi2pd/Gost.cpp
+@@ -1,5 +1,6 @@
+ #include <string.h>
+ #include <array>
++#include <openssl/bn.h>
+ #include <openssl/sha.h>
+ #include <openssl/evp.h>
+ #include "I2PEndian.h"
