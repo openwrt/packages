@@ -170,7 +170,7 @@ define Build/Compile/python-setuptools
 	$(STAGING_DIR_HOSTPKG)/bin/pip install \
 		--ignore-installed \
 		--root=$(PKG_BUILD_DIR)/install-setuptools --prefix=. \
-		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/setuptools-*.whl
+		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/setuptools-$(PYTHON_SETUPTOOLS_VERSION)-py2.py3-none-any.whl
 endef
 endif # CONFIG_PACKAGE_python-setuptools
 
@@ -179,7 +179,7 @@ define Build/Compile/python-pip
 	$(STAGING_DIR_HOSTPKG)/bin/pip install \
 		--ignore-installed \
 		--root=$(PKG_BUILD_DIR)/install-pip --prefix=. \
-		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/pip-*.whl
+		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/pip-$(PYTHON_PIP_VERSION)-py2.py3-none-any.whl
 endef
 endif # CONFIG_PACKAGE_python-pip
 
