@@ -8,17 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpam
-PKG_VERSION:=1.3.0
+PKG_VERSION:=1.3.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=Linux-PAM-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://www.linux-pam.org/library/
-PKG_HASH:=241aed1ef522f66ed672719ecf2205ec513fd0075ed80cda8e086a5b1a01d1bb
-PKG_INSTALL:=1
-PKG_FIXUP:=autoreconf
-PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
-
+PKG_SOURCE:=Linux-PAM-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/linux-pam/linux-pam/releases/download/v$(PKG_VERSION)
+PKG_HASH:=eff47a4ecd833fbf18de9686632a70ee8d0794b79aecb217ebd0ce11db4cd0db
 PKG_BUILD_DIR:=$(BUILD_DIR)/Linux-PAM-$(PKG_VERSION)
+
+PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
+PKG_LICENSE:=BSD-3c GPL
+PKG_LICENSE_FILES:=COPYING Copyright
+PKG_CPE_ID:=cpe:/a:kernel:linux-pam
+
+PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
+PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -33,23 +38,22 @@ define Package/libpam/description
 	The Linux-PAM Pluggable Authentication Modules.
 endef
 
-TARGET_CFLAGS += $(FPIC)
-
-define Build/Configure
-	$(call Build/Configure/Default, \
-		--enable-shared \
-		--enable-static \
-		--enable-pamlocking \
-		--disable-prelude \
-		--disable-lckpwdf \
-		--disable-selinux \
-		--disable-nls \
-		--disable-rpath \
-		--disable-nis \
-		--disable-regenerate-docu \
-		--enable-db=no \
-	)
-endef
+CONFIGURE_ARGS += \
+	--enable-pamlocking \
+	--enable-shared \
+	--enable-static \
+	--disable-audit \
+	--disable-cracklib \
+	--disable-db \
+	--disable-prelude \
+	--disable-lckpwdf \
+	--disable-nis \
+	--disable-regenerate-docu \
+	--disable-rpath \
+	--disable-selinux \
+	--with-gnu-ld \
+	--without-mailspool \
+	--without-xauth
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/lib
