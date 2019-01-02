@@ -8,13 +8,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=findutils
 PKG_VERSION:=4.6.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=GPL-3.0+
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
 PKG_HASH:=ded4c9f73731cd48fec3b6bdaccce896473b6d8e337e9612e16cf1431bb1169d
+PKG_MAINTAINER:=Daniel Dickinson <cshored@thecshore.com>
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -47,16 +48,18 @@ endef
 define Package/findutils-find
 	$(call Package/findutils/Default)
 	TITLE+= - find utility
-endef
-
-define Package/findutils-locate
-	$(call Package/findutils/Default)
-	TITLE+= - locate and updatedb utility
+	ALTERNATIVES:=300:/usr/bin/find:/usr/libexec/findutils-find
 endef
 
 define Package/findutils-xargs
 	$(call Package/findutils/Default)
 	TITLE+= - xargs utility
+	ALTERNATIVES:=300:/usr/bin/xargs:/usr/libexec/findutils-xargs
+endef
+
+define Package/findutils-locate
+	$(call Package/findutils/Default)
+	TITLE+= - locate and updatedb utility
 endef
 
 CONFIGURE_ARGS += --localstatedir=/srv/var
@@ -67,8 +70,13 @@ define Package/findutils/install
 endef
 
 define Package/findutils-find/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/find $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/find $(1)/usr/libexec/findutils-find
+endef
+
+define Package/findutils-xargs/install
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/xargs $(1)/usr/libexec/findutils-xargs
 endef
 
 define Package/findutils-locate/install
@@ -76,11 +84,6 @@ define Package/findutils-locate/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/locate $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/updatedb $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib $(1)/usr/
-endef
-
-define Package/findutils-xargs/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/xargs $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,findutils))
