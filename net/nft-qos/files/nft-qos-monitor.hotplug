@@ -8,6 +8,14 @@
 logger -t nft-qos-monitor "ACTION=$ACTION, MACADDR=$MACADDR, IPADDR=$IPADDR, HOSTNAME=$HOSTNAME"
 
 case "$ACTION" in
-	add | update) qosdef_init_env && qosdef_monitor_add $MACADDR $IPADDR $HOSTNAME;;
-	remove) qosdef_init_env && qosdef_monitor_del $MACADDR $IPADDR $HOSTNAME;;
+	add | update)
+		qosdef_init_env
+		qosdef_init_monitor
+		qosdef_monitor_add $MACADDR $IPADDR $HOSTNAME
+	;;
+	remove)
+		qosdef_init_env
+		qosdef_init_monitor
+		qosdef_monitor_del $MACADDR $IPADDR $HOSTNAME
+	;;
 esac
