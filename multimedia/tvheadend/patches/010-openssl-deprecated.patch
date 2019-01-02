@@ -25,7 +25,14 @@
    RAND_cleanup();
    CRYPTO_cleanup_all_ex_data();
    EVP_cleanup();
-@@ -1174,6 +1179,7 @@ main(int argc, char **argv)
+@@ -1168,12 +1173,13 @@ main(int argc, char **argv)
+ #ifndef OPENSSL_NO_COMP
+   COMP_zlib_cleanup();
+ #endif
+-  ERR_remove_state(0);
++  ERR_remove_thread_state(NULL);
+   ERR_free_strings();
+ #ifndef OPENSSL_NO_COMP
    sk_SSL_COMP_free(SSL_COMP_get_compression_methods());
  #endif
    /* end of OpenSSL cleanup code */
