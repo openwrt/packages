@@ -1,14 +1,26 @@
+--- a/sources/common/include/utils/misc/libcrypto-compat.h
++++ b/sources/common/include/utils/misc/libcrypto-compat.h
+@@ -4,6 +4,7 @@
+ #include <openssl/opensslv.h>
+ #if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 
++#include <openssl/bn.h>
+ #include <openssl/dh.h>
+ #include <openssl/evp.h>
+ #include <openssl/hmac.h>
 --- a/sources/common/src/utils/misc/crypto.cpp
 +++ b/sources/common/src/utils/misc/crypto.cpp
-@@ -350,6 +350,7 @@ string unhex(string source) {
+@@ -350,11 +350,13 @@ string unhex(string source) {
  	return result;
  }
  
 +#if OPENSSL_VERSION_NUMBER < 0x10100000L
  void CleanupSSL() {
- 	ERR_remove_state(0);
+-	ERR_remove_state(0);
++	ERR_remove_thread_state(NULL);
  	ENGINE_cleanup();
-@@ -358,3 +359,4 @@ void CleanupSSL() {
+ 	CONF_modules_unload(1);
+ 	ERR_free_strings();
  	EVP_cleanup();
  	CRYPTO_cleanup_all_ex_data();
  }

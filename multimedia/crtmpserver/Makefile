@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=crtmpserver
 PKG_REV:=b6fdcdb953d1e99c48a0c37a8c80f2cad2db443b
 PKG_VERSION:=2012-07-18+git-$(PKG_REV)
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/j0sh/crtmpserver/tar.gz/$(PKG_REV)?
