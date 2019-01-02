@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=conserver
 PKG_VERSION:=8.2.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Bjørn Mork <bjorn@mork.no>
 
 PKG_SOURCE_PROTO:=git
