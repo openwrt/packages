@@ -9,7 +9,7 @@ nut_upsmon_conf() {
 
 	echo "# Config file automatically generated from UCI config" > "$UPSMON_C"
 
-	config_get runas "$cfg" runas "nut"
+	config_get runas "$cfg" runas
 	[ -n "$runas" ] && echo "RUN_AS_USER $runas" >> $UPSMON_C
 
 	config_get val "$cfg" minsupplies 1

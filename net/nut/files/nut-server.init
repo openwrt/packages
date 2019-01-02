@@ -44,7 +44,7 @@ upsd_runas() {
 
 	[ -n "$RUNAS" ] && return
 
-	config_get runas "$cfg" runas "nut"
+	config_get runas "$cfg" runas
 	RUNAS="$runas"
 }
 
@@ -62,7 +62,7 @@ upsd_config() {
 
     # Note runas support requires you make sure USB device file is readable by
     # the runas user
-    config_get runas "$cfg" runas "nut"
+    config_get runas "$cfg" runas
     RUNAS="$runas"
 
     config_get statepath "$cfg" statepath "/var/run/nut"
@@ -221,7 +221,7 @@ build_global_driver_config() {
 	get_write_driver_config "$cfg" retrydelay
 	get_write_driver_config "$cfg" pollinterval
 	get_write_driver_config "$cfg" synchronous
-	config_get runas "$cfg" user "nut"
+	config_get runas "$cfg" user
 	RUNAS="$runas"
 	upsd_runas
 
@@ -229,7 +229,6 @@ build_global_driver_config() {
 }
 
 build_config() {
-	local RUNAS=nut
 	local STATEPATH=/var/run/nut
 
         mkdir -m 0755 -p "$(dirname "$UPS_C")"
@@ -252,7 +251,7 @@ start_driver_instance() {
 	local requested="$2"
 	local driver
 	local STATEPATH=/var/run/nut
-	local RUNAS=nut
+	local RUNAS
 
 	[ "$havedriver" != 1 ] && return
 
@@ -301,6 +300,7 @@ start_server_instance() {
 start_service() {
 	local havedriver haveserver
 	local STATEPATH=/var/run/nut
+	local RUNAS
 
 	# Avoid hotplug inadvertenly restarting driver during
 	# forced shutdown
