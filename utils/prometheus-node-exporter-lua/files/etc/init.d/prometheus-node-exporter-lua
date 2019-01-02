@@ -49,6 +49,8 @@ service_triggers()
 {
 	local interface
 
+	procd_add_reload_trigger "prometheus-node-exporter-lua"
+
 	config_load prometheus-node-exporter-lua.main
 	config_get interface "main" listen_interface "loopback"
 
