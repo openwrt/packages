@@ -1,0 +1,10 @@
+--- a/crypto-openssl.c
++++ b/crypto-openssl.c
+@@ -20,6 +20,7 @@
+ #include <string.h>
+ #include <errno.h>
+ #include <openssl/pem.h>
++#include <openssl/rsa.h>
+ #include "config.h"
+ #include "sysdep.h"
+ #include "crypto.h"
