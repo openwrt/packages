@@ -86,6 +86,8 @@ service_triggers()
 {
 	local web_interface statsd_udp_interface statsd_tcp_interface
 
+	procd_add_reload_trigger "prometheus-statsd-exporter"
+
 	config_load "prometheus-statsd-exporter"
 	config_get web_interface main web_interface "loopback"
 	config_get statsd_udp_interface main statsd_udp_interface "loopback"
