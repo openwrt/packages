@@ -2,10 +2,8 @@
 
 USE_PROCD=1
 
-START=50
+START=30
 STOP=51
-
-PROG="/usr/sbin/stubby"
 
 stubby="/usr/sbin/stubby"
 stubby_init="/etc/init.d/stubby"
@@ -29,6 +27,7 @@ generate_config()
     local edns_client_subnet_private
     local idle_timeout
     local appdata_dir
+    local trust_anchors_backoff_time
     local tls_connection_retries
     local tls_backoff_time
     local timeout
@@ -37,7 +36,6 @@ generate_config()
     local listen_addresses_section=0
     local dns_transport_list_section=0
     local upstream_recursive_servers_section=0
-    local stubby_args
     local command_line_arguments
     local log_level
 
@@ -50,6 +48,9 @@ generate_config()
 
     config_get appdata_dir "global" appdata_dir "/var/lib/stubby"
     echo "appdata_dir: \"$appdata_dir\"" >> "$config_file"
+
+    config_get trust_anchors_backoff_time "global" trust_anchors_backoff_time "2500"
+    echo "trust_anchors_backoff_time: $trust_anchors_backoff_time" >> "$config_file"
 
     config_get tls_connection_retries "global" tls_connection_retries ""
     if [ -n "$tls_connection_retries" ]; then
@@ -121,7 +122,6 @@ generate_config()
         local config=$1
         local address
         local tls_auth_name
-        local spki
         local tls_pubkey_pinset_section=0
 
         if [ "$upstream_recursive_servers_section" = 0 ]; then
@@ -176,10 +176,11 @@ start_service() {
 
     config_get log_level "global" log_level ""
 
-    if [ $("${stubby_init}" enabled; printf "%u" ${?}) -eq 0 ]; then
-        if [ -n "${stubby_boot}" ]; then
-            local trigger="$(uci_get stubby global trigger)"
-            if [ "${trigger}" != "timed" ]; then
+    if [ "$("$stubby_init" enabled; printf "%u" $?)" -eq 0 ]; then
+        if [ -n "$stubby_boot" ]; then
+            local trigger
+            trigger="$(uci_get stubby global trigger)"
+            if [ "$trigger" != "timed" ]; then
                 return 0
             fi
         fi
@@ -191,7 +192,7 @@ start_service() {
         if [ -n "$command_line_arguments" ]; then
             procd_append_param command "$command_line_arguments"
         fi
-        procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
+        procd_set_param respawn
         procd_set_param file "$stubby_config"
         procd_set_param stdout 1
         procd_set_param stderr 1
@@ -203,12 +204,15 @@ start_service() {
 
 service_triggers()
 {
-    local trigger="$(uci_get stubby global trigger)"
-    local delay="$(uci_get stubby global triggerdelay "2")"
+    local trigger
+    local delay
 
-    if [ "${trigger}" != "none" ] && [ "${trigger}" != "timed" ]; then
+    trigger="$(uci_get stubby global trigger)"
+    delay="$(uci_get stubby global triggerdelay "2")"
+
+    if [ "$trigger" != "none" ] && [ "$trigger" != "timed" ]; then
         PROCD_RELOAD_DELAY=$((${delay:-2} * 1000))
-        procd_add_interface_trigger "interface.*.up" "${trigger}" "${stubby_init}" start
+        procd_add_interface_trigger "interface.*.up" "$trigger" "$stubby_init" start
     fi
     procd_add_reload_trigger "stubby"
 }
