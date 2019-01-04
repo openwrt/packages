@@ -11,6 +11,7 @@ process_filespec() {
 	local dst_dir="$2"
 	local filespec="$3"
 	echo "$filespec" | (
+	set -e
 	IFS='|'
 	while read fop fspec fperm; do
 		local fop=`echo "$fop" | tr -d ' \t\n'`
@@ -37,7 +38,7 @@ process_filespec() {
 			chmod -R $fperm ${dst_dir}${fspec}
 		fi
 	done
-	)
+	) || exit 1	# Otherwise error return gets ignored
 }
 
 ver="$1"
