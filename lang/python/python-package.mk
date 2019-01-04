@@ -60,6 +60,7 @@ define PyPackage
 		if [ -d $(PKG_INSTALL_DIR)/usr/bin ]; then \
 			$(INSTALL_DIR) $$(1)/usr/bin ; \
 			$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $$(1)/usr/bin/ ; \
+			$(SED) '1!b;s,^#!.*python.*,#!/usr/bin/python2,' $$(1)/usr/bin/* ; \
 		fi
     endef
   endif
