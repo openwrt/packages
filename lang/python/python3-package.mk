@@ -9,6 +9,10 @@
 python3_mk_path:=$(dir $(lastword $(MAKEFILE_LIST)))
 include $(python3_mk_path)python3-host.mk
 
+ifeq ($(findstring python3,$(PKG_BUILD_DEPENDS)),)
+PKG_BUILD_DEPENDS+=python3/host
+endif
+
 PYTHON3_DIR:=$(STAGING_DIR)/usr
 PYTHON3_BIN_DIR:=$(PYTHON3_DIR)/bin
 PYTHON3_INC_DIR:=$(PYTHON3_DIR)/include/python$(PYTHON3_VERSION)
