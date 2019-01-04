@@ -32,10 +32,16 @@ function list_ipkg_files {
 }
 
 
-echo "                   Installed in Staging                                             Packages"
 
+set -e
 : ${1:?First arg is staging_dir}
 : ${2:?Second and following args are ruby ipkg packages}
 STAGING_DIR=$1; shift
+(cd "$STAGING_DIR" )
+if ! [ -e "$1" ]; then
+	echo "$1 does not exist!"
+	exit 1
+fi
+printf '%-62s %-62s\n' "Installed in Staging" "From Packages Files"
 diff -d -y <(list_staging_files "$STAGING_DIR") <(list_ipkg_files "$@")
 
