@@ -10,6 +10,10 @@
 python_mk_path:=$(dir $(lastword $(MAKEFILE_LIST)))
 include $(python_mk_path)python-host.mk
 
+ifeq ($(findstring python,$(PKG_BUILD_DEPENDS)),)
+PKG_BUILD_DEPENDS+=python/host
+endif
+
 PYTHON_DIR:=$(STAGING_DIR)/usr
 PYTHON_BIN_DIR:=$(PYTHON_DIR)/bin
 PYTHON_INC_DIR:=$(PYTHON_DIR)/include/python$(PYTHON_VERSION)
