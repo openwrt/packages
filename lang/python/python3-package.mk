@@ -100,6 +100,7 @@ define Py3Package
 		if [ -d $(PKG_INSTALL_DIR)/usr/bin ]; then \
 			$(INSTALL_DIR) $$(1)/usr/bin ; \
 			$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $$(1)/usr/bin/ ; \
+			$(SED) 's,^#!.*python.*,#!/usr/bin/python$(PYTHON3_VERSION),' $$(1)/usr/bin/* ; \
 		fi
     endef
   endif
