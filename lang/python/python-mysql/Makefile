@@ -9,13 +9,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-mysql
 PKG_VERSION:=1.3.14
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE:=mysqlclient-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/m/mysqlclient
 PKG_HASH:=3981ae9ce545901a36a8b7aed76ed02960a429f75dc53b7ad77fb2f9ab7cd56b
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-mysql-$(PKG_VERSION)
+
+PYTHON_PKG_OLD:=0
+PYTHON3_PKG_OLD:=0
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
@@ -24,6 +27,9 @@ include ../python3-package.mk
 include $(INCLUDE_DIR)/nls.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
+
+PYTHON_PKG_build_ext_ARGS:=build_ext -L $(ICONV_PREFIX)/lib
+PYTHON3_PKG_build_ext_ARGS:=build_ext -L $(ICONV_PREFIX)/lib
 
 define Package/python-mysql/Default
   SUBMENU:=Python
@@ -60,6 +66,8 @@ endef
 
 $(eval $(call PyPackage,python-mysql))
 $(eval $(call BuildPackage,python-mysql))
+$(eval $(call BuildPackage,python-mysql-src))
 
 $(eval $(call Py3Package,python3-mysql))
 $(eval $(call BuildPackage,python3-mysql))
+$(eval $(call BuildPackage,python3-mysql-src))
