@@ -23,6 +23,8 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * minimal status & error logging to syslog, enable debug logging to receive more output
 * procd based init system support (start/stop/restart/reload/status)
 * procd network interface trigger support
+* automatic blocklist backup & restore, they will be used in case of download errors or during startup in backup mode
+* 'backup mode' to re-use blocklist backups during startup, get fresh lists via reload or restart action
 * output comprehensive runtime information via LuCI or via 'status' init command
 * strong LuCI support
 * optional: add new banIP sources on your own
@@ -43,6 +45,24 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * install 'luci-app-banip' (_opkg install luci-app-banip_)
 * the application is located in LuCI under 'Services' menu
 
+## banIP config options
+* usually the pre-configured banIP setup works quite well and no manual overrides are needed
+* the following options apply to the 'global' config section:
+    * ban\_enabled => main switch to enable/disable banIP service (bool/default: '0', disabled)
+    * ban\_automatic => determine the L2/L3 WAN network device automatically (bool/default: '1', enabled)
+    * ban\_fetchutil => name of the used download utility: 'uclient-fetch', 'wget', 'curl', 'aria2c', 'wget-nossl'. 'busybox' (default: 'uclient-fetch')
+    * ban\_iface => space separated list of WAN network interface(s)/device(s) used by banIP (default: automatically set by banIP ('ban_automatic'))
+
+* the following options apply to the 'extra' config section:
+    * ban\_debug => enable/disable banIP debug output (default: '0', disabled)
+    * ban\_nice => set the nice level of the banIP process and all sub-processes (int/default: '0', standard priority)
+    * ban\_triggerdelay => additional trigger delay in seconds before banIP processing begins (int/default: '2')
+    * ban\_backup => create compressed blocklist backups, they will be used in case of download errors or during startup in 'backup mode' (bool/default: '0', disabled)
+    * ban\_backupdir => target directory for adblock backups (default: not set)
+    * ban\_backupboot => do not automatically update blocklists during startup, use their backups instead (bool/default: '0', disabled)
+    * ban\_maxqueue => size of the download queue to handle downloads & IPSet processing in parallel (int/default: '8')
+    * ban\_fetchparm => special config options for the download utility (default: not set)
+
 ## Examples
 **receive banIP runtime information:**
 
@@ -50,11 +70,11 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 /etc/init.d/banip status
 ::: banIP runtime information
   + status     : enabled
-  + version    : 0.0.5
+  + version    : 0.1.0
   + fetch_info : /bin/uclient-fetch (libustream-ssl)
-  + ipset_info : 3 IPSets with overall 29510 IPs/Prefixes
-  + last_run   : 08.11.2018 15:03:50
-  + system     : GL-AR750S, OpenWrt SNAPSHOT r8419-860de2e1aa
+  + ipset_info : 1 IPSets with overall 516 IPs/Prefixes (backup mode)
+  + last_run   : 05.01.2019 14:48:18
+  + system     : TP-LINK RE450, OpenWrt SNAPSHOT r8910+72-25d8aa7d02
 </code></pre>
   
 **cronjob for a regular block list update (/etc/crontabs/root):**
@@ -65,7 +85,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
   
 
 ## Support
-Please join the banIP discussion in this [forum thread](https://forum.openwrt.org/t/banip-new-project-needs-testers-feedback/16985) or contact me by mail <dev@brenken.org>  
+Please join the banIP discussion in this [forum thread](https://forum.openwrt.org/t/banip-support-thread/16985) or contact me by mail <dev@brenken.org>  
 
 ## Removal
 * stop all banIP related services with _/etc/init.d/banip stop_
