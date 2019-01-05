@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.3.1"
+trm_ver="1.3.2"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -131,7 +131,7 @@ f_prep()
 		fi
 		if [ -z "${eaptype}" ] || [ ${eap_rc} -eq 0 ]
 		then
-			trm_stalist="$(f_trim "${trm_stalist} ${config}_${radio}")"
+			trm_stalist="$(f_trim "${trm_stalist} ${config}-${radio}")"
 		fi
 	fi
 	f_log "debug" "f_prep ::: config: ${config}, mode: ${mode}, network: ${network}, eap_rc: ${eap_rc}, radio: ${radio}, trm_radio: ${trm_radio:-"-"}, trm_active_sta: ${trm_active_sta:-"-"}, proactive: ${proactive}, disabled: ${disabled}"
@@ -321,7 +321,7 @@ f_main()
 		for dev in ${trm_devlist}
 		do
 			f_log "debug" "f_main ::: dev: ${dev}"
-			if [ -z "$(printf "%s" "${trm_stalist}" | grep -Fo "_${dev}")" ]
+			if [ -z "$(printf "%s" "${trm_stalist}" | grep -o "\-${dev}")" ]
 			then
 				f_log "debug" "f_main ::: no station on '${dev}' - continue"
 				continue
@@ -332,8 +332,8 @@ f_main()
 				f_log "debug" "f_main ::: cnt: ${cnt}, max_cnt: ${trm_maxretry}"
 				for sta in ${trm_stalist}
 				do
-					config="${sta%%_*}"
-					sta_radio="${sta##*_}"
+					config="${sta%%-*}"
+					sta_radio="${sta##*-}"
 					sta_essid="$(uci_get wireless "${config}" ssid)"
 					sta_bssid="$(uci_get wireless "${config}" bssid)"
 					sta_iface="$(uci_get wireless "${config}" network)"
