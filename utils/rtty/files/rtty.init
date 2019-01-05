@@ -1,7 +1,5 @@
 #!/bin/sh /etc/rc.common
 
-. /lib/functions/network.sh
-
 USE_PROCD=1
 START=99
 
@@ -24,6 +22,8 @@ start_rtty() {
         echo "validation failed" >&2
         return 1
     }
+
+    . /lib/functions/network.sh
 
     [ -n "$interface" ] && network_get_device ifname "$interface"
 
