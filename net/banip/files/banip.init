@@ -37,15 +37,20 @@ start_service()
 	fi
 }
 
+refresh()
+{
+	rc_procd start_service refresh
+}
+
+reload_service()
+{
+	rc_procd start_service reload
+}
+
 stop_service()
 {
 	rc_procd "${ban_script}" stop
 	rc_procd start_service
-}
-
-refresh()
-{
-	rc_procd start_service "refresh"
 }
 
 status()
@@ -71,10 +76,13 @@ status()
 
 service_triggers()
 {
-	local iface="$(uci_get banip global ban_iface)"
+	local ban_iface="$(uci_get banip global ban_iface)"
 	local delay="$(uci_get banip extra ban_triggerdelay)"
 
 	PROCD_RELOAD_DELAY=$((${delay:-2} * 1000))
-	procd_add_interface_trigger "interface.*.up" "${iface:-"wan"}" "${ban_init}" start
+	for iface in ${ban_iface:-"wan"}
+	do
+		procd_add_interface_trigger "interface.*.up" "${iface}" "${ban_init}" start
+	done
 	procd_add_reload_trigger "banip" "firewall"
 }
