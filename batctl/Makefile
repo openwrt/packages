@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=batctl
 
 PKG_VERSION:=2018.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_HASH:=e43827a5e868b4e134e77ca04da989fde1981463166bf1b6f2053acc3edd6257
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -25,7 +25,7 @@ define Package/batctl/Default
   URL:=https://www.open-mesh.org/
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+kmod-batman-adv +libnl-tiny +libc +librt
+  DEPENDS:=+libnl-tiny +libc +librt
   PROVIDES:=batctl
   MAINTAINER:=Simon Wunderlich <sw@simonwunderlich.de>
 endef

@@ -17,9 +17,9 @@ proto_batadv_setup() {
 	json_get_vars mesh routing_algo
 
 	[ -n "$routing_algo" ] || routing_algo="BATMAN_IV"
-	echo "$routing_algo" > "/sys/module/batman_adv/parameters/routing_algo"
+	batctl routing_algo "$routing_algo"
 
-	echo "$mesh" > "/sys/class/net/$iface/batman_adv/mesh_iface"
+	batctl -m "$mesh" interface add "$iface"
 	proto_init_update "$iface" 1
 	proto_send_update "$config"
 }
@@ -28,7 +28,10 @@ proto_batadv_teardown() {
 	local config="$1"
 	local iface="$2"
 
-	echo "none" > "/sys/class/net/$iface/batman_adv/mesh_iface" || true
+	local mesh
+	json_get_vars mesh
+
+	batctl -m "$mesh" interface del "$iface" || true
 }
 
 add_protocol batadv
