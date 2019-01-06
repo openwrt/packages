@@ -78,6 +78,9 @@ ifeq ($(BUILD_VARIANT),ssl)
 	CONFIGURE_ARGS+= \
 		--with-ssl=openssl \
 		--with-libssl-prefix="$(STAGING_DIR)/usr"
+
+	CONFIGURE_VARS += \
+		ac_cv_libssl=yes
 endif
 
 ifeq ($(BUILD_VARIANT),nossl)
