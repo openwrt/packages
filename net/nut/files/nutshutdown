@@ -16,11 +16,14 @@ stop_instance() {
 shutdown_instance() {
 	local cfg="$1"
 	config_get driver "$cfg" driver "usbhid-ups"
-	/lib/nut/${driver} -a "$cfg" -k
+	# Only FSD if killpower was indicated
+	if [ -f /var/run/killpower ]; then
+		/lib/nut/${driver} -a "$cfg" -k
+	fi
 }
 
-[ -f /var/run/killpower ] && {
-	[ -f /etc/config/nut_server ] && {
+if [ -f /var/run/killpower ]; then
+	if [ -f /etc/config/nut_server ]; then
 		config_load nut_server
 
 		# Can't FSD unless drivers are stopped
@@ -33,9 +36,9 @@ shutdown_instance() {
 		sleep 120
 		# Uh-oh failed to poweroff UPS
 		reboot -f
-	} || {
+	else
 		poweroff
-	}
-} || {
+	fi
+else
 	poweroff
-}
+fi
