@@ -9,7 +9,7 @@
  IRSSI_LIB?=$(DESTDIR)/$(LIBDIR)/irssi
  IRSSI_CFLAGS+=-I$(IRSSI_INCLUDE)/src/
  IRSSI_CFLAGS+=-I$(IRSSI_INCLUDE)/src/core/
-@@ -27,7 +27,7 @@ else
+@@ -28,7 +28,7 @@ else
      LDFLAGS += -lquasselc
  endif
  

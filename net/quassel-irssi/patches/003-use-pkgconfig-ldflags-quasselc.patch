@@ -1,6 +1,6 @@
 --- a/core/Makefile
 +++ b/core/Makefile
-@@ -24,7 +24,7 @@ ifndef SYSTEM_QUASSELC
+@@ -25,7 +25,7 @@ ifndef SYSTEM_QUASSELC
      QUASSELC_FLAGS:=-Ilib
  else
      QUASSELC_FLAGS:=$(shell pkg-config --cflags quasselc)
