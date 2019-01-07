@@ -9,13 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libarchive
 PKG_VERSION:=3.3.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.libarchive.org/downloads
 PKG_HASH:=ba7eb1781c9fbbae178c4c6bad1c6eb08edab9a1496c64833d1715d022b30e2e
 PKG_MAINTAINER:=Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
 PKG_LICENSE:=BSD-2-Clause
+PKG_CPE_ID:=cpe:/a:libarchive:libarchive
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
