@@ -50,7 +50,7 @@ start_proxy() {
 
 	proxy_atom "$1" LogLevel >> $CFGFILE
 
-	proxy_list "$1" XTinyproxy >> $CFGFILE
+	proxy_flag "$1" XTinyproxy >> $CFGFILE
 
 	proxy_atom "$1" MaxClients >> $CFGFILE
 	proxy_atom "$1" MinSpareServers >> $CFGFILE
