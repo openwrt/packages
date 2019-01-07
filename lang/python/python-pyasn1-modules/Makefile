@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyasn1-modules
-PKG_VERSION:=0.2.2
+PKG_VERSION:=0.2.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=pyasn1-modules-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pyasn1-modules
-PKG_HASH:=a0cf3e1842e7c60fde97cb22d275eb6f9524f5c5250489e292529de841417547
+PKG_HASH:=d14fcb29dabecba3d7b360bf72327c26c385248a5d603cf6be5f566ce999b261
 
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
