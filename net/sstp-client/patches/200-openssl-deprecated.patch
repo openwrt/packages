@@ -1,0 +1,18 @@
+--- a/src/sstp-client.c
++++ b/src/sstp-client.c
+@@ -477,6 +477,7 @@ static status_t sstp_init_ssl(sstp_client_st *client, sstp_option_st *opt)
+     int retval = SSTP_FAIL;
+     int status = 0;
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+     /* Initialize the OpenSSL library */
+     status = SSL_library_init();
+     if (status != 1)
+@@ -487,6 +488,7 @@ static status_t sstp_init_ssl(sstp_client_st *client, sstp_option_st *opt)
+ 
+     /* Load all error strings */
+     SSL_load_error_strings();
++#endif
+ 
+     /* Create a new crypto context */
+     client->ssl_ctx = SSL_CTX_new(SSLv23_client_method());
