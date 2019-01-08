@@ -856,7 +856,9 @@ mwan3_set_sticky_iptables()
 
 mwan3_set_user_iptables_rule()
 {
-	local ipset family proto policy src_ip src_port sticky dest_ip dest_port use_policy timeout rule policy IPT
+	local ipset family proto policy src_ip src_port sticky dest_ip
+	local dest_port use_policy timeout rule policy IPT
+	local global_logging rule_logging loglevel
 
 	rule="$1"
 
@@ -870,6 +872,10 @@ mwan3_set_user_iptables_rule()
 	config_get dest_port $1 dest_port 0:65535
 	config_get use_policy $1 use_policy
 	config_get family $1 family any
+
+	config_get rule_logging $1 logging 0
+	config_get global_logging globals logging 0
+	config_get loglevel globals loglevel notice
 
 	if [ "$1" != $(echo "$1" | cut -c1-15) ]; then
 		$LOG warn "Rule $1 exceeds max of 15 chars. Not setting rule" && return 0
@@ -945,6 +951,17 @@ mwan3_set_user_iptables_rule()
 			for IPT in "$IPT4" "$IPT6"; do
 				case $proto in
 					tcp|udp)
+					[ "$global_logging" = "1" ] && [ "$rule_logging" = "1" ] && {
+						$IPT -A mwan3_rules \
+							-p $proto \
+							-s $src_ip \
+							-d $dest_ip $ipset \
+							-m multiport --sports $src_port \
+							-m multiport --dports $dest_port \
+							-m mark --mark 0/$MMX_MASK \
+							-m comment --comment "$1" \
+							-j LOG --log-level "$loglevel" --log-prefix "MWAN3($1)" &> /dev/null
+					}
 					$IPT -A mwan3_rules \
 						-p $proto \
 						-s $src_ip \
@@ -956,6 +973,15 @@ mwan3_set_user_iptables_rule()
 						-j $policy &> /dev/null
 					;;
 					*)
+					[ "$global_logging" = "1" ] && [ "$rule_logging" = "1" ] && {
+						$IPT -A mwan3_rules \
+							-p $proto \
+							-s $src_ip \
+							-d $dest_ip $ipset \
+							-m mark --mark 0/$MMX_MASK \
+							-m comment --comment "$1" \
+							-j LOG --log-level "$loglevel" --log-prefix "MWAN3($1)" &> /dev/null
+					}
 					$IPT -A mwan3_rules \
 						-p $proto \
 						-s $src_ip \
@@ -971,6 +997,17 @@ mwan3_set_user_iptables_rule()
 
 			case $proto in
 				tcp|udp)
+				[ "$global_logging" = "1" ] && [ "$rule_logging" = "1" ] && {
+					$IPT -A mwan3_rules \
+						-p $proto \
+						-s $src_ip \
+						-d $dest_ip $ipset \
+						-m multiport --sports $src_port \
+						-m multiport --dports $dest_port \
+						-m mark --mark 0/$MMX_MASK \
+						-m comment --comment "$1" \
+						-j LOG --log-level "$loglevel" --log-prefix "MWAN3($1)" &> /dev/null
+				}
 				$IPT4 -A mwan3_rules \
 					-p $proto \
 					-s $src_ip \
@@ -982,6 +1019,15 @@ mwan3_set_user_iptables_rule()
 					-j $policy &> /dev/null
 				;;
 				*)
+				[ "$global_logging" = "1" ] && [ "$rule_logging" = "1" ] && {
+					$IPT4 -A mwan3_rules \
+						-p $proto \
+						-s $src_ip \
+						-d $dest_ip $ipset \
+						-m mark --mark 0/$MMX_MASK \
+						-m comment --comment "$1" \
+						-j LOG --log-level "$loglevel" --log-prefix "MWAN3($1)" &> /dev/null
+				}
 				$IPT4 -A mwan3_rules \
 					-p $proto \
 					-s $src_ip \
@@ -996,6 +1042,17 @@ mwan3_set_user_iptables_rule()
 
 			case $proto in
 				tcp|udp)
+				[ "$global_logging" = "1" ] && [ "$rule_logging" = "1" ] && {
+					$IPT6 -A mwan3_rules \
+						-p $proto \
+						-s $src_ip \
+						-d $dest_ip $ipset \
+						-m multiport --sports $src_port \
+						-m multiport --dports $dest_port \
+						-m mark --mark 0/$MMX_MASK \
+						-m comment --comment "$1" \
+						-j LOG --log-level "$loglevel" --log-prefix "MWAN3($1)" &> /dev/null
+				}
 				$IPT6 -A mwan3_rules \
 					-p $proto \
 					-s $src_ip \
@@ -1007,6 +1064,15 @@ mwan3_set_user_iptables_rule()
 					-j $policy &> /dev/null
 				;;
 				*)
+				[ "$global_logging" = "1" ] && [ "$rule_logging" = "1" ] && {
+					$IPT6 -A mwan3_rules \
+						-p $proto \
+						-s $src_ip \
+						-d $dest_ip $ipset \
+						-m mark --mark 0/$MMX_MASK \
+						-m comment --comment "$1" \
+						-j LOG --log-level  "$loglevel" --log-prefix "MWAN3($1)" &> /dev/null
+				}
 				$IPT6 -A mwan3_rules \
 					-p $proto \
 					-s $src_ip \
