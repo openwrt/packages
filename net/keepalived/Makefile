@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
-PKG_VERSION:=2.0.7
-PKG_RELEASE:=3
+PKG_VERSION:=2.0.10
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.keepalived.org/software
-PKG_HASH:=bce45d6d5cf3620bfd88472ec839a75b5a14a54fda12d09e890670244873b8ab
+PKG_HASH:=40e0e55afed9ca313d621a9c5878579696fafb5504dab521aadaf20ba6e7f597
 
 PKG_CPE_ID:=cpe:/a:keepalived:keepalived
 PKG_LICENSE:=GPL-2.0+
@@ -58,7 +58,8 @@ CONFIGURE_ARGS+= \
 	--disable-libnl \
 	--enable-sha1 \
 	--disable-snmp \
-	--with-kernel-dir="$(LINUX_DIR)/$(LINUX_UAPI_DIR)"
+	--with-kernel-dir="$(LINUX_DIR)/$(LINUX_UAPI_DIR)" \
+	--with-init=SYSV
 
 MAKE_FLAGS += \
 		STRIP="/bin/true" \
