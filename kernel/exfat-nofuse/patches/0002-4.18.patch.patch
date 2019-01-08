@@ -1,0 +1,42 @@
+From 4b9607d6fd4a35d9bb35527fae7aac23d848c0ce Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Tue, 8 Jan 2019 15:45:24 +0000
+Subject: [PATCH 2/2] 4.18.patch
+
+Imported from https://aur.archlinux.org/cgit/aur.git/plain/4.18.patch?h=exfat-dkms-git
+---
+ exfat_super.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/exfat_super.c b/exfat_super.c
+index 312de36..3ac18b0 100644
+--- a/exfat_super.c
++++ b/exfat_super.c
+@@ -147,8 +147,13 @@ static time_t accum_days_in_year[] = {
+ static void _exfat_truncate(struct inode *inode, loff_t old_size);
+ 
+ /* Convert a FAT time/date pair to a UNIX date (seconds since 1 1 70). */
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,18,01)
++void exfat_time_fat2unix(struct exfat_sb_info *sbi, struct timespec64 *ts,
++						 DATE_TIME_T *tp)
++#else
+ void exfat_time_fat2unix(struct exfat_sb_info *sbi, struct timespec *ts,
+ 						 DATE_TIME_T *tp)
++#endif
+ {
+ 	time_t year = tp->Year;
+ 	time_t ld;
+@@ -166,8 +171,13 @@ void exfat_time_fat2unix(struct exfat_sb_info *sbi, struct timespec *ts,
+ }
+ 
+ /* Convert linear UNIX date to a FAT time/date pair. */
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,18,01)
++void exfat_time_unix2fat(struct exfat_sb_info *sbi, struct timespec64 *ts,
++						 DATE_TIME_T *tp)
++#else
+ void exfat_time_unix2fat(struct exfat_sb_info *sbi, struct timespec *ts,
+ 						 DATE_TIME_T *tp)
++#endif	
+ {
+ 	time_t second = ts->tv_sec;
+ 	time_t day, month, year;

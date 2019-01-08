@@ -1,0 +1,31 @@
+From c0d3452e0366e2ab4fc51e7981e48636facdf486 Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Tue, 8 Jan 2019 15:45:26 +0000
+Subject: [PATCH 1/2] exfat_oal: use get_seconds() directly
+
+---
+ exfat_oal.c | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
+
+diff --git a/exfat_oal.c b/exfat_oal.c
+index 7435442..83f8e4b 100644
+--- a/exfat_oal.c
++++ b/exfat_oal.c
+@@ -128,16 +128,9 @@ static time_t accum_days_in_year[] = {
+ 
+ TIMESTAMP_T *tm_current(TIMESTAMP_T *tp)
+ {
+-	struct timespec ts;
+ 	time_t second, day, leap_day, month, year;
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,8,0)
+-	ts = CURRENT_TIME_SEC;
+-#else
+-	ktime_get_real_ts(&ts);
+-#endif
+-
+-	second = ts.tv_sec;
++	second = get_seconds();
+ 	second -= sys_tz.tz_minuteswest * SECS_PER_MIN;
+ 
+ 	/* Jan 1 GMT 00:00:00 1980. But what about another time zone? */
