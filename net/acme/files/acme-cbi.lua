@@ -56,8 +56,8 @@ us.rmempty = false
 kl = cs:option(ListValue, "keylength", translate("Key size"),
                translate("Key size (and type) for the generated certificate."))
 kl:value("2048", "RSA 2048 bits")
+kl:value("3072", "RSA 3072 bits")
 kl:value("4096", "RSA 4096 bits")
-kl:value("8192", "RSA 8192 bits")
 kl:value("ec-256", "ECC 256 bits")
 kl:value("ec-384", "ECC 384 bits")
 kl.default = "2048"
