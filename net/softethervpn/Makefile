@@ -18,8 +18,8 @@ PKG_SOURCE:=softether-src-v$(PKG_VERSION)-$(PKG_VERREL).tar.gz
 PKG_SOURCE_URL:=http://www.softether-download.com/files/softether/v$(PKG_VERSION)-$(PKG_VERREL)-$(PKG_VERDATE)-tree/Source_Code/
 PKG_HASH:=1e641fa227a732b3eec3fe8bdcf4d4fd2b1d0b0a5084119126c1216d2ec1b545
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/v$(PKG_VERSION)
-HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/v$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/v$(PKG_VERSION)
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)/v$(PKG_VERSION)
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -39,6 +39,7 @@ HOST_MAKE_FLAGS += -C $(HOST_BUILD_DIR)
 # Select 32 or 64 bit Makefile for host build depending on host architecture
 HOST_MAKE_FLAGS += -f src/makefiles/linux_$(if $(shell uname -m | grep 64),64,32)bit.mak
 
+HOST_LDFLAGS += -Wl,-rpath="$(STAGING_DIR_HOSTPKG)/lib"
 # Prevent calling upstream configure
 define Host/Configure
 endef
