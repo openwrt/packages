@@ -17,8 +17,6 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => numerous updates on the same day, approx. 6.500 entries (enabled by default)
     * [dshield](http://dshield.org)
     * => daily updates, approx. 4.500 entries
-    * [feodotracker](https://feodotracker.abuse.ch)
-    * => daily updates, approx. 0-10 entries
     * [hphosts](https://hosts-file.net)
     * => monthly updates, approx. 50.000 entries
     * [malwaredomains](http://malwaredomains.com)
@@ -147,7 +145,6 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_nice => set the nice level of the adblock process and all sub-processes (int/default: '0', standard priority)
     * adb\_triggerdelay => additional trigger delay in seconds before adblock processing begins (int/default: '2')
     * adb\_forcedns => force dns requests to local resolver (bool/default: '0', disabled)
-    * adb\_forcesrt => force overall sort on low memory devices with less than 64 MB RAM (bool/default: '0', disabled)
     * adb\_backup => create compressed blocklist backups, they will be used in case of download errors or during startup in backup mode (bool/default: '0', disabled)
     * adb\_backupdir => target directory for adblock backups (default: not set)
     * adb\_backup_mode => do not automatically update blocklists during startup, use backups instead (bool/default: '0', disabled)
@@ -313,23 +310,32 @@ This entry does not remove:
 
 The query function checks against the submitted (sub-)domain and recurses automatically to the upper top level domain. For every (sub-)domain it returns the first ten relevant results.
 <pre><code>
-/etc/init.d/adblock query www.example.google.com
-::: results for domain 'www.example.google.com'
-  - no match
-::: results for domain 'example.google.com'
-  - no match
+/etc/init.d/adblock query google.com
+:::
 ::: results for domain 'google.com'
-  + ads.google.com
-  + adservices.google.com
-  + adwords.google.com
-  + ampcid.google.com
+:::
   + analytics.google.com
-  + gg.google.com
-  + google.com.analytics.kdgsrltkcun.com
   + googleadapis.l.google.com
-  + id.google.com
-  + pagead-googlehosted.l.google.com
-  + [...]
+  + pagead.l.google.com
+  + partnerad.l.google.com
+  + ssl-google-analytics.l.google.com
+  + www-google-analytics.l.google.com
+  + video-stats.video.google.com
+:::
+::: results for domain 'google.com' in backups
+:::
+  + adb_list.adguard.gz           partnerad.l.google.com
+  + adb_list.adguard.gz           googleadapis.l.google.com
+  + adb_list.adguard.gz           ssl-google-analytics.l.google.com
+  + adb_list.adguard.gz           [...]
+  + adb_list.disconnect.gz        pagead.l.google.com
+  + adb_list.disconnect.gz        partnerad.l.google.com
+  + adb_list.disconnect.gz        video-stats.video.google.com
+  + adb_list.disconnect.gz        [...]
+  + adb_list.yoyo.gz              analytics.google.com
+  + adb_list.yoyo.gz              pagead.l.google.com
+  + adb_list.yoyo.gz              partnerad.l.google.com
+  + adb_list.yoyo.gz              [...]
 </code></pre>
   
 **add a new blocklist source:**
