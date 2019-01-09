@@ -1,13 +1,13 @@
 #!/bin/sh /etc/rc.common
 
-. /lib/functions/network.sh
-
 USE_PROCD=1
 START=99
 
 BIN=/usr/sbin/rtty
 
 start_rtty() {
+    . /lib/functions/network.sh
+
     local cfg="$1"
     local interface ifname id description host port ssl
 
