@@ -73,6 +73,14 @@ function index()
 	table.insert(place,"Gateways")
 	entry(place,call("action_tunnels_j"),"Gateways",3)
 	table.remove(place)
+
+	-- Integrate bmx7-mdns if present
+	if nixio.fs.stat("/usr/lib/lua/luci/model/cbi/bmx7-mdns.lua","type") ~= nil then
+		table.insert(place,"mDNS")
+		entry(place, cbi("bmx7-mdns"), "mesh DNS", 1).dependent=false
+		table.remove(place)
+	end
+
 end
 
 
