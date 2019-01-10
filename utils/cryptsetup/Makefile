@@ -22,41 +22,17 @@ PKG_LICENSE_FILES:=COPYING COPYING.LGPL
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/cryptsetup/Default
+define Package/cryptsetup
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Encryption
   TITLE:=Cryptsetup
-  DEPENDS:=+libblkid +libuuid +libpopt +lvm2 +libdevmapper +libjson-c +@KERNEL_DIRECT_IO
+  DEPENDS:=+libblkid +libuuid +libpopt +lvm2 +libdevmapper +libjson-c +@KERNEL_DIRECT_IO +kmod-crypto-user
   URL:=https://gitlab.com/cryptsetup/cryptsetup/
 endef
 
-define Package/cryptsetup
-$(call Package/cryptsetup/Default)
-  DEPENDS+=+kmod-crypto-user
-  VARIANT:=kernel
-endef
-
-define Package/cryptsetup-openssl
-$(call Package/cryptsetup/Default)
-  TITLE+= (with openssl support)
-  DEPENDS+=+libopenssl
-  VARIANT:=openssl
-endef
-
-define Package/cryptsetup/Default/description
-	Cryptsetup-luks
-endef
-
 define Package/cryptsetup/description
-$(call Package/cryptsetup/Default/description)
-linked against kernel crypto API
-endef
-
-
-define Package/cryptsetup-openssl/description
-$(call Package/cryptsetup/Default/description)
-linked against openssl
+  Cryptsetup is utility used to conveniently setup disk encryption based on DMCrypt kernel module.
 endef
 
 CONFIGURE_ARGS += \
@@ -66,15 +42,8 @@ CONFIGURE_ARGS += \
 	--disable-rpath \
 	--disable-veritysetup \
 	--disable-udev \
-	--with-default-luks-format=LUKS2
-
-ifeq ($(BUILD_VARIANT),openssl)
-CONFIGURE_ARGS += \
-        --with-crypto_backend=openssl
-else
-CONFIGURE_ARGS += \
+	--with-default-luks-format=LUKS2 \
 	--with-crypto_backend=kernel
-endif
 
 define Package/cryptsetup/install
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -83,7 +52,4 @@ define Package/cryptsetup/install
 	$(CP) $(PKG_BUILD_DIR)/.libs/libcryptsetup.so* $(1)/usr/lib
 endef
 
-Package/cryptsetup-openssl/install = $(Package/cryptsetup/install)
-
 $(eval $(call BuildPackage,cryptsetup))
-$(eval $(call BuildPackage,cryptsetup-openssl))
