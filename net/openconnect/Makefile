@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openconnect
-PKG_VERSION:=7.08
-PKG_RELEASE:=8
+PKG_VERSION:=8.01
+PKG_RELEASE:=1
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.infradead.org/pub/openconnect/
-PKG_HASH:=1c44ec1f37a6a025d1ca726b9555649417f1d31a46f747922b84099ace628a03
+PKG_HASH:=48868a4f99c81a7474d87fbabb41b8eaa7d32b54771c9f23a7aea72d9cd626fd
 PKG_LICENSE:=LGPLv2.1+
 
 PKG_CONFIG_DEPENDS:= \
@@ -31,7 +31,7 @@ endef
 define Package/openconnect
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libxml2 +kmod-tun +resolveip +vpnc-scripts +OPENCONNECT_OPENSSL:libopenssl +OPENCONNECT_OPENSSL:p11-kit +OPENCONNECT_OPENSSL:libp11 +OPENCONNECT_GNUTLS:libgnutls +OPENCONNECT_STOKEN:libstoken
+  DEPENDS:=+libxml2 +kmod-tun +resolveip +vpnc-scripts +OPENCONNECT_OPENSSL:libopenssl +OPENCONNECT_OPENSSL:p11-kit +OPENCONNECT_OPENSSL:libp11 +OPENCONNECT_GNUTLS:libgnutls +OPENCONNECT_GNUTLS:libtasn1 +OPENCONNECT_STOKEN:libstoken
   TITLE:=OpenConnect VPN client (Cisco AnyConnect and Juniper/Pulse compatible)
   MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
   URL:=http://www.infradead.org/openconnect/
