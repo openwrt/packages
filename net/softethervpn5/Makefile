@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=softethervpn5
 PKG_VERSION:=5.01.9667
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-2.0
@@ -92,6 +92,7 @@ define Host/Prepare
 	$(Host/Prepare/Default)
 	$(SED) 's,SHARED,STATIC,g' $(HOST_BUILD_DIR)/src/Mayaqua/CMakeLists.txt
 	$(SED) 's,SHARED,STATIC,g' $(HOST_BUILD_DIR)/src/Cedar/CMakeLists.txt
+	$(SED) 's,readline,libreadline.a,g' $(HOST_BUILD_DIR)/src/Cedar/CMakeLists.txt
 endef
 
 define Host/Compile
@@ -134,7 +135,6 @@ endef
 define Package/softethervpn5-bridge/install
 	$(INSTALL_DIR) $(1)/usr/libexec/softethervpn
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/vpnbridge $(1)/usr/libexec/softethervpn/
-	$(INSTALL_BIN) files/launcher.sh $(1)/usr/libexec/softethervpn/
 	$(INSTALL_DATA) files/dummy $(1)/usr/libexec/softethervpn/vpn_bridge.config
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/vpnbridge.init $(1)/etc/init.d/softethervpnbridge
@@ -143,7 +143,6 @@ endef
 define Package/softethervpn5-client/install
 	$(INSTALL_DIR) $(1)/usr/libexec/softethervpn
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/vpnclient $(1)/usr/libexec/softethervpn/
-	$(INSTALL_BIN) files/launcher.sh $(1)/usr/libexec/softethervpn/
 	$(INSTALL_DATA) files/dummy $(1)/usr/libexec/softethervpn/vpn_client.config
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/vpnclient.init $(1)/etc/init.d/softethervpnclient
