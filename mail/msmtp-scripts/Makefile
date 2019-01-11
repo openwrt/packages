@@ -1,7 +1,6 @@
 #
 # Copyright (C) 2009 David Cooper <dave@kupesoft.com>
-# Copyright (C) 2009-2015 OpenWrt.org
-# Copyright (C) 2016 Daniel Dickinson <cshored@thecshore.com>
+# Copyright (C) 2016-2018 Daniel Dickinson <cshored@thecshore.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,12 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msmtp-scripts
-PKG_VERSION:=1.0.8
+PKG_VERSION:=1.2-b-3
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/msmtp-scripts
-PKG_HASH:=2aec48d47b02facf2a33cf97a7434e969c1a054224406e6c55320d825c7902b2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://launchpad.net/$(PKG_NAME)/$(firstword $(subst -, ,$(PKG_VERSION)))/$(PKG_VERSION)/+download
+PKG_HASH:=b1d112df3ba8f42848102ba75d678a3ecef6dae6dd78b12a1357772313292639
+PKG_MAINTAINER:=Daniel F. Dickinson <cshored@thecshore.com>
 
 PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=COPYING
@@ -25,28 +25,25 @@ include $(INCLUDE_DIR)/package.mk
 define Package/msmtp-scripts/Default
   SECTION:=mail
   CATEGORY:=Mail
-  TITLE:=DEPRECATED: Simple sendmail SMTP queueing and forwarding
-  URL:=http://msmtp-scripts.sourceforge.net/
+  TITLE:=Forwarding only SMTP with queuing
+  URL:=https://launchpad.net/msmtp-scripts
 endef
 
 define Package/msmtp-scripts/Default/description
- DEPRECATED: SourceForge project is abandonded; and upstream (on GitHub)
- has deprecated this project. See:
- https://github.com/cshore-history/msmtp-scripts#deprecation-notice
-
  msmtp-scripts are scripts wrappers around the msmtp SMTP client that
- add queueing, logging to syslog or file, a subset of sendmail/postfix
+ add queueing, logging to syslog or file, and a subset of sendmail/postfix
  mailq/postsuper/postqueue commands implemented in a compatible fashion.
 endef
 
 define Package/msmtpq-ng
 $(call Package/msmtp-scripts/Default)
   DEPENDS+= +msmtp
-  TITLE+= (msmtpq-ng wrappers)
+  TITLE+= (common)
 endef
 
 define Package/msmtpq-ng/conffiles
 /etc/msmtpq-ng.rc
+/etc/msmtpq-ng-msmtprc
 endef
 
 define Package/msmtpq-ng/description
@@ -66,11 +63,12 @@ $(call Package/msmtp-scripts/Default)
     400:/usr/lib/sendmail:/usr/bin/msmtpq-ng-mta \
     400:/usr/sbin/mailq:/usr/bin/msmtpq-ng-queue-mta \
     400:/usr/sbin/postqueue:/usr/bin/msmtpq-ng-queue-mta \
-    400:/usr/sbin/postsuper:/usr/sin/msmtpq-ng-queue-mta
+    400:/usr/sbin/postsuper:/usr/bin/msmtpq-ng-queue-mta
 endef
 
 define Package/msmtp-queue-mta/conffiles
 /etc/msmtpq-ng-mta.rc
+/etc/msmtpq-ng-mta-msmtprc
 endef
 
 define Package/msmtpq-ng-mta/description
@@ -84,7 +82,7 @@ endef
 define Package/msmtpq-ng-mta-smtpd
 $(call Package/msmtp-scripts/Default)
   DEPENDS+= +msmtpq-ng-mta +xinetd
-  TITLE+= (basic SMTP server)
+  TITLE+= (localhost SMTPd)
 endef
 
 define Package/msmtp-ng-mta-smtpd/description
@@ -100,11 +98,7 @@ endef
 
 define Package/msmtpq-ng-mta/postinst
 	mkdir -p $${IPKG_INSTROOT}/etc/crontabs
-	if ! grep -q msmtpq-ng-mta $${IPKG_INSTROOT}/etc/crontabs/root; then echo $$'\n'"*/60 * * * * /usr/bin/msmtpq-ng-mta -q" >>$${IPKG_INSTROOT}/etc/crontabs/root; fi
-endef
-
-define Package/msmtp-queue-mta/prerm
-	if grep -q msmtpq-ng-mta $${IPKG_INSTROOT}/etc/crontabs/root; then grep -v '\*/60 \* \* \* \* /usr/bin/msmtpq-ng-mta -q' $${IPKG_INSTROOT}/etc/crontabs/root >$${IPKG_INSTROOT}/etc/crontabs/root.new; mv -f $${IPKG_INSTROOT}/etc/crontabs/root.new $${IPKG_INSTROOT}/etc/crontabs; fi
+	if ! grep -q msmtpq-ng-mta $${IPKG_INSTROOT}/etc/crontabs/root 2>/dev/null; then echo $$'\n'"*/60 * * * * /usr/bin/msmtpq-ng-mta -q" >>$${IPKG_INSTROOT}/etc/crontabs/root; fi
 endef
 
 define Build/Configure
@@ -117,21 +111,20 @@ endef
 
 define Package/msmtpq-ng/install
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) ./files/msmtpq-ng.rc $(1)/etc/msmtpq-ng.rc
+	$(INSTALL_DATA) ./files/msmtpq-ng.rc $(1)/etc/msmtpq-ng.rc
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_BUILD_DIR)/msmtpq-ng/msmtpq-ng $(1)/usr/bin/
-	$(SED) 's/logger -i/logger/' $(1)/usr/bin/msmtpq-ng
 	$(CP) $(PKG_BUILD_DIR)/msmtpq-ng/msmtpq-ng-queue $(1)/usr/bin/
 endef
 
 define Package/msmtpq-ng-mta/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/sbin $(1)/usr/lib $(1)/etc/init.d
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/msmtpq-ng-mta/msmtpq-ng-mta.rc $(1)/etc/
-	echo 'MSMTP_LOCK_DIR=/var/lock/msmtp' >>$(1)/etc/msmtpq-ng-mta.rc
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/msmtpq-ng-mta/msmtpq-ng-mta.rc $(1)/etc/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/msmtpq-ng-mta/msmtpq-ng-mta $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/msmtpq-ng-mta/msmtpq-ng-queue-mta $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/crontabs
 	$(INSTALL_BIN) ./files/msmtpq-ng-mta.init $(1)/etc/init.d/msmtpq-ng-mta
+	ln -s /etc/msmtprc $(1)/etc/msmtpq-ng-mta-msmtprc
 endef
 
 define Package/msmtpq-ng-mta-smtpd/install
