@@ -1,0 +1,39 @@
+From 86a7346a464a163c6d173b9f13a92cf62e8670d4 Mon Sep 17 00:00:00 2001
+From: yangfl <yangfl@users.noreply.github.com>
+Date: Sun, 12 May 2019 11:52:33 +0800
+Subject: [PATCH 06/19] remove hardcoded flags
+
+---
+ Makefile | 16 ++++------------
+ 1 file changed, 4 insertions(+), 12 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 824516c..35b4f2b 100644
+--- a/Makefile
++++ b/Makefile
+@@ -2,18 +2,10 @@ OBJ	=	objs
+ DEP	=	dep
+ EXE = ${OBJ}/bin
+ 
+-COMMIT := $(shell git log -1 --pretty=format:"%H")
+-
+-ARCH =
+-ifeq ($m, 32)
+-ARCH = -m32
+-endif
+-ifeq ($m, 64)
+-ARCH = -m64
+-endif
+-
+-CFLAGS = $(ARCH) -O3 -std=gnu11 -Wall -mpclmul -march=core2 -mfpmath=sse -mssse3 -fno-strict-aliasing -fno-strict-overflow -fwrapv -DAES=1 -DCOMMIT=\"${COMMIT}\" -D_GNU_SOURCE=1 -D_FILE_OFFSET_BITS=64
+-LDFLAGS = $(ARCH) -ggdb -rdynamic -lm -lrt -lcrypto -lz -lpthread -lcrypto
++COMMIT ?= $(shell git log -1 --pretty=format:"%H")
++
++CFLAGS += -std=gnu11 -Wall -fno-strict-aliasing -fno-strict-overflow -fwrapv -DCOMMIT=\"${COMMIT}\" -D_GNU_SOURCE=1
++LDFLAGS += -rdynamic -lm -lrt -lcrypto -lz -lpthread
+ 
+ define check_libatomic
+ #include <stdatomic.h>
+-- 
+2.20.1
+

@@ -1,0 +1,1352 @@
+From e2682937c40244cab7c3f45aff32945c32b77e23 Mon Sep 17 00:00:00 2001
+From: yangfl <yangfl@users.noreply.github.com>
+Date: Sun, 12 May 2019 11:55:55 +0800
+Subject: [PATCH 15/19] replace unsupported atomic operations
+
+---
+ common/mp-queue.c         | 86 +++++++++++++++++++++++----------------
+ common/tl-parse.c         |  5 ++-
+ engine/engine-signals.c   |  5 ++-
+ jobs/jobs.c               | 48 ++++++++++++----------
+ mtproto/mtproto-proxy.c   |  3 +-
+ net/net-connections.c     | 82 +++++++++++++++++++------------------
+ net/net-crypto-aes.h      |  5 ++-
+ net/net-events.c          |  3 +-
+ net/net-msg-buffers.c     | 18 ++++----
+ net/net-msg-buffers.h     |  3 +-
+ net/net-msg.c             | 26 ++++++------
+ net/net-rpc-targets.c     |  7 ++--
+ net/net-tcp-connections.c |  3 +-
+ net/net-tcp-rpc-client.c  |  3 +-
+ net/net-tcp-rpc-server.c  |  7 ++--
+ vv/vv-tree.c              | 17 ++++----
+ 16 files changed, 180 insertions(+), 141 deletions(-)
+
+diff --git a/common/mp-queue.c b/common/mp-queue.c
+index de69bd4..011289e 100644
+--- a/common/mp-queue.c
++++ b/common/mp-queue.c
+@@ -25,6 +25,8 @@
+ #include <errno.h>
+ #include <pthread.h>
+ #include <signal.h>
++#include <stdatomic.h>
++#include <stdbool.h>
+ #include <stddef.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -110,7 +112,7 @@ int get_this_thread_id (void) {
+   if (i) {
+     return i;
+   }
+-  i = __sync_fetch_and_add (&mpq_threads, 1) + 1;
++  i = atomic_fetch_add (&mpq_threads, 1) + 1;
+   assert (i > 0 && i < MAX_MPQ_THREADS);
+   thread_hazard_pointers = mqb_hazard_ptr[i];
+   return mpq_this_thread_id = i;
+@@ -119,7 +121,7 @@ int get_this_thread_id (void) {
+ /* custom semaphore implementation using futexes */
+ 
+ int mp_sem_post (mp_sem_t *sem) {
+-  __sync_fetch_and_add (&sem->value, 1);
++  atomic_fetch_add (&sem->value, 1);
+   if (sem->waiting > 0) {
+     syscall (__NR_futex, &sem->value, FUTEX_WAKE, 1, NULL, 0, 0);
+   }
+@@ -130,20 +132,20 @@ int mp_sem_wait (mp_sem_t *sem) {
+   int v = sem->value, q = 0;
+   while (1) {
+     if (v > 0) {
+-      v = __sync_fetch_and_add (&sem->value, -1);
++      v = atomic_fetch_add (&sem->value, -1);
+       if (v > 0) {
+ 	return 0;
+       }
+-      v = __sync_add_and_fetch (&sem->value, 1);
++      v = atomic_fetch_add (&sem->value, 1) + 1;
+     } else {
+       if (v < 0 && q++ < 10) {
+ 	barrier ();
+ 	v = sem->value;
+ 	continue;
+       }
+-      __sync_fetch_and_add (&sem->waiting, 1);
++      atomic_fetch_add (&sem->waiting, 1);
+       syscall (__NR_futex, &sem->value, FUTEX_WAIT, v, NULL, 0, 0);
+-      __sync_fetch_and_add (&sem->waiting, -1);
++      atomic_fetch_add (&sem->waiting, -1);
+       v = sem->value;
+       q = 0;
+     }
+@@ -153,11 +155,11 @@ int mp_sem_wait (mp_sem_t *sem) {
+ int mp_sem_trywait (mp_sem_t *sem) {
+   int v = sem->value;
+   if (v > 0) {
+-    v = __sync_fetch_and_add (&sem->value, -1);
++    v = atomic_fetch_add (&sem->value, -1);
+     if (v > 0) {
+       return 0;
+     }
+-    __sync_fetch_and_add (&sem->value, 1);
++    atomic_fetch_add (&sem->value, 1);
+   }
+   return -1;
+ }
+@@ -175,7 +177,7 @@ struct mp_queue_block *alloc_mpq_block (mqn_value_t first_val, int allow_recursi
+       if (!is_hazard_ptr (QB, 0, 2)) {
+ 	// reclaiming garbage
+ 	assert (QB->mqb_magic == MQ_BLOCK_GARBAGE_MAGIC); 
+-	__sync_fetch_and_add (&mpq_blocks_wasted, -1);
++	atomic_fetch_add (&mpq_blocks_wasted, -1);
+ 	align_bytes = QB->mqb_align_bytes;
+       } else {
+ 	mpq_push (is_small ? &MqGarbageSmallBlocks : &MqGarbageBlocks, QB, MPQF_RECURSIVE);
+@@ -187,7 +189,7 @@ struct mp_queue_block *alloc_mpq_block (mqn_value_t first_val, int allow_recursi
+       if (QB) {
+ 	assert (QB->mqb_magic == MQ_BLOCK_PREPARED_MAGIC); 
+ 	prepared = 1;
+-	__sync_fetch_and_add (&mpq_blocks_prepared, -1);
++	atomic_fetch_add (&mpq_blocks_prepared, -1);
+ 	align_bytes = QB->mqb_align_bytes;
+       }
+     }
+@@ -199,22 +201,24 @@ struct mp_queue_block *alloc_mpq_block (mqn_value_t first_val, int allow_recursi
+     align_bytes = -(int)(long) new_block & (MPQ_BLOCK_ALIGNMENT - 1);
+     QB = (struct mp_queue_block *) (new_block + align_bytes);
+ 
+-    __sync_fetch_and_add (&mpq_blocks_true_allocations, 1);
++    atomic_fetch_add (&mpq_blocks_true_allocations, 1);
+     if (is_small) {
+-      int t = __sync_fetch_and_add (&mpq_small_blocks_allocated, 1);
++      int t = atomic_fetch_add (&mpq_small_blocks_allocated, 1);
+       if (t >= mpq_small_blocks_allocated_max) {
+-	__sync_bool_compare_and_swap (&mpq_small_blocks_allocated_max, mpq_small_blocks_allocated_max, t + 1);
++	int expect_mpq_small_blocks_allocated_max = mpq_small_blocks_allocated_max;
++	atomic_compare_exchange_strong (&mpq_small_blocks_allocated_max, &expect_mpq_small_blocks_allocated_max, t + 1);
+       }
+     } else {
+-      int t = __sync_fetch_and_add (&mpq_blocks_allocated, 1);
++      int t = atomic_fetch_add (&mpq_blocks_allocated, 1);
+       if (t >= mpq_blocks_allocated_max) {
+-	__sync_bool_compare_and_swap (&mpq_blocks_allocated_max, mpq_blocks_allocated_max, t + 1);
++	int expect_mpq_blocks_allocated_max = mpq_blocks_allocated_max;
++	atomic_compare_exchange_strong (&mpq_blocks_allocated_max, &expect_mpq_blocks_allocated_max, t + 1);
+       }
+     }
+   } else {
+     assert (QB->mqb_size == size);
+   }
+-  __sync_fetch_and_add (&mpq_blocks_allocations, 1);
++  atomic_fetch_add (&mpq_blocks_allocations, 1);
+ 
+   memset (QB, 0, offsetof (struct mp_queue_block, mqb_nodes));
+   QB->mqb_align_bytes = align_bytes;
+@@ -244,10 +248,10 @@ void free_mpq_block (struct mp_queue_block *QB) {
+   assert ((unsigned) QB->mqb_align_bytes < MPQ_BLOCK_ALIGNMENT && !(QB->mqb_align_bytes & (sizeof (void *) - 1)));
+   QB->mqb_magic = MQ_BLOCK_FREE_MAGIC;
+   if (QB->mqb_size == MPQ_SMALL_BLOCK_SIZE) {
+-    __sync_fetch_and_add (&mpq_small_blocks_allocated, -1);
++    atomic_fetch_add (&mpq_small_blocks_allocated, -1);
+   } else {
+     assert (QB->mqb_size == MPQ_BLOCK_SIZE);
+-    __sync_fetch_and_add (&mpq_blocks_allocated, -1);
++    atomic_fetch_add (&mpq_blocks_allocated, -1);
+   }
+   free ((char *) QB - QB->mqb_align_bytes);
+ }
+@@ -268,8 +272,9 @@ static inline void mpq_fix_state (struct mp_queue_block *QB) {
+     }
+     // here tail < head ; try to advance tail to head 
+     // (or to some value h such that tail < h <= head)
+-    if (__sync_bool_compare_and_swap (&QB->mqb_tail, t, h)) {
+-      break;
++    long expect_t = t;
++    if (atomic_compare_exchange_strong (&QB->mqb_tail, &expect_t, h)) {
++      break; 
+     }
+   }
+ }
+@@ -278,7 +283,7 @@ mqn_value_t mpq_block_pop (struct mp_queue_block *QB) {
+   // fprintf (stderr, "%d:mpq_block_pop(%p)\n", mpq_this_thread_id, QB);
+   long size = QB->mqb_size;
+   while (1) {
+-    long h = __sync_fetch_and_add (&QB->mqb_head, 1);
++    long h = atomic_fetch_add (&QB->mqb_head, 1);
+     // fprintf (stderr, "%d:  mpq_block_pop(%ld)\n", mpq_this_thread_id, h);
+     mpq_node_t *node = &QB->mqb_nodes[h & (size - 1)];
+     while (1) {
+@@ -298,21 +303,24 @@ mqn_value_t mpq_block_pop (struct mp_queue_block *QB) {
+ 	if (idx == h) {
+ 	  e.idx = safe_idx + size;
+ 	  e.val = 0;
+-	  if (__sync_bool_compare_and_swap (&node->pair, d.pair, e.pair)) {
++	  DLONG expect_d_pair = d.pair;
++	  if (atomic_compare_exchange_strong (&node->pair, &expect_d_pair, e.pair)) {
+ 	    // fprintf (stderr, "%d:  mpq_block_pop(%ld) -> %lx\n", mpq_this_thread_id, h, (long) val);
+ 	    return val;
+ 	  }
+ 	} else {
+ 	  e.val = val;
+ 	  e.idx = idx; // clear 'safe' flag
+-	  if (__sync_bool_compare_and_swap (&node->pair, d.pair, e.pair)) {
++	  DLONG expect_d_pair = d.pair;
++	  if (atomic_compare_exchange_strong (&node->pair, &expect_d_pair, e.pair)) {
+ 	    break;
+ 	  }
+ 	}
+       } else {
+ 	e.idx = (safe_idx & MQN_SAFE) + h + size;
+ 	e.val = 0;
+-	if (__sync_bool_compare_and_swap (&node->pair, d.pair, e.pair)) {
++	DLONG expect_d_pair = d.pair;
++	if (atomic_compare_exchange_strong (&node->pair, &expect_d_pair, e.pair)) {
+ 	  break;
+ 	}
+       }
+@@ -334,7 +342,7 @@ long mpq_block_push (struct mp_queue_block *QB, mqn_value_t val) {
+   long size = QB->mqb_size;
+   // fprintf (stderr, "%d:mpq_block_push(%p)\n", mpq_this_thread_id, QB);
+   while (1) {
+-    long t = __sync_fetch_and_add (&QB->mqb_tail, 1);
++    long t = atomic_fetch_add (&QB->mqb_tail, 1);
+     // fprintf (stderr, "%d:  mpq_block_push(%ld)\n", mpq_this_thread_id, t);
+     if (t & MQN_SAFE) {
+       return -1L; // bad luck
+@@ -352,7 +360,8 @@ long mpq_block_push (struct mp_queue_block *QB, mqn_value_t val) {
+       d.val = 0;
+       e.idx = MQN_SAFE + t;
+       e.val = val;
+-      if (__sync_bool_compare_and_swap (&node->pair, d.pair, e.pair)) {
++      DLONG expect_d_pair = d.pair;
++      if (atomic_compare_exchange_strong (&node->pair, &expect_d_pair, e.pair)) {
+ 	// fprintf (stderr, "%d:  mpq_block_push(%ld) <- %lx\n", mpq_this_thread_id, t, (long) val);
+ 	return t; // pushed OK
+       }
+@@ -361,7 +370,7 @@ long mpq_block_push (struct mp_queue_block *QB, mqn_value_t val) {
+     long h = QB->mqb_head;
+     barrier ();
+     if (t - h >= size || ++iterations > 10) {
+-      __sync_fetch_and_or (&QB->mqb_tail, MQN_SAFE); // closing queue
++      atomic_fetch_or (&QB->mqb_tail, MQN_SAFE); // closing queue
+       return -1L; // bad luck
+     }
+   }
+@@ -460,12 +469,13 @@ mqn_value_t mpq_pop (struct mp_queue *MQ, int flags) {
+     if (v) {
+       break;
+     }
+-    if (__sync_bool_compare_and_swap (&MQ->mq_head, QB, QB->mqb_next)) {
++    struct mp_queue_block *expect_QB = QB;
++    if (atomic_compare_exchange_strong (&MQ->mq_head, &expect_QB, QB->mqb_next)) {
+       // want to free QB here, but this is complicated if somebody else holds a pointer
+       if (is_hazard_ptr (QB, 0, 2) <= 1) {
+ 	free_mpq_block (QB);
+       } else {
+-	__sync_fetch_and_add (&mpq_blocks_wasted, 1);
++	atomic_fetch_add (&mpq_blocks_wasted, 1);
+ 	// ... put QB into some GC queue? ...
+ 	QB->mqb_magic = MQ_BLOCK_GARBAGE_MAGIC;
+ 	mpq_push (QB->mqb_size == MPQ_SMALL_BLOCK_SIZE ? &MqGarbageSmallBlocks : &MqGarbageBlocks, QB, flags & MPQF_RECURSIVE);
+@@ -512,12 +522,13 @@ int mpq_is_empty (struct mp_queue *MQ) {
+       *hptr = 0;
+       return 1;
+     }
+-    if (__sync_bool_compare_and_swap (&MQ->mq_head, QB, QB->mqb_next)) {
++    struct mp_queue_block *expect_QB = QB;
++    if (atomic_compare_exchange_strong (&MQ->mq_head, &expect_QB, QB->mqb_next)) {
+       // want to free QB here, but this is complicated if somebody else holds a pointer
+       if (is_hazard_ptr (QB, 0, 2) <= 1) {
+ 	free_mpq_block (QB);
+       } else {
+-	__sync_fetch_and_add (&mpq_blocks_wasted, 1);
++	atomic_fetch_add (&mpq_blocks_wasted, 1);
+ 	// ... put QB into some GC queue? ...
+ 	QB->mqb_magic = MQ_BLOCK_GARBAGE_MAGIC;
+ 	mpq_push (QB->mqb_size == MPQ_SMALL_BLOCK_SIZE ? &MqGarbageSmallBlocks : &MqGarbageBlocks, QB, 0);
+@@ -544,7 +555,8 @@ long mpq_push (struct mp_queue *MQ, mqn_value_t val, int flags) {
+     }
+ 
+     if (QB->mqb_next) {
+-      __sync_bool_compare_and_swap (&MQ->mq_tail, QB, QB->mqb_next);
++      struct mp_queue_block *expect_QB = QB;
++      atomic_compare_exchange_strong (&MQ->mq_tail, &expect_QB, QB->mqb_next);
+       continue;
+     }
+     long pos = mpq_block_push (QB, val);
+@@ -558,7 +570,7 @@ long mpq_push (struct mp_queue *MQ, mqn_value_t val, int flags) {
+ #define DBG(c) // fprintf (stderr, "[%d] pushing %lx to %p,%p: %c\n", mpq_this_thread_id, (long) val, MQ, QB, c);
+     DBG('A');
+     /*
+-    if (__sync_fetch_and_add (&QB->mqb_next_allocators, 1)) {
++    if (atomic_fetch_add (&QB->mqb_next_allocators, 1)) {
+       // somebody else will allocate next block; busy wait instead of spuruous alloc/free
+       DBG('B')
+       while (!QB->mqb_next) {
+@@ -579,8 +591,10 @@ long mpq_push (struct mp_queue *MQ, mqn_value_t val, int flags) {
+     }    
+     assert (hptr[r] == QB);
+     DBG('D')
+-    if (__sync_bool_compare_and_swap (&QB->mqb_next, 0, NQB)) {
+-      __sync_bool_compare_and_swap (&MQ->mq_tail, QB, NQB);
++    struct mp_queue_block *expect_0 = 0;
++    if (atomic_compare_exchange_strong (&QB->mqb_next, &expect_0, NQB)) {
++      struct mp_queue_block *expect_QB = QB;
++      atomic_compare_exchange_strong (&MQ->mq_tail, &expect_QB, NQB);
+       DBG('E')
+       if (flags & MPQF_STORE_PTR) {
+ 	hptr[2] = NQB;
+@@ -591,7 +605,7 @@ long mpq_push (struct mp_queue *MQ, mqn_value_t val, int flags) {
+       DBG('F');
+       NQB->mqb_magic = MQ_BLOCK_PREPARED_MAGIC;
+       mpq_push (is_small ? &MqPreparedSmallBlocks : &MqPreparedBlocks, NQB, 0);
+-      __sync_fetch_and_add (&mpq_blocks_prepared, 1);
++      atomic_fetch_add (&mpq_blocks_prepared, 1);
+     }
+   }
+ #undef DBG
+diff --git a/common/tl-parse.c b/common/tl-parse.c
+index 5796e9c..c85d22d 100644
+--- a/common/tl-parse.c
++++ b/common/tl-parse.c
+@@ -25,6 +25,7 @@
+ 
+ #include <assert.h>
+ #include <stdarg.h>
++#include <stdatomic.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -92,13 +93,13 @@ MODULE_STAT_FUNCTION_END
+ 
+ 
+ void tl_query_header_delete (struct tl_query_header *h) {
+-  if (__sync_fetch_and_add (&h->ref_cnt, -1) > 1) { return; }
++  if (atomic_fetch_add (&h->ref_cnt, -1) > 1) { return; }
+   assert (!h->ref_cnt);
+   free (h);
+ }
+   
+ struct tl_query_header *tl_query_header_dup (struct tl_query_header *h) {
+-  __sync_fetch_and_add (&h->ref_cnt, 1);
++  atomic_fetch_add (&h->ref_cnt, 1);
+   return h;
+ }
+   
+diff --git a/engine/engine-signals.c b/engine/engine-signals.c
+index 5bba640..162202e 100644
+--- a/engine/engine-signals.c
++++ b/engine/engine-signals.c
+@@ -26,6 +26,7 @@
+               2015-2016 Vitaliy Valtman
+ */
+ #include <signal.h>
++#include <stdatomic.h>
+ #include <unistd.h>
+ 
+ #include "common/kprintf.h"
+@@ -42,7 +43,7 @@ void engine_set_terminal_attributes (void) {}
+ /* {{{ PENDING SIGNALS */
+ 
+ void signal_set_pending (int sig) {
+-  __sync_fetch_and_or (&pending_signals, SIG2INT(sig));
++  atomic_fetch_or (&pending_signals, SIG2INT(sig));
+ }
+ 
+ int signal_check_pending (int sig) {
+@@ -52,7 +53,7 @@ int signal_check_pending (int sig) {
+ int signal_check_pending_and_clear (int sig) {
+   int res = (pending_signals & SIG2INT(sig)) != 0;
+   if (res) {
+-    __sync_fetch_and_and (&pending_signals, ~SIG2INT(sig));
++    atomic_fetch_and (&pending_signals, ~SIG2INT(sig));
+   }
+   return res;
+ }
+diff --git a/jobs/jobs.c b/jobs/jobs.c
+index a25a5b5..116ce02 100644
+--- a/jobs/jobs.c
++++ b/jobs/jobs.c
+@@ -27,6 +27,7 @@
+ #include <errno.h>
+ #include <pthread.h>
+ #include <signal.h>
++#include <stdatomic.h>
+ #include <stddef.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -606,7 +607,7 @@ int try_lock_job (job_t job, int set_flags, int clear_flags) {
+     if (flags & JF_LOCKED) {
+       return 0;
+     }
+-    if (__sync_bool_compare_and_swap (&job->j_flags, flags, (flags & ~clear_flags) | set_flags | JF_LOCKED)) {
++    if (atomic_compare_exchange_weak (&job->j_flags, &flags, (flags & ~clear_flags) | set_flags | JF_LOCKED)) {
+       job->j_thread = this_job_thread;
+       return 1;
+     }
+@@ -626,11 +627,12 @@ int unlock_job (JOB_REF_ARG (job)) {
+     int todo = flags & job->j_status & (-1 << 24);
+     if (!todo) /* {{{ */ {
+       int new_flags = flags & ~JF_LOCKED;
+-      if (!__sync_bool_compare_and_swap (&job->j_flags, flags, new_flags)) {
++      int expect_flags = flags;
++      if (!atomic_compare_exchange_strong (&job->j_flags, &expect_flags, new_flags)) {
+         continue;
+       }
+       if (job->j_refcnt >= 2) {
+-        if (__sync_fetch_and_add (&job->j_refcnt, -1) != 1) {
++        if (atomic_fetch_add (&job->j_refcnt, -1) != 1) {
+           return 0;
+         }
+         job->j_refcnt = 1;
+@@ -660,7 +662,7 @@ int unlock_job (JOB_REF_ARG (job)) {
+     /* {{{ Try to run signal signo */
+     if (((JT->job_class_mask >> req_class) & 1) && (is_fast || !JT->current_job) && (cur_subclass == save_subclass)) {
+       job_t current_job = JT->current_job;
+-      __sync_fetch_and_and (&job->j_flags, ~JFS_SET (signo));
++      atomic_fetch_and (&job->j_flags, ~JFS_SET (signo));
+       JT->jobs_running[req_class] ++;
+       JT->current_job = job;
+       JT->status |= JTS_PERFORMING;
+@@ -685,7 +687,7 @@ int unlock_job (JOB_REF_ARG (job)) {
+       }
+       if (!(res & ~0x1ff)) {
+         if (res & 0xff) {
+-          __sync_fetch_and_or (&job->j_flags, res << 24);
++          atomic_fetch_or (&job->j_flags, res << 24);
+         }
+         if (res & JOB_COMPLETED) {
+           complete_job (job);
+@@ -703,7 +705,8 @@ int unlock_job (JOB_REF_ARG (job)) {
+     // have to insert job into queue of req_class
+     int queued_flag = JF_QUEUED_CLASS (req_class);
+     int new_flags = (flags | queued_flag) & ~JF_LOCKED;
+-    if (!__sync_bool_compare_and_swap (&job->j_flags, flags, new_flags)) {
++    int expect_flags = flags;
++    if (!atomic_compare_exchange_strong (&job->j_flags, &expect_flags, new_flags)) {
+       continue;
+     }
+     if (!(flags & queued_flag)) {
+@@ -714,7 +717,7 @@ int unlock_job (JOB_REF_ARG (job)) {
+         vkprintf (JOBS_DEBUG, "RESCHEDULED JOB %p, type %p, flags %08x, refcnt %d -> Queue %d\n", job, job->j_execute, job->j_flags, job->j_refcnt, req_class);
+         vkprintf (JOBS_DEBUG, "sub=%p\n", JT->job_class->subclasses);
+         mpq_push_w (JQ, PTR_MOVE (job), 0);
+-        if (JQ == &MainJobQueue && main_thread_interrupt_status == 1 && __sync_fetch_and_add (&main_thread_interrupt_status, 1) == 1) {
++        if (JQ == &MainJobQueue && main_thread_interrupt_status == 1 && atomic_fetch_add (&main_thread_interrupt_status, 1) == 1) {
+           //pthread_kill (main_pthread_id, SIGRTMAX - 7);
+           vkprintf (JOBS_DEBUG, "WAKING UP MAIN THREAD\n");
+           wakeup_main_thread ();
+@@ -726,7 +729,7 @@ int unlock_job (JOB_REF_ARG (job)) {
+         assert (cur_subclass < JC->subclasses->subclass_cnt);
+         
+         struct job_subclass *JSC = &JC->subclasses->subclasses[cur_subclass];
+-        __sync_fetch_and_add (&JSC->total_jobs, 1);
++        atomic_fetch_add (&JSC->total_jobs, 1);
+         
+         vkprintf (JOBS_DEBUG, "RESCHEDULED JOB %p, type %p, flags %08x, refcnt %d -> Queue %d subclass %d\n", job, job->j_execute, job->j_flags, job->j_refcnt, req_class, cur_subclass);
+         mpq_push_w (JSC->job_queue, PTR_MOVE (job), 0);
+@@ -758,7 +761,7 @@ void job_send_signals (JOB_REF_ARG (job), int sigset) {
+     unlock_job (JOB_REF_PASS (job));
+     return;
+   }
+-  __sync_fetch_and_or (&job->j_flags, sigset);
++  atomic_fetch_or (&job->j_flags, sigset);
+   if (try_lock_job (job, 0, 0)) {
+     unlock_job (JOB_REF_PASS (job));
+   } else {
+@@ -779,7 +782,7 @@ void job_signal (JOB_REF_ARG (job), int signo) {
+ // destroys one reference to job
+ void job_decref (JOB_REF_ARG (job)) {
+   if (job->j_refcnt >= 2) {
+-    if (__sync_fetch_and_add (&job->j_refcnt, -1) != 1) {
++    if (atomic_fetch_add (&job->j_refcnt, -1) != 1) {
+       return;
+     }
+     job->j_refcnt = 1;
+@@ -793,7 +796,7 @@ job_t job_incref (job_t job) {
+   //if (job->j_refcnt == 1) {
+   //  job->j_refcnt = 2;
+   //} else {
+-    __sync_fetch_and_add (&job->j_refcnt, 1);
++    atomic_fetch_add (&job->j_refcnt, 1);
+   //}
+   return job;
+ }
+@@ -806,7 +809,7 @@ void process_one_job (JOB_REF_ARG (job), int thread_class) {
+   if (try_lock_job (job, 0, queued_flag)) {
+     unlock_job (JOB_REF_PASS (job));
+   } else {
+-    __sync_fetch_and_and (&job->j_flags, ~queued_flag);
++    atomic_fetch_and (&job->j_flags, ~queued_flag);
+     if (try_lock_job (job, 0, 0)) {
+       unlock_job (JOB_REF_PASS (job));
+     } else {
+@@ -825,17 +828,18 @@ void complete_subjob (job_t job, JOB_REF_ARG (parent), int status) {
+   }
+   if (job->j_error && (status & JSP_PARENT_ERROR)) {
+     if (!parent->j_error) {
+-      __sync_bool_compare_and_swap (&parent->j_error, 0, job->j_error);
++      int expect_0 = 0;
++      atomic_compare_exchange_strong (&parent->j_error, &expect_0, job->j_error);
+     }
+     if (status & JSP_PARENT_WAKEUP) {
+-      __sync_fetch_and_add (&parent->j_children, -1);
++      atomic_fetch_add (&parent->j_children, -1);
+     }
+     vkprintf (JOBS_DEBUG, "waking up parent %p with JS_ABORT (%d children remaining)\n", parent, parent->j_children);
+     job_signal (JOB_REF_PASS (parent), JS_ABORT);
+     return;
+   }
+   if (status & JSP_PARENT_WAKEUP) {
+-    if (__sync_fetch_and_add (&parent->j_children, -1) == 1 && (status & JSP_PARENT_RUN)) {
++    if (atomic_fetch_add (&parent->j_children, -1) == 1 && (status & JSP_PARENT_RUN)) {
+       vkprintf (JOBS_DEBUG, "waking up parent %p with JS_RUN\n", parent);
+       job_signal (JOB_REF_PASS (parent), JS_RUN);
+     } else {
+@@ -858,7 +862,7 @@ void complete_job (job_t job) {
+   if (job->j_flags & JF_COMPLETED) {
+     return;
+   }
+-  __sync_fetch_and_or (&job->j_flags, JF_COMPLETED);
++  atomic_fetch_or (&job->j_flags, JF_COMPLETED);
+   job_t parent = PTR_MOVE (job->j_parent);
+   if (!parent) {
+     return;
+@@ -971,9 +975,10 @@ static void process_one_sublist (unsigned long id, int class) {
+ 
+   struct job_subclass *J_SC = &J_SCL->subclasses[subclass_id];
+  
+-  __sync_fetch_and_add (&J_SC->allowed_to_run_jobs, 1);
++  atomic_fetch_add (&J_SC->allowed_to_run_jobs, 1);
+     
+-  if (!__sync_bool_compare_and_swap (&J_SC->locked, 0, 1)) {
++  int expect_0 = 0;
++  if (!atomic_compare_exchange_strong (&J_SC->locked, &expect_0, 1)) {
+     return;
+   }
+ 
+@@ -999,8 +1004,9 @@ static void process_one_sublist (unsigned long id, int class) {
+ 
+     __sync_synchronize ();
+ 
++    int expect_0 = 0;
+     if (J_SC->processed_jobs < J_SC->allowed_to_run_jobs && 
+-        __sync_bool_compare_and_swap (&J_SC->locked, 0, 1)) {
++        atomic_compare_exchange_strong (&J_SC->locked, &expect_0, 1)) {
+       continue;
+     }
+     break;
+@@ -1068,7 +1074,7 @@ void job_change_signals (job_t job, unsigned long long job_signals) {
+ job_t create_async_job (job_function_t run_job, unsigned long long job_signals, int job_subclass, int custom_bytes, unsigned long long job_type, JOB_REF_ARG (parent_job)) {
+   if (parent_job) {
+     if (job_signals & JSP_PARENT_WAKEUP) {
+-      __sync_fetch_and_add (&parent_job->j_children, 1);
++      atomic_fetch_add (&parent_job->j_children, 1);
+     }
+   }
+ 
+@@ -1214,7 +1220,7 @@ int insert_node_into_job_list (job_t list_job, struct job_list_node *w) {
+ int insert_job_into_job_list (job_t list_job, JOB_REF_ARG(job), int mode) {
+   check_thread_class (JC_ENGINE);
+   if (mode & JSP_PARENT_WAKEUP) {
+-    __sync_fetch_and_add (&job->j_children, 1);
++    atomic_fetch_add (&job->j_children, 1);
+   }
+   struct job_list_job_node *wj = malloc (sizeof (struct job_list_job_node));
+   assert (wj);
+diff --git a/mtproto/mtproto-proxy.c b/mtproto/mtproto-proxy.c
+index 5976262..7bdd637 100644
+--- a/mtproto/mtproto-proxy.c
++++ b/mtproto/mtproto-proxy.c
+@@ -27,6 +27,7 @@
+ #include <assert.h>
+ #include <errno.h>
+ #include <string.h>
++#include <stdatomic.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <time.h>
+@@ -1768,7 +1769,7 @@ int forward_tcp_query (struct tl_in_state *tlio_in, connection_job_t c, conn_tar
+       vkprintf (2, "nowhere to forward user query from connection %d, dropping\n", CONN_INFO(c)->fd);
+       dropped_queries++;
+       if (CONN_INFO(c)->type == &ct_tcp_rpc_ext_server_mtfront) {
+-	__sync_fetch_and_or (&TCP_RPC_DATA(c)->flags, RPC_F_DROPPED);
++	atomic_fetch_or (&TCP_RPC_DATA(c)->flags, RPC_F_DROPPED);
+       }
+       return 0;
+     }
+diff --git a/net/net-connections.c b/net/net-connections.c
+index a0d0553..3120142 100644
+--- a/net/net-connections.c
++++ b/net/net-connections.c
+@@ -36,6 +36,7 @@
+ #include <netinet/in.h>
+ #include <netinet/tcp.h>
+ #include <pthread.h>
++#include <stdatomic.h>
+ #include <stddef.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -309,9 +310,9 @@ void connection_write_close (connection_job_t C) /* {{{ */ {
+   if (c->status == conn_working) {
+     socket_connection_job_t S = c->io_conn;
+     if (S) {
+-      __sync_fetch_and_or (&SOCKET_CONN_INFO(S)->flags, C_STOPREAD);
++      atomic_fetch_or (&SOCKET_CONN_INFO(S)->flags, C_STOPREAD);
+     }
+-    __sync_fetch_and_or (&c->flags, C_STOPREAD);
++    atomic_fetch_or (&c->flags, C_STOPREAD);
+     c->status = conn_write_close;
+ 
+     job_signal (JOB_REF_CREATE_PASS (C), JS_RUN);
+@@ -354,7 +355,7 @@ int set_connection_timeout (connection_job_t C, double timeout) /* {{{ */ {
+ 
+   if (c->flags & C_ERROR) { return 0; }
+ 
+-  __sync_fetch_and_and (&c->flags, ~C_ALARM);
++  atomic_fetch_and (&c->flags, ~C_ALARM);
+   
+   if (timeout > 0) {
+     job_timer_insert (C, precise_now + timeout);
+@@ -382,7 +383,7 @@ int clear_connection_timeout (connection_job_t C) /* {{{ */ {
+ void fail_connection (connection_job_t C, int err) /* {{{ */ {
+   struct connection_info *c = CONN_INFO (C);
+     
+-  if (!(__sync_fetch_and_or (&c->flags, C_ERROR) & C_ERROR)) {
++  if (!(atomic_fetch_or (&c->flags, C_ERROR) & C_ERROR)) {
+     c->status = conn_error;
+     if (c->error >= 0) {
+       c->error = err;
+@@ -487,7 +488,7 @@ int cpu_server_close_connection (connection_job_t C, int who) /* {{{ */ {
+ 
+   if (c->flags & C_ISDH) {
+     MODULE_STAT->active_dh_connections --;
+-    __sync_fetch_and_and (&c->flags, ~C_ISDH);
++    atomic_fetch_and (&c->flags, ~C_ISDH);
+   }
+ 
+   assert (c->io_conn);
+@@ -515,7 +516,7 @@ int cpu_server_close_connection (connection_job_t C, int who) /* {{{ */ {
+ 
+   if (c->flags & C_SPECIAL) {
+     c->flags &= ~C_SPECIAL;
+-    int orig_special_connections = __sync_fetch_and_add (&active_special_connections, -1);
++    int orig_special_connections = atomic_fetch_add (&active_special_connections, -1);
+     if (orig_special_connections == max_special_connections) {
+       int i;
+       for (i = 0; i < special_listen_sockets; i++) {
+@@ -541,12 +542,13 @@ int do_connection_job (job_t job, int op, struct job_thread *JT) /* {{{ */ {
+     if (!(c->flags & C_ERROR)) {
+       if (c->flags & C_READY_PENDING) {
+         assert (c->flags & C_CONNECTED);
+-        __sync_fetch_and_and (&c->flags, ~C_READY_PENDING);
++        atomic_fetch_and (&c->flags, ~C_READY_PENDING);
+         MODULE_STAT->active_outbound_connections ++;        
+         MODULE_STAT->active_connections ++;
+-        __sync_fetch_and_add (&CONN_TARGET_INFO(c->target)->active_outbound_connections, 1);
++        atomic_fetch_add (&CONN_TARGET_INFO(c->target)->active_outbound_connections, 1);
+         if (c->status == conn_connecting) {
+-          if (!__sync_bool_compare_and_swap (&c->status, conn_connecting, conn_working)) {
++          int expect_conn_connecting = conn_connecting;
++          if (!atomic_compare_exchange_strong (&c->status, &expect_conn_connecting, conn_working)) {
+             assert (c->status == conn_error);
+           }
+         }
+@@ -567,7 +569,7 @@ int do_connection_job (job_t job, int op, struct job_thread *JT) /* {{{ */ {
+   }
+   if (op == JS_ABORT) { // RUN IN NET-CPU THREAD
+     assert (c->flags & C_ERROR);
+-    if (!(__sync_fetch_and_or (&c->flags, C_FAILED) & C_FAILED)) {
++    if (!(atomic_fetch_or (&c->flags, C_FAILED) & C_FAILED)) {
+       c->type->close (C, 0);
+     }
+     return JOB_COMPLETED;
+@@ -741,7 +743,7 @@ connection_job_t alloc_new_connection (int cfd, conn_target_job_t CTJ, listening
+       
+       if (LC->flags & C_SPECIAL) {
+         c->flags |= C_SPECIAL;
+-        __sync_fetch_and_add (&active_special_connections, 1);
++        atomic_fetch_add (&active_special_connections, 1);
+         
+         if (active_special_connections > max_special_connections) {
+           vkprintf (active_special_connections >= max_special_connections + 16 ? 0 : 1, "ERROR: forced to accept connection when special connections limit was reached (%d of %d)\n", active_special_connections, max_special_connections);
+@@ -795,7 +797,7 @@ void fail_socket_connection (socket_connection_job_t C, int who) /* {{{ */ {
+   struct socket_connection_info *c = SOCKET_CONN_INFO (C);
+   assert (C->j_flags & JF_LOCKED);
+ 
+-  if (!(__sync_fetch_and_or (&c->flags, C_ERROR) & C_ERROR)) {
++  if (!(atomic_fetch_or (&c->flags, C_ERROR) & C_ERROR)) {
+     job_timer_remove (C);
+ 
+     remove_event_from_heap (c->ev, 0);
+@@ -864,24 +866,24 @@ int net_server_socket_reader (socket_connection_job_t C) /* {{{ */ {
+ 
+     int p = 1;
+ 
+-    __sync_fetch_and_or (&c->flags, C_NORD);
++    atomic_fetch_or (&c->flags, C_NORD);
+     int r = readv (c->fd, tcp_recv_iovec + p, MAX_TCP_RECV_BUFFERS + 1 - p);
+     MODULE_STAT->tcp_readv_calls ++;
+ 
+     if (r <= 0) {
+       if (r < 0 && errno == EAGAIN) {
+       } else if (r < 0 && errno == EINTR) {
+-        __sync_fetch_and_and (&c->flags, ~C_NORD);
++        atomic_fetch_and (&c->flags, ~C_NORD);
+         MODULE_STAT->tcp_readv_intr ++;
+         continue;
+       } else {
+         vkprintf (1, "Connection %d: Fatal error %m\n", c->fd);
+         job_signal (JOB_REF_CREATE_PASS (C), JS_ABORT);
+-        __sync_fetch_and_or (&c->flags, C_NET_FAILED);
++        atomic_fetch_or (&c->flags, C_NET_FAILED);
+         return 0;
+       }
+     } else {
+-      __sync_fetch_and_and (&c->flags, ~C_NORD);
++      atomic_fetch_and (&c->flags, ~C_NORD);
+     }
+       
+     if (verbosity > 0 && r < 0 && errno != EAGAIN) {
+@@ -959,7 +961,7 @@ int net_server_socket_writer (socket_connection_job_t C) /* {{{ */{
+ 
+   while ((c->flags & (C_WANTWR | C_NOWR | C_ERROR | C_NET_FAILED)) == C_WANTWR) {
+     if (!out->total_bytes) {
+-      __sync_fetch_and_and (&c->flags, ~C_WANTWR);
++      atomic_fetch_and (&c->flags, ~C_WANTWR);
+       break;
+     }
+ 
+@@ -969,7 +971,7 @@ int net_server_socket_writer (socket_connection_job_t C) /* {{{ */{
+     int s = tcp_prepare_iovec (iov, &iovcnt, sizeof (iov) / sizeof (iov[0]), out);
+     assert (iovcnt > 0 && s > 0);
+ 
+-    __sync_fetch_and_or (&c->flags, C_NOWR);
++    atomic_fetch_or (&c->flags, C_NOWR);
+     int r = writev (c->fd, iov, iovcnt);
+     MODULE_STAT->tcp_writev_calls ++;
+ 
+@@ -978,21 +980,21 @@ int net_server_socket_writer (socket_connection_job_t C) /* {{{ */{
+         if (++c->eagain_count > 100) {
+           kprintf ("Too much EAGAINs for connection %d (%s), dropping\n", c->fd, show_remote_socket_ip (C));
+           job_signal (JOB_REF_CREATE_PASS (C), JS_ABORT);
+-          __sync_fetch_and_or (&c->flags, C_NET_FAILED);
++          atomic_fetch_or (&c->flags, C_NET_FAILED);
+           return 0;
+         }
+       } else if (r < 0 && errno == EINTR) {
+-        __sync_fetch_and_and (&c->flags, ~C_NOWR);
++        atomic_fetch_and (&c->flags, ~C_NOWR);
+         MODULE_STAT->tcp_writev_intr ++;
+         continue;
+       } else {
+         vkprintf (1, "Connection %d: Fatal error %m\n", c->fd);
+         job_signal (JOB_REF_CREATE_PASS (C), JS_ABORT);
+-        __sync_fetch_and_or (&c->flags, C_NET_FAILED);
++        atomic_fetch_or (&c->flags, C_NET_FAILED);
+         return 0;
+       }
+     } else {
+-      __sync_fetch_and_and (&c->flags, ~C_NOWR);
++      atomic_fetch_and (&c->flags, ~C_NOWR);
+       MODULE_STAT->tcp_writev_bytes += r;
+       c->eagain_count = 0;
+       t += r;
+@@ -1020,7 +1022,7 @@ int net_server_socket_writer (socket_connection_job_t C) /* {{{ */{
+   if (stop && !(c->flags & C_WANTWR)) {
+     vkprintf (1, "Closing write_close socket\n");
+     job_signal (JOB_REF_CREATE_PASS (C), JS_ABORT);
+-    __sync_fetch_and_or (&c->flags, C_NET_FAILED);
++    atomic_fetch_or (&c->flags, C_NET_FAILED);
+   }
+ 
+   vkprintf (2, "socket_server_writer: written %d bytes to %d, flags=0x%08x\n", t, c->fd, c->flags);
+@@ -1044,9 +1046,9 @@ int net_server_socket_read_write (socket_connection_job_t C) /* {{{ */ {
+  
+   if (!(c->flags & C_CONNECTED)) {
+     if (!(c->flags & C_NOWR)) {
+-      __sync_fetch_and_and (&c->flags, C_PERMANENT);
+-      __sync_fetch_and_or (&c->flags, C_WANTRD | C_CONNECTED);
+-      __sync_fetch_and_or (&CONN_INFO(c->conn)->flags, C_READY_PENDING | C_CONNECTED);
++      atomic_fetch_and (&c->flags, C_PERMANENT);
++      atomic_fetch_or (&c->flags, C_WANTRD | C_CONNECTED);
++      atomic_fetch_or (&CONN_INFO(c->conn)->flags, C_READY_PENDING | C_CONNECTED);
+         
+       c->type->socket_connected (C);
+       job_signal (JOB_REF_CREATE_PASS (c->conn), JS_RUN);
+@@ -1071,7 +1073,7 @@ int net_server_socket_read_write (socket_connection_job_t C) /* {{{ */ {
+   }
+ 
+   if (out->total_bytes) {
+-    __sync_fetch_and_or (&c->flags, C_WANTWR);
++    atomic_fetch_or (&c->flags, C_WANTWR);
+   }
+  
+   while ((c->flags & (C_NOWR | C_ERROR | C_WANTWR | C_NET_FAILED)) == C_WANTWR) {  
+@@ -1110,7 +1112,7 @@ int net_server_socket_read_write_gateway (int fd, void *data, event_t *ev) /* {{
+     if ((ev->state & EVT_WRITE) && (ev->ready & EVT_WRITE)) {
+       clear_flags |= C_NOWR;
+     }
+-    __sync_fetch_and_and (&c->flags, ~clear_flags);
++    atomic_fetch_and (&c->flags, ~clear_flags);
+ 
+     if (ev->epoll_ready & EPOLLERR) {
+       int error = 0;
+@@ -1344,7 +1346,7 @@ int init_listening_connection_ext (int fd, conn_type_t *type, void *extra, int m
+ 
+   if (mode & SM_SPECIAL) {
+     LC->flags |= C_SPECIAL;
+-    int idx = __sync_fetch_and_add (&special_listen_sockets, 1);
++    int idx = atomic_fetch_add (&special_listen_sockets, 1);
+     assert (idx < MAX_SPECIAL_LISTEN_SOCKETS);
+     special_socket[idx].fd = LC->fd; 
+     special_socket[idx].generation = LC->generation; 
+@@ -1388,7 +1390,7 @@ int init_listening_tcpv6_connection (int fd, conn_type_t *type, void *extra, int
+ void connection_event_incref (int fd, long long val) {
+   struct event_descr *ev = &Events[fd];
+ 
+-  if (!__sync_add_and_fetch (&ev->refcnt, val) && ev->data) {
++  if (!(atomic_fetch_add (&ev->refcnt, val) + val) && ev->data) {
+     socket_connection_job_t C = ev->data;
+     ev->data = NULL;
+     job_decref (JOB_REF_PASS (C));
+@@ -1400,13 +1402,13 @@ connection_job_t connection_get_by_fd (int fd) {
+   if (!(int)(ev->refcnt) || !ev->data) { return NULL; }
+ 
+   while (1) {
+-    long long v = __sync_fetch_and_add (&ev->refcnt, (1ll << 32));
++    long long v = atomic_fetch_add (&ev->refcnt, (1ll << 32));
+     if (((int)v) != 0) { break; }
+-    v = __sync_fetch_and_add (&ev->refcnt, -(1ll << 32));
++    v = atomic_fetch_add (&ev->refcnt, -(1ll << 32));
+     if (((int)v) != 0) { continue; }
+     return NULL;
+   }
+-  __sync_fetch_and_add (&ev->refcnt, 1 - (1ll << 32));
++  atomic_fetch_add (&ev->refcnt, 1 - (1ll << 32));
+   socket_connection_job_t C = job_incref (ev->data);
+   
+   connection_event_incref (fd, -1);
+@@ -1625,7 +1627,7 @@ void destroy_dead_target_connections (conn_target_job_t CTJ) /* {{{ */ {
+ 
+   struct tree_connection *T = CT->conn_tree;  
+   if (T) {
+-    __sync_fetch_and_add (&T->refcnt, 1);
++    atomic_fetch_add (&T->refcnt, 1);
+   }
+   
+   while (1) {
+@@ -1634,9 +1636,9 @@ void destroy_dead_target_connections (conn_target_job_t CTJ) /* {{{ */ {
+     if (!CJ) { break; }
+     
+     if (connection_is_active (CONN_INFO (CJ)->flags)) {    
+-      __sync_fetch_and_add (&CT->active_outbound_connections, -1);
++      atomic_fetch_add (&CT->active_outbound_connections, -1);
+     }
+-    __sync_fetch_and_add (&CT->outbound_connections, -1);
++    atomic_fetch_add (&CT->outbound_connections, -1);
+ 
+     T = tree_delete_connection (T, CJ);     
+   }
+@@ -1707,7 +1709,7 @@ int create_new_connections (conn_target_job_t CTJ) /* {{{ */ {
+   if (precise_now >= CT->next_reconnect || CT->active_outbound_connections) {
+     struct tree_connection *T = CT->conn_tree;  
+     if (T) {
+-      __sync_fetch_and_add (&T->refcnt, 1);
++      atomic_fetch_add (&T->refcnt, 1);
+     }
+ 
+     while (CT->outbound_connections < need_c) {
+@@ -1882,7 +1884,7 @@ int destroy_target (JOB_REF_ARG (CTJ)) /* {{{ */ {
+   assert (CT->global_refcnt > 0);
+ 
+   int r;
+-  if (!((r = __sync_add_and_fetch (&CT->global_refcnt, -1)))) {
++  if (!((r = atomic_fetch_add (&CT->global_refcnt, -1) + -1))) {
+     MODULE_STAT->active_targets--;
+     MODULE_STAT->inactive_targets++;
+ 
+@@ -1956,7 +1958,7 @@ conn_target_job_t create_target (struct conn_target_info *source, int *was_creat
+     t->max_connections = source->max_connections;
+     t->reconnect_timeout = source->reconnect_timeout;
+ 
+-    if (!__sync_fetch_and_add (&t->global_refcnt, 1)) {
++    if (!atomic_fetch_add (&t->global_refcnt, 1)) {
+       MODULE_STAT->active_targets++;
+       MODULE_STAT->inactive_targets--;
+     
+@@ -2129,7 +2131,7 @@ void incr_active_dh_connections (void) {
+ }
+ 
+ int new_conn_generation (void) {
+-  return __sync_fetch_and_add (&conn_generation, 1);
++  return atomic_fetch_add (&conn_generation, 1);
+ }
+ 
+ int get_cur_conn_generation (void) {
+diff --git a/net/net-crypto-aes.h b/net/net-crypto-aes.h
+index cdc123b..614d1dc 100644
+--- a/net/net-crypto-aes.h
++++ b/net/net-crypto-aes.h
+@@ -27,6 +27,7 @@
+ 
+ #pragma once
+ 
++#include <stdatomic.h>
+ #include <openssl/aes.h>
+ 
+ #include "net/net-connections.h"
+@@ -95,7 +96,7 @@ int aes_create_udp_keys (struct aes_key_data *R, struct process_id *local_pid, s
+ 
+ void free_aes_secret (aes_secret_t *secret);
+ aes_secret_t *alloc_aes_secret (const char *key, int key_len);
+-static inline void aes_secret_decref (aes_secret_t *secret) { if (__sync_add_and_fetch (&secret->refcnt, -1) <= 0) { free_aes_secret (secret); } }
+-static inline void aes_secret_incref (aes_secret_t *secret) { __sync_fetch_and_add (&secret->refcnt, 1); }
++static inline void aes_secret_decref (aes_secret_t *secret) { if (atomic_fetch_add (&secret->refcnt, -1) - 1 <= 0) { free_aes_secret (secret); } }
++static inline void aes_secret_incref (aes_secret_t *secret) { atomic_fetch_add (&secret->refcnt, 1); }
+ void free_crypto_temp (void *crypto, int len);
+ void *alloc_crypto_temp (int len);
+diff --git a/net/net-events.c b/net/net-events.c
+index 403faa6..037d93c 100644
+--- a/net/net-events.c
++++ b/net/net-events.c
+@@ -32,6 +32,7 @@
+ #include <netinet/tcp.h>
+ #include <pwd.h>
+ #include <signal.h>
++#include <stdatomic.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -189,7 +190,7 @@ int epoll_sethandler (int fd, int prio, event_handler_t handler, void *data) {
+     ev->fd = fd;
+   }
+   assert (!ev->refcnt);
+-  __sync_fetch_and_add (&ev->refcnt, 1);
++  atomic_fetch_add (&ev->refcnt, 1);
+   ev->priority = prio;
+   ev->data = data;
+   ev->work = handler;
+diff --git a/net/net-msg-buffers.c b/net/net-msg-buffers.c
+index 1628799..732e61d 100644
+--- a/net/net-msg-buffers.c
++++ b/net/net-msg-buffers.c
+@@ -25,6 +25,7 @@
+ #define        _FILE_OFFSET_BITS        64
+ 
+ #include <assert.h>
++#include <stdatomic.h>
+ #include <stddef.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -119,7 +120,8 @@ static inline void prepare_bs_inv (struct msg_buffers_chunk *C) {
+ 
+ static void lock_chunk_head (struct msg_buffers_chunk *CH) {
+   while (1) {
+-    if (__sync_bool_compare_and_swap (&CH->magic, MSG_CHUNK_HEAD_MAGIC, MSG_CHUNK_HEAD_LOCKED_MAGIC)) {
++    int expect_MSG_CHUNK_HEAD_MAGIC = MSG_CHUNK_HEAD_MAGIC;
++    if (atomic_compare_exchange_weak (&CH->magic, &expect_MSG_CHUNK_HEAD_MAGIC, MSG_CHUNK_HEAD_LOCKED_MAGIC)) {
+       break;
+     }
+     usleep (1000);
+@@ -131,7 +133,8 @@ static void unlock_chunk_head (struct msg_buffers_chunk *CH) {
+ }
+ 
+ static int try_lock_chunk (struct msg_buffers_chunk *C) {
+-  if (C->magic != MSG_CHUNK_USED_MAGIC || !__sync_bool_compare_and_swap (&C->magic, MSG_CHUNK_USED_MAGIC, MSG_CHUNK_USED_LOCKED_MAGIC)) {
++  int expect_MSG_CHUNK_USED_MAGIC = MSG_CHUNK_USED_MAGIC;
++  if (C->magic != MSG_CHUNK_USED_MAGIC || !atomic_compare_exchange_weak (&C->magic, &expect_MSG_CHUNK_USED_MAGIC, MSG_CHUNK_USED_LOCKED_MAGIC)) {
+     return 0;
+   }
+   while (1) {
+@@ -219,7 +222,7 @@ struct msg_buffers_chunk *alloc_new_msg_buffers_chunk (struct msg_buffers_chunk
+   unlock_chunk_head (CH);
+   
+   MODULE_STAT->allocated_buffer_bytes += MSG_BUFFERS_CHUNK_SIZE;  
+-  __sync_fetch_and_add (&allocated_buffer_chunks, 1);
++  atomic_fetch_add (&allocated_buffer_chunks, 1);
+ 
+   MODULE_STAT->buffer_chunk_alloc_ops ++;
+ 
+@@ -232,7 +235,8 @@ struct msg_buffers_chunk *alloc_new_msg_buffers_chunk (struct msg_buffers_chunk
+     if (keep_max_allocated_buffer_chunks >= keep_allocated_buffer_chunks) {
+       break;
+     }
+-    __sync_bool_compare_and_swap (&max_allocated_buffer_chunks, keep_max_allocated_buffer_chunks, keep_allocated_buffer_chunks);
++    int expect_keep_max_allocated_buffer_chunks = keep_max_allocated_buffer_chunks;\
++    atomic_compare_exchange_strong (&max_allocated_buffer_chunks, &expect_keep_max_allocated_buffer_chunks, keep_allocated_buffer_chunks);
+     if (allocated_buffer_chunks >= max_buffer_chunks - 8 && max_buffer_chunks >= 32 && verbosity < 3) { 
+       // verbosity = 3; 
+       // vkprintf (1, "Setting verbosity to 3 (NOTICE) because of high buffer chunk usage (used %d, max %d)\n", allocated_buffer_chunks, max_buffer_chunks);
+@@ -287,7 +291,7 @@ void free_msg_buffers_chunk_internal (struct msg_buffers_chunk *C, struct msg_bu
+   
+   assert (CH->tot_chunks >= 0);  
+ 
+-  __sync_fetch_and_add (&allocated_buffer_chunks, -1);
++  atomic_fetch_add (&allocated_buffer_chunks, -1);
+   MODULE_STAT->allocated_buffer_bytes -= MSG_BUFFERS_CHUNK_SIZE;
+ 
+   memset (C, 0, sizeof (struct msg_buffers_chunk));
+@@ -394,7 +398,7 @@ struct msg_buffer *alloc_msg_buffer_internal (struct msg_buffer *neighbor, struc
+         }
+       }
+       if (C_hint) {
+-        __sync_fetch_and_add (&C_hint->refcnt, -1);
++        atomic_fetch_add (&C_hint->refcnt, -1);
+       }
+     }
+   }
+@@ -480,7 +484,7 @@ struct msg_buffer *alloc_msg_buffer_internal (struct msg_buffer *neighbor, struc
+   X->refcnt = 1;
+   X->magic = MSG_BUFFER_USED_MAGIC;
+ 
+-  //__sync_fetch_and_add (&total_used_buffers, 1);
++  //atomic_fetch_add (&total_used_buffers, 1);
+   MODULE_STAT->total_used_buffers_size += C->buffer_size;
+   MODULE_STAT->total_used_buffers ++;
+   
+diff --git a/net/net-msg-buffers.h b/net/net-msg-buffers.h
+index 0069893..d781025 100644
+--- a/net/net-msg-buffers.h
++++ b/net/net-msg-buffers.h
+@@ -25,6 +25,7 @@
+ #pragma once
+ 
+ #include <assert.h>
++#include <stdatomic.h>
+ #include "common/mp-queue.h"
+ 
+ #define MSG_STD_BUFFER	2048
+@@ -101,7 +102,7 @@ void fetch_buffers_stat (struct buffers_stat *bs);
+ 
+ int free_msg_buffer (struct msg_buffer *X);
+ static inline void msg_buffer_decref (struct msg_buffer *buffer) {
+-  if (buffer->refcnt == 1 || __sync_fetch_and_add (&buffer->refcnt, -1) == 1) {
++  if (buffer->refcnt == 1 || atomic_fetch_add (&buffer->refcnt, -1) == 1) {
+     buffer->refcnt = 0;
+     free_msg_buffer (buffer);
+   }
+diff --git a/net/net-msg.c b/net/net-msg.c
+index 71d2571..50db6e4 100644
+--- a/net/net-msg.c
++++ b/net/net-msg.c
+@@ -26,6 +26,7 @@
+ #define        _FILE_OFFSET_BITS        64
+ 
+ #include <assert.h>
++#include <stdatomic.h>
+ #include <stddef.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -100,7 +101,7 @@ static int msg_part_decref (struct msg_part *mp) /* {{{ */{
+     if (mp->refcnt == 1) {
+       mp->refcnt = 0;
+     } else {
+-      if (__sync_fetch_and_add (&mp->refcnt, -1) > 1) {
++      if (atomic_fetch_add (&mp->refcnt, -1) > 1) {
+         break;
+       }
+     }
+@@ -138,7 +139,8 @@ struct msg_part *rwm_lock_last_part (struct raw_message *raw) /* {{{ */ {
+     // trying to append bytes to a sub-message of a longer chain, have to fork the chain
+     fork_message_chain (raw);
+   } else {
+-    if (mp->magic != MSG_PART_MAGIC || !__sync_bool_compare_and_swap (&mp->magic, MSG_PART_MAGIC, MSG_PART_LOCKED_MAGIC)) {
++    int expect_MSG_PART_MAGIC = MSG_PART_MAGIC;
++    if (mp->magic != MSG_PART_MAGIC || !atomic_compare_exchange_strong (&mp->magic, &expect_MSG_PART_MAGIC, MSG_PART_LOCKED_MAGIC)) {
+       fork_message_chain (raw);
+     } else {
+       locked = mp;
+@@ -170,7 +172,7 @@ struct msg_part *rwm_lock_first_part (struct raw_message *raw) /* {{{ */ {
+     return NULL;
+   }
+ 
+-  __sync_fetch_and_add (&raw->first->part->refcnt, 1);
++  atomic_fetch_add (&raw->first->part->refcnt, 1);
+   struct msg_part *mp = new_msg_part (raw->first, raw->first->part);
+   mp->offset = raw->first_offset;
+   mp->data_end = raw->first->data_end;
+@@ -180,7 +182,7 @@ struct msg_part *rwm_lock_first_part (struct raw_message *raw) /* {{{ */ {
+   } else {
+     mp->next = raw->first->next;
+     assert (mp->next);
+-    __sync_fetch_and_add (&mp->next->refcnt, 1);
++    atomic_fetch_add (&mp->next->refcnt, 1);
+   }
+   msg_part_decref (raw->first);
+   raw->first = mp;
+@@ -281,7 +283,7 @@ int fork_message_chain (struct raw_message *raw) /* {{{ */ {
+       check_msg_part_magic (mp);
+       struct msg_part *mpc = new_msg_part (mpl, mp->part);
+ 
+-      __sync_fetch_and_add (&mpc->part->refcnt, 1);
++      atomic_fetch_add (&mpc->part->refcnt, 1);
+       mpc->offset = mp->offset;
+       mpc->data_end = mp->data_end;
+ 
+@@ -346,7 +348,7 @@ void rwm_clone (struct raw_message *dest_raw, struct raw_message *src_raw) /* {{
+     if (src_raw->first->refcnt == 1) {
+       src_raw->first->refcnt ++;
+     } else {
+-      __sync_fetch_and_add (&src_raw->first->refcnt, 1);
++      atomic_fetch_add (&src_raw->first->refcnt, 1);
+     }
+   }
+   MODULE_STAT->rwm_total_msgs ++;
+@@ -752,7 +754,7 @@ int rwm_split (struct raw_message *raw, struct raw_message *tail, int bytes) /*
+     raw->total_bytes -= s;
+     tail->first = tail->last = raw->last;
+     if (raw->magic == RM_INIT_MAGIC) {
+-      __sync_fetch_and_add (&tail->first->refcnt, 1);
++      atomic_fetch_add (&tail->first->refcnt, 1);
+     }
+ 
+     tail->first_offset = raw->last_offset;
+@@ -783,7 +785,7 @@ int rwm_split (struct raw_message *raw, struct raw_message *tail, int bytes) /*
+         if (ok) {
+           mp->refcnt ++;
+         } else {
+-          __sync_fetch_and_add (&mp->refcnt, 1);
++          atomic_fetch_add (&mp->refcnt, 1);
+         }
+       }
+       bytes = 0;
+@@ -822,7 +824,7 @@ int rwm_union (struct raw_message *raw, struct raw_message *tail) /* {{{ */ {
+ 
+     l2 = rwm_lock_first_part (tail);      
+     raw->last->next = tail->first;
+-    __sync_fetch_and_add (&tail->first->refcnt, 1);
++    atomic_fetch_add (&tail->first->refcnt, 1);
+ 
+     raw->last_offset = tail->last_offset;
+     raw->last = tail->last;
+@@ -924,7 +926,7 @@ int rwm_process_ex (struct raw_message *raw, int bytes, int offset, int flags, i
+     if (r >= 0) {
+       if (flags & RMPF_ADVANCE) {
+         if (raw->magic == RM_INIT_MAGIC) {
+-          __sync_fetch_and_add (&raw->last->refcnt, 1);
++          atomic_fetch_add (&raw->last->refcnt, 1);
+           msg_part_decref (raw->first);
+         }
+         raw->first = raw->last;
+@@ -992,7 +994,7 @@ int rwm_process_ex (struct raw_message *raw, int bytes, int offset, int flags, i
+             if (ok2) {
+               mp->refcnt ++;
+             } else {
+-              __sync_fetch_and_add (&mp->refcnt, 1);
++              atomic_fetch_add (&mp->refcnt, 1);
+             }
+             msg_part_decref (raw->first);
+           }
+@@ -1178,7 +1180,7 @@ int rwm_get_block_ptr_bytes (struct raw_message *raw) {
+       mp->next = NULL;
+     } else {
+       raw->first = mp->next;
+-      __sync_fetch_and_add (&mp->next->refcnt, 1);
++      atomic_fetch_add (&mp->next->refcnt, 1);
+     }
+     msg_part_decref (mp);
+     raw->first_offset = raw->first->offset;
+diff --git a/net/net-rpc-targets.c b/net/net-rpc-targets.c
+index 01d9e47..39d254b 100644
+--- a/net/net-rpc-targets.c
++++ b/net/net-rpc-targets.c
+@@ -23,6 +23,7 @@
+ */
+ 
+ #include <assert.h>
++#include <stdatomic.h>
+ #include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
+@@ -92,7 +93,7 @@ static rpc_target_job_t rpc_target_alloc (struct process_id PID) {
+   struct tree_rpc_target *old = rpc_target_tree;
+   
+   if (old) {
+-    __sync_fetch_and_add (&old->refcnt, 1);
++    atomic_fetch_add (&old->refcnt, 1);
+   }
+ 
+   rpc_target_tree = tree_insert_rpc_target (rpc_target_tree, SS, lrand48_j ());
+@@ -136,7 +137,7 @@ void rpc_target_insert_conn (connection_job_t C) {
+   struct tree_connection *old = S->conn_tree;
+ 
+   if (old) {
+-    __sync_fetch_and_add (&old->refcnt, 1);
++    atomic_fetch_add (&old->refcnt, 1);
+   }
+ 
+   S->conn_tree = tree_insert_connection (S->conn_tree, job_incref (C), lrand48_j ());
+@@ -179,7 +180,7 @@ void rpc_target_delete_conn (connection_job_t C) {
+ 
+   struct tree_connection *old = S->conn_tree;
+   if (old) {
+-    __sync_fetch_and_add (&old->refcnt, 1);
++    atomic_fetch_add (&old->refcnt, 1);
+   }
+   S->conn_tree = tree_delete_connection (S->conn_tree, C);
+   MODULE_STAT->total_connections_in_rpc_targets --;
+diff --git a/net/net-tcp-connections.c b/net/net-tcp-connections.c
+index 9b2f462..12eefae 100644
+--- a/net/net-tcp-connections.c
++++ b/net/net-tcp-connections.c
+@@ -25,6 +25,7 @@
+ 
+ #include <errno.h>
+ #include <sys/uio.h>
++#include <stdatomic.h>
+ #include <stdlib.h>
+ #include <assert.h>
+ #include <stdio.h>
+@@ -84,7 +85,7 @@ int cpu_tcp_server_writer (connection_job_t C) /* {{{ */ {
+   if (raw->total_bytes && c->io_conn) {        
+     mpq_push_w (SOCKET_CONN_INFO(c->io_conn)->out_packet_queue, raw, 0);
+     if (stop) {
+-      __sync_fetch_and_or (&SOCKET_CONN_INFO(c->io_conn)->flags, C_STOPWRITE);
++      atomic_fetch_or (&SOCKET_CONN_INFO(c->io_conn)->flags, C_STOPWRITE);
+     }
+     job_signal (JOB_REF_CREATE_PASS (c->io_conn), JS_RUN);
+   } else {
+diff --git a/net/net-tcp-rpc-client.c b/net/net-tcp-rpc-client.c
+index bae0d7d..2e3ff55 100644
+--- a/net/net-tcp-rpc-client.c
++++ b/net/net-tcp-rpc-client.c
+@@ -27,6 +27,7 @@
+ 
+ #include <assert.h>
+ #include <string.h>
++#include <stdatomic.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <time.h>
+@@ -214,7 +215,7 @@ static int tcp_rpcc_process_nonce_packet (connection_job_t C, struct raw_message
+       }
+       //active_dh_connections++;
+       incr_active_dh_connections ();
+-      __sync_fetch_and_or (&c->flags, C_ISDH);
++      atomic_fetch_or (&c->flags, C_ISDH);
+     }
+     if (c->crypto_temp) {
+       if (((struct crypto_temp_dh_params *) c->crypto_temp)->magic == CRYPTO_TEMP_DH_PARAMS_MAGIC) {
+diff --git a/net/net-tcp-rpc-server.c b/net/net-tcp-rpc-server.c
+index 167deab..74361c0 100644
+--- a/net/net-tcp-rpc-server.c
++++ b/net/net-tcp-rpc-server.c
+@@ -26,6 +26,7 @@
+ #define        _FILE_OFFSET_BITS        64
+ 
+ #include <assert.h>
++#include <stdatomic.h>
+ #include <string.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -455,7 +456,7 @@ int tcp_rpcs_wakeup (connection_job_t C) {
+   notification_event_insert_tcp_conn_wakeup (C);
+ 
+   if (c->out_p.total_bytes > 0) {
+-    __sync_fetch_and_or (&c->flags, C_WANTWR);
++    atomic_fetch_or (&c->flags, C_WANTWR);
+   }
+   
+   //c->generation = ++conn_generation;
+@@ -469,7 +470,7 @@ int tcp_rpcs_alarm (connection_job_t C) {
+   notification_event_insert_tcp_conn_alarm (C);
+   
+   if (c->out_p.total_bytes > 0) {
+-    __sync_fetch_and_or (&c->flags, C_WANTWR);
++    atomic_fetch_or (&c->flags, C_WANTWR);
+   }
+ 
+   //c->generation = ++conn_generation;
+@@ -606,7 +607,7 @@ int tcp_rpcs_init_crypto (connection_job_t C, struct tcp_rpc_nonce_packet *P) {
+     assert (temp_dh_len == 256);
+ 
+     incr_active_dh_connections ();
+-    __sync_fetch_and_or (&c->flags, C_ISDH);
++    atomic_fetch_or (&c->flags, C_ISDH);
+   }
+   aes_generate_nonce (D->nonce);
+ 
+diff --git a/vv/vv-tree.c b/vv/vv-tree.c
+index d7c4987..4a4db0d 100644
+--- a/vv/vv-tree.c
++++ b/vv/vv-tree.c
+@@ -20,6 +20,7 @@
+ 
+ 
+ #include <assert.h>
++#include <stdatomic.h>
+       
+ long long total_vv_tree_nodes;
+ 
+@@ -320,7 +321,7 @@ TREE_PREFIX void SUFFIX(tree_insert_sub_,TREE_NAME) (TREE_NODE_TYPE **T, X_TYPE
+     TREE_NODE_TYPE *TT = *T;
+ 
+     if (TT) {
+-      __sync_fetch_and_add (&TT->refcnt, 1);
++      atomic_fetch_add (&TT->refcnt, 1);
+     }
+   #endif
+ 
+@@ -445,7 +446,7 @@ TREE_PREFIX void SUFFIX(tree_delete_sub_,TREE_NAME) (TREE_NODE_TYPE **T, X_TYPE
+     TREE_NODE_TYPE *TT = *T;
+ 
+     if (TT) {
+-      __sync_fetch_and_add (&TT->refcnt, 1);
++      atomic_fetch_add (&TT->refcnt, 1);
+     }
+   #endif
+ 
+@@ -578,7 +579,7 @@ TREE_PREFIX TREE_NODE_TYPE *SUFFIX (tree_alloc_, TREE_NAME) (X_TYPE x, Y_TYPE y)
+   T->refcnt = 1;
+   #endif
+   T->left = T->right = NULL;
+-  __sync_fetch_and_add (&total_vv_tree_nodes, 1);
++  atomic_fetch_add (&total_vv_tree_nodes, 1);
+   return T;
+ }
+ 
+@@ -586,7 +587,7 @@ TREE_PREFIX TREE_NODE_TYPE *SUFFIX (tree_alloc_, TREE_NAME) (X_TYPE x, Y_TYPE y)
+ TREE_PREFIX void SUFFIX (tree_free_, TREE_NAME) (TREE_NODE_TYPE *T) {
+   #ifdef TREE_PTHREAD
+     if (!T) { return; }
+-    if (__sync_fetch_and_add (&T->refcnt, -1) > 1) {
++    if (atomic_fetch_add (&T->refcnt, -1) > 1) {
+       return;
+     }
+     assert (!T->refcnt);
+@@ -603,7 +604,7 @@ TREE_PREFIX void SUFFIX (tree_free_, TREE_NAME) (TREE_NODE_TYPE *T) {
+   #else
+     free (T);
+   #endif
+-  __sync_fetch_and_add (&total_vv_tree_nodes, -1);
++  atomic_fetch_add (&total_vv_tree_nodes, -1);
+ }
+ 
+ #ifdef TREE_PTHREAD
+@@ -616,12 +617,12 @@ TREE_PREFIX TREE_NODE_TYPE *SUFFIX(tree_clone_, TREE_NAME) (TREE_NODE_TYPE *T) {
+   assert (R);
+ 
+   if (T->left) {
+-    __sync_fetch_and_add (&T->left->refcnt, 1);
++    atomic_fetch_add (&T->left->refcnt, 1);
+     R->left = T->left;
+   }
+   
+   if (T->right) {
+-    __sync_fetch_and_add (&T->right->refcnt, 1);
++    atomic_fetch_add (&T->right->refcnt, 1);
+     R->right = T->right;
+   }
+ 
+@@ -646,7 +647,7 @@ TREE_PREFIX void SUFFIX(tree_relax_,TREE_NAME)  (TREE_NODE_TYPE *T) {
+ 
+ TREE_PREFIX void SUFFIX(incref_tree_ptr_,TREE_NAME) (TREE_NODE_TYPE *T) {
+   if (T) {
+-    assert (__sync_fetch_and_add (&T->refcnt, 1) > 0);
++    assert (atomic_fetch_add (&T->refcnt, 1) > 0);
+   }
+ }
+ 
+-- 
+2.20.1
+

@@ -1,0 +1,38 @@
+From e3381fd7a26b2ce721401eb41bfe0ccd1e9f65f5 Mon Sep 17 00:00:00 2001
+From: yangfl <yangfl@users.noreply.github.com>
+Date: Tue, 28 May 2019 13:22:22 +0800
+Subject: [PATCH 18/19] remove rdynamic
+
+---
+ Makefile | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index f8c021e..9ffc65e 100644
+--- a/Makefile
++++ b/Makefile
+@@ -5,7 +5,7 @@ EXE = ${OBJ}/bin
+ COMMIT ?= $(shell git log -1 --pretty=format:"%H")
+ 
+ CFLAGS += -std=gnu11 -Wall -fno-strict-aliasing -fno-strict-overflow -fwrapv -DCOMMIT=\"${COMMIT}\" -D_GNU_SOURCE=1
+-LDFLAGS += -rdynamic -lm -lrt -lcrypto -lz -lpthread
++LDFLAGS += -lm -lrt -lcrypto -lz -lpthread
+ 
+ define check_libatomic
+ #include <stdatomic.h>
+@@ -93,10 +93,10 @@ ${OBJECTS}: ${OBJ}/%.o: %.c | create_dirs_and_headers
+ ${LIB_OBJS_NORMAL}: ${OBJ}/%.o: %.c | create_dirs_and_headers
+ 	${CC} ${CFLAGS} -fpic ${CINCLUDE} -c -MP -MD -MF ${DEP}/$*.d -MQ ${OBJ}/$*.o -o $@ $<
+ 
+-${EXELIST}: ${LIBLIST}
++${EXELIST}: ${LIB_OBJS}
+ 
+ ${EXE}/mtproto-proxy:	${OBJ}/mtproto/mtproto-proxy.o ${OBJ}/mtproto/mtproto-config.o ${OBJ}/net/net-tcp-rpc-ext-server.o
+-	${CC} ${CFLAGS} -o $@ $^ ${LIB}/libkdb.a ${LDFLAGS}
++	${CC} ${CFLAGS} -o $@ $^ ${LDFLAGS}
+ 
+ ${LIB}/libkdb.a: ${LIB_OBJS}
+ 	rm -f $@ && ar rcs $@ $^
+-- 
+2.20.1
+

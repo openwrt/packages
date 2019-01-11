@@ -1,0 +1,26 @@
+From 3db1506bf4d4f90f66f55cda072e044d9cbd31c0 Mon Sep 17 00:00:00 2001
+From: Alexander Ryzhov <github@ryzhov-al.ru>
+Date: Sun, 12 May 2019 12:18:08 +0800
+Subject: [PATCH 16/19] remove false SIGRTMAX assert
+
+Origin: https://github.com/Entware/graveyard/commit/2b71e8814b5c374848b09cf135f7339f7a8edff1
+---
+ engine/engine.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/engine/engine.c b/engine/engine.c
+index 846af66..7644237 100644
+--- a/engine/engine.c
++++ b/engine/engine.c
+@@ -573,7 +573,7 @@ void engine_startup (engine_t *E, server_functions_t *F) /* {{{ */ {
+ 
+   precise_now_diff = get_utime_monotonic () - get_double_time ();
+ 
+-  assert (SIGRTMAX == OUR_SIGRTMAX);
++  assert (SIGRTMAX >= OUR_SIGRTMAX);
+   assert (SIGRTMAX - SIGRTMIN >= 20);
+   
+   E->sfd = 0;
+-- 
+2.20.1
+

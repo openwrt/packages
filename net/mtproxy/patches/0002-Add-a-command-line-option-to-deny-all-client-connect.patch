@@ -1,0 +1,91 @@
+From a8a1689c7dc2c49da5e7c5a3723c8f167c11c0a9 Mon Sep 17 00:00:00 2001
+From: Kirill Ovchinnikov <kirill.ovchinn@gmail.com>
+Date: Sun, 12 May 2019 12:28:46 +0800
+Subject: [PATCH 02/19] Add a command line option to deny all client
+ connections without random padding mode
+
+---
+ README.md                    | 2 ++
+ mtproto/mtproto-proxy.c      | 4 ++++
+ net/net-tcp-rpc-ext-server.c | 7 ++++++-
+ net/net-tcp-rpc-ext-server.h | 1 +
+ 4 files changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index e3c131c..ff4d884 100644
+--- a/README.md
++++ b/README.md
+@@ -69,6 +69,8 @@ It's only enabled for clients which request it.
+ Add `dd` prefix to secret (`cafe...babe` => `ddcafe...babe`) to enable
+ this mode on client side.
+ 
++Adding argument "-R" to the command line will cause MTProxy to allow connections only from the clients with random padding mode enabled.
++
+ ## Systemd example configuration
+ 1. Create systemd service file (it's standart path for the most Linux distros, but you should check it before):
+ ```bash
+diff --git a/mtproto/mtproto-proxy.c b/mtproto/mtproto-proxy.c
+index 718c6b2..5976262 100644
+--- a/mtproto/mtproto-proxy.c
++++ b/mtproto/mtproto-proxy.c
+@@ -2215,6 +2215,9 @@ int f_parse_option (int val) {
+       }
+     }
+     break;
++  case 'R':
++    tcp_rpcs_set_ext_rand_pad_only(1);
++    break;
+   default:
+     return -1;
+   }
+@@ -2231,6 +2234,7 @@ void mtfront_prepare_parse_options (void) {
+   // parse_option ("outbound-connections-ps", required_argument, 0, 'o', "limits creation rate of outbound connections to mtproto-servers (default %d)", DEFAULT_OUTBOUND_CONNECTION_CREATION_RATE);
+   parse_option ("slaves", required_argument, 0, 'M', "spawn several slave workers");
+   parse_option ("ping-interval", required_argument, 0, 'T', "sets ping interval in second for local TCP connections (default %.3lf)", PING_INTERVAL);
++  parse_option ("random-padding-only", no_argument, 0, 'R', "allow only clients with random padding option enabled");
+ }
+ 
+ void mtfront_parse_extra_args (int argc, char *argv[]) /* {{{ */ {
+diff --git a/net/net-tcp-rpc-ext-server.c b/net/net-tcp-rpc-ext-server.c
+index efc29cf..6ec1463 100644
+--- a/net/net-tcp-rpc-ext-server.c
++++ b/net/net-tcp-rpc-ext-server.c
+@@ -81,12 +81,17 @@ int tcp_rpcs_default_execute (connection_job_t c, int op, struct raw_message *ms
+ 
+ static unsigned char ext_secret[16][16];
+ static int ext_secret_cnt = 0;
++static int ext_rand_pad_only = 0;
+ 
+ void tcp_rpcs_set_ext_secret(unsigned char secret[16]) {
+   assert (ext_secret_cnt < 16);
+   memcpy (ext_secret[ext_secret_cnt ++], secret, 16);
+ }
+ 
++void tcp_rpcs_set_ext_rand_pad_only(int set) {
++  ext_rand_pad_only = set;
++}
++
+ /*
+ struct tcp_rpc_server_functions default_tcp_rpc_ext_server = {
+   .execute = tcp_rpcs_default_execute,
+@@ -223,7 +228,7 @@ int tcp_rpcs_compact_parse_execute (connection_job_t C) {
+         T->read_aeskey.type->ctr128_crypt (&T->read_aeskey, random_header, random_header, 64, T->read_iv, T->read_ebuf, &T->read_num);
+         unsigned tag = *(unsigned *)(random_header + 56);
+ 
+-        if (tag == 0xdddddddd || tag == 0xeeeeeeee || tag == 0xefefefef) {
++        if (tag == 0xdddddddd || ((tag == 0xeeeeeeee || tag == 0xefefefef) && !ext_rand_pad_only)) {
+           assert (rwm_skip_data (&c->in, 64) == 64);
+           rwm_union (&c->in_u, &c->in);
+           rwm_init (&c->in, 0);
+diff --git a/net/net-tcp-rpc-ext-server.h b/net/net-tcp-rpc-ext-server.h
+index 61e50d6..2ab98ab 100644
+--- a/net/net-tcp-rpc-ext-server.h
++++ b/net/net-tcp-rpc-ext-server.h
+@@ -30,3 +30,4 @@ extern conn_type_t ct_tcp_rpc_ext_server;
+ 
+ int tcp_rpcs_compact_parse_execute (connection_job_t c);
+ void tcp_rpcs_set_ext_secret(unsigned char secret[16]);
++void tcp_rpcs_set_ext_rand_pad_only(int set);
+-- 
+2.20.1
+

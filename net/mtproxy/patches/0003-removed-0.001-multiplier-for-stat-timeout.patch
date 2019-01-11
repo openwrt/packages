@@ -1,0 +1,25 @@
+From 38498c1dadcf0c2379437cfe478b605f0c3502f3 Mon Sep 17 00:00:00 2001
+From: Gleb Panchishen <gleb.panchishen@nordigy.ru>
+Date: Tue, 19 Mar 2019 01:55:23 +0300
+Subject: [PATCH 03/19] removed 0.001 multiplier for stat timeout
+
+---
+ engine/engine.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/engine/engine.c b/engine/engine.c
+index 73c8745..4823823 100644
+--- a/engine/engine.c
++++ b/engine/engine.c
+@@ -403,7 +403,7 @@ int precise_cron_job_run (job_t job, int op, struct job_thread *JT) /* {{{ */ {
+   }
+ 
+   do_precise_cron ();
+-  job_timer_insert (job, precise_now + 0.001 * (1 + drand48_j ()));
++  job_timer_insert (job, precise_now + (1 + drand48_j ()));
+   return 0;
+ }
+ /* }}} */ 
+-- 
+2.20.1
+

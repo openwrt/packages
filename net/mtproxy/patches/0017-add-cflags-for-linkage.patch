@@ -1,0 +1,25 @@
+From 7ec02a988f20def999e2d8848a7f084a2ed4444e Mon Sep 17 00:00:00 2001
+From: yangfl <yangfl@users.noreply.github.com>
+Date: Sun, 12 May 2019 15:41:21 +0800
+Subject: [PATCH 17/19] add cflags for linkage
+
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 35b4f2b..f8c021e 100644
+--- a/Makefile
++++ b/Makefile
+@@ -96,7 +96,7 @@ ${LIB_OBJS_NORMAL}: ${OBJ}/%.o: %.c | create_dirs_and_headers
+ ${EXELIST}: ${LIBLIST}
+ 
+ ${EXE}/mtproto-proxy:	${OBJ}/mtproto/mtproto-proxy.o ${OBJ}/mtproto/mtproto-config.o ${OBJ}/net/net-tcp-rpc-ext-server.o
+-	${CC} -o $@ $^ ${LIB}/libkdb.a ${LDFLAGS}
++	${CC} ${CFLAGS} -o $@ $^ ${LIB}/libkdb.a ${LDFLAGS}
+ 
+ ${LIB}/libkdb.a: ${LIB_OBJS}
+ 	rm -f $@ && ar rcs $@ $^
+-- 
+2.20.1
+

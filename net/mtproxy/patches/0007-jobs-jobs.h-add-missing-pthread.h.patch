@@ -1,0 +1,24 @@
+From 52c670d04903af51411854511e7e655f749573f2 Mon Sep 17 00:00:00 2001
+From: yangfl <yangfl@users.noreply.github.com>
+Date: Sun, 12 May 2019 11:54:02 +0800
+Subject: [PATCH 07/19] jobs/jobs.h: add missing pthread.h
+
+---
+ jobs/jobs.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/jobs/jobs.h b/jobs/jobs.h
+index 56522e5..3e49b71 100644
+--- a/jobs/jobs.h
++++ b/jobs/jobs.h
+@@ -24,6 +24,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <semaphore.h>
++#include <pthread.h>
+ #include "net/net-events.h"
+ #include "net/net-msg.h"
+ #include "net/net-timers.h"
+-- 
+2.20.1
+

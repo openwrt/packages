@@ -1,0 +1,128 @@
+From cbd66f8bf21299e10f7371c102eab1a283ff023f Mon Sep 17 00:00:00 2001
+From: yangfl <yangfl@users.noreply.github.com>
+Date: Mon, 3 Jun 2019 18:56:24 +0800
+Subject: [PATCH 19/19] reduce constants
+
+---
+ common/mp-queue.h       |  2 +-
+ jobs/jobs.c             |  4 ++--
+ jobs/jobs.h             |  4 ++--
+ mtproto/mtproto-proxy.c | 10 +++++-----
+ net/net-connections.h   |  2 +-
+ 5 files changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/common/mp-queue.h b/common/mp-queue.h
+index f30be38..a329ef4 100644
+--- a/common/mp-queue.h
++++ b/common/mp-queue.h
+@@ -100,7 +100,7 @@ struct mp_queue {
+ extern volatile int mpq_blocks_allocated, mpq_blocks_allocated_max, mpq_blocks_allocations, mpq_blocks_true_allocations, mpq_blocks_wasted, mpq_blocks_prepared;
+ extern volatile int mpq_small_blocks_allocated, mpq_small_blocks_allocated_max;
+ 
+-#define MAX_MPQ_THREADS	256
++#define MAX_MPQ_THREADS	16
+ extern __thread int mpq_this_thread_id;
+ extern __thread void **thread_hazard_pointers;
+ extern volatile int mpq_threads;
+diff --git a/jobs/jobs.c b/jobs/jobs.c
+index 116ce02..5a6c0a6 100644
+--- a/jobs/jobs.c
++++ b/jobs/jobs.c
+@@ -55,7 +55,7 @@
+ 
+ #define JOB_SUBCLASS_OFFSET 3
+ 
+-struct job_thread JobThreads[MAX_JOB_THREADS] __attribute__((aligned(128)));
++struct job_thread JobThreads[MAX_JOB_THREADS];
+ 
+ struct job_thread_stat {
+   unsigned long tot_sys;
+@@ -63,7 +63,7 @@ struct job_thread_stat {
+   unsigned long recent_sys;
+   unsigned long recent_user;
+ };
+-struct job_thread_stat JobThreadsStats[MAX_JOB_THREADS] __attribute__((aligned(128)));
++struct job_thread_stat JobThreadsStats[MAX_JOB_THREADS];
+ 
+ #define MODULE jobs
+ 
+diff --git a/jobs/jobs.h b/jobs/jobs.h
+index e867e74..357a203 100644
+--- a/jobs/jobs.h
++++ b/jobs/jobs.h
+@@ -236,7 +236,7 @@ struct job_thread {
+   job_t timer_manager;
+   double wakeup_time;
+   struct job_class *job_class;
+-} __attribute__((aligned(128)));
++};
+ 
+ struct job_message {
+   unsigned int type;  
+@@ -261,7 +261,7 @@ struct job_timer_info {
+   double (*wakeup)(void *);
+ };
+ 
+-#define MAX_JOB_THREADS		256
++#define MAX_JOB_THREADS		16
+ 
+ long int lrand48_j (void);
+ long int mrand48_j (void);
+diff --git a/mtproto/mtproto-proxy.c b/mtproto/mtproto-proxy.c
+index 7bdd637..2c5d82e 100644
+--- a/mtproto/mtproto-proxy.c
++++ b/mtproto/mtproto-proxy.c
+@@ -78,8 +78,8 @@ const char FullVersionStr[] = VERSION_STR " compiled at " __DATE__ " " __TIME__
+ #endif
+ " after commit " COMMIT;
+ 
+-#define EXT_CONN_TABLE_SIZE	(1 << 22)
+-#define EXT_CONN_HASH_SHIFT	20
++#define EXT_CONN_TABLE_SIZE	(1 << 10)
++#define EXT_CONN_HASH_SHIFT	8
+ #define EXT_CONN_HASH_SIZE	(1 << EXT_CONN_HASH_SHIFT)
+ 
+ #define	RPC_TIMEOUT_INTERVAL	5.0
+@@ -128,7 +128,7 @@ long long api_invoke_requests;
+ 
+ volatile int sigpoll_cnt;
+ 
+-#define STATS_BUFF_SIZE	(1 << 20)
++#define STATS_BUFF_SIZE	(1 << 12)
+ 
+ int stats_buff_len;
+ char stats_buff[STATS_BUFF_SIZE];
+@@ -371,7 +371,7 @@ void remove_ext_connection (struct ext_connection *Ex, int send_notifications) {
+  *
+  */
+ 
+-#define MAX_WORKERS	256
++#define MAX_WORKERS	16
+ 
+ struct worker_stats {
+   int cnt;
+@@ -1409,7 +1409,7 @@ int hts_stats_execute (connection_job_t c, struct raw_message *msg, int op) {
+   }
+ 
+   stats_buffer_t sb;
+-  sb_alloc(&sb, 1 << 20);
++  sb_alloc(&sb, 1 << 12);
+   mtfront_prepare_stats(&sb);
+ 
+   struct raw_message *raw = calloc (sizeof (*raw), 1);
+diff --git a/net/net-connections.h b/net/net-connections.h
+index 943b3dc..da4ba1a 100644
+--- a/net/net-connections.h
++++ b/net/net-connections.h
+@@ -35,7 +35,7 @@
+ #include "common/mp-queue.h"
+ #include "common/pid.h"
+ 
+-#define MAX_CONNECTIONS	65536
++#define MAX_CONNECTIONS	64
+ #define MAX_TARGETS	65536
+ #define PRIME_TARGETS	99961
+ #define MAX_SPECIAL_LISTEN_SOCKETS	64
+-- 
+2.20.1
+

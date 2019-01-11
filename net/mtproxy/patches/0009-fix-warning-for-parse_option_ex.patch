@@ -1,0 +1,36 @@
+From 76ae58fcb9eabc1c4ca5664142e7497c611bcb16 Mon Sep 17 00:00:00 2001
+From: yangfl <yangfl@users.noreply.github.com>
+Date: Sun, 12 May 2019 11:54:56 +0800
+Subject: [PATCH 09/19] fix warning for parse_option_ex
+
+---
+ engine/engine.c | 13 +------------
+ 1 file changed, 1 insertion(+), 12 deletions(-)
+
+diff --git a/engine/engine.c b/engine/engine.c
+index 31ddae6..846af66 100644
+--- a/engine/engine.c
++++ b/engine/engine.c
+@@ -678,18 +678,7 @@ static int f_parse_option_engine (int val) {
+   return 0;
+ }
+ 
+-static void parse_option_engine_builtin (const char *name, int arg, int *var, int val, unsigned flags, const char *help, ...) __attribute__ ((format (printf, 6, 7)));
+-static void parse_option_engine_builtin (const char *name, int arg, int *var, int val, unsigned flags, const char *help, ...) {
+-  char *h;
+-  va_list ap;
+-  va_start (ap, help);
+-  assert (vasprintf (&h, help, ap) >= 0);
+-  va_end (ap);
+-
+-  parse_option_ex (name, arg, var, val, flags, f_parse_option_engine, h);
+-
+-  free (h);
+-}
++#define parse_option_engine_builtin(name, arg, var, val, flags, ...) parse_option_ex (name, arg, var, val, flags, f_parse_option_engine, __VA_ARGS__)
+ 
+ void engine_add_engine_parse_options (void) {
+   parse_option_engine_builtin ("cpu-threads", required_argument, 0, 227, LONGOPT_JOBS_SET, "Number of CPU threads (1-64, default 8)");
+-- 
+2.20.1
+

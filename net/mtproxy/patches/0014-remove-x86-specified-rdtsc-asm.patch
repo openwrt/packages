@@ -1,0 +1,29 @@
+From c15a3bf15479afce24a506dd962861e8c9d7c260 Mon Sep 17 00:00:00 2001
+From: yangfl <yangfl@users.noreply.github.com>
+Date: Sun, 12 May 2019 11:54:28 +0800
+Subject: [PATCH 14/19] remove x86-specified rdtsc asm
+
+---
+ common/precise-time.h | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/common/precise-time.h b/common/precise-time.h
+index 2b12237..5a473b2 100644
+--- a/common/precise-time.h
++++ b/common/precise-time.h
+@@ -34,6 +34,12 @@ static __inline__ unsigned long long rdtsc(void) {
+   __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+   return ( (unsigned long long)lo)|( ((unsigned long long)hi)<<32 );
+ }
++#else
++static __inline__ unsigned long long rdtsc(void) {
++  struct timespec now;
++  clock_gettime (CLOCK_PROCESS_CPUTIME_ID, &now);
++  return (unsigned long long)now.tv_sec * 1000000000 + now.tv_nsec;
++}
+ #endif
+ 
+ /* net-event.h */
+-- 
+2.20.1
+

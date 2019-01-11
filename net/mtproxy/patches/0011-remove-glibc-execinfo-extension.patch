@@ -1,0 +1,44 @@
+From cab270ff93337fc3cc08008efcd02d60de8e30eb Mon Sep 17 00:00:00 2001
+From: yangfl <yangfl@users.noreply.github.com>
+Date: Sun, 12 May 2019 11:55:36 +0800
+Subject: [PATCH 11/19] remove glibc execinfo extension
+
+---
+ common/server-functions.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/common/server-functions.c b/common/server-functions.c
+index 3d852ff..80fdb0a 100644
+--- a/common/server-functions.c
++++ b/common/server-functions.c
+@@ -35,7 +35,9 @@
+ #include <arpa/inet.h>
+ #include <assert.h>
+ #include <errno.h>
++#ifdef __GLIBC__
+ #include <execinfo.h>
++#endif
+ #include <fcntl.h>
+ #include <getopt.h>
+ #include <grp.h>
+@@ -168,6 +170,7 @@ const char *get_version_string (void) {
+ }
+ 
+ void print_backtrace (void) {
++#ifdef __GLIBC__
+   void *buffer[64];
+   int nptrs = backtrace (buffer, 64);
+   kwrite (2, "\n------- Stack Backtrace -------\n", 33);
+@@ -178,6 +181,9 @@ void print_backtrace (void) {
+     kwrite (2, s, strlen (s));
+     kwrite (2, "\n", 1);
+   }
++#else
++  kwrite (2, "\nStack Backtrace not available on non-glibc\n", 44);
++#endif
+ }
+ 
+ pthread_t debug_main_pthread_id;
+-- 
+2.20.1
+

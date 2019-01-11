@@ -1,0 +1,25 @@
+From e9bbb7fd612c003e71747c334cc16389aa75c7e1 Mon Sep 17 00:00:00 2001
+From: Alexander Ryzhov <github@ryzhov-al.ru>
+Date: Sun, 12 May 2019 11:57:34 +0800
+Subject: [PATCH 08/19] net/net-events.c: remove sys/io.h
+
+Origin: https://github.com/Entware/graveyard/commit/2b71e8814b5c374848b09cf135f7339f7a8edff1
+---
+ net/net-events.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/net/net-events.c b/net/net-events.c
+index 47cc678..403faa6 100644
+--- a/net/net-events.c
++++ b/net/net-events.c
+@@ -36,7 +36,6 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <sys/epoll.h>
+-#include <sys/io.h>
+ #include <sys/socket.h>
+ #include <time.h>
+ #include <unistd.h>
+-- 
+2.20.1
+

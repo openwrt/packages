@@ -1,0 +1,36 @@
+From 8248696903974564a71e222284d54c7f3119dcf9 Mon Sep 17 00:00:00 2001
+From: yangfl <yangfl@users.noreply.github.com>
+Date: Sun, 12 May 2019 11:51:50 +0800
+Subject: [PATCH 05/19] detect libatomic
+
+---
+ Makefile | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/Makefile b/Makefile
+index 67e6771..824516c 100644
+--- a/Makefile
++++ b/Makefile
+@@ -15,6 +15,19 @@ endif
+ CFLAGS = $(ARCH) -O3 -std=gnu11 -Wall -mpclmul -march=core2 -mfpmath=sse -mssse3 -fno-strict-aliasing -fno-strict-overflow -fwrapv -DAES=1 -DCOMMIT=\"${COMMIT}\" -D_GNU_SOURCE=1 -D_FILE_OFFSET_BITS=64
+ LDFLAGS = $(ARCH) -ggdb -rdynamic -lm -lrt -lcrypto -lz -lpthread -lcrypto
+ 
++define check_libatomic
++#include <stdatomic.h>
++
++int main() {
++  volatile long long val = 1;
++  atomic_fetch_add(&val, 1);
++  return 0;
++}
++endef
++
++LIBATOMIC_LDFLAGS = $(shell echo "$(check_libatomic)" | gcc -std=gnu11 -o /dev/null -xc - 2> /dev/null || echo -latomic)
++LDFLAGS += $(LIBATOMIC_LDFLAGS)
++
+ LIB = ${OBJ}/lib
+ CINCLUDE = -iquote common -iquote .
+ 
+-- 
+2.20.1
+

@@ -1,0 +1,27 @@
+From 8a1dc4762e80249d113fd882cb3efeae7c008166 Mon Sep 17 00:00:00 2001
+From: yangfl <yangfl@users.noreply.github.com>
+Date: Sun, 12 May 2019 11:53:40 +0800
+Subject: [PATCH 13/19] remove x86-specified mfence asm
+
+---
+ common/server-functions.h | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/common/server-functions.h b/common/server-functions.h
+index 874b4e0..681b3b1 100644
+--- a/common/server-functions.h
++++ b/common/server-functions.h
+@@ -110,9 +110,7 @@ static inline void barrier (void) {
+   asm volatile("": : :"memory");
+ }
+ 
+-static inline void mfence (void) {
+-  asm volatile ("mfence": : :"memory");
+-}
++#define mfence __sync_synchronize
+ 
+ //extern struct multicast_host multicast_hosts[];
+ //extern int multicast_hosts_num;
+-- 
+2.20.1
+

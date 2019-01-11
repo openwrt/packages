@@ -1,0 +1,104 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+
+START=90
+STOP=10
+
+PROG=/usr/bin/mtproto-proxy
+USER="nobody"
+GROUP="nobody"
+PIDFILE=/var/run/mtproto-proxy.pid
+DATADIR=/var/lib/mtproto-proxy
+
+
+. /lib/functions.sh
+
+
+download_data() {
+	mkdir -p "$DATADIR"
+	if [ ! -f "$DATADIR/proxy-secret" ]; then
+		wget -O "$DATADIR/proxy-secret" https://core.telegram.org/getProxySecret || return 1
+	fi
+	if [ ! -f "$DATADIR/proxy-multi.conf" ]; then
+		wget -O "$DATADIR/proxy-multi.conf" https://core.telegram.org/getProxyConfig || return 1
+	fi
+}
+
+
+mtproxy_start() {
+	download_data || return 1
+
+	local cfg="$1"
+	local secret_list
+	local port
+	local local_port
+	local ipv6
+	local workers
+	local cpu_threads
+	local io_threads
+	local other_options
+
+	config_get secret_list "$cfg" secret
+	config_get port "$cfg" port
+	config_get local_port "$cfg" local_port 0
+	config_get_bool ipv6 "$cfg" ipv6 0
+	config_get_bool random_padding_only "$cfg" random_padding_only 0
+	config_get workers "$cfg" workers 1
+	config_get cpu_threads "$cfg" cpu_threads 2
+	config_get io_threads "$cfg" io_threads 4
+	config_get other_options "$cfg" other_options ''
+
+	local opts
+	opts=''
+
+	for secret in $secret_list; do
+		opts="$opts -S $secret"
+	done
+
+	port=$(echo $port | tr ' ' ,)
+
+	if [ "$local_port" != 0 ]; then
+		opts="$opts -p $local_port"
+	fi
+
+	if [ "$ipv6" -gt 0 ]; then
+		opts="$opts -6"
+	fi
+
+	if [ "$random_padding_only" -gt 0 ]; then
+		opts="$opts -R"
+	fi
+
+	procd_open_instance
+	procd_set_param command $PROG -u "$USER" -H "$port" $opts --aes-pwd "$DATADIR/proxy-secret" -M "$workers" --cpu-threads "$cpu_threads" --io-threads "$io_threads" "$DATADIR/proxy-multi.conf" $other_options
+	echo $PROG -u "$USER" -H "$port" $opts --aes-pwd "$DATADIR/proxy-secret" -M "$workers" --cpu-threads "$cpu_threads" --io-threads "$io_threads" "$DATADIR/proxy-multi.conf" $other_options
+	procd_set_param limits nofile=32
+	procd_set_param user $USER
+	procd_close_instance
+}
+
+
+start_service() {
+	local instance="$1"
+	local instance_found=0
+
+	config_cb() {
+		local type="$1"
+		local name="$2"
+		if [ "$type" = "mtproxy" ]; then
+			if [ -n "$instance" -a "$instance" = "$name" ]; then
+				instance_found=1
+			fi
+		fi
+	}
+
+	config_load mtproxy
+
+	if [ -n "$instance" ]; then
+		[ "$instance_found" -gt 0 ] || return
+		mtproxy_start "$instance"
+	else
+		config_foreach mtproxy_start mtproxy
+	fi
+}
