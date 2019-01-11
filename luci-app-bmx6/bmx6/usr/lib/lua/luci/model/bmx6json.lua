@@ -59,6 +59,7 @@ function get(field, host)
 
 	if json_url[1] == "http"  then
 		raw,err = wget(url..field,1000)
+		sys.exec("")
 	else
 
 		if json_url[1] == "exec" then
