@@ -1112,7 +1112,7 @@ mwan3_set_iface_hotplug_state() {
 mwan3_get_iface_hotplug_state() {
 	local iface=$1
 
-	cat $MWAN3_STATUS_DIR/iface_state/$iface 2>/dev/null || echo "unknown"
+	cat $MWAN3_STATUS_DIR/iface_state/$iface 2>/dev/null || echo "offline"
 }
 
 mwan3_report_iface_status()
@@ -1135,7 +1135,7 @@ mwan3_report_iface_status()
 	fi
 
 	if [ -z "$id" -o -z "$device" ]; then
-		result="unknown"
+		result="offline"
 	elif [ -n "$($IP rule | awk '$1 == "'$(($id+1000)):'"')" ] && \
 		[ -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" ] && \
 		[ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] && \
