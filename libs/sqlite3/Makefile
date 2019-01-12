@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlite
 PKG_VERSION:=3260000
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_VERSION).tar.gz
 PKG_HASH:=5daa6a3fb7d1e8c767cd59c4ded8da6e4b00c61d3b466d0685e35c4dd6d7bf5d
@@ -20,13 +20,25 @@ PKG_LICENSE_FILES:=
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-autoconf-$(PKG_VERSION)
 
+PKG_BUILD_PARALLEL:=1
+
+PKG_CPE_ID:=cpe:/a:sqlite:sqlite
+
 PKG_FIXUP:=autoreconf
 
 PKG_INSTALL:=1
 
 PKG_CONFIG_DEPENDS := \
-	CONFIG_SQLITE_FTS3 \
-	CONFIG_SQLITE_RTREE
+	CONFIG_SQLITE3_DYNAMIC_EXTENSIONS \
+	CONFIG_SQLITE3_FTS3 \
+	CONFIG_SQLITE3_FTS4 \
+	CONFIG_SQLITE3_FTS5 \
+	CONFIG_SQLITE3_JSON1 \
+	CONFIG_SQLITE3_LIBEDIT \
+	CONFIG_SQLITE3_READLINE \
+	CONFIG_SQLITE3_RTREE \
+	CONFIG_SQLITE3_SESSION \
+	CONFIG_SQLITE3_THREADSAFE
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -57,14 +69,18 @@ $(call Package/sqlite3/Default/description)
 endef
 
 define Package/libsqlite3/config
-  source "$(SOURCE)/Config.in"
+  source "$(SOURCE)/Config-lib.in"
 endef
 
 define Package/sqlite3-cli
   $(call Package/sqlite3/Default)
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libsqlite3 +libncurses +libreadline
+  DEPENDS := \
+	  +libsqlite3 \
+	  +SQLITE3_LIBEDIT:libedit \
+	  +SQLITE3_READLINE:libreadline \
+	  +SQLITE3_READLINE:libncursesw
   TITLE+= (cli)
 endef
 
@@ -75,31 +91,42 @@ $(call Package/sqlite3/Default/description)
  formats.
 endef
 
+define Package/sqlite3-cli/config
+  source "$(SOURCE)/Config-cli.in"
+endef
+
 TARGET_CFLAGS += \
-	-DHAVE_ISNAN=1 \
-	-DHAVE_MALLOC_USABLE_SIZE=1 \
-	-DSQLITE_ENABLE_UNLOCK_NOTIFY=1
-
-ifneq ($(CONFIG_SQLITE_FTS3),y)
-TARGET_CFLAGS += -USQLITE_ENABLE_FTS3
-endif
-
-ifneq ($(CONFIG_SQLITE_RTREE),y)
-TARGET_CFLAGS += -USQLITE_ENABLE_RTREE
-endif
+	-DHAVE_ISNAN \
+	-DHAVE_MALLOC_USABLE_SIZE \
+	-DSQLITE_ENABLE_UNLOCK_NOTIFY
 
 CONFIGURE_ARGS += \
+	--disable-debug \
+	--disable-static-shell \
 	--enable-shared \
 	--enable-static \
-	--disable-editline \
-	--disable-static-shell
+	$(if $(CONFIG_SQLITE3_DYNAMIC_EXTENSIONS),--enable-dynamic-extensions,--disable-dynamic-extensions) \
+	$(if $(CONFIG_SQLITE3_FTS3),--enable-fts3,--disable-fts3) \
+	$(if $(CONFIG_SQLITE3_FTS3),--enable-fts4,--disable-fts4) \
+	$(if $(CONFIG_SQLITE3_FTS3),--enable-fts5,--disable-fts5) \
+	$(if $(CONFIG_SQLITE3_JSON1),--enable-json1,--disable-json1) \
+	$(if $(CONFIG_SQLITE3_RTREE),--enable-rtree,--disable-rtree) \
+	$(if $(CONFIG_SQLITE3_SESSION),--enable-session,--disable-session) \
+	$(if $(CONFIG_SQLITE3_THREADSAFE),--enable-threadsafe,--disable-threadsafe)
+
+ifeq ($(CONFIG_SQLITE3_LIBEDIT),y)
+CONFIGURE_ARGS+=--disable-readline
+else ifeq ($(CONFIG_SQLITE3_READLINE),y)
+CONFIGURE_ARGS+=--disable-editline
+else
+CONFIGURE_ARGS+=--disable-editline --disable-readline
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/sqlite3{,ext}.h $(1)/usr/include/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsqlite3.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/sqlite3{,ext}.h $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsqlite3.{a,so*} $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/sqlite3.pc $(1)/usr/lib/pkgconfig/
 endef
 
