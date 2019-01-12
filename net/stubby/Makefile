@@ -10,7 +10,7 @@ PKG_RELEASE:=3
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=David Mora <iamperson347+public@gmail.com>, Jonathan Underwood <jonathan.underwood@gmail.com>
+PKG_MAINTAINER:=Jonathan Underwood <jonathan.underwood@gmail.com>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
