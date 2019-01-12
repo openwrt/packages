@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmicrohttpd
-PKG_VERSION:=0.9.62
+PKG_VERSION:=0.9.60
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/libmicrohttpd
-PKG_HASH:=bd3e097d703f5091a6a01b56c0464a90fdd17f5d50478cea50a346b25c88db49
+PKG_HASH:=cd0e5d3f95a9e55ef7cdf4d0530e997ba00b8411af9149d9287db785d729c471
 
 PKG_MAINTAINER:=Alexander Couzens <lynxis@fe80.eu>
 
