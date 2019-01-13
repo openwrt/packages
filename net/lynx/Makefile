@@ -11,9 +11,13 @@ PKG_VERSION:=2.8.9rel.1
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Leonid Esman <leonid.esman@gmail.com>
 PKG_SOURCE:=$(PKG_NAME)$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://invisible-mirror.net/archives/lynx/tarballs/
+PKG_SOURCE_URL:=https://invisible-mirror.net/archives/lynx/tarballs/ \
+                https://ftp.icm.edu.pl/packages/lynx/tarballs/ \
+                http://ftp.oregonstate.edu/pub/blfs/conglomeration/lynx/ \
+                https://ftp.osuosl.org/pub/blfs/conglomeration/lynx/ \
+                https://fossies.org/linux/www/
 PKG_HASH:=387f193d7792f9cfada14c60b0e5c0bff18f227d9257a39483e14fa1aaf79595
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)$(PKG_VERSION)
 # try current development version
