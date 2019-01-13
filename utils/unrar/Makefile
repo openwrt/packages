@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unrar
 PKG_VERSION:=5.6.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=unrarsrc-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.rarlab.com/rar
@@ -57,6 +57,11 @@ define Package/libunrar/description
   UnRAR library is a shared library that provides file extraction from RAR
   archives
 endef
+
+ifeq ($(CONFIG_USE_UCLIBCXX),y)
+TARGET_LDFLAGS +=-nodefaultlibs
+endif
+TARGET_CXXFLAGS +=-fno-rtti
 
 MAKE_FLAGS += \
 	LDFLAGS="$(TARGET_LDFLAGS) -lpthread"
