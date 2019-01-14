@@ -29,7 +29,7 @@ index ce05191c..afd2eb19 100644
 +     * makes it possible to, e.g., assign /32 addresses on a mesh interface and
 +     * have routing work.
 +     */
-+    if (!neigh_find2(&p->p, &r->next_hop, r->neigh->ifa->iface, 0))
++    if (!neigh_find(&p->p, r->next_hop, r->neigh->ifa->iface, 0))
 +	    a0.nh.flags = RNF_ONLINK;
 +
      rta *a = rta_lookup(&a0);
