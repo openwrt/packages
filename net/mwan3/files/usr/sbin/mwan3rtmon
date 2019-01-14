@@ -25,7 +25,8 @@ main() {
 	sleep 3
 	while mwan3_rtmon_ipv4 || mwan3_rtmon_ipv6; do
 		[ "$rtmon_interval" = "0" ] && break
-		sleep $rtmon_interval
+		sleep "$rtmon_interval" &
+		wait
 	done
 }
 
