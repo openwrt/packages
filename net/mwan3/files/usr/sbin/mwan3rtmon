@@ -23,11 +23,16 @@ main() {
 	config_get rtmon_interval globals rtmon_interval '5'
 
 	sleep 3
-	while mwan3_rtmon_ipv4 || mwan3_rtmon_ipv6; do
+	while true; do
+		mwan3_lock
+		[ mwan3_remon_ipv4 = "1" ] || \
+		[ mwan3_rtmon_ipv6 = "1" ] && break
+		mwan3_unlock
 		[ "$rtmon_interval" = "0" ] && break
 		sleep "$rtmon_interval" &
 		wait
 	done
+	mwan3_unlock
 }
 
 main "$@"
