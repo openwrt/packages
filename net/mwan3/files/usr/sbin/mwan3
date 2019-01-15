@@ -136,7 +136,7 @@ stop()
 {
 	local ipset route rule table IP IPT pid
 
-	mwan3_lock
+	mwan3_lock "command" "mwan3"
 
 	for pid in $(pgrep -f "mwan3rtmon"); do
 		kill -TERM "$pid" > /dev/null 2>&1
@@ -186,7 +186,7 @@ stop()
 		$IPS -q destroy $ipset
 	done
 
-	mwan3_unlock
+	mwan3_unlock "command" "mwan3"
 
 	mwan3_lock_clean
 	rm -rf $MWAN3_STATUS_DIR $MWAN3TRACK_STATUS_DIR
