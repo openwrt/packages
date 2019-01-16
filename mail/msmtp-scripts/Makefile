@@ -41,7 +41,7 @@ endef
 
 define Package/msmtpq-ng
 $(call Package/msmtp-scripts/Default)
-  DEPENDS+= @(PACKAGE_msmtp||PACKAGE_msmtp-nossl)
+  DEPENDS+= +msmtp
   TITLE+= (msmtpq-ng wrappers)
 endef
 
@@ -61,6 +61,12 @@ $(call Package/msmtp-scripts/Default)
   TITLE+= (as MTA)
   DEPENDS+=+msmtpq-ng
   USERID:=msmtp=482:msmtp=482
+  ALTERNATIVES:=\
+    400:/usr/sbin/sendmail:/usr/bin/msmtpq-ng-mta \
+    400:/usr/lib/sendmail:/usr/bin/msmtpq-ng-mta \
+    400:/usr/sbin/mailq:/usr/bin/msmtpq-ng-queue-mta \
+    400:/usr/sbin/postqueue:/usr/bin/msmtpq-ng-queue-mta \
+    400:/usr/sbin/postsuper:/usr/sin/msmtpq-ng-queue-mta
 endef
 
 define Package/msmtp-queue-mta/conffiles
@@ -126,11 +132,6 @@ define Package/msmtpq-ng-mta/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/msmtpq-ng-mta/msmtpq-ng-queue-mta $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/crontabs
 	$(INSTALL_BIN) ./files/msmtpq-ng-mta.init $(1)/etc/init.d/msmtpq-ng-mta
-	ln -sf ../bin/msmtpq-ng-mta $(1)/usr/sbin/sendmail
-	ln -sf ../bin/msmtpq-ng-mta $(1)/usr/lib/sendmail
-	ln -sf ../bin/msmtpq-ng-queue-mta $(1)/usr/sbin/mailq
-	ln -sf ../bin/msmtpq-ng-queue-mta $(1)/usr/sbin/postqueue
-	ln -sf ../bin/msmtpq-ng-queue-mta $(1)/usr/sbin/postsuper
 endef
 
 define Package/msmtpq-ng-mta-smtpd/install
