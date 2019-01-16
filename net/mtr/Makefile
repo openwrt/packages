@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mtr
 PKG_VERSION:=0.92
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.bitwizard.nl/mtr/files
@@ -25,6 +25,16 @@ PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
+
+# Creation of .tarball-version is an attempt to make it explicit to configure
+# script the program version.  See discussions at link [1] for more details
+#
+#  [1] mtr: add autoreconf, https://github.com/openwrt/packages/pull/6962#issuecomment-419156300
+#
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	echo "$(PKG_VERSION)" >$(PKG_BUILD_DIR)/.tarball-version
+endef
 
 define Package/mtr
   SECTION:=net
