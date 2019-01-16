@@ -1,7 +1,5 @@
 #!/bin/sh
 
-. /lib/functions.sh
-
 nut_driver_config() {
 	local cfg="$1"
 	local nomatch="$2"
@@ -10,23 +8,19 @@ nut_driver_config() {
 	config_get vendorid "$cfg" vendorid
 	config_get productid "$cfg" productid
 
-	[ "$ACTION" = "add" ] &&[ -n "$DEVNAME" ] && {
+	[ "$ACTION" = "add" ] && [ -n "$DEVNAME" ] && {
 		chmod 0660 /dev/"$DEVNAME"
-		chown ${runas:-root}:$(id -gn "${runas:-root}") /dev/"$DEVNAME"
+		chown "${runas:-root}":"$(id -gn "${runas:-root}")" /dev/"$DEVNAME"
 	}
 
 	if [ "$nomatch" = "1" ]; then
 		[ "$ACTION" = "add" ] && {
 			/etc/init.d/nut-server start "$cfg"
 		}
-		[ "$ACTION" = "remove" ] && {
-			/etc/init.d/nut-server stop "$cfg"
-		}
 	elif [ "$(printf "%04x" 0x"$pvendid")" = "$vendorid" ] && \
 		[ "$(printf "%04x" 0x"$pprodid")" = "$productid" ]; then
 			[ "$ACTION" = "add" ] && {
 				/etc/init.d/nut-server start "$cfg"
-				/etc/init.d/nut-server reload upsd
 			}
 			[ "$ACTION" = "remove" ] && {
 				/etc/init.d/nut-server stop "$cfg"
@@ -36,6 +30,8 @@ nut_driver_config() {
 }
 
 perform_libhid_action() {
+	. /lib/functions.sh
+
 	local vendorid productid runas
 	local pvendid pprodid found
 
@@ -47,6 +43,7 @@ perform_libhid_action() {
 	config_load nut_server
 	config_foreach nut_driver_config driver 0
 	[ "$found" != "1" ] && config_foreach nut_driver_config driver 1
+	/etc/init.d/nut-server start upsd
 }
 
 [ -n "$PRODUCT" ] && case "$PRODUCT" in
