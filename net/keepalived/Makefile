@@ -15,6 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.keepalived.org/software
 PKG_HASH:=bce45d6d5cf3620bfd88472ec839a75b5a14a54fda12d09e890670244873b8ab
 
+PKG_CPE_ID:=cpe:/a:keepalived:keepalived
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Ben Kelly <ben@benjii.net> \
