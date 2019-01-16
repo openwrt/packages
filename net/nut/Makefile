@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
 PKG_VERSION:=2.7.4
-PKG_RELEASE:=14
+PKG_RELEASE:=15
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.networkupstools.org/source/2.7/
@@ -73,12 +73,12 @@ define Package/nut-server/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/cmdvartab $(1)/usr/share/nut/
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nut_server $(1)/etc/config/nut_server
-	ln -sf /var/etc/nut/upsd.users  $(1)/etc/nut/upsd.users
-	ln -sf /var/etc/nut/upsd.conf $(1)/etc/nut/upsd.conf
+	ln -sf ../../var/etc/nut/upsd.users  $(1)/etc/nut/upsd.users
+	ln -sf ../../var/etc/nut/upsd.conf $(1)/etc/nut/upsd.conf
 	# Driver common portion
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/upsdrvctl $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/nut/driver.list $(1)/usr/share/nut/
-	ln -sf /var/etc/nut/ups.conf $(1)/etc/nut/ups.conf
+	ln -sf ../../var/etc/nut/ups.conf $(1)/etc/nut/ups.conf
 	# Mangle libhid.usermap into a format (hotplug shell script) useful for OpenWrt
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/tty
@@ -376,10 +376,10 @@ define DriverPackage
 	# new version of nut we will need to provide descriptions for any new
 	# drivers.
         define Package/nut-driver-$(2)/description
-		
+
         endef
         define Package/nut-driver-$(2)/install
-        	$(INSTALL_DIR) $$(1)/lib/nut
+		$(INSTALL_DIR) $$(1)/lib/nut
 		$(CP) $$(PKG_INSTALL_DIR)/lib/nut/$(2) $$(1)/lib/nut/
 		$(if $(filter $(2),clone),$(CP) $$(PKG_INSTALL_DIR)/lib/nut/$(2)-outlet $$(1)/lib/nut/)
         endef

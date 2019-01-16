@@ -4,6 +4,7 @@
 #config driver 'upsname'
 #	option driver usbhid-ups
 #	option port auto
+#	option enable_usb_serial 0
 
 #config user
 #	option username upsuser
