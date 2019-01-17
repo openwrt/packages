@@ -8,15 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=diffutils
-PKG_VERSION:=3.6
+PKG_VERSION:=3.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/diffutils
-PKG_HASH:=d621e8bdd4b573918c8145f7ae61817d1be9deb4c8d2328a65cea8e11d783bd6
+PKG_HASH:=b3a7a6221c3dc916085f0d205abf6b8e1ba443d4dd965118da364a1dc1cb3a26
+
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 PKG_LICENSE:=GPL-3.0
+PKG_LICENSE_FILES:=COPYING
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -37,7 +40,6 @@ endef
 CONFIGURE_VARS += \
 	gl_cv_func_getopt_gnu=yes \
 	ac_cv_func_mempcpy=n
-TARGET_CFLAGS += --std=gnu99
 
 define Package/diffutils/install
 	$(INSTALL_DIR) $(1)/usr/bin
