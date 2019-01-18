@@ -9,31 +9,40 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bonnie++
 PKG_VERSION:=1.97.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://www.coker.com.au/bonnie++/
+PKG_SOURCE_URL:=https://www.coker.com.au/bonnie++/
 PKG_HASH:=e27b386ae0dc054fa7b530aab6bdead7aea6337a864d1f982bc9ebacb320746e
+
+PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=copyright.txt
-PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_BUILD_PARALLEL:=1
+PKG_FIXUP:=autoreconf
 
+include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/bonniexx
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libstdcpp +libpthread
+  DEPENDS:=$(CXX_DEPENDS) +libpthread
   TITLE:=Bonnie++ - hard drive bottleneck testing program.
-  URL:=http://www.coker.com.au/bonnie++/
+  URL:=https://www.coker.com.au/bonnie++/
 endef
 
 define Package/bonniexx/description
   Bonnie++ is a benchmark suite that is aimed at performing a number of simple
   tests of hard drive and file system performance.
 endef
+
+ifeq ($(CONFIG_USE_UCLIBCXX),y)
+TARGET_LDFLAGS +=-nodefaultlibs
+endif
+
+TARGET_CXXFLAGS +=-fno-rtti
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
