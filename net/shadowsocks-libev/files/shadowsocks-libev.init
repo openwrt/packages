@@ -157,7 +157,12 @@ ss_rules() {
 	ss_redir_servers="$(echo "$ss_redir_servers" | tr ' ' '\n' | sort -u)"
 	[ "$dst_forward_recentrst" = 0 ] || args="$args --dst-forward-recentrst"
 
-	"$bin" \
+	ss_rules_call
+	ss_rules_call -6
+}
+
+ss_rules_call() {
+	"$bin" "$@" \
 			-s "$ss_redir_servers" \
 			-l "$local_port_tcp" \
 			-L "$local_port_udp" \
@@ -174,7 +179,7 @@ ss_rules() {
 			--ifnames "$ifnames" \
 			--ipt-extra "$ipt_args" \
 			$args \
-		|| "$bin" -f
+		|| "$bin" "$@" -f
 }
 
 start_service() {
@@ -280,13 +285,13 @@ validate_ss_rules_section() {
 		'disabled:bool:0' \
 		'redir_tcp:uci("shadowsocks-libev", "@ss_redir")' \
 		'redir_udp:uci("shadowsocks-libev", "@ss_redir")' \
-		'src_ips_bypass:or(ip4addr,cidr4)' \
-		'src_ips_forward:or(ip4addr,cidr4)' \
-		'src_ips_checkdst:or(ip4addr,cidr4)' \
+		'src_ips_bypass:or(ipaddr,cidr)' \
+		'src_ips_forward:or(ipaddr,cidr)' \
+		'src_ips_checkdst:or(ipaddr,cidr)' \
 		'dst_ips_bypass_file:file' \
-		'dst_ips_bypass:or(ip4addr,cidr4)' \
+		'dst_ips_bypass:or(ipaddr,cidr)' \
 		'dst_ips_forward_file:file' \
-		'dst_ips_forward:or(ip4addr,cidr4)' \
+		'dst_ips_forward:or(ipaddr,cidr)' \
 		'src_default:or("bypass", "forward", "checkdst"):checkdst' \
 		'dst_default:or("bypass", "forward"):bypass' \
 		'local_default:or("bypass", "forward", "checkdst"):bypass' \
