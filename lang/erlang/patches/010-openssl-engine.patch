@@ -1,0 +1,80 @@
+--- a/lib/crypto/c_src/crypto.c
++++ b/lib/crypto/c_src/crypto.c
+@@ -41,6 +41,7 @@
+ #include <openssl/des.h>
+ #endif /* #ifndef OPENSSL_NO_DES */
+ /* #include <openssl/idea.h> This is not supported on the openssl OTP requires */
++#include <openssl/dh.h>
+ #include <openssl/dsa.h>
+ #include <openssl/rsa.h>
+ #include <openssl/aes.h>
+@@ -197,8 +198,10 @@
+ /* If OPENSSL_NO_EC is set, there will be an error in ec.h included from engine.h
+    So if EC is disabled, you can't use Engine either....
+ */
++#if !defined(OPENSSL_NO_ENGINE)
+ # define HAS_ENGINE_SUPPORT
+ #endif
++#endif
+ 
+ 
+ #if defined(HAS_ENGINE_SUPPORT)
+@@ -1186,7 +1189,11 @@ static int initialize(ErlNifEnv* env, ERL_NIF_TERM load_info)
+ #ifdef OPENSSL_THREADS
+     if (nlocks > 0) {
+ 	CRYPTO_set_locking_callback(ccb->locking_function);
++#if OPENSSL_VERSION_NUMBER < 0x10000000
+ 	CRYPTO_set_id_callback(ccb->id_function);
++#else
++	CRYPTO_THREADID_set_callback(ccb->id_function);
++#endif
+ 	CRYPTO_set_dynlock_create_callback(ccb->dyn_create_function);
+ 	CRYPTO_set_dynlock_lock_callback(ccb->dyn_lock_function);
+ 	CRYPTO_set_dynlock_destroy_callback(ccb->dyn_destroy_function);
+--- a/lib/crypto/c_src/crypto_callback.c
++++ b/lib/crypto/c_src/crypto_callback.c
+@@ -115,10 +115,17 @@ static void locking_function(int mode, int n, const char *file, int line)
+     locking(mode, lock_vec[n]);
+ }
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10000000
+ static unsigned long id_function(void)
+ {
+     return (unsigned long) enif_thread_self();
+ }
++#else
++static void id_function(CRYPTO_THREADID *id)
++{
++    CRYPTO_THREADID_set_numeric(id, (unsigned long) enif_thread_self());
++}
++#endif
+ 
+ /* Dynamic locking, not used by current openssl version (0.9.8)
+  */
+--- a/lib/crypto/c_src/crypto_callback.h
++++ b/lib/crypto/c_src/crypto_callback.h
+@@ -36,7 +36,11 @@ struct crypto_callbacks
+     /* openssl callbacks */
+   #ifdef OPENSSL_THREADS
+     void (*locking_function)(int mode, int n, const char *file, int line);
++  #if OPENSSL_VERSION_NUMBER < 0x10000000
+     unsigned long (*id_function)(void);
++  #else
++    void (*id_function)(CRYPTO_THREADID *id);
++  #endif
+     struct CRYPTO_dynlock_value* (*dyn_create_function)(const char *file,
+ 							int line);
+     void (*dyn_lock_function)(int mode, struct CRYPTO_dynlock_value* ptr,
+--- a/lib/crypto/c_src/otp_test_engine.c
++++ b/lib/crypto/c_src/otp_test_engine.c
+@@ -42,8 +42,10 @@
+ 	&& !defined(OPENSSL_NO_EC) \
+ 	&& !defined(OPENSSL_NO_ECDH) \
+ 	&& !defined(OPENSSL_NO_ECDSA)
++#if !defined(OPENSSL_NO_ENGINE)
+ # define HAVE_EC
+ #endif
++#endif
+ 
+ #if defined(HAVE_EC)
+ /* If OPENSSL_NO_EC is set, there will be an error in ec.h included from engine.h
