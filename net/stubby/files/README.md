@@ -307,6 +307,13 @@ This option specifies the location for storing stubby runtime data. In
 particular, if DNSSEC is turned on, stubby will store its automatically
 retrieved trust anchor data here. The default value is `'/var/lib/stubby'`.
 
+#### `option trust_anchors_backoff_time`
+
+When Zero configuration DNSSEC failed, because of network unavailability or
+failure to write to the appdata directory, stubby will backoff trying to refetch
+the DNSSEC trust-anchor for a specified amount of time expressed in milliseconds
+(which defaults to two and a half seconds).
+
 #### `option dnssec_trust_anchors`
 
 This option sets the location of the file containing the trust anchor data used
