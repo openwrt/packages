@@ -280,6 +280,7 @@ define GoPackage/Package/Install/Bin
 	if [ -n "$(call GoPackage/has_binaries)" ]; then \
 		$(INSTALL_DIR) $(1)/usr/bin ; \
 		$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/* $(1)/usr/bin/ ; \
+		upx --lzma -9 $(1)/usr/bin/* ; \
 	fi
 endef
 
