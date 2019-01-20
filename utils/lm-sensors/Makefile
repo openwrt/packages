@@ -12,7 +12,7 @@ PKG_VERSION:=3.5.0
 PKG_RELEASE:=1
 
 PKG_VERSION_SUBST=$(subst .,-,$(PKG_VERSION))
-PKG_SOURCE_URL:=https://github.com/lm-sensors/lm-sensors/archive/V$(PKG_VERSION_SUBST)/lm-sensors
+PKG_SOURCE_URL:=https://codeload.github.com/lm-sensors/lm-sensors/tar.gz/V$(PKG_VERSION_SUBST)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=f671c1d63a4cd8581b3a4a775fd7864a740b15ad046fe92038bcff5c5134d7e0
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION_SUBST)
@@ -50,6 +50,7 @@ define Package/libsensors
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=libsensors
+  ABI_VERSION:=5
 endef
 
 define Package/lm-sensors/description
