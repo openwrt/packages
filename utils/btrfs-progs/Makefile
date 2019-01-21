@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btrfs-progs
-PKG_VERSION:=4.19.1
+PKG_VERSION:=4.20
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs
-PKG_HASH:=04d82af5cf479d139299a8f13ec0921f9578ca444e81ec0202f01a20d2bcefb8
+PKG_HASH:=96a4209ea9b3ea8dacbca04a467babf3422b7aee9532d923957c6af28e5f7d3d
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
