@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gitolite
-PKG_VERSION:=3.6.10
+PKG_VERSION:=3.6.11
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=0ae3bea637b25cff13826e5ecd181c7b74a6eff377cf4c2243d85c2b0a290d3f
+PKG_HASH:=2166a61b14de19e605b14f4a13a070fbfd5ecd247b6fd725108f111198a2c121
 PKG_SOURCE_URL:=https://codeload.github.com/sitaramc/gitolite/tar.gz/v$(PKG_VERSION)?
 
 include $(INCLUDE_DIR)/package.mk
