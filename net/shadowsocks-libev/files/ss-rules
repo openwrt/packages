@@ -101,7 +101,7 @@ o_src_default=bypass
 o_dst_default=bypass
 o_local_default=bypass
 
-alias grep_af="sed -nre '/^([0-9]+\.){3}[0-9]+$/p'"
+alias grep_af="sed -ne '/:/!p'"
 o_dst_bypass_="$o_dst_bypass4_"
 if [ -n "$o_use_ipv6" ]; then
 	alias grep_af="sed -ne /:/p"
@@ -183,8 +183,8 @@ ss_rules_ipset_mkadd() {
 	local i
 
 	for i in $*; do
-		echo "$i"
-	done | grep_af | sed -e "s/^/add $setname /"
+		echo "add $setname $i"
+	done | grep_af
 }
 
 ss_rules_iptchains_init() {
