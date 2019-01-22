@@ -4,7 +4,8 @@
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
-START=60
+START=87
+STOP=23
 USE_PROCD=1
 
 DEFAULT=/etc/default/nut
@@ -17,11 +18,11 @@ nut_upscgi_upsset() {
 
 	config_get_bool enable "$cfg" enable 0
 
-	[ $enable -eq 1 ] && {
+	if [ "$enable" -eq 1 ]; then
 		ln -sf /etc/nut/upsset.conf.enable "$UPSCGI_S"
-	} || {
+	else
 		ln -sf /etc/nut/upsset.conf.disable "$UPSCGI_S"
-	}
+	fi
 }
 
 nut_upscgi_add() {
