@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.3.2"
+trm_ver="1.3.3"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -148,7 +148,10 @@ f_check()
 	then
 		trm_ifstatus="false"
 	else
-		ubus call network reload
+		if [ "${status}" = "false" ]
+		then
+			ubus call network reload
+		fi
 	fi
 	while [ ${wait} -le ${trm_maxwait} ]
 	do
@@ -300,6 +303,7 @@ f_main()
 	local sta sta_essid sta_bssid sta_radio sta_iface active_essid active_bssid active_radio active_prio
 
 	f_check "initial"
+	f_log "debug" "f_main ::: status: ${trm_ifstatus}, proactive: ${trm_proactive}"
 	if [ "${trm_ifstatus}" != "true" ] || [ ${trm_proactive} -eq 1 ]
 	then
 		config_load wireless
@@ -320,7 +324,7 @@ f_main()
 		f_log "debug" "f_main ::: iwinfo: ${trm_iwinfo:-"-"}, dev_list: ${trm_devlist:-"-"}, sta_list: ${trm_stalist:0:800}, faulty_list: ${faulty_list:-"-"}"
 		for dev in ${trm_devlist}
 		do
-			f_log "debug" "f_main ::: dev: ${dev}"
+			f_log "debug" "f_main ::: device: ${dev}"
 			if [ -z "$(printf "%s" "${trm_stalist}" | grep -o "\-${dev}")" ]
 			then
 				f_log "debug" "f_main ::: no station on '${dev}' - continue"
@@ -347,12 +351,12 @@ f_main()
 						([ "${dev}" != "${active_radio}" ] && [ "${active_prio}" = "true" ])
 					then
 						active_prio="true"
-						f_log "debug" "f_main ::: active station prioritized '${active_radio}/${active_essid}/${active_bssid:-"-"}' - break"
-						break
+						f_log "debug" "f_main ::: active station prioritized '${active_radio}/${active_essid}/${active_bssid:-"-"}' - continue"
+						continue 3
 					fi
 					if [ -z "${scan_list}" ]
 					then
-						scan_list="$(f_trim "$(${trm_iwinfo} "${dev}" scan 2>/dev/null | \
+						scan_list="$(f_trim "$("${trm_iwinfo}" "${dev}" scan 2>/dev/null | \
 							awk 'BEGIN{FS="[/ ]"}/Address:/{var1=$NF}/ESSID:/{var2="";for(i=12;i<=NF;i++) \
 							if(var2==""){var2=$i}else{var2=var2" "$i}}/Quality:/{printf "%i,%s,%s\n",(100/$NF*$(NF-1)),var1,var2}' | \
 							sort -rn | awk '{ORS=",";print $0}')")"
