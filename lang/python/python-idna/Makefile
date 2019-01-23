@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015-2018 OpenWrt.org
+# Copyright (C) 2015-2019 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -36,14 +36,14 @@ endef
 define Package/python-idna
 $(call Package/python-idna/Default)
   TITLE:=python-idna
-  DEPENDS:=+PACKAGE_python-idna:python-light
+  DEPENDS:=+PACKAGE_python-idna:python-light +PACKAGE_python-idna:python-codecs
   VARIANT:=python
 endef
 
 define Package/python3-idna
 $(call Package/python-idna/Default)
   TITLE:=python3-idna
-  DEPENDS:=+PACKAGE_python3-idna:python3-light
+  DEPENDS:=+PACKAGE_python3-idna:python3-light +PACKAGE_python3-idna:python3-codecs
   VARIANT:=python3
 endef
 
