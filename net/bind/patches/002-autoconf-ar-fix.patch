@@ -1,8 +1,6 @@
-Index: bind-9.11.5/configure.in
-===================================================================
---- bind-9.11.5.orig/configure.in
-+++ bind-9.11.5/configure.in
-@@ -181,26 +181,11 @@ esac
+--- a/configure.in
++++ b/configure.in
+@@ -182,26 +182,11 @@ esac
  #
  AC_CONFIG_FILES([make/rules make/includes])
  

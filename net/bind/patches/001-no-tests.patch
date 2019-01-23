@@ -1,7 +1,5 @@
-Index: bind-9.11.5/bin/Makefile.in
-===================================================================
---- bind-9.11.5.orig/bin/Makefile.in
-+++ bind-9.11.5/bin/Makefile.in
+--- a/bin/Makefile.in
++++ b/bin/Makefile.in
 @@ -12,7 +12,7 @@ VPATH =		@srcdir@
  top_srcdir =	@top_srcdir@
  
