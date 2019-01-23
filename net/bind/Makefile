@@ -9,7 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
-PKG_VERSION:=9.11.5-P1
+PKG_VERSION:=9.12.3-P1
 PKG_RELEASE:=1
 USERID:=bind=57:bind=57
 
@@ -20,13 +20,14 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 	https://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION) \
 	https://ftp.isc.org/isc/bind9/$(PKG_VERSION)
-PKG_HASH:=6cd6dbf016569f12d4a0ed629e44e895d9ed41c6908274ed2e617666c5491928
+PKG_HASH:=6cb79389d787368af27f01c65a9fa09be1fd062eda37c94819a1a0178d5ded73
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
 
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
+PKG_BUILD_PARALLEL:=1
 
 PKG_CONFIG_DEPENDS := \
 	CONFIG_BIND_ENABLE_FILTER_AAAA \
@@ -118,8 +119,7 @@ endef
 export BUILD_CC="$(TARGET_CC)"
 
 CONFIGURE_ARGS += \
-	--enable-shared \
-	--enable-static \
+	--enable-ipv6=$(if $(CONFIG_IPV6),yes,no) \
 	--with-randomdev="/dev/urandom" \
 	--disable-threads \
 	--disable-linux-caps \
