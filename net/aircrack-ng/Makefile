@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aircrack-ng
-PKG_VERSION:=1.4
+PKG_VERSION:=1.5.2
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/aircrack-ng/aircrack-ng/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=425122525e9c7dd8834d75b6716516f2b673342b7e04fa247ec277a8c8433b47
+PKG_HASH:=7e03f9828495a3a1a781ad79e41805971bf7347c092df852820232bca866a19b
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -38,7 +38,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/aircrack-ng
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+AIRCRACK_NG_HWLOC:libhwloc +libpcap +libpcre +libpthread
+  DEPENDS:=+AIRCRACK_NG_HWLOC:libhwloc +libpcap +libpcre +libpthread +libstdcpp
   DEPENDS += +AIRCRACK_NG_OPENSSL:libopenssl
   DEPENDS += +AIRCRACK_NG_GCRYPT:libgcrypt
   DEPENDS += +AIRCRACK_NG_SQLITE3:libsqlite3
@@ -91,7 +91,6 @@ ifeq ($(CONFIG_AIRCRACK_NG_OPTIMIZE_SPEED),y)
 endif
 
 TARGET_LDFLAGS+= \
-	-static-libstdc++ \
 	-Wl,--gc-sections
 
 define Package/aircrack-ng/install
