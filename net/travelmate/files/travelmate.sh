@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.3.3"
+trm_ver="1.3.4"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -108,7 +108,7 @@ f_prep()
 	local disabled="$(uci_get wireless "${config}" disabled)"
 	local eaptype="$(uci_get wireless "${config}" eap_type)"
 
-	if [ -z "${trm_radio}" ] && [ -z "$(printf "%s" "${trm_radiolist}" | grep -Fo " ${radio}")" ]
+	if [ -z "${trm_radio}" ] && [ -z "$(printf "%s" "${trm_radiolist}" | grep -Fo "${radio}")" ]
 	then
 		trm_radiolist="$(f_trim "${trm_radiolist} ${radio}")"
 	elif [ -n "${trm_radio}" ] && [ -z "${trm_radiolist}" ]
@@ -168,7 +168,7 @@ f_check()
 				for radio in ${trm_radiolist}
 				do
 					result="$(printf "%s" "${dev_status}" | jsonfilter -l1 -e "@.${radio}.up")"
-					if [ "${result}" = "true" ] && [ -z "$(printf "%s" "${trm_devlist}" | grep -Fo " ${radio}")" ]
+					if [ "${result}" = "true" ] && [ -z "$(printf "%s" "${trm_devlist}" | grep -Fo "${radio}")" ]
 					then
 						trm_devlist="$(f_trim "${trm_devlist} ${radio}")"
 					fi
@@ -300,7 +300,7 @@ f_log()
 f_main()
 {
 	local IFS cnt dev config scan scan_list scan_essid scan_bssid scan_quality faulty_list
-	local sta sta_essid sta_bssid sta_radio sta_iface active_essid active_bssid active_radio active_prio
+	local sta sta_essid sta_bssid sta_radio sta_iface active_essid active_bssid active_radio
 
 	f_check "initial"
 	f_log "debug" "f_main ::: status: ${trm_ifstatus}, proactive: ${trm_proactive}"
@@ -347,12 +347,10 @@ f_main()
 						f_log "debug" "f_main ::: faulty station '${sta_radio}/${sta_essid}/${sta_bssid:-"-"}' - continue"
 						continue
 					fi
-					if ([ "${dev}" = "${active_radio}" ] && [ "${sta_essid}" = "${active_essid}" ] && [ "${sta_bssid:-"-"}" = "${active_bssid}" ]) || \
-						([ "${dev}" != "${active_radio}" ] && [ "${active_prio}" = "true" ])
+					if [ "${dev}" = "${active_radio}" ] && [ "${sta_essid}" = "${active_essid}" ] && [ "${sta_bssid:-"-"}" = "${active_bssid}" ]
 					then
-						active_prio="true"
-						f_log "debug" "f_main ::: active station prioritized '${active_radio}/${active_essid}/${active_bssid:-"-"}' - continue"
-						continue 3
+						f_log "debug" "f_main ::: active station prioritized '${active_radio}/${active_essid}/${active_bssid:-"-"}' - break"
+						break 3
 					fi
 					if [ -z "${scan_list}" ]
 					then
@@ -361,6 +359,11 @@ f_main()
 							if(var2==""){var2=$i}else{var2=var2" "$i}}/Quality:/{printf "%i,%s,%s\n",(100/$NF*$(NF-1)),var1,var2}' | \
 							sort -rn | awk '{ORS=",";print $0}')")"
 						f_log "debug" "f_main ::: scan_list: ${scan_list:0:800}"
+						if [ -z "${scan_list}" ]
+						then
+							f_log "debug" "f_main ::: no scan results on '${dev}' - continue"
+							continue 3
+						fi
 					fi
 					IFS=","
 					for scan in ${scan_list}
