@@ -53,7 +53,6 @@ COLLECTD_PLUGINS_DISABLED:= \
 	ipvs \
 	java \
 	log_logstash \
-	lua \
 	lvm \
 	lpar \
 	madwifi \
@@ -138,6 +137,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	iwinfo \
 	load \
 	logfile \
+	lua \
 	match_empty_counter \
 	match_hashed \
 	match_regex \
@@ -196,7 +196,11 @@ endef
 
 define Package/collectd
 $(call Package/collectd/Default)
-  DEPENDS:= +libpthread +zlib +libltdl +libip4tc
+  DEPENDS:= +libpthread \
+	  +zlib \
+	  +libltdl \
+	  +libip4tc \
+	  +PACKAGE_collectd-mod-lua:liblua
   MENU:=1
 endef
 
@@ -226,7 +230,12 @@ CONFIGURE_ARGS+= \
 CONFIGURE_VARS+= \
 	CFLAGS="$$$$CFLAGS $(FPIC)" \
 	LDFLAGS="$$$$LDFLAGS -lm -lz" \
-	KERNEL_DIR="$(LINUX_DIR)" \
+	KERNEL_DIR="$(LINUX_DIR)"
+
+ifneq ($(CONFIG_PACKAGE_collectd-mod-lua),)
+CONFIGURE_VARS+= \
+	LDFLAGS="$$$$LDFLAGS -llua"
+endif
 
 ifneq ($(CONFIG_PACKAGE_COLLECTD_ENCRYPTED_NETWORK),)
 CONFIGURE_ARGS+= \
@@ -360,6 +369,7 @@ $(eval $(call BuildPlugin,irq,interrupt usage input,irq,))
 $(eval $(call BuildPlugin,iwinfo,libiwinfo wireless statistics,iwinfo,+PACKAGE_collectd-mod-iwinfo:libiwinfo))
 $(eval $(call BuildPlugin,load,system load input,load,))
 $(eval $(call BuildPlugin,logfile,log files output,logfile,))
+$(eval $(call BuildPlugin,lua,lua input/output,lua,+PACKAGE_collectd-mod-lua:liblua))
 $(eval $(call BuildPlugin,match-empty-counter,empty-counter match,match_empty_counter,))
 $(eval $(call BuildPlugin,match-hashed,hashed match,match_hashed,))
 $(eval $(call BuildPlugin,match-regex,regex match,match_regex,))
