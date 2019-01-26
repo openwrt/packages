@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gitolite
 PKG_VERSION:=3.6.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=2166a61b14de19e605b14f4a13a070fbfd5ecd247b6fd725108f111198a2c121
@@ -21,7 +21,21 @@ define Package/gitolite
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Version Control Systems
-  DEPENDS:=+perlbase-essential +perlbase-sys +perlbase-data +perlbase-digest +perlbase-env +perlbase-time +git +perlbase-findbin +perlbase-storable +perlbase-text +perlbase-getopt +perlbase-utf8 +openssh-keygen +openssh-server +openssh-moduli perl
+  DEPENDS:= \
+	+git \
+	+perlbase-essential \
+	+perlbase-data \
+	+perlbase-digest \
+	+perlbase-env \
+	+perlbase-findbin \
+	+perlbase-getopt \
+	+perlbase-mime \
+	+perlbase-storable \
+	+perlbase-sys \
+	+perlbase-text \
+	+perlbase-time \
+	+perlbase-utf8 \
+
   TITLE:=Easy administration of git repositories
   URL:=http://gitolite.com/gitolite
   MAINTAINER:=Daniel Dickinson <cshored@thecshore.com>
@@ -29,10 +43,11 @@ define Package/gitolite
 endef
 
 define Package/gitolite/description
-  Gitolite is a system for managing access to git repositories.  Note you will need to make
-  sure dropbear does not interfere with OpenSSH as gitolite depends on feature not in
-  dropbear (to my knowledge).
-  See https://openwrt.org/docs/guide-user/services/gitolite for a guide on installation.
+  Gitolite is a system for managing access to git repositories.
+  See https://openwrt.org/docs/guide-user/services/gitolite for a guide
+  to installation.
+  NB: You will need an SSH server to use gitolite: dropbear is now sufficient
+  for gitolite purposes.
 endef
 
 define Package/gitolite/postinst
