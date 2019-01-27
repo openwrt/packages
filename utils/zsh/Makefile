@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zsh
 PKG_VERSION:=5.6.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/zsh
@@ -47,8 +47,8 @@ define Build/Configure
 	$(call Build/Configure/Default, \
 		--disable-etcdir \
 		--disable-gdbm \
-		--enable-dynamic \
-		--enable-libc-musl \
+		--disable-dynamic \
+		$(if $(CONFIG_USE_MUSL),--enable-libc-musl) \
 		--enable-pcre \
 		--enable-cap \
 		--enable-multibyte \
@@ -83,6 +83,9 @@ define Build/Configure
 	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" prep
 endef
 
+TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
+TARGET_LDFLAGS += -Wl,--gc-sections -flto
+
 define Package/zsh/postinst
 #!/bin/sh
 grep zsh $${IPKG_INSTROOT}/etc/shells || \
@@ -97,11 +100,9 @@ endef
 define Package/zsh/install
 	$(INSTALL_DIR) $(1)/bin
 	$(INSTALL_DIR) $(1)/$(CONFIGURE_PREFIX)/bin
-	$(INSTALL_DIR) $(1)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)
 	$(INSTALL_DIR) $(1)/$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)
 
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/$(CONFIGURE_PREFIX)/bin/zsh $(1)/$(CONFIGURE_PREFIX)/bin/
-	$(CP) $(PKG_INSTALL_DIR)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/* $(1)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/
 	$(CP) $(PKG_INSTALL_DIR)/$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)/* $(1)/$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)/
 endef
 
