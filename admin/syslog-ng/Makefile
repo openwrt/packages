@@ -82,6 +82,8 @@ define Package/syslog-ng/install
 	$(INSTALL_DIR) $(1)/etc/syslog-ng.d
 	$(INSTALL_DATA) ./files/syslog-ng.conf $(1)/etc
 	touch $(1)/etc/syslog-ng.d/.keep
+
+	$(INSTALL_BIN) ./files/logread $(1)/usr/sbin
 endef
 
 define Package/syslog-ng/postinst
