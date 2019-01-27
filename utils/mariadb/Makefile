@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.2.19
-PKG_RELEASE:=4
+PKG_VERSION:=10.2.21
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := \
@@ -18,7 +18,7 @@ PKG_SOURCE_URL := \
 	https://ftp.yz.yamagata-u.ac.jp/pub/dbms/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
 	https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=c0e103cfd73ee96d58402073e9513f0f7b5c0bd216641faecc8d763fb6529727
+PKG_HASH:=637f0808b65ec06902897a2f885a60377828d019d35802402dca541f8113536c
 PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
 PKG_LICENSE:=GPL-2.0 LGPL-2.1
 PKG_LICENSE_FILES:=COPYING libmariadb/COPYING.LIB
@@ -520,6 +520,7 @@ define Package/libmariadb/install
 	$(INSTALL_DIR) $(1)$(CONF_DIR)/conf.d
 	$(INSTALL_DIR) $(1)$(PLUGIN_DIR)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{mariadb,mysqlclient}*.so* $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/caching_sha2_password.so $(1)$(PLUGIN_DIR)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/dialog.so $(1)$(PLUGIN_DIR)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/mysql_clear_password.so $(1)$(PLUGIN_DIR)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/sha256_password.so $(1)$(PLUGIN_DIR)
