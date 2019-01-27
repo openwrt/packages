@@ -8,18 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pciutils
-PKG_VERSION:=3.6.1
+PKG_VERSION:=3.6.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/utils/pciutils
-PKG_HASH:=fcc0431cc951c3563f1e4f946d27c8e2161cfd81f25316e6bd783fa6118469e0
-PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
+PKG_HASH:=db452ec986edefd88af0d222d22f6102f8030a8633fdfe846c3ae4bde9bb93f3
 
+PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_USE_MIPS16:=0
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -37,13 +38,13 @@ define Package/pciutils/description
  of PCI devices
 endef
 
-PCI_IDS_REV:=4ad9327b147ce7bb6ae27b68efe0c1d89d9eb9a1
-PCI_IDS_FILE:=pci.ids.$(PCI_IDS_REV)
+PCI_IDS_VER:=0.319
+PCI_IDS_FILE:=pci.ids.$(PCI_IDS_VER)
 define Download/pci_ids
   FILE:=$(PCI_IDS_FILE)
   URL_FILE:=pci.ids
-  URL:=@GITHUB/pciutils/pciids/$(PCI_IDS_REV)
-  HASH:=f8386c74ecc74f3c410b2f0f4885e7705c5dfcacd52fe924a931a63b246c8793
+  URL:=@GITHUB/vcrhonek/hwdata/v$(PCI_IDS_VER)
+  HASH:=54154a6955f550b110c6a216943dcd69ba6188e68b80bee6efbaa03ef0df0a5f
 endef
 $(eval $(call Download,pci_ids))
 
