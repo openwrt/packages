@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btrfs-progs
-PKG_VERSION:=4.20
+PKG_VERSION:=4.20.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs
-PKG_HASH:=96a4209ea9b3ea8dacbca04a467babf3422b7aee9532d923957c6af28e5f7d3d
+PKG_HASH:=562f5d1ff1d17867c4c2be2768c653b62f1f257c42f9bb3e1a36380c02ec4fcd
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
