@@ -80,6 +80,17 @@ TARGET_LDFLAGS += -L$(PKG_BUILD_DIR)
 # duplicate ld args for binaries.
 CONFIGURE_VARS += XLDFLAGS="$(TARGET_LDFLAGS)"
 
+# On uClibc, finite, isinf and isnan are not directly implemented as
+# functions. Instead math.h #define's these to __finite, __isinf and
+# __isnan, confusing the Ruby configure script. Tell it that they
+# really are available.
+ifeq ($(call qstrip,$(CONFIG_LIBC)),uClibc)
+CONFIGURE_VARS += \
+	ac_cv_func_finite=yes \
+	ac_cv_func_isinf=yes \
+	ac_cv_func_isnan=yes
+endif
+
 MAKE_FLAGS += \
 	DESTDIR="$(PKG_INSTALL_DIR)" \
 	SHELL="/bin/bash"
