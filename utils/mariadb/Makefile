@@ -211,10 +211,15 @@ endef
 
 define Package/libmariadb
   $(call Package/libmariadb/Default)
-  DEPENDS:=$(MARIADB_COMMON_DEPENDS)
+  DEPENDS:=+mariadb-common \
+	  $(MARIADB_COMMON_DEPENDS)
   TITLE:=MariaDB database client library
   MENU:=1
   PROVIDES:=libmariadbclient libmysqlclient libmysqlclient-r
+endef
+
+define Package/libmariadb/conffiles
+$(CONF_DIR)/conf.d/50-client.cnf
 endef
 
 define Package/libmariadb/description
@@ -256,7 +261,6 @@ define Package/mariadb-client-base
 endef
 
 define Package/mariadb-client-base/conffiles
-$(CONF_DIR)/conf.d/50-client.cnf
 $(CONF_DIR)/conf.d/50-mysql-clients.cnf
 endef
 
@@ -513,11 +517,13 @@ define Build/InstallDev
 endef
 
 define Package/libmariadb/install
+	$(INSTALL_DIR) $(1)$(CONF_DIR)/conf.d
 	$(INSTALL_DIR) $(1)$(PLUGIN_DIR)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{mariadb,mysqlclient}*.so* $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/dialog.so $(1)$(PLUGIN_DIR)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/mysql_clear_password.so $(1)$(PLUGIN_DIR)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/sha256_password.so $(1)$(PLUGIN_DIR)
+	$(INSTALL_CONF) conf/50-client.cnf $(1)$(CONF_DIR)/conf.d
 endef
 
 define Package/mariadb-client/install
@@ -531,7 +537,6 @@ endef
 
 define Package/mariadb-client-base/install
 	$(INSTALL_DIR) $(1)$(CONF_DIR)/conf.d
-	$(INSTALL_CONF) conf/50-client.cnf $(1)$(CONF_DIR)/conf.d
 	$(INSTALL_CONF) conf/50-mysql-clients.cnf $(1)$(CONF_DIR)/conf.d
 endef
 
