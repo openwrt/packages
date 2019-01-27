@@ -1,6 +1,6 @@
 --- a/core/Makefile
 +++ b/core/Makefile
-@@ -48,7 +48,7 @@ irssi/network-openssl.o: CFLAGS:=$(IRSSI_CFLAGS)
+@@ -49,7 +49,7 @@ irssi/network-openssl.o: CFLAGS:=$(IRSSI_CFLAGS)
  quasselc-connector.o: CFLAGS:=$(CFLAGS)
  
  $(TARGET): $(OBJECTS)
