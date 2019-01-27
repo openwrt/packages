@@ -1,0 +1,21 @@
+--- a/src/racoon/crypto_openssl.c
++++ b/src/racoon/crypto_openssl.c
+@@ -1087,7 +1087,7 @@ eay_strerror()
+ 	int line, flags;
+ 	unsigned long es;
+ 
+-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
++#if OPENSSL_VERSION_NUMBER >= 0x10000000L
+ 	es = 0; /* even when allowed by OPENSSL_API_COMPAT, it is defined as 0 */
+ #else
+ 	es = CRYPTO_thread_id();
+--- a/src/racoon/openssl_compat.h
++++ b/src/racoon/openssl_compat.h
+@@ -5,6 +5,7 @@
+ #if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 
+ #include <openssl/rsa.h>
++#include <openssl/bn.h>
+ #include <openssl/dh.h>
+ #include <openssl/evp.h>
+ #include <openssl/hmac.h>
