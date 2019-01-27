@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2010-2012 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,52 +6,68 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vips
-PKG_VERSION:=8.6.5
+PKG_VERSION:=8.7.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/jcupitt/libvips/releases/download/v8.6.5/
-PKG_HASH:=8702af0e340e220e0c08f8ded6c8248b18e7043938d9e8a2426631fd37a9d5db
-PKG_FIXUP:=autoreconf
-PKG_CHECK_FORMAT_SECURITY:=0
+PKG_SOURCE_URL:=https://github.com/libvips/libvips/releases/download/v$(PKG_VERSION)
+PKG_HASH:=ce7518a8f31b1d29a09b3d7c88e9852a5a2dcb3ee1501524ab477e433383f205
 
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_LICENSE:=LGPL-2.1+
+PKG_LICENSE_FILES:=COPYING
+
+PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
+PKG_INSTALL:=1
+
+include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-
-PKG_INSTALL=1
 
 define Package/vips
   $(call Package/vips/Default)
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=An image manipulation library
-  URL:=http://www.vips.ecs.soton.ac.uk/
-  MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-  DEPENDS:=+glib2 +libexif +libexpat +libjpeg +libpng +giflib +libstdcpp +libxml2 $(INTL_DEPENDS)
+  URL:=https://libvips.github.io/libvips/
+  DEPENDS:=+glib2 +libexif +libexpat +libjpeg +libpng +giflib +libxml2 $(CXX_DEPENDS) $(INTL_DEPENDS)
 endef
 
-TARGET_LDFLAGS+= \
-	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib
-
 CONFIGURE_ARGS += \
-	--disable-cxx \
-	--disable-threads \
+	--disable-debug \
+	--disable-gtk-doc-html \
+	--disable-magickload \
+	--disable-magicksave \
+	--without-analyze \
 	--without-cfitsio \
 	--without-fftw \
+	--without-gsf \
+	--without-imagequant \
 	--without-lcms \
+	--without-libwebp \
 	--without-magick \
+	--without-magickpackage \
 	--without-matio \
+	--without-nifti \
 	--without-OpenEXR \
+	--without-openslide \
 	--without-orc \
 	--without-pangoft2 \
-	--without-python \
+	--without-pdfium \
+	--without-poppler \
+	--without-ppm \
+	--without-radiance \
+	--without-rsvg \
 	--without-tiff \
-	--without-v4l \
 	--without-x \
-	--without-zip \
+	--without-zlib \
+	--with-giflib \
 	--with-jpeg \
 	--with-libexif \
 	--with-png \
+
+TARGET_CXXFLAGS += -fno-rtti
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/vips
