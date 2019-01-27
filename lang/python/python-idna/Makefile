@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-idna
 PKG_VERSION:=2.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=idna-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/f4/bd/0467d62790828c23c47fc1dfa1b1f052b24efdf5290f071c7a91d0d82fd3
@@ -37,14 +37,14 @@ endef
 define Package/python-idna
 $(call Package/python-idna/Default)
   TITLE:=python-idna
-  DEPENDS:=+PACKAGE_python-idna:python-light
+  DEPENDS:=+PACKAGE_python-idna:python-light +PACKAGE_python-idna:python-codecs
   VARIANT:=python
 endef
 
 define Package/python3-idna
 $(call Package/python-idna/Default)
   TITLE:=python3-idna
-  DEPENDS:=+PACKAGE_python3-idna:python3-light
+  DEPENDS:=+PACKAGE_python3-idna:python3-light +PACKAGE_python3-idna:python3-codecs
   VARIANT:=python3
 endef
 
