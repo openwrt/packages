@@ -31,6 +31,7 @@ define Package/lua-xavante
   TITLE:=Xavante Web Server
   URL:=https://keplerproject.github.io/xavante/
   DEPENDS:= +lua
+  PKGARCH:=all
 endef
 
 define Package/lua-xavante/description

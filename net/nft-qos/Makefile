@@ -23,6 +23,7 @@ define Package/nft-qos
   CATEGORY:=Base system
   DEPENDS:=+nftables +kmod-nft-netdev +kmod-nft-bridge
   TITLE:=QoS scripts over nftables
+  PKGARCH:=all
 endef
 
 define Package/nft-qos/description

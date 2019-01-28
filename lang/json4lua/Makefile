@@ -29,6 +29,7 @@ define Package/json4lua
   TITLE:=json4lua
   URL:=https://github.com/amrhassan/json4lua
   DEPENDS:=+lua +luasocket
+  PKGARCH:=all
 endef
 
 define Package/json4lua/description

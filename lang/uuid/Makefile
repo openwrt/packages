@@ -32,6 +32,7 @@ define Package/uuid
   TITLE:=uuid
   URL:=https://github.com/Tieske/uuid
   DEPENDS:=+lua +luasocket
+  PKGARCH:=all
 endef
 
 define Package/uuid/description

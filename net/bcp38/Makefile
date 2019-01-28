@@ -20,6 +20,7 @@ define Package/bcp38
   URL:=https://github.com/dtaht/ceropackages-3.10
   MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
   DEPENDS:=+ipset
+  PKGARCH:=all
 endef
 
 define Package/bcp38/description
