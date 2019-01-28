@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sane-backends
 PKG_VERSION:=1.0.27
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://fossies.org/linux/misc \
     https://alioth.debian.org/frs/download.php/file/4146/
@@ -126,11 +126,15 @@ $(call Package/sane-backends/Default)
   CATEGORY:=Utilities
   DEPENDS:=+libsane
   TITLE+= (network daemon)
+  ALTERNATIVES:=100:/usr/sbin/saned:/usr/sbin/saned.real
 endef
 
 define Package/sane-daemon/description
 $(call Package/sane-backends/Default/description)
 This package contains the SANE daemon.
+NB: If you plan on using a printer/scanner combo device with SANE
+and a print server such as p910nd you should also install
+printscan-helper.
 endef
 
 define Package/libsane
@@ -193,7 +197,7 @@ define Package/sane-daemon/install
 	$(INSTALL_DIR) $(1)/etc/sane.d
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/sane.d/saned.conf $(1)/etc/sane.d/
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/saned $(1)/usr/sbin/saned.real
 	$(INSTALL_DIR) $(1)/etc/xinetd.d
 	$(CP) ./files/xinet.d_sane-port $(1)/etc/xinetd.d/sane-port
 endef
