@@ -5,7 +5,7 @@ PKG_SOURCE_VERSION:=d80214febe4e0e4cc64dddc74e990b3c5ca8a5df
 # PKG_MIRROR_HASH:=4cbb9cf48f18fa87aa7c81bcff2372fc9c04c3688fb8dd4b2b57da258050179b
 
 PKG_VERSION:=0.10.2-git-20190128-$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -198,7 +198,7 @@ PLUGIN_dht-cli:=block_test
 DEPENDS_curl:=+libgnurl +jansson
 LIB_curl:=curl
 
-DEPENDS_hostlist:=+libmicrohttpd +gnunet-curl +ca-certificates
+DEPENDS_hostlist:=+libmicrohttpd-ssl +gnunet-curl +ca-certificates
 LIBEXEC_hostlist:=daemon-hostlist
 CONF_hostlist:=hostlist
 
@@ -209,7 +209,7 @@ LIBEXEC_transport-bluetooth:=helper-transport-bluetooth
 DEPENDS_transport-http_client:=+gnunet-curl +ca-certificates
 PLUGIN_transport-http_client:=transport_http_client transport_https_client
 
-DEPENDS_transport-http_server:=+libmicrohttpd
+DEPENDS_transport-http_server:=+libmicrohttpd-ssl
 PLUGIN_transport-http_server:=transport_http_server transport_https_server
 
 PLUGIN_transport-tcp:=transport_tcp
@@ -247,10 +247,10 @@ PLUGIN_gns:=block_dns block_gns gnsrecord_conversation gnsrecord_dns gnsrecord_g
 LIBEXEC_gns:=dns2gns helper-dns service-dns service-gns service-namecache service-namestore service-resolver service-zonemaster
 CONF_gns:=dns gns namecache namestore resolver zonemaster
 
-DEPENDS_namestore-fcfsd:=+gnunet-gns +libmicrohttpd
+DEPENDS_namestore-fcfsd:=+gnunet-gns +libmicrohttpd-ssl
 LIBEXEC_namestore-fcfsd:=namestore-fcfsd
 
-DEPENDS_gns-proxy:=+gnunet-gns +gnunet-curl +libmicrohttpd
+DEPENDS_gns-proxy:=+gnunet-gns +gnunet-curl +libmicrohttpd-ssl
 LIBEXEC_gns-proxy:=gns-proxy
 
 DEPENDS_datastore:=+gnunet-gns
@@ -264,7 +264,7 @@ LIB_peerstore:=peerstore
 LIBEXEC_peerstore:=service-peerstore
 CONF_peerstore:=peerstore
 
-DEPENDS_rest:=+gnunet-gns +gnunet-social +libmicrohttpd +jansson
+DEPENDS_rest:=+gnunet-gns +gnunet-social +libmicrohttpd-ssl +jansson
 LIB_rest:=rest json
 PLUGIN_rest:=rest_copying rest_gns rest_identity rest_namestore rest_peerinfo rest_openid_connect rest_reclaim
 LIBEXEC_rest:=rest-server
@@ -275,7 +275,7 @@ LIB_rps:=rps
 LIBEXEC_rps:=service-rps
 CONF_rps:=rps
 
-DEPENDS_social:=+gnunet-gns +libmicrohttpd +jansson +libpbc +libgabe
+DEPENDS_social:=+gnunet-gns +libmicrohttpd-ssl +jansson +libpbc +libgabe
 BIN_social:=credential identity-token multicast reclaim social
 LIB_social:=abe consensus credential identityprovider multicast psyc psycstore psycutil reclaim reclaimattribute secretsharing social
 LIBEXEC_social:=service-consensus service-credential service-evil-consensus service-identity-provider service-multicast service-psyc service-psycstore service-reclaim service-secretsharing service-social
