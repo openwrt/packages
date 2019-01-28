@@ -1,6 +1,6 @@
 --- a/gio/gthreadedresolver.c
 +++ b/gio/gthreadedresolver.c
-@@ -871,6 +871,8 @@ do_lookup_records (GTask         *task,
+@@ -873,6 +873,8 @@ do_lookup_records (GTask         *task,
  
  #ifdef HAVE_RES_NQUERY
  
@@ -9,7 +9,7 @@
  #if defined(HAVE_RES_NDESTROY)
    res_ndestroy (&res);
  #elif defined(HAVE_RES_NCLOSE)
-@@ -881,6 +883,8 @@ do_lookup_records (GTask         *task,
+@@ -883,6 +885,8 @@ do_lookup_records (GTask         *task,
  
  #endif  /* HAVE_RES_NQUERY */
  
