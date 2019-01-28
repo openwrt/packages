@@ -20,6 +20,7 @@ define Package/watchcat
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Enable the configuration of programed reboots
+  PKGARCH:=all
 endef
 
 define Package/watchcat/description

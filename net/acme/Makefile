@@ -17,6 +17,7 @@ PKG_SOURCE_URL:=https://codeload.github.com/Neilpang/acme.sh/tar.gz/$(PKG_VERSIO
 PKG_HASH:=25f8eef1a53584e3ebc653e1ae7763362ca97c40bb476ab7fee01aa50fa3a101
 PKG_BUILD_DIR:=$(BUILD_DIR)/acme.sh-$(PKG_VERSION)
 PKG_MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
+PKGARCH:=all
 
 LUCI_DIR:=/usr/lib/lua/luci
 

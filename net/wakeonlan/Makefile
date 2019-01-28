@@ -26,6 +26,7 @@ define Package/wakeonlan
   TITLE:=Sends 'magic packets' to wake-on-LAN enabled ethernet adapters
   URL:=http://gsd.di.uminho.pt/jpo/software/wakeonlan/
   DEPENDS:=+perl +perlbase-getopt +perlbase-net +perlbase-socket
+  PKGARCH:=all
 endef
 
 define Package/wakeonlan/description

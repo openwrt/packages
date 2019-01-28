@@ -22,6 +22,7 @@ define Package/sshtunnel
   SUBMENU:=SSH
   TITLE:=Manages Local and Remote openssh ssh(1) tunnels
   DEPENDS:=+openssh-client
+  PKGARCH:=all
 endef
 
 define Package/sshtunnel/description

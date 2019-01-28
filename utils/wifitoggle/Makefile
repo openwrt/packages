@@ -22,6 +22,7 @@ define Package/wifitoggle
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Script to toggle Wi-Fi with a button and UCI config
+  PKGARCH:=all
 endef
 
 define Package/wifitoggle/description

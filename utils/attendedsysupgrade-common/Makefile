@@ -17,6 +17,7 @@ define Package/attendedsysupgrade-common
   TITLE:=Common files neede by attendedsysupgrade packages
   MAINTAINER:=Paul Spooren <paul@spooren.de>
   DEPENDS:=+rpcd +rpcd-mod-rpcsys
+  PKGARCH:=all
 endef
 
 define Package/attendedsysupgrade-common/description

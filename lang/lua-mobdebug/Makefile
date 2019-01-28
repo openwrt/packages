@@ -32,6 +32,7 @@ define Package/lua-mobdebug
   TITLE:=Lua-MobDebug
   URL:=https://github.com/pkulchenko/MobDebug
   DEPENDS:=+lua
+  PKGARCH:=all
 endef
 
 define Package/lua-mobdebug/description
