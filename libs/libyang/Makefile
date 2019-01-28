@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libyang
 PKG_VERSION:=0.16-r3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
