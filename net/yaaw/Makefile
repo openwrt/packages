@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yaaw
-PKG_VERSION:=2017-04-12
+PKG_SOURCE_DATE:=2017-10-15
+PKG_SOURCE_VERSION:=6ac3046b49aafcfba9f65a04efcdce80150fc29a
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/binux/yaaw.git
-PKG_MIRROR_HASH:=02c79d4233384df7b82e18740f96803da03260785a710be587b4c1554e900326
-PKG_SOURCE_VERSION:=d3a8346c5b9c2c1875dc79e1db2533b584fc8def
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/binux/yaaw/tar.gz/$(PKG_SOURCE_VERSION)?
+PKG_HASH:=60bc14768434fcef889621ddb9a8196d0854d319584657918f19e593f4a70c7a
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 
-PKG_LICENSE:=LGPL-3.0
 PKG_MAINTAINER:=Hsing-Wang Liao <kuoruan@gmail.com>
+PKG_LICENSE:=LGPL-3.0
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -27,7 +28,7 @@ define Package/yaaw
   SUBMENU:=Download Manager
   DEPENDS:=
   TITLE:=Yet another aria2 web frontend
-  URL:=https://github.com/binux/yaaw
+  URL:=https://binux.github.io/yaaw/
   PKGARCH:=all
 endef
 
