@@ -2,19 +2,19 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=usb-serial-xr_usb_serial_common
-PKG_VERSION:=1a
-PKG_RELEASE=1
+PKG_SOURCE_DATE:=2017-08-01
+PKG_SOURCE_VERSION:=b8dad8cf15de160afbd9989f880dc74b921a857b
+PKG_RELEASE:=1
 
-PKG_LICENSE:=GPLv2
-PKG_LICENSE_FILES:=
-
-PKG_SOURCE_URL:=https://github.com/kasbert/epsolar-tracer
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=8c21f4afdfd6acd77b6adad59a4dabe5cbf2b947
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/kasbert/epsolar-tracer/tar.gz/$(PKG_SOURCE_VERSION)?
+PKG_HASH:=74df9e25b7f2df99b5662c2d99dfedb0852772e608d53c924816ecbc2541fbc1
+PKG_BUILD_DIR:=$(BUILD_DIR)/epsolar-tracer-$(PKG_SOURCE_VERSION)
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_LICENSE:=Apache
+PKG_LICENSE_FILES:=LICENSE
+
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
