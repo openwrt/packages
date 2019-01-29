@@ -1,0 +1,222 @@
+Index: libyang-0.16-r3/src/parser.c
+===================================================================
+--- libyang-0.16-r3.orig/src/parser.c
++++ libyang-0.16-r3/src/parser.c
+@@ -1210,7 +1210,7 @@ lyp_parse_value(struct lys_type *type, c
+     unsigned int i, j;
+     int64_t num;
+     uint64_t unum, uind, u = 0;
+-    const char *ptr, *value = *value_, *itemname;
++    const char *ptr, *value = *value_, *itemname, *old_val_str;
+     struct lys_type_bit **bits = NULL;
+     struct lys_ident *ident;
+     lyd_val *val, old_val;
+@@ -1245,7 +1245,8 @@ lyp_parse_value(struct lys_type *type, c
+ 
+     /* fully clear the value */
+     if (store) {
+-        lyd_free_value(*val, *val_type, *val_flags, type, &old_val, &old_val_type, &old_val_flags);
++        old_val_str = lydict_insert(ctx, *value_, 0);
++        lyd_free_value(*val, *val_type, *val_flags, type, old_val_str, &old_val, &old_val_type, &old_val_flags);
+         *val_flags &= ~LY_VALUE_UNRES;
+     }
+ 
+@@ -1907,7 +1908,7 @@ lyp_parse_value(struct lys_type *type, c
+ 
+             if (store) {
+                 /* erase possible present and invalid value data */
+-                lyd_free_value(*val, *val_type, *val_flags, t, NULL, NULL, NULL);
++                lyd_free_value(*val, *val_type, *val_flags, t, *value_, NULL, NULL, NULL);
+                 memset(val, 0, sizeof(lyd_val));
+             }
+         }
+@@ -1946,7 +1947,8 @@ lyp_parse_value(struct lys_type *type, c
+ 
+     /* free backup */
+     if (store) {
+-        lyd_free_value(old_val, old_val_type, old_val_flags, type, NULL, NULL, NULL);
++        lyd_free_value(old_val, old_val_type, old_val_flags, type, old_val_str, NULL, NULL, NULL);
++        lydict_remove(ctx, old_val_str);
+     }
+     return type;
+ 
+@@ -1956,6 +1958,7 @@ error:
+         *val = old_val;
+         *val_type = old_val_type;
+         *val_flags = old_val_flags;
++        lydict_remove(ctx, old_val_str);
+     }
+     return NULL;
+ }
+Index: libyang-0.16-r3/src/parser.h
+===================================================================
+--- libyang-0.16-r3.orig/src/parser.h
++++ libyang-0.16-r3/src/parser.h
+@@ -267,10 +267,10 @@ int lytype_store(const struct lys_module
+ /**
+  * @brief Free a user type stored value.
+  *
+- * @param[in] mod Module of the type.
+- * @param[in] type_name Type (typedef) name.
++ * @param[in] type Type of the value.
+  * @param[in] value Value union to free.
++ * @param[in] value_str String value of the value.
+  */
+-void lytype_free(const struct lys_module *mod, const char *type_name, lyd_val value);
++void lytype_free(const struct lys_type *type, lyd_val value, const char *value_str);
+ 
+ #endif /* LY_PARSER_H_ */
+Index: libyang-0.16-r3/src/plugins.c
+===================================================================
+--- libyang-0.16-r3.orig/src/plugins.c
++++ libyang-0.16-r3/src/plugins.c
+@@ -603,11 +603,40 @@ lytype_store(const struct lys_module *mo
+ }
+ 
+ void
+-lytype_free(const struct lys_module *mod, const char *type_name, lyd_val value)
++lytype_free(const struct lys_type *type, lyd_val value, const char *value_str)
+ {
+     struct lytype_plugin_list *p;
++    struct lys_node_leaf sleaf;
++    struct lyd_node_leaf_list leaf;
++    struct lys_module *mod;
+ 
+-    p = lytype_find(mod->name, mod->rev_size ? mod->rev[0].date : NULL, type_name);
++    assert(type->der && type->der->module);
++
++    mod = type->der->module;
++    memset(&sleaf, 0, sizeof sleaf);
++    memset(&leaf, 0, sizeof leaf);
++
++    if (type->base == LY_TYPE_UNION) {
++        /* create a fake schema node */
++        sleaf.module = mod;
++        sleaf.name = "fake-leaf";
++        sleaf.type = *type;
++        sleaf.nodetype = LYS_LEAF;
++
++        /* and a fake data node */
++        leaf.schema = (struct lys_node *)&sleaf;
++        leaf.value = value;
++        leaf.value_str = value_str;
++
++        /* find the original type */
++        type = lyd_leaf_type(&leaf);
++        if (!type) {
++            LOGINT(mod->ctx);
++            return;
++        }
++    }
++
++    p = lytype_find(mod->name, mod->rev_size ? mod->rev[0].date : NULL, type->der->name);
+     if (!p) {
+         LOGINT(mod->ctx);
+         return;
+Index: libyang-0.16-r3/src/resolve.c
+===================================================================
+--- libyang-0.16-r3.orig/src/resolve.c
++++ libyang-0.16-r3/src/resolve.c
+@@ -3630,7 +3630,7 @@ check_default(struct lys_type *type, con
+     }
+ 
+ cleanup:
+-    lyd_free_value(node.value, node.value_type, node.value_flags, type, NULL, NULL, NULL);
++    lyd_free_value(node.value, node.value_type, node.value_flags, type, node.value_str, NULL, NULL, NULL);
+     lydict_remove(ctx, node.value_str);
+     if (tpdf && node.schema) {
+         free((char *)node.schema->name);
+@@ -7923,7 +7923,7 @@ resolve_union(struct lyd_node_leaf_list
+ 
+     if (store) {
+         lyd_free_value(leaf->value, leaf->value_type, leaf->value_flags, &((struct lys_node_leaf *)leaf->schema)->type,
+-                       NULL, NULL, NULL);
++                       leaf->value_str, NULL, NULL, NULL);
+         memset(&leaf->value, 0, sizeof leaf->value);
+     }
+ 
+@@ -8012,7 +8012,7 @@ resolve_union(struct lyd_node_leaf_list
+ 
+         /* erase possible present and invalid value data */
+         if (store) {
+-            lyd_free_value(leaf->value, leaf->value_type, leaf->value_flags, t, NULL, NULL, NULL);
++            lyd_free_value(leaf->value, leaf->value_type, leaf->value_flags, t, leaf->value_str, NULL, NULL, NULL);
+             memset(&leaf->value, 0, sizeof leaf->value);
+         }
+     }
+Index: libyang-0.16-r3/src/tree_data.c
+===================================================================
+--- libyang-0.16-r3.orig/src/tree_data.c
++++ libyang-0.16-r3/src/tree_data.c
+@@ -2442,7 +2442,7 @@ lyd_merge_node_update(struct lyd_node *t
+                                 NULL, trg_leaf, NULL, NULL, 1, src_leaf->dflt, 0);
+             } else {
+                 lyd_free_value(trg_leaf->value, trg_leaf->value_type, trg_leaf->value_flags,
+-                               &((struct lys_node_leaf *)trg_leaf->schema)->type, NULL, NULL, NULL);
++                               &((struct lys_node_leaf *)trg_leaf->schema)->type, trg_leaf->value_str, NULL, NULL, NULL);
+                 trg_leaf->value = src_leaf->value;
+             }
+             src_leaf->value = (lyd_val)0;
+@@ -2492,7 +2492,7 @@ lyd_merge_node_update(struct lyd_node *t
+             lydict_remove(ctx, trg_leaf->value_str);
+             trg_leaf->value_str = lydict_insert(ctx, src_leaf->value_str, 0);
+             lyd_free_value(trg_leaf->value, trg_leaf->value_type, trg_leaf->value_flags,
+-                           &((struct lys_node_leaf *)trg_leaf->schema)->type, NULL, NULL, NULL);
++                           &((struct lys_node_leaf *)trg_leaf->schema)->type, trg_leaf->value_str, NULL, NULL, NULL);
+             trg_leaf->value_type = src_leaf->value_type;
+             trg_leaf->dflt = src_leaf->dflt;
+ 
+@@ -5866,7 +5866,7 @@ lyd_free_attr(struct ly_ctx *ctx, struct
+         lydict_remove(ctx, attr->name);
+         type = lys_ext_complex_get_substmt(LY_STMT_TYPE, attr->annotation, NULL);
+         assert(type);
+-        lyd_free_value(attr->value, attr->value_type, attr->value_flags, *type, NULL, NULL, NULL);
++        lyd_free_value(attr->value, attr->value_type, attr->value_flags, *type, attr->value_str, NULL, NULL, NULL);
+         lydict_remove(ctx, attr->value_str);
+         free(attr);
+     }
+@@ -5975,8 +5975,8 @@ lyd_insert_attr(struct lyd_node *parent,
+ }
+ 
+ void
+-lyd_free_value(lyd_val value, LY_DATA_TYPE value_type, uint8_t value_flags, struct lys_type *type, lyd_val *old_val,
+-               LY_DATA_TYPE *old_val_type, uint8_t *old_val_flags)
++lyd_free_value(lyd_val value, LY_DATA_TYPE value_type, uint8_t value_flags, struct lys_type *type, const char *value_str,
++               lyd_val *old_val, LY_DATA_TYPE *old_val_type, uint8_t *old_val_flags)
+ {
+     if (old_val) {
+         *old_val = value;
+@@ -5988,8 +5988,7 @@ lyd_free_value(lyd_val value, LY_DATA_TY
+ 
+     /* otherwise the value is correctly freed */
+     if (value_flags & LY_VALUE_USER) {
+-        assert(type->der && type->der->module);
+-        lytype_free(type->der->module, type->der->name, value);
++        lytype_free(type, value, value_str);
+     } else {
+         switch (value_type) {
+         case LY_TYPE_BITS:
+@@ -6062,7 +6061,7 @@ _lyd_free_node(struct lyd_node *node)
+     case LYS_LEAFLIST:
+         leaf = (struct lyd_node_leaf_list *)node;
+         lyd_free_value(leaf->value, leaf->value_type, leaf->value_flags, &((struct lys_node_leaf *)leaf->schema)->type,
+-                       NULL, NULL, NULL);
++                       leaf->value_str, NULL, NULL, NULL);
+         lydict_remove(leaf->schema->module->ctx, leaf->value_str);
+         break;
+     default:
+Index: libyang-0.16-r3/src/tree_internal.h
+===================================================================
+--- libyang-0.16-r3.orig/src/tree_internal.h
++++ libyang-0.16-r3/src/tree_internal.h
+@@ -496,8 +496,8 @@ int lyd_get_unique_default(const char* u
+ int lyd_build_relative_data_path(const struct lys_module *module, const struct lyd_node *node, const char *schema_id,
+                                  char *buf);
+ 
+-void lyd_free_value(lyd_val value, LY_DATA_TYPE value_type, uint8_t value_flags, struct lys_type *type, lyd_val *old_val,
+-                    LY_DATA_TYPE *old_val_type, uint8_t *old_val_flags);
++void lyd_free_value(lyd_val value, LY_DATA_TYPE value_type, uint8_t value_flags, struct lys_type *type,
++                    const char *value_str, lyd_val *old_val, LY_DATA_TYPE *old_val_type, uint8_t *old_val_flags);
+ 
+ int lyd_list_equal(struct lyd_node *node1, struct lyd_node *node2, int with_defaults);
+ 
