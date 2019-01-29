@@ -1,31 +1,18 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2006-2016 OpenWrt.org
 
-START=20
-PROG=/usr/sbin/syslog-ng
-PROG2=/usr/sbin/syslog-ng-ctl
+START=50
 
-SERVICE_USE_PID=1
-SERVICE_PID_FILE=/var/run/syslog-ng.pid
+USE_PROCD=1
 
-config_file=/etc/syslog-ng.conf
-
-start() {
-	[ -f $config_file ] || return 1
-
-	if ! $PROG -s 2>/dev/null ; then
-		echo "Couldn't parse $(basename $config_file)" >&2
-		exit 1
-	fi
-
-	service_start $PROG --process-mode background \
-		-p $SERVICE_PID_FILE
+start_service() {
+	[ -f /etc/syslog-ng.conf ] || return 1
+	procd_open_instance
+	procd_set_param command /usr/sbin/syslog-ng
+	procd_close_instance
 }
 
-stop() {
-	service_stop $PROG
-}
-
-reload() {
-	$PROG2 reload
+reload_service() {
+        stop
+        start
 }
