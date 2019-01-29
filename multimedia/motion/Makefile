@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=motion
 PKG_VERSION:=4.2.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 PKG_LICENSE:=GPLv2
@@ -28,7 +28,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/motion
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+libjpeg +libpthread +libmicrohttpd
+  DEPENDS:=+libjpeg +libpthread +libmicrohttpd-ssl
   TITLE:=webcam motion sensing and logging
   URL:=https://motion-project.github.io/
 endef
