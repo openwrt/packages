@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
 PKG_VERSION:=3.19.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1+
@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/syslog-ng
   SECTION:=admin
   CATEGORY:=Administration
-  DEPENDS:=+libpcre +glib2 +libopenssl +libpthread +librt +zlib +libdbi +psmisc +libjson-c +libcurl +libuuid
+  DEPENDS:=+libpcre +glib2 +libopenssl +libpthread +librt +zlib +libdbi +libjson-c +libcurl +libuuid
   TITLE:=A powerful syslog daemon
   URL:=https://www.syslog-ng.com/products/open-source-log-management/
 endef
