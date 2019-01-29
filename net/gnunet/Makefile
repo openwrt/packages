@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
-PKG_SOURCE_VERSION:=e0785bb1b2af91a38d161bda7a4075338579441a
-PKG_MIRROR_HASH:=4cbb9cf48f18fa87aa7c81bcff2372fc9c04c3688fb8dd4b2b57da258050179b
+PKG_SOURCE_VERSION:=d80214febe4e0e4cc64dddc74e990b3c5ca8a5df
+# PKG_MIRROR_HASH:=4cbb9cf48f18fa87aa7c81bcff2372fc9c04c3688fb8dd4b2b57da258050179b
 
-PKG_VERSION:=0.10.2-git-20181021-$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=2
+PKG_VERSION:=0.10.2-git-20190128-$(PKG_SOURCE_VERSION)
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -32,6 +32,7 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_PACKAGE_libsqlite3),--with-sqlite="$(STAGING_DIR)/usr",--without-sqlite) \
 	--enable-testing \
 	--disable-testruns \
+	--disable-documentation \
 	--enable-experimental \
 	--with-extractor=$(STAGING_DIR)/usr \
 	--with-gnutls=$(STAGING_DIR)/usr \
@@ -52,7 +53,7 @@ endef
 define Package/gnunet
 $(call Package/gnunet/Default)
   TITLE+= - a peer-to-peer framework focusing on security
-  DEPENDS:=+libgcrypt +libgpg-error +libidn +libltdl +libunistring +librt +zlib \
+  DEPENDS:=+libgcrypt +libgpg-error +libidn2 +libltdl +libunistring +librt +zlib \
            $(ICONV_DEPENDS) $(INTL_DEPENDS)
   USERID:=gnunet=958:gnunet=958
   MENU:=1
@@ -140,7 +141,7 @@ define Package/gnunet/install
 
 	( for lib in arm ats block blockgroup cadet core datacache dht \
 	    dns dnsparser fragmentation friends hello identity natauto natnew nse \
-	    peerinfo regexblock regex revocation scalarproduct set \
+	    nt peerinfo regexblock regex revocation scalarproduct set \
 	    statistics transport util; do \
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnunet$$$$lib.so* $(1)/usr/lib/ ; \
 	done )
