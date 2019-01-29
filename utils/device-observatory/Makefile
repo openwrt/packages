@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=device-observatory
 PKG_VERSION:=1.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPL-3.0+
 
@@ -18,7 +18,7 @@ define Package/device-observatory
 	TITLE:=device-observatory
 	MAINTAINER:=Moritz Warning <moritzwarning@web.de>
 	URL:=https://github.com/mwarning/device-observatory/
-	DEPENDS:=+iw +libpcap +libmicrohttpd-no-ssl
+	DEPENDS:=+iw +libpcap +libmicrohttpd
 endef
 
 define Package/device-observatory/description
