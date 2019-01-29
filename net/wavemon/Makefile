@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wavemon
-PKG_VERSION:=0.8.2
-PKG_RELEASE:=2
+PKG_VERSION:=0.9.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/uoaerg/wavemon/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=4199e2ad11a036f4289f5ad42a8b0fe518f2b5ff77447f4c366dbcf3f23e91d5
+PKG_HASH:=5823ef9459d6147a457b390b6744a77465584e93d37c2809fa7a0be557070166
 
+PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -39,14 +40,9 @@ define Package/wavemon/description
   and higher), e.g. the Lucent Orinoco cards.
 endef
 
-CONFIGURE_VARS += \
-	ac_cv_lib_cap_cap_get_flag=no \
-	BUILD_DATE=$(SOURCE_DATE_EPOCH)
+CONFIGURE_ARGS += --without-libcap
 
-TARGET_CFLAGS += -pthread -I$(STAGING_DIR)/usr/include/libnl3
-
-MAKE_FLAGS += \
-	CFLAGS="$(TARGET_CFLAGS) -L$(STAGING_DIR)/usr/lib -I$(STAGING_DIR)/usr/include"
+TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include/libnl3
 
 define Package/wavemon/install
 	$(INSTALL_DIR) $(1)/usr/bin
