@@ -149,7 +149,9 @@ aria2_validate() {
 		'seed_time:ufloat' \
 		'split:uinteger' \
 		'timeout:uinteger' \
-		'user_agent:string'
+		'user_agent:string' \
+		'bt_detach_seed_only:or("true","false"):false' \
+		'bt_prioritize_piece:string:head=1M,tail=1M'
 }
 
 aria2_start() {
@@ -157,8 +159,8 @@ aria2_start() {
 	aria2_validate "$section" || { _err "Validation failed."; return 1; }
 
 	[ "$enabled" = "1" ] || { _info "Instance \"${section}\" disabled."; return 1; }
-	[ -n "$dir" ] || { _err "Please set downlod dir."; return 1; }
-	[ -d "$dir" ] || { _err "Please create downlod dir first."; return 1; }
+	[ -n "$dir" ] || { _err "Please set download dir."; return 1; }
+	[ -d "$dir" ] || { _err "Please create download dir first."; return 1; }
 
 	config_file="${config_dir}/${NAME}.conf.${section}"
 	config_file_tmp="${config_dir}/${NAME}.conf.tmp"
@@ -226,7 +228,7 @@ aria2_start() {
 			append_setting "rpc-user=${rpc_user}"
 			append_setting "rpc-passwd=${rpc_passwd}"
 		else
-			_info "It is recommand to set RPC secret."
+			_info "It is recommended to set RPC secret."
 		fi
 	elif [ "$rpc_auth_method" = "token" ]; then
 		if [ -n "$rpc_secret" ]; then
@@ -299,7 +301,7 @@ aria2_start() {
 		"max_download_limit" "max_overall_download_limit" "max_overall_upload_limit" "max_tries" \
 		"max_upload_limit" "min_split_size" "pause" "pause_metadata" "peer_id_prefix" "private_key" \
 		"retry_wait" "rpc_listen_port" "save_session_interval" "seed_ratio" "seed_time" "split" "timeout" \
-		"user_agent"
+		"user_agent" "bt_detach_seed_only" "bt_prioritize_piece"
 
 	config_list_foreach "$section" "header" append_header
 	config_list_foreach "$section" "extra_settings" append_setting
