@@ -8,14 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tdb
-PKG_VERSION:=1.3.16
-PKG_RELEASE:=2
+PKG_VERSION:=1.3.17
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.samba.org/ftp/tdb/
-PKG_HASH:=6a3fc2616567f23993984ada3cea97d953a27669ffd1bfbbe961f26e0cf96cc5
+PKG_HASH:=1cb4399394c60a773430ca54848359adcf54fb6f136afdcfcbbe62b5f4245614
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -30,7 +31,7 @@ define Package/tdb
   CATEGORY:=Libraries
   TITLE:=Trivial Database
   DEPNEDS:=+libattr
-  URL:=http://sourceforge.net/projects/tdb/
+  URL:=https://tdb.samba.org/
   MAINTAINER:=Dmitry V. Zimin <pfzim@mail.ru>
 endef
 

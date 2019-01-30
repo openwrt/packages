@@ -1,8 +1,6 @@
-diff --git a/lib/replace/wscript b/lib/replace/wscript
-index fd00a42..337d559 100644
 --- a/lib/replace/wscript
 +++ b/lib/replace/wscript
-@@ -340,22 +340,13 @@ def configure(conf):
+@@ -378,22 +378,13 @@ def configure(conf):
  
      conf.CHECK_FUNCS('prctl dirname basename')
  
@@ -32,7 +30,7 @@ index fd00a42..337d559 100644
  
      conf.CHECK_CODE('''
                  struct ucred cred;
-@@ -698,9 +689,6 @@ def configure(conf):
+@@ -751,9 +742,6 @@ def configure(conf):
  
      # look for a method of finding the list of network interfaces
      for method in ['HAVE_IFACE_GETIFADDRS', 'HAVE_IFACE_AIX', 'HAVE_IFACE_IFCONF', 'HAVE_IFACE_IFREQ']:
@@ -42,7 +40,7 @@ index fd00a42..337d559 100644
          if conf.CHECK_CODE('''
                             #define %s 1
                             #define NO_CONFIG_H 1
-@@ -713,7 +701,7 @@ def configure(conf):
+@@ -766,7 +754,7 @@ def configure(conf):
                             #include "test/getifaddrs.c"
                             ''' % method,
                             method,
@@ -51,7 +49,7 @@ index fd00a42..337d559 100644
                             addmain=False,
                             execute=True):
              break
-@@ -761,7 +749,6 @@ def build(bld):
+@@ -814,7 +802,6 @@ def build(bld):
                  break
  
      extra_libs = ''
