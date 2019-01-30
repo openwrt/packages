@@ -163,6 +163,12 @@ issue_cert()
     [ -n "$webroot" ] || [ -n "$dns" ] || pre_checks "$main_domain" || return 1
 
     log "Running ACME for $main_domain"
+    
+    handle_credentials() {
+        local credential="$1"
+        eval export $credential
+    }
+    config_list_foreach "$section" credentials handle_credentials
 
     if [ -e "$STATE_DIR/$main_domain" ]; then
         if [ "$use_staging" -eq "0" ] && is_staging "$main_domain"; then
@@ -196,12 +202,6 @@ issue_cert()
         log "Using webroot dir: $webroot"
         acme_args="$acme_args --webroot $webroot"
     fi
-
-    handle_credentials() {
-        local credential="$1"
-        eval export $credential
-    }
-    config_list_foreach "$section" credentials handle_credentials
 
     if ! $ACME --home "$STATE_DIR" --issue $acme_args; then
         failed_dir="$STATE_DIR/${main_domain}.failed-$(date +%s)"
