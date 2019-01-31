@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=nodogsplash
 PKG_FIXUP:=autoreconf
 PKG_VERSION:=3.2.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://codeload.github.com/nodogsplash/nodogsplash/tar.gz/v$(PKG_VERSION)?
 PKG_SOURCE:=nodogsplash-$(PKG_VERSION).tar.gz
@@ -26,7 +26,7 @@ define Package/nodogsplash
 	SUBMENU:=Captive Portals
 	SECTION:=net
 	CATEGORY:=Network
-	DEPENDS:=+libpthread +iptables-mod-ipopt +libmicrohttpd-no-ssl
+	DEPENDS:=+libpthread +iptables-mod-ipopt +libmicrohttpd
 	TITLE:=Open public network gateway daemon
 	URL:=https://github.com/nodogsplash/nodogsplash
 	CONFLICTS:=nodogsplash2
