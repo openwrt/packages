@@ -1,0 +1,67 @@
+commit 1c95076d881b7508a8d0819b1cfd642e364b255c
+Author: Jérôme Magnin <jmagnin@haproxy.com>
+Date:   Sun Jan 20 11:27:40 2019 +0100
+
+    BUG/MINOR: server: don't always trust srv_check_health when loading a server state
+    
+    When we load health values from a server state file, make sure what we assign
+    to srv->check.health actually matches the state we restore.
+    
+    This should be backported as far as 1.6.
+    
+    (cherry picked from commit f57afa453a685cfd92b7a27ef6e6035cb384ff57)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 75455a0b78ce4ac723698df26c014b38467843b1)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+
+diff --git a/src/server.c b/src/server.c
+index a86db3db..28414780 100644
+--- a/src/server.c
++++ b/src/server.c
+@@ -2843,16 +2843,37 @@ static void srv_update_state(struct server *srv, int version, char **params)
+ 			HA_SPIN_LOCK(SERVER_LOCK, &srv->lock);
+ 			/* recover operational state and apply it to this server
+ 			 * and all servers tracking this one */
++			srv->check.health = srv_check_health;
+ 			switch (srv_op_state) {
+ 				case SRV_ST_STOPPED:
+ 					srv->check.health = 0;
+ 					srv_set_stopped(srv, "changed from server-state after a reload", NULL);
+ 					break;
+ 				case SRV_ST_STARTING:
++					/* If rise == 1 there is no STARTING state, let's switch to
++					 * RUNNING
++					 */
++					if (srv->check.rise == 1) {
++						srv->check.health = srv->check.rise + srv->check.fall - 1;
++						srv_set_running(srv, "", NULL);
++						break;
++					}
++					if (srv->check.health < 1 || srv->check.health >= srv->check.rise)
++						srv->check.health = srv->check.rise - 1;
+ 					srv->next_state = srv_op_state;
+ 					break;
+ 				case SRV_ST_STOPPING:
+-					srv->check.health = srv->check.rise + srv->check.fall - 1;
++					/* If fall == 1 there is no STOPPING state, let's switch to
++					 * STOPPED
++					 */
++					if (srv->check.fall == 1) {
++						srv->check.health = 0;
++						srv_set_stopped(srv, "changed from server-state after a reload", NULL);
++						break;
++					}
++					if (srv->check.health < srv->check.rise ||
++					    srv->check.health > srv->check.rise + srv->check.fall - 2)
++						srv->check.health = srv->check.rise;
+ 					srv_set_stopping(srv, "changed from server-state after a reload", NULL);
+ 					break;
+ 				case SRV_ST_RUNNING:
+@@ -2906,7 +2927,6 @@ static void srv_update_state(struct server *srv, int version, char **params)
+ 			srv->last_change = date.tv_sec - srv_last_time_change;
+ 			srv->check.status = srv_check_status;
+ 			srv->check.result = srv_check_result;
+-			srv->check.health = srv_check_health;
+ 
+ 			/* Only case we want to apply is removing ENABLED flag which could have been
+ 			 * done by the "disable health" command over the stats socket

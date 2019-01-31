@@ -1,0 +1,43 @@
+commit 7a74ffef9f356304b46ab862858cead85d451b5f
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Mon Jan 21 14:15:50 2019 +0100
+
+    BUG/MINOR: check: Wake the check task if the check is finished in wake_srv_chk()
+    
+    With tcp-check, the result of the check is set by the function tcpcheck_main()
+    from the I/O layer. So it is important to wake up the check task to handle the
+    result and finish the check. Otherwise, we will wait the task timeout to handle
+    the result of a tcp-check, delaying the next check by as much.
+    
+    This patch also fixes a problem about email alerts reported by PiBa-NL (Pieter)
+    on the ML [1] on all versions since the 1.6. So this patch must be backported
+    from 1.9 to 1.6.
+    
+    [1] https://www.mail-archive.com/haproxy@formilux.org/msg32190.html
+    
+    (cherry picked from commit 774c486cece942570b6a9d16afe236a16ee12079)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 3722dfbbfadf8f83f82feb3e67fbe482a5c94840)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+
+diff --git a/src/checks.c b/src/checks.c
+index 74958b2d..e04f1146 100644
+--- a/src/checks.c
++++ b/src/checks.c
+@@ -1403,12 +1403,13 @@ static int wake_srv_chk(struct conn_stream *cs)
+ 	}
+ 
+ 	if (check->result != CHK_RES_UNKNOWN) {
+-		/* We're here because nobody wants to handle the error, so we
+-		 * sure want to abort the hard way.
+-		 */
++		/* Check complete or aborted. If connection not yet closed do it
++		 * now and wake the check task up to be sure the result is
++		 * handled ASAP. */
+ 		conn_sock_drain(conn);
+ 		cs_close(cs);
+ 		ret = -1;
++		task_wakeup(check->task, TASK_WOKEN_IO);
+ 	}
+ 
+ 	HA_SPIN_UNLOCK(SERVER_LOCK, &check->server->lock);

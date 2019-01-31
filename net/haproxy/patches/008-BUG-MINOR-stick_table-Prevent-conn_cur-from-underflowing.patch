@@ -1,0 +1,66 @@
+commit 93b3994091b5bd17b43c9d91ecae470d33157e25
+Author: Tim Duesterhus <tim@bastelstu.be>
+Date:   Fri Jan 4 00:11:59 2019 +0100
+
+    BUG/MINOR: stick_table: Prevent conn_cur from underflowing
+    
+    When using the peers feature a race condition could prevent
+    a connection from being properly counted. When this connection
+    exits it is being "uncounted" nonetheless, leading to a possible
+    underflow (-1) of the conn_curr stick table entry in the following
+    scenario :
+    
+      - Connect to peer A     (A=1, B=0)
+      - Peer A sends 1 to B   (A=1, B=1)
+      - Kill connection to A  (A=0, B=1)
+      - Connect to peer B     (A=0, B=2)
+      - Peer A sends 0 to B   (A=0, B=0)
+      - Peer B sends 0/2 to A (A=?, B=0)
+      - Kill connection to B  (A=?, B=-1)
+      - Peer B sends -1 to A  (A=-1, B=-1)
+    
+    This fix may be backported to all supported branches.
+    
+    (cherry picked from commit 8b87c01c4d59247d9fb51a38cd12d5d94324b6a4)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 4ceecc8a4ee6f46f20c7729056e14af5a8757121)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+
+diff --git a/include/proto/session.h b/include/proto/session.h
+index f48c0d4f..7265f5a7 100644
+--- a/include/proto/session.h
++++ b/include/proto/session.h
+@@ -59,7 +59,8 @@ static inline void session_store_counters(struct session *sess)
+ 		if (ptr) {
+ 			HA_RWLOCK_WRLOCK(STK_SESS_LOCK, &ts->lock);
+ 
+-			stktable_data_cast(ptr, conn_cur)--;
++			if (stktable_data_cast(ptr, conn_cur) > 0)
++				stktable_data_cast(ptr, conn_cur)--;
+ 
+ 			HA_RWLOCK_WRUNLOCK(STK_SESS_LOCK, &ts->lock);
+ 
+diff --git a/include/proto/stream.h b/include/proto/stream.h
+index 8521957e..c9bcac37 100644
+--- a/include/proto/stream.h
++++ b/include/proto/stream.h
+@@ -104,7 +104,8 @@ static inline void stream_store_counters(struct stream *s)
+ 		if (ptr) {
+ 			HA_RWLOCK_WRLOCK(STK_SESS_LOCK, &ts->lock);
+ 
+-			stktable_data_cast(ptr, conn_cur)--;
++			if (stktable_data_cast(ptr, conn_cur) > 0)
++				stktable_data_cast(ptr, conn_cur)--;
+ 
+ 			HA_RWLOCK_WRUNLOCK(STK_SESS_LOCK, &ts->lock);
+ 
+@@ -142,7 +143,8 @@ static inline void stream_stop_content_counters(struct stream *s)
+ 		if (ptr) {
+ 			HA_RWLOCK_WRLOCK(STK_SESS_LOCK, &ts->lock);
+ 
+-			stktable_data_cast(ptr, conn_cur)--;
++			if (stktable_data_cast(ptr, conn_cur) > 0)
++				stktable_data_cast(ptr, conn_cur)--;
+ 
+ 			HA_RWLOCK_WRUNLOCK(STK_SESS_LOCK, &ts->lock);
+ 
