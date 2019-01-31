@@ -3,6 +3,8 @@
 # Copyright 2018 rosysong@rosinson.com
 #
 
+export initscript="nft-qos-dynamic"
+
 . /lib/functions.sh
 . /lib/nft-qos/core.sh
 . /lib/nft-qos/dynamic.sh
