@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openocd
 PKG_SOURCE_VERSION:=0.10.0
 PKG_VERSION:=v$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=@SF/openocd
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.bz2
@@ -20,6 +20,7 @@ PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_MAINTAINER:=Paul Fertser <fercerpav@gmail.com>
+PKG_CPE_ID:=cpe:/a:openocd:open_on-chip_debugger
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
