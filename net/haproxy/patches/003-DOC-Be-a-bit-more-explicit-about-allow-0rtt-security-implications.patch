@@ -1,0 +1,32 @@
+commit aca7e5aed7e036489ccc83d925103e94653b8670
+Author: Olivier Houchard <ohouchard@haproxy.com>
+Date:   Tue Jan 8 15:35:32 2019 +0100
+
+    DOC: Be a bit more explicit about allow-0rtt security implications.
+    
+    Document a bit better than allow-0rtt can trivially be used for replay attacks,
+    and so should only be used when it's safe to replay a request.
+    
+    This should probably be backported to 1.8 and 1.9.
+    
+    (cherry picked from commit 69752964944ef9c8dc03477ee95bc7d149a72089)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit bb0df71201ad5b2d0cec514773d244275e5240df)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+
+diff --git a/doc/configuration.txt b/doc/configuration.txt
+index 712e56e2..72b769a4 100644
+--- a/doc/configuration.txt
++++ b/doc/configuration.txt
+@@ -10483,7 +10483,10 @@ accept-proxy
+ 
+ allow-0rtt
+   Allow receiving early data when using TLSv1.3. This is disabled by default,
+-  due to security considerations.
++  due to security considerations. Because it is vulnerable to replay attacks,
++  you should only allow if for requests that are safe to replay, ie requests
++  that are idempotent. You can use the "wait-for-handshake" action for any
++  request that wouldn't be safe with early data.
+ 
+ alpn <protocols>
+   This enables the TLS ALPN extension and advertises the specified protocol

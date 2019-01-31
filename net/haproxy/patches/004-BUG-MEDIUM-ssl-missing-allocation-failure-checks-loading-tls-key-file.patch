@@ -1,0 +1,77 @@
+commit 30cd01cbfd40201f3abe246216a85c69352aa79c
+Author: Emeric Brun <ebrun@haproxy.com>
+Date:   Thu Jan 10 10:51:13 2019 +0100
+
+    BUG/MEDIUM: ssl: missing allocation failure checks loading tls key file
+    
+    This patch fixes missing allocation checks loading tls key file
+    and avoid memory leak in some error cases.
+    
+    This patch should be backport on branches 1.9 and 1.8
+    
+    (cherry picked from commit 09852f70e0ed0f23cf9287b1ce55bb6a60112f32)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit a1dc55a63cfbc8f440b72b6def3957bf1fad12b2)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 11655533..7884c411 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -7627,15 +7627,36 @@ static int bind_parse_tls_ticket_keys(char **args, int cur_arg, struct proxy *px
+ 	}
+ 
+ 	keys_ref = malloc(sizeof(*keys_ref));
++	if (!keys_ref) {
++		if (err)
++			 memprintf(err, "'%s' : allocation error", args[cur_arg+1]);
++		return ERR_ALERT | ERR_FATAL;
++	}
++
+ 	keys_ref->tlskeys = malloc(TLS_TICKETS_NO * sizeof(struct tls_sess_key));
++	if (!keys_ref->tlskeys) {
++		free(keys_ref);
++		if (err)
++			 memprintf(err, "'%s' : allocation error", args[cur_arg+1]);
++		return ERR_ALERT | ERR_FATAL;
++	}
+ 
+ 	if ((f = fopen(args[cur_arg + 1], "r")) == NULL) {
++		free(keys_ref->tlskeys);
++		free(keys_ref);
+ 		if (err)
+ 			memprintf(err, "'%s' : unable to load ssl tickets keys file", args[cur_arg+1]);
+ 		return ERR_ALERT | ERR_FATAL;
+ 	}
+ 
+ 	keys_ref->filename = strdup(args[cur_arg + 1]);
++	if (!keys_ref->filename) {
++		free(keys_ref->tlskeys);
++		free(keys_ref);
++		if (err)
++			 memprintf(err, "'%s' : allocation error", args[cur_arg+1]);
++		return ERR_ALERT | ERR_FATAL;
++	}
+ 
+ 	while (fgets(thisline, sizeof(thisline), f) != NULL) {
+ 		int len = strlen(thisline);
+@@ -7647,6 +7668,9 @@ static int bind_parse_tls_ticket_keys(char **args, int cur_arg, struct proxy *px
+ 			thisline[--len] = 0;
+ 
+ 		if (base64dec(thisline, len, (char *) (keys_ref->tlskeys + i % TLS_TICKETS_NO), sizeof(struct tls_sess_key)) != sizeof(struct tls_sess_key)) {
++			free(keys_ref->filename);
++			free(keys_ref->tlskeys);
++			free(keys_ref);
+ 			if (err)
+ 				memprintf(err, "'%s' : unable to decode base64 key on line %d", args[cur_arg+1], i + 1);
+ 			fclose(f);
+@@ -7656,6 +7680,9 @@ static int bind_parse_tls_ticket_keys(char **args, int cur_arg, struct proxy *px
+ 	}
+ 
+ 	if (i < TLS_TICKETS_NO) {
++		free(keys_ref->filename);
++		free(keys_ref->tlskeys);
++		free(keys_ref);
+ 		if (err)
+ 			memprintf(err, "'%s' : please supply at least %d keys in the tls-tickets-file", args[cur_arg+1], TLS_TICKETS_NO);
+ 		fclose(f);

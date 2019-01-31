@@ -1,0 +1,91 @@
+commit a64e5574e40e3e0819c82e35a7e3d2fa65febc73
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Fri Jan 11 19:38:25 2019 +0100
+
+    BUG/MAJOR: cache: fix confusion between zero and uninitialized cache key
+    
+    The cache uses the first 32 bits of the uri's hash as the key to reference
+    the object in the cache. It makes a special case of the value zero to mean
+    that the object is not in the cache anymore. The problem is that when an
+    object hashes as zero, it's still inserted but the eb32_delete() call is
+    skipped, resulting in the object still being chained in the memory area
+    while the block has been reclaimed and used for something else. Then when
+    objects which were chained below it (techically any object since zero is
+    at the root) are deleted, the walk through the upper object may encounter
+    corrupted values where valid pointers were expected.
+    
+    But while this should only happen statically once on 4 billion, the problem
+    gets worse when the cache-use conditions don't match the cache-store ones,
+    because cache-store runs with an uninitialized key, which can create objects
+    that will never be found by the lookup code, or worse, entries with a zero
+    key preventing eviction of the tree node and resulting in a crash. It's easy
+    to accidently end up on such a config because the request rules generally
+    can't be used to decide on the response :
+    
+      http-request  cache-use cache   if { path_beg /images }
+      http-response cache-store cache
+    
+    In this test, mixing traffic with /images/$RANDOM and /foo/$RANDOM will
+    result in random keys being inserted, some of them possibly being zero,
+    and crashes will quickly happen.
+    
+    The fix consists in 1) always initializing the transaction's cache_hash
+    to zero, and 2) never storing a response for which the hash has not been
+    calculated, as indicated by the value zero.
+    
+    It is worth noting that objects hashing as value zero will never be cached,
+    but given that there's only one chance among 4 billion that this happens,
+    this is totally harmless.
+    
+    This fix must be backported to 1.9 and 1.8.
+    
+    (cherry picked from commit c9036c00044a8d81561113886ecec9a9ce71bd3b)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 5a6279fcc16da479304bcabc1705e8653f274337)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+
+diff --git a/src/cache.c b/src/cache.c
+index 667cede3..3d8ed241 100644
+--- a/src/cache.c
++++ b/src/cache.c
+@@ -400,7 +400,7 @@ enum act_return http_action_store_cache(struct act_rule *rule, struct proxy *px,
+ 	struct cache *cache = (struct cache *)rule->arg.act.p[0];
+ 	struct shared_context *shctx = shctx_ptr(cache);
+ 	struct cache_entry *object;
+-
++	unsigned int key = *(unsigned int *)txn->cache_hash;
+ 
+ 	/* Don't cache if the response came from a cache */
+ 	if ((obj_type(s->target) == OBJ_TYPE_APPLET) &&
+@@ -420,6 +420,10 @@ enum act_return http_action_store_cache(struct act_rule *rule, struct proxy *px,
+ 	if (txn->meth != HTTP_METH_GET)
+ 		goto out;
+ 
++	/* cache key was not computed */
++	if (!key)
++		goto out;
++
+ 	/* cache only 200 status code */
+ 	if (txn->status != 200)
+ 		goto out;
+@@ -478,7 +482,7 @@ enum act_return http_action_store_cache(struct act_rule *rule, struct proxy *px,
+ 
+ 					cache_ctx->first_block = first;
+ 
+-					object->eb.key = (*(unsigned int *)&txn->cache_hash);
++					object->eb.key = key;
+ 					memcpy(object->hash, txn->cache_hash, sizeof(object->hash));
+ 					/* Insert the node later on caching success */
+ 
+diff --git a/src/proto_http.c b/src/proto_http.c
+index 7e4a8351..29a1083a 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -8210,6 +8210,7 @@ void http_init_txn(struct stream *s)
+ 
+ 	txn->flags = 0;
+ 	txn->status = -1;
++	*(unsigned int *)txn->cache_hash = 0;
+ 
+ 	txn->cookie_first_date = 0;
+ 	txn->cookie_last_date = 0;

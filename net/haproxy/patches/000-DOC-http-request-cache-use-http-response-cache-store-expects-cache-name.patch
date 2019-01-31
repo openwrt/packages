@@ -1,0 +1,38 @@
+commit 6648ff0cccee04a6a0c0e64050151b5d6c5bac51
+Author: Jarno Huuskonen <jarno.huuskonen@uef.fi>
+Date:   Fri Jan 4 14:05:02 2019 +0200
+
+    DOC: http-request cache-use / http-response cache-store expects cache name
+    
+    Adds missing cache name option to http-request cache-use and
+    http-response cache-store documentation.
+    
+    Also adds optional if/unless condition to
+    10.2.2. Proxy section: http-request cache-use / http-response cache-store
+    
+    (cherry picked from commit 251a6b72a8b6f0a4b167f6a2960e422d682aed80)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 5376f6af9239fdf8a79b6c912387de12e3c9d6cd)
+    [wla: no http-request/response section in 1.8]
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+
+diff --git a/doc/configuration.txt b/doc/configuration.txt
+index 4f999e25..712e56e2 100644
+--- a/doc/configuration.txt
++++ b/doc/configuration.txt
+@@ -17157,13 +17157,13 @@ max-age <seconds>
+ 10.2.2. Proxy section
+ ---------------------
+ 
+-http-request cache-use <name>
++http-request cache-use <name> [ { if | unless } <condition> ]
+   Try to deliver a cached object from the cache <name>. This directive is also
+   mandatory to store the cache as it calculates the cache hash. If you want to
+   use a condition for both storage and delivering that's a good idea to put it
+   after this one.
+ 
+-http-response cache-store <name>
++http-response cache-store <name> [ { if | unless } <condition> ]
+   Store an http-response within the cache. The storage of the response headers
+   is done at this step, which means you can use others http-response actions
+   to modify headers before or after the storage of the response. This action
