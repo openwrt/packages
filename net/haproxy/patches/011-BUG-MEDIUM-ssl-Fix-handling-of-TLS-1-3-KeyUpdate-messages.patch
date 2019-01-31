@@ -1,0 +1,58 @@
+commit b68a427a236e7b9b0cf8b1c4a5360d960cdf9458
+Author: Dirkjan Bussink <d.bussink@gmail.com>
+Date:   Mon Jan 21 09:35:03 2019 -0800
+
+    BUG/MEDIUM: ssl: Fix handling of TLS 1.3 KeyUpdate messages
+    
+    In OpenSSL 1.1.1 TLS 1.3 KeyUpdate messages will trigger the callback
+    that is used to verify renegotiation is disabled. This means that these
+    KeyUpdate messages fail. In OpenSSL 1.1.1 a better mechanism is
+    available with the SSL_OP_NO_RENEGOTIATION flag that disables any TLS
+    1.2 and earlier negotiation.
+    
+    So if this SSL_OP_NO_RENEGOTIATION flag is available, instead of having
+    a manual check, trust OpenSSL and disable the check. This means that TLS
+    1.3 KeyUpdate messages will work properly.
+    
+    Reported-By: Adam Langley <agl@imperialviolet.org>
+    (cherry picked from commit 526894ff3925d272c13e57926aa6b5d9d8ed5ee3)
+    [wt: gh issue #24; Needs to be backported till 1.8]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 062c5a190d50c4aa9c5bde88c8c5c85c5f15fc7b)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 7884c411..7736c324 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -1406,6 +1406,10 @@ void ssl_sock_infocbk(const SSL *ssl, int where, int ret)
+ 	BIO *write_bio;
+ 	(void)ret; /* shut gcc stupid warning */
+ 
++#ifndef SSL_OP_NO_RENEGOTIATION
++	/* Please note that BoringSSL defines this macro to zero so don't
++	 * change this to #if and do not assign a default value to this macro!
++	 */
+ 	if (where & SSL_CB_HANDSHAKE_START) {
+ 		/* Disable renegotiation (CVE-2009-3555) */
+ 		if ((conn->flags & (CO_FL_CONNECTED | CO_FL_EARLY_SSL_HS | CO_FL_EARLY_DATA)) == CO_FL_CONNECTED) {
+@@ -1413,6 +1417,7 @@ void ssl_sock_infocbk(const SSL *ssl, int where, int ret)
+ 			conn->err_code = CO_ER_SSL_RENEG;
+ 		}
+ 	}
++#endif
+ 
+ 	if ((where & SSL_CB_ACCEPT_LOOP) == SSL_CB_ACCEPT_LOOP) {
+ 		if (!(conn->xprt_st & SSL_SOCK_ST_FL_16K_WBFSIZE)) {
+@@ -3806,6 +3811,11 @@ ssl_sock_initial_ctx(struct bind_conf *bind_conf)
+ 		options |= SSL_OP_NO_TICKET;
+ 	if (bind_conf->ssl_options & BC_SSL_O_PREF_CLIE_CIPH)
+ 		options &= ~SSL_OP_CIPHER_SERVER_PREFERENCE;
++
++#ifdef SSL_OP_NO_RENEGOTIATION
++	options |= SSL_OP_NO_RENEGOTIATION;
++#endif
++
+ 	SSL_CTX_set_options(ctx, options);
+ 
+ #if (OPENSSL_VERSION_NUMBER >= 0x1010000fL) && !defined(OPENSSL_NO_ASYNC)
