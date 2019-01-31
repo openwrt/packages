@@ -14,7 +14,7 @@ find ${PATCHESDIR} -type f -name "*.patch" -exec rm -f "{}" \;
 
 i=0
 for cid in $(git -C "${TMP_REPODIR}" rev-list ${BASE_TAG}..HEAD | tac); do
-	filename="$(printf "%04d" $i)-$(git -C "${TMP_REPODIR}" log --format=%s -n 1 $cid | sed -e"s/[()']//g" -e's/[^_a-zA-Z0-9+-]\+/-/g' -e's/-$//').patch"
+	filename="$(printf "%03d" $i)-$(git -C "${TMP_REPODIR}" log --format=%s -n 1 $cid | sed -e"s/[()']//g" -e's/[^_a-zA-Z0-9+-]\+/-/g' -e's/-$//').patch"
 	printf "Creating ${filename}\n"
 	git -C "${TMP_REPODIR}" show $cid > "${PATCHESDIR}/$filename"
 	git add "${PATCHESDIR}/$filename"
