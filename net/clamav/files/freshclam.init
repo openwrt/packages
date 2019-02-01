@@ -9,7 +9,7 @@ PROG=/usr/sbin/freshclam
 FRESHCLAM_CONFIGFILE="/tmp/clamav/freshclam.conf"
 
 validate_freshclam_section() {
-	uci_validate_section freshclam freshclam "${1}" \
+	uci_load_validate freshclam freshclam "$1" "$2" \
 		'freshclam_config_file:string' \
 		'UpdateLogFile:string' \
 		'DatabaseMirror:string' \
@@ -19,11 +19,8 @@ validate_freshclam_section() {
 		'DatabaseDirectory:string:'
 }
 
-start_service() {
-	local freshclam_config_file UpdateLogFile DatabaseOwner NotifyClamd DatabaseMirror \
-	DatabaseDirectory
-
-	validate_freshclam_section freshclam || {
+start_freshclam_instance() {
+	[ "$2" = 0 ] || {
 		echo "validation failed"
 		return 1
 	}
@@ -49,6 +46,11 @@ start_service() {
 	procd_set_param command $PROG -d --config-file=$FRESHCLAM_CONFIGFILE -p /tmp/freshclam.pid --no-warnings
 	procd_set_param file $FRESHCLAM_CONFIGFILE
 	procd_close_instance
+}
+
+start_service()
+{
+	validate_freshclam_section freshclam start_freshclam_instance
 }
 
 stop_service()
