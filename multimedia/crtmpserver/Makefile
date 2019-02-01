@@ -8,27 +8,27 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=crtmpserver
-PKG_REV:=b6fdcdb953d1e99c48a0c37a8c80f2cad2db443b
-PKG_VERSION:=2012-07-18+git-$(PKG_REV)
-PKG_RELEASE:=4
+PKG_SOURCE_DATE:=2015-10-04
+PKG_SOURCE_VERSION:=b866fffca37c3b967a8878499cd2b91aa2587f34
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/j0sh/crtmpserver/tar.gz/$(PKG_REV)?
-PKG_HASH:=e210eeb99d39334e7beb0a1be27dcf23d1f851383f87cf63d7fb98209ef96cee
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_REV)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/shiretu/crtmpserver/tar.gz/$(PKG_SOURCE_VERSION)?
+PKG_HASH:=3744bef060129fda6f7902eb64f566b0d5049864dc542b2882c550b083ef82aa
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=GPL-3.0
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_PARALLEL:=1
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/crtmpserver
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=$(CXX_DEPENDS) +libopenssl +liblua
+  DEPENDS:=+libstdcpp +libopenssl +liblua
   TITLE:=C++ RTMP Server
 endef
 
