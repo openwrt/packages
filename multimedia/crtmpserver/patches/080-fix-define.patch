@@ -1,0 +1,11 @@
+--- a/sources/thelib/include/protocols/ts/basetsappprotocolhandler.h
++++ b/sources/thelib/include/protocols/ts/basetsappprotocolhandler.h
+@@ -18,7 +18,7 @@
+  */
+ 
+ 
+-#if defined HAS_PROTOCOL_TS && defined HAS_MEDIA_TS
++#if defined HAS_PROTOCOL_TS || defined HAS_MEDIA_TS
+ #ifndef _BASETSAPPPROTOCOLHANDLER_H
+ #define	_BASETSAPPPROTOCOLHANDLER_H
+ 
