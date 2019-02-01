@@ -195,11 +195,11 @@ $(eval $(call BuildPackage,lighttpd))
 $(eval $(call BuildPlugin,redirect,URL redirection,+PACKAGE_lighttpd-mod-redirect:libpcre,10))
 
 # Next, permit authentication.
-$(eval $(call BuildPlugin,auth,Authentication,+lighttpd-mod-authn_file,20))
-$(eval $(call BuildPlugin,authn_file,File-based authentication,+lighttpd-mod-auth,20))
-$(eval $(call BuildPlugin,authn_gssapi,Kerberos-based authentication,+lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_gssapi:krb5-libs,20))
-$(eval $(call BuildPlugin,authn_ldap,LDAP-based authentication,+lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_ldap:libopenldap,20))
-$(eval $(call BuildPlugin,authn_mysql,Mysql-based authentication,+lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_mysql:libmysqlclient,20))
+$(eval $(call BuildPlugin,auth,Authentication,,20))
+$(eval $(call BuildPlugin,authn_file,File-based authentication,lighttpd-mod-auth,20))
+$(eval $(call BuildPlugin,authn_gssapi,Kerberos-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_gssapi:krb5-libs,20))
+$(eval $(call BuildPlugin,authn_ldap,LDAP-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_ldap:libopenldap,20))
+$(eval $(call BuildPlugin,authn_mysql,Mysql-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_mysql:libmysqlclient,20))
 
 # Finally, everything else.
 $(eval $(call BuildPlugin,access,Access restrictions,,30))
