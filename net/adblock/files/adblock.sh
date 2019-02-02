@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.6.4"
+adb_ver="3.6.5"
 adb_sysver="unknown"
 adb_enabled=0
 adb_debug=0
@@ -325,8 +325,8 @@ f_uci()
 				;;
 			esac
 		fi
+		f_log "debug" "f_uci    ::: config: ${config}, change: ${change}"
 	fi
-	f_log "debug" "f_uci    ::: config: ${config}, change: ${change}"
 }
 
 # list/overall count
@@ -362,7 +362,9 @@ f_extconf()
 	case "${adb_dns}" in
 		dnsmasq)
 			uci_config="dhcp"
-			if [ ${adb_enabled} -eq 1 ] && [ -z "$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}]" serversfile | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
+			if [ ${adb_enabled} -eq 1 ] && [ -n "$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}]")" ] && \
+				[ -z "$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}]" serversfile | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ] && \
+				[ -z "$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}]" serversfile | grep -Fo "${adb_dnsdir}/${adb_dnsjail}")" ]
 			then
 				uci_set dhcp "@dnsmasq[${adb_dnsinstance}]" serversfile "${adb_dnsdir}/${adb_dnsfile}"
 			elif [ ${adb_enabled} -eq 0 ] && [ -n "$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}]" serversfile | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
@@ -742,7 +744,7 @@ f_query()
 #
 f_jsnup()
 {
-	local run_time bg_pid status="${1:-"enabled"}" mode="normal mode" no_mail=0
+	local run_time bg_pid status="${1:-"enabled"}" mode="normal mode"
 
 	if [ ${adb_rc} -gt 0 ]
 	then
@@ -759,8 +761,7 @@ f_jsnup()
 	fi
 	if [ "${status}" = "resume" ]
 	then
-		no_mail=1
-		status="enabled"
+		status=""
 	fi
 	if [ ${adb_backup_mode} -eq 1 ]
 	then
@@ -790,7 +791,7 @@ f_jsnup()
 	json_load_file "${adb_rtfile}" >/dev/null 2>&1
 	json_init
 	json_add_object "data"
-	json_add_string "adblock_status" "${status}"
+	json_add_string "adblock_status" "${status:-"enabled"}"
 	json_add_string "adblock_version" "${adb_ver}"
 	json_add_string "overall_domains" "${adb_cnt:-0} (${mode})"
 	json_add_string "fetch_utility" "${adb_fetchinfo:-"-"}"
@@ -800,13 +801,13 @@ f_jsnup()
 	json_close_object
 	json_dump > "${adb_rtfile}"
 
-	if [ ${adb_notify} -eq 1 ] && [ ${no_mail} -eq 0 ] && [ -x /etc/adblock/adblock.notify ] && \
+	if [ ${adb_notify} -eq 1 ] && [ -x /etc/adblock/adblock.notify ] && \
 		([ "${status}" = "error" ] || ([ "${status}" = "enabled" ] && [ ${adb_cnt} -le ${adb_notifycnt} ]))
 	then
 		(/etc/adblock/adblock.notify >/dev/null 2>&1)&
 		bg_pid=${!}
 	fi
-	f_log "debug" "f_jsnup  ::: status: ${status}, mode: ${mode}, cnt: ${adb_cnt}, notify: ${adb_notify}, notify_cnt: ${adb_notifycnt}, notify_pid: ${bg_pid:-"-"}"
+	f_log "debug" "f_jsnup  ::: status: ${status:-"-"}, mode: ${mode}, cnt: ${adb_cnt}, notify: ${adb_notify}, notify_cnt: ${adb_notifycnt}, notify_pid: ${bg_pid:-"-"}"
 }
 
 # write to syslog
@@ -1060,7 +1061,7 @@ f_report()
 
 	if [ ${adb_report} -eq 1 ] && [ ! -x "${adb_reputil}" ]
 	then
-		f_log "info" "Please install the package 'tcpdump-mini' to use the adblock reporting feature!"
+		f_log "info" "Please install the package 'tcpdump' or 'tcpdump-mini' to use the adblock reporting feature!"
 	elif [ ${adb_report} -eq 0 ] && [ "${adb_action}" = "report" ]
 	then
 		f_log "info" "Please enable the extra option 'adb_report' to use the adblock reporting feature!"
@@ -1151,7 +1152,7 @@ f_report()
 				for client in ${rep_clients}
 				do
 					json_add_object
-					json_add_string "count" "${client%_*}"
+					json_add_string "count" "${client%%_*}"
 					json_add_string "address" "${client#*_}"
 					json_close_object
 				done
@@ -1160,7 +1161,7 @@ f_report()
 				for domain in ${rep_domains}
 				do
 					json_add_object
-					json_add_string "count" "${domain%_*}"
+					json_add_string "count" "${domain%%_*}"
 					json_add_string "address" "${domain#*_}"
 					json_close_object
 				done
@@ -1169,7 +1170,7 @@ f_report()
 				for block in ${rep_blocked}
 				do
 					json_add_object
-					json_add_string "count" "${block%_*}"
+					json_add_string "count" "${block%%_*}"
 					json_add_string "address" "${block#*_}"
 					json_close_object
 				done
