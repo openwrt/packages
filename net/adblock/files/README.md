@@ -86,7 +86,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * suspend & resume adblock actions temporarily without blocklist reloading
 * provide comprehensive runtime information via LuCI or via 'status' init command
 * provide a detailed DNS Query Report with dns related information about client requests, top (blocked) domains and more
-* query function to quickly identify blocked (sub-)domains, e.g. for whitelisting
+* provide a query function to quickly identify blocked (sub-)domains, e.g. for whitelisting. This function is also able to search in adblock backups, to get back the set of blocking lists sources for a certain domain
 * force dns requests to local resolver
 * force overall sort / duplicate removal for low memory devices (handle with care!)
 * automatic blocklist backup & restore, they will be used in case of download errors or during startup in backup mode
@@ -104,7 +104,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * for limited devices with real memory constraints, adblock provides also a 'http only' option and supports wget-nossl and uclient-fetch (without libustream-ssl) as well
     * for more configuration options see examples below
 * email notification (optional): for email notification support you need to install and configure the additional 'msmtp' package
-* DNS Query Report (optional): for this detailed report you need to install the additional package 'tcpdump-mini'
+* DNS Query Report (optional): for this detailed report you need to install the additional package 'tcpdump' or 'tcpdump-mini'
 
 ## Installation & Usage
 * install 'adblock' (_opkg install adblock_)
@@ -196,6 +196,15 @@ Take a custom OpenWrt build with plugins support to use this feature. Adblock de
 To use the blocklist please modify '/etc/config/dnscrypt-proxy' per instance:
 <pre><code>
   list blacklist 'domains:/tmp/adb_list.overall'
+</code></pre>
+  
+**reference the jail block list manually in a 'kidsafe' dhcp config:**
+
+The additional 'Jail' blocklist (by default in /tmp/adb_list.jail) block access to all domains except those listed in the whitelist file.
+<pre><code>
+config dnsmasq 'kidsafe'
+        [...]
+        option serversfile '/tmp/adb_list.jail'
 </code></pre>
   
 **enable email notification via msmtp:**
