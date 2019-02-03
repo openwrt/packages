@@ -10,30 +10,32 @@ NAME=socat
 
 validate_section_socat()
 {
-	uci_validate_section socat socat "${1}" \
+	uci_load_validate socat socat "$1" "$2" \
 		'enable:bool:1' \
 		'SocatOptions:string'
-	return $?
 }
 
 socat_instance()
 {
-	local SocatOptions enable
-
-	validate_section_socat "${1}" || {
+	[ "$2" = 0 ] || {
 		echo "validation failed"
 		return 1
 	}
 
-	[ "${enable}" = "0" ] && return 1
+	[ "$enable" = "0" ] && return 1
 
 	procd_open_instance
 	procd_set_param command "$PROG"
-	procd_append_param command ${SocatOptions}
+	procd_append_param command $SocatOptions
 	procd_close_instance
 }
 
 start_service () {
-	config_load "${NAME}"
-	config_foreach socat_instance socat
+	config_load "$NAME"
+	config_foreach validate_section_socat socat socat_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$NAME"
+	procd_add_validation validate_section_socat
 }
