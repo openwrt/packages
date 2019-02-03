@@ -453,10 +453,13 @@ FFMPEG_CONFIGURE+= \
 else ifneq ($(findstring powerpc,$(CONFIG_ARCH)),)
 FFMPEG_CONFIGURE+= \
 	--disable-altivec
-# libavcode/mips/aacdec_mips.c build problem
-else ifneq ($(findstring 24kf,$(CONFIG_CPU_TYPE)),)
+endif
+
+# libavcodec/mips/aacdec_mips.c build problem
+# XXX: disable use of assembly on MIPS. Patches welcome.
+ifneq ($(findstring mips,$(CONFIG_ARCH)),)
 FFMPEG_CONFIGURE+= \
-	--disable-inline-asm
+        --disable-asm --disable-inline-asm
 endif
 
 # selectively disable optimizations according to arch/cpu type
