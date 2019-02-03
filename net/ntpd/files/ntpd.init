@@ -8,7 +8,7 @@ USE_PROCD=1
 PROG=/sbin/ntpd
 HOTPLUG_HELPER=/usr/sbin/ntpd.hotplug-helper
 
-config_file=/var/run/ntpd.conf
+config_file=/var/etc/ntpd.conf
 
 trunc() {
 	echo -n "" > $config_file
@@ -19,15 +19,15 @@ emit() {
 }
 
 validate_ntp_section() {
-	uci_validate_section system timeserver "${1}" \
+	uci_load_validate system timeserver "$1" "$2" \
 		'server:list(host)' 'enabled:bool:1' 'enable_server:bool:0' \
 		'interface:list(string)'
 }
 
-start_service() {
-	local server enabled enable_server interface intf
+start_ntpd_instance() {
+	local intf i
 
-	validate_ntp_section ntp || {
+	[ "$2" = 0 ] || {
 		echo "validation failed"
 		return 1
 	}
@@ -84,4 +84,13 @@ start_service() {
 	procd_open_instance
 	procd_set_param command $HOTPLUG_HELPER
 	procd_close_instance
+}
+
+start_service() {
+	validate_ntp_section ntp start_ntpd_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "system"
+	procd_add_validation validate_ntp_section
 }
