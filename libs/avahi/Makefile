@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avahi
 PKG_VERSION:=0.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/lathiat/avahi/releases/download/v$(PKG_VERSION) \
@@ -273,8 +273,6 @@ CONFIGURE_ARGS+= \
 	--disable-dbm \
 	--enable-gdbm \
 	--enable-libdaemon \
-	$(and $(CONFIG_PACKAGE_libavahi-compat-libdnssd),ifeq ($(BUILD_VARIANT),dbus),\
-		--enable-compat-libdns_sd) \
 	--disable-python \
 	--disable-pygtk \
 	--disable-python-dbus \
@@ -303,6 +301,10 @@ CONFIGURE_ARGS+= \
 endif
 
 ifeq ($(BUILD_VARIANT),dbus)
+ifneq ($(CONFIG_PACKAGE_libavahi-compat-libdnssd),)
+CONFIGURE_ARGS += \
+	--enable-compat-libdns_sd
+endif
 CONFIGURE_ARGS += \
 	--enable-dbus
 else
@@ -348,7 +350,7 @@ endef
 
 define Package/libavahi-compat-libdnssd/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdns_sd.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdns_sd.so* $(1)/usr/lib/
 endef
 
 define Package/avahi-utils/install
