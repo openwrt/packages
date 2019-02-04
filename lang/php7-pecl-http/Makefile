@@ -49,6 +49,7 @@ CONFIGURE_VARS+= \
 CONFIGURE_ARGS+= \
 	--with-http \
 	--without-http-shared-deps \
+	--with-http-zlib-dir="$(STAGING_DIR)/usr" \
 	--with-http-libcurl-dir="$(STAGING_DIR)/usr" \
 	--with-http-libevent-dir="$(STAGING_DIR)/usr" \
 	--with-http-libidn-dir="$(STAGING_DIR)/usr" \
