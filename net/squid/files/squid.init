@@ -10,7 +10,7 @@ CONFIGFILE="/tmp/squid/squid.conf"
 MIMETABLE="/tmp/squid/mime.conf"
 
 validate_squid_section() {
-	uci_validate_section squid squid "${1}" \
+	uci_load_validate squid squid "$1" "$2" \
 		'config_file:string' \
 		'http_port:port:3128' \
 		'http_port_options:string' \
@@ -27,10 +27,10 @@ create_squid_user() {
 	group_exists squid || group_add squid $USERID && group_add_user squid squid
 }
 
-start_service() {
-	local config_file http_port http_port_options ssldb ssldb_options coredump_dir visible_hostname pinger_enable
+start_squid_instance() {
+	local config_dir
 
-	validate_squid_section squid || {
+	[ "$2" = 0 ] || {
 		echo "validation failed"
 		return 1
 	}
@@ -57,9 +57,14 @@ start_service() {
 	procd_close_instance
 }
 
+start_service()
+{
+	validate_squid_section squid start_squid_instance
+}
+
 stop_service()
 {
-        ${PROG} -f $CONFIGFILE -N -k shutdown 2>/dev/null
+	$PROG -f $CONFIGFILE -N -k shutdown 2>/dev/null
 }
 
 service_triggers()
