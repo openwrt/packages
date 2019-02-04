@@ -65,6 +65,12 @@ process_filespec "$src_dir" "$dst_dir" "$filespec" || {
 	exit 1
 }
 
+usr_bin_dir="$dst_dir/usr/bin"
+
+if [ -d "$usr_bin_dir" ] ; then
+	sed "1"'!'"b;s,^#"'!'".*python.*,#"'!'"/usr/bin/python${ver}," -i $usr_bin_dir/*
+fi
+
 if [ "$mode" == "sources" ] ; then
 	# Copy only python source files
 	find "$dst_dir" -not -type d -not -name "*\.py" -exec rm -f {} \;
