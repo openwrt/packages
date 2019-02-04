@@ -68,7 +68,6 @@ define Py3Package
 
   define Package/$(1)/install
 	$(call Py3Package/$(1)/install,$$(1))
-	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
 	$(SHELL) $(python3_mk_path)python-package-install.sh "3" \
 		"$(PKG_INSTALL_DIR)" "$$(1)" \
 		"$(HOST_PYTHON3_BIN)" "$$(2)" \
@@ -112,7 +111,6 @@ define Build/Compile/Py3Mod
 		cd $(PKG_BUILD_DIR)/$(strip $(1)), \
 		./setup.py $(2), \
 		$(3))
-	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
 endef
 
 PYTHON3_PKG_SETUP_ARGS:=--single-version-externally-managed

@@ -47,6 +47,8 @@ python="$4"
 mode="$5"
 filespec="$6"
 
+find "$src_dir" -name "*\.exe" | xargs rm -f
+
 process_filespec "$src_dir" "$dst_dir" "$filespec" || {
 	echo "process filespec error-ed"
 	exit 1
