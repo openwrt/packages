@@ -9,23 +9,47 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batctl
 
-PKG_VERSION:=2018.4
-PKG_RELEASE:=1
-PKG_HASH:=e43827a5e868b4e134e77ca04da989fde1981463166bf1b6f2053acc3edd6257
+PKG_VERSION:=2019.0
+PKG_RELEASE:=0
+PKG_HASH:=997721096ff396644e8d697ea7651e9d38243faf317bcea2661d4139ff58b531
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
 PKG_LICENSE:=GPL-2.0
 
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+
 include $(INCLUDE_DIR)/package.mk
 
-define Package/batctl
+define Package/batctl/Default
   URL:=https://www.open-mesh.org/
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+kmod-batman-adv +libnl-tiny +libc +librt
-  TITLE:=B.A.T.M.A.N. Advanced user space configuration tool batctl
+  DEPENDS:=+libnl-tiny +libc +librt
+  PROVIDES:=batctl
   MAINTAINER:=Simon Wunderlich <sw@simonwunderlich.de>
+endef
+
+define Package/batctl-tiny
+$(call Package/batctl/Default)
+  TITLE:=B.A.T.M.A.N. Advanced user space configuration tool (Minimal)
+  VARIANT:=tiny
+  PROVIDES:=batctl
+  ALTERNATIVES:=100:/usr/sbin/batctl:/usr/libexec/batctl-tiny
+endef
+
+define Package/batctl-default
+$(call Package/batctl/Default)
+  TITLE:=B.A.T.M.A.N. Advanced user space configuration tool (Default)
+  VARIANT:=default
+  ALTERNATIVES:=200:/usr/sbin/batctl:/usr/libexec/batctl-full
+endef
+
+define Package/batctl-full
+$(call Package/batctl/Default)
+  TITLE:=B.A.T.M.A.N. Advanced user space configuration tool (Minimal)
+  VARIANT:=full
+  ALTERNATIVES:=300:/usr/sbin/batctl:/usr/libexec/batctl-full
 endef
 
 define Package/batctl/description
@@ -63,14 +87,138 @@ MAKE_BATCTL_ARGS += \
         batctl install \
         REVISION="openwrt-$(PKG_VERSION)-$(PKG_RELEASE)"
 
+config-n := \
+	aggregation \
+	ap_isolation \
+	backbonetable \
+	bisect_iv \
+	bonding \
+	bridge_loop_avoidance \
+	claimtable \
+	dat_cache \
+	distributed_arp_table \
+	event \
+	fragmentation \
+	gateways \
+	gw_mode \
+	interface \
+	isolation_mark \
+	log \
+	loglevel \
+	mcast_flags \
+	multicast_mode \
+	nc_nodes \
+	neighbors \
+	network_coding \
+	orig_interval \
+	originators \
+	ping \
+	routing_algo \
+	statistics \
+	tcpdump \
+	throughputmeter \
+	traceroute \
+	transglobal \
+	translate \
+	translocal \
+
+config-settings := \
+	aggregation \
+	ap_isolation \
+	bonding \
+	bridge_loop_avoidance \
+	distributed_arp_table \
+	fragmentation \
+	gw_mode \
+	interface \
+	isolation_mark \
+	loglevel \
+	multicast_mode \
+	network_coding \
+	orig_interval \
+	routing_algo \
+
+config-tables := \
+	backbonetable \
+	claimtable \
+	dat_cache \
+	gateways \
+	loglevel \
+	nc_nodes \
+	neighbors \
+	originators \
+	statistics \
+	transglobal \
+	translocal \
+
+config-tools := \
+	event \
+	log \
+	ping \
+	tcpdump \
+	throughputmeter \
+	traceroute \
+	translate \
+
+config-extratools := \
+	bisect_iv \
+
+ifeq ($(BUILD_VARIANT),tiny)
+
+config-y := \
+	$(config-settings) \
+
+endif
+
+ifeq ($(BUILD_VARIANT),default)
+
+config-y := \
+	$(config-settings) \
+	$(config-tables) \
+	$(config-tools) \
+
+endif
+
+ifeq ($(BUILD_VARIANT),full)
+
+config-y := \
+	$(config-settings) \
+	$(config-tables) \
+	$(config-tools) \
+	$(config-extratools) \
+
+endif
+
+define ConfigVars
+$(subst $(space),,$(foreach opt,$(config-$(1)),CONFIG_$(opt)=$(1)
+))
+endef
+
+define batctl_config
+$(call ConfigVars,n)$(call ConfigVars,y)
+endef
+$(eval $(call shexport,batctl_config))
 
 define Build/Compile
-	$(MAKE_BATCTL_ENV) $(MAKE) -C "$(PKG_BUILD_DIR)" $(MAKE_BATCTL_ARGS)
+	$(MAKE_BATCTL_ENV) $(MAKE) -C "$(PKG_BUILD_DIR)" $(MAKE_BATCTL_ARGS) \
+		$$$$$(call shvar,batctl_config)
 endef
 
-define Package/batctl/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/batctl $(1)/usr/sbin/
+define Package/batctl-tiny/install
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/batctl $(1)/usr/libexec/batctl-tiny
 endef
 
-$(eval $(call BuildPackage,batctl))
+define Package/batctl-default/install
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/batctl $(1)/usr/libexec/batctl-default
+endef
+
+define Package/batctl-full/install
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/batctl $(1)/usr/libexec/batctl-full
+endef
+
+$(eval $(call BuildPackage,batctl-default))
+$(eval $(call BuildPackage,batctl-tiny))
+$(eval $(call BuildPackage,batctl-full))

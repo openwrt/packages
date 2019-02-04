@@ -33,19 +33,21 @@ bat_config()
 
 	[ ! -f "/sys/class/net/$mesh/mesh/orig_interval" ] && echo "batman-adv mesh $mesh does not exist - check your interface configuration" && return 1
 
-	[ -n "$aggregated_ogms" ] && echo $aggregated_ogms > /sys/class/net/$mesh/mesh/aggregated_ogms
-	[ -n "$ap_isolation" ] && echo $ap_isolation > /sys/class/net/$mesh/mesh/ap_isolation
-	[ -n "$bonding" ] && echo $bonding > /sys/class/net/$mesh/mesh/bonding
-	[ -n "$bridge_loop_avoidance" ] && echo $bridge_loop_avoidance > /sys/class/net/$mesh/mesh/bridge_loop_avoidance 2>&-
-	[ -n "$distributed_arp_table" ] && echo $distributed_arp_table > /sys/class/net/$mesh/mesh/distributed_arp_table 2>&-
-	[ -n "$fragmentation" ] && echo $fragmentation > /sys/class/net/$mesh/mesh/fragmentation
+	[ -n "$aggregated_ogms" ] && batctl -m "$mesh" aggregation "$aggregated_ogms"
+	[ -n "$ap_isolation" ] && batctl -m "$mesh" ap_isolation "$ap_isolation"
+	[ -n "$bonding" ] && batctl -m "$mesh" bonding "$bonding"
+	[ -n "$bridge_loop_avoidance" ] &&  batctl -m "$mesh" bridge_loop_avoidance "$bridge_loop_avoidance" 2>&-
+	[ -n "$distributed_arp_table" ] && batctl -m "$mesh" distributed_arp_table "$distributed_arp_table" 2>&-
+	[ -n "$fragmentation" ] && batctl -m "$mesh" fragmentation "$fragmentation"
+
 	[ -n "$gw_bandwidth" ] && echo $gw_bandwidth > /sys/class/net/$mesh/mesh/gw_bandwidth
 	[ -n "$gw_mode" ] && echo $gw_mode > /sys/class/net/$mesh/mesh/gw_mode
 	[ -n "$gw_sel_class" ] && echo $gw_sel_class > /sys/class/net/$mesh/mesh/gw_sel_class
 	[ -n "$hop_penalty" ] && echo $hop_penalty > /sys/class/net/$mesh/mesh/hop_penalty
-	[ -n "$isolation_mark" ] && echo $isolation_mark > /sys/class/net/$mesh/mesh/isolation_mark
-	[ -n "$multicast_mode" ] && echo $multicast_mode > /sys/class/net/$mesh/mesh/multicast_mode 2>&-
-	[ -n "$network_coding" ] && echo $network_coding > /sys/class/net/$mesh/mesh/network_coding 2>&-
-	[ -n "$log_level" ] && echo $log_level > /sys/class/net/$mesh/mesh/log_level 2>&-
-	[ -n "$orig_interval" ] && echo $orig_interval > /sys/class/net/$mesh/mesh/orig_interval
+
+	[ -n "$isolation_mark" ] && batctl -m "$mesh" isolation_mark "$isolation_mark"
+	[ -n "$multicast_mode" ] && batctl -m "$mesh" multicast_mode "$multicast_mode" 2>&-
+	[ -n "$network_coding" ] && batctl -m "$mesh" network_coding "$network_coding" 2>&-
+	[ -n "$log_level" ] && batctl -m "$mesh" loglevel "$log_level" 2>&-
+	[ -n "$orig_interval" ] && batctl -m "$mesh" orig_interval "$orig_interval"
 }
