@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freetype
 PKG_VERSION:=2.9.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/freetype
@@ -50,6 +50,11 @@ CONFIGURE_ARGS += \
 	--with-bzip2=no \
 	--with-zlib=yes \
 	--with-png=yes
+
+HOST_CONFIGURE_ARGS+= \
+	--with-bzip2=no \
+	--with-zlib=no \
+	--with-png=no
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" all install
