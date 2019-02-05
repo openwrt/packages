@@ -11,7 +11,7 @@ include perlver.mk
 
 PKG_NAME:=perl
 PKG_VERSION:=$(PERL_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=\
 		https://cpan.metacpan.org/src/5.0 \
@@ -89,7 +89,12 @@ define Host/Install
 	# Link any possibly installed static extension in
 	$(MAKE) -C $(HOST_BUILD_DIR)/relink clean || true
 	( cd $(HOST_BUILD_DIR)/relink && $(HOST_PERL_PREFIX)/bin/perl Makefile.PL )
+	( rm -f $(STAGING_DIR_HOST)/bin/perl && $(LN) $(HOST_PERL_PREFIX)/bin/perl $(STAGING_DIR_HOST)/bin/perl )
 	$(call perlmod/host/relink,$(HOST_BUILD_DIR)/relink)
+endef
+
+define Host/Uninstall
+	( rm -f $(STAGING_DIR_HOST)/bin/perl && $(LN) /usr/bin/perl $(STAGING_DIR_HOST)/bin/perl )
 endef
 
 # Target perl
