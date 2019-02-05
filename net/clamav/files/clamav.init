@@ -9,7 +9,7 @@ PROG=/usr/sbin/clamd
 CLAMD_CONFIGFILE="/tmp/clamav/clamd.conf"
 
 validate_clamav_section() {
-	uci_validate_section clamav clamav "${1}" \
+	uci_load_validate clamav clamav "$1" "$2" \
 		'clamd_config_file:string' \
 		'LogFile:string' \
 		'LogFileMaxSize:string' \
@@ -46,15 +46,8 @@ validate_clamav_section() {
 		'DatabaseDirectory:string'
 }
 
-start_service() {
-	local clamd_config_file LogFile LogTime StreamMinPort \
-		StreamMaxPort MaxThreads ReadTimeout CommandReadTimeout MaxDirectoryRecursion \
-		FollowFileSymlinks FollowDirectorySymlinks SelfCheck DetectPUA ScanPE DisableCertCheck \
-		ScanELF DetectBrokenExecutables ScanOLE2 ScanPDF ScanSWF ScanMail ScanPartialMessages \
-		ScanArchive TemporaryDirectory ArchiveBlockEncrypted MaxFileSize LocalSocket User \
-		DatabaseDirectory
-
-	validate_clamav_section clamav || {
+start_clamav_instance() {
+	[ "$2" = 0 ] || {
 		echo "validation failed"
 		return 1
 	}
@@ -107,9 +100,14 @@ start_service() {
 	procd_close_instance
 }
 
+start_service()
+{
+	validate_clamav_section clamav start_clamav_instance
+}
+
 stop_service()
 {
-	service_stop ${PROG}
+	service_stop $PROG
 }
 
 service_triggers()
