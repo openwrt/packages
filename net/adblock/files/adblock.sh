@@ -783,7 +783,7 @@ f_main()
 	local tmp_load tmp_file src_name src_rset src_url src_log src_arc src_cat cat list entry suffix mem_total mem_free enabled cnt=1
 
 	mem_total="$(awk '/^MemTotal/ {print int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
-	mem_free="$(awk '/^MemFree/ {print int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
+	mem_free="$(awk '/^MemFree|^Buffers|^Cached/ {available += $2} END {print int (available/1000)}' "/proc/meminfo" 2>/dev/null)"
 	tmp_load="${adb_tmpload}"
 	tmp_file="${adb_tmpfile}"
 	> "${adb_dnsdir}/.${adb_dnsfile}"
