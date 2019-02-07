@@ -1,6 +1,6 @@
 --- a/scripts/mysql_install_db.sh
 +++ b/scripts/mysql_install_db.sh
-@@ -384,7 +384,7 @@ fi
+@@ -394,7 +394,7 @@ fi
  
  
  # Try to determine the hostname
