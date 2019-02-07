@@ -180,6 +180,7 @@ issue_cert()
     local failed_dir
     local webroot
     local dns
+    local ret
 
     config_get_bool enabled "$section" enabled 0
     config_get_bool use_staging "$section" use_staging
@@ -211,8 +212,9 @@ issue_cert()
             moved_staging=1
         else
             log "Found previous cert config. Issuing renew."
-            $ACME --home "$STATE_DIR" --renew -d "$main_domain" $acme_args || return 1
-            return 0
+            $ACME --home "$STATE_DIR" --renew -d "$main_domain" $acme_args && ret=0 || ret=1
+            post_checks
+            return $ret
         fi
     fi
 
@@ -231,6 +233,7 @@ issue_cert()
     else
         if [ ! -d "$webroot" ]; then
             err "$main_domain: Webroot dir '$webroot' does not exist!"
+            post_checks
             return 1
         fi
         log "Using webroot dir: $webroot"
