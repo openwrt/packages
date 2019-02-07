@@ -5,7 +5,7 @@ PKG_SOURCE_VERSION:=d80214febe4e0e4cc64dddc74e990b3c5ca8a5df
 PKG_MIRROR_HASH:=12d6f8e8c9e17217db16fbb89d023f50dcf54b8ec1959c4a248880be9b11ef3c
 
 PKG_VERSION:=0.10.2-git-20190128-$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -41,7 +41,9 @@ CONFIGURE_ARGS+= \
 	--with-microhttpd=$(STAGING_DIR)/usr
 
 # ToDo: request upstream to provide --with-pulseaudio=...
-TARGET_LDFLAGS+= -Wl,-rpath-link=$(STAGING_DIR)/usr/lib/pulseaudio
+TARGET_LDFLAGS += \
+	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib/pulseaudio \
+	-Wl,-latomic
 
 define Package/gnunet/Default
   SECTION:=net
@@ -54,7 +56,7 @@ define Package/gnunet
 $(call Package/gnunet/Default)
   TITLE+= - a peer-to-peer framework focusing on security
   DEPENDS:=+libgcrypt +libgpg-error +libidn2 +libltdl +libunistring +librt +zlib \
-           $(ICONV_DEPENDS) $(INTL_DEPENDS)
+           $(ICONV_DEPENDS) $(INTL_DEPENDS) +libatomic
   USERID:=gnunet=958:gnunet=958
   MENU:=1
 endef
