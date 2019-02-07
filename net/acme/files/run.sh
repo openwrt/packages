@@ -132,9 +132,9 @@ post_checks()
     if [ -e /etc/init.d/uhttpd ] && ( [ -n "$UHTTPD_LISTEN_HTTP" ] || [ $UPDATE_UHTTPD -eq 1 ] ); then
         if [ -n "$UHTTPD_LISTEN_HTTP" ]; then
             uci set uhttpd.main.listen_http="$UHTTPD_LISTEN_HTTP"
-            uci commit uhttpd
             UHTTPD_LISTEN_HTTP=
         fi
+        uci commit uhttpd
         /etc/init.d/uhttpd reload
     fi
 
