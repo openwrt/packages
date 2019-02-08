@@ -1,0 +1,22 @@
+{
+	"poe": {
+		"description": "manipulate gpio pins to enable/disable poe",
+		"read": {
+			"ubus": {
+				"poe": [
+					"status",
+					"list"
+				]
+			}
+		},
+		"write": {
+			"ubus": {
+				"poe": [
+					"on",
+					"off",
+					"powercycle"
+				]
+			}
+		}
+	}
+}

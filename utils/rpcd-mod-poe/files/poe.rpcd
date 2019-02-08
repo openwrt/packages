@@ -1,0 +1,89 @@
+#!/bin/sh
+
+. /usr/share/libubox/jshn.sh
+
+print_active()
+{
+	json_init
+	json_add_string "active" "$(uci get system.poe_power_port${port}.value)"
+	json_dump
+}
+
+
+json_port()
+{
+	json_add_object "poe_power_port${1}"
+	json_add_string "name" "$(uci get system.poe_power_port${1}.name)"
+	json_add_int "gpio_pin" "$(uci get system.poe_power_port${1}.gpio_pin)"
+	json_add_int "active" "$(uci get system.poe_power_port${1}.value)"
+	json_close_object
+}
+
+case "$1" in
+list)
+	json_init
+	json_add_object "on"
+	json_add_int "port"
+	json_close_object
+	json_add_object "off"
+	json_add_int "port"
+	json_close_object
+	json_add_object "powercycle"
+	json_add_int "port"
+	json_close_object
+	json_add_object "status"
+	json_add_int "port"
+	json_close_object
+	json_add_object "list"
+	json_close_object
+	json_dump
+	;;
+call)
+	read input
+	json_load "$input"
+	json_get_var port port
+
+	uci get system.poe_power_port${port}.value 2>/dev/null 1>/dev/null || {
+		json_init
+		json_add_string "error" "gpio $gpio not found"
+		json_dump
+	}
+
+	case "$2" in
+	on)
+		uci set system.poe_power_port${port}.value=1
+		uci commit system
+		/etc/init.d/gpio_switch restart
+		print_active
+		;;
+	off)
+		uci set system.poe_power_port${port}.value=0
+		uci commit system
+		/etc/init.d/gpio_switch restart
+		print_active
+		;;
+	powercycle)
+		uci set system.poe_power_port${port}.value=0
+		/etc/init.d/gpio_switch restart
+		sleep 1
+		uci set system.poe_power_port${port}.value=1
+		uci commit system
+		/etc/init.d/gpio_switch restart
+		print_active
+		;;
+	status)
+		# in future version additional status information like voltage
+		# and current should follow
+		print_active
+		;;
+	list)
+		json_init
+		port=0;
+		while uci show system.@gpio_switch[$port] 2>/dev/null 1>/dev/null; do
+			json_port $port
+			port=$((port+1))
+		done
+		json_dump
+		;;
+	esac
+esac
