@@ -17,14 +17,19 @@ PKG_HASH:=57b219efd183795bd545dd5a60d9eabbe9dcb6f8fb92bc7ba2122b87f98527d5
 
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=PACKAGE_python-smbus:python
+PKG_BUILD_DEPENDS:=PACKAGE_python3-smbus:python
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
+ifdef CONFIG_PACKAGE_python-smbus
 include ../../lang/python/python-package.mk
+endif
+ifdef CONFIG_PACKAGE_python3-smbus
 include ../../lang/python/python3-package.mk
+endif
 
 define Package/i2c/Default
   URL:=https://i2c.wiki.kernel.org/index.php/I2C_Tools
@@ -135,7 +140,11 @@ endef
 
 $(eval $(call BuildPackage,libi2c))
 $(eval $(call BuildPackage,i2c-tools))
+ifdef CONFIG_PACKAGE_python-smbus
 $(eval $(call PyPackage,python-smbus))
 $(eval $(call BuildPackage,python-smbus))
+endif
+ifdef CONFIG_PACKAGE_python3-smbus
 $(eval $(call PyPackage,python3-smbus))
 $(eval $(call BuildPackage,python3-smbus))
+endif
