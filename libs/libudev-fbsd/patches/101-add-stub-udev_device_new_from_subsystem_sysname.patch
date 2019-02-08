@@ -1,6 +1,6 @@
 --- a/src/libudev.c
 +++ b/src/libudev.c
-@@ -26,6 +26,7 @@ struct udev_device {
+@@ -35,6 +35,7 @@ struct udev_device {
  	struct udev *udev;
  	int refcount;
  	char syspath[32];
@@ -8,7 +8,7 @@
  	dev_t devnum;
  	char const *sysname;
  	char const *action;
-@@ -115,6 +116,29 @@ udev_device_new_from_devnum(struct udev
+@@ -124,6 +125,29 @@ udev_device_new_from_devnum(struct udev
  	return NULL;
  }
  
@@ -38,7 +38,7 @@
  char const *
  udev_device_get_devnode(struct udev_device *udev_device)
  {
-@@ -132,6 +156,20 @@ udev_device_get_devnum(struct udev_devic
+@@ -141,6 +165,20 @@ udev_device_get_devnum(struct udev_devic
  char const *
  udev_device_get_driver(struct udev_device *udev_device)
  {
@@ -61,7 +61,7 @@
  
 --- a/src/libudev.h
 +++ b/src/libudev.h
-@@ -30,6 +30,8 @@ struct udev_device *udev_device_new_from
+@@ -31,6 +31,8 @@ struct udev_device *udev_device_new_from
      struct udev *udev, char const *syspath);
  struct udev_device *udev_device_new_from_devnum(
      struct udev *udev, char type, dev_t devnum);
