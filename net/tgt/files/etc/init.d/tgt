@@ -13,7 +13,7 @@ tgtadm="/usr/sbin/tgtadm --lld iscsi"
 logger="logger -p daemon.err -s -t $NAME"
 
 validate_lun_section() {
-	uci_validate_section tgt lun $1 \
+	uci_load_validate tgt lun "$1" "$2" \
 		'device:or(file, device)' \
 		'type:or("disk", "cd", "pt"):disk' \
 		'bstype:or("rdwr", "aio", "sg"):rdwr' \
@@ -33,14 +33,12 @@ validate_lun_section() {
 
 handle_lun() {
 	local tgt_lun=$1
-	local tgtid=$2
-	local readonly device type bstype sync direct
 	local my_tgtid=${tgt_lun%_*}
 	local lun=${tgt_lun#*_}
 
 	[ $my_tgtid -eq $tgtid ] || return 0
 
-	validate_lun_section $tgt_lun || {
+	[ "$2" = 0 ] || {
 		$logger "Validation failed for LUN $tgt_lun"
 		return 1
 	}
@@ -64,7 +62,7 @@ handle_lun() {
 	done
 
 	local _tgtadm="$tgtadm --mode logicalunit --tid $tgtid --lun $lun"
-	$_tgtadm --op new --backing-store $device --device-type $type --bstype $bstype --bstype $bstype $bsoflags $blocksize || {
+	$_tgtadm --op new --backing-store $device --device-type $type --bstype $bstype $bsoflags $blocksize || {
 		$logger "Failed to create lun $tgt_lun"
 		return 1
 	}
@@ -75,7 +73,7 @@ handle_lun() {
 }
 
 validate_account_section () {
-	uci_validate_section tgt account $1 \
+	uci_load_validate tgt account "$1" "$2" \
 		'target:list(uinteger)' \
 		'user:string' \
 		'password:string' \
@@ -84,9 +82,8 @@ validate_account_section () {
 
 handle_account() {
 	local _tgtadm="$tgtadm --mode account"
-	local user password target outgoing
 
-	validate_account_section $1 || {
+	[ "$2" = 0 ] || {
 		$logger "Validation failed for account ${user:-$1}"
 		return 1
 	}
@@ -110,9 +107,8 @@ handle_account() {
 
 bind_account_to_target() {
 	local _tgtadm="$tgtadm --mode account"
-	local tgtid=$2 user password outgoing
 
-	validate_account_section $1 || {
+	[ "$2" = 0 ] || {
 		$logger "Validation failed for account ${user:-$1}"
 		return 1
 	}
@@ -131,7 +127,7 @@ bind_account_to_target() {
 }
 
 validate_target_section() {
-	uci_validate_section tgt target $1 \
+	uci_load_validate tgt target "$1" "$2" \
 		'name:string:iqn.2012-06.org.openwrt' \
 		'allow_address:list(string):ALL' \
 		'allow_name:list(string)'
@@ -140,10 +136,9 @@ validate_target_section() {
 handle_target() {
 	local tgtid=$1
 	local _tgtadm="$tgtadm --mode target"
-	local name allow
 
 	[ $tgtid -ge 0 ] || return 1
-	validate_target_section $tgtid || {
+	[ "$2" = 0 ] || {
 		$logger "Validation failed for target $tgtid"
 		return 1
 	}
@@ -164,8 +159,8 @@ handle_target() {
 			return 1
 		}
 	done
-	config_foreach handle_lun lun $tgtid || return 1
-	config_foreach bind_account_to_target account $tgtid || return 1
+	config_foreach validate_lun_section lun handle_lun || return 1
+	config_foreach validate_account_section account bind_account_to_target || return 1
 }
 
 configure() {
@@ -174,8 +169,8 @@ configure() {
 		$logger "Failed to set system state to Offline"
 		return 1
 	}
-	config_foreach handle_account account || return 1
-	config_foreach handle_target target || return 1
+	config_foreach validate_account_section account handle_account || return 1
+	config_foreach validate_target_section target handle_target || return 1
 	$tgtadm --mode sys --op update --name State -v ready || {
 		$logger "Failed to set system state to Ready"
 		return 1
@@ -184,23 +179,22 @@ configure() {
 }
 
 validate_tgt_section() {
-	uci_validate_section tgt options $1 \
+	uci_load_validate tgt options "$1" "$2" \
 		'iothreads:uinteger' \
 		'portal:list(string)' \
 		'nop_interval:uinteger' \
 		'nop_count:uinteger'
 }
 
-start_service() {
-	local iothreads portal nop_interval nop_count
-	validate_tgt_section tgt || {
+start_tgt_instance() {
+	[ "$2" = 0 ] || {
 		$logger "Validation failed for tgt options"
 		return 1
 	}
 	procd_open_instance
 	procd_set_param command $PROG -f
 	[ "$iothreads" ] && procd_append_param command -t $iothreads
-	[ "${portal}${nop_interval}${nop_count}" ] && {
+	[ "$portal$nop_interval$nop_count" ] && {
 		local iscsi="" i
 		for i in nop_interval nop_count; do
 			eval iscsi=\${$i+$i=\$$i,}\$iscsi
@@ -214,6 +208,10 @@ start_service() {
 	procd_close_instance
 	logger -p daemon.info -t $NAME -s "Configuration will be loaded in seconds"
 	( sleep 5; configure || { stop_service; exit 1; } ) &
+}
+
+start_service() {
+	validate_tgt_section tgt start_tgt_instance
 }
 
 stop_service() {
@@ -230,6 +228,17 @@ stop_service() {
 reload_service() {
 	stop_service
 	start_service
+}
+
+service_triggers() {
+	procd_add_reload_trigger "tgt"
+
+	procd_open_validate
+	validate_tgt_section
+	validate_account_section
+	validate_target_section
+	validate_lun_section
+	procd_close_validate
 }
 
 show() {
