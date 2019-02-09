@@ -32,6 +32,8 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 #
 #   * Files in any 'testdata' directory
 #
+#   * go.mod and go.sum, in any directory
+#
 #   e.g. GO_PKG_INSTALL_EXTRA:=example.toml marshal_test.toml
 #
 #
@@ -155,12 +157,13 @@ define GoPackage/Build/Configure
 		if [ "$(GO_PKG_INSTALL_ALL)" != 1 ]; then \
 			code=$$$$(echo "$$$$files" | grep '\.\(c\|cc\|cpp\|go\|h\|hh\|hpp\|proto\|s\)$$$$') ; \
 			testdata=$$$$(echo "$$$$files" | grep '\(^\|/\)testdata/') ; \
+			gomod=$$$$(echo "$$$$files" | grep '\(^\|/\)go\.\(mod\|sum\)$$$$') ; \
 			\
 			for pattern in $(GO_PKG_INSTALL_EXTRA); do \
 				extra=$$$$(echo "$$$$extra"; echo "$$$$files" | grep "$$$$pattern") ; \
 			done ; \
 			\
-			files=$$$$(echo "$$$$code"; echo "$$$$testdata"; echo "$$$$extra") ; \
+			files=$$$$(echo "$$$$code"; echo "$$$$testdata"; echo "$$$$gomod"; echo "$$$$extra") ; \
 			files=$$$$(echo "$$$$files" | grep -v '^[[:space:]]*$$$$' | sort -u) ; \
 		fi ; \
 		\
