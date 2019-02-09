@@ -28,7 +28,7 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 #   files are installed:
 #
 #   * Files with one of these extensions:
-#     .go, .c, .cc, .h, .hh, .proto, .s
+#     .go, .c, .cc, .cpp, .h, .hh, .hpp, .proto, .s
 #
 #   * Files in any 'testdata' directory
 #
@@ -77,7 +77,7 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 
 # Credit for this package build process (GoPackage/Build/Configure and
 # GoPackage/Build/Compile) belong to Debian's dh-golang completely.
-# https://anonscm.debian.org/cgit/pkg-go/packages/dh-golang.git
+# https://salsa.debian.org/go-team/packages/dh-golang
 
 
 # for building packages, not user code
@@ -153,7 +153,7 @@ define GoPackage/Build/Configure
 			sed 's|^\./||') ; \
 		\
 		if [ "$(GO_PKG_INSTALL_ALL)" != 1 ]; then \
-			code=$$$$(echo "$$$$files" | grep '\.\(c\|cc\|go\|h\|hh\|proto\|s\)$$$$') ; \
+			code=$$$$(echo "$$$$files" | grep '\.\(c\|cc\|cpp\|go\|h\|hh\|hpp\|proto\|s\)$$$$') ; \
 			testdata=$$$$(echo "$$$$files" | grep '\(^\|/\)testdata/') ; \
 			\
 			for pattern in $(GO_PKG_INSTALL_EXTRA); do \
