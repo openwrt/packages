@@ -1,0 +1,27 @@
+Description: Hardcode version
+Bug: https://github.com/Kozea/Radicale/issues/874
+Author: Jonas Smedegaard <dr@jones.dk>
+Last-Update: 2018-09-22
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/radicale/__init__.py
++++ b/radicale/__init__.py
+@@ -54,7 +54,7 @@
+ from radicale import auth, config, log, rights, storage, web, xmlutils
+ 
+ 
+-VERSION = pkg_resources.get_distribution('radicale').version
++VERSION = "2.1.11"
+ 
+ NOT_ALLOWED = (
+     client.FORBIDDEN, (("Content-Type", "text/plain"),),
+--- a/setup.py
++++ b/setup.py
+@@ -41,6 +41,7 @@
+ 
+ # When the version is updated, a new section in the NEWS.md file must be
+ # added too.
++# make sure to also update radicale/__init__.py
+ VERSION = "2.1.11"
+ WEB_FILES = ["web/css/icon.png", "web/css/main.css", "web/fn.js",
+              "web/index.html"]

@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=radicale2
 PKG_VERSION:=2.1.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Daniel Dickinson <cshored@thecshore.com>
 
 PKG_LICENSE:=GPL-3.0
