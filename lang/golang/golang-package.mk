@@ -164,6 +164,8 @@ define GoPackage/Build/Configure
 			files=$$$$(echo "$$$$files" | grep -v '^[[:space:]]*$$$$' | sort -u) ; \
 		fi ; \
 		\
+		IFS=$$$$'\n' ; \
+		\
 		echo "Copying files from $(PKG_BUILD_DIR) into $(GO_PKG_BUILD_DIR)/src/$(GO_PKG)" ; \
 		for file in $$$$files; do \
 			echo $$$$file ; \
