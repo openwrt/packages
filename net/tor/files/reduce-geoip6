@@ -1,0 +1,43 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use Socket qw(AF_INET6 inet_pton);
+
+sub ipv6_to_bin($) {
+  return unpack("B128", inet_pton(AF_INET6, @_));
+}
+
+sub common_bits($$) {
+  my ($a, $b) = @_;
+  my $ret = 0;
+  $ret++ while $ret < 128 and substr($a, $ret, 1) == substr($b, $ret, 1);
+  return $ret;
+}
+
+# Print only blocks of size /31 (approximately) or bigger
+# This reduces the file to approximately 20% size
+
+my $total = 0;
+my $covered = 0;
+
+print "# This file has been reduced by reduce-geoip6 in OpenWRT\n";
+while (<>) {
+  if (/^#/) {
+    print;
+    next;
+  }
+  my ($start, $end, $country) = split ",";
+  $start = ipv6_to_bin($start);
+  $end = ipv6_to_bin($end);
+  my $common = common_bits($start, $end);
+  my $size = ($common <= 48) ? 1 << (48 - $common) : 0;
+  $total += $size;
+  next if $common > 31;
+  $covered += $size;
+  print;
+}
+
+my $coverage = int(100 * $covered / $total);
+print "# Covered $covered /48 networks out of $total ($coverage%)\n";

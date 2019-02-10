@@ -75,13 +75,29 @@ endef
 
 define Package/tor-geoip
 $(call Package/tor/Default)
-  TITLE:=GeoIP db for tor
+  TITLE:=GeoIP db for tor (full version)
   DEPENDS:=+tor
 endef
 
 define Package/tor-geoip/description
 $(call Package/tor/Default/description)
  This package contains a GeoIP database mapping IP addresses to countries.
+ If you want to save space at the cost of excluding some possible relays,
+ please take a look at the tor-geoip-tiny package.
+endef
+
+define Package/tor-geoip-tiny
+$(call Package/tor/Default)
+  TITLE:=GeoIP db for tor (tiny version)
+  DEPENDS:=+tor
+  PROVIDES:=tor-geoip
+endef
+
+define Package/tor-geoip-tiny/description
+$(call Package/tor/Default/description)
+ This package contains a GeoIP database mapping IP addresses to countries.
+ This database has been reduced to ~15% of its original size by excluding
+ too-small networks. It still covers more than 90% of IP addresses.
 endef
 
 define Package/tor/conffiles
@@ -142,7 +158,17 @@ define Package/tor-geoip/install
 	$(1)/usr/share/tor/
 endef
 
+define Package/tor-geoip-tiny/install
+	$(INSTALL_DIR) $(1)/usr/share/tor
+	perl ./files/reduce-geoip $(PKG_INSTALL_DIR)/usr/share/tor/geoip \
+		> $(1)/usr/share/tor/geoip
+	perl ./files/reduce-geoip6 $(PKG_INSTALL_DIR)/usr/share/tor/geoip6 \
+		> $(1)/usr/share/tor/geoip6
+	chmod 0644 $(1)/usr/share/tor/geoip $(1)/usr/share/tor/geoip6
+endef
+
 $(eval $(call BuildPackage,tor))
 $(eval $(call BuildPackage,tor-gencert))
 $(eval $(call BuildPackage,tor-resolve))
 $(eval $(call BuildPackage,tor-geoip))
+$(eval $(call BuildPackage,tor-geoip-tiny))

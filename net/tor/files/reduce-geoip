@@ -1,0 +1,26 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+# Print only blocks of size /18 or bigger
+# This reduces the file to approximately 10% size
+
+my $total = 0;
+my $covered = 0;
+
+print "# This file has been reduced by reduce-geoip in OpenWRT\n";
+while (<>) {
+  if (/^#/) {
+    print;
+    next;
+  }
+  my ($start, $end, $country) = split ",";
+  my $size = $end - $start + 1;
+  $total += $size;
+  next if $size < 2 ** (32 - 18);
+  $covered += $size;
+  print;
+}
+my $coverage = int(100 * $covered / $total);
+print "# Covered $covered addresses out of $total ($coverage%)\n";
