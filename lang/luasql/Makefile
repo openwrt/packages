@@ -82,21 +82,19 @@ TARGET_CFLAGS += $(FPIC) -std=gnu99
 TARGET_CPPFLAGS += -DLUA_USE_LINUX
 
 ifeq ($(BUILD_VARIANT),mysql)
-  TARGET_CPPFLAGS += -I$(STAGING_DIR)/usr/include/mysql
-  TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib/mysql -lmysqlclient -lz
+  MAKE_FLAGS += DRIVER_INCS_mysql='-I$(STAGING_DIR)/usr/include/mysql' \
+		DRIVER_LIBS_mysql='$(TARGET_LDFLAGS) -L$(STAGING_DIR)/usr/lib/mysql -lmysqlclient -lz'
 endif
 
 ifeq ($(BUILD_VARIANT),postgres)
-  TARGET_LDFLAGS += -lpq
+  MAKE_FLAGS += DRIVER_LIBS_postgres='$(TARGET_LDFLAGS) -lpq'
 endif
 
 ifeq ($(BUILD_VARIANT),sqlite3)
-  TARGET_LDFLAGS += -lsqlite3 -lpthread
+  MAKE_FLAGS += DRIVER_LIBS_sqlite='$(TARGET_LDFLAGS) -lsqlite3 -lpthread'
 endif
 
 MAKE_FLAGS += \
-	DRIVER_INCS="$(TARGET_CPPFLAGS)" \
-	DRIVER_LIBS="$(TARGET_LDFLAGS)" \
 	CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
 	$(BUILD_VARIANT)
 
