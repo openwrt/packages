@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgpg-error
-PKG_VERSION:=1.34
+PKG_VERSION:=1.35
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=https://ftp.bit.nl/mirror/gnupg/ \
 		https://ftp.nluug.nl/security/gnupg/ \
 		http://ring.ksc.gr.jp/archives/net/gnupg/libgpg-error/ \
 		https://www.gnupg.org/ftp/gcrypt/libgpg-error/
-PKG_HASH:=0680799dee71b86b2f435efb825391eb040ce2704b057f6bd3dcc47fbc398c81
+PKG_HASH:=cbd5ee62a8a8c88d48c158fff4fc9ead4132aacd1b4a56eb791f9f997d07e067
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1+
@@ -44,11 +44,15 @@ define Package/libgpg-error/description
 	future.
 endef
 
+TARGET_CFLAGS += -flto
+TARGET_LDFLAGS += -Wl,--gc-sections
+
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-doc \
 	--disable-languages \
+	--disable-ld-version-script \
 	--disable-rpath \
 	--disable-tests
 
