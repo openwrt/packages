@@ -144,12 +144,14 @@ ss_rules() {
 	local args
 
 	[ -x "$bin" ] || return 1
+	"$bin" -f
+
 	config_get cfgtype "$cfg" TYPE
 	[ "$cfgtype" = ss_rules ] || return 1
 
 	eval "$(validate_ss_rules_section "$cfg" ss_validate_mklocal)"
 	validate_ss_rules_section "$cfg" || return 1
-	[ "$disabled" = 0 ] || return 1
+	[ "$disabled" = 0 ] || return 0
 
 	eval local_port_tcp="\$ss_rules_redir_tcp_$redir_tcp"
 	eval local_port_udp="\$ss_rules_redir_udp_$redir_udp"
