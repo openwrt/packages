@@ -1,23 +1,8 @@
-Index: daemon/daemon.c
-===================================================================
---- a/daemon/daemon.c
-+++ b/daemon/daemon.c
-@@ -769,7 +769,7 @@ daemon_delete(struct daemon* daemon)
- #  endif
- #  ifdef HAVE_OPENSSL_CONFIG
- 	EVP_cleanup();
--#  if OPENSSL_VERSION_NUMBER < 0x10100000
-+#  if (OPENSSL_VERSION_NUMBER < 0x10100000) || !defined(OPENSSL_NO_ENGINE)
- 	ENGINE_cleanup();
- #  endif
- 	CONF_modules_free();
-Index: util/net_help.c
-===================================================================
 --- a/util/net_help.c
 +++ b/util/net_help.c
-@@ -1006,10 +1006,10 @@ void* outgoing_ssl_fd(void* sslctx, int fd)
+@@ -1049,10 +1049,10 @@ void* outgoing_ssl_fd(void* sslctx, int
  static lock_basic_type *ub_openssl_locks = NULL;
- 
+
  /** callback that gets thread id for openssl */
 -static unsigned long
 -ub_crypto_id_cb(void)
@@ -27,9 +12,9 @@ Index: util/net_help.c
 -	return (unsigned long)log_thread_get();
 +	CRYPTO_THREADID_set_numeric(id, (unsigned long)log_thread_get());
  }
- 
+
  static void
-@@ -1035,7 +1035,7 @@ int ub_openssl_lock_init(void)
+@@ -1078,7 +1078,7 @@ int ub_openssl_lock_init(void)
  	for(i=0; i<CRYPTO_num_locks(); i++) {
  		lock_basic_init(&ub_openssl_locks[i]);
  	}
@@ -38,7 +23,7 @@ Index: util/net_help.c
  	CRYPTO_set_locking_callback(&ub_crypto_lock_cb);
  #endif /* OPENSSL_THREADS */
  	return 1;
-@@ -1047,7 +1047,7 @@ void ub_openssl_lock_delete(void)
+@@ -1090,7 +1090,7 @@ void ub_openssl_lock_delete(void)
  	int i;
  	if(!ub_openssl_locks)
  		return;
