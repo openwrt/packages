@@ -1,18 +1,27 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2013 Project Gluon
 
 START=50
-
-SERVICE_USE_PID=1
-SERVICE_WRITE_PID=1
-SERVICE_DAEMONIZE=1
+USE_PROCD=1
 
 CRONDIR=/usr/lib/micron.d
 
-start () {
-	service_start /usr/sbin/micrond "$CRONDIR"
+service_triggers() {
+	for file in $CRONDIR/*; do
+		if [ -f /etc/config/${file##*/} ]; then
+			procd_add_reload_trigger "${file##*/}"
+		fi
+	done
 }
 
-stop() {
-	service_stop /usr/sbin/micrond
+reload_service() {
+	stop
+	sleep 1
+	start
+}
+
+start_service() {
+	procd_open_instance
+	procd_set_param command /usr/sbin/micrond "$CRONDIR"
+	procd_set_param respawn
+	procd_close_instance
 }
