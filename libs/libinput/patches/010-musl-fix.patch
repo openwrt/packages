@@ -1,0 +1,10 @@
+--- a/src/libinput.h
++++ b/src/libinput.h
+@@ -29,6 +29,7 @@
+ extern "C" {
+ #endif
+ 
++#include <stdarg.h>
+ #include <stdlib.h>
+ #include <stdint.h>
+ #include <libudev.h>
