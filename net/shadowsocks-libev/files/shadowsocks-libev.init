@@ -145,7 +145,7 @@ ss_rules() {
 
 	[ -x "$bin" ] || return 1
 	"$bin" -f
-	"$bin" -f -6
+	"$bin" -6 -f
 
 	config_get cfgtype "$cfg" TYPE
 	[ "$cfgtype" = ss_rules ] || return 1
