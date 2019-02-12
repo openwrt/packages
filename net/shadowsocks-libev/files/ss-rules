@@ -13,8 +13,8 @@ __errmsg() {
 }
 
 if [ "$1" = "-6" ]; then
-	if ! ip6tables -t nat -L -n >/dev/null; then
-		__errmsg "Skipping ipv6.  Please install ip6tables-mod-nat"
+	if ! ip6tables -t nat -L -n &>/dev/null; then
+		__errmsg "Skipping ipv6.  Requires ip6tables-mod-nat"
 		exit 1
 	fi
 	o_use_ipv6=1; shift
@@ -210,7 +210,7 @@ ss_rules_iptchains_init_tcp() {
 		:ss_rules_local_out -
 		-I OUTPUT 1 -p tcp -j ss_rules_local_out
 		-A ss_rules_local_out -m set --match-set ss_rules${o_af}_dst_bypass_ dst -j RETURN
-		-A ss_rules_local_out -p tcp $o_ipt_extra -j $local_target -m comment --comment "local_default: $o_local_default"
+		-A ss_rules_local_out $o_ipt_extra -j $local_target
 		COMMIT
 	EOF
 }
@@ -265,15 +265,15 @@ ss_rules_iptchains_init_() {
 		:ss_rules_forward -
 		$(ss_rules_iptchains_mkprerules "$proto")
 		-A ss_rules_pre_src -m set --match-set ss_rules${o_af}_dst_bypass_ dst -j RETURN
-		-A ss_rules_pre_src -p $proto $o_ipt_extra -j ss_rules_src
+		-A ss_rules_pre_src $o_ipt_extra -j ss_rules_src
 		-A ss_rules_src -m set --match-set ss_rules${o_af}_src_bypass src -j RETURN
 		-A ss_rules_src -m set --match-set ss_rules${o_af}_src_forward src -j ss_rules_forward
 		-A ss_rules_src -m set --match-set ss_rules${o_af}_src_checkdst src -j ss_rules_dst
-		-A ss_rules_src -j $src_default_target -m comment --comment "src_default: $o_src_default"
+		-A ss_rules_src -j $src_default_target
 		-A ss_rules_dst -m set --match-set ss_rules${o_af}_dst_bypass dst -j RETURN
 		-A ss_rules_dst -m set --match-set ss_rules${o_af}_dst_forward dst -j ss_rules_forward
 		$recentrst_addset_rules
-		-A ss_rules_dst -j $dst_default_target -m comment --comment "dst_default: $o_dst_default"
+		-A ss_rules_dst -j $dst_default_target
 		$forward_rules
 		COMMIT
 		$recentrst_mangle_rules
