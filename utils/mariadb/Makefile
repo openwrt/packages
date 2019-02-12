@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.2.21
+PKG_VERSION:=10.2.22
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -18,7 +18,7 @@ PKG_SOURCE_URL := \
 	https://ftp.yz.yamagata-u.ac.jp/pub/dbms/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
 	https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=637f0808b65ec06902897a2f885a60377828d019d35802402dca541f8113536c
+PKG_HASH:=42f4c54c29b7c196bd105bbf4d2ea721f869b14cb7ba436c3566e6dd2760614c
 PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
 PKG_LICENSE:=GPL-2.0 LGPL-2.1
 PKG_LICENSE_FILES:=COPYING libmariadb/COPYING.LIB
@@ -171,10 +171,13 @@ include $(INCLUDE_DIR)/nls.mk
 
 MARIADB_COMMON_DEPENDS := \
 	$(ICONV_DEPENDS) \
-	+libatomic \
 	+libopenssl \
-	+libstdcpp \
 	+zlib
+
+MARIADB_COMMON_DEPENDS_EXE := \
+	$(MARIADB_COMMON_DEPENDS) \
+	+libatomic \
+	+libstdcpp
 
 # Pass CPPFLAGS in the CFLAGS as otherwise the build system will
 # ignore them.
@@ -256,7 +259,7 @@ define Package/mariadb-client-base
   $(call Package/mariadb/Default)
   TITLE:=MariaDB database client base
   DEPENDS:=mariadb-common \
-	  $(MARIADB_COMMON_DEPENDS) \
+	  $(MARIADB_COMMON_DEPENDS_EXE) \
 	  +libedit
 endef
 
@@ -324,7 +327,7 @@ endef
 define Package/mariadb-server-base
   $(call Package/mariadb/Default)
   DEPENDS:=mariadb-common \
-	  $(MARIADB_COMMON_DEPENDS) \
+	  $(MARIADB_COMMON_DEPENDS_EXE) \
 	  +!arc:libaio \
 	  +liblzma \
 	  +libpcre \
