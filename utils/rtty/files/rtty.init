@@ -5,13 +5,8 @@ START=99
 
 BIN=/usr/sbin/rtty
 
-start_rtty() {
-	. /lib/functions/network.sh
-
-	local cfg="$1"
-	local interface ifname id description host port ssl
-
-	uci_validate_section rtty rtty "${1}" \
+validate_rtty_section() {
+	uci_load_validate rtty rtty "$1" "$2" \
 		'interface:uci("network", "@interface"):lan' \
 		'id:maxlength(63)' \
 		'description:maxlength(126)' \
@@ -19,8 +14,14 @@ start_rtty() {
 		'port:port' \
 		'ssl:bool:0' \
 		'keepalive:uinteger:5'
+}
 
-	[ $? -ne 0 ] && {
+start_rtty() {
+	. /lib/functions/network.sh
+
+	local ifname
+
+	[ "$2" = 0 ] || {
 		echo "validation failed" >&2
 		return 1
 	}
@@ -54,5 +55,10 @@ start_rtty() {
 
 start_service() {
 	config_load rtty
-	config_foreach start_rtty rtty
+	config_foreach validate_rtty_section rtty start_rtty
+}
+
+service_triggers() {
+	procd_add_reload_trigger "rtty"
+	procd_add_validation validate_rtty_section
 }
