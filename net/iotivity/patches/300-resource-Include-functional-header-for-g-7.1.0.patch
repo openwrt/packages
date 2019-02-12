@@ -1,0 +1,58 @@
+From 26c2798188497da22e0a70efebc47991dd755db2 Mon Sep 17 00:00:00 2001
+From: Philippe Coval <philippe.coval@osg.samsung.com>
+Date: Wed, 28 Jun 2017 04:54:05 +0200
+Subject: [PATCH] resource: Include functional header for g++-7.1.0
+
+It was tested on yocto poky master on iotivity-1.2.1 (and later):
+
+  resource/include/OCUtilities.h: \
+  In function 'OCStackResult OC::nil_guard(PtrT&&, FnT&&, ParamTs&& ...)':
+  resource/include/OCUtilities.h:85:21: \
+  error: 'bind' is not a member of 'std'
+  return std::bind(fn, p, std::ref(params)...)();
+
+  resource/include/OCApi.h: At global scope:
+  resource/include/OCApi.h:362:18: \
+  error: 'function' in namespace 'std' does not name a template type
+  typedef std::function<void(std::shared_ptr<OCResource>)> FindCallback;
+
+Change-Id: Ie1cab497c33fde394f77490a1d636eb36a563396
+Origin: https://gerrit.iotivity.org/gerrit/#/c/21069/
+Signed-off-by: Philippe Coval <philippe.coval@osg.samsung.com>
+Reviewed-on: https://gerrit.iotivity.org/gerrit/21067
+Reviewed-by: Thiago Macieira <thiago.macieira@intel.com>
+Tested-by: jenkins-iotivity <jenkins@iotivity.org>
+---
+ resource/include/OCApi.h       | 2 --
+ resource/include/OCUtilities.h | 1 +
+ 2 files changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/resource/include/OCApi.h b/resource/include/OCApi.h
+index 4e14f29cc..af9721554 100644
+--- a/resource/include/OCApi.h
++++ b/resource/include/OCApi.h
+@@ -27,9 +27,7 @@
+ #include <map>
+ #include <memory>
+ #include <iterator>
+-#if defined(_MSC_VER)
+ #include <functional>
+-#endif
+ 
+ #include "octypes.h"
+ #include "OCHeaderOption.h"
+diff --git a/resource/include/OCUtilities.h b/resource/include/OCUtilities.h
+index 85039d0c1..f1c93045f 100644
+--- a/resource/include/OCUtilities.h
++++ b/resource/include/OCUtilities.h
+@@ -26,6 +26,7 @@
+ #include <memory>
+ #include <utility>
+ #include <exception>
++#include <functional>
+ 
+ #include <OCException.h>
+ #include <StringConstants.h>
+-- 
+2.17.1
+
