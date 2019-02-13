@@ -8,14 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prosody
-PKG_VERSION:=0.9.12
+PKG_VERSION:=0.11.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://prosody.im/downloads/source
-PKG_HASH:=1a59a322b71928a21985522aa00d0eab3552208d7bf9ecb318542a1b2fee3e8d
+PKG_SOURCE_URL:=https://prosody.im/downloads/source
+PKG_HASH:=8911f6dc29b9e0c4edf9e61dc23fa22d77bc42c4caf28b809ab843b2f08e4831
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=MIT/X11
+PKG_BUILD_DEPENDS:=lua/host
+PKG_CPE_ID:=cpe:/a:prosody:prosody
+HOST_BUILD_DEPENDS:=$(PKG_BUILD_DEPENDS)
 
 PKG_INSTALL:=1
 
@@ -25,7 +28,7 @@ define Package/prosody
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Instant Messaging
-  DEPENDS:=+luafilesystem +libidn +luaexpat +luasec +libopenssl +libidn +liblua 
+  DEPENDS:=+luafilesystem +libidn +luaexpat +luasec +libopenssl +libidn +liblua +luabitop
   TITLE:=XMPP server
   URL:=http://prosody.im/
   USERID:=prosody=54:prosody=54
@@ -50,7 +53,7 @@ define Build/Configure
 	# this is *NOT* GNU autoconf stuff
 	(cd $(PKG_BUILD_DIR); ./configure \
 		--prefix=/usr \
-		--with-lua="$(STAGING_DIR_HOSTPKG)/bin" \
+		--with-lua="$(STAGING_DIR_HOSTPKG)" \
 		--with-lua-include="$(STAGING_DIR)/usr/include" \
 		--with-lua-lib="$(STAGING_DIR)/usr/lib" \
 		--cflags="$(TARGET_CFLAGS)" \
@@ -81,7 +84,7 @@ define Package/prosody/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/prosody/prosody.version $(1)/usr/lib/prosody/
 	$(INSTALL_DIR) $(1)/usr/lib/prosody/core
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/core/*.lua $(1)/usr/lib/prosody/core/
-	$(INSTALL_DIR) $(1)/usr/lib/prosody/fallbacks
+	#$(INSTALL_DIR) $(1)/usr/lib/prosody/fallbacks
 	#$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/fallbacks/*.lua $(1)/usr/lib/prosody/fallbacks/
 	$(INSTALL_DIR) $(1)/usr/lib/prosody/modules
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/modules/*.lua $(1)/usr/lib/prosody/modules/
@@ -91,12 +94,20 @@ define Package/prosody/install
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/modules/mod_s2s/*.lua $(1)/usr/lib/prosody/modules/mod_s2s/
 	$(INSTALL_DIR) $(1)/usr/lib/prosody/modules/muc
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/modules/muc/*.lua $(1)/usr/lib/prosody/modules/muc/
-	$(INSTALL_DIR) $(1)/usr/lib/prosody/modules/storage
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/modules/storage/*.lua $(1)/usr/lib/prosody/modules/storage/
+	$(INSTALL_DIR) $(1)/usr/lib/prosody/modules/mod_pubsub
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/modules/mod_pubsub/*.lua $(1)/usr/lib/prosody/modules/mod_pubsub/
+	$(INSTALL_DIR) $(1)/usr/lib/prosody/modules/mod_mam
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/modules/mod_mam/*.lua $(1)/usr/lib/prosody/modules/mod_mam/
+	#$(INSTALL_DIR) $(1)/usr/lib/prosody/modules/storage
+	#$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/modules/storage/*.lua $(1)/usr/lib/prosody/modules/storage/
 	$(INSTALL_DIR) $(1)/usr/lib/prosody/net
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/net/*.lua $(1)/usr/lib/prosody/net/
 	$(INSTALL_DIR) $(1)/usr/lib/prosody/net/http
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/net/http/*.lua $(1)/usr/lib/prosody/net/http/
+	$(INSTALL_DIR) $(1)/usr/lib/prosody/net/resolvers
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/net/resolvers/*.lua $(1)/usr/lib/prosody/net/resolvers/
+	$(INSTALL_DIR) $(1)/usr/lib/prosody/net/websocket
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/net/websocket/*.lua $(1)/usr/lib/prosody/net/websocket/
 	$(INSTALL_DIR) $(1)/usr/lib/prosody/util
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/prosody/util/*.lua $(1)/usr/lib/prosody/util/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/prosody/util/*.so $(1)/usr/lib/prosody/util/
