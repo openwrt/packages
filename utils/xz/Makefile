@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xz
 PKG_VERSION:=5.2.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/lzmautils
@@ -74,7 +74,6 @@ TARGET_LDFLAGS += -Wl,--gc-sections -flto
 
 CONFIGURE_ARGS += \
 	--enable-small \
-	--enable-assume-ram=4 \
 	--disable-assembler \
 	--disable-debug \
 	--disable-doc \
