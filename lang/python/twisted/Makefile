@@ -24,6 +24,7 @@ PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
+include ../python3-package.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xjf $(DL_DIR)/$(PKG_SOURCE)
 
@@ -48,10 +49,30 @@ $(call Package/twisted/Default)
   VARIANT:=python
 endef
 
+define Package/python3-twisted
+$(call Package/twisted/Default)
+  TITLE:=Python3 networking engine
+  DEPENDS:= \
+      +PACKAGE_python3-twisted:python3-light \
+      +PACKAGE_python3-twisted:python3-attrs \
+      +PACKAGE_python3-twisted:python3-automat \
+      +PACKAGE_python3-twisted:python3-constantly \
+      +PACKAGE_python3-twisted:python3-incremental \
+      +PACKAGE_python3-twisted:python3-hyperlink \
+      +PACKAGE_python3-twisted:python3-zope-interface
+  VARIANT:=python3
+endef
+
 define Package/twisted/description
 Twisted is a networking engine written in Python, supporting numerous
 protocols. It contains a web server, numerous chat clients, chat servers,
 mail servers, and more.
+endef
+
+define Package/python3-twisted/description
+$(call Package/twisted/description)
+.
+(Variant for Python3)
 endef
 
 define PyPackage/twisted/filespec
@@ -60,6 +81,16 @@ define PyPackage/twisted/filespec
 -|$(PYTHON_PKG_DIR)/twisted/conch/scripts/tkconch.py
 endef
 
+define Py3Package/python3-twisted/filespec
++|/usr/bin
++|$(PYTHON3_PKG_DIR)
+-|$(PYTHON3_PKG_DIR)/twisted/conch/scripts/tkconch.py
+endef
+
 $(eval $(call PyPackage,twisted))
 $(eval $(call BuildPackage,twisted))
 $(eval $(call BuildPackage,twisted-src))
+
+$(eval $(call Py3Package,python3-twisted))
+$(eval $(call BuildPackage,python3-twisted))
+$(eval $(call BuildPackage,python3-twisted-src))
