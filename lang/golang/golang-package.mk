@@ -28,9 +28,11 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 #   files are installed:
 #
 #   * Files with one of these extensions:
-#     .go, .c, .cc, .h, .hh, .proto, .s
+#     .go, .c, .cc, .cpp, .h, .hh, .hpp, .proto, .s
 #
 #   * Files in any 'testdata' directory
+#
+#   * go.mod and go.sum, in any directory
 #
 #   e.g. GO_PKG_INSTALL_EXTRA:=example.toml marshal_test.toml
 #
@@ -77,7 +79,7 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 
 # Credit for this package build process (GoPackage/Build/Configure and
 # GoPackage/Build/Compile) belong to Debian's dh-golang completely.
-# https://anonscm.debian.org/cgit/pkg-go/packages/dh-golang.git
+# https://salsa.debian.org/go-team/packages/dh-golang
 
 
 # for building packages, not user code
@@ -153,16 +155,19 @@ define GoPackage/Build/Configure
 			sed 's|^\./||') ; \
 		\
 		if [ "$(GO_PKG_INSTALL_ALL)" != 1 ]; then \
-			code=$$$$(echo "$$$$files" | grep '\.\(c\|cc\|go\|h\|hh\|proto\|s\)$$$$') ; \
+			code=$$$$(echo "$$$$files" | grep '\.\(c\|cc\|cpp\|go\|h\|hh\|hpp\|proto\|s\)$$$$') ; \
 			testdata=$$$$(echo "$$$$files" | grep '\(^\|/\)testdata/') ; \
+			gomod=$$$$(echo "$$$$files" | grep '\(^\|/\)go\.\(mod\|sum\)$$$$') ; \
 			\
 			for pattern in $(GO_PKG_INSTALL_EXTRA); do \
 				extra=$$$$(echo "$$$$extra"; echo "$$$$files" | grep "$$$$pattern") ; \
 			done ; \
 			\
-			files=$$$$(echo "$$$$code"; echo "$$$$testdata"; echo "$$$$extra") ; \
+			files=$$$$(echo "$$$$code"; echo "$$$$testdata"; echo "$$$$gomod"; echo "$$$$extra") ; \
 			files=$$$$(echo "$$$$files" | grep -v '^[[:space:]]*$$$$' | sort -u) ; \
 		fi ; \
+		\
+		IFS=$$$$'\n' ; \
 		\
 		echo "Copying files from $(PKG_BUILD_DIR) into $(GO_PKG_BUILD_DIR)/src/$(GO_PKG)" ; \
 		for file in $$$$files; do \
