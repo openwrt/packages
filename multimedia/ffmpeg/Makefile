@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Ian Leonard <antonlacon@gmail.com>
+# Copyright (C) 2017-2019 Ian Leonard <antonlacon@gmail.com>
 # Copyright (C) 2018 Ted Hess <thess@kitschensync.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=3.2.12
-PKG_RELEASE:=5
+PKG_VERSION:=3.4.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
-PKG_HASH:=8985cea7b1b3b2e0e2b2a8ac6187a7fb022fe8aa9d35101760a000205c59c412
+PKG_HASH:=741cbd6394eaed370774ca4cc089eaafbc54d0824b9aa360d4b3b0cbcbc4a92c
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Ian Leonard <antonlacon@gmail.com>
 
@@ -453,10 +453,13 @@ FFMPEG_CONFIGURE+= \
 else ifneq ($(findstring powerpc,$(CONFIG_ARCH)),)
 FFMPEG_CONFIGURE+= \
 	--disable-altivec
-# libavcode/mips/aacdec_mips.c build problem
-else ifneq ($(findstring 24kf,$(CONFIG_CPU_TYPE)),)
+endif
+
+# libavcodec/mips/aacdec_mips.c build problem
+# XXX: disable use of assembly on MIPS. Patches welcome.
+ifneq ($(findstring mips,$(CONFIG_ARCH)),)
 FFMPEG_CONFIGURE+= \
-	--disable-inline-asm
+        --disable-asm --disable-inline-asm
 endif
 
 # selectively disable optimizations according to arch/cpu type
@@ -483,11 +486,9 @@ endif
 
 ifneq ($(CONFIG_TARGET_x86),)
 ifeq ($(CONFIG_NASM),y)
-  # Set yasmexe to anything but YASM/NASM (ffmpeg configure will then find NASM correctly)
-  # Newer ffmpeg packages will use --enable-x86asm (with NASM default)
-  FFMPEG_CONFIGURE += --yasmexe=xyzzy
+  FFMPEG_CONFIGURE += --enable-x86asm
 else
-  FFMPEG_CONFIGURE += --disable-yasm
+  FFMPEG_CONFIGURE += --disable-x86asm
 endif
 endif
 
