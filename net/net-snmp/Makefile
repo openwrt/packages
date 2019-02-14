@@ -206,6 +206,9 @@ CONFIGURE_ARGS += \
 	--without-zlib \
 	--with-nl \
 	 $(call autoconf_bool,CONFIG_IPV6,ipv6) \
+	--disable-perl-cc-checks \
+	--disable-embedded-perl \
+	--without-perl-modules
 
 CONFIGURE_VARS += \
 	ac_cv_header_netlink_netlink_h=yes \
