@@ -1,0 +1,13 @@
+Index: pcsensor.c
+===================================================================
+--- a/pcsensor.c	2019-02-11 15:26:14.000000000 +0000
++++ b/pcsensor.c	2019-02-11 15:53:15.715592461 +0000
+@@ -39,7 +39,7 @@
+ #include <strings.h>
+ #include <errno.h>
+ #include <signal.h>
+-#include <libusb.h>
++#include <libusb-1.0/libusb.h>
+ 
+ #define VERSION "1.2.0"
+ 

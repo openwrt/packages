@@ -1,0 +1,11 @@
+Index: pcsensor-1.2.0/Makefile
+===================================================================
+--- pcsensor-1.2.0.orig/Makefile	2019-02-11 15:26:14.000000000 +0000
++++ pcsensor-1.2.0/Makefile	2019-02-12 19:54:38.012709343 +0000
+@@ -16,3 +16,6 @@
+ 
+ rules-install:			# must be superuser to do this
+ 	cp 99-tempsensor.rules /etc/udev/rules.d
++
++install:
++	cp 99-tempsensor.rules /etc/udev/rules.d/
