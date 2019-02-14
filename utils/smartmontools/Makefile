@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/uclibc++.mk
 
 PKG_NAME:=smartmontools
 PKG_VERSION:=7.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/smartmontools
@@ -28,13 +28,13 @@ include $(INCLUDE_DIR)/package.mk
 define Package/smartmontools/Default
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=$(CXX_DEPENDS)
   TITLE:=S.M.A.R.T Monitoring
-  URL:=http://smartmontools.sourceforge.net/
+  URL:=https://www.smartmontools.org/
 endef
 
 define Package/smartmontools
   $(call Package/smartmontools/Default)
+  DEPENDS:=$(CXX_DEPENDS)
   TITLE+= Tool
 endef
 
@@ -47,6 +47,7 @@ endef
 
 define Package/smartd
   $(call Package/smartmontools/Default)
+  DEPENDS:=$(CXX_DEPENDS)
   TITLE+= Daemon
 endef
 
@@ -55,6 +56,16 @@ define Package/smartd/description
   control/monitor storage systems using the Self-Monitoring, Analysis
   and Reporting Technology System (S.M.A.R.T.) built into most modern
   ATA and SCSI disks. It is derived from smartsuite.
+endef
+
+define Package/smartmontools-drivedb
+  $(call Package/smartmontools/Default)
+  TITLE+= Drive database
+  PKGARCH=all
+endef
+
+define Package/smartmontools-drivedb/description
+  Database of known drives and USB bridges for smartctl and smartd.
 endef
 
 ifeq ($(CONFIG_USE_UCLIBCXX),y)
@@ -83,8 +94,6 @@ CONFIGURE_VARS += \
 define Package/smartmontools/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/smartctl $(1)/usr/sbin/
-	$(INSTALL_DIR) $(1)/usr/share
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/smartmontools/drivedb.h $(1)/usr/share/smartmontools
 endef
 
 define Package/smartd/install
@@ -96,9 +105,15 @@ define Package/smartd/install
 	$(INSTALL_BIN) ./files/smartd.init $(1)/etc/init.d/smartd
 endef
 
+define Package/smartmontools-drivedb/install
+	$(INSTALL_DIR) $(1)/usr/share/smartmontools/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/smartmontools/drivedb.h $(1)/usr/share/smartmontools/
+endef
+
 define Package/smartd/conffiles
 /etc/smartd.conf
 endef
 
 $(eval $(call BuildPackage,smartmontools))
 $(eval $(call BuildPackage,smartd))
+$(eval $(call BuildPackage,smartmontools-drivedb))
