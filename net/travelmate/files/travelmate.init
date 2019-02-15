@@ -31,8 +31,20 @@ start_service()
 
 reload_service()
 {
-	[ -s "${trm_pidfile}" ] && return 1
-	rc_procd start_service
+	local ppid pid
+
+	if [ -s "${trm_pidfile}" ]
+	then
+		ppid="$(cat "${trm_pidfile}" 2>/dev/null)"
+		if [ -n "${ppid}" ]
+		then
+			pid="$(pgrep sleep -P ${ppid} 2>/dev/null)"
+			if [ -n "${pid}" ]
+			then
+				kill -INT ${pid} 2>/dev/null
+			fi
+		fi
+	fi
 }
 
 stop_service()
@@ -68,5 +80,5 @@ service_triggers()
 
 	PROCD_RELOAD_DELAY=$((${delay:-2} * 1000))
 	procd_add_interface_trigger "interface.*.down" "${trigger}" "${trm_init}" reload
-	procd_add_reload_trigger "travelmate"
+	procd_add_config_trigger "config.change" "travelmate" "${trm_init}" restart
 }
