@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.3.4"
+trm_ver="1.3.5"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -45,7 +45,7 @@ f_trim()
 #
 f_envload()
 {
-	local sys_call sys_desc sys_model sys_ver
+	local sys_call sys_desc sys_model
 
 	# get system information
 	#
@@ -101,37 +101,40 @@ f_envload()
 #
 f_prep()
 {
-	local eap_rc=0 config="${1}" proactive="${2}"
+	local eap_rc=1 config="${1}" proactive="${2}"
 	local mode="$(uci_get wireless "${config}" mode)"
 	local network="$(uci_get wireless "${config}" network)"
 	local radio="$(uci_get wireless "${config}" device)"
 	local disabled="$(uci_get wireless "${config}" disabled)"
 	local eaptype="$(uci_get wireless "${config}" eap_type)"
 
-	if [ -z "${trm_radio}" ] && [ -z "$(printf "%s" "${trm_radiolist}" | grep -Fo "${radio}")" ]
+	if [ -n "${config}" ] && [ -n "${radio}" ] && [ -n "${mode}" ] && [ -n "${network}" ]
 	then
-		trm_radiolist="$(f_trim "${trm_radiolist} ${radio}")"
-	elif [ -n "${trm_radio}" ] && [ -z "${trm_radiolist}" ]
-	then
-		trm_radiolist="$(f_trim "$(printf "%s" "${trm_radio}" | \
-			awk '{while(match(tolower($0),/radio[0-9]/)){ORS=" ";print substr(tolower($0),RSTART,RLENGTH);$0=substr($0,RSTART+RLENGTH)}}')")"
-	fi
-	if [ "${mode}" = "sta" ] && [ "${network}" = "${trm_iface}" ]
-	then
-		if ([ -z "${disabled}" ] || [ "${disabled}" = "0" ]) && ([ ${proactive} -eq 0 ] || [ "${trm_ifstatus}" != "true" ])
+		if [ -z "${trm_radio}" ] && [ -z "$(printf "%s" "${trm_radiolist}" | grep -Fo "${radio}")" ]
 		then
-			uci_set wireless "${config}" disabled 1
-		elif [ "${disabled}" = "0" ] && [ "${trm_ifstatus}" = "true" ] && [ -z "${trm_active_sta}" ] && [ ${proactive} -eq 1 ]
+			trm_radiolist="$(f_trim "${trm_radiolist} ${radio}")"
+		elif [ -n "${trm_radio}" ] && [ -z "${trm_radiolist}" ]
 		then
-			trm_active_sta="${config}"
+			trm_radiolist="$(f_trim "$(printf "%s" "${trm_radio}" | \
+				awk '{while(match(tolower($0),/radio[0-9]/)){ORS=" ";print substr(tolower($0),RSTART,RLENGTH);$0=substr($0,RSTART+RLENGTH)}}')")"
 		fi
-		if [ -n "${eaptype}" ]
+		if [ "${mode}" = "sta" ] && [ "${network}" = "${trm_iface}" ]
 		then
-			eap_rc="$("${trm_wpa}" -veap >/dev/null 2>&1; printf "%u" ${?})"
-		fi
-		if [ -z "${eaptype}" ] || [ ${eap_rc} -eq 0 ]
-		then
-			trm_stalist="$(f_trim "${trm_stalist} ${config}-${radio}")"
+			if ([ -z "${disabled}" ] || [ "${disabled}" = "0" ]) && ([ ${proactive} -eq 0 ] || [ "${trm_ifstatus}" != "true" ])
+			then
+				uci_set wireless "${config}" disabled 1
+			elif [ "${disabled}" = "0" ] && [ "${trm_ifstatus}" = "true" ] && [ -z "${trm_active_sta}" ] && [ ${proactive} -eq 1 ]
+			then
+				trm_active_sta="${config}"
+			fi
+			if [ -n "${eaptype}" ]
+			then
+				eap_rc="$("${trm_wpa}" -veap >/dev/null 2>&1; printf "%u" ${?})"
+			fi
+			if [ -z "${eaptype}" ] || [ ${eap_rc} -eq 0 ]
+			then
+				trm_stalist="$(f_trim "${trm_stalist} ${config}-${radio}")"
+			fi
 		fi
 	fi
 	f_log "debug" "f_prep ::: config: ${config}, mode: ${mode}, network: ${network}, eap_rc: ${eap_rc}, radio: ${radio}, trm_radio: ${trm_radio:-"-"}, trm_active_sta: ${trm_active_sta:-"-"}, proactive: ${proactive}, disabled: ${disabled}"
@@ -396,26 +399,20 @@ f_main()
 									if [ "${trm_ifstatus}" = "true" ]
 									then
 										uci_commit wireless
-										f_check "initial"
 										f_log "info" "connected to uplink '${sta_radio}/${sta_essid}/${sta_bssid:-"-"}' (${trm_sysver})"
 										return 0
-									elif [ ${cnt} -eq ${trm_maxretry} ]
-									then
-										uci -q revert wireless
-										f_check "rev"
-										if [ "${dev}" = "${active_radio}" ] && [ -n "${trm_active_sta}" ]
-										then
-											f_check "initial"
-										fi
-										faulty_station="${sta_radio}/${sta_essid}/${sta_bssid:-"-"}"
-										f_jsnup "${faulty_station}"
-										f_log "info" "uplink disabled '${sta_radio}/${sta_essid}/${sta_bssid:-"-"}' (${trm_sysver})"
-										break
 									else
 										uci -q revert wireless
 										f_check "rev"
-										f_jsnup
-										f_log "info" "can't connect to uplink '${sta_radio}/${sta_essid}/${sta_bssid:-"-"}' (${trm_sysver})"
+										if [ ${cnt} -eq ${trm_maxretry} ] || ([ "${dev}" = "${active_radio}" ] && [ -n "${trm_active_sta}" ])
+										then
+											faulty_station="${sta_radio}/${sta_essid}/${sta_bssid:-"-"}"
+											f_jsnup "${faulty_station}"
+											f_log "info" "uplink disabled '${sta_radio}/${sta_essid}/${sta_bssid:-"-"}' (${trm_sysver})"
+										else
+											f_jsnup
+											f_log "info" "can't connect to uplink '${sta_radio}/${sta_essid}/${sta_bssid:-"-"}' (${trm_sysver})"
+										fi
 										unset scan_list
 										break
 									fi
@@ -461,7 +458,18 @@ while true
 do
 	if [ -z "${trm_action}" ]
 	then
-		sleep ${trm_timeout}
+		while true
+		do
+			f_check "initial"
+			if [ "${trm_ifstatus}" = "true" ]
+			then
+				sleep ${trm_timeout}
+			fi
+			if [ $? -eq 0 ] || [ "${trm_ifstatus}" = "false" ]
+			then
+				break
+			fi
+		done
 	elif [ "${trm_action}" = "stop" ]
 	then
 		> "${trm_rtfile}"
