@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
 PKG_VERSION:=2.94
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GITHUB/transmission/transmission-releases/master
@@ -123,17 +123,14 @@ TARGET_CFLAGS += -flto
 TARGET_LDFLAGS += -Wl,--gc-sections -Wl,--as-needed
 
 CONFIGURE_ARGS += \
-	--enable-daemon \
 	--enable-cli \
-	--without-gtk \
+	--enable-daemon \
 	--enable-external-natpmp \
 	--enable-largefile \
-	--enable-lightweight
-
-ifeq ($(BUILD_VARIANT),openssl)
-  CONFIGURE_ARGS += \
-	--with-crypto=openssl
-endif
+	--enable-lightweight \
+	--without-gtk \
+	--without-kqueue \
+	--without-systemd-daemon
 
 ifeq ($(BUILD_VARIANT),mbedtls)
   CONFIGURE_ARGS += \
@@ -141,6 +138,9 @@ ifeq ($(BUILD_VARIANT),mbedtls)
   CONFIGURE_VARS += \
 	MBEDTLS_CFLAGS="-I$(STAGING_DIR)/usr/include/mbedtls" \
 	MBEDTLS_LIBS="-lmbedtls -lmbedcrypto"
+else
+  CONFIGURE_ARGS += \
+	--with-crypto=openssl
 endif
 
 define Package/transmission-daemon-openssl/install
