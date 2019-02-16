@@ -1,0 +1,119 @@
+diff --git a/support/export/client.c b/support/export/client.c
+index baf59c8..750eb7d 100644
+--- a/support/export/client.c
++++ b/support/export/client.c
+@@ -309,7 +309,8 @@ client_lookup(char *hname, int canonical)
+ 		init_addrlist(clp, ai);
+ 
+ out:
+-	freeaddrinfo(ai);
++	if (ai)
++		freeaddrinfo(ai);
+ 	return clp;
+ }
+ 
+diff --git a/support/export/hostname.c b/support/export/hostname.c
+index 5c4c824..710bf61 100644
+--- a/support/export/hostname.c
++++ b/support/export/hostname.c
+@@ -354,7 +354,7 @@ host_numeric_addrinfo(const struct sockaddr *sap)
+ 	 * getaddrinfo(AI_NUMERICHOST) never fills in ai_canonname
+ 	 */
+ 	if (ai != NULL) {
+-		free(ai->ai_canonname);		/* just in case */
++		//free(ai->ai_canonname);		/* just in case */
+ 		ai->ai_canonname = strdup(buf);
+ 		if (ai->ai_canonname == NULL) {
+ 			freeaddrinfo(ai);
+diff --git a/utils/exportfs/exportfs.c b/utils/exportfs/exportfs.c
+index cd3c979..2f8d59a 100644
+--- a/utils/exportfs/exportfs.c
++++ b/utils/exportfs/exportfs.c
+@@ -282,7 +282,8 @@ exportfs_parsed(char *hname, char *path, char *options, int verbose)
+ 	validate_export(exp);
+ 
+ out:
+-	freeaddrinfo(ai);
++	if (ai)
++		freeaddrinfo(ai);
+ }
+ 
+ static int exportfs_generic(char *arg, char *options, int verbose)
+@@ -395,7 +396,8 @@ unexportfs_parsed(char *hname, char *path, int verbose)
+ 	if (!success)
+ 		xlog(L_ERROR, "Could not find '%s:%s' to unexport.", hname, path);
+ 
+-	freeaddrinfo(ai);
++	if (ai)
++		freeaddrinfo(ai);
+ }
+ 
+ static int unexportfs_generic(char *arg, int verbose)
+@@ -639,8 +641,10 @@ matchhostname(const char *hostname1, const char *hostname2)
+ 			}
+ 
+ out:
+-	freeaddrinfo(results1);
+-	freeaddrinfo(results2);
++	if (results1)
++		freeaddrinfo(results1);
++	if (results2)
++		freeaddrinfo(results2);
+ 	return result;
+ }
+ 
+diff --git a/utils/mount/stropts.c b/utils/mount/stropts.c
+index 4d2e37e..612ef1e 100644
+--- a/utils/mount/stropts.c
++++ b/utils/mount/stropts.c
+@@ -1263,7 +1263,8 @@ int nfsmount_string(const char *spec, const char *node, char *type,
+ 	} else
+ 		nfs_error(_("%s: internal option parsing error"), progname);
+ 
+-	freeaddrinfo(mi.address);
++	if (mi.address)
++		freeaddrinfo(mi.address);
+ 	free(mi.hostname);
+ 	return retval;
+ }
+diff --git a/utils/mountd/cache.c b/utils/mountd/cache.c
+index 6f42512..18a5d9e 100644
+--- a/utils/mountd/cache.c
++++ b/utils/mountd/cache.c
+@@ -834,7 +834,8 @@ static void nfsd_fh(int f)
+ out:
+ 	if (found_path)
+ 		free(found_path);
+-	freeaddrinfo(ai);
++	if(ai)
++		freeaddrinfo(ai);
+ 	free(dom);
+ 	xlog(D_CALL, "nfsd_fh: found %p path %s", found, found ? found->e_path : NULL);
+ }
+@@ -1355,7 +1356,8 @@ static void nfsd_export(int f)
+ 	xlog(D_CALL, "nfsd_export: found %p path %s", found, path ? path : NULL);
+ 	if (dom) free(dom);
+ 	if (path) free(path);
+-	freeaddrinfo(ai);
++	if (ai)
++		freeaddrinfo(ai);
+ }
+ 
+ 
+diff --git a/utils/statd/hostname.c b/utils/statd/hostname.c
+index 8cccdb8..6556ab1 100644
+--- a/utils/statd/hostname.c
++++ b/utils/statd/hostname.c
+@@ -308,8 +308,10 @@ statd_matchhostname(const char *hostname1, const char *hostname2)
+ 			}
+ 
+ out:
+-	freeaddrinfo(results2);
+-	freeaddrinfo(results1);
++	if (results2)
++		freeaddrinfo(results2);
++	if (results1)
++		freeaddrinfo(results1);
+ 
+ 	xlog(D_CALL, "%s: hostnames %s and %s %s", __func__,
+ 			hostname1, hostname2,
