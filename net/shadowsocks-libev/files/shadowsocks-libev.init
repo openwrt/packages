@@ -12,6 +12,24 @@ START=99
 ss_confdir=/var/etc/shadowsocks-libev
 ss_bindir=/usr/bin
 
+ss_validate() {
+	uci_load_validate shadowsocks-libev "$@"
+}
+
+add_common_validate_options_() {
+	"$@" \
+		'disabled:bool:0' \
+		'fast_open:bool:0' \
+		'ipv6_first:bool:0' \
+		'no_delay:bool:0' \
+		'reuse_port:bool:0' \
+		'verbose:bool:0' \
+		'mode:or("tcp_only", "udp_only", "tcp_and_udp"):tcp_only' \
+		'mtu:uinteger' \
+		'timeout:uinteger' \
+		'user:string'
+}
+
 ss_mkjson_common_conf() {
 	json_add_boolean fast_open "$fast_open"
 	json_add_boolean ipv6_first "$ipv6_first"
@@ -20,6 +38,19 @@ ss_mkjson_common_conf() {
 	[ -z "$mtu" ] || json_add_int mtu "$mtu"
 	[ -z "$timeout" ] || json_add_int timeout "$timeout"
 	[ -z "$user" ] || json_add_string user "$user"
+}
+
+validate_common_server_options_() {
+	local stream_methods='"table", "rc4", "rc4-md5", "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr", "bf-cfb", "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "salsa20", "chacha20", "chacha20-ietf"'
+	local aead_methods='"aes-128-gcm", "aes-192-gcm", "aes-256-gcm", "chacha20-ietf-poly1305", "xchacha20-ietf-poly1305"'
+
+	ss_validate "$@" \
+		'disabled:bool:0' \
+		'server:host' \
+		'server_port:port' \
+		'password:string' \
+		'key:string' \
+		"method:or($stream_methods, $aead_methods)"
 }
 
 ss_mkjson_common_server_conf() {
@@ -34,12 +65,24 @@ ss_mkjson_common_server_conf() {
 	[ -z "$method" ] || json_add_string method "$method"
 }
 
+validate_server_section() {
+	validate_common_server_options_ server "$1" "$2"
+}
+
 ss_mkjson_server_conf() {
 	local cfgserver
 
 	config_get cfgserver "$cfg" server
 	[ -n "$cfgserver" ] || return 1
 	validate_server_section "$cfgserver" ss_mkjson_common_server_conf
+}
+
+validate_common_client_options_() {
+	add_common_validate_options_ \
+		ss_validate "$@" \
+		'server:uci("shadowsocks-libev", "@server")' \
+		'local_address:host:0.0.0.0' \
+		'local_port:port'
 }
 
 ss_mkjson_common_client_conf() {
@@ -50,17 +93,36 @@ ss_mkjson_common_client_conf() {
 	[ -z "$local_port" ] || json_add_int local_port "$local_port"
 }
 
+validate_ss_local_section() {
+	validate_common_client_options_ ss_local "$1" "$2"
+}
+
 ss_mkjson_ss_local_conf() {
 	ss_mkjson_common_client_conf
+}
+
+validate_ss_redir_section() {
+	validate_common_client_options_ ss_redir "$1" "$2"
 }
 
 ss_mkjson_ss_redir_conf() {
 	ss_mkjson_common_client_conf
 }
 
+validate_ss_server_section() {
+	add_common_validate_options_ \
+		validate_common_server_options_ ss_server "$1" "$2" \
+		'bind_address:ipaddr'
+}
+
 ss_mkjson_ss_server_conf() {
 	ss_mkjson_common_conf
 	ss_mkjson_common_server_conf "$cfg" 0
+}
+
+validate_ss_tunnel_section() {
+	validate_common_client_options_ ss_tunnel "$1" "$2" \
+		'tunnel_address:regex(".+\:[0-9]+")'
 }
 
 ss_mkjson_ss_tunnel_conf() {
@@ -109,6 +171,26 @@ ss_rules_cb() {
 			eval "ss_rules_redir_udp_$cfg=$local_port"
 		fi
 	fi
+}
+
+validate_ss_rules_section() {
+	ss_validate ss_rules "$1" "$2" \
+		'disabled:bool:0' \
+		'redir_tcp:uci("shadowsocks-libev", "@ss_redir")' \
+		'redir_udp:uci("shadowsocks-libev", "@ss_redir")' \
+		'src_ips_bypass:or(ipaddr,cidr)' \
+		'src_ips_forward:or(ipaddr,cidr)' \
+		'src_ips_checkdst:or(ipaddr,cidr)' \
+		'dst_ips_bypass_file:file' \
+		'dst_ips_bypass:or(ipaddr,cidr)' \
+		'dst_ips_forward_file:file' \
+		'dst_ips_forward:or(ipaddr,cidr)' \
+		'src_default:or("bypass", "forward", "checkdst"):checkdst' \
+		'dst_default:or("bypass", "forward"):bypass' \
+		'local_default:or("bypass", "forward", "checkdst"):bypass' \
+		'dst_forward_recentrst:bool:0' \
+		'ifnames:maxlength(15)' \
+		'ipt_args:string'
 }
 
 ss_rules() {
@@ -186,86 +268,4 @@ service_triggers() {
 	validate_ss_server_section
 	validate_ss_tunnel_section
 	procd_close_validate
-}
-
-ss_validate() {
-	uci_load_validate shadowsocks-libev "$@"
-}
-
-validate_common_server_options_() {
-	local stream_methods='"table", "rc4", "rc4-md5", "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr", "bf-cfb", "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "salsa20", "chacha20", "chacha20-ietf"'
-	local aead_methods='"aes-128-gcm", "aes-192-gcm", "aes-256-gcm", "chacha20-ietf-poly1305", "xchacha20-ietf-poly1305"'
-
-	ss_validate "$@" \
-		'disabled:bool:0' \
-		'server:host' \
-		'server_port:port' \
-		'password:string' \
-		'key:string' \
-		"method:or($stream_methods, $aead_methods)"
-}
-
-validate_common_client_options_() {
-	add_common_validate_options_ \
-		ss_validate "$@" \
-		'server:uci("shadowsocks-libev", "@server")' \
-		'local_address:host:0.0.0.0' \
-		'local_port:port'
-}
-
-add_common_validate_options_() {
-	"$@" \
-		'disabled:bool:0' \
-		'fast_open:bool:0' \
-		'ipv6_first:bool:0' \
-		'no_delay:bool:0' \
-		'reuse_port:bool:0' \
-		'verbose:bool:0' \
-		'mode:or("tcp_only", "udp_only", "tcp_and_udp"):tcp_only' \
-		'mtu:uinteger' \
-		'timeout:uinteger' \
-		'user:string'
-}
-
-validate_server_section() {
-	validate_common_server_options_ server "$1" "$2"
-}
-
-validate_ss_local_section() {
-	validate_common_client_options_ ss_local "$1" "$2"
-}
-
-validate_ss_redir_section() {
-	validate_common_client_options_ ss_redir "$1" "$2"
-}
-
-validate_ss_rules_section() {
-	ss_validate ss_rules "$1" "$2" \
-		'disabled:bool:0' \
-		'redir_tcp:uci("shadowsocks-libev", "@ss_redir")' \
-		'redir_udp:uci("shadowsocks-libev", "@ss_redir")' \
-		'src_ips_bypass:or(ipaddr,cidr)' \
-		'src_ips_forward:or(ipaddr,cidr)' \
-		'src_ips_checkdst:or(ipaddr,cidr)' \
-		'dst_ips_bypass_file:file' \
-		'dst_ips_bypass:or(ipaddr,cidr)' \
-		'dst_ips_forward_file:file' \
-		'dst_ips_forward:or(ipaddr,cidr)' \
-		'src_default:or("bypass", "forward", "checkdst"):checkdst' \
-		'dst_default:or("bypass", "forward"):bypass' \
-		'local_default:or("bypass", "forward", "checkdst"):bypass' \
-		'dst_forward_recentrst:bool:0' \
-		'ifnames:maxlength(15)' \
-		'ipt_args:string'
-}
-
-validate_ss_server_section() {
-	add_common_validate_options_ \
-		validate_common_server_options_ ss_server "$1" "$2" \
-		'bind_address:ipaddr'
-}
-
-validate_ss_tunnel_section() {
-	validate_common_client_options_ ss_tunnel "$1" "$2" \
-		'tunnel_address:regex(".+\:[0-9]+")'
 }
