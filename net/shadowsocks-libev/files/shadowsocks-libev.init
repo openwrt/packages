@@ -12,12 +12,14 @@ START=99
 ss_confdir=/var/etc/shadowsocks-libev
 ss_bindir=/usr/bin
 
-ss_mkjson_server_conf() {
-	local cfgserver
-
-	config_get cfgserver "$cfg" server
-	[ -n "$cfgserver" ] || return 1
-	validate_server_section "$cfgserver" ss_mkjson_common_server_conf
+ss_mkjson_common_conf() {
+	json_add_boolean fast_open "$fast_open"
+	json_add_boolean ipv6_first "$ipv6_first"
+	json_add_boolean reuse_port "$reuse_port"
+	json_add_string mode "$mode"
+	[ -z "$mtu" ] || json_add_int mtu "$mtu"
+	[ -z "$timeout" ] || json_add_int timeout "$timeout"
+	[ -z "$user" ] || json_add_string user "$user"
 }
 
 ss_mkjson_common_server_conf() {
@@ -32,22 +34,20 @@ ss_mkjson_common_server_conf() {
 	[ -z "$method" ] || json_add_string method "$method"
 }
 
+ss_mkjson_server_conf() {
+	local cfgserver
+
+	config_get cfgserver "$cfg" server
+	[ -n "$cfgserver" ] || return 1
+	validate_server_section "$cfgserver" ss_mkjson_common_server_conf
+}
+
 ss_mkjson_common_client_conf() {
 	ss_mkjson_common_conf
 	ss_mkjson_server_conf || return 1
 
 	json_add_string local_address "$local_address"
 	[ -z "$local_port" ] || json_add_int local_port "$local_port"
-}
-
-ss_mkjson_common_conf() {
-	json_add_boolean fast_open "$fast_open"
-	json_add_boolean ipv6_first "$ipv6_first"
-	json_add_boolean reuse_port "$reuse_port"
-	json_add_string mode "$mode"
-	[ -z "$mtu" ] || json_add_int mtu "$mtu"
-	[ -z "$timeout" ] || json_add_int timeout "$timeout"
-	[ -z "$user" ] || json_add_string user "$user"
 }
 
 ss_mkjson_ss_local_conf() {
