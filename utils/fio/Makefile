@@ -8,16 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fio
-PKG_VERSION:=3.12
+PKG_VERSION:=3.13
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://brick.kernel.dk/snaps
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=f73ec0a84834a058adcaf9964eb7e9a7af0a6e41a4e5eff781438c12b99b3b9d
+PKG_HASH:=a21d1e50c18eecbd5ee6f7c3c0a8c8605bbe31b91e07c387b2144b02ea3fb235
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
+
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -38,6 +40,7 @@ define Package/fio/description
 endef
 
 TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS))
+TARGET_LDFLAGS += -Wl,--gc-sections
 
 CONFIGURE_ARGS = \
 	--disable-numa \
