@@ -37,13 +37,12 @@ ss_mkjson_server_conf() {
 
 	config_get cfgserver "$cfg" server
 	[ -n "$cfgserver" ] || return 1
-	eval "$(validate_server_section "$cfg" ss_validate_mklocal)"
-	validate_server_section "$cfgserver" || return 1
-	[ "$disabled" = 0 ] || return 1
-	ss_mkjson_server_conf_ "$cfgserver"
+	validate_server_section "$cfgserver" ss_mkjson_server_conf_
 }
 
 ss_mkjson_server_conf_() {
+	[ "$2" = 0 ] || return 1
+	[ "$disabled" = 0 ] || return 1
 	[ -n "$server_port" ] || return 1
 	password="${password//\"/\\\"}"
 	cat <<-EOF
@@ -82,7 +81,7 @@ ss_mkjson_ss_redir_conf() {
 }
 
 ss_mkjson_ss_server_conf() {
-	ss_mkjson_server_conf_
+	ss_mkjson_server_conf_ "$cfg" 0
 }
 
 ss_mkjson_ss_tunnel_conf() {
@@ -95,13 +94,11 @@ ss_mkjson_ss_tunnel_conf() {
 
 ss_xxx() {
 	local cfg="$1"
-	local cfgtype="$2"
 	local bin="$ss_bindir/${cfgtype/_/-}"
 	local confjson="$ss_confdir/$cfgtype.$cfg.json"
 
 	[ -x "$bin" ] || return
-	eval "$("validate_${cfgtype}_section" "$cfg" ss_validate_mklocal)"
-	"validate_${cfgtype}_section" "$cfg" || return 1
+	[ "$2" = 0 ] || return 1
 	[ "$disabled" = 0 ] || return
 
 	if ss_mkjson \
@@ -137,9 +134,7 @@ ss_rules_cb() {
 }
 
 ss_rules() {
-	local cfg="ss_rules"
 	local bin="$ss_bindir/ss-rules"
-	local cfgtype
 	local local_port_tcp local_port_udp
 	local args
 
@@ -147,11 +142,7 @@ ss_rules() {
 	"$bin" -f
 	"$bin" -6 -f
 
-	config_get cfgtype "$cfg" TYPE
-	[ "$cfgtype" = ss_rules ] || return 1
-
-	eval "$(validate_ss_rules_section "$cfg" ss_validate_mklocal)"
-	validate_ss_rules_section "$cfg" || return 1
+	[ "$2" = 0 ] || return 1
 	[ "$disabled" = 0 ] || return 0
 
 	eval local_port_tcp="\$ss_rules_redir_tcp_$redir_tcp"
@@ -191,9 +182,9 @@ start_service() {
 	mkdir -p "$ss_confdir"
 	config_load shadowsocks-libev
 	for cfgtype in ss_local ss_redir ss_server ss_tunnel; do
-		config_foreach ss_xxx "$cfgtype" "$cfgtype"
+		config_foreach validate_${cfgtype}_section $cfgtype ss_xxx
 	done
-	ss_rules
+	validate_ss_rules_section ss_rules ss_rules
 }
 
 stop_service() {
@@ -219,28 +210,15 @@ service_triggers() {
 	procd_close_validate
 }
 
-ss_validate_mklocal() {
-	local tuple opts
-
-	shift 2
-	for tuple in "$@"; do
-		opts="${tuple%%:*} $opts"
-	done
-	[ -z "$opts" ] || echo "local $opts"
-}
-
 ss_validate() {
-	uci_validate_section shadowsocks-libev "$@"
+	uci_load_validate shadowsocks-libev "$@"
 }
 
 validate_common_server_options_() {
-	local cfgtype="$1"; shift
-	local cfg="$1"; shift
-	local func="$1"; shift
 	local stream_methods='"table", "rc4", "rc4-md5", "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "aes-128-ctr", "aes-192-ctr", "aes-256-ctr", "bf-cfb", "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "salsa20", "chacha20", "chacha20-ietf"'
 	local aead_methods='"aes-128-gcm", "aes-192-gcm", "aes-256-gcm", "chacha20-ietf-poly1305", "xchacha20-ietf-poly1305"'
 
-	"${func:-ss_validate}" "$cfgtype" "$cfg" "$@" \
+	ss_validate "$@" \
 		'disabled:bool:0' \
 		'server:host' \
 		'server_port:port' \
@@ -250,18 +228,15 @@ validate_common_server_options_() {
 }
 
 validate_common_client_options_() {
-	validate_common_options_ "$@" \
+	add_common_validate_options_ \
+		ss_validate "$@" \
 		'server:uci("shadowsocks-libev", "@server")' \
 		'local_address:host:0.0.0.0' \
 		'local_port:port'
 }
 
-validate_common_options_() {
-	local cfgtype="$1"; shift
-	local cfg="$1"; shift
-	local func="$1"; shift
-
-	"${func:-ss_validate}" "$cfgtype" "$cfg" "$@" \
+add_common_validate_options_() {
+	"$@" \
 		'disabled:bool:0' \
 		'fast_open:bool:0' \
 		'ipv6_first:bool:0' \
@@ -287,7 +262,7 @@ validate_ss_redir_section() {
 }
 
 validate_ss_rules_section() {
-	"${2:-ss_validate}" ss_rules "$1" \
+	ss_validate ss_rules "$1" "$2" \
 		'disabled:bool:0' \
 		'redir_tcp:uci("shadowsocks-libev", "@ss_redir")' \
 		'redir_udp:uci("shadowsocks-libev", "@ss_redir")' \
@@ -307,14 +282,12 @@ validate_ss_rules_section() {
 }
 
 validate_ss_server_section() {
-	validate_common_server_options_ ss_server "$1" \
-		validate_common_options_ \
-		"$2" \
+	add_common_validate_options_ \
+		validate_common_server_options_ ss_server "$1" "$2" \
 		'bind_address:ipaddr'
 }
 
 validate_ss_tunnel_section() {
-	validate_common_client_options_ ss_tunnel "$1" \
-		"$2" \
+	validate_common_client_options_ ss_tunnel "$1" "$2" \
 		'tunnel_address:regex(".+\:[0-9]+")'
 }
