@@ -199,7 +199,10 @@ start_service() {
 stop_service() {
 	local bin="$ss_bindir/ss-rules"
 
-	[ -x "$bin" ] && "$bin" -f
+	[ -x "$bin" ] && {
+		"$bin" -f
+		"$bin" -6 -f
+	}
 	rm -rf "$ss_confdir"
 }
 
