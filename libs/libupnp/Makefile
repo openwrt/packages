@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libupnp
 PKG_VERSION:=1.8.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/pupnp
@@ -45,7 +45,7 @@ define Package/libupnp-sample/description
 TVcontrolpoint & tvdevice sample applications run inside /etc/upnp-tvdevice/
 endef
 
-TARGET_CFLAGS += -flto
+TARGET_CFLAGS += -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -flto
 TARGET_LDFLAGS += -flto
 
 CONFIGURE_VARS += ac_cv_lib_compat_ftime=no
