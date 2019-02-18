@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=obfsproxy
 PKG_VERSION:=0.2.13
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/o/obfsproxy
@@ -27,7 +27,7 @@ define Package/obfsproxy
 	CATEGORY:=Network
 	TITLE:=A pluggable transport proxy written in Python
 	URL:=https://www.torproject.org/projects/obfsproxy.html.en
-	DEPENDS:=+python-light +python-crypto +python-pyptlib +python-setuptools +python-yaml +twisted
+	DEPENDS:=+python-light +python-crypto +python-pyptlib +python-setuptools +python-twisted +python-yaml
 endef
 
 define Package/obfsproxy/description
