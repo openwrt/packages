@@ -45,6 +45,8 @@ CONFIGURE_ARGS += \
 	--enable-nopoll-doc=no
 
 define Build/InstallDev
+	$(INSTALL_DIR) $(STAGING_DIR)/usr/include/nopoll
+	$(CP) $(PKG_BUILD_DIR)/src/*.h $(STAGING_DIR)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/{lib,include}
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnopoll.{a,so*} $(1)/usr/lib/
