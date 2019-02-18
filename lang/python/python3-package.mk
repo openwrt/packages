@@ -67,7 +67,7 @@ define Py3Package
   $(call shexport,Py3Package/$(1)/filespec)
 
   define Package/$(1)/install
-	$(call Py3Package/$(1)/install,$$(1))
+	$$(call Py3Package/$(1)/install,$$(1))
 	$(SHELL) $(python3_mk_path)python-package-install.sh "3" \
 		"$(PKG_INSTALL_DIR)" "$$(1)" \
 		"$(HOST_PYTHON3_BIN)" "$$(2)" \

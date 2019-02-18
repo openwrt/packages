@@ -68,7 +68,7 @@ define PyPackage
   $(call shexport,PyPackage/$(1)/filespec)
 
   define Package/$(1)/install
-	$(call PyPackage/$(1)/install,$$(1))
+	$$(call PyPackage/$(1)/install,$$(1))
 	$(SHELL) $(python_mk_path)python-package-install.sh "2" \
 		"$(PKG_INSTALL_DIR)" "$$(1)" \
 		"$(HOST_PYTHON_BIN)" "$$(2)" \
