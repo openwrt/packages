@@ -7,9 +7,9 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=twisted
+PKG_NAME:=python-twisted
 PKG_VERSION:=18.9.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=Twisted-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/T/Twisted
@@ -28,29 +28,30 @@ include ../python3-package.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xjf $(DL_DIR)/$(PKG_SOURCE)
 
-define Package/twisted/Default
-  SUBMENU:=Python
+define Package/python-twisted/Default
   SECTION:=lang
   CATEGORY:=Languages
+  SUBMENU:=Python
   URL:=http://twistedmatrix.com/
 endef
 
-define Package/twisted
-$(call Package/twisted/Default)
+define Package/python-twisted
+$(call Package/python-twisted/Default)
   TITLE:=Python networking engine
   DEPENDS:= \
-      +PACKAGE_twisted:python-light \
-      +PACKAGE_twisted:python-attrs \
-      +PACKAGE_twisted:python-automat \
-      +PACKAGE_twisted:python-constantly \
-      +PACKAGE_twisted:python-incremental \
-      +PACKAGE_twisted:python-hyperlink \
-      +PACKAGE_twisted:python-zope-interface
+      +PACKAGE_python-twisted:python-light \
+      +PACKAGE_python-twisted:python-attrs \
+      +PACKAGE_python-twisted:python-automat \
+      +PACKAGE_python-twisted:python-constantly \
+      +PACKAGE_python-twisted:python-incremental \
+      +PACKAGE_python-twisted:python-hyperlink \
+      +PACKAGE_python-twisted:python-setuptools \
+      +PACKAGE_python-twisted:python-zope-interface
   VARIANT:=python
 endef
 
 define Package/python3-twisted
-$(call Package/twisted/Default)
+$(call Package/python-twisted/Default)
   TITLE:=Python3 networking engine
   DEPENDS:= \
       +PACKAGE_python3-twisted:python3-light \
@@ -59,37 +60,44 @@ $(call Package/twisted/Default)
       +PACKAGE_python3-twisted:python3-constantly \
       +PACKAGE_python3-twisted:python3-incremental \
       +PACKAGE_python3-twisted:python3-hyperlink \
+      +PACKAGE_python3-twisted:python3-setuptools \
       +PACKAGE_python3-twisted:python3-zope-interface
   VARIANT:=python3
 endef
 
-define Package/twisted/description
+define Package/python-twisted/description
 Twisted is a networking engine written in Python, supporting numerous
 protocols. It contains a web server, numerous chat clients, chat servers,
 mail servers, and more.
 endef
 
 define Package/python3-twisted/description
-$(call Package/twisted/description)
+$(call Package/python-twisted/description)
 .
 (Variant for Python3)
 endef
 
-define PyPackage/twisted/filespec
-+|/usr/bin
+define PyPackage/python-twisted/filespec
 +|$(PYTHON_PKG_DIR)
 -|$(PYTHON_PKG_DIR)/twisted/conch/scripts/tkconch.py
 endef
 
 define Py3Package/python3-twisted/filespec
-+|/usr/bin
 +|$(PYTHON3_PKG_DIR)
 -|$(PYTHON3_PKG_DIR)/twisted/conch/scripts/tkconch.py
 endef
 
-$(eval $(call PyPackage,twisted))
-$(eval $(call BuildPackage,twisted))
-$(eval $(call BuildPackage,twisted-src))
+define Py3Package/python3-twisted/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
+	for bin in $(1)/usr/bin/*; do \
+		mv $$$$$$$$bin $$$$$$$${bin}3 ; \
+	done
+endef
+
+$(eval $(call PyPackage,python-twisted))
+$(eval $(call BuildPackage,python-twisted))
+$(eval $(call BuildPackage,python-twisted-src))
 
 $(eval $(call Py3Package,python3-twisted))
 $(eval $(call BuildPackage,python3-twisted))
