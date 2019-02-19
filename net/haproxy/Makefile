@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
 PKG_VERSION:=1.8.19
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=haproxy-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.haproxy.org/download/1.8/src/
@@ -68,11 +68,6 @@ endef
 define Package/haproxy/description
 $(call Package/haproxy/Default/description)
  This package is built with SSL and LUA support.
-endef
-
-define Package/haproxy/config
-	select CONFIG_OPENSSL_WITH_DEPRECATED
-	$(call Package/haproxy/Default/config)
 endef
 
 define Package/haproxy-nossl
