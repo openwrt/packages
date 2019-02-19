@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-crypto
 PKG_VERSION:=2.6.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=pycrypto-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pycrypto
@@ -28,24 +28,32 @@ include ../python3-package.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
+PYTHON_PKG_SETUP_ARGS:=
+PYTHON_PKG_SETUP_VARS:= \
+  CONFIG_BIG_ENDIAN="$(CONFIG_BIG_ENDIAN)"
+
+PYTHON3_PKG_SETUP_ARGS:=
+PYTHON3_PKG_SETUP_VARS:= \
+  CONFIG_BIG_ENDIAN="$(CONFIG_BIG_ENDIAN)"
+
 define Package/python-crypto/Default
   SECTION:=lang-python
   CATEGORY:=Languages
   SUBMENU:=Python
+  TITLE:=Python Cryptography Toolkit
   URL:=https://www.dlitz.net/software/pycrypto/
+  DEPENDS:=+libgmp
 endef
 
 define Package/python-crypto
 $(call Package/python-crypto/Default)
-  TITLE:=python-crypto
-  DEPENDS:=+libgmp +PACKAGE_python-crypto:python
+  DEPENDS+=+PACKAGE_python-crypto:python
   VARIANT:=python
 endef
 
 define Package/python3-crypto
 $(call Package/python-crypto/Default)
-  TITLE:=python3-crypto
-  DEPENDS:=+libgmp +PACKAGE_python3-crypto:python3
+  DEPENDS+=+PACKAGE_python3-crypto:python3
   VARIANT:=python3
 endef
 
@@ -58,20 +66,6 @@ define Package/python3-crypto/description
 $(call Package/python-crypto/description)
 .
 (Variant for Python3)
-endef
-
-define PyBuild/Compile
-	$(call Build/Compile/PyMod,,\
-		install --prefix=/usr --root=$(PKG_INSTALL_DIR),\
-		CONFIG_BIG_ENDIAN="$(CONFIG_BIG_ENDIAN)" \
-	)
-endef
-
-define Py3Build/Compile
-	$(call Build/Compile/Py3Mod,,\
-		install --prefix=/usr --root=$(PKG_INSTALL_DIR),\
-		CONFIG_BIG_ENDIAN="$(CONFIG_BIG_ENDIAN)" \
-	)
 endef
 
 $(eval $(call PyPackage,python-crypto))

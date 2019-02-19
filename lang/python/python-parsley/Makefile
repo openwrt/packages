@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-parsley
 PKG_VERSION:=1.3
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=Parsley-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/source/P/Parsley
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/P/Parsley
 PKG_HASH:=9444278d47161d5f2be76a767809a3cbe6db4db822f46a4fd7481d4057208d41
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-parsley-$(PKG_VERSION)
@@ -27,23 +27,25 @@ include ../python3-package.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
+PYTHON_PKG_SETUP_ARGS:=
+PYTHON3_PKG_SETUP_ARGS:=
+
 define Package/python-parsley/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
+  TITLE:=Parsing and pattern matching
   URL:=http://launchpad.net/parsley
 endef
 
 define Package/python-parsley
 $(call Package/python-parsley/Default)
-  TITLE:=python-parsley
   DEPENDS:=+PACKAGE_python-parsley:python-light
   VARIANT:=python
 endef
 
 define Package/python3-parsley
 $(call Package/python-parsley/Default)
-  TITLE:=python3-parsley
   DEPENDS:=+PACKAGE_python3-parsley:python3-light
   VARIANT:=python3
 endef
@@ -56,14 +58,6 @@ define Package/python3-parsley/description
 $(call Package/python-parsley/description)
 .
 (Variant for Python3)
-endef
-
-define PyBuild/Compile
-	$(call Build/Compile/PyMod,,install --prefix="/usr" --root="$(PKG_INSTALL_DIR)")
-endef
-
-define Py3Build/Compile
-	$(call Build/Compile/Py3Mod,,install --prefix="/usr" --root="$(PKG_INSTALL_DIR)")
 endef
 
 $(eval $(call PyPackage,python-parsley))

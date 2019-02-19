@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-automat
 PKG_VERSION:=0.7.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=Automat-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/A/Automat
@@ -27,16 +27,21 @@ include ../python3-package.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
+PYTHON_PKG_SETUP_VARS:= \
+  PKG_VERSION="$(PKG_VERSION)"
+PYTHON3_PKG_SETUP_VARS:= \
+  PKG_VERSION="$(PKG_VERSION)"
+
 define Package/python-automat/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
+  TITLE:=Concise, idiomatic finite-state automata
   URL:=https://github.com/glyph/Automat
 endef
 
 define Package/python-automat
 $(call Package/python-automat/Default)
-  TITLE:=Concise, idiomatic finite-state automata
   DEPENDS:= \
       +PACKAGE_python-automat:python-light \
       +PACKAGE_python-automat:python-attrs \
@@ -46,7 +51,6 @@ endef
 
 define Package/python3-automat
 $(call Package/python-automat/Default)
-  TITLE:=Concise, idiomatic finite-state automata
   DEPENDS:= \
       +PACKAGE_python3-automat:python3-light \
       +PACKAGE_python3-automat:python3-attrs \
@@ -74,20 +78,6 @@ endef
 define Py3Package/python3-automat/filespec
 +|$(PYTHON3_PKG_DIR)
 -|$(PYTHON3_PKG_DIR)/automat/_visualize.py
-endef
-
-define PyBuild/Compile
-	$(call Build/Compile/PyMod,, \
-		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)", \
-		PKG_VERSION="$(PKG_VERSION)" \
-	)
-endef
-
-define Py3Build/Compile
-	$(call Build/Compile/Py3Mod,, \
-		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)", \
-		PKG_VERSION="$(PKG_VERSION)" \
-	)
 endef
 
 $(eval $(call PyPackage,python-automat))
