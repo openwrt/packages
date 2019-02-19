@@ -1,0 +1,25 @@
+From 3ea761a1ed338241fbc79bef8e433307e108b6cd Mon Sep 17 00:00:00 2001
+From: Jan Engelhardt <jengelh@inai.de>
+Date: Tue, 14 Aug 2018 14:29:30 +0200
+Subject: [PATCH] build: add support for Linux 4.18
+
+---
+ extensions/xt_DNETMAP.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/extensions/xt_DNETMAP.c b/extensions/xt_DNETMAP.c
+index 1b415c3..de7d4ec 100644
+--- a/extensions/xt_DNETMAP.c
++++ b/extensions/xt_DNETMAP.c
+@@ -367,7 +367,11 @@ dnetmap_tg(struct sk_buff *skb, const struct xt_action_param *par)
+ 	__be32 prenat_ip, postnat_ip, prenat_ip_prev;
+ 	const struct xt_DNETMAP_tginfo *tginfo = par->targinfo;
+ 	const struct nf_nat_range *mr = &tginfo->prefix;
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0)
++	struct nf_nat_range2 newrange;
++#else
+ 	struct nf_nat_range newrange;
++#endif
+ 	struct dnetmap_entry *e;
+ 	struct dnetmap_prefix *p;
+ 	__s32 jttl;
