@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-twisted
 PKG_VERSION:=18.9.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=Twisted-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/T/Twisted
@@ -91,7 +91,7 @@ define Py3Package/python3-twisted/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 	for bin in $(1)/usr/bin/*; do \
-		mv $$$$$$$$bin $$$$$$$${bin}3 ; \
+		mv $$$$bin $$$${bin}3 ; \
 	done
 endef
 
