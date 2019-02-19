@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-txsocksx
 PKG_VERSION:=1.15.0.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=txsocksx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/t/txsocksx
@@ -26,6 +26,9 @@ include ../python-package.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
+PYTHON_PKG_SETUP_VARS:= \
+  PKG_VERSION="$(PKG_VERSION)"
+
 define Package/python-txsocksx/Default
   SECTION:=lang
   CATEGORY:=Languages
@@ -39,20 +42,13 @@ $(call Package/python-txsocksx/Default)
   DEPENDS:= \
       +PACKAGE_python-txsocksx:python-light \
       +PACKAGE_python-txsocksx:python-parsley \
-      +PACKAGE_python-txsocksx:twisted
+      +PACKAGE_python-txsocksx:python-twisted
   VARIANT:=python
 endef
 
 define Package/python-txsocksx/description
 txsocksx is SOCKS4/4a and SOCKS5 client endpoints for Twisted 10.1 or
 greater.
-endef
-
-define PyBuild/Compile
-	$(call Build/Compile/PyMod,, \
-		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)", \
-		PKG_VERSION="$(PKG_VERSION)" \
-	)
 endef
 
 $(eval $(call PyPackage,python-txsocksx))
