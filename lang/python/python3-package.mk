@@ -114,8 +114,8 @@ define Build/Compile/Py3Mod
 endef
 
 PYTHON3_PKG_SETUP_DIR ?=
-PYTHON3_PKG_SETUP_ARGS:=--single-version-externally-managed
-PYTHON3_PKG_SETUP_VARS:=
+PYTHON3_PKG_SETUP_ARGS ?= --single-version-externally-managed
+PYTHON3_PKG_SETUP_VARS ?=
 
 define Py3Build/Compile/Default
 	$(foreach pkg,$(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS),

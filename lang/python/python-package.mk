@@ -115,8 +115,8 @@ define Build/Compile/PyMod
 endef
 
 PYTHON_PKG_SETUP_DIR ?=
-PYTHON_PKG_SETUP_ARGS:=--single-version-externally-managed
-PYTHON_PKG_SETUP_VARS:=
+PYTHON_PKG_SETUP_ARGS ?= --single-version-externally-managed
+PYTHON_PKG_SETUP_VARS ?=
 
 define PyBuild/Compile/Default
 	$(foreach pkg,$(HOST_PYTHON_PACKAGE_BUILD_DEPENDS),
