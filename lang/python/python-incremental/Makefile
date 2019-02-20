@@ -31,19 +31,18 @@ define Package/python-incremental/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
+  TITLE:=Versions your Python projects
   URL:=https://github.com/twisted/incremental
 endef
 
 define Package/python-incremental
 $(call Package/python-incremental/Default)
-  TITLE:=Versions your Python projects
   DEPENDS:=+PACKAGE_python-incremental:python-light
   VARIANT:=python
 endef
 
 define Package/python3-incremental
 $(call Package/python-incremental/Default)
-  TITLE:=Versions your Python projects
   DEPENDS:=+PACKAGE_python3-incremental:python3-light
   VARIANT:=python3
 endef
