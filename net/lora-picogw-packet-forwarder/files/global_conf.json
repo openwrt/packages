@@ -1,0 +1,12 @@
+"gateway_conf": {
+       "gateway_ID": "RUN_UTIL_CHIP_ID",
+       "server_address": "router.eu.thethings.network",
+       "serv_port_up": 1700,
+       "serv_port_down": 1700,
+       "keepalive_interval": 10,
+       "stat_interval": 30,
+       "push_timeout_ms": 100,
+       "forward_crc_valid": true,
+       "forward_crc_error": false,
+       "forward_crc_disabled": false
+   }

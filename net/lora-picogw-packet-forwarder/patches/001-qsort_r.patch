@@ -1,0 +1,18 @@
+--- picoGW_packet_forwarder-0.1.0.orig/lora_pkt_fwd/src/jitqueue.c      2017-06-09 18:59:09.000000000 +1000
++++ picoGW_packet_forwarder-0.1.0/lora_pkt_fwd/src/jitqueue.c   2019-02-20 23:53:10.098309612 +1100
+@@ -115,7 +115,15 @@
+     }
+
+     MSG_DEBUG(DEBUG_JIT, "sorting queue in ascending order packet timestamp - queue size:%u\n", queue->num_pkt);
+-    qsort_r(queue->nodes, queue->num_pkt, sizeof(queue->nodes[0]), compare, &counter);
++    // Not sure if replacing qsort for its re-entrant counterpart qsort_r is safe in this context, but there's
++    // precedent in OpenWRT:
++    //
++    // https://gitlab.labs.nic.cz/turris/openwrt/commit/51e3d8b8aab90471212373283736548c64804e7e
++    //
++    // If it starts failing, here's a possible suitable candidate:
++    // https://github.com/noporpoise/sort_r
++    //qsort_r(queue->nodes, queue->num_pkt, sizeof(queue->nodes[0]), compare, &counter);
++    qsort(queue->nodes, queue->num_pkt, sizeof(queue->nodes[0]), compare);
+     MSG_DEBUG(DEBUG_JIT, "sorting queue done - swapped:%d\n", counter);
+ }
