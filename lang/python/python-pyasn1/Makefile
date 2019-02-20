@@ -31,19 +31,18 @@ define Package/python-pyasn1/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
+  TITLE:=ASN.1 library for Python
   URL:=https://github.com/etingof/pyasn1
 endef
 
 define Package/python-pyasn1
 $(call Package/python-pyasn1/Default)
-  TITLE:=ASN.1 library for Python
   DEPENDS:=+PACKAGE_python-pyasn1:python-light
   VARIANT:=python
 endef
 
 define Package/python3-pyasn1
 $(call Package/python-pyasn1/Default)
-  TITLE:=ASN.1 library for Python
   DEPENDS:=+PACKAGE_python3-pyasn1:python3-light
   VARIANT:=python3
 endef

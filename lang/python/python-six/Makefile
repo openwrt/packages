@@ -9,16 +9,17 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-six
 PKG_VERSION:=1.12.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=six-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/s/six
 PKG_HASH:=d16a0141ec1a18405cd4ce8b4613101da75da0e9a7aec5bdd4fa804d0e0eba73
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-six-$(PKG_VERSION)
 
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 
 HOST_BUILD_DEPENDS:=python/host
 
@@ -34,19 +35,18 @@ define Package/python-six/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
+  TITLE:=Python 2 and 3 compatibility library
   URL:=https://github.com/benjaminp/six
 endef
 
 define Package/python-six
 $(call Package/python-six/Default)
-  TITLE:=python-six
   DEPENDS:=+PACKAGE_python-six:python-light
   VARIANT:=python
 endef
 
 define Package/python3-six
 $(call Package/python-six/Default)
-  TITLE:=python3-six
   DEPENDS:=+PACKAGE_python3-six:python3-light
   VARIANT:=python3
 endef

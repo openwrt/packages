@@ -29,12 +29,12 @@ define Package/python-ipaddress/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
+  TITLE:=Python 3.3+'s ipaddress
   URL:=https://github.com/phihag/ipaddress
 endef
 
 define Package/python-ipaddress
 $(call Package/python-ipaddress/Default)
-  TITLE:=Python 3.3+'s ipaddress
   DEPENDS:=+PACKAGE_python-ipaddress:python-light
   VARIANT:=python
 endef
