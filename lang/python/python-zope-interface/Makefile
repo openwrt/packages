@@ -31,19 +31,18 @@ define Package/python-zope-interface/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
+  TITLE:=Interfaces for Python
   URL:=https://github.com/zopefoundation/zope.interface
 endef
 
 define Package/python-zope-interface
 $(call Package/python-zope-interface/Default)
-  TITLE:=Interfaces for Python
   DEPENDS:=+PACKAGE_python-zope-interface:python-light
   VARIANT:=python
 endef
 
 define Package/python3-zope-interface
 $(call Package/python-zope-interface/Default)
-  TITLE:=Interfaces for Python
   DEPENDS:=+PACKAGE_python3-zope-interface:python3-light
   VARIANT:=python3
 endef

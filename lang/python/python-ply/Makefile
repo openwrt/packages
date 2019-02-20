@@ -32,19 +32,18 @@ define Package/python-ply/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
+  TITLE:=lex and yacc for Python
   URL:=http://www.dabeaz.com/ply/
 endef
 
 define Package/python-ply
 $(call Package/python-ply/Default)
-  TITLE:=lex and yacc for Python
   DEPENDS:=+PACKAGE_python-ply:python-light
   VARIANT:=python
 endef
 
 define Package/python3-ply
 $(call Package/python-ply/Default)
-  TITLE:=lex and yacc for Python
   DEPENDS:=+PACKAGE_python3-ply:python3-light
   VARIANT:=python3
 endef

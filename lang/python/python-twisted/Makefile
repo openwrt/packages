@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-twisted
 PKG_VERSION:=18.9.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=Twisted-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/T/Twisted
@@ -32,12 +32,12 @@ define Package/python-twisted/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=http://twistedmatrix.com/
+  TITLE:=Asynchronous networking framework
+  URL:=https://twistedmatrix.com/
 endef
 
 define Package/python-twisted
 $(call Package/python-twisted/Default)
-  TITLE:=Python networking engine
   DEPENDS:= \
       +PACKAGE_python-twisted:python-light \
       +PACKAGE_python-twisted:python-attrs \
@@ -52,7 +52,6 @@ endef
 
 define Package/python3-twisted
 $(call Package/python-twisted/Default)
-  TITLE:=Python3 networking engine
   DEPENDS:= \
       +PACKAGE_python3-twisted:python3-light \
       +PACKAGE_python3-twisted:python3-attrs \
