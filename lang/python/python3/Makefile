@@ -110,6 +110,7 @@ define Py3BasePackage
       -|/usr/lib/python$(PYTHON_VERSION)/*/tests
     endif
   endef
+  Py3Package/$(1)/install?=:
 endef
 
 include ./files/python3-package-*.mk
@@ -263,6 +264,9 @@ define Py3Package/python3-base/install
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python3
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* $(1)/usr/lib/
 endef
+
+Py3Package/python3-light/install:=:
+Py3Package/python3/install:=:
 
 define Py3Package/python3/filespec
 -|$(PYTHON3_PKG_DIR)
