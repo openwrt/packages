@@ -1,5 +1,7 @@
---- a/main.c
-+++ b/main.c
+Index: squeezelite-1.8.4-743/main.c
+===================================================================
+--- squeezelite-1.8.4-743.orig/main.c
++++ squeezelite-1.8.4-743/main.c
 @@ -78,6 +78,7 @@ static void usage(const char *argv0) {
  #if IR
  		   "  -i [<filename>]\tEnable lirc remote control support (lirc config file ~/.lircrc used if filename not specified)\n"
@@ -74,8 +76,10 @@
  
  	decode_close();
  	stream_close();
---- a/squeezelite.h
-+++ b/squeezelite.h
+Index: squeezelite-1.8.4-743/squeezelite.h
+===================================================================
+--- squeezelite-1.8.4-743.orig/squeezelite.h
++++ squeezelite-1.8.4-743/squeezelite.h
 @@ -403,7 +403,7 @@ typedef enum { EVENT_TIMEOUT = 0, EVENT_
  
  char *next_param(char *src, char c);
@@ -94,8 +98,10 @@
  void slimproto_stop(void);
  void wake_controller(void);
  
---- a/slimproto.c
-+++ b/slimproto.c
+Index: squeezelite-1.8.4-743/slimproto.c
+===================================================================
+--- squeezelite-1.8.4-743.orig/slimproto.c
++++ squeezelite-1.8.4-743/slimproto.c
 @@ -119,7 +119,7 @@ void send_packet(u8_t *packet, size_t le
  	}
  }
@@ -150,8 +156,10 @@
  			}
  
  		} else {
---- a/utils.c
-+++ b/utils.c
+Index: squeezelite-1.8.4-743/utils.c
+===================================================================
+--- squeezelite-1.8.4-743.orig/utils.c
++++ squeezelite-1.8.4-743/utils.c
 @@ -22,11 +22,11 @@
  #include "squeezelite.h"
  
@@ -270,8 +278,8 @@
 -	if (ioctl(s, SIOCGIFCONF, &ifc) == 0) {
 -		ifend = ifs + (ifc.ifc_len / sizeof(struct ifreq));
 +			// Check address family.
-+			if ((ifa->ifa_addr->sa_family == AF_INET) &&
-+			    (((struct sockaddr_in *)ifa->ifa_broadaddr)->sin_addr.s_addr != 0))
++			if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_INET &&
++			    ((struct sockaddr_in *)ifa->ifa_broadaddr)->sin_addr.s_addr != 0)
 +			{
 +				// Get broadcast address and MAC address
 +				bcast_addr = ((struct sockaddr_in *)ifa->ifa_broadaddr)->sin_addr.s_addr;
@@ -298,8 +306,8 @@
 +		// Find MAC address matching interface
 +		if (!have_mac && (bcast_addr != 0)) {
 +			for (ifa = addrs; ifa; ifa = ifa->ifa_next) {
-+				if ((ifa->ifa_addr->sa_family == PF_PACKET) &&
-+				    (strncmp(ifname, ifa->ifa_name, sizeof(ifname)) == 0)) {
++				if (ifa->ifa_addr && ifa->ifa_addr->sa_family == PF_PACKET &&
++				    strncmp(ifname, ifa->ifa_name, sizeof(ifname)) == 0) {
 +					sdl = (struct sockaddr *)(ifa->ifa_addr);
 +					ptr = (unsigned char *)sdl->sa_data;
 +					memcpy(mac, ptr + 10, 6);
