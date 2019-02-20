@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-enum34
 PKG_VERSION:=1.1.6
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=enum34-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/bf/3e/31d502c25302814a7c2f1d3959d2a3b3f78e509002ba91aea64993936876
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/e/enum34
 PKG_HASH:=8ad8c4783bf61ded74527bffb48ed9b54166685e4230386a9ed9b1279e2df5b1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-enum34-$(PKG_VERSION)
@@ -30,12 +30,12 @@ define Package/python-enum34/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=https://pypi.python.org/pypi/enum34/
+  TITLE:=Backported Python 3.4 enum
+  URL:=https://bitbucket.org/stoneleaf/enum34
 endef
 
 define Package/python-enum34
 $(call Package/python-enum34/Default)
-  TITLE:=python-enum34
   DEPENDS:=+PACKAGE_python-enum34:python-light
   VARIANT:=python
 endef

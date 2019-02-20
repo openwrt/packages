@@ -31,19 +31,18 @@ define Package/python-attrs/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
+  TITLE:=Classes Without Boilerplate
   URL:=http://www.attrs.org/
 endef
 
 define Package/python-attrs
 $(call Package/python-attrs/Default)
-  TITLE:=Classes Without Boilerplate
   DEPENDS:=+PACKAGE_python-attrs:python-light
   VARIANT:=python
 endef
 
 define Package/python3-attrs
 $(call Package/python-attrs/Default)
-  TITLE:=Classes Without Boilerplate
   DEPENDS:=+PACKAGE_python3-attrs:python3-light
   VARIANT:=python3
 endef

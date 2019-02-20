@@ -31,12 +31,12 @@ define Package/python-hyperlink/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
+  TITLE:=Pure-Python immutable URLs
   URL:=https://github.com/python-hyper/hyperlink
 endef
 
 define Package/python-hyperlink
 $(call Package/python-hyperlink/Default)
-  TITLE:=Pure-Python immutable URLs
   DEPENDS:= \
       +PACKAGE_python-hyperlink:python-light \
       +PACKAGE_python-hyperlink:python-idna
@@ -45,7 +45,6 @@ endef
 
 define Package/python3-hyperlink
 $(call Package/python-hyperlink/Default)
-  TITLE:=Pure-Python immutable URLs
   DEPENDS:= \
       +PACKAGE_python3-hyperlink:python3-light \
       +PACKAGE_python3-hyperlink:python3-idna

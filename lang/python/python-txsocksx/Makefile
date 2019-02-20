@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-txsocksx
 PKG_VERSION:=1.15.0.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=txsocksx-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/source/t/txsocksx
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/t/txsocksx
 PKG_HASH:=4f79b5225ce29709bfcee45e6f726e65b70fd6f1399d1898e54303dbd6f8065f
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-txsocksx-$(PKG_VERSION)
@@ -33,12 +33,12 @@ define Package/python-txsocksx/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
+  TITLE:=SOCKS client endpoints for Twisted
   URL:=https://github.com/habnabit/txsocksx
 endef
 
 define Package/python-txsocksx
 $(call Package/python-txsocksx/Default)
-  TITLE:=python-txsocksx
   DEPENDS:= \
       +PACKAGE_python-txsocksx:python-light \
       +PACKAGE_python-txsocksx:python-parsley \
