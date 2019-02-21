@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vim
 PKG_VERSION:=8.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 VIMVER:=81
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -21,7 +21,11 @@ PKG_CPE_ID:=cpe:/a:vim:vim
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)$(VIMVER)
 PKG_BUILD_PARALLEL:=1
 
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)$(VIMVER)
+HOST_BUILD_PARALLEL:=1
+
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 define Package/vim/Default
   SECTION:=utils
@@ -236,9 +240,19 @@ define Package/xxd/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/xxd/xxd $(1)/usr/bin
 endef
 
+define Host/Install/xxd
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/usr/bin
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/xxd/xxd $(STAGING_DIR_HOSTPKG)/usr/bin
+endef
+
+define Host/Install
+$(call Host/Install/xxd)
+endef
+
 $(eval $(call BuildPackage,vim))
 $(eval $(call BuildPackage,vim-full))
 $(eval $(call BuildPackage,vim-fuller))
 $(eval $(call BuildPackage,vim-runtime))
 $(eval $(call BuildPackage,vim-help))
 $(eval $(call BuildPackage,xxd))
+$(eval $(call HostBuild))
