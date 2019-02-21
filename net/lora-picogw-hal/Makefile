@@ -9,8 +9,8 @@ PKG_NAME:=lora-picogw-hal
 PKG_VERSION:=0.2.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=V$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/Lora-net/picoGW_hal/archive/
+PKG_SOURCE_URL:=https://codeload.github.com/Lora-net/picoGW_hal/tar.gz/V$(PKG_VERSION)?
+PKG_SOURCE:=picoGW_hal-$(PKG_VERSION).tar.gz
 PKG_HASH:=4841940f621342ba55767f79b738669417a7e572d7143d94e2b512ae8c45d05f
 PKG_MAINTAINER:=Roman Valls Guimera <brainstorm+openwrt@nopcode.org>
 PKG_LICENSE_FILES:=LICENSE
@@ -23,10 +23,11 @@ define Package/libloragw/description
 endef
 
 define Package/lora-picogw-hal
-  SECTION:=net
-  CATEGORY:=Network
-  SUBMENU:=LoRaWAN
-  TITLE:=Host driver/HAL to build a LoRa Picocell Gateway.
+	SECTION:=net
+	CATEGORY:=Network
+	SUBMENU:=LoRaWAN
+	TITLE:=Host driver/HAL to build a LoRa Picocell Gateway.
+	CONFLICTS:=lora-gateway-hal
 endef
 
 TARGET_CFLAGS += $(FPIC) -Wall -Wextra -std=c99 -Iinc -I. -lm

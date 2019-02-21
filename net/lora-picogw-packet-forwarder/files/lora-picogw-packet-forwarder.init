@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 
-START=97
+START=99
 
 USE_PROCD=1
 PROG=/usr/sbin/lora_pkt_fwd
@@ -28,26 +28,24 @@ stop_service() {
     sudo killall lora_pkt_fwd 
 }
 
-# WIP, init bits borrowed from:
+# Init bits borrowed from:
 # https://github.com/Lora-net/picoGW_packet_forwarder/blob/master/daemon/run_pkt_fwd.sh
 
-#start() {
-#    echo "Start packet forwarder..."
-#    cd $DIR/lora_gateway
-#    ./reset_lgw.sh start # XXX: check how portable is: https://github.com/Lora-net/lora_gateway/blob/master/reset_lgw.sh
-#    cd $DIR/packet_forwarder/lora_pkt_fwd
-#    ./lora_pkt_fwd
-#}
+start() {
+    echo "Start packet forwarder..."
+    cd $DIR/lora_gateway
+    ./reset_lgw.sh start # XXX: check how portable is: https://github.com/Lora-net/lora_gateway/blob/master/reset_lgw.sh
+    cd $DIR/packet_forwarder/lora_pkt_fwd
+    ./lora_pkt_fwd
+}
 
-
-
-#check() {
-#    ps -ef | grep -v grep | grep -w 'lora_pkt_fwd' > /dev/null
-#    result=$?
-#    if [ "${result}" -eq "0" ] ; then
-#         echo "`date`: lora_pkt_fwd is already running"
-#         exit 0
-#    fi
-#    start
-#}
+check() {
+    ps -ef | grep -v grep | grep -w 'lora_pkt_fwd' > /dev/null
+    result=$?
+    if [ "${result}" -eq "0" ] ; then
+         echo "`date`: lora_pkt_fwd is already running"
+         exit 0
+    fi
+    start
+}
 

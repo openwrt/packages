@@ -1,0 +1,53 @@
+EU_863_870:
+  description: Europe 868MHz
+  base_freq: 868
+  global_conf: EU-global_conf.json
+
+US_902_928:
+  description: United States 915MHz
+  base_freq: 915
+  global_conf: US-global_conf.json
+
+CN_779_787:
+
+EU_433:
+  description: Europe 433MHz
+  base_freq: 433
+
+AU_915_928:
+  description: Australia 915MHz
+  base_freq: 915
+  global_conf: AU-global_conf.json
+
+CN_470_510:
+  description: China 470-510MHz
+  base_freq: 470
+  global_conf: CN-global_conf.json
+
+AS_923:
+  base_freq: 915
+
+AS_920_923:
+  description: Asia 920-923MHz
+  base_freq: 915
+  global_conf: AS1-global_conf.json
+
+AS_923_925:
+  description: Asia 923-925MHz
+  base_freq: 915
+  global_conf: AS2-global_conf.json
+
+KR_920_923:
+  description: Korea 920-923MHz
+  base_freq: 915
+  global_conf: KR-global_conf.json
+
+IN_865_867:
+  description: India 865-867MHz
+  base_freq: 868
+  global_conf: IN-global_conf.json
+
+RU_864_870:
+  description: Russia 864-870MHz
+  base_freq: 868
+  global_conf: RU-global_conf.json

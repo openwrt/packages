@@ -1,0 +1,10 @@
+--- lora_pkt_fwd/Makefile.orig  2019-09-08 18:40:29.922192672 +1000
++++ lora_pkt_fwd/Makefile       2019-09-08 18:40:55.443352582 +1000
+@@ -4,7 +4,7 @@
+
+ ### Environment constants
+
+-LGW_PATH ?= ../../lora_gateway/libloragw
++LGW_PATH ?= ../../lora_gateway-5.0.1/libloragw
+ ARCH ?=
+ CROSS_COMPILE ?=
