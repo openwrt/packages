@@ -113,6 +113,7 @@ define Build/Compile/Py3Mod
 		$(3))
 endef
 
+PYTHON3_PKG_SETUP_DIR ?=
 PYTHON3_PKG_SETUP_ARGS:=--single-version-externally-managed
 PYTHON3_PKG_SETUP_VARS:=
 
@@ -120,7 +121,8 @@ define Py3Build/Compile/Default
 	$(foreach pkg,$(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS),
 		$(call host_python3_pip_install_host,$(pkg))
 	)
-	$(call Build/Compile/Py3Mod,, \
+	$(call Build/Compile/Py3Mod, \
+		$(PYTHON3_PKG_SETUP_DIR), \
 		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
 		$(PYTHON3_PKG_SETUP_ARGS), \
 		$(PYTHON3_PKG_SETUP_VARS) \
