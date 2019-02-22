@@ -36,11 +36,6 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
 
-/* for batadv_v_elp_get_throughput which would have used
- * STATION_INFO_EXPECTED_THROUGHPUT in Linux 4.0.0
- */
-#define NL80211_STA_INFO_EXPECTED_THROUGHPUT    28
-
 /* wild hack for batadv_getlink_net only */
 #define get_link_net get_xstats_size || 1 ? fallback_net : (struct net*)netdev->rtnl_link_ops->get_xstats_size
 
