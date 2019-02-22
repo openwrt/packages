@@ -40,9 +40,26 @@ bat_config()
 	[ -n "$distributed_arp_table" ] && batctl -m "$mesh" distributed_arp_table "$distributed_arp_table" 2>&-
 	[ -n "$fragmentation" ] && batctl -m "$mesh" fragmentation "$fragmentation"
 
-	[ -n "$gw_bandwidth" ] && echo $gw_bandwidth > /sys/class/net/$mesh/mesh/gw_bandwidth
-	[ -n "$gw_mode" ] && echo $gw_mode > /sys/class/net/$mesh/mesh/gw_mode
-	[ -n "$gw_sel_class" ] && echo $gw_sel_class > /sys/class/net/$mesh/mesh/gw_sel_class
+	case "$gw_mode" in
+	server)
+		if [ -n "$gw_bandwidth" ]; then
+			batctl -m "$mesh" gw_mode "server" "$gw_bandwidth"
+		else
+			batctl -m "$mesh" gw_mode "server"
+		fi
+		;;
+	client)
+		if [ -n "$gw_sel_class" ]; then
+			batctl -m "$mesh" gw_mode "client" "$gw_sel_class"
+		else
+			batctl -m "$mesh" gw_mode "client"
+		fi
+		;;
+	*)
+		batctl -m "$mesh" gw_mode "off"
+		;;
+	esac
+
 	[ -n "$hop_penalty" ] && echo $hop_penalty > /sys/class/net/$mesh/mesh/hop_penalty
 
 	[ -n "$isolation_mark" ] && batctl -m "$mesh" isolation_mark "$isolation_mark"
