@@ -138,48 +138,6 @@ batadv_ethtool_get_link_ksettings(struct net_device *dev,
 
 #endif /* < KERNEL_VERSION(4, 11, 9) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
-
-static inline void *batadv_skb_put(struct sk_buff *skb, unsigned int len)
-{
-	return (void *)skb_put(skb, len);
-}
-#ifdef skb_put
-#undef skb_put
-#endif
-
-#define skb_put batadv_skb_put
-
-static inline void *batadv_skb_put_zero(struct sk_buff *skb, unsigned int len)
-{
-	void *tmp = skb_put(skb, len);
-
-	memset(tmp, 0, len);
-
-	return tmp;
-}
-#ifdef skb_put_zero
-#undef skb_put_zero
-#endif
-
-#define skb_put_zero batadv_skb_put_zero
-
-static inline void *batadv_skb_put_data(struct sk_buff *skb, const void *data,
-				 unsigned int len)
-{
-	void *tmp = skb_put(skb, len);
-
-	memcpy(tmp, data, len);
-
-	return tmp;
-}
-#ifdef skb_put_data
-#undef skb_put_data
-#endif
-
-#define skb_put_data batadv_skb_put_data
-
-#endif /* < KERNEL_VERSION(4, 13, 0) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
 
