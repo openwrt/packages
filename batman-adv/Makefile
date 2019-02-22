@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=batman-adv
 
 PKG_VERSION:=2019.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_HASH:=3e97d8a771cdbd7b2df42c52b88e071eaa58b5d28eb4e17a4b13b6698debbdc0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz

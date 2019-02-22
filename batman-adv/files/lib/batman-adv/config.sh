@@ -60,8 +60,7 @@ bat_config()
 		;;
 	esac
 
-	[ -n "$hop_penalty" ] && echo $hop_penalty > /sys/class/net/$mesh/mesh/hop_penalty
-
+	[ -n "$hop_penalty" ] && batctl -m "$mesh" hop_penalty "$hop_penalty"
 	[ -n "$isolation_mark" ] && batctl -m "$mesh" isolation_mark "$isolation_mark"
 	[ -n "$multicast_mode" ] && batctl -m "$mesh" multicast_mode "$multicast_mode" 2>&-
 	[ -n "$network_coding" ] && batctl -m "$mesh" network_coding "$network_coding" 2>&-
