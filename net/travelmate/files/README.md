@@ -124,14 +124,6 @@ edit /etc/config/travelmate and set 'trm_enabled' to '1'
 /etc/init.d/travelmate restart
 </code></pre>
 
-## FAQ
-**Q:** What happen with misconfigured, faulty uplinks, e.g. due to outdated wlan passwords?  
-**A:** Travelmate tries n times (default 3) to connect, then the respective uplink will be marked as "faulty" in the JSON runtime file and hereafter ignored. To reset the JSON runtime file, simply restart travelmate.  
-**Q:** How to connect to hidden uplinks?  
-**A:** See 'example\_hidden' STA configuration above, option 'SSID' and 'BSSID' must be specified for successful connections.  
-**Q:** Any recommendations regarding suitable DNS settings to easily connect to captive portals?  
-**A:** Use a simple DNS forwarder like dnsmasq and disable the option 'rebind_protection'.  
-
 ## Support
 Please join the travelmate discussion in this [forum thread](https://forum.lede-project.org/t/travelmate-support-thread/5155) or contact me by [mail](mailto:dev@brenken.org)  
 
