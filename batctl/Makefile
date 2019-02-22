@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=batctl
 
 PKG_VERSION:=2019.0
-PKG_RELEASE:=0
+PKG_RELEASE:=1
 PKG_HASH:=997721096ff396644e8d697ea7651e9d38243faf317bcea2661d4139ff58b531
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -42,12 +42,12 @@ define Package/batctl-default
 $(call Package/batctl/Default)
   TITLE:=B.A.T.M.A.N. Advanced user space configuration tool (Default)
   VARIANT:=default
-  ALTERNATIVES:=200:/usr/sbin/batctl:/usr/libexec/batctl-full
+  ALTERNATIVES:=200:/usr/sbin/batctl:/usr/libexec/batctl-default
 endef
 
 define Package/batctl-full
 $(call Package/batctl/Default)
-  TITLE:=B.A.T.M.A.N. Advanced user space configuration tool (Minimal)
+  TITLE:=B.A.T.M.A.N. Advanced user space configuration tool (Full)
   VARIANT:=full
   ALTERNATIVES:=300:/usr/sbin/batctl:/usr/libexec/batctl-full
 endef
