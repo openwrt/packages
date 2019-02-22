@@ -167,13 +167,6 @@ static inline int batadv_cfg80211_get_station(struct net_device *dev,
 
 #endif /* < KERNEL_VERSION(4, 18, 0) */
 
-
-#ifdef __CHECK_POLL
-typedef unsigned __bitwise __poll_t;
-#else
-typedef unsigned __poll_t;
-#endif
-
 #endif /* < KERNEL_VERSION(4, 16, 0) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
