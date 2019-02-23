@@ -9,18 +9,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
-PKG_VERSION:=9.12.3-P1
+PKG_VERSION:=9.12.3-P4
 PKG_RELEASE:=1
 USERID:=bind=57:bind=57
 
 PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
 PKG_LICENSE := MPL-2.0
+PKG_CPE_ID:=cpe:/a:isc:bind
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 	https://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION) \
 	https://ftp.isc.org/isc/bind9/$(PKG_VERSION)
-PKG_HASH:=6cb79389d787368af27f01c65a9fa09be1fd062eda37c94819a1a0178d5ded73
+PKG_HASH:=d1014453c62623e42323fd83fc89444c12ae6b707fd586466959a052fe21f206
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
@@ -117,6 +118,8 @@ define Package/bind-dig
 endef
 
 export BUILD_CC="$(TARGET_CC)"
+
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 CONFIGURE_ARGS += \
 	--enable-ipv6=$(if $(CONFIG_IPV6),yes,no) \
