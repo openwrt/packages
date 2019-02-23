@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2016 OpenWrt.org
+# Copyright (C) 2008-2019 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tor
-PKG_VERSION:=0.3.5.7
+PKG_VERSION:=0.3.5.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dist.torproject.org/ \
 	https://archive.torproject.org/tor-package-archive
-PKG_HASH:=1b0887fc21ac535befea7243c5d5f1e31394d7458d64b30807a3e98cca0d839e
+PKG_HASH:=d5c56603942a8927670f50a4a469fb909e29d3571fdd013389d567e57abc0b47
 PKG_MAINTAINER:=Hauke Mehrtens <hauke@hauke-m.de> \
 		Peter Wagner <tripolar@gmx.at>
 PKG_LICENSE_FILES:=LICENSE
