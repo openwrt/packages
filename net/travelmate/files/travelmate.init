@@ -31,14 +31,14 @@ start_service()
 
 reload_service()
 {
-	local ppid pid
+	local ppid pid timeout="$(uci_get travelmate global trm_timeout)"
 
 	if [ -s "${trm_pidfile}" ]
 	then
 		ppid="$(cat "${trm_pidfile}" 2>/dev/null)"
 		if [ -n "${ppid}" ]
 		then
-			pid="$(pgrep sleep -P ${ppid} 2>/dev/null)"
+			pid="$(pgrep -xnf "sleep ${timeout:-60} 0" -P ${ppid} 2>/dev/null)"
 			if [ -n "${pid}" ]
 			then
 				kill -INT ${pid} 2>/dev/null
