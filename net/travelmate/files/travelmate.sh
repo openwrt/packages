@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.3.6"
+trm_ver="1.3.7"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -474,7 +474,7 @@ do
 			f_check "initial"
 			if [ "${trm_ifstatus}" = "true" ]
 			then
-				sleep ${trm_timeout}
+				sleep ${trm_timeout} 0
 			fi
 			if [ $? -eq 0 ] || [ "${trm_ifstatus}" = "false" ]
 			then
