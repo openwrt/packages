@@ -114,14 +114,16 @@ define Build/Compile/PyMod
 		$(3))
 endef
 
-PYTHON_PKG_SETUP_ARGS:=--single-version-externally-managed
-PYTHON_PKG_SETUP_VARS:=
+PYTHON_PKG_SETUP_DIR ?=
+PYTHON_PKG_SETUP_ARGS ?= --single-version-externally-managed
+PYTHON_PKG_SETUP_VARS ?=
 
 define PyBuild/Compile/Default
 	$(foreach pkg,$(HOST_PYTHON_PACKAGE_BUILD_DEPENDS),
 		$(call host_python_pip_install_host,$(pkg))
 	)
-	$(call Build/Compile/PyMod,, \
+	$(call Build/Compile/PyMod, \
+		$(PYTHON_PKG_SETUP_DIR), \
 		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
 		$(PYTHON_PKG_SETUP_ARGS), \
 		$(PYTHON_PKG_SETUP_VARS) \
