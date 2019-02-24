@@ -106,6 +106,7 @@ define PyBasePackage
       -|/usr/lib/python$(PYTHON_VERSION)/*/tests
     endif
   endef
+  PyPackage/$(1)/install?=:
 endef
 
 include ./files/python-package-*.mk
@@ -262,6 +263,9 @@ define PyPackage/python-base/install
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python2
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* $(1)/usr/lib/
 endef
+
+PyPackage/python-light/install:=:
+PyPackage/python/install:=:
 
 define PyPackage/python/filespec
 -|$(PYTHON_PKG_DIR)
