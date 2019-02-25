@@ -1,0 +1,33 @@
+--- a/src/Mayaqua/Encrypt.c
++++ b/src/Mayaqua/Encrypt.c
+@@ -3807,6 +3807,7 @@ void FreeCryptLibrary()
+ //	RAND_Free_For_SoftEther();
+ 	OpenSSL_FreeLock();
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ #ifdef OPENSSL_FIPS
+ 	FIPS_mode_set(0);
+ #endif
+@@ -3821,6 +3822,7 @@ void FreeCryptLibrary()
+ #ifndef OPENSSL_NO_COMP
+ 	SSL_COMP_free_compression_methods();
+ #endif
++#endif
+ }
+ 
+ // Initialize the Crypt library
+@@ -3830,12 +3832,14 @@ void InitCryptLibrary()
+ 
+ //	RAND_Init_For_SoftEther()
+ 	openssl_lock = NewLock();
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	SSL_library_init();
+ 	//OpenSSL_add_all_algorithms();
+ 	OpenSSL_add_all_ciphers();
+ 	OpenSSL_add_all_digests();
+ 	ERR_load_crypto_strings();
+ 	SSL_load_error_strings();
++#endif
+ 
+ 	ssl_clientcert_index = SSL_get_ex_new_index(0, "struct SslClientCertInfo *", NULL, NULL, NULL);
+ 
