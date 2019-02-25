@@ -1,0 +1,280 @@
+From d05faf03448628f577153692e3819ebf3449ab9d Mon Sep 17 00:00:00 2001
+From: Paul Kehrer <paul.l.kehrer@gmail.com>
+Date: Mon, 25 Feb 2019 13:32:05 +0800
+Subject: [PATCH] support NO_ENGINE (#4763)
+
+* support OPENSSL_NO_ENGINE
+
+* support some new openssl config args
+
+* sigh
+---
+ .travis.yml                                   |  2 +
+ .travis/install.sh                            |  6 +-
+ .travis/openssl_config.sh                     | 13 ++++
+ .travis/run.sh                                | 11 +--
+ CHANGELOG.rst                                 | 25 +++++++
+ src/_cffi_src/openssl/engine.py               | 68 +++++++++++++++++++
+ src/_cffi_src/openssl/ssl.py                  |  1 -
+ .../hazmat/backends/openssl/backend.py        | 17 ++---
+ .../hazmat/bindings/openssl/_conditional.py   | 42 ++++++++++++
+ .../hazmat/bindings/openssl/binding.py        |  9 +--
+ tests/hazmat/backends/test_openssl.py         |  3 +
+ 11 files changed, 178 insertions(+), 19 deletions(-)
+ create mode 100755 .travis/openssl_config.sh
+
+diff --git a/CHANGELOG.rst b/CHANGELOG.rst
+index 7ee6d4d9..7c3f3bfe 100644
+--- a/CHANGELOG.rst
++++ b/CHANGELOG.rst
+@@ -1,6 +1,31 @@
+ Changelog
+ =========
+ 
++.. _v2-6:
++
++2.6 - `master`_
++~~~~~~~~~~~~~~~
++
++.. note:: This version is not yet released and is under active development.
++
++* **BACKWARDS INCOMPATIBLE:** Removed
++  ``cryptography.hazmat.primitives.asymmetric.utils.encode_rfc6979_signature``
++  and
++  ``cryptography.hazmat.primitives.asymmetric.utils.decode_rfc6979_signature``,
++  which had been deprecated for nearly 4 years. Use
++  :func:`~cryptography.hazmat.primitives.asymmetric.utils.encode_dss_signature`
++  and
++  :func:`~cryptography.hazmat.primitives.asymmetric.utils.decode_dss_signature`
++  instead.
++* **BACKWARDS INCOMPATIBLE**: Removed ``cryptography.x509.Certificate.serial``,
++  which had been deprecated for nearly 3 years. Use
++  :attr:`~cryptography.x509.Certificate.serial_number` instead.
++* Add support for easily mapping an object identifier to its elliptic curve
++  class via
++  :func:`~cryptography.hazmat.primitives.asymmetric.ec.get_curve_for_oid`.
++* Add support for OpenSSL when compiled with the ``no-engine``
++  (``OPENSSL_NO_ENGINE``) flag.
++
+ .. _v2-5:
+ 
+ 2.5 - 2019-01-22
+diff --git a/src/_cffi_src/openssl/engine.py b/src/_cffi_src/openssl/engine.py
+index 45ce9526..59331aa2 100644
+--- a/src/_cffi_src/openssl/engine.py
++++ b/src/_cffi_src/openssl/engine.py
+@@ -36,6 +36,7 @@ static const unsigned int ENGINE_METHOD_ALL;
+ static const unsigned int ENGINE_METHOD_NONE;
+ 
+ static const int ENGINE_R_CONFLICTING_ENGINE_ID;
++static const long Cryptography_HAS_ENGINE;
+ """
+ 
+ FUNCTIONS = """
+@@ -130,4 +131,71 @@ void ENGINE_cleanup(void);
+ """
+ 
+ CUSTOMIZATIONS = """
++#ifdef OPENSSL_NO_ENGINE
++static const long Cryptography_HAS_ENGINE = 0;
++typedef int (*ENGINE_GEN_INT_FUNC_PTR)(ENGINE *);
++typedef void *ENGINE_CTRL_FUNC_PTR;
++typedef void *ENGINE_LOAD_KEY_PTR;
++typedef void *ENGINE_CIPHERS_PTR;
++typedef void *ENGINE_DIGESTS_PTR;
++typedef struct ENGINE_CMD_DEFN_st {
++    unsigned int cmd_num;
++    const char *cmd_name;
++    const char *cmd_desc;
++    unsigned int cmd_flags;
++} ENGINE_CMD_DEFN;
++
++/* This section is so osrandom_engine.c can successfully compile even
++   when engine support is disabled */
++#define ENGINE_CMD_BASE 0
++#define ENGINE_CMD_FLAG_NO_INPUT 0
++#define ENGINE_F_ENGINE_CTRL 0
++#define ENGINE_R_INVALID_ARGUMENT 0
++#define ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED 0
++int (*ENGINE_set_cmd_defns)(ENGINE *, const ENGINE_CMD_DEFN *) = NULL;
++
++static const unsigned int ENGINE_METHOD_RAND = 0;
++static const int ENGINE_R_CONFLICTING_ENGINE_ID = 0;
++
++ENGINE *(*ENGINE_get_first)(void) = NULL;
++ENGINE *(*ENGINE_get_last)(void) = NULL;
++int (*ENGINE_add)(ENGINE *) = NULL;
++int (*ENGINE_remove)(ENGINE *) = NULL;
++ENGINE *(*ENGINE_by_id)(const char *) = NULL;
++int (*ENGINE_init)(ENGINE *) = NULL;
++int (*ENGINE_finish)(ENGINE *) = NULL;
++void (*ENGINE_load_builtin_engines)(void) = NULL;
++ENGINE *(*ENGINE_get_default_RAND)(void) = NULL;
++int (*ENGINE_set_default_RAND)(ENGINE *) = NULL;
++int (*ENGINE_register_RAND)(ENGINE *) = NULL;
++void (*ENGINE_unregister_RAND)(ENGINE *) = NULL;
++void (*ENGINE_register_all_RAND)(void) = NULL;
++int (*ENGINE_ctrl)(ENGINE *, int, long, void *, void (*)(void)) = NULL;
++int (*ENGINE_ctrl_cmd)(ENGINE *, const char *, long, void *,
++                       void (*)(void), int) = NULL;
++int (*ENGINE_ctrl_cmd_string)(ENGINE *, const char *, const char *,
++                              int) = NULL;
++
++ENGINE *(*ENGINE_new)(void) = NULL;
++int (*ENGINE_free)(ENGINE *) = NULL;
++int (*ENGINE_up_ref)(ENGINE *) = NULL;
++int (*ENGINE_set_id)(ENGINE *, const char *) = NULL;
++int (*ENGINE_set_name)(ENGINE *, const char *) = NULL;
++int (*ENGINE_set_RAND)(ENGINE *, const RAND_METHOD *) = NULL;
++int (*ENGINE_set_destroy_function)(ENGINE *, ENGINE_GEN_INT_FUNC_PTR) = NULL;
++int (*ENGINE_set_init_function)(ENGINE *, ENGINE_GEN_INT_FUNC_PTR) = NULL;
++int (*ENGINE_set_finish_function)(ENGINE *, ENGINE_GEN_INT_FUNC_PTR) = NULL;
++int (*ENGINE_set_ctrl_function)(ENGINE *, ENGINE_CTRL_FUNC_PTR) = NULL;
++const char *(*ENGINE_get_id)(const ENGINE *) = NULL;
++const char *(*ENGINE_get_name)(const ENGINE *) = NULL;
++const RAND_METHOD *(*ENGINE_get_RAND)(const ENGINE *) = NULL;
++
++void (*ENGINE_add_conf_module)(void) = NULL;
++/* these became macros in 1.1.0 */
++void (*ENGINE_load_openssl)(void) = NULL;
++void (*ENGINE_load_dynamic)(void) = NULL;
++void (*ENGINE_cleanup)(void) = NULL;
++#else
++static const long Cryptography_HAS_ENGINE = 1;
++#endif
+ """
+diff --git a/src/_cffi_src/openssl/ssl.py b/src/_cffi_src/openssl/ssl.py
+index 2218095c..92fd1e3e 100644
+--- a/src/_cffi_src/openssl/ssl.py
++++ b/src/_cffi_src/openssl/ssl.py
+@@ -334,7 +334,6 @@ int SSL_SESSION_print(BIO *, const SSL_SESSION *);
+ const COMP_METHOD *SSL_get_current_compression(SSL *);
+ const COMP_METHOD *SSL_get_current_expansion(SSL *);
+ const char *SSL_COMP_get_name(const COMP_METHOD *);
+-int SSL_CTX_set_client_cert_engine(SSL_CTX *, ENGINE *);
+ 
+ unsigned long SSL_set_mode(SSL *, unsigned long);
+ unsigned long SSL_get_mode(SSL *);
+diff --git a/src/cryptography/hazmat/backends/openssl/backend.py b/src/cryptography/hazmat/backends/openssl/backend.py
+index 0a9bc53a..025c414c 100644
+--- a/src/cryptography/hazmat/backends/openssl/backend.py
++++ b/src/cryptography/hazmat/backends/openssl/backend.py
+@@ -150,14 +150,15 @@ class Backend(object):
+             self.openssl_assert(res == 1)
+ 
+     def activate_osrandom_engine(self):
+-        # Unregister and free the current engine.
+-        self.activate_builtin_random()
+-        with self._get_osurandom_engine() as e:
+-            # Set the engine as the default RAND provider.
+-            res = self._lib.ENGINE_set_default_RAND(e)
+-            self.openssl_assert(res == 1)
+-        # Reset the RNG to use the new engine.
+-        self._lib.RAND_cleanup()
++        if self._lib.Cryptography_HAS_ENGINE:
++            # Unregister and free the current engine.
++            self.activate_builtin_random()
++            with self._get_osurandom_engine() as e:
++                # Set the engine as the default RAND provider.
++                res = self._lib.ENGINE_set_default_RAND(e)
++                self.openssl_assert(res == 1)
++            # Reset the RNG to use the new engine.
++            self._lib.RAND_cleanup()
+ 
+     def osrandom_engine_implementation(self):
+         buf = self._ffi.new("char[]", 64)
+diff --git a/src/cryptography/hazmat/bindings/openssl/_conditional.py b/src/cryptography/hazmat/bindings/openssl/_conditional.py
+index c0238dcc..3fecfe59 100644
+--- a/src/cryptography/hazmat/bindings/openssl/_conditional.py
++++ b/src/cryptography/hazmat/bindings/openssl/_conditional.py
+@@ -341,6 +341,47 @@ def cryptography_has_evp_r_memory_limit_exceeded():
+     ]
+ 
+ 
++def cryptography_has_engine():
++    return [
++        "ENGINE_get_first",
++        "ENGINE_get_last",
++        "ENGINE_add",
++        "ENGINE_remove",
++        "ENGINE_by_id",
++        "ENGINE_init",
++        "ENGINE_finish",
++        "ENGINE_load_builtin_engines",
++        "ENGINE_get_default_RAND",
++        "ENGINE_set_default_RAND",
++        "ENGINE_register_RAND",
++        "ENGINE_unregister_RAND",
++        "ENGINE_register_all_RAND",
++        "ENGINE_ctrl",
++        "ENGINE_ctrl_cmd",
++        "ENGINE_ctrl_cmd_string",
++        "ENGINE_new",
++        "ENGINE_free",
++        "ENGINE_up_ref",
++        "ENGINE_set_id",
++        "ENGINE_set_name",
++        "ENGINE_set_RAND",
++        "ENGINE_set_destroy_function",
++        "ENGINE_set_init_function",
++        "ENGINE_set_finish_function",
++        "ENGINE_set_ctrl_function",
++        "ENGINE_get_id",
++        "ENGINE_get_name",
++        "ENGINE_get_RAND",
++        "ENGINE_add_conf_module",
++        "ENGINE_load_openssl",
++        "ENGINE_load_dynamic",
++        "ENGINE_cleanup",
++        "ENGINE_METHOD_RAND",
++        "ENGINE_R_CONFLICTING_ENGINE_ID",
++        "Cryptography_add_osrandom_engine",
++    ]
++
++
+ # This is a mapping of
+ # {condition: function-returning-names-dependent-on-that-condition} so we can
+ # loop over them and delete unsupported names at runtime. It will be removed
+@@ -412,4 +453,5 @@ CONDITIONAL_NAMES = {
+     "Cryptography_HAS_EVP_R_MEMORY_LIMIT_EXCEEDED": (
+         cryptography_has_evp_r_memory_limit_exceeded
+     ),
++    "Cryptography_HAS_ENGINE": cryptography_has_engine,
+ }
+diff --git a/src/cryptography/hazmat/bindings/openssl/binding.py b/src/cryptography/hazmat/bindings/openssl/binding.py
+index 0824ea88..69621b54 100644
+--- a/src/cryptography/hazmat/bindings/openssl/binding.py
++++ b/src/cryptography/hazmat/bindings/openssl/binding.py
+@@ -114,10 +114,11 @@ class Binding(object):
+         # reliably clear the error queue. Once we clear it here we will
+         # error on any subsequent unexpected item in the stack.
+         cls.lib.ERR_clear_error()
+-        cls._osrandom_engine_id = cls.lib.Cryptography_osrandom_engine_id
+-        cls._osrandom_engine_name = cls.lib.Cryptography_osrandom_engine_name
+-        result = cls.lib.Cryptography_add_osrandom_engine()
+-        _openssl_assert(cls.lib, result in (1, 2))
++        if cls.lib.Cryptography_HAS_ENGINE:
++            cls._osrandom_engine_id = cls.lib.Cryptography_osrandom_engine_id
++            cls._osrandom_engine_name = cls.lib.Cryptography_osrandom_engine_name
++            result = cls.lib.Cryptography_add_osrandom_engine()
++            _openssl_assert(cls.lib, result in (1, 2))
+ 
+     @classmethod
+     def _ensure_ffi_initialized(cls):
+diff --git a/tests/hazmat/backends/test_openssl.py b/tests/hazmat/backends/test_openssl.py
+index 0aa72d89..ce9a1352 100644
+--- a/tests/hazmat/backends/test_openssl.py
++++ b/tests/hazmat/backends/test_openssl.py
+@@ -170,6 +170,9 @@ class TestOpenSSL(object):
+         assert backend._bn_to_int(bn) == 0
+ 
+ 
++@pytest.mark.skipif(
++    backend._lib.Cryptography_HAS_ENGINE == 0,
++    reason="Requires OpenSSL with ENGINE support")
+ class TestOpenSSLRandomEngine(object):
+     def setup(self):
+         # The default RAND engine is global and shared between
+-- 
+2.17.1
+
