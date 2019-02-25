@@ -18,6 +18,7 @@ PKG_HASH:=d5c56603942a8927670f50a4a469fb909e29d3571fdd013389d567e57abc0b47
 PKG_MAINTAINER:=Hauke Mehrtens <hauke@hauke-m.de> \
 		Peter Wagner <tripolar@gmx.at>
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/:a:torproject:tor
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
