@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius3
 PKG_VERSION:=release_3_0_17
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/FreeRADIUS/freeradius-server/archive
@@ -380,6 +380,13 @@ define Package/freeradius3-utils
   DEPENDS:=+freeradius3-common
   TITLE:=Misc. client utilities
 endef
+
+# This is a workaround for a bug in configure.ac, that does not check
+# for the openss/rand.h header.  Setting the macro is safe for openwrt,
+# and faster than rebuilding configure.
+# This has been fixed upstream in the 3.0.x branch, and should not be
+# needed in a future release.
+EXTRA_CFLAGS+= -DHAVE_OPENSSL_RAND_H
 
 CONFIGURE_ARGS+= \
 	--libdir=/usr/lib/freeradius3 \
