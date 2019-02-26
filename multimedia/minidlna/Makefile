@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=minidlna
 PKG_VERSION:=1.2.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_URL:=@SF/minidlna
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -36,6 +36,7 @@ define Package/minidlna
   DEPENDS:= +libpthread +libexif +libjpeg +libsqlite3 +libffmpeg \
   	+libid3tag +libflac +libvorbis +libuuid \
   	$(ICONV_DEPENDS) $(INTL_DEPENDS)
+  USERID:=minidlna:minidlna
 endef
 
 define Package/minidlna/description
