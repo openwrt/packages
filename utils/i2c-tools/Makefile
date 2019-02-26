@@ -15,16 +15,18 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/utils/i2c-tools
 PKG_HASH:=57b219efd183795bd545dd5a60d9eabbe9dcb6f8fb92bc7ba2122b87f98527d5
 
-PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=PACKAGE_python-smbus:python
-
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=COPYING
 
+PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-i2c-tools-$(PKG_VERSION)
+
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python-package.mk
 include ../../lang/python/python3-package.mk
+
+PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xJf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/i2c/Default
   URL:=https://i2c.wiki.kernel.org/index.php/I2C_Tools
@@ -36,6 +38,7 @@ define Package/libi2c
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+=library for i2c-tools
+  VARIANT:=bin
 endef
 
 define Package/i2c-tools
@@ -44,6 +47,7 @@ define Package/i2c-tools
   CATEGORY:=Utilities
   TITLE+=tools for Linux
   DEPENDS:=+libi2c
+  VARIANT:=bin
 endef
 
 define Package/python-smbus
@@ -52,7 +56,8 @@ define Package/python-smbus
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Python bindings for the SMBUS
-  DEPENDS:=+libi2c +python-light
+  DEPENDS:=+PACKAGE_python-smbus:libi2c +PACKAGE_python-smbus:python-light
+  VARIANT:=python
 endef
 
 define Package/python3-smbus
@@ -61,7 +66,8 @@ define Package/python3-smbus
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Python bindings for the SMBUS
-  DEPENDS:=+libi2c +python3-light
+  DEPENDS:=+PACKAGE_python3-smbus:libi2c +PACKAGE_python3-smbus:python3-light
+  VARIANT:=python3
 endef
 
 define Package/libi2c/description
@@ -78,28 +84,10 @@ define Package/python-smbus/description
 endef
 
 define Package/python3-smbus/description
- This package contain the python bindings for Linux SMBus access through i2c-dev.
+ This package contain the Python3 bindings for Linux SMBus access through i2c-dev.
 endef
 
-TARGET_CPPFLAGS += -I$(PKG_BUILD_DIR)/include
-
-ifdef CONFIG_PACKAGE_python-smbus
-  define Build/Compile/python-smbus
-	$(if $(Build/Compile/PyMod),,@echo Python packaging code not found.; false)
-	$(call Build/Compile/PyMod,./py-smbus/, \
-		install --prefix="$(PKG_INSTALL_DIR)/usr", \
-	)
-  endef
-endif
-
-ifdef CONFIG_PACKAGE_python3-smbus
-  define Build/Compile/python3-smbus
-	$(if $(Build/Compile/Py3Mod),,@echo Python3 packaging code not found.; false)
-	$(call Build/Compile/Py3Mod,./py-smbus/, \
-		install --prefix="$(PKG_INSTALL_DIR)/usr", \
-	)
-  endef
-endif
+ifeq ($(BUILD_VARIANT),bin)
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
@@ -108,9 +96,21 @@ define Build/Compile
 		STAGING_DIR="$(STAGING_DIR)" \
 		LDFLAGS="$(TARGET_LDFLAGS)" \
 		CFLAGS="$(TARGET_CFLAGS)"
-	$(Build/Compile/python-smbus)
-	$(Build/Compile/python3-smbus)
 endef
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib
+	$(CP) $(PKG_BUILD_DIR)/include/i2c $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/lib/libi2c.{a,so*} $(1)/usr/lib/
+endef
+
+endif # ifeq
+
+PYTHON_PKG_SETUP_ARGS:=
+PYTHON3_PKG_SETUP_ARGS:=
+
+PYTHON_PKG_SETUP_DIR:=py-smbus
+PYTHON3_PKG_SETUP_DIR:=py-smbus
 
 define Package/libi2c/install
 	$(INSTALL_DIR) $(1)/usr/lib
@@ -125,17 +125,9 @@ define Package/i2c-tools/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tools/i2cget $(1)/usr/sbin/
 endef
 
-define PyPackage/python-smbus/filespec
-+|$(PYTHON_PKG_DIR)
-endef
-
-define PyPackage/python3-smbus/filespec
-+|$(PYTHON3_PKG_DIR)
-endef
-
 $(eval $(call BuildPackage,libi2c))
 $(eval $(call BuildPackage,i2c-tools))
 $(eval $(call PyPackage,python-smbus))
 $(eval $(call BuildPackage,python-smbus))
-$(eval $(call PyPackage,python3-smbus))
+$(eval $(call Py3Package,python3-smbus))
 $(eval $(call BuildPackage,python3-smbus))
