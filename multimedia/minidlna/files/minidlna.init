@@ -6,7 +6,7 @@ START=50
 SERVICE_USE_PID=1
 SERVICE_PID_FILE=/var/run/minidlna/minidlna.pid
 
-MINIDLNA_CONFIG_FILE="/tmp/minidlna.conf"
+MINIDLNA_CONFIG_FILE="/var/etc/minidlna.conf"
 
 minidlna_cfg_append() {
 	echo "$1" >> "$MINIDLNA_CONFIG_FILE"
@@ -35,7 +35,6 @@ minidlna_cfg_addstr() {
 
 minidlna_cfg_add_media_dir() {
 	local val=$1
-
 	minidlna_cfg_append "media_dir=$val"
 }
 
@@ -44,31 +43,33 @@ minidlna_create_config() {
 	local port
 	local interface
 
-	config_get port $cfg port
-	config_get interface $cfg interface
+	config_get port "$cfg" port
+	config_get interface "$cfg" interface
 
 	[ -z "$interface" -o -t "$port" ] && return 1
 
+	mkdir -p /var/etc
 	echo "# this file is generated automatically, don't edit" > "$MINIDLNA_CONFIG_FILE"
 
 	minidlna_cfg_append "port=$port"
 	minidlna_cfg_append "network_interface=$interface"
 
-	minidlna_cfg_addstr $cfg friendly_name
-	minidlna_cfg_addstr $cfg db_dir
-	minidlna_cfg_addstr $cfg log_dir
-	minidlna_cfg_addstr $cfg log_level 'error'
-	minidlna_cfg_addbool $cfg inotify '1'
-	minidlna_cfg_addbool $cfg enable_tivo '0'
-	minidlna_cfg_addbool $cfg wide_links '0'
-	minidlna_cfg_addbool $cfg strict_dlna '0'
-	minidlna_cfg_addstr $cfg album_art_names
-	minidlna_cfg_addstr $cfg presentation_url
-	minidlna_cfg_addstr $cfg notify_interval '900'
-	minidlna_cfg_addstr $cfg serial '12345678'
-	minidlna_cfg_addstr $cfg model_number '1'
-	minidlna_cfg_addstr $cfg minissdpsocket
-	minidlna_cfg_addstr $cfg root_container '.'
+	minidlna_cfg_addstr "$cfg" friendly_name
+	minidlna_cfg_addstr "$cfg" user
+	minidlna_cfg_addstr "$cfg" db_dir
+	minidlna_cfg_addstr "$cfg" log_dir
+	minidlna_cfg_addstr "$cfg" log_level 'error'
+	minidlna_cfg_addbool "$cfg" inotify '1'
+	minidlna_cfg_addbool "$cfg" enable_tivo '0'
+	minidlna_cfg_addbool "$cfg" wide_links '0'
+	minidlna_cfg_addbool "$cfg" strict_dlna '0'
+	minidlna_cfg_addstr "$cfg" album_art_names
+	minidlna_cfg_addstr "$cfg" presentation_url
+	minidlna_cfg_addstr "$cfg" notify_interval '900'
+	minidlna_cfg_addstr "$cfg" serial '12345678'
+	minidlna_cfg_addstr "$cfg" model_number '1'
+	minidlna_cfg_addstr "$cfg" minissdpsocket
+	minidlna_cfg_addstr "$cfg" root_container '.'
 	config_list_foreach "$cfg" "media_dir" minidlna_cfg_add_media_dir
 
 	return 0
@@ -78,6 +79,7 @@ start() {
 	local enabled
 	local db_dir
 	local log_dir
+	local user
 
 	config_load 'minidlna'
 	config_get_bool enabled config 'enabled' '0'
@@ -87,10 +89,12 @@ start() {
 	minidlna_create_config config || return 1
 	
 	config_get db_dir config 'db_dir' '/var/run/minidlna'
-	config_get log_dir config 'log_dir' '/var/log'
+	config_get log_dir config 'log_dir' '/var/log/minidlna'
+	config_get user config 'user' 'root'
 
-	mkdir -m 0755 -p $db_dir
-	mkdir -m 0755 -p $log_dir
+	mkdir -m 0755 -p "$db_dir" "$log_dir"
+	chown -R "$user" "$db_dir" "$log_dir"
+
 	service_start /usr/bin/minidlna -f "$MINIDLNA_CONFIG_FILE"
 }
 
