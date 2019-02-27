@@ -21,6 +21,8 @@ PKG_HASH:=22d9b1ac5b26135ad2b8c2901a9413537e08749a753356ee913c84dbd2df5574
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
 
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Jeffery To <jeffery.to@gmail.com>
+
 # This file provides the necsessary host build variables
 include ../python-host.mk
 
@@ -51,7 +53,6 @@ define Package/python/Default
   CATEGORY:=Languages
   TITLE:=Python $(PYTHON_VERSION) programming language
   URL:=https://www.python.org/
-  MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 endef
 
 define Package/python/Default/description
