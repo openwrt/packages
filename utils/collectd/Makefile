@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
 PKG_VERSION:=5.8.1
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
@@ -200,6 +200,7 @@ $(call Package/collectd/Default)
 	  +zlib \
 	  +libltdl \
 	  +libip4tc \
+	  +jshn \
 	  +PACKAGE_collectd-mod-lua:liblua
   MENU:=1
 endef
@@ -298,18 +299,21 @@ endif
 
 define Package/collectd/conffiles
 /etc/collectd.conf
+/etc/config/collectd
 endef
 
 define Package/collectd/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/collectd $(1)/usr/sbin/
+
 	$(INSTALL_DIR) $(1)/usr/share/collectd
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/collectd/types.db $(1)/usr/share/collectd/
-	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) ./files/collectd.conf $(1)/etc/
+
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/collectd.init $(1)/etc/init.d/collectd
-	$(INSTALL_DIR) $(1)/etc/collectd/conf.d
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) files/collectd.uci $(1)/etc/config/collectd
 endef
 
 # 1: plugin name
@@ -333,6 +337,11 @@ define BuildPlugin
 			$(PKG_INSTALL_DIR)/usr/lib/collectd/$$$$$$$${m}.so \
 			$$(1)/usr/lib/collectd/ ; \
 	done
+	if [ -f ./files/usr/share/collectd/plugin/$(1).json ]; then \
+		$(INSTALL_DIR) $$(1)/usr/share/collectd/plugin ; \
+		$(INSTALL_DATA) ./files/usr/share/collectd/plugin/$(1).json \
+			$$(1)/usr/share/collectd/plugin/$(1).json ; \
+	fi
   endef
 
   $$(eval $$(call BuildPackage,collectd-mod-$(1)))
