@@ -12,7 +12,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=openvswitch
 
-PKG_VERSION:=2.8.2
+PKG_VERSION:=2.8.5
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -20,7 +20,7 @@ PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
-PKG_HASH:=87b4a7e7134a44ce1f808d3415a2244b4518c2b0b2a42fa2f8231e592f13103d
+PKG_HASH:=3aeb3e0dc1b56868f6d65b5fcea4414a799cd2209fc671154a2ccd6192a3e8a6
 
 PKG_BUILD_DEPENDS:=python/host python-six/host
 
