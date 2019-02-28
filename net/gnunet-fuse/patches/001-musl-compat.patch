@@ -1,0 +1,33 @@
+--- a/src/fuse/mutex.c
++++ b/src/fuse/mutex.c
+@@ -71,8 +71,13 @@ GNUNET_mutex_create (int isRecursive)
+   if (isRecursive)
+     {
+ #if LINUX
++#if defined(__UCLIBC__) || defined(__GLIBC__)
+       GNUNET_assert (0 == pthread_mutexattr_setkind_np
+ 		     (&attr, PTHREAD_MUTEX_RECURSIVE_NP));
++#else
++      GNUNET_assert (0 == pthread_mutexattr_settype
++		     (&attr, PTHREAD_MUTEX_RECURSIVE));
++#endif
+ #elif SOMEBSD || GNUNET_freeBSD || GNUNET_freeBSD5
+       GNUNET_assert (0 == pthread_mutexattr_setkind_np
+ 		     (&attr, PTHREAD_MUTEX_RECURSIVE));
+@@ -84,11 +89,16 @@ GNUNET_mutex_create (int isRecursive)
+   else
+     {
+ #if LINUX
++#if defined(__UCLIBC__) || defined(__GLIBC__)
+       GNUNET_assert (0 == pthread_mutexattr_setkind_np
+ 		     (&attr, PTHREAD_MUTEX_ERRORCHECK_NP));
+ #else
+       GNUNET_assert (0 == pthread_mutexattr_settype
+ 		     (&attr, PTHREAD_MUTEX_ERRORCHECK));
++#endif
++#else
++      GNUNET_assert (0 == pthread_mutexattr_settype
++		     (&attr, PTHREAD_MUTEX_ERRORCHECK));
+ #endif
+     }
+   mut = GNUNET_new (struct GNUNET_Mutex);
