@@ -1,0 +1,50 @@
+From 6c0f43552d627b93f99f7fd40d63815f323958c3 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 28 Feb 2019 16:16:13 +0100
+Subject: [PATCH] reclaim: include reclaim.conf in source dist
+
+---
+ src/reclaim/Makefile.am | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+--- a/src/reclaim/Makefile.am
++++ b/src/reclaim/Makefile.am
+@@ -17,9 +17,10 @@ SQLITE_PLUGIN = libgnunet_plugin_reclaim
+ endif
+ 
+ EXTRA_DIST = \
++  reclaim.conf \
+   test_reclaim_defaults.conf \
+-	test_reclaim.conf \
+-	$(check_SCRIPTS)
++  test_reclaim.conf \
++  $(check_SCRIPTS)
+ 
+ pkgcfgdir= $(pkgdatadir)/config.d/
+ 
+--- /dev/null
++++ b/src/reclaim/reclaim.conf
+@@ -0,0 +1,23 @@
++[reclaim]
++START_ON_DEMAND = NO
++RUN_PER_USER = YES
++#PORT = 2108
++HOSTNAME = localhost
++BINARY = gnunet-service-reclaim
++ACCEPT_FROM = 127.0.0.1;
++ACCEPT_FROM6 = ::1;
++UNIXPATH = $GNUNET_USER_RUNTIME_DIR/gnunet-service-reclaim.sock
++UNIX_MATCH_UID = NO
++UNIX_MATCH_GID = YES
++TOKEN_EXPIRATION_INTERVAL = 30 m
++DATABASE = sqlite
++
++[reclaim-rest-plugin]
++#ADDRESS = https://identity.gnu:8000#/login
++ADDRESS = https://ui.reclaim/#/login
++PSW = secret
++JWT_SECRET = secret
++EXPIRATION_TIME = 1d
++
++[reclaim-sqlite]
++FILENAME = $GNUNET_DATA_HOME/reclaim/sqlite.db
