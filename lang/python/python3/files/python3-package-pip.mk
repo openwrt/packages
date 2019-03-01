@@ -12,7 +12,7 @@ $(call Package/python3/Default)
   DEPENDS:=+python3 +python3-setuptools +python-pip-conf
 endef
 
-define Package/python3-pip/install
+define Py3Package/python3-pip/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages
 	$(CP) $(PKG_BUILD_DIR)/install-pip/bin/pip3* $(1)/usr/bin
 	$(CP) \
