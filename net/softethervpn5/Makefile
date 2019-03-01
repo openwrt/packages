@@ -3,19 +3,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=softethervpn5
-PKG_VERSION:=5.01.9667
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
-PKG_SOURCE:=softether-vpn-src-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/SoftEtherVPN/SoftEtherVPN/releases/download/$(PKG_VERSION)
-PKG_HASH:=c99142c5e55fae055955332964c56d29aba10bec9764ab961aebabf6c3ee1462
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/SoftEtherVPN/SoftEtherVPN.git
+PKG_SOURCE_DATE:=2019-02-27
+PKG_SOURCE_VERSION:=beef8d68924916d0834c87ceb9ae8eef2c9b1d6c
+PKG_MIRROR_HASH:=8cd27ee1d768c00f816501be925bb971fd62b9cef145e4ac5c731456a86d782c
 
 HOST_BUILD_DEPENDS:=ncurses/host readline/host
 PKG_BUILD_DEPENDS:=softethervpn5/host
@@ -25,7 +23,6 @@ include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-TAR_CMD=$(HOST_TAR) -C $(1) $(TAR_OPTIONS)
 
 define Package/softethervpn5/Default
   SECTION:=net
