@@ -1,13 +1,19 @@
 #!/bin/sh
 
-# should restart shorewall when an interface comes up
+DEVICE=${DEVICE:-$(/sbin/uci -p /var/state get network."$INTERFACE".ifname)}
 
 case "$ACTION" in
     ifup)
-        /etc/init.d/shorewall restart
+        if [ "$INTERFACE" = "lan" ]; then
+            /usr/sbin/shorewall start
+	elif [ "${INTERFACE:0:3}" = "wan" ] &&
+             [ "${INTERFACE:$((${#INTERFACE}-2)):2}" != "_6" ]; then
+	    /etc/shorewall/state/firewall enable "$DEVICE"
+	fi
         ;;
     ifdown)
-        # might need to restore some routing
-        /etc/init.d/shorewall restart
+	if [ "${INTERFACE:0:3}" = "wan" ]; then
+	    /etc/shorewall/state/firewall disable "$DEVICE"
+	fi
         ;;
 esac
