@@ -1,0 +1,50 @@
+--- a/setup.py
++++ b/setup.py
+@@ -245,16 +245,6 @@
+     "Crypto.Signature",
+     "Crypto.Util",
+     "Crypto.Math",
+-    "Crypto.SelfTest",
+-    "Crypto.SelfTest.Cipher",
+-    "Crypto.SelfTest.Hash",
+-    "Crypto.SelfTest.IO",
+-    "Crypto.SelfTest.Protocol",
+-    "Crypto.SelfTest.PublicKey",
+-    "Crypto.SelfTest.Random",
+-    "Crypto.SelfTest.Signature",
+-    "Crypto.SelfTest.Util",
+-    "Crypto.SelfTest.Math",
+ ]
+ package_dir = {"Crypto": "lib/Crypto"}
+ package_data = {
+@@ -268,30 +258,6 @@
+     "Crypto.Signature" : [ "*.pyi" ],
+     "Crypto.IO" : [ "*.pyi" ],
+     "Crypto.Util" : [ "*.pyi" ],
+-    "Crypto.SelfTest.Cipher" : [
+-        "test_vectors/AES/*.rsp",
+-        "test_vectors/TDES/*.rsp",
+-        "test_vectors/wycheproof/*.json",
+-    ],
+-    "Crypto.SelfTest.Hash" : [
+-        "test_vectors/SHA1/*.rsp",
+-        "test_vectors/SHA2/*.rsp",
+-        "test_vectors/SHA3/*.txt",
+-        "test_vectors/keccak/*.txt",
+-        "test_vectors/BLAKE2s/*.txt",
+-        "test_vectors/BLAKE2b/*.txt",
+-        "test_vectors/wycheproof/*.json",
+-    ],
+-    "Crypto.SelfTest.Signature" : [
+-        "test_vectors/DSA/*.*",
+-        "test_vectors/ECDSA/*.*",
+-        "test_vectors/PKCS1-v1.5/*.*",
+-        "test_vectors/PKCS1-PSS/*.*",
+-        "test_vectors/wycheproof/*.json",
+-    ],
+-    "Crypto.SelfTest.PublicKey" : [
+-        "test_vectors/ECC/*.*",
+-    ],
+ }
+ 
+ system_bits = 8 * struct.calcsize("P")
