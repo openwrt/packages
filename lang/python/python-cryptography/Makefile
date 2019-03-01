@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cryptography
-PKG_VERSION:=2.5
+PKG_VERSION:=2.6.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=cryptography-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:= https://files.pythonhosted.org/packages/source/c/cryptography
-PKG_HASH:=4946b67235b9d2ea7d31307be9d5ad5959d6c4a8f98f900157b47abddf698401
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/c/cryptography
+PKG_HASH:=26c821cbeb683facb966045e2064303029d572a87ee69ca5a1bf54bf55f93ca6
 
 PKG_LICENSE:=Apache-2.0 BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.APACHE LICENSE.BSD
@@ -31,18 +31,17 @@ define Package/python-cryptography/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
+  TITLE:=Cryptographic recipes and primitives
   URL:=https://github.com/pyca/cryptography
   DEPENDS:=+libopenssl
 endef
 
 define Package/python-cryptography
 $(call Package/python-cryptography/Default)
-  TITLE:=python-cryptography
   DEPENDS+= \
       +PACKAGE_python-cryptography:python \
       +PACKAGE_python-cryptography:python-cffi \
       +PACKAGE_python-cryptography:python-enum34 \
-      +PACKAGE_python-cryptography:python-idna \
       +PACKAGE_python-cryptography:python-ipaddress \
       +PACKAGE_python-cryptography:python-asn1crypto \
       +PACKAGE_python-cryptography:python-six
@@ -51,11 +50,9 @@ endef
 
 define Package/python3-cryptography
 $(call Package/python-cryptography/Default)
-  TITLE:=python3-cryptography
   DEPENDS+= \
       +PACKAGE_python3-cryptography:python3 \
       +PACKAGE_python3-cryptography:python3-cffi \
-      +PACKAGE_python3-cryptography:python3-idna \
       +PACKAGE_python3-cryptography:python3-asn1crypto \
       +PACKAGE_python3-cryptography:python3-six
   VARIANT:=python3
