@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnurl
-PKG_VERSION:=7.57.0
-PKG_RELEASE:=2
+PKG_VERSION:=7.63.0
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://gnunet.org/sites/default/files
+PKG_SOURCE_URL:=https://ftp.gnu.org/gnu/gnunet
 
-PKG_HASH:=2ccd2a641a9815df924b6a79ee47d12a27ee43bd05a3c6ba958108564580d3b7
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_HASH:=d435d9e35d6d1afda3a2a66db9f364d18a9f199d5f7b70e7296cd863bcf4c497
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -57,6 +58,7 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--without-axtls \
+	--without-brotli \
 	--without-libssh2 \
 	--without-libmetalink \
 	--without-winidn \
@@ -64,13 +66,16 @@ CONFIGURE_ARGS += \
 	--without-nghttp2 \
 	--without-nss \
 	--without-cyassl \
+	--without-libpsl \
 	--without-polarssl \
 	--without-ssl \
 	--without-winssl \
 	--without-darwinssl \
 	--disable-ares \
 	--disable-sspi \
+	--disable-crypto-auth \
 	--disable-ntlm-wb \
+	--disable-tls-srp \
 	--disable-ldap \
 	--disable-ldaps \
 	--disable-rtsp \
