@@ -5,7 +5,7 @@ PKG_NAME:=gnunet-secushare
 PKG_SOURCE_VERSION:=81939cb93670efcee8e99884d10d2676b02edba9
 PKG_SOURCE_DATE:=20190228
 PKG_MIRROR_HASH:=64a0fb7ad6a515559360de71df85dde152f55a60585668f15114bc1f55cf2742
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE_URL:=https://gnunet.org/git/gnunet-secushare.git
 PKG_SOURCE_PROTO:=git
 PKG_LICENSE:=GPL-3.0
@@ -83,16 +83,22 @@ endef
 define Package/gnunet-secushare-mysql/install
 	$(INSTALL_DIR) $(1)/usr/lib/gnunet
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libgnunet_plugin_psycstore_mysql.so* $(1)/usr/lib/gnunet/
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/gnunet-secushare-mysql.defaults $(1)/etc/uci-defaults/gnunet-secushare-mysql
 endef
 
 define Package/gnunet-secushare-pgsql/install
 	$(INSTALL_DIR) $(1)/usr/lib/gnunet
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libgnunet_plugin_psycstore_postgres.so* $(1)/usr/lib/gnunet/
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/gnunet-secushare-pgsql.defaults $(1)/etc/uci-defaults/gnunet-secushare-pgsql
 endef
 
 define Package/gnunet-secushare-sqlite/install
 	$(INSTALL_DIR) $(1)/usr/lib/gnunet
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libgnunet_plugin_psycstore_sqlite.so* $(1)/usr/lib/gnunet/
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/gnunet-secushare-sqlite.defaults $(1)/etc/uci-defaults/gnunet-secushare-sqlite
 endef
 
 $(eval $(call BuildPackage,gnunet-secushare))
