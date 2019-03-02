@@ -1,0 +1,32 @@
+diff --git a/source3/modules/vfs_fruit.c b/source3/modules/vfs_fruit.c
+index 14d7a797451..1982f128cb3 100644
+--- a/source3/modules/vfs_fruit.c
++++ b/source3/modules/vfs_fruit.c
+@@ -119,6 +119,18 @@ static struct global_fruit_config {
+ #define AFPRESOURCE_EA_NETATALK "user." NETATALK_RSRC_XATTR
+ #endif
+ 
++#ifndef OFF_T_MAX
++#if SIZEOF_OFF_T == SIZEOF_INT8_T
++#define OFF_T_MAX INT8_MAX
++#elif SIZEOF_OFF_T == SIZEOF_INT16_T
++#define OFF_T_MAX INT16_MAX
++#elif SIZEOF_OFF_T == SIZEOF_INT32_T
++#define OFF_T_MAX INT32_MAX
++#elif SIZEOF_OFF_T == SIZEOF_INT64_T
++#define OFF_T_MAX INT64_MAX
++#endif
++#endif
++
+ enum apple_fork {APPLE_FORK_DATA, APPLE_FORK_RSRC};
+ 
+ enum fruit_rsrc {FRUIT_RSRC_STREAM, FRUIT_RSRC_ADFILE, FRUIT_RSRC_XATTR};
+@@ -6867,7 +6879,7 @@ static bool fruit_tmsize_do_dirent(vfs_handle_struct *handle,
+ 		return true;
+ 	}
+ 
+-	if (bandsize > SIZE_MAX/nbands) {
++	if (bandsize > OFF_T_MAX/nbands) {
+ 		DBG_ERR("tmsize overflow: bandsize [%zu] nbands [%zu]\n",
+ 			bandsize, nbands);
+ 		return false;
