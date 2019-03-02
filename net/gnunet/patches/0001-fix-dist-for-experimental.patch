@@ -1,0 +1,777 @@
+From 6603f7e1a837d3a51a1949a6f4e1802b6ef3d806 Mon Sep 17 00:00:00 2001
+From: "Schanzenbach, Martin" <mschanzenbach@posteo.de>
+Date: Thu, 28 Feb 2019 14:19:34 +0100
+Subject: [PATCH] fix dist for experimental
+
+---
+ po/POTFILES.in          | 114 ++++++++++++++++++++--------------------
+ src/include/Makefile.am |   1 +
+ 2 files changed, 58 insertions(+), 57 deletions(-)
+
+--- a/po/POTFILES.in
++++ b/po/POTFILES.in
+@@ -4,6 +4,14 @@ src/arm/arm_monitor_api.c
+ src/arm/gnunet-arm.c
+ src/arm/gnunet-service-arm.c
+ src/arm/mockup-service.c
++src/ats-tests/ats-testing-experiment.c
++src/ats-tests/ats-testing-log.c
++src/ats-tests/ats-testing-preferences.c
++src/ats-tests/ats-testing-traffic.c
++src/ats-tests/ats-testing.c
++src/ats-tests/gnunet-ats-sim.c
++src/ats-tests/gnunet-solver-eval.c
++src/ats-tool/gnunet-ats.c
+ src/ats/ats_api2_application.c
+ src/ats/ats_api2_transport.c
+ src/ats/ats_api_connectivity.c
+@@ -11,10 +19,10 @@ src/ats/ats_api_performance.c
+ src/ats/ats_api_scanner.c
+ src/ats/ats_api_scheduling.c
+ src/ats/gnunet-ats-solver-eval.c
+-src/ats/gnunet-service-ats_addresses.c
++src/ats/gnunet-service-ats-new.c
+ src/ats/gnunet-service-ats.c
++src/ats/gnunet-service-ats_addresses.c
+ src/ats/gnunet-service-ats_connectivity.c
+-src/ats/gnunet-service-ats-new.c
+ src/ats/gnunet-service-ats_normalization.c
+ src/ats/gnunet-service-ats_performance.c
+ src/ats/gnunet-service-ats_plugins.c
+@@ -26,14 +34,6 @@ src/ats/plugin_ats2_simple.c
+ src/ats/plugin_ats_mlp.c
+ src/ats/plugin_ats_proportional.c
+ src/ats/plugin_ats_ril.c
+-src/ats-tests/ats-testing.c
+-src/ats-tests/ats-testing-experiment.c
+-src/ats-tests/ats-testing-log.c
+-src/ats-tests/ats-testing-preferences.c
+-src/ats-tests/ats-testing-traffic.c
+-src/ats-tests/gnunet-ats-sim.c
+-src/ats-tests/gnunet-solver-eval.c
+-src/ats-tool/gnunet-ats.c
+ src/auction/gnunet-auction-create.c
+ src/auction/gnunet-auction-info.c
+ src/auction/gnunet-auction-join.c
+@@ -50,8 +50,8 @@ src/cadet/cadet_api_list_peers.c
+ src/cadet/cadet_api_list_tunnels.c
+ src/cadet/cadet_test_lib.c
+ src/cadet/desirability_table.c
+-src/cadet/gnunet-cadet.c
+ src/cadet/gnunet-cadet-profiler.c
++src/cadet/gnunet-cadet.c
+ src/cadet/gnunet-service-cadet.c
+ src/cadet/gnunet-service-cadet_channel.c
+ src/cadet/gnunet-service-cadet_connection.c
+@@ -67,15 +67,15 @@ src/consensus/gnunet-service-consensus.c
+ src/consensus/plugin_block_consensus.c
+ src/conversation/conversation_api.c
+ src/conversation/conversation_api_call.c
+-src/conversation/gnunet-conversation.c
+ src/conversation/gnunet-conversation-test.c
+-src/conversation/gnunet_gst.c
+-src/conversation/gnunet_gst_test.c
+-src/conversation/gnunet-helper-audio-playback.c
++src/conversation/gnunet-conversation.c
+ src/conversation/gnunet-helper-audio-playback-gst.c
+-src/conversation/gnunet-helper-audio-record.c
++src/conversation/gnunet-helper-audio-playback.c
+ src/conversation/gnunet-helper-audio-record-gst.c
++src/conversation/gnunet-helper-audio-record.c
+ src/conversation/gnunet-service-conversation.c
++src/conversation/gnunet_gst.c
++src/conversation/gnunet_gst_test.c
+ src/conversation/microphone.c
+ src/conversation/plugin_gnsrecord_conversation.c
+ src/conversation/speaker.c
+@@ -111,7 +111,6 @@ src/dht/dht_api.c
+ src/dht/dht_test_lib.c
+ src/dht/gnunet-dht-get.c
+ src/dht/gnunet-dht-monitor.c
+-src/dht/gnunet_dht_profiler.c
+ src/dht/gnunet-dht-put.c
+ src/dht/gnunet-service-dht.c
+ src/dht/gnunet-service-dht_clients.c
+@@ -120,6 +119,7 @@ src/dht/gnunet-service-dht_hello.c
+ src/dht/gnunet-service-dht_neighbours.c
+ src/dht/gnunet-service-dht_nse.c
+ src/dht/gnunet-service-dht_routing.c
++src/dht/gnunet_dht_profiler.c
+ src/dht/plugin_block_dht.c
+ src/dns/dns_api.c
+ src/dns/gnunet-dns-monitor.c
+@@ -129,8 +129,8 @@ src/dns/gnunet-service-dns.c
+ src/dns/gnunet-zonewalk.c
+ src/dns/plugin_block_dns.c
+ src/exit/gnunet-daemon-exit.c
+-src/exit/gnunet-helper-exit.c
+ src/exit/gnunet-helper-exit-windows.c
++src/exit/gnunet-helper-exit.c
+ src/fragmentation/defragmentation.c
+ src/fragmentation/fragmentation.c
+ src/fs/fs_api.c
+@@ -155,8 +155,8 @@ src/fs/gnunet-auto-share.c
+ src/fs/gnunet-daemon-fsprofiler.c
+ src/fs/gnunet-directory.c
+ src/fs/gnunet-download.c
+-src/fs/gnunet-fs.c
+ src/fs/gnunet-fs-profiler.c
++src/fs/gnunet-fs.c
+ src/fs/gnunet-helper-fs-publish.c
+ src/fs/gnunet-publish.c
+ src/fs/gnunet-search.c
+@@ -176,10 +176,10 @@ src/gns/gns_tld_api.c
+ src/gns/gnunet-bcd.c
+ src/gns/gnunet-dns2gns.c
+ src/gns/gnunet-gns-benchmark.c
+-src/gns/gnunet-gns.c
+ src/gns/gnunet-gns-helper-service-w32.c
+ src/gns/gnunet-gns-import.c
+ src/gns/gnunet-gns-proxy.c
++src/gns/gnunet-gns.c
+ src/gns/gnunet-service-gns.c
+ src/gns/gnunet-service-gns_interceptor.c
+ src/gns/gnunet-service-gns_resolver.c
+@@ -187,19 +187,19 @@ src/gns/nss/nss_gns.c
+ src/gns/nss/nss_gns_query.c
+ src/gns/plugin_block_gns.c
+ src/gns/plugin_gnsrecord_gns.c
++src/gns/w32nsp-install.c
++src/gns/w32nsp-resolve.c
++src/gns/w32nsp-uninstall.c
++src/gns/w32nsp.c
+ src/gnsrecord/gnsrecord.c
+ src/gnsrecord/gnsrecord_crypto.c
+ src/gnsrecord/gnsrecord_misc.c
+ src/gnsrecord/gnsrecord_serialization.c
+ src/gnsrecord/plugin_gnsrecord_dns.c
+-src/gns/w32nsp.c
+-src/gns/w32nsp-install.c
+-src/gns/w32nsp-resolve.c
+-src/gns/w32nsp-uninstall.c
+ src/hello/address.c
+ src/hello/gnunet-hello.c
+-src/hello/hello.c
+ src/hello/hello-ng.c
++src/hello/hello.c
+ src/hostlist/gnunet-daemon-hostlist.c
+ src/hostlist/gnunet-daemon-hostlist_client.c
+ src/hostlist/gnunet-daemon-hostlist_server.c
+@@ -222,8 +222,8 @@ src/namecache/namecache_api.c
+ src/namecache/plugin_namecache_flat.c
+ src/namecache/plugin_namecache_postgres.c
+ src/namecache/plugin_namecache_sqlite.c
+-src/namestore/gnunet-namestore.c
+ src/namestore/gnunet-namestore-fcfsd.c
++src/namestore/gnunet-namestore.c
+ src/namestore/gnunet-service-namestore.c
+ src/namestore/gnunet-zoneimport.c
+ src/namestore/namestore_api.c
+@@ -238,10 +238,10 @@ src/nat-auto/gnunet-service-nat-auto.c
+ src/nat-auto/gnunet-service-nat-auto_legacy.c
+ src/nat-auto/nat_auto_api.c
+ src/nat-auto/nat_auto_api_test.c
+-src/nat/gnunet-helper-nat-client.c
+ src/nat/gnunet-helper-nat-client-windows.c
+-src/nat/gnunet-helper-nat-server.c
++src/nat/gnunet-helper-nat-client.c
+ src/nat/gnunet-helper-nat-server-windows.c
++src/nat/gnunet-helper-nat-server.c
+ src/nat/gnunet-nat.c
+ src/nat/gnunet-service-nat.c
+ src/nat/gnunet-service-nat_externalip.c
+@@ -250,16 +250,16 @@ src/nat/gnunet-service-nat_mini.c
+ src/nat/gnunet-service-nat_stun.c
+ src/nat/nat_api.c
+ src/nat/nat_api_stun.c
+-src/nse/gnunet-nse.c
+ src/nse/gnunet-nse-profiler.c
++src/nse/gnunet-nse.c
+ src/nse/gnunet-service-nse.c
+ src/nse/nse_api.c
+ src/nt/nt.c
++src/peerinfo-tool/gnunet-peerinfo.c
++src/peerinfo-tool/gnunet-peerinfo_plugins.c
+ src/peerinfo/gnunet-service-peerinfo.c
+ src/peerinfo/peerinfo_api.c
+ src/peerinfo/peerinfo_api_notify.c
+-src/peerinfo-tool/gnunet-peerinfo.c
+-src/peerinfo-tool/gnunet-peerinfo_plugins.c
+ src/peerstore/gnunet-peerstore.c
+ src/peerstore/gnunet-service-peerstore.c
+ src/peerstore/peerstore_api.c
+@@ -295,7 +295,6 @@ src/regex/regex_internal_dht.c
+ src/regex/regex_test_graph.c
+ src/regex/regex_test_lib.c
+ src/regex/regex_test_random.c
+-src/rest/gnunet-rest-server.c
+ src/rest-plugins/json_reclaim.c
+ src/rest-plugins/oidc_helper.c
+ src/rest-plugins/plugin_rest_copying.c
+@@ -306,27 +305,28 @@ src/rest-plugins/plugin_rest_namestore.c
+ src/rest-plugins/plugin_rest_openid_connect.c
+ src/rest-plugins/plugin_rest_peerinfo.c
+ src/rest-plugins/plugin_rest_reclaim.c
++src/rest/gnunet-rest-server.c
+ src/rest/rest.c
+ src/revocation/gnunet-revocation.c
+ src/revocation/gnunet-service-revocation.c
+ src/revocation/plugin_block_revocation.c
+ src/revocation/revocation_api.c
+-src/rps/gnunet-rps.c
+ src/rps/gnunet-rps-profiler.c
++src/rps/gnunet-rps.c
+ src/rps/gnunet-service-rps.c
+ src/rps/gnunet-service-rps_custommap.c
+ src/rps/gnunet-service-rps_sampler.c
+ src/rps/gnunet-service-rps_sampler_elem.c
+ src/rps/gnunet-service-rps_view.c
+-src/rps/rps_api.c
+ src/rps/rps-sampler_client.c
+ src/rps/rps-sampler_common.c
+ src/rps/rps-test_util.c
++src/rps/rps_api.c
+ src/scalarproduct/gnunet-scalarproduct.c
+-src/scalarproduct/gnunet-service-scalarproduct_alice.c
+-src/scalarproduct/gnunet-service-scalarproduct_bob.c
+ src/scalarproduct/gnunet-service-scalarproduct-ecc_alice.c
+ src/scalarproduct/gnunet-service-scalarproduct-ecc_bob.c
++src/scalarproduct/gnunet-service-scalarproduct_alice.c
++src/scalarproduct/gnunet-service-scalarproduct_bob.c
+ src/scalarproduct/scalarproduct_api.c
+ src/secretsharing/gnunet-secretsharing-profiler.c
+ src/secretsharing/gnunet-service-secretsharing.c
+@@ -352,15 +352,16 @@ src/statistics/gnunet-statistics.c
+ src/statistics/statistics_api.c
+ src/template/gnunet-service-template.c
+ src/template/gnunet-template.c
++src/testbed-logger/gnunet-service-testbed-logger.c
++src/testbed-logger/testbed_logger_api.c
+ src/testbed/generate-underlay-topology.c
+ src/testbed/gnunet-daemon-latency-logger.c
+ src/testbed/gnunet-daemon-testbed-blacklist.c
+ src/testbed/gnunet-daemon-testbed-underlay.c
+ src/testbed/gnunet-helper-testbed.c
+-src/testbed/gnunet_mpi_test.c
+ src/testbed/gnunet-service-test-barriers.c
+-src/testbed/gnunet-service-testbed_barriers.c
+ src/testbed/gnunet-service-testbed.c
++src/testbed/gnunet-service-testbed_barriers.c
+ src/testbed/gnunet-service-testbed_cache.c
+ src/testbed/gnunet-service-testbed_connectionpool.c
+ src/testbed/gnunet-service-testbed_cpustatus.c
+@@ -368,20 +369,19 @@ src/testbed/gnunet-service-testbed_links
+ src/testbed/gnunet-service-testbed_meminfo.c
+ src/testbed/gnunet-service-testbed_oc.c
+ src/testbed/gnunet-service-testbed_peers.c
+-src/testbed/gnunet_testbed_mpi_spawn.c
+ src/testbed/gnunet-testbed-profiler.c
+-src/testbed-logger/gnunet-service-testbed-logger.c
+-src/testbed-logger/testbed_logger_api.c
+-src/testbed/testbed_api_barriers.c
++src/testbed/gnunet_mpi_test.c
++src/testbed/gnunet_testbed_mpi_spawn.c
+ src/testbed/testbed_api.c
++src/testbed/testbed_api_barriers.c
+ src/testbed/testbed_api_hosts.c
+ src/testbed/testbed_api_operations.c
+ src/testbed/testbed_api_peers.c
+ src/testbed/testbed_api_sd.c
+ src/testbed/testbed_api_services.c
+ src/testbed/testbed_api_statistics.c
+-src/testbed/testbed_api_testbed.c
+ src/testbed/testbed_api_test.c
++src/testbed/testbed_api_testbed.c
+ src/testbed/testbed_api_topology.c
+ src/testbed/testbed_api_underlay.c
+ src/testing/gnunet-testing.c
+@@ -393,29 +393,29 @@ src/transport/gnunet-communicator-tcp.c
+ src/transport/gnunet-communicator-udp.c
+ src/transport/gnunet-communicator-unix.c
+ src/transport/gnunet-helper-transport-bluetooth.c
+-src/transport/gnunet-helper-transport-wlan.c
+ src/transport/gnunet-helper-transport-wlan-dummy.c
++src/transport/gnunet-helper-transport-wlan.c
+ src/transport/gnunet-service-tng.c
+-src/transport/gnunet-service-transport_ats.c
+ src/transport/gnunet-service-transport.c
++src/transport/gnunet-service-transport_ats.c
+ src/transport/gnunet-service-transport_hello.c
+ src/transport/gnunet-service-transport_manipulation.c
+ src/transport/gnunet-service-transport_neighbours.c
+ src/transport/gnunet-service-transport_plugins.c
+ src/transport/gnunet-service-transport_validation.c
+-src/transport/gnunet-transport.c
+ src/transport/gnunet-transport-certificate-creation.c
+ src/transport/gnunet-transport-profiler.c
+ src/transport/gnunet-transport-wlan-receiver.c
+ src/transport/gnunet-transport-wlan-sender.c
++src/transport/gnunet-transport.c
+ src/transport/plugin_transport_http_client.c
+ src/transport/plugin_transport_http_common.c
+ src/transport/plugin_transport_http_server.c
+ src/transport/plugin_transport_smtp.c
+ src/transport/plugin_transport_tcp.c
+ src/transport/plugin_transport_template.c
+-src/transport/plugin_transport_udp_broadcasting.c
+ src/transport/plugin_transport_udp.c
++src/transport/plugin_transport_udp_broadcasting.c
+ src/transport/plugin_transport_unix.c
+ src/transport/plugin_transport_wlan.c
+ src/transport/plugin_transport_xt.c
+@@ -424,6 +424,11 @@ src/transport/tcp_connection_legacy.c
+ src/transport/tcp_server_legacy.c
+ src/transport/tcp_server_mst_legacy.c
+ src/transport/tcp_service_legacy.c
++src/transport/transport-testing-filenames.c
++src/transport/transport-testing-loggers.c
++src/transport/transport-testing-main.c
++src/transport/transport-testing-send.c
++src/transport/transport-testing.c
+ src/transport/transport_api2_address.c
+ src/transport/transport_api2_communication.c
+ src/transport/transport_api2_core.c
+@@ -436,11 +441,6 @@ src/transport/transport_api_manipulation
+ src/transport/transport_api_monitor_peers.c
+ src/transport/transport_api_monitor_plugins.c
+ src/transport/transport_api_offer_hello.c
+-src/transport/transport-testing.c
+-src/transport/transport-testing-filenames.c
+-src/transport/transport-testing-loggers.c
+-src/transport/transport-testing-main.c
+-src/transport/transport-testing-send.c
+ src/util/bandwidth.c
+ src/util/benchmark.c
+ src/util/bio.c
+@@ -453,8 +453,8 @@ src/util/configuration_loader.c
+ src/util/container_bloomfilter.c
+ src/util/container_heap.c
+ src/util/container_meta_data.c
+-src/util/container_multihashmap32.c
+ src/util/container_multihashmap.c
++src/util/container_multihashmap32.c
+ src/util/container_multipeermap.c
+ src/util/container_multishortmap.c
+ src/util/crypto_abe.c
+@@ -476,15 +476,15 @@ src/util/dnsparser.c
+ src/util/dnsstub.c
+ src/util/getopt.c
+ src/util/getopt_helpers.c
+-src/util/gnunet-config.c
+ src/util/gnunet-config-diff.c
++src/util/gnunet-config.c
+ src/util/gnunet-ecc.c
+ src/util/gnunet-helper-w32-console.c
+ src/util/gnunet-resolver.c
+ src/util/gnunet-scrypt.c
+ src/util/gnunet-service-resolver.c
+-src/util/gnunet-timeout.c
+ src/util/gnunet-timeout-w32.c
++src/util/gnunet-timeout.c
+ src/util/gnunet-uri.c
+ src/util/helper.c
+ src/util/load.c
+@@ -513,13 +513,13 @@ src/util/tun.c
+ src/util/w32cat.c
+ src/util/win.c
+ src/util/winproc.c
+-src/vpn/gnunet-helper-vpn.c
+ src/vpn/gnunet-helper-vpn-windows.c
++src/vpn/gnunet-helper-vpn.c
+ src/vpn/gnunet-service-vpn.c
+ src/vpn/gnunet-vpn.c
+ src/vpn/vpn_api.c
+-src/zonemaster/gnunet-service-zonemaster.c
+ src/zonemaster/gnunet-service-zonemaster-monitor.c
++src/zonemaster/gnunet-service-zonemaster.c
+ src/fs/fs_api.h
+ src/include/compat.h
+ src/include/gnunet_common.h
+--- a/src/include/Makefile.am
++++ b/src/include/Makefile.am
+@@ -47,6 +47,7 @@ gnunetinclude_HEADERS = \
+   gnunet_container_lib.h \
+   gnunet_conversation_service.h \
+   gnunet_core_service.h \
++	gnunet_credential_service.h \
+   gnunet_crypto_lib.h \
+   gnunet_curl_lib.h \
+   gnunet_datacache_lib.h \
+--- /dev/null
++++ b/src/include/gnunet_credential_service.h
+@@ -0,0 +1,375 @@
++/*
++      This file is part of GNUnet
++      Copyright (C) 2012-2014 GNUnet e.V.
++
++      GNUnet is free software: you can redistribute it and/or modify it
++      under the terms of the GNU Affero General Public License as published
++      by the Free Software Foundation, either version 3 of the License,
++      or (at your option) any later version.
++
++      GNUnet is distributed in the hope that it will be useful, but
++      WITHOUT ANY WARRANTY; without even the implied warranty of
++      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++      Affero General Public License for more details.
++     
++      You should have received a copy of the GNU Affero General Public License
++      along with this program.  If not, see <http://www.gnu.org/licenses/>.
++
++     SPDX-License-Identifier: AGPL3.0-or-later
++ */
++
++/**
++ * @author Martin Schanzenbach
++ *
++ * @file
++ * API to the Credential service
++ *
++ * @defgroup credential  Credential service
++ * Credentials
++ *
++ * @{
++ */
++#ifndef GNUNET_CREDENTIAL_SERVICE_H
++#define GNUNET_CREDENTIAL_SERVICE_H
++
++#include "gnunet_util_lib.h"
++#include "gnunet_gns_service.h"
++#include "gnunet_identity_service.h"
++
++#ifdef __cplusplus
++extern "C"
++{
++#if 0                           /* keep Emacsens' auto-indent happy */
++}
++#endif
++#endif
++
++
++/**
++ * Connection to the Credential service.
++ */
++struct GNUNET_CREDENTIAL_Handle;
++
++/**
++ * Handle to control a lookup operation.
++ */
++struct GNUNET_CREDENTIAL_Request;
++
++/*
++* Enum used for checking whether the issuer has the authority to issue credentials or is just a subject
++*/
++enum GNUNET_CREDENTIAL_CredentialFlags {
++
++  //Subject had credentials before, but have been revoked now
++  GNUNET_CREDENTIAL_FLAG_REVOKED=0,
++
++  //Subject flag indicates that the subject is a holder of this credential and may present it as such
++  GNUNET_CREDENTIAL_FLAG_SUBJECT=1,
++
++  //Issuer flag is used to signify that the subject is allowed to issue this credential and delegate issuance
++  GNUNET_CREDENTIAL_FLAG_ISSUER=2
++
++};
++
++GNUNET_NETWORK_STRUCT_BEGIN
++/**
++ * The attribute delegation record
++ */
++struct GNUNET_CREDENTIAL_DelegationRecord {
++
++  /**
++   * Number of delegation sets in this record
++   */
++  uint32_t set_count;
++
++  /**
++   * Length of delegation sets
++   */
++  uint64_t data_size;
++  /**
++   * Followed by set_count DelegationSetRecords
++   *
++   */
++};
++
++/**
++ * The attribute delegation record
++ */
++struct GNUNET_CREDENTIAL_DelegationRecordSet {
++
++  /**
++   * Public key of the subject this attribute was delegated to
++   */
++  struct GNUNET_CRYPTO_EcdsaPublicKey subject_key;
++
++  /**
++   * Length of attribute, may be 0
++   */
++  uint32_t subject_attribute_len;
++};
++
++
++GNUNET_NETWORK_STRUCT_END
++
++/**
++ * The attribute delegation record
++ */
++struct GNUNET_CREDENTIAL_DelegationSet {
++
++  /**
++   * Public key of the subject this attribute was delegated to
++   */
++  struct GNUNET_CRYPTO_EcdsaPublicKey subject_key;
++
++  uint32_t subject_attribute_len;
++
++  /**
++   * The subject attribute
++   */
++  const char *subject_attribute;
++};
++
++
++/**
++ * A delegation
++ */
++struct GNUNET_CREDENTIAL_Delegation {
++
++  /**
++   * The issuer of the delegation
++   */
++  struct GNUNET_CRYPTO_EcdsaPublicKey issuer_key;
++
++  /**
++   * Public key of the subject this attribute was delegated to
++   */
++  struct GNUNET_CRYPTO_EcdsaPublicKey subject_key;
++
++  /**
++   * Length of the attribute
++   */
++  uint32_t issuer_attribute_len;
++
++  /**
++   * The attribute
++   */
++  const char *issuer_attribute;
++
++  /**
++   * Length of the attribute
++   */
++  uint32_t subject_attribute_len;
++
++  /**
++   * The attribute
++   */
++  const char *subject_attribute;
++};
++
++
++/**
++ * A credential
++ */
++struct GNUNET_CREDENTIAL_Credential {
++
++  /**
++   * The issuer of the credential
++   */
++  struct GNUNET_CRYPTO_EcdsaPublicKey issuer_key;
++
++  /**
++   * Public key of the subject this credential was issued to
++   */
++  struct GNUNET_CRYPTO_EcdsaPublicKey subject_key;
++
++  /**
++   * Signature of this credential
++   */
++  struct GNUNET_CRYPTO_EcdsaSignature signature;
++
++  /**
++   * Expiration of this credential
++   */
++  struct GNUNET_TIME_Absolute expiration;
++
++  /**
++   * Length of the attribute
++   */
++  uint32_t issuer_attribute_len;
++
++  /**
++   * The attribute
++   */
++  const char *issuer_attribute;
++
++};
++
++
++
++/**
++ * Initialize the connection with the Credential service.
++ *
++ * @param cfg configuration to use
++ * @return handle to the Credential service, or NULL on error
++ */
++struct GNUNET_CREDENTIAL_Handle *
++GNUNET_CREDENTIAL_connect (const struct GNUNET_CONFIGURATION_Handle *cfg);
++
++
++/**
++ * Shutdown connection with the Credentail service.
++ *
++ * @param handle connection to shut down
++ */
++void
++GNUNET_CREDENTIAL_disconnect (struct GNUNET_CREDENTIAL_Handle *handle);
++
++
++/**
++ * Iterator called on obtained result for an attribute verification.
++ *
++ * @param cls closure
++ * @param d_count the number of delegations processed
++ * @param delegation_chain the delegations processed
++ * @param c_count the number of credentials found
++ * @param credential the credentials
++ */
++typedef void (*GNUNET_CREDENTIAL_CredentialResultProcessor) (void *cls,
++                                                         unsigned int d_count,
++                                                         struct GNUNET_CREDENTIAL_Delegation *delegation_chain,
++                                                         unsigned int c_count,
++                                                         struct GNUNET_CREDENTIAL_Credential *credential);
++
++/**
++ * Iterator called on obtained result for an attribute delegation.
++ *
++ * @param cls closure
++ * @param success GNUNET_YES if successful
++ * @param result the record data that can be handed to the subject
++ */
++typedef void (*GNUNET_CREDENTIAL_DelegateResultProcessor) (void *cls,
++                                                           uint32_t success);
++
++/**
++ * Iterator called on obtained result for an attribute delegation removal.
++ *
++ * @param cls closure
++ * @param success GNUNET_YES if successful
++ * @param result the record data that can be handed to the subject
++ */
++typedef void (*GNUNET_CREDENTIAL_RemoveDelegateResultProcessor) (void *cls,
++                                                                 uint32_t success);
++
++
++/**
++ * Performs attribute verification.
++ * Checks if there is a delegation chain from
++ * attribute ``issuer_attribute'' issued by the issuer
++ * with public key ``issuer_key'' maps to the attribute
++ * ``subject_attribute'' claimed by the subject with key
++ * ``subject_key''
++ *
++ * @param handle handle to the Credential service
++ * @param issuer_key the issuer public key
++ * @param issuer_attribute the issuer attribute
++ * @param subject_key the subject public key
++ * @param credential_count number of credentials
++ * @param credentials the subject credentials
++ * @param proc function to call on result
++ * @param proc_cls closure for processor
++ * @return handle to the queued request
++ */
++struct GNUNET_CREDENTIAL_Request*
++GNUNET_CREDENTIAL_verify (struct GNUNET_CREDENTIAL_Handle *handle,
++                          const struct GNUNET_CRYPTO_EcdsaPublicKey *issuer_key,
++                          const char *issuer_attribute,
++                          const struct GNUNET_CRYPTO_EcdsaPublicKey *subject_key,
++                          uint32_t credential_count,
++                          const struct GNUNET_CREDENTIAL_Credential *credentials,
++                          GNUNET_CREDENTIAL_CredentialResultProcessor proc,
++                          void *proc_cls);
++
++struct GNUNET_CREDENTIAL_Request*
++GNUNET_CREDENTIAL_collect (struct GNUNET_CREDENTIAL_Handle *handle,
++                           const struct GNUNET_CRYPTO_EcdsaPublicKey *issuer_key,
++                           const char *issuer_attribute,
++                           const struct GNUNET_CRYPTO_EcdsaPrivateKey *subject_key,
++                           GNUNET_CREDENTIAL_CredentialResultProcessor proc,
++                           void *proc_cls);
++
++/**
++ * Delegate an attribute
++ *
++ * @param handle handle to the Credential service
++ * @param issuer the ego that should be used to delegate the attribute
++ * @param attribute the name of the attribute to delegate
++ * @param subject the subject of the delegation
++ * @param delegated_attribute the name of the attribute that is delegated to
++ * @param proc the result callback
++ * @param proc_cls the result closure context
++ * @return handle to the queued request
++ */
++struct GNUNET_CREDENTIAL_Request *
++GNUNET_CREDENTIAL_add_delegation (struct GNUNET_CREDENTIAL_Handle *handle,
++                                  struct GNUNET_IDENTITY_Ego *issuer,
++                                  const char *attribute,
++                                  struct GNUNET_CRYPTO_EcdsaPublicKey *subject,
++                                  const char *delegated_attribute,
++                                  GNUNET_CREDENTIAL_DelegateResultProcessor proc,
++                                  void *proc_cls);
++
++/**
++ * Remove a delegation
++ *
++ * @param handle handle to the Credential service
++ * @param issuer the ego that was used to delegate the attribute
++ * @param attribute the name of the attribute that is delegated
++ * @param proc the callback
++ * @param proc_cls callback closure
++ * @return handle to the queued request
++ */
++struct GNUNET_CREDENTIAL_Request *
++GNUNET_CREDENTIAL_remove_delegation (struct GNUNET_CREDENTIAL_Handle *handle,
++                                     struct GNUNET_IDENTITY_Ego *issuer,
++                                     const char *attribute,
++                                     GNUNET_CREDENTIAL_RemoveDelegateResultProcessor proc,
++                                     void *proc_cls);
++
++
++
++/**
++ * Issue an attribute to a subject
++ *
++ * @param issuer the ego that should be used to issue the attribute
++ * @param subject the subject of the attribute
++ * @param attribute the name of the attribute
++ * @param expiration the TTL of the credential
++ * @return handle to the queued request
++ */
++struct GNUNET_CREDENTIAL_Credential*
++GNUNET_CREDENTIAL_credential_issue (const struct GNUNET_CRYPTO_EcdsaPrivateKey *issuer,
++                                    struct GNUNET_CRYPTO_EcdsaPublicKey *subject,
++                                    const char *attribute,
++                                    struct GNUNET_TIME_Absolute *expiration);
++
++
++
++/**
++ * Cancel pending lookup request
++ *
++ * @param lr the lookup request to cancel
++ */
++void
++GNUNET_CREDENTIAL_request_cancel (struct GNUNET_CREDENTIAL_Request *lr);
++
++
++#if 0                           /* keep Emacsens' auto-indent happy */
++{
++#endif
++#ifdef __cplusplus
++}
++#endif
++
++#endif
++
++/** @} */  /* end of group */
