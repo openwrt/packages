@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pyodbc
-PKG_VERSION:=4.0.24
+PKG_VERSION:=4.0.26
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pyodbc
-PKG_HASH:=4326abb737dec36156998d52324921673d30f575e1e0998f0c5edd7de20e61d4
+PKG_HASH:=e52700b5d24a846483b5ab80acd9153f8e593999c9184ffea11596288fb33de3
 PKG_BUILD_DEPENDS:=python python3 unixodbc
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -18,6 +18,8 @@ PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-$(PKG_NAME)-$(PKG_VERSION)
 PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
+
+PKG_BUILD_DEPENDS:=unixodbc/host
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
