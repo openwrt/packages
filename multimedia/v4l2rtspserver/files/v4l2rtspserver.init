@@ -49,8 +49,9 @@ start_instance() {
 	args="$args -u ${path}"
 	args="$args -F $fps"
 	args="$args -G ${resolution}"
-	args="$args -H $h"
-	args="$args -f$format"
+        if [ ! -z "$format" ]; then
+                args="$args -f$format"
+        fi
 	args="$args -c" # fixes issue with corrupt frames with H264
 		
 	if [ -n "$username" ]; then
