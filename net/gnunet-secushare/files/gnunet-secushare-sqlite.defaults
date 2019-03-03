@@ -1,0 +1,11 @@
+#!/bin/sh
+
+uci -q get gnunet.psycstore || uci set gnunet.psycstore=gnunet-config
+
+uci -q batch <<EOF
+	del gnunet.psycstore_sqlite
+	set gnunet.psycstore_sqlite=gnunet-config
+	set gnunet.psycstore_sqlite.FILENAME=/etc/gnunet/psycstore.sqlite
+	set gnunet.psycstore.DATABASE=sqlite
+	commit gnunet
+EOF
