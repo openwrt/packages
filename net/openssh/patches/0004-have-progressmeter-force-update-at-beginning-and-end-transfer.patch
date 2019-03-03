@@ -1,0 +1,108 @@
+From 2a8f710447442e9a03e71c022859112ec2d77d17 Mon Sep 17 00:00:00 2001
+From: "dtucker@openbsd.org" <dtucker@openbsd.org>
+Date: Thu, 24 Jan 2019 16:52:17 +0000
+Subject: upstream: Have progressmeter force an update at the beginning and
+
+end of each transfer.  Fixes the problem recently introduces where very quick
+transfers do not display the progressmeter at all.  Spotted by naddy@
+
+OpenBSD-Commit-ID: 68dc46c259e8fdd4f5db3ec2a130f8e4590a7a9a
+
+Origin: upstream, https://anongit.mindrot.org/openssh.git/commit/?id=bdc6c63c80b55bcbaa66b5fde31c1cb1d09a41eb
+Last-Update: 2019-02-08
+
+Patch-Name: have-progressmeter-force-update-at-beginning-and-end-transfer.patch
+---
+ progressmeter.c | 13 +++++--------
+ progressmeter.h |  4 ++--
+ scp.c           |  2 +-
+ sftp-client.c   |  2 +-
+ 4 files changed, 9 insertions(+), 12 deletions(-)
+
+diff --git a/progressmeter.c b/progressmeter.c
+index add462dde..e385c1254 100644
+--- a/progressmeter.c
++++ b/progressmeter.c
+@@ -59,9 +59,6 @@ static void format_rate(char *, int, off_t);
+ static void sig_winch(int);
+ static void setscreensize(void);
+ 
+-/* updates the progressmeter to reflect the current state of the transfer */
+-void refresh_progress_meter(void);
+-
+ /* signal handler for updating the progress meter */
+ static void sig_alarm(int);
+ 
+@@ -120,7 +117,7 @@ format_size(char *buf, int size, off_t bytes)
+ }
+ 
+ void
+-refresh_progress_meter(void)
++refresh_progress_meter(int force_update)
+ {
+ 	char buf[MAX_WINSIZE + 1];
+ 	off_t transferred;
+@@ -131,7 +128,7 @@ refresh_progress_meter(void)
+ 	int hours, minutes, seconds;
+ 	int file_len;
+ 
+-	if ((!alarm_fired && !win_resized) || !can_output())
++	if ((!force_update && !alarm_fired && !win_resized) || !can_output())
+ 		return;
+ 	alarm_fired = 0;
+ 
+@@ -254,7 +251,7 @@ start_progress_meter(const char *f, off_t filesize, off_t *ctr)
+ 	bytes_per_second = 0;
+ 
+ 	setscreensize();
+-	refresh_progress_meter();
++	refresh_progress_meter(1);
+ 
+ 	signal(SIGALRM, sig_alarm);
+ 	signal(SIGWINCH, sig_winch);
+@@ -271,7 +268,7 @@ stop_progress_meter(void)
+ 
+ 	/* Ensure we complete the progress */
+ 	if (cur_pos != end_pos)
+-		refresh_progress_meter();
++		refresh_progress_meter(1);
+ 
+ 	atomicio(vwrite, STDOUT_FILENO, "\n", 1);
+ }
+diff --git a/progressmeter.h b/progressmeter.h
+index 8f6678060..1703ea75b 100644
+--- a/progressmeter.h
++++ b/progressmeter.h
+@@ -24,5 +24,5 @@
+  */
+ 
+ void	start_progress_meter(const char *, off_t, off_t *);
+-void	refresh_progress_meter(void);
++void	refresh_progress_meter(int);
+ void	stop_progress_meter(void);
+diff --git a/scp.c b/scp.c
+index 80308573c..1971c80cd 100644
+--- a/scp.c
++++ b/scp.c
+@@ -593,7 +593,7 @@ scpio(void *_cnt, size_t s)
+ 	off_t *cnt = (off_t *)_cnt;
+ 
+ 	*cnt += s;
+-	refresh_progress_meter();
++	refresh_progress_meter(0);
+ 	if (limit_kbps > 0)
+ 		bandwidth_limit(&bwlimit, s);
+ 	return 0;
+diff --git a/sftp-client.c b/sftp-client.c
+index 2bc698f86..cf2887a40 100644
+--- a/sftp-client.c
++++ b/sftp-client.c
+@@ -101,7 +101,7 @@ sftpio(void *_bwlimit, size_t amount)
+ {
+ 	struct bwlimit *bwlimit = (struct bwlimit *)_bwlimit;
+ 
+-	refresh_progress_meter();
++	refresh_progress_meter(0);
+ 	if (bwlimit != NULL)
+ 		bandwidth_limit(bwlimit, amount);
+ 	return 0;

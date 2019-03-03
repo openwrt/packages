@@ -1,0 +1,39 @@
+From d94226d4fcefbc398c5583e12b5d07ca33884ba4 Mon Sep 17 00:00:00 2001
+From: "djm@openbsd.org" <djm@openbsd.org>
+Date: Thu, 27 Dec 2018 23:02:11 +0000
+Subject: upstream: Request RSA-SHA2 signatures for
+
+rsa-sha2-{256|512}-cert-v01@openssh.com cert algorithms; ok markus@
+
+OpenBSD-Commit-ID: afc6f7ca216ccd821656d1c911d2a3deed685033
+
+Origin: upstream, https://anongit.mindrot.org/openssh.git/commit/?id=f429c1b2ef631f2855e51a790cf71761d752bbca
+Bug: https://bugzilla.mindrot.org/show_bug.cgi?id=2944
+Bug-Debian: https://bugs.debian.org/923419
+Last-Update: 2019-02-28
+
+Patch-Name: request-rsa-sha2-cert-signatures.patch
+---
+ authfd.c | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/authfd.c b/authfd.c
+index ecdd869ab..62cbf8c19 100644
+--- a/authfd.c
++++ b/authfd.c
+@@ -327,10 +327,12 @@ ssh_free_identitylist(struct ssh_identitylist *idl)
+ static u_int
+ agent_encode_alg(const struct sshkey *key, const char *alg)
+ {
+-	if (alg != NULL && key->type == KEY_RSA) {
+-		if (strcmp(alg, "rsa-sha2-256") == 0)
++	if (alg != NULL && sshkey_type_plain(key->type) == KEY_RSA) {
++		if (strcmp(alg, "rsa-sha2-256") == 0 ||
++		    strcmp(alg, "rsa-sha2-256-cert-v01@openssh.com") == 0)
+ 			return SSH_AGENT_RSA_SHA2_256;
+-		else if (strcmp(alg, "rsa-sha2-512") == 0)
++		if (strcmp(alg, "rsa-sha2-512") == 0 ||
++		    strcmp(alg, "rsa-sha2-512-cert-v01@openssh.com") == 0)
+ 			return SSH_AGENT_RSA_SHA2_512;
+ 	}
+ 	return 0;

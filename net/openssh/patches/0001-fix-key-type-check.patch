@@ -1,0 +1,82 @@
+From 5e021158aa22cc64da4fca1618ee0bfd2d031049 Mon Sep 17 00:00:00 2001
+From: "djm@openbsd.org" <djm@openbsd.org>
+Date: Fri, 16 Nov 2018 02:43:56 +0000
+Subject: upstream: fix bug in HostbasedAcceptedKeyTypes and
+
+PubkeyAcceptedKeyTypes options. If only RSA-SHA2 siganture types were
+specified, then authentication would always fail for RSA keys as the monitor
+checks only the base key (not the signature algorithm) type against
+*AcceptedKeyTypes. bz#2746; reported by Jakub Jelen; ok dtucker
+
+OpenBSD-Commit-ID: 117bc3dc54578dbdb515a1d3732988cb5b00461b
+
+Origin: upstream, https://anongit.mindrot.org/openssh.git/commit/?id=cd9467318b56e6e93ff9575c906ff8350af9b8a2
+Last-Update: 2019-02-28
+
+Patch-Name: fix-key-type-check.patch
+---
+ monitor.c | 39 ++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 34 insertions(+), 5 deletions(-)
+
+diff --git a/monitor.c b/monitor.c
+index 08fddabd7..037d6d333 100644
+--- a/monitor.c
++++ b/monitor.c
+@@ -892,6 +892,35 @@ mm_answer_authrole(int sock, struct sshbuf *m)
+ 	return (0);
+ }
+ 
++/*
++ * Check that the key type appears in the supplied pattern list, ignoring
++ * mismatches in the signature algorithm. (Signature algorithm checks are
++ * performed in the unprivileged authentication code).
++ * Returns 1 on success, 0 otherwise.
++ */
++static int
++key_base_type_match(const char *method, const struct sshkey *key,
++    const char *list)
++{
++	char *s, *l, *ol = xstrdup(list);
++	int found = 0;
++
++	l = ol;
++	for ((s = strsep(&l, ",")); s && *s != '\0'; (s = strsep(&l, ","))) {
++		if (sshkey_type_from_name(s) == key->type) {
++			found = 1;
++			break;
++		}
++	}
++	if (!found) {
++		error("%s key type %s is not in permitted list %s", method,
++		    sshkey_ssh_name(key), list);
++	}
++
++	free(ol);
++	return found;
++}
++
+ int
+ mm_answer_authpassword(int sock, struct sshbuf *m)
+ {
+@@ -1197,8 +1226,8 @@ mm_answer_keyallowed(int sock, struct sshbuf *m)
+ 				break;
+ 			if (auth2_key_already_used(authctxt, key))
+ 				break;
+-			if (match_pattern_list(sshkey_ssh_name(key),
+-			    options.pubkey_key_types, 0) != 1)
++			if (!key_base_type_match(auth_method, key,
++			    options.pubkey_key_types))
+ 				break;
+ 			allowed = user_key_allowed(ssh, authctxt->pw, key,
+ 			    pubkey_auth_attempt, &opts);
+@@ -1209,8 +1238,8 @@ mm_answer_keyallowed(int sock, struct sshbuf *m)
+ 				break;
+ 			if (auth2_key_already_used(authctxt, key))
+ 				break;
+-			if (match_pattern_list(sshkey_ssh_name(key),
+-			    options.hostbased_key_types, 0) != 1)
++			if (!key_base_type_match(auth_method, key,
++			    options.hostbased_key_types))
+ 				break;
+ 			allowed = hostbased_key_allowed(authctxt->pw,
+ 			    cuser, chost, key);
