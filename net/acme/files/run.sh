@@ -44,7 +44,7 @@ debug()
 
 get_listeners()
 {
-    netstat -nptl 2>/dev/null | awk 'match($4, /:80$/){split($7, parts, "/"); print parts[2];}' | uniq | tr "\n" " "
+    netstat -nptl 2>/dev/null | awk 'match($4, /:80$/){split($7, parts, "/"); print parts[2];}' | uniq | tr -d '\n'
 }
 
 pre_checks()
