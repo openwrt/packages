@@ -219,8 +219,6 @@ issue_cert()
         uci set uhttpd.main.cert="$STATE_DIR/${main_domain}/fullchain.cer"
         # commit and reload is in post_checks
     fi
-
-    post_checks
 }
 
 load_vars()
@@ -248,6 +246,7 @@ fi
 
 trap err_out HUP TERM
 trap int_out INT
+trap post_checks EXIT
 
 config_foreach issue_cert cert
 
