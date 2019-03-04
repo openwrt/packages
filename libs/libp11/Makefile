@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libp11
 PKG_VERSION:=0.4.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://github.com/OpenSC/libp11/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -30,7 +30,7 @@ define Package/libp11
   CATEGORY:=Libraries
   TITLE:=PKCS#11 wrapper library
   URL:=https://www.opensc-project.org/opensc/wiki/libp11
-  DEPENDS:=+libopenssl
+  DEPENDS:=+libopenssl @OPENSSL_ENGINE
   CONFLICTS:=engine_pkcs11
 endef
 
