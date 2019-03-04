@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsoup
 PKG_VERSION:=2.65.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/$(PKG_NAME)/2.65
@@ -35,13 +35,16 @@ define Package/libsoup
 endef
 
 CONFIGURE_ARGS += \
+		--disable-debug \
 		--disable-glibtest \
 		--disable-gtk-doc-html \
+		--disable-introspection \
 		--disable-more-warnings \
 		--disable-vala \
 		--without-apache-httpd \
 		--without-gnome \
-		--without-gssapi
+		--without-gssapi \
+		--without-ntlm-auth
 
 define package/libsoup/decription
 Libsoup is an HTTP library implementation in C
