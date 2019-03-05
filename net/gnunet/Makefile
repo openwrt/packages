@@ -195,7 +195,7 @@ PLUGIN_dht-cli:=block_test
 DEPENDS_curl:=+libgnurl +jansson
 LIB_curl:=curl
 
-DEPENDS_hostlist:=+libmicrohttpd-ssl +gnunet-curl +ca-certificates
+DEPENDS_hostlist:=+libmicrohttpd +gnunet-curl +ca-certificates
 LIBEXEC_hostlist:=daemon-hostlist
 CONF_hostlist:=hostlist
 
@@ -206,7 +206,7 @@ LIBEXEC_transport-bluetooth:=helper-transport-bluetooth
 DEPENDS_transport-http_client:=+gnunet-curl +ca-certificates
 PLUGIN_transport-http_client:=transport_http_client transport_https_client
 
-DEPENDS_transport-http_server:=+libmicrohttpd-ssl
+DEPENDS_transport-http_server:=+libmicrohttpd
 PLUGIN_transport-http_server:=transport_http_server transport_https_server
 
 PLUGIN_transport-tcp:=transport_tcp
@@ -244,10 +244,10 @@ PLUGIN_gns:=block_dns block_gns gnsrecord_conversation gnsrecord_dns gnsrecord_g
 LIBEXEC_gns:=dns2gns helper-dns service-dns service-gns service-namecache service-namestore service-resolver service-zonemaster
 CONF_gns:=dns gns namecache namestore resolver zonemaster
 
-DEPENDS_namestore-fcfsd:=+gnunet-gns +libmicrohttpd-ssl
+DEPENDS_namestore-fcfsd:=+gnunet-gns +libmicrohttpd
 LIBEXEC_namestore-fcfsd:=namestore-fcfsd
 
-DEPENDS_gns-proxy:=+gnunet-gns +gnunet-curl +libmicrohttpd-ssl
+DEPENDS_gns-proxy:=+gnunet-gns +gnunet-curl +libmicrohttpd
 LIBEXEC_gns-proxy:=gns-proxy
 
 DEPENDS_datastore:=+gnunet-gns
@@ -273,7 +273,7 @@ LIBEXEC_reclaim:=service-consensus service-credential service-reclaim service-se
 CONF_reclaim:=consensus reclaim secretsharing
 PLUGIN_reclaim:=block_consensus gnsrecord_credential gnsrecord_reclaim reclaim_attribute_gnuid reclaim_sqlite
 
-DEPENDS_rest:=+gnunet-gns +gnunet-reclaim +libmicrohttpd-ssl +jansson
+DEPENDS_rest:=+gnunet-gns +gnunet-reclaim +libmicrohttpd +jansson
 LIB_rest:=rest json
 PLUGIN_rest:=rest_copying rest_gns rest_identity rest_namestore rest_peerinfo rest_openid_connect rest_reclaim
 LIBEXEC_rest:=rest-server
