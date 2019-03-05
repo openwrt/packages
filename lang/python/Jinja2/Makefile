@@ -28,7 +28,7 @@ define Package/python3-jinja2
   SUBMENU:=Python
   URL:=http://jinja.pocoo.org/
   TITLE:=python3-jinja2
-  DEPENDS:=+python3-light
+  DEPENDS:=+python3-light +python3-markupsafe
   VARIANT:=python3
 endef
 
