@@ -30,7 +30,7 @@ define Package/libp11
   CATEGORY:=Libraries
   TITLE:=PKCS#11 wrapper library
   URL:=https://www.opensc-project.org/opensc/wiki/libp11
-  DEPENDS:=+libopenssl @OPENSSL_ENGINE
+  DEPENDS:=+libopenssl +@OPENSSL_ENGINE
   CONFLICTS:=engine_pkcs11
 endef
 
