@@ -24,6 +24,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * [OpenWrt](https://openwrt.org), tested with the stable release series (18.06.x) and with the latest OpenWrt snapshot
 * iwinfo for wlan scanning, uclient-fetch for captive portal detection
 * optional: qrencode 4.x for QR code support
+* optional: wpad (the full version, not wpad-mini) to use Enterprise WiFi
 
 ## Installation & Usage
 * download the package [here](https://downloads.openwrt.org/snapshots/packages/x86_64/packages)
