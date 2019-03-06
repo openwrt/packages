@@ -59,7 +59,12 @@ smb_header() {
 EOT
 	}
 
-	[ -L /etc/samba/smb.conf ] || ln -nsf /var/etc/smb.conf /etc/samba/smb.conf
+	[ -e /etc/samba/smb.conf ] || ln -nsf /var/etc/smb.conf /etc/samba/smb.conf
+	
+	if [ -f /etc/samba/smb.conf ]; then
+		logger -t 'samba4-server' "Local custom /etc/samba/smb.conf file detected, all luci/config settings are ignored!"
+	fi
+	
 }
 
 smb_add_share() {
