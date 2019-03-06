@@ -3,7 +3,7 @@
 ## Description
 If you’re planning an upcoming vacation or a business trip, taking your laptop, tablet or smartphone give you the ability to connect with friends or complete work on the go. But many hotels don’t have a secure wireless network setup or you’re limited on using a single device at once. Investing in a portable, mini travel router is a great way to connect all of your devices at once while having total control over your own personalized wireless network.  
 A logical combination of AP+STA mode on one physical radio allows most of OpenWrt supported router devices to connect to a wireless hotspot/station (STA) and provide a wireless access point (AP) from that hotspot at the same time. Downside of this solution: whenever the STA interface looses the connection it will go into an active scan cycle which renders the radio unusable for AP mode operation, therefore the AP is taken down if the STA looses its association.  
-To avoid these kind of deadlocks, travelmate set all station interfaces in an "always off" mode and connects automatically to available/configured hotspots.  
+To avoid these kind of deadlocks, travelmate will set all station interfaces to an "always off" mode and connects automatically to available/configured hotspots.  
 
 ## Main Features
 * STA interfaces operating in an "always off" mode, to make sure that the AP is always accessible
@@ -24,6 +24,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * [OpenWrt](https://openwrt.org), tested with the stable release series (18.06.x) and with the latest OpenWrt snapshot
 * iwinfo for wlan scanning, uclient-fetch for captive portal detection
 * optional: qrencode 4.x for QR code support
+* optional: wpad (the full version, not wpad-mini) to use Enterprise WiFi
 
 ## Installation & Usage
 * download the package [here](https://downloads.openwrt.org/snapshots/packages/x86_64/packages)
