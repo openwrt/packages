@@ -252,7 +252,7 @@ static void pkglist_check_cb(struct ubus_request *req, int type, struct blob_att
 		return;
 	}
 
-	blobmsg_add_field(buf, BLOBMSG_TYPE_TABLE, "packages", blobmsg_data(tb[PACKAGELIST_PACKAGES]), blobmsg_data_len(tb[PACKAGELIST_PACKAGES]));
+	blobmsg_add_field(buf, BLOBMSG_TYPE_TABLE, "installed", blobmsg_data(tb[PACKAGELIST_PACKAGES]), blobmsg_data_len(tb[PACKAGELIST_PACKAGES]));
 };
 
 /*
@@ -703,98 +703,6 @@ static int init_ustream_ssl(void) {
 	return 0;
 }
 
-/**
- * use busybox sha256sum to verify sha256sums file
- */
-static int sha256sum_v(const char *sha256file, const char *msgfile) {
-	pid_t pid;
-	int fds[2];
-	int status;
-	FILE *f = fopen(sha256file, "r");
-	char sumline[512] = {};
-	char *fname;
-	unsigned int fnlen;
-	unsigned int cnt = 0;
-
-	if (pipe(fds))
-		return -1;
-
-	if (!f)
-		return -1;
-
-
-	pid = fork();
-	switch (pid) {
-	case -1:
-		return -1;
-
-	case 0:
-		uloop_done();
-
-		dup2(fds[0], 0);
-		close(1);
-		close(2);
-		close(fds[0]);
-		close(fds[1]);
-		if (execl("/bin/busybox", "/bin/busybox", "sha256sum", "-s", "-c", NULL));
-			return -1;
-
-		break;
-
-	default:
-		while (fgets(sumline, sizeof(sumline), f)) {
-			fname = &sumline[66];
-			fnlen = strlen(fname);
-			fname[fnlen-1] = '\0';
-			if (!strcmp(fname, msgfile)) {
-				fname[fnlen-1] = '\n';
-				write(fds[1], sumline, strlen(sumline));
-				cnt++;
-			}
-		}
-		fclose(f);
-		close(fds[1]);
-		waitpid(pid, &status, 0);
-		close(fds[0]);
-
-		if (cnt == 1)
-			return WEXITSTATUS(status);
-		else
-			return -1;
-	}
-
-	return -1;
-}
-
-/**
- * use usign to verify sha256sums.sig
- */
-static int usign_v(const char *file) {
-	pid_t pid;
-	int status;
-
-	pid = fork();
-	switch (pid) {
-	case -1:
-		return -1;
-
-	case 0:
-		uloop_done();
-
-		if (execl("/usr/bin/usign", "/usr/bin/usign",
-		          "-V", "-q", "-P", PUBKEY_PATH, "-m", file, NULL));
-			return -1;
-
-		break;
-
-	default:
-		waitpid(pid, &status, 0);
-		return WEXITSTATUS(status);
-	}
-
-	return -1;
-}
-
 static int ask_user(void)
 {
 	fprintf(stderr, "Are you sure you want to continue the upgrade process? [N/y] ");
@@ -878,17 +786,19 @@ int main(int args, char *argv[]) {
 		goto freeconfig;
 	}
 
-	rc = init_ustream_ssl();
-	if (rc == -2) {
-		fprintf(stderr, "No CA certificates loaded, please install ca-certificates\n");
-		rc=-1;
-		goto freessl;
-	}
+	if (!strncmp(serverurl, "https", 5)) {
+		rc = init_ustream_ssl();
+		if (rc == -2) {
+			fprintf(stderr, "No CA certificates loaded, please install ca-certificates\n");
+			rc=-1;
+			goto freessl;
+		}
 
-	if (rc || !ssl_ctx) {
-		fprintf(stderr, "SSL support not available, please install ustream-ssl\n");
-		rc=-1;
-		goto freessl;
+		if (rc || !ssl_ctx) {
+			fprintf(stderr, "SSL support not available, please install ustream-ssl\n");
+			rc=-1;
+			goto freessl;
+		}
 	}
 
 	blobmsg_buf_init(&checkbuf);
@@ -1057,73 +967,6 @@ int main(int args, char *argv[]) {
 		goto freeboard;
 	}
 
-	tmp=strrchr(url, '/');
-
-	strcpy(tmp, "/sha256sums");
-	server_request(url, NULL, NULL);
-
-	if (stat("sha256sums", &imgstat)) {
-		fprintf(stderr, "sha256sums download failed\n");
-		rc=-1;
-		goto freeboard;
-	}
-
-	if ((intmax_t)imgstat.st_size != out_len) {
-		fprintf(stderr, "sha256sums download incomplete\n");
-		unlink("sha256sums");
-		rc=-1;
-		goto freeboard;
-	}
-
-	if (out_len < 68) {
-		fprintf(stderr, "sha256sums size mismatch\n");
-		unlink("sha256sums");
-		rc=-1;
-		goto freeboard;
-	}
-
-	if (sha256sum_v("sha256sums", filename)) {
-		fprintf(stderr, "checksum verification failed\n");
-		unlink(filename);
-		unlink("sha256sums");
-		rc=-1;
-		goto freeboard;
-	}
-
-	strcpy(tmp, "/sha256sums.sig");
-	server_request(url, NULL, NULL);
-
-	if (stat("sha256sums.sig", &imgstat)) {
-		fprintf(stderr, "sha256sums.sig download failed\n");
-		rc=-1;
-		goto freeboard;
-	}
-
-	if ((intmax_t)imgstat.st_size != out_len) {
-		fprintf(stderr, "sha256sums.sig download incomplete\n");
-		unlink("sha256sums.sig");
-		rc=-1;
-		goto freeboard;
-	}
-
-	if (out_len < 16) {
-		fprintf(stderr, "sha256sums.sig size mismatch\n");
-		unlink("sha256sums.sig");
-		rc=-1;
-		goto freeboard;
-	}
-
-	if (usign_v("sha256sums")) {
-		fprintf(stderr, "signature verification failed\n");
-		if (!ignore_sig) {
-			unlink(filename);
-			unlink("sha256sums");
-			unlink("sha256sums.sig");
-			rc=-1;
-			goto freeboard;
-		}
-	};
-
 	if (strcmp(filename, "firmware.bin")) {
 		if (rename(filename, "firmware.bin")) {
 			fprintf(stderr, "can't rename to firmware.bin\n");
@@ -1136,6 +979,7 @@ int main(int args, char *argv[]) {
 	valid = 0;
 	ubus_invoke(ctx, id, "upgrade_test", NULL, upgtest_cb, &valid, 3000);
 	if (!valid) {
+		fprintf(stdout, "image verification failed\n");
 		rc=-1;
 		goto freeboard;
 	}
