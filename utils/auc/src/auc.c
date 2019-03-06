@@ -13,7 +13,7 @@
  */
 
 #define _GNU_SOURCE
-#define AUC_VERSION "0.0.9"
+#define AUC_VERSION "0.1.1"
 
 #include <fcntl.h>
 #include <dlfcn.h>
@@ -316,8 +316,6 @@ static void board_cb(struct ubus_request *req, int type, struct blob_attr *msg) 
 	}
 
 	target = strdup(blobmsg_get_string(rel[RELEASE_TARGET]));
-	subtarget = strchr(target, '/');
-	*subtarget++ = '\0';
 
 	distribution = strdup(blobmsg_get_string(rel[RELEASE_DISTRIBUTION]));
 	version = strdup(blobmsg_get_string(rel[RELEASE_VERSION]));
@@ -433,9 +431,14 @@ static void header_done_cb(struct uclient *cl)
 		request_done(cl);
 		rc=-1;
 		break;
+	case 409:
+		fprintf(stderr, "Conflicting packages requested\n");
+		request_done(cl);
+		rc=-2;
+		break;
 	case 412:
-		fprintf(stderr, "%s target %s/%s (%s) not found. Please report this at %s\n",
-			distribution, target, subtarget, board_name, server_issues);
+		fprintf(stderr, "%s target %s (%s) not found. Please report this at %s\n",
+			distribution, target, board_name, server_issues);
 		request_done(cl);
 		rc=-2;
 		break;
@@ -833,8 +836,8 @@ int main(int args, char *argv[]) {
 
 	blobmsg_add_u32(&checkbuf, "upgrade_packages", upgrade_packages);
 
-	fprintf(stdout, "running %s %s on %s/%s (%s)\n", distribution,
-		version, target, subtarget, board_name);
+	fprintf(stdout, "running %s %s on %s (%s)\n", distribution,
+		version, target, board_name);
 
 	fprintf(stdout, "checking %s for release upgrade%s\n", serverurl,
 		upgrade_packages?" or updated packages":"");
@@ -896,7 +899,6 @@ int main(int args, char *argv[]) {
 
 	blobmsg_add_string(&reqbuf, "distro", distribution);
 	blobmsg_add_string(&reqbuf, "target", target);
-	blobmsg_add_string(&reqbuf, "subtarget", subtarget);
 	blobmsg_add_string(&reqbuf, "board", board_name);
 
 	blob_buf_init(&allpkg, 0);
@@ -991,7 +993,6 @@ int main(int args, char *argv[]) {
 freeboard:
 	free(board_name);
 	free(target);
-	/* subtarget is a pointer within target, don't free */
 	free(distribution);
 	free(version);
 
