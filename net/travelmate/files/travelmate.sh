@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.4.0"
+trm_ver="1.4.1"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -70,9 +70,12 @@ f_envload()
 	#
 	option_cb()
 	{
-		local option="${1}"
-		local value="${2}"
-		eval "${option}=\"${value}\""
+		if [ "${CONFIG_SECTION}" = "global" ]
+		then
+			local option="${1}"
+			local value="${2}"
+			eval "${option}=\"${value}\""
+		fi
 	}
 	config_load travelmate
 
@@ -198,6 +201,11 @@ f_check()
 						sta_essid="$(printf "%s" "${dev_status}" | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].*.ssid')"
 						sta_bssid="$(printf "%s" "${dev_status}" | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].*.bssid')"
 						f_log "info" "uplink '${sta_essid:-"-"}/${sta_bssid:-"-"}' is out of range (${trm_ifquality}/${trm_minquality}), uplink disconnected (${trm_sysver})"
+					fi
+				else
+					if [ "${trm_ifstatus}" != "${status}" ]
+					then
+						trm_ifstatus="${status}"
 					fi
 				fi
 			fi
@@ -366,7 +374,7 @@ f_main()
 					then
 						scan_list="$(f_trim "$("${trm_iwinfo}" "${dev}" scan 2>/dev/null | \
 							awk 'BEGIN{FS="[/ ]"}/Address:/{var1=$NF}/ESSID:/{var2="";for(i=12;i<=NF;i++) \
-							if(var2==""){var2=$i}else{var2=var2" "$i}}/Quality:/{printf "%i,%s,%s\n",(100/$NF*$(NF-1)),var1,var2}' | \
+							if(var2==""){var2=$i}else{var2=var2" "$i};gsub(/,/,".",var2)}/Quality:/{printf "%i,%s,%s\n",(100/$NF*$(NF-1)),var1,var2}' | \
 							sort -rn | awk '{ORS=",";print $0}')")"
 						f_log "debug" "f_main ::: scan_list: ${scan_list:0:800}"
 						if [ -z "${scan_list}" ]
@@ -392,7 +400,7 @@ f_main()
 						then
 							if [ ${scan_quality} -ge ${trm_minquality} ]
 							then
-								if (([ "${scan_essid}" = "\"${sta_essid}\"" ] && ([ -z "${sta_bssid}" ] || [ "${scan_bssid}" = "${sta_bssid}" ])) || \
+								if (([ "${scan_essid}" = "\"${sta_essid//,/.}\"" ] && ([ -z "${sta_bssid}" ] || [ "${scan_bssid}" = "${sta_bssid}" ])) || \
 									([ "${scan_bssid}" = "${sta_bssid}" ] && [ "${scan_essid}" = "unknown" ])) && [ "${dev}" = "${sta_radio}" ]
 								then
 									f_log "debug" "f_main ::: scan_quality: ${scan_quality}, sta_bssid: ${sta_bssid}, scan_bssid: ${scan_bssid}, sta_essid: \"${sta_essid}\", scan_essid: ${scan_essid}"
