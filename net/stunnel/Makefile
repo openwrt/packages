@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stunnel
-PKG_VERSION:=5.49
-PKG_RELEASE:=2
+PKG_VERSION:=5.50
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
@@ -23,7 +23,7 @@ PKG_SOURCE_URL:= \
 	https://www.usenix.org.uk/mirrors/stunnel/archive/$(word 1, $(subst .,$(space),$(PKG_VERSION))).x/
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=3d6641213a82175c19f23fde1c3d1c841738385289eb7ca1554f4a58b96d955e
+PKG_HASH:=951d92502908b852a297bd9308568f7c36598670b84286d3e05d4a3a550c0149
 
 PKG_FIXUP:=autoreconf
 PKG_FIXUP:=patch-libtool
@@ -58,8 +58,7 @@ CONFIGURE_ARGS+= \
 	--with-threads=pthread \
 	--with-ssl=$(STAGING_DIR)/usr \
 	--disable-libwrap \
-	--disable-systemd \
-	--disable-fips
+	--disable-systemd
 
 ifeq ($(CONFIG_IPV6),n)
 CONFIGURE_ARGS+= \
