@@ -1,0 +1,15 @@
+#!/bin/sh
+
+asu_tables="$(ls -1 /usr/lib/*/site-packages/asu/utils/tables.sql | head -n 1)"
+uci -q batch <<EOF
+	del postgresql.asu
+	set postgresql.asu=postgres-db
+	set postgresql.asu.name=asu
+	set postgresql.asu.user=asu
+	set postgresql.asu.pass=password
+	set postgresql.asu.script='$asu_tables'
+	commit postgresql
+EOF
+
+sed -i 's/database_user:.*/database_user: asu/' /etc/asu/config.yml
+sed -i 's/database_pass:.*/database_pass: asu/' /etc/asu/config.yml
