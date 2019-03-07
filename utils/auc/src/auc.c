@@ -13,7 +13,7 @@
  */
 
 #define _GNU_SOURCE
-#define AUC_VERSION "0.1.1"
+#define AUC_VERSION "0.1.2"
 
 #include <fcntl.h>
 #include <dlfcn.h>
@@ -61,7 +61,7 @@ static bool cur_resume;
 static int output_fd = -1;
 static int retry, imagebuilder, building, ibready;
 static char *board_name = NULL;
-static char *target = NULL, *subtarget = NULL;
+static char *target = NULL;
 static char *distribution = NULL, *version = NULL;
 static int uptodate;
 static char *filename = NULL;
@@ -322,7 +322,6 @@ static void board_cb(struct ubus_request *req, int type, struct blob_attr *msg) 
 
 	blobmsg_add_string(buf, "distro", distribution);
 	blobmsg_add_string(buf, "target", target);
-	blobmsg_add_string(buf, "subtarget", subtarget);
 	blobmsg_add_string(buf, "version", version);
 }
 
