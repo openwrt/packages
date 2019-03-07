@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius3
 PKG_VERSION:=release_3_0_17
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/FreeRADIUS/freeradius-server/archive
@@ -85,6 +85,8 @@ define Package/freeradius3-default
 +freeradius3-mod-preprocess \
 +freeradius3-mod-radutmp \
 +freeradius3-mod-realm \
++freeradius3-mod-sql \
++freeradius3-mod-sql-sqlite \
 +freeradius3-mod-unix
   TITLE:=Modules needed for Radius default configuration
 endef
@@ -349,7 +351,27 @@ define Package/freeradius3-mod-realm/conffiles
 /etc/freeradius3/mods-enabled/realm
 endef
 
-# SQL support has not been ported
+# SQL support has not been completly ported
+define Package/freeradius3-mod-sql
+  $(call Package/freeradius3/Default)
+  DEPENDS:=freeradius3
+  TITLE:=Base SQL module
+endef
+
+define Package/freeradius3-mod-sql/conffiles
+/etc/freeradius3/mods-available/sql
+endef
+
+define Package/freeradius3-mod-sql-sqlite
+  $(call Package/freeradius3/Default)
+  DEPENDS:=freeradius3-mod-sql +libsqlite3
+  TITLE:=SQLite module
+endef
+
+define Package/freeradius3-mod-sql-sqlite/conffiles
+/etc/freeradius3/mods-config/sql/main/sqlite/queries.conf
+/etc/freeradius3/mods-config/sql/main/sqlite/schema.sql
+endef
 
 define Package/freeradius3-mod-radutmp
   $(call Package/freeradius3/Default)
@@ -420,7 +442,6 @@ CONFIGURE_ARGS+= \
 	--without-rlm_ruby \
 	--without-rlm_securid \
 	--without-rlm_smsotp \
-	--without-rlm_sql \
 	--without-rlm_sql_db2 \
 	--without-rlm_sql_firebird \
 	--without-rlm_sql_freetds \
@@ -428,7 +449,6 @@ CONFIGURE_ARGS+= \
 	--without-rlm_sql_mysql \
 	--without-rlm_sql_oracle \
 	--without-rlm_sql_postgresql \
-	--without-rlm_sql_sqlite \
 	--without-rlm_sql_unixodbc \
 	--without-rlm_sqlcounter \
 	--without-rlm_sqlhpwippool \
@@ -488,6 +508,15 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-radutmp),)
   CONFIGURE_ARGS+= --with-rlm_radutmp
 else
   CONFIGURE_ARGS+= --without-rlm_radutmp
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-sql-sqlite),)
+  CONFIGURE_ARGS+= \
+    --with-rlm_sql_sqlite \
+    --with-sqlite-include-dir="$(STAGING_DIR)/usr/include" \
+    --with-sqlite-lib-dir="$(STAGING_DIR)/usr/lib"
+else
+  CONFIGURE_ARGS+= --without-rlm_sql_sqlite
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-unix),)
@@ -634,5 +663,7 @@ $(eval $(call BuildPlugin,freeradius3-mod-passwd,rlm_passwd,))
 $(eval $(call BuildPlugin,freeradius3-mod-preprocess,rlm_preprocess,))
 $(eval $(call BuildPlugin,freeradius3-mod-radutmp,rlm_radutmp,))
 $(eval $(call BuildPlugin,freeradius3-mod-realm,rlm_realm,))
+$(eval $(call BuildPlugin,freeradius3-mod-sql,rlm_sql rlm_sql_null,))
+$(eval $(call BuildPlugin,freeradius3-mod-sql-sqlite,rlm_sql_sqlite,))
 $(eval $(call BuildPlugin,freeradius3-mod-unix,rlm_unix,))
 $(eval $(call BuildPackage,freeradius3-utils))
