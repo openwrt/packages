@@ -13,7 +13,7 @@
  */
 
 #define _GNU_SOURCE
-#define AUC_VERSION "0.1.2"
+#define AUC_VERSION "0.1.3"
 
 #include <fcntl.h>
 #include <dlfcn.h>
@@ -122,13 +122,13 @@ static const struct blobmsg_policy packagelist_policy[__PACKAGELIST_MAX] = {
  */
 enum {
 	UPGTEST_CODE,
-	UPGTEST_STDOUT,
+	UPGTEST_STDERR,
 	__UPGTEST_MAX,
 };
 
 static const struct blobmsg_policy upgtest_policy[__UPGTEST_MAX] = {
 	[UPGTEST_CODE] = { .name = "code", .type = BLOBMSG_TYPE_INT32 },
-	[UPGTEST_STDOUT] = { .name = "stdout", .type = BLOBMSG_TYPE_STRING },
+	[UPGTEST_STDERR] = { .name = "stderr", .type = BLOBMSG_TYPE_STRING },
 };
 
 
@@ -167,7 +167,6 @@ enum {
 
 static const struct blobmsg_policy image_policy[__IMAGE_MAX] = {
 	[IMAGE_REQHASH] = { .name = "request_hash", .type = BLOBMSG_TYPE_STRING },
-	[IMAGE_URL] = { .name = "url", .type = BLOBMSG_TYPE_STRING },
 	[IMAGE_FILES] = { .name = "files", .type = BLOBMSG_TYPE_STRING },
 	[IMAGE_SYSUPGRADE] = { .name = "sysupgrade", .type = BLOBMSG_TYPE_STRING },
 };
@@ -341,8 +340,13 @@ static void upgtest_cb(struct ubus_request *req, int type, struct blob_attr *msg
 	}
 
 	*valid = (blobmsg_get_u32(tb[UPGTEST_CODE]) == 0)?1:0;
-	if (*valid == 0)
-		fprintf(stderr, "%s", blobmsg_get_string(tb[UPGTEST_STDOUT]));
+
+	if (tb[UPGTEST_STDERR])
+		fprintf(stderr, "%s", blobmsg_get_string(tb[UPGTEST_STDERR]));
+	else if (*valid == 0)
+		fprintf(stderr, "image verification failed\n");
+	else
+		fprintf(stderr, "image verification succeeded\n");
 };
 
 /**
@@ -738,10 +742,8 @@ int main(int args, char *argv[]) {
 	char *newversion = NULL;
 	struct blob_attr *tb[__IMAGE_MAX];
 	struct blob_attr *tbc[__CHECK_MAX];
-	char *tmp;
 	struct stat imgstat;
 	int check_only = 0;
-	int ignore_sig = 0;
 	unsigned char argc = 1;
 
 	snprintf(user_agent, sizeof(user_agent), "%s (%s)", argv[0], AUC_VERSION);
@@ -767,9 +769,6 @@ int main(int args, char *argv[]) {
 #endif
 		if (!strncmp(argv[argc], "-c", 3))
 			check_only = 1;
-
-		if (!strncmp(argv[argc], "-F", 3))
-			ignore_sig = 1;
 
 		argc++;
 	};
@@ -949,7 +948,17 @@ int main(int args, char *argv[]) {
 		goto freeboard;
 	}
 
-	strncpy(url, blobmsg_get_string(tb[IMAGE_SYSUPGRADE]), sizeof(url));
+	if (!tb[IMAGE_FILES]) {
+		if (!rc) {
+			fprintf(stderr, "no path to image files returned\n");
+			rc=-1;
+		}
+		goto freeboard;
+	}
+
+	snprintf(url, sizeof(url), "%s/%s/%s", serverurl,
+	         blobmsg_get_string(tb[IMAGE_FILES]),
+	         blobmsg_get_string(tb[IMAGE_SYSUPGRADE]));
 
 	server_request(url, NULL, NULL);
 
@@ -978,16 +987,16 @@ int main(int args, char *argv[]) {
 	}
 
 	valid = 0;
-	ubus_invoke(ctx, id, "upgrade_test", NULL, upgtest_cb, &valid, 3000);
+	ubus_invoke(ctx, id, "upgrade_test", NULL, upgtest_cb, &valid, 15000);
 	if (!valid) {
-		fprintf(stdout, "image verification failed\n");
 		rc=-1;
 		goto freeboard;
 	}
 
+	fprintf(stderr, "invoking sysupgrade\n");
+
 	blobmsg_add_u8(&upgbuf, "keep", 1);
-	fprintf(stdout, "invoking sysupgrade\n");
-	ubus_invoke(ctx, id, "upgrade_start", upgbuf.head, NULL, NULL, 3000);
+	ubus_invoke(ctx, id, "upgrade_start", upgbuf.head, NULL, NULL, 120000);
 
 freeboard:
 	free(board_name);
