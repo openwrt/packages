@@ -36,11 +36,6 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
 
-/* for batadv_v_elp_get_throughput which would have used
- * STATION_INFO_EXPECTED_THROUGHPUT in Linux 4.0.0
- */
-#define NL80211_STA_INFO_EXPECTED_THROUGHPUT    28
-
 /* wild hack for batadv_getlink_net only */
 #define get_link_net get_xstats_size || 1 ? fallback_net : (struct net*)netdev->rtnl_link_ops->get_xstats_size
 
@@ -109,113 +104,6 @@ batadv_ethtool_get_link_ksettings(struct net_device *dev,
 
 #endif /* < KERNEL_VERSION(4, 6, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 7, 0)
-
-#ifdef netif_trans_update
-#undef netif_trans_update
-#endif
-
-#define netif_trans_update batadv_netif_trans_update
-static inline void batadv_netif_trans_update(struct net_device *dev)
-{
-	dev->trans_start = jiffies;
-}
-
-#endif /* < KERNEL_VERSION(4, 7, 0) */
-
-
-#include_next <linux/netlink.h>
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 7, 0)
-
-#include_next <net/netlink.h>
-
-static inline bool batadv_nla_need_padding_for_64bit(struct sk_buff *skb);
-
-static inline int batadv_nla_align_64bit(struct sk_buff *skb, int padattr)
-{
-	if (batadv_nla_need_padding_for_64bit(skb) &&
-	    !nla_reserve(skb, padattr, 0))
-		return -EMSGSIZE;
-
-	return 0;
-}
-
-static inline struct nlattr *batadv__nla_reserve_64bit(struct sk_buff *skb,
-						       int attrtype,
-						       int attrlen, int padattr)
-{
-	if (batadv_nla_need_padding_for_64bit(skb))
-		batadv_nla_align_64bit(skb, padattr);
-
-	return __nla_reserve(skb, attrtype, attrlen);
-}
-
-static inline void batadv__nla_put_64bit(struct sk_buff *skb, int attrtype,
-					 int attrlen, const void *data,
-					 int padattr)
-{
-	struct nlattr *nla;
-
-	nla = batadv__nla_reserve_64bit(skb, attrtype, attrlen, padattr);
-	memcpy(nla_data(nla), data, attrlen);
-}
-
-static inline bool batadv_nla_need_padding_for_64bit(struct sk_buff *skb)
-{
-#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
-	/* The nlattr header is 4 bytes in size, that's why we test
-	 * if the skb->data _is_ aligned.  A NOP attribute, plus
-	 * nlattr header for next attribute, will make nla_data()
-	 * 8-byte aligned.
-	 */
-	if (IS_ALIGNED((unsigned long)skb_tail_pointer(skb), 8))
-		return true;
-#endif
-	return false;
-}
-
-static inline int batadv_nla_total_size_64bit(int payload)
-{
-	return NLA_ALIGN(nla_attr_size(payload))
-#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
-		+ NLA_ALIGN(nla_attr_size(0))
-#endif
-		;
-}
-
-static inline int batadv_nla_put_64bit(struct sk_buff *skb, int attrtype,
-				       int attrlen, const void *data,
-				       int padattr)
-{
-	size_t len;
-
-	if (batadv_nla_need_padding_for_64bit(skb))
-		len = batadv_nla_total_size_64bit(attrlen);
-	else
-		len = nla_total_size(attrlen);
-	if (unlikely(skb_tailroom(skb) < len))
-		return -EMSGSIZE;
-
-	batadv__nla_put_64bit(skb, attrtype, attrlen, data, padattr);
-	return 0;
-}
-
-#ifdef nla_put_u64_64bit
-#undef nla_put_u64_64bit
-#endif
-
-#define nla_put_u64_64bit(_skb, _attrtype, _value, _padattr) \
-	batadv_nla_put_u64_64bit(_skb, _attrtype, _value, _padattr)
-static inline int batadv_nla_put_u64_64bit(struct sk_buff *skb, int attrtype,
-					   u64 value, int padattr)
-{
-	return batadv_nla_put_64bit(skb, attrtype, sizeof(u64), &value,
-				    padattr);
-}
-
-#endif /* < KERNEL_VERSION(4, 7, 0) */
-
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 10, 0)
 
@@ -250,48 +138,6 @@ static inline int batadv_nla_put_u64_64bit(struct sk_buff *skb, int attrtype,
 
 #endif /* < KERNEL_VERSION(4, 11, 9) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
-
-static inline void *batadv_skb_put(struct sk_buff *skb, unsigned int len)
-{
-	return (void *)skb_put(skb, len);
-}
-#ifdef skb_put
-#undef skb_put
-#endif
-
-#define skb_put batadv_skb_put
-
-static inline void *batadv_skb_put_zero(struct sk_buff *skb, unsigned int len)
-{
-	void *tmp = skb_put(skb, len);
-
-	memset(tmp, 0, len);
-
-	return tmp;
-}
-#ifdef skb_put_zero
-#undef skb_put_zero
-#endif
-
-#define skb_put_zero batadv_skb_put_zero
-
-static inline void *batadv_skb_put_data(struct sk_buff *skb, const void *data,
-				 unsigned int len)
-{
-	void *tmp = skb_put(skb, len);
-
-	memcpy(tmp, data, len);
-
-	return tmp;
-}
-#ifdef skb_put_data
-#undef skb_put_data
-#endif
-
-#define skb_put_data batadv_skb_put_data
-
-#endif /* < KERNEL_VERSION(4, 13, 0) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
 
@@ -300,53 +146,6 @@ static inline void *batadv_skb_put_data(struct sk_buff *skb, const void *data,
 
 #endif /* < KERNEL_VERSION(4, 15, 0) */
 
-#ifndef from_timer
-
-#define TIMER_DATA_TYPE                unsigned long
-#define TIMER_FUNC_TYPE                void (*)(TIMER_DATA_TYPE)
-
-static inline void timer_setup(struct timer_list *timer,
-			       void (*callback)(struct timer_list *),
-			       unsigned int flags)
-{
-	__setup_timer(timer, (TIMER_FUNC_TYPE)callback,
-		      (TIMER_DATA_TYPE)timer, flags);
-}
-
-#define from_timer(var, callback_timer, timer_fieldname) \
-	container_of(callback_timer, typeof(*var), timer_fieldname)
-
-#endif /* !from_timer */
-	
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 16, 0)
-
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 18, 0)
-
-#include <net/cfg80211.h>
-
-/* cfg80211 fix: https://patchwork.kernel.org/patch/10449857/ */
-static inline int batadv_cfg80211_get_station(struct net_device *dev,
-					      const u8 *mac_addr,
-					      struct station_info *sinfo)
-{
-	memset(sinfo, 0, sizeof(*sinfo));
-	return cfg80211_get_station(dev, mac_addr, sinfo);
-}
-
-#define cfg80211_get_station(dev, mac_addr, sinfo) \
-	batadv_cfg80211_get_station(dev, mac_addr, sinfo)
-
-#endif /* < KERNEL_VERSION(4, 18, 0) */
-
-
-#ifdef __CHECK_POLL
-typedef unsigned __bitwise __poll_t;
-#else
-typedef unsigned __poll_t;
-#endif
-
-#endif /* < KERNEL_VERSION(4, 16, 0) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
 

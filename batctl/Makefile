@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=batctl
 
 PKG_VERSION:=2019.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_HASH:=997721096ff396644e8d697ea7651e9d38243faf317bcea2661d4139ff58b531
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -101,6 +101,7 @@ config-n := \
 	fragmentation \
 	gateways \
 	gw_mode \
+	hop_penalty \
 	interface \
 	isolation_mark \
 	log \
@@ -130,6 +131,7 @@ config-settings := \
 	distributed_arp_table \
 	fragmentation \
 	gw_mode \
+	hop_penalty \
 	interface \
 	isolation_mark \
 	loglevel \
