@@ -29,8 +29,9 @@ define Package/python3-flask
   URL:=http://github.com/pallets/flask/
   TITLE:=python3-flask
   DEPENDS:=+python3-asyncio +python3-click +python3-codecs +python3-decimal \
-           +python3-itsdangerous +python3-jinja2 +python3-light +python3-logging \
-           +python3-markupsafe +python3-multiprocessing +python3-werkzeug
+           +python3-itsdangerous +python3-jinja2 +python3 +python3-logging \
+           +python3-markupsafe +python3-multiprocessing +python3-setuptools \
+           +python3-werkzeug
   VARIANT:=python3
 endef
 
