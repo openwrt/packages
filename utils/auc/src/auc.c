@@ -13,7 +13,7 @@
  */
 
 #define _GNU_SOURCE
-#define AUC_VERSION "0.1.3"
+#define AUC_VERSION "0.1.4"
 
 #include <fcntl.h>
 #include <dlfcn.h>
@@ -62,7 +62,7 @@ static int output_fd = -1;
 static int retry, imagebuilder, building, ibready;
 static char *board_name = NULL;
 static char *target = NULL;
-static char *distribution = NULL, *version = NULL;
+static char *distribution = NULL, *version = NULL, *revision = NULL;
 static int uptodate;
 static char *filename = NULL;
 static int rc;
@@ -93,6 +93,7 @@ static const struct blobmsg_policy board_policy[__BOARD_MAX] = {
 enum {
 	RELEASE_DISTRIBUTION,
 	RELEASE_VERSION,
+	RELEASE_REVISION,
 	RELEASE_TARGET,
 	__RELEASE_MAX,
 };
@@ -100,6 +101,7 @@ enum {
 static const struct blobmsg_policy release_policy[__RELEASE_MAX] = {
 	[RELEASE_DISTRIBUTION] = { .name = "distribution", .type = BLOBMSG_TYPE_STRING },
 	[RELEASE_VERSION] = { .name = "version", .type = BLOBMSG_TYPE_STRING },
+	[RELEASE_REVISION] = { .name = "revision", .type = BLOBMSG_TYPE_STRING },
 	[RELEASE_TARGET] = { .name = "target", .type = BLOBMSG_TYPE_STRING },
 };
 
@@ -308,20 +310,24 @@ static void board_cb(struct ubus_request *req, int type, struct blob_attr *msg) 
 	blobmsg_parse(release_policy, __RELEASE_MAX, rel,
 			blobmsg_data(tb[BOARD_RELEASE]), blobmsg_data_len(tb[BOARD_RELEASE]));
 
-	if (!rel[RELEASE_TARGET]) {
-		fprintf(stderr, "No target received\n");
+	if (!rel[RELEASE_TARGET] ||
+	    !rel[RELEASE_DISTRIBUTION] ||
+	    !rel[RELEASE_VERSION] ||
+	    !rel[RELEASE_REVISION]) {
+		fprintf(stderr, "No release information received\n");
 		rc=-1;
 		return;
 	}
 
 	target = strdup(blobmsg_get_string(rel[RELEASE_TARGET]));
-
 	distribution = strdup(blobmsg_get_string(rel[RELEASE_DISTRIBUTION]));
 	version = strdup(blobmsg_get_string(rel[RELEASE_VERSION]));
+	revision = strdup(blobmsg_get_string(rel[RELEASE_REVISION]));
 
 	blobmsg_add_string(buf, "distro", distribution);
 	blobmsg_add_string(buf, "target", target);
 	blobmsg_add_string(buf, "version", version);
+	blobmsg_add_string(buf, "revision", revision);
 }
 
 /*
