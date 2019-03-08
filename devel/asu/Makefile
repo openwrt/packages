@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=asu
 PKG_VERSION:=0.2.3
-PKG_RELEASE=1
+PKG_RELEASE=2
 
 PKG_LICENSE:=GPL-3.0
 
@@ -37,7 +37,7 @@ define Package/asu
     URL:=http://github.com/aparcar/gsoc17-attended-sysupgrade/
     DEPENDS:=$(IMAGEBUILDER_DEPENDS) +pgsql-server +psqlodbcw \
              +python3-ctypes +python3-distutils +python3-flask \
-             +python3-openssl +python3-pyodbc +python3-yaml \
+             +gunicorn +python3-openssl +python3-pyodbc +python3-yaml \
              +libustream-mbedtls +ca-certificates +gnupg
     USERID:=asu:asu
     VARIANT:=python3
