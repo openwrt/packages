@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot
-PKG_VERSION:=2.7.6
+PKG_VERSION:=2.8.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-dns/
-PKG_HASH:=a1cb1877f04f7c2549c977c2658cfafd07c7e0e924f8e8aa8d4ae4b707f697a2
+PKG_HASH:=494ad926705018bd754d96711dc2129f3173f326a0b57d33978090ba4eef87ef
 
 PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
 PKG_LICENSE:=GPL-3.0 LGPL-2.0 0BSD BSD-3-Clause OLDAP-2.8
@@ -234,9 +234,9 @@ define Package/knot-tests/install
 	$(INSTALL_DIR) 						$(1)/usr/share/knot
 	$(INSTALL_BIN) ./files/runtests.sh			$(1)/usr/share/knot/
 
-	$(INSTALL_DIR) 						$(1)/usr/share/knot/tap
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tests/tap/runtests	$(1)/usr/share/knot/tap/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tests/tap/libtap.sh	$(1)/usr/share/knot/tap/
+	$(INSTALL_DIR) 							$(1)/usr/share/knot/tap
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tests/tap/.libs/runtests	$(1)/usr/share/knot/tap/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tests/tap/libtap.sh		$(1)/usr/share/knot/tap/
 
 	$(INSTALL_DIR)								$(1)/usr/share/knot/tests
 
@@ -249,7 +249,7 @@ define Package/knot-tests/install
 		find $(PKG_BUILD_DIR)/tests/$$$${module}/.libs -maxdepth 1 -executable -type f | \
 			xargs -I{} basename {} | \
 			xargs -I{} $(INSTALL_BIN) -T $(PKG_BUILD_DIR)/tests/$$$${module}/.libs/{} \
-											$(1)/usr/share/knot/tests/$$$${module}_{}; \
+										$(1)/usr/share/knot/tests/$$$${module}_{}; \
 	done
 endef
 
