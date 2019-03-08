@@ -4,7 +4,7 @@ PKG_NAME:=syslog-ng
 PKG_VERSION:=3.20.1
 PKG_RELEASE:=1
 
-PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:balabit:syslog-ng
