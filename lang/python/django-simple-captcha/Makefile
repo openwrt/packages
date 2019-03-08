@@ -8,13 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-simple-captcha
-PKG_VERSION:=0.5.9
-PKG_RELEASE:=2
+PKG_VERSION:=0.5.11
+PKG_RELEASE:=1
+
+PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
 PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).zip
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/d/${PKG_NAME}
-PKG_HASH:=0c30a14f02502119fd1a4d308dd5d2b899d0f4284825a396bbb010afd904754a
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/d/$(PKG_NAME)
+PKG_HASH:=e14e5c4b207be3dffb200309e7ac7a48de1a2b3293f09eefedd9ab317c4d9a7f
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
@@ -23,7 +26,6 @@ define Package/django-simple-captcha
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
   TITLE:=A very simple, yet powerful, Django captcha application
   URL:=https://github.com/mbi/django-simple-captcha
   DEPENDS:=+python +python-six +django +pillow +django-ranged-response
