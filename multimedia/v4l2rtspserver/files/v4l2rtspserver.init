@@ -40,10 +40,6 @@ start_instance() {
 	config_get path "$s" 'path'
 	config_get format "$s" 'format'
 
-	# pull out resolution width and height from string
-	local w="$(echo $resolution | cut -d'x' -f1)"
-	local h="$(echo $resolution | cut -d'x' -f2)"
-	
 	# make sure format is uppercase
 	format="$(echo $format | tr a-z A-Z)"
 
@@ -52,9 +48,10 @@ start_instance() {
 	args="$args -P $port"
 	args="$args -u ${path}"
 	args="$args -F $fps"
-	args="$args -W $w"
-	args="$args -H $h"
-	args="$args -f$format"
+	args="$args -G ${resolution}"
+        if [ ! -z "$format" ]; then
+                args="$args -f$format"
+        fi
 	args="$args -c" # fixes issue with corrupt frames with H264
 		
 	if [ -n "$username" ]; then
