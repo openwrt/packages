@@ -42,7 +42,7 @@ proto_vpnc_setup() {
 
 	logger -t vpnc "initializing..."
 	serv_addr=
-	for ip in $(resolveip -t 10 "$server"); do
+	for ip in $(resolveip -4t 10 "$server"); do
 		( proto_add_host_dependency "$config" "$ip" $interface )
 		serv_addr=1
 	done
