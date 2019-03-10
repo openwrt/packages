@@ -84,6 +84,7 @@ qosdef_init_priority() {
 		;;
 		wan*) network_get_device ifname "$priority_netdev" || \
 			ifname="$(uci_get network.$priority_netdev.ifname)"
+		;;
 	esac
 
 	qosdef_appendx "table netdev nft-qos-priority {\n"
