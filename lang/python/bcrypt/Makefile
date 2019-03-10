@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bcrypt
-PKG_VERSION:=3.1.5
+PKG_VERSION:=3.1.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=bcrypt-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= https://files.pythonhosted.org/packages/source/b/$(PKG_NAME)
-PKG_HASH:=136243dc44e5bab9b61206bd46fff3018bd80980b1a1dfbab64a22ff5745957f
+PKG_HASH:=44636759d222baa62806bbceb20e96f75a015a6381690d1bc2eda91c01ec02ea
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
