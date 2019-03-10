@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bonnie++
-PKG_VERSION:=1.97.3
-PKG_RELEASE:=2
+PKG_VERSION:=1.98
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://www.coker.com.au/bonnie++/
-PKG_HASH:=e27b386ae0dc054fa7b530aab6bdead7aea6337a864d1f982bc9ebacb320746e
+PKG_HASH:=6e0bcbc08b78856fd998dd7bcb352d4615a99c26c2dc83d5b8345b102bad0b04
 
 PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
 PKG_LICENSE:=GPL-2.0
@@ -39,19 +39,10 @@ define Package/bonniexx/description
 endef
 
 ifeq ($(CONFIG_USE_UCLIBCXX),y)
-TARGET_LDFLAGS +=-nodefaultlibs
+TARGET_LDFLAGS += -nodefaultlibs
 endif
 
-TARGET_CXXFLAGS +=-fno-rtti
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		TARGET_CXX="$(TARGET_CXX)" \
-		TARGET_LINK="$(TARGET_CXX)" \
-		MORECFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CXXFLAGS)" \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
-		all
-endef
+TARGET_CXXFLAGS += -fno-rtti -flto
 
 define Package/bonniexx/install
 	$(INSTALL_DIR) $(1)/usr/bin
