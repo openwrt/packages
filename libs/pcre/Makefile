@@ -55,12 +55,8 @@ CONFIGURE_ARGS += \
 	--enable-unicode-properties \
 	--enable-pcre16 \
 	--with-match-limit-recursion=16000 \
+	--enable-cpp
 
-ifneq ($(CONFIG_PACKAGE_libpcrecpp),)
-  CONFIGURE_ARGS+= --enable-cpp
-else
-  CONFIGURE_ARGS+= --disable-cpp
-endif
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS)"
