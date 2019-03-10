@@ -94,6 +94,9 @@ aria2_validate() {
 		'all_proxy_user:string' \
 		'auto_save_interval:range(0,600)' \
 		'bt_enable_lpd:or("true","false")' \
+		'bt_detach_seed_only:or("true","false")' \
+		'bt_load_saved_metadata:or("true","false")' \
+		'bt_prioritize_piece:string' \
 		'bt_max_open_files:uinteger' \
 		'bt_max_peers:uinteger' \
 		'bt_remove_unselected_file:or("true","false")' \
@@ -105,6 +108,7 @@ aria2_validate() {
 		'ca_certificate:file' \
 		'certificate:file' \
 		'check_certificate:or("true","false"):true' \
+		'check_integrity:or("true","false")' \
 		'connect_timeout:uinteger' \
 		'dht_listen_port:string' \
 		'dir:string' \
@@ -157,8 +161,8 @@ aria2_start() {
 	aria2_validate "$section" || { _err "Validation failed."; return 1; }
 
 	[ "$enabled" = "1" ] || { _info "Instance \"${section}\" disabled."; return 1; }
-	[ -n "$dir" ] || { _err "Please set downlod dir."; return 1; }
-	[ -d "$dir" ] || { _err "Please create downlod dir first."; return 1; }
+	[ -n "$dir" ] || { _err "Please set download dir."; return 1; }
+	[ -d "$dir" ] || { _err "Please create download dir first."; return 1; }
 
 	config_file="${config_dir}/${NAME}.conf.${section}"
 	config_file_tmp="${config_dir}/${NAME}.conf.tmp"
@@ -176,7 +180,7 @@ aria2_start() {
 
 	# create tmp file
 	cat >"$config_file_tmp" <<-EOF
-		# Auto generated file, changes to this file will lost.
+		# Auto generated file, changes to this file will be lost.
 	EOF
 
 	append_setting "dir=${dir}"
@@ -226,7 +230,7 @@ aria2_start() {
 			append_setting "rpc-user=${rpc_user}"
 			append_setting "rpc-passwd=${rpc_passwd}"
 		else
-			_info "It is recommand to set RPC secret."
+			_info "It is recommended to set RPC secret."
 		fi
 	elif [ "$rpc_auth_method" = "token" ]; then
 		if [ -n "$rpc_secret" ]; then
@@ -292,10 +296,12 @@ aria2_start() {
 	fi
 
 	append_options "auto_save_interval" "bt_enable_lpd" "bt_max_open_files" "bt_max_peers" \
-		"bt_remove_unselected_file" "bt_request_peer_speed_limit" "bt_save_metadata" "bt_seed_unverified" \
-		"bt_stop_timeout" "certificate" "connect_timeout" "dht_listen_port" "disable_ipv6" "disk_cache" \
-		"enable_peer_exchange" "event_poll" "file_allocation" "follow_torrent" "force_save" "http_accept_gzip" \
-		"http_no_cache" "listen_port" "lowest_speed_limit" "max_concurrent_downloads" "max_connection_per_server" \
+		"bt_remove_unselected_file" "bt_request_peer_speed_limit" "bt_prioritize_piece" \
+		"bt_stop_timeout" "bt_detach_seed_only" "bt_save_metadata" "bt_load_saved_metadata" \
+		"bt_seed_unverified" "certificate" "check_integrity" "connect_timeout" "dht_listen_port" \
+		"disable_ipv6" "disk_cache" "enable_peer_exchange" "event_poll" "file_allocation" \
+		"follow_torrent" "force_save" "http_accept_gzip" "http_no_cache" "listen_port" \
+		"lowest_speed_limit" "max_concurrent_downloads" "max_connection_per_server" \
 		"max_download_limit" "max_overall_download_limit" "max_overall_upload_limit" "max_tries" \
 		"max_upload_limit" "min_split_size" "pause" "pause_metadata" "peer_id_prefix" "private_key" \
 		"retry_wait" "rpc_listen_port" "save_session_interval" "seed_ratio" "seed_time" "split" "timeout" \
@@ -317,7 +323,7 @@ aria2_start() {
 					_info "Please make sure user '${user}' has write access to download dir: ${dir}"
 				fi
 		else
-			_info "Set run user to '${user}' failed, default user will be used."
+			_info "Setting run user to '${user}' failed, default user will be used."
 			user=
 		fi
 	fi
