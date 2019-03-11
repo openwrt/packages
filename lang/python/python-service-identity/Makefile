@@ -14,6 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=service_identity-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/s/service_identity
 PKG_HASH:=0858a54aabc5b459d1aafa8a518ed2081a285087f349fe3e55197989232e2e2d
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-service-identity-$(PKG_VERSION)
 
 PKG_LICENSE:=MIT
@@ -30,12 +31,12 @@ define Package/python-service-identity/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=https://github.com/pyca/service_identity
+  TITLE:=Service identity verification
+  URL:=https://service-identity.readthedocs.io/
 endef
 
 define Package/python-service-identity
 $(call Package/python-service-identity/Default)
-  TITLE:=python-service-identity
   DEPENDS:= \
       +PACKAGE_python-service-identity:python-light \
       +PACKAGE_python-service-identity:python-attrs \
@@ -48,7 +49,6 @@ endef
 
 define Package/python3-service-identity
 $(call Package/python-service-identity/Default)
-  TITLE:=python3-service-identity
   DEPENDS:= \
       +PACKAGE_python3-service-identity:python3-light \
       +PACKAGE_python3-service-identity:python3-attrs \
