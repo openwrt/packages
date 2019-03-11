@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-requests
 PKG_VERSION:=2.21.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=Apache-2.0
 
 PKG_SOURCE:=requests-$(PKG_VERSION).tar.gz
@@ -38,7 +38,7 @@ $(call Package/python-requests/Default)
   TITLE:=HTTP library for Python
   DEPENDS:= \
 	  +PACKAGE_python-requests:python \
-	  +PACKAGE_python-requests:chardet \
+	  +PACKAGE_python-requests:python-chardet \
 	  +PACKAGE_python-requests:python-idna \
 	  +PACKAGE_python-requests:python-urllib3 \
 	  +PACKAGE_python-requests:python-certifi
