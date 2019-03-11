@@ -38,7 +38,7 @@ $(call Package/python-requests/Default)
   TITLE:=HTTP library for Python
   DEPENDS:= \
 	  +PACKAGE_python-requests:python \
-	  +PACKAGE_python-requests:chardet \
+	  +PACKAGE_python-requests:python-chardet \
 	  +PACKAGE_python-requests:python-idna \
 	  +PACKAGE_python-requests:python-urllib3 \
 	  +PACKAGE_python-requests:python-certifi
