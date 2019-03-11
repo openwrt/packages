@@ -23,6 +23,8 @@ start_service() {
       [ $((i++)) -gt 30 ] && return 1
     done
 
+    cp /etc/asu/odbc.ini /var/run/asu/.odbc.ini
+
     FLASK_APP=asu $PROG loaddb
 
     procd_open_instance asu_main

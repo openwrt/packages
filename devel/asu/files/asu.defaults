@@ -13,8 +13,7 @@ uci -q batch <<EOF
 	commit postgresql
 EOF
 
-sed -i "s/database_user.*/database_user: asu/" /etc/asu/config.yml
-sed -i "s/database_pass.*/database_pass: $asu_password/" /etc/asu/config.yml
+sed -i "s/Password.*/Password = $asu_password/" /etc/asu/odbc.ini
 
 cp -r /usr/lib/python*/site-packages/asu/utils/distributions /etc/asu/
 

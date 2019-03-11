@@ -5,14 +5,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=asu
-PKG_VERSION:=0.2.3
-PKG_RELEASE=2
+PKG_VERSION:=0.2.4
+PKG_RELEASE=1
 
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/a/asu/
-PKG_HASH:=e60027cd531cc5b9b20d3321acc06fdf0cdd894004919800575b8235343ba8ef
+PKG_HASH:=6c4fa3b52bf826ae403f964fb0a8551dded24104c3290be25b1288b88dda8b2b
 
 PKG_BUILD_DEPENDS:=python3
 
@@ -33,8 +33,8 @@ define Package/asu
     SECTION:=devel
     CATEGORY:=Development
     TITLE:=attended sysupgrade image server
-    MAINTAINER:=Paul Spooren <paul@spooren.de>
-    URL:=http://github.com/aparcar/gsoc17-attended-sysupgrade/
+    MAINTAINER:=Paul Spooren <mail@aparcar.org>
+    URL:=https://github.com/aparcar/attendedsysupgrade-server
     DEPENDS:=$(IMAGEBUILDER_DEPENDS) +pgsql-server +psqlodbcw \
              +python3-ctypes +python3-distutils +python3-flask \
              +gunicorn +python3-openssl +python3-pyodbc +python3-yaml \
@@ -54,6 +54,7 @@ define Py3Package/asu/install
 	$(INSTALL_BIN) ./files/asu.init $(1)/etc/init.d/asu
 	$(INSTALL_DIR) $(1)/etc/asu
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/asu/utils/config.yml.default $(1)/etc/asu/config.yml
+	$(INSTALL_CONF) ./files/odbc.ini $(1)/etc/asu/odbc.ini
 endef
 
 $(eval $(call Py3Package,asu))
