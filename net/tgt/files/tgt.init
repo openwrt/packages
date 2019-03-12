@@ -223,6 +223,7 @@ stop_service() {
 		| awk '$1 == "Target" {sub(/:/,"",$2); print $2}' \
 		| xargs -r -n1 $tgtadm --mode target --op delete --force --tid
 	$tgtadm --mode sys --op delete
+	procd_kill tgt
 }
 
 reload_service() {
