@@ -1,18 +1,15 @@
-#
-# Copyright (C) 2012-2016 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tgt
-PKG_VERSION:=1.0.74
-PKG_RELEASE:=2
+PKG_VERSION:=1.0.75
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/fujita/tgt/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=bfc202790d5326d7a18bd3928b4bb204ffb0acf443a5ec5c16a1a0fbc53be99f
+PKG_HASH:=1c719fdccc6ddc8e5de57a6e546aa64f41056a2fb1d710b8b2a22f65e08f5b90
 
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-2.0
@@ -30,10 +27,10 @@ define Package/tgt
 endef
 
 define Package/tgt/description
-Linux SCSI target framework (tgt) aims to simplify various SCSI target driver (iSCSI, Fibre Channel, SRP, etc) creation and maintenance.
-Key goals of the project are the clean integration into the scsi-mid layer and implementing a great portion of tgt in user space.
-Tgt consists of kernel-space and user-space code. The kernel-space component is included in upstream as of 2.6.20.
-Note that if you are interested in only iSCSI (probably you are), you need only the user-space code (any kernel version is fine).
+The Linux target framework (tgt) is a user space SCSI target framework
+that supports the iSCSI and iSER transport protocols and that also
+supports multiple methods for accessing block storage. Tgt consists of
+a user-space daemon and user-space tools.
 endef
 
 define Build/Compile
@@ -50,11 +47,10 @@ define Package/tgt/conffiles
 endef
 
 define Package/tgt/install
-	$(INSTALL_DIR) $(1)/
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(CP) ./files/* $(1)/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/tgtd $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/tgtadm $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d $(1)/usr/sbin
+	$(INSTALL_DATA) ./files/tgt.config $(1)/etc/config/
+	$(INSTALL_BIN) ./files/tgt.init $(1)/etc/init.d/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/tgtd $(PKG_INSTALL_DIR)/usr/sbin/tgtadm $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,tgt))
