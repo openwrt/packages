@@ -1,6 +1,6 @@
 --- a/configure
 +++ b/configure
-@@ -14962,7 +14962,7 @@ $as_echo_n "checking ABIFLAGS... " >&6;
+@@ -15129,7 +15129,7 @@ $as_echo_n "checking ABIFLAGS... " >&6;
  $as_echo "$ABIFLAGS" >&6; }
  { $as_echo "$as_me:${as_lineno-$LINENO}: checking SOABI" >&5
  $as_echo_n "checking SOABI... " >&6; }
@@ -11,7 +11,7 @@
  
 --- a/configure.ac
 +++ b/configure.ac
-@@ -4665,7 +4665,7 @@ AC_SUBST(SOABI)
+@@ -4719,7 +4719,7 @@ AC_SUBST(SOABI)
  AC_MSG_CHECKING(ABIFLAGS)
  AC_MSG_RESULT($ABIFLAGS)
  AC_MSG_CHECKING(SOABI)

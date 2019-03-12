@@ -20,7 +20,7 @@
          abi=sys.abiflags,
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -1390,7 +1390,7 @@ libinstall:	build_all $(srcdir)/Modules/
+@@ -1398,7 +1398,7 @@ libinstall:	build_all $(srcdir)/Modules/
  			esac; \
  		done; \
  	done
@@ -29,7 +29,7 @@
  		$(DESTDIR)$(LIBDEST); \
  	$(INSTALL_DATA) $(srcdir)/LICENSE $(DESTDIR)$(LIBDEST)/LICENSE.txt
  ifeq (@COMPILE_ALL_TESTS@,yes)
-@@ -1525,7 +1525,7 @@ sharedinstall: sharedmods
+@@ -1543,7 +1543,7 @@ sharedinstall: sharedmods
  		--install-scripts=$(BINDIR) \
  		--install-platlib=$(DESTSHARED) \
  		--root=$(DESTDIR)/
@@ -40,7 +40,7 @@
  # Here are a couple of targets for MacOSX again, to install a full
 --- a/configure
 +++ b/configure
-@@ -14981,7 +14981,7 @@ LDVERSION='$(VERSION)$(ABIFLAGS)'
+@@ -15148,7 +15148,7 @@ LDVERSION='$(VERSION)$(ABIFLAGS)'
  $as_echo "$LDVERSION" >&6; }
  
  
@@ -51,7 +51,7 @@
    LIBPL='$(prefix)'"/lib/python${VERSION}/config-${LDVERSION}-${PLATFORM_TRIPLET}"
 --- a/configure.ac
 +++ b/configure.ac
-@@ -4682,7 +4682,7 @@ AC_MSG_RESULT($LDVERSION)
+@@ -4736,7 +4736,7 @@ AC_MSG_RESULT($LDVERSION)
  
  dnl define LIBPL after ABIFLAGS and LDVERSION is defined.
  AC_SUBST(PY_ENABLE_SHARED)
