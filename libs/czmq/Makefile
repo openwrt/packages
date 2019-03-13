@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=czmq
-PKG_VERSION:=4.1.1
+PKG_VERSION:=4.2.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/zeromq/czmq/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=f00ff419881dc2a05d0686c8467cd89b4882677fc56f31c0e2cc81c134cbb0c0
+PKG_HASH:=cfab29c2b3cc8a845749758a51e1dd5f5160c1ef57e2a41ea96e4c2dcc8feceb
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
@@ -29,7 +29,7 @@ define Package/czmq
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE:=CZMQ
-	DEPENDS:=+libzmq +libuuid +libpcre +liblz4
+	DEPENDS:=+libzmq +libuuid +libpcre +libmicrohttpd +liblz4 +libcurl
 endef
 
 define Package/czmq/description
