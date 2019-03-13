@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pytz
 PKG_HASH:=d5f05e487007e29e03409f9398d074e158d920d36eb82eaf66fb1136b0c5374c
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-pytz-$(PKG_VERSION)
 
-HOST_BUILD_DEPENDS:=python/host
+HOST_BUILD_DEPENDS:=python/host python3/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -61,6 +61,7 @@ endef
 
 define Host/Compile
 	$(call Build/Compile/HostPyMod,,install --prefix="" --root="$(STAGING_DIR_HOSTPKG)")
+	$(call Build/Compile/HostPy3Mod,,install --prefix="" --root="$(STAGING_DIR_HOSTPKG)")
 endef
 
 Host/Install:=
