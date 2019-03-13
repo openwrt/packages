@@ -22,6 +22,9 @@ PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=README.md
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
+HOST_BUILD_DEPENDS:=python/host python3/host
+
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
@@ -58,6 +61,15 @@ $(call Package/python-ply/description)
 .
 (Variant for Python3)
 endef
+
+define Host/Compile
+	$(call Build/Compile/HostPyMod,,install --prefix="" --root="$(STAGING_DIR_HOSTPKG)")
+	$(call Build/Compile/HostPy3Mod,,install --prefix="" --root="$(STAGING_DIR_HOSTPKG)")
+endef
+
+Host/Install:=
+
+$(eval $(call HostBuild))
 
 $(eval $(call PyPackage,python-ply))
 $(eval $(call BuildPackage,python-ply))
