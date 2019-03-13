@@ -25,16 +25,3 @@
    ])
  
    PHP_NEW_EXTENSION(fileinfo, fileinfo.c $libmagic_sources, $ext_shared,,-I@ext_srcdir@/libmagic)
---- a/ext/opcache/config.m4
-+++ b/ext/opcache/config.m4
-@@ -232,6 +232,10 @@ int main() {
- flock_type=unknown
- AC_MSG_CHECKING(for struct flock layout)
- 
-+dnl cross-compiling for Linux
-+flock_type=linux
-+AC_DEFINE([HAVE_FLOCK_LINUX], [], [Struct flock is Linux-type])
-+
- if test "$flock_type" = "unknown"; then
- AC_TRY_RUN([
-   #include <fcntl.h>
