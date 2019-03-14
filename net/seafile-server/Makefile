@@ -9,13 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
 PKG_VERSION:=6.3.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/haiwen/seafile-server/tar.gz/v$(PKG_VERSION)-server?
 PKG_HASH:=1ba4c641bad8d7592fd2592827e81470c88b8e802707d2b1e6d551c16d0da100
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-server
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -37,7 +38,6 @@ define Package/seafile-server
     SECTION:=net
     CATEGORY:=Network
     TITLE:=Seafile server
-    MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
     URL:=https://seafile.com/
     DEPENDS:=+libarchive +libopenssl +glib2 +libsearpc +seafile-ccnet +seafile-seahub +sqlite3-cli +python-mysql +python-urllib3 \
 		+jansson +libevent2 +libevent2-openssl +zlib +libzdb +libsqlite3 +libmysqlclient \
