@@ -11,7 +11,7 @@
  check_PROGRAMS = testupnpdescgen
 --- a/configure.ac
 +++ b/configure.ac
-@@ -644,6 +644,8 @@ case "$target_os" in
+@@ -647,6 +647,8 @@ case "$target_os" in
  esac
  
  
