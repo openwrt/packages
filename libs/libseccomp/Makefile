@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libseccomp
-PKG_VERSION:=2.3.3
+PKG_VERSION:=2.4.0
 PKG_RELEASE:=1
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/seccomp/libseccomp/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=7fc28f4294cc72e61c529bedf97e705c3acf9c479a8f1a3028d4cd2ca9f3b155
+PKG_HASH:=2e74c7e8b54b340ad5d472e59286c6758e1e1e96c6b43c3dbdc8ddafbf0e525d
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <nmav@gnutls.org>
 
 PKG_BUILD_PARALLEL:=1
@@ -49,6 +49,12 @@ $(call Package/libseccomp/Default)
   DEPENDS+=
 endef
 
+define Package/scmp_sys_resolver
+$(call Package/libseccomp/Default)
+  TITLE+= scmp_sys_resolver
+  DEPENDS+= libseccomp
+endef
+
 define Package/libseccomp/description
  This package contains the seccomp library.
 endef
@@ -71,4 +77,10 @@ define Package/libseccomp/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libseccomp.so.* $(1)/usr/lib/
 endef
 
+define Package/scmp_sys_resolver/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/scmp_sys_resolver $(1)/usr/bin/
+endef
+
 $(eval $(call BuildPackage,libseccomp))
+$(eval $(call BuildPackage,scmp_sys_resolver))
