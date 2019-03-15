@@ -13,6 +13,7 @@ PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
 PKG_LICENSE:=PHPv3.01
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:php:php
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.php.net/distributions/
