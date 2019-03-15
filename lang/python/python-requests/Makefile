@@ -25,11 +25,11 @@ include ../python3-package.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
-define Package/python-requests/Defaults
+define Package/python-requests/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>, Alexandru Ardelean <ardeleanalex@gmail.com>
+  MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>, Alexandru Ardelean <ardeleanalex@gmail.com>
   URL:=http://python-requests.org/
 endef
 
@@ -49,11 +49,11 @@ define Package/python3-requests
 $(call Package/python-requests/Default)
   TITLE:=HTTP library for Python3
   DEPENDS:= \
-	  +PACKAGE_python3-requests:python3-light  \
-	  +PACKAGE_python3-requests:python3-chardet  \
-	  +PACKAGE_python3-requests:python3-idna  \
-	  +PACKAGE_python3-requests:python3-urllib3  \
-	  +PACKAGE_python3-requests:python3-certifi
+	  +python3-light  \
+	  +python3-chardet  \
+	  +python3-idna  \
+	  +python3-urllib3  \
+	  +python3-certifi
   VARIANT:=python3
 endef
 

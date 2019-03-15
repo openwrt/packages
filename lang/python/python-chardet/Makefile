@@ -23,7 +23,7 @@ include ../python3-package.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
-define Package/python-chardet/Defaults
+define Package/python-chardet/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
