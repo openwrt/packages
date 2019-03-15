@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=open-vm-tools
 PKG_VERSION:=10.3.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-10430147.tar.gz
 PKG_SOURCE_URL:=https://github.com/vmware/open-vm-tools/releases/download/stable-$(PKG_VERSION)
@@ -56,7 +56,8 @@ CONFIGURE_ARGS+= \
 	--without-x \
 	--without-gtk2 \
 	--without-gtk3 \
-	--without-xerces
+	--without-xerces \
+	--enable-resolutionkms=no
 
 
 define Package/open-vm-tools/install
@@ -92,7 +93,6 @@ define Package/open-vm-tools/install
 	$(INSTALL_DIR) $(1)/usr/lib/open-vm-tools/plugins/vmsvc/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/open-vm-tools/plugins/vmsvc/libguestInfo.so $(1)/usr/lib/open-vm-tools/plugins/vmsvc/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/open-vm-tools/plugins/vmsvc/libpowerOps.so $(1)/usr/lib/open-vm-tools/plugins/vmsvc/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/open-vm-tools/plugins/vmsvc/libresolutionKMS.so $(1)/usr/lib/open-vm-tools/plugins/vmsvc/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/open-vm-tools/plugins/vmsvc/libtimeSync.so $(1)/usr/lib/open-vm-tools/plugins/vmsvc/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/open-vm-tools/plugins/vmsvc/libvmbackup.so $(1)/usr/lib/open-vm-tools/plugins/vmsvc/
 
