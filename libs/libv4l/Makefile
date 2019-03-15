@@ -76,6 +76,7 @@ TARGET_CFLAGS += -flto
 TARGET_LDFLAGS += -largp -Wl,--gc-sections
 
 CONFIGURE_ARGS+= \
+	--disable-bpf \
 	--disable-doxygen-doc \
 	--disable-libdvbv5 \
 	--disable-qv4l2 \
