@@ -6,11 +6,14 @@ Subject: [PATCH] bpo-30008: SSL module: emulate tls methods
 OpenSSL 1.1 compatility: emulate version specific TLS methods with
 SSL_CTX_set_min/max_proto_version().
 ---
- .../2018-02-25-20-05-51.bpo-30008.6Bmyhr.rst       |   4 +
- Modules/_ssl.c                                     | 134 ++++++++++++++++-----
+ .../2018-02-25-20-05-51.bpo-30008.6Bmyhr.rst  |   4 +
+ Modules/_ssl.c                                | 134 ++++++++++++++----
  2 files changed, 108 insertions(+), 30 deletions(-)
  create mode 100644 Misc/NEWS.d/next/Library/2018-02-25-20-05-51.bpo-30008.6Bmyhr.rst
 
+diff --git a/Misc/NEWS.d/next/Library/2018-02-25-20-05-51.bpo-30008.6Bmyhr.rst b/Misc/NEWS.d/next/Library/2018-02-25-20-05-51.bpo-30008.6Bmyhr.rst
+new file mode 100644
+index 000000000000..e0a08464a1e1
 --- /dev/null
 +++ b/Misc/NEWS.d/next/Library/2018-02-25-20-05-51.bpo-30008.6Bmyhr.rst
 @@ -0,0 +1,4 @@
@@ -18,6 +21,8 @@ SSL_CTX_set_min/max_proto_version().
 +1.1.0. The version specific TLS methods are emulated with TLS_method() plus
 +SSL_CTX_set_min/max_proto_version(). Pseudo random numbers are generated
 +with RAND_bytes().
+diff --git a/Modules/_ssl.c b/Modules/_ssl.c
+index f50823e6947a..827026e3bf5c 100644
 --- a/Modules/_ssl.c
 +++ b/Modules/_ssl.c
 @@ -45,14 +45,6 @@ static PySocketModule_APIObject PySocketModule;
@@ -43,6 +48,15 @@ SSL_CTX_set_min/max_proto_version().
  #define TLS_method SSLv23_method
  #define TLS_client_method SSLv23_client_method
  #define TLS_server_method SSLv23_server_method
+@@ -866,7 +859,7 @@ _ssl_configure_hostname(PySSLSocket *self, const char* server_hostname)
+                 goto error;
+             }
+         } else {
+-            if (!X509_VERIFY_PARAM_set1_ip(param, ASN1_STRING_data(ip),
++            if (!X509_VERIFY_PARAM_set1_ip(param, ASN1_STRING_get0_data(ip),
+                                            ASN1_STRING_length(ip))) {
+                 _setSSLError(NULL, 0, __FILE__, __LINE__);
+                 goto error;
 @@ -1319,8 +1312,9 @@ _get_peer_alt_names (X509 *certificate) {
                      goto fail;
                  }
@@ -55,7 +69,14 @@ SSL_CTX_set_min/max_proto_version().
                  if (v == NULL) {
                      Py_DECREF(t);
                      goto fail;
-@@ -2959,38 +2953,118 @@ _ssl__SSLContext_impl(PyTypeObject *type, int proto_version)
+@@ -2953,44 +2947,124 @@ _ssl__SSLContext_impl(PyTypeObject *type, int proto_version)
+     long options;
+     SSL_CTX *ctx = NULL;
+     X509_VERIFY_PARAM *params;
+-    int result;
++    int result = 0;
+ #if defined(SSL_MODE_RELEASE_BUFFERS)
+     unsigned long libver;
  #endif
  
      PySSL_BEGIN_ALLOW_THREADS
@@ -63,8 +84,8 @@ SSL_CTX_set_min/max_proto_version().
 +    switch (proto_version) {
 +#if OPENSSL_VERSION_NUMBER <= 0x10100000L
 +    /* OpenSSL < 1.1.0 or not LibreSSL
-+    * Use old-style methods for OpenSSL 1.0.2
-+    */
++     * Use old-style methods for OpenSSL 1.0.2
++     */
 +#if defined(SSL2_VERSION) && !defined(OPENSSL_NO_SSL2)
 +    case PY_SSL_VERSION_SSL2:
 +        ctx = SSL_CTX_new(SSLv2_method());
@@ -98,9 +119,9 @@ SSL_CTX_set_min/max_proto_version().
 -        ctx = SSL_CTX_new(SSLv3_method());
 +#else
 +    /* OpenSSL >= 1.1 or LibreSSL
-+    * create context with TLS_method for all protocols
-+    * no SSLv2_method in OpenSSL 1.1.
-+    */
++     * create context with TLS_method for all protocols
++     * no SSLv2_method in OpenSSL 1.1.
++     */
 +#if defined(SSL3_VERSION) && !defined(OPENSSL_NO_SSL3)
 +    case PY_SSL_VERSION_SSL3:
 +        ctx = SSL_CTX_new(TLS_method());
@@ -190,4 +211,13 @@ SSL_CTX_set_min/max_proto_version().
 +    else if (ctx == NULL) {
          _setSSLError(NULL, 0, __FILE__, __LINE__);
          return NULL;
+     }
+@@ -5095,7 +5169,7 @@ PySSL_RAND(int len, int pseudo)
+     if (bytes == NULL)
+         return NULL;
+     if (pseudo) {
+-        ok = RAND_pseudo_bytes((unsigned char*)PyBytes_AS_STRING(bytes), len);
++        ok = RAND_bytes((unsigned char*)PyBytes_AS_STRING(bytes), len);
+         if (ok == 0 || ok == 1)
+             return Py_BuildValue("NO", bytes, ok == 1 ? Py_True : Py_False);
      }

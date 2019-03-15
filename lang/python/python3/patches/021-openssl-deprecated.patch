@@ -48,15 +48,6 @@
  
  static int X509_NAME_ENTRY_set(const X509_NAME_ENTRY *ne)
  {
-@@ -859,7 +865,7 @@ _ssl_configure_hostname(PySSLSocket *self, const char* server_hostname)
-                 goto error;
-             }
-         } else {
--            if (!X509_VERIFY_PARAM_set1_ip(param, ASN1_STRING_data(ip),
-+            if (!X509_VERIFY_PARAM_set1_ip(param, ASN1_STRING_get0_data(ip),
-                                            ASN1_STRING_length(ip))) {
-                 _setSSLError(NULL, 0, __FILE__, __LINE__);
-                 goto error;
 @@ -1624,7 +1630,7 @@ _decode_certificate(X509 *certificate) {
      Py_DECREF(sn_obj);
  
@@ -84,16 +75,7 @@
      if (!(libver >= 0x10001000UL && libver < 0x1000108fUL) &&
          !(libver >= 0x10000000UL && libver < 0x100000dfUL)) {
          SSL_CTX_set_mode(self->ctx, SSL_MODE_RELEASE_BUFFERS);
-@@ -5159,7 +5175,7 @@ PySSL_RAND(int len, int pseudo)
-     if (bytes == NULL)
-         return NULL;
-     if (pseudo) {
--        ok = RAND_pseudo_bytes((unsigned char*)PyBytes_AS_STRING(bytes), len);
-+        ok = RAND_bytes((unsigned char*)PyBytes_AS_STRING(bytes), len);
-         if (ok == 0 || ok == 1)
-             return Py_BuildValue("NO", bytes, ok == 1 ? Py_True : Py_False);
-     }
-@@ -6176,10 +6192,10 @@ PyInit__ssl(void)
+@@ -6186,10 +6192,10 @@ PyInit__ssl(void)
          return NULL;
  
      /* OpenSSL version */
