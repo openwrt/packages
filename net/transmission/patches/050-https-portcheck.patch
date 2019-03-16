@@ -1,9 +1,9 @@
-From 6de0a3d7a3cd0b2ca6d1b33b5d4d7f44908c1ac3 Mon Sep 17 00:00:00 2001
+From a2991e22434352a3114bf437674070a135b723fd Mon Sep 17 00:00:00 2001
 From: Rosen Penev <rosenp@gmail.com>
-Date: Thu, 1 Mar 2018 11:21:43 -0800
-Subject: [PATCH] portcheck: Switch to HTTPS.
+Date: Sun, 27 May 2018 13:38:27 -0700
+Subject: [PATCH] portcheck: Switch to HTTPS
 
-Useful for OpenWrt.
+Useful for testing TLS verification.
 ---
  libtransmission/rpcimpl.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
@@ -22,5 +22,5 @@ index 46fd3192c..dcd96df59 100644
    tr_free (url);
    return NULL;
 -- 
-2.14.3
+2.17.0
 

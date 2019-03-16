@@ -111,7 +111,6 @@ transmission() {
 	cmdline="transmission-daemon -g $config_dir -f"
 	procd_open_instance
 	procd_set_param command $cmdline
-	procd_set_param env CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 	procd_set_param user $user
 	procd_set_param group $group
 	procd_set_param nice $nice
@@ -134,4 +133,3 @@ start_service() {
 	config_load 'transmission'
 	config_foreach transmission 'transmission'
 }
-
