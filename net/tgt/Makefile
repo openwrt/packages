@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tgt
 PKG_VERSION:=1.0.75
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/fujita/tgt/tar.gz/v$(PKG_VERSION)?
@@ -48,8 +48,8 @@ endef
 
 define Package/tgt/install
 	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d $(1)/usr/sbin
-	$(INSTALL_DATA) ./files/tgt.config $(1)/etc/config/
-	$(INSTALL_BIN) ./files/tgt.init $(1)/etc/init.d/
+	$(INSTALL_DATA) ./files/tgt.config $(1)/etc/config/tgt
+	$(INSTALL_BIN) ./files/tgt.init $(1)/etc/init.d/tgt
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/tgtd $(PKG_INSTALL_DIR)/usr/sbin/tgtadm $(1)/usr/sbin/
 endef
 
