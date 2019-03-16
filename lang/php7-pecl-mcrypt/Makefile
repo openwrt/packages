@@ -8,9 +8,9 @@ include $(TOPDIR)/rules.mk
 PECL_NAME:=mcrypt
 PECL_LONGNAME:=Bindings for the libmcrypt library
 
-PKG_VERSION:=1.0.1
+PKG_VERSION:=1.0.2
 PKG_RELEASE:=1
-PKG_HASH:=a3b0e5493b5cd209ab780ee54733667293d369e6b7052b4a7dab9dd0def46ac6
+PKG_HASH:=4d21dd20bfdc3cf4d43c967abdd137224f9c56258ca28ee0bc66ce130e01cae4
 
 PKG_NAME:=php7-pecl-mcrypt
 PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz
