@@ -48,9 +48,43 @@ struct sk_buff *skb_checksum_trimmed(struct sk_buff *skb,
 				     unsigned int transport_len,
 				     __sum16(*skb_chkf)(struct sk_buff *skb));
 
-int ip_mc_check_igmp(struct sk_buff *skb, struct sk_buff **skb_trimmed);
+int ip_mc_check_igmp(struct sk_buff *skb);
+int ipv6_mc_check_mld(struct sk_buff *skb);
 
-int ipv6_mc_check_mld(struct sk_buff *skb, struct sk_buff **skb_trimmed);
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(5, 1, 0)
+
+#include_next <linux/igmp.h>
+#include_next <net/addrconf.h>
+
+static inline int batadv_ipv6_mc_check_mld1(struct sk_buff *skb)
+{
+	return ipv6_mc_check_mld(skb, NULL);
+}
+
+static inline int batadv_ipv6_mc_check_mld2(struct sk_buff *skb,
+					    struct sk_buff **skb_trimmed)
+{
+	return ipv6_mc_check_mld(skb, skb_trimmed);
+}
+
+#define ipv6_mc_check_mld_get(_1, _2, ipv6_mc_check_mld_name, ...) ipv6_mc_check_mld_name
+#define ipv6_mc_check_mld(...) \
+	ipv6_mc_check_mld_get(__VA_ARGS__, batadv_ipv6_mc_check_mld2, batadv_ipv6_mc_check_mld1)(__VA_ARGS__)
+
+static inline int batadv_ip_mc_check_igmp1(struct sk_buff *skb)
+{
+	return ip_mc_check_igmp(skb, NULL);
+}
+
+static inline int batadv_ip_mc_check_igmp2(struct sk_buff *skb,
+					   struct sk_buff **skb_trimmed)
+{
+	return ip_mc_check_igmp(skb, skb_trimmed);
+}
+
+#define ip_mc_check_igmp_get(_1, _2, ip_mc_check_igmp_name, ...) ip_mc_check_igmp_name
+#define ip_mc_check_igmp(...) \
+	ip_mc_check_igmp_get(__VA_ARGS__, batadv_ip_mc_check_igmp2, batadv_ip_mc_check_igmp1)(__VA_ARGS__)
 
 #endif /* < KERNEL_VERSION(4, 2, 0) */
 
