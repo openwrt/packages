@@ -30,12 +30,24 @@ define Package/batctl/Default
   MAINTAINER:=Simon Wunderlich <sw@simonwunderlich.de>
 endef
 
+define Package/batctl/description
+batctl is a more intuitive managment utility for B.A.T.M.A.N.-Advanced.
+It is an easier method for configuring batman-adv and provides some
+additional tools for debugging as well. This package builds
+version $(PKG_VERSION) of the user space utility.
+endef
+
 define Package/batctl-tiny
 $(call Package/batctl/Default)
   TITLE:=B.A.T.M.A.N. Advanced user space configuration tool (Minimal)
   VARIANT:=tiny
   PROVIDES:=batctl
   ALTERNATIVES:=100:/usr/sbin/batctl:/usr/libexec/batctl-tiny
+endef
+
+define Package/batctl-tiny/description
+$(Package/batctl/description)
+Only configuration relevant subcommands are enabled.
 endef
 
 define Package/batctl-default
@@ -45,6 +57,11 @@ $(call Package/batctl/Default)
   ALTERNATIVES:=200:/usr/sbin/batctl:/usr/libexec/batctl-default
 endef
 
+define Package/batctl-default/description
+$(Package/batctl/description)
+Standard subcommands for configuration and online debugging are enabled.
+endef
+
 define Package/batctl-full
 $(call Package/batctl/Default)
   TITLE:=B.A.T.M.A.N. Advanced user space configuration tool (Full)
@@ -52,11 +69,9 @@ $(call Package/batctl/Default)
   ALTERNATIVES:=300:/usr/sbin/batctl:/usr/libexec/batctl-full
 endef
 
-define Package/batctl/description
-batctl is a more intuitive managment utility for B.A.T.M.A.N.-Advanced.
-It is an easier method for configuring batman-adv and provides some
-additional tools for debugging as well. This package builds
-version $(PKG_VERSION) of the user space utility.
+define Package/batctl-full/description
+$(Package/batctl/description)
+Subcommands for configuration, online and offline debugging are enabled.
 endef
 
 # The linker can identify unused sections of a binary when each symbol is stored
