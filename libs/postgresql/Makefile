@@ -22,7 +22,6 @@ PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
 PKG_MACRO_PATHS:=config
 PKG_BUILD_DEPENDS:=readline/host postgresql/host
-HOST_BUILD_DEPENDS:=zlib/host
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/host-build.mk
