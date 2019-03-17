@@ -9,9 +9,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batctl
 
-PKG_VERSION:=2019.0
-PKG_RELEASE:=2
-PKG_HASH:=997721096ff396644e8d697ea7651e9d38243faf317bcea2661d4139ff58b531
+PKG_VERSION:=2019.1
+PKG_RELEASE:=0
+PKG_HASH:=e82d05f058d8b799d17ce6063e1bf5b83ef1fe42a0867b3e2e39545177469793
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -122,6 +122,7 @@ config-n := \
 	log \
 	loglevel \
 	mcast_flags \
+	multicast_forceflood \
 	multicast_mode \
 	nc_nodes \
 	neighbors \
@@ -150,6 +151,7 @@ config-settings := \
 	interface \
 	isolation_mark \
 	loglevel \
+	multicast_forceflood \
 	multicast_mode \
 	network_coding \
 	orig_interval \
