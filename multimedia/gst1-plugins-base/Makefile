@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-base
 PKG_VERSION:=1.15.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
 		Ted Hess <thess@kitschensync.net>
@@ -40,6 +40,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_libgst1app \
 
 PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -117,6 +118,15 @@ GST_VERSION:=1.0
 CONFIGURE_ARGS += \
 	--disable-debug \
 	--disable-examples \
+	--disable-fatal-warnings \
+	--disable-glib-asserts \
+	--disable-gobject-cast-checks \
+	--disable-gtk-doc-html \
+	--disable-introspection \
+	--disable-rpath \
+	--disable-valgrind \
+	--without-html-dir \
+	--with-pic \
 	\
 	$(call GST_COND_SELECT,alsa) \
 	$(call GST_COND_SELECT,app) \
@@ -125,7 +135,6 @@ CONFIGURE_ARGS += \
 	$(call GST_COND_SELECT,audioresample) \
 	$(call GST_COND_SELECT,audiotestsrc) \
 	--disable-cdparanoia \
-	--disable-freetypetest \
 	$(call GST_COND_SELECT,gio) \
 	--disable-libvisual \
 	$(call GST_COND_SELECT,ogg) \
@@ -145,15 +154,8 @@ CONFIGURE_ARGS += \
 	\
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
-	--without-x \
 	\
 	--with-audioresample-format=int \
-
-TARGET_CFLAGS += -Wno-format-nonliteral
-
-EXTRA_LDFLAGS+= \
-	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib \
-	$(if $(ICONV_FULL),-liconv) \
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/gstreamer-$(GST_VERSION)
