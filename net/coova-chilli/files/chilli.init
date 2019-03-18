@@ -32,7 +32,15 @@ option_cb() {
 			[ "$(config_get_bool "$1")" = "1" ] && eval "start_chilli_$chilli_inst=0"
 			;;
 		# boolean settings
-		debug|dhcpbroadcast|nodynip|vlanlocation|locationstopstart|locationcopycalled|locationimmediateupdate|locationopt82|coanoipcheck|noradallow|proxymacaccept|proxyonacct|dhcpmacset|dhcpradius|noc2c|eapolenable|uamanydns|uamanyip|uamnatanyip|nouamsuccess|nowispr1|nowispr2|domaindnslocal|radsec|macauth|macreauth|macauthdeny|macallowlocal|strictmacauth|strictdhcp|ieee8021q|only8021q|radiusoriginalurl|swapoctets|statusfilesave|wpaguests|openidauth|papalwaysok|mschapv2|chillixml|acctupdate|dnsparanoia|seskeepalive|usetap|noarpentries|framedservice|scalewin|redir|injectwispr|redirurl|routeonetone|nousergardendata|uamgardendata|uamotherdata|withunixipc|uamallowpost|redirssl|uamuissl|layer3|patricia|redirdnsreq|dhcpnotidle|ipv6|ipv6only)
+		debug|dhcpbroadcast|nodynip|vlanlocation|locationstopstart|locationcopycalled|\
+		locationimmediateupdate|locationopt82|coanoipcheck|noradallow|proxymacaccept|\
+		proxyonacct|dhcpmacset|dhcpradius|noc2c|eapolenable|uamanydns|uamanyip|uamnatanyip|\
+		nouamsuccess|nowispr1|nowispr2|domaindnslocal|radsec|macauth|macreauth|macauthdeny|\
+		macallowlocal|strictmacauth|strictdhcp|ieee8021q|only8021q|radiusoriginalurl|swapoctets|\
+		statusfilesave|wpaguests|openidauth|papalwaysok|mschapv2|chillixml|acctupdate|dnsparanoia|\
+		seskeepalive|usetap|noarpentries|framedservice|scalewin|redir|injectwispr|redirurl|\
+		routeonetone|nousergardendata|uamgardendata|uamotherdata|withunixipc|uamallowpost|redirssl|\
+		uamuissl|layer3|patricia|redirdnsreq|dhcpnotidle|ipv6|ipv6only)
 			[ "$2" = "true" -o "$2" = "1" ] && echo "$1" >> "$chilli_conf"
 			;;
 		*)
@@ -50,7 +58,12 @@ start_chilli() {
 	procd_open_instance "$cfg"
 	procd_set_param command /usr/sbin/chilli
 	procd_set_param file "${base}.conf"
-	procd_append_param command --fg --conf "${base}.conf" --pidfile "${base}.pid" --cmdsocket "${base}.sock" --unixipc "${base}.ipc"
+	procd_append_param command \
+		--fg \
+		--conf "${base}.conf" \
+		--pidfile "${base}.pid" \
+		--cmdsocket "${base}.sock" \
+		--unixipc "${base}.ipc"
 	procd_set_param respawn
 	procd_set_param stdout 1
 	procd_set_param stderr 1
