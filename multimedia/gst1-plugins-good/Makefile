@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-good
 PKG_VERSION:=1.15.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
 		Ted Hess <thess@kitschensync.net>
@@ -27,6 +27,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_gst1-mod-mpg123 \
 
 PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -97,8 +98,15 @@ CONFIGURE_ARGS += \
 	$(call GST_COND_SELECT,lame) \
         $(call GST_COND_SELECT,mpg123) \
 	\
+	--disable-Bsymbolic \
 	--disable-debug \
 	--disable-examples \
+	--disable-fatal-warnings \
+	--disable-glib-asserts \
+	--disable-gobject-cast-checks \
+	--disable-gtk-doc-html \
+	--disable-rpath \
+	--disable-valgrind \
 	\
 	--disable-aalib \
 	--disable-annodex \
@@ -127,16 +135,10 @@ CONFIGURE_ARGS += \
 	--disable-y4m \
 	--disable-zlib \
 	\
+	--without-gudev \
+	--without-libv4l2 \
 	--without-libiconv-prefix \
-	--without-libintl-prefix \
-	--without-x \
-
-TARGET_CFLAGS += -Wno-incompatible-pointer-types
-
-EXTRA_LDFLAGS+= \
-	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib \
-	$(if $(ICONV_FULL),-liconv) \
-
+	--without-libintl-prefix
 
 define Package/gst1-plugins-good/install
 	/bin/true
