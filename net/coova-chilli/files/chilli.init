@@ -26,15 +26,17 @@ option_cb() {
 			echo "dhcpif=\"$ifname\"" >> "$chilli_conf"
 			;;
 		# boolean settings
-		debug|dhcpbroadcast|nodynip|vlanlocation|locationstopstart|locationcopycalled|\
-		locationimmediateupdate|locationopt82|coanoipcheck|noradallow|proxymacaccept|\
-		proxyonacct|dhcpmacset|dhcpradius|noc2c|eapolenable|uamanydns|uamanyip|uamnatanyip|\
-		nouamsuccess|nowispr1|nowispr2|domaindnslocal|radsec|macauth|macreauth|macauthdeny|\
-		macallowlocal|strictmacauth|strictdhcp|ieee8021q|only8021q|radiusoriginalurl|swapoctets|\
-		statusfilesave|wpaguests|openidauth|papalwaysok|mschapv2|chillixml|acctupdate|dnsparanoia|\
-		seskeepalive|usetap|noarpentries|framedservice|scalewin|redir|injectwispr|redirurl|\
-		routeonetone|nousergardendata|uamgardendata|uamotherdata|withunixipc|uamallowpost|redirssl|\
-		uamuissl|layer3|patricia|redirdnsreq|dhcpnotidle|ipv6|ipv6only)
+		acctupdate|chillixml|coanoipcheck|debug|dhcpbroadcast|dhcpmacset|dhcpnotidle|\
+		dhcpradius|dnsparanoia|domaindnslocal|eapolenable|fg|forgiving|framedservice|\
+		ieee8021q|injectwispr|ipv6|ipv6only|layer3|locationcopycalled|\
+		locationimmediateupdate|locationopt82|locationstopstart|macallowlocal|\
+		macauth|macauthdeny|macreauth|mmapring|mschapv2|noarpentries|noc2c|nochallenge|\
+		nodynip|noradallow|nosystemdns|nouamsuccess|nousergardendata|nowispr1|nowispr2|\
+		only8021q|openidauth|papalwaysok|patricia|postauthproxyssl|proxymacaccept|\
+		proxyonacct|radiusoriginalurl|radsec|redir|redirdnsreq|redirssl|redirurl|reload|\
+		routeonetone|scalewin|seskeepalive|statusfilesave|strictdhcp|strictmacauth|\
+		swapoctets|uamallowpost|uamanydns|uamanyip|uamauthedallowed|uamgardendata|\
+		uamnatanyip|uamotherdata|uamuissl|usetap|vlanlocation|wpaguests)
 			[ "$2" = "true" -o "$2" = "1" ] && echo "$1" >> "$chilli_conf"
 			;;
 		*)
