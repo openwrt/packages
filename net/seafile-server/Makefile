@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
 PKG_VERSION:=6.3.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -24,6 +24,15 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 include ../../lang/python/python-package.mk
 
+# Check that the actual Makefile version-relase match the above.
+$(eval $(shell awk '/^PKG_VERSION.*=/ { print "SEAHUB_" $$$$0 }' ../seafile-seahub/Makefile))
+ifneq ($(PKG_VERSION),$(SEAHUB_PKG_VERSION))
+    $(error $(if $(SEAHUB_PKG_VERSION), \
+		Version mismatch between seafile-seahub ($(SEAHUB_PKG_VERSION)) and \
+		seafile-server ($(PKG_VERSION)), \
+		Could not get PKG_VERSION from seafile-seahub Makefile))
+endif
+
 define Package/seafile-server
     SECTION:=net
     CATEGORY:=Network
@@ -33,7 +42,6 @@ define Package/seafile-server
     DEPENDS:=+libarchive +libopenssl +glib2 +libsearpc +seafile-ccnet +seafile-seahub +sqlite3-cli +python-mysql +python-urllib3 \
 		+jansson +libevent2 +libevent2-openssl +zlib +libzdb +libsqlite3 +libmysqlclient \
 		+libpthread +libuuid +bash +procps-ng +procps-ng-pkill +SEAFILE_FUSE_SUPPORT:libfuse $(ICONV_DEPENDS)
-    EXTRA_DEPENDS:=seafile-seahub (=6.3.4-1)
     MENU:=1
 endef
 
@@ -45,11 +53,7 @@ define Package/seafile-server/description
    Open source cloud storage with advanced features on privacy protection and teamwork.
 endef
 
-CONFIGURE_ARGS += --disable-client \
-		    --enable-server \
-		    --enable-python \
-		    --disable-static-build \
-		    --disable-server-pkg
+CONFIGURE_ARGS += --enable-python
 
 ifeq ($(CONFIG_SEAFILE_FUSE_SUPPORT),y)
 	CONFIGURE_ARGS += --enable-fuse
@@ -62,12 +66,6 @@ ifeq ($(CONFIG_SEAFILE_CONSOLE_SUPPORT),y)
 	CONFIGURE_ARGS += --enable-console
 else
 	CONFIGURE_ARGS += --disable-console
-endif
-
-ifeq ($(CONFIG_SEAFILE_RIAK_SUPPORT),y)
-	CONFIGURE_ARGS += --enable-riak
-else
-	CONFIGURE_ARGS += --disable-riak
 endif
 
 PKG_BUILD_DEPENDS:=vala/host libevhtp
