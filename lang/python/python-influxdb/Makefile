@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-influxdb
-PKG_VERSION:=5.2.1
+PKG_VERSION:=5.2.2
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/i/influxdb/
 PKG_SOURCE:=influxdb-$(PKG_VERSION).tar.gz
-PKG_HASH:=75d96de25d0d4e9e66e155f64dc9dc2a48de74ac4e77e3a46ad881fba772e3b6
+PKG_HASH:=afeff28953a91b4ea1aebf9b5b8258a4488d0e49e2471db15ea43fd2c8533143
 PKG_LICENSE:=MIT
 PKG_BUILD_DIR:=$(BUILD_DIR)/influxdb-$(PKG_VERSION)
 
