@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yggdrasil
 PKG_VERSION:=0.3.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://codeload.github.com/yggdrasil-network/yggdrasil-go/tar.gz/v$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -24,7 +24,6 @@ define Package/yggdrasil
 	TITLE:=Yggdrasil supports end-to-end encrypted IPv6 networks
 	URL:=https://yggdrasil-network.github.io/
 	DEPENDS:=$(GO_ARCH_DEPENDS) @IPV6 +kmod-tun +@(mips):KERNEL_MIPS_FPU_EMULATOR
-	PKGARCH:=all
 endef
 
 define Package/yggdrasil/description
