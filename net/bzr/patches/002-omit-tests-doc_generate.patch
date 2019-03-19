@@ -1,0 +1,43 @@
+=== modified file 'bzrlib/builtins.py'
+--- old/bzrlib/builtins.py	2013-05-23 10:04:17 +0000
++++ new/bzrlib/builtins.py	2019-03-17 18:34:54 +0000
+@@ -4136,7 +4136,10 @@
+         # backtraces.
+         lazy_import.disallow_proxying()
+ 
+-        from bzrlib import tests
++        try:
++            from bzrlib import tests
++        except ImportError:
++            raise errors.BzrCommandError("tests not available")
+ 
+         if testspecs_list is not None:
+             pattern = '|'.join(testspecs_list)
+
+=== modified file 'setup.py'
+--- old/setup.py	2014-03-30 17:59:29 +0000
++++ new/setup.py	2019-03-17 18:44:59 +0000
+@@ -65,12 +65,7 @@
+ 
+ PKG_DATA = {# install files from selftest suite
+             'package_data': {'bzrlib': ['doc/api/*.txt',
+-                                        'tests/test_patches_data/*',
+                                         'help_topics/en/*.txt',
+-                                        'tests/ssl_certs/ca.crt',
+-                                        'tests/ssl_certs/server_without_pass.key',
+-                                        'tests/ssl_certs/server_with_pass.key',
+-                                        'tests/ssl_certs/server.crt',
+                                        ]},
+            }
+ I18N_FILES = []
+@@ -96,7 +91,8 @@
+             else:
+                 package_name = ('bzrlib.' +
+                             package_path.replace('/', '.').replace('\\', '.'))
+-            packages.append(package_name)
++            if '.tests' not in package_name and '.doc_generate' not in package_name:
++                packages.append(package_name)
+     return sorted(packages)
+ 
+ 
+

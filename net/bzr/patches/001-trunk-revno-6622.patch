@@ -1,0 +1,819 @@
+=== modified file 'COPYING.txt'
+--- old/COPYING.txt	2006-07-30 16:43:12 +0000
++++ new/COPYING.txt	2019-03-17 17:14:28 +0000
+@@ -1,12 +1,12 @@
+-		    GNU GENERAL PUBLIC LICENSE
+-		       Version 2, June 1991
++                    GNU GENERAL PUBLIC LICENSE
++                       Version 2, June 1991
+ 
+  Copyright (C) 1989, 1991 Free Software Foundation, Inc.,
+  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+  Everyone is permitted to copy and distribute verbatim copies
+  of this license document, but changing it is not allowed.
+ 
+-			    Preamble
++                            Preamble
+ 
+   The licenses for most software are designed to take away your
+ freedom to share and change it.  By contrast, the GNU General Public
+@@ -56,7 +56,7 @@
+   The precise terms and conditions for copying, distribution and
+ modification follow.
+ 
+-		    GNU GENERAL PUBLIC LICENSE
++                    GNU GENERAL PUBLIC LICENSE
+    TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+ 
+   0. This License applies to any program or other work which contains
+@@ -255,7 +255,7 @@
+ of preserving the free status of all derivatives of our free software and
+ of promoting the sharing and reuse of software generally.
+ 
+-			    NO WARRANTY
++                            NO WARRANTY
+ 
+   11. BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+ FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN
+@@ -277,9 +277,9 @@
+ PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGES.
+ 
+-		     END OF TERMS AND CONDITIONS
++                     END OF TERMS AND CONDITIONS
+ 
+-	    How to Apply These Terms to Your New Programs
++            How to Apply These Terms to Your New Programs
+ 
+   If you develop a new program, and you want it to be of the greatest
+ possible use to the public, the best way to achieve this is to make it
+
+=== modified file 'MANIFEST.in'
+--- old/MANIFEST.in	2010-01-13 16:23:07 +0000
++++ new/MANIFEST.in	2019-03-17 17:14:28 +0000
+@@ -1,3 +1,12 @@
+-include bzr README setup.py
++include bzr README setup.py COPYING.txt
++# FIXME: Not needed, remove after 2.7.0 -- vila 2016-02-07
++include BRANCH.TODO bzr.ico INSTALL Makefile MANIFEST.in NEWS profile_imports.py README_BDIST_RPM .rsyncexclude .testr.conf TODO tools/bzr_epydoc tools/packaging/lp-upload-release tools/subunit-sum bzrlib/plugins/news_merge/README bzrlib/plugins/po_merge/README bzrlib/tests/ssl_certs/ca.key bzrlib/tests/ssl_certs/server.csr bzrlib/plugins/grep/.bzrignore bzrlib/plugins/grep/NEWS
++# bzr export still create some empty dirs that need to be removed
++# bzrlib/plugins/weave_fmt/tests/ bzrlib/store/revision/ doc/ja/_templates/ man1/ man1
++recursive-include tools/win32 *
+ recursive-include bzrlib *.py *.pyx *.pxd *.txt *.c *.h
+ recursive-include tools *.py *.sh
++recursive-include apport *
++recursive-include contrib *
++recursive-include doc *
++recursive-include po *
+
+=== modified file 'Makefile'
+--- old/Makefile	2016-02-01 18:09:33 +0000
++++ new/Makefile	2019-03-17 17:14:28 +0000
+@@ -1,4 +1,4 @@
+-# Copyright (C) 2005-2012, 2016 Canonical Ltd
++# Copyright (C) 2005-2012, 2016, 2017 Canonical Ltd
+ #
+ # This program is free software; you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+@@ -148,7 +148,7 @@
+ NEWS_FILES = $(wildcard doc/en/release-notes/bzr-*.txt)
+ 
+ doc/en/user-reference/index.txt: $(MAN_DEPENDENCIES)
+-	$(PYTHON) tools/generate_docs.py -o $@ rstx
++	LANGUAGE=C $(PYTHON) tools/generate_docs.py -o $@ rstx
+ 
+ doc/en/release-notes/index.txt: $(NEWS_FILES) tools/generate_release_notes.py
+ 	$(PYTHON) tools/generate_release_notes.py $@ $(NEWS_FILES)
+@@ -454,9 +454,6 @@
+ .PHONY: dist check-dist-tarball
+ 
+ # build a distribution source tarball
+-#
+-# this method of copying the pyrex generated files is a bit ugly; it would be
+-# nicer to generate it from distutils.
+ dist: 
+ 	version=`./bzr version --short` && \
+ 	echo Building distribution of bzr $$version && \
+@@ -465,10 +462,8 @@
+ 	tarball=$$PWD/../bzr-$$version.tar.gz && \
+ 	$(MAKE) clean && \
+ 	$(MAKE) && \
+-	bzr export $$expdir && \
+-	cp bzrlib/*.c bzrlib/*.h $$expdir/bzrlib/. && \
+-	tar cfz $$tarball -C $$expbasedir bzr-$$version && \
+-	gpg --detach-sign $$tarball && \
++	$(PYTHON) setup.py sdist -d $$PWD/.. && \
++	gpg --detach-sign --armor $$tarball && \
+ 	rm -rf $$expbasedir
+ 
+ # run all tests in a previously built tarball
+
+=== modified file 'bzr'
+--- old/bzr	2013-07-27 12:53:28 +0000
++++ new/bzr	2019-03-17 17:14:28 +0000
+@@ -1,6 +1,6 @@
+ #! /usr/bin/env python
+ 
+-# Copyright (C) 2005-2012 Canonical Ltd
++# Copyright (C) 2005-2013, 2016, 2017 Canonical Ltd
+ #
+ # This program is free software; you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+@@ -25,7 +25,7 @@
+ import warnings
+ 
+ # update this on each release
+-_script_version = (2, 7, 0)
++_script_version = (2, 8, 0)
+ 
+ NEED_VERS = (2, 6)
+ 
+
+=== modified file 'bzrlib/__init__.py'
+--- old/bzrlib/__init__.py	2016-02-01 18:09:33 +0000
++++ new/bzrlib/__init__.py	2019-03-17 17:14:28 +0000
+@@ -1,4 +1,4 @@
+-# Copyright (C) 2005-2013, 2016 Canonical Ltd
++# Copyright (C) 2005-2013, 2016, 2017 Canonical Ltd
+ #
+ # This program is free software; you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+@@ -55,7 +55,7 @@
+ # Python version 2.0 is (2, 0, 0, 'final', 0)."  Additionally we use a
+ # releaselevel of 'dev' for unreleased under-development code.
+ 
+-version_info = (2, 7, 0, 'final', 0)
++version_info = (2, 8, 0, 'dev', 1)
+ 
+ # API compatibility version
+ api_minimum_version = (2, 4, 0)
+
+=== modified file 'bzrlib/annotate.py'
+--- old/bzrlib/annotate.py	2012-06-26 12:14:56 +0000
++++ new/bzrlib/annotate.py	2019-03-17 17:14:28 +0000
+@@ -215,7 +215,7 @@
+             rev = revisions[origin]
+             tz = rev.timezone or 0
+             date_str = time.strftime('%Y%m%d',
+-                                     time.gmtime(rev.timestamp + tz))
++                                     osutils.gmtime(rev.timestamp + tz))
+             # a lazy way to get something like the email address
+             # TODO: Get real email address
+             author = rev.get_apparent_authors()[0]
+
+=== modified file 'bzrlib/crash.py'
+--- old/bzrlib/crash.py	2013-01-30 05:55:38 +0000
++++ new/bzrlib/crash.py	2019-03-17 17:14:28 +0000
+@@ -242,7 +242,7 @@
+         # Windows or if it's manually configured it might need to be created,
+         # and then it should be private
+         os.makedirs(crash_dir, mode=0600)
+-    date_string = time.strftime('%Y-%m-%dT%H:%M', time.gmtime())
++    date_string = time.strftime('%Y-%m-%dT%H:%M', osutils.gmtime())
+     # XXX: getuid doesn't work on win32, but the crash directory is per-user
+     if sys.platform == 'win32':
+         user_part = ''
+
+=== modified file 'bzrlib/doc_generate/autodoc_bash_completion.py'
+--- old/bzrlib/doc_generate/autodoc_bash_completion.py	2011-12-19 13:23:58 +0000
++++ new/bzrlib/doc_generate/autodoc_bash_completion.py	2019-03-17 17:14:28 +0000
+@@ -23,6 +23,7 @@
+ import bzrlib
+ import bzrlib.help
+ import bzrlib.commands
++import bzrlib.osutils
+ 
+ 
+ def get_filename(options):
+@@ -30,8 +31,7 @@
+ 
+ 
+ def infogen(options, outfile):
+-    t = time.time()
+-    tt = time.gmtime(t)
++    tt = bzrlib.osutils.gmtime()
+     params = \
+            { "bzrcmd": options.bzr_name,
+              "datestamp": time.strftime("%Y-%m-%d",tt),
+
+=== modified file 'bzrlib/doc_generate/autodoc_man.py'
+--- old/bzrlib/doc_generate/autodoc_man.py	2015-03-14 23:44:01 +0000
++++ new/bzrlib/doc_generate/autodoc_man.py	2019-03-17 17:14:28 +0000
+@@ -32,6 +32,7 @@
+ import bzrlib.help
+ import bzrlib.help_topics
+ import bzrlib.commands
++import bzrlib.osutils
+ 
+ from bzrlib.plugin import load_plugins
+ load_plugins()
+@@ -44,8 +45,7 @@
+ 
+ def infogen(options, outfile):
+     """Assembles a man page"""
+-    t = time.time()
+-    tt = time.gmtime(t)
++    tt = bzrlib.osutils.gmtime()
+     params = \
+            { "bzrcmd": options.bzr_name,
+              "datestamp": time.strftime("%Y-%m-%d",tt),
+
+=== modified file 'bzrlib/doc_generate/autodoc_rstx.py'
+--- old/bzrlib/doc_generate/autodoc_rstx.py	2015-11-15 02:30:05 +0000
++++ new/bzrlib/doc_generate/autodoc_rstx.py	2019-03-17 17:14:28 +0000
+@@ -38,8 +38,7 @@
+ 
+ def infogen(options, outfile):
+     """Create manual in RSTX format"""
+-    t = time.time()
+-    tt = time.gmtime(t)
++    tt = bzrlib.osutils.gmtime()
+     params = \
+            { "bzrcmd": options.bzr_name,
+              "datestamp": time.strftime("%Y-%m-%d",tt),
+
+=== modified file 'bzrlib/lazy_regex.py'
+--- old/bzrlib/lazy_regex.py	2011-12-19 13:23:58 +0000
++++ new/bzrlib/lazy_regex.py	2019-03-17 17:14:28 +0000
+@@ -1,4 +1,4 @@
+-# Copyright (C) 2006 Canonical Ltd
++# Copyright (C) 2006, 2008-2011, 2017 Canonical Ltd
+ #
+ # This program is free software; you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+@@ -131,3 +131,13 @@
+     raise AssertionError(
+         "re.compile has already been overridden as lazy_compile, but this would" \
+         " cause infinite recursion")
++
++
++# Some libraries calls re.finditer which fails it if receives a LazyRegex.
++if getattr(re, 'finditer', False):
++    def finditer_public(pattern, string, flags=0):
++        if isinstance(pattern, LazyRegex):
++            return pattern.finditer(string)
++        else:
++            return _real_re_compile(pattern, flags).finditer(string)
++    re.finditer = finditer_public
+
+=== modified file 'bzrlib/osutils.py'
+--- old/bzrlib/osutils.py	2013-06-24 12:03:12 +0000
++++ new/bzrlib/osutils.py	2019-03-17 17:14:28 +0000
+@@ -27,6 +27,7 @@
+ from bzrlib.lazy_import import lazy_import
+ lazy_import(globals(), """
+ from datetime import datetime
++from datetime import timedelta
+ import getpass
+ import locale
+ import ntpath
+@@ -827,6 +828,16 @@
+             return True
+ 
+ 
++def gmtime(seconds=None):
++    """Convert seconds since the Epoch to a time tuple expressing UTC (a.k.a.
++    GMT). When 'seconds' is not passed in, convert the current time instead.
++    Handy replacement for time.gmtime() buggy on Windows and 32-bit platforms.
++    """
++    if seconds is None:
++        seconds = time.time()
++    return (datetime(1970, 1, 1) + timedelta(seconds=seconds)).timetuple()
++
++
+ def local_time_offset(t=None):
+     """Return offset of local zone from GMT, either at present or at time t."""
+     if t is None:
+@@ -872,7 +883,7 @@
+     """
+     if offset is None:
+         offset = 0
+-    tt = time.gmtime(t + offset)
++    tt = gmtime(t + offset)
+     date_fmt = _default_format_by_weekday_num[tt[6]]
+     date_str = time.strftime(date_fmt, tt)
+     offset_str = _cache.get(offset, None)
+@@ -904,12 +915,12 @@
+ 
+ def _format_date(t, offset, timezone, date_fmt, show_offset):
+     if timezone == 'utc':
+-        tt = time.gmtime(t)
++        tt = gmtime(t)
+         offset = 0
+     elif timezone == 'original':
+         if offset is None:
+             offset = 0
+-        tt = time.gmtime(t + offset)
++        tt = gmtime(t + offset)
+     elif timezone == 'local':
+         tt = time.localtime(t)
+         offset = local_time_offset(t)
+@@ -925,7 +936,7 @@
+ 
+ 
+ def compact_date(when):
+-    return time.strftime('%Y%m%d%H%M%S', time.gmtime(when))
++    return time.strftime('%Y%m%d%H%M%S', gmtime(when))
+ 
+ 
+ def format_delta(delta):
+
+=== modified file 'bzrlib/plugins/launchpad/lp_propose.py'
+--- old/bzrlib/plugins/launchpad/lp_propose.py	2012-10-22 16:25:40 +0000
++++ new/bzrlib/plugins/launchpad/lp_propose.py	2019-03-17 17:14:28 +0000
+@@ -94,6 +94,8 @@
+ 
+     def get_comment(self, prerequisite_branch):
+         """Determine the initial comment for the merge proposal."""
++        if self.commit_message is not None:
++            return self.commit_message.strip().encode('utf-8')
+         info = ["Source: %s\n" % self.source_branch.lp.bzr_identity]
+         info.append("Target: %s\n" % self.target_branch.lp.bzr_identity)
+         if prerequisite_branch is not None:
+
+=== modified file 'bzrlib/tests/blackbox/test_commit.py'
+--- old/bzrlib/tests/blackbox/test_commit.py	2016-02-01 18:06:32 +0000
++++ new/bzrlib/tests/blackbox/test_commit.py	2019-03-17 17:14:28 +0000
+@@ -713,7 +713,40 @@
+         self.assertEqual(
+             'Sat 2009-10-10 08:00:00 +0100',
+             osutils.format_date(last_rev.timestamp, last_rev.timezone))
+-        
++
++    def test_commit_time_negative_windows(self):
++        tree = self.make_branch_and_tree('tree')
++        self.build_tree(['tree/hello.txt'])
++        tree.add('hello.txt')
++        out, err = self.run_bzr("commit -m hello "
++            "--commit-time='1969-10-10 00:00:00 +0000' tree/hello.txt")
++        last_rev = tree.branch.repository.get_revision(tree.last_revision())
++        self.assertEqual(
++            'Fri 1969-10-10 00:00:00 +0000',
++            osutils.format_date(last_rev.timestamp, last_rev.timezone))
++
++    def test_commit_time_negative_32bit(self):
++        tree = self.make_branch_and_tree('tree')
++        self.build_tree(['tree/hello.txt'])
++        tree.add('hello.txt')
++        out, err = self.run_bzr("commit -m hello "
++            "--commit-time='1900-01-01 00:00:00 +0000' tree/hello.txt")
++        last_rev = tree.branch.repository.get_revision(tree.last_revision())
++        self.assertEqual(
++            'Mon 1900-01-01 00:00:00 +0000',
++            osutils.format_date(last_rev.timestamp, last_rev.timezone))
++
++    def test_commit_time_positive_32bit(self):
++        tree = self.make_branch_and_tree('tree')
++        self.build_tree(['tree/hello.txt'])
++        tree.add('hello.txt')
++        out, err = self.run_bzr("commit -m hello "
++            "--commit-time='2039-01-01 00:00:00 +0000' tree/hello.txt")
++        last_rev = tree.branch.repository.get_revision(tree.last_revision())
++        self.assertEqual(
++            'Sat 2039-01-01 00:00:00 +0000',
++            osutils.format_date(last_rev.timestamp, last_rev.timezone))
++
+     def test_commit_time_bad_time(self):
+         tree = self.make_branch_and_tree('tree')
+         self.build_tree(['tree/hello.txt'])
+
+=== modified file 'bzrlib/tests/test_diff.py'
+--- old/bzrlib/tests/test_diff.py	2016-02-01 18:06:32 +0000
++++ new/bzrlib/tests/test_diff.py	2019-03-17 17:14:28 +0000
+@@ -1,4 +1,4 @@
+-# Copyright (C) 2005-2012, 2014, 2016 Canonical Ltd
++# Copyright (C) 2005-2012, 2014, 2016, 2017 Canonical Ltd
+ #
+ # This program is free software; you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+@@ -313,8 +313,6 @@
+         pipe = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                      stdin=subprocess.PIPE)
+         out, err = pipe.communicate()
+-        # Diff returns '2' on Binary files.
+-        self.assertEqual(2, pipe.returncode)
+         # We should output whatever diff tells us, plus a trailing newline
+         self.assertEqual(out.splitlines(True) + ['\n'], lines)
+ 
+
+=== modified file 'bzrlib/tests/test_http.py'
+--- old/bzrlib/tests/test_http.py	2016-02-01 18:06:32 +0000
++++ new/bzrlib/tests/test_http.py	2019-03-17 17:14:28 +0000
+@@ -1,4 +1,4 @@
+-# Copyright (C) 2005-2012, 2015, 2016 Canonical Ltd
++# Copyright (C) 2005-2012, 2015, 2016, 2017 Canonical Ltd
+ #
+ # This program is free software; you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+@@ -260,6 +260,16 @@
+         self.assertEqual('basic', scheme)
+         self.assertEqual('realm="Thou should not pass"', remainder)
+ 
++    def test_build_basic_header_with_long_creds(self):
++        handler = _urllib2_wrappers.BasicAuthHandler()
++        user = 'user' * 10  # length 40
++        password = 'password' * 5  # length 40
++        header = handler.build_auth_header(
++            dict(user=user, password=password), None)
++        # https://bugs.launchpad.net/bzr/+bug/1606203 was caused by incorrectly
++        # creating a header value with an embedded '\n'
++        self.assertFalse('\n' in header)
++
+     def test_basic_extract_realm(self):
+         scheme, remainder = self.parse_header(
+             'Basic realm="Thou should not pass"',
+@@ -1273,6 +1283,8 @@
+             self.no_proxy_host = self.server_host_port
+         # The secondary server is the proxy
+         self.proxy_url = self.get_secondary_url()
++        if self._testing_pycurl():
++            self.proxy_url = self.proxy_url.replace('+pycurl', '')
+ 
+     def _testing_pycurl(self):
+         # TODO: This is duplicated for lots of the classes in this file
+@@ -1853,7 +1865,10 @@
+                                   ])
+ 
+     def get_user_transport(self, user, password):
+-        self.overrideEnv('all_proxy', self.get_user_url(user, password))
++        proxy_url = self.get_user_url(user, password)
++        if self._testing_pycurl():
++            proxy_url = proxy_url.replace('+pycurl', '')
++        self.overrideEnv('all_proxy', proxy_url)
+         return TestAuth.get_user_transport(self, user, password)
+ 
+     def test_empty_pass(self):
+
+=== modified file 'bzrlib/timestamp.py'
+--- old/bzrlib/timestamp.py	2011-12-18 15:28:38 +0000
++++ new/bzrlib/timestamp.py	2019-03-17 17:14:28 +0000
+@@ -57,7 +57,7 @@
+     # revision XML entry will be reproduced faithfully.
+     if offset is None:
+         offset = 0
+-    tt = time.gmtime(t + offset)
++    tt = osutils.gmtime(t + offset)
+ 
+     return (osutils.weekdays[tt[6]] +
+             time.strftime(" %Y-%m-%d %H:%M:%S", tt)
+@@ -119,10 +119,6 @@
+     # give the epoch in utc
+     if secs == 0:
+         offset = 0
+-    if secs + offset < 0:
+-        from warnings import warn
+-        warn("gmtime of negative time (%s, %s) may not work on Windows" %
+-                (secs, offset))
+     return osutils.format_date(secs, offset=offset,
+             date_fmt='%Y-%m-%d %H:%M:%S')
+ 
+
+=== modified file 'bzrlib/transport/http/_pycurl.py'
+--- old/bzrlib/transport/http/_pycurl.py	2011-12-19 13:23:58 +0000
++++ new/bzrlib/transport/http/_pycurl.py	2019-03-17 17:14:28 +0000
+@@ -1,4 +1,4 @@
+-# Copyright (C) 2006-2010 Canonical Ltd
++# Copyright (C) 2006-2011, 2017 Canonical Ltd
+ #
+ # This program is free software; you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+@@ -85,6 +85,9 @@
+     """
+     return pycurl.__dict__.get(symbol, default)
+ 
++# Yes, weird but returned on weird http error (invalid status line)
++CURLE_FTP_WEIRD_SERVER_REPLY = _get_pycurl_errcode(
++    'E_FTP_WEIRD_SERVER_REPLY', 8)
+ CURLE_COULDNT_CONNECT = _get_pycurl_errcode('E_COULDNT_CONNECT', 7)
+ CURLE_COULDNT_RESOLVE_HOST = _get_pycurl_errcode('E_COULDNT_RESOLVE_HOST', 6)
+ CURLE_COULDNT_RESOLVE_PROXY = _get_pycurl_errcode('E_COULDNT_RESOLVE_PROXY', 5)
+@@ -397,6 +400,7 @@
+             if e[0] in (CURLE_COULDNT_RESOLVE_HOST,
+                         CURLE_COULDNT_RESOLVE_PROXY,
+                         CURLE_COULDNT_CONNECT,
++                        CURLE_FTP_WEIRD_SERVER_REPLY,
+                         CURLE_GOT_NOTHING,
+                         CURLE_SSL_CACERT,
+                         CURLE_SSL_CACERT_BADFILE,
+
+=== modified file 'bzrlib/transport/http/_urllib2_wrappers.py'
+--- old/bzrlib/transport/http/_urllib2_wrappers.py	2016-01-31 12:55:31 +0000
++++ new/bzrlib/transport/http/_urllib2_wrappers.py	2019-03-17 17:14:28 +0000
+@@ -1,4 +1,4 @@
+-# Copyright (C) 2006-2013, 2016 Canonical Ltd
++# Copyright (C) 2006-2013, 2016, 2017 Canonical Ltd
+ #
+ # This program is free software; you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+@@ -48,6 +48,7 @@
+ # actual code more or less do that, tests should be written to
+ # ensure that.
+ 
++import base64
+ import errno
+ import httplib
+ import os
+@@ -1491,7 +1492,7 @@
+ 
+     def build_auth_header(self, auth, request):
+         raw = '%s:%s' % (auth['user'], auth['password'])
+-        auth_header = 'Basic ' + raw.encode('base64').strip()
++        auth_header = 'Basic ' + base64.b64encode(raw)
+         return auth_header
+ 
+     def extract_realm(self, header_value):
+
+=== modified file 'bzrlib/transport/sftp.py'
+--- old/bzrlib/transport/sftp.py	2016-01-21 17:48:07 +0000
++++ new/bzrlib/transport/sftp.py	2019-03-17 17:14:28 +0000
+@@ -1,4 +1,4 @@
+-# Copyright (C) 2005-2011, 2016 Canonical Ltd
++# Copyright (C) 2005-2011, 2016, 2017 Canonical Ltd
+ #
+ # This program is free software; you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+@@ -410,8 +410,9 @@
+         try:
+             path = self._remote_path(relpath)
+             f = self._get_sftp().file(path, mode='rb')
++            size = f.stat().st_size
+             if self._do_prefetch and (getattr(f, 'prefetch', None) is not None):
+-                f.prefetch()
++                f.prefetch(size)
+             return f
+         except (IOError, paramiko.SSHException), e:
+             self._translate_io_exception(e, path, ': error retrieving',
+
+=== modified file 'doc/developers/releasing.txt'
+--- old/doc/developers/releasing.txt	2013-08-05 12:16:25 +0000
++++ new/doc/developers/releasing.txt	2019-03-17 17:14:28 +0000
+@@ -513,7 +513,7 @@
+ ----------------------------
+ 
+ #. Post to the ``bazaar@lists.canonical.com`` and
+-   ``bzr-packagers@list.launchpad.net`` lists, saying that the source has
++   ``bzr-packagers@lists.launchpad.net`` lists, saying that the source has
+    been frozen. Be extra clear that this is only a *source* release targeted
+    at packagers and installer builders (see
+    <https://bugs.launchpad.net/launchpad/+bug/645084>).  This is the cue for
+@@ -551,12 +551,12 @@
+    <http://doc.bazaar.canonical.com>.  It should be automatically build when
+    the branch is created, by a cron script ``update-bzr-docs`` on
+    ``escudero``. When the first release is created in a new series, a branch
+-   needs to be created on zhongshan::
++   needs to be created on ``escudero``::
+ 
+-     ssh zhongshan.canonical.com
++     ssh escudero.canonical.com
+      sudo -u bzr-web -s
+      cd /srv/doc.bazaar.canonical.com/
+-     bzr branch http://bazaar.launchpad.net/~bzr-pqm/bzr/2.6 bzr/bzr.2.6
++     bzr branch lp:bzr/2.7 bzr/bzr.2.7
+ 
+    And the ``bzr/bin/update-bzr-docs`` script needs to refer to it.
+ 
+@@ -640,17 +640,48 @@
+ #. Update `<http://en.wikipedia.org/wiki/Bazaar_(software)>`_ -- this should
+    be done for the stable and beta releases.
+ 
+-#. Update the python package index: <http://pypi.python.org/pypi/bzr> - best
+-   done by running ::
+-
+-       python setup.py register
++#. Update the python package index: <http://pypi.python.org/pypi/bzr>
++
++   From the tarball created and tested earlier ::
++
++     twine upload -s ../bzr-2.7.0.tar.gz
+ 
+    Remember to check the results afterward -- this should be done for
+    stable releases but not for beta releases nor SRUs.
+ 
+-   To be able to register the release you must create an account on
+-   <http://pypi.python.org/pypi> and have one of the existing owners of
+-   the project add you to the group.
++   The ``twine`` command is provided by the ``twine`` package on Debian and
++   Ubuntu.
++
++   If in doubt, you can test with <https://testpypi.python.org/pypi> where
++   you can register yourself, register the bzr project and upload (and then
++   remove the upload and delete the project so a new release manager can
++   enjoy the same facilities). If the project already exists, have one of
++   the existing owners of the project add you to the group.
++
++   To use the pypi test site, you need to record your credentials for an
++   existing user (the registration process is manual and starts at
++   <https://testpypi.python.org/pypi?%3Aaction=register_form>.
++
++   Once registered, you can record your crdentials in your ``~/pypirc`` file
++   with ::
++
++     [testpypi]
++     username:<login on testpypi>
++     password:<password on testpypi>
++     repository = https://testpypi.python.org/pypi
++
++   Registering the bzr project if doesn't exist is achieved with::
++
++     python setup.py -r https://testpypi.python.org/pypi register
++
++  Uploading is done with::
++
++    twine upload -r testpypi -s ../bzr-2.7.0.tar.gz
++
++   To be able to upload the release you must create an account on
++   <http://pypi.python.org/pypi> and have one of the existing owners of the
++   project add you to the group and update your ``[pypi]`` section in your
++   ``~/pypirc`` file.
+ 
+ 
+ Merging the released code back to trunk
+
+=== modified file 'doc/en/index.txt'
+--- old/doc/en/index.txt	2013-07-27 12:53:28 +0000
++++ new/doc/en/index.txt	2019-03-17 17:14:28 +0000
+@@ -10,7 +10,7 @@
+ .. toctree::
+    :maxdepth: 1
+ 
+-   whats-new/whats-new-in-2.7
++   whats-new/whats-new-in-2.8
+    user-guide/index
+    tutorials/index
+    quick-reference/index
+
+=== modified file 'doc/en/release-notes/bzr-2.7.txt'
+--- old/doc/en/release-notes/bzr-2.7.txt	2016-02-01 18:09:33 +0000
++++ new/doc/en/release-notes/bzr-2.7.txt	2019-03-17 17:14:28 +0000
+@@ -5,6 +5,65 @@
+ .. toctree::
+    :maxdepth: 1
+ 
++bzr 2.7.1
++#########
++
++:2.7.1: NOT RELEASED YET
++
++
++External Compatibility Breaks
++*****************************
++
++None.
++
++New Features
++************
++
++None.
++
++Improvements
++************
++
++None.
++
++
++Bug Fixes
++*********
++
++* Complete monkey-patching of re.finditer or LazyRegexps leak.
++  (Vincent Ladeuil, #1644003, #1657238)
++
++* Cope with paramiko making argument to SFTPFile.prefetch() mandatory.
++  (Jelmer Vernooij, #1579093)
++
++Documentation
++*************
++
++* Clarify pypi uploads for releases. (Vincent Ladeuil, #1542903)
++
++API Changes
++***********
++
++None.
++
++Internals
++*********
++
++None.
++
++Changed Behaviour
++*****************
++
++None.
++
++Testing
++*******
++
++* Recent versions of pycurl started being stricter about the proxy url,
++  using 'http+pycurl:' is not allowed anymore and should just be 'http:'
++  (Vincent Ladeuil, #1645017).
++
++
+ bzr 2.7.0
+ #########
+ 
+
+=== added file 'doc/en/release-notes/bzr-2.8.txt'
+--- old/doc/en/release-notes/bzr-2.8.txt	1970-01-01 00:00:00 +0000
++++ new/doc/en/release-notes/bzr-2.8.txt	2019-03-17 17:14:28 +0000
+@@ -0,0 +1,67 @@
++####################
++Bazaar Release Notes
++####################
++
++.. toctree::
++   :maxdepth: 1
++
++bzr 2.8b1
++#########
++
++:2.8b1: NOT RELEASED YET
++
++External Compatibility Breaks
++*****************************
++
++.. These may require users to change the way they use Bazaar.
++
++New Features
++************
++
++.. New commands, options, etc that users may wish to try out.
++
++Improvements
++************
++
++.. Improvements to existing commands, especially improved performance 
++   or memory usage, or better results.
++
++Bug Fixes
++*********
++
++.. Fixes for situations where bzr would previously crash or give incorrect
++   or undesirable results.
++
++ * When generating documentation with a custom locale set, make sure
++   doc/en/user-reference only contains English documentation.
++   (Jelmer Vernooij, #1565503)
++
++ * Fix for Windows and 32-bit platforms buggy gmtime().
++   (Florent Gallaire, #1669178, #1670243)
++
++Documentation
++*************
++
++.. Improved or updated documentation.
++
++API Changes
++***********
++
++.. Changes that may require updates in plugins or other code that uses
++   bzrlib.
++
++Internals
++*********
++
++.. Major internal changes, unlikely to be visible to users or plugin 
++   developers, but interesting for bzr developers.
++
++Testing
++*******
++
++* POSIX mandates diff to exit with status 1 (was 2 previously), bzr didn't
++  rely on that feature but one of the tests did.
++  (Vincent Ladeuil, #1622039)
++
++..
++   vim: tw=74 ft=rst ff=unix
+
+=== added file 'doc/en/whats-new/whats-new-in-2.8.txt'
+--- old/doc/en/whats-new/whats-new-in-2.8.txt	1970-01-01 00:00:00 +0000
++++ new/doc/en/whats-new/whats-new-in-2.8.txt	2019-03-17 17:14:28 +0000
+@@ -0,0 +1,28 @@
++*************************
++What's New in Bazaar 2.8?
++*************************
++
++Bazaar 2.8 is still under development, and will be released in Month Year.
++This document accumulates a high level summary of what's changed.  See the
++:doc:`../release-notes/index` for a full list.
++
++<topics of interest here>
++
++Further information
++*******************
++
++For more detailed information on the changes made, see the the
++:doc:`../release-notes/index` for:
++
++* the interim bzr `milestones <https://launchpad.net/bzr/x.y>`_
++* the plugins you use.
++
++For a summary of changes made in earlier releases, see:
++
++* :doc:`whats-new-in-2.1`
++* :doc:`whats-new-in-2.2`
++* :doc:`whats-new-in-2.3`
++* :doc:`whats-new-in-2.4`
++* :doc:`whats-new-in-2.5`
++* :doc:`whats-new-in-2.6`
++* :doc:`whats-new-in-2.7`
+

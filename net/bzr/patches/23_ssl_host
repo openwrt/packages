@@ -1,0 +1,175 @@
+Origin: commit, revision id: v.ladeuil+lp@free.fr-20170302132700-31ram3guhdll88pc
+Author: Vincent Ladeuil <v.ladeuil+lp@free.fr>
+Bug: https://launchpad.net/bugs/1089352
+Last-Update: 2017-03-02
+Applied-Upstream: no
+X-Bzr-Revision-Id: v.ladeuil+lp@free.fr-20170302132700-31ram3guhdll88pc
+
+=== modified file 'bzrlib/tests/ssl_certs/create_ssls.py'
+--- a/bzrlib/tests/ssl_certs/create_ssls.py
++++ b/bzrlib/tests/ssl_certs/create_ssls.py
+@@ -1,6 +1,6 @@
+ #! /usr/bin/env python
+ 
+-# Copyright (C) 2007 Canonical Ltd
++# Copyright (C) 2007, 2008, 2009, 2017 Canonical Ltd
+ #
+ # This program is free software; you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+@@ -45,26 +45,25 @@
+     CalledProcessError,
+     Popen,
+     PIPE,
+-    )
++)
+ import sys
+ 
+ # We want to use the right bzrlib: the one we are part of
+-# FIXME: The fllowing is correct but looks a bit ugly 
++# FIXME: The following is correct but looks a bit ugly
+ _dir = os.path.dirname
+ our_bzr = _dir(_dir(_dir(_dir(os.path.realpath(__file__)))))
+ sys.path.insert(0, our_bzr)
+ 
+-from bzrlib import (
+-    osutils,
+-    )
+-from bzrlib.tests import (
+-    ssl_certs,
+-    )
++
++from bzrlib import osutils
++from bzrlib.tests import ssl_certs
++
+ 
+ def error(s):
+     print s
+     exit(1)
+ 
++
+ def needs(request, *paths):
+     """Errors out if the specified path does not exists"""
+     missing = [p for p in paths if not os.path.exists(p)]
+@@ -79,6 +78,7 @@
+     except:
+         pass
+ 
++
+ def _openssl(args, input=None):
+     """Execute a command in a subproces feeding stdin with the provided input.
+ 
+@@ -93,7 +93,7 @@
+     return proc.returncode, stdout, stderr
+ 
+ 
+-ssl_params=dict(
++ssl_params = dict(
+     # Passwords
+     server_pass='I will protect the communications',
+     server_challenge_pass='Challenge for the CA',
+@@ -112,17 +112,18 @@
+     server_locality='LocalHost',
+     server_organization='Testing Ltd',
+     server_section='https server',
+-    server_name='127.0.0.1', # Always accessed under that name
+-    server_email='https_server@locahost',
++    server_name='127.0.0.1',  # Always accessed under that name
++    server_email='https_server@localhost',
+     server_optional_company_name='',
+-    )
++)
+ 
+ 
+ def build_ca_key():
+     """Generate an ssl certificate authority private key."""
+     key_path = ssl_certs.build_path('ca.key')
+     rm_f(key_path)
+-    _openssl(['genrsa', '-passout', 'stdin', '-des3', '-out', key_path, '4096'],
++    _openssl(['genrsa', '-passout', 'stdin', '-des3', '-out',
++              key_path, '4096'],
+              input='%(ca_pass)s\n%(ca_pass)s\n' % ssl_params)
+ 
+ 
+@@ -151,17 +152,18 @@
+     """Generate an ssl server private key.
+ 
+     We generates a key with a password and then copy it without password so
+-    that as server can user it without prompting.
++    that a server can use it without prompting.
+     """
+     key_path = ssl_certs.build_path('server_with_pass.key')
+     rm_f(key_path)
+-    _openssl(['genrsa', '-passout', 'stdin', '-des3', '-out', key_path, '4096'],
++    _openssl(['genrsa', '-passout', 'stdin', '-des3', '-out',
++              key_path, '4096'],
+              input='%(server_pass)s\n%(server_pass)s\n' % ssl_params)
+ 
+     key_nopass_path = ssl_certs.build_path('server_without_pass.key')
+     rm_f(key_nopass_path)
+     _openssl(['rsa', '-passin', 'stdin', '-in', key_path,
+-              '-out', key_nopass_path,],
++              '-out', key_nopass_path],
+              input='%(server_pass)s\n' % ssl_params)
+ 
+ 
+@@ -200,7 +202,7 @@
+               '-in', server_csr_path,
+               '-CA', ca_cert_path, '-CAkey', ca_key_path,
+               '-set_serial', '01',
+-              '-out', server_cert_path,],
++              '-out', server_cert_path],
+              input='%(ca_pass)s\n' % ssl_params)
+ 
+ 
+@@ -232,7 +234,7 @@
+ opt_parser.add_option(
+     "-r", "--sign-request", dest="signing_requests", action="append",
+     metavar="REQUEST",
+-    help="generate a new signing REQUEST (several -r options can be specified)")
++    help="generate a new signing REQUEST (can be repeated)")
+ opt_parser.add_option(
+     "-s", "--sign", dest="signings", action="append",
+     metavar="SIGNING",
+@@ -248,8 +250,8 @@
+ if __name__ == '__main__':
+     (Options, args) = opt_parser.parse_args()
+     if (Options.ca or Options.server):
+-        if (Options.keys or Options.certificates or Options.signing_requests
+-            or Options.signings):
++        if ((Options.keys or Options.certificates or Options.signing_requests
++             or Options.signings)):
+             error("--ca and --server can't be used with other options")
+         # Handles --ca before --server so that both can be used in the same run
+         # to generate all the files needed by the https test server
+--- a/bzrlib/transport/http/_urllib2_wrappers.py
++++ b/bzrlib/transport/http/_urllib2_wrappers.py
+@@ -452,9 +452,9 @@
+                     "'bzr help ssl.ca_certs' for more information on setting "
+                     "trusted CAs.")
+         try:
+-            ssl_sock = ssl.wrap_socket(
+-                self.sock, self.key_file, self.cert_file,
+-                cert_reqs=cert_reqs, ca_certs=ca_certs)
++            ssl_sock = ssl.SSLSocket(self.sock, self.key_file, self.cert_file,
++                                     cert_reqs=cert_reqs, ca_certs=ca_certs,
++                                     server_hostname=self.host)
+         except ssl.SSLError:
+             trace.note(
+                 "\n"
+@@ -463,13 +463,13 @@
+                 "Pass -Ossl.cert_reqs=none to disable certificate "
+                 "verification entirely.\n")
+             raise
++        # Wrap the ssl socket before anybody use it
++        self._wrap_socket_for_reporting(ssl_sock)
++
+         if cert_reqs == ssl.CERT_REQUIRED:
+             peer_cert = ssl_sock.getpeercert()
+             ssl.match_hostname(peer_cert, host)
+ 
+-        # Wrap the ssl socket before anybody use it
+-        self._wrap_socket_for_reporting(ssl_sock)
+-
+ 
+ class Request(urllib2.Request):
+     """A custom Request object.
