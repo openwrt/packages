@@ -15,7 +15,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.sudo.ws/dist
 PKG_HASH:=7ea8d97a3cee4c844e0887ea7a1bd80eb54cc98fd77966776cb1a80653ad454f
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=doc/LICENSE
 PKG_CPE_ID:=cpe:/a:todd_miller:sudo
