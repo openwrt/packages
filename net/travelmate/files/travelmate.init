@@ -79,6 +79,7 @@ service_triggers()
 	local delay="$(uci_get travelmate global trm_triggerdelay)"
 
 	PROCD_RELOAD_DELAY=$((${delay:-2} * 1000))
-	procd_add_interface_trigger "interface.*.down" "${trigger}" "${trm_init}" reload
+	procd_add_interface_trigger "interface.*.down" "${trigger:-"trm_wwan"}" "${trm_init}" reload
+	procd_add_config_trigger "config.change" "wireless" "${trm_init}" reload
 	procd_add_config_trigger "config.change" "travelmate" "${trm_init}" restart
 }
