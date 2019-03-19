@@ -1,0 +1,66 @@
+#!/bin/sh
+
+yggConfig="/etc/yggdrasil.conf"
+
+if [ ! -e ${yggConfig} ]; then
+
+  yggdrasil -genconf -json > ${yggConfig}
+
+  # create the firewall zone
+  uci -q batch <<-EOF >/dev/null
+    add firewall zone
+    set firewall.@zone[-1].name=yggdrasil
+    add_list firewall.@zone[-1].network=yggdrasil
+    set firewall.@zone[-1].input=REJECT
+    set firewall.@zone[-1].output=ACCEPT
+    set firewall.@zone[-1].forward=REJECT
+    set firewall.@zone[-1].conntrack=1
+    set firewall.@zone[-1].family=ipv6
+EOF
+
+  # allow ICMP from yggdrasil zone, e.g. ping6
+  uci -q batch <<-EOF >/dev/null
+    add firewall rule
+    set firewall.@rule[-1].name='Allow-ICMPv6-yggdrasil'
+    set firewall.@rule[-1].src=yggdrasil
+    set firewall.@rule[-1].proto=icmp
+    add_list firewall.@rule[-1].icmp_type=echo-request
+    add_list firewall.@rule[-1].icmp_type=echo-reply
+    add_list firewall.@rule[-1].icmp_type=destination-unreachable
+    add_list firewall.@rule[-1].icmp_type=packet-too-big
+    add_list firewall.@rule[-1].icmp_type=time-exceeded
+    add_list firewall.@rule[-1].icmp_type=bad-header
+    add_list firewall.@rule[-1].icmp_type=unknown-header-type
+    set firewall.@rule[-1].limit='1000/sec'
+    set firewall.@rule[-1].family=ipv6
+    set firewall.@rule[-1].target=ACCEPT
+EOF
+
+  # allow SSH from yggdrasil zone, needs to be explicitly enabled
+  uci -q batch <<-EOF >/dev/null
+    add firewall rule
+    set firewall.@rule[-1].enabled=0
+    set firewall.@rule[-1].name='Allow-SSH-yggdrasil'
+    set firewall.@rule[-1].src=yggdrasil
+    set firewall.@rule[-1].proto=tcp
+    set firewall.@rule[-1].dest_port=22
+    set firewall.@rule[-1].target=ACCEPT
+EOF
+
+  # allow LuCI access from yggdrasil zone, needs to be explicitly enabled
+  uci -q batch <<-EOF >/dev/null
+    add firewall rule
+    set firewall.@rule[-1].enabled=0
+    set firewall.@rule[-1].name='Allow-HTTP-yggdrasil'
+    set firewall.@rule[-1].src=yggdrasil
+    set firewall.@rule[-1].proto=tcp
+    set firewall.@rule[-1].dest_port=80
+    set firewall.@rule[-1].target=ACCEPT
+EOF
+
+
+else
+  :
+fi
+
+exit 0
