@@ -75,18 +75,17 @@ endef
 $(eval $(call HostBuild))
 
 define Package/sudo/install
-	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) \
+		$(1)/etc/{init.d,sudoers.d} \
+		$(1)/usr/{bin,sbin} \
+		$(1)/usr/lib/sudo
+
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/sudo $(1)/usr/bin/
 	chmod 4755 $(1)/usr/bin/sudo
-	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/visudo $(1)/usr/sbin/
-	$(INSTALL_DIR) $(1)/etc
 	$(CP) $(PKG_INSTALL_DIR)/etc/sudoers $(1)/etc/
 	chmod 0440 $(1)/etc/sudoers
-	$(INSTALL_DIR) $(1)/etc/sudoers.d
-	$(INSTALL_DIR) $(1)/usr/lib/sudo
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/sudo/*.so* $(1)/usr/lib/sudo/
-	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/sudo.init $(1)/etc/init.d/sudo
 endef
 
