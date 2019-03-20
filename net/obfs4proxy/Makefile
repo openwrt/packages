@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=obfs4proxy
 PKG_VERSION:=0.0.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=obfs4-$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gitlab.com/yawning/obfs4/-/archive/$(PKG_NAME)-$(PKG_VERSION)/
@@ -45,12 +45,6 @@ define Package/golang-gitlab-yawning-obfs4-dev
 $(call Package/obfs4proxy/Default)
 $(call GoPackage/GoSubMenu)
   TITLE+= (source files)
-  DEPENDS+= \
-    +golang-github-agl-ed25519-dev \
-    +golang-github-dchest-siphash-dev \
-    +golang-golang-x-crypto-dev \
-    +golang-golang-x-net-dev \
-    +golang-torproject-pluggable-transports-goptlib-dev
   PKGARCH:=all
 endef
 
