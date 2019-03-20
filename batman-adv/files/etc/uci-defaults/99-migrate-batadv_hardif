@@ -89,7 +89,7 @@ if [ -f /etc/config/batman-adv ]; then
 
     config_load batman-adv
     config_foreach mv_batadv_config_section 'mesh'
-    uci commit batman-adv
+    uci commit network
 
     rm -f /etc/config/batman-adv
 fi
