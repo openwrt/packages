@@ -76,6 +76,28 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 #   not necessary.
 #
 #   e.g. GO_PKG_GO_GENERATE:=1
+#
+#
+# GO_PKG_GCFLAGS - list of arguments, default empty
+#
+#   Additional go tool compile arguments to use when building targets.
+#
+#   e.g. GO_PKG_GCFLAGS:=-N -l
+#
+#
+# GO_PKG_LDFLAGS - list of arguments, default empty
+#
+#   Additional go tool link arguments to use when building targets.
+#
+#   e.g. GO_PKG_LDFLAGS:=-s -w
+#
+#
+# GO_PKG_LDFLAGS_X - list of string variable definitions, default empty
+#
+#   Each definition will be passed as the parameter to the -X go tool
+#   link argument, i.e. -ldflags "-X importpath.name=value"
+#
+#   e.g. GO_PKG_LDFLAGS_X:=main.Version=$(PKG_VERSION) main.BuildStamp=$(SOURCE_DATE_EPOCH)
 
 # Credit for this package build process (GoPackage/Build/Configure and
 # GoPackage/Build/Compile) belong to Debian's dh-golang completely.
@@ -247,18 +269,25 @@ define GoPackage/Build/Compile
 		if [ "$(GO_PKG_SOURCE_ONLY)" != 1 ]; then \
 			echo "Building targets" ; \
 			case $(GO_ARCH) in \
-			arm)             installsuffix="-installsuffix v$(GO_ARM)" ;; \
-			mips|mipsle)     installsuffix="-installsuffix $(GO_MIPS)" ;; \
-			mips64|mips64le) installsuffix="-installsuffix $(GO_MIPS64)" ;; \
+			arm)             installsuffix="v$(GO_ARM)" ;; \
+			mips|mipsle)     installsuffix="$(GO_MIPS)" ;; \
+			mips64|mips64le) installsuffix="$(GO_MIPS64)" ;; \
 			esac ; \
 			trimpath="all=-trimpath=$(GO_PKG_BUILD_DIR)" ; \
 			ldflags="all=-linkmode external -extldflags '$(TARGET_LDFLAGS)'" ; \
+			pkg_gcflags="$(GO_PKG_GCFLAGS)" ; \
+			pkg_ldflags="$(GO_PKG_LDFLAGS)" ; \
+			for def in $(GO_PKG_LDFLAGS_X); do \
+				pkg_ldflags="$$$$pkg_ldflags -X $$$$def" ; \
+			done ; \
 			go install \
-				$$$$installsuffix \
+				$$$${installsuffix:+-installsuffix $$$$installsuffix} \
 				-gcflags "$$$$trimpath" \
 				-asmflags "$$$$trimpath" \
 				-ldflags "$$$$ldflags" \
 				-v \
+				$$$${pkg_gcflags:+-gcflags "$$$$pkg_gcflags"} \
+				$$$${pkg_ldflags:+-ldflags "$$$$pkg_ldflags"} \
 				$(1) \
 				$$$$targets ; \
 			retval=$$$$? ; \
