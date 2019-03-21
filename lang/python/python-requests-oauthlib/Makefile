@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-requests-oauthlib
-PKG_VERSION:=1.0.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.2.0
+PKG_RELEASE:=1
 PKG_LICENSE:=ISC
 
 PKG_SOURCE:=requests-oauthlib-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/r/requests-oauthlib
-PKG_HASH:=8886bfec5ad7afb391ed5443b1f697c6f4ae98d0e5620839d8b4499c032ada3f
+PKG_HASH:=bd6533330e8748e94bf0b214775fed487d309b8b8fe823dc45641ebcd9a32f57
 PKG_BUILD_DIR:=$(BUILD_DIR)/requests-oauthlib-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
