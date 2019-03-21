@@ -388,7 +388,7 @@ the supplied server certificate
 #### `list spki`
 
 This list specifies the SPKI pinset which is verified against the keys in the
-server cerrtificate. The values takes the form `'<digest type>/value>'`, where
+server cerrtificate. The value takes the form `'<digest type>/value>'`, where
 the `digest type` is the hashing algorithm used, and the value is the Base64
 encoded hash of the public key. At present, only `sha256` is
 supported for the digest type.
