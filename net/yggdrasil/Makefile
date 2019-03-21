@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yggdrasil
 PKG_VERSION:=0.3.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=https://codeload.github.com/yggdrasil-network/yggdrasil-go/tar.gz/v$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -14,8 +14,17 @@ PKG_MAINTAINER:=William Fleurant <meshnet@protonmail.com>
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
+
+GO_PKG:=github.com/yggdrasil-network/yggdrasil-go
+GO_PKG_BUILD_PKG:=github.com/yggdrasil-network/yggdrasil-go/cmd/...
+
+GO_PKG_LDFLAGS_X:= \
+  github.com/yggdrasil-network/yggdrasil-go/src/yggdrasil.buildName=yggdrasil-openwrt \
+  github.com/yggdrasil-network/yggdrasil-go/src/yggdrasil.buildVersion=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
+include ../../lang/golang/golang-package.mk
 
 define Package/yggdrasil
 	SECTION:=net
@@ -23,7 +32,7 @@ define Package/yggdrasil
 	SUBMENU:=Routing and Redirection
 	TITLE:=Yggdrasil supports end-to-end encrypted IPv6 networks
 	URL:=https://yggdrasil-network.github.io/
-	DEPENDS:=$(GO_ARCH_DEPENDS) @IPV6 +kmod-tun +@(mips):KERNEL_MIPS_FPU_EMULATOR
+	DEPENDS:=$(GO_ARCH_DEPENDS) @IPV6 +kmod-tun
 endef
 
 define Package/yggdrasil/description
@@ -36,55 +45,6 @@ define Package/yggdrasil/description
  interfaces simultaneously with much greater throughput.
 endef
 
-ifeq ($(ARCH),aarch64)
-	GOARCH:=arm64
-endif
-
-ifeq ($(ARCH),arc)
-	GOARCH:=risc
-endif
-
-ifeq ($(ARCH),arc)
-	GOARCH:=risc
-endif
-
-ifeq ($(ARCH),arm)
-	GOARCH:=arm
-endif
-
-ifeq ($(ARCH),armeb)
-	GOARCH:=armbe
-endif
-
-ifeq ($(ARCH),i386)
-	GOARCH:=386
-endif
-
-ifeq ($(ARCH),mips)
-	GOARCH:=mips
-endif
-
-ifeq ($(ARCH),mips64)
-	GOARCH:=mips64
-endif
-
-ifeq ($(ARCH),mipsel)
-	GOARCH:=mipsle
-endif
-
-ifeq ($(ARCH),powerpc)
-	GOARCH:=ppc64
-endif
-
-define Build/Compile
-	cd $(PKG_BUILD_DIR) && \
-	GOOS="linux" \
-	GOARCH="$(GOARCH)" \
-	PKGVER="$(PKG_VERSION)" \
-	PKGNAME="yggdrasil-openwrt" \
-	$(PKG_BUILD_DIR)/build
-endef
-
 define Package/yggdrasil/install
 	$(INSTALL_DIR) \
 		$(1)/etc/init.d \
@@ -92,11 +52,11 @@ define Package/yggdrasil/install
 		$(1)/usr/sbin
 
 	$(INSTALL_BIN) \
-		$(PKG_BUILD_DIR)/yggdrasil \
+		$(GO_PKG_BUILD_BIN_DIR)/yggdrasil \
 		$(1)/usr/sbin
 
 	$(INSTALL_BIN) \
-		$(PKG_BUILD_DIR)/yggdrasilctl \
+		$(GO_PKG_BUILD_BIN_DIR)/yggdrasilctl \
 		$(1)/usr/sbin
 
 	$(INSTALL_BIN) \
@@ -108,4 +68,5 @@ define Package/yggdrasil/install
 		$(1)/etc/init.d/yggdrasil
 endef
 
+$(eval $(call GoBinPackage,yggdrasil))
 $(eval $(call BuildPackage,yggdrasil))
