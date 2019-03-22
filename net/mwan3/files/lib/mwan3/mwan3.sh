@@ -32,6 +32,8 @@ MM_BLACKHOLE=""
 MMX_UNREACHABLE=""
 MM_UNREACHABLE=""
 
+# return true(=0) if has any mwan3 interface enabled
+# otherwise return false
 mwan3_rtmon_ipv4()
 {
 	local tid=1
@@ -61,6 +63,8 @@ mwan3_rtmon_ipv4()
 	return $ret
 }
 
+# return true(=0) if has any mwan3 interface enabled
+# otherwise return false
 mwan3_rtmon_ipv6()
 {
 	local tid=1
