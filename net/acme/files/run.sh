@@ -129,7 +129,7 @@ post_checks()
     iptables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
     ip6tables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
 
-    if [ -e /etc/init.d/uhttpd ] && ( [ -n "$UHTTPD_LISTEN_HTTP" ] || [ $UPDATE_UHTTPD -eq 1 ] ); then
+    if [ -e /etc/init.d/uhttpd ] && ( [ -n "$UHTTPD_LISTEN_HTTP" ] || [ "$UPDATE_UHTTPD" -eq 1 ] ); then
         if [ -n "$UHTTPD_LISTEN_HTTP" ]; then
             uci set uhttpd.main.listen_http="$UHTTPD_LISTEN_HTTP"
             UHTTPD_LISTEN_HTTP=
@@ -138,7 +138,7 @@ post_checks()
         /etc/init.d/uhttpd reload
     fi
 
-    if [ -e /etc/init.d/nginx ] && ( [ "$NGINX_WEBSERVER" -eq 1 ] || [ $UPDATE_NGINX -eq 1 ] ); then
+    if [ -e /etc/init.d/nginx ] && ( [ "$NGINX_WEBSERVER" -eq 1 ] || [ "$UPDATE_NGINX" -eq 1 ] ); then
         NGINX_WEBSERVER=0
         /etc/init.d/nginx restart
     fi
@@ -204,7 +204,7 @@ issue_cert()
     [ -n "$webroot" ] || [ -n "$dns" ] || pre_checks "$main_domain" || return 1
 
     log "Running ACME for $main_domain"
-    
+
     handle_credentials() {
         local credential="$1"
         eval export $credential
