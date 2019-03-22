@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cffi
-PKG_VERSION:=1.12.1
+PKG_VERSION:=1.12.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=cffi-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/c/cffi
-PKG_HASH:=9b6f7ba4e78c52c1a291d0c0c0bd745d19adde1a9e1c03cb899f0c6efd6f8033
+PKG_HASH:=e113878a446c6228669144ae8a56e268c91b7f1fafae927adc4879d9849e0ea7
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-cffi-$(PKG_VERSION)
 
@@ -37,7 +37,7 @@ define Package/python-cffi/Default
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=C Foreign Function Interface
-  URL:=http://cffi.readthedocs.org/
+  URL:=https://cffi.readthedocs.org/
   DEPENDS:=+libffi
 endef
 
