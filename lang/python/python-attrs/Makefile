@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-attrs
-PKG_VERSION:=18.2.0
+PKG_VERSION:=19.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=attrs-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/a/attrs
-PKG_HASH:=10cbf6e27dbce8c30807caf056c8eb50917e0eaafe86347671b57254006c3e69
+PKG_HASH:=f0b870f674851ecbfbbbd364d6b5cbdff9dcedbc7f3f5e18a6891057f21fe399
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-attrs-$(PKG_VERSION)
 
@@ -32,7 +32,7 @@ define Package/python-attrs/Default
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=Classes Without Boilerplate
-  URL:=http://www.attrs.org/
+  URL:=https://www.attrs.org/
 endef
 
 define Package/python-attrs
