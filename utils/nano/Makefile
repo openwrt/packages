@@ -8,14 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nano
-PKG_VERSION:=3.2
+PKG_VERSION:=4.0
 PKG_RELEASE:=1
-PKG_LICENSE:=GPL-3.0+
-PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/nano
-PKG_HASH:=d12773af3589994b2e4982c5792b07c6240da5b86c5aef2103ab13b401fe6349
+PKG_HASH:=1e2fcfea35784624a7d86785768b772d58bb3995d1aec9176a27a113b1e9bac3
+
+PKG_LICENSE:=GPL-3.0+
+PKG_LICENSE_FILES:=COPYING
+PKG_MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>, Hannu Nyman <hannu.nyman@iki.fi>
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -27,9 +29,7 @@ define Package/nano
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=An enhanced clone of the Pico text editor
-  URL:=http://www.nano-editor.org/
-  MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>, \
-		Hannu Nyman <hannu.nyman@iki.fi>
+  URL:=https://www.nano-editor.org/
   DEPENDS:=+libncurses
 endef
 
@@ -53,4 +53,3 @@ define Package/nano/install
 endef
 
 $(eval $(call BuildPackage,nano))
-
