@@ -29,7 +29,7 @@ define Package/libsigcxx
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=typesafe callback system for standard C++
-  URL:=http://libsigc.sourceforge.net/
+  URL:=https://libsigcplusplus.github.io/libsigcplusplus/
   DEPENDS:=+libstdcpp
 endef
 
