@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fping
-PKG_VERSION:=4.1
+PKG_VERSION:=4.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://fping.org/dist/
-PKG_HASH:=2733e2a18cc2b5b935c4e3b5b84ccf2080c38043f1864d7c43326e8048ddab73
+PKG_SOURCE_URL:=https://fping.org/dist/
+PKG_HASH:=7d339674b6a95aae1d8ad487ff5056fd95b474c3650938268f6a905c3771b64a
 
 PKG_MAINTAINER:=Nikil Mehta <nikil.mehta@gmail.com>
 PKG_LICENSE:=BSD-4-Clause
@@ -27,7 +27,7 @@ define Package/fping
   SECTION:=net
   CATEGORY:=Network
   TITLE:=sends ICMP ECHO_REQUEST packets to network hosts
-  URL:=http://fping.org/
+  URL:=https://fping.org/
 endef
 
 
