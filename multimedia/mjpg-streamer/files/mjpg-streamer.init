@@ -69,6 +69,9 @@ start_instance() {
 		config_get port "$s" 'port'
 		[ -n "$port" ] && output_arg="${output_arg} --port $port"
 
+		config_get listen_ip "$s" 'listen_ip'
+		[ -n "$listen_ip" ] && output_arg="${output_arg} --listen $listen_ip"
+
 		config_get www "$s" 'www'
 		[ -n "$www" ] && output_arg="${output_arg} --www $www"
 
