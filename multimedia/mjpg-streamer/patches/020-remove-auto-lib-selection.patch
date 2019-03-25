@@ -3,27 +3,27 @@
 @@ -49,8 +49,7 @@ set (MJPG_STREAMER_PLUGIN_INSTALL_PATH "
  # Global dependencies
  #
- 
+
 -find_library(JPEG_LIB jpeg)
 -
 +#find_library(JPEG_LIB jpeg)
- 
+
  #
  # Input plugins
 --- a/plugins/input_uvc/CMakeLists.txt
 +++ b/plugins/input_uvc/CMakeLists.txt
-@@ -8,27 +8,27 @@ if (PLUGIN_INPUT_UVC)
-     
+@@ -9,27 +9,27 @@ if (PLUGIN_INPUT_UVC)
      add_definitions(-DLINUX -D_GNU_SOURCE)
      
--    find_library(V4L2_LIB v4l2)
-+#    find_library(V4L2_LIB v4l2)
+     find_library(V4L2_LIB v4l2)
+-    find_library(JPEG_LIB jpeg)
++#    find_library(JPEG_LIB jpeg)
      
 -    if (V4L2_LIB)
 -        add_definitions(-DUSE_LIBV4L2)
 -    endif (V4L2_LIB)
 +#    if (V4L2_LIB)
-+#       add_definitions(-DUSE_LIBV4L2)
++#        add_definitions(-DUSE_LIBV4L2)
 +#    endif (V4L2_LIB)
      
 -    if (NOT JPEG_LIB)
