@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gstreamer1
 PKG_VERSION:=1.15.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
 		Ted Hess <thess@kitschensync.net>
@@ -25,6 +25,7 @@ PKG_HASH:=27a3211eb5c3f6929c5f123ffecaac0ea6e9ed6b93be879c033a7d5af13ad7e6
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=autogen.sh aclocal.m4
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -118,23 +119,26 @@ GST_VERSION:=1.0
 
 CONFIGURE_ARGS += \
 	--enable-static \
+	--disable-Bsymbolic \
 	--disable-benchmarks \
+	--disable-debug \
 	--disable-examples \
 	--disable-failing-tests \
 	--disable-fatal-warnings \
 	--disable-introspection \
+	--disable-glib-asserts \
+	--disable-gobject-cast-checks \
 	--disable-gst-tracer-hooks \
+	--disable-gst-debug \
 	--disable-gtk-doc-html \
+	--disable-option-parsing \
+	--disable-rpath \
 	--disable-tests \
 	--disable-valgrind \
 	--without-dw \
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
 	--without-unwind
-
-EXTRA_LDFLAGS+= \
-	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib \
-	$(if $(ICONV_FULL),-liconv)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/gstreamer-$(GST_VERSION)
