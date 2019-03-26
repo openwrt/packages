@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ptunnel-ng
 PKG_VERSION:=1.40
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/lnslbrty/ptunnel-ng/tar.gz/v$(PKG_VERSION)?
@@ -31,6 +31,9 @@ endef
 CONFIGURE_ARGS += \
 	--disable-pcap \
 	--disable-selinux
+
+CONFIGURE_VARS += \
+	ac_cv_header_bsd_stdlib_h=no
 
 define Package/ptunnel-ng/install
 	$(INSTALL_DIR) $(1)/usr/sbin
