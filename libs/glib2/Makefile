@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
+# Copyright (C) 2007-2019 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
-PKG_VERSION:=2.52.3
+PKG_VERSION:=2.58.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_BUILD_DIR:=$(BUILD_DIR)/glib-$(PKG_VERSION)
-PKG_SOURCE_URL:=@GNOME/glib/2.52
-PKG_HASH:=25ee7635a7c0fcd4ec91cbc3ae07c7f8f5ce621d8183511f414ded09e7e4e128
+PKG_SOURCE_URL:=@GNOME/glib/2.58
+PKG_HASH:=8f43c31767e88a25da72b52a40f3301fefc49a665b56dc10ee7cc9565cbe7481
 
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=glib2/host libpthread zlib libintl libffi
+PKG_BUILD_DEPENDS:=glib2/host gettext
 HOST_BUILD_DEPENDS:=gettext-full/host libiconv/host libffi/host
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
@@ -44,19 +44,23 @@ define Package/glib2/description
   The GLib library of C routines
 endef
 
+TARGET_CFLAGS += -Wno-error=implicit-function-declaration
+
 HOST_CONFIGURE_ARGS += \
 	--disable-selinux \
 	--with-libiconv=gnu \
 	--with-pcre=internal \
-	--enable-libmount=no
+	--disable-libmount
 
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
-	--enable-debug=no \
+	--disable-debug \
 	--disable-selinux \
-	--enable-libmount=no \
+	--disable-libmount \
 	--disable-fam \
+	--disable-gtk-doc-html \
+	--disable-man \
 	--with-libiconv=gnu \
 	--with-pcre=internal
 
@@ -69,6 +73,11 @@ CONFIGURE_VARS += \
 	ac_cv_func_posix_getgrgid_r=yes
 
 define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/bin/* \
+		$(1)/usr/bin/
+
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/glib-2.0 \

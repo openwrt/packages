@@ -33,13 +33,15 @@
 #
 # 66666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
 #
-#.cloudflare.com-v1	!!! Please install additional package "ddns-scripts_cloudflare"
 #.cloudflare.com-v4	!!! Please install additional package "ddns-scripts_cloudflare.com-v4"
 #.godaddy.com-v1	!!! Please install additional package "ddns-scripts_godaddy.com-v1"
 #.no-ip.com / noip.com	!!! Please install additional package "ddns-scripts_no-ip_com"
+#.route53-v1		!!! Please install additional package "ddns-scripts_route53-v1"
 
 "afraid.org-basicauth"	"http://[USERNAME]:[PASSWORD]@freedns.afraid.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
 "afraid.org-keyauth"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
+"afraid.org-v2-basic"	"http://[USERNAME]:[PASSWORD]@v6.sync.afraid.org/u/?h=[DOMAIN]&ip=[IP]"
+"afraid.org-v2-token"	"http://v6.sync.afraid.org/u/[PASSWORD]/?address=[IP]"
 
 "all-inkl.com"		"http://[USERNAME]:[PASSWORD]@dyndns.kasserver.com/?myip=[IP]"
 
@@ -48,7 +50,7 @@
 # "ddnss.de"		"http://[USERNAME]:[PASSWORD]@ip6.ddnss.de/upd.php?host=[DOMAIN]&ip6=[IP]"	"good|nochg"
 "ddnss.de"		"http://ip6.ddnss.de/upd.php?user=[USERNAME]&pwd=[PASSWORD]&host=[DOMAIN]&ip6=[IP]"	"good|nochg"
 
-"desec.io"		"http://[USERNAME]:[PASSWORD]@update.dedyn.io/?hostname=[DOMAIN]&myipv6=[IP]"	"good|nochg"
+"desec.io"		"http://update.dedyn.io/?username=[USERNAME]&password=[PASSWORD]&hostname=[DOMAIN]&myipv6=[IP]"	"good|nochg"
 
 "dhis.org"		"http://[USERNAME]:[PASSWORD]@is.dhis.org/"
 
@@ -63,7 +65,9 @@
 "dyn.com"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 "dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
-"dynv6.com"		"http://dynv6.com/api/update?hostname=[DOMAIN]&token=[PASSWORD]&ipv6=[IP]"	"updated"
+"dynu.com"    		"http://api.dynu.com/nic/update?hostname=[DOMAIN]&myipv6=[IP]&username=[USERNAME]&password=[PASSWORD]"
+
+"dynv6.com"		"http://dynv6.com/api/update?hostname=[DOMAIN]&token=[PASSWORD]&ipv6=[IP]"	"updated|unchanged"
 
 "goip.de"		"http://www.goip.de/setip?username=[USERNAME]&password=[PASSWORD]&subdomain=[DOMAIN]&ip6=[IP]"
 
@@ -81,7 +85,7 @@
 
 "no-ip.pl"		"http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
 
-"now-dns.com"		"http://[USERNAME]:[PASSWORD]@now-dns.com/update?hostname=[DOMAIN]"
+"now-dns.com"		"https://[USERNAME]:[PASSWORD]@now-dns.com/update?hostname=[DOMAIN]"	"good|nochg"
 
 "nsupdate.info"		"http://[USERNAME]:[PASSWORD]@ipv6.nsupdate.info/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 

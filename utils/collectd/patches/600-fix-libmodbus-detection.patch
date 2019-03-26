@@ -18,15 +18,18 @@ Reversed patch to be applied:
 
 --- a/configure.ac
 +++ b/configure.ac
-@@ -3278,7 +3278,7 @@ then
- 	SAVE_CPPFLAGS="$CPPFLAGS"
- 	CPPFLAGS="$CPPFLAGS $with_libmodbus_cflags"
+@@ -3327,9 +3327,9 @@ if test "x$with_libmodbus" = "xyes"; the
+   SAVE_CPPFLAGS="$CPPFLAGS"
+   CPPFLAGS="$CPPFLAGS $with_libmodbus_cflags"
  
--	AC_CHECK_HEADERS(modbus.h, [], [with_libmodbus="no (modbus.h not found)"])
-+	AC_CHECK_HEADERS(modbus/modbus.h, [], [with_libmodbus="no (modbus/modbus.h not found)"])
+-  AC_CHECK_HEADERS([modbus.h],
++  AC_CHECK_HEADERS([modbus/modbus.h],
+     [with_libmodbus="yes"],
+-    [with_libmodbus="no (modbus.h not found)"]
++    [with_libmodbus="no (modbus/modbus.h not found)"]
+   )
  
- 	CPPFLAGS="$SAVE_CPPFLAGS"
- fi
+   CPPFLAGS="$SAVE_CPPFLAGS"
 --- a/src/modbus.c
 +++ b/src/modbus.c
 @@ -26,7 +26,7 @@

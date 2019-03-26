@@ -1,7 +1,0 @@
-menu "Configuration"
-	depends on PACKAGE_ethtool
-
-	config ETHTOOL_PRETTY_DUMP
-		bool "Enable pretty printing"
-
-endmenu

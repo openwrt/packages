@@ -1,0 +1,88 @@
+Index: squeezelite-1.9.1-1130/Makefile
+===================================================================
+--- squeezelite-1.9.1-1130.orig/Makefile
++++ squeezelite-1.9.1-1130/Makefile
+@@ -17,7 +17,7 @@ OPT_NO_FAAD = -DNO_FAAD
+ SOURCES = \
+ 	main.c slimproto.c buffer.c stream.c utils.c \
+ 	output.c output_alsa.c output_pa.c output_stdout.c output_pack.c decode.c \
+-	flac.c pcm.c mad.c vorbis.c mpg.c
++	flac.c pcm.c vorbis.c mpg.c
+ 
+ SOURCES_DSD      = dsd.c dop.c dsd2pcm/dsd2pcm.c
+ SOURCES_FF       = ffmpeg.c
+@@ -30,7 +30,7 @@ SOURCES_FAAD     = faad.c
+ LINK_LINUX       = -ldl
+ LINK_RPI         = -lwiringPi
+ 
+-LINKALL          = -lFLAC -lmad -lvorbisfile -lmpg123
++LINKALL          = -lFLAC -lvorbisfile -lmpg123
+ LINKALL_FF       = -lavcodec -lavformat -lavutil
+ LINKALL_RESAMPLE = -lsoxr
+ LINKALL_IR       = -llirc_client
+Index: squeezelite-1.9.1-1130/decode.c
+===================================================================
+--- squeezelite-1.9.1-1130.orig/decode.c
++++ squeezelite-1.9.1-1130/decode.c
+@@ -176,11 +176,7 @@ void decode_init(log_level level, const
+ 	if (!strstr(exclude_codecs, "pcm")	&& (!include_codecs || (order_codecs = strstr(include_codecs, "pcm"))))
+ 		sort_codecs((include_codecs ? order_codecs - include_codecs : i), register_pcm());
+ 
+-	// try mad then mpg for mp3 unless command line option passed
+-	if (!(strstr(exclude_codecs, "mp3") || strstr(exclude_codecs, "mad")) &&
+-		(!include_codecs || (order_codecs = strstr(include_codecs, "mp3")) || (order_codecs = strstr(include_codecs, "mad"))))
+-		sort_codecs((include_codecs ? order_codecs - include_codecs : i), register_mad());
+-	else if (!(strstr(exclude_codecs, "mp3") || strstr(exclude_codecs, "mpg")) &&
++	if (!(strstr(exclude_codecs, "mp3") || strstr(exclude_codecs, "mpg")) &&
+ 		(!include_codecs || (order_codecs = strstr(include_codecs, "mp3")) || (order_codecs = strstr(include_codecs, "mpg"))))
+ 		sort_codecs((include_codecs ? order_codecs - include_codecs : i), register_mpg());
+ 
+Index: squeezelite-1.9.1-1130/main.c
+===================================================================
+--- squeezelite-1.9.1-1130.orig/main.c
++++ squeezelite-1.9.1-1130/main.c
+@@ -44,7 +44,7 @@
+ #else
+ #define CODECS_DSD  ""
+ #endif
+-#define CODECS_MP3  " (mad,mpg for specific mp3 codec)"
++#define CODECS_MP3  ""
+ 
+ #define CODECS CODECS_BASE CODECS_AAC CODECS_FF CODECS_DSD CODECS_MP3
+ 
+Index: squeezelite-1.9.1-1130/squeezelite.h
+===================================================================
+--- squeezelite-1.9.1-1130.orig/squeezelite.h
++++ squeezelite-1.9.1-1130/squeezelite.h
+@@ -163,7 +163,6 @@
+ 
+ #if LINUX
+ #define LIBFLAC "libFLAC.so.8"
+-#define LIBMAD  "libmad.so.0"
+ #define LIBMPG "libmpg123.so.0"
+ #define LIBVORBIS "libvorbisfile.so.3"
+ #define LIBTREMOR "libvorbisidec.so.1"
+@@ -177,7 +176,6 @@
+ 
+ #if OSX
+ #define LIBFLAC "libFLAC.8.dylib"
+-#define LIBMAD  "libmad.0.dylib"
+ #define LIBMPG "libmpg123.0.dylib"
+ #define LIBVORBIS "libvorbisfile.3.dylib"
+ #define LIBTREMOR "libvorbisidec.1.dylib"
+@@ -190,7 +188,6 @@
+ 
+ #if WIN
+ #define LIBFLAC "libFLAC.dll"
+-#define LIBMAD  "libmad-0.dll"
+ #define LIBMPG "libmpg123-0.dll"
+ #define LIBVORBIS "libvorbisfile.dll"
+ #define LIBTREMOR "libvorbisidec.dll"
+@@ -203,7 +200,6 @@
+ 
+ #if FREEBSD
+ #define LIBFLAC "libFLAC.so.11"
+-#define LIBMAD  "libmad.so.2"
+ #define LIBMPG "libmpg123.so.0"
+ #define LIBVORBIS "libvorbisfile.so.6"
+ #define LIBTREMOR "libvorbisidec.so.1"

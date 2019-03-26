@@ -1,0 +1,17 @@
+--- a/buildconf/base.ini
++++ b/buildconf/base.ini
+@@ -1,9 +1,9 @@
+ [uwsgi]
+-xml = auto
+-yaml = true
+-json = auto
+-ssl = auto
+-pcre = auto
++xml = false
++yaml = embedded
++json = jansson
++ssl = false
++pcre = false
+ routing = auto
+ debug = false
+ unbit = false

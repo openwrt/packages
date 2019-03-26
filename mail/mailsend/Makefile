@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mailsend
-PKG_VERSION:=1.17b15
+PKG_VERSION:=1.19
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/muquit/mailsend/archive/$(PKG_VERSION)
-PKG_MD5SUM:=60103c411a8627e893d35e7836f904e8
+PKG_HASH:=565ef6be26c58ef75065c5519eae8dd55bae3142928619696b28d242b73493f7
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 

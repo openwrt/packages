@@ -1,0 +1,20 @@
+--- a/gio/gthreadedresolver.c
++++ b/gio/gthreadedresolver.c
+@@ -873,6 +873,8 @@ do_lookup_records (GTask         *task,
+ 
+ #ifdef HAVE_RES_NQUERY
+ 
++#ifdef HAVE_RES_NQUERY
++
+ #if defined(HAVE_RES_NDESTROY)
+   res_ndestroy (&res);
+ #elif defined(HAVE_RES_NCLOSE)
+@@ -883,6 +885,8 @@ do_lookup_records (GTask         *task,
+ 
+ #endif  /* HAVE_RES_NQUERY */
+ 
++#endif
++
+ #else
+ 
+   DNS_STATUS status;

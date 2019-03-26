@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=classpath
 PKG_VERSION:=0.99
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Dana H. Myers <k6jq@comcast.net>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/classpath
-PKG_MD5SUM:=0ae1571249172acd82488724a3b8acb4
+PKG_HASH:=f929297f8ae9b613a1a167e231566861893260651d913ad9b6c11933895fecc8
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -46,10 +46,11 @@ endef
 define Download/antlr
   URL:=http://www.antlr.org/download
   FILE:=antlr-3.4-complete.jar
-  MD5SUM:=1b91dea1c7d480b3223f7c8a9aa0e172
+  HASH:=9d3e866b610460664522520f73b81777b5626fb0a282a5952b9800b751550bf7
 endef
 $(eval $(call Download,antlr))
 
+EXTRA_CFLAGS += -Wno-error=implicit-fallthrough
 CONFIGURE_ARGS += \
 	--with-gmp="$(STAGING_DIR)/usr" \
 	--without-x \

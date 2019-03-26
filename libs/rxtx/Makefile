@@ -15,7 +15,7 @@ PKG_MAINTAINER:=Dana H. Myers <k6jq@comcast.net>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).zip
 PKG_SOURCE_URL:=http://rxtx.qbang.org/pub/rxtx/
-PKG_MD5SUM:=7eedb18e3f33a427e2b0e9be8ce3f94c
+PKG_HASH:=3c30373e760f444def3650c76c5a00ae12fb1d860ec008750d084f4880495b03
 
 PKG_FIXUP:=patch-libtool
 PKG_CHECK_FORMAT_SECURITY:=0

@@ -8,28 +8,34 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sispmctl
-PKG_VERSION:=3.1+20120206
+PKG_VERSION:=4.1
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=5ff4a05a5bcb6a64a9d6f77fed47014512f66b11
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=git://git.code.sf.net/p/sispmctl/git
-PKG_MAINTAINER:=Richard Kunze <richard.kunze@web.de>
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=@SF/$(PKG_NAME)
+PKG_HASH:=bf5177e085cb0168e18e4cfb69645c3095da149ed46f5659d6e757bde3548e40
+PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-2.0+
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
-PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
+
+define Package/libsispmctl
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=Silver Shield PM Control for Linux library
+  URL:=http://sispmctl.sourceforge.net
+  DEPENDS:=+libusb-compat
+endef
 
 define Package/sispmctl
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Silver Shield PM Control for Linux
-  URL:=http://sispmctl.sourceforge.net/
-  DEPENDS:=+libusb-compat
+  URL:=http://sispmctl.sourceforge.net
+  DEPENDS:=+libsispmctl
 endef
 
 define Package/sispmctl/description
@@ -48,9 +54,15 @@ CONFIGURE_ARGS += \
 	--enable-webless \
 	--disable-dependency-tracking
 
-define Package/sispmctl/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(PKG_NAME) $(1)/usr/bin/
+define Package/libsispmctl/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libsispmctl* $(1)/usr/lib/
 endef
 
+define Package/sispmctl/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/sispmctl $(1)/usr/bin/
+endef
+
+$(eval $(call BuildPackage,libsispmctl))
 $(eval $(call BuildPackage,sispmctl))

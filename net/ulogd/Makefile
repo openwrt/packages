@@ -8,15 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ulogd
-PKG_VERSION:=2.0.5
-PKG_RELEASE:=2
+PKG_VERSION:=2.0.7
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=ftp://ftp.netfilter.org/pub/ulogd/ \
-	ftp://ftp.be.netfilter.org/pub/netfilter/ulogd/ \
-	ftp://ftp.de.netfilter.org/pub/netfilter/ulogd/ \
-	ftp://ftp.no.netfilter.org/pub/netfilter/ulogd/
-PKG_MD5SUM:=f0f8fe1371fa28b5e06cb16aaa0111dd
+PKG_SOURCE_URL:=https://netfilter.org/projects/ulogd/files/ \
+	ftp://ftp.netfilter.org/pub/ulogd/
+PKG_HASH:=990a05494d9c16029ba0a83f3b7294fc05c756546b8d60d1c1572dc25249a92b
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -46,55 +44,55 @@ endef
 
 define Package/ulogd-mod-dbi
   $(call Package/ulogd/Default)
-  DEPENDS:=ulogd +libdbi
+  DEPENDS:=ulogd +PACKAGE_ulogd-mod-dbi:libdbi
   TITLE:=Output plugin for logging to a database using libdbi
 endef
 
 define Package/ulogd-mod-json
   $(call Package/ulogd/Default)
-  DEPENDS:=ulogd +jansson
+  DEPENDS:=ulogd +PACKAGE_ulogd-mod-json:jansson
   TITLE:=JSON output plugin
 endef
 
 define Package/ulogd-mod-mysql
   $(call Package/ulogd/Default)
-  DEPENDS:=ulogd +libmysqlclient
+  DEPENDS:=ulogd +PACKAGE_ulogd-mod-mysql:libmysqlclient
   TITLE:=Output plugin for logging to a MySQL database
 endef
 
 define Package/ulogd-mod-nfacct
   $(call Package/ulogd/Default)
-  DEPENDS:=ulogd +libnetfilter-acct
+  DEPENDS:=ulogd +PACKAGE_ulogd-mod-nfacct:libnetfilter-acct
   TITLE:=Input plugin for flow-based logging (accounting)
 endef
 
 define Package/ulogd-mod-nfct
   $(call Package/ulogd/Default)
-  DEPENDS:=ulogd +libnetfilter-conntrack
+  DEPENDS:=ulogd +PACKAGE_ulogd-mod-nfct:libnetfilter-conntrack
   TITLE:=Input plugin for flow-based logging (conntracking)
 endef
 
 define Package/ulogd-mod-nflog
   $(call Package/ulogd/Default)
-  DEPENDS:=ulogd +libnetfilter-log
+  DEPENDS:=ulogd +PACKAGE_ulogd-mod-nflog:libnetfilter-log
   TITLE:=Input plugin using NFLOG
 endef
 
 define Package/ulogd-mod-pcap
   $(call Package/ulogd/Default)
-  DEPENDS:=ulogd +libpcap
+  DEPENDS:=ulogd +PACKAGE_ulogd-mod-pcap:libpcap
   TITLE:=Output plugin for logging in pcap format
 endef
 
 define Package/ulogd-mod-pgsql
   $(call Package/ulogd/Default)
-  DEPENDS:=ulogd +libpq
+  DEPENDS:=ulogd +PACKAGE_ulogd-mod-pgsql:libpq
   TITLE:=Output plugin for logging to a PostgreSQL database
 endef
 
 define Package/ulogd-mod-sqlite
   $(call Package/ulogd/Default)
-  DEPENDS:=ulogd +libsqlite3
+  DEPENDS:=ulogd +PACKAGE_ulogd-mod-sqlite:libsqlite3
   TITLE:=Output plugin for logging to an SQLite database
 endef
 
@@ -106,7 +104,7 @@ endef
 
 define Package/ulogd-mod-xml
   $(call Package/ulogd/Default)
-  DEPENDS:=ulogd +libnetfilter-acct +libnetfilter-conntrack +libnetfilter-log
+  DEPENDS:=ulogd +PACKAGE_ulogd-mod-xml:libnetfilter-acct +PACKAGE_ulogd-mod-xml:libnetfilter-conntrack +PACKAGE_ulogd-mod-xml:libnetfilter-log
   TITLE:=XML output plugin
 endef
 
@@ -141,7 +139,9 @@ else
 endif
 
 ifneq ($(DEVELOPER)$(SDK)$(CONFIG_PACKAGE_ulogd-mod-mysql),)
-	CONFIGURE_ARGS += --with-mysql="$(STAGING_DIR)/usr"
+	CONFIGURE_ARGS += \
+		--with-mysql-inc=$(STAGING_DIR)/usr/include/mysql \
+		--with-mysql-lib=$(STAGING_DIR)/usr/lib/mysql
 else
 	CONFIGURE_ARGS += --without-mysql
 endif

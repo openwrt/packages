@@ -5,7 +5,7 @@
 if PACKAGE_mjpg-streamer
 
 config MJPG_STREAMER_V4L2
-	bool "Compile input_uvc with libv4l2 (camera controls)"
+	bool "Build input_uvc with libv4l2 (camera controls)"
 	default n
 	select PACKAGE_libv4l
 
@@ -17,8 +17,16 @@ config MJPG_STREAMER_INPUT_UVC
 	bool "Install input uvc plugin"
 	default y
 
-config MJPG_STREAMER_INPUT_TESTPICTURE
-	bool "Install input testpicture plugin"
+config MJPG_STREAMER_INPUT_HTTP
+	bool "Install input HTTP plugin"
+	default n
+
+config MJPG_STREAMER_OUTPUT_RTSP
+	bool "Install output RTSP plugin"
+	default n
+
+config MJPG_STREAMER_OUTPUT_UDP
+	bool "Install output UDP plugin"
 	default n
 
 config MJPG_STREAMER_OUTPUT_FILE
@@ -26,7 +34,7 @@ config MJPG_STREAMER_OUTPUT_FILE
 	default n
 
 config MJPG_STREAMER_OUTPUT_HTTP
-	bool "Install output http plugin"
+	bool "Install output HTTP plugin"
 	default y
 
 config MJPG_STREAMER_WWW

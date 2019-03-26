@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://downloads.xiph.org/releases/ao/
-PKG_MD5SUM:=9f5dd20d7e95fd0dd72df5353829f097
+PKG_HASH:=03ad231ad1f9d64b52474392d63c31197b0bc7bd416e58b1c10a329a5ed89caf
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 

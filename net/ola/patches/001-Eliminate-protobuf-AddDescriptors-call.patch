@@ -1,0 +1,91 @@
+From d7f13fdc516ffa36b16b89e7f398a8a36b4188d9 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Christoph=20M=C3=BCllner?= <christophm30@gmail.com>
+Date: Sat, 2 Dec 2017 00:08:55 +0100
+Subject: [PATCH 1/6] Eliminate protobuf AddDescriptors() call.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Eliminating protobuf's AddDescriptors() calls enabled
+forward-compatibility with libprotobuf. That allows to
+run OLA on recent Linux distrubutions.
+
+Tested on x86_64 running Fedora 27 with protobuf 3.3.1
+in combination with QLC+ and a uDMX controller.
+
+See #1192.
+
+Signed-off-by: Christoph Müllner <christophm30@gmail.com>
+---
+ config/ola.m4               | 3 ---
+ protoc/CppFileGenerator.cpp | 8 --------
+ protoc/GeneratorHelpers.cpp | 5 -----
+ protoc/GeneratorHelpers.h   | 3 ---
+ 4 files changed, 19 deletions(-)
+
+diff --git a/config/ola.m4 b/config/ola.m4
+index 6080932e9..d3b8cc8f8 100644
+--- a/config/ola.m4
++++ b/config/ola.m4
+@@ -24,9 +24,6 @@ AC_DEFUN([PROTOBUF_SUPPORT],
+ AC_REQUIRE_CPP()
+ PKG_CHECK_MODULES(libprotobuf, [protobuf >= $1])
+ 
+-PKG_CHECK_MODULES(libprotobuf2, [protobuf < 3.2], [],
+-                  [AC_MSG_ERROR([OLA currently requires protobuf < 3.2, see issue 1192])])
+-
+ AC_SUBST([libprotobuf_CFLAGS])
+ 
+ AC_ARG_WITH([protoc],
+diff --git a/protoc/CppFileGenerator.cpp b/protoc/CppFileGenerator.cpp
+index 518c17879..e7dd95ccb 100644
+--- a/protoc/CppFileGenerator.cpp
++++ b/protoc/CppFileGenerator.cpp
+@@ -196,14 +196,6 @@ void FileGenerator::GenerateBuildDescriptors(Printer* printer) {
+       "assigndescriptorsname", GlobalAssignDescriptorsName(m_output_name));
+     printer->Indent();
+ 
+-    // Make sure the file has found its way into the pool.  If a descriptor
+-    // is requested *during* static init then AddDescriptors() may not have
+-    // been called yet, so we call it manually.  Note that it's fine if
+-    // AddDescriptors() is called multiple times.
+-    printer->Print(
+-      "$adddescriptorsname$();\n",
+-      "adddescriptorsname", GlobalAddDescriptorsName(m_file->name()));
+-
+     // Get the file's descriptor from the pool.
+     printer->Print(
+       "const ::google::protobuf::FileDescriptor* file =\n"
+diff --git a/protoc/GeneratorHelpers.cpp b/protoc/GeneratorHelpers.cpp
+index 19609181e..6f619b5c0 100644
+--- a/protoc/GeneratorHelpers.cpp
++++ b/protoc/GeneratorHelpers.cpp
+@@ -104,11 +104,6 @@ string FilenameIdentifier(const string& filename) {
+   return result;
+ }
+ 
+-// Return the name of the AddDescriptors() function for a given file.
+-string GlobalAddDescriptorsName(const string& filename) {
+-  return "protobuf_AddDesc_" + FilenameIdentifier(filename);
+-}
+-
+ // Return the name of the AssignDescriptors() function for a given file.
+ string GlobalAssignDescriptorsName(const string& filename) {
+   return "protobuf_AssignDesc_" + FilenameIdentifier(filename);
+diff --git a/protoc/GeneratorHelpers.h b/protoc/GeneratorHelpers.h
+index 35efdbb04..fa91a915d 100644
+--- a/protoc/GeneratorHelpers.h
++++ b/protoc/GeneratorHelpers.h
+@@ -67,9 +67,6 @@ string StripProto(const string& filename);
+ // Convert a file name into a valid identifier.
+ string FilenameIdentifier(const string& filename);
+ 
+-// Return the name of the AddDescriptors() function for a given file.
+-string GlobalAddDescriptorsName(const string& filename);
+-
+ // Return the name of the AssignDescriptors() function for a given file.
+ string GlobalAssignDescriptorsName(const string& filename);
+ 
+-- 
+2.11.0
+

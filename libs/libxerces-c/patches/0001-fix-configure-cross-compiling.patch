@@ -1,0 +1,20 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -194,7 +194,7 @@ AC_COMPILE_IFELSE(  [AC_LANG_PROGRAM([[#
+                     ]
+                  )
+ AC_MSG_CHECKING([for wcsrtombs])
+-AC_RUN_IFELSE(  [AC_LANG_PROGRAM([[#include <wchar.h>
++AC_COMPILE_IFELSE(  [AC_LANG_PROGRAM([[#include <wchar.h>
+ #include <string.h>]],
+                                  [[
+ mbstate_t st;
+@@ -216,7 +216,7 @@ else
+                     ]
+                  )
+ AC_MSG_CHECKING([for mbsrtowcs])
+-AC_RUN_IFELSE(  [AC_LANG_PROGRAM([[#include <wchar.h>
++AC_COMPILE_IFELSE(  [AC_LANG_PROGRAM([[#include <wchar.h>
+ #include <string.h>]],
+                                  [[
+ mbstate_t st;

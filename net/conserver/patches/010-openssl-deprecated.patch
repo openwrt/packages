@@ -1,0 +1,11 @@
+--- a/conserver/cutil.h
++++ b/conserver/cutil.h
+@@ -7,6 +7,8 @@
+ #include <stdarg.h>
+ #if HAVE_OPENSSL
+ # include <openssl/ssl.h>
++# include <openssl/bn.h>
++# include <openssl/dh.h>
+ # include <openssl/err.h>
+ # if OPENSSL_VERSION_NUMBER < 0x10100000L
+ #  define TLS_method SSLv23_method

@@ -1,0 +1,40 @@
+--- a/src/lib-dcrypt/dcrypt-openssl.c
++++ b/src/lib-dcrypt/dcrypt-openssl.c
+@@ -20,6 +20,7 @@
+ #include <openssl/engine.h>
+ #include <openssl/hmac.h>
+ #include <openssl/objects.h>
++#include <openssl/bn.h>
+ #include "dcrypt.h"
+ #include "dcrypt-private.h"
+ 
+--- a/src/lib-ssl-iostream/dovecot-openssl-common.c
++++ b/src/lib-ssl-iostream/dovecot-openssl-common.c
+@@ -79,6 +79,7 @@ bool dovecot_openssl_common_global_unref(void)
+ 		ENGINE_finish(dovecot_openssl_engine);
+ 		dovecot_openssl_engine = NULL;
+ 	}
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	/* OBJ_cleanup() is called automatically by EVP_cleanup() in
+ 	   newer versions. Doesn't hurt to call it anyway. */
+ 	OBJ_cleanup();
+@@ -100,6 +101,7 @@ bool dovecot_openssl_common_global_unref(void)
+ 	ERR_free_strings();
+ #ifdef HAVE_OPENSSL_CLEANUP
+ 	OPENSSL_cleanup();
++#endif
+ #endif
+ 	return FALSE;
+ }
+--- a/src/lib-ssl-iostream/iostream-openssl-context.c
++++ b/src/lib-ssl-iostream/iostream-openssl-context.c
+@@ -6,6 +6,9 @@
+ #include "dovecot-openssl-common.h"
+ 
+ #include <openssl/crypto.h>
++#include <openssl/rsa.h>
++#include <openssl/dh.h>
++#include <openssl/bn.h>
+ #include <openssl/x509.h>
+ #include <openssl/pem.h>
+ #include <openssl/ssl.h>

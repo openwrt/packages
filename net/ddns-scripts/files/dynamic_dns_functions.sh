@@ -6,7 +6,7 @@
 # (Loosely) based on the script on the one posted by exobyte in the forums here:
 # http://forum.openwrt.org/viewtopic.php?id=14040
 # extended and partial rewritten
-#.2014-2017 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+#.2014-2018 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 #
 # function timeout
 # copied from http://www.ict.griffith.edu.au/anthony/software/timeout.sh
@@ -21,7 +21,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.7.6-13"
+VERSION="2.7.8-6"
 SECTION_ID=""		# hold config's section name
 VERBOSE=0		# default mode is log to console, but easily changed with parameter
 MYPROG=$(basename $0)	# my program call name
@@ -31,6 +31,7 @@ PIDFILE=""		# pid file
 UPDFILE=""		# store UPTIME of last update
 DATFILE=""		# save stdout data of WGet and other external programs called
 ERRFILE=""		# save stderr output of WGet and other external programs called
+IPFILE=""		# store registered IP for read by LuCI status
 TLDFILE=/usr/share/public_suffix_list.dat.gz	# TLD file used by split_FQDN
 
 CHECK_SECONDS=0		# calculated seconds out of given
@@ -62,6 +63,12 @@ IPV4_REGEX="[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}"
 # IPv6       ( ( 0-9a-f  1-4char ":") min 1x) ( ( 0-9a-f  1-4char   )optional) ( (":" 0-9a-f 1-4char  ) min 1x)
 IPV6_REGEX="\(\([0-9A-Fa-f]\{1,4\}:\)\{1,\}\)\(\([0-9A-Fa-f]\{1,4\}\)\{0,1\}\)\(\(:[0-9A-Fa-f]\{1,4\}\)\{1,\}\)"
 
+# characters that are dangerous to pass to a shell command line
+SHELL_ESCAPE="[\"\'\`\$\!();><{}?|\[\]\*\\\\]"
+
+# dns character set
+DNS_CHARSET="[@a-zA-Z0-9._-]"
+
 # detect if called by ddns-lucihelper.sh script, disable retrys (empty variable == false)
 LUCI_HELPER=$(printf %s "$MYPROG" | grep -i "luci")
 
@@ -71,7 +78,6 @@ KNOT_HOST=$(which khost)
 DRILL=$(which drill)
 HOSTIP=$(which hostip)
 NSLOOKUP=$(which nslookup)
-NSLOOKUP_MUSL=$($(which nslookup) localhost 2>&1 | grep -F "(null)")	# not empty busybox compiled with musl
 
 # Transfer Programs
 WGET=$(which wget)
@@ -79,13 +85,11 @@ WGET_SSL=$(which wget-ssl)
 
 CURL=$(which curl)
 # CURL_SSL not empty then SSL support available
-CURL_SSL=$($(which curl) -V 2>/dev/null | grep "Protocols:" | grep -F "https")
+CURL_SSL=$($CURL -V 2>/dev/null | grep -F "https")
 # CURL_PROXY not empty then Proxy support available
-CURL_PROXY=$(find /lib /usr/lib -name libcurl.so* -exec grep -i "all_proxy" {} 2>/dev/null \;)
+CURL_PROXY=$(find /lib /usr/lib -name libcurl.so* -exec strings {} 2>/dev/null \; | grep -im1 "all_proxy")
 
 UCLIENT_FETCH=$(which uclient-fetch)
-# UCLIENT_FETCH_SSL not empty then SSL support available
-UCLIENT_FETCH_SSL=$(find /lib /usr/lib -name libustream-ssl.so* 2>/dev/null)
 
 # Global configuration settings
 # allow NON-public IP's
@@ -227,7 +231,7 @@ stop_daemon_for_all_ddns_sections() {
 #	value +10 will exit the scripts
 # $2..n	text to report
 write_log() {
-	local __LEVEL __EXIT __CMD __MSG
+	local __LEVEL __EXIT __CMD __MSG __MSE
 	local __TIME=$(date +%H%M%S)
 	[ $1 -ge 10 ] && {
 		__LEVEL=$(($1-10))
@@ -261,7 +265,16 @@ write_log() {
 	[ $VERBOSE -gt 0 -o $__EXIT -gt 0 ] && echo -e "$__MSG"
 	# write to logfile
 	if [ ${use_logfile:-1} -eq 1 -o $VERBOSE -gt 1 ]; then
-		echo -e "$__MSG" >> $LOGFILE
+		if [ -n "$password" ]; then
+			# url encode __MSG, password already done
+			urlencode __MSE "$__MSG"
+			# replace encoded password inside encoded message
+			# and url decode (newline was encoded as %00)
+			__MSG=$( echo -e "$__MSE" \
+				| sed -e "s/$URL_PASS/***PW***/g" \
+				| sed -e "s/+/ /g; s/%00/\n/g; s/%/\\\\x/g" | xargs -0 printf "%b" )
+		fi
+		printf "%s\n" "$__MSG" >> $LOGFILE
 		# VERBOSE > 1 then NO loop so NO truncate log to $ddns_loglines lines
 		[ $VERBOSE -gt 1 ] || sed -i -e :a -e '$q;N;'$ddns_loglines',$D;ba' $LOGFILE
 	fi
@@ -269,11 +282,11 @@ write_log() {
 	[ $__LEVEL -eq 7 ] && return	# no syslog for debug messages
 	__CMD=$(echo -e "$__CMD" | tr -d '\n' | tr '\t' '     ')        # remove \n \t chars
 	[ $__EXIT  -eq 1 ] && {
-		$__CMD		# force syslog before exit
+		eval "$__CMD"	# force syslog before exit
 		exit 1
 	}
 	[ $use_syslog -eq 0 ] && return
-	[ $((use_syslog + __LEVEL)) -le 7 ] && $__CMD
+	[ $((use_syslog + __LEVEL)) -le 7 ] && eval "$__CMD"
 
 	return
 }
@@ -288,32 +301,12 @@ write_log() {
 urlencode() {
 	# $1	Name of Variable to store encoded string to
 	# $2	string to encode
-	local __STR __LEN __CHAR __OUT
-	local __ENC=""
-	local __POS=1
+	local __ENC
 
 	[ $# -ne 2 ] && write_log 12 "Error calling 'urlencode()' - wrong number of parameters"
 
-	__STR="$2"		# read string to encode
-	__LEN=${#__STR}		# get string length
-
-	while [ $__POS -le $__LEN ]; do
-		# read one chat of the string
-		__CHAR=$(expr substr "$__STR" $__POS 1)
-
-		case "$__CHAR" in
-		        [-_.~a-zA-Z0-9] )
-				# standard char
-				__OUT="${__CHAR}"
-				;;
-		        * )
-				# special char get %hex code
-		               __OUT=$(printf '%%%02x' "'$__CHAR" )
-				;;
-		esac
-		__ENC="${__ENC}${__OUT}"	# append to encoded string
-		__POS=$(( $__POS + 1 ))		# increment position
-	done
+	__ENC="$(awk -v str="$2" 'BEGIN{ORS="";for(i=32;i<=127;i++)lookup[sprintf("%c",i)]=i
+		for(k=1;k<=length(str);++k){enc=substr(str,k,1);if(enc!~"[-_.~a-zA-Z0-9]")enc=sprintf("%%%02x", lookup[enc]);print enc}}')"
 
 	eval "$1=\"$__ENC\""	# transfer back to variable
 	return 0
@@ -466,6 +459,27 @@ timeout() {
 	# /bin/ps j  # uncomment to show if abort "sleep" is still sleeping
 
 	return $status
+}
+
+# sanitize a variable
+# $1	variable name
+# $2	allowed shell pattern
+# $3	disallowed shell pattern
+sanitize_variable() {
+	local __VAR=$1
+	eval __VALUE=\$$__VAR
+	local __ALLOWED=$2
+	local __REJECT=$3
+
+	# removing all allowed should give empty string
+	if [ -n "$__ALLOWED" ]; then
+		[ -z "${__VALUE//$__ALLOWED}" ] || write_log 12 "sanitize on $__VAR found characters outside allowed subset"
+	fi
+
+	# removing rejected pattern should give the same string as the input
+	if [ -n "$__REJECT" ]; then
+		[ "$__VALUE" = "${__VALUE//$__REJECT}" ] || write_log 12 "sanitize on $__VAR found rejected characters"
+	fi
 }
 
 # verify given host and port is connectable
@@ -762,6 +776,8 @@ do_transfer() {
 
 	# uclient-fetch possibly with ssl support if /lib/libustream-ssl.so installed
 	elif [ -n "$UCLIENT_FETCH" ]; then
+		# UCLIENT_FETCH_SSL not empty then SSL support available
+		UCLIENT_FETCH_SSL=$(find /lib /usr/lib -name libustream-ssl.so* 2>/dev/null)
 		__PROG="$UCLIENT_FETCH -q -O $DATFILE"
 		# force network/ip not supported
 		[ -n "$__BINDIP" ] && \
@@ -874,7 +890,7 @@ send_update() {
 
 		do_transfer "$__URL" || return 1
 
-		write_log 7 "DDNS Provider answered:\n$(cat $DATFILE)"
+		write_log 7 "DDNS Provider answered:${N}$(cat $DATFILE)"
 
 		[ -z "$UPD_ANSWER" ] && return 0	# not set then ignore
 
@@ -892,14 +908,15 @@ get_local_ip () {
 	write_log 7 "Detect local IP on '$ip_source'"
 
 	while : ; do
-		if [ -n "$ip_network" ]; then
+		if [ -n "$ip_network" -a "$ip_source" = "network" ]; then
 			# set correct program
+			network_flush_cache	# force re-read data from ubus
 			[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" \
 					    || __RUNPROG="network_get_ipaddr6"
 			eval "$__RUNPROG __DATA $ip_network" || \
 				write_log 13 "Can not detect local IP using $__RUNPROG '$ip_network' - Error: '$?'"
 			[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on network '$ip_network'"
-		elif [ -n "$ip_interface" ]; then
+		elif [ -n "$ip_interface" -a "$ip_source" = "interface" ]; then
 			local __DATA4=""; local __DATA6=""
 			if [ -n "$(which ip)" ]; then		# ip program installed
 				write_log 7 "#> ip -o addr show dev $ip_interface scope global >$DATFILE 2>$ERRFILE"
@@ -978,7 +995,7 @@ get_local_ip () {
 			fi
 			[ $use_ipv6 -eq 0 ] && __DATA="$__DATA4" || __DATA="$__DATA6"
 			[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on interface '$ip_interface'"
-		elif [ -n "$ip_script" ]; then
+		elif [ -n "$ip_script" -a "$ip_source" = "script" ]; then
 			write_log 7 "#> $ip_script >$DATFILE 2>$ERRFILE"
 			eval $ip_script >$DATFILE 2>$ERRFILE
 			__ERR=$?
@@ -989,7 +1006,7 @@ get_local_ip () {
 				write_log 3 "$ip_script Error: '$__ERR'"
 				write_log 7 "$(cat $ERRFILE)"		# report error
 			fi
-		elif [ -n "$ip_url" ]; then
+		elif [ -n "$ip_url" -a "$ip_source" = "web" ]; then
 			do_transfer "$ip_url"
 			# use correct regular expression
 			[ $use_ipv6 -eq 0 ] \
@@ -1104,6 +1121,7 @@ get_registered_ip() {
 		__RUNPROG="$__PROG $lookup_host >$DATFILE 2>$ERRFILE"
 		__PROG="hostip"
 	elif [ -n "$NSLOOKUP" ]; then	# last use BusyBox nslookup
+		NSLOOKUP_MUSL=$($(which nslookup) localhost 2>&1 | grep -F "(null)")	# not empty busybox compiled with musl
 		[ $force_dnstcp -ne 0 ] && \
 			write_log 14 "Busybox nslookup - no support for 'DNS over TCP'"
 		[ -n "$NSLOOKUP_MUSL" -a -n "$dns_server" ] && \
@@ -1140,12 +1158,14 @@ get_registered_ip() {
 			fi
 			[ -n "$__DATA" ] && {
 				write_log 7 "Registered IP '$__DATA' detected"
+				[ -z "$IPFILE" ] || echo "$__DATA" > $IPFILE
 				eval "$1=\"$__DATA\""	# valid data found
 				return 0		# leave here
 			}
 			write_log 4 "NO valid IP found"
 			__ERR=127
 		fi
+		[ -z "$IPFILE" ] || echo "" > $IPFILE
 
 		[ -n "$LUCI_HELPER" ] && return $__ERR	# no retry if called by LuCI helper script
 		[ -n "$2" ] && return $__ERR		# $2 is given -> no retry
@@ -1190,17 +1210,17 @@ trap_handler() {
 
 	case $1 in
 		 0)	if [ $__ERR -eq 0 ]; then
-				write_log 5 "PID '$$' exit normal at $(eval $DATE_PROG)\n"
+				write_log 5 "PID '$$' exit normal at $(eval $DATE_PROG)${N}"
 			else
-				write_log 4 "PID '$$' exit WITH ERROR '$__ERR' at $(eval $DATE_PROG)\n"
+				write_log 4 "PID '$$' exit WITH ERROR '$__ERR' at $(eval $DATE_PROG)${N}"
 			fi ;;
 		 1)	write_log 6 "PID '$$' received 'SIGHUP' at $(eval $DATE_PROG)"
 			# reload config via starting the script again
 			/usr/lib/ddns/dynamic_dns_updater.sh -v "0" -S "$__SECTIONID" -- start || true
 			exit 0 ;;	# and leave this one
-		 2)	write_log 5 "PID '$$' terminated by 'SIGINT' at $(eval $DATE_PROG)\n";;
-		 3)	write_log 5 "PID '$$' terminated by 'SIGQUIT' at $(eval $DATE_PROG)\n";;
-		15)	write_log 5 "PID '$$' terminated by 'SIGTERM' at $(eval $DATE_PROG)\n";;
+		 2)	write_log 5 "PID '$$' terminated by 'SIGINT' at $(eval $DATE_PROG)${N}";;
+		 3)	write_log 5 "PID '$$' terminated by 'SIGQUIT' at $(eval $DATE_PROG)${N}";;
+		15)	write_log 5 "PID '$$' terminated by 'SIGTERM' at $(eval $DATE_PROG)${N}";;
 		 *)	write_log 13 "Unhandled signal '$1' in 'trap_handler()'";;
 	esac
 

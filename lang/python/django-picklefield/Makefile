@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
+# Copyright (C) 2007-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-picklefield
-PKG_VERSION:=0.3.2
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pypi.python.org/packages/source/d/django-picklefield/
-PKG_MD5SUM:=b2c17ca9e03704ce33890e6aefc7b2e5
-PKG_BUILD_DEPENDS:=python python-setuptools
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/d/django-picklefield
+PKG_HASH:=ce7fee5c6558fe5dc8924993d994ccde75bb75b91cd82787cbd4c92b95a69f9c
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/django-picklefield
   SUBMENU:=Python
@@ -26,7 +25,7 @@ define Package/django-picklefield
   CATEGORY:=Languages
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
   TITLE:=Pickled object field for Django
-  URL:=http://github.com/gintas/django-picklefield/
+  URL:=https://github.com/gintas/django-picklefield
   DEPENDS:=+python +django
 endef
 

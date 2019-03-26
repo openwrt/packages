@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpng
-PKG_VERSION:=1.6.29
-PKG_RELEASE:=2
+PKG_VERSION:=1.6.36
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/libpng
-PKG_HASH:=4245b684e8fe829ebb76186327bb37ce5a639938b219882b53d64bd3cfc5f239
-PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
+PKG_HASH:=eceb924c1fa6b79172fdfd008d335f0e59172a86a66481e09d4089df872aa319
 
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=Libpng GPL-2.0+ BSD-3-Clause
 PKC_LICENSE_FILES:=LICENSE contrib/gregbook/COPYING contrib/gregbook/LICENSE
+PKG_CPE_ID:=cpe:/a:libpng:libpng
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -39,6 +40,7 @@ TARGET_CFLAGS += $(FPIC)
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
+	$(if $(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)),--enable-hardware-optimizations=yes --enable-arm-neon=yes)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin

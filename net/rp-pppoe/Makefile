@@ -9,13 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rp-pppoe
 PKG_VERSION:=3.12
-PKG_RELEASE:=1
-PKG_MAINTAINER:=Daniel Dickinson <lede@cshore.thecshore.com>
+PKG_RELEASE:=6
 PKG_LICENSE:=LGPL-2.0+
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://roaringpenguin.com/files/download
-PKG_MD5SUM:=00794e04031546b0e9b8cf286f2a6d1ccfc4a621b2a3abb2d7ef2a7ab7cc86c2
+PKG_HASH:=00794e04031546b0e9b8cf286f2a6d1ccfc4a621b2a3abb2d7ef2a7ab7cc86c2
 
 PKG_BUILD_DEPENDS:=ppp
 
@@ -37,7 +36,7 @@ endef
 define Package/rp-pppoe-common
   $(call Package/rp-pppoe/Default)
   TITLE+= common
-  DEPENDS:=+ppp
+  DEPENDS:=ppp
 endef
 
 define Package/rp-pppoe-common/description
@@ -69,7 +68,7 @@ endef
 
 define Package/rp-pppoe-server
   $(call Package/rp-pppoe/Default)
-  DEPENDS:=+rp-pppoe-common
+  DEPENDS:=+rp-pppoe-common +ppp-mod-pppoe
   TITLE+= server
 endef
 
@@ -102,7 +101,7 @@ endef
 TARGET_CFLAGS += -I$(PKG_BUILD_DIR)/src/libevent -isystem $(PKG_BUILD_DIR)/missing-headers
 CONFIGURE_PATH := ./src
 CONFIGURE_ARGS += ac_cv_path_PPPD=/usr/sbin/pppd --enable-plugin=$(STAGING_DIR)/usr/include/
-MAKE_FLAGS := DESTDIR="$(PKG_INSTALL_DIR)" install
+MAKE_FLAGS := DESTDIR="$(PKG_INSTALL_DIR)" PLUGIN_PATH=rp-pppoe.so install
 MAKE_PATH := ./src
 
 define Build/Prepare
@@ -132,7 +131,6 @@ define Package/rp-pppoe-server/install
 	$(INSTALL_DIR) $(1)/etc/ppp/plugins
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/pppoe-server $(1)/usr/sbin/
-	$(CP) $(PKG_INSTALL_DIR)/etc/ppp/plugins/rp-pppoe.so $(1)/etc/ppp/plugins/
 	$(INSTALL_DATA) ./files/pppoe-server.default $(1)/etc/uci-defaults/
 endef
 

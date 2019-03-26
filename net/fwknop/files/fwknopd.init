@@ -4,50 +4,70 @@
 # Copyright (C) 2009-2014 fwknop developers and contributors. For a full
 # list of contributors, see the file 'CREDITS'.
 #
-. /lib/functions.sh
+
+USE_PROCD=1
 START=95
+
+. /lib/functions/network.sh
 
 FWKNOPD_BIN=/usr/sbin/fwknopd
 
-start()
+start_service()
 {
-	gen_confs
-	if [ $UCI_ENABLED ]; then
-        	$FWKNOPD_BIN -c /var/etc/fwknopd.conf -a /var/etc/access.conf 
+	generate_configuration
+
+	if [ -n "$DEPEND_IFNAME" ] ; then
+		# We know the interface, so we can start
+		procd_open_instance
+		procd_set_param command "$FWKNOPD_BIN" --foreground --syslog-enable
+		procd_set_param respawn
+		if [ $UCI_ENABLED -eq 1 ]; then
+			procd_append_param command -c /var/etc/fwknopd.conf
+			procd_append_param command -a /var/etc/access.conf
+		fi
+		procd_append_param command -i "$DEPEND_IFNAME"
+		procd_set_param netdev "$DEPEND_IFNAME"
+		procd_close_instance
 	else
-        	$FWKNOPD_BIN 
+		logger -p daemon.info -t "fwknopd[----]" "Postponing start-up of fwknopd, network $NETWORK is not up"
 	fi
-
 }
 
-stop()
+service_triggers()
 {
-        $FWKNOPD_BIN -K
+	procd_add_reload_trigger "fwknopd"
+
+	if [ -n "$NETWORK" ] ; then
+		logger -p daemon.info -t "fwknopd[----]" "Listening for changes on network $NETWORK"
+		procd_add_reload_interface_trigger "$NETWORK"
+	fi
 }
 
-restart()
+get_bool()
 {
-    stop;
-    sleep 1;
-    start;
+	local _tmp="$1"
+	case "$_tmp" in
+		1|on|true|yes|enabled) _tmp=1;;
+		0|off|false|no|disabled) _tmp=0;;
+		*) _tmp="$2";;
+	esac
+	echo -n "$_tmp"
 }
 
-reload()
-{
-	gen_confs
-        $FWKNOPD_BIN -R
-}
-
-gen_confs()
+generate_configuration()
 {
 	[ -f /tmp/access.conf.tmp ] && rm /tmp/access.conf.tmp
-	if [ -z "$( uci get fwknopd.@config[0].PCAP_INTF )" ]
-	then
-		. /lib/functions/network.sh
-		network_get_physdev device wan
-		uci set fwknopd.@config[0].PCAP_INTF="$device"
-		uci commit
-	fi
+
+	UCI_ENABLED=0
+	DEPEND_IFNAME=
+	NETWORK=
+	local PCAP_INTF=
+	local USER_CONFIG_PATH=/etc/fwknop/fwknopd.conf
+	local DEFAULT_UCI_NETWORK=wan
+	local DEFAULT_FWKNOPD_IFNAME=
+
+	network_get_device DEFAULT_FWKNOPD_IFNAME $DEFAULT_UCI_NETWORK
+
 	config_cb() {
 		local type="$1"
 		local name="$2"
@@ -55,24 +75,43 @@ gen_confs()
 			option_cb() {
 				local option="$1"
 				local value="$2"
-				if [ "$option" = "uci_enabled" ] && [ "$value" -eq 1 ] ; then
+				if [ "$option" = "uci_enabled" ] && [ "$(get_bool "$value" 0)" -eq 1 ] ; then
 					> /var/etc/fwknopd.conf
 					> /var/etc/access.conf
-                                        chmod 600 /var/etc/fwknopd.conf
-                                        chmod 600 /var/etc/access.conf
+					chmod 600 /var/etc/fwknopd.conf
+					chmod 600 /var/etc/access.conf
 					UCI_ENABLED=1
+
+					# Forced defaults
+
+					# Do not let fwknopd to shut-down when interface goes down,
+					# control it from the start-up script instead:
+					# https://bugs.openwrt.org/index.php?do=details&task_id=1481
+					echo "EXIT_AT_INTF_DOWN n" >> /var/etc/fwknopd.conf
+				fi
+			}
+		elif [ "$type" = "network" ]; then
+			option_cb() {
+				local option="$1"
+				local value="$2"
+				if [ $UCI_ENABLED -eq 1 ] && [ $option = "network" ]; then
+					NETWORK="$value"
 				fi
 			}
 		elif [ "$type" = "config" ]; then
 			option_cb() {
 				local option="$1"
 				local value="$2"
-				if [ $UCI_ENABLED ]; then
+				if [ $UCI_ENABLED -eq 1 ] && [ $option = "PCAP_INTF" ]; then
+					PCAP_INTF="$value"
+					echo "$option $value" >> /var/etc/fwknopd.conf  #writing each option to fwknopd.conf
+				elif [ $UCI_ENABLED -eq 1 ] && [ $option = "EXIT_AT_INTF_DOWN" ]; then
+					logger -p daemon.warn -t "fwknopd[----]" "Ignoring EXIT_AT_INTF_DOWN option, forced to N (no) to work reliably with procd"
+				elif [ $UCI_ENABLED -eq 1 ]; then
 					echo "$option $value" >> /var/etc/fwknopd.conf  #writing each option to fwknopd.conf
 				fi
 			}
-		elif [ "$type" = "access" ]
-		then
+		elif [ "$type" = "access" ]; then
 			if [ -f /tmp/access.conf.tmp ] ; then
 				cat /tmp/access.conf.tmp >> /var/etc/access.conf
 				rm /tmp/access.conf.tmp
@@ -80,22 +119,63 @@ gen_confs()
 			option_cb() {
 				local option="$1"
 				local value="$2"
-				if [ $UCI_ENABLED ] && [ $option = "SOURCE" ]; then
+				if [ $UCI_ENABLED -eq 1 ] && [ $option = "SOURCE" ]; then
 					echo "$option $value" >> /var/etc/access.conf  #writing each option to access.conf
 				fi
-				if [ $UCI_ENABLED ] && [ $option != "SOURCE" ]; then
+				if [ $UCI_ENABLED -eq 1 ] && [ $option != "SOURCE" ]; then
 					echo "$option $value" >> /tmp/access.conf.tmp  #writing each option to access.conf
 				fi
 			}
+		else
+			reset_cb
+			if [ -z "$type" ]; then
+				# Finalize reading
+				if [ -f /tmp/access.conf.tmp ] ; then
+					cat /tmp/access.conf.tmp >> /var/etc/access.conf
+					rm /tmp/access.conf.tmp
+				fi
+			fi
 		fi
 	}
 
 	if [ -f /etc/config/fwknopd ]; then
 		config_load fwknopd
-		if [ -f /tmp/access.conf.tmp ] ; then
-			cat /tmp/access.conf.tmp >> /var/etc/access.conf
-			rm /tmp/access.conf.tmp
-		fi
 	fi
 
+	if [ $UCI_ENABLED -eq 0 ]; then
+		if [ -f $USER_CONFIG_PATH ] ; then
+			# Scan user configuration for PCAP_INTF settings and fallback to fwknopd's default
+			DEPEND_IFNAME="$( sed -ne '/^\s*PCAP_INTF\s\+/ { s/^\s*PCAP_INTF\s\+//; s/\s\+$//; p; q; }' $USER_CONFIG_PATH )"
+			if [ -n "$DEPEND_IFNAME" ]; then
+				logger -p daemon.debug -t "fwknopd[----]" "Found fwknopd.conf configuration, using PCAP_INTF interface $DEPEND_IFNAME"
+			else
+				logger -p daemon.info -t "fwknopd[----]" "No PCAP_INTF interface specified in fwknopd.conf, fwknopd's default $DEFAULT_FWKNOPD_IFNAME will be used"
+				DEPEND_IFNAME="$DEFAULT_FWKNOPD_IFNAME"
+			fi
+		else
+			logger -p daemon.error -t "fwknopd[----]" "No $USER_CONFIG_PATH found, not starting"
+			exit 1
+		fi
+	elif [ $UCI_ENABLED -eq 1 ]; then
+		if [ -n "$NETWORK" ] && [ -n "$PCAP_INTF" ]; then
+			logger -p daemon.warn -t "fwknopd[----]" "Specified both network and PCAP_INTF. Ignoring PCAP_INTF"
+		elif [ -z "$NETWORK" ] && [ -z "$PCAP_INTF" ]; then
+			# Fallback - compatibility with old script, which used wan interface by default
+			logger -p daemon.info -t "fwknopd[----]" "Neither network, nor PCAP_INTF interface specified, trying network $DEFAULT_UCI_NETWORK"
+			NETWORK="$DEFAULT_UCI_NETWORK"
+		fi
+
+		# Resolve network if possible
+		if [ -n "$NETWORK" ]; then
+			network_get_device DEPEND_IFNAME "$NETWORK"
+			if [ -n "$DEPEND_IFNAME" ]; then
+				logger -p daemon.debug -t "fwknopd[----]" "Resolved network $NETWORK as interface $DEPEND_IFNAME"
+			else
+				logger -p daemon.warn -t "fwknopd[----]" "Cannot find interface for network $NETWORK, probably the network is not up"
+			fi
+		elif [ -n "$PCAP_INTF" ]; then
+			DEPEND_IFNAME="$PCAP_INTF"
+			logger -p daemon.debug -t "fwknopd[----]" "Using configured PCAP_INTF interface $DEPEND_IFNAME"
+		fi
+	fi
 }

@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-penlight
-PKG_VERSION:=1.3.2
-PKG_RELEASE:=2
+PKG_VERSION:=1.6.0
+PKG_RELEASE:=1
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/Penlight-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/stevedonovan/Penlight/archive/
-PKG_MD5SUM:=0315a39834bb6fab07741ec04ede1bf4
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/stevedonovan/Penlight/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=a552d0a314f7aa94c9579746996a7aad4ed59f3187f33b4735d3e323e27354b0
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.md
 
@@ -26,7 +27,7 @@ define Package/lua-penlight
   TITLE:=Penlight
   URL:=http://stevedonovan.github.io/Penlight/api/manual/01-introduction.md.html
   DEPENDS:=+luafilesystem
-  MAINTAINER:=Karl Palsson <karlp@remake.is>
+  MAINTAINER:=Karl Palsson <karlp@etactica.com>
 endef
 
 define Package/lua-penlight/description

@@ -14,6 +14,7 @@ PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_MIRROR_HASH:=7026ce5898d37a4175b7afad693d59ff1fff1a84adafcabfafd065956a03616c
 PKG_SOURCE_URL:=https://github.com/keplerproject/rings.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=2b8a900f8b9dbde304859a3ac9d437795c3fdde3

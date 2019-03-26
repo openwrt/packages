@@ -13,7 +13,7 @@ PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
 PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/non-free/s/svox
-PKG_MD5SUM:=df4bf610ff4273b420e80ff64af93130
+PKG_HASH:=337b25e6ccb3764f0df1e176470b883c90e40e98840d4133340fcc89eb3cea0c
 
 PKG_MAINTAINER:=Alessandro Di Marco <dmr@ethzero.com>
 PKG_LICENSE:=Apache-2.0

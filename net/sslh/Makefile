@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2017 OpenWrt.org
+# Copyright (C) 2009-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sslh
-PKG_VERSION:=v1.18
-PKG_RELEASE:=2
+PKG_VERSION:=v1.19c
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://rutschle.net/tech/sslh/
-PKG_MD5SUM:=0e3568d5d234516c634d4df156473298
+PKG_SOURCE_URL:=https://rutschle.net/tech/sslh/
+PKG_HASH:=bb11dfa88b27ae1ec825a1b8156000c3f17f7e8f042311f19b7a249193c47bf3
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
 
@@ -25,7 +25,7 @@ define Package/sslh
   SUBMENU:=Routing and Redirection
   TITLE:=SSL/SSH multiplexer
   DEPENDS:=+libconfig +USE_UCLIBC:libpcre +USE_MUSL:libpcre
-  URL:=http://rutschle.net/tech/sslh.shtml
+  URL:=https://rutschle.net/tech/sslh/README.html
   PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 endef
 
@@ -34,19 +34,8 @@ define Package/sslh/conffiles
 /etc/sslh.conf
 endef
 
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		CC="$(TARGET_CC)" \
-		CFLAGS="$(TARGET_CFLAGS)" \
-		CPPFLAGS="$(TARGET_CPPFLAGS)" \
-		LDFLAGS="$(TARGET_LDFLAGS)" \
-		ENABLE_REGEX=1 \
-		USELIBCONFIG=1 \
-		USELIBWRAP= \
-		USELIBPCRE= \
-		$(if $(CONFIG_USE_GLIBC),USELIBPCRE=,USELIBPCRE=1)\
-		all
-endef
+MAKE_FLAGS += \
+  $(if $(CONFIG_USE_GLIBC),USELIBPCRE=,USELIBPCRE=1)
 
 define Package/sslh/install
 	$(INSTALL_DIR) $(1)/usr/sbin

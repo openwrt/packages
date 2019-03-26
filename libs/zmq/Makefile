@@ -10,18 +10,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zeromq
-PKG_VERSION:=4.1.4
+PKG_VERSION:=4.1.6
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=LICENCE.txt
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:= https://github.com/zeromq/zeromq4-1/releases/download/v$(PKG_VERSION)/
-PKG_MD5SUM:=a611ecc93fffeb6d058c0e6edf4ad4fb
+PKG_SOURCE_URL:=https://github.com/zeromq/zeromq4-1/releases/download/v$(PKG_VERSION)
+PKG_HASH:=02ebf60a43011e770799336365bcbce2eb85569e9b5f52aa0d8cc04672438a0a
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
-PKG_BUILD_DEPENDS:=libuuid
 
 PKG_FIXUP:=autoreconf
 
@@ -49,7 +48,7 @@ define Package/libzmq-curve
   $(call Package/libzmq/default)
   VARIANT:=curve
   TITLE+= (CurveZMQ)
-  DEPENDS+=+libsodium 
+  DEPENDS+=+libsodium
 endef
 
 define Package/libzmq-nc/description

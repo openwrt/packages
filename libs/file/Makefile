@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=file
-PKG_VERSION:=5.25
+PKG_VERSION:=5.35
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://ftp.astron.com/pub/file/
-PKG_MD5SUM:=e6a972d4e10d9e76407a432f4a63cd4c
+PKG_SOURCE_URL:=https://src.fedoraproject.org/lookaside/pkgs/file/ \
+	http://download.openpkg.org/components/cache/file/ \
+	ftp://ftp.astron.com/pub/file/
+PKG_HASH:=30c45e817440779be7aac523a905b123cba2a6ed0bf4f5439e1e99ba940b5546
 
 PKG_LICENSE:=BSD-2c
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -26,8 +27,8 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/file/Default
   TITLE:=File type determination
-  URL:=ftp://ftp.astron.com/pub/file/
-  MAINTAINER:=Luka Perkov <luka@openwrt.org>
+  URL:=https://darwinsys.com/file/
+  MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 endef
 
 define Package/file
@@ -49,6 +50,7 @@ endef
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
+	--disable-libseccomp
 
 MAKE_PATH := src
 
@@ -83,14 +85,11 @@ define Package/file/install
 	$(SED) "/^#/d" $(PKG_INSTALL_DIR)/usr/share/file/magic
 	$(SED) "/^$$$$/d" $(PKG_INSTALL_DIR)/usr/share/file/magic
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/file/magic $(1)/usr/share/misc/
-
-	# For some reason both "magic" and "magic.mgc" MUST exist
-	ln -sf magic $(1)/usr/share/misc/magic.mgc
 endef
 
 define Package/libmagic/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libmagic.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmagic.so.* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,file))

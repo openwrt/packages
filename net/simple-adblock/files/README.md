@@ -22,19 +22,19 @@ If you want a more robust AdBlocking, supporting free memory detection and compl
 
 
 ## Screenshot (luci-app-simple-adblock)
-![screenshot](https://raw.githubusercontent.com/stangri/screenshots/master/simple-adblock/screenshot04.png "screenshot")
+![screenshot](https://raw.githubusercontent.com/stangri/openwrt_packages/master/screenshots/simple-adblock/screenshot06.png "screenshot")
 
 
 ## Requirements
-This service requires the following packages to be installed on your router: ```dnsmasq``` or ```dnsmasq-full``` and either ```wget``` and ```libopenssl``` (for OpenWrt CC 15.05.1) or ```uclient-fetch``` and ```libustream-mbedtls``` (for OpenWrt DD trunk and all LEDE Project release and snapshot builds). Additionally installation of ```coreutils-sort``` is highly recommended as it speeds up blocklist processing.
+This service requires the following packages to be installed on your router: ```dnsmasq``` or ```dnsmasq-full``` and either ```ca-certificates```, ```wget``` and ```libopenssl``` (for OpenWrt 15.05.1) or ```uclient-fetch``` and ```libustream-mbedtls``` (for OpenWrt DD trunk and all LEDE Project builds). Additionally installation of ```coreutils-sort``` is highly recommended as it speeds up blocklist processing.
 
 To satisfy the requirements for connect to your router via ssh and run the following commands:
-###### OpenWrt CC 15.05.1
+###### OpenWrt 15.05.1
 ```sh
-opkg update; opkg install wget libopenssl coreutils-sort dnsmasq
+opkg update; opkg install ca-certificates wget libopenssl coreutils-sort dnsmasq
 ```
 
-###### LEDE Project and OpenWrt DD trunk
+###### LEDE Project 17.01.x and OpenWrt 18.xx or later
 ```sh
 opkg update; opkg install uclient-fetch libustream-mbedtls coreutils-sort dnsmasq
 ```
@@ -54,29 +54,31 @@ If you are running a development (trunk/snapshot) build of OpenWrt/LEDE Project 
 
 
 ## How to install
-Install ```simple-adblock``` and  ```luci-app-simple-adblock``` packages from Web UI or run the following in the command line:
+Install ```simple-adblock``` and ```luci-app-simple-adblock``` packages from Web UI or run the following in the command line:
 ```sh
 opkg update; opkg install simple-adblock luci-app-simple-adblock
 ```
 
-If ```simple-adblock``` and  ```luci-app-simple-adblock``` packages are not found in the official feed/repo for your version of OpenWrt/LEDE Project, you will need to [add a custom repo to your router](#add-custom-repo-to-your-router) first.
+If ```simple-adblock``` and ```luci-app-simple-adblock``` packages are not found in the official feed/repo for your version of OpenWrt/LEDE Project, you will need to [add a custom repo to your router](#add-custom-repo-to-your-router) first.
 
 
 #### Add custom repo to your router
 If your router is not set up with the access to repository containing these packages you will need to add custom repository to your router by connecting to your router via ssh and running the following commands:
 
-###### OpenWrt CC 15.05.1
+###### OpenWrt 15.05.1
 ```sh
-opkg update; opkg install wget libopenssl
-echo -e -n 'untrusted comment: public key 7ffc7517c4cc0c56\nRWR//HUXxMwMVnx7fESOKO7x8XoW4/dRidJPjt91hAAU2L59mYvHy0Fa\n' > /tmp/stangri-repo.pub && opkg-key add /tmp/stangri-repo.pub
+opkg update; opkg install ca-certificates wget libopenssl
+echo -e -n 'untrusted comment: LEDE usign key of Stan Grishin\nRWR//HUXxMwMVnx7fESOKO7x8XoW4/dRidJPjt91hAAU2L59mYvHy0Fa\n' > /tmp/stangri-repo.pub && opkg-key add /tmp/stangri-repo.pub
 ! grep -q 'stangri_repo' /etc/opkg/customfeeds.conf && echo 'src/gz stangri_repo https://raw.githubusercontent.com/stangri/openwrt-repo/master' >> /etc/opkg/customfeeds.conf
 opkg update
 ```
 
-###### LEDE Project and OpenWrt DD trunk
+###### LEDE Project and OpenWrt 18.xx or later
 ```sh
-opkg update; opkg install uclient-fetch libustream-mbedtls
-echo -e -n 'untrusted comment: public key 7ffc7517c4cc0c56\nRWR//HUXxMwMVnx7fESOKO7x8XoW4/dRidJPjt91hAAU2L59mYvHy0Fa\n' > /tmp/stangri-repo.pub && opkg-key add /tmp/stangri-repo.pub
+opkg update
+opkg list-installed | grep -q uclient-fetch || opkg install uclient-fetch
+opkg list-installed | grep -q libustream || opkg install libustream-mbedtls
+echo -e -n 'untrusted comment: LEDE usign key of Stan Grishin\nRWR//HUXxMwMVnx7fESOKO7x8XoW4/dRidJPjt91hAAU2L59mYvHy0Fa\n' > /tmp/stangri-repo.pub && opkg-key add /tmp/stangri-repo.pub
 ! grep -q 'stangri_repo' /etc/opkg/customfeeds.conf && echo 'src/gz stangri_repo https://raw.githubusercontent.com/stangri/openwrt-repo/master' >> /etc/opkg/customfeeds.conf
 opkg update
 ```
@@ -106,26 +108,22 @@ If you specify ```google.com``` as a domain to be whitelisted, you will have acc
 In general, whatever domain is specified to be whitelisted; it, along with with its subdomains will be whitelisted, but not any fake domains containing it.
 
 ## Documentation / Discussion
-Please head to [OpenWrt Forum](https://forum.openwrt.org/viewtopic.php?pid=307950) or [LEDE Project Forum](https://forum.lede-project.org/t/simple-adblock-fast-lean-and-fully-uci-luci-configurable-adblocking/1327/) for discussion of this package.
+Please head [LEDE Project Forum](https://forum.lede-project.org/t/simple-adblock-fast-lean-and-fully-uci-luci-configurable-adblocking/1327/) for discussion of this package.
 
 ## What's New
+1.5.8:
+- Better start/stop/reload logic.
+- Better uninstall logic.
+- Better start/stop/reload from Web UI.
+- New command-line ```check``` command.
+
 1.5.7:
 - Much stricter filters for hosts and domains lists resulting in better garbage removal.
-
-1.5.6:
 - Better handling of service start/enable from Web UI and enabled flag management.
-
-1.5.5:
 - Implemented support to set one of the router LEDs on/off based on the AdBlocking status.
 - Fixed the output bug when verbosity=1.
-
-1.5.3:
 - No longer using enabled in config file, Simple AdBlocking Web UI now enables/disables service directly.
-
-1.5.1:
 - Reworked console/system log output logic and formatting.
-
-1.5.0:
 - Processes already downloaded lists in the background while downloading next list from config, dramatically increasing overall speed.
 
 1.0.0:

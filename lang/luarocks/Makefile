@@ -12,6 +12,7 @@ PKG_VERSION:=2.2.2
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_MIRROR_HASH:=e4cf874c9bce34a5accd41daaf51a3213763b8b6f7f658ca4d13a70a7ddb1c0c
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/keplerproject/luarocks.git
@@ -19,9 +20,12 @@ PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Amr Hassan <amr.hassan@gmail.com>
 PKG_INSTALL=1
-PKG_BUILD_DEPENDS:=lua/host luac/host
+PKG_BUILD_DEPENDS:=lua/host
+HOST_BUILD_DEPENDS:=$(PKG_BUILD_DEPENDS)
 PKG_LICENSE=GPL
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)-$(PKG_VERSION)
 
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/luarocks
@@ -43,12 +47,21 @@ CONFIGURE_ARGS = \
     --sysconfdir=/etc \
     --with-lua=$(STAGING_DIR_HOSTPKG)
 
+HOST_CONFIGURE_ARGS= \
+    --prefix=$(STAGING_DIR_HOSTPKG) \
+    --sysconfdir=$(STAGING_DIR_HOSTPKG)/etc \
+    --with-lua=$(STAGING_DIR_HOSTPKG)
+
 CONFIGURE_VARS = \
 	LUAROCKS_UNAME_S="Linux" \
 	LUAROCKS_UNAME_M="$(ARCH)"
 
 define Build/Compile
 	$(call Build/Compile/Default,build)
+endef
+
+define Host/Compile
+  $(call Host/Compile/Default,build)
 endef
 
 define Package/luarocks/install
@@ -59,4 +72,10 @@ define Package/luarocks/install
 	$(CP) $(PKG_INSTALL_DIR)/etc $(1)/etc
 endef
 
+define Host/Install
+  $(MAKE) -C $(HOST_BUILD_DIR) install
+endef
+
 $(eval $(call BuildPackage,luarocks))
+
+$(eval $(call HostBuild))

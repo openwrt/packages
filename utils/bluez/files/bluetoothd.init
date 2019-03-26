@@ -7,6 +7,7 @@ USE_PROCD=1
 PROG=/usr/bin/bluetoothd
 
 start_service() {
+	ln -snf /etc/bluetooth/keys/ /var/lib/bluetooth
 	procd_open_instance
 	procd_set_param command "$PROG" -n
 	procd_close_instance

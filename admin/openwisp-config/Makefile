@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openwisp-config
 PKG_VERSION:=0.4.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_PROTO:=git
@@ -34,8 +34,6 @@ endef
 Package/openwisp-config-openssl=$(call Package/openwisp-config/default,openssl,OpenSSL,+ca-certificates +libopenssl)
 Package/openwisp-config-mbedtls=$(call Package/openwisp-config/default,mbedtls,mbedTLS,+ca-certificates +libmbedtls)
 Package/openwisp-config-cyassl=$(call Package/openwisp-config/default,cyassl,CyaSSL,+ca-certificates +libcyassl)
-# deprecated on recent versions of OpenWRT (>= Designated Driver) and LEDE (>= 17.01)
-Package/openwisp-config-polarssl=$(call Package/openwisp-config/default,polarssl,PolarSSL,+ca-certificates +libpolarssl)
 Package/openwisp-config-nossl=$(call Package/openwisp-config/default,nossl,No SSL)
 
 define Build/Compile
@@ -52,9 +50,6 @@ ifeq ($(BUILD_VARIANT),mbedtls)
 CONFIG_OPENWISP_UCI:=ssl
 endif
 ifeq ($(BUILD_VARIANT),cyassl)
-CONFIG_OPENWISP_UCI:=ssl
-endif
-ifeq ($(BUILD_VARIANT),polarssl)
 CONFIG_OPENWISP_UCI:=ssl
 endif
 ifeq ($(BUILD_VARIANT),nossl)
@@ -115,5 +110,4 @@ endef
 $(eval $(call BuildPackage,openwisp-config-openssl))
 $(eval $(call BuildPackage,openwisp-config-mbedtls))
 $(eval $(call BuildPackage,openwisp-config-cyassl))
-$(eval $(call BuildPackage,openwisp-config-polarssl))
 $(eval $(call BuildPackage,openwisp-config-nossl))

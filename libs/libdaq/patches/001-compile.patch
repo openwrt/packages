@@ -1,6 +1,6 @@
 --- a/configure
 +++ b/configure
-@@ -12967,10 +12967,11 @@ if ${daq_cv_libpcap_version_1x+:} false;
+@@ -13552,10 +13552,11 @@ if ${daq_cv_libpcap_version_1x+:} false;
  else
  
      if test "$cross_compiling" = yes; then :

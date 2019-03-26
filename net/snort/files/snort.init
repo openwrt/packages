@@ -22,7 +22,7 @@ start_service() {
 	}
 
 	procd_open_instance
-	procd_set_param command $PROG "-q" "--daq-dir" "/usr/lib/daq/" "-i" "$interface" "-s" "-N"
+	procd_set_param command $PROG "-q" "--daq-dir" "/usr/lib/daq/" "-i" "$interface" "-c" "$config_file" "-s" "-N"
 	procd_set_param file $CONFIGFILE
 	procd_set_param respawn
 	procd_close_instance

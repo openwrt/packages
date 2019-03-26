@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# should restart shorewall when an interface comes up
+
+case "$ACTION" in
+    ifup)
+        /etc/init.d/shorewall restart
+        ;;
+    ifdown)
+        # might need to restore some routing
+        /etc/init.d/shorewall restart
+        ;;
+esac

@@ -53,6 +53,8 @@ $(call Package/openzwave/default)
   TITLE:=Open-ZWave Device Configs
 endef
 
+TARGET_CPPFLAGS+=-Wno-format -Wno-format-security
+
 MAKE_FLAGS += \
 	LD="$(TARGET_CROSS)g++" \
 	LIBDIR="$(PKG_BUILD_DIR)" \

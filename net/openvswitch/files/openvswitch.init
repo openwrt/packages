@@ -1,0 +1,68 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2013 Julius Schulz-Zander <julius@net.t-labs.tu-berlin.de>
+# Copyright (C) 2014-2017 OpenWrt.org
+# Copyright (C) 2018 Yousong Zhou <yszhou4tech@gmail.com>
+
+START=15
+
+ovs_script_dir=/usr/share/openvswitch/scripts
+ovs_ctl="$ovs_script_dir/ovs-ctl"; [ -x "$ovs_ctl" ] || ovs_ctl=:
+ovn_ctl="$ovs_script_dir/ovn-ctl"; [ -x "$ovn_ctl" ] || ovn_ctl=:
+
+EXTRA_COMMANDS=status
+
+start() {
+	ovs_action start "$@"
+}
+
+stop() {
+	ovs_action stop "$@"
+}
+
+restart() {
+	ovs_action restart "$@"
+}
+
+status() {
+	ovs_action status "$@"
+}
+
+ovs_action_cfgs=
+ovs_action() {
+	local action="$1"; shift
+	local cfgtype
+
+	ovs_action_cfgs="$*"
+	config_load openvswitch
+	for cfgtype in ovs ovn_northd ovn_controller; do
+		config_foreach "ovs_xx" "$cfgtype" "$action" "$cfgtype"
+	done
+}
+
+ovs_xx() {
+	local cfg="$1"
+	local action="$2"
+	local cfgtype="$3"
+	local disabled
+
+	if [ -n "$ovs_action_cfgs" ] && ! list_contains "ovs_action_cfgs" "$cfg"; then
+		return
+	fi
+	case "$action" in
+		status|stop) ;;
+		*)
+			config_get_bool disabled "$cfg" disabled 0
+			[ "$disabled" -le 0 ] || return
+			;;
+	esac
+
+	case "$cfgtype" in
+		ovs)
+			"$ovs_ctl" "$action" \
+				--system-id=random
+			;;
+		ovn_*)
+			"$ovn_ctl" "${action}_${cfgtype#ovn_}"
+			;;
+	esac
+}

@@ -1,0 +1,24 @@
+From 734e3ce6747a5ed120b93a1ff253b3fde5f20024 Mon Sep 17 00:00:00 2001
+From: Meng Tan <mtan@wallix.com>
+Date: Wed, 17 Oct 2018 14:50:08 +0200
+Subject: [PATCH 3/8] server: Set correct state after sending INFO_REQUEST (Kbd
+ Interactive)
+
+Signed-off-by: Meng Tan <mtan@wallix.com>
+Reviewed-by: Andreas Schneider <asn@cryptomilk.org>
+(cherry picked from commit 4ea46eecce9f4e676150fe27fec34e1570b70ace)
+Signed-off-by: Kevin Darbyshire-Bryant <ldir@darbyshire-bryant.me.uk>
+---
+ src/server.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/src/server.c
++++ b/src/server.c
+@@ -976,6 +976,7 @@ int ssh_message_auth_interactive_request
+     msg->session->kbdint->prompts = NULL;
+     msg->session->kbdint->echo = NULL;
+   }
++  msg->session->auth.state = SSH_AUTH_STATE_INFO;
+ 
+   return rc;
+ }

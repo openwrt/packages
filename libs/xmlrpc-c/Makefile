@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xmlrpc-c
-PKG_VERSION:=1.39.12
+PKG_VERSION:=1.43.08
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=@SF/xmlrpc-c/Xmlrpc-c%20Super%20Stable/$(PKG_VERSION)
-PKG_HASH:=d830f3264a832dfe09f629cc64036acfd08121692526d0fabe090f7ff881ce08
+PKG_HASH:=c9f5b584a42493877ae0f09ed680d94e035ab389e8fa1873b1ec42118d5cfca3
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=VARIOUS
@@ -105,9 +105,10 @@ CONFIGURE_ARGS+= \
 	--disable-wininet-client \
 	--disable-libwww-client \
 	--disable-abyss-server \
+	--disable-cgi-server \
 	--disable-cplusplus \
 	--disable-abyss-threads \
-	--disable-cgi-server
+	--without-libwww-ssl
 
 ifeq ($(BUILD_VARIANT),libxml2)
 	CONFIGURE_ARGS += \

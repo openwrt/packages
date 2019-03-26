@@ -1,6 +1,6 @@
 --- a/ntpclient.c
 +++ b/ntpclient.c
-@@ -611,7 +611,7 @@ int main(int argc, char *argv[]) {
+@@ -608,7 +608,7 @@ int main(int argc, char *argv[]) {
  	ntpc.cross_check=1;
  
  	for (;;) {
@@ -9,8 +9,8 @@
  		if (c == EOF) break;
  		switch (c) {
  			case 'c':
-@@ -660,6 +660,10 @@ int main(int argc, char *argv[]) {
- 				(ntpc.cross_check)=0;
+@@ -657,6 +657,10 @@ int main(int argc, char *argv[]) {
+ 				ntpc.cross_check = 0;
  				break;
  
 +			case 'D':

@@ -8,14 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vim
-PKG_VERSION:=8.0.069
-PKG_RELEASE:=4
-VIMVER:=80
+PKG_VERSION:=8.1
+PKG_RELEASE:=1
+VIMVER:=81
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=ftp://ftp.vim.org/pub/vim/unix/
-PKG_MD5SUM:=457543a7754b0d3c1c0aa4d4c3bb4070
+PKG_SOURCE_URL:=http://ftp.vim.org/pub/vim/unix
+PKG_HASH:=8b69fbd01c877dd8ecbbeca1dc66e5e927228d631ac4c2174b9307eb5c827c86
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
+PKG_CPE_ID:=cpe:/a:vim:vim
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)$(VIMVER)
 PKG_BUILD_PARALLEL:=1
@@ -114,7 +115,8 @@ CONFIGURE_ARGS += \
 	--disable-cscope \
 	--disable-gpm \
 	--disable-acl \
-	--with-tlib=ncurses
+	--with-tlib=ncurses \
+	--with-compiledby="non-existent-hostname-compiled"
 
 CONFIGURE_VARS += \
 	vim_cv_getcwd_broken=no \
@@ -125,6 +127,15 @@ CONFIGURE_VARS += \
 	vim_cv_toupper_broken=no \
 	vim_cv_tty_group=root \
 	vim_cv_tty_mode=0620
+
+ifneq ($(HOST_OS),Linux)
+  TARGET_PATH_PKG:=$(CURDIR)/scripts:$(TARGET_PATH_PKG)
+endif
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(MAKE) -C $(PKG_BUILD_DIR)/src autoconf
+endef
 
 ifneq ($(CONFIG_PACKAGE_vim),)
 define Build/Compile/vim

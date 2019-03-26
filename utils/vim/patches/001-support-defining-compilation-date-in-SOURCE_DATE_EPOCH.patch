@@ -1,0 +1,81 @@
+From: James McCoy <jamessan@jamessan.com>
+Date: Thu, 28 Jan 2016 10:55:11 -0500
+Subject: Support defining compilation date in $SOURCE_DATE_EPOCH
+
+There is an ongoing effort[0] to make FOSS software reproducibly
+buildable.  In order to make Vim build reproducibly, it is necessary to
+allow defining the date/time that is part of VIM_VERSION_LONG as part of
+the build process.
+
+This commit enables that by adding support for the SOURCE_DATE_EPOCH
+spec[1].  When the $SOURCE_DATE_EPOCH environment variable is defined,
+it will be used to populate the BUILD_DATE preprocessor define.
+
+If BUILD_DATE is not defined, the existing behavior of relying on the
+preprocessor's __DATE__/__TIME__ symbols will be used.
+
+[0]: https://reproducible-builds.org/
+[1]: https://reproducible-builds.org/specs/source-date-epoch/
+---
+ src/config.h.in  |  3 +++
+ src/configure.ac | 10 ++++++++++
+ src/version.c    |  6 ++++++
+ 3 files changed, 19 insertions(+)
+
+diff --git a/src/config.h.in b/src/config.h.in
+index e692d40..d3aa1a2 100644
+--- a/src/config.h.in
++++ b/src/config.h.in
+@@ -30,6 +30,9 @@
+ /* Define when __DATE__ " " __TIME__ can be used */
+ #undef HAVE_DATE_TIME
+ 
++/* Defined as the date of last modification */
++#undef BUILD_DATE
++
+ /* Define when __attribute__((unused)) can be used */
+ #undef HAVE_ATTRIBUTE_UNUSED
+ 
+diff --git a/src/configure.ac b/src/configure.ac
+index e287124..5a16797 100644
+--- a/src/configure.ac
++++ b/src/configure.ac
+@@ -29,6 +29,16 @@ dnl in autoconf needs it, where it uses STDC_HEADERS.
+ AC_HEADER_STDC
+ AC_HEADER_SYS_WAIT
+ 
++dnl If $SOURCE_DATE_EPOCH is present in the environment, use that as the
++dnl "compiled" timestamp in :version's output.  Attempt to get the formatted
++dnl date using GNU date syntax, BSD date syntax, and finally falling back to
++dnl just using the current time.
++if test -n "$SOURCE_DATE_EPOCH"; then
++  DATE_FMT="%b %d %Y %H:%M:%S"
++  BUILD_DATE=$(LC_ALL=C date -u -d "@$SOURCE_DATE_EPOCH" "+$DATE_FMT" 2>/dev/null || LC_ALL=C date -u -r "$SOURCE_DATE_EPOCH" "+$DATE_FMT" 2>/dev/null || LC_ALL=C date -u "+$DATE_FMT")
++  AC_DEFINE_UNQUOTED(BUILD_DATE, ["$BUILD_DATE"])
++fi
++
+ dnl Check that the C99 features that Vim uses are supported:
+ if test x"$ac_cv_prog_cc_c99" != xno; then
+   dnl If the compiler doesn't explicitly support C99, then check
+diff --git a/src/version.c b/src/version.c
+index 65f5a4b..9422657 100644
+--- a/src/version.c
++++ b/src/version.c
+@@ -44,11 +44,17 @@ make_version(void)
+      * VAX C can't catenate strings in the preprocessor.
+      */
+     strcpy(longVersion, VIM_VERSION_LONG_DATE);
++#ifdef BUILD_DATE
++    strcat(longVersion, BUILD_DATE);
++#else
+     strcat(longVersion, __DATE__);
+     strcat(longVersion, " ");
+     strcat(longVersion, __TIME__);
++#endif
+     strcat(longVersion, ")");
+ }
++# elif defined(BUILD_DATE)
++char	*longVersion = VIM_VERSION_LONG_DATE BUILD_DATE ")";
+ # else
+ char	*longVersion = VIM_VERSION_LONG_DATE __DATE__ " " __TIME__ ")";
+ # endif

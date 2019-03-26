@@ -1,0 +1,48 @@
+From 43e323f5fd61ddf2c2adc2a5c12455b6578c059a Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Wed, 12 Dec 2018 13:40:37 -0800
+Subject: [PATCH 1/2] Fix compilation when OpenSSL has no ENGINE support
+
+This will be the case in OpenWrt soon.
+---
+ src/tincd.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/src/tincd.c b/src/tincd.c
+index 7b882c7a..bdac0c9d 100644
+--- a/src/tincd.c
++++ b/src/tincd.c
+@@ -37,7 +37,9 @@
+ #include <openssl/rsa.h>
+ #include <openssl/pem.h>
+ #include <openssl/evp.h>
++#ifndef OPENSSL_NO_ENGINE
+ #include <openssl/engine.h>
++#endif
+ 
+ #ifdef HAVE_LZO
+ #include LZO1X_H
+@@ -685,8 +687,10 @@ int main(int argc, char **argv) {
+ 
+ 	init_configuration(&config_tree);
+ 
++#ifndef OPENSSL_NO_ENGINE
+ 	ENGINE_load_builtin_engines();
+ 	ENGINE_register_all_complete();
++#endif
+ 
+ 	OpenSSL_add_all_algorithms();
+ 
+@@ -809,7 +813,9 @@ end:
+ 
+ 	EVP_cleanup();
+ 	ERR_free_strings();
++#ifndef OPENSSL_NO_ENGINE
+ 	ENGINE_cleanup();
++#endif
+ 
+ 	exit_configuration(&config_tree);
+ 	list_delete_list(cmdline_conf);
+-- 
+2.20.0
+

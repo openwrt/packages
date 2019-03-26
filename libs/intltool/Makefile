@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,13 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=intltool
-PKG_LIBVER:=0.40
-PKG_VERSION:=$(PKG_LIBVER).6
-PKG_RELEASE:=3
+PKG_VERSION:=0.51.0
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=@GNOME/intltool/$(PKG_LIBVER)
-PKG_MD5SUM:=69bc0353323112f42ad4f9cf351bc3e5
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://launchpad.net/intltool/trunk/$(PKG_VERSION)/+download
+PKG_HASH:=67c74d94196b153b774ab9f89b2fa6c6ba79352407037c8c14d5aeb334e959cd
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_HOST_ONLY:=1
@@ -27,7 +24,7 @@ define Package/intltool
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=set of tools to centralize translation using GNU gettext
-  URL:=http://www.freedesktop.org/wiki/Software/intltool
+  URL:=https://www.freedesktop.org/wiki/Software/intltool
   BUILDONLY:=1
 endef
 

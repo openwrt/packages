@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=minicom
-PKG_VERSION:=2.7
-PKG_RELEASE:=3
+PKG_VERSION:=2.7.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://alioth.debian.org/frs/download.php/file/3977/
-PKG_MD5SUM:=7044ca3e291268c33294f171d426dc2d
+PKG_SOURCE_URL:=https://alioth.debian.org/frs/download.php/file/4215
+PKG_HASH:=532f836b7a677eb0cb1dca8d70302b73729c3d30df26d58368d712e5cca041f1
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=GPL-2.0

@@ -1,0 +1,15 @@
+--- a/src/bluetooth.conf
++++ b/src/bluetooth.conf
+@@ -26,10 +26,10 @@
+   </policy>
+ 
+   <!-- allow users of lp group (printing subsystem) to 
+-       communicate with bluetoothd -->
++       communicate with bluetoothd
+   <policy group="lp">
+     <allow send_destination="org.bluez"/>
+-  </policy>
++  </policy> -->
+ 
+   <policy context="default">
+     <deny send_destination="org.bluez"/>

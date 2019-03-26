@@ -8,20 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-ldap
-PKG_VERSION:=2.4.32
+PKG_VERSION:=3.1.0
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Dmitry Trefilov <the-alien@live.ru>
 PKG_LICENSE:=Python-style
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/67/d9/fa0ea70d1792875745116ad62ac8d4bcb07550b15cded591bb57df6a6d9a
-PKG_MD5SUM:=7c46c8a04acc227a778c7900c87cdfc7
-
-PKG_BUILD_DEPENDS:=python libopenldap
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/python-ldap
+PKG_HASH:=41975e79406502c092732c57ef0c2c2eb318d91e8e765f81f5d4ab6c1db727c5
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/python-ldap
   SUBMENU:=Python
@@ -29,7 +27,7 @@ define Package/python-ldap
   CATEGORY:=Languages
   DEPENDS:=+libopenldap +python
   TITLE:=Python modules for implementing LDAP clients
-  URL:=http://python-ldap.org/
+  URL:=https://python-ldap.org/
 endef
 
 define Package/python-ldap/description

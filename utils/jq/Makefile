@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=jq
-PKG_VERSION:=1.5
+PKG_VERSION:=1.6
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/stedolan/jq/releases/download/jq-$(PKG_VERSION)/
-PKG_MD5SUM:=0933532b086bd8b6a41c1b162b1731f9
+PKG_HASH:=9625784cf2e4fd9842f1d407681ce4878b5b0dcddbcd31c6135114a30c71e6a8
 
 PKG_INSTALL:=1
 
@@ -23,6 +23,13 @@ include $(INCLUDE_DIR)/package.mk
 ifdef CONFIG_USE_MIPS16
   TARGET_CFLAGS += -fno-ipa-sra
 endif
+
+TARGET_CFLAGS += -std=c99 -D_GNU_SOURCE
+
+CONFIGURE_ARGS+= \
+	--disable-docs \
+	--disable-valgrind \
+	--without-oniguruma
 
 define Package/jq
   SECTION:=utils

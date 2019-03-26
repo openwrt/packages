@@ -1,0 +1,24 @@
+From e4c6d591df6a9c34c1ff3ec9f367c7257122bef3 Mon Sep 17 00:00:00 2001
+From: Andreas Schneider <asn@cryptomilk.org>
+Date: Wed, 17 Oct 2018 07:23:10 +0200
+Subject: [PATCH 2/8] packet: Add missing break in ssh_packet_incoming_filter()
+
+CID 1396239
+
+Signed-off-by: Andreas Schneider <asn@cryptomilk.org>
+(cherry picked from commit fe618a35dc4be3e73ddf29d0c4a96b98d3b9c48f)
+Signed-off-by: Kevin Darbyshire-Bryant <ldir@darbyshire-bryant.me.uk>
+---
+ src/packet.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/src/packet.c
++++ b/src/packet.c
+@@ -285,6 +285,7 @@ static enum ssh_packet_filter_result_e s
+             (session->dh_handshake_state != DH_STATE_FINISHED))
+         {
+             rc = SSH_PACKET_DENIED;
++            break;
+         }
+ 
+         rc = SSH_PACKET_ALLOWED;

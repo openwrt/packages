@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=clamav
-PKG_VERSION:=0.99.2
-PKG_RELEASE:=1
+PKG_VERSION:=0.101.1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr> \
 		Lucian Cristian <lucian.cristian@gmail.com>
+PKG_CPE_ID:=cpe:/a:clamav:clamav
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.clamav.net/downloads/production/
-PKG_HASH:=167bd6a13e05ece326b968fdb539b05c2ffcfef6018a274a10aeda85c2c0027a
+PKG_HASH:=fa368fa9b2f57638696150c7d108b06dec284e8d8e3b8e702c784947c01fb806
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -27,11 +28,11 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/clamav/Default
   SECTION:=net
-  DEPENDS:=+libpthread +uclibcxx +zlib +libcurl +libopenssl +libltdl +libpcre2 +USE_MUSL:musl-fts
+  DEPENDS:=$(CXX_DEPENDS) +libpthread +zlib +libcurl +libjson-c +libmilter-sendmail +libopenssl +libltdl +libpcre2 +USE_MUSL:musl-fts
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=ClamAV
-  URL:=http://www.clamav.net/
+  URL:=https://www.clamav.net/
 endef
 
 define Package/clamav
@@ -66,11 +67,16 @@ define Build/Configure
 		--sysconfdir=/etc/clamav/ \
 		--prefix=/usr/ \
 		--exec-prefix=/usr/ \
-		--disable-xml \
+		--enable-milter \
+		--with-xml=no \
 		--disable-bzip2 \
 		--with-user nobody \
 		--with-group nogroup \
 		--with-pcre="$(STAGING_DIR)/usr/" \
+		--with-openssl="$(STAGING_DIR)/usr/" \
+		--with-zlib="$(STAGING_DIR)/usr/" \
+		--disable-zlib-vcheck \
+		--disable-clamdtop \
 	)
 endef
 
@@ -83,6 +89,7 @@ endef
 define Package/clamav/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/clamd $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/clamav-milter $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/clamav-config $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/clambc $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/clamconf $(1)/usr/sbin/

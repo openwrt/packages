@@ -8,20 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luasql
-PKG_VERSION:=2.3.0
+PKG_VERSION:=2.4.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/keplerproject/luasql.git
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/keplerproject/luasql/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=db2458a8c8c5f3bc717e4030fe2878f1ad8d71e437ec6149c381eebad5d525c5
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
+PKG_MAINTAINER:=
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=docs/us/license.html
-PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -30,7 +27,7 @@ define Package/luasql/Default
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Lua SQL binding
-  URL:=http://keplerproject.github.io/luasql/
+  URL:=https://keplerproject.github.io/luasql/
   DEPENDS:= +lua
 endef
 
@@ -98,11 +95,10 @@ ifeq ($(BUILD_VARIANT),sqlite3)
 endif
 
 MAKE_FLAGS += \
-	T="$(BUILD_VARIANT)" \
 	DRIVER_INCS="$(TARGET_CPPFLAGS)" \
 	DRIVER_LIBS="$(TARGET_LDFLAGS)" \
 	CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
-	lib
+	$(BUILD_VARIANT)
 
 define Package/Install/Default
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luasql

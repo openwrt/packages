@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=autossh
-PKG_VERSION:=1.4e
+PKG_VERSION:=1.4g
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://www.harding.motd.ca/autossh/
-PKG_MD5SUM:=f86684b96e99d22b2e9d35dc63b0aa29
+PKG_SOURCE_URL:=https://www.harding.motd.ca/autossh/
+PKG_HASH:=5fc3cee3361ca1615af862364c480593171d0c54ec156de79fc421e31ae21277
 PKG_LICENSE:=0BSD
 
 include $(INCLUDE_DIR)/package.mk
@@ -22,7 +22,7 @@ define Package/autossh
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Autossh client
-  URL:=http://www.harding.motd.ca/autossh/
+  URL:=https://www.harding.motd.ca/autossh/
   MAINTAINER:=Christian Beier <cb@shoutrlabs.com>
   SUBMENU:=SSH
 endef

@@ -1,0 +1,35 @@
+Index: lcdproc-0.5.9/clients/lcdproc/main.c
+===================================================================
+--- lcdproc-0.5.9.orig/clients/lcdproc/main.c	2017-04-21 12:43:48.000000000 +0200
++++ lcdproc-0.5.9/clients/lcdproc/main.c	2017-12-06 23:36:54.674753530 +0100
+@@ -58,7 +58,6 @@
+ int sock = -1;
+ 
+ char *version = VERSION;
+-char *build_date = __DATE__;
+ 
+ int lcd_wid = 0;
+ int lcd_hgt = 0;
+Index: lcdproc-0.5.9/server/main.c
+===================================================================
+--- lcdproc-0.5.9.orig/server/main.c	2017-04-24 22:17:15.000000000 +0200
++++ lcdproc-0.5.9/server/main.c	2017-12-06 23:36:47.550605856 +0100
+@@ -104,7 +104,6 @@
+ char *version = VERSION;
+ char *protocol_version = PROTOCOL_VERSION;
+ char *api_version = API_VERSION;
+-char *build_date = __DATE__;
+ 
+ 
+ /**** Configuration variables ****/
+@@ -197,8 +196,8 @@
+ 
+ 	/* Report that server is starting (report will be delayed) */
+ 	report(RPT_NOTICE, "LCDd version %s starting", version);
+-	report(RPT_INFO, "Built on %s, protocol version %s, API version %s",
+-		build_date, protocol_version, api_version);
++	report(RPT_INFO, "Protocol version %s, API version %s",
++		protocol_version, api_version);
+ 
+ 	clear_settings();
+ 

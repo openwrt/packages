@@ -11,7 +11,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://dri.freedesktop.org/libdrm
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_MD5SUM:=920957cfe25a80efb02be9bd90bf3c1e
+PKG_HASH:=b17d4b39ed97ca0e4cffa0db06ff609e617bac94646ec38e8e0579d530540e7b
 
 PKG_INSTALL:=1
 

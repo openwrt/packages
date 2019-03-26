@@ -1,7 +1,7 @@
 diff -Naur postfix-2.10.2/conf/post-install postfix-2.10.2_patched/conf/post-install
 --- postfix-2.10.2/conf/post-install	2013-06-13 18:07:46.000000000 +0400
 +++ postfix-2.10.2_patched/conf/post-install	2013-11-19 21:17:49.572820573 +0400
-@@ -361,10 +361,10 @@
+@@ -366,10 +366,10 @@
  
  # Sanity checks
  
@@ -16,7 +16,7 @@ diff -Naur postfix-2.10.2/conf/post-install postfix-2.10.2_patched/conf/post-ins
  
  case $setgid_group in
   no) echo $0: Error: setgid_group no longer accepts \"no\" values. 1>&2
-@@ -372,7 +372,7 @@
+@@ -377,7 +377,7 @@
  esac
  
  for path in "$daemon_directory" "$command_directory" "$queue_directory" \
@@ -25,7 +25,7 @@ diff -Naur postfix-2.10.2/conf/post-install postfix-2.10.2_patched/conf/post-ins
      "$meta_directory"
  do
     case "$path" in
-@@ -381,7 +381,7 @@
+@@ -386,7 +386,7 @@
     esac
  done
  
@@ -37,7 +37,7 @@ diff -Naur postfix-2.10.2/conf/post-install postfix-2.10.2_patched/conf/post-ins
 diff -Naur postfix-2.10.2/postfix-install postfix-2.10.2_patched/postfix-install
 --- postfix-2.10.2/postfix-install	2012-05-22 23:40:29.000000000 +0400
 +++ postfix-2.10.2_patched/postfix-install	2013-11-19 21:12:20.694160734 +0400
-@@ -554,13 +554,13 @@
+@@ -563,13 +563,13 @@
       exit 1;;
  esac
  
@@ -58,7 +58,7 @@ diff -Naur postfix-2.10.2/postfix-install postfix-2.10.2_patched/postfix-install
  
  for path in "$html_directory" "$readme_directory" "$shlib_directory"
  do
-@@ -573,7 +573,7 @@
+@@ -582,7 +582,7 @@
  done
  
  for path in "$daemon_directory" "$data_directory" "$command_directory" "$queue_directory" \
@@ -67,7 +67,7 @@ diff -Naur postfix-2.10.2/postfix-install postfix-2.10.2_patched/postfix-install
      "$meta_directory"
  do
     case "$path" in
-@@ -780,8 +780,8 @@
+@@ -789,8 +789,8 @@
  		compare_or_replace $mode "$owner" "$group" html/$file \
  		    $HTML_DIRECTORY/$file || exit 1;;
  	'$manpage_directory')

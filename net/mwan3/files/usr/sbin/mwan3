@@ -1,6 +1,7 @@
 #!/bin/sh
 
 . /lib/functions.sh
+. /usr/share/libubox/jshn.sh
 . /lib/functions/network.sh
 . /lib/mwan3/mwan3.sh
 
@@ -36,14 +37,21 @@ ifdown()
 
 	ACTION=ifdown INTERFACE=$1 /sbin/hotplug-call iface
 
-	kill $(pgrep -f "mwan3track $1") &> /dev/null
+	kill $(pgrep -f "mwan3track $1 $2") &> /dev/null
+	mwan3_track_clean $1
 }
 
 ifup()
 {
-	local device enabled
+	local device enabled up l3_device status
 
 	config_load mwan3
+	config_get_bool enabled globals 'enabled' 0
+	[ ${enabled} -gt 0 ] || {
+		echo "The service mwan3 is global disabled."
+		echo "Please execute \"/etc/init.d/mwan3 start\" first."
+		exit 1
+	}
 
 	if [ -z "$1" ]; then
 		echo "Expecting interface. Usage: mwan3 ifup <interface>" && exit 0
@@ -53,12 +61,18 @@ ifup()
 		echo "Too many arguments. Usage: mwan3 ifup <interface>" && exit 0
 	fi
 
+	status=$(ubus -S call network.interface.$1 status)
+	[ -n "$status" ] && {
+		json_load $status
+		json_get_vars up l3_device 
+	}
+
 	config_get enabled "$1" enabled 0
 
-	device=$(uci -p /var/state get network.$1.ifname) &> /dev/null
-
-	if [ -n "$device" ] ; then
-		[ "$enabled" -eq 1 ] && ACTION=ifup INTERFACE=$1 DEVICE=$device /sbin/hotplug-call iface
+	if [ "$up" = "1" ] \
+		&& [ -n "$l3_device" ] \
+		&& [ "$enabled" = "1" ]; then
+		ACTION=ifup INTERFACE=$1 DEVICE=$l3_device /sbin/hotplug-call iface
 	fi
 }
 
@@ -111,19 +125,37 @@ status()
 
 start()
 {
-	config_load mwan3
+	local enabled
+
+	uci_toggle_state mwan3 globals enabled "1"
+
 	config_foreach ifup interface
 }
 
 stop()
 {
-	local ipset route rule table IP IPT
+	local ipset route rule table IP IPT pid
 
-	killall mwan3track &> /dev/null
+	mwan3_lock "command" "mwan3"
+
+	for pid in $(pgrep -f "mwan3rtmon"); do
+		kill -TERM "$pid" > /dev/null 2>&1
+		sleep 1
+		kill -KILL "$pid" > /dev/null 2>&1
+	done
+
+	for pid in $(pgrep -f "mwan3track"); do
+		kill -TERM "$pid" > /dev/null 2>&1
+		sleep 1
+		kill -KILL "$pid" > /dev/null 2>&1
+	done
+
+	config_load mwan3
+	config_foreach mwan3_track_clean interface
 
 	for IP in "$IP4" "$IP6"; do
 
-		for route in $($IP route list table all | sed 's/.*table \([^ ]*\) .*/\1/' |  awk '{print $1}' | awk '{for(i=1;i<=NF;i++) if($i+0>0) if($i+0<255) {print;break}}'); do
+		for route in $(seq 1 $MWAN3_INTERFACE_MAX); do
 			$IP route flush table $route &> /dev/null
 		done
 
@@ -153,6 +185,13 @@ stop()
 	for ipset in $($IPS -n list | grep mwan3 | grep -E '_v4|_v6'); do
 		$IPS -q destroy $ipset
 	done
+
+	mwan3_unlock "command" "mwan3"
+
+	mwan3_lock_clean
+	rm -rf $MWAN3_STATUS_DIR $MWAN3TRACK_STATUS_DIR
+
+	uci_toggle_state mwan3 globals enabled "0"
 }
 
 restart() {
@@ -162,6 +201,7 @@ restart() {
 
 case "$1" in
 	ifup|ifdown|interfaces|policies|connected|rules|status|start|stop|restart)
+		mwan3_init
 		$*
 	;;
 	*)

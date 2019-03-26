@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2016 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,15 +6,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=talloc
-PKG_VERSION:=2.1.7
+PKG_VERSION:=2.1.14
 MAJOR_VERSION:=2
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.samba.org/ftp/talloc/
-PKG_MD5SUM:=d6763d65d03d627816ae1d50c74576fe
+PKG_SOURCE_URL:=https://www.samba.org/ftp/talloc
+PKG_HASH:=b185602756a628bac507fa8af8b9df92ace69d27c0add5dab93190ad7c3367ce
 
-PKG_MAINTAINER:=Lucile Quirion <lucile.quirion@savoirfairelinux.com>
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=LGPL-3.0+
 
 PKG_BUILD_PARALLEL:=0
@@ -28,7 +26,7 @@ define Package/libtalloc
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Core memory allocator used in Samba
-  DEPENDS:=+USE_GLIBC:libbsd $(ICONV_DEPENDS) +libattr
+  DEPENDS:=$(ICONV_DEPENDS) +libattr
   URL:=https://talloc.samba.org/talloc/doc/html/index.html
 endef
 
@@ -101,6 +99,8 @@ define Build/InstallDev
 	$(CP) $(PKG_BUILD_DIR)/bin/default/libtalloc.so $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_BUILD_DIR)/*.h $(1)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_BUILD_DIR)/bin/default/talloc.pc $(1)/usr/lib/pkgconfig/
 endef
 
 define Package/libtalloc/install

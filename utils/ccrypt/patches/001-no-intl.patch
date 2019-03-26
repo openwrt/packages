@@ -1,33 +1,5 @@
---- a/configure.ac
-+++ b/configure.ac
-@@ -123,17 +123,6 @@ AC_MSG_RESULT($UINT32_TYPE)
- AC_DEFINE_UNQUOTED(UINT32_TYPE,$UINT32_TYPE,unsigned 32 bit integer type)
- 
- dnl ----------------------------------------------------------------------
--dnl Internationalization
--
--GETTEXT_PACKAGE=ccrypt
--AC_SUBST(GETTEXT_PACKAGE)
--AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Package name for gettext])
--
--AM_GNU_GETTEXT
--AM_GNU_GETTEXT_VERSION([0.14.3])
--IT_PO_SUBDIR(po)
--
--dnl ----------------------------------------------------------------------
- dnl Libtool (needed by intl/)
- 
- LT_INIT
-@@ -153,9 +142,7 @@ AC_SUBST(TAR)
- dnl ----------------------------------------------------------------------
- AC_CONFIG_FILES([doc/ccrypt.1
- 	   doc/ccguess.1
--	   po/Makefile.in 
- 	   m4/Makefile 
--	   intl/Makefile 
- 	   Makefile 
- 	   src/Makefile 
- 	   emacs/Makefile
+diff --git a/Makefile.am b/Makefile.am
+index bfe1d43..2f45264 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -4,7 +4,7 @@
@@ -39,27 +11,29 @@
  
  EXTRA_DIST = m4/ChangeLog config.rpath README-WIN
  
+diff --git a/Makefile.in b/Makefile.in
+index 314e162..18dcff3 100644
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -36,7 +36,7 @@ host_triplet = @host@
- subdir = .
- DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
- 	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
--	$(top_srcdir)/configure $(top_srcdir)/intl/Makefile.in \
-+	$(top_srcdir)/configure \
- 	ABOUT-NLS AUTHORS COPYING ChangeLog INSTALL NEWS config.guess \
- 	config.rpath config.sub depcomp elisp-comp install-sh \
- 	ltmain.sh missing mkinstalldirs
-@@ -66,7 +66,7 @@ am__CONFIG_DISTCLEAN_FILES = config.stat
+@@ -117,7 +117,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
   configure.lineno config.status.lineno
  mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
  CONFIG_HEADER = config.h
 -CONFIG_CLEAN_FILES = intl/Makefile
 +CONFIG_CLEAN_FILES =
  CONFIG_CLEAN_VPATH_FILES =
- SOURCES =
- DIST_SOURCES =
-@@ -277,7 +277,7 @@ target_alias = @target_alias@
+ AM_V_P = $(am__v_P_@AM_V@)
+ am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
+@@ -177,7 +177,7 @@ CTAGS = ctags
+ CSCOPE = cscope
+ DIST_SUBDIRS = $(SUBDIRS)
+ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
+-	$(top_srcdir)/intl/Makefile.in ABOUT-NLS AUTHORS COPYING \
++	ABOUT-NLS AUTHORS COPYING \
+ 	ChangeLog INSTALL NEWS README compile config.guess \
+ 	config.rpath config.sub install-sh ltmain.sh missing \
+ 	mkinstalldirs
+@@ -403,7 +403,7 @@ target_alias = @target_alias@
  top_build_prefix = @top_build_prefix@
  top_builddir = @top_builddir@
  top_srcdir = @top_srcdir@
@@ -68,22 +42,58 @@
  EXTRA_DIST = m4/ChangeLog config.rpath README-WIN
  ACLOCAL_AMFLAGS = -I m4
  all: config.h
+diff --git a/configure.ac b/configure.ac
+index 56d11f1..6d32602 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -148,17 +148,6 @@ fi
+ AC_MSG_RESULT($UINT32_TYPE)
+ AC_DEFINE_UNQUOTED(UINT32_TYPE,$UINT32_TYPE,unsigned 32 bit integer type)
+ 
+-dnl ----------------------------------------------------------------------
+-dnl Internationalization
+-
+-GETTEXT_PACKAGE=ccrypt
+-AC_SUBST(GETTEXT_PACKAGE)
+-AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Package name for gettext])
+-
+-AM_GNU_GETTEXT
+-AM_GNU_GETTEXT_VERSION([0.19.8])
+-dnl IT_PO_SUBDIR(po)
+-
+ dnl ----------------------------------------------------------------------
+ dnl Libtool (needed by intl/)
+ 
+@@ -180,9 +169,7 @@ AC_SUBST(TAR)
+ dnl ----------------------------------------------------------------------
+ AC_CONFIG_FILES([doc/ccrypt.1
+ 	   doc/ccguess.1
+-	   po/Makefile.in 
+ 	   m4/Makefile 
+-	   intl/Makefile 
+ 	   Makefile 
+ 	   src/Makefile 
+ 	   emacs/Makefile
+diff --git a/src/Makefile.am b/src/Makefile.am
+index 4cb1d03..ff33d59 100644
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
 @@ -56,4 +56,4 @@ uninstall-local:
  # internationalization stuff
  localedir = $(datadir)/locale
- INCLUDES = -I../intl -I$(top_srcdir)/intl -DLOCALEDIR=\"$(localedir)\"
+ AM_CPPFLAGS = @EXTRA_INCLUDES@ -I../intl -I$(top_srcdir)/intl -DLOCALEDIR=\"$(localedir)\"
 -LIBS = @LIBINTL@ @LIBS@
 +LIBS = @LIBS@
+diff --git a/src/Makefile.in b/src/Makefile.in
+index 27c7d28..01c6764 100644
 --- a/src/Makefile.in
 +++ b/src/Makefile.in
-@@ -159,7 +159,7 @@ LDFLAGS = @LDFLAGS@
- LIBICONV = @LIBICONV@
- LIBINTL = @LIBINTL@
+@@ -278,7 +278,7 @@ LIBMULTITHREAD = @LIBMULTITHREAD@
  LIBOBJS = @LIBOBJS@
+ LIBPTH = @LIBPTH@
+ LIBPTH_PREFIX = @LIBPTH_PREFIX@
 -LIBS = @LIBINTL@ @LIBS@
 +LIBS = @LIBS@
+ LIBTHREAD = @LIBTHREAD@
  LIBTOOL = @LIBTOOL@
  LIPO = @LIPO@
- LN_S = @LN_S@

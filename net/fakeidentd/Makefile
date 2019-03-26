@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).c
 PKG_SOURCE_URL:=http://distfiles.gentoo.org/distfiles/
-PKG_MD5SUM:=d26693c1a7c883d1432e05fb6f7ead6e
+PKG_HASH:=75b321e5d9dddcea2b38035b62ac30f2175ed43f3f187be6da19aaa67c4fe165
 PKG_MAINTAINER:=Daniel Gimpelevich <daniel@gimpelevich.san-francisco.ca.us>
 PKG_LICENSE:=GPL-2.0+
 UNPACK_CMD=$(CP) $(DL_DIR)/$(PKG_SOURCE) $(1)/

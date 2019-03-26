@@ -1,0 +1,69 @@
+commit 31e53f07c26e5ac75ec2c2d99497439323dbdaf7
+Author: Philip Prindeville <philipp@redfish-solutions.com>
+Date:   Wed Jan 24 18:47:19 2018 -0700
+
+    Be consistent in clearing out in php_iconv_string()
+    
+    Also, don't bother checking returned point in error case since it
+    will always be NULL (and not require free()ing, obviously).
+
+diff --git a/ext/iconv/iconv.c b/ext/iconv/iconv.c
+index 35dafd4..4289242 100644
+--- a/ext/iconv/iconv.c
++++ b/ext/iconv/iconv.c
+@@ -559,6 +559,8 @@ PHP_ICONV_API php_iconv_err_t php_iconv_string(const char *in_p, size_t in_len,
+ 	size_t result;
+ 	zend_string *ret, *out_buffer;
+ 
++	*out = NULL;
++
+ 	/*
+ 	  This is not the right way to get output size...
+ 	  This is not space efficient for large text.
+
+commit 3763c8f1645983b5abc37c60597e1ecc1bf89019
+Author: Philip Prindeville <philipp@redfish-solutions.com>
+Date:   Thu Jan 25 14:18:00 2018 -0700
+
+    Always free out_buf in php_iconv_string()
+
+diff --git a/ext/iconv/iconv.c b/ext/iconv/iconv.c
+index 4289242..807bb14 100644
+--- a/ext/iconv/iconv.c
++++ b/ext/iconv/iconv.c
+@@ -697,6 +697,7 @@ PHP_ICONV_API php_iconv_err_t php_iconv_string(const char *in_p, size_t in_len,
+ 	iconv_close(cd);
+ 
+ 	if (result == (size_t)(-1)) {
++		zend_string_free(out_buf);
+ 		switch (errno) {
+ 			case EINVAL:
+ 				retval = PHP_ICONV_ERR_ILLEGAL_CHAR;
+@@ -713,7 +714,6 @@ PHP_ICONV_API php_iconv_err_t php_iconv_string(const char *in_p, size_t in_len,
+ 
+ 			default:
+ 				/* other error */
+-				zend_string_free(out_buf);
+ 				return PHP_ICONV_ERR_UNKNOWN;
+ 		}
+ 	}
+@@ -986,9 +986,6 @@ static php_iconv_err_t _php_iconv_strpos(size_t *pretval,
+ 	err = php_iconv_string(ndl, ndl_nbytes, &ndl_buf, GENERIC_SUPERSET_NAME, enc);
+ 
+ 	if (err != PHP_ICONV_ERR_SUCCESS) {
+-		if (ndl_buf != NULL) {
+-			zend_string_free(ndl_buf);
+-		}
+ 		return err;
+ 	}
+ 
+@@ -2465,9 +2462,6 @@ PHP_NAMED_FUNCTION(php_if_iconv)
+ 	if (err == PHP_ICONV_ERR_SUCCESS && out_buffer != NULL) {
+ 		RETVAL_STR(out_buffer);
+ 	} else {
+-		if (out_buffer != NULL) {
+-			zend_string_free(out_buffer);
+-		}
+ 		RETURN_FALSE;
+ 	}
+ }

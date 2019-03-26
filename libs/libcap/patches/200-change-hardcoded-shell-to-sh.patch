@@ -1,0 +1,34 @@
+--- a/progs/capsh.c
++++ b/progs/capsh.c
+@@ -24,6 +24,9 @@
+ #include <sys/wait.h>
+ #include <sys/prctl.h>
+ 
++#ifndef SHELL
++#define SHELL "/bin/sh"
++#endif
+ #define MAX_GROUPS       100   /* max number of supplementary groups for user */
+ 
+ static char *binary(unsigned long value)
+@@ -692,10 +695,10 @@ int main(int argc, char *argv[], char *envp[])
+ 	} else if (!strcmp("--print", argv[i])) {
+ 	    arg_print();
+ 	} else if ((!strcmp("--", argv[i])) || (!strcmp("==", argv[i]))) {
+-	    argv[i] = strdup(argv[i][0] == '-' ? "/bin/bash" : argv[0]);
++	    argv[i] = strdup(argv[i][0] == '-' ? SHELL : argv[0]);
+ 	    argv[argc] = NULL;
+ 	    execve(argv[i], argv+i, envp);
+-	    fprintf(stderr, "execve /bin/bash failed!\n");
++	    fprintf(stderr, "execve " SHELL " failed!\n");
+ 	    exit(1);
+ 	} else {
+ 	usage:
+@@ -720,7 +723,7 @@ int main(int argc, char *argv[], char *envp[])
+ 		   "  --killit=<n>   send signal(n) to child\n"
+ 		   "  --forkfor=<n>  fork and make child sleep for <n> sec\n"
+ 		   "  ==             re-exec(capsh) with args as for --\n"
+-		   "  --             remaing arguments are for /bin/bash\n"
++		   "  --             remaing arguments are for " SHELL "\n"
+ 		   "                 (without -- [%s] will simply exit(0))\n",
+ 		   argv[0], argv[0]);
+ 

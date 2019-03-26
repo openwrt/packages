@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alsa-lib
-PKG_VERSION:=1.1.4.1
+PKG_VERSION:=1.1.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.alsa-project.org/pub/lib/ \
 		http://distfiles.gentoo.org/distfiles/
 
-PKG_HASH:=91bb870c14d1c7c269213285eeed874fa3d28112077db061a3af8010d0885b76
+PKG_HASH:=3cdc3a93a6427a26d8efab4ada2152e64dd89140d981f6ffa003e85be707aedf
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Peter Wagner <tripolar@gmx.at>
 
@@ -40,6 +40,10 @@ endef
 define Package/alsa-lib/description
  This is the library package for alsa, needed by some userspace programs.
  You must have enabled the ALSA support in the kernel.
+endef
+
+define Package/alsa-lib/conffiles
+/etc/asound.conf
 endef
 
 TARGET_CFLAGS += $(FPIC)

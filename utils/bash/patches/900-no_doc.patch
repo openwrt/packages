@@ -1,6 +1,6 @@
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -741,10 +741,8 @@ reconfig: force
+@@ -791,10 +791,8 @@ loadables:
  #	$(MAKE) -f $(srcdir)/Makefile $(MFLAGS) srcdir=$(srcdir)
  
  doc documentation:  force

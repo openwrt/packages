@@ -201,5 +201,63 @@ config NGINX_HTTP_SECURE_LINK
 	bool
 	prompt "Enable HTTP secure link module"
 	default n
+	
+config NGINX_HTTP_SUB
+	bool
+	prompt "Enable HTTP sub module"
+	default n
+	
+config NGINX_HEADERS_MORE
+	bool
+	prompt "Enable Headers_more module"
+	help
+		Set and clear input and output headers...more than "add"!
+	default y
+	
+config NGINX_HTTP_BROTLI
+	bool
+	prompt "Enable Brotli compression module"
+	help
+		Add support for brotli compression module.
+	default n
+
+config NGINX_STREAM_CORE_MODULE
+	bool
+	prompt "Enable stream support"
+	help
+		Add support for NGINX request streaming.
+	default n
+
+config NGINX_STREAM_SSL_MODULE
+	bool
+	prompt "Enable stream support with SSL/TLS termination"
+	depends on NGINX_STREAM_CORE_MODULE
+	help
+		Add support for NGINX request streaming with SSL/TLS termination.
+	default n
+
+config NGINX_STREAM_SSL_PREREAD_MODULE
+	bool
+	prompt "Enable stream support with SSL/TLS pre-read"
+	depends on NGINX_STREAM_CORE_MODULE
+	help
+		Add support for NGINX request streaming using information from the ClientHello message without terminating SSL/TLS.
+	default n
+
+config NGINX_RTMP_MODULE
+	bool
+	prompt "Enable RTMP module"
+	depends on NGINX_SSL
+	help
+		Add support for NGINX-based Media Streaming Server module.
+		DASH enhanced - https://github.com/ut0mt8/nginx-rtmp-module
+	default n
+
+config NGINX_TS_MODULE
+	bool
+	prompt "Enable TS module"
+	help
+		Add support for MPEG-TS Live Module module.
+	default n
 
 endmenu

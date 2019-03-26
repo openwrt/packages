@@ -1,0 +1,35 @@
+From 13f95a28ce12216ba51cf0ca8d61c3d89689d02b Mon Sep 17 00:00:00 2001
+From: Eneas U de Queiroz <cote2004-github@yahoo.com>
+Date: Wed, 6 Jun 2018 18:11:47 -0300
+Subject: [PATCH] Remove API deprecated in openssl 1.1
+
+Openssl 1.1 has deprecated RAND_pseudo_bytes.  It won't compile with
+openssl built witout deprecated API.
+
+Signed-off-by: Eneas U de Queiroz <cote2004-github@yahoo.com>
+---
+ common/seafile-crypt.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/common/seafile-crypt.c b/common/seafile-crypt.c
+index c7d1702..c3cebf5 100644
+--- a/common/seafile-crypt.c
++++ b/common/seafile-crypt.c
+@@ -81,9 +81,14 @@ seafile_generate_random_key (const char *passwd, char *random_key)
+ 
+     int rc = RAND_bytes (secret_key, sizeof(secret_key));
+     if (rc != 1) {
++#if OPENSSL_VERSION_NUMBER < 0x10100000L || OPENSSL_API_COMPAT < 0x10100000L
+         seaf_warning ("Failed to generate secret key for repo encryption "
+                       "with RAND_bytes(), use RAND_pseudo_bytes().\n");
+         RAND_pseudo_bytes (secret_key, sizeof(secret_key));
++#else
++        seaf_warning ("Failed to generate secret key for repo encryption "
++                      "with RAND_bytes().\n");
++#endif
+     }
+ 
+     seafile_derive_key (passwd, strlen(passwd), 2, key, iv);
+-- 
+2.16.4
+

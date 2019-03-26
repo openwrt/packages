@@ -1,0 +1,21 @@
+From b0f77c10fc4561463b59b12cba0bfd69d7c73934 Mon Sep 17 00:00:00 2001
+From: Timo Teräs <timo.teras@iki.fi>
+Date: Tue, 10 Jan 2017 09:51:32 +0200
+Subject: [PATCH] fix aarch64 compile error due to undefined variable
+
+fixes #36
+
+Signed-off-by: Timo Teräs <timo.teras@iki.fi>
+
+--- a/procinterrupts.c
++++ b/procinterrupts.c
+@@ -148,6 +148,9 @@ GList* collect_full_irq_list()
+ 	char *line = NULL;
+ 	size_t size = 0;
+ 	char *irq_name, *irq_mod, *savedptr, *last_token, *p;
++#ifdef AARCH64
++	char *tmp;
++#endif
+ 
+ 	file = fopen("/proc/interrupts", "r");
+ 	if (!file)

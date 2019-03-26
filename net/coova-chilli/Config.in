@@ -38,9 +38,6 @@ choice
 config COOVACHILLI_NOSSL
 	bool "No SSL support"
 
-config COOVACHILLI_MATRIXSSL
-	bool "MatrixSSL"
-
 config COOVACHILLI_CYASSL
 	bool "CyaSSL"
 

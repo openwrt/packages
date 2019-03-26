@@ -8,15 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libnetfilter_acct
-PKG_VERSION:=1.0.2
+PKG_VERSION:=1.0.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:= \
-	http://www.netfilter.org/projects/libnetfilter_acct/files/ \
-	ftp://ftp.netfilter.org/pub/libnetfilter_acct/ \
-	http://mirrors.evolva.ro/netfilter.org/libnetfilter_acct/
-PKG_MD5SUM:=2118d9514c079839ebd9cb3144ad2ad7
+PKG_SOURCE_URL:=https://netfilter.org/projects/libnetfilter_acct/files
+PKG_HASH:=4250ceef3efe2034f4ac05906c3ee427db31b9b0a2df41b2744f4bf79a959a1a
 
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=COPYING

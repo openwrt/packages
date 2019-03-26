@@ -1,0 +1,25 @@
+#
+# Copyright (c) 2018 Gregory L. Dietsche <Gregory.Dietsche@cuw.edu>
+# This is free software, licensed under the MIT License
+#
+
+#
+# IMPORTANT: if this file is not working, make sure that dnsmasq is able to READ it!
+#
+
+#216.239.38.120 restrict.youtube.com
+#2001:4860:4802:32::78 restrict.youtube.com
+
+#IPv6
+2001:4860:4802:32::78 www.youtube.com
+2001:4860:4802:32::78 m.youtube.com
+2001:4860:4802:32::78 youtubei.googleapis.com
+2001:4860:4802:32::78 youtube.googleapis.com
+2001:4860:4802:32::78 www.youtube-nocookie.com
+
+#IPv4
+216.239.38.120 www.youtube.com
+216.239.38.120 m.youtube.com
+216.239.38.120 youtubei.googleapis.com
+216.239.38.120 youtube.googleapis.com
+216.239.38.120 www.youtube-nocookie.com

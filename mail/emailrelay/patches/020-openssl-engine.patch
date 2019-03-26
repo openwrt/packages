@@ -1,0 +1,10 @@
+--- a/src/gssl/gssl_openssl.cpp
++++ b/src/gssl/gssl_openssl.cpp
+@@ -32,7 +32,6 @@
+ #include <openssl/ssl.h>
+ #include <openssl/err.h>
+ #include <openssl/rand.h>
+-#include <openssl/engine.h>
+ #include <openssl/conf.h>
+ #include <openssl/evp.h>
+ #include <openssl/hmac.h>

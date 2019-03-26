@@ -8,26 +8,27 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acpica-unix
-PKG_VERSION:=20170531
+PKG_VERSION:=20181213
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://acpica.org/sites/$(subst -unix,,$(PKG_NAME))/files/
-PKG_HASH:=50155778cd1633dfca3443b8f8fd1ccc30e70e55ddece4d3c4fceafbbf1ab0e8
+PKG_SOURCE_URL:=https://acpica.org/sites/$(patsubst %-unix,%,$(PKG_NAME))/files/$(PKG_SOURCE_URL)
+PKG_HASH:=fc90006775c635ba86c5bbf08590ac98ab10e1f9eff6d8951385f57dd3a6f8ed
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>
 
 PKG_LICENSE:=GPL-2.0
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_FORTIFY_SOURCE:=0
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/acpica-unix
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=
-  TITLE:=ACPI utilities for UNIX
+  DEPENDS:=@TARGET_x86_64
+  TITLE:=ACPI utilities (currently acpidump) for UNIX
   URL:=https://acpica.org/
 endef
 
@@ -35,6 +36,8 @@ define Package/acpica-unix/description
 	Open Source utilities for ACPI including the ACPICA Machine Language
 	(AML) interpreter, a simulator, test suites, and a compiler to
 	translate ACPI Source Language (ASL) into AML.
+
+	At this time, only acpidump is bundled; more might be added later.
 endef
 
 define Build/Configure

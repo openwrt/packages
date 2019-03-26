@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2016 OpenWrt.org
+# Copyright (C) 2006-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=privoxy
-PKG_VERSION:=3.0.26
-PKG_RELEASE:=2
+PKG_VERSION:=3.0.28
+PKG_RELEASE:=1
 
 PKG_SOURCE:=privoxy-$(PKG_VERSION)-stable-src.tar.gz
 PKG_SOURCE_URL:=@SF/ijbswa
-PKG_MD5SUM:=8a1c842112ccea68c19b7ceb4a0e999f
+PKG_HASH:=b5d78cc036aaadb3b7cf860e9d598d7332af468926a26e2d56167f1cb6f2824a
 PKG_BUILD_DIR:=$(BUILD_DIR)/privoxy-$(PKG_VERSION)-stable
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -21,7 +21,7 @@ PKG_INSTALL:=1
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_MAINTAINER:=Christian Schoenebeck <christian.schoenebeck@gmail.com>
+PKG_MAINTAINER:=
 
 PKG_CONFIG_DEPENDS:= \
   CONFIG_IPV6 \
@@ -77,7 +77,6 @@ define Package/privoxy/config
 		Run as : $(USERID)
 		Version: $(PKG_VERSION)-$(PKG_RELEASE)
 		Home   : $(URL)
-		$(PKG_MAINTAINER)
 
 	source "$(SOURCE)/Config.in"
 endef

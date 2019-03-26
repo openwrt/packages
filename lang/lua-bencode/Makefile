@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-bencode
-PKG_VERSION:=2.1.0
+PKG_VERSION:=2.2.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://bitbucket.org/wilhelmy/lua-bencode/downloads/
-PKG_HASH:=4624f33ff026bc62990a323ee4953e42d68430c38a1a4726c9cfd77c085b1422
+PKG_HASH:=25830ff3fe342c09c65995d46c4d89ad0387cc502b1a2f70f9cca2d8c7ccafdd
+
+PKG_MAINTAINER:=Lars Gierth <larsg@systemli.org>
 PKG_LICENSE:=MIT
 
 include $(INCLUDE_DIR)/package.mk
@@ -25,7 +26,6 @@ define Package/lua-bencode
 	CATEGORY:=Languages
 	TITLE:=lua-bencode
 	URL:=https://bitbucket.org/wilhelmy/lua-bencode
-	MAINTAINER:=Lars Gierth <larsg@systemli.org>
 	DEPENDS:=+lua
 endef
 

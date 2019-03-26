@@ -8,32 +8,40 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mtr
-PKG_REV:=dd2b75080bc5406ba0b438953b36b72204ba114b
-PKG_VERSION:=0.85+newdns-$(PKG_REV)
-PKG_RELEASE:=2
+PKG_VERSION:=0.92
+PKG_RELEASE:=5
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/traviscross/mtr.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://www.bitwizard.nl/mtr/files
+PKG_HASH:=f2979db9e2f41aa8e6574e7771767c9afe111d9213814eb47f5e1e71876e4382
 
+PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
+
+# Creation of .tarball-version is an attempt to make it explicit to configure
+# script the program version.  See discussions at link [1] for more details
+#
+#  [1] mtr: add autoreconf, https://github.com/openwrt/packages/pull/6962#issuecomment-419156300
+#
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	echo "$(PKG_VERSION)" >$(PKG_BUILD_DIR)/.tarball-version
+endef
 
 define Package/mtr
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=+libncurses
   TITLE:=Full screen ncurses traceroute tool
-  URL:=http://www.bitwizard.nl/mtr/
-  PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
+  URL:=https://www.bitwizard.nl/mtr/
 endef
 
 define Package/mtr/description
@@ -49,25 +57,14 @@ endef
 
 CONFIGURE_ARGS += \
 	--without-gtk \
-	--without-glib \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6)
 
-define Build/Configure
-	(cd $(PKG_BUILD_DIR); touch \
-		configure.in \
-		aclocal.m4 \
-		Makefile.in \
-		img/Makefile.in \
-		stamp-h.in \
-		config.h.in \
-		configure \
-	);
-	$(call Build/Configure/Default)
-endef
+CONFIGURE_VARS += ac_cv_lib_cap_cap_set_proc=no
 
 define Package/mtr/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/mtr $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/mtr-packet $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,mtr))

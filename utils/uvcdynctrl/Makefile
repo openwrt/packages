@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uvcdynctrl
-PKG_VERSION:=0.2.4
-PKG_REV:=2
+PKG_VERSION:=0.2.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=libwebcam-src-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/libwebcam
-PKG_MD5SUM:=31dbb5713e95a699c5fc4dbe1493f764
+PKG_HASH:=3ca5199c7b8398b655a7c38e3ad4191bb053b1486503287f20d30d141bda9d41
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/libwebcam-src-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/libwebcam-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -26,7 +26,7 @@ define Package/uvcdynctrl
   CATEGORY:=Utilities
   DEPENDS:=+libwebcam
   TITLE:=Manage dynamic controls in uvcvideo
-  URL:=http://sourceforge.net/projects/libwebcam/
+  URL:=https://sourceforge.net/projects/libwebcam/
   MENU:=1
 endef
 
@@ -41,7 +41,7 @@ define Package/libwebcam
   CATEGORY:=Libraries
   DEPENDS:=+libxml2 +libiconv-full
   TITLE:=Webcam library
-  URL:=http://sourceforge.net/projects/libwebcam/
+  URL:=https://sourceforge.net/projects/libwebcam/
 endef
 
 define Package/libwebcam/description

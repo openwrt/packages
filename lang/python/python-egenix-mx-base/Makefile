@@ -8,21 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-egenix-mx-base
-PKG_VERSION:=3.2.8
-PKG_RELEASE:=1
+PKG_VERSION:=3.2.9
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Dmitry Trefilov <the-alien@live.ru>
 PKG_LICENSE:=eGenix.com Public License 1.1.0
 PKG_LICENSE_FILES:=LICENSE COPYRIGHT
 
 PKG_SOURCE:=egenix-mx-base-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://downloads.egenix.com/python/
-PKG_MD5SUM:=9d9d3a25f9dc051a15e97f452413423b
+PKG_SOURCE_URL:=https://downloads.egenix.com/python
+PKG_HASH:=1c6b67688e7a231c6c1da09b7a6a2210745c3f2507bdda70e2639faedbf68977
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/egenix-mx-base-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=python
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/python-egenix-mx-base
   SUBMENU:=Python
@@ -30,7 +30,7 @@ define Package/python-egenix-mx-base
   CATEGORY:=Languages
   DEPENDS:=+USE_EGLIBC:librt +USE_UCLIBC:librt +python
   TITLE:=Egenix mxBase
-  URL:=http://www.egenix.com/products/python/mxBase/
+  URL:=https://www.egenix.com/products/python/mxBase/
 endef
 
 define Package/python-egenix-mx-base/description

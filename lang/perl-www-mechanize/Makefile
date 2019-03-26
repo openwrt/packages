@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=WWW-Mechanize-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/E/ET/ETHER/
-PKG_MD5SUM:=9a4b9c8827f519908ef0a0d2b8ae96fa
+PKG_HASH:=5310051feb66c6ef9f7a4c070c66ec6092932129fc9cd18bba009ce999b7930b
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>

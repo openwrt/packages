@@ -1,31 +1,7 @@
---- a/configure.ac
-+++ b/configure.ac
-@@ -998,21 +998,6 @@ libs/gst/net/Makefile
- plugins/Makefile
- plugins/elements/Makefile
- plugins/tracers/Makefile
--tests/Makefile
--tests/benchmarks/Makefile
--tests/check/Makefile
--tests/misc/Makefile
--tests/examples/Makefile
--tests/examples/adapter/Makefile
--tests/examples/controller/Makefile
--tests/examples/stepping/Makefile
--tests/examples/helloworld/Makefile
--tests/examples/manual/Makefile
--tests/examples/memory/Makefile
--tests/examples/netclock/Makefile
--tests/examples/ptp/Makefile
--tests/examples/streamiddemux/Makefile
--tests/examples/streams/Makefile
- tools/Makefile
- common/Makefile
- common/m4/Makefile
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -7,7 +7,7 @@ aclocaldir = $(datadir)/aclocal
- aclocal_DATA = gst-element-check-@GST_API_VERSION@.m4
+ aclocal_DATA = gst-element-check-1.0.m4
  
  SUBDIRS = pkgconfig \
 -	gst libs plugins tests \
@@ -42,3 +18,26 @@
  	docs \
  	m4 \
  	common \
+--- a/configure.ac
++++ b/configure.ac
+@@ -1086,20 +1086,6 @@ libs/gst/net/Makefile
+ plugins/Makefile
+ plugins/elements/Makefile
+ plugins/tracers/Makefile
+-tests/Makefile
+-tests/benchmarks/Makefile
+-tests/check/Makefile
+-tests/misc/Makefile
+-tests/examples/Makefile
+-tests/examples/adapter/Makefile
+-tests/examples/controller/Makefile
+-tests/examples/stepping/Makefile
+-tests/examples/helloworld/Makefile
+-tests/examples/memory/Makefile
+-tests/examples/netclock/Makefile
+-tests/examples/ptp/Makefile
+-tests/examples/streamiddemux/Makefile
+-tests/examples/streams/Makefile
+ tools/Makefile
+ common/Makefile
+ common/m4/Makefile

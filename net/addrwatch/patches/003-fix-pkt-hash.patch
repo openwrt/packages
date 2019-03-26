@@ -1,0 +1,25 @@
+From 3852468f402bf9070eb1c9bab16cb1119db52f63 Mon Sep 17 00:00:00 2001
+From: Julius Kriukas <julius@kriukas.lt>
+Date: Sun, 4 Feb 2018 21:35:52 +0200
+Subject: [PATCH] Add experimental meson build support
+
+---
+ src/storage.c   |  2 +-
+ 1 file changed, 1 insertions(+), 1 deletion(-)
+
+diff --git a/src/storage.c b/src/storage.c
+index c162496..8b7a77e 100644
+--- a/src/storage.c
++++ b/src/storage.c
+@@ -76,7 +76,7 @@ struct ip_node *blacklist_match(uint8_t *ip_addr, uint8_t addr_len)
+ 	return NULL;
+ }
+ 
+-inline uint16_t pkt_hash(uint8_t *l2_addr, uint8_t *ip_addr, uint8_t len, uint16_t vlan_tag)
++static inline uint16_t pkt_hash(uint8_t *l2_addr, uint8_t *ip_addr, uint8_t len, uint16_t vlan_tag)
+ {
+ 	int i;
+ 	uint16_t sum;
+-- 
+2.17.1
+

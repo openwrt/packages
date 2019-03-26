@@ -1,0 +1,10 @@
+--- a/support/misc/file.c
++++ b/support/misc/file.c
+@@ -27,6 +27,7 @@
+ #include <dirent.h>
+ #include <stdlib.h>
+ #include <stdbool.h>
++#include <limits.h>
+ 
+ #include "xlog.h"
+ #include "misc.h"

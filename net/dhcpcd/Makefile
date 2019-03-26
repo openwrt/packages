@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dhcpcd
-PKG_VERSION:=6.4.3
+PKG_VERSION:=7.0.8
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=ftp://roy.marples.name/pub/dhcpcd \
     http://roy.marples.name/downloads/dhcpcd
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_MD5SUM:=b22005c131e7108ecf598b6a4ac091eb
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_HASH:=96968e883369ab4afd11eba9dfd9bb109f5dfff65b2814ce6c432f36362dc9b5
 
 PKG_LICENSE:=BSD-2c
 PKG_LICENSE_FILES:=
 
-PKG_MAINTAINER:=Roy Marples <roy@marples.name>
+PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -45,8 +45,11 @@ define Package/dhcpcd/description
     * ARP ping profiles
 endef
 
-CONFIGURE_ARGS+=	--prefix=/ --sbindir=/sbin \
-			--libexecdir=/lib/dhcpcd --dbdir=/var/dhcpcd
+CONFIGURE_ARGS+= \
+	--prefix=/ \
+	--sbindir=/sbin \
+	--libexecdir=/lib/dhcpcd \
+	--dbdir=/var/dhcpcd
 
 define Package/dhcpcd/install
 	$(INSTALL_DIR) $(1)/sbin $(1)/etc $(1)/lib/dhcpcd/dhcpcd-hooks

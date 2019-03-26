@@ -1,31 +1,96 @@
---- a/configure.ac
-+++ b/configure.ac
-@@ -488,9 +488,9 @@ have_ioloop=no
- 
- if test "$ioloop" = "best" || test "$ioloop" = "epoll"; then
-   AC_CACHE_CHECK([whether we can use epoll],i_cv_epoll_works,[
+diff -u --recursive dovecot-2.3.1-vanilla/m4/fd_passing.m4 dovecot-2.3.1/m4/fd_passing.m4
+--- dovecot-2.3.1-vanilla/m4/fd_passing.m4	2018-06-08 20:02:15.849850956 -0400
++++ dovecot-2.3.1/m4/fd_passing.m4	2018-06-08 20:04:28.947016370 -0400
+@@ -8,7 +8,7 @@
+         CFLAGS="$CFLAGS -DBUGGY_CMSG_MACROS"
+       fi
+     
+-      AC_TRY_RUN([
++      AC_TRY_LINK([
+         #include <sys/types.h>
+         #include <sys/socket.h>
+         #include <sys/wait.h>
+@@ -16,7 +16,7 @@
+         #include <unistd.h>
+         #include <fcntl.h>
+         #include "fdpass.h"
+-        
++      ], [
+ 	static
+         int nopen(void)
+         {
+diff -u --recursive dovecot-2.3.1-vanilla/m4/glibc.m4 dovecot-2.3.1/m4/glibc.m4
+--- dovecot-2.3.1-vanilla/m4/glibc.m4	2018-06-08 20:02:15.850850957 -0400
++++ dovecot-2.3.1/m4/glibc.m4	2018-06-08 20:04:00.780981363 -0400
+@@ -17,7 +17,7 @@
+   dnl * Old glibcs have broken posix_fallocate(). Make sure not to use it.
+   dnl * It may also be broken in AIX.
+   AC_CACHE_CHECK([whether posix_fallocate() works],i_cv_posix_fallocate_works,[
 -    AC_TRY_RUN([
 +    AC_TRY_LINK([
-       #include <sys/epoll.h>
--  
+       #define _XOPEN_SOURCE 600
+       #include <stdio.h>
+       #include <stdlib.h>
+@@ -26,6 +26,7 @@
+       #if defined(__GLIBC__) && (__GLIBC__ < 2 || __GLIBC_MINOR__ < 7)
+         possibly broken posix_fallocate
+       #endif
 +    ], [
-       int main()
-       {
- 	return epoll_create(5) < 1;
-@@ -594,7 +594,7 @@ fi
- dnl * Old glibcs have broken posix_fallocate(). Make sure not to use it.
- dnl * It may also be broken in AIX.
- AC_CACHE_CHECK([whether posix_fallocate() works],i_cv_posix_fallocate_works,[
--  AC_TRY_RUN([
-+  AC_TRY_LINK([
-     #define _XOPEN_SOURCE 600
-     #include <stdio.h>
-     #include <stdlib.h>
-@@ -603,6 +603,7 @@ AC_CACHE_CHECK([whether posix_fallocate(
-     #if defined(__GLIBC__) && (__GLIBC__ < 2 || __GLIBC_MINOR__ < 7)
-       possibly broken posix_fallocate
-     #endif
-+  ], [
-     int main() {
-       int fd = creat("conftest.temp", 0600);
-       int ret;
+       int main() {
+         int fd = creat("conftest.temp", 0600);
+         int ret;
+diff -u --recursive dovecot-2.3.1-vanilla/m4/ioloop.m4 dovecot-2.3.1/m4/ioloop.m4
+--- dovecot-2.3.1-vanilla/m4/ioloop.m4	2018-06-08 20:02:15.850850957 -0400
++++ dovecot-2.3.1/m4/ioloop.m4	2018-06-08 20:03:31.666945181 -0400
+@@ -4,9 +4,9 @@
+   
+   if test "$ioloop" = "best" || test "$ioloop" = "epoll"; then
+     AC_CACHE_CHECK([whether we can use epoll],i_cv_epoll_works,[
+-      AC_TRY_RUN([
++      AC_TRY_LINK([
+         #include <sys/epoll.h>
+-    
++      ], [
+         int main()
+         {
+   	return epoll_create(5) < 1;
+diff -u --recursive dovecot-2.3.1-vanilla/m4/mmap_write.m4 dovecot-2.3.1/m4/mmap_write.m4
+--- dovecot-2.3.1-vanilla/m4/mmap_write.m4	2018-06-08 20:02:15.850850957 -0400
++++ dovecot-2.3.1/m4/mmap_write.m4	2018-06-08 20:03:27.369939841 -0400
+@@ -1,7 +1,7 @@
+ dnl * If mmap() plays nicely with write()
+ AC_DEFUN([DOVECOT_MMAP_WRITE], [
+   AC_CACHE_CHECK([whether shared mmaps get updated by write()s],i_cv_mmap_plays_with_write,[
+-    AC_TRY_RUN([
++    AC_TRY_LINK([
+       #include <stdio.h>
+       #include <sys/types.h>
+       #include <sys/stat.h>
+@@ -9,6 +9,7 @@
+       #include <fcntl.h>
+       #include <sys/mman.h>
+       #include <string.h>
++    ], [
+       int main() {
+         /* return 0 if we're signed */
+         int f = open("conftest.mmap", O_RDWR|O_CREAT|O_TRUNC, 0600);
+diff -u --recursive dovecot-2.3.1-vanilla/m4/want_gssapi.m4 dovecot-2.3.1/m4/want_gssapi.m4
+--- dovecot-2.3.1-vanilla/m4/want_gssapi.m4	2018-06-08 20:02:15.850850957 -0400
++++ dovecot-2.3.1/m4/want_gssapi.m4	2018-06-08 20:04:13.204996804 -0400
+@@ -54,7 +54,7 @@
+   
+   				# does the kerberos library support SPNEGO?
+   				AC_CACHE_CHECK([whether GSSAPI supports SPNEGO],i_cv_gssapi_spnego,[
+-  				  AC_TRY_RUN([
++  				  AC_TRY_LINK([
+   				    #ifdef HAVE_GSSAPI_H
+   				    #  include <gssapi.h>
+   				    #else
+@@ -62,6 +62,7 @@
+   				    #endif
+   				    #include <krb5.h>
+   				    #include <string.h>
++  				  ], [
+   				    int main(void) {
+   				      OM_uint32 minor_status;
+   				      gss_OID_set mech_set;

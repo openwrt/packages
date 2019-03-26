@@ -1,0 +1,101 @@
+#!/bin/sh
+
+yggConfig="/etc/yggdrasil.conf"
+
+first_boot_genConfig()
+{
+  . /usr/share/libubox/jshn.sh
+  boardcfg=$(ubus call system board)
+  yggcfg=$(yggdrasil -genconf -json | grep NodeInfo -v)
+
+  json_load "$boardcfg"
+  json_get_var kernel     kernel
+  json_get_var hostname   hostname
+  json_get_var system     system
+  json_get_var model      model
+  json_get_var board_name board_name
+
+  json_load "$yggcfg"
+  json_add_string "IfName" "ygg0"
+  json_add_object "NodeInfo"
+  json_add_string "kernel"      "$kernel"
+  json_add_string "hostname"    "$hostname"
+  json_add_string "system"      "$system"
+  json_add_string "model"       "$model"
+  json_add_string "board_name"  "$board_name"
+  json_close_object
+  json_dump
+}
+
+if [ ! -e ${yggConfig} ]; then
+  echo "first_boot: adding system board details to NodeInfo[] in NEW config: ${yggConfig}" | logger -t yggdrasil
+
+  first_boot_genConfig > ${yggConfig}
+
+  # create the network interface
+  uci -q batch <<-EOF >/dev/null
+    set network.yggdrasil=interface
+    set network.yggdrasil.ifname=ygg0
+    set network.yggdrasil.proto=none
+EOF
+
+  # create the firewall zone
+  uci -q batch <<-EOF >/dev/null
+    add firewall zone
+    set firewall.@zone[-1].name=yggdrasil
+    add_list firewall.@zone[-1].network=yggdrasil
+    set firewall.@zone[-1].input=REJECT
+    set firewall.@zone[-1].output=ACCEPT
+    set firewall.@zone[-1].forward=REJECT
+    set firewall.@zone[-1].conntrack=1
+    set firewall.@zone[-1].family=ipv6
+EOF
+
+  # allow ICMP from yggdrasil zone, e.g. ping6
+  uci -q batch <<-EOF >/dev/null
+    add firewall rule
+    set firewall.@rule[-1].name='Allow-ICMPv6-yggdrasil'
+    set firewall.@rule[-1].src=yggdrasil
+    set firewall.@rule[-1].proto=icmp
+    add_list firewall.@rule[-1].icmp_type=echo-request
+    add_list firewall.@rule[-1].icmp_type=echo-reply
+    add_list firewall.@rule[-1].icmp_type=destination-unreachable
+    add_list firewall.@rule[-1].icmp_type=packet-too-big
+    add_list firewall.@rule[-1].icmp_type=time-exceeded
+    add_list firewall.@rule[-1].icmp_type=bad-header
+    add_list firewall.@rule[-1].icmp_type=unknown-header-type
+    set firewall.@rule[-1].limit='1000/sec'
+    set firewall.@rule[-1].family=ipv6
+    set firewall.@rule[-1].target=ACCEPT
+EOF
+
+  # allow SSH from yggdrasil zone, needs to be explicitly enabled
+  uci -q batch <<-EOF >/dev/null
+    add firewall rule
+    set firewall.@rule[-1].enabled=0
+    set firewall.@rule[-1].name='Allow-SSH-yggdrasil'
+    set firewall.@rule[-1].src=yggdrasil
+    set firewall.@rule[-1].proto=tcp
+    set firewall.@rule[-1].dest_port=22
+    set firewall.@rule[-1].target=ACCEPT
+EOF
+
+  # allow LuCI access from yggdrasil zone, needs to be explicitly enabled
+  uci -q batch <<-EOF >/dev/null
+    add firewall rule
+    set firewall.@rule[-1].enabled=0
+    set firewall.@rule[-1].name='Allow-HTTP-yggdrasil'
+    set firewall.@rule[-1].src=yggdrasil
+    set firewall.@rule[-1].proto=tcp
+    set firewall.@rule[-1].dest_port=80
+    set firewall.@rule[-1].target=ACCEPT
+EOF
+
+  uci commit firewall
+  uci commit network
+
+else
+  :
+fi
+
+exit 0

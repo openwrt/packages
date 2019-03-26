@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016 Yousong Zhou <yszhou4tech@gmail.com>
+# Copyright (C) 2016-2018 Yousong Zhou <yszhou4tech@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dtc
-PKG_VERSION:=1.4.2
-PKG_RELEASE:=2
+PKG_VERSION:=1.5.0
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://www.kernel.org/pub/software/utils/dtc
-PKG_SOURCE_MD5SUM:=3d5814e31b2046ef51fca8fece998db0
+PKG_HASH:=c672e443c9f7e39f5a7c8e602da6777f9ad55ad70de87de300a43828c8050172
+PKG_SOURCE_URL:=@KERNEL/software/utils/dtc
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=GPL
 PKG_INSTALL:=1
@@ -25,7 +25,7 @@ define Package/dtc
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Device Tree Compiler
-  URL:=http://devicetree.org/Device_Tree_Compiler
+  URL:=https://git.kernel.org/pub/scm/utils/dtc/dtc.git
 endef
 
 define Package/dtc/description
@@ -40,11 +40,29 @@ define Package/dtc/install
 endef
 
 
+# See Documentation/manual.txt for details about each utility
+define Package/fdt-utils
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE:=Flat Device Tree Utilities
+  URL:=https://git.kernel.org/pub/scm/utils/dtc/dtc.git
+endef
+
+define Package/fdt-utils/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/convert-dtsv0 $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/fdtdump $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/fdtget $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/fdtput $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/fdtoverlay $(1)/usr/bin
+endef
+
+
 define Package/libfdt
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=a utility library for reading and manipulating dtb files
-  URL:=http://devicetree.org/Device_Tree_Compiler
+  URL:=https://git.kernel.org/pub/scm/utils/dtc/dtc.git
 endef
 
 define Package/libfdt/description
@@ -56,12 +74,12 @@ define Package/libfdt/install
 	$(CP) $(PKG_INSTALL_DIR)/lib/libfdt*.so* $(1)/usr/lib
 endef
 
-TARGET_CFLAGS += \
-	$(FPIC)
-
+# NO_PYTHON is for disabling pylibfdt
 MAKE_FLAGS += \
 	PREFIX= \
-	CFLAGS="$(TARGET_CFLAGS)"
+	NO_PYTHON=1 \
+	NO_VALGRIND=1 \
+	NO_YAML=1 \
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib
@@ -71,4 +89,5 @@ define Build/InstallDev
 endef
 
 $(eval $(call BuildPackage,dtc))
+$(eval $(call BuildPackage,fdt-utils))
 $(eval $(call BuildPackage,libfdt))

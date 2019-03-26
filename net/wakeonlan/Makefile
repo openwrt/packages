@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
 PKG_SOURCE_URL:=http://http.debian.net/debian/pool/main/w/wakeonlan/
-PKG_MD5SUM:=581b1b27a7e810ab72668cce4bd9aa9b3e0cea34b2db24dd1a44c09d63ddda98
+PKG_HASH:=581b1b27a7e810ab72668cce4bd9aa9b3e0cea34b2db24dd1a44c09d63ddda98
 
 PKG_MAINTAINER:=Nikil Mehta <nikil.mehta@gmail.com>
 PKG_LICENSE:=Artistic-1.0-Perl

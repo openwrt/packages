@@ -1,0 +1,12 @@
+diff -u --recursive loudmouth-1.5.3-vanilla/loudmouth/lm-sasl.c loudmouth-1.5.3/loudmouth/lm-sasl.c
+--- loudmouth-1.5.3-vanilla/loudmouth/lm-sasl.c	2018-07-27 22:42:03.250616281 -0400
++++ loudmouth-1.5.3/loudmouth/lm-sasl.c	2018-07-27 22:42:26.756659723 -0400
+@@ -529,7 +529,7 @@
+     }
+ 
+     nonce = g_hash_table_lookup (challenge, "nonce");
+-    if (nonce == NULL || nonce == '\0') {
++    if (nonce == NULL || *nonce == '\0') {
+         g_log (LM_LOG_DOMAIN, LM_LOG_LEVEL_SASL,
+                "%s: server didn't provide a nonce in the challenge",
+                G_STRFUNC);

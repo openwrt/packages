@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 OpenWrt.org
+# Copyright (C) 2015, 2017-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,32 +7,48 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=six
-PKG_VERSION:=1.10.0
+PKG_NAME:=python-six
+PKG_VERSION:=1.12.0
 PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/source/s/six
-PKG_MD5SUM:=34eed507548117b2ab523ab14b2f8b55
+PKG_SOURCE:=six-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/s/six
+PKG_HASH:=d16a0141ec1a18405cd4ce8b4613101da75da0e9a7aec5bdd4fa804d0e0eba73
 
-HOST_BUILD_DEPENDS:=python/host
-PKG_BUILD_DEPENDS:=python
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-six-$(PKG_VERSION)
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
+
+HOST_BUILD_DEPENDS:=python/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
+include ../python3-package.mk
+
+PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
+HOST_UNPACK:=$(HOST_TAR) -C $(HOST_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
+
+define Package/python-six/Default
+  SECTION:=lang
+  CATEGORY:=Languages
+  SUBMENU:=Python
+  TITLE:=Python 2 and 3 compatibility library
+  URL:=https://github.com/benjaminp/six
+endef
 
 define Package/python-six
-	SECTION:=lang
-	CATEGORY:=Languages
-	SUBMENU:=Python
-	TITLE:=python-six
-	URL:=https://pypi.python.org/pypi/six
-	DEPENDS:=+python-light
+$(call Package/python-six/Default)
+  DEPENDS:=+PACKAGE_python-six:python-light
+  VARIANT:=python
+endef
+
+define Package/python3-six
+$(call Package/python-six/Default)
+  DEPENDS:=+PACKAGE_python3-six:python3-light
+  VARIANT:=python3
 endef
 
 define Package/python-six/description
@@ -42,8 +58,10 @@ writing Python code that is compatible on both Python versions.  See the
 documentation for more information on what is provided.
 endef
 
-define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
+define Package/python3-six/description
+$(call Package/python-six/description)
+.
+(Variant for Python3)
 endef
 
 define Host/Compile
@@ -56,3 +74,8 @@ $(eval $(call HostBuild))
 
 $(eval $(call PyPackage,python-six))
 $(eval $(call BuildPackage,python-six))
+$(eval $(call BuildPackage,python-six-src))
+
+$(eval $(call Py3Package,python3-six))
+$(eval $(call BuildPackage,python3-six))
+$(eval $(call BuildPackage,python3-six-src))

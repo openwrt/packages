@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqm-scripts
-PKG_SOURCE_VERSION:=8217081f7e52af342c362b29480461575c496387
-PKG_VERSION:=1.1.3
+PKG_SOURCE_VERSION:=4d6ec3349026dac798b5dd84dbffa0bc8331ff04
+PKG_VERSION:=1.3.0
 PKG_RELEASE:=1
 PKG_LICENSE:=GPLv2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE).tar.xz
+PKG_MIRROR_HASH:=ae61179fb60a44e5b657f4d6cdce861b91fc20c224465d2b2ddf2d12d1833edf
 PKG_SOURCE_URL:=https://github.com/tohojo/sqm-scripts.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE)
@@ -50,7 +51,7 @@ define Package/luci-app-sqm
   TITLE:=SQM Scripts - LuCI interface
   MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
   PKGARCH:=all
-  DEPENDS:= lua luci-base +sqm-scripts
+  DEPENDS:= +lua +luci-base +sqm-scripts
   SUBMENU:=3. Applications
 endef
 
@@ -80,7 +81,7 @@ uci -q get ucitrack.@sqm[0] > /dev/null && {
   uci delete ucitrack.@sqm[0]
   uci del_list ucitrack.@firewall[0].affects=sqm
   uci commit
-}
+} || exit 0
 endef
 
 $(eval $(call BuildPackage,sqm-scripts))

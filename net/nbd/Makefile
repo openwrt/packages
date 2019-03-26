@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nbd
-PKG_VERSION:=3.11
+PKG_VERSION:=3.16.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/nbd
-PKG_MD5SUM:=73d11644a28b9f335292cdb3bdc4b74b
+PKG_HASH:=422f62bdf6e6b973bd82083dc52b6577396fe00aa6607837ac464e476124155b
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Marcin Jurkowski <marcin1j@gmail.com>
 
@@ -24,7 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 # -liconv due to glib2, to be revisited later
 include $(INCLUDE_DIR)/nls.mk
 
-PKG_BUILD_DEPENDS:=glib2 libintl
+PKG_BUILD_DEPENDS:=glib2 gettext
 
 define Package/nbd
   SECTION:=net
@@ -51,7 +51,8 @@ define Package/nbd-server/description
 endef
 
 CONFIGURE_ARGS += \
-	--disable-glibtest
+	--disable-glibtest \
+	--without-gnutls
 
 TARGET_CFLAGS += --std=gnu99 -DNODAEMON
 

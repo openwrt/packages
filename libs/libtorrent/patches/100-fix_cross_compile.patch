@@ -1,13 +1,3 @@
---- a/configure.ac
-+++ b/configure.ac
-@@ -19,7 +19,6 @@ AC_SUBST(LIBTORRENT_INTERFACE_VERSION_NO
- 
- AM_INIT_AUTOMAKE
- AC_CONFIG_HEADERS(config.h)
--AM_PATH_CPPUNIT(1.9.6)
- 
- AC_PROG_CXX
- 
 --- a/scripts/checks.m4
 +++ b/scripts/checks.m4
 @@ -96,7 +96,7 @@ AC_DEFUN([TORRENT_CHECK_KQUEUE], [

@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2009-2010 Stefan Monnier
-# Copyright (C) 2011-2014 OpenWrt.org
+# Copyright (C) 2011-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v3+.
 # See /LICENSE for more information.
@@ -9,16 +9,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=LVM2
-PKG_VERSION:=2.02.168
+PKG_VERSION:=2.03.02
 PKG_RELEASE:=1
-PKG_LICENSE:=GPL-2.0 LGPL-2.1
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=ftp://sources.redhat.com/pub/lvm2/releases \
-		http://ftp.gwdg.de/pub/linux/sources.redhat.com/lvm2/
-PKG_HASH:=23a3d1cddd41b3ef51812ebf83e9fa491f502fe74130d4263be327a91914660d
-PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_SOURCE_URL:=https://sourceware.org/pub/lvm2
+PKG_HASH:=550ba750239fd75b7e52c9877565cabffef506bbf6d7f6f17b9700dee56c720f
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME).$(PKG_VERSION)
+
+PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_LICENSE:=GPL-2.0 LGPL-2.1
+PKG_LICENSE_FILES:=COPYING COPYING.lib
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -26,8 +27,8 @@ define Package/libdevmapper
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=The Linux Kernel Device Mapper userspace library
-  URL:=http://sourceware.org/dm/
-  DEPENDS:=+kmod-dm +libpthread +libuuid +librt
+  URL:=https://sourceware.org/dm/
+  DEPENDS:=+kmod-dm +libpthread +libuuid +librt +libblkid
 endef
 
 define Package/libdevmapper/description
@@ -40,8 +41,8 @@ define Package/lvm2
   CATEGORY:=Utilities
   SUBMENU:=Disc
   TITLE:=The Linux Logical Volume Manager
-  URL:=http://sourceware.org/lvm2/
-  DEPENDS:=+libdevmapper +libblkid +libreadline +libncurses
+  URL:=https://sourceware.org/lvm2/
+  DEPENDS:=+libdevmapper +libreadline +libncurses +libaio
 endef
 
 define Package/lvm2/description
@@ -50,7 +51,12 @@ define Package/lvm2/description
  LVM toolset.
 endef
 
-CONFIGURE_ARGS += --disable-o_direct
+CONFIGURE_ARGS += \
+  --disable-o_direct \
+  --with-default-pid-dir=/var/run \
+  --with-default-dm-run-dir=/var/run \
+  --with-default-run-dir=/var/run/lvm \
+  --with-default-locking-dir=/var/lock/lvm
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \

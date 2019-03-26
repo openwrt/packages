@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
-PKG_VERSION:=1.1.5
-PKG_RELEASE:=3
+PKG_VERSION:=2.1.1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=LGPL-2.1+ BSD-2-Clause GPL-2.0
-PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
+PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://linuxcontainers.org/downloads/lxc/
-PKG_MD5SUM:=dd9684dde0a58ed13f4f49c855b79a1a
+PKG_SOURCE_URL:=https://linuxcontainers.org/downloads/lxc/
+PKG_HASH:=68663a67450a8d6734e137eac54cc7077209fb15c456eec401a2c26e6386eff6
 
 PKG_BUILD_DEPENDS:=lua
 PKG_BUILD_PARALLEL:=1
@@ -27,23 +27,19 @@ PKG_FIXUP:=autoreconf
 include $(INCLUDE_DIR)/package.mk
 
 LXC_APPLETS_BIN += \
-	attach autostart cgroup clone config console create destroy device \
+	attach autostart cgroup copy config console create destroy device \
 	execute freeze info monitor snapshot start stop unfreeze unshare \
-	usernsexec wait
+	usernsexec wait top ls
 
 LXC_APPLETS_LIB += \
 	monitord user-nic
 
 LXC_SCRIPTS += \
-	checkconfig ls top
+	checkconfig
 
 DEPENDS_APPLETS = +libpthread +libcap +liblxc
 
 DEPENDS_create = +lxc-configs +lxc-hooks +lxc-templates +flock
-
-DEPENDS_ls = +lxc-config
-DEPENDS_top = +lxc-lua +luafilesystem @BROKEN
-
 
 define Package/lxc/Default
   SECTION:=utils
@@ -72,6 +68,22 @@ endef
 
 define Package/lxc-auto/conffiles
 /etc/config/lxc-auto
+endef
+
+define Package/lxc-unprivileged
+  $(call Package/lxc/Default)
+  TITLE:=Helper script for unprivileged containers support
+  DEPENDS:=+shadow-utils +shadow-newuidmap +shadow-newgidmap
+endef
+
+define Package/lxc-unprivileged/description
+ Support for unprivileged containers requires newuidmap and newguidmap.
+ This package makes sure they are available & have correct permissions.
+endef
+
+define Package/lxc-unprivileged/install
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DATA) ./files/lxc-unprivileged.defaults $(1)/etc/uci-defaults/lxc-unprivileged
 endef
 
 define Package/lxc/config
@@ -118,7 +130,7 @@ endef
 define Package/lxc-lua
   $(call Package/lxc/Default)
   TITLE:=LXC Lua bindings
-  DEPENDS:= lxc +liblua +liblxc +luafilesystem
+  DEPENDS:= lxc +liblua +liblxc
 endef
 
 define Package/lxc-init
@@ -128,6 +140,7 @@ define Package/lxc-init
 endef
 
 CONFIGURE_ARGS += \
+	--disable-gnutls \
 	--disable-apparmor \
 	--disable-doc \
 	--disable-examples \
@@ -275,6 +288,7 @@ $(eval $(call BuildPackage,liblxc))
 $(eval $(call BuildPackage,lxc-lua))
 $(eval $(call BuildPackage,lxc-init))
 $(eval $(call BuildPackage,lxc-auto))
+$(eval $(call BuildPackage,lxc-unprivileged))
 $(foreach u,$(LXC_APPLETS_BIN),$(eval $(call GenPlugin,$(u),$(DEPENDS_APPLETS),"/usr/bin")))
 $(foreach u,$(LXC_APPLETS_LIB),$(eval $(call GenPlugin,$(u),$(DEPENDS_APPLETS),"/usr/lib/lxc")))
 $(foreach u,$(LXC_SCRIPTS),$(eval $(call GenPlugin,$(u),,"/usr/bin")))

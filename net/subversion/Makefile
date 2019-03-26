@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
+# Copyright (C) 2007-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=subversion
-PKG_RELEASE:=2
-PKG_VERSION:=1.9.5
+PKG_RELEASE:=1
+PKG_VERSION:=1.11.1
 PKG_SOURCE_URL:=@APACHE/subversion
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_MD5SUM:=9fcbae352a5efe73d46a88c97c6bba14
+PKG_HASH:=9efd2750ca4d72ec903431a24b9c732b6cbb84aad9b7563f59dd96dea5be60bb
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
 
 PKG_FIXUP:=autoreconf
 PKG_MACRO_PATHS:=build/ac-macros
+PKG_BUILD_DEPENDS:=apr-util
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -93,7 +94,9 @@ CONFIGURE_ARGS += \
 	--without-junit \
 	--without-berkeley-db \
 	--without-apxs \
-	--without-sasl
+	--without-sasl \
+	--with-lz4=internal \
+	--with-utf8proc=internal
 
 ifdef $(INTL_FULL)
 	CONFIGURE_ARGS += --enable-nls

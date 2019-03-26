@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lcd4linux
-PKG_REV:=1203
+PKG_REV:=1204
 PKG_VERSION:=r$(PKG_REV)
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://ssl.bulix.org/svn/lcd4linux/trunk/
@@ -120,13 +120,6 @@ PKG_INSTALL:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_BUILD_DEPENDS:= \
-	libdbus \
-	libgd \
-	libmpdclient \
-	libmysqlclient \
-	libncurses \
-	libnmeap \
-	libsqlite3 \
 	ppp \
 #	libftdi \
 #	libX11 \
@@ -212,6 +205,8 @@ endef
 
 CONFIGURE_ARGS+= \
 	--disable-rpath \
+
+TARGET_CFLAGS += -std=gnu89
 
 EXTRA_LDFLAGS+= -Wl,-rpath-link,$(STAGING_DIR)/usr/lib
 

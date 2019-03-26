@@ -1,0 +1,25 @@
+Description: Fix DEFAULT_MACHINE on mips
+ The DEFAULT_MACHINE constant is calculated from the CMAKE_SYSTEM_PROCESSOR
+ variable which contains the processor which built mariadb. Since most Debian
+ buildds run on 64-bit hardware even though they build 32-bit binaries,
+ DEFAULT_MACHINE previously contained "mips64" on 32-bit builds. This confuses
+ some mroonga tests which rely on DEFAULT_MACHINE to detect 64-bitness.
+ .
+ This patch fixes the value of DEFAULT_MACHINE so it always contains just "mips"
+ on 32-bit mips builds.
+Author: James Cowgill <jcowgill@debian.org>
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- mariadb-10.1.orig/cmake/package_name.cmake
++++ mariadb-10.1/cmake/package_name.cmake
+@@ -34,6 +34,10 @@ IF(NOT VERSION)
+       SET(DEFAULT_MACHINE "mips")
+     ENDIF()
+ 
++    IF(NOT 64BIT AND CMAKE_SYSTEM_PROCESSOR MATCHES "^mips64")
++      SET(DEFAULT_MACHINE "mips")
++    ENDIF()
++
+     IF(CMAKE_SYSTEM_NAME MATCHES "Windows")
+       SET(NEED_DASH_BETWEEN_PLATFORM_AND_MACHINE 0)
+       SET(DEFAULT_PLATFORM "win")

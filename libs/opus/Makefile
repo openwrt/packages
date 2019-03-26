@@ -8,17 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opus
-PKG_VERSION:=1.2
+PKG_VERSION:=1.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://archive.mozilla.org/pub/opus/
-PKG_HASH:=77db45a87b51578fbc49555ef1b10926179861d854eb2613207dc79d9ec0a9a9
+PKG_SOURCE_URL:=https://archive.mozilla.org/pub/opus
+PKG_HASH:=4f3d69aefdf2dbaf9825408e452a8a414ffc60494c70633560700398820dc550
 
+PKG_MAINTAINER:=Ted Hess <thess@kitchensync.net>, Ian Leonard <antonlacon@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Ted Hess <thess@kitchensync.net>, Ian Leonard <antonlacon@gmail.com>
+PKG_CPE_ID:=cpe:/a:opus-codec:opus
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -27,7 +29,7 @@ define Package/libopus
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=OPUS Audio Codec
-  URL:=http://opus-codec.org/
+  URL:=https://opus-codec.org
 endef
 
 define Package/libopus/description
@@ -45,8 +47,12 @@ ifeq ($(CONFIG_SOFT_FLOAT),y)
 		--enable-fixed-point
 endif
 
-CPU_ASM_BLACKLIST:=xscale arm926ej-s
+ifneq ($(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)),)
+	CONFIGURE_ARGS+= \
+		--enable-fixed-point
+endif
 
+CPU_ASM_BLACKLIST:=xscale arm926ej-s
 ifneq ($(findstring $(call qstrip,$(CONFIG_CPU_TYPE)),$(CPU_ASM_BLACKLIST)),)
 	CONFIGURE_ARGS+= --disable-asm
 endif

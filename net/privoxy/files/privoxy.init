@@ -40,6 +40,11 @@ _uci2conf() {
 						;;
 				esac
 			}
+
+			list_cb()
+			{
+				option_cb "$@"
+			}
 		fi
 	}
 

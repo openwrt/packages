@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2016-2017 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2016-2019 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 #
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=travelmate
-PKG_VERSION:=0.8.0
+PKG_VERSION:=1.4.2
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0+
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
@@ -17,7 +17,7 @@ define Package/travelmate
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=A wlan connection manager for travel router
-	DEPENDS:=+iwinfo
+	DEPENDS:=+iwinfo +jshn +jsonfilter +uclient-fetch
 	PKGARCH:=all
 endef
 

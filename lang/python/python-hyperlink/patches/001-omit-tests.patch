@@ -1,0 +1,13 @@
+--- a/setup.py
++++ b/setup.py
+@@ -24,8 +24,9 @@ setup(name='hyperlink',
+       author=__author__,
+       author_email=__contact__,
+       url=__url__,
+-      packages=['hyperlink', 'hyperlink.test'],
++      packages=['hyperlink'],
+       include_package_data=True,
++      exclude_package_data={'':['test/*']},
+       zip_safe=False,
+       license=__license__,
+       platforms='any',

@@ -1,0 +1,28 @@
+#!/bin/sh
+
+if [ -f "/etc/nginx/luci_nginx.conf" ] && [ -f "/etc/nginx/nginx.conf" ]; then
+	if [ ! "$(cat '/etc/nginx/nginx.conf' | grep 'luci_uwsgi.conf')" ]; then
+		mv /etc/nginx/nginx.conf /etc/nginx/nginx.conf_old
+		mv /etc/nginx/luci_nginx.conf /etc/nginx/nginx.conf
+		core_number=$(grep -c ^processor /proc/cpuinfo)
+		sed -i "3s/.*/worker_processes  "$core_number";/" /etc/nginx/nginx.conf
+		if [ -n "$(pgrep uhttpd)" ]; then
+			/etc/init.d/uhttpd stop
+			/etc/init.d/uhttpd disable
+		fi
+		if [ -n "$(pgrep nginx)" ]; then
+			/etc/init.d/nginx restart
+		else
+			/etc/init.d/nginx start
+		fi
+		if [ -n "$(pgrep uwsgi)" ]; then
+			/etc/init.d/uwsgi restart
+		else
+			/etc/init.d/uwsgi start
+		fi
+	else
+		rm /etc/nginx/luci_nginx.conf
+	fi
+fi
+
+exit 0

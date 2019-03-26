@@ -13,13 +13,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nmap
-PKG_VERSION:=7.40
+PKG_VERSION:=7.70
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://nmap.org/dist/
-PKG_MD5SUM:=9c5a28bfb46228bade82b238408c065e
+PKG_SOURCE_URL:=https://nmap.org/dist/
+PKG_HASH:=847b068955f792f4cc247593aca6dc3dc4aae12976169873247488de147a6e18
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
@@ -29,7 +29,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSI
 
 include $(INCLUDE_DIR)/package.mk
 
-NMAP_DEPENDS:=+libpcap +libstdcpp
+NMAP_DEPENDS:=+libpcap +libstdcpp +zlib +libpcre
 NCAT_DEPENDS:=+libpcap
 NPING_DEPENDS:=+libpcap +libpthread +libstdcpp
 NDIFF_DEPENDS:=+python
@@ -85,7 +85,7 @@ endef
 
 CONFIGURE_ARGS += \
 	--with-libdnet=included \
-	--with-libpcre=included \
+	--with-libpcre="$(STAGING_DIR)/usr" \
 	--with-libpcap="$(STAGING_DIR)/usr" \
 	--without-liblua \
 	--without-zenmap
@@ -95,7 +95,7 @@ CONFIGURE_VARS += \
 	CXXFLAGS="$$$$CXXFLAGS -fno-builtin"
 
 ifeq ($(BUILD_VARIANT),ssl)
-	CONFIGURE_ARGS += --with-openssl="$(STAGING_DIR)/usr"
+	CONFIGURE_ARGS += --with-openssl="$(STAGING_DIR)/usr" --without-libssh2
 else
 	CONFIGURE_ARGS += --without-openssl
 endif

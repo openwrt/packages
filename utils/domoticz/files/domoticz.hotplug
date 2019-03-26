@@ -28,7 +28,7 @@ add() {
 	chgrp domoticz "/dev/$DEVICENAME"
 	chmod g+rw "/dev/$DEVICENAME"
 
-	[ -n "$symlink" ] && ln -s "/dev/$DEVICENAME" "/dev/$symlink"
+	[ -n "$symlink" ] && ln -sf "/dev/$DEVICENAME" "/dev/$symlink"
 }
 
 remove() {

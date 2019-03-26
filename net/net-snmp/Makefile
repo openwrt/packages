@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
-PKG_VERSION:=5.7.3
-PKG_RELEASE:=6
+PKG_VERSION:=5.8
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
-PKG_MD5SUM:=d4a3459e1577d0efa8d96ca70a885e53
+PKG_HASH:=b2fc3500840ebe532734c4786b0da4ef0a5f67e51ef4c86b3345d697e4976adf
 PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
 PKG_LICENSE:=MIT BSD-3-Clause-Clear
 
@@ -72,7 +72,13 @@ endef
 define Package/snmp-utils/description
 $(call Package/net-snmp/Default/description)
  .
- This package contains SNMP client utilities.
+ This package contains SNMP client utilities:
+   - snmpget
+   - snmpset
+   - snmpstatus
+   - snmptest
+   - snmptrap
+   - snmpwalk
 endef
 
 
@@ -96,6 +102,18 @@ $(call Package/net-snmp/Default)
 endef
 
 
+define Package/snmptrapd
+$(call Package/net-snmp/Default)
+  DEPENDS:=+libnetsnmp
+  TITLE:=Open source SNMP implementation (notification receiver)
+endef
+
+define Package/snmptrapd/description
+$(call Package/net-snmp/Default/description)
+ .
+ This package contains the SNMP notification receiver.
+endef
+
 
 SNMP_MIB_MODULES_INCLUDED = \
 	agent/extend \
@@ -110,6 +128,7 @@ SNMP_MIB_MODULES_INCLUDED = \
 	host/hr_system \
 	ieee802dot11 \
 	if-mib/ifXTable \
+	ip-mib/inetNetToMediaTable \
 	mibII/at \
 	mibII/icmp \
 	mibII/ifTable \
@@ -146,6 +165,7 @@ SNMP_MIB_MODULES_EXCLUDED = \
 	hardware \
 	host \
 	if-mib \
+	ip-mib \
 	mibII \
 	notification \
 	notification-log-mib \
@@ -183,13 +203,18 @@ CONFIGURE_ARGS += \
 	--with-transports="$(SNMP_TRANSPORTS_INCLUDED)" \
 	--without-openssl \
 	--without-libwrap \
+	--without-mysql \
 	--without-rpm \
 	--without-zlib \
 	--with-nl \
 	 $(call autoconf_bool,CONFIG_IPV6,ipv6) \
+	--disable-perl-cc-checks \
+	--disable-embedded-perl \
+	--without-perl-modules
 
 CONFIGURE_VARS += \
 	ac_cv_header_netlink_netlink_h=yes \
+	ac_cv_header_pcre_h=no \
 	netsnmp_cv_func_nl_connect_LIBS=-lnl-tiny \
 
 ifeq ($(CONFIG_IPV6),y)
@@ -209,6 +234,7 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(2)/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/net-snmp-config $(2)/bin/
 	$(SED) 's,=/usr,=$(STAGING_DIR)/usr,g' $(2)/bin/net-snmp-config
+	$(INSTALL_DIR) $(STAGING_DIR)/usr/bin
 	$(LN) $(STAGING_DIR)/host/bin/net-snmp-config $(STAGING_DIR)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/usr/include
@@ -240,11 +266,20 @@ define Package/snmpd/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/snmpd.conf $(1)/etc/config/snmpd
 	$(INSTALL_DIR) $(1)/etc/snmp
-	ln -sf /var/run/snmpd.conf $(1)/etc/snmp/
+	$(LN) /var/run/snmpd.conf $(1)/etc/snmp/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/snmpd.init $(1)/etc/init.d/snmpd
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/snmpd $(1)/usr/sbin/snmpd
+endef
+
+define Package/snmptrapd/install
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/snmptrapd.init $(1)/etc/init.d/snmptrapd
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnetsnmptrapd.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/snmptrapd $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,libnetsnmp))
@@ -252,3 +287,4 @@ $(eval $(call BuildPackage,snmp-mibs))
 $(eval $(call BuildPackage,snmp-utils))
 $(eval $(call BuildPackage,snmpd))
 $(eval $(call BuildPackage,snmpd-static))
+$(eval $(call BuildPackage,snmptrapd))

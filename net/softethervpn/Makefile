@@ -9,22 +9,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=softethervpn
-PKG_VERSION:=4.22-9634
+PKG_VERSION:=4.28-9669
 PKG_VERREL:=beta
-PKG_VERDATE:=2016.11.27
+PKG_VERDATE:=2018.09.11
 PKG_RELEASE:=1
 
 PKG_SOURCE:=softether-src-v$(PKG_VERSION)-$(PKG_VERREL).tar.gz
 PKG_SOURCE_URL:=http://www.softether-download.com/files/softether/v$(PKG_VERSION)-$(PKG_VERREL)-$(PKG_VERDATE)-tree/Source_Code/
-PKG_MD5SUM:=703d41b34ff49d008ddd329340a5a75e
+PKG_HASH:=1e641fa227a732b3eec3fe8bdcf4d4fd2b1d0b0a5084119126c1216d2ec1b545
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/v$(PKG_VERSION)
-HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/v$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/v$(PKG_VERSION)
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)/v$(PKG_VERSION)
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_DEPENDS:=softethervpn/host
+HOST_BUILD_DEPENDS:=readline/host
 
 HAMCORE_SE2:=$(STAGING_DIR_HOST)/share/softethervpn/hamcore.se2
 
@@ -32,33 +33,22 @@ include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 
-
-# Override CC to add fake libreadline to linker search path
-HOSTCC += -L./src/readline
-
-# Add defines to turn add_history() and readline() calls into no-ops
-HOSTCC += -D'add_history(x)' -D'readline(x)=\"\"'
-
 # Execute in host build directory
 HOST_MAKE_FLAGS += -C $(HOST_BUILD_DIR)
 
 # Select 32 or 64 bit Makefile for host build depending on host architecture
 HOST_MAKE_FLAGS += -f src/makefiles/linux_$(if $(shell uname -m | grep 64),64,32)bit.mak
 
+HOST_LDFLAGS += -Wl,-rpath="$(STAGING_DIR_HOSTPKG)/lib"
 # Prevent calling upstream configure
 define Host/Configure
 endef
 
 define Host/Compile
-	# Prepare fake readline headers and library
-	mkdir -p $(HOST_BUILD_DIR)/src/readline
-	touch $(HOST_BUILD_DIR)/src/readline/readline.h
-	touch $(HOST_BUILD_DIR)/src/readline/history.h
-	ar rcs $(HOST_BUILD_DIR)/src/readline/libreadline.a
-
 	# Build hamcorebuilder using host compiler and let it generate
 	# the hamcore.se2 archive file
-	CC="$(HOSTCC)" $(MAKE) $(HOST_MAKE_FLAGS) \
+	# CFLAGS, CPPFLAGS & LDFLAGS need to be passed with CC because they are being ingored
+	CC="$(HOSTCC) $(HOST_CFLAGS) $(HOST_CPPFLAGS) $(HOST_LDFLAGS)" $(MAKE) $(HOST_MAKE_FLAGS) \
 		src/bin/BuiltHamcoreFiles/unix/hamcore.se2
 endef
 
@@ -78,8 +68,8 @@ MAKE_FLAGS += \
 	-f src/makefiles/linux_$(if $(CONFIG_ARCH_64BIT),64,32)bit.mak
 
 # Map nonstandard CCFLAGS variable to standard TARGET_CFLAGS
-MAKE_VARS += \
-	CCFLAGS="$(TARGET_CFLAGS)"
+MAKE_FLAGS += \
+	CC="$(TARGET_CC) $(TARGET_CFLAGS) $(TARGET_CPPFLAGS) $(TARGET_LDFLAGS)"
 
 define Build/Configure
 	# Fetch prebuilt hamcore.se2 from staging dir
@@ -93,11 +83,10 @@ define Build/Configure
 endef
 
 
-define Package/softethervpn
+define Package/softethervpn/default
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=VPN
-  DEPENDS:=+libpthread +librt +libreadline +libopenssl +libncurses +kmod-tun +zlib $(ICONV_DEPENDS)
   TITLE:=Free Cross-platform Multi-protocol VPN server and client
   URL:=http://www.softether.org/
   MAINTAINER:=Federico Di Marco <fededim@gmail.com>
@@ -112,41 +101,98 @@ IPsec and MS-SSTP), but has also original strong SSL-VPN protocol to penetrate a
 has very fast throughput, low latency and firewall resistance.
 endef
 
-
-define Package/softethervpn/conffiles
-/usr/libexec/softethervpn/vpn_server.config
-/usr/libexec/softethervpn/vpn_client.config
-/usr/libexec/softethervpn/vpn_bridge.config
-/usr/libexec/softethervpn/lang.config
+define Package/softethervpn-base
+  $(Package/softethervpn/default)
+  DEPENDS:=+libpthread +librt +libreadline +libopenssl +libncurses +kmod-tun +zlib $(ICONV_DEPENDS)
+  TITLE += (Base)
 endef
 
-define Package/softethervpn/install
+define Package/softethervpn-server
+  $(Package/softethervpn/default)
+  DEPENDS:=+softethervpn-base
+  TITLE += (Server)
+endef
+
+define Package/softethervpn-bridge
+  $(Package/softethervpn/default)
+  DEPENDS:=+softethervpn-base
+  TITLE += (Bridge)
+endef
+
+define Package/softethervpn-client
+  $(Package/softethervpn/default)
+  DEPENDS:=+softethervpn-base
+  TITLE += (Client)
+endef
+
+Package/softethervpn-base/description = $(Package/softethervpn/description)
+Package/softethervpn-server/description = $(Package/softethervpn/description)
+Package/softethervpn-bridge/description = $(Package/softethervpn/description)
+Package/softethervpn-client/description = $(Package/softethervpn/description)
+
+define Package/softethervpn-base/conffiles
+  /usr/libexec/softethervpn/lang.config
+endef
+
+define Package/softethervpn-server/conffiles
+  /usr/libexec/softethervpn/vpn_server.config
+endef
+
+define Package/softethervpn-client/conffiles
+  /usr/libexec/softethervpn/vpn_client.config
+endef
+
+define Package/softethervpn-bridge/conffiles
+  /usr/libexec/softethervpn/vpn_bridge.config
+endef
+
+define Package/softethervpn-base/install
 	$(INSTALL_DIR) $(1)/usr/libexec/softethervpn
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/vpnserver/vpnserver $(1)/usr/libexec/softethervpn
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/vpnserver/hamcore.se2 $(1)/usr/libexec/softethervpn
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/vpnclient/vpnclient $(1)/usr/libexec/softethervpn
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/vpnbridge/vpnbridge $(1)/usr/libexec/softethervpn
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/vpncmd/vpncmd $(1)/usr/libexec/softethervpn
 	$(INSTALL_BIN) files/launcher.sh $(1)/usr/libexec/softethervpn
 
-	$(INSTALL_DATA) files/dummy $(1)/usr/libexec/softethervpn/vpn_server.config
-	$(INSTALL_DATA) files/dummy $(1)/usr/libexec/softethervpn/vpn_bridge.config
-	$(INSTALL_DATA) files/dummy $(1)/usr/libexec/softethervpn/vpn_client.config
 	$(INSTALL_DATA) files/dummy $(1)/usr/libexec/softethervpn/lang.config
 
 	$(INSTALL_DIR) $(1)/usr/bin
-
-	#$(LN) ../../usr/libexec/softethervpn/launcher.sh $(1)/usr/bin/vpnserver
-	#$(LN) ../../usr/libexec/softethervpn/launcher.sh $(1)/usr/bin/vpnclient
-	#$(LN) ../../usr/libexec/softethervpn/launcher.sh $(1)/usr/bin/vpnbridge
 	$(LN) ../../usr/libexec/softethervpn/launcher.sh $(1)/usr/bin/vpncmd
+endef
+
+define Package/softethervpn-server/install
+	$(INSTALL_DIR) $(1)/usr/libexec/softethervpn
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/vpnserver/vpnserver $(1)/usr/libexec/softethervpn
+
+	$(INSTALL_DATA) files/dummy $(1)/usr/libexec/softethervpn/vpn_server.config
 
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/vpnserver.init $(1)/etc/init.d/softethervpnserver
+endef
+
+define Package/softethervpn-bridge/install
+	$(INSTALL_DIR) $(1)/usr/libexec/softethervpn
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/vpnbridge/vpnbridge $(1)/usr/libexec/softethervpn
+
+	$(INSTALL_DATA) files/dummy $(1)/usr/libexec/softethervpn/vpn_bridge.config
+
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/vpnbridge.init $(1)/etc/init.d/softethervpnbridge
+endef
+
+define Package/softethervpn-client/install
+	$(INSTALL_DIR) $(1)/usr/libexec/softethervpn
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/vpnclient/vpnclient $(1)/usr/libexec/softethervpn
+
+	$(INSTALL_DATA) files/dummy $(1)/usr/libexec/softethervpn/vpn_client.config
+
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/vpnclient.init $(1)/etc/init.d/softethervpnclient
 endef
 
-$(eval $(call BuildPackage,softethervpn))
+$(eval $(call BuildPackage,softethervpn-base))
+$(eval $(call BuildPackage,softethervpn-server))
+$(eval $(call BuildPackage,softethervpn-client))
+$(eval $(call BuildPackage,softethervpn-bridge))
 $(eval $(call HostBuild))

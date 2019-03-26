@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2012 OpenWrt.org
+# Copyright (C) 2006-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qrencode
-PKG_VERSION:=3.4.4
-PKG_RELEASE:=2
+PKG_VERSION:=4.0.2
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://fukuchi.org/works/qrencode/
-PKG_MD5SUM:=be545f3ce36ea8fbb58612d72c4222de
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://fukuchi.org/works/qrencode
+PKG_HASH:=c9cb278d3b28dcc36b8d09e8cad51c0eca754eb004cb0247d4703cb4472b58b4
+
 PKG_MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>
 PKG_LICENSE:=LGPL-2.1+
+
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
 
@@ -25,7 +28,7 @@ define Package/libqrencode
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Library for encoding data in a QR Code symbol
-  URL:=http://fukuchi.org/works/qrencode/
+  URL:=https://fukuchi.org/works/qrencode/
 endef
 
 define Package/libqrencode/description
@@ -56,7 +59,8 @@ CONFIGURE_ARGS+= \
 	--enable-static \
 	--disable-rpath \
 	--disable-sdltest \
-	--without-tests 
+	--without-tests \
+	--without-png
 
 TARGET_LDFLAGS+= -s
 

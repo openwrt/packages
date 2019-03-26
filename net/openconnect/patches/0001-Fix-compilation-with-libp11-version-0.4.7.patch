@@ -1,0 +1,50 @@
+From 03ecd34e0137b3f0bf0d2fc3ab7f7d8b3682785e Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Thu, 14 Dec 2017 18:03:35 +0800
+Subject: [PATCH] Fix compilation with libp11 version >= 0.4.7
+
+libp11 0.4.7 renamed then dropped macro definition in commits
+
+ 4f0fce4: Error reporting fixes
+ e4c641b: PKCS11 errors separated into P11 and CKR
+
+This change assumes that libp11 will restore compatibility by bringing
+back old forms of macro definition
+
+Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
+---
+ openssl-pkcs11.c | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/openssl-pkcs11.c b/openssl-pkcs11.c
+index 61da123..ba7e491 100644
+--- a/openssl-pkcs11.c
++++ b/openssl-pkcs11.c
+@@ -30,6 +30,24 @@
+ #include <libp11.h>
+ #include <p11-kit/pkcs11.h>
+ 
++#ifndef ERR_LIB_PKCS11
++#	if defined(ERR_LIB_CKR)
++#		define ERR_LIB_PKCS11 ERR_LIB_CKR
++#	elif defined(ERR_LIB_USER)
++#		define ERR_LIB_PKCS11 ERR_LIB_USER
++#	else
++#		error undefined macro ERR_LIB_PKCS11
++#	endif
++#endif
++
++#ifndef PKCS11_F_PKCS11_LOGIN
++#	if defined(CKR_F_PKCS11_LOGIN)
++#		define PKCS11_F_PKCS11_LOGIN CKR_F_PKCS11_LOGIN
++#	else
++#		error undefined macro PKCS11_F_PKCS11_LOGIN
++#	endif
++#endif
++
+ static PKCS11_CTX *pkcs11_ctx(struct openconnect_info *vpninfo)
+ {
+ 	PKCS11_CTX *ctx;
+-- 
+1.8.3.1
+

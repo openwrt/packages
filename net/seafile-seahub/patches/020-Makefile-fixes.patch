@@ -1,14 +1,13 @@
-diff -rupN seafile-seahub-5.1.1.orig/Makefile seafile-seahub-5.1.1/Makefile
---- seafile-seahub-5.1.1.orig/Makefile	2016-04-26 23:59:48.000000000 +0200
-+++ seafile-seahub-5.1.1/Makefile	2016-04-28 09:03:35.507105416 +0200
+--- a/Makefile
++++ b/Makefile
 @@ -1,3 +1,6 @@
 +include $(TOPDIR)/rules.mk
-+$(call include_mk, python-package.mk)
++include $(TOPDIR)/feeds/packages/lang/python/python-package.mk
 +
  PROJECT=seahub
  
  develop: setup-git
-@@ -9,7 +12,7 @@ dist: locale uglify statici18n collectst
+@@ -9,7 +12,7 @@ dist: locale uglify statici18n collectstatic
  
  locale:
  	@echo "--> Compile locales"
@@ -17,7 +16,7 @@ diff -rupN seafile-seahub-5.1.1.orig/Makefile seafile-seahub-5.1.1/Makefile
  	@echo ""
  
  uglify:
-@@ -19,7 +22,7 @@ uglify:
+@@ -19,17 +22,17 @@ uglify:
  
  statici18n:
  	@echo "--> Generate JS locale files in static/scripts/i18n"
@@ -26,3 +25,15 @@ diff -rupN seafile-seahub-5.1.1.orig/Makefile seafile-seahub-5.1.1/Makefile
  
  collectstatic:
  	@echo "--> Collect django static files to media/assets"
+ 	rm -rf media/assets 2> /dev/null
+-	python manage.py collectstatic --noinput -i admin -i termsandconditions -i app -i sysadmin-app -i build.js
++	$(call HostPython,,manage.py collectstatic --noinput -i admin -i termsandconditions -i app -i sysadmin-app -i build.js)
+ 
+ compressstatic:
+ 	@echo "--> Compress static files(css) to media/CACHE"
+ 	rm -rf media/CACHE 2> /dev/null
+-	python manage.py compress
++	$(call HostPython,,manage.py compress)
+ 
+ clean:
+ 	@echo '--> Cleaning media/static cache & dist'

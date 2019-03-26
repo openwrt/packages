@@ -1,0 +1,36 @@
+From c39f7578765859d7416e4140c92d034c8cae3341 Mon Sep 17 00:00:00 2001
+From: Jakub Jelen <jjelen@redhat.com>
+Date: Wed, 8 Nov 2017 15:35:08 +0100
+Subject: [PATCH] pki_crypto: Avoid potential memory leak
+
+Signed-off-by: Jakub Jelen <jjelen@redhat.com>
+Reviewed-by: Andreas Schneider <asn@cryptomilk.org>
+---
+ src/pki_crypto.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/pki_crypto.c b/src/pki_crypto.c
+index 30f49a81..d9f7753a 100644
+--- a/src/pki_crypto.c
++++ b/src/pki_crypto.c
+@@ -453,7 +453,7 @@ int pki_key_generate_dss(ssh_key key, int parameter){
+     int rc;
+ #if OPENSSL_VERSION_NUMBER > 0x10100000L
+     key->dsa = DSA_new();
+-    if (!key->dsa) {
++    if (key->dsa == NULL) {
+         return SSH_ERROR;
+     }
+     rc = DSA_generate_parameters_ex(key->dsa,
+@@ -464,6 +464,8 @@ int pki_key_generate_dss(ssh_key key, int parameter){
+                                     NULL,  /* h_ret */
+                                     NULL); /* cb */
+     if (rc != 1) {
++        DSA_free(key->dsa);
++        key->dsa = NULL;
+         return SSH_ERROR;
+     }
+ #else
+-- 
+2.19.1
+

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadow
-PKG_VERSION:=4.2.1
-PKG_RELEASE:=6
+PKG_VERSION:=4.6
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://pkg-shadow.alioth.debian.org/releases
-PKG_MD5SUM:=2bfafe7d4962682d31b5eba65dba4fc8
+PKG_SOURCE_URL:=https://github.com/shadow-maint/shadow/releases/download/$(PKG_VERSION)
+PKG_HASH:=0998c8d84242a231ab0acb7f8613927ff5bcff095f8aa6b79478893a03f05583
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=BSD-3-Clause
 
@@ -27,7 +27,8 @@ include $(INCLUDE_DIR)/nls.mk
 SHADOW_APPLETS := \
 	chage chpasswd chfn chsh expiry faillog gpasswd \
 	groupadd groupdel groupmems groupmod groups \
-	lastlog login newgrp nologin passwd su \
+	lastlog login newgidmap newgrp newuidmap nologin \
+	passwd su \
 	useradd userdel usermod vipw
 
 CONFIGURE_ARGS += \
@@ -37,14 +38,13 @@ CONFIGURE_ARGS += \
 	--without-acl \
 	--without-attr \
 	--without-tcb \
-	--without-nscd \
-	--disable-subordinate-ids \
+	--without-nscd
 
 define Package/shadow/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=The PLD Linux shadow utilities
-  URL:=http://pkg-shadow.alioth.debian.org/
+  URL:=https://github.com/shadow-maint/shadow
 endef
 
 define Package/shadow

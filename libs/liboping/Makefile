@@ -8,23 +8,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liboping
-PKG_VERSION:=1.9.0
+PKG_VERSION:=1.10.0
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=LGPL-2.1+
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://noping.cc/files
-PKG_MD5SUM:=9c9f65bfd297d7e7092c7f219c31f66a
+PKG_HASH:=eb38aa93f93e8ab282d97e2582fbaea88b3f889a08cbc9dbf20059c3779d5cd8
 
 PKG_FIXUP:=autoreconf
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/liboping/Default
-  URL:=http://verplant.org/liboping/
+  URL:=https://noping.cc
 endef
 
 define Package/liboping

@@ -1,0 +1,23 @@
+#!/bin/sh
+
+me=go-gcc-helper
+name=$(basename $0)
+
+case $name in
+gcc)
+	cmd=$GO_GCC_HELPER_CC
+	;;
+g++)
+	cmd=$GO_GCC_HELPER_CXX
+	;;
+*)
+	echo "$me: unknown command \"$name\""
+	exit 1
+	;;
+esac
+
+export PATH="$GO_GCC_HELPER_PATH"
+
+echo "$me: running $cmd $@"
+
+$cmd "$@"

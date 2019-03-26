@@ -1,8 +1,8 @@
 --- a/Lib/distutils/command/build_scripts.py
 +++ b/Lib/distutils/command/build_scripts.py
-@@ -89,6 +89,7 @@ class build_scripts (Command):
-                     adjust = 1
-                     post_interp = match.group(1) or ''
+@@ -91,6 +91,7 @@ class build_scripts(Command):
+                     adjust = True
+                     post_interp = match.group(1) or b''
  
 +            adjust = 0
              if adjust:

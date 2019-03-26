@@ -1,6 +1,6 @@
---- a/configure.in
-+++ b/configure.in
-@@ -197,7 +197,6 @@ dnl XXX - quick hack, should disappear b
+--- a/configure.ac
++++ b/configure.ac
+@@ -200,7 +200,6 @@ dnl XXX - quick hack, should disappear b
  AC_DEFINE(USE_SYSLOG, 1, [Define to use syslog().])
  if test "$ac_cv_func_ruserok" = "yes"; then
  	AC_DEFINE(RLOGIN, 1, [Define if login should support the -r flag for rlogind.])

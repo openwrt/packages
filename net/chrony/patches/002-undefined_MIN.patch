@@ -1,0 +1,10 @@
+--- a/hash_intmd5.c
++++ b/hash_intmd5.c
+@@ -29,6 +29,7 @@
+ #include "sysincl.h"
+ #include "hash.h"
+ #include "memory.h"
++#include "util.h"
+ 
+ #include "md5.c"
+ 

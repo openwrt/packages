@@ -31,8 +31,8 @@ start_instance() {
 	local cfg=$1
 	local conf_custom conf_file aux
 
-	config_get_bool aux "$cfg" 'disabled' '0'
-	[ "$aux" = 1 ] && return 1
+	config_get_bool aux "$cfg" 'enabled' '0'
+	[ "$aux" = 0 ] && return 1
 
 	config_get_bool conf_custom "$cfg" 'conf_custom' '0'
 	config_get conf_file "$cfg" "conf_file"

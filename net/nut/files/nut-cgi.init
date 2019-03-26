@@ -4,10 +4,26 @@
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
-START=51
+START=87
+STOP=23
+USE_PROCD=1
 
 DEFAULT=/etc/default/nut
 UPSCGI_C=/var/etc/nut/hosts.conf
+UPSCGI_S=/var/etc/nut/upsset.conf
+
+nut_upscgi_upsset() {
+	local cfg="$1"
+	local enable
+
+	config_get_bool enable "$cfg" enable 0
+
+	if [ "$enable" -eq 1 ]; then
+		ln -sf /etc/nut/upsset.conf.enable "$UPSCGI_S"
+	else
+		ln -sf /etc/nut/upsset.conf.disable "$UPSCGI_S"
+	fi
+}
 
 nut_upscgi_add() {
 	local cfg="$1"
@@ -25,20 +41,36 @@ nut_upscgi_add() {
 	    system="$system:$port";
 	fi
 	config_get displayname "$cfg" displayname
-	echo "MONITOR $system \"$displayname\"" >> $UPSCGI_C
+	echo "MONITOR $system \"$displayname\"" >> "$UPSCGI_C"
 }
 
-start() {
-	rm -f $UPSCGI_C
+service_reload() {
+	mkdir -m 0755 -p "$(dirname "$UPSCGI_C")"
+	rm -f "$UPSCGI_C"
+	rm -f "$UPSCGI_S"
 
 	config_load nut_cgi
 
 	config_foreach nut_upscgi_add host
+	config_foreach nut_upscgi_upsset upsset
 
-	chmod 640 /var/etc/nut/hosts.conf
+	[ -s "$UPSCGI_C" ] && chmod 640 "$UPSCGI_C"
 }
 
-stop() {
-	rm -f $UPSCGI_C
+start_service() {
+	service_reload
 }
 
+reload_service() {
+	service_reload
+}
+
+stop_service() {
+	rm -f "$UPSCGI_C"
+	rm -f "$UPSCGI_S"
+	ln -sf /etc/nut/upsset.conf.disable "$UPSCGI_S"
+}
+
+service_triggers() {
+	procd_add_reload_trigger "nut_cgi"
+}

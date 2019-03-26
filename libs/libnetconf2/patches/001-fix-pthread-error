@@ -1,0 +1,47 @@
+Index: libnetconf2-0.12-r1/CMakeLists.txt
+===================================================================
+--- libnetconf2-0.12-r1.orig/CMakeLists.txt
++++ libnetconf2-0.12-r1/CMakeLists.txt
+@@ -172,8 +172,10 @@ target_link_libraries(netconf2 ${CMAKE_T
+ 
+ # check availability for some pthread functions
+ set(CMAKE_REQUIRED_LIBRARIES pthread)
++include(CheckFunctionExists)
+ check_function_exists(pthread_spin_lock HAVE_SPINLOCK)
+ check_function_exists(pthread_mutex_timedlock HAVE_PTHREAD_MUTEX_TIMEDLOCK)
++check_function_exists(pthread_rwlockattr_setkind_np HAVE_PTHREAD_RWLOCKATTR_SETKIND_NP)
+ 
+ # dependencies - openssl
+ if(ENABLE_TLS OR ENABLE_DNSSEC OR ENABLE_SSH)
+Index: libnetconf2-0.12-r1/src/config.h.in
+===================================================================
+--- libnetconf2-0.12-r1.orig/src/config.h.in
++++ libnetconf2-0.12-r1/src/config.h.in
+@@ -65,4 +65,7 @@
+  */
+ #define NC_PS_QUEUE_SIZE @MAX_PSPOLL_THREAD_COUNT@
+ 
++/* Portability feature-check macros. */
++#cmakedefine HAVE_PTHREAD_RWLOCKATTR_SETKIND_NP
++
+ #endif /* NC_CONFIG_H_ */
+Index: libnetconf2-0.12-r1/src/session_server.c
+===================================================================
+--- libnetconf2-0.12-r1.orig/src/session_server.c
++++ libnetconf2-0.12-r1/src/session_server.c
+@@ -520,6 +520,7 @@ nc_server_init(struct ly_ctx *ctx)
+     errno=0;
+ 
+     if (pthread_rwlockattr_init(&attr) == 0) {
++#if defined(HAVE_PTHREAD_RWLOCKATTR_SETKIND_NP)
+         if (pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP) == 0) {
+             if (pthread_rwlock_init(&server_opts.endpt_lock, &attr) != 0) {
+                 ERR("%s: failed to init rwlock(%s).", __FUNCTION__, strerror(errno));
+@@ -530,6 +531,7 @@ nc_server_init(struct ly_ctx *ctx)
+         } else {
+             ERR("%s: failed set attribute (%s).", __FUNCTION__, strerror(errno));
+         }
++#endif
+         pthread_rwlockattr_destroy(&attr);
+     } else {
+         ERR("%s: failed init attribute (%s).", __FUNCTION__, strerror(errno));

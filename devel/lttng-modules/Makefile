@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lttng-modules
-PKG_VERSION:=2.6.1
+PKG_VERSION:=2.10.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://lttng.org/files/$(PKG_NAME)/
-PKG_MD5SUM:=ccfb50ad922cdaf54a809e2d9de23da4
+PKG_HASH:=fe1d269bca723e8948af871c322c37d3900e647cdc5eb3efbe821e434beee44c
 
+PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.1 GPL-2.0 MIT
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/package.mk

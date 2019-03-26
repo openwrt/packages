@@ -1,4 +1,4 @@
-# 
+#
 # Copyright (C) 2010 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -10,26 +10,26 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=crtmpserver
 PKG_REV:=b6fdcdb953d1e99c48a0c37a8c80f2cad2db443b
 PKG_VERSION:=2012-07-18+git-$(PKG_REV)
-PKG_RELEASE:=2
-PKG_BUILD_PARALLEL:=2
+PKG_RELEASE:=4
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/j0sh/crtmpserver/tar.gz/$(PKG_REV)?
+PKG_HASH:=e210eeb99d39334e7beb0a1be27dcf23d1f851383f87cf63d7fb98209ef96cee
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_REV)
+
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=GPL-3.0
 
+PKG_BUILD_PARALLEL:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://github.com/j0sh/crtmpserver.git
-PKG_SOURCE_SUBDIR:=crtmpserver-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_SOURCE_PROTO:=git
-
+include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/crtmpserver
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+libopenssl +libstdcpp +liblua
+  DEPENDS:=$(CXX_DEPENDS) +libopenssl +liblua
   TITLE:=C++ RTMP Server
-  URL:=http://www.rtmpd.com/
 endef
 
 define Package/crtmpserver/description
@@ -39,7 +39,7 @@ stream (live or recorded) in the following technologies:
  * To and from embedded devices: iPhone, Android
  * From surveillance cameras
  * IP-TV using MPEG-TS and RTSP/RTCP/RTP protocols
-                
+
 Also, crtmpserver can be used as a high performance rendes-vous
 server. For example, it enables you to do:
  * Audio/Video conferencing
@@ -62,7 +62,7 @@ define Build/Configure
 		$(SED) 's,^TOOLCHAIN_BASE[[:space:]]*=.*,TOOLCHAIN_BASE=$(TS_BASE),' \
 			-e 's,^TOOLCHAIN_PREFIX[[:space:]]*=.*,TOOLCHAIN_PREFIX=$(TARGET_CROSS),' \
 			-e 's,^CCOMPILER[[:space:]]*=.*,CCOMPILER=$(TARGET_CC),' \
-			-e 's,^CXXCOMPILER[[:space:]]*=.*,CXXCOMPILER=$(TARGET_CXX),' \
+			-e 's,^CXXCOMPILER[[:space:]]*=.*,CXXCOMPILER=$(TARGET_CXX) -std=gnu++03,' \
 			-e 's,^OPTIMIZATIONS[[:space:]]*=.*,OPTIMIZATIONS=-O2,' \
 			-e 's,^SSL_BASE[[:space:]]*=.*,SSL_BASE=$(STAGING_DIR)/usr,' \
 			linux-openwrt-uclibc.mk)

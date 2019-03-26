@@ -1,0 +1,69 @@
+#!/bin/sh
+#
+# adblock send mail script for msmtp
+# written by Dirk Brenken (dev@brenken.org)
+# Please note: you have to install and configure the package 'msmtp' before using this script.
+
+# This is free software, licensed under the GNU General Public License v3.
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+LC_ALL=C
+PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+mail_ver="1.0.4"
+mail_daemon="$(command -v msmtp)"
+mail_profile="adb_notify"
+#mail_debug="--debug"
+mail_rc=1
+
+# mail header & mail receiver check
+#
+mail_receiver=""
+mail_sender="no-reply@adblock"
+mail_topic="${HOSTNAME}: adblock notification"
+mail_head="From: ${mail_sender}\nTo: ${mail_receiver}\nSubject: ${mail_topic}\nReply-to: ${mail_sender}\nMime-Version: 1.0\nContent-Type: text/html\nContent-Disposition: inline\n\n"
+
+if [ -z "${mail_receiver}" ]
+then
+	logger -p "err" -t "adblock-notify-${mail_ver}[${$}]" "please supply/customize the 'mail_receiver' in '/etc/adblock/adblock.notify'"
+	exit ${mail_rc}
+fi
+
+# mail daemon check
+#
+if [ ! -x "${mail_daemon}" ]
+then
+	mail_daemon="$(command -v sendmail)"
+fi
+
+# info preparation
+#
+sys_info="$(strings /etc/banner 2>/dev/null; ubus call system board | sed -e 's/\"release\": {//' | sed -e 's/^[ \t]*//' | sed -e 's/[{}\",]//g' | sed -e 's/[ ]/  \t/' | sed '/^$/d' 2>/dev/null)"
+adb_info="$(/etc/init.d/adblock status 2>/dev/null)"
+if [ -f "/var/log/messages" ]
+then
+	log_info="$(awk '/adblock-/{NR=1;max=79;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max),"&#8629;"} else {print " ",substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}' /var/log/messages)"
+else
+	log_info="$(logread -e "adblock-" | awk '{NR=1;max=79;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max),"&#8629;"} else {print " ",substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}')"
+fi
+
+# mail body
+#
+mail_text="<html><body><pre style='display:block;font-family:monospace;font-size:1rem;padding:20;background-color:#f3eee5;white-space:pre'>"
+mail_text="${mail_text}\n<strong>++\n++ System Information ++\n++</strong>\n${sys_info}"
+mail_text="${mail_text}\n\n<strong>++\n++ Adblock Information ++\n++</strong>\n${adb_info}"
+mail_text="${mail_text}\n\n<strong>++\n++ Logfile Information ++\n++</strong>\n${log_info}"
+mail_text="${mail_text}</pre></body></html>"
+
+# send mail
+#
+if [ -x "${mail_daemon}" ]
+then
+	printf "%b" "${mail_head}${mail_text}" 2>/dev/null | "${mail_daemon}" ${mail_debug} -a "${mail_profile}" "${mail_receiver}" >/dev/null 2>&1
+	mail_rc=${?}
+	logger -p "info" -t "adblock-notify-${mail_ver}[${$}]" "mail sent to '${mail_receiver}' with rc '${mail_rc}'"
+else
+	logger -p "err" -t "adblock-notify-${mail_ver}[${$}]" "msmtp mail daemon not found"
+fi
+
+exit ${mail_rc}

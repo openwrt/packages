@@ -9,11 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cmdpad
 PKG_VERSION:=0.0.3
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=@SF/cmdpad
-PKG_MD5SUM:=6633b2354b7f23f9cd8e2bfb6e735965
+PKG_HASH:=19963f20f1af50fab0013fb373af294ea412da7241d1ea91fad90455291948b9
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=MIT
@@ -27,6 +27,8 @@ define Package/cmdpad
   TITLE:=execute commands when key is pressed/released/held down
   URL:=http://cmdpad.sourceforge.net/index.php
 endef
+
+TARGET_CFLAGS += -std=gnu89
 
 CONFIGURE_ARGS += \
 	--enable-static \

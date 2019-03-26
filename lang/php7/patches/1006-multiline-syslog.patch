@@ -1,0 +1,178 @@
+commit f11d40ef88f640fe4764d2731d3061472aefe556
+Author: Philip Prindeville <philipp@redfish-solutions.com>
+Date:   Wed Aug 9 20:55:25 2017 -0600
+
+    Turn php_syslog() into wrapper for syslog and split lines
+
+diff --git a/Zend/zend_smart_string.h b/Zend/zend_smart_string.h
+index 2282202..12d755e 100644
+--- a/Zend/zend_smart_string.h
++++ b/Zend/zend_smart_string.h
+@@ -136,6 +136,10 @@ static zend_always_inline void smart_string_setl(smart_string *dest, char *src,
+ 	dest->c = src;
+ }
+ 
++static zend_always_inline void smart_string_reset(smart_string *str) {
++	str->len = 0;
++}
++
+ #endif
+ 
+ /*
+diff --git a/configure.ac b/configure.ac
+index cb95d86..a63354f 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1443,7 +1443,7 @@ PHP_ADD_SOURCES(main, main.c snprintf.c spprintf.c php_sprintf.c \
+        php_ini.c SAPI.c rfc1867.c php_content_types.c strlcpy.c \
+        strlcat.c explicit_bzero.c mergesort.c reentrancy.c php_variables.c php_ticks.c \
+        network.c php_open_temporary_file.c \
+-       output.c getopt.c, -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1)
++       output.c getopt.c php_syslog.c, -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1)
+ 
+ PHP_ADD_SOURCES_X(main, fastcgi.c, -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1, PHP_FASTCGI_OBJS, no)
+ 
+diff --git a/main/php_syslog.c b/main/php_syslog.c
+new file mode 100644
+index 0000000..c351951
+--- /dev/null
++++ b/main/php_syslog.c
+@@ -0,0 +1,81 @@
++/*
++   +----------------------------------------------------------------------+
++   | PHP Version 7                                                        |
++   +----------------------------------------------------------------------+
++   | Copyright (c) 2017 The PHP Group                                |
++   +----------------------------------------------------------------------+
++   | This source file is subject to version 3.01 of the PHP license,      |
++   | that is bundled with this package in the file LICENSE, and is        |
++   | available through the world-wide-web at the following url:           |
++   | http://www.php.net/license/3_01.txt                                  |
++   | If you did not receive a copy of the PHP license and are unable to   |
++   | obtain it through the world-wide-web, please send a note to          |
++   | license@php.net so we can mail you a copy immediately.               |
++   +----------------------------------------------------------------------+
++   | Author: Philip Prindeville <philipp@redfish-solutions.com>           |
++   +----------------------------------------------------------------------+
++*/
++
++/* $Id$ */
++
++#include <stdio.h>
++#include <string.h>
++#include <assert.h>
++#include <stdlib.h>
++#include "php.h"
++#include "php_syslog.h"
++
++#include "zend.h"
++#include "zend_smart_string.h"
++
++/*
++ * The SCO OpenServer 5 Development System (not the UDK)
++ * defines syslog to std_syslog.
++ */
++
++#ifdef HAVE_STD_SYSLOG
++#define syslog std_syslog
++#endif
++
++PHPAPI void php_syslog(int priority, const char *format, ...) /* {{{ */
++{
++	const char *ptr;
++	unsigned char c;
++	smart_string fbuf = {0};
++	smart_string sbuf = {0};
++	va_list args;
++
++	va_start(args, format);
++	zend_printf_to_smart_string(&fbuf, format, args);
++	smart_string_0(&fbuf);
++	va_end(args);
++
++	for (ptr = fbuf.c; ; ++ptr) {
++		c = *ptr;
++		if (c == '\0') {
++			syslog(priority, "%.*s", (int)sbuf.len, sbuf.c);
++			break;
++		}
++
++		if (c != '\n')
++			smart_string_appendc(&sbuf, c);
++		else {
++			syslog(priority, "%.*s", (int)sbuf.len, sbuf.c);
++			smart_string_reset(&sbuf);
++		}
++	}
++
++	smart_string_free(&fbuf);
++	smart_string_free(&sbuf);
++}
++
++/* }}} */
++
++/*
++ * Local variables:
++ * tab-width: 4
++ * c-basic-offset: 4
++ * End:
++ * vim600: sw=4 ts=4 fdm=marker
++ * vim<600: sw=4 ts=4
++ */
+diff --git a/main/php_syslog.h b/main/php_syslog.h
+index be68cc4..4c4ca4e 100644
+--- a/main/php_syslog.h
++++ b/main/php_syslog.h
+@@ -21,6 +21,8 @@
+ #ifndef PHP_SYSLOG_H
+ #define PHP_SYSLOG_H
+ 
++#include "php.h"
++
+ #ifdef PHP_WIN32
+ #include "win32/syslog.h"
+ #else
+@@ -30,26 +32,12 @@
+ #endif
+ #endif
+ 
+-/*
+- * The SCO OpenServer 5 Development System (not the UDK)
+- * defines syslog to std_syslog.
+- */
+-
+-#ifdef syslog
+-
+-#ifdef HAVE_STD_SYSLOG
+-#define php_syslog std_syslog
+-#endif
+-
+-#undef syslog
++BEGIN_EXTERN_C()
++PHPAPI void php_syslog(int, const char *format, ...);
++END_EXTERN_C()
+ 
+ #endif
+ 
+-#ifndef php_syslog
+-#define php_syslog syslog
+-#endif
+-
+-#endif
+ /*
+  * Local variables:
+  * tab-width: 4
+diff --git a/win32/build/config.w32 b/win32/build/config.w32
+index 6cbb18b..71cf491 100644
+--- a/win32/build/config.w32
++++ b/win32/build/config.w32
+@@ -244,7 +244,8 @@ ADD_FLAG("CFLAGS_BD_ZEND", "/D ZEND_ENABLE_STATIC_TSRMLS_CACHE=1");
+ ADD_SOURCES("main", "main.c snprintf.c spprintf.c getopt.c fopen_wrappers.c \
+ 	php_scandir.c php_ini.c SAPI.c rfc1867.c php_content_types.c strlcpy.c \
+ 	strlcat.c mergesort.c reentrancy.c php_variables.c php_ticks.c network.c \
+-	php_open_temporary_file.c output.c internal_functions.c php_sprintf.c");
++	php_open_temporary_file.c output.c internal_functions.c php_sprintf.c \
++	php_syslog.c");
+ ADD_FLAG("CFLAGS_BD_MAIN", "/D ZEND_ENABLE_STATIC_TSRMLS_CACHE=1");
+ 
+ AC_DEFINE('HAVE_STRNLEN', 1);

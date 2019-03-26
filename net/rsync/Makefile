@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsync
-PKG_VERSION:=3.1.2
+PKG_VERSION:=3.1.3
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.samba.org/pub/rsync/src
-PKG_MD5SUM:=0f758d7e000c0f7f7d3792610fad70cb
+PKG_HASH:=55cc554efec5fdaad70de921cd5a5eeb6c29a95524c715f3bbf849235b0800c0
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
@@ -58,6 +58,12 @@ ifeq ($(CONFIG_RSYNC_zlib),y)
 	CONFIGURE_ARGS+= --with-included-zlib=no
 else
 	CONFIGURE_ARGS+= --with-included-zlib=yes
+endif
+
+ifeq ($(CONFIG_IPV6),y)
+    TARGET_CFLAGS+= -DINET6
+else
+    CONFIGURE_ARGS+= --disable-ipv6
 endif
 
 define Package/rsyncd

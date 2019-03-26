@@ -1,0 +1,11 @@
+--- a/userland/configure
++++ b/userland/configure
+@@ -3291,7 +3291,7 @@ SYS_LIBS=""
+ VER=`cat ../kernel/linux/pf_ring.h | grep RING_VERSION | head -1 | cut -d '"' -f 2`
+ MAJOR_VER=`cat ../kernel/linux/pf_ring.h | grep RING_VERSION | head -1 | cut -d '"' -f 2 | cut -d '.' -f 1`
+ 
+-NATIVE=`$CC -c -Q -march=native --help=target| grep "march" | xargs | cut -d ' ' -f 2`
++NATIVE=`$CC -c -Q --help=target| grep "march" | xargs | cut -d ' ' -f 2`
+ if test -f "lib/libs/libpfring_zc_x86_64_$NATIVE.a"; then
+   CFLAGS="-march=native -mtune=native $CFLAGS"
+   LIBARCH="_$NATIVE"

@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnurl
-PKG_VERSION:=7.54.1
+PKG_VERSION:=7.64.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://gnunet.org/sites/default/files
+PKG_SOURCE_URL:=https://ftp.gnu.org/gnu/gnunet
 
-PKG_HASH:=4481f50a6c2bf3f1e161743333cb1bafea29dffc3cf535137bba2428ca90eb6b
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_HASH:=68b68a1be6a04f514a863eaac0d6b89f935833aff4e60bc2bcac472a465c755f
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -42,7 +43,7 @@ define Package/libgnurl
   $(call Package/gnurl/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libgnutls +libidn +zlib
+  DEPENDS:=+libgnutls +libidn2 +zlib
   TITLE:=A client-side HTTP/HTTPS transfer library
 endef
 
@@ -57,6 +58,7 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--without-axtls \
+	--without-brotli \
 	--without-libssh2 \
 	--without-libmetalink \
 	--without-winidn \
@@ -64,13 +66,16 @@ CONFIGURE_ARGS += \
 	--without-nghttp2 \
 	--without-nss \
 	--without-cyassl \
+	--without-libpsl \
 	--without-polarssl \
 	--without-ssl \
 	--without-winssl \
 	--without-darwinssl \
 	--disable-ares \
 	--disable-sspi \
+	--disable-crypto-auth \
 	--disable-ntlm-wb \
+	--disable-tls-srp \
 	--disable-ldap \
 	--disable-ldaps \
 	--disable-rtsp \
@@ -98,7 +103,7 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(2)/bin $(1)/usr/bin $(1)/usr/include/gnurl $(1)/usr/lib $(1)/usr/lib/pkgconfig
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gnurl-config $(1)/usr/bin/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/curl/*.h $(1)/usr/include/gnurl
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/gnurl/*.h $(1)/usr/include/gnurl
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnurl.{a,so*} $(1)/usr/lib/
 	$(CP) $(PKG_BUILD_DIR)/libgnurl.pc $(1)/usr/lib/pkgconfig/
 	$(SED) 's,-L$$$${exec_prefix}/lib,,g' $(1)/usr/bin/gnurl-config

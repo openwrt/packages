@@ -10,7 +10,7 @@ PECL_LONGNAME:=Resource and persistent handles factory
 
 PKG_VERSION:=2.0.0
 PKG_RELEASE:=2
-PKG_MD5SUM:=bc465eb5caa9d0f09cced121a8ac2e8e
+PKG_HASH:=95a59ea0dc3fc172805a6acd8327b122dd159b0a85b253826166457a05efa411
 
 PKG_NAME:=php7-pecl-raphf
 PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz

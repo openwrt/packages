@@ -1,0 +1,45 @@
+diff --git a/alsaloop/Makefile.am b/alsaloop/Makefile.am
+index 4cdf20b..0715b02 100644
+--- a/alsaloop/Makefile.am
++++ b/alsaloop/Makefile.am
+@@ -1,9 +1,9 @@
+ AM_CPPFLAGS = -I$(top_srcdir)/include
+ LDADD = -lm
+ AM_CFLAGS = -D_GNU_SOURCE
+-if HAVE_SAMPLERATE
+-LDADD += -lsamplerate
+-endif
++# if HAVE_SAMPLERATE
++# LDADD += -lsamplerate
++# endif
+ # LDFLAGS = -static
+ # CFLAGS += -g -Wall
+ 
+diff --git a/alsaloop/Makefile.in b/alsaloop/Makefile.in
+index 374cbcc..25dbae3 100644
+--- a/alsaloop/Makefile.in
++++ b/alsaloop/Makefile.in
+@@ -51,7 +51,7 @@ PRE_UNINSTALL = :
+ POST_UNINSTALL = :
+ build_triplet = @build@
+ host_triplet = @host@
+-@HAVE_SAMPLERATE_TRUE@am__append_1 = -lsamplerate
++# @HAVE_SAMPLERATE_TRUE@am__append_1 = -lsamplerate
+ bin_PROGRAMS = alsaloop$(EXEEXT)
+ subdir = alsaloop
+ DIST_COMMON = $(noinst_HEADERS) $(srcdir)/Makefile.am \
+diff --git a/configure.ac b/configure.ac
+index 3e8f1e8..487e5de 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -38,8 +38,8 @@ AC_CHECK_HEADERS([alsa/use-case.h], [have_ucm="yes"], [have_ucm="no"],
+   [#include <alsa/asoundlib.h>])
+ AC_CHECK_HEADERS([alsa/topology.h], [have_topology="yes"], [have_topology="no"],
+   [#include <alsa/asoundlib.h>])
+-AC_CHECK_HEADERS([samplerate.h], [have_samplerate="yes"], [have_samplerate="no"],
+-  [#include <samplerate.h>])
++dnl AC_CHECK_HEADERS([samplerate.h], [have_samplerate="no"], [have_samplerate="no"],
++dnl  [#include <samplerate.h>])
+ 
+ AC_CHECK_LIB([asound], [snd_seq_client_info_get_card], [HAVE_SEQ_CLIENT_INFO_GET_CARD="yes"])
+ if test "$HAVE_SEQ_CLIENT_INFO_GET_CARD" = "yes" ; then

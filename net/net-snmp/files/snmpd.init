@@ -187,6 +187,18 @@ snmpd_exec_add() {
 	echo "exec $miboid $name $prog $args" >> $CONFIGFILE
 }
 
+snmpd_extend_add() {
+	local cfg="$1"
+
+	config_get name "$cfg" name
+	[ -n "$name" ] || return 0
+	config_get prog "$cfg" prog
+	[ -n "$prog" ] || return 0
+	config_get args "$cfg" args
+	config_get miboid "$cfg" miboid
+	echo "extend $miboid $name $prog $args" >> $CONFIGFILE
+}
+
 snmpd_disk_add() {
         local cfg="$1"
         local disk='disk'
@@ -272,9 +284,12 @@ snmpd_setup_fw_rules() {
 start_service() {
 	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
 
-	procd_open_instance
-
 	config_load snmpd
+
+	config_get_bool snmp_enabled general enabled 1
+	[ "$snmp_enabled" -eq 0 ] && return
+
+	procd_open_instance
 
 	config_foreach snmpd_agent_add agent
 	config_foreach snmpd_agentx_add agentx
@@ -291,6 +306,7 @@ start_service() {
 	config_foreach snmpd_access_HostIP_add access_HostIP
 	config_foreach snmpd_pass_add pass
 	config_foreach snmpd_exec_add exec
+	config_foreach snmpd_extend_add extend
 	config_foreach snmpd_disk_add disk
 	config_foreach snmpd_engineid_add engineid
 	append_parm trapcommunity community trapcommunity
@@ -322,6 +338,7 @@ start_service() {
 
 stop_service() {
 	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
+	procd_set_config_changed firewall
 }
 
 service_triggers(){
@@ -333,4 +350,8 @@ service_triggers(){
 	procd_close_trigger
 
 	procd_add_reload_trigger 'snmpd'
+}
+
+service_started() {
+	procd_set_config_changed firewall
 }

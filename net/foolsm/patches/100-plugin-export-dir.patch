@@ -1,0 +1,11 @@
+--- a/defs.h	2016-11-10 07:22:50.275506874 -0500
++++ b/defs.h	2016-11-10 07:22:58.639469850 -0500
+@@ -22,7 +22,7 @@
+ 
+ #define min(x, y) ((x)<(y) ? (x) : (y))
+ 
+-#define PLUGIN_EXPORT_DIR "/var/lib/foolsm"
++#define PLUGIN_EXPORT_DIR "/tmp"
+ 
+ #endif
+ 

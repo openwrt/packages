@@ -1,0 +1,103 @@
+From 45a0a33aea1878c467c380562d6e38b3e4c713a9 Mon Sep 17 00:00:00 2001
+From: Eneas U de Queiroz <cote2004-github@yahoo.com>
+Date: Fri, 8 Jun 2018 11:59:04 -0300
+Subject: [PATCH] Update openssl 1.1 deprecated API
+
+Allows building with openssl 1.1 compiled without deprecated API support.
+
+Signed-off-by: Eneas U de Queiroz <cote2004-github@yahoo.com>
+---
+ src/ssli_openssl.c | 27 ++++++++++++++++++++++++---
+ 1 file changed, 24 insertions(+), 3 deletions(-)
+
+diff --git a/src/ssli_openssl.c b/src/ssli_openssl.c
+index 8ff1bcf..4f7979c 100644
+--- a/src/ssli_openssl.c
++++ b/src/ssli_openssl.c
+@@ -42,6 +42,8 @@
+ 
+ #include <openssl/x509v3.h>
+ #include <openssl/ssl.h>
++#include <openssl/rsa.h>
++#include <openssl/bn.h>
+ #include <openssl/err.h>
+ #include <openssl/safestack.h>
+ static X509 *x509;
+@@ -159,6 +161,7 @@ static void SSL_initializeCert() {
+ 
+ 	char *crt = (char *)getStrConf(CERTIFICATE);
+ 	char *key = (char *)getStrConf(KEY);
++	BIGNUM *e = NULL;
+ 
+ 	if (context) {
+ 		bool_t did_load_cert = SSL_CTX_use_certificate_chain_file(context, crt);
+@@ -172,13 +175,24 @@ static void SSL_initializeCert() {
+ 
+ 			x509 = X509_new();
+ 			pkey = EVP_PKEY_new();
+-			rsa = RSA_generate_key(4096,RSA_F4,NULL,NULL);
++			rsa = RSA_new();
++			e = BN_new();
++			if (x509 == NULL || pkey == NULL || rsa == NULL || e == NULL || !BN_set_word(e, RSA_F4) ||
++			    !RSA_generate_key_ex (rsa, 4096, e, NULL)) {
++				Log_fatal("Failed to Generate RSA key.");
++			}
++			BN_free(e);
+ 			EVP_PKEY_assign_RSA(pkey, rsa);
+ 
+ 			X509_set_version(x509, 2);
+ 			ASN1_INTEGER_set(X509_get_serialNumber(x509),1);
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 			X509_gmtime_adj(X509_get_notBefore(x509),0);
+ 			X509_gmtime_adj(X509_get_notAfter(x509),60*60*24*365);
++#else
++			X509_gmtime_adj(X509_getm_notBefore(x509),0);
++			X509_gmtime_adj(X509_getm_notAfter(x509),60*60*24*365);
++#endif
+ 			X509_set_pubkey(x509, pkey);
+ 
+ 			X509_NAME *name=X509_get_subject_name(x509);
+@@ -214,9 +228,10 @@ void SSLi_init(void)
+ 	SSL *ssl;
+ 	int i, offset = 0, cipherstringlen = 0;
+ 	STACK_OF(SSL_CIPHER) *cipherlist = NULL, *cipherlist_new = NULL;
+-	SSL_CIPHER *cipher;
++	const SSL_CIPHER *cipher;
+ 	char *cipherstring;
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	SSL_library_init();
+ 	OpenSSL_add_all_algorithms();
+ 	SSL_load_error_strings();
+@@ -225,13 +240,17 @@ void SSLi_init(void)
+ 	context = SSL_CTX_new(SSLv23_server_method());
+ 	SSL_CTX_set_options(context, SSL_OP_NO_SSLv2);
+ 	SSL_CTX_set_options(context, SSL_OP_NO_SSLv3);
+-	SSL_CTX_set_options(context, SSL_OP_CIPHER_SERVER_PREFERENCE);
++#else
++	context = SSL_CTX_new(TLS_server_method());
++	SSL_CTX_set_min_proto_version(context, TLS1_VERSION);
++#endif
+ 	if (context == NULL)
+ 	{
+ 		ERR_print_errors_fp(stderr);
+ 		abort();
+ 	}
+ 
++	SSL_CTX_set_options(context, SSL_OP_CIPHER_SERVER_PREFERENCE);
+ 	SSL_CTX_set_cipher_list(context, ciphers);
+ 
+ 	EC_KEY *ecdhkey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+@@ -290,7 +309,9 @@ void SSLi_init(void)
+ void SSLi_deinit(void)
+ {
+ 	SSL_CTX_free(context);
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	EVP_cleanup();
++#endif
+ }
+ 
+ int SSLi_nonblockaccept(SSL_handle_t *ssl, bool_t *SSLready)
+-- 
+2.16.4
+

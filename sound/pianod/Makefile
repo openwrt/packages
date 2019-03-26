@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pianod
-PKG_VERSION:=174.05
+PKG_VERSION:=174.09
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://github.com/thess/pianod-sc/releases/download/$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MD5SUM:=0bae19b0c1e309343bc1b351e521173fe439431542a949dd2bacf4165cce5200
+PKG_HASH:=744c833ee17a7c95068c6925f4301f342bcad838ad8e48b40a19fd6739533eac
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
@@ -28,7 +28,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/pianod
   SECTION:=sound
   CATEGORY:=Sound
-  DEPENDS:=+libao +libfaad2 +libmad +libmbedtls +libjson-c +libgcrypt +libpthread
+  DEPENDS:=+libao +libfaad2 +libmpg123 +libmbedtls +libjson-c +libgcrypt +libpthread
   TITLE:=Pandora radio daemon
   USERID:=pianod=88:pianod=88
   URL:=http://deviousfish.com/pianod1/

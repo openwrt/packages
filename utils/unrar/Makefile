@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2006-2016 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,16 +6,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unrar
-PKG_VERSION:=5.4.5
+PKG_VERSION:=5.6.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=unrarsrc-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.rarlab.com/rar
-PKG_MD5SUM:=588b3fadc04eea7372cbfe98e4709aee
-PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
+PKG_SOURCE_URL:=https://www.rarlab.com/rar
+PKG_HASH:=a4cc0ac14a354827751912d2af4a0a09e2c2129df5766576fa7e151791dd3dff
+PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>, \
+		Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=UnRAR
 PKG_LICENSE_FILES:=license.txt
+PKG_CPE_ID:=cpe:/a:rarlab:unrar
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-$(BUILD_VARIANT)/unrar
 PKG_INSTALL:=1
@@ -28,7 +28,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/unrar/Default
   TITLE:=UnRAR
   SUBMENU:=Compression
-  URL:=http://www.rarlab.com/
+  URL:=https://www.rarlab.com/
   DEPENDS:=$(CXX_DEPENDS) +libpthread
 endef
 

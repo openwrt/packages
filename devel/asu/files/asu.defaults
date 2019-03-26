@@ -1,0 +1,22 @@
+#!/bin/sh
+
+asu_password=$(dd if=/dev/urandom bs=16 count=1 2>/dev/null | sha256sum | cut -d' ' -f1)
+asu_tables="$(ls -1 /usr/lib/python*/site-packages/asu/utils/tables.sql | head -n 1)"
+
+uci -q batch <<EOF
+	del postgresql.asu
+	set postgresql.asu=postgres-db
+	set postgresql.asu.name=asu
+	set postgresql.asu.user=asu
+	set postgresql.asu.pass='$asu_password'
+	set postgresql.asu.script='$asu_tables'
+	commit postgresql
+EOF
+
+sed -i "s/database_user.*/database_user: asu/" /etc/asu/config.yml
+sed -i "s/database_pass.*/database_pass: $asu_password/" /etc/asu/config.yml
+
+cp -r /usr/lib/python*/site-packages/asu/utils/distributions /etc/asu/
+
+chown -R root:asu /etc/asu
+chmod -R g+rX /etc/asu

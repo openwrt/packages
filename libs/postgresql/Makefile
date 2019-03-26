@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
-PKG_VERSION:=9.4.12
-PKG_RELEASE:=4
+PKG_VERSION:=9.6.12
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
 
@@ -15,12 +15,13 @@ PKG_SOURCE_URL:=\
 	https://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
 	http://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
 	ftp://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
-PKG_MD5SUM:=fca055481875d1c49e31c28443f56472a1474b3fbe25b7ae64440c6118f82e64
+
+PKG_HASH:=2e8c8446ba94767bda8a26cf5a2152bf0ae68a86aaebf894132a763084579d84
 
 PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
 PKG_MACRO_PATHS:=config
-PKG_BUILD_DEPENDS += readline/host postgresql/host
+PKG_BUILD_DEPENDS:=readline/host postgresql/host
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/host-build.mk
@@ -29,7 +30,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libpq
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+zlib +libreadline +libpthread +libncursesw
+  DEPENDS:=+libpthread
   TITLE:=PostgreSQL client library
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -42,7 +43,7 @@ endef
 define Package/pgsql-cli
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq +librt
+  DEPENDS:=+libncursesw +libpq +libreadline +librt +zlib
   TITLE:=Command Line Interface (CLI) to PostgreSQL databases
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -55,7 +56,7 @@ endef
 define Package/pgsql-cli-extra
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq +librt
+  DEPENDS:=+libncursesw +libpq +libreadline +librt +zlib
   TITLE:=Command Line extras for PostgreSQL databases
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -68,7 +69,7 @@ endef
 define Package/pgsql-server
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq +librt +pgsql-cli
+  DEPENDS:=+pgsql-cli
   TITLE:=PostgreSQL databases Server
   URL:=http://www.postgresql.org/
   SUBMENU:=database
@@ -125,6 +126,7 @@ endif
 TARGET_CONFIGURE_OPTS+=$(PGSQL_CONFIG_VARS)
 
 HOST_CONFIGURE_ARGS += \
+			--disable-nls \
 			--disable-rpath \
 			--without-bonjour \
 			--without-gssapi \
@@ -151,14 +153,11 @@ CONFIGURE_ARGS += \
 			--without-tcl \
 			--with-zlib="yes" \
 			--enable-depend \
-			$(if $(CONFIG_TARGET_avr32),--disable-spinlocks)
+			$(if $(CONFIG_arc),--disable-spinlocks)
 
-EXTRA_CFLAGS:= -I$(PKG_BUILD_DIR)/src/include/
-
-# Need a native ecpg and zic for build
+# Need a native ecpg, pg_config and zic for build
 define Host/Compile
-	$(MAKE) -C $(HOST_BUILD_DIR)/src/common CC="$(HOSTCC)"
-	$(MAKE) -C $(HOST_BUILD_DIR)/src/port CC="$(HOSTCC)"
+	$(MAKE) -C $(HOST_BUILD_DIR)/src/bin/pg_config CC="$(HOSTCC)"
 	$(MAKE) -C $(HOST_BUILD_DIR)/src/interfaces/ecpg/preproc CC="$(HOSTCC)"
 	$(MAKE) -C $(HOST_BUILD_DIR)/src/timezone CC="$(HOSTCC)"
 endef
@@ -167,6 +166,7 @@ define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/lib/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/common/libpgcommon.a $(STAGING_DIR_HOSTPKG)/lib/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/port/libpgport.a $(STAGING_DIR_HOSTPKG)/lib/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/bin/pg_config/pg_config $(STAGING_DIR_HOSTPKG)/lib/
 	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/interfaces/ecpg/preproc/ecpg $(STAGING_DIR_HOSTPKG)/bin/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/timezone/zic $(STAGING_DIR_HOSTPKG)/bin/
@@ -176,14 +176,6 @@ define Build/Configure
 	$(Build/Configure/Default)
 	$(SED) 's@ECPG = ../../preproc/ecpg@ECPG = $(STAGING_DIR_HOSTPKG)/bin/ecpg@' $(PKG_BUILD_DIR)/src/interfaces/ecpg/test/Makefile.regress
 endef
-
-define Build/Compile
-	$(call Build/Compile/Default, )
-	$(MAKE) -C $(PKG_BUILD_DIR)/src/bin/pg_config clean
-	$(MAKE) -C $(PKG_BUILD_DIR)/src/bin/pg_config CC="$(HOSTCC)" TARGET_CC="$(TARGET_CC)" CFLAGS="$(HOST_CFLAGS)" TARGET_CFLAGS="$(TARGET_CFLAGS)" LDFLAGS="$(HOST_LDFLAGS)" STD_LDFLAGS="$(TARGET_LDFLAGS)"
-endef
-
-TARGET_CFLAGS += $(FPIC) -lpthread
 
 # because PROFILE means something else in the project Makefile
 unexport PROFILE
@@ -229,7 +221,7 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/bin/pg_config/pg_config $(1)/usr/bin/
+	$(CP) $(STAGING_DIR_HOSTPKG)/lib/pg_config $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/host/bin/
 	$(LN) $(STAGING_DIR)/usr/bin/pg_config $(1)/host/bin
 	$(INSTALL_DIR) $(1)/usr/include
@@ -242,6 +234,8 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/postgresql $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpq.{a,so*} $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libpq.pc $(1)/usr/lib/pkgconfig/
 endef
 
 $(eval $(call HostBuild))

@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acme
-PKG_SOURCE_VERSION:=7b40cbe8c1a52041351524bcde4b37665a7cdf79
-PKG_VERSION:=1.6
-PKG_RELEASE:=2
+PKG_VERSION:=2.7.9
+PKG_RELEASE:=8
 PKG_LICENSE:=GPLv3
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE).tar.xz
-PKG_SOURCE_URL:=git://github.com/Neilpang/acme.sh.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE)
-PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/Neilpang/acme.sh/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=25f8eef1a53584e3ebc653e1ae7763362ca97c40bb476ab7fee01aa50fa3a101
+PKG_BUILD_DIR:=$(BUILD_DIR)/acme.sh-$(PKG_VERSION)
+PKG_MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
+
 LUCI_DIR:=/usr/lib/lua/luci
 
 include $(INCLUDE_DIR)/package.mk
@@ -25,10 +25,8 @@ include $(INCLUDE_DIR)/package.mk
 define Package/acme
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+curl +ca-bundle +openssl-util +netcat
+  DEPENDS:=+curl +ca-bundle +openssl-util +socat
   TITLE:=ACME (Letsencrypt) client
-  PKGARCH:=all
-  MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
 endef
 
 define Package/acme/description
@@ -57,13 +55,27 @@ define Package/acme/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/acme.sh $(1)/usr/lib/acme/acme.sh
 endef
 
+define Package/acme-dnsapi
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=+acme
+  TITLE:=DNS API integration for ACME (Letsencrypt) client
+endef
+
+define Package/acme-dnsapi/description
+ This package provides DNS API integration for ACME (Letsencrypt) client.
+endef
+
+define Package/acme-dnsapi/install
+	$(INSTALL_DIR) $(1)/usr/lib/acme/dnsapi
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/dnsapi/*.sh $(1)/usr/lib/acme/dnsapi
+endef
+
 define Package/luci-app-acme
   SECTION:=luci
   CATEGORY:=LuCI
   TITLE:=ACME package - LuCI interface
-  MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
-  PKGARCH:=all
-  DEPENDS:= lua luci-base +acme luci-app-uhttpd
+  DEPENDS:= lua luci-base +acme
   SUBMENU:=3. Applications
 endef
 
@@ -91,8 +103,10 @@ uci -q get ucitrack.@acme[0] > /dev/null && {
   uci delete ucitrack.@acme[0]
   uci commit
 }
+exit 0
 endef
 
 
 $(eval $(call BuildPackage,acme))
+$(eval $(call BuildPackage,acme-dnsapi))
 $(eval $(call BuildPackage,luci-app-acme))

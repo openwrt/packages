@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2014 Bruno Randolf <br1@einfach.org>
+# Copyright (C) 2019 Yousong Zhou <yszhou4tech@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,16 +10,15 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=exfat-nofuse
-PKG_VERSION=2017-01-03-$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/dorimanx/exfat-nofuse.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_SUBDIR=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=8d291f525ce6d88fe0d8b11b86fd5c2e900401d3
+PKG_SOURCE_DATE:=2018-04-17
+PKG_SOURCE_VERSION:=01c30ad52625a7261e1b0d874553b6ca7af25966
+PKG_MIRROR_HASH:=47e3b6b8384e4beaa07dc762f4e0cce9a067750cbb4b2fb4ba18d2348038c270
 
-PKG_MAINTAINER:=Bruno Randolf <br1@einfach.org>
+PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 

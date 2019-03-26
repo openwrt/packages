@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ipmitool
 PKG_VERSION:=1.8.18
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
@@ -24,7 +24,7 @@ define Package/ipmitool
   CATEGORY:=Administration
   DEPENDS:=+libopenssl +libncurses +libreadline
   TITLE:=Command-line interface to IPMI-enabled devices
-  URL:=http://sourceforge.net/projects/ipmitool/
+  URL:=https://github.com/ipmitool/ipmitool
   MAINTAINER:=Alexander Couzens <lynxis@fe80.eu>
 endef
 

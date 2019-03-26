@@ -1,0 +1,10 @@
+--- a/Lib/py_compile.py
++++ b/Lib/py_compile.py
+@@ -108,6 +108,7 @@ def compile(file, cfile=None, dfile=None
+             timestamp = long(os.fstat(f.fileno()).st_mtime)
+         except AttributeError:
+             timestamp = long(os.stat(file).st_mtime)
++        timestamp = long(os.getenv('SOURCE_DATE_EPOCH', timestamp))
+         codestring = f.read()
+     try:
+         codeobject = __builtin__.compile(codestring, dfile or file,'exec')

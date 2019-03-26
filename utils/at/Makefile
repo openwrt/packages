@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=at
-PKG_VERSION:=3.1.16
-PKG_RELEASE:=2
+PKG_VERSION:=3.1.23
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
 PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/a/at
-PKG_MD5SUM:=d05da75d9b75d93917ffb16ab48b1e19
+PKG_HASH:=97450aa954aaa8a70218cc8e61a33df9fee9f86527e9f861de302fb7a3c81710
 
 PKG_LICENSE:=GPL-2.0+ GPL-3.0+ ISC
 PKG_LICENSE_FILES:=COPYING Copyright
@@ -24,7 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/at
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libelf1
+  DEPENDS:=+libelf
   TITLE:=Delayed job execution and batch processing
   URL:=http://packages.debian.org/stable/at
 endef

@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ocserv
-PKG_VERSION:=0.11.8
+PKG_VERSION:=0.12.3
 PKG_RELEASE:=1
 PKG_USE_MIPS16:=0
 
 PKG_BUILD_DIR :=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=ftp://ftp.infradead.org/pub/ocserv/
-PKG_HASH:=735b9b88a004d5bc8a91d4093d07ea0e2c9fac370a35d84beccc394ed24420c7
+PKG_HASH:=42f8f459dae6f88862d4098997d8f5668d97439ec78beede3985f6ff24d91edd
 
 PKG_LICENSE:=GPLv2+
 PKG_LICENSE_FILES:=COPYING
-PKG_FIXUP:=autoreconf
+#PKG_FIXUP:=autoreconf
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_OCSERV_PAM \
@@ -57,10 +57,8 @@ EXTRA_LDFLAGS+=-lncurses
 
 CONFIGURE_ARGS+= \
 	--with-pager="" \
-	--enable-local-libopts \
 	--with-libreadline-prefix="$(STAGING_DIR)/" \
 	--without-libnl \
-	--without-lz4 \
 	--without-gssapi \
 	--with-libcrypt-prefix="$(STAGING_DIR)/" \
 	--with-libev-prefix="$(STAGING_DIR)/" \

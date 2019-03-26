@@ -7,5 +7,5 @@
 -	@CC@ -o $@ @RDYNAMIC@ $^ $(LDFLAGS) $(PPPOE_SERVER_LIBS) -Llibevent -levent
 +	@CC@ -o $@ @RDYNAMIC@ $^ $(LDFLAGS) $(PPPOE_SERVER_LIBS)
  
- pppoe: pppoe.o if.o debug.o common.o ppp.o discovery.o
- 	@CC@ -o $@ $^ $(LDFLAGS)
+ # Experimental code from Savoir Faire Linux.  I do not consider it
+ # production-ready, so not part of the official distribution.

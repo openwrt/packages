@@ -9,14 +9,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
-PKG_VERSION:=1.4.12
+PKG_VERSION:=1.5.7
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
+PKG_CPE_ID:=cpe:/a:eclipse:mosquitto
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://mosquitto.org/files/source/
-PKG_HASH:=b12e2353f92cb76882ce7b7bddfea022b461b38cbe6e7fb7c969d0daeb379cf7
+PKG_SOURCE_URL:=https://mosquitto.org/files/source/
+PKG_HASH:=d4024c3388502d50be4192991e90d66dfb344376104df3f63846c9f201779955
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
@@ -60,7 +61,8 @@ endef
 
 define Package/mosquitto-ssl/description
 	$(call Package/mosquitto/default/description)
-	This package is built with SSL support
+This package is built with SSL support.  TLS-PSK will be included (in both
+the client and broker) if OpenSSL is built with TLS-PSK support.
 endef
 
 define Package/mosquitto-nossl/description
@@ -144,7 +146,7 @@ endef
 define Package/libmosquittopp
     SECTION:=libs
     CATEGORY:=Libraries
-    DEPENDS:=+libmosquitto-ssl +libstdcpp
+    DEPENDS:=libmosquitto +libstdcpp
     TITLE:= mosquitto - client c++ library
 endef
 
@@ -191,11 +193,22 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_BUILD_DIR)/lib/mosquitto.h $(1)/usr/include
 	$(CP) $(PKG_BUILD_DIR)/lib/cpp/mosquittopp.h $(1)/usr/include
+	$(CP) $(PKG_BUILD_DIR)/src/mosquitto_plugin.h $(1)/usr/include
+	$(CP) $(PKG_BUILD_DIR)/src/mosquitto_broker.h $(1)/usr/include
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/lib/libmosquitto.so.1 $(1)/usr/lib/
 	$(CP) $(PKG_BUILD_DIR)/lib/cpp/libmosquittopp.so.1 $(1)/usr/lib/
 	$(LN) libmosquitto.so.1 $(1)/usr/lib/libmosquitto.so
 	$(LN) libmosquittopp.so.1 $(1)/usr/lib/libmosquittopp.so
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_BUILD_DIR)/libmosquitto.pc.in $(1)/usr/lib/pkgconfig/libmosquitto.pc
+	sed -i -e "s#@CMAKE_INSTALL_PREFIX@#/usr#" \
+	       -e "s#@VERSION@#$(PKG_VERSION)#" \
+	    $(1)/usr/lib/pkgconfig/libmosquitto.pc
+	$(CP) $(PKG_BUILD_DIR)/libmosquittopp.pc.in $(1)/usr/lib/pkgconfig/libmosquittopp.pc
+	sed -i -e "s#@CMAKE_INSTALL_PREFIX@#/usr#" \
+	       -e "s#@VERSION@#$(PKG_VERSION)#" \
+	    $(1)/usr/lib/pkgconfig/libmosquittopp.pc
 endef
 
 # This installs files on the target.  Compare with Build/InstallDev
@@ -218,6 +231,7 @@ ifeq ($(BUILD_VARIANT),nossl)
 	MAKE_FLAGS += WITH_TLS=no WITH_WEBSOCKETS=no
 else
 	MAKE_FLAGS += WITH_WEBSOCKETS=$(if $(CONFIG_MOSQUITTO_LWS),"yes","no")
+	MAKE_FLAGS += WITH_TLS_PSK=$(if $(CONFIG_OPENSSL_WITH_PSK),"yes","no")
 endif
 
 $(eval $(call BuildPackage,mosquitto-ssl))

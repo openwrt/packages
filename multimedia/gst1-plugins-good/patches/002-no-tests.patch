@@ -1,6 +1,16 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -2,7 +2,6 @@ DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-doc
+ 
+ ALWAYS_SUBDIRS =		\
+ 	gst sys ext 		\
+-	tests			\
+ 	docs			\
+ 	common			\
+ 	m4			\
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1049,21 +1049,6 @@ sys/sunaudio/Makefile
+@@ -1292,22 +1292,6 @@ sys/osxvideo/Makefile
  sys/v4l2/Makefile
  sys/waveform/Makefile
  sys/ximage/Makefile
@@ -10,10 +20,11 @@
 -tests/examples/audiofx/Makefile
 -tests/examples/cairo/Makefile
 -tests/examples/equalizer/Makefile
+-tests/examples/gtk/Makefile
 -tests/examples/jack/Makefile
 -tests/examples/level/Makefile
--tests/examples/pulse/Makefile
 -tests/examples/rtp/Makefile
+-tests/examples/rtsp/Makefile
 -tests/examples/shapewipe/Makefile
 -tests/examples/spectrum/Makefile
 -tests/examples/v4l2/Makefile
@@ -22,13 +33,3 @@
  common/Makefile
  common/m4/Makefile
  m4/Makefile
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -2,7 +2,6 @@ DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-d
- 
- ALWAYS_SUBDIRS =		\
- 	gst sys ext 		\
--	tests			\
- 	docs			\
- 	common			\
- 	m4			\

@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/D/DA/DAGOLDEN
 PKG_SOURCE:=Sub-Uplevel-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=5d0752dbfa94d0c91b25a264f47f5675
+PKG_HASH:=2dcca582a7ea5bada576eb27c4be1d1b064fb22175bdbd6d696c45d083560505
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>

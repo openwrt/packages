@@ -1,7 +1,7 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -187,8 +187,8 @@ installpythonmodule3:	pythonmodule3
- 	python3 setup.py install
+@@ -186,8 +186,8 @@ installpythonmodule3:	pythonmodule3
+ 	MAKE=$(MAKE) python3 setup.py install
  
  validateminixml:	minixmlvalid
 -	@echo "minixml validation test"

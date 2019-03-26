@@ -1,0 +1,35 @@
+Index: gkrellm-2.3.10/server/gkrellmd.conf
+===================================================================
+--- gkrellm-2.3.10.orig/server/gkrellmd.conf	2008-03-09 10:19:26.000000000 +0100
++++ gkrellm-2.3.10/server/gkrellmd.conf	2008-03-09 10:19:26.000000000 +0100
+@@ -4,7 +4,7 @@
+ # the client update frequency.  Values may be from 1 to 10 and should be
+ # smaller values to reduce network traffic.
+ #
+-#update-hz 3
++update-hz 10
+ 
+ # Limit number of simultaneous clients allowed to connect.
+ #
+@@ -30,18 +30,18 @@
+ # Drop privileges after startup (you must start gkrellmd as root to do it).
+ # NOTE: Option ignored on Windows
+ #
+-#user	nobody
++user	nobody
+ #group	proc
+ 
+ # Create a PID file for the running gkrellmd.  Default is no PID file.
+ # NOTE: Option ignored on Windows
+ #
+-#pidfile /var/run/gkrellmd.pid
++pidfile /var/run/gkrellmd.pid
+ 
+ # Run in background and detach from the controlling terminal
+ # NOTE: Option ignored on Windows
+ #
+-#detach
++detach
+ 
+ # Time interval between checks for various monitors.  If nfs-interval
+ # is <= 0 then gkrellmd will not read data for nfs file system types.

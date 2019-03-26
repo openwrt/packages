@@ -8,17 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=forked-daapd
-PKG_VERSION:=24.2
+PKG_VERSION:=26.4
 PKG_RELEASE:=1
-PKG_REV:=1b6283752ed0b790a6658bed1f05946e1af193da
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/ejurgensen/forked-daapd.git
-PKG_SOURCE_VERSION:=$(PKG_REV)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/ejurgensen/$(PKG_NAME)/releases/download/$(PKG_VERSION)/
+PKG_HASH:=c37012faf56238544fc7274ad0ade7bf16c15a9ae6af9ef4ba56ba88e508fffa
 
-PKG_BUILD_DEPENDS:=gperf/host
 PKG_FIXUP:=autoreconf
 PKG_USE_MIPS16:=0
 PKG_INSTALL:=1
@@ -38,7 +34,7 @@ URL:=https://github.com/ejurgensen/forked-daapd
 DEPENDS:=+libgpg-error +libgcrypt +libgdbm +zlib +libexpat +libunistring \
 	+libevent2 +libdaemon +libantlr3c +confuse +alsa-lib +libffmpeg-full \
 	+mxml +libavahi-client +sqlite3-cli +libplist +libcurl +libjson-c \
-	+libprotobuf-c +libgnutls $(ICONV_DEPENDS)
+	+libprotobuf-c +libgnutls +libsodium +libwebsockets $(ICONV_DEPENDS)
 endef
 
 define Package/forked-daapd/description
@@ -56,7 +52,15 @@ CONFIGURE_ARGS += \
 	--enable-itunes \
 	--enable-lastfm \
 	--enable-mpd \
-	--enable-chromecast
+	--enable-chromecast \
+	--enable-verification \
+	--enable-webinterface \
+	--disable-spotify \
+	--with-libplist \
+	--with-libwebsockets \
+	--with-alsa \
+	--without-pulseaudio \
+	--without-libevent_pthreads
 
 TARGET_CFLAGS += $(FPIC)
 TARGET_LDFLAGS += -Wl,-rpath-link,$(STAGING_DIR)/usr/lib

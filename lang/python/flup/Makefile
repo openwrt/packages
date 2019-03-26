@@ -8,17 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=flup
-PKG_VERSION:=1.0.2
+PKG_VERSION:=1.0.3
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pypi.python.org/packages/source/f/flup/
-PKG_MD5SUM:=24dad7edc5ada31dddd49456ee8d5254
-PKG_BUILD_DEPENDS:=python python-setuptools
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/f/flup
+PKG_HASH:=5eb09f26eb0751f8380d8ac43d1dfb20e1d42eca0fa45ea9289fa532a79cd159
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/flup
   SUBMENU:=Python
@@ -26,7 +25,7 @@ define Package/flup
   CATEGORY:=Languages
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
   TITLE:=Random assortment of WSGI servers
-  URL:=http://www.saddi.com/software/flup/
+  URL:=https://www.saddi.com/software/flup/
   DEPENDS:=+python
 endef
 

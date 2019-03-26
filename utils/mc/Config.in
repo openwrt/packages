@@ -53,7 +53,7 @@ config MC_VFS
 	help
            This option enables the Virtual File System switch code to get
            transparent access to the following file systems:
-           cpio, tar, fish, sfs, ftp, sftp, extfs, smb.
+           cpio, tar, fish, sfs, ftp, sftp, extfs.
            Disabled by default.
 
 endmenu

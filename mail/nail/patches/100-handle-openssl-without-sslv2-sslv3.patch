@@ -4,7 +4,7 @@
  
  	cp = ssl_method_string(uhp);
  	if (cp != NULL) {
-+#ifndef OPENSSL_NO_SSL2
++#if !defined(OPENSSL_NO_SSL2) && !OPENSSL_VERSION_NUMBER >= 0x10100000L
  		if (equal(cp, "ssl2"))
  			method = SSLv2_client_method();
 -		else if (equal(cp, "ssl3"))

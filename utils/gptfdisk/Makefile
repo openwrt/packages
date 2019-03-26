@@ -1,6 +1,5 @@
 #
-# Copyright (C) 2016 Daniel Engberg <daniel.engberg.lists@pyret.net>
-#
+# Copyright (C) 2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,79 +8,91 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gptfdisk
-PKG_VERSION:=1.0.1
+PKG_VERSION:=1.0.4
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/gptfdisk
-PKG_MD5SUM:=d7f3d306b083123bcc6f5941efade586
+PKG_MAINTAINER:=Alif M. Ahmad <alive4ever@live.com>
+PKG_LICENSE:=GPL-2.0
 
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=@SF/$(PKG_NAME)
+PKG_HASH:=b663391a6876f19a3cd901d862423a16e2b5ceaa2f4a3b9bb681e64b9c7ba78d
+
+PKG_BUILD_PARALLEL:=1
+
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 
-define Package/gptfdisk/default
+define Package/gptfdisk/Default
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Disc
   URL:=http://www.rodsbooks.com/gdisk
-  MAINTAINER:=Daniel Engberg <daniel.engberg.lists@pyret.net>
+  DEPENDS:= +libstdcpp
 endef
 
 define Package/gdisk
-  $(call Package/gptfdisk/default)
-  TITLE:=GPT partition table manipulation utility
-  DEPENDS:=+libstdcpp +libuuid +libpopt
+$(call Package/gptfdisk/Default)
+  TITLE:=GPT aware disk manipulation utility for interactive use
+  DEPENDS+= +libuuid
 endef
 
 define Package/gdisk/description
- GPT partition table manipulation utility with an interface
- similar to fdisk. It can read and convert MBR partitions in GPT
- but is otherwise unable to generate or modify MBR partitions.
-endef
-
-define Package/sgdisk
-  $(call Package/gptfdisk/default)
-  TITLE:=script-friendly GPT partition table manipulation utility
-  DEPENDS:=+libstdcpp +libuuid +libpopt
-endef
-
-define Package/sgdisk/description
- Script-friendly GPT partition table manipulation utility.
- It can read and convert MBR partitions in GPT but is otherwise
- unable to generate or modify MBR partitions.
- To the contrary of gdisk, its interface is geared towards scripts,
- so it takes command line arguments instead of being interactive.
- It will NOT ask confirmation before carrying out the operations.
- It has a slightly smaller footprint than gdisk tool.
+  gdisk is GPT aware disk partitioning tool, with interactive UI.
 endef
 
 define Package/cgdisk
- $(call Package/gptfdisk/default)
- TITLE:=ncurses-based GPT partition table manipulation utility
- DEPENDS:=+libstdcpp +libuuid +libncurses +libpopt
+$(call Package/gptfdisk/Default)
+  TITLE:=GPT aware disk manipulation utility for interactive use
+  DEPENDS+= +libuuid +libncursesw
 endef
 
 define Package/cgdisk/description
-ncurses-based partition table manipulation utility with GPT support.
-Similar to sfdisk, but works with GPT partitions. Shares the same limitations
-of the gdisk partition utility. While it can read and convert MBR partitions
-in GPT, it cannot modify MBR partitions on its own.
+  cgdisk is GPT aware disk partitioning tool, with interactive ncurses based UI.
+endef
+
+define Package/sgdisk
+$(call Package/gptfdisk/Default)
+  TITLE:=GPT aware disk manipulation utility for scripting use
+  DEPENDS+= +libuuid +libpopt
+endef
+
+define Package/sgdisk/description
+  sgdisk is GPT-aware disk partitioning tool for scripting use.
+endef
+
+define Package/fixparts
+$(call Package/gptfdisk/Default)
+  TITLE:=A utility to fix corrupted MBR partitions
+  DEPENDS+=
+endef
+
+define Package/fixparts/description
+  a text-mode menu-driven program for repairing certain types of problems with
+  Master Boot Record (MBR) partition tables
 endef
 
 define Package/gdisk/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/gdisk $(1)/usr/sbin
-endef
-
-define Package/sgdisk/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sgdisk $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/gdisk $(1)/usr/bin/
 endef
 
 define Package/cgdisk/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cgdisk $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cgdisk $(1)/usr/bin/
+endef
+
+define Package/sgdisk/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sgdisk $(1)/usr/bin/
+endef
+
+define Package/fixparts/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/fixparts $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,gdisk))
-$(eval $(call BuildPackage,sgdisk))
 $(eval $(call BuildPackage,cgdisk))
+$(eval $(call BuildPackage,sgdisk))
+$(eval $(call BuildPackage,fixparts))

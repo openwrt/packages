@@ -1,4 +1,4 @@
-# 
+#
 # Copyright (C) 2014-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -8,15 +8,29 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postfix
-PKG_RELEASE:=2
-PKG_SOURCE_URL:=ftp://ftp.porcupine.org/mirrors/postfix-release/official/
-PKG_VERSION:=3.1.4
-PKG_MD5SUM:=878a059d92ee3b093d7d3e97248c915d
+PKG_RELEASE:=3
+PKG_VERSION:=3.3.2
+PKG_SOURCE_URL:= \
+	https://cdn.postfix.johnriley.me/mirrors/postfix-release/official/ \
+	ftp://ftp.porcupine.org/mirrors/postfix-release/official/
+
+PKG_HASH:=3c93f31eee49a58e592c31e62a058701cadde11e8e066ea441da19fddad7b35b
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
 PKG_LICENSE:=IPL-1.0
 PKG_LICENSE_FILES:=LICENSE
-PKG_BUILD_DEPENDS:=+POSTFIX_CDB:tinycdb
+PKG_BUILD_DEPENDS:=POSTFIX_CDB:tinycdb
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_POSTFIX_TLS \
+	CONFIG_POSTFIX_SASL \
+	CONFIG_POSTFIX_LDAP \
+	CONFIG_POSTFIX_CDB \
+	CONFIG_POSTFIX_DB \
+	CONFIG_POSTFIX_SQLITE \
+	CONFIG_POSTFIX_MYSQL \
+	CONFIG_POSTFIX_PGSQL \
+	CONFIG_POSTFIX_PCRE \
+	CONFIG_POSTFIX_EAI \
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -24,8 +38,11 @@ define Package/postfix
   SECTION:=mail
   CATEGORY:=Mail
   TITLE:=Postfix Mail Transmit Agent
+  USERID:= \
+  	postfix=25:postfix=25 \
+  	postdrop=26:postdrop=26
   URL:=http://www.postfix.org/
-  DEPENDS:=+POSTFIX_TLS:libopenssl +POSTFIX_SASL:libsasl2 +POSTFIX_LDAP:libopenldap +POSTFIX_DB:libdb47 +POSTFIX_SQLITE:libsqlite3 +POSTFIX_EAI:icu +libpcre
+  DEPENDS:=+POSTFIX_TLS:libopenssl +POSTFIX_SASL:libsasl2 +POSTFIX_LDAP:libopenldap +POSTFIX_DB:libdb47 +POSTFIX_SQLITE:libsqlite3 +POSTFIX_MYSQL:libmysqlclient +POSTFIX_PGSQL:libpq +POSTFIX_EAI:icu +POSTFIX_PCRE:libpcre
 endef
 
 define Package/postfix/description
@@ -53,7 +70,7 @@ define Package/postfix/config
 			bool "BerkeleyDB support"
 			default n
 			help
-			  Implements support for btree files using Berkeley DB. Note that hash files support is not compiled into Berkeley DB OpenWRT distribution
+			  Implements support for btree and hash files using Berkeley DB.
 		config POSTFIX_CDB
 			bool "CDB support"
 			default y
@@ -64,22 +81,36 @@ define Package/postfix/config
 			default y
 			help
 			  Implements support for SQLite3 DB
+		config POSTFIX_MYSQL
+			bool "MYSQL support"
+			default n
+			help
+			  Implements support for MySQL
+		config POSTFIX_PGSQL
+			bool "PostgreSQL support"
+			default n
+			help
+			  Implement support for PostgreSQL
+		config POSTFIX_PCRE
+			bool "PCRE support"
+			default y
+			help
+			  Implement support for Perl Compatible Regular Expressions
 		config POSTFIX_EAI
 			bool "SMTPUTF8 support"
 			default n
 			help
-				Enable Postfix support for Email Address Internationalization
-				(EAI) as defined in RFC 6531 (SMTPUTF8 extension), RFC 6532
-				(Internationalized email headers) and RFC 6533
-				(Internationalized delivery status notifications).
-				Since version 3.0, Postfix fully supports UTF-8 email
-				addresses and UTF-8 message header values.
+			  Enable Postfix support for Email Address Internationalization
+			  (EAI) as defined in RFC 6531 (SMTPUTF8 extension), RFC 6532
+			  (Internationalized email headers) and RFC 6533
+			  (Internationalized delivery status notifications).
+			  Since version 3.0, Postfix fully supports UTF-8 email
+			  addresses and UTF-8 message header values.
 	endmenu
 endef
 
 CCARGS=-DNO_NIS
 AUXLIBS=-L$(STAGING_DIR)/usr/lib
-default_database_type=cdb
 
 ifdef CONFIG_POSTFIX_TLS
   CCARGS+=-DUSE_TLS
@@ -99,12 +130,15 @@ endif
 ifdef CONFIG_POSTFIX_CDB
   CCARGS+=-DHAS_CDB
   AUXLIBS+=-lcdb
+  ifndef default_database_type
+    default_database_type=cdb
+  endif
 endif
 
 ifdef CONFIG_POSTFIX_DB
   AUXLIBS+=-ldb
   CCARGS+=-DHAS_DB
-  ifndef CONFIG_POSTFIX_CDB
+  ifndef default_database_type
     default_database_type=btree
   endif
 else
@@ -114,6 +148,23 @@ endif
 ifdef CONFIG_POSTFIX_SQLITE
   CCARGS+=-DHAS_SQLITE -I$(STAGING_DIR)/usr/include/
   AUXLIBS+=-L$(STAGING_DIR)/usr/lib -lsqlite3 -lpthread
+endif
+
+ifdef CONFIG_POSTFIX_MYSQL
+  CCARGS+=-DHAS_MYSQL -I$(STAGING_DIR)/usr/include/mysql
+  AUXLIBS+=-L$(STAGING_DIR)/usr/lib -lmysqlclient -lz -lm
+endif
+
+ifdef CONFIG_POSTFIX_PGSQL
+  CCARGS+=-DHAS_PGSQL -I$(STAGING_DIR)/usr/include/
+  AUXLIBS+=-L$(STAGING_DIR)/usr/lib -lpq
+endif
+
+ifdef CONFIG_POSTFIX_PCRE
+  CCARGS+=-DHAS_PCRE -I$(STAGING_DIR)/usr/include/
+  AUXLIBS+=-L$(STAGING_DIR)/usr/lib -lpcre
+else
+  CCARGS+=-DNO_PCRE
 endif
 
 ifdef CONFIG_POSTFIX_EAI
@@ -127,13 +178,12 @@ endif
 
 CCARGS+=-DDEF_DB_TYPE=\"$(default_database_type)\"
 
-config_directory=/etc/postfix# also add this to postfix init file
+# prevent postfix-install from executing postconf at build time
+# by explicitly providing the default values to postfix-install
+config_directory=/etc/postfix
 sample_directory=/etc/postfix
 command_directory=/usr/sbin
 daemon_directory=/usr/libexec/postfix
-data_directory=/usr/var/lib/postfix
-queue_directory=/usr/var/spool/postfix
-mail_spool_directory=/usr/var/mail
 html_directory=no
 manpage_directory=no
 readme_directory=no
@@ -142,66 +192,38 @@ newaliases_path=/usr/bin/newaliases
 mailq_path=/usr/bin/mailq
 shlib_directory=/usr/lib/postfix
 meta_directory=/etc/postfix
+data_directory=/usr/var/lib/postfix
+queue_directory=/usr/var/spool/postfix
+mail_spool_directory=/usr/var/mail
 
 ln_suffix=.postfix
-ln_old_suffix=.old
+ln_suffix_pre_pf=.pre-postfix
+ln_suffix_legacy=.old
 
 define Package/postfix/conffiles
-$(config_directory)/main.cf
-$(config_directory)/master.cf
-$(config_directory)/aliases
-$(config_directory)/virtual
+$(config_directory)
 endef
 
 define Build/Configure
-	if [ "$(CONFIG_POSTFIX_DB)" = "" -a "$(CONFIG_POSTFIX_CDB)" = "" ]; then\
-	  echo "Build error: You must select at least one of the DB types";\
-          exit 1;\
+	if [ "$(default_database_type)" = "" ]; then \
+		echo "Build error: CDB or BerkeleyDB support must be enabled."; \
+		exit 1; \
 	fi
-
 	cd $(PKG_BUILD_DIR); $(MAKE) makefiles CCARGS='$(CCARGS)' $(TARGET_CONFIGURE_OPTS) AUXLIBS="$(AUXLIBS)"
 endef
-
-# Steps to regenerate files/main.cf.default:
-#
-# 1. Compile the package with current file
-# 2. Execute the following command on target device:
-# 	postconf -d > /tmp/main.cf.new
-# 3. Transfer /tmp/main.cf.new file to the build system
-# 4. Execute the following command:
-# 	cat /tmp/main.cf.new | ( echo '# DO NOT EDIT THIS FILE. EDIT THE MAIN.CF FILE INSTEAD. THE'; echo '# TEXT HERE JUST SHOWS DEFAULT SETTINGS BUILT INTO POSTFIX.'; echo '#'; grep -v ^alias_maps\ = |grep -v ^alias_database\ = |grep -v ^command_directory\ = |grep -v ^config_directory\ = |grep -v ^daemon_directory\ = |grep -v ^data_directory\ = |grep -v ^default_database_type\ = |grep -v ^html_directory\ = |grep -v ^mail_spool_directory\ = |grep -v ^mailq_path\ = |grep -v ^manpage_directory\ = |grep -v ^meta_directory\ = |grep -v ^mydomain\ = |grep -v ^myhostname\ = |grep -v ^mynetworks\ = |grep -v ^mynetworks_style\ = |grep -v ^newaliases_path\ = |grep -v ^queue_directory\ = |grep -v ^readme_directory\ = |grep -v ^sample_directory\ = |grep -v ^sendmail_path\ = |grep -v ^shlib_directory\ = |grep -v ^smtputf8_enable\ = |grep -v ^virtual_maps\ = |grep -v ^process_id\ = ) > files/main.cf.default
-# 5. Done. Now you can rebuild the package with new main.cf.default.
-#
 
 define Build/Compile
 	# Currently postfix has a bug with Makefiles that CCARGS are not passed to the compiler, so we are copying them to CC as a workaround
 	cd $(PKG_BUILD_DIR); $(MAKE) $(TARGET_CONFIGURE_OPTS) CC='$(TARGET_CC) $(CCARGS)'
-	cp ./files/main.cf.default $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "default_database_type = $(default_database_type)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "alias_database = $(default_database_type):$(config_directory)/aliases" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "alias_maps = $(default_database_type):$(config_directory)/aliases" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "virtual_maps = $(default_database_type):$(config_directory)/virtual" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "sendmail_path = $(sendmail_path)$(ln_suffix)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "newaliases_path = $(newaliases_path)$(ln_suffix)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "mailq_path = $(mailq_path)$(ln_suffix)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "html_directory = $(html_directory)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "manpage_directory = $(manpage_directory)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "sample_directory = $(sample_directory)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "readme_directory = $(readme_directory)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "command_directory = $(command_directory)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "daemon_directory = $(daemon_directory)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "data_directory = $(data_directory)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "queue_directory = $(queue_directory)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "config_directory = $(config_directory)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "mail_spool_directory = $(mail_spool_directory)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "shlib_directory = $(shlib_directory)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "meta_directory = $(meta_directory)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
-	echo "smtputf8_enable = $(smtputf8_conf)" >> $(PKG_BUILD_DIR)/conf/main.cf.default
+	$(foreach p, \
+		default_database_type config_directory command_directory daemon_directory \
+		shlib_directory manpage_directory data_directory queue_directory \
+		mail_spool_directory, \
+	echo "$(p) = $($(p))" >> $(PKG_BUILD_DIR)/conf/main.cf;)
 endef
 
 define Package/postfix/install
 	cd $(PKG_BUILD_DIR); $(MAKE) install_root=$(1) command_directory=$(command_directory) daemon_directory=$(daemon_directory) data_directory=$(data_directory) html_directory=$(html_directory) mail_owner=postfix mailq_path=$(mailq_path)$(ln_suffix) manpage_directory=$(manpage_directory) newaliases_path=$(newaliases_path)$(ln_suffix) queue_directory=$(queue_directory) readme_directory=$(readme_directory) sendmail_path=$(sendmail_path)$(ln_suffix) setgid_group=postdrop sample_directory=$(sample_directory) config_directory=$(config_directory) shlib_directory=$(shlib_directory) meta_directory=$(meta_directory) mail_version=$(PKG_VERSION) non-interactive-package
-	$(INSTALL_DIR) $(1)$(mail_spool_directory)
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_BIN) ./files/postfix.init $(1)/etc/init.d/postfix
 endef
@@ -209,69 +231,46 @@ endef
 define Package/postfix/postinst
 #!/bin/sh
 
- if [ -f "$${IPKG_INSTROOT}$(sendmail_path)" -a "$$(readlink "$${IPKG_INSTROOT}$(sendmail_path)")" != "$(sendmail_path)$(ln_suffix)" ]; then
-  mv "$${IPKG_INSTROOT}$(sendmail_path)" "$${IPKG_INSTROOT}$(sendmail_path)$(ln_old_suffix)"
-  echo "Warning: $${IPKG_INSTROOT}$(sendmail_path) saved as $${IPKG_INSTROOT}$(sendmail_path)$(ln_old_suffix)"
- fi
- if [ ! -f "$${IPKG_INSTROOT}$(sendmail_path)" ]; then
-  ln -s "$${IPKG_INSTROOT}$(sendmail_path)$(ln_suffix)" "$(sendmail_path)"
- fi
+for syml in $(sendmail_path) $(newaliases_path) $(mailq_path); do
+  file=$${IPKG_INSTROOT}$${syml}
+  if [ -f "$${file}$(ln_suffix_legacy)" ]; then
+    # update files saved by legacy versions of Postfix postinst script
+    mv "$${file}$(ln_suffix_legacy)" "$${file}$(ln_suffix_pre_pf)"
+  fi
+  if [ -f "$${file}" ]; then
+    linktarget=$$(basename $$(readlink "$${file}"))
+    postfixf=$$(basename "$${syml}")$(ln_suffix)
+    if [ $${linktarget} != $${postfixf} ]; then
+      mv "$${file}" "$${file}$(ln_suffix_pre_pf)"
+      echo "Info: $${file} saved as $${file}$(ln_suffix_pre_pf)"
+    fi
+  fi
+  if [ ! -f "$${file}" ]; then
+    ln -s "$${syml}$(ln_suffix)" "$${file}"
+  fi
+done
+# fix file/dir ownership in data_directory and queue_directory
+if [ -z "$${IPKG_INSTROOT}" ]; then
+  postfix set-permissions
+fi
 
- if [ -f "$${IPKG_INSTROOT}$(newaliases_path)" -a "$$(readlink "$${IPKG_INSTROOT}$(newaliases_path)")" != "$(newaliases_path)$(ln_suffix)" ]; then
-  mv "$${IPKG_INSTROOT}$(newaliases_path)" "$${IPKG_INSTROOT}$(newaliases_path)$(ln_old_suffix)"
-  echo "Warning: $${IPKG_INSTROOT}$(newaliases_path) saved as $${IPKG_INSTROOT}$(newaliases_path)$(ln_old_suffix)"
- fi
- if [ ! -f "$${IPKG_INSTROOT}$(newaliases_path)" ]; then
-  ln -s "$${IPKG_INSTROOT}$(newaliases_path)$(ln_suffix)" "$(newaliases_path)"
- fi
-
- if [ -f "$${IPKG_INSTROOT}$(mailq_path)" -a "$$(readlink "$${IPKG_INSTROOT}$(mailq_path)")" != "$(mailq_path)$(ln_suffix)" ]; then
-  mv "$${IPKG_INSTROOT}$(mailq_path)" "$${IPKG_INSTROOT}$(mailq_path)$(ln_old_suffix)"
-  echo "Warning: $${IPKG_INSTROOT}$(mailq_path) saved as $${IPKG_INSTROOT}$(mailq_path)$(ln_old_suffix)"
- fi
- if [ ! -f "$(mailq_path)" ]; then
-  ln -s "$${IPKG_INSTROOT}$(mailq_path)$(ln_suffix)" "$(mailq_path)"
- fi
-
- grep -qc main\.cf "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/main.cf" >> "$${IPKG_INSTROOT}"/etc/sysupgrade.conf
- grep -qc master\.cf "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/master.cf" >> "$${IPKG_INSTROOT}"/etc/sysupgrade.conf
- grep -qc aliases "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/aliases" >> "$${IPKG_INSTROOT}"/etc/sysupgrade.conf
- grep -qc virtual "$${IPKG_INSTROOT}"/etc/sysupgrade.conf >/dev/null || echo "$(config_directory)/virtual" >> "$${IPKG_INSTROOT}"/etc/sysupgrade.conf
-
- touch "$${IPKG_INSTROOT}$(config_directory)"/opkg_postinst
-
- if [ -z "$${IPKG_INSTROOT}" ]; then
-  ps | grep "postfix/master" | grep -cvq grep >/dev/null && /etc/init.d/postfix restart
- fi
-
-endef
-
-define Package/postfix/prerm
-#!/bin/sh
- ps | grep "postfix/master" | grep -cvq grep >/dev/null && postfix stop
- /etc/init.d/postfix disable
 endef
 
 define Package/postfix/postrm
 #!/bin/sh
- rm -f $${IPKG_INSTROOT}$(config_directory)/aliases.cdb $${IPKG_INSTROOT}$(config_directory)/aliases.db $${IPKG_INSTROOT}$(data_directory)/master.lock
+rm -f "$(sendmail_path)" "$(newaliases_path)" "$(mailq_path)"
 
- rm -f $${IPKG_INSTROOT}$(config_directory)/virtual.cdb $${IPKG_INSTROOT}$(config_directory)/virtual.db
-
- rm -f "$${IPKG_INSTROOT}$(sendmail_path)" "$${IPKG_INSTROOT}$(newaliases_path)" "$${IPKG_INSTROOT}$(mailq_path)"
-
- if [ -f "$${IPKG_INSTROOT}$(sendmail_path)$(ln_old_suffix)" ]; then
-  mv "$${IPKG_INSTROOT}$(sendmail_path)$(ln_old_suffix)" "$${IPKG_INSTROOT}$(sendmail_path)"
-  echo "Warning: $${IPKG_INSTROOT}$(sendmail_path) restored from $${IPKG_INSTROOT}$(sendmail_path)$(ln_old_suffix)"
- fi
- if [ -f "$${IPKG_INSTROOT}$(newaliases_path)$(ln_old_suffix)" ]; then
-  mv "$${IPKG_INSTROOT}$(newaliases_path)$(ln_old_suffix)" "$${IPKG_INSTROOT}$(newaliases_path)"
-  echo "Warning: $${IPKG_INSTROOT}$(newaliases_path) restored from $${IPKG_INSTROOT}$(newaliases_path)$(ln_old_suffix)"
- fi
- if [ -f "$${IPKG_INSTROOT}$(mailq_path)$(ln_old_suffix)" ]; then
-  mv "$${IPKG_INSTROOT}$(mailq_path)$(ln_old_suffix)" "$${IPKG_INSTROOT}$(mailq_path)"
-  echo "Warning: $${IPKG_INSTROOT}$(mailq_path) restored from $${IPKG_INSTROOT}$(mailq_path)$(ln_old_suffix)"
- fi
+for syml in "$(sendmail_path)" "$(newaliases_path)" "$(mailq_path)"; do
+  file=$${IPKG_INSTROOT}$${syml}
+  if [ -f "$${file}$(ln_suffix_legacy)" ]; then
+    # update files saved by legacy versions of Postfix postinst script
+    mv "$${file}$(ln_suffix_legacy)" "$${file}$(ln_suffix_pre_pf)"
+  fi
+  if [ -f "$${syml}$(ln_suffix_pre_pf)" ]; then
+    mv "$${syml}$(ln_suffix_pre_pf)" "$${syml}"
+    echo "Info: $${syml}$(ln_suffix_pre_pf) restored as $${syml}"
+  fi
+done
 endef
 
 $(eval $(call BuildPackage,postfix))

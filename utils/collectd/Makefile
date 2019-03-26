@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
-PKG_VERSION:=5.7.2
-PKG_RELEASE:=1
+PKG_VERSION:=5.8.1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
 	https://github.com/collectd/collectd/releases/download/collectd-$(PKG_VERSION)
-PKG_HASH:=9d20a0221569a8d6b80bbc52b86e5e84965f5bafdbf5dfc3790e0fed0763e592
+PKG_HASH:=e796fda27ce06377f491ad91aa286962a68c2b54076aa77a29673d53204453da
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libltdl/aclocal.m4
@@ -36,9 +36,9 @@ COLLECTD_PLUGINS_DISABLED:= \
 	curl_json \
 	curl_xml \
 	dbi \
+	dpdkevents \
 	dpdkstat \
 	drbd \
-	ethstat \
 	fhcount \
 	genericjmx \
 	gmond \
@@ -46,6 +46,7 @@ COLLECTD_PLUGINS_DISABLED:= \
 	grpc \
 	hddtemp \
 	hugepages \
+	intel_pmu \
 	intel_rdt \
 	ipc \
 	ipmi \
@@ -57,12 +58,12 @@ COLLECTD_PLUGINS_DISABLED:= \
 	lpar \
 	madwifi \
 	mbmon \
+	mcelog \
 	md \
 	memcachec \
 	memcached \
 	mic \
 	monitorus \
-	mqtt \
 	multimeter \
 	netapp \
 	nfs \
@@ -73,6 +74,8 @@ COLLECTD_PLUGINS_DISABLED:= \
 	openldap \
 	openvz \
 	oracle \
+	ovs_events \
+	ovs_stats \
 	perl \
 	pf \
 	pinba \
@@ -83,8 +86,10 @@ COLLECTD_PLUGINS_DISABLED:= \
 	serial \
 	sigrok \
 	smart \
+	snmp_agent \
 	statsd \
 	swap \
+	synproxy \
 	tape \
 	tokyotyrant \
 	turbostat \
@@ -123,6 +128,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	dns \
 	email \
 	entropy \
+	ethstat \
 	exec \
 	filecount \
 	fscache \
@@ -139,6 +145,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	match_value \
 	memory \
 	modbus \
+	mqtt \
 	mysql \
 	netlink \
 	network \
@@ -177,6 +184,8 @@ PKG_CONFIG_DEPENDS:= \
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/kernel.mk
+# collectd-mod-mysql needs iconv
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/collectd/Default
   SECTION:=utils
@@ -196,9 +205,13 @@ define Package/collectd/description
  and provides mechanismns to store the values in a variety of ways.
 endef
 
-ifneq ($(CONFIG_avr32),)
-  TARGET_CFLAGS += -fsigned-char
-endif
+define Package/collectd/config
+	config PACKAGE_COLLECTD_ENCRYPTED_NETWORK
+	bool "Enable ability to use encrypted networking"
+	default n
+	depends on PACKAGE_collectd
+	select PACKAGE_collectd-mod-network
+endef
 
 # common configure args
 CONFIGURE_ARGS+= \
@@ -207,7 +220,6 @@ CONFIGURE_ARGS+= \
 	--enable-daemon \
 	--with-nan-emulation \
 	--with-libyajl=no \
-	--without-libgcrypt \
 	--without-perl-bindings \
 	--without-libudev
 
@@ -215,6 +227,16 @@ CONFIGURE_VARS+= \
 	CFLAGS="$$$$CFLAGS $(FPIC)" \
 	LDFLAGS="$$$$LDFLAGS -lm -lz" \
 	KERNEL_DIR="$(LINUX_DIR)" \
+
+ifneq ($(CONFIG_PACKAGE_COLLECTD_ENCRYPTED_NETWORK),)
+CONFIGURE_ARGS+= \
+	--with-libgcrypt=$(STAGING_DIR)/usr
+CONFIGURE_VARS+= \
+	GCRYPT_LIBS="-lgcrypt"
+else
+CONFIGURE_ARGS+= \
+	--without-libgcrypt
+endif
 
 CONFIGURE_PLUGIN= \
 	$(foreach m, $(1), \
@@ -328,6 +350,7 @@ $(eval $(call BuildPlugin,disk,disk usage/timing input,disk,))
 $(eval $(call BuildPlugin,dns,DNS traffic input,dns,+PACKAGE_collectd-mod-dns:libpcap))
 $(eval $(call BuildPlugin,email,email output,email,))
 $(eval $(call BuildPlugin,entropy,Entropy amount input,entropy,))
+$(eval $(call BuildPlugin,ethstat,Ethernet adapter statistics input,ethstat,))
 $(eval $(call BuildPlugin,exec,process exec input,exec,))
 $(eval $(call BuildPlugin,filecount,file count input,filecount,))
 $(eval $(call BuildPlugin,fscache,file-system based caching framework input,fscache,))
@@ -342,11 +365,12 @@ $(eval $(call BuildPlugin,match-hashed,hashed match,match_hashed,))
 $(eval $(call BuildPlugin,match-regex,regex match,match_regex,))
 $(eval $(call BuildPlugin,match-timediff,timediff match,match_timediff,))
 $(eval $(call BuildPlugin,match-value,value match,match_value,))
-#$(eval $(call BuildPlugin,mysql,MySQL status input,mysql,+PACKAGE_collectd-mod-mysql:libmysqlclient-r))
+$(eval $(call BuildPlugin,mysql,MySQL status input,mysql,+PACKAGE_collectd-mod-mysql:libmysqlclient-r))
 $(eval $(call BuildPlugin,memory,physical memory usage input,memory,))
 $(eval $(call BuildPlugin,modbus,read variables through libmodbus,modbus,+PACKAGE_collectd-mod-modbus:libmodbus))
+$(eval $(call BuildPlugin,mqtt,transmit data with MQTT,mqtt,+PACKAGE_collectd-mod-mqtt:libmosquitto))
 $(eval $(call BuildPlugin,netlink,netlink input,netlink,+PACKAGE_collectd-mod-netlink:libmnl))
-$(eval $(call BuildPlugin,network,network input/output,network,))
+$(eval $(call BuildPlugin,network,network input/output,network,+PACKAGE_COLLECTD_ENCRYPTED_NETWORK:libgcrypt))
 $(eval $(call BuildPlugin,nginx,nginx status input,nginx,+PACKAGE_collectd-mod-nginx:libcurl))
 $(eval $(call BuildPlugin,ntpd,NTP daemon status input,ntpd,))
 $(eval $(call BuildPlugin,nut,UPS monitoring input,nut,+PACKAGE_collectd-mod-nut:nut-common))
@@ -366,7 +390,7 @@ $(eval $(call BuildPlugin,tail,tail input,tail,))
 $(eval $(call BuildPlugin,tail-csv,tail CSV input,tail_csv,))
 $(eval $(call BuildPlugin,table,table-like structured file input,table,))
 $(eval $(call BuildPlugin,teamspeak2,TeamSpeak2 input,teamspeak2,))
-$(eval $(call BuildPlugin,ted,The Energy Detective input,ted,@((!TARGET_avr32)||BROKEN))) # fails on avr32 because of warnings treated as errors
+$(eval $(call BuildPlugin,ted,The Energy Detective input,ted,))
 $(eval $(call BuildPlugin,tcpconns,TCP connection tracking input,tcpconns,))
 $(eval $(call BuildPlugin,thermal,system temperatures input,thermal,))
 $(eval $(call BuildPlugin,unixsock,unix socket output,unixsock,))

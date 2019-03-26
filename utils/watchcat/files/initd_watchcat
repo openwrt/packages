@@ -83,7 +83,7 @@ stop() {
 
 		while read pid
 		do
-			kill "$pid"
+			kill -KILL "$pid"
 		done < "${PIDFILE}.pids"
 
 		rm "${PIDFILE}.pids"

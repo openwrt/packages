@@ -1,0 +1,72 @@
+From acb0e4f401440ca325e441064d2cb4b896fb9a3d Mon Sep 17 00:00:00 2001
+From: Andreas Schneider <asn@cryptomilk.org>
+Date: Wed, 17 Oct 2018 17:32:54 +0200
+Subject: [PATCH 5/8] examples: Explicitly track auth state in
+ samplesshd-kbdint
+
+Signed-off-by: Andreas Schneider <asn@cryptomilk.org>
+(cherry picked from commit 0ff566b6dde5cd27653aa35280feceefad5d5224)
+Signed-off-by: Kevin Darbyshire-Bryant <ldir@darbyshire-bryant.me.uk>
+---
+ examples/samplesshd-kbdint.c | 20 ++++++++++++++++----
+ 1 file changed, 16 insertions(+), 4 deletions(-)
+
+--- a/examples/samplesshd-kbdint.c
++++ b/examples/samplesshd-kbdint.c
+@@ -23,6 +23,7 @@ clients must be made or how a client sho
+ #include <stdlib.h>
+ #include <string.h>
+ #include <stdio.h>
++#include <stdbool.h>
+ 
+ #define SSHD_USER "libssh"
+ #define SSHD_PASSWORD "libssh"
+@@ -36,6 +37,7 @@ clients must be made or how a client sho
+ #endif
+ 
+ static int port = 22;
++static bool authenticated = false;
+ 
+ #ifdef WITH_PCAP
+ static const char *pcap_file = "debug.server.pcap";
+@@ -61,11 +63,20 @@ static void cleanup_pcap(void) {
+ #endif
+ 
+ 
+-static int auth_password(const char *user, const char *password){
+-    if(strcmp(user, SSHD_USER))
++static int auth_password(const char *user, const char *password)
++{
++    int cmp;
++
++    cmp = strcmp(user, SSHD_USER);
++    if (cmp != 0) {
+         return 0;
+-    if(strcmp(password, SSHD_PASSWORD))
++    }
++    cmp = strcmp(password, SSHD_PASSWORD);
++    if (cmp != 0) {
+         return 0;
++    }
++
++    authenticated = true;
+     return 1; // authenticated
+ }
+ #ifdef HAVE_ARGP_H
+@@ -200,6 +211,7 @@ static int kbdint_check_response(ssh_ses
+         return 0;
+     }
+ 
++    authenticated = true;
+     return 1;
+ }
+ 
+@@ -328,7 +340,7 @@ int main(int argc, char **argv){
+ 
+     /* proceed to authentication */
+     auth = authenticate(session);
+-    if(!auth){
++    if (!auth || !authenticated) {
+         printf("Authentication error: %s\n", ssh_get_error(session));
+         ssh_disconnect(session);
+         return 1;

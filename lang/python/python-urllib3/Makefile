@@ -8,42 +8,55 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-urllib3
-PKG_VERSION:=1.20
-PKG_RELEASE:=1
+PKG_VERSION:=1.24.1
+PKG_RELEASE:=2
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=urllib3-$(PKG_VERSION).tar.gz
-PKG_BUILD_DIR:=$(BUILD_DIR)/urllib3-$(PKG_VERSION)/
-PKG_SOURCE_URL:=https://pypi.python.org/packages/20/56/a6aa403b0998f857b474a538343ee483f5c02491bd1aebf61d42a3f60f77/
-PKG_MD5SUM:=34691d4e7e20a8e9cdb452ea24fc38e7
-PKG_BUILD_DEPENDS:=python python-setuptools
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/u/urllib3
+PKG_HASH:=de9529817c93f27c8ccbfead6985011db27bd0ddfcdb2d86f3f663385c6a9c22
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-urllib3-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
 
-define Package/python-urllib3
+include ../python-package.mk
+include ../python3-package.mk
+
+PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
+
+define Package/python-urllib3/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
   TITLE:=HTTP library with thread-safe connection pooling, file post, and more.
   URL:=https://urllib3.readthedocs.io/
-  DEPENDS:=+python
+endef
+
+define Package/python-urllib3
+$(call Package/python-urllib3/Default)
+  DEPENDS:=+PACKAGE_python-urllib3:python
+  VARIANT:=python
 endef
 
 define Package/python-urllib3/description
   HTTP library with thread-safe connection pooling, file post, and more.
 endef
 
-define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
+define Package/python3-urllib3
+$(call Package/python-urllib3/Default)
+  DEPENDS:=+PACKAGE_python3-urllib3:python3
+  VARIANT:=python3
 endef
 
-define Package/python-urllib3/install
-	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
-	$(CP) \
-	    $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
-	    $(1)$(PYTHON_PKG_DIR)
+define Package/python3-urllib3/description
+$(call Package/python-urllib3/description)
+.
+(Variant for Python3)
 endef
 
+$(eval $(call PyPackage,python-urllib3))
 $(eval $(call BuildPackage,python-urllib3))
+$(eval $(call BuildPackage,python-urllib3-src))
+$(eval $(call Py3Package,python3-urllib3))
+$(eval $(call BuildPackage,python3-urllib3))
+$(eval $(call BuildPackage,python3-urllib3-src))

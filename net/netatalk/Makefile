@@ -8,16 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netatalk
-PKG_VERSION:=3.1.11
-PKG_RELEASE:=2
+PKG_VERSION:=3.1.12
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/netatalk
-PKG_HASH:=3434472ba96d3bbe3b024274438daad83b784ced720f7662a4c1d0a1078799a6
+PKG_HASH:=1560f83a3da41be97e0b70a96e2402159b8ddc631d38538360b14784beada5d1
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
+
+PKG_BUILD_DEPENDS:=libevent2
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -25,7 +27,7 @@ define Package/netatalk
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Filesystem
-  DEPENDS:=+libattr +libdb47 +libgcrypt +libopenssl $(LIBRPC_DEPENDS)
+  DEPENDS:=+libattr +libdb47 +libgcrypt +libopenssl
   TITLE:=netatalk
   URL:=http://netatalk.sourceforge.net
   MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
@@ -38,7 +40,6 @@ define Package/netatalk/decription
 endef
 
 TARGET_CFLAGS += -std=gnu99
-TARGET_LDFLAGS += $(LIBRPC)
 
 CONFIGURE_ARGS += \
 	--disable-afs \
@@ -51,6 +52,7 @@ CONFIGURE_ARGS += \
 	--disable-tcp-wrappers \
 	--with-cnid-default-backend=dbd \
 	--with-bdb="$(STAGING_DIR)/usr/" \
+	--with-libevent=no \
 	--with-libgcrypt-dir="$(STAGING_DIR)/usr" \
 	--with-ssl-dir="$(STAGING_DIR)/usr" \
 	--with-uams-path="/usr/lib/uams" \

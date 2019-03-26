@@ -1,0 +1,25 @@
+--- a/src/libudev.h
++++ b/src/libudev.h
+@@ -7,6 +7,11 @@
+ extern "C" {
+ #endif
+ 
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ struct udev;
+ struct udev_device;
+ struct udev_list_entry;
+@@ -76,6 +81,10 @@ void udev_monitor_unref(struct udev_moni
+ 
+ #ifdef __cplusplus
+ } /* extern "C" */
++#endif
++
++#ifdef __cplusplus
++} /* extern "C" */
+ #endif
+ 
+ #endif

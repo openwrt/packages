@@ -8,19 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=jpeg
-PKG_VERSION:=9a
+PKG_VERSION:=9c
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)src.v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.ijg.org/files
-PKG_MD5SUM:=3353992aecaee1805ef4109aadd433e7
+PKG_HASH:=650250979303a649e21f87b5ccd02672af1ea6954b911342ea491f351ceb7122
 
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=IJG
 PKG_LICENSE_FILES:=README
 
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=libltdl
+PKG_BUILD_DEPENDS:=libtool
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk

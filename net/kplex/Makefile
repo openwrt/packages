@@ -7,15 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kplex
-PKG_VERSION:=20150809
+PKG_VERSION:=1.4
+PKG_RELEASE=1
 
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
-
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/stripydog/kplex.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=fec47cd1877ec7903969adefa4220838a706d940
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
+PKG_SOURCE_URL:=http://www.stripydog.com/download
+PKG_HASH:=8c2f1ccba4a22cb3b683b73b9dab6ce317e7d858764f1c2c695970f94c726fc1
 
 PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=COPYING
@@ -45,6 +42,8 @@ endef
 define Package/kplex/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/kplex $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/kplex.conf.ex $(1)/etc/kplex.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/kplex.init $(1)/etc/init.d/kplex
 endef

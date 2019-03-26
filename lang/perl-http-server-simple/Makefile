@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/B/BP/BPS
 PKG_SOURCE:=HTTP-Server-Simple-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=ef736daddc7a32a29207fa4ed5f5d62e
+PKG_HASH:=b9dc5c9f12c16ca39a96f0ede1e27a18a5594274ff8f583000788a7fca136dfb
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>

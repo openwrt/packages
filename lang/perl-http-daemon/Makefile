@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GA/GAAS
 PKG_SOURCE:=HTTP-Daemon-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=ed0ae02d25d7f1e89456d4d69732adc2
+PKG_HASH:=43fd867742701a3f9fcc7bd59838ab72c6490c0ebaf66901068ec6997514adc2
 
 PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>

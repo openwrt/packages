@@ -1,0 +1,13 @@
+--- a/configure.in
++++ b/configure.in
+@@ -598,6 +598,10 @@ if test "$class_driver" = "no" && test "$hpijs_only_build" = "no" && test "$hpcu
+    else
+       AC_CHECK_LIB([usb-1.0], [libusb_init], [LIBS="$LIBS"], [AC_MSG_ERROR([cannot find libusb 1.0 support], 2)])
+       AC_CHECK_HEADERS(libusb-1.0/libusb.h, ,[AC_MSG_ERROR([cannot find libusb-1.0-devel support], 11)])
++      PKG_CHECK_MODULES(LIBUSB_1_0, [ libusb-1.0 >= 1.0.0 ], have_libusb_1_0=yes, have_libusb_1_0=no)
++      if test "$have_libusb_1_0" = "yes"; then
++        CFLAGS="$CFLAGS $LIBUSB_1_0_CFLAGS"
++      fi
+    fi
+ fi
+ 

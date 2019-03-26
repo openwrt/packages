@@ -1,0 +1,57 @@
+--- a/configure
++++ b/configure
+@@ -7084,7 +7084,7 @@ sys/param.h sys/poll.h sys/random.h sys/
+ sys/termio.h sys/time.h \
+ sys/times.h sys/types.h sys/un.h sys/utsname.h sys/wait.h pty.h libutil.h \
+ sys/resource.h netpacket/packet.h sysexits.h bluetooth.h \
+-bluetooth/bluetooth.h linux/tipc.h spawn.h util.h alloca.h sys/sysmacros.h
++linux/tipc.h spawn.h util.h alloca.h sys/sysmacros.h
+ do :
+   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+@@ -7306,6 +7306,24 @@ fi
+ fi
+ 
+ 
++# bluetooth/bluetooth.h has been known to not compile with -std=c99.
++# http://permalink.gmane.org/gmane.linux.bluez.kernel/22294
++SAVE_CFLAGS=$CFLAGS
++CFLAGS="-std=c99 $CFLAGS"
++for ac_header in bluetooth/bluetooth.h
++do :
++  ac_fn_c_check_header_mongrel "$LINENO" "bluetooth/bluetooth.h" "ac_cv_header_bluetooth_bluetooth_h" "$ac_includes_default"
++if test "x$ac_cv_header_bluetooth_bluetooth_h" = xyes; then :
++  cat >>confdefs.h <<_ACEOF
++#define HAVE_BLUETOOTH_BLUETOOTH_H 1
++_ACEOF
++
++fi
++
++done
++
++CFLAGS=$SAVE_CFLAGS
++
+ # On Linux, netlink.h requires asm/types.h
+ for ac_header in linux/netlink.h
+ do :
+--- a/configure.ac
++++ b/configure.ac
+@@ -1739,10 +1739,17 @@ sys/param.h sys/poll.h sys/random.h sys/
+ sys/termio.h sys/time.h \
+ sys/times.h sys/types.h sys/un.h sys/utsname.h sys/wait.h pty.h libutil.h \
+ sys/resource.h netpacket/packet.h sysexits.h bluetooth.h \
+-bluetooth/bluetooth.h linux/tipc.h spawn.h util.h alloca.h sys/sysmacros.h)
++linux/tipc.h spawn.h util.h alloca.h sys/sysmacros.h)
+ AC_HEADER_DIRENT
+ AC_HEADER_MAJOR
+ 
++# bluetooth/bluetooth.h has been known to not compile with -std=c99.
++# http://permalink.gmane.org/gmane.linux.bluez.kernel/22294
++SAVE_CFLAGS=$CFLAGS
++CFLAGS="-std=c99 $CFLAGS"
++AC_CHECK_HEADERS(bluetooth/bluetooth.h)
++CFLAGS=$SAVE_CFLAGS
++
+ # On Linux, netlink.h requires asm/types.h
+ AC_CHECK_HEADERS(linux/netlink.h,,,[
+ #ifdef HAVE_ASM_TYPES_H

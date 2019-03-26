@@ -12,8 +12,8 @@ PKG_VERSION:=20
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://www.kernel.org/pub/linux/utils/kernel/kmod/
-PKG_MD5SUM:=d6f4fef718a50bd88080de6a43bc64d8
+PKG_SOURCE_URL:=@KERNEL/linux/utils/kernel/kmod/
+PKG_HASH:=89c1a1a2193c31f9ebe582640bfa2bd401341dc24119f5a7f702588116fadaa0
 PKG_MAINTAINER:=Jeff Waugh <jdub@bethesignal.org>
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=COPYING

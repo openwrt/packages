@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2016 OpenWrt.org
-# Copyright (C) 2016 Yousong Zhou <yszhou4tech@gmail.com>
+# Copyright (C) 2016-2018 Yousong Zhou <yszhou4tech@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,15 +9,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=2.6.2
-PKG_RELEASE:=3
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://wiki.qemu-project.org/download/
-PKG_SOURCE_MD5SUM:=bdf1f3d0c177ebeb35a079a4bc3fc74e
+PKG_VERSION:=3.1.0
+PKG_RELEASE:=1
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_HASH:=6a0508df079a0a33c2487ca936a56c12122f105b8a96a44374704bef6c69abfc
+PKG_SOURCE_URL:=http://download.qemu.org/
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
 
@@ -95,6 +96,34 @@ define Package/qemu-bridge-helper/install
 	$(INSTALL_DATA) ./files/bridge.conf $(1)/etc/qemu
 endef
 
+define Package/qemu-img
+ SECTION:=utils
+ CATEGORY:=Utilities
+ SUBMENU:=Virtualization
+ TITLE:=QEMU Image utility
+ URL:=http://www.qemu.org
+ DEPENDS:=+glib2 $(CXX_DEPENDS) $(QEMU_DEPS_IN_HOST)
+endef
+
+define Package/qemu-img/install
+	$(INSTALL_DIR) $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/qemu-img $(1)/usr/bin/qemu-img
+endef
+
+define Package/qemu-nbd
+ SECTION:=utils
+ CATEGORY:=Utilities
+ SUBMENU:=Virtualization
+ TITLE:=QEMU Network Block Device Utility
+ URL:=http://www.qemu.org
+ DEPENDS:=+glib2 $(CXX_DEPENDS) $(QEMU_DEPS_IN_HOST) +kmod-nbd
+endef
+
+define Package/qemu-nbd/install
+	$(INSTALL_DIR) $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/qemu-nbd $(1)/usr/sbin/qemu-nbd
+endef
+
 PKG_CONFIG_DEPENDS += CONFIG_PACKAGE_qemu-ga
 
 # Naming rules used in qemu Makefile.target
@@ -123,7 +152,7 @@ define qemu-target
     TITLE:=QEMU target $(1)
     URL:=http://www.qemu.org
     DEPENDS:= +glib2 +libpthread +zlib $(CXX_DEPENDS) $(QEMU_DEPS_IN_HOST) \
-	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +qemu-blobs)
+	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +pixman +qemu-blobs)
   endef
 
   define Package/qemu-$(1)/description
@@ -211,7 +240,6 @@ CONFIGURE_ARGS +=			\
 	--disable-tools			\
 	--disable-seccomp		\
 	--disable-glusterfs		\
-	--disable-archipelago		\
 	--disable-gtk			\
 	--disable-gnutls		\
 	--disable-nettle		\
@@ -228,12 +256,8 @@ CONFIGURE_ARGS +=			\
 	--disable-strip			\
 	--disable-werror		\
 
-QEMU_CONFIGURE_TARGET_LIST := $(foreach target,$(QEMU_TARGET_LIST),$(if $(CONFIG_PACKAGE_qemu-$(target)),$(target)))
-CONFIGURE_ARGS += --target-list='$(QEMU_CONFIGURE_TARGET_LIST)'
-
-ifneq ($(CONFIG_PACKAGE_qemu-ga),)
-CONFIGURE_ARGS += --enable-guest-agent
-endif
+CONFIGURE_ARGS += --target-list='$(foreach target,$(QEMU_TARGET_LIST),$(if $(CONFIG_PACKAGE_qemu-$(target)),$(target)))'
+CONFIGURE_ARGS += $(if $(CONFIG_PACKAGE_qemu-ga),--enable-guest-agent)
 
 TARGET_LDFLAGS += -Wl,--as-needed
 MAKE_VARS += V=s
@@ -246,6 +270,8 @@ MAKE_FLAGS:=$(filter-out	\
 QEMU_MAKE_TARGETS := \
 	$(if $(CONFIG_PACKAGE_qemu-ga),qemu-ga) \
 	$(if $(CONFIG_PACKAGE_qemu-bridge-helper),qemu-bridge-helper) \
+	$(if $(CONFIG_PACKAGE_qemu-img),qemu-img) \
+	$(if $(CONFIG_PACKAGE_qemu-nbd),qemu-nbd) \
 	$(foreach target,$(QEMU_TARGET_LIST),$(if $(CONFIG_PACKAGE_qemu-$(target)),subdir-$(target))) \
 
 define Build/Compile
@@ -255,6 +281,8 @@ endef
 $(eval $(call BuildPackage,virtio-console-helper))
 $(eval $(call BuildPackage,qemu-ga))
 $(eval $(call BuildPackage,qemu-bridge-helper))
+$(eval $(call BuildPackage,qemu-img))
+$(eval $(call BuildPackage,qemu-nbd))
 $(eval $(call BuildPackage,qemu-blobs))
 $(foreach target,$(QEMU_TARGET_LIST), \
   $(eval $(call BuildPackage,qemu-$(target))) \

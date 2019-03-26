@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2015 OpenWrt.org
+# Copyright (C) 2010-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=usbip
-PKG_RELEASE:=6
+PKG_RELEASE:=11
 PKG_LICENSE:=GPL-2.0
 
 # Since kernel 2.6.39.1 userspace tools are inside the kernel tree
@@ -32,7 +32,6 @@ Hooks/Prepare/Pre += prepare_source_directory
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
-PKG_FLAGS:=nonshared
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -52,7 +51,7 @@ endef
 define Package/usbip
   $(call Package/usbip/Default)
   TITLE+= (common)
-  DEPENDS+= +libwrap +kmod-usbip +libudev-fbsd
+  DEPENDS+= +libwrap +kmod-usbip +libudev-fbsd +USE_GLIBC:libbsd
 endef
 
 define Package/usbip-client
@@ -70,26 +69,32 @@ endef
 CONFIGURE_PATH:=.
 MAKE_PATH:=.
 LIBTOOL_PATHS:=.
-MAKE_FLAGS+=CFLAGS="-Wno-implicit-function-declaration"
+MAKE_FLAGS+=CFLAGS='-Dudev_device_get_devpath\(x\)=udev_device_get_syspath\(x\)+strlen\(\"/sys\"\) \
+	-DSIGCLD=SIGCHLD'
+CONFIGURE_ARGS+= --disable-silent-rules
 
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); ./autogen.sh );
 	$(call Build/Configure/Default)
 endef
 
+CONFIGURE_VARS+= $(if $(CONFIG_USE_GLIBC),LIBS='-lbsd -lpthread')
 CFLAGS+="$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include"
 
+USB_IDS_VER:=0.318
+USB_IDS_FILE:=usb.ids.$(USB_IDS_VER)
 define Download/usb.ids
-  URL:=http://www.linux-usb.org/
-  FILE:=usb.ids
-  MD5SUM:=
+  FILE:=$(USB_IDS_FILE)
+  URL_FILE:=usb.ids
+  URL:=@GITHUB/vcrhonek/hwdata/v$(USB_IDS_VER)
+  HASH:=84bc5452e4e45c2250e01bc74e03528b2a53c4724b2c4a5feaea76a922f83915
 endef
 
 define Package/usbip/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libusbip.so.* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/share/hwdata
-	$(CP) $(DL_DIR)/usb.ids $(1)/usr/share/hwdata/
+	$(CP) $(DL_DIR)/usb.ids.$(USB_IDS_VER) $(1)/usr/share/hwdata/usb.ids
 endef
 
 define Package/usbip-client/install

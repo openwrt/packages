@@ -20,13 +20,14 @@ PKG_SOURCE_URL:=https://github.com/libimobiledevice/libimobiledevice.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=13bf235cac2201747de11652cf14fe2714ca0718
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_MIRROR_HASH:=4e8892b27f20216f86d69b36ad2229fca87cdf0a10f8d3e145d01841a492562a
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-$(call include_mk, python-package.mk)
+include ../../lang/python/python-package.mk
 
 define Package/libimobiledevice/Default
   TITLE:=A library that talks to Apple devices.

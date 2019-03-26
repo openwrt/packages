@@ -8,15 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tvheadend
-PKG_VERSION:=4.0.9
-PKG_RELEASE:=1
+PKG_VERSION:=4.0.10
+PKG_RELEASE:=3
 
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/tvheadend/tvheadend.git
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/tvheadend/tvheadend/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=f610e7d9f3bf6cff05cd73830a66ee0c74bc5291c4c9d08369364c4c681ebf23
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=LICENSE.md
@@ -74,6 +71,8 @@ CONFIGURE_ARGS += \
 	--disable-dbus_1 \
 	--disable-libav \
 	--enable-bundle
+
+TARGET_CFLAGS += -Wno-error=pointer-compare
 
 define Build/Prepare
 	$(call Build/Prepare/Default)

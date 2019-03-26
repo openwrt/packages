@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
+# Copyright (C) 2007-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=jdcal
-PKG_VERSION:=1.2
+PKG_VERSION:=1.4
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pypi.python.org/packages/source/j/jdcal/
-PKG_MD5SUM:=ab8d5ba300fd1eb01514f363d19b1eb9
-PKG_BUILD_DEPENDS:=python python-setuptools
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/j/jdcal
+PKG_HASH:=ea0a5067c5f0f50ad4c7bdc80abad3d976604f6fb026b0b3a17a9d84bb9046c9
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
 
 define Package/jdcal
   SUBMENU:=Python
@@ -26,7 +25,7 @@ define Package/jdcal
   CATEGORY:=Languages
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
   TITLE:=Julian dates from proleptic Gregorian and Julian calendars.
-  URL:=http://github.com/phn/jdcal
+  URL:=https://github.com/phn/jdcal
   DEPENDS:=+python
 endef
 

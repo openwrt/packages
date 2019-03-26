@@ -8,22 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openssh
-PKG_VERSION:=7.5p1
-PKG_RELEASE:=2
+PKG_VERSION:=7.9p1
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
 		https://ftp.spline.de/pub/OpenBSD/OpenSSH/portable/ \
 		https://anorien.csc.warwick.ac.uk/pub/OpenBSD/OpenSSH/portable/
-PKG_HASH:=9846e3c5fab9f0547400b4d2c017992f914222b3fd1f8eee6c7dc6bc5e59f9f0
+PKG_HASH:=6b4b3ba2253d84ed3771c8050728d597c91cfce898713beb7b64a305b6f11aad
 
 PKG_LICENSE:=BSD ISC
 PKG_LICENSE_FILES:=LICENCE
 
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
-
-PKG_BUILD_DEPENDS:=libopenssl
+PKG_REMOVE_FILES:=
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -51,6 +50,10 @@ endef
 define Package/openssh-client
 	$(call Package/openssh/Default)
 	TITLE+= client
+	ALTERNATIVES:=\
+		200:/usr/bin/ssh:/usr/bin/openssh-ssh \
+		200:/usr/bin/scp:/usr/bin/openssh-scp \
+
 endef
 
 define Package/openssh-client/description
@@ -93,6 +96,8 @@ endef
 
 define Package/openssh-server/conffiles
 /etc/ssh/sshd_config
+/etc/ssh/ssh_host_*_key
+/etc/ssh/ssh_host_*_key.pub
 endef
 
 define Package/openssh-server-pam
@@ -202,24 +207,6 @@ define Build/Compile
 		all install
 endef
 
-define Package/openssh-client/preinst
-#!/bin/sh
-if [ -L $${IPKG_INSTROOT}/usr/bin/ssh ] && [ -L $${IPKG_INSTROOT}/usr/bin/scp ]; then
-	rm -f $${IPKG_INSTROOT}/usr/bin/ssh $${IPKG_INSTROOT}/usr/bin/scp;
-fi
-exit 0
-endef
-
-define Package/openssh-client/postrm
-#!/bin/sh
-rm -f $${IPKG_INSTROOT}/usr/bin/ssh $${IPKG_INSTROOT}/usr/bin/scp;
-if [ -x $${IPKG_INSTROOT}/usr/sbin/dropbear ] ; then
-	ln -s /usr/sbin/dropbear $${IPKG_INSTROOT}/usr/bin/ssh;
-	ln -s /usr/sbin/dropbear $${IPKG_INSTROOT}/usr/bin/scp;
-fi
-exit 0
-endef
-
 define Package/openssh-moduli/install
 	$(INSTALL_DIR) $(1)/etc/ssh
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/ssh/moduli $(1)/etc/ssh/
@@ -230,8 +217,8 @@ define Package/openssh-client/install
 	chmod 0700 $(1)/etc/ssh
 	$(CP) $(PKG_INSTALL_DIR)/etc/ssh/ssh_config $(1)/etc/ssh/
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/scp $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh $(1)/usr/bin/openssh-ssh
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/scp $(1)/usr/bin/openssh-scp
 endef
 
 define Package/openssh-client-utils/install

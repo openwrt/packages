@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
-PKG_VERSION:=1.2.19
-PKG_RELEASE:=2
+PKG_VERSION:=2.0.10
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:= http://www.keepalived.org/software
-PKG_MD5SUM:=5c98b06639dd50a6bff76901b53febb6
-PKG_HASH:=32fbae732c1cd854cacd7a930d4a26f5bad6372cdecb5e3139f0c17e87493853
+PKG_SOURCE_URL:=http://www.keepalived.org/software
+PKG_HASH:=40e0e55afed9ca313d621a9c5878579696fafb5504dab521aadaf20ba6e7f597
 
+PKG_CPE_ID:=cpe:/a:keepalived:keepalived
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Ben Kelly <ben@benjii.net>
+PKG_MAINTAINER:=Ben Kelly <ben@benjii.net> \
+		Florian Eckert <fe@dev.tdt.de>
 
 PKG_INSTALL:=1
 
@@ -30,7 +31,16 @@ define Package/keepalived
   CATEGORY:=Network
   TITLE:=Failover and monitoring daemon for LVS clusters
   URL:=http://www.keepalived.org/
-  DEPENDS:=+PACKAGE_libnl-genl:libnl-genl +libopenssl
+  DEPENDS:= \
+    +libopenssl \
+    +libip4tc \
+    +IPV6:libip6tc \
+    +libxtables \
+    +kmod-macvlan \
+    +libmagic \
+    +libnl-route \
+    +libnfnetlink \
+    +kmod-nf-ipvs
 endef
 
 define Package/keepalived/description
@@ -39,18 +49,17 @@ endef
 
 define Package/keepalived/conffiles
 /etc/keepalived/keepalived.conf
+/etc/config/keepalived
+/etc/keepalived.user
 endef
 
 CONFIGURE_ARGS+= \
-	--enable-vrrp \
-	--enable-fwmark \
+	--disable-libipset \
+	--disable-libnl \
 	--enable-sha1 \
-	--disable-lvs \
-	--disable-lvs-syncd \
 	--disable-snmp \
-	--disable-debug \
-	--disable-profile \
-	--with-kernel-dir="$(LINUX_DIR)/$(LINUX_UAPI_DIR)"
+	--with-kernel-dir="$(LINUX_DIR)/$(LINUX_UAPI_DIR)" \
+	--with-init=SYSV
 
 MAKE_FLAGS += \
 		STRIP="/bin/true" \
@@ -66,6 +75,10 @@ define Package/keepalived/install
 	$(INSTALL_BIN) ./files/keepalived.init $(1)/etc/init.d/keepalived
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/keepalived.config $(1)/etc/config/keepalived
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_CONF) ./files/keepalived.user $(1)/etc/keepalived.user
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/keepalived
+	$(INSTALL_DATA) ./files/hotplug-user $(1)/etc/hotplug.d/keepalived/01-user
 endef
 
 $(eval $(call BuildPackage,keepalived))

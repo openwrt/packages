@@ -8,18 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libyang
-PKG_VERSION:=0.12.174
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_VERSION:=0.16-r3
+PKG_RELEASE:=3
 
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/CESNET/libyang.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=7e811613b335afc8e1b2c0ee77e7b3f371bc9175
-PKG_MIRROR_HASH:=860865b294c628ad66ca5ef6848aae8df93e46325302914dbfb14264866f1678
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/CESNET/libyang/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=4745460dedc4ba17d8bcfc39ad9ba0d1b91bbe82b55b9417a090390909ba8ca5
+
+CMAKE_INSTALL:=1
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -32,7 +31,7 @@ define Package/libyang
   CATEGORY:=Libraries
   TITLE:=YANG data modeling language library
   URL:=$(PKG_SOURCE_URL)
-  DEPENDS:=+libpcre
+  DEPENDS:=+libpcre +libpthread
 endef
 
 define Package/yanglint
@@ -52,6 +51,7 @@ TARGET_LDFLAGS += -lm
 
 CMAKE_OPTIONS += \
 	-DCMAKE_INSTALL_PREFIX:PATH=/usr \
+	-DENABLE_LYD_PRIV:BOOL=ON \
 	-DCMAKE_BUILD_TYPE:STRING=Release
 
 define Build/InstallDev
@@ -70,7 +70,10 @@ define Package/libyang/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libyang.so* $(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/usr/lib/libyang
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libyang/* $(1)/usr/lib/libyang/
+	$(INSTALL_DIR) $(1)/usr/lib/libyang/extensions
+	$(INSTALL_DIR) $(1)/usr/lib/libyang/user_types
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libyang/extensions/* $(1)/usr/lib/libyang/extensions
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libyang/user_types/* $(1)/usr/lib/libyang/user_types
 endef
 
 define Package/yanglint/install

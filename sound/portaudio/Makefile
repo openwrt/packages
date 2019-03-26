@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=portaudio
-PKG_VERSION:=19_20140130
+PKG_VERSION:=190600_20161030
 PKG_RELEASE:=1
 
 PKG_SOURCE:=pa_stable_v$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=http://www.portaudio.com/archives/
-PKG_MD5SUM:=7f220406902af9dca009668e198cbd23
+PKG_HASH:=f5a21d7dcd6ee84397446fa1fa1a0675bb2e8a4a6dceb4305a8404698d8d1513
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -45,6 +45,12 @@ CONFIGURE_ARGS+= \
 	--without-asihpi \
 	--without-jack \
 	--with-oss \
+
+EXTRA_CFLAGS += $(TARGET_CPPFLAGS)
+
+define Build/Compile
+	$(call Build/Compile/Default,lib/libportaudio.la)
+endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

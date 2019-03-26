@@ -9,14 +9,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vsftpd
 PKG_VERSION:=3.0.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://security.appspot.com/downloads/
 PKG_HASH:=9d4d2bf6e6e2884852ba4e69e157a2cecd68c5a7635d66a3a8cf8d898c955ef7
-PKG_LICENSE:=GPLv2
-
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+
+PKG_MAINTAINER:=Cezary Jackiewicz <cezary@eko.one.pl>
+PKG_LICENSE:=GPLv2
+PKG_CPE_ID:=cpe:/a:beasts:vsftpd
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -26,7 +28,6 @@ define Package/vsftpd/Default
   CATEGORY:=Network
   TITLE:=Fast and secure FTP server
   URL:=https://security.appspot.com/vsftpd.html
-  MAINTAINER:=Cezary Jackiewicz <cezary@eko.one.pl>
 endef
 
 

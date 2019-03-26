@@ -8,18 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=triggerhappy
-PKG_VERSION:=0.3.4-151001
-PKG_REV:=7e5abc69f215678e93a6b999524981c8b40bdcd9
+PKG_VERSION:=0.5.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=git://github.com/wertarbyte/triggerhappy
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=$(PKG_REV)
+PKG_SOURCE_URL:=https://github.com/wertarbyte/$(PKG_NAME)/archive/release/$(PKG_VERSION)/
+PKG_HASH:=af0fc196202f2d35153be401769a9ad9107b5b6387146cfa8895ae9cafad631c
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-release-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
-PKG_LICENSE:=GPL-3.0+
+PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk

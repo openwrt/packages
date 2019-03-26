@@ -1,5 +1,5 @@
 # VPN Bypass
-A simple PROCD-based vpnbypass service for OpenWrt/LEDE Project. Useful if your router accesses internet thru VPN client/tunnel, but you want specific traffic (ports, IP ranges, domains or local IP ranges) to be routed outside of this tunnel.
+A simple PROCD-based ```vpnbypass``` service for OpenWrt/LEDE Project. Useful if your router accesses internet thru VPN client/tunnel, but you want specific traffic (ports, IP ranges, domains or local IP ranges) to be routed outside of this tunnel.
 
 ## Features
 - Allows to define local ports so that traffic to them is routed outside of the VPN tunnel (by default routes Plex Media Server traffic (port 32400) outside of the VPN tunnel).
@@ -52,15 +52,15 @@ If these packages are not found in the official feed/repo for your version of Op
 #### Add custom repo to your router
 If your router is not set up with the access to repository containing these packages you will need to add custom repository to your router by connecting to your router via ssh and running the following commands:
 
-###### OpenWrt CC 15.05.1
+###### OpenWrt 15.05.1
 ```sh
-opkg update; opkg install wget libopenssl
+opkg update; opkg install ca-certificates wget libopenssl
 echo -e -n 'untrusted comment: public key 7ffc7517c4cc0c56\nRWR//HUXxMwMVnx7fESOKO7x8XoW4/dRidJPjt91hAAU2L59mYvHy0Fa\n' > /tmp/stangri-repo.pub && opkg-key add /tmp/stangri-repo.pub
 ! grep -q 'stangri_repo' /etc/opkg/customfeeds.conf && echo 'src/gz stangri_repo https://raw.githubusercontent.com/stangri/openwrt-repo/master' >> /etc/opkg/customfeeds.conf
 opkg update
 ```
 
-###### LEDE Project and OpenWrt DD trunk
+###### LEDE Project 17.01.x and OpenWrt 18.xx or later
 ```sh
 opkg update; opkg install uclient-fetch libustream-mbedtls
 echo -e -n 'untrusted comment: public key 7ffc7517c4cc0c56\nRWR//HUXxMwMVnx7fESOKO7x8XoW4/dRidJPjt91hAAU2L59mYvHy0Fa\n' > /tmp/stangri-repo.pub && opkg-key add /tmp/stangri-repo.pub

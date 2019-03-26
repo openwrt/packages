@@ -1,0 +1,70 @@
+From 91b777c7064d9d91a1433a42b0bb31592388d1b4 Mon Sep 17 00:00:00 2001
+From: Eneas U de Queiroz <cote2004-github@yahoo.com>
+Date: Tue, 9 Oct 2018 16:17:42 -0300
+Subject: [PATCH] fix compilation with openssl built without ECC
+
+ECDSA code in openssh-compat.h and libressl-api-compat.c needs to be
+guarded by OPENSSL_HAS_ECC
+
+Signed-off-by: Eneas U de Queiroz <cote2004-github@yahoo.com>
+
+diff --git a/openbsd-compat/libressl-api-compat.c b/openbsd-compat/libressl-api-compat.c
+index de3e64a6..ae00ff59 100644
+--- a/openbsd-compat/libressl-api-compat.c
++++ b/openbsd-compat/libressl-api-compat.c
+@@ -152,7 +152,9 @@
+ #include <openssl/dsa.h>
+ #include <openssl/rsa.h>
+ #include <openssl/evp.h>
++#ifdef OPENSSL_HAS_ECC
+ #include <openssl/ecdsa.h>
++#endif
+ #include <openssl/dh.h>
+ 
+ #ifndef HAVE_DSA_GET0_PQG
+@@ -417,6 +419,7 @@ DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
+ }
+ #endif /* HAVE_DSA_SIG_SET0 */
+ 
++#ifdef OPENSSL_HAS_ECC
+ #ifndef HAVE_ECDSA_SIG_GET0
+ void
+ ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
+@@ -442,6 +445,7 @@ ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
+ 	return 1;
+ }
+ #endif /* HAVE_ECDSA_SIG_SET0 */
++#endif /* OPENSSL_HAS_ECC */
+ 
+ #ifndef HAVE_DH_GET0_PQG
+ void
+diff --git a/openbsd-compat/openssl-compat.h b/openbsd-compat/openssl-compat.h
+index 9e0264c0..6a525f28 100644
+--- a/openbsd-compat/openssl-compat.h
++++ b/openbsd-compat/openssl-compat.h
+@@ -24,7 +24,9 @@
+ #include <openssl/evp.h>
+ #include <openssl/rsa.h>
+ #include <openssl/dsa.h>
++#ifdef OPENSSL_HAS_ECC
+ #include <openssl/ecdsa.h>
++#endif
+ #include <openssl/dh.h>
+ 
+ int ssh_compatible_openssl(long, long);
+@@ -161,6 +163,7 @@ void DSA_SIG_get0(const DSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
+ int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s);
+ #endif /* DSA_SIG_SET0 */
+ 
++#ifdef OPENSSL_HAS_ECC
+ #ifndef HAVE_ECDSA_SIG_GET0
+ void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
+ #endif /* HAVE_ECDSA_SIG_GET0 */
+@@ -168,6 +171,7 @@ void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
+ #ifndef HAVE_ECDSA_SIG_SET0
+ int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s);
+ #endif /* HAVE_ECDSA_SIG_SET0 */
++#endif /* OPENSSL_HAS_ECC */
+ 
+ #ifndef HAVE_DH_GET0_PQG
+ void DH_get0_pqg(const DH *dh, const BIGNUM **p, const BIGNUM **q,

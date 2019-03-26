@@ -22,6 +22,11 @@ validate_squid_section() {
 		'mime_table:string:/etc/squid/mime.conf'
 }
 
+create_squid_user() {
+	user_exists squid || user_add squid $USERID
+	group_exists squid || group_add squid $USERID && group_add_user squid squid
+}
+
 start_service() {
 	local config_file http_port http_port_options ssldb ssldb_options coredump_dir visible_hostname pinger_enable
 
@@ -33,7 +38,7 @@ start_service() {
 	config_dir=$(dirname $CONFIGFILE)
 	[ -d $config_dir ] || mkdir -p $config_dir && chown nobody:nogroup $config_dir
 	[ -d $coredump_dir ] || mkdir -p $coredump_dir && chown nobody:nogroup $coredump_dir
-	[ "$ssldb" ] && ( [ -f "$ssldb"/size ] || /usr/lib/squid/ssl_crtd -c -s $ssldb && chown -R nobody:nogroup $ssldb )
+	[ "$ssldb" ] && ( [ -f "$ssldb"/size ] || /usr/lib/squid/security_file_certgen -c -s $ssldb $ssldb_options && chown -R nobody:nogroup $ssldb )
 
 	cat $config_file > $CONFIGFILE
 	echo http_port $http_port $http_port_options >> $CONFIGFILE
@@ -42,7 +47,7 @@ start_service() {
 	echo pinger_enable $pinger_enable >> $CONFIGFILE
 	cat $mime_table > $MIMETABLE
 	echo mime_table $MIMETABLE >> $CONFIGFILE
-	[ "$ssldb" ] && echo sslcrtd_program /usr/lib/squid/ssl_crtd -s $ssldb $ssldb_options >> $CONFIGFILE
+	[ "$ssldb" ] && echo sslcrtd_program /usr/lib/squid/security_file_certgen -s $ssldb $ssldb_options >> $CONFIGFILE
 	$PROG -s -f $CONFIGFILE -N -z 2>/dev/null
 
 	procd_open_instance

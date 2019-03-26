@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
+# Copyright (C) 2006-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,15 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sudo
-PKG_VERSION:=1.8.14p3
+PKG_VERSION:=1.8.26
 PKG_RELEASE:=1
-PKG_LICENSE:=ISC
-PKG_LICENSE_FILES:=doc/LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.sudo.ws/dist
-PKG_MD5SUM:=93dbd1e47c136179ff1b01494c1c0e75
+PKG_SOURCE_URL:=https://www.sudo.ws/dist
+PKG_HASH:=40da219a6f0341ccb22d04a98988e27f09b831d2561b14c6154067a49ef3fee2
 
+PKG_LICENSE:=ISC
+PKG_LICENSE_FILES:=doc/LICENSE
+PKG_CPE_ID:=cpe:/a:todd_miller:sudo
+
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 PKG_BUILD_DEPENDS:=sudo/host
@@ -27,7 +30,7 @@ define Package/sudo
   SECTION:=admin
   CATEGORY:=Administration
   TITLE:=Delegate authority to run commands
-  URL:=http://www.sudo.ws/
+  URL:=https://www.sudo.ws/
   MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
 endef
 

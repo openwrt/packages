@@ -1,7 +1,8 @@
---- a/configure.ac
-+++ b/configure.ac
-@@ -907,23 +907,6 @@ pkgconfig/gstreamer-video.pc
- pkgconfig/gstreamer-video-uninstalled.pc
+diff -u --recursive gst-plugins-base-1.15.2-vanilla/configure.ac gst-plugins-base-1.15.2/configure.ac
+--- gst-plugins-base-1.15.2-vanilla/configure.ac	2019-03-16 13:40:28.843441622 -0400
++++ gst-plugins-base-1.15.2/configure.ac	2019-03-16 13:41:14.880578949 -0400
+@@ -1005,41 +1005,6 @@
+ pkgconfig/gstreamer-gl-uninstalled.pc
  pkgconfig/gstreamer-plugins-base.pc
  pkgconfig/gstreamer-plugins-base-uninstalled.pc
 -tests/Makefile
@@ -9,11 +10,29 @@
 -tests/examples/Makefile
 -tests/examples/app/Makefile
 -tests/examples/audio/Makefile
+-tests/examples/compositor/Makefile
+-tests/examples/decodebin_next/Makefile
 -tests/examples/dynamic/Makefile
 -tests/examples/encoding/Makefile
 -tests/examples/fft/Makefile
 -tests/examples/gio/Makefile
+-tests/examples/gl/Makefile
+-tests/examples/gl/generic/Makefile
+-tests/examples/gl/generic/cube/Makefile
+-tests/examples/gl/generic/doublecube/Makefile
+-tests/examples/gl/generic/recordgraphic/Makefile
+-tests/examples/gl/generic/cubeyuv/Makefile
+-tests/examples/gl/qt/Makefile
+-tests/examples/gl/gtk/Makefile
+-tests/examples/gl/gtk/fxtest/Makefile
+-tests/examples/gl/gtk/3dvideo/Makefile
+-tests/examples/gl/gtk/switchvideooverlay/Makefile
+-tests/examples/gl/gtk/filternovideooverlay/Makefile
+-tests/examples/gl/gtk/filtervideooverlay/Makefile
+-tests/examples/gl/cocoa/Makefile
+-tests/examples/gl/sdl/Makefile
 -tests/examples/overlay/Makefile
+-tests/examples/overlaycomposition/Makefile
 -tests/examples/seek/Makefile
 -tests/examples/snapshot/Makefile
 -tests/examples/playback/Makefile
@@ -22,11 +41,12 @@
 -tests/icles/Makefile
 -tests/icles/playback/Makefile
  docs/Makefile
- docs/design/Makefile
  docs/libs/Makefile
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -11,7 +11,6 @@ SUBDIRS = 			\
+ docs/plugins/Makefile
+diff -u --recursive gst-plugins-base-1.15.2-vanilla/Makefile.am gst-plugins-base-1.15.2/Makefile.am
+--- gst-plugins-base-1.15.2-vanilla/Makefile.am	2019-03-16 13:40:28.864441684 -0400
++++ gst-plugins-base-1.15.2/Makefile.am	2019-03-16 13:41:27.970617996 -0400
+@@ -11,7 +11,6 @@
  	gst-libs 		\
  	gst sys $(SUBDIRS_EXT) 	\
  	tools 			\
@@ -34,7 +54,7 @@
  	docs			\
  	common 			\
  	m4
-@@ -22,7 +21,6 @@ DIST_SUBDIRS = 			\
+@@ -22,7 +21,6 @@
  	gst-libs		\
  	gst sys ext		\
  	tools 			\

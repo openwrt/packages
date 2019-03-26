@@ -1,0 +1,24 @@
+diff --git a/dialects/linux/Makefile b/dialects/linux/Makefile
+index 2bea108..ed8382e 100644
+--- a/dialects/linux/Makefile
++++ b/dialects/linux/Makefile
+@@ -78,8 +78,8 @@ version.h:	FRC
+ 	@echo '#define	LSOF_BLDCMT	"${LSOF_BLDCMT}"' > version.h;
+ 	@echo '#define	LSOF_CC		"${CC}"' >> version.h
+ 	@echo '#define	LSOF_CCV	"${CCV}"' >> version.h
+-	@echo '#define	LSOF_CCDATE	"'`date`'"' >> version.h
+-	@echo '#define	LSOF_CCFLAGS	"'`echo ${CFLAGS} | sed 's/\\\\(/\\(/g' | sed 's/\\\\)/\\)/g' | sed 's/"/\\\\"/g'`'"' >> version.h
++	@echo '#define	LSOF_CCDATE	"'`date -d @${SOURCE_DATE_EPOCH}`'"' >> version.h
++	@echo '#define	LSOF_CCFLAGS	""' >> version.h
+ 	@echo '#define	LSOF_CINFO	"${CINFO}"' >> version.h
+ 	@if [ "X${LSOF_HOST}" = "X" ]; then \
+ 	  echo '#define	LSOF_HOST	"'`uname -n`'"' >> version.h; \
+@@ -90,7 +90,7 @@ version.h:	FRC
+ 	    echo '#define	LSOF_HOST	"${LSOF_HOST}"' >> version.h; \
+ 	  fi \
+ 	fi
+-	@echo '#define	LSOF_LDFLAGS	"${CFGL}"' >> version.h
++	@echo '#define	LSOF_LDFLAGS	""' >> version.h
+ 	@if [ "X${LSOF_LOGNAME}" = "X" ]; then \
+ 	  echo '#define	LSOF_LOGNAME	"${LOGNAME}"' >> version.h; \
+ 	else \

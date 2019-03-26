@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2006-2015 OpenWrt.org
-# Copyright (C) 2015 Christian Beier <dontmind@freeshell.org>
+# Copyright (C) 2015-2017 Christian Beier <dontmind@freeshell.org>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,19 +9,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ola
-PKG_VERSION:=0.10.1
+PKG_VERSION:=0.10.7
 PKG_RELEASE:=2
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/OpenLightingProject/ola.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=5b86f5802e2e5b23c6a010dc8d10788e6dc57614
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/OpenLightingProject/ola/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=95b5e99775f700a9cdf6e2219eccfc8c037fa8841f87cb00344359c4b8c7bf26
+
 PKG_LICENSE:=LGPL-2.1+
 
 PKG_FIXUP:=libtool
-PKG_INSTALL:=1
 
+PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
@@ -37,7 +36,7 @@ define Package/ola
   TITLE:=Open Lighting Architecture Daemon
   URL:=https://www.openlighting.org/
   MAINTAINER:=Christian Beier <dontmind@freeshell.org>
-  DEPENDS:=+protobuf +libusb-1.0 +libuuid +libstdcpp +libpthread +librt +zlib +libncurses +liblo +sudo
+  DEPENDS:=+protobuf +libftdi1 +libusb-1.0 +libuuid +libstdcpp +libpthread +librt +zlib +libncurses +liblo +libmicrohttpd
 endef
 
 define Package/ola/description
@@ -51,9 +50,8 @@ CONFIGURE_ARGS += \
 	--disable-static \
 	--disable-fatal-warnings \
 	--disable-unittests \
-	--disable-http \
 	--without-dns-sd \
-	 --with-ola-protoc-plugin=$(HOST_BUILD_DIR)/protoc/ola_protoc_plugin
+	--with-ola-protoc-plugin=$(STAGING_DIR_HOSTPKG)/bin/ola_protoc_plugin
 
 HOST_CONFIGURE_ARGS += \
 	--disable-all-plugins \
@@ -61,7 +59,6 @@ HOST_CONFIGURE_ARGS += \
 	--disable-osc \
 	--disable-uart \
 	--disable-libusb \
-	--disable-libftdi \
 	--disable-http  \
 	--disable-examples \
 	--disable-unittests \
@@ -74,8 +71,9 @@ define Host/Compile
 		$(MAKE) protoc/ola_protoc_plugin
 endef
 
-# nothing to install for host part
 define Host/Install
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin
+	$(CP) $(HOST_BUILD_DIR)/protoc/ola_protoc_plugin $(STAGING_DIR_HOSTPKG)/bin
 endef
 
 
@@ -100,6 +98,9 @@ define Package/ola/install
 
 	$(INSTALL_DIR) $(1)/usr/share/ola/pids
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/ola/pids/* $(1)/usr/share/ola/pids
+
+	$(INSTALL_DIR) $(1)/usr/share/olad/www
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/olad/www/* $(1)/usr/share/olad/www
 endef
 
 define Package/ola/postinst

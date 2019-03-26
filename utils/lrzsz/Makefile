@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ohse.de/uwe/releases/
-PKG_MD5SUM:=b5ce6a74abc9b9eb2af94dffdfd372a4
+PKG_HASH:=c28b36b14bddb014d9e9c97c52459852f97bd405f89113f30bee45ed92728ff1
 
 PKG_MAINTAINER:=Hsing-Wang Liao <kuoruan@gmail.com>
 PKG_LICENSE:=GPL-2.0+

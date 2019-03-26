@@ -1,0 +1,10 @@
+--- a/iptunnel.c	2016-07-10 20:15:29.000000000 +0200
++++ b/iptunnel.c	2017-10-19 19:51:09.172782821 +0200
+@@ -26,7 +26,6 @@
+ #include <sys/socket.h>
+ #include <sys/ioctl.h>
+ #include <netinet/in.h>
+-#include <netinet/ip.h>
+ #include <arpa/inet.h>
+ #include <net/if.h>
+ #include <net/if_arp.h>

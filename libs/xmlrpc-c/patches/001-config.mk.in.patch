@@ -1,6 +1,6 @@
 --- a/config.mk.in
 +++ b/config.mk.in
-@@ -175,7 +175,7 @@ ifeq ($(patsubst linux-gnu%,linux-gnu,$(
+@@ -176,7 +176,7 @@ ifeq ($(patsubst linux-gnu%,linux-gnu,$(
    shlibfn = $(1:%=%.$(SHLIB_SUFFIX).$(MAJ).$(MIN))
    shliblefn = $(1:%=%.$(SHLIB_SUFFIX))
  #  SHLIB_CLIB = -lc

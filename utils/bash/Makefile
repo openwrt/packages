@@ -7,22 +7,20 @@
 
 include $(TOPDIR)/rules.mk
 
-BASE_VERSION:=4.3
-
 PKG_NAME:=bash
-PKG_VERSION:=$(BASE_VERSION).42
-PKG_RELEASE:=1
+PKG_VERSION:=5.0
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(BASE_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/bash
-PKG_MD5SUM:=81348932d5da294953e15d4814c74dd1
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BASE_VERSION)
+PKG_HASH:=b4a80f2ac66170b2913efbfb9f2594f1f76c7b1afd11f799e22035d63077fb4d
 
 PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
-PKG_CHECK_FORMAT_SECURITY:=0
+PKG_INSTALL:=1
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/bash
@@ -30,7 +28,7 @@ define Package/bash
   CATEGORY:=Utilities
   SUBMENU:=Shells
   TITLE:=The GNU Bourne Again SHell
-  DEPENDS:=+libncurses
+  DEPENDS:=+libncurses +libreadline
   URL:=http://www.gnu.org/software/bash/
 endef
 
@@ -40,35 +38,56 @@ define Package/bash/description
   incorporates useful features from the Korn and C shells (ksh and csh).
 endef
 
+# Bash detects and enables certain features by runtest simple piece of code
+# which is not viable when doing cross compilation and default to no in many
+# cases.  Grep for 'cross.compil' in aclocal.m4 and config-bot.h for details
+#
+# bash_cv_job_control_missing: Job control is needed for bash to be used as the
+# default shell
+#
+# bash_cv_getcwd_malloc: The replacement by bash does not work well with
+# overlayfs.  See "bash getcwd errors when running under OverlayFS"
+# http://permalink.gmane.org/gmane.linux.embedded.yocto.general/25204
+#
+# bash_cv_dev_fd: The test is done on build system but OpenWrt currently does
+# not have /dev/fd, it provides /proc/self/fd/ instead
+#
+# bash_cv_sys_named_pipes: Required for process substituion
+CONFIGURE_VARS += \
+	ac_cv_rl_prefix="$(STAGING_DIR)/usr" \
+	ac_cv_rl_version="8.0" \
+	bash_cv_getcwd_malloc=yes \
+	bash_cv_job_control_missing=present \
+	bash_cv_dev_fd=whacky \
+	bash_cv_sys_named_pipes=present \
 
-define Build/Configure
-	$(call Build/Configure/Default, \
-		--without-bash-malloc \
-                --bindir=/bin \
-	)
-endef
+# The following are some other tests that cannot run when cross-compiling
+CONFIGURE_VARS += \
+	bash_cv_func_sigsetjmp=present \
+	bash_cv_printf_a_format=yes \
 
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR)/builtins LDFLAGS_FOR_BUILD= mkbuiltins
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
-		SHELL="/bin/bash" \
-		all install
-endef
+CONFIGURE_ARGS+= \
+	--with-installed-readline="$(STAGING_DIR)/usr" \
+	--with-curses \
+	--without-bash-malloc \
+	--bindir=/bin \
+	--disable-rpath \
+	--enable-direxpand-default \
+	--enable-job-control \
+	--enable-readline
 
 define Package/bash/postinst
 #!/bin/sh
-grep bash $${IPKG_INSTROOT}/etc/shells || \
-	echo "/bin/bash" >> $${IPKG_INSTROOT}/etc/shells
-	echo "/bin/rbash" >> $${IPKG_INSTROOT}/etc/shells
+grep -q bash "$${IPKG_INSTROOT}/etc/shells" || {
+	echo /bin/bash >> "$${IPKG_INSTROOT}/etc/shells"
+	echo /bin/rbash >> "$${IPKG_INSTROOT}/etc/shells"
+}
 endef
 
 define Package/bash/install
 	$(INSTALL_DIR) $(1)/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/bash $(1)/bin/
-	ln -sf bash $(1)/bin/rbash
+	$(LN) bash $(1)/bin/rbash
 endef
-
 
 $(eval $(call BuildPackage,bash))
