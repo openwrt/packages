@@ -27,7 +27,7 @@
  	delete[] _pIV;
  	delete[] _pKey;
  }
-@@ -60,11 +59,9 @@ bool InboundAESProtocol::Initialize(Vari
+@@ -60,11 +59,9 @@ bool InboundAESProtocol::Initialize(Variant &parameters) {
  	_inputBuffer.IgnoreAll();
  	_tempBuffer.IgnoreAll();
  
@@ -42,7 +42,7 @@
  
  	return true;
  }
-@@ -105,14 +102,14 @@ bool InboundAESProtocol::SignalInputData
+@@ -105,14 +102,14 @@ bool InboundAESProtocol::SignalInputData(IOBuffer &buffer) {
  	int decryptedFinalSize = 0;
  	uint32_t padding = 0;
  
@@ -78,6 +78,35 @@
  };
  
  DLLEXP void InitRC4Encryption(uint8_t *secretKey, uint8_t *pubKeyIn, uint8_t *pubKeyOut,
+--- /dev/null
++++ b/sources/common/include/utils/misc/libcrypto-compat.h
+@@ -0,0 +1,26 @@
++#ifndef LIBCRYPTO_COMPAT_H
++#define LIBCRYPTO_COMPAT_H
++
++#include <openssl/opensslv.h>
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++
++#include <openssl/bn.h>
++#include <openssl/dh.h>
++#include <openssl/evp.h>
++#include <openssl/hmac.h>
++
++int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
++void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key);
++int DH_set_length(DH *dh, long length);
++
++EVP_MD_CTX *EVP_MD_CTX_new(void);
++void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
++#define EVP_MD_CTX_reset EVP_MD_CTX_cleanup
++
++HMAC_CTX *HMAC_CTX_new(void);
++void HMAC_CTX_free(HMAC_CTX *ctx);
++#define HMAC_CTX_reset HMAC_CTX_cleanup
++
++#endif /* OPENSSL_VERSION_NUMBER */
++
++#endif /* LIBCRYPTO_COMPAT_H */
 --- a/sources/common/src/utils/misc/crypto.cpp
 +++ b/sources/common/src/utils/misc/crypto.cpp
 @@ -35,6 +35,7 @@ DHWrapper::~DHWrapper() {
@@ -125,24 +154,24 @@
 -		Cleanup();
 -		return false;
 +		goto return_error;
- 	}
- 
--	//4. Set the key length
--	_pDH->length = _bitsCount;
++	}
++
 +	//4. Set internal p and g
 +	if (DH_set0_pqg(_pDH, p, NULL, g) != 1) {
 +		FATAL("Unable to set internal p and g");
 +		goto return_error;
-+	}
+ 	}
 +	p = g = NULL;
  
--	//5. Generate private and public key
+-	//4. Set the key length
+-	_pDH->length = _bitsCount;
 +	//5. Set the key length
 +	if (DH_set_length(_pDH, _bitsCount) != 1) {
 +		FATAL("Unable to set length");
 +		goto return_error;
 +	}
-+
+ 
+-	//5. Generate private and public key
 +	//6. Generate private and public key
  	if (DH_generate_key(_pDH) != 1) {
  		FATAL("Unable to generate DH public/private keys");
@@ -161,7 +190,7 @@
  }
  
  bool DHWrapper::CopyPublicKey(uint8_t *pDst, int32_t dstLength) {
-@@ -90,7 +102,9 @@ bool DHWrapper::CopyPublicKey(uint8_t *p
+@@ -90,7 +102,9 @@ bool DHWrapper::CopyPublicKey(uint8_t *pDst, int32_t dstLength) {
  		return false;
  	}
  
@@ -172,7 +201,7 @@
  }
  
  bool DHWrapper::CopyPrivateKey(uint8_t *pDst, int32_t dstLength) {
-@@ -99,7 +113,9 @@ bool DHWrapper::CopyPrivateKey(uint8_t *
+@@ -99,7 +113,9 @@ bool DHWrapper::CopyPrivateKey(uint8_t *pDst, int32_t dstLength) {
  		return false;
  	}
  
@@ -183,7 +212,7 @@
  }
  
  bool DHWrapper::CreateSharedKey(uint8_t *pPeerPublicKey, int32_t length) {
-@@ -153,14 +169,6 @@ bool DHWrapper::CopySharedKey(uint8_t *p
+@@ -153,14 +169,6 @@ bool DHWrapper::CopySharedKey(uint8_t *pDst, int32_t dstLength) {
  
  void DHWrapper::Cleanup() {
  	if (_pDH != NULL) {
@@ -207,7 +236,7 @@
  	int32_t keySize = BN_num_bytes(pNum);
  	if ((keySize <= 0) || (dstLength <= 0) || (keySize > dstLength)) {
  		FATAL("CopyPublicKey failed due to either invalid DH state or invalid call");
-@@ -197,20 +205,21 @@ void InitRC4Encryption(uint8_t *secretKe
+@@ -197,20 +205,21 @@ void InitRC4Encryption(uint8_t *secretKey, uint8_t *pubKeyIn, uint8_t *pubKeyOut
  	uint8_t digest[SHA256_DIGEST_LENGTH];
  	unsigned int digestLen = 0;
  
@@ -240,7 +269,7 @@
  
  	RC4_set_key(rc4keyIn, 16, digest);
  }
-@@ -220,14 +229,17 @@ string md5(string source, bool textResul
+@@ -220,14 +229,17 @@ string md5(string source, bool textResult) {
  }
  
  string md5(uint8_t *pBuffer, uint32_t length, bool textResult) {
@@ -263,7 +292,7 @@
  
  	if (textResult) {
  		string result = "";
-@@ -244,12 +256,12 @@ void HMACsha256(const void *pData, uint3
+@@ -259,12 +271,12 @@ void HMACsha256(const void *pData, uint32_t dataLength,
  		const void *pKey, uint32_t keyLength, void *pResult) {
  	unsigned int digestLen;
  
@@ -282,84 +311,17 @@
  
  	o_assert(digestLen == 32);
  }
---- a/sources/thelib/src/protocols/ssl/basesslprotocol.cpp
-+++ b/sources/thelib/src/protocols/ssl/basesslprotocol.cpp
-@@ -211,6 +211,7 @@ string BaseSSLProtocol::GetSSLErrors() {
- 
- string BaseSSLProtocol::DumpBIO(BIO *pBIO) {
- 	string formatString;
-+#if OPENSSL_VERSION_NUMBER < 0x10100000L
- 	formatString = "method: %p\n";
- 	formatString += "callback: %p\n";
- 	formatString += "cb_arg: %p\n";
-@@ -240,6 +241,39 @@ string BaseSSLProtocol::DumpBIO(BIO *pBI
- 			pBIO->references,
- 			(int64_t) pBIO->num_read,
- 			(int64_t) pBIO->num_write);
-+#else
-+// Some of these are problematic in openssl >= 1.1, since
-+// the BIO struct is opaque.
-+	formatString = "method: %s\n";
-+	formatString += "callback: %p\n";
-+	formatString += "cb_arg: %p\n";
-+	formatString += "init: %d\n";
-+	formatString += "shutdown: %d\n";
-+	formatString += "flags: %d\n";
-+	formatString += "retry_reason: %d\n";
-+	formatString += "num: %d\n";
-+	formatString += "ptr: %p\n";
-+	formatString += "next_bio: %p\n";
-+	formatString += "prev_bio: %s\n";
-+	formatString += "references: %s\n";
-+	formatString += "num_read: %"PRId64"\n";
-+	formatString += "num_write: %"PRId64;
-+	return format(formatString,
-+			BIO_method_name(pBIO),
-+			BIO_get_callback(pBIO),
-+			BIO_get_callback_arg(pBIO),
-+			BIO_get_init(pBIO),
-+			BIO_get_shutdown(pBIO),
-+			BIO_get_flags(pBIO),
-+			BIO_get_retry_reason(pBIO),
-+			BIO_get_fd(pBIO, NULL),
-+			BIO_get_data(pBIO),
-+			BIO_next(pBIO),
-+			"unknown", //prev_bio
-+			"unknown", //references
-+			BIO_number_read(pBIO),
-+			BIO_number_written(pBIO));
-+#endif
+@@ -397,8 +409,8 @@ string unhex(const uint8_t *pBuffer, uint32_t length) {
  }
  
- void BaseSSLProtocol::InitRandGenerator() {
---- /dev/null
-+++ b/sources/common/include/utils/misc/libcrypto-compat.h
-@@ -0,0 +1,25 @@
-+#ifndef LIBCRYPTO_COMPAT_H
-+#define LIBCRYPTO_COMPAT_H
-+
-+#include <openssl/opensslv.h>
+ void CleanupSSL() {
+-#ifndef NO_SSL_ENGINE_CLEANUP
+-	ERR_remove_state(0);
 +#if OPENSSL_VERSION_NUMBER < 0x10100000L
-+
-+#include <openssl/dh.h>
-+#include <openssl/evp.h>
-+#include <openssl/hmac.h>
-+
-+int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
-+void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key);
-+int DH_set_length(DH *dh, long length);
-+
-+EVP_MD_CTX *EVP_MD_CTX_new(void);
-+void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
-+#define EVP_MD_CTX_reset EVP_MD_CTX_cleanup
-+
-+HMAC_CTX *HMAC_CTX_new(void);
-+void HMAC_CTX_free(HMAC_CTX *ctx);
-+#define HMAC_CTX_reset HMAC_CTX_cleanup
-+
-+#endif /* OPENSSL_VERSION_NUMBER */
-+
-+#endif /* LIBCRYPTO_COMPAT_H */
++	ERR_remove_thread_state(NULL);
+ 	ENGINE_cleanup();
+ 	CONF_modules_unload(1);
+ 	ERR_free_strings();
 --- /dev/null
 +++ b/sources/common/src/utils/misc/libcrypto-compat.cpp
 @@ -0,0 +1,90 @@
@@ -453,3 +415,80 @@
 +}
 +
 +#endif /* OPENSSL_VERSION_NUMBER */
+--- a/sources/thelib/src/protocols/ssl/basesslprotocol.cpp
++++ b/sources/thelib/src/protocols/ssl/basesslprotocol.cpp
+@@ -43,6 +43,7 @@ BaseSSLProtocol::~BaseSSLProtocol() {
+ bool BaseSSLProtocol::Initialize(Variant &parameters) {
+ 	//1. Initialize the SSL library
+ 	if (!_libraryInitialized) {
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 		//3. This is the first time we use the library. So we have to
+ 		//initialize it first
+ 		SSL_library_init();
+@@ -55,6 +56,7 @@ bool BaseSSLProtocol::Initialize(Variant &parameters) {
+ 		OpenSSL_add_all_algorithms();
+ 		OpenSSL_add_all_ciphers();
+ 		OpenSSL_add_all_digests();
++#endif
+ 
+ 		//initialize the random numbers generator
+ 		InitRandGenerator();
+@@ -211,6 +213,7 @@ string BaseSSLProtocol::GetSSLErrors() {
+ 
+ string BaseSSLProtocol::DumpBIO(BIO *pBIO) {
+ 	string formatString;
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	formatString = "method: %p\n";
+ 	formatString += "callback: %p\n";
+ 	formatString += "cb_arg: %p\n";
+@@ -240,6 +243,39 @@ string BaseSSLProtocol::DumpBIO(BIO *pBIO) {
+ 			pBIO->references,
+ 			(int64_t) pBIO->num_read,
+ 			(int64_t) pBIO->num_write);
++#else
++// Some of these are problematic in openssl >= 1.1, since
++// the BIO struct is opaque.
++	formatString = "method: %s\n";
++	formatString += "callback: %p\n";
++	formatString += "cb_arg: %p\n";
++	formatString += "init: %d\n";
++	formatString += "shutdown: %d\n";
++	formatString += "flags: %d\n";
++	formatString += "retry_reason: %d\n";
++	formatString += "num: %d\n";
++	formatString += "ptr: %p\n";
++	formatString += "next_bio: %p\n";
++	formatString += "prev_bio: %s\n";
++	formatString += "references: %s\n";
++	formatString += "num_read: %"PRId64"\n";
++	formatString += "num_write: %"PRId64;
++	return format(STR(formatString),
++			BIO_method_name(pBIO),
++			BIO_get_callback(pBIO),
++			BIO_get_callback_arg(pBIO),
++			BIO_get_init(pBIO),
++			BIO_get_shutdown(pBIO),
++			BIO_get_flags(pBIO),
++			BIO_get_retry_reason(pBIO),
++			BIO_get_fd(pBIO, NULL),
++			BIO_get_data(pBIO),
++			BIO_next(pBIO),
++			"unknown", //prev_bio
++			"unknown", //references
++			BIO_number_read(pBIO),
++			BIO_number_written(pBIO));
++#endif
+ }
+ 
+ void BaseSSLProtocol::InitRandGenerator() {
+--- a/sources/thelib/src/protocols/ssl/outboundsslprotocol.cpp
++++ b/sources/thelib/src/protocols/ssl/outboundsslprotocol.cpp
+@@ -33,7 +33,7 @@ bool OutboundSSLProtocol::InitGlobalContext(Variant &parameters) {
+ 	_pGlobalSSLContext = _pGlobalContexts[hash];
+ 	if (_pGlobalSSLContext == NULL) {
+ 		//2. prepare the global ssl context
+-		_pGlobalSSLContext = SSL_CTX_new(TLSv1_method());
++		_pGlobalSSLContext = SSL_CTX_new(SSLv23_method());
+ 		if (_pGlobalSSLContext == NULL) {
+ 			FATAL("Unable to create global SSL context");
+ 			return false;
