@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-libav
 PKG_VERSION:=1.15.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
 		Ted Hess <thess@kitschensync.net>
@@ -146,12 +146,27 @@ LIBAV_CONFIGURE_PROTOCOLS:=$(call FILTER_CONFIG,PROTOCOL,protocol,$(LIBAV_PROTOC
 REAL_CPU_TYPE:=$(firstword $(subst +, ,$(CONFIG_CPU_TYPE)))
 
 CONFIGURE_ARGS += \
+	--disable-Bsymbolic \
+	--disable-fatal-warnings \
+	--disable-glib-asserts \
+	--disable-gobject-cast-checks \
+	--disable-gtk-doc-html \
+	--disable-valgrind \
 	--without-system-libav \
+	--with-pic \
 	--with-libav-extra-configure=" \
 	$(if $(REAL_CPU_TYPE),--cpu=$(call qstrip,$(REAL_CPU_TYPE)),) \
 	--disable-bsfs \
 	--disable-programs \
 	--disable-devices \
+	--disable-debug \
+	--disable-doc \
+	--disable-extra-warnings \
+	--disable-htmlpages \
+	--disable-manpages \
+	--disable-podpages \
+	--disable-txtpages \
+	--disable-runtime-cpudetect \
 	--disable-encoders \
 	$(LIBAV_CONFIGURE_ENCODERS) \
 	--disable-decoders \
@@ -182,11 +197,7 @@ CONFIGURE_ARGS += \
 	--disable-fma4 \
 	--disable-avx2 \
 	--disable-inline-asm \
-	--disable-yasm"
-
-TARGET_CFLAGS += -D_GNU_SOURCE -Wno-format-nonliteral
-
-TARGET_LDFLAGS += $(FPIC)
+	--disable-x86asm"
 
 define Package/gst1-libav/install
 	$(INSTALL_DIR) $(1)/usr/lib/gstreamer-$(GST_VERSION)
