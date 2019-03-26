@@ -12,7 +12,7 @@ include ../python-version.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
@@ -194,23 +194,17 @@ define Build/Compile
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/ $(1)/usr/lib/ $(1)/usr/lib/pkgconfig
-	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
+	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib $(1)/usr/lib/pkgconfig
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
 		$(1)/usr/include/
 	$(CP) \
-		$(HOST_PYTHON_LIB_DIR) \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION) \
 		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* \
 		$(1)/usr/lib/
 	$(CP) \
-		$(HOST_PYTHON_DIR)/lib/pkgconfig/python.pc \
-		$(HOST_PYTHON_DIR)/lib/pkgconfig/python2.pc \
-		$(HOST_PYTHON_DIR)/lib/pkgconfig/python-$(PYTHON_VERSION).pc \
+		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/python*.pc \
 		$(1)/usr/lib/pkgconfig
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config \
-		$(1)/usr/lib/python$(PYTHON_VERSION)/
 endef
 
 PYTHON_BASE_LIB_FILES:= \
