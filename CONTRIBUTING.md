@@ -66,6 +66,7 @@ Pull requests are the easiest way to contribute changes to git repos at Github. 
 
 ### If you have commit access:
 
+* Preferably have someone else merge your own changes (commits) so that at least four eyes have seen it.
 * Do NOT use git push --force.
 * Do NOT commit to other maintainer's packages without their consent.
 * Use Pull Requests if you are unsure and to suggest changes to other maintainers.
