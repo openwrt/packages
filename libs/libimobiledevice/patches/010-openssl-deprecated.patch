@@ -1,0 +1,88 @@
+--- a/common/userpref.c
++++ b/common/userpref.c
+@@ -37,6 +37,7 @@
+ #include <unistd.h>
+ #include <usbmuxd.h>
+ #ifdef HAVE_OPENSSL
++#include <openssl/bn.h>
+ #include <openssl/pem.h>
+ #include <openssl/rsa.h>
+ #include <openssl/x509.h>
+@@ -73,6 +74,11 @@ const ASN1_ARRAY_TYPE pkcs1_asn1_tab[] = {
+ };
+ #endif
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++#define X509_set1_notBefore X509_set_notBefore
++#define X509_set1_notAfter X509_set_notAfter
++#endif
++
+ #ifdef WIN32
+ #define DIR_SEP '\\'
+ #define DIR_SEP_S "\\"
+@@ -420,9 +426,9 @@ userpref_error_t pair_record_generate_keys_and_certs(plist_t pair_record, key_da
+ 		/* set key validity */
+ 		ASN1_TIME* asn1time = ASN1_TIME_new();
+ 		ASN1_TIME_set(asn1time, time(NULL));
+-		X509_set_notBefore(root_cert, asn1time);
++		X509_set1_notBefore(root_cert, asn1time);
+ 		ASN1_TIME_set(asn1time, time(NULL) + (60 * 60 * 24 * 365 * 10));
+-		X509_set_notAfter(root_cert, asn1time);
++		X509_set1_notAfter(root_cert, asn1time);
+ 		ASN1_TIME_free(asn1time);
+ 
+ 		/* use root public key for root cert */
+@@ -453,9 +459,9 @@ userpref_error_t pair_record_generate_keys_and_certs(plist_t pair_record, key_da
+ 		/* set key validity */
+ 		ASN1_TIME* asn1time = ASN1_TIME_new();
+ 		ASN1_TIME_set(asn1time, time(NULL));
+-		X509_set_notBefore(host_cert, asn1time);
++		X509_set1_notBefore(host_cert, asn1time);
+ 		ASN1_TIME_set(asn1time, time(NULL) + (60 * 60 * 24 * 365 * 10));
+-		X509_set_notAfter(host_cert, asn1time);
++		X509_set1_notAfter(host_cert, asn1time);
+ 		ASN1_TIME_free(asn1time);
+ 
+ 		/* use host public key for host cert */
+@@ -533,9 +539,9 @@ userpref_error_t pair_record_generate_keys_and_certs(plist_t pair_record, key_da
+ 
+ 		ASN1_TIME* asn1time = ASN1_TIME_new();
+ 		ASN1_TIME_set(asn1time, time(NULL));
+-		X509_set_notBefore(dev_cert, asn1time);
++		X509_set1_notBefore(dev_cert, asn1time);
+ 		ASN1_TIME_set(asn1time, time(NULL) + (60 * 60 * 24 * 365 * 10));
+-		X509_set_notAfter(dev_cert, asn1time);
++		X509_set1_notAfter(dev_cert, asn1time);
+ 		ASN1_TIME_free(asn1time);
+ 
+ 		EVP_PKEY* pkey = EVP_PKEY_new();
+--- a/src/idevice.c
++++ b/src/idevice.c
+@@ -36,6 +36,7 @@
+ #include <usbmuxd.h>
+ #ifdef HAVE_OPENSSL
+ #include <openssl/err.h>
++#include <openssl/rsa.h>
+ #include <openssl/ssl.h>
+ 
+ #else
+@@ -49,6 +50,10 @@
+ 
+ #ifdef HAVE_OPENSSL
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++#define TLS_method TLSv1_method
++#endif
++
+ #if OPENSSL_VERSION_NUMBER < 0x10002000L
+ static void SSL_COMP_free_compression_methods(void)
+ {
+@@ -721,7 +726,7 @@ LIBIMOBILEDEVICE_API idevice_error_t idevice_connection_enable_ssl(idevice_conne
+ 	}
+ 	BIO_set_fd(ssl_bio, (int)(long)connection->data, BIO_NOCLOSE);
+ 
+-	SSL_CTX *ssl_ctx = SSL_CTX_new(TLSv1_method());
++	SSL_CTX *ssl_ctx = SSL_CTX_new(TLS_method());
+ 	if (ssl_ctx == NULL) {
+ 		debug_info("ERROR: Could not create SSL context.");
+ 		BIO_free(ssl_bio);
