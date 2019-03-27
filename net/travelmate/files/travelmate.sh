@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.4.2"
+trm_ver="1.4.3"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -62,7 +62,7 @@ f_envload()
 		trm_sysver="${sys_model}, ${sys_desc}"
 	fi
 
-	# get eap capabilities and rebind setting
+	# get eap capabilities and rebind protection setting
 	#
 	trm_eap="$("${trm_wpa}" -veap >/dev/null 2>&1; printf "%u" ${?})"
 	trm_rebind="$(uci_get dhcp "@dnsmasq[0]" rebind_protection)"
@@ -155,13 +155,13 @@ f_prep()
 			then
 				trm_active_sta="${config}"
 			fi
-			if [ -z "${eaptype}" ] || ([ -n "${eaptype}" ] && [ ${trm_eap} -eq 0 ])
+			if [ -z "${eaptype}" ] || ([ -n "${eaptype}" ] && [ ${trm_eap:-1} -eq 0 ])
 			then
 				trm_stalist="$(f_trim "${trm_stalist} ${config}-${radio}")"
 			fi
 		fi
 	fi
-	f_log "debug" "f_prep ::: config: ${config}, mode: ${mode}, network: ${network}, radio: ${radio}, trm_radio: ${trm_radio:-"-"}, trm_active_sta: ${trm_active_sta:-"-"}, proactive: ${proactive}, trm_eap: ${trm_eap}, trm_rebind: ${trm_rebind}, disabled: ${disabled}"
+	f_log "debug" "f_prep ::: config: ${config}, mode: ${mode}, network: ${network}, radio: ${radio}, trm_radio: ${trm_radio:-"-"}, trm_active_sta: ${trm_active_sta:-"-"}, proactive: ${proactive}, trm_eap: ${trm_eap:-"-"}, trm_rebind: ${trm_rebind:-"-"}, disabled: ${disabled}"
 }
 
 # check interface status
@@ -244,15 +244,18 @@ f_check()
 						awk '/^Failed to redirect|^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|^Connection error/{printf "%s" "net nok";exit}')"
 					if [ -n "${result}" ] && ([ -z "${trm_connection}" ] || [ "${result}" != "${trm_connection%/*}" ])
 					then
-						cp_domain="$(printf "%s" "${result}" | awk -F "['| ]" '/^net cp/{printf "%s" $4}')"
-						if [ -x "/etc/init.d/dnsmasq" ] && [ -n "${cp_domain}" ]
+						if [ "${trm_rebind:-0}" -eq 1 ] && [ -x "/etc/init.d/dnsmasq" ]
 						then
-							if [ -z "$(uci_get dhcp "@dnsmasq[0]" rebind_domain | grep -Fo "${cp_domain}")" ]
-							then
+							cp_domain="$(printf "%s" "${result}" | awk -F "['| ]" '/^net cp/{printf "%s" $4}')"
+							while [ -n "${cp_domain}" ] && [ -z "$(uci_get dhcp "@dnsmasq[0]" rebind_domain | grep -Fo "${cp_domain}")" ]
+							do
 								uci -q add_list dhcp.@dnsmasq[0].rebind_domain="${cp_domain}"
 								uci_commit dhcp
 								/etc/init.d/dnsmasq reload
-							fi
+								result="$(${trm_fetch} --timeout=$(( ${trm_maxwait} / 3 )) "${trm_captiveurl}" -O /dev/null 2>&1 | \
+									awk '/^Failed to redirect|^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|^Connection error/{printf "%s" "net nok";exit}')"
+								cp_domain="$(printf "%s" "${result}" | awk -F "['| ]" '/^net cp/{printf "%s" $4}')"
+							done
 						fi
 						trm_connection="${result}/${trm_ifquality}"
 						f_jsnup
@@ -295,7 +298,7 @@ f_jsnup()
 	fi
 
 	json_get_var faulty_list "faulty_stations"
-	if [ -n "${faulty_list}" ] || [ -n "${faulty_station}" ]
+	if [ -n "${faulty_station}" ]
 	then
 		if [ -z "$(printf "%s" "${faulty_list}" | grep -Fo "${faulty_station}")" ]
 		then
@@ -442,7 +445,7 @@ f_main()
 									then
 										unset IFS scan_list
 										uci_commit wireless
-										f_log "info" "connected to uplink '${sta_radio}/${sta_essid}/${sta_bssid:-"-"} (${cnt}/${trm_maxretry}, ${trm_sysver})"
+										f_log "info" "connected to uplink '${sta_radio}/${sta_essid}/${sta_bssid:-"-"}' (${cnt}/${trm_maxretry}, ${trm_sysver})"
 										return 0
 									else
 										uci -q revert wireless
