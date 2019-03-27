@@ -14,7 +14,7 @@ PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -198,23 +198,17 @@ define Build/Compile
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/ $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib $(1)/usr/lib/pkgconfig
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
 		$(1)/usr/include/
 	$(CP) \
-		$(HOST_PYTHON3_LIB_DIR) \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION) \
 		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* \
 		$(1)/usr/lib/
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/python3.pc \
-		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/python-$(PYTHON3_VERSION).pc \
+		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/python*.pc \
 		$(1)/usr/lib/pkgconfig
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config-$(PYTHON_VERSION) \
-		$(1)/usr/lib/python$(PYTHON_VERSION)/
 endef
 
 PYTHON3_BASE_LIB_FILES:= \
