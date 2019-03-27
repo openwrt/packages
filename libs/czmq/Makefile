@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=czmq
 PKG_VERSION:=4.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/zeromq/czmq/releases/download/v$(PKG_VERSION)/
@@ -22,18 +22,23 @@ PKG_LICENSE:=MPLv2
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 
+PKG_ABI_VERSION:=4
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/autotools.mk
 
 define Package/czmq
 	SECTION:=libs
 	CATEGORY:=Libraries
-	TITLE:=CZMQ
+	TITLE:=CZMQ High-level C binding for ZeroMQ
+	URL:=http://czmq.zeromq.org
+	ABI_VERSION:=$(PKG_ABI_VERSION)
 	DEPENDS:=+libzmq +libuuid +libpcre +libmicrohttpd +liblz4 +libcurl
 endef
 
 define Package/czmq/description
-	High-level C binding for ØMQ
+  High-level C binding for ZeroMQ which is high-performance asynchronous messaging
+  library, aimed at use in distributed or concurrent applications.
 endef
 
 TARGET_CFLAGS += --std=c99
@@ -51,7 +56,9 @@ define Package/czmq/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/zmakecert $(1)/usr/bin/zmakecert
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libczmq.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libczmq.so.$(PKG_VERSION) $(1)/usr/lib/
+	$(LN) /usr/lib/libczmq.so.$(PKG_VERSION) $(1)/usr/lib/libczmq.so
+	$(LN) /usr/lib/libczmq.so.$(PKG_VERSION) $(1)/usr/lib/libczmq.so.$(PKG_ABI_VERSION)
 endef
 
 $(eval $(call BuildPackage,czmq))
