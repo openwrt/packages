@@ -59,6 +59,12 @@ CONFIGURE_ARGS += \
 	--with-port=3109 \
 	--with-logfile=/var/log/conserver/server.log
 
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(CP) ./files/config.sub $(PKG_BUILD_DIR)/
+	$(CP) ./files/config.guess $(PKG_BUILD_DIR)/
+endef
+
 define Package/conserver/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/conserver $(1)/usr/sbin/
