@@ -5,7 +5,7 @@
 
  #elif defined(linux) || defined(__linux__)
 -#define PLATFORM_NAME "Linux"
-+#define PLATFORM_NAME "OpenWRT"
++#define PLATFORM_NAME "OpenWrt"
 
  #elif defined(sun)
  #define PLATFORM_NAME "Solaris"
