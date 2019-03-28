@@ -140,10 +140,13 @@ define Package/lxc-init
 endef
 
 CONFIGURE_ARGS += \
-	--disable-gnutls \
 	--disable-apparmor \
+	--disable-cgmanager \
 	--disable-doc \
 	--disable-examples \
+	--disable-gnutls \
+	--disable-selinux \
+	--disable-python \
 	--enable-lua=yes \
 	--with-lua-pc="$(STAGING_DIR)/usr/lib/pkgconfig/lua.pc"
 
