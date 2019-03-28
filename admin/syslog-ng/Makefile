@@ -60,6 +60,7 @@ CONFIGURE_ARGS +=  \
 	--disable-redis \
 	--disable-dependency-tracking \
 	--disable-python \
+	--disable-geoip2 \
 	--disable-java \
 	--disable-java-modules \
 	--with-librabbitmq-client=no \
