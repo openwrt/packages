@@ -1,0 +1,11 @@
+--- a/config.h
++++ b/config.h
+@@ -42,7 +42,7 @@
+ #define PLATFORM_NAME "BSD/OS"
+
+ #elif defined(linux) || defined(__linux__)
+-#define PLATFORM_NAME "Linux"
++#define PLATFORM_NAME "OpenWRT"
+
+ #elif defined(sun)
+ #define PLATFORM_NAME "Solaris"
