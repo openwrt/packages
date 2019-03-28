@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libssh2
-PKG_VERSION:=1.7.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.8.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.libssh2.org/download
-PKG_MD5SUM:=b01662a210e94cccf2f76094db7dac5c
+PKG_HASH:=40b517f35b1bb869d0075b15125c7a015557f53a5a3a6a8bffb89b69fd70f159
 
 PKG_INSTALL:=1
 
@@ -35,12 +35,11 @@ define Package/libssh2/description
  libssh2 is a client-side C library implementing the SSH2 protocol.
 endef
 
-TARGET_CFLAGS += $(FPIC)
-
 CONFIGURE_ARGS += \
 	--disable-examples-build \
 	--with-libssl-prefix=$(STAGING_DIR)/usr \
-	--with-libz-prefix=$(STAGING_DIR)/usr
+	--with-libz-prefix=$(STAGING_DIR)/usr \
+	--with-openssl
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
