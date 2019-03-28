@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.4.3"
+trm_ver="1.4.4"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -242,16 +242,17 @@ f_check()
 				then
 					result="$(${trm_fetch} --timeout=$(( ${trm_maxwait} / 3 )) "${trm_captiveurl}" -O /dev/null 2>&1 | \
 						awk '/^Failed to redirect|^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|^Connection error/{printf "%s" "net nok";exit}')"
-					if [ -n "${result}" ] && ([ -z "${trm_connection}" ] || [ "${result}" != "${trm_connection%/*}" ])
+					cp_domain="$(printf "%s" "${result}" | awk -F "['| ]" '/^net cp/{printf "%s" $4}')"
+					if [ -n "${result}" ] && ([ -z "${trm_connection}" ] || [ "${result}" != "${trm_connection%/*}" ] || [ -n "${cp_domain}" ])
 					then
 						if [ "${trm_rebind:-0}" -eq 1 ] && [ -x "/etc/init.d/dnsmasq" ]
 						then
-							cp_domain="$(printf "%s" "${result}" | awk -F "['| ]" '/^net cp/{printf "%s" $4}')"
 							while [ -n "${cp_domain}" ] && [ -z "$(uci_get dhcp "@dnsmasq[0]" rebind_domain | grep -Fo "${cp_domain}")" ]
 							do
 								uci -q add_list dhcp.@dnsmasq[0].rebind_domain="${cp_domain}"
 								uci_commit dhcp
 								/etc/init.d/dnsmasq reload
+								f_log "info" "captive portal domain '${cp_domain}' added to rebind whitelist"
 								result="$(${trm_fetch} --timeout=$(( ${trm_maxwait} / 3 )) "${trm_captiveurl}" -O /dev/null 2>&1 | \
 									awk '/^Failed to redirect|^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|^Connection error/{printf "%s" "net nok";exit}')"
 								cp_domain="$(printf "%s" "${result}" | awk -F "['| ]" '/^net cp/{printf "%s" $4}')"
