@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l-utils
-PKG_VERSION:=1.16.3
+PKG_VERSION:=1.16.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.linuxtv.org/downloads/v4l-utils
-PKG_HASH:=7c5c0d49c130cf65d384f28e9f3a53c5f7d17bf18740c48c40810e0fbbed5b54
+PKG_HASH:=ed80242510385017a1dc566e17a285a77222bb301f5bc19386badfcc2c19df1b
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=GPL-2.0 LGPL-2.1
@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/nls.mk
 
 define Package/libv4l/Default
   TITLE:=Video 4 Linux
-  URL:=http://www.linuxtv.org/
+  URL:=https://www.linuxtv.org/
 endef
 
 define Package/libv4l/Default/description
