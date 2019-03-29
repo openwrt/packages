@@ -1,6 +1,6 @@
---- a/src/util/dict_db.c	2017-07-16 16:56:00.819659962 +0300
-+++ b/src/util/dict_db.c	2017-07-16 16:58:31.011401358 +0300
-@@ -740,8 +740,8 @@
+--- a/src/util/dict_db.c
++++ b/src/util/dict_db.c
+@@ -750,8 +750,8 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
  	msg_fatal("create DB database: %m");
      if (db == 0)
  	msg_panic("db_create null result");
