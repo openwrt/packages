@@ -42,6 +42,8 @@ define Build/Compile
         CC="$(TARGET_CC)" \
         LUA="$(STAGING_DIR_HOSTPKG)/bin/lua" \
         LUAC="$(STAGING_DIR_HOSTPKG)/bin/luac" \
+	LUA_FLAGS= \
+	LUA_LIBS=-llua \
         OPT_FLAGS="$(TARGET_CFLAGS) -Dpthread_yield=sched_yield"
 endef
 
