@@ -9,9 +9,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=batctl
 
-PKG_VERSION:=2019.0
-PKG_RELEASE:=2
-PKG_HASH:=997721096ff396644e8d697ea7651e9d38243faf317bcea2661d4139ff58b531
+PKG_VERSION:=2019.1
+PKG_RELEASE:=0
+PKG_HASH:=e82d05f058d8b799d17ce6063e1bf5b83ef1fe42a0867b3e2e39545177469793
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.open-mesh.org/batman/releases/batman-adv-$(PKG_VERSION)
@@ -30,12 +30,24 @@ define Package/batctl/Default
   MAINTAINER:=Simon Wunderlich <sw@simonwunderlich.de>
 endef
 
+define Package/batctl/description
+batctl is a more intuitive managment utility for B.A.T.M.A.N.-Advanced.
+It is an easier method for configuring batman-adv and provides some
+additional tools for debugging as well. This package builds
+version $(PKG_VERSION) of the user space utility.
+endef
+
 define Package/batctl-tiny
 $(call Package/batctl/Default)
   TITLE:=B.A.T.M.A.N. Advanced user space configuration tool (Minimal)
   VARIANT:=tiny
   PROVIDES:=batctl
   ALTERNATIVES:=100:/usr/sbin/batctl:/usr/libexec/batctl-tiny
+endef
+
+define Package/batctl-tiny/description
+$(Package/batctl/description)
+Only configuration relevant subcommands are enabled.
 endef
 
 define Package/batctl-default
@@ -45,6 +57,11 @@ $(call Package/batctl/Default)
   ALTERNATIVES:=200:/usr/sbin/batctl:/usr/libexec/batctl-default
 endef
 
+define Package/batctl-default/description
+$(Package/batctl/description)
+Standard subcommands for configuration and online debugging are enabled.
+endef
+
 define Package/batctl-full
 $(call Package/batctl/Default)
   TITLE:=B.A.T.M.A.N. Advanced user space configuration tool (Full)
@@ -52,11 +69,9 @@ $(call Package/batctl/Default)
   ALTERNATIVES:=300:/usr/sbin/batctl:/usr/libexec/batctl-full
 endef
 
-define Package/batctl/description
-batctl is a more intuitive managment utility for B.A.T.M.A.N.-Advanced.
-It is an easier method for configuring batman-adv and provides some
-additional tools for debugging as well. This package builds
-version $(PKG_VERSION) of the user space utility.
+define Package/batctl-full/description
+$(Package/batctl/description)
+Subcommands for configuration, online and offline debugging are enabled.
 endef
 
 # The linker can identify unused sections of a binary when each symbol is stored
@@ -107,6 +122,7 @@ config-n := \
 	log \
 	loglevel \
 	mcast_flags \
+	multicast_forceflood \
 	multicast_mode \
 	nc_nodes \
 	neighbors \
@@ -135,6 +151,7 @@ config-settings := \
 	interface \
 	isolation_mark \
 	loglevel \
+	multicast_forceflood \
 	multicast_mode \
 	network_coding \
 	orig_interval \
