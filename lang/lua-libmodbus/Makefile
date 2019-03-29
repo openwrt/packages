@@ -22,7 +22,7 @@ define Package/lua-libmodbus
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=lua-libmodbus
-  URL:=https://github.com/remakeelectric/lua-libmodbus
+  URL:=https://github.com/etactica/lua-libmodbus
   DEPENDS:=+liblua +libmodbus
 endef
 
