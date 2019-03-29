@@ -119,7 +119,7 @@ diff -u --recursive snort-2.9.11.1-vanilla/configure.in snort-2.9.11.1/configure
 -]])],
 -[have_daq_ext_modflow="yes"],
 -[have_daq_ext_modflow="no"])
-+have_daq_ext_modflow="no"
++have_daq_ext_modflow="yes"
  AC_MSG_RESULT($have_daq_ext_modflow)
  if test "x$have_daq_ext_modflow" = "xyes"; then
      CCONFIGFLAGS="${CCONFIGFLAGS} -DHAVE_DAQ_EXT_MODFLOW"
@@ -160,7 +160,7 @@ diff -u --recursive snort-2.9.11.1-vanilla/configure.in snort-2.9.11.1/configure
 -]])],
 -[have_daq_data_channel_flags="yes"],
 -[have_daq_data_channel_flags="no"])
-+have_daq_data_channel_flags="no"
++have_daq_data_channel_flags="yes"
  AC_MSG_RESULT($have_daq_data_channel_flags)
  if test "x$have_daq_data_channel_flags" = "xyes"; then
      CCONFIGFLAGS="${CCONFIGFLAGS} -DHAVE_DAQ_DATA_CHANNEL_PARAMS"
@@ -180,7 +180,7 @@ diff -u --recursive snort-2.9.11.1-vanilla/configure.in snort-2.9.11.1/configure
 -]])],
 -[have_daq_data_channel_separate_ip_versions="yes"],
 -[have_daq_data_channel_separate_ip_versions="no"])
-+have_daq_data_channel_separate_ip_versions="no"
++have_daq_data_channel_separate_ip_versions="yes"
  AC_MSG_RESULT($have_daq_data_channel_separate_ip_versions)
  if test "x$have_daq_data_channel_separate_ip_versions" = "xyes"; then
      CCONFIGFLAGS="${CCONFIGFLAGS} -DHAVE_DAQ_DATA_CHANNEL_SEPARATE_IP_VERSIONS"
