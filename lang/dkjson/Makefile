@@ -27,6 +27,7 @@ define Package/dkjson
 	URL:=http://dkolf.de/src/dkjson-lua.fsl/home
 	MAINTAINER:=Lars Gierth <larsg@systemli.org>
 	DEPENDS:=+lua
+	PKGARCH:=all
 endef
 
 define Package/dkjson/description

@@ -21,6 +21,7 @@ define Package/dynapoint
     SUBMENU:=wireless
     DEPENDS:=+lua +libubus-lua +libuci-lua +libubox-lua +luci-lib-nixio
     TITLE:=Dynamic access point manager
+    PKGARCH:=all
 endef
 
 define Package/dynapoint/description

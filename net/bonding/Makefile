@@ -23,6 +23,7 @@ define Package/proto-bonding
   CATEGORY:=Network
   TITLE:=Link Aggregation (Channel Bonding) proto handler
   DEPENDS:=+kmod-bonding
+  PKGARCH:=all
 endef
 
 define Package/proto-bonding/description

@@ -27,6 +27,7 @@ define Package/lua-bencode
 	TITLE:=lua-bencode
 	URL:=https://bitbucket.org/wilhelmy/lua-bencode
 	DEPENDS:=+lua
+	PKGARCH:=all
 endef
 
 define Package/lua-bencode/description
