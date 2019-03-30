@@ -1,7 +1,6 @@
-diff -Naur a/conf/post-install b/conf/post-install
---- a/conf/post-install	2015-12-28 00:00:45.000000000 +0000
-+++ b/conf/post-install	2017-08-01 22:42:30.476896711 +0000
-@@ -566,15 +566,16 @@
+--- a/conf/post-install
++++ b/conf/post-install
+@@ -566,15 +566,16 @@ test -n "$create" && {
  	    then
  		set_permission=1
  	    fi
