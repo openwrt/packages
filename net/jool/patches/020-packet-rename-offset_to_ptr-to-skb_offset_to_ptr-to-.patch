@@ -1,0 +1,65 @@
+From f9e62248f252accb0609243958fb51f0f99a5bf3 Mon Sep 17 00:00:00 2001
+From: Ricardo Salveti <ricardo@foundries.io>
+Date: Mon, 1 Oct 2018 22:45:17 -0300
+Subject: [PATCH 2/2] packet: rename offset_to_ptr to skb_offset_to_ptr to
+ avoid conflicts with newer kernel
+
+Rename offset_to_ptr to skb_offset_to_ptr to avoid definition conflict
+when building jool against linux >= 4.19.
+
+Fixes:
+| mod/stateful/../common/packet.c:73:14: error: conflicting types for 'offset_to_ptr'
+|  static void *offset_to_ptr(struct sk_buff *skb, unsigned int offset)
+|               ^~~~~~~~~~~~~
+| In file included from kernel-source/include/linux/export.h:45,
+|                  from kernel-source/include/linux/linkage.h:7,
+|                  from kernel-source/include/linux/kernel.h:7,
+|                  from kernel-source/include/linux/skbuff.h:17,
+|                  from mod/stateful/../../include/nat64/mod/common/packet.h:81,
+|                  from mod/stateful/../common/packet.c:1:
+| kernel-source/include/linux/compiler.h:297:21: note: previous definition of 'offset_to_ptr' was here
+|  static inline void *offset_to_ptr(const int *off)
+|                      ^~~~~~~~~~~~~
+
+Signed-off-by: Ricardo Salveti <ricardo@foundries.io>
+---
+ mod/common/packet.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/mod/common/packet.c b/mod/common/packet.c
+index 9b4fbcd6..1b094fcc 100644
+--- a/mod/common/packet.c
++++ b/mod/common/packet.c
+@@ -70,7 +70,7 @@ static int inhdr4(struct sk_buff *skb, const char *msg)
+ 	return -EINVAL;
+ }
+ 
+-static void *offset_to_ptr(struct sk_buff *skb, unsigned int offset)
++static void *skb_offset_to_ptr(struct sk_buff *skb, unsigned int offset)
+ {
+ 	return ((void *) skb->data) + offset;
+ }
+@@ -368,9 +368,9 @@ int pkt_init_ipv6(struct packet *pkt, struct sk_buff *skb)
+ 	pkt->l4_proto = meta.l4_proto;
+ 	pkt->is_inner = 0;
+ 	pkt->is_hairpin = false;
+-	pkt->hdr_frag = meta.has_frag_hdr ? offset_to_ptr(skb, meta.frag_offset) : NULL;
++	pkt->hdr_frag = meta.has_frag_hdr ? skb_offset_to_ptr(skb, meta.frag_offset) : NULL;
+ 	skb_set_transport_header(skb, meta.l4_offset);
+-	pkt->payload = offset_to_ptr(skb, meta.payload_offset);
++	pkt->payload = skb_offset_to_ptr(skb, meta.payload_offset);
+ 	pkt->original_pkt = pkt;
+ 
+ 	return 0;
+@@ -530,7 +530,7 @@ int pkt_init_ipv4(struct packet *pkt, struct sk_buff *skb)
+ 	pkt->is_hairpin = false;
+ 	pkt->hdr_frag = NULL;
+ 	skb_set_transport_header(skb, meta.l4_offset);
+-	pkt->payload = offset_to_ptr(skb, meta.payload_offset);
++	pkt->payload = skb_offset_to_ptr(skb, meta.payload_offset);
+ 	pkt->original_pkt = pkt;
+ 
+ 	return 0;
+-- 
+2.19.1
+
