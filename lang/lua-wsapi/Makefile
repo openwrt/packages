@@ -31,6 +31,7 @@ define Package/lua-wsapi/Default
   TITLE:=Lua WSAPI
   URL:=https://keplerproject.github.io/wsapi/
   DEPENDS:= +lua
+  PKGARCH:=all
 endef
 
 define Package/lua-wsapi/Default/description

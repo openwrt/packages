@@ -30,6 +30,7 @@ define Package/luasoap
   TITLE:=LuaSOAP
   URL:=https://github.com/tomasguisasola/luasoap
   DEPENDS:=+lua +luaexpat +luasec +luasocket
+  PKGARCH:=all
 endef
 
 define Package/luasoap/description

@@ -12,6 +12,7 @@ define Package/bmx7-dnsupdate
   TITLE:=bmx7-dnsupdate
   MAINTAINER:=Paul Spooren <spooren@informatik.uni-leipzig.de>
   DEPENDS:=+bmx7 +bmx7-json inotifywait jshn
+  PKGARCH:=all
 endef
 
 define Build/Compile
