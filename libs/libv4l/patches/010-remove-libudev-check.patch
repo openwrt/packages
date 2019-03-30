@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -283,16 +283,9 @@ else
+@@ -309,16 +309,9 @@ else
     AC_MSG_WARN(ALSA library not available)
  fi
  
