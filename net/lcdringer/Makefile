@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lcdringer
 PKG_VERSION:=0.0.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -23,6 +23,7 @@ PKG_BUILD_DEPENDS:=vala
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
