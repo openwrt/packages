@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fcgi
-PKG_VERSION:=2.4.1
+PKG_VERSION:=2.4.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)2-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/FastCGI-Archives/fcgi2/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=53cc36624bb92a88e3d5a3d696282e1af24b280c3f275604123d9c6d407173e2
+PKG_HASH:=1fe83501edfc3a7ec96bb1e69db3fd5ea1730135bd73ab152186fd0b437013bc
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)2-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Jacob Siverskog <jacob@teenageengineering.com>
@@ -49,6 +49,9 @@ define Package/fcgi/description
  CGI that provides high performance without the limitations of
  server specific APIs.
 endef
+
+TARGET_CXXFLAGS += -fno-rtti -flto
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

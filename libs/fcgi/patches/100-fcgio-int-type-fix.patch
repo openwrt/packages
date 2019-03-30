@@ -1,5 +1,3 @@
-diff --git a/include/fcgio.h b/include/fcgio.h
-index 20d222a..92eda3c 100644
 --- a/include/fcgio.h
 +++ b/include/fcgio.h
 @@ -77,10 +77,10 @@ protected:
@@ -15,11 +13,9 @@ index 20d222a..92eda3c 100644
  
      // Use a buffer.  The only reasons that a buffer would be useful is
      // to support the use of the unget()/putback() or seek() methods.  Using
-diff --git a/libfcgi/fcgio.cpp b/libfcgi/fcgio.cpp
-index 5a54c11..e57b622 100644
 --- a/libfcgi/fcgio.cpp
 +++ b/libfcgi/fcgio.cpp
-@@ -89,7 +89,7 @@ int fcgi_streambuf::sync()
+@@ -86,7 +86,7 @@ int fcgi_streambuf::sync()
  }
  
  // uflow() removes the char, underflow() doesn't
@@ -28,7 +24,7 @@ index 5a54c11..e57b622 100644
  {
      if (this->bufsize)
      {
-@@ -103,7 +103,7 @@ int fcgi_streambuf::uflow()
+@@ -100,7 +100,7 @@ int fcgi_streambuf::uflow()
      }
  }
  				
