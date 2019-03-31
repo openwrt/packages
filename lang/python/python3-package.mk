@@ -68,6 +68,7 @@ define Py3Package
 
   define Package/$(1)/install
 	$$(call Py3Package/$(1)/install,$$(1))
+	SED="$(SED)" \
 	$(SHELL) $(python3_mk_path)python-package-install.sh "3" \
 		"$(PKG_INSTALL_DIR)" "$$(1)" \
 		"$(HOST_PYTHON3_BIN)" "$$(2)" \

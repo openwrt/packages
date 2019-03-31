@@ -58,6 +58,8 @@ python="$4"
 mode="$5"
 filespec="$6"
 
+SED="${SED:-sed -e}"
+
 find "$src_dir" -name "*\.exe" -exec rm -f {} \;
 
 process_filespec "$src_dir" "$dst_dir" "$filespec" || {
@@ -68,7 +70,7 @@ process_filespec "$src_dir" "$dst_dir" "$filespec" || {
 usr_bin_dir="$dst_dir/usr/bin"
 
 if [ -d "$usr_bin_dir" ] ; then
-	sed "1"'!'"b;s,^#"'!'".*python.*,#"'!'"/usr/bin/python${ver}," -i $usr_bin_dir/*
+	$SED "1"'!'"b;s,^#"'!'".*python.*,#"'!'"/usr/bin/python${ver}," -i --follow-symlinks $usr_bin_dir/*
 fi
 
 if [ "$mode" == "sources" ] ; then
