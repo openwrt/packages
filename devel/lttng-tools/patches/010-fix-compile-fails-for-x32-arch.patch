@@ -1,0 +1,45 @@
+From e0212fb3278ca54ac6d3beecf990297670f2612f Mon Sep 17 00:00:00 2001
+From: Kai Kang <kai.kang@windriver.com>
+Date: Thu, 13 Dec 2018 10:55:36 +0800
+Subject: [PATCH] Fix: compile fails for x32 arch
+
+It fails to compile for x32 arch:
+
+| .../src/common/utils.c: Assembler messages:
+| .../src/common/utils.c:1026: Error: register type mismatch for `bsr'
+| .../src/common/utils.c:1028: Error: operand type mismatch for `movq'
+
+Add macro check that not to define that fls_u64() for x32.
+
+Signed-off-by: Kai Kang <kai.kang@windriver.com>
+---
+ src/bin/lttng/utils.c | 2 +-
+ src/common/utils.c    | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/bin/lttng/utils.c b/src/bin/lttng/utils.c
+index 0e96ef0c3..5c79c8c7e 100644
+--- a/src/bin/lttng/utils.c
++++ b/src/bin/lttng/utils.c
+@@ -158,7 +158,7 @@ unsigned int fls_u32(uint32_t x)
+ #define HAS_FLS_U32
+ #endif
+ 
+-#if defined(__x86_64)
++#if defined(__x86_64) && !defined(__ILP32__)
+ static inline
+ unsigned int fls_u64(uint64_t x)
+ {
+diff --git a/src/common/utils.c b/src/common/utils.c
+index 08139e5e2..3c3899819 100644
+--- a/src/common/utils.c
++++ b/src/common/utils.c
+@@ -1223,7 +1223,7 @@ static inline unsigned int fls_u32(uint32_t x)
+ #define HAS_FLS_U32
+ #endif
+ 
+-#if defined(__x86_64)
++#if defined(__x86_64) && !defined(__ILP32__)
+ static inline
+ unsigned int fls_u64(uint64_t x)
+ {
