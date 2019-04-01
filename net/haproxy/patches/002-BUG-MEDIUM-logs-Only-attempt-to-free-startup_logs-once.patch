@@ -1,0 +1,37 @@
+commit 4c82743abd299f0aa8105e98ec92b76375a7f344
+Author: Olivier Houchard <ohouchard@haproxy.com>
+Date:   Thu Mar 7 14:19:24 2019 +0100
+
+    BUG/MEDIUM: logs: Only attempt to free startup_logs once.
+    
+    deinit_log_buffers() can be called once per thread, however startup_logs
+    is common to all threads. So only attempt to free it once.
+    
+    This should be backported to 1.9 and 1.8.
+    
+    (cherry picked from commit 7c49711d6041d1afc42d5b310ddfd7d6f6817c3c)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+    (cherry picked from commit bc3e21b27849275306a0580488613b7dfd4d8eb5)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+
+diff --git a/src/log.c b/src/log.c
+index b3f33662..9c112255 100644
+--- a/src/log.c
++++ b/src/log.c
+@@ -1380,11 +1380,15 @@ int init_log_buffers()
+ /* Deinitialize log buffers used for syslog messages */
+ void deinit_log_buffers()
+ {
++	void *tmp_startup_logs;
++
+ 	free(logheader);
+ 	free(logheader_rfc5424);
+ 	free(logline);
+ 	free(logline_rfc5424);
+-	free(startup_logs);
++	tmp_startup_logs = HA_ATOMIC_XCHG(&startup_logs, NULL);
++	free(tmp_startup_logs);
++
+ 	logheader         = NULL;
+ 	logheader_rfc5424 = NULL;
+ 	logline           = NULL;

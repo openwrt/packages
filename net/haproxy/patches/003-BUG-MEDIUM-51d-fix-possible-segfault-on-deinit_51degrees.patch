@@ -1,0 +1,35 @@
+commit 63f5dbf1b9fcdc5b10537d733b0e0798905ff1dc
+Author: Dragan Dosen <ddosen@haproxy.com>
+Date:   Thu Mar 7 15:24:23 2019 +0100
+
+    BUG/MEDIUM: 51d: fix possible segfault on deinit_51degrees()
+    
+    When haproxy is built with 51Degrees support, but not configured to use
+    51Degrees database, a segfault can occur when deinit_51degrees()
+    function is called, eg. during soft-stop on SIGUSR1 signal.
+    
+    Only builds that use Pattern algorithm are affected.
+    
+    This fix must be backported to all stable branches where 51Degrees
+    support is available. Additional adjustments are required for some
+    branches due to API and naming changes.
+    
+    (cherry picked from commit bc6218e1b02860c6cdad0d2bb4dc8874557087f8)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+    (cherry picked from commit 4e0363e84cb3f6ca341e1f83c6fd490c76c9ae6b)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+
+diff --git a/src/51d.c b/src/51d.c
+index a36333ef..03101136 100644
+--- a/src/51d.c
++++ b/src/51d.c
+@@ -639,7 +639,8 @@ static void deinit_51degrees(void)
+ 
+ 	free(global_51degrees.header_names);
+ #ifdef FIFTYONEDEGREES_H_PATTERN_INCLUDED
+-	fiftyoneDegreesWorksetPoolFree(global_51degrees.pool);
++	if (global_51degrees.pool)
++		fiftyoneDegreesWorksetPoolFree(global_51degrees.pool);
+ #endif
+ #ifdef FIFTYONEDEGREES_H_TRIE_INCLUDED
+ 	free(global_51degrees.device_offsets.firstOffset);
