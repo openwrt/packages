@@ -11,7 +11,7 @@ LOGFILE="/tmp/e2guardian/access.log"
 GROUPCONFIG="/tmp/e2guardian/e2guardianf1.conf"
 
 validate_e2guardian_section() {
-	uci_validate_section e2guardian e2guardian "${1}" \
+	uci_load_validate e2guardian e2guardian "$1" "$2" \
 		'accessdeniedaddress:string' \
 		'bannediplist:string' \
 		'contentscanexceptions:string' \
@@ -83,22 +83,9 @@ validate_e2guardian_section() {
 		'weightedphrasemode:range(0,2)'
 }
 
-start_service() {
+start_e2guardian_instance() {
 
-	local accessdeniedaddress bannediplist contentscanexceptions contentscanner contentscannertimeout \
-		createlistcachefiles custombannedflashfile custombannedimagefile deletedownloadedtempfiles \
-		downloadmanager exceptioniplist filecachedir loglocation \
-		filtergroups filtergroupslist filterip filterports forcequicksearch forwardedfor hexdecodecontent \
-		initialtrickledelay ipcfilename ipipcfilename language languagedir logadblocks logchildprocesshandling \
-		logclienthostnames logconnectionhandlingerrors logexceptionhits logfileformat loglevel loguseragent \
-		maxagechildren maxchildren maxcontentfilecachescansize maxcontentfiltersize maxcontentramcachescansize \
-		maxips maxsparechildren maxuploadsize minchildren minsparechildren nodaemon nologger \
-		pcontimeout perroomdirectory phrasefiltermode prefercachedlists preforkchildren preservecase proxyexchange \
-		proxyip proxyport proxytimeout recheckreplacedurls reverseaddresslookups reverseclientiplookups scancleancache \
-		showweightedfound softrestart trickledelay urlcacheage urlcachenumber urlipcfilename usecustombannedflash \
-		usecustombannedimage usexforwardedfor weightedphrasemode
-
-	validate_e2guardian_section e2guardian || {
+	[ "$2" = 0 ] || {
 		echo "validation failed"
 		return 1
 	}
@@ -196,6 +183,11 @@ start_service() {
 	procd_set_param file $CONFIGFILE
 	procd_close_instance
 
+}
+
+start_service()
+{
+	validate_e2guardian_section e2guardian start_e2guardian_instance
 }
 
 stop_service()
