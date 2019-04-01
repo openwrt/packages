@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hd-idle
 PKG_VERSION:=1.05
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Lim Guo Wei <limguowei@gmail.com>
 PKG_LICENSE:=GPL-2.0

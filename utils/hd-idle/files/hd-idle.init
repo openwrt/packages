@@ -8,7 +8,7 @@ USE_PROCD=1
 
 validate_section_hdidle()
 {
-	uci_validate_section hd-idle hd-idle "${1}" \
+	uci_load_validate hd-idle hd-idle "$1" "$2" \
 		'disk:string' \
 		'enabled:bool' \
 		'idle_time_interval:uinteger:10' \
@@ -43,9 +43,7 @@ compute_seconds() {
 }
 
 hdidle_append() {
-	local disk enabled idle_time_interval idle_time_unit
-
-	validate_section_hdidle "${1}" || return
+	[ "$2" = 0 ] || return
 
 	[ "$enabled" -gt 0 ] || return
 
@@ -63,10 +61,15 @@ start_service() {
 	config_load "hd-idle"
 
 	numdisks="0"
-	config_foreach hdidle_append "hd-idle"
+	config_foreach validate_section_hdidle "hd-idle" hdidle_append
 
 	if [ "$numdisks" -gt 0 ]; then
 		procd_set_param respawn
 		procd_close_instance
 	fi
+}
+
+service_triggers() {
+	procd_add_reload_trigger "hd-idle"
+	procd_add_validation validate_section_hdidle
 }
