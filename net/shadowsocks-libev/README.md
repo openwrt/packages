@@ -1,4 +1,6 @@
-## components
+Skip to [recipes](#recipes) for quick setup instructions
+
+# components
 
 `ss-local` provides SOCKS5 proxy with UDP associate support.
 
@@ -20,7 +22,7 @@
 
 `ss-server`, the "ss server" in the above diagram
 
-## uci
+# uci
 
 Option names are the same as those used in json config files.  Check `validate_xxx` func definition of the [service script](files/shadowsocks-libev.init) and shadowsocks-libev's own documentation for supported options and expected value types.  A [sample config file](files/shadowsocks-libev.config) is also provided for reference.
 
@@ -73,7 +75,7 @@ ss-rules uses kernel ipset mechanism for storing addresses/networks.  Those ipse
 
 Note also that `src_ips_xx` and `dst_ips_xx` actually also accepts cidr network representation.  Option names are retained in its current form for backward compatibility coniderations
 
-## notes and faq
+# notes and faq
 
 Useful paths and commands for debugging
 
@@ -95,3 +97,76 @@ Useful paths and commands for debugging
 ss-redir needs to open a new socket and setsockopt IP_TRANSPARENT when sending udp reply to client.  This requires `CAP_NET_ADMIN` and as such the process cannot run as `nobody`
 
 ss-local, ss-redir, etc. supports specifying an array of remote ss server, but supporting this in uci seems to be overkill.  The workaround can be defining multiple `server` sections and multiple `ss-redir` instances with `reuse_port` enabled
+
+# recipes
+
+## forward all
+
+This will setup firewall rules to forward almost all incoming tcp/udp and locally generated tcp traffic (excluding those to private addresses like 192.168.0.0/16 etc.) through remote shadowsocks server
+
+Install components.
+Retry each command till it succeed
+
+	opkg install shadowsocks-libev-ss-redir
+	opkg install shadowsocks-libev-ss-rules
+	opkg install shadowsocks-libev-ss-tunnel
+
+Edit uci config `/etc/config/shadowsocks-libev`.
+Replace `config server 'sss0'` section with parameters of your own remote shadowsocks server.
+As for other options, change them only when you know the effect.
+
+	config server 'sss0'
+		option disabled 0
+		option server '_sss_addr_'
+		option server_port '_sss_port_'
+		option password '********'
+		option method 'aes-256-cfb'
+
+	config ss_tunnel
+		option disabled 0
+		option server 'sss0'
+		option local_address '0.0.0.0'
+		option local_port '8053'
+		option tunnel_address '8.8.8.8:53'
+		option mode 'tcp_and_udp'
+
+	config ss_redir ssr0
+		option disabled 0
+		option server 'sss0'
+		option local_address '0.0.0.0'
+		option local_port '1100'
+		option mode 'tcp_and_udp'
+		option reuse_port 1
+
+	config ss_rules 'ss_rules'
+		option disabled 0
+		option redir_tcp 'ssr0'
+		option redir_udp 'ssr0'
+		option src_default 'checkdst'
+		option dst_default 'forward'
+		option local_default 'forward'
+
+Restart shadowsocks-libev components
+
+	/etc/init.d/shadowsocks-libev restart
+
+Check if things are in place
+
+	iptables-save | grep ss_rules
+	netstat -lntp | grep -E '8053|1100'
+	ps ww | grep ss-
+
+Edit `/etc/config/dhcp`, add a line to the first dnsmasq section like the following to let it use local tunnel endpoint for upstream dns query
+
+	config dnsmasq
+		...
+		list server '127.0.0.1#8053'
+
+Restart dnsmasq
+
+	/etc/init.d/dnsmasq restart
+
+Check network on your computer
+
+	nslookup www.google.com
+	curl -vv https://www.google.com
