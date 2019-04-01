@@ -1,0 +1,34 @@
+commit 1dfa4fd4be313a87f2a4861e81d0ad8ea8214223
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Thu Mar 14 19:10:55 2019 +0100
+
+    BUG/MEDIUM: threads/fd: do not forget to take into account epoll_fd/pipes
+    
+    Each thread uses one epoll_fd or kqueue_fd, and a pipe (thus two FDs).
+    These ones have to be accounted for in the maxsock calculation, otherwise
+    we can reach maxsock before maxconn. This is difficult to observe but it
+    in fact happens when a server connects back to the frontend and has checks
+    enabled : the check uses its FD and serves to fill the loop. In this case
+    all FDs planed for the datapath are used for this.
+    
+    This needs to be backported to 1.9 and 1.8.
+    
+    (cherry picked from commit 2c58b41c96e70f567d0f9ae876a80770630c06ee)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 26d110ba04cba02b337beff53a83847320e4fcdb)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/haproxy.c b/src/haproxy.c
+index 68367627..5c3febdd 100644
+--- a/src/haproxy.c
++++ b/src/haproxy.c
+@@ -1828,6 +1828,9 @@ static void init(int argc, char **argv)
+ 	global.hardmaxconn = global.maxconn;  /* keep this max value */
+ 	global.maxsock += global.maxconn * 2; /* each connection needs two sockets */
+ 	global.maxsock += global.maxpipes * 2; /* each pipe needs two FDs */
++	global.maxsock += global.nbthread;     /* one epoll_fd/kqueue_fd per thread */
++	global.maxsock += 2 * global.nbthread; /* one wake-up pipe (2 fd) per thread */
++
+ 	/* compute fd used by async engines */
+ 	if (global.ssl_used_async_engines) {
+ 		int sides = !!global.ssl_used_frontend + !!global.ssl_used_backend;

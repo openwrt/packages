@@ -1,0 +1,67 @@
+commit 78714ea673cefa83d3dff5aa9aa5e97726cfb5cd
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Mon Feb 25 15:02:04 2019 +0100
+
+    BUG/MINOR: listener: keep accept rate counters accurate under saturation
+    
+    The test on l->nbconn forces to exit the loop before updating the freq
+    counters, so the last session which reaches a listener's limit will not
+    be accounted for in the session rate measurement.
+    
+    Let's move the test at the beginning of the loop and mark the listener
+    as saturated on exit.
+    
+    This may be backported to 1.9 and 1.8.
+    
+    (cherry picked from commit 741b4d6b7aad1e4a66dd8584b5eff729b08fade7)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+    (cherry picked from commit 5c7c7e447df84a04bda88c40382b652cdb77a079)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+
+diff --git a/src/listener.c b/src/listener.c
+index 5f6fafbc..b94d823c 100644
+--- a/src/listener.c
++++ b/src/listener.c
+@@ -457,11 +457,6 @@ void listener_accept(int fd)
+ 	if (HA_SPIN_TRYLOCK(LISTENER_LOCK, &l->lock))
+ 		return;
+ 
+-	if (unlikely(l->nbconn >= l->maxconn)) {
+-		listener_full(l);
+-		goto end;
+-	}
+-
+ 	if (!(l->options & LI_O_UNLIMITED) && global.sps_lim) {
+ 		int max = freq_ctr_remain(&global.sess_per_sec, global.sps_lim, 0);
+ 
+@@ -520,7 +515,7 @@ void listener_accept(int fd)
+ 	 * worst case. If we fail due to system limits or temporary resource
+ 	 * shortage, we try again 100ms later in the worst case.
+ 	 */
+-	while (max_accept--) {
++	while (l->nbconn < l->maxconn && max_accept--) {
+ 		struct sockaddr_storage addr;
+ 		socklen_t laddr = sizeof(addr);
+ 		unsigned int count;
+@@ -627,11 +622,6 @@ void listener_accept(int fd)
+ 			goto transient_error;
+ 		}
+ 
+-		if (l->nbconn >= l->maxconn) {
+-			listener_full(l);
+-			goto end;
+-		}
+-
+ 		/* increase the per-process number of cumulated connections */
+ 		if (!(l->options & LI_O_UNLIMITED)) {
+ 			count = update_freq_ctr(&global.sess_per_sec, 1);
+@@ -659,6 +649,9 @@ void listener_accept(int fd)
+ 	limit_listener(l, &global_listener_queue);
+ 	task_schedule(global_listener_queue_task, tick_first(expire, global_listener_queue_task->expire));
+  end:
++	if (l->nbconn >= l->maxconn)
++		listener_full(l);
++
+ 	HA_SPIN_UNLOCK(LISTENER_LOCK, &l->lock);
+ }
+ 
