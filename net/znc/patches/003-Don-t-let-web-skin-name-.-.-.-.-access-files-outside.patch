@@ -1,0 +1,32 @@
+From 5be22795dc7bc6362d67467b5e25c53dffba4df9 Mon Sep 17 00:00:00 2001
+From: Alexey Sokolov <alexey+znc@asokolov.org>
+Date: Sat, 14 Jul 2018 00:12:28 +0100
+Subject: [PATCH 3/6] Don't let web skin name ../../../../ access files outside
+ of usual skins directories.
+
+Thanks for Jeriko One <jeriko.one@gmx.us> for finding and reporting this.
+---
+ src/WebModules.cpp | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+--- a/src/WebModules.cpp
++++ b/src/WebModules.cpp
+@@ -521,13 +521,15 @@ CWebSock::EPageReqResult CWebSock::Print
+ }
+ 
+ CString CWebSock::GetSkinPath(const CString& sSkinName) {
+-	CString sRet = CZNC::Get().GetZNCPath() + "/webskins/" + sSkinName;
++	const CString sSkin = sSkinName.Replace_n("/", "_").Replace_n(".", "_");
++
++	CString sRet = CZNC::Get().GetZNCPath() + "/webskins/" + sSkin;
+ 
+ 	if (!CFile::IsDir(sRet)) {
+-		sRet = CZNC::Get().GetCurPath() + "/webskins/" + sSkinName;
++		sRet = CZNC::Get().GetCurPath() + "/webskins/" + sSkin;
+ 
+ 		if (!CFile::IsDir(sRet)) {
+-			sRet = CString(_SKINDIR_) + "/" + sSkinName;
++			sRet = CString(_SKINDIR_) + "/" + sSkin;
+ 		}
+ 	}
+ 

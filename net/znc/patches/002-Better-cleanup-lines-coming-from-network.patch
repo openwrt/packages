@@ -1,0 +1,35 @@
+From ff15cb3288b96e16c2cf01d511cc082d65272699 Mon Sep 17 00:00:00 2001
+From: Alexey Sokolov <alexey+znc@asokolov.org>
+Date: Fri, 13 Jul 2018 22:50:47 +0100
+Subject: [PATCH 2/6] Better cleanup lines coming from network.
+
+Thanks for Jeriko One <jeriko.one@gmx.us> for finding and reporting this.
+---
+ src/Client.cpp  | 3 ++-
+ src/IRCSock.cpp | 3 ++-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+--- a/src/Client.cpp
++++ b/src/Client.cpp
+@@ -97,7 +97,8 @@ void CClient::SendRequiredPasswordNotice
+ void CClient::ReadLine(const CString& sData) {
+ 	CString sLine = sData;
+ 
+-	sLine.TrimRight("\n\r");
++	sLine.Replace("\n", "");
++	sLine.Replace("\r", "");
+ 
+ 	DEBUG("(" << GetFullName() << ") CLI -> ZNC [" << sLine << "]");
+ 
+--- a/src/IRCSock.cpp
++++ b/src/IRCSock.cpp
+@@ -132,7 +132,8 @@ void CIRCSock::Quit(const CString& sQuit
+ void CIRCSock::ReadLine(const CString& sData) {
+ 	CString sLine = sData;
+ 
+-	sLine.TrimRight("\n\r");
++	sLine.Replace("\n", "");
++	sLine.Replace("\r", "");
+ 
+ 	DEBUG("(" << m_pNetwork->GetUser()->GetUserName() << "/" << m_pNetwork->GetName() << ") IRC -> ZNC [" << sLine << "]");
+ 

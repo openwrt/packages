@@ -1,0 +1,42 @@
+From cd20be68a544e7a9bde941f93710561b9d9327db Mon Sep 17 00:00:00 2001
+From: Alexey Sokolov <alexey+znc@asokolov.org>
+Date: Fri, 13 Jul 2018 23:26:44 +0100
+Subject: [PATCH 1/6] Don't let attackers inject rogue values into znc.conf
+
+Because of this vulnerability, existing ZNC users could get Admin
+permissions.
+
+Thanks for Jeriko One <jeriko.one@gmx.us> for finding and reporting this.
+---
+ src/Config.cpp | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+--- a/src/Config.cpp
++++ b/src/Config.cpp
+@@ -183,9 +183,13 @@ bool CConfig::Parse(CFile& file, CString
+ void CConfig::Write(CFile& File, unsigned int iIndentation) {
+ 	CString sIndentation = CString(iIndentation, '\t');
+ 
++	auto SingleLine = [](const CString& s) {
++		return s.Replace_n("\r", "").Replace_n("\n", "");
++	};
++
+ 	for (EntryMapIterator it = m_ConfigEntries.begin(); it != m_ConfigEntries.end(); ++it) {
+ 		for (VCString::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2) {
+-			File.Write(sIndentation + it->first + " = " + *it2 + "\n");
++			File.Write(SingleLine(sIndentation + it->first + " = " + *it2) + "\n");
+ 		}
+ 	}
+ 
+@@ -193,9 +197,9 @@ void CConfig::Write(CFile& File, unsigne
+ 		for (SubConfig::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2) {
+ 			File.Write("\n");
+ 
+-			File.Write(sIndentation + "<" + it->first + " " + it2->first + ">\n");
++			File.Write(SingleLine(sIndentation + "<" + it->first + " " + it2->first + ">") + "\n");
+ 			it2->second.m_pSubConfig->Write(File, iIndentation + 1);
+-			File.Write(sIndentation + "</" + it->first + ">\n");
++			File.Write(SingleLine(sIndentation + "</" + it->first + ">") + "\n");
+ 		}
+ 	}
+ }
