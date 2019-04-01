@@ -1,0 +1,34 @@
+commit 57e2606f70fa8d26fe4b5563ba72a6c7f2a25655
+Author: Lukas Tribus <lukas@ltri.eu>
+Date:   Tue Mar 5 23:14:32 2019 +0100
+
+    BUG/MINOR: ssl: fix warning about ssl-min/max-ver support
+    
+    In 84e417d8 ("MINOR: ssl: support Openssl 1.1.1 early callback for
+    switchctx") the code was extended to also support OpenSSL 1.1.1
+    (code already supported BoringSSL). A configuration check warning
+    was updated but with the wrong logic, the #ifdef needs a && instead
+    of an ||.
+    
+    Reported in #54.
+    
+    Should be backported to 1.8.
+    
+    (cherry picked from commit 1aabc939780d5eab1f88089d01fb077ad9315c65)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+    (cherry picked from commit f407d16b8f4cf2afb148668a23a1ba1cc4dd942a)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 7736c324..afdb1fce 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -7418,7 +7418,7 @@ static int parse_tls_method_minmax(char **args, int cur_arg, struct tls_version_
+ 
+ static int ssl_bind_parse_tls_method_minmax(char **args, int cur_arg, struct proxy *px, struct ssl_bind_conf *conf, char **err)
+ {
+-#if (OPENSSL_VERSION_NUMBER < 0x10101000L) || !defined(OPENSSL_IS_BORINGSSL)
++#if (OPENSSL_VERSION_NUMBER < 0x10101000L) && !defined(OPENSSL_IS_BORINGSSL)
+ 	ha_warning("crt-list: ssl-min-ver and ssl-max-ver are not supported with this Openssl version (skipped).\n");
+ #endif
+ 	return parse_tls_method_minmax(args, cur_arg, &conf->ssl_methods, err);
