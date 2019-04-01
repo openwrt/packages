@@ -1,6 +1,6 @@
 --- a/src/Mayaqua/Internat.c
 +++ b/src/Mayaqua/Internat.c
-@@ -123,7 +123,7 @@
+@@ -114,7 +114,7 @@
  #include <Mayaqua/Mayaqua.h>
  
  extern LOCK *token_lock;
@@ -9,7 +9,7 @@
  static LOCK *iconv_lock = NULL;
  void *iconv_cache_wide_to_str = 0;
  void *iconv_cache_str_to_wide = 0;
-@@ -938,7 +938,7 @@ void InitInternational()
+@@ -929,7 +929,7 @@ void InitInternational()
  #ifdef	UNIX_MACOS
  		StrCpy(charset, sizeof(charset), "utf-8");
  #else	// UNIX_MACOS
@@ -18,7 +18,7 @@
  #endif	// UNIX_MACOS
  		d = IconvWideToStrInternal();
  		if (d == (void *)-1)
-@@ -1198,7 +1198,7 @@ void GetCurrentCharSet(char *name, UINT
+@@ -1189,7 +1189,7 @@ void GetCurrentCharSet(char *name, UINT
  		}
  		else
  		{
