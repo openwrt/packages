@@ -1,0 +1,18 @@
+--- a/setup.py
++++ b/setup.py
+@@ -1,4 +1,5 @@
+ from setuptools import setup
++import os
+
+ classifiers = [
+     "Development Status :: 4 - Beta",
+@@ -29,8 +30,7 @@ def main():
+         name="pluggy",
+         description="plugin and hook calling mechanisms for python",
+         long_description=long_description,
+-        use_scm_version={"write_to": "src/pluggy/_version.py"},
+-        setup_requires=["setuptools-scm"],
++        version=os.getenv('PKG_VERSION'),
+         license="MIT license",
+         platforms=["unix", "linux", "osx", "win32"],
+         author="Holger Krekel",
