@@ -1,0 +1,49 @@
+commit 62aec002ccd6a7129b4f5e2e88be1957a6b2308b
+Author: Olivier Houchard <ohouchard@haproxy.com>
+Date:   Thu Mar 7 18:48:22 2019 +0100
+
+    MEDIUM: threads: Use __ATOMIC_SEQ_CST when using the newer atomic API.
+    
+    When using the new __atomic* API, ask the compiler to generate barriers.
+    A variant of those functions that don't generate barriers will be added later.
+    Before that, using HA_ATOMIC* would not generate any barrier, and some parts
+    of the code should be reviewed and missing barriers should be added.
+    
+    This should probably be backported to 1.8 and 1.9.
+    
+    (cherry picked from commit 113537967c8680f94977473e18c9e14dc09c3356)
+    [wt: this is in fact a real bug fix : all these atomics do not provide
+     the slightest sequential consistency by default as the value 0 is
+     __ATOMIC_RELAXED, which will definitely cause random issues with
+     threads on non-x86 platforms].
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit e5d1670f5fa95972fed6391201c0da8982bb9f94)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/include/common/hathreads.h b/include/common/hathreads.h
+index 24fb1d1a..8a738aaf 100644
+--- a/include/common/hathreads.h
++++ b/include/common/hathreads.h
+@@ -213,14 +213,14 @@ static inline unsigned long thread_isolated()
+ 	})
+ #else
+ /* gcc >= 4.7 */
+-#define HA_ATOMIC_CAS(val, old, new) __atomic_compare_exchange_n(val, old, new, 0, 0, 0)
+-#define HA_ATOMIC_ADD(val, i)        __atomic_add_fetch(val, i, 0)
+-#define HA_ATOMIC_XADD(val, i)       __atomic_fetch_add(val, i, 0)
+-#define HA_ATOMIC_SUB(val, i)        __atomic_sub_fetch(val, i, 0)
+-#define HA_ATOMIC_AND(val, flags)    __atomic_and_fetch(val, flags, 0)
+-#define HA_ATOMIC_OR(val, flags)     __atomic_or_fetch(val,  flags, 0)
+-#define HA_ATOMIC_XCHG(val, new)     __atomic_exchange_n(val, new, 0)
+-#define HA_ATOMIC_STORE(val, new)    __atomic_store_n(val, new, 0)
++#define HA_ATOMIC_CAS(val, old, new) __atomic_compare_exchange_n(val, old, new, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
++#define HA_ATOMIC_ADD(val, i)        __atomic_add_fetch(val, i, __ATOMIC_SEQ_CST)
++#define HA_ATOMIC_XADD(val, i)       __atomic_fetch_add(val, i, __ATOMIC_SEQ_CST)
++#define HA_ATOMIC_SUB(val, i)        __atomic_sub_fetch(val, i, __ATOMIC_SEQ_CST)
++#define HA_ATOMIC_AND(val, flags)    __atomic_and_fetch(val, flags, __ATOMIC_SEQ_CST)
++#define HA_ATOMIC_OR(val, flags)     __atomic_or_fetch(val,  flags, __ATOMIC_SEQ_CST)
++#define HA_ATOMIC_XCHG(val, new)     __atomic_exchange_n(val, new, __ATOMIC_SEQ_CST)
++#define HA_ATOMIC_STORE(val, new)    __atomic_store_n(val, new, __ATOMIC_SEQ_CST)
+ #endif
+ 
+ #define HA_ATOMIC_UPDATE_MAX(val, new)					\

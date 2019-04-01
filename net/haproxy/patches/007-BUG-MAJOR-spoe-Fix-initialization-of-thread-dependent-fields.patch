@@ -1,0 +1,54 @@
+commit a3cfe8f4bc2ec98fdbe25c49f2c21699b6d09d2b
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Mon Mar 18 13:57:42 2019 +0100
+
+    BUG/MAJOR: spoe: Fix initialization of thread-dependent fields
+    
+    A bug was introduced in the commit b0769b ("BUG/MEDIUM: spoe: initialization
+    depending on nbthread must be done last"). The code depending on global.nbthread
+    was moved from cfg_parse_spoe_agent() to spoe_check() but the pointer on the
+    agent configuration was not updated to use the filter's one. The variable
+    curagent is a global variable only valid during the configuration parsing. In
+    spoe_check(), conf->agent must be used instead.
+    
+    This patch must be backported to 1.9 and 1.8.
+    
+    (cherry picked from commit fe261551b9980fe33990eb34d2153bf1de24b20f)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    (cherry picked from commit 7a93d271d549144a8ed8c816f5694a51ab62b90c)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/flt_spoe.c b/src/flt_spoe.c
+index e4453882..66d26f34 100644
+--- a/src/flt_spoe.c
++++ b/src/flt_spoe.c
+@@ -2937,20 +2937,20 @@ spoe_check(struct proxy *px, struct flt_conf *fconf)
+ 	if (global.nbthread == 1)
+ 		conf->agent->flags |= SPOE_FL_ASYNC;
+ 
+-	if ((curagent->rt = calloc(global.nbthread, sizeof(*curagent->rt))) == NULL) {
++	if ((conf->agent->rt = calloc(global.nbthread, sizeof(*conf->agent->rt))) == NULL) {
+ 		ha_alert("Proxy %s : out of memory initializing SPOE agent '%s' declared at %s:%d.\n",
+ 			 px->id, conf->agent->id, conf->agent->conf.file, conf->agent->conf.line);
+ 		return 1;
+ 	}
+ 	for (i = 0; i < global.nbthread; ++i) {
+-		curagent->rt[i].frame_size   = curagent->max_frame_size;
+-		curagent->rt[i].applets_act  = 0;
+-		curagent->rt[i].applets_idle = 0;
+-		curagent->rt[i].sending_rate = 0;
+-		LIST_INIT(&curagent->rt[i].applets);
+-		LIST_INIT(&curagent->rt[i].sending_queue);
+-		LIST_INIT(&curagent->rt[i].waiting_queue);
+-		HA_SPIN_INIT(&curagent->rt[i].lock);
++		conf->agent->rt[i].frame_size   = conf->agent->max_frame_size;
++		conf->agent->rt[i].applets_act  = 0;
++		conf->agent->rt[i].applets_idle = 0;
++		conf->agent->rt[i].sending_rate = 0;
++		LIST_INIT(&conf->agent->rt[i].applets);
++		LIST_INIT(&conf->agent->rt[i].sending_queue);
++		LIST_INIT(&conf->agent->rt[i].waiting_queue);
++		HA_SPIN_INIT(&conf->agent->rt[i].lock);
+ 	}
+ 
+ 	free(conf->agent->b.name);
