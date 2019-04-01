@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -74,6 +74,18 @@ AM_SILENT_RULES
+@@ -74,6 +74,21 @@ AM_SILENT_RULES
  AC_CANONICAL_HOST
  AB_INIT
  
@@ -10,6 +10,9 @@
 +        ;;
 +    arm-openwrt-linux-gnu|armeb-openwrt-linux-gnu)
 +        host=arm-unknown-linux-gnueabi
++        ;;
++    mips64-openwrt-linux-gnu)
++        host=mips64el-unknown-linux-gnuabi64
 +        ;;
 +    *)
 +        host=$(echo $host | sed 's/openwrt/unknown/g')
