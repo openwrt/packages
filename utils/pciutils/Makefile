@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pciutils
 PKG_VERSION:=3.6.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/utils/pciutils
 PKG_HASH:=db452ec986edefd88af0d222d22f6102f8030a8633fdfe846c3ae4bde9bb93f3
 
-PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
+PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
@@ -30,13 +30,22 @@ define Package/pciutils
   CATEGORY:=Utilities
   TITLE:=Linux PCI Utilities
   URL:=http://mj.ucw.cz/pciutils.shtml
-  DEPENDS:=+libkmod +zlib
+  DEPENDS:=+libkmod +libpci
 endef
 
 define Package/pciutils/description
  contains collection of programs for inspecting and manipulating configuration
  of PCI devices
 endef
+
+define Package/libpci
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=Linux PCI Libraries
+  URL:=http://mj.ucw.cz/pciutils.shtml
+  DEPENDS:=
+endef
+
 
 PCI_IDS_VER:=0.319
 PCI_IDS_FILE:=pci.ids.$(PCI_IDS_VER)
@@ -54,12 +63,15 @@ define Build/Prepare
 	$(CP) $(DL_DIR)/$(PCI_IDS_FILE) $(PKG_BUILD_DIR)/pci.ids
 endef
 
+TARGET_CFLAGS += $(FPIC)
+
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
 	PREFIX="/usr" \
 	HOST="Linux" \
 	HWDB="no" \
-	ZLIB="yes"
+	ZLIB="no" \
+	SHARED="yes"
 
 ifneq ($(CONFIG_USE_GLIBC),)
 TARGET_LDFLAGS += -lresolv
@@ -67,7 +79,11 @@ endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_BUILD_DIR)/lib/libpci.a $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpci.so.3 \
+		$(PKG_INSTALL_DIR)/usr/lib/libpci.so
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_BUILD_DIR)/lib/libpci.pc $(1)/usr/lib/pkgconfig
 	$(INSTALL_DIR) $(1)/usr/include/pci
 	$(CP) $(foreach i,pci.h config.h header.h types.h, \
 		$(PKG_BUILD_DIR)/lib/$(i)) $(1)/usr/include/pci
@@ -77,7 +93,14 @@ define Package/pciutils/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/{lspci,setpci,update-pciids} $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/usr/share
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/pci.ids.gz $(1)/usr/share/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/pci.ids $(1)/usr/share/
 endef
 
+define Package/libpci/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
+endef
+
+
+$(eval $(call BuildPackage,libpci))
 $(eval $(call BuildPackage,pciutils))
