@@ -33,7 +33,9 @@ endef
 define Package/libmicrohttpd-no-ssl
 $(call Package/libmicrohttpd/default)
   VARIANT:=nossl
+  DEFAULT_VARIANT:=1
   CONFLICTS:=libmicrohttpd-ssl
+  PROVIDES:=libmicrohttpd
 endef
 
 define Package/libmicrohttpd-ssl
@@ -41,6 +43,7 @@ $(call Package/libmicrohttpd/default)
   TITLE+= with SSL support
   VARIANT:=ssl
   DEPENDS:=+libgcrypt +libgnutls +libgpg-error
+  CONFLICTS:=libmicrohttpd-no-ssl
   PROVIDES:=libmicrohttpd
 endef
 
