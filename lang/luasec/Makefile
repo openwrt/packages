@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luasec
 PKG_VERSION:=0.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/brunoos/luasec/archive/
@@ -39,6 +39,9 @@ endef
 
 define Build/Configure
 endef
+
+TARGET_CFLAGS += $(FPIC)
+TARGET_LDFLAGS += $(FPIC)
 
 MAKE_FLAGS += \
 	INCDIR="$(TARGET_CPPFLAGS) -I." \
