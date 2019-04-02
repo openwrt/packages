@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
 PKG_VERSION:=3.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_HASH:=6a0508df079a0a33c2487ca936a56c12122f105b8a96a44374704bef6c69abfc
 PKG_SOURCE_URL:=http://download.qemu.org/
@@ -218,8 +218,11 @@ CONFIGURE_ARGS +=			\
 	--disable-jemalloc		\
 	--disable-libiscsi		\
 	--disable-libnfs		\
+	--disable-libpmem		\
 	--disable-libssh2		\
+	--disable-libudev		\
 	--disable-libusb		\
+	--disable-libxml2		\
 	--disable-linux-aio		\
 	--disable-lzo			\
 	--disable-modules		\
@@ -236,7 +239,6 @@ CONFIGURE_ARGS +=			\
 	--disable-snappy		\
 	--disable-sparse		\
 	--disable-spice			\
-	--disable-strip			\
 	--disable-strip			\
 	--disable-tcg-interpreter	\
 	--disable-tcmalloc		\
