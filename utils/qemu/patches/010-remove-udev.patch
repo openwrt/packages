@@ -1,0 +1,10 @@
+--- a/configure
++++ b/configure
+@@ -880,7 +880,6 @@ Linux)
+   vhost_vsock="yes"
+   QEMU_INCLUDES="-I\$(SRC_PATH)/linux-headers -I$PWD/linux-headers $QEMU_INCLUDES"
+   supported_os="yes"
+-  libudev="yes"
+ ;;
+ esac
+ 
