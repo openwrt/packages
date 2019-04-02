@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openldap
 PKG_VERSION:=2.4.47
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://gpl.savoirfairelinux.net/pub/mirrors/openldap/openldap-release/ \
@@ -24,6 +24,7 @@ PKG_FIXUP:=autoreconf
 
 PKG_CONFIG_DEPENDS := \
         CONFIG_OPENLDAP_DEBUG \
+        CONFIG_OPENLDAP_CRYPT \
         CONFIG_OPENLDAP_MONITOR \
         CONFIG_OPENLDAP_DB47 \
         CONFIG_OPENLDAP_ICU
@@ -53,6 +54,25 @@ define Package/libopenldap/config
 	help
 		Enable debugging information. This option must be enabled
 		for the loglevel directive to work.
+  config OPENLDAP_CRYPT
+	bool "Crypt(3) passwords support"
+	default n
+	help
+		With crypt(3) password storage scheme enabled, OpenLDAP can
+		receive and store SHA-256 and SHA-512 password hashes from
+		Samba AD-DC. If this option is disabled, synchronization of
+		passwords between Samba AD-DC (v4.5 and above) and OpenLDAP
+		requires use of cleartext passwords.
+		To enable crypt(3) password synchronization functionality:
+		1. Re-include crypt(3) support in OpenWRT by enabling 'Include
+		crypt() support for SHA256, SHA512 and Blowfish ciphers' option
+		in "Advanced configuration options (for developers)" ->
+		"Toolchain Options".
+		2. Provision AD-DC with 'password hash userPassword schemes'
+		option. For more information, see smb.conf manpage for details
+		on 'password hash userPassword schemes'.
+		3. Use a script to synchronize passwords from AD-DC to
+		OpenLDAP. See samba-tool manpage for 'user syncpasswords'.
   config OPENLDAP_MONITOR
 	bool "Enable monitor backend"
 	default n
@@ -120,6 +140,12 @@ CONFIGURE_ARGS += \
 	--enable-null \
 	--disable-relay
 
+
+ifdef CONFIG_OPENLDAP_CRYPT
+	CONFIGURE_ARGS+= --enable-crypt
+else
+	CONFIGURE_ARGS+= --disable-crypt
+endif
 
 ifdef CONFIG_OPENLDAP_MONITOR
 	CONFIGURE_ARGS+= --enable-monitor
