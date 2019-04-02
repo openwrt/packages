@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=luasocket
 PKG_SOURCE_VERSION:=6d5e40c324c84d9c1453ae88e0ad5bdd0a631448
 PKG_VERSION:=3.0-rc1-20130909
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/diegonehab/luasocket.git
@@ -41,7 +41,7 @@ endef
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)/ \
 		LIBDIR="$(TARGET_LDFLAGS)" \
-		CC="$(TARGET_CC) $(TARGET_CFLAGS) $(TARGET_CPPFLAGS) -std=gnu99" \
+		CC="$(TARGET_CC) $(TARGET_CFLAGS) $(TARGET_CPPFLAGS) $(FPIC)" \
 		LD="$(TARGET_CROSS)ld -shared" \
 		all
 endef
