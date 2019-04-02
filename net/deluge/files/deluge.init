@@ -1,0 +1,60 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2010 OpenWrt.org
+# Copyright (C) 2010 Alexander Sulfrian
+
+NAME=deluge
+PIDFILE=/var/run/deluged.pid
+START=50
+STOP=50
+
+load_config()
+{
+	config_get_bool enabled $1 enabled 0
+	[ "${enabled}" -eq 0 ] && return 1
+
+	config_get user $1 user
+	if [ "${user}" == "" ]; then
+		echo "Please check your uci config. User for '$1' should not be empty."
+		return 1
+	fi
+
+	username=$(echo ${user} | cut -d ':' -f 1)
+	group=$(echo ${user} | cut -d ':' -f 2)
+
+	if ! $(cut -d ':' -f 1 /etc/passwd | grep -sq "${username}"); then
+		echo "Please check your uci config. User for '$1' should exist."
+		return 1
+	fi
+
+	if [ "${group}" != "" ]; then
+		if ! $(cut -d ':' -f 1 /etc/passwd | grep -sq "${group}"); then
+			echo "Please check your uci config. Group for '$1' should exist."
+	                return 1
+		fi
+	fi
+}
+
+start()
+{
+	config_load "${NAME}"
+	load_config deluged || return $?
+
+	config_get options deluged options
+
+	config_get home deluged home
+	if [ "${home}" == "" ]; then
+		home=$(grep "^${username}:" /etc/passwd | cut -d ':' -f 6)
+	fi
+
+	HOME="${home}" /sbin/start-stop-daemon -S -u "${username}" \
+		-p "${PIDFILE}" -b -m -x "/usr/bin/python2.7" \
+		-c "${user}" -- /usr/bin/deluged --do-not-daemonize ${options}
+}
+
+stop()
+{
+	config_load "${NAME}"
+	load_config deluged || return $?
+
+	/sbin/start-stop-daemon -K -u "${username}" -p "${PIDFILE}"
+}
