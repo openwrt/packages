@@ -1,0 +1,14 @@
+--- a/src/makefile
++++ b/src/makefile
+@@ -163,9 +163,8 @@ DEF_linux=-DLUASOCKET_$(DEBUG) -DLUA_$(COMPAT)_MODULE \
+ 	-DLUASOCKET_API='__attribute__((visibility("default")))' \
+ 	-DUNIX_API='__attribute__((visibility("default")))' \
+ 	-DMIME_API='__attribute__((visibility("default")))'
+-CFLAGS_linux= -I$(LUAINC) $(DEF) -pedantic -Wall -Wshadow -Wextra \
+-	-Wimplicit -O2 -ggdb3 -fpic -fvisibility=hidden
+-LDFLAGS_linux=-O -shared -fpic -o 
++CFLAGS_linux= -I$(LUAINC) $(DEF) -fvisibility=hidden
++LDFLAGS_linux=-shared -o
+ LD_linux=gcc
+ SOCKET_linux=usocket.o
+ 
