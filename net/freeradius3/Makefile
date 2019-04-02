@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius3
-PKG_VERSION:=release_3_0_17
-PKG_RELEASE:=3
+PKG_VERSION:=release_3_0_18
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/FreeRADIUS/freeradius-server/archive
-PKG_HASH:=5b2382f08c0d9d064298281c1fb8348fc13df76550ce7a5cfc47ea91361fad91
+PKG_HASH:=c6802e3ec675b1cf59c850b0f01ed088e2983c5c4daa7f64cc22be4e6ad13ae5
 
-PKG_MAINTAINER:=Lucile Quirion <lucile.quirion@savoirfairelinux.com>
+PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYRIGHT LICENSE
 
@@ -54,7 +54,7 @@ endef
 define Package/freeradius3-common
   $(call Package/freeradius3/Default)
   TITLE:=common files
-  DEPENDS:=+USE_GLIBC:libpthread +FREERADIUS3_OPENSSL:libopenssl +libcap +libpcap +libncurses +PACKAGE_libpcre:libpcre +libreadline +libtalloc
+  DEPENDS:=+USE_GLIBC:libpthread +FREERADIUS3_OPENSSL:libopenssl +libcap +libpcap +libncurses +PACKAGE_libpcre:libpcre +libreadline +libtalloc +libatomic
 endef
 
 define Package/freeradius3-default
@@ -503,6 +503,8 @@ CONFIGURE_ARGS+= \
 	--without-rlm_sql_unixodbc \
 	--without-rlm_unbound \
 	--without-rlm_yubikey \
+
+CONFIGURE_LIBS+= -latomic
 
 PKG_DICTIONARIES:= \
 	compat \
