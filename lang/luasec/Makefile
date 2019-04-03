@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luasec
 PKG_VERSION:=0.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/brunoos/luasec/tar.gz/luasec-$(PKG_VERSION)?
@@ -45,6 +45,7 @@ TARGET_CFLAGS += $(FPIC)
 TARGET_LDFLAGS += $(FPIC)
 
 MAKE_FLAGS += \
+	LD="$(TARGET_CC)" \
 	INCDIR="$(TARGET_CPPFLAGS) -I." \
 	LIBDIR="$(TARGET_LDFLAGS) -L./luasocket" \
 	LUACPATH="$(PKG_INSTALL_DIR)/usr/lib/lua" \
