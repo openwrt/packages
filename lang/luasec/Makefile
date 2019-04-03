@@ -45,8 +45,8 @@ TARGET_LDFLAGS += $(FPIC)
 
 MAKE_FLAGS += \
 	LD="$(TARGET_CC)" \
-	INCDIR="$(TARGET_CPPFLAGS) -I." \
-	LIBDIR="$(TARGET_LDFLAGS) -L./luasocket" \
+	INC_PATH="" \
+	LIB_PATH="" \
 	LUACPATH="$(PKG_INSTALL_DIR)/usr/lib/lua" \
 	LUAPATH="$(PKG_INSTALL_DIR)/usr/lib/lua"
 
