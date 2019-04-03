@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prosody
 PKG_VERSION:=0.11.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://prosody.im/downloads/source
@@ -30,7 +30,7 @@ define Package/prosody
   SUBMENU:=Instant Messaging
   DEPENDS:=+luafilesystem +libidn +luaexpat +luasec +libopenssl +libidn +liblua +luabitop
   TITLE:=XMPP server
-  URL:=http://prosody.im/
+  URL:=https://prosody.im/
   USERID:=prosody=54:prosody=54
 endef
 
@@ -44,10 +44,10 @@ define Package/prosody/conffiles
 /etc/prosody/prosody.cfg.lua
 endef
 
-TARGET_CFLAGS += $(FPIC) 
+TARGET_CFLAGS += $(FPIC) -std=gnu99
+TARGET_LDFLAGS += -shared
 
-TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib 
-
+MAKE_FLAGS += LD="$(TARGET_CC)"
 
 define Build/Configure
 	# this is *NOT* GNU autoconf stuff
@@ -57,17 +57,11 @@ define Build/Configure
 		--with-lua-include="$(STAGING_DIR)/usr/include" \
 		--with-lua-lib="$(STAGING_DIR)/usr/lib" \
 		--cflags="$(TARGET_CFLAGS)" \
-		--ldflags="$(TARGET_LDFLAGS) -llua -lm -ldl -shared" \
+		--ldflags="$(TARGET_LDFLAGS)" \
 		--c-compiler="$(CC)" \
-		--linker="$(LD)" \
 		--datadir="/etc/prosody/data" \
 	)
 endef
-#	LDFLAGS="$(TARGET_LDFLAGS) -llua -lm -ldl" \
-
-MAKE_FLAGS += \
-	CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) -std=gnu99" \
-	PREFIX="/usr" \
 
 define Package/prosody/install
 	$(INSTALL_DIR) $(1)/etc/init.d
@@ -124,7 +118,7 @@ define Package/prosody/postinst
 		paxctl  -v /usr/bin/ > /dev/null  2>&1
 		[ $$? -ne 0 ] && {
 			cp /usr/bin/lua /tmp
-			paxctl -c -m /tmp/lua > /dev/null  2>&1 
+			paxctl -c -m /tmp/lua > /dev/null  2>&1
 			cp -f /tmp/lua /usr/bin/lua
 		}
 	}
