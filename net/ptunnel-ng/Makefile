@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ptunnel-ng
-PKG_VERSION:=1.40
-PKG_RELEASE:=2
+PKG_VERSION:=1.41
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/lnslbrty/ptunnel-ng/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=ad2f2032a79ad41e871c00d28c94670c10ed74920de54d977fe0a33a65fcac76
+PKG_HASH:=b61855dcffe920fd188e5239464b049231f83e550e24e76669eb49d59991baff
 
 PKG_LICENSE:=BSD-3
 PKG_LICENSE_FILES:=COPYING
@@ -30,11 +30,8 @@ endef
 
 CONFIGURE_ARGS += \
 	--disable-pcap \
-	--disable-selinux
-
-CONFIGURE_VARS += \
-	ac_cv_header_bsd_stdlib_h=no \
-	ac_cv_search_arc4random=no
+	--disable-selinux \
+	--with-rngdev=/dev/urandom
 
 define Package/ptunnel-ng/install
 	$(INSTALL_DIR) $(1)/usr/sbin
