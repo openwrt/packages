@@ -8,12 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=icu4c
-PKG_VERSION:=63.1
+MAJOR_VERSION:=64
+MINOR_VERSION:=1
+PKG_VERSION:=$(MAJOR_VERSION).$(MINOR_VERSION)
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-63_1-src.tgz
-PKG_SOURCE_URL:=http://download.icu-project.org/files/$(PKG_NAME)/$(PKG_VERSION)
-PKG_HASH:=05c490b69454fce5860b7e8e2821231674af0a11d7ef2febea9a32512998cb9d
+PKG_SOURCE:=$(PKG_NAME)-$(MAJOR_VERSION)_$(MINOR_VERSION)-src.tgz
+PKG_SOURCE_URL:=https://github.com/unicode-org/icu/releases/download/release-$(MAJOR_VERSION)-$(MINOR_VERSION)
+PKG_HASH:=92f1b7b9d51b396679c17f35a2112423361b8da3c1b9de00aa94fd768ae296e6
 
 PKG_LICENSE:=ICU-1.8.1+
 PKG_LICENSE_FILES:=LICENSE
@@ -108,6 +110,11 @@ HOST_CONFIGURE_ARGS:= \
 	--disable-extras \
 	--enable-dyload \
 	--prefix=$(STAGING_DIR_HOSTPKG)
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	mkdir -p $(PKG_BUILD_DIR)/data/out
+endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
