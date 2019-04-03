@@ -105,8 +105,14 @@ global_defs() {
 	config_get notification_email $1 notification_email
 	print_list_indent notification_email
 
-	print_elems_indent $1 $INDENT_1 notification_email_from smtp_server smtp_connect_timeout \
-	           router_id vrrp_mcast_group4 vrrp_mcast_group6
+	print_elems_indent $1 $INDENT_1 \
+		notification_email_from \
+		smtp_server \
+		smtp_connect_timeout \
+		router_id \
+		vrrp_mcast_group4 \
+		vrrp_mcast_group6 \
+		vrrp_startup_delay
 }
 
 print_ipaddress_indent() {
