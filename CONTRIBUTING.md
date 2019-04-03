@@ -42,7 +42,7 @@ All packages you commit or submit by pull-request should follow these simple gui
 * Have a useful description prefixed with the package name
     (E.g.: "foopkg: Add libzot dependency")
 * Include Signed-off-by tag in the commit comments.
-    See: [Sign your work](https://openwrt.org/docs/guide-developer/submittingpatches-tomerge?s[]=sign#sign_your_work)
+    See: [Sign your work](https://openwrt.org/submitting-patches#sign_your_work)
 
 ### Advice on pull requests:
 
