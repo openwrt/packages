@@ -34,7 +34,6 @@ define Package/libmicrohttpd-no-ssl
 $(call Package/libmicrohttpd/default)
   VARIANT:=nossl
   DEFAULT_VARIANT:=1
-  CONFLICTS:=libmicrohttpd-ssl
   PROVIDES:=libmicrohttpd
 endef
 
