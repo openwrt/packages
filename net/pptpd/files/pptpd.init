@@ -12,7 +12,8 @@ OPTIONS_PPTP=/var/etc/options.pptpd
 validate_login_section() {
 	uci_load_validate pptpd login "$1" "$2" \
 		'username:string' \
-		'password:string'
+		'password:string' \
+		'remoteip:string'
 }
 
 validate_pptpd_section() {
@@ -32,8 +33,9 @@ setup_login() {
 
 	[ -n "$username" ] || return 0
 	[ -n "$password" ] || return 0
+	[ -n "$remoteip" ] || remoteip=*
 
-	echo "$username pptp-server $password *" >> $CHAP_SECRETS
+	echo "$username pptp-server $password $remoteip" >> $CHAP_SECRETS
 }
 
 setup_config() {
