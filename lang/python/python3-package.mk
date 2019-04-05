@@ -115,6 +115,7 @@ define Build/Compile/Py3Mod
 endef
 
 PYTHON3_PKG_SETUP_DIR ?=
+PYTHON3_PKG_SETUP_GLOABL_ARGS ?=
 PYTHON3_PKG_SETUP_ARGS ?= --single-version-externally-managed
 PYTHON3_PKG_SETUP_VARS ?=
 
@@ -124,6 +125,7 @@ define Py3Build/Compile/Default
 	)
 	$(call Build/Compile/Py3Mod, \
 		$(PYTHON3_PKG_SETUP_DIR), \
+		$(PYTHON3_PKG_SETUP_GLOBAL_ARGS) \
 		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
 		$(PYTHON3_PKG_SETUP_ARGS), \
 		$(PYTHON3_PKG_SETUP_VARS) \
