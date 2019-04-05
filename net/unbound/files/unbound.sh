@@ -592,7 +592,7 @@ unbound_forward() {
       for fdomain in $UNBOUND_LIST_FORWARD ; do
         {
           echo "forward-zone:"
-          echo "  name: \"$fdomain.\""
+          echo "  name: \"${fdomain%.}.\""
           for fresolver in $resolvers ; do
           echo "  forward-addr: $fresolver"
           done
