@@ -30,6 +30,7 @@ define Package/libpcre/default
   SECTION:=libs
   CATEGORY:=Libraries
   URL:=https://www.pcre.org/
+  DEPENDS:=$(CXX_DEPENDS)
 endef
 
 define Package/libpcre
@@ -45,7 +46,7 @@ endef
 define Package/libpcrecpp
   $(call Package/libpcre/default)
   TITLE:=C++ wrapper for Perl Compatible Regular Expression library
-  DEPENDS:=+libpcre $(CXX_DEPENDS)
+  DEPENDS:=+libpcre
 endef
 
 TARGET_CFLAGS += $(FPIC)
