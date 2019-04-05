@@ -116,6 +116,7 @@ define Build/Compile/PyMod
 endef
 
 PYTHON_PKG_SETUP_DIR ?=
+PYTHON_PKG_SETUP_GLOBAL_ARGS ?=
 PYTHON_PKG_SETUP_ARGS ?= --single-version-externally-managed
 PYTHON_PKG_SETUP_VARS ?=
 
@@ -125,6 +126,7 @@ define PyBuild/Compile/Default
 	)
 	$(call Build/Compile/PyMod, \
 		$(PYTHON_PKG_SETUP_DIR), \
+		$(PYTHON_PKG_SETUP_GLOBAL_ARGS) \
 		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
 		$(PYTHON_PKG_SETUP_ARGS), \
 		$(PYTHON_PKG_SETUP_VARS) \
