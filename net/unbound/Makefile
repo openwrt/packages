@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/unbound/Default
   TITLE:=Validating Recursive DNS Server
   URL:=https://www.unbound.net/
-  DEPENDS:=+libopenssl @OPENSSL_WITH_EC
+  DEPENDS:=+libopenssl +@OPENSSL_WITH_EC
 endef
 
 define Package/unbound
