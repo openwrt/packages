@@ -12,7 +12,7 @@ PKG_VERSION:=2014-10-28
 PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/abrasive/shairport.git
+PKG_SOURCE_URL:=https://github.com/abrasive/shairport.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=d679d19a4bd66cc220dabfd23ad748c34e95995c
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz

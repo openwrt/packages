@@ -18,7 +18,7 @@ PKG_REV:=66cb08ca2ad8581080b626a75dfca266a890afb2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_SOURCE_URL:=git://github.com/lloyd/yajl.git
+PKG_SOURCE_URL:=https://github.com/lloyd/yajl.git
 PKG_SOURCE_PROTO:=git
 
 include $(INCLUDE_DIR)/package.mk

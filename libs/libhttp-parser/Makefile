@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=LICENSE-MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=git://github.com/joyent/http-parser.git
+PKG_SOURCE_URL:=https://github.com/joyent/http-parser.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=56f7ad0e2e5a80f79d214015c91e1f17d11d109f
 

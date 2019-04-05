@@ -15,7 +15,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_RELEASE:=4
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/coova/coova-chilli
+PKG_SOURCE_URL:=https://github.com/coova/coova-chilli
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=b93de20a288c01c2ba28e96e31ad6da01627f45f
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
