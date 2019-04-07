@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openssh
 PKG_VERSION:=7.9p1
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
@@ -180,7 +180,7 @@ CONFIGURE_ARGS += \
 	--without-pam
 endif
 
-ifeq ($(CONFIG_OPENSSL_ENGINE_CRYPTO),y)
+ifeq ($(CONFIG_OPENSSL_ENGINE),y)
 CONFIGURE_ARGS+= \
 	--with-ssl-engine
 endif
