@@ -3,8 +3,8 @@ local iwinfo = require "iwinfo"
 
 local function scrape()
   local metric_wifi_station_signal = metric("wifi_station_signal_dbm","gauge")
-  local metric_wifi_station_tx_packets = metric("wifi_station_tx_packets_total","gauge")
-  local metric_wifi_station_rx_packets = metric("wifi_station_rx_packets_total","gauge")
+  local metric_wifi_station_tx_packets = metric("wifi_station_tx_packets_total","counter")
+  local metric_wifi_station_rx_packets = metric("wifi_station_rx_packets_total","counter")
 
   local u = ubus.connect()
   local status = u:call("network.wireless", "status", {})
