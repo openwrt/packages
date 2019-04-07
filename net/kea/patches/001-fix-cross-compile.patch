@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -594,10 +594,10 @@ AC_TRY_COMPILE([
+@@ -580,10 +580,10 @@ AC_TRY_COMPILE([
          AC_MSG_RESULT(no))
  
  AC_MSG_CHECKING(for usuable C++11 regex)
