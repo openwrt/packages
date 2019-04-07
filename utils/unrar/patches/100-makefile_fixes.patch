@@ -1,22 +1,27 @@
 --- a/makefile
 +++ b/makefile
-@@ -2,13 +2,13 @@
+@@ -2,14 +2,14 @@
  # Makefile for UNIX - unrar
  
  # Linux using GCC
 -CXX=c++
 -CXXFLAGS=-O2 -Wno-logical-op-parentheses -Wno-switch -Wno-dangling-else
-+#CXX=c++
-+#CXXFLAGS=-O2 -Wno-logical-op-parentheses -Wno-switch -Wno-dangling-else
- LIBFLAGS=-fPIC
+-LIBFLAGS=-fPIC
++CXX?=c++
++CXXFLAGS?=-O2 -Wno-logical-op-parentheses -Wno-switch -Wno-dangling-else
++LIBFLAGS?=-fPIC
  DEFINES=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DRAR_SMP
- STRIP=strip
- AR=ar
+-STRIP=strip
+-AR=ar
 -LDFLAGS=-pthread
-+LDFLAGS=-lpthread
- DESTDIR=/usr
+-DESTDIR=/usr
++STRIP?=strip
++AR?=ar
++LDFLAGS?=-lpthread
++DESTDIR?=/usr
  
  # Linux using LCC
+ #CXX=lcc
 @@ -166,7 +166,7 @@ uninstall-unrar:
  			rm -f $(DESTDIR)/bin/unrar
  
