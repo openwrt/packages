@@ -1,0 +1,130 @@
+# liushuyu <liushuyu_011@163.com>, 2017.
+# Yangfl <mmyangfl@gmail.com>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: 2019-04-08 16:06+0800\n"
+"Last-Translator: guyezi <admin@guyezi.com>\n"
+"Language-Team:  <admin@guyezi.com>\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Gtranslator 2.91.7\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "ACME certs"
+msgstr "ACME 证书管理"
+
+msgid "ACME certificates"
+msgstr "ACME 颁发证书管理"
+
+msgid "This configures ACME (Letsencrypt) automatic certificate installation. "
+"Simply fill out this to have the router configured with Letsencrypt-issued "
+"certificates for the web interface. "
+"Note that the domain names in the certificate must already be configured to "
+"point at the router's public IP address. "
+"Once configured, issuing certificates can take a while. "
+"Check the logs for progress and any errors."
+msgstr "部署Acme (Letsencrypt) 设置自动化申请证书及安装. "
+"简单地完成这web接口配置即可为本路由实现自动化申请Letsencrypt颁发的域名证书 " 
+"及完成自动化安装使用域名证书. "
+"注意证书中的域名必须已经配置为指向 "
+"路由器的公网IP地址. "
+"一旦配置完毕, 颁发证书可能需要一段时间. "
+"检查日志中的进度和任何错误. "
+
+msgid "ACME global config"
+msgstr "ACME 全局配置"
+
+msgid "State directory"
+msgstr "存放目录"
+
+msgid "Where certs and other state files are kept."
+msgstr "保存证书和其他状态文件的地方."
+
+msgid "Account email"
+msgstr "电子邮箱帐号"
+
+msgid "Email address to associate with account key."
+msgstr "填写与帐户密钥关联的电子邮箱"
+
+msgid "Enable debug logging"
+msgstr "开启故障诊断日记"
+
+msgid "Certificate config"
+msgstr "颁发证书设置"
+
+msgid "Enabled"
+msgstr "开启"
+
+msgid "Use staging server"
+msgstr "使用暂存服务器"
+
+msgid "Get certificate from the Letsencrypt staging server "
+"(use for testing; the certificate won't be valid)."
+msgstr "从LetsEncrypt暂存服务器获取证书"
+"(用于测试; 证书是无效的)."
+
+msgid "Key length"
+msgstr "密钥长度"
+
+msgid "Number of bits (minimum 2048)."
+msgstr "二进制位数 (最小为 2048)."
+
+msgid "Use for uhttpd"
+msgstr "用于uhttpd"
+
+msgid "Update the uhttpd config with this certificate once issued "
+"(only select this for one certificate)."
+msgstr "在颁发此证书后将使用此证书替换uhttpd的证书"
+"(选择此项颁发一份证书)."
+
+msgid "Webroot directory"
+msgstr "虚拟主机根目录"
+
+msgid "Webserver root directory. Set this to the webserver "
+"document root to run Acme in webroot mode. The web "
+"server must be accessible from the internet on port 80."
+msgstr "Web服务器根目录. ACME服务程序运行在web服务器"
+"文档目录上的web根目录里. 这个web服务器"
+"必须可以从互联网80端口上访问的."
+
+msgid "Domain names"
+msgstr "域名的名称"
+
+msgid "Domain names to include in the certificate. "
+"The first name will be the subject name, subsequent names will be alt names. "
+"Note that all domain names must point at the router in the global DNS."
+msgstr "证书中采用的域名. "
+"The first name will be the subject name, subsequent names will be alt names. "
+"请注意所有域名都必须指向全局 DNS 中的路由器."
+
+msgid "DNS API"
+msgstr ""
+
+msgid "To use DNS mode to issue certificates, set this to the name of a DNS API supported by acme.sh. "
+"See https://github.com/Neilpang/acme.sh/tree/master/dnsapi for the list of available APIs. "
+"In DNS mode, the domain name does not have to resolve to the router IP. "
+"DNS mode is also the only mode that supports wildcard certificates. "
+"Using this mode requires the acme-dnsapi package to be installed."
+msgstr "若要使用 DNS 模式颁发证书, 请将其设置为 acme.sh 支持的 DNS API 的名称. "
+"可用 Api 列表请查看 https://github.com/Neilpang/acme.sh/tree/master/dnsapi"
+"在 DNS 模式下, 域名不必解析为路由IP ."
+"DNS 模式也是唯一支持通配符证书的模式. "
+"使用此模式需要安装 acme-dnsapi. "
+
+msgid "DNS API credentials"
+msgstr "DNS API 凭据"
+
+msgid "The credentials for the DNS API mode selected above. "
+"See https://github.com/Neilpang/acme.sh/tree/master/dnsapi#how-to-use-dns-api for the format of credentials required by each API. "
+"Add multiple entries here in KEY=VAL shell variable format to supply multiple credential variables."
+msgstr "上面选择的 DNS API 模式的凭据. "
+"有关每个 API 所需的凭据格式, 请参阅 https://github.com/Neilpang/acme.sh/tree/master/dnsapi#how-to-use-dns-api . "
+"在这里添加多个条 KEY=VAL shell 变量格式, 以提供多个凭据变量。"
+
+msgid ""
+msgstr ""
