@@ -9,9 +9,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=voluptuous-serialize
 PKG_VERSION:=2.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE:=voluptuous-serialize-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/v/voluptuous-serialize/
 PKG_HASH:=d30fef4f1aba251414ec0b315df81a06da7bf35201dcfb1f6db5253d738a154f
 
@@ -28,7 +28,9 @@ define Package/python3-voluptuous-serialize
   SUBMENU:=Python
   TITLE:=Python Voluptuous Serialize
   URL:=https://github.com/balloob/voluptuous-serialize
-  DEPENDS:=+python3-light
+  DEPENDS:= \
+	+python3-light \
+	+python3-voluptuous
   VARIANT:=python3
 endef
 
