@@ -1,0 +1,207 @@
+#!/bin/sh /etc/rc.common
+
+START=90
+STOP=10
+
+#USE_PROCD=1
+
+. $IPKG_INSTROOT/lib/functions.sh
+
+EXTRA_COMMANDS=status
+EXTRA_HELP="	status	Show the status of the service"
+
+# Check that networking is up.
+[ "${NETWORKING}" = "no" ] && exit 6
+
+if [ $(id -u) -ne 0 ]; then
+    echo "permission denied (must be superuser)" | \
+	logger -s -p daemon.error -t ipsec_setup 2>&1
+    exit 4
+fi
+
+# where the private directory and the config files are
+IPSEC_EXECDIR="${IPSEC_EXECDIR-/usr/libexec/ipsec}"
+IPSEC_SBINDIR="${IPSEC_SBINDIR-/usr/sbin}"
+IPSEC_CONF="${IPSEC_CONF-/etc/ipsec.conf}"
+unset PLUTO_OPTIONS
+
+rundir=/var/run/pluto
+plutopid=${rundir}/pluto.pid
+plutoctl=${rundir}/pluto.ctl
+lockdir=/var/lock
+lockfile=${lockdir}/ipsec
+ipsecversion=/proc/net/ipsec_version
+kamepfkey=/proc/net/pfkey
+
+# /etc/resolv.conf related paths
+LIBRESWAN_RESOLV_CONF=${rundir}/libreswan-resolv-conf-backup
+ORIG_RESOLV_CONF=/etc/resolv.conf
+
+# misc setup
+umask 022
+
+# standardize PATH, and export it for everything else's benefit
+PATH="${IPSEC_SBINDIR}":/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin
+export PATH
+
+mkdir -p ${rundir}
+chmod 700 ${rundir}
+
+verify_config() {
+	[ -f ${IPSEC_CONF} ] || exit 6
+	config_error=$(ipsec addconn --config ${IPSEC_CONF} --checkconfig 2>&1)
+	RETVAL=$?
+	if [ ${RETVAL} -gt 0 ]; then
+		echo "Configuration error - the following error occurred:"
+		echo ${config_error}
+		echo "IKE daemon status was not modified"
+		exit ${RETVAL}
+	fi
+}
+
+start() {
+	echo -n "Starting pluto IKE daemon for IPsec: "
+	ipsec _stackmanager start
+	# pluto searches the current directory, so this is required for making it selinux compliant
+	cd /
+	# Create nss db or convert from old format to new sql format
+	ipsec --checknss
+	# Enable nflog if configured
+	ipsec --checknflog > /dev/null
+	# This script will enter an endless loop to ensure pluto restarts on crash
+	ipsec _plutorun --config ${IPSEC_CONF} --nofork ${PLUTO_OPTIONS} & [ -d ${lockdir} ] || mkdir -p ${lockdir}
+	touch ${lockfile}
+	# Because _plutorun starts pluto at background we need to make sure pluto is started
+	# before we know if start was successful or not
+	for waitsec in 1 2 3 4 5; do
+	    if status >/dev/null; then
+		RETVAL=0
+		break
+		else
+		echo -n "."
+		sleep 1
+		RETVAL=1
+	    fi
+	done
+	if [ ${RETVAL} -ge 1 ]; then
+	    rm -f ${lockfile}
+	fi
+	echo
+	return ${RETVAL}
+}
+
+stop() {
+    if [ -e ${plutoctl} ]; then
+	echo "Shutting down pluto IKE daemon"
+	ipsec whack --shutdown 2>/dev/null
+	# don't use seq, might not exist on embedded
+	for waitsec in 1 2 3 4 5 6 7 8 9 10; do
+	    if [ -s ${plutopid} ]; then
+		echo -n "."
+		sleep 1
+	    else
+		break
+	    fi
+	done
+	echo
+	rm -f ${plutoctl} # we won't be using this anymore
+    fi
+    if [ -s ${plutopid} ]; then
+	# pluto did not die peacefully
+	pid=$(cat ${plutopid})
+	if [ -d /proc/${pid} ]; then
+	    kill -TERM ${pid}
+	    RETVAL=$?
+	    sleep 5;
+	    if [ -d /proc/${pid} ]; then
+		kill -KILL ${pid}
+		RETVAL=$?
+	    fi
+	    if [ ${RETVAL} -ne 0 ]; then
+		echo "Kill failed - removing orphaned ${plutopid}"
+	    fi
+	else
+	    echo "Removing orphaned ${plutopid}"
+	fi
+	rm -f ${plutopid}
+    fi
+
+    ipsec _stackmanager stop
+    ipsec --stopnflog > /dev/null
+
+    # cleaning up backup resolv.conf
+    if [ -e ${LIBRESWAN_RESOLV_CONF} ]; then
+	if grep 'Libreswan' ${ORIG_RESOLV_CONF} > /dev/null 2>&1; then
+	    cp ${LIBRESWAN_RESOLV_CONF} ${ORIG_RESOLV_CONF}
+	fi
+	rm -f  ${LIBRESWAN_RESOLV_CONF}
+    fi
+
+    rm -f ${lockfile}
+    return ${RETVAL}
+}
+
+restart() {
+    verify_config
+    stop
+    start
+    return $?
+}
+
+status() {
+    local RC
+    if [ -f ${plutopid} ]; then
+	if [ -r ${plutopid} ]; then
+	    pid=$(cat ${plutopid})
+	    if [ -n "$pid" -a -d /proc/${pid} ]; then
+		RC=0    # running
+	    else
+		RC=1    # not running but pid exists
+	    fi
+	else
+	    RC=4        # insufficient privileges
+	fi
+    fi
+    if [ -z "${RC}" ]; then
+	if [ -f ${lockfile} ]; then
+	    RC=2
+	else
+	    RC=3
+	fi
+    fi
+    case "${RC}" in
+	0)
+	    echo "ipsec: pluto (pid ${pid}) is running..."
+	    return 0
+	    ;;
+	1)
+	    echo "ipsec: pluto dead but pid file exits"
+	    return 1
+	    ;;
+	2)
+	    echo "ipsec: pluto dead but subsys locked"
+	    return 2
+	    ;;
+	4)
+	    echo "ipsec: pluto status unknown due to insufficient privileges."
+	    return 4
+	    ;;
+    esac
+    echo "ipsec: pluto is stopped"
+    return 3
+}
+
+condrestart() {
+    verify_config
+    RETVAL=$?
+    if [ -f ${lockfile} ]; then
+	restart
+	RETVAL=$?
+    fi
+    return ${RETVAL}
+}
+
+version() {
+    ipsec version
+    return $?
+}
