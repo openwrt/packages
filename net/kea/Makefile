@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kea
 PKG_VERSION:=1.5.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=BangLang Huang<banglang.huang@foxmail.com>, Rosy Song<rosysong@rosinson.com>
 PKG_BUILD_DEPENDS:=boost log4cplus kea/host
 HOST_BUILD_DEPENDS:=boost boost/host log4cplus/host
@@ -99,6 +99,7 @@ endef
 
 CONFIGURE_ARGS += \
 	--with-log4cplus="$(STAGING_DIR)/usr" \
+	--with-openssl="$(STAGING_DIR)/usr" \
 	$(if $(CONFIG_PACKAGE_kea-perfdhcp),--enable-perfdhcp,)
 
 CONFIGURE_VARS += \
@@ -108,12 +109,14 @@ HOST_CONFIGURE_ARGS += \
 	--enable-static-link \
 	--enable-boost-headers-only \
 	--with-log4cplus="$(STAGING_DIR_HOSTPKG)" \
-	--with-boost-include="$(STAGING_DIR)/usr/include"
+	--with-boost-include="$(STAGING_DIR)/usr/include" \
+	--without-pic
 
 HOST_LDFLAGS += \
 		-Wl,--gc-sections,--as-needed
 
 TARGET_CXXFLAGS += \
+		$(FPIC) \
 		-fdata-sections \
 		-ffunction-sections
 
