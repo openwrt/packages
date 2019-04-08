@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libprotobuf-c
 PKG_VERSION:=1.3.1
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=protobuf-c-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/protobuf-c/protobuf-c/releases/download/v$(PKG_VERSION)
@@ -42,9 +42,6 @@ define Package/libprotobuf-c/description
   extensible format. Google uses Protocol Buffers for almost all of its
   internal RPC protocols and file formats.
 endef
-
-HOST_CONFIGURE_ARGS += \
-	--disable-protoc
 
 CONFIGURE_ARGS += \
 	--enable-shared \
