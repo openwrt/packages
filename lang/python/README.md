@@ -209,13 +209,73 @@ The name `*-src` must be the Python package name; so for `python-lxml-src` a equ
 
 Some packages need custom build rules (because they do).
 
-For building, if a user specifies a `PyBuild/Compile` & `Py3Build/Compile` rule, this will be used to build/compile the package, instead of the default one defined in `python[3]-package.mk`.
+The default package build and install processes are defined in `python[3]-package.mk`.
 
-For installing files on the target, 2 build rules are used:
-* `PyPackage/$(1)/filespec` & `Py3Package/$(1)/filespec` which are Python library files relative to `/usr/lib/pythonX.Y` ; by default this is `/usr/lib/python$(PYTHON[3]_VERSION)/site-packages` ; most Python[3] packages generate files that get installed in this sub-folder
-* `PyPackage/$(1)/install` & `Py3Package/$(1)/install` is similar to `Package/$(1)/install` ; these allow binary (or other files) to be installed on the target
+#### Building
 
-Both the 2 above rules generate a `Package/$(1)/install` build rule, which gets picked up by the build system. Both can be used together (they are not mutually exclusive), and provide a good enough flexibility for specifying Python[3] packages.
+The default build process calls `setup.py install` inside the directory where the Python source package is extracted (`PKG_BUILD_DIR`). This "installs" the Python package to an intermediate location (`PKG_INSTALL_DIR`) where it is used by the default install process.
+
+There are several Makefile variables that can be used to customize this process (all optional):
+
+* `PYTHON_PKG_SETUP_DIR` / `PYTHON3_PKG_SETUP_DIR`: Path where `setup.py` can be found, relative to the package directory (`PKG_BUILD_DIR`).  
+  Default: empty value (`setup.py` is in the package directory)
+* `PYTHON_PKG_SETUP_VARS` / `PYTHON3_PKG_SETUP_VARS`: Additional environment variables to set for the call to `setup.py`. Should be in the form of `VARIABLE1=value VARIABLE2=value ...`.  
+  Default: empty value
+* `PYTHON_PKG_SETUP_GLOBAL_ARGS` / `PYTHON3_PKG_SETUP_GLOBAL_ARGS`: Additional command line arguments to pass to `setup.py`, before / in front of the `install` command.  
+  Default: empty value
+* `PYTHON_PKG_SETUP_ARGS` / `PYTHON3_PKG_SETUP_ARGS`: Additional command line arguments to pass to `setup.py`, after the `install` command.  
+  Default: `--single-version-externally-managed`
+
+Conceptually, these variables are used in this way (using a Python 2 package as an example):
+
+```
+cd $(PKG_BUILD_DIR)/$(PYTHON_PKG_SETUP_DIR)
+$(PYTHON_PKG_SETUP_VARS) python setup.py $(PYTHON_PKG_SETUP_GLOBAL_ARGS) install $(PYTHON_PKG_SETUP_ARGS)
+```
+
+The default build process can be completely overridden by defining custom `PyBuild/Compile` & `Py3Build/Compile` rules in the package Makefile.
+
+#### Installing
+
+The default install process copies some/all of the files from `PKG_INSTALL_DIR`, placed there by the build process, to a location passed to the install rule as the first argument (`$(1)`). The OpenWrt build system will then take those files and create the actual .ipk package archives.
+
+This default process uses 2 build rules:
+* `PyPackage/<package>/filespec` & `Py3Package/<package>/filespec` which are Python library files relative to `/usr/lib/pythonX.Y` ; by default this is `/usr/lib/python$(PYTHON[3]_VERSION)/site-packages` (`PYTHON[3]_PKG_DIR`) ; most Python[3] packages generate files that get installed in this sub-folder
+* `PyPackage/<package>/install` & `Py3Package/<package>/install` is similar to `Package/<package>/install` ; these allow binary (or other files) to be installed on the target
+
+Both the 2 above rules generate a `Package/<package>/install` build rule, which gets picked up by the build system. Both can be used together (they are not mutually exclusive), and provide a good enough flexibility for specifying Python[3] packages.
+
+The `PyPackage/<package>/filespec` & `Py3Package/<package>/filespec` rules contain one or more lines of the following format (whitespace added for clarity):
+
+```
+<one of: +-=> | <file/directory path> | <file permissions>
+```
+
+The initial character controls the action that will be taken:
+
+* `+`: Install the given path. If the path is a directory, all files and subdirectories inside are installed.
+  * If file permissions is specified (optional), then the file or directory (and all files and subdirectories) are assigned the given permissions; if omitted, then the file or directory retains its original permissions.
+* `-`: Remove the given path. Useful when most of a directory should be installed except for a few files or subdirectories.
+  * File permissions is not used / ignored in this case.
+* `=`: Assign the given file permissions to the given path. File permissions is required in this case.
+
+As mentioned, the default `PyPackage/<package>/filespec` & `Py3Package/<package>/filespec` install `PYTHON[3]_PKG_DIR`:
+
+```
+define PyPackage/python-example/filespec
++|$(PYTHON_PKG_DIR)
+endef
+```
+
+If there is an `examples` directory and `test_*.py` files that can be omitted to save space, this can be specified as:
+
+```
+define PyPackage/python-example/filespec
++|$(PYTHON_PKG_DIR)
+-|$(PYTHON_PKG_DIR)/examples
+-|$(PYTHON_PKG_DIR)/test_*.py
+endef
+```
 
 ### Host-side Python packages for build
 
