@@ -1,4 +1,3 @@
-
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,14 +6,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sslsplit
-PKG_VERSION:=0.5.2
+PKG_VERSION:=0.5.4
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE LICENSE.contrib LICENSE.third
 
-PKG_SOURCE:=sslsplit-0.5.2.tar.bz2
+PKG_SOURCE:=sslsplit-${PKG_VERSION}.tar.bz2
 PKG_SOURCE_URL:=https://mirror.roe.ch/rel/sslsplit/
-PKG_HASH:=f32c7fd760a45bb521adb8d96c819173fcaed1964bf114e666fcd7cf7ff043a8
+PKG_HASH:=336c54c4578a2f2bd9d8bae153f31499156037515fa07d5fa7d5373f4c1378c2
 
 PKG_INSTALL:=1
 
