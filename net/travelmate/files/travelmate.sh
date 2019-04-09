@@ -10,18 +10,20 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.4.4"
+trm_ver="1.4.5"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
 trm_iface="trm_wwan"
 trm_captive=1
 trm_proactive=1
+trm_netcheck=0
 trm_captiveurl="http://captive.apple.com"
 trm_minquality=35
 trm_maxretry=3
 trm_maxwait=30
 trm_timeout=60
+trm_listexpiry=0
 trm_radio=""
 trm_connection=""
 trm_rtfile="/tmp/trm_runtime.json"
@@ -100,9 +102,13 @@ f_envload()
 	then
 		trm_minquality=35
 	fi
+	if [ ${trm_listexpiry} -lt 0 ] || [ ${trm_listexpiry} -gt 300 ]
+	then
+		trm_listexpiry=0
+	fi
 	if [ ${trm_maxretry} -lt 1 ] || [ ${trm_maxretry} -gt 10 ]
 	then
-		trm_maxretry=3
+		trm_maxretry=5
 	fi
 	if [ ${trm_maxwait} -lt 20 ] || [ ${trm_maxwait} -gt 40 ] || [ ${trm_maxwait} -ge ${trm_timeout} ]
 	then
@@ -168,13 +174,16 @@ f_prep()
 #
 f_check()
 {
-	local IFS ifname radio dev_status last_status config sta_essid sta_bssid result cp_domain wait=1 mode="${1}" status="${2:-"false"}"
+	local IFS ifname radio dev_status last_status config sta_essid sta_bssid result cp_domain wait mode="${1}" status="${2:-"false"}"
 
-	trm_ifquality=0
 	if [ "${mode}" != "initial" ] && [ "${status}" = "false" ]
 	then
 		ubus call network reload
+		wait=$(( ${trm_maxwait} / 6 ))
+		sleep ${wait}
 	fi
+
+	wait=1
 	while [ ${wait} -le ${trm_maxwait} ]
 	do
 		dev_status="$(ubus -S call network.wireless status 2>/dev/null)"
@@ -204,86 +213,83 @@ f_check()
 				fi
 			elif [ "${mode}" = "rev" ]
 			then
-				wait=$(( ${trm_maxwait} / 3 ))
-				sleep ${wait}
 				break
 			else
 				ifname="$(printf "%s" "${dev_status}" | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
 				if [ -n "${ifname}" ]
 				then
 					trm_ifquality="$(${trm_iwinfo} ${ifname} info 2>/dev/null | awk -F "[\/| ]" '/Link Quality:/{printf "%i\n", (100 / $NF * $(NF-1)) }')"
-					if [ ${trm_ifquality} -ge ${trm_minquality} ]
+					if [ ${trm_captive} -eq 1 ]
+					then
+						result="$(${trm_fetch} --timeout=$(( ${trm_maxwait} / 3 )) "${trm_captiveurl}" -O /dev/null 2>&1 | \
+							awk '/^Failed to redirect|^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|^Connection error/{printf "%s" "net nok";exit}')"
+					fi
+					if [ ${trm_ifquality} -ge ${trm_minquality} ] && ([ ${trm_captive} -eq 0 ] || [ ${trm_netcheck} -eq 0 ] || [ "${result%/*}" != "net nok" ])
 					then
 						trm_ifstatus="$(ubus -S call network.interface dump 2>/dev/null | jsonfilter -l1 -e "@.interface[@.device=\"${ifname}\"].up")"
-					elif [ "${mode}" = "initial" ] && [ ${trm_ifquality} -lt ${trm_minquality} ] && [ "${trm_ifstatus}" != "${status}" ]
-					then
-						trm_ifstatus="${status}"
-						sta_essid="$(printf "%s" "${dev_status}" | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].*.ssid')"
-						sta_bssid="$(printf "%s" "${dev_status}" | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].*.bssid')"
-						f_log "info" "uplink '${sta_essid:-"-"}/${sta_bssid:-"-"}' is out of range (${trm_ifquality}/${trm_minquality}), uplink disconnected (${trm_sysver})"
+						if [ "${trm_ifstatus}" = "true" ]
+						then
+							if [ ${trm_captive} -eq 1 ]
+							then
+								cp_domain="$(printf "%s" "${result}" | awk -F "['| ]" '/^net cp/{printf "%s" $4}')"
+								if [ -n "${cp_domain}" ] && [ ${trm_rebind:-0} -eq 1 ] && [ -x "/etc/init.d/dnsmasq" ]
+								then
+									while [ -n "${cp_domain}" ] && [ -z "$(uci_get dhcp "@dnsmasq[0]" rebind_domain | grep -Fo "${cp_domain}")" ]
+									do
+										uci -q add_list dhcp.@dnsmasq[0].rebind_domain="${cp_domain}"
+										uci_commit dhcp
+										/etc/init.d/dnsmasq reload
+										f_log "info" "captive portal domain '${cp_domain}' added to rebind whitelist"
+										result="$(${trm_fetch} --timeout=$(( ${trm_maxwait} / 3 )) "${trm_captiveurl}" -O /dev/null 2>&1 | \
+											awk '/^Failed to redirect|^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|^Connection error/{printf "%s" "net nok";exit}')"
+										cp_domain="$(printf "%s" "${result}" | awk -F "['| ]" '/^net cp/{printf "%s" $4}')"
+									done
+								fi
+							fi
+							trm_connection="${result}/${trm_ifquality}"
+							f_jsnup
+							break
+						fi
+					else
+						if [ -n "${trm_connection}" ]
+						then
+							sta_essid="$(printf "%s" "${dev_status}" | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].*.ssid')"
+							sta_bssid="$(printf "%s" "${dev_status}" | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].*.bssid')"
+							if [ ${trm_ifquality} -lt ${trm_minquality} ]
+							then
+								f_log "info" "uplink '${sta_essid:-"-"}/${sta_bssid:-"-"}' is out of range (${trm_ifquality}/${trm_minquality})"
+							elif [ ${trm_captive} -eq 1 ] && [ ${trm_netcheck} -eq 1 ] && [ "${result%/*}" = "net nok" ]
+							then
+								f_log "info" "uplink '${sta_essid:-"-"}/${sta_bssid:-"-"}' has no internet (${result})"
+							fi
+							unset trm_connection
+							trm_ifstatus="${status}"
+							f_jsnup
+							break
+						fi
 					fi
 				else
-					if [ "${trm_ifstatus}" != "${status}" ]
+					if [ -n "${trm_connection}" ]
 					then
+						unset trm_connection
 						trm_ifstatus="${status}"
-					fi
-				fi
-			fi
-			if [ "${mode}" = "initial" ] || [ "${trm_ifstatus}" = "true" ]
-			then
-				json_get_var last_status "travelmate_status"
-				if ([ "${trm_ifstatus}" = "false" ] && [ "${trm_ifstatus}" != "${status}" ]) || \
-					([ "${trm_ifstatus}" = "true" ] && [ "${mode}" = "sta" ] && [ -n "${trm_active_sta}" ]) || \
-					[ -z "${last_status}" ] || [ "${last_status}" = "running / not connected" ] || [ ${trm_ifquality} -lt ${trm_minquality} ]
-				then
-					f_jsnup
-				fi
-				if [ "${mode}" = "initial" ] && [ ${trm_captive} -eq 1 ] && [ "${trm_ifstatus}" = "true" ]
-				then
-					result="$(${trm_fetch} --timeout=$(( ${trm_maxwait} / 3 )) "${trm_captiveurl}" -O /dev/null 2>&1 | \
-						awk '/^Failed to redirect|^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|^Connection error/{printf "%s" "net nok";exit}')"
-					cp_domain="$(printf "%s" "${result}" | awk -F "['| ]" '/^net cp/{printf "%s" $4}')"
-					if [ -n "${result}" ] && ([ -z "${trm_connection}" ] || [ "${result}" != "${trm_connection%/*}" ] || [ -n "${cp_domain}" ])
-					then
-						if [ "${trm_rebind:-0}" -eq 1 ] && [ -x "/etc/init.d/dnsmasq" ]
-						then
-							while [ -n "${cp_domain}" ] && [ -z "$(uci_get dhcp "@dnsmasq[0]" rebind_domain | grep -Fo "${cp_domain}")" ]
-							do
-								uci -q add_list dhcp.@dnsmasq[0].rebind_domain="${cp_domain}"
-								uci_commit dhcp
-								/etc/init.d/dnsmasq reload
-								f_log "info" "captive portal domain '${cp_domain}' added to rebind whitelist"
-								result="$(${trm_fetch} --timeout=$(( ${trm_maxwait} / 3 )) "${trm_captiveurl}" -O /dev/null 2>&1 | \
-									awk '/^Failed to redirect|^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|^Connection error/{printf "%s" "net nok";exit}')"
-								cp_domain="$(printf "%s" "${result}" | awk -F "['| ]" '/^net cp/{printf "%s" $4}')"
-							done
-						fi
-						trm_connection="${result}/${trm_ifquality}"
 						f_jsnup
+						break
 					fi
 				fi
-				break
 			fi
 		fi
 		wait=$(( wait + 1 ))
 		sleep 1
 	done
-	f_log "debug" "f_check::: mode: ${mode}, name: ${ifname:-"-"}, status: ${trm_ifstatus}, quality: ${trm_ifquality}, result: ${result:-"-"}, connection: ${trm_connection:-"-"}, wait: ${wait}, max_wait: ${trm_maxwait}, min_quality: ${trm_minquality}, captive: ${trm_captive}"
+	f_log "debug" "f_check::: mode: ${mode}, name: ${ifname:-"-"}, status: ${trm_ifstatus}, quality: ${trm_ifquality}, result: ${result:-"-"}, connection: ${trm_connection:-"-"}, wait: ${wait}, max_wait: ${trm_maxwait}, min_quality: ${trm_minquality}, captive: ${trm_captive}, netcheck: ${trm_netcheck}"
 }
 
 # update runtime information
 #
 f_jsnup()
 {
-	local IFS config sta_iface sta_radio sta_essid sta_bssid dev_status status="${trm_ifstatus}" faulty_list faulty_station="${1}"
-
-	if [ "${status}" = "true" ]
-	then
-		status="connected (${trm_connection:-"-"})"
-	else
-		unset trm_connection
-		status="running / not connected"
-	fi
+	local IFS config d1 d2 d3 last_date last_station sta_iface sta_radio sta_essid sta_bssid last_status dev_status status="${trm_ifstatus}" faulty_list faulty_station="${1}"
 
 	dev_status="$(ubus -S call network.wireless status 2>/dev/null)"
 	if [ -n "${dev_status}" ]
@@ -298,7 +304,37 @@ f_jsnup()
 		fi
 	fi
 
+	json_get_var last_date "last_rundate"
+	json_get_var last_station "station_id"
+	if [ "${status}" = "true" ]
+	then
+		status="connected (${trm_connection:-"-"})"
+		json_get_var last_status "travelmate_status"
+		if [ "${last_status}" = "running / not connected" ] || [ "${last_station}" != "${sta_radio:-"-"}/${sta_essid:-"-"}/${sta_bssid:-"-"}" ]
+		then
+			last_date="$(/bin/date "+%Y.%m.%d-%H:%M:%S")"
+		fi
+	else
+		unset trm_connection
+		status="running / not connected"
+	fi
+	if [ -z "${last_date}" ]
+	then
+		last_date="$(/bin/date "+%Y.%m.%d-%H:%M:%S")"
+	fi
+
 	json_get_var faulty_list "faulty_stations"
+	if [ -n "${faulty_list}" ] && [ ${trm_listexpiry} -gt 0 ]
+	then
+		d1="$(/bin/date -d "${last_date}" "+%s")"
+		d2="$(/bin/date "+%s")"
+		d3=$(( (d2 - d1) / 60 ))
+		if [ ${d3} -ge ${trm_listexpiry} ]
+		then
+			faulty_list=""
+		fi
+	fi
+
 	if [ -n "${faulty_station}" ]
 	then
 		if [ -z "$(printf "%s" "${faulty_list}" | grep -Fo "${faulty_station}")" ]
@@ -311,10 +347,10 @@ f_jsnup()
 	json_add_string "station_id" "${sta_radio:-"-"}/${sta_essid:-"-"}/${sta_bssid:-"-"}"
 	json_add_string "station_interface" "${sta_iface:-"-"}"
 	json_add_string "faulty_stations" "${faulty_list}"
-	json_add_string "last_rundate" "$(/bin/date "+%d.%m.%Y %H:%M:%S")"
+	json_add_string "last_rundate" "${last_date}"
 	json_add_string "system" "${trm_sysver}"
 	json_dump > "${trm_rtfile}"
-	f_log "debug" "f_jsnup::: config: ${config:-"-"}, status: ${status:-"-"}, sta_iface: ${sta_iface:-"-"}, sta_radio: ${sta_radio:-"-"}, sta_essid: ${sta_essid:-"-"}, sta_bssid: ${sta_bssid:-"-"}, faulty_list: ${faulty_list:-"-"}"
+	f_log "debug" "f_jsnup::: config: ${config:-"-"}, status: ${status:-"-"}, sta_iface: ${sta_iface:-"-"}, sta_radio: ${sta_radio:-"-"}, sta_essid: ${sta_essid:-"-"}, sta_bssid: ${sta_bssid:-"-"}, faulty_list: ${faulty_list:-"-"}, list_expiry: ${trm_listexpiry}"
 }
 
 # write to syslog
