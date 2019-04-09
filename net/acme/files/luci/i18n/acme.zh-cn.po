@@ -1,0 +1,121 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "ACME certificates"
+msgstr "ACME 证书管理"
+
+msgid "This configures ACME (Letsencrypt) automatic certificate installation. "
+"Simply fill out this to have the router configured with Letsencrypt-issued"
+"certificates for the web interface. "
+"Note that the domain names in the certificate must already be configured to"
+"point at the router's public IP address. "
+"Once configured, issuing certificates can take a while."
+"Check the logs for progress and any errors."
+msgstr "这ACME配置将会自动向 Letsencrypt 申请及安装域名证书使用的. "
+"只需简单地填写此项目就可以为路由器申请Letsencrypt服务器颁发的域名证书及"
+"安装在此路由设备上的web服务上使用"
+"注意，这域名必须已经配置好解析指向到"
+"路由器的外网公共IP上. "
+"完成域名解析后，此程序申请颁发证书可能需要一段时间."
+"检查日志中的进度和任何错误."
+
+msgid "ACME global config"
+msgstr "Acme全局配置"
+
+msgid "State directory"
+msgstr "存放目录"
+
+msgid "Where certs and other state files are kept."
+msgstr "保存证书和其他状态文件的位置."
+
+msgid "Account email"
+msgstr "电子邮件帐号"
+
+msgid "Email address to associate with account key."
+msgstr "要与帐户密钥关联的电子邮件地址."
+
+msgid "Enable debug logging"
+msgstr "开启记录debug模式"
+
+msgid "Certificate config"
+msgstr "证书设置"
+
+msgid "Use staging server"
+msgstr "使用颁发服务器"
+
+msgid "Get certificate from the Letsencrypt staging server"
+"use for testing; the certificate won't be valid"
+msgstr "从LetsEncrypt颁发服务器获取证书"
+"用于测试; 这证书不再有效"
+
+msgid "Key size"
+msgstr "密钥长度"
+
+msgid "Key size (and type) for the generated certificate."
+msgstr "生成的证书的密钥大小及类型."
+
+msgid "Use for uhttpd"
+msgstr "用于uhttpd"
+
+msgid "Update the uhttpd config with this certificate once issued"
+"(only select this for one certificate)."
+"Is also available luci-app-uhttpd to configure uhttpd form the LuCI interface."
+msgstr "一旦颁发此证书，就使用此证书更新uhtpd配置"
+"(选择此项其中一个证书)."
+"也可以从luci接口使用luci-app-uhtpd配置uhtpd."
+
+msgid "Use for nginx"
+msgstr "用于nginx"
+
+msgid "Update the nginx config with this certificate once issued "
+"(only select this for one certificate)."
+"Nginx must support ssl, if not it won't start as it needs to be "
+"compiled with ssl support to use cert options"
+msgstr "一旦颁发了这个证书，就用它更新nginx配置 "
+"(选择此项其中一个证书)."
+"nginx必须支持ssl，否则它将无法启动 "
+"因为使用cert配置需要使用ssl支持编译才能运行"
+
+msgid "Webroot directory"
+msgstr "虚拟主机根目录"
+
+msgid "Webserver root directory. Set this to the webserver"
+"document root to run Acme in webroot mode. The web "
+"server must be accessible from the internet on port 80."
+msgstr "Web服务器根目录. 将此设置为webserver文档根目录"
+"以在webroot模式下运行acme.  "
+"必须可以从80端口的Internet访问Web服务器."
+
+msgid "Domain names"
+msgstr "域名"
+
+msgid "Domain names to include in the certificate. "
+"The first name will be the subject name, subsequent names will be alt names. "
+"Note that all domain names must point at the router in the global DNS."
+msgstr "包含在证书中的域名. "
+"名字将是主题名, 后面的名字将是替换名. "
+"请注意，所有域名必须指向全局DNS中的路由器."
+
+msgid "DNS API"
+msgstr ""
+
+msgid "To use DNS mode to issue certificates, set this to the name of a DNS API supported by acme.sh. "
+"See https://github.com/Neilpang/acme.sh/tree/master/dnsapi for the list of available APIs. "
+"In DNS mode, the domain name does not have to resolve to the router IP. "
+"DNS mode is also the only mode that supports wildcard certificates. "
+"Using this mode requires the acme-dnsapi package to be installed."
+msgstr " 要使用DNS模式颁发证书，请将其设置为acme.sh支持的DNS API的名称。 . "
+"有关可用API的列表，请参阅 https://github.com/Neilpang/acme.sh/tree/master/dnsapi . "
+" 在DNS模式下，域名不必解析为路由器IP. "
+"DNS模式也是唯一支持通配符证书的模式. "
+"使用此模式需要安装 acme-dnsapi."
+
+msgid "DNS API credentials"
+msgstr "DNS API 凭据"
+
+msgid "The credentials for the DNS API mode selected above. "
+"See https://github.com/Neilpang/acme.sh/tree/master/dnsapi#how-to-use-dns-api for the format of credentials required by each API. "
+"Add multiple entries here in KEY=VAL shell variable format to supply multiple credential variables."
+msgstr "上面选择的DNS API模式的凭据. "
+"请参阅 https://github.com/Neilpang/acme.sh/tree/master/dnsapi#how-to-use-dns-api 如何使用DNS API来获取每个API所需的凭据格式. "
+"以key=val shell变量格式在此处添加多个条目，以提供多个凭证变量."
