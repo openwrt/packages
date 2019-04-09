@@ -1,0 +1,33 @@
+diff --git a/src/abe/Makefile.am b/src/abe/Makefile.am
+index 23a7ae68e..cccd3ccb0 100644
+--- a/src/abe/Makefile.am
++++ b/src/abe/Makefile.am
+@@ -20,6 +20,8 @@ libgnunetabe_la_LIBADD = \
+   $(LTLIBICONV) \
+   $(LTLIBINTL) \
+ 	$(ABE_LIBADD) \
++	$(top_builddir)/src/util/libgnunetutil.la \
++	-lgmp \
+ 	-lgabe \
+ 	-lpbc \
+ 	-lglib-2.0 \
+diff --git a/src/reclaim/Makefile.am b/src/reclaim/Makefile.am
+index 13918508e..be50cce26 100644
+--- a/src/reclaim/Makefile.am
++++ b/src/reclaim/Makefile.am
+@@ -99,6 +99,7 @@ libgnunet_plugin_reclaim_sqlite_la_LIBADD = \
+   libgnunetreclaim.la  \
+   $(top_builddir)/src/sq/libgnunetsq.la \
+   $(top_builddir)/src/statistics/libgnunetstatistics.la \
++	$(top_builddir)/src/reclaim-attribute/libgnunetreclaimattribute.la \
+   $(top_builddir)/src/util/libgnunetutil.la $(XLIBS) -lsqlite3 \
+   $(LTLIBINTL)
+ libgnunet_plugin_reclaim_sqlite_la_LDFLAGS = \
+@@ -126,6 +127,7 @@ libgnunetreclaim_la_SOURCES = \
+  reclaim.h
+ libgnunetreclaim_la_LIBADD = \
+   $(top_builddir)/src/util/libgnunetutil.la \
++	$(top_builddir)/src/reclaim-attribute/libgnunetreclaimattribute.la \
+ 	$(GN_LIBINTL) $(XLIB)
+ libgnunetreclaim_la_LDFLAGS = \
+ 	$(GN_LIB_LDFLAGS)  $(WINFLAGS) \
