@@ -8,16 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libhttp-parser
-PKG_VERSION:=2.8.1
+PKG_VERSION:=2.9.0
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Ramanathan Sivagurunathan <ramzthecoder@gmail.com>
-PKG_LICENSE:=MIT
-PKG_LICENSE_FILES:=LICENSE-MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/nodejs/http-parser/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=51615f68b8d67eadfd2482decc63b3e55d749ce0055502bbb5b0032726d22d96
+PKG_HASH:=ef26268c54c8084d17654ba2ed5140bffeffd2a040a895ffb22a6cca3f6c613f
 PKG_BUILD_DIR:=$(BUILD_DIR)/http-parser-$(PKG_VERSION)
+
+PKG_MAINTAINER:=Ramanathan Sivagurunathan <ramzthecoder@gmail.com>, Hirokazu MORIKAWA <morikw2@gmail.com>
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE-MIT
+
+PKG_BUILD_PARALLEL:=1
+PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -29,7 +33,7 @@ define Package/libhttp-parser
 endef
 
 define Package/libhttp-parser/description
-  A parser for HTTP messages written in C. It parses both requests and responses. 
+  A parser for HTTP messages written in C. It parses both requests and responses.
   The parser is designed to be used in performance HTTP applications.
   It does not make any syscalls nor allocations, it does not buffer data,
   it can be interrupted at anytime. Depending on your architecture,
@@ -37,26 +41,18 @@ define Package/libhttp-parser/description
   (in a web server that is per connection).
 endef
 
-define Build/Compile
-	$(call Build/Compile/Default, library)
-endef
+MAKE_FLAGS+=library
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/http_parser.h $(1)/usr/include/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/local/include/http_parser.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/libhttp_parser.so.* $(1)/usr/lib/
-	(	cd $(1)/usr/lib ; \
-		ln -s libhttp_parser.so.$(PKG_VERSION) libhttp_parser.so ; \
-		ln -s libhttp_parser.so.$(PKG_VERSION) libhttp_parser.so.2.8 )
+	$(CP) $(PKG_INSTALL_DIR)/usr/local/lib/libhttp_parser.so* $(1)/usr/lib/
 endef
 
 define Package/libhttp-parser/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_BUILD_DIR)/libhttp_parser.so.* $(1)/usr/lib/
-	(	cd $(1)/usr/lib ; \
-		ln -s libhttp_parser.so.$(PKG_VERSION) libhttp_parser.so ; \
-		ln -s libhttp_parser.so.$(PKG_VERSION) libhttp_parser.so.2.8 )
+	$(CP) $(PKG_INSTALL_DIR)/usr/local/lib/libhttp_parser.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libhttp-parser))
