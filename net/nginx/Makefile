@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.15.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
@@ -519,11 +519,11 @@ endif
 
 ifeq ($(CONFIG_NGINX_DAV),y)
   define Download/nginx-dav-ext-module
-    VERSION:=430fd774fe838a04f1a5defbf1dd571d42300cf9
+    VERSION:=bce35a587fc7f77c64f54233bc6674b67ca93e70
     SUBDIR:=nginx-dav-ext-module
     FILE:=nginx-dav-ext-module-$$(VERSION).tar.gz
     URL:=https://github.com/arut/nginx-dav-ext-module.git
-    MIRROR_HASH:=0566053a8756423ecab455fd9d218cec1e017598fcbb3d6415a06f816851611e
+    MIRROR_HASH:=2b54e28c7cc48a523d3568a27827dfa563c7baeb2e1272972108b2ddaa8fdb67
     PROTO:=git
   endef
   $(eval $(call Download,nginx-dav-ext-module))
