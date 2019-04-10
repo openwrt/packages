@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kea
 PKG_VERSION:=1.5.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=BangLang Huang<banglang.huang@foxmail.com>, Rosy Song<rosysong@rosinson.com>
 PKG_BUILD_DEPENDS:=boost log4cplus kea/host
 HOST_BUILD_DEPENDS:=boost boost/host log4cplus/host
@@ -110,6 +110,7 @@ HOST_CONFIGURE_ARGS += \
 	--enable-boost-headers-only \
 	--with-log4cplus="$(STAGING_DIR_HOSTPKG)" \
 	--with-boost-include="$(STAGING_DIR)/usr/include" \
+	--with-openssl="$(STAGING_DIR)/usr" \
 	--without-pic
 
 HOST_LDFLAGS += \
