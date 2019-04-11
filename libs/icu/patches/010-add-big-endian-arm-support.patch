@@ -1,0 +1,23 @@
+From cb5cf996d123014a2420c853c4db60e4500973b1 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Mon, 1 Apr 2019 04:52:32 -0700
+Subject: [PATCH] Add big endian ARM support (#92)
+
+This fixes compilation on such platforms.
+---
+ double-conversion/utils.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/source/i18n/double-conversion-utils.h b/source/i18n/double-conversion-utils.h
+index 1e44fca..b715c65 100644
+--- a/18n/double-conversion-utils.h
++++ b/i18n/double-conversion-utils.h
+@@ -99,7 +99,7 @@ int main(int argc, char** argv) {
+     defined(_POWER) || defined(_ARCH_PPC) || defined(_ARCH_PPC64) || \
+     defined(__sparc__) || defined(__sparc) || defined(__s390__) || \
+     defined(__SH4__) || defined(__alpha__) || \
+-    defined(_MIPS_ARCH_MIPS32R2) || \
++    defined(_MIPS_ARCH_MIPS32R2) || defined(__ARMEB__) || \
+     defined(__AARCH64EL__) || defined(__aarch64__) || defined(__AARCH64EB__) || \
+     defined(__riscv) || \
+     defined(__or1k__) || defined(__arc__) || \
