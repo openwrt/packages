@@ -82,7 +82,7 @@ convert_mosq_general() {
 	append_if "$1" max_queued_bytes
 	append_if "$1" max_queued_messages
 	append_if "$1" message_size_limit
-	append_if "$1" passwd_file
+	append_if "$1" password_file
 	append_if "$1" pid_file
 	append_if "$1" psk_file
 	append_optional_bool "$1" queue_qos0_messages
