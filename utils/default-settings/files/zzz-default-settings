@@ -63,7 +63,7 @@ sed -i '/option disabled/d' /etc/config/wireless
 sed -i '/set wireless.radio${devidx}.disabled/d' /lib/wifi/mac80211.sh
 wifi up
 
-sed -i '/DISTRIB_REVISION/d' /etc/config/google_fu_mode
+sed -i '' /etc/config/google_fu_mode
 echo "0xDEADBEEF" >> /etc/config/google_fu_mode
 sed -i '/DISTRIB_REVISION/d' /etc/openwrt_release
 echo "DISTRIB_REVISION='GYZHOS B1.0 By guyezi'" >> /etc/openwrt_release
