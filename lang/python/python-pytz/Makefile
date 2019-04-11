@@ -8,14 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pytz
-PKG_VERSION:=2018.9
+PKG_VERSION:=2019.1
 PKG_RELEASE:=1
-PKG_LICENSE:=MIT
 
 PKG_SOURCE:=pytz-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pytz
-PKG_HASH:=d5f05e487007e29e03409f9398d074e158d920d36eb82eaf66fb1136b0c5374c
+PKG_HASH:=d747dd3d23d77ef44c6a3526e274af6efeb0a6f1afd5a69ba4d5be4098c8e141
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-pytz-$(PKG_VERSION)
+
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE.txt
 
 HOST_BUILD_DEPENDS:=python/host
 
@@ -31,8 +35,7 @@ define Package/python-pytz/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
-  URL:=https://sourceforge.net/projects/pytz/
+  URL:=https://pythonhosted.org/pytz/
 endef
 
 define Package/python-pytz
