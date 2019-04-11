@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libreswan
 PKG_VERSION:=3.27
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.libreswan.org/
@@ -90,6 +90,7 @@ MAKE_FLAGS+= \
     USE_SYSTEMD_WATCHDOG=false \
     INC_USRLOCAL="/usr" \
     FINALRUNDIR="/var/run/pluto" \
+    ARCH="$(LINUX_KARCH)" \
     KERNELSRC="$(LINUX_DIR)"
 
 define Build/Prepare
