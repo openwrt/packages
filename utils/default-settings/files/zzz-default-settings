@@ -66,7 +66,7 @@ wifi up
 sed -i '' /etc/config/google_fu_mode
 echo "0xDEADBEEF" >> /etc/config/google_fu_mode
 sed -i '/DISTRIB_REVISION/d' /etc/openwrt_release
-echo "DISTRIB_REVISION='GYZHOS B1.0 By guyezi'" >> /etc/openwrt_release
+echo "DISTRIB_REVISION='GYZHOS K4.14 By guyezi'" >> /etc/openwrt_release
 sed -i '/DISTRIB_DESCRIPTION/d' /etc/openwrt_release
 echo "DISTRIB_DESCRIPTION='OpenWrt '" >> /etc/openwrt_release
 
