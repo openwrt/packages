@@ -164,7 +164,7 @@ define Host/Install
 endef
 
 define Package/nfs-kernel-server/install
-	$(INSTALL_DIR) $(1)/etc/init.d $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/etc/init.d $(1)/usr/sbin $(1)/etc/config
 	$(INSTALL_DATA) ./files/nfsd.exports $(1)/etc/exports
 	$(INSTALL_BIN) ./files/nfsd.init $(1)/etc/init.d/nfsd
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/statd/sm-notify $(1)/usr/sbin/
@@ -172,6 +172,7 @@ define Package/nfs-kernel-server/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/nfsd/nfsd $(1)/usr/sbin/rpc.nfsd
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/mountd/mountd $(1)/usr/sbin/rpc.mountd
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/exportfs/exportfs $(1)/usr/sbin/
+	$(INSTALL_CONF) ./files/nfs.config $(1)/etc/config/nfs
 endef
 
 define Package/nfs-kernel-server-utils/install
