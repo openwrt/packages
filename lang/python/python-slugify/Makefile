@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-slugify
-PKG_VERSION:=3.0.1
+PKG_VERSION:=3.0.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=python-slugify-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/python-slugify/
-PKG_HASH:=492b27e5a12495340e50652ab4eab3a229ef7167c44b66b3a2861450e68b269a
+PKG_HASH:=57163ffb345c7e26063435a27add1feae67fa821f1ef4b2f292c25847575d758
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT
@@ -30,6 +30,8 @@ define Package/python3-slugify
   URL:=https://github.com/un33k/python-slugify
   DEPENDS+= \
       +python3-light \
+      +python3-codecs \
+      +python3-setuptools \
       +python3-text-unidecode
   VARIANT:=python3
 endef
