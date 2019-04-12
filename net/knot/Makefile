@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot
-PKG_VERSION:=2.8.0
+PKG_VERSION:=2.8.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-dns/
-PKG_HASH:=494ad926705018bd754d96711dc2129f3173f326a0b57d33978090ba4eef87ef
+PKG_HASH:=b21bf03e5cb6804df4e0e8b3898446349e86ddae5bf110edaf240d0ad1e2a2c6
 
 PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
 PKG_LICENSE:=GPL-3.0 LGPL-2.0 0BSD BSD-3-Clause OLDAP-2.8
@@ -143,6 +143,8 @@ define Package/knot-tests/description
 	Unit tests for the Knot DNS server and libraries.
 	Usage: /usr/share/knot/runtests.sh
 endef
+
+export KNOT_VERSION_FORMAT=release
 
 CONFIGURE_ARGS += 			\
 	--enable-recvmmsg=no		\
