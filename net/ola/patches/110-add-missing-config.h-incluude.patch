@@ -1,0 +1,25 @@
+From 409a82f0e35fc33627f16180af7ba8a617347c8e Mon Sep 17 00:00:00 2001
+From: Peter Newman <peterjnewman@gmail.com>
+Date: Sat, 9 Mar 2019 14:08:01 +0000
+Subject: [PATCH] Add the missing config.h include
+
+---
+ protoc/StrUtil.cpp | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/protoc/StrUtil.cpp b/protoc/StrUtil.cpp
+index 2914e82f1..d300b71e8 100644
+--- a/protoc/StrUtil.cpp
++++ b/protoc/StrUtil.cpp
+@@ -41,6 +41,11 @@
+ 
+ #include "protoc/StrUtil.h"
+ 
++#if HAVE_CONFIG_H
++#include <config.h>
++#endif  // HAVE_CONFIG_H
++
++// Required for Protobuf 3.7 onwards
+ #ifdef HAVE_GOOGLE_PROTOBUF_IO_STRTOD_H
+ #include <google/protobuf/io/strtod.h>
+ #endif  // HAVE_GOOGLE_PROTOBUF_IO_STRTOD_H
