@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ldns
 PKG_VERSION:=1.7.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.nlnetlabs.nl/downloads/ldns
@@ -70,6 +70,8 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/ldns $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libldns.{a,so*} $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_BUILD_DIR)/packaging/libldns.pc $(1)/usr/lib/pkgconfig
 endef
 
 define Package/libldns/install
