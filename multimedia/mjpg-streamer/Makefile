@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mjpg-streamer
 PKG_VERSION:=2018-10-25
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>, \
 		Ted Hess <thess@kitschensync.net>
 
