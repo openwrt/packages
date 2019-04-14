@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=botan
 PKG_VERSION:=2.10.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=BangLang Huang <banglang.huang@foxmail.com>
 
 PKG_SOURCE:=Botan-$(PKG_VERSION).tgz
@@ -68,6 +68,9 @@ CONFIGURE_ARGS = \
 	--optimize-for-size \
 	$(DISABLE_IPV6)
 
+ifeq ($(CONFIG_SOFT_FLOAT),y)
+CONFIGURE_ARGS += --disable-neon
+endif
 
 TARGET_LDFLAGS += \
 	-Wl,--gc-sections,--as-needed \
