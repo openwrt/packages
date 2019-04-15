@@ -9,16 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NPM_NAME:=mozilla-iot-gateway
 PKG_NAME:=node-$(PKG_NPM_NAME)
-PKG_VERSION:=0.6.1
+PKG_VERSION:=0.7.0
 PKG_RELEASE:=1
-PKG_REV:=2bcdf4866872b1e8992ee70ff6fc65566d6288d8
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/mozilla-iot/gateway.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=c424b6f5f011c0cceb455458c855854395d47e902fd4ec2d63564c5e736d4fcd
+PKG_SOURCE_URL:=https://codeload.github.com/mozilla-iot/gateway/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=a5ff36942b686ea39f6d1e5d369cd783d6e2265f19262856647de7e596aa1a77
 
 PKG_BUILD_DEPENDS:=node/host openzwave
 
