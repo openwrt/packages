@@ -1,0 +1,33 @@
+From a59d98003c0b2364929ee23ed331d610029c6dcf Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <michael.heimpold@i2se.com>
+Date: Tue, 18 Dec 2018 14:52:12 +0100
+Subject: [PATCH 3/9] Fix parsing of character in to_binstr()
+
+When a hex-digit > 'a' or 'A' is read, we have to add an offset of 10
+to access the valid symbol in our mapping table.
+
+Signed-off-by: Michael Heimpold <michael.heimpold@i2se.com>
+Cc: Michael Heimpold <mhei@heimpold.de>
+---
+ lsmmc.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/lsmmc.c b/lsmmc.c
+index a53bc57..e64117c 100644
+--- a/lsmmc.c
++++ b/lsmmc.c
+@@ -386,9 +386,9 @@ char *to_binstr(char *hexstr)
+ 		if (isdigit(*hexstr))
+ 			strcat(binstr, bindigits[*hexstr - '0']);
+ 		else if (islower(*hexstr))
+-			strcat(binstr, bindigits[*hexstr - 'a']);
++			strcat(binstr, bindigits[*hexstr - 'a' + 10]);
+ 		else
+-			strcat(binstr, bindigits[*hexstr - 'A']);
++			strcat(binstr, bindigits[*hexstr - 'A' + 10]);
+ 
+ 		hexstr++;
+ 	}
+-- 
+2.17.1
+

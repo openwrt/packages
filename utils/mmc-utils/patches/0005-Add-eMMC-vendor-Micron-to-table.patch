@@ -1,0 +1,30 @@
+From c0375ecea6f3731c0f65ff6abd2c194b90153b26 Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <michael.heimpold@i2se.com>
+Date: Tue, 18 Dec 2018 15:09:42 +0100
+Subject: [PATCH 5/9] Add eMMC vendor Micron to table
+
+Signed-off-by: Michael Heimpold <michael.heimpold@i2se.com>
+Cc: Michael Heimpold <mhei@heimpold.de>
+---
+ lsmmc.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/lsmmc.c b/lsmmc.c
+index 86713f7..4f687ac 100644
+--- a/lsmmc.c
++++ b/lsmmc.c
+@@ -194,6 +194,11 @@ struct ids_database database[] = {
+ 		.id = 0x11,
+ 		.manufacturer = "Toshiba",
+ 	},
++	{
++		.type = "mmc",
++		.id = 0x13,
++		.manufacturer = "Micron",
++	},
+ 	{
+ 		.type = "mmc",
+ 		.id = 0x15,
+-- 
+2.17.1
+
