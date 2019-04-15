@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libhttp-parser
-PKG_VERSION:=2.9.0
+PKG_VERSION:=2.9.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/nodejs/http-parser/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=ef26268c54c8084d17654ba2ed5140bffeffd2a040a895ffb22a6cca3f6c613f
+PKG_HASH:=5199500e352584852c95c13423edc5f0cb329297c81dd69c3c8f52a75496da08
 PKG_BUILD_DIR:=$(BUILD_DIR)/http-parser-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Ramanathan Sivagurunathan <ramzthecoder@gmail.com>, Hirokazu MORIKAWA <morikw2@gmail.com>
