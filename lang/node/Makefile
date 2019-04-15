@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
 PKG_VERSION:=v8.15.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=node-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://nodejs.org/dist/${PKG_VERSION}
 PKG_HASH:=6b6486a3f452624941f6e11dd5f878c298d43e9c21b5f43ca1721dc7ce25add1
