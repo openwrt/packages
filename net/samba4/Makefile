@@ -2,19 +2,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.9.5
+PKG_VERSION:=4.9.6
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=COPYING
 
-PKG_SOURCE_URL:=https://download.samba.org/pub/samba/stable/ \
-				https://ftp5.gwdg.de/pub/samba/stable/ \
+PKG_SOURCE_URL:=https://fossies.org/linux/misc/ \
+				ftp://mirrors.dotsrc.org/samba/ \
+				https://ftp.gwdg.de/pub/samba/stable/ \
 				https://ftp.yz.yamagata-u.ac.jp/pub/network/samba/ \
-				http://ftp.uni-bayreuth.de/netsoftware/samba/
+				http://ftp.uni-bayreuth.de/netsoftware/samba/ \
+				https://www.samba.org/ftp/samba/stable/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=078956d2d98e22011265afd4b7221efe4861067dcba4a031583b01f34d423700
+PKG_HASH:=c9205a651a83d69e200fec9dd65e9fa360f0c75ab3275b3dcb74e5cbaec60807
 
 # samba4=(asn1_compile) e2fsprogs=(compile_et) nfs-kernel-server=(rpcgen)
 PKG_BUILD_DEPENDS:=samba4/host e2fsprogs/host nfs-kernel-server/host 
