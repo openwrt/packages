@@ -1,0 +1,29 @@
+From: Rosen Penev <rosenp@gmail.com>
+To: linux-nfs@vger.kernel.org
+Subject: [PATCH] idmapd: Add missing libgen header
+Date: Sun, 14 Apr 2019 19:11:40 -0700
+Message-Id: <20190415021140.1388-1-rosenp@gmail.com>
+X-Mailer: git-send-email 2.17.1
+
+Otherwise compilation can fail with an implicit declaration of basename.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ utils/idmapd/idmapd.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/utils/idmapd/idmapd.c b/utils/idmapd/idmapd.c
+index 91c0253..62e37b8 100644
+--- a/utils/idmapd/idmapd.c
++++ b/utils/idmapd/idmapd.c
+@@ -59,6 +59,7 @@
+ #include <grp.h>
+ #include <limits.h>
+ #include <ctype.h>
++#include <libgen.h>
+ #include <nfsidmap.h>
+ 
+ #ifdef HAVE_CONFIG_H
+-- 
+2.17.1
+
