@@ -168,7 +168,7 @@ config zone
 ## HOW TO: TLS Over DNS
 Unbound can use TLS as a client or server. UCI supports Unbound as a forwarding client with TLS. Servers are more complex and need manual configuration. This may be desired for privacy against stealth tracking. Some public DNS servers seem to advertise help in this quest. If your looking for a better understanding, then some information can be found at [Cloudflare](https://www.cloudflare.com/) DNS [1.1.1.1](https://1.1.1.1/). The following is a generic example. You can mix providers by using complete server specificaiton to override the zones common port and certificate domain index.
 
-**NOTICE:** Unbound requires openssl-1.1.0 to verify host certificates. OpenWrt at present is configured with openssl-1.0.2. Connections will be over TLS, but theoretically, certificates may not be from a trusted source. See report [Unbound #658](https://www.nlnetlabs.nl/bugs-script/show_bug.cgi?id=658). When this is resolved, it will be recommended again to install `ca-bundle`, maintain it, and be sure to include the TLS certificate domain index with the host addresses.
+Update as of Unbound 1.9.1, all TLS functions work correctly with either OpenSSL 1.0.2 or 1.1.0. Please be sure to install `ca-bundle` package and use `opkg` to get updates regularly.
 
 **/etc/config/unbound**:
 ```
