@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NPM_NAME:=hid
 PKG_NAME:=node-$(PKG_NPM_NAME)
 PKG_VERSION:=0.7.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/node-hid/node-hid.git
@@ -43,7 +43,7 @@ endef
 
 CPU:=$(subst x86_64,x64,$(subst i386,ia32,$(ARCH)))
 
-EXTRA_CFLAGS+=-I$(STAGING_DIR)/usr/include/libusb-1.0
+EXTRA_CFLAGS+=$(FPIC) -I$(STAGING_DIR)/usr/include/libusb-1.0
 
 define Build/Compile
 	git init $(PKG_BUILD_DIR)
