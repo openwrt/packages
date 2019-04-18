@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntfs-3g
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_VERSION:=2017.3.23
 PKG_SOURCE:=$(PKG_NAME)_ntfsprogs-$(PKG_VERSION).tgz
@@ -66,6 +66,10 @@ config PACKAGE_NTFS-3G_USE_LIBFUSE
 	etc.) it makes sense to activate this option and save some kilobytes
 	of space.
 
+config PACKAGE_NTFS-3G_HAS_PROBE
+	bool "install the ntfs-3g.probe utility"
+	depends on PACKAGE_ntfs-3g
+	default y
 endef
 
 define Package/ntfs-3g-low
@@ -150,7 +154,8 @@ endef
 
 define Package/ntfs-3g/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ntfs-3g{,.probe} $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ntfs-3g $(1)/usr/bin/
+	$(if $(CONFIG_PACKAGE_NTFS-3G_HAS_PROBE),$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ntfs-3g.probe $(1)/usr/bin/,)
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libntfs-3g.so.* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/sbin
