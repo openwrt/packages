@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NPM_NAME:=serialport
 PKG_NAME:=node-$(PKG_NPM_NAME)
 PKG_VERSION:=6.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NPM_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=http://registry.npmjs.org/$(PKG_NPM_NAME)/-/
@@ -45,7 +45,7 @@ endef
 
 CPU:=$(subst x86_64,x64,$(subst i386,ia32,$(ARCH)))
 
-EXTRA_LDFLAGS="-L$(TOOLCHAIN_DIR)/lib/ -Wl,-rpath-link $(TOOLCHAIN_DIR)/lib/" \
+EXTRA_LDFLAGS="$(FPIC) -L$(TOOLCHAIN_DIR)/lib/ -Wl,-rpath-link $(TOOLCHAIN_DIR)/lib/" \
 
 define Build/Compile
 	$(MAKE_FLAGS) \
