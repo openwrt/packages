@@ -23,7 +23,7 @@ diff --git a/configure.ac b/configure.ac
 index cb95d86..a63354f 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1443,7 +1443,7 @@ PHP_ADD_SOURCES(main, main.c snprintf.c spprintf.c php_sprintf.c \
+@@ -1478,7 +1478,7 @@ PHP_ADD_SOURCES(main, main.c snprintf.c spprintf.c php_sprintf.c \
         php_ini.c SAPI.c rfc1867.c php_content_types.c strlcpy.c \
         strlcat.c explicit_bzero.c mergesort.c reentrancy.c php_variables.c php_ticks.c \
         network.c php_open_temporary_file.c \
@@ -166,7 +166,7 @@ diff --git a/win32/build/config.w32 b/win32/build/config.w32
 index 6cbb18b..71cf491 100644
 --- a/win32/build/config.w32
 +++ b/win32/build/config.w32
-@@ -244,7 +244,8 @@ ADD_FLAG("CFLAGS_BD_ZEND", "/D ZEND_ENABLE_STATIC_TSRMLS_CACHE=1");
+@@ -241,7 +241,8 @@ ADD_FLAG("CFLAGS_BD_ZEND", "/D ZEND_ENABLE_STATIC_TSRMLS_CACHE=1");
  ADD_SOURCES("main", "main.c snprintf.c spprintf.c getopt.c fopen_wrappers.c \
  	php_scandir.c php_ini.c SAPI.c rfc1867.c php_content_types.c strlcpy.c \
  	strlcat.c mergesort.c reentrancy.c php_variables.c php_ticks.c network.c \
