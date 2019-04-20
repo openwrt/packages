@@ -1,0 +1,189 @@
+--- a/lib/crypto/c_src/crypto.c
++++ b/lib/crypto/c_src/crypto.c
+@@ -41,6 +41,7 @@
+ #include <openssl/des.h>
+ #endif /* #ifndef OPENSSL_NO_DES */
+ /* #include <openssl/idea.h> This is not supported on the openssl OTP requires */
++#include <openssl/dh.h>
+ #include <openssl/dsa.h>
+ #include <openssl/rsa.h>
+ #include <openssl/aes.h>
+@@ -177,7 +178,7 @@
+ #endif
+ 
+ #if OPENSSL_VERSION_NUMBER >= PACKED_OPENSSL_VERSION_PLAIN(1,1,0)
+-# ifndef HAS_LIBRESSL
++# if !defined(OPENSSL_NO_CHACHA) || !defined(OPENSSL_NO_POLY1305)
+ #  define HAVE_CHACHA20_POLY1305
+ # endif
+ #endif
+@@ -197,8 +198,10 @@
+ /* If OPENSSL_NO_EC is set, there will be an error in ec.h included from engine.h
+    So if EC is disabled, you can't use Engine either....
+ */
++#if !defined(OPENSSL_NO_ENGINE)
+ # define HAS_ENGINE_SUPPORT
+ #endif
++#endif
+ 
+ 
+ #if defined(HAS_ENGINE_SUPPORT)
+@@ -910,7 +913,11 @@ static void engine_ctx_dtor(ErlNifEnv* env, struct engine_ctx* ctx) {
+ 
+ static int verify_lib_version(void)
+ {
++#if OPENSSL_VERSION_NUMBER < PACKED_OPENSSL_VERSION_PLAIN(1,1,0)
+     const unsigned long libv = SSLeay();
++#else
++    const unsigned long libv = OpenSSL_version_num();
++#endif
+     const unsigned long hdrv = OPENSSL_VERSION_NUMBER;
+ 
+ #   define MAJOR_VER(V) ((unsigned long)(V) >> (7*4))
+@@ -1166,12 +1173,14 @@ static int initialize(ErlNifEnv* env, ERL_NIF_TERM load_info)
+     funcp = &get_crypto_callbacks;
+ #endif
+ 
++#if OPENSSL_VERSION_NUMBER < PACKED_OPENSSL_VERSION_PLAIN(1,1,0)
+ #ifdef OPENSSL_THREADS
+     enif_system_info(&sys_info, sizeof(sys_info));
+     if (sys_info.scheduler_threads > 1) {
+ 	nlocks = CRYPTO_num_locks();
+     }
+     /* else no need for locks */
++#endif
+ #endif
+ 
+     ccb = (*funcp)(nlocks);
+@@ -1183,15 +1192,21 @@ static int initialize(ErlNifEnv* env, ERL_NIF_TERM load_info)
+ 
+     CRYPTO_set_mem_functions(ccb->crypto_alloc, ccb->crypto_realloc, ccb->crypto_free);
+ 
++#if OPENSSL_VERSION_NUMBER < PACKED_OPENSSL_VERSION_PLAIN(1,1,0)
+ #ifdef OPENSSL_THREADS
+     if (nlocks > 0) {
+ 	CRYPTO_set_locking_callback(ccb->locking_function);
++#if OPENSSL_VERSION_NUMBER < 0x10000000
+ 	CRYPTO_set_id_callback(ccb->id_function);
++#else
++	CRYPTO_THREADID_set_callback(ccb->id_function);
++#endif
+ 	CRYPTO_set_dynlock_create_callback(ccb->dyn_create_function);
+ 	CRYPTO_set_dynlock_lock_callback(ccb->dyn_lock_function);
+ 	CRYPTO_set_dynlock_destroy_callback(ccb->dyn_destroy_function);
+     }
+ #endif /* OPENSSL_THREADS */
++#endif
+ 
+     init_digest_types(env);
+     init_cipher_types(env);
+@@ -1391,7 +1406,11 @@ static ERL_NIF_TERM info_lib(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]
+ 
+     static const char libname[] = "OpenSSL";
+     unsigned name_sz = strlen(libname);
++#if OPENSSL_VERSION_NUMBER < PACKED_OPENSSL_VERSION_PLAIN(1,1,0)
+     const char* ver = SSLeay_version(SSLEAY_VERSION);
++#else
++    const char* ver = OpenSSL_version(OPENSSL_VERSION);
++#endif
+     unsigned ver_sz = strlen(ver);
+     ERL_NIF_TERM name_term, ver_term;
+     int ver_num = OPENSSL_VERSION_NUMBER;
+--- a/lib/crypto/c_src/crypto_callback.c
++++ b/lib/crypto/c_src/crypto_callback.c
+@@ -83,7 +83,7 @@ static void crypto_free(void* ptr CCB_FILE_LINE_ARGS)
+     enif_free(ptr);
+ }
+ 
+-
++#if OPENSSL_VERSION_NUMBER < 0x10100000
+ #ifdef OPENSSL_THREADS /* vvvvvvvvvvvvvvv OPENSSL_THREADS vvvvvvvvvvvvvvvv */
+ 
+ static ErlNifRWLock** lock_vec = NULL; /* Static locks used by openssl */
+@@ -115,10 +115,17 @@ static void locking_function(int mode, int n, const char *file, int line)
+     locking(mode, lock_vec[n]);
+ }
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10000000
+ static unsigned long id_function(void)
+ {
+     return (unsigned long) enif_thread_self();
+ }
++#else
++static void id_function(CRYPTO_THREADID *id)
++{
++    CRYPTO_THREADID_set_numeric(id, (unsigned long) enif_thread_self());
++}
++#endif
+ 
+ /* Dynamic locking, not used by current openssl version (0.9.8)
+  */
+@@ -136,6 +143,7 @@ static void dyn_destroy_function(struct CRYPTO_dynlock_value *ptr, const char *f
+ }
+ 
+ #endif /* ^^^^^^^^^^^^^^^^^^^^^^ OPENSSL_THREADS ^^^^^^^^^^^^^^^^^^^^^^ */
++#endif
+ 
+ DLLEXPORT struct crypto_callbacks* get_crypto_callbacks(int nlocks)
+ {
+@@ -146,7 +154,8 @@ DLLEXPORT struct crypto_callbacks* get_crypto_callbacks(int nlocks)
+ 	&crypto_alloc,
+ 	&crypto_realloc,
+ 	&crypto_free,
+-        
++
++#if OPENSSL_VERSION_NUMBER < 0x10100000
+ #ifdef OPENSSL_THREADS
+ 	&locking_function,
+ 	&id_function,
+@@ -154,9 +163,11 @@ DLLEXPORT struct crypto_callbacks* get_crypto_callbacks(int nlocks)
+ 	&dyn_lock_function,
+ 	&dyn_destroy_function
+ #endif /* OPENSSL_THREADS */
++#endif
+     };
+ 
+     if (!is_initialized) {
++#if OPENSSL_VERSION_NUMBER < 0x10100000
+ #ifdef OPENSSL_THREADS
+ 	if (nlocks > 0) {
+ 	    int i;
+@@ -169,6 +180,7 @@ DLLEXPORT struct crypto_callbacks* get_crypto_callbacks(int nlocks)
+ 		if (lock_vec[i]==NULL) return NULL;
+ 	    }
+ 	}
++#endif
+ #endif
+ 	is_initialized = 1;
+     }
+--- a/lib/crypto/c_src/crypto_callback.h
++++ b/lib/crypto/c_src/crypto_callback.h
+@@ -34,9 +34,15 @@ struct crypto_callbacks
+     void (*crypto_free)(void* ptr CCB_FILE_LINE_ARGS);
+ 
+     /* openssl callbacks */
++#if OPENSSL_VERSION_NUMBER < 0x10100000
+   #ifdef OPENSSL_THREADS
+     void (*locking_function)(int mode, int n, const char *file, int line);
++  #if OPENSSL_VERSION_NUMBER < 0x10000000
+     unsigned long (*id_function)(void);
++  #else
++    void (*id_function)(CRYPTO_THREADID *id);
++  #endif
++#endif
+     struct CRYPTO_dynlock_value* (*dyn_create_function)(const char *file,
+ 							int line);
+     void (*dyn_lock_function)(int mode, struct CRYPTO_dynlock_value* ptr,
+--- a/lib/crypto/c_src/otp_test_engine.c
++++ b/lib/crypto/c_src/otp_test_engine.c
+@@ -42,8 +42,10 @@
+ 	&& !defined(OPENSSL_NO_EC) \
+ 	&& !defined(OPENSSL_NO_ECDH) \
+ 	&& !defined(OPENSSL_NO_ECDSA)
++#if !defined(OPENSSL_NO_ENGINE)
+ # define HAVE_EC
+ #endif
++#endif
+ 
+ #if defined(HAVE_EC)
+ /* If OPENSSL_NO_EC is set, there will be an error in ec.h included from engine.h
