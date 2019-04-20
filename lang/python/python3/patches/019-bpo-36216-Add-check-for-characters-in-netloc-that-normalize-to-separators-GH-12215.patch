@@ -1,0 +1,173 @@
+From 8f5285ac12bd185202fdaac56fd19dfb858ec947 Mon Sep 17 00:00:00 2001
+From: Steve Dower <steve.dower@python.org>
+Date: Thu, 7 Mar 2019 08:09:56 -0800
+Subject: [PATCH 1/2] bpo-36216: Add check for characters in netloc that
+ normalize to separators (GH-12201)
+
+---
+ Doc/library/urllib.parse.rst                  | 18 +++++++++++++++
+ Lib/test/test_urlparse.py                     | 23 +++++++++++++++++++
+ Lib/urllib/parse.py                           | 17 ++++++++++++++
+ .../2019-03-06-09-38-40.bpo-36216.6q1m4a.rst  |  3 +++
+ 4 files changed, 61 insertions(+)
+ create mode 100644 Misc/NEWS.d/next/Security/2019-03-06-09-38-40.bpo-36216.6q1m4a.rst
+
+diff --git a/Doc/library/urllib.parse.rst b/Doc/library/urllib.parse.rst
+index d991254d5ca1..647af613a315 100644
+--- a/Doc/library/urllib.parse.rst
++++ b/Doc/library/urllib.parse.rst
+@@ -121,6 +121,11 @@ or on combining URL components into a URL string.
+    Unmatched square brackets in the :attr:`netloc` attribute will raise a
+    :exc:`ValueError`.
+ 
++   Characters in the :attr:`netloc` attribute that decompose under NFKC
++   normalization (as used by the IDNA encoding) into any of ``/``, ``?``,
++   ``#``, ``@``, or ``:`` will raise a :exc:`ValueError`. If the URL is
++   decomposed before parsing, no error will be raised.
++
+    .. versionchanged:: 3.2
+       Added IPv6 URL parsing capabilities.
+ 
+@@ -133,6 +138,10 @@ or on combining URL components into a URL string.
+       Out-of-range port numbers now raise :exc:`ValueError`, instead of
+       returning :const:`None`.
+ 
++   .. versionchanged:: 3.6.9
++      Characters that affect netloc parsing under NFKC normalization will
++      now raise :exc:`ValueError`.
++
+ 
+ .. function:: parse_qs(qs, keep_blank_values=False, strict_parsing=False, encoding='utf-8', errors='replace', max_num_fields=None)
+ 
+@@ -256,10 +265,19 @@ or on combining URL components into a URL string.
+    Unmatched square brackets in the :attr:`netloc` attribute will raise a
+    :exc:`ValueError`.
+ 
++   Characters in the :attr:`netloc` attribute that decompose under NFKC
++   normalization (as used by the IDNA encoding) into any of ``/``, ``?``,
++   ``#``, ``@``, or ``:`` will raise a :exc:`ValueError`. If the URL is
++   decomposed before parsing, no error will be raised.
++
+    .. versionchanged:: 3.6
+       Out-of-range port numbers now raise :exc:`ValueError`, instead of
+       returning :const:`None`.
+ 
++   .. versionchanged:: 3.6.9
++      Characters that affect netloc parsing under NFKC normalization will
++      now raise :exc:`ValueError`.
++
+ 
+ .. function:: urlunsplit(parts)
+ 
+diff --git a/Lib/test/test_urlparse.py b/Lib/test/test_urlparse.py
+index be50b47603aa..e6638aee2244 100644
+--- a/Lib/test/test_urlparse.py
++++ b/Lib/test/test_urlparse.py
+@@ -1,3 +1,5 @@
++import sys
++import unicodedata
+ import unittest
+ import urllib.parse
+ 
+@@ -984,6 +986,27 @@ def test_all(self):
+                 expected.append(name)
+         self.assertCountEqual(urllib.parse.__all__, expected)
+ 
++    def test_urlsplit_normalization(self):
++        # Certain characters should never occur in the netloc,
++        # including under normalization.
++        # Ensure that ALL of them are detected and cause an error
++        illegal_chars = '/:#?@'
++        hex_chars = {'{:04X}'.format(ord(c)) for c in illegal_chars}
++        denorm_chars = [
++            c for c in map(chr, range(128, sys.maxunicode))
++            if (hex_chars & set(unicodedata.decomposition(c).split()))
++            and c not in illegal_chars
++        ]
++        # Sanity check that we found at least one such character
++        self.assertIn('\u2100', denorm_chars)
++        self.assertIn('\uFF03', denorm_chars)
++
++        for scheme in ["http", "https", "ftp"]:
++            for c in denorm_chars:
++                url = "{}://netloc{}false.netloc/path".format(scheme, c)
++                with self.subTest(url=url, char='{:04X}'.format(ord(c))):
++                    with self.assertRaises(ValueError):
++                        urllib.parse.urlsplit(url)
+ 
+ class Utility_Tests(unittest.TestCase):
+     """Testcase to test the various utility functions in the urllib."""
+diff --git a/Lib/urllib/parse.py b/Lib/urllib/parse.py
+index 85e68c8b42c7..24a628915e53 100644
+--- a/Lib/urllib/parse.py
++++ b/Lib/urllib/parse.py
+@@ -391,6 +391,21 @@ def _splitnetloc(url, start=0):
+             delim = min(delim, wdelim)     # use earliest delim position
+     return url[start:delim], url[delim:]   # return (domain, rest)
+ 
++def _checknetloc(netloc):
++    if not netloc or netloc.isascii():
++        return
++    # looking for characters like \u2100 that expand to 'a/c'
++    # IDNA uses NFKC equivalence, so normalize for this check
++    import unicodedata
++    netloc2 = unicodedata.normalize('NFKC', netloc)
++    if netloc == netloc2:
++        return
++    _, _, netloc = netloc.rpartition('@') # anything to the left of '@' is okay
++    for c in '/?#@:':
++        if c in netloc2:
++            raise ValueError("netloc '" + netloc2 + "' contains invalid " +
++                             "characters under NFKC normalization")
++
+ def urlsplit(url, scheme='', allow_fragments=True):
+     """Parse a URL into 5 components:
+     <scheme>://<netloc>/<path>?<query>#<fragment>
+@@ -420,6 +435,7 @@ def urlsplit(url, scheme='', allow_fragments=True):
+                 url, fragment = url.split('#', 1)
+             if '?' in url:
+                 url, query = url.split('?', 1)
++            _checknetloc(netloc)
+             v = SplitResult(scheme, netloc, url, query, fragment)
+             _parse_cache[key] = v
+             return _coerce_result(v)
+@@ -443,6 +459,7 @@ def urlsplit(url, scheme='', allow_fragments=True):
+         url, fragment = url.split('#', 1)
+     if '?' in url:
+         url, query = url.split('?', 1)
++    _checknetloc(netloc)
+     v = SplitResult(scheme, netloc, url, query, fragment)
+     _parse_cache[key] = v
+     return _coerce_result(v)
+diff --git a/Misc/NEWS.d/next/Security/2019-03-06-09-38-40.bpo-36216.6q1m4a.rst b/Misc/NEWS.d/next/Security/2019-03-06-09-38-40.bpo-36216.6q1m4a.rst
+new file mode 100644
+index 000000000000..5546394157f9
+--- /dev/null
++++ b/Misc/NEWS.d/next/Security/2019-03-06-09-38-40.bpo-36216.6q1m4a.rst
+@@ -0,0 +1,3 @@
++Changes urlsplit() to raise ValueError when the URL contains characters that
++decompose under IDNA encoding (NFKC-normalization) into characters that
++affect how the URL is parsed.
+
+From 379c71551a3f005bbedccc3758568918612c1765 Mon Sep 17 00:00:00 2001
+From: Steve Dower <steve.dower@python.org>
+Date: Thu, 7 Mar 2019 08:28:39 -0800
+Subject: [PATCH 2/2] Replace isascii call with any() call
+
+---
+ Lib/urllib/parse.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Lib/urllib/parse.py b/Lib/urllib/parse.py
+index 24a628915e53..7b06f4d71d67 100644
+--- a/Lib/urllib/parse.py
++++ b/Lib/urllib/parse.py
+@@ -392,7 +392,7 @@ def _splitnetloc(url, start=0):
+     return url[start:delim], url[delim:]   # return (domain, rest)
+ 
+ def _checknetloc(netloc):
+-    if not netloc or netloc.isascii():
++    if not netloc or not any(ord(c) > 127 for c in netloc):
+         return
+     # looking for characters like \u2100 that expand to 'a/c'
+     # IDNA uses NFKC equivalence, so normalize for this check
