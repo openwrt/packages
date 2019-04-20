@@ -47,7 +47,7 @@ Subject: Add patch to remove build timestamps from generated binaries.
    *aix*)
 --- a/sapi/cgi/cgi_main.c
 +++ b/sapi/cgi/cgi_main.c
-@@ -2427,9 +2427,9 @@ consult the installation file that came
+@@ -2442,9 +2442,9 @@ consult the installation file that came
  								SG(request_info).no_headers = 1;
  							}
  #if ZEND_DEBUG
