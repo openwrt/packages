@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmicrohttpd
 PKG_VERSION:=0.9.62
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Alexander Couzens <lynxis@fe80.eu>
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING
@@ -42,7 +42,6 @@ $(call Package/libmicrohttpd/default)
   TITLE+= with SSL support
   VARIANT:=ssl
   DEPENDS:=+libgcrypt +libgnutls +libgpg-error
-  CONFLICTS:=libmicrohttpd-no-ssl
   PROVIDES:=libmicrohttpd
 endef
 
