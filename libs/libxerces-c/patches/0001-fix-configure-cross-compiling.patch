@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -194,7 +194,7 @@ AC_COMPILE_IFELSE(  [AC_LANG_PROGRAM([[#
+@@ -228,7 +228,7 @@ AC_COMPILE_IFELSE(  [AC_LANG_PROGRAM([[#
                      ]
                   )
  AC_MSG_CHECKING([for wcsrtombs])
@@ -9,7 +9,7 @@
  #include <string.h>]],
                                   [[
  mbstate_t st;
-@@ -216,7 +216,7 @@ else
+@@ -250,7 +250,7 @@ else
                      ]
                   )
  AC_MSG_CHECKING([for mbsrtowcs])
