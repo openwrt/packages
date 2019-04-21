@@ -11,15 +11,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=boost
-PKG_VERSION:=1.69.0
-PKG_SOURCE_VERSION:=1_69_0
-PKG_RELEASE:=3
+PKG_VERSION:=1.70.0
+PKG_SOURCE_VERSION:=1_70_0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_SOURCE_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)_$(PKG_SOURCE_VERSION)
-PKG_HASH:=8f32d4617390d1c2d16f26a27ab60d97807b35440d45891fa340fc2648b04406
+PKG_HASH:=430ae8354789de4fd19ee52f3b1f739e1fba576f0aded0897c3c2bc00fb38778
 PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 
@@ -38,7 +38,7 @@ define Package/boost/Default
 endef
 
 define Package/boost/description
-This package provides the Boost v1.69.0 libraries.
+This package provides the Boost v1.70.0 libraries.
 Boost is a set of free, peer-reviewed, portable C++ source libraries.
 
 -----------------------------------------------------------------------------
@@ -84,7 +84,7 @@ This package provides the following run-time libraries:
  - wave
 
 There are many more header-only libraries supported by Boost.
-See more at http://www.boost.org/doc/libs/1_69_0/
+See more at http://www.boost.org/doc/libs/1_70_0/
 endef
 
 PKG_BUILD_DEPENDS:=boost/host PACKAGE_python:python PACKAGE_python3:python3
@@ -374,7 +374,7 @@ TARGET_LDFLAGS += -pthread -lrt
 TARGET_CFLAGS += \
 	$(if $(CONFIG_SOFT_FLOAT),-DBOOST_NO_FENV_H) -fPIC
 
-EXTRA_CXXFLAGS += $(if $(CONFIG_GCC_VERSION_4_8),-std=gnu++11,-std=gnu++14)
+EXTRA_CXXFLAGS += $(if $(CONFIG_GCC_USE_VERSION_5),-std=gnu++14,-std=gnu++17)
 
 ifneq ($(findstring mips,$(ARCH)),)
     BOOST_ABI = o32
@@ -392,14 +392,14 @@ endif
 comma := ,
 
 define Build/Compile
-	$(info Selected Boost API $(BOOST_ABI) for architecture $(ARCH) and cpu $(CONFIG_CPU_TYPE) $(if $(CONFIG_CPU_SUBTYPE),and cpu subtype $(CONFIG_CPU_SUBTYPE),))
+	$(info Selected Boost API $(BOOST_ABI) for architecture $(ARCH) and cpu type $(CONFIG_CPU_TYPE) $(if $(CONFIG_CPU_SUBTYPE),and cpu subtype $(CONFIG_CPU_SUBTYPE),))
 	( cd $(PKG_BUILD_DIR) ; \
-		echo "using gcc : $(ARCH) : $(GNU_TARGET_NAME)-gcc : <compileflags>\"$(TARGET_CFLAGS)\" <cxxflags>\"$(TARGET_CXXFLAGS) $(EXTRA_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > \
+		echo "using gcc : $(GCC_VERSION) : $(GNU_TARGET_NAME)-gcc : <compileflags>\"$(TARGET_CFLAGS)\" <cxxflags>\"$(TARGET_CXXFLAGS) $(EXTRA_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > \
 			tools/build/src/user-config.jam ; \
 		b2 \
 			$(CONFIGURE_ARGS) \
 			--ignore-site-config \
-			--toolset=gcc-$(ARCH) abi=$(BOOST_ABI) \
+			--toolset=gcc abi=$(BOOST_ABI) \
 			--disable-long-double \
 			$(if $(CONFIG_boost-compile-visibility-global), visibility=global,) \
 			$(if $(CONFIG_boost-compile-visibility-protected), visibility=protected,) \
@@ -435,14 +435,14 @@ define Build/Compile
 				-sZLIB_LIBPATH=$(STAGING_DIR)/usr/lib) \
 			install ;\
 			$(if $(CONFIG_PACKAGE_boost-python), \
-				echo "using gcc : $(ARCH) : $(GNU_TARGET_NAME)-gcc : <compileflags>\"$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include/python$(BOOST_PYTHON_VER)/ \" <cxxflags>\"$(TARGET_CXXFLAGS) $(EXTRA_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > \
+				echo "using gcc : $(GCC_VERSION) : $(GNU_TARGET_NAME)-gcc : <compileflags>\"$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include/python$(BOOST_PYTHON_VER)/ \" <cxxflags>\"$(TARGET_CXXFLAGS) $(EXTRA_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > \
 					tools/build/src/user-config.jam ; \
 				echo "using python : $(BOOST_PYTHON_VER) : : $(STAGING_DIR)/usr/include/python$(BOOST_PYTHON_VER)/ : $(STAGING_DIR)/usr/lib/libpython$(BOOST_PYTHON_VER).so ;" >> \
 					tools/build/src/user-config.jam; \
 				b2 -a \
 					$(CONFIGURE_ARGS) \
 					--ignore-site-config \
-					--toolset=gcc-$(ARCH) abi=$(BOOST_ABI) \
+					--toolset=gcc abi=$(BOOST_ABI) \
 					--disable-long-double \
 					$(if $(CONFIG_boost-variant-release), variant=release,) \
 					$(if $(CONFIG_boost-variant-debug), variant=debug,) \
@@ -461,14 +461,14 @@ define Build/Compile
 				install ;\
 			,) \
 			$(if $(CONFIG_PACKAGE_boost-python3), \
-				echo "using gcc : $(ARCH) : $(GNU_TARGET_NAME)-gcc : <compileflags>\"$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include/python$(BOOST_PYTHON3_VER)/ \" <cxxflags>\"$(TARGET_CXXFLAGS) $(EXTRA_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > \
+				echo "using gcc : $(GCC_VERSION) : $(GNU_TARGET_NAME)-gcc : <compileflags>\"$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include/python$(BOOST_PYTHON3_VER)/ \" <cxxflags>\"$(TARGET_CXXFLAGS) $(EXTRA_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > \
 					tools/build/src/user-config.jam ; \
 				echo "using python : $(BOOST_PYTHON3_VER) : : $(STAGING_DIR)/usr/include/python$(BOOST_PYTHON3_VER)/ : $(STAGING_DIR)/usr/lib/libpython$(BOOST_PYTHON3_VER).so ;" >> \
 					tools/build/src/user-config.jam; \
 				b2 -a \
 					$(CONFIGURE_ARGS) \
 					--ignore-site-config \
-					--toolset=gcc-$(ARCH) abi=$(BOOST_ABI) \
+					--toolset=gcc abi=$(BOOST_ABI) \
 					--disable-long-double \
 					$(if $(CONFIG_boost-variant-release), variant=release,) \
 					$(if $(CONFIG_boost-variant-debug), variant=debug,) \
