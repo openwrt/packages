@@ -42,7 +42,6 @@ $(call Package/libmicrohttpd/default)
   TITLE+= with SSL support
   VARIANT:=ssl
   DEPENDS:=+libgcrypt +libgnutls +libgpg-error
-  CONFLICTS:=libmicrohttpd-no-ssl
   PROVIDES:=libmicrohttpd
 endef
 
