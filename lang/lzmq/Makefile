@@ -25,7 +25,7 @@ define Package/lzmq
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Lua ZeroMQ binding
-  URL:=https://github.com/moteus/lzmq/
+  URL:=https://github.com/zeromq/lzmq
   DEPENDS:= +lua +libzmq
 endef
 
