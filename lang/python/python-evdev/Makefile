@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=python-evdev
-PKG_VERSION:=1.1.2
+PKG_VERSION:=1.2.0
 PKG_RELEASE:=1
 
 PKG_LICENSE:=BSD-3-Clause
@@ -17,7 +17,7 @@ PKG_MAINTAINER:=Paulo Costa <me@paulo.costa.nom.br>, Alexandru Ardelean <ardelea
 
 PKG_SOURCE:=evdev-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/e/evdev
-PKG_HASH:=2dd67291be20e70643e8ef6f2381efc10e0c6e44a32abb3c1db74996ea3b0351
+PKG_HASH:=b03f5e1be5b4a5327494a981b831d251a142b09e8778eda1a8b53eba91100166
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-evdev-$(PKG_VERSION)
 
