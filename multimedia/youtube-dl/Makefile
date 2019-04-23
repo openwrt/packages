@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=youtube-dl
-PKG_VERSION:=2019.01.30.1
+PKG_VERSION:=2019.04.24
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/rg3/youtube-dl/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=6ce95ef3d290c4254fbdc50d5514a1259479486e183b63dee9a4163244035d97
+PKG_SOURCE_URL:=https://codeload.github.com/ytdl-org/youtube-dl/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=f39fbcb57a012a7a55b11666603e6d6f87f520b926932c706af7946dbe6f84a7
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_LICENSE:=Unlicense
@@ -29,7 +29,7 @@ define Package/youtube-dl
   CATEGORY:=Multimedia
   TITLE:=utility to download videos from YouTube.com
   DEPENDS:=+python-openssl +python-email +python-xml +python-codecs +python-ctypes +ca-certificates
-  URL:=https://youtube-dl.org
+  URL:=https://yt-dl.org/
 endef
 
 define Package/youtube-dl/description
