@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-hyperlink
-PKG_VERSION:=18.0.0
+PKG_VERSION:=19.0.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=hyperlink-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/h/hyperlink
-PKG_HASH:=f01b4ff744f14bc5d0a22a6b9f1525ab7d6312cb0ff967f59414bbac52f0a306
+PKG_HASH:=4288e34705da077fada1111a24a0aa08bb1e76699c9ce49876af722441845654
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-hyperlink-$(PKG_VERSION)
 
