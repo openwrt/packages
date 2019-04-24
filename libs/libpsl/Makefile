@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2007-2018 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -9,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpsl
 PKG_VERSION:=0.20.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -24,13 +22,14 @@ PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/libpsl
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=C library to handle the Public Suffix List
   URL:=https://github.com/rockdaboot/libpsl
-  DEPENDS:=+libidn2 +libunistring
+  DEPENDS:=+libidn2 +libunistring $(INTL_DEPENDS)
 endef
 
 define Package/libpsl/description

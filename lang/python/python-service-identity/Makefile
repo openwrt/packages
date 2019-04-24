@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-service-identity
-PKG_VERSION:=17.0.0
-PKG_RELEASE:=2
+PKG_VERSION:=18.1.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=service_identity-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/de/2a/cab6e30be82c8fcd2339ef618036720eda954cf05daef514e386661c9221
-PKG_HASH:=4001fbb3da19e0df22c47a06d29681a398473af4aa9d745eca525b3b2c2302ab
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/s/service_identity
+PKG_HASH:=0858a54aabc5b459d1aafa8a518ed2081a285087f349fe3e55197989232e2e2d
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-service-identity-$(PKG_VERSION)
 
@@ -31,30 +31,30 @@ define Package/python-service-identity/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=https://github.com/pyca/service_identity
+  TITLE:=Service identity verification
+  URL:=https://service-identity.readthedocs.io/
 endef
 
 define Package/python-service-identity
 $(call Package/python-service-identity/Default)
-  TITLE:=python-service-identity
   DEPENDS:= \
       +PACKAGE_python-service-identity:python-light \
       +PACKAGE_python-service-identity:python-attrs \
+      +PACKAGE_python-service-identity:python-cryptography \
+      +PACKAGE_python-service-identity:python-ipaddress \
       +PACKAGE_python-service-identity:python-pyasn1 \
-      +PACKAGE_python-service-identity:python-pyasn1-modules \
-      +PACKAGE_python-service-identity:python-pyopenssl
+      +PACKAGE_python-service-identity:python-pyasn1-modules
   VARIANT:=python
 endef
 
 define Package/python3-service-identity
 $(call Package/python-service-identity/Default)
-  TITLE:=python3-service-identity
   DEPENDS:= \
       +PACKAGE_python3-service-identity:python3-light \
       +PACKAGE_python3-service-identity:python3-attrs \
+      +PACKAGE_python3-service-identity:python3-cryptography \
       +PACKAGE_python3-service-identity:python3-pyasn1 \
-      +PACKAGE_python3-service-identity:python3-pyasn1-modules \
-      +PACKAGE_python3-service-identity:python3-pyopenssl
+      +PACKAGE_python3-service-identity:python3-pyasn1-modules
   VARIANT:=python3
 endef
 

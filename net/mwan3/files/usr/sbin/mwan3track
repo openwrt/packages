@@ -43,6 +43,12 @@ validate_track_method() {
 				return 1
 			}
 			;;
+		nping-*)
+			which nping 1>/dev/null 2>&1 || {
+				$LOG warn "Missing nping. Please install nping package."
+				return 1
+			}
+			;;
 		*)
 			$LOG warn "Unsupported tracking method: $track_method"
 			return 2
@@ -106,8 +112,8 @@ main() {
 	local loss=0
 	local latency=0
 
-	if [ "$STATUS" = "unknown" ]; then
-		echo "unknown" > /var/run/mwan3track/$1/STATUS
+	if [ "$STATUS" = "offline" ]; then
+		echo "offline" > /var/run/mwan3track/$1/STATUS
 		echo "0" > /var/run/mwan3track/$1/UPTIME
 		echo "$(get_uptime)" > /var/run/mwan3track/$1/DOWNTIME
 		score=0
@@ -145,6 +151,18 @@ main() {
 					httping)
 						httping -y $SRC_IP -c $count -t $timeout -q $track_ip &> /dev/null
 						result=$?
+					;;
+					nping-tcp)
+						result=$(nping -e $DEVICE -c $count $track_ip --tcp | grep Lost | awk '{print $12}')
+					;;
+					nping-udp)
+						result=$(nping -e $DEVICE -c $count $track_ip --udp | grep Lost | awk '{print $12}')
+					;;
+					nping-icmp)
+						result=$(nping -e $DEVICE -c $count $track_ip --icmp | grep Lost | awk '{print $12}')
+					;;
+					nping-arp)
+						result=$(nping -e $DEVICE -c $count $track_ip --arp | grep Lost | awk '{print $12}')
 					;;
 				esac
 				if [ $check_quality -eq 0 ]; then
@@ -203,11 +221,7 @@ main() {
 
 			if [ $score -eq $up ]; then
 				echo "offline" > /var/run/mwan3track/$1/STATUS
-				echo "0" > /var/run/mwan3track/$1/UPTIME
-				echo "$(get_uptime)" > /var/run/mwan3track/$1/DOWNTIME
-				$LOG notice "Interface $1 ($2) is offline"
 				env -i ACTION=ifdown INTERFACE=$1 DEVICE=$2 /sbin/hotplug-call iface
-				env -i ACTION="disconnected" INTERFACE="$1" DEVICE="$2" /sbin/hotplug-call iface
 				score=0
 			fi
 		else

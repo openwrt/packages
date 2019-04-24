@@ -26,7 +26,7 @@ require_ignore=%w{drb/invokemethod16 foo rubygems/defaults/operating_system win3
                   builder/xchar json/pure simplecov win32/sspi rdoc/markdown/literals_1_8 enumerator win32/resolv rbtree
                   nqxml/streamingparser nqxml/treeparser xmlscan/parser xmlscan/scanner xmltreebuilder xml/parser xmlparser xml/encoding-ja xmlencoding-ja
                   iconv uconv win32ole gettext/po_parser gettext/mo libxml psych.jar psych_jars jar-dependencies thread minitest/proveit
-		bundler pry
+		bundler pry bcrypt net/http/pipeline capistrano/version rubygems/builder rubygems/format diff/lcs graphviz
 	}
 
 builtin_enc=[

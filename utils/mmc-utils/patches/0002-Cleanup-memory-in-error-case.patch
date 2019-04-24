@@ -1,0 +1,33 @@
+From 9214f2a4002bafef73c9593464ab3841ba7bac12 Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <michael.heimpold@i2se.com>
+Date: Tue, 18 Dec 2018 14:49:37 +0100
+Subject: [PATCH 2/9] Cleanup memory in error case
+
+In case that we leave due to malformed string,
+free the allocated memory before returning.
+
+Signed-off-by: Michael Heimpold <michael.heimpold@i2se.com>
+Cc: Michael Heimpold <mhei@heimpold.de>
+---
+ lsmmc.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/lsmmc.c b/lsmmc.c
+index e514c83..a53bc57 100644
+--- a/lsmmc.c
++++ b/lsmmc.c
+@@ -378,8 +378,10 @@ char *to_binstr(char *hexstr)
+ 		return NULL;
+ 
+ 	while (hexstr && *hexstr != '\0') {
+-		if (!isxdigit(*hexstr))
++		if (!isxdigit(*hexstr)) {
++			free(binstr);
+ 			return NULL;
++		}
+ 
+ 		if (isdigit(*hexstr))
+ 			strcat(binstr, bindigits[*hexstr - '0']);
+-- 
+2.17.1
+

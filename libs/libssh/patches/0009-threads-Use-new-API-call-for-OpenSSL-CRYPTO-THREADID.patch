@@ -1,0 +1,83 @@
+From a8523d83c242c6f71dbf69fab0ca91d768e78f05 Mon Sep 17 00:00:00 2001
+From: Andreas Schneider <asn@cryptomilk.org>
+Date: Sun, 6 Nov 2016 12:07:32 +0100
+Subject: [PATCH] threads: Use new API call for OpenSSL CRYPTO THREADID
+
+BUG: https://red.libssh.org/issues/222
+
+Signed-off-by: Andreas Schneider <asn@cryptomilk.org>
+---
+ ConfigureChecks.cmake |  4 ++++
+ config.h.cmake        |  3 +++
+ src/threads.c         | 19 +++++++++++++++++--
+ 3 files changed, 24 insertions(+), 2 deletions(-)
+
+diff --git a/ConfigureChecks.cmake b/ConfigureChecks.cmake
+index 0a53c5b1..43179d8f 100644
+--- a/ConfigureChecks.cmake
++++ b/ConfigureChecks.cmake
+@@ -95,6 +95,10 @@ if (OPENSSL_FOUND)
+     set(CMAKE_REQUIRED_INCLUDES ${OPENSSL_INCLUDE_DIR})
+     set(CMAKE_REQUIRED_LIBRARIES ${OPENSSL_CRYPTO_LIBRARY})
+     check_function_exists(CRYPTO_ctr128_encrypt HAVE_OPENSSL_CRYPTO_CTR128_ENCRYPT)
++
++    set(CMAKE_REQUIRED_INCLUDES ${OPENSSL_INCLUDE_DIR})
++    set(CMAKE_REQUIRED_LIBRARIES ${OPENSSL_CRYPTO_LIBRARY})
++    check_function_exists(CRYPTO_THREADID_set_callback HAVE_OPENSSL_CRYPTO_THREADID_SET_CALLBACK)
+ endif()
+ 
+ if (CMAKE_HAVE_PTHREAD_H)
+diff --git a/config.h.cmake b/config.h.cmake
+index 3e7f7939..b87fea5c 100644
+--- a/config.h.cmake
++++ b/config.h.cmake
+@@ -79,6 +79,9 @@
+ /* Define to 1 if you have the `CRYPTO_ctr128_encrypt' function. */
+ #cmakedefine HAVE_OPENSSL_CRYPTO_CTR128_ENCRYPT 1
+ 
++/* Define to 1 if you have the `CRYPTO_THREADID_set_callback' function. */
++#cmakedefine HAVE_OPENSSL_CRYPTO_THREADID_SET_CALLBACK 1
++
+ /* Define to 1 if you have the `snprintf' function. */
+ #cmakedefine HAVE_SNPRINTF 1
+ 
+diff --git a/src/threads.c b/src/threads.c
+index 7f3a304e..062c3b84 100644
+--- a/src/threads.c
++++ b/src/threads.c
+@@ -116,6 +116,15 @@ static void libcrypto_lock_callback(int mode, int i, const char *file, int line)
+ 	}
+ }
+ 
++#ifdef HAVE_OPENSSL_CRYPTO_THREADID_SET_CALLBACK
++static void libcrypto_THREADID_callback(CRYPTO_THREADID *id)
++{
++    unsigned long thread_id = (*user_callbacks->thread_id)();
++
++    CRYPTO_THREADID_set_numeric(id, thread_id);
++}
++#endif /* HAVE_OPENSSL_CRYPTO_THREADID_SET_CALLBACK */
++
+ static int libcrypto_thread_init(void){
+ 	int n=CRYPTO_num_locks();
+ 	int i;
+@@ -127,8 +136,14 @@ static int libcrypto_thread_init(void){
+ 	for (i=0;i<n;++i){
+ 		user_callbacks->mutex_init(&libcrypto_mutexes[i]);
+ 	}
+-  CRYPTO_set_id_callback(user_callbacks->thread_id);
+-	CRYPTO_set_locking_callback(libcrypto_lock_callback);
++
++#ifdef HAVE_OPENSSL_CRYPTO_THREADID_SET_CALLBACK
++    CRYPTO_THREADID_set_callback(libcrypto_THREADID_callback);
++#else
++    CRYPTO_set_id_callback(user_callbacks->thread_id);
++#endif
++
++    CRYPTO_set_locking_callback(libcrypto_lock_callback);
+ 
+ 	return SSH_OK;
+ }
+-- 
+2.19.1
+

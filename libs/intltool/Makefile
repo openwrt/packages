@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,9 +6,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=intltool
-PKG_LIBVER:=0.51
-PKG_VERSION:=$(PKG_LIBVER).0
-PKG_RELEASE:=1
+PKG_VERSION:=0.51.0
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://launchpad.net/intltool/trunk/$(PKG_VERSION)/+download

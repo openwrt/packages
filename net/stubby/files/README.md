@@ -1,3 +1,4 @@
+
 # Stubby for OpenWRT
 
 ## Stubby Description
@@ -86,7 +87,7 @@ command line:
 
     uci add_list dhcp.@dnsmasq[-1].server='127.0.0.1#5453'
     uci dhcp.@dnsmasq[-1].noresolv=1
-    uci commit
+    uci commit && reload_config
 
 The same outcome can be achieved in the LUCI web interface as follows:
 
@@ -114,7 +115,7 @@ loopback address for both the `wan` and `wan6` interfaces in the
     uci set network.wan.dns='127.0.0.1'
     uci set network.wan6.peerdns='0'
     uci set network.wan6.dns='0::1'
-    uci commit
+    uci commit && reload_config
 
 The same outcome can also be achieved using the LUCI web interface as follows:
 
@@ -156,7 +157,7 @@ configuration option `dnssec_return_status` to `'1'` in `/etc/config/stubby`,
 which can be done by editing the file directly or by executing the commands:
 
     uci set stubby.global.dnssec_return_status=1
-    uci commit
+    uci commit && reload_config
     
 With stubby performing DNSSEC validation, dnsmasq needs to be configured to
 proxy the DNSSEC data to clients. This requires setting the option `proxydnssec`
@@ -164,7 +165,7 @@ to 1 in the dnsmasq configuration in `/etc/config/dhcp`. That can be achieved by
 the following commands:
 
     uci set dhcp.@dnsmasq[-1].proxydnssec=1
-    uci commit
+    uci commit && reload_config
 
 #### DNSSEC by dnsmasq
 
@@ -176,7 +177,7 @@ commands:
 
     uci set dhcp.@dnsmasq[-1].dnssec=1
     uci set dhcp.@dnsmasq[-1].dnsseccheckunsigned=1
-    uci commit
+    uci commit && reload_config
 
 The same options can be set in the LUCI web interface as follows:
 
@@ -306,6 +307,13 @@ This option specifies the location for storing stubby runtime data. In
 particular, if DNSSEC is turned on, stubby will store its automatically
 retrieved trust anchor data here. The default value is `'/var/lib/stubby'`.
 
+#### `option trust_anchors_backoff_time`
+
+When Zero configuration DNSSEC failed, because of network unavailability or
+failure to write to the appdata directory, stubby will backoff trying to refetch
+the DNSSEC trust-anchor for a specified amount of time expressed in milliseconds
+(which defaults to two and a half seconds).
+
 #### `option dnssec_trust_anchors`
 
 This option sets the location of the file containing the trust anchor data used
@@ -380,7 +388,7 @@ the supplied server certificate
 #### `list spki`
 
 This list specifies the SPKI pinset which is verified against the keys in the
-server cerrtificate. The values takes the form `'<digest type>/value>'`, where
+server cerrtificate. The value takes the form `'<digest type>/value>'`, where
 the `digest type` is the hashing algorithm used, and the value is the Base64
 encoded hash of the public key. At present, only `sha256` is
 supported for the digest type.

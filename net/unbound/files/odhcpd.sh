@@ -29,14 +29,6 @@
 ##############################################################################
 
 odhcpd_zonedata() {
-  local longconf dateconf
-  local dns_ls_add=$UB_VARDIR/dhcp_dns.add
-  local dns_ls_del=$UB_VARDIR/dhcp_dns.del
-  local dhcp_ls_new=$UB_VARDIR/dhcp_lease.new
-  local dhcp_ls_old=$UB_VARDIR/dhcp_lease.old
-  local dhcp_ls_add=$UB_VARDIR/dhcp_lease.add
-  local dhcp_ls_del=$UB_VARDIR/dhcp_lease.del
-
   local dhcp_link=$( uci_get unbound.@unbound[0].dhcp_link )
   local dhcp4_slaac6=$( uci_get unbound.@unbound[0].dhcp4_slaac6 )
   local dhcp_domain=$( uci_get unbound.@unbound[0].domain )
@@ -45,52 +37,68 @@ odhcpd_zonedata() {
 
   if [ -f "$UB_TOTAL_CONF" -a -f "$dhcp_origin" \
        -a "$dhcp_link" = "odhcpd" -a -n "$dhcp_domain" ] ; then
+    local longconf dateconf
+    local dns_ls_add=$UB_VARDIR/dhcp_dns.add
+    local dns_ls_del=$UB_VARDIR/dhcp_dns.del
+    local dns_ls_new=$UB_VARDIR/dhcp_dns.new
+    local dns_ls_old=$UB_VARDIR/dhcp_dns.old
+    local dhcp_ls_new=$UB_VARDIR/dhcp_lease.new
+
     # Capture the lease file which could be changing often
     sort $dhcp_origin > $dhcp_ls_new
 
 
-    if [ ! -f $UB_DHCP_CONF -o ! -f $dhcp_ls_old ] ; then
-      longconf=2
+    if [ ! -f $UB_DHCP_CONF -o ! -f $dns_ls_old ] ; then
+      # no old files laying around
+      longconf=freshstart
 
     else
+      # incremental at high load or full refresh about each 5 minutes
       dateconf=$(( $( date +%s ) - $( date -r $UB_DHCP_CONF +%s ) ))
 
 
-      if [ $dateconf > 150 ] ; then
-        longconf=1
+      if [ $dateconf -gt 300 ] ; then
+        longconf=longtime
       else
-        longconf=0
+        longconf=increment
       fi
     fi
 
 
-    if [ $longconf -gt 0 ] ; then
-      # Go through the messy business of coding up A, AAAA, and PTR records
-      # This static conf will be available if Unbound restarts asynchronously
-      awk -v hostfile=$UB_DHCP_CONF -v domain=$dhcp_domain \
-          -v bslaac=$dhcp4_slaac6 -v bisolt=0 -v bconf=1 \
+    case $longconf in
+    freshstart)
+      awk -v conffile=$UB_DHCP_CONF -v pipefile=$dns_ls_new \
+          -v domain=$dhcp_domain -v bslaac=$dhcp4_slaac6 \
+          -v bisolt=0 -v bconf=1 \
           -f /usr/lib/unbound/odhcpd.awk $dhcp_ls_new
-    fi
 
+      cp $dns_ls_new $dns_ls_add
+      cp $dns_ls_new $dns_ls_old
+      ;;
 
-    if [ $longconf -lt 2 ] ; then
-      # Deleting and adding all records into Unbound can be a burden in a
-      # high density environment. Use unbound-control incrementally.
-      sort $dhcp_ls_old $dhcp_ls_new $dhcp_ls_new | uniq -u > $dhcp_ls_del
-      awk -v hostfile=$dns_ls_del -v domain=$dhcp_domain \
-          -v bslaac=$dhcp4_slaac6 -v bisolt=0 -v bconf=0 \
-          -f /usr/lib/unbound/odhcpd.awk $dhcp_ls_del
-
-      sort $dhcp_ls_new $dhcp_ls_old $dhcp_ls_old | uniq -u > $dhcp_ls_add
-      awk -v hostfile=$dns_ls_add -v domain=$dhcp_domain \
-          -v bslaac=$dhcp4_slaac6 -v bisolt=0 -v bconf=0 \
-          -f /usr/lib/unbound/odhcpd.awk $dhcp_ls_add
-
-    else
-      awk -v hostfile=$dns_ls_add -v domain=$dhcp_domain \
-          -v bslaac=$dhcp4_slaac6 -v bisolt=0 -v bconf=0 \
+    longtime)
+      awk -v conffile=$UB_DHCP_CONF -v pipefile=$dns_ls_new \
+          -v domain=$dhcp_domain -v bslaac=$dhcp4_slaac6 \
+          -v bisolt=0 -v bconf=1 \
           -f /usr/lib/unbound/odhcpd.awk $dhcp_ls_new
-    fi
+
+      awk '{ print $1 }' $dns_ls_old | sort | uniq > $dns_ls_del
+      cp $dns_ls_new $dns_ls_add
+      cp $dns_ls_new $dns_ls_old
+      ;;
+
+    *)
+      # incremental add and prepare the old list for delete later
+      # unbound-control can be slow so high DHCP rates cannot run a full list
+      awk -v conffile=$UB_DHCP_CONF -v pipefile=$dns_ls_new \
+          -v domain=$dhcp_domain -v bslaac=$dhcp4_slaac6 \
+          -v bisolt=0 -v bconf=0 \
+          -f /usr/lib/unbound/odhcpd.awk $dhcp_ls_new
+
+      sort $dns_ls_new $dns_ls_old $dns_ls_old | uniq -u > $dns_ls_add
+      sort $dns_ls_new $dns_ls_old | uniq > $dns_ls_old
+      ;;
+    esac
 
 
     if [ -f "$dns_ls_del" ] ; then
@@ -104,8 +112,7 @@ odhcpd_zonedata() {
 
 
     # prepare next round
-    mv $dhcp_ls_new $dhcp_ls_old
-    rm -f $dns_ls_del $dns_ls_add $dhcp_ls_del $dhcp_ls_add
+    rm -f $dns_ls_new $dns_ls_del $dns_ls_add $dhcp_ls_new
   fi
 }
 

@@ -1,6 +1,5 @@
-diff -rupN seafile-server-5.1.1.orig/tools/seafile-admin seafile-server-5.1.1/tools/seafile-admin
---- seafile-server-5.1.1.orig/tools/seafile-admin	2016-04-19 15:44:33.000000000 +0200
-+++ seafile-server-5.1.1/tools/seafile-admin	2016-04-26 10:55:11.826798430 +0200
+--- a/tools/seafile-admin
++++ b/tools/seafile-admin
 @@ -449,9 +449,12 @@ workers = 3
  
  # Logging

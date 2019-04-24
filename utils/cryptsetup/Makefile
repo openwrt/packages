@@ -8,63 +8,42 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cryptsetup
-PKG_VERSION:=2.0.4
+PKG_VERSION:=2.1.0
 PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=@KERNEL/linux/utils/cryptsetup/v2.1
+PKG_HASH:=a3eeb2741f8f3376d16585191f3c60e067dd987e096c3c4b073fab7748b1c897
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+
+PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0+ LGPL-2.1+
 PKG_LICENSE_FILES:=COPYING COPYING.LGPL
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@KERNEL/linux/utils/cryptsetup/v2.0
-PKG_HASH:=9d3a3c7033293e0c97f0ad0501fd5b4d4913ae497cbf70cca06633ccc54b5734
-PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
-
 include $(INCLUDE_DIR)/package.mk
 
-TARGET_LDFLAGS+=-Wl,-rpath-link=$(STAGING_DIR)/usr/lib
-
-define Package/cryptsetup/Default
+define Package/cryptsetup
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Encryption
   TITLE:=Cryptsetup
-  DEPENDS:=+libblkid +libuuid +libpopt +lvm2 +libdevmapper +libjson-c +@KERNEL_DIRECT_IO
+  DEPENDS:=+libblkid +libuuid +libpopt +lvm2 +libdevmapper +libjson-c +@KERNEL_DIRECT_IO +kmod-crypto-user
   URL:=https://gitlab.com/cryptsetup/cryptsetup/
 endef
 
-define Package/cryptsetup
-$(call Package/cryptsetup/Default)
-  DEPENDS+=+libgcrypt
-  VARIANT:=gcrypt
-endef
-
-define Package/cryptsetup-openssl
-$(call Package/cryptsetup/Default)
-  TITLE+= (with openssl support)
-  DEPENDS+=+libopenssl
-  VARIANT:=openssl
-endef
-
-define Package/cryptsetup/Default/description
-	Cryptsetup-luks
-endef
-
 define Package/cryptsetup/description
-$(call Package/cryptsetup/Default/description)
-linked against libgcrypt
+  Cryptsetup is utility used to conveniently setup disk encryption based on DMCrypt kernel module.
 endef
 
-
-define Package/cryptsetup-openssl/description
-$(call Package/cryptsetup/Default/description)
-linked against openssl
-endef
-
-ifeq ($(BUILD_VARIANT),openssl)
-CONFIGURE_ARGS+= \
-        --with-crypto_backend=openssl
-endif
+CONFIGURE_ARGS += \
+	--disable-cryptsetup-reencrypt \
+	--disable-integritysetup \
+	--disable-selinux \
+	--disable-rpath \
+	--disable-veritysetup \
+	--disable-udev \
+	--with-default-luks-format=LUKS2 \
+	--with-crypto_backend=kernel
 
 define Package/cryptsetup/install
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -73,7 +52,4 @@ define Package/cryptsetup/install
 	$(CP) $(PKG_BUILD_DIR)/.libs/libcryptsetup.so* $(1)/usr/lib
 endef
 
-Package/cryptsetup-openssl/install = $(Package/cryptsetup/install)
-
 $(eval $(call BuildPackage,cryptsetup))
-$(eval $(call BuildPackage,cryptsetup-openssl))

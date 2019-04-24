@@ -1,0 +1,61 @@
+From 115a4583deb9ae11adbc419ea87c990d0b8572fe Mon Sep 17 00:00:00 2001
+From: Joffrey Darcq <j-off@live.fr>
+Date: Sat, 28 Apr 2018 22:27:28 +0200
+Subject: [PATCH 1/2] fix django version 1.11
+
+---
+ tools/seafile-admin | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/tools/seafile-admin b/tools/seafile-admin
+index 5e3658b..38e7288 100755
+--- a/tools/seafile-admin
++++ b/tools/seafile-admin
+@@ -518,10 +518,10 @@ def init_seahub():
+ 
+ 
+ def check_django_version():
+-    '''Requires django 1.8'''
++    '''Requires django 1.11'''
+     import django
+-    if django.VERSION[0] != 1 or django.VERSION[1] != 8:
+-        error('Django 1.8 is required')
++    if django.VERSION[0] != 1 or django.VERSION[1] != 11:
++        error('Django 1.11 is required')
+     del django
+ 
+ 
+
+From bf69ff1cf1080081eae5d8115842c26468746736 Mon Sep 17 00:00:00 2001
+From: Joffrey Darcq <j-off@live.fr>
+Date: Sun, 3 Jun 2018 15:51:54 +0200
+Subject: [PATCH 2/2] fix django version 1.11
+
+---
+ tools/seafile-admin | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/tools/seafile-admin b/tools/seafile-admin
+index 38e7288..c16aab6 100755
+--- a/tools/seafile-admin
++++ b/tools/seafile-admin
+@@ -499,8 +499,8 @@ def init_seahub():
+     # create seahub_settings.py
+     create_seahub_settings_py()
+ 
+-    argv = [PYTHON, 'manage.py', 'syncdb']
+-    # Set proper PYTHONPATH before run django syncdb command
++    argv = [PYTHON, 'manage.py', 'migrate']
++    # Set proper PYTHONPATH before run django migrate command
+     env = get_seahub_env()
+ 
+     print
+@@ -509,7 +509,7 @@ def init_seahub():
+     print
+ 
+     if run_argv(argv, cwd=seahub_dir, env=env) != 0:
+-        error('Seahub syncdb failed')
++        error('Seahub migrate failed')
+ 
+     info('done')
+ 

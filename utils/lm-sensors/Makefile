@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lm-sensors
-PKG_VERSION:=3.3.5
-PKG_RELEASE:=4
+PKG_VERSION:=3.5.0
+PKG_RELEASE:=2
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/groeck/lm-sensors.git
-PKG_SOURCE_VERSION:=f8cdcc35bff0785aecf49d9a8484a71ce3ebee4f
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=892e9e2eed78e27fb7a08e8ce78b1164a3d101ba79a9e04f1c1273940d48cf17
+PKG_VERSION_SUBST=$(subst .,-,$(PKG_VERSION))
+PKG_SOURCE_URL:=https://codeload.github.com/lm-sensors/lm-sensors/tar.gz/V$(PKG_VERSION_SUBST)?
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_HASH:=f671c1d63a4cd8581b3a4a775fd7864a740b15ad046fe92038bcff5c5134d7e0
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION_SUBST)
+
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=GPL-2.0+ LGPL-2.1+
 
@@ -26,7 +26,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/lm-sensors/Default
   DEPENDS:=+sysfsutils
-  URL:=http://www.lm-sensors.org/
+  URL:=https://hwmon.wiki.kernel.org/lm_sensors
 endef
 
 define Package/lm-sensors
@@ -50,6 +50,7 @@ define Package/libsensors
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=libsensors
+  ABI_VERSION:=5
 endef
 
 define Package/lm-sensors/description

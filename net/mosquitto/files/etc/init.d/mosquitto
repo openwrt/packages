@@ -82,7 +82,7 @@ convert_mosq_general() {
 	append_if "$1" max_queued_bytes
 	append_if "$1" max_queued_messages
 	append_if "$1" message_size_limit
-	append_if "$1" passwd_file
+	append_if "$1" password_file
 	append_if "$1" pid_file
 	append_if "$1" psk_file
 	append_optional_bool "$1" queue_qos0_messages
@@ -91,6 +91,7 @@ convert_mosq_general() {
 	append_if "$1" sys_interval
 	append_if "$1" upgrade_outgoing_qos
 	append_if "$1" user
+	append_optional_bool "$1" per_listener_settings
 }
 
 convert_persistence() {
@@ -144,6 +145,10 @@ add_listener() {
     append_optional_bool "$1" use_identity_as_username
     append_optional_bool "$1" use_subject_as_username
     append_if "$1" psk_hint
+    append_if "$1" auth_plugin
+
+    # Careful, this relies on internal behaviour of the cfg_load functions!
+    set | grep "CONFIG_$1_auth_opt_" | sed "s/^.*_\(auth_opt_.*\)='\(.*\)'/\1 \2/" >> $TCONF
 }
 
 add_topic() {

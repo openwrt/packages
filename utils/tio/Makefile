@@ -8,15 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tio
-PKG_VERSION:=1.31
+PKG_VERSION:=1.32
 PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/tio/tio/releases/download/v$(PKG_VERSION)
+PKG_HASH:=a8f5ed6994cacb96780baa416b19e5a6d7d67e8c162a8ea4fd9eccd64984ae44
+
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
-
-PKG_SOURCE_URL:=https://github.com/$(PKG_NAME)/$(PKG_NAME)/releases/download/v$(PKG_VERSION)/
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=4e72825914dac77c4587c0772accbd7a1292d5c5895bd49ad1477707b3203e42
 
 PKG_FIXUP:=autoreconf
 

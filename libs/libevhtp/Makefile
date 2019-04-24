@@ -12,15 +12,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libevhtp
 PKG_VERSION:=1.1.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=BSD-3-Clause
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://chromium.googlesource.com/external/github.com/ellzey/libevhtp
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=91071e2f20749cd469b87ac2ef1c158dc2a6806f
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=c9c4415539e78ac9021a8507cd16b9101564dd03286bc84428cc1ee11f0df1fd
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/criticalstack/libevhtp/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=725dd0a32237b2a097cdc2003d09278a082ccce310aaba7441a5fd8fa8f26635
 
 PKG_INSTALL:=1
 

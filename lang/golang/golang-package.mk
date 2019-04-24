@@ -28,9 +28,11 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 #   files are installed:
 #
 #   * Files with one of these extensions:
-#     .go, .c, .cc, .h, .hh, .proto, .s
+#     .go, .c, .cc, .cpp, .h, .hh, .hpp, .proto, .s
 #
 #   * Files in any 'testdata' directory
+#
+#   * go.mod and go.sum, in any directory
 #
 #   e.g. GO_PKG_INSTALL_EXTRA:=example.toml marshal_test.toml
 #
@@ -74,10 +76,32 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 #   not necessary.
 #
 #   e.g. GO_PKG_GO_GENERATE:=1
+#
+#
+# GO_PKG_GCFLAGS - list of arguments, default empty
+#
+#   Additional go tool compile arguments to use when building targets.
+#
+#   e.g. GO_PKG_GCFLAGS:=-N -l
+#
+#
+# GO_PKG_LDFLAGS - list of arguments, default empty
+#
+#   Additional go tool link arguments to use when building targets.
+#
+#   e.g. GO_PKG_LDFLAGS:=-s -w
+#
+#
+# GO_PKG_LDFLAGS_X - list of string variable definitions, default empty
+#
+#   Each definition will be passed as the parameter to the -X go tool
+#   link argument, i.e. -ldflags "-X importpath.name=value"
+#
+#   e.g. GO_PKG_LDFLAGS_X:=main.Version=$(PKG_VERSION) main.BuildStamp=$(SOURCE_DATE_EPOCH)
 
 # Credit for this package build process (GoPackage/Build/Configure and
 # GoPackage/Build/Compile) belong to Debian's dh-golang completely.
-# https://anonscm.debian.org/cgit/pkg-go/packages/dh-golang.git
+# https://salsa.debian.org/go-team/packages/dh-golang
 
 
 # for building packages, not user code
@@ -129,6 +153,7 @@ define GoPackage/Environment
 	GO386=$(GO_386) \
 	GOARM=$(GO_ARM) \
 	GOMIPS=$(GO_MIPS) \
+	GOMIPS64=$(GO_MIPS64) \
 	CGO_ENABLED=1 \
 	CGO_CFLAGS="$(filter-out $(GO_CFLAGS_TO_REMOVE),$(TARGET_CFLAGS))" \
 	CGO_CPPFLAGS="$(TARGET_CPPFLAGS)" \
@@ -152,16 +177,19 @@ define GoPackage/Build/Configure
 			sed 's|^\./||') ; \
 		\
 		if [ "$(GO_PKG_INSTALL_ALL)" != 1 ]; then \
-			code=$$$$(echo "$$$$files" | grep '\.\(c\|cc\|go\|h\|hh\|proto\|s\)$$$$') ; \
+			code=$$$$(echo "$$$$files" | grep '\.\(c\|cc\|cpp\|go\|h\|hh\|hpp\|proto\|s\)$$$$') ; \
 			testdata=$$$$(echo "$$$$files" | grep '\(^\|/\)testdata/') ; \
+			gomod=$$$$(echo "$$$$files" | grep '\(^\|/\)go\.\(mod\|sum\)$$$$') ; \
 			\
 			for pattern in $(GO_PKG_INSTALL_EXTRA); do \
 				extra=$$$$(echo "$$$$extra"; echo "$$$$files" | grep "$$$$pattern") ; \
 			done ; \
 			\
-			files=$$$$(echo "$$$$code"; echo "$$$$testdata"; echo "$$$$extra") ; \
+			files=$$$$(echo "$$$$code"; echo "$$$$testdata"; echo "$$$$gomod"; echo "$$$$extra") ; \
 			files=$$$$(echo "$$$$files" | grep -v '^[[:space:]]*$$$$' | sort -u) ; \
 		fi ; \
+		\
+		IFS=$$$$'\n' ; \
 		\
 		echo "Copying files from $(PKG_BUILD_DIR) into $(GO_PKG_BUILD_DIR)/src/$(GO_PKG)" ; \
 		for file in $$$$files; do \
@@ -170,6 +198,7 @@ define GoPackage/Build/Configure
 			mkdir -p $$$$(dirname $$$$dest) ; \
 			$(CP) $$$$file $$$$dest ; \
 		done ; \
+		echo ; \
 		\
 		link_contents() { \
 			local src=$$$$1 ; \
@@ -208,6 +237,7 @@ define GoPackage/Build/Configure
 		else \
 			echo "Not building binaries, skipping symlinks" ; \
 		fi ; \
+		echo ; \
 	)
 endef
 
@@ -223,35 +253,54 @@ define GoPackage/Build/Compile
 			CXX=$(TARGET_CXX) \
 			$(call GoPackage/Environment) ; \
 		\
+		echo "Finding targets" ; \
 		targets=$$$$(go list $(GO_PKG_BUILD_PKG)) ; \
 		for pattern in $(GO_PKG_EXCLUDES); do \
 			targets=$$$$(echo "$$$$targets" | grep -v "$$$$pattern") ; \
 		done ; \
+		echo ; \
 		\
 		if [ "$(GO_PKG_GO_GENERATE)" = 1 ]; then \
+			echo "Calling go generate" ; \
 			go generate -v $(1) $$$$targets ; \
+			echo ; \
 		fi ; \
 		\
 		if [ "$(GO_PKG_SOURCE_ONLY)" != 1 ]; then \
+			echo "Building targets" ; \
 			case $(GO_ARCH) in \
-			arm)         installsuffix="-installsuffix v$(GO_ARM)" ;; \
-			mips|mipsle) installsuffix="-installsuffix $(GO_MIPS)" ;; \
+			arm)             installsuffix="v$(GO_ARM)" ;; \
+			mips|mipsle)     installsuffix="$(GO_MIPS)" ;; \
+			mips64|mips64le) installsuffix="$(GO_MIPS64)" ;; \
 			esac ; \
 			trimpath="all=-trimpath=$(GO_PKG_BUILD_DIR)" ; \
 			ldflags="all=-linkmode external -extldflags '$(TARGET_LDFLAGS)'" ; \
+			pkg_gcflags="$(GO_PKG_GCFLAGS)" ; \
+			pkg_ldflags="$(GO_PKG_LDFLAGS)" ; \
+			for def in $(GO_PKG_LDFLAGS_X); do \
+				pkg_ldflags="$$$$pkg_ldflags -X $$$$def" ; \
+			done ; \
 			go install \
-				$$$$installsuffix \
+				$$$${installsuffix:+-installsuffix $$$$installsuffix} \
 				-gcflags "$$$$trimpath" \
 				-asmflags "$$$$trimpath" \
 				-ldflags "$$$$ldflags" \
 				-v \
+				$$$${pkg_gcflags:+-gcflags "$$$$pkg_gcflags"} \
+				$$$${pkg_ldflags:+-ldflags "$$$$pkg_ldflags"} \
 				$(1) \
 				$$$$targets ; \
 			retval=$$$$? ; \
+			echo ; \
 			\
 			if [ "$$$$retval" -eq 0 ] && [ -z "$(call GoPackage/has_binaries)" ]; then \
 				echo "No binaries were generated, consider adding GO_PKG_SOURCE_ONLY:=1 to Makefile" ; \
+				echo ; \
 			fi ; \
+			\
+			echo "Cleaning module download cache (golang/go#27455)" ; \
+			go clean -modcache ; \
+			echo ; \
 		fi ; \
 		exit $$$$retval ; \
 	)

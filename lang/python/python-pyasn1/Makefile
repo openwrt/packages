@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyasn1
-PKG_VERSION:=0.4.4
+PKG_VERSION:=0.4.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=pyasn1-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pyasn1
-PKG_HASH:=f58f2a3d12fd754aa123e9fa74fb7345333000a035f3921dbdaa08597aa53137
+PKG_HASH:=da2420fe13a9452d8ae97a0e478adde1dee153b11ba832a95b223a2ba01c10f7
 
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -31,19 +31,18 @@ define Package/python-pyasn1/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
+  TITLE:=ASN.1 library for Python
   URL:=https://github.com/etingof/pyasn1
 endef
 
 define Package/python-pyasn1
 $(call Package/python-pyasn1/Default)
-  TITLE:=ASN.1 library for Python
   DEPENDS:=+PACKAGE_python-pyasn1:python-light
   VARIANT:=python
 endef
 
 define Package/python3-pyasn1
 $(call Package/python-pyasn1/Default)
-  TITLE:=ASN.1 library for Python
   DEPENDS:=+PACKAGE_python3-pyasn1:python3-light
   VARIANT:=python3
 endef

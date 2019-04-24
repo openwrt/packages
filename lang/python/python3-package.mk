@@ -67,8 +67,8 @@ define Py3Package
   $(call shexport,Py3Package/$(1)/filespec)
 
   define Package/$(1)/install
-	$(call Py3Package/$(1)/install,$$(1))
-	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
+	$$(call Py3Package/$(1)/install,$$(1))
+	SED="$(SED)" \
 	$(SHELL) $(python3_mk_path)python-package-install.sh "3" \
 		"$(PKG_INSTALL_DIR)" "$$(1)" \
 		"$(HOST_PYTHON3_BIN)" "$$(2)" \
@@ -112,17 +112,20 @@ define Build/Compile/Py3Mod
 		cd $(PKG_BUILD_DIR)/$(strip $(1)), \
 		./setup.py $(2), \
 		$(3))
-	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
 endef
 
-PYTHON3_PKG_SETUP_ARGS:=--single-version-externally-managed
-PYTHON3_PKG_SETUP_VARS:=
+PYTHON3_PKG_SETUP_DIR ?=
+PYTHON3_PKG_SETUP_GLOABL_ARGS ?=
+PYTHON3_PKG_SETUP_ARGS ?= --single-version-externally-managed
+PYTHON3_PKG_SETUP_VARS ?=
 
 define Py3Build/Compile/Default
 	$(foreach pkg,$(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS),
 		$(call host_python3_pip_install_host,$(pkg))
 	)
-	$(call Build/Compile/Py3Mod,, \
+	$(call Build/Compile/Py3Mod, \
+		$(PYTHON3_PKG_SETUP_DIR), \
+		$(PYTHON3_PKG_SETUP_GLOBAL_ARGS) \
 		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
 		$(PYTHON3_PKG_SETUP_ARGS), \
 		$(PYTHON3_PKG_SETUP_VARS) \

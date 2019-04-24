@@ -1,0 +1,31 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -1316,7 +1316,7 @@ AC_SUBST(DEPS_OPENSUBTITLES_LIBS)
+ # GETTEXT/INTLTOOL
+ # ----------------------------------------------------------
+ 
+-IT_PROG_INTLTOOL([0.40.0])
++IT_PROG_INTLTOOL([0.40.0], [no-xml])
+ GETTEXT_PACKAGE=grilo-plugins
+ AC_SUBST(GETTEXT_PACKAGE)
+ AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [The domain to use with gettext])
+@@ -1334,7 +1334,7 @@ AC_SUBST([builddir])
+ # DOCUMENTATION
+ # ----------------------------------------------------------
+ 
+-YELP_HELP_INIT
++#YELP_HELP_INIT
+ 
+ # ----------------------------------------------------------
+ # OUTPUT
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -10,7 +10,7 @@ include $(top_srcdir)/release.mk
+ 
+ ACLOCAL_AMFLAGS = -I m4
+ 
+-SUBDIRS = src help po tests
++SUBDIRS = src po
+ 
+ MAINTAINERCLEANFILES = \
+ 	$(GITIGNORE_MAINTAINERCLEANFILES_TOPLEVEL) \

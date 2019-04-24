@@ -8,14 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgcrypt
-PKG_VERSION:=1.8.3
+PKG_VERSION:=1.8.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.gnupg.org/ftp/gcrypt/libgcrypt/
-PKG_HASH:=66ec90be036747602f2b48f98312361a9180c97c68a690a5f376fa0f67d0af7c
+PKG_HASH:=f638143a0672628fde0cad745e9b14deb85dffb175709cacc1f4fe24b93f2227
+
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1+ GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:gnupg:libgcrypt
 
 PKG_FIXUP:=autoreconf patch-libtool
 PKG_INSTALL:=1
@@ -28,8 +31,7 @@ define Package/libgcrypt
   CATEGORY:=Libraries
   DEPENDS:=+libgpg-error
   TITLE:=GNU crypto library
-  URL:=http://directory.fsf.org/security/libgcrypt.html
-  MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+  URL:=https://www.gnupg.org/related_software/libgcrypt/
 endef
 
 define Package/libgcrypt/description

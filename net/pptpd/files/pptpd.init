@@ -10,13 +10,14 @@ CHAP_SECRETS=/var/etc/chap-secrets
 OPTIONS_PPTP=/var/etc/options.pptpd
 
 validate_login_section() {
-	uci_validate_section pptpd login "${1}" \
+	uci_load_validate pptpd login "$1" "$2" \
 		'username:string' \
-		'password:string'
+		'password:string' \
+		'remoteip:string'
 }
 
 validate_pptpd_section() {
-	uci_validate_section pptpd service "${1}" \
+	uci_load_validate pptpd service "$1" "$2" \
 		'enabled:uinteger' \
 		'localip:string' \
 		'remoteip:string' \
@@ -25,21 +26,20 @@ validate_pptpd_section() {
 }
 
 setup_login() {
-	validate_login_section "${1}" || {
+	[ "$2" = 0 ] || {
 		echo "validation failed"
 		return 1
 	}
 
-	[ -n "${username}" ] || return 0
-	[ -n "${password}" ] || return 0
+	[ -n "$username" ] || return 0
+	[ -n "$password" ] || return 0
+	[ -n "$remoteip" ] || remoteip=*
 
-	echo "${username} pptp-server ${password} *" >> $CHAP_SECRETS
+	echo "$username pptp-server $password $remoteip" >> $CHAP_SECRETS
 }
 
 setup_config() {
-	local enabled localip remoteip mppe
-
-	validate_pptpd_section "${1}" || {
+	[ "$2" = 0 ] || {
 		echo "validation failed"
 		return 1
 	}
@@ -61,12 +61,21 @@ setup_config() {
 
 start_service() {
 	config_load pptpd
-	setup_config pptpd || return
-	config_foreach setup_login login
+	validate_pptpd_section pptpd setup_config || return
+	config_foreach validate_login_section login setup_login
 
 	ln -sfn $CHAP_SECRETS /etc/ppp/chap-secrets
 
 	procd_open_instance
 	procd_set_param command $BIN -c $CONFIG --fg -o $OPTIONS_PPTP
 	procd_close_instance
+}
+
+service_triggers () {
+	procd_add_reload_trigger "pptpd"
+
+	procd_open_validate
+	validate_pptpd_section
+	validate_login_section
+	procd_close_validate
 }

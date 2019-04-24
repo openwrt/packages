@@ -1,0 +1,61 @@
+diff --git a/imap/src/osdep/unix/ssl_unix.c b/imap/src/osdep/unix/ssl_unix.c
+index 4c4d6ef..f2df2f2 100644
+--- a/imap/src/osdep/unix/ssl_unix.c
++++ b/imap/src/osdep/unix/ssl_unix.c
+@@ -33,9 +33,9 @@
+ #include <bio.h>
+ #include <crypto.h>
+ #include <rand.h>
+-#ifdef OPENSSL_1_1_0
+ #include <rsa.h>
+ #include <bn.h>
++#ifdef OPENSSL_1_1_0
+ #ifdef TLSv1_1_client_method
+ #undef TLSv1_1_client_method
+ #endif /* TLSv1_1_client_method */
+@@ -862,22 +862,16 @@ static RSA *ssl_genkey (SSL_CTX_TYPE *con,int export,int keylength)
+   static RSA *key = NIL;
+   if (!key) {			/* if don't have a key already */
+ 				/* generate key */
+-#ifdef OPENSSL_1_1_0
+     BIGNUM *e = BN_new();
+     if (!RSA_generate_key_ex (key, export ? keylength : 1024, e,NIL)) {
+-#else
+-    if (!(key = RSA_generate_key (export ? keylength : 1024,RSA_F4,NIL,NIL))) {
+-#endif /* OPENSSL_1_1_0 */
+       syslog (LOG_ALERT,"Unable to generate temp key, host=%.80s",
+ 	      tcp_clienthost ());
+       while ((i = ERR_get_error ()) != 0L)
+ 	syslog (LOG_ALERT,"SSL error status: %s",ERR_error_string (i,NIL));
+       exit (1);
+     }
+-#ifdef OPENSSL_1_1_0
+     BN_free(e);
+     e = NULL;
+-#endif /* OPENSSL_1_1_0 */
+   }
+   return key;
+ }
+diff --git a/pith/smkeys.h b/pith/smkeys.h
+index e37eea3..a6c143b 100644
+--- a/pith/smkeys.h
++++ b/pith/smkeys.h
+@@ -32,6 +32,8 @@
+ #include <openssl/safestack.h>
+ #include <openssl/conf.h>
+ #include <openssl/x509v3.h>
++#include <openssl/bn.h>
++#include <openssl/rsa.h>
+ 
+ #ifndef OPENSSL_1_1_0
+ #define X509_get0_notBefore(x) ((x) && (x)->cert_info                   \
+@@ -47,9 +49,6 @@
+                                 ? (x)->cert_info->validity->notAfter	\
+                                 : NULL)
+ #define X509_REQ_get0_pubkey(x) (X509_REQ_get_pubkey((x)))
+-#else
+-#include <openssl/rsa.h>
+-#include <openssl/bn.h>
+ #endif /* OPENSSL_1_1_0 */
+ 
+ #define EMAILADDRLEADER "emailAddress="

@@ -1,0 +1,494 @@
+--- a/sources/applications/applestreamingclient/include/protocols/aes/inboundaesprotocol.h
++++ b/sources/applications/applestreamingclient/include/protocols/aes/inboundaesprotocol.h
+@@ -30,7 +30,7 @@ namespace app_applestreamingclient {
+ 	private:
+ 		IOBuffer _tempBuffer;
+ 		IOBuffer _inputBuffer;
+-		EVP_CIPHER_CTX _decContex;
++		EVP_CIPHER_CTX *_decContex;
+ 		bool _lastChunk;
+ 		uint8_t *_pIV;
+ 		uint8_t *_pKey;
+--- a/sources/applications/applestreamingclient/src/protocols/aes/inboundaesprotocol.cpp
++++ b/sources/applications/applestreamingclient/src/protocols/aes/inboundaesprotocol.cpp
+@@ -31,13 +31,12 @@ InboundAESProtocol::InboundAESProtocol()
+ 	memset(_pIV, 0, 16);
+ 	_pKey = new uint8_t[16];
+ 	memset(_pKey, 0, 16);
+-	memset(&_decContex, 0, sizeof (EVP_CIPHER_CTX));
++	_decContex = EVP_CIPHER_CTX_new();
+ 	_totalDecrypted = 0;
+ }
+ 
+ InboundAESProtocol::~InboundAESProtocol() {
+-	EVP_CIPHER_CTX_cleanup(&_decContex);
+-	memset(&_decContex, 0, sizeof (EVP_CIPHER_CTX));
++	EVP_CIPHER_CTX_free(_decContex);
+ 	delete[] _pIV;
+ 	delete[] _pKey;
+ }
+@@ -60,11 +59,9 @@ bool InboundAESProtocol::Initialize(Variant &parameters) {
+ 	_inputBuffer.IgnoreAll();
+ 	_tempBuffer.IgnoreAll();
+ 
+-	EVP_CIPHER_CTX_cleanup(&_decContex);
+-	memset(&_decContex, 0, sizeof (EVP_CIPHER_CTX));
+-	EVP_CIPHER_CTX_init(&_decContex);
+-	EVP_DecryptInit_ex(&_decContex, EVP_aes_128_cbc(), NULL, _pKey, _pIV);
+-	EVP_CIPHER_CTX_set_padding(&_decContex, 0);
++	EVP_CIPHER_CTX_reset(_decContex);
++	EVP_DecryptInit_ex(_decContex, EVP_aes_128_cbc(), NULL, _pKey, _pIV);
++	EVP_CIPHER_CTX_set_padding(_decContex, 0);
+ 
+ 	return true;
+ }
+@@ -105,14 +102,14 @@ bool InboundAESProtocol::SignalInputData(IOBuffer &buffer) {
+ 	int decryptedFinalSize = 0;
+ 	uint32_t padding = 0;
+ 
+-	EVP_DecryptUpdate(&_decContex, pTempData, &decryptedSize, GETIBPOINTER(buffer), safeSize);
++	EVP_DecryptUpdate(_decContex, pTempData, &decryptedSize, GETIBPOINTER(buffer), safeSize);
+ 	_totalDecrypted += decryptedSize;
+ 
+ 	//6. Decrypt leftovers
+ 	bool transferCompleted = false;
+ 	if (((HTTPBufferProtocol *) GetFarProtocol())->TransferCompleted()) {
+ 		transferCompleted = true;
+-		EVP_DecryptFinal_ex(&_decContex,
++		EVP_DecryptFinal_ex(_decContex,
+ 				pTempData + decryptedSize,
+ 				&decryptedFinalSize);
+ 		_totalDecrypted += decryptedFinalSize;
+--- a/sources/common/include/utils/misc/crypto.h
++++ b/sources/common/include/utils/misc/crypto.h
+@@ -33,6 +33,7 @@
+ #include <openssl/aes.h>
+ #include <openssl/engine.h>
+ #include <openssl/conf.h>
++#include "utils/misc/libcrypto-compat.h"
+ 
+ /*!
+ 	@class DHWrapper
+@@ -83,7 +84,7 @@ public:
+ 	bool CopySharedKey(uint8_t *pDst, int32_t dstLength);
+ private:
+ 	void Cleanup();
+-	bool CopyKey(BIGNUM *pNum, uint8_t *pDst, int32_t dstLength);
++	bool CopyKey(const BIGNUM *pNum, uint8_t *pDst, int32_t dstLength);
+ };
+ 
+ DLLEXP void InitRC4Encryption(uint8_t *secretKey, uint8_t *pubKeyIn, uint8_t *pubKeyOut,
+--- /dev/null
++++ b/sources/common/include/utils/misc/libcrypto-compat.h
+@@ -0,0 +1,26 @@
++#ifndef LIBCRYPTO_COMPAT_H
++#define LIBCRYPTO_COMPAT_H
++
++#include <openssl/opensslv.h>
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++
++#include <openssl/bn.h>
++#include <openssl/dh.h>
++#include <openssl/evp.h>
++#include <openssl/hmac.h>
++
++int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
++void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key);
++int DH_set_length(DH *dh, long length);
++
++EVP_MD_CTX *EVP_MD_CTX_new(void);
++void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
++#define EVP_MD_CTX_reset EVP_MD_CTX_cleanup
++
++HMAC_CTX *HMAC_CTX_new(void);
++void HMAC_CTX_free(HMAC_CTX *ctx);
++#define HMAC_CTX_reset HMAC_CTX_cleanup
++
++#endif /* OPENSSL_VERSION_NUMBER */
++
++#endif /* LIBCRYPTO_COMPAT_H */
+--- a/sources/common/src/utils/misc/crypto.cpp
++++ b/sources/common/src/utils/misc/crypto.cpp
+@@ -35,6 +35,7 @@ DHWrapper::~DHWrapper() {
+ }
+ 
+ bool DHWrapper::Initialize() {
++	BIGNUM *p = NULL, *g = NULL;
+ 	Cleanup();
+ 
+ 	//1. Create the DH
+@@ -46,42 +47,53 @@ bool DHWrapper::Initialize() {
+ 	}
+ 
+ 	//2. Create his internal p and g
+-	_pDH->p = BN_new();
+-	if (_pDH->p == NULL) {
++	p = BN_new();
++	if (p == NULL) {
+ 		FATAL("Unable to create p");
+-		Cleanup();
+-		return false;
++		goto return_error;
+ 	}
+-	_pDH->g = BN_new();
+-	if (_pDH->g == NULL) {
++	g = BN_new();
++	if (g == NULL) {
+ 		FATAL("Unable to create g");
+-		Cleanup();
+-		return false;
++		goto return_error;
+ 	}
+ 
+ 	//3. initialize p, g and key length
+-	if (BN_hex2bn(&_pDH->p, P1024) == 0) {
++	if (BN_hex2bn(&p, P1024) == 0) {
+ 		FATAL("Unable to parse P1024");
+-		Cleanup();
+-		return false;
++		goto return_error;
+ 	}
+-	if (BN_set_word(_pDH->g, 2) != 1) {
++	if (BN_set_word(g, 2) != 1) {
+ 		FATAL("Unable to set g");
+-		Cleanup();
+-		return false;
++		goto return_error;
++	}
++
++	//4. Set internal p and g
++	if (DH_set0_pqg(_pDH, p, NULL, g) != 1) {
++		FATAL("Unable to set internal p and g");
++		goto return_error;
+ 	}
++	p = g = NULL;
+ 
+-	//4. Set the key length
+-	_pDH->length = _bitsCount;
++	//5. Set the key length
++	if (DH_set_length(_pDH, _bitsCount) != 1) {
++		FATAL("Unable to set length");
++		goto return_error;
++	}
+ 
+-	//5. Generate private and public key
++	//6. Generate private and public key
+ 	if (DH_generate_key(_pDH) != 1) {
+ 		FATAL("Unable to generate DH public/private keys");
+-		Cleanup();
+-		return false;
++		goto return_error;
+ 	}
+ 
+ 	return true;
++
++return_error:
++	if (p != NULL) BN_free(p);
++	if (g != NULL) BN_free(g);
++	Cleanup();
++	return false;
+ }
+ 
+ bool DHWrapper::CopyPublicKey(uint8_t *pDst, int32_t dstLength) {
+@@ -90,7 +102,9 @@ bool DHWrapper::CopyPublicKey(uint8_t *pDst, int32_t dstLength) {
+ 		return false;
+ 	}
+ 
+-	return CopyKey(_pDH->pub_key, pDst, dstLength);
++	const BIGNUM *pub_key;
++	DH_get0_key(_pDH, &pub_key, NULL);
++	return CopyKey(pub_key, pDst, dstLength);
+ }
+ 
+ bool DHWrapper::CopyPrivateKey(uint8_t *pDst, int32_t dstLength) {
+@@ -99,7 +113,9 @@ bool DHWrapper::CopyPrivateKey(uint8_t *pDst, int32_t dstLength) {
+ 		return false;
+ 	}
+ 
+-	return CopyKey(_pDH->priv_key, pDst, dstLength);
++	const BIGNUM *priv_key;
++	DH_get0_key(_pDH, NULL, &priv_key);
++	return CopyKey(priv_key, pDst, dstLength);
+ }
+ 
+ bool DHWrapper::CreateSharedKey(uint8_t *pPeerPublicKey, int32_t length) {
+@@ -153,14 +169,6 @@ bool DHWrapper::CopySharedKey(uint8_t *pDst, int32_t dstLength) {
+ 
+ void DHWrapper::Cleanup() {
+ 	if (_pDH != NULL) {
+-		if (_pDH->p != NULL) {
+-			BN_free(_pDH->p);
+-			_pDH->p = NULL;
+-		}
+-		if (_pDH->g != NULL) {
+-			BN_free(_pDH->g);
+-			_pDH->g = NULL;
+-		}
+ 		DH_free(_pDH);
+ 		_pDH = NULL;
+ 	}
+@@ -177,7 +185,7 @@ void DHWrapper::Cleanup() {
+ 	}
+ }
+ 
+-bool DHWrapper::CopyKey(BIGNUM *pNum, uint8_t *pDst, int32_t dstLength) {
++bool DHWrapper::CopyKey(const BIGNUM *pNum, uint8_t *pDst, int32_t dstLength) {
+ 	int32_t keySize = BN_num_bytes(pNum);
+ 	if ((keySize <= 0) || (dstLength <= 0) || (keySize > dstLength)) {
+ 		FATAL("CopyPublicKey failed due to either invalid DH state or invalid call");
+@@ -197,20 +205,21 @@ void InitRC4Encryption(uint8_t *secretKey, uint8_t *pubKeyIn, uint8_t *pubKeyOut
+ 	uint8_t digest[SHA256_DIGEST_LENGTH];
+ 	unsigned int digestLen = 0;
+ 
+-	HMAC_CTX ctx;
+-	HMAC_CTX_init(&ctx);
+-	HMAC_Init_ex(&ctx, secretKey, 128, EVP_sha256(), 0);
+-	HMAC_Update(&ctx, pubKeyIn, 128);
+-	HMAC_Final(&ctx, digest, &digestLen);
+-	HMAC_CTX_cleanup(&ctx);
++	HMAC_CTX *ctx;
++	ctx = HMAC_CTX_new();
++	if (ctx == NULL)
++		return;
++	HMAC_Init_ex(ctx, secretKey, 128, EVP_sha256(), 0);
++	HMAC_Update(ctx, pubKeyIn, 128);
++	HMAC_Final(ctx, digest, &digestLen);
++	HMAC_CTX_reset(ctx);
+ 
+ 	RC4_set_key(rc4keyOut, 16, digest);
+ 
+-	HMAC_CTX_init(&ctx);
+-	HMAC_Init_ex(&ctx, secretKey, 128, EVP_sha256(), 0);
+-	HMAC_Update(&ctx, pubKeyOut, 128);
+-	HMAC_Final(&ctx, digest, &digestLen);
+-	HMAC_CTX_cleanup(&ctx);
++	HMAC_Init_ex(ctx, secretKey, 128, EVP_sha256(), 0);
++	HMAC_Update(ctx, pubKeyOut, 128);
++	HMAC_Final(ctx, digest, &digestLen);
++	HMAC_CTX_free(ctx);
+ 
+ 	RC4_set_key(rc4keyIn, 16, digest);
+ }
+@@ -220,14 +229,17 @@ string md5(string source, bool textResult) {
+ }
+ 
+ string md5(uint8_t *pBuffer, uint32_t length, bool textResult) {
+-	EVP_MD_CTX mdctx;
++	EVP_MD_CTX *mdctx;
+ 	unsigned char md_value[EVP_MAX_MD_SIZE];
+ 	unsigned int md_len;
+ 
+-	EVP_DigestInit(&mdctx, EVP_md5());
+-	EVP_DigestUpdate(&mdctx, pBuffer, length);
+-	EVP_DigestFinal_ex(&mdctx, md_value, &md_len);
+-	EVP_MD_CTX_cleanup(&mdctx);
++	mdctx = EVP_MD_CTX_new();
++	if (mdctx == NULL)
++		return "";
++	EVP_DigestInit(mdctx, EVP_md5());
++	EVP_DigestUpdate(mdctx, pBuffer, length);
++	EVP_DigestFinal_ex(mdctx, md_value, &md_len);
++	EVP_MD_CTX_free(mdctx);
+ 
+ 	if (textResult) {
+ 		string result = "";
+@@ -259,12 +271,12 @@ void HMACsha256(const void *pData, uint32_t dataLength,
+ 		const void *pKey, uint32_t keyLength, void *pResult) {
+ 	unsigned int digestLen;
+ 
+-	HMAC_CTX ctx;
+-	HMAC_CTX_init(&ctx);
+-	HMAC_Init_ex(&ctx, (unsigned char*) pKey, keyLength, EVP_sha256(), NULL);
+-	HMAC_Update(&ctx, (unsigned char *) pData, dataLength);
+-	HMAC_Final(&ctx, (unsigned char *) pResult, &digestLen);
+-	HMAC_CTX_cleanup(&ctx);
++	HMAC_CTX *ctx;
++	ctx = HMAC_CTX_new();
++	HMAC_Init_ex(ctx, (unsigned char*) pKey, keyLength, EVP_sha256(), NULL);
++	HMAC_Update(ctx, (unsigned char *) pData, dataLength);
++	HMAC_Final(ctx, (unsigned char *) pResult, &digestLen);
++	HMAC_CTX_free(ctx);
+ 
+ 	o_assert(digestLen == 32);
+ }
+@@ -397,8 +409,8 @@ string unhex(const uint8_t *pBuffer, uint32_t length) {
+ }
+ 
+ void CleanupSSL() {
+-#ifndef NO_SSL_ENGINE_CLEANUP
+-	ERR_remove_state(0);
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++	ERR_remove_thread_state(NULL);
+ 	ENGINE_cleanup();
+ 	CONF_modules_unload(1);
+ 	ERR_free_strings();
+--- /dev/null
++++ b/sources/common/src/utils/misc/libcrypto-compat.cpp
+@@ -0,0 +1,90 @@
++/*
++ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
++ *
++ * Licensed under the OpenSSL license (the "License").  You may not use
++ * this file except in compliance with the License.  You can obtain a copy
++ * in the file LICENSE in the source distribution or at
++ * https://www.openssl.org/source/license.html
++ */
++
++#include "utils/misc/libcrypto-compat.h"
++
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++
++#include <string.h>
++
++static void *OPENSSL_zalloc(size_t num)
++{
++    void *ret = OPENSSL_malloc(num);
++
++    if (ret != NULL)
++        memset(ret, 0, num);
++    return ret;
++}
++
++int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
++{
++    /* If the fields p and g in d are NULL, the corresponding input
++     * parameters MUST be non-NULL.  q may remain NULL.
++     */
++    if ((dh->p == NULL && p == NULL)
++        || (dh->g == NULL && g == NULL))
++        return 0;
++
++    if (p != NULL) {
++        BN_free(dh->p);
++        dh->p = p;
++    }
++    if (q != NULL) {
++        BN_free(dh->q);
++        dh->q = q;
++    }
++    if (g != NULL) {
++        BN_free(dh->g);
++        dh->g = g;
++    }
++
++    if (q != NULL) {
++        dh->length = BN_num_bits(q);
++    }
++
++    return 1;
++}
++
++void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key)
++{
++    if (pub_key != NULL)
++        *pub_key = dh->pub_key;
++    if (priv_key != NULL)
++        *priv_key = dh->priv_key;
++}
++
++int DH_set_length(DH *dh, long length)
++{
++    dh->length = length;
++    return 1;
++}
++
++EVP_MD_CTX *EVP_MD_CTX_new(void)
++{
++    return (EVP_MD_CTX *)OPENSSL_zalloc(sizeof(EVP_MD_CTX));
++}
++
++void EVP_MD_CTX_free(EVP_MD_CTX *ctx)
++{
++    EVP_MD_CTX_cleanup(ctx);
++    OPENSSL_free(ctx);
++}
++
++HMAC_CTX *HMAC_CTX_new(void)
++{
++    return (HMAC_CTX *)OPENSSL_zalloc(sizeof(HMAC_CTX));
++}
++
++void HMAC_CTX_free(HMAC_CTX *ctx)
++{
++    HMAC_CTX_cleanup(ctx);
++    OPENSSL_free(ctx);
++}
++
++#endif /* OPENSSL_VERSION_NUMBER */
+--- a/sources/thelib/src/protocols/ssl/basesslprotocol.cpp
++++ b/sources/thelib/src/protocols/ssl/basesslprotocol.cpp
+@@ -43,6 +43,7 @@ BaseSSLProtocol::~BaseSSLProtocol() {
+ bool BaseSSLProtocol::Initialize(Variant &parameters) {
+ 	//1. Initialize the SSL library
+ 	if (!_libraryInitialized) {
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 		//3. This is the first time we use the library. So we have to
+ 		//initialize it first
+ 		SSL_library_init();
+@@ -55,6 +56,7 @@ bool BaseSSLProtocol::Initialize(Variant &parameters) {
+ 		OpenSSL_add_all_algorithms();
+ 		OpenSSL_add_all_ciphers();
+ 		OpenSSL_add_all_digests();
++#endif
+ 
+ 		//initialize the random numbers generator
+ 		InitRandGenerator();
+@@ -211,6 +213,7 @@ string BaseSSLProtocol::GetSSLErrors() {
+ 
+ string BaseSSLProtocol::DumpBIO(BIO *pBIO) {
+ 	string formatString;
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	formatString = "method: %p\n";
+ 	formatString += "callback: %p\n";
+ 	formatString += "cb_arg: %p\n";
+@@ -240,6 +243,39 @@ string BaseSSLProtocol::DumpBIO(BIO *pBIO) {
+ 			pBIO->references,
+ 			(int64_t) pBIO->num_read,
+ 			(int64_t) pBIO->num_write);
++#else
++// Some of these are problematic in openssl >= 1.1, since
++// the BIO struct is opaque.
++	formatString = "method: %s\n";
++	formatString += "callback: %p\n";
++	formatString += "cb_arg: %p\n";
++	formatString += "init: %d\n";
++	formatString += "shutdown: %d\n";
++	formatString += "flags: %d\n";
++	formatString += "retry_reason: %d\n";
++	formatString += "num: %d\n";
++	formatString += "ptr: %p\n";
++	formatString += "next_bio: %p\n";
++	formatString += "prev_bio: %s\n";
++	formatString += "references: %s\n";
++	formatString += "num_read: %"PRId64"\n";
++	formatString += "num_write: %"PRId64;
++	return format(STR(formatString),
++			BIO_method_name(pBIO),
++			BIO_get_callback(pBIO),
++			BIO_get_callback_arg(pBIO),
++			BIO_get_init(pBIO),
++			BIO_get_shutdown(pBIO),
++			BIO_get_flags(pBIO),
++			BIO_get_retry_reason(pBIO),
++			BIO_get_fd(pBIO, NULL),
++			BIO_get_data(pBIO),
++			BIO_next(pBIO),
++			"unknown", //prev_bio
++			"unknown", //references
++			BIO_number_read(pBIO),
++			BIO_number_written(pBIO));
++#endif
+ }
+ 
+ void BaseSSLProtocol::InitRandGenerator() {
+--- a/sources/thelib/src/protocols/ssl/outboundsslprotocol.cpp
++++ b/sources/thelib/src/protocols/ssl/outboundsslprotocol.cpp
+@@ -33,7 +33,7 @@ bool OutboundSSLProtocol::InitGlobalContext(Variant &parameters) {
+ 	_pGlobalSSLContext = _pGlobalContexts[hash];
+ 	if (_pGlobalSSLContext == NULL) {
+ 		//2. prepare the global ssl context
+-		_pGlobalSSLContext = SSL_CTX_new(TLSv1_method());
++		_pGlobalSSLContext = SSL_CTX_new(SSLv23_method());
+ 		if (_pGlobalSSLContext == NULL) {
+ 			FATAL("Unable to create global SSL context");
+ 			return false;

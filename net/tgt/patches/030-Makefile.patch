@@ -1,6 +1,6 @@
---- tgt-1.0.48.orig/Makefile	2014-06-04 15:03:53.000000000 +0300
-+++ tgt-1.0.48/Makefile	2014-06-04 15:18:13.132963670 +0300
-@@ -64,7 +64,7 @@
+--- a/Makefile
++++ b/Makefile
+@@ -64,7 +64,7 @@ clean-conf:
  	$(MAKE) -C conf clean
  
  .PHONY: install

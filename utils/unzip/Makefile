@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=unzip
 PKG_REV:=60
 PKG_VERSION:=6.0
-PKG_RELEASE:=6
+PKG_RELEASE:=8
 
 PKG_SOURCE:=$(PKG_NAME)$(PKG_REV).tar.gz
 PKG_SOURCE_URL:=@SF/infozip
@@ -19,6 +19,7 @@ PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=BSD-4-Clause
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:info-zip:unzip
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/unzip$(PKG_REV)
 PKG_CHECK_FORMAT_SECURITY:=0

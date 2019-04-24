@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyasn1-modules
-PKG_VERSION:=0.2.2
-PKG_RELEASE:=1
+PKG_VERSION:=0.2.4
+PKG_RELEASE:=2
 
 PKG_SOURCE:=pyasn1-modules-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pyasn1-modules
-PKG_HASH:=a0cf3e1842e7c60fde97cb22d275eb6f9524f5c5250489e292529de841417547
+PKG_HASH:=a52090e8c5841ebbf08ae455146792d9ef3e8445b21055d3a3b7ed9c712b7c7c
 
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -31,25 +31,24 @@ define Package/python-pyasn1-modules/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=http://sourceforge.net/projects/pyasn1/
+  TITLE:=Collection of ASN.1 modules
+  URL:=https://github.com/etingof/pyasn1-modules
 endef
 
 define Package/python-pyasn1-modules
 $(call Package/python-pyasn1-modules/Default)
-  TITLE:=python-pyasn1-modules
-  VARIANT:=python
   DEPENDS:= \
       +PACKAGE_python-pyasn1-modules:python-light \
       +PACKAGE_python-pyasn1-modules:python-pyasn1
+  VARIANT:=python
 endef
 
 define Package/python3-pyasn1-modules
 $(call Package/python-pyasn1-modules/Default)
-  TITLE:=python3-pyasn1-modules
-  VARIANT:=python3
   DEPENDS:= \
       +PACKAGE_python3-pyasn1-modules:python3-light \
       +PACKAGE_python3-pyasn1-modules:python3-pyasn1
+  VARIANT:=python3
 endef
 
 define Package/python-pyasn1-modules/description

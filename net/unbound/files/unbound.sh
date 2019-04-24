@@ -422,8 +422,10 @@ unbound_zone() {
 
   case $zone_type in
     auth_zone)
-      if [ -n "$UB_LIST_ZONE_NAMES" \
+      if [ "$UB_B_NTP_BOOT" -eq 0 -a -n "$UB_LIST_ZONE_NAMES" \
            -a \( -n "$url_dir" -o -n "$UB_LIST_ZONE_SERVERS" \) ] ; then
+        # Note AXFR may have large downloads. If NTP restart is configured,
+        # then this can cause procd to force a process kill.
         for zone_name in $UB_LIST_ZONE_NAMES ; do
           if [ "$zone_name" = "." ] ; then
             zone_sym=.

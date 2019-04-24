@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-copas
-PKG_VERSION:=2.0.0
+PKG_VERSION:=2.0.2
 PKG_RELEASE:=1
+
+PKG_SOURCE:=copas-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/keplerproject/copas/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=1469eaf987513f5a9a0bee345c040c8fa30ca6194bc75ad78171362f9904cf3e
+PKG_BUILD_DIR:=$(BUILD_DIR)/copas-$(PKG_VERSION)
+
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=a47a8b5f6c1cf0d9fff4770a28bf7a3efdd8f37415dde8e02528f3e63f8a7899
-PKG_SOURCE_URL:=https://github.com/keplerproject/copas.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=f39a80add9f7c010ac979297652bbaaea0360a27
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -46,9 +46,6 @@ define Build/Compile
 		PREFIX="$(PKG_INSTALL_DIR)/usr" \
 		install
 endef
-
-# add make variable overrides here
-MAKE_FLAGS +=
 
 define Package/lua-copas/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua

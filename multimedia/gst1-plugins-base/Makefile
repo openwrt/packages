@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-base
-PKG_VERSION:=1.14.2
-PKG_RELEASE:=1
+PKG_VERSION:=1.15.2
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
 		Ted Hess <thess@kitschensync.net>
@@ -19,8 +19,8 @@ PKG_LICENSE_FILES:=COPYING.LIB COPYING
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-base-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-base-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-base/
-PKG_HASH:=a4b7e80ba869f599307449b17c9e00b5d1e94d3ba1d8a1a386b8770b2ef01c7c
+PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-base
+PKG_HASH:=6952be988abe67b5affd46b194e97863b160cd58846199873b4315fe5e1cdbf0
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_gst1-mod-alsa \
@@ -40,6 +40,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_libgst1app \
 
 PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -52,7 +53,7 @@ define Package/gstreamer1-base/Default
   CATEGORY:=Multimedia
   SECTION:=multimedia
   TITLE:=GStreamer
-  URL:=http://gstreamer.freedesktop.org/
+  URL:=https://gstreamer.freedesktop.org/
   DEPENDS:= +libgstreamer1 $(ICONV_DEPENDS)
 endef
 
@@ -117,6 +118,15 @@ GST_VERSION:=1.0
 CONFIGURE_ARGS += \
 	--disable-debug \
 	--disable-examples \
+	--disable-fatal-warnings \
+	--disable-glib-asserts \
+	--disable-gobject-cast-checks \
+	--disable-gtk-doc-html \
+	--disable-introspection \
+	--disable-rpath \
+	--disable-valgrind \
+	--without-html-dir \
+	--with-pic \
 	\
 	$(call GST_COND_SELECT,alsa) \
 	$(call GST_COND_SELECT,app) \
@@ -125,7 +135,6 @@ CONFIGURE_ARGS += \
 	$(call GST_COND_SELECT,audioresample) \
 	$(call GST_COND_SELECT,audiotestsrc) \
 	--disable-cdparanoia \
-	--disable-freetypetest \
 	$(call GST_COND_SELECT,gio) \
 	--disable-libvisual \
 	$(call GST_COND_SELECT,ogg) \
@@ -145,13 +154,8 @@ CONFIGURE_ARGS += \
 	\
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
-	--without-x \
 	\
 	--with-audioresample-format=int \
-
-EXTRA_LDFLAGS+= \
-	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib \
-	$(if $(ICONV_FULL),-liconv) \
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/gstreamer-$(GST_VERSION)

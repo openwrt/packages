@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openobex
-PKG_VERSION:=1.7.1
+PKG_VERSION:=1.7.2
 PKG_RELEASE:=1
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-Source
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-Source.tar.gz
 PKG_SOURCE_URL:=@SF/openobex
-PKG_HASH:=3b264665d90901ea4ff720332ffb9b6d1d8f67187463d3a3279caddc7205ea57
+PKG_HASH:=158860aaea52f0fce0c8e4b64550daaae06df2689e05834697b7e8c7d73dd4fc
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-Source
 
+PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-2.0+ LGPL-2.1+
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
+PKG_CPE_ID:=cpe:/a:openobex:openobex
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk

@@ -7,7 +7,7 @@
  PROJECT=seahub
  
  develop: setup-git
-@@ -9,7 +12,7 @@ dist: locale uglify statici18n collectst
+@@ -9,7 +12,7 @@ dist: locale uglify statici18n collectstatic
  
  locale:
  	@echo "--> Compile locales"
@@ -26,8 +26,8 @@
  collectstatic:
  	@echo "--> Collect django static files to media/assets"
  	rm -rf media/assets 2> /dev/null
--	python manage.py collectstatic --noinput
-+	$(call HostPython,,manage.py collectstatic --noinput)
+-	python manage.py collectstatic --noinput -i admin -i termsandconditions -i app -i sysadmin-app -i build.js
++	$(call HostPython,,manage.py collectstatic --noinput -i admin -i termsandconditions -i app -i sysadmin-app -i build.js)
  
  compressstatic:
  	@echo "--> Compress static files(css) to media/CACHE"

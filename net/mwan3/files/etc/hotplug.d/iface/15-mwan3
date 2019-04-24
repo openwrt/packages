@@ -16,10 +16,11 @@ config_load mwan3
 config_get_bool enabled globals 'enabled' '0'
 [ ${enabled} -gt 0 ] || exit 0
 
-mwan3_lock
+mwan3_lock "$ACTION" "$INTERFACE"
 mwan3_init
 mwan3_set_connected_iptables
-mwan3_unlock
+mwan3_set_custom_ipset
+mwan3_unlock "$ACTION" "$INTERFACE"
 
 config_get enabled $INTERFACE enabled 0
 config_get initial_state $INTERFACE initial_state "online"
@@ -57,7 +58,7 @@ else
 	running=1
 fi
 
-mwan3_lock
+mwan3_lock "$ACTION" "$INTERFACE"
 $LOG notice "Execute "$ACTION" event on interface $INTERFACE (${DEVICE:-unknown})"
 
 case "$ACTION" in
@@ -71,14 +72,14 @@ case "$ACTION" in
 			$LOG notice "Starting tracker on interface $INTERFACE (${DEVICE:-unknown})"
 			mwan3_set_iface_hotplug_state $INTERFACE "online"
 			mwan3_track $INTERFACE $DEVICE "online" "$src_ip"
-			mwan3_set_policies_iptables
-			mwan3_set_user_rules
-			mwan3_flush_conntrack $INTERFACE $DEVICE "ifup"
 		else
 			$LOG notice "Starting tracker on interface $INTERFACE (${DEVICE:-unknown})"
 			mwan3_set_iface_hotplug_state $INTERFACE "offline"
-			mwan3_track $INTERFACE $DEVICE "unknown" "$src_ip"
+			mwan3_track $INTERFACE $DEVICE "offline" "$src_ip"
 		fi
+		mwan3_set_policies_iptables
+		mwan3_set_user_rules
+		mwan3_flush_conntrack $INTERFACE $DEVICE "ifup"
 	;;
 	ifdown)
 		mwan3_set_iface_hotplug_state $INTERFACE "offline"
@@ -90,6 +91,6 @@ case "$ACTION" in
 	;;
 esac
 
-mwan3_unlock
+mwan3_unlock "$ACTION" "$INTERFACE"
 
 exit 0

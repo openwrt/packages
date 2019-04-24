@@ -8,15 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=open-plc-utils
-PKG_VERSION:=2017-12-03
-PKG_RELEASE:=$(PKG_SOURCE_VERSION)
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/qca/open-plc-utils.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=18b7e2a9a17f043fe8ac8b457680aafb1c249c55
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
-PKG_MIRROR_HASH:=8ccbee8a6eb9a9be97bab74e02033cdb57456ae5f78fd3b19a3661352b89e259
+PKG_SOURCE_VERSION:=32408520fcebe785983a68e39ec83830a3005779
+PKG_MIRROR_HASH:=b5ae48fd300f75b948a2b2a5f6cd4465b7a336495685f73100ad33a5d43a4c05
 
 PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
 
@@ -46,9 +43,9 @@ define GenPlugin
     TITLE:=Utility $(1) from the Open PLC utilities
   endef
 
-   define Package/$(addprefix open-plc-utils-,$(1))/description
-     Utility $(1) from the Open PLC utilities package.
-   endef
+  define Package/$(addprefix open-plc-utils-,$(1))/description
+    Utility $(1) from the Open PLC utilities package.
+  endef
 endef
 
 OPEN_PLC_UTILS_APPS:=efbu efeu efru efsu edru edsu nics \
@@ -64,7 +61,7 @@ OPEN_PLC_UTILS_APPS:=efbu efeu efru efsu edru edsu nics \
 		     int6kmdio2 int6kmod int6kstat int6ktest int6krate \
 		     int6krule int6ktone int6kwait CMEncrypt sada \
 		     coqos_add coqos_info coqos_man coqos_mod coqos_rel \
-		     mdustats ampboot amphost ampID amplist amprate \
+		     mdustats ampboot amphost ampID amplist amprate amprule \
 		     ampstat amptest amptool amptone ampwait \
 		     plcboot plchost plcID plclist plcrate plcrule \
 		     plcstat plctest plctool plctone \
@@ -72,7 +69,8 @@ OPEN_PLC_UTILS_APPS:=efbu efeu efru efsu edru edsu nics \
 		     plcdevs plclog plcmdio16 plcmdio32 \
 		     config2cfg sdram \
 		     int6kuart int6kbaud ttysig ptsctl weeder ttysend \
-		     ttyrecv ttycat int6kdetect
+		     ttyrecv ttycat int6kdetect \
+		     pev evse
 
 $(foreach a,$(OPEN_PLC_UTILS_APPS),$(eval $(call GenPlugin,$(a))))
 
@@ -93,7 +91,7 @@ endef
 
 define BuildPlugin
   define Package/$(1)/install
-  	$(INSTALL_DIR) $$(1)/usr/bin
+	$(INSTALL_DIR) $$(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/local/bin/$(subst open-plc-utils-,,$(1)) \
 		$$(1)/usr/bin/
   endef

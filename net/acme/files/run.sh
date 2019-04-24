@@ -129,16 +129,16 @@ post_checks()
     iptables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
     ip6tables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
 
-    if [ -e /etc/init.d/uhttpd ] && ( [ -n "$UHTTPD_LISTEN_HTTP" ] || [ $UPDATE_UHTTPD -eq 1 ] ); then
+    if [ -e /etc/init.d/uhttpd ] && ( [ -n "$UHTTPD_LISTEN_HTTP" ] || [ "$UPDATE_UHTTPD" -eq 1 ] ); then
         if [ -n "$UHTTPD_LISTEN_HTTP" ]; then
             uci set uhttpd.main.listen_http="$UHTTPD_LISTEN_HTTP"
-            uci commit uhttpd
             UHTTPD_LISTEN_HTTP=
         fi
+        uci commit uhttpd
         /etc/init.d/uhttpd reload
     fi
 
-    if [ -e /etc/init.d/nginx ] && ( [ "$NGINX_WEBSERVER" -eq 1 ] || [ $UPDATE_NGINX -eq 1 ] ); then
+    if [ -e /etc/init.d/nginx ] && ( [ "$NGINX_WEBSERVER" -eq 1 ] || [ "$UPDATE_NGINX" -eq 1 ] ); then
         NGINX_WEBSERVER=0
         /etc/init.d/nginx restart
     fi
@@ -180,6 +180,7 @@ issue_cert()
     local failed_dir
     local webroot
     local dns
+    local ret
 
     config_get_bool enabled "$section" enabled 0
     config_get_bool use_staging "$section" use_staging
@@ -204,6 +205,12 @@ issue_cert()
 
     log "Running ACME for $main_domain"
 
+    handle_credentials() {
+        local credential="$1"
+        eval export $credential
+    }
+    config_list_foreach "$section" credentials handle_credentials
+
     if [ -e "$STATE_DIR/$main_domain" ]; then
         if [ "$use_staging" -eq "0" ] && is_staging "$main_domain"; then
             log "Found previous cert issued using staging server. Moving it out of the way."
@@ -211,8 +218,9 @@ issue_cert()
             moved_staging=1
         else
             log "Found previous cert config. Issuing renew."
-            $ACME --home "$STATE_DIR" --renew -d "$main_domain" $acme_args || return 1
-            return 0
+            $ACME --home "$STATE_DIR" --renew -d "$main_domain" $acme_args && ret=0 || ret=1
+            post_checks
+            return $ret
         fi
     fi
 
@@ -231,17 +239,12 @@ issue_cert()
     else
         if [ ! -d "$webroot" ]; then
             err "$main_domain: Webroot dir '$webroot' does not exist!"
+            post_checks
             return 1
         fi
         log "Using webroot dir: $webroot"
         acme_args="$acme_args --webroot $webroot"
     fi
-
-    handle_credentials() {
-        local credential="$1"
-        eval export $credential
-    }
-    config_list_foreach "$section" credentials handle_credentials
 
     if ! $ACME --home "$STATE_DIR" --issue $acme_args; then
         failed_dir="$STATE_DIR/${main_domain}.failed-$(date +%s)"

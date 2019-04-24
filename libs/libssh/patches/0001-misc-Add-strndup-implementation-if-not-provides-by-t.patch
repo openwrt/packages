@@ -1,0 +1,83 @@
+From f81ca6161223e3566ce78a427571235fb6848fe9 Mon Sep 17 00:00:00 2001
+From: Andreas Schneider <asn@cryptomilk.org>
+Date: Wed, 29 Aug 2018 18:41:15 +0200
+Subject: [PATCH 1/8] misc: Add strndup implementation if not provides by the
+ OS
+
+Fixes T112
+
+Signed-off-by: Andreas Schneider <asn@cryptomilk.org>
+(cherry picked from commit 247983e9820fd264cb5a59c14cc12846c028bd08)
+Signed-off-by: Kevin Darbyshire-Bryant <ldir@darbyshire-bryant.me.uk>
+---
+ ConfigureChecks.cmake |  1 +
+ config.h.cmake        |  3 +++
+ include/libssh/priv.h |  4 ++++
+ src/misc.c            | 21 +++++++++++++++++++++
+ 4 files changed, 29 insertions(+)
+
+--- a/ConfigureChecks.cmake
++++ b/ConfigureChecks.cmake
+@@ -115,6 +115,7 @@ endif (NOT WITH_GCRYPT)
+ 
+ check_function_exists(isblank HAVE_ISBLANK)
+ check_function_exists(strncpy HAVE_STRNCPY)
++check_function_exists(strndup HAVE_STRNDUP)
+ check_function_exists(strtoull HAVE_STRTOULL)
+ 
+ if (NOT WIN32)
+--- a/config.h.cmake
++++ b/config.h.cmake
+@@ -103,6 +103,9 @@
+ /* Define to 1 if you have the `strncpy' function. */
+ #cmakedefine HAVE_STRNCPY 1
+ 
++/* Define to 1 if you have the `strndup' function. */
++#cmakedefine HAVE_STRNDUP 1
++
+ /* Define to 1 if you have the `cfmakeraw' function. */
+ #cmakedefine HAVE_CFMAKERAW 1
+ 
+--- a/include/libssh/priv.h
++++ b/include/libssh/priv.h
+@@ -43,6 +43,10 @@
+ # endif
+ #endif /* !defined(HAVE_STRTOULL) */
+ 
++#if !defined(HAVE_STRNDUP)
++char *strndup(const char *s, size_t n);
++#endif /* ! HAVE_STRNDUP */
++
+ #ifdef HAVE_BYTESWAP_H
+ #include <byteswap.h>
+ #endif
+--- a/src/misc.c
++++ b/src/misc.c
+@@ -1028,6 +1028,27 @@ int ssh_match_group(const char *group, c
+     return 0;
+ }
+ 
++#if !defined(HAVE_STRNDUP)
++char *strndup(const char *s, size_t n)
++{
++    char *x = NULL;
++
++    if (n + 1 < n) {
++        return NULL;
++    }
++
++    x = malloc(n + 1);
++    if (x == NULL) {
++        return NULL;
++    }
++
++    memcpy(x, s, n);
++    x[n] = '\0';
++
++    return x;
++}
++#endif /* ! HAVE_STRNDUP */
++
+ /** @} */
+ 
+ /* vim: set ts=4 sw=4 et cindent: */

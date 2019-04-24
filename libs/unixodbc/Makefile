@@ -97,6 +97,11 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/$(STAGING_DIR)/usr/include/*.h $(1)/usr/include/
+	# Save autoconf config.h file for host build
+	# copy target autoconf config.h and unixodbc_conf.h file for host build
+	$(INSTALL_DIR) $(1)/tmp/unixodbc
+	$(CP) $(PKG_BUILD_DIR)/config.h $(1)/tmp/unixodbc/
+	$(CP) $(PKG_BUILD_DIR)/unixodbc_conf.h $(1)/tmp/unixodbc/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/etc
@@ -131,8 +136,9 @@ endef
 
 define Host/Configure
 	$(call Host/Configure/Default)
-	cp $(PKG_BUILD_DIR)/config.h $(HOST_BUILD_DIR)
-	cp $(PKG_BUILD_DIR)/unixodbc_conf.h $(HOST_BUILD_DIR)
+	cp $(STAGING_DIR)/tmp/unixodbc/config.h $(HOST_BUILD_DIR)
+	sed -i -e 's!\(LIB_PREFIX \).*$$$$!\1"$(STAGING_DIR)/usr/lib"!' $(HOST_BUILD_DIR)/config.h
+	cp $(STAGING_DIR)/tmp/unixodbc/unixodbc_conf.h $(HOST_BUILD_DIR)
 endef
 
 define Host/Compile

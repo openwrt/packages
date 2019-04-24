@@ -4,10 +4,11 @@
 START=30
 USE_PROCD=1
 
-EXTRA_COMMANDS="suspend resume query status"
+EXTRA_COMMANDS="suspend resume query report status"
 EXTRA_HELP="	suspend	Suspend adblock processing
 	resume	Resume adblock processing
 	query	<DOMAIN> Query active blocklists for specific domains
+	report	<SEARCH> Print dns query statistics with an optional search parameter
 	status	Print runtime information"
 
 adb_init="/etc/init.d/adblock"
@@ -75,6 +76,12 @@ query()
 {
 	[ -s "${adb_pidfile}" ] && return 1
 	rc_procd "${adb_script}" query "${1}"
+}
+
+report()
+{
+	[ -s "${adb_pidfile}" ] && return 1
+	rc_procd "${adb_script}" report "${1:-"+"}" "${2:-"50"}" "${3:-"false"}" "${4:-"true"}"
 }
 
 status()

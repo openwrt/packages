@@ -1,0 +1,114 @@
+From a00ab52931a587cf29c53a945e9295b4d7fe41ba Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Thu, 28 Mar 2019 01:52:04 +0100
+Subject: [PATCH] Add support for RS485 to modbus plugin
+
+Allow setting up RS485 mode for Modbus-RTU
+---
+ src/collectd.conf.pod |  6 +++++
+ src/modbus.c          | 55 +++++++++++++++++++++++++++++++++++++++----
+ 2 files changed, 57 insertions(+), 4 deletions(-)
+
+--- a/src/collectd.conf.pod
++++ b/src/collectd.conf.pod
+@@ -4234,6 +4234,12 @@ For Modbus/RTU, specifies the path to th
+ For Modbus/RTU, specifies the baud rate of the serial device.
+ Note, connections currently support only 8/N/1.
+ 
++=item B<UARTType> I<UARTType>
++
++For Modbus/RTU, specifies the type of the serial device.
++RS232, RS422 and RS485 are supported. Defaults to RS232.
++Available only on Linux systems with libmodbus>=2.9.4.
++
+ =item B<Interval> I<Interval>
+ 
+ Sets the interval (in seconds) in which the values will be collected from this
+--- a/src/modbus.c
++++ b/src/modbus.c
+@@ -95,6 +95,12 @@ enum mb_conntype_e /* {{{ */
+   MBCONN_RTU }; /* }}} */
+ typedef enum mb_conntype_e mb_conntype_t;
+ 
++enum mb_uarttype_e /* {{{ */
++{ UARTTYPE_RS232,
++  UARTTYPE_RS422,
++  UARTTYPE_RS485 }; /* }}} */
++typedef enum mb_uarttype_e mb_uarttype_t;
++
+ struct mb_data_s;
+ typedef struct mb_data_s mb_data_t;
+ struct mb_data_s /* {{{ */
+@@ -124,8 +130,9 @@ struct mb_host_s /* {{{ */
+   char host[DATA_MAX_NAME_LEN];
+   char node[NI_MAXHOST]; /* TCP hostname or RTU serial device */
+   /* char service[NI_MAXSERV]; */
+-  int port;     /* for Modbus/TCP */
+-  int baudrate; /* for Modbus/RTU */
++  int port;               /* for Modbus/TCP */
++  int baudrate;           /* for Modbus/RTU */
++  mb_uarttype_t uarttype; /* UART type for Modbus/RTU */
+   mb_conntype_t conntype;
+   cdtime_t interval;
+ 
+@@ -390,6 +397,22 @@ static int mb_init_connection(mb_host_t
+     return status;
+   }
+ 
++#if defined(linux) && LIBMODBUS_VERSION_CHECK(2, 9, 4)
++  switch (host->uarttype) {
++  case UARTTYPE_RS485:
++    if (modbus_rtu_set_serial_mode(host->connection, MODBUS_RTU_RS485))
++      DEBUG("Modbus plugin: Setting RS485 mode failed.");
++    break;
++  case UARTTYPE_RS422:
++    /* libmodbus doesn't say anything about full-duplex symmetric RS422 UART */
++    break;
++  case UARTTYPE_RS232:
++    break;
++  default:
++    DEBUG("Modbus plugin: Invalid UART type!.");
++  }
++#endif /* defined(linux) && LIBMODBUS_VERSION_CHECK(2, 9, 4) */
++
+   return 0;
+ } /* }}} int mb_init_connection */
+ #endif /* !LEGACY_LIBMODBUS */
+@@ -951,11 +974,35 @@ static int mb_config_add_host(oconfig_it
+         status = -1;
+     } else if (strcasecmp("Device", child->key) == 0) {
+       status = cf_util_get_string_buffer(child, host->node, sizeof(host->node));
+-      if (status == 0)
++      if (status == 0) {
+         host->conntype = MBCONN_RTU;
++        host->uarttype = UARTTYPE_RS232;
++      }
+     } else if (strcasecmp("Baudrate", child->key) == 0)
+       status = cf_util_get_int(child, &host->baudrate);
+-    else if (strcasecmp("Interval", child->key) == 0)
++    else if (strcasecmp("UARTType", child->key) == 0) {
++#if defined(linux) && !LEGACY_LIBMODBUS && LIBMODBUS_VERSION_CHECK(2, 9, 4)
++      char buffer[NI_MAXHOST];
++      status = cf_util_get_string_buffer(child, buffer, sizeof(buffer));
++      if (status != 0)
++        break;
++      if (strncmp(buffer, "RS485", 6) == 0)
++        host->uarttype = UARTTYPE_RS485;
++      else if (strncmp(buffer, "RS422", 6) == 0)
++        host->uarttype = UARTTYPE_RS422;
++      else if (strncmp(buffer, "RS232", 6) == 0)
++        host->uarttype = UARTTYPE_RS232;
++      else {
++        ERROR("Modbus plugin: The UARTType \"%s\" is unknown.", buffer);
++        status = -1;
++        break;
++      }
++#else
++      ERROR("Modbus plugin: Option `UARTType' not supported. Please "
++            "upgrade libmodbus to at least 2.9.4");
++      return -1;
++#endif
++    } else if (strcasecmp("Interval", child->key) == 0)
+       status = cf_util_get_cdtime(child, &host->interval);
+     else if (strcasecmp("Slave", child->key) == 0)
+       /* Don't set status: Gracefully continue if a slave fails. */

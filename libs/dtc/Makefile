@@ -8,10 +8,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dtc
-PKG_VERSION:=1.4.7
+PKG_VERSION:=1.5.0
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=6643e8f00ff86350f465bb54b2185058b5b1b7bac01a0842c81a52b86589cde7
+PKG_HASH:=c672e443c9f7e39f5a7c8e602da6777f9ad55ad70de87de300a43828c8050172
 PKG_SOURCE_URL:=@KERNEL/software/utils/dtc
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=GPL
@@ -74,14 +74,12 @@ define Package/libfdt/install
 	$(CP) $(PKG_INSTALL_DIR)/lib/libfdt*.so* $(1)/usr/lib
 endef
 
-TARGET_CFLAGS += \
-	$(FPIC)
-
 # NO_PYTHON is for disabling pylibfdt
 MAKE_FLAGS += \
 	PREFIX= \
 	NO_PYTHON=1 \
-	CFLAGS="$(TARGET_CFLAGS)"
+	NO_VALGRIND=1 \
+	NO_YAML=1 \
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib

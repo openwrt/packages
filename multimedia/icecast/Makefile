@@ -6,18 +6,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=icecast
-PKG_VERSION:=2.4.3
-PKG_RELEASE:=3
+PKG_VERSION:=2.4.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.xiph.org/releases/icecast/
-PKG_HASH:=c85ca48c765d61007573ee1406a797ae6cb31fb5961a42e7f1c87adb45ddc592
+PKG_HASH:=49b5979f9f614140b6a38046154203ee28218d8fc549888596a683ad604e4d44
 
 PKG_MAINTAINER:=André Gaul <andre@gaul.io>, \
 		Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:icecast:icecast
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:= 1
@@ -30,7 +31,7 @@ define Package/icecast
   DEPENDS:=+libcurl +libxml2 +libxslt +libogg +libvorbisidec
   TITLE:=A streaming media server for Ogg/Vorbis and MP3 audio streams
   USERID:=icecast=87:icecast=87
-  URL:=http://www.icecast.org/
+  URL:=https://icecast.org/
 endef
 
 define Package/icecast/description

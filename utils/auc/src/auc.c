@@ -13,7 +13,7 @@
  */
 
 #define _GNU_SOURCE
-#define AUC_VERSION "0.0.9"
+#define AUC_VERSION "0.1.4"
 
 #include <fcntl.h>
 #include <dlfcn.h>
@@ -61,8 +61,8 @@ static bool cur_resume;
 static int output_fd = -1;
 static int retry, imagebuilder, building, ibready;
 static char *board_name = NULL;
-static char *target = NULL, *subtarget = NULL;
-static char *distribution = NULL, *version = NULL;
+static char *target = NULL;
+static char *distribution = NULL, *version = NULL, *revision = NULL;
 static int uptodate;
 static char *filename = NULL;
 static int rc;
@@ -93,6 +93,7 @@ static const struct blobmsg_policy board_policy[__BOARD_MAX] = {
 enum {
 	RELEASE_DISTRIBUTION,
 	RELEASE_VERSION,
+	RELEASE_REVISION,
 	RELEASE_TARGET,
 	__RELEASE_MAX,
 };
@@ -100,6 +101,7 @@ enum {
 static const struct blobmsg_policy release_policy[__RELEASE_MAX] = {
 	[RELEASE_DISTRIBUTION] = { .name = "distribution", .type = BLOBMSG_TYPE_STRING },
 	[RELEASE_VERSION] = { .name = "version", .type = BLOBMSG_TYPE_STRING },
+	[RELEASE_REVISION] = { .name = "revision", .type = BLOBMSG_TYPE_STRING },
 	[RELEASE_TARGET] = { .name = "target", .type = BLOBMSG_TYPE_STRING },
 };
 
@@ -122,13 +124,13 @@ static const struct blobmsg_policy packagelist_policy[__PACKAGELIST_MAX] = {
  */
 enum {
 	UPGTEST_CODE,
-	UPGTEST_STDOUT,
+	UPGTEST_STDERR,
 	__UPGTEST_MAX,
 };
 
 static const struct blobmsg_policy upgtest_policy[__UPGTEST_MAX] = {
 	[UPGTEST_CODE] = { .name = "code", .type = BLOBMSG_TYPE_INT32 },
-	[UPGTEST_STDOUT] = { .name = "stdout", .type = BLOBMSG_TYPE_STRING },
+	[UPGTEST_STDERR] = { .name = "stderr", .type = BLOBMSG_TYPE_STRING },
 };
 
 
@@ -167,7 +169,6 @@ enum {
 
 static const struct blobmsg_policy image_policy[__IMAGE_MAX] = {
 	[IMAGE_REQHASH] = { .name = "request_hash", .type = BLOBMSG_TYPE_STRING },
-	[IMAGE_URL] = { .name = "url", .type = BLOBMSG_TYPE_STRING },
 	[IMAGE_FILES] = { .name = "files", .type = BLOBMSG_TYPE_STRING },
 	[IMAGE_SYSUPGRADE] = { .name = "sysupgrade", .type = BLOBMSG_TYPE_STRING },
 };
@@ -252,7 +253,7 @@ static void pkglist_check_cb(struct ubus_request *req, int type, struct blob_att
 		return;
 	}
 
-	blobmsg_add_field(buf, BLOBMSG_TYPE_TABLE, "packages", blobmsg_data(tb[PACKAGELIST_PACKAGES]), blobmsg_data_len(tb[PACKAGELIST_PACKAGES]));
+	blobmsg_add_field(buf, BLOBMSG_TYPE_TABLE, "installed", blobmsg_data(tb[PACKAGELIST_PACKAGES]), blobmsg_data_len(tb[PACKAGELIST_PACKAGES]));
 };
 
 /*
@@ -309,23 +310,24 @@ static void board_cb(struct ubus_request *req, int type, struct blob_attr *msg) 
 	blobmsg_parse(release_policy, __RELEASE_MAX, rel,
 			blobmsg_data(tb[BOARD_RELEASE]), blobmsg_data_len(tb[BOARD_RELEASE]));
 
-	if (!rel[RELEASE_TARGET]) {
-		fprintf(stderr, "No target received\n");
+	if (!rel[RELEASE_TARGET] ||
+	    !rel[RELEASE_DISTRIBUTION] ||
+	    !rel[RELEASE_VERSION] ||
+	    !rel[RELEASE_REVISION]) {
+		fprintf(stderr, "No release information received\n");
 		rc=-1;
 		return;
 	}
 
 	target = strdup(blobmsg_get_string(rel[RELEASE_TARGET]));
-	subtarget = strchr(target, '/');
-	*subtarget++ = '\0';
-
 	distribution = strdup(blobmsg_get_string(rel[RELEASE_DISTRIBUTION]));
 	version = strdup(blobmsg_get_string(rel[RELEASE_VERSION]));
+	revision = strdup(blobmsg_get_string(rel[RELEASE_REVISION]));
 
 	blobmsg_add_string(buf, "distro", distribution);
 	blobmsg_add_string(buf, "target", target);
-	blobmsg_add_string(buf, "subtarget", subtarget);
 	blobmsg_add_string(buf, "version", version);
+	blobmsg_add_string(buf, "revision", revision);
 }
 
 /*
@@ -344,8 +346,13 @@ static void upgtest_cb(struct ubus_request *req, int type, struct blob_attr *msg
 	}
 
 	*valid = (blobmsg_get_u32(tb[UPGTEST_CODE]) == 0)?1:0;
-	if (*valid == 0)
-		fprintf(stderr, "%s", blobmsg_get_string(tb[UPGTEST_STDOUT]));
+
+	if (tb[UPGTEST_STDERR])
+		fprintf(stderr, "%s", blobmsg_get_string(tb[UPGTEST_STDERR]));
+	else if (*valid == 0)
+		fprintf(stderr, "image verification failed\n");
+	else
+		fprintf(stderr, "image verification succeeded\n");
 };
 
 /**
@@ -433,9 +440,14 @@ static void header_done_cb(struct uclient *cl)
 		request_done(cl);
 		rc=-1;
 		break;
+	case 409:
+		fprintf(stderr, "Conflicting packages requested\n");
+		request_done(cl);
+		rc=-2;
+		break;
 	case 412:
-		fprintf(stderr, "%s target %s/%s (%s) not found. Please report this at %s\n",
-			distribution, target, subtarget, board_name, server_issues);
+		fprintf(stderr, "%s target %s (%s) not found. Please report this at %s\n",
+			distribution, target, board_name, server_issues);
 		request_done(cl);
 		rc=-2;
 		break;
@@ -703,98 +715,6 @@ static int init_ustream_ssl(void) {
 	return 0;
 }
 
-/**
- * use busybox sha256sum to verify sha256sums file
- */
-static int sha256sum_v(const char *sha256file, const char *msgfile) {
-	pid_t pid;
-	int fds[2];
-	int status;
-	FILE *f = fopen(sha256file, "r");
-	char sumline[512] = {};
-	char *fname;
-	unsigned int fnlen;
-	unsigned int cnt = 0;
-
-	if (pipe(fds))
-		return -1;
-
-	if (!f)
-		return -1;
-
-
-	pid = fork();
-	switch (pid) {
-	case -1:
-		return -1;
-
-	case 0:
-		uloop_done();
-
-		dup2(fds[0], 0);
-		close(1);
-		close(2);
-		close(fds[0]);
-		close(fds[1]);
-		if (execl("/bin/busybox", "/bin/busybox", "sha256sum", "-s", "-c", NULL));
-			return -1;
-
-		break;
-
-	default:
-		while (fgets(sumline, sizeof(sumline), f)) {
-			fname = &sumline[66];
-			fnlen = strlen(fname);
-			fname[fnlen-1] = '\0';
-			if (!strcmp(fname, msgfile)) {
-				fname[fnlen-1] = '\n';
-				write(fds[1], sumline, strlen(sumline));
-				cnt++;
-			}
-		}
-		fclose(f);
-		close(fds[1]);
-		waitpid(pid, &status, 0);
-		close(fds[0]);
-
-		if (cnt == 1)
-			return WEXITSTATUS(status);
-		else
-			return -1;
-	}
-
-	return -1;
-}
-
-/**
- * use usign to verify sha256sums.sig
- */
-static int usign_v(const char *file) {
-	pid_t pid;
-	int status;
-
-	pid = fork();
-	switch (pid) {
-	case -1:
-		return -1;
-
-	case 0:
-		uloop_done();
-
-		if (execl("/usr/bin/usign", "/usr/bin/usign",
-		          "-V", "-q", "-P", PUBKEY_PATH, "-m", file, NULL));
-			return -1;
-
-		break;
-
-	default:
-		waitpid(pid, &status, 0);
-		return WEXITSTATUS(status);
-	}
-
-	return -1;
-}
-
 static int ask_user(void)
 {
 	fprintf(stderr, "Are you sure you want to continue the upgrade process? [N/y] ");
@@ -828,10 +748,8 @@ int main(int args, char *argv[]) {
 	char *newversion = NULL;
 	struct blob_attr *tb[__IMAGE_MAX];
 	struct blob_attr *tbc[__CHECK_MAX];
-	char *tmp;
 	struct stat imgstat;
 	int check_only = 0;
-	int ignore_sig = 0;
 	unsigned char argc = 1;
 
 	snprintf(user_agent, sizeof(user_agent), "%s (%s)", argv[0], AUC_VERSION);
@@ -858,9 +776,6 @@ int main(int args, char *argv[]) {
 		if (!strncmp(argv[argc], "-c", 3))
 			check_only = 1;
 
-		if (!strncmp(argv[argc], "-F", 3))
-			ignore_sig = 1;
-
 		argc++;
 	};
 
@@ -878,17 +793,19 @@ int main(int args, char *argv[]) {
 		goto freeconfig;
 	}
 
-	rc = init_ustream_ssl();
-	if (rc == -2) {
-		fprintf(stderr, "No CA certificates loaded, please install ca-certificates\n");
-		rc=-1;
-		goto freessl;
-	}
+	if (!strncmp(serverurl, "https", 5)) {
+		rc = init_ustream_ssl();
+		if (rc == -2) {
+			fprintf(stderr, "No CA certificates loaded, please install ca-certificates\n");
+			rc=-1;
+			goto freessl;
+		}
 
-	if (rc || !ssl_ctx) {
-		fprintf(stderr, "SSL support not available, please install ustream-ssl\n");
-		rc=-1;
-		goto freessl;
+		if (rc || !ssl_ctx) {
+			fprintf(stderr, "SSL support not available, please install ustream-ssl\n");
+			rc=-1;
+			goto freessl;
+		}
 	}
 
 	blobmsg_buf_init(&checkbuf);
@@ -923,8 +840,8 @@ int main(int args, char *argv[]) {
 
 	blobmsg_add_u32(&checkbuf, "upgrade_packages", upgrade_packages);
 
-	fprintf(stdout, "running %s %s on %s/%s (%s)\n", distribution,
-		version, target, subtarget, board_name);
+	fprintf(stdout, "running %s %s on %s (%s)\n", distribution,
+		version, target, board_name);
 
 	fprintf(stdout, "checking %s for release upgrade%s\n", serverurl,
 		upgrade_packages?" or updated packages":"");
@@ -986,7 +903,6 @@ int main(int args, char *argv[]) {
 
 	blobmsg_add_string(&reqbuf, "distro", distribution);
 	blobmsg_add_string(&reqbuf, "target", target);
-	blobmsg_add_string(&reqbuf, "subtarget", subtarget);
 	blobmsg_add_string(&reqbuf, "board", board_name);
 
 	blob_buf_init(&allpkg, 0);
@@ -1038,7 +954,17 @@ int main(int args, char *argv[]) {
 		goto freeboard;
 	}
 
-	strncpy(url, blobmsg_get_string(tb[IMAGE_SYSUPGRADE]), sizeof(url));
+	if (!tb[IMAGE_FILES]) {
+		if (!rc) {
+			fprintf(stderr, "no path to image files returned\n");
+			rc=-1;
+		}
+		goto freeboard;
+	}
+
+	snprintf(url, sizeof(url), "%s/%s/%s", serverurl,
+	         blobmsg_get_string(tb[IMAGE_FILES]),
+	         blobmsg_get_string(tb[IMAGE_SYSUPGRADE]));
 
 	server_request(url, NULL, NULL);
 
@@ -1057,73 +983,6 @@ int main(int args, char *argv[]) {
 		goto freeboard;
 	}
 
-	tmp=strrchr(url, '/');
-
-	strcpy(tmp, "/sha256sums");
-	server_request(url, NULL, NULL);
-
-	if (stat("sha256sums", &imgstat)) {
-		fprintf(stderr, "sha256sums download failed\n");
-		rc=-1;
-		goto freeboard;
-	}
-
-	if ((intmax_t)imgstat.st_size != out_len) {
-		fprintf(stderr, "sha256sums download incomplete\n");
-		unlink("sha256sums");
-		rc=-1;
-		goto freeboard;
-	}
-
-	if (out_len < 68) {
-		fprintf(stderr, "sha256sums size mismatch\n");
-		unlink("sha256sums");
-		rc=-1;
-		goto freeboard;
-	}
-
-	if (sha256sum_v("sha256sums", filename)) {
-		fprintf(stderr, "checksum verification failed\n");
-		unlink(filename);
-		unlink("sha256sums");
-		rc=-1;
-		goto freeboard;
-	}
-
-	strcpy(tmp, "/sha256sums.sig");
-	server_request(url, NULL, NULL);
-
-	if (stat("sha256sums.sig", &imgstat)) {
-		fprintf(stderr, "sha256sums.sig download failed\n");
-		rc=-1;
-		goto freeboard;
-	}
-
-	if ((intmax_t)imgstat.st_size != out_len) {
-		fprintf(stderr, "sha256sums.sig download incomplete\n");
-		unlink("sha256sums.sig");
-		rc=-1;
-		goto freeboard;
-	}
-
-	if (out_len < 16) {
-		fprintf(stderr, "sha256sums.sig size mismatch\n");
-		unlink("sha256sums.sig");
-		rc=-1;
-		goto freeboard;
-	}
-
-	if (usign_v("sha256sums")) {
-		fprintf(stderr, "signature verification failed\n");
-		if (!ignore_sig) {
-			unlink(filename);
-			unlink("sha256sums");
-			unlink("sha256sums.sig");
-			rc=-1;
-			goto freeboard;
-		}
-	};
-
 	if (strcmp(filename, "firmware.bin")) {
 		if (rename(filename, "firmware.bin")) {
 			fprintf(stderr, "can't rename to firmware.bin\n");
@@ -1134,20 +993,20 @@ int main(int args, char *argv[]) {
 	}
 
 	valid = 0;
-	ubus_invoke(ctx, id, "upgrade_test", NULL, upgtest_cb, &valid, 3000);
+	ubus_invoke(ctx, id, "upgrade_test", NULL, upgtest_cb, &valid, 15000);
 	if (!valid) {
 		rc=-1;
 		goto freeboard;
 	}
 
+	fprintf(stderr, "invoking sysupgrade\n");
+
 	blobmsg_add_u8(&upgbuf, "keep", 1);
-	fprintf(stdout, "invoking sysupgrade\n");
-	ubus_invoke(ctx, id, "upgrade_start", upgbuf.head, NULL, NULL, 3000);
+	ubus_invoke(ctx, id, "upgrade_start", upgbuf.head, NULL, NULL, 120000);
 
 freeboard:
 	free(board_name);
 	free(target);
-	/* subtarget is a pointer within target, don't free */
 	free(distribution);
 	free(version);
 

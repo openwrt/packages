@@ -8,7 +8,8 @@ USE_PROCD=1
 PROG=/usr/sbin/sshd
 
 start_service() {
-	for type in rsa ecdsa ed25519; do {
+	for type in rsa ecdsa ed25519
+	do
 		# check for keys
 		key=/etc/ssh/ssh_host_${type}_key
 		[ ! -f $key ] && {
@@ -17,11 +18,11 @@ start_service() {
 				/usr/bin/ssh-keygen -N '' -t $type -f $key 2>&- >&-
 			}
 		}
-	}; done
+	done
 	mkdir -m 0700 -p /var/empty
 
-	local lport=`grep ^Port /etc/ssh/sshd_config | cut -d " " -f 2`
-	[ -z $lport ] && lport=22
+	local lport=$(awk '/^Port / { print $2; exit }' /etc/ssh/sshd_config)
+	[ -z "$lport" ] && lport=22
 
 	procd_open_instance
 	procd_add_mdns "ssh" "tcp" "$lport"
@@ -31,16 +32,13 @@ start_service() {
 
 shutdown() {
 	local pid
-	local pids
-	local pid_mine
 
 	stop
 
 	# kill active clients
-	pid_mine="$$"
-	pids="$(pidof sshd)"
-	for pid in $pids; do
-		[ "$pid" = "$pid_mine" ] && continue
+	for pid in $(pidof sshd)
+	do
+		[ "$pid" == "$$" ] && continue
 		[ -e "/proc/$pid/stat" ] && kill $pid
 	done
 }

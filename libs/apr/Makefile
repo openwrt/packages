@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apr
 PKG_VERSION:=1.6.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/apr/
@@ -29,7 +29,7 @@ define Package/libapr
   CATEGORY:=Libraries
   DEPENDS:=+libpthread +librt +libuuid
   TITLE:=Apache Portable Runtime Library
-  URL:=http://apr.apache.org/
+  URL:=https://apr.apache.org/
 endef
 
 TARGET_CFLAGS += $(FPIC)

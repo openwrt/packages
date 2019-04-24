@@ -1,6 +1,6 @@
 --- a/Clients/dns-sd.c
 +++ b/Clients/dns-sd.c
-@@ -1811,7 +1811,7 @@ Fail:
+@@ -2281,7 +2281,7 @@ Fail:
  
  // NOT static -- otherwise the compiler may optimize it out
  // The "@(#) " pattern is a special prefix the "what" command looks for
@@ -11,7 +11,7 @@
  // If the process crashes, then this string will be magically included in the automatically-generated crash log
 --- a/mDNSPosix/PosixDaemon.c
 +++ b/mDNSPosix/PosixDaemon.c
-@@ -289,9 +289,9 @@ asm (".desc ___crashreporter_info__, 0x1
+@@ -290,9 +290,9 @@ asm (".desc ___crashreporter_info__, 0x1
  
  // For convenience when using the "strings" command, this is the last thing in the file
  #if mDNSResponderVersion > 1
@@ -33,7 +33,7 @@
 +const char VersionString_SCCS[] = "@(#) libjdns_sd " STRINGIFY(mDNSResponderVersion);
 --- a/mDNSShared/dnsextd.c
 +++ b/mDNSShared/dnsextd.c
-@@ -3141,7 +3141,7 @@ mDNS mDNSStorage;
+@@ -3136,7 +3136,7 @@ mDNS mDNSStorage;
  
  // For convenience when using the "strings" command, this is the last thing in the file
  // The "@(#) " pattern is a special prefix the "what" command looks for
@@ -48,5 +48,5 @@
  
  // NOT static -- otherwise the compiler may optimize it out
  // The "@(#) " pattern is a special prefix the "what" command looks for
--const char VersionString_SCCS_libdnssd[] = "@(#) libdns_sd " STRINGIFY(mDNSResponderVersion) " (" __DATE__ " " __TIME__ ")";
-+const char VersionString_SCCS_libdnssd[] = "@(#) libdns_sd " STRINGIFY(mDNSResponderVersion);
+-const char VersionString_SCCS_libdnssd[] DNSSD_USED = "@(#) libdns_sd " STRINGIFY(mDNSResponderVersion) " (" __DATE__ " " __TIME__ ")";
++const char VersionString_SCCS_libdnssd[] DNSSD_USED = "@(#) libdns_sd " STRINGIFY(mDNSResponderVersion);

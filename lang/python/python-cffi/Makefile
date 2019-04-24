@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cffi
-PKG_VERSION:=1.11.5
+PKG_VERSION:=1.12.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=cffi-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.io/packages/source/c/cffi
-PKG_HASH:=e90f17980e6ab0f3c2f3730e56d1fe9bcba1891eeea58966e89d352492cc74f4
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/c/cffi
+PKG_HASH:=041c81822e9f84b1d9c401182e174996f0bae9991f33725d059b771744290774
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-cffi-$(PKG_VERSION)
 
@@ -36,21 +36,24 @@ define Package/python-cffi/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=http://cffi.readthedocs.org/
+  TITLE:=C Foreign Function Interface
+  URL:=https://cffi.readthedocs.org/
   DEPENDS:=+libffi
 endef
 
 define Package/python-cffi
 $(call Package/python-cffi/Default)
-  TITLE:=python-cffi
-  DEPENDS+=+PACKAGE_python-cffi:python-light +PACKAGE_python-cffi:python-pycparser
+  DEPENDS+= \
+      +PACKAGE_python-cffi:python-light \
+      +PACKAGE_python-cffi:python-pycparser
   VARIANT:=python
 endef
 
 define Package/python3-cffi
 $(call Package/python-cffi/Default)
-  TITLE:=python3-cffi
-  DEPENDS+=+PACKAGE_python3-cffi:python3-light +PACKAGE_python3-cffi:python3-pycparser
+  DEPENDS+= \
+      +PACKAGE_python3-cffi:python3-light \
+      +PACKAGE_python3-cffi:python3-pycparser
   VARIANT:=python3
 endef
 

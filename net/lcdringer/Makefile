@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lcdringer
-PKG_VERSION:=0.0.2
-PKG_RELEASE:=1
+PKG_VERSION:=0.0.3
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -17,11 +17,13 @@ PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.flyn.org/projects/lcdringer
-PKG_HASH:=34f8a5325cb20bf404ac1a10fe63d013a077a12814c4558df4e55d95262ff618
+PKG_SOURCE_URL:=https://www.flyn.org/projects/lcdringer
+PKG_HASH:=72f34473a62f997516e0a73827b4400150966e1d1d98ece4d7b92075e26913e0
 PKG_BUILD_DEPENDS:=vala
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -31,7 +33,7 @@ define Package/lcdringer
   CATEGORY:=Network
   DEPENDS:=+libgee +libgstreamer1 +loudmouth @TARGET_brcm2708
   TITLE:=lcdringer
-  URL:=http://www.flyn.org/projects/lcdringer/
+  URL:=https://www.flyn.org/projects/lcdringer/
 endef
 
 define Package/lcdringer/decription

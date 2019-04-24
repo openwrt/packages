@@ -9,15 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NPM_NAME:=mozilla-iot-gateway
 PKG_NAME:=node-$(PKG_NPM_NAME)
-PKG_VERSION:=0.3.1
-PKG_RELEASE:=1
+PKG_VERSION:=0.7.0
+PKG_RELEASE:=2
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/mozilla-iot/gateway.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=ba05bc3e93c36768244df922434e7132c2dae85a1ff9e3213beea087a4844d11
+PKG_SOURCE_URL:=https://codeload.github.com/mozilla-iot/gateway/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=a5ff36942b686ea39f6d1e5d369cd783d6e2265f19262856647de7e596aa1a77
 
 PKG_BUILD_DEPENDS:=node/host openzwave
 
@@ -33,7 +30,9 @@ define Package/node-mozilla-iot-gateway
   CATEGORY:=Languages
   TITLE:=Things Gateway by Mozilla
   URL:=https://iot.mozilla.org/gateway/
-  DEPENDS:=+node +node-npm +libopenzwave +python +openssl-util
+  DEPENDS:= +libpthread +node +node-npm +libopenzwave +openzwave-config +python +python3-light +python3-pip +openssl-util
+  DEPENDS+= +MOIT_enable-plugin-support:git-http
+  MENU:=1
 endef
 
 define Package/node-mozilla-iot-gateway/description
@@ -44,7 +43,13 @@ define Package/node-mozilla-iot-gateway/description
   and defining a standard data model and APIs to make them interoperable.
 endef
 
+define Package/node-mozilla-iot-gateway/config
+  source "$(SOURCE)/Config.in"
+endef
+
 CPU:=$(subst powerpc,ppc,$(subst aarch64,arm64,$(subst x86_64,x64,$(subst i386,ia32,$(ARCH)))))
+
+TARGET_CFLAGS+=$(FPIC)
 
 define Build/Compile
 	$(MAKE_VARS) \
@@ -58,11 +63,18 @@ define Build/Compile
 endef
 
 define Package/node-mozilla-iot-gateway/install
-	$(INSTALL_DIR) $(1)/opt/mozilla-iot/gateway
+	$(INSTALL_DIR) $(1)/opt/mozilla-iot/gateway/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/things-gateway/* $(1)/opt/mozilla-iot/gateway
 	$(STAGING_DIR_HOSTPKG)/bin/npm --prefix=$(1)/opt/mozilla-iot/gateway install $(1)/opt/mozilla-iot/gateway
-	$(LN) ../constants.js $(1)/opt/mozilla-iot/gateway/src/addons/addon-constants.js
-	$(LN) /tmp/mozilla-iot/gateway/run-app.log $(1)/opt/mozilla-iot/gateway/run-app.log
+
+	# Clean up of old build files that confuse OpenWrt's dependency checker
+	$(RM) -r $(1)/opt/mozilla-iot/gateway/node_modules/sqlite3/lib/binding/node-v57-linux-x64
+	$(RM) -r $(1)/opt/mozilla-iot/gateway/node_modules/ursa-optional/build/Release/ursaNative.node
+	$(RM) -r $(1)/opt/mozilla-iot/gateway/node_modules/ursa-optional/build/Release/obj.target/ursaNative.node
+
+	$(INSTALL_DIR) $(1)/opt/mozilla-iot/gateway/node_modules/sqlite3/lib/binding/node-v57-linux-$(CPU)/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/things-gateway/node_modules/sqlite3/lib/binding/node-v57-linux-$(CPU)/node_sqlite3.node \
+		$(1)/opt/mozilla-iot/gateway/node_modules/sqlite3/lib/binding/node-v57-linux-$(CPU)/
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/mozilla-iot-gateway.init $(1)/etc/init.d/mozilla-iot-gateway

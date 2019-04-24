@@ -9,10 +9,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=3.0.0
-PKG_RELEASE:=1
+PKG_VERSION:=3.1.0
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=8d7af64fe8bd5ea5c3bdf17131a8b858491bcce1ee3839425a6d91fb821b5713
+PKG_HASH:=6a0508df079a0a33c2487ca936a56c12122f105b8a96a44374704bef6c69abfc
 PKG_SOURCE_URL:=http://download.qemu.org/
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
@@ -193,68 +193,74 @@ CONFIGURE_ARGS +=			\
 	--disable-fortify-source	\
 	--disable-stack-protector	\
 
+# Make a list from QEMU source code for reference
+#
+#	grep -E '^\s*--disable-[^)]+\)' configure | cut -f1 -d')' | sort -u
+#
 CONFIGURE_ARGS +=			\
 	--audio-drv-list=''		\
+	--disable-attr			\
+	--disable-bluez			\
+	--disable-brlapi		\
+	--disable-bsd-user		\
+	--disable-bzip2			\
+	--disable-cap-ng		\
+	--disable-cocoa			\
+	--disable-curl			\
 	--disable-debug-info		\
-	--disable-modules		\
-	--disable-sdl			\
-	--disable-qom-cast-debug	\
-	--disable-virtfs		\
-	--disable-vnc			\
 	--disable-debug-tcg		\
+	--disable-docs			\
+	--disable-gcrypt		\
+	--disable-glusterfs		\
+	--disable-gnutls		\
+	--disable-gtk			\
+	--disable-guest-agent-msi	\
+	--disable-jemalloc		\
+	--disable-libiscsi		\
+	--disable-libnfs		\
+	--disable-libpmem		\
+	--disable-libssh2		\
+	--disable-libudev		\
+	--disable-libusb		\
+	--disable-libxml2		\
+	--disable-linux-aio		\
+	--disable-lzo			\
+	--disable-modules		\
+	--disable-netmap		\
+	--disable-nettle		\
+	--disable-numa			\
+	--disable-opengl		\
+	--disable-qom-cast-debug	\
+	--disable-rbd			\
+	--disable-rdma			\
+	--disable-sdl			\
+	--disable-seccomp		\
+	--disable-smartcard		\
+	--disable-snappy		\
 	--disable-sparse		\
+	--disable-spice			\
 	--disable-strip			\
-	--disable-vnc-sasl		\
-	--disable-vnc-jpeg		\
-	--disable-vnc-png		\
+	--disable-tcg-interpreter	\
+	--disable-tcmalloc		\
+	--disable-tools			\
+	--disable-tpm			\
+	--disable-usb-redir		\
 	--disable-uuid			\
 	--disable-vde			\
-	--disable-netmap		\
+	--disable-vhdx			\
+	--disable-virglrenderer		\
+	--disable-virtfs		\
+	--disable-vnc			\
+	--disable-vnc-jpeg		\
+	--disable-vnc-png		\
+	--disable-vnc-sasl		\
+	--disable-vte			\
+	--disable-werror		\
 	--disable-xen			\
 	--disable-xen-pci-passthrough	\
 	--disable-xen-pv-domain-build	\
-	--disable-brlapi		\
-	--disable-bluez			\
-	--disable-tcg-interpreter	\
-	--disable-cap-ng		\
-	--disable-spice			\
-	--disable-libiscsi		\
-	--disable-libnfs		\
-	--disable-cocoa			\
-	--disable-bsd-user		\
-	--disable-curl			\
-	--disable-linux-aio		\
-	--disable-attr			\
-	--disable-docs			\
-	--disable-opengl		\
-	--disable-rbd			\
 	--disable-xfsctl		\
-	--disable-smartcard		\
-	--disable-libusb		\
-	--disable-usb-redir		\
 	--disable-zlib-test		\
-	--disable-lzo			\
-	--disable-snappy		\
-	--disable-bzip2			\
-	--disable-guest-agent-msi	\
-	--disable-tools			\
-	--disable-seccomp		\
-	--disable-glusterfs		\
-	--disable-gtk			\
-	--disable-gnutls		\
-	--disable-nettle		\
-	--disable-gcrypt		\
-	--disable-rdma			\
-	--disable-vte			\
-	--disable-virglrenderer		\
-	--disable-tpm			\
-	--disable-libssh2		\
-	--disable-vhdx			\
-	--disable-numa			\
-	--disable-tcmalloc		\
-	--disable-jemalloc		\
-	--disable-strip			\
-	--disable-werror		\
 
 CONFIGURE_ARGS += --target-list='$(foreach target,$(QEMU_TARGET_LIST),$(if $(CONFIG_PACKAGE_qemu-$(target)),$(target)))'
 CONFIGURE_ARGS += $(if $(CONFIG_PACKAGE_qemu-ga),--enable-guest-agent)

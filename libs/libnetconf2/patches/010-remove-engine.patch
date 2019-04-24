@@ -1,0 +1,33 @@
+From 5472ebd501c0558a9434a11b309f3b6a314c2168 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Wed, 7 Nov 2018 16:58:42 -0800
+Subject: [PATCH] session: Remove engine.h include
+
+OpenSSL's engine API is not used except for a cleanup call.
+---
+ src/session.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/src/session.c b/src/session.c
+index edf1bb4..fe90fa9 100644
+--- a/src/session.c
++++ b/src/session.c
+@@ -36,7 +36,6 @@
+ 
+ #if defined(NC_ENABLED_SSH) || defined(NC_ENABLED_TLS)
+ 
+-#   include <openssl/engine.h>
+ #   include <openssl/conf.h>
+ #   include <openssl/err.h>
+ 
+@@ -1296,7 +1295,6 @@ static void
+ nc_ssh_destroy(void)
+ {
+     FIPS_mode_set(0);
+-    ENGINE_cleanup();
+     CONF_modules_unload(1);
+     nc_thread_destroy();
+     ssh_finalize();
+-- 
+2.19.1
+

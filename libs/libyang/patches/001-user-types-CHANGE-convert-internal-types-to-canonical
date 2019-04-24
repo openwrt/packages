@@ -1,0 +1,1030 @@
+Index: libyang-0.16-r3/CMakeLists.txt
+===================================================================
+--- libyang-0.16-r3.orig/CMakeLists.txt
++++ libyang-0.16-r3/CMakeLists.txt
+@@ -351,8 +351,8 @@ else()
+     add_subdirectory(src/extensions)
+ endif(ENABLE_STATIC)
+ 
+-# YANG user types plugins ("user_ipv4" is just an example, not installed by default)
+-set(USER_TYPE_LIST "user_date_and_time")
++# YANG user types plugins
++set(USER_TYPE_LIST "user_yang_types" "user_inet_types")
+ if(ENABLE_STATIC)
+     set(USER_TYPE_LIST_SIZE " 0 ")
+     foreach(USER_TYPE ${USER_TYPE_LIST})
+Index: libyang-0.16-r3/src/parser.c
+===================================================================
+--- libyang-0.16-r3.orig/src/parser.c
++++ libyang-0.16-r3/src/parser.c
+@@ -1936,7 +1936,7 @@ lyp_parse_value(struct lys_type *type, c
+ 
+     /* search user types in case this value is supposed to be stored in a custom way */
+     if (store && type->der && type->der->module) {
+-        c = lytype_store(type->der->module, type->der->name, *value_, val);
++        c = lytype_store(type->der->module, type->der->name, value_, val);
+         if (c == -1) {
+             goto error;
+         } else if (!c) {
+Index: libyang-0.16-r3/src/parser.h
+===================================================================
+--- libyang-0.16-r3.orig/src/parser.h
++++ libyang-0.16-r3/src/parser.h
+@@ -258,11 +258,11 @@ struct lyext_plugin *ext_get_plugin(cons
+  *
+  * @param[in] mod Module of the type.
+  * @param[in] type_name Type (typedef) name.
+- * @param[in] value_str Value to store as a string.
++ * @param[in,out] value_str Stored string value, can be overwritten by the user store callback.
+  * @param[in,out] value Filled value to be overwritten by the user store callback.
+  * @return 0 on successful storing, 1 if the type is not a user type, -1 on error.
+  */
+-int lytype_store(const struct lys_module *mod, const char *type_name, const char *value_str, lyd_val *value);
++int lytype_store(const struct lys_module *mod, const char *type_name, const char **value_str, lyd_val *value);
+ 
+ /**
+  * @brief Free a user type stored value.
+Index: libyang-0.16-r3/src/plugins.c
+===================================================================
+--- libyang-0.16-r3.orig/src/plugins.c
++++ libyang-0.16-r3/src/plugins.c
+@@ -574,7 +574,7 @@ lytype_find(const char *module, const ch
+ }
+ 
+ int
+-lytype_store(const struct lys_module *mod, const char *type_name, const char *value_str, lyd_val *value)
++lytype_store(const struct lys_module *mod, const char *type_name, const char **value_str, lyd_val *value)
+ {
+     struct lytype_plugin_list *p;
+     char *err_msg = NULL;
+@@ -583,9 +583,9 @@ lytype_store(const struct lys_module *mo
+ 
+     p = lytype_find(mod->name, mod->rev_size ? mod->rev[0].date : NULL, type_name);
+     if (p) {
+-        if (p->store_clb(type_name, value_str, value, &err_msg)) {
++        if (p->store_clb(mod->ctx, type_name, value_str, value, &err_msg)) {
+             if (!err_msg) {
+-                if (asprintf(&err_msg, "Failed to store value \"%s\" of user type \"%s\".", value_str, type_name) == -1) {
++                if (asprintf(&err_msg, "Failed to store value \"%s\" of user type \"%s\".", *value_str, type_name) == -1) {
+                     LOGMEM(mod->ctx);
+                     return -1;
+                 }
+Index: libyang-0.16-r3/src/tree_data.c
+===================================================================
+--- libyang-0.16-r3.orig/src/tree_data.c
++++ libyang-0.16-r3/src/tree_data.c
+@@ -5476,7 +5476,7 @@ _lyd_dup_node(const struct lyd_node *nod
+         }
+ 
+         if (sleaf->type.der && sleaf->type.der->module) {
+-            r = lytype_store(sleaf->type.der->module, sleaf->type.der->name, new_leaf->value_str, &new_leaf->value);
++            r = lytype_store(sleaf->type.der->module, sleaf->type.der->name, &new_leaf->value_str, &new_leaf->value);
+             if (r == -1) {
+                 goto error;
+             } else if (!r) {
+Index: libyang-0.16-r3/src/user_types.h
+===================================================================
+--- libyang-0.16-r3.orig/src/user_types.h
++++ libyang-0.16-r3/src/user_types.h
+@@ -33,13 +33,15 @@ extern "C" {
+  * This callback should overwrite the value stored in \p value using some custom encoding. Be careful,
+  * if the type is #LY_TYPE_BITS, the bits must be freed before overwritting the union value.
+  *
++ * @param[in] ctx libyang ctx to enable correct manipulation with values that are in the dictionary.
+  * @param[in] type_name Name of the type being stored.
+- * @param[in] value_str String value to be stored.
++ * @param[in,out] value_str String value to be stored.
+  * @param[in,out] value Value union for the value to be stored in (already is but in the standard way).
+  * @param[out] err_msg Can be filled on error. If not, a generic error message will be printed.
+  * @return 0 on success, non-zero if an error occured and the value could not be stored for any reason.
+  */
+-typedef int (*lytype_store_clb)(const char *type_name, const char *value_str, lyd_val *value, char **err_msg);
++typedef int (*lytype_store_clb)(struct ly_ctx *ctx, const char *type_name, const char **value_str, lyd_val *value,
++                                char **err_msg);
+ 
+ struct lytype_plugin_list {
+     const char *module;          /**< Name of the module where the type is defined. */
+Index: libyang-0.16-r3/src/user_types/user_inet_types.c
+===================================================================
+--- /dev/null
++++ libyang-0.16-r3/src/user_types/user_inet_types.c
+@@ -0,0 +1,235 @@
++/**
++ * @file user_inet_types.c
++ * @author Michal Vasko <mvasko@cesnet.cz>
++ * @brief ietf-inet-types typedef conversion to canonical format
++ *
++ * Copyright (c) 2018 CESNET, z.s.p.o.
++ *
++ * This source code is licensed under BSD 3-Clause License (the "License").
++ * You may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     https://opensource.org/licenses/BSD-3-Clause
++ */
++
++#define _GNU_SOURCE
++
++#include <stdlib.h>
++#include <string.h>
++#include <errno.h>
++#include <arpa/inet.h>
++
++#include "../user_types.h"
++
++#ifdef __GNUC__
++#  define UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
++#else
++#  define UNUSED(x) UNUSED_ ## x
++#endif
++
++static char *
++convert_ipv6_addr(const char *ipv6_addr, char **err_msg)
++{
++    char buf[sizeof(struct in6_addr)], *str;
++
++    str = malloc(INET6_ADDRSTRLEN);
++    if (!str) {
++        *err_msg = NULL;
++        return NULL;
++    }
++
++    if (!inet_pton(AF_INET6, ipv6_addr, buf)) {
++        asprintf(err_msg, "Failed to convert IPv6 address \"%s\".", ipv6_addr);
++        free(str);
++        return NULL;
++    }
++
++    if (!inet_ntop(AF_INET6, buf, str, INET6_ADDRSTRLEN)) {
++        asprintf(err_msg, "Failed to convert IPv6 address (%s).", strerror(errno));
++        free(str);
++        return NULL;
++    }
++
++    return str;
++}
++
++static int
++ip_store_clb(struct ly_ctx *ctx, const char *UNUSED(type_name), const char **value_str, lyd_val *value, char **err_msg)
++{
++    char *ptr, *ipv6_addr, *result, *tmp;
++
++    if (!strchr(*value_str, ':')) {
++        /* not an IPv6 address */
++        return 0;
++    }
++
++    if ((ptr = strchr(*value_str, '%'))) {
++        /* there is a zone index */
++        ipv6_addr = strndup(*value_str, ptr - *value_str);
++    } else {
++        ipv6_addr = (char *)*value_str;
++    }
++
++    /* convert to canonical format */
++    result = convert_ipv6_addr(ipv6_addr, err_msg);
++    if (ptr) {
++        free(ipv6_addr);
++    }
++
++    /* failure */
++    if (!result) {
++        return 1;
++    }
++
++    if (strncmp(*value_str, result, strlen(result))) {
++        /* some conversion took place, update the value */
++        if (ptr) {
++            tmp = result;
++            if (asprintf(&result, "%s%s", tmp, ptr) == -1) {
++                free(tmp);
++                *err_msg = NULL;
++                return 1;
++            }
++            free(tmp);
++        }
++
++        lydict_remove(ctx, *value_str);
++        *value_str = lydict_insert_zc(ctx, result);
++        value->string = *value_str;
++    } else {
++        free(result);
++    }
++
++    return 0;
++}
++
++static int
++ipv4_prefix_store_clb(struct ly_ctx *ctx, const char *UNUSED(type_name), const char **value_str, lyd_val *value, char **err_msg)
++{
++    char *pref_str, *ptr, *result;
++    int result_len, i, j, num;
++    unsigned long int pref;
++
++    pref_str = strchr(*value_str, '/');
++    if (!pref_str) {
++        asprintf(err_msg, "Invalid IPv4 prefix \"%s\".", *value_str);
++        return 1;
++    }
++
++    pref = strtoul(pref_str + 1, &ptr, 10);
++    if (ptr[0]) {
++        asprintf(err_msg, "Invalid IPv4 prefix \"%s\".", *value_str);
++        return 1;
++    }
++
++    result = malloc(INET_ADDRSTRLEN + 3);
++    if (!result) {
++        *err_msg = NULL;
++        return 1;
++    }
++
++    /* generate ip prefix mask */
++    result_len = 0;
++    for (i = 0; i < 4; ++i) {
++        num = 0;
++        for (j = 0; (j < 8) && pref; ++j) {
++            num += (1 << j);
++            --pref;
++        }
++
++        result_len += sprintf(result + result_len, "%s%d", i ? "." : "", num);
++    }
++
++    /* add the prefix */
++    result_len += sprintf(result + result_len, "%s", pref_str);
++
++    if (strcmp(result, *value_str)) {
++        /* some conversion took place, update the value */
++        lydict_remove(ctx, *value_str);
++        *value_str = lydict_insert_zc(ctx, result);
++        value->string = *value_str;
++    } else {
++        free(result);
++    }
++
++    return 0;
++}
++
++static int
++ipv6_prefix_store_clb(struct ly_ctx *ctx, const char *UNUSED(type_name), const char **value_str, lyd_val *value, char **err_msg)
++{
++    char *pref_str, *ptr, *result;
++    int result_len, i, j, num;
++    unsigned long int pref;
++
++    pref_str = strchr(*value_str, '/');
++    if (!pref_str) {
++        asprintf(err_msg, "Invalid IPv6 prefix \"%s\".", *value_str);
++        return 1;
++    }
++
++    pref = strtoul(pref_str + 1, &ptr, 10);
++    if (ptr[0]) {
++        asprintf(err_msg, "Invalid IPv6 prefix \"%s\".", *value_str);
++        return 1;
++    }
++
++    result = malloc(INET6_ADDRSTRLEN + 4);
++    if (!result) {
++        *err_msg = NULL;
++        return 1;
++    }
++
++    /* generate ipv6 prefix mask */
++    result_len = 0;
++    for (i = 0; i < 8; ++i) {
++        num = 0;
++        for (j = 0; (j < 16) && pref; ++j) {
++            num += (1 << j);
++            --pref;
++        }
++
++        result_len += sprintf(result + result_len, "%s%x", i ? ":" : "", num);
++
++        if (!pref && (i < 6)) {
++            /* shorten ending zeros */
++            result_len += sprintf(result + result_len, "::");
++            break;
++        }
++    }
++
++    /* add the prefix */
++    result_len += sprintf(result + result_len, "%s", pref_str);
++
++    if (strcmp(result, *value_str)) {
++        /* some conversion took place, update the value */
++        lydict_remove(ctx, *value_str);
++        *value_str = lydict_insert_zc(ctx, result);
++        value->string = *value_str;
++    } else {
++        free(result);
++    }
++
++    return 0;
++}
++
++static int
++ip_prefix_store_clb(struct ly_ctx *ctx, const char *type_name, const char **value_str, lyd_val *value, char **err_msg)
++{
++    if (strchr(*value_str, ':')) {
++        return ipv6_prefix_store_clb(ctx, type_name, value_str, value, err_msg);
++    }
++    return ipv4_prefix_store_clb(ctx, type_name, value_str, value, err_msg);
++}
++
++/* Name of this array must match the file name! */
++struct lytype_plugin_list user_inet_types[] = {
++    {"ietf-inet-types", "2013-07-15", "ip-address", ip_store_clb, NULL},
++    {"ietf-inet-types", "2013-07-15", "ipv6-address", ip_store_clb, NULL},
++    {"ietf-inet-types", "2013-07-15", "ip-address-no-zone", ip_store_clb, NULL},
++    {"ietf-inet-types", "2013-07-15", "ipv6-address-no-zone", ip_store_clb, NULL},
++    {"ietf-inet-types", "2013-07-15", "ip-prefix", ip_prefix_store_clb, NULL},
++    {"ietf-inet-types", "2013-07-15", "ipv4-prefix", ipv4_prefix_store_clb, NULL},
++    {"ietf-inet-types", "2013-07-15", "ipv6-prefix", ipv6_prefix_store_clb, NULL},
++    {NULL, NULL, NULL, NULL, NULL} /* terminating item */
++};
+Index: libyang-0.16-r3/src/user_types/user_ipv4.c
+===================================================================
+--- libyang-0.16-r3.orig/src/user_types/user_ipv4.c
++++ /dev/null
+@@ -1,42 +0,0 @@
+-/**
+- * @file user_ipv4.c
+- * @author Michal Vasko <mvasko@cesnet.cz>
+- * @brief Example implementation of an ipv4-address as a user type
+- *
+- * Copyright (c) 2018 CESNET, z.s.p.o.
+- *
+- * This source code is licensed under BSD 3-Clause License (the "License").
+- * You may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     https://opensource.org/licenses/BSD-3-Clause
+- */
+-
+-#include <stdlib.h>
+-#include <string.h>
+-#include <arpa/inet.h>
+-#include <sys/socket.h>
+-
+-#include "../user_types.h"
+-
+-static int
+-ipv4_store_clb(const char *type_name, const char *value_str, lyd_val *value, char **err_msg)
+-{
+-    value->ptr = malloc(sizeof(struct in_addr));
+-    if (!value->ptr) {
+-        return 1;
+-    }
+-
+-    if (inet_pton(AF_INET, value_str, value->ptr) != 1) {
+-        free(value->ptr);
+-        return 1;
+-    }
+-    return 0;
+-}
+-
+-/* Name of this array must match the file name! */
+-struct lytype_plugin_list user_ipv4[] = {
+-    {"ietf-inet-types", "2013-07-15", "ipv4-address", ipv4_store_clb, free},
+-    {"ietf-inet-types", "2013-07-15", "ipv4-address-no-zone", ipv4_store_clb, free},
+-    {NULL, NULL, NULL, NULL, NULL} /* terminating item */
+-};
+Index: libyang-0.16-r3/src/user_types/user_yang_types.c
+===================================================================
+--- /dev/null
++++ libyang-0.16-r3/src/user_types/user_yang_types.c
+@@ -0,0 +1,303 @@
++/**
++ * @file user_yang_types.c
++ * @author Michal Vasko <mvasko@cesnet.cz>
++ * @brief ietf-yang-types typedef validation and conversion to canonical format
++ *
++ * Copyright (c) 2018 CESNET, z.s.p.o.
++ *
++ * This source code is licensed under BSD 3-Clause License (the "License").
++ * You may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     https://opensource.org/licenses/BSD-3-Clause
++ */
++#define _GNU_SOURCE
++
++#include <stdlib.h>
++#include <string.h>
++#include <stdint.h>
++#include <errno.h>
++#include <time.h>
++#include <ctype.h>
++
++#include "../user_types.h"
++
++#ifdef __GNUC__
++#  define UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
++#else
++#  define UNUSED(x) UNUSED_ ## x
++#endif
++
++static const char *gmt_offsets[] = {
++    "+00:00",
++    "+00:20",
++    "+00:30",
++    "+01:00",
++    "+01:24",
++    "+01:30",
++    "+02:00",
++    "+02:30",
++    "+03:00",
++    "+03:30",
++    "+04:00",
++    "+04:30",
++    "+04:51",
++    "+05:00",
++    "+05:30",
++    "+05:40",
++    "+05:45",
++    "+06:00",
++    "+06:30",
++    "+07:00",
++    "+07:20",
++    "+07:30",
++    "+08:00",
++    "+08:30",
++    "+08:45",
++    "+09:00",
++    "+09:30",
++    "+09:45",
++    "+10:00",
++    "+10:30",
++    "+11:00",
++    "+11:30",
++    "+12:00",
++    "+12:45",
++    "+13:00",
++    "+13:45",
++    "+14:00",
++    "-00:00",
++    "-00:44",
++    "-01:00",
++    "-02:00",
++    "-02:30",
++    "-03:00",
++    "-03:30",
++    "-04:00",
++    "-04:30",
++    "-05:00",
++    "-06:00",
++    "-07:00",
++    "-08:00",
++    "-08:30",
++    "-09:00",
++    "-09:30",
++    "-10:00",
++    "-10:30",
++    "-11:00",
++    "-12:00",
++};
++
++static int
++date_and_time_store_clb(struct ly_ctx *UNUSED(ctx), const char *UNUSED(type_name), const char **value_str,
++                        lyd_val *UNUSED(value), char **err_msg)
++{
++    struct tm tm, tm2;
++    uint32_t i, j, k;
++    const char *val_str = *value_str;
++    int ret;
++
++    /* \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[\+\-]\d{2}:\d{2})
++     * 2018-03-21T09:11:05(.55785...)(Z|+02:00) */
++    memset(&tm, 0, sizeof tm);
++    i = 0;
++
++    /* year */
++    tm.tm_year = atoi(val_str + i);
++    /* if there was some invalid number, it will either be discovered in the loop below or by mktime() */
++    tm.tm_year -= 1900;
++    for (j = i + 4; i < j; ++i) {
++        if (!isdigit(val_str[i])) {
++            ret = asprintf(err_msg, "Invalid character '%c'[%d] in date-and-time value \"%s\", a digit expected.", val_str[i], i, val_str);
++            goto error;
++        }
++    }
++    if (val_str[i] != '-') {
++        ret = asprintf(err_msg, "Invalid character '%c'[%d] in date-and-time value \"%s\", '-' expected.", val_str[i], i, val_str);
++        goto error;
++    }
++    ++i;
++
++    /* month */
++    tm.tm_mon = atoi(val_str + i);
++    tm.tm_mon -= 1;
++    for (j = i + 2; i < j; ++i) {
++        if (!isdigit(val_str[i])) {
++            ret = asprintf(err_msg, "Invalid character '%c'[%d] in date-and-time value \"%s\", a digit expected.", val_str[i], i, val_str);
++            goto error;
++        }
++    }
++    if (val_str[i] != '-') {
++        ret = asprintf(err_msg, "Invalid character '%c'[%d] in date-and-time value \"%s\", '-' expected.", val_str[i], i, val_str);
++        goto error;
++    }
++    ++i;
++
++    /* day */
++    tm.tm_mday = atoi(val_str + i);
++    for (j = i + 2; i < j; ++i) {
++        if (!isdigit(val_str[i])) {
++            ret = asprintf(err_msg, "Invalid character '%c'[%d] in date-and-time value \"%s\", a digit expected.", val_str[i], i, val_str);
++            goto error;
++        }
++    }
++    if (val_str[i] != 'T') {
++        ret = asprintf(err_msg, "Invalid character '%c'[%d] in date-and-time value \"%s\", 'T' expected.", val_str[i], i, val_str);
++        goto error;
++    }
++    ++i;
++
++    /* hours */
++    tm.tm_hour = atoi(val_str + i);
++    for (j = i + 2; i < j; ++i) {
++        if (!isdigit(val_str[i])) {
++            ret = asprintf(err_msg, "Invalid character '%c'[%d] in date-and-time value \"%s\", a digit expected.", val_str[i], i, val_str);
++            goto error;
++        }
++    }
++    if (val_str[i] != ':') {
++        ret = asprintf(err_msg, "Invalid character '%c'[%d] in date-and-time value \"%s\", ':' expected.", val_str[i], i, val_str);
++        goto error;
++    }
++    ++i;
++
++    /* minutes */
++    tm.tm_min = atoi(val_str + i);
++    for (j = i + 2; i < j; ++i) {
++        if (!isdigit(val_str[i])) {
++            ret = asprintf(err_msg, "Invalid character '%c'[%d] in date-and-time value \"%s\", a digit expected.", val_str[i], i, val_str);
++            goto error;
++        }
++    }
++    if (val_str[i] != ':') {
++        ret = asprintf(err_msg, "Invalid character '%c'[%d] in date-and-time value \"%s\", ':' expected.", val_str[i], i, val_str);
++        goto error;
++    }
++    ++i;
++
++    /* seconds */
++    tm.tm_sec = atoi(val_str + i);
++    for (j = i + 2; i < j; ++i) {
++        if (!isdigit(val_str[i])) {
++            ret = asprintf(err_msg, "Invalid character '%c'[%d] in date-and-time value \"%s\", a digit expected.", val_str[i], i, val_str);
++            goto error;
++        }
++    }
++    if ((val_str[i] != '.') && (val_str[i] != 'Z') && (val_str[i] != '+') && (val_str[i] != '-')) {
++        ret = asprintf(err_msg, "Invalid character '%c'[%d] in date-and-time value \"%s\", '.', 'Z', '+', or '-' expected.",
++                       val_str[i], i, val_str);
++        goto error;
++    }
++
++    /* validate using mktime() */
++    tm2 = tm;
++    if (mktime(&tm) == -1) {
++        ret = asprintf(err_msg, "Checking date-and-time value \"%s\" failed (%s).", val_str, strerror(errno));
++        goto error;
++    }
++    /* we now have correctly filled the remaining values, use them */
++    memcpy(((char *)&tm2) + (6 * sizeof(int)), ((char *)&tm) + (6 * sizeof(int)), sizeof(struct tm) - (6 * sizeof(int)));
++    /* back it up again */
++    tm = tm2;
++    /* let mktime() correct date & time with having the other values correct now */
++    if (mktime(&tm) == -1) {
++        ret = asprintf(err_msg, "Checking date-and-time value \"%s\" failed (%s).", val_str, strerror(errno));
++        goto error;
++    }
++    /* detect changes in the filled values */
++    if (memcmp(&tm, &tm2, 6 * sizeof(int))) {
++        ret = asprintf(err_msg, "Checking date-and-time value \"%s\" failed, canonical date and time is \"%04d-%02d-%02dT%02d:%02d:%02d\".",
++                       val_str, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
++        goto error;
++    }
++
++    /* tenth of a second */
++    if (val_str[i] == '.') {
++        ++i;
++        if (!isdigit(val_str[i])) {
++            ret = asprintf(err_msg, "Invalid character '%c'[%d] in date-and-time value \"%s\", a digit expected.", val_str[i], i, val_str);
++            goto error;
++        }
++        do {
++            ++i;
++        } while (isdigit(val_str[i]));
++    }
++
++    switch (val_str[i]) {
++    case 'Z':
++        /* done */
++        break;
++    case '+':
++    case '-':
++        /* timezone shift */
++        k = sizeof gmt_offsets / sizeof *gmt_offsets;
++        for (j = 0; j < k ; ++j) {
++            if (!strncmp(val_str + i, gmt_offsets[j], 6)) {
++                break;
++            }
++        }
++        if (j == k) {
++            ret = asprintf(err_msg, "Invalid timezone \"%.6s\" in date-and-time value \"%s\".", val_str + i, val_str);
++            goto error;
++        }
++        i += 5;
++        break;
++    default:
++        ret = asprintf(err_msg, "Invalid character '%c'[%d] in date-and-time value \"%s\", 'Z', '+', or '-' expected.", val_str[i], i, val_str);
++        goto error;
++    }
++
++    /* no other characters expected */
++    ++i;
++    if (val_str[i]) {
++        ret = asprintf(err_msg, "Invalid character '%c'[%d] in date-and-time value \"%s\", no characters expected.", val_str[i], i, val_str);
++        goto error;
++    }
++
++    /* validation succeeded and we do not want to change how it is stored */
++    return 0;
++
++error:
++    if (ret == -1) {
++        err_msg = NULL;
++    }
++    return 1;
++}
++
++static int
++hex_string_store_clb(struct ly_ctx *ctx, const char *UNUSED(type_name), const char **value_str, lyd_val *value, char **err_msg)
++{
++    char *str;
++    uint32_t i, len;
++
++    str = strdup(*value_str);
++    if (!str) {
++        /* we can hardly allocate an error message */
++        *err_msg = NULL;
++        return 1;
++    }
++
++    len = strlen(str);
++    for (i = 0; i < len; ++i) {
++        if ((str[i] >= 'A') && (str[i] <= 'Z')) {
++            /* make it lowercase (canonical format) */
++            str[i] += 32;
++        }
++    }
++
++    /* update the value correctly */
++    lydict_remove(ctx, *value_str);
++    *value_str = lydict_insert_zc(ctx, str);
++    value->string = *value_str;
++    return 0;
++}
++
++/* Name of this array must match the file name! */
++struct lytype_plugin_list user_yang_types[] = {
++    {"ietf-yang-types", "2013-07-15", "date-and-time", date_and_time_store_clb, NULL},
++    {"ietf-yang-types", "2013-07-15", "phys-address", hex_string_store_clb, NULL},
++    {"ietf-yang-types", "2013-07-15", "mac-address", hex_string_store_clb, NULL},
++    {"ietf-yang-types", "2013-07-15", "hex-string", hex_string_store_clb, NULL},
++    {"ietf-yang-types", "2013-07-15", "uuid", hex_string_store_clb, NULL},
++    {NULL, NULL, NULL, NULL, NULL} /* terminating item */
++};
+Index: libyang-0.16-r3/tests/CMakeLists.txt
+===================================================================
+--- libyang-0.16-r3.orig/tests/CMakeLists.txt
++++ libyang-0.16-r3/tests/CMakeLists.txt
+@@ -7,7 +7,7 @@ set(CMAKE_MACOSX_RPATH TRUE)
+ get_filename_component(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests" REALPATH)
+ 
+ set(api_tests test_libyang test_tree_schema test_xml test_dict test_tree_data test_tree_data_dup test_tree_data_merge test_xpath test_xpath_1.1 test_diff)
+-set(data_tests test_data_initialization test_leafref_remove test_instid_remove test_keys test_autodel test_when test_when_1.1 test_must_1.1 test_defaults test_emptycont test_unique test_mandatory test_json test_parse_print test_values test_metadata test_yangtypes_xpath test_yang_data test_unknown_element)
++set(data_tests test_data_initialization test_leafref_remove test_instid_remove test_keys test_autodel test_when test_when_1.1 test_must_1.1 test_defaults test_emptycont test_unique test_mandatory test_json test_parse_print test_values test_metadata test_yangtypes_xpath test_yang_data test_unknown_element test_user_types)
+ set(schema_yin_tests test_print_transform)
+ set(schema_tests test_ietf test_augment test_deviation test_refine test_typedef test_import test_include test_feature test_conformance test_leaflist test_status test_printer test_invalid)
+ if(CMAKE_BUILD_TYPE MATCHES debug)
+Index: libyang-0.16-r3/tests/api/test_libyang.c
+===================================================================
+--- libyang-0.16-r3.orig/tests/api/test_libyang.c
++++ libyang-0.16-r3/tests/api/test_libyang.c
+@@ -1245,7 +1245,13 @@ test_ly_get_loaded_plugins(void **state)
+     }
+     assert_non_null(plugins[i]);
+     for (i = 0; plugins[i]; ++i) {
+-        if (!strcmp(plugins[i], "user_date_and_time")) {
++        if (!strcmp(plugins[i], "user_yang_types")) {
++            break;
++        }
++    }
++    assert_non_null(plugins[i]);
++    for (i = 0; plugins[i]; ++i) {
++        if (!strcmp(plugins[i], "user_inet_types")) {
+             break;
+         }
+     }
+Index: libyang-0.16-r3/tests/data/files/user-types.yang
+===================================================================
+--- /dev/null
++++ libyang-0.16-r3/tests/data/files/user-types.yang
+@@ -0,0 +1,61 @@
++module user-types {
++    namespace "urn:user-types";
++    prefix ut;
++
++    import ietf-yang-types {
++        prefix yang;
++    }
++
++    import ietf-inet-types {
++        prefix inet;
++    }
++
++
++    leaf yang1 {
++        type yang:date-and-time;
++    }
++
++    leaf yang2 {
++        type yang:phys-address;
++    }
++
++    leaf yang3 {
++        type yang:mac-address;
++    }
++
++    leaf yang4 {
++        type yang:hex-string;
++    }
++
++    leaf yang5 {
++        type yang:uuid;
++    }
++
++    leaf inet1 {
++        type inet:ip-address;
++    }
++
++    leaf inet2 {
++        type inet:ipv6-address;
++    }
++
++    leaf inet3 {
++        type inet:ip-address-no-zone;
++    }
++
++    leaf inet4 {
++        type inet:ipv6-address-no-zone;
++    }
++
++    leaf inet5 {
++        type inet:ip-prefix;
++    }
++
++    leaf inet6 {
++        type inet:ipv4-prefix;
++    }
++
++    leaf inet7 {
++        type inet:ipv6-prefix;
++    }
++}
+Index: libyang-0.16-r3/tests/data/test_user_types.c
+===================================================================
+--- /dev/null
++++ libyang-0.16-r3/tests/data/test_user_types.c
+@@ -0,0 +1,226 @@
++/**
++ * @file test_user_types.c
++ * @author Michal Vasko <mvasko@cesnet.cz>
++ * @brief Cmocka tests for libyang internal user types.
++ *
++ * Copyright (c) 2018 CESNET, z.s.p.o.
++ *
++ * This source code is licensed under BSD 3-Clause License (the "License").
++ * You may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     https://opensource.org/licenses/BSD-3-Clause
++ */
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <setjmp.h>
++#include <stdarg.h>
++#include <cmocka.h>
++
++#include "tests/config.h"
++#include "libyang.h"
++
++struct state {
++    struct ly_ctx *ctx;
++    const struct lys_module *mod;
++    struct lyd_node *dt;
++};
++
++static int
++setup_f(void **state)
++{
++    struct state *st;
++
++    (*state) = st = calloc(1, sizeof *st);
++    if (!st) {
++        fprintf(stderr, "Memory allocation error");
++        return -1;
++    }
++
++    /* libyang context */
++    st->ctx = ly_ctx_new(TESTS_DIR"/data/files", 0);
++    if (!st->ctx) {
++        fprintf(stderr, "Failed to create context.\n");
++        goto error;
++    }
++
++    st->mod = ly_ctx_load_module(st->ctx, "user-types", NULL);
++    if (!st->mod) {
++        fprintf(stderr, "Failed to load schema.\n");
++        goto error;
++    }
++
++    return 0;
++
++error:
++    ly_ctx_destroy(st->ctx, NULL);
++    free(st);
++    (*state) = NULL;
++
++    return -1;
++}
++
++static int
++teardown_f(void **state)
++{
++    struct state *st = (*state);
++
++    lyd_free_withsiblings(st->dt);
++    ly_ctx_destroy(st->ctx, NULL);
++    free(st);
++    (*state) = NULL;
++
++    return 0;
++}
++
++static void
++test_yang_types(void **state)
++{
++    struct state *st = (struct state *)*state;
++
++    /* date-and-time */
++    st->dt = lyd_new_leaf(NULL, st->mod, "yang1", "2005-05-25T23:15:15.88888Z");
++    assert_non_null(st->dt);
++    lyd_free_withsiblings(st->dt);
++
++    st->dt = lyd_new_leaf(NULL, st->mod, "yang1", "2005-05-31T23:15:15-08:00");
++    assert_non_null(st->dt);
++    lyd_free_withsiblings(st->dt);
++
++    st->dt = lyd_new_leaf(NULL, st->mod, "yang1", "2005-05-31T23:15:15.-08:00");
++    assert_null(st->dt);
++
++    st->dt = lyd_new_leaf(NULL, st->mod, "yang1", "2005-02-29T23:15:15-08:00");
++    assert_null(st->dt);
++
++    /* phys-address */
++    st->dt = lyd_new_leaf(NULL, st->mod, "yang2", "aa:bb:cc:dd");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "aa:bb:cc:dd");
++    lyd_free_withsiblings(st->dt);
++
++    st->dt = lyd_new_leaf(NULL, st->mod, "yang2", "AA:BB:1D:2F:CA:52");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "aa:bb:1d:2f:ca:52");
++    lyd_free_withsiblings(st->dt);
++
++    /* mac-address */
++    st->dt = lyd_new_leaf(NULL, st->mod, "yang3", "12:34:56:78:9A:BC");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "12:34:56:78:9a:bc");
++    lyd_free_withsiblings(st->dt);
++
++    /* hex-string */
++    st->dt = lyd_new_leaf(NULL, st->mod, "yang4", "AB:CD:eF:fE:dc:Ba:Ab");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "ab:cd:ef:fe:dc:ba:ab");
++    lyd_free_withsiblings(st->dt);
++
++    /* uuid */
++    st->dt = lyd_new_leaf(NULL, st->mod, "yang5", "12AbCDef-3456-58cd-9ABC-8796cdACdfEE");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "12abcdef-3456-58cd-9abc-8796cdacdfee");
++}
++
++static void
++test_inet_types(void **state)
++{
++    struct state *st = (struct state *)*state;
++
++    /* ip-address */
++    st->dt = lyd_new_leaf(NULL, st->mod, "inet1", "192.168.0.1");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "192.168.0.1");
++    lyd_free_withsiblings(st->dt);
++
++    st->dt = lyd_new_leaf(NULL, st->mod, "inet1", "192.168.0.1%12");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "192.168.0.1%12");
++    lyd_free_withsiblings(st->dt);
++
++    st->dt = lyd_new_leaf(NULL, st->mod, "inet1", "2008:15:0:0:0:0:feAC:1");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "2008:15::feac:1");
++    lyd_free_withsiblings(st->dt);
++
++    /* ipv6-address */
++    st->dt = lyd_new_leaf(NULL, st->mod, "inet2", "FAAC:21:011:Da85::87:daaF%1");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "faac:21:11:da85::87:daaf%1");
++    lyd_free_withsiblings(st->dt);
++
++    /* ip-address-no-zone */
++    st->dt = lyd_new_leaf(NULL, st->mod, "inet3", "127.0.0.1");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "127.0.0.1");
++    lyd_free_withsiblings(st->dt);
++
++    st->dt = lyd_new_leaf(NULL, st->mod, "inet3", "0:00:000:0000:000:00:0:1");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "::1");
++    lyd_free_withsiblings(st->dt);
++
++    /* ipv6-address-no-zone */
++    st->dt = lyd_new_leaf(NULL, st->mod, "inet4", "A:B:c:D:e:f:1:0");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "a:b:c:d:e:f:1:0");
++    lyd_free_withsiblings(st->dt);
++
++    /* ip-prefix */
++    st->dt = lyd_new_leaf(NULL, st->mod, "inet5", "12.1.58.4/1");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "1.0.0.0/1");
++    lyd_free_withsiblings(st->dt);
++
++    st->dt = lyd_new_leaf(NULL, st->mod, "inet5", "12.1.58.4/24");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "255.255.255.0/24");
++    lyd_free_withsiblings(st->dt);
++
++    st->dt = lyd_new_leaf(NULL, st->mod, "inet5", "2000:A:B:C:D:E:f:a/16");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "ffff::/16");
++    lyd_free_withsiblings(st->dt);
++
++    /* ipv4-prefix */
++    st->dt = lyd_new_leaf(NULL, st->mod, "inet6", "0.1.58.4/32");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "255.255.255.255/32");
++    lyd_free_withsiblings(st->dt);
++
++    st->dt = lyd_new_leaf(NULL, st->mod, "inet6", "12.1.58.4/8");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "255.0.0.0/8");
++    lyd_free_withsiblings(st->dt);
++
++    /* ipv6-prefix */
++    st->dt = lyd_new_leaf(NULL, st->mod, "inet7", "::C:D:E:f:a/112");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "ffff:ffff:ffff:ffff:ffff:ffff:ffff:0/112");
++    lyd_free_withsiblings(st->dt);
++
++    st->dt = lyd_new_leaf(NULL, st->mod, "inet7", "::C:D:E:f:a/110");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "ffff:ffff:ffff:ffff:ffff:ffff:3fff:0/110");
++    lyd_free_withsiblings(st->dt);
++
++    st->dt = lyd_new_leaf(NULL, st->mod, "inet7", "::C:D:E:f:a/96");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "ffff:ffff:ffff:ffff:ffff:ffff::/96");
++    lyd_free_withsiblings(st->dt);
++
++    st->dt = lyd_new_leaf(NULL, st->mod, "inet7", "::C:D:E:f:a/55");
++    assert_non_null(st->dt);
++    assert_string_equal(((struct lyd_node_leaf_list *)st->dt)->value_str, "ffff:ffff:ffff:7f::/55");
++}
++
++int main(void)
++{
++    const struct CMUnitTest tests[] = {
++        cmocka_unit_test_setup_teardown(test_yang_types, setup_f, teardown_f),
++        cmocka_unit_test_setup_teardown(test_inet_types, setup_f, teardown_f),
++    };
++
++    return cmocka_run_group_tests(tests, NULL, NULL);
++}

@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=Flask
-PKG_VERSION:=0.12.2
+PKG_VERSION:=1.0.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/eb/12/1c7bd06fcbd08ba544f25bf2c6612e305a70ea51ca0eda8007344ec3f123/
-PKG_HASH:=49f44461237b69ecd901cc7ce66feea0319b9158743dd27a2899962ab214dac1
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/F/Flask
+PKG_HASH:=2271c0070dbcb5275fad4a82e29f23ab92682dc45f9dfbc22c02ba9b9322ce48
 PKG_BUILD_DEPENDS:=python python3
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -29,8 +29,9 @@ define Package/python3-flask
   URL:=http://github.com/pallets/flask/
   TITLE:=python3-flask
   DEPENDS:=+python3-asyncio +python3-click +python3-codecs +python3-decimal \
-           +python3-itsdangerous +python3-jinja2 +python3-light +python3-logging \
-           +python3-markupsafe +python3-multiprocessing +python3-werkzeug
+           +python3-itsdangerous +python3-jinja2 +python3 +python3-logging \
+           +python3-markupsafe +python3-multiprocessing +python3-setuptools \
+           +python3-werkzeug
   VARIANT:=python3
 endef
 

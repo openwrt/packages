@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
-PKG_VERSION:=5.8.0
-PKG_RELEASE:=6
+PKG_VERSION:=5.8.1
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
 	https://github.com/collectd/collectd/releases/download/collectd-$(PKG_VERSION)
-PKG_HASH:=b06ff476bbf05533cb97ae6749262cc3c76c9969f032bd8496690084ddeb15c9
+PKG_HASH:=e796fda27ce06377f491ad91aa286962a68c2b54076aa77a29673d53204453da
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libltdl/aclocal.m4
@@ -39,7 +39,6 @@ COLLECTD_PLUGINS_DISABLED:= \
 	dpdkevents \
 	dpdkstat \
 	drbd \
-	ethstat \
 	fhcount \
 	genericjmx \
 	gmond \
@@ -129,6 +128,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	dns \
 	email \
 	entropy \
+	ethstat \
 	exec \
 	filecount \
 	fscache \
@@ -350,6 +350,7 @@ $(eval $(call BuildPlugin,disk,disk usage/timing input,disk,))
 $(eval $(call BuildPlugin,dns,DNS traffic input,dns,+PACKAGE_collectd-mod-dns:libpcap))
 $(eval $(call BuildPlugin,email,email output,email,))
 $(eval $(call BuildPlugin,entropy,Entropy amount input,entropy,))
+$(eval $(call BuildPlugin,ethstat,Ethernet adapter statistics input,ethstat,))
 $(eval $(call BuildPlugin,exec,process exec input,exec,))
 $(eval $(call BuildPlugin,filecount,file count input,filecount,))
 $(eval $(call BuildPlugin,fscache,file-system based caching framework input,fscache,))

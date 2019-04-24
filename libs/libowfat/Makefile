@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libowfat
-PKG_VERSION:=0.31
+PKG_VERSION:=0.32
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.fefe.de/libowfat
-PKG_HASH:=d1e4ac1cfccbb7dc51d77d96398e6302d229ba7538158826c84cb4254c7e8a12
+PKG_SOURCE_URL:=https://www.fefe.de/libowfat
+PKG_HASH:=f4b9b3d9922dc25bc93adedf9e9ff8ddbebaf623f14c8e7a5f2301bfef7998c1
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -27,7 +27,7 @@ define Package/libowfat
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=reimplemented libdjb under GPL
-  URL:=http://www.fefe.de/libowfat/
+  URL:=https://www.fefe.de/libowfat/
 endef
 
 define Build/Configure

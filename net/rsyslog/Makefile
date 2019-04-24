@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsyslog
-PKG_VERSION:=8.38.0
+PKG_VERSION:=8.39.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.rsyslog.com/files/download/rsyslog/
-PKG_HASH:=4d328ed3bcae784e15401c6c20ada2a9be380798ff6bf0da3fe2095915bba22c
+PKG_HASH:=c71f96fed6538de397df25da602384f6ee2cb67329d9f3362af2a18508616ab4
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-3.0

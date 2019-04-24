@@ -9,20 +9,19 @@ include $(TOPDIR)/rules.mk
 
 PKG_NPM_NAME:=cylon
 PKG_NAME:=node-$(PKG_NPM_NAME)
+PKG_SRC_NAME:=$(PKG_NPM_NAME)-firmata
 PKG_VERSION:=0.24.0
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/hybridgroup/cylon-firmata.git
-PKG_SOURCE_VERSION:=a930f8446f23ec2cb28aadeff54b79ab7704e3a0
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_SOURCE_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=dceb75539d32f402db0a5f68f2c7e2b52e5547a5ac2dec875d34fd3cc95cce00
+PKG_SOURCE:=$(PKG_SRC_NAME)-$(PKG_VERSION).tgz
+PKG_SOURCE_URL:=https://registry.npmjs.org/$(PKG_SRC_NAME)/-/
+PKG_HASH:=06ac7a8e2e6012577d2f4b043af766bf28a1d3e2a0d50e46629dab4f0bb65104
+PKG_SOURCE_SUBDIR:=$(PKG_SRC_NAME)-$(PKG_VERSION)
 
 PKG_BUILD_DEPENDS:=node/host
-PKG_NODE_VERSION:=8.10.0
+PKG_USE_MIPS16:=0
 
-PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
+PKG_MAINTAINER:=Hirokazu MORIKAWA <morikw2@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -33,7 +32,7 @@ define Package/node-cylon/default
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=CylonJS - $(1)
-  URL:=https://www.npmjs.org/package/cylon
+  URL:=https://www.npmjs.org/package/cylon-firmata
   DEPENDS:=+node +node-npm $(2)
 endef
 
@@ -54,47 +53,55 @@ define Package/node-cylon-firmata
 endef
 
 define Package/node-cylon/description
-	JavaScript Robotics, By Your Command Next generation robotics framework with support for 36 different platforms Get Started
+ JavaScript Robotics, By Your Command Next generation robotics framework with support for 36 different platforms Get Started
 endef
 
-define Build/Prepare
-	/bin/tar xzf $(DL_DIR)/$(PKG_SOURCE) -C $(PKG_BUILD_DIR) --strip-components 1
-	$(Build/Patch)
-endef
+TAR_OPTIONS+= --strip-components 1
+TAR_CMD=$(HOST_TAR) -C $(1) $(TAR_OPTIONS)
 
-EXTRA_LDFLAGS="-L$(TOOLCHAIN_DIR)/lib/ -Wl,-rpath-link $(TOOLCHAIN_DIR)/lib/" \
+NODEJS_CPU:=$(subst powerpc,ppc,$(subst aarch64,arm64,$(subst x86_64,x64,$(subst i386,ia32,$(ARCH)))))
 
 define Build/Compile
+	$(MAKE_VARS) \
 	$(MAKE_FLAGS) \
-	npm_config_arch=$(CONFIG_ARCH) \
-	npm_config_nodedir=$(BUILD_DIR)/node-v$(PKG_NODE_VERSION)/ \
-	npm_config_cache=$(BUILD_DIR)/node-v$(PKG_NODE_VERSION)/npm-cache \
-	PREFIX="$(PKG_INSTALL_DIR)/usr/" \
+	npm_config_arch=$(NODEJS_CPU) \
+	npm_config_target_arch=$(NODEJS_CPU) \
+	npm_config_build_from_source=true \
+	npm_config_nodedir=$(STAGING_DIR)/usr/ \
+	npm_config_prefix=$(PKG_INSTALL_DIR)/usr/ \
+	npm_config_cache=$(TMP_DIR)/npm-cache \
+	npm_config_tmp=$(TMP_DIR)/npm-tmp \
 	npm install -g $(PKG_BUILD_DIR)
+	rm -rf $(TMP_DIR)/npm-tmp
+	rm -rf $(TMP_DIR)/npm-cache
 endef
 
 define Package/node-cylon/install
-	mkdir -p $(1)/usr/lib/node/cylon
+	$(INSTALL_DIR) $(1)/usr/lib/node/cylon
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/cylon-firmata/node_modules/cylon/* $(1)/usr/lib/node/cylon/
 endef
 
 define Package/node-cylon-i2c/install
-	mkdir -p $(1)/usr/lib/node/cylon-i2c
+	$(INSTALL_DIR) $(1)/usr/lib/node/cylon-i2c
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/cylon-firmata/node_modules/cylon-i2c/* $(1)/usr/lib/node/cylon-i2c/
 endef
 
 define Package/node-cylon-gpio/install
-	mkdir -p $(1)/usr/lib/node/cylon-gpio
+	$(INSTALL_DIR) $(1)/usr/lib/node/cylon-gpio
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/cylon-firmata/node_modules/cylon-gpio/* $(1)/usr/lib/node/cylon-gpio/
 endef
 
 define Package/node-cylon-firmata/install
-	mkdir -p $(1)/usr/lib/node/cylon-firmata
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/cylon-firmata/{index.js,lib,LICENSE,package.json,README.md,RELEASES.md,spec} $(1)/usr/lib/node/cylon-firmata/
+	$(INSTALL_DIR) $(1)/usr/lib/node/cylon-firmata
+	$(CP) $(PKG_BUILD_DIR)/{package.json,LICENSE,*.md} \
+		$(1)/usr/lib/node/cylon-firmata/
+	$(CP) $(PKG_BUILD_DIR)/{docs,examples,*.js} \
+		$(1)/usr/lib/node/cylon-firmata/
+	$(CP) $(PKG_BUILD_DIR)/{lib,spec} \
+		$(1)/usr/lib/node/cylon-firmata/
 endef
 
 $(eval $(call BuildPackage,node-cylon))
 $(eval $(call BuildPackage,node-cylon-i2c))
 $(eval $(call BuildPackage,node-cylon-gpio))
 $(eval $(call BuildPackage,node-cylon-firmata))
-

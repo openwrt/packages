@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postfix
-PKG_RELEASE:=2
-PKG_VERSION:=3.3.1
+PKG_RELEASE:=1
+PKG_VERSION:=3.4.4
 PKG_SOURCE_URL:= \
 	https://cdn.postfix.johnriley.me/mirrors/postfix-release/official/ \
-	ftp://ftp.porcupine.org/mirrors/postfix-release/official/
+	http://ftp.porcupine.org/mirrors/postfix-release/official/
 
-PKG_HASH:=54f514dae42b5275cb4bc9c69283f16c06200b71813d0bb696568c4ba7ae7e3b
+PKG_HASH:=27f2ab631a966a40e002aedc6db9281e5970295fa5fd96b29066e457a4601e34
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
 PKG_LICENSE:=IPL-1.0

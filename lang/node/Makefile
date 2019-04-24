@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
-PKG_VERSION:=v8.11.3
+PKG_VERSION:=v8.16.0
 PKG_RELEASE:=1
 PKG_SOURCE:=node-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://nodejs.org/dist/${PKG_VERSION}
-PKG_HASH:=577c751fdca91c46c60ffd8352e5b465881373bfdde212c17c3a3c1bd2616ee0
+PKG_SOURCE_URL:=https://nodejs.org/dist/${PKG_VERSION}
+PKG_HASH:=3515e8e01568a5dc4dff3d91a76ebc6724f5fa2fbb58b4b0c5da7b178a2f7340
 
 HOST_BUILD_DEPENDS:=python/host
 PKG_BUILD_DEPENDS:=python/host
@@ -26,6 +26,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>, Adrian Panella <ianchi74@outlook.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:nodejs:node.js
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -35,8 +36,8 @@ define Package/node
   CATEGORY:=Languages
   SUBMENU:=Node.js
   TITLE:=Node.js is a platform built on Chrome's JavaScript runtime
-  URL:=http://nodejs.org/
-  DEPENDS:=@(HAS_FPU||KERNEL_MIPS_FPU_EMULATOR) +libstdcpp +libopenssl +zlib +USE_UCLIBC:libpthread +USE_UCLIBC:librt +NODEJS_ICU:icu
+  URL:=https://nodejs.org/
+  DEPENDS:=@(HAS_FPU||KERNEL_MIPS_FPU_EMULATOR) +libstdcpp +libopenssl +zlib +libnghttp2 +libuv +libhttp-parser +USE_UCLIBC:libpthread +USE_UCLIBC:librt +NODEJS_ICU:icu
 endef
 
 define Package/node/description
@@ -50,7 +51,7 @@ define Package/node-npm
   CATEGORY:=Languages
   SUBMENU:=Node.js
   TITLE:=NPM stands for Node Package Manager
-  URL:=http://npmjs.com/
+  URL:=https://npmjs.com/
   DEPENDS:=+node
 endef
 
@@ -85,6 +86,9 @@ CONFIGURE_ARGS:= \
 	--without-snapshot \
 	--shared-zlib \
 	--shared-openssl \
+	--shared-nghttp2 \
+	--shared-libuv \
+	--shared-http-parser \
 	--with-intl=$(if $(CONFIG_NODEJS_ICU),system-icu,none) \
 	$(if $(findstring mips,$(NODEJS_CPU)), \
 		$(if $(CONFIG_SOFT_FLOAT),--with-mips-float-abi=soft)) \

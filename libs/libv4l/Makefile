@@ -6,15 +6,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l-utils
-PKG_VERSION:=1.14.2
+PKG_VERSION:=1.16.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.linuxtv.org/downloads/v4l-utils
-PKG_HASH:=e6b962c4b1253cf852c31da13fd6b5bb7cbe5aa9e182881aec55123bae680692
+PKG_HASH:=ed80242510385017a1dc566e17a285a77222bb301f5bc19386badfcc2c19df1b
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
-
 PKG_LICENSE:=GPL-2.0 LGPL-2.1
 PKG_LICENSE_FILES:=COPYING COPYING.libv4l
 
@@ -30,7 +29,7 @@ include $(INCLUDE_DIR)/nls.mk
 
 define Package/libv4l/Default
   TITLE:=Video 4 Linux
-  URL:=http://www.linuxtv.org/
+  URL:=https://www.linuxtv.org/
 endef
 
 define Package/libv4l/Default/description
@@ -73,13 +72,15 @@ define Package/v4l-utils/description
   This package contains the video4linux utilities.
 endef
 
-TARGET_CFLAGS += $(FPIC)
-TARGET_LDFLAGS += -largp
+TARGET_CFLAGS += -flto
+TARGET_LDFLAGS += -largp -Wl,--gc-sections
 
 CONFIGURE_ARGS+= \
+	--disable-bpf \
 	--disable-doxygen-doc \
 	--disable-libdvbv5 \
 	--disable-qv4l2 \
+	--disable-qvidcap \
 	--without-jpeg \
 
 define Build/InstallDev

@@ -53,10 +53,15 @@ us = cs:option(Flag, "use_staging", translate("Use staging server"),
                          "(use for testing; the certificate won't be valid)."))
 us.rmempty = false
 
-kl = cs:option(Value, "keylength", translate("Key length"),
-               translate("Number of bits (minimum 2048)."))
+kl = cs:option(ListValue, "keylength", translate("Key size"),
+               translate("Key size (and type) for the generated certificate."))
+kl:value("2048", "RSA 2048 bits")
+kl:value("3072", "RSA 3072 bits")
+kl:value("4096", "RSA 4096 bits")
+kl:value("ec-256", "ECC 256 bits")
+kl:value("ec-384", "ECC 384 bits")
+kl.default = "2048"
 kl.rmempty = false
-kl.datatype = "and(uinteger,min(2048))"
 
 if uhttpd_presence then
 u = cs:option(Flag, "update_uhttpd", translate("Use for uhttpd"),

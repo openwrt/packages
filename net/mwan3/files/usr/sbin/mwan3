@@ -61,12 +61,6 @@ ifup()
 		echo "Too many arguments. Usage: mwan3 ifup <interface>" && exit 0
 	fi
 
-	config_get_bool enabled globals 'enabled' 0
-	[ ${enabled} -gt 0 ] || {
-		echo "Warning: mwan3 is global disabled. Usage: /etc/init.d/mwan3 start"
-		exit 0
-	}
-
 	status=$(ubus -S call network.interface.$1 status)
 	[ -n "$status" ] && {
 		json_load $status
@@ -74,7 +68,6 @@ ifup()
 	}
 
 	config_get enabled "$1" enabled 0
-
 
 	if [ "$up" = "1" ] \
 		&& [ -n "$l3_device" ] \
@@ -132,34 +125,18 @@ status()
 
 start()
 {
-	local enabled src_ip local_source
+	local enabled
 
 	uci_toggle_state mwan3 globals enabled "1"
-
-	config_get local_source globals local_source 'none'
-	[ "${local_source}" = "none" ] || {
-		src_ip=$(uci_get_state mwan3 globals src_ip)
-		[ "${src_ip}" != "" ] && {
-			ip route del default via "${src_ip}" dev lo 1>/dev/null 2>&1
-			ip addr del "${src_ip}/32" dev lo 1>/dev/null 2>&1
-		}
-
-		network_get_ipaddr src_ip "${local_source}"
-		if [ "${src_ip}" = "" ]; then
-			$LOG warn "Unable to set source ip for own initiated traffic (${local_source})"
-		else
-			ip addr add "${src_ip}/32" dev lo
-			ip route add default via "${src_ip}" dev lo
-			uci_toggle_state mwan3 globals src_ip "${src_ip}"
-		fi
-	}
 
 	config_foreach ifup interface
 }
 
 stop()
 {
-	local ipset route rule table IP IPT pid src_ip
+	local ipset route rule table IP IPT pid
+
+	mwan3_lock "command" "mwan3"
 
 	for pid in $(pgrep -f "mwan3rtmon"); do
 		kill -TERM "$pid" > /dev/null 2>&1
@@ -209,14 +186,10 @@ stop()
 		$IPS -q destroy $ipset
 	done
 
+	mwan3_unlock "command" "mwan3"
+
 	mwan3_lock_clean
 	rm -rf $MWAN3_STATUS_DIR $MWAN3TRACK_STATUS_DIR
-
-	src_ip=$(uci_get_state mwan3 globals src_ip)
-	[ "${src_ip}" = "" ] || {
-		ip route del default via "${src_ip}" dev lo 1>/dev/null 2>&1
-		ip addr del "${src_ip}/32" dev lo 1>/dev/null 2>&1
-	}
 
 	uci_toggle_state mwan3 globals enabled "0"
 }

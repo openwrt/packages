@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-dpkt
-PKG_VERSION:=1.91
+PKG_VERSION:=1.9.2
 PKG_RELEASE:=1
+
+PKG_SOURCE:=dpkt-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/d/dpkt
+PKG_HASH:=52a92ecd5ca04d5bd852bb11cb2eac4bbe38b42a7c472e0d950eeb9f82a81e54
+PKG_BUILD_DIR:=$(BUILD_DIR)/dpkt-$(PKG_VERSION)
+
 PKG_MAINTAINER:=Andrew McConachie <andrew@depht.com>
 PKG_LICENSE:=BSD-3-Clause
-
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/kbandla/dpkt.git
-PKG_SOURCE_VERSION:=6cd0909d613a66033ecdefaca6cc07cfa7d46d6b
-PKG_MIRROR_HASH:=fe8657552b1dbaf8b9eba50168730e200567dc88a06932aa1cf60dc93211d16b
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk

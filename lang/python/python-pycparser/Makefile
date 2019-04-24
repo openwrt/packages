@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pycparser
-PKG_VERSION:=2.18
+PKG_VERSION:=2.19
 PKG_RELEASE:=2
 
 PKG_SOURCE:=pycparser-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/8c/2d/aad7f16146f4197a11f8e91fb81df177adcc2073d36a17b1491fd09df6ed
-PKG_HASH:=99a8ca03e29851d96616ad0404b4aad7d9ee16f25c9f9708a11faf2810f7b226
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pycparser
+PKG_HASH:=a988718abfad80b6b157acce7bf130a30876d27603738ac39f140993246b25b3
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-pycparser-$(PKG_VERSION)
 
@@ -34,20 +34,23 @@ define Package/python-pycparser/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
+  TITLE:=C parser in Python
   URL:=https://github.com/eliben/pycparser
 endef
 
 define Package/python-pycparser
 $(call Package/python-pycparser/Default)
-  TITLE:=python-pycparser
-  DEPENDS:=+PACKAGE_python-pycparser:python-light +PACKAGE_python-pycparser:python-ply
+  DEPENDS:= \
+      +PACKAGE_python-pycparser:python-light \
+      +PACKAGE_python-pycparser:python-ply
   VARIANT:=python
 endef
 
 define Package/python3-pycparser
 $(call Package/python-pycparser/Default)
-  TITLE:=python3-pycparser
-  DEPENDS:=+PACKAGE_python3-pycparser:python3-light +PACKAGE_python3-pycparser:python3-ply
+  DEPENDS:= \
+      +PACKAGE_python3-pycparser:python3-light \
+      +PACKAGE_python3-pycparser:python3-ply
   VARIANT:=python3
 endef
 

@@ -8,18 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdouble-conversion
-PKG_VERSION:=2.0
-PKG_RELEASE:=1
+PKG_VERSION:=3.1.4
+PKG_RELEASE:=2
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=0d25506a2e7fb52928963313343e0237e890059e
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=7466f634421f3136174cbc2b00635788509a3312894de28367f31d891fd401ad
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/google/double-conversion.git
+PKG_SOURCE:=double-conversion-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/google/double-conversion/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=95004b65e43fefc6100f337a25da27bb99b9ef8d4071a36a33b5e83eb1f82021
+
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/double-conversion-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/double-conversion-$(PKG_VERSION)
+
+PKG_MAINTAINER:=
+PKG_LICENSE:=BSD-3c
 PKG_LICENSE_FILES:=COPYING LICENSE
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libdouble-conversion
@@ -32,7 +36,7 @@ endef
 
 define Package/libdouble-conversion/description
   double-conversion provides binary-decimal and decimal-binary routines for IEEE doubles.
-  
+
   The library consists of efficient conversion routines that have been extracted
   from the V8 JavaScript engine. The code has been refactored and improved so that
   it can be used more easily in other projects.
@@ -66,3 +70,4 @@ define Package/libdouble-conversion/install
 endef
 
 $(eval $(call BuildPackage,libdouble-conversion))
+$(eval $(call HostBuild))

@@ -21,7 +21,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.7.8-5"
+VERSION="2.7.8-6"
 SECTION_ID=""		# hold config's section name
 VERBOSE=0		# default mode is log to console, but easily changed with parameter
 MYPROG=$(basename $0)	# my program call name
@@ -698,7 +698,7 @@ do_transfer() {
 
 	# lets prefer GNU Wget because it does all for us - IPv4/IPv6/HTTPS/PROXY/force IP version
 	if [ -n "$WGET_SSL" -a $USE_CURL -eq 0 ]; then 			# except global option use_curl is set to "1"
-		__PROG="$WGET_SSL -nv -t 1 -O $DATFILE -o $ERRFILE"	# non_verbose no_retry outfile errfile
+		__PROG="$WGET_SSL --hsts-file=/tmp/.wget-hsts -nv -t 1 -O $DATFILE -o $ERRFILE"	# non_verbose no_retry outfile errfile
 		# force network/ip to use for communication
 		if [ -n "$bind_network" ]; then
 			local __BINDIP

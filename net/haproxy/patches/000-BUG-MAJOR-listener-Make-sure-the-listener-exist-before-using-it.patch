@@ -1,0 +1,50 @@
+commit 7c3fd37724c58cf09359e0d381a9be305dd7869b
+Author: Olivier Houchard <cognet@ci0.org>
+Date:   Mon Feb 25 16:18:16 2019 +0100
+
+    BUG/MAJOR: listener: Make sure the listener exist before using it.
+    
+    In listener_accept(), make sure we have a listener before attempting to
+    use it.
+    An another thread may have closed the FD meanwhile, and set fdtab[fd].owner
+    to NULL.
+    As the listener is not free'd, it is ok to attempt to accept() a new
+    connection even if the listener was closed. At worst the fd has been
+    reassigned to another connection, and accept() will fail anyway.
+    
+    Many thanks to Richard Russo for reporting the problem, and suggesting the
+    fix.
+    
+    This should be backported to 1.9 and 1.8.
+    
+    (cherry picked from commit d16a9dfed80e75d730754b717370515265698cdd)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    (cherry picked from commit a2511ed1fcdfa8047dbe2268fc0259f9b06cf891)
+    Signed-off-by: William Lallemand <wlallemand@haproxy.org>
+
+diff --git a/src/listener.c b/src/listener.c
+index a30efe03..5f6fafbc 100644
+--- a/src/listener.c
++++ b/src/listener.c
+@@ -441,8 +441,8 @@ void delete_listener(struct listener *listener)
+ void listener_accept(int fd)
+ {
+ 	struct listener *l = fdtab[fd].owner;
+-	struct proxy *p = l->bind_conf->frontend;
+-	int max_accept = l->maxaccept ? l->maxaccept : 1;
++	struct proxy *p;
++	int max_accept;
+ 	int expire;
+ 	int cfd;
+ 	int ret;
+@@ -450,6 +450,10 @@ void listener_accept(int fd)
+ 	static int accept4_broken;
+ #endif
+ 
++	if (!l)
++		return;
++	p = l->bind_conf->frontend;
++	max_accept = l->maxaccept ? l->maxaccept : 1;
+ 	if (HA_SPIN_TRYLOCK(LISTENER_LOCK, &l->lock))
+ 		return;
+ 

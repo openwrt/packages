@@ -9,15 +9,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=LVM2
-PKG_VERSION:=2.02.181
+PKG_VERSION:=2.03.02
 PKG_RELEASE:=1
-PKG_LICENSE:=GPL-2.0 LGPL-2.1
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://sourceware.org/pub/lvm2
-PKG_HASH:=400fead33b3abc2d82bd631b63f644b646e83040699f2e8f91ff5779119bb89e
-PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_HASH:=550ba750239fd75b7e52c9877565cabffef506bbf6d7f6f17b9700dee56c720f
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME).$(PKG_VERSION)
+
+PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_LICENSE:=GPL-2.0 LGPL-2.1
+PKG_LICENSE_FILES:=COPYING COPYING.lib
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -26,7 +28,7 @@ define Package/libdevmapper
   CATEGORY:=Libraries
   TITLE:=The Linux Kernel Device Mapper userspace library
   URL:=https://sourceware.org/dm/
-  DEPENDS:=+kmod-dm +libpthread +libuuid +librt
+  DEPENDS:=+kmod-dm +libpthread +libuuid +librt +libblkid
 endef
 
 define Package/libdevmapper/description
@@ -40,7 +42,7 @@ define Package/lvm2
   SUBMENU:=Disc
   TITLE:=The Linux Logical Volume Manager
   URL:=https://sourceware.org/lvm2/
-  DEPENDS:=+libdevmapper +libblkid +libreadline +libncurses +libaio
+  DEPENDS:=+libdevmapper +libreadline +libncurses +libaio
 endef
 
 define Package/lvm2/description

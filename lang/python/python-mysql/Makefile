@@ -8,14 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-mysql
-PKG_VERSION:=1.3.13
+PKG_VERSION:=1.3.14
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE:=mysqlclient-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/m/mysqlclient
-PKG_HASH:=ff8ee1be84215e6c30a746b728c41eb0701a46ca76e343af445b35ce6250644f
-
+PKG_HASH:=3981ae9ce545901a36a8b7aed76ed02960a429f75dc53b7ad77fb2f9ab7cd56b
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-mysql-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk

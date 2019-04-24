@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apcupsd
 PKG_VERSION:=3.14.14
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 PKG_LICENSE:=GPL-2.0
@@ -38,6 +38,8 @@ define Package/apcupsd-cgi
   TITLE:=UPS control software CGI module
   URL:=http://www.apcupsd.org/
 endef
+
+CONFIGURE_VARS += SHUTDOWN=/sbin/halt
 
 define Build/Configure
 	$(CP) $(SCRIPT_DIR)/config.* $(PKG_BUILD_DIR)/autoconf/

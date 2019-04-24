@@ -6,17 +6,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=7.2.11
+PKG_VERSION:=7.2.17
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
 PKG_LICENSE:=PHPv3.01
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:php:php
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.php.net/distributions/
-PKG_HASH:=da1a705c0bc46410e330fc6baa967666c8cd2985378fb9707c01a8e33b01d985
+PKG_HASH:=a3e5f51a9ae08813b3925bea3a4de02cd4906fcccf75646e267a213bb63bcf84
 
 PKG_FIXUP:=libtool autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -175,6 +176,7 @@ CONFIGURE_ARGS+= \
 	--enable-fpm \
 	--enable-shared \
 	--disable-static \
+	--with-pic \
 	--disable-rpath \
 	--disable-debug \
 	--disable-phpdbg \

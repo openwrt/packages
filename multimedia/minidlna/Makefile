@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=minidlna
-PKG_VERSION:=1.2.1
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=@SF/minidlna
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=67388ba23ab0c7033557a32084804f796aa2a796db7bb2b770fb76ac2a742eec
+PKG_SOURCE_URL=git://minidlna.git.sourceforge.net/gitroot/minidlna/minidlna
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_DATE:=2018-04-10
+PKG_SOURCE_VERSION:=799e6cf505ec470b2bf0ae4118143380aa16b837
+PKG_MIRROR_HASH:=67cc817e671de99e5a3f5ed237f89e22470f1de94819bcaba86c0ba821104af5
 
 PKG_LICENSE:=GPL-2.0 BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING LICENCE.miniupnpd
@@ -36,6 +37,7 @@ define Package/minidlna
   DEPENDS:= +libpthread +libexif +libjpeg +libsqlite3 +libffmpeg \
   	+libid3tag +libflac +libvorbis +libuuid \
   	$(ICONV_DEPENDS) $(INTL_DEPENDS)
+  USERID:=minidlna:minidlna
 endef
 
 define Package/minidlna/description

@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hwloc
-PKG_VERSION:=2.0.1
+PKG_VERSION:=2.0.3
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://download.open-mpi.org/release/$(PKG_NAME)/v2.0/
-PKG_HASH:=f1156df22fc2365a31a3dc5f752c53aad49e34a5e22d75ed231cd97eaa437f9d
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://download.open-mpi.org/release/$(PKG_NAME)/v2.0
+PKG_HASH:=e393aaf39e576b329a2bff3096d9618d4e39f416874390b58e6573349554c725
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -43,7 +43,7 @@ $(call Package/hwloc/Default)
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE+= utilities
-  DEPENDS+= +libhwloc
+  DEPENDS+= +libhwloc +libncurses
 endef
 
 define Package/hwloc-utils/description
@@ -62,6 +62,10 @@ define Package/libhwloc/description
 $(call Package/hwloc/Default/description)
   This package contains the hwloc libraries.
 endef
+
+CONFIGURE_ARGS += \
+	--disable-libxml2 \
+	--disable-libudev
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/include

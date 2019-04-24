@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=audiofile
 PKG_VERSION:=0.3.6
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/$(PKG_NAME)/0.3
@@ -18,6 +18,7 @@ PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_FIXUP:=autoreconf
 PKG_INSTALL=1
 
+include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libaudiofile
@@ -25,7 +26,7 @@ define Package/libaudiofile
   CATEGORY:=Libraries
   TITLE:=Audio File library
   URL:=http://audiofile.68k.org/
-  DEPENDS:=+libflac +libstdcpp
+  DEPENDS:=$(CXX_DEPENDS) +libflac
 endef
 
 define Package/libaudiofile/description

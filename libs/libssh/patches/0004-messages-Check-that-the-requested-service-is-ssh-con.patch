@@ -1,0 +1,37 @@
+From 3fe7510b261098e3937ab5417935916a46e6727b Mon Sep 17 00:00:00 2001
+From: Andreas Schneider <asn@cryptomilk.org>
+Date: Fri, 19 Oct 2018 11:40:44 +0200
+Subject: [PATCH 4/8] messages: Check that the requested service is
+ 'ssh-connection'
+
+Signed-off-by: Andreas Schneider <asn@cryptomilk.org>
+(cherry picked from commit 9c200d3ef4f62d724d3bae2563b81c38cc31e215)
+Signed-off-by: Kevin Darbyshire-Bryant <ldir@darbyshire-bryant.me.uk>
+---
+ src/messages.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+--- a/src/messages.c
++++ b/src/messages.c
+@@ -649,6 +649,7 @@ SSH_PACKET_CALLBACK(ssh_packet_userauth_
+   ssh_message msg = NULL;
+   char *service = NULL;
+   char *method = NULL;
++  int cmp;
+   int rc;
+ 
+   (void)user;
+@@ -675,6 +676,13 @@ SSH_PACKET_CALLBACK(ssh_packet_userauth_
+       service, method,
+       msg->auth_request.username);
+ 
++  cmp = strcmp(service, "ssh-connection");
++  if (cmp != 0) {
++      SSH_LOG(SSH_LOG_WARNING,
++              "Invalid service request: %s",
++              service);
++      goto end;
++  }
+ 
+   if (strcmp(method, "none") == 0) {
+     msg->auth_request.method = SSH_AUTH_METHOD_NONE;

@@ -1,0 +1,56 @@
+From f1fc04d7609ab074647aa00e96d4c66d5135b155 Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <michael.heimpold@i2se.com>
+Date: Tue, 18 Dec 2018 15:02:25 +0100
+Subject: [PATCH 4/9] Optimize to_binstr() function
+
+Appending multiple times to same string is slow since strcat() needs
+to determine the end during each run. So manually maintain a pointer
+to the end to speed-up things.
+
+Signed-off-by: Michael Heimpold <michael.heimpold@i2se.com>
+Cc: Michael Heimpold <mhei@heimpold.de>
+---
+ lsmmc.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/lsmmc.c b/lsmmc.c
+index e64117c..86713f7 100644
+--- a/lsmmc.c
++++ b/lsmmc.c
+@@ -371,12 +371,14 @@ char *to_binstr(char *hexstr)
+ 		"0000", "0001", "0010", "0011", "0100", "0101", "0110", "0111",
+ 		"1000", "1001", "1010", "1011", "1100", "1101", "1110", "1111",
+ 	};
+-	char *binstr;
++	char *binstr, *tail;
+ 
+ 	binstr = calloc(strlen(hexstr) * 4 + 1, sizeof(char));
+ 	if (!binstr)
+ 		return NULL;
+ 
++	tail = binstr;
++
+ 	while (hexstr && *hexstr != '\0') {
+ 		if (!isxdigit(*hexstr)) {
+ 			free(binstr);
+@@ -384,13 +386,14 @@ char *to_binstr(char *hexstr)
+ 		}
+ 
+ 		if (isdigit(*hexstr))
+-			strcat(binstr, bindigits[*hexstr - '0']);
++			strcat(tail, bindigits[*hexstr - '0']);
+ 		else if (islower(*hexstr))
+-			strcat(binstr, bindigits[*hexstr - 'a' + 10]);
++			strcat(tail, bindigits[*hexstr - 'a' + 10]);
+ 		else
+-			strcat(binstr, bindigits[*hexstr - 'A' + 10]);
++			strcat(tail, bindigits[*hexstr - 'A' + 10]);
+ 
+ 		hexstr++;
++		tail += 4;
+ 	}
+ 
+ 	return binstr;
+-- 
+2.17.1
+

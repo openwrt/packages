@@ -1,8 +1,6 @@
-Index: fcgi-2.4.0/include/fcgio.h
-===================================================================
---- fcgi-2.4.0.orig/include/fcgio.h	2007-07-17 13:30:28.000000000 +0200
-+++ fcgi-2.4.0/include/fcgio.h	2007-07-17 13:30:28.000000000 +0200
-@@ -77,10 +77,10 @@
+--- a/include/fcgio.h
++++ b/include/fcgio.h
+@@ -77,10 +77,10 @@ protected:
      virtual int sync();
  
      // Remove and return the current character.
@@ -15,22 +13,21 @@ Index: fcgi-2.4.0/include/fcgio.h
  
      // Use a buffer.  The only reasons that a buffer would be useful is
      // to support the use of the unget()/putback() or seek() methods.  Using
-diff -urN fcgi-2.4.0/libfcgi/fcgio.cpp fcgi-2.4.0.new/libfcgi/fcgio.cpp
---- fcgi-2.4.0/libfcgi/fcgio.cpp	2002-02-24 21:12:22.000000000 +0100
-+++ fcgi-2.4.0.new/libfcgi/fcgio.cpp	2007-08-28 11:22:22.000000000 +0200
-@@ -89,7 +89,7 @@
+--- a/libfcgi/fcgio.cpp
++++ b/libfcgi/fcgio.cpp
+@@ -86,7 +86,7 @@ int fcgi_streambuf::sync()
  }
  
  // uflow() removes the char, underflow() doesn't
 -int fcgi_streambuf::uflow() 
 +std::basic_streambuf<char>::int_type fcgi_streambuf::uflow()
  {
-     int rv = underflow();
-     if (this->bufsize) gbump(1);
-@@ -97,7 +97,7 @@
+     if (this->bufsize)
+     {
+@@ -100,7 +100,7 @@ int fcgi_streambuf::uflow()
+     }
  }
  				
- // Note that the expected behaviour when there is no buffer varies
 -int fcgi_streambuf::underflow()
 +std::basic_streambuf<char>::int_type fcgi_streambuf::underflow()
  {

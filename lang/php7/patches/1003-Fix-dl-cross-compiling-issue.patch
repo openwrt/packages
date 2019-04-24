@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -453,7 +453,10 @@ PHP_CHECK_FUNC(gethostname, nsl)
+@@ -422,7 +422,10 @@ PHP_CHECK_FUNC(gethostname, nsl)
  PHP_CHECK_FUNC(gethostbyaddr, nsl)
  PHP_CHECK_FUNC(yp_get_default_domain, nsl)
  
@@ -25,35 +25,3 @@
    ])
  
    PHP_NEW_EXTENSION(fileinfo, fileinfo.c $libmagic_sources, $ext_shared,,-I@ext_srcdir@/libmagic)
---- a/ext/opcache/config.m4
-+++ b/ext/opcache/config.m4
-@@ -227,7 +227,14 @@ AC_TRY_RUN([
- 	flock_type=linux
-     AC_DEFINE([HAVE_FLOCK_LINUX], [], [Struct flock is Linux-type])
-     AC_MSG_RESULT("yes")
--], AC_MSG_RESULT("no") )
-+], [
-+    AC_MSG_RESULT("no")
-+], [
-+    dnl cross-compiling; assume Linux
-+	flock_type=linux
-+    AC_DEFINE([HAVE_FLOCK_LINUX], [], [Struct flock is Linux-type])
-+    AC_MSG_RESULT("yes")
-+])
- 
- AC_MSG_CHECKING("whether flock struct is BSD ordered")
- AC_TRY_RUN([
-@@ -243,7 +250,12 @@ AC_TRY_RUN([
- 	flock_type=bsd
-     AC_DEFINE([HAVE_FLOCK_BSD], [], [Struct flock is BSD-type]) 
-     AC_MSG_RESULT("yes")
--], AC_MSG_RESULT("no") )
-+], [
-+    AC_MSG_RESULT("no")
-+], [
-+    dnl cross-compiling; assume Linux
-+    AC_MSG_RESULT("no")
-+])
- 
- if test "$flock_type" == "unknown"; then
- 	AC_MSG_ERROR([Don't know how to define struct flock on this system[,] set --enable-opcache=no])

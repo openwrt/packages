@@ -8,25 +8,37 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlite
-PKG_VERSION:=3240000
+PKG_VERSION:=3270200
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_VERSION).tar.gz
-PKG_HASH:=d9d14e88c6fb6d68de9ca0d1f9797477d82fc3aed613558f87ffbdbbc5ceb74a
-PKG_SOURCE_URL:=http://www.sqlite.org/2018/
+PKG_HASH:=50c39e85ea28b5ecfdb3f9e860afe9ba606381e21836b2849efca6a0bfe6ef6e
+PKG_SOURCE_URL:=https://www.sqlite.org/2019/
 
 PKG_LICENSE:=PUBLICDOMAIN
 PKG_LICENSE_FILES:=
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-autoconf-$(PKG_VERSION)
 
+PKG_BUILD_PARALLEL:=1
+
+PKG_CPE_ID:=cpe:/a:sqlite:sqlite
+
 PKG_FIXUP:=autoreconf
 
 PKG_INSTALL:=1
 
 PKG_CONFIG_DEPENDS := \
-	CONFIG_SQLITE_FTS3 \
-	CONFIG_SQLITE_RTREE
+	CONFIG_SQLITE3_DYNAMIC_EXTENSIONS \
+	CONFIG_SQLITE3_FTS3 \
+	CONFIG_SQLITE3_FTS4 \
+	CONFIG_SQLITE3_FTS5 \
+	CONFIG_SQLITE3_JSON1 \
+	CONFIG_SQLITE3_LIBEDIT \
+	CONFIG_SQLITE3_READLINE \
+	CONFIG_SQLITE3_RTREE \
+	CONFIG_SQLITE3_SESSION \
+	CONFIG_SQLITE3_THREADSAFE
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -34,7 +46,7 @@ define Package/sqlite3/Default
   SUBMENU:=database
   TITLE:=SQLite (v3.x) database engine
   URL:=http://www.sqlite.org/
-  MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
+  MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
 endef
 
 define Package/sqlite3/Default/description
@@ -57,14 +69,18 @@ $(call Package/sqlite3/Default/description)
 endef
 
 define Package/libsqlite3/config
-  source "$(SOURCE)/Config.in"
+  source "$(SOURCE)/Config-lib.in"
 endef
 
 define Package/sqlite3-cli
   $(call Package/sqlite3/Default)
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libsqlite3 +libncurses +libreadline
+  DEPENDS := \
+	  +libsqlite3 \
+	  +SQLITE3_LIBEDIT:libedit \
+	  +SQLITE3_READLINE:libreadline \
+	  +SQLITE3_READLINE:libncursesw
   TITLE+= (cli)
 endef
 
@@ -75,39 +91,42 @@ $(call Package/sqlite3/Default/description)
  formats.
 endef
 
-TARGET_CFLAGS += $(FPIC) \
-	-DSQLITE_ENABLE_UNLOCK_NOTIFY=1 \
-	-DHAVE_ISNAN=1 \
-	-DHAVE_MALLOC_USABLE_SIZE=1
+define Package/sqlite3-cli/config
+  source "$(SOURCE)/Config-cli.in"
+endef
 
-ifneq ($(CONFIG_SQLITE_FTS3),y)
-TARGET_CFLAGS += -USQLITE_ENABLE_FTS3
-endif
-
-ifneq ($(CONFIG_SQLITE_RTREE),y)
-TARGET_CFLAGS += -USQLITE_ENABLE_RTREE
-endif
+TARGET_CFLAGS += \
+	-DHAVE_ISNAN \
+	-DHAVE_MALLOC_USABLE_SIZE \
+	-DSQLITE_ENABLE_UNLOCK_NOTIFY
 
 CONFIGURE_ARGS += \
+	--disable-debug \
+	--disable-static-shell \
 	--enable-shared \
 	--enable-static \
-	--disable-editline \
-	--disable-static-shell
+	$(if $(CONFIG_SQLITE3_DYNAMIC_EXTENSIONS),--enable-dynamic-extensions,--disable-dynamic-extensions) \
+	$(if $(CONFIG_SQLITE3_FTS3),--enable-fts3,--disable-fts3) \
+	$(if $(CONFIG_SQLITE3_FTS3),--enable-fts4,--disable-fts4) \
+	$(if $(CONFIG_SQLITE3_FTS3),--enable-fts5,--disable-fts5) \
+	$(if $(CONFIG_SQLITE3_JSON1),--enable-json1,--disable-json1) \
+	$(if $(CONFIG_SQLITE3_RTREE),--enable-rtree,--disable-rtree) \
+	$(if $(CONFIG_SQLITE3_SESSION),--enable-session,--disable-session) \
+	$(if $(CONFIG_SQLITE3_THREADSAFE),--enable-threadsafe,--disable-threadsafe)
 
-CONFIGURE_VARS += \
-	config_BUILD_CC="$(HOSTCC)" \
-	config_BUILD_CFLAGS="-O2" \
-	config_TARGET_CC="$(TARGET_CC)" \
-	config_TARGET_CFLAGS="$(TARGET_CFLAGS)" \
-	config_TARGET_READLINE_INC="$(TARGET_CPPFLAGS)" \
-	config_TARGET_READLINE_LIBS="$(TARGET_LDFLAGS) -lreadline -lncurses" \
+ifeq ($(CONFIG_SQLITE3_LIBEDIT),y)
+CONFIGURE_ARGS+=--disable-readline
+else ifeq ($(CONFIG_SQLITE3_READLINE),y)
+CONFIGURE_ARGS+=--disable-editline
+else
+CONFIGURE_ARGS+=--disable-editline --disable-readline
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/sqlite3{,ext}.h $(1)/usr/include/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsqlite3.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/sqlite3{,ext}.h $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsqlite3.{a,so*} $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/sqlite3.pc $(1)/usr/lib/pkgconfig/
 endef
 

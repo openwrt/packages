@@ -48,8 +48,8 @@
  LINKOPTS = -lsocket -lnsl -lresolv
  JAVACFLAGS_OS += -I$(JDK)/include/solaris
  ifneq ($(DEBUG),1)
-@@ -148,7 +149,8 @@ CFLAGS_OS = -DHAVE_IPV6 -no-cpp-precomp
- 	-D__MAC_OS_X_VERSION_MIN_REQUIRED=__MAC_OS_X_VERSION_10_4 \
+@@ -149,7 +150,8 @@ 	-D__MAC_OS_X_VERSION_MIN_REQUIRED=__MAC_OS_X_VERSION_10_4 \
+	-DHAVE_STRLCPY=1 \
  	-D__APPLE_USE_RFC_2292 #-Wunreachable-code
  CC = gcc
 -LD = $(CC) -dynamiclib
@@ -58,7 +58,7 @@
  LINKOPTS = -lSystem
  LDSUFFIX = dylib
  JDK = /System/Library/Frameworks/JavaVM.framework/Home
-@@ -170,8 +172,9 @@ NSSLIBFILE  := $(NSSLIBNAME)-$(NSSVERSIO
+@@ -172,8 +174,9 @@ NSSLIBFILE  := $(NSSLIBNAME)-$(NSSVERSIO
  NSSLINKNAME := $(NSSLIBNAME).so.2
  NSSINSTPATH := /lib
  
@@ -69,7 +69,7 @@
  INSTBASE?=/usr
  STARTUPSCRIPTNAME?=mdns
  
-@@ -257,7 +260,7 @@ libdns_sd: setup $(BUILDDIR)/libdns_sd.$
+@@ -259,7 +262,7 @@ libdns_sd: setup $(BUILDDIR)/libdns_sd.$
  CLIENTLIBOBJS = $(OBJDIR)/dnssd_clientlib.c.so.o $(OBJDIR)/dnssd_clientstub.c.so.o $(OBJDIR)/dnssd_ipc.c.so.o
  
  $(BUILDDIR)/libdns_sd.$(LDSUFFIX): $(CLIENTLIBOBJS)
@@ -78,7 +78,7 @@
  	@$(STRIP) $@
  
  Clients: setup libdns_sd ../Clients/build/dns-sd
-@@ -292,7 +295,7 @@ InstalledManPages: $(MANPATH)/man8/mdnsd
+@@ -294,7 +297,7 @@ InstalledManPages: $(MANPATH)/man8/mdnsd
  InstalledClients: $(INSTBASE)/bin/dns-sd
  	@echo $+ " installed"
  
@@ -112,4 +112,3 @@
 +	-[ -f $(ETCBASE)/nsswitch.conf ] && sed -e '/mdns/!s/^\(hosts:.*\)dns\(.*\)/\1mdns dns\2/' $(ETCBASE)/nsswitch.conf.pre-mdns > $(ETCBASE)/nsswitch.conf
  
  #############################################################################
- 

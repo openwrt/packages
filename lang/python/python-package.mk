@@ -68,8 +68,8 @@ define PyPackage
   $(call shexport,PyPackage/$(1)/filespec)
 
   define Package/$(1)/install
-	$(call PyPackage/$(1)/install,$$(1))
-	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
+	$$(call PyPackage/$(1)/install,$$(1))
+	SED="$(SED)" \
 	$(SHELL) $(python_mk_path)python-package-install.sh "2" \
 		"$(PKG_INSTALL_DIR)" "$$(1)" \
 		"$(HOST_PYTHON_BIN)" "$$(2)" \
@@ -113,17 +113,20 @@ define Build/Compile/PyMod
 		cd $(PKG_BUILD_DIR)/$(strip $(1)), \
 		./setup.py $(2), \
 		$(3))
-	find $(PKG_INSTALL_DIR) -name "*\.exe" | xargs rm -f
 endef
 
-PYTHON_PKG_SETUP_ARGS:=--single-version-externally-managed
-PYTHON_PKG_SETUP_VARS:=
+PYTHON_PKG_SETUP_DIR ?=
+PYTHON_PKG_SETUP_GLOBAL_ARGS ?=
+PYTHON_PKG_SETUP_ARGS ?= --single-version-externally-managed
+PYTHON_PKG_SETUP_VARS ?=
 
 define PyBuild/Compile/Default
 	$(foreach pkg,$(HOST_PYTHON_PACKAGE_BUILD_DEPENDS),
 		$(call host_python_pip_install_host,$(pkg))
 	)
-	$(call Build/Compile/PyMod,, \
+	$(call Build/Compile/PyMod, \
+		$(PYTHON_PKG_SETUP_DIR), \
+		$(PYTHON_PKG_SETUP_GLOBAL_ARGS) \
 		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
 		$(PYTHON_PKG_SETUP_ARGS), \
 		$(PYTHON_PKG_SETUP_VARS) \

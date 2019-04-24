@@ -31,19 +31,18 @@ define Package/python-constantly/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
+  TITLE:=Symbolic constants in Python
   URL:=https://github.com/twisted/constantly
 endef
 
 define Package/python-constantly
 $(call Package/python-constantly/Default)
-  TITLE:=Symbolic constants in Python
   DEPENDS:=+PACKAGE_python-constantly:python-light
   VARIANT:=python
 endef
 
 define Package/python3-constantly
 $(call Package/python-constantly/Default)
-  TITLE:=Symbolic constants in Python
   DEPENDS:=+PACKAGE_python3-constantly:python3-light
   VARIANT:=python3
 endef

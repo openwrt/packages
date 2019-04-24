@@ -9,21 +9,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msmtp
-PKG_VERSION:=1.6.8
+PKG_VERSION:=1.8.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://marlam.de/msmtp/releases
-PKG_HASH:=55ff95a304d888b56d07d9c62327ab9bfe26532c9c2a2ed6aefc43bea1b659fb
+PKG_HASH:=3cb2eefd33d048f0f82de100ef39a494e44fd1485e376ead31f733d2f36b92b4
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
+PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=
+PKG_CPE_ID:=cpe:/a:marlam:msmtp
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -46,7 +46,7 @@ endef
 
 define Package/msmtp
 $(call Package/msmtp/Default)
-  DEPENDS+= +libopenssl +ca-bundle
+  DEPENDS+= +libgnutls +ca-bundle
   TITLE+= (with SSL support)
   VARIANT:=ssl
 endef
@@ -74,7 +74,7 @@ endef
 define Package/msmtp-mta
 $(call Package/msmtp/Default)
   TITLE+= (as MTA)
-  DEPENDS+=@(PACKAGE_msmtp||PACAKGE_msmtp-nossl)
+  DEPENDS+=@(PACKAGE_msmtp||PACKAGE_msmtp-nossl)
 endef
 
 define Package/msmtp-mta/description
@@ -101,6 +101,7 @@ CONFIGURE_ARGS += \
 	--without-libidn \
 	--without-libsecret \
 	--without-macosx-keyring \
+	--without-msmtpd
 
 ifneq ($(CONFIG_USE_UCLIBC),)
   CONFIGURE_ARGS += --disable-gai-idn
@@ -110,7 +111,7 @@ MAKE_FLAGS :=
 
 ifeq ($(BUILD_VARIANT),ssl)
 	CONFIGURE_ARGS += \
-		--with-tls=openssl
+		--with-tls=gnutls
 endif
 
 ifeq ($(BUILD_VARIANT),nossl)

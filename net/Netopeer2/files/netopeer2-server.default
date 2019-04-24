@@ -28,6 +28,11 @@ if [ -x /bin/sysrepoctl ]; then
 		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-netconf-server@2016-11-02.yang -o root:root -p 600
 		sysrepoctl -m ietf-netconf-server -e listen
 		sysrepoctl -m ietf-netconf-server -e ssh-listen
+		sysrepoctl -m ietf-netconf-server -e tls-listen
+		sysrepoctl -m ietf-netconf-server -e call-home
+		sysrepoctl -m ietf-netconf-server -e ssh-call-home
+		sysrepoctl -m ietf-netconf-server -e tls-call-home
+		sysrepoctl -m ietf-netconf -e url
 		if [ -x /bin/sysrepocfg ]; then
 			sysrepocfg -f xml -d startup -i /usr/share/netopeer2-server/stock_config.xml ietf-netconf-server
 			rm /usr/share/netopeer2-server/stock_config.xml

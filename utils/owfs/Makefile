@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=owfs
-PKG_VERSION:=3.2p2
+PKG_VERSION:=3.2p3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/owfs/owfs/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=904ee3ab1d80e9d3461b310f0cc78b2175e24aa0075edc4f7f92371c667d0bb6
+PKG_SOURCE_URL:=https://github.com/owfs/owfs/releases/download/v$(PKG_VERSION)
+PKG_HASH:=b8d33eba57d4a2f6c8a11ff23f233e3248bd75a42c8219b058a888846edd8717
 
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=GPL-2.0

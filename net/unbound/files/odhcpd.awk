@@ -18,11 +18,12 @@
 # function from dnsmasq and use DHCPv4 MAC to find IPV6 SLAAC hosts.
 #
 # External Parameters
-#   "hostfile" = where this script will cache host DNS data
+#   "conffile" = Unbound configuration left for a restart
+#   "pipefile" = DNS entries for unbound-control standard input
 #   "domain" = text domain suffix
 #   "bslaac" = boolean, use DHCPv4 MAC to find GA and ULA IPV6 SLAAC
 #   "bisolt" = boolean, format <host>.<network>.<domain>. so you can isolate
-#   "bconf"  = boolean, write conf file format rather than pipe records
+#   "bconf"  = boolean, write conf file with pipe records
 #
 ##############################################################################
 
@@ -66,15 +67,15 @@
     if ( bconf == 1 ) {
       x = ( "local-data: \"" fqdn ". 300 IN A " adr "\"" ) ;
       y = ( "local-data-ptr: \"" adr " 300 " fqdn "\"" ) ;
-      print ( x "\n" y "\n" ) > hostfile ;
+      print ( x "\n" y "\n" ) > conffile ;
     }
 
-    else {
-      for( i=1; i<=4; i++ ) { qpr = ( ptr[i] "." qpr) ; }
-      x = ( fqdn ". 300 IN A " adr ) ;
-      y = ( qpr "in-addr.arpa. 300 IN PTR " fqdn ) ;
-      print ( x "\n" y ) > hostfile ;
-    }
+
+    # always create the pipe file
+    for( i=1; i<=4; i++ ) { qpr = ( ptr[i] "." qpr) ; }
+    x = ( fqdn ". 300 IN A " adr ) ;
+    y = ( qpr "in-addr.arpa. 300 IN PTR " fqdn ) ;
+    print ( x "\n" y ) > pipefile ;
 
 
     if (( bslaac == 1 ) && ( slaac != 0 )) {
@@ -100,15 +101,15 @@
           if ( bconf == 1 ) {
             x = ( "local-data: \"" fqdn ". 300 IN AAAA " adr "\"" ) ;
             y = ( "local-data-ptr: \"" adr " 300 " fqdn "\"" ) ;
-            print ( x "\n" y "\n" ) > hostfile ;
+            print ( x "\n" y "\n" ) > conffile ;
           }
 
-          else {
-            qpr = ipv6_ptr( adr ) ;
-            x = ( fqdn ". 300 IN AAAA " adr ) ;
-            y = ( qpr ". 300 IN PTR " fqdn ) ;
-            print ( x "\n" y ) > hostfile ;
-          }
+
+          # always create the pipe file
+          qpr = ipv6_ptr( adr ) ;
+          x = ( fqdn ". 300 IN AAAA " adr ) ;
+          y = ( qpr ". 300 IN PTR " fqdn ) ;
+          print ( x "\n" y ) > pipefile ;
         }
       }
 
@@ -122,32 +123,30 @@
       if ( bconf == 1 ) {
         x = ( "local-data: \"" fqdn ". 300 IN AAAA " adr "\"" ) ;
         y = ( "local-data-ptr: \"" adr " 300 " fqdn "\"" ) ;
-        print ( x "\n" y "\n" ) > hostfile ;
+        print ( x "\n" y "\n" ) > conffile ;
       }
 
-      else {
-        # only for provided hostnames and full /128 assignments
-        qpr = ipv6_ptr( adr ) ;
-        x = ( fqdn ". 300 IN AAAA " adr ) ;
-        y = ( qpr ". 300 IN PTR " fqdn ) ;
-        print ( x "\n" y ) > hostfile ;
-      }
+
+      # only for provided hostnames and full /128 assignments
+      qpr = ipv6_ptr( adr ) ;
+      x = ( fqdn ". 300 IN AAAA " adr ) ;
+      y = ( qpr ". 300 IN PTR " fqdn ) ;
+      print ( x "\n" y ) > pipefile ;
     }
 
     if (cdr2 == 128) {
       if ( bconf == 1 ) {
         x = ( "local-data: \"" fqdn ". 300 IN AAAA " adr2 "\"" ) ;
         y = ( "local-data-ptr: \"" adr2 " 300 " fqdn "\"" ) ;
-        print ( x "\n" y "\n" ) > hostfile ;
+        print ( x "\n" y "\n" ) > conffile ;
       }
 
-      else {
-        # odhcp puts GA and ULA on the same line (position 9 and 10)
-        qpr2 = ipv6_ptr( adr2 ) ;
-        x = ( fqdn ". 300 IN AAAA " adr2 ) ;
-        y = ( qpr2 ". 300 IN PTR " fqdn ) ;
-        print ( x "\n" y ) > hostfile ;
-      }
+
+      # odhcp puts GA and ULA on the same line (position 9 and 10)
+      qpr2 = ipv6_ptr( adr2 ) ;
+      x = ( fqdn ". 300 IN AAAA " adr2 ) ;
+      y = ( qpr2 ". 300 IN PTR " fqdn ) ;
+      print ( x "\n" y ) > pipefile ;
     }
   }
 

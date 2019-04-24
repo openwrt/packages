@@ -8,14 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libyang
-PKG_VERSION:=0.16-r1
+PKG_VERSION:=0.16-r3
+PKG_RELEASE:=3
 
 PKG_LICENSE:=GPL-2.0+
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/CESNET/libyang/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=43ab396fc7529251dc9cf02fbd8da48dcf476b998ea0f9e66197632988969074
+PKG_HASH:=4745460dedc4ba17d8bcfc39ad9ba0d1b91bbe82b55b9417a090390909ba8ca5
 
 CMAKE_INSTALL:=1
 
@@ -50,6 +51,7 @@ TARGET_LDFLAGS += -lm
 
 CMAKE_OPTIONS += \
 	-DCMAKE_INSTALL_PREFIX:PATH=/usr \
+	-DENABLE_LYD_PRIV:BOOL=ON \
 	-DCMAKE_BUILD_TYPE:STRING=Release
 
 define Build/InstallDev

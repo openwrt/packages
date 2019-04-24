@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dovecot
-PKG_VERSION:=2.3.2.1
-PKG_RELEASE:=2
+PKG_VERSION:=2.3.5.1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.dovecot.org/releases/2.3
-PKG_HASH:=4a65118508dc7a562e5f90dd7c3f56219fff22367c496f17d77cd0c7e2724e34
+PKG_HASH:=d78f9d479e3b2caa808160f86bfec1c9c7b46344d8b14b88f5fa9bbbf8c7c33f
 PKG_LICENSE:=LGPL-2.1 MIT BSD-3-Clause Unique
 PKG_LICENSE_FILES:=COPYING COPYING.LGPL COPYING.MIT
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
@@ -29,6 +29,7 @@ PKG_CONFIG_DEPENDS:= \
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 # iconv is needed when compiling with MySQL support. iconv will also be used by
@@ -122,7 +123,8 @@ CONFIGURE_VARS += \
 	lib_cv_va_copy=yes \
 	lib_cv_va_copy=yes \
 	lib_cv___va_copy=yes \
-	lib_cv_va_val_copy=yes
+	lib_cv_va_val_copy=yes \
+	ac_cv_prog_KRB5CONFIG="krb5-config"
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib

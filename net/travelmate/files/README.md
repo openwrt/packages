@@ -3,7 +3,7 @@
 ## Description
 If you’re planning an upcoming vacation or a business trip, taking your laptop, tablet or smartphone give you the ability to connect with friends or complete work on the go. But many hotels don’t have a secure wireless network setup or you’re limited on using a single device at once. Investing in a portable, mini travel router is a great way to connect all of your devices at once while having total control over your own personalized wireless network.  
 A logical combination of AP+STA mode on one physical radio allows most of OpenWrt supported router devices to connect to a wireless hotspot/station (STA) and provide a wireless access point (AP) from that hotspot at the same time. Downside of this solution: whenever the STA interface looses the connection it will go into an active scan cycle which renders the radio unusable for AP mode operation, therefore the AP is taken down if the STA looses its association.  
-To avoid these kind of deadlocks, travelmate set all station interfaces in an "always off" mode and connects automatically to available/configured hotspots.  
+To avoid these kind of deadlocks, travelmate will set all station interfaces to an "always off" mode and connects automatically to available/configured hotspots.  
 
 ## Main Features
 * STA interfaces operating in an "always off" mode, to make sure that the AP is always accessible
@@ -13,6 +13,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * support all kinds of uplinks, incl. hidden and enterprise uplinks
 * continuously checks the existing uplink connection (quality), e.g. for conditional uplink (dis-) connections
 * captive portal detection with internet online check and a 'heartbeat' function to keep the uplink connection up & running
+* proactively scan and switch to a higher prioritized uplink, despite of an already existing connection
 * support devices with multiple radios in any order
 * procd init and hotplug support
 * runtime information available via LuCI & via 'status' init command
@@ -23,6 +24,7 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
 * [OpenWrt](https://openwrt.org), tested with the stable release series (18.06.x) and with the latest OpenWrt snapshot
 * iwinfo for wlan scanning, uclient-fetch for captive portal detection
 * optional: qrencode 4.x for QR code support
+* optional: wpad (the full version, not wpad-mini) to use Enterprise WiFi
 
 ## Installation & Usage
 * download the package [here](https://downloads.openwrt.org/snapshots/packages/x86_64/packages)
@@ -42,11 +44,12 @@ To avoid these kind of deadlocks, travelmate set all station interfaces in an "a
     * trm\_enabled => main switch to enable/disable the travelmate service (bool/default: '0', disabled)
     * trm\_debug => enable/disable debug logging (bool/default: '0', disabled)
     * trm\_captive => enable/disable the captive portal detection (bool/default: '1', enabled)
+    * trm\_proactive => enable/disable the proactive uplink switch (bool/default: '1', enabled)
     * trm\_minquality => minimum signal quality threshold as percent for conditional uplink (dis-) connections (int/default: '35', valid range: 20-80)
     * trm\_maxwait => how long (in seconds) should travelmate wait for a successful wlan interface reload action (int/default: '30', valid range: 20-40)
     * trm\_maxretry => how many times should travelmate try to connect to an uplink (int/default: '3', valid range: 1-10)
     * trm\_timeout => overall retry timeout in seconds (int/default: '60', valid range: 30-300)
-    * trm\_radio => limit travelmate to a single radio (e.g. 'radio1') or change the overall scanning order (e.g. 'radio1 radio2 radio0') (default: not set, use all radios 0-n)
+    * trm\_radio => limit travelmate to a single radio (e.g. 'radio1') or change the overall scanning priority (e.g. 'radio1 radio2 radio0') (default: not set, use all radios 0-n)
     * trm\_iface => main uplink / procd trigger network interface (default: trm_wwan)
     * trm\_triggerdelay => additional trigger delay in seconds before travelmate processing begins (int/default: '2')
 
@@ -121,14 +124,6 @@ config wifi-iface
 edit /etc/config/travelmate and set 'trm_enabled' to '1'
 /etc/init.d/travelmate restart
 </code></pre>
-
-## FAQ
-**Q:** What happen with misconfigured, faulty uplinks, e.g. due to outdated wlan passwords?  
-**A:** Travelmate tries n times (default 3) to connect, then the respective uplink will be marked as "faulty" in the JSON runtime file and hereafter ignored. To reset the JSON runtime file, simply restart travelmate.  
-**Q:** How to connect to hidden uplinks?  
-**A:** See 'example\_hidden' STA configuration above, option 'SSID' and 'BSSID' must be specified for successful connections.  
-**Q:** Any recommendations regarding suitable DNS settings to easily connect to captive portals?  
-**A:** Use a simple DNS forwarder like dnsmasq and disable the option 'rebind_protection'.  
 
 ## Support
 Please join the travelmate discussion in this [forum thread](https://forum.lede-project.org/t/travelmate-support-thread/5155) or contact me by [mail](mailto:dev@brenken.org)  

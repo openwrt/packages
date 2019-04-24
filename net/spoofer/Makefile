@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 The Regents of the University of California
+# Copyright (C) 2019 The Regents of the University of California
 #
 # This is free software, licensed under the GNU General Public License v3.
 # See /LICENSE for more information.
@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=spoofer
-PKG_VERSION:=1.3.3
+PKG_VERSION:=1.4.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.caida.org/projects/spoofer/downloads
-PKG_HASH:=376f9a4b2d0404de3c37df645672a954b4916ad56508fadfe3f99120e5b0f87e
+PKG_HASH:=994555b360a095f0e9baed2469ef26bd29610af155ce58b3984d2f1616a74526
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=LICENSE
 
+PKG_USE_MIPS16:=0
 HOST_BUILD_DEPENDS:=protobuf/host
 
 include $(INCLUDE_DIR)/host-build.mk

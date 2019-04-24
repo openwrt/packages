@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=znc
-PKG_VERSION:=1.7.1
+PKG_VERSION:=1.7.3
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://znc.in/releases \
 		https://znc.in/releases/archive
-PKG_HASH:=44cfea7158ea05dc2547c7c6bc22371e66c869def90351de0ab90a9c200d39c4
+PKG_HASH:=1e4cc31837a1e8e6cc310873659a167cec16a3fd4281cbc3bf364e42352c113d
 
 PKG_MAINTAINER:=Jonas Gorski <jonas.gorski@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:znc:znc
 
 PKG_USE_MIPS16:=0
 PKG_BUILD_PARALLEL:=1
@@ -292,7 +293,7 @@ CONFIGURE_ARGS += \
 	--disable-perl \
 	--enable-poll \
 	--disable-python \
-	--enable-ssl \
+	--enable-openssl \
 	--disable-swig \
 	--disable-tcl \
 	--enable-tdns \

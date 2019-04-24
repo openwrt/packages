@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rpcbind
 PKG_VERSION:=1.2.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=@SF/rpcbind
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -10,14 +10,14 @@ PKG_HASH:=2ce360683963b35c19c43f0ee2c7f18aa5b81ef41c3fdbd15ffcb00b8bffda7a
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
+PKG_CPE_ID:=cpe:/a:rpcbind_project:rpcbind
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=autogen.sh aclocal.m4
 PKG_INSTALL:=1
 
 PKG_CONFIG_DEPENDS:= \
-	CONFIG_RPCBIND_LIBWRAP \
-	CONFIG_RPCBIND_WARMSTARTS
+	CONFIG_RPCBIND_LIBWRAP
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -43,26 +43,18 @@ if PACKAGE_rpcbind
 	config RPCBIND_LIBWRAP
 		bool "Enable libwrap (TCP wrappers) support."
 		default y
-
-	config RPCBIND_WARMSTARTS
-		bool "Enable warmstarts support"
-		default y
-		help
-		  The warmstart feature saves RPC registrations on termination.
 endif
 endef
 
 CONFIGURE_ARGS += \
 	--with-rpcuser=rpc \
-	--without-systemdsystemunitdir
+	--without-systemdsystemunitdir \
+	--enable-warmstarts
 
 ifeq ($(CONFIG_RPCBIND_LIBWRAP),y)
 	CONFIGURE_ARGS += --enable-libwrap
 else
 	CONFIGURE_ARGS += --disable-libwrap
-endif
-ifeq ($(CONFIG_RPCBIND_WARMSTARTS),y)
-	CONFIGURE_ARGS += --enable-warmstarts
 endif
 
 define Package/rpcbind/install

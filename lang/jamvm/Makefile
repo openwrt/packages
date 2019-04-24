@@ -35,9 +35,9 @@ define Package/jamvm
 endef
 
 define Package/jamvm/description
- JamVM is a new Java Virtual Machine which conforms to the JVM
- specification version (blue book). In comparison to most other VM's (free
- and commercial) it is extremely small.However, unlike other small VMs
+ JamVM is a Java Virtual Machine which conforms to the JVM
+ specification version 2 (a.k.a, 1.2).  In comparison to most other VM's (free
+ and commercial) it is extremely small.  However, unlike other small VMs
  (e.g. KVM) it is designed to support the full specification, and includes
  support for object finalisation, Soft/Weak/Phantom References, the Java
  Native Interface (JNI) and the Reflection API.

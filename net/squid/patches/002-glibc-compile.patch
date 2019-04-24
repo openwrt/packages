@@ -1,6 +1,6 @@
---- squid-4.0.21.orig/src/tools.cc
-+++ squid-4.0.21/src/tools.cc
-@@ -581,7 +581,8 @@
+--- a/src/tools.cc
++++ b/src/tools.cc
+@@ -582,7 +582,8 @@
      }
  #else
  

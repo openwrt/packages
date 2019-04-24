@@ -18,7 +18,7 @@ All packages you commit or submit by pull-request should follow these simple gui
 * Convenience macros for popular mirrors are defined. Using these macros will make your package downloads more robust by mapping to a list of possible source mirrors for archive availability.
     - @SF - Sourceforge (downloads.sourceforge.net) with 5 retries due to re-directs
     - @GITHUB - Github (raw.githubusercontent.com) with 5 retries due to re-directs
-    - @GNU - 8 regional servers 
+    - @GNU - 8 regional servers
     - @GNOME - 8 regional servers
     - @SAVANNAH - 8 regional servers
     - @APACHE - 8 regional servers
@@ -30,7 +30,7 @@ All packages you commit or submit by pull-request should follow these simple gui
 * Provide an up-to-date Copyright notice or **none**. Copyright should not be assigned to OpenWrt unless you are explicitly requested by or working under contract to OpenWrt. Assigning a Copyright to yourself or organization you represent is acceptable.
 * A (PKG_)MAINTAINER definition listing either yourself and/or another person responsible for this package (E.g.: PKG_MAINTAINER:= Joe D. Hacker `<jdh@jdhs-email-provider.org`>). Listing multiple maintainers is encouraged in order to keep the package active and up-to-date. Leaving this blank will also be accepted, however the review process may not be as quick as one with a maintainer.
 * A PKG_LICENSE tag declaring the main license of the package.
-    (E.g.: PKG_LICENSE:=GPL-2.0+) Please use SPDX identifiers if possible (see list at the bottom).
+    (E.g.: PKG_LICENSE:=GPL-2.0-or-later) Please use SPDX identifiers if possible (see list at the bottom).
 * An optional PKG_LICENSE_FILES tag including the filenames of the license-files in the source-package.
     (E.g.: PKG_LICENSE_FILES:=COPYING)
 * PKG_RELEASE should be initially set to 1 or reset to 1 if the software version is changed. You should increment it if the package itself has changed. For example, modifying a support script, changing configure options like --disable* or --enable* switches, or if you changed something in the package which causes the resulting binaries to be different. Changes like correcting md5sums, changing mirror URLs, adding a maintainer field or updating a comment or copyright year in a Makefile do not require a change to PKG_RELEASE.
@@ -42,7 +42,7 @@ All packages you commit or submit by pull-request should follow these simple gui
 * Have a useful description prefixed with the package name
     (E.g.: "foopkg: Add libzot dependency")
 * Include Signed-off-by tag in the commit comments.
-    See: [Sign your work](https://openwrt.org/docs/guide-developer/submittingpatches-tomerge?s[]=sign#sign_your_work)
+    See: [Sign your work](https://openwrt.org/submitting-patches#sign_your_work)
 
 ### Advice on pull requests:
 
@@ -87,7 +87,7 @@ Pull requests are the easiest way to contribute changes to git repos at Github. 
 * If you are unsure if your change is suitable, please use a pull request.
 
 ### Common LICENSE tags (short list)  
-(Complete list can be found at: <http://spdx.org/licenses>)
+(Complete list can be found at: <https://spdx.org/licenses>)
 
 | Full Name | Identifier  |
 |---|:---|
@@ -95,30 +95,30 @@ Pull requests are the easiest way to contribute changes to git repos at Github. 
 |Apache License 1.1|Apache-1.1|
 |Apache License 2.0|Apache-2.0|
 |Artistic License 1.0|Artistic-1.0|
-|Artistic License 1.0 (Perl)|Artistic-1.0-Perl|
 |Artistic License 1.0 w/clause 8|Artistic-1.0-cl8|
+|Artistic License 1.0 (Perl)|Artistic-1.0-Perl|
 |Artistic License 2.0|Artistic-2.0|
-|BSD 2-clause "Simplified" License|BSD-2-Clause|
-|BSD 2-clause FreeBSD License|BSD-2-Clause-FreeBSD|
-|BSD 2-clause NetBSD License|BSD-2-Clause-NetBSD|
-|BSD 3-clause "New" or "Revised" License|BSD-3-Clause|
-|BSD 3-clause Clear License|BSD-3-Clause-Clear|
-|BSD 4-clause "Original" or "Old" License|BSD-4-Clause|
-|BSD Protection License|BSD-Protection|
+|BSD 2-Clause "Simplified" License|BSD-2-Clause|
+|BSD 2-Clause FreeBSD License|BSD-2-Clause-FreeBSD|
+|BSD 2-Clause NetBSD License|BSD-2-Clause-NetBSD|
+|BSD 3-Clause "New" or "Revised" License|BSD-3-Clause|
 |BSD with attribution|BSD-3-Clause-Attribution|
+|BSD 3-Clause Clear License|BSD-3-Clause-Clear|
+|BSD 4-Clause "Original" or "Old" License|BSD-4-Clause|
 |BSD-4-Clause (University of California-Specific)|BSD-4-Clause-UC|
-|GNU General Public License v1.0 only|GPL-1.0|
-|GNU General Public License v1.0 or later|GPL-1.0+|
-|GNU General Public License v2.0 only|GPL-2.0|
-|GNU General Public License v2.0 or later|GPL-2.0+|
-|GNU General Public License v3.0 only|GPL-3.0|
-|GNU General Public License v3.0 or later|GPL-3.0+|
-|GNU Lesser General Public License v2.1 only|LGPL-2.1|
-|GNU Lesser General Public License v2.1 or later|LGPL-2.1+|
-|GNU Lesser General Public License v3.0 only|LGPL-3.0|
-|GNU Lesser General Public License v3.0 or later|LGPL-3.0+|
-|GNU Library General Public License v2 only|LGPL-2.0|
-|GNU Library General Public License v2 or later|LGPL-2.0+|
+|BSD Protection License|BSD-Protection|
+|GNU General Public License v1.0 only|GPL-1.0-only|
+|GNU General Public License v1.0 or later|GPL-1.0-or-later|
+|GNU General Public License v2.0 only|GPL-2.0-only|
+|GNU General Public License v2.0 or later|GPL-2.0-or-later|
+|GNU General Public License v3.0 only|GPL-3.0-only|
+|GNU General Public License v3.0 or later|GPL-3.0-or-later|
+|GNU Lesser General Public License v2.1 only|LGPL-2.1-only|
+|GNU Lesser General Public License v2.1 or later|LGPL-2.1-or-later|
+|GNU Lesser General Public License v3.0 only|LGPL-3.0-only|
+|GNU Lesser General Public License v3.0 or later|LGPL-3.0-or-later|
+|GNU Library General Public License v2 only|LGPL-2.0-only|
+|GNU Library General Public License v2 or later|LGPL-2.0-or-later|
 |Fair License|Fair|
 |ISC License|ISC|
 |MIT License|MIT|

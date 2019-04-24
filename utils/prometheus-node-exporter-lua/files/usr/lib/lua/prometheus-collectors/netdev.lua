@@ -29,7 +29,7 @@ local function scrape()
     end
   end
   for i, ndss in ipairs(netdevsubstat) do
-    netdev_metric = metric("node_network_" .. ndss, "gauge")
+    netdev_metric = metric("node_network_" .. ndss, "counter")
     for dev, nds_dev in pairs(nds_table) do
       netdev_metric({device=dev}, nds_dev[i+1])
     end

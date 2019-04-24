@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=danish
 PKG_VERSION:=0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Andrew McConachie <andrew@depht.com>
 PKG_LICENSE:=GPL-3.0
 
@@ -29,7 +29,7 @@ define Package/danish
 	SUBMENU:=IP Addresses and Names
 	TITLE:=A middle box implementation of RFC 6698 for HTTPS.
 	URL:=https://github.com/smutt/danish
-	DEPENDS:=+python +python-dns +python-pcapy +python-dpkt +kmod-ipt-filter +iptables-mod-filter +dnsmasq-full
+	DEPENDS:=+python +python-dns +python-pcapy +python-dpkt +kmod-ipt-filter +iptables-mod-filter
 endef
 
 define Package/danish/description

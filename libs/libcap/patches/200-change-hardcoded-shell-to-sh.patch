@@ -9,10 +9,10 @@
 +#endif
  #define MAX_GROUPS       100   /* max number of supplementary groups for user */
  
- static const cap_value_t raise_setpcap[1] = { CAP_SETPCAP };
-@@ -557,10 +560,10 @@ int main(int argc, char *argv[], char *envp[])
- 	    }
- 	    printf("\n");
+ static char *binary(unsigned long value)
+@@ -692,10 +695,10 @@ int main(int argc, char *argv[], char *envp[])
+ 	} else if (!strcmp("--print", argv[i])) {
+ 	    arg_print();
  	} else if ((!strcmp("--", argv[i])) || (!strcmp("==", argv[i]))) {
 -	    argv[i] = strdup(argv[i][0] == '-' ? "/bin/bash" : argv[0]);
 +	    argv[i] = strdup(argv[i][0] == '-' ? SHELL : argv[0]);
@@ -23,7 +23,7 @@
  	    exit(1);
  	} else {
  	usage:
-@@ -582,7 +585,7 @@ int main(int argc, char *argv[], char *envp[])
+@@ -720,7 +723,7 @@ int main(int argc, char *argv[], char *envp[])
  		   "  --killit=<n>   send signal(n) to child\n"
  		   "  --forkfor=<n>  fork and make child sleep for <n> sec\n"
  		   "  ==             re-exec(capsh) with args as for --\n"

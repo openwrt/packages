@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pyodbc
-PKG_VERSION:=4.0.21
-PKG_RELEASE:=1
+PKG_VERSION:=4.0.26
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/0f/04/c5638a4636fb8117fdc45685f489864459d193b1d892b61dce785ddf58f9
-PKG_HASH:=9655f84ca9e5cb2dfffff705601017420c840d55271ba62dd44f05383eff0329
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pyodbc
+PKG_HASH:=e52700b5d24a846483b5ab80acd9153f8e593999c9184ffea11596288fb33de3
 PKG_BUILD_DEPENDS:=python python3 unixodbc
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -19,6 +19,9 @@ PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-$(PKG_NAME)-$(PKG_VERSION)
 PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
+PKG_BUILD_DEPENDS:=unixodbc/host
+
+include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
@@ -28,7 +31,7 @@ define Package/python-pyodbc/Default
   CATEGORY:=Languages
   SUBMENU:=Python
   URL:=https://github.com/mkleehammer/pyodbc
-  DEPENDS:=+unixodbc +libstdcpp
+  DEPENDS:=+unixodbc $(CXX_DEPENDS)
 endef
 
 define Package/python-pyodbc

@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glog
-PKG_VERSION:=0.3.5
-PKG_RELEASE:=2
+PKG_VERSION:=0.4.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/google/glog/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=7580e408a2c0b5a89ca214739978ce6ff480b5e7d8d7698a2aa92fadc484d1e0
+PKG_HASH:=f28359aeba12f30d73d9e4711ef356dc842886968112162bc73002645139c39c
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILE:=COPYING
@@ -32,7 +32,7 @@ define Package/glog/description
   module.  Documentation for the implementation is in doc/.
 endef
 
-CONFIGURE_VARS+=ac_cv_have_libunwind_h=0
+CONFIGURE_VARS+=ac_cv_header_libunwind_h=0
 
 TARGET_CXXFLAGS+=-std=c++11
 TARGET_LDFLAGS+=-lpthread

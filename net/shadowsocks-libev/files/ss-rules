@@ -8,10 +8,24 @@
 # See /LICENSE for more information.
 #
 
+__errmsg() {
+	echo "ss-rules: $*" >&2
+}
+
+if [ "$1" = "-6" ]; then
+	if ! ip6tables -t nat -L -n &>/dev/null; then
+		__errmsg "Skipping ipv6.  Requires ip6tables-mod-nat"
+		exit 1
+	fi
+	o_use_ipv6=1; shift
+fi
+
 ss_rules_usage() {
 	cat >&2 <<EOF
 Usage: ss-rules [options]
 
+	-6              Operate on address family IPv6
+	                When present, must be the first argument
 	-h, --help      Show this help message then exit
 	-f, --flush     Flush rules, ipset then exit
 	-l <port>       Local port number of ss-redir with TCP mode
@@ -50,7 +64,7 @@ populated by other programs like dnsmasq with ipset support
 EOF
 }
 
-o_dst_bypass_="
+o_dst_bypass4_="
 	0.0.0.0/8
 	10.0.0.0/8
 	100.64.0.0/10
@@ -71,13 +85,33 @@ o_dst_bypass_="
 	240.0.0.0/4
 	255.255.255.255
 "
+o_dst_bypass6_="
+	::1/128
+	::/128
+	::ffff:0:0/96
+	64:ff9b:1::/48
+	100::/64
+	2001:2::/48
+	2001:db8::/32
+	fe80::/10
+	2001::/23
+	fc00::/7
+"
 o_src_default=bypass
 o_dst_default=bypass
 o_local_default=bypass
 
-__errmsg() {
-	echo "ss-rules: $*" >&2
-}
+alias grep_af="sed -ne '/:/!p'"
+o_dst_bypass_="$o_dst_bypass4_"
+if [ -n "$o_use_ipv6" ]; then
+	alias grep_af="sed -ne /:/p"
+	alias iptables=ip6tables
+	alias iptables-save=ip6tables-save
+	alias iptables-restore=ip6tables-restore
+	alias ip="ip -6"
+	o_af=6
+	o_dst_bypass_="$o_dst_bypass6_"
+fi
 
 ss_rules_parse_args() {
 	while [ "$#" -gt 0 ]; do
@@ -109,10 +143,10 @@ ss_rules_parse_args() {
 		return 1
 	fi
 	if [ -n "$o_dst_forward_recentrst" ] && ! iptables -m recent -h >/dev/null; then
-		__errmsg "Please install iptables-mod-conntrack-extra with opkg"
+		__errmsg "Please install iptables-mod-conntrack-extra"
 		return 1
 	fi
-	o_remote_servers="$(for s in $o_remote_servers; do resolveip -4 "$s"; done)"
+	o_remote_servers="$(for s in $o_remote_servers; do resolveip "$s" | grep_af; done)"
 }
 
 ss_rules_flush() {
@@ -121,26 +155,26 @@ ss_rules_flush() {
 	iptables-save --counters | grep -v ss_rules_ | iptables-restore --counters
 	while ip rule del fwmark 1 lookup 100 2>/dev/null; do true; done
 	ip route flush table 100
-	for setname in $(ipset -n list | grep "ss_rules_"); do
+	for setname in $(ipset -n list | grep "ss_rules${o_af}_"); do
 		ipset destroy "$setname" 2>/dev/null || true
 	done
 }
 
 ss_rules_ipset_init() {
 	ipset --exist restore <<-EOF
-		create ss_rules_src_bypass hash:net hashsize 64
-		create ss_rules_src_forward hash:net hashsize 64
-		create ss_rules_src_checkdst hash:net hashsize 64
-		create ss_rules_dst_bypass hash:net hashsize 64
-		create ss_rules_dst_bypass_ hash:net hashsize 64
-		create ss_rules_dst_forward hash:net hashsize 64
-		create ss_rules_dst_forward_recentrst_ hash:ip hashsize 64 timeout 3600
-		$(ss_rules_ipset_mkadd ss_rules_dst_bypass_ "$o_dst_bypass_ $o_remote_servers")
-		$(ss_rules_ipset_mkadd ss_rules_src_bypass "$o_src_bypass")
-		$(ss_rules_ipset_mkadd ss_rules_src_forward "$o_src_forward")
-		$(ss_rules_ipset_mkadd ss_rules_src_checkdst "$o_src_checkdst")
-		$(ss_rules_ipset_mkadd ss_rules_dst_bypass "$o_dst_bypass $(cat "$o_dst_bypass_file" 2>/dev/null)")
-		$(ss_rules_ipset_mkadd ss_rules_dst_forward "$o_dst_forward $(cat "$o_dst_forward_file" 2>/dev/null)")
+		create ss_rules${o_af}_src_bypass hash:net family inet$o_af hashsize 64
+		create ss_rules${o_af}_src_forward hash:net family inet$o_af hashsize 64
+		create ss_rules${o_af}_src_checkdst hash:net family inet$o_af hashsize 64
+		create ss_rules${o_af}_dst_bypass hash:net family inet$o_af hashsize 64
+		create ss_rules${o_af}_dst_bypass_ hash:net family inet$o_af hashsize 64
+		create ss_rules${o_af}_dst_forward hash:net family inet$o_af hashsize 64
+		create ss_rules${o_af}_dst_forward_rrst_ hash:ip family inet$o_af hashsize 8 timeout 3600
+		$(ss_rules_ipset_mkadd ss_rules${o_af}_dst_bypass_ "$o_dst_bypass_ $o_remote_servers")
+		$(ss_rules_ipset_mkadd ss_rules${o_af}_src_bypass "$o_src_bypass")
+		$(ss_rules_ipset_mkadd ss_rules${o_af}_src_forward "$o_src_forward")
+		$(ss_rules_ipset_mkadd ss_rules${o_af}_src_checkdst "$o_src_checkdst")
+		$(ss_rules_ipset_mkadd ss_rules${o_af}_dst_bypass "$o_dst_bypass $(cat "$o_dst_bypass_file" 2>/dev/null)")
+		$(ss_rules_ipset_mkadd ss_rules${o_af}_dst_forward "$o_dst_forward $(cat "$o_dst_forward_file" 2>/dev/null)")
 	EOF
 }
 
@@ -150,7 +184,7 @@ ss_rules_ipset_mkadd() {
 
 	for i in $*; do
 		echo "add $setname $i"
-	done
+	done | grep_af
 }
 
 ss_rules_iptchains_init() {
@@ -175,8 +209,8 @@ ss_rules_iptchains_init_tcp() {
 		*nat
 		:ss_rules_local_out -
 		-I OUTPUT 1 -p tcp -j ss_rules_local_out
-		-A ss_rules_local_out -m set --match-set ss_rules_dst_bypass_ dst -j RETURN
-		-A ss_rules_local_out -p tcp $o_ipt_extra -j $local_target -m comment --comment "local_default: $o_local_default"
+		-A ss_rules_local_out -m set --match-set ss_rules${o_af}_dst_bypass_ dst -j RETURN
+		-A ss_rules_local_out $o_ipt_extra -j $local_target
 		COMMIT
 	EOF
 }
@@ -203,8 +237,8 @@ ss_rules_iptchains_init_() {
 					COMMIT
 				"
 				recentrst_addset_rules="
-					-A ss_rules_dst -m recent --name ss_rules_recentrst --rcheck --rdest --seconds 3 --hitcount 3 -j SET --add-set ss_rules_dst_forward_recentrst_ dst --exist
-					-A ss_rules_dst -m set --match-set ss_rules_dst_forward_recentrst_ dst -j ss_rules_forward
+					-A ss_rules_dst -m recent --name ss_rules_recentrst --rcheck --rdest --seconds 3 --hitcount 3 -j SET --add-set ss_rules${o_af}_dst_forward_rrst_ dst --exist
+					-A ss_rules_dst -m set --match-set ss_rules${o_af}_dst_forward_rrst_ dst -j ss_rules_forward
 				"
 			fi
 			;;
@@ -230,16 +264,16 @@ ss_rules_iptchains_init_() {
 		:ss_rules_dst -
 		:ss_rules_forward -
 		$(ss_rules_iptchains_mkprerules "$proto")
-		-A ss_rules_pre_src -m set --match-set ss_rules_dst_bypass_ dst -j RETURN
-		-A ss_rules_pre_src -p $proto $o_ipt_extra -j ss_rules_src
-		-A ss_rules_src -m set --match-set ss_rules_src_bypass src -j RETURN
-		-A ss_rules_src -m set --match-set ss_rules_src_forward src -j ss_rules_forward
-		-A ss_rules_src -m set --match-set ss_rules_src_checkdst src -j ss_rules_dst
-		-A ss_rules_src -j $src_default_target -m comment --comment "src_default: $o_src_default"
-		-A ss_rules_dst -m set --match-set ss_rules_dst_bypass dst -j RETURN
-		-A ss_rules_dst -m set --match-set ss_rules_dst_forward dst -j ss_rules_forward
+		-A ss_rules_pre_src -m set --match-set ss_rules${o_af}_dst_bypass_ dst -j RETURN
+		-A ss_rules_pre_src $o_ipt_extra -j ss_rules_src
+		-A ss_rules_src -m set --match-set ss_rules${o_af}_src_bypass src -j RETURN
+		-A ss_rules_src -m set --match-set ss_rules${o_af}_src_forward src -j ss_rules_forward
+		-A ss_rules_src -m set --match-set ss_rules${o_af}_src_checkdst src -j ss_rules_dst
+		-A ss_rules_src -j $src_default_target
+		-A ss_rules_dst -m set --match-set ss_rules${o_af}_dst_bypass dst -j RETURN
+		-A ss_rules_dst -m set --match-set ss_rules${o_af}_dst_forward dst -j ss_rules_forward
 		$recentrst_addset_rules
-		-A ss_rules_dst -j $dst_default_target -m comment --comment "dst_default: $o_dst_default"
+		-A ss_rules_dst -j $dst_default_target
 		$forward_rules
 		COMMIT
 		$recentrst_mangle_rules

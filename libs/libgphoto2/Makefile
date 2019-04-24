@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2006-2012 OpenWrt.org
-# Copyright (C) 2017-2018 Leonardo Medici
+# Copyright (C) 2017-2019 Leonardo Medici
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,14 +9,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgphoto2
-PKG_VERSION:=2.5.19
+PKG_VERSION:=2.5.22
 PKG_RELEASE:=1
 PORT_VERSION:=0.12.0
 PKG_MAINTAINER:=Leonardo Medici <leonardo_medici@me.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/gphoto
-PKG_HASH:=62523e52e3b8542301e072635b518387f2bd0948347775cf10cb2da9a6612c63
+PKG_HASH:=15d7327aa9a986af1e1dbfd8f15ba81352b67450d30e44562ce768ff9435ce58
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING
 

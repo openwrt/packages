@@ -125,6 +125,12 @@ config FFMPEG_CUSTOM_AUDIO_DEC_SUPPORT
 	select FFMPEG_CUSTOM_PROTOCOL_tcp
 	select FFMPEG_CUSTOM_PROTOCOL_udp
 
+config FFMPEG_CUSTOM_PROGRAMS
+	bool "Include ffmpeg command-line utilities"
+	select PACKAGE_ffmpeg-custom
+	select PACKAGE_ffserver-custom
+	select PACKAGE_ffprobe-custom
+
 comment "External Libraries"
 
 config FFMPEG_CUSTOM_SELECT_libfdk-aac

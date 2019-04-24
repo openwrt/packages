@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014-2018 CZ.NIC, z.s.p.o. <knot-dns@labs.nic.cz>
+# Copyright (C) 2014-2019 CZ.NIC, z.s.p.o. <knot-dns@labs.nic.cz>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot
-PKG_VERSION:=2.7.3
+PKG_VERSION:=2.8.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-dns/
-PKG_HASH:=8717c0f34e441e96bc32bc93b48333ea9c094c5075f91575e40ac30fcf6692df
+PKG_HASH:=b21bf03e5cb6804df4e0e8b3898446349e86ddae5bf110edaf240d0ad1e2a2c6
 
 PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
 PKG_LICENSE:=GPL-3.0 LGPL-2.0 0BSD BSD-3-Clause OLDAP-2.8
@@ -144,6 +144,8 @@ define Package/knot-tests/description
 	Usage: /usr/share/knot/runtests.sh
 endef
 
+export KNOT_VERSION_FORMAT=release
+
 CONFIGURE_ARGS += 			\
 	--enable-recvmmsg=no		\
 	--disable-fastparser		\
@@ -234,9 +236,9 @@ define Package/knot-tests/install
 	$(INSTALL_DIR) 						$(1)/usr/share/knot
 	$(INSTALL_BIN) ./files/runtests.sh			$(1)/usr/share/knot/
 
-	$(INSTALL_DIR) 						$(1)/usr/share/knot/tap
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tests/tap/runtests	$(1)/usr/share/knot/tap/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tests/tap/libtap.sh	$(1)/usr/share/knot/tap/
+	$(INSTALL_DIR) 							$(1)/usr/share/knot/tap
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tests/tap/.libs/runtests	$(1)/usr/share/knot/tap/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tests/tap/libtap.sh		$(1)/usr/share/knot/tap/
 
 	$(INSTALL_DIR)								$(1)/usr/share/knot/tests
 
@@ -249,7 +251,7 @@ define Package/knot-tests/install
 		find $(PKG_BUILD_DIR)/tests/$$$${module}/.libs -maxdepth 1 -executable -type f | \
 			xargs -I{} basename {} | \
 			xargs -I{} $(INSTALL_BIN) -T $(PKG_BUILD_DIR)/tests/$$$${module}/.libs/{} \
-											$(1)/usr/share/knot/tests/$$$${module}_{}; \
+										$(1)/usr/share/knot/tests/$$$${module}_{}; \
 	done
 endef
 

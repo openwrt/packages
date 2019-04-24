@@ -313,7 +313,7 @@ CMAKE_HOST_OPTIONS = \
 	-DINSTALL_SYSTEM_FILES=OFF \
 	-DFORCE_IN_SOURCE_BUILD=ON \
 	-DBUILD_TESTING=OFF \
-	-DPLUGINS="ALL;-python2;-python" \
+	-DPLUGINS="ALL;-python2;-python;-ruby" \
 	-DTOOLS="gen;kdb"
 
 define Package/libelektra-core/install

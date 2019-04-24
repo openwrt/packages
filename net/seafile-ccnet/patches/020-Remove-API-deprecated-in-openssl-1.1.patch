@@ -1,4 +1,4 @@
-From afeb62f01ad6e610cd19dcde0ceffc018b3247ec Mon Sep 17 00:00:00 2001
+From 6c825349e1994a991f287e398cf0ead5f790a01b Mon Sep 17 00:00:00 2001
 From: Eneas U de Queiroz <cote2004-github@yahoo.com>
 Date: Wed, 6 Jun 2018 18:05:33 -0300
 Subject: [PATCH] Remove API deprecated in openssl 1.1
@@ -11,17 +11,17 @@ Also, we need to #include <openssl/bn.h> for BN_num_bytes().
 
 Signed-off-by: Eneas U de Queiroz <cote2004-github@yahoo.com>
 ---
- lib/rsa.c                                      | 19 ++++++++++++++-----
+ lib/rsa.c                                      | 15 ++++++++++++---
  net/common/processors/keepalive-proc.c         |  4 ++--
  net/common/processors/keepalive2-proc.c        |  2 +-
  net/common/processors/sendsessionkey-proc.c    |  2 +-
  net/common/processors/sendsessionkey-v2-proc.c |  2 +-
  net/server/user-mgr.c                          |  4 ++++
  tools/ccnet-init.c                             |  2 ++
- 7 files changed, 25 insertions(+), 10 deletions(-)
+ 7 files changed, 23 insertions(+), 8 deletions(-)
 
 diff --git a/lib/rsa.c b/lib/rsa.c
-index 7cca150..23abb82 100644
+index 7cca150..d969a62 100644
 --- a/lib/rsa.c
 +++ b/lib/rsa.c
 @@ -4,6 +4,7 @@
@@ -39,8 +39,6 @@ index 7cca150..23abb82 100644
 -
 -	private = RSA_generate_key(bits, 35, NULL, NULL);
 -	if (private == NULL)
--		g_error ("rsa_generate_private_key: key generation failed.");
--	return private;
 +	BIGNUM *e = NULL;
 +
 +	private = RSA_new();
@@ -49,11 +47,11 @@ index 7cca150..23abb82 100644
 +		!RSA_generate_key_ex(private, bits, e, NULL)) {
 +		RSA_free(private);
 +		BN_free(e);
-+		g_error ("rsa_generate_private_key: key generation failed.");
+ 		g_error ("rsa_generate_private_key: key generation failed.");
 +		return NULL;
 +	}
 +	BN_free(e);
-+	return private;
+ 	return private;
  }
 diff --git a/net/common/processors/keepalive-proc.c b/net/common/processors/keepalive-proc.c
 index 609d102..42a0c23 100644
@@ -117,10 +115,10 @@ index c1c6924..4805ba6 100644
      SHA1_Init (&s);
      SHA1_Update (&s, random_buf, sizeof(random_buf));
 diff --git a/net/server/user-mgr.c b/net/server/user-mgr.c
-index 0973959..3f0c3b3 100644
+index 8a356f0..7a3f5cb 100644
 --- a/net/server/user-mgr.c
 +++ b/net/server/user-mgr.c
-@@ -811,9 +811,13 @@ hash_password_pbkdf2_sha256 (const char *passwd,
+@@ -816,9 +816,13 @@ hash_password_pbkdf2_sha256 (const char *passwd,
      char salt_str[SHA256_DIGEST_LENGTH*2+1];
  
      if (!RAND_bytes (salt, sizeof(salt))) {
@@ -149,5 +147,5 @@ index 4748962..28c9995 100644
      if (RAND_status() != 1) {   /* it should be seeded automatically */
          fprintf(stderr, "PRNG is not seeded\n");
 -- 
-2.16.4
+2.19.1
 

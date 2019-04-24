@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=attendedsysupgrade-common
-PKG_VERSION:=0.1
-PKG_RELEASE:=2
+PKG_VERSION:=0.2
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
@@ -17,6 +17,7 @@ define Package/attendedsysupgrade-common
   TITLE:=Common files neede by attendedsysupgrade packages
   MAINTAINER:=Paul Spooren <paul@spooren.de>
   DEPENDS:=+rpcd +rpcd-mod-rpcsys
+  PKGARCH:=all
 endef
 
 define Package/attendedsysupgrade-common/description
@@ -51,6 +52,9 @@ endef
 define Package/attendedsysupgrade-common/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults/
 	$(INSTALL_BIN) ./files/attendedsysupgrade.defaults $(1)/etc/uci-defaults/attendedsysupgrade
+
+	$(INSTALL_DIR) $(1)/etc/opkg/keys/
+	$(INSTALL_BIN) ./files/c06d891233ba699 $(1)/etc/opkg/keys/c06d891233ba699
 endef
 
 $(eval $(call BuildPackage,attendedsysupgrade-common))

@@ -1,19 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luajit
-PKG_VERSION:=2017-01-17-71ff7ef
-PKG_RELEASE:=2
+PKG_VERSION:=2.1.0-beta3
+PKG_RELEASE:=1
+
+PKG_SOURCE:=LuaJIT-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://luajit.org/download
+PKG_HASH:=1ad2e34b111c802f9d0cdf019e986909123237a28c746b21295b63c9e785d9c3
+PKG_BUILD_DIR:=$(BUILD_DIR)/LuaJIT-$(PKG_VERSION)
+
 PKG_MAINTAINER:=Morteza Milani <milani@pichak.co>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYRIGHT
-
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/LuaJIT/LuaJIT.git
-PKG_SOURCE_VERSION:=71ff7ef8a7e0592dedb3527d4aacc68bf04af0bd
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=543994d0822515d9b7dc7cbaa7737c48258403d56a3b30e729267421265d4618
-PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_USE_MIPS16:=0
 
@@ -25,16 +23,13 @@ define Package/luajit
  SECTION:=lang
  CATEGORY:=Languages
  TITLE:=LuaJIT
- URL:=http://www.luajit.org
+ URL:=https://www.luajit.org
  DEPENDS:=@(i386||x86_64||arm||armeb||powerpc||mips||mipsel)
 endef
 
 define Package/luajit/description
  LuaJIT is a Just-In-Time (JIT) compiler for the Lua programming language. *** Requires GCC Multilib on host system to build! ***
 endef
-
-TARGET_CFLAGS += $(FPIC) -std=gnu99
-HOST_CFLAGS += $(FPIC) -std=gnu99
 
 ifeq ($(HOST_ARCH),x86_64)
   ifeq ($(CONFIG_x86_64),)
@@ -64,14 +59,14 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/luajit.pc $(1)/usr/lib/pkgconfig/
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/luajit-2.1.0-beta2 $(PKG_INSTALL_DIR)/usr/bin/$(PKG_NAME)
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/luajit-$(PKG_VERSION) $(PKG_INSTALL_DIR)/usr/bin/$(PKG_NAME)
 endef
 
 define Package/luajit/install
 	$(INSTALL_DIR) $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/luajit-2.1.0-beta2 $(1)/usr/bin/$(PKG_NAME)
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/luajit-$(PKG_VERSION) $(1)/usr/bin/$(PKG_NAME)
 endef
 
 define Host/Compile
@@ -85,7 +80,7 @@ define Host/Install
 	$(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) \
 		DPREFIX=$(STAGING_DIR_HOSTPKG) \
 		install
-	$(CP) $(STAGING_DIR_HOSTPKG)/bin/luajit-2.1.0-beta2 $(STAGING_DIR_HOSTPKG)/bin/$(PKG_NAME)
+	$(CP) $(STAGING_DIR_HOSTPKG)/bin/luajit-$(PKG_VERSION) $(STAGING_DIR_HOSTPKG)/bin/$(PKG_NAME)
 endef
 
 $(eval $(call HostBuild,luajit))

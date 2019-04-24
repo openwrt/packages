@@ -9,16 +9,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=poco
-PKG_VERSION:=1.8.1
+PKG_VERSION:=1.9.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://pocoproject.org/releases/$(PKG_NAME)-$(PKG_VERSION)
-PKG_HASH:=2e4c07ac73174ee06c7e2c7cf2b7642a5b3aea81d0203e1c069b32ac4a8ecfbc
+PKG_SOURCE_URL:=https://pocoproject.org/releases/$(PKG_NAME)-$(PKG_VERSION)
+PKG_HASH:=a0a5a03d87c585f1a43def33bfc52c0c34a528e43a7b13bc83841a7c00adde39
 
 PKG_LICENSE:=BSL-1.0
 PKG_LICENSE_FILES:=LICENSE
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -27,7 +28,7 @@ define Package/poco
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Poco C++ libraries
-  URL:=http://www.pocoproject.org/
+  URL:=https://www.pocoproject.org/
   DEPENDS:=+libstdcpp +libpthread +librt
   MAINTAINER:=Jean-Michel Julien <jean-michel.julien@trilliantinc.com>
 endef
