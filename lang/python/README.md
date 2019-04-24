@@ -1,5 +1,20 @@
 # Python packages folder
 
+## Notice of deprecation for Python2 packages
+
+Python2 will retire in...  [see link](https://pythonclock.org/)
+
+That means, we also had to make a plan for OpenWrt's Python2 packages.
+
+For a longer explanation about this plan, see:
+   https://github.com/openwrt/packages/issues/8520
+
+But the bottom line is as follows:
+
+* Hard deadline for new Py2 programs and libraries: 31 May 2019
+* Normal updates deadline: 31 October 2019 (security updates continue afterwards)
+* Mass removal: 31 March 2020 (or 2 weeks before freeze for 20.x release, whichever is sooner)
+
 ## Table of contents
 
 1. [Description](#description)
