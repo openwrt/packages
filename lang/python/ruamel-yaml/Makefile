@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruamel-yaml
-PKG_VERSION:=0.15.91
+PKG_VERSION:=0.15.94
 PKG_RELEASE:=1
 
 PKG_SOURCE:=ruamel.yaml-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/r/ruamel.yaml/
-PKG_HASH:=692f03ed24c8c1d9fa9fd4c045f7ba1c26f1e96edb8bfb4d54854ba26bc02319
+PKG_HASH:=0939bcb399ad037ef903d74ccf2f8a074f06683bc89133ad19305067d34487c8
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-ruamel.yaml-$(PKG_VERSION)
 
