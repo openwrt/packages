@@ -38,12 +38,12 @@ define Package/python3-evdev/description
   Bindings to the Linux input handling subsystem
 endef
 
-define Py3Build/Compile
-	$(call Build/Compile/Py3Mod,, build \
-		build_ecodes  --evdev-headers="$(LINUX_DIR)/include/uapi/linux/input.h:$(LINUX_DIR)/include/uapi/linux/input-event-codes.h" \
-		build_ext \
-		install --root="$(PKG_INSTALL_DIR)" --prefix="/usr")
-endef
+LINUX_EVDEV_HEADERS="$(LINUX_DIR)/include/uapi/linux/input.h:$(LINUX_DIR)/include/uapi/linux/input-event-codes.h"
+
+PYTHON3_PKG_SETUP_GLOBAL_ARGS:= \
+	build build_ecodes \
+	--evdev-headers="$(LINUX_EVDEV_HEADERS)" \
+	build_ext
 
 $(eval $(call Py3Package,python3-evdev))
 $(eval $(call BuildPackage,python3-evdev))
