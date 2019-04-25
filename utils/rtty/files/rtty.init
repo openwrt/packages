@@ -13,7 +13,8 @@ validate_rtty_section() {
 		'host:host' \
 		'port:port' \
 		'ssl:bool:0' \
-		'keepalive:uinteger:5'
+		'keepalive:uinteger:5' \
+		'token:maxlength(32)'
 }
 
 start_rtty() {
@@ -49,6 +50,7 @@ start_rtty() {
 	[ -n "$id" ] && procd_append_param command -I "$id"
 	[ -n "$description" ] && procd_append_param command -d "$description"
 	[ "$ssl" = "1" ] && procd_append_param command -s
+	[ -n "$token" ] && procd_append_param command -t "$token"
 	procd_set_param respawn
 	procd_close_instance
 }
