@@ -35,6 +35,7 @@ PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python-host.mk
 include ../../lang/python/python-package.mk
+include ../../lang/python/python3-package.mk
 
 
 ovs_kmod_packages:=
@@ -281,6 +282,16 @@ define ovs_python_install
 	$$(CP) $$(PKG_INSTALL_DIR)/usr/share/openvswitch/python/ovs $$(1)$$(PYTHON_PKG_DIR)
 endef
 $(eval $(call OvsPackageTemplate,python))
+
+
+ovs_python3_title:=Open vSwitch (Python3 library)
+ovs_python3_hidden:=
+ovs_python3_depends:=+PACKAGE_openvswitch-python3:python3 +PACKAGE_openvswitch-python3:python3-six
+define ovs_python3_install
+	$$(INSTALL_DIR) $$(1)$$(PYTHON3_PKG_DIR)
+	$$(CP) $$(PKG_INSTALL_DIR)/usr/share/openvswitch/python/ovs $$(1)$$(PYTHON3_PKG_DIR)
+endef
+$(eval $(call OvsPackageTemplate,python3))
 
 
 CONFIGURE_ARGS+= \
