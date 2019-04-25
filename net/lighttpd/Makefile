@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
 PKG_VERSION:=1.4.53
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.lighttpd.net/lighttpd/releases-1.4.x
@@ -172,6 +172,10 @@ define BuildPlugin
       DEPENDS+= $(3)
     endif
     TITLE:=$(2) module
+  endef
+
+  define Package/lighttpd-mod-$(1)/conffiles
+/etc/lighttpd/conf.d/$(4)-$(1).conf
   endef
 
  ifneq ($(SDK)$(CONFIG_PACKAGE_lighttpd-mod-$(1)),)
