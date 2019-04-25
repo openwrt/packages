@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libuwsc
-PKG_VERSION:=3.2.1
+PKG_VERSION:=3.2.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://codeload.github.com/zhaojh329/libuwsc/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=0dca131a1046327b6020a190ba8e6d46f62a8367ea91f4e85bf5bfde2aa11415
+PKG_HASH:=824a29446ba12171f8f08778667c6b3a0528e18c249f0cf1f89b5f129cd2aadd
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Jianhui Zhao <jianhuizhao329@gmail.com>
