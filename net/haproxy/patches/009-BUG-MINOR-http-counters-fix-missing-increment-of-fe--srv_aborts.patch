@@ -1,0 +1,30 @@
+commit f5ed1f24a9f7bb3b58f6f29b403963e0155e44a9
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Mon Mar 18 11:02:57 2019 +0100
+
+    BUG/MINOR: http/counters: fix missing increment of fe->srv_aborts
+    
+    When a server aborts a transfer, we used to increment the backend's
+    counter but not the frontend's during the forwarding phase. This fixes
+    it. It might be backported to all supported versions (possibly removing
+    the htx part) though it is of very low importance.
+    
+    (cherry picked from commit d1fd6f5f64e4d05d4993f2d43c1ee8c79a16fec1)
+    [wt: s/_HA_ATOMIC/HA_ATOMIC/]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 8aa5c6f660ecc9ed79e759a70112e1dbfd59831d)
+    [cf: HTX code removed]
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index efd318e7..8b087c5b 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -6150,6 +6150,7 @@ int http_response_forward_body(struct stream *s, struct channel *res, int an_bit
+ 		if (!buffer_pending(res->buf)) {
+ 			if (!(s->flags & SF_ERR_MASK))
+ 				s->flags |= SF_ERR_SRVCL;
++			HA_ATOMIC_ADD(&sess->fe->fe_counters.srv_aborts, 1);
+ 			HA_ATOMIC_ADD(&s->be->be_counters.srv_aborts, 1);
+ 			if (objt_server(s->target))
+ 				HA_ATOMIC_ADD(&objt_server(s->target)->counters.srv_aborts, 1);

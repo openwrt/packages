@@ -1,0 +1,44 @@
+commit f4be23cefd779894ca85680d85b1d66cd22d42b6
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Thu Feb 28 15:05:53 2019 +0100
+
+    MINOR: list: make the delete and pop operations idempotent
+    
+    These operations previously used to return a "locked" element, which is
+    a constraint when multiple threads try to delete the same element, because
+    the second one will block indefinitely. Instead, let's make sure that both
+    LIST_DEL_LOCKED() and LIST_POP_LOCKED() always reinitialize the element
+    after deleting it. This ensures that the second thread will immediately
+    unblock and succeed with the removal. It also secures the pop vs delete
+    competition that may happen when trying to remove an element that's about
+    to be dequeued.
+    
+    (cherry picked from commit 4c747e86cda5d7eab46390779447f216ce9aa5de)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 731853a3e19b2ce314c1626360dc5b1dcba5baa1)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/include/common/mini-clist.h b/include/common/mini-clist.h
+index 92a995c9..d4861ccc 100644
+--- a/include/common/mini-clist.h
++++ b/include/common/mini-clist.h
+@@ -261,6 +261,9 @@ struct cond_wordlist {
+ 			n->p = p;                                          \
+ 			p->n = n;                                          \
+ 			__ha_barrier_store();                              \
++			(el)->p = (el);                                    \
++			(el)->n = (el);	                                   \
++			__ha_barrier_store();                              \
+ 			break;                                             \
+ 		}                                                          \
+ 	} while (0)
+@@ -308,6 +311,9 @@ struct cond_wordlist {
+ 			 (lh)->n = n2;                                     \
+ 			 (n2)->p = (lh);                                   \
+ 			 __ha_barrier_store();                             \
++			 (n)->p = (n);                                     \
++			 (n)->n = (n);	                                   \
++			 __ha_barrier_store();                             \
+ 			 _ret = LIST_ELEM(n, pt, el);                      \
+ 			 break;                                            \
+ 		 }                                                         \

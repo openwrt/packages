@@ -1,0 +1,33 @@
+commit 9ffd35ec59b1ade094b4828b880bdb4971f0c69e
+Author: William Lallemand <wlallemand@haproxy.com>
+Date:   Mon Apr 1 11:30:04 2019 +0200
+
+    BUG/MINOR: cli: correctly handle abns in 'show cli sockets'
+    
+    The 'show cli sockets' was not handling the abns sockets. This is a
+    problem since it uses the AF_UNIX family, it displays nothing
+    in the path column because the path starts by \0.
+    
+    Should be backported to 1.9 and 1.8.
+    
+    (cherry picked from commit 75812a7a3cdc853ceee0b3fb2173db060057ba35)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    (cherry picked from commit d06619b5adf8a718ad840dbddbc9d2c83fbb01b1)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/cli.c b/src/cli.c
+index 079d8d9b..39744c7a 100644
+--- a/src/cli.c
++++ b/src/cli.c
+@@ -972,7 +972,10 @@ static int cli_io_handler_show_cli_sock(struct appctx *appctx)
+ 							const struct sockaddr_un *un;
+ 
+ 							un = (struct sockaddr_un *)&l->addr;
+-							chunk_appendf(&trash, "%s ", un->sun_path);
++							if (un->sun_path[0] == '\0')
++								chunk_appendf(&trash, "abns@%s ", un->sun_path+1);
++							else
++								chunk_appendf(&trash, "%s ", un->sun_path);
+ 						} else if (l->addr.ss_family == AF_INET) {
+ 							addr_to_str(&l->addr, addr, sizeof(addr));
+ 							port_to_str(&l->addr, port, sizeof(port));

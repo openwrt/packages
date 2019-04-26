@@ -1,0 +1,44 @@
+commit c4a54648f510771e792ed0c0bc16e4cf8be8bb9a
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Thu Feb 28 16:51:28 2019 +0100
+
+    BUG/MEDIUM: list: correct fix for LIST_POP_LOCKED's removal of last element
+    
+    As seen with Olivier, in the end the fix in commit 285192564 ("BUG/MEDIUM:
+    list: fix LIST_POP_LOCKED's removal of the last pointer") is wrong,
+    the code there was right but the bug was triggered by another bug in
+    LIST_ADDQ_LOCKED() which doesn't properly update the list's head by
+    inserting in the wrong order.
+    
+    This will have to be backported if the commit above is backported.
+    
+    (cherry picked from commit 4ef6801cd4db450b4ac3a21e58ca5fce5256189b)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 92f771c7efd9a82ef189d2be7c2fcfa6a6703e07)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/include/common/mini-clist.h b/include/common/mini-clist.h
+index d4861ccc..9ad53aa0 100644
+--- a/include/common/mini-clist.h
++++ b/include/common/mini-clist.h
+@@ -216,9 +216,9 @@ struct cond_wordlist {
+ 			(el)->n = n;                                       \
+ 			(el)->p = p;                                       \
+ 			__ha_barrier_store();                              \
+-			n->p = (el);                                       \
++			n->n = (el);                                       \
+ 			__ha_barrier_store();                              \
+-			p->n = (el);                                       \
++			p->p = (el);                                       \
+ 			__ha_barrier_store();                              \
+ 			break;                                             \
+ 		}                                                          \
+@@ -299,7 +299,7 @@ struct cond_wordlist {
+ 				 __ha_barrier_store();                     \
+ 				 continue;                                 \
+ 			 }                                                 \
+-			 p2 = HA_ATOMIC_XCHG(&n->p, LLIST_BUSY);           \
++			 p2 = HA_ATOMIC_XCHG(&n2->p, LLIST_BUSY);          \
+ 			 if (p2 == LLIST_BUSY) {                           \
+ 				 n->n = n2;                                \
+ 				 n->p = p;                                 \

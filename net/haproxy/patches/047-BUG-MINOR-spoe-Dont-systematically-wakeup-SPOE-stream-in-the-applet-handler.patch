@@ -1,0 +1,29 @@
+commit 1526ce4e6f5fb241ca236bd2ac870cdb30e054fd
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Tue Apr 23 15:39:32 2019 +0200
+
+    BUG/MINOR: spoe: Don't systematically wakeup SPOE stream in the applet handler
+    
+    This can lead to wakeups in loop between the SPOE stream and the SPOE applets
+    waiting to receive agent messages (mainly AGENT-HELLO and AGENT-DISCONNECT).
+    
+    This patch must be backported to 1.9 and 1.8.
+    
+    (cherry picked from commit 371723b0c2a2e38ae14e1e6f6a7581ef3e2491cf)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    (cherry picked from commit fe0ccea6bb93406ca0a7339cdf17357b1a283e59)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/flt_spoe.c b/src/flt_spoe.c
+index 95f30898..f6109778 100644
+--- a/src/flt_spoe.c
++++ b/src/flt_spoe.c
+@@ -1929,8 +1929,6 @@ spoe_handle_appctx(struct appctx *appctx)
+ 
+ 	if (SPOE_APPCTX(appctx)->task->expire != TICK_ETERNITY)
+ 		task_queue(SPOE_APPCTX(appctx)->task);
+-	si_oc(si)->flags |= CF_READ_DONTWAIT;
+-	task_wakeup(si_strm(si)->task, TASK_WOKEN_IO);
+ }
+ 
+ struct applet spoe_applet = {
