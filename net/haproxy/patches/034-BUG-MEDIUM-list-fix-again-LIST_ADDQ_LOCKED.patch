@@ -1,0 +1,43 @@
+commit 43dbd48e8f39b56f77493a4a0e786bd310a8e682
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Mon Mar 4 11:19:49 2019 +0100
+
+    BUG/MEDIUM: list: fix again LIST_ADDQ_LOCKED
+    
+    Well, that's becoming embarrassing. Now this fixes commit 4ef6801c
+    ("BUG/MEDIUM: list: correct fix for LIST_POP_LOCKED's removal of last
+    element") which itself tried to fix commit 285192564. This fix only
+    works under low contention and was tested with the listener's queue.
+    With the idle conns it's obvious that it's still wrong since adding
+    more than one element to the list leaves a LLIST_BUSY pointer into
+    the list's head. This was visible when accumulating idle connections
+    in a server's list.
+    
+    This new version of the fix almost goes back to the original code,
+    except that since then we addressed issues with expectedly idempotent
+    operations that were not. Now the code has been verified on paper again
+    and has survived 300 million connections spread over 4 threads.
+    
+    This will have to be backported if the commit above is backported.
+    
+    (cherry picked from commit 967de20a43665715e4513c7cc7a67e36a36a9955)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 76eeabc45943cc6a493a2212130cedcde803e432)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/include/common/mini-clist.h b/include/common/mini-clist.h
+index 9ad53aa0..27128a2c 100644
+--- a/include/common/mini-clist.h
++++ b/include/common/mini-clist.h
+@@ -216,9 +216,9 @@ struct cond_wordlist {
+ 			(el)->n = n;                                       \
+ 			(el)->p = p;                                       \
+ 			__ha_barrier_store();                              \
+-			n->n = (el);                                       \
++			p->n = (el);                                       \
+ 			__ha_barrier_store();                              \
+-			p->p = (el);                                       \
++			n->p = (el);                                       \
+ 			__ha_barrier_store();                              \
+ 			break;                                             \
+ 		}                                                          \
