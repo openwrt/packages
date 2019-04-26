@@ -1,0 +1,38 @@
+commit 814ca94cbcba61a11485dedf80f6b35c34e4d74b
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Fri Apr 19 11:35:22 2019 +0200
+
+    BUG/MEDIUM: maps: only try to parse the default value when it's present
+    
+    Maps returning an IP address (e.g. map_str_ip) support an optional
+    default value which must be parsed. Unfortunately the parsing code does
+    not check for this argument's existence and uncondtionally tries to
+    resolve the argument whenever the output is of type address, resulting
+    in segfaults at parsing time when no such argument is provided. This
+    patch adds the appropriate check.
+    
+    This fix may be backported as far as 1.6.
+    
+    (cherry picked from commit aa5801bcaade82ce58b9a70f320b7d0389e444b0)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 0ad6d18945467f4d6defaad619ae49f939770ba2)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/map.c b/src/map.c
+index da399088..211d1911 100644
+--- a/src/map.c
++++ b/src/map.c
+@@ -142,10 +142,10 @@ int sample_load_map(struct arg *arg, struct sample_conv *conv,
+ 	                            1, err, file, line))
+ 		return 0;
+ 
+-	/* the maps of type IP have a string as defaultvalue. This
+-	 * string canbe anipv4 or an ipv6, we must convert it.
++	/* the maps of type IP support a string as default value. This
++	 * string can be an ipv4 or an ipv6, we must convert it.
+ 	 */
+-	if (desc->conv->out_type == SMP_T_ADDR) {
++	if (arg[1].type != ARGT_STOP && desc->conv->out_type == SMP_T_ADDR) {
+ 		struct sample_data data;
+ 		if (!map_parse_ip(arg[1].data.str.str, &data)) {
+ 			memprintf(err, "map: cannot parse default ip <%s>.", arg[1].data.str.str);

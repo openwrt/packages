@@ -1,0 +1,30 @@
+commit 02fd3cd55a2232703494ad5c317907aba21783fe
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Fri Apr 19 15:22:29 2019 +0200
+
+    BUG/MINOR: 51d: Get the request channel to call CHECK_HTTP_MESSAGE_FIRST()
+    
+    Since the commit 89dc49935 ("BUG/MAJOR: http_fetch: Get the channel depending on
+    the keyword used"), the right channel must be passed as argument when the macro
+    CHECK_HTTP_MESSAGE_FIRST is called.
+    
+    This patch must be backported to 1.9.
+    
+    (cherry picked from commit 2db9dac4c81bbb97b45c9f0ff73ed9fe24a2ba83)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    (cherry picked from commit 4fc4c6a9d5effccab3f63909cc86bca452f1be1e)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/51d.c b/src/51d.c
+index 03101136..a0b683b1 100644
+--- a/src/51d.c
++++ b/src/51d.c
+@@ -384,7 +384,7 @@ static int _51d_fetch(const struct arg *args, struct sample *smp, const char *kw
+ 	 * Data type has to be reset to ensure the string output is processed
+ 	 * correctly.
+ 	 */
+-	CHECK_HTTP_MESSAGE_FIRST();
++	CHECK_HTTP_MESSAGE_FIRST((smp->strm ? &smp->strm->req : NULL));
+ 	smp->data.type = SMP_T_STR;
+ 
+ 	/* Flags the sample to show it uses constant memory*/

@@ -1,0 +1,32 @@
+commit 4c20fedc4302aec6e5f4409274b832d524aef44d
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Wed Mar 13 14:03:28 2019 +0100
+
+    BUG/MEDIUM: list: fix incorrect pointer unlocking in LIST_DEL_LOCKED()
+    
+    Injecting on a saturated listener started to exhibit some deadlocks
+    again between LIST_POP_LOCKED() and LIST_DEL_LOCKED(). Olivier found
+    it was due to a leftover from a previous debugging session. This patch
+    fixes it.
+    
+    This will have to be backported if the other LIST_*_LOCKED() patches
+    are backported.
+    
+    (cherry picked from commit b0cef35b097c89ff675e055186e71239e105eb01)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit bf7cc16958e288219989949add02c8a97ed9cf6f)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/include/common/mini-clist.h b/include/common/mini-clist.h
+index 27128a2c..454089ff 100644
+--- a/include/common/mini-clist.h
++++ b/include/common/mini-clist.h
+@@ -251,7 +251,7 @@ struct cond_wordlist {
+ 			        n2 = HA_ATOMIC_XCHG(&n->p, LLIST_BUSY);    \
+ 				if (n2 == LLIST_BUSY) {                    \
+ 					if (p2 != NULL)                    \
+-						p2->n = (el);              \
++						p->n = p2;                 \
+ 					(el)->p = p;                       \
+ 					(el)->n = n;                       \
+ 					__ha_barrier_store();              \

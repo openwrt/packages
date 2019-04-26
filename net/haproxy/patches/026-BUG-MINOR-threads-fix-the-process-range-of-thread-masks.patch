@@ -1,0 +1,30 @@
+commit c56c82b4a55f0e03b28248f1230d6d6cd4f40484
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Sat Feb 2 13:18:01 2019 +0100
+
+    BUG/MINOR: threads: fix the process range of thread masks
+    
+    Commit 421f02e ("MINOR: threads: add a MAX_THREADS define instead of
+    LONGBITS") used a MAX_THREADS macros to fix threads limits. However,
+    one change was wrong as it affected the upper bound of the process
+    loop when setting threads masks. No backport is needed.
+    
+    (cherry picked from commit bbcf2b9e0d17d83609ac529a21a258d2f2ea7bb8)
+    [wt: this should be backported to 1.8 as well]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 1a3ae41964f934a4317e37ed0e0680f252dea4af)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/listener.c b/src/listener.c
+index b94d823c..45d9c252 100644
+--- a/src/listener.c
++++ b/src/listener.c
+@@ -954,7 +954,7 @@ static int bind_parse_process(char **args, int cur_arg, struct proxy *px, struct
+ 
+ 	conf->bind_proc |= proc;
+ 	if (thread) {
+-		for (i = 0; i < MAX_THREADS; i++)
++		for (i = 0; i < LONGBITS; i++)
+ 			if (!proc || (proc & (1UL << i)))
+ 				conf->bind_thread[i] |= thread;
+ 	}

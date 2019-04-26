@@ -1,0 +1,27 @@
+commit 0ddf04ee66d3a2ff9c47d0c91a2d3c7bc06b34e9
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Fri Mar 29 17:56:13 2019 +0100
+
+    BUILD: makefile: add _LINUX_SOURCE_COMPAT to build on AIX-51
+    
+    Not tested on later versions, but at least there _LINUX_SOURCE_COMPAT
+    must be defined to access the CMSG_SPACE() and CMSG_LEN() macros.
+    
+    (cherry picked from commit 891d65a67280bea35f8ae38e4dcfe7c2330ddd10)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 20faac416072cabffb13a7e41a58dd5b56fc21b0)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/Makefile b/Makefile
+index 81e70e02..955f1188 100644
+--- a/Makefile
++++ b/Makefile
+@@ -358,7 +358,7 @@ ifeq ($(TARGET),aix51)
+   # This is for AIX 5.1
+   USE_POLL        = implicit
+   USE_LIBCRYPT    = implicit
+-  TARGET_CFLAGS   = -Dss_family=__ss_family -Dip6_hdr=ip6hdr -DSTEVENS_API
++  TARGET_CFLAGS   = -Dss_family=__ss_family -Dip6_hdr=ip6hdr -DSTEVENS_API -D_LINUX_SOURCE_COMPAT
+   DEBUG_CFLAGS    =
+ else
+ ifeq ($(TARGET),aix52)
