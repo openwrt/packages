@@ -1,0 +1,33 @@
+Commit in requests repository - urllib1.25 branch: https://github.com/kennethreitz/requests/commit/d6b5b401e8d6141bcefa4a70ff1c836aa085120b
+Pull request: https://github.com/kennethreitz/requests/pull/5063
+
+diff --git a/requests/__init__.py b/requests/__init__.py
+index bc168ee..9a899df 100644
+--- a/requests/__init__.py
++++ b/requests/__init__.py
+@@ -57,10 +57,10 @@ def check_compatibility(urllib3_version, chardet_version):
+     # Check urllib3 for compatibility.
+     major, minor, patch = urllib3_version  # noqa: F811
+     major, minor, patch = int(major), int(minor), int(patch)
+-    # urllib3 >= 1.21.1, <= 1.24
++    # urllib3 >= 1.21.1, <= 1.25
+     assert major == 1
+     assert minor >= 21
+-    assert minor <= 24
++    assert minor <= 25
+
+     # Check chardet for compatibility.
+     major, minor, patch = chardet_version.split('.')[:3]
+diff --git a/setup.py b/setup.py
+index 10ce2c6..0d5d0cc 100755
+--- a/setup.py
++++ b/setup.py
+@@ -44,7 +44,7 @@ packages = ['requests']
+ requires = [
+     'chardet>=3.0.2,<3.1.0',
+     'idna>=2.5,<2.9',
+-    'urllib3>=1.21.1,<1.25',
++    'urllib3>=1.21.1,<1.26,!=1.25.0',
+     'certifi>=2017.4.17'
+
+ ]
