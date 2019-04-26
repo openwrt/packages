@@ -1,0 +1,34 @@
+commit 8caa2434cd52ac4056f4ec32b423d11a4dc7eaf5
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Thu Feb 28 15:55:18 2019 +0100
+
+    BUG/MEDIUM: list: fix LIST_POP_LOCKED's removal of the last pointer
+    
+    There was a typo making the last updated pointer be the pre-last element's
+    prev instead of the last's prev element. It didn't show up during early
+    tests because the contention is very rare on this one  and it's implicitly
+    recovered when updating the pointers to go to the next element, but it was
+    clearly visible in the listener_accept() tests by having all threads block
+    on LIST_POP_LOCKED() with n==p==LLIST_BUSY.
+    
+    This will have to be backported if commit a8434ec14 ("MINOR: lists:
+    Implement locked variations.") is backported.
+    
+    (cherry picked from commit 285192564d2a7d6eff077d91758b603ba7f2b10a)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 20fcf3a0e188551ef185c02c7fb28314de6e412e)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/include/common/mini-clist.h b/include/common/mini-clist.h
+index 779f81da..51c61051 100644
+--- a/include/common/mini-clist.h
++++ b/include/common/mini-clist.h
+@@ -292,7 +292,7 @@ struct cond_wordlist {
+ 				 __ha_barrier_store();                     \
+ 				 continue;                                 \
+ 			 }                                                 \
+-			 p2 = HA_ATOMIC_XCHG(&n2->p, LLIST_BUSY);          \
++			 p2 = HA_ATOMIC_XCHG(&n->p, LLIST_BUSY);           \
+ 			 if (p2 == LLIST_BUSY) {                           \
+ 				 n->n = n2;                                \
+ 				 n->p = p;                                 \

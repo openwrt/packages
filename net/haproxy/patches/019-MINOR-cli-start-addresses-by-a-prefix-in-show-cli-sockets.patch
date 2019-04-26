@@ -1,0 +1,45 @@
+commit d33b1dd5193df4dfc1dcbea22ade1ee53c89009e
+Author: William Lallemand <wlallemand@haproxy.com>
+Date:   Mon Apr 1 11:30:05 2019 +0200
+
+    MINOR: cli: start addresses by a prefix in 'show cli sockets'
+    
+    Displays a prefix for every addresses in 'show cli sockets'.
+    It could be 'unix@', 'ipv4@', 'ipv6@', 'abns@' or 'sockpair@'.
+    
+    Could be backported in 1.9 and 1.8.
+    
+    (cherry picked from commit e58915f07f7e7a83a7aece909f115bb40887cd55)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    (cherry picked from commit 97a9b60016159140ba3c001f7427d8ff52d1d311)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/cli.c b/src/cli.c
+index 39744c7a..f0c41b06 100644
+--- a/src/cli.c
++++ b/src/cli.c
+@@ -972,18 +972,19 @@ static int cli_io_handler_show_cli_sock(struct appctx *appctx)
+ 							const struct sockaddr_un *un;
+ 
+ 							un = (struct sockaddr_un *)&l->addr;
+-							if (un->sun_path[0] == '\0')
++							if (un->sun_path[0] == '\0') {
+ 								chunk_appendf(&trash, "abns@%s ", un->sun_path+1);
+-							else
+-								chunk_appendf(&trash, "%s ", un->sun_path);
++							} else {
++								chunk_appendf(&trash, "unix@%s ", un->sun_path);
++							}
+ 						} else if (l->addr.ss_family == AF_INET) {
+ 							addr_to_str(&l->addr, addr, sizeof(addr));
+ 							port_to_str(&l->addr, port, sizeof(port));
+-							chunk_appendf(&trash, "%s:%s ", addr, port);
++							chunk_appendf(&trash, "ipv4@%s:%s ", addr, port);
+ 						} else if (l->addr.ss_family == AF_INET6) {
+ 							addr_to_str(&l->addr, addr, sizeof(addr));
+ 							port_to_str(&l->addr, port, sizeof(port));
+-							chunk_appendf(&trash, "[%s]:%s ", addr, port);
++							chunk_appendf(&trash, "ipv6@[%s]:%s ", addr, port);
+ 						} else
+ 							continue;
+ 
