@@ -3,7 +3,7 @@
 @@ -15,6 +15,7 @@ use Inline (
          ($ENV{LIBUSB_INCDIR} ? ( INC => "-I\"$ENV{LIBUSB_INCDIR}\"" ) : () ),
          NAME => 'Device::USB',
-         VERSION => '0.36',
+         VERSION => '0.37',
 +        PREFIX => 'deviceusb_',
     );
  
