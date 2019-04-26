@@ -9,14 +9,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=i2pd
-PKG_VERSION:=2.23.0
+PKG_VERSION:=2.24.0
 PKG_RELEASE:=1
 PKG_BUILD_PARALLEL:=1
 
-PKG_SOURCE_URL:=https://codeload.github.com/PurpleI2P/i2pd/tar.gz/$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=19e8573b44b94ce83bd5705569934049cb1dc39db11449abcb9e4b36afe5a279
-PKG_LICENSE:=BSD-3-clause
+PKG_SOURCE_URL:=https://codeload.github.com/PurpleI2P/i2pd/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=809b37100f0f176432b01ab6edee96dc62b0f65d5bf7531e008a87117e742566
+
+PKG_MAINTAINER:=David Yang <mmyangfl@gmail.com>
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -28,7 +31,6 @@ define Package/i2pd
 	TITLE:=full-featured C++ implementation of I2P client
 	URL:=https://github.com/PurpleI2P/i2pd
 	USERID:=i2pd:i2pd
-	MAINTAINER:=David Yang <mmyangfl@gmail.com>
 endef
 
 define Package/i2pd/description
