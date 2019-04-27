@@ -37,7 +37,10 @@ define Package/node
   SUBMENU:=Node.js
   TITLE:=Node.js is a platform built on Chrome's JavaScript runtime
   URL:=https://nodejs.org/
-  DEPENDS:=@(HAS_FPU||KERNEL_MIPS_FPU_EMULATOR) +libstdcpp +libopenssl +zlib +libnghttp2 +libuv +libhttp-parser +USE_UCLIBC:libpthread +USE_UCLIBC:librt +NODEJS_ICU:icu
+  DEPENDS:=@(HAS_FPU||KERNEL_MIPS_FPU_EMULATOR) @!arc @!armeb \
+	   +libstdcpp +libopenssl +zlib +libnghttp2 +libuv +libhttp-parser \
+	   +USE_UCLIBC:libpthread +USE_UCLIBC:librt \
+	   +NODEJS_ICU:icu
 endef
 
 define Package/node/description
@@ -60,13 +63,13 @@ define Package/node-npm/description
 endef
 
 define Package/node/config
-	menu "Module Selection"
+	if PACKAGE_node
 
 	config NODEJS_ICU
 		bool "enable i18n features"
 		default n
 
-	endmenu
+	endif
 endef
 
 NODEJS_CPU:=$(subst powerpc,ppc,$(subst aarch64,arm64,$(subst x86_64,x64,$(subst i386,ia32,$(ARCH)))))
