@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bogofilter
 PKG_VERSION:=1.2.4
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=COPYING
@@ -39,6 +39,10 @@ CONFIGURE_ARGS += \
 	--disable-unicode \
 	--with-libdb-prefix=$(STAGING_DIR) \
 	--with-included-gsl
+
+define Package/bogofilter/conffiles
+/etc/bogofilter.cf
+endef
 
 define Package/bogofilter/install
 	$(INSTALL_DIR)  $(1)/etc/ \
