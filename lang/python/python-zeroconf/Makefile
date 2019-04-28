@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-zeroconf
-PKG_VERSION:=0.21.3
+PKG_VERSION:=0.22.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=zeroconf-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://pypi.python.org/packages/source/z/zeroconf/
-PKG_HASH:=5b52dfdf4e665d98a17bf9aa50dea7a8c98e25f972d9c1d7660e2b978a1f5713
+PKG_HASH:=fe66582c7b3ecc229ea4555b6d9da9bc26fc70134811e980b4fbd033e472b825
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/zeroconf-$(PKG_VERSION)
 
