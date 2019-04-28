@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ssmtp
 PKG_VERSION:=2.64
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 PKG_LICENSE:=GPL-2.0+
 
