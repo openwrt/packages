@@ -47,3 +47,5 @@ do_fsd() {
 		poweroff
 	fi
 }
+
+do_fsd

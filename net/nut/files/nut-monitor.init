@@ -148,7 +148,6 @@ nut_upsmon_add() {
 }
 
 build_config() {
-	local runas=nutmon
 	mkdir -m 0750 -p "$(dirname "$UPSMON_C")"
 
 	config_load nut_monitor
@@ -193,6 +192,7 @@ interface_triggers() {
 }
 
 start_service() {
+	local runas=nutmon
 	local havemon havems
 	build_config
 
@@ -210,21 +210,18 @@ start_service() {
 	return 0
 }
 
-restart() {
-	trap '' TERM
-	stop "$@"
-	sleep 2
-	trap - TERM
-	start "$@"
-}
-
 reload_service() {
 	if pgrep upsmon >/dev/null 2>/dev/null; then
+		local runas=nutmon
 		build_config
 		/usr/sbin/upsmon -c reload
 	else
 		restart
 	fi
+}
+
+stop_service() {
+	upsmon -c stop
 }
 
 service_triggers() {
