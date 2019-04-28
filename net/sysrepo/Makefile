@@ -12,7 +12,7 @@ PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 
 PKG_NAME:=sysrepo
 PKG_VERSION:=0.7.7
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/sysrepo/sysrepo/tar.gz/v$(PKG_VERSION)?
@@ -33,7 +33,7 @@ define Package/libsysrepo/config
 	source "$(SOURCE)/Config_libsysrepo.in"
 endef
 
-PKG_BUILD_DEPENDS:=+SYSREPO_BINDINGS:swig/host
+PKG_BUILD_DEPENDS:=SYSREPO_BINDINGS:swig/host
 
 define Package/libsysrepo
   SECTION:=utils
@@ -109,7 +109,8 @@ ifeq ($(CONFIG_SYSREPO_BINDINGS),y)
 CMAKE_OPTIONS += \
 	-DCMAKE_DISABLE_FIND_PACKAGE_SWIG=FALSE \
 	-DGEN_LANGUAGE_BINDINGS:BOOL=TRUE \
-	-DSWIG_DIR=$(STAGING_DIR)/host/share/swig \
+	-DSWIG_DIR=$(STAGING_DIR_HOSTPKG)/share/swig \
+	-DSWIG_EXECUTABLE=$(STAGING_DIR_HOSTPKG)/bin/swig \
 	-DCALL_TARGET_BINS_DIRECTLY=OFF
 endif
 
