@@ -18,6 +18,8 @@ PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
 PKG_FIXUP:=autoreconf
 PKG_MACRO_PATHS:=build/ac-macros
 PKG_BUILD_DEPENDS:=apr-util
+PKG_BUILD_PARALLEL:=1
+PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -28,9 +30,8 @@ define Package/subversion/Default
   CATEGORY:=Network
   SUBMENU:=Version Control Systems
   TITLE:=A compelling replacement for CVS
-  DEPENDS:=+zlib +libsqlite3 +PACKAGE_unixodbc:unixodbc +libapr +libaprutil +libmagic \
-  	$(ICONV_DEPENDS) $(INTL_DEPENDS)
-  URL:=http://subversion.apache.org/
+  DEPENDS:=+PACKAGE_unixodbc:unixodbc +libaprutil +libmagic $(ICONV_DEPENDS) $(INTL_DEPENDS)
+  URL:=https://subversion.apache.org/
 endef
 
 define Package/subversion/Default/description
@@ -78,8 +79,6 @@ define Package/subversion-server/conffiles
 endef
 
 TARGET_CFLAGS += $(FPIC)
-TARGET_CPPFLAGS += -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
-APU_LIBS=$(shell $(STAGING_DIR)/usr/bin/apu-1-config --link-libtool --libs)
 
 CONFIGURE_ARGS += \
 	--with-apr="$(STAGING_DIR)/usr/bin/apr-1-config" \
@@ -101,17 +100,6 @@ ifdef $(INTL_FULL)
 else
 	CONFIGURE_ARGS += --disable-nls
 endif
-
-CONFIGURE_VARS += \
-	LDFLAGS="$(TARGET_LDFLAGS) $(APU_LIBS) -lcrypt -lm \
-		-lz -lpthread $(if $(INTL_FULL),-lintl)"
-	CPPFLAGS="$(TARGET_CPPFLAGS)"
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
-		all local-install
-endef
 
 define Package/subversion-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib
