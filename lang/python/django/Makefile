@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django
 PKG_VERSION:=1.11.17
-PKG_RELEASE=2
+PKG_RELEASE=3
 
 PKG_SOURCE:=Django-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/D/Django
@@ -30,7 +30,7 @@ define Package/django
     CATEGORY:=Languages
     TITLE:=The web framework for perfectionists with deadlines.
     URL:=https://www.djangoproject.com/
-    DEPENDS:=+python
+    DEPENDS:=+python +python-pytz
 endef
 
 define Package/django/description
