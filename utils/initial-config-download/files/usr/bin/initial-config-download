@@ -1,0 +1,48 @@
+#!/bin/sh
+
+INTERFACES="$(uci -q get initial-config-download.main.interfaces || 'br-lan')"
+CONFIG="$(uci -q get initial-config-download.main.file || 'config.tar.gz')"
+PORT="$(uci -q get initial-config-download.main.port || '8123')"
+MAC="$(cat sys/class/net/$INTERFACE/address | tr -d ':')"
+
+apply_config() {
+    # disable initial service until firstboot reset
+    /etc/init.d/initial-config-download disable
+
+    # extract config files to / of node
+    tar xz -C / -f "/tmp/${CONFIG}"
+
+    # reboot device to make LEDs blink and apply files of /etc/uci-defaults
+    reboot
+}
+
+find_neighbors() {
+    # find neighbored nodes which may offer a config
+    echo "$(ping6 -I ${interface} ff02::1 -c 2 | awk '{ print $4 }' | \
+        tail -n +2 | head -n -4 | cut -d'%' -f 1 | sort | uniq)"
+}
+
+download_config() {
+    # iterate over MAC address like PXE does
+    for i in 12 11 10 9 8 7 6 5 4 3 2 1 0; do
+        MAC_DIR="$(echo $MAC | tr -c $i)"
+        # try to download the file
+        wget "http://[${neighbor%:}%${interface}]:${PORT}/${MAC_DIR}/${CONFIG}" -P /tmp -q
+        # stop if file was successfully retrieved
+        [ -e "/tmp/${CONFIG}" ] && apply_config
+    done
+
+}
+
+# don't stop before no configuration is found
+while [[ ! -e "/tmp/${CONFIG}" ]]; do
+    # run on all configured interfaces
+    for interface in $INTERFACES; do
+        # run on every found neighbor
+        for neighbor in find_neighbors; do
+            download_config
+        done
+    done
+    sleep 5
+done
+

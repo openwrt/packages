@@ -1,0 +1,12 @@
+#!/bin/sh
+
+uci -q show initial-config-download.main || {
+    touch /etc/config/initial-config-download
+    uci batch <<-EOF
+    set initial-config-download.main='main'
+	set initial-config-download.main.port='8123'
+	set initial-config-download.main.file='config.tar.gz'
+	set initial-config-download.main.interfaces='br-lan'
+	commit initial-config-download
+EOF
+}
