@@ -7,16 +7,17 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_LICENSE:=ASL-2.0
-PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
-
 PKG_NAME:=go-ethereum
-PKG_VERSION:=1.8.21
+PKG_VERSION:=1.8.27
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ethereum/go-ethereum/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=736028b4babd44d67a70a4a7883a06e97263449805c8c067b7dfd77e9fa94299
+PKG_HASH:=45d264106991d0e2a4c34ac5d6539fc9460c768fc70588ea38a25f467039ece8
+
+PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
+PKG_LICENSE:=GPL-3 LGPL-3
+PKG_LICENSE_FILES:=COPYING COPYING.LESSER
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
