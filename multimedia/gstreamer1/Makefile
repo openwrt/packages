@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gstreamer1
 PKG_VERSION:=1.16.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
 		Ted Hess <thess@kitschensync.net>
@@ -131,7 +131,6 @@ CONFIGURE_ARGS += \
 	--disable-gst-tracer-hooks \
 	--disable-gst-debug \
 	--disable-gtk-doc-html \
-	--disable-option-parsing \
 	--disable-rpath \
 	--disable-tests \
 	--disable-valgrind \
