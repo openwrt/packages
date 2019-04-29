@@ -62,12 +62,9 @@ endif
 
 # libvpx expects gcc as linker but uses $LD if provided
 # However, OpenWRT defines LD as *-uclibc-ld and not *-gcc
-CONFIGURE_VARS += \
-    CROSS=$(GNU_TARGET_NAME) \
-	LD="$(TARGET_CC)" \
-
-MAKE_FLAGS += \
-	LD="$(TARGET_CC)" \
+CONFIGURE_VARS := $(filter-out LD=%,$(CONFIGURE_VARS)) LD="$(TARGET_CC)" \
+       CROSS=$(GNU_TARGET_NAME)
+MAKE_FLAGS := $(filter-out LD=%,$(MAKE_FLAGS)) LD="$(TARGET_CC)"
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/vpx/
