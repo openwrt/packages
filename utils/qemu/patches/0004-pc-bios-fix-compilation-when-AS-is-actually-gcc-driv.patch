@@ -1,4 +1,4 @@
-From e030d1c14119e880a52788dd04325d489cf455ae Mon Sep 17 00:00:00 2001
+From 8cff6a5f07f66103809e6bf4a26c512d70ab2841 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Sat, 24 Feb 2018 13:46:31 +0800
 Subject: [PATCH 4/4] pc-bios: fix compilation when $(AS) is actually gcc
@@ -9,7 +9,7 @@ Subject: [PATCH 4/4] pc-bios: fix compilation when $(AS) is actually gcc
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/pc-bios/optionrom/Makefile b/pc-bios/optionrom/Makefile
-index a9a9e5e7eb..f88b3ee446 100644
+index e33a24da0d..ce734e8202 100644
 --- a/pc-bios/optionrom/Makefile
 +++ b/pc-bios/optionrom/Makefile
 @@ -34,7 +34,7 @@ endif
@@ -20,13 +20,13 @@ index a9a9e5e7eb..f88b3ee446 100644
 +ASFLAGS += $(Wa)-32
  QEMU_CFLAGS += $(call cc-c-option, $(QEMU_CFLAGS), $(Wa)-32)
  
- build-all: multiboot.bin linuxboot.bin linuxboot_dma.bin kvmvapic.bin
-@@ -44,7 +44,7 @@ build-all: multiboot.bin linuxboot.bin linuxboot_dma.bin kvmvapic.bin
+ build-all: multiboot.bin linuxboot.bin linuxboot_dma.bin kvmvapic.bin pvh.bin
+@@ -44,7 +44,7 @@ build-all: multiboot.bin linuxboot.bin linuxboot_dma.bin kvmvapic.bin pvh.bin
  
  
  %.o: %.S
 -	$(call quiet-command,$(CPP) $(QEMU_INCLUDES) $(QEMU_DGFLAGS) -c -o - $< | $(AS) $(ASFLAGS) -o $@,"AS","$(TARGET_DIR)$@")
 +	$(call quiet-command,$(CPP) $(QEMU_INCLUDES) $(QEMU_DGFLAGS) -c -o - $< | $(AS) $(ASFLAGS) -o $@ -x assembler -,"AS","$(TARGET_DIR)$@")
  
- %.img: %.o
- 	$(call quiet-command,$(LD) $(LDFLAGS_NOPIE) -m $(LD_I386_EMULATION) -T $(SRC_PATH)/pc-bios/optionrom/flat.lds -s -o $@ $<,"BUILD","$(TARGET_DIR)$@")
+ pvh.img: pvh.o pvh_main.o
+ 	$(call quiet-command,$(LD) $(LDFLAGS_NOPIE) -m $(LD_I386_EMULATION) -T $(SRC_PATH)/pc-bios/optionrom/flat.lds -s -o $@ $^,"BUILD","$(TARGET_DIR)$@")

@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2016 OpenWrt.org
-# Copyright (C) 2016-2018 Yousong Zhou <yszhou4tech@gmail.com>
+# Copyright (C) 2016-2019 Yousong Zhou <yszhou4tech@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,10 +9,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=3.1.0
-PKG_RELEASE:=2
+PKG_VERSION:=4.0.0
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=6a0508df079a0a33c2487ca936a56c12122f105b8a96a44374704bef6c69abfc
+PKG_HASH:=13a93dfe75b86734326f8d5b475fde82ec692d5b5a338b4262aeeb6b0fa4e469
 PKG_SOURCE_URL:=http://download.qemu.org/
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
@@ -23,6 +23,7 @@ PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/uclibc++.mk
+include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/package.mk
 
 
@@ -152,7 +153,7 @@ define qemu-target
     TITLE:=QEMU target $(1)
     URL:=http://www.qemu.org
     DEPENDS:= +glib2 +libpthread +zlib $(CXX_DEPENDS) $(QEMU_DEPS_IN_HOST) \
-	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +pixman +qemu-blobs)
+	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +pixman +qemu-blobs $(ICONV_DEPENDS))
   endef
 
   define Package/qemu-$(1)/description
@@ -193,27 +194,92 @@ CONFIGURE_ARGS +=			\
 	--disable-fortify-source	\
 	--disable-stack-protector	\
 
-# Make a list from QEMU source code for reference
+# VHost features
+CONFIGURE_ARGS +=			\
+	--enable-vhost-crypto		\
+	--enable-vhost-kernel		\
+	--enable-vhost-net		\
+	--enable-vhost-scsi		\
+	--enable-vhost-user		\
+	--enable-vhost-vsock		\
+
+# Image formats support
+CONFIGURE_ARGS +=			\
+	--disable-bochs			\
+	--disable-cloop			\
+	--disable-dmg			\
+	--disable-qcow1			\
+	--disable-vdi			\
+	--disable-vvfat			\
+	--disable-qed			\
+	--disable-parallels		\
+
+# system/user-mode emulation
+CONFIGURE_ARGS +=			\
+	--disable-user			\
+	--disable-bsd-user		\
+	--disable-linux-user		\
+	--enable-system			\
+
+# accel
+CONFIGURE_ARGS +=			\
+	--disable-hax			\
+	--disable-hvf			\
+	--disable-whpx			\
+	--disable-xen			\
+	--enable-kvm			\
+	--enable-tcg			\
+
+# UI
+CONFIGURE_ARGS +=			\
+	--disable-cocoa			\
+	--disable-gtk			\
+	--disable-sdl			\
+	--disable-sdl-image		\
+	--disable-spice			\
+	--disable-virglrenderer		\
+	--disable-vnc			\
+	--disable-vnc-jpeg		\
+	--disable-vnc-png		\
+	--disable-vnc-sasl		\
+	--disable-vte			\
+	--enable-curses			\
+	--enable-iconv			\
+
+# Features for performance & no external dependency
+CONFIGURE_ARGS +=			\
+	--enable-coroutine-pool		\
+	--enable-crypto-afalg		\
+	--enable-live-block-migration	\
+	--enable-membarrier		\
+	--enable-replication		\
+
+# Review configure options not explicitly specified here
 #
-#	grep -E '^\s*--disable-[^)]+\)' configure | cut -f1 -d')' | sort -u
+#	openwrt_makefile=openwrt/packages/utils/qemu/Makefile
+#	qemu_configure=qemu/configure
+#	for arg in $(grep -E '^\s*--disable-[^)]+\)' "$qemu_configure" | cut -f1 -d')'); do
+#	  grep -qE "(--enable|--disable)${arg#--disable}" "$openwrt_makefile" || echo "$arg"
+#	done
 #
 CONFIGURE_ARGS +=			\
 	--audio-drv-list=''		\
 	--disable-attr			\
+	--disable-auth-pam		\
 	--disable-bluez			\
 	--disable-brlapi		\
-	--disable-bsd-user		\
 	--disable-bzip2			\
 	--disable-cap-ng		\
-	--disable-cocoa			\
+	--disable-capstone		\
 	--disable-curl			\
 	--disable-debug-info		\
+	--disable-debug-mutex		\
 	--disable-debug-tcg		\
 	--disable-docs			\
 	--disable-gcrypt		\
+	--disable-git-update		\
 	--disable-glusterfs		\
 	--disable-gnutls		\
-	--disable-gtk			\
 	--disable-guest-agent-msi	\
 	--disable-jemalloc		\
 	--disable-libiscsi		\
@@ -224,43 +290,36 @@ CONFIGURE_ARGS +=			\
 	--disable-libusb		\
 	--disable-libxml2		\
 	--disable-linux-aio		\
+	--disable-lzfse			\
 	--disable-lzo			\
 	--disable-modules		\
+	--disable-mpath			\
 	--disable-netmap		\
 	--disable-nettle		\
 	--disable-numa			\
 	--disable-opengl		\
+	--disable-pvrdma		\
 	--disable-qom-cast-debug	\
 	--disable-rbd			\
 	--disable-rdma			\
-	--disable-sdl			\
+	--disable-sanitizers		\
 	--disable-seccomp		\
+	--disable-sheepdog		\
 	--disable-smartcard		\
 	--disable-snappy		\
 	--disable-sparse		\
-	--disable-spice			\
 	--disable-strip			\
 	--disable-tcg-interpreter	\
 	--disable-tcmalloc		\
 	--disable-tools			\
 	--disable-tpm			\
 	--disable-usb-redir		\
-	--disable-uuid			\
 	--disable-vde			\
-	--disable-vhdx			\
-	--disable-virglrenderer		\
 	--disable-virtfs		\
-	--disable-vnc			\
-	--disable-vnc-jpeg		\
-	--disable-vnc-png		\
-	--disable-vnc-sasl		\
-	--disable-vte			\
+	--disable-vxhs			\
 	--disable-werror		\
-	--disable-xen			\
 	--disable-xen-pci-passthrough	\
-	--disable-xen-pv-domain-build	\
 	--disable-xfsctl		\
-	--disable-zlib-test		\
 
 CONFIGURE_ARGS += --target-list='$(foreach target,$(QEMU_TARGET_LIST),$(if $(CONFIG_PACKAGE_qemu-$(target)),$(target)))'
 CONFIGURE_ARGS += $(if $(CONFIG_PACKAGE_qemu-ga),--enable-guest-agent)

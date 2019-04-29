@@ -1,4 +1,4 @@
-From 82d1bb429533dcab4278ed21afc19ee303d7d3f5 Mon Sep 17 00:00:00 2001
+From cbb0971d0d1bc32413095810e24f17eb7169810a Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Sat, 24 Feb 2018 13:43:19 +0800
 Subject: [PATCH 1/4] configure: allow disable fortify_source
@@ -10,10 +10,10 @@ OpenWrt base build system decide flavor of fortify_source to use
  1 file changed, 2 insertions(+)
 
 diff --git a/configure b/configure
-index 0a3c6a72c3..d274df816c 100755
+index 1c563a7027..f4d949b35b 100755
 --- a/configure
 +++ b/configure
-@@ -1491,6 +1491,8 @@ for opt do
+@@ -1518,6 +1518,8 @@ for opt do
    ;;
    --disable-libpmem) libpmem=no
    ;;
