@@ -2,14 +2,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zstd
 PKG_VERSION:=1.4.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/facebook/zstd/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=63be339137d2b683c6d19a9e34f4fb684790e864fee13c7dd40e197a64c705c1
 
 PKG_LICENSE:=GPL-2.0-or-later
-PKG_LICENSE_FILE:=COPYING
+PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
