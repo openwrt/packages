@@ -80,6 +80,29 @@ start_instance() {
 		[ -n "$username" ] && [ -n "$password" ] && output_arg="${output_arg} --credentials $username:$password"
 	fi
 
+	if [ "x$output" = 'xfile' ]; then
+		output_arg="output_file.so"
+
+		config_get folder "$s" 'folder'
+		[ -n "$folder" ] && output_arg="${output_arg} --folder $folder"
+
+		config_get delay "$s" 'delay'
+		[ -n "$delay" ] && output_arg="${output_arg} --delay $delay"
+
+		config_get link "$s" 'link'
+		[ -n "$link" ] && output_arg="${output_arg} --link $link"
+
+		config_get ringbuffer "$s" 'ringbuffer'
+		[ -n "$ringbuffer" ] && output_arg="${output_arg} --size $ringbuffer"
+
+		config_get exceed "$s" 'exceed'
+		[ -n "$exceed" ] && output_arg="${output_arg} --exceed $exceed"
+
+		config_get command "$s" 'command'
+		[ -n "$command" ] && output_arg="${output_arg} --command $command"
+
+	fi
+
 	if [ -z "$output_arg" ]; then
 		error "unsuported output option '$output' in section '$s'"
 		return 1
