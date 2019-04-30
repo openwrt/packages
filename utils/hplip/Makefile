@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hplip
-PKG_VERSION:=3.18.12
+PKG_VERSION:=3.19.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/hplip
-PKG_HASH:=3ba5278d5fcaf83ecd04d16850f2f24c43c78c1189c15ae32cae756360c2fabd
+PKG_HASH:=a04edf0b5b4c4dcaa3998a27caad8f24513340e0aea61b694397c7807d7c2ae6
 
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=GPL-2.0 GPL-2.0+
