@@ -113,7 +113,7 @@ create_interface_dns() {
   # Create local-data: references for this hosts interfaces (router).
   config_get logint "$cfg" interface
   config_get_bool ignore "$cfg" ignore 0
-  network_get_device ifname "$cfg"
+  network_get_device ifname "$logint"
 
   ifdashname="${ifname//./-}"
   ipcommand="ip -o address show $ifname"

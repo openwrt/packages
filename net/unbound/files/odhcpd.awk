@@ -85,6 +85,7 @@
 
       while ( ( cmd | getline adr ) > 0 ) {
         if (( substr( adr, 1, 5 ) <= "fdff:" ) \
+        && ( index( adr, "::/" ) != 0 ) \
         && ( index( adr, "anycast" ) == 0 ) \
         && ( index( adr, "via" ) == 0 )) {
           # GA or ULA routed addresses only (not LL or MC)
