@@ -36,10 +36,12 @@
   sub( /.*\//, "", cdr ) ;
   sub( /\/.*/, "", adr2 ) ;
   sub( /.*\//, "", cdr2 ) ;
+  gsub( /_/, "-", hst ) ;
 
 
   if ( hst !~ /^[[:alnum:]]([-[:alnum:]]*[[:alnum:]])?$/ ) {
     # that is not a valid host name (RFC1123)
+    # above replaced common error of "_" in host name with "-"
     hst = "-" ;
   }
 
@@ -48,7 +50,7 @@
     # TODO: this might be better with a substituion option,
     # or per DHCP pool do-not-DNS option, but its getting busy here.
     fqdn = net
-    fqdn = sub( /\./, "-", fqdn ) ;
+    gsub( /\./, "-", fqdn ) ;
     fqdn = tolower( hst "." fqdn "." domain ) ;
   }
 
@@ -86,6 +88,7 @@
 
       while ( ( cmd | getline adr ) > 0 ) {
         if (( substr( adr, 1, 5 ) <= "fdff:" ) \
+        && ( index( adr, "::/" ) != 0 ) \
         && ( index( adr, "anycast" ) == 0 ) \
         && ( index( adr, "via" ) == 0 )) {
           # GA or ULA routed addresses only (not LL or MC)
