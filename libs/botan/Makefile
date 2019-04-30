@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=botan
 PKG_VERSION:=2.10.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=BangLang Huang <banglang.huang@foxmail.com>
 
 PKG_SOURCE:=Botan-$(PKG_VERSION).tgz
@@ -19,7 +19,7 @@ PKG_HASH:=88481997578c27924724fea76610d43d9f59c99edfe561d41803bbc98871ad31
 
 PKG_USE_MIPS16:=0
 PKG_LICENSE:=BSD-2-Clause
-PKG_LICENSE_FILE:=license.txt
+PKG_LICENSE_FILES:=license.txt
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
