@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glog
 PKG_VERSION:=0.4.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/google/glog/tar.gz/v$(PKG_VERSION)?
@@ -16,13 +16,15 @@ PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
+PKG_BUILD_DEPENDS:=libgflags
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/glog
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=C++ implementation of the Google logging module
-  DEPENDS:= +libstdcpp +libpthread
+  DEPENDS:= +libstdcpp +libpthread +gflags
   URL:=https://github.com/google/glog
   MAINTAINER:=Amir Sabbaghi <amir@pichak.co>
 endef
