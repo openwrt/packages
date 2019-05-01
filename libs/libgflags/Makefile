@@ -2,14 +2,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gflags
 PKG_VERSION:=2.2.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gflags/gflags/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=34af2f15cf7367513b352bdcd2493ab14ce43692d2dcd9dfc499492966c64dcf
 
 PKG_LICENSE:=BSD-3-Clause
-PKG_LICENSE_FILE:=COPYING.txt
+PKG_LICENSE_FILES:=COPYING.txt
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
