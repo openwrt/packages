@@ -1,0 +1,19 @@
+--- a/usr/iscsi/iscsi_tcp.c
++++ b/usr/iscsi/iscsi_tcp.c
+@@ -26,6 +26,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
++#include <malloc.h>
+ #include <arpa/inet.h>
+ #include <netinet/in.h>
+ #include <netinet/tcp.h>
+@@ -578,7 +579,7 @@ static void iscsi_tcp_free_task(struct iscsi_task *task)
+ 
+ static void *iscsi_tcp_alloc_data_buf(struct iscsi_connection *conn, size_t sz)
+ {
+-	return valloc(sz);
++	return memalign(sysconf(_SC_PAGESIZE),sz);
+ }
+ 
+ static void iscsi_tcp_free_data_buf(struct iscsi_connection *conn, void *buf)
