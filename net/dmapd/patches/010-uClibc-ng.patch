@@ -1,0 +1,10 @@
+--- a/src/dmapd.c
++++ b/src/dmapd.c
+@@ -29,6 +29,7 @@
+ #include <grp.h>
+ #include <glib.h>
+ #include <libdmapsharing/dmap.h>
++#include <sys/stat.h>
+ 
+ #include "dmapd-dmap-container-record.h"
+ #include "dmapd-dmap-container-db.h"
