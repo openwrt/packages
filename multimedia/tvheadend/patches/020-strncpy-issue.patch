@@ -1,0 +1,13 @@
+diff --git a/Makefile b/Makefile
+index 8c5e380..baef144 100644
+--- a/Makefile
++++ b/Makefile
+@@ -28,7 +28,7 @@ PROG    := $(BUILDDIR)/tvheadend
+ #
+ 
+ CFLAGS  += -g -O2 -Wunused-result
+-CFLAGS  += -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations
++#CFLAGS  += -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations
+ CFLAGS  += -Wmissing-prototypes
+ CFLAGS  += -fms-extensions -funsigned-char -fno-strict-aliasing
+ CFLAGS  += -D_FILE_OFFSET_BITS=64
