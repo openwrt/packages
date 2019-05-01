@@ -1,0 +1,22 @@
+diff --git a/Makefile b/Makefile
+index 3bf5929..e065577 100644
+--- a/Makefile
++++ b/Makefile
+@@ -32,7 +32,7 @@ VERS     = $(shell ./atop -V 2>/dev/null| sed -e 's/^[^ ]* //' -e 's/ .*//')
+ all: 		atop atopsar atopacctd atopconvert
+ 
+ atop:		atop.o    $(ALLMODS) Makefile
+-		$(CC) -c version.c
++		$(CC) $(CFLAGS) -c version.c
+ 		$(CC) atop.o $(ALLMODS) -o atop -lncurses -lz -lm -lrt $(LDFLAGS)
+ 
+ atopsar:	atop
+@@ -45,7 +45,7 @@ atopconvert:	atopconvert.o
+ 		$(CC) atopconvert.o -o atopconvert -lz $(LDFLAGS)
+ 
+ netlink.o:	netlink.c
+-		$(CC) -I. -Wall -c netlink.c
++		$(CC) $(CFLAGS) -I. -Wall -c netlink.c
+ 
+ clean:
+ 		rm -f *.o atop atopacctd atopconvert
