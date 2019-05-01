@@ -1,0 +1,43 @@
+--- a/boost/asio/detail/impl/eventfd_select_interrupter.ipp
++++ b/boost/asio/detail/impl/eventfd_select_interrupter.ipp
+@@ -23,11 +23,11 @@
+ #include <sys/stat.h>
+ #include <sys/types.h>
+ #include <fcntl.h>
+-#if __GLIBC__ == 2 && __GLIBC_MINOR__ < 8
++#if __GLIBC__ == 2 && __GLIBC_MINOR__ < 2
+ # include <asm/unistd.h>
+-#else // __GLIBC__ == 2 && __GLIBC_MINOR__ < 8
++#else // __GLIBC__ == 2 && __GLIBC_MINOR__ < 2
+ # include <sys/eventfd.h>
+-#endif // __GLIBC__ == 2 && __GLIBC_MINOR__ < 8
++#endif // __GLIBC__ == 2 && __GLIBC_MINOR__ < 2
+ #include <boost/asio/detail/cstdint.hpp>
+ #include <boost/asio/detail/eventfd_select_interrupter.hpp>
+ #include <boost/asio/detail/throw_error.hpp>
+@@ -46,14 +46,14 @@ eventfd_select_interrupter::eventfd_select_interrupter()
+ 
+ void eventfd_select_interrupter::open_descriptors()
+ {
+-#if __GLIBC__ == 2 && __GLIBC_MINOR__ < 8
++#if __GLIBC__ == 2 && __GLIBC_MINOR__ < 2
+   write_descriptor_ = read_descriptor_ = syscall(__NR_eventfd, 0);
+   if (read_descriptor_ != -1)
+   {
+     ::fcntl(read_descriptor_, F_SETFL, O_NONBLOCK);
+     ::fcntl(read_descriptor_, F_SETFD, FD_CLOEXEC);
+   }
+-#else // __GLIBC__ == 2 && __GLIBC_MINOR__ < 8
++#else // __GLIBC__ == 2 && __GLIBC_MINOR__ < 2
+ # if defined(EFD_CLOEXEC) && defined(EFD_NONBLOCK)
+   write_descriptor_ = read_descriptor_ =
+     ::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+@@ -70,7 +70,7 @@ void eventfd_select_interrupter::open_descriptors()
+       ::fcntl(read_descriptor_, F_SETFD, FD_CLOEXEC);
+     }
+   }
+-#endif // __GLIBC__ == 2 && __GLIBC_MINOR__ < 8
++#endif // __GLIBC__ == 2 && __GLIBC_MINOR__ < 2
+ 
+   if (read_descriptor_ == -1)
+   {
