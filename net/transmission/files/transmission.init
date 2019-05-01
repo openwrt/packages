@@ -65,9 +65,11 @@ transmission() {
 	config_get nice "$cfg" nice 0
 	config_get web_home "$cfg" 'web_home'
 
-	local MEM=$(sed -ne 's!^MemTotal:[[:space:]]*\([0-9]*\) kB$!\1!p' /proc/meminfo)
+	local MEM
+
+	MEM=$(sed -ne 's!^MemTotal:[[:space:]]*\([0-9]*\) kB$!\1!p' /proc/meminfo)
 	if test "$MEM" -gt 1;then
-		USE=$(expr $MEM \* $mem_percentage \* 10)
+		USE=$((MEM * mem_percentage * 10))
 	fi
 
 	config_file="$config_dir/settings.json"
@@ -78,7 +80,7 @@ transmission() {
 		[ -z "$user" ] || chown -R "$user:$group" $config_dir
 	}
 
-	[ "$config_overwrite" == 0 ] || {
+	[ "$config_overwrite" = 0 ] || {
 
 		echo "{" > $config_file
 
