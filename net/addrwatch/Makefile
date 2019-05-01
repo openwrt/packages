@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=addrwatch
 PKG_VERSION:=0.8
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-master.tar.gz
 PKG_SOURCE_URL:=https://github.com/fln/addrwatch/releases/download/$(PKG_VERSION)/
@@ -41,6 +41,8 @@ endef
 define Package/addrwatch/conffiles
 	/etc/config/addrwatch
 endef
+
+TARGET_CFLAGS += -std=gnu89
 
 define Package/addrwatch/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d
