@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rpcbind
 PKG_VERSION:=1.2.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=@SF/rpcbind
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -49,7 +49,8 @@ endef
 CONFIGURE_ARGS += \
 	--with-rpcuser=rpc \
 	--without-systemdsystemunitdir \
-	--enable-warmstarts
+	--enable-warmstarts \
+	--enable-rmtcalls
 
 ifeq ($(CONFIG_RPCBIND_LIBWRAP),y)
 	CONFIGURE_ARGS += --enable-libwrap
