@@ -30,9 +30,9 @@ define Package/seafile-seahub
     DEPENDS:=+python-simplejson +python +pillow +python-chardet +django +django-appconf \
 		+django-compressor +django-constance +django-formtools +django-jsonfield \
 		+django-picklefield +django-postoffice +django-restframework \
-		+django-simple-captcha +django-statici18n +django-webpack-loader +et_xmlfile \
-		+flup +gunicorn +jdcal +openpyxl +python-dateutil +python-mysql \
-		+python-qrcode +python-requests +python-requests-oauthlib +python-pytz +rcssmin
+		+django-simple-captcha +django-statici18n +django-webpack-loader \
+		+flup +gunicorn +openpyxl +python-dateutil +python-mysql \
+		+python-qrcode +python-requests +python-requests-oauthlib +python-pytz
 endef
 
 define Build/Configure
