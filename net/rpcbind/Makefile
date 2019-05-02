@@ -49,7 +49,8 @@ endef
 CONFIGURE_ARGS += \
 	--with-rpcuser=rpc \
 	--without-systemdsystemunitdir \
-	--enable-warmstarts
+	--enable-warmstarts \
+	--enable-rmtcalls
 
 ifeq ($(CONFIG_RPCBIND_LIBWRAP),y)
 	CONFIGURE_ARGS += --enable-libwrap
