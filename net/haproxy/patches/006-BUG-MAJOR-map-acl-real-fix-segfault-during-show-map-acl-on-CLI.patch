@@ -1,0 +1,67 @@
+commit 83af1f6b65806982640679823228976deebf5202
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Tue Apr 30 11:43:43 2019 +0200
+
+    BUG/MAJOR: map/acl: real fix segfault during show map/acl on CLI
+    
+    A previous commit 8d85aa44d ("BUG/MAJOR: map: fix segfault during
+    'show map/acl' on cli.") was provided to address a concurrency issue
+    between "show acl" and "clear acl" on the CLI. Sadly the code placed
+    there was copy-pasted without changing the element type (which was
+    struct stream in the original code) and not tested since the crash
+    is still present.
+    
+    The reproducer is simple : load a large ACL file (e.g. geolocation
+    addresses), issue "show acl #0" in loops in one window and issue a
+    "clear acl #0" in the other one, haproxy crashes.
+    
+    This fix was also tested with threads enabled and looks good since
+    the locking seems to work correctly in these areas though. It will
+    have to be backported as far as 1.6 since the commit above went
+    that far as well...
+    
+    (cherry picked from commit 49ee3b2f9a9e5d0b8d394938df527aa645ce72b4)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit ac4be10f62ef72962d9cf0e6f2619e1e1c370d62)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/pattern.c b/src/pattern.c
+index 7eea9d96..21639569 100644
+--- a/src/pattern.c
++++ b/src/pattern.c
+@@ -1651,7 +1651,7 @@ int pat_ref_delete_by_id(struct pat_ref *ref, struct pat_ref_elt *refelt)
+ 				LIST_DEL(&bref->users);
+ 				LIST_INIT(&bref->users);
+ 				if (elt->list.n != &ref->head)
+-					LIST_ADDQ(&LIST_ELEM(elt->list.n, struct stream *, list)->back_refs, &bref->users);
++					LIST_ADDQ(&LIST_ELEM(elt->list.n, typeof(elt), list)->back_refs, &bref->users);
+ 				bref->ref = elt->list.n;
+ 			}
+ 			list_for_each_entry(expr, &ref->pat, list)
+@@ -1691,7 +1691,7 @@ int pat_ref_delete(struct pat_ref *ref, const char *key)
+ 				LIST_DEL(&bref->users);
+ 				LIST_INIT(&bref->users);
+ 				if (elt->list.n != &ref->head)
+-					LIST_ADDQ(&LIST_ELEM(elt->list.n, struct stream *, list)->back_refs, &bref->users);
++					LIST_ADDQ(&LIST_ELEM(elt->list.n, typeof(elt), list)->back_refs, &bref->users);
+ 				bref->ref = elt->list.n;
+ 			}
+ 			list_for_each_entry(expr, &ref->pat, list)
+@@ -2086,7 +2086,7 @@ void pat_ref_reload(struct pat_ref *ref, struct pat_ref *replace)
+ 			LIST_DEL(&bref->users);
+ 			LIST_INIT(&bref->users);
+ 			if (elt->list.n != &ref->head)
+-				LIST_ADDQ(&LIST_ELEM(elt->list.n, struct stream *, list)->back_refs, &bref->users);
++				LIST_ADDQ(&LIST_ELEM(elt->list.n, typeof(elt), list)->back_refs, &bref->users);
+ 			bref->ref = elt->list.n;
+ 		}
+ 		LIST_DEL(&elt->list);
+@@ -2175,7 +2175,7 @@ void pat_ref_prune(struct pat_ref *ref)
+ 			LIST_DEL(&bref->users);
+ 			LIST_INIT(&bref->users);
+ 			if (elt->list.n != &ref->head)
+-				LIST_ADDQ(&LIST_ELEM(elt->list.n, struct stream *, list)->back_refs, &bref->users);
++				LIST_ADDQ(&LIST_ELEM(elt->list.n, typeof(elt), list)->back_refs, &bref->users);
+ 			bref->ref = elt->list.n;
+ 		}
+ 		LIST_DEL(&elt->list);
