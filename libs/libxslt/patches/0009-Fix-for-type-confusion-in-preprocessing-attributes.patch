@@ -10,11 +10,9 @@ its namespace
  libxslt/preproc.c | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/libxslt/preproc.c b/libxslt/preproc.c
-index 0eb80a0..7f69325 100644
 --- a/libxslt/preproc.c
 +++ b/libxslt/preproc.c
-@@ -2249,7 +2249,8 @@ xsltStylePreCompute(xsltStylesheetPtr style, xmlNodePtr inst) {
+@@ -2245,7 +2245,8 @@ xsltStylePreCompute(xsltStylesheetPtr st
  	} else if (IS_XSLT_NAME(inst, "attribute")) {
  	    xmlNodePtr parent = inst->parent;
  
@@ -24,6 +22,3 @@ index 0eb80a0..7f69325 100644
  		((parent->ns != inst->ns) &&
  		 (!xmlStrEqual(parent->ns->href, inst->ns->href))) ||
  		(!xmlStrEqual(parent->name, BAD_CAST "attribute-set"))) {
--- 
-2.8.1
-

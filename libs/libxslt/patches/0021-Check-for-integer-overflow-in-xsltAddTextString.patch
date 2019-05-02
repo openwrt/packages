@@ -14,11 +14,9 @@ https://crbug.com/676623
  libxslt/xsltInternals.h |  4 ++--
  2 files changed, 24 insertions(+), 5 deletions(-)
 
-diff --git a/libxslt/transform.c b/libxslt/transform.c
-index 519133fc..02bff34a 100644
 --- a/libxslt/transform.c
 +++ b/libxslt/transform.c
-@@ -813,13 +813,32 @@ xsltAddTextString(xsltTransformContextPtr ctxt, xmlNodePtr target,
+@@ -718,13 +718,32 @@ xsltAddTextString(xsltTransformContextPt
          return(target);
  
      if (ctxt->lasttext == target->content) {
@@ -54,11 +52,9 @@ index 519133fc..02bff34a 100644
  	    newbuf = (xmlChar *) xmlRealloc(target->content,size);
  	    if (newbuf == NULL) {
  		xsltTransformError(ctxt, NULL, target,
-diff --git a/libxslt/xsltInternals.h b/libxslt/xsltInternals.h
-index 060b1783..5ad17719 100644
 --- a/libxslt/xsltInternals.h
 +++ b/libxslt/xsltInternals.h
-@@ -1754,8 +1754,8 @@ struct _xsltTransformContext {
+@@ -1752,8 +1752,8 @@ struct _xsltTransformContext {
       * Speed optimization when coalescing text nodes
       */
      const xmlChar  *lasttext;		/* last text node content */
@@ -69,6 +65,3 @@ index 060b1783..5ad17719 100644
      /*
       * Per Context Debugging
       */
--- 
-2.11.0
-
