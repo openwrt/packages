@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.1.38
+PKG_VERSION:=10.1.39
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -18,10 +18,12 @@ PKG_SOURCE_URL := \
 	https://ftp.yz.yamagata-u.ac.jp/pub/dbms/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
 	https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=caf1f4fc237d143343995b6625375aef911dfc366433645d400727e7063f077f
+PKG_HASH:=6ebaa9424707b8f45ad45eaad37df0d39e77fc965309786d298d6baf3bd93a7e
 PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
+
+PKG_CPE_ID:=cpe:/a:mariadb:mariadb
 
 HOST_BUILD_PARALLEL:=1
 PKG_BUILD_PARALLEL:=1
