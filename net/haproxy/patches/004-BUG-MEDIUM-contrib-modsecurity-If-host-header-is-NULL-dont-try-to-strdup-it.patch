@@ -1,0 +1,36 @@
+commit 95cf225d099dcb49eefcf4f5b648be604414ae0c
+Author: Yann Cézard <ycezard@viareport.com>
+Date:   Thu Apr 25 14:30:23 2019 +0200
+
+    BUG/MEDIUM: contrib/modsecurity: If host header is NULL, don't try to strdup it
+    
+    I discovered this bug when running OWASP regression tests against HAProxy +
+    modsecurity-spoa (it's a POC to evaluate how it is working).  I found out that
+    modsecurity spoa will crash when the request doesn't have any Host header.
+    
+    See the pull request #86 on github for details.
+    
+    This patch must be backported to 1.9 and 1.8.
+    
+    (cherry picked from commit bf60f6b8033deddc86de5357d6099c7593fe44cc)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    (cherry picked from commit d988e3dddcbe1f48f3b24d1bb529fc9ecefde180)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/contrib/modsecurity/modsec_wrapper.c b/contrib/modsecurity/modsec_wrapper.c
+index 271ec15d..2f3987b4 100644
+--- a/contrib/modsecurity/modsec_wrapper.c
++++ b/contrib/modsecurity/modsec_wrapper.c
+@@ -325,7 +325,11 @@ int modsecurity_process(struct worker *worker, struct modsecurity_parameters *pa
+ 	req->content_type = apr_table_get(req->headers_in, "Content-Type");
+ 	req->content_encoding = apr_table_get(req->headers_in, "Content-Encoding");
+ 	req->hostname = apr_table_get(req->headers_in, "Host");
+-	req->parsed_uri.hostname = chunk_strdup(req, req->hostname, strlen(req->hostname));
++	if (req->hostname != NULL) {
++		req->parsed_uri.hostname = chunk_strdup(req, req->hostname, strlen(req->hostname));
++	} else {
++		req->parsed_uri.hostname = NULL;
++	}
+ 
+ 	lang = apr_table_get(req->headers_in, "Content-Languages");
+ 	if (lang != NULL) {

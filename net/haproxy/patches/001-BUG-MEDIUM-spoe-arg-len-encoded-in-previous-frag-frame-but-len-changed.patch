@@ -1,0 +1,83 @@
+commit c1620a52a3def02b4837376385c416c03ca874c4
+Author: Kevin Zhu <ipandtcp@gmail.com>
+Date:   Fri Apr 26 14:00:01 2019 +0800
+
+    BUG/MEDIUM: spoe: arg len encoded in previous frag frame but len changed
+    
+    Fragmented arg will do fetch at every encode time, each fetch may get
+    different result if SMP_F_MAY_CHANGE, for example res.payload, but
+    the length already encoded in first fragment of the frame, that will
+    cause SPOA decode failed and waste resources.
+    
+    This patch must be backported to 1.9 and 1.8.
+    
+    (cherry picked from commit f7f54280c8106e92a55243f5d60f8587e79602d1)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    (cherry picked from commit 3a838e526cdbc00ded5362e66f1ef3a441abc3c1)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/include/proto/spoe.h b/include/proto/spoe.h
+index 002cf7d7..2cdca10b 100644
+--- a/include/proto/spoe.h
++++ b/include/proto/spoe.h
+@@ -121,7 +121,7 @@ spoe_decode_buffer(char **buf, char *end, char **str, uint64_t *len)
+  * many bytes has been encoded. If <*off> is zero at the end, it means that all
+  * data has been encoded. */
+ static inline int
+-spoe_encode_data(struct sample *smp, unsigned int *off, char **buf, char *end)
++spoe_encode_data(unsigned int *len, struct sample *smp, unsigned int *off, char **buf, char *end)
+ {
+ 	char *p = *buf;
+ 	int   ret;
+@@ -183,15 +183,16 @@ spoe_encode_data(struct sample *smp, unsigned int *off, char **buf, char *end)
+ 				ret = spoe_encode_frag_buffer(chk->str, chk->len, &p, end);
+ 				if (ret == -1)
+ 					return -1;
++				*len = chk->len;
+ 			}
+ 			else {
+ 				/* The sample has been fragmented, encode remaining data */
+-				ret = MIN(chk->len - *off, end - p);
++				ret = MIN(*len - *off, end - p);
+ 				memcpy(p, chk->str + *off, ret);
+ 				p += ret;
+ 			}
+ 			/* Now update <*off> */
+-			if (ret + *off != chk->len)
++			if (ret + *off != *len)
+ 				*off += ret;
+ 			else
+ 				*off = 0;
+diff --git a/include/types/spoe.h b/include/types/spoe.h
+index 53e7200c..cfaa42f8 100644
+--- a/include/types/spoe.h
++++ b/include/types/spoe.h
+@@ -304,6 +304,7 @@ struct spoe_context {
+ 		struct spoe_message *curmsg;      /* SPOE message from which to resume encoding */
+ 		struct spoe_arg     *curarg;      /* SPOE arg in <curmsg> from which to resume encoding */
+ 		unsigned int         curoff;      /* offset in <curarg> from which to resume encoding */
++		unsigned int         curlen;      /* length of <curarg> need to be encode, for SMP_F_MAY_CHANGE data */
+ 		unsigned int         flags;       /* SPOE_FRM_FL_* */
+ 	} frag_ctx; /* Info about fragmented frames, valid on if SPOE_CTX_FL_FRAGMENTED is set */
+ };
+diff --git a/src/flt_spoe.c b/src/flt_spoe.c
+index f6109778..0c0b3794 100644
+--- a/src/flt_spoe.c
++++ b/src/flt_spoe.c
+@@ -2172,6 +2172,7 @@ spoe_encode_message(struct stream *s, struct spoe_context *ctx,
+ 	list_for_each_entry(arg, &msg->args, list) {
+ 		ctx->frag_ctx.curarg = arg;
+ 		ctx->frag_ctx.curoff = UINT_MAX;
++		ctx->frag_ctx.curlen = 0;
+ 
+ 	  encode_argument:
+ 		if (ctx->frag_ctx.curoff != UINT_MAX)
+@@ -2186,7 +2187,7 @@ spoe_encode_message(struct stream *s, struct spoe_context *ctx,
+ 
+ 		/* Fetch the arguement value */
+ 		smp = sample_process(s->be, s->sess, s, dir|SMP_OPT_FINAL, arg->expr, NULL);
+-		ret = spoe_encode_data(smp, &ctx->frag_ctx.curoff, buf, end);
++		ret = spoe_encode_data(&ctx->frag_ctx.curlen, smp, &ctx->frag_ctx.curoff, buf, end);
+ 		if (ret == -1 || ctx->frag_ctx.curoff)
+ 			goto too_big;
+ 	}
