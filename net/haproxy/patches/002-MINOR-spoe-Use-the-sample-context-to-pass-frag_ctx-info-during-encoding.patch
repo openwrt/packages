@@ -1,0 +1,71 @@
+commit 72fdff1fdb5b82685dc3d2db23ece042195a0cbd
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Fri Apr 26 14:30:15 2019 +0200
+
+    MINOR: spoe: Use the sample context to pass frag_ctx info during encoding
+    
+    This simplifies the API and hide the details in the sample. This way, only
+    string and binary are aware of these info, because other types cannot be
+    partially encoded.
+    
+    This patch may be backported to 1.9 and 1.8.
+    
+    (cherry picked from commit 85db3212b87b33f1a39a688546f4f53a5c4ba4da)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    (cherry picked from commit b93366e3ee44f5de93f01569fcdcd602f6d0703f)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/include/proto/spoe.h b/include/proto/spoe.h
+index 2cdca10b..cce13e50 100644
+--- a/include/proto/spoe.h
++++ b/include/proto/spoe.h
+@@ -117,11 +117,9 @@ spoe_decode_buffer(char **buf, char *end, char **str, uint64_t *len)
+  *
+  * If the value is too big to be encoded, depending on its type, then encoding
+  * failed or the value is partially encoded. Only strings and binaries can be
+- * partially encoded. In this case, the offset <*off> is updated to known how
+- * many bytes has been encoded. If <*off> is zero at the end, it means that all
+- * data has been encoded. */
++ * partially encoded. */
+ static inline int
+-spoe_encode_data(unsigned int *len, struct sample *smp, unsigned int *off, char **buf, char *end)
++spoe_encode_data(struct sample *smp, char **buf, char *end)
+ {
+ 	char *p = *buf;
+ 	int   ret;
+@@ -164,12 +162,16 @@ spoe_encode_data(unsigned int *len, struct sample *smp, unsigned int *off, char
+ 
+ 		case SMP_T_STR:
+ 		case SMP_T_BIN: {
++			/* If defined, get length and offset of the sample by reading the sample
++			 * context. ctx.a[0] is the pointer to the length and ctx.a[1] is the
++			 * pointer to the offset. If the offset is greater than 0, it means the
++			 * sample is partially encoded. In this case, we only need to encode the
++			 * reamining. When all the sample is encoded, the offset is reset to 0.
++			 * So the caller know it can try to encode the next sample. */
+ 			struct chunk *chk = &smp->data.u.str;
++			unsigned int *len  = (smp->ctx.a[0] ? smp->ctx.a[0] : 0);
++			unsigned int *off  = (smp->ctx.a[1] ? smp->ctx.a[1] : 0);
+ 
+-			/* Here, we need to know if the sample has already been
+-			 * partially encoded. If yes, we only need to encode the
+-			 * remaining, <*off> reprensenting the number of bytes
+-			 * already encoded. */
+ 			if (!*off) {
+ 				/* First evaluation of the sample : encode the
+ 				 * type (string or binary), the buffer length
+diff --git a/src/flt_spoe.c b/src/flt_spoe.c
+index 0c0b3794..66d8b045 100644
+--- a/src/flt_spoe.c
++++ b/src/flt_spoe.c
+@@ -2187,7 +2187,9 @@ spoe_encode_message(struct stream *s, struct spoe_context *ctx,
+ 
+ 		/* Fetch the arguement value */
+ 		smp = sample_process(s->be, s->sess, s, dir|SMP_OPT_FINAL, arg->expr, NULL);
+-		ret = spoe_encode_data(&ctx->frag_ctx.curlen, smp, &ctx->frag_ctx.curoff, buf, end);
++		smp->ctx.a[0] = &ctx->frag_ctx.curlen;
++		smp->ctx.a[1] = &ctx->frag_ctx.curoff;
++		ret = spoe_encode_data(smp, buf, end);
+ 		if (ret == -1 || ctx->frag_ctx.curoff)
+ 			goto too_big;
+ 	}

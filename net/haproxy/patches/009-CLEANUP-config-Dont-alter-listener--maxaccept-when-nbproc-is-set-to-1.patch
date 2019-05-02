@@ -1,0 +1,34 @@
+commit c6e03c1495fa51f9a98ed0bbe3230313c7c7201c
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Tue Apr 30 14:08:41 2019 +0200
+
+    CLEANUP: config: Don't alter listener->maxaccept when nbproc is set to 1
+    
+    This patch only removes a useless calculation on listener->maxaccept when nbproc
+    is set to 1. Indeed, the following formula has no effet in such case:
+    
+      listener->maxaccept = (listener->maxaccept + nbproc - 1) / nbproc;
+    
+    This patch may be backported as far as 1.5.
+    
+    (cherry picked from commit 02f3cf19ed803d20aff9294ce7cb732489951ff5)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    (cherry picked from commit 14203e3cf9404e57de5e274b453f0fe4f2174924)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/cfgparse.c b/src/cfgparse.c
+index 8e325416..3f6ea352 100644
+--- a/src/cfgparse.c
++++ b/src/cfgparse.c
+@@ -9018,9 +9018,8 @@ out_uri_auth_compat:
+ 			 * is bound to. Rememeber that maxaccept = -1 must be kept as it is
+ 			 * used to disable the limit.
+ 			 */
+-			if (listener->maxaccept > 0) {
+-				if (nbproc > 1)
+-					listener->maxaccept = (listener->maxaccept + 1) / 2;
++			if (listener->maxaccept > 0 && nbproc > 1) {
++				listener->maxaccept = (listener->maxaccept + 1) / 2;
+ 				listener->maxaccept = (listener->maxaccept + nbproc - 1) / nbproc;
+ 			}
+ 
