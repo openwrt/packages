@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rpcbind
 PKG_VERSION:=1.2.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=@SF/rpcbind
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -17,7 +17,8 @@ PKG_REMOVE_FILES:=autogen.sh aclocal.m4
 PKG_INSTALL:=1
 
 PKG_CONFIG_DEPENDS:= \
-	CONFIG_RPCBIND_LIBWRAP
+	CONFIG_RPCBIND_LIBWRAP \
+	CONFIG_RPCBIND_RMTCALLS
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -43,6 +44,13 @@ if PACKAGE_rpcbind
 	config RPCBIND_LIBWRAP
 		bool "Enable libwrap (TCP wrappers) support."
 		default y
+	config RPCBIND_RMTCALLS
+		bool "Enable broadcast discovery support of rpc services."
+		help
+			Services such as Kodi (via libnfs) use this functionality to discover available NFS shares on the network.
+		default y
+		
+		
 endif
 endef
 
@@ -56,6 +64,13 @@ ifeq ($(CONFIG_RPCBIND_LIBWRAP),y)
 else
 	CONFIGURE_ARGS += --disable-libwrap
 endif
+
+ifeq ($(CONFIG_RPCBIND_RMTCALLS),y)
+	CONFIGURE_ARGS += --enable-rmtcalls
+else
+	CONFIGURE_ARGS += --disable-rmtcalls
+endif
+
 
 define Package/rpcbind/install
 	$(INSTALL_DIR) $(1)/usr/bin
