@@ -1,0 +1,33 @@
+--- a/src/routing/SchedulingBundleIndex.cpp
++++ b/src/routing/SchedulingBundleIndex.cpp
+@@ -28,7 +28,7 @@ namespace dtn
+ 		void SchedulingBundleIndex::remove(const dtn::data::BundleID &id)
+ 		{
+ 			ibrcommon::MutexLock l(_index_mutex);
+-			for (priority_index::const_iterator iter = _priority_index.begin(); iter != _priority_index.end(); ++iter)
++			for (priority_index::iterator iter = _priority_index.begin(); iter != _priority_index.end(); ++iter)
+ 			{
+ 				const dtn::data::MetaBundle &b = (*iter);
+ 				if (id == (const dtn::data::BundleID&)b) {
+--- a/src/storage/MemoryBundleStorage.cpp
++++ b/src/storage/MemoryBundleStorage.cpp
+@@ -217,7 +217,7 @@ namespace dtn
+ 			ibrcommon::MutexLock l(_bundleslock);
+ 
+ 			// search for the bundle in the bundle list
+-			const bundle_list::const_iterator iter = find(_bundles.begin(), _bundles.end(), id);
++			const bundle_list::iterator iter = find(_bundles.begin(), _bundles.end(), id);
+ 
+ 			// if no bundle was found throw an exception
+ 			if (iter == _bundles.end()) throw NoBundleFoundException();
+--- a/src/storage/MetaStorage.cpp
++++ b/src/storage/MetaStorage.cpp
+@@ -66,7 +66,7 @@ namespace dtn
+ 		{
+ 			std::set<dtn::data::EID> ret;
+ 
+-			for (dtn::data::BundleList::const_iterator iter = begin(); iter != end(); ++iter)
++			for (const_iterator iter = begin(); iter != end(); ++iter)
+ 			{
+ 				const dtn::data::MetaBundle &bundle = (*iter);
+ 
