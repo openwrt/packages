@@ -188,12 +188,15 @@ endef
 ```
 
 Some considerations here (based on the example above):
-* be sure to make sure that `DEPENDS` are correct for both variants; as seen in the example above, `python-codecs` is needed only for `python-lxml` ; that's because `python3-codecs` doesn't exist and is included in `python3-base` ; most of the times they are similar, sometimes they are not
+* be sure to make sure that `DEPENDS` are correct for both variants; as seen in the example above, `python-codecs` is needed only for `python-lxml` (see **[note-encodings](#note-encodings)**)
 * consider adding conditional DEPENDS for each variant ; so for each Python[3] package add `+PACKAGE_python-lxml:<dep>` as seen in the above example ; the reason for this is build-time reduction ; if you want to build Python3 only packages, this won't build Python & Python packages + dependencies ; this is a known functionality of OpenWrt build deps
   * there is an exception to the above consideration: if adding `+PACKAGE_python-lxml` conditional deps creates circular dependencies [for some weird reason], then this can be omitted
 * `VARIANT=python` or `VARIANT=python3` must be added
 * typically each variant package is named `Package/python3-<something>` & `Package/python3-<something>` ; this convention makes things easier to follow, though it could work without naming things this this
 * `TITLE` can be something a bit more verbose/neat ; typically the name is short as seen above
+
+<a name="note-encodings">**note-encodings**</a>: That's because some character encodings are needed, which are present in `python3-base` but not in `python-light` (but are present in `python-codecs`) ; this is because Python3 is designed to be more Unicode friendly than Python2 (it's one of the fundamental differences between the 2), and Python3 won't start without those encodings being present.
+
 
 Following these, 2 more definitions are required:
 ```
