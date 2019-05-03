@@ -21,11 +21,9 @@ insignificant bug.
  create mode 100644 tests/general/bug-186.out
  create mode 100644 tests/general/bug-186.xsl
 
-diff --git a/libxslt/numbers.c b/libxslt/numbers.c
-index e3209e0..184ee6f 100644
 --- a/libxslt/numbers.c
 +++ b/libxslt/numbers.c
-@@ -532,6 +532,43 @@ xsltNumberFormatInsertNumbers(xsltNumberDataPtr data,
+@@ -532,6 +532,43 @@ xsltNumberFormatInsertNumbers(xsltNumber
  }
  
  static int
@@ -69,7 +67,7 @@ index e3209e0..184ee6f 100644
  xsltNumberFormatGetAnyLevel(xsltTransformContextPtr context,
  			    xmlNodePtr node,
  			    xsltCompMatchPtr countPat,
-@@ -562,21 +599,8 @@ xsltNumberFormatGetAnyLevel(xsltTransformContextPtr context,
+@@ -564,21 +601,8 @@ xsltNumberFormatGetAnyLevel(xsltTransfor
  
      while (cur != NULL) {
  	/* process current node */
@@ -93,7 +91,7 @@ index e3209e0..184ee6f 100644
  	if ((fromPat != NULL) &&
  	    xsltTestCompMatchList(context, cur, fromPat)) {
  	    break; /* while */
-@@ -633,30 +657,18 @@ xsltNumberFormatGetMultipleLevel(xsltTransformContextPtr context,
+@@ -637,30 +661,18 @@ xsltNumberFormatGetMultipleLevel(xsltTra
  		xsltTestCompMatchList(context, ancestor, fromPat))
  		break; /* for */
  
@@ -132,9 +130,6 @@ index e3209e0..184ee6f 100644
  		}
  		array[amount++] = (double)cnt;
  		if (amount >= max)
-diff --git a/tests/docs/bug-186.xml b/tests/docs/bug-186.xml
-new file mode 100644
-index 0000000..424db6b
 --- /dev/null
 +++ b/tests/docs/bug-186.xml
 @@ -0,0 +1,4 @@
@@ -142,9 +137,6 @@ index 0000000..424db6b
 +<foo/>
 +<bar/>
 +</top>
-diff --git a/tests/general/bug-186.out b/tests/general/bug-186.out
-new file mode 100644
-index 0000000..01a59f8
 --- /dev/null
 +++ b/tests/general/bug-186.out
 @@ -0,0 +1,5 @@
@@ -153,9 +145,6 @@ index 0000000..01a59f8
 +1111
 +1111
 +
-diff --git a/tests/general/bug-186.xsl b/tests/general/bug-186.xsl
-new file mode 100644
-index 0000000..9c491dd
 --- /dev/null
 +++ b/tests/general/bug-186.xsl
 @@ -0,0 +1,7 @@
@@ -166,6 +155,3 @@ index 0000000..9c491dd
 +  </xsl:for-each>
 + </xsl:template>
 +</xsl:stylesheet>
--- 
-2.8.1
-
