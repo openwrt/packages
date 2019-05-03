@@ -1,0 +1,46 @@
+From b89f391203c4420eb454cb321e799a64de809f52 Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <zhouyousong@yunionyun.com>
+Date: Fri, 3 May 2019 15:03:24 +0000
+Subject: [PATCH 5/5] datapath: conntrack: fix include for
+ IP6_DEFRAG_CONNTRACK_IN
+
+The enum definition is now inside include/net/ipv6_frag.h since upstream commit
+70b095c ("ipv6: remove dependency of nf_defrag_ipv6 on ipv6 module") which was
+backported to stable trees (4.9, 4.14, 4.19) only these days.
+
+The error message
+
+	  CC [M]  /opt/buildbot/slaves/lede-slave-tah/mipsel_24kc/build/sdk/build_dir/target-mipsel_24kc_musl/linux-ramips_mt7620/openvswitch-2.11.0/datapath/linux/conntrack.o
+	/opt/buildbot/slaves/lede-slave-tah/mipsel_24kc/build/sdk/build_dir/target-mipsel_24kc_musl/linux-ramips_mt7620/openvswitch-2.11.0/datapath/linux/conntrack.c: In function 'handle_fragments':
+	/opt/buildbot/slaves/lede-slave-tah/mipsel_24kc/build/sdk/build_dir/target-mipsel_24kc_musl/linux-ramips_mt7620/openvswitch-2.11.0/datapath/linux/conntrack.c:554:8: error: variable 'user' has initializer but incomplete type
+	   enum ip6_defrag_users user = IP6_DEFRAG_CONNTRACK_IN + zone;
+		^~~~~~~~~~~~~~~~
+	/opt/buildbot/slaves/lede-slave-tah/mipsel_24kc/build/sdk/build_dir/target-mipsel_24kc_musl/linux-ramips_mt7620/openvswitch-2.11.0/datapath/linux/conntrack.c:554:32: error: 'IP6_DEFRAG_CONNTRACK_IN' undeclared (first use in this function); did you mean 'IP_DEFRAG_CONNTRACK_IN'?
+	   enum ip6_defrag_users user = IP6_DEFRAG_CONNTRACK_IN + zone;
+					^~~~~~~~~~~~~~~~~~~~~~~
+					IP_DEFRAG_CONNTRACK_IN
+	/opt/buildbot/slaves/lede-slave-tah/mipsel_24kc/build/sdk/build_dir/target-mipsel_24kc_musl/linux-ramips_mt7620/openvswitch-2.11.0/datapath/linux/conntrack.c:554:32: note: each undeclared identifier is reported only once for each function it appears in
+	/opt/buildbot/slaves/lede-slave-tah/mipsel_24kc/build/sdk/build_dir/target-mipsel_24kc_musl/linux-ramips_mt7620/openvswitch-2.11.0/datapath/linux/conntrack.c:554:25: error: storage size of 'user' isn't known
+	   enum ip6_defrag_users user = IP6_DEFRAG_CONNTRACK_IN + zone;
+				 ^~~~
+	/opt/buildbot/slaves/lede-slave-tah/mipsel_24kc/build/sdk/build_dir/target-mipsel_24kc_musl/linux-ramips_mt7620/openvswitch-2.11.0/datapath/linux/conntrack.c:554:25: warning: unused variable 'user' [-Wunused-variable]
+	scripts/Makefile.build:326: recipe for target '/opt/buildbot/slaves/lede-slave-tah/mipsel_24kc/build/sdk/build_dir/target-mipsel_24kc_musl/linux-ramips_mt7620/openvswitch-2.11.0/datapath/linux/conntrack.o' failed
+
+Reference: https://github.com/openwrt/packages/issues/8548#issuecomment-488871090
+Signed-off-by: Yousong Zhou <zhouyousong@yunionyun.com>
+---
+ datapath/conntrack.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/datapath/conntrack.c b/datapath/conntrack.c
+index a7dc9e0c3..69bda5a9c 100644
+--- a/datapath/conntrack.c
++++ b/datapath/conntrack.c
+@@ -31,6 +31,7 @@
+ #include <net/netfilter/nf_conntrack_seqadj.h>
+ #include <net/netfilter/nf_conntrack_zones.h>
+ #include <net/netfilter/ipv6/nf_defrag_ipv6.h>
++#include <net/ipv6_frag.h>
+ 
+ #ifdef CONFIG_NF_NAT_NEEDED
+ #include <linux/netfilter/nf_nat.h>
