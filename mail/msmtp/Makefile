@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msmtp
 PKG_VERSION:=1.8.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://marlam.de/msmtp/releases
@@ -102,10 +102,6 @@ CONFIGURE_ARGS += \
 	--without-libsecret \
 	--without-macosx-keyring \
 	--without-msmtpd
-
-ifneq ($(CONFIG_USE_UCLIBC),)
-  CONFIGURE_ARGS += --disable-gai-idn
-endif
 
 ifeq ($(BUILD_VARIANT),ssl)
 	CONFIGURE_ARGS += --with-tls=gnutls
