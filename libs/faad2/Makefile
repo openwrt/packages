@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=faad2
 PKG_VERSION:=2.8.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/faac/faad2-src/$(PKG_NAME)-2.8.0
@@ -62,10 +62,6 @@ CONFIGURE_ARGS+= --without-xmms
 ifeq ($(CONFIG_SOFT_FLOAT),y)
 	TARGET_CFLAGS+= -DFIXED_POINT
 	CONFIGURE_ARGS+= -nfp
-endif
-
-ifeq ($(CONFIG_USE_UCLIBC),y)
-	CONFIGURE_VARS+= CPPFLAGS="-fno-builtin-cos -fno-builtin-sin -fno-builtin-log"
 endif
 
 define Build/InstallDev
