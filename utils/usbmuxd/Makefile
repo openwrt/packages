@@ -8,22 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=usbmuxd
-PKG_VERSION:=1.1.1
-PKG_RELEASE:=4
-PKG_SOURCE_PROTO:=git
+PKG_SOURCE_DATE:=2019-03-04
+PKG_SOURCE_VERSION:=b1b0bf390363fa36aff1bc09443ff751943b9c34
+PKG_RELEASE:=1
 
-PKG_MAINTAINER:=Lukasz Baj <l.baj@radytek.com>
+PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING.GPLv2
 
-PKG_SOURCE_URL:=https://github.com/libimobiledevice/usbmuxd.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=35e5d48f29ae03b2b9686109e4ed9ab8b9677ce8
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=7c0d8ea230570344fbc0183c0171689c74baf3d75fff33bbdfca2d1775a4d62d
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
+PKG_SOURCE_URL=https://codeload.github.com/libimobiledevice/usbmuxd/tar.gz/$(PKG_SOURCE_VERSION)?
+PKG_HASH:=ca4275dbc21e8d9c926e65943b605ea5a6112d30eb3f9e655d3983da87ac6798
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -43,7 +43,7 @@ define Package/usbmuxd/description
   uses a dedicated USB interface as a virtual network device.
 endef
 
-TARGET_CFLAGS += $(FPIC)
+CONFIGURE_ARGS += --without-systemd
 
 define Package/usbmuxd/install
 	$(INSTALL_DIR) $(1)/usr/sbin
