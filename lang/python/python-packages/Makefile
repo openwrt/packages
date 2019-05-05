@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-packages
 PKG_VERSION:=1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
@@ -66,6 +66,7 @@ CONFIG_PACKAGE_python-packages-list:=$(call qstrip,$(CONFIG_PACKAGE_python-packa
 CONFIG_PACKAGE_python-packages-list-cleanup:=$(call qstrip,$(CONFIG_PACKAGE_python-packages-list-cleanup))
 CONFIG_PACKAGE_python-packages-envs:=$(call qstrip,$(CONFIG_PACKAGE_python-packages-envs))
 CONFIG_PACKAGE_python-packages-extra-deps:=$(call qstrip,$(CONFIG_PACKAGE_python-packages-extra-deps))
+CONFIG_PACKAGE_python-packages-index-url:=$(call qstrip,$(CONFIG_PACKAGE_python-packages-index-url))
 CONFIG_PACKAGE_python-packages-pip-opts:=$(call qstrip,$(CONFIG_PACKAGE_python-packages-pip-opts))
 
 HOST_PYTHON_PIP:=$(STAGING_DIR_HOSTPKG)/bin/pip$(PYTHON_VERSION)
@@ -88,7 +89,7 @@ HOST_PYTHON_PIP_INSTALL=$(HOST_PYTHON_PIP) install \
 	--prefix=$(2) \
 	--ignore-installed \
 	--no-compile \
-	$(if $(CONFIG_PACKAGE_python-packages-index-url), --index-url $(CONFIG_PACKAGE_python-packages-index-url)) \
+	$(if $(CONFIG_PACKAGE_python-packages-index-url), --index-url "$(CONFIG_PACKAGE_python-packages-index-url)") \
 	$(if $(CONFIG_PACKAGE_python-packages-pip-opts), $(CONFIG_PACKAGE_python-packages-pip-opts)) \
 
 HOST_PYTHON_PIP_INSTALL_HOST:=$(call HOST_PYTHON_PIP_INSTALL,$(STAGING_DIR_HOSTPKG),"")
