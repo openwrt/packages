@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 #
-# Copyright (C) 2017 Yousong Zhou <yszhou4tech@gmail.com>
+# Copyright (C) 2017-2019 Yousong Zhou <yszhou4tech@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v3.
 # See /LICENSE for more information.
@@ -73,6 +73,8 @@ ss_xxx() {
 	[ -z "$mode" ] || json_add_string mode "$mode"
 	[ -z "$mtu" ] || json_add_int mtu "$mtu"
 	[ -z "$timeout" ] || json_add_int timeout "$timeout"
+	[ -z "$plugin" ] || json_add_string plugin "$plugin"
+	[ -z "$plugin_opts" ] || json_add_string plugin_opts "$plugin_opts"
 	[ -z "$user" ] || json_add_string user "$user"
 	json_dump -i >"$confjson"
 
@@ -237,6 +239,8 @@ validate_common_options_() {
 		'mode:or("tcp_only", "udp_only", "tcp_and_udp"):tcp_only' \
 		'mtu:uinteger' \
 		'timeout:uinteger' \
+		'plugin:string' \
+		'plugin_opts:string' \
 		'user:string'
 }
 
