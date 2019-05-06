@@ -1,19 +1,13 @@
-#
-# Copyright (C) 2009-2016 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tmux
-PKG_VERSION:=2.8
+PKG_VERSION:=2.9a
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/tmux/tmux/releases/download/$(PKG_VERSION)
-PKG_HASH:=7f6bf335634fafecff878d78de389562ea7f73a7367f268b66d37ea13617a2ba
+PKG_HASH:=839d167a4517a6bffa6b6074e89a9a8630547b2dea2086f1fad15af12ab23b25
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 
 PKG_LICENSE:=ISC
