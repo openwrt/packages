@@ -30,6 +30,8 @@ ss_mkjson_server_conf_() {
 	[ -z "$method" ] || json_add_string method "$method"
 	[ -z "$key" ] || json_add_string key "$key"
 	[ -z "$password" ] || json_add_string password "$password"
+	[ -z "$plugin" ] || json_add_string plugin "$plugin"
+	[ -z "$plugin_opts" ] || json_add_string plugin_opts "$plugin_opts"
 }
 
 ss_mkjson_ss_local_conf() {
@@ -73,8 +75,6 @@ ss_xxx() {
 	[ -z "$mode" ] || json_add_string mode "$mode"
 	[ -z "$mtu" ] || json_add_int mtu "$mtu"
 	[ -z "$timeout" ] || json_add_int timeout "$timeout"
-	[ -z "$plugin" ] || json_add_string plugin "$plugin"
-	[ -z "$plugin_opts" ] || json_add_string plugin_opts "$plugin_opts"
 	[ -z "$user" ] || json_add_string user "$user"
 	json_dump -i >"$confjson"
 
@@ -214,7 +214,9 @@ validate_common_server_options_() {
 		'server_port:port' \
 		'password:string' \
 		'key:string' \
-		"method:or($stream_methods, $aead_methods)"
+		"method:or($stream_methods, $aead_methods)" \
+		'plugin:string' \
+		'plugin_opts:string'
 }
 
 validate_common_client_options_() {
@@ -239,8 +241,6 @@ validate_common_options_() {
 		'mode:or("tcp_only", "udp_only", "tcp_and_udp"):tcp_only' \
 		'mtu:uinteger' \
 		'timeout:uinteger' \
-		'plugin:string' \
-		'plugin_opts:string' \
 		'user:string'
 }
 

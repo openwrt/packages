@@ -32,6 +32,8 @@ Section type `server` is for definition of remote shadowsocks servers.  They wil
 
 Section type `ss_local`, `ss_redir`, `ss_tunnel` are for specification of shadowsocks-libev components.  They share mostly a common set of options like `local_port`, `verbose`, `fast_open`, `timeout`, etc.
 
+Plugin options should be specified in `server` section and will be inherited by other compoenents referring to it.
+
 We can have multiple instances of component and `server` sections.  The relationship between them is many-to-one.  This will have the following implications
 
  - It's possible to have both `ss_local` and `ss_redir` referring to the same `server` definition
