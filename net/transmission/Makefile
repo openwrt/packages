@@ -86,7 +86,6 @@ define Package/transmission-web
   $(call Package/transmission/template)
   TITLE+= (webinterface)
   DEPENDS:=@(PACKAGE_transmission-daemon-openssl||PACKAGE_transmission-daemon-mbedtls)
-  CONFLICTS:=transmission-web-control
   PKGARCH:=all
 endef
 
