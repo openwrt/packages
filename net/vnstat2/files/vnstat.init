@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+USE_PROCD=1
+
+APPBINARY=/usr/sbin/vnstatd
+CONFIGFILE=/etc/vnstat.conf
+
+start_service() {
+	mkdir -m 0755 -p /var/db/vnstat
+	chown nobody /var/db/vnstat
+	procd_open_instance
+	procd_set_param command $APPBINARY -n --alwaysadd --config $CONFIGFILE
+	procd_set_param file $CONFIGFILE
+	procd_set_param respawn
+	procd_close_instance
+	}
