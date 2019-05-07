@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
 PKG_VERSION:=v8.16.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=node-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://nodejs.org/dist/${PKG_VERSION}
 PKG_HASH:=3515e8e01568a5dc4dff3d91a76ebc6724f5fa2fbb58b4b0c5da7b178a2f7340
@@ -39,7 +39,6 @@ define Package/node
   URL:=https://nodejs.org/
   DEPENDS:=@(HAS_FPU||KERNEL_MIPS_FPU_EMULATOR) @!arc @!armeb \
 	   +libstdcpp +libopenssl +zlib +libnghttp2 +libuv +libhttp-parser \
-	   +USE_UCLIBC:libpthread +USE_UCLIBC:librt \
 	   +NODEJS_ICU:icu
 endef
 
