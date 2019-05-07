@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linuxptp
 PKG_VERSION:=2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_MAINTAINER:=Wojciech Dubowik <Wojciech.Dubowik@neratec.com>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/v$(PKG_VERSION)
 PKG_HASH:=0a24d9401e87d4af023d201e234d91127d82c350daad93432106284aa9459c7d
 
+PKG_MAINTAINER:=Wojciech Dubowik <Wojciech.Dubowik@neratec.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
@@ -27,7 +27,6 @@ define Package/linuxptp
   SUBMENU:=Time Synchronization
   TITLE:=Linux Precision Time Protocol (PTP) daemon
   URL:=http://linuxptp.sourceforge.net/
-  DEPENDS:=@!USE_UCLIBC +librt
 endef
 
 define Package/linuxptp/description
