@@ -499,8 +499,8 @@ define Build/InstallDev
 		# copies _all_ header files - independent of <--with-library>-argument above
 
 	$(INSTALL_DIR) $(1)/usr/lib
-	# copies all compiled archive and shared object files
-	$(CP) -v $(PKG_INSTALL_DIR)/lib/*.{a,so*} $(1)/usr/lib/ || :
+	# copies all cmake files, compiled archive and shared object files
+	$(CP) -v $(PKG_INSTALL_DIR)/lib/{*.{a,so*},cmake} $(1)/usr/lib/ || :
 endef
 
 define Host/Install
