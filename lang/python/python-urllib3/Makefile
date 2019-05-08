@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-urllib3
-PKG_VERSION:=1.25
+PKG_VERSION:=1.25.2
 PKG_RELEASE:=1
 
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_CPE_ID:=cpe:/a:urllib3_project:urllib3
 
 PKG_SOURCE:=urllib3-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/u/urllib3
-PKG_HASH:=f03eeb431c77b88cf8747d47e94233a91d0e0fdae1cf09e0b21405a885700266
+PKG_HASH:=a53063d8b9210a7bdec15e7b272776b9d42b2fd6816401a0d43006ad2f9902db
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-urllib3-$(PKG_VERSION)
 
