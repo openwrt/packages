@@ -536,8 +536,8 @@ verify_host_port() {
 			__IPV4=$(cat $DATFILE | awk -F "address " '/has address/ {print $2; exit}' )
 			__IPV6=$(cat $DATFILE | awk -F "address " '/has IPv6/ {print $2; exit}' )
 		elif [ -n "$DRILL" ]; then	# use drill if installed
-			__IPV4=$(cat $DATFILE | awk '/^'"$lookup_host"'/ {print $5}' | grep -m 1 -o "$IPV4_REGEX")
-			__IPV6=$(cat $DATFILE | awk '/^'"$lookup_host"'/ {print $5}' | grep -m 1 -o "$IPV6_REGEX")
+			__IPV4=$(cat $DATFILE | awk '/^'"$__HOST"'/ {print $5}' | grep -m 1 -o "$IPV4_REGEX")
+			__IPV6=$(cat $DATFILE | awk '/^'"$__HOST"'/ {print $5}' | grep -m 1 -o "$IPV6_REGEX")
 		elif [ -n "$HOSTIP" ]; then	# use hostip if installed
 			__IPV4=$(cat $DATFILE | grep -m 1 -o "$IPV4_REGEX")
 			__IPV6=$(cat $DATFILE | grep -m 1 -o "$IPV6_REGEX")
