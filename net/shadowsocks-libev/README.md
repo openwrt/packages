@@ -77,6 +77,13 @@ ss-rules uses kernel ipset mechanism for storing addresses/networks.  Those ipse
 
 Note also that `src_ips_xx` and `dst_ips_xx` actually also accepts cidr network representation.  Option names are retained in its current form for backward compatibility coniderations
 
+# incompatible changes
+
+| Commit date | Commit ID | Subject | Comment |
+| ----------- | --------- | ------- | ------- |
+| 2019-05-09  | afe7d3424 | shadowsocks-libev: move plugin options to server section | This is a revision against c19e949 committed 2019-05-06 |
+| 2017-07-02  | b61af9703 | shadowsocks-libev: rewrite | Packaging of shadowsocks-libev was rewritten from scratch |
+
 # notes and faq
 
 Useful paths and commands for debugging
