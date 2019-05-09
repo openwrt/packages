@@ -1,7 +1,0 @@
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -241,3 +241,4 @@ endif()
- install (FILES evhtp.h DESTINATION include)
- install (FILES htparse/htparse.h DESTINATION include)
- install (FILES evthr/evthr.h DESTINATION include)
-+install (FILES oniguruma/onigposix.h DESTINATION include)
