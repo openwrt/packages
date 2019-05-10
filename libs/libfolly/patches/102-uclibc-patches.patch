@@ -1,0 +1,114 @@
+diff --git a/folly/CachelinePadded.h b/folly/CachelinePadded.h
+--- a/folly/CachelinePadded.h
++++ b/folly/CachelinePadded.h
+@@ -35,10 +35,6 @@
+  */
+ template <typename T>
+ class CachelinePadded {
+-  static_assert(
+-      alignof(T) <= max_align_v,
+-      "CachelinePadded does not support over-aligned types.");
+-
+  public:
+   template <typename... Args>
+   explicit CachelinePadded(Args&&... args)
+diff --git a/folly/experimental/JSONSchema.cpp b/folly/experimental/JSONSchema.cpp
+--- a/folly/experimental/JSONSchema.cpp
++++ b/folly/experimental/JSONSchema.cpp
+@@ -25,6 +25,7 @@
+ #include <folly/Singleton.h>
+ #include <folly/String.h>
+ #include <folly/json.h>
++#include <folly/portability/Math.h>
+
+ namespace folly {
+ namespace jsonschema {
+@@ -141,7 +142,7 @@
+       return none;
+     }
+     if (schema_.isDouble() || value.isDouble()) {
+-      const auto rem = std::remainder(value.asDouble(), schema_.asDouble());
++      const auto rem = folly::remainder(value.asDouble(), schema_.asDouble());
+       if (std::abs(rem) > std::numeric_limits<double>::epsilon()) {
+         return makeError("a multiple of ", schema_, value);
+       }
+diff --git a/folly/external/farmhash/farmhash.cpp b/folly/external/farmhash/farmhash.cpp
+--- a/folly/external/farmhash/farmhash.cpp
++++ b/folly/external/farmhash/farmhash.cpp
+@@ -181,6 +181,7 @@
+
+ #undef bswap_32
+ #undef bswap_64
++#undef _BYTESWAP_H
+ #include <byteswap.h>
+
+ #endif
+diff --git a/folly/portability/Math.h b/folly/portability/Math.h
+--- a/folly/portability/Math.h
++++ b/folly/portability/Math.h
+@@ -20,21 +20,24 @@
+
+ namespace folly {
+
+-#ifndef __ANDROID__
++#if !defined(__ANDROID__) && !defined(__UCLIBC__)
+
+ /**
+- * Most platforms hopefully provide std::nextafter.
++ * Most platforms hopefully provide std::{nextafter,remainder}.
+  */
+
+ /* using override */ using std::nextafter;
++/* using override */ using std::remainder;
+
+-#else // !__ANDROID__
++#else // !__ANDROID__ && !__UCLIBC__
+
+ /**
+  * On Android, std::nextafter isn't implemented. However, the C functions and
+  * compiler builtins are still provided. Using the GCC builtin is actually
+  * slightly faster, as they're constexpr and the use cases within folly are in
+  * constexpr context.
++ *
++ * UCLIBC doesn't implement std::remainder. Use the builtin versions.
+  */
+
+ #if defined(__GNUC__) && !defined(__clang__)
+@@ -51,6 +54,18 @@
+   return __builtin_nextafterl(x, y);
+ }
+
++constexpr float remainder(float x, float y) {
++  return __builtin_remainderf(x, y);
++}
++
++constexpr double remainder(double x, double y) {
++  return __builtin_remainder(x, y);
++}
++
++constexpr long double remainder(long double x, long double y) {
++  return __builtin_remainderl(x, y);
++}
++
+ #else // __GNUC__
+
+ inline float nextafter(float x, float y) {
+@@ -65,6 +80,18 @@
+   return ::nextafterl(x, y);
+ }
+
++inline float remainder(float x, float y) {
++  return ::remainderf(x, y);
++}
++
++inline double remainder(double x, double y) {
++  return ::remainder(x, y);
++}
++
++inline long double remainder(long double x, long double y) {
++  return ::remainderl(x, y);
++}
++
+ #endif // __GNUC__
+
+ #endif // __ANDROID__
