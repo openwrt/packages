@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=Werkzeug
-PKG_VERSION:=0.14.1
+PKG_VERSION:=0.15.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/W/Werkzeug
-PKG_HASH:=c3fd7a7d41976d9f44db327260e263132466836cef6f91512889ed60ad26557c
+PKG_HASH:=0a73e8bb2ff2feecfc5d56e6f458f5b99290ef34f565ffb2665801ff7de6af7a
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3-Clause
