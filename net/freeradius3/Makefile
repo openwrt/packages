@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius3
 PKG_VERSION:=release_3_0_19
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/FreeRADIUS/freeradius-server/archive
@@ -381,7 +381,7 @@ define Package/freeradius3-mod-sql-postgresql
   TITLE:=Radius PostgreSQL back-end drivers
 endef
 
-define Package/freeradius3-mod-sql-mysql/conffiles
+define Package/freeradius3-mod-sql-postgresql/conffiles
 /etc/freeradius3/mods-config/sql/main/postgresql
 endef
 
@@ -391,7 +391,7 @@ define Package/freeradius3-mod-sql-sqlite
   TITLE:=Radius SQLite back-end drivers
 endef
 
-define Package/freeradius3-mod-sql-mysql/conffiles
+define Package/freeradius3-mod-sql-sqlite/conffiles
 /etc/freeradius3/mods-config/sql/main/sqlite
 endef
 
