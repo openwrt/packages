@@ -1,6 +1,6 @@
 --- a/evhtp.c
 +++ b/evhtp.c
-@@ -1686,16 +1686,15 @@ _evhtp_ssl_thread_lock(int mode, int typ
+@@ -1817,16 +1817,15 @@ _evhtp_ssl_thread_lock(int mode, int typ
  #endif
  static void
  _evhtp_ssl_delete_scache_ent(evhtp_ssl_ctx_t * ctx, evhtp_ssl_sess_t * sess) {
@@ -22,7 +22,7 @@
  
      if (cfg->scache_del) {
          (cfg->scache_del)(htp, sid, slen);
-@@ -1706,14 +1705,17 @@ static int
+@@ -1837,14 +1836,17 @@ static int
  _evhtp_ssl_add_scache_ent(evhtp_ssl_t * ssl, evhtp_ssl_sess_t * sess) {
      evhtp_connection_t * connection;
      evhtp_ssl_cfg_t    * cfg;
@@ -44,7 +44,7 @@
  
      SSL_set_timeout(sess, cfg->scache_timeout);
  
-@@ -1725,7 +1727,7 @@ _evhtp_ssl_add_scache_ent(evhtp_ssl_t *
+@@ -1856,7 +1858,7 @@ _evhtp_ssl_add_scache_ent(evhtp_ssl_t *
  }
  
  static evhtp_ssl_sess_t *
@@ -53,7 +53,7 @@
      evhtp_connection_t * connection;
      evhtp_ssl_cfg_t    * cfg;
      evhtp_ssl_sess_t   * sess;
-@@ -1767,12 +1769,12 @@ _evhtp_ssl_servername(evhtp_ssl_t * ssl,
+@@ -1898,12 +1900,12 @@ _evhtp_ssl_servername(evhtp_ssl_t * ssl,
          connection->vhost_via_sni = 1;
  
          SSL_set_SSL_CTX(ssl, evhtp_vhost->ssl_ctx);
@@ -69,7 +69,7 @@
          }
  
          return SSL_TLSEXT_ERR_OK;
-@@ -3017,15 +3019,21 @@ evhtp_ssl_init(evhtp_t * htp, evhtp_ssl_
+@@ -3197,15 +3199,21 @@ evhtp_ssl_init(evhtp_t * htp, evhtp_ssl_
          return -1;
      }
  
@@ -91,7 +91,7 @@
  
  #if OPENSSL_VERSION_NUMBER >= 0x10000000L
      SSL_CTX_set_options(htp->ssl_ctx, SSL_MODE_RELEASE_BUFFERS);
-@@ -3062,7 +3070,11 @@ evhtp_ssl_init(evhtp_t * htp, evhtp_ssl_
+@@ -3242,7 +3250,11 @@ evhtp_ssl_init(evhtp_t * htp, evhtp_ssl_
      SSL_CTX_set_verify(htp->ssl_ctx, cfg->verify_peer, cfg->x509_verify_cb);
  
      if (cfg->x509_chk_issued_cb != NULL) {
@@ -117,7 +117,7 @@
  #else
  typedef void                      evhtp_ssl_sess_t;
  typedef void                      evhtp_ssl_t;
-@@ -154,9 +159,9 @@ typedef int (*evhtp_headers_iterator)(ev
+@@ -157,9 +162,9 @@ typedef int (*evhtp_headers_iterator)(ev
  typedef int (*evhtp_ssl_verify_cb)(int pre_verify, evhtp_x509_store_ctx_t * ctx);
  typedef int (*evhtp_ssl_chk_issued_cb)(evhtp_x509_store_ctx_t * ctx, evhtp_x509_t * x, evhtp_x509_t * issuer);
  
@@ -129,4 +129,4 @@
 +typedef evhtp_ssl_sess_t * (*evhtp_ssl_scache_get)(evhtp_connection_t * connection, evhtp_ssl_data_t * sid, int sid_len);
  typedef void * (*evhtp_ssl_scache_init)(evhtp_t *);
  
- #define EVHTP_VERSION           "1.1.6"
+ #define EVHTP_VERSION           "1.2.0"
