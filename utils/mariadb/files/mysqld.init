@@ -10,7 +10,7 @@ USE_PROCD=1
 
 NAME=mysqld
 
-LOGGER="/usr/bin/logger -p user.err -s -t $NAME"
+LOGGER="/usr/bin/logger -p user.err -s -t $NAME --"
 COMMAND=/usr/bin/$NAME
 
 mysqld_get_param() {
@@ -24,7 +24,10 @@ mysqld_get_param() {
 start_service() {
 	local conf=/etc/mysql/my.cnf
 	local dir
-	local user=mariadb
+	local user
+	local group
+
+	local logfile
 
 	local datadir
 	local logdir=/var/log/mysql
@@ -35,6 +38,8 @@ start_service() {
 	local log_stderr
 	local log_stdout
 	local options
+
+	local hint="please fix your server configuration in /etc/mysql/"
 
 	if [ ! -x $COMMAND ]; then
 		$LOGGER $COMMAND is missing
@@ -60,30 +65,80 @@ start_service() {
 	config_get options general options
 
 	datadir=$(mysqld_get_param datadir)
+	logfile=$(mysqld_get_param general_log_file)
 	tmpdir=$(mysqld_get_param tmpdir)
+	user=$(mysqld_get_param user)
 
 	if [ -z "$datadir" ]; then
 		$LOGGER datadir is not set
+		$LOGGER $hint
 		exit 1
 	fi
 
 	if [ -z "$tmpdir" ]; then
-		$LOGGER tmpdir is not set.
+		$LOGGER tmpdir is not set
+		$LOGGER $hint
 		exit 1
 	fi
 
-	[ -e "$datadir" ] || mkdir -p "$datadir"
+	if [ -z "$user" ]; then
+		$LOGGER user is not set
+		$LOGGER $hint
+		exit 1
+	fi
 
-	for dir in "$logdir" "$rundir" "$tmpdir"; do
-		if [ ! -e "$dir" ]; then
-			mkdir -p "$dir"
-			chown $user "$dir"
-		fi
-	done
+	user_exists "$user" || {
+		$LOGGER user \""$user"\" does not exist
+		$LOGGER $hint
+		exit 1
+	}
+
+	group=$(id -g -n "$user")
+
+	group_exists "$group" || {
+		$LOGGER group \""$group"\" does not exist
+		$LOGGER user \""$user"\" not configured correctly
+		exit 1
+	}
+
+	[ -n "$logfile" ] && logdir=$(dirname "$logfile")
+
+	# do not touch directories that already exist
+	# posix shell does not support arrays, hence using awk
+	awk \
+	  -v user="$user" \
+	  -v group="$group" \
+	  -v a="$datadir" \
+	  -v b="$logdir" \
+	  -v c="$rundir" \
+	  -v d="$tmpdir" \
+	  '
+	    BEGIN {
+	      dir[0]=a
+	      dir[1]=b
+	      dir[2]=c
+	      dir[3]=d
+	      for (x in dir) {
+	        if (system("test ! -e \"" dir[x] "\"" )) {
+	          delete dir[x]
+	        }
+	      }
+	      for (x in dir) {
+	        system("mkdir -p \"" dir[x] "\"" )
+	        system("chmod 750 \"" dir[x] "\"" )
+	        system("chown \"" user "\":\"" group "\" \"" dir[x] "\"" )
+	      }
+	    }
+	  '
 
 	if [ ! -f "$datadir/mysql/tables_priv.MYD" ]; then
-		$LOGGER "cannot detect privileges table, you might need to"
-		$LOGGER "run 'mysql_install_db --force' to initialize the system tables"
+		local args="--force"
+		local basedir=$(mysqld_get_param basedir)
+		[ -n "$basedir" ] && args="$args --basedir=$basedir"
+
+		$LOGGER Cannot detect privileges table. You might need to run
+		$LOGGER \'mysql_install_db $args\'
+		$LOGGER to initialize the system tables.
 		exit 1
 	fi
 
