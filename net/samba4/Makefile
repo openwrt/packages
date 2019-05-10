@@ -2,7 +2,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.9.7
+PKG_VERSION:=4.10.2
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
@@ -16,10 +16,10 @@ PKG_SOURCE_URL:=https://ftp.heanet.ie/mirrors/ftp.samba.org/stable/ \
 		http://samba.mirror.bit.nl/samba/ftp/stable/ \
 		https://download.samba.org/pub/samba/stable/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=44e5bc58dcae6d86ca8d5f269fa927f20ff91bce97cde86fe4e83addcb89c001
+PKG_HASH:=878cfdc51b74fafb604399c381c690b325061eb63fc17a188a505e96fa8f5e84
 
 # samba4=(asn1_compile) e2fsprogs=(compile_et) nfs-kernel-server=(rpcgen)
-HOST_BUILD_DEPENDS:=nfs-kernel-server/host e2fsprogs/host
+HOST_BUILD_DEPENDS:=python3/host nfs-kernel-server/host e2fsprogs/host
 PKG_BUILD_DEPENDS:=samba4/host
 
 PKG_CONFIG_DEPENDS:= \
@@ -35,6 +35,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_kmod-fs-xfs
 
 include $(INCLUDE_DIR)/package.mk
+include $(TOPDIR)/feeds/packages/lang/python/python3-package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/version.mk
@@ -63,7 +64,7 @@ define Package/samba4-libs
 	+SAMBA4_SERVER_VFS:attr \
 	+SAMBA4_SERVER_ACL:acl +SAMBA4_SERVER_ACL:attr \
 	+SAMBA4_SERVER_AVAHI:libavahi-client \
-	+SAMBA4_SERVER_AD_DC:python-base +SAMBA4_SERVER_AD_DC:libopenssl +SAMBA4_SERVER_AD_DC:libgnutls +SAMBA4_SERVER_AD_DC:libopenldap +SAMBA4_SERVER_AD_DC:jansson +SAMBA4_SERVER_AD_DC:libarchive
+	+SAMBA4_SERVER_AD_DC:python3-base +SAMBA4_SERVER_AD_DC:libopenssl +SAMBA4_SERVER_AD_DC:libgnutls +SAMBA4_SERVER_AD_DC:libopenldap +SAMBA4_SERVER_AD_DC:jansson +SAMBA4_SERVER_AD_DC:libarchive
 endef
 
 define Package/samba4-server
@@ -207,8 +208,8 @@ HOST_CONFIGURE_ARGS += \
 		--without-gpgme
 
 HOST_CONFIGURE_ARGS += --disable-avahi --without-quotas --without-acl-support --without-winbind \
-	--without-ad-dc --without-json-audit --without-libarchive --disable-python --nopyc --nopyo \
-	--disable-gnutls --without-dnsupdate --without-ads --without-ldap
+	--without-ad-dc --without-json --without-libarchive --disable-python --nopyc --nopyo \
+	--without-dnsupdate --without-ads --without-ldap
 HOST_CONFIGURE_VARS += python_LDFLAGS="" python_LIBDIR=""
 
 # Optional AES-NI support - https://lists.samba.org/archive/samba-technical/2017-September/122738.html
@@ -242,9 +243,9 @@ else
 endif
 ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
 	CONFIGURE_ARGS += --enable-gnutls --with-dnsupdate --with-ads --with-ldap
-	TARGET_CFLAGS := -I$(STAGING_DIR)/usr/include/python2.7 $(TARGET_CFLAGS)
+	TARGET_CFLAGS := -I$(STAGING_DIR)/usr/include/python3 $(TARGET_CFLAGS)
 else
-	CONFIGURE_ARGS += --without-ad-dc --without-json-audit --without-libarchive --disable-python --nopyc --nopyo \
+	CONFIGURE_ARGS += --without-ad-dc --without-json --without-libarchive --disable-python --nopyc --nopyo \
 		--disable-gnutls --without-dnsupdate --without-ads --without-ldap
 	CONFIGURE_VARS += \
 		python_LDFLAGS="" \
@@ -409,8 +410,8 @@ define Package/samba4-libs/install
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/samba/krb5 $(1)/usr/lib/samba/; \
 	fi
 ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
-	$(INSTALL_DIR) $(1)/usr/lib/python2.7
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/python2.7 $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/python3
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/python3 $(1)/usr/lib/
 endif
 endef
 

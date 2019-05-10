@@ -8,10 +8,10 @@ Signed-off-by: Bian Naimeng <biannm@cn.fujitsu.com>
 @@ -2,6 +2,7 @@
  
  import sys
- import Build, Options, Logs
+ from waflib import Build, Options, Logs
 +import imp, os
- from Configure import conf
- from samba_utils import TO_LIST
+ from waflib.Configure import conf
+ from wafsamba import samba_utils
  
 @@ -249,17 +250,32 @@ def CHECK_BUNDLED_SYSTEM_PYTHON(conf, li
      # versions
