@@ -122,6 +122,7 @@ generate_config()
         local config=$1
         local address
         local tls_auth_name
+        local tls_port
         local tls_pubkey_pinset_section=0
 
         if [ "$upstream_recursive_servers_section" = 0 ]; then
@@ -130,8 +131,12 @@ generate_config()
         fi
         config_get address "$config" address
         config_get tls_auth_name "$config" tls_auth_name
+        config_get tls_auth_port "$config" tls_port ""
         echo "  - address_data: $address" >> "$config_file"
         echo "    tls_auth_name: \"$tls_auth_name\"" >> "$config_file"
+        if [ -n "$tls_port" ]; then
+            echo "    tls_port: $tls_port"  >> "$config_file"
+        fi
 
         handle_resolver_spki()
         {
