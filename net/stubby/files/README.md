@@ -385,6 +385,11 @@ IPv6 address.
 This option specifies the upstream domain name used for TLS authentication with
 the supplied server certificate
 
+#### `option tls_port`
+
+This option specifies the TLS port for the upstream resolver. If not specified,
+this defaults to 853.
+
 #### `list spki`
 
 This list specifies the SPKI pinset which is verified against the keys in the
