@@ -1,21 +1,40 @@
-diff --git a/evhtp.c b/evhtp.c
-index 24687be..b646925 100644
 --- a/evhtp.c
 +++ b/evhtp.c
-@@ -1667,9 +1667,9 @@ _evhtp_accept_cb(evserv_t * serv, int fd, struct sockaddr * s, int sl, void * ar
+@@ -1797,10 +1797,10 @@ _evhtp_accept_cb(evserv_t * serv, int fd, struct sockaddr * s, int sl, void * ar
+ }
  
  #ifndef EVHTP_DISABLE_SSL
- #ifndef EVHTP_DISABLE_EVTHR
+-#ifndef EVHTP_DISABLE_EVTHR
 -static unsigned long
 -_evhtp_ssl_get_thread_id(void) {
 -    return (unsigned long)pthread_self();
++#if !defined(EVHTP_DISABLE_EVTHR) && (OPENSSL_VERSION_NUMBER < 0x10100000L)
 +static void
 +_evhtp_ssl_get_thread_id(CRYPTO_THREADID *id) {
 +    CRYPTO_THREADID_set_numeric(id, (unsigned long)pthread_self());
  }
  
  static void
-@@ -2999,7 +2999,7 @@ evhtp_ssl_use_threads(void) {
+@@ -3050,7 +3050,9 @@ evhtp_use_threads(evhtp_t * htp, evhtp_thread_init_cb init_cb, int nthreads, voi
+     htp->thread_init_cbarg = arg;
+ 
+ #ifndef EVHTP_DISABLE_SSL
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+     evhtp_ssl_use_threads();
++#endif
+ #endif
+ 
+     if (!(htp->thr_pool = evthr_pool_new(nthreads, _evhtp_thread_init, htp))) {
+@@ -3161,7 +3163,7 @@ evhtp_set_post_accept_cb(evhtp_t * htp, evhtp_post_accept_cb cb, void * arg) {
+ }
+ 
+ #ifndef EVHTP_DISABLE_SSL
+-#ifndef EVHTP_DISABLE_EVTHR
++#if !defined(EVHTP_DISABLE_EVTHR) && (OPENSSL_VERSION_NUMBER < 0x10100000L)
+ int
+ evhtp_ssl_use_threads(void) {
+     int i;
+@@ -3179,7 +3181,7 @@ evhtp_ssl_use_threads(void) {
          pthread_mutex_init(&(ssl_locks[i]), NULL);
      }
  
