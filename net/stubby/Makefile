@@ -14,7 +14,7 @@ PKG_MAINTAINER:=Jonathan Underwood <jonathan.underwood@gmail.com>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/getdnsapi/$(PKG_NAME)
-PKG_SOURCE_VERSION:=b0d3154af61e1b46a30b56d239dc074273642217
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_MIRROR_HASH:=af896c471ac67b31c2263d11fcdfcdb32a213621c2f8789f4b0a4ceca4437108
 
 PKG_FIXUP:=autoreconf
