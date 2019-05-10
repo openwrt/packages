@@ -136,7 +136,7 @@ generate_config()
         handle_resolver_spki()
         {
             local val="$1"
-            local digest="${val%/*}"
+            local digest="${val%%/*}"
             local value="${val#*/}"
 
             if [ "$tls_pubkey_pinset_section" = 0 ]; then
