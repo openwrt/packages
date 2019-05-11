@@ -9,16 +9,17 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libartnet
 PKG_VERSION:=1.1.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/OpenLightingProject/libartnet/releases/download/1.1.2
 PKG_HASH:=19cdda434e208a81ddd138377f11046364438e40e34542ae101d6aa3fcaec696
 
 PKG_MAINTAINER:=Martijn Zilverschoon <martijn@friedzombie.com>
-
 PKG_LICENSE:=GPL-2.1
 PKG_LICENSE_FILES:=COPYING
+
+PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -26,22 +27,12 @@ define Package/libartnet
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE:=Libartnet is an implementation of the ArtNet protocol.
-	URL:=http://www.openlighting.org/libartnet-main/
+	URL:=https://www.openlighting.org/libartnet-main/
 endef
 
 define Package/libartnet/description
 	Libartnet is an implementation of the ArtNet protocol. ArtNet allows the
 	transmission of DMX and related data over IP networks.
-endef
-
-define Build/Configure
-	$(call Build/Configure/Default)
-endef
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-	DESTDIR="$(PKG_INSTALL_DIR)" \
-	all install
 endef
 
 define Build/InstallDev
