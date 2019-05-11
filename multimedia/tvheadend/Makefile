@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tvheadend
 PKG_VERSION:=4.0.10
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tvheadend/tvheadend/tar.gz/v$(PKG_VERSION)?
@@ -71,8 +71,6 @@ CONFIGURE_ARGS += \
 	--disable-dbus_1 \
 	--disable-libav \
 	--enable-bundle
-
-TARGET_CFLAGS += -Wno-error=pointer-compare
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
