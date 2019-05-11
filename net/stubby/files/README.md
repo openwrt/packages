@@ -372,7 +372,33 @@ The possible levels are:
 
 This option specifies additional command line arguments for
 stubby daemon. By default, this is an empty string.
-       
+
+#### `option tls_cipher_list`
+
+If set, this specifies the acceptable ciphers for DNS over TLS. With OpenSSL
+1.1.1 this list is for TLS1.2 and older only. Ciphers for TLS1.3 should be set
+with the `tls_ciphersuites` option. This option can also be given per upstream
+resolver. By default, this option is not set.
+
+#### `option tls_ciphersuites`
+
+If set, this specifies the acceptable cipher for DNS over TLS1.3. OpenSSL
+version 1.1.1 or greater is required for this option. This option can also be
+given per upstream resolver. By default, this option is not set.
+
+#### `option tls_min_version`
+
+If set, this specifies the minimum acceptable TLS version. Works with OpenSSL
+1.1.1 or greater only. This option can also be given per upstream resolver. By
+default, this option is not set.
+
+#### `option tls_max_version`
+
+If set, this specifies the maximum acceptable TLS version. Works with OpenSSL
+1.1.1 or greater only. This option can also be given per upstream resolver. By
+default, this option is not set.
+
+
 ### `resolver` section options
 
 #### `option address`
@@ -385,10 +411,40 @@ IPv6 address.
 This option specifies the upstream domain name used for TLS authentication with
 the supplied server certificate
 
+#### `option tls_port`
+
+This option specifies the TLS port for the upstream resolver. If not specified,
+this defaults to 853.
+
+#### `option tls_cipher_list`
+
+If set, this specifies the acceptable ciphers for DNS over TLS. With OpenSSL
+1.1.1 this list is for TLS1.2 and older only. Ciphers for TLS1.3 should be set
+with the `tls_ciphersuites` option. By default, this option is not set. If set,
+this overrides the global value.
+
+#### `option tls_ciphersuites`
+
+If set, this specifies the acceptable cipher for DNS over TLS1.3. OpenSSL
+version 1.1.1 or greater is required for this option. By default, this option is
+not set. If set, this overrides the global value.
+
+#### `option tls_min_version`
+
+If set, this specifies the minimum acceptable TLS version. Works with OpenSSL
+1.1.1 or greater only. By default, this option is not set. If set, this
+overrides the global value.
+
+#### `option tls_max_version`
+
+If set, this specifies the maximum acceptable TLS version. Works with OpenSSL
+1.1.1 or greater only. By default, this options is not set. If set, this
+overrides the global value.
+
 #### `list spki`
 
 This list specifies the SPKI pinset which is verified against the keys in the
-server cerrtificate. The values takes the form `'<digest type>/value>'`, where
+server cerrtificate. The value takes the form `'<digest type>/value>'`, where
 the `digest type` is the hashing algorithm used, and the value is the Base64
 encoded hash of the public key. At present, only `sha256` is
 supported for the digest type.
