@@ -1,0 +1,28 @@
+--- a/src/threads.c
++++ b/src/threads.c
+@@ -106,6 +106,8 @@ static int libgcrypt_thread_init(void){
+ 
+ static void **libcrypto_mutexes;
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++
+ static void libcrypto_lock_callback(int mode, int i, const char *file, int line){
+ 	(void)file;
+ 	(void)line;
+@@ -160,6 +162,16 @@ static void libcrypto_thread_finalize(void){
+ 
+ }
+ 
++#else
++
++static int libcrypto_thread_init(void){
++	return SSH_OK;
++}
++
++static void libcrypto_thread_finalize(void){
++}
++#endif
++
+ #endif
+ 
+ /** @internal
