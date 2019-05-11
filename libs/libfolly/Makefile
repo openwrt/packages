@@ -35,7 +35,7 @@ define Package/libfolly
 	DEPENDS:=+libstdcpp +boost +boost-context +boost-system +boost-thread \
 		+boost-date_time +boost-filesystem +boost-program_options +boost-regex \
 		+libbz2 +libopenssl +libdouble-conversion +libevent2 +glog +zlib +libzstd \
-		+gflags +libsodium +liblzma +libaio
+		+gflags +libsodium +liblzma +libaio +liblz4 +libunwind +libatomic
 endef
 
 define Package/libfolly/description
