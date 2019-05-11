@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsyslog
 PKG_VERSION:=8.39.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.rsyslog.com/files/download/rsyslog/
@@ -29,7 +29,7 @@ define Package/rsyslog
   CATEGORY:=Network
   TITLE:=Enhanced system logging and kernel message trapping daemons
   URL:=https://www.rsyslog.com/
-  DEPENDS:=+libestr +libfastjson +libuuid +zlib +USE_UCLIBC:libpthread +USE_UCLIBC:librt
+  DEPENDS:=+libestr +libfastjson +libuuid +zlib
 endef
 
 define Package/rsyslog/conffiles
