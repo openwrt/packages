@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oath-toolkit
 PKG_VERSION:=2.6.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=oath-toolkit-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SAVANNAH/oath-toolkit
