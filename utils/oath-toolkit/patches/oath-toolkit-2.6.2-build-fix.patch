@@ -123,28 +123,6 @@ index 8ab19fd..54c3d5a 100644
    return ((fp->_flags & _IO_NO_WRITES) != 0
            || ((fp->_flags & (_IO_NO_READS | _IO_CURRENTLY_PUTTING)) == 0
                && fp->_IO_read_base != NULL));
-diff --git a/liboath/gl/fseeko.c b/liboath/gl/fseeko.c
-index 67bb9ec..5616221 100644
---- a/liboath/gl/fseeko.c
-+++ b/liboath/gl/fseeko.c
-@@ -47,7 +47,7 @@ fseeko (FILE *fp, off_t offset, int whence)
- #endif
- 
-   /* These tests are based on fpurge.c.  */
--#if defined _IO_ftrylockfile || __GNU_LIBRARY__ == 1 /* GNU libc, BeOS, Haiku, Linux libc5 */
-+#if defined _IO_ftrylockfile || __GNU_LIBRARY__ /* GNU libc, BeOS, Haiku, Linux libc5 */
-   if (fp->_IO_read_end == fp->_IO_read_ptr
-       && fp->_IO_write_ptr == fp->_IO_write_base
-       && fp->_IO_save_base == NULL)
-@@ -123,7 +123,7 @@ fseeko (FILE *fp, off_t offset, int whence)
-           return -1;
-         }
- 
--#if defined _IO_ftrylockfile || __GNU_LIBRARY__ == 1 /* GNU libc, BeOS, Haiku, Linux libc5 */
-+#if defined _IO_ftrylockfile || __GNU_LIBRARY__ /* GNU libc, BeOS, Haiku, Linux libc5 */
-       fp->_flags &= ~_IO_EOF_SEEN;
-       fp->_offset = pos;
- #elif defined __sferror || defined __DragonFly__ || defined __ANDROID__
 diff --git a/liboath/gl/stdio-impl.h b/liboath/gl/stdio-impl.h
 index 4c02c9f..393ef0c 100644
 --- a/liboath/gl/stdio-impl.h
