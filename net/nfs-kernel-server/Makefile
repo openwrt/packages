@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
 PKG_VERSION:=2.3.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_HASH:=3c8c63611c7e78b7a3b2f8a28b9928a5b5e66d5e9ad09a1e54681508884320a4
 
 PKG_SOURCE_URL:=@SF/nfs
@@ -37,7 +37,7 @@ endef
 define Package/nfs-kernel-server
   $(call Package/nfs-kernel-server/Default)
   TITLE:=Kernel NFS server support
-  DEPENDS+= +kmod-fs-nfsd +kmod-fs-nfs +rpcbind
+  DEPENDS+= +kmod-fs-nfsd +kmod-fs-nfs +portmap
 endef
 
 define Package/nfs-kernel-server/description
