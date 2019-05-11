@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=tac_plus
 PKG_VERSION:=4.0.4.28
 PKG_REV:=259251e6f1c2d5c98081a43c6f66d9eb2989cfd8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE_DATE:=2019.02.11
@@ -24,6 +24,9 @@ CONFIGURE_PATH:=$(PKG_BUILD_SUBDIR)
 CONFIGURE_ARGS += \
 	--disable-shared \
 	--without-libwrap
+
+CONFIGURE_VARS += \
+	ac_cv_lib_pam_pam_start=no
 
 define Package/tac_plus
 	SECTION:=net
