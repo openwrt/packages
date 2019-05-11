@@ -8,9 +8,10 @@
 2. [Python 2 end-of-life](#python-2-end-of-life)
     1. [Transition policy / schedule](#transition-policy--schedule)
 3. [Introduction](#introduction)
-4. [Build considerations](#build-considerations)
-5. [General folder structure](#general-folder-structure)
-6. [Building a Python[3] package](#building-a-python3-package)
+4. [Using Python[3] in external/other package feeds](#using-python3-in-externalother-package-feeds)
+5. [Build considerations](#build-considerations)
+6. [General folder structure](#general-folder-structure)
+7. [Building a Python[3] package](#building-a-python3-package)
     1. [PKG_BUILD_DIR](#pkg_build_dir)
     2. [PKG_UNPACK](#pkg_unpack)
     3. [Include python[3]-package.mk](#include-python3-packagemk)
@@ -64,6 +65,43 @@ This sub-tree came to exist after a number of contributions (Python packages) we
 It contains the 2 Python interpreters (Python & Python3) and Python packages. Most of the Python packages are downloaded from [pypi.org](https://pypi.org/). Python packages from [pypi.org](https://pypi.org/) are typically preferred when adding new packages.
 
 If more packages (than the ones packaged here) are needed, they can be downloaded via [pip or pip3](https://pip.pypa.io). Note that the versions of `pip` & `setuptools` [available in this repo] are the ones that are packaged inside the Python & Python3 packages (yes, Python & Python3 come packaged with `pip` & `setuptools`).
+
+## Using Python[3] in external/other package feeds
+
+In the feeds.conf (or feeds.conf.default file, whatever is preferred), the packages repo should be present.
+
+Example
+```
+src-git packages https://git.openwrt.org/feed/packages.git
+src-git luci https://git.openwrt.org/project/luci.git
+src-git routing https://git.openwrt.org/feed/routing.git
+src-git telephony https://git.openwrt.org/feed/telephony.git
+#
+#
+src-git someotherfeed https://github.com/<github-user>/<some-other-package>
+```
+
+Assuming that there are Python packages in the `<some-other-package>`, they should include `python[3]-package.mk` like this:
+```
+include $(TOPDIR)/feeds/packages/lang/python/python-package.mk
+include $(TOPDIR)/feeds/packages/lang/python/python3-package.mk
+```
+
+Same rules apply for `python[3]-package.mk` as the Python packages in this repo.
+And if only 1 of `python-package.mk` or `python3-package.mk` is needed, then only the needed mk file should be included (though it's not an issue if both are included).
+
+**One important consideration:**: if the local name is not `packages`, it's something else, like `openwrt-packages`. And in `feeds.conf[.default]` it's:
+```
+src-git openwrt-packages https://git.openwrt.org/feed/packages.git
+```
+
+Then, the inclusions also change:
+```
+include $(TOPDIR)/feeds/openwrt-packages/lang/python/python-package.mk
+include $(TOPDIR)/feeds/openwrt-packages/lang/python/python3-package.mk
+```
+
+Each maintainer[s] of external packages feeds is responsible for the local name, and relative inclusion path back to this feed (which is named `packages` by default).
 
 ## Build considerations
 
