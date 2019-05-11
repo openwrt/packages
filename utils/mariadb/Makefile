@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.2.22
+PKG_VERSION:=10.2.24
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -18,10 +18,12 @@ PKG_SOURCE_URL := \
 	https://ftp.yz.yamagata-u.ac.jp/pub/dbms/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
 	https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=42f4c54c29b7c196bd105bbf4d2ea721f869b14cb7ba436c3566e6dd2760614c
+PKG_HASH:=97f4d924e69f77abb2f650116785c2f5ef356230442534ebcbaadb51d9bb8bc4
 PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
 PKG_LICENSE:=GPL-2.0 LGPL-2.1
 PKG_LICENSE_FILES:=COPYING libmariadb/COPYING.LIB
+
+PKG_CPE_ID:=cpe:/a:mariadb:mariadb
 
 HOST_BUILD_PARALLEL:=1
 PKG_BUILD_PARALLEL:=1
@@ -200,10 +202,7 @@ define Package/mariadb/install/plugin
 endef
 
 define Package/mariadb/description/Default
-MariaDB is a fast, stable and true multi-user, multi-threaded SQL
-database server. SQL (Structured Query Language) is the most popular
-database query language in the world. The main goals of MariaDB are
-speed, robustness and ease of use.
+MariaDB is a very fast and robust SQL database server.
 endef
 
 define Package/libmariadb/Default
