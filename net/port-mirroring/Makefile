@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015 OpenWrt.org
+# Copyright (c) 2019 OpenWrt.org
 #
 # This is free software, licensed under the BSD 2-Clause License.
 #
@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=port-mirroring
-PKG_VERSION:=1.4.3
+PKG_VERSION:=1.4.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mmaraya/port-mirroring/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=90603163fb086cc586a711e066360ccfa5b4735f67586e8f9254e93f3bebb97e
+PKG_HASH:=9fb259d24cee4fe1bed1a51c49e52a8eb05b692ba1b5debb75fdf54957cc8ed1
 
 PKG_MAINTAINER:=Mike Maraya <mike.maraya@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
