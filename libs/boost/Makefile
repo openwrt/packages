@@ -3,7 +3,7 @@
 # See /LICENSE for more information.
 #
 
-# 
+#
 # Original Boost 1.51 Makefile by Mirko Vogt <mirko@openwrt.org>
 # Dude, this "boost" is really one of the most crude stuff I ported yet.
 #
@@ -13,7 +13,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.70.0
 PKG_SOURCE_VERSION:=1_70_0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
@@ -57,7 +57,7 @@ This package provides the following run-time libraries:
  - chrono
  - container
  - context
- - contract 
+ - contract
  - coroutine (Deprecated - use Coroutine2)
  - - coroutine2 (Requires GCC v5 and up)
  - date_time
@@ -142,17 +142,17 @@ define Package/boost/config
 						 cannot be redefined by another shared library or executable. This mode is
 						 not supported on some platforms, for example OS X.
 					-> Hidden:
-						- Hidden symbols are not exported from shared libraries and cannot be 
+						- Hidden symbols are not exported from shared libraries and cannot be
 						 redefined by a different shared library or executable loaded in a process.
 						 In this mode, public symbols have to be explicitly marked in the source code
 						 to be exported from shared libraries. This is the recommended mode.
 
 			config boost-compile-visibility-global
 				bool "Global"
-			
+
 			config boost-compile-visibility-protected
 				bool "Protected"
-			
+
 			config boost-compile-visibility-hidden
 				bool "Hidden"
 		endchoice
@@ -171,10 +171,10 @@ define Package/boost/config
 
 			config boost-shared-libs
 				bool "Shared"
-			
+
 			config boost-static-libs
 				bool "Static"
-			
+
 			config boost-static-and-shared-libs
 				bool "Both"
 		endchoice
@@ -189,7 +189,7 @@ define Package/boost/config
 					- Not available if Shared libs are to be built.
 				-> Use both runtimes.
 					- Not available if Shared libs are to be built.
-					- Two separate versions of Boost are built, linking each to a different runtime. 
+					- Two separate versions of Boost are built, linking each to a different runtime.
 					- This option requires "Use tagged names" option to be active.
 
 			config boost-runtime-shared
@@ -197,7 +197,7 @@ define Package/boost/config
 
 			config boost-runtime-static
 				depends on @(!boost-shared-libs&&!boost-static-and-shared-libs)
-				bool "Static"		    	
+				bool "Static"
 
 			config boost-runtime-static-and-shared
 				depends on @(boost-use-name-tags&&!boost-shared-libs&&!boost-static-and-shared-libs)
@@ -211,7 +211,7 @@ define Package/boost/config
 				Chooses which boost variant should be selected:
 				-> Release: Optimizes Boost for release.
 					- Optimization: Speed;  Debug Symbols: Off; Inlining: Full; Runtime Debugging: Off.
-				-> Debug: 
+				-> Debug:
 					- Optimization: Off; Debug Symbols: On; Inlining: Off; Runtime Debugging: On.
 				-> Profile:
 					- Profiling: On;  Debug Symbols: On.
@@ -228,7 +228,7 @@ define Package/boost/config
 
 		config boost-use-name-tags
 			bool "Use tagged names."
-			help 
+			help
 				Add name tags the lib files, to diferentiate each library version:
 				  "-mt" for multi-threading.
 				  "-d" for debugging.
@@ -239,14 +239,14 @@ define Package/boost/config
 		config boost-single-thread
 			depends on @boost-use-name-tags
 			bool "Single thread Support."
-			help 
+			help
 				Compile Boost libraries in single-thread mode.
 			default n
-			    
+
 		config boost-build-type-complete
 			depends on @boost-use-name-tags
 			bool "Complete Boost Build."
-			help 
+			help
 				Builds both release and debug libs. It will take much longer to compile.
 			default n
 	endmenu
@@ -294,6 +294,16 @@ define Package/boost/config
 		)
 	endmenu
 
+	menu "Select Boost libraries for Host build"
+		comment  "Libraries for Host build"
+
+		$(foreach lib,$(BOOST_LIBS), \
+		config boost-host-build-$(lib)
+			bool "Boost $(lib) $(if $(findstring python,$(lib)),$(paren_left)v$(if $(findstring 3,$(lib)),$(BOOST_PYTHON3_VER),$(BOOST_PYTHON_VER))$(paren_right) ,)library."
+			default n
+		)
+	endmenu
+
 endef
 
 PKG_CONFIG_DEPENDS:= CONFIG_PACKAGE_boost-test
@@ -316,6 +326,7 @@ define DefineBoostLibrary
 
   BOOST_DEPENDS+= +$(if $(4),$(4):boost-$(1),boost-$(1))
   PKG_CONFIG_DEPENDS+= CONFIG_PACKAGE_boost-$(1)
+  HOST_CONFIG_DEPENDS+= CONFIG_boost-host-build-$(1)
 
   BOOST_LIBS+= $(1)
 
@@ -366,6 +377,14 @@ include $(INCLUDE_DIR)/host-build.mk
 define Host/Compile
 	# b2 does not provide a configure-script nor a Makefile
 	( cd $(HOST_BUILD_DIR)/tools/build/src/engine ; ./build.sh gcc )
+
+	( cd $(HOST_BUILD_DIR) ; \
+		./bootstrap.sh --prefix=$(STAGING_DIR_HOST) \
+			--with-libraries=$(subst $() $(),$(comma),$(strip \
+				headers \
+				$(foreach lib,$(BOOST_LIBS), \
+					$(if $(findstring python,$(lib)),,$(if $(CONFIG_boost-host-build-$(lib)),$(lib)))))) ; \
+		./b2 install )
 endef
 
 CONFIGURE_PREFIX:=$(PKG_INSTALL_DIR)
@@ -524,7 +543,7 @@ endef
 
 define BuildBoostLibrary
   define Package/boost-$(1)/install
-    $(call Package/boost/Default/install,$$(1),$(1)) 
+    $(call Package/boost/Default/install,$$(1),$(1))
   endef
 
   $$(eval $$(call BuildPackage,boost-$(1)))
