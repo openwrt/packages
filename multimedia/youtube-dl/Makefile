@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=youtube-dl
-PKG_VERSION:=2019.4.30
+PKG_VERSION:=2019.5.11
 PKG_RELEASE:=1
 
 PKG_SOURCE:=youtube_dl-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/y/youtube_dl/
-PKG_HASH:=31844229a4f4d7003e03ab309ff2caff1b16ce0acbd3cfb7a13276058af13056
+PKG_HASH:=fe71aa725dc0f86deacdcc91f38492317d53b0ca8ec0f8bddc9961c205b4fea4
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/youtube_dl-$(PKG_VERSION)
 
