@@ -130,7 +130,7 @@ valid_subnet_any() {
   local validip6=$( valid_subnet6 $subnet )
 
 
-  if [ "$validip4" = "ok" -o "$validip6" = "ok" ] ; then
+  if [ "$validip4" = "ok" ] || [ "$validip6" = "ok" ] ; then
     echo "ok"
   else
     echo "not"

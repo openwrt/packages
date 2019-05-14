@@ -61,7 +61,7 @@ service_triggers() {
   . /usr/lib/unbound/defaults.sh
 
 
-  if [ ! -f "$UB_TOTAL_CONF" -o -n "$UB_BOOT" ] ; then
+  if [ ! -f "$UB_TOTAL_CONF" ] || [ -n "$UB_BOOT" ] ; then
     # Unbound is can be a bit heavy, so wait some on first start but any
     # interface coming up affects the trigger and delay so guarantee start
     procd_add_raw_trigger "interface.*.up" 3000 /etc/init.d/unbound restart
