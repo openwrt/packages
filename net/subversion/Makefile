@@ -79,6 +79,8 @@ define Package/subversion-server/conffiles
 endef
 
 TARGET_CFLAGS += $(FPIC)
+APU_LIBS=$(shell $(STAGING_DIR)/usr/bin/apu-1-config --link-libtool --libs)
+TARGET_LDFLAGS += $(APU_LIBS)
 
 CONFIGURE_ARGS += \
 	--with-apr="$(STAGING_DIR)/usr/bin/apr-1-config" \
