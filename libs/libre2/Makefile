@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=re2
 PKG_VERSION:=2019-04-01
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/google/re2/tar.gz/$(PKG_VERSION)?
@@ -53,6 +53,14 @@ define Package/re2/description
 	RE2 is a fast, safe, thread-friendly alternative to backtracking regular
 	expression engines like those used in PCRE, Perl, and Python.
 	It is a C++ library.
+endef
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include/re2
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/re2/*.h $(1)/usr/include/re2/
+
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libre2.so* $(1)/usr/lib/
 endef
 
 define Package/re2/install
