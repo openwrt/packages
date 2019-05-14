@@ -7,41 +7,70 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=openpyxl
-PKG_VERSION:=2.5.9
-PKG_RELEASE:=2
-PKG_LICENSE:=MIT
+PKG_NAME:=python-openpyxl
+PKG_VERSION:=2.6.2
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/o/openpyxl
-PKG_HASH:=022c0f3fa1e873cc0ba20651c54dd5e6276fc4ff150b4060723add4fc448645e
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENCE.rst
+
+PKG_SOURCE:=openpyxl-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/o/openpyxl
+PKG_HASH:=1d2af392cef8c8227bd2ac3ebe3a28b25aba74fd4fa473ce106065f0b73bfe2e
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-openpyxl-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
+include ../python3-package.mk
 
-define Package/openpyxl
+PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
+
+define Package/python-openpyxl/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=A Python library to read/write Excel 2010 xlsx/xlsm files
   URL:=https://openpyxl.readthedocs.org/
-  DEPENDS:=+python +django
 endef
 
-define Package/openpyxl/description
+define Package/python-openpyxl
+  $(call Package/python-openpyxl/Default)
+  DEPENDS:= \
+	+PACKAGE_python-openpyxl:python \
+	+PACKAGE_python-openpyxl:python-defusedxml \
+	+PACKAGE_python-openpyxl:python-et_xmlfile \
+	+PACKAGE_python-openpyxl:python-jdcal
+  VARIANT:=python
+  # The PROVIDES below is deprecated and should be dropped with the next version.
+  PROVIDES:=openpyxl
+endef
+
+define Package/python3-openpyxl
+  $(call Package/python-openpyxl/Default)
+  DEPENDS:= \
+	+PACKAGE_python3-openpyxl:python3 \
+	+PACKAGE_python3-openpyxl:python3-defusedxml \
+	+PACKAGE_python3-openpyxl:python3-et_xmlfile \
+	+PACKAGE_python3-openpyxl:python3-jdcal
+  VARIANT:=python3
+endef
+
+define Package/python-openpyxl/description
   A Python library to read/write Excel 2010 xlsx/xlsm files
 endef
 
-define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
+define Package/python3-openpyxl/description
+$(call Package/python-openpyxl/description)
+.
+(Variant for Python3)
 endef
 
-define Package/openpyxl/install
-	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
-	$(CP) \
-	    $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
-	    $(1)$(PYTHON_PKG_DIR)
-endef
+$(eval $(call PyPackage,python-openpyxl))
+$(eval $(call BuildPackage,python-openpyxl))
+$(eval $(call BuildPackage,python-openpyxl-src))
 
-$(eval $(call BuildPackage,openpyxl))
+$(eval $(call Py3Package,python3-openpyxl))
+$(eval $(call BuildPackage,python3-openpyxl))
+$(eval $(call BuildPackage,python3-openpyxl-src))
