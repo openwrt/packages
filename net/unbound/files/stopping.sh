@@ -43,11 +43,11 @@ rootkey_update() {
   [ -z "$dnssec_age" ] && dnssec_age=9
 
 
-  if [ "$dnssec_age" -gt 90 -o "$dnssec" -lt 1 ] ; then
+  if [ "$dnssec_age" -gt 90 ] || [ "$dnssec" -lt 1 ] ; then
     # Feature disabled
     return 0
 
-  elif [ "$dnssec_ntp" -gt 0 -a ! -f "$UB_TIME_FILE" ] ; then
+  elif [ "$dnssec_ntp" -gt 0 ] && [ ! -f "$UB_TIME_FILE" ] ; then
     # We don't have time yet
     return 0
   fi
