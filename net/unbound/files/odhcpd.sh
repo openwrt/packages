@@ -35,8 +35,8 @@ odhcpd_zonedata() {
   local dhcp_origin=$( uci_get dhcp.@odhcpd[0].leasefile )
 
 
-  if [ -f "$UB_TOTAL_CONF" -a -f "$dhcp_origin" \
-       -a "$dhcp_link" = "odhcpd" -a -n "$dhcp_domain" ] ; then
+  if [ -f "$UB_TOTAL_CONF" ] && [ -f "$dhcp_origin" ] \
+  && [ "$dhcp_link" = "odhcpd" ] && [ -n "$dhcp_domain" ] ; then
     local longconf dateconf
     local dns_ls_add=$UB_VARDIR/dhcp_dns.add
     local dns_ls_del=$UB_VARDIR/dhcp_dns.del
@@ -48,7 +48,7 @@ odhcpd_zonedata() {
     sort $dhcp_origin > $dhcp_ls_new
 
 
-    if [ ! -f $UB_DHCP_CONF -o ! -f $dns_ls_old ] ; then
+    if [ ! -f $UB_DHCP_CONF ] || [ ! -f $dns_ls_old ] ; then
       # no old files laying around
       longconf=freshstart
 
