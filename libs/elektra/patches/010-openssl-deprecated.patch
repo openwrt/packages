@@ -1,0 +1,35 @@
+--- a/src/plugins/crypto/openssl_operations.c
++++ b/src/plugins/crypto/openssl_operations.c
+@@ -25,6 +25,10 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++#define EVP_CIPHER_CTX_reset EVP_CIPHER_CTX_cleanup
++#endif
++
+ #define KEY_BUFFER_SIZE (ELEKTRA_CRYPTO_SSL_KEYSIZE + ELEKTRA_CRYPTO_SSL_BLOCKSIZE)
+ 
+ /*
+@@ -144,8 +148,10 @@ int elektraCryptoOpenSSLInit (Key * errorKey ELEKTRA_UNUSED)
+ 	// initialize OpenSSL according to
+ 	// https://wiki.openssl.org/index.php/Library_Initialization
+ 	pthread_mutex_lock (&mutex_ssl);
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	OpenSSL_add_all_algorithms ();
+ 	ERR_load_crypto_strings ();
++#endif
+ 	pthread_mutex_unlock (&mutex_ssl);
+ 	return 1;
+ }
+@@ -246,8 +252,8 @@ void elektraCryptoOpenSSLHandleDestroy (elektraCryptoHandle * handle)
+ 	if (handle)
+ 	{
+ 		pthread_mutex_lock (&mutex_ssl);
+-		EVP_CIPHER_CTX_cleanup (handle->encrypt);
+-		EVP_CIPHER_CTX_cleanup (handle->decrypt);
++		EVP_CIPHER_CTX_reset (handle->encrypt);
++		EVP_CIPHER_CTX_reset (handle->decrypt);
+ 		EVP_CIPHER_CTX_free (handle->encrypt);
+ 		EVP_CIPHER_CTX_free (handle->decrypt);
+ 		pthread_mutex_unlock (&mutex_ssl);
