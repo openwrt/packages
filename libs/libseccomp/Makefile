@@ -26,6 +26,11 @@ PKG_CONFIG_DEPENDS:= \
 
 include $(INCLUDE_DIR)/package.mk
 
+# This is done instead of DEPENDS:=@!arc to avoid a recursive dependency when
+# the library is conditionally selected by util/lxc.
+define Package/libseccomp/config
+  depends on !arc
+endef
 
 define Package/libseccomp/Default
   SUBMENU:=
@@ -46,7 +51,6 @@ endef
 define Package/libseccomp
 $(call Package/libseccomp/Default)
   TITLE+= (library)
-  DEPENDS+=
 endef
 
 define Package/libseccomp/description
