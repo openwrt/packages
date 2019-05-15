@@ -38,6 +38,9 @@ define Package/smcroute/conffiles
 	/etc/smcroute.conf
 endef
 
+CONFIGURE_ARGS += \
+	--without-libcap
+
 define Package/smcroute/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/usr/bin
