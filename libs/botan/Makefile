@@ -41,7 +41,7 @@ define Package/libbotan
   CATEGORY:=Libraries
   TITLE+= (library)
   ABI_VERSION:=$(PKG_VERSION)-$(PKG_RELEASE)
-  DEPENDS:=+libstdcpp +libpthread
+  DEPENDS:=+libstdcpp +libpthread @!arc
 endef
 
 define Package/libbotan/description
