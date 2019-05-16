@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-ban_ver="0.1.0"
+ban_ver="0.1.1"
 ban_sysver="unknown"
 ban_enabled=0
 ban_automatic="1"
@@ -19,7 +19,7 @@ ban_debug=0
 ban_backup=0
 ban_backupboot=0
 ban_backupdir="/mnt"
-ban_maxqueue=8
+ban_maxqueue=4
 ban_fetchutil="uclient-fetch"
 ban_ip="$(command -v ip)"
 ban_ipt="$(command -v iptables)"
@@ -257,7 +257,7 @@ f_iptrule()
 		rc="$("${ban_ipt6}" "${timeout}" -C ${rule} 2>/dev/null; printf '%u' ${?})"
 
 		if ([ ${rc} -ne 0 ] && ([ "${action}" = "-A" ] || [ "${action}" = "-I" ])) \
-		   || ([ ${rc} -eq 0 ] && [ "${action}" = "-D" ])
+			|| ([ ${rc} -eq 0 ] && [ "${action}" = "-D" ])
 		then
 			"${ban_ipt6}" "${timeout}" "${action}" ${rule}
 		fi
@@ -265,7 +265,7 @@ f_iptrule()
 		rc="$("${ban_ipt}" "${timeout}" -C ${rule} 2>/dev/null; printf '%u' ${?})"
 
 		if ([ ${rc} -ne 0 ] && ([ "${action}" = "-A" ] || [ "${action}" = "-I" ])) \
-		   || ([ ${rc} -eq 0 ] && [ "${action}" = "-D" ])
+			|| ([ ${rc} -eq 0 ] && [ "${action}" = "-D" ])
 		then
 			"${ban_ipt}" "${timeout}" "${action}" ${rule}
 		fi
@@ -678,7 +678,7 @@ f_main()
 
 			if [ ${ban_rc} -eq 0 ]
 			then
-				awk "${src_rset}" "${tmp_load}" 2>/dev/null | sort -u > "${tmp_file}"
+				awk "${src_rset}" "${tmp_load}" 2>/dev/null > "${tmp_file}"
 				ban_rc=${?}
 				if [ ${ban_rc} -eq 0 ]
 				then
