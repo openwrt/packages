@@ -7,14 +7,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-defusedxml
 PKG_VERSION:=0.6.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
+
+PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
 PKG_LICENSE:=Python-2.0
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
 
 PKG_SOURCE:=defusedxml-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/d/defusedxml
 PKG_HASH:=f684034d135af4c6cbb949b8a4d2ed61634515257a67299e5f940fbaa34377f5
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-defusedxml-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
@@ -27,7 +29,7 @@ define Package/python-defusedxml/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=XML bomb protection for Python stdlib modules.
+  TITLE:=XML bomb protection for Python
   URL:=https://github.com/tiran/defusedxml
 endef
 
