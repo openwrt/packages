@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libftdi
 PKG_VERSION:=0.20
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.intra2net.com/en/developer/libftdi/download/
@@ -38,6 +38,8 @@ define Package/libftdi/description
   libFTDI is an open source library to talk to FTDI chips: FT232BM, FT245BM, FT2232C, FT2232H, FT4232H, FT2232D and FT245R, including the popular bitbang mode. 
   The library is linked with your program in userspace, no kernel driver required.
 endef
+
+CMAKE_OPTIONS += -DBoost_NO_BOOST_CMAKE=ON
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
