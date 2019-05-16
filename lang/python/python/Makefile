@@ -12,14 +12,14 @@ include ../python-version.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
 PKG_HASH:=f222ef602647eecb6853681156d32de4450a2c39f4de93bd5b20235f2e660ed7
 
-PKG_LICENSE:=PSF
-PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
+PKG_LICENSE:=Python/2.0
+PKG_LICENSE_FILES:=LICENSE Doc/license.rst Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE Modules/expat/COPYING
 PKG_CPE_ID:=cpe:/a:python:python
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Jeffery To <jeffery.to@gmail.com>
@@ -42,7 +42,9 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_python-setuptools CONFIG_PACKAGE_python-pip \
 	CONFIG_PYTHON_BLUETOOTH_SUPPORT
 
-PKG_BUILD_DEPENDS:=python/host
+# bluez is being added here as a workaround to avoid a circular
+# dependecy.  See comment in EXTRA_DEPENDS below.
+PKG_BUILD_DEPENDS:=python/host bluez
 HOST_BUILD_DEPENDS:=bzip2/host expat/host
 
 include $(INCLUDE_DIR)/host-build.mk
@@ -79,10 +81,17 @@ endef
 define Package/python-light
 $(call Package/python/Default)
   TITLE:=Python $(PYTHON_VERSION) light installation
-  DEPENDS:=+python-base +libffi +libbz2 +PYTHON_BLUETOOTH_SUPPORT:bluez-libs
+  DEPENDS:=+python-base +libffi +libbz2
+  # This is being done instead of adding +PYTHON_BLUETOOTH_SUPPORT above to avoid
+  # a circular dependency because kmod-bluetooth depends on USB_SUPPORT.
+  # If && support is added to the DEPENDS syntax, this can be changed to
+  # to +(PYTHON_BLUETOOTH_SUPPORT&&USB_SUPPORT):bluez-libs in DEPENDS.
+  EXTRA_DEPENDS:=$(if $(CONFIG_PYTHON_BLUETOOTH_SUPPORT),bluez-libs)
 endef
 
+# The select statement below is also part of the circular dependency workaround
 define Package/python-light/config
+  select PACKAGE_bluez-libs if PYTHON_BLUETOOTH_SUPPORT
   source "$(SOURCE)/Config-python-light.in"
 endef
 
