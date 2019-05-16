@@ -4,8 +4,8 @@
  top_srcdir =	@top_srcdir@
  
  SUBDIRS =	named rndc dig delv dnssec tools nsupdate check confgen \
--		@NZD_TOOLS@ @PYTHON_TOOLS@ @PKCS11_TOOLS@ tests
-+		@NZD_TOOLS@ @PYTHON_TOOLS@ @PKCS11_TOOLS@
+-		@NZD_TOOLS@ @PYTHON_TOOLS@ @PKCS11_TOOLS@ plugins tests
++		@NZD_TOOLS@ @PYTHON_TOOLS@ @PKCS11_TOOLS@ plugins
  TARGETS =
  
  @BIND9_MAKE_RULES@
