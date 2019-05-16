@@ -14,15 +14,15 @@ PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
-PKG_RELEASE:=10
+PKG_RELEASE:=11
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
 PKG_HASH:=d83fe8ce51b1bb48bbcf0550fd265b9a75cdfdfa93f916f9e700aef8444bf1bb
 
-PKG_LICENSE:=PSF
-PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
+PKG_LICENSE:=Python-2.0
+PKG_LICENSE_FILES:=LICENSE Doc/license.rst Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi_osx/LICENSE Modules/expat/COPYING
 PKG_CPE_ID:=cpe:/a:python:python
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Jeffery To <jeffery.to@gmail.com>
@@ -45,7 +45,9 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_python3-setuptools CONFIG_PACKAGE_python3-pip \
 	CONFIG_PYTHON3_BLUETOOTH_SUPPORT
 
-PKG_BUILD_DEPENDS:=python3/host
+# bluez is being added here as a workaround to avoid a circular
+# dependecy.  See comment in EXTRA_DEPENDS below.
+PKG_BUILD_DEPENDS:=python3/host bluez
 HOST_BUILD_DEPENDS:=bzip2/host expat/host libffi/host
 
 include $(INCLUDE_DIR)/host-build.mk
@@ -82,10 +84,17 @@ endef
 define Package/python3-light
 $(call Package/python3/Default)
   TITLE:=Python $(PYTHON_VERSION) light installation
-  DEPENDS:=+python3-base +libffi +libbz2 +PYTHON3_BLUETOOTH_SUPPORT:bluez-libs +libuuid
+  DEPENDS:=+python3-base +libffi +libbz2 +libuuid
+  # This is being done instead of adding +PYTHON_BLUETOOTH_SUPPORT above to avoid
+  # a circular dependency because kmod-bluetooth depends on USB_SUPPORT.
+  # If && support is added to the DEPENDS syntax, this can be changed to
+  # +(PYTHON_BLUETOOTH_SUPPORT&&USB_SUPPORT):bluez-libs in DEPENDS.
+  EXTRA_DEPENDS:=$(if $(CONFIG_PYTHON_BLUETOOTH_SUPPORT),bluez-libs)
 endef
 
+# The select statement below is also part of the circular dependency workaround
 define Package/python3-light/config
+  select PACKAGE_bluez-libs if PYTHON3_BLUETOOTH_SUPPORT
   source "$(SOURCE)/Config-python3-light.in"
 endef
 

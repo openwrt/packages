@@ -1,3 +1,4 @@
+if USB_SUPPORT
 menu "Configuration"
 
 config PYTHON3_BLUETOOTH_SUPPORT
@@ -5,3 +6,4 @@ config PYTHON3_BLUETOOTH_SUPPORT
 	default n
 
 endmenu
+endif
