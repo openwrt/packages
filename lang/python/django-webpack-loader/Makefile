@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -9,8 +7,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-webpack-loader
 PKG_VERSION:=0.6.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
+
+PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
 PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/d/${PKG_NAME}
@@ -23,8 +24,7 @@ define Package/django-webpack-loader
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
-  TITLE:=Transparently use webpack with django
+  TITLE:=Transparently use webpack in django
   URL:=https://github.com/owais/django-webpack-loader
   DEPENDS:=+python +django
   VARIANT:=python
