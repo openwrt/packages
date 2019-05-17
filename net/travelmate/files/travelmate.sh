@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.4.5"
+trm_ver="1.4.6"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -20,7 +20,7 @@ trm_proactive=1
 trm_netcheck=0
 trm_captiveurl="http://captive.apple.com"
 trm_minquality=35
-trm_maxretry=3
+trm_maxretry=5
 trm_maxwait=30
 trm_timeout=60
 trm_listexpiry=0
@@ -218,7 +218,7 @@ f_check()
 				ifname="$(printf "%s" "${dev_status}" | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
 				if [ -n "${ifname}" ]
 				then
-					trm_ifquality="$(${trm_iwinfo} ${ifname} info 2>/dev/null | awk -F "[\/| ]" '/Link Quality:/{printf "%i\n", (100 / $NF * $(NF-1)) }')"
+					trm_ifquality="$(${trm_iwinfo} ${ifname} info 2>/dev/null | awk -F "[ ]" '/Link Quality:/{split($NF,var0,"/");printf "%i\n",(var0[1]*100/var0[2])}')"
 					if [ ${trm_captive} -eq 1 ]
 					then
 						result="$(${trm_fetch} --timeout=$(( ${trm_maxwait} / 3 )) "${trm_captiveurl}" -O /dev/null 2>&1 | \
@@ -433,7 +433,7 @@ f_main()
 				if [ -z "${scan_list}" ]
 				then
 					scan_list="$(f_trim "$("${trm_iwinfo}" "${dev}" scan 2>/dev/null | \
-						awk 'BEGIN{FS="[/ ]"}/Address:/{var1=$NF}/ESSID:/{var2="";for(i=12;i<=NF;i++)if(var2==""){var2=$i}else{var2=var2" "$i};gsub(/,/,".",var2)}/Quality:/{printf "%i,%s,%s\n",(100/$NF*$(NF-1)),var1,var2}' | \
+						awk 'BEGIN{FS="[ ]"}/Address:/{var1=$NF}/ESSID:/{var2="";for(i=12;i<=NF;i++)if(var2==""){var2=$i}else{var2=var2" "$i};gsub(/,/,".",var2)}/Quality:/{split($NF,var0,"/");printf "%i,%s,%s\n",(var0[1]*100/var0[2]),var1,var2}' | \
 						sort -rn | awk 'BEGIN{ORS=","}{print $0}' | awk '{print substr($0,1,4096)}')")"
 					f_log "debug" "f_main ::: scan_list: ${scan_list:0:800}"
 					if [ -z "${scan_list}" ]
