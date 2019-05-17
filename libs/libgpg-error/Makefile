@@ -9,13 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgpg-error
 PKG_VERSION:=1.36
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://ftp.bit.nl/mirror/gnupg/ \
-		https://ftp.nluug.nl/security/gnupg/ \
-		http://ring.ksc.gr.jp/archives/net/gnupg/libgpg-error/ \
-		https://www.gnupg.org/ftp/gcrypt/libgpg-error/
+PKG_SOURCE_URL:=https://mirrors.dotsrc.org/gcrypt/libgpg-error \
+		http://ring.ksc.gr.jp/archives/net/gnupg/libgpg-error \
+		https://www.gnupg.org/ftp/gcrypt/libgpg-error
 PKG_HASH:=babd98437208c163175c29453f8681094bcaf92968a15cafb1a276076b33c97c
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
