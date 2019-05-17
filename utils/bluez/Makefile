@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bluez
 PKG_VERSION:=5.50
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/bluetooth/
@@ -47,7 +47,7 @@ $(call Package/bluez/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+= library
-  DEPENDS:=+libpthread +kmod-bluetooth
+  DEPENDS:=+libpthread +USB_SUPPORT:kmod-bluetooth
 endef
 
 define Package/bluez-utils
