@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
-PKG_VERSION:=9.6.12
+PKG_VERSION:=9.6.13
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=\
 	http://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
 	ftp://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
 
-PKG_HASH:=2e8c8446ba94767bda8a26cf5a2152bf0ae68a86aaebf894132a763084579d84
+PKG_HASH:=ecbed20056296a65b6a4f5526c477e3ae5cc284cb01a15507785ddb23831e9a4
 
 PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
