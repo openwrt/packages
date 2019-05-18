@@ -38,6 +38,7 @@ config LXC_BUSYBOX_OPTIONS
 config LXC_SECCOMP
 	bool "Enable support for seccomp in LXC"
 	default KERNEL_SECCOMP
+	depends on !arc
 	help
 	  Build LXC with support for seccomp filters.
 	  Select libseccomp which also pulls-in the needed kernel features.

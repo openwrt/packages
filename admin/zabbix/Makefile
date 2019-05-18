@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
-PKG_VERSION:=4.0.3
-PKG_RELEASE:=1
+PKG_VERSION:=4.0.6
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=6b3d3b23c72a7af1958dc0938a566be03f0424cb44df5b2a9f487428f32d0463
 PKG_SOURCE_URL:=@SF/zabbix
+PKG_HASH:=2890851b3a4b0f70f69ef754aa0d07070b42440f56d280113a9474bc4ed75e5b
 
+PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:zabbix:zabbix
@@ -70,10 +71,9 @@ endef
 define Package/zabbix/Default
   SECTION:=admin
   CATEGORY:=Administration
+  SUBMENU:=zabbix
   TITLE:=Zabbix
   URL:=https://www.zabbix.com/
-  SUBMENU:=zabbix
-  MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
   USERID:=zabbix=53:zabbix=53
   DEPENDS += $(ICONV_DEPENDS) +libpcre +zlib +ZABBIX_GNUTLS:libgnutls +ZABBIX_OPENSSL:libopenssl
 endef
@@ -159,6 +159,7 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_ZABBIX_POSTGRESQL),--with-postgresql) \
 	--with-libevent=$(STAGING_DIR)/usr/include/libevent \
 	--with-libpcre=$(STAGING_DIR)/usr/include \
+	--with-zlib=$(STAGING_DIR)/usr/include \
 	$(if $(CONFIG_ZABBIX_GNUTLS),--with-gnutls="$(STAGING_DIR)/usr") \
 	$(if $(CONFIG_ZABBIX_OPENSSL),--with-openssl="$(STAGING_DIR)/usr")
 

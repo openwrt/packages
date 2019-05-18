@@ -55,7 +55,7 @@ index c3779c0..611fb43 100644
    BIO_get_mem_ptr(bio, &mem);
    info->Set(context, env->valid_to_string(),
              String::NewFromUtf8(env->isolate(), mem->data,
-@@ -6194,8 +6208,12 @@ void TimingSafeEqual(const FunctionCallbackInfo<Value>& args) {
+@@ -6191,8 +6205,12 @@ void TimingSafeEqual(const FunctionCallbackInfo<Value>& args) {
  }
  
  void InitCryptoOnce() {
@@ -68,7 +68,7 @@ index c3779c0..611fb43 100644
  
    // --openssl-config=...
    if (!openssl_config.empty()) {
-@@ -6217,10 +6235,10 @@ void InitCryptoOnce() {
+@@ -6214,10 +6232,10 @@ void InitCryptoOnce() {
      }
    }
  

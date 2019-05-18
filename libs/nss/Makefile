@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nss
-PKG_VERSION:=3.43
+PKG_VERSION:=3.44
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENCE:=MPL-2.0
@@ -16,7 +16,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
     https://download.cdn.mozilla.net/pub/security/$(PKG_NAME)/releases/NSS_$(subst .,_,$(PKG_VERSION))_RTM/src \
     https://archive.mozilla.org/pub/security/$(PKG_NAME)/releases/NSS_$(subst .,_,$(PKG_VERSION))_RTM/src
-PKG_HASH:=f30bc1b7330887b75de9fec37dbc173001758dc43fb095ffbc45dac4093fe2ca
+PKG_HASH:=a5620e59b6eeedfd5a12c9298b50ad92e9898b223e214eb675e36f4ffb5b6aff
 
 PKG_BUILD_PARALLEL:=0
 
@@ -28,7 +28,7 @@ define Package/libnss
   CATEGORY:=Libraries
   TITLE:=Mozilla's SSL and TLS implementation
   URL:=https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS
-  DEPENDS:=+libpthread +librt +libsqlite3 +nspr
+  DEPENDS:=+libpthread +libsqlite3 +nspr
 endef
 
 define Package/nss-utils
@@ -61,6 +61,7 @@ export CROSS_COMPILE=1
 export BUILD_OPT=1
 export NATIVE_CC=$(HOSTCC)
 export NATIVE_FLAGS=$(HOST_CFLAGS)
+export NSDISTMODE=copy
 export NSS_ENABLE_WERROR=0
 export NSS_DISABLE_GTESTS=1
 export NSS_USE_SYSTEM_SQLITE=1
@@ -73,6 +74,7 @@ export NSPR_INCLUDE_DIR=$(STAGING_DIR)/usr/include/nspr
 export SEED_ONLY_DEV_URANDOM=1
 export OS_REL_CFLAGS=$(TARGET_CFLAGS)
 export NS_USE_GCC=1
+export FREEBL_NO_DEPEND=1
 #size optimisation, seems to not impact speed
 export NSS_DISABLE_DBM=1
 export NSS_PKIX_NO_LDAP=1
@@ -97,19 +99,21 @@ define Build/InstallDev
 	 $(1)/usr/include/nss \
 	 $(1)/usr/lib \
 	 $(1)/usr/lib/pkgconfig
-	$(FIND) $(PKG_BUILD_DIR)/nss  -type f -name *.h \
-	    -exec $(CP) -a {} $(1)/usr/include/nss/ \;
-	$(FIND) $(PKG_BUILD_DIR)/nss -type f -name *.so \
-	    -exec $(CP) -a {} $(1)/usr/lib/ \;
-	$(FIND) $(PKG_BUILD_DIR)/nss -type f -name *.pc \
-	    -exec $(CP) -a {} $(1)/usr/lib/pkgconfig/ \;
+	$(CP) $(PKG_BUILD_DIR)/dist/private/nss/*.h \
+	  $(1)/usr/include/nss/
+	$(CP) $(PKG_BUILD_DIR)/dist/public/nss/*.h \
+	  $(1)/usr/include/nss/
+	$(CP) $(PKG_BUILD_DIR)/dist/build_dir/lib/*.so \
+	  $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/nss/config/*.pc \
+	  $(1)/usr/lib/pkgconfig/
 endef
 
 define Package/nss-utils/install
 	$(INSTALL_DIR) \
 	 $(1)/usr/bin
-	$(CP) $(PKG_BUILD_DIR)/nss/cmd/certutil/build_dir/certutil $(1)/usr/bin
-	$(CP) $(PKG_BUILD_DIR)/nss/cmd/pk12util/build_dir/pk12util $(1)/usr/bin
+	$(CP) $(PKG_BUILD_DIR)/dist/build_dir/bin/certutil $(1)/usr/bin
+	$(CP) $(PKG_BUILD_DIR)/dist/build_dir/bin/pk12util $(1)/usr/bin
 endef
 
 #for now pack only libreswan needed libs
@@ -119,12 +123,12 @@ define Package/libnss/install
 	 $(1)/etc/pki/nssdb \
 	 $(1)/etc/ipsec.d
 
-	$(CP) $(PKG_BUILD_DIR)/nss/lib/nss/build_dir/libnss3.so $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/nss/lib/smime/build_dir/libsmime3.so $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/nss/lib/ssl/build_dir/libssl3.so $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/nss/lib/util/build_dir/libnssutil3.so $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/nss/lib/softoken/build_dir/libsoftokn3.so $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/nss/lib/freebl/build_dir/$(OS_TARGET)_SINGLE_SHLIB/libfreeblpriv3.so $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/dist/build_dir/lib/libfreebl3.so $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/dist/build_dir/lib/libnss3.so $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/dist/build_dir/lib/libnssutil3.so $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/dist/build_dir/lib/libsmime3.so $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/dist/build_dir/lib/libsoftokn3.so $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/dist/build_dir/lib/libssl3.so $(1)/usr/lib/
 #	Pprovide databases with a blank certificate
 	$(CP)	./files/blank-cert9.db $(1)/etc/pki/nssdb/cert9.db
 	$(CP)	./files/blank-key4.db $(1)/etc/pki/nssdb/key4.db

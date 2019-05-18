@@ -10,7 +10,7 @@ Signed-off-by: Marko Ratkaj <marko.ratkaj@sartura.hr>
 
 --- a/src/Makefile.in
 +++ b/src/Makefile.in
-@@ -8383,7 +8383,8 @@
+@@ -8385,7 +8385,8 @@
  
  # cf_gen builds the configuration files.
  cf_gen$(EXEEXT): $(cf_gen_SOURCES) $(cf_gen_DEPENDENCIES) cf_gen_defines.cci

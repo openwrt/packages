@@ -8,14 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpd
-PKG_VERSION:=2.1.20180706
-PKG_RELEASE:=1
+PKG_VERSION:=2.1.20190408
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://miniupnp.tuxfamily.org/files
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=fc2d2fd044d8c3f8d02b63d70489bb35ece836a4fc1b6386865ac8fbe8d8b006
+PKG_HASH:=4175d588f600e2877503c781c5d75320dfce572669fcab7604434b07ec5c0d5d
 
 PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/version.mk
@@ -38,9 +39,9 @@ define Build/Prepare
 	echo "$(VERSION_NUMBER)" | tr '() ' '_' >$(PKG_BUILD_DIR)/os.openwrt
 endef
 
-TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS))
-TARGET_CFLAGS += -flto -ffunction-sections -fdata-sections -O2
-TARGET_LDFLAGS += $(FPIC) -flto -Wl,--gc-sections
+TARGET_CFLAGS += $(FPIC) -flto
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+
 MAKE_FLAGS += \
 	TARGET_OPENWRT=1 TEST=0 LIBS="" \
 	CC="$(TARGET_CC) -DIPTABLES_143 -lip4tc -luuid \

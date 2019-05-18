@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 #
-# Copyright (C) 2017 Yousong Zhou <yszhou4tech@gmail.com>
+# Copyright (C) 2017-2019 Yousong Zhou <yszhou4tech@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v3.
 # See /LICENSE for more information.
@@ -30,6 +30,8 @@ ss_mkjson_server_conf_() {
 	[ -z "$method" ] || json_add_string method "$method"
 	[ -z "$key" ] || json_add_string key "$key"
 	[ -z "$password" ] || json_add_string password "$password"
+	[ -z "$plugin" ] || json_add_string plugin "$plugin"
+	[ -z "$plugin_opts" ] || json_add_string plugin_opts "$plugin_opts"
 }
 
 ss_mkjson_ss_local_conf() {
@@ -212,7 +214,9 @@ validate_common_server_options_() {
 		'server_port:port' \
 		'password:string' \
 		'key:string' \
-		"method:or($stream_methods, $aead_methods)"
+		"method:or($stream_methods, $aead_methods)" \
+		'plugin:string' \
+		'plugin_opts:string'
 }
 
 validate_common_client_options_() {

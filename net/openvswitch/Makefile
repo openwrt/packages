@@ -1,7 +1,7 @@
 #
 # Copyright (C) 2013 Julius Schulz-Zander <julius@net.t-labs.tu-berlin.de>
 # Copyright (C) 2014-2017 OpenWrt.org
-# Copyright (C) 2018 Yousong Zhou <yszhou4tech@gmail.com>
+# Copyright (C) 2018-2019 Yousong Zhou <yszhou4tech@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -16,7 +16,7 @@ include $(INCLUDE_DIR)/kernel.mk
 #
 PKG_NAME:=openvswitch
 PKG_VERSION:=2.11.0
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
 PKG_HASH:=f4b01d7376d7298bc6e7fa7a6067229ca7c7e299394e5ea9aff651d52edfdbee
@@ -24,7 +24,7 @@ PKG_HASH:=f4b01d7376d7298bc6e7fa7a6067229ca7c7e299394e5ea9aff651d52edfdbee
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=python/host python-six/host
+PKG_BUILD_DEPENDS+=python3/host python-six/host
 PKG_USE_MIPS16:=0
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
@@ -33,8 +33,9 @@ PKG_INSTALL:=1
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
-include ../../lang/python/python-host.mk
+include ../../lang/python/python3-host.mk
 include ../../lang/python/python-package.mk
+include ../../lang/python/python3-package.mk
 
 
 ovs_kmod_packages:=
@@ -283,6 +284,16 @@ endef
 $(eval $(call OvsPackageTemplate,python))
 
 
+ovs_python3_title:=Open vSwitch (Python3 library)
+ovs_python3_hidden:=
+ovs_python3_depends:=+PACKAGE_openvswitch-python3:python3 +PACKAGE_openvswitch-python3:python3-six
+define ovs_python3_install
+	$$(INSTALL_DIR) $$(1)$$(PYTHON3_PKG_DIR)
+	$$(CP) $$(PKG_INSTALL_DIR)/usr/share/openvswitch/python/ovs $$(1)$$(PYTHON3_PKG_DIR)
+endef
+$(eval $(call OvsPackageTemplate,python3))
+
+
 CONFIGURE_ARGS+= \
 	--enable-ndebug \
 	--enable-shared \
@@ -290,10 +301,10 @@ CONFIGURE_ARGS+= \
 
 CONFIGURE_VARS += \
 	ovs_cv_flake8=no \
-	ovs_cv_python3=no \
+	ovs_cv_python=$(PYTHON3) \
+	ovs_cv_python_host=$(HOST_PYTHON3_BIN) \
 	ovs_cv_sphinx=no \
-	ovs_cv_python=$(PYTHON) \
-	ovs_cv_python_host=$(HOST_PYTHON_BIN) \
+	ovs_cv_python2=no \
 	KARCH=$(LINUX_KARCH) \
 
 ovs_intree_kmod_configs:=CONFIG_PACKAGE_kmod-openvswitch-intree
@@ -304,7 +315,7 @@ ifneq ($(ovs_intree_kmod_enabled),)
 endif
 
 TARGET_CFLAGS += -flto -std=gnu99
-MAKE_VARS += PYTHONPATH="$(HOST_PYTHONPATH)"
+MAKE_VARS += PYTHONPATH="$(HOST_PYTHON3PATH)"
 
 $(foreach p,$(ovs_kmod_packages),\
   $(eval $(call KernelPackage,$(p)))\

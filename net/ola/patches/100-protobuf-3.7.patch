@@ -1,0 +1,45 @@
+From d311970864a2338d63ce3c22a46bb9ec4bb26bfe Mon Sep 17 00:00:00 2001
+From: Peter Newman <peterjnewman@gmail.com>
+Date: Fri, 8 Mar 2019 15:43:50 +0000
+Subject: [PATCH] Attempt to fix Protobuf 3.7 builds
+
+---
+ configure.ac       |  3 +++
+ protoc/StrUtil.cpp | 10 ++++++++++
+ 2 files changed, 13 insertions(+)
+
+diff --git a/configure.ac b/configure.ac
+index 9824609b4..4f782847c 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -803,6 +803,9 @@ AS_IF([test "${enable_rdm_tests}" = "yes"],
+ AS_IF([test "x$build_java_libs" = xyes],
+       [PROTOBUF_SUPPORT([2.4.0])],
+       [PROTOBUF_SUPPORT([2.3.0])])
++# Version 3.7 and above of protoc require some additional includes
++AC_CHECK_HEADERS([google/protobuf/io/strtod.h google/protobuf/stubs/logging.h \
++                  google/protobuf/stubs/stl_util.h])
+ 
+ 
+ # Doxygen
+diff --git a/protoc/StrUtil.cpp b/protoc/StrUtil.cpp
+index 85891a6a4..2914e82f1 100644
+--- a/protoc/StrUtil.cpp
++++ b/protoc/StrUtil.cpp
+@@ -41,6 +41,16 @@
+ 
+ #include "protoc/StrUtil.h"
+ 
++#ifdef HAVE_GOOGLE_PROTOBUF_IO_STRTOD_H
++#include <google/protobuf/io/strtod.h>
++#endif  // HAVE_GOOGLE_PROTOBUF_IO_STRTOD_H
++#ifdef HAVE_GOOGLE_PROTOBUF_STUBS_LOGGING_H
++#include <google/protobuf/stubs/logging.h>
++#endif  // HAVE_GOOGLE_PROTOBUF_STUBS_LOGGING_H
++#ifdef HAVE_GOOGLE_PROTOBUF_STUBS_STL_UTIL_H
++#include <google/protobuf/stubs/stl_util.h>
++#endif  // HAVE_GOOGLE_PROTOBUF_STUBS_STL_UTIL_H
++
+ #ifdef _WIN32
+ // MSVC has only _snprintf, not snprintf.
+ //

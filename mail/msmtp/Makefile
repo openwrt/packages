@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msmtp
-PKG_VERSION:=1.8.3
-PKG_RELEASE:=1
+PKG_VERSION:=1.8.4
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://marlam.de/msmtp/releases
-PKG_HASH:=3cb2eefd33d048f0f82de100ef39a494e44fd1485e376ead31f733d2f36b92b4
+PKG_HASH:=e5dd7fe95bc8e2f5eea3e4894ec9628252f30bd700a7fd1a568b10efa91129f7
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
@@ -103,20 +103,10 @@ CONFIGURE_ARGS += \
 	--without-macosx-keyring \
 	--without-msmtpd
 
-ifneq ($(CONFIG_USE_UCLIBC),)
-  CONFIGURE_ARGS += --disable-gai-idn
-endif
-
-MAKE_FLAGS :=
-
 ifeq ($(BUILD_VARIANT),ssl)
-	CONFIGURE_ARGS += \
-		--with-tls=gnutls
-endif
-
-ifeq ($(BUILD_VARIANT),nossl)
-	CONFIGURE_ARGS += \
-		--with-tls=no
+	CONFIGURE_ARGS += --with-tls=gnutls
+else
+	CONFIGURE_ARGS += --without-tls
 endif
 
 define Package/msmtp/install

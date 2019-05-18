@@ -8,12 +8,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pillow
 PKG_VERSION:=5.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=Pillow-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/P/Pillow
 PKG_HASH:=2ea3517cd5779843de8a759c2349a3cd8d3893e03ab47053b66d5ec6f8bc4f93
 PKG_BUILD_DIR:=$(BUILD_DIR)/Pillow-$(PKG_VERSION)
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_LICENSE:=CUSTOM
 PKG_LICENSE_FILES:=LICENSE
@@ -26,7 +27,6 @@ define Package/pillow
     SECTION:=lang
     CATEGORY:=Languages
     TITLE:=The friendly PIL fork
-    MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
     URL:=https://python-pillow.org/
     DEPENDS:=+python +libfreetype +libjpeg +zlib +libtiff
 endef

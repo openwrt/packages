@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=quasselc
 PKG_SOURCE_DATE:=2017-01-11
 PKG_SOURCE_VERSION:=a0a1e6bd87d3eac68b5369972d1c2035cfe47e94
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/phhusson/QuasselC/tar.gz/$(PKG_SOURCE_VERSION)?
@@ -25,6 +25,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 MAKE_FLAGS += prefix=$(STAGING_DIR)/usr libdir=$(STAGING_DIR)/usr/lib includedir=$(STAGING_DIR)/usr/include
 MAKE_INSTALL_FLAGS += prefix=/usr libdir=/usr/lib includedir=/usr/include

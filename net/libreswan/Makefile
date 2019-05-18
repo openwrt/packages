@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libreswan
 PKG_VERSION:=3.27
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.libreswan.org/
@@ -21,7 +21,6 @@ PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/kernel.mk
 
 define Package/libreswan/Default
   TITLE:=Libreswan
@@ -40,8 +39,9 @@ $(call Package/libreswan/Default)
   SUBMENU:=VPN
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:= +kmod-libreswan +libnss +librt +libevent2 +libevent2-pthreads \
-	    +ip-full
+  DEPENDS:= +libnss +librt +libevent2 +libevent2-pthreads +kmod-crypto-authenc \
+	+kmod-crypto-hash +kmod-ipt-ipsec +iptables-mod-ipsec +ip-full +kmod-ip-vti \
+	+kmod-ipsec +kmod-ipsec4 +kmod-crypto-rng +IPV6:kmod-ipsec6 +IPV6:kmod-ip6-vti
   PROVIDES:=openswan
   CONFLICTS:=strongswan
   TITLE+= IPsec Server
@@ -53,20 +53,6 @@ $(call Package/libreswan/Default/description)
  standardized VPN protocol based on ("IPsec") and the Internet Key Exchange
  ("IKE"). These standards are produced and maintained by the Internet
  Engineering Task Force ("IETF").
-endef
-
-define KernelPackage/libreswan
-$(call Package/libreswan/Default)
-  SUBMENU:=Network Support
-  TITLE+= (kernel module)
-  FILES:=$(PKG_BUILD_DIR)/modobj*/ipsec.$(LINUX_KMOD_SUFFIX)
-  DEPENDS:= +kmod-crypto-authenc +kmod-crypto-hash +kmod-ipt-ipsec +iptables-mod-ipsec \
-	    +kmod-ipsec +kmod-ipsec4 +kmod-crypto-rng +IPV6:kmod-ipsec6
-endef
-
-define KernelPackage/libreswan/description
-$(call Package/libreswan/Default/description)
- This package contains the Libreswan kernel module.
 endef
 
 define Package/libreswan/conffiles
@@ -90,6 +76,7 @@ MAKE_FLAGS+= \
     USE_SYSTEMD_WATCHDOG=false \
     INC_USRLOCAL="/usr" \
     FINALRUNDIR="/var/run/pluto" \
+    ARCH="$(LINUX_KARCH)" \
     KERNELSRC="$(LINUX_DIR)"
 
 define Build/Prepare
@@ -99,8 +86,7 @@ define Build/Prepare
 endef
 
 define Build/Compile
-	$(call Build/Compile/Default,base)
-	$(call Build/Compile/Default,module)
+	$(call Build/Compile/Default,all)
 endef
 
 define Package/libreswan/install
@@ -122,4 +108,3 @@ define Package/libreswan/install
 endef
 
 $(eval $(call BuildPackage,libreswan))
-$(eval $(call KernelPackage,libreswan))

@@ -1,0 +1,22 @@
+--- a/i18n/decimfmt.cpp
++++ b/i18n/decimfmt.cpp
+@@ -1812,7 +1812,7 @@ bool DecimalFormat::fastFormatDouble(double input, UnicodeString& output) const
+         return false;
+     }
+     if (std::isnan(input)
+-            || std::trunc(input) != input
++            || trunc(input) != input
+             || input <= INT32_MIN
+             || input > INT32_MAX) {
+         return false;
+--- a/i18n/number_decimalquantity.cpp
++++ b/i18n/number_decimalquantity.cpp
+@@ -446,7 +446,7 @@ void DecimalQuantity::_setToDoubleFast(double n) {
+         for (; i <= -22; i += 22) n /= 1e22;
+         n /= DOUBLE_MULTIPLIERS[-i];
+     }
+-    auto result = static_cast<int64_t>(std::round(n));
++    auto result = static_cast<int64_t>(round(n));
+     if (result != 0) {
+         _setToLong(result);
+         scale -= fracLength;

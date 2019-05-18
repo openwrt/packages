@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=measurement-kit
-PKG_VERSION:=0.10.0
+PKG_VERSION:=0.10.3
 PKG_RELEASE=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/measurement-kit/measurement-kit/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=c31ff8a457dfdbb2d42ef60f82646e508f6649107f15eec31fc22bc140ceb8e6
+PKG_HASH:=04bc1832fbaa54a9fde4923e8f44a2f99610a862c228dd05977c36f54870d80f
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/measurement-kit
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=C++14 library that implements open network measurement methodologies
+  TITLE:=library for open network measurement
   URL:=https://measurement-kit.github.io/
   DEPENDS:=+libstdcpp +libcurl +libevent2-pthreads +libevent2-extra +libevent2-openssl +libevent2-core +libmaxminddb +ca-bundle
 endef

@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gstreamer1
-PKG_VERSION:=1.15.2
+PKG_VERSION:=1.16.0
 PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -20,7 +20,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_BUILD_DIR:=$(BUILD_DIR)/gstreamer-$(PKG_VERSION)
 PKG_SOURCE:=gstreamer-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gstreamer
-PKG_HASH:=27a3211eb5c3f6929c5f123ffecaac0ea6e9ed6b93be879c033a7d5af13ad7e6
+PKG_HASH:=0e8e2f7118be437cba879353970cf83c2acced825ecb9275ba05d9186ef07c00
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=autogen.sh aclocal.m4
@@ -131,7 +131,6 @@ CONFIGURE_ARGS += \
 	--disable-gst-tracer-hooks \
 	--disable-gst-debug \
 	--disable-gtk-doc-html \
-	--disable-option-parsing \
 	--disable-rpath \
 	--disable-tests \
 	--disable-valgrind \

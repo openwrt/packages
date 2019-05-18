@@ -1,0 +1,147 @@
+diff --git a/folly/io/async/ssl/OpenSSLUtils.cpp b/folly/io/async/ssl/OpenSSLUtils.cpp
+index 0504cf8..a9c2775 100644
+--- a/folly/io/async/ssl/OpenSSLUtils.cpp
++++ b/folly/io/async/ssl/OpenSSLUtils.cpp
+@@ -155,8 +155,12 @@ static std::unordered_map<uint16_t, std::string> getOpenSSLCipherNames() {
+   SSL_CTX* ctx = nullptr;
+   SSL* ssl = nullptr;
+
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+   const SSL_METHOD* meth = SSLv23_server_method();
+   OpenSSL_add_ssl_algorithms();
++#else
++  const SSL_METHOD* meth = TLS_server_method();
++#endif
+
+   if ((ctx = SSL_CTX_new(meth)) == nullptr) {
+     return ret;
+diff --git a/folly/portability/OpenSSL.h b/folly/portability/OpenSSL.h
+index a4f4b04..427bf95 100644
+--- a/folly/portability/OpenSSL.h
++++ b/folly/portability/OpenSSL.h
+@@ -27,6 +27,7 @@
+
+ #include <openssl/asn1.h>
+ #include <openssl/bio.h>
++#include <openssl/bn.h>
+ #include <openssl/crypto.h>
+ #include <openssl/dh.h>
+ #include <openssl/err.h>
+diff --git a/folly/ssl/OpenSSLCertUtils.cpp b/folly/ssl/OpenSSLCertUtils.cpp
+index 544bb4f..423dd2c 100644
+--- a/folly/ssl/OpenSSLCertUtils.cpp
++++ b/folly/ssl/OpenSSLCertUtils.cpp
+@@ -155,12 +155,17 @@ folly::Optional<std::string> OpenSSLCertUtils::toString(X509& x509) {
+   }
+ }
+
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++#define X509_get0_notAfter X509_get_notAfter
++#define X509_get0_notBefore X509_get_notBefore
++#endif
++
+ std::string OpenSSLCertUtils::getNotAfterTime(X509& x509) {
+-  return getDateTimeStr(X509_get_notAfter(&x509));
++  return getDateTimeStr(X509_get0_notAfter(&x509));
+ }
+
+ std::string OpenSSLCertUtils::getNotBeforeTime(X509& x509) {
+-  return getDateTimeStr(X509_get_notBefore(&x509));
++  return getDateTimeStr(X509_get0_notBefore(&x509));
+ }
+
+ std::string OpenSSLCertUtils::getDateTimeStr(const ASN1_TIME* time) {
+diff --git a/folly/ssl/OpenSSLVersionFinder.h b/folly/ssl/OpenSSLVersionFinder.h
+index d0110d7..9d65580 100644
+--- a/folly/ssl/OpenSSLVersionFinder.h
++++ b/folly/ssl/OpenSSLVersionFinder.h
+@@ -18,6 +18,12 @@
+ #include <folly/Conv.h>
+ #include <folly/portability/OpenSSL.h>
+
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++#define OPENSSL_VERSION SSLEAY_VERSION
++#define OpenSSL_version SSLeay_version
++#define OpenSSL_version_num SSLeay
++#endif
++
+ // This is used to find the OpenSSL version at runtime. Just returning
+ // OPENSSL_VERSION_NUMBER is insufficient as runtime version may be different
+ // from the compile-time version
+@@ -25,7 +31,7 @@ namespace folly {
+ namespace ssl {
+ inline std::string getOpenSSLLongVersion() {
+ #ifdef OPENSSL_VERSION_TEXT
+-  return SSLeay_version(SSLEAY_VERSION);
++  return OpenSSL_version(OPENSSL_VERSION);
+ #elif defined(OPENSSL_VERSION_NUMBER)
+   return folly::format("0x{:x}", OPENSSL_VERSION_NUMBER).str();
+ #else
+@@ -35,7 +41,7 @@ inline std::string getOpenSSLLongVersion() {
+
+ inline uint64_t getOpenSSLNumericVersion() {
+ #ifdef OPENSSL_VERSION_NUMBER
+-  return SSLeay();
++  return OpenSSL_version_num();
+ #else
+   return 0;
+ #endif
+diff --git a/folly/ssl/detail/OpenSSLThreading.cpp b/folly/ssl/detail/OpenSSLThreading.cpp
+index 3414fbd..ce345ab 100644
+--- a/folly/ssl/detail/OpenSSLThreading.cpp
++++ b/folly/ssl/detail/OpenSSLThreading.cpp
+@@ -115,6 +115,7 @@ struct SSLLock {
+ // SSLContext runs in such environments.
+ // Instead of declaring a static member we "new" the static
+ // member so that it won't be destructed on exit().
++#if !FOLLY_SSL_DETAIL_OPENSSL_IS_110
+ static std::unique_ptr<SSLLock[]>& locks() {
+   static auto locksInst = new std::unique_ptr<SSLLock[]>();
+   return *locksInst;
+@@ -128,8 +129,8 @@ static void callbackLocking(int mode, int n, const char*, int) {
+   }
+ }
+
+-static unsigned long callbackThreadID() {
+-  return static_cast<unsigned long>(folly::getCurrentThreadID());
++static void callbackThreadID(CRYPTO_THREADID *id) {
++  return CRYPTO_THREADID_set_numeric(id, folly::getCurrentThreadID());
+ }
+
+ static CRYPTO_dynlock_value* dyn_create(const char*, int) {
+@@ -150,28 +151,33 @@ dyn_lock(int mode, struct CRYPTO_dynlock_value* lock, const char*, int) {
+ static void dyn_destroy(struct CRYPTO_dynlock_value* lock, const char*, int) {
+   delete lock;
+ }
++#endif
+
+ void installThreadingLocks() {
++#if !FOLLY_SSL_DETAIL_OPENSSL_IS_110
+   // static locking
+   locks() = std::make_unique<SSLLock[]>(size_t(CRYPTO_num_locks()));
+   for (auto it : lockTypes()) {
+     locks()[size_t(it.first)].lockType = it.second;
+   }
+-  CRYPTO_set_id_callback(callbackThreadID);
++  CRYPTO_THREADID_set_callback(callbackThreadID);
+   CRYPTO_set_locking_callback(callbackLocking);
+   // dynamic locking
+   CRYPTO_set_dynlock_create_callback(dyn_create);
+   CRYPTO_set_dynlock_lock_callback(dyn_lock);
+   CRYPTO_set_dynlock_destroy_callback(dyn_destroy);
++#endif
+ }
+
+ void cleanupThreadingLocks() {
+-  CRYPTO_set_id_callback(nullptr);
++#if !FOLLY_SSL_DETAIL_OPENSSL_IS_110
++  CRYPTO_THREADID_set_callback(nullptr);
+   CRYPTO_set_locking_callback(nullptr);
+   CRYPTO_set_dynlock_create_callback(nullptr);
+   CRYPTO_set_dynlock_lock_callback(nullptr);
+   CRYPTO_set_dynlock_destroy_callback(nullptr);
+   locks().reset();
++#endif
+ }
+
+ } // namespace detail

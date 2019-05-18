@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius3
-PKG_VERSION:=release_3_0_18
-PKG_RELEASE:=1
+PKG_VERSION:=release_3_0_19
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/FreeRADIUS/freeradius-server/archive
-PKG_HASH:=c6802e3ec675b1cf59c850b0f01ed088e2983c5c4daa7f64cc22be4e6ad13ae5
+PKG_HASH:=34c50ac47a683b13eae1a02f2d0263c0bd51a83f01b99c02c5fe25df07a1ee77
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0
@@ -35,7 +35,7 @@ endef
 define Package/freeradius3/Default
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://freeradius.org/
+  URL:=https://freeradius.org/
   SUBMENU:=FreeRADIUS (version 3)
 endef
 
@@ -54,7 +54,7 @@ endef
 define Package/freeradius3-common
   $(call Package/freeradius3/Default)
   TITLE:=common files
-  DEPENDS:=+USE_GLIBC:libpthread +FREERADIUS3_OPENSSL:libopenssl +libcap +libpcap +libncurses +PACKAGE_libpcre:libpcre +libreadline +libtalloc +libatomic
+  DEPENDS:=+USE_GLIBC:libpthread +FREERADIUS3_OPENSSL:libopenssl +libcap +libpcap +libncurses +libpcre +libreadline +libtalloc +libatomic
 endef
 
 define Package/freeradius3-default
@@ -381,7 +381,7 @@ define Package/freeradius3-mod-sql-postgresql
   TITLE:=Radius PostgreSQL back-end drivers
 endef
 
-define Package/freeradius3-mod-sql-mysql/conffiles
+define Package/freeradius3-mod-sql-postgresql/conffiles
 /etc/freeradius3/mods-config/sql/main/postgresql
 endef
 
@@ -391,7 +391,7 @@ define Package/freeradius3-mod-sql-sqlite
   TITLE:=Radius SQLite back-end drivers
 endef
 
-define Package/freeradius3-mod-sql-mysql/conffiles
+define Package/freeradius3-mod-sql-sqlite/conffiles
 /etc/freeradius3/mods-config/sql/main/sqlite
 endef
 

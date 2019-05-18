@@ -10,14 +10,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=log4cplus
 PKG_VERSION:=2.0.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=BangLang Huang <banglang.huang@foxmail.com>, Rosy Song <rosysong@rosinson.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/log4cplus/log4cplus/releases/download/REL_2_0_3/
 PKG_HASH:=c55742c348d09b33219eea00d65b05bdd78ea967761b980b7134855fe24c5f73
 
-PKG_LICENSE_FILE:=LICENSE
+PKG_LICENSE_FILES:=LICENSE
 CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk

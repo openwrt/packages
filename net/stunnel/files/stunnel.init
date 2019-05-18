@@ -52,12 +52,13 @@ validate_service_options() {
 		'checkHost:list(host)' \
 		'checkIP:list(ipaddr)' \
 		'ciphers:list(string)' \
+		'ciphersuites:list(string)' \
 		'client:bool' \
 		'config:list(string)' \
 		'connect:list(string)' \
 		'CRLfile:string' \
 		'CRLpath:string' \
-		'curve:string' \
+		'curves:list(string)' \
 		'debug:or(range(0,7),string)' \
 		'delay:bool' \
 		'engineId:string' \
@@ -232,7 +233,6 @@ print_service_options() {
 		cert \
 		CRLfile \
 		CRLpath \
-		curve \
 		debug \
 		logId \
 		engineId \
@@ -294,6 +294,8 @@ print_service_options() {
 
 	print_lists_reduce : \
 		ciphers \
+		curves \
+		ciphersuites \
 		;
 
 	print_host_port \

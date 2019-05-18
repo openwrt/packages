@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 # Name and release number of this package
 PKG_NAME:=noddos
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=GPLv3
 PKG_MAINTAINER:=Steven Hessing <steven.hessing@gmail.com>
 

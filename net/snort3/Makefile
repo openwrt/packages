@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=snort3
 PKG_VERSION:=3.0.0-beta
 PKG_VERSION_SHORT:=3.0.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>

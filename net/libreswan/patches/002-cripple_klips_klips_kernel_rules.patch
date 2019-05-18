@@ -1,0 +1,22 @@
+From fa00316e8c5151747f3e80895e6afd9ee1a9c0cd Mon Sep 17 00:00:00 2001
+From: Andrew Cagney <cagney@gnu.org>
+Date: Thu, 25 Oct 2018 21:02:45 -0400
+Subject: [PATCH] building: when !USE_KLIPS=true cripple klips kernel module
+ rules
+
+---
+ Makefile | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 0b070966e6..2fcf0229fd 100644
+--- a/Makefile
++++ b/Makefile
+@@ -216,5 +216,6 @@ install-fipshmac:
+ include ${LIBRESWANSRCDIR}/mk/docker-targets.mk
+ include ${LIBRESWANSRCDIR}/mk/kvm-targets.mk
+ include ${LIBRESWANSRCDIR}/mk/web-targets.mk
++ifeq ($(USE_KLIPS),true)
+ include ${LIBRESWANSRCDIR}/mk/kernel.mk
+-
++endif

@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libvpx
-PKG_VERSION:=1.7.0
+PKG_VERSION:=1.8.0
 PKG_RELEASE:=1
 
 PKG_REV:=v$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_REV).tar.gz
-PKG_MIRROR_HASH:=be50ff18464d614a08726597ecbd72d1f11ec69ec04df2d9acdf646ecd9adcca
+PKG_MIRROR_HASH:=caf53ffff549fefb14d8d054db014c6394e1955d199b80dc985ef6098bd4213d
 PKG_SOURCE_URL:=https://chromium.googlesource.com/webm/libvpx
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_REV)
@@ -46,14 +46,14 @@ define Package/libvpx/description
 endef
 
 CONFIGURE_ARGS = \
-		--target=generic-gnu \
-		--prefix=$(CONFIGURE_PREFIX) \
-		--libdir=/usr/lib \
-		--enable-static \
-		--enable-shared \
-        --disable-examples \
-        --disable-docs \
-        --disable-unit-tests \
+	--target=generic-gnu \
+	--prefix=$(CONFIGURE_PREFIX) \
+	--libdir=/usr/lib \
+	--enable-static \
+	--enable-shared \
+	--disable-examples \
+	--disable-docs \
+	--disable-unit-tests \
 
 # Add --enable-small as openwrt gcc flags are overwritten
 ifneq ($(findstring -Os,$(TARGET_CFLAGS)),)
@@ -62,12 +62,9 @@ endif
 
 # libvpx expects gcc as linker but uses $LD if provided
 # However, OpenWRT defines LD as *-uclibc-ld and not *-gcc
-CONFIGURE_VARS += \
-    CROSS=$(GNU_TARGET_NAME) \
-	LD="$(TARGET_CC)" \
-
-MAKE_FLAGS += \
-	LD="$(TARGET_CC)" \
+CONFIGURE_VARS := $(filter-out LD=%,$(CONFIGURE_VARS)) LD="$(TARGET_CC)" \
+       CROSS=$(GNU_TARGET_NAME)
+MAKE_FLAGS := $(filter-out LD=%,$(MAKE_FLAGS)) LD="$(TARGET_CC)"
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/vpx/

@@ -1,12 +1,17 @@
 # Python packages folder
 
+:warning: **Python 2 will soon be unsupported and removed from the feed - [see below](#python-2-end-of-life)** :warning:
+
 ## Table of contents
 
 1. [Description](#description)
-2. [Introduction](#introduction)
-3. [Build considerations](#build-considerations)
-4. [General folder structure](#general-folder-structure)
-5. [Building a Python[3] package](#building-a-python3-package)
+2. [Python 2 end-of-life](#python-2-end-of-life)
+    1. [Transition policy / schedule](#transition-policy--schedule)
+3. [Introduction](#introduction)
+4. [Using Python[3] in external/other package feeds](#using-python3-in-externalother-package-feeds)
+5. [Build considerations](#build-considerations)
+6. [General folder structure](#general-folder-structure)
+7. [Building a Python[3] package](#building-a-python3-package)
     1. [PKG_BUILD_DIR](#pkg_build_dir)
     2. [PKG_UNPACK](#pkg_unpack)
     3. [Include python[3]-package.mk](#include-python3-packagemk)
@@ -21,6 +26,38 @@ This section describes specifics for the Python packages that are present in thi
 
 In terms of license, contributing guide, etc, all of that information is described in the top [README.md](README.md) file, and it applies here as well. This document attempts to cover only technical aspects of Python/Python3 packages, and maybe some explanations about how things are (and why they are as they are).
 
+## Python 2 end-of-life
+
+Python 2 will not be maintained past [1 January 2020](https://pythonclock.org/). As such, we will be transitioning Python 2 programs and libraries to Python 3, and Python 2 packages will be removed in early 2020.
+
+(Discussion for how to handle this transition can be found in [#8520](https://github.com/openwrt/packages/issues/8520).)
+
+### Transition policy / schedule
+
+A mass removal event ("The Snap") will occur on 31 March 2020, or 2 weeks before the freeze for a 20.x release, whichever is sooner. The exact date will be confirmed when the 20.x release schedule is known, or by 15 March 2020.
+
+All Python 2 packages (the Python 2 interpreter, programs that depend on Python 2, and Python 2-only libraries) will be removed during this event.
+
+Leading up to "The Snap":
+
+* In general, new Python 2 packages are no longer accepted
+  * Exceptions can be made on a case-by-case basis, given extraordinary circumstances or reasons, until 31 May 2019
+  * From 31 May 2019 onward, absolutely no new Python 2 packages will be accepted
+
+* The Python 2 interpreter will remain in the feed until "The Snap"
+  * The interpreter will continue to be updated, including the last release in January 2020 (if there is one)
+
+* Programs that depend on Python 2 will be transitioned to Python 3 (see [#8893](https://github.com/openwrt/packages/issues/8893))
+  * If a program cannot be transitioned, a suitable replacement will be found
+  * If a replacement cannot be found, the program will be removed during "The Snap"
+
+* Python 2 libraries will remain in the feed until "The Snap"
+  * A Python 2-only library will be transitioned to Python 3 (or a suitable replacement found), if its Python 3 version is a dependency of another package in the feed
+  * Python 2 libraries will receive normal updates until 31 October 2019
+  * From 31 October 2019 onward:
+    * Python 2-only libraries will receive security updates only
+    * Python 2 libraries that share the same Makefile as their Python 3 version will continue to receive normal updates
+
 ## Introduction
 
 This sub-tree came to exist after a number of contributions (Python packages) were made to this repo, and the [lang](lang) subtree grew to a point where a decision was made to move all Python packages under [lang/python](lang/python).
@@ -28,6 +65,43 @@ This sub-tree came to exist after a number of contributions (Python packages) we
 It contains the 2 Python interpreters (Python & Python3) and Python packages. Most of the Python packages are downloaded from [pypi.org](https://pypi.org/). Python packages from [pypi.org](https://pypi.org/) are typically preferred when adding new packages.
 
 If more packages (than the ones packaged here) are needed, they can be downloaded via [pip or pip3](https://pip.pypa.io). Note that the versions of `pip` & `setuptools` [available in this repo] are the ones that are packaged inside the Python & Python3 packages (yes, Python & Python3 come packaged with `pip` & `setuptools`).
+
+## Using Python[3] in external/other package feeds
+
+In the feeds.conf (or feeds.conf.default file, whatever is preferred), the packages repo should be present.
+
+Example
+```
+src-git packages https://git.openwrt.org/feed/packages.git
+src-git luci https://git.openwrt.org/project/luci.git
+src-git routing https://git.openwrt.org/feed/routing.git
+src-git telephony https://git.openwrt.org/feed/telephony.git
+#
+#
+src-git someotherfeed https://github.com/<github-user>/<some-other-package>
+```
+
+Assuming that there are Python packages in the `<some-other-package>`, they should include `python[3]-package.mk` like this:
+```
+include $(TOPDIR)/feeds/packages/lang/python/python-package.mk
+include $(TOPDIR)/feeds/packages/lang/python/python3-package.mk
+```
+
+Same rules apply for `python[3]-package.mk` as the Python packages in this repo.
+And if only 1 of `python-package.mk` or `python3-package.mk` is needed, then only the needed mk file should be included (though it's not an issue if both are included).
+
+**One important consideration:**: if the local name is not `packages`, it's something else, like `openwrt-packages`. And in `feeds.conf[.default]` it's:
+```
+src-git openwrt-packages https://git.openwrt.org/feed/packages.git
+```
+
+Then, the inclusions also change:
+```
+include $(TOPDIR)/feeds/openwrt-packages/lang/python/python-package.mk
+include $(TOPDIR)/feeds/openwrt-packages/lang/python/python3-package.mk
+```
+
+Each maintainer[s] of external packages feeds is responsible for the local name, and relative inclusion path back to this feed (which is named `packages` by default).
 
 ## Build considerations
 
@@ -152,12 +226,15 @@ endef
 ```
 
 Some considerations here (based on the example above):
-* be sure to make sure that `DEPENDS` are correct for both variants; as seen in the example above, `python-codecs` is needed only for `python-lxml` ; that's because `python3-codecs` doesn't exist and is included in `python3-base` ; most of the times they are similar, sometimes they are not
+* be sure to make sure that `DEPENDS` are correct for both variants; as seen in the example above, `python-codecs` is needed only for `python-lxml` (see **[note-encodings](#note-encodings)**)
 * consider adding conditional DEPENDS for each variant ; so for each Python[3] package add `+PACKAGE_python-lxml:<dep>` as seen in the above example ; the reason for this is build-time reduction ; if you want to build Python3 only packages, this won't build Python & Python packages + dependencies ; this is a known functionality of OpenWrt build deps
   * there is an exception to the above consideration: if adding `+PACKAGE_python-lxml` conditional deps creates circular dependencies [for some weird reason], then this can be omitted
 * `VARIANT=python` or `VARIANT=python3` must be added
 * typically each variant package is named `Package/python3-<something>` & `Package/python3-<something>` ; this convention makes things easier to follow, though it could work without naming things this this
 * `TITLE` can be something a bit more verbose/neat ; typically the name is short as seen above
+
+<a name="note-encodings">**note-encodings**</a>: That's because some character encodings are needed, which are present in `python3-base` but not in `python-light` (but are present in `python-codecs`) ; this is because Python3 is designed to be more Unicode friendly than Python2 (it's one of the fundamental differences between the 2), and Python3 won't start without those encodings being present.
+
 
 Following these, 2 more definitions are required:
 ```

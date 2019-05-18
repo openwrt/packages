@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcsc-tools
-PKG_VERSION=1.5.3
+PKG_VERSION=1.5.4
 PKG_RELEASE:=1
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0
@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://ludovic.rousseau.free.fr/softwares/pcsc-tools/
-PKG_HASH:=daaa011c28daa00653bd8e2a3d8b0b9f8abae00f7344f50b1a94fbd2b01f1d14
+PKG_HASH:=c39e6abba781895220c68df5e5d2f0f9547c7a676eebec3f1ddcff8794377c93
 
 PKG_FIXUP:=autoreconf
 

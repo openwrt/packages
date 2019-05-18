@@ -9,13 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-mysql
 PKG_VERSION:=1.3.14
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE:=mysqlclient-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/m/mysqlclient
 PKG_HASH:=3981ae9ce545901a36a8b7aed76ed02960a429f75dc53b7ad77fb2f9ab7cd56b
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-mysql-$(PKG_VERSION)
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
@@ -30,7 +31,6 @@ define Package/python-mysql/Default
   SECTION:=lang
   CATEGORY:=Languages
   URL:=https://pypi.python.org/project/mysqlclient
-  MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
 endef
 
 define Package/python-mysql

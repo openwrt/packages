@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmicrohttpd
 PKG_VERSION:=0.9.62
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Alexander Couzens <lynxis@fe80.eu>
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING
@@ -30,10 +30,11 @@ define Package/libmicrohttpd/default
   URL:=http://www.gnu.org/software/libmicrohttpd/
 endef
 
-define Package/libmicrohttpd
+define Package/libmicrohttpd-no-ssl
 $(call Package/libmicrohttpd/default)
   VARIANT:=nossl
-  CONFLICTS:=libmicrohttpd-ssl
+  DEFAULT_VARIANT:=1
+  PROVIDES:=libmicrohttpd
 endef
 
 define Package/libmicrohttpd-ssl
@@ -76,7 +77,7 @@ define Build/InstallDev
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libmicrohttpd.pc $(1)/usr/lib/pkgconfig/
 endef
 
-define Package/libmicrohttpd/install
+define Package/libmicrohttpd-no-ssl/install
 	$(INSTALL_DIR) $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmicrohttpd.so* $(1)/usr/lib/
 endef
@@ -86,5 +87,5 @@ define Package/libmicrohttpd-ssl/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmicrohttpd.so* $(1)/usr/lib/
 endef
 
-$(eval $(call BuildPackage,libmicrohttpd))
+$(eval $(call BuildPackage,libmicrohttpd-no-ssl))
 $(eval $(call BuildPackage,libmicrohttpd-ssl))

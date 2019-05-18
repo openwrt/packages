@@ -1,0 +1,39 @@
+--- a/src/dh.c
++++ b/src/dh.c
+@@ -131,11 +131,15 @@ int ssh_get_random(void *where, int len, int strong){
+ 
+   return 1;
+ #elif defined HAVE_LIBCRYPTO
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+   if (strong) {
+     return RAND_bytes(where,len);
+   } else {
+     return RAND_pseudo_bytes(where,len);
+   }
++#else
++    return RAND_bytes(where,len);
++#endif
+ #endif
+ 
+   /* never reached */
+@@ -198,7 +202,9 @@ int ssh_crypto_init(void) {
+     }
+     bignum_bin2bn(p_group14_value, P_GROUP14_LEN, p_group14);
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+     OpenSSL_add_all_algorithms();
++#endif
+ 
+ #endif
+ 
+@@ -219,8 +225,10 @@ void ssh_crypto_finalize(void) {
+ #ifdef HAVE_LIBGCRYPT
+     gcry_control(GCRYCTL_TERM_SECMEM);
+ #elif defined HAVE_LIBCRYPTO
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+     EVP_cleanup();
+     CRYPTO_cleanup_all_ex_data();
++#endif
+ #endif
+     ssh_crypto_initialized=0;
+   }

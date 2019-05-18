@@ -59,7 +59,12 @@ smb_header() {
 EOT
 	}
 
-	[ -L /etc/samba/smb.conf ] || ln -nsf /var/etc/smb.conf /etc/samba/smb.conf
+	[ -e /etc/samba/smb.conf ] || ln -nsf /var/etc/smb.conf /etc/samba/smb.conf
+	
+	if [ -f /etc/samba/smb.conf ]; then
+		logger -t 'samba4-server' "Local custom /etc/samba/smb.conf file detected, all luci/config settings are ignored!"
+	fi
+	
 }
 
 smb_add_share() {
@@ -77,6 +82,8 @@ smb_add_share() {
 	local timemachine
 	local timemachine_maxsize
 	local force_root
+	local write_list
+	local read_list
 
 	config_get name $1 name
 	config_get path $1 path
@@ -92,6 +99,8 @@ smb_add_share() {
 	config_get_bool timemachine	$1 timemachine	0
 	config_get timemachine_maxsize $1 timemachine_maxsize
 	config_get_bool force_root	$1 force_root	0
+	config_get write_list $1 write_list
+	config_get read_list $1 read_list
 
 	[ -z "$name" -o -z "$path" ] && return
 
@@ -112,7 +121,10 @@ smb_add_share() {
 	[ -n "$guest_ok" ] && echo -e "\tguest ok = $guest_ok" >> /var/etc/smb.conf
 	[ -n "$guest_only" ] && echo -e "\tguest only = $guest_only" >> /var/etc/smb.conf
 	[ -n "$inherit_owner" ] && echo -e "\tinherit owner = $inherit_owner" >> /var/etc/smb.conf
-	
+
+	[ -n "$write_list" ] && echo -e "\twrite list = $write_list" >> /var/etc/smb.conf
+	[ -n "$read_list" ] && echo -e "\tread list = $read_list" >> /var/etc/smb.conf
+
 	if [ "$MACOS" -eq 1 ]; then
 		vfs_objects="catia fruit streams_xattr $vfs_objects"
 		echo -e "\tfruit:encoding = native" >> /var/etc/smb.conf

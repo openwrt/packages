@@ -5,55 +5,62 @@ START=99
 
 BIN=/usr/sbin/rtty
 
+validate_rtty_section() {
+	uci_load_validate rtty rtty "$1" "$2" \
+		'interface:uci("network", "@interface"):lan' \
+		'id:maxlength(63)' \
+		'description:maxlength(126)' \
+		'host:host' \
+		'port:port' \
+		'ssl:bool:0' \
+		'keepalive:uinteger:5' \
+		'token:maxlength(32)'
+}
+
 start_rtty() {
-    . /lib/functions/network.sh
+	. /lib/functions/network.sh
 
-    local cfg="$1"
-    local interface ifname id description host port ssl
+	local ifname
 
-    uci_validate_section rtty rtty "${1}" \
-        'interface:uci("network", "@interface"):lan' \
-        'id:maxlength(63)' \
-        'description:maxlength(126)' \
-        'host:host' \
-        'port:port' \
-        'ssl:bool:0' \
-        'keepalive:uinteger:5'
-    
-    [ $? -ne 0 ] && {
-        echo "validation failed" >&2
-        return 1
-    }
+	[ "$2" = 0 ] || {
+		echo "validation failed" >&2
+		return 1
+	}
 
-    [ -n "$interface" ] && network_get_device ifname "$interface"
+	[ -n "$interface" ] && network_get_device ifname "$interface"
 
-    [ -z "$ifname" -a -z "$id" ] && {
-        echo "You must specify an interface or ID" >&2
-        return 1
-    }
+	[ -z "$ifname" -a -z "$id" ] && {
+		echo "You must specify an interface or ID" >&2
+		return 1
+	}
 
-    [ -z "$host" ] && {
-        echo "host required" >&2
-        return 1
-    }
-    
-    [ -z "$port" ] && {
-        echo "port required" >&2
-        return 1
-    }
+	[ -z "$host" ] && {
+		echo "host required" >&2
+		return 1
+	}
 
-    procd_open_instance
-    procd_set_param command $BIN -h $host -p $port -a -k $keepalive
-    [ -n "$ifname" ] && procd_append_param command -i "$ifname"
-    [ -n "$id" ] && procd_append_param command -I "$id"
-    [ -n "$description" ] && procd_append_param command -d "$description"
-    [ "$ssl" = "1" ] && procd_append_param command -s
-    procd_set_param respawn
-    procd_close_instance
+	[ -z "$port" ] && {
+		echo "port required" >&2
+		return 1
+	}
+
+	procd_open_instance
+	procd_set_param command $BIN -h $host -p $port -a -k $keepalive
+	[ -n "$ifname" ] && procd_append_param command -i "$ifname"
+	[ -n "$id" ] && procd_append_param command -I "$id"
+	[ -n "$description" ] && procd_append_param command -d "$description"
+	[ "$ssl" = "1" ] && procd_append_param command -s
+	[ -n "$token" ] && procd_append_param command -t "$token"
+	procd_set_param respawn
+	procd_close_instance
 }
 
 start_service() {
-    config_load rtty
-    config_foreach start_rtty rtty
+	config_load rtty
+	config_foreach validate_rtty_section rtty start_rtty
 }
 
+service_triggers() {
+	procd_add_reload_trigger "rtty"
+	procd_add_validation validate_rtty_section
+}

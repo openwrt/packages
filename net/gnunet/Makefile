@@ -2,11 +2,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
 
-PKG_VERSION:=0.11.3
+PKG_VERSION:=0.11.4
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gnunet
-PKG_HASH:=2405db9232ae6ded57e7ff513abdf810c65e3861823b3985717ce990b8d87a37
+PKG_HASH:=7afeb638bd8b5a33c6b8dab24b90c5d7467439adc79794ff33218e9180f8b01b
 
 PKG_LICENSE:=AGPL-3.0
 PKG_LICENSE_FILES:=COPYING
@@ -213,7 +213,6 @@ PLUGIN_transport-http_client:=transport_http_client transport_https_client
 
 DEPENDS_transport-http_server:=+libmicrohttpd-ssl
 PLUGIN_transport-http_server:=transport_http_server transport_https_server
-BIN_transport-http_server:=transport-certificate-creation
 
 PLUGIN_transport-tcp:=transport_tcp
 
@@ -241,7 +240,7 @@ CONF_fs:=fs
 
 DEPENDS_gns:=+gnunet-vpn +iptables-mod-extra
 USERID_gns:=gnunet=958:gnunetdns=452
-BIN_gns:=gns gns-import.sh gns-proxy-setup-ca namecache namestore resolver zoneimport 
+BIN_gns:=gns gns-import.sh namecache namestore resolver zoneimport 
 LIB_gns:=gns gnsrecord namecache namestore
 PLUGIN_gns:=block_dns block_gns gnsrecord_conversation gnsrecord_dns gnsrecord_gns
 LIBEXEC_gns:=dns2gns helper-dns service-dns service-gns service-namecache service-namestore service-resolver service-zonemaster
@@ -265,7 +264,7 @@ BIN_reclaim:=credential reclaim
 LIB_reclaim:=consensus credential abe reclaim reclaimattribute secretsharing
 LIBEXEC_reclaim:=service-consensus service-credential service-reclaim service-secretsharing
 CONF_reclaim:=consensus credential reclaim secretsharing
-PLUGIN_reclaim:=block_consensus gnsrecord_credential gnsrecord_reclaim reclaim_attribute_gnuid reclaim_sqlite
+PLUGIN_reclaim:=block_consensus gnsrecord_credential gnsrecord_reclaim reclaim_attribute_gnuid
 
 DEPENDS_rest:=+gnunet-gns +gnunet-reclaim +libmicrohttpd-ssl +jansson
 LIB_rest:=rest json

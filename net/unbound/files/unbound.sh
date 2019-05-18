@@ -112,10 +112,11 @@ bundle_all_networks() {
 
 bundle_lan_networks() {
   local cfg="$1"
-  local ifsubnet ifname ifdashname ignore
+  local interface ifsubnet ifname ifdashname ignore
 
   config_get_bool    ignore "$cfg" ignore 0
-  network_get_device ifname "$cfg"
+  config_get         interface "$cfg" interface ""
+  network_get_device ifname "$interface"
   ifdashname="${ifname//./-}"
 
 

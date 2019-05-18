@@ -1,0 +1,13 @@
+--- a/ssmtp.c
++++ b/ssmtp.c
+@@ -1046,8 +1046,10 @@ int smtp_open(char *host, int port)
+ 	/* Init SSL stuff */
+ 	SSL_CTX *ctx = NULL;
+ 	X509 *server_cert;
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+ 	SSL_load_error_strings();
+ 	SSLeay_add_ssl_algorithms();
++#endif
+ 	ctx = SSL_CTX_new(SSLv23_client_method());
+ 	if(!ctx) {
+ 		log_event(LOG_ERR, "No SSL support initiated\n");

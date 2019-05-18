@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2016 OpenWrt.org
+# Copyright (C) 2009-2019 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,9 +7,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
-PKG_VERSION:=2.3.3
-PKG_RELEASE:=5
-PKG_HASH:=3c8c63611c7e78b7a3b2f8a28b9928a5b5e66d5e9ad09a1e54681508884320a4
+PKG_VERSION:=2.3.4
+PKG_RELEASE:=1
+PKG_HASH:=8a6bafd5a33c4259e6e5093d126384cbe33acb10135578b5faa60c40f2f5e995
 
 PKG_SOURCE_URL:=@SF/nfs
 PKG_SOURCE:=nfs-utils-$(PKG_VERSION).tar.xz
@@ -29,36 +29,37 @@ include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/nfs-kernel-server/Default
-  SECTION:=net
-  CATEGORY:=Network
-  SUBMENU:=Filesystem
-  DEPENDS:=+libwrap +libblkid +libuuid +libtirpc
-  URL:=http://nfs.sourceforge.net/
-  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
+	SECTION:=net
+	CATEGORY:=Network
+	SUBMENU:=Filesystem
+	DEPENDS:=+libwrap +libblkid +libuuid +libtirpc
+	URL:=http://nfs.sourceforge.net/
+	MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
 define Package/nfs-kernel-server
-  $(call Package/nfs-kernel-server/Default)
-  TITLE:=Kernel NFS server support
-  DEPENDS+= +kmod-fs-nfsd +kmod-fs-nfs +NFS_KERNEL_SERVER_V4:kmod-fs-nfs-v4 +rpcbind +NFS_KERNEL_SERVER_V4:nfs-utils-libs +NFS_KERNEL_SERVER_V4:libkeyutils +NFS_KERNEL_SERVER_V4:libdevmapper
+	$(call Package/nfs-kernel-server/Default)
+	TITLE:=Kernel NFS server support
+	DEPENDS+= +kmod-fs-nfsd +kmod-fs-nfs +NFS_KERNEL_SERVER_V4:kmod-fs-nfs-v4 +rpcbind +NFS_KERNEL_SERVER_V4:nfs-utils-libs +NFS_KERNEL_SERVER_V4:libkeyutils +NFS_KERNEL_SERVER_V4:libdevmapper
+	USERID:=nfs:nfs
 endef
 
 define Package/nfs-kernel-server/description
-  Kernel NFS server support
+Kernel NFS server support
 endef
 
 define Package/nfs-kernel-server/config
-  source "$(SOURCE)/Config.in"
+	source "$(SOURCE)/Config.in"
 endef
 
 define Package/nfs-kernel-server-utils
-  $(call Package/nfs-kernel-server/Default)
-  TITLE:=NFS server utils
-  DEPENDS:=nfs-kernel-server
+	$(call Package/nfs-kernel-server/Default)
+	TITLE:=NFS server utils
+	DEPENDS:=nfs-kernel-server
 endef
 
 define Package/nfs-kernel-server-utils/description
-  NFS server utils
+NFS server utils
 endef
 
 define Package/nfs-kernel-server/conffiles
@@ -66,30 +67,30 @@ define Package/nfs-kernel-server/conffiles
 endef
 
 define Package/nfs-utils/Default
-  $(call Package/nfs-kernel-server/Default)
-  SECTION:=utils
-  CATEGORY:=Utilities
-  DEPENDS+= +NFS_KERNEL_SERVER_V4:libkeyutils +NFS_KERNEL_SERVER_V4:libdevmapper
-  URL:=http://nfs.sourceforge.net/
-  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
+	$(call Package/nfs-kernel-server/Default)
+	SECTION:=utils
+	CATEGORY:=Utilities
+	DEPENDS+= +NFS_KERNEL_SERVER_V4:libkeyutils +NFS_KERNEL_SERVER_V4:libdevmapper
+	URL:=http://nfs.sourceforge.net/
+	MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
 define Package/nfs-utils
-  $(call Package/nfs-utils/Default)
-  TITLE:=updated mount utility (includes nfs4)
+	$(call Package/nfs-utils/Default)
+	TITLE:=updated mount utility (includes nfs4)
 endef
 
 define Package/nfs-utils/description
-  Updated mount.nfs command - allows mounting nfs4 volumes
+Updated mount.nfs command - allows mounting nfs4 volumes
 endef
 
 define Package/nfs-utils-libs
-  $(call Package/nfs-utils/Default)
-  TITLE:=libraries provided by nfs-utils
+	$(call Package/nfs-utils/Default)
+	TITLE:=libraries provided by nfs-utils
 endef
 
 define Package/nfs-utils-libs/description
-  Libraries provided by nfs-utils
+Libraries provided by nfs-utils
 endef
 
 TARGET_CFLAGS += -Wno-error=implicit-function-declaration \
@@ -113,7 +114,7 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),--enable,--disable)-nfsv41
 
 ifeq ($(CONFIG_IPV6),n)
-CONFIGURE_ARGS += --disable-ipv6
+	CONFIGURE_ARGS += --disable-ipv6
 endif
 
 CONFIGURE_VARS += \

@@ -8,30 +8,29 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libimobiledevice
-PKG_VERSION:=1.2.1
-PKG_RELEASE:=2
+PKG_SOURCE_DATE:=2019-02-16
+PKG_SOURCE_VERSION:=0584aa90c93ff6ce46927b8d67887cb987ab9545
+PKG_RELEASE:=1
 
-PKG_MAINTAINER:=Lukasz Baj <l.baj@radytek.com>
+PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=COPYING.LESSER
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/libimobiledevice/libimobiledevice.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=13bf235cac2201747de11652cf14fe2714ca0718
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=4e8892b27f20216f86d69b36ad2229fca87cdf0a10f8d3e145d01841a492562a
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/libimobiledevice/libimobiledevice/tar.gz/$(PKG_SOURCE_VERSION)?
+PKG_HASH:=286e294aad60ef04a39ce70512a0e816415167c982f3e6c2988d9a6b8c5ee29b
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include ../../lang/python/python-package.mk
 
 define Package/libimobiledevice/Default
   TITLE:=A library that talks to Apple devices.
-  URL:=http://www.libimobiledevice.org/
+  URL:=https://www.libimobiledevice.org/
 endef
 
 define Package/libimobiledevice/Default/description
@@ -62,17 +61,8 @@ define Package/libimobiledevice-utils/description
   This package contains the libimobiledevice utilities.
 endef
 
-CONFIGURE_VARS += \
-	libusbmuxd_CFLAGS="-I$(STAGING_DIR)/usr/include" \
-	libusbmuxd_LIBS="-L$(STAGING_DIR)/usr/lib -lusbmuxd" \
-	openssl_CFLAGS=" " \
-	openssl_LIBS="-L$(STAGING_DIR)/usr/lib -lssl -lcrypto"
-
-CONFIGURE_ARGS += \
-	--without-cython \
-	--disable-largefile
-
-TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib
+CONFIGURE_VARS += ac_cv_sys_file_offset_bits=64
+CONFIGURE_ARGS += --without-cython
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

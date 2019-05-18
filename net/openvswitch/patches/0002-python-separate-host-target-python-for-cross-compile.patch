@@ -1,7 +1,7 @@
-From 38d142005a0b582efdad5580e311d815ad1f34a4 Mon Sep 17 00:00:00 2001
+From e881c50ff537d4b34c10227360589f83d90ce373 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <zhouyousong@yunionyun.com>
 Date: Tue, 21 Aug 2018 12:21:05 +0000
-Subject: [PATCH 2/4] python: separate host/target python for cross-compile
+Subject: [PATCH 2/5] python: separate host/target python for cross-compile
 
 At the moment, python-six is a requirement for openvswitch python
 library on target machine.

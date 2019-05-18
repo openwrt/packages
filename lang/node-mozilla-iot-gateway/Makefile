@@ -9,16 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NPM_NAME:=mozilla-iot-gateway
 PKG_NAME:=node-$(PKG_NPM_NAME)
-PKG_VERSION:=0.6.1
+PKG_VERSION:=0.8.1
 PKG_RELEASE:=1
-PKG_REV:=2bcdf4866872b1e8992ee70ff6fc65566d6288d8
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/mozilla-iot/gateway.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=c424b6f5f011c0cceb455458c855854395d47e902fd4ec2d63564c5e736d4fcd
+PKG_SOURCE_URL:=https://codeload.github.com/mozilla-iot/gateway/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=f407732b9c1d020aa79e9d0b12f1b97e82691d6f58def2df067f790f4f640e30
 
 PKG_BUILD_DEPENDS:=node/host openzwave
 
@@ -32,7 +28,7 @@ define Package/node-mozilla-iot-gateway
   SUBMENU:=Node.js
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Things Gateway by Mozilla
+  TITLE:=WebThings Gateway by Mozilla
   URL:=https://iot.mozilla.org/gateway/
   DEPENDS:= +libpthread +node +node-npm +libopenzwave +openzwave-config +python +python3-light +python3-pip +openssl-util
   DEPENDS+= +MOIT_enable-plugin-support:git-http
@@ -53,6 +49,8 @@ endef
 
 CPU:=$(subst powerpc,ppc,$(subst aarch64,arm64,$(subst x86_64,x64,$(subst i386,ia32,$(ARCH)))))
 
+TARGET_CFLAGS+=$(FPIC)
+
 define Build/Compile
 	$(MAKE_VARS) \
 	$(MAKE_FLAGS) \
@@ -66,16 +64,16 @@ endef
 
 define Package/node-mozilla-iot-gateway/install
 	$(INSTALL_DIR) $(1)/opt/mozilla-iot/gateway/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/things-gateway/* $(1)/opt/mozilla-iot/gateway
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/webthings-gateway/* $(1)/opt/mozilla-iot/gateway
 	$(STAGING_DIR_HOSTPKG)/bin/npm --prefix=$(1)/opt/mozilla-iot/gateway install $(1)/opt/mozilla-iot/gateway
 
 	# Clean up of old build files that confuse OpenWrt's dependency checker
 	$(RM) -r $(1)/opt/mozilla-iot/gateway/node_modules/sqlite3/lib/binding/node-v57-linux-x64
-	$(RM) -r $(1)/opt/mozilla-iot/gateway/node_modules/ursa-optional/build/Release/ursaNative.node
-	$(RM) -r $(1)/opt/mozilla-iot/gateway/node_modules/ursa-optional/build/Release/obj.target/ursaNative.node
+	$(RM) -r $(1)/opt/mozilla-iot/gateway/node_modules/ursa/build/Release/ursaNative.node
+	$(RM) -r $(1)/opt/mozilla-iot/gateway/node_modules/ursa/build/Release/obj.target/ursaNative.node
 
 	$(INSTALL_DIR) $(1)/opt/mozilla-iot/gateway/node_modules/sqlite3/lib/binding/node-v57-linux-$(CPU)/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/things-gateway/node_modules/sqlite3/lib/binding/node-v57-linux-$(CPU)/node_sqlite3.node \
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/webthings-gateway/node_modules/sqlite3/lib/binding/node-v57-linux-$(CPU)/node_sqlite3.node \
 		$(1)/opt/mozilla-iot/gateway/node_modules/sqlite3/lib/binding/node-v57-linux-$(CPU)/
 
 	$(INSTALL_DIR) $(1)/etc/init.d

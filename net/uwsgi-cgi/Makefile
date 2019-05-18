@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uwsgi-cgi
 PKG_VERSION:=2.0.18
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL= \
 	https://projects.unbit.it/downloads \
@@ -16,7 +16,6 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Ansuel Smith <ansuelsmth@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
-include $(TOPDIR)/feeds/packages/lang/python/python-package.mk
 
 define Package/uwsgi-cgi
   SECTION:=net
