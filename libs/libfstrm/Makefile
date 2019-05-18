@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libfstrm
 PKG_VERSION:=0.5.0
-PKG_RELEASE=1
+PKG_RELEASE=2
 
 PKG_SOURCE:=fstrm-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dl.farsightsecurity.com/dist/fstrm/
@@ -23,16 +23,17 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libfstrm
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=This is fstrm, a C implementation of the Frame Streams data transport protocol.
+  TITLE:=C implementation of the Frame Streams data transport protocol
+  URL:=https://github.com/farsightsec/fstrm
 endef
 
 define Package/libfstrm/description
-	fstrm is an optimized C implementation of Frame Streams that includes a fast,
-	lockless circular queue implementation and exposes library interfaces for
-	setting up a dedicated Frame Streams I/O thread and asynchronously submitting
-	data frames for transport from worker threads. It was originally written to
-	facilitate the addition of high speed binary logging to DNS servers written
-	in C using the dnstap log format.
+fstrm is an optimized C implementation of Frame Streams that includes a fast,
+  lockless circular queue implementation and exposes library interfaces for
+  setting up a dedicated Frame Streams I/O thread and asynchronously submitting
+  data frames for transport from worker threads. It was originally written to
+  facilitate the addition of high speed binary logging to DNS servers written
+  in C using the dnstap log format.
 endef
 
 CONFIGURE_ARGS+= \
