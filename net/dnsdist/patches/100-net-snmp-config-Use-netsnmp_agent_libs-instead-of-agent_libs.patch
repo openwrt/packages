@@ -1,0 +1,23 @@
+From d73bc006c62e4340ab56dd4baba5bc8eb8e1db49 Mon Sep 17 00:00:00 2001
+From: Remi Gacogne <remi.gacogne@powerdns.com>
+Date: Mon, 13 May 2019 16:01:06 +0200
+Subject: [PATCH] SNMP: Use net-snmp-config --netsnmp-agent-libs instead of
+ --agent-libs
+
+---
+ m4/pdns_with_net_snmp.m4 | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/m4/pdns_with_net_snmp.m4 b/m4/pdns_with_net_snmp.m4
+index 8040672e6c..2da80c75fc 100644
+--- a/m4/pdns_with_net_snmp.m4
++++ b/m4/pdns_with_net_snmp.m4
+@@ -10,7 +10,7 @@ AC_DEFUN([PDNS_WITH_NET_SNMP], [
+   AS_IF([test "x$with_net_snmp" != "xno"], [
+     AS_IF([test "x$with_net_snmp" = "xyes" -o "x$with_net_snmp" = "xauto"], [
+       AC_CHECK_PROG([NET_SNMP_CFLAGS], [net-snmp-config], [`net-snmp-config --cflags`])
+-      AC_CHECK_PROG([NET_SNMP_LIBS], [net-snmp-config], [`net-snmp-config --agent-libs`])
++      AC_CHECK_PROG([NET_SNMP_LIBS], [net-snmp-config], [`net-snmp-config --netsnmp-agent-libs`])
+       AC_CHECK_DECLS([snmp_select_info2], [ : ], [ : ],
+         [AC_INCLUDES_DEFAULT
+           #include <net-snmp/net-snmp-config.h>
