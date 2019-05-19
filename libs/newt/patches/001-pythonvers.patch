@@ -1,0 +1,10 @@
+--- a/configure
++++ b/configure
+@@ -3957,7 +3957,6 @@ if test "x$with_python" = "xno"; then
+ $as_echo "skipped" >&6; }
+   PYTHONVERS=
+ else
+-  PYTHONVERS=$(ls /usr/include/python*/Python.h 2> /dev/null | sed 's|.*\(python[0-9]*\.[0-9]*\).*|\1|g' | tr '\n' ' ')
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PYTHONVERS" >&5
+ $as_echo "$PYTHONVERS" >&6; }
+ fi

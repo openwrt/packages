@@ -1,0 +1,33 @@
+--- a/usr/lib/byobu/users
++++ b/usr/lib/byobu/users
+@@ -22,20 +22,26 @@
+ #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+ __users_detail() {
+-	ps -ef | grep "sshd:.*@" | grep -v grep
++	ps -ef 2>/dev/null | grep "sshd:.*@" | grep -v grep
+ }
+ 
+ __users() {
+-	local count=0
++	local count=0 f pid
++	for f in /var/run/dropbear.*.pid; do
++		read pid < "$f"
++		count=$(($count + $(pgrep -P "$pid" | wc -l)))
++	done
++	if [ $count -eq 0 ]; then
+ 	if [ "$USERS_DISTINCT" = "1" ]; then
+ 		count=$(pgrep -fl 'sshd:.*@' | cut -f3 -d\ | cut -f1 -d@ | sort -u | wc -l)
+ 	else
+ 		# Note: we'd like to use pgrep -c, however, this isn't available in
+ 		# busybox and some distro's pgrep (and it doesn't exit non-zero).
+-		count=$(pgrep -f "^sshd:.*@|^/usr/sbin/sshd -i" | wc -l) || return
++		count=$(pgrep -f "^sshd:.*@|^/usr/sbin/sshd -i" | wc -l)
++	fi
+ 	fi
+ 	if [ $count -gt 0 ]; then
+-		color b w r; printf "%d" "$count"; color -; color w r; printf "#"; color --
++		color b w r; printf "%d" "$count"; color -; color w r; printf "##"; color --
+ 	else
+ 		rm -f "$BYOBU_RUN_DIR/status.$BYOBU_BACKEND/users"*
+ 	fi
