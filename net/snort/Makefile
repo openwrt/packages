@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort
-PKG_VERSION:=2.9.11.1
+PKG_VERSION:=2.9.13
 PKG_RELEASE:=8
 
 PKG_LICENSE:=GPL-2.0
@@ -17,7 +17,7 @@ PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.snort.org/downloads/snort/ \
 	@SF/$(PKG_NAME)
-PKG_HASH:=9f6b3aeac5a109f55504bd370564ac431cb1773507929dc461626898f33f46cd
+PKG_HASH:=31447393d15286b848810dd78ab2cb3ad231fcd1f1663f959587690eeea75413
 
 PKG_BUILD_DEPENDS:=libtirpc
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(PKG_NAME)-$(PKG_VERSION)
@@ -59,6 +59,7 @@ CONFIGURE_ARGS += \
 	--with-libpcre-libraries="$(STAGING_DIR)/usr/lib" \
 	--with-daq-includes="$(STAGING_DIR)/usr/include" \
 	--with-daq-libraries="$(STAGING_DIR)/usr/lib" \
+	--disable-open-appid \
 	--disable-static-daq
 
 ifeq ($(CONFIG_SNORT_LZMA),)
