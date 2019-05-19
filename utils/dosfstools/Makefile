@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dosfstools
 PKG_VERSION:=4.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/dosfstools/dosfstools/releases/download/v$(PKG_VERSION)/ \
@@ -41,6 +41,8 @@ endef
 define Package/dosfstools/description
 	The dosfstools package includes the mkfs.fat and fsck.fat utilities, which respectively make and check MS-DOS FAT filesystems.
 endef
+
+TARGET_LDFLAGS += $(if $(ICONV_FULL),-liconv)
 
 define Package/dosfstools/install
 	$(INSTALL_DIR) $(1)/usr/sbin
