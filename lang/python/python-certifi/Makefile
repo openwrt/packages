@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -9,25 +7,29 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-certifi
 PKG_VERSION:=2019.3.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
+
+PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
 PKG_LICENSE:=MPL-2.0
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=certifi-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/c/certifi
 PKG_HASH:=b26104d6835d1f5e49452a26eb2ff87fe7090b89dfcaee5ea2212697e1e1d7ae
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-certifi-$(PKG_VERSION)
-PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
 
+PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
+
 define Package/python-certifi/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
-  TITLE:=Python package for providing Mozilla's CA Bundle.
+  TITLE:=Python package for Mozilla's CA Bundle
   URL:=http://certifi.io/
 endef
 
