@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dmapd
-PKG_VERSION:=0.0.81
+PKG_VERSION:=0.0.82
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -18,7 +18,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.flyn.org/projects/dmapd
-PKG_HASH:=74b56417eaed4fa6cd3b47465819f1f83caffc621b5da302d3c90e58bfb2a932
+PKG_HASH:=7dc1a10d6c1363491492f159f7864d57194384b8007013088ca3b6c220e9e3f6
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -35,9 +35,12 @@ define Package/dmapd
   USERID:=dmapd=56:dmapd=56
 endef
 
-define Package/dmapd/decription
+define Package/dmapd/description
 	Dmapd is a DMAP server
 endef
+
+CONFIGURE_ARGS += \
+	--disable-check
 
 define Package/dmapd/conffiles
 /etc/dmapd.conf
