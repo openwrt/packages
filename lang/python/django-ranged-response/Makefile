@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -9,7 +7,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-ranged-response
 PKG_VERSION:=0.2.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
+
+PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -23,8 +23,7 @@ define Package/django-ranged-response
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
-  TITLE:=Modified Django FileResponse that adds Content-Range headers.
+  TITLE:=Add Content-Range: to FileResponse
   URL:=https://github.com/wearespindle/django-ranged-fileresponse
   DEPENDS:=+python +django
   VARIANT:=python
