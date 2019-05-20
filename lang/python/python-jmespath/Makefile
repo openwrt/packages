@@ -28,13 +28,13 @@ endef
 
 define Package/python-jmespath
 $(call Package/python-jmespath/Default)
-  DEPENDS:=+python
+  DEPENDS:=+PACKAGE_python-jmespath:python
   VARIANT:=python
 endef
 
 define Package/python3-jmespath
 $(call Package/python-jmespath/Default)
-  DEPENDS:=+python3
+  DEPENDS:=+PACKAGE_python3-jmespath:python3
   VARIANT:=python3
 endef
 

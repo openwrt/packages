@@ -36,14 +36,14 @@ endef
 define Package/python-pyserial
 $(call Package/python-pyserial/Default)
   TITLE:=python-pyserial
-  DEPENDS:=+python-light
+  DEPENDS:=+PACKAGE_python-pyserial:python-light
   VARIANT:=python
 endef
 
 define Package/python3-pyserial
 $(call Package/python-pyserial/Default)
   TITLE:=python3-pyserial
-  DEPENDS:=+python3-light
+  DEPENDS:=+PACKAGE_python3-pyserial:python3-light
   VARIANT:=python3
 endef
 

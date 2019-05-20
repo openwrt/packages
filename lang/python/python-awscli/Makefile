@@ -28,27 +28,27 @@ endef
 
 define Package/python-awscli
 $(call Package/python-awscli/Default)
-  DEPENDS:=+python \
-	+python-yaml \
-	+python-pyasn1 \
-	+python-botocore \
-	+python-rsa \
-	+python-colorama \
-	+python-docutils \
-	+python-s3transfer
+  DEPENDS:=+PACKAGE_python-awscli:python \
+	+PACKAGE_python-awscli:python-yaml \
+	+PACKAGE_python-awscli:python-pyasn1 \
+	+PACKAGE_python-awscli:python-botocore \
+	+PACKAGE_python-awscli:python-rsa \
+	+PACKAGE_python-awscli:python-colorama \
+	+PACKAGE_python-awscli:python-docutils \
+	+PACKAGE_python-awscli:python-s3transfer
   VARIANT:=python
 endef
 
 define Package/python3-awscli
 $(call Package/python-awscli/Default)
-  DEPENDS:=+python3 \
-	+python3-yaml \
-	+python3-pyasn1 \
-	+python3-botocore \
-	+python3-rsa \
-	+python3-colorama \
-	+python3-docutils \
-	+python3-s3transfer
+  DEPENDS:=+PACKAGE_python3-awscli:python3 \
+	+PACKAGE_python3-awscli:python3-yaml \
+	+PACKAGE_python3-awscli:python3-pyasn1 \
+	+PACKAGE_python3-awscli:python3-botocore \
+	+PACKAGE_python3-awscli:python3-rsa \
+	+PACKAGE_python3-awscli:python3-colorama \
+	+PACKAGE_python3-awscli:python3-docutils \
+	+PACKAGE_python3-awscli:python3-s3transfer
   VARIANT:=python3
 endef
 
