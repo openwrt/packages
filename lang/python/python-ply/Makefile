@@ -44,7 +44,7 @@ endef
 
 define Package/python3-ply
 $(call Package/python-ply/Default)
-  DEPENDS:=+python3-light
+  DEPENDS:=+PACKAGE_python3-ply:python3-light
   VARIANT:=python3
 endef
 

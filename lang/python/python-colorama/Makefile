@@ -28,13 +28,13 @@ endef
 
 define Package/python-colorama
 $(call Package/python-colorama/Default)
-  DEPENDS:=+python
+  DEPENDS:=+PACKAGE_python-colorama:python
   VARIANT:=python
 endef
 
 define Package/python3-colorama
 $(call Package/python-colorama/Default)
-  DEPENDS:=+python3
+  DEPENDS:=+PACKAGE_python3-colorama:python3
   VARIANT:=python3
 endef
 

@@ -28,23 +28,23 @@ endef
 
 define Package/python-botocore
 $(call Package/python-botocore/Default)
-  DEPENDS:=+python \
-	+python-urllib3 \
-	+python-docutils \
-	+python-dateutil \
-	+python-jmespath \
-	+python-requests
+  DEPENDS:=+PACKAGE_python-botocore:python \
+	+PACKAGE_python-botocore:python-urllib3 \
+	+PACKAGE_python-botocore:python-docutils \
+	+PACKAGE_python-botocore:python-dateutil \
+	+PACKAGE_python-botocore:python-jmespath \
+	+PACKAGE_python-botocore:python-requests
   VARIANT:=python
 endef
 
 define Package/python3-botocore
 $(call Package/python-botocore/Default)
-  DEPENDS:=+python3 \
-	+python3-urllib3 \
-	+python3-docutils \
-	+python3-dateutil \
-	+python3-jmespath \
-	+python3-requests
+  DEPENDS:=+PACKAGE_python3-botocore:python3 \
+	+PACKAGE_python3-botocore:python3-urllib3 \
+	+PACKAGE_python3-botocore:python3-docutils \
+	+PACKAGE_python3-botocore:python3-dateutil \
+	+PACKAGE_python3-botocore:python3-jmespath \
+	+PACKAGE_python3-botocore:python3-requests
   VARIANT:=python3
 endef
 

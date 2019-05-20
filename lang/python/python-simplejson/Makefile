@@ -34,7 +34,7 @@ endef
 define Package/python-simplejson
 $(call Package/python-simplejson/Default)
   TITLE:=Simple, fast, extensible JSON encoder/decoder for Python 2
-  DEPENDS:=+python-light
+  DEPENDS:=+PACKAGE_python-simplejson:python-light
   VARIANT:=python
 endef
 
