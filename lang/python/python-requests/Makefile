@@ -52,11 +52,11 @@ endef
 define Package/python3-requests
 $(call Package/python-requests/Default)
   DEPENDS:= \
-	  +python3-light  \
-	  +python3-chardet  \
-	  +python3-idna  \
-	  +python3-urllib3  \
-	  +python3-certifi
+	  +PACKAGE_python3-requests:python3-light  \
+	  +PACKAGE_python3-requests:python3-chardet  \
+	  +PACKAGE_python3-requests:python3-idna  \
+	  +PACKAGE_python3-requests:python3-urllib3  \
+	  +PACKAGE_python3-requests:python3-certifi
   VARIANT:=python3
 endef
 

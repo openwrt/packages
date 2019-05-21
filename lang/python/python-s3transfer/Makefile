@@ -28,13 +28,18 @@ endef
 
 define Package/python-s3transfer
 $(call Package/python-s3transfer/Default)
-  DEPENDS:=+python +python-botocore +python-futures
+  DEPENDS:= \
+	+PACKAGE_python-s3transfer:python \
+	+PACKAGE_python-s3transfer:python-botocore \
+	+PACKAGE_python-s3transfer:python-futures
   VARIANT:=python
 endef
 
 define Package/python3-s3transfer
 $(call Package/python-s3transfer/Default)
-  DEPENDS:=+python3 +python3-botocore
+  DEPENDS:= \
+	+PACKAGE_python3-s3transfer:python3 \
+	+PACKAGE_python3-s3transfer:python3-botocore
   VARIANT:=python3
 endef
 
