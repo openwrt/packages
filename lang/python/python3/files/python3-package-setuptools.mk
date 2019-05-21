@@ -9,6 +9,9 @@ define Package/python3-setuptools
 $(call Package/python3/Default)
   TITLE:=Python $(PYTHON3_VERSION) setuptools module
   VERSION:=$(PYTHON3_SETUPTOOLS_VERSION)-$(PYTHON3_SETUPTOOLS_PKG_RELEASE)
+  LICENSE:=MIT
+  LICENSE_FILES:=LICENSE
+#  CPE_ID:=cpe:/a:python:setuptools # not currently handled this way by uscan
   DEPENDS:=+python3
 endef
 
