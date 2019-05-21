@@ -1,0 +1,10 @@
+--- a/package.json
++++ b/package.json
+@@ -41,7 +41,6 @@
+   ],
+   "dependencies": {
+     "@serialport/binding-mock": "^2.0.5",
+-    "@serialport/bindings": "^2.0.8",
+     "@serialport/parser-byte-length": "^2.0.2",
+     "@serialport/parser-cctalk": "^2.0.2",
+     "@serialport/parser-delimiter": "^2.0.2",
