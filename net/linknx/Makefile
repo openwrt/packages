@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linknx
 PKG_VERSION:=0.0.1.37
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 PKG_LICENSE:=GPL-2.0+
@@ -24,13 +24,14 @@ PKG_FORTIFY_SOURCE:=1
 PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/linknx
   SECTION:=net
   CATEGORY:=Network
   TITLE:=KNX home automation platform
   URL:=https://github.com/linknx/linknx
-  DEPENDS:=+pthsem +lua +luac +libstdcpp +libcurl +libesmtp
+  DEPENDS:=+pthsem +lua +luac +libstdcpp +libcurl +libesmtp $(ICONV_DEPENDS)
 endef
 
 CONFIGURE_ARGS+= \
