@@ -43,12 +43,14 @@ define Build/Compile
 		CROSS="$(TARGET_CROSS)" \
 		DPREFIX=$(PKG_INSTALL_DIR)/usr \
 		PREFIX=/usr \
+		TARGET_SYS=Linux \
 		TARGET_CFLAGS="$(TARGET_CFLAGS)"
 	rm -rf $(PKG_INSTALL_DIR)
 	mkdir -p $(PKG_INSTALL_DIR)
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		DPREFIX=$(PKG_INSTALL_DIR)/usr \
 		PREFIX=/usr \
+		TARGET_SYS=Linux \
 		install
 endef
 
