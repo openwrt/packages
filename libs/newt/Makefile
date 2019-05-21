@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=newt
 PKG_VERSION:=0.52.20
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://releases.pagure.org/newt
@@ -26,6 +26,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 include ../../lang/python/python3-package.mk
 
 define Package/newt/Default
@@ -45,7 +46,7 @@ $(call Package/newt/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+= library
-  DEPENDS:=+libslang2
+  DEPENDS:=+libslang2 $(INTL_DEPENDS)
 endef
 
 define Package/libnewt/description
