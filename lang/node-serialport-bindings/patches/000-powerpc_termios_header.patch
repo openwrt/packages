@@ -1,0 +1,16 @@
+--- a/src/serialport_linux.cpp
++++ b/src/serialport_linux.cpp
+@@ -1,8 +1,13 @@
+ #if defined(__linux__)
+ 
+ #include <sys/ioctl.h>
++#if defined(__powerpc__) || defined(__powerpc64__)
++#include <asm-generic/ioctls.h>
++#include <asm-generic/termbits.h>
++#else
+ #include <asm/ioctls.h>
+ #include <asm/termbits.h>
++#endif
+ 
+ // Uses the termios2 interface to set nonstandard baud rates
+ int linuxSetCustomBaudRate(const int fd, const unsigned int baudrate) {
