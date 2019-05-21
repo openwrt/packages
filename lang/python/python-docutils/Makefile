@@ -28,13 +28,13 @@ endef
 
 define Package/python-docutils
 $(call Package/python-docutils/Default)
-  DEPENDS:=+python
+  DEPENDS:=+PACKAGE_python-docutils:python
   VARIANT:=python
 endef
 
 define Package/python3-docutils
 $(call Package/python-docutils/Default)
-  DEPENDS:=+python3
+  DEPENDS:=+PACKAGE_python3-docutils:python3
   VARIANT:=python3
 endef
 

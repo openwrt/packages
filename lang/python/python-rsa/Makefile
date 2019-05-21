@@ -28,13 +28,13 @@ endef
 
 define Package/python-rsa
 $(call Package/python-rsa/Default)
-  DEPENDS:=+python +python-pyasn1
+  DEPENDS:=+PACKAGE_python-rsa:python +PACKAGE_python-rsa:python-pyasn1
   VARIANT:=python
 endef
 
 define Package/python3-rsa
 $(call Package/python-rsa/Default)
-  DEPENDS:=+python3 +python3-pyasn1
+  DEPENDS:=+PACKAGE_python3-rsa:python3 +PACKAGE_python3-rsa:python3-pyasn1
   VARIANT:=python3
 endef
 
