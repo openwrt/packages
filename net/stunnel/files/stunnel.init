@@ -101,6 +101,8 @@ validate_service_options() {
 		'socket:list(string)' \
 		'sslVersion:or("all","SSLv2","SSLv3","TLSv1","TLSv1.1","TLSv1.2")' \
 		'stack:uinteger' \
+		'ticketKeySecret:string' \
+		'ticketMacSecret:string' \
 		'TIMEOUTbusy:uinteger' \
 		'TIMEOUTclose:uinteger' \
 		'TIMEOUTconnect:uinteger' \
@@ -259,6 +261,8 @@ print_service_options() {
 		setuid \
 		sslVersion \
 		stack \
+		ticketKeySecret \
+		ticketMacSecret \
 		TIMEOUTbusy \
 		TIMEOUTclose \
 		TIMEOUTconnect \
