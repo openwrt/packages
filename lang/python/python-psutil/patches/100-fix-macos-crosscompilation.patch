@@ -1,0 +1,29 @@
+--- a/psutil/_common.py
++++ b/psutil/_common.py
+@@ -73,17 +73,17 @@ __all__ = [
+ # ===================================================================
+ 
+ 
+-POSIX = os.name == "posix"
+-WINDOWS = os.name == "nt"
+-LINUX = sys.platform.startswith("linux")
+-MACOS = sys.platform.startswith("darwin")
++POSIX = True
++WINDOWS = False
++LINUX = True
++MACOS = False
+ OSX = MACOS  # deprecated alias
+-FREEBSD = sys.platform.startswith("freebsd")
+-OPENBSD = sys.platform.startswith("openbsd")
+-NETBSD = sys.platform.startswith("netbsd")
++FREEBSD = False
++OPENBSD = False
++NETBSD = False
+ BSD = FREEBSD or OPENBSD or NETBSD
+-SUNOS = sys.platform.startswith(("sunos", "solaris"))
+-AIX = sys.platform.startswith("aix")
++SUNOS = False
++AIX = False
+ 
+ 
+ # ===================================================================
