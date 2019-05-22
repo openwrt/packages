@@ -79,7 +79,6 @@ case "$ACTION" in
 		fi
 		mwan3_set_policies_iptables
 		mwan3_set_user_rules
-		mwan3_flush_conntrack $INTERFACE $DEVICE "ifup"
 	;;
 	ifdown)
 		mwan3_set_iface_hotplug_state $INTERFACE "offline"
@@ -87,7 +86,6 @@ case "$ACTION" in
 		mwan3_track_signal $INTERFACE $DEVICE
 		mwan3_set_policies_iptables
 		mwan3_set_user_rules
-		mwan3_flush_conntrack $INTERFACE $DEVICE "ifdown"
 	;;
 esac
 
