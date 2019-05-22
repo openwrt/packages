@@ -34,6 +34,10 @@ ifdef CONFIG_USE_MIPS16
   TARGET_CFLAGS += -mno-mips16 -mno-interlink-mips16
 endif
 
+ifeq ($(ARCH),aarch64)
+  TARGET_CFLAGS += -fPIC
+endif
+
 define Py3Shebang
 $(SED) "1"'!'"b;s,^#"'!'".*python.*,#"'!'"/usr/bin/python3," -i --follow-symlinks $(1)
 endef
