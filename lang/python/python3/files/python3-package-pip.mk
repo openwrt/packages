@@ -9,6 +9,9 @@ define Package/python3-pip
 $(call Package/python3/Default)
   TITLE:=Python $(PYTHON3_VERSION) pip module
   VERSION:=$(PYTHON3_PIP_VERSION)-$(PYTHON3_PIP_PKG_RELEASE)
+  LICENSE:=MIT
+  LICENSE_FILES:=LICENSE.txt
+#  CPE_ID:=cpe:/a:python:pip # not currently handled this way by uscan
   DEPENDS:=+python3 +python3-setuptools +python-pip-conf
 endef
 
