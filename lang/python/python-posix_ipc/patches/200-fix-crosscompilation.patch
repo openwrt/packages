@@ -1,0 +1,65 @@
+--- a/prober.py
++++ b/prober.py
+@@ -15,6 +15,7 @@ MAX_LINE_LENGTH = 78
+ 
+ PY_MAJOR_VERSION = sys.version_info[0]
+ 
++platform_uname = "Linux"
+ 
+ def line_wrap_paragraph(s):
+     # Format s with terminal-friendly line wraps.
+@@ -61,7 +62,7 @@ def does_build_succeed(filename, linker_
+     #   - Some versions of Linux place the sem_xxx() functions in libpthread.
+     #     Rather than testing whether or not it's needed, I just specify it
+     #     everywhere since it's harmless to specify it when it's not needed.
+-    cmd = "cc -Wall -o ./prober/foo ./prober/%s %s -lpthread" % (filename, linker_options)
++    cmd = (os.environ['CC'] or "cc") + " -Wall -o ./prober/foo ./prober/%s %s -lpthread" % (filename, linker_options)
+ 
+     p = subprocess.Popen(cmd, shell=True, stdout=STDOUT, stderr=STDERR)
+ 
+@@ -73,7 +74,7 @@ def does_build_succeed(filename, linker_
+ def compile_and_run(filename, linker_options=""):
+     # Utility function that returns the stdout output from running the
+     # compiled source file; None if the compile fails.
+-    cmd = "cc -Wall -o ./prober/foo %s ./prober/%s" % (linker_options, filename)
++    cmd = (os.environ['CC'] or "cc") + " -Wall -o ./prober/foo %s ./prober/%s" % (linker_options, filename)
+ 
+     p = subprocess.Popen(cmd, shell=True, stdout=STDOUT, stderr=STDERR)
+ 
+@@ -344,7 +345,7 @@ def probe():
+ 
+     # Sniffing of the realtime libs has to go early in the list so as
+     # to provide correct linker options to the rest of the tests.
+-    if "Darwin" in platform.uname():
++    if "Darwin" in platform_uname:
+         # I skip the test under Darwin/OS X for two reasons. First, I know
+         # it isn't needed there. Second, I can't even compile the test for
+         # the realtime lib because it references mq_unlink() which OS X
+@@ -361,12 +362,12 @@ def probe():
+         d["REALTIME_LIB_IS_NEEDED"] = ""
+         linker_options = " -lrt "
+ 
+-    d["PAGE_SIZE"] = sniff_page_size()
++    d["PAGE_SIZE"] = 4096 # sniff_page_size()
+ 
+     if sniff_sem_getvalue(linker_options):
+         d["SEM_GETVALUE_EXISTS"] = ""
+ 
+-    if ("SEM_GETVALUE_EXISTS" in d) and ("Darwin" in platform.uname()):
++    if ("SEM_GETVALUE_EXISTS" in d) and ("Darwin" in platform_uname):
+         # sem_getvalue() isn't available on OS X. The function exists but
+         # always returns -1 (under OS X 10.9) or ENOSYS ("Function not
+         # implemented") under some earlier version(s).
+@@ -383,9 +384,9 @@ def probe():
+     if sniff_mq_existence(linker_options):
+         d["MESSAGE_QUEUE_SUPPORT_EXISTS"] = ""
+ 
+-    d["QUEUE_MESSAGES_MAX_DEFAULT"] = sniff_mq_max_messages()
+-    d["QUEUE_MESSAGE_SIZE_MAX_DEFAULT"] = sniff_mq_max_message_size_default()
+-    d["QUEUE_PRIORITY_MAX"] = sniff_mq_prio_max()
++    d["QUEUE_MESSAGES_MAX_DEFAULT"] = 10 # sniff_mq_max_messages()
++    d["QUEUE_MESSAGE_SIZE_MAX_DEFAULT"] = 8192 # sniff_mq_max_message_size_default()
++    d["QUEUE_PRIORITY_MAX"] = 32768 # sniff_mq_prio_max()
+ 
+     if PY_MAJOR_VERSION == 2:
+         # I only need this for Python 2.x
