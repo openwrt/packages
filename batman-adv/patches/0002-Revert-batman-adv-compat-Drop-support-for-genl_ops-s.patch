@@ -1,0 +1,29 @@
+From: Sven Eckelmann <sven@narfation.org>
+Date: Thu, 23 May 2019 19:26:36 +0200
+Subject: Revert "batman-adv: compat: Drop support for genl_ops->start"
+
+OpenWrt's mac80211 package is not yet ready to support the generic netlink
+API of Linux 5.2.
+
+This reverts commit 1d30dbe3917d0d6fdb8ba473dfdd6265ac46670b.
+
+diff --git a/compat-include/net/genetlink.h b/compat-include/net/genetlink.h
+index ee5b82288be97193c1a8e8340a2ea7e0c7ce112c..fbfdb733a3dd63c251def43cae416c7fe32cadab 100644
+--- a/compat-include/net/genetlink.h
++++ b/compat-include/net/genetlink.h
+@@ -42,6 +42,7 @@ enum genl_validate_flags {
+ struct batadv_genl_ops {
+ 	int		       (*doit)(struct sk_buff *skb,
+ 				       struct genl_info *info);
++	int		       (*start)(struct netlink_callback *cb);
+ 	int		       (*dumpit)(struct sk_buff *skb,
+ 					 struct netlink_callback *cb);
+ 	int		       (*done)(struct netlink_callback *cb);
+@@ -104,6 +105,7 @@ static inline int batadv_genl_register_family(struct batadv_genl_family *family)
+ 
+ 	for (i = 0; i < family->family.n_ops; i++) {
+ 		ops[i].doit = family->ops[i].doit;
++		ops[i].start = family->ops[i].start;
+ 		ops[i].dumpit = family->ops[i].dumpit;
+ 		ops[i].done = family->ops[i].done;
+ 		ops[i].cmd = family->ops[i].cmd;

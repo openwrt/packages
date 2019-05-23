@@ -22,6 +22,7 @@ proto_batadv_init_config() {
 	proto_config_add_int 'hop_penalty'
 	proto_config_add_string 'isolation_mark'
 	proto_config_add_string 'log_level'
+	proto_config_add_int 'multicast_fanout'
 	proto_config_add_boolean 'multicast_mode:bool'
 	proto_config_add_boolean 'network_coding:bool'
 	proto_config_add_int 'orig_interval'
@@ -44,6 +45,7 @@ proto_batadv_setup() {
 	local hop_penalty
 	local isolation_mark
 	local log_level
+	local multicast_fanout
 	local multicast_mode
 	local network_coding
 	local orig_interval
@@ -61,6 +63,7 @@ proto_batadv_setup() {
 	json_get_vars hop_penalty
 	json_get_vars isolation_mark
 	json_get_vars log_level
+	json_get_vars multicast_fanout
 	json_get_vars multicast_mode
 	json_get_vars network_coding
 	json_get_vars orig_interval
@@ -100,6 +103,7 @@ proto_batadv_setup() {
 
 	[ -n "$hop_penalty" ] && batctl -m "$iface" hop_penalty "$hop_penalty"
 	[ -n "$isolation_mark" ] && batctl -m "$iface" isolation_mark "$isolation_mark"
+	[ -n "$multicast_fanout" ] && batctl -m "$iface" multicast_fanout "$multicast_fanout"
 	[ -n "$multicast_mode" ] && batctl -m "$iface" multicast_mode "$multicast_mode" 2>&-
 	[ -n "$network_coding" ] && batctl -m "$iface" network_coding "$network_coding" 2>&-
 	[ -n "$log_level" ] && batctl -m "$iface" loglevel "$log_level" 2>&-
