@@ -44,10 +44,4 @@ config SQLITE3_SESSION
 	help
 	  Enable the session extension (default no).
 
-config SQLITE3_THREADSAFE
-	bool "Thread-safe library"
-	default y
-	help
-	  Build a thread-safe library.
-
 endmenu
