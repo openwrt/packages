@@ -6,39 +6,40 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdrm
-PKG_VERSION:=2.4.70
+PKG_VERSION:=2.4.97
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://dri.freedesktop.org/libdrm
+PKG_SOURCE_URL:=https://dri.freedesktop.org/libdrm
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=b17d4b39ed97ca0e4cffa0db06ff609e617bac94646ec38e8e0579d530540e7b
+PKG_HASH:=77d0ccda3e10d6593398edb70b1566bfe1a23a39bd3da98ace2147692eadd123
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+
+PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libdrm
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=
+  DEPENDS:=+libpciaccess
   TITLE:=libdrm
-  URL:=http://dri.freedesktop.org/
+  URL:=https://dri.freedesktop.org/
+endef
+
+define Package/libdrm/description
+  LIBDRM is the cross-driver middleware which allows user-space applications
+  (such as Mesa and 2D drivers) to communicate with the Kernel by the means
+  of the DRI protocol.
 endef
 
 CONFIGURE_ARGS += \
   --disable-udev \
   --enable-kms \
-  --disable-intel \
-  --disable-radeon \
-  --disable-amdgpu \
-  --disable-nouveau \
-  --disable-vmwgfx \
   --disable-omap-experimental-api \
   --disable-exynos-experimental-api \
-  --disable-freedreno \
-  --disable-freedreno-kgsl \
   --disable-tegra-experimental-api \
-  --disable-vc4 \
   --disable-cairo-tests \
   --disable-manpages \
   --disable-valgrind
