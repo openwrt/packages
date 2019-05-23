@@ -79,7 +79,7 @@ MAKE_BATGAT_ARGS += \
 	PATH="$(TARGET_PATH)" \
 	SUBDIRS="$(PKG_KMOD_BUILD_DIR)" \
 	LINUX_VERSION="$(LINUX_VERSION)" \
-	REVISION="$(PKG_REV)" modules	
+	REVISION="$(PKG_REV)" modules
 
 
 define Build/Configure
@@ -88,11 +88,11 @@ endef
 ifneq ($(DEVELOPER)$(CONFIG_PACKAGE_batmand),)
 	BUILD_BATMAND := $(MAKE) -C $(PKG_BUILD_DIR) $(MAKE_BATMAND_ARGS)
 endif
-	
+
 ifneq ($(DEVELOPER)$(CONFIG_PACKAGE_kmod-batgat),)
 	BUILD_BATGAT := $(MAKE) -C "$(LINUX_DIR)" $(MAKE_BATGAT_ARGS)
 endif
-	        
+
 define Build/Compile
 	$(BUILD_BATMAND)
 	cp $(PKG_KMOD_BUILD_DIR)/Makefile.kbuild $(PKG_KMOD_BUILD_DIR)/Makefile
