@@ -10,11 +10,10 @@ Copyright 2016 Toke Høiland-Jørgensen <toke@toke.dk>
 
 ]]--
 
-local ipkg = require "luci.model.ipkg"
+local fs = require "nixio.fs"
 
-local nginx_presence = ipkg.installed("nginx-all-module") or ipkg.installed("nginx-ssl") or false
-
-local uhttpd_presence = ipkg.installed("uhttpd") or false
+local nginx_presence = fs.access("/usr/sbin/nginx") or false
+local uhttpd_presence = fs.access("/usr/sbin/uhttpd") or false
 
 m = Map("acme", translate("ACME certificates"),
 	translate("This configures ACME (Letsencrypt) automatic certificate installation. " ..
