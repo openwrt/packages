@@ -72,7 +72,7 @@
  #include <linux/netlink.h>
 --- a/src/libcharon/plugins/kernel_netlink/kernel_netlink_shared.c
 +++ b/src/libcharon/plugins/kernel_netlink/kernel_netlink_shared.c
-@@ -38,6 +38,8 @@
+@@ -39,6 +39,8 @@
   * THE SOFTWARE.
   */
  
