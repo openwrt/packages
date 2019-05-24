@@ -1,0 +1,596 @@
+From 6cf6c7ff25c883349e8e9e5468e61498358e2e91 Mon Sep 17 00:00:00 2001
+From: WGH <wgh@torlan.ru>
+Date: Sat, 27 Aug 2016 17:34:22 +0300
+Subject: [PATCH] added "static" to C functions, where possible
+
+1. It reduces clutter in symbol table.
+2. It fixes issues with C99 inline semantics for functions
+   marked as inline (#237, #180, #222), which manifests
+   when compiled with GCC>=5.
+---
+ lib/ultrajsondec.c | 24 ++++++++--------
+ lib/ultrajsonenc.c | 24 ++++++++--------
+ python/JSONtoObj.c | 24 ++++++++--------
+ python/objToJSON.c | 72 +++++++++++++++++++++++-----------------------
+ 4 files changed, 72 insertions(+), 72 deletions(-)
+
+diff --git a/lib/ultrajsondec.c b/lib/ultrajsondec.c
+index 21a732e..19efc60 100644
+--- a/lib/ultrajsondec.c
++++ b/lib/ultrajsondec.c
+@@ -66,7 +66,7 @@ struct DecoderState
+   JSONObjectDecoder *dec;
+ };
+ 
+-JSOBJ FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATTR;
++static JSOBJ FASTCALL_MSVC decode_any( struct DecoderState *ds) FASTCALL_ATTR;
+ typedef JSOBJ (*PFN_DECODER)( struct DecoderState *ds);
+ 
+ static JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
+@@ -76,13 +76,13 @@ static JSOBJ SetError( struct DecoderState *ds, int offset, const char *message)
+   return NULL;
+ }
+ 
+-double createDouble(double intNeg, double intValue, double frcValue, int frcDecimalCount)
++static double createDouble(double intNeg, double intValue, double frcValue, int frcDecimalCount)
+ {
+   static const double g_pow10[] = {1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001,0.0000001, 0.00000001, 0.000000001, 0.0000000001, 0.00000000001, 0.000000000001, 0.0000000000001, 0.00000000000001, 0.000000000000001};
+   return (intValue + (frcValue * g_pow10[frcDecimalCount])) * intNeg;
+ }
+ 
+-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodePreciseFloat(struct DecoderState *ds)
++static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodePreciseFloat(struct DecoderState *ds)
+ {
+   char *end;
+   double value;
+@@ -99,7 +99,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decodePreciseFloat(struct DecoderState *ds)
+   return ds->dec->newDouble(ds->prv, value);
+ }
+ 
+-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
++static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
+ {
+   int intNeg = 1;
+   int mantSize = 0;
+@@ -309,7 +309,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_numeric (struct DecoderState *ds)
+   return ds->dec->newDouble (ds->prv, createDouble( (double) intNeg, (double) intValue , frcValue, decimalCount) * pow(10.0, expValue * expNeg));
+ }
+ 
+-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds)
++static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds)
+ {
+   char *offset = ds->start;
+   offset ++;
+@@ -329,7 +329,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_true ( struct DecoderState *ds)
+   return SetError(ds, -1, "Unexpected character found when decoding 'true'");
+ }
+ 
+-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_false ( struct DecoderState *ds)
++static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_false ( struct DecoderState *ds)
+ {
+   char *offset = ds->start;
+   offset ++;
+@@ -351,7 +351,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_false ( struct DecoderState *ds)
+   return SetError(ds, -1, "Unexpected character found when decoding 'false'");
+ }
+ 
+-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_null ( struct DecoderState *ds)
++static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_null ( struct DecoderState *ds)
+ {
+   char *offset = ds->start;
+   offset ++;
+@@ -371,7 +371,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_null ( struct DecoderState *ds)
+   return SetError(ds, -1, "Unexpected character found when decoding 'null'");
+ }
+ 
+-FASTCALL_ATTR void FASTCALL_MSVC SkipWhitespace(struct DecoderState *ds)
++static FASTCALL_ATTR void FASTCALL_MSVC SkipWhitespace(struct DecoderState *ds)
+ {
+   char *offset = ds->start;
+ 
+@@ -422,7 +422,7 @@ static const JSUINT8 g_decoderLookup[256] =
+   /* 0xf0 */ 4, 4, 4, 4, 4, 4, 4, 4, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR, DS_UTFLENERROR,
+ };
+ 
+-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
++static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
+ {
+   JSUTF16 sur[2] = { 0 };
+   int iSur = 0;
+@@ -672,7 +672,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_string ( struct DecoderState *ds)
+   }
+ }
+ 
+-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
++static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
+ {
+   JSOBJ itemValue;
+   JSOBJ newObj;
+@@ -736,7 +736,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_array(struct DecoderState *ds)
+   }
+ }
+ 
+-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
++static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
+ {
+   JSOBJ itemName;
+   JSOBJ itemValue;
+@@ -819,7 +819,7 @@ FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_object( struct DecoderState *ds)
+   }
+ }
+ 
+-FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_any(struct DecoderState *ds)
++static FASTCALL_ATTR JSOBJ FASTCALL_MSVC decode_any(struct DecoderState *ds)
+ {
+   for (;;)
+   {
+diff --git a/lib/ultrajsonenc.c b/lib/ultrajsonenc.c
+index 6c1b120..f330171 100644
+--- a/lib/ultrajsonenc.c
++++ b/lib/ultrajsonenc.c
+@@ -112,7 +112,7 @@ static void SetError (JSOBJ obj, JSONObjectEncoder *enc, const char *message)
+ /*
+ FIXME: Keep track of how big these get across several encoder calls and try to make an estimate
+ That way we won't run our head into the wall each call */
+-void Buffer_Realloc (JSONObjectEncoder *enc, size_t cbNeeded)
++static void Buffer_Realloc (JSONObjectEncoder *enc, size_t cbNeeded)
+ {
+   size_t curSize = enc->end - enc->start;
+   size_t newSize = curSize * 2;
+@@ -148,7 +148,7 @@ void Buffer_Realloc (JSONObjectEncoder *enc, size_t cbNeeded)
+   enc->end = enc->start + newSize;
+ }
+ 
+-FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC Buffer_AppendShortHexUnchecked (char *outputOffset, unsigned short value)
++static FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC Buffer_AppendShortHexUnchecked (char *outputOffset, unsigned short value)
+ {
+   *(outputOffset++) = g_hexChars[(value & 0xf000) >> 12];
+   *(outputOffset++) = g_hexChars[(value & 0x0f00) >> 8];
+@@ -156,7 +156,7 @@ FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC Buffer_AppendShortHexUnchecked (c
+   *(outputOffset++) = g_hexChars[(value & 0x000f) >> 0];
+ }
+ 
+-int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *io, const char *end)
++static int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *io, const char *end)
+ {
+   char *of = (char *) enc->offset;
+ 
+@@ -260,7 +260,7 @@ int Buffer_EscapeStringUnvalidated (JSONObjectEncoder *enc, const char *io, cons
+   }
+ }
+ 
+-int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char *io, const char *end)
++static int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char *io, const char *end)
+ {
+   JSUTF32 ucs;
+   char *of = (char *) enc->offset;
+@@ -498,19 +498,19 @@ int Buffer_EscapeStringValidated (JSOBJ obj, JSONObjectEncoder *enc, const char
+ #define Buffer_AppendCharUnchecked(__enc, __chr) \
+                 *((__enc)->offset++) = __chr; \
+ 
+-FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC strreverse(char* begin, char* end)
++static FASTCALL_ATTR INLINE_PREFIX void FASTCALL_MSVC strreverse(char* begin, char* end)
+ {
+   char aux;
+   while (end > begin)
+   aux = *end, *end-- = *begin, *begin++ = aux;
+ }
+ 
+-void Buffer_AppendIndentNewlineUnchecked(JSONObjectEncoder *enc)
++static void Buffer_AppendIndentNewlineUnchecked(JSONObjectEncoder *enc)
+ {
+   if (enc->indent > 0) Buffer_AppendCharUnchecked(enc, '\n');
+ }
+ 
+-void Buffer_AppendIndentUnchecked(JSONObjectEncoder *enc, JSINT32 value)
++static void Buffer_AppendIndentUnchecked(JSONObjectEncoder *enc, JSINT32 value)
+ {
+   int i;
+   if (enc->indent > 0)
+@@ -519,7 +519,7 @@ void Buffer_AppendIndentUnchecked(JSONObjectEncoder *enc, JSINT32 value)
+         Buffer_AppendCharUnchecked(enc, ' ');
+ }
+ 
+-void Buffer_AppendIntUnchecked(JSONObjectEncoder *enc, JSINT32 value)
++static void Buffer_AppendIntUnchecked(JSONObjectEncoder *enc, JSINT32 value)
+ {
+   char* wstr;
+   JSUINT32 uvalue = (value < 0) ? -value : value;
+@@ -535,7 +535,7 @@ void Buffer_AppendIntUnchecked(JSONObjectEncoder *enc, JSINT32 value)
+   enc->offset += (wstr - (enc->offset));
+ }
+ 
+-void Buffer_AppendLongUnchecked(JSONObjectEncoder *enc, JSINT64 value)
++static void Buffer_AppendLongUnchecked(JSONObjectEncoder *enc, JSINT64 value)
+ {
+   char* wstr;
+   JSUINT64 uvalue = (value < 0) ? -value : value;
+@@ -551,7 +551,7 @@ void Buffer_AppendLongUnchecked(JSONObjectEncoder *enc, JSINT64 value)
+   enc->offset += (wstr - (enc->offset));
+ }
+ 
+-void Buffer_AppendUnsignedLongUnchecked(JSONObjectEncoder *enc, JSUINT64 value)
++static void Buffer_AppendUnsignedLongUnchecked(JSONObjectEncoder *enc, JSUINT64 value)
+ {
+   char* wstr;
+   JSUINT64 uvalue = value;
+@@ -566,7 +566,7 @@ void Buffer_AppendUnsignedLongUnchecked(JSONObjectEncoder *enc, JSUINT64 value)
+   enc->offset += (wstr - (enc->offset));
+ }
+ 
+-int Buffer_AppendDoubleUnchecked(JSOBJ obj, JSONObjectEncoder *enc, double value)
++static int Buffer_AppendDoubleUnchecked(JSOBJ obj, JSONObjectEncoder *enc, double value)
+ {
+   /* if input is larger than thres_max, revert to exponential */
+   const double thres_max = (double) 1e16 - 1;
+@@ -714,7 +714,7 @@ Handle integration functions returning NULL here */
+ FIXME:
+ Perhaps implement recursion detection */
+ 
+-void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
++static void encode(JSOBJ obj, JSONObjectEncoder *enc, const char *name, size_t cbName)
+ {
+   const char *value;
+   char *objName;
+diff --git a/python/JSONtoObj.c b/python/JSONtoObj.c
+index 79d9f1a..6cef088 100644
+--- a/python/JSONtoObj.c
++++ b/python/JSONtoObj.c
+@@ -43,7 +43,7 @@ Numeric decoder derived from from TCL library
+ //#define PRINTMARK() fprintf(stderr, "%s: MARK(%d)\n", __FILE__, __LINE__)
+ #define PRINTMARK()
+ 
+-void Object_objectAddKey(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value)
++static void Object_objectAddKey(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value)
+ {
+   PyDict_SetItem (obj, name, value);
+   Py_DECREF( (PyObject *) name);
+@@ -51,59 +51,59 @@ void Object_objectAddKey(void *prv, JSOBJ obj, JSOBJ name, JSOBJ value)
+   return;
+ }
+ 
+-void Object_arrayAddItem(void *prv, JSOBJ obj, JSOBJ value)
++static void Object_arrayAddItem(void *prv, JSOBJ obj, JSOBJ value)
+ {
+   PyList_Append(obj, value);
+   Py_DECREF( (PyObject *) value);
+   return;
+ }
+ 
+-JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end)
++static JSOBJ Object_newString(void *prv, wchar_t *start, wchar_t *end)
+ {
+   return PyUnicode_FromWideChar (start, (end - start));
+ }
+ 
+-JSOBJ Object_newTrue(void *prv)
++static JSOBJ Object_newTrue(void *prv)
+ {
+   Py_RETURN_TRUE;
+ }
+ 
+-JSOBJ Object_newFalse(void *prv)
++static JSOBJ Object_newFalse(void *prv)
+ {
+   Py_RETURN_FALSE;
+ }
+ 
+-JSOBJ Object_newNull(void *prv)
++static JSOBJ Object_newNull(void *prv)
+ {
+   Py_RETURN_NONE;
+ }
+ 
+-JSOBJ Object_newObject(void *prv)
++static JSOBJ Object_newObject(void *prv)
+ {
+   return PyDict_New();
+ }
+ 
+-JSOBJ Object_newArray(void *prv)
++static JSOBJ Object_newArray(void *prv)
+ {
+   return PyList_New(0);
+ }
+ 
+-JSOBJ Object_newInteger(void *prv, JSINT32 value)
++static JSOBJ Object_newInteger(void *prv, JSINT32 value)
+ {
+   return PyInt_FromLong( (long) value);
+ }
+ 
+-JSOBJ Object_newLong(void *prv, JSINT64 value)
++static JSOBJ Object_newLong(void *prv, JSINT64 value)
+ {
+   return PyLong_FromLongLong (value);
+ }
+ 
+-JSOBJ Object_newUnsignedLong(void *prv, JSUINT64 value)
++static JSOBJ Object_newUnsignedLong(void *prv, JSUINT64 value)
+ {
+   return PyLong_FromUnsignedLongLong (value);
+ }
+ 
+-JSOBJ Object_newDouble(void *prv, double value)
++static JSOBJ Object_newDouble(void *prv, double value)
+ {
+   return PyFloat_FromDouble(value);
+ }
+diff --git a/python/objToJSON.c b/python/objToJSON.c
+index 04a4575..1960d40 100644
+--- a/python/objToJSON.c
++++ b/python/objToJSON.c
+@@ -226,7 +226,7 @@ static void *PyDateToINT64(JSOBJ _obj, JSONTypeContext *tc, void *outValue, size
+   return NULL;
+ }
+ 
+-int Tuple_iterNext(JSOBJ obj, JSONTypeContext *tc)
++static int Tuple_iterNext(JSOBJ obj, JSONTypeContext *tc)
+ {
+   PyObject *item;
+ 
+@@ -242,21 +242,21 @@ int Tuple_iterNext(JSOBJ obj, JSONTypeContext *tc)
+   return 1;
+ }
+ 
+-void Tuple_iterEnd(JSOBJ obj, JSONTypeContext *tc)
++static void Tuple_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+ {
+ }
+ 
+-JSOBJ Tuple_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
++static JSOBJ Tuple_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
+ {
+   return GET_TC(tc)->itemValue;
+ }
+ 
+-char *Tuple_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
++static char *Tuple_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
+ {
+   return NULL;
+ }
+ 
+-int Iter_iterNext(JSOBJ obj, JSONTypeContext *tc)
++static int Iter_iterNext(JSOBJ obj, JSONTypeContext *tc)
+ {
+   PyObject *item;
+ 
+@@ -282,7 +282,7 @@ int Iter_iterNext(JSOBJ obj, JSONTypeContext *tc)
+   return 1;
+ }
+ 
+-void Iter_iterEnd(JSOBJ obj, JSONTypeContext *tc)
++static void Iter_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+ {
+   if (GET_TC(tc)->itemValue)
+   {
+@@ -297,17 +297,17 @@ void Iter_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+   }
+ }
+ 
+-JSOBJ Iter_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
++static JSOBJ Iter_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
+ {
+   return GET_TC(tc)->itemValue;
+ }
+ 
+-char *Iter_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
++static char *Iter_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
+ {
+   return NULL;
+ }
+ 
+-void Dir_iterEnd(JSOBJ obj, JSONTypeContext *tc)
++static void Dir_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+ {
+   if (GET_TC(tc)->itemValue)
+   {
+@@ -325,7 +325,7 @@ void Dir_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+   PRINTMARK();
+ }
+ 
+-int Dir_iterNext(JSOBJ _obj, JSONTypeContext *tc)
++static int Dir_iterNext(JSOBJ _obj, JSONTypeContext *tc)
+ {
+   PyObject *obj = (PyObject *) _obj;
+   PyObject *itemValue = GET_TC(tc)->itemValue;
+@@ -401,20 +401,20 @@ int Dir_iterNext(JSOBJ _obj, JSONTypeContext *tc)
+   return 1;
+ }
+ 
+-JSOBJ Dir_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
++static JSOBJ Dir_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
+ {
+   PRINTMARK();
+   return GET_TC(tc)->itemValue;
+ }
+ 
+-char *Dir_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
++static char *Dir_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
+ {
+   PRINTMARK();
+   *outLen = PyString_GET_SIZE(GET_TC(tc)->itemName);
+   return PyString_AS_STRING(GET_TC(tc)->itemName);
+ }
+ 
+-int List_iterNext(JSOBJ obj, JSONTypeContext *tc)
++static int List_iterNext(JSOBJ obj, JSONTypeContext *tc)
+ {
+   if (GET_TC(tc)->index >= GET_TC(tc)->size)
+   {
+@@ -427,16 +427,16 @@ int List_iterNext(JSOBJ obj, JSONTypeContext *tc)
+   return 1;
+ }
+ 
+-void List_iterEnd(JSOBJ obj, JSONTypeContext *tc)
++static void List_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+ {
+ }
+ 
+-JSOBJ List_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
++static JSOBJ List_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
+ {
+   return GET_TC(tc)->itemValue;
+ }
+ 
+-char *List_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
++static char *List_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
+ {
+   return NULL;
+ }
+@@ -447,7 +447,7 @@ char *List_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
+ // itemValue is borrowed from object (which is dict). No refCounting
+ //=============================================================================
+ 
+-int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
++static int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
+ {
+ #if PY_MAJOR_VERSION >= 3
+   PyObject* itemNameTmp;
+@@ -488,7 +488,7 @@ int Dict_iterNext(JSOBJ obj, JSONTypeContext *tc)
+     return 1;
+ }
+ 
+-void Dict_iterEnd(JSOBJ obj, JSONTypeContext *tc)
++static void Dict_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+ {
+   if (GET_TC(tc)->itemName)
+   {
+@@ -499,18 +499,18 @@ void Dict_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+   PRINTMARK();
+ }
+ 
+-JSOBJ Dict_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
++static JSOBJ Dict_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
+ {
+   return GET_TC(tc)->itemValue;
+ }
+ 
+-char *Dict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
++static char *Dict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
+ {
+   *outLen = PyString_GET_SIZE(GET_TC(tc)->itemName);
+   return PyString_AS_STRING(GET_TC(tc)->itemName);
+ }
+ 
+-int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
++static int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
+ {
+   PyObject *items = NULL, *item = NULL, *key = NULL, *value = NULL;
+   Py_ssize_t i, nitems;
+@@ -603,7 +603,7 @@ int SortedDict_iterNext(JSOBJ obj, JSONTypeContext *tc)
+   return -1;
+ }
+ 
+-void SortedDict_iterEnd(JSOBJ obj, JSONTypeContext *tc)
++static void SortedDict_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+ {
+   GET_TC(tc)->itemName = NULL;
+   GET_TC(tc)->itemValue = NULL;
+@@ -612,19 +612,19 @@ void SortedDict_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+   PRINTMARK();
+ }
+ 
+-JSOBJ SortedDict_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
++static JSOBJ SortedDict_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
+ {
+   return GET_TC(tc)->itemValue;
+ }
+ 
+-char *SortedDict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
++static char *SortedDict_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
+ {
+   *outLen = PyString_GET_SIZE(GET_TC(tc)->itemName);
+   return PyString_AS_STRING(GET_TC(tc)->itemName);
+ }
+ 
+ 
+-void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder *enc)
++static void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder *enc)
+ {
+   if (enc->sortKeys) {
+     pc->iterEnd = SortedDict_iterEnd;
+@@ -642,7 +642,7 @@ void SetupDictIter(PyObject *dictObj, TypeContext *pc, JSONObjectEncoder *enc)
+   pc->index = 0;
+ }
+ 
+-void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder *enc)
++static void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder *enc)
+ {
+   PyObject *obj, *exc, *iter;
+   TypeContext *pc;
+@@ -929,7 +929,7 @@ void Object_beginTypeContext (JSOBJ _obj, JSONTypeContext *tc, JSONObjectEncoder
+   return;
+ }
+ 
+-void Object_endTypeContext(JSOBJ obj, JSONTypeContext *tc)
++static void Object_endTypeContext(JSOBJ obj, JSONTypeContext *tc)
+ {
+   Py_XDECREF(GET_TC(tc)->newObj);
+ 
+@@ -937,33 +937,33 @@ void Object_endTypeContext(JSOBJ obj, JSONTypeContext *tc)
+   tc->prv = NULL;
+ }
+ 
+-const char *Object_getStringValue(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen)
++static const char *Object_getStringValue(JSOBJ obj, JSONTypeContext *tc, size_t *_outLen)
+ {
+   return GET_TC(tc)->PyTypeToJSON (obj, tc, NULL, _outLen);
+ }
+ 
+-JSINT64 Object_getLongValue(JSOBJ obj, JSONTypeContext *tc)
++static JSINT64 Object_getLongValue(JSOBJ obj, JSONTypeContext *tc)
+ {
+   JSINT64 ret;
+   GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
+   return ret;
+ }
+ 
+-JSUINT64 Object_getUnsignedLongValue(JSOBJ obj, JSONTypeContext *tc)
++static JSUINT64 Object_getUnsignedLongValue(JSOBJ obj, JSONTypeContext *tc)
+ {
+   JSUINT64 ret;
+   GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
+   return ret;
+ }
+ 
+-JSINT32 Object_getIntValue(JSOBJ obj, JSONTypeContext *tc)
++static JSINT32 Object_getIntValue(JSOBJ obj, JSONTypeContext *tc)
+ {
+   JSINT32 ret;
+   GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
+   return ret;
+ }
+ 
+-double Object_getDoubleValue(JSOBJ obj, JSONTypeContext *tc)
++static double Object_getDoubleValue(JSOBJ obj, JSONTypeContext *tc)
+ {
+   double ret;
+   GET_TC(tc)->PyTypeToJSON (obj, tc, &ret, NULL);
+@@ -975,22 +975,22 @@ static void Object_releaseObject(JSOBJ _obj)
+   Py_DECREF( (PyObject *) _obj);
+ }
+ 
+-int Object_iterNext(JSOBJ obj, JSONTypeContext *tc)
++static int Object_iterNext(JSOBJ obj, JSONTypeContext *tc)
+ {
+   return GET_TC(tc)->iterNext(obj, tc);
+ }
+ 
+-void Object_iterEnd(JSOBJ obj, JSONTypeContext *tc)
++static void Object_iterEnd(JSOBJ obj, JSONTypeContext *tc)
+ {
+   GET_TC(tc)->iterEnd(obj, tc);
+ }
+ 
+-JSOBJ Object_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
++static JSOBJ Object_iterGetValue(JSOBJ obj, JSONTypeContext *tc)
+ {
+   return GET_TC(tc)->iterGetValue(obj, tc);
+ }
+ 
+-char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
++static char *Object_iterGetName(JSOBJ obj, JSONTypeContext *tc, size_t *outLen)
+ {
+   return GET_TC(tc)->iterGetName(obj, tc, outLen);
+ }
