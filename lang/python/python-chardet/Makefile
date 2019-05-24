@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-chardet
 PKG_VERSION:=3.0.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=LGPL-2.1
 
 PKG_SOURCE:=chardet-$(PKG_VERSION).tar.gz
@@ -53,6 +53,14 @@ define Package/python3-chardet/description
 $(call Package/python-chardet/description)
 .
 (Variant for Python3)
+endef
+
+define Py3Package/python3-chardet/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
+	for bin in $(1)/usr/bin/*; do \
+		mv $$$$bin $$$${bin}3 ; \
+	done
 endef
 
 $(eval $(call PyPackage,python-chardet))
