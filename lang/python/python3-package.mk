@@ -93,6 +93,9 @@ define Build/Compile/HostPy3RunTarget
 		CXX="$(TARGET_CXX)" \
 		LD="$(TARGET_CC)" \
 		LDSHARED="$(TARGET_CC) -shared" \
+		F90="$(TARGET_CROSS)gfortran" \
+		AR="$(TARGET_AR)" \
+		RANLIB="$(TARGET_RANLIB)" \
 		CFLAGS="$(TARGET_CFLAGS)" \
 		CPPFLAGS="$(TARGET_CPPFLAGS) -I$(PYTHON3_INC_DIR)" \
 		LDFLAGS="$(TARGET_LDFLAGS) -lpython$(PYTHON3_VERSION)" \
