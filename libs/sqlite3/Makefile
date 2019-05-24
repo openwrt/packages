@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlite
 PKG_VERSION:=3270200
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_VERSION).tar.gz
 PKG_HASH:=50c39e85ea28b5ecfdb3f9e860afe9ba606381e21836b2849efca6a0bfe6ef6e
@@ -37,8 +37,7 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_SQLITE3_LIBEDIT \
 	CONFIG_SQLITE3_READLINE \
 	CONFIG_SQLITE3_RTREE \
-	CONFIG_SQLITE3_SESSION \
-	CONFIG_SQLITE3_THREADSAFE
+	CONFIG_SQLITE3_SESSION
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -105,14 +104,14 @@ CONFIGURE_ARGS += \
 	--disable-static-shell \
 	--enable-shared \
 	--enable-static \
+	--enable-threadsafe \
 	$(if $(CONFIG_SQLITE3_DYNAMIC_EXTENSIONS),--enable-dynamic-extensions,--disable-dynamic-extensions) \
 	$(if $(CONFIG_SQLITE3_FTS3),--enable-fts3,--disable-fts3) \
 	$(if $(CONFIG_SQLITE3_FTS3),--enable-fts4,--disable-fts4) \
 	$(if $(CONFIG_SQLITE3_FTS3),--enable-fts5,--disable-fts5) \
 	$(if $(CONFIG_SQLITE3_JSON1),--enable-json1,--disable-json1) \
 	$(if $(CONFIG_SQLITE3_RTREE),--enable-rtree,--disable-rtree) \
-	$(if $(CONFIG_SQLITE3_SESSION),--enable-session,--disable-session) \
-	$(if $(CONFIG_SQLITE3_THREADSAFE),--enable-threadsafe,--disable-threadsafe)
+	$(if $(CONFIG_SQLITE3_SESSION),--enable-session,--disable-session)
 
 ifeq ($(CONFIG_SQLITE3_LIBEDIT),y)
 CONFIGURE_ARGS+=--disable-readline
