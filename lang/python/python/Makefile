@@ -174,6 +174,7 @@ define Build/Compile/python-setuptools
 		--ignore-installed \
 		--root=$(PKG_BUILD_DIR)/install-setuptools --prefix=. \
 		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/setuptools-$(PYTHON_SETUPTOOLS_VERSION)-py2.py3-none-any.whl
+	$(call PatchDir,$(PKG_BUILD_DIR)/install-setuptools/lib/python$(PYTHON_VERSION)/site-packages,./patches-setuptools,)
 endef
 endif # CONFIG_PACKAGE_python-setuptools
 
@@ -183,6 +184,7 @@ define Build/Compile/python-pip
 		--ignore-installed \
 		--root=$(PKG_BUILD_DIR)/install-pip --prefix=. \
 		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/pip-$(PYTHON_PIP_VERSION)-py2.py3-none-any.whl
+	$(call PatchDir,$(PKG_BUILD_DIR)/install-pip/lib/python$(PYTHON_VERSION)/site-packages,./patches-pip,)
 endef
 endif # CONFIG_PACKAGE_python-pip
 
@@ -304,6 +306,14 @@ define Host/Install
 	$(MAKE) -C $(HOST_BUILD_DIR) install
 	$(INSTALL_DIR) $(HOST_PYTHON_DIR)/bin/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(HOST_PYTHON_DIR)/bin/pgen2
+  ifeq ($(wildcard $(HOST_PYTHON_PKG_DIR)/.setuptools-patched),)
+	$(call HostPatchDir,$(HOST_PYTHON_PKG_DIR),./patches-setuptools,)
+	touch $(HOST_PYTHON_PKG_DIR)/.setuptools-patched
+  endif
+  ifeq ($(wildcard $(HOST_PYTHON_PKG_DIR)/.pip-patched),)
+	$(call HostPatchDir,$(HOST_PYTHON_PKG_DIR),./patches-pip,)
+	touch $(HOST_PYTHON_PKG_DIR)/.pip-patched
+  endif
 endef
 
 $(eval $(call HostBuild))
