@@ -42,7 +42,12 @@ define Package/lm-sensors-detect
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=lm-sensors-detect
-  DEPENDS+=+lm-sensors +perl +perlbase-essential +perlbase-fcntl +perlbase-file +perlbase-xsloader
+  DEPENDS+=+lm-sensors \
+	+PACKAGE_lm-sensors-detect:perl \
+	+PACKAGE_lm-sensors-detect:perlbase-essential \
+	+PACKAGE_lm-sensors-detect:perlbase-fcntl \
+	+PACKAGE_lm-sensors-detect:perlbase-file \
+	+PACKAGE_lm-sensors-detect:perlbase-xsloader
 endef
 
 define Package/libsensors
