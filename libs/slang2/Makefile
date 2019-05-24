@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=slang
 PKG_VERSION:=2.3.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.jedsoft.org/releases/slang \
@@ -22,12 +22,13 @@ PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
-PKG_BUILD_PARALLEL:=1
+PKG_BUILD_PARALLEL:=0
 
 SLANG_MODULES:= base64 chksum csv fcntl fork histogram iconv json pcre png \
 	rand select slsmg socket stats sysconf termios varray zlib
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/libslang2/Default
   SECTION:=libs
@@ -61,6 +62,12 @@ define Package/libslang2-modules/description
 $(call Package/libslang2/Default/description)
 
   This installs all of S-Lang's bundled modules.
+endef
+
+define Package/libslang2-mod-iconv
+$(call Package/libslang2/Default)
+  TITLE+= (iconv module)
+  DEPENDS:=$(ICONV_DEPENDS)
 endef
 
 define Package/libslang2-mod-pcre
@@ -101,6 +108,7 @@ CONFIGURE_ARGS+= \
 	--enable-warnings \
 	--with-terminfo=default \
 	--with-readline=slang \
+	--with-iconv="$(ICONV_PREFIX)" \
 	--with-pcre="$(STAGING_DIR)/usr" \
 	--with-png="$(STAGING_DIR)/usr" \
 	--with-z="$(STAGING_DIR)/usr" \
