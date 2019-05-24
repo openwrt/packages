@@ -37,7 +37,8 @@ define Package/node
   SUBMENU:=Node.js
   TITLE:=Node.js is a platform built on Chrome's JavaScript runtime
   URL:=https://nodejs.org/
-  DEPENDS:=@(HAS_FPU||KERNEL_MIPS_FPU_EMULATOR) @!arc @!armeb \
+  DEPENDS:=@(HAS_FPU||KERNEL_MIPS_FPU_EMULATOR) \
+	   @(mips||mipsel||mips64||mip64sel||i386||i686||x86_64||powerpc||powerpc64||arm_v7||aarch64||TARGET_brcm2708||TARGET_cns3xxx) \
 	   +libstdcpp +libopenssl +zlib +libnghttp2 +libuv +libhttp-parser \
 	   +NODEJS_ICU:icu
 endef
