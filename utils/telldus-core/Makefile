@@ -1,4 +1,4 @@
-# 
+#
 # Copyright (C) 2010 Telldus Technologies AB
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -7,10 +7,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=telldus-core
 PKG_VERSION:=2.1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=LGPL-2.1
-PKG_BUILD_DEPENDS:=argp-standalone 
+PKG_BUILD_DEPENDS:=argp-standalone
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.telldus.com/TellStick/Software/telldus-core/
 PKG_HASH:=a20f6c74814afc23312d2c93ebbb37fdea9deaaee05ae7b6a6275e11e4662014
@@ -39,6 +39,8 @@ CMAKE_OPTIONS+=\
 	-DBUILD_TDTOOL=1 \
 	-DGENERATE_MAN=0 \
 	-DICONV_LIBRARY=-liconv
+
+TARGET_CXXFLAGS += -fpermissive
 
 define Package/telldus-core/conffiles
 /etc/tellstick.conf
