@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=slang
 PKG_VERSION:=2.3.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.jedsoft.org/releases/slang \
@@ -24,8 +24,8 @@ PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 PKG_BUILD_PARALLEL:=0
 
-SLANG_MODULES:= base64 chksum csv fcntl fork histogram iconv json pcre png \
-	rand select slsmg socket stats sysconf termios varray zlib
+SLANG_MODULES:= base64 chksum csv fcntl fork histogram iconv json onig pcre \
+	png rand select slsmg socket stats sysconf termios varray zlib
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -70,6 +70,12 @@ $(call Package/libslang2/Default)
   DEPENDS:=$(ICONV_DEPENDS)
 endef
 
+define Package/libslang2-mod-onig
+$(call Package/libslang2/Default)
+  TITLE+= (onig module)
+  DEPENDS:=+oniguruma
+endef
+
 define Package/libslang2-mod-pcre
 $(call Package/libslang2/Default)
   TITLE+= (pcre module)
@@ -109,10 +115,10 @@ CONFIGURE_ARGS+= \
 	--with-terminfo=default \
 	--with-readline=slang \
 	--with-iconv="$(ICONV_PREFIX)" \
+	--with-onig="$(STAGING_DIR)/usr" \
 	--with-pcre="$(STAGING_DIR)/usr" \
 	--with-png="$(STAGING_DIR)/usr" \
 	--with-z="$(STAGING_DIR)/usr" \
-	--without-onig \
 	--without-x
 
 define Build/Compile
