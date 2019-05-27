@@ -103,6 +103,28 @@ include $(TOPDIR)/feeds/openwrt-packages/lang/python/python3-package.mk
 
 Each maintainer[s] of external packages feeds is responsible for the local name, and relative inclusion path back to this feed (which is named `packages` by default).
 
+In case there is a need/requirement such that the local package feed is named something else than `packages`, one approach to make the package flexible to change is:
+
+```
+PYTHON_PACKAGE_MK:=$(wildcard $(TOPDIR)/feeds/*/lang/python/python-package.mk)
+
+# verify that there is only one single file returned
+ifneq (1,$(words $(PYTHON_PACKAGE_MK)))
+ifeq (0,$(words $(PYTHON_PACKAGE_MK)))
+$(error did not find python-package.mk in any feed)
+else
+$(error found multiple python-package.mk files in the feeds)
+endif
+else
+$(info found python-package.mk at $(PYTHON_PACKAGE_MK))
+endif
+
+include $(PYTHON_PACKAGE_MK)
+```
+
+Same can be done for `python3-package.mk`.
+This should solve the corner-case where the `python[3]-package.mk` can be in some other feed, or if the packages feed will be named something else locally.
+
 ## Build considerations
 
 In order to build the Python[3] interpreters, a host Python/Python3 interpreter needs to be built, in order to process some of the build for the target Python/Python3 build. The host Python[3] interpreters are also needed so that Python bytecodes are generated, so the host interpreters need to be the exact versions as on the target. And finally, the host Python[3] interpreters also provide pip & pip3, so that they may be used to install some Python[3] packages that are required to build other Python[3] packages.
