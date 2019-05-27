@@ -65,7 +65,7 @@ This package provides the libprotobuf-lite library.
 
 endef
 
-CONFIGURE_ARGS += --with-protoc=$(STAGING_DIR_HOSTPKG)/bin/protoc
+CONFIGURE_ARGS += --with-protoc=$(STAGING_DIR_HOSTPKG)/bin/protoc CXXFLAGS='-std=c++11'
 
 define Build/InstallDev
 	$(INSTALL_DIR) \
