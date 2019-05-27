@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnsdist
 PKG_VERSION:=1.3.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
@@ -43,7 +43,7 @@ define Package/dnsdist
   SECTION:=base
   CATEGORY:=Network
   TITLE:=dnsdist DNS-, DOS- and abuse-aware loadbalancer
-  DEPENDS:=+DNSDIST_OPENSSL:libopenssl +DNSDIST_GNUTLS:libgnutls +protobuf +re2 +libedit +libfstrm +libsodium +lua +boost +libnetsnmp
+  DEPENDS:=+DNSDIST_OPENSSL:libopenssl +DNSDIST_GNUTLS:libgnutls +protobuf +re2 +libedit +libfstrm +libsodium +lua +boost +libnetsnmp +libatomic
   URL:=https://dnsdist.org/
 endef
 
