@@ -18,10 +18,9 @@ start () {
 	disable_aggregation=$(uci get batmand.general.disable_aggregation)
 	batman_args=""
 
-	for hna in $hnas
-	   do
-	      batman_args=${batman_args}'-a '$hna' '
-	   done
+	for hna in $hnas; do
+		batman_args=${batman_args}'-a '$hna' '
+	done
 
 	if [ $gateway_class ]; then
 		batman_args=${batman_args}'-g '$gateway_class' '
@@ -38,19 +37,19 @@ start () {
 	if [ $routing_class ]; then
 		batman_args=${batman_args}'-r '$routing_class' '
 	fi
-		
+
 	if [ $visualisation_srv ]; then
 		batman_args=${batman_args}'-s '$visualisation_srv' '
 	fi
-	
+
 	if [ $policy_routing_script ]; then
 		batman_args=${batman_args}'--policy-routing-script '$policy_routing_script' '
 	fi
-	
+
 	if [ $disable_client_nat ]; then
 		batman_args=${batman_args}'--disable-client-nat '
 	fi
-	
+
 	if [ $disable_aggregation ]; then
 		batman_args=${batman_args}'--disable-aggregation '
 	fi
@@ -60,7 +59,5 @@ start () {
 }
 
 stop () {
-        killall batmand
+	killall batmand
 }
-
-        
