@@ -48,7 +48,7 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/{include,lib}
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
-	$(SED) 's,/usr,${STAGING_DIR}/usr,g' $(1)/usr/lib/pkgconfig/oniguruma.pc
+	$(SED) 's,/usr,$(STAGING_DIR)/usr,g' $(1)/usr/lib/pkgconfig/oniguruma.pc
 endef
 
 $(eval $(call BuildPackage,oniguruma))
