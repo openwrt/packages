@@ -12,7 +12,7 @@ PKG_NAME:=softethervpn
 PKG_VERSION:=4.28-9669
 PKG_VERREL:=beta
 PKG_VERDATE:=2018.09.11
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=softether-src-v$(PKG_VERSION)-$(PKG_VERREL).tar.gz
 PKG_SOURCE_URL:=http://www.softether-download.com/files/softether/v$(PKG_VERSION)-$(PKG_VERREL)-$(PKG_VERDATE)-tree/Source_Code/
@@ -62,6 +62,9 @@ endef
 TARGET_CFLAGS += \
 	$(if $(CONFIG_OPENSSL_WITH_SSL3),,-DSSL_OP_NO_SSLv3) \
 	$(if $(filter mips mipsel,$(ARCH)),-minterlink-mips16)
+
+TARGET_LDFLAGS += \
+	-liconv
 
 # Select 32 or 64 bit Makefile for target build depending on 64bit config symbol
 MAKE_FLAGS += \
