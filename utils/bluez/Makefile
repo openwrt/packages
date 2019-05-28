@@ -30,18 +30,6 @@ define Package/bluez/Default
   URL:=http://www.bluez.org/
 endef
 
-define Package/bluez-examples
-$(call Package/bluez/Default)
-  SECTION:=utils
-  CATEGORY:=Utilities
-  TITLE+= python example apps
-  DEPENDS:=+python
-endef
-
-define Package/bluez-examples/description
-  contains many examples apps for bluetooth, requiring python
-endef
-
 define Package/bluez-libs
 $(call Package/bluez/Default)
   SECTION:=libs
@@ -106,11 +94,6 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/bluez.pc $(1)/usr/lib/pkgconfig/
 endef
 
-define Package/bluez-examples/install
-	$(INSTALL_DIR) $(1)/usr/bin/bluez
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/test/* $(1)/usr/bin/bluez/
-endef
-
 define Package/bluez-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libbluetooth.so.* $(1)/usr/lib/
@@ -155,7 +138,6 @@ define Package/bluez-daemon/install
 	$(INSTALL_BIN) ./files/bluetoothd.init $(1)/etc/init.d/bluetoothd
 endef
 
-$(eval $(call BuildPackage,bluez-examples))
 $(eval $(call BuildPackage,bluez-libs))
 $(eval $(call BuildPackage,bluez-utils))
 $(eval $(call BuildPackage,bluez-daemon))
