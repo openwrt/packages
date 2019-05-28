@@ -29,6 +29,7 @@
 # used variables
 local __HOST __DOMAIN __TYPE __URLBASE __PRGBASE __RUNPROG __DATA __IPV6 __ZONEID __RECID __PROXIED
 local __URLBASE="https://api.cloudflare.com/client/v4"
+local __TTL=120
 
 # split __HOST __DOMAIN from $domain
 # given data:
@@ -127,7 +128,6 @@ fi
 __PRGBASE="$__PRGBASE --header 'X-Auth-Email: $username' "
 __PRGBASE="$__PRGBASE --header 'X-Auth-Key: $password' "
 __PRGBASE="$__PRGBASE --header 'Content-Type: application/json' "
-# __PRGBASE="$__PRGBASE --header 'Accept: application/json' "
 
 # read zone id for registered domain.TLD
 __RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones?name=$__DOMAIN'"
@@ -182,7 +182,7 @@ __PROXIED=$(grep -o '"proxied":[^",]*' $DATFILE | grep -o '[^:]*$')
 
 # use file to work around " needed for json
 cat > $DATFILE << EOF
-{"id":"$__ZONEID","type":"$__TYPE","name":"$__HOST","content":"$__IP","proxied":$__PROXIED}
+{"id":"$__ZONEID","type":"$__TYPE","name":"$__HOST","content":"$__IP","ttl":$__TTL,"proxied":$__PROXIED}
 EOF
 
 # let's complete transfer command

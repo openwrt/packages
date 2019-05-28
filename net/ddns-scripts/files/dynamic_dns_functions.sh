@@ -21,7 +21,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.7.8-6"
+VERSION="2.7.8-11"
 SECTION_ID=""		# hold config's section name
 VERBOSE=0		# default mode is log to console, but easily changed with parameter
 MYPROG=$(basename $0)	# my program call name
@@ -319,16 +319,19 @@ urlencode() {
 # $2	Name of Variable to store script to
 # $3	Name of Variable to store service answer to
 get_service_data() {
+	local __FILE __SERVICE __DATA __ANSWER __URL __SCRIPT __PIPE
+
 	[ $# -ne 3 ] && write_log 12 "Error calling 'get_service_data()' - wrong number of parameters"
 
 	__FILE="/etc/ddns/services"				# IPv4
 	[ $use_ipv6 -ne 0 ] && __FILE="/etc/ddns/services_ipv6"	# IPv6
 
 	# workaround with variables; pipe create subshell with no give back of variable content
-	mkfifo pipe_$$
+	__PIPE="$ddns_rundir/pipe_$$"
+	mkfifo "$__PIPE"
+
 	# only grep without # or whitespace at linestart | remove "
-#	grep -v -E "(^#|^[[:space:]]*$)" $__FILE | sed -e s/\"//g > pipe_$$ &
-	sed '/^#/d; /^[ \t]*$/d; s/\"//g' $__FILE  > pipe_$$ &
+	sed '/^#/d; /^[ \t]*$/d; s/\"//g' "$__FILE" > "$__PIPE" &
 
 	while read __SERVICE __DATA __ANSWER; do
 		if [ "$__SERVICE" = "$service_name" ]; then
@@ -339,11 +342,11 @@ get_service_data() {
 			eval "$1=\"$__URL\""
 			eval "$2=\"$__SCRIPT\""
 			eval "$3=\"$__ANSWER\""
-			rm pipe_$$
+			rm "$__PIPE"
 			return 0
 		fi
-	done < pipe_$$
-	rm pipe_$$
+	done < "$__PIPE"
+	rm "$__PIPE"
 
 	eval "$1=\"\""	# no service match clear variables
 	eval "$2=\"\""
@@ -533,17 +536,17 @@ verify_host_port() {
 		}
 		# extract IP address
 		if [ -n "$BIND_HOST" -o -n "$KNOT_HOST" ]; then	# use BIND host or Knot host if installed
-			__IPV4=$(cat $DATFILE | awk -F "address " '/has address/ {print $2; exit}' )
-			__IPV6=$(cat $DATFILE | awk -F "address " '/has IPv6/ {print $2; exit}' )
+			__IPV4="$(awk -F "address " '/has address/ {print $2; exit}' "$DATFILE")"
+			__IPV6="$(awk -F "address " '/has IPv6/ {print $2; exit}' "$DATFILE")"
 		elif [ -n "$DRILL" ]; then	# use drill if installed
-			__IPV4=$(cat $DATFILE | awk '/^'"$lookup_host"'/ {print $5}' | grep -m 1 -o "$IPV4_REGEX")
-			__IPV6=$(cat $DATFILE | awk '/^'"$lookup_host"'/ {print $5}' | grep -m 1 -o "$IPV6_REGEX")
+			__IPV4="$(awk '/^'"$__HOST"'/ {print $5}' "$DATFILE" | grep -m 1 -o "$IPV4_REGEX")"
+			__IPV6="$(awk '/^'"$__HOST"'/ {print $5}' "$DATFILE" | grep -m 1 -o "$IPV6_REGEX")"
 		elif [ -n "$HOSTIP" ]; then	# use hostip if installed
-			__IPV4=$(cat $DATFILE | grep -m 1 -o "$IPV4_REGEX")
-			__IPV6=$(cat $DATFILE | grep -m 1 -o "$IPV6_REGEX")
+			__IPV4="$(grep -m 1 -o "$IPV4_REGEX" "$DATFILE")"
+			__IPV6="$(grep -m 1 -o "$IPV6_REGEX" "$DATFILE")"
 		else	# use BusyBox nslookup
-			__IPV4=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($IPV4_REGEX\).*$/\\1/p }")
-			__IPV6=$(cat $DATFILE | sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($IPV6_REGEX\).*$/\\1/p }")
+			__IPV4="$(sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($IPV4_REGEX\).*$/\\1/p }" "$DATFILE")"
+			__IPV6="$(sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($IPV6_REGEX\).*$/\\1/p }" "$DATFILE")"
 		fi
 	}
 
