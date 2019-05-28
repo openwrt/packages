@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnsdist
 PKG_VERSION:=1.3.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
@@ -66,6 +66,7 @@ CONFIGURE_ARGS+= \
 	--enable-libsodium \
 	--enable-protobuf \
 	--enable-re2 \
+	--with-lua=lua \
 	--with-net-snmp \
         $(if $(CONFIG_DNSDIST_GNUTLS),--enable,--disable)-gnutls \
         $(if $(CONFIG_DNSDIST_OPENSSL),--enable,--disable)-libssl
