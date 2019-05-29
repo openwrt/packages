@@ -17,10 +17,10 @@ endef
 
 define PyPackage/python-pip/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/python$(PYTHON_VERSION)/site-packages
-	$(CP) $(PKG_BUILD_DIR)/install-pip/bin/* $(1)/usr/bin
+	$(CP) $(PKG_BUILD_DIR)/install-pip/usr/bin/* $(1)/usr/bin
 	$(CP) \
-		$(PKG_BUILD_DIR)/install-pip/lib/python$(PYTHON_VERSION)/site-packages/pip \
-		$(PKG_BUILD_DIR)/install-pip/lib/python$(PYTHON_VERSION)/site-packages/pip-$(PYTHON_PIP_VERSION).dist-info \
+		$(PKG_BUILD_DIR)/install-pip/usr/lib/python$(PYTHON_VERSION)/site-packages/pip \
+		$(PKG_BUILD_DIR)/install-pip/usr/lib/python$(PYTHON_VERSION)/site-packages/pip-$(PYTHON_PIP_VERSION).dist-info \
 		$(1)/usr/lib/python$(PYTHON_VERSION)/site-packages/
 endef
 
