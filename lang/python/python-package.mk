@@ -40,7 +40,11 @@ define PyPackage
   define Package/$(1)-src
     $(call Package/$(1))
     DEPENDS:=
+    CONFLICTS:=
+    PROVIDES:=
+    EXTRA_DEPENDS:=
     TITLE+= (sources)
+    USERID:=
   endef
 
   define Package/$(1)-src/description
