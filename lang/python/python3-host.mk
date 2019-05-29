@@ -71,16 +71,15 @@ endef
 
 # Note: I shamelessly copied this from Yousong's logic (from python-packages);
 HOST_PYTHON3_PIP:=$(STAGING_DIR_HOSTPKG)/bin/pip$(PYTHON3_VERSION)
-define host_python3_pip_install
-	$(call host_python3_settings) \
-	$(HOST_PYTHON3_PIP) install \
-		--root=$(1) \
-		--prefix=$(2) \
-		$(3)
-endef
 
-define host_python3_pip_install_host
-$(call host_python3_pip_install,$(STAGING_DIR_HOSTPKG),"",$(1))
+# $(1) => packages to install
+define Build/Compile/HostPy3PipInstall
+	$(call host_python3_settings) \
+	$(HOST_PYTHON3_PIP) \
+		--disable-pip-version-check \
+		--cache-dir "$(DL_DIR)/pip-cache" \
+		install \
+		$(1)
 endef
 
 # $(1) => build subdir
