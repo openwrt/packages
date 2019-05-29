@@ -55,8 +55,20 @@ $(call Package/python-curl/description)
 (Variant for Python3)
 endef
 
-PYTHON_PKG_SETUP_ARGS:=--with-mbedtls
-PYTHON3_PKG_SETUP_ARGS:=--with-mbedtls
+ifdef CONFIG_LIBCURL_OPENSSL
+  PYTHON_PKG_SETUP_ARGS:=--with-openssl
+  PYTHON3_PKG_SETUP_ARGS:=--with-openssl
+endif
+
+ifdef CONFIG_LIBCURL_GNUTLS
+  PYTHON_PKG_SETUP_ARGS:=--with-gnutls
+  PYTHON3_PKG_SETUP_ARGS:=--with-gnutls
+endif
+
+ifdef CONFIG_LIBCURL_MBEDTLS
+  PYTHON_PKG_SETUP_ARGS:=--with-mbedtls
+  PYTHON3_PKG_SETUP_ARGS:=--with-mbedtls
+endif
 
 $(eval $(call PyPackage,python-curl))
 $(eval $(call BuildPackage,python-curl))
