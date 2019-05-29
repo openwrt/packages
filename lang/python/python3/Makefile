@@ -292,6 +292,11 @@ HOST_CONFIGURE_ARGS+= \
 	--with-ensurepip=install \
 	CONFIG_SITE=
 
+define Host/Configure
+	$(SED) 's/^ENABLE_USER_SITE = None$$$$/ENABLE_USER_SITE = False/' $(HOST_BUILD_DIR)/Lib/site.py
+	$(call Host/Configure/Default)
+endef
+
 define Host/Compile
 	+$(HOST_MAKE_VARS) $(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) python Parser/pgen
 	+$(HOST_MAKE_VARS) $(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) sharedmods
