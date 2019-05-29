@@ -295,7 +295,7 @@ HOST_CONFIGURE_ARGS+= \
 	--prefix=$(HOST_PYTHON_DIR) \
 	--exec-prefix=$(HOST_PYTHON_DIR) \
 	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
-	--with-ensurepip=install \
+	--with-ensurepip=upgrade \
 	CONFIG_SITE=
 
 define Host/Compile
