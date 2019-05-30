@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cgi-io
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_LICENSE:=GPL-2.0+
 
@@ -38,7 +38,7 @@ define Package/cgi-io/install
 	$(INSTALL_DIR) $(1)/usr/libexec $(1)/www/cgi-bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cgi-io $(1)/usr/libexec
 	$(LN) ../../usr/libexec/cgi-io $(1)/www/cgi-bin/cgi-upload 
-	$(LN) ../../usr/libexec/cgi-io $(1)/www/cgi-bin/cgi-download 
+	$(LN) ../../usr/libexec/cgi-io $(1)/www/cgi-bin/cgi-backup
 endef
 
 $(eval $(call BuildPackage,cgi-io))
