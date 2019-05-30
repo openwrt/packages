@@ -314,14 +314,16 @@ define Host/Install
 	$(MAKE) -C $(HOST_BUILD_DIR) install
 	$(INSTALL_DIR) $(HOST_PYTHON_DIR)/bin/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(HOST_PYTHON_DIR)/bin/pgen2
-  ifeq ($(wildcard $(HOST_PYTHON_PKG_DIR)/.setuptools-patched),)
-	$(call HostPatchDir,$(HOST_PYTHON_PKG_DIR),./patches-setuptools,)
-	touch $(HOST_PYTHON_PKG_DIR)/.setuptools-patched
-  endif
-  ifeq ($(wildcard $(HOST_PYTHON_PKG_DIR)/.pip-patched),)
-	$(call HostPatchDir,$(HOST_PYTHON_PKG_DIR),./patches-pip,)
-	touch $(HOST_PYTHON_PKG_DIR)/.pip-patched
-  endif
+	$(if $(wildcard $(HOST_PYTHON_PKG_DIR)/.setuptools-patched-$(PYTHON_SETUPTOOLS_VERSION)),,
+		$(call HostPatchDir,$(HOST_PYTHON_PKG_DIR),./patches-setuptools,)
+		rm -f $(HOST_PYTHON_PKG_DIR)/.setuptools-patched-*
+		touch $(HOST_PYTHON_PKG_DIR)/.setuptools-patched-$(PYTHON_SETUPTOOLS_VERSION)
+	)
+	$(if $(wildcard $(HOST_PYTHON_PKG_DIR)/.pip-patched-$(PYTHON_PIP_VERSION)),,
+		$(call HostPatchDir,$(HOST_PYTHON_PKG_DIR),./patches-pip,)
+		rm -f $(HOST_PYTHON_PKG_DIR)/.pip-patched-*
+		touch $(HOST_PYTHON_PKG_DIR)/.pip-patched-$(PYTHON_PIP_VERSION)
+	)
 endef
 
 $(eval $(call HostBuild))
