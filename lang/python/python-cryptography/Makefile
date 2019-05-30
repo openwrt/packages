@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cryptography
 PKG_VERSION:=2.6.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=cryptography-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/c/cryptography
@@ -20,6 +20,10 @@ PKG_LICENSE_FILES:=LICENSE.APACHE LICENSE.BSD
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-cryptography-$(PKG_VERSION)
+PKG_BUILD_DEPENDS:=libffi/host
+
+HOST_PYTHON_PACKAGE_BUILD_DEPENDS:="cffi>=1.8,!=1.11.3"
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="cffi>=1.8,!=1.11.3"
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
