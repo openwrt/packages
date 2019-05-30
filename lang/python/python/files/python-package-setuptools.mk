@@ -17,12 +17,12 @@ endef
 
 define PyPackage/python-setuptools/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/python$(PYTHON_VERSION)/site-packages
-	$(CP) $(PKG_BUILD_DIR)/install-setuptools/bin/* $(1)/usr/bin
+	$(CP) $(PKG_BUILD_DIR)/install-setuptools/usr/bin/* $(1)/usr/bin
 	$(CP) \
-		$(PKG_BUILD_DIR)/install-setuptools/lib/python$(PYTHON_VERSION)/site-packages/pkg_resources \
-		$(PKG_BUILD_DIR)/install-setuptools/lib/python$(PYTHON_VERSION)/site-packages/setuptools \
-		$(PKG_BUILD_DIR)/install-setuptools/lib/python$(PYTHON_VERSION)/site-packages/setuptools-$(PYTHON_SETUPTOOLS_VERSION).dist-info \
-		$(PKG_BUILD_DIR)/install-setuptools/lib/python$(PYTHON_VERSION)/site-packages/easy_install.py \
+		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON_VERSION)/site-packages/pkg_resources \
+		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON_VERSION)/site-packages/setuptools \
+		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON_VERSION)/site-packages/setuptools-$(PYTHON_SETUPTOOLS_VERSION).dist-info \
+		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON_VERSION)/site-packages/easy_install.py \
 		$(1)/usr/lib/python$(PYTHON_VERSION)/site-packages
 endef
 
