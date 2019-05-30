@@ -170,21 +170,29 @@ endef
 
 ifdef CONFIG_PACKAGE_python-setuptools
 define Build/Compile/python-setuptools
-	$(STAGING_DIR_HOSTPKG)/bin/pip install \
+	$(HOST_PYTHON_PIP) \
+		--disable-pip-version-check \
+		--cache-dir "$(DL_DIR)/pip-cache" \
+		install \
 		--ignore-installed \
-		--root=$(PKG_BUILD_DIR)/install-setuptools --prefix=. \
+		--root=$(PKG_BUILD_DIR)/install-setuptools \
+		--prefix=/usr \
 		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/setuptools-$(PYTHON_SETUPTOOLS_VERSION)-py2.py3-none-any.whl
-	$(call PatchDir,$(PKG_BUILD_DIR)/install-setuptools/lib/python$(PYTHON_VERSION)/site-packages,./patches-setuptools,)
+	$(call PatchDir,$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON_VERSION)/site-packages,./patches-setuptools,)
 endef
 endif # CONFIG_PACKAGE_python-setuptools
 
 ifdef CONFIG_PACKAGE_python-pip
 define Build/Compile/python-pip
-	$(STAGING_DIR_HOSTPKG)/bin/pip install \
+	$(HOST_PYTHON_PIP) \
+		--disable-pip-version-check \
+		--cache-dir "$(DL_DIR)/pip-cache" \
+		install \
 		--ignore-installed \
-		--root=$(PKG_BUILD_DIR)/install-pip --prefix=. \
+		--root=$(PKG_BUILD_DIR)/install-pip \
+		--prefix=/usr \
 		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/pip-$(PYTHON_PIP_VERSION)-py2.py3-none-any.whl
-	$(call PatchDir,$(PKG_BUILD_DIR)/install-pip/lib/python$(PYTHON_VERSION)/site-packages,./patches-pip,)
+	$(call PatchDir,$(PKG_BUILD_DIR)/install-pip/usr/lib/python$(PYTHON_VERSION)/site-packages,./patches-pip,)
 endef
 endif # CONFIG_PACKAGE_python-pip
 

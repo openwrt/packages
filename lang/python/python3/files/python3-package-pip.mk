@@ -17,15 +17,13 @@ endef
 
 define Py3Package/python3-pip/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages
-	$(CP) $(PKG_BUILD_DIR)/install-pip/bin/pip3* $(1)/usr/bin
+	$(CP) $(PKG_BUILD_DIR)/install-pip/usr/bin/pip3* $(1)/usr/bin
 	$(CP) \
-		$(PKG_BUILD_DIR)/install-pip/lib/python$(PYTHON3_VERSION)/site-packages/pip \
-		$(PKG_BUILD_DIR)/install-pip/lib/python$(PYTHON3_VERSION)/site-packages/pip-$(PYTHON3_PIP_VERSION).dist-info \
+		$(PKG_BUILD_DIR)/install-pip/usr/lib/python$(PYTHON3_VERSION)/site-packages/pip \
+		$(PKG_BUILD_DIR)/install-pip/usr/lib/python$(PYTHON3_VERSION)/site-packages/pip-$(PYTHON3_PIP_VERSION).dist-info \
 		$(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/
-	for _ in \$(seq 1 10) ; do \
-		find $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/ -name __pycache__ -exec rm -rf {} \; || continue ; \
-		break ; \
-	done
+	find $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/ -path '*/__pycache__/*' -delete
+	find $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/ -type d -name __pycache__ -delete
 endef
 
 $(eval $(call Py3BasePackage,python3-pip, \
