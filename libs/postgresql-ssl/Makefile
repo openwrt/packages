@@ -4,19 +4,21 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=postgresql
+PKG_NAME:=postgresql-ssl
+PKG_BASE_NAME:=postgresql
 PKG_VERSION:=9.6.13
 PKG_RELEASE:=2
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_BASE_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=\
 	https://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
 	http://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
 	ftp://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
 
 PKG_HASH:=ecbed20056296a65b6a4f5526c477e3ae5cc284cb01a15507785ddb23831e9a4
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(PKG_BASE_NAME)-$(PKG_VERSION)
 
 PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
@@ -27,71 +29,64 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 
-define Package/libpq
+define Package/libpq-ssl
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libpthread
-  TITLE:=PostgreSQL client library
+  TITLE:=PostgreSQL client library (SSL)
   URL:=http://www.postgresql.org/
   SUBMENU:=database
+  DEPENDS:=+libpthread +libopenssl
 endef
 
-define Package/libpq/description
+define Package/libpq-ssl/description
 PostgreSQL client library.
+
+This is the SSL-enabled version
 endef
 
-define Package/pgsql-cli
+define Package/pgsql-ssl-cli
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libncursesw +libpq +libreadline +librt +zlib
-  TITLE:=Command Line Interface (CLI) to PostgreSQL databases
+  DEPENDS:=+libncursesw +libreadline +librt +zlib +libpq-ssl
+  TITLE:=CLI to PostgreSQL databases (SSL)
   URL:=http://www.postgresql.org/
   SUBMENU:=database
 endef
 
-define Package/pgsql-cli/description
+define Package/pgsql-ssl-cli/description
 Command Line Interface (CLI) to PostgreSQL databases.
+
+This is the SSL-enabled version
 endef
 
-define Package/pgsql-cli-extra
+define Package/pgsql-ssl-cli-extra
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libncursesw +libpq +libreadline +librt +zlib
-  TITLE:=Command Line extras for PostgreSQL databases
+  DEPENDS:=+libncursesw +libreadline +librt +zlib +libpq-ssl
+  TITLE:=Command Line extras for PostgreSQL databases (SSL)
   URL:=http://www.postgresql.org/
   SUBMENU:=database
 endef
 
-define Package/pgsql-cli-extra/description
+define Package/pgsql-ssl-cli-extra/description
 Command Line extras for PostgreSQL databases.
+
+This is the SSL-enabled version
 endef
 
-define Package/pgsql-common-server
+define Package/pgsql-ssl-server
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=PostgreSQL databases servers common files
+  TITLE:=PostgreSQL databases Server (SSL)
   URL:=http://www.postgresql.org/
   SUBMENU:=database
-  USERID:=postgres=5432:postgres=5432
+  DEPENDS:=+pgsql-ssl-cli +pgsql-common-server
 endef
 
-define Package/pgsql-common-server/description
-Common files for PostgreSQL databases Servers.
-This package contains common files between the non-ssl-enabled
-server and the ssl-enabled server.
-endef
-
-define Package/pgsql-server
-  SECTION:=utils
-  CATEGORY:=Utilities
-  DEPENDS:=+pgsql-cli +pgsql-common-server
-  TITLE:=PostgreSQL databases Server
-  URL:=http://www.postgresql.org/
-  SUBMENU:=database
-endef
-
-define Package/pgsql-server/description
+define Package/pgsql-ssl-server/description
 PostgreSQL databases Server.
+
+This is the SSL-enabled version
 endef
 
 PGSQL_SERVER_BIN := \
@@ -140,50 +135,61 @@ endif
 TARGET_CONFIGURE_OPTS+=$(PGSQL_CONFIG_VARS)
 
 HOST_CONFIGURE_ARGS += \
+		       	--libdir=$(STAGING_DIR_HOSTPKG)/usr/lib/psql-ssl \
+		       	--includedir=$(STAGING_DIR_HOSTPKG)/usr/include/psql-ssl \
 			--disable-nls \
 			--disable-rpath \
 			--without-bonjour \
 			--without-gssapi \
 			--without-ldap \
-			--without-openssl \
 			--without-pam \
 			--without-perl \
 			--without-python \
 			--without-readline \
 			--without-tcl \
+		  	--with-includes=$(STAGING_DIR_HOST)/include \
+		  	--with-libraries=$(STAGING_DIR_HOST)/lib \
+			--with-openssl \
 			--with-zlib="yes" \
 			--enable-depend
 
 CONFIGURE_ARGS += \
+		       	--includedir=$(CONFIGURE_PREFIX)/include/psql-ssl \
 			$(DISABLE_NLS) \
 			--disable-rpath \
 			--without-bonjour \
 			--without-gssapi \
 			--without-ldap \
-			--without-openssl \
 			--without-pam \
 			--without-perl \
 			--without-python \
 			--without-tcl \
+			--with-extra-version=ssl \
+			--with-extra-libname=ssl \
+			--with-includes=$(STAGING_DIR)/usr/include \
+		  	--with-libraries=$(STAGING_DIR)/usr/lib \
+			--with-openssl \
 			--with-zlib="yes" \
-			--enable-depend \
-			$(if $(CONFIG_arc),--disable-spinlocks)
+			--enable-depend
+
+CONFIGURE_VARS += \
+		  PG_CONFIG=$(STAGING_DIR_HOSTPKG)/lib/psql-ssl/pg_config
 
 # Need a native ecpg, pg_config and zic for build
 define Host/Compile
-	$(MAKE) -C $(HOST_BUILD_DIR)/src/bin/pg_config CC="$(HOSTCC)"
-	$(MAKE) -C $(HOST_BUILD_DIR)/src/interfaces/ecpg/preproc CC="$(HOSTCC)"
-	$(MAKE) -C $(HOST_BUILD_DIR)/src/timezone CC="$(HOSTCC)"
+	$(MAKE) -C $(HOST_BUILD_DIR)/src/bin/pg_config CC="$(HOSTCC)" PG_CONFIG="$(STAGING_DIR_HOSTPKG)/lib/psql-ssl/pg_config
+	$(MAKE) -C $(HOST_BUILD_DIR)/src/interfaces/ecpg/preproc CC="$(HOSTCC)" PG_CONFIG="$(STAGING_DIR_HOSTPKG)/lib/psql-ssl/pg_config
+	$(MAKE) -C $(HOST_BUILD_DIR)/src/timezone CC="$(HOSTCC)" PG_CONFIG="$(STAGING_DIR_HOSTPKG)/lib/psql-ssl/pg_config
 endef
 
 define Host/Install
-	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/lib/
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/common/libpgcommon.a $(STAGING_DIR_HOSTPKG)/lib/
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/port/libpgport.a $(STAGING_DIR_HOSTPKG)/lib/
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/bin/pg_config/pg_config $(STAGING_DIR_HOSTPKG)/lib/
-	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin/
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/interfaces/ecpg/preproc/ecpg $(STAGING_DIR_HOSTPKG)/bin/
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/timezone/zic $(STAGING_DIR_HOSTPKG)/bin/
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/lib/psql-ssl
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/common/libpgcommon.a $(STAGING_DIR_HOSTPKG)/lib/psql-ssl
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/port/libpgport.a $(STAGING_DIR_HOSTPKG)/lib/psql-ssl
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/bin/pg_config/pg_config $(STAGING_DIR_HOSTPKG)/lib/psql-ssl
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin/psql-ssl
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/interfaces/ecpg/preproc/ecpg $(STAGING_DIR_HOSTPKG)/bin
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/timezone/zic $(STAGING_DIR_HOSTPKG)/bin
 endef
 
 define Build/Configure
@@ -194,37 +200,22 @@ endef
 # because PROFILE means something else in the project Makefile
 unexport PROFILE
 
-define Package/libpq/install
+define Package/libpq-ssl/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpq.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpqssl.so.* $(1)/usr/lib/
 endef
 
-define Package/pgsql-cli/install
+define Package/pgsql-ssl-cli/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/psql $(1)/usr/bin/
 endef
 
-define Package/pgsql-cli-extra/install
+define Package/pgsql-ssl-cli-extra/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(foreach bin,$(PGSQL_CLI_EXTRA_BIN),$(PKG_INSTALL_DIR)/usr/bin/$(bin)) $(1)/usr/bin/
 endef
 
-define Package/pgsql-common-server/install
-	$(INSTALL_DIR) $(1)/usr/share/postgresql
-	$(CP) $(PKG_INSTALL_DIR)/usr/share/postgresql/* \
-		$(1)/usr/share/postgresql
-
-	$(INSTALL_DIR) $(1)/lib/functions
-	$(INSTALL_BIN) ./files/postgresql.sh $(1)/lib/functions/
-
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/postgresql.config $(1)/etc/config/postgresql
-
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/postgresql.init $(1)/etc/init.d/postgresql
-endef
-
-define Package/pgsql-server/install
+define Package/pgsql-ssl-server/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(foreach bin,$(PGSQL_SERVER_BIN),$(PKG_INSTALL_DIR)/usr/bin/$(bin)) $(1)/usr/bin/
 
@@ -237,26 +228,25 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(STAGING_DIR_HOSTPKG)/lib/pg_config $(1)/usr/bin
+	$(CP) $(STAGING_DIR_HOSTPKG)/lib/pg_config $(1)/usr/bin/pg_configssl
 	$(INSTALL_DIR) $(1)/host/bin/
-	$(LN) $(STAGING_DIR)/usr/bin/pg_config $(1)/host/bin
+	$(LN) $(STAGING_DIR)/usr/bin/pg_configssl $(1)/host/bin/pg_configssl
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/libpq $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/libpq-fe.h $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/pg_config.h $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/pg_config_manual.h $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/postgres_ext.h $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/pg_config_ext.h $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/postgresql $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/psql-ssl/libpq $(1)/usr/include/psql-ssl
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/psql-ssl/libpq-fe.h $(1)/usr/include/pgql-ssl
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/psql-ssl/pg_config.h $(1)/usr/include/psql-ssl
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/psql-ssl/pg_config_manual.h $(1)/usr/include/psql-ssl
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/psql-ssl/postgres_ext.h $(1)/usr/include/psql-ssl
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/psql-ssl/pg_config_ext.h $(1)/usr/include/psql-ssl
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/psql-ssl/postgresql $(1)/usr/include/psql-ssl
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpq.{a,so*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpqssl.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libpq.pc $(1)/usr/lib/pkgconfig/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libpqssl.pc $(1)/usr/lib/pkgconfig/
 endef
 
 $(eval $(call HostBuild))
-$(eval $(call BuildPackage,libpq))
-$(eval $(call BuildPackage,pgsql-cli))
-$(eval $(call BuildPackage,pgsql-cli-extra))
-$(eval $(call BuildPackage,pgsql-common-server))
-$(eval $(call BuildPackage,pgsql-server))
+$(eval $(call BuildPackage,libpq-ssl))
+$(eval $(call BuildPackage,pgsql-ssl-cli))
+$(eval $(call BuildPackage,pgsql-ssl-cli-extra))
+$(eval $(call BuildPackage,pgsql-ssl-server))

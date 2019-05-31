@@ -1,0 +1,401 @@
+Index: postgresql-9.6.13/configure.in
+===================================================================
+--- postgresql-9.6.13.orig/configure.in
++++ postgresql-9.6.13/configure.in
+@@ -38,6 +38,12 @@ PGAC_ARG_REQ(with, extra-version, [STRIN
+              [PG_VERSION="$PACKAGE_VERSION"])
+ AC_DEFINE_UNQUOTED(PG_VERSION, "$PG_VERSION", [PostgreSQL version as a string])
+ 
++PGAC_ARG_REQ(with, extra-libname, [STRING], [append STRING to library names],
++             [PG_SOEXTRA="$withval"],
++             [PG_SOEXTRA=""])
++AC_DEFINE_UNQUOTED(PG_SOEXTRA, "$PG_SOEXTRA", [Extra version for library names])
++AC_SUBST(PG_SOEXTRA)
++
+ AC_CANONICAL_HOST
+ 
+ template=
+Index: postgresql-9.6.13/src/Makefile.shlib
+===================================================================
+--- postgresql-9.6.13.orig/src/Makefile.shlib
++++ postgresql-9.6.13/src/Makefile.shlib
+@@ -19,6 +19,7 @@
+ # variables:
+ #
+ # NAME                  Name of library to build (no suffix nor "lib" prefix)
++# SOEXTRA               Extra name (appended to $(NAME))
+ # OBJS                  List of object files to include in library
+ # SHLIB_LINK            Stuff to append to library's link command
+ #                       (typically, -L and -l switches for external libraries)
+@@ -74,24 +75,24 @@
+ COMPILER = $(CC) $(CFLAGS)
+ LINK.static = $(AR) $(AROPT)
+ 
+-LDFLAGS_INTERNAL += $(SHLIB_LINK_INTERNAL)
++LDFLAGS_INTERNAL += $(foreach intshlib,$(SHLIB_LINK_INTERNAL),$(if $(filter -l,$(intshlib)),-l$(instshlib)$(SOEXTRA),$(instshlib)))
+ 
+ 
+ 
+ ifdef SO_MAJOR_VERSION
+ # Default library naming convention used by the majority of platforms
+-shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+-shlib_major	= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+-shlib_bare	= lib$(NAME)$(DLSUFFIX)
++shlib		= lib$(NAME)$(SOEXTRA)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
++shlib_major	= lib$(NAME)$(SOEXTRA)$(DLSUFFIX).$(SO_MAJOR_VERSION)
++shlib_bare	= lib$(NAME)$(SOEXTRA)$(DLSUFFIX)
+ # Testing the soname variable is a reliable way to determine whether a
+ # linkable library is being built.
+ soname		= $(shlib_major)
+ pkgconfigdir = $(libdir)/pkgconfig
+ else
+ # Naming convention for dynamically loadable modules
+-shlib		= $(NAME)$(DLSUFFIX)
++shlib		= $(NAME)$(SOEXTRA)$(DLSUFFIX)
+ endif
+-stlib		= lib$(NAME).a
++stlib		= lib$(NAME)$(SOEXTRA).a
+ 
+ ifndef soname
+ # additional flags for backend modules
+@@ -113,11 +114,11 @@ endif
+ 
+ ifeq ($(PORTNAME), aix)
+   ifdef SO_MAJOR_VERSION
+-    shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
++    shlib		= lib$(NAME)$(SOEXTRA)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+   endif
+   haslibarule   = yes
+   # $(exports_file) is also usable as an import file
+-  exports_file		= lib$(NAME).exp
++  exports_file		= lib$(NAME)$(SOEXTRA).exp
+ endif
+ 
+ ifeq ($(PORTNAME), darwin)
+@@ -127,9 +128,9 @@ ifeq ($(PORTNAME), darwin)
+     ifneq ($(SO_MAJOR_VERSION), 0)
+       version_link	= -compatibility_version $(SO_MAJOR_VERSION) -current_version $(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+     endif
+-    LINK.shared		= $(COMPILER) -dynamiclib -install_name '$(libdir)/lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)' $(version_link) $(exported_symbols_list) -multiply_defined suppress
+-    shlib		= lib$(NAME).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)$(DLSUFFIX)
+-    shlib_major		= lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)
++    LINK.shared		= $(COMPILER) -dynamiclib -install_name '$(libdir)/lib$(NAME)$(SOEXTRA).$(SO_MAJOR_VERSION)$(DLSUFFIX)' $(version_link) $(exported_symbols_list) -multiply_defined suppress
++    shlib		= lib$(NAME)$(SOEXTRA).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)$(DLSUFFIX)
++    shlib_major		= lib$(NAME)$(SOEXTRA).$(SO_MAJOR_VERSION)$(DLSUFFIX)
+   else
+     # loadable module
+     DLSUFFIX		= .so
+@@ -157,7 +158,7 @@ endif
+ ifeq ($(PORTNAME), freebsd)
+   ifdef ELF_SYSTEM
+     ifdef SO_MAJOR_VERSION
+-      shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
++      shlib		= lib$(NAME)$(SOEXTRA)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+     endif
+     LINK.shared		= $(COMPILER) -shared
+     ifdef soname
+@@ -165,7 +166,7 @@ ifeq ($(PORTNAME), freebsd)
+     endif
+   else
+     ifdef SO_MAJOR_VERSION
+-      shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
++      shlib		= lib$(NAME)$(SOEXTRA)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+     endif
+     LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
+   endif
+@@ -184,7 +185,7 @@ endif
+ 
+ ifeq ($(PORTNAME), hpux)
+   ifdef SO_MAJOR_VERSION
+-    shlib			= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
++    shlib			= lib$(NAME)$(SOEXTRA)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+   endif
+   ifeq ($(with_gnu_ld), yes)
+     LINK.shared		= $(CC) -shared
+@@ -269,14 +270,14 @@ endif
+ ifeq ($(PORTNAME), cygwin)
+   LINK.shared		= $(CC) -shared
+   ifdef SO_MAJOR_VERSION
+-    shlib		= cyg$(NAME)$(DLSUFFIX)
++    shlib		= cyg$(NAME)$(SOEXTRA)$(DLSUFFIX)
+   endif
+   haslibarule   = yes
+ endif
+ 
+ ifeq ($(PORTNAME), win32)
+   ifdef SO_MAJOR_VERSION
+-    shlib		= lib$(NAME)$(DLSUFFIX)
++    shlib		= lib$(NAME)$(SOEXTRA)$(DLSUFFIX)
+   endif
+   haslibarule   = yes
+ endif
+@@ -293,7 +294,7 @@ all-lib: all-shared-lib
+ ifdef soname
+ # no static library when building a dynamically loadable module
+ all-lib: all-static-lib
+-all-lib: lib$(NAME).pc
++all-lib: lib$(NAME)$(SOEXTRA).pc
+ endif
+ 
+ all-static-lib: $(stlib)
+@@ -399,7 +400,7 @@ ifeq (,$(SHLIB_EXPORTS))
+ $(shlib): $(OBJS) | $(SHLIB_PREREQS)
+ 	$(CC) $(CFLAGS)  -shared -static-libgcc -o $@  $(OBJS) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK) $(LIBS) -Wl,--export-all-symbols -Wl,--out-implib=$(stlib)
+ else
+-DLL_DEFFILE = lib$(NAME)dll.def
++DLL_DEFFILE = lib$(NAME)$(SOEXTRA)dll.def
+ 
+ $(shlib): $(OBJS) $(DLL_DEFFILE) | $(SHLIB_PREREQS)
+ 	$(CC) $(CFLAGS)  -shared -static-libgcc -o $@  $(OBJS) $(DLL_DEFFILE) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK) $(LIBS) -Wl,--out-implib=$(stlib)
+@@ -410,14 +411,14 @@ endif # PORTNAME == cygwin || PORTNAME =
+ 
+ 
+ %.pc: $(MAKEFILE_LIST)
+-	echo 'Name: lib$(NAME)' >$@
+-	echo 'Description: PostgreSQL lib$(NAME) library' >>$@
++	echo 'Name: lib$(NAME)$(SOEXTRA)' >$@
++	echo 'Description: PostgreSQL lib$(NAME)$(SOEXTRA) library' >>$@
+ 	echo 'Url: http://www.postgresql.org/' >>$@
+ 	echo 'Version: $(VERSION)' >>$@
+ 	echo 'Requires: ' >>$@
+ 	echo 'Requires.private: $(PKG_CONFIG_REQUIRES_PRIVATE)' >>$@
+ 	echo 'Cflags: -I$(includedir)' >>$@
+-	echo 'Libs: -L$(libdir) -l$(NAME)' >>$@
++	echo 'Libs: -L$(libdir) -l$(NAME)$(SOEXTRA)' >>$@
+ # Record -L flags that the user might have passed in to the PostgreSQL
+ # build to locate third-party libraries (e.g., ldap, ssl).  Filter out
+ # those that point inside the build or source tree.  Use sort to
+@@ -433,23 +434,23 @@ endif # PORTNAME == cygwin || PORTNAME =
+ # tarballs.
+ 
+ ifneq (,$(SHLIB_EXPORTS))
+-distprep: lib$(NAME)dll.def lib$(NAME)ddll.def blib$(NAME)dll.def
++distprep: lib$(NAME)$(SOEXTRA)dll.def lib$(NAME)$(SOEXTRA)ddll.def blib$(NAME)$(SOEXTRA)dll.def
+ 
+-UC_NAME = $(shell echo $(NAME) | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')
++UC_NAME = $(shell echo $(NAME)$(SOEXTRA) | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+ 
+-lib$(NAME)dll.def: $(SHLIB_EXPORTS)
++lib$(NAME)$(SOEXTRA)dll.def: $(SHLIB_EXPORTS)
+ 	echo '; DEF file for win32.mak release build and for Makefile.shlib (MinGW)' >$@
+ 	echo 'LIBRARY LIB$(UC_NAME).dll' >>$@
+ 	echo 'EXPORTS' >>$@
+ 	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
+ 
+-lib$(NAME)ddll.def: $(SHLIB_EXPORTS)
++lib$(NAME)$(SOEXTRA)ddll.def: $(SHLIB_EXPORTS)
+ 	echo '; DEF file for win32.mak debug build' >$@
+ 	echo 'LIBRARY LIB$(UC_NAME)D.dll' >>$@
+ 	echo 'EXPORTS' >>$@
+ 	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
+ 
+-blib$(NAME)dll.def: $(SHLIB_EXPORTS)
++blib$(NAME)$(SOEXTRA)dll.def: $(SHLIB_EXPORTS)
+ 	echo '; DEF file for bcc32.mak (Borland C++ Builder)' >$@
+ 	echo 'LIBRARY BLIB$(UC_NAME)' >>$@
+ 	echo 'EXPORTS' >>$@
+@@ -471,8 +472,8 @@ install-lib: install-lib-static
+ install-lib: install-lib-pc
+ endif
+ 
+-install-lib-pc: lib$(NAME).pc installdirs-lib
+-	$(INSTALL_DATA) $< '$(DESTDIR)$(pkgconfigdir)/lib$(NAME).pc'
++install-lib-pc: lib$(NAME)$(SOEXTRA).pc installdirs-lib
++	$(INSTALL_DATA) $< '$(DESTDIR)$(pkgconfigdir)/lib$(NAME)$(SOEXTRA).pc'
+ 
+ install-lib-static: $(stlib) installdirs-lib
+ 	$(INSTALL_STLIB) $< '$(DESTDIR)$(libdir)/$(stlib)'
+@@ -529,7 +530,7 @@ ifdef soname
+ 	rm -f '$(DESTDIR)$(libdir)/$(shlib_bare)' \
+ 	  '$(DESTDIR)$(libdir)/$(shlib_major)' \
+ 	  '$(DESTDIR)$(libdir)/$(shlib)' $(if $(findstring $(PORTNAME),win32 cygwin),'$(DESTDIR)$(bindir)/$(shlib)') \
+-	  '$(DESTDIR)$(pkgconfigdir)/lib$(NAME).pc'
++	  '$(DESTDIR)$(pkgconfigdir)/lib$(NAME)$(SOEXTRA).pc'
+ else # no soname
+ 	rm -f '$(DESTDIR)$(pkglibdir)/$(shlib)'
+ endif # no soname
+@@ -541,9 +542,9 @@ endif # no soname
+ 
+ .PHONY: clean-lib
+ clean-lib:
+-	rm -f $(shlib) $(shlib_bare) $(shlib_major) $(stlib) $(exports_file) lib$(NAME).pc
++	rm -f $(shlib) $(shlib_bare) $(shlib_major) $(stlib) $(exports_file) lib$(NAME)$(SOEXTRA).pc
+ 
+ ifneq (,$(SHLIB_EXPORTS))
+ maintainer-clean-lib:
+-	rm -f lib$(NAME)dll.def lib$(NAME)ddll.def blib$(NAME)dll.def
++	rm -f lib$(NAME)$(SOEXTRA)dll.def lib$(NAME)$(SOEXTRA)ddll.def blib$(NAME)$(SOEXTRA)dll.def
+ endif
+Index: postgresql-9.6.13/src/Makefile.global.in
+===================================================================
+--- postgresql-9.6.13.orig/src/Makefile.global.in
++++ postgresql-9.6.13/src/Makefile.global.in
+@@ -39,6 +39,7 @@ all:
+ VERSION = @PACKAGE_VERSION@
+ MAJORVERSION = @PG_MAJORVERSION@
+ VERSION_NUM = @PG_VERSION_NUM@
++SOEXTRA = @PG_SOEXTRA@
+ 
+ # Set top_srcdir, srcdir, and VPATH.
+ ifdef PGXS
+@@ -496,7 +497,7 @@ endif
+ 
+ # This macro is for use by libraries linking to libpq.  (Because libpgport
+ # isn't created with the same link flags as libpq, it can't be used.)
+-libpq = -L$(libpq_builddir) -lpq
++libpq = -L$(libpq_builddir) -lpq$(SOEXTRA)
+ 
+ # This macro is for use by client executables (not libraries) that use libpq.
+ # We force clients to pull symbols from the non-shared libraries libpgport
+@@ -506,9 +507,9 @@ libpq = -L$(libpq_builddir) -lpq
+ # pgport before libpq.  This does cause duplicate -lpgport's to appear
+ # on client link lines.
+ ifdef PGXS
+-libpq_pgport = -L$(libdir) -lpgcommon -lpgport $(libpq)
++libpq_pgport = -L$(libdir) -lpgcommon$(SOEXTRA) -lpgport$(SOEXTRA) $(libpq)
+ else
+-libpq_pgport = -L$(top_builddir)/src/common -lpgcommon -L$(top_builddir)/src/port -lpgport $(libpq)
++libpq_pgport = -L$(top_builddir)/src/common -lpgcommon$(SOEXTRA) -L$(top_builddir)/src/port -lpgport$(SOEXTRA) $(libpq)
+ endif
+ 
+ # Cygwin seems to need ldap libraries to be mentioned here, too
+@@ -634,7 +635,7 @@ LIBOBJS = @LIBOBJS@
+ # files needed for the chosen CRC-32C implementation
+ PG_CRC32C_OBJS = @PG_CRC32C_OBJS@
+ 
+-LIBS := -lpgcommon -lpgport $(LIBS)
++LIBS := -lpgcommon$(SOEXTRA) -lpgport$(SOEXTRA) $(LIBS)
+ 
+ # to make ws2_32.lib the last library
+ ifeq ($(PORTNAME),win32)
+Index: postgresql-9.6.13/src/common/Makefile
+===================================================================
+--- postgresql-9.6.13.orig/src/common/Makefile
++++ postgresql-9.6.13/src/common/Makefile
+@@ -44,19 +44,19 @@ OBJS_FRONTEND = $(OBJS_COMMON) fe_memuti
+ 
+ OBJS_SRV = $(OBJS_COMMON:%.o=%_srv.o)
+ 
+-all: libpgcommon.a libpgcommon_srv.a
++all: libpgcommon$(SOEXTRA).a libpgcommon_srv$(SOEXTRA).a
+ 
+ # libpgcommon is needed by some contrib
+ install: all installdirs
+-	$(INSTALL_STLIB) libpgcommon.a '$(DESTDIR)$(libdir)/libpgcommon.a'
++	$(INSTALL_STLIB) libpgcommon$(SOEXTRA).a '$(DESTDIR)$(libdir)/libpgcommon$(SOEXTRA).a'
+ 
+ installdirs:
+ 	$(MKDIR_P) '$(DESTDIR)$(libdir)'
+ 
+ uninstall:
+-	rm -f '$(DESTDIR)$(libdir)/libpgcommon.a'
++	rm -f '$(DESTDIR)$(libdir)/libpgcommon$(SOEXTRA).a'
+ 
+-libpgcommon.a: $(OBJS_FRONTEND)
++libpgcommon$(SOEXTRA).a: $(OBJS_FRONTEND)
+ 	rm -f $@
+ 	$(AR) $(AROPT) $@ $^
+ 
+@@ -64,7 +64,7 @@ libpgcommon.a: $(OBJS_FRONTEND)
+ # Server versions of object files
+ #
+ 
+-libpgcommon_srv.a: $(OBJS_SRV)
++libpgcommon_srv$(SOEXTRA).a: $(OBJS_SRV)
+ 	rm -f $@
+ 	$(AR) $(AROPT) $@ $^
+ 
+@@ -94,4 +94,4 @@ keywords.o: $(top_srcdir)/src/include/pa
+ keywords_srv.o: $(top_builddir)/src/include/parser/gram.h $(top_srcdir)/src/include/parser/kwlist.h
+ 
+ clean distclean maintainer-clean:
+-	rm -f libpgcommon.a libpgcommon_srv.a $(OBJS_FRONTEND) $(OBJS_SRV)
++	rm -f libpgcommon$(SOEXTRA).a libpgcommon_srv$(SOEXTRA).a $(OBJS_FRONTEND) $(OBJS_SRV)
+Index: postgresql-9.6.13/src/port/Makefile
+===================================================================
+--- postgresql-9.6.13.orig/src/port/Makefile
++++ postgresql-9.6.13/src/port/Makefile
+@@ -38,19 +38,19 @@ OBJS = $(LIBOBJS) $(PG_CRC32C_OBJS) chkl
+ # foo_srv.o and foo.o are both built from foo.c, but only foo.o has -DFRONTEND
+ OBJS_SRV = $(OBJS:%.o=%_srv.o)
+ 
+-all: libpgport.a libpgport_srv.a
++all: libpgport$(SOEXTRA).a libpgport_srv$(SOEXTRA).a
+ 
+ # libpgport is needed by some contrib
+ install: all installdirs
+-	$(INSTALL_STLIB) libpgport.a '$(DESTDIR)$(libdir)/libpgport.a'
++	$(INSTALL_STLIB) libpgport$(SOEXTRA).a '$(DESTDIR)$(libdir)/libpgport$(SOEXTRA).a'
+ 
+ installdirs:
+ 	$(MKDIR_P) '$(DESTDIR)$(libdir)'
+ 
+ uninstall:
+-	rm -f '$(DESTDIR)$(libdir)/libpgport.a'
++	rm -f '$(DESTDIR)$(libdir)/libpgport$(SOEXTRA).a'
+ 
+-libpgport.a: $(OBJS)
++libpgport$(SOEXTRA).a: $(OBJS)
+ 	rm -f $@
+ 	$(AR) $(AROPT) $@ $^
+ 
+@@ -65,7 +65,7 @@ pg_crc32c_sse42_srv.o: CFLAGS+=$(CFLAGS_
+ # Server versions of object files
+ #
+ 
+-libpgport_srv.a: $(OBJS_SRV)
++libpgport_srv$(SOEXTRA).a: $(OBJS_SRV)
+ 	rm -f $@
+ 	$(AR) $(AROPT) $@ $^
+ 
+@@ -110,4 +110,4 @@ pg_config_paths.h: $(top_builddir)/src/M
+ 	echo "#define MANDIR \"$(mandir)\"" >>$@
+ 
+ clean distclean maintainer-clean:
+-	rm -f libpgport.a libpgport_srv.a $(OBJS) $(OBJS_SRV) pg_config_paths.h
++	rm -f libpgport$(SOEXTRA).a libpgport_srv$(SOEXTRA).a $(OBJS) $(OBJS_SRV) pg_config_paths.h
+Index: postgresql-9.6.13/src/backend/Makefile
+===================================================================
+--- postgresql-9.6.13.orig/src/backend/Makefile
++++ postgresql-9.6.13/src/backend/Makefile
+@@ -35,12 +35,12 @@ LOCALOBJS += utils/probes.o
+ endif
+ endif
+ 
+-OBJS = $(SUBDIROBJS) $(LOCALOBJS) $(top_builddir)/src/port/libpgport_srv.a \
+-       $(top_builddir)/src/common/libpgcommon_srv.a
++OBJS = $(SUBDIROBJS) $(LOCALOBJS) $(top_builddir)/src/port/libpgport_srv$(SOEXTRA).a \
++       $(top_builddir)/src/common/libpgcommon_srv$(SOEXTRA).a
+ 
+ # We put libpgport and libpgcommon into OBJS, so remove it from LIBS; also add
+ # libldap
+-LIBS := $(filter-out -lpgport -lpgcommon, $(LIBS)) $(LDAP_LIBS_BE)
++LIBS := $(filter-out -lpgport$(SOEXTRA) -lpgcommon$(SOEXTRA), $(LIBS)) $(LDAP_LIBS_BE)
+ 
+ # The backend doesn't need everything that's in LIBS, however
+ LIBS := $(filter-out -lz -lreadline -ledit -ltermcap -lncurses -lcurses, $(LIBS))
+@@ -117,7 +117,7 @@ submake-errcodes: $(top_builddir)/src/in
+ 
+ .PHONY: submake-errcodes
+ 
+-$(top_builddir)/src/port/libpgport_srv.a: | submake-libpgport
++$(top_builddir)/src/port/libpgport_srv$(SOEXTRA).a: | submake-libpgport
+ 
+ 
+ # The postgres.o target is needed by the rule in Makefile.global that
+Index: postgresql-9.6.13/src/backend/storage/lmgr/Makefile
+===================================================================
+--- postgresql-9.6.13.orig/src/backend/storage/lmgr/Makefile
++++ postgresql-9.6.13/src/backend/storage/lmgr/Makefile
+@@ -21,9 +21,9 @@ ifdef TAS
+ TASPATH = $(top_builddir)/src/backend/port/tas.o
+ endif
+ 
+-s_lock_test: s_lock.c $(top_builddir)/src/port/libpgport.a
++s_lock_test: s_lock.c $(top_builddir)/src/port/libpgport$(SOEXTRA).a
+ 	$(CC) $(CPPFLAGS) $(CFLAGS) -DS_LOCK_TEST=1 $(srcdir)/s_lock.c \
+-		$(TASPATH) -L $(top_builddir)/src/port -lpgport -o s_lock_test
++		$(TASPATH) -L $(top_builddir)/src/port -lpgport$(SOEXTRA) -o s_lock_test
+ 
+ # see notes in src/backend/parser/Makefile
+ lwlocknames.c: lwlocknames.h

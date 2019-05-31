@@ -1,0 +1,12 @@
+Index: postgresql-9.6.13/src/port/Makefile
+===================================================================
+--- postgresql-9.6.13.orig/src/port/Makefile
++++ postgresql-9.6.13/src/port/Makefile
+@@ -53,6 +53,7 @@ uninstall:
+ libpgport$(SOEXTRA).a: $(OBJS)
+ 	rm -f $@
+ 	$(AR) $(AROPT) $@ $^
++	$(RANLIB) libpgport$(SOEXTRA).a
+ 
+ # thread.o needs PTHREAD_CFLAGS (but thread_srv.o does not)
+ thread.o: CFLAGS+=$(PTHREAD_CFLAGS)
