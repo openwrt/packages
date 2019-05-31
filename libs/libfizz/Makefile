@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libfizz
-PKG_VERSION:=2019.05.06.00
+PKG_VERSION:=2019.05.27.00
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/facebookincubator/fizz/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=80d4089cef655192733a7b0536bd3e2dab9baf143ed99510308064ff4842ae11
+PKG_HASH:=d3f5325717a2af3684a41889d45b19e975cfff177faffdfaab8cb63df4e0318c
 PKG_BUILD_DIR:=$(BUILD_DIR)/fizz-$(PKG_VERSION)
 
 PKG_LICENSE:=BSD
@@ -25,8 +25,7 @@ CMAKE_INSTALL:=1
 define Package/libfizz
 	SECTION:=libs
 	CATEGORY:=Libraries
-	DEPENDS:=+libfolly +boost +libopenssl +glog +gflags +libevent2 \
-		+libdouble-conversion +libsodium
+	DEPENDS:=+libfolly
 	TITLE:=C++14 implementation of the TLS-1.3 standard
 	URL:=https://github.com/facebookincubator/fizz
 endef
