@@ -29,14 +29,14 @@ define Package/librsocket-cpp
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE:=C++ implementation of RSocket
-	DEPENDS:=+libfolly +gflags +glog +libopenssl +libyarpl
+	DEPENDS:=+libyarpl
 endef
 
 define Package/libyarpl
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE:=yarpl: Yet Another Reactive Programming Library
-	DEPENDS:=+libfolly +gflags +glog +libatomic
+	DEPENDS:=+libfolly
 endef
 
 define Package/librsocket-cpp/description
