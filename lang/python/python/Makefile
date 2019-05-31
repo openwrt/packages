@@ -311,18 +311,32 @@ define Host/Compile
 endef
 
 define Host/Install
+	$(if $(wildcard $(HOST_PYTHON_PKG_DIR)/.setuptools_installed_$(PYTHON_SETUPTOOLS_VERSION)-$(PYTHON_SETUPTOOLS_PKG_RELEASE)),,
+		rm -rf \
+			$(HOST_PYTHON_PKG_DIR)/easy_install.py \
+			$(HOST_PYTHON_PKG_DIR)/pkg_resources \
+			$(HOST_PYTHON_PKG_DIR)/setuptools \
+			$(HOST_PYTHON_PKG_DIR)/setuptools-* \
+			$(HOST_PYTHON_PKG_DIR)/.setuptools-patched* \
+			$(HOST_PYTHON_PKG_DIR)/.setuptools_installed_*
+	)
+	$(if $(wildcard $(HOST_PYTHON_PKG_DIR)/.pip_installed_$(PYTHON_PIP_VERSION)-$(PYTHON_PIP_PKG_RELEASE)),,
+		rm -rf \
+			$(HOST_PYTHON_PKG_DIR)/pip \
+			$(HOST_PYTHON_PKG_DIR)/pip-* \
+			$(HOST_PYTHON_PKG_DIR)/.pip-patched* \
+			$(HOST_PYTHON_PKG_DIR)/.pip_installed_*
+	)
 	$(MAKE) -C $(HOST_BUILD_DIR) install
 	$(INSTALL_DIR) $(HOST_PYTHON_DIR)/bin/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(HOST_PYTHON_DIR)/bin/pgen2
-	$(if $(wildcard $(HOST_PYTHON_PKG_DIR)/.setuptools-patched-$(PYTHON_SETUPTOOLS_VERSION)),,
+	$(if $(wildcard $(HOST_PYTHON_PKG_DIR)/.setuptools_installed_$(PYTHON_SETUPTOOLS_VERSION)-$(PYTHON_SETUPTOOLS_PKG_RELEASE)),,
 		$(call HostPatchDir,$(HOST_PYTHON_PKG_DIR),./patches-setuptools,)
-		rm -f $(HOST_PYTHON_PKG_DIR)/.setuptools-patched-*
-		touch $(HOST_PYTHON_PKG_DIR)/.setuptools-patched-$(PYTHON_SETUPTOOLS_VERSION)
+		touch $(HOST_PYTHON_PKG_DIR)/.setuptools_installed_$(PYTHON_SETUPTOOLS_VERSION)-$(PYTHON_SETUPTOOLS_PKG_RELEASE)
 	)
-	$(if $(wildcard $(HOST_PYTHON_PKG_DIR)/.pip-patched-$(PYTHON_PIP_VERSION)),,
+	$(if $(wildcard $(HOST_PYTHON_PKG_DIR)/.pip_installed_$(PYTHON_PIP_VERSION)-$(PYTHON_PIP_PKG_RELEASE)),,
 		$(call HostPatchDir,$(HOST_PYTHON_PKG_DIR),./patches-pip,)
-		rm -f $(HOST_PYTHON_PKG_DIR)/.pip-patched-*
-		touch $(HOST_PYTHON_PKG_DIR)/.pip-patched-$(PYTHON_PIP_VERSION)
+		touch $(HOST_PYTHON_PKG_DIR)/.pip_installed_$(PYTHON_PIP_VERSION)-$(PYTHON_PIP_PKG_RELEASE)
 	)
 endef
 
