@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libfolly
-PKG_VERSION:=2019.05.06.00
+PKG_VERSION:=2019.05.27.00
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/facebook/folly/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=59e88d792e4c917e2f37ac22c230af0056bce8aa7bacf2d9e94ceb177a7c1079
+PKG_HASH:=7535937e4b4bde14e6c854dc55a5fe9f290ccf1918621f20678ebecd0c1239e1
 PKG_BUILD_DIR:=$(BUILD_DIR)/folly-$(PKG_VERSION)
 
 PKG_LICENSE:=Apache-2.0
@@ -32,10 +32,9 @@ define Package/libfolly
 	CATEGORY:=Libraries
 	TITLE:=An open-source C++ library developed and used at Facebook.
 	URL:=https://github.com/facebook/folly
-	DEPENDS:=+libstdcpp +boost +boost-context +boost-system +boost-thread \
-		+boost-date_time +boost-filesystem +boost-program_options +boost-regex \
-		+libbz2 +libopenssl +libdouble-conversion +libevent2 +glog +zlib +libzstd \
-		+gflags +libsodium +liblzma +libaio +liblz4 +libunwind +libatomic
+	DEPENDS:=+boost +boost-context +boost-date_time +boost-filesystem +boost-program_options +boost-regex \
+		+libopenssl +libdouble-conversion +libevent2 +glog +libsodium +libaio +libunwind +libatomic \
+		+libbz2 +zlib +libzstd +liblzma +liblz4
 endef
 
 define Package/libfolly/description

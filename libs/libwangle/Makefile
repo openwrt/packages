@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwangle
-PKG_VERSION:=2019.05.06.00
+PKG_VERSION:=2019.05.27.00
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/facebook/wangle/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=de145e3748a5f71be1883ad2ea4be37e99f99fcb1838a6a258ca2c4cd0d053e7
+PKG_HASH:=935d94658133279d98de27ab7c78801c87f16414b8eec43766798acc5b14f549
 PKG_BUILD_DIR:=$(BUILD_DIR)/wangle-$(PKG_VERSION)
 
 PKG_LICENSE:=Apache-2.0
@@ -25,7 +25,7 @@ define Package/libwangle
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE:=Wangle: C++ networking library
-	DEPENDS:=+libstdcpp +libfolly +libsodium +libfizz
+	DEPENDS:=+libfizz
 endef
 
 define Package/libwangle/description
