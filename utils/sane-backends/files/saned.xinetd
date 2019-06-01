@@ -7,8 +7,7 @@ service sane-port
 	socket_type = stream
 	port        = 6566
 	wait        = no
-	user        = root
-#	user        = saned
+	user        = saned
 	group       = scanner
 	server      = /usr/sbin/saned
 	disable     = yes
