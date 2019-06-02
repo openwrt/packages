@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=irqbalance
 PKG_VERSION:=1.2.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_PROTO:=git
@@ -49,6 +49,8 @@ define Package/irqbalance/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/irqbalance $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/irqbalance.init $(1)/etc/init.d/irqbalance
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/irqbalance.config $(1)/etc/config/irqbalance
 endef
 
 $(eval $(call BuildPackage,irqbalance))
