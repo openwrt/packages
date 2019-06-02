@@ -54,6 +54,7 @@ UB_IP_DNS64="64:ff9b::/96"
 UB_N_EDNS_SIZE=1280
 UB_N_RX_PORT=53
 UB_N_ROOT_AGE=9
+UB_N_THREADS=1
 
 UB_TTL_MIN=120
 UB_TXT_DOMAIN=lan
@@ -580,9 +581,18 @@ unbound_conf() {
   fi
 
 
+  if [ "$UB_N_THREADS" -gt 1 ] \
+  && $PROG -h | grep -q "linked libs:.*libevent" ; then
+    # heavy variant using "threads" may need substantial resources
+    echo "  num-threads: 2" >> $UB_CORE_CONF
+  else
+    # light variant with one "process" is much more efficient with light traffic
+    echo "  num-threads: 1" >> $UB_CORE_CONF
+  fi
+
+
   {
-    # No threading
-    echo "  num-threads: 1"
+    # Limited threading (2) with one shared slab
     echo "  msg-cache-slabs: 1"
     echo "  rrset-cache-slabs: 1"
     echo "  infra-cache-slabs: 1"
@@ -967,19 +977,16 @@ unbound_hostname() {
           echo "  local-data: \"$UB_TXT_DOMAIN. $UB_XNS\""
           echo "  local-data: '$UB_TXT_DOMAIN. $UB_XTXT'"
           echo
-          # avoid upstream involvement in RFC6762
-          echo "  domain-insecure: local"
-          echo "  private-domain: local"
-          echo "  local-zone: local $UB_D_DOMAIN_TYPE"
-          echo "  local-data: \"local. $UB_XSOA\""
-          echo "  local-data: \"local. $UB_XNS\""
-          echo "  local-data: 'local. $UB_LTXT'"
-          echo
+          if [ "$UB_TXT_DOMAIN" != "local" ] ; then
+            # avoid involvement in RFC6762, unless it is the local zone name
+            echo "  local-zone: local always_nxdomain"
+            echo
+          fi
         } >> $UB_HOST_CONF
         zonetype=2
         ;;
 
-      transparent|typetransparent)
+      inform|transparent|typetransparent)
         {
           # transparent will permit forward-zone: or stub-zone: clauses
           echo "  private-domain: $UB_TXT_DOMAIN"
@@ -1205,6 +1212,7 @@ unbound_uci() {
   config_get UB_N_EDNS_SIZE "$cfg" edns_size 1280
   config_get UB_N_RX_PORT   "$cfg" listen_port 53
   config_get UB_N_ROOT_AGE  "$cfg" root_age 9
+  config_get UB_N_THREADS   "$cfg" num_threads 1
 
   config_get UB_D_CONTROL     "$cfg" unbound_control 0
   config_get UB_D_DOMAIN_TYPE "$cfg" domain_type static
