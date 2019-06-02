@@ -212,18 +212,17 @@ config unbound
     4 - Above and interfaces named <iface>.<hostname>.<domain>
 
   option add_wan_fqdn '0'
-    Level. Same as previous option only this applies to the WAN. WAN
-    are inferred by a UCI `config dhcp` entry that contains the line
-    option ignore '1'.
+    Level. Same as previous option only this applies to the WAN. WAN are
+    inferred by a UCI `config dhcp` entry that contains the 'option ignore 1'.
 
   option dns64 '0'
-    Boolean. Enable DNS64 through Unbound in order to bridge networks
-    that are IPV6 only and IPV4 only (see RFC6052).
+    Boolean. Enable DNS64 through Unbound in order to bridge networks that are
+    IPV6 only and IPV4 only (see RFC6052).
 
   option dns64_prefix '64:ff9b::/96'
-    IPV6 Prefix. The IPV6 prefix wrapped on the IPV4 address for DNS64.
-    You should use RFC6052 "well known" address, unless you also
-    redirect to a proxy or gateway for your NAT64.
+    IPV6 Prefix. The IPV6 prefix wrapped on the IPV4 address for DNS64. You
+    should use RFC6052 "well known" address, unless you also redirect to a proxy
+    or gateway for your NAT64.
 
   option dhcp_link 'none'
     Program Name. Link to one of the supported programs we have scripts
@@ -271,6 +270,12 @@ config unbound
     Boolean. Skip all this UCI nonsense. Manually edit the
     configuration. Make changes to /etc/unbound/unbound.conf.
 
+  option num_threads '1'
+    Count. Enable multithreading with the "heavy traffic" variant. Base variant
+    spins each as whole proces and is not efficient. Two threads may be used,
+    but they use one shared cache slab. More edges into an industrial setup,
+    and UCI simplificaitons may not be appropriate.
+
   option protocol 'mixed'
     Unbound can limit its protocol used for recursive queries.
     ip4_only - old fashioned IPv4 upstream and downstream
@@ -281,19 +286,18 @@ config unbound
     default - Unbound built-in defaults
 
   option query_minimize '0'
-    Boolean. Enable a minor privacy option. Don't let each server know
-    the next recursion. Query one piece at a time.
+    Boolean. Enable a minor privacy option. Don't let each server know the next
+    recursion. Query one piece at a time.
 
   option query_min_strict '0'
-    Boolean. Query minimize is best effort and will fall back to normal
-    when it must. This option prevents the fall back, but less than
-    standard name servers will fail to resolve their domains.
+    Boolean. Query minimize is best effort and will fall back to normal when it
+    must. This option prevents the fall back, but less than standard name
+    servers will fail to resolve their domains.
 
   option rebind_localhost '0'
-    Boolean. Prevent loopback "127.0.0.0/8" or "::1/128" responses.
-    These may used by black hole servers for good purposes like
-    ad-blocking or parental access control. Obviously these responses
-    also can be used to for bad purposes.
+    Boolean. Prevent loopback "127.0.0.0/8" or "::1/128" responses. These may
+    used by black hole servers for good purposes like ad-blocking or parental
+    access control. Obviously these responses may be used to for bad purposes.
 
   option rebind_protection '1'
     Level. Block your local address responses from global DNS. A poisoned
@@ -319,16 +323,16 @@ config unbound
     large - about double of medium
 
   option root_age '9'
-    Days. >90 Disables. Age limit for Unbound root data like root
-    DNSSEC key. Unbound uses RFC 5011 to manage root key. This could
-    harm flash ROM. This activity is mapped to "tmpfs," but every so
-    often it needs to be copied back to flash for the next reboot.
+    Days. >90 Disables. Age limit for Unbound root data like root DNSSEC key.
+    Unbound uses RFC 5011 to manage root key. This could harm flash ROM. This
+    activity is mapped to "tmpfs," but every so often it needs to be copied back
+    to flash for the next reboot.
 
   option ttl_min '120'
-    Seconds. Minimum TTL in cache. Recursion can be expensive without
-    cache. A low TTL is normal for server migration. A low TTL can be
-    abused for snoop-vertising (DNS hit counts; recording query IP).
-    Typical to configure maybe 0~300, but 1800 is the maximum accepted.
+    Seconds. Minimum TTL in cache. Recursion can be expensive without cache. A
+    low TTL is normal for server migration. A low TTL can be abused for snoop-
+    vertising (DNS hit counts; recording query IP). Typical to configure maybe
+    0~300, but 1800 is the maximum accepted.
 
   option unbound_control '0'
     Level. Enables unbound-control application access ports.
@@ -342,10 +346,10 @@ config unbound
     Boolean. Enable DNSSEC. Unbound names this the "validator" module.
 
   option validator_ntp '1'
-    Boolean. Disable DNSSEC time checks at boot. Once NTP confirms
-    global real time, then DNSSEC is restarted at full strength. Many
-    embedded devices don't have a real time power off clock. NTP needs
-    DNS to resolve servers. This works around the chicken-and-egg.
+    Boolean. Disable DNSSEC time checks at boot. Once NTP confirms global real
+    time, then DNSSEC is restarted at full strength. Many embedded devices don't
+    have a real time power off clock. NTP needs DNS to resolve servers. This
+    works around the chicken-and-egg.
 
   option verbosity '1'
     Level. Sets Unbounds logging intensity.
@@ -356,9 +360,9 @@ config unbound
 
   list trigger_interface 'lan' 'wan'
     Interface (logical). This option is a work around for netifd/procd
-    interaction with WAN DHCPv6. Minor RA or DHCP changes in IP6 can
-    cause netifd to execute procd interface reload. Limit Unbound procd
-    triggers to LAN and WAN (IP4 only) to prevent restart @2-3 minutes.
+    interaction with WAN DHCPv6. Minor RA or DHCP changes in IP6 can cause
+    netifd to execute procd interface reload. Limit Unbound procd triggers to
+    LAN and WAN (IP4 only) to prevent restart @2-3 minutes.
 
 
 config zone
@@ -368,23 +372,22 @@ config zone
     Boolean. Enable the zone clause.
 
   option fallback 1
-    Boolean. Permit normal recursion when the narrowly selected servers
-    in this zone are unresponsive or return empty responses. Disable, if
-    there are security concerns (forward only internal to organization).
+    Boolean. Permit normal recursion when the narrowly selected servers in this
+    zone are unresponsive or return empty responses. Disable, if there are
+    security concerns (forward only internal to organization).
 
   option port 53
     Port. Servers are contact on this port for plain DNS operations.
 
   option resolv_conf 0
-    Boolean. Use "resolv.conf" as it was filled by the DHCP client. This
-    can be used to forward zones within your ISP (mail.example.net) or that
-    have co-located services (streamed-movies.example.com). Recursion may
-    not yield the most local result, but forwarding may instead.
+    Boolean. Use "resolv.conf" as it was filled by the DHCP client. This can be
+    used to forward zones within your ISP (mail.example.net) or that have co-
+    located services (streamed-movies.example.com). Recursion may not yield the
+    most local result, but forwarding may instead.
 
   option tls_index (n/a)
     Domain. Name TLS certificates are signed for (dns.example.net). If this
-    option is ommitted, then Unbound will make the connection but not
-    validate it.
+    option is ommitted, then Unbound will make connections but not validate.
 
   option tls_port 853
     Port. Servers are contact on this port for DNS over TLS operations.
@@ -397,33 +400,33 @@ config zone
     auth_zone type only. Files "${zone_name}.zone" are expect in this path.
 
   option zone_type (n/a)
-    State. Required field or the clause is effectively disabled. Check
-    Unbound documentation for clarity (unbound-conf).
+    State. Required field or the clause is effectively disabled. Check Unbound
+    documentation for clarity (unbound-conf).
     auth_zone     - prefetch whole zones from authoritative server (ICANN)
     forward_zone  - forward queries in these domains to the listed servers
     stub_zone     - force recursion of these domains to the listed servers
 
   list server (n/a)
-    IP. Every zone must have one server. Stub and forward require IP to
-    prevent chicken and egg (due to UCI simplicity). Authoritative prefetch
-    may use a server name.
+    IP. Every zone must have one server. Stub and forward require IP to prevent
+    chicken and egg (due to UCI simplicity). Authoritative prefetch may use a
+    server name.
 
   list zone_name
-    Domain. Every zone must represent some part of the DNS tree. It can be
-    all of it "." or you internal organization domain "example.com." Within
-    each zone clause all zone names will be matched to all servers.
+    Domain. Every zone must represent some part of the DNS tree. It can be all
+    of it "." or you internal organization domain "example.com." Within each
+    zone clause all zone names will be matched to all servers.
 ```
 
 ## Replaced Options
   config unbound / option prefetch_root
-    List the domains in a zone with type auth_zone and fill in the server
-    or url fields. Root zones are ready but disabled in default install UCI.
+    List the domains in a zone with type auth_zone and fill in the server or url
+    fields. Root zones are ready but disabled in default install UCI.
 
   config unbound / list domain_forward
     List the domains in a zone with type forward_zone and enable the
     resolv_conf option.
 
   config unbound / list rebind_interface
-    Enable rebind_protection at 2 and all DHCP interfaces are also
-    protected for IPV6 GLA (parallel to subnets in add_local_fqdn).
+    Enable rebind_protection at 2 and all DHCP interfaces are also protected for
+    IPV6 GLA (parallel to subnets in add_local_fqdn).
 
