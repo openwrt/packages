@@ -10,12 +10,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=newt
-PKG_VERSION:=0.52.20
-PKG_RELEASE:=2
+PKG_VERSION:=0.52.21
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://releases.pagure.org/newt
-PKG_HASH:=8d66ba6beffc3f786d4ccfee9d2b43d93484680ef8db9397a4fb70b5adbb6dbc
+PKG_HASH:=265eb46b55d7eaeb887fca7a1d51fe115658882dfe148164b6c49fccac5abb31
 
 PKG_LICENSE:=LGPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -82,16 +82,12 @@ $(call Package/newt/Default/description)
   This is the Newt module for Python 3.
 endef
 
-TARGET_CFLAGS+= $(FPIC)
-
 CONFIGURE_ARGS+= \
 	--enable-largefile \
-	--with-python \
+	--with-python=python$(PYTHON3_VERSION) \
 	--without-tcl \
 	--without-gpm-support \
 	--with-colorsfile=/etc/newt/palette
-
-CONFIGURE_VARS+= PYTHONVERS="python$(PYTHON3_VERSION)"
 
 MAKE_VARS+= PYTHON_CONFIG_PATH="$(STAGING_DIR)/usr/bin"
 
