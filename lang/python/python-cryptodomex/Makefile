@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cryptodomex
-PKG_VERSION:=3.8.1
+PKG_VERSION:=3.8.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=pycryptodomex-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pycryptodomex
-PKG_HASH:=9251b3f6254d4274caa21b79bd432bf07afa3567c6f02f11861659fb6245139a
+PKG_HASH:=e50b15af6bbdc6b5f8bd70d818cb846b15303ffa6c371b799db561a403a21607
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-cryptodomex-$(PKG_VERSION)
 
