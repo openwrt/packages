@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=isc-dhcp
 UPSTREAM_NAME:=dhcp
 PKG_VERSION:=4.4.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -161,7 +161,6 @@ $(call Package/isc-dhcp-omshell/description)
 endef
 
 CONFIGURE_ARGS += \
-	--disable-tracing 		\
 	--enable-paranoia		\
 	--disable-dependency-tracking	\
 	--with-randomdev=/dev/urandom \
