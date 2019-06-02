@@ -1,0 +1,77 @@
+From: Sven Eckelmann <sven@narfation.org>
+Date: Sun, 2 Jun 2019 10:57:31 +0200
+Subject: batman-adv: Fix duplicated OGMs on NETDEV_UP
+
+The state of slave interfaces are handled differently depending on whether
+the interface is up or not. All active interfaces (IFF_UP) will transmit
+OGMs. But for B.A.T.M.A.N. IV, also non-active interfaces are scheduling
+(low TTL) OGMs on active interfaces. The code which setups and schedules
+the OGMs must therefore already be called when the interfaces gets added as
+slave interface and the transmit function must then check whether it has to
+send out the OGM or not on the specific slave interface.
+
+But the commit 0d8468553c3c ("batman-adv: remove ogm_emit and ogm_schedule
+API calls") moved the setup code from the enable function to the activate
+function. The latter is called either when the added slave was already up
+when batadv_hardif_enable_interface processed the new interface or when a
+NETDEV_UP event was received for this slave interfac. As result, each
+NETDEV_UP would schedule a new OGM worker for the interface and thus OGMs
+would be send a lot more than expected.
+
+Fixes: 0d8468553c3c ("batman-adv: remove ogm_emit and ogm_schedule API calls")
+Reported-by: Linus Lüssing <linus.luessing@c0d3.blue>
+Signed-off-by: Sven Eckelmann <sven@narfation.org>
+
+Origin: upstream, https://git.open-mesh.org/batman-adv.git/commit/c92331e0df3c0c5645ee5a897eb018c5da5e4aa5
+
+diff --git a/net/batman-adv/bat_iv_ogm.c b/net/batman-adv/bat_iv_ogm.c
+index bd4138ddf7e09a0020d9842d603dc98f21e225c7..240ed70912d6a014c0a48280741989133034396c 100644
+--- a/net/batman-adv/bat_iv_ogm.c
++++ b/net/batman-adv/bat_iv_ogm.c
+@@ -2337,7 +2337,7 @@ batadv_iv_ogm_neigh_is_sob(struct batadv_neigh_node *neigh1,
+ 	return ret;
+ }
+ 
+-static void batadv_iv_iface_activate(struct batadv_hard_iface *hard_iface)
++static void batadv_iv_iface_enabled(struct batadv_hard_iface *hard_iface)
+ {
+ 	/* begin scheduling originator messages on that interface */
+ 	batadv_iv_ogm_schedule(hard_iface);
+@@ -2683,8 +2683,8 @@ static void batadv_iv_gw_dump(struct sk_buff *msg, struct netlink_callback *cb,
+ static struct batadv_algo_ops batadv_batman_iv __read_mostly = {
+ 	.name = "BATMAN_IV",
+ 	.iface = {
+-		.activate = batadv_iv_iface_activate,
+ 		.enable = batadv_iv_ogm_iface_enable,
++		.enabled = batadv_iv_iface_enabled,
+ 		.disable = batadv_iv_ogm_iface_disable,
+ 		.update_mac = batadv_iv_ogm_iface_update_mac,
+ 		.primary_set = batadv_iv_ogm_primary_iface_set,
+diff --git a/net/batman-adv/hard-interface.c b/net/batman-adv/hard-interface.c
+index 79d1731b83066c60f9aef958d2bc343233bce67a..3719cfd026f04093f5d86ffe1b41a41849b2af62 100644
+--- a/net/batman-adv/hard-interface.c
++++ b/net/batman-adv/hard-interface.c
+@@ -795,6 +795,9 @@ int batadv_hardif_enable_interface(struct batadv_hard_iface *hard_iface,
+ 
+ 	batadv_hardif_recalc_extra_skbroom(soft_iface);
+ 
++	if (bat_priv->algo_ops->iface.enabled)
++		bat_priv->algo_ops->iface.enabled(hard_iface);
++
+ out:
+ 	return 0;
+ 
+diff --git a/net/batman-adv/types.h b/net/batman-adv/types.h
+index 74b644738a36bfe063eef6df016278b45a1a0256..e0b25104cbfa9f715df364658621c29faa7ad637 100644
+--- a/net/batman-adv/types.h
++++ b/net/batman-adv/types.h
+@@ -2129,6 +2129,9 @@ struct batadv_algo_iface_ops {
+ 	/** @enable: init routing info when hard-interface is enabled */
+ 	int (*enable)(struct batadv_hard_iface *hard_iface);
+ 
++	/** @enabled: notification when hard-interface was enabled (optional) */
++	void (*enabled)(struct batadv_hard_iface *hard_iface);
++
+ 	/** @disable: de-init routing info when hard-interface is disabled */
+ 	void (*disable)(struct batadv_hard_iface *hard_iface);
+ 
