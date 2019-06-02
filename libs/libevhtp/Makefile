@@ -12,7 +12,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libevhtp
 PKG_VERSION:=1.2.18
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 # This package is building a static library, used by seafile-server
 # Every time the built library changes (metadata changes are exempt),
 # seafile-server needs a release bump to ensure the update is used.
@@ -25,11 +25,7 @@ PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
-TARGET_CFLAGS += $(TARGET_CPPFLAGS)
 CMAKE_INSTALL:=1
-CMAKE_OPTIONS += \
-	-DLIB_INSTALL_DIR="$(STAGING_DIR)/usr/lib" \
-	-DINCLUDE_INSTALL_DIR="$(STAGING_DIR)/usr/include"
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -48,10 +44,9 @@ define Package/libevhtp/description
    meaning the developer never thought of it being used for creating a full-fledged HTTP service.
 endef
 
-define Package/InstallDev
-	$(INSTALL_DIR) $(1)/usr/{lib,include}
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/. $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/. $(1)/usr/lib/
+define Build/InstallDev
+	$(call Build/InstallDev/cmake,$(1))
+	$(SED) 's,^\(include\|lib\)dir=,\0$(STAGING_DIR)/usr/\1,' "$(1)/usr/lib/pkgconfig/evhtp.pc"
 endef
 
 $(eval $(call BuildPackage,libevhtp))
