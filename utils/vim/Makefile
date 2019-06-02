@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vim
 PKG_VERSION:=8.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 VIMVER:=81
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -123,6 +123,7 @@ CONFIGURE_ARGS += \
 	--with-compiledby="non-existent-hostname-compiled"
 
 CONFIGURE_VARS += \
+	ac_cv_header_elf_h=no \
 	vim_cv_getcwd_broken=no \
 	vim_cv_memmove_handles_overlap=yes \
 	vim_cv_stat_ignores_slash=yes \
