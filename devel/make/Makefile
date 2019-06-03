@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=make
 PKG_VERSION:=4.2.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=@GNU/make
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -36,6 +36,8 @@ define Package/make/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/make $(1)/usr/bin/
 endef
+
+CONFIGURE_VARS += ac_cv_lib_elf_elf_begin=no
 
 # provide gnumake.h at build time for other packages
 define Build/InstallDev
