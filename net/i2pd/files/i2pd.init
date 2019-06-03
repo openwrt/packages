@@ -18,14 +18,13 @@ CONFFILE=/etc/i2pd/i2pd.conf
 
 
 
-start_service() {
+i2pd_start() {
+	local cfg="$1"
 	local data_dir
 	local addressbook_dir
 
-	config_load i2pd
-
-	config_get data_dir i2pd data_dir
-	config_get addressbook_dir i2pd addressbook_dir
+	config_get data_dir "$cfg" data_dir
+	config_get addressbook_dir "$cfg" addressbook_dir
 
 	## Setting up data dir
 	if [ ! -d "$data_dir" ]; then
@@ -56,4 +55,29 @@ start_service() {
 	procd_set_param user "$USER"
 	procd_set_param pidfile "$PIDFILE"
 	procd_close_instance
+}
+
+
+start_service() {
+	local instance="$1"
+	local instance_found=0
+
+	config_cb() {
+		local type="$1"
+		local name="$2"
+		if [ "$type" = "i2pd" ]; then
+			if [ -n "$instance" ] && [ "$instance" = "$name" ]; then
+				instance_found=1
+			fi
+		fi
+	}
+
+	config_load i2pd
+
+	if [ -n "$instance" ]; then
+		[ "$instance_found" -gt 0 ] || return
+		i2pd_start "$instance"
+	else
+		config_foreach i2pd_start i2pd
+	fi
 }
