@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-compressor
 PKG_VERSION:=2.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
@@ -30,7 +30,7 @@ define Package/django-compressor
   CATEGORY:=Languages
   TITLE:=Compress CSS/JS into single cached files
   URL:=http://django-compressor.readthedocs.org/
-  DEPENDS:=+python +django +django-appconf +python-rcssmin
+  DEPENDS:=+python +python-django +django-appconf +python-rcssmin
   VARIANT:=python
 endef
 

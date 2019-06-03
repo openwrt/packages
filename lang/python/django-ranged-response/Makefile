@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-ranged-response
 PKG_VERSION:=0.2.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
 PKG_LICENSE:=MIT
@@ -25,7 +25,7 @@ define Package/django-ranged-response
   CATEGORY:=Languages
   TITLE:=Add Content-Range: to FileResponse
   URL:=https://github.com/wearespindle/django-ranged-fileresponse
-  DEPENDS:=+python +django
+  DEPENDS:=+python +python-django
   VARIANT:=python
 endef
 

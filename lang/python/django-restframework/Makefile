@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-restframework
 PKG_VERSION:=3.9.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=djangorestframework-$(PKG_VERSION).tar.gz
@@ -27,7 +27,7 @@ define Package/django-restframework
   CATEGORY:=Languages
   TITLE:=Web APIs for Django, made easy.
   URL:=https://www.django-rest-framework.org
-  DEPENDS:=+python +django
+  DEPENDS:=+python +python-django
 endef
 
 define Package/django-restframework/description

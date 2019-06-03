@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-postoffice
 PKG_VERSION:=3.1.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=django-post_office-$(PKG_VERSION).tar.gz
@@ -27,7 +27,7 @@ define Package/django-postoffice
   CATEGORY:=Languages
   TITLE:=A Django app to monitor and send mail asynchronously, complete with template support.
   URL:=https://github.com/ui/django-postoffice
-  DEPENDS:=+python +django +django-jsonfield
+  DEPENDS:=+python +python-django +django-jsonfield
 endef
 
 define Package/django-postoffice/description
