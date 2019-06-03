@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-seahub
 PKG_VERSION:=6.3.4
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_LICENSE:=Apache-2.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -22,17 +22,20 @@ PKG_BUILD_DEPENDS:=python-pytz/host
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python-package.mk
 
+SEAFILE_PYTHON_DEPENDS:= \
+	simplejson chardet dateutil mysql pytz qrcode requests requests-oauthlib
+
 define Package/seafile-seahub
     SECTION:=net
     CATEGORY:=Network
     TITLE:=Seafile server - seahub component
     URL:=https://seafile.com/
-    DEPENDS:=+python-simplejson +python +pillow +python-chardet +django +django-appconf \
+    DEPENDS:=+python +pillow +django +django-appconf \
 		+django-compressor +django-constance +django-formtools +django-jsonfield \
 		+django-picklefield +django-postoffice +django-restframework \
 		+django-simple-captcha +django-statici18n +django-webpack-loader \
-		+flup +gunicorn +openpyxl +python-dateutil +python-mysql \
-		+python-qrcode +python-requests +python-requests-oauthlib +python-pytz
+		+flup +gunicorn +openpyxl \
+		$(foreach dep,$(SEAFILE_PYTHON_DEPENDS),+python-$(dep))
 endef
 
 define Build/Configure
