@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-formtools
 PKG_VERSION:=2.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -26,7 +26,7 @@ define Package/django-formtools
   CATEGORY:=Languages
   TITLE:=High-level abstractions for Django forms
   URL:=https://django-formtools.readthedocs.io/en/latest/
-  DEPENDS:=+python +django
+  DEPENDS:=+python +python-django
   VARIANT:=python
 endef
 

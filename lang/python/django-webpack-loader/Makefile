@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-webpack-loader
 PKG_VERSION:=0.6.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
 PKG_LICENSE:=MIT
@@ -26,7 +26,7 @@ define Package/django-webpack-loader
   CATEGORY:=Languages
   TITLE:=Transparently use webpack in django
   URL:=https://github.com/owais/django-webpack-loader
-  DEPENDS:=+python +django
+  DEPENDS:=+python +python-django
   VARIANT:=python
 endef
 

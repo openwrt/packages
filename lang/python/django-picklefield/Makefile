@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-picklefield
 PKG_VERSION:=1.1.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -26,7 +26,7 @@ define Package/django-picklefield
   CATEGORY:=Languages
   TITLE:=Pickled object field for Django
   URL:=https://github.com/gintas/django-picklefield
-  DEPENDS:=+python +django
+  DEPENDS:=+python +python-django
 endef
 
 define Package/django-picklefield/description
