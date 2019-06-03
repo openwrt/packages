@@ -311,18 +311,32 @@ define Host/Compile
 endef
 
 define Host/Install
+	$(if $(wildcard $(HOST_PYTHON3_PKG_DIR)/.setuptools_installed_$(PYTHON3_SETUPTOOLS_VERSION)-$(PYTHON3_SETUPTOOLS_PKG_RELEASE)),,
+		rm -rf \
+			$(HOST_PYTHON3_PKG_DIR)/easy_install.py \
+			$(HOST_PYTHON3_PKG_DIR)/pkg_resources \
+			$(HOST_PYTHON3_PKG_DIR)/setuptools \
+			$(HOST_PYTHON3_PKG_DIR)/setuptools-* \
+			$(HOST_PYTHON3_PKG_DIR)/.setuptools-patched* \
+			$(HOST_PYTHON3_PKG_DIR)/.setuptools_installed_*
+	)
+	$(if $(wildcard $(HOST_PYTHON3_PKG_DIR)/.pip_installed_$(PYTHON3_PIP_VERSION)-$(PYTHON3_PIP_PKG_RELEASE)),,
+		rm -rf \
+			$(HOST_PYTHON3_PKG_DIR)/pip \
+			$(HOST_PYTHON3_PKG_DIR)/pip-* \
+			$(HOST_PYTHON3_PKG_DIR)/.pip-patched* \
+			$(HOST_PYTHON3_PKG_DIR)/.pip_installed_*
+	)
 	$(MAKE) -C $(HOST_BUILD_DIR) install
 	$(INSTALL_DIR) $(HOST_PYTHON3_DIR)/bin/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/Parser/pgen $(HOST_PYTHON3_DIR)/bin/pgen3
-	$(if $(wildcard $(HOST_PYTHON3_PKG_DIR)/.setuptools-patched-$(PYTHON3_SETUPTOOLS_VERSION)),,
+	$(if $(wildcard $(HOST_PYTHON3_PKG_DIR)/.setuptools_installed_$(PYTHON3_SETUPTOOLS_VERSION)-$(PYTHON3_SETUPTOOLS_PKG_RELEASE)),,
 		$(call HostPatchDir,$(HOST_PYTHON3_PKG_DIR),./patches-setuptools,)
-		rm -f $(HOST_PYTHON3_PKG_DIR)/.setuptools-patched-*
-		touch $(HOST_PYTHON3_PKG_DIR)/.setuptools-patched-$(PYTHON3_SETUPTOOLS_VERSION)
+		touch $(HOST_PYTHON3_PKG_DIR)/.setuptools_installed_$(PYTHON3_SETUPTOOLS_VERSION)-$(PYTHON3_SETUPTOOLS_PKG_RELEASE)
 	)
-	$(if $(wildcard $(HOST_PYTHON3_PKG_DIR)/.pip-patched-$(PYTHON3_PIP_VERSION)),,
+	$(if $(wildcard $(HOST_PYTHON3_PKG_DIR)/.pip_installed_$(PYTHON3_PIP_VERSION)-$(PYTHON3_PIP_PKG_RELEASE)),,
 		$(call HostPatchDir,$(HOST_PYTHON3_PKG_DIR),./patches-pip,)
-		rm -f $(HOST_PYTHON3_PKG_DIR)/.pip-patched-*
-		touch $(HOST_PYTHON3_PKG_DIR)/.pip-patched-$(PYTHON3_PIP_VERSION)
+		touch $(HOST_PYTHON3_PKG_DIR)/.pip_installed_$(PYTHON3_PIP_VERSION)-$(PYTHON3_PIP_PKG_RELEASE)
 	)
 endef
 
