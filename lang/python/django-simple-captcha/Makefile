@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-simple-captcha
 PKG_VERSION:=0.5.11
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
 PKG_LICENSE:=MIT
@@ -28,7 +28,7 @@ define Package/django-simple-captcha
   CATEGORY:=Languages
   TITLE:=Simple Django captcha application
   URL:=https://github.com/mbi/django-simple-captcha
-  DEPENDS:=+python +python-six +django +pillow +django-ranged-response
+  DEPENDS:=+python +python-six +python-django +pillow +django-ranged-response
   VARIANT:=python
 endef
 
