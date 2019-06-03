@@ -125,8 +125,8 @@ PYTHON_PKG_SETUP_ARGS ?= --single-version-externally-managed
 PYTHON_PKG_SETUP_VARS ?=
 
 define PyBuild/Compile/Default
-	$(foreach pkg,$(HOST_PYTHON_PACKAGE_BUILD_DEPENDS),
-		$(call host_python_pip_install_host,$(pkg))
+	$(if $(HOST_PYTHON_PACKAGE_BUILD_DEPENDS),
+		$(call Build/Compile/HostPyPipInstall,$(HOST_PYTHON_PACKAGE_BUILD_DEPENDS))
 	)
 	$(call Build/Compile/PyMod, \
 		$(PYTHON_PKG_SETUP_DIR), \
