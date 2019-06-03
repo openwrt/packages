@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=https://codeload.github.com/haiwen/seahub/tar.gz/v$(PKG_VERSION)
 PKG_HASH:=53a9efdb6791fd3a2a191e89cb0f133632056046ec08adbb2ad72088e6161430
 PKG_BUILD_DIR:=$(BUILD_DIR)/seahub-$(PKG_VERSION)-server
 
-PKG_BUILD_DEPENDS:=python-pytz/host
+HOST_PYTHON_PACKAGE_BUILD_DEPENDS:="django>=1.11"
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python-package.mk
@@ -41,7 +41,12 @@ endef
 define Build/Configure
 endef
 
+MAKE_VARS += \
+	PYTHON="$(HOST_PYTHON_BIN)" \
+	DJANGO_ADMIN_PY="$(STAGING_DIR_HOSTPKG)/bin/django-admin"
+
 define Build/Compile
+	$(call Build/Compile/HostPyPipInstall,$(HOST_PYTHON_PACKAGE_BUILD_DEPENDS))
 	$(call Build/Compile/Default,locale)
 endef
 
