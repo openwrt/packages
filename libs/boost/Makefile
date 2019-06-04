@@ -384,7 +384,7 @@ define Host/Compile
 				headers \
 				$(foreach lib,$(BOOST_LIBS), \
 					$(if $(findstring python,$(lib)),,$(if $(CONFIG_boost-host-build-$(lib)),$(lib)))))) ; \
-		./b2 install )
+		./b2 variant=release visibility=hidden install )
 endef
 
 CONFIGURE_PREFIX:=$(PKG_INSTALL_DIR)
