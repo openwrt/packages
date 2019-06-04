@@ -9,14 +9,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgphoto2
-PKG_VERSION:=2.5.22
+PKG_VERSION:=2.5.23
 PKG_RELEASE:=1
 PORT_VERSION:=0.12.0
 PKG_MAINTAINER:=Leonardo Medici <leonardo_medici@me.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/gphoto
-PKG_HASH:=15d7327aa9a986af1e1dbfd8f15ba81352b67450d30e44562ce768ff9435ce58
+PKG_HASH:=d8af23364aa40fd8607f7e073df74e7ace05582f4ba13f1724d12d3c97e8852d
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING
 
@@ -434,7 +434,7 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-rpath \
-	--with-camlibs="all" \
+	--with-camlibs="all,outdated" \
 	--with-gdlib=no \
 	--with-libexif=no \
 	--with-libusb=no \
