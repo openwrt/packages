@@ -14,4 +14,9 @@ if [ "$ACTION" == "ifup" ]; then
 	mwan3_unlock "$ACTION" "mwan3rtmon"
 fi
 
+config_get enabled $INTERFACE enabled 0
+[ "${enabled}" = "0" ] || {
+	mwan3_flush_conntrack "$INTERFACE" "$ACTION"
+}
+
 exit 0
