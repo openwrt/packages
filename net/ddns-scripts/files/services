@@ -118,6 +118,8 @@
 
 "he.net"		"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
+"inwx.de"		"http://[USERNAME]:[PASSWORD]@dyndns.inwx.com/nic/update?myip=[IP]"	"good|nochg"
+
 "joker.com"		"http://svc.joker.com/nic/update?username=[USERNAME]&password=[PASSWORD]&myip=[IP]&hostname=[DOMAIN]"	"good|nochg"
 
 "loopia.se"		"http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
