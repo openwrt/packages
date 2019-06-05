@@ -6,9 +6,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oniguruma
 PKG_VERSION:=6.9.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE:=onig-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/kkos/oniguruma/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=3b568a9050839e7828b2f2d5bc9cd3650979b6b54a080f54c515320dddda06b0
 
@@ -17,8 +17,9 @@ PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:oniguruma_project:oniguruma
 
-PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -27,7 +28,6 @@ define Package/oniguruma
     CATEGORY:=Libraries
     TITLE:=Regular expression library for different character encodings
     URL:=https://github.com/kkos/oniguruma
-    DEPENDS:=
     ABI_VERSION:=5
 endef
 
@@ -41,13 +41,15 @@ endef
 
 define Package/oniguruma/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libonig.so.$(ABI_VERSION) $(1)/usr/lib/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libonig.so.$(ABI_VERSION) $(1)/usr/lib/
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/{include,lib}
+	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(SED) 's,/usr,$(STAGING_DIR)/usr,g' $(1)/usr/lib/pkgconfig/oniguruma.pc
 endef
 
