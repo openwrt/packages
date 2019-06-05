@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python3-pyroute2
-PKG_VERSION:=0.5.5
+PKG_VERSION:=0.5.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=pyroute2-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pyroute2
-PKG_HASH:=ad679a91d453fe8426c4076d0da3a67265e5ccfe641879d75c9bc7660d075dfa
+PKG_HASH:=deae0e6191a04c3ee213c6fae6ed779602ef5da5ca5e2fa533f27bc04326bfbe
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/pyroute2-$(PKG_VERSION)
 
@@ -29,7 +29,7 @@ define Package/python3-pyroute2
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Python netlink library
-  URL:=http://github.com/svinota/pyroute2
+  URL:=https://github.com/svinota/pyroute2
   DEPENDS:= \
 	  +python3-light \
 	  +python3-distutils \
