@@ -62,6 +62,7 @@ define Package/domoticz/description
 endef
 
 CMAKE_OPTIONS += \
+	-DBUILD_SHARED_LIBS=yes \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DUSE_BUILTIN_MQTT=no \
 	-DUSE_BUILTIN_SQLITE=no \
