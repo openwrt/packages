@@ -40,8 +40,9 @@ endchoice
 endef
 
 define Package/dnsdist
-  SECTION:=base
+  SECTION:=net
   CATEGORY:=Network
+  SUBMENU:=IP Addresses and Names
   TITLE:=dnsdist DNS-, DOS- and abuse-aware loadbalancer
   DEPENDS:=+DNSDIST_OPENSSL:libopenssl +DNSDIST_GNUTLS:libgnutls +protobuf +re2 +libedit +libfstrm +libsodium +lua +boost +libnetsnmp +libatomic
   URL:=https://dnsdist.org/
