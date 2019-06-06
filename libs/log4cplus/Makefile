@@ -9,15 +9,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=log4cplus
-PKG_VERSION:=2.0.3
-PKG_RELEASE:=2
-PKG_MAINTAINER:=BangLang Huang <banglang.huang@foxmail.com>, Rosy Song <rosysong@rosinson.com>
+PKG_VERSION:=2.0.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://github.com/log4cplus/log4cplus/releases/download/REL_2_0_3/
-PKG_HASH:=c55742c348d09b33219eea00d65b05bdd78ea967761b980b7134855fe24c5f73
+PKG_SOURCE_URL:=@SF/$(PKG_NAME)
+PKG_HASH:=faf15f3651e2d0f9f9cf2c1bfcb38ec4962f22f4a671410453a27c0976da5e36
 
+PKG_MAINTAINER:=BangLang Huang <banglang.huang@foxmail.com>, Rosy Song <rosysong@rosinson.com>
+PKG_LICENSE:=BSD-2-Clause Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+
 CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -39,7 +41,6 @@ define Package/log4cplus/description
 endef
 
 TARGET_CFLAGS += -flto
-
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 CMAKE_OPTIONS += \
@@ -48,17 +49,10 @@ CMAKE_OPTIONS += \
 	-DUNICODE:BOOL=OFF \
 	-DWITH_ICONV:BOOL=OFF
 
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/log4cplus $(1)/usr/include/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liblog4cplus*.so* $(1)/usr/lib
-endef
-
 define Package/log4cplus/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liblog4cplus*.so* $(1)/usr/lib
 endef
 
-$(eval $(call HostBuild))
 $(eval $(call BuildPackage,log4cplus))
+$(eval $(call HostBuild))
