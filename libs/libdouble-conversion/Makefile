@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdouble-conversion
-PKG_VERSION:=3.1.4
-PKG_RELEASE:=2
+PKG_VERSION:=3.1.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=double-conversion-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/google/double-conversion/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=95004b65e43fefc6100f337a25da27bb99b9ef8d4071a36a33b5e83eb1f82021
+PKG_HASH:=a63ecb93182134ba4293fd5f22d6e08ca417caafa244afaa751cbfddf6415b13
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/double-conversion-$(PKG_VERSION)
 PKG_BUILD_DIR:=$(BUILD_DIR)/double-conversion-$(PKG_VERSION)
@@ -21,6 +21,8 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/double-conversion-$(PKG_VERSION)
 PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3c
 PKG_LICENSE_FILES:=COPYING LICENSE
+
+CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -43,30 +45,12 @@ define Package/libdouble-conversion/description
 endef
 
 CMAKE_OPTIONS += \
-  -DBUILD_SHARED_LIBS=ON \
-  -DBUILD_TESTING=OFF
-
-define Build/InstallDev
-	$(INSTALL_DIR) \
-	  $(1)/usr/lib \
-	  $(1)/usr/include/double-conversion
-
-	$(CP) \
-	  $(PKG_INSTALL_DIR)/usr/include/* \
-	  $(1)/usr/include/
-
-	$(INSTALL_DATA) \
-	  $(PKG_INSTALL_DIR)/usr/lib/lib*.so* \
-	  $(1)/usr/lib/
-endef
+	-DBUILD_SHARED_LIBS=ON \
+	-DBUILD_TESTING=OFF
 
 define Package/libdouble-conversion/install
-	$(INSTALL_DIR) \
-	  $(1)/usr/lib
-
-	$(INSTALL_DATA) \
-	  $(PKG_INSTALL_DIR)/usr/lib/lib*.so* \
-	  $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/lib*.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libdouble-conversion))
