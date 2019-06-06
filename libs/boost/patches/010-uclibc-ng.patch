@@ -15,7 +15,7 @@
  #include <boost/asio/detail/cstdint.hpp>
  #include <boost/asio/detail/eventfd_select_interrupter.hpp>
  #include <boost/asio/detail/throw_error.hpp>
-@@ -46,14 +46,14 @@ eventfd_select_interrupter::eventfd_select_interrupter()
+@@ -46,14 +46,14 @@ eventfd_select_interrupter::eventfd_sele
  
  void eventfd_select_interrupter::open_descriptors()
  {
@@ -32,7 +32,7 @@
  # if defined(EFD_CLOEXEC) && defined(EFD_NONBLOCK)
    write_descriptor_ = read_descriptor_ =
      ::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
-@@ -70,7 +70,7 @@ void eventfd_select_interrupter::open_descriptors()
+@@ -70,7 +70,7 @@ void eventfd_select_interrupter::open_de
        ::fcntl(read_descriptor_, F_SETFD, FD_CLOEXEC);
      }
    }
