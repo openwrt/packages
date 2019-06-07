@@ -28,6 +28,7 @@ define Package/bridge
   CATEGORY:=Base system
   TITLE:=Ethernet bridging configuration utility
   URL:=http://www.linuxfromscratch.org/blfs/view/svn/basicnet/bridge-utils.html
+  ALTERNATIVES:=300:/usr/sbin/brctl:/usr/libexec/bridge-utils-brctl
 endef
 
 define Package/bridge/description
@@ -41,15 +42,8 @@ CONFIGURE_ARGS += \
 	--with-linux-headers="$(LINUX_DIR)" \
 
 define Package/bridge/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/brctl/brctl $(1)/usr/sbin
-endef
-
-define Package/bridge/prerm
-#!/bin/sh
-$${IPKG_INSTROOT}/bin/busybox brctl -h 2>&1 | grep -q BusyBox && \
-ln -sf ../../bin/busybox $${IPKG_INSTROOT}/usr/sbin/brctl
-exit 0
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/brctl/brctl $(1)/usr/libexec/bridge-utils-brctl
 endef
 
 $(eval $(call BuildPackage,bridge))
