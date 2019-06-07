@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pciutils
 PKG_VERSION:=3.6.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/utils/pciutils
@@ -43,17 +43,16 @@ define Package/libpci
   CATEGORY:=Libraries
   TITLE:=Linux PCI Libraries
   URL:=http://mj.ucw.cz/pciutils.shtml
-  DEPENDS:=
 endef
 
 
-PCI_IDS_VER:=0.319
+PCI_IDS_VER:=0.324
 PCI_IDS_FILE:=pci.ids.$(PCI_IDS_VER)
 define Download/pci_ids
   FILE:=$(PCI_IDS_FILE)
   URL_FILE:=pci.ids
   URL:=@GITHUB/vcrhonek/hwdata/v$(PCI_IDS_VER)
-  HASH:=54154a6955f550b110c6a216943dcd69ba6188e68b80bee6efbaa03ef0df0a5f
+  HASH:=6dba287b4aaafb9582d6139eda22ee6580651b8557828b9598d99078a5f4217e
 endef
 $(eval $(call Download,pci_ids))
 
@@ -98,7 +97,7 @@ endef
 
 define Package/libpci/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
 endef
 
 
