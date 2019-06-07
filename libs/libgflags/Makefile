@@ -2,12 +2,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gflags
 PKG_VERSION:=2.2.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gflags/gflags/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=34af2f15cf7367513b352bdcd2493ab14ce43692d2dcd9dfc499492966c64dcf
 
+PKG_MAINTAINER:=Amol Bhave <ambhave@fb.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING.txt
 
@@ -28,7 +29,6 @@ define Package/gflags
 	TITLE:=C++ library that implements commandline flags processing
 	DEPENDS:=+libstdcpp +libpthread
 	URL:=https://github.com/gflags/gflags
-	MAINTAINER:=Amol Bhave <ambhave@fb.com>
 endef
 
 define Package/gflags/description
@@ -39,7 +39,7 @@ endef
 
 define Package/gflags/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libgflags.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgflags.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,gflags))
