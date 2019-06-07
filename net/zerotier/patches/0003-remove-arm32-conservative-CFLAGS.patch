@@ -1,0 +1,11 @@
+--- a/make-linux.mk
++++ b/make-linux.mk
+@@ -231,7 +231,7 @@ ifeq ($(ZT_OFFICIAL),1)
+ endif
+ 
+ # ARM32 hell -- use conservative CFLAGS
+-ifeq ($(ZT_ARCHITECTURE),3)
++ifeq (0,3)
+ 	ifeq ($(shell if [ -e /usr/bin/dpkg ]; then dpkg --print-architecture; fi),armel)
+ 		override CFLAGS+=-march=armv5 -mfloat-abi=soft -msoft-float -mno-unaligned-access -marm
+ 		override CXXFLAGS+=-march=armv5 -mfloat-abi=soft -msoft-float -mno-unaligned-access -marm
