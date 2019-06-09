@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sysstat
-PKG_VERSION:=12.0.2
-PKG_RELEASE:=2
+PKG_VERSION:=12.0.5
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://pagesperso-orange.fr/sebastien.godard/
-PKG_HASH:=2d30947c8fabbb5015c229fbc149f2891db4926cdf165e5f099310795d8dac80
+PKG_HASH:=58583b0776b9addec69e42eebd6dd1a8e976da8a36bad2422659a1ad6c1a2600
 
 PKG_INSTALL:=1
 
