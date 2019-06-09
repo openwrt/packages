@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=file
-PKG_VERSION:=5.36
+PKG_VERSION:=5.37
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://src.fedoraproject.org/lookaside/pkgs/file/ \
 	http://download.openpkg.org/components/cache/file/ \
 	ftp://ftp.astron.com/pub/file/
-PKG_HASH:=fb608290c0fd2405a8f63e5717abf6d03e22e183fb21884413d1edd918184379
+PKG_HASH:=e9c13967f7dd339a3c241b7710ba093560b9a33013491318e88e6b8b57bae07f
 
 PKG_LICENSE:=BSD-2c
 PKG_LICENSE_FILES:=COPYING
