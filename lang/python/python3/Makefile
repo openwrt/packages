@@ -209,7 +209,7 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib $(1)/usr/lib/pkgconfig
-	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(2)/bin
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
 		$(1)/usr/include/
@@ -222,7 +222,10 @@ define Build/InstallDev
 		$(1)/usr/lib/pkgconfig
 	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/bin/python$(PYTHON_VERSION)-config \
-		$(1)/usr/bin/
+		$(2)/bin/
+	$(SED) \
+		's|^prefix_real=.*$$$$|prefix_real="$(PYTHON3_DIR)"|' \
+		$(2)/bin/python$(PYTHON_VERSION)-config
 endef
 
 PYTHON3_BASE_LIB_FILES:= \
