@@ -8,17 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=inadyn
-PKG_VERSION:=2.3.1
-PKG_RELEASE:=2
+PKG_VERSION:=2.5
+PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/troglobit/inadyn/releases/download/v$(PKG_VERSION)
+PKG_HASH:=4a9ad208671f62912428413da0282450b2d2c4da38f3c95c4ac975d048c41fcd
+
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://github.com/troglobit/inadyn/releases/download/v$(PKG_VERSION)
-PKG_HASH:=81c942db6eab27fa16e868175bdb7aff963eeee06d48bc5443e0dcd6f7c2da40
-
-PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -39,12 +41,18 @@ define Package/inadyn/conffiles
 /etc/inadyn.conf
 endef
 
-CONFIGURE_ARGS += --enable-shared --disable-static --enable-openssl
+TARGET_CFLAGS += $(FPIC)
+
+CONFIGURE_ARGS += \
+	--enable-shared \
+	--disable-static \
+	--enable-openssl \
+	--without-pic
 
 define Package/inadyn/install
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/inadyn $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/inadyn $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,inadyn))
