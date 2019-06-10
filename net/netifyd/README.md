@@ -1,11 +1,11 @@
 Netify Agent
 ============
-Copyright ©2015-2018 eGloo Incorporated ([www.egloo.ca](https://www.egloo.ca))
+Copyright ©2015-2019 eGloo Incorporated ([www.egloo.ca](https://www.egloo.ca))
 
-Deep-Packet Inspection Server
------------------------------
+Network Intelligence - Simplified
+---------------------------------
 
-The [Netify Agent](https://www.netify.ai/) is a deep-packet inspection server.  The Agent is built on top of [nDPI](http://www.ntop.org/products/deep-packet-inspection/ndpi/) (formerly OpenDPI) to detect network protocols and applications.  These detections can be saved locally, served over a UNIX or TCP socket, and/or "pushed" (via HTTP POSTs) to a remote third-party server.  Flow metadata, network statistics, and detection classifications are stored using JSON encoding.
+The [Netify Agent](https://www.netify.ai/) is a deep-packet inspection server.  The Agent is built on top of [nDPI](http://www.ntop.org/products/deep-packet-inspection/ndpi/) (formerly OpenDPI) to detect network protocols and applications.  Detections can be saved locally, served over a UNIX or TCP socket, and/or "pushed" (via HTTP POSTs) to a remote third-party server.  Flow metadata, network statistics, and detection classifications are stored using JSON encoding.
 
 Optionally, the Netify Agent can be coupled with a [Netify Cloud](https://www.netify.ai/) subscription for further cloud processing, historical storage, machine-learning analysis, event notifications, device detection/identification, along with the option (on supported platforms) to take an active role in policing/bandwidth-shaping specific network protocols and applications.
 
@@ -43,6 +43,11 @@ Currently you can download binary packages for the following OS distributions:
 - [Debian](http://software.opensuse.org/download.html?project=home%3Aegloo&package=netifyd)
 - [Fedora](http://software.opensuse.org/download.html?project=home%3Aegloo&package=netifyd)
 - [Ubuntu](http://software.opensuse.org/download.html?project=home%3Aegloo&package=netifyd)
+
+Developer Documentation
+-----------------------
+
+Further developer documentation can be found [here](https://www.netify.ai/developer/netify-agent).
 
 Configuring/Building From Source
 --------------------------------
