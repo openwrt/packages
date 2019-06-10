@@ -205,7 +205,7 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib $(1)/usr/lib/pkgconfig
-	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(2)/bin
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)-openwrt
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON_VERSION) \
@@ -219,10 +219,11 @@ define Build/InstallDev
 		$(1)/usr/lib/pkgconfig
 	$(INSTALL_BIN) \
 		./files/python-config.in \
-		$(1)/usr/bin/python$(PYTHON_VERSION)-config
+		$(2)/bin/python$(PYTHON_VERSION)-config
 	$(SED) \
 		's|@EXENAME@|$(HOST_PYTHON_DIR)/bin/python$(PYTHON_VERSION)|' \
-		$(1)/usr/bin/python$(PYTHON_VERSION)-config
+		-e 's|@TARGET_PREFIX@|$(PYTHON_DIR)|' \
+		$(2)/bin/python$(PYTHON_VERSION)-config
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/_sysconfigdata.py \
 		$(1)/usr/lib/python$(PYTHON_VERSION)-openwrt/_sysconfigdatatarget.py
