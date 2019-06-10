@@ -14,7 +14,6 @@ PKG_LICENSE_FILES:=README
 PKG_CPE_ID:=cpe:/a:zlib:pigz
 
 PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
