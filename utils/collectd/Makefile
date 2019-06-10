@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
 PKG_VERSION:=5.9.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
@@ -83,7 +83,6 @@ COLLECTD_PLUGINS_DISABLED:= \
 	pinba \
 	python \
 	redis \
-	routeros \
 	rrdcached \
 	serial \
 	sigrok \
@@ -165,6 +164,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	powerdns \
 	processes \
 	protocols \
+	routeros \
 	rrdtool \
 	sensors \
 	snmp \
@@ -406,6 +406,7 @@ $(eval $(call BuildPlugin,postgresql,PostgreSQL status input,postgresql,+PACKAGE
 $(eval $(call BuildPlugin,powerdns,PowerDNS server status input,powerdns,))
 $(eval $(call BuildPlugin,processes,process status input,processes,+PACKAGE_collectd-mod-processes:libmnl))
 $(eval $(call BuildPlugin,protocols,network protocols input,protocols,))
+$(eval $(call BuildPlugin,routeros,MikroTik RouterOS input,routeros,+PACKAGE_collectd-mod-routeros:librouteros))
 $(eval $(call BuildPlugin,rrdtool,RRDtool output,rrdtool,+PACKAGE_collectd-mod-rrdtool:librrd1))
 $(eval $(call BuildPlugin,sensors,lm_sensors input,sensors,+PACKAGE_collectd-mod-sensors:libsensors))
 $(eval $(call BuildPlugin,snmp,SNMP input,snmp,+PACKAGE_collectd-mod-snmp:libnetsnmp))
