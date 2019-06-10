@@ -8,8 +8,7 @@ from distutils import sysconfig
 # start changes
 host_prefix = sysconfig.PREFIX
 
-target_bin_dir = os.path.dirname(os.path.abspath(__file__))
-target_prefix = os.path.normpath(os.path.join(target_bin_dir, '..'))
+target_prefix = '@TARGET_PREFIX@'
 
 target_data_dir = os.path.join(target_prefix, 'lib', 'python' + sysconfig.get_config_var('VERSION') + '-openwrt')
 sys.path.append(target_data_dir)
