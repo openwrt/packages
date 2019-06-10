@@ -89,7 +89,7 @@ CONFIGURE_ARGS+= \
 	--without-gpm-support \
 	--with-colorsfile=/etc/newt/palette
 
-MAKE_VARS+= PYTHON_CONFIG_PATH="$(STAGING_DIR)/usr/bin"
+MAKE_VARS+= PYTHON_CONFIG_PATH="$(STAGING_DIR)/host/bin"
 
 Build/Compile=$(call Build/Compile/Default,)
 
