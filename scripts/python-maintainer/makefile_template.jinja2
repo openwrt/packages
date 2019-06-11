@@ -1,0 +1,35 @@
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:={{ openwrt_name }}
+PKG_VERSION:={{ version }}
+PKG_RELEASE:=1
+
+PKG_MAINTAINER:={{ maintainer }}
+PKG_LICENSE:={{ license }}
+PKG_LICENSE_FILES:=LICENSE
+
+PKG_SOURCE:={{ filename }}
+PKG_SOURCE_URL:=https://pypi.python.org/packages/source/{{ first_char }}/{{ package }}/
+PKG_HASH:={{ sha256 }}
+PKG_BUILD_DIR:=$(BUILD_DIR)/{{ package }}-$(PKG_VERSION)
+
+include $(INCLUDE_DIR)/package.mk
+include ../python3-package.mk
+
+define Package/$(PKG_NAME)
+  SECTION:=lang
+  CATEGORY:=Languages
+  SUBMENU:=Python
+  TITLE:={{ openwrt_name }}
+  URL:=http://pypi.python.org/{{ package }}
+  DEPENDS:=+python3-light {{ depends }}
+  VARIANT:=python3
+endef
+
+define Package/$(PKG_NAME)/description
+	{{ description }}
+endef
+
+$(eval $(call Py3Package,$(PKG_NAME)))
+$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,$(PKG_NAME)-src))
