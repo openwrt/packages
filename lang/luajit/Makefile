@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luajit
 PKG_VERSION:=2.1.0-beta3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=LuaJIT-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://luajit.org/download
@@ -24,7 +24,7 @@ define Package/luajit
  CATEGORY:=Languages
  TITLE:=LuaJIT
  URL:=https://www.luajit.org
- DEPENDS:=@(i386||x86_64||arm||armeb||powerpc||mips||mipsel)
+ DEPENDS:=@(i386||x86_64||arm||armeb||aarch64||powerpc||mips||mipsel)
 endef
 
 define Package/luajit/description
@@ -32,7 +32,7 @@ define Package/luajit/description
 endef
 
 ifeq ($(HOST_ARCH),x86_64)
-  ifeq ($(CONFIG_x86_64),)
+  ifeq ($(CONFIG_ARCH_64BIT),)
     HOST_BITS := -m32
   endif
 endif
