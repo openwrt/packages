@@ -96,7 +96,7 @@ proto_sstp_setup() {
 		ipv6-down-script /lib/netifd/ppp-down \
 		${mtu:+mtu $mtu mru $mtu} \
 		$pppd_options
-
+		
 	# WORKAROUND: Workaround to properly register the sstp interface (As seeen in: https://forum.archive.openwrt.org/viewtopic.php?id=58007)
 	# WORKAROUND: Start
 	sleep 10
