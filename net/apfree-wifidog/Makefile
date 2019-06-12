@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Dengfeng Liu
+# Copyright (C) 2018 KunTeng.org.cn
 #
 # This is free software, licensed under the GNU General Public License v3.
 # See /LICENSE for more information.
@@ -7,50 +7,50 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=apfree-wifidog
-PKG_VERSION:=3.8.1588
+PKG_NAME:=wifidogx
+PKG_VERSION:=3.11.1716
 PKG_RELEASE=1
 
-PKG_LICENSE:=GPL-3.0-or-later
-PKG_LICENSE_FILES:=COPYING
 
-PKG_MAINTAINER:=Dengfeng Liu <liudf0716@gmail.com>
+PKG_LICENSE:=GPL-3.0
+PKG_MAINTAINER:=Dengfeng Liu<liudengfeng@kunteng.org>
+PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/liudf0716/apfree_wifidog.git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_MIRROR_HASH:=0d10ad5a29358a7124ba75570894f48998af841519b0f295e3fcbed66ee7bccc
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_MIRROR_HASH:=01dfcb80ddaacc0ec234335ff1c229c9af2524b6b802216de93bcc85588a823e
 
 PKG_INSTALL:=1
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-define Package/apfree-wifidog
+define Package/$(PKG_NAME)
   SUBMENU:=Captive Portals
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=+zlib +iptables-mod-extra +iptables-mod-ipopt +kmod-ipt-nat +iptables-mod-nat-extra \
+           +libpthread +libopenssl +@OPENSSL_WITH_EC +@OPENSSL_WITH_DEPRECATED +@OPENSSL_WITH_PSK \
            +libjson-c +ipset +libip4tc +libevent2 +libevent2-openssl \
            +fping +libmosquitto +libuci +px5g
-  TITLE:=Apfree's wireless captive portal solution
-  URL:=https://github.com/liudf0716/apfree_wifidog
+  TITLE:=A wireless captive portal solution
+
 endef
 
-define Package/apfree-wifidog/description
-  The ApFree Wifidog project is a complete and embeddable captive portal
-  solution for wireless community groups or individuals who wish to open a free
-  Hotspot while still preventing abuse of their Internet connection.
-
-  It's enhanced wifidog
+define Package/$(PKG_NAME)/description
+	portal solution for wireless community groups or individuals
+	who wish to open a free Hotspot while still preventing abuse
+	of their Internet connection.
 endef
 
-define Package/apfree-wifidog/install
+define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/wifidog $(1)/usr/bin/wifidogx
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/wdctl $(1)/usr/bin/wdctlx
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libhttpd.so* $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/wifidogx $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/wdctlx $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) ./files/wdping $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc
@@ -66,4 +66,4 @@ define Package/apfree-wifidog/install
 	$(CP) ./files/wifidogx.conf $(1)/etc/config/wifidogx
 endef
 
-$(eval $(call BuildPackage,apfree-wifidog))
+$(eval $(call BuildPackage,$(PKG_NAME)))
