@@ -1,0 +1,39 @@
+# --将返回重定向代码从 400 改回 302 以支持客户端弹窗--
+--- a/src/mqtt_thread.c	2018-11-26 11:26:38.000000000 +0800
++++ b/src/mqtt_thread.c	2019-04-09 21:43:45.000000000 +0800
+@@ -115,7 +115,7 @@ set_trusted_op(void *mosq, const char *t
+ {
+ 	if (!type || !value) {
+ 		debug(LOG_INFO, "set trusted operation, type or value is NULL");	
+-		send_mqtt_response(mosq, req_id, 400, "type or value is NULL", config);
++		send_mqtt_response(mosq, req_id, 302, "type or value is NULL", config);
+ 		return;
+ 	}
+ 
+@@ -134,7 +134,7 @@ del_trusted_op(void *mosq, const char *t
+ {
+ 	if (!type || !value) {
+ 		debug(LOG_INFO, "del trusted operation, type or value is NULL");	
+-		send_mqtt_response(mosq, req_id, 400, "type or value is NULL", config);
++		send_mqtt_response(mosq, req_id, 302, "type or value is NULL", config);
+ 		return;
+ 	}
+ 
+@@ -153,7 +153,7 @@ clear_trusted_op(void *mosq, const char
+ {
+ 	if (!type) {
+ 		debug(LOG_INFO, "clear trusted operaion, type is NULL");
+-		send_mqtt_response(mosq, req_id, 400, "type is NULL", config);
++		send_mqtt_response(mosq, req_id, 302, "type is NULL", config);
+ 		return;
+ 	}
+ 
+@@ -172,7 +172,7 @@ show_trusted_op(void *mosq, const char *
+ {
+ 	if (!type) {
+ 		debug(LOG_INFO, "show trusted operaion, type is NULL");
+-		send_mqtt_response(mosq, req_id, 400, "type is NULL", config);
++		send_mqtt_response(mosq, req_id, 302, "type is NULL", config);
+ 		return;
+ 	}
+ 
