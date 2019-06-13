@@ -7,7 +7,7 @@ START=99
 
 USE_PROCD=1
 PROG=/usr/bin/wifidogx
-CONFIGFILE=/tmp/wifidog.conf
+CONFIGFILE=/tmp/wifidogx.conf
 
 EXTRA_COMMANDS="status"
 EXTRA_HELP="        status Print the status of the service"
@@ -75,7 +75,6 @@ prepare_wifidog_conf() {
 	local delta_traffic
 	local check_interval
 	local client_timeout
-	local httpd_max_conn
 	local trusted_domains
 	local js_filter
 	local trusted_maclist
@@ -97,8 +96,11 @@ prepare_wifidog_conf() {
 
 	[ -f ${CONFIGFILE} ] && rm -f ${CONFIGFILE}
 
-	config_get enable "${cfg}" "enable" 0
-	[ "${enable}" = "1" ] || return
+	config_get enable "${cfg}" "disabled" 0
+	[ "${enable}" = "0" ] || {
+		echo "wifidogx disabled in /etc/config/wifidogx file, please set disabled to 0 to enable it" >&2
+		return
+	}
 
 	default_gateway_id=$(sed -e 's/://g' /sys/class/net/br-lan/address)
 
@@ -118,7 +120,6 @@ prepare_wifidog_conf() {
 	config_get check_interval "${cfg}" "check_interval" "60"
 	config_get js_filter "${cfg}" "js_filter" 1
 	config_get client_timeout "${cfg}" "client_timeout"	"5"
-	config_get httpd_max_conn "${cfg}" "httpd_max_conn"	"200"
 	config_get trusted_domains "${cfg}" "trusted_domains"
 	config_get trusted_maclist "${cfg}" "trusted_maclist"
 	config_get untrusted_maclist "${cfg}" "untrusted_maclist"
@@ -201,31 +202,15 @@ prepare_wifidog_conf() {
 		ClientTimeout $client_timeout
 		JsFilter $js_filter
 		WiredPassed $wired_passed
-
-		HTTPDMaxConn $httpd_max_conn
-
-		PoolMode $pool_mode
-		ThreadNumber $thread_number
-		QueueSize $queue_size
-
 		$set_trusted_domains
-
 		$set_untrusted_maclist
-
 		$set_trusted_maclist
-
 		$set_trusted_iplist
-
 		$set_trusted_pan_domains
-
 		$set_proxy_port
-
 		$set_no_auth
-
 		$set_apple_cna
-
 		$set_update_domain_interval
-
 		$set_dns_timeout
 
 		FirewallRuleSet global {
@@ -266,8 +251,7 @@ init_config() {
 	config_foreach prepare_wifidog_conf wifidog
 
 	[ ! -f ${CONFIGFILE} ] && {
-		echo "no wifidog.conf, exit..."
-		stop
+		echo "no wifidogx.conf, exit..." >&2
 		exit
 	}
 
@@ -276,8 +260,7 @@ init_config() {
 	}
 
 	[ -s ${APFREE_KEY} -a -s ${APFREE_CERT} ] || {
-		echo "no cert or key, exit..."
-		stop
+		echo "no cert or key, exit..." >&2
 		exit
 	}
 
