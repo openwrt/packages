@@ -1,0 +1,53 @@
+From a5b9c2feeaabbd90c9734c5d865d471eed0d5e3a Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Thu, 28 Mar 2019 01:55:15 -0700
+Subject: [PATCH] Add operator!=() to BundleID and MetaBundle
+
+Needed for uClibc++.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ ibrdtn/data/Bundle.cpp | 10 ++++++++++
+ ibrdtn/data/Bundle.h   |  2 ++
+ 2 files changed, 12 insertions(+)
+
+diff --git a/ibrdtn/data/Bundle.cpp b/ibrdtn/data/Bundle.cpp
+index f515860..943544e 100644
+--- a/ibrdtn/data/Bundle.cpp
++++ b/ibrdtn/data/Bundle.cpp
+@@ -71,11 +71,21 @@ namespace dtn
+ 			return other == (const PrimaryBlock&)(*this);
+ 		}
+ 
++		bool Bundle::operator!=(const BundleID& other) const
++		{
++			return other != (const PrimaryBlock&)(*this);
++		}
++
+ 		bool Bundle::operator==(const MetaBundle& other) const
+ 		{
+ 			return other == (const PrimaryBlock&)(*this);
+ 		}
+ 
++		bool Bundle::operator!=(const MetaBundle& other) const
++		{
++			return other != (const PrimaryBlock&)(*this);
++		}
++
+ 		bool Bundle::operator!=(const Bundle& other) const
+ 		{
+ 			return (const PrimaryBlock&)(*this) != (const PrimaryBlock&)other;
+diff --git a/ibrdtn/data/Bundle.h b/ibrdtn/data/Bundle.h
+index 9bbc066..6a4ea47 100644
+--- a/ibrdtn/data/Bundle.h
++++ b/ibrdtn/data/Bundle.h
+@@ -97,7 +97,9 @@ namespace dtn
+ 			virtual ~Bundle();
+ 
+ 			bool operator==(const BundleID& other) const;
++			bool operator!=(const BundleID& other) const;
+ 			bool operator==(const MetaBundle& other) const;
++			bool operator!=(const MetaBundle& other) const;
+ 
+ 			bool operator==(const Bundle& other) const;
+ 			bool operator!=(const Bundle& other) const;

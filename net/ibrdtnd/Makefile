@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ibrdtnd
 PKG_VERSION:=1.0.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
@@ -20,6 +20,7 @@ PKG_LICENSE:=Apache-2.0
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
+include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/ibrdtnd
