@@ -26,3 +26,16 @@
  	# By default, we won't bug the user with the display of network traffic
  	# below DISK_IO_THRESHOLD in kB/s; override in $BYOBU_CONFIG_DIR/status
  	[ -n "$DISK_IO_THRESHOLD" ] || DISK_IO_THRESHOLD=50
+--- a/usr/share/byobu/status/statusrc
++++ b/usr/share/byobu/status/statusrc
+@@ -36,8 +36,8 @@
+ # and your lsb_release is "precise", only "p" will be displayed
+ #RELEASE_ABBREVIATED=1
+ 
+-# Default: /
+-#MONITORED_DISK=/
++# Default: /overlay
++#MONITORED_DISK=/overlay
+ 
+ # Minimum disk throughput that triggers the notification (in kB/s)
+ # Default: 50
