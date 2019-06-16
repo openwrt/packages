@@ -17,7 +17,7 @@
      /* consolidation_functions = */ NULL,
      /* consolidation_functions_num = */ 0,
  
-@@ -949,6 +952,12 @@ static int rrd_config(const char *key, c
+@@ -944,6 +947,12 @@ static int rrd_config(const char *key, c
            /* compar = */ rrd_compare_numeric);
  
      free(value_copy);
@@ -30,8 +30,8 @@
    } else if (strcasecmp("XFF", key) == 0) {
      double tmp = atof(value);
      if ((tmp < 0.0) || (tmp >= 1.0)) {
---- a/src/utils_rrdcreate.c
-+++ b/src/utils_rrdcreate.c
+--- a/src/utils/rrdcreate/rrdcreate.c
++++ b/src/utils/rrdcreate/rrdcreate.c
 @@ -180,6 +180,9 @@ static int rra_get(char ***ret, const va
      rts_num = rra_timespans_num;
    }
@@ -42,8 +42,8 @@
    rra_max = rts_num * rra_types_num;
    assert(rra_max > 0);
  
---- a/src/utils_rrdcreate.h
-+++ b/src/utils_rrdcreate.h
+--- a/src/utils/rrdcreate/rrdcreate.h
++++ b/src/utils/rrdcreate/rrdcreate.h
 @@ -40,6 +40,8 @@ struct rrdcreate_config_s {
    int *timespans;
    size_t timespans_num;
