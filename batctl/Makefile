@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=batctl
 
 PKG_VERSION:=2019.2
-PKG_RELEASE:=0
+PKG_RELEASE:=1
 PKG_HASH:=fb656208ff7d4cd8b1b422f60c9e6d8747302a347cbf6c199d7afa9b80f80ea3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -112,6 +112,7 @@ config-n := \
 	claimtable \
 	dat_cache \
 	distributed_arp_table \
+	elp_interval \
 	event \
 	fragmentation \
 	gateways \
@@ -133,6 +134,7 @@ config-n := \
 	routing_algo \
 	statistics \
 	tcpdump \
+	throughput_override \
 	throughputmeter \
 	traceroute \
 	transglobal \
@@ -145,6 +147,7 @@ config-settings := \
 	bonding \
 	bridge_loop_avoidance \
 	distributed_arp_table \
+	elp_interval \
 	fragmentation \
 	gw_mode \
 	hop_penalty \
@@ -157,6 +160,7 @@ config-settings := \
 	network_coding \
 	orig_interval \
 	routing_algo \
+	throughput_override \
 
 config-tables := \
 	backbonetable \

@@ -5,7 +5,7 @@
 init_proto "$@"
 
 proto_batadv_vlan_init_config() {
-	proto_config_add_string "ap_isolation"
+	proto_config_add_boolean 'ap_isolation:bool'
 }
 
 proto_batadv_vlan_setup() {
@@ -17,7 +17,7 @@ proto_batadv_vlan_setup() {
 
 	json_get_vars ap_isolation
 
-	batctl -m "$iface" ap_isolation "$ap_isolation"
+	[ -n "$ap_isolation" ] && batctl -m "$iface" ap_isolation "$ap_isolation"
 	proto_init_update "$iface" 1
 	proto_send_update "$config"
 }
