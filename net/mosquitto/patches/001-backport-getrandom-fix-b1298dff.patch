@@ -1,0 +1,21 @@
+From b1298dff5420990a14333bae952f27461982b8e4 Mon Sep 17 00:00:00 2001
+From: "Roger A. Light" <roger@atchoo.org>
+Date: Thu, 16 May 2019 15:03:40 +0100
+Subject: [PATCH] Fix use of getrandom() for Linux and WITH_TLS=no.
+
+Fix random number generation if compiling using WITH_TLS=no and on Linux
+with glibc >= 2.25. Without this fix, no random numbers would be generated
+for e.g. on broker client id generation, and so clients connecting expecting
+this feature would be unable to connect.
+
+--- a/lib/util_mosq.c
++++ b/lib/util_mosq.c
+@@ -326,7 +326,7 @@ int util__random_bytes(void *bytes, int count)
+ 		rc = MOSQ_ERR_SUCCESS;
+ 	}
+ #elif defined(__GLIBC__) && __GLIBC_PREREQ(2, 25)
+-	if(getrandom(bytes, count, 0) == 0){
++	if(getrandom(bytes, count, 0) == count){
+ 		rc = MOSQ_ERR_SUCCESS;
+ 	}
+ #elif defined(WIN32)

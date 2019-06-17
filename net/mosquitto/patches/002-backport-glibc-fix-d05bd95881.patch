@@ -1,0 +1,31 @@
+From d05bd958813b7ead344f66653ce9b13b00e67595 Mon Sep 17 00:00:00 2001
+From: "Roger A. Light" <roger@atchoo.org>
+Date: Thu, 16 May 2019 22:12:18 +0100
+Subject: [PATCH] Fix compilation problem related to getrandom() on non-glibc systems.
+
+Fix compilation problem related to getrandom() on non-glibc systems.
+
+--- a/lib/util_mosq.c
++++ b/lib/util_mosq.c
+@@ -28,9 +28,10 @@ and the Eclipse Distribution License is available at
+ #  include <sys/stat.h>
+ #endif
+ 
+-#if !defined(WITH_TLS) && defined(__linux__)
+-#  if defined(__GLIBC__) && __GLIBC_PREREQ(2, 25)
++#if !defined(WITH_TLS) && defined(__linux__) && defined(__GLIBC__)
++#  if __GLIBC_PREREQ(2, 25)
+ #    include <sys/random.h>
++#    define HAVE_GETRANDOM 1
+ #  endif
+ #endif
+ 
+@@ -325,7 +326,7 @@ int util__random_bytes(void *bytes, int count)
+ 	if(RAND_bytes(bytes, count) == 1){
+ 		rc = MOSQ_ERR_SUCCESS;
+ 	}
+-#elif defined(__GLIBC__) && __GLIBC_PREREQ(2, 25)
++#elif defined(HAVE_GETRANDOM)
+ 	if(getrandom(bytes, count, 0) == count){
+ 		rc = MOSQ_ERR_SUCCESS;
+ 	}
