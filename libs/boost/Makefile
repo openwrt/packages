@@ -13,7 +13,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.70.0
 PKG_SOURCE_VERSION:=1_70_0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
@@ -294,16 +294,6 @@ define Package/boost/config
 		)
 	endmenu
 
-	menu "Select Boost libraries for Host build"
-		comment  "Libraries for Host build"
-
-		$(foreach lib,$(BOOST_LIBS), \
-		config boost-host-build-$(lib)
-			bool "Boost $(lib) $(if $(findstring python,$(lib)),$(paren_left)v$(if $(findstring 3,$(lib)),$(BOOST_PYTHON3_VER),$(BOOST_PYTHON_VER))$(paren_right) ,)library."
-			default n
-		)
-	endmenu
-
 endef
 
 PKG_CONFIG_DEPENDS:= CONFIG_PACKAGE_boost-test
@@ -326,7 +316,6 @@ define DefineBoostLibrary
 
   BOOST_DEPENDS+= +$(if $(4),$(4):boost-$(1),boost-$(1))
   PKG_CONFIG_DEPENDS+= CONFIG_PACKAGE_boost-$(1)
-  HOST_CONFIG_DEPENDS+= CONFIG_boost-host-build-$(1)
 
   BOOST_LIBS+= $(1)
 
@@ -379,11 +368,8 @@ define Host/Compile
 	( cd $(HOST_BUILD_DIR)/tools/build/src/engine ; ./build.sh gcc )
 
 	( cd $(HOST_BUILD_DIR) ; \
-		./bootstrap.sh --prefix=$(STAGING_DIR_HOST) \
-			--with-libraries=$(subst $() $(),$(comma),$(strip \
-				headers \
-				$(foreach lib,$(BOOST_LIBS), \
-					$(if $(findstring python,$(lib)),,$(if $(CONFIG_boost-host-build-$(lib)),$(lib)))))) ; \
+		./bootstrap.sh --prefix=$(STAGING_DIR_HOSTPKG) \
+			--with-libraries=atomic,chrono,date_time,filesystem,headers,thread,system ;\
 		./b2 --ignore-site-config install )
 endef
 
