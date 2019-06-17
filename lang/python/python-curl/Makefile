@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pycurl
-PKG_VERSION:=7.43.0.2
-PKG_RELEASE:=2
+PKG_VERSION:=7.43.0.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=pycurl-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pycurl
-PKG_HASH:=0f0cdfc7a92d4f2a5c44226162434e34f7d6967d3af416a6f1448649c09a25a4
+PKG_HASH:=6f08330c5cf79fa8ef68b9912b9901db7ffd34b63e225dce74db56bb21deda8e
 
 PKG_MAINTAINER:=Waldemar Konik <informatyk74@interia.pl>
 PKG_LICENSE:=LGPL-2.1
