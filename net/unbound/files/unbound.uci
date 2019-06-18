@@ -14,6 +14,7 @@ config unbound
 	option listen_port '53'
 	option localservice '1'
 	option manual_conf '0'
+	option num_threads '1'
 	option protocol 'default'
 	option query_minimize '0'
 	option query_min_strict '0'
