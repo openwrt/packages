@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=poco
 PKG_VERSION:=1.9.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://pocoproject.org/releases/$(PKG_NAME)-$(PKG_VERSION)
@@ -29,7 +29,7 @@ define Package/poco
   CATEGORY:=Libraries
   TITLE:=Poco C++ libraries
   URL:=https://www.pocoproject.org/
-  DEPENDS:=+libstdcpp +libpthread +librt
+  DEPENDS:=+libstdcpp +libpthread +librt @!arc
   MAINTAINER:=Jean-Michel Julien <jean-michel.julien@trilliantinc.com>
 endef
 
