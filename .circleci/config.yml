@@ -7,7 +7,7 @@ jobs:
       - SDK_HOST: "downloads.openwrt.org"
       - SDK_PATH: "snapshots/targets/ath79/generic"
       - SDK_FILE: "openwrt-sdk-ath79-generic_*.Linux-x86_64.tar.xz"
-      - BRANCH: "master"
+      - BRANCH: "openwrt-19.07"
     steps:
       - checkout:
           path: ~/openwrt_packages
