@@ -84,5 +84,5 @@ service_triggers()
 	do
 		procd_add_interface_trigger "interface.*.up" "${iface}" "${ban_init}" start
 	done
-	procd_add_reload_trigger "banip" "firewall"
+	procd_add_reload_trigger "banip"
 }
