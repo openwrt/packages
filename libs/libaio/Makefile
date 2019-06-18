@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libaio
-PKG_VERSION:=0.3.111
-PKG_RELEASE:=2
+PKG_VERSION:=0.3.112
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://releases.pagure.org/libaio
-PKG_HASH:=62cf871ad8fd09eb3418f00aca7a7d449299b8e1de31c65f28bf6a2ef1fa502a
+PKG_HASH:=ab0462f2c9d546683e5147b1ce9c195fe95d07fac5bf362f6c01637955c3b492
 
-PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=LGPL-2.1-only
 PKG_LICENSE_FILES:=COPYING
 
