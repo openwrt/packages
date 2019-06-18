@@ -96,7 +96,7 @@ Last-Update: 2014-10-09
 +#endif /* _MIPS_SIM == _MIPS_SIM_NABI32 */
 --- a/src/libaio.h
 +++ b/src/libaio.h
-@@ -71,6 +71,7 @@ typedef enum io_iocb_cmd {
+@@ -72,6 +72,7 @@ typedef enum io_iocb_cmd {
  
  /* big endian, 64 bits */
  #elif defined(__powerpc64__) || defined(__s390x__) || \
