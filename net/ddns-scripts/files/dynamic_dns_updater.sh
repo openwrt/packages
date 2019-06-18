@@ -193,6 +193,7 @@ ERR_LAST=$?	# save return code - equal 0 if SECTION_ID found
 [ "$ip_source" = "network" -a -z "$ip_network" -a $use_ipv6 -eq 1 ] && ip_network="wan6" # IPv6: default wan6
 [ "$ip_source" = "web" -a -z "$ip_url" -a $use_ipv6 -eq 0 ] && ip_url="http://checkip.dyndns.com"
 [ "$ip_source" = "web" -a -z "$ip_url" -a $use_ipv6 -eq 1 ] && ip_url="http://checkipv6.dyndns.com"
+[ "$ip_source" = "interface" -a -z "$ip_interface" -a -n "$interface" ] && ip_interface="$interface"
 [ "$ip_source" = "interface" -a -z "$ip_interface" ] && ip_interface="eth1"
 
 # url encode username (might be email or something like this)
