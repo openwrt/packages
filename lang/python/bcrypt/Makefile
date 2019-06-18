@@ -18,6 +18,10 @@ PKG_MAINTAINER:=Daniel Dickinson <cshored@thecshore.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
+PKG_BUILD_DEPENDS:=libffi/host
+HOST_PYTHON_PACKAGE_BUILD_DEPENDS:="cffi>=1.1"
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="cffi>=1.1"
+
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
