@@ -26,7 +26,7 @@ Description: Add SH supprt
  #define KERNEL_RW_POINTER	((void *)0x10100000)
 --- a/src/libaio.h
 +++ b/src/libaio.h
-@@ -51,7 +51,8 @@ typedef enum io_iocb_cmd {
+@@ -52,7 +52,8 @@ typedef enum io_iocb_cmd {
  
  /* little endian, 32 bits */
  #if defined(__i386__) || (defined(__arm__) && !defined(__ARMEB__)) || \
@@ -36,7 +36,7 @@ Description: Add SH supprt
      defined(__cris__) || (defined(__riscv) && __riscv_xlen == 32) || \
      (defined(__GNUC__) && defined(__BYTE_ORDER__) && \
           __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && __SIZEOF_LONG__ == 4)
-@@ -83,6 +84,7 @@ typedef enum io_iocb_cmd {
+@@ -84,6 +85,7 @@ typedef enum io_iocb_cmd {
  /* big endian, 32 bits */
  #elif defined(__PPC__) || defined(__s390__) || \
        (defined(__arm__) && defined(__ARMEB__)) || \
