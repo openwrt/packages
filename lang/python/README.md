@@ -52,7 +52,7 @@ Leading up to "The Snap":
   * If a replacement cannot be found, the program will be removed during "The Snap"
 
 * Python 2 libraries will remain in the feed until "The Snap"
-  * A Python 2-only library will be transitioned to Python 3 (or a suitable replacement found), if its Python 3 version is a dependency of another package in the feed
+  * For any Python 2-only libraries, a Python 3 version will be added (or a suitable replacement found), if its Python 3 version is a dependency of another package in the feed
   * Python 2 libraries will receive normal updates until 31 October 2019
   * From 31 October 2019 onward:
     * Python 2-only libraries will receive security updates only
