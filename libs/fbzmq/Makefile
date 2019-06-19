@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fbzmq
 PKG_VERSION:=2019.06.10.00
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/facebook/fbzmq/tar.gz/v$(PKG_VERSION)?
@@ -36,6 +36,8 @@ CMAKE_OPTIONS += \
 	-DBUILD_SHARED_LIBS=ON \
 	-DTHRIFT1="$(STAGING_DIR_HOSTPKG)/bin/thrift1" \
 	-DTHRIFT_COMPILER_INCLUDE="$(STAGING_DIR_HOSTPKG)/include/"
+
+TARGET_CXXFLAGS += -faligned-new
 
 define Package/fbzmq/install
 	$(INSTALL_DIR) $(1)/usr/lib
