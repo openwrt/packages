@@ -1,0 +1,37 @@
+commit b50e7fe5e9ae7e8670a467fdd7ece2d08fc02809
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Wed May 22 20:07:45 2019 +0200
+
+    BUG/MEDIUM: dns: make the port numbers unsigned
+    
+    Mustafa Yildirim reported in Discourse that ports >32767 advertised
+    in SRV records are wrong. Given the high value they definitely
+    correspond to a sign extension of a negative number. The cause was
+    indeed that the port is declared as a signed int in the dns_answer_item
+    structure, and Lukas confirmed in github issue #103 that turning it to
+    unsigned addresses the issue.
+    
+    It is worth noting that there are other such fields in this structure
+    that don't look right (ttl, priority, class, type) and that someone
+    should audit this part to be certain they are properly typed.
+    
+    This fix must be backported to 1.9 and likely to 1.8 as well.
+    
+    (cherry picked from commit d1f56c9a0110805c4a5f3afba2990556cb74ec8b)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    (cherry picked from commit 01ceb8a9fb0caecb20a12cc6763230cfc9895de5)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/include/types/dns.h b/include/types/dns.h
+index e8ab9f06..e2d98169 100644
+--- a/include/types/dns.h
++++ b/include/types/dns.h
+@@ -144,7 +144,7 @@ struct dns_answer_item {
+ 	int32_t         ttl;                         /* response TTL */
+ 	int16_t         priority;                    /* SRV type priority */
+ 	uint16_t        weight;                      /* SRV type weight */
+-	int16_t         port;                        /* SRV type port */
++	uint16_t        port;                        /* SRV type port */
+ 	uint16_t        data_len;                    /* number of bytes in target below */
+ 	struct sockaddr address;                     /* IPv4 or IPv6, network format */
+ 	char            target[DNS_MAX_NAME_SIZE+1]; /* Response data: SRV or CNAME type target */

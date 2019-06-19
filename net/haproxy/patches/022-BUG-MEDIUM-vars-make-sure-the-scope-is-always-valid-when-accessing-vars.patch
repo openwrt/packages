@@ -1,0 +1,193 @@
+commit 47133bd99225554519c1d32293e0e5c3db83db30
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Tue Jun 4 16:27:36 2019 +0200
+
+    BUG/MEDIUM: vars: make sure the scope is always valid when accessing vars
+    
+    Patrick Hemmer reported that a simple tcp rule involving a variable like
+    this is enough to crash haproxy :
+    
+        frontend foo
+            bind :8001
+            tcp-request session set-var(txn.foo) src
+    
+    The tests on the variables scopes is not strict enough, it needs to always
+    verify if the stream is valid when accessing a req/res/txn variable. This
+    patch does this by adding a new get_vars() function which does the job
+    instead of open-coding all the lookups everywhere.
+    
+    It must be backported to all versions supporting set-var and
+    "tcp-request session" so at least 1.9 and 1.8.
+    
+    (cherry picked from commit f37b140b06b9963dea8adaf5e13b5b57cd219c74)
+    [wt: s/_HA_/HA_/]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 5dcf8515592602ed0d962e365cbb74a3646727c1)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/vars.c b/src/vars.c
+index 566ead6e..c86f612f 100644
+--- a/src/vars.c
++++ b/src/vars.c
+@@ -34,6 +34,25 @@ static unsigned int var_reqres_limit = 0;
+ 
+ __decl_hathreads(HA_RWLOCK_T var_names_rwlock);
+ 
++/* returns the struct vars pointer for a session, stream and scope, or NULL if
++ * it does not exist.
++ */
++static inline struct vars *get_vars(struct session *sess, struct stream *strm, enum vars_scope scope)
++{
++	switch (scope) {
++	case SCOPE_PROC:
++		return &global.vars;
++	case SCOPE_SESS:
++		return &sess->vars;
++	case SCOPE_TXN:
++		return strm ? &strm->vars_txn : NULL;
++	case SCOPE_REQ:
++	case SCOPE_RES:
++	default:
++		return strm ? &strm->vars_reqres : NULL;
++	}
++}
++
+ /* This function adds or remove memory size from the accounting. The inner
+  * pointers may be null when setting the outer ones only.
+  */
+@@ -42,10 +61,12 @@ static void var_accounting_diff(struct vars *vars, struct session *sess, struct
+ 	switch (vars->scope) {
+ 	case SCOPE_REQ:
+ 	case SCOPE_RES:
+-		HA_ATOMIC_ADD(&strm->vars_reqres.size, size);
++		if (strm)
++			HA_ATOMIC_ADD(&strm->vars_reqres.size, size);
+ 		/* fall through */
+ 	case SCOPE_TXN:
+-		HA_ATOMIC_ADD(&strm->vars_txn.size, size);
++		if (strm)
++			HA_ATOMIC_ADD(&strm->vars_txn.size, size);
+ 		/* fall through */
+ 	case SCOPE_SESS:
+ 		HA_ATOMIC_ADD(&sess->vars.size, size);
+@@ -68,11 +89,11 @@ static int var_accounting_add(struct vars *vars, struct session *sess, struct st
+ 	switch (vars->scope) {
+ 	case SCOPE_REQ:
+ 	case SCOPE_RES:
+-		if (var_reqres_limit && strm->vars_reqres.size + size > var_reqres_limit)
++		if (var_reqres_limit && strm && strm->vars_reqres.size + size > var_reqres_limit)
+ 			return 0;
+ 		/* fall through */
+ 	case SCOPE_TXN:
+-		if (var_txn_limit && strm->vars_txn.size + size > var_txn_limit)
++		if (var_txn_limit && strm && strm->vars_txn.size + size > var_txn_limit)
+ 			return 0;
+ 		/* fall through */
+ 	case SCOPE_SESS:
+@@ -285,27 +306,8 @@ static int smp_fetch_var(const struct arg *args, struct sample *smp, const char
+ 	struct vars *vars;
+ 
+ 	/* Check the availibity of the variable. */
+-	switch (var_desc->scope) {
+-	case SCOPE_PROC:
+-		vars = &global.vars;
+-		break;
+-	case SCOPE_SESS:
+-		vars = &smp->sess->vars;
+-		break;
+-	case SCOPE_TXN:
+-		if (!smp->strm)
+-			return 0;
+-		vars = &smp->strm->vars_txn;
+-		break;
+-	case SCOPE_REQ:
+-	case SCOPE_RES:
+-	default:
+-		if (!smp->strm)
+-			return 0;
+-		vars = &smp->strm->vars_reqres;
+-		break;
+-	}
+-	if (vars->scope != var_desc->scope)
++	vars = get_vars(smp->sess, smp->strm, var_desc->scope);
++	if (!vars || vars->scope != var_desc->scope)
+ 		return 0;
+ 
+ 	HA_RWLOCK_RDLOCK(VARS_LOCK, &vars->rwlock);
+@@ -423,15 +425,8 @@ static inline int sample_store_stream(const char *name, enum vars_scope scope, s
+ 	struct vars *vars;
+ 	int ret;
+ 
+-	switch (scope) {
+-	case SCOPE_PROC: vars = &global.vars;  break;
+-	case SCOPE_SESS: vars = &smp->sess->vars;  break;
+-	case SCOPE_TXN:  vars = &smp->strm->vars_txn;    break;
+-	case SCOPE_REQ:
+-	case SCOPE_RES:
+-	default:         vars = &smp->strm->vars_reqres; break;
+-	}
+-	if (vars->scope != scope)
++	vars = get_vars(smp->sess, smp->strm, scope);
++	if (!vars || vars->scope != scope)
+ 		return 0;
+ 
+ 	HA_RWLOCK_WRLOCK(VARS_LOCK, &vars->rwlock);
+@@ -447,15 +442,8 @@ static inline int sample_clear_stream(const char *name, enum vars_scope scope, s
+ 	struct var  *var;
+ 	unsigned int size = 0;
+ 
+-	switch (scope) {
+-	case SCOPE_PROC: vars = &global.vars;  break;
+-	case SCOPE_SESS: vars = &smp->sess->vars;  break;
+-	case SCOPE_TXN:  vars = &smp->strm->vars_txn;    break;
+-	case SCOPE_REQ:
+-	case SCOPE_RES:
+-	default:         vars = &smp->strm->vars_reqres; break;
+-	}
+-	if (vars->scope != scope)
++	vars = get_vars(smp->sess, smp->strm, scope);
++	if (!vars || vars->scope != scope)
+ 		return 0;
+ 
+ 	/* Look for existing variable name. */
+@@ -586,17 +574,8 @@ int vars_get_by_name(const char *name, size_t len, struct sample *smp)
+ 		return 0;
+ 
+ 	/* Select "vars" pool according with the scope. */
+-	switch (scope) {
+-	case SCOPE_PROC: vars = &global.vars;  break;
+-	case SCOPE_SESS: vars = &smp->sess->vars;  break;
+-	case SCOPE_TXN:  vars = &smp->strm->vars_txn;    break;
+-	case SCOPE_REQ:
+-	case SCOPE_RES:
+-	default:         vars = &smp->strm->vars_reqres; break;
+-	}
+-
+-	/* Check if the scope is avalaible a this point of processing. */
+-	if (vars->scope != scope)
++	vars = get_vars(smp->sess, smp->strm, scope);
++	if (!vars || vars->scope != scope)
+ 		return 0;
+ 
+ 	/* Get the variable entry. */
+@@ -620,17 +599,10 @@ int vars_get_by_desc(const struct var_desc *var_desc, struct sample *smp)
+ 	struct var *var;
+ 
+ 	/* Select "vars" pool according with the scope. */
+-	switch (var_desc->scope) {
+-	case SCOPE_PROC: vars = &global.vars;  break;
+-	case SCOPE_SESS: vars = &smp->sess->vars;  break;
+-	case SCOPE_TXN:  vars = &smp->strm->vars_txn;    break;
+-	case SCOPE_REQ:
+-	case SCOPE_RES:
+-	default:         vars = &smp->strm->vars_reqres; break;
+-	}
++	vars = get_vars(smp->sess, smp->strm, var_desc->scope);
+ 
+-	/* Check if the scope is avalaible a this point of processing. */
+-	if (vars->scope != var_desc->scope)
++	/* Check if the scope is available a this point of processing. */
++	if (!vars || vars->scope != var_desc->scope)
+ 		return 0;
+ 
+ 	/* Get the variable entry. */

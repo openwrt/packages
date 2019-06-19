@@ -8,7 +8,7 @@
  #include <openssl/crypto.h>
  #include <openssl/ssl.h>
  #include <openssl/x509.h>
-@@ -61,6 +62,17 @@
+@@ -60,6 +61,17 @@
  #include <openssl/async.h>
  #endif
  
@@ -26,7 +26,7 @@
  #include <import/lru.h>
  #include <import/xxhash.h>
  
-@@ -206,7 +218,7 @@ static struct {
+@@ -217,7 +229,7 @@ static struct {
  	.capture_cipherlist = 0,
  };
  
@@ -35,7 +35,7 @@
  
  static HA_RWLOCK_T *ssl_rwlocks;
  
-@@ -1675,8 +1687,8 @@ ssl_sock_do_create_cert(const char *servername, struct bind_conf *bind_conf, SSL
+@@ -1716,8 +1728,8 @@ ssl_sock_do_create_cert(const char *servername, struct bind_conf *bind_conf, SSL
  	ASN1_INTEGER_set(X509_get_serialNumber(newcrt), HA_ATOMIC_ADD(&ssl_ctx_serial, 1));
  
  	/* Set duration for the certificate */
@@ -46,7 +46,7 @@
  		goto mkcert_error;
  
  	/* set public key in the certificate */
-@@ -6226,7 +6238,7 @@ smp_fetch_ssl_x_notafter(const struct arg *args, struct sample *smp, const char
+@@ -6299,7 +6311,7 @@ smp_fetch_ssl_x_notafter(const struct arg *args, struct sample *smp, const char
  		goto out;
  
  	smp_trash = get_trash_chunk();
@@ -55,7 +55,7 @@
  		goto out;
  
  	smp->data.u.str = *smp_trash;
-@@ -6326,7 +6338,7 @@ smp_fetch_ssl_x_notbefore(const struct arg *args, struct sample *smp, const char
+@@ -6399,7 +6411,7 @@ smp_fetch_ssl_x_notbefore(const struct a
  		goto out;
  
  	smp_trash = get_trash_chunk();
@@ -64,21 +64,26 @@
  		goto out;
  
  	smp->data.u.str = *smp_trash;
-@@ -8777,10 +8789,12 @@ static void __ssl_sock_init(void)
- 		global_ssl.connect_default_ciphers = strdup(global_ssl.connect_default_ciphers);
+@@ -8977,7 +8989,9 @@ static void __ssl_sock_init(void)
+ #endif
  
  	xprt_register(XPRT_SSL, &ssl_sock);
 +#if OPENSSL_VERSION_NUMBER < 0x10100000L
  	SSL_library_init();
 +#endif
+ #if (!defined(OPENSSL_NO_COMP) && !defined(SSL_OP_NO_COMPRESSION))
  	cm = SSL_COMP_get_compression_methods();
- 	sk_SSL_COMP_zero(cm);
+ 	i = sk_SSL_COMP_num(cm);
+@@ -8986,7 +9000,7 @@ static void __ssl_sock_init(void)
+ 	}
+ #endif
+ 
 -#ifdef USE_THREAD
 +#if defined(USE_THREAD) && (OPENSSL_VERSION_NUMBER < 0x10100000L)
  	ssl_locking_init();
  #endif
  #if (OPENSSL_VERSION_NUMBER >= 0x1000200fL && !defined OPENSSL_NO_TLSEXT && !defined OPENSSL_IS_BORINGSSL && !defined LIBRESSL_VERSION_NUMBER)
-@@ -8808,8 +8822,8 @@ static void __ssl_sock_init(void)
+@@ -9015,8 +9029,8 @@ static void __ssl_sock_init(void)
  #else /* OPENSSL_IS_BORINGSSL */
  	        OPENSSL_VERSION_TEXT
  		"\nRunning on OpenSSL version : %s%s",
@@ -89,7 +94,7 @@
  #endif
  	memprintf(&ptr, "%s\nOpenSSL library supports TLS extensions : "
  #if OPENSSL_VERSION_NUMBER < 0x00907000L
-@@ -8900,12 +8914,14 @@ static void __ssl_sock_deinit(void)
+@@ -9107,12 +9121,14 @@ static void __ssl_sock_deinit(void)
  	}
  #endif
  

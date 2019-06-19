@@ -1,0 +1,43 @@
+commit 339e69400f87c34e28c67eaab6e503dc41b29d48
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Tue May 28 08:26:17 2019 +0200
+
+    BUG/MEDIUM: http: fix "http-request reject" when not final
+    
+    When "http-request reject" was introduced in 1.8 with commit 53275e8b0
+    ("MINOR: http: implement the "http-request reject" rule"), it was already
+    broken. The code mentions "it always returns ACT_RET_STOP" and obviously
+    a gross copy-paste made it ACT_RET_CONT. If the rule is the last one it
+    properly blocks, but if not the last one it gets ignored, as can be seen
+    with this simple configuration :
+    
+        frontend f1
+            bind :8011
+            mode http
+            http-request reject
+            http-request redirect location /
+    
+    This trivial fix must be backported to 1.9 and 1.8. It is tracked by
+    github issue #107.
+    
+    (cherry picked from commit 11c90fbd92cfaa5695e328481402d62d536456ef)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit f6d5f2b27634cf3f8591016985b9fb81a1caf01c)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    
+    [Cf: The fix was applied in the file src/proto_http.c because, in 1.8, the file
+         src/http_act.c does not exist.]
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index 32aeef2d..e5792f8c 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -12157,7 +12157,7 @@ enum act_return http_action_reject(struct act_rule *rule, struct proxy *px,
+ 	if (!(s->flags & SF_FINST_MASK))
+ 		s->flags |= SF_FINST_R;
+ 
+-	return ACT_RET_CONT;
++	return ACT_RET_STOP;
+ }
+ 
+ /* parse the "reject" action:
