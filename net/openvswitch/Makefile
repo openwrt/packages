@@ -15,11 +15,11 @@ include $(INCLUDE_DIR)/kernel.mk
 #  - Check and update kmod dependencies when necessary (runtime module load check in the least)
 #
 PKG_NAME:=openvswitch
-PKG_VERSION:=2.11.0
-PKG_RELEASE:=3
+PKG_VERSION:=2.11.1
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
-PKG_HASH:=f4b01d7376d7298bc6e7fa7a6067229ca7c7e299394e5ea9aff651d52edfdbee
+PKG_HASH:=c1296ae44a7b176150915e33bc497cc0a7a02caeba84ea43ce9b6a2509d9b5dc
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
