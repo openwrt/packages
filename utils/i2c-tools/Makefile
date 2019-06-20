@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=i2c-tools
 PKG_VERSION:=4.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/utils/i2c-tools
@@ -114,7 +114,7 @@ PYTHON3_PKG_SETUP_DIR:=py-smbus
 
 define Package/libi2c/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/libi2c.so* $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/lib/libi2c.so* $(1)/usr/lib/
 endef
 
 define Package/i2c-tools/install
