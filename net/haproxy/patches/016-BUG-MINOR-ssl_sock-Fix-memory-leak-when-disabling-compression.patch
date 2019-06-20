@@ -1,0 +1,53 @@
+commit b3dae591a4fb47922d4235cf05ac66bcce443cf4
+Author: Ilya Shipitsin <chipitsine@gmail.com>
+Date:   Sat May 25 03:38:14 2019 +0500
+
+    BUG/MINOR: ssl_sock: Fix memory leak when disabling compression
+    
+    according to manpage:
+    
+           sk_TYPE_zero() sets the number of elements in sk to zero. It
+           does not free sk so after this call sk is still valid.
+    
+    so we need to free all elements
+    
+    [wt: seems like it has been there forever and should be backported
+     to all stable branches]
+    
+    (cherry picked from commit e242f3dfb8ae2f27de9d10d90a783df05d5c849b)
+    [wt: adjusted context due to libressl detection]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 273c61dfb45d968eb8b677616130cda6586977f0)
+    [wt: minor adjustments due to version detection and local variables]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index fbb7cf2b..3ab63342 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -8959,11 +8959,10 @@ static void ssl_sock_capture_free_func(void *parent, void *ptr, CRYPTO_EX_DATA *
+ __attribute__((constructor))
+ static void __ssl_sock_init(void)
+ {
++	STACK_OF(SSL_COMP)* cm;
+ 	char *ptr;
+ 	int i;
+ 
+-	STACK_OF(SSL_COMP)* cm;
+-
+ 	if (global_ssl.listen_default_ciphers)
+ 		global_ssl.listen_default_ciphers = strdup(global_ssl.listen_default_ciphers);
+ 	if (global_ssl.connect_default_ciphers)
+@@ -8978,7 +8977,11 @@ static void __ssl_sock_init(void)
+ 	xprt_register(XPRT_SSL, &ssl_sock);
+ 	SSL_library_init();
+ 	cm = SSL_COMP_get_compression_methods();
+-	sk_SSL_COMP_zero(cm);
++	i = sk_SSL_COMP_num(cm);
++	while (i--) {
++		(void) sk_SSL_COMP_pop(cm);
++	}
++
+ #ifdef USE_THREAD
+ 	ssl_locking_init();
+ #endif

@@ -1,0 +1,71 @@
+commit ee60daed3071426242fcacbb1cd9603a825b359e
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Sun Jun 2 11:11:29 2019 +0200
+
+    BUG/MINOR: deinit/threads: make hard-stop-after perform a clean exit
+    
+    As reported in GH issue #99, when hard-stop-after triggers and threads
+    are in use, the chance that any thread releases the resources in use by
+    the other ones is non-null. Thus no thread should be allowed to deinit()
+    nor exit by itself.
+    
+    Here we take a different approach. We simply use a 3rd possible value
+    for the "killed" variable so that all threads know they must break out
+    of the run-poll-loop and immediately stop.
+    
+    This patch was tested by commenting the stream_shutdown() calls in
+    hard_stop() to increase the chances to see a stream use released
+    resources. With this fix applied, it never crashes anymore.
+    
+    This fix should be backported to 1.9 and 1.8.
+    
+    (cherry picked from commit 7067b3a92efc9c9a7c3239245fdc96ea7310f46a)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit daf91d3a5c8d2b47878580a0e0bde654d92ad42a)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/include/types/global.h b/include/types/global.h
+index bd7761cd..d3721d03 100644
+--- a/include/types/global.h
++++ b/include/types/global.h
+@@ -213,7 +213,7 @@ extern const int zero;
+ extern const int one;
+ extern const struct linger nolinger;
+ extern int stopping;	/* non zero means stopping in progress */
+-extern int killed;	/* non zero means a hard-stop is triggered */
++extern int killed;	/* >0 means a hard-stop is triggered, >1 means hard-stop immediately */
+ extern char hostname[MAX_HOSTNAME_LEN];
+ extern char localpeer[MAX_HOSTNAME_LEN];
+ extern struct list global_listener_queue; /* list of the temporarily limited listeners */
+diff --git a/src/haproxy.c b/src/haproxy.c
+index 105cde6f..6ea17a0c 100644
+--- a/src/haproxy.c
++++ b/src/haproxy.c
+@@ -2431,6 +2431,10 @@ static void run_poll_loop()
+ 		if (tid == 0 && jobs == 0)
+ 			THREAD_WANT_SYNC();
+ 
++		/* also stop  if we failed to cleanly stop all tasks */
++		if (killed > 1)
++			break;
++
+ 		/* expire immediately if events are pending */
+ 		exp = now_ms;
+ 		if (fd_cache_mask & tid_bit)
+diff --git a/src/proxy.c b/src/proxy.c
+index cff6c0aa..ef491aed 100644
+--- a/src/proxy.c
++++ b/src/proxy.c
+@@ -942,9 +942,9 @@ struct task *hard_stop(struct task *t)
+ 	if (killed) {
+ 		ha_warning("Some tasks resisted to hard-stop, exiting now.\n");
+ 		send_log(NULL, LOG_WARNING, "Some tasks resisted to hard-stop, exiting now.\n");
+-		/* Do some cleanup and explicitely quit */
+-		deinit();
+-		exit(0);
++		killed = 2;
++		t->expire = TICK_ETERNITY;
++		return t;
+ 	}
+ 
+ 	ha_warning("soft-stop running for too long, performing a hard-stop.\n");

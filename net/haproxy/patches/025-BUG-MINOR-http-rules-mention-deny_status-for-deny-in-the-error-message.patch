@@ -1,0 +1,34 @@
+commit 8a74cad9b7fe8b9e1f5b140d90360ece838a878e
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Tue Jun 11 16:01:56 2019 +0200
+
+    BUG/MINOR: http-rules: mention "deny_status" for "deny" in the error message
+    
+    The error message indicating an unknown keyword on an http-request rule
+    doesn't mention the "deny_status" option which comes with the "deny" rule,
+    this is particularly confusing.
+    
+    This can be backported to all versions supporting this option.
+    
+    (cherry picked from commit 5abdc760c99a0011607f2cc97e199ef6ce0e8486)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    (cherry picked from commit 4e66beaf2a32bd835db9de61a60318648258f649)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    
+    [Cf: The fix was applied on src/proto_http.c because, in 1.8, the file
+         src/http_rules.c does not exist.]
+
+diff --git a/src/proto_http.c b/src/proto_http.c
+index e5792f8c..689e0e31 100644
+--- a/src/proto_http.c
++++ b/src/proto_http.c
+@@ -8830,7 +8830,8 @@ struct act_rule *parse_http_req_cond(const char **args, const char *file, int li
+ 		rule->cond = cond;
+ 	}
+ 	else if (*args[cur_arg]) {
+-		ha_alert("parsing [%s:%d]: 'http-request %s' expects 'realm' for 'auth' or"
++		ha_alert("parsing [%s:%d]: 'http-request %s' expects 'realm' for 'auth',"
++			 " 'deny_status' for 'deny', or"
+ 			 " either 'if' or 'unless' followed by a condition but found '%s'.\n",
+ 			 file, linenum, args[0], args[cur_arg]);
+ 		goto out_err;

@@ -1,0 +1,133 @@
+commit 30e228120ebc1caad1086d0d90383f472f710375
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Mon Jun 3 08:17:30 2019 +0200
+
+    BUG/MEDIUM: connection: fix multiple handshake polling issues
+    
+    Connection handshakes were rarely stacked on top of each other, but the
+    recent experiments consisting in sending PROXY over SOCKS4 revealed a
+    number of issues in these lower layers. First, each handler waiting for
+    data MUST subscribe to recv events with __conn_sock_want_recv() and MUST
+    unsubscribe from send events using __conn_sock_stop_send() to avoid any
+    wake-up loop in case a previous sender has set this. Second, each handler
+    waiting for sending MUST subscribe to send events with __conn_sock_want_send()
+    and MUST unsubscribe from recv events using __conn_sock_stop_recv() to
+    avoid any wake-up loop in case some data are available on the connection.
+    
+    Till now this was done at various random places, and in particular the
+    cases where the FD was not ready for recv forgot to re-enable reading.
+    
+    Second, while senders can happily use conn_sock_send() which automatically
+    handles EINTR, loops, and marks the FD as not ready with fd_cant_send(),
+    there is no equivalent for recv so receivers facing EAGAIN MUST call
+    fd_cant_send() to enable polling. It could be argued that implementing
+    an equivalent conn_sock_recv() function could be useful and more
+    long-term proof than the current situation.
+    
+    Third, both types of handlers MUST unsubscribe from their respective
+    events once they managed to do their job, and none may even play with
+    __conn_xprt_*(). Here again this was lacking, and one surprizing call
+    to __conn_xprt_stop_recv() was present in the proxy protocol parser
+    for TCP6 messages!
+    
+    Thanks to Alexander Liu for his help on this issue.
+    
+    This patch must be backported to 1.9 and possibly some older versions,
+    though the SOCKS parts should be dropped.
+    
+    (cherry picked from commit 6499b9d996ea8f57749021f56ed635c4688a727e)
+    [wt: dropped SOCKS4]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit a34d37966ed87ffd9924e2b11f8003dc773e1853)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/connection.c b/src/connection.c
+index f57ef60a..e00c2f81 100644
+--- a/src/connection.c
++++ b/src/connection.c
+@@ -404,7 +404,7 @@ int conn_recv_proxy(struct connection *conn, int flag)
+ 		goto fail;
+ 
+ 	if (!fd_recv_ready(conn->handle.fd))
+-		return 0;
++		goto not_ready;
+ 
+ 	do {
+ 		trash.len = recv(conn->handle.fd, trash.str, trash.size, MSG_PEEK);
+@@ -413,7 +413,7 @@ int conn_recv_proxy(struct connection *conn, int flag)
+ 				continue;
+ 			if (errno == EAGAIN) {
+ 				fd_cant_recv(conn->handle.fd);
+-				return 0;
++				goto not_ready;
+ 			}
+ 			goto recv_abort;
+ 		}
+@@ -653,8 +653,14 @@ int conn_recv_proxy(struct connection *conn, int flag)
+ 
+ 	conn->flags &= ~flag;
+ 	conn->flags |= CO_FL_RCVD_PROXY;
++	__conn_sock_stop_recv(conn);
+ 	return 1;
+ 
++ not_ready:
++	__conn_sock_want_recv(conn);
++	__conn_sock_stop_send(conn);
++	return 0;
++
+  missing:
+ 	/* Missing data. Since we're using MSG_PEEK, we can only poll again if
+ 	 * we have not read anything. Otherwise we need to fail because we won't
+@@ -709,7 +715,7 @@ int conn_recv_netscaler_cip(struct connection *conn, int flag)
+ 		goto fail;
+ 
+ 	if (!fd_recv_ready(conn->handle.fd))
+-		return 0;
++		goto not_ready;
+ 
+ 	do {
+ 		trash.len = recv(conn->handle.fd, trash.str, trash.size, MSG_PEEK);
+@@ -718,7 +724,7 @@ int conn_recv_netscaler_cip(struct connection *conn, int flag)
+ 				continue;
+ 			if (errno == EAGAIN) {
+ 				fd_cant_recv(conn->handle.fd);
+-				return 0;
++				goto not_ready;
+ 			}
+ 			goto recv_abort;
+ 		}
+@@ -849,8 +855,14 @@ int conn_recv_netscaler_cip(struct connection *conn, int flag)
+ 	} while (0);
+ 
+ 	conn->flags &= ~flag;
++	__conn_sock_stop_recv(conn);
+ 	return 1;
+ 
++ not_ready:
++	__conn_sock_want_recv(conn);
++	__conn_sock_stop_send(conn);
++	return 0;
++
+  missing:
+ 	/* Missing data. Since we're using MSG_PEEK, we can only poll again if
+ 	 * we have not read anything. Otherwise we need to fail because we won't
+diff --git a/src/stream_interface.c b/src/stream_interface.c
+index 47a100d7..8e4df70a 100644
+--- a/src/stream_interface.c
++++ b/src/stream_interface.c
+@@ -400,6 +400,7 @@ int conn_si_send_proxy(struct connection *conn, unsigned int flag)
+ 	if (conn->flags & CO_FL_WAIT_L4_CONN)
+ 		conn->flags &= ~CO_FL_WAIT_L4_CONN;
+ 	conn->flags &= ~flag;
++	__conn_sock_stop_send(conn);
+ 	return 1;
+ 
+  out_error:
+@@ -409,6 +410,7 @@ int conn_si_send_proxy(struct connection *conn, unsigned int flag)
+ 
+  out_wait:
+ 	__conn_sock_stop_recv(conn);
++	__conn_sock_want_send(conn);
+ 	return 0;
+ }
+ 

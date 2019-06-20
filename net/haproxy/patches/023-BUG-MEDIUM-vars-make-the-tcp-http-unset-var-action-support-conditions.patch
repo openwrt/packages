@@ -1,0 +1,44 @@
+commit a41ac2d710711f3ab91d92415278a73c358aedca
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Tue Jun 4 16:43:29 2019 +0200
+
+    BUG/MEDIUM: vars: make the tcp/http unset-var() action support conditions
+    
+    Patrick Hemmer reported that http-request unset-var(foo) if ... fails to
+    parse. The reason is that it reuses the same parser as "set-var(foo)" which
+    makes a special case of the arguments, supposed to be a sample expression
+    for set-var, but which must not exist for unset-var. Unfortunately the
+    parser finds "if" or "unless" and believes it's an expression. Let's simply
+    drop the test so that the outer rule parser deals with potential extraneous
+    keywords.
+    
+    This should be backported to all versions supporting unset-var().
+    
+    (cherry picked from commit 4b7531f48b5aa66d11fcee2836c201644bfb6a71)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit a47e745276662db361637914b8558984f091306b)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/vars.c b/src/vars.c
+index c86f612f..d69fb838 100644
+--- a/src/vars.c
++++ b/src/vars.c
+@@ -684,6 +684,7 @@ static int conv_check_var(struct arg *args, struct sample_conv *conv,
+  * the format:
+  *
+  *   set-var(<variable-name>) <expression>
++ *   unset-var(<variable-name>)
+  *
+  * It returns ACT_RET_PRS_ERR if fails and <err> is filled with an error
+  * message. Otherwise, it returns ACT_RET_PRS_OK and the variable <expr>
+@@ -727,10 +728,6 @@ static enum act_parse_ret parse_store(const char **args, int *arg, struct proxy
+ 	/* There is no fetch method when variable is unset. Just set the right
+ 	 * action and return. */
+ 	if (!set_var) {
+-		if (*args[*arg]) {
+-			memprintf(err, "fetch method not supported");
+-			return ACT_RET_PRS_ERR;
+-		}
+ 		rule->action     = ACT_CUSTOM;
+ 		rule->action_ptr = action_clear;
+ 		return ACT_RET_PRS_OK;

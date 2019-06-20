@@ -1,0 +1,30 @@
+commit 8f2772f5c603168ad3f79adc9e17569f510274ca
+Author: Kazuo Yagi <kazuo.yagi@gmail.com>
+Date:   Thu Jun 13 17:14:57 2019 +0900
+
+    MINOR: doc: Remove -Ds option in man page
+    
+    Remove -Ds option in man page.
+    
+    Should be backported in every version since 1.8.
+    
+    (cherry picked from commit 971c3943be1283e9d377d68f95ea467304b3a8da)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    (cherry picked from commit a5e78ea5150f31190e4c1cd38fa7c1cadbf1ae8a)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/doc/haproxy.1 b/doc/haproxy.1
+index 91f58a3b..cfed2cf7 100644
+--- a/doc/haproxy.1
++++ b/doc/haproxy.1
+@@ -77,10 +77,6 @@ starting up.
+ \fB\-D\fP
+ Start in daemon mode.
+ 
+-.TP
+-\fB\-Ds\fP
+-Start in systemd daemon mode, keeping a process in foreground.
+-
+ .TP
+ \fB\-q\fP
+ Disable messages on output.

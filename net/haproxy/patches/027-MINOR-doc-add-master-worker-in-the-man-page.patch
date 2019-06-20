@@ -1,0 +1,55 @@
+commit 4fb0b5fb585e7f697914e935fe1001f752da8470
+Author: William Lallemand <wlallemand@haproxy.org>
+Date:   Thu Jun 13 11:51:09 2019 +0200
+
+    MINOR: doc: add master-worker in the man page
+    
+    Add some information about the master-worker in the man page.
+    
+    Should be backported in every version since 1.8.
+    
+    (cherry picked from commit 95635ddac8c29859d297e8ba33174e71efd5fc47)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    (cherry picked from commit d7a0c4695f00765dc03d7d6f6e17058726e84951)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/doc/haproxy.1 b/doc/haproxy.1
+index cfed2cf7..2a23674f 100644
+--- a/doc/haproxy.1
++++ b/doc/haproxy.1
+@@ -6,7 +6,7 @@ HAProxy \- fast and reliable http reverse proxy and load balancer
+ 
+ .SH SYNOPSIS
+ 
+-haproxy \-f <configuration\ file|dir> [\-L\ <name>] [\-n\ maxconn] [\-N\ maxconn] [\-C\ <dir>] [\-v|\-vv] [\-d] [\-D] [\-q] [\-V] [\-c] [\-p\ <pidfile>] [\-dk] [\-ds] [\-de] [\-dp] [\-db] [\-dM[<byte>]] [\-m\ <megs>] [\-x <unix_socket>] [{\-sf|\-st}\ pidlist...]
++haproxy \-f <configuration\ file|dir> [\-L\ <name>] [\-n\ maxconn] [\-N\ maxconn] [\-C\ <dir>] [\-v|\-vv] [\-d] [\-D] [\-W] [\-Ws] [\-q] [\-V] [\-c] [\-p\ <pidfile>] [\-dk] [\-ds] [\-de] [\-dp] [\-db] [\-dM[<byte>]] [\-m\ <megs>] [\-x <unix_socket>] [{\-sf|\-st}\ pidlist...]
+ 
+ .SH DESCRIPTION
+ 
+@@ -77,6 +77,16 @@ starting up.
+ \fB\-D\fP
+ Start in daemon mode.
+ 
++.TP
++\fB\-W\fP
++Start in master-worker mode. Could be used either with foreground or daemon
++mode.
++
++.TP
++\fB\-Ws\fP
++Start in master-worker mode with systemd notify support. It tells systemd when
++the process is ready. This mode forces foreground.
++
+ .TP
+ \fB\-q\fP
+ Disable messages on output.
+@@ -172,6 +182,9 @@ Some signals have a special meaning for the haproxy daemon. Generally, they are
+ \- \fBSIGUSR1\fP
+ Tells the daemon to stop all proxies and exit once all sessions are closed. It is often referred to as the "soft-stop" signal.
+ .TP
++\- \fBSIGUSR2\fP
++In master-worker mode, reloads the configuration and sends a soft-stop signal to old processes.
++.TP
+ \- \fBSIGTTOU\fP
+ Tells the daemon to stop listening to all sockets. Used internally by \fB\-sf\fP and \fB\-st\fP.
+ .TP

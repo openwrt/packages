@@ -1,0 +1,44 @@
+commit 89ff157c3262c8493ed48e6ac48f614791f446f8
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Thu May 23 22:47:48 2019 +0200
+
+    BUG/MEDIUM: spoe: Don't use the SPOE applet after releasing it
+    
+    In spoe_release_appctx(), the SPOE applet may be used after it was released to
+    get its exit status code. Of course, HAProxy crashes when this happens.
+    
+    This patch must be backported to 1.9 and 1.8.
+    
+    (cherry picked from commit 55ae8a64e4e1175063463921375b279c31bbc6a4)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    (cherry picked from commit df29d11f522044217ea7c1373f494c2a36515b31)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/flt_spoe.c b/src/flt_spoe.c
+index 66d8b045..aeb1fde7 100644
+--- a/src/flt_spoe.c
++++ b/src/flt_spoe.c
+@@ -1292,11 +1292,6 @@ spoe_release_appctx(struct appctx *appctx)
+ 		task_wakeup(ctx->strm->task, TASK_WOKEN_MSG);
+ 	}
+ 
+-	/* Release allocated memory */
+-	spoe_release_buffer(&spoe_appctx->buffer,
+-			    &spoe_appctx->buffer_wait);
+-	pool_free(pool_head_spoe_appctx, spoe_appctx);
+-
+ 	if (!LIST_ISEMPTY(&agent->rt[tid].applets))
+ 		goto end;
+ 
+@@ -1317,6 +1312,11 @@ spoe_release_appctx(struct appctx *appctx)
+ 	}
+ 
+   end:
++	/* Release allocated memory */
++	spoe_release_buffer(&spoe_appctx->buffer,
++			    &spoe_appctx->buffer_wait);
++	pool_free(pool_head_spoe_appctx, spoe_appctx);
++
+ 	/* Update runtinme agent info */
+ 	agent->rt[tid].frame_size = agent->max_frame_size;
+ 	list_for_each_entry(spoe_appctx, &agent->rt[tid].applets, list)

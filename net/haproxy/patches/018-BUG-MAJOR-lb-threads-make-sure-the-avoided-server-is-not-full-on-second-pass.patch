@@ -1,0 +1,54 @@
+commit 5d60902ec7883bb05927c648638a009eb930acc7
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Mon May 27 10:17:05 2019 +0200
+
+    BUG/MAJOR: lb/threads: make sure the avoided server is not full on second pass
+    
+    In fwrr_get_next_server(), we optionally pass a server to avoid. It
+    usually points to the current server during a redispatch operation. If
+    this server is usable, an "avoided" pointer is set and we continue to
+    look for another server. If in the end no other server is found, then
+    we fall back to this avoided one, which is still better than nothing.
+    
+    The problem that may arise with threads is that in the mean time, this
+    avoided server might have received extra connections and might not be
+    usable anymore. This causes it to be queued a second time in the "full"
+    list and the loop to search for a server again, ending up on this one
+    again and so on.
+    
+    This patch makes sure that we break out of the loop when we have to
+    pick the avoided server. It's probably what the code intended to do
+    as the current break statement causes fwrr_update_position() and
+    fwrr_dequeue_srv() to be called again on the avoided server.
+    
+    It must be backported to 1.9 and 1.8, and seems appropriate for older
+    versions though it's unclear what the impact of this bug might be
+    there since the race doesn't exist and we're left with the double
+    update of the server's position.
+    
+    (cherry picked from commit b6195ef2a6b0cb3f68bc34735313daa640ab3e92)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 7df15f275af90110e6ab4ec75065cbfabdf764ec)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/lb_fwrr.c b/src/lb_fwrr.c
+index cba7db5f..33181b46 100644
+--- a/src/lb_fwrr.c
++++ b/src/lb_fwrr.c
+@@ -504,7 +504,7 @@ struct server *fwrr_get_next_server(struct proxy *p, struct server *srvtoavoid)
+ 			if (switched) {
+ 				if (avoided) {
+ 					srv = avoided;
+-					break;
++					goto take_this_one;
+ 				}
+ 				goto requeue_servers;
+ 			}
+@@ -534,6 +534,7 @@ struct server *fwrr_get_next_server(struct proxy *p, struct server *srvtoavoid)
+ 		full = srv;
+ 	}
+ 
++ take_this_one:
+ 	/* OK, we got the best server, let's update it */
+ 	fwrr_queue_srv(srv);
+ 

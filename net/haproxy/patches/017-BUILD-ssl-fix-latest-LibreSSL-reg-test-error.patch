@@ -1,0 +1,46 @@
+commit e834ca5c6914c71a86138362423b9d6e7ce15a78
+Author: Ilya Shipitsin <chipitsine@gmail.com>
+Date:   Sat May 25 19:30:50 2019 +0500
+
+    BUILD: ssl: fix latest LibreSSL reg-test error
+    
+    starting with OpenSSL 1.0.0 recommended way to disable compression is
+    using SSL_OP_NO_COMPRESSION when creating context.
+    
+    manipulations with SSL_COMP_get_compression_methods, sk_SSL_COMP_num
+    are only required for OpenSSL < 1.0.0
+    
+    (cherry picked from commit 0590f44254da9203a3c9d239836f4703aa6d543b)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit be086d6dc7029aec9349e54ab5cccc499892bd61)
+    [wt: context adjustments]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 3ab63342..3436459f 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -8959,7 +8959,9 @@ static void ssl_sock_capture_free_func(void *parent, void *ptr, CRYPTO_EX_DATA *
+ __attribute__((constructor))
+ static void __ssl_sock_init(void)
+ {
++#if (!defined(OPENSSL_NO_COMP) && !defined(SSL_OP_NO_COMPRESSION))
+ 	STACK_OF(SSL_COMP)* cm;
++#endif
+ 	char *ptr;
+ 	int i;
+ 
+@@ -8976,11 +8978,13 @@ static void __ssl_sock_init(void)
+ 
+ 	xprt_register(XPRT_SSL, &ssl_sock);
+ 	SSL_library_init();
++#if (!defined(OPENSSL_NO_COMP) && !defined(SSL_OP_NO_COMPRESSION))
+ 	cm = SSL_COMP_get_compression_methods();
+ 	i = sk_SSL_COMP_num(cm);
+ 	while (i--) {
+ 		(void) sk_SSL_COMP_pop(cm);
+ 	}
++#endif
+ 
+ #ifdef USE_THREAD
+ 	ssl_locking_init();
