@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oath-toolkit
 PKG_VERSION:=2.6.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=oath-toolkit-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SAVANNAH/oath-toolkit
@@ -48,7 +48,7 @@ define Package/oath-toolkit/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/oathtool $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/liboath.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liboath.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,oath-toolkit))

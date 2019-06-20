@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libnetconf2
 PKG_VERSION:=0.12-r1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
@@ -51,7 +51,7 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
 
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libnetconf2.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnetconf2.so* $(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/usr/include/libnetconf2
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/include/libnetconf2/* $(1)/usr/include/libnetconf2/
