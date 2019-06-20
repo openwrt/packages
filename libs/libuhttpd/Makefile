@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libuhttpd
 PKG_VERSION:=2.2.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
@@ -71,8 +71,8 @@ endif
 
 define Package/libuhttpd/default/install
 	$(INSTALL_DIR) $(1)/usr/lib/ $(1)/usr/lib/lua/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libuhttpd.so* $(1)/usr/lib/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/lua/uhttpd.so* $(1)/usr/lib/lua/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libuhttpd.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lua/uhttpd.so* $(1)/usr/lib/lua/
 endef
 
 Package/libuhttpd-nossl/install = $(Package/libuhttpd/default/install)

@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libfstrm
 PKG_VERSION:=0.5.0
-PKG_RELEASE=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=fstrm-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dl.farsightsecurity.com/dist/fstrm/
@@ -55,7 +55,7 @@ endef
 
 define Package/libfstrm/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libfstrm.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfstrm.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libfstrm))

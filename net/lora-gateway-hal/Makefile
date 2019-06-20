@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lora-gateway-hal
 PKG_VERSION:=5.0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://codeload.github.com/Lora-net/lora_gateway/tar.gz/v$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -64,7 +64,7 @@ define Build/InstallDev
 	$(CP) $(PKG_BUILD_DIR)/libloragw/inc/loragw_* $(1)/usr/include/libloragw
 	$(CP) $(PKG_BUILD_DIR)/libloragw/config.h $(1)/usr/include/libloragw
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/libloragw/libloragw.so* $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/libloragw/libloragw.so* $(1)/usr/lib/
 	$(LN) libloragw.so.0 $(1)/usr/lib/libloragw.so
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_BUILD_DIR)/loragw.pc  $(1)/usr/lib/pkgconfig/
@@ -72,7 +72,7 @@ endef
 
 define Package/libloragw/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/libloragw/libloragw.so.* $(1)/usr/lib/
+	$(CP) $(PKG_BUILD_DIR)/libloragw/libloragw.so.* $(1)/usr/lib/
 endef
 
 define Package/libloragw-tests/install
