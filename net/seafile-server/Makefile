@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
 PKG_VERSION:=6.3.4
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -76,6 +76,10 @@ ifdef CONFIG_USE_MIPS16
 endif
 TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib -liconv \
 		    -L$(STAGING_DIR)/usr/lib/mysql -lmysqlclient -lz -levent_openssl -levent
+
+ifdef CONFIG_GCC_LIBSSP
+TARGET_LDFLAGS += -lssp
+endif
 
 define Package/seafile-server/conffiles
 /etc/config/seafile
