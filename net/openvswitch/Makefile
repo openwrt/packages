@@ -70,7 +70,6 @@ ovs_kmod_openvswitch_title:=Open vSwitch kernel datapath (upstream)
 ovs_kmod_openvswitch_kconfig:=CONFIG_OPENVSWITCH
 ovs_kmod_openvswitch_depends:=\
 	  +kmod-lib-crc32c \
-	  +kmod-mpls \
 	  +kmod-nf-nat \
 	  +IPV6:kmod-nf-nat6 \
 	  +kmod-nf-conntrack \
@@ -114,7 +113,6 @@ $(eval $(call OvsKmodPackageTemplate,openvswitch-geneve))
 ovs_kmod_openvswitch-intree_title:=Open vSwitch kernel datapath (in tree)
 ovs_kmod_openvswitch-intree_depends:=\
 	  +kmod-lib-crc32c \
-	  +kmod-mpls \
 	  +kmod-nf-nat \
 	  +IPV6:kmod-nf-nat6 \
 	  +kmod-nf-conntrack \
