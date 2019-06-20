@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=crtmpserver
 PKG_SOURCE_DATE:=2015-10-04
 PKG_SOURCE_VERSION:=b866fffca37c3b967a8878499cd2b91aa2587f34
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/shiretu/crtmpserver/tar.gz/$(PKG_SOURCE_VERSION)?
@@ -80,7 +80,7 @@ define Package/crtmpserver/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/builders/make/output/dynamic/crtmpserver $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/lib/crtmpserver
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/builders/make/output/dynamic/*.so $(1)/usr/lib/crtmpserver/
+	$(CP) $(PKG_BUILD_DIR)/builders/make/output/dynamic/*.so $(1)/usr/lib/crtmpserver/
 	$(foreach app,flvplayback samplefactory admin stresstest appselector vptests applestreamingclient proxypublish, \
 		$(INSTALL_DIR) $(1)/usr/lib/crtmpserver/$(app); \
 		$(INSTALL_BIN) $(PKG_BUILD_DIR)/builders/make/output/dynamic/applications/$(app)/lib$(app).so \
