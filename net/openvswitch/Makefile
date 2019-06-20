@@ -69,9 +69,14 @@ endef
 ovs_kmod_openvswitch_title:=Open vSwitch kernel datapath (upstream)
 ovs_kmod_openvswitch_kconfig:=CONFIG_OPENVSWITCH
 ovs_kmod_openvswitch_depends:=\
-	  +kmod-lib-crc32c +kmod-mpls \
-	  +kmod-nf-nat +IPV6:kmod-nf-nat6 \
-	  +kmod-nf-conntrack +IPV6:kmod-nf-conntrack6
+	  +kmod-lib-crc32c \
+	  +kmod-mpls \
+	  +kmod-nf-nat \
+	  +IPV6:kmod-nf-nat6 \
+	  +kmod-nf-conntrack \
+	  +IPV6:kmod-nf-conntrack6 \
+	  +(!LINUX_4_9&&!LINUX_4.14):kmod-nsh \
+
 ovs_kmod_openvswitch_files:=$(ovs_kmod_upstream_dir)/openvswitch.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch))
 
@@ -107,7 +112,15 @@ $(eval $(call OvsKmodPackageTemplate,openvswitch-geneve))
 #    enabled and selected on its own
 #
 ovs_kmod_openvswitch-intree_title:=Open vSwitch kernel datapath (in tree)
-ovs_kmod_openvswitch-intree_depends:=$(ovs_kmod_openvswitch_depends) +kmod-gre +IPV6:kmod-gre6
+ovs_kmod_openvswitch-intree_depends:=\
+	  +kmod-lib-crc32c \
+	  +kmod-mpls \
+	  +kmod-nf-nat \
+	  +IPV6:kmod-nf-nat6 \
+	  +kmod-nf-conntrack \
+	  +IPV6:kmod-nf-conntrack6 \
+	  +kmod-gre +IPV6:kmod-gre6 \
+
 ovs_kmod_openvswitch-intree_files:= $(ovs_kmod_intree_dir)/openvswitch.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-intree))
 
