@@ -10,25 +10,26 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kea
 PKG_VERSION:=1.5.0
-PKG_RELEASE:=3
-PKG_MAINTAINER:=BangLang Huang<banglang.huang@foxmail.com>, Rosy Song<rosysong@rosinson.com>
-PKG_BUILD_DEPENDS:=boost log4cplus kea/host
-HOST_BUILD_DEPENDS:=boost boost/host log4cplus/host
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://ftp.isc.org/isc/kea/$(PKG_VERSION)/
-
+PKG_SOURCE_URL:=https://ftp.isc.org/isc/kea/$(PKG_VERSION)
 PKG_HASH:=edce4fab68ca7af607cf7f5bc86596e04fe0ef4b8e88906e339cdefcf21daaec
 
-PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
+PKG_MAINTAINER:=BangLang Huang<banglang.huang@foxmail.com>, Rosy Song<rosysong@rosinson.com>
 PKG_LICENSE:=MPL-2.0
+PKG_LICENSE_FILES:=COPYING
+
+HOST_BUILD_DEPENDS:=boost/host log4cplus/host openssl
+PKG_BUILD_DEPENDS:=kea/host
+HOST_BUILD_PARALLEL:=1
+PKG_BUILD_PARALLEL:=1
+
+PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
-
-HOST_BUILD_PREFIX:=$(STAGING_DIR_HOST)
 
 define Package/kea/Default
   SECTION:=net
@@ -97,32 +98,33 @@ define Package/kea-perfdhcp
 	DEPENDS:=+kea-libs
 endef
 
+HOST_CONFIGURE_ARGS += \
+	--with-boost-include="$(STAGING_DIR_HOSTPKG)" \
+	--with-log4cplus="$(STAGING_DIR_HOSTPKG)" \
+	--with-openssl="$(STAGING_DIR)/usr" \
+	--enable-boost-headers-only \
+	--enable-static-link
+
+HOST_LDFLAGS += \
+	 -Wl,--gc-sections,--as-needed
+
 CONFIGURE_ARGS += \
+	--with-boost-include="$(STAGING_DIR)/usr" \
 	--with-log4cplus="$(STAGING_DIR)/usr" \
 	--with-openssl="$(STAGING_DIR)/usr" \
+	--without-pic \
 	$(if $(CONFIG_PACKAGE_kea-perfdhcp),--enable-perfdhcp,)
 
 CONFIGURE_VARS += \
 	cross_compiling="yes"
 
-HOST_CONFIGURE_ARGS += \
-	--enable-static-link \
-	--enable-boost-headers-only \
-	--with-log4cplus="$(STAGING_DIR_HOSTPKG)" \
-	--with-boost-include="$(STAGING_DIR)/usr/include" \
-	--with-openssl="$(STAGING_DIR)/usr" \
-	--without-pic
-
-HOST_LDFLAGS += \
-		-Wl,--gc-sections,--as-needed
-
 TARGET_CXXFLAGS += \
-		$(FPIC) \
-		-fdata-sections \
-		-ffunction-sections
+	$(FPIC) \
+	-fdata-sections \
+	-ffunction-sections
 
 TARGET_LDFLAGS += \
-		-Wl,--gc-sections,--as-needed
+	-Wl,--gc-sections,--as-needed
 
 # Only compile the kea-msg-compiler which we need for
 # package compilation
