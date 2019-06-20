@@ -1017,13 +1017,13 @@ unbound_hostname() {
 
     case "$UNBOUND_D_DOMAIN_TYPE" in
     deny|inform_deny|refuse|static)
-      {
-        # avoid upstream involvement in RFC6762 like responses (link only)
-        echo "  local-zone: local. $UNBOUND_D_DOMAIN_TYPE"
-        echo "  domain-insecure: local"
-        echo "  private-domain: local"
-        echo
-      } >> $UNBOUND_CONFFILE
+      if [ "$UNBOUND_TXT_DOMAIN" != "local" ] ; then
+        {
+          # avoid involvement in RFC6762, unless it is the local zone name
+          echo "  local-zone: local always_nxdomain"
+          echo
+        } >> $UNBOUND_CONFFILE
+      fi
       ;;
     esac
 
