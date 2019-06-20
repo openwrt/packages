@@ -49,12 +49,13 @@ ovs_kmod_is_intree=$(filter %-intree,$(1))
 ovs_kmod_upstream_name=kmod-$(call ovs_kmod_package_name,$(patsubst %-intree,%,$(1)))
 ovs_kmod_package_provides=$(call ovs_kmod_upstream_name,$(1))
 define OvsKmodPackageTemplate
+ifeq ($(if $(call ovs_kmod_is_intree,$(1)),$(ovs_kmod_intree_not_supported)),)
   define KernelPackage/$(call ovs_kmod_package_name,$(1))
      SECTION:=kernel
      CATEGORY:=Kernel modules
      SUBMENU:=Network Support
      TITLE:=$(ovs_kmod_$(1)_title)
-     DEPENDS:=$(ovs_kmod_$(1)_depends) $(if $(call ovs_kmod_is_intree,$(1)),@DEVEL $(if $(ovs_kmod_intree_not_supported),@BROKEN))
+     DEPENDS:=$(ovs_kmod_$(1)_depends) $(if $(call ovs_kmod_is_intree,$(1)),@DEVEL)
      PROVIDES:=$(call ovs_kmod_package_provides,$(1))
      KCONFIG:=$(ovs_kmod_$(1)_kconfig)
      FILES:=$(ovs_kmod_$(1)_files)
@@ -62,6 +63,7 @@ define OvsKmodPackageTemplate
   endef
 
   ovs_kmod_packages+=$(call ovs_kmod_package_name,$(1))
+endif
 endef
 
 ovs_kmod_openvswitch_title:=Open vSwitch kernel datapath (upstream)
@@ -311,7 +313,11 @@ ovs_intree_kmod_configs:=CONFIG_PACKAGE_kmod-openvswitch-intree
 ovs_intree_kmod_enabled:=$(strip $(foreach c,$(ovs_intree_kmod_configs),$($(c))))
 PKG_CONFIG_DEPENDS+=$(ovs_intree_kmod_configs)
 ifneq ($(ovs_intree_kmod_enabled),)
-  CONFIGURE_ARGS += --with-linux=$(LINUX_DIR)
+  ifeq ($(ovs_kmod_intree_not_supported),)
+    CONFIGURE_ARGS += --with-linux=$(LINUX_DIR)
+  else
+    $(warning XXX: openvswitch: intree kmods selected but not supported)
+  endif
 endif
 
 TARGET_CFLAGS += -flto -std=gnu99
