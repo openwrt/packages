@@ -22,9 +22,9 @@ diff --git a/ext/opcache/config.m4 b/ext/opcache/config.m4
 index b7e4835..7b6c0aa 100644
 --- a/ext/opcache/config.m4
 +++ b/ext/opcache/config.m4
-@@ -28,127 +28,13 @@ if test "$PHP_OPCACHE" != "no"; then
- 
-   AC_CHECK_HEADERS([unistd.h sys/uio.h])
+@@ -11,127 +11,13 @@ if test "$PHP_OPCACHE" != "no"; then
+     AC_DEFINE(HAVE_MPROTECT, 1, [Define if you have mprotect() function])
+   ])
  
 -  AC_MSG_CHECKING(for sysvipc shared memory support)
 -  AC_TRY_RUN([
