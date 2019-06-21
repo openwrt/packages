@@ -1,0 +1,29 @@
+commit 661bfc3d0e1b7756db59d00d86e316f694cae3c6
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Mon Jun 17 14:07:46 2019 +0200
+
+    BUG/MINOR: mux-h1: Add the header connection in lower case in outgoing messages
+    
+    When necessary, this header is directly added in outgoing messages by the H1
+    multiplexer. Because there is no HTX conversion first, the header name is not
+    converserted to its lower case version. So, it must be added in lower case by
+    the multiplexer.
+    
+    This patch must be backported to 2.0 and 1.9.
+    
+    (cherry picked from commit a110ecbd843e156dd01c6ac581c735be5e240d5b)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/mux_h1.c b/src/mux_h1.c
+index 317f1a55..21deb354 100644
+--- a/src/mux_h1.c
++++ b/src/mux_h1.c
+@@ -1642,7 +1642,7 @@ static size_t h1_process_output(struct h1c *h1c, struct buffer *buf, size_t coun
+ 					/* There is no "Connection:" header and
+ 					 * it the conn_mode must be
+ 					 * processed. So do it */
+-					n = ist("Connection");
++					n = ist("connection");
+ 					v = ist("");
+ 					h1_process_output_conn_mode(h1s, h1m, &v);
+ 					if (v.len) {
