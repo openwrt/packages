@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-ban_ver="0.1.3"
+ban_ver="0.1.4"
 ban_sysver="unknown"
 ban_enabled=0
 ban_automatic="1"
@@ -326,9 +326,9 @@ f_iptadd()
 			done
 		fi
 	else
-		if [ -x "${ban_ipset}" ] && [ -n "$("${ban_ipset}" -n list "${src_name}" 2>/dev/null)" ]
+		if [ -x "${ban_ipset}" ] && [ -n "$("${ban_ipset}" -q -n list "${src_name}")" ]
 		then
-			"${ban_ipset}" destroy "${src_name}"
+			"${ban_ipset}" -q destroy "${src_name}"
 		fi
 	fi
 }
@@ -408,27 +408,28 @@ f_ipset()
 
 			if [ "${cnt}" -gt 0 ]
 			then
-				if [ -x "${ban_ipset}" ] && [ -z "$("${ban_ipset}" -n list "${src_name}" 2>/dev/null)" ]
+				if [ -x "${ban_ipset}" ] && [ -z "$("${ban_ipset}" -q -n list "${src_name}")" ]
 				then
-					"${ban_ipset}" create "${src_name}" hash:"${src_settype}" hashsize "${size}" maxelem 262144 family "${src_setipv}" counters
+					"${ban_ipset}" -q create "${src_name}" hash:"${src_settype}" hashsize "${size}" maxelem 262144 family "${src_setipv}" counters
 				else
-					"${ban_ipset}" flush "${src_name}"
+					"${ban_ipset}" -q flush "${src_name}"
 				fi
-
 				"${ban_ipset}" -! restore < "${tmp_file}"
 				printf "%s\n" "1" > "${tmp_set}"
 				printf "%s\n" "${cnt}" > "${tmp_cnt}"
 			fi
 			f_iptadd
 			end_ts="$(date +%s)"
-			f_log "debug" "f_ipset ::: name: ${src_name:-"-"}, mode: ${mode:-"-"}, settype: ${src_settype:-"-"}, setipv: ${src_setipv:-"-"}, ruletype: ${src_ruletype:-"-"}, count(sum/ip/cidr): ${cnt:-0}/${cnt_ip:-0}/${cnt_cidr:-0}, time(s): $((end_ts-start_ts))"
+			f_log "debug" "f_ipset ::: name: ${src_name:-"-"}, mode: ${mode:-"-"}, settype: ${src_settype:-"-"}, setipv: ${src_setipv:-"-"}, ruletype: ${src_ruletype:-"-"}, count(sum/ip/cidr): ${cnt:-0}/${cnt_ip:-0}/${cnt_cidr:-0}, time: $((end_ts-start_ts))"
 		;;
 		refresh)
-			if [ -x "${ban_ipset}" ] && [ -n "$("${ban_ipset}" -n list "${src_name}" 2>/dev/null)" ]
+			ban_rc=4
+			if [ -x "${ban_ipset}" ] && [ -n "$("${ban_ipset}" -q -n list "${src_name}")" ]
 			then
-				"${ban_ipset}" save "${src_name}" > "${tmp_file}"
+				"${ban_ipset}" -q save "${src_name}" > "${tmp_file}"
 				if [ -s "${tmp_file}" ]
 				then
+					ban_rc=0
 					cnt="$(($(wc -l 2>/dev/null < "${tmp_file}")-1))"
 					cnt_cidr="$(grep -cF "/" "${tmp_file}")"
 					cnt_ip="$((cnt-cnt_cidr))"
@@ -438,15 +439,15 @@ f_ipset()
 				f_iptadd
 			fi
 			end_ts="$(date +%s)"
-			f_log "debug" "f_ipset ::: name: ${src_name:-"-"}, mode: ${mode:-"-"}, count: ${cnt:-0}/${cnt_ip:-0}/${cnt_cidr:-0}, time(s): $((end_ts-start_ts))"
+			f_log "debug" "f_ipset ::: name: ${src_name:-"-"}, mode: ${mode:-"-"}, count: ${cnt:-0}/${cnt_ip:-0}/${cnt_cidr:-0}, time: $((end_ts-start_ts)), rc: ${ban_rc}"
 		;;
 		flush)
 			f_iptadd "remove"
 
-			if [ -x "${ban_ipset}" ] && [ -n "$("${ban_ipset}" -n list "${src_name}" 2>/dev/null)" ]
+			if [ -x "${ban_ipset}" ] && [ -n "$("${ban_ipset}" -q -n list "${src_name}")" ]
 			then
-				"${ban_ipset}" flush "${src_name}"
-				"${ban_ipset}" destroy "${src_name}"
+				"${ban_ipset}" -q flush "${src_name}"
+				"${ban_ipset}" -q destroy "${src_name}"
 			fi
 			f_log "debug" "f_ipset ::: name: ${src_name:-"-"}, mode: ${mode:-"-"}"
 		;;
@@ -469,9 +470,9 @@ f_ipset()
 
 			for source in ${ban_sources}
 			do
-				if [ -x "${ban_ipset}" ] && [ -n "$("${ban_ipset}" -n list "${source}" 2>/dev/null)" ]
+				if [ -x "${ban_ipset}" ] && [ -n "$("${ban_ipset}" -q -n list "${source}")" ]
 				then
-					"${ban_ipset}" destroy "${source}"
+					"${ban_ipset}" -q destroy "${source}"
 				fi
 			done
 			f_log "debug" "f_ipset ::: name: ${src_name:-"-"}, mode: ${mode:-"-"}"
@@ -572,8 +573,12 @@ f_main()
 			continue
 		elif [ "${ban_action}" = "refresh" ]
 		then
+			start_ts="$(date +%s)"
 			f_ipset refresh
-			continue
+			if [ ${ban_rc} -eq 0 ]
+			then
+				continue
+			fi
 		fi
 
 		# download queue processing
