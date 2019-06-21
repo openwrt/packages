@@ -1,0 +1,32 @@
+commit 032cff38c24d8359dc575423a94d19b6ad8bf848
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Mon Jun 17 11:44:47 2019 +0200
+
+    BUG/MEDIUM: h2/htx: Update data length of the HTX when the cookie list is built
+    
+    When an H2 request is converted into an HTX message, All cookie headers are
+    grouped into one, each value separated by a semicolon (;). To do so, we add the
+    header "cookie" with the first value and then we update the value by appending
+    other cookies. But during this operation, only the size of the HTX block is
+    updated. And not the data length of the whole HTX message.
+    
+    It is an old bug and it seems to work by chance till now. But it may lead to
+    undefined behaviour by time to time.
+    
+    This patch must be backported to 2.0 and 1.9
+    
+    (cherry picked from commit 0c6de00d7c842a682bba7586ef34fb10f69ec63c)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/h2.c b/src/h2.c
+index 9681aca5..32c1ef16 100644
+--- a/src/h2.c
++++ b/src/h2.c
+@@ -737,6 +737,7 @@ int h2_make_htx_request(struct http_hdr *list, struct htx *htx, unsigned int *ms
+ 				goto fail;
+ 
+ 			htx_set_blk_value_len(blk, tl);
++			htx->data += vl+2;
+ 			*(char *)(htx_get_blk_ptr(htx, blk) + bs + 0) = ';';
+ 			*(char *)(htx_get_blk_ptr(htx, blk) + bs + 1) = ' ';
+ 			memcpy(htx_get_blk_ptr(htx, blk) + bs + 2, list[ck].v.ptr, vl);
