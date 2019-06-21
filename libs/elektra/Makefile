@@ -15,7 +15,7 @@ PKG_NAME:=elektra
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.md
 PKG_VERSION:=0.8.21
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 # Use this for official releasees
 PKG_HASH:=51892570f18d1667d0da4d0908a091e41b41c20db9835765677109a3d150cd26
@@ -34,6 +34,7 @@ PKG_BUILD_DEPENDS:=elektra/host swig/host
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/libelektra/Default
   SECTION:=libs
@@ -93,7 +94,7 @@ endef
 define Package/libelektra-plugins
   $(call Package/libelektra/Default)
   TITLE:=Useful elektra plugins
-  DEPENDS:=+libelektra-core
+  DEPENDS:=+libelektra-core $(ICONV_DEPENDS)
 endef
 
 define CONTENT_ELEKTRA_PLUGINS_TEXT
@@ -302,7 +303,10 @@ CMAKE_OPTIONS = \
 	-DKDB_DEFAULT_RESOLVER=resolver_fm_pb_b \
 	-DKDB_DEFAULT_STORAGE=ini \
 	-DENABLE_OPTIMIZATIONS=OFF \
-	-DPLUGINS="ALL;-multifile"
+	-DPLUGINS="ALL;-multifile" \
+	-DICONV_FIND_REQUIRED=ON \
+	-DICONV_INCLUDE_DIR="$(ICONV_PREFIX)/include" \
+	-DICONV_LIBRARY="$(ICONV_PREFIX)/lib"
 
 CMAKE_HOST_OPTIONS = \
 	-DCMAKE_SKIP_RPATH=FALSE \
