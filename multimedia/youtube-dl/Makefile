@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=youtube-dl
-PKG_VERSION:=2019.6.8
+PKG_VERSION:=2019.6.21
 PKG_RELEASE:=1
 
 PKG_SOURCE:=youtube_dl-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/y/youtube_dl/
-PKG_HASH:=93ca1ff30b99223318305cf4f30a02b8ea2cf5fdd2816f83d60aaa3c1bb19432
+PKG_HASH:=a64ffda79f467c81877d5452d775ebf858b43853ff7ce8644be3a80ebf3f9ea9
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/youtube_dl-$(PKG_VERSION)
 
@@ -28,8 +28,8 @@ define Package/youtube-dl/Default
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=Utility to download videos from YouTube.com
-  DEPENDS:=+ca-certificates
   URL:=https://yt-dl.org
+  DEPENDS:=+ca-certificates
 endef
 
 define Package/youtube-dl/description
