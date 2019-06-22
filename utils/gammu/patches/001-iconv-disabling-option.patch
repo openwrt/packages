@@ -1,5 +1,3 @@
-diff --git a/cmake/FindIconv.cmake b/cmake/FindIconv.cmake
-index 3ec0493..f716700 100644
 --- a/cmake/FindIconv.cmake
 +++ b/cmake/FindIconv.cmake
 @@ -9,10 +9,10 @@
@@ -15,8 +13,6 @@ index 3ec0493..f716700 100644
  
  IF(APPLE)
      FIND_PATH(ICONV_INCLUDE_DIR iconv.h
-diff --git a/configure b/configure
-index 4f51ca7..5b0d993 100755
 --- a/configure
 +++ b/configure
 @@ -33,6 +33,7 @@ Usage: ./configure [options]
