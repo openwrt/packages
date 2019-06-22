@@ -17,11 +17,14 @@ PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
+PKG_HASH:=430ae8354789de4fd19ee52f3b1f739e1fba576f0aded0897c3c2bc00fb38778
+
+PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
+PKG_LICENSE:=BSL-1.0
+PKG_LICENSE_FILES:=LICENSE_1_0.txt
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_SOURCE_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)_$(PKG_SOURCE_VERSION)
-PKG_HASH:=430ae8354789de4fd19ee52f3b1f739e1fba576f0aded0897c3c2bc00fb38778
-PKG_LICENSE:=Boost Software License <http://www.boost.org/users/license.html>
-PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
@@ -33,7 +36,7 @@ define Package/boost/Default
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Boost C++ source library
-  URL:=http://www.boost.org
+  URL:=https://www.boost.org
   DEPENDS:=+libstdcpp +libpthread +librt
 endef
 
