@@ -9,18 +9,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gammu
-PKG_VERSION:=1.39.0
-PKG_RELEASE:=3
+PKG_VERSION:=1.40.0
+PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=https://dl.cihar.com/gammu/releases
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=66d1d991d7a993fdf254d4c425f0fdd38c9cca15b1735936695a486067a6a9f8
+PKG_SOURCE_URL:=https://dl.cihar.com/gammu/releases
+PKG_HASH:=a760a3520d9f3a16a4ed73cefaabdbd86125bec73c6fa056ca3f0a4be8478dd6
 
 PKG_MAINTAINER:=Vitaly Protsko <villy@sft.ru>
-PKG_LICENCE:=GPL-2.0
+PKG_LICENCE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
+CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -47,13 +48,6 @@ CMAKE_OPTIONS += -DDISABLE_ICONV=OFF
 CMAKE_OPTIONS += -DICONV_INCLUDE_DIRS:PATH=$(ICONV_PREFIX)/include
 CMAKE_OPTIONS += -DICONV_LIBRARIES:STRING=iconv
 endif
-
-define Build/InstallDev
-	mkdir -p $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/gammu $(1)/usr/include/
-	mkdir -p $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{Gammu*,gsmsd*} $(1)/usr/lib/
-endef
 
 define Package/gammu/install
 	$(INSTALL_DIR) $(1)/usr/bin
