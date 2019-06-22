@@ -10,7 +10,7 @@ PKG_NAME:=switchdev-poller
 PKG_VERSION:=1.0.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
-PKG_LICENSE:=GPLv2
+PKG_LICENSE:=GPL-2.0-or-later
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 include $(INCLUDE_DIR)/package.mk
@@ -18,8 +18,8 @@ include $(INCLUDE_DIR)/package.mk
 define Package/switchdev-poller
    SECTION:=net
    CATEGORY:=Network
+   TITLE:=Poll switchdev ports to bring CPU ports up/down
    DEPENDS:=+swconfig
-   TITLE:=Poll switchdev port to bring CPU ports up/down
    PKGARCH:=all
 endef
 
