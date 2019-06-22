@@ -8,17 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=youtube-dl
-PKG_VERSION:=2019.05.11
+PKG_VERSION:=2019.06.21
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ytdl-org/youtube-dl/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=f823c401fc28213872d7fa10b82bfc4260ebba6a08a23be71e5c9fb2c2290327
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_HASH:=03c6cd1bc112dc8d950cb9d0f05ac90f7111caabcefb1a66483a0fd2319269e0
 
+PKG_MAINTAINER:=Adrian Panella <ianchi74@outlook.com>, Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=Unlicense
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Adrian Panella <ianchi74@outlook.com>, Josef Schlehofer <pepe.schlehofer@gmail.com>
 
 PKG_BUILD_DEPENDS:=python/host zip/host
 
@@ -28,8 +27,8 @@ define Package/youtube-dl
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=utility to download videos from YouTube.com
-  DEPENDS:=+python-openssl +python-email +python-xml +python-codecs +python-ctypes +ca-certificates
   URL:=https://yt-dl.org/
+  DEPENDS:=+python-openssl +python-email +python-xml +python-codecs +python-ctypes +ca-certificates
 endef
 
 define Package/youtube-dl/description
