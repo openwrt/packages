@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
 PKG_VERSION:=2.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=haproxy-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.haproxy.org/download/2.0/src/
@@ -91,10 +91,14 @@ ENABLE_LUA:=y
 ENABLE_REGPARM:=n
 
 ifeq ($(CONFIG_TARGET_x86),y)
-  ENABLE_REGPARM:=y
+	ENABLE_REGPARM:=y
 endif
 
-LINUX_TARGET:=linux-glibc
+ifeq ($(CONFIG_USE_UCLIBC),y)
+	LINUX_TARGET:=linux-uclibc
+else
+	LINUX_TARGET:=linux-glibc
+endif
 
 ifeq ($(BUILD_VARIANT),ssl)
 	ADDON+=USE_OPENSSL=1
@@ -139,7 +143,7 @@ define Build/Compile
 		VERSION="$(PKG_VERSION)" SUBVERS="-$(PKG_RELEASE)" \
 		VERDATE="$(shell date -d @$(SOURCE_DATE_EPOCH) '+%Y/%m/%d')" IGNOREGIT=1 \
 		$(ADDON) \
-		CFLAGS="$(TARGET_CFLAGS) -fno-strict-aliasing -Wdeclaration-after-statement -fwrapv -Wno-format-truncation -Wno-unused-label -Wno-sign-compare -Wno-unused-parameter -Wno-old-style-declaration -Wno-ignored-qualifiers -Wno-clobbered -Wno-missing-field-initializers -Wno-implicit-fallthrough -Wno-stringop-overflow -Wtype-limits -Wshift-negative-value -Wshift-overflow=2 -Wduplicated-cond -Wnull-dereference" \
+		CFLAGS="$(TARGET_CFLAGS) -fno-strict-aliasing -Wdeclaration-after-statement -fwrapv -Wno-format-truncation -Wno-unused-label -Wno-sign-compare -Wno-unused-parameter -Wno-old-style-declaration -Wno-ignored-qualifiers -Wno-clobbered -Wno-missing-field-initializers -Wno-implicit-fallthrough -Wno-stringop-overflow -Wno-cast-function-type -Wtype-limits -Wshift-negative-value -Wshift-overflow=2 -Wduplicated-cond -Wnull-dereference" \
 		LD="$(TARGET_CC)" \
 		LDFLAGS="$(TARGET_LDFLAGS) -latomic" \
 		EXTRA_OBJS="contrib/prometheus-exporter/service-prometheus.o"
