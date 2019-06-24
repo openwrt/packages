@@ -1,0 +1,27 @@
+commit 3d574a587dc3704e93bcd29b16d54d96069667b4
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Tue Jun 18 12:22:38 2019 +0200
+
+    BUG/MEDIUM: mux-h2: Reset padlen when several frames are demux
+    
+    In the function h2_process_demux(), if several frames are parsed, the padding
+    length must be reset between each frame. Otherwise we may wrongly think a frame
+    has a padding block because the previous one was padded.
+    
+    This patch must be backported to 2.0 and 1.9.
+    
+    (cherry picked from commit dd2a5620d594523cd515a629e105a9a2b64345bb)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/mux_h2.c b/src/mux_h2.c
+index d02168df..c06d5d68 100644
+--- a/src/mux_h2.c
++++ b/src/mux_h2.c
+@@ -2316,6 +2316,7 @@ static void h2_process_demux(struct h2c *h2c)
+ 				break;
+ 			}
+ 
++			padlen = 0;
+ 			if (h2_ft_bit(hdr.ft) & H2_FT_PADDED_MASK && hdr.ff & H2_F_PADDED) {
+ 				/* If the frame is padded (HEADERS, PUSH_PROMISE or DATA),
+ 				 * we read the pad length and drop it from the remaining

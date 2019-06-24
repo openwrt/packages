@@ -1,0 +1,133 @@
+commit 41dc8432f87622145390dc1b1467a5ee14ba184c
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Tue Jun 18 09:49:16 2019 +0200
+
+    BUG/MEDIUM: htx: Fully update HTX message when the block value is changed
+    
+    Everywhere the value length of a block is changed, calling the function
+    htx_set_blk_value_len(), the HTX message must be updated. But at many places,
+    because of the recent changes in the HTX structure, this update was only
+    partially done. tail_addr and head_addr values were not systematically updated.
+    
+    In fact, the function htx_set_blk_value_len() was designed as an internal
+    function to the HTX API. And we used it from outside by convenience. But it is
+    really painfull and error prone to let the caller update the HTX message. So
+    now, we use the function htx_change_blk_value_len() wherever is possible. It
+    changes the value length of a block and updates the HTX message accordingly.
+    
+    This patch must be backported to 2.0.
+    
+    (cherry picked from commit 3e2638ee04407a1d9e9376f0c518f67fca7deaa4)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/h2.c b/src/h2.c
+index 32c1ef16..990d602b 100644
+--- a/src/h2.c
++++ b/src/h2.c
+@@ -736,8 +736,7 @@ int h2_make_htx_request(struct http_hdr *list, struct htx *htx, unsigned int *ms
+ 			if (tl > fs)
+ 				goto fail;
+ 
+-			htx_set_blk_value_len(blk, tl);
+-			htx->data += vl+2;
++			htx_change_blk_value_len(htx, blk, tl);
+ 			*(char *)(htx_get_blk_ptr(htx, blk) + bs + 0) = ';';
+ 			*(char *)(htx_get_blk_ptr(htx, blk) + bs + 1) = ' ';
+ 			memcpy(htx_get_blk_ptr(htx, blk) + bs + 2, list[ck].v.ptr, vl);
+diff --git a/src/http_htx.c b/src/http_htx.c
+index 7322b337..bc26e5ba 100644
+--- a/src/http_htx.c
++++ b/src/http_htx.c
+@@ -461,10 +461,7 @@ int http_remove_header(struct htx *htx, struct http_hdr_ctx *ctx)
+ 	}
+ 	/* Update the block content and its len */
+ 	memmove(start, start+len, v.len-len);
+-	htx_set_blk_value_len(blk, v.len-len);
+-
+-	/* Update HTX msg */
+-	htx->data -= len;
++	htx_change_blk_value_len(htx, blk, v.len-len);
+ 
+ 	/* Finally update the ctx */
+ 	ctx->value.ptr = start;
+diff --git a/src/htx.c b/src/htx.c
+index bfd136f4..81492598 100644
+--- a/src/htx.c
++++ b/src/htx.c
+@@ -406,15 +406,8 @@ void htx_truncate(struct htx *htx, uint32_t offset)
+ 			offset -= sz;
+ 			continue;
+ 		}
+-		if (type == HTX_BLK_DATA) {
+-			htx_set_blk_value_len(blk, offset);
+-			htx->data -= (sz - offset);
+-
+-			if (blk->addr+sz == htx->tail_addr)
+-				htx->tail_addr -= offset;
+-			else if (blk->addr+sz == htx->head_addr)
+-				htx->head_addr -= offset;
+-		}
++		if (type == HTX_BLK_DATA)
++			htx_change_blk_value_len(htx, blk, offset);
+ 		offset = 0;
+ 	}
+ 	while (blk)
+@@ -522,14 +515,7 @@ struct htx_blk *htx_add_data_atonce(struct htx *htx, struct ist data)
+ 	/* Append data and update the block itself */
+ 	ptr = htx_get_blk_ptr(htx, tailblk);
+ 	memcpy(ptr+sz, data.ptr, len);
+-	htx_set_blk_value_len(tailblk, sz+len);
+-
+-	/* Update HTTP message */
+-	htx->data += len;
+-	if (tailblk->addr+sz == htx->tail_addr)
+-		htx->tail_addr += len;
+-	else if (tailblk->addr+sz == htx->head_addr)
+-		htx->head_addr += len;
++	htx_change_blk_value_len(htx, tailblk, sz+len);
+ 
+ 	if (data.len == len) {
+ 		blk = tailblk;
+@@ -988,14 +974,7 @@ size_t htx_add_data(struct htx *htx, const struct ist data)
+ 	/* Append data and update the block itself */
+ 	ptr = htx_get_blk_ptr(htx, tailblk);
+ 	memcpy(ptr + sz, data.ptr, len);
+-	htx_set_blk_value_len(tailblk, sz + len);
+-
+-	/* Update HTTP message */
+-	htx->data += len;
+-	if (tailblk->addr+sz == htx->tail_addr)
+-		htx->tail_addr += len;
+-	else if (tailblk->addr+sz == htx->head_addr)
+-		htx->head_addr += len;
++	htx_change_blk_value_len(htx, tailblk, sz+len);
+ 
+ 	BUG_ON((int32_t)htx->tail_addr < 0);
+ 	BUG_ON((int32_t)htx->head_addr < 0);
+diff --git a/src/proto_htx.c b/src/proto_htx.c
+index 7f501366..d821e38c 100644
+--- a/src/proto_htx.c
++++ b/src/proto_htx.c
+@@ -4314,10 +4314,8 @@ static void htx_manage_client_side_cookies(struct stream *s, struct channel *req
+ 			hdr_end = (preserve_hdr ? del_from : hdr_beg);
+ 		}
+ 		if ((hdr_end - hdr_beg) != ctx.value.len) {
+-			if (hdr_beg != hdr_end) {
+-				htx_set_blk_value_len(ctx.blk, hdr_end - hdr_beg);
+-				htx->data -= ctx.value.len - (hdr_end - hdr_beg);
+-			}
++			if (hdr_beg != hdr_end)
++				htx_change_blk_value_len(htx, ctx.blk, hdr_end - hdr_beg);
+ 			else
+ 				http_remove_header(htx, &ctx);
+ 		}
+@@ -4495,8 +4493,7 @@ static void htx_manage_server_side_cookies(struct stream *s, struct channel *res
+ 				next         += stripped_before;
+ 				hdr_end      += stripped_before;
+ 
+-				htx_set_blk_value_len(ctx.blk, hdr_end - hdr_beg);
+-				htx->data -= ctx.value.len - (hdr_end - hdr_beg);
++				htx_change_blk_value_len(htx, ctx.blk, hdr_end - hdr_beg);
+ 				ctx.value.len = hdr_end - hdr_beg;
+ 			}
+ 
