@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
 PKG_VERSION:=10.1.41
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := \
@@ -267,7 +267,7 @@ define Package/mariadb-server
   $(call Package/mariadb/Default)
   DEPENDS:= \
 	  $(MARIADB_COMMON_DEPENDS) \
-	  +!arc:libaio \
+	  +libaio \
 	  +liblzma \
 	  +libpcre \
 	  +resolveip
