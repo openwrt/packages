@@ -9,18 +9,18 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=pf-ring
-PKG_VERSION:=7.2.0
+PKG_VERSION:=7.4.0
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Banglang Huang <banglang.huang@foxmail.com>
 
-PKG_LICENSE:=GPL-2.0
+PKG_MAINTAINER:=Banglang Huang <banglang.huang@foxmail.com>
+PKG_LICENSE:=GPL-2.0-only
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ntop/PF_RING/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=5d349ac37a6ece5966bf606a6f131d628b98d88654c2f502d3c4b8bbf6ef9796
-
+PKG_HASH:=e1c9cb44d8072854220f493c56fa5cba99a6b8336883939dc18b3e30c2954b68
 PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/PF_RING-$(PKG_VERSION)
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
