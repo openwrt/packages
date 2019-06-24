@@ -1,0 +1,40 @@
+commit 9eae8935663bc0b27c23018e8cc24ae9a3e31732
+Author: Frédéric Lécaille <flecaille@haproxy.com>
+Date:   Thu Jun 20 09:31:04 2019 +0200
+
+    BUG/MAJOR: sample: Wrong stick-table name parsing in "if/unless" ACL condition.
+    
+    This bug was introduced by 1b8e68e commit which supposed the stick-table was always
+    stored in struct arg at parsing time. This is never the case with the usage of
+    "if/unless" conditions in stick-table declared as backends. In this case, this is
+    the name of the proxy which must be considered as the stick-table name.
+    
+    This must be backported to 2.0.
+    
+    (cherry picked from commit 9417f4534ad742eda35c4cc3d1ccb390f75ea4b1)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/sample.c b/src/sample.c
+index 67f59e84..77ec9b1e 100644
+--- a/src/sample.c
++++ b/src/sample.c
+@@ -1245,15 +1245,11 @@ int smp_resolve_args(struct proxy *p)
+ 			break;
+ 
+ 		case ARGT_TAB:
+-			if (!arg->data.str.data) {
+-				ha_alert("parsing [%s:%d] : missing table name in arg %d of %s%s%s%s '%s' %s proxy '%s'.\n",
+-					 cur->file, cur->line,
+-					 cur->arg_pos + 1, conv_pre, conv_ctx, conv_pos, ctx, cur->kw, where, p->id);
+-				cfgerr++;
+-				continue;
+-			}
++			if (arg->data.str.data)
++				stktname = arg->data.str.area;
++			else
++				stktname = px->id;
+ 
+-			stktname = arg->data.str.area;
+ 			t = stktable_find_by_name(stktname);
+ 			if (!t) {
+ 				ha_alert("parsing [%s:%d] : unable to find table '%s' referenced in arg %d of %s%s%s%s '%s' %s proxy '%s'.\n",
