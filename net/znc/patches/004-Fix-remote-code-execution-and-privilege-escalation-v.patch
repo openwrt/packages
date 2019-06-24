@@ -1,0 +1,92 @@
+From a06aa79a308585cc6048f725f2dc3c1d55ff9991 Mon Sep 17 00:00:00 2001
+From: Alexey Sokolov <alexey+znc@asokolov.org>
+Date: Wed, 12 Jun 2019 08:57:29 +0100
+Subject: [PATCH] Fix remote code execution and privilege escalation
+ vulnerability.
+
+To trigger this, need to have a user already.
+
+Thanks for Jeriko One <jeriko.one@gmx.us> for finding and reporting this.
+
+CVE-2019-12816
+---
+ include/znc/Modules.h |  1 +
+ src/Modules.cpp       | 33 ++++++++++++++++++++++++++++-----
+ 2 files changed, 29 insertions(+), 5 deletions(-)
+
+--- a/include/znc/Modules.h
++++ b/include/znc/Modules.h
+@@ -1253,6 +1253,7 @@ public:
+ private:
+ 	static ModHandle OpenModule(const CString& sModule, const CString& sModPath,
+ 			bool &bVersionMismatch, CModInfo& Info, CString& sRetMsg);
++	static bool ValidateModuleName(const CString& sModule, CString& sRetMsg);
+ 
+ protected:
+ 	CUser*        m_pUser;
+--- a/src/Modules.cpp
++++ b/src/Modules.cpp
+@@ -1014,9 +1014,26 @@ CModule* CModules::FindModule(const CStr
+ 	return NULL;
+ }
+ 
++bool CModules::ValidateModuleName(const CString& sModule, CString& sRetMsg) {
++	for (unsigned int a = 0; a < sModule.length(); a++) {
++		if (((sModule[a] < '0') || (sModule[a] > '9')) &&
++		    ((sModule[a] < 'a') || (sModule[a] > 'z')) &&
++		    ((sModule[a] < 'A') || (sModule[a] > 'Z')) && (sModule[a] != '_')) {
++			sRetMsg = "Module names can only contain letters, numbers and underscores, [" + sModule + "] is invalid.";
++			return false;
++		}
++	}
++
++	return true;
++}
++
+ bool CModules::LoadModule(const CString& sModule, const CString& sArgs, CModInfo::EModuleType eType, CUser* pUser, CIRCNetwork *pNetwork, CString& sRetMsg) {
+ 	sRetMsg = "";
+ 
++	if (!ValidateModuleName(sModule, sRetMsg)) {
++		return false;
++	}
++
+ 	if (FindModule(sModule) != NULL) {
+ 		sRetMsg = "Module [" + sModule + "] already loaded.";
+ 		return false;
+@@ -1167,6 +1184,10 @@ bool CModules::ReloadModule(const CStrin
+ bool CModules::GetModInfo(CModInfo& ModInfo, const CString& sModule, CString& sRetMsg) {
+ 	CString sModPath, sTmp;
+ 
++	if (!ValidateModuleName(sModule, sRetMsg)) {
++		return false;
++	}
++
+ 	bool bSuccess;
+ 	bool bHandled = false;
+ 	GLOBALMODULECALL(OnGetModInfo(ModInfo, sModule, bSuccess, sRetMsg), &bHandled);
+@@ -1183,6 +1204,10 @@ bool CModules::GetModInfo(CModInfo& ModI
+ bool CModules::GetModPathInfo(CModInfo& ModInfo, const CString& sModule, const CString& sModPath, CString& sRetMsg) {
+ 	bool bVersionMismatch;
+ 
++	if (!ValidateModuleName(sModule, sRetMsg)) {
++		return false;
++	}
++
+ 	ModHandle p = OpenModule(sModule, sModPath, bVersionMismatch, ModInfo, sRetMsg);
+ 
+ 	if (!p)
+@@ -1302,11 +1327,9 @@ ModHandle CModules::OpenModule(const CSt
+ 	bVersionMismatch = false;
+ 	sRetMsg.clear();
+ 
+-	for (unsigned int a = 0; a < sModule.length(); a++) {
+-		if (((sModule[a] < '0') || (sModule[a] > '9')) && ((sModule[a] < 'a') || (sModule[a] > 'z')) && ((sModule[a] < 'A') || (sModule[a] > 'Z')) && (sModule[a] != '_')) {
+-			sRetMsg = "Module names can only contain letters, numbers and underscores, [" + sModule + "] is invalid.";
+-			return NULL;
+-		}
++
++	if (!ValidateModuleName(sModule, sRetMsg)) {
++		return NULL;
+ 	}
+ 
+ 	// The second argument to dlopen() has a long history. It seems clear
