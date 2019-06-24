@@ -6,14 +6,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
-PKG_VERSION:=4.8.22
+PKG_VERSION:=4.8.23
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 PKG_LICENSE:=GPL-3.0+
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ftp.midnight-commander.org/
-PKG_HASH:=ee7868d7ba0498cf2cccefe107d7efee7f2571098806bba2aed5a159db801318
+PKG_HASH:=dd7f7ce74183307b0df25b5c3e60ad3293fd3d3d27d2f37dd7a10efce13dff1c
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf gettext-version
 PKG_BUILD_DEPENDS:=MC_VFS:libtirpc
@@ -98,8 +98,9 @@ define Package/mc/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mc $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/etc/mc
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.charsets $(1)/etc/mc
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.default.keymap $(1)/etc/mc
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.ext $(1)/etc/mc
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.default.keymap $(1)/etc/mc/mc.keymap
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/filehighlight.ini $(1)/etc/mc
 	$(INSTALL_DIR) $(1)/usr/share/mc/help
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/doc/hlp/mc.hlp $(1)/usr/share/mc/help
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.menu $(1)/etc/mc
@@ -113,7 +114,7 @@ ifeq ($(CONFIG_MC_EDITOR),y)
 	ln -sf mc $(1)/usr/bin/mcedit
 endif
 ifeq ($(CONFIG_MC_VFS),y)
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/vfs/extfs/helpers/sfs.ini $(1)/etc/mc
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/vfs/sfs/sfs.ini $(1)/etc/mc
 	$(INSTALL_DIR) $(1)/usr/lib/mc/extfs.d
 endif
 endef
