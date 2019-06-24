@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
-PKG_VERSION:=5.8.1
-PKG_RELEASE:=6
+PKG_VERSION:=5.9.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
 	https://github.com/collectd/collectd/releases/download/collectd-$(PKG_VERSION)
-PKG_HASH:=e796fda27ce06377f491ad91aa286962a68c2b54076aa77a29673d53204453da
+PKG_HASH:=7b220f8898a061f6e7f29a8c16697d1a198277f813da69474a67911097c0626b
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libltdl/aclocal.m4
@@ -26,6 +26,7 @@ PKG_USE_MIPS16:=0
 
 COLLECTD_PLUGINS_DISABLED:= \
 	amqp \
+	ampq1 \
 	apple_sensors \
 	aquaero \
 	barometer \
@@ -43,6 +44,7 @@ COLLECTD_PLUGINS_DISABLED:= \
 	genericjmx \
 	gmond \
 	gps \
+	gpu_nvidia \
 	grpc \
 	hddtemp \
 	hugepages \
@@ -75,6 +77,7 @@ COLLECTD_PLUGINS_DISABLED:= \
 	oracle \
 	ovs_events \
 	ovs_stats \
+	pcie_errors \
 	perl \
 	pf \
 	pinba \
@@ -103,6 +106,8 @@ COLLECTD_PLUGINS_DISABLED:= \
 	write_redis \
 	write_riemann \
 	write_sensu \
+	write_stackdriver \
+	write_syslog \
 	write_tsdb \
 	xencpu \
 	xmms \
@@ -399,7 +404,7 @@ $(eval $(call BuildPlugin,openvpn,OpenVPN traffic/compression input,openvpn,))
 $(eval $(call BuildPlugin,ping,ping status input,ping,+PACKAGE_collectd-mod-ping:liboping))
 $(eval $(call BuildPlugin,postgresql,PostgreSQL status input,postgresql,+PACKAGE_collectd-mod-postgresql:libpq))
 $(eval $(call BuildPlugin,powerdns,PowerDNS server status input,powerdns,))
-$(eval $(call BuildPlugin,processes,process status input,processes,))
+$(eval $(call BuildPlugin,processes,process status input,processes,+PACKAGE_collectd-mod-processes:libmnl))
 $(eval $(call BuildPlugin,protocols,network protocols input,protocols,))
 $(eval $(call BuildPlugin,rrdtool,RRDtool output,rrdtool,+PACKAGE_collectd-mod-rrdtool:librrd1))
 $(eval $(call BuildPlugin,sensors,lm_sensors input,sensors,+PACKAGE_collectd-mod-sensors:libsensors))
