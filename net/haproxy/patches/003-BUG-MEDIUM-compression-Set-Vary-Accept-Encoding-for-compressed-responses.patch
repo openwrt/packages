@@ -1,0 +1,253 @@
+commit eaf650083924a697cde3379703984c5e7a5ebd41
+Author: Tim Duesterhus <tim@bastelstu.be>
+Date:   Mon Jun 17 16:10:07 2019 +0200
+
+    BUG/MEDIUM: compression: Set Vary: Accept-Encoding for compressed responses
+    
+    Make HAProxy set the `Vary: Accept-Encoding` response header if it compressed
+    the server response.
+    
+    Technically the `Vary` header SHOULD also be set for responses that would
+    normally be compressed based off the current configuration, but are not due
+    to a missing or invalid `Accept-Encoding` request header or due to the
+    maximum compression rate being exceeded.
+    
+    Not setting the header in these cases does no real harm, though: An
+    uncompressed response might be returned by a Cache, even if a compressed
+    one could be retrieved from HAProxy. This increases the traffic to the end
+    user if the cache is unable to compress itself, but it saves another
+    roundtrip to HAProxy.
+    
+    see the discussion on the mailing list: https://www.mail-archive.com/haproxy@formilux.org/msg34221.html
+    Message-ID: 20190617121708.GA2964@1wt.eu
+    
+    A small issue remains: The User-Agent is not added to the `Vary` header,
+    despite being relevant to the response. Adding the User-Agent header would
+    make responses effectively uncacheable and it's unlikely to see a Mozilla/4
+    in the wild in 2019.
+    
+    Add a reg-test to ensure the behaviour as described in this commit message.
+    
+    see issue #121
+    Should be backported to all branches with compression (i.e. 1.6+).
+    
+    (cherry picked from commit 721d686bd10dc6993859f9026ad907753d1d2064)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/reg-tests/compression/vary.vtc b/reg-tests/compression/vary.vtc
+new file mode 100644
+index 00000000..0a060e4b
+--- /dev/null
++++ b/reg-tests/compression/vary.vtc
+@@ -0,0 +1,187 @@
++varnishtest "Compression sets Vary header"
++
++#REQUIRE_VERSION=1.9
++#REQUIRE_OPTION=ZLIB|SLZ
++
++feature ignore_unknown_macro
++
++server s1 {
++        rxreq
++        expect req.url == "/plain/accept-encoding-gzip"
++        expect req.http.accept-encoding == "gzip"
++        txresp \
++          -hdr "Content-Type: text/plain" \
++          -bodylen 100
++
++        rxreq
++        expect req.url == "/plain/accept-encoding-invalid"
++        expect req.http.accept-encoding == "invalid"
++        txresp \
++          -hdr "Content-Type: text/plain" \
++          -bodylen 100
++
++        rxreq
++        expect req.url == "/plain/accept-encoding-null"
++        expect req.http.accept-encoding == "<undef>"
++        txresp \
++          -hdr "Content-Type: text/plain" \
++          -bodylen 100
++
++        rxreq
++        expect req.url == "/html/accept-encoding-gzip"
++        expect req.http.accept-encoding == "gzip"
++        txresp \
++          -hdr "Content-Type: text/html" \
++          -bodylen 100
++
++        rxreq
++        expect req.url == "/html/accept-encoding-invalid"
++        expect req.http.accept-encoding == "invalid"
++        txresp \
++          -hdr "Content-Type: text/html" \
++          -bodylen 100
++
++
++        rxreq
++        expect req.url == "/html/accept-encoding-null"
++        expect req.http.accept-encoding == "<undef>"
++        txresp \
++          -hdr "Content-Type: text/html" \
++          -bodylen 100
++
++        rxreq
++        expect req.url == "/dup-etag/accept-encoding-gzip"
++        expect req.http.accept-encoding == "gzip"
++        txresp \
++          -hdr "Content-Type: text/plain" \
++          -hdr "ETag: \"123\"" \
++          -hdr "ETag: \"123\"" \
++          -bodylen 100
++} -repeat 2 -start
++
++
++haproxy h1 -conf {
++    defaults
++        mode http
++        ${no-htx} option http-use-htx
++        timeout connect 1s
++        timeout client  1s
++        timeout server  1s
++
++    frontend fe-gzip
++        bind "fd@${fe_gzip}"
++        default_backend be-gzip
++
++    backend be-gzip
++        compression algo gzip
++        compression type text/plain
++        server www ${s1_addr}:${s1_port}
++
++    frontend fe-nothing
++        bind "fd@${fe_nothing}"
++        default_backend be-nothing
++
++    backend be-nothing
++        server www ${s1_addr}:${s1_port}
++} -start
++
++client c1 -connect ${h1_fe_gzip_sock} {
++        txreq -url "/plain/accept-encoding-gzip" \
++          -hdr "Accept-Encoding: gzip"
++        rxresp
++        expect resp.status == 200
++        expect resp.http.content-encoding == "gzip"
++        expect resp.http.vary == "Accept-Encoding"
++        gunzip
++        expect resp.bodylen == 100
++
++        txreq -url "/plain/accept-encoding-invalid" \
++          -hdr "Accept-Encoding: invalid"
++        rxresp
++        expect resp.status == 200
++        expect resp.http.vary == "<undef>"
++        expect resp.bodylen == 100
++
++        txreq -url "/plain/accept-encoding-null"
++        rxresp
++        expect resp.status == 200
++        expect resp.http.vary == "<undef>"
++        expect resp.bodylen == 100
++
++        txreq -url "/html/accept-encoding-gzip" \
++          -hdr "Accept-Encoding: gzip"
++        rxresp
++        expect resp.status == 200
++        expect resp.http.vary == "<undef>"
++        expect resp.bodylen == 100
++
++        txreq -url "/html/accept-encoding-invalid" \
++          -hdr "Accept-Encoding: invalid"
++        rxresp
++        expect resp.status == 200
++        expect resp.http.vary == "<undef>"
++        expect resp.bodylen == 100
++
++        txreq -url "/html/accept-encoding-null"
++        rxresp
++        expect resp.status == 200
++        expect resp.http.vary == "<undef>"
++        expect resp.bodylen == 100
++
++        txreq -url "/dup-etag/accept-encoding-gzip" \
++          -hdr "Accept-Encoding: gzip"
++        rxresp
++        expect resp.status == 200
++        expect resp.http.vary == "<undef>"
++        expect resp.bodylen == 100
++} -run
++
++# This Client duplicates c1, against the "nothing" frontend, ensuring no Vary header is ever set.
++client c2 -connect ${h1_fe_nothing_sock} {
++        txreq -url "/plain/accept-encoding-gzip" \
++          -hdr "Accept-Encoding: gzip"
++        rxresp
++        expect resp.status == 200
++        expect resp.http.vary == "<undef>"
++        expect resp.bodylen == 100
++
++        txreq -url "/plain/accept-encoding-invalid" \
++          -hdr "Accept-Encoding: invalid"
++        rxresp
++        expect resp.status == 200
++        expect resp.http.vary == "<undef>"
++        expect resp.bodylen == 100
++
++        txreq -url "/plain/accept-encoding-null"
++        rxresp
++        expect resp.status == 200
++        expect resp.http.vary == "<undef>"
++        expect resp.bodylen == 100
++
++        txreq -url "/html/accept-encoding-gzip" \
++          -hdr "Accept-Encoding: gzip"
++        rxresp
++        expect resp.status == 200
++        expect resp.http.vary == "<undef>"
++        expect resp.bodylen == 100
++
++        txreq -url "/html/accept-encoding-invalid" \
++          -hdr "Accept-Encoding: invalid"
++        rxresp
++        expect resp.status == 200
++        expect resp.http.vary == "<undef>"
++        expect resp.bodylen == 100
++
++        txreq -url "/html/accept-encoding-null"
++        rxresp
++        expect resp.status == 200
++        expect resp.http.vary == "<undef>"
++        expect resp.bodylen == 100
++
++        txreq -url "/dup-etag/accept-encoding-gzip" \
++          -hdr "Accept-Encoding: gzip"
++        rxresp
++        expect resp.status == 200
++        expect resp.http.vary == "<undef>"
++        expect resp.bodylen == 100
++} -run
+diff --git a/src/flt_http_comp.c b/src/flt_http_comp.c
+index b04dcd14..37f237fe 100644
+--- a/src/flt_http_comp.c
++++ b/src/flt_http_comp.c
+@@ -523,6 +523,9 @@ http_set_comp_reshdr(struct comp_state *st, struct stream *s, struct http_msg *m
+ 		}
+ 	}
+ 
++	if (http_header_add_tail2(msg, &txn->hdr_idx, "Vary: Accept-Encoding", 21) < 0)
++		goto error;
++
+ 	return 1;
+ 
+   error:
+@@ -577,6 +580,9 @@ htx_set_comp_reshdr(struct comp_state *st, struct stream *s, struct http_msg *ms
+ 		}
+ 	}
+ 
++	if (!http_add_header(htx, ist("Vary"), ist("Accept-Encoding")))
++		goto error;
++
+ 	return 1;
+ 
+   error:

@@ -1,0 +1,32 @@
+commit 5a8549e68225070d0b79cbbb9c5f791e103685e7
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Mon Jun 17 13:36:06 2019 +0200
+
+    BUG/MINOR: lua/htx: Make txn.req_req_* and txn.res_rep_* HTX aware
+    
+    These bindings were not updated to support HTX streams.
+    
+    This patch must be backported to 2.0 and 1.9. It fixes the issue #124.
+    
+    (cherry picked from commit ea418748dd22331e9798cfd8f5e25b436cd577e3)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/hlua.c b/src/hlua.c
+index 28abd083..32f0e8db 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -5375,7 +5375,13 @@ __LJMP static inline int hlua_http_rep_hdr(lua_State *L, struct hlua_txn *htxn,
+ 	if (!(re = regex_comp(reg, 1, 1, NULL)))
+ 		WILL_LJMP(luaL_argerror(L, 3, "invalid regex"));
+ 
+-	http_transform_header_str(htxn->s, msg, name, name_len, value, re, action);
++	if (IS_HTX_STRM(htxn->s)) {
++		struct htx *htx = htxbuf(&msg->chn->buf);
++
++		htx_transform_header_str(htxn->s, msg->chn, htx, ist2(name, name_len), value, re, action);
++	}
++	else
++		http_transform_header_str(htxn->s, msg, name, name_len, value, re, action);
+ 	regex_free(re);
+ 	return 0;
+ }
