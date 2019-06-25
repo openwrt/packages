@@ -11,6 +11,7 @@ PKG_HASH:=9fb24f9032025955169f3c6e9b0a05b6aa9d6441ec47da08d22de1c1aa23e8cf
 PKG_MAINTAINER:=James Taylor <james@jtaylor.id.au>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:powerdns:dnsdist
 
 PKG_INSTALL:=1
 
