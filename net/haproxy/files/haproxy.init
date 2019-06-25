@@ -5,6 +5,7 @@ START=99
 STOP=80
 
 SERVICE_USE_PID=1
+EXTRA_COMMANDS="check"
 
 HAPROXY_BIN="/usr/sbin/haproxy"
 HAPROXY_CONFIG="/etc/haproxy.cfg"
@@ -20,6 +21,9 @@ stop() {
 }
 
 reload() {
-	$HAPROXY_BIN -D -q -f $HAPROXY_CONFIG -p $HAPROXY_PID -sf $(cat $HAPROXY_PID | tr "\n" " ")	
-	#$HAPROXY_BIN -D -q -f $HAPROXY_CONFIG -p $HAPROXY_PID -sf $(cat $HAPROXY_PID)
+	$HAPROXY_BIN -D -q -f $HAPROXY_CONFIG -p $HAPROXY_PID -sf $(cat $HAPROXY_PID)
+}
+
+check() {
+        $HAPROXY_BIN -c -q -V -f $HAPROXY_CONFIG
 }

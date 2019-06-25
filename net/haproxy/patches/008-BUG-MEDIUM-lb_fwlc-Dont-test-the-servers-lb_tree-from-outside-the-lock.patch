@@ -1,0 +1,39 @@
+commit 3f0b1de623d09f8668db34c1be696f7245de7d50
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Wed Jun 19 10:50:38 2019 +0200
+
+    BUG/MEDIUM: lb_fwlc: Don't test the server's lb_tree from outside the lock
+    
+    In the function fwlc_srv_reposition(), the server's lb_tree is tested from
+    outside the lock. So it is possible to remove it after the test and then call
+    eb32_insert() in fwlc_queue_srv() with a NULL root pointer, which is
+    invalid. Moving the test in the scope of the lock fixes the bug.
+    
+    This issue was reported on Github, issue #126.
+    
+    This patch must be backported to 2.0, 1.9 and 1.8.
+    
+    (cherry picked from commit 1ae2a8878170ded922f2c4d32b6704af7689bbfd)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/lb_fwlc.c b/src/lb_fwlc.c
+index 174dc67e..5fa81739 100644
+--- a/src/lb_fwlc.c
++++ b/src/lb_fwlc.c
+@@ -66,12 +66,11 @@ static inline void fwlc_queue_srv(struct server *s)
+  */
+ static void fwlc_srv_reposition(struct server *s)
+ {
+-	if (!s->lb_tree)
+-		return;
+-
+ 	HA_SPIN_LOCK(LBPRM_LOCK, &s->proxy->lbprm.lock);
+-	fwlc_dequeue_srv(s);
+-	fwlc_queue_srv(s);
++	if (s->lb_tree) {
++		fwlc_dequeue_srv(s);
++		fwlc_queue_srv(s);
++	}
+ 	HA_SPIN_UNLOCK(LBPRM_LOCK, &s->proxy->lbprm.lock);
+ }
+ 
