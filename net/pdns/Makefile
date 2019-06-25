@@ -1,16 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pdns
-PKG_VERSION:=4.1.8
+PKG_VERSION:=4.1.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
-PKG_HASH:=94561132f46c08f646399511b680ce8cda150fd2b8e3d38c0b90b4187163e617
+PKG_HASH:=5a46cfde92caaaa2e85af9a15acb9ad81b56f4c8a8255c457e6938d8c0cb15c7
 
 PKG_MAINTAINER:=James Taylor <james@jtaylor.id.au>
 PKG_LICENCE:=GPL-2.0-only
 PKG_LICENCE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:powerdns:authoritative_server
 
 PKG_FIXUP:=autoreconf
 
