@@ -24,7 +24,7 @@ include ../../lang/python/python-package.mk
 
 SEAFILE_PYTHON_DEPENDS:= \
 	simplejson chardet dateutil mysql pytz qrcode requests requests-oauthlib \
-	django django-constance django-appconf django-compressor
+	django django-constance django-appconf django-compressor django-formtools
 
 define Package/seafile-seahub
   SECTION:=net
@@ -32,7 +32,7 @@ define Package/seafile-seahub
   TITLE:=Seafile server - seahub component
   URL:=https://seafile.com/
   DEPENDS:=+python +pillow \
-	+django-formtools +django-jsonfield \
+	+django-jsonfield \
 	+django-picklefield +django-postoffice +django-restframework \
 	+django-simple-captcha +django-statici18n +django-webpack-loader \
 	+python-flup +gunicorn +openpyxl \
