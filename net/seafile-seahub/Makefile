@@ -24,14 +24,14 @@ include ../../lang/python/python-package.mk
 
 SEAFILE_PYTHON_DEPENDS:= \
 	simplejson chardet dateutil mysql pytz qrcode requests requests-oauthlib \
-	django django-constance
+	django django-constance django-appconf
 
 define Package/seafile-seahub
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Seafile server - seahub component
   URL:=https://seafile.com/
-  DEPENDS:=+python +pillow +django-appconf \
+  DEPENDS:=+python +pillow \
 	+django-compressor +django-formtools +django-jsonfield \
 	+django-picklefield +django-postoffice +django-restframework \
 	+django-simple-captcha +django-statici18n +django-webpack-loader \
