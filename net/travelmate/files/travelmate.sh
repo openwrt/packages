@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.4.7"
+trm_ver="1.4.8"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -19,6 +19,7 @@ trm_captive=1
 trm_proactive=1
 trm_netcheck=0
 trm_captiveurl="http://captive.apple.com"
+trm_scanbuffer=1024
 trm_minquality=35
 trm_maxretry=5
 trm_maxwait=30
@@ -394,7 +395,7 @@ f_log()
 #
 f_main()
 {
-	local IFS cnt dev config scan scan_list scan_essid scan_bssid scan_quality faulty_list
+	local IFS cnt dev config spec scan_list scan_essid scan_bssid scan_quality faulty_list
 	local station_id sta sta_essid sta_bssid sta_radio sta_iface active_essid active_bssid active_radio
 
 	f_check "initial"
@@ -417,7 +418,7 @@ f_main()
 			f_check "dev"
 		fi
 		json_get_var faulty_list "faulty_stations"
-		f_log "debug" "f_main ::: iwinfo: ${trm_iwinfo:-"-"}, dev_list: ${trm_devlist:-"-"}, sta_list: ${trm_stalist:0:800}, faulty_list: ${faulty_list:-"-"}"
+		f_log "debug" "f_main ::: iwinfo: ${trm_iwinfo:-"-"}, dev_list: ${trm_devlist:-"-"}, sta_list: ${trm_stalist:0:${trm_scanbuffer}}, faulty_list: ${faulty_list:-"-"}"
 		# radio loop
 		#
 		for dev in ${trm_devlist}
@@ -450,10 +451,11 @@ f_main()
 				f_log "debug" "f_main ::: sta_radio: ${sta_radio}, sta_essid: \"${sta_essid}\", sta_bssid: ${sta_bssid:-"-"}"
 				if [ -z "${scan_list}" ]
 				then
-					scan_list="$(f_trim "$("${trm_iwinfo}" "${dev}" scan 2>/dev/null | \
-						awk 'BEGIN{FS="[ ]"}/Address:/{var1=$NF}/ESSID:/{var2="";for(i=12;i<=NF;i++)if(var2==""){var2=$i}else{var2=var2" "$i};gsub(/,/,".",var2)}/Quality:/{split($NF,var0,"/");printf "%i,%s,%s\n",(var0[1]*100/var0[2]),var1,var2}' | \
-						sort -rn | awk 'BEGIN{ORS=","}{print $0}' | awk '{print substr($0,1,4096)}')")"
-					f_log "debug" "f_main ::: scan_list: ${scan_list:0:800}"
+					scan_list="$("${trm_iwinfo}" "${dev}" scan 2>/dev/null | \
+						awk 'BEGIN{FS="[ ]"}/Address:/{var1=$NF}/ESSID:/{var2="";for(i=12;i<=NF;i++)if(var2==""){var2=$i}else{var2=var2" "$i};
+						gsub(/,/,".",var2)}/Quality:/{split($NF,var0,"/");printf "%i,%s,%s\n",(var0[1]*100/var0[2]),var1,var2}' | \
+						sort -rn | awk -v buf="${trm_scanbuffer}" 'BEGIN{ORS=","}{print substr($0,1,buf)}')"
+					f_log "debug" "f_main ::: scan_buffer: ${trm_scanbuffer}, scan_list: ${scan_list}"
 					if [ -z "${scan_list}" ]
 					then
 						f_log "debug" "f_main ::: no scan results on '${dev}' - continue"
@@ -463,17 +465,17 @@ f_main()
 				# scan loop
 				#
 				IFS=","
-				for scan in ${scan_list}
+				for spec in ${scan_list}
 				do
 					if [ -z "${scan_quality}" ]
 					then
-						scan_quality="${scan}"
+						scan_quality="${spec}"
 					elif [ -z "${scan_bssid}" ]
 					then
-						scan_bssid="${scan}"
+						scan_bssid="${spec}"
 					elif [ -z "${scan_essid}" ]
 					then
-						scan_essid="${scan}"
+						scan_essid="${spec}"
 					fi
 					if [ -n "${scan_quality}" ] && [ -n "${scan_bssid}" ] && [ -n "${scan_essid}" ]
 					then
