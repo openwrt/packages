@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-seahub
 PKG_VERSION:=6.3.4
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_LICENSE:=Apache-2.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -35,7 +35,7 @@ define Package/seafile-seahub
 	+django-compressor +django-formtools +django-jsonfield \
 	+django-picklefield +django-postoffice +django-restframework \
 	+django-simple-captcha +django-statici18n +django-webpack-loader \
-	+flup +gunicorn +openpyxl \
+	+python-flup +gunicorn +openpyxl \
 	$(foreach dep,$(SEAFILE_PYTHON_DEPENDS),+python-$(dep))
 endef
 
