@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=mcproxy
 PKG_SOURCE_VERSION:=93b5ace42268160ebbfff4c61818fb15fa2d9b99
 PKG_VERSION:=2017-08-24-$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/mcproxy/mcproxy.git

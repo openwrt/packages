@@ -4,7 +4,7 @@
  #include <numeric>
  #include <unistd.h>
  
-+#ifndef __GLIBC__
++#if !defined(__GLIBC__) || defined(__UCLIBC__)
 +#include "sourcefilter.cpp"
 +#endif /* __GLIBC__ */
 +
