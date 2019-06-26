@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bird1
-PKG_VERSION:=1.6.4
+PKG_VERSION:=1.6.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=bird-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://bird.network.cz/pub/bird
-PKG_MD5SUM:=c26b8caae988dba81a9dbbee93502463d4326d1b749d728d62aa5529c605afc0
+PKG_HASH:=975b3b7aefbe1e0dc9c11e55517f0ca2d82cca1d544e2e926f78bc843aaf2d70
 PKG_BUILD_DEPENDS:=ncurses readline
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_BUILD_DIR:=$(BUILD_DIR)/bird-$(PKG_VERSION)
@@ -23,19 +23,19 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/bird1/Default
   TITLE:=The BIRD Internet Routing Daemon (v1.6)
-  URL:=http://bird.network.cz/
+  URL:=https://bird.network.cz/
   DEPENDS:=+libpthread
 endef
 
 define Package/bird1c/Default
   TITLE:=The BIRD command-line client (v1.6)
-  URL:=http://bird.network.cz/
-  DEPENDS:= +libreadline +libncurses
+  URL:=https://bird.network.cz/
+  DEPENDS:=+libreadline +libncurses
 endef
 
 define Package/bird1cl/Default
   TITLE:=The BIRD lightweight command-line client (v1.6)
-  URL:=http://bird.network.cz/
+  URL:=https://bird.network.cz/
 endef
 
 define Package/bird1/Default/description1
@@ -93,7 +93,7 @@ $(call Package/bird1c/Default)
   CATEGORY:=Network
   SUBMENU:=Routing and Redirection
   TITLE+= (IPv4)
-  DEPENDS+= +bird1-ipv4
+  DEPENDS+=+bird1-ipv4
   CONFLICTS+=birdc4
 endef
 
@@ -103,7 +103,7 @@ $(call Package/bird1cl/Default)
   CATEGORY:=Network
   SUBMENU:=Routing and Redirection
   TITLE+= (IPv4)
-  DEPENDS+= +bird1-ipv4
+  DEPENDS+=+bird1-ipv4
   CONFLICTS+=birdcl4
 endef
 
@@ -122,7 +122,7 @@ $(call Package/bird1c/Default)
   CATEGORY:=Network
   SUBMENU:=Routing and Redirection
   TITLE+= (IPv6)
-  DEPENDS+= +bird1-ipv6
+  DEPENDS+=+bird1-ipv6
   CONFLICTS+=birdc6
 endef
 
@@ -132,7 +132,7 @@ $(call Package/bird1cl/Default)
   CATEGORY:=Network
   SUBMENU:=Routing and Redirection
   TITLE+= (IPv6)
-  DEPENDS+= +bird1-ipv6
+  DEPENDS+=+bird1-ipv6
   CONFLICTS+=birdcl6
 endef
 
