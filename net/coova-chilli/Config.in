@@ -38,8 +38,8 @@ choice
 config COOVACHILLI_NOSSL
 	bool "No SSL support"
 
-config COOVACHILLI_CYASSL
-	bool "CyaSSL"
+config COOVACHILLI_WOLFSSL
+	bool "wolfSSL"
 
 config COOVACHILLI_OPENSSL
 	bool "OpenSSL"
