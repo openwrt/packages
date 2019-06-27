@@ -1,0 +1,84 @@
+--- a/src/ms_chap.c
++++ b/src/ms_chap.c
+@@ -96,18 +96,18 @@ MakeKey(u_char *key, u_char *des_key)
+   des_key[6] = Get7Bits(key, 42);
+   des_key[7] = Get7Bits(key, 49);
+ 
+-  des_set_odd_parity((des_cblock *)des_key);
++  DES_set_odd_parity((DES_cblock *)des_key);
+ }
+ 
+ static void /* IN 8 octets IN 7 octest OUT 8 octets */
+ DesEncrypt(u_char *clear, u_char *key, u_char *cipher)
+ {
+-  des_cblock		des_key;
+-  des_key_schedule	key_schedule;
++  DES_cblock		des_key;
++  DES_key_schedule	key_schedule;
+ 
+   MakeKey(key, des_key);
+-  des_set_key(&des_key, key_schedule);
+-  des_ecb_encrypt((des_cblock *)clear, (des_cblock *)cipher, key_schedule, 1);
++  DES_set_key(&des_key, &key_schedule);
++  DES_ecb_encrypt((DES_cblock *)clear, (DES_cblock *)cipher, &key_schedule, 1);
+ }
+ 
+ #define LENGTH 20
+--- a/src/ssl.c
++++ b/src/ssl.c
+@@ -35,11 +35,13 @@ openssl_env * initssl() {
+     if (openssl_init == 0) {
+       openssl_init = 1;
+ #ifdef HAVE_OPENSSL
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+       if (_options.debug) {
+ 	SSL_load_error_strings();
+       }
+       SSL_library_init();
+       OpenSSL_add_all_algorithms();
++#endif
+ #else
+       matrixSslOpen();
+       syslog(LOG_DEBUG, "%s(%d): MatrixSslOpen()", __FUNCTION__, __LINE__);
+@@ -55,11 +57,13 @@ openssl_env * initssl_cli() {
+     if (openssl_init == 0) {
+       openssl_init = 1;
+ #ifdef HAVE_OPENSSL
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+       if (_options.debug) {
+ 	SSL_load_error_strings();
+       }
+       SSL_library_init();
+       OpenSSL_add_all_algorithms();
++#endif
+ #else
+       matrixSslOpen();
+       syslog(LOG_DEBUG, "%s(%d): MatrixSslOpen()", __FUNCTION__, __LINE__);
+@@ -132,7 +136,7 @@ _openssl_env_init(openssl_env *env, char *engine, int server) {
+   if (_options.sslciphers) {
+     SSL_CTX_set_cipher_list(env->ctx, _options.sslciphers);
+   }
+-#ifdef HAVE_OPENSSL_ENGINE
++#ifndef OPENSSL_NO_ENGINE
+   if (engine) {
+  retry:
+     if ((env->engine = ENGINE_by_id(engine)) == NULL) {
+@@ -609,7 +613,7 @@ openssl_env_free(openssl_env *env) {
+ #endif
+ #ifdef HAVE_OPENSSL
+   if (env->ctx) SSL_CTX_free(env->ctx);
+-#ifdef HAVE_OPENSSL_ENGINE
++#ifndef OPENSSL_NO_ENGINE
+   if (env->engine) ENGINE_free(env->engine);
+ #endif
+ #endif
+--- a/src/ssl.h
++++ b/src/ssl.h
+@@ -41,6 +41,7 @@ typedef struct {
+ #include <openssl/ssl.h>
+ #include <openssl/pem.h>
+ #include <openssl/engine.h>
++#include <openssl/err.h>
+ #elif HAVE_CYASSL
+ #include <stdio.h>
+ #include <stdlib.h>
