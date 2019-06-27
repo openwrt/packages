@@ -8,30 +8,28 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pagekitec
-PKG_REV:=0.91.171102
-PKG_VERSION:=$(PKG_REV)C
-PKG_RELEASE:=2
-PKG_LICENSE:=Apache-2.0
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=9e04b979cff827974ec9e9708daf116867bf1268cdad7dff4ad585172123f6b5
-PKG_SOURCE_URL:=https://github.com/pagekite/libpagekite.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=v$(PKG_REV)
+PKG_VERSION:=0.91.190530
+PKG_RELEASE:=1
 
-include $(INCLUDE_DIR)/package.mk
+PKG_SOURCE:=libpagekitec-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/pagekite/libpagekite/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=c812815aae6f100212b7d6f662370a0634151fabb59f028126a59c4083a6d26d
+PKG_BUILD_DIR:=$(BUILD_DIR)/libpagekitec-$(PKG_VERSION)
+
+PKG_MAINTAINER:= Karl Palsson <karlp@tweak.net.au>
+PKG_LICENSE:=Apache-2.0
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
-CONFIGURE_ARGS += --without-java
+include $(INCLUDE_DIR)/package.mk
 
 define Package/pagekitec/default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Make localhost servers publicly visible.
   URL:=https://pagekite.net/wiki/Floss/LibPageKite/
-  MAINTAINER:= Karl Palsson <karlp@tweak.net.au>
   DEPENDS:=+libopenssl +libpthread +libev
 endef
 
@@ -76,6 +74,8 @@ endef
 define Package/pagekitec/conffiles
 /etc/config/pagekitec
 endef
+
+CONFIGURE_ARGS += --without-java
 
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); ./autogen.sh );
