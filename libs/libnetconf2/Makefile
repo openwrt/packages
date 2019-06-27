@@ -9,19 +9,18 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libnetconf2
 PKG_VERSION:=0.12-r1
-PKG_RELEASE:=3
-
-PKG_LICENSE:=BSD-3-Clause
-PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/CESNET/libnetconf2/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=86269d3f1bc85bb17d8823d214f9a676ee3b14ee18a0b87a230380df8503e8f5
 
-CMAKE_INSTALL:=1
+PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
+CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -30,7 +29,7 @@ define Package/libnetconf2
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=NETCONF library
-  URL:=$(PKG_SOURCE_URL)
+  URL:=https://github.com/CESNET/libnetconf2
   DEPENDS:= +libyang +libssh +libopenssl +libpthread
 endef
 
@@ -44,21 +43,6 @@ endef
 CMAKE_OPTIONS += \
 	-DCMAKE_INSTALL_PREFIX:PATH=/usr \
 	-DCMAKE_BUILD_TYPE:STRING=Release
-
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/libnetconf2
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/libnetconf2/*.h $(1)/usr/include/libnetconf2/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
-
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnetconf2.so* $(1)/usr/lib/
-
-	$(INSTALL_DIR) $(1)/usr/include/libnetconf2
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/include/libnetconf2/* $(1)/usr/include/libnetconf2/
-
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libnetconf2.pc $(1)/usr/lib/pkgconfig/
-endef
 
 define Package/libnetconf2/install
 	$(INSTALL_DIR) $(1)/usr/lib
