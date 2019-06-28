@@ -104,10 +104,14 @@ get_mwan3_status() {
 			let offline=time_n-time_d
 		}
 
+		local uptime="0"
+		network_get_uptime uptime "$iface"
+
 		json_add_object "${iface}"
 		json_add_int age "$age"
 		json_add_int online "${online}"
 		json_add_int offline "${offline}"
+		json_add_int uptime "${uptime}"
 		json_add_int "score" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/SCORE")"
 		json_add_int "lost" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LOST")"
 		json_add_int "turn" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/TURN")"
