@@ -1,0 +1,128 @@
+From 9b400b32eb3673ab525f12f41a2ff3e4e3bfcccb Mon Sep 17 00:00:00 2001
+From: Eneas U de Queiroz <cotequeiroz@gmail.com>
+Date: Fri, 28 Jun 2019 11:05:20 -0300
+Subject: [PATCH] Add locking support to wolfSSL
+
+This takes advantage of wolfSSL openssl compatibility layer, so all
+that that's needed are library detection, and inclusion of specific
+headers.
+WolfSSL must be built with --enable-opensslextra to enable the required
+API, and that's being checked at build time, with a warning if disabled.
+
+Signed-off-by: Eneas U de Queiroz <cotequeiroz@gmail.com>
+
+diff --git a/setup.py b/setup.py
+index 3be0fcb..d4303b0 100644
+--- a/setup.py
++++ b/setup.py
+@@ -143,6 +143,7 @@ class ExtensionConfiguration(object):
+         return {
+             '--with-openssl': self.using_openssl,
+             '--with-ssl': self.using_openssl,
++            '--with-wolfssl': self.using_wolfssl,
+             '--with-gnutls': self.using_gnutls,
+             '--with-nss': self.using_nss,
+             '--with-mbedtls': self.using_mbedtls,
+@@ -163,7 +164,7 @@ class ExtensionConfiguration(object):
+ 
+         if 'PYCURL_SSL_LIBRARY' in os.environ:
+             ssl_lib = os.environ['PYCURL_SSL_LIBRARY']
+-            if ssl_lib in ['openssl', 'gnutls', 'nss', 'mbedtls']:
++            if ssl_lib in ['openssl', 'wolfssl', 'gnutls', 'nss', 'mbedtls']:
+                 ssl_lib_detected = ssl_lib
+                 getattr(self, 'using_%s' % ssl_lib)()
+             else:
+@@ -188,6 +189,10 @@ class ExtensionConfiguration(object):
+                         self.using_openssl()
+                         ssl_lib_detected = 'openssl'
+                         break
++                    if arg[2:] == 'wolfssl':
++                        self.using_wolfssl()
++                        ssl_lib_detected = 'wolfssl'
++                        break
+                     if arg[2:] == 'gnutls':
+                         self.using_gnutls()
+                         ssl_lib_detected = 'gnutls'
+@@ -506,6 +511,11 @@ manually. For other SSL backends please ignore this message.''')
+             self.libraries.append('ssl')
+         self.define_macros.append(('HAVE_CURL_SSL', 1))
+ 
++    def using_wolfssl(self):
++        self.define_macros.append(('HAVE_CURL_WOLFSSL', 1))
++        self.libraries.append('wolfssl')
++        self.define_macros.append(('HAVE_CURL_SSL', 1))
++
+     def using_gnutls(self):
+         self.define_macros.append(('HAVE_CURL_GNUTLS', 1))
+         self.libraries.append('gnutls')
+@@ -572,6 +582,7 @@ def strip_pycurl_options(argv):
+ PRETTY_SSL_LIBS = {
+     # setup.py may be detecting BoringSSL properly, need to test
+     'openssl': 'OpenSSL/LibreSSL/BoringSSL',
++    'wolfssl': 'wolfSSL',
+     'gnutls': 'GnuTLS',
+     'nss': 'NSS',
+     'mbedtls': 'mbedTLS',
+@@ -902,6 +913,7 @@ PycURL Unix options:
+  --with-gnutls                       libcurl is linked against GnuTLS
+  --with-nss                          libcurl is linked against NSS
+  --with-mbedtls                      libcurl is linked against mbedTLS
++ --with-wolfssl                      libcurl is linked against wolfSSL
+ '''
+ 
+ windows_help = '''\
+diff --git a/src/module.c b/src/module.c
+index 909cdfe..23387ec 100644
+--- a/src/module.c
++++ b/src/module.c
+@@ -351,6 +351,8 @@ initpycurl(void)
+     } else if (!strncmp(vi->ssl_version, "OpenSSL/", 8) || !strncmp(vi->ssl_version, "LibreSSL/", 9) ||
+                !strncmp(vi->ssl_version, "BoringSSL", 9)) {
+         runtime_ssl_lib = "openssl";
++    } else if (!strncmp(vi->ssl_version, "wolfSSL/", 8)) {
++        runtime_ssl_lib = "wolfssl";
+     } else if (!strncmp(vi->ssl_version, "GnuTLS/", 7)) {
+         runtime_ssl_lib = "gnutls";
+     } else if (!strncmp(vi->ssl_version, "NSS/", 4)) {
+diff --git a/src/pycurl.h b/src/pycurl.h
+index 2294cb8..092387f 100644
+--- a/src/pycurl.h
++++ b/src/pycurl.h
+@@ -164,6 +164,28 @@ pycurl_inet_ntop (int family, void *addr, char *string, size_t string_size);
+ #   include <openssl/ssl.h>
+ #   include <openssl/err.h>
+ #   define COMPILE_SSL_LIB "openssl"
++# elif defined(HAVE_CURL_WOLFSSL)
++#   include <wolfssl/options.h>
++#   if defined(OPENSSL_EXTRA)
++#     define HAVE_CURL_OPENSSL
++#     define PYCURL_NEED_SSL_TSL
++#     define PYCURL_NEED_OPENSSL_TSL
++#     include <wolfssl/openssl/ssl.h>
++#     include <wolfssl/openssl/err.h>
++#   else
++#    ifdef _MSC_VER
++#     pragma message(\
++       "libcurl was compiled with wolfSSL, but the library was built without " \
++       "--enable-opensslextra; thus no SSL crypto locking callbacks will be set, " \
++       "which may cause random crashes on SSL requests")
++#    else
++#     warning \
++       "libcurl was compiled with wolfSSL, but the library was built without " \
++       "--enable-opensslextra; thus no SSL crypto locking callbacks will be set, " \
++       "which may cause random crashes on SSL requests"
++#    endif
++#   endif
++#   define COMPILE_SSL_LIB "wolfssl"
+ # elif defined(HAVE_CURL_GNUTLS)
+ #   include <gnutls/gnutls.h>
+ #   if GNUTLS_VERSION_NUMBER <= 0x020b00
+@@ -195,7 +217,7 @@ pycurl_inet_ntop (int family, void *addr, char *string, size_t string_size);
+    /* since we have no crypto callbacks for other ssl backends,
+     * no reason to require users match those */
+ #  define COMPILE_SSL_LIB "none/other"
+-# endif /* HAVE_CURL_OPENSSL || HAVE_CURL_GNUTLS || HAVE_CURL_NSS || HAVE_CURL_MBEDTLS */
++# endif /* HAVE_CURL_OPENSSL || HAVE_CURL_WOLFSSL || HAVE_CURL_GNUTLS || HAVE_CURL_NSS || HAVE_CURL_MBEDTLS */
+ #else
+ # define COMPILE_SSL_LIB "none/other"
+ #endif /* HAVE_CURL_SSL */
