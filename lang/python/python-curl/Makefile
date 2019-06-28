@@ -73,6 +73,11 @@ ifdef CONFIG_LIBCURL_MBEDTLS
   PYTHON3_PKG_SETUP_ARGS+=--with-mbedtls
 endif
 
+ifdef CONFIG_LIBCURL_WOLFSSL
+  PYTHON_PKG_SETUP_ARGS+=--with-wolfssl
+  PYTHON3_PKG_SETUP_ARGS+=--with-wolfssl
+endif
+
 $(eval $(call PyPackage,python-curl))
 $(eval $(call BuildPackage,python-curl))
 $(eval $(call BuildPackage,python-curl-src))
