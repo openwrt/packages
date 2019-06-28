@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. /usr/share/libubox/jshn.sh
+
 IP4="ip -4"
 IP6="ip -6"
 IPS="ipset"
@@ -1066,7 +1068,18 @@ mwan3_report_iface_status()
 		[ -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" ] && \
 		[ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] && \
 		[ -n "$($IP route list table $id default dev $device 2> /dev/null)" ]; then
-		result="$(mwan3_get_iface_hotplug_state $1)"
+		json_init
+		json_add_string section interfaces
+		json_add_string interface "$1"
+		json_load "$(ubus call mwan3 status "$(json_dump)")"
+		json_select "interfaces"
+		json_select "$1"
+		json_get_vars online uptime
+		json_select ..
+		json_select ..
+		online="$(printf '%02dh:%02dm:%02ds\n' $(($online/3600)) $(($online%3600/60)) $(($online%60)))"
+		uptime="$(printf '%02dh:%02dm:%02ds\n' $(($uptime/3600)) $(($uptime%3600/60)) $(($uptime%60)))"
+		result="$(mwan3_get_iface_hotplug_state $1) $online, uptime $uptime"
 	elif [ -n "$($IP rule | awk '$1 == "'$(($id+1000)):'"')" ] || \
 		[ -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" ] || \
 		[ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] || \
