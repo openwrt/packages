@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=frp
 PKG_VERSION:=0.27.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/fatedier/frp/tar.gz/v${PKG_VERSION}?
@@ -25,6 +25,7 @@ include ../../lang/golang/golang-package.mk
 define Package/frp/template
   SECTION:=net
   CATEGORY:=Network
+  SUBMENU:=Web Servers/Proxies
   TITLE:=frp - fast reverse proxy
   URL:=https://github.com/fatedier/frp
   DEPENDS:=$(GO_ARCH_DEPENDS)
@@ -52,8 +53,10 @@ define Package/frp/install
 
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(2) $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/etc/frp
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/conf/$(2).ini $(1)/etc/frp/
+	$(INSTALL_DIR) $(1)/etc/frp/$(2).d/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/conf/$(2)_full.ini $(1)/etc/frp/$(2).d/
+	$(INSTALL_DIR) $(1)/etc/config/
+	$(INSTALL_CONF) ./files/$(2).config $(1)/etc/config/$(2)
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_BIN) ./files/$(2).init $(1)/etc/init.d/$(2)
 endef
