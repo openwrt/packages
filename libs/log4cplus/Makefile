@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=log4cplus
 PKG_VERSION:=2.0.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
@@ -20,6 +20,8 @@ PKG_MAINTAINER:=BangLang Huang <banglang.huang@foxmail.com>, Rosy Song <rosysong
 PKG_LICENSE:=BSD-2-Clause Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
+HOST_BUILD_PARALLEL:=1
+PKG_BUILD_PARALLEL:=1
 CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -40,14 +42,14 @@ define Package/log4cplus/description
   configuration. It is modeled after the Java log4j API.
 endef
 
-TARGET_CFLAGS += -flto
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
-
 CMAKE_OPTIONS += \
 	-DLOG4CPLUS_BUILD_LOGGINGSERVER:BOOL=OFF \
 	-DLOG4CPLUS_BUILD_TESTING:BOOL=OFF \
 	-DUNICODE:BOOL=OFF \
 	-DWITH_ICONV:BOOL=OFF
+
+TARGET_CFLAGS += -flto
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 define Package/log4cplus/install
 	$(INSTALL_DIR) $(1)/usr/lib
