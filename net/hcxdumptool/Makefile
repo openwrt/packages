@@ -12,8 +12,8 @@ PKG_NAME:=hcxdumptool
 PKG_VERSION:=5.1.7
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/github.com/ZerBea/hcxdumptool/releases/download/v$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/ZerBea/$(PKG_NAME)/archive/
 PKG_HASH:=6ac996a506cb312a5f1c5987f30a4a80c793993908750f69f2df51056f961269
 
 PKG_BUILD_PARALLEL:=1

@@ -11,8 +11,8 @@ PKG_NAME:=hcxtools
 PKG_VERSION:=5.1.6
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/github.com/ZerBea/hcxtools/releases/download/v$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/ZerBea/$(PKG_NAME)/archive/
 PKG_HASH:=19d2800c6f9339dd552ebc3e7195860f208a9856340b4db1aeaeb4a234557ca6
 
 PKG_BUILD_PARALLEL:=1
