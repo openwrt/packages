@@ -21,7 +21,7 @@ diff --git a/ch341a_spi.c b/ch341a_spi.c
 index 95e9c95..ee18624 100644
 --- a/ch341a_spi.c
 +++ b/ch341a_spi.c
-@@ -441,7 +441,12 @@ int ch341a_spi_init(void)
+@@ -444,7 +444,12 @@ int ch341a_spi_init(void)
  		return -1;
  	}
  
