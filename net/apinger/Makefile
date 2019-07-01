@@ -8,23 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apinger
-PKG_VERSION:=0.6.1
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_SOURCE_DATE:=2015-04-09
+PKG_SOURCE_VERSION:=78eb328721ba1a10571c19df95acd
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/Jajcus/apinger.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=c7da72f7ec26eedd7fd8d224c0e10787b204f94e
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=c6739bef32568877ad63dbfa8e34b617a287e225a0344d4c41ba891e1f25d487
+PKG_SOURCE_URL:=https://github.com/Jajcus/apinger
+PKG_MIRROR_HASH:=4ada1330fc5d0adc0216d141f5e3b494df7a4c6500bbffce1efeab3d58684f7e
 
 PKG_MAINTAINER:=Alex Samorukov <samm@os2.kiev.ua>
-PKG_LICENSE:= GPL-2.0
+PKG_LICENSE:=GPL-2.0-only
 
+PKG_REMOVE_FILES:=autogen.sh
 PKG_FIXUP:=autoreconf
 
-PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=0
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -33,7 +32,6 @@ define Package/apinger
   CATEGORY:=Network
   TITLE:=Tool which monitors various IP devices by simple ICMP echo requests
   URL:=https://github.com/Jajcus/apinger
-  PKG_MAINTAINER:=Alex Samorukov <samm@os2.kiev.ua>
 endef
 
 define Package/apinger/description
@@ -49,10 +47,6 @@ endef
 
 define Package/apinger/conffiles
 /etc/apinger.conf
-endef
-
-define Build/Configure
-	$(call Build/Configure/Default)
 endef
 
 define Package/apinger/install
