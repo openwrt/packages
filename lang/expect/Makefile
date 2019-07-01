@@ -17,7 +17,7 @@ PKG_HASH:=49a7da83b0bdd9f46d04a04deec19c7767bb9a323e40c4781f89caf760b92c34
 PKG_MAINTAINER:=Vadim Radovel <vadim@radovel.ru>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)$(PKG_VERSION)
-PKG_BUILD_DEPENDS:=tcl/host
+PKG_BUILD_DEPENDS:=tcl tcl/host
 
 # prevent "autoreconf" from removing "aclocal.m4"
 PKG_REMOVE_FILES:=
