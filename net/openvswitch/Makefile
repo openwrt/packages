@@ -16,7 +16,7 @@ include $(INCLUDE_DIR)/kernel.mk
 #
 PKG_NAME:=openvswitch
 PKG_VERSION:=2.11.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
 PKG_HASH:=c1296ae44a7b176150915e33bc497cc0a7a02caeba84ea43ce9b6a2509d9b5dc
@@ -75,6 +75,7 @@ ovs_kmod_openvswitch_depends:=\
 	  +kmod-nf-conntrack \
 	  +IPV6:kmod-nf-conntrack6 \
 	  +(!LINUX_4_9&&!LINUX_4.14):kmod-nsh \
+	  +(!LINUX_4_9&&!LINUX_4.14):kmod-ipt-conntrack-extra \
 
 ovs_kmod_openvswitch_files:=$(ovs_kmod_upstream_dir)/openvswitch.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch))
