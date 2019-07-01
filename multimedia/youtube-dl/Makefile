@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=youtube-dl
-PKG_VERSION:=2019.6.21
+PKG_VERSION:=2019.6.27
 PKG_RELEASE:=1
 
 PKG_SOURCE:=youtube_dl-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/y/youtube_dl/
-PKG_HASH:=a64ffda79f467c81877d5452d775ebf858b43853ff7ce8644be3a80ebf3f9ea9
+PKG_HASH:=9ffbc02a0a150795f076b6a521fdfe2dad3f3305a8e3a0d29a720c551d4a9a44
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/youtube_dl-$(PKG_VERSION)
 
@@ -41,11 +41,12 @@ endef
 define Package/youtube-dl
 $(call Package/youtube-dl/Default)
   DEPENDS+= \
-	+python3 \
-	+python3-email \
-	+python3-xml \
-	+python3-codecs \
-	+python3-ctypes
+    +python3 \
+    +python3-email \
+    +python3-xml \
+    +python3-codecs \
+    +python3-ctypes \
+    +python3-setuptools
   VARIANT:=python3
 endef
 
