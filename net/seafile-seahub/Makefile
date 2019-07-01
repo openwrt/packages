@@ -9,15 +9,19 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-seahub
 PKG_VERSION:=6.3.4
-PKG_RELEASE:=5
-PKG_LICENSE:=Apache-2.0
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/haiwen/seahub/tar.gz/v$(PKG_VERSION)-server?
 PKG_HASH:=53a9efdb6791fd3a2a191e89cb0f133632056046ec08adbb2ad72088e6161430
-PKG_BUILD_DIR:=$(BUILD_DIR)/seahub-$(PKG_VERSION)-server
+
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_LICENSE:=Apache-2.0
+PKG_LICENSE_FILES:=LICENSE.txt
 
 HOST_PYTHON_PACKAGE_BUILD_DEPENDS:="django>=1.11"
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/seahub-$(PKG_VERSION)-server
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python-package.mk
