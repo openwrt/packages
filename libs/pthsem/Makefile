@@ -9,15 +9,15 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pthsem
 PKG_VERSION:=2.0.8
-PKG_RELEASE:=5
-
-PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
-PKG_LICENSE:=LGPL-2.1+
-PKG_LICENSE_FILES:=COPYING
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.auto.tuwien.ac.at/~mkoegler/pth/
 PKG_HASH:=4024cafdd5d4bce2b1778a6be5491222c3f6e7ef1e43971264c451c0012c5c01
+
+PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
+PKG_LICENSE:=LGPL-2.1-or-later
+PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -40,7 +40,7 @@ endef
 
 # The musl libc provides a proper implementation of sigaltstack() so
 # prevent configure from wrongly assuming a broken Linux platform
-ifeq ($(CONFIG_USE_MUSL),y)
+ifneq ($(CONFIG_USE_GLIBC),y)
   CONFIGURE_VARS += \
 	ac_cv_check_sjlj=ssjlj
 endif
