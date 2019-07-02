@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
 PKG_VERSION:=0.20.23
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.20/
@@ -48,7 +48,7 @@ endef
 define Package/mpd-full
 $(call Package/mpd/Default)
   TITLE+= (full)
-  DEPENDS+= +libffmpeg +libid3tag +libmms +libupnp +libshout
+  DEPENDS+= +libffmpeg +libid3tag +libmms +libupnp +libshout +pulseaudio-daemon
   PROVIDES:=mpd
   VARIANT:=full
 endef
@@ -99,7 +99,7 @@ define Package/mpd-avahi-service/conffiles
 /etc/avahi/services/mpd.service
 endef
 
-EXTRA_LDFLAGS += $(if $(ICONV_FULL),-liconv,-Wl,--whole-archive -liconv -Wl,--no-whole-archive)
+EXTRA_LDFLAGS += $(if $(ICONV_FULL),-liconv,-Wl,--whole-archive -liconv -Wl,--no-whole-archive) -Wl,-rpath-link=$(STAGING_DIR)/usr/lib/pulseaudio
 
 CONFIGURE_ARGS += \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
@@ -130,7 +130,6 @@ CONFIGURE_ARGS += \
 	--disable-nfs \
 	--disable-openal \
 	--disable-opus \
-	--disable-pulse \
 	--disable-sidplay \
 	--disable-smbclient \
 	--disable-sndfile \
@@ -166,6 +165,7 @@ ifeq ($(BUILD_VARIANT),full)
 	--enable-pipe-output \
 	--enable-recorder-output \
 	--enable-shout \
+	--enable-pulse \
 	--disable-vorbis
 endif
 
@@ -179,6 +179,7 @@ ifeq ($(BUILD_VARIANT),mini)
 	--disable-id3 \
 	--disable-mms \
 	--disable-shout \
+	--disable-pulse \
 	--enable-vorbis \
 	--with-tremor=yes \
 	--disable-recorder-output
