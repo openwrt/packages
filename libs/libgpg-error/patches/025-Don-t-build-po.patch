@@ -1,0 +1,29 @@
+From: =?UTF-8?q?Rafa=C5=82=20Mi=C5=82ecki?= <rafal@milecki.pl>
+Date: Wed, 6 May 2020 22:51:26 +0200
+Subject: [PATCH] Don't build po
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This is needed to fix:
+*** error: gettext infrastructure mismatch: using a Makefile.in.in from gettext version 0.17 but the autoconf macros are from gettext version 0.18
+
+Using PKG_FIXUP:=autoreconf doesn't regenrate Makefile.in.in so it
+results in GETTEXT_MACRO_VERSION mismatch. The same problem affected
+minidlna: 90d3ef2f7633 ("minidlna: exclude "po" directory to fix
+CONFIG_BUILD_NLS=y builds").
+
+Signed-off-by: Rafał Miłecki <rafal@milecki.pl>
+---
+
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -33,7 +33,7 @@ else
+ lang_subdirs =
+ endif
+ 
+-SUBDIRS = m4 src tests po $(lang_subdirs)
++SUBDIRS = m4 src tests $(lang_subdirs)
+ 
+ 
+ dist-hook: gen-ChangeLog
