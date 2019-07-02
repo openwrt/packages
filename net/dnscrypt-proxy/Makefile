@@ -8,21 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnscrypt-proxy
-PKG_VERSION:=1.9.5
-PKG_RELEASE:=8
+PKG_SOURCE_DATE:=2018-11-22
+PKG_SOURCE_VERSION:=f61ca76a852cf56e399a458f9e002886b1b049f0
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_VERSION:=f71ca699aa3399f0c103c1f13ce1a86f9ce9638c
 PKG_SOURCE_URL:=https://github.com/dyne/dnscrypt-proxy
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_MIRROR_HASH:=a3a52f7f85b390184695db688c9837bf51cf25c4cb2c1093bb315640dbd2a54f
-
-PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
+PKG_MIRROR_HASH:=1de8d9913aea4528920dbc6fcd4769a7ab70f7c1c73abba39e68e07376cbb395
 
 PKG_MAINTAINER:=Damiano Renfer <damiano.renfer@gmail.com>
 PKG_LICENSE:=ISC
+PKG_LICENSE_FILES:=COPYING
+
+PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_DNSCRYPT_ENABLE_PLUGINS
 
@@ -33,7 +33,6 @@ define Package/dnscrypt-proxy/Default
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
   URL:=https://github.com/dyne/dnscrypt-proxy
-  MAINTAINER:=Damiano Renfer <damiano.renfer@gmail.com>
 endef
 
 define Package/dnscrypt-proxy
@@ -55,7 +54,6 @@ endef
 define Package/dnscrypt-proxy-resolvers
   $(call Package/dnscrypt-proxy/Default)
   TITLE:=Package with current list of dnscrypt-proxy resolvers
-  VERSION:=$(PKG_VERSION)+git-20171001-2d43be3-$(PKG_RELEASE)
 endef
 
 define Package/dnscrypt-proxy-resolvers/description
