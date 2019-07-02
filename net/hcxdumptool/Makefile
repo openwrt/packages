@@ -1,5 +1,4 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
 # Copyright (C) 2019 Andreas Nilsen <adde88@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -12,13 +11,13 @@ PKG_NAME:=hcxdumptool
 PKG_VERSION:=5.1.7
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/ZerBea/$(PKG_NAME)/archive/
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/zerbea/hcxdumptool/tar.gz/$(PKG_VERSION)?
 PKG_HASH:=6ac996a506cb312a5f1c5987f30a4a80c793993908750f69f2df51056f961269
 
-PKG_BUILD_PARALLEL:=1
-
-PKG_USE_MIPS16:=0
+PKG_MAINTAINER:=Andreas Nilsen <adde88@gmail.com>
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILE:=license.txt
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -27,9 +26,8 @@ define Package/hcxdumptool
   CATEGORY:=Network
   DEPENDS:=+libpcap
   TITLE:=hcxdumptool
-  URL:=https://github.com/ZerBea/hcxdumptool.git
+  URL:=https://github.com/ZerBea/hcxdumptool
   SUBMENU:=wireless
-  MAINTAINER:=Andreas Nilsen <adde88@gmail.com>
 endef
 
 define Package/hcxdumptool/description
@@ -48,7 +46,7 @@ endef
 
 define Package/hcxdumptool/install
 	$(INSTALL_DIR) $(1)/sbin
-	$(CP) $(PKG_BUILD_DIR)/hcxdumptool $(1)/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hcxdumptool $(1)/sbin/
 endef
 
 $(eval $(call BuildPackage,hcxdumptool))
