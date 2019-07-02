@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freetype
-PKG_VERSION:=2.10.0
+PKG_VERSION:=2.10.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/freetype
-PKG_HASH:=fccc62928c65192fff6c98847233b28eb7ce05f12d2fea3f6cc90e8b4e5fbe06
+PKG_HASH:=16dbfa488a21fe827dc27eaf708f42f7aa3bb997d745d31a19781628c36ba26f
 
-PKG_LICENSE:=FTL GPL-2.0 MIT ZLIB
-PKG_LICENSE_FILES:=docs/LICENSE.TXT docs/FTL.TXT docs/GPLv2.TXT src/bdf/README src/pcf/README src/gzip/zlib.h
+PKG_LICENSE:=FTL GPL-2.0-only MIT ZLIB GPL-3.0-or-later
+PKG_LICENSE_FILES:=docs/LICENSE.TXT docs/FTL.TXT docs/GPLv2.TXT src/bdf/README src/pcf/README src/gzip/zlib.h builds/unix/config.sub builds/unix/config.guess builds/unix/libtool 
 PKG_CPE_ID:=cpe:/a:freetype:freetype2
 PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
 
