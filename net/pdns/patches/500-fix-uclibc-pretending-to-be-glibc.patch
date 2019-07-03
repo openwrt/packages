@@ -17,7 +17,7 @@ index e6686787b3..209db7af89 100644
  }
  
 -#ifdef __GLIBC__
-+#ifdef __GLIBC__ && !defined(__UCLIBC__)
++#if defined(__GLIBC__) && !defined(__UCLIBC__)
  #include <execinfo.h>
  static void tbhandler(int num)
  {
@@ -26,7 +26,7 @@ index e6686787b3..209db7af89 100644
    s_starttime=time(0);
  
 -#ifdef __GLIBC__
-+#ifdef __GLIBC__ && !defined(__UCLIBC__)
++#if defined(__GLIBC__) && !defined(__UCLIBC__)
    signal(SIGSEGV,tbhandler);
    signal(SIGFPE,tbhandler);
    signal(SIGABRT,tbhandler);
@@ -35,7 +35,7 @@ index e6686787b3..209db7af89 100644
      // we really need to do work - either standalone or as an instance
  
 -#ifdef __GLIBC__
-+#ifdef __GLIBC__ && !defined(__UCLIBC__)
++#if defined(__GLIBC__) && !defined(__UCLIBC__)
      if(!::arg().mustDo("traceback-handler")) {
        g_log<<Logger::Warning<<"Disabling traceback handler"<<endl;
        signal(SIGSEGV,SIG_DFL);
