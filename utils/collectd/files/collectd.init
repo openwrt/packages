@@ -1,8 +1,6 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2006-2016 OpenWrt.org
 
-. "/usr/share/libubox/jshn.sh"
-
 START=80
 STOP=10
 
@@ -62,6 +60,7 @@ process_generic() {
 
 	local config=""
 
+	. /usr/share/libubox/jshn.sh
 	json_init
 	json_load_file "$json"
 
