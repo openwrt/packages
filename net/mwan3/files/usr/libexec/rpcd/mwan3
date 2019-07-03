@@ -76,6 +76,7 @@ get_mwan3_status() {
 	local age=0
 	local online=0
 	local offline=0
+	local up="0"
 	local enabled pid device time_p time_n time_u time_d
 
 	network_get_device device $1
@@ -108,6 +109,7 @@ get_mwan3_status() {
 
 		config_get enabled "$iface" enabled 0
 		network_get_uptime uptime "$iface"
+		network_is_up "$iface" && up="1"
 
 		json_add_object "${iface}"
 		json_add_int age "$age"
@@ -120,6 +122,7 @@ get_mwan3_status() {
 		json_add_string "status" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS")"
 		json_add_boolean "enabled" "${enabled}"
 		json_add_boolean "running" "${running}"
+		json_add_boolean "up" "${up}"
 		json_add_array "track_ip"
 		for file in $MWAN3TRACK_STATUS_DIR/${iface}/*; do
 			track="${file#*/TRACK_}"
