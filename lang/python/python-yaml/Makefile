@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=PyYAML
-PKG_VERSION:=5.1
+PKG_VERSION:=5.1.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/P/PyYAML
-PKG_HASH:=436bc774ecf7c103814098159fbb84c2715d25980175292c648f2da143909f95
+PKG_HASH:=b4bb4d3f5e232425e25dda21c070ce05168a786ac9eda43768ab7f3ac2770955
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT
@@ -30,8 +30,8 @@ PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$
 
 define Package/python-yaml/Default
   SECTION:=lang
-  SUBMENU:=Python
   CATEGORY:=Languages
+  SUBMENU:=Python
   TITLE:=YAML parser and emitter for Python
   URL:=https://github.com/yaml/pyyaml
   DEPENDS:=+libyaml
@@ -52,7 +52,7 @@ $(call Package/python-yaml/Default)
 endef
 
 define Package/python-yaml/description
-PyYAML is a YAML parser and emitter for the Python programming language.
+  PyYAML is a YAML parser and emitter for the Python programming language.
 endef
 
 define Package/python3-yaml/description
