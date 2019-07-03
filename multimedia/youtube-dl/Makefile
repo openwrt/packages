@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=youtube-dl
-PKG_VERSION:=2019.6.27
+PKG_VERSION:=2019.7.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=youtube_dl-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/y/youtube_dl/
-PKG_HASH:=9ffbc02a0a150795f076b6a521fdfe2dad3f3305a8e3a0d29a720c551d4a9a44
+PKG_HASH:=829fc833d8cc4a24c883fa49fd450d06b29fb17cddcb885314af92da220234f1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/youtube_dl-$(PKG_VERSION)
 
@@ -24,23 +24,13 @@ PKG_MAINTAINER:=Adrian Panella <ianchi74@outlook.com>, Josef Schlehofer <pepe.sc
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
 
-define Package/youtube-dl/Default
+define Package/youtube-dl
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=Utility to download videos from YouTube.com
   URL:=https://yt-dl.org
-  DEPENDS:=+ca-certificates
-endef
-
-define Package/youtube-dl/description
-  youtube-dl is a small command-line program to download videos
-  from YouTube.com and other video sites.
-  It requires the Python3 interpreter.
-endef
-
-define Package/youtube-dl
-$(call Package/youtube-dl/Default)
-  DEPENDS+= \
+  DEPENDS:= \
+    +ca-certificates \
     +python3 \
     +python3-email \
     +python3-xml \
@@ -48,6 +38,12 @@ $(call Package/youtube-dl/Default)
     +python3-ctypes \
     +python3-setuptools
   VARIANT:=python3
+endef
+
+define Package/youtube-dl/description
+  youtube-dl is a small command-line program to download videos
+  from YouTube.com and other video sites.
+  It requires the Python3 interpreter.
 endef
 
 $(eval $(call Py3Package,youtube-dl))
