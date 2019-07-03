@@ -30,7 +30,7 @@ SEAFILE_PYTHON_DEPENDS:= \
 	simplejson chardet dateutil mysql pytz qrcode requests requests-oauthlib \
 	django django-constance django-appconf django-compressor django-formtools \
 	django-jsonfield django-picklefield django-postoffice django-restframework \
-	pillow
+	pillow django-simple-captcha
 
 define Package/seafile-seahub
   SECTION:=net
@@ -39,7 +39,7 @@ define Package/seafile-seahub
   URL:=https://seafile.com/
   DEPENDS:=+python \
 	+django-simple-captcha +django-statici18n +django-webpack-loader \
-	+flup +gunicorn +openpyxl \
+	+python-flup +gunicorn +openpyxl \
 	$(foreach dep,$(SEAFILE_PYTHON_DEPENDS),+python-$(dep))
 endef
 
