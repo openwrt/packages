@@ -7,38 +7,18 @@ STOP=1
 USE_PROCD=1
 PROG=/usr/bin/squeezelite
 
-#
-# Auto config checks for existing codec installations if not specified in config
-# Explicit disable (override) by setting appropriate "decode_xxx" in config
-#
+# Check if a codec is disabled in the configuration (ie "decode_<codec> 0")
 checkcodec() {
-	config_get_bool auto_conf options "decoder_auto_conf" 1
-	config_get_bool codec options "$1" $auto_conf
-	
-	if [ $codec -ne 0 ] ; then 
-		if [ $auto_conf -eq 0 ] ; then
-			#force use requested
-			echo "$4"
+	config_get_bool codec options "$1" 1
+
+	if [ $codec -eq 0 ] ; then
+		if [ -z "$3" ] ; then
+			echo "-e $2"
 		else
-			if [ -e "/usr/lib/${2}" ] ; then
-				# Use codec (it exists)
-				echo "$4"
-			else
- 				#exclude non-existant
-			        if [ -z "$4" ] ; then
-			                echo "-e $3"
-			        else
-			                echo "$4,$3"
-			        fi
-			fi
-		fi
-	else
-		# explicitly excluded
-	        if [ -z "$4" ] ; then
-	                echo "-e $3"
-	        else
-	                echo "$4,$3"
+			echo "$3,$2"
 	        fi
+	else
+		echo "$3"
 	fi
 }
 
@@ -59,10 +39,10 @@ make_cmdline() {
 
 	config_get alsa_buffer options alsa_buffer 200
 	[ $alsa_buffer -eq 0 ] && alsa_buffer="200"
-    
+
 	config_get alsa_period options alsa_period 4
 	[ $alsa_period -eq 0 ] && alsa_period="4"
-    
+
 	config_get alsa_format options alsa_format 16
 	[ $alsa_format = "0" ] && alsa_format="16"
 
@@ -95,20 +75,12 @@ make_cmdline() {
 	config_get priority options priority 0
 	[ $priority -ne 0 ] && cmdline="$cmdline -p $priority"
 
-	#
-	# ***NOTE: codec lib names are in squeezelite.h (set decode_auto_conf to 0 to ignore)
-	#
 	local excl_codecs=""
-	local vorbis_lib="libvorbisidec.so.1"
-
-	excl_codecs=`checkcodec decode_flac "libFLAC.so.8" flac "$excl_codecs"`
-	excl_codecs=`checkcodec decode_mp3 "libmpg123.so.0" mp3 "$excl_codecs"`
-	excl_codecs=`checkcodec decode_aac "libfaad.so.2" aac "$excl_codecs"`
-
-	[ -e "/usr/lib/$vorbis_lib" ] || vorbis_lib="libvorbisfile.so.3"
-
-	excl_codecs=`checkcodec decode_ogg "$vorbis_lib" ogg "$excl_codecs"`
-	excl_codecs=`checkcodec decode_wma_alac "libavcodec.so.56" wma,alac "$excl_codecs"`
+	excl_codecs=$(checkcodec decode_flac flac "$excl_codecs")
+	excl_codecs=$(checkcodec decode_mp3 mp3 "$excl_codecs")
+	excl_codecs=$(checkcodec decode_aac aac "$excl_codecs")
+	excl_codecs=$(checkcodec decode_ogg ogg "$excl_codecs")
+	excl_codecs=$(checkcodec decode_wma_alac wma,alac "$excl_codecs")
 	cmdline="$cmdline $excl_codecs"
 
 	config_get dop options dsd_over_pcm 0
