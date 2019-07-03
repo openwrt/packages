@@ -17,7 +17,7 @@ PKG_HASH:=19d2800c6f9339dd552ebc3e7195860f208a9856340b4db1aeaeb4a234557ca6
 
 PKG_MAINTAINER:=Andreas Nilsen <adde88@gmail.com>
 PKG_LICENSE:=MIT
-PKG_LICENSE_FILE:=license.txt
+PKG_LICENSE_FILES:=license.txt
 
 include $(INCLUDE_DIR)/package.mk
 
