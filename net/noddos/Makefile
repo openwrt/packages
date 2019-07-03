@@ -9,18 +9,20 @@ include $(TOPDIR)/rules.mk
 
 # Name and release number of this package
 PKG_NAME:=noddos
-PKG_RELEASE:=3
-PKG_LICENSE:=GPLv3
-PKG_MAINTAINER:=Steven Hessing <steven.hessing@gmail.com>
+PKG_VERSION:=0.5.5
+PKG_RELEASE:=4
 
-PKG_SOURCE_VERSION:=0.5.5
-PKG_SOURCE_URL:=https://github.com/noddos/noddos/releases/download/v$(PKG_SOURCE_VERSION)/
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.xz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/noddos/noddos/releases/download/v$(PKG_VERSION)/
 PKG_HASH:=1f5be0c1015b0407036eecc8449d60d2abcacec442bba55db85fc32e89f754db
 
-PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
+PKG_MAINTAINER:=Steven Hessing <steven.hessing@gmail.com>
+PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=LICENSE.md
 
+PKG_BUILD_PARALLEL:=1
 CMAKE_INSTALL:=1
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
@@ -29,7 +31,7 @@ define Package/noddos
 	CATEGORY:=Network
 	TITLE:=noddos -- device-aware cloud-powered firewall
 	URL:=https://www.noddos.io/
-	DEPENDS:=+libstdcpp +libnetfilter-conntrack +libcurl +libopenssl +openssl-util +ca-bundle +ca-certificates +wget +bzip2 +libtins +ipset +libpthread +libyaml-cpp
+	DEPENDS:=+libstdcpp +libnetfilter-conntrack +libcurl +libopenssl +openssl-util +ca-bundle +wget +bzip2 +libtins +ipset +libpthread +libyaml-cpp
 endef
 
 define Package/noddos/description
