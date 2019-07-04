@@ -1,0 +1,34 @@
+--- a/m4/pdns_check_os.m4
++++ b/m4/pdns_check_os.m4
+@@ -35,16 +35,21 @@
+   AM_CONDITIONAL([HAVE_LINUX], [test "x$have_linux" = "xyes"])
+   AM_CONDITIONAL([HAVE_SOLARIS], [test "x$have_solaris" = "xyes"])
+
+-  case "$host" in
+-  mips* | powerpc-* )
+-    AC_MSG_CHECKING([whether the linker accepts -latomic])
+-    LDFLAGS="-latomic $LDFLAGS"
+-    AC_LINK_IFELSE([m4_default([],[AC_LANG_PROGRAM()])],
+-      [AC_MSG_RESULT([yes])],
+-      [AC_MSG_ERROR([Unable to link against libatomic, cannot continue])]
+-    )
+-    ;;
+-  esac
++  AC_MSG_CHECKING([whether -latomic is needed for __atomic builtins])
++  AC_LINK_IFELSE(
++    [AC_LANG_PROGRAM([[#include <stdint.h>]],
++       [[uint64_t val = 0; __atomic_add_fetch(&val, 1, __ATOMIC_RELAXED);]]
++    )],
++    [AC_MSG_RESULT([no])],
++    [LIBS="$LIBS -latomic"
++     AC_LINK_IFELSE(
++       [AC_LANG_PROGRAM([[#include <stdint.h>]],
++               [[uint64_t val = 0; __atomic_add_fetch(&val, 1, __ATOMIC_RELAXED);]]
++       )],
++       [AC_MSG_RESULT([yes])],
++       [AC_MSG_FAILURE([libatomic needed, but linking with -latomic failed, cannot continue])]
++    )]
++  )
+
+   AC_SUBST(THREADFLAGS)
+   AC_SUBST([DYNLINKFLAGS], [-export-dynamic])
