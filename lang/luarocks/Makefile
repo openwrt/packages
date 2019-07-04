@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luarocks
 PKG_VERSION:=2.2.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_MIRROR_HASH:=e4cf874c9bce34a5accd41daaf51a3213763b8b6f7f658ca4d13a70a7ddb1c0c
