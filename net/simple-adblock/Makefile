@@ -7,7 +7,9 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=simple-adblock
 PKG_VERSION:=1.7.0
 PKG_RELEASE:=1
-PKG_LICENSE:=GPL-3.0+
+
+PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 
 include $(INCLUDE_DIR)/package.mk
