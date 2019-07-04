@@ -1,0 +1,22 @@
+From 73eb6cef41daba0359c1888e4756108d41b4e819 Mon Sep 17 00:00:00 2001
+From: Darren Tucker <dtucker@dtucker.net>
+Date: Sun, 16 Jun 2019 12:55:27 +1000
+Subject: [PATCH] Include stdio.h for vsnprintf.
+
+Patch from mforney at mforney.org.
+---
+ openbsd-compat/setproctitle.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/openbsd-compat/setproctitle.c b/openbsd-compat/setproctitle.c
+index dbd1a95a0..e4064323a 100644
+--- a/openbsd-compat/setproctitle.c
++++ b/openbsd-compat/setproctitle.c
+@@ -36,6 +36,7 @@
+ #ifndef HAVE_SETPROCTITLE
+ 
+ #include <stdarg.h>
++#include <stdio.h>
+ #include <stdlib.h>
+ #include <unistd.h>
+ #ifdef HAVE_SYS_PSTAT_H
