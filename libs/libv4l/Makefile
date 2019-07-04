@@ -64,7 +64,7 @@ define Package/v4l-utils
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE+= utilities
-  DEPENDS := +libv4l $(CXX_DEPENDS) $(ICONV_DEPENDS)
+  DEPENDS := +libv4l $(CXX_DEPENDS) $(ICONV_DEPENDS) $(INTL_DEPENDS)
 endef
 
 define Package/v4l-utils/description
