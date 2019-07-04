@@ -9,13 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsync
 PKG_VERSION:=3.1.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.samba.org/pub/rsync/src
 PKG_HASH:=55cc554efec5fdaad70de921cd5a5eeb6c29a95524c715f3bbf849235b0800c0
+
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
-PKG_LICENSE:=GPL-3.0
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
@@ -29,7 +30,7 @@ define Package/rsync
   SUBMENU:=File Transfer
   TITLE:=Fast remote file copy program (like rcp)
   DEPENDS:=+libpopt +RSYNC_xattr:libattr +RSYNC_acl:libacl +RSYNC_zlib:zlib
-  URL:=http://rsync.samba.org/
+  URL:=https://rsync.samba.org/
   MENU:=1
 endef
 
@@ -66,13 +67,15 @@ else
     CONFIGURE_ARGS+= --disable-ipv6
 endif
 
+CONFIGURE_VARS += rsync_cv_HAVE_GETTIMEOFDAY_TZ=yes
+
 define Package/rsyncd
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=File Transfer
   TITLE:=Rsync daemon
   DEPENDS:=+rsync
-  URL:=http://rsync.samba.org/
+  URL:=https://rsync.samba.org/
 endef
 
 define Package/rsync/description
