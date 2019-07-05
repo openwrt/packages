@@ -1,0 +1,55 @@
+From 1f610129b475b417509b251e022ad46d2210ff50 Mon Sep 17 00:00:00 2001
+From: Rafael Cossovan <navossoc@gmail.com>
+Date: Tue, 3 Apr 2018 17:04:35 -0300
+Subject: [PATCH 2/3] Fixes strerror_r GNU/XSI issue #40.
+ http://www.zverovich.net/2015/03/13/reliable-detection-of-strerror-variants.html
+
+---
+ src/logger.cc | 14 ++++++++++++-
+ src/logger.h  |  3 +++
+ 2 files changed, 15 insertions(+), 1 deletions(-)
+
+diff --git a/src/logger.cc b/src/logger.cc
+index 6ddbea9..6ccb2a0 100644
+--- a/src/logger.cc
++++ b/src/logger.cc
+@@ -84,6 +84,6 @@ std::string logger::err()
+ {
+     char buf[2048];
+-    return strerror_r(errno, buf, sizeof(buf));
++    return strerror_r_wrapper(strerror_r(errno, buf, sizeof(buf)), buf);
+ }
+ 
+ logger logger::error()
+@@ -221,4 +221,16 @@ 
+     return false;
+ }
+
++// XSI-compliant: int
++std::string logger::strerror_r_wrapper(int, char* s)
++{
++    return s;
++}
++
++// GNU-specific: char *
++std::string logger::strerror_r_wrapper(char* s, char*)
++{
++    return s;
++}
++
+ NDPPD_NS_END
+diff --git a/src/logger.h b/src/logger.h
+index 7d3d7db..0446595 100644
+--- a/src/logger.h
++++ b/src/logger.h
+@@ -91,6 +91,9 @@ class logger {
+ 
+     static int _max_pri;
+ 
++    // helpers for strerror_r
++    static std::string strerror_r_wrapper(int, char* s);
++    static std::string strerror_r_wrapper(char* s, char*);
+ 
+ };
+ 
+

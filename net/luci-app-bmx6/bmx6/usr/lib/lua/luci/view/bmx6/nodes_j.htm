@@ -1,0 +1,204 @@
+<%#
+   Copyright (C) 2011 Pau Escrich <pau@dabax.net>
+   Contributors Lluis Esquerda <eskerda@gmail.com>
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License along
+   with this program; if not, write to the Free Software Foundation, Inc.,
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+   The full GNU General Public License is included in this distribution in
+   the file called "COPYING".
+-%>
+
+<%+header%>
+<script type="text/javascript" src="<%=resource%>/cbi.js"></script>
+<script type="text/javascript" src="<%=resource%>/bmx6/js/polling.js"></script>
+
+
+<style>
+
+	div.hideme{
+		display: none;
+	}
+
+	div.info{
+		background: #FFF;
+		border: solid 0px;
+		height: 90px;
+		display: block;
+		overflow: auto;
+	}
+
+	div.inforow{
+		text-align:left;
+		display:inline-block;
+		width:20%;
+		margin:5px;
+		vertical-align:top;
+
+	}
+
+#extra-info ul { list-style: none outside none; margin-left: 0em; }
+
+</style>
+<div class="cbi-map">
+
+<h2>Node originators</h2>
+<div class="cbi-map-descr"></div>
+<div id="extra-info" class="info">
+	<br />
+	<center>
+	Click icon <img src="<%=resource%>/bmx6/world.png" /> to see individual node information
+	</center>
+</div>
+<fieldset class="cbi-section">
+	<legend><%:Mesh nodes%></legend>
+	<table class="cbi-section-table" id="descriptions_table">
+		<tr class="cbi-section-table-titles">
+			<th class="cbi-section-table-cell"></th>
+			<th class="cbi-section-table-cell"><%:Hostname%></th>
+			<th class="cbi-section-table-cell"><%:Primary IP%></th>
+			<th class="cbi-section-table-cell"><%:Via Device%></th>
+			<th class="cbi-section-table-cell"><%:Metric%></th>
+			<th class="cbi-section-table-cell"><%:Last Desc%></th>
+			<th class="cbi-section-table-cell"><%:Last Ref%></th>
+			<th class="cbi-section-table-cell"><%:Blocked%></th>
+		</tr>
+		<tr class="cbi-section-table-row">
+			<td colspan="8"><br /><center><em><%:Collecting data...%></em></center></td>
+		</tr>
+	</table>
+</fieldset>
+
+</div>
+
+<script type="text/javascript">//<![CDATA[
+		var displayExtraInfo = function ( id ) {
+		  document.getElementById('extra-info').innerHTML = document.getElementById(id).innerHTML;
+		}
+	
+		new TablePooler(5,"/cgi-bin/bmx6-info", {'$neighbours':''}, "descriptions_table", function(st){
+	  	  var infoicon = "<%=resource%>/bmx6/world_small.png";
+		  var nodeicon = "<%=resource%>/bmx6/world.png";
+	  	  var originators = st.neighbours[0].originators;
+	  	  var descriptions = st.neighbours[1].descriptions;
+	  	  var res = Array();
+	  	  var error = "";
+
+	  	  if ( originators.length != descriptions.length )
+	  	  {
+	  		error = '<em><br /><%:Some problem with JSON: lenght of originators and descriptions differs. %> \
+	  		<%: Please perform a cache flush from a console it this persists: bmx6 -c --flushAll %></em>';
+	  		res.push([[error,7]]);
+	  		return res;
+	  	  }  
+
+	  	  for ( var i = 0; i < descriptions.length; i++ ){
+			var nodename =  descriptions[i].DESC_ADV.globalId.replace(/\.[^\.]+$/,"");		
+			var extensions = descriptions[i].DESC_ADV.extensions;
+			//var extrainfo = '<a onclick="displayExtraInfo(\'ip-' + i + '\')"><img src="' + infoicon + '" / ></a>';
+			var extrainfo_link = '<a onclick="displayExtraInfo(\'ip-' + i + '\')">' +  '<img src="' + infoicon + '" />' + '</a>';
+			// Looking for the extensions
+			var hna6 = [];
+			var tun4in6 = [];
+			var tun6in6 = [];
+
+			for( var e = 0; e < extensions.length; e++)
+				{
+				if( extensions[e].HNA6_EXTENSION )
+				hna6 = extensions[e].HNA6_EXTENSION;
+				if ( extensions[e].TUN4IN6_NET_EXTENSION )
+				tun4in6 = extensions[e].TUN4IN6_NET_EXTENSION;
+				tun6in6 = extensions[e].TUN6IN6_NET_EXTENSION;
+				}
+
+			// Gateways
+			var gateways = '<ul>';
+			if ( typeof(tun4in6) !== "undefined" && tun4in6 !== null )
+			for ( var t = 0; t < tun4in6.length; t++)
+				{
+				if ( tun4in6[t].networklen == "32" )
+					gateways += '<li><a href="http://' + tun4in6[t].network + '">' + tun4in6[t].network + '</a></li>';
+				else
+					gateways += "<li>"+tun4in6[t].network+'/'+tun4in6[t].networklen + ' | ' + tun4in6[t].bandwidth+'</li>';
+				}
+
+			if ( typeof(tun6in6) !== "undefined" && tun6in6 !== null )
+			for ( var t = 0; t < tun6in6.length; t++)
+				{
+				if ( tun6in6[t].networklen == "128" )
+					gateways += '<li><a href="http://' + tun6in6[t].network + '">' + tun6in6[t].network + '</a></li>';
+				else
+					gateways += "<li>"+tun6in6[t].network+'/'+tun6in6[t].networklen + ' | ' + tun6in6[t].bandwidth+'</li>';
+				}
+
+			gateways += '</ul>';
+
+			//Adding HNAs with prefix=128 as main address
+			var ipstxt = '';
+			var address;
+			var first = 1;
+			var ipstxt_hidden = '<ul>';
+			var hna6list = '<ul>';
+			var extrainfo = "";
+
+			for( var e = 0; e < hna6.length; e++ )
+			{
+				address = hna6[e].address;
+				prefix = hna6[e].prefixlen;
+				if ( prefix == '128' )
+					{
+					if (first)
+						{
+						ipstxt += address;
+						ipstxt_hidden += '<li><a href="http://['+address+']" >'+address+"</a></li>";
+						first = 0;
+						}
+					else 	{
+						ipstxt_hidden += '<li><a href="http://['+address+']" >'+address+"</a></li>";
+						}
+					}
+				else	{
+					hna6list += '<li>'+address+'/'+prefix+'</li>';
+					}
+			}
+			hna6list += '</ul>';
+			ipstxt_hidden += '</ul>';
+
+			extrainfo = '<div id="ip-'+ i +'" class="hideme">'
+			+ "<div class='inforow'>" 
+			+ "<h4>" + nodename  + '</h4>\n' + '<img src="' + nodeicon + '" />'+ "</div>"
+			
+			+ "<div class='inforow'>"
+			+ "<h5>Available IPs</h5>\n"
+			+ ipstxt_hidden + "</div>\n"
+			
+			+ "<div class='inforow'>"
+			+ "<h5>Gateways announced</h5>\n"
+			+ gateways + "</div>\n"
+			
+			+ "<div class='inforow'>"
+			+ "<h5>Networks announced</h5>\n"
+			+ hna6list +  "</div>\n"
+			+ "\n</div>";
+			
+			res.push([extrainfo_link,nodename, ipstxt, originators[i].viaDev, originators[i].metric,
+			originators[i].lastDesc, originators[i].lastRef, originators[i].blocked, extrainfo]);
+
+		  }
+		  return res;
+		});
+//]]></script>
+
+<%+footer%>
+

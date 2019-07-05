@@ -1,0 +1,5 @@
+#!/bin/sh
+
+DAEMON='dlep_proxy'
+
+. /lib/functions/oonf_hotplug.sh

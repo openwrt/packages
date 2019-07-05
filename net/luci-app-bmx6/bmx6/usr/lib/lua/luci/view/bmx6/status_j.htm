@@ -1,0 +1,88 @@
+<%+header%>
+<script type="text/javascript" src="<%=resource%>/cbi.js"></script>
+<script type="text/javascript" src="<%=resource%>/bmx6/js/polling.js"></script>
+
+
+<style>
+
+	div.hideme{
+		display: none;
+	}
+
+	div.info{
+		background: #FFF;
+		border: solid 1px;
+		height: 80px;
+		display: block;
+		overflow: auto;
+	}
+
+	div.inforow{
+		text-align:left;
+		display:inline-block;
+		width:20%;
+		margin:5px;
+		vertical-align:top;
+
+	}
+
+#extra-info ul { list-style: none outside none; margin-left: 0em; }
+
+</style>
+<div class="cbi-map">
+<center>
+<img src="<%=resource%>/bmx6/bmx6logo.png" />
+<br />
+<br />
+a mesh routing protocol for Linux devices.<br />
+Visit <a href="http://bmx6.net">bmx6.net</a> for more info.
+<br />
+<br />
+</center>
+
+<h2>status</h2>
+<div class="cbi-map-descr"></div>
+<fieldset class="cbi-section">
+	<legend><%:status%></legend>
+	<table class="cbi-section-table" id="status_table">
+		<tr class="cbi-section-table-titles">
+			<th class="cbi-section-table-cell"><%:Version%></th>
+			<th class="cbi-section-table-cell"><%:Primary IP%></th>
+			<th class="cbi-section-table-cell"><%:Tun6Address%></th>
+			<th class="cbi-section-table-cell"><%:Tun4Address%></th>
+			<th class="cbi-section-table-cell"><%:Uptime%></th>
+			<th class="cbi-section-table-cell"><%:Cpu load%></th>
+			<th class="cbi-section-table-cell"><%:Nodes seen%></th>
+		</tr>
+	        <tr class="cbi-section-table-row">
+			<td colspan="7"><em><br /><%:Collecting data...%></em></td>
+		</tr>
+	</table>
+</fieldset>
+
+</div>
+
+<script type="text/javascript">//<![CDATA[
+		new TablePooler(5,"/cgi-bin/bmx6-info", {'$info':''}, "status_table", function(st){
+		var res = Array();
+		var sta = st.info[0].status;
+		var ifaces = st.info[1].interfaces;
+
+		res.push([sta.version+'/'+sta.compat,sta.primaryIp,sta.tun6Address,
+			sta.tun4Address,sta.uptime,sta.cpu,sta.nodes]);
+		res.push(['<br/>','','','','','','',''])
+		res.push(['','','','','','','',''])
+		res.push(['<b>Interface Name</b>','<b>State</b>','<b>Type</b>','<b>Rate</b>','<b>Local IP</b>','<b>Global IP</b>','<b>is Primary</b>'])
+
+		for ( var i = 0; i < ifaces.length; i++)
+			{
+			res.push([ifaces[i].devName,ifaces[i].state,ifaces[i].type,ifaces[i].rateMin+"/"+ifaces[i].rateMax,
+                              ifaces[i].llocalIp,ifaces[i].globalIp,ifaces[i].primary],'');
+			}
+
+		return res;
+		});
+//]]></script>
+
+<%+footer%>
+

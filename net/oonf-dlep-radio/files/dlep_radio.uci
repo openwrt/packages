@@ -1,0 +1,24 @@
+config global
+	option 'failfast' 'no'
+	option 'pidfile'  '/var/run/dlep_radio.pid'
+	option 'lockfile' '/var/lock/dlep_radio'
+
+config log
+	option 'syslog'   'true'
+	option 'stderr'   'true'
+#	option 'file'		  '/var/log/dlep_radio.log'
+#	option 'info'     'all'
+#	option 'debug'    'all'
+
+config telnet
+#	option 'port' '2009'
+
+config dlep_radio
+  list   'name'        'wlan0'
+  option 'datapath_if' 'br-lan'
+  option 'not_proxied' 'false'
+  option 'proxied'     'true'
+
+config nl80211_listener
+  option 'if'          'wlan0'
+  option 'interval'    '1.0'

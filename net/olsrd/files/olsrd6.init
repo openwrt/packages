@@ -1,0 +1,14 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2013 OpenWrt.org
+
+. $IPKG_INSTROOT/lib/functions/olsrd.sh
+
+START=65
+
+SERVICE_DAEMONIZE=1
+SERVICE_WRITE_PID=1
+
+CONF=/var/etc/olsrd6.conf
+PID=/var/run/olsrd6.pid
+
+UCI_CONF_NAME=olsrd6

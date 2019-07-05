@@ -1,0 +1,127 @@
+#!/bin/sh /etc/rc.common
+
+# XXX - is there something that should cause reload? or can we just
+# use info from netifd and let it handle dynamic changes? let's hope
+# so..
+
+START=90
+STOP=10
+USE_PROCD=1
+
+DNSMASQ_DIR=/tmp/dnsmasq.d
+DNSMASQ_SCRIPT=/etc/init.d/dnsmasq
+OHP_SCRIPT=/usr/sbin/hnetd-ohp-script
+OHP_BINARY=/usr/sbin/ohybridproxy
+DDZ_SCRIPT=/usr/sbin/hnetd-ddz-script
+DDZ_BINARY=/usr/sbin/zonestitcher
+PCP_SCRIPT=/usr/sbin/hnetd-pcp-script
+PCP_BINARY=/usr/sbin/minimalist-pcproxy
+MULTICAST_SCRIPT=/usr/sbin/hnet-multicast
+WIFI_SCRIPT=/usr/sbin/autowifi
+
+start_service() {
+    . /lib/functions.sh
+    . /lib/functions/network.sh
+    config_load hnet
+
+    mkdir -p $DNSMASQ_DIR
+    procd_open_instance
+    procd_set_param command /usr/sbin/hnetd
+
+    # SD parts are here (make configurable?)
+    if [ -f $OHP_BINARY -a -f $DNSMASQ_SCRIPT ]
+    then
+        mkdir -p $DNSMASQ_DIR
+        procd_append_param command -d $DNSMASQ_SCRIPT
+        procd_append_param command -f $DNSMASQ_DIR/hnet.conf
+        procd_append_param command -o $OHP_SCRIPT
+        HOSTNAME=`cat /proc/sys/kernel/hostname`
+        if [ -n "$HOSTNAME" ]
+        then
+            procd_append_param command -n "$HOSTNAME"
+        fi
+        if [ -f $DDZ_BINARY ]
+        then
+            procd_append_param command -z $DDZ_SCRIPT
+        fi
+    fi
+	
+    # Enable multicast if present and installed
+    if [ -f "$MULTICAST_SCRIPT" ]
+    then
+        $MULTICAST_SCRIPT status && procd_append_param command -M "$MULTICAST_SCRIPT"
+    fi
+
+    config_get enableval wifi enable
+    if [ -f "$WIFI_SCRIPT" -a "$enableval" = "1" ]; then
+        wifiopt=$WIFI_SCRIPT
+        config_get ssidval wifi ssid
+        config_get passval wifi password
+        if [ -n "$ssidval" -a -n "$passval"  ]; then
+            wifiopt=${wifiopt},${ssidval}:${passval}
+        fi
+        procd_append_param command -w "$wifiopt"
+    fi
+
+    # Enable PCP, if it's present
+    if [ -f $PCP_BINARY -a -f $PCP_SCRIPT ]
+    then
+        procd_append_param command -c $PCP_SCRIPT
+    fi
+
+    # State file
+    config_get val pa persistent_store
+    procd_append_param command -s ${val:-/tmp/hnetd.pa_state}
+
+    # Routing script
+    procd_append_param command -r /usr/sbin/hnetd-routing
+
+    [ -x /usr/sbin/hnetd-tunnel ] && \
+         procd_append_param command -t /usr/sbin/hnetd-tunnel
+
+    # Prefix assignment (pa)
+    config_get val pa ip4prefix
+    [ -n "$val" ] && procd_append_param command --ip4prefix $val
+
+    config_get val pa ip4mode
+    [ -n "$val" ] && procd_append_param command --ip4mode $val
+
+    config_get val pa ulaprefix
+    [ -n "$val" ] && procd_append_param command --ulaprefix $val
+
+    config_get val pa ulamode
+    [ -n "$val" ] && procd_append_param command --ulamode $val
+
+    # Service discovery (sd)
+    config_get val sd router_name
+    [ -n "$val" ] && procd_append_param command -n $val
+
+    config_get val sd domain_name
+    [ -n "$val" ] && procd_append_param command -m $val
+
+    # Security (needs security-enabled build)
+    config_get val security password
+    [ -n "$val" ] && procd_append_param command --password $val
+
+    config_get val security certificate_file
+    [ -n "$val" ] && procd_append_param command --certificate $val
+
+    config_get val security private_key_file
+    [ -n "$val" ] && procd_append_param command --privatekey $val
+
+    config_get val security trust_store
+    [ -n "$val" ] && procd_append_param command --trust $val
+
+    config_get val security trust_certificate_file
+    [ -n "$val" ] && procd_append_param command --verify-path $val
+
+    # For more verbose logging, uncomment this:
+    #procd_append_param command --loglevel 7
+
+    procd_set_param respawn
+    procd_close_instance
+}
+
+service_triggers() {
+    procd_add_reload_trigger "hnet"
+}

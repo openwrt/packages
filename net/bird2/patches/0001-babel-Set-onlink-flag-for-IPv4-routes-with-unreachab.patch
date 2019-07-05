@@ -1,0 +1,40 @@
+From 0ca3156f64a46c52c6d6fc913958f83970d3e57f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Toke=20H=C3=B8iland-J=C3=B8rgensen?= <toke@toke.dk>
+Date: Mon, 30 Apr 2018 11:13:02 +0200
+Subject: [PATCH] babel: Set onlink flag for IPv4 routes with unreachable next
+ hop
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+If the next hop of a route is not a reachable address, the route should be
+installed as onlink. This enables a configuration common in mesh networks
+where the mesh interface is assigned a /32 and babel handles the routing by
+installing onlink routes.
+
+Signed-off-by: Toke Høiland-Jørgensen <toke@toke.dk>
+---
+ proto/babel/babel.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/proto/babel/babel.c b/proto/babel/babel.c
+index ce05191c..afd2eb19 100644
+--- a/proto/babel/babel.c
++++ b/proto/babel/babel.c
+@@ -640,6 +640,13 @@ babel_announce_rte(struct babel_proto *p, struct babel_entry *e)
+       .nh.iface = r->neigh->ifa->iface,
+     };
+ 
++    /* If we cannot find a reachable neighbour, set the entry to be onlink. This
++     * makes it possible to, e.g., assign /32 addresses on a mesh interface and
++     * have routing work.
++     */
++    if (!neigh_find(&p->p, r->next_hop, r->neigh->ifa->iface, 0))
++	    a0.nh.flags = RNF_ONLINK;
++
+     rta *a = rta_lookup(&a0);
+     rte *rte = rte_get_temp(a);
+     rte->u.babel.seqno = r->seqno;
+-- 
+2.17.0
+

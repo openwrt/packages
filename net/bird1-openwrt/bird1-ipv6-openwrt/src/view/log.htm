@@ -1,0 +1,41 @@
+<%-
+    -- Only populate textarea through XHR.poll
+    -- "refresh" is present in the URL (.../log?refresh=1)
+    if luci.http.formvalue("refresh") then
+
+        -- Force HTTP Contents to be "text/plain"
+        luci.http.prepare_content("text/plain")
+
+        local sys = require("luci.sys")
+        local uci = require "luci.model.uci".cursor()
+
+        -- Get Log File from Bird's configuration or leave it empty.
+        local log_file = uci:get("bird6", "global", "log_file") or ""
+        local log_size = ""
+        if log_file then
+            log_size = sys.exec("du -h " .. log_file .. " | awk '{print      $1}'")
+            -- Gathering last 30 lines of the Log File.
+            lf = sys.exec("tail -n30 " .. log_file):gsub("\r\n?", "\n")
+        end
+
+        -- Write File used and its contents.
+        luci.http.write("Using Log File: " .. log_file .. " - File Size: " .. log_size .. "\n" .. lf)
+
+        -- Avoid printing the rest of the page (return only text log data)
+        return
+    end
+-%>
+
+<%+header%>
+<script type="text/javascript" src="<%=resource%>/cbi.js"></script>
+<script type="text/javascript">//<![CDATA[
+    // Refresh page each second. Use "refresh=1" as trigger.
+    XHR.poll(1, '<%=url('admin/network/bird6/log')%>', { refresh: 1 },       function(xhrInstance) {
+        var area = document.getElementById('log')
+        area.value = xhrInstance.responseText;
+    });
+//]]></script>
+
+
+<textarea readonly="readonly" style="width: 100%" wrap="on" rows="32"        id="log"><%=lf:pcdata()%></textarea>
+<%+footer%>

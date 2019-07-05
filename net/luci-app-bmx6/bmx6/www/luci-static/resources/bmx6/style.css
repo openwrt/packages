@@ -1,0 +1,22 @@
+    table {
+       width:90%;
+       border-top:1px solid #e5eaf8;
+       border-right:1px solid #e5eaf8;
+       margin:1em auto;
+       border-collapse:collapse;
+     }
+
+    td {
+       color:#678197;
+       border-bottom:1px solid #e6eff8;
+       border-left:1px solid #e6eff8;
+       padding:.3em 1em;
+       text-align:center;
+     }
+    th {
+       background:#f4f9fe;
+       text-align:center;
+       font:bold 1.2em/2em Century Gothic,Trebuchet MS,Arial,Helvetica,sans-serif;
+       color:#66a3d3;
+     }
+

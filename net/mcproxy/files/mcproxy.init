@@ -1,0 +1,184 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2014-2015 OpenWrt.org
+
+START=99
+USE_PROCD=1
+
+mcproxy_handle_instances() {
+	local instance="$1"
+	local conf_file="$2"
+	local disabled
+	local pre=""
+	local name
+	local upstreams
+	local downstreams
+
+	config_get_bool disabled "$instance" 'disabled' '0'
+	config_get name "$instance" "name" "$instance"
+	config_get upstreams "$instance" "upstream"
+	config_get downstreams "$instance" "downstream"
+
+	if [ $disabled -eq 1 ]; then
+		pre="# "
+	fi
+
+	local str_up=""
+	if [ -n "$upstreams" ]; then
+		local upstream
+		for upstream in $upstreams; do
+			str_up="$str_up \"$upstream\""
+		done
+	fi
+
+	local str_down=""
+	if [ -n "$downstreams" ]; then
+		local downstream
+		for downstream in $downstreams; do
+			str_down="$str_down \"$downstream\""
+		done
+	fi
+
+	if [ ! -z $downstream ]; then
+		echo -e "${pre}pinstance ${name}:${str_up} ==>${str_down};\n" >> $conf_file
+	fi
+}
+
+# mcproxy_list_table <var> <section> <option>
+mcproxy_list_table() {
+	local val
+	local len
+	local _buffer
+	local c=1
+
+	config_get len "$2" "${3}_LENGTH"
+	[ -z "$len" ] && return 0
+	while [ $c -le "$len" ]; do
+		config_get val "$2" "${3}_ITEM$c"
+		append _buffer "\t${val}\n"
+		c="$(($c + 1))"
+	done
+
+	export "${1}=${_buffer}";
+}
+
+mcproxy_handle_tables() {
+	local table="$1"
+	local conf_file="$2"
+	local name
+	local entries
+
+	config_get name "$table" "name" ""
+	mcproxy_list_table entries "$table" "entries"
+
+	if [ ! -z $name ] && [ ! -z $table ]; then
+		echo -e "table $name {\n${entries}};\n" >> $conf_file
+	fi
+}
+
+mcproxy_handle_behaviour() {
+	local behaviour="$1"
+	local conf_file="$2"
+	local disabled
+	local pre=""
+	local instance
+	local section
+	local interface
+	local direction
+	local rulematching
+	local table
+
+	config_get_bool disabled "$behaviour" 'disabled' '0'
+	config_get instance "$behaviour" "instance"
+	config_get section "$behaviour" "section" "upstream"
+	config_get interface "$behaviour" "interface" "*"
+	config_get direction "$behaviour" "direction" "in"
+	config_get rulematching "$behaviour" "rulematching"
+	config_get table "$behaviour" "table"
+
+	if [ -z $instance ]; then
+		return 1
+	fi
+
+	local rule_table
+	if [ ! -z $rulematching ]; then
+		rule_table="rulematching $rulematching"
+	elif [ ! -z $table ]; then
+		local whitelist
+		local list
+
+		config_get_bool whitelist "$behaviour" 'whitelist' '0'
+		if [ $whitelist -eq 1 ]; then
+			list="whitelist"
+		else
+			list="blacklist"
+		fi
+
+		rule_table="$list table $table"
+	else
+		rule_table="rulematching all"
+	fi
+
+	if [ $disabled -eq 1 ]; then
+		pre="# "
+	fi
+
+	echo -e "${pre}pinstance $instance $section \"$interface\" $direction $rule_table;\n" >> $conf_file
+}
+
+mcproxy_network_trigger() {
+	procd_add_interface_trigger "interface.*" "$1" /etc/init.d/mcproxy restart
+}
+mcproxy_handle_network() {
+	local instance="$1"
+
+	config_list_foreach "$instance" upstream mcproxy_network_trigger
+	config_list_foreach "$instance" downstream mcproxy_network_trigger
+}
+
+start_instance() {
+	local cfg="$1"
+	local aux
+	local conf_file
+
+	config_get_bool aux "$cfg" 'disabled' '0'
+	[ "$aux" = 1 ] && return 1
+
+	config_get conf_file "$cfg" "file"
+	if [ ! -n "$conf_file" ]; then
+		mkdir -p /var/etc
+		conf_file="/var/etc/mcproxy_${cfg}.conf"
+
+		local protocol
+		config_get protocol "$cfg" "protocol" "IGMPv3"
+		echo -e "protocol ${protocol};\n" > $conf_file
+
+		config_foreach mcproxy_handle_instances instance $conf_file
+		config_foreach mcproxy_handle_tables table $conf_file
+		config_foreach mcproxy_handle_behaviour behaviour $conf_file
+	fi
+
+	procd_open_instance
+
+	procd_set_param command /usr/sbin/mcproxy
+	procd_append_param command -f $conf_file
+
+	config_get_bool aux "$cfg" 'respawn' '0'
+	[ "$aux" = 1 ] && procd_set_param respawn
+
+	procd_open_trigger
+	config_foreach mcproxy_handle_network instance
+	procd_close_trigger
+
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_open_trigger
+	procd_add_config_trigger "config.change" "mcproxy" /etc/init.d/mcproxy restart
+	procd_close_trigger
+}
+
+start_service() {
+	config_load mcproxy
+	config_foreach start_instance mcproxy
+}
