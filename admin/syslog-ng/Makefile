@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
-PKG_VERSION:=3.21.1
-PKG_RELEASE:=2
+PKG_VERSION:=3.22.1
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=LGPL-2.1+
@@ -11,7 +11,7 @@ PKG_CPE_ID:=cpe:/a:balabit:syslog-ng
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/balabit/syslog-ng/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
-PKG_HASH:=8d163da5ad79cf3a5f043b2ed0fe18a4888d0d740542703bf2508f0b9996cd25
+PKG_HASH:=0656443776fa554320cb81bbebeac72bdf871298dd2ebef7413c393aec4d74c8
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -48,6 +48,7 @@ define Build/Configure
 endef
 
 CONFIGURE_ARGS +=  \
+	--disable-snmp-dest \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	--disable-tcp-wrapper \
 	--disable-spoof-source \
