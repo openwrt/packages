@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bcrypt
-PKG_VERSION:=3.1.6
+PKG_VERSION:=3.1.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=bcrypt-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= https://files.pythonhosted.org/packages/source/b/$(PKG_NAME)
-PKG_HASH:=44636759d222baa62806bbceb20e96f75a015a6381690d1bc2eda91c01ec02ea
+PKG_HASH:=0b0069c752ec14172c5f78208f1863d7ad6755a6fae6fe76ec2c80d13be41e42
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-bcrypt-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Daniel Dickinson <cshored@thecshore.com>
