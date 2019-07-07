@@ -8,15 +8,15 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gkermit
 PKG_VERSION:=1.00
-PKG_RELEASE:=1
-PKG_LICENSE:=GPL-2.0
+PKG_RELEASE:=2
 
 PKG_SOURCE:=gku100.tar.gz
 PKG_SOURCE_URL:=ftp://kermit.columbia.edu/kermit/archives
 PKG_HASH:=3dbe63291277c4795255343b48b860777fb0a160163d7e1d30b1ee68585593eb
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Nathaniel Wesley Filardo <nwfilardo@gmail.com>
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -34,6 +34,7 @@ endef
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
 	tar -C $(PKG_BUILD_DIR) -xzvf "$(DL_DIR)/$(PKG_SOURCE)"
+	$(Build/Patch)
 endef
 
 # nothing to do
