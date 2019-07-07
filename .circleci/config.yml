@@ -81,13 +81,12 @@ jobs:
              EOF
              cat feeds.conf
              ./scripts/feeds update -a > /dev/null
-             ./scripts/feeds install -a > /dev/null
              make defconfig > /dev/null
              # enable BUILD_LOG
              sed -i 's/# CONFIG_BUILD_LOG is not set/CONFIG_BUILD_LOG=y/' .config
 
       - run:
-          name: Download source, check package, compile
+          name: Install & download source, check package, compile
           working_directory: ~/build_dir
           command: |
              set +o pipefail
@@ -99,6 +98,9 @@ jobs:
 
              echo_blue "=== Found new/modified packages: $PKGS"
              for PKG in $PKGS ; do
+                 echo_blue "===+ Install: $PKG"
+                 ./scripts/feeds install "$PKG"
+
                  echo_blue "===+ Download: $PKG"
                  make "package/$PKG/download" V=s
 
