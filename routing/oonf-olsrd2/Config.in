@@ -1,0 +1,47 @@
+	# OONF Olsrd2 configuration
+	menu "Optional Plugins"
+		depends on PACKAGE_oonf-olsrd2
+
+	config OONF_NHDP_AUTOLL4
+		bool "Auto_LL4 plugin enabled"
+		help
+			The auto_ll4 plugin automatically generates linklocal IPv4 addresses on interfaces that do not contain IPv4 addresses.
+		default n
+
+	config OONF_OLSRV2_LAN_IMPORT
+		bool "Lan_import plugin enabled"
+		help
+			The lan_import plugin can read routing tables and automatically export them as locally attached networks in olsrd2.
+		default n
+
+	config OONF_OLSRV2_ROUTE_MODIFIER
+		bool "route_modifier plugin enabled"
+		help
+			The route_modifier plugin allows you to overwrite aspects of routes (like table/protocol) for certain destinations. 
+		default n
+
+	config OONF_GENERIC_DLEP_ROUTER
+		bool "dlep_router plugin enabled"
+		help
+			The dlep_router plugin can receive linklayer metadata over the DLEP protocol. 
+		default n
+
+	config OONF_GENERIC_REMOTECONTROL
+		bool "remotecontrol plugin enabled"
+		help
+			The remotecontrol plugin allows you to control configuration and logging over the telnet plugin. Be careful not to open this functionality over the network without securing it.
+		default n
+
+	config OONF_GENERIC_HTTP
+		bool "http plugin enabled"
+		help
+			The HTTP plugin allows HTTP access to all telnet commands.
+		default n
+
+	config OONF_OLSRV2_MPR
+		bool "MPR plugin enabled"
+		help
+			The MPR plugin reduce the routing graph to limit the overhead of the OLSRv2 protocol
+		default n
+
+	endmenu

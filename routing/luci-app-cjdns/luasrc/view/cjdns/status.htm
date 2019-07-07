@@ -1,0 +1,67 @@
+<script type="text/javascript">//<![CDATA[
+	/* 75lb/usage-stats */
+	function lbbytes (bytes){
+		var kilobyte = 1024,
+			megabyte = kilobyte * 1024,
+			gigabyte = megabyte * 1024,
+			terabyte = gigabyte * 1024;
+		if ((bytes >= 0) && (bytes < kilobyte)) {
+			return bytes + " B";
+		} else if ((bytes >= kilobyte) && (bytes < megabyte)) {
+			return (bytes / kilobyte).toFixed(2) + " KB";
+		} else if ((bytes >= megabyte) && (bytes < gigabyte)) {
+			return (bytes / megabyte).toFixed(2) + " MB";
+		} else if ((bytes >= gigabyte) && (bytes < terabyte)) {
+			return (bytes / gigabyte).toFixed(2) + " GB";
+		} else if (bytes >= terabyte) {
+			return (bytes / terabyte).toFixed(2) + " TB";
+		} else {
+			return bytes + " B";
+		}
+	}
+
+	XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "services", "cjdns", "peers")%>', null,
+		function(x, st) {
+			var table = document.getElementById('cjdns-peerings');
+			if (st && table) {
+				var rows = [];
+				st.forEach(function(peer) {
+					rows.push([
+						peer.lladdr,
+						peer.ipv6,
+						peer.version,
+						((peer.isIncoming === 0) ? 'outgoing, ' : 'incoming, ').concat(peer.state.toLowerCase()),
+						lbbytes(peer.bytesIn) + ' / ' + lbbytes(peer.bytesOut),
+						(peer.user == null) ? '-' : peer.user
+					]);
+				});
+
+				if (typeof(cbi_update_table) == 'function') {
+					cbi_update_table(table, rows, '<em><%:Querying Admin API%></em>');
+				} else {
+					while (table.rows.length > 1) { table.deleteRow(1); }
+					rows.forEach(function(peer) {
+						var row = table.insertRow(-1);
+						peer.forEach(function(x) { row.insertCell(-1).textContent = x; });
+					});
+				}
+			}
+		}
+	);
+//]]></script>
+
+<div class="cbi-map">
+	<fieldset class="cbi-section">
+		<legend><%:Active cjdns peers%></legend>
+		<table class="table" id="cjdns-peerings">
+			<tr class="tr table-titles">
+				<th class="th nowrap">Address</th>
+				<th class="th nowrap">IPv6</th>
+				<th class="th nowrap">Version</th>
+				<th class="th nowrap">Status</th>
+				<th class="th nowrap">Rx / Tx</th>
+				<th class="th nowrap">User/Name</th>
+			</tr>
+		</table>
+	</fieldset>
+</div>

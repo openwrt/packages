@@ -1,0 +1,82 @@
+
+# for more information:
+# http://bmx6.net/projects/bmx6/wiki
+# options execute: bmx6 --help
+
+config 'bmx6' 'general'
+#       option 'runtimeDir' '/var/run/bmx6'
+#       option 'tun4Address' '10.202.0.116/32'
+#       option 'tun4Address' '10.254.10.0/32'
+#       option 'tun6Address' '2012:0:0:1000::1/64'
+
+#config 'ipVersion' 'ipVersion'
+#       option 'ipVersion' '6'   # default is 4
+#       option 'throwRules' '0'
+
+
+#config 'plugin'
+#        option 'plugin' 'bmx6_config.so'
+
+
+
+#config 'plugin'
+#        option 'plugin' 'bmx6_json.so'
+
+
+
+#config 'plugin'
+#        option 'plugin' 'bmx6_sms.so'
+
+
+config 'dev' 'mesh_1'
+        option 'dev' 'eth0.12'
+
+config 'dev' 'mesh_2'
+        option 'dev' 'ath0.12'
+
+
+
+#config 'hna' 'my_global_prefix'
+#       option 'hna' '2012:0:0:74:0:0:0:0/64'
+
+
+#config 'tunOut'
+#        option 'tunOut' 'ip6'
+#        option 'network' '2012::/16'
+#        option 'exportDistance' '0'
+
+#config 'tunOut'
+#        option 'tunOut' 'ip4'
+#        option 'network' '10.254.0.0/16'
+#        option 'exportDistance' '0'  # requires quagga plugin !
+#        option 'minPrefixLen' '27'
+
+
+
+#config 'plugin'
+#        option 'plugin' 'bmx6_quagga.so'
+
+
+
+#config 'redistribute'
+#        option 'redistribute' 'ospf6'
+#        option 'network' '10.0.0.0/8'
+#        option 'minPrefixLen' '10'
+#        option 'bandwidth' '10000000'
+#        option 'ospf6' '1'
+#        option 'aggregatePrefixLen' '16'
+
+#config 'redistribute'
+#        option 'redistribute' 'bgp'
+#        option 'network' '0.0.0.0/0'
+#        option 'minPrefixLen' '0'
+#        option 'maxPrefixLen' '24'
+#        option 'bandwidth' '10000000'
+#        option 'bgp' '1'
+#        option 'aggregatePrefixLen' '8'
+
+
+
+
+
+

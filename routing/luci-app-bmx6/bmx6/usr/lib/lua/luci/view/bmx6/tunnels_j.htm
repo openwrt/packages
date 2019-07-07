@@ -1,0 +1,106 @@
+<%#
+   Copyright (C) 2011 Pau Escrich <pau@dabax.net>
+   Contributors Lluis Esquerda <eskerda@gmail.com>
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License along
+   with this program; if not, write to the Free Software Foundation, Inc.,
+   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+   The full GNU General Public License is included in this distribution in
+   the file called "COPYING".
+-%>
+
+
+<%+header%>
+<script type="text/javascript" src="<%=resource%>/cbi.js"></script>
+<script type="text/javascript" src="<%=resource%>/bmx6/js/polling.js"></script>
+
+
+<style>
+
+	div.hideme{
+		display: none;
+	}
+
+	div.info{
+		background: #FFF;
+		border: solid 1px;
+		height: 80px;
+		display: block;
+		overflow: auto;
+	}
+
+	div.inforow{
+		text-align:left;
+		display:inline-block;
+		width:20%;
+		margin:5px;
+		vertical-align:top;
+
+	}
+
+#extra-info ul { list-style: none outside none; margin-left: 0em; }
+
+</style>
+<div class="cbi-map">
+
+<h2>Gateways tunnel announcements</h2>
+<div class="cbi-map-descr"></div>
+<fieldset class="cbi-section">
+	<legend><%:Mesh gateways%></legend>
+	<table class="cbi-section-table" id="descriptions_table">
+		<tr class="cbi-section-table-titles">
+			<th class="cbi-section-table-cell"></th>
+			<th class="cbi-section-table-cell"><%:Tunnel%></th>
+			<th class="cbi-section-table-cell"><%:Node%></th>
+			<th class="cbi-section-table-cell"><%:Network%></th>
+			<th class="cbi-section-table-cell"><%:Bandwidth%></th>
+			<th class="cbi-section-table-cell"><%:SearchNet%></th>
+			<th class="cbi-section-table-cell"><%:Path Metric%></th>
+			<th class="cbi-section-table-cell"><%:Tun metric%></th>
+			<th class="cbi-section-table-cell"><%:Rating%></th>
+			<th class="cbi-section-table-cell"><%:Src%></th>
+			<th class="cbi-section-table-cell"><%:Search id%></th>
+		</tr>
+		<tr class="cbi-section-table-row">
+			<td colspan="10"><em><br /><%:Collecting data...%></em></td>
+		</tr>
+	</table>
+</fieldset>
+
+</div>
+
+<script type="text/javascript">//<![CDATA[
+		new TablePooler(5,"/cgi-bin/bmx6-info", {'$tunnels':''}, "descriptions_table", function(st){
+                  var tunicon = "<%=resource%>/icons/tunnel.png";
+                  var tunicon_dis = "<%=resource%>/icons/tunnel_disabled.png";
+                  var applyicon = "<%=resource%>/cbi/apply.gif";
+		  var res = Array();
+                  for ( var k in st.tunnels ){
+                        var tunnel = st.tunnels[k];
+                        var nodename = tunnel.remoteName.replace(/\..+$/,'');
+			var advnet = tunnel.advNet;
+			var status = '<img src="'+tunicon_dis+'"/>';
+			
+			if ( tunnel.tunName != "---" ) status = '<img src="'+tunicon+'"/>';
+			if ( advnet == "0.0.0.0/0" ) advnet = "<b>Internet</b>";
+
+			res.push([status, tunnel.name, nodename, advnet, tunnel.advBw, tunnel.net,
+				tunnel.pathMtc, tunnel.tunMtc, tunnel.rating, tunnel.srcIngress, tunnel.id]);
+		  }
+		  return res;
+		});
+//]]></script>
+
+<%+footer%>
+

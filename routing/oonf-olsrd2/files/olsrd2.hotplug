@@ -1,0 +1,5 @@
+#!/bin/sh
+
+DAEMON='olsrd2'
+
+. /lib/functions/oonf_hotplug.sh

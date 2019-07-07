@@ -1,0 +1,16 @@
+#!/bin/sh
+
+if [ `uci -q get upnpd.config._pcproxy_configured` = "1" ]
+then
+    exit
+fi
+
+uci batch <<EOF
+set upnpd.config.enable_upnp=0
+set upnpd.config.pcp_allow_thirdparty=1
+set upnpd.config.internal_iface=loopback
+set upnpd.config.ipv6_listening_ip=::1
+set upnpd.config.external_zone=wan
+set upnpd.config._pcproxy_configured=1
+commit upnpd
+EOF

@@ -1,0 +1,50 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2009-2014 OpenWrt.org
+
+START=60
+STOP=10
+USE_PROCD=1
+
+HAS_IFACES=
+
+service_triggers()
+{
+	procd_add_reload_trigger "ohybridproxy"
+}
+
+ohp_interface()
+{
+	local section="$1"
+	config_get interface "$section" interface
+	config_get domain "$section" domain
+
+	[ -n "$interface" ] && network_get_device interface "$interface"
+	if [ -n "$interface" -a -n "$domain" ]; then
+		procd_append_param command "$interface=$domain"
+		HAS_IFACES=1
+	fi
+}
+
+start_service()
+{
+	. /lib/functions.sh
+	. /lib/functions/network.sh
+
+	procd_open_instance
+	procd_set_param command /usr/sbin/ohybridproxy
+
+	config_load ohybridproxy
+
+	config_get val main host
+	[ -n "$val" ] && procd_append_param command -a "${val}"
+
+	config_get val main port
+	[ -n "$val" ] && procd_append_param command -p "${val}"
+
+	config_foreach ohp_interface interface
+
+	[ "$HAS_IFACES" = 1 ] || return 0
+
+	procd_close_instance
+}
+

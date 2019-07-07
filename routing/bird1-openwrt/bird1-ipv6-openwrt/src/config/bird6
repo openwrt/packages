@@ -1,0 +1,36 @@
+config bird 'bird'
+    option use_UCI_config '1'
+        #Caution! Enabling this option, Bird will translate this
+        #UCI file and use it instead of /etc/bird6.conf
+    option UCI_config_file '/tmp/bird6.conf'
+        #If you enable useUCIconfig, UCIconfigFile will be Bird's
+        #configuration file location.
+
+config global 'global'
+    option log_file '/tmp/bird6.log'
+    option log 'all'
+    option debug 'off'
+    # This option is set up because is mandatory for Bird6.
+    # Change it to your IPv4 Address or a HEX value.
+    option router_id '0xCAFEBABE'
+
+config table
+    option name 'aux'
+
+config kernel kernel1
+    option table 'aux'
+    option import 'all'
+    option export 'all'
+    option kernel_table '100'
+    option scan_time '10'
+    option learn '1'
+    option persist '0'
+    option disabled '0'
+
+config device device1
+    option scan_time '10'
+    option disabled '0'
+
+config static static1
+    option table 'aux'
+    option disabled '0'

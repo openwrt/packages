@@ -1,0 +1,55 @@
+<%+header%>
+<meta http-equiv="refresh" content="10" />
+<h2><a id="content" name="content"><%:Links%></a></h2>
+<br />
+<div id="links" style="position:relative;padding-left:2px">
+
+<% for j,d in pairs(links) do %>
+
+	<table>
+	<tr>
+		<td><img src="/luci-static/resources/bmx6/wifi.png"/></td>
+		<td><strong><%=j%></strong></td>
+	</tr>
+	</table>
+
+	<div style="display:table">
+
+<% for i,l in ipairs(d) do  %>
+	<div id="link" style="background-color:#dadbe9;left:50px;width:300px;margin:10px;float:left;position:relative">
+	<table>
+	<tr><th colspan="2">
+		<span style="color:grey;font-weight:700;text-align:left;">
+		<%=l.name%>
+		<br />
+		</span>
+	</th></tr>
+	<tr>
+		<td><img src="/luci-static/resources/bmx6/link.png"/></td>
+		<td>
+		<ul>
+			<li>Local IP: <a href="[<%=l.llocalIp%>]"><%=l.llocalIp%></a></li>
+			<li>Device: <%=l.viaDev%></li>
+			<li>Rate (rx/tx):
+				<% if l.rxRate+l.txRate < 120 then %>
+					<span style="color:red;">
+				<% else %>
+					<span style="color:green;">
+				<% end %>
+					<%=l.rxRate%>/<%=l.txRate%>
+				</span>
+			</li>
+			<li>Routes: <%=l.routes%></li>
+		</ul>
+		</td>
+	</tr>
+	</table>
+	</div>
+<% end %>
+</div>
+<% end %>
+</div>
+
+<br />
+<br />
+<%+footer%>

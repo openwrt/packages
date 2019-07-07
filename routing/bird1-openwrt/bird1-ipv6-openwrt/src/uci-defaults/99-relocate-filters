@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# This UCI-Defaults script will MOVE any pre-existing filter
+# stored in a file and configured as an UCI item (deprecated)
+# The script will try to match any "filter" Section, get its
+# "file_path" property and move the file (if exists) to the
+# new (v0.3+) default location: /etc/bird{4|6}/filters
+
+[ $# -ne 1 ] && exit 1
+BIRD="$1"
+
+. /lib/functions.sh
+
+# This function will move an existing folder configured on
+# Bird as a "filter" to filters' folder.
+mv_filter() {
+    local section="$1"
+    local file_path
+    config_get file_path ${section} file_path
+
+    if [ -f ${file_path} ]; then
+        mv ${file_path} /etc/${BIRD}/filters/
+    fi
+    uci delete ${BIRD}.${section}
+}
+
+if [ -f /etc/config/${BIRD} ]; then
+    config_load ${BIRD}
+    config_foreach mv_filter 'filter'
+    uci commit ${BIRD}
+fi
+
+exit 0

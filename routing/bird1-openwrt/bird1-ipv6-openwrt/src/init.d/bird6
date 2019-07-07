@@ -1,0 +1,225 @@
+#!/bin/sh /etc/rc.common
+
+# Copyright (C) 2014-2017 - Eloi Carbo
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+# Extra Service Function to get the Status of the Service
+# This complements /etc/rc.common functions
+# Commands ending with *_quiet are meant to be ran in Luci. These
+# scripts' return minimal output.
+EXTRA_COMMANDS="status start_quiet stop_quiet restart_quiet status_quiet"
+EXTRA_HELP="        status  Returns service status"
+
+BIRD="bird6"
+BIRD_CONFIG="/etc/${BIRD}.conf"
+BIRD_LOG="/var/log/${BIRD}.log"
+BIRD_ERR="/tmp/${BIRD}.err"
+
+START=99
+STOP=10
+
+SERVICE_DAEMONIZE=1
+SERVICE_USE_PID=1
+SERVICE_PID_FILE="/var/run/${BIRD}.pid"
+
+BIRD_BIN="/usr/sbin/${BIRD}"
+# Special non-terminal-rich output for Luci calls
+LUCI="false"
+
+. /etc/${BIRD}/init.d/${BIRD}-lib.sh
+
+start() {
+    config_load ${BIRD}
+    local use_UCI_config
+    get use_UCI_config 'bird'
+
+    #Start the service
+    if [ "${LUCI}" == "false" ]; then
+        echo "Starting ${BIRD} Service [ ... ]"
+    fi
+    if [ -f ${BIRD_ERR} ]; then
+        echo "" > ${BIRD_ERR}
+    else
+        touch ${BIRD_ERR}
+    fi
+
+    if [ -z "${use_UCI_config}" -o "${use_UCI_config}" = "0" ]; then
+        # Disable Custom bird-openwrt settings.
+        # Use default behaviour and files
+        ${BIRD_BIN} -d -c ${BIRD_CONFIG} -P ${SERVICE_PID_FILE} -D ${BIRD_LOG} &> ${BIRD_ERR} &
+    else
+        #Set Bird6 configuration location:
+        local UCI_config_file
+        local log_file
+        get UCI_config_file 'bird'
+        get log_file 'global'
+        BIRD_CONFIG="${UCI_config_file:-$BIRD_CONFIG}"
+        BIRD_LOG="${log_file:-$BIRD_LOG}"
+        #Backup previous configuration
+        [ -f ${BIRD_CONFIG} ] && cp ${BIRD_CONFIG} ${BIRD_CONFIG}.bak
+        #Setup the basic configuration
+        prepare_global 'global'
+
+        # Gather and set all Functions
+        gather_functions
+        # Gather and set all Filters
+        gather_filters
+
+        # Setup Main Protocols
+        config_foreach prepare_kernel 'kernel'
+        config_foreach prepare_static 'static'
+        config_foreach prepare_device 'device'
+        config_foreach prepare_direct 'direct'
+        config_foreach prepare_pipe 'pipe'
+
+        #Setup protocol's configuration: BGP
+        config_foreach prepare_bgp_template 'bgp_template'
+        config_foreach prepare_bgp 'bgp'
+
+        #Setup protocol's configuration: OSPF
+        #config_foreach prepare_ospf_instance 'ospf'
+
+        #Start the service
+        ${BIRD_BIN} -d -c ${BIRD_CONFIG} -P ${SERVICE_PID_FILE} -D ${BIRD_LOG} &>${BIRD_ERR} &
+    fi
+    while [ ! -s ${SERVICE_PID_FILE} ]; do
+        sleep 1
+        if [ -s ${BIRD_ERR} ]; then
+            if [ "${LUCI}" == "false" ]; then
+                echo -e "${BIRD} Daemon Start Status: \033[0;31m[ FAILED ]\e[m"
+                cat ${BIRD_ERR}
+                cat ${BIRD_ERR} >> ${BIRD_LOG}
+            else
+                echo "${BIRD} - Failed: $(cat ${BIRD_ERR})"
+                cat ${BIRD_ERR} >> ${BIRD_LOG}
+            fi
+            break
+        fi
+    done
+
+    if [ -s ${SERVICE_PID_FILE} ]; then
+        if [ -s ${BIRD_ERR} ]; then
+            if [ "${LUCI}" == "false" ]; then
+                echo -e "${BIRD} Daemon already started. Status \033[0;32m[ RUNNING ]\e[m"
+            else
+                echo "${BIRD} already started"
+            fi
+        else
+            if [ "${LUCI}" == "false" ]; then
+                echo -e "${BIRD} Daemon Start Status: \033[0;32m[ STARTED ]\e[m"
+            else
+                echo "${BIRD} - Started"
+            fi
+        fi
+        # PID File found (service started correctly)
+        return 0
+    fi
+
+    # PID File not found (error while starting service)
+    return 1
+}
+
+stop() {
+    if [ -s ${SERVICE_PID_FILE} ]; then
+        config_load ${BIRD}
+        local log_file
+        get log_file 'global'
+        BIRD_LOG="${log_file:-$BIRD_LOG}"
+        start-stop-daemon -p ${SERVICE_PID_FILE} -K 2>&1 >> ${BIRD_LOG}
+        if [ $? -eq 0 ]; then
+            if [ "${LUCI}" == "false" ]; then
+                echo -e "${BIRD} Daemon Stop Status: \033[0;32m[ OK ]\e[m"
+            else
+                echo "${BIRD} - Stopped"
+            fi
+        else
+            if [ "${LUCI}" == "false" ]; then
+                echo -e "${BIRD} Daemon Stop Status: \033[0;31m[ FAILED ]\e[m"
+                echo "Check ${BIRD_LOG} file for more information."
+            else
+                echo "${BIRD} Failed to Stop. See Log file: ${BIRD_LOG}"
+            fi
+        fi
+    else
+        if [ "${LUCI}" == "false" ]; then
+            echo -e "${BIRD} Daemon Service already stopped. \033[0;31m[ FAILED ]\e[m"
+        else
+            echo "${BIRD} already stopped"
+        fi
+    fi
+    return 0
+}
+
+restart() {
+    stop
+    sleep 1
+    if [ "${LUCI}" == "true" ]; then
+        echo " ... "
+    fi
+    start
+}
+
+reload() {
+    service_reload ${BIRD_BIN}
+}
+
+status() {
+    if [ -s ${SERVICE_PID_FILE} ]; then
+        if [ "${LUCI}" == "false" ]; then
+            echo -e "${BIRD} start status: \033[0;32m[ RUNNING ]\e[m"
+        else
+            echo "${BIRD}: Running"
+        fi
+        return 0
+    else
+        if [ -s ${BIRD_ERR} ]; then
+            if [ "${LUCI}" == "false" ]; then
+                echo -e "${BIRD} service status: \033[0;31m[ STOPPED ]\e[m"
+                cat ${BIRD_ERR}
+            else
+                echo "${BIRD}: Failed - $(cat ${BIRD_ERR})"
+            fi
+            return 2
+        else
+            if [ "${LUCI}" == "false" ]; then
+                echo -e "${BIRD} service status: \033[0;31m[ STOPPED ]\e[m"
+            else
+                echo "${BIRD}: Stopped"
+            fi
+            return 1
+        fi
+    fi
+}
+
+# Luci-specific calls (stripped output).
+# The following scripts are not meant to be ran using Ash Terminal
+# Used in: LUCI/model/cbi/bird6/status.lua
+start_quiet() {
+    LUCI="true"
+    start
+}
+stop_quiet() {
+    LUCI="true"
+    stop
+}
+restart_quiet() {
+    LUCI="true"
+    restart
+}
+status_quiet() {
+    LUCI="true"
+    status
+}

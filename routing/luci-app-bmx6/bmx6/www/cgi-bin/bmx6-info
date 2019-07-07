@@ -1,0 +1,126 @@
+#!/bin/sh
+# This script gives information about bmx6
+# Can be executed from a linux shell: ./bmx6-info -s links
+# Or from web interfae (with cgi enabled): http://host/cgi-bin/bmx6-info?links
+# Special methods are tagged with '$', like $myself or $neighbours: http://host/cgi-bin/bmx6-info?$myself
+# When '$' is not used, raw bmx6 information from the filesystem is returned (/var/runb/bmx6/json/)
+
+BMX6_DIR="$(uci get bmx6.general.runtimeDir 2>/dev/null)" || BMX6_DIR="/var/run/bmx6/json"
+
+#Checking if shell mode or cgi-bin mode
+if [ "$1" == "-s" ]; then
+  QUERY="$2"
+else
+  QUERY="${QUERY_STRING%%=*}"
+  QUERY="${QUERY%%\?*}"
+  QUERY="${QUERY%%\&*}"
+  echo "Content-type: application/json"
+  echo ""
+fi
+
+# workaround to support old format starting with '$'
+QUERY="$(echo "$QUERY" | sed s/'\$'//)"
+
+check_path() {
+  [ -d "$1" ] && path=$(cd $1; pwd)
+  [ -f "$1" ] && path=$(cd $1/..; pwd)
+  [ $(echo "$path" | grep -c "^$BMX6_DIR") -ne 1 ] && exit 1
+}
+
+print_query() {
+  # If the query is a directory
+  [ -d "$BMX6_DIR/$1" ] &&
+  {
+    # If /all has not been specified
+    [ -z "$QALL" ] &&
+    {
+      total=$(ls $BMX6_DIR/$1 | wc -w)
+      i=1
+      echo -n "{ \"$1\": [ "
+      for f in $(ls $BMX6_DIR/$1); do
+        echo -n "{ \"name\": \"$f\" }"
+        [ $i -lt $total ]  && echo -n ','
+        i=$(( $i + 1 ))
+      done
+      echo -n " ] }"
+
+      # If /all has been specified, printing all the files together
+      } || {
+      comma=""
+      echo -n "[ "
+      for entry in "$BMX6_DIR/$1/"*; do
+        [ -f "$entry" ] &&
+        {
+          ${comma:+echo -n "$comma"}
+          tr -d '\n' < "$entry"
+          comma=","
+        }
+      done
+      echo -n " ]"
+    }
+  }
+  # If the query is a file, just printing the file
+  [ -f "$BMX6_DIR/$1" ] && cat "$BMX6_DIR/$1";
+}
+
+if [ "${QUERY##*/}" == "all" ]; then
+  QUERY="${QUERY%/all}"
+  QALL=1
+fi
+
+if [ "$QUERY" == 'myself' ]; then
+  hostname="$(cat /proc/sys/kernel/hostname)"
+  ip6="$(bmx6 -c show=status | grep ^BMX | awk '{print $5}')"
+  ip4="$(bmx6 -c show=status | grep ^BMX | awk '{print $6}')"
+  cidr6=$(lua -l luci.ip -e "ip=luci.ip.new(\"$ip6\"); print(ip:network():string()..'/'..ip:prefix())")
+  cidr4=$(lua -l luci.ip -e "ip=luci.ip.new(\"$ip4\"); print(ip:network():string()..'/'..ip:prefix())")
+  echo -n "{\"myself\":{\"hostname\":\"$hostname\",\"ip6\":\"$ip6\",\"ip4\":\"$ip4\",\"net6\":\"$cidr6\",\"net4\":\"$cidr4\"}}"
+  exit 0
+fi
+
+if [ "$QUERY" == 'info' ]; then
+  echo -n '{ "info": [ '
+  print_query status
+  echo -n ","
+  print_query interfaces
+  echo -n "] }"
+  exit 0
+fi
+
+if [ "$QUERY" == 'neighbours' ]; then
+  QALL=1
+  echo -n '{ "neighbours": [ '
+  echo -n '{ "originators": '
+  print_query originators
+  echo -n '}, '
+  echo -n '{ "descriptions": '
+  print_query descriptions
+  echo -n "} ] }"
+  exit 0
+fi
+
+if [ "$QUERY" == 'tunnels' ]; then
+  tunnels=$(bmx6 -c --jshow tunnels /r=0)
+  if [ -z $tunnels ]; then
+    echo '{ "tunnels" : [] }'
+  else
+    echo $tunnels
+  fi
+  exit 0
+fi
+
+if [ "$QUERY" == "" ]; then
+  echo -n '{ "queries": ['
+  echo -n '{ "name": "myself", "info": "basic network information of self node" },'
+  echo -n '{ "name": "info", "info": "full network and device information of self node" },'
+  echo -n '{ "name": "tunnels", "info": "accnouncements (tunnels) published by the mesh network" },'
+  echo -n '{ "name": "neighbours", "info": "list of all my neighbours and their information" },'
+  echo -n '{ "name": "/", "info": "raw bmx6 json API" }]}'
+  exit 0
+fi
+
+check_path "$BMX6_DIR/$QUERY"
+print_query $QUERY
+
+#ls -1F "$BMX6_DIR"
+exit 0

@@ -1,0 +1,26 @@
+From c015e7e62ed4c7645595f7f83cf156810433d0cd Mon Sep 17 00:00:00 2001
+From: Florian Fainelli <f.fainelli@gmail.com>
+Date: Mon, 5 Jun 2017 17:56:33 -0700
+Subject: [PATCH] Cmake: Search and find libubox/utils.h
+
+---
+ CMakeLists.txt | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 2556669d2a52..1c970d92ff56 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -16,6 +16,9 @@ else(${APPLE})
+ set(dns_sd "dns_sd")
+ endif(${APPLE})
+ 
++FIND_PATH(ubox_include_dir libubox/utils.h)
++INCLUDE_DIRECTORIES(${ubox_include_dir})
++
+ set(CORE src/cache.c src/io.c src/socket.c)
+ 
+ add_executable(ohybridproxy src/ohybridproxy.c src/dns2mdns.c ${CORE})
+-- 
+2.9.3
+

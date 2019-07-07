@@ -1,0 +1,18 @@
+This is an OpenWrt package feed containing community maintained routing packages.
+
+To use these packages, add the following line to the feeds.conf
+in the OpenWrt buildroot:
+
+  src-git routing git://github.com/openwrt-routing/packages.git
+  
+Update the feed:
+
+  ./scripts/feeds update routing
+  
+Activate the package:
+
+  ./scripts/feeds install -a -p routing
+  
+The routing packages should now appear in menuconfig.
+
+

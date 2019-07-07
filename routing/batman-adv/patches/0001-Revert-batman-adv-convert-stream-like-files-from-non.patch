@@ -1,0 +1,55 @@
+From: Sven Eckelmann <sven@narfation.org>
+Date: Thu, 23 May 2019 19:26:27 +0200
+Subject: Revert "batman-adv: convert stream-like files from nonseekable_open -> stream_open"
+
+OpenWrt's mac80211 package is not yet ready to support the generic netlink
+API of Linux 5.2.
+
+This reverts commit 337ae19a00d4455cf84afa58abfb432f78c882b9.
+
+diff --git a/compat-include/linux/fs.h b/compat-include/linux/fs.h
+index 480722f04ba7ddefc837d5e55a340271e0814b14..c52e0e8e87584d106ab64ef2c522e6ac1ff6e796 100644
+--- a/compat-include/linux/fs.h
++++ b/compat-include/linux/fs.h
+@@ -31,15 +31,4 @@ static inline struct dentry *batadv_file_dentry(const struct file *file)
+ 
+ #endif /* < KERNEL_VERSION(4, 6, 0) */
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
+-
+-static inline int batadv_stream_open(struct inode *inode, struct file *filp)
+-{
+-	return nonseekable_open(inode, filp);
+-}
+-
+-#define stream_open batadv_stream_open
+-
+-#endif /* < KERNEL_VERSION(5, 2, 0) */
+-
+ #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_FS_H_ */
+diff --git a/net/batman-adv/icmp_socket.c b/net/batman-adv/icmp_socket.c
+index 0a91c8661357d4ddbea1ba20dcd0df67b8ba5a97..de81b5ecad91afd8d684edbf781c70a3bae38c60 100644
+--- a/net/batman-adv/icmp_socket.c
++++ b/net/batman-adv/icmp_socket.c
+@@ -65,7 +65,7 @@ static int batadv_socket_open(struct inode *inode, struct file *file)
+ 
+ 	batadv_debugfs_deprecated(file, "");
+ 
+-	stream_open(inode, file);
++	nonseekable_open(inode, file);
+ 
+ 	socket_client = kmalloc(sizeof(*socket_client), GFP_KERNEL);
+ 	if (!socket_client) {
+diff --git a/net/batman-adv/log.c b/net/batman-adv/log.c
+index f79ebd5b46e95b3b6de717c7ea1ecf44e5c96051..60ce11e16a905e790424a2d7aca81c1f945c1ec2 100644
+--- a/net/batman-adv/log.c
++++ b/net/batman-adv/log.c
+@@ -90,7 +90,7 @@ static int batadv_log_open(struct inode *inode, struct file *file)
+ 	batadv_debugfs_deprecated(file,
+ 				  "Use tracepoint batadv:batadv_dbg instead\n");
+ 
+-	stream_open(inode, file);
++	nonseekable_open(inode, file);
+ 	file->private_data = inode->i_private;
+ 	return 0;
+ }

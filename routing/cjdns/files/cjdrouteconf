@@ -1,0 +1,30 @@
+#!/usr/bin/env lua
+
+dkjson = require("dkjson")
+cjdns = require("cjdns")
+require("cjdns/uci")
+
+function help()
+  print("JSON interface to /etc/config/cjdns\n\nExamples: \
+    cjdrouteconf get > /tmp/etc/cjdroute.conf \
+    cat /tmp/etc/cjdroute.conf | cjdrouteconf set \
+    uci changes \
+    cjdrouteconf get | cjdroute")
+end
+
+if arg[1] == "get" then
+  local json = dkjson.encode(cjdns.uci.get(), { indent = true })
+  print(json)
+elseif arg[1] == "set" then
+  local json = io.stdin:read("*a")
+  local obj, pos, err = dkjson.decode(json, 1, nil)
+
+  if obj then
+    cjdns.uci.set(obj)
+  else
+    print("dkjson: " .. err .. " (try cjdroute --cleanconf)")
+    os.exit(1)
+  end
+else
+  help()
+end

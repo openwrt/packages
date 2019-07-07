@@ -1,0 +1,49 @@
+<%#
+Copyright (C) 2011 Pau Escrich <pau@dabax.net>
+Contributors Jo-Philip
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+The full GNU General Public License is included in this distribution in
+the file called "COPYING".
+-%>
+
+<%
+	luci.http.prepare_content("text/html")
+
+	local location = { unpack(luci.dispatcher.context.path) }
+	location[#location] = "topology"
+%>
+
+<%+header%>
+
+<button id="redraw" onclick="redraw();">&nbsp redraw &nbsp</button>
+
+<div id="wait" style="text-align: center">
+<br /><br />
+<img src="<%=resource%>/icons/loading.gif" />
+<%:Collecting data...%>
+
+</div>
+
+<div id="canvas" style="min-width:1024px; min-height:1024px"></div>
+
+<script type="text/javascript" src="<%=resource%>/jquery/jquery-1.4.js"></script>
+<script type="text/javascript" src="<%=resource%>/dracula/raphael-min.js"></script>
+<script type="text/javascript" src="<%=resource%>/dracula/dracula_graffle.js"></script>
+<script type="text/javascript" src="<%=resource%>/dracula/dracula_graph.js"></script>
+<script type="text/javascript" src="<%=resource%>/bmx6/js/bmx6-graph.js"></script>
+
+<%+footer%>
