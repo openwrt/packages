@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NPM_NAME:=mozilla-iot-gateway
 PKG_NAME:=node-$(PKG_NPM_NAME)
 PKG_VERSION:=0.8.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mozilla-iot/gateway/tar.gz/v$(PKG_VERSION)?
@@ -65,17 +65,10 @@ endef
 define Package/node-mozilla-iot-gateway/install
 	$(INSTALL_DIR) $(1)/opt/mozilla-iot/gateway/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/webthings-gateway/* $(1)/opt/mozilla-iot/gateway
-	$(STAGING_DIR_HOSTPKG)/bin/npm --prefix=$(1)/opt/mozilla-iot/gateway install $(1)/opt/mozilla-iot/gateway
-
-	# Clean up of old build files that confuse OpenWrt's dependency checker
-	$(RM) -r $(1)/opt/mozilla-iot/gateway/node_modules/sqlite3/lib/binding/node-v57-linux-x64
-	$(RM) -r $(1)/opt/mozilla-iot/gateway/node_modules/ursa/build/Release/ursaNative.node
-	$(RM) -r $(1)/opt/mozilla-iot/gateway/node_modules/ursa/build/Release/obj.target/ursaNative.node
-
-	$(INSTALL_DIR) $(1)/opt/mozilla-iot/gateway/node_modules/sqlite3/lib/binding/node-v57-linux-$(CPU)/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/webthings-gateway/node_modules/sqlite3/lib/binding/node-v57-linux-$(CPU)/node_sqlite3.node \
-		$(1)/opt/mozilla-iot/gateway/node_modules/sqlite3/lib/binding/node-v57-linux-$(CPU)/
-
+	$(MAKE_VARS) \
+	$(MAKE_FLAGS) \
+	$(STAGING_DIR_HOSTPKG)/bin/npm --prefix=$(1)/opt/mozilla-iot/gateway install \
+		--build-from-source --target_arch=$(CPU) $(1)/opt/mozilla-iot/gateway
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/mozilla-iot-gateway.init $(1)/etc/init.d/mozilla-iot-gateway
 endef
