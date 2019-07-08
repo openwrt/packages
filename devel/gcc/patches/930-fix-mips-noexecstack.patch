@@ -48,9 +48,9 @@ sellcey@mips.com
 
 --- a/gcc/config/mips/mips.c
 +++ b/gcc/config/mips/mips.c
-@@ -19629,6 +19629,9 @@ mips_lra_p (void)
- #undef TARGET_LRA_P
- #define TARGET_LRA_P mips_lra_p
+@@ -22567,6 +22567,9 @@ mips_promote_function_mode (const_tree t
+ #undef TARGET_CUSTOM_FUNCTION_DESCRIPTORS
+ #define TARGET_CUSTOM_FUNCTION_DESCRIPTORS 2
  
 +#undef TARGET_ASM_FILE_END
 +#define TARGET_ASM_FILE_END file_end_indicate_exec_stack
