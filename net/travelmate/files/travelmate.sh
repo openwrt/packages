@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.4.8"
+trm_ver="1.4.9"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -359,6 +359,7 @@ f_jsnup()
 		if [ -z "$(printf "%s" "${faulty_list}" | grep -Fo "${faulty_station}")" ]
 		then
 			faulty_list="$(f_trim "${faulty_list} ${faulty_station}")"
+			last_date="$(/bin/date "+%Y.%m.%d-%H:%M:%S")"
 		fi
 	fi
 	json_add_string "travelmate_status" "${status}"
