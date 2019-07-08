@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=spoofer
-PKG_VERSION:=1.4.3
+PKG_VERSION:=1.4.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.caida.org/projects/spoofer/downloads
-PKG_HASH:=994555b360a095f0e9baed2469ef26bd29610af155ce58b3984d2f1616a74526
+PKG_HASH:=5f045be7269d93efb1ee7918e923e7695c9a36d192c3ada932bb6ae7fba8d15e
 
-PKG_LICENSE:=GPL-3.0
+PKG_MAINTAINER:=Ken Keys <spoofer-info@caida.org>
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_USE_MIPS16:=0
-HOST_BUILD_DEPENDS:=protobuf/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -31,7 +31,6 @@ define Package/spoofer
   CATEGORY:=Network
   TITLE:=Measure your ISP's resistance to spoofed IP packets
   URL:=https://spoofer.caida.org/
-  MAINTAINER:=Ken Keys <spoofer-info@caida.org>
   DEPENDS:=+protobuf-lite +libpcap +libpthread +libopenssl
 endef
 
