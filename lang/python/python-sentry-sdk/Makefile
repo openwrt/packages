@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015-2019 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2019 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-sentry-sdk
-PKG_VERSION:=0.9.5
+PKG_VERSION:=0.10.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=sentry-sdk-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/s/sentry-sdk/
-PKG_HASH:=7c9db0e419fb0fb31c1b1d2ec9247667d2b77bd4f3136119ee6f1464e9b088a4
+PKG_HASH:=14cfbc61e44f7acb18c91b27a0912249c7bf941ecd7e248646e81492464faee0
 PKG_BUILD_DIR:=$(BUILD_DIR)/sentry-sdk-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
@@ -30,9 +30,10 @@ define Package/python3-sentry-sdk
   TITLE:=Python Client for Sentry
   URL:=https://github.com/getsentry/sentry-python
   DEPENDS:= \
+	+python3-certifi \
 	+python3-light \
-	+python3-urllib3 \
-	+python3-certifi
+	+python3-logging \
+	+python3-urllib3
   VARIANT:=python3
 endef
 
