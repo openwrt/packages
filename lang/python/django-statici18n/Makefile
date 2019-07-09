@@ -24,17 +24,41 @@ define Package/django-statici18n
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
+<<<<<<< HEAD
   TITLE:=A Django app that provides helper for generating JavaScript catalog to static files.
   URL:=https://django-statici18n.readthedocs.org/
   DEPENDS:=+python +python-django
+=======
+  TITLE:=Helper for generating JavaScript catalog to static files
+  URL:=https://$(PKG_NAME).readthedocs.io
+endef
+
+define Package/python-$(PKG_NAME)
+$(call Package/$(PKG_NAME)/Default)
+  DEPENDS:= \
+	+PACKAGE_python-$(PKG_NAME):python \
+	python-django
+  VARIANT:=python
+  MDEPENDS:=python-django
+>>>>>>> 90527d75a... django: move django* packages under django submenu
 endef
 
 define Package/django-statici18n/description
   A Django app that provides helper for generating JavaScript catalog to static files.
 endef
 
+<<<<<<< HEAD
 define Build/Compile
 	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
+=======
+define Package/python3-$(PKG_NAME)
+$(call Package/$(PKG_NAME)/Default)
+  DEPENDS:= \
+	+PACKAGE_python3-$(PKG_NAME):python3 \
+	python3-django
+  VARIANT:=python3
+  MDEPENDS:=python3-django
+>>>>>>> 90527d75a... django: move django* packages under django submenu
 endef
 
 define Package/django-statici18n/install

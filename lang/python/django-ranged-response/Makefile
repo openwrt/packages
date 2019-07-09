@@ -18,6 +18,7 @@ PKG_HASH:=f71fff352a37316b9bead717fc76e4ddd6c9b99c4680cdf4783b9755af1cf985
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
+include ../python3-package.mk
 
 define Package/django-ranged-response
   SUBMENU:=Python
@@ -25,14 +26,39 @@ define Package/django-ranged-response
   CATEGORY:=Languages
   TITLE:=Add Content-Range: to FileResponse
   URL:=https://github.com/wearespindle/django-ranged-fileresponse
-  DEPENDS:=+python +python-django
+endef
+
+define Package/python-$(PKG_NAME)
+$(call Package/$(PKG_NAME)/Default)
+  DEPENDS:= \
+	+PACKAGE_python-$(PKG_NAME):python \
+	python-django
   VARIANT:=python
+  MDEPENDS:=python-django
 endef
 
 define Package/django-ranged-response/description
   Modified Django FileResponse that adds Content-Range headers.
 endef
 
-$(eval $(call PyPackage,django-ranged-response))
-$(eval $(call BuildPackage,django-ranged-response))
-$(eval $(call BuildPackage,django-ranged-response-src))
+define Package/python3-$(PKG_NAME)
+$(call Package/$(PKG_NAME)/Default)
+  DEPENDS:= \
+	+PACKAGE_python3-$(PKG_NAME):python3 \
+	python3-django
+  VARIANT:=python3
+  MDEPENDS:=python3-django
+
+define Package/python3-$(PKG_NAME)/description
+$(call define Package/python-$(PKG_NAME)/description)
+.
+(Variant for Python3)
+endef
+
+$(eval $(call PyPackage,python-$(PKG_NAME)))
+$(eval $(call BuildPackage,python-$(PKG_NAME)))
+$(eval $(call BuildPackage,python-$(PKG_NAME)-src))
+
+$(eval $(call Py3Package,python3-$(PKG_NAME)))
+$(eval $(call BuildPackage,python3-$(PKG_NAME)))
+$(eval $(call BuildPackage,python3-$(PKG_NAME)-src))

@@ -45,6 +45,7 @@ define PyPackage
     EXTRA_DEPENDS:=
     TITLE+= (sources)
     USERID:=
+    MENU:=
   endef
 
   define Package/$(1)-src/description

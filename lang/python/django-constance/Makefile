@@ -37,8 +37,9 @@ define Package/python-django-constance
 $(call Package/python-django-constance/Default)
   DEPENDS:= \
 	+PACKAGE_python-django-constance:python \
-	+PACKAGE_python-django-constance:python-django
+	python-django
   VARIANT:=python
+  MDEPENDS:=python-django
 endef
 
 define Package/python-django-constance/description
@@ -49,8 +50,9 @@ define Package/python3-django-constance
 $(call Package/python-django-constance/Default)
   DEPENDS:= \
 	+PACKAGE_python3-django-constance:python3 \
-	+PACKAGE_python3-django-constance:python3-django
+	python3-django
   VARIANT:=python3
+  MDEPENDS:=python3-django
 endef
 
 define Package/python3-django-constance/description
