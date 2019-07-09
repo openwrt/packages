@@ -20,8 +20,6 @@ Signed-off-by: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
  Lib/distutils/sysconfig.py         | 15 +++++++++++----
  2 files changed, 15 insertions(+), 5 deletions(-)
 
-diff --git a/Lib/distutils/command/build_ext.py b/Lib/distutils/command/build_ext.py
-index 74de782d8a..d0c847b365 100644
 --- a/Lib/distutils/command/build_ext.py
 +++ b/Lib/distutils/command/build_ext.py
 @@ -234,7 +234,10 @@ class build_ext(Command):
@@ -36,8 +34,6 @@ index 74de782d8a..d0c847b365 100644
              else:
                  # building python standard extensions
                  self.library_dirs.append('.')
-diff --git a/Lib/distutils/sysconfig.py b/Lib/distutils/sysconfig.py
-index 2bcd1dd288..422c13fa4f 100644
 --- a/Lib/distutils/sysconfig.py
 +++ b/Lib/distutils/sysconfig.py
 @@ -17,10 +17,17 @@ import sys
@@ -62,6 +58,3 @@ index 2bcd1dd288..422c13fa4f 100644
  
  # Path to the base directory of the project. On Windows the binary may
  # live in project/PCbuild/win32 or project/PCbuild/amd64.
--- 
-2.13.5
-
