@@ -6,17 +6,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-oauthlib
-PKG_VERSION:=3.0.1
-PKG_RELEASE:=2
+PKG_VERSION:=3.0.2
+PKG_RELEASE:=1
 
-PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
+PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=oauthlib-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/o/oauthlib
-PKG_HASH:=0ce32c5d989a1827e3f1148f98b9085ed2370fc939bf524c9c851d8714797298
-
+PKG_HASH:=b4d99ae8ccfb7d33ba9591b59355c64eef5241534aa3da2e4c0435346b84bc8e
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-oauthlib-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
