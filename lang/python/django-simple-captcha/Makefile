@@ -40,10 +40,11 @@ $(call Package/$(PKG_NAME)/Default)
   DEPENDS:= \
 	+PACKAGE_python-$(PKG_NAME):python \
 	+PACKAGE_python-$(PKG_NAME):python-six \
-	+PACKAGE_python-$(PKG_NAME):python-django \
+	python-django \
 	+PACKAGE_python-$(PKG_NAME):python-pillow \
 	+PACKAGE_python-$(PKG_NAME):python-django-ranged-response
   VARIANT:=python
+  MDEPENDS:=python-django
 endef
 
 define Package/python-$(PKG_NAME)/description
@@ -56,10 +57,11 @@ $(call Package/$(PKG_NAME)/Default)
   DEPENDS:= \
 	+PACKAGE_python3-$(PKG_NAME):python3 \
 	+PACKAGE_python3-$(PKG_NAME):python3-six \
-	+PACKAGE_python3-$(PKG_NAME):python3-django \
+	python3-django \
 	+PACKAGE_python3-$(PKG_NAME):python3-pillow \
 	+PACKAGE_python3-$(PKG_NAME):python3-django-ranged-response
   VARIANT:=python3
+  MDEPENDS:=python3-django
 endef
 
 define Package/python3-$(PKG_NAME)/description
