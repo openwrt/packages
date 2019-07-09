@@ -9,27 +9,20 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wifidog
 PKG_VERSION:=1.3.0
-PKG_RELEASE:=3
-
-
-PKG_LICENSE:=GPL-2.0
-# Note: Packaging is maintained upstream at
-# https://github.com/wifidog/packages
-PKG_MAINTAINER:=Michael Haas <haas@computerlinguist.org>
-PKG_LICENSE_FILES:=COPYING
-
+PKG_RELEASE:=4
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/wifidog/wifidog-gateway
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=1.3.0
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKG_MIRROR_HASH:=9ffd9f3ae54baceb723abb7a04e27a9b6a3ff1479f8a3bfda9b8a496e8b4050f
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+
+PKG_MAINTAINER:=Michael Haas <haas@computerlinguist.org>
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
-# do not run make install
 PKG_INSTALL:=0
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -49,7 +42,7 @@ endef
 
 define Package/wifidog-tls
 $(call Package/wifidog/Default)
-  DEPENDS+= +libcyassl
+  DEPENDS+= +PACKAGE_wifidog-tls:libwolfssl
   VARIANT:=tls
 endef
 
@@ -73,11 +66,6 @@ endef
 
 Package/wifidog-tls/conffiles = $(Package/wifidog/conffiles)
 
-
-define Package/wifidog/configure
-	$(call Build/Configure/Default)
-endef
-
 ifeq ($(BUILD_VARIANT),tls)
 
 CONFIGURE_ARGS += \
@@ -90,7 +78,7 @@ define Package/wifidog/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/wifidog $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/wdctl $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libhttpd.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libhttpd.so.* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/wifidog.conf $(1)/etc/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/wifidog-msg.html $(1)/etc/
