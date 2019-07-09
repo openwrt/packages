@@ -26,14 +26,50 @@ define Package/django-webpack-loader
   CATEGORY:=Languages
   TITLE:=Transparently use webpack in django
   URL:=https://github.com/owais/django-webpack-loader
+<<<<<<< HEAD
   DEPENDS:=+python +python-django
+=======
+endef
+
+define Package/python-$(PKG_NAME)
+$(call Package/$(PKG_NAME)/Default)
+  DEPENDS:= \
+	+PACKAGE_python-$(PKG_NAME):python \
+	python-django
+>>>>>>> 90527d75a... django: move django* packages under django submenu
   VARIANT:=python
+  MDEPENDS:=python-django
 endef
 
 define Package/django-webpack-loader/description
   Use webpack to generate your static bundles without django’s staticfiles or opaque wrappers.
 endef
 
+<<<<<<< HEAD
 $(eval $(call PyPackage,django-webpack-loader))
 $(eval $(call BuildPackage,django-webpack-loader))
 $(eval $(call BuildPackage,django-webpack-loader-src))
+=======
+define Package/python3-$(PKG_NAME)
+$(call Package/$(PKG_NAME)/Default)
+  DEPENDS:= \
+	+PACKAGE_python3-$(PKG_NAME):python3 \
+	python3-django
+  VARIANT:=python3
+  MDEPENDS:=python3-django
+endef
+
+define Package/python3-$(PKG_NAME)/description
+$(call define Package/python-$(PKG_NAME)/description)
+.
+(Variant for Python3)
+endef
+
+$(eval $(call PyPackage,python-$(PKG_NAME)))
+$(eval $(call BuildPackage,python-$(PKG_NAME)))
+$(eval $(call BuildPackage,python-$(PKG_NAME)-src))
+
+$(eval $(call Py3Package,python3-$(PKG_NAME)))
+$(eval $(call BuildPackage,python3-$(PKG_NAME)))
+$(eval $(call BuildPackage,python3-$(PKG_NAME)-src))
+>>>>>>> 90527d75a... django: move django* packages under django submenu
