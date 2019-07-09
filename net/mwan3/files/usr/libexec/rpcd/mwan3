@@ -74,9 +74,10 @@ get_mwan3_status() {
 	local iface_select="${2}"
 	local running="0"
 	local age=0
-	local uptime=0
-	local downtime=0
-	local pid device time_p time_n time_u time_d
+	local online=0
+	local offline=0
+	local up="0"
+	local enabled pid device time_p time_n time_u time_d
 
 	network_get_device device $1
 
@@ -92,27 +93,36 @@ get_mwan3_status() {
 			let age=time_n-time_p
 		}
 
-		time_u="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/UPTIME")"
+		time_u="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/ONLINE")"
 		[ -z "${time_u}" ] || [ "${time_u}" = "0" ] || {
 			time_n="$(get_uptime)"
-			let uptime=time_n-time_u
+			let online=time_n-time_u
 		}
 
-		time_d="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/DOWNTIME")"
+		time_d="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/OFFLINE")"
 		[ -z "${time_d}" ] || [ "${time_d}" = "0" ] || {
 			time_n="$(get_uptime)"
-			let downtime=time_n-time_d
+			let offline=time_n-time_d
 		}
+
+		local uptime="0"
+
+		config_get enabled "$iface" enabled 0
+		network_get_uptime uptime "$iface"
+		network_is_up "$iface" && up="1"
 
 		json_add_object "${iface}"
 		json_add_int age "$age"
+		json_add_int online "${online}"
+		json_add_int offline "${offline}"
 		json_add_int uptime "${uptime}"
-		json_add_int downtime "${downtime}"
 		json_add_int "score" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/SCORE")"
 		json_add_int "lost" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LOST")"
 		json_add_int "turn" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/TURN")"
 		json_add_string "status" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS")"
+		json_add_boolean "enabled" "${enabled}"
 		json_add_boolean "running" "${running}"
+		json_add_boolean "up" "${up}"
 		json_add_array "track_ip"
 		for file in $MWAN3TRACK_STATUS_DIR/${iface}/*; do
 			track="${file#*/TRACK_}"
