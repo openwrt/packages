@@ -61,7 +61,7 @@ EOT
 
 	[ -e /etc/samba/smb.conf ] || ln -nsf /var/etc/smb.conf /etc/samba/smb.conf
 	
-	if [ -f /etc/samba/smb.conf ]; then
+	if ! [ -L /etc/samba/smb.conf ]; then
 		logger -t 'samba4-server' "Local custom /etc/samba/smb.conf file detected, all luci/config settings are ignored!"
 	fi
 	
@@ -75,6 +75,7 @@ smb_add_share() {
 	local dir_mask
 	local browseable
 	local read_only
+	local writeable
 	local guest_ok
 	local guest_only
 	local inherit_owner
@@ -92,6 +93,7 @@ smb_add_share() {
 	config_get dir_mask $1 dir_mask
 	config_get browseable $1 browseable
 	config_get read_only $1 read_only
+	config_get writeable $1 writeable
 	config_get guest_ok $1 guest_ok
 	config_get guest_only $1 guest_only
 	config_get inherit_owner $1 inherit_owner
@@ -118,6 +120,7 @@ smb_add_share() {
 
 	[ -n "$browseable" ] && echo -e "\tbrowseable = $browseable" >> /var/etc/smb.conf
 	[ -n "$read_only" ] && echo -e "\tread only = $read_only" >> /var/etc/smb.conf
+	[ -n "$writeable" ] && echo -e "\twriteable = $writeable" >> /var/etc/smb.conf
 	[ -n "$guest_ok" ] && echo -e "\tguest ok = $guest_ok" >> /var/etc/smb.conf
 	[ -n "$guest_only" ] && echo -e "\tguest only = $guest_only" >> /var/etc/smb.conf
 	[ -n "$inherit_owner" ] && echo -e "\tinherit owner = $inherit_owner" >> /var/etc/smb.conf
