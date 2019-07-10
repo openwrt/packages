@@ -31,11 +31,12 @@ define Package/logrotate
 endef
 
 define Package/logrotate/config
-config LOGROTATE_ACL
-	bool
-	prompt "Enable ACL support"
-	default y if USE_FS_ACL_ATTR
-	default n
+	if PACKAGE_logrotate
+		config LOGROTATE_ACL
+			bool
+			prompt "Enable ACL support"
+			default y if USE_FS_ACL_ATTR
+	endif
 endef
 
 define Package/logrotate/description
