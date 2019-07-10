@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgpg-error
 PKG_VERSION:=1.36
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://mirrors.dotsrc.org/gcrypt/libgpg-error \
@@ -18,12 +18,11 @@ PKG_SOURCE_URL:=https://mirrors.dotsrc.org/gcrypt/libgpg-error \
 PKG_HASH:=babd98437208c163175c29453f8681094bcaf92968a15cafb1a276076b33c97c
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-PKG_LICENSE:=LGPL-2.1+
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
-
 PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
