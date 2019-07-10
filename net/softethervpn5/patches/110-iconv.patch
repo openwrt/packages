@@ -1,0 +1,11 @@
+--- SoftEtherVPN-5.01.9671/src/Mayaqua/Mayaqua.h.orig	2019-07-10 13:16:07.267152861 -0700
++++ SoftEtherVPN-5.01.9671/src/Mayaqua/Mayaqua.h	2019-07-10 13:16:25.211025882 -0700
+@@ -178,7 +178,7 @@
+ #include <ifaddrs.h>
+ #endif	// MAYAQUA_SUPPORTS_GETIFADDRS
+ 
+-#ifdef	UNIX_LINUX
++#if 0
+ typedef void *iconv_t;
+ iconv_t iconv_open (__const char *__tocode, __const char *__fromcode);
+ size_t iconv (iconv_t __cd, char **__restrict __inbuf,

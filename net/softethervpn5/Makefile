@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=softethervpn5
 PKG_VERSION:=5.01.9670
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-2.0
@@ -106,6 +106,8 @@ endef
 
 define Build/Install
 endef
+
+TARGET_LDFLAGS += -liconv
 
 define Package/softethervpn5-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib

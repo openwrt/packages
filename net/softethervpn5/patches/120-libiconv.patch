@@ -1,0 +1,11 @@
+--- SoftEtherVPN-5.01.9671/src/Mayaqua/CMakeLists.txt.orig	2019-07-10 13:46:12.794229786 -0700
++++ SoftEtherVPN-5.01.9671/src/Mayaqua/CMakeLists.txt	2019-07-10 13:52:32.077845446 -0700
+@@ -63,7 +63,7 @@
+ 
+   find_library(LIB_RT rt)
+ 
+-  target_link_libraries(mayaqua PRIVATE OpenSSL::SSL OpenSSL::Crypto Threads::Threads ZLIB::ZLIB)
++  target_link_libraries(mayaqua PRIVATE iconv OpenSSL::SSL OpenSSL::Crypto Threads::Threads ZLIB::ZLIB)
+ 
+   if (CMAKE_SYSTEM_PROCESSOR MATCHES "^(armv7l|aarch64|s390x)$" OR NOT HAVE_SYS_AUXV)
+     add_definitions(-DSKIP_CPU_FEATURES)
