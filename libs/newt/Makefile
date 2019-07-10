@@ -11,16 +11,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=newt
 PKG_VERSION:=0.52.21
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://releases.pagure.org/newt
 PKG_HASH:=265eb46b55d7eaeb887fca7a1d51fe115658882dfe148164b6c49fccac5abb31
 
-PKG_LICENSE:=LGPL-2.0
+PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_LICENSE:=LGPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:fedorahosted:newt
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -88,6 +88,8 @@ CONFIGURE_ARGS+= \
 	--without-tcl \
 	--without-gpm-support \
 	--with-colorsfile=/etc/newt/palette
+
+CONFIGURE_VARS += $(if $(CONFIG_BUILD_NLS),ac_cv_lib_c_gettext=no)
 
 MAKE_VARS+= PYTHON_CONFIG_PATH="$(STAGING_DIR)/host/bin"
 
