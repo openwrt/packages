@@ -29,14 +29,15 @@ include ../../lang/python/python-package.mk
 SEAFILE_PYTHON_DEPENDS:= \
 	simplejson chardet dateutil mysql pytz qrcode requests requests-oauthlib \
 	django django-constance django-appconf django-compressor django-formtools \
-	django-jsonfield django-picklefield django-postoffice django-restframework
+	django-jsonfield django-picklefield django-postoffice django-restframework \
+	pillow
 
 define Package/seafile-seahub
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Seafile server - seahub component
   URL:=https://seafile.com/
-  DEPENDS:=+python +pillow \
+  DEPENDS:=+python \
 	+django-simple-captcha +django-statici18n +django-webpack-loader \
 	+python-flup +gunicorn +openpyxl \
 	$(foreach dep,$(SEAFILE_PYTHON_DEPENDS),+python-$(dep))
