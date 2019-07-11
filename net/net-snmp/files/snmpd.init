@@ -337,7 +337,8 @@ start_service() {
 }
 
 stop_service() {
-	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
+	[ -f "$CONFIGFILE" ] || return
+	rm -f "$CONFIGFILE"
 	procd_set_config_changed firewall
 }
 
@@ -353,5 +354,6 @@ service_triggers(){
 }
 
 service_started() {
+	[ "$snmp_enabled" -eq 0 ] && return
 	procd_set_config_changed firewall
 }
