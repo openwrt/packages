@@ -22,19 +22,29 @@
 #define IPS_HIJACKED    (1 << 31)
 #define IPS_ALLOWED     (1 << 30)
 
-static u32 wd_nf_nat_setup_info(void *priv, struct sk_buff *skb,
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 17, 19)
+static u32 wd_nat_setup_info(struct sk_buff *skb, struct nf_conn *ct)
+#else
+static u32 wd_nat_setup_info(void *priv, struct sk_buff *skb,
     const struct nf_hook_state *state, struct nf_conn *ct)
+#endif
 {
     struct config *conf = get_config();
     struct tcphdr *tcph = tcp_hdr(skb);
     union nf_conntrack_man_proto proto;
-    struct nf_nat_range newrange;
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 17, 19)
+    struct nf_nat_range2 newrange = {};
+#else
+    struct nf_nat_range newrange = {};
+#endif
     static uint16_t PORT_80 = htons(80);
 
     proto.tcp.port = (tcph->dest == PORT_80) ? htons(conf->port) : htons(conf->ssl_port);
     newrange.flags       = NF_NAT_RANGE_MAP_IPS | NF_NAT_RANGE_PROTO_SPECIFIED;
-    newrange.min_addr.ip = newrange.max_addr.ip = conf->interface_ipaddr;
-    newrange.min_proto   = newrange.max_proto = proto;
+    newrange.min_addr.ip = conf->interface_ipaddr;
+    newrange.max_addr.ip = conf->interface_ipaddr;
+    newrange.min_proto   = proto;
+    newrange.max_proto   = proto;
 
     ct->status |= IPS_HIJACKED;
 
@@ -117,16 +127,18 @@ redirect:
         return NF_DROP;
     }
 
-    return nf_nat_ipv4_in(priv, skb, state, wd_nf_nat_setup_info);
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 17, 19)
+    return wd_nat_setup_info(skb, ct);
+#else
+    return nf_nat_ipv4_in(priv, skb, state, wd_nat_setup_info);
+#endif
 }
 
-static struct nf_hook_ops wifidog_ops[] __read_mostly = {
-    {
-        .hook       = wifidog_hook,
-        .pf         = PF_INET,
-        .hooknum    = NF_INET_PRE_ROUTING,
-        .priority   = NF_IP_PRI_CONNTRACK + 1 /* after conntrack */
-    }
+static struct nf_hook_ops wifidog_ops __read_mostly = {
+    .hook       = wifidog_hook,
+    .pf         = PF_INET,
+    .hooknum    = NF_INET_PRE_ROUTING,
+    .priority   = NF_IP_PRI_NAT_DST
 };
 
 static int __init wifidog_init(void)
@@ -137,10 +149,12 @@ static int __init wifidog_init(void)
     if (ret)
         return ret;
 
-#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 12, 14)
-    ret = nf_register_net_hooks(&init_net, wifidog_ops, ARRAY_SIZE(wifidog_ops));
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 17, 19)
+    ret = nf_nat_l3proto_ipv4_register_fn(&init_net, &wifidog_ops);
+#elif LINUX_VERSION_CODE > KERNEL_VERSION(4, 12, 14)
+    ret = nf_register_net_hook(&init_net, &wifidog_ops);
 #else
-    ret = nf_register_hooks(wifidog_ops, ARRAY_SIZE(wifidog_ops));
+    ret = nf_register_hook(&wifidog_ops);
 #endif
     if (ret < 0) {
         pr_err("can't register hook\n");
@@ -160,10 +174,12 @@ static void __exit wifidog_exit(void)
 {
     deinit_config();
 
-#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 12, 14)
-    nf_unregister_net_hooks(&init_net, wifidog_ops, ARRAY_SIZE(wifidog_ops));
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 17, 19)
+    nf_nat_l3proto_ipv4_unregister_fn(&init_net, &wifidog_ops);
+#elif LINUX_VERSION_CODE > KERNEL_VERSION(4, 12, 14)
+    nf_unregister_net_hook(&init_net, &wifidog_ops);
 #else
-    nf_unregister_hooks(wifidog_ops, ARRAY_SIZE(wifidog_ops));
+    nf_unregister_hook(&wifidog_ops);
 #endif
 
     pr_info("kmod of wifidog-ng is stop\n");
