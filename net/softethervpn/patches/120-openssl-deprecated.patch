@@ -2,7 +2,7 @@ diff --git a/src/Mayaqua/Encrypt.c b/src/Mayaqua/Encrypt.c
 index f3b3908..06b7fea 100644
 --- a/src/Mayaqua/Encrypt.c
 +++ b/src/Mayaqua/Encrypt.c
-@@ -129,6 +129,7 @@
+@@ -120,6 +120,7 @@
  #include <openssl/rand.h>
  #include <openssl/engine.h>
  #include <openssl/bio.h>
@@ -10,7 +10,7 @@ index f3b3908..06b7fea 100644
  #include <openssl/x509.h>
  #include <openssl/pkcs7.h>
  #include <openssl/pkcs12.h>
-@@ -137,6 +138,7 @@
+@@ -128,6 +129,7 @@
  #include <openssl/md4.h>
  #include <openssl/hmac.h>
  #include <openssl/sha.h>
@@ -18,7 +18,7 @@ index f3b3908..06b7fea 100644
  #include <openssl/des.h>
  #include <openssl/aes.h>
  #include <openssl/dh.h>
-@@ -634,7 +636,7 @@ UINT CipherProcess(CIPHER *c, void *iv, void *dest, void *src, UINT size)
+@@ -625,7 +627,7 @@ UINT CipherProcess(CIPHER *c, void *iv, void *dest, void *src, UINT size)
  		return 0;
  	}
  
@@ -27,7 +27,7 @@ index f3b3908..06b7fea 100644
  	{
  		return 0;
  	}
-@@ -933,6 +935,7 @@ BUF *BigNumToBuf(const BIGNUM *bn)
+@@ -924,6 +926,7 @@ BUF *BigNumToBuf(const BIGNUM *bn)
  // Initialization of the lock of OpenSSL
  void OpenSSL_InitLock()
  {
@@ -35,7 +35,7 @@ index f3b3908..06b7fea 100644
  	UINT i;
  
  	// Initialization of the lock object
-@@ -946,11 +949,13 @@ void OpenSSL_InitLock()
+@@ -937,11 +940,13 @@ void OpenSSL_InitLock()
  	// Setting the lock function
  	CRYPTO_set_locking_callback(OpenSSL_Lock);
  	CRYPTO_set_id_callback(OpenSSL_Id);
@@ -49,7 +49,7 @@ index f3b3908..06b7fea 100644
  	UINT i;
  
  	for (i = 0;i < ssl_lock_num;i++)
-@@ -962,11 +967,13 @@ void OpenSSL_FreeLock()
+@@ -953,11 +958,13 @@ void OpenSSL_FreeLock()
  
  	CRYPTO_set_locking_callback(NULL);
  	CRYPTO_set_id_callback(NULL);
@@ -63,7 +63,7 @@ index f3b3908..06b7fea 100644
  	LOCK *lock = ssl_lock_obj[n];
  
  	if (mode & CRYPTO_LOCK)
-@@ -979,12 +986,15 @@ void OpenSSL_Lock(int mode, int n, const char *file, int line)
+@@ -970,12 +977,15 @@ void OpenSSL_Lock(int mode, int n, const char *file, int line)
  		// Unlock
  		Unlock(lock);
  	}
@@ -79,7 +79,7 @@ index f3b3908..06b7fea 100644
  }
  
  // Get the display name of the certificate
-@@ -1908,8 +1918,8 @@ X509 *NewX509(K *pub, K *priv, X *ca, NAME *name, UINT days, X_SERIAL *serial)
+@@ -1899,8 +1909,8 @@ X509 *NewX509(K *pub, K *priv, X *ca, NAME *name, UINT days, X_SERIAL *serial)
  	X509_set_version(x509, 2L);
  
  	// Set the Expiration
@@ -90,7 +90,7 @@ index f3b3908..06b7fea 100644
  	if (!UINT64ToAsn1Time(t1, notBefore))
  	{
  		FreeX509(x509);
-@@ -2050,8 +2060,8 @@ X509 *NewRootX509(K *pub, K *priv, NAME *name, UINT days, X_SERIAL *serial)
+@@ -2041,8 +2051,8 @@ X509 *NewRootX509(K *pub, K *priv, NAME *name, UINT days, X_SERIAL *serial)
  	X509_set_version(x509, 2L);
  
  	// Set the Expiration
@@ -101,7 +101,7 @@ index f3b3908..06b7fea 100644
  	if (!UINT64ToAsn1Time(t1, notBefore))
  	{
  		FreeX509(x509);
-@@ -2677,6 +2687,43 @@ bool RsaCheckEx()
+@@ -2697,6 +2707,43 @@ bool RsaCheckEx()
  
  	return false;
  }
@@ -145,7 +145,7 @@ index f3b3908..06b7fea 100644
  bool RsaCheck()
  {
  	RSA *rsa;
-@@ -2690,12 +2737,11 @@ bool RsaCheck()
+@@ -2710,12 +2757,11 @@ bool RsaCheck()
  	// Key generation
  	Lock(openssl_lock);
  	{
@@ -159,7 +159,7 @@ index f3b3908..06b7fea 100644
  		return false;
  	}
  
-@@ -2760,12 +2806,11 @@ bool RsaGen(K **priv, K **pub, UINT bit)
+@@ -2780,12 +2826,11 @@ bool RsaGen(K **priv, K **pub, UINT bit)
  	// Key generation
  	Lock(openssl_lock);
  	{
@@ -173,7 +173,7 @@ index f3b3908..06b7fea 100644
  		return false;
  	}
  
-@@ -3875,7 +3920,7 @@ X *X509ToX(X509 *x509)
+@@ -3895,7 +3940,7 @@ X *X509ToX(X509 *x509)
  				{
  					if (OBJ_obj2nid(ad->method) == NID_ad_ca_issuers && ad->location->type == GEN_URI)
  					{
@@ -182,7 +182,7 @@ index f3b3908..06b7fea 100644
  
  						if (IsEmptyStr(uri) == false)
  						{
-@@ -4088,7 +4133,9 @@ void Rand(void *buf, UINT size)
+@@ -4108,7 +4153,9 @@ void Rand(void *buf, UINT size)
  // Delete a thread-specific information that OpenSSL has holded
  void FreeOpenSSLThreadState()
  {
@@ -192,7 +192,7 @@ index f3b3908..06b7fea 100644
  }
  
  // Release the Crypt library
-@@ -4110,13 +4157,16 @@ void InitCryptLibrary()
+@@ -4130,13 +4177,16 @@ void InitCryptLibrary()
  	CheckIfIntelAesNiSupportedInit();
  //	RAND_Init_For_SoftEther()
  	openssl_lock = NewLock();
