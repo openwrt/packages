@@ -184,16 +184,20 @@ validate_tgt_section() {
 		'iothreads:uinteger' \
 		'portal:list(string)' \
 		'nop_interval:uinteger' \
-		'nop_count:uinteger'
+		'nop_count:uinteger' \
+		'logging:bool:0'
 }
 
 start_tgt_instance() {
+	local fg_flag=-f
 	[ "$2" = 0 ] || {
 		$logger "Validation failed for tgt options"
 		return 1
 	}
 	procd_open_instance
-	procd_set_param command $PROG -f
+	procd_set_param command $PROG
+	[ "$logging" -eq 1 ] && fg_flag=-D
+	procd_append_param command "$fg_flag"
 	[ "$iothreads" ] && procd_append_param command -t "$iothreads"
 	[ "$portal$nop_interval$nop_count" ] && {
 		local iscsi="" i
