@@ -1,0 +1,25 @@
+From f68bd76eab9a6e93b42f396a81aed64f65b99d1c Mon Sep 17 00:00:00 2001
+From: pinglin <pinglin@synology.com>
+Date: Mon, 25 Mar 2019 20:43:54 +0800
+Subject: [PATCH] fix rpath error, this commit related to the previous one
+
+---
+ buildtools/wafsamba/samba_waf18.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/buildtools/wafsamba/samba_waf18.py b/buildtools/wafsamba/samba_waf18.py
+index cc310fbf512..47acc5b3c06 100644
+--- a/buildtools/wafsamba/samba_waf18.py
++++ b/buildtools/wafsamba/samba_waf18.py
+@@ -220,7 +220,7 @@ def CHECK_LIBRARY_SUPPORT(conf, rpath=False, version_script=False, msg=None):
+              args = conf.SAMBA_CROSS_ARGS(msg=msg)
+              env = dict(os.environ)
+              env['LD_LIBRARY_PATH'] = self.inputs[0].parent.abspath() + os.pathsep + env.get('LD_LIBRARY_PATH', '')
+-             self.generator.bld.cmd_and_log([self.inputs[0].abspath()] + args, env=env)
++             self.generator.bld.cmd_and_log([self.inputs[0].abspath()] + args, env=env, exec_args=args)
+         o.post()
+         bld(rule=run_app, source=o.link_task.outputs[0])
+ 
+-- 
+2.17.1
+

@@ -1,0 +1,13 @@
+--- a/lib/replace/replace.h
++++ b/lib/replace/replace.h
+@@ -162,10 +162,6 @@
+ #include <bsd/unistd.h>
+ #endif
+ 
+-#ifdef HAVE_UNISTD_H
+-#include <unistd.h>
+-#endif
+-
+ #ifdef HAVE_STRING_H
+ #include <string.h>
+ #endif

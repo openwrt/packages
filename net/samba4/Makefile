@@ -2,7 +2,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.9.8
+PKG_VERSION:=4.10.6
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
@@ -16,10 +16,10 @@ PKG_SOURCE_URL:=https://ftp.heanet.ie/mirrors/ftp.samba.org/stable/ \
 		http://samba.mirror.bit.nl/samba/ftp/stable/ \
 		https://download.samba.org/pub/samba/stable/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=82ebb7c3f1847c39341dd97ff8b73f40fa83f5f794daeceb80f3c349ace3cf56
+PKG_HASH:=9efbeb52db1203dc779b118f1c48c161e569f7a6af5101e745497ee6296eef42
 
 # samba4=(asn1_compile) e2fsprogs=(compile_et) nfs-kernel-server=(rpcgen)
-HOST_BUILD_DEPENDS:=nfs-kernel-server/host e2fsprogs/host
+HOST_BUILD_DEPENDS:=python3/host nfs-kernel-server/host e2fsprogs/host
 PKG_BUILD_DEPENDS:=samba4/host
 
 PKG_CONFIG_DEPENDS:= \
@@ -35,6 +35,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_kmod-fs-xfs
 
 include $(INCLUDE_DIR)/package.mk
+include $(TOPDIR)/feeds/packages/lang/python/python3-package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/version.mk
@@ -57,20 +58,19 @@ endef
 define Package/samba4-libs
   $(call Package/samba4/Default)
   TITLE+= libs
-  DEPENDS:= +zlib +libtirpc +libpopt +libcomerr \
+  DEPENDS:= +zlib +libtirpc +libpopt +libcomerr +libtasn1 +libopenssl \
 	+PACKAGE_libcap:libcap +PACKAGE_libpthread:libpthread +PACKAGE_libnettle:libnettle \
 	+PACKAGE_libgcrypt:libgcrypt +PACKAGE_libpam:libpam +PACKAGE_dbus:dbus +PACKAGE_libavahi-client:libavahi-client \
 	+SAMBA4_SERVER_VFS:attr \
 	+SAMBA4_SERVER_ACL:acl +SAMBA4_SERVER_ACL:attr \
 	+SAMBA4_SERVER_AVAHI:libavahi-client \
-	+SAMBA4_SERVER_AD_DC:python-base +SAMBA4_SERVER_AD_DC:libopenssl +SAMBA4_SERVER_AD_DC:libgnutls +SAMBA4_SERVER_AD_DC:libopenldap +SAMBA4_SERVER_AD_DC:jansson +SAMBA4_SERVER_AD_DC:libarchive
+	+SAMBA4_SERVER_AD_DC:python3-base +SAMBA4_SERVER_AD_DC:python3-crypto +SAMBA4_SERVER_AD_DC:libgnutls +SAMBA4_SERVER_AD_DC:libopenldap +SAMBA4_SERVER_AD_DC:jansson +SAMBA4_SERVER_AD_DC:libarchive
 endef
 
 define Package/samba4-server
   $(call Package/samba4/Default)
   TITLE+= server
   DEPENDS:= +samba4-libs
-  EXTRA_DEPENDS:=$(if $(CONFIG_SAMBA4_SERVER_AD_DC),python-crypto,)
 endef
 
 define Package/samba4-server/description
@@ -207,7 +207,7 @@ HOST_CONFIGURE_ARGS += \
 		--without-gpgme
 
 HOST_CONFIGURE_ARGS += --disable-avahi --without-quotas --without-acl-support --without-winbind \
-	--without-ad-dc --without-json-audit --without-libarchive --disable-python --nopyc --nopyo \
+	--without-ad-dc --without-json --without-libarchive --disable-python --nopyc --nopyo \
 	--disable-gnutls --without-dnsupdate --without-ads --without-ldap
 HOST_CONFIGURE_VARS += python_LDFLAGS="" python_LIBDIR=""
 
@@ -240,11 +240,12 @@ ifeq ($(CONFIG_SAMBA4_SERVER_ACL),y)
 else
 	CONFIGURE_ARGS += --without-acl-support
 endif
+#BUG: We fail to get a wortking "python embedded interpreter" for AD_DC mode, seems mixed host/target libs.
 ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
 	CONFIGURE_ARGS += --enable-gnutls --with-dnsupdate --with-ads --with-ldap
-	TARGET_CFLAGS := -I$(STAGING_DIR)/usr/include/python2.7 $(TARGET_CFLAGS)
+	TARGET_CFLAGS := -I$(PYTHON3_INC_DIR) $(TARGET_CFLAGS)
 else
-	CONFIGURE_ARGS += --without-ad-dc --without-json-audit --without-libarchive --disable-python --nopyc --nopyo \
+	CONFIGURE_ARGS += --without-ad-dc --without-json --without-libarchive --disable-python --nopyc --nopyo --nopycache \
 		--disable-gnutls --without-dnsupdate --without-ads --without-ldap
 	CONFIGURE_VARS += \
 		python_LDFLAGS="" \
@@ -347,6 +348,15 @@ endif
 CONFIGURE_ARGS += --private-libraries=talloc,tevent,tevent-util,texpect,tdb,ldb,tdr,cmocka,replace
 # CONFIGURE_ARGS += --disable-symbol-versions
 
+define Host/Configure
+	if [ $(CONFIG_SAMBA4_SERVER_AD_DC) = "y" ]; then \
+		echo "Config error: SAMBA4_SERVER_AD_DC config option is broken atm!"; \
+		echo "Last AD_DC version that builds is here: https://github.com/Andy2244/openwrt-extra/tree/samba-4.9 "; \
+		exit 1; \
+	fi
+	$(call Host/Configure/Default)
+endef
+
 define Host/Compile
 	(cd $(HOST_BUILD_DIR); \
 		./buildtools/bin/waf build \
@@ -380,6 +390,7 @@ define Build/Configure
 endef
 
 # BUG: We need to use "waf install --targets=" otherwise a "make install" or "waf install" will retrigger a full recompile of all possible targets!
+# BUG: Samba4-10 "waf install --destdir" is not working, bins are not installed!
 define Build/Compile
 	(cd $(PKG_BUILD_DIR); \
 		./buildtools/bin/waf install \
@@ -395,65 +406,64 @@ endef
 
 define Package/samba4-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/samba/*.so* $(1)/usr/lib/
+	$(CP) -L $(PKG_BUILD_DIR)/bin/shared/*.so* $(1)/usr/lib/
+	$(CP) -L $(PKG_BUILD_DIR)/bin/shared/private/*.so* $(1)/usr/lib/
 	
 	$(INSTALL_DIR) $(1)/usr/lib/samba/vfs $(1)/usr/lib/samba/idmap $(1)/usr/lib/samba/ldb $(1)/usr/lib/samba/krb5
-	if [ -d $(PKG_INSTALL_DIR)/usr/lib/samba/idmap ]; then \
-		$(CP) $(PKG_INSTALL_DIR)/usr/lib/samba/idmap $(1)/usr/lib/samba/; \
+	if [ -d $(PKG_BUILD_DIR)/bin/modules/idmap ]; then \
+		$(CP) -L $(PKG_BUILD_DIR)/bin/modules/idmap $(1)/usr/lib/samba/; \
 	fi
-	if [ -d $(PKG_INSTALL_DIR)/usr/lib/samba/vfs ]; then \
-		$(CP) $(PKG_INSTALL_DIR)/usr/lib/samba/vfs $(1)/usr/lib/samba/; \
+	if [ -d $(PKG_BUILD_DIR)/bin/modules/vfs ]; then \
+		$(CP) -L $(PKG_BUILD_DIR)/bin/modules/vfs $(1)/usr/lib/samba/; \
 	fi
-	if [ -d $(PKG_INSTALL_DIR)/usr/lib/samba/krb5 ]; then \
-		$(CP) $(PKG_INSTALL_DIR)/usr/lib/samba/krb5 $(1)/usr/lib/samba/; \
+	if [ -d $(PKG_BUILD_DIR)/bin/modules/krb5 ]; then \
+		$(CP) -L $(PKG_BUILD_DIR)/bin/modules/krb5 $(1)/usr/lib/samba/; \
 	fi
 ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
-	$(INSTALL_DIR) $(1)/usr/lib/python2.7
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/python2.7 $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/python3
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/python3 $(1)/usr/lib/
 endif
 endef
 
 define Package/samba4-client/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{smbclient,cifsdd} $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/{smbclient,cifsdd} $(1)/usr/bin/
 endef
 
 define Package/samba4-admin/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{net,smbcontrol,profiles,rpcclient,smbcacls,smbcquotas} $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/{net,smbcontrol,profiles,rpcclient,smbcacls,smbcquotas} $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/eventlogadm $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/eventlogadm $(1)/usr/sbin/
 endef
 
 define Package/samba4-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{smbstatus,smbtree,smbget,mvxattr,nmblookup} $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/{smbstatus,smbtree,smbget,mvxattr,nmblookup} $(1)/usr/bin/
 endef
 
 define Package/samba4-server/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{smbpasswd,pdbedit,testparm} $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/{smbpasswd,pdbedit,testparm} $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/smbd $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/smbd $(1)/usr/sbin/
 ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{samba-tool,ntlm_auth,smbtar} $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/{samba,samba-gpupdate,samba_dnsupdate,samba_kcc,samba_spnupdate,samba_upgradedns} $(1)/usr/sbin/
-	# waf does not install those?
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/{samba-tool,ntlm_auth,smbtar} $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/{samba,samba-gpupdate,samba_dnsupdate,samba_kcc,samba_spnupdate,samba_upgradedns} $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/{samba4kinit,samba4kgetcred,samba4kpasswd,samba4ktutil} $(1)/usr/bin/
 endif
 ifeq ($(CONFIG_SAMBA4_SERVER_NETBIOS),y)
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/nmbd $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/nmbd $(1)/usr/sbin/
 endif
 ifeq ($(CONFIG_SAMBA4_SERVER_WINBIND),y)
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/wbinfo $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/winbindd $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/wbinfo $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/winbindd $(1)/usr/sbin/
 endif
 ifeq ($(CONFIG_SAMBA4_SERVER_ACL),y)
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/sharesec $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/sharesec $(1)/usr/bin/
 endif
 	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/samba $(1)/etc/init.d
-	$(INSTALL_DATA) ./files/samba.config $(1)/etc/config/samba4
+	$(INSTALL_CONF) ./files/samba.config $(1)/etc/config/samba4
 	$(INSTALL_DATA) ./files/smb.conf.template $(1)/etc/samba
 	$(INSTALL_BIN) ./files/samba.init $(1)/etc/init.d/samba4
 endef
