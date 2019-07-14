@@ -51,20 +51,14 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * => weekly updates, approx. 21.000 entries
     * [ut_capitole](https://dsi.ut-capitole.fr/blacklists) (categories "cryptojacking" "ddos" "malware" "phishing" "warez" enabled by default)
     * => daily updates, approx. 64.000 entries (a short description of all categories can be found [online](https://dsi.ut-capitole.fr/blacklists/index_en.php))
-    * [urlhaus](https://urlhaus.abuse.ch)
-    * => numerous updates on the same day, approx. 3.500 entries
     * [whocares](http://someonewhocares.org)
     * => weekly updates, approx. 12.000 entries
     * [winhelp](http://winhelp2002.mvps.org)
     * => infrequent updates, approx. 15.000 entries
     * [winspy](https://github.com/crazy-max/WindowsSpyBlocker)
     * => infrequent updates, approx. 120 entries
-    * [youtube](https://api.hackertarget.com/hostsearch/?q=googlevideo.com)
-    * => dynamic request API to filter "random" youtube ad domains (experimental!), approx. 150 entries
     * [yoyo](http://pgl.yoyo.org/adservers)
     * => weekly updates, approx. 2.500 entries (enabled by default)
-    * [zeus tracker](https://zeustracker.abuse.ch)
-    * => daily updates, approx. 440 entries
 * zero-conf like automatic installation & setup, usually no manual changes needed
 * simple but yet powerful adblock engine: adblock does not use error prone external iptables rulesets, http pixel server instances and things like that
 * supports five different dns backends / blocklist formats: dnsmasq, unbound, named (bind), kresd and dnscrypt-proxy

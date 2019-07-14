@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.6.5"
+adb_ver="3.6.5-2"
 adb_sysver="unknown"
 adb_enabled=0
 adb_debug=0
