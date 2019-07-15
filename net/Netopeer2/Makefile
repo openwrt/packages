@@ -10,19 +10,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=Netopeer2
-PKG_VERSION:=0.7-r1
-PKG_RELEASE:=3
+PKG_VERSION:=0.7-r2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/CESNET/Netopeer2/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=040013d1e315c62c496b704475665165578c374ffb387cbbff422cf8898d3a12
+PKG_HASH:=59688271be4fecbbee671fc7eb3dc0538b13b4baab53e923e26eaeb33e6f7ec0
 
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_PARALLEL:=1
 CMAKE_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -65,8 +65,6 @@ define Package/netopeer2/description
 endef
 
 CMAKE_OPTIONS += \
-	-DCMAKE_INSTALL_PREFIX:PATH=/usr \
-	-DCMAKE_BUILD_TYPE:STRING=Release \
 	-DKEYSTORED_KEYS_DIR:STRING=/etc/keystored/keys \
 	-DENABLE_CONFIGURATION:BOOL=OFF \
 	-DMODEL_INSTALL:BOOL=OFF \
