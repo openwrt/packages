@@ -8,21 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sysrepo
-PKG_VERSION:=0.7.7
-PKG_RELEASE:=5
+PKG_VERSION:=0.7.8
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/sysrepo/sysrepo/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=2bf8cb4d810d19231eba1e549f58f3a0ce068d170a5e7b212b927396098560e4
+PKG_HASH:=d3066c1776a6727b96bbb3517eb646d0bb6037e8e1addcbe873cae590493843e
 
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 CMAKE_INSTALL:=1
-
 PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=SYSREPO_BINDINGS:swig/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -34,11 +33,9 @@ define Package/libsysrepo/config
 	source "$(SOURCE)/Config_libsysrepo.in"
 endef
 
-PKG_BUILD_DEPENDS:=SYSREPO_BINDINGS:swig/host
-
 define Package/libsysrepo
-  SECTION:=utils
-  CATEGORY:=Utilities
+  SECTION:=libs
+  CATEGORY:=Libraries
   TITLE:=YANG-based data store library
   URL:=https://www.sysrepo.org/
   DEPENDS:=+libyang +libprotobuf-c +libev +libredblack +librt +libpthread +SYSREPO_BINDINGS:libstdcpp +SYSREPO_PYTHON:python-base +SYSREPO_LUA:lua
@@ -74,7 +71,6 @@ Sysrepo is an YANG-based configuration and operational state data store for Unix
 endef
 
 CMAKE_OPTIONS += \
-	-DCMAKE_BUILD_TYPE:STRING=Release \
 	-DUSE_AVL_LIB:BOOL=FALSE \
 	-DENABLE_TESTS:BOOL=FALSE \
 	-DBUILD_EXAMPLES:BOOL=FALSE \
@@ -83,7 +79,6 @@ CMAKE_OPTIONS += \
 	-DGEN_PYTHON_BINDINGS=0 \
 	-DGEN_LUA_BINDINGS=0 \
 	-DREPOSITORY_LOC:PATH=/etc/sysrepo \
-	-DCMAKE_INSTALL_PREFIX:PATH=/usr \
 	-DENABLE_NACM:BOOL=FALSE \
 	-DREQUEST_TIMEOUT=6 \
 	-DLONG_REQUEST_TIMEOUT=30 \
@@ -171,17 +166,6 @@ endef
 define Package/sysrepocfg/install
 	$(INSTALL_DIR) $(1)/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/sysrepocfg $(1)/bin/
-endef
-
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libsysrepo.pc $(1)/usr/lib/pkgconfig/
-
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_BUILD_DIR)/src/libsysrepo.so* $(1)/usr/lib/
-
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_BUILD_DIR)/inc/* $(1)/usr/include/
 endef
 
 $(eval $(call BuildPackage,libsysrepo))
