@@ -64,8 +64,8 @@ jobs:
           working_directory: ~/sdk
           command: |
              curl "https://$SDK_HOST/$SDK_PATH/sha256sums" -sS -o sha256sums
-             curl "https://$SDK_HOST/$SDK_PATH/sha256sums.asc" -sS -o sha256sums.asc
-             gpg --with-fingerprint --verify sha256sums.asc sha256sums
+             curl "https://$SDK_HOST/$SDK_PATH/sha256sums.sig" -sS -o sha256sums.sig
+             gpg --with-fingerprint --verify sha256sums.sig sha256sums
              rsync -av "$SDK_HOST::downloads/$SDK_PATH/$SDK_FILE" .
              sha256sum -c --ignore-missing sha256sums
 
