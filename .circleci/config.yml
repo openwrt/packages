@@ -2,7 +2,7 @@ version: 2.0
 jobs:
   build:
     docker:
-      - image: docker.io/openwrtorg/packages-cci:v1.0.2
+      - image: docker.io/openwrtorg/packages-cci:v1.0.3
     environment:
       - SDK_HOST: "downloads.openwrt.org"
       - SDK_PATH: "snapshots/targets/ath79/generic"
@@ -64,8 +64,28 @@ jobs:
           working_directory: ~/sdk
           command: |
              curl "https://$SDK_HOST/$SDK_PATH/sha256sums" -sS -o sha256sums
-             curl "https://$SDK_HOST/$SDK_PATH/sha256sums.asc" -sS -o sha256sums.asc
-             gpg --with-fingerprint --verify sha256sums.asc sha256sums
+             curl "https://$SDK_HOST/$SDK_PATH/sha256sums.asc" -fs -o sha256sums.asc || true
+             curl "https://$SDK_HOST/$SDK_PATH/sha256sums.sig" -fs -o sha256sums.sig || true
+             if [ ! -f sha256sums.asc ] && [ ! -f sha256sums.sig ]; then
+                 echo_red "Missing sha256sums signature files"
+                 exit 1
+             fi
+             [ ! -f sha256sums.asc ] || gpg --with-fingerprint --verify sha256sums.asc sha256sums
+             if [ -f sha256sums.sig ]; then
+                 VERIFIED=
+                 for KEY in ~/usign/*; do
+                     echo "Trying $KEY..."
+                     if signify-openbsd -V -q -p "$KEY" -x sha256sums.sig -m sha256sums; then
+                         echo "...verified"
+                         VERIFIED=1
+                         break
+                     fi
+                 done
+                 if [ -z "$VERIFIED" ]; then
+                     echo_red "Could not verify usign signature"
+                     exit 1
+                 fi
+             fi
              rsync -av "$SDK_HOST::downloads/$SDK_PATH/$SDK_FILE" .
              sha256sum -c --ignore-missing sha256sums
 
