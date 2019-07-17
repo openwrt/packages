@@ -10,7 +10,8 @@ smb_header()
 	config_get CIFSD_IFACE $1 interface "lan"
 
 	# resolve interfaces
-	local interfaces=$(
+	local interfaces
+	interfaces=$(
 		. /lib/functions/network.sh
 
 		local net
@@ -23,7 +24,8 @@ smb_header()
 	)
 
 	local workgroup description
-	local hostname="$(cat /proc/sys/kernel/hostname)"
+	local hostname
+	hostname="$(cat /proc/sys/kernel/hostname)"
 
 	config_get workgroup		$1 workgroup	"WORKGROUP"
 	config_get description		$1 description	"Cifsd on OpenWrt"
@@ -35,7 +37,7 @@ smb_header()
 	    /etc/cifs/smb.conf.template > /var/etc/cifs/smb.conf
 
 	[ -e /etc/cifs/smb.conf ] || ln -nsf /var/etc/cifs/smb.conf /etc/cifs/smb.conf
-	
+
 	if [ ! -L /etc/cifs/smb.conf ]; then
 		logger -t 'cifsd' "Local custom /etc/cifs/smb.conf file detected, all UCI/Luci config settings are ignored!"
 	fi
@@ -75,31 +77,33 @@ smb_add_share()
 	config_get_bool hide_dot_files	$1 hide_dot_files	0
 	config_get veto_files $1 veto_files
 
-	[ -z "$name" -o -z "$path" ] && return
+	[ -z "$name" ] || [ -z "$path" ] && return
 
-	echo -e "\n[$name]\n\tpath = $path" >> /var/etc/cifs/smb.conf
-	[ -n "$comment" ] && echo -e "\tcomment = $comment" >> /var/etc/cifs/smb.conf
-	
-	if [ "$force_root" -eq 1 ]; then
-		echo -e "\tforce user = root" >> /var/etc/cifs/smb.conf
-		echo -e "\tforce group = root" >> /var/etc/cifs/smb.conf
-	else
-		[ -n "$users" ] && echo -e "\tvalid users = $users" >> /var/etc/cifs/smb.conf
-	fi
+	{
+		printf "\n[%s]\n\tpath = %s\n" "$name" "$path"
+		[ -n "$comment" ] && printf "\tcomment = %s\n" "$comment"
 
-	[ -n "$create_mask" ] && echo -e "\tcreate mask = $create_mask" >> /var/etc/cifs/smb.conf
-	[ -n "$dir_mask" ] && echo -e "\tdirectory mask = $dir_mask" >> /var/etc/cifs/smb.conf
+		if [ "$force_root" -eq 1 ]; then
+			printf "\tforce user = %s\n" "root"
+			printf "\tforce group = %s\n" "root"
+		else
+			[ -n "$users" ] && printf "\tvalid users = %s\n" "$users"
+		fi
 
-	[ -n "$browseable" ] && echo -e "\tbrowseable = $browseable" >> /var/etc/cifs/smb.conf
-	[ -n "$read_only" ] && echo -e "\tread only = $read_only" >> /var/etc/cifs/smb.conf
-	[ -n "$writeable" ] && echo -e "\twriteable = $writeable" >> /var/etc/cifs/smb.conf
-	[ -n "$guest_ok" ] && echo -e "\tguest ok = $guest_ok" >> /var/etc/cifs/smb.conf
+		[ -n "$create_mask" ] && printf "\tcreate mask = %s\n" "$create_mask"
+		[ -n "$dir_mask" ] && printf "\tdirectory mask = %s\n" "$dir_mask"
 
-	[ -n "$write_list" ] && echo -e "\twrite list = $write_list" >> /var/etc/cifs/smb.conf
-	[ -n "$read_list" ] && echo -e "\tread list = $read_list" >> /var/etc/cifs/smb.conf
+		[ -n "$browseable" ] && printf "\tbrowseable = %s\n" "$browseable"
+		[ -n "$read_only" ] && printf "\tread only = %s\n" "$read_only"
+		[ -n "$writeable" ] && printf "\twriteable = %s\n" "$writeable"
+		[ -n "$guest_ok" ] && printf "\tguest ok = %s\n" "$guest_ok"
 
-	[ "$hide_dot_files" -eq 1 ] && echo -e "\thide dot files = yes" >> /var/etc/cifs/smb.conf
-	[ -n "$veto_files" ] && echo -e "\tveto files = $veto_files" >> /var/etc/cifs/smb.conf
+		[ -n "$write_list" ] && printf "\twrite list = %s\n" "$write_list"
+		[ -n "$read_list" ] && printf "\tread list = %s\n" "$read_list"
+
+		[ "$hide_dot_files" -eq 1 ] && printf "\thide dot files = %s\n" "yes"
+		[ -n "$veto_files" ] && printf "\tveto files = %s\n" "$veto_files"
+	} >> /var/etc/cifs/smb.conf
 }
 
 init_config()
@@ -117,9 +121,9 @@ init_config()
 service_triggers()
 {
 	PROCD_RELOAD_DELAY=2000
-	
+
 	procd_add_reload_trigger "dhcp" "system" "cifsd"
-	
+
 	local i
 	for i in $CIFSD_IFACE; do
 		procd_add_reload_interface_trigger $i
@@ -129,21 +133,20 @@ service_triggers()
 start_service()
 {
 	init_config
-	
+
 	if [ ! -e /etc/cifs/smb.conf ]; then
 		logger -t 'cifsd' "missing config /etc/cifs/smb.conf, needs to-be created manually!"
 		exit 1
 	fi
 
 	[ -f /tmp/cifsd.lock ] && rm /tmp/cifsd.lock
-	
+
 	# try remove again before start
-	if (lsmod | grep cifsd &>/dev/null); then
-		rmmod cifsd &>/dev/null
-	fi
-	modprobe cifsd 2>/dev/null
-	if ! (lsmod | grep cifsd &>/dev/null); then
-		logger -t 'cifsd' "modprobe of cifsd module failed, cant start cifsd!"
+	[ -e /sys/module/cifsd ] && rmmod cifsd > /dev/null 2>&1
+
+	modprobe cifsd 2> /dev/null
+	if [ ! -e /sys/module/cifsd ]; then
+		logger -t 'cifsd' "modprobe of cifsd module failed, can\'t start cifsd!"
 		exit 1
 	fi
 
