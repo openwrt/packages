@@ -27,7 +27,7 @@ define Package/gddrescue
   CATEGORY:=Utilities
   TITLE:=Data recovery tool
   URL:=https://www.gnu.org/software/ddrescue/
-  DEPENDS:=$(CXX_DEPENDS)
+  DEPENDS:=$(CXX_DEPENDS) @!USE_UCLIBC
 endef
 
 define Package/gddrescue/description
