@@ -50,7 +50,7 @@ prepare_mqtt_conf() {
 
 	config_get serveraddr "$cfg" "serveraddr"
 	config_get serverport "$cfg" "serverport"
-	[ -z "${serveraddr}" -o -z "${serverport}" ] && return 1
+	[ -z "${serveraddr}" ] || [ -z "${serverport}" ] && return 1
 
 	cat <<-EOF >>${CONFIGFILE}
 		MQTT {
@@ -97,10 +97,10 @@ prepare_wifidog_conf() {
 	[ -f ${CONFIGFILE} ] && rm -f ${CONFIGFILE}
 
 	config_get enable "${cfg}" "disabled" 0
-	[ "${enable}" = "0" ] || {
+	if [ "${enable}" = "0" ]; then
 		echo "wifidogx disabled in /etc/config/wifidogx file, please set disabled to 0 to enable it" >&2
 		return
-	}
+	fi
 
 	default_gateway_id=$(sed -e 's/://g' /sys/class/net/br-lan/address)
 
@@ -185,7 +185,7 @@ prepare_wifidog_conf() {
 		GatewayID $gateway_id
 		GatewayInterface $gateway_interface
 		Externalinterface $external_interface
- 
+
 		AuthServer {
 			Hostname $auth_server_hostname
 			HTTPPort $auth_server_port
@@ -196,7 +196,7 @@ prepare_wifidog_conf() {
 			$set_auth_server_path_ping
 			$set_auth_server_path_auth
 		}
- 
+
 		$set_delta_traffic
 		CheckInterval $check_interval
 		ClientTimeout $client_timeout
@@ -216,21 +216,21 @@ prepare_wifidog_conf() {
 		FirewallRuleSet global {
 			$set_firewall_rule_global
 		}
- 
+
 		FirewallRuleSet validating-users {
 			$set_firewall_rule_validating_users
 			FirewallRule allow to 0.0.0.0/0
 		}
- 
+
 		FirewallRuleSet known-users {
 			$set_firewall_rule_known_users
 			FirewallRule allow to 0.0.0.0/0
 		}
- 
+
 		FirewallRuleSet auth-is-down {
 			$set_firewall_rule_auth_is_down
 		}
- 
+
 		FirewallRuleSet unknown-users {
 			$set_firewall_rule_unknown_users
 			FirewallRule allow udp port 53
@@ -238,7 +238,7 @@ prepare_wifidog_conf() {
 			FirewallRule allow udp port 67
 			FirewallRule allow tcp port 67
 		}
- 
+
 		FirewallRuleSet locked-users {
 			$set_firewall_rule_locked_users
 			FirewallRule block to 0.0.0.0/0
@@ -250,19 +250,19 @@ init_config() {
 	config_load wifidogx
 	config_foreach prepare_wifidog_conf wifidog
 
-	[ ! -f ${CONFIGFILE} ] && {
+	if [ ! -f ${CONFIGFILE} ]; then
 		echo "no wifidogx.conf, exit..." >&2
 		exit
-	}
+	fi
 
-	[ -s "${APFREE_CERT}" -a -s "${APFREE_KEY}" ] || {
+	if [ -s "${APFREE_CERT}" ] && [ -s "${APFREE_KEY}" ]; then
 		generate_keys
-	}
+	fi
 
-	[ -s ${APFREE_KEY} -a -s ${APFREE_CERT} ] || {
+	if [ -s ${APFREE_KEY} ] && [ -s ${APFREE_CERT} ]; then
 		echo "no cert or key, exit..." >&2
 		exit
-	}
+	fi
 
 	config_foreach prepare_mqtt_conf mqtt
 
