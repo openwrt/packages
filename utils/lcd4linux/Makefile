@@ -120,6 +120,8 @@ LCD4LINUX_PLUGINS:= \
 	w1retap \
 	$(if $(CONFIG_BROKEN),wireless) \
 	xmms \
+	layout \
+	run \
 #	python
 
 include $(INCLUDE_DIR)/package.mk
