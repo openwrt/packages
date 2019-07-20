@@ -14,8 +14,10 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.libreswan.org/
 PKG_HASH:=d60e4160f43272b6307b697a13f79f56b5ec2bca61d83097ddadd8586a58ab3e
 
-PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING LICENSE
+PKG_CPE_ID:=cpe:/a:libreswan:libreswan
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
