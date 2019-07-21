@@ -8,6 +8,20 @@ config SAMBA4_SERVER_ACL
 		Extended access control list support
 	default n
 
+config SAMBA4_SERVER_AD_DC
+	bool "Active Directory Domain Controller support (requires krb5-server) (EXPERIMENTAL)"
+	depends on PACKAGE_samba4-server
+	select PACKAGE_python-crypto
+	help
+		installs: samba (meta-daemon) python-crypto ntlm_auth
+			scripts: samba-tool
+
+		Run as a Active Directory Domain Controller
+		see: https://wiki.samba.org/index.php/Setting_up_Samba_as_an_Active_Directory_Domain_Controller
+		HINT: see section (# Using the Domain Controller as a File Server)
+		NOTE: Extroot is recommend for this setup, as it is not optimized to run completely from RAM/tempfs!
+	default n
+
 config SAMBA4_SERVER_AVAHI
 	bool "Avahi support"
 	depends on PACKAGE_samba4-server
