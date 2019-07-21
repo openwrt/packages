@@ -3,12 +3,12 @@
 @@ -15,6 +15,7 @@ use Inline (
          ($ENV{LIBUSB_INCDIR} ? ( INC => "-I\"$ENV{LIBUSB_INCDIR}\"" ) : () ),
          NAME => 'Device::USB',
-         VERSION => '0.37',
+         VERSION => '0.38',
 +        PREFIX => 'deviceusb_',
     );
  
  Inline->init();
-@@ -540,74 +541,74 @@ unsigned DeviceUSBDebugLevel()
+@@ -657,74 +658,74 @@ unsigned DeviceUSBDebugLevel()
      return debugLevel;
  }
  
@@ -98,7 +98,7 @@
      }
  #if LIBUSB_HAS_GET_DRIVER_NP
      ret = usb_get_driver_np((usb_dev_handle *)dev, interface, name, namelen);
-@@ -618,11 +619,11 @@ int libusb_get_driver_np(void *dev, int
+@@ -735,11 +736,11 @@ int libusb_get_driver_np(void *dev, int interface, char *name, unsigned int name
  #endif
  }
  
@@ -112,7 +112,7 @@
      }
  #if LIBUSB_HAS_DETACH_KERNEL_DRIVER_NP
      return usb_detach_kernel_driver_np((usb_dev_handle *)dev, interface);
-@@ -631,25 +632,25 @@ int libusb_detach_kernel_driver_np(void
+@@ -748,25 +749,25 @@ int libusb_detach_kernel_driver_np(void *dev, int interface)
  #endif
  }
  
@@ -143,7 +143,7 @@
  {
      int i = 0;
      int retval = 0;
-@@ -658,7 +659,7 @@ void libusb_control_msg(void *dev, int r
+@@ -775,7 +776,7 @@ void libusb_control_msg(void *dev, int requesttype, int request, int value, int
  
      if(DeviceUSBDebugLevel())
      {
@@ -152,7 +152,7 @@
              requesttype, request, value, index, bytes, size, timeout
          );
          /* maybe need to add support for printing the bytes string. */
-@@ -691,54 +692,54 @@ void libusb_control_msg(void *dev, int r
+@@ -808,54 +809,54 @@ void libusb_control_msg(void *dev, int requesttype, int request, int value, int
      Inline_Stack_Done;
  }
  
