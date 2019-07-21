@@ -25,7 +25,7 @@ PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_DEPENDS:=softethervpn/host
-HOST_BUILD_DEPENDS:=readline/host libiconv/host
+HOST_BUILD_DEPENDS:=readline/host libiconv/host openssl
 
 HAMCORE_SE2:=$(STAGING_DIR_HOST)/share/softethervpn/hamcore.se2
 
