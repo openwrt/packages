@@ -8,20 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsigc++
-PKG_VERSION:=2.10.1
+PKG_VERSION:=2.10.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/libsigc++/2.10
-PKG_HASH:=c9a25f26178c6cbb147f9904d8c533b5a5c5111a41ac2eb781eb734eea446003
+PKG_HASH:=b1ca0253379596f9c19f070c83d362b12dfd39c0a3ea1dd813e8e21c1a097a98
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
-PKG_LICENSE:=LGPL-3.0+
+PKG_LICENSE:=LGPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -45,7 +44,8 @@ CONFIGURE_ARGS += \
 	--disable-benchmark \
 	--disable-documentation \
 	--disable-deprecated-api \
-	--disable-warnings
+	--disable-warnings \
+	--without-boost
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
