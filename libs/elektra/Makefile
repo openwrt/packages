@@ -41,7 +41,7 @@ define Package/libelektra/Default
   CATEGORY:=Libraries
   TITLE:=Elektra
   URL:=http://www.libelektra.org/
-  SUBMENU:=libelektra
+  SUBMENU:=LibElektra
 endef
 
 define Package/libelektra/Default-description

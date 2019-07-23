@@ -71,7 +71,7 @@ endef
 define Package/zabbix/Default
   SECTION:=admin
   CATEGORY:=Administration
-  SUBMENU:=zabbix
+  SUBMENU:=Zabbix
   TITLE:=Zabbix
   URL:=https://www.zabbix.com/
   USERID:=zabbix=53:zabbix=53

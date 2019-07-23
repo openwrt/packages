@@ -18,7 +18,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/dynapoint
     SECTION:=net
     CATEGORY:=Network
-    SUBMENU:=wireless
+    SUBMENU:=Wireless
     DEPENDS:=+lua +libubus-lua +libuci-lua +libubox-lua +luci-lib-nixio
     TITLE:=Dynamic access point manager
     PKGARCH:=all

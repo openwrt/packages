@@ -42,7 +42,7 @@ PKG_CONFIG_DEPENDS := \
 include $(INCLUDE_DIR)/package.mk
 
 define Package/sqlite3/Default
-  SUBMENU:=database
+  SUBMENU:=Database
   TITLE:=SQLite (v3.x) database engine
   URL:=http://www.sqlite.org/
   MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>

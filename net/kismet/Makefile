@@ -27,7 +27,7 @@ define Package/kismet/Default
   MAINTAINER:=Jean-Michel lacroix <lacroix@lepine-lacroix.info>
   DEPENDS:= $(CXX_DEPENDS) +libnl
   URL:=http://www.kismetwireless.net/
-  SUBMENU:=wireless
+  SUBMENU:=Wireless
 endef
 
 define Package/kismet/Default/description

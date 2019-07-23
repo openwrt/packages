@@ -235,7 +235,7 @@ define Package/mariadb/Default
   SECTION:=utils
   CATEGORY:=Utilities
   URL:=https://mariadb.org/
-  SUBMENU:=database
+  SUBMENU:=Database
 endef
 
 define Package/mariadb-client

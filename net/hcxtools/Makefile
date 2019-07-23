@@ -27,7 +27,7 @@ define Package/hcxtools
   DEPENDS:=+libpthread +libpcap +zlib +libcurl +libopenssl
   TITLE:=hcxtools
   URL:=https://github.com/ZerBea/hcxtools
-  SUBMENU:=wireless
+  SUBMENU:=Wireless
 endef
 
 define Package/hcxtools/description

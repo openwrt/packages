@@ -28,7 +28,7 @@ TCPREPLAY_MODULES:= \
 	tcpreplay tcpreplay-edit tcprewrite
 
 define Package/tcpreplay/default
-  SUBMENU:=tcprelay
+  SUBMENU:=Tcpreplay
   SECTION:=net
   CATEGORY:=Network
   URL:=http://tcpreplay.appneta.com/
