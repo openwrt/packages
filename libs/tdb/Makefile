@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/version.mk
 
 define Package/tdb
-  SUBMENU:=database
+  SUBMENU:=Database
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Trivial Database

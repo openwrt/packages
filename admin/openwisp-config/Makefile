@@ -24,7 +24,7 @@ define Package/openwisp-config/default
 	TITLE:=Remote configuration management agent ($(2) variant)
 	CATEGORY:=Administration
 	SECTION:=admin
-	SUBMENU:=openwisp
+	SUBMENU:=OpenWISP
 	DEPENDS:=+curl +lua +libuci-lua +luafilesystem $(3)
 	VARIANT:=$(1)
 	MAINTAINER:=Federico Capoano <f.capoano@cineca.it>

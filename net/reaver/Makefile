@@ -33,7 +33,7 @@ CONFIGURE_ARGS += --enable-savetocurrent
 define Package/reaver
   SECTION:=net
   CATEGORY:=Network
-  SUBMENU:=wireless
+  SUBMENU:=Wireless
   TITLE:=Efficient brute force attack against Wifi Protected Setup
   URL:=https://github.com/t6x/reaver-wps-fork-t6x
   DEPENDS:=+libpcap

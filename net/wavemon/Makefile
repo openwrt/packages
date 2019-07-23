@@ -29,7 +29,7 @@ define Package/wavemon
   CATEGORY:=Network
   TITLE:=N-curses based wireless network devices monitor
   DEPENDS:=+libncurses +libpthread +libnl-genl
-  SUBMENU:=wireless
+  SUBMENU:=Wireless
   URL:=https://github.com/uoaerg/wavemon/releases
 endef
 
