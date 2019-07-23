@@ -24,6 +24,8 @@ PKG_FIXUP:=autoreconf
 
 PKG_INSTALL:=1
 
+PKG_CONFIG_DEPENDS := CONFIG_PACKAGE_libpcrecpp
+
 include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
@@ -31,7 +33,6 @@ define Package/libpcre/default
   SECTION:=libs
   CATEGORY:=Libraries
   URL:=https://www.pcre.org/
-  DEPENDS:=$(CXX_DEPENDS)
 endef
 
 define Package/libpcre
@@ -47,7 +48,7 @@ endef
 define Package/libpcrecpp
   $(call Package/libpcre/default)
   TITLE:=C++ wrapper for Perl Compatible Regular Expression library
-  DEPENDS:=+libpcre
+  DEPENDS:=+libpcre $(CXX_DEPENDS)
 endef
 
 TARGET_CFLAGS += $(FPIC)
@@ -57,8 +58,7 @@ CONFIGURE_ARGS += \
 	--enable-unicode-properties \
 	--enable-pcre16 \
 	--with-match-limit-recursion=16000 \
-	--enable-cpp
-
+	$(if $(CONFIG_PACKAGE_libpcrecpp),--enable,--disable)-cpp
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS)"
