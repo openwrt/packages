@@ -9,21 +9,19 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tar
 PKG_VERSION:=1.32
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
 PKG_HASH:=d0d3ae07f103323be809bc3eac0dcc386d52c5262499fe05511ac4788af1fdd8
 
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
-PKG_LICENSE:=GPL-3.0
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gnu:tar
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
-
-PKG_BUILD_DEPENDS:=xz
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -49,18 +47,23 @@ define Package/tar/config
 			default y if USE_FS_ACL_ATTR
 			default n
 
-		config PACKAGE_TAR_GZIP
-			bool "tar: Enable seamless gzip support"
-			default y
-
 		config PACKAGE_TAR_BZIP2
 			bool "tar: Enable seamless bzip2 support"
+			default y
+
+		config PACKAGE_TAR_GZIP
+			bool "tar: Enable seamless gzip support"
 			default y
 
 		config PACKAGE_TAR_XZ
 			bool "tar: Enable seamless xz support"
 			select PACKAGE_xz-utils
 			select PACKAGE_xz
+			default y
+
+		config PACKAGE_TAR_ZSTD
+			bool "tar: Enable seamless zstd support"
+			select PACKAGE_libzstd
 			default y
 	endif
 endef
@@ -89,14 +92,16 @@ endef
 CONFIGURE_ARGS += \
 	$(if $(CONFIG_PACKAGE_TAR_POSIX_ACL),--with,--without)-posix-acls \
 	$(if $(CONFIG_PACKAGE_TAR_XATTR),--with,--without)-xattrs \
-	$(if $(CONFIG_PACKAGE_TAR_GZIP),--with-gzip=gzip,--without-gzip) \
 	$(if $(CONFIG_PACKAGE_TAR_BZIP2),--with-bzip2=bzip2,--without-bzip2) \
+	$(if $(CONFIG_PACKAGE_TAR_GZIP),--with-gzip=gzip,--without-gzip) \
 	$(if $(CONFIG_PACKAGE_TAR_XZ),--with-xz=xz,--without-xz) \
+	$(if $(CONFIG_PACKAGE_TAR_ZSTD),--with-zstd=zstd,--without-zstd) \
 	--without-compress \
 	--without-lzip \
 	--without-lzma \
 	--without-lzop \
-	--without-selinux
+	--without-selinux \
+	--disable-rpath
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS)" \
