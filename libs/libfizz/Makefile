@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libfizz
-PKG_VERSION:=2019.06.10.00
+PKG_VERSION:=2019.07.22.00
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/facebookincubator/fizz/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=29a9b2d020b70b83bf27fa6332c07c4ae9cca3b82c5ac9214220a815d7f1fe7f
-PKG_BUILD_DIR:=$(BUILD_DIR)/fizz-$(PKG_VERSION)
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/facebookincubator/fizz
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_MIRROR_HASH:=aa46793a4983d4d4c49ff86b4b0cb9b2bcac50d59fbc9744982a726966aa1596
 
 PKG_MAINTAINER:=Amol Bhave <ambhave@fb.com>
 PKG_LICENSE:=BSD
