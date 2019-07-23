@@ -1,25 +1,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=re2
-PKG_VERSION:=2019-06-01
-PKG_RELEASE:=2
+PKG_VERSION:=2019-07-01
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/google/re2/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=02b7d73126bd18e9fbfe5d6375a8bb13fadaf8e99e48cbb062e4500fc18e8e2e
+PKG_HASH:=de6c3ee49b2cecdfd2936af18d6947db36726590e566b5915db3746784c55745
 
+PKG_MAINTAINER:=Amol Bhave <ambhave@fb.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
+
+HOST_BUILD_PARALLEL:=1
+PKG_BUILD_PARALLEL:=1
+CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
-
-PKG_BUILD_PARALLEL:=1
-HOST_BUILD_PARALLEL:=1
-CMAKE_OPTIONS:= \
-	-DBUILD_SHARED_LIBS=$(if $(CONFIG_RE2_SHARED),ON,OFF)
-CMAKE_INSTALL:=1
 
 define Package/re2
 	SECTION:=libs
@@ -27,7 +26,6 @@ define Package/re2
 	DEPENDS:=+libstdcpp
 	TITLE:=RE2 is a fast, safe, thread-friendly alternative to backtracking regular expression engines like those used in PCRE, Perl, and Python. It is a C++ library.
 	URL:=https://github.com/google/re2
-	MAINTAINER:=Amol Bhave <ambhave@fb.com>
 endef
 
 define Package/re2/config
@@ -54,6 +52,9 @@ define Package/re2/description
 	expression engines like those used in PCRE, Perl, and Python.
 	It is a C++ library.
 endef
+
+CMAKE_OPTIONS += \
+	-DBUILD_SHARED_LIBS=$(if $(CONFIG_RE2_SHARED),ON,OFF)
 
 define Package/re2/install
 	$(INSTALL_DIR) $(1)/usr/lib
