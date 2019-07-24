@@ -76,7 +76,7 @@ endef
 define Package/kea-admin
 	$(call Package/kea/Default)
 	TITLE+= Admin
-	DEPENDS:= +kea-libs +python3
+	DEPENDS:= +kea-libs
 endef
 
 define Package/kea-ctrl
