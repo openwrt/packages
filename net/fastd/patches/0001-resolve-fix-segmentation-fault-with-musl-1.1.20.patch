@@ -1,0 +1,35 @@
+From 9710132c04cd378bd36f16a2a3d98d9c4c5fdbac Mon Sep 17 00:00:00 2001
+From: David Bauer <mail@david-bauer.net>
+Date: Thu, 25 Jul 2019 18:51:25 +0200
+Subject: [PATCH] resolve: fix segmentation fault with musl >1.1.20
+
+When compiled with musl >1.1.20, fastd will crash in case it can't
+resolve a peers hostname. This is due to a changed implementation of
+freeaddrinfo in musl 1.1.21 onwards.
+
+This segfault is fixed by not calling freeaddrinfo in case the supplied
+pointer is null.
+
+Signed-off-by: David Bauer <mail@david-bauer.net>
+---
+ src/resolve.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/resolve.c b/src/resolve.c
+index 9bdfa1c..bfd2a59 100644
+--- a/src/resolve.c
++++ b/src/resolve.c
+@@ -104,7 +104,9 @@ static void * resolve_peer(void *varg) {
+ 
+ 	fastd_async_enqueue(ASYNC_TYPE_RESOLVE_RETURN, ret, sizeof(fastd_async_resolve_return_t) + n_addr*sizeof(fastd_peer_address_t));
+ 
+-	freeaddrinfo(res);
++	if (res)
++		freeaddrinfo(res);
++
+ 	free(arg->hostname);
+ 	free(arg);
+ 
+-- 
+2.20.1
+
