@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xz
 PKG_VERSION:=5.2.4
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/lzmautils
@@ -83,6 +83,9 @@ CONFIGURE_ARGS += \
 	--disable-werror \
 	--with-pic
 
+CONFIGURE_VARS += \
+	gl_cv_posix_shell=/bin/sh
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) \
@@ -114,7 +117,7 @@ $(eval $(call BuildSubPackage,lzmadec, +liblzma,))
 $(eval $(call BuildSubPackage,lzmainfo, +liblzma,))
 $(eval $(call BuildSubPackage,xz, +liblzma, lzcat lzma unlzma unxz xzcat))
 $(eval $(call BuildSubPackage,xzdec, +liblzma,))
-$(eval $(call BuildSubPackage,xzdiff, +bash +xz, lzcmp lzdiff xzcmp))
-$(eval $(call BuildSubPackage,xzgrep, +bash +xz, lzegrep lzfgrep lzgrep xzegrep xzfgrep))
-$(eval $(call BuildSubPackage,xzless, +bash +xz, lzless))
-$(eval $(call BuildSubPackage,xzmore, +bash +xz, lzmore))
+$(eval $(call BuildSubPackage,xzdiff, +xz, lzcmp lzdiff xzcmp))
+$(eval $(call BuildSubPackage,xzgrep, +xz, lzegrep lzfgrep lzgrep xzegrep xzfgrep))
+$(eval $(call BuildSubPackage,xzless, +xz, lzless))
+$(eval $(call BuildSubPackage,xzmore, +xz, lzmore))
