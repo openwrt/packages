@@ -330,6 +330,12 @@ define Package/freeradius3-mod-preprocess/conffiles
 /etc/freeradius3/mods-enabled/preprocess
 endef
 
+define Package/freeradius3-mod-python
+  $(call Package/freeradius3/Default)
+  DEPENDS:=freeradius3 +python
+  TITLE:=the Python module for freeradius
+endef
+
 define Package/freeradius3-mod-realm
   $(call Package/freeradius3/Default)
   DEPENDS:=freeradius3
@@ -407,7 +413,6 @@ CONFIGURE_ARGS+= \
 	--without-rlm_opendirectory \
 	--without-rlm_pam \
 	--without-rlm_perl \
-	--without-rlm_python \
 	--without-rlm_redis \
 	--without-rlm_rediswho \
 	--without-rlm_rest \
@@ -446,6 +451,17 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-eap-peap),)
   CONFIGURE_LIBS+= -lcrypto -lssl
 else
   CONFIGURE_ARGS+= --without-rlm_eap_peap
+endif
+
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-python),)
+  CFLAGS+=-fPIC
+  CONFIGURE_ARGS+= \
+        --with-rlm_python \
+        --with-rlm_python-include-dir="$(STAGING_DIR)/usr/include" \
+        --with-rlm_python-lib-dir="$(STAGING_DIR)/usr/lib" \
+else
+  CONFIGURE_ARGS+= --without-rlm_python
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-eap-tls),)
@@ -608,6 +624,7 @@ $(eval $(call BuildPlugin,freeradius3-mod-mschap,rlm_mschap,))
 $(eval $(call BuildPlugin,freeradius3-mod-pap,rlm_pap,))
 $(eval $(call BuildPlugin,freeradius3-mod-passwd,rlm_passwd,))
 $(eval $(call BuildPlugin,freeradius3-mod-preprocess,rlm_preprocess,))
+$(eval $(call BuildPlugin,freeradius3-mod-python,rlm_python,))
 $(eval $(call BuildPlugin,freeradius3-mod-radutmp,rlm_radutmp,))
 $(eval $(call BuildPlugin,freeradius3-mod-realm,rlm_realm,))
 $(eval $(call BuildPlugin,freeradius3-mod-unix,rlm_unix,))
