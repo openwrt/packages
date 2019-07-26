@@ -1,0 +1,102 @@
+--- a/fillbook.cc
++++ b/fillbook.cc
+@@ -31,6 +31,9 @@
+ #include "block.h"
+ #include "mapbook.h"
+ 
++#ifdef __UCLIBCXX_MAJOR__
++#undef fputc
++#endif
+ 
+ // Return values: 1 write error, 0 OK.
+ //
+--- a/genbook.cc
++++ b/genbook.cc
+@@ -31,6 +31,9 @@
+ #include "block.h"
+ #include "mapbook.h"
+ 
++#ifdef __UCLIBCXX_MAJOR__
++#undef fputc
++#endif
+ 
+ const char * format_time( const long t, const bool low_prec )
+   {
+--- a/loggers.cc
++++ b/loggers.cc
+@@ -25,6 +25,9 @@
+ #include "block.h"
+ #include "loggers.h"
+ 
++#ifdef __UCLIBCXX_MAJOR__
++#undef fputc
++#endif
+ 
+ namespace {
+ 
+--- a/main.cc
++++ b/main.cc
+@@ -46,6 +46,11 @@
+ #include "non_posix.h"
+ #include "rescuebook.h"
+ 
++#ifdef __UCLIBCXX_MAJOR__
++#undef fgetc
++#undef fputc
++#endif
++
+ #ifndef O_BINARY
+ #define O_BINARY 0
+ #endif
+--- a/main_common.cc
++++ b/main_common.cc
+@@ -15,6 +15,10 @@
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
++#ifdef __UCLIBCXX_MAJOR__
++#undef fputc
++#endif
++
+ int verbosity = 0;
+ 
+ namespace {
+--- a/mapbook.cc
++++ b/mapbook.cc
+@@ -32,6 +32,10 @@
+ #include "block.h"
+ #include "mapbook.h"
+ 
++#ifdef __UCLIBCXX_MAJOR__
++#undef fgetc
++#undef fputc
++#endif
+ 
+ namespace {
+ 
+--- a/mapfile.cc
++++ b/mapfile.cc
+@@ -29,6 +29,11 @@
+ 
+ #include "block.h"
+ 
++#ifdef __UCLIBCXX_MAJOR__
++#undef fgetc
++#undef ferror
++#undef feof
++#endif
+ 
+ namespace {
+ 
+--- a/rescuebook.cc
++++ b/rescuebook.cc
+@@ -36,6 +36,9 @@
+ #include "mapbook.h"
+ #include "rescuebook.h"
+ 
++#ifdef __UCLIBCXX_MAJOR__
++#undef fputc
++#endif
+ 
+ namespace {
+ 
