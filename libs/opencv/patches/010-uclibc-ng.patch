@@ -1,0 +1,46 @@
+--- a/modules/gapi/include/opencv2/gapi/core.hpp
++++ b/modules/gapi/include/opencv2/gapi/core.hpp
+@@ -392,8 +392,8 @@ namespace core {
+             {
+                 GAPI_Assert(fx != 0. && fy != 0.);
+                 return in.withSize
+-                    (Size(static_cast<int>(std::round(in.size.width  * fx)),
+-                          static_cast<int>(std::round(in.size.height * fy))));
++                    (Size(static_cast<int>(round(in.size.width  * fx)),
++                          static_cast<int>(round(in.size.height * fy))));
+             }
+         }
+     };
+--- a/modules/gapi/include/opencv2/gapi/own/saturate.hpp
++++ b/modules/gapi/include/opencv2/gapi/own/saturate.hpp
+@@ -81,8 +81,8 @@ static inline DST saturate(SRC x, R round)
+ // explicit suffix 'd' for double type
+ inline double  ceild(double x) { return std::ceil(x); }
+ inline double floord(double x) { return std::floor(x); }
+-inline double roundd(double x) { return std::round(x); }
+-inline double  rintd(double x) { return std::rint(x); }
++inline double roundd(double x) { return round(x); }
++inline double  rintd(double x) { return rint(x); }
+ 
+ } //namespace own
+ } //namespace gapi
+--- a/modules/gapi/src/backends/fluid/gfluidcore.cpp
++++ b/modules/gapi/src/backends/fluid/gfluidcore.cpp
+@@ -389,7 +389,7 @@ static void run_arithm_s1(uchar out[], const float in[], int width, const float
+     cv::util::suppress_unused_warning(v_op);
+     for (; w < width; w++)
+     {
+-        out[w] = saturate<uchar>(s_op(in[w], scalar[0]), std::roundf);
++        out[w] = saturate<uchar>(s_op(in[w], scalar[0]), roundf);
+     }
+ }
+ 
+@@ -1954,7 +1954,7 @@ GAPI_FLUID_KERNEL(GFluidCartToPolar, cv::gapi::core::GCartToPolar, false)
+         {
+             float x = in1[l];
+             float y = in2[l];
+-            float magnitude = std::hypot(y, x);
++            float magnitude = hypot(y, x);
+             float angle_rad = std::atan2(y, x);
+             float angle = angleInDegrees?
+                           angle_rad * static_cast<float>(180 / CV_PI):
