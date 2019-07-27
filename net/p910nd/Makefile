@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=p910nd
 PKG_VERSION:=0.97
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/p910nd
@@ -28,6 +28,7 @@ define Package/p910nd
   SUBMENU:=Printing
   TITLE:=A small non-spooling printer server
   URL:=http://p910nd.sourceforge.net
+  USERID:=p910nd=393:lp=7
 endef
 
 define Package/p910nd/conffiles
@@ -54,6 +55,8 @@ define Package/p910nd/install
 	$(INSTALL_DATA) ./files/p910nd.config $(1)/etc/config/p910nd
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/p910nd.init $(1)/etc/init.d/p910nd
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/usbmisc
+	$(INSTALL_BIN) ./files/p910nd.hotplug $(1)/etc/hotplug.d/usbmisc/20-p910nd
 endef
 
 $(eval $(call BuildPackage,p910nd))
