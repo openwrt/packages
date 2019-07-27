@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luaposix
 PKG_VERSION:=v33.2.1
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=release-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/luaposix/luaposix/archive/
@@ -48,13 +48,6 @@ ifeq ($(CONFIG_USE_MUSL),y)
   # see https://github.com/luaposix/luaposix/issues/295
   TARGET_CFLAGS += -D_XOPEN_REALTIME=1
 endif
-
-ifneq ($(CONFIG_USE_GLIBC),)
-  ifeq ($(CONFIG_EGLIBC_OPTION_EGLIBC_UTMP),)
-    TARGET_CFLAGS += -DNO_GETLOGIN
-  endif
-endif
-
 
 define Package/luaposix/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/posix
