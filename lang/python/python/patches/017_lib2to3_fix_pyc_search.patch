@@ -1,6 +1,6 @@
 --- a/Lib/lib2to3/refactor.py
 +++ b/Lib/lib2to3/refactor.py
-@@ -40,6 +40,12 @@ def get_all_fix_names(fixer_pkg, remove_prefix=True):
+@@ -40,6 +40,12 @@ def get_all_fix_names(fixer_pkg, remove_
              if remove_prefix:
                  name = name[4:]
              fix_names.append(name[:-3])

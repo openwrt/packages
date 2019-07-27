@@ -7,11 +7,9 @@ Subject: [PATCH] bpo-36216: Only print test messages when verbose
  Lib/test/test_urlparse.py | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/Lib/test/test_urlparse.py b/Lib/test/test_urlparse.py
-index 73b0228ea8e3..1830d0b28688 100644
 --- a/Lib/test/test_urlparse.py
 +++ b/Lib/test/test_urlparse.py
-@@ -644,7 +644,8 @@ def test_urlsplit_normalization(self):
+@@ -644,7 +644,8 @@ class UrlParseTestCase(unittest.TestCase
          for scheme in [u"http", u"https", u"ftp"]:
              for c in denorm_chars:
                  url = u"{}://netloc{}false.netloc/path".format(scheme, c)

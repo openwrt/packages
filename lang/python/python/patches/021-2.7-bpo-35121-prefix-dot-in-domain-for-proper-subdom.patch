@@ -15,8 +15,6 @@ https://bugs.python.org/issue35121
  3 files changed, 45 insertions(+), 2 deletions(-)
  create mode 100644 Misc/NEWS.d/next/Security/2019-05-20-00-35-12.bpo-35121.RRi-HU.rst
 
-diff --git a/Lib/cookielib.py b/Lib/cookielib.py
-index 2dd7c48728..0b471a42f2 100644
 --- a/Lib/cookielib.py
 +++ b/Lib/cookielib.py
 @@ -1139,6 +1139,11 @@ class DefaultCookiePolicy(CookiePolicy):
@@ -53,8 +51,6 @@ index 2dd7c48728..0b471a42f2 100644
              #_debug("   request domain %s does not match cookie domain %s",
              #       req_host, domain)
              return False
-diff --git a/Lib/test/test_cookielib.py b/Lib/test/test_cookielib.py
-index f2dd9727d1..7f7ff614d6 100644
 --- a/Lib/test/test_cookielib.py
 +++ b/Lib/test/test_cookielib.py
 @@ -368,6 +368,7 @@ class CookieTests(TestCase):
@@ -108,9 +104,6 @@ index f2dd9727d1..7f7ff614d6 100644
      def test_secure(self):
          from cookielib import CookieJar, DefaultCookiePolicy
  
-diff --git a/Misc/NEWS.d/next/Security/2019-05-20-00-35-12.bpo-35121.RRi-HU.rst b/Misc/NEWS.d/next/Security/2019-05-20-00-35-12.bpo-35121.RRi-HU.rst
-new file mode 100644
-index 0000000000..7725180616
 --- /dev/null
 +++ b/Misc/NEWS.d/next/Security/2019-05-20-00-35-12.bpo-35121.RRi-HU.rst
 @@ -0,0 +1,4 @@
@@ -118,6 +111,3 @@ index 0000000000..7725180616
 +domain A is a suffix match of domain B while using a cookiejar with
 +:class:`cookielib.DefaultCookiePolicy` policy. Patch by Karthikeyan
 +Singaravelan.
--- 
-2.20.1
-
