@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=http://mirrors.kernel.org/${PKG_NAME}/${PKG_VERSION}/
 PKG_HASH:=7dcd9f0f48263c6b27a2c3d085dd7278b5c0feed1dfec8872a04899707fa23d8
 PKG_USE_MIPS16:=0
 
-PKG_BUILD_DEPENDS:=boost python/host
+PKG_BUILD_DEPENDS:=boost python/host scons/host
 
 PKG_MAINTAINER:=Hauke Mehrtens <hauke.mehrtens@intel.com>
 
@@ -37,7 +37,7 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_PACKAGE_iotivity_SECURE
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/scons.mk
+include ../../devel/scons/scons.mk
 
 
 define Package/iotivity
