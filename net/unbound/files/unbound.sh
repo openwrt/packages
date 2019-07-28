@@ -1022,7 +1022,6 @@ unbound_hostname() {
             {
               # Create a static zone for WAN host record only (singular)
               echo "  domain-insecure: $ifarpa"
-              echo "  private-address: $ifaddr"
               echo "  local-zone: $ifarpa static"
               echo "  local-data: \"$ifarpa. $UB_XSOA\""
               echo "  local-data: \"$ifarpa. $UB_XNS\""
