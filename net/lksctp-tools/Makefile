@@ -29,7 +29,7 @@ define Package/lksctp-tools/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=SCTP user-land
-  URL:=http://lksctp.sourceforge.net
+  URL:=https://github.com/sctp/lksctp-tools
 endef
 
 define Package/libsctp
