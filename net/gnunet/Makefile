@@ -2,11 +2,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
 
-PKG_VERSION:=0.11.5
-PKG_RELEASE:=2
+PKG_VERSION:=0.11.6
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gnunet
-PKG_HASH:=98e0355ff0627bf88112b3b92a7522e98c0ae6071fc45efda5a33daed28199b3
+PKG_HASH:=f8a07063b1e0890a1386fed2313a967f58f5495c075a25725aba200469c857bf
 
 PKG_LICENSE:=AGPL-3.0
 PKG_LICENSE_FILES:=COPYING
@@ -281,7 +281,7 @@ PLUGIN_dhtcache-heap:=datacache_heap
 CONFLICTS_dhtcache-heap:=gnunet-dhtcache-pgsql gnunet-dhtcache-sqlite
 
 DEPENDS_gns-flat:=+gnunet-gns
-PLUGIN_gns-flat:=namecache_flat namestore_heap
+PLUGIN_gns-flat:=namecache_flat namestore_flat
 
 PLUGIN_peerstore-flat:=peerstore_flat
 
