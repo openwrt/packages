@@ -9,15 +9,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ipvsadm
-PKG_VERSION:=1.29
+PKG_VERSION:=1.30
 PKG_MAINTAINER:=Mauro Mozzarelli <mauro@ezplanet.org>, \
 		Florian Eckert <fe@dev.tdt.de>
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://www.kernel.org/pub/linux/utils/kernel/ipvsadm/
-PKG_HASH:=c3de4a21d90a02c621f0c72ee36a7aa27374b6f29fd4178f33fbf71b4c66c149
+PKG_SOURCE_URL:=@KERNEL/linux/utils/kernel/ipvsadm/
+PKG_HASH:=95573d70df473c9f63fc4ac496c044c69e3a6de7ccac119922210c0b44cd7a0c
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -29,7 +29,7 @@ define Package/ipvsadm
   CATEGORY:=Network
   TITLE:=IP Virtual Server Configuration Manager
   URL:=http://www.linuxvirtualserver.org
-  DEPENDS:= +kmod-nf-ipvs +libnl-tiny +libpopt
+  DEPENDS:= +kmod-nf-ipvs +libnl-genl +libpopt
 endef
 
 define Package/ipvsadm/description
@@ -38,17 +38,6 @@ define Package/ipvsadm/description
   ipvsadm is used to set up, maintain or inspect the virtual server table
   in the Linux kernel. The Linux Virtual Server can be used to build scalable
   network services based on a cluster of two or more nodes.
-endef
-
-TARGET_CFLAGS += \
-	-D_GNU_SOURCE \
-	-I$(STAGING_DIR)/usr/include/libnl-tiny
-
-define Build/Compile
-	CFLAGS="$(TARGET_CFLAGS)" \
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		CC="$(TARGET_CC)" \
-		LIBS="$(TARGET_LDFLAGS) -lnl-tiny -lpopt"
 endef
 
 define Package/ipvsadm/install
