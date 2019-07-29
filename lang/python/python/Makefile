@@ -290,7 +290,15 @@ define PyPackage/python/filespec
 endef
 
 HOST_LDFLAGS += \
-	$$$$(pkg-config --static --libs libcrypto libssl) -Wl$(comma)-rpath=$(STAGING_DIR_HOSTPKG)/lib
+	$$$$(pkg-config --static --libs libcrypto libssl)
+
+ifeq ($(HOST_OS),Darwin)
+HOST_LDFLAGS += \
+	-Wl,-rpath $(STAGING_DIR_HOSTPKG)/lib
+else
+HOST_LDFLAGS += \
+	-Wl,-rpath=$(STAGING_DIR_HOSTPKG)/lib
+endif
 
 ifeq ($(HOST_OS),Linux)
 HOST_LDFLAGS += \
