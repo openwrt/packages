@@ -22,20 +22,44 @@ PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/luasocket
+define Package/luasocket/default
   SUBMENU:=Lua
   SECTION:=lang
   CATEGORY:=Languages
   URL:=http://w3.impa.br/~diego/software/luasocket
-  TITLE:=LuaSocket
-  DEPENDS:=+lua
 endef
 
-define Package/luasocket/description
+define Package/luasocket
+  $(Package/luasocket/default)
+  TITLE:=LuaSocket
+  DEPENDS:=+lua
+  VARIANT:=lua-51
+  DEFAULT_VARIANT:=1
+endef
+
+define Package/luasocket5.3
+  $(Package/luasocket/default)
+  TITLE:=LuaSocket 5.3
+  DEPENDS:=+liblua5.3
+  VARIANT:=lua-53
+endef
+
+ifeq ($(BUILD_VARIANT),lua-51)
+  LUA_VERSION=5.1
+endif
+
+ifeq ($(BUILD_VARIANT),lua-53)
+  LUA_VERSION=5.3
+endif
+
+
+define Package/luasocket/default/description
   LuaSocket is the most comprehensive networking support
   library for the Lua language. It provides easy access to
   TCP, UDP, DNS, SMTP, FTP, HTTP, MIME and much more.
 endef
+Package/luasocket/description     = $(Package/luasocket/default/description)
+Package/luasocket5.3/description = $(Package/luasocket/default/description)
 
 define Build/Configure
 endef
@@ -45,7 +69,7 @@ define Build/Compile
 		LIBDIR="$(TARGET_LDFLAGS)" \
 		CC="$(TARGET_CC) $(TARGET_CFLAGS) $(TARGET_CPPFLAGS) $(FPIC)" \
 		LD="$(TARGET_CROSS)ld -shared" \
-		LUAV=5.1 LUAINC_linux_base=$(STAGING_DIR)/usr/include \
+		LUAV=$(LUA_VERSION) LUAINC_linux_base=$(STAGING_DIR)/usr/include \
 		all
 endef
 
@@ -62,4 +86,14 @@ define Package/luasocket/install
 	ln -sf ../socket-3.0-rc1.so $(1)/usr/lib/lua/socket/core.so
 endef
 
+
+define Package/luasocket5.3/install
+	$(MAKE) -C $(PKG_BUILD_DIR)/src \
+		DESTDIR="$(1)" \
+		LUAV=$(LUA_VERSION) \
+		install
+endef
+
+
 $(eval $(call BuildPackage,luasocket))
+$(eval $(call BuildPackage,luasocket5.3))
