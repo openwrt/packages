@@ -13,7 +13,9 @@ append_arg() {
 	local val
 
 	config_get val "$cfg" "$var"
-	[ -n "$val" -o -n "$def" ] && procd_append_param command $opt "${val:-$def}"
+	if [ -n "$val" ] || [ -n "$def" ]; then
+		procd_append_param command "$opt" "${val:-$def}"
+	fi
 }
 
 append_bool() {
@@ -82,7 +84,7 @@ start_instance() {
 	append_arg "$cfg" html_dir "--html-dir"
 	append_arg "$cfg" write_json "--write-json"
 	config_get aux "$cfg" "write_json"
-	[ -n "$aux" ] && mkdir -p $aux
+	[ -n "$aux" ] && mkdir -p "$aux"
 	append_arg "$cfg" write_json_every "--write-json-every"
 	append_arg "$cfg" json_location_accuracy "--json-location-accuracy"
 	append_bool "$cfg" oversample "--oversample"
