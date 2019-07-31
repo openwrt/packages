@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zstd
-PKG_VERSION:=1.4.1
+PKG_VERSION:=1.4.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/facebook/zstd/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f91ea3397e6cc65d398e1bc0713cf2f0b0de2fb85ea9dabb1eb3e8f1b22f8d6f
+PKG_HASH:=7a6e1dad34054b35e2e847eb3289be8820a5d378228802239852f913c6dcf6a7
 
 PKG_MAINTAINER:=Amol Bhave <ambhave@fb.com>
 PKG_LICENSE:=GPL-2.0-or-later
