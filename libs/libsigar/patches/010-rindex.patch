@@ -1,0 +1,18 @@
+--- a/src/sigar_util.c
++++ b/src/sigar_util.c
+@@ -954,14 +954,10 @@ int sigar_file2str(const char *fname, char *buffer, int buflen)
+ #define vsnprintf _vsnprintf
+ #endif
+ 
+-#ifdef WIN32
+-#   define rindex strrchr
+-#endif
+-
+ static int proc_module_get_self(void *data, char *name, int len)
+ {
+     sigar_t *sigar = (sigar_t *)data;
+-    char *ptr = rindex(name, '/');
++    char *ptr = strrchr(name, '/');
+ 
+     if (!ptr) {
+         return SIGAR_OK;
