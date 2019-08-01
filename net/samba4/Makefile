@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
 PKG_VERSION:=4.9.11
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.heanet.ie/mirrors/ftp.samba.org/stable/ \
@@ -19,7 +19,7 @@ PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=COPYING
 
 # samba4=(asn1_compile) e2fsprogs=(compile_et) nfs-kernel-server=(rpcgen)
-HOST_BUILD_DEPENDS:=nfs-kernel-server/host e2fsprogs/host
+HOST_BUILD_DEPENDS:=python/host nfs-kernel-server/host e2fsprogs/host
 PKG_BUILD_DEPENDS:=samba4/host
 
 PKG_CONFIG_DEPENDS:= \
