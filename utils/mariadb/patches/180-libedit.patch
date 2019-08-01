@@ -24,7 +24,7 @@ Date:   Sun Dec 9 21:19:24 2018 +0100
 
 --- a/client/mysql.cc
 +++ b/client/mysql.cc
-@@ -2577,7 +2577,7 @@ C_MODE_END
+@@ -2578,7 +2578,7 @@ C_MODE_END
    if not.
  */
  
@@ -33,7 +33,7 @@ Date:   Sun Dec 9 21:19:24 2018 +0100
  static int fake_magic_space(int, int);
  extern "C" char *no_completion(const char*,int)
  #elif defined(USE_LIBEDIT_INTERFACE)
-@@ -2659,7 +2659,7 @@ static int not_in_history(const char *li
+@@ -2660,7 +2660,7 @@ static int not_in_history(const char *li
  }
  
  
@@ -42,7 +42,7 @@ Date:   Sun Dec 9 21:19:24 2018 +0100
  static int fake_magic_space(int, int)
  #else
  static int fake_magic_space(const char *, int)
-@@ -2676,7 +2676,7 @@ static void initialize_readline (char *n
+@@ -2677,7 +2677,7 @@ static void initialize_readline (char *n
    rl_readline_name = name;
  
    /* Tell the completer that we want a crack first. */
@@ -51,7 +51,7 @@ Date:   Sun Dec 9 21:19:24 2018 +0100
    rl_attempted_completion_function= (rl_completion_func_t*)&new_mysql_completion;
    rl_completion_entry_function= (rl_compentry_func_t*)&no_completion;
  
-@@ -2706,7 +2706,7 @@ static char **new_mysql_completion(const
+@@ -2707,7 +2707,7 @@ static char **new_mysql_completion(const
                                     int end __attribute__((unused)))
  {
    if (!status.batch && !quick)
