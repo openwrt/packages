@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.2.24
-PKG_RELEASE:=2
+PKG_VERSION:=10.2.26
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := \
@@ -18,10 +18,10 @@ PKG_SOURCE_URL := \
 	https://ftp.yz.yamagata-u.ac.jp/pub/dbms/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
 	https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=97f4d924e69f77abb2f650116785c2f5ef356230442534ebcbaadb51d9bb8bc4
+PKG_HASH:=152fe941c4f2a352b2b3a4db1ef64e70235fd9ff055af62ad7bda9f2b2191528
 PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
 PKG_LICENSE:=GPL-2.0 LGPL-2.1
-PKG_LICENSE_FILES:=COPYING libmariadb/COPYING.LIB
+PKG_LICENSE_FILES:=COPYING THIRDPARTY libmariadb/COPYING.LIB
 
 PKG_CPE_ID:=cpe:/a:mariadb:mariadb
 
@@ -65,7 +65,6 @@ MARIADB_SERVER_PLUGINS := \
 	auth_ed25519 \
 	auth_gssapi \
 	auth_pam \
-	client_ed25519 \
 	disks \
 	feedback \
 	file_key_management \
@@ -98,7 +97,6 @@ plugin-auth_gssapi_client       := PLUGIN_AUTH_GSSAPI_CLIENT
 plugin-auth_ed25519             := PLUGIN_AUTH_ED25519
 plugin-auth_gssapi              := PLUGIN_AUTH_GSSAPI
 plugin-auth_pam                 := PLUGIN_AUTH_PAM
-plugin-client_ed25519           := PLUGIN_CLIENT_ED25519
 plugin-disks                    := PLUGIN_DISKS
 plugin-feedback                 := PLUGIN_FEEDBACK
 plugin-file_key_management      := PLUGIN_FILE_KEY_MANAGEMENT
@@ -523,6 +521,7 @@ define Package/libmariadb/install
 	$(INSTALL_DIR) $(1)$(PLUGIN_DIR)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{mariadb,mysqlclient}*.so* $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/caching_sha2_password.so $(1)$(PLUGIN_DIR)
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/client_ed25519.so $(1)$(PLUGIN_DIR)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/dialog.so $(1)$(PLUGIN_DIR)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/mysql_clear_password.so $(1)$(PLUGIN_DIR)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/sha256_password.so $(1)$(PLUGIN_DIR)
@@ -617,7 +616,6 @@ $(eval $(call BuildPlugin,libmariadb,auth_gssapi_client,+krb5-libs))
 $(eval $(call BuildPlugin,mariadb-server,auth_ed25519,))
 $(eval $(call BuildPlugin,mariadb-server,auth_gssapi,+krb5-libs))
 $(eval $(call BuildPlugin,mariadb-server,auth_pam,+libpam))
-$(eval $(call BuildPlugin,mariadb-server,client_ed25519,))
 $(eval $(call BuildPlugin,mariadb-server,disks,))
 $(eval $(call BuildPlugin,mariadb-server,feedback,))
 $(eval $(call BuildPlugin,mariadb-server,file_key_management,))
