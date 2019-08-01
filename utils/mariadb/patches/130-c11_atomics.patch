@@ -46,7 +46,7 @@ Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
 +++ b/include/atomic/gcc_builtins.h
 @@ -16,6 +16,7 @@
     along with this program; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA */
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1335  USA */
  
 +#if defined (HAVE_GCC_ATOMIC_BUILTINS)
  #define make_atomic_add_body(S)                     \
