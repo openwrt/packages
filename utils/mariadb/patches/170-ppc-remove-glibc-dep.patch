@@ -27,7 +27,7 @@ directly was the first solution adopted in MariaDB [2].
 
 --- a/storage/xtradb/include/ut0ut.h
 +++ b/storage/xtradb/include/ut0ut.h
-@@ -86,8 +86,7 @@ private:
+@@ -84,8 +84,7 @@ private:
     independent way by using YieldProcessor. */
  #  define UT_RELAX_CPU() YieldProcessor()
  # elif defined(__powerpc__)
@@ -37,7 +37,7 @@ directly was the first solution adopted in MariaDB [2].
  # else
  #  define UT_RELAX_CPU() ((void)0) /* avoid warning for an empty statement */
  # endif
-@@ -101,9 +100,8 @@ private:
+@@ -99,9 +98,8 @@ private:
  #endif
  
  # if defined(HAVE_HMT_PRIORITY_INSTRUCTION)
@@ -51,7 +51,7 @@ directly was the first solution adopted in MariaDB [2].
  #  define UT_RESUME_PRIORITY_CPU() ((void)0)
 --- a/storage/innobase/include/ut0ut.h
 +++ b/storage/innobase/include/ut0ut.h
-@@ -89,8 +89,7 @@ private:
+@@ -87,8 +87,7 @@ private:
     independent way by using YieldProcessor. */
  #  define UT_RELAX_CPU() YieldProcessor()
  # elif defined(__powerpc__)
@@ -61,7 +61,7 @@ directly was the first solution adopted in MariaDB [2].
  # else
  #  define UT_RELAX_CPU() ((void)0) /* avoid warning for an empty statement */
  # endif
-@@ -104,9 +103,8 @@ private:
+@@ -102,9 +101,8 @@ private:
  #endif
  
  # if defined(HAVE_HMT_PRIORITY_INSTRUCTION)
