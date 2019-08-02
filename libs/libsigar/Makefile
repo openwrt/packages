@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=libsigar
 PKG_SOURCE_DATE:=2017-02-21
 PKG_SOURCE_VERSION:=a6c61edf8c64e013411e8c9d753165cd03102c6e
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/boundary/sigar

@@ -1,0 +1,10 @@
+--- a/src/os/linux/linux_sigar.c
++++ b/src/os/linux/linux_sigar.c
+@@ -23,6 +23,7 @@
+ #include <linux/param.h>
+ #include <sys/param.h>
+ #include <sys/stat.h>
++#include <sys/sysmacros.h>
+ #include <sys/times.h>
+ #include <sys/utsname.h>
+ #include <mntent.h>
