@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnutls
-PKG_VERSION:=3.6.8
-PKG_RELEASE:=2
+PKG_VERSION:=3.6.9
+PKG_RELEASE:=1
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.gnupg.org/ftp/gcrypt/gnutls/v3.6
-PKG_HASH:=aa81944e5635de981171772857e72be231a7e0f559ae0292d2737de475383e83
+PKG_HASH:=4331fca55817ecdd74450b908a6c29b4f05bb24dd13144c6284aa34d872e1fcb
 #PKG_FIXUP:=autoreconf gettext-version
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <nmav@gnutls.org>
 PKG_LICENSE:=LGPLv2.1+
@@ -104,7 +104,10 @@ $(call Package/gnutls/Default/description)
  This package contains the GnuTLS shared library, needed by other programs.
 endef
 
-
+# We disable the configuration file (system-priority-file) because
+# the use of configuration increases the non-shared memory used by
+# the library and we don't provide an openwrt-specific configuration
+# anyway.
 CONFIGURE_ARGS+= \
 	--enable-shared \
 	--enable-static \
@@ -124,7 +127,8 @@ CONFIGURE_ARGS+= \
 	--with-default-trust-store-dir=/etc/ssl/certs/ \
 	--with-included-unistring \
 	--with-librt-prefix="$(LIBRT_ROOT_DIR)/" \
-	--with-pic
+	--with-pic \
+	--with-system-priority-file=""
 
 ifneq ($(CONFIG_GNUTLS_EXT_LIBTASN1),y)
 CONFIGURE_ARGS += --with-included-libtasn1
