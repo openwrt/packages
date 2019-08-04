@@ -1,0 +1,27 @@
+From 036535e92373a5b209ca5bc5df0770aff22ed32a Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 2 Aug 2019 13:28:23 -0700
+Subject: [PATCH 3/7] io: Add missing prototype
+
+Found with -Wmissing-prototypes
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ io.cc | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/io.cc b/io.cc
+index f8fbdbf..fc1f1d0 100644
+--- a/io.cc
++++ b/io.cc
+@@ -34,6 +34,7 @@ namespace {
+ 
+ int volatile signum_ = 0;		// user pressed Ctrl-C or similar
+ 
++extern "C" void sighandler( int signum );
+ extern "C" void sighandler( int signum )
+   { if( signum_ == 0 && signum > 0 ) signum_ = signum; }
+ 
+-- 
+2.17.1
+

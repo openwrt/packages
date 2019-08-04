@@ -1,0 +1,156 @@
+From 61cdbf3d2f40bcbb6d36be5f77a4a2b29190cb51 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 2 Aug 2019 12:57:13 -0700
+Subject: [PATCH 2/7] treewide: Replace old style cast with static_cast
+
+Found with Clang's -Wold-style-cast
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ fillbook.cc    |  2 +-
+ main_common.cc |  2 +-
+ rational.cc    | 10 +++++-----
+ rational.h     |  8 ++++----
+ rescuebook.cc  | 12 ++++++------
+ 5 files changed, 17 insertions(+), 17 deletions(-)
+
+diff --git a/fillbook.cc b/fillbook.cc
+index 89ba06b..83b0828 100644
+--- a/fillbook.cc
++++ b/fillbook.cc
+@@ -43,7 +43,7 @@ int Fillbook::fill_block( const Sblock & sb )
+   if( write_location_data )	// write location data into each sector
+     for( long long pos = sb.pos(); pos < sb.end(); pos += hardbs() )
+       {
+-      char * const buf = (char *)iobuf() + ( pos - sb.pos() );
++      char * const buf = reinterpret_cast<char *>( iobuf() ) + ( pos - sb.pos() );
+       const int bufsize = std::min( 80LL, sb.end() - pos );
+       const int len = snprintf( buf, bufsize,
+                         "\n# position 0x%08llX sector 0x%08llX status %c",
+diff --git a/main_common.cc b/main_common.cc
+index 6037040..437eb41 100644
+--- a/main_common.cc
++++ b/main_common.cc
+@@ -304,7 +304,7 @@ const char * format_percentage( long long num, long long den,
+       {
+       buf[i++] = '.';
+       while( prec > 0 && ( rest > 0 || !trunc ) && i < sizeof( buf ) - 2 )
+-        { rest *= 10; buf[i++] = (char)( rest / den ) + '0';
++        { rest *= 10; buf[i++] = static_cast<char>( rest / den ) + '0';
+           rest %= den; --prec; }
+       }
+     }
+diff --git a/rational.cc b/rational.cc
+index c0d088a..1b9fe31 100644
+--- a/rational.cc
++++ b/rational.cc
+@@ -118,9 +118,9 @@ Rational & Rational::operator+=( const Rational & r )
+   if( den <= 0 ) return *this;			// no op on error
+   if( r.den <= 0 ) { num = r.num; den = 0; return *this; }	// set error
+ 
+-  const long long new_den = (long long)den * r.den;
+-  const long long new_num = ( (long long)num * r.den ) +
+-                            ( (long long)r.num * den );
++  const long long new_den = static_cast<long long>( den * r.den );
++  const long long new_num = ( static_cast<long long>( num * r.den ) ) +
++                            ( static_cast<long long>( r.num * den ) );
+   normalize( new_num, new_den );
+   return *this;
+   }
+@@ -131,8 +131,8 @@ Rational & Rational::operator*=( const Rational & r )
+   if( den <= 0 ) return *this;			// no op on error
+   if( r.den <= 0 ) { num = r.num; den = 0; return *this; }	// set error
+ 
+-  const long long new_num = (long long)num * r.num;
+-  const long long new_den = (long long)den * r.den;
++  const long long new_num = static_cast<long long>( num * r.num );
++  const long long new_den = static_cast<long long>( den * r.den );
+   normalize( new_num, new_den );
+   return *this;
+   }
+diff --git a/rational.h b/rational.h
+index d5b6086..0b7392d 100644
+--- a/rational.h
++++ b/rational.h
+@@ -109,16 +109,16 @@ public:
+ 
+   bool operator< ( const Rational & r ) const
+     { return ( den > 0 && r.den > 0 &&
+-               (long long)num * r.den < (long long)r.num * den ); }
++               static_cast<long long>( num * r.den ) < static_cast<long long>( r.num * den ) ); }
+   bool operator<=( const Rational & r ) const
+     { return ( den > 0 && r.den > 0 &&
+-               (long long)num * r.den <= (long long)r.num * den ); }
++               static_cast<long long>( num * r.den ) <= static_cast<long long>( r.num * den ) ); }
+   bool operator> ( const Rational & r ) const
+     { return ( den > 0 && r.den > 0 &&
+-               (long long)num * r.den > (long long)r.num * den ); }
++               static_cast<long long>( num * r.den ) > static_cast<long long>( r.num * den ) ); }
+   bool operator>=( const Rational & r ) const
+     { return ( den > 0 && r.den > 0 &&
+-               (long long)num * r.den >= (long long)r.num * den ); }
++               static_cast<long long>( num * r.den ) >= static_cast<long long>( r.num * den ) ); }
+ 
+   bool operator< ( const int n ) const { return operator< ( Rational( n ) ); }
+   bool operator<=( const int n ) const { return operator<=( Rational( n ) ); }
+diff --git a/rescuebook.cc b/rescuebook.cc
+index eba387d..693653b 100644
+--- a/rescuebook.cc
++++ b/rescuebook.cc
+@@ -465,7 +465,7 @@ int Rescuebook::trim_errors()
+     long long end = sb.end();
+     while( pos < end && !error_found )		// trim leading edge
+       {
+-      Block b( pos, std::min( (long long)hardbs(), end - pos ) );
++      Block b( pos, std::min( static_cast<long long>( hardbs() ), end - pos ) );
+       if( b.end() != end ) b.align_end( hardbs() );
+       pos = b.end();
+       int copied_size = 0, error_size = 0;
+@@ -480,7 +480,7 @@ int Rescuebook::trim_errors()
+     error_found = rbad;
+     while( pos < end && !error_found )		// trim trailing edge
+       {
+-      const int size = std::min( (long long)hardbs(), end - pos );
++      const int size = std::min( static_cast<long long>( hardbs() ), end - pos );
+       Block b( end - size, size );
+       if( b.pos() != pos ) b.align_pos( hardbs() );
+       end = b.pos();
+@@ -526,7 +526,7 @@ int Rescuebook::scrape_errors()
+     const long long end = sb.end();
+     while( pos < end )
+       {
+-      Block b( pos, std::min( (long long)hardbs(), end - pos ) );
++      Block b( pos, std::min( static_cast<long long>( hardbs() ), end - pos ) );
+       if( b.end() != end ) b.align_end( hardbs() );
+       pos = b.end();
+       int copied_size = 0, error_size = 0;
+@@ -677,7 +677,7 @@ bool Rescuebook::update_rates( const bool force )
+     {
+     if( tp > 0 )
+       {
+-      const long delta = std::min( t0 - 1, (long)tp.round() );
++      const long delta = std::min( t0 - 1, static_cast<long>( tp.round() ) );
+       t0 -= delta;
+       t1 -= delta;
+       ts -= delta;
+@@ -765,7 +765,7 @@ void Rescuebook::show_status( const long long ipos, const char * const msg,
+       else sliding_avg.add_term( c_rate );
+       const long long s_rate = domain().full() ? 0 : sliding_avg();
+       const long remaining_time = ( s_rate <= 0 ) ? -1 :
+-        std::min( std::min( (long long)LONG_MAX, 315359999968464000LL ),
++        std::min( std::min( static_cast<long long>( LONG_MAX ), 315359999968464000LL ),
+                   ( non_tried_size + non_trimmed_size + non_scraped_size +
+                     ( max_retries ? bad_size : 0 ) + s_rate - 1 ) / s_rate );
+       std::printf( "pct rescued:  %s, read errors:%9lu,  remaining time: %11s\n",
+@@ -824,7 +824,7 @@ Rescuebook::Rescuebook( const long long offset, const long long insize,
+   {
+   if( preview_lines > softbs() / 16 ) preview_lines = softbs() / 16;
+   if( skipbs < 0 )
+-    skipbs = round_up( std::max( insize / 100000, (long long)min_skipbs ),
++    skipbs = round_up( std::max( insize / 100000, static_cast<long long>( min_skipbs ) ),
+                        min_skipbs );
+   const long long csize = insize / 100;
+   if( insize > 0 && skipbs > 0 && max_skipbs == max_max_skipbs &&
+-- 
+2.17.1
+

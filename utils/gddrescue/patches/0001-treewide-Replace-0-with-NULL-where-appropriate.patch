@@ -1,0 +1,374 @@
+From 179223b1bdcb31908e0c1caab89e37841a661673 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 2 Aug 2019 12:40:24 -0700
+Subject: [PATCH 1/7] treewide: Replace 0 with NULL where appropriate
+
+Discovered with Clang's -Wzero-as-null-pointer-constant
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ arg_parser.cc  |  2 +-
+ block.h        |  8 ++++----
+ fillbook.cc    |  4 ++--
+ genbook.cc     |  4 ++--
+ io.cc          |  2 +-
+ loggers.cc     |  2 +-
+ loggers.h      |  4 ++--
+ main.cc        | 14 +++++++-------
+ main_common.cc |  6 +++---
+ mapbook.cc     |  4 ++--
+ mapbook.h      |  4 ++--
+ mapfile.cc     |  6 +++---
+ rescuebook.cc  |  8 ++++----
+ rescuebook.h   |  2 +-
+ 14 files changed, 35 insertions(+), 35 deletions(-)
+
+diff --git a/arg_parser.cc b/arg_parser.cc
+index ea32fde..9b530b2 100644
+--- a/arg_parser.cc
++++ b/arg_parser.cc
+@@ -153,7 +153,7 @@ Arg_parser::Arg_parser( const int argc, const char * const argv[],
+     if( ch1 == '-' && ch2 )		// we found an option
+       {
+       const char * const opt = argv[argind];
+-      const char * const arg = ( argind + 1 < argc ) ? argv[argind+1] : 0;
++      const char * const arg = ( argind + 1 < argc ) ? argv[argind+1] : NULL;
+       if( ch2 == '-' )
+         {
+         if( !argv[argind][2] ) { ++argind; break; }	// we found "--"
+diff --git a/block.h b/block.h
+index 250a840..1169445 100644
+--- a/block.h
++++ b/block.h
+@@ -135,7 +135,7 @@ class Domain
+ 
+ public:
+   Domain( const long long p, const long long s,
+-          const char * const mapname = 0, const bool loose = false );
++          const char * const mapname = NULL, const bool loose = false );
+ 
+   long long pos() const { return block_vector.front().pos(); }
+   long long end() const { return block_vector.back().end(); }
+@@ -230,9 +230,9 @@ public:
+   void set_to_status( const Sblock::Status st )
+     { sblock_vector.assign( 1, Sblock( 0, -1, st ) ); }
+   bool read_mapfile( const int default_sblock_status = 0, const bool ro = true );
+-  int write_mapfile( FILE * f = 0, const bool timestamp = false,
++  int write_mapfile( FILE * f = NULL, const bool timestamp = false,
+                      const bool mf_sync = false,
+-                     const Domain * const annotate_domainp = 0 ) const;
++                     const Domain * const annotate_domainp = NULL ) const;
+ 
+   bool blank() const;
+   long long current_pos() const { return current_pos_; }
+@@ -275,7 +275,7 @@ public:
+                     const bool before_finished = false ) const;
+   int change_chunk_status( const Block & b, const Sblock::Status st,
+                            const Domain & domain,
+-                           Sblock::Status * const old_stp = 0 );
++                           Sblock::Status * const old_stp = NULL );
+ 
+   static bool isstatus( const int st )
+     { return ( st == copying || st == trimming || st == scraping ||
+diff --git a/fillbook.cc b/fillbook.cc
+index 8745269..89ba06b 100644
+--- a/fillbook.cc
++++ b/fillbook.cc
+@@ -114,7 +114,7 @@ void Fillbook::show_status( const long long ipos, const char * const msg,
+     }
+ 
+   if( ipos >= 0 ) last_ipos = ipos;
+-  const long t2 = std::time( 0 );
++  const long t2 = std::time( NULL );
+   if( t2 < t1 )					// clock jumped back
+     {
+     t0 -= std::min( t0, t1 - t2 );
+@@ -191,7 +191,7 @@ int Fillbook::do_fill( const int odes )
+   if( signaled ) retval = 0;
+   if( verbosity >= 0 )
+     {
+-    show_status( -1, ( retval || signaled ) ? 0 : "Finished", true );
++    show_status( -1, ( retval || signaled ) ? NULL : "Finished", true );
+     if( retval == -2 ) std::fputs( "\nMapfile error", stdout );
+     else if( signaled ) std::fputs( "\nInterrupted by user", stdout );
+     std::fputc( '\n', stdout );
+diff --git a/genbook.cc b/genbook.cc
+index f818bf4..47610e4 100644
+--- a/genbook.cc
++++ b/genbook.cc
+@@ -126,7 +126,7 @@ void Genbook::show_status( const long long ipos, const char * const msg,
+     }
+ 
+   if( ipos >= 0 ) last_ipos = ipos;
+-  const long t2 = std::time( 0 );
++  const long t2 = std::time( NULL );
+   if( t2 < t1 )					// clock jumped back
+     {
+     t0 -= std::min( t0, t1 - t2 );
+@@ -191,7 +191,7 @@ int Genbook::do_generate( const int odes )
+   if( signaled ) retval = 0;
+   if( verbosity >= 0 )
+     {
+-    show_status( -1, ( retval || signaled ) ? 0 : "Finished", true );
++    show_status( -1, ( retval || signaled ) ? NULL : "Finished", true );
+     if( retval == -2 ) std::fputs( "\nMapfile error", stdout );
+     else if( signaled ) std::fputs( "\nInterrupted by user", stdout );
+     std::fputc( '\n', stdout );
+diff --git a/io.cc b/io.cc
+index d58f507..f8fbdbf 100644
+--- a/io.cc
++++ b/io.cc
+@@ -45,7 +45,7 @@ int set_signal( const int signum, void (*handler)( int ) )
+   new_action.sa_handler = handler;
+   sigemptyset( &new_action.sa_mask );
+   new_action.sa_flags = SA_RESTART;
+-  return sigaction( signum, &new_action, 0 );
++  return sigaction( signum, &new_action, NULL );
+   }
+ 
+ } // end namespace
+diff --git a/loggers.cc b/loggers.cc
+index 6e75ec2..7b6608b 100644
+--- a/loggers.cc
++++ b/loggers.cc
+@@ -67,7 +67,7 @@ bool Logger::close_file()
+   {
+   if( f && !error && !write_final_timestamp( f ) ) error = true;
+   if( f && std::fclose( f ) != 0 ) error = true;
+-  f = 0;
++  f = NULL;
+   return !error;
+   }
+ 
+diff --git a/loggers.h b/loggers.h
+index 0acf276..6962af8 100644
+--- a/loggers.h
++++ b/loggers.h
+@@ -23,9 +23,9 @@ protected:
+   bool error;
+ 
+ public:
+-  Logger() : filename_( 0 ), f( 0 ), error( false ) {}
++  Logger() : filename_( NULL ), f( NULL ), error( false ) {}
+ 
+-  bool active() const { return ( f != 0 && !error ); }
++  bool active() const { return ( f != NULL && !error ); }
+   bool set_filename( const char * const name );
+   bool close_file();
+   };
+diff --git a/main.cc b/main.cc
+index 5ed4d78..c9b337d 100644
+--- a/main.cc
++++ b/main.cc
+@@ -59,7 +59,7 @@ namespace {
+ 
+ const char * const Program_name = "GNU ddrescue";
+ const char * const program_name = "ddrescue";
+-const char * invocation_name = 0;
++const char * invocation_name = NULL;
+ 
+ enum Mode { m_none, m_command, m_fill, m_generate };
+ const mode_t outmode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+@@ -515,7 +515,7 @@ int do_rescue( const long long offset, Domain & domain,
+     }
+ 
+   if( rescuebook.filename() && !rescuebook.mapfile_exists() &&
+-      !rescuebook.write_mapfile( 0, true ) )
++      !rescuebook.write_mapfile( NULL, true ) )
+     { show_error( "Can't create mapfile", errno ); return 1; }
+ 
+   if( command_mode ) return rescuebook.do_commands( ides, odes );
+@@ -720,8 +720,8 @@ int main( const int argc, const char * const argv[] )
+   long long ipos = 0;
+   long long opos = -1;
+   long long max_size = -1;
+-  const char * domain_mapfile_name = 0;
+-  const char * test_mode_mapfile_name = 0;
++  const char * domain_mapfile_name = NULL;
++  const char * test_mode_mapfile_name = NULL;
+   const int cluster_bytes = 65536;
+   const int default_hardbs = 512;
+   const int max_hardbs = 1 << 28;
+@@ -809,7 +809,7 @@ int main( const int argc, const char * const argv[] )
+     { opt_rea, "log-reads",        Arg_parser::yes },
+     { opt_rs,  "reset-slow",       Arg_parser::no  },
+     { opt_sf,  "same-file",        Arg_parser::no  },
+-    {  0 , 0,                      Arg_parser::no  } };
++    {  0 , NULL,                   Arg_parser::no  } };
+ 
+   const Arg_parser parser( argc, argv, options );
+   if( parser.error().size() )				// bad option
+@@ -903,7 +903,7 @@ int main( const int argc, const char * const argv[] )
+   if( cluster < 1 ) cluster = cluster_bytes / hardbs;
+   if( cluster < 1 ) cluster = 1;
+ 
+-  const char *iname = 0, *oname = 0, *mapname = 0;
++  const char *iname = NULL, *oname = NULL, *mapname = NULL;
+   if( argind < parser.arguments() ) iname = parser.argument( argind++ ).c_str();
+   if( argind < parser.arguments() ) oname = parser.argument( argind++ ).c_str();
+   if( argind < parser.arguments() ) mapname = parser.argument( argind++ ).c_str();
+@@ -950,7 +950,7 @@ int main( const int argc, const char * const argv[] )
+           return 1; }
+       const Domain test_domain( 0, -1, test_mode_mapfile_name, loose );
+       return do_rescue( opos - ipos, domain,
+-                        test_mode_mapfile_name ? &test_domain : 0, mb_opts,
++                        test_mode_mapfile_name ? &test_domain : NULL, mb_opts,
+                         rb_opts, iname, oname, mapname, cluster, hardbs,
+                         o_direct_out, o_trunc, ask, program_mode == m_command,
+                         preallocate, synchronous, verify_input_size );
+diff --git a/main_common.cc b/main_common.cc
+index 4d84b79..6037040 100644
+--- a/main_common.cc
++++ b/main_common.cc
+@@ -38,7 +38,7 @@ void show_version()
+ long long getnum( const char * const ptr, const int hardbs,
+                   const long long llimit = -LLONG_MAX,
+                   const long long ulimit = LLONG_MAX,
+-                  const char ** const tailp = 0 )
++                  const char ** const tailp = NULL )
+   {
+   char * tail;
+   errno = 0;
+@@ -152,7 +152,7 @@ void set_name( const char ** name, const char * new_name, const char opt )
+ const char * get_timestamp( const long t = 0 )
+   {
+   static char buf[80];
+-  const time_t tt = t ? t : std::time( 0 );
++  const time_t tt = t ? t : std::time( NULL );
+   const struct tm * const tm = std::localtime( &tt );
+   if( !tm || std::strftime( buf, sizeof buf, "%Y-%m-%d %H:%M:%S", tm ) == 0 )
+     buf[0] = 0;
+@@ -210,7 +210,7 @@ long initial_time()
+   {
+   static long initial_time_ = 0;
+ 
+-  if( initial_time_ == 0 ) initial_time_ = std::time( 0 );
++  if( initial_time_ == 0 ) initial_time_ = std::time( NULL );
+   return initial_time_;
+   }
+ 
+diff --git a/mapbook.cc b/mapbook.cc
+index 4bb4e8c..64474c8 100644
+--- a/mapbook.cc
++++ b/mapbook.cc
+@@ -134,7 +134,7 @@ bool Mapbook::update_mapfile( const int odes, const bool force )
+   if( !filename() ) return true;
+   const int interval = ( mapfile_save_interval >= 0 ) ? mapfile_save_interval :
+     30 + std::min( 270L, sblocks() / 38 );	// auto, 30s to 5m
+-  const long t2 = std::time( 0 );
++  const long t2 = std::time( NULL );
+   if( um_t1 == 0 || um_t1 > t2 ) um_t1 = um_t1s = t2;	// initialize
+   if( !force && t2 - um_t1 < interval ) return true;
+   um_t1 = t2;
+@@ -152,7 +152,7 @@ bool Mapbook::update_mapfile( const int odes, const bool force )
+   while( true )
+     {
+     errno = 0;
+-    if( write_mapfile( 0, true, mf_sync ) ) return true;
++    if( write_mapfile( NULL, true, mf_sync ) ) return true;
+     if( verbosity < 0 ) return false;
+     const int saved_errno = errno;
+     std::fputc( '\n', stderr );
+diff --git a/mapbook.h b/mapbook.h
+index 5b5c544..e0359ad 100644
+--- a/mapbook.h
++++ b/mapbook.h
+@@ -110,7 +110,7 @@ class Fillbook : public Mapbook, public Fb_options
+ 
+   int fill_block( const Sblock & sb );
+   int fill_areas();
+-  void show_status( const long long ipos, const char * const msg = 0,
++  void show_status( const long long ipos, const char * const msg = NULL,
+                     bool force = false );
+ 
+ public:
+@@ -141,7 +141,7 @@ class Genbook : public Mapbook
+ 
+   void check_block( const Block & b, int & copied_size, int & error_size );
+   int check_all();
+-  void show_status( const long long ipos, const char * const msg = 0,
++  void show_status( const long long ipos, const char * const msg = NULL,
+                     bool force = false );
+ public:
+   Genbook( const long long offset, const long long insize,
+diff --git a/mapfile.cc b/mapfile.cc
+index bbac1aa..b4b9071 100644
+--- a/mapfile.cc
++++ b/mapfile.cc
+@@ -64,7 +64,7 @@ const char * my_fgets( FILE * const f, int & linenum )
+       }
+     }
+   if( len > 0 ) { buf[len] = 0; return buf; }
+-  else return 0;
++  else return NULL;
+   }
+ 
+ 
+@@ -209,7 +209,7 @@ bool Mapfile::truncate_vector( const long long end, const bool force )
+ //
+ bool Mapfile::read_mapfile( const int default_sblock_status, const bool ro )
+   {
+-  FILE * f = 0;
++  FILE * f = NULL;
+   errno = 0;
+   read_only_ = ro;
+   if( ro && std::strcmp( filename_, "-" ) == 0 ) f = stdin;
+@@ -270,7 +270,7 @@ int Mapfile::write_mapfile( FILE * f, const bool timestamp,
+                             const bool mf_sync,
+                             const Domain * const annotate_domainp ) const
+   {
+-  const bool f_given = ( f != 0 );
++  const bool f_given = ( f != NULL );
+ 
+   if( !f && !filename_ ) return false;
+   if( !f ) { f = std::fopen( filename_, "w" ); if( !f ) return false; }
+diff --git a/rescuebook.cc b/rescuebook.cc
+index 92ef1c0..eba387d 100644
+--- a/rescuebook.cc
++++ b/rescuebook.cc
+@@ -217,7 +217,7 @@ int Rescuebook::copy_and_update( const Block & b, int & copied_size,
+       {
+       show_status( -1, "Paused", true );
+       sleep( pause_on_pass );
+-      const long t2 = std::time( 0 );
++      const long t2 = std::time( NULL );
+       if( t1 < t2 ) t1 = t2;			// clock may have jumped back
+       ts = std::min( ts + pause_on_pass, t2 );	// avoid spurious timeout
+       }
+@@ -661,9 +661,9 @@ bool Rescuebook::update_rates( const bool force )
+       }
+     }
+ 
+-  long t2 = std::time( 0 );
++  long t2 = std::time( NULL );
+   if( max_read_rate > 0 && finished_size - last_size > max_read_rate && t2 == t1 )
+-    { sleep( 1 ); t2 = std::time( 0 ); }
++    { sleep( 1 ); t2 = std::time( NULL ); }
+   if( t2 < t1 )					// clock jumped back
+     {
+     const long delta = std::min( t0 - 1, t1 - t2 );
+@@ -904,7 +904,7 @@ int Rescuebook::do_rescue( const int ides, const int odes )
+   if( retval == 0 && max_retries != 0 && !errors_or_timeout() )
+     retval = copy_errors();
+   if( !rates_updated ) update_rates( true );	// force update of e_code
+-  show_status( -1, retval ? 0 : "Finished", true );
++  show_status( -1, retval ? NULL : "Finished", true );
+ 
+   const bool signaled = ( retval == -1 );
+   if( signaled ) retval = 0;
+diff --git a/rescuebook.h b/rescuebook.h
+index 193b466..7e6ad8c 100644
+--- a/rescuebook.h
++++ b/rescuebook.h
+@@ -182,7 +182,7 @@ class Rescuebook : public Mapbook, public Rb_options
+   int fcopy_errors( const char * const msg, const int pass, const bool resume );
+   int rcopy_errors( const char * const msg, const int pass, const bool resume );
+   bool update_rates( const bool force = false );
+-  void show_status( const long long ipos, const char * const msg = 0,
++  void show_status( const long long ipos, const char * const msg = NULL,
+                     const bool force = false );
+   int copy_command( const char * const command );
+   int status_command( const char * const command ) const;
+-- 
+2.17.1
+
