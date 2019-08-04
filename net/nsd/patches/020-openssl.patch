@@ -1,0 +1,13 @@
+--- a/tsig.c
++++ b/tsig.c
+@@ -19,6 +19,10 @@
+ #include "query.h"
+ #include "rbtree.h"
+ 
++#ifndef HAVE_SSL
++#define CRYPTO_memcmp memcmp
++#endif
++
+ static region_type *tsig_region;
+ 
+ struct tsig_key_table

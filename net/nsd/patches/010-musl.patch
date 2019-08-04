@@ -1,0 +1,10 @@
+--- a/nsd-control.c
++++ b/nsd-control.c
+@@ -42,6 +42,7 @@
+  */
+ 
+ #include "config.h"
++#include <stdio.h>
+ #ifdef HAVE_SSL
+ 
+ #include <sys/types.h>
