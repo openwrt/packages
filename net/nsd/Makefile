@@ -8,27 +8,26 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nsd
-PKG_VERSION:=4.1.13
+PKG_VERSION:=4.2.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.nlnetlabs.nl/downloads/nsd
-PKG_HASH:=c45cd4ba2101a027e133b2be44db9378e27602e05f09a5ef25019e1ae45291af
-PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
-
-PKG_LICENSE:=BSD-3c
-PKG_LICENSE_FILES:=LICENSE
+PKG_SOURCE_URL:=https://www.nlnetlabs.nl/downloads/nsd
+PKG_HASH:=d17c0ea3968cb0eb2be79f2f83eb299b7bfcc554b784007616eed6ece828871f
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Vasilis Tsiligiannis <acinonyx@openwrt.gr>
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/nsd/default
   TITLE:=NSD Name Server Daemon
-  URL:=http://www.nlnetlabs.nl/projects/nsd/
+  URL:=https://www.nlnetlabs.nl/projects/nsd/
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
@@ -85,22 +84,22 @@ define Package/nsd-control-setup/description
 endef
 
 CONFIGURE_ARGS+= \
+	--enable-packed \
+	--enable-recvmmsg \
+	--enable-tcp-fastopen \
 	--disable-checking \
-	--with-libevent=no \
 	--with-user="network" \
+	--without-libevent \
+	$(if $(CONFIG_IPV6),--with,--without)-ipv6
 
 CONFIGURE_VARS+= \
 	ac_cv_c_va_list_def=no \
-	ac_cv_c_strptime_needs_defs=no \
+	ac_cv_c_strptime_needs_defs=no
 
 ifeq ($(BUILD_VARIANT),ssl)
-	CONFIGURE_ARGS += \
-		--with-ssl="$(STAGING_DIR)/usr"
-endif
-
-ifeq ($(BUILD_VARIANT),nossl)
-	CONFIGURE_ARGS += \
-		--without-ssl
+	CONFIGURE_ARGS += --with-ssl="$(STAGING_DIR)/usr"
+else
+	CONFIGURE_ARGS += --without-ssl
 endif
 
 define Package/nsd/conffiles
