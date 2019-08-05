@@ -1,0 +1,46 @@
+commit 7343c710152c586a232a194ef37a56af636d6a56
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Thu Aug 1 18:51:38 2019 +0200
+
+    BUG/MINOR: stream-int: also update analysers timeouts on activity
+    
+    Between 1.6 and 1.7, some parts of the stream forwarding process were
+    moved into lower layers and the stream-interface had to keep the
+    stream's task up to date regarding the timeouts. The analyser timeouts
+    were not updated there as it was believed this was not needed during
+    forwarding, but actually there is a case for this which is "option
+    contstats" which periodically triggers the analyser timeout, and this
+    change broke the option in case of sustained traffic (if there is some
+    I/O activity during the same millisecond as the timeout expires, then
+    the update will be missed).
+    
+    This patch simply brings back the analyser expiration updates from
+    process_stream() to stream_int_notify().
+    
+    It may be backported as far as 1.7, taking care to adjust the fields
+    names if needed.
+    
+    (cherry picked from commit 45bcb37f0f8fa1e16dd9358a59dc280a38834dcd)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/stream_interface.c b/src/stream_interface.c
+index 9b9a8e9f..7d89cc90 100644
+--- a/src/stream_interface.c
++++ b/src/stream_interface.c
+@@ -558,6 +558,16 @@ static void stream_int_notify(struct stream_interface *si)
+ 		task->expire = tick_first((tick_is_expired(task->expire, now_ms) ? 0 : task->expire),
+ 					  tick_first(tick_first(ic->rex, ic->wex),
+ 						     tick_first(oc->rex, oc->wex)));
++
++		task->expire = tick_first(task->expire, ic->analyse_exp);
++		task->expire = tick_first(task->expire, oc->analyse_exp);
++
++		if (si->exp)
++			task->expire = tick_first(task->expire, si->exp);
++
++		if (sio->exp)
++			task->expire = tick_first(task->expire, sio->exp);
++
+ 		task_queue(task);
+ 	}
+ 	if (ic->flags & CF_READ_ACTIVITY)

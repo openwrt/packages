@@ -1,0 +1,32 @@
+commit 21a796cb83c29ee276feb04649a1b18214bbdee0
+Author: Olivier Houchard <ohouchard@haproxy.com>
+Date:   Fri Jul 26 14:54:34 2019 +0200
+
+    BUG/MEDIUM: streams: Don't switch the SI to SI_ST_DIS if we have data to send.
+    
+    In sess_established(), don't immediately switch the backend stream_interface
+    to SI_ST_DIS if we only got a SHUTR. We may still have something to send,
+    ie if the request is a POST, and we should be switched to SI_ST8DIS later
+    when the shutw will happen.
+    
+    This should be backported to 2.0 and 1.9.
+    
+    (cherry picked from commit 7859526fd6ce7ea33e20b7e532b21aa2465cb11d)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/stream.c b/src/stream.c
+index a5c5f45c..64875c80 100644
+--- a/src/stream.c
++++ b/src/stream.c
+@@ -954,8 +954,9 @@ static void sess_establish(struct stream *s)
+ 		si_chk_rcv(si);
+ 	}
+ 	req->wex = TICK_ETERNITY;
+-	/* If we managed to get the whole response, switch to SI_ST_DIS now. */
+-	if (rep->flags & CF_SHUTR)
++	/* If we managed to get the whole response, and we don't have anything
++	 * left to send, or can't, switch to SI_ST_DIS now. */
++	if (rep->flags & (CF_SHUTR | CF_SHUTW))
+ 		si->state = SI_ST_DIS;
+ }
+ 

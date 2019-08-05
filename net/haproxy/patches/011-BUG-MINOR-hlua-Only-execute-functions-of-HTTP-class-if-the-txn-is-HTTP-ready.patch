@@ -1,0 +1,180 @@
+commit 2351ca211d655c1be9ef6d62880899102134266d
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Fri Jul 26 16:31:34 2019 +0200
+
+    BUG/MINOR: hlua: Only execute functions of HTTP class if the txn is HTTP ready
+    
+    The flag HLUA_TXN_HTTP_RDY was added in the previous commit to know when a
+    function is called for a channel with a valid HTTP message or not. Of course it
+    also depends on the calling direction. In this commit, we allow the execution of
+    functions of the HTTP class only if this flag is set.
+    
+    Nobody seems to use them from an unsupported context (for instance, trying to
+    set an HTTP header from a tcp-request rule). But it remains a bug leading to
+    undefined behaviors or crashes.
+    
+    This patch may be backported to all versions since the 1.6. It depends on the
+    commits "MINOR: hlua: Add a flag on the lua txn to know in which context it can
+    be used" and "MINOR: hlua: Don't set request analyzers on response channel for
+    lua actions".
+    
+    (cherry picked from commit 301eff8e215d5dc7130e1ebacd7cf8da09a4f643)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/hlua.c b/src/hlua.c
+index d37e3c61..4d92fa44 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -5346,7 +5346,7 @@ __LJMP static int hlua_http_req_get_headers(lua_State *L)
+ 	MAY_LJMP(check_args(L, 1, "req_get_headers"));
+ 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
+ 
+-	if (htxn->dir != SMP_OPT_DIR_REQ)
++	if (htxn->dir != SMP_OPT_DIR_REQ || !(htxn->flags & HLUA_TXN_HTTP_RDY))
+ 		WILL_LJMP(lua_error(L));
+ 
+ 	return hlua_http_get_headers(L, htxn, &htxn->s->txn->req);
+@@ -5359,7 +5359,7 @@ __LJMP static int hlua_http_res_get_headers(lua_State *L)
+ 	MAY_LJMP(check_args(L, 1, "res_get_headers"));
+ 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
+ 
+-	if (htxn->dir != SMP_OPT_DIR_RES)
++	if (htxn->dir != SMP_OPT_DIR_RES || !(htxn->flags & HLUA_TXN_HTTP_RDY))
+ 		WILL_LJMP(lua_error(L));
+ 
+ 	return hlua_http_get_headers(L, htxn, &htxn->s->txn->rsp);
+@@ -5399,7 +5399,7 @@ __LJMP static int hlua_http_req_rep_hdr(lua_State *L)
+ 	MAY_LJMP(check_args(L, 4, "req_rep_hdr"));
+ 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
+ 
+-	if (htxn->dir != SMP_OPT_DIR_REQ)
++	if (htxn->dir != SMP_OPT_DIR_REQ || !(htxn->flags & HLUA_TXN_HTTP_RDY))
+ 		WILL_LJMP(lua_error(L));
+ 
+ 	return MAY_LJMP(hlua_http_rep_hdr(L, htxn, &htxn->s->txn->req, ACT_HTTP_REPLACE_HDR));
+@@ -5412,7 +5412,7 @@ __LJMP static int hlua_http_res_rep_hdr(lua_State *L)
+ 	MAY_LJMP(check_args(L, 4, "res_rep_hdr"));
+ 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
+ 
+-	if (htxn->dir != SMP_OPT_DIR_RES)
++	if (htxn->dir != SMP_OPT_DIR_RES || !(htxn->flags & HLUA_TXN_HTTP_RDY))
+ 		WILL_LJMP(lua_error(L));
+ 
+ 	return MAY_LJMP(hlua_http_rep_hdr(L, htxn, &htxn->s->txn->rsp, ACT_HTTP_REPLACE_HDR));
+@@ -5425,7 +5425,7 @@ __LJMP static int hlua_http_req_rep_val(lua_State *L)
+ 	MAY_LJMP(check_args(L, 4, "req_rep_hdr"));
+ 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
+ 
+-	if (htxn->dir != SMP_OPT_DIR_REQ)
++	if (htxn->dir != SMP_OPT_DIR_REQ || !(htxn->flags & HLUA_TXN_HTTP_RDY))
+ 		WILL_LJMP(lua_error(L));
+ 
+ 	return MAY_LJMP(hlua_http_rep_hdr(L, htxn, &htxn->s->txn->req, ACT_HTTP_REPLACE_VAL));
+@@ -5438,7 +5438,7 @@ __LJMP static int hlua_http_res_rep_val(lua_State *L)
+ 	MAY_LJMP(check_args(L, 4, "res_rep_val"));
+ 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
+ 
+-	if (htxn->dir != SMP_OPT_DIR_RES)
++	if (htxn->dir != SMP_OPT_DIR_RES || !(htxn->flags & HLUA_TXN_HTTP_RDY))
+ 		WILL_LJMP(lua_error(L));
+ 
+ 	return MAY_LJMP(hlua_http_rep_hdr(L, htxn, &htxn->s->txn->rsp, ACT_HTTP_REPLACE_VAL));
+@@ -5480,7 +5480,7 @@ __LJMP static int hlua_http_req_del_hdr(lua_State *L)
+ 	MAY_LJMP(check_args(L, 2, "req_del_hdr"));
+ 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
+ 
+-	if (htxn->dir != SMP_OPT_DIR_REQ)
++	if (htxn->dir != SMP_OPT_DIR_REQ || !(htxn->flags & HLUA_TXN_HTTP_RDY))
+ 		WILL_LJMP(lua_error(L));
+ 
+ 	return hlua_http_del_hdr(L, htxn, &htxn->s->txn->req);
+@@ -5493,7 +5493,7 @@ __LJMP static int hlua_http_res_del_hdr(lua_State *L)
+ 	MAY_LJMP(check_args(L, 2, "res_del_hdr"));
+ 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
+ 
+-	if (htxn->dir != SMP_OPT_DIR_RES)
++	if (htxn->dir != SMP_OPT_DIR_RES || !(htxn->flags & HLUA_TXN_HTTP_RDY))
+ 		WILL_LJMP(lua_error(L));
+ 
+ 	return hlua_http_del_hdr(L, htxn, &htxn->s->txn->rsp);
+@@ -5547,7 +5547,7 @@ __LJMP static int hlua_http_req_add_hdr(lua_State *L)
+ 	MAY_LJMP(check_args(L, 3, "req_add_hdr"));
+ 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
+ 
+-	if (htxn->dir != SMP_OPT_DIR_REQ)
++	if (htxn->dir != SMP_OPT_DIR_REQ || !(htxn->flags & HLUA_TXN_HTTP_RDY))
+ 		WILL_LJMP(lua_error(L));
+ 
+ 	return hlua_http_add_hdr(L, htxn, &htxn->s->txn->req);
+@@ -5560,7 +5560,7 @@ __LJMP static int hlua_http_res_add_hdr(lua_State *L)
+ 	MAY_LJMP(check_args(L, 3, "res_add_hdr"));
+ 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
+ 
+-	if (htxn->dir != SMP_OPT_DIR_RES)
++	if (htxn->dir != SMP_OPT_DIR_RES || !(htxn->flags & HLUA_TXN_HTTP_RDY))
+ 		WILL_LJMP(lua_error(L));
+ 
+ 	return hlua_http_add_hdr(L, htxn, &htxn->s->txn->rsp);
+@@ -5573,7 +5573,7 @@ static int hlua_http_req_set_hdr(lua_State *L)
+ 	MAY_LJMP(check_args(L, 3, "req_set_hdr"));
+ 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
+ 
+-	if (htxn->dir != SMP_OPT_DIR_REQ)
++	if (htxn->dir != SMP_OPT_DIR_REQ || !(htxn->flags & HLUA_TXN_HTTP_RDY))
+ 		WILL_LJMP(lua_error(L));
+ 
+ 	hlua_http_del_hdr(L, htxn, &htxn->s->txn->req);
+@@ -5587,7 +5587,7 @@ static int hlua_http_res_set_hdr(lua_State *L)
+ 	MAY_LJMP(check_args(L, 3, "res_set_hdr"));
+ 	htxn = MAY_LJMP(hlua_checkhttp(L, 1));
+ 
+-	if (htxn->dir != SMP_OPT_DIR_RES)
++	if (htxn->dir != SMP_OPT_DIR_RES || !(htxn->flags & HLUA_TXN_HTTP_RDY))
+ 		WILL_LJMP(lua_error(L));
+ 
+ 	hlua_http_del_hdr(L, htxn, &htxn->s->txn->rsp);
+@@ -5601,7 +5601,7 @@ static int hlua_http_req_set_meth(lua_State *L)
+ 	size_t name_len;
+ 	const char *name = MAY_LJMP(luaL_checklstring(L, 2, &name_len));
+ 
+-	if (htxn->dir != SMP_OPT_DIR_REQ)
++	if (htxn->dir != SMP_OPT_DIR_REQ || !(htxn->flags & HLUA_TXN_HTTP_RDY))
+ 		WILL_LJMP(lua_error(L));
+ 
+ 	lua_pushboolean(L, http_replace_req_line(0, name, name_len, htxn->p, htxn->s) != -1);
+@@ -5615,7 +5615,7 @@ static int hlua_http_req_set_path(lua_State *L)
+ 	size_t name_len;
+ 	const char *name = MAY_LJMP(luaL_checklstring(L, 2, &name_len));
+ 
+-	if (htxn->dir != SMP_OPT_DIR_REQ)
++	if (htxn->dir != SMP_OPT_DIR_REQ || !(htxn->flags & HLUA_TXN_HTTP_RDY))
+ 		WILL_LJMP(lua_error(L));
+ 
+ 	lua_pushboolean(L, http_replace_req_line(1, name, name_len, htxn->p, htxn->s) != -1);
+@@ -5629,7 +5629,7 @@ static int hlua_http_req_set_query(lua_State *L)
+ 	size_t name_len;
+ 	const char *name = MAY_LJMP(luaL_checklstring(L, 2, &name_len));
+ 
+-	if (htxn->dir != SMP_OPT_DIR_REQ)
++	if (htxn->dir != SMP_OPT_DIR_REQ || !(htxn->flags & HLUA_TXN_HTTP_RDY))
+ 		WILL_LJMP(lua_error(L));
+ 
+ 	/* Check length. */
+@@ -5656,7 +5656,7 @@ static int hlua_http_req_set_uri(lua_State *L)
+ 	size_t name_len;
+ 	const char *name = MAY_LJMP(luaL_checklstring(L, 2, &name_len));
+ 
+-	if (htxn->dir != SMP_OPT_DIR_REQ)
++	if (htxn->dir != SMP_OPT_DIR_REQ || !(htxn->flags & HLUA_TXN_HTTP_RDY))
+ 		WILL_LJMP(lua_error(L));
+ 
+ 	lua_pushboolean(L, http_replace_req_line(3, name, name_len, htxn->p, htxn->s) != -1);
+@@ -5670,7 +5670,7 @@ static int hlua_http_res_set_status(lua_State *L)
+ 	unsigned int code = MAY_LJMP(luaL_checkinteger(L, 2));
+ 	const char *reason = MAY_LJMP(luaL_optlstring(L, 3, NULL, NULL));
+ 
+-	if (htxn->dir != SMP_OPT_DIR_RES)
++	if (htxn->dir != SMP_OPT_DIR_RES || !(htxn->flags & HLUA_TXN_HTTP_RDY))
+ 		WILL_LJMP(lua_error(L));
+ 
+ 	http_set_status(code, reason, htxn->s);
