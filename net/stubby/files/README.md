@@ -86,7 +86,7 @@ to use resolvers found in `/etc/resolv.conf` by setting the dnsmasq option
 command line:
 
     uci add_list dhcp.@dnsmasq[-1].server='127.0.0.1#5453'
-    uci dhcp.@dnsmasq[-1].noresolv=1
+    uci set dhcp.@dnsmasq[-1].noresolv=1
     uci commit && reload_config
 
 The same outcome can be achieved in the LUCI web interface as follows:
