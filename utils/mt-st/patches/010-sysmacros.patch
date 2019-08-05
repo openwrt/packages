@@ -1,0 +1,10 @@
+--- a/mt.c
++++ b/mt.c
+@@ -21,6 +21,7 @@
+ #include <sys/types.h>
+ #include <sys/ioctl.h>
+ #include <sys/stat.h>
++#include <sys/sysmacros.h>
+ #include <sys/utsname.h>
+ 
+ #include "mtio.h"
