@@ -1,0 +1,37 @@
+commit a8fcdacb8cc0dddec72b1ddc4d9afc92d3684acd
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Fri Aug 2 07:48:47 2019 +0200
+
+    BUG/MEDIUM: mux-h2: unbreak receipt of large DATA frames
+    
+    Recent optimization in commit 4d7a88482 ("MEDIUM: mux-h2: don't try to
+    read more than needed") broke the receipt of large DATA frames because
+    it would unconditionally subscribe if there was some room left, thus
+    preventing any new rx from being done since subscription may only be
+    done once the end was reached, as indicated by ret == 0.
+    
+    However, fixing this uncovered that in HTX mode previous versions might
+    occasionally be affected as well, when an available frame is the same
+    size as the maximum data that may fit into an HTX buffer, we may end
+    up reading that whole frame and still subscribe since it's still allowed
+    to receive, thus causing issues to read the next frame.
+    
+    This patch will only work for 2.1-dev but a minor adaptation will be
+    needed for earlier versions (down to 1.9, where subscribe() was added).
+    
+    (cherry picked from commit 9bc1c95855b9c6300de5ecf3720cbe4b2558c5a1)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/mux_h2.c b/src/mux_h2.c
+index 5bb85181..d605fe94 100644
+--- a/src/mux_h2.c
++++ b/src/mux_h2.c
+@@ -2766,7 +2766,7 @@ static int h2_recv(struct h2c *h2c)
+ 			ret = 0;
+ 	} while (ret > 0);
+ 
+-	if (h2_recv_allowed(h2c) && (b_data(buf) < buf->size))
++	if (max && !ret && h2_recv_allowed(h2c))
+ 		conn->xprt->subscribe(conn, conn->xprt_ctx, SUB_RETRY_RECV, &h2c->wait_event);
+ 
+ 	if (!b_data(buf)) {
