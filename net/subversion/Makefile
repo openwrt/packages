@@ -8,21 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=subversion
+PKG_VERSION:=1.10.6
 PKG_RELEASE:=1
-PKG_VERSION:=1.10.0
+
 PKG_SOURCE_URL:=@APACHE/subversion
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=2cf23f3abb837dea0585a6b0ebd70e80e01f95bddef7c1aa097c18e3eaa6b584
+PKG_HASH:=18c8e72691e6d2e7d3137ae4ad98b9f8977cca5eb2504fab48d55e584b10eca7
+
+PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
 
 PKG_FIXUP:=autoreconf
 PKG_MACRO_PATHS:=build/ac-macros
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-
 
 define Package/subversion/Default
   SECTION:=net
@@ -31,15 +32,15 @@ define Package/subversion/Default
   TITLE:=A compelling replacement for CVS
   DEPENDS:=+zlib +libsqlite3 +PACKAGE_unixodbc:unixodbc +libapr +libaprutil +libmagic \
   	$(ICONV_DEPENDS) $(INTL_DEPENDS)
-  URL:=http://subversion.apache.org/
+  URL:=https://subversion.apache.org/
 endef
 
 define Package/subversion/Default/description
-	Subversion is a free/open-source version control system. That is,
-	Subversion manages files and directories, and the changes made to them,
-	over time. This allows you to recover older versions of your data, or
-	examine the history of how your data changed. In this regard, many
-	people think of a version control system as a sort of time machine.
+  Subversion is a free/open-source version control system. That is,
+  Subversion manages files and directories, and the changes made to them,
+  over time. This allows you to recover older versions of your data, or
+  examine the history of how your data changed. In this regard, many
+  people think of a version control system as a sort of time machine.
 endef
 
 define Package/subversion-libs
