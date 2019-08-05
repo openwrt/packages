@@ -6,6 +6,7 @@ FROM debian:9
 # v1.0.1 - Run as non-root, add unzip, xz-utils
 # v1.0.2 - Add bzr
 # v1.0.3 - Verify usign signatures
+# v1.0.4 - Add support for Python3
 
 RUN apt update && apt install -y \
 build-essential \
@@ -18,6 +19,7 @@ git \
 libncurses5-dev \
 libssl-dev \
 python \
+python3 \
 signify-openbsd \
 subversion \
 time \
