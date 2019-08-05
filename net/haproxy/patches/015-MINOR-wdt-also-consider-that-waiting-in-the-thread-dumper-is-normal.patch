@@ -1,0 +1,70 @@
+commit 445b2b7c52a13678241a190c4ff52e77a09ef0a6
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Wed Jul 31 19:20:39 2019 +0200
+
+    MINOR: wdt: also consider that waiting in the thread dumper is normal
+    
+    It happens that upon looping threads the watchdog fires, starts a dump,
+    and other threads expire their budget while waiting for the other threads
+    to get dumped and trigger a watchdog event again, adding some confusion
+    to the traces. With this patch the situation becomes clearer as we export
+    the list of threads being dumped so that the watchdog can check it before
+    deciding to trigger. This way such threads in queue for being dumped are
+    not attempted to be reported in turn.
+    
+    This should be backported to 2.0 as it helps understand stack traces.
+    
+    (cherry picked from commit a37cb1880c81b1f038e575d88ba7210aea0b7b8f)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/include/common/debug.h b/include/common/debug.h
+index 333203dd..f43258e9 100644
+--- a/include/common/debug.h
++++ b/include/common/debug.h
+@@ -70,6 +70,7 @@
+ 
+ struct task;
+ struct buffer;
++extern volatile unsigned long threads_to_dump;
+ void ha_task_dump(struct buffer *buf, const struct task *task, const char *pfx);
+ void ha_thread_dump(struct buffer *buf, int thr, int calling_tid);
+ void ha_thread_dump_all_to_trash();
+diff --git a/src/debug.c b/src/debug.c
+index 07624ca5..3077e97c 100644
+--- a/src/debug.c
++++ b/src/debug.c
+@@ -29,6 +29,11 @@
+ #include <proto/stream_interface.h>
+ #include <proto/task.h>
+ 
++/* mask of threads still having to dump, used to respect ordering. Only used
++ * when USE_THREAD_DUMP is set.
++ */
++volatile unsigned long threads_to_dump = 0;
++
+ /* Dumps to the buffer some known information for the desired thread, and
+  * optionally extra info for the current thread. The dump will be appended to
+  * the buffer, so the caller is responsible for preliminary initializing it.
+@@ -405,9 +410,6 @@ void ha_thread_dump_all_to_trash()
+  */
+ #define DEBUGSIG SIGURG
+ 
+-/* mask of threads still having to dump, used to respect ordering */
+-static volatile unsigned long threads_to_dump;
+-
+ /* ID of the thread requesting the dump */
+ static unsigned int thread_dump_tid;
+ 
+diff --git a/src/wdt.c b/src/wdt.c
+index 19d36c34..aa89fd44 100644
+--- a/src/wdt.c
++++ b/src/wdt.c
+@@ -75,7 +75,7 @@ void wdt_handler(int sig, siginfo_t *si, void *arg)
+ 		if (n - p < 1000000000UL)
+ 			goto update_and_leave;
+ 
+-		if ((threads_harmless_mask|sleeping_thread_mask) & (1UL << thr)) {
++		if ((threads_harmless_mask|sleeping_thread_mask|threads_to_dump) & (1UL << thr)) {
+ 			/* This thread is currently doing exactly nothing
+ 			 * waiting in the poll loop (unlikely but possible),
+ 			 * waiting for all other threads to join the rendez-vous
