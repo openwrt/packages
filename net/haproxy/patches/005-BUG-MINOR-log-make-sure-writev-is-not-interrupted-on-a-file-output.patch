@@ -1,0 +1,42 @@
+commit 487b38e86c08431bc5f48aac72c8d753ee23cb03
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Fri Jul 26 15:10:39 2019 +0200
+
+    BUG/MINOR: log: make sure writev() is not interrupted on a file output
+    
+    Since 1.9 we support sending logs to various non-blocking outputs like
+    stdou/stderr or flies, by using writev() which guarantees that it only
+    returns after having written everything or nothing. However the syscall
+    may be interrupted while doing so, and this is visible when writing to
+    a tty during debug sessions, as some logs occasionally appear interleaved
+    if an xterm or SSH connection is not very fast. Performance here is not a
+    critical concern, log correctness is. Let's simply take the logger's lock
+    around the writev() call to prevent multiple senders from stepping onto
+    each other's toes.
+    
+    This may be backported to 2.0 and 1.9.
+    
+    (cherry picked from commit 9fbcb7e2e9c32659ab11927394fec2e160be2d0b)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/log.c b/src/log.c
+index ef999d13..99f185e4 100644
+--- a/src/log.c
++++ b/src/log.c
+@@ -1672,8 +1672,15 @@ send:
+ 	iovec[7].iov_len  = 1;
+ 
+ 	if (logsrv->addr.ss_family == AF_UNSPEC) {
+-		/* the target is a direct file descriptor */
++		/* the target is a direct file descriptor. While writev() guarantees
++		 * to write everything, it doesn't guarantee that it will not be
++		 * interrupted while doing so. This occasionally results in interleaved
++		 * messages when the output is a tty, hence the lock. There's no real
++		 * performance concern here for such type of output.
++		 */
++		HA_SPIN_LOCK(LOGSRV_LOCK, &logsrv->lock);
+ 		sent = writev(*plogfd, iovec, 8);
++		HA_SPIN_UNLOCK(LOGSRV_LOCK, &logsrv->lock);
+ 	}
+ 	else {
+ 		msghdr.msg_name = (struct sockaddr *)&logsrv->addr;
