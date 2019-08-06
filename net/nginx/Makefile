@@ -429,18 +429,18 @@ endif
 
 ifeq ($(CONFIG_NGINX_HTTP_BROTLI),y)
   define Download/nginx-brotli
-    VERSION:=e26248ee361c04e25f581b92b85d95681bdffb39
+    VERSION:=dc37f658ccb5a51d090dc09d1a2aca2f24309869
     SUBDIR:=nginx-brotli
-    FILE:=ngx-brotli-module-$$(VERSION).tar.gz
+    FILE:=ngx-brotli-module-$$(VERSION).tar.xz
     URL:=https://github.com/eustas/ngx_brotli.git
-    MIRROR_HASH:=76b891ba49f82f0cfbc9cba875646e26ee986b522373e0aa2698a9923a4adcdb
+    MIRROR_HASH:=6bc0c40ff24f6e0ac616dfddc803bdc7fcf54764ba9dc4f9cecb3a68beedcdaf
     PROTO:=git
   endef
   $(eval $(call Download,nginx-brotli))
 
   define Prepare/nginx-brotli
 	$(eval $(Download/nginx-brotli))
-	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+	xzcat $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
   endef
 endif
 
