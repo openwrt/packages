@@ -13,6 +13,7 @@ To avoid these kind of deadlocks, travelmate will set all station interfaces to 
 * support all kinds of uplinks, incl. hidden and enterprise uplinks
 * continuously checks the existing uplink connection (quality), e.g. for conditional uplink (dis-) connections
 * captive portal detection with internet online check and a 'heartbeat' function to keep the uplink connection up & running
+* captive portal auto-login hook (configured via uci/LuCI), you could reference an external script for captive portal auto-logins (see example below)
 * proactively scan and switch to a higher prioritized uplink, despite of an already existing connection
 * support devices with multiple radios in any order
 * procd init and hotplug support
@@ -21,10 +22,11 @@ To avoid these kind of deadlocks, travelmate will set all station interfaces to 
 * optional: the LuCI frontend shows the WiFi QR codes from all configured Access Points. It allows you to connect your Android or iOS devices to your router’s WiFi using the QR code
 
 ## Prerequisites
-* [OpenWrt](https://openwrt.org), tested with the stable release series (18.06.x) and with the latest OpenWrt snapshot
-* iwinfo for wlan scanning, uclient-fetch for captive portal detection
+* [OpenWrt](https://openwrt.org), tested with the stable release series (19.07.x) and with the latest OpenWrt snapshot
+* iwinfo for wlan scanning, uclient-fetch for captive portal detection, dnsmasq as dns backend
 * optional: qrencode 4.x for QR code support
 * optional: wpad (the full version, not wpad-mini) to use Enterprise WiFi
+* optional: curl to use external scripts for captive portal auto-logins
 
 ## Installation & Usage
 * download the package [here](https://downloads.openwrt.org/snapshots/packages/x86_64/packages)
@@ -50,8 +52,20 @@ To avoid these kind of deadlocks, travelmate will set all station interfaces to 
     * trm\_maxretry => how many times should travelmate try to connect to an uplink (int/default: '3', valid range: 1-10)
     * trm\_timeout => overall retry timeout in seconds (int/default: '60', valid range: 30-300)
     * trm\_radio => limit travelmate to a single radio (e.g. 'radio1') or change the overall scanning priority (e.g. 'radio1 radio2 radio0') (default: not set, use all radios 0-n)
-    * trm\_iface => main uplink / procd trigger network interface (default: trm_wwan)
+    * trm\_iface => uplink / procd trigger network interface (default: trm_wwan)
     * trm\_triggerdelay => additional trigger delay in seconds before travelmate processing begins (int/default: '2')
+
+## Captive Portal auto-logins
+For automated captive portal logins you could reference external shell scripts. All login scripts should be executable and located in '/etc/travelmate' with the extension '.login'. The provided 'wifionice.login' script example requires curl and automates the login to german ICE hotspots, it also explains the principle approach to extract runtime data like security tokens for a succesful login. Hopefully more scripts for different captive portals will be provided by the community ...
+
+A typical/succesful captive portal login looks like this:
+<pre><code>
+[...]
+Mon Aug  5 10:15:48 2019 user.info travelmate-1.4.10[1481]: travelmate instance started ::: action: start, pid: 1481
+Mon Aug  5 10:16:17 2019 user.info travelmate-1.4.10[1481]: captive portal login '/etc/travelmate/wifionice.login' for 'www.wifionice.de' has been executed with rc '0'
+Mon Aug  5 10:16:23 2019 user.info travelmate-1.4.10[1481]: connected to uplink 'radio1/WIFIonICE/-' (1/5, GL.iNet GL-AR750S, OpenWrt SNAPSHOT r10644-cb49e46a8a)
+[...]
+</code></pre>
 
 ## Runtime information
 
@@ -59,14 +73,16 @@ To avoid these kind of deadlocks, travelmate will set all station interfaces to 
 <pre><code>
 ~# /etc/init.d/travelmate status
 ::: travelmate runtime information
-  + travelmate_status  : connected (net ok/78)
-  + travelmate_version : 1.2.3
-  + station_id         : radio1/blackhole/01:02:03:04:05:06
+  + travelmate_status  : connected (net ok/100)
+  + travelmate_version : 1.4.10
+  + station_id         : radio1/blackhole/-
   + station_interface  : trm_wwan
   + faulty_stations    : 
-  + last_rundate       : 07.09.2018 17:22:37
-  + system             : TP-LINK RE450, OpenWrt SNAPSHOT r8018-42f158314e
+  + last_rundate       : 2019.08.03-20:37:19
+  + system             : GL.iNet GL-AR750S, OpenWrt SNAPSHOT r10644-cb49e46a8a
 </code></pre>
+
+To debug travelmate runtime problems, please always enable the 'trm\_debug' flag, restart travelmate and scan the system log (_logread -e "travelmate"_)
 
 ## Manual Setup
 **1. configure the travelmate wwan interface in /etc/config/network:**
