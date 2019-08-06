@@ -14,8 +14,8 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * supports blocking by ASN numbers
 * supports blocking by iso country codes
 * supports local white & blacklist (IPv4, IPv6 & CIDR notation), located by default in /etc/banip/banip.whitelist and /etc/banip/banip.blacklist
-* auto-add unsuccessful ssh login attempts to local blacklist
-* auto-add the uplink subnet to local whitelist
+* auto-add unsuccessful ssh login attempts to local blacklist (see 'ban_autoblacklist' option)
+* auto-add the uplink subnet to local whitelist (see 'ban_autowhitelist' option)
 * per source configuration of SRC (incoming) and DST (outgoing)
 * integrated IPSet-Lookup
 * integrated RIPE-Lookup
@@ -54,7 +54,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
     * ban\_iface => space separated list of WAN network interface(s)/device(s) used by banIP (default: automatically set by banIP ('ban_automatic'))
 
 * the following options apply to the 'extra' config section:
-    * ban\_debug => enable/disable banIP debug output (default: '0', disabled)
+    * ban\_debug => enable/disable banIP debug output (bool/default: '0', disabled)
     * ban\_nice => set the nice level of the banIP process and all sub-processes (int/default: '0', standard priority)
     * ban\_triggerdelay => additional trigger delay in seconds before banIP processing begins (int/default: '2')
     * ban\_backup => create compressed blocklist backups, they will be used in case of download errors or during startup in 'backup mode' (bool/default: '0', disabled)
@@ -62,6 +62,8 @@ IP address blocking is commonly used to protect against brute force attacks, pre
     * ban\_backupboot => do not automatically update blocklists during startup, use their backups instead (bool/default: '0', disabled)
     * ban\_maxqueue => size of the download queue to handle downloads & IPSet processing in parallel (int/default: '8')
     * ban\_fetchparm => special config options for the download utility (default: not set)
+    * ban\_autoblacklist => store auto-addons temporary in ipset and permanently in local blacklist as well (bool/default: '1', enabled)
+    * ban\_autowhitelist => store auto-addons temporary in ipset and permanently in local whitelist as well (bool/default: '1', enabled)
 
 ## Examples
 **receive banIP runtime information:**

@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-ban_ver="0.1.4"
+ban_ver="0.1.5"
 ban_sysver="unknown"
 ban_enabled=0
 ban_automatic="1"
@@ -21,6 +21,8 @@ ban_backup=0
 ban_backupboot=0
 ban_backupdir="/mnt"
 ban_maxqueue=4
+ban_autoblacklist=1
+ban_autowhitelist=1
 ban_fetchutil="uclient-fetch"
 ban_ip="$(command -v ip)"
 ban_ipt="$(command -v iptables)"
@@ -623,7 +625,11 @@ f_main()
 						if [ -z "$(grep -F "${ip}" "${src_url}")" ]
 						then
 							printf '%s\n' "${ip}" >> "${tmp_load}"
-							printf '%s\n' "${ip}" >> "${src_url}"
+							if { [ "${src_name//_*/}" = "blacklist" ] && [ "${ban_autoblacklist}" -eq 1 ]; } || \
+								{ [ "${src_name//_*/}" = "whitelist" ] && [ "${ban_autowhitelist}" -eq 1 ]; }
+							then
+								printf '%s\n' "${ip}" >> "${src_url}"
+							fi
 						fi
 					done
 				elif [ -n "${src_cat}" ]
