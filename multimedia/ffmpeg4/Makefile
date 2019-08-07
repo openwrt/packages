@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg4
-PKG_VERSION:=4.1.4
+PKG_VERSION:=4.2
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=
@@ -15,7 +15,7 @@ PKG_LICENSE_FILES:=COPYING.GPLv2 COPYING.GPLv3 COPYING.LGPLv2.1 COPYING.LGPLv3
 
 PKG_SOURCE:=ffmpeg-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.ffmpeg.org/releases/
-PKG_HASH:=f1f049a82fcfbf156564e73a3935d7e750891fab2abf302e735104fd4050a7e1
+PKG_HASH:=023f10831a97ad93d798f53a3640e55cd564abfeba807ecbe8524dac4fedecd5
 PKG_BUILD_DIR:=$(BUILD_DIR)/ffmpeg-$(PKG_VERSION)
 
 PKG_FIXUP:=autoreconf
@@ -27,6 +27,7 @@ PKG_CONFIG_DEPENDS:= \
   CONFIG_ffmpeg4_ENC_MJPEG \
   CONFIG_ffmpeg4_ENC_MPEG4 \
   CONFIG_ffmpeg4_ENC_PNG \
+  CONFIG_ffmpeg4_FEAT_DASH \
   CONFIG_ffmpeg4_LIB_FDK-AAC \
   CONFIG_ffmpeg4_LIB_LAME \
   CONFIG_ffmpeg4_LIB_MBEDTLS \
@@ -42,6 +43,7 @@ define Package/ffmpeg4
   SECTION:=multimedia
   CATEGORY:=Multimedia
   DEPENDS:=+libpthread +zlib @BUILD_PATENTED \
+    +ffmpeg4_FEAT_DASH:libxml2 \
     +ffmpeg4_LIB_FDK-AAC:fdk-aac \
     +ffmpeg4_LIB_LAME:lame-lib \
     +ffmpeg4_LIB_MBEDTLS:libmbedtls \
@@ -163,7 +165,7 @@ CONFIGURE_ARGS += \
 	--enable-encoder=pcm_u16le,pcm_u24be,pcm_u24le \
 	--enable-encoder=pcm_u32be,pcm_u32le,pcm_u8 \
 	--enable-encoder=wrapped_avframe,zlib \
-	--enable-demuxer=aac,ac3,asf,asf_o,ass,avi,concat,dash,data \
+	--enable-demuxer=aac,ac3,asf,asf_o,ass,avi,concat,data \
 	--enable-demuxer=dts,dtshd,dvbsub,dvbtxt,eac3,ffmetadata,flac \
 	--enable-demuxer=flv,g723_1,g726,g726le,g729,h263,h264,hevc \
 	--enable-demuxer=hls,live_flv,loas,m4v,matroska,mjpeg,mlp,mov \
@@ -211,7 +213,7 @@ CONFIGURE_ARGS += \
 	--enable-bsf=dump_extradata,eac3_core,extract_extradata \
 	--enable-bsf=h264_metadata,h264_mp4toannexb,hevc_mp4toannexb \
 	--enable-bsf=hevc_metadata,hevc_mp4toannexb \
-	--enable-bsf=mjpeg2jpeg,mjpega_dump_header \
+	--enable-bsf=mjpeg2jpeg,mjpega_dump_header,mlp_parser \
 	--enable-bsf=mp3_header_decompress,mpeg2_metadata \
 	--enable-bsf=mpeg4_unpack_bframes,noise,null \
 	--enable-bsf=remove_extradata \
@@ -224,7 +226,7 @@ CONFIGURE_ARGS += \
 	--enable-filter=fps,framerate \
 	--enable-filter=interleave,join,metadata \
 	--enable-filter=movie,null,nullsink \
-	--enable-filter=nullsrc,pad,qp,resample \
+	--enable-filter=nullsrc,pad,qp \
 	--enable-filter=realtime,scale,select \
 	--enable-filter=showinfo,streamselect,trim \
 	--enable-filter=volume,w3fdif,yadif  \
@@ -239,6 +241,7 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_ffmpeg4_ENC_MJPEG),--enable-encoder=mjpeg,) \
 	$(if $(CONFIG_ffmpeg4_ENC_MPEG4),--enable-encoder=mpeg4,) \
 	$(if $(CONFIG_ffmpeg4_ENC_PNG),--enable-encoder=png,) \
+	$(if $(CONFIG_ffmpeg4_FEAT_DASH),--enable-demuxer=dash --enable-libxml2,) \
 	$(if $(CONFIG_ffmpeg4_LIB_FDK-AAC),--enable-decoder=libfdk_aac --enable-encoder=libfdk_aac --enable-libfdk-aac --enable-nonfree, --disable-libfdk-aac) \
 	$(if $(CONFIG_ffmpeg4_LIB_LAME),--enable-encoder=libmp3lame --enable-libmp3lame,--disable-libmp3lame) \
 	$(if $(CONFIG_ffmpeg4_LIB_MBEDTLS),--enable-mbedtls --enable-version3,--disable-mbedtls) \

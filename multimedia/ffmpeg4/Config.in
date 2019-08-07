@@ -39,6 +39,10 @@ config ffmpeg4_ENC_PNG
   bool "Enable builtin PNG encoder"
   default n
 
+config ffmpeg4_FEAT_DASH
+  bool "Enable support for Dynamic Adaptive Streaming over HTTP (DASH)"
+  default y
+
 config ffmpeg4_LIB_FDK-AAC
   bool "Enable FDK-AAC (AAC encoding) support"
   default y if !mips && !mips64
