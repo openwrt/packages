@@ -1,7 +1,6 @@
 #
 # Copyright (C) 2009 David Cooper <dave@kupesoft.com>
-# Copyright (C) 2009-2015 OpenWrt.org
-# Copyright (C) 2016 Daniel Dickinson <cshored@thecshore.com>
+# Copyright (C) 2016-2019 Daniel Dickinson <cshored@thecshore.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -17,7 +16,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/msmtp-scripts
 PKG_HASH:=2aec48d47b02facf2a33cf97a7434e969c1a054224406e6c55320d825c7902b2
 
-PKG_LICENSE:=GPL-3.0+
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
