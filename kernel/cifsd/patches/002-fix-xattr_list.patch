@@ -1,0 +1,89 @@
+===
+
+SMB1/SMB2 don't know exactly how vfs layer allocates xattr list,
+via kmalloc() or vmalloc(). Introduce cifsd_vfs_xattr_free() and
+keep both xattr allocation and de-allocation in one place.
+
+Signed-off-by: Sergey Senozhatsky <sergey.senozhatsky@gmail.com>
+---
+ smb1pdu.c | 4 ++--
+ smb2pdu.c | 6 ++----
+ vfs.c     | 6 ++++++
+ vfs.h     | 1 +
+ 4 files changed, 11 insertions(+), 6 deletions(-)
+
+diff --git a/smb1pdu.c b/smb1pdu.c
+index 35599ef..8cb92cf 100644
+--- a/smb1pdu.c
++++ b/smb1pdu.c
+@@ -8,6 +8,7 @@
+ #include <linux/posix_acl_xattr.h>
+ #include <linux/namei.h>
+ #include <linux/statfs.h>
++#include <linux/vmalloc.h>
+
+ #include "glob.h"
+ #include "smb1pdu.h"
+@@ -3844,8 +3845,7 @@ done:
+ 	rsp->ByteCount = cpu_to_le16(rsp_data_cnt + 5);
+ 	inc_rfc1001_len(&rsp->hdr, (10 * 2 + rsp->ByteCount));
+ out:
+-	if (xattr_list)
+-		vfree(xattr_list);
++	cifsd_vfs_xattr_free(xattr_list);
+ 	return rc;
+ }
+
+diff --git a/smb2pdu.c b/smb2pdu.c
+index 754258f..2727622 100644
+--- a/smb2pdu.c
++++ b/smb2pdu.c
+@@ -3867,8 +3867,7 @@ done:
+ 	rsp->OutputBufferLength = cpu_to_le32(rsp_data_cnt);
+ 	inc_rfc1001_len(rsp_org, rsp_data_cnt);
+ out:
+-	if (xattr_list)
+-		vfree(xattr_list);
++	cifsd_vfs_xattr_free(xattr_list);
+ 	return rc;
+ }
+
+@@ -4151,8 +4150,7 @@ static void get_file_stream_info(struct cifsd_work *work,
+ 	/* last entry offset should be 0 */
+ 	file_info->NextEntryOffset = 0;
+ out:
+-	if (xattr_list)
+-		vfree(xattr_list);
++	cifsd_vfs_xattr_free(xattr_list);
+
+ 	rsp->OutputBufferLength = cpu_to_le32(nbytes);
+ 	inc_rfc1001_len(rsp_org, nbytes);
+diff --git a/vfs.c b/vfs.c
+index 556b1a5..6da6f8e 100644
+--- a/vfs.c
++++ b/vfs.c
+@@ -1550,6 +1550,12 @@ int cifsd_vfs_remove_xattr(struct dentry *dentry, char *attr_name)
+ 	return vfs_removexattr(dentry, attr_name);
+ }
+
++void cifsd_vfs_xattr_free(char *xattr)
++{
++	if (xattr)
++		vfree(xattr);
++}
++
+ int cifsd_vfs_unlink(struct dentry *dir, struct dentry *dentry)
+ {
+ 	int err = 0;
+diff --git a/vfs.h b/vfs.h
+index ee54daf..16b4f9e 100644
+--- a/vfs.h
++++ b/vfs.h
+@@ -186,6 +186,7 @@ int cifsd_vfs_xattr_stream_name(char *stream_name,
+
+ int cifsd_vfs_truncate_xattr(struct dentry *dentry, int wo_streams);
+ int cifsd_vfs_remove_xattr(struct dentry *dentry, char *attr_name);
++void cifsd_vfs_xattr_free(char *xattr);
+
+ int cifsd_vfs_kern_path(char *name, unsigned int flags, struct path *path,
+ 		bool caseless);
