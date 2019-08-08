@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.4.10"
+trm_ver="1.4.11"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -278,7 +278,7 @@ f_check()
 									uci_commit travelmate
 								fi
 							fi
-							if [ "${cp_domain}" != "false" ] && [ -n "${uci_essid}" ] && [ "${trm_captive}" -eq 1 ]
+							if [ -n "${cp_domain}" ] && [ "${cp_domain}" != "false" ] && [ -n "${uci_essid}" ] && [ "${trm_captive}" -eq 1 ]
 							then
 								trm_connection="${result:-"-"}/${trm_ifquality}"
 								f_jsnup
