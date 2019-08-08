@@ -1,6 +1,6 @@
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -71,6 +71,8 @@ drv_generic_i2c.c             \
+@@ -72,6 +72,8 @@ drv_generic_i2c.c             \
  drv_generic_i2c.h             \
  drv_generic_keypad.c          \
  drv_generic_keypad.h          \

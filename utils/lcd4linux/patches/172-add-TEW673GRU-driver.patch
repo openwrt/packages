@@ -68,7 +68,7 @@
  #endif
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -119,6 +119,7 @@ drv_ShuttleVFD.c              \
+@@ -120,6 +120,7 @@ drv_ShuttleVFD.c              \
  drv_SimpleLCD.c               \
  drv_T6963.c                   \
  drv_TeakLCM.c                 \
