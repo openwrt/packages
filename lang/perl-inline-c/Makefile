@@ -8,15 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-inline-c
-PKG_VERSION:=0.78
+PKG_VERSION:=0.81
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/T/TI/TINITA
 PKG_SOURCE:=Inline-C-$(PKG_VERSION).tar.gz
-PKG_HASH:=9a7804d85c01a386073d2176582b0262b6374c5c0341049da3ef84c6f53efbc7
+PKG_SOURCE_URL:=https://www.cpan.org/authors/id/T/TI/TINITA
+PKG_HASH:=f185258d9050d7f79b4f00f12625cc469c2f700ff62d3e831cb18d80d2c87aac
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
+PKG_LICENSE_FILES:=LICENSE
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/perl/Inline-C-$(PKG_VERSION)
 HOST_BUILD_DEPENDS:=perl/host perl-inline/host perl-parse-recdescent/host perl-file-sharedir-install/host
@@ -32,7 +33,7 @@ define Package/perl-inline-c
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=C Language Support for Inline
-  URL:=http://search.cpan.org/dist/Inline-C/
+  URL:=https://search.cpan.org/dist/Inline-C/
   DEPENDS:=perl +perl-inline +perl-parse-recdescent +perlbase-config +perlbase-cwd +perlbase-data +perlbase-essential +perlbase-file +perlbase-if
 endef
 

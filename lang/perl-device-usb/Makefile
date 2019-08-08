@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-device-usb
-PKG_VERSION:=0.37
+PKG_VERSION:=0.38
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://www.cpan.org/authors/id/G/GW/GWADEJ/
 PKG_SOURCE:=Device-USB-$(PKG_VERSION).tar.gz
-PKG_HASH:=0dd58d9c627b3c539d07263a7b96e1de2adea3a4ddb118cdd45aa638f8702e49
+PKG_HASH:=f0c36379db4913406dc9bd546a6cfd4da20d58f7c2cc085893a2fe67a43465dc
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Device-USB-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=perl-inline-c/host
