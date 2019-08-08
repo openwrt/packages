@@ -36,7 +36,6 @@ endef
 
 
 define Package/tesseract-data-default
-  SUBMENU:=Tesseract
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=tesseract
@@ -44,7 +43,7 @@ endef
 
 define generate-tesseract-data-package
   define Package/tesseract-data-$(1)
-    TITLE:=Tesseract training data for $(1) language
+    TITLE:=Training data for $(1) language
     $(call Package/tesseract-data-default)
   endef
 
