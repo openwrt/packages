@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zerotier
 PKG_VERSION:=1.4.0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/zerotier/ZeroTierOne/tar.gz/$(PKG_VERSION)?
@@ -55,6 +55,10 @@ endef
 # Make binary smaller
 TARGET_CFLAGS += -ffunction-sections -fdata-sections
 TARGET_LDFLAGS += -Wl,--gc-sections
+
+ifdef CONFIG_USE_UCLIBC
+	TARGET_CFLAGS += -D'valloc(a)=aligned_alloc(getpagesize(),a)'
+endif
 
 define Package/zerotier/conffiles
 /etc/config/zerotier
