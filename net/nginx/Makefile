@@ -359,8 +359,8 @@ Package/nginx-all-module/install = $(Package/nginx/install)
 
 define Package/nginx/postinst
 #!/bin/sh
-core_number=$(grep -c ^processor /proc/cpuinfo)
-sed -i "s/^\s*worker_processes\s.*/worker_processes "$core_number";/" \
+core_number=$$(grep -c ^processor /proc/cpuinfo)
+sed -i "s/^\s*worker_processes\s.*/worker_processes "$$core_number";/" \
 	/etc/nginx/nginx.conf
 endef
 
