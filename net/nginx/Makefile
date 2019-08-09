@@ -128,7 +128,7 @@ define Package/nginx-ssl/config
   source "$(SOURCE)/Config_ssl.in"
 endef
 
-config_files=nginx.conf mime.types
+config_files=mime.types
 
 define Package/nginx/conffiles
 /etc/nginx/
@@ -195,6 +195,8 @@ ifneq ($(BUILD_VARIANT),all-module)
   endif
   ifneq ($(CONFIG_NGINX_HTTP_UWSGI),y)
     ADDITIONAL_MODULES += --without-http_uwsgi_module
+  else
+    config_files += uwsgi_params
   endif
   ifneq ($(CONFIG_NGINX_HTTP_SCGI),y)
     ADDITIONAL_MODULES += --without-http_scgi_module
@@ -309,33 +311,6 @@ else
   config_files += koi-utf koi-win win-utf fastcgi_params 
 endif
 
-define Package/nginx-mod-luci/default
-  TITLE:=Nginx on LuCI
-  SECTION:=net
-  CATEGORY:=Network
-  SUBMENU:=Web Servers/Proxies
-  TITLE:=Support file for Nginx
-  URL:=http://nginx.org/
-  DEPENDS:=+uwsgi-cgi +uwsgi-cgi-luci-support
-endef
-
-define Package/nginx-mod-luci
-  $(Package/nginx-mod-luci/default)
-  DEPENDS += +nginx
-endef
-
-define Package/nginx-mod-luci/description
- Support file for LuCI in nginx. Include custom nginx configuration, autostart script for uwsgi.
-endef
-
-define Package/nginx-mod-luci-ssl
-  $(Package/nginx-mod-luci/default)
-  TITLE += with HTTPS support
-  DEPENDS += +nginx-ssl
-endef
-
-Package/nginx-mod-luci-ssl/description = $(define Package/nginx-mod-luci/description) \
-  This also include redirect from http to https and cert autogeneration.
 
 TARGET_CFLAGS += -fvisibility=hidden -ffunction-sections -fdata-sections -DNGX_LUA_NO_BY_LUA_BLOCK
 TARGET_LDFLAGS += -Wl,--gc-sections
@@ -362,27 +337,12 @@ CONFIGURE_ARGS += \
 			--with-ld-opt="$(TARGET_LDFLAGS)" \
 			--without-http_upstream_zone_module
 
-define Package/nginx-mod-luci/install
-	$(INSTALL_DIR) $(1)/etc/nginx
-	$(INSTALL_BIN) ./files-luci-support/luci_uwsgi.conf $(1)/etc/nginx/luci_uwsgi.conf
-	$(INSTALL_BIN) ./files-luci-support/luci_nginx.conf $(1)/etc/nginx/luci_nginx.conf
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files-luci-support/60_nginx-luci-support $(1)/etc/uci-defaults/60_nginx-luci-support
-endef
-
-define Package/nginx-mod-luci-ssl/install
-	$(Package/nginx-mod-luci/install)
-	$(INSTALL_DIR) $(1)/etc/nginx
-	$(INSTALL_BIN) ./files-luci-support/luci_nginx_ssl.conf $(1)/etc/nginx/luci_nginx_ssl.conf
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files-luci-support/70_nginx-luci-support-ssl $(1)/etc/uci-defaults/70_nginx-luci-support-ssl
-endef
-
 define Package/nginx/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/nginx $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/nginx
 	$(INSTALL_DATA) $(addprefix $(PKG_INSTALL_DIR)/etc/nginx/,$(config_files)) $(1)/etc/nginx/
+	$(INSTALL_CONF) ./files/nginx.conf $(1)/etc/nginx/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/nginx.init $(1)/etc/init.d/nginx
 ifeq ($(CONFIG_NGINX_NAXSI),y)
@@ -396,6 +356,17 @@ endef
 
 Package/nginx-ssl/install = $(Package/nginx/install)
 Package/nginx-all-module/install = $(Package/nginx/install)
+
+define Package/nginx/postinst
+#!/bin/sh
+core_number=$(grep -c ^processor /proc/cpuinfo)
+sed -i "s/^\s*worker_processes\s.*/worker_processes "$core_number";/" \
+	/etc/nginx/nginx.conf
+endef
+
+Package/nginx-ssl/postinst = $(Package/nginx/postinst)
+Package/nginx-all-module/postinst = $(Package/nginx/postinst)
+
 
 define Build/Prepare
 	$(Build/Prepare/Default)
@@ -429,18 +400,18 @@ endif
 
 ifeq ($(CONFIG_NGINX_HTTP_BROTLI),y)
   define Download/nginx-brotli
-    VERSION:=dc37f658ccb5a51d090dc09d1a2aca2f24309869
+    VERSION:=e26248ee361c04e25f581b92b85d95681bdffb39
     SUBDIR:=nginx-brotli
-    FILE:=ngx-brotli-module-$$(VERSION).tar.xz
+    FILE:=ngx-brotli-module-$$(VERSION).tar.gz
     URL:=https://github.com/eustas/ngx_brotli.git
-    MIRROR_HASH:=6bc0c40ff24f6e0ac616dfddc803bdc7fcf54764ba9dc4f9cecb3a68beedcdaf
+    MIRROR_HASH:=76b891ba49f82f0cfbc9cba875646e26ee986b522373e0aa2698a9923a4adcdb
     PROTO:=git
   endef
   $(eval $(call Download,nginx-brotli))
 
   define Prepare/nginx-brotli
 	$(eval $(Download/nginx-brotli))
-	xzcat $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
   endef
 endif
 
@@ -538,5 +509,3 @@ endif
 $(eval $(call BuildPackage,nginx))
 $(eval $(call BuildPackage,nginx-ssl))
 $(eval $(call BuildPackage,nginx-all-module))
-$(eval $(call BuildPackage,nginx-mod-luci))
-$(eval $(call BuildPackage,nginx-mod-luci-ssl))
