@@ -6,18 +6,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=talloc
-PKG_VERSION:=2.1.14
+PKG_VERSION:=2.3.1
 MAJOR_VERSION:=2
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.samba.org/ftp/talloc
-PKG_HASH:=b185602756a628bac507fa8af8b9df92ace69d27c0add5dab93190ad7c3367ce
+PKG_HASH:=ef4822d2fdafd2be8e0cabc3ec3c806ae29b8268e932c5e9a4cd5585f37f9f77
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=LGPL-3.0-or-later
 
 PKG_BUILD_PARALLEL:=0
+
+HOST_BUILD_DEPENDS:=python/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/kernel.mk
@@ -35,42 +37,18 @@ define Package/libtalloc/description
 endef
 
 CROSS = " \
-	\nChecking simple C program: OK \
-	\nrpath library support: OK \
-	\n-Wl,--version-script support: OK \
+	\nChecking simple C program: \"hello world\" \
+	\nrpath library support: (127, \"\") \
+	\n-Wl,--version-script support: (127, \"\") \
 	\nChecking getconf LFS_CFLAGS: NO \
 	\nChecking for large file support without additional flags: OK \
-	\nChecking for -D_LARGE_FILES: OK \
-	\nChecking correct behavior of strtoll: NO \
-	\nChecking for working strptime: OK \
-	\nChecking for C99 vsnprintf: OK \
-	\nChecking for HAVE_SHARED_MMAP: OK \
-	\nChecking for HAVE_MREMAP: OK \
-	\nChecking for HAVE_INCOHERENT_MMAP: NO \
+	\nChecking correct behavior of strtoll: OK \
+	\nChecking for working strptime: NO \
+	\nChecking for C99 vsnprintf: \"1\" \
+	\nChecking for HAVE_SHARED_MMAP: NO \
+	\nChecking for HAVE_MREMAP: NO \
+	\nChecking for HAVE_INCOHERENT_MMAP: (2, \"\") \
 	\nChecking for HAVE_SECURE_MKSTEMP: OK \
-	\nChecking for HAVE_IFACE_GETIFADDRS: OK \
-	\nChecking for kernel change notify support: OK \
-	\nChecking for Linux kernel oplocks: OK \
-	\nChecking for kernel share modes: OK \
-	\nChecking if can we convert from CP850 to UCS-2LE: OK \
-	\nChecking if can we convert from UTF-8 to UCS-2LE: OK \
-	\nChecking whether we can use Linux thread-specific credentials with 32-bit system calls: OK \
-	\nChecking whether we can use Linux thread-specific credentials: OK \
-	\nChecking whether setreuid is available: OK \
-	\nChecking whether setresuid is available: OK \
-	\nChecking whether seteuid is available: OK \
-	\nChecking whether fcntl locking is available: OK \
-	\nChecking for the maximum value of the 'time_t' type: OK \
-	\nChecking whether the realpath function allows a NULL argument: OK \
-	\nChecking whether POSIX capabilities are available: OK \
-	\nChecking for ftruncate extend: OK \
-	\nvfs_fileid checking for statfs() and struct statfs.f_fsid: OK \
-	\ngetcwd takes a NULL argument: OK \
-	\nChecking value of NSIG: \"65\" \
-	\nChecking value of _NSIG: \"65\" \
-	\nChecking value of SIGRTMAX: \"64\" \
-	\nChecking value of SIGRTMIN: \"34\" \
-	\nChecking if toolchain accepts -fstack-protector: OK \
 	\n"
 
 define Build/Configure
@@ -88,7 +66,8 @@ define Build/Configure
 			--localstatedir=/var \
 			--with-libiconv="$(ICONV_PREFIX)" \
 			--cross-compile \
-			--cross-answers=$(PKG_BUILD_DIR)/cache.txt \
+			--cross-answers=cache.txt \
+			--disable-python \
 			--disable-rpath \
 			--disable-rpath-install \
 	)
