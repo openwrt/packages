@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-simple-captcha
-PKG_VERSION:=0.5.11
-PKG_RELEASE:=4
+PKG_VERSION:=0.5.12
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mbi/django-simple-captcha/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=7ca26a4f48e14e5f8be022c0dc099ef98980f3fc99f403ca565ab1f3addaee5b
+PKG_HASH:=89db73a3883573ad5e22c511948a5500491f9848363174d835a2364750c81a77
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=MIT
