@@ -16,7 +16,9 @@ append_arg() {
         local val
 
         config_get val "$cfg" "$var"
-        [ -n "$val" -o -n "$def" ] && procd_append_param command $opt "${val:-$def}"
+        if [ -n "$val" ] || [ -n "$def" ]; then
+		procd_append_param command "$opt" "${val:-$def}"
+	fi
 }
 
 start_instance() {
