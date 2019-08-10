@@ -6,17 +6,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mjpg-streamer
-PKG_VERSION:=2018-10-25
+PKG_VERSION:=2019-5-24
 PKG_RELEASE:=2
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>, \
 		Ted Hess <thess@kitschensync.net>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/jacksonliam/mjpg-streamer.git
-PKG_SOURCE_VERSION:=ddb69b7b4f114f3c2ca01adf55712792ca8aed43
+PKG_SOURCE_VERSION:=501f6362c5afddcfb41055f97ae484252c85c912
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_MIRROR_HASH:=d87ebff5de0c17a35a5b81adad5aa234bc70fe2bb17d1c6277c726845dc043bb
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -30,7 +29,7 @@ define Package/mjpg-streamer
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=MJPG-streamer
-  DEPENDS:=+libpthread +libjpeg +MJPG_STREAMER_V4L2:libv4l
+  DEPENDS:=+libpthread +MJPG_STREAMER_V4L2:libv4l
   URL:=https://github.com/jacksonliam/mjpg-streamer
   MENU:=1
 endef
@@ -78,10 +77,8 @@ define Build/Configure
     $(RM) $(PKG_BUILD_DIR)/plugins/input_uvc/uvcvideo.h
 endef
 
-    TARGET_LDFLAGS+= -ljpeg
-
 ifeq ($(CONFIG_MJPG_STREAMER_V4L2),y)
-    TARGET_CFLAGS+= -DUSE_LIBV4L2
+    TARGET_CFLAGS+= -DUSE_LIBV4L2 -DNO_LIBJPEG
     TARGET_LDFLAGS+= -lv4l2
 endif
 
