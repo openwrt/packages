@@ -23,6 +23,7 @@ PKG_CPE_ID:=cpe:/a:clamav:clamav
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
@@ -74,7 +75,6 @@ CONFIGURE_ARGS += \
 	--with-openssl="$(STAGING_DIR)/usr/" \
 	--with-pcre="$(STAGING_DIR)/usr/" \
 	--with-zlib="$(STAGING_DIR)/usr/" \
-	--without-xml \
 	--without-iconv \
 	--without-libncurses-prefix
 
