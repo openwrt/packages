@@ -12,7 +12,7 @@ PKG_NAME:=softethervpn
 PKG_VERSION:=4.29-9680
 PKG_VERREL:=rtm
 PKG_VERDATE:=2019.02.28
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=softether-src-v$(PKG_VERSION)-$(PKG_VERREL).tar.gz
 PKG_SOURCE_URL:=http://www.softether-download.com/files/softether/v$(PKG_VERSION)-$(PKG_VERREL)-$(PKG_VERDATE)-tree/Source_Code/
