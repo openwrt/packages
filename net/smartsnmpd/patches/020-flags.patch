@@ -1,0 +1,44 @@
+--- a/SConstruct
++++ b/SConstruct
+@@ -134,21 +134,21 @@ env = Environment(
+ 
+ # handle options/environment varibles.
+ if 'CC' in os.environ:
+-  env.Replace(CC = os.environ['CC'])
++  env.Replace(CC = Split(os.environ['CC']))
+ 
+ # CFLAGS
+ if GetOption("cflags") != "":
+   env.Append(CFLAGS = GetOption("cflags"))
+ elif 'CFLAGS' in os.environ:
+-  env.Append(CFLAGS = os.environ['CFLAGS'])
++  env.Append(CFLAGS = Split(os.environ['CFLAGS']))
+ 
+ # LDFLAGS
+ if GetOption("ldflags") != "":
+   env.Replace(LINKFLAGS = GetOption("ldflags"))
+ elif 'LDFLAGS' in os.environ:
+-  env.Replace(LINKFLAGS = os.environ['LDFLAGS'])
++  env.Replace(LINKFLAGS = Split(os.environ['LDFLAGS']))
+ elif 'LINKFLAGS' in os.environ:
+-  env.Replace(LINKFLAGS = os.environ['LINKFLAGS'])
++  env.Replace(LINKFLAGS = Split(os.environ['LINKFLAGS']))
+ 
+ # LIBS
+ if GetOption("libs") != "":
+@@ -192,15 +192,6 @@ else:
+ # autoconf
+ conf = Configure(env, custom_tests = {'CheckEpoll' : CheckEpoll, 'CheckSelect' : CheckSelect, 'CheckKqueue' : CheckKqueue, 'CheckEndian' : CheckEndian})
+ 
+-# Endian check
+-endian = conf.CheckEndian()
+-if endian == 'Big':
+-  env.Append(CFLAGS = ["-DBIG_ENDIAN"])
+-elif endian == 'Little':
+-  env.Append(CFLAGS = ["-DLITTLE_ENDIAN"])
+-else:
+-  raise SConfError("Error when testing the endian.")
+-
+ # built-in event loop check
+ if GetOption("transport") == 'built-in' or GetOption("transport") == '':
+   if GetOption("evloop") == 'epoll':

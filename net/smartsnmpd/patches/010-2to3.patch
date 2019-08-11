@@ -1,0 +1,82 @@
+--- a/SConstruct
++++ b/SConstruct
+@@ -133,21 +133,21 @@ env = Environment(
+ )
+ 
+ # handle options/environment varibles.
+-if os.environ.has_key('CC'):
++if 'CC' in os.environ:
+   env.Replace(CC = os.environ['CC'])
+ 
+ # CFLAGS
+ if GetOption("cflags") != "":
+   env.Append(CFLAGS = GetOption("cflags"))
+-elif os.environ.has_key('CFLAGS'):
++elif 'CFLAGS' in os.environ:
+   env.Append(CFLAGS = os.environ['CFLAGS'])
+ 
+ # LDFLAGS
+ if GetOption("ldflags") != "":
+   env.Replace(LINKFLAGS = GetOption("ldflags"))
+-elif os.environ.has_key('LDFLAGS'):
++elif 'LDFLAGS' in os.environ:
+   env.Replace(LINKFLAGS = os.environ['LDFLAGS'])
+-elif os.environ.has_key('LINKFLAGS'):
++elif 'LINKFLAGS' in os.environ:
+   env.Replace(LINKFLAGS = os.environ['LINKFLAGS'])
+ 
+ # LIBS
+@@ -183,10 +183,10 @@ elif GetOption("transport") == 'built-in' or GetOption("transport") == '':
+   elif GetOption("evloop") == 'select' or GetOption("evloop") == '':
+     pass
+   else:
+-    print "Error: Not the right event driving type"
++    print("Error: Not the right event driving type")
+     Exit(1)
+ else:
+-  print "Error: Transport not found!"
++  print("Error: Transport not found!")
+   Exit(1)
+ 
+ # autoconf
+@@ -205,18 +205,18 @@ else:
+ if GetOption("transport") == 'built-in' or GetOption("transport") == '':
+   if GetOption("evloop") == 'epoll':
+     if not conf.CheckEpoll():
+-      print "Error: epoll failed"
++      print("Error: epoll failed")
+       Exit(1)
+   elif GetOption("evloop") == 'kqueue':
+     if not conf.CheckKqueue():
+-      print "Error: Kqueue failed"
++      print("Error: Kqueue failed")
+       Exit(1)
+   elif GetOption("evloop") == 'select' or GetOption("evloop") == '':
+     if not conf.CheckSelect():
+-      print "Error: select failed"
++      print("Error: select failed")
+       Exit(1)
+   else:
+-    print "Error: Not the right event driving type"
++    print("Error: Not the right event driving type")
+     Exit(1)
+ 
+ # CFLAGS
+@@ -232,7 +232,7 @@ if conf.CheckLib('lua'):
+ elif conf.CheckLib('lua5.1'):
+   env.Append(LIBS = ['lua5.1'])
+ else:
+-  print "Error: liblua or liblua5.1 not found!"
++  print("Error: liblua or liblua5.1 not found!")
+   Exit(1)
+ 
+ # find lua header files
+@@ -241,7 +241,7 @@ if conf.CheckCHeader('lua.h'):
+ elif conf.CheckCHeader('lua5.1/lua.h'):
+   env.Append(CFLAGS = ['-I/usr/include/lua5.1'])
+ else:
+-  print "Error: lua.h not found"
++  print("Error: lua.h not found")
+   Exit(1)
+ 
+ env = conf.Finish()
