@@ -1,0 +1,12 @@
+--- a/src/os/linux/os.c
++++ b/src/os/linux/os.c
+@@ -26,6 +26,9 @@
+ #include <sys/sysinfo.h>
+ 
+ #define __USE_GNU
++#ifndef _GNU_SOURCE
++#define _GNU_SOURCE
++#endif
+ #include <dlfcn.h>
+ #include <pthread.h>
+ 
