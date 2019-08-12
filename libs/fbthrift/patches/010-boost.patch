@@ -1,0 +1,14 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -44,7 +44,11 @@ endif(MSVC)
+ find_package(
+   Boost 1.54.0 REQUIRED #1.54.0 or greater
+   COMPONENTS
++    context
++    date_time
+     filesystem
++    program_options
++    regex
+     system
+     thread
+ )
