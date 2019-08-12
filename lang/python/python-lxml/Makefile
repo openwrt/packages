@@ -89,6 +89,8 @@ endef
 
 $(eval $(call PyPackage,python-lxml))
 $(eval $(call BuildPackage,python-lxml))
+$(eval $(call BuildPackage,python-lxml-src))
 
 $(eval $(call Py3Package,python3-lxml))
 $(eval $(call BuildPackage,python3-lxml))
+$(eval $(call BuildPackage,python3-lxml-src))
