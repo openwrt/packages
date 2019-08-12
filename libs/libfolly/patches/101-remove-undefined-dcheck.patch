@@ -1,8 +1,6 @@
-Index: folly-2019.05.06.00/folly/stats/detail/BufferedStat-defs.h
-===================================================================
---- folly-2019.05.06.00.orig/folly/stats/detail/BufferedStat-defs.h
-+++ folly-2019.05.06.00/folly/stats/detail/BufferedStat-defs.h
-@@ -74,7 +74,6 @@ void BufferedStat<DigestT, ClockT>::doUp
+--- a/folly/stats/detail/BufferedStat-inl.h
++++ b/folly/stats/detail/BufferedStat-inl.h
+@@ -69,7 +69,6 @@ void BufferedStat<DigestT, ClockT>::doUpdate(
      TimePoint now,
      const std::unique_lock<SharedMutex>& g,
      UpdateMode updateMode) {
