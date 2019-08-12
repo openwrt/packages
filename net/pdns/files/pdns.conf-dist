@@ -92,7 +92,7 @@
 #################################
 # config-dir	Location of configuration directory (pdns.conf)
 #
-# config-dir=/usr/local/etc
+# config-dir=/etc/powerdns
 
 #################################
 # config-name	Name of this virtual configuration - will rename the binary image
@@ -377,7 +377,7 @@
 #################################
 # module-dir	Default directory for modules
 #
-# module-dir=/usr/local/lib/pdns
+# module-dir=/usr/lib/powerdns/pdns
 
 #################################
 # negquery-cache-ttl	Seconds to store negative query results in the QueryCache
@@ -530,6 +530,11 @@
 # socket-dir=
 
 #################################
+# superslave	Act as a superslave
+#
+# superslave=yes
+
+#################################
 # tcp-control-address	If set, PowerDNS can be controlled over TCP on this address
 #
 # tcp-control-address=
@@ -618,3 +623,5 @@
 # xfr-max-received-mbytes	Maximum number of megabytes received from an incoming XFR
 #
 # xfr-max-received-mbytes=100
+
+
