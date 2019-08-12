@@ -1,0 +1,74 @@
+commit 5730c2b5cb56e7639dc423dd62651c8736a54e35 (refs/remotes/origin/v3.5)
+Author: Amos Jeffries <yadij@users.noreply.github.com>
+Date:   2019-07-05 03:17:26 +0000
+
+    Bug 4957: Multiple XSS issues in cachemgr.cgi (#429)
+    
+    The cachemgr.cgi web module of the squid proxy is vulnerable
+    to XSS issue. The vulnerable parameters "user_name" and "auth"
+    have insufficient sanitization in place.
+
+diff --git a/tools/cachemgr.cc b/tools/cachemgr.cc
+index 0c67538..9aecaa9 100644
+--- a/tools/cachemgr.cc
++++ b/tools/cachemgr.cc
+@@ -354,7 +354,7 @@ auth_html(const char *host, int port, const char *user_name)
+ 
+     printf("<TR><TH ALIGN=\"left\">Manager name:</TH><TD><INPUT NAME=\"user_name\" ");
+ 
+-    printf("size=\"30\" VALUE=\"%s\"></TD></TR>\n", user_name);
++    printf("size=\"30\" VALUE=\"%s\"></TD></TR>\n", rfc1738_escape(user_name));
+ 
+     printf("<TR><TH ALIGN=\"left\">Password:</TH><TD><INPUT TYPE=\"password\" NAME=\"passwd\" ");
+ 
+@@ -418,7 +418,7 @@ menu_url(cachemgr_request * req, const char *action)
+              script_name,
+              req->hostname,
+              req->port,
+-             safe_str(req->user_name),
++             rfc1738_escape(safe_str(req->user_name)),
+              action,
+              safe_str(req->pub_auth));
+     return url;
+@@ -1073,8 +1073,8 @@ make_pub_auth(cachemgr_request * req)
+     const int bufLen = snprintf(buf, sizeof(buf), "%s|%d|%s|%s",
+                                 req->hostname,
+                                 (int) now,
+-                                req->user_name ? req->user_name : "",
+-                                req->passwd);
++                                rfc1738_escape(safe_str(req->user_name)),
++                                rfc1738_escape(req->passwd));
+     debug("cmgr: pre-encoded for pub: %s\n", buf);
+ 
+     const int encodedLen = base64_encode_len(bufLen);
+@@ -1089,8 +1089,6 @@ decode_pub_auth(cachemgr_request * req)
+     char *buf;
+     const char *host_name;
+     const char *time_str;
+-    const char *user_name;
+-    const char *passwd;
+ 
+     debug("cmgr: decoding pub: '%s'\n", safe_str(req->pub_auth));
+     safe_free(req->passwd);
+@@ -1119,17 +1117,21 @@ decode_pub_auth(cachemgr_request * req)
+ 
+     debug("cmgr: decoded time: '%s' (now: %d)\n", time_str, (int) now);
+ 
++    char *user_name;
+     if ((user_name = strtok(NULL, "|")) == NULL) {
+         xfree(buf);
+         return;
+     }
++    rfc1738_unescape(user_name);
+ 
+     debug("cmgr: decoded uname: '%s'\n", user_name);
+ 
++    char *passwd;
+     if ((passwd = strtok(NULL, "|")) == NULL) {
+         xfree(buf);
+         return;
+     }
++    rfc1738_unescape(passwd);
+ 
+     debug("cmgr: decoded passwd: '%s'\n", passwd);
+ 

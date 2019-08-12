@@ -1,0 +1,72 @@
+commit f1657a9decc820f748fa3aff68168d3145258031
+Author: Christos Tsantilas <christos@chtsanti.net>
+Date:   2018-10-17 15:14:07 +0000
+
+    Certificate fields injection via %D in ERR_SECURE_CONNECT_FAIL (#306)
+    
+    %ssl_subject, %ssl_ca_name, and %ssl_cn values were not properly escaped when %D code was expanded in HTML context of the ERR_SECURE_CONNECT_FAIL template. This bug affects all
+    ERR_SECURE_CONNECT_FAIL page templates containing %D, including the default template.
+    
+    Other error pages are not vulnerable because Squid does not populate %D with certificate details in other contexts (yet).
+    
+    Thanks to Nikolas Lohmann [eBlocker] for identifying the problem.
+    
+    TODO: If those certificate details become needed for ACL checks or other non-HTML purposes, make their HTML-escaping conditional.
+    
+    This is a Measurement Factory project.
+
+diff --git a/src/ssl/ErrorDetail.cc b/src/ssl/ErrorDetail.cc
+index b5030e3..314e998 100644
+--- a/src/ssl/ErrorDetail.cc
++++ b/src/ssl/ErrorDetail.cc
+@@ -8,6 +8,8 @@
+ 
+ #include "squid.h"
+ #include "errorpage.h"
++#include "fatal.h"
++#include "html_quote.h"
+ #include "ssl/ErrorDetail.h"
+ 
+ #include <climits>
+@@ -432,8 +434,11 @@ const char  *Ssl::ErrorDetail::subject() const
+ {
+     if (broken_cert.get()) {
+         static char tmpBuffer[256]; // A temporary buffer
+-        if (X509_NAME_oneline(X509_get_subject_name(broken_cert.get()), tmpBuffer, sizeof(tmpBuffer)))
+-            return tmpBuffer;
++        if (X509_NAME_oneline(X509_get_subject_name(broken_cert.get()), tmpBuffer, sizeof(tmpBuffer))) {
++            // quote to avoid possible html code injection through
++            // certificate subject
++            return html_quote(tmpBuffer);
++        }
+     }
+     return "[Not available]";
+ }
+@@ -461,8 +466,11 @@ const char *Ssl::ErrorDetail::cn() const
+         static String tmpStr;  ///< A temporary string buffer
+         tmpStr.clean();
+         Ssl::matchX509CommonNames(broken_cert.get(), &tmpStr, copy_cn);
+-        if (tmpStr.size())
+-            return tmpStr.termedBuf();
++        if (tmpStr.size()) {
++            // quote to avoid possible html code injection through
++            // certificate subject
++            return html_quote(tmpStr.termedBuf());
++        }
+     }
+     return "[Not available]";
+ }
+@@ -474,8 +482,11 @@ const char *Ssl::ErrorDetail::ca_name() const
+ {
+     if (broken_cert.get()) {
+         static char tmpBuffer[256]; // A temporary buffer
+-        if (X509_NAME_oneline(X509_get_issuer_name(broken_cert.get()), tmpBuffer, sizeof(tmpBuffer)))
+-            return tmpBuffer;
++        if (X509_NAME_oneline(X509_get_issuer_name(broken_cert.get()), tmpBuffer, sizeof(tmpBuffer))) {
++            // quote to avoid possible html code injection through
++            // certificate issuer subject
++            return html_quote(tmpBuffer);
++        }
+     }
+     return "[Not available]";
+ }
