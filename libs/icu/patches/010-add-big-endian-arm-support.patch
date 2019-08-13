@@ -5,13 +5,13 @@ Subject: [PATCH] Add big endian ARM support (#92)
 
 This fixes compilation on such platforms.
 ---
- double-conversion/utils.h | 2 +-
+ i18n/double-conversion-utils.h | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/source/i18n/double-conversion-utils.h b/source/i18n/double-conversion-utils.h
-index 1e44fca..b715c65 100644
---- a/source/i18n/double-conversion-utils.h
-+++ b/source/i18n/double-conversion-utils.h
+diff --git a/i18n/double-conversion-utils.h b/i18n/double-conversion-utils.h
+index 02795b4..9b3cdef 100644
+--- a/i18n/double-conversion-utils.h
++++ b/i18n/double-conversion-utils.h
 @@ -84,7 +84,7 @@ inline void abort_noreturn() { abort(); }
      defined(_POWER) || defined(_ARCH_PPC) || defined(_ARCH_PPC64) || \
      defined(__sparc__) || defined(__sparc) || defined(__s390__) || \
@@ -21,3 +21,5 @@ index 1e44fca..b715c65 100644
      defined(__AARCH64EL__) || defined(__aarch64__) || \
      defined(__riscv)
  #define DOUBLE_CONVERSION_CORRECT_DOUBLE_OPERATIONS 1
+--
+2.20.1
