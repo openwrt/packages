@@ -94,6 +94,11 @@ jobs:
           working_directory: ~/build_dir
           command: |
              tar Jxf ~/sdk/$SDK_FILE --strip=1
+             touch .config
+             make prepare-tmpinfo scripts/config/conf
+             ./scripts/config/conf --defconfig=.config Config.in
+             make prereq
+             rm .config
              cat > feeds.conf <<EOF
              src-git base https://github.com/openwrt/openwrt.git;$BRANCH
              src-link packages $HOME/openwrt_packages
