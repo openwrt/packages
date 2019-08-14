@@ -2,9 +2,15 @@ local labels = {
     id = "",
     release = "",
     revision = "",
+    architecture = "",
     model = string.sub(get_contents("/tmp/sysinfo/model"), 1, -2),
     board_name = string.sub(get_contents("/tmp/sysinfo/board_name"), 1, -2)
 }
+
+for value in string.gmatch(get_contents("/proc/cpuinfo"), "system type%s+:%s([^\n]*)") do
+        labels["architecture"] = value
+end
+
 
 for k, v in string.gmatch(get_contents("/etc/openwrt_release"), "(DISTRIB_%w+)='(.-)'\n") do
     if k == "DISTRIB_ID" then
