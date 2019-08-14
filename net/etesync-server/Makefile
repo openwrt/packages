@@ -100,11 +100,12 @@ define Py3Package/etesync-uwsgi/install
 	$(INSTALL_DIR) $(1)/etc/uwsgi/sites
 	$(INSTALL_CONF) ./files/uwsgi.ini \
 		$(1)/etc/uwsgi/sites/etesync.ini
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/uwsgi.init \
+		$(1)/etc/init.d/etesync
 endef
 
-#TODO preinst: stop? 
-
-#TODO postinst: start? preserve!
+#TODO preserve!
 
 define Package/etesync-server/postinst
 #!/bin/sh
@@ -124,6 +125,11 @@ do
 		etesync-server.ini \
 	|| exit 1
 done 
+if [ -n "$$(pgrep etesync)" ]; then
+	/etc/init.d/etesync reload
+else
+	/etc/init.d/etesync start
+fi
 if [ ! -f "/etesync-server/ssl.key" ]; then
 	NGINX_KEY=/etesync-server/ssl.key
 	NGINX_CER=/etesync-server/ssl.cer
