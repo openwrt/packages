@@ -8,21 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=flac
-PKG_VERSION:=1.3.2
-PKG_RELEASE:=2
+PKG_VERSION:=1.3.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://downloads.xiph.org/releases/flac/
-PKG_HASH:=91cfc3ed61dc40f47f050a109b08610667d73477af6ef36dcad31c31a4a8d53f
+PKG_HASH:=213e82bd716c9de6db2f98bcadbc4c24c7e2efe8c75939a1a84e28539c4e1748
+
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
-
-PKG_INSTALL:=1
-
 PKG_LICENSE:=GFDL-1.2 GPL-2 LGPL-2.1 BSD-3-Clause
 PKG_LICENSE_FILES:=README COPYING.FDL COPYING.GPL COPYING.LGPL COPYING.Xiph
 PKG_CPE_ID:=cpe:/a:flac_project:flac
 
 PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 PKG_REMOVE_FILES:=autogen.sh aclocal.m4
 
 include $(INCLUDE_DIR)/package.mk
@@ -37,15 +37,18 @@ endef
 CONFIGURE_ARGS += \
 	--disable-cpplibs \
 	--disable-sse \
-	--disable-3dnow \
 	--disable-altivec \
 	--disable-doxgen-docs \
 	--disable-local-xmms-plugin \
 	--disable-xmms-plugin \
 	--disable-ogg \
 	--disable-oggtest \
+	--disable-thorough-tests \
+	--disable-examples \
+	--disable-rpath \
 	$(if $(CONFIG_DEBUG),--enable-debug) \
-	--enable-static
+	--enable-static \
+	--without-pic
 
 TARGET_CFLAGS += $(FPIC)
 
