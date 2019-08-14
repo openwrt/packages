@@ -47,7 +47,7 @@ define Package/libxs
 endef
 
 define Package/libxs/description
-Use this package to build the XS JavaScript engine library
+Use this package to build the XS JavaScript engine library 
 
 XS is the JavaScript engine at the core of Moddable applications and tools
 endef
