@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django2-cors-headers
-PKG_VERSION:=3.0.2
+PKG_VERSION:=3.1.0
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=django-cors-headers-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/d/django-cors-headers/
-PKG_HASH:=ebf3e2cf25aa6993b959a8e6a87828ebb3c8fe5bc3ec4a2d6e65f3b8d9b4212c
+PKG_HASH:=e69b1c909f2eddc7ef2a24f071583bc22b73b871731ea3370ac52b3318c43b3c
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/django2-cors-headers-$(PKG_VERSION)
 PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
