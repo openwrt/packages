@@ -47,10 +47,18 @@ python="$4"
 mode="$5"
 filespec="$6"
 
+SED="${SED:-sed -e}"
+
 process_filespec "$src_dir" "$dst_dir" "$filespec" || {
 	echo "process filespec error-ed"
 	exit 1
 }
+
+usr_bin_dir="$dst_dir/usr/bin"
+
+if [ -d "$usr_bin_dir" ] ; then
+	$SED "1"'!'"b;s,^#"'!'".*python.*,#"'!'"/usr/bin/python${ver}," -i --follow-symlinks $usr_bin_dir/*
+fi
 
 if [ "$mode" == "sources" ] ; then
 	# Copy only python source files
