@@ -105,7 +105,18 @@ define Py3Package/etesync-uwsgi/install
 		$(1)/etc/init.d/etesync
 endef
 
-#TODO preserve!
+
+define Package/etesync/conffiles
+/etesync-server/etesync-server.ini
+/etc/nginx/conf.d/etesync.conf
+endef
+
+define Package/etesync-uwsgi/conffiles
+$(Package/etesync/conffiles)
+/etc/uwsgi/sites/etesync.ini
+endef
+
+#TODO preserve db.sqlite3?!
 
 define Package/etesync-server/postinst
 #!/bin/sh
