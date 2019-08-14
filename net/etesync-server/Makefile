@@ -124,7 +124,11 @@ do
 		etesync-server.ini \
 	|| exit 1
 done 
-/etc/init.d/nginx restart; 
+if [ -n "$(pgrep nginx)" ]; then
+	/etc/init.d/nginx reload
+else
+	/etc/init.d/nginx start
+fi
 endef
 
 define Package/etesync-uwsgi/postinst
