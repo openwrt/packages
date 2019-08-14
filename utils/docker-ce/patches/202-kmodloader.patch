@@ -1,0 +1,11 @@
+--- a/components/engine/vendor/github.com/docker/libnetwork/ipvs/netlink.go
++++ b/components/engine/vendor/github.com/docker/libnetwork/ipvs/netlink.go
+@@ -61,7 +61,7 @@ func (f *ipvsFlags) Len() int {
+ func setup() {
+ 	ipvsOnce.Do(func() {
+ 		var err error
+-		if out, err := exec.Command("modprobe", "-va", "ip_vs").CombinedOutput(); err != nil {
++		if out, err := exec.Command("modprobe", "ip_vs").CombinedOutput(); err != nil {
+ 			logrus.Warnf("Running modprobe ip_vs failed with message: `%s`, error: %v", strings.TrimSpace(string(out)), err)
+ 		}
+ 

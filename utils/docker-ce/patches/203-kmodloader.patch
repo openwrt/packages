@@ -1,0 +1,11 @@
+--- a/components/engine/vendor/github.com/docker/libnetwork/drivers/bridge/bridge.go
++++ b/components/engine/vendor/github.com/docker/libnetwork/drivers/bridge/bridge.go
+@@ -346,7 +346,7 @@ func (d *driver) configure(option map[st
+ 
+ 	if config.EnableIPTables {
+ 		if _, err := os.Stat("/proc/sys/net/bridge"); err != nil {
+-			if out, err := exec.Command("modprobe", "-va", "bridge", "br_netfilter").CombinedOutput(); err != nil {
++			if out, err := exec.Command("modprobe", "bridge", "br_netfilter").CombinedOutput(); err != nil {
+ 				logrus.Warnf("Running modprobe bridge br_netfilter failed with message: %s, error: %v", out, err)
+ 			}
+ 		}
