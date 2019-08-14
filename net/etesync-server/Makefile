@@ -124,7 +124,26 @@ do
 		etesync-server.ini \
 	|| exit 1
 done 
-if [ -n "$(pgrep nginx)" ]; then
+if [ ! -f "/etesync-server/ssl.key" ]; then
+	NGINX_KEY=/etesync-server/ssl.key
+	NGINX_CER=/etesync-server/ssl.cer
+	OPENSSL_BIN=/usr/bin/openssl
+	PX5G_BIN=/usr/sbin/px5g
+	# Prefer px5g for certificate generation (existence evaluated last)
+	GENKEY_CMD=""
+	UNIQUEID=$$(dd if=/dev/urandom bs=1 count=4 | hexdump -e '1/1 "%02x"')
+	[ -x "$$OPENSSL_BIN" ] && GENKEY_CMD="$$OPENSSL_BIN req -x509 -nodes"
+	[ -x "$$PX5G_BIN" ] && GENKEY_CMD="$$PX5G_BIN selfsigned"
+	[ -n "$$GENKEY_CMD" ] && {
+		$$GENKEY_CMD \
+			-days 730 -newkey rsa:2048 -keyout "$${NGINX_KEY}.new" -out "$${NGINX_CER}.new" \
+			-subj /C="ZZ"/ST="Somewhere"/L="Unknown"/O="OpenWrt""$$UNIQUEID"/CN="OpenWrt"
+		sync
+		mv "$${NGINX_KEY}.new" "$${NGINX_KEY}"
+		mv "$${NGINX_CER}.new" "$${NGINX_CER}"
+	}
+fi 
+if [ -n "$$(pgrep nginx)" ]; then
 	/etc/init.d/nginx reload
 else
 	/etc/init.d/nginx start
