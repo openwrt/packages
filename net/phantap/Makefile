@@ -11,9 +11,9 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/nccgroup/phantap
-PKG_SOURCE_DATE:=2019.08.04
-PKG_SOURCE_VERSION:=f104742cf489b2b916a2cf9e2ee980259b89efe7
-PKG_MIRROR_HASH:=ebe090dbfeb0ef928b28a15c17290abbcdee043e77f38bd38acaabe38f2b685e
+PKG_MIRROR_HASH:=d81f7b52f2259af093240446674b41ce354222aa7d851504fbc445f3a7c1431e
+PKG_SOURCE_DATE:=2019.08.13
+PKG_SOURCE_VERSION:=f5420af847dd53b2d4cf2b5c2551239709d51bf7
 
 PKG_MAINTAINER:=Diana Dragusin <diana.dragusin@nccgroup.com>, \
     Etienne Champetier <champetier.etienne@gmail.com>
