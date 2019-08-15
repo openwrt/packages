@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bonnie++
 PKG_VERSION:=1.98
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://www.coker.com.au/bonnie++/
@@ -19,8 +19,8 @@ PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=copyright.txt
 
-PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
@@ -42,7 +42,7 @@ ifeq ($(CONFIG_USE_UCLIBCXX),y)
 TARGET_LDFLAGS += -nodefaultlibs
 endif
 
-TARGET_CXXFLAGS += -fno-rtti -flto
+TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -fno-rtti -flto -std=c++98
 
 define Package/bonniexx/install
 	$(INSTALL_DIR) $(1)/usr/bin
