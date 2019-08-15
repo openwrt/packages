@@ -1,20 +1,20 @@
+local ubus = require "ubus"
+local u = ubus.connect()
+local b = u:call("system", "board", {})
+
 local labels = {
-    id = "",
-    release = "",
-    revision = "",
-    model = string.sub(get_contents("/tmp/sysinfo/model"), 1, -2),
-    board_name = string.sub(get_contents("/tmp/sysinfo/board_name"), 1, -2)
+    board_name = b.board_name,
+    id = b.release.distribution,
+    model = b.model,
+    release = b.release.version,
+    revision = b.release.revision,
+    system = b.system,
+    target = b.release.target
 }
 
-for k, v in string.gmatch(get_contents("/etc/openwrt_release"), "(DISTRIB_%w+)='(.-)'\n") do
-    if k == "DISTRIB_ID" then
-        labels["id"] = v
-    elseif k == "DISTRIB_RELEASE" then
-        labels["release"] = v
-    elseif k == "DISTRIB_REVISION" then
-        labels["revision"] = v
-    end
-end
+b = nil
+u = nil
+ubus = nil
 
 local function scrape()
     metric("node_openwrt_info", "gauge", labels, 1)
