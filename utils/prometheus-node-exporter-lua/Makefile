@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
-PKG_VERSION:=2019.04.12
+PKG_VERSION:=2019.08.14
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
@@ -79,7 +79,7 @@ endef
 define Package/prometheus-node-exporter-lua-openwrt
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (openwrt collector)
-  DEPENDS:=prometheus-node-exporter-lua
+  DEPENDS:=prometheus-node-exporter-lua +libubus-lua
 endef
 
 define Package/prometheus-node-exporter-lua-ltq-dsl
