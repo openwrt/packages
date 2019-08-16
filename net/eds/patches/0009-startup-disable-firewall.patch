@@ -1,0 +1,23 @@
+From 2c672f0fbbde903655389a637cdcff58c6e5d662 Mon Sep 17 00:00:00 2001
+From: Yangbo Lu <yangbo.lu@nxp.com>
+Date: Thu, 18 Apr 2019 14:38:44 +0800
+Subject: [PATCH] startup: disable firewall
+
+Signed-off-by: Yangbo Lu <yangbo.lu@nxp.com>
+---
+ startup/env.sh | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/startup/env.sh b/startup/env.sh
+index a335da5..0394f60 100755
+--- a/startup/env.sh
++++ b/startup/env.sh
+@@ -103,3 +103,5 @@ for a in 1 2 3 4 5;do
+     done
+     sleep 2
+ done
++
++/etc/init.d/firewall stop
+-- 
+2.17.1
+

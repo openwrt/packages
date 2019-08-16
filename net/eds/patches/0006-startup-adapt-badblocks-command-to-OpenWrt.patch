@@ -1,0 +1,26 @@
+From 74185826adb365b76e7230b2e5b4d5204a889a60 Mon Sep 17 00:00:00 2001
+From: Yangbo Lu <yangbo.lu@nxp.com>
+Date: Wed, 6 Mar 2019 16:53:48 +0800
+Subject: [PATCH] startup: adapt badblocks command to OpenWrt
+
+Signed-off-by: Yangbo Lu <yangbo.lu@nxp.com>
+---
+ startup/mmc-check.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/startup/mmc-check.sh b/startup/mmc-check.sh
+index 781b8a6..aef4c8c 100755
+--- a/startup/mmc-check.sh
++++ b/startup/mmc-check.sh
+@@ -13,7 +13,7 @@ mmc::badblocks(){
+         for b in $(find /dev/ -regex '/dev/mmcblk.*p.*')
+         do
+                 echo Checking $b
+-                badblocks -sv $b -o /var/log/edgescale/badblocks-$(basename $b).log
++                badblocks -o /var/log/edgescale/badblocks-$(basename $b).log -sv $b
+         done
+ }
+ 
+-- 
+2.17.1
+

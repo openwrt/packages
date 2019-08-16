@@ -1,0 +1,26 @@
+From be76616bfec469f1465138fde3a44707ee28dfe5 Mon Sep 17 00:00:00 2001
+From: Yangbo Lu <yangbo.lu@nxp.com>
+Date: Fri, 8 Mar 2019 17:27:43 +0800
+Subject: [PATCH] etc: Fix PATH to use binaries in /usr first
+
+Signed-off-by: Yangbo Lu <yangbo.lu@nxp.com>
+---
+ etc/edgescale | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/etc/edgescale b/etc/edgescale
+index 8036afa..37c5d2a 100755
+--- a/etc/edgescale
++++ b/etc/edgescale
+@@ -6,7 +6,7 @@
+ #
+ #####################################
+ 
+-PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/edgescale/bin
++PATH=/usr/local/edgescale/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ DESC="edgescale service"
+ NAME="edgescale"
+ STARTUP="/usr/local/edgescale/bin/startup.sh"
+-- 
+2.17.1
+

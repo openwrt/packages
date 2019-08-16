@@ -1,0 +1,61 @@
+From ad256482d886a87fe768de44265bb434777f20f5 Mon Sep 17 00:00:00 2001
+From: Yangbo Lu <yangbo.lu@nxp.com>
+Date: Wed, 6 Mar 2019 11:56:50 +0800
+Subject: [PATCH 2/3] startup: show warning if no Internet access
+
+Signed-off-by: Yangbo Lu <yangbo.lu@nxp.com>
+---
+ startup/env.sh | 37 +++++++------------------------------
+ 1 file changed, 7 insertions(+), 30 deletions(-)
+
+diff --git a/startup/env.sh b/startup/env.sh
+index 49b268b..50940ab 100755
+--- a/startup/env.sh
++++ b/startup/env.sh
+@@ -84,36 +84,13 @@ httpdate() {
+ 
+ curl -k --connect-timeout 10 $testserver >/dev/null 2>&1
+ if [ $? -ne 0 ];then
+-	ok=0
+-	ethlist=$(ip -o link show|awk -F ":" '{print $2}'|sed 's/\ //g'|grep -ie fm -ie ^e)
+-	for eth in $ethlist;do
+-		ifconfig $eth down
+-	done
+-	
+-	for eth in $ethlist;do
+-		echo "Checking for ethernet port $eth" 
+-		ifconfig $eth up;sleep 10
+-	
+-		if ethtool $eth|grep "Link detected: yes";then
+-			if [ -z $udhcpc ];then
+-				dhclient -r $eth; dhclient $eth
+-			else
+-				udhcpc -i $eth
+-			fi
+-
+-			ip r |grep "default"
+-			if [ $? -ne 0 ];then
+-				ifconfig $eth down;continue
+-			fi
+-				
+-		else
+-			ifconfig $eth down;continue
+-		fi
+-	
+-		curl -k --connect-timeout 30 $testserver >/dev/null 2>&1 && \
+-		ok=1;echo "network ethernet port is $eth"; ifconfig $eth; ip r;break
+-	done
+-	
++	ethwan=$(uci get network.wan.ifname)
++	echo "Please make sure Internet access to WAN port ${ethwan}!"
++	echo "Or reconfigure new WAN port:"
++	echo "    uci set network.wan.ifname=ethx"
++	echo "    uci set network.wan6.ifname=ethx"
++	echo "    /etc/init.d/network restart"
++	exit 1
+ fi
+ #for a in `seq 5`; do
+ for a in 1 2 3 4 5;do
+-- 
+2.17.1
+

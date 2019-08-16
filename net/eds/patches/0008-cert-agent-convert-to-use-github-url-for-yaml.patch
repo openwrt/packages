@@ -1,0 +1,40 @@
+From 5ab30bd1ff991466bb99a2d09c12f000ec08bdd5 Mon Sep 17 00:00:00 2001
+From: Yangbo Lu <yangbo.lu@nxp.com>
+Date: Thu, 18 Apr 2019 12:09:22 +0800
+Subject: [PATCH] cert-agent: convert to use github url for yaml
+
+Signed-off-by: Yangbo Lu <yangbo.lu@nxp.com>
+---
+ cert-agent/Makefile | 2 +-
+ cert-agent/mft.go   | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/cert-agent/Makefile b/cert-agent/Makefile
+index 475b938..2a30ddb 100644
+--- a/cert-agent/Makefile
++++ b/cert-agent/Makefile
+@@ -21,7 +21,7 @@ GOBUILDTAGS ?= default
+ 
+ all:
+ 	go get github.com/edgeiot/est-client-go
+-	go get gopkg.in/yaml.v2
++	go get github.com/go-yaml/yaml
+ 	env CGO_ENABLED=1 GOOS=linux GOARCH=${ARCH} CC=${CC} CGO_CFLAGS="${CGO_CFLAGS}" CGO_LDFLAGS="${CGO_LDFLAGS}" go build -o cert-agent --ldflags="-w -s" --tags "${GOBUILDTAGS}"
+ 
+ clean:
+diff --git a/cert-agent/mft.go b/cert-agent/mft.go
+index c4d21e5..7b816dc 100644
+--- a/cert-agent/mft.go
++++ b/cert-agent/mft.go
+@@ -15,7 +15,7 @@ import (
+ 	"encoding/pem"
+ 	"errors"
+ 	"fmt"
+-	yaml "gopkg.in/yaml.v2"
++	yaml "github.com/go-yaml/yaml"
+ 	"io/ioutil"
+ 	"math/big"
+ 	"net/http"
+-- 
+2.17.1
+

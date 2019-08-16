@@ -1,0 +1,202 @@
+
+Edgescale Quick Start
+
+1. What's Edgescale
+-------------------
+EdgeScale is a unified, scalable, and secure device management solution
+for Edge Computing applications. It enables OEMs and developers to
+leverage cloud compute frameworks like AWS Greengrass, Azure IoT, and
+Aliyun on Layerscape devices.
+
+EdgeScale provides the missing piece of device security and management
+needed for customers to securely deploy and manage many Edge computing
+devices from the cloud. End-users and developers can use the EdgeScale
+cloud dashboard to securely enroll Edge devices, monitor their health,
+attest, and deploy container applications and firmware updates.
+
+EdgeScale can also be used as a development environment to build
+containers and generate firmware.
+
+Edgescale website:
+https://www.nxp.com/support/developer-resources/run-time-software/
+linux-software-and-development-tools/edgescale-for-secure-edge-computing:EDGESCALE
+
+2. Supported features
+---------------------
+  * EdgeScale dashboard for users
+  * Secure device enrolment
+  * Secure key/certificate provisioning
+  * OTA: firmware update
+  * Device status monitoring on the cloud
+  * Dynamic deployment of container-based applications
+
+Note: OTA of Edgescale is currently not supported for OpenWrt.
+
+3. Supported targets
+--------------------
+NXP Edgescale aims at not only NXP Layerscape targets. It could be
+extended and deployed to any other targets easily even with different
+architecture.
+
+To support dynamic deployment of container-based applications, Edgescale
+requires large free storage space in rootfs partition. So it's recommended
+to use SD for rootfs storage.
+
+Below are two Layerscape boards which had been verified.
+
+  * LS1043ARDB SD card boot
+  * LS1046ARDB SD card boot
+
+4. Build
+--------
+
+Refer to OpenWrt documentation for build steps. In menuconfig stage, besides
+the options required for target build in menuconfig, just select all options
+in "Edgescale for edge computing".
+
+* Target build options
+Here is an example for LS1043ARDB SD card boot.
+
+  +--------------------------------------------------------------+
+  | Target System (NXP Layerscape)  --->                         |
+  | Subtarget (ARMv8 64-bit based boards)  --->                  |
+  | Target Profile (LS1043ARDB (SD Card Boot))  --->             |
+  | Target Images  --->                                          |
+  |   [*] ext4  --->                                             |
+  |       (0)   Percentage of reserved blocks in root filesystem |
+  |       Root filesystem block size (1k)  --->                  |
+  |       [ ]   Create a journaling filesystem                   |
+  |   (512) Root filesystem partition size (in MB)               |
+  +--------------------------------------------------------------+
+
+Note: Make sure enough space for rootfs. Here we use 512MB rootfs
+partition on SD card. We could resized the partition to enlarge it 
+online with fdisk/resize2fs in OpenWrt when Edgescale needs.
+
+* Edgescale options
+
+  +------------------------------------------------+
+  | Network  --->                                  |
+  |   Edgescale for edge computing  --->           |
+  |     -*- bootstrap-enroll                       |
+  |     -*- edgescale                              |
+  |     [*]   Busybox support for Edgescale        |
+  |     <*> edgescale-kubelet                      |
+  |     [*]   Kernel support for Edgescale Kubelet |
+  +------------------------------------------------+
+
+5. Run Edgescale
+----------------
+
+After flashing OpenWrt firmware to SD card, please refer to "Getting Started"
+chapter of Edgescale documentation (v0.5), for connecting to cloud and
+deploying APP.
+  - https://doc.edgescale.org/quickstart.html#
+
+The only difference on OpenWrt are the steps in "Prepare Devices". After step 1
+and step 2, just start up OpenWrt from SD card.
+  1. Create Device
+  2. Download & Provision Device Identity
+
+And follow new steps below.
+  3. Enlarge rootfs partition (See 7. Resizing partition log)
+
+     - Delete origin rootfs partition, and create a new larger partition
+       instead, with same start sector number.
+       $ fdisk /dev/mmcblk0
+
+     - Resize the partition
+       $ resize2fs /dev/mmcblk0p1
+     
+  4. Connect WAN port to Internet
+
+     - Check current WAN port and connect to Internet.
+       $ uci get network.wan.ifname
+
+     - If want to change WAN port for Internet accessing, use commands below.
+       $ uci set network.wan.ifname=ethx
+       $ uci set network.wan6.ifname=ethx
+       $ /etc/init.d/network restart
+
+     - Ping test.
+       $ ping www.baidu.com
+
+  5. Bringing the Device On-line
+
+     Run Edgescale with below command, and refresh "My Devices" in Edgescale
+     Dashboard showing the device as online.
+
+     $ /etc/init.d/edgescale start
+
+6. Known issues
+---------------
+NA
+
+7. Resizing partition log
+-------------------------
+
+============================= Log =================================
+root@OpenWrt:/# df -h
+Filesystem                Size      Used Available Use% Mounted on
+/dev/root               471.8M    249.5M    208.1M  55% /
+tmpfs                   942.4M     48.0K    942.4M   0% /tmp
+tmpfs                   512.0K         0    512.0K   0% /dev
+root@OpenWrt:/# fdisk /dev/mmcblk0
+
+Welcome to fdisk (util-linux 2.33).
+Changes will remain in memory only, until you decide to write them.
+Be careful before using the write command.
+
+
+Command (m for help): p
+Disk /dev/mmcblk0: 29.8 GiB, 32015122432 bytes, 62529536 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: dos
+Disk identifier: 0x5452574f
+
+Device         Boot  Start        End    Sectors  Size Id Type
+/dev/mmcblk0p1 *    131072 1073872895 1073741824  512G 83 Linux
+
+Command (m for help): d
+Selected partition 1
+Partition 1 has been deleted.
+
+Command (m for help): n
+Partition type
+   p   primary (0 primary, 0 extended, 4 free)
+   e   extended (container for logical partitions)
+Select (default p):
+
+Using default response p.
+Partition number (1-4, default 1):
+First sector (2048-62529535, default 2048): 131072
+Last sector, +/-sectors or +/-size{K,M,G,T,P} (131072-62529535, default 62529535): 8529535
+
+Created a new partition 1 of type 'Linux' and of size 4 GiB.
+Partition #1 contains a ext4 signature.
+
+Do you want to remove the signature? [Y]es/[N]o: N
+
+Command (m for help): w
+
+The partition table has been altered.
+Syncing disks.
+
+root@OpenWrt:/# resize2fs /dev/mmcblk0p1
+resize2fs 1.44.5 (15-Dec-2018)
+Filesystem at /d[   81.708322] EXT4-fs (mmcblk0p1): resizing filesystem from 524288 to 4199232 blocks
+ev/mmcblk0p1 is mounted on /; on-line resizing required
+old_desc_blocks = 2, new_desc_blocks = 17
+[   81.960715] EXT4-fs (mmcblk0p1): resized filesystem to 4199232
+The filesystem on /dev/mmcblk0p1 is now 4199232 (1k) blocks long.
+
+root@OpenWrt:/# df -h
+Filesystem                Size      Used Available Use% Mounted on
+/dev/root                 3.7G    250.3M      3.5G   7% /
+tmpfs                   942.4M     64.0K    942.3M   0% /tmp
+tmpfs                   512.0K         0    512.0K   0% /dev
+root@OpenWrt:/#
+
+================================ Log End ==============================

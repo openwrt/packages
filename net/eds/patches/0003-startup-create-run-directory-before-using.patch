@@ -1,0 +1,25 @@
+From 9599490f67dbcdd61355bb30f5cd566233b87084 Mon Sep 17 00:00:00 2001
+From: Yangbo Lu <yangbo.lu@nxp.com>
+Date: Wed, 6 Mar 2019 13:50:08 +0800
+Subject: [PATCH 3/3] startup: create /run directory before using
+
+Signed-off-by: Yangbo Lu <yangbo.lu@nxp.com>
+---
+ startup/startup.sh | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/startup/startup.sh b/startup/startup.sh
+index 3a52b38..b9295a2 100755
+--- a/startup/startup.sh
++++ b/startup/startup.sh
+@@ -22,6 +22,7 @@ push_publicip() {
+ 
+ cd /usr/local/edgescale/bin/
+ mkdir -p /data
++mkdir -p /run
+ 
+ ./env.sh
+ start-stop-daemon -S -a /bin/tee-supplicant -n tee-supplicant -m -p /var/run/tee-supplicant.pid -b
+-- 
+2.17.1
+

@@ -1,0 +1,33 @@
+From 6ae73cd6a108a03b9b82be53b9b4df89d9c52bc7 Mon Sep 17 00:00:00 2001
+From: Yangbo Lu <yangbo.lu@nxp.com>
+Date: Wed, 6 Mar 2019 11:38:30 +0800
+Subject: [PATCH 1/3] startup: adapt start-stop-daemon using for OpenWrt
+
+Signed-off-by: Yangbo Lu <yangbo.lu@nxp.com>
+---
+ startup/startup.sh | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/startup/startup.sh b/startup/startup.sh
+index 083fffd..3a52b38 100755
+--- a/startup/startup.sh
++++ b/startup/startup.sh
+@@ -24,7 +24,7 @@ cd /usr/local/edgescale/bin/
+ mkdir -p /data
+ 
+ ./env.sh
+-start-stop-daemon --start --startas /bin/tee-supplicant --name tee-supplicant -m --pidfile /var/run/tee-supplicant.pid -b
++start-stop-daemon -S -a /bin/tee-supplicant -n tee-supplicant -m -p /var/run/tee-supplicant.pid -b
+ ./cert-agent
+ 
+ . /data/config.env
+@@ -55,5 +55,5 @@ if [ $? -eq 0 ];then
+     ./mmc-check.sh &
+ 
+     # starting mq-agent
+-    start-stop-daemon --start --startas /usr/local/edgescale/bin/mq-agent --name mq-agent -m --pidfile /var/run/mq-agent.pid -b
++    start-stop-daemon -S -a /usr/local/edgescale/bin/mq-agent -n mq-agent -m -p /var/run/mq-agent.pid -b
+ fi
+-- 
+2.17.1
+

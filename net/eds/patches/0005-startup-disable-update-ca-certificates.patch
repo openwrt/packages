@@ -1,0 +1,32 @@
+From b8c649531c0faf31303ea18351925350f88e586f Mon Sep 17 00:00:00 2001
+From: Yangbo Lu <yangbo.lu@nxp.com>
+Date: Wed, 6 Mar 2019 16:11:37 +0800
+Subject: [PATCH] startup: disable update-ca-certificates
+
+Signed-off-by: Yangbo Lu <yangbo.lu@nxp.com>
+---
+ startup/startup.sh | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/startup/startup.sh b/startup/startup.sh
+index 2d9b241..a75eed5 100755
+--- a/startup/startup.sh
++++ b/startup/startup.sh
+@@ -36,10 +36,11 @@ done
+ 
+ if [ -z $ES_OEM_TRUST_CA ] ; then
+ 		rm -rf /usr/local/share/ca-certificates/es-oem-trust.crt
+-		update-ca-certificates
++		# update-ca-certificates
+ else
+-		echo -n $ES_OEM_TRUST_CA | base64 -d > /usr/local/share/ca-certificates/es-oem-trust.crt
+-		update-ca-certificates
++		echo "update-ca-certificates is not supported now!"
++		# echo -n $ES_OEM_TRUST_CA | base64 -d > /usr/local/share/ca-certificates/es-oem-trust.crt
++		# update-ca-certificates
+ fi
+ 
+ if [ $? -eq 0 ];then
+-- 
+2.17.1
+

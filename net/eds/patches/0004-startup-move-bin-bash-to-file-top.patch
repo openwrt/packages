@@ -1,0 +1,109 @@
+From f53ade17f9e27bc040f1eac68f447cc8adc71c44 Mon Sep 17 00:00:00 2001
+From: Yangbo Lu <yangbo.lu@nxp.com>
+Date: Wed, 6 Mar 2019 15:39:01 +0800
+Subject: [PATCH] startup: move "#!/bin/bash" to file top
+
+Signed-off-by: Yangbo Lu <yangbo.lu@nxp.com>
+---
+ startup/env.sh          | 4 ++--
+ startup/mmc-check.sh    | 6 +++---
+ startup/ota-statuscheck | 4 ++--
+ startup/ota-updateSet   | 4 ++--
+ startup/startup.sh      | 4 ++--
+ 5 files changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/startup/env.sh b/startup/env.sh
+index 50940ab..a335da5 100755
+--- a/startup/env.sh
++++ b/startup/env.sh
+@@ -1,11 +1,11 @@
++#!/bin/bash
++
+ #####################################
+ #
+ # Copyright 2017-2018 NXP
+ #
+ #####################################
+ 
+-#!/bin/bash
+-
+ testserver="https://www.linux.org"
+ ok=1
+ which dhclient||udhcpc=1
+diff --git a/startup/mmc-check.sh b/startup/mmc-check.sh
+index b2aa8d5..781b8a6 100755
+--- a/startup/mmc-check.sh
++++ b/startup/mmc-check.sh
+@@ -1,12 +1,12 @@
++#!/bin/bash
++# check the MMC blocks health status
++
+ #####################################
+ #
+ #Copyright 2017-2018 NXP
+ #
+ #####################################
+ 
+-#!/bin/bash
+-# check the MMC blocks health status
+-
+ check_list="mmc"
+ 
+ mmc::badblocks(){
+diff --git a/startup/ota-statuscheck b/startup/ota-statuscheck
+index afce6c5..65fd129 100755
+--- a/startup/ota-statuscheck
++++ b/startup/ota-statuscheck
+@@ -1,11 +1,11 @@
++#!/bin/bash
++
+ #####################################
+ #
+ # Copyright 2017-2018 NXP
+ #
+ #####################################
+ 
+-#!/bin/bash
+-
+ dd if=/dev/mmcblk0 of=/tmp/ota-info bs=512 skip=129024 count=1
+ updateStatus=`cat /tmp/ota-info | awk '{print $1}'`
+ platform=`cat /tmp/ota-info | awk '{print $2}'`
+diff --git a/startup/ota-updateSet b/startup/ota-updateSet
+index 7e4f9e0..67515df 100755
+--- a/startup/ota-updateSet
++++ b/startup/ota-updateSet
+@@ -1,11 +1,11 @@
++#!/bin/bash
++
+ #####################################
+ #
+ # Copyright 2017-2018 NXP
+ #
+ #####################################
+ 
+-#!/bin/bash
+-
+ /usr/local/edgescale/bin/cert-agent
+ . /data/config.env
+ 
+diff --git a/startup/startup.sh b/startup/startup.sh
+index b9295a2..2d9b241 100755
+--- a/startup/startup.sh
++++ b/startup/startup.sh
+@@ -1,11 +1,11 @@
++#!/bin/bash
++
+ #####################################
+ #
+ # Copyright 2017-2018 NXP
+ #
+ #####################################
+ 
+-#!/bin/bash
+-
+ export version=`cat /usr/local/edgescale/conf/edgescale-version`
+ 
+ push_publicip() {
+-- 
+2.17.1
+
