@@ -43,7 +43,7 @@ define Package/gcc
   CATEGORY:=Development
   TITLE:=gcc
   MAINTAINER:=Noble Pepper <gccmaintain@noblepepper.com>
-  DEPENDS:= +binutils +libstdcpp
+  DEPENDS:= +binutils +libstdcpp @!arc
 endef
 
 define Package/gcc/description
