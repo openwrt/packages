@@ -17,7 +17,7 @@ PKG_SOURCE_URL=https://github.com/daurnimator/ldbus
 PKG_MAINTAINER:=Enrico Mioso <mrkiko.rs@gmail.com>
 PKG_LICENSE:=MIT
 
-PKG_BUILD_DEPENDS:=luarocks/host
+PKG_BUILD_DEPENDS:=luarocks/host zip/host
 
 include $(INCLUDE_DIR)/package.mk
 
