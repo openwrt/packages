@@ -40,6 +40,18 @@ define Package/giflib/description
   the LZW compression algorithm was patented.
 endef
 
+define Package/giflib-gif2rgb
+  SECTION:=multimedia
+  CATEGORY:=Utilities
+  TITLE:=convert GIF to 24-bit RGB
+  URL:=http://sourceforge.net/projects/giflib
+  DEPENDS:=+giflib
+endef
+
+define Package/giflib-gif2rgb/description
+  giflib-gif2rgb - convert GIF to 24-bit RGB pixel triples or vice-versa.
+endef
+
 TARGET_CFLAGS += $(FPIC)
 
 define Build/Compile
@@ -59,5 +71,11 @@ define Package/giflib/install
 	$(CP) $(PKG_BUILD_DIR)/lib/.libs/lib*so* $(1)/usr/lib/
 endef
 
+define Package/giflib-gif2rgb/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_BUILD_DIR)/util/.libs/gif2rgb $(1)/usr/bin/
+endef
+
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,giflib))
+$(eval $(call BuildPackage,giflib-gif2rgb))
