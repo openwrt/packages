@@ -1,0 +1,21 @@
+config EDGESCALE_KUBELET_KERNEL_SUPPORT
+	bool "Kernel support for Edgescale Kubelet"
+	depends on PACKAGE_edgescale-kubelet
+	select KERNEL_NAMESPACES
+	select KERNEL_NET_NS
+	select KERNEL_PID_NS
+	select KERNEL_IPC_NS
+	select KERNEL_UTS_NS
+	select KERNEL_CGROUPS
+	select KERNEL_CGROUP_CPUACCT
+	select KERNEL_CGROUP_DEVICE
+	select KERNEL_CGROUP_FREEZER
+	select KERNEL_CGROUP_SCHED
+	select KERNEL_CPUSETS
+	select KERNEL_MEMCG
+	select KERNEL_KEYS
+	select KERNEL_LXC_MISC
+	select KERNEL_POSIX_MQUEUE
+	default y
+	help
+	  This enables kerenl options required by Edgescale Kubelet.

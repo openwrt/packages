@@ -1,0 +1,72 @@
+From 09a9ef9575d8a3d947411ce860935adde2431aa2 Mon Sep 17 00:00:00 2001
+From: Yangbo Lu <yangbo.lu@nxp.com>
+Date: Fri, 8 Mar 2019 11:31:34 +0800
+Subject: [PATCH] Add shell file to set up docker
+
+Signed-off-by: Yangbo Lu <yangbo.lu@nxp.com>
+---
+ scripts/docker-setup.sh | 37 +++++++++++++++++++++++++++++++++++++
+ scripts/k8s.sh          |  3 +++
+ 2 files changed, 40 insertions(+)
+ create mode 100755 scripts/docker-setup.sh
+
+diff --git a/scripts/docker-setup.sh b/scripts/docker-setup.sh
+new file mode 100755
+index 0000000..8442f2b
+--- /dev/null
++++ b/scripts/docker-setup.sh
+@@ -0,0 +1,37 @@
++#!/bin/bash
++
++DOCKER_URL=https://download.docker.com/linux/static/stable
++DOCKER_VER=18.09.3
++DOCKER_PKG=docker.tgz
++
++which docker 1>/dev/null 2>/dev/null
++if [ $? -ne 0 ];then
++	ARCH=$(uname -m)
++	if [ ${ARCH} == "aarch64" ];then
++		ARCH=aarch64
++	elif [ ${ARCH} == "arm" ];then
++		ARCH=armhf
++	else
++		echo "${ARCH}: docker is not supported now!"
++		exit 1
++	fi
++
++	echo "Download and install docker for ${ARCH}..."
++
++	curl ${DOCKER_URL}/${ARCH}/docker-${DOCKER_VER}.tgz -o /tmp/${DOCKER_PKG}
++	tar zxvf /tmp/${DOCKER_PKG} -C /tmp 1>/dev/null 2>/dev/null
++	mv /tmp/docker/* /usr/bin
++	rm /tmp/${DOCKER_PKG} /tmp/docker -rf
++fi
++
++docker info 1>/dev/null 2>/dev/null
++while [ $? -ne 0 ]
++do
++	echo "Restart up docker..."
++	killall -9 dockerd 1>/dev/null 2>/dev/null
++	dockerd --data-root /docker/lib --exec-root /docker/run 1>/dev/null 2>/var/log/docker-err.log &
++	sleep 3
++	docker info 1>/dev/null 2>/dev/null
++done
++
++echo "Docker started up!"
+diff --git a/scripts/k8s.sh b/scripts/k8s.sh
+index 10b485c..fc76ab5 100755
+--- a/scripts/k8s.sh
++++ b/scripts/k8s.sh
+@@ -6,6 +6,9 @@
+ #
+ #####################################
+ 
++echo "Set up docker"
++/usr/local/edgescale/bin/docker-setup.sh
++
+ echo "Start kubelet"
+ 
+ podpause="edgerepos/pause-arm64:3.0"
+-- 
+2.17.1
+

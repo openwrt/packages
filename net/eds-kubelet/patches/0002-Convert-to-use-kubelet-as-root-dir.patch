@@ -1,0 +1,26 @@
+From a1b6557ed4377ee63ee9fb81b707c6007e35803e Mon Sep 17 00:00:00 2001
+From: Yangbo Lu <yangbo.lu@nxp.com>
+Date: Thu, 7 Mar 2019 16:53:54 +0800
+Subject: [PATCH 2/3] Convert to use /kubelet as root-dir
+
+The default root-dir is in /var which is a link to /tmp.
+
+Signed-off-by: Yangbo Lu <yangbo.lu@nxp.com>
+---
+ scripts/k8s.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/scripts/k8s.sh b/scripts/k8s.sh
+index 1a99c4e..10b485c 100755
+--- a/scripts/k8s.sh
++++ b/scripts/k8s.sh
+@@ -19,5 +19,5 @@ mkdir -p /dev/kubelet; mkdir -p /var/lib/kubelet/;mkdir -p /var/log/edgescale
+ export PATH=/usr/local/edgescale/bin/:$PATH
+ 
+ 
+-kubelet --address=127.0.0.1 --pod-infra-container-image=$podpause --image-gc-high-threshold=99 --image-gc-low-threshold=95 --image-pull-progress-deadline=10m --pod-manifest-path=/dev/kubelet/ --allow-privileged=true --logtostderr=true  --v=1 > /var/log/edgescale/kubelet.log 2>&1 &
++kubelet --root-dir=/kubelet/ --address=127.0.0.1 --pod-infra-container-image=$podpause --image-gc-high-threshold=99 --image-gc-low-threshold=95 --image-pull-progress-deadline=10m --pod-manifest-path=/dev/kubelet/ --allow-privileged=true --logtostderr=true  --v=1 > /var/log/edgescale/kubelet.log 2>&1 &
+ 
+-- 
+2.17.1
+
