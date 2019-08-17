@@ -1,0 +1,109 @@
+#!/bin/bash /etc/rc.common
+
+USE_PROCD=1
+
+START=30
+SERVICE_NAME=lancache
+
+EXTRA_COMMANDS="status"
+EXTRA_HELP="        status  Get the status of the ${SERVICE_NAME} container"
+
+container_status() {
+	local OUTPUT=$(docker container list --all --filter "name=${1}" ${@:2} --format "{{.Names}}: {{.Status}}")
+	if [[ ! -z "${OUTPUT}" ]]; then
+		echo ${OUTPUT}
+		return 0
+	else
+		return 1
+	fi
+}
+
+status() {
+	container_status ${SERVICE_NAME}
+}
+
+service_running() {
+	# load/validate config
+	config_load lancache
+	config_get TYPE ${SERVICE_NAME} TYPE ""
+	[[ "${TYPE}" == "lancache" ]] || return 1
+
+	config_get INTERFACES ${SERVICE_NAME} interfaces
+	config_get DOMAINS_DIR ${SERVICE_NAME} domains_dir
+
+	source /lib/functions/network.sh
+	local IP_ADDRS=()
+	for INTERFACE in ${INTERFACES[@]}; do
+		network_get_ipaddr IF_ADDR4 ${INTERFACE} && IP_ADDRS=(${IP_ADDRS[@]} ${IF_ADDR4})
+		network_get_ipaddr6 IF_ADDR6 ${INTERFACE} && IP_ADDRS=(${IP_ADDRS[@]} ${IF_ADDR6})
+	done
+
+	# Wait for container to be ready
+	until container_status ${SERVICE_NAME} > /dev/null && docker exec ${SERVICE_NAME} service nginx status > /dev/null; do
+		sleep 1
+		procd_running ${SERVICE_NAME} || return 1
+	done
+
+	# Setup dnsmasq to forward cached domains to the cache server
+	local CONFIG_JSON="$(cat /etc/lancache/cache-domains-config.json)"
+	for IP in ${IP_ADDRS[@]}; do
+		CONFIG_JSON="$(jq ".ips.generic += [\"${IP}\"]" <<< "${CONFIG_JSON}")"
+	done
+	echo ${CONFIG_JSON} > ${DOMAINS_DIR}/scripts/config.json
+
+	pushd ${DOMAINS_DIR}/scripts/ > /dev/null
+		./create-dnsmasq.sh
+		mv ./output/dnsmasq/* /tmp/dnsmasq.d/
+	popd > /dev/null
+
+	/etc/init.d/dnsmasq restart
+}
+
+start_service() {
+	# load/validate config
+	config_load lancache
+	config_get TYPE ${SERVICE_NAME} TYPE ""
+	[[ "${TYPE}" == "lancache" ]] || return 1
+
+	config_get BIND_PORT ${SERVICE_NAME} bind_port
+	config_get UPSTREAM_DNS ${SERVICE_NAME} upstream_dns
+	config_get CACHE_MEM_SIZE ${SERVICE_NAME} cache_mem_size
+	config_get CACHE_DISK_SIZE ${SERVICE_NAME} cache_disk_size
+	config_get CACHE_MAX_AGE ${SERVICE_NAME} cache_max_age
+	config_get LOG_DIR ${SERVICE_NAME} log_dir
+	config_get CACHE_DIR ${SERVICE_NAME} cache_dir
+	config_get DOMAINS_DIR ${SERVICE_NAME} domains_dir
+
+	# Wait for docker daemon to start
+	until docker info &>/dev/null; do
+		sleep 1
+		procd_running dockerd || return 1
+	done
+
+	# Cleanup
+	docker container rm ${SERVICE_NAME} &> /dev/null
+
+	procd_open_instance
+
+	procd_set_param stderr 1
+
+	procd_set_param command docker run --name ${SERVICE_NAME} --init --interactive
+	procd_append_param command --volume ${CACHE_DIR}:/data/cache --volume ${LOG_DIR}:/data/logs --volume ${DOMAINS_DIR}:/data/cachedomains
+	procd_append_param command --publish ${BIND_PORT}:80
+	procd_append_param command --env "UPSTREAM_DNS=${UPSTREAM_DNS}"
+	procd_append_param command --env "CACHE_MEM_SIZE=${CACHE_MEM_SIZE}"
+	procd_append_param command --env "CACHE_DISK_SIZE=${CACHE_DISK_SIZE}"
+	procd_append_param command --env "CACHE_MAX_AGE=${CACHE_MAX_AGE}"
+	procd_append_param command lancachenet/monolithic:latest
+	procd_append_param command > /dev/null
+
+	procd_close_instance
+}
+
+stop_service() {
+	docker stop ${SERVICE_NAME} &> /dev/null
+
+	# leave dnsmasq in a clean state
+	rm -fr /tmp/dnsmasq.d/*
+	/etc/init.d/dnsmasq restart
+}
