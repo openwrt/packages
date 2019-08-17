@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=http://mirrors.kernel.org/${PKG_NAME}/${PKG_VERSION}/
 PKG_HASH:=7dcd9f0f48263c6b27a2c3d085dd7278b5c0feed1dfec8872a04899707fa23d8
 PKG_USE_MIPS16:=0
 
-PKG_BUILD_DEPENDS:=boost
+PKG_BUILD_DEPENDS:=boost python/host
 
 PKG_MAINTAINER:=Hauke Mehrtens <hauke.mehrtens@intel.com>
 
@@ -227,7 +227,7 @@ endef
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); \
 		$(SCONS_VARS) \
-		scons \
+		python2.7 $(STAGING_DIR_HOST)/bin/scons.py \
 			$(SCONS_OPTIONS) \
 	)
 endef
