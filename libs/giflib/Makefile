@@ -39,16 +39,17 @@ define Package/giflib/description
   the LZW compression algorithm was patented.
 endef
 
-define Package/giflib-gif2rgb
+define Package/giflib-utils
   SECTION:=multimedia
   CATEGORY:=Utilities
-  TITLE:=convert GIF to 24-bit RGB
+  TITLE:=gif2rgb gifbuild giffix giftext giftool gifclrmp - giflib \
+    utilities
   URL:=http://sourceforge.net/projects/giflib
   DEPENDS:=+giflib
 endef
 
-define Package/giflib-gif2rgb/description
-  giflib-gif2rgb - convert GIF to 24-bit RGB pixel triples or vice-versa.
+define Package/giflib-utils/description
+  giflib-utils - gif2rgb gifbuild giffix giftext giftool gifclrmp
 endef
 
 TARGET_CFLAGS += -ffunction-sections -fdata-sections $(FPIC)
@@ -71,11 +72,16 @@ define Package/giflib/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgif.so* $(1)/usr/lib
 endef
 
-define Package/giflib-gif2rgb/install
+define Package/giflib-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_BUILD_DIR)/util/.libs/gif2rgb $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/gif2rgb $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/gifbuild $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/giffix $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/giftext $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/giftool $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/gifclrmp $(1)/usr/bin/
 endef
 
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,giflib))
-$(eval $(call BuildPackage,giflib-gif2rgb))
+$(eval $(call BuildPackage,giflib-utils))
