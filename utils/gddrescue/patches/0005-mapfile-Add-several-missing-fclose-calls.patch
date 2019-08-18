@@ -1,0 +1,43 @@
+From 42e89aac3247ca6c82bec7a35236ca6e20b253db Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 2 Aug 2019 14:02:40 -0700
+Subject: [PATCH 5/7] mapfile: Add several missing fclose calls
+
+Found with clang-analyzer.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ mapfile.cc | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/mapfile.cc b/mapfile.cc
+index b4b9071..1f4d2e3 100644
+--- a/mapfile.cc
++++ b/mapfile.cc
+@@ -231,7 +231,7 @@ bool Mapfile::read_mapfile( const int default_sblock_status, const bool ro )
+         current_pass_ >= 1 )
+       current_status_ = Status( ch );
+     else
+-      { show_mapfile_error( filename_, linenum ); std::exit( 2 ); }
++      { std::fclose( f ); show_mapfile_error( filename_, linenum ); std::exit( 2 ); }
+ 
+     while( true )
+       {
+@@ -252,12 +252,12 @@ bool Mapfile::read_mapfile( const int default_sblock_status, const bool ro )
+                                 Sblock::Status( default_sblock_status ) );
+               sblock_vector.push_back( sb2 ); }
+           else if( end > 0 )
+-            { show_mapfile_error( filename_, linenum ); std::exit( 2 ); }
++            { std::fclose( f ); show_mapfile_error( filename_, linenum ); std::exit( 2 ); }
+           }
+         sblock_vector.push_back( sb );
+         }
+       else
+-        { show_mapfile_error( filename_, linenum ); std::exit( 2 ); }
++        { std::fclose( f ); show_mapfile_error( filename_, linenum ); std::exit( 2 ); }
+       }
+     }
+   if( std::ferror( f ) || !std::feof( f ) || std::fclose( f ) != 0 )
+-- 
+2.17.1
+

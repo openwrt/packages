@@ -1,0 +1,40 @@
+From 26aa55317ae705eb93db081326914f9c7758fe3d Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 2 Aug 2019 18:00:57 -0700
+Subject: [PATCH 6/7] tree: Remove stdint.h from two unnecessary places
+
+Tested with uClibc++.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ block.cc       | 1 -
+ ddrescuelog.cc | 1 -
+ 2 files changed, 2 deletions(-)
+
+diff --git a/block.cc b/block.cc
+index cbee358..415478d 100644
+--- a/block.cc
++++ b/block.cc
+@@ -23,7 +23,6 @@
+ #include <cstdlib>
+ #include <string>
+ #include <vector>
+-#include <stdint.h>
+ 
+ #include "block.h"
+ 
+diff --git a/ddrescuelog.cc b/ddrescuelog.cc
+index 72add83..562d35f 100644
+--- a/ddrescuelog.cc
++++ b/ddrescuelog.cc
+@@ -30,7 +30,6 @@
+ #include <ctime>
+ #include <string>
+ #include <vector>
+-#include <stdint.h>
+ 
+ #include "arg_parser.h"
+ #include "block.h"
+-- 
+2.17.1
+

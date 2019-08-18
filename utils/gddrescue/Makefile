@@ -5,14 +5,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gddrescue
-PKG_VERSION:=1.23
-PKG_RELEASE:=2
+PKG_VERSION:=1.25-pre1
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.xz
-PKG_SOURCE_URL:=http://http.debian.net/debian/pool/main/g/$(PKG_NAME)
-PKG_HASH:=5831d7e24070bc700d8f22deaeec56af1149392ce30ae67254096eaf8c9169ab
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/mruffalo/ddrescue
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_MIRROR_HASH:=5831d7e24070bc700d8f22deaeec56af1149392ce30ae67254096eaf8c9169ab
+
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
-
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 

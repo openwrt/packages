@@ -1,0 +1,193 @@
+From df2ef36479e634a15fc5924dd94cf01d76d27633 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Sat, 3 Aug 2019 16:39:41 -0700
+Subject: [PATCH] treewide: Replace size() with empty() where appropriate
+
+From Clang:
+
+The emptiness of a container should be checked using the empty() method
+instead of the size() method. It is not guaranteed that size() is a
+constant-time function, and it is generally more efficient and also shows
+clearer intent to use empty(). Furthermore some containers may implement
+the empty() method but not implement the size() method. Using empty()
+whenever possible makes it easier to switch to another container in the
+future.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ arg_parser.cc   | 4 ++--
+ command_mode.cc | 6 +++---
+ ddrescuelog.cc  | 2 +-
+ fillbook.cc     | 2 +-
+ genbook.cc      | 2 +-
+ main.cc         | 2 +-
+ main_common.cc  | 2 +-
+ mapbook.cc      | 2 +-
+ mapfile.cc      | 4 ++--
+ rescuebook.cc   | 2 +-
+ 10 files changed, 14 insertions(+), 14 deletions(-)
+
+diff --git a/arg_parser.cc b/arg_parser.cc
+index 9b530b2..08dd671 100644
+--- a/arg_parser.cc
++++ b/arg_parser.cc
+@@ -167,7 +167,7 @@ Arg_parser::Arg_parser( const int argc, const char * const argv[],
+       else non_options.push_back( argv[argind++] );
+       }
+     }
+-  if( error_.size() ) data.clear();
++  if( !error_.empty() ) data.clear();
+   else
+     {
+     for( unsigned i = 0; i < non_options.size(); ++i )
+@@ -190,7 +190,7 @@ Arg_parser::Arg_parser( const char * const opt, const char * const arg,
+       { if( opt[2] ) parse_long_option( opt, arg, options, argind ); }
+     else
+       parse_short_option( opt, arg, options, argind );
+-    if( error_.size() ) data.clear();
++    if( !error_.empty() ) data.clear();
+     }
+   else data.push_back( Record( opt ) );
+   }
+diff --git a/command_mode.cc b/command_mode.cc
+index ec6a389..2120a80 100644
+--- a/command_mode.cc
++++ b/command_mode.cc
+@@ -108,10 +108,10 @@ int Rescuebook::do_commands( const int ides, const int odes )
+     while( true )
+       {
+       const int c = std::fgetc( stdin );
+-      if( c == '\n' ) { if( command.size() ) break; else continue; }
++      if( c == '\n' ) { if( !command.empty() ) break; else continue; }
+       if( c == EOF ) { command = "f"; break; }	// discard partial command
+       if( !std::isspace( c ) ) command += c;
+-      else if( command.size() && !std::isspace( command[command.size()-1] ) )
++      else if( !command.empty() && !std::isspace( command[command.size()-1] ) )
+         command += ' ';
+       }
+     if( command == "q" ) break;
+@@ -133,7 +133,7 @@ int Rescuebook::do_commands( const int ides, const int odes )
+     if( tmp <= 0 ) std::fputs( "done\n", stdout );
+     else
+       {
+-      if( final_msg().size() )
++      if( !final_msg().empty() )
+         { printf( "error: %s%s%s\n", final_msg().c_str(),
+                   ( final_errno() > 0 ) ? ": " : "",
+                   ( final_errno() > 0 ) ? std::strerror( final_errno() ) : "" );
+diff --git a/ddrescuelog.cc b/ddrescuelog.cc
+index 562d35f..a17336b 100644
+--- a/ddrescuelog.cc
++++ b/ddrescuelog.cc
+@@ -595,7 +595,7 @@ int main( const int argc, const char * const argv[] )
+     {  0 , 0,                     Arg_parser::no  } };
+ 
+   const Arg_parser parser( argc, argv, options );
+-  if( parser.error().size() )				// bad option
++  if( !parser.error().empty() )				// bad option
+     { show_error( parser.error().c_str(), 0, true ); return 1; }
+ 
+   int argind = 0;
+diff --git a/fillbook.cc b/fillbook.cc
+index 83b0828..f272733 100644
+--- a/fillbook.cc
++++ b/fillbook.cc
+@@ -204,7 +204,7 @@ int Fillbook::do_fill( const int odes )
+     compact_sblock_vector();
+     if( !update_mapfile( odes_, true ) && retval == 0 ) retval = 1;
+     }
+-  if( final_msg().size() ) show_error( final_msg().c_str(), final_errno() );
++  if( !final_msg().empty() ) show_error( final_msg().c_str(), final_errno() );
+   if( close( odes_ ) != 0 )
+     { show_error( "Error closing outfile", errno );
+       if( retval == 0 ) retval = 1; }
+diff --git a/genbook.cc b/genbook.cc
+index 47610e4..87093ea 100644
+--- a/genbook.cc
++++ b/genbook.cc
+@@ -204,7 +204,7 @@ int Genbook::do_generate( const int odes )
+     compact_sblock_vector();
+     if( !update_mapfile( -1, true ) && retval == 0 ) retval = 1;
+     }
+-  if( final_msg().size() ) show_error( final_msg().c_str(), final_errno() );
++  if( !final_msg().empty() ) show_error( final_msg().c_str(), final_errno() );
+   if( retval ) return retval;		// errors have priority over signals
+   if( signaled ) return signaled_exit();
+   return 0;
+diff --git a/main.cc b/main.cc
+index c9b337d..489993d 100644
+--- a/main.cc
++++ b/main.cc
+@@ -812,7 +812,7 @@ int main( const int argc, const char * const argv[] )
+     {  0 , NULL,                   Arg_parser::no  } };
+ 
+   const Arg_parser parser( argc, argv, options );
+-  if( parser.error().size() )				// bad option
++  if( !parser.error().empty() )				// bad option
+     { show_error( parser.error().c_str(), 0, true ); return 1; }
+ 
+   int argind = 0;
+diff --git a/main_common.cc b/main_common.cc
+index 437eb41..4f630e6 100644
+--- a/main_common.cc
++++ b/main_common.cc
+@@ -114,7 +114,7 @@ bool check_types( std::string & types, const char * const opt_name,
+     if( !Sblock::isstatus( types[i] ) )
+       { error = true; break; }
+     }
+-  if( !types.size() || error )
++  if( types.empty() || error )
+     {
+     char buf[80];
+     snprintf( buf, sizeof buf, "Invalid type for '%s' option.", opt_name );
+diff --git a/mapbook.cc b/mapbook.cc
+index 64474c8..d481482 100644
+--- a/mapbook.cc
++++ b/mapbook.cc
+@@ -77,7 +77,7 @@ bool Mapbook::emergency_save()
+     const char * const p = std::getenv( "HOME" );
+     if( p ) { home_name = p; home_name += '/'; home_name += dead_name; }
+     }
+-  if( home_name.size() &&
++  if( !home_name.empty() &&
+       filename() != home_name && save_mapfile( home_name.c_str() ) )
+     return true;
+   show_error( "Emergency save failed." );
+diff --git a/mapfile.cc b/mapfile.cc
+index 1f4d2e3..d0c5fc4 100644
+--- a/mapfile.cc
++++ b/mapfile.cc
+@@ -243,7 +243,7 @@ bool Mapfile::read_mapfile( const int default_sblock_status, const bool ro )
+           ( size > 0 || ( size == 0 && pos == 0 ) ) )
+         {
+         const Sblock sb( pos, size, Sblock::Status( ch ) );
+-        const long long end = sblock_vector.size() ?
++        const long long end = !sblock_vector.empty() ?
+                               sblock_vector.back().end() : 0;
+         if( sb.pos() != end )
+           {
+@@ -276,7 +276,7 @@ int Mapfile::write_mapfile( FILE * f, const bool timestamp,
+   if( !f ) { f = std::fopen( filename_, "w" ); if( !f ) return false; }
+   write_file_header( f, "Mapfile" );
+   if( timestamp ) write_timestamp( f );
+-  if( current_msg.size() ) std::fprintf( f, "# %s\n", current_msg.c_str() );
++  if( !current_msg.empty() ) std::fprintf( f, "# %s\n", current_msg.c_str() );
+   char buf[80] = { 0 };		// comment
+   if( annotate_domainp )
+     snprintf( buf, sizeof buf, "\t#  %sB", format_num( current_pos_ ) );
+diff --git a/rescuebook.cc b/rescuebook.cc
+index 693653b..4ce91f8 100644
+--- a/rescuebook.cc
++++ b/rescuebook.cc
+@@ -943,7 +943,7 @@ int Rescuebook::do_rescue( const int ides, const int odes )
+     compact_sblock_vector();
+     if( !update_mapfile( odes_, true ) && retval == 0 ) retval = 1;
+     }
+-  if( final_msg().size() ) show_error( final_msg().c_str(), final_errno() );
++  if( !final_msg().empty() ) show_error( final_msg().c_str(), final_errno() );
+   if( close( odes_ ) != 0 )
+     { show_error( "Error closing outfile", errno );
+       if( retval == 0 ) retval = 1; }
+-- 
+2.17.1
+

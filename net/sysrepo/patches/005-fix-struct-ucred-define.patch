@@ -1,8 +1,6 @@
-Index: sysrepo-0.7.0-7aa2f18d234267403147df92c0005c871f0aa840/src/common/sr_utils.c
-===================================================================
---- sysrepo-0.7.0-7aa2f18d234267403147df92c0005c871f0aa840.orig/src/common/sr_utils.c
-+++ sysrepo-0.7.0-7aa2f18d234267403147df92c0005c871f0aa840/src/common/sr_utils.c
-@@ -460,14 +460,24 @@ sr_fd_set_nonblock(int fd)
+--- a/src/common/sr_utils.c
++++ b/src/common/sr_utils.c
+@@ -506,14 +506,24 @@ sr_fd_set_nonblock(int fd)
  
  #if defined(SO_PEERCRED)
  
@@ -16,14 +14,14 @@ Index: sysrepo-0.7.0-7aa2f18d234267403147df92c0005c871f0aa840/src/common/sr_util
  };
  #endif /* !defined(SCM_CREDENTIALS) */
 +#else
-+#if !defined(__USE_GNU)
++#if !defined(_GNU_SOURCE)
 +struct ucred {
 +    pid_t pid;    /* process ID of the sending process */
 +    uid_t uid;    /* user ID of the sending process */
 +    gid_t gid;    /* group ID of the sending process */
 +};
 +/* struct ucred is ifdefined behind __USE_GNU, but __USE_GNU is not defined */
-+#endif /* !defined(__USE_GNU) */
++#endif /* !defined(__GNU_SOURCE) */
 +#endif /* defined(__GLIBC__) */
  
  int

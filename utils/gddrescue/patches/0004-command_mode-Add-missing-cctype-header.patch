@@ -1,0 +1,27 @@
+From 59de8e443f3cf9c61b9260d81769a4c8aae8a665 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 2 Aug 2019 13:32:20 -0700
+Subject: [PATCH 4/7] command_mode: Add missing cctype header
+
+Needed for std::isspace
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ command_mode.cc | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/command_mode.cc b/command_mode.cc
+index bd2208a..ec6a389 100644
+--- a/command_mode.cc
++++ b/command_mode.cc
+@@ -18,6 +18,7 @@
+ #define _FILE_OFFSET_BITS 64
+ 
+ #include <cerrno>
++#include <cctype>
+ #include <climits>
+ #include <cstdio>
+ #include <cstring>
+-- 
+2.17.1
+

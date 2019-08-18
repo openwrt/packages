@@ -2,10 +2,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fbzmq
 PKG_VERSION:=2019.06.10.00
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/facebook/fbzmq/tar.gz/v$(PKG_VERSION)?
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/facebook/fbzmq
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_HASH:=9bb9b2bd42951fa3458b5d6d25f3364c14a7efa3b78bef68a6c00ee6fcba5813
 
 PKG_MAINTAINER:=Amol Bhave <ambhave@fb.com>
@@ -20,14 +21,14 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/fbzmq
-	SECTION:=libs
-	CATEGORY:=Libraries
-	TITLE:=Facebook ZeroMQ wrappers.
-	DEPENDS:=+fbthrift +libzmq +libsigar
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=Facebook ZeroMQ wrappers.
+  DEPENDS:=+fbthrift +libzmq +libsigar
 endef
 
 define Package/fbzmq/description
-	Facebook ZeroMQ wrappers.
+  Facebook ZeroMQ wrappers.
 endef
 
 CMAKE_OPTIONS += \
@@ -37,7 +38,8 @@ CMAKE_OPTIONS += \
 	-DTHRIFT1="$(STAGING_DIR_HOSTPKG)/bin/thrift1" \
 	-DTHRIFT_COMPILER_INCLUDE="$(STAGING_DIR_HOSTPKG)/include/"
 
-TARGET_CXXFLAGS += -faligned-new
+TARGET_CXXFLAGS += -faligned-new -ffunction-sections -fdata-sections -flto
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 define Package/fbzmq/install
 	$(INSTALL_DIR) $(1)/usr/lib

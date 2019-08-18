@@ -1,14 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=librsocket-cpp
-PKG_SOURCE_DATE:=2019-06-11
-PKG_SOURCE_VERSION:=741f817fd519e0610cddb5783aae812355e19435
+PKG_SOURCE_DATE:=2019-08-12
+PKG_SOURCE_VERSION:=ffe9a1e9c7583f8081e5d4d11a3b2fc68867677d
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/rsocket/rsocket-cpp/tar.gz/$(PKG_SOURCE_VERSION)?
-PKG_HASH:=56886deba0f3594b4a430b1f515c90a138800b8e387440e6b8bf728d660f457a
-PKG_BUILD_DIR:=$(BUILD_DIR)/rsocket-cpp-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/rsocket/rsocket-cpp
+PKG_MIRROR_HASH:=13f89eec56d0617823857e48ed5806988c90cc1443822814e616086d42b81e17
 
 PKG_MAINTAINER:=Amol Bhave <ambhave@fb.com>
 PKG_LICENSE:=Apache-2.0
@@ -25,6 +24,7 @@ define Package/librsocket-cpp
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE:=C++ implementation of RSocket
+	URL:=https://rsocket.io
 	DEPENDS:=+libyarpl
 endef
 
@@ -32,6 +32,7 @@ define Package/libyarpl
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE:=yarpl: Yet Another Reactive Programming Library
+	URL:=https://rsocket.io
 	DEPENDS:=+libfolly
 endef
 
@@ -48,6 +49,9 @@ CMAKE_OPTIONS += \
 	-DBUILD_EXAMPLES=OFF \
 	-DBUILD_TESTS=OFF \
 	-DBUILD_SHARED_LIBS=ON
+
+TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -flto
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 define Package/librsocket-cpp/install
 	$(INSTALL_DIR) $(1)/usr/lib
