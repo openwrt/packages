@@ -39,6 +39,17 @@ define Package/giflib/description
   the LZW compression algorithm was patented.
 endef
 
+define Package/giflib-utils
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE:=GIF utilities
+  URL:=https://sourceforge.net/projects/giflib
+endef
+
+define Package/giflib-utils/description
+  These are the utilities that come with giflib.
+endef
+
 TARGET_CFLAGS += -ffunction-sections -fdata-sections $(FPIC)
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
@@ -59,5 +70,11 @@ define Package/giflib/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgif.so* $(1)/usr/lib
 endef
 
+define Package/giflib-utils/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin
+endef
+
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,giflib))
+$(eval $(call BuildPackage,giflib-utils))
