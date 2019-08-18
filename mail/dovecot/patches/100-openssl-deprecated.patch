@@ -10,7 +10,7 @@
  
 --- a/src/lib-ssl-iostream/dovecot-openssl-common.c
 +++ b/src/lib-ssl-iostream/dovecot-openssl-common.c
-@@ -63,9 +63,11 @@ void dovecot_openssl_common_global_ref(void)
+@@ -63,9 +63,11 @@ void dovecot_openssl_common_global_ref(v
  		/*i_warning("CRYPTO_set_mem_functions() was called too late");*/
  	}
  
@@ -22,7 +22,7 @@
  }
  
  bool dovecot_openssl_common_global_unref(void)
-@@ -79,6 +81,7 @@ bool dovecot_openssl_common_global_unref(void)
+@@ -79,6 +81,7 @@ bool dovecot_openssl_common_global_unref
  		ENGINE_finish(dovecot_openssl_engine);
  		dovecot_openssl_engine = NULL;
  	}
@@ -30,14 +30,14 @@
  	/* OBJ_cleanup() is called automatically by EVP_cleanup() in
  	   newer versions. Doesn't hurt to call it anyway. */
  	OBJ_cleanup();
-@@ -100,6 +103,7 @@ bool dovecot_openssl_common_global_unref(void)
- 	ERR_free_strings();
+@@ -101,6 +104,7 @@ bool dovecot_openssl_common_global_unref
  #ifdef HAVE_OPENSSL_CLEANUP
  	OPENSSL_cleanup();
-+#endif
  #endif
++#endif
  	return FALSE;
  }
+ 
 --- a/src/lib-ssl-iostream/iostream-openssl-context.c
 +++ b/src/lib-ssl-iostream/iostream-openssl-context.c
 @@ -6,6 +6,9 @@
@@ -50,7 +50,7 @@
  #include <openssl/x509.h>
  #include <openssl/pem.h>
  #include <openssl/ssl.h>
-@@ -510,8 +513,10 @@ ssl_proxy_ctx_set_crypto_params(SSL_CTX *ssl_ctx,
+@@ -514,8 +517,10 @@ ssl_proxy_ctx_set_crypto_params(SSL_CTX
  	int nid;
  	const char *curve_name;
  #endif

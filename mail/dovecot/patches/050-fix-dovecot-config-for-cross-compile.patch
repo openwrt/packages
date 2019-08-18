@@ -33,10 +33,8 @@ LIBDOVECOT_LIBFTS=-ldovecot-fts
 
 This patch modifed dovecot-config that gets installed on the assumption
 that users of libdovecot will also be cross-compiled (a safe bet).
-Index: dovecot-2.3.2.1/Makefile.am
-===================================================================
---- dovecot-2.3.2.1.orig/Makefile.am
-+++ dovecot-2.3.2.1/Makefile.am
+--- a/Makefile.am
++++ b/Makefile.am
 @@ -73,7 +73,7 @@ install-exec-hook:
  	grep -v '^LIBDOVECOT_.*_INCLUDE' dovecot-config | \
  	grep -v '^LIBDOVECOT.*_DEPS' | sed \
