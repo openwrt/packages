@@ -1,7 +1,6 @@
-diff -u --recursive dovecot-2.3.1-vanilla/m4/fd_passing.m4 dovecot-2.3.1/m4/fd_passing.m4
---- dovecot-2.3.1-vanilla/m4/fd_passing.m4	2018-06-08 20:02:15.849850956 -0400
-+++ dovecot-2.3.1/m4/fd_passing.m4	2018-06-08 20:04:28.947016370 -0400
-@@ -8,7 +8,7 @@
+--- a/m4/fd_passing.m4
++++ b/m4/fd_passing.m4
+@@ -8,7 +8,7 @@ AC_DEFUN([DOVECOT_FD_PASSING], [
          CFLAGS="$CFLAGS -DBUGGY_CMSG_MACROS"
        fi
      
@@ -10,7 +9,7 @@ diff -u --recursive dovecot-2.3.1-vanilla/m4/fd_passing.m4 dovecot-2.3.1/m4/fd_p
          #include <sys/types.h>
          #include <sys/socket.h>
          #include <sys/wait.h>
-@@ -16,7 +16,7 @@
+@@ -16,7 +16,7 @@ AC_DEFUN([DOVECOT_FD_PASSING], [
          #include <unistd.h>
          #include <fcntl.h>
          #include "fdpass.h"
@@ -19,10 +18,9 @@ diff -u --recursive dovecot-2.3.1-vanilla/m4/fd_passing.m4 dovecot-2.3.1/m4/fd_p
  	static
          int nopen(void)
          {
-diff -u --recursive dovecot-2.3.1-vanilla/m4/glibc.m4 dovecot-2.3.1/m4/glibc.m4
---- dovecot-2.3.1-vanilla/m4/glibc.m4	2018-06-08 20:02:15.850850957 -0400
-+++ dovecot-2.3.1/m4/glibc.m4	2018-06-08 20:04:00.780981363 -0400
-@@ -17,7 +17,7 @@
+--- a/m4/glibc.m4
++++ b/m4/glibc.m4
+@@ -17,7 +17,7 @@ AC_DEFUN([DOVECOT_GLIBC], [
    dnl * Old glibcs have broken posix_fallocate(). Make sure not to use it.
    dnl * It may also be broken in AIX.
    AC_CACHE_CHECK([whether posix_fallocate() works],i_cv_posix_fallocate_works,[
@@ -31,7 +29,7 @@ diff -u --recursive dovecot-2.3.1-vanilla/m4/glibc.m4 dovecot-2.3.1/m4/glibc.m4
        #define _XOPEN_SOURCE 600
        #include <stdio.h>
        #include <stdlib.h>
-@@ -26,6 +26,7 @@
+@@ -26,6 +26,7 @@ AC_DEFUN([DOVECOT_GLIBC], [
        #if defined(__GLIBC__) && (__GLIBC__ < 2 || __GLIBC_MINOR__ < 7)
          possibly broken posix_fallocate
        #endif
@@ -39,10 +37,9 @@ diff -u --recursive dovecot-2.3.1-vanilla/m4/glibc.m4 dovecot-2.3.1/m4/glibc.m4
        int main() {
          int fd = creat("conftest.temp", 0600);
          int ret;
-diff -u --recursive dovecot-2.3.1-vanilla/m4/ioloop.m4 dovecot-2.3.1/m4/ioloop.m4
---- dovecot-2.3.1-vanilla/m4/ioloop.m4	2018-06-08 20:02:15.850850957 -0400
-+++ dovecot-2.3.1/m4/ioloop.m4	2018-06-08 20:03:31.666945181 -0400
-@@ -4,9 +4,9 @@
+--- a/m4/ioloop.m4
++++ b/m4/ioloop.m4
+@@ -4,9 +4,9 @@ AC_DEFUN([DOVECOT_IOLOOP], [
    
    if test "$ioloop" = "best" || test "$ioloop" = "epoll"; then
      AC_CACHE_CHECK([whether we can use epoll],i_cv_epoll_works,[
@@ -54,9 +51,8 @@ diff -u --recursive dovecot-2.3.1-vanilla/m4/ioloop.m4 dovecot-2.3.1/m4/ioloop.m
          int main()
          {
    	return epoll_create(5) < 1;
-diff -u --recursive dovecot-2.3.1-vanilla/m4/mmap_write.m4 dovecot-2.3.1/m4/mmap_write.m4
---- dovecot-2.3.1-vanilla/m4/mmap_write.m4	2018-06-08 20:02:15.850850957 -0400
-+++ dovecot-2.3.1/m4/mmap_write.m4	2018-06-08 20:03:27.369939841 -0400
+--- a/m4/mmap_write.m4
++++ b/m4/mmap_write.m4
 @@ -1,7 +1,7 @@
  dnl * If mmap() plays nicely with write()
  AC_DEFUN([DOVECOT_MMAP_WRITE], [
@@ -66,7 +62,7 @@ diff -u --recursive dovecot-2.3.1-vanilla/m4/mmap_write.m4 dovecot-2.3.1/m4/mmap
        #include <stdio.h>
        #include <sys/types.h>
        #include <sys/stat.h>
-@@ -9,6 +9,7 @@
+@@ -9,6 +9,7 @@ AC_DEFUN([DOVECOT_MMAP_WRITE], [
        #include <fcntl.h>
        #include <sys/mman.h>
        #include <string.h>
@@ -74,10 +70,9 @@ diff -u --recursive dovecot-2.3.1-vanilla/m4/mmap_write.m4 dovecot-2.3.1/m4/mmap
        int main() {
          /* return 0 if we're signed */
          int f = open("conftest.mmap", O_RDWR|O_CREAT|O_TRUNC, 0600);
-diff -u --recursive dovecot-2.3.1-vanilla/m4/want_gssapi.m4 dovecot-2.3.1/m4/want_gssapi.m4
---- dovecot-2.3.1-vanilla/m4/want_gssapi.m4	2018-06-08 20:02:15.850850957 -0400
-+++ dovecot-2.3.1/m4/want_gssapi.m4	2018-06-08 20:04:13.204996804 -0400
-@@ -54,7 +54,7 @@
+--- a/m4/want_gssapi.m4
++++ b/m4/want_gssapi.m4
+@@ -54,7 +54,7 @@ AC_DEFUN([DOVECOT_WANT_GSSAPI], [
    
    				# does the kerberos library support SPNEGO?
    				AC_CACHE_CHECK([whether GSSAPI supports SPNEGO],i_cv_gssapi_spnego,[
@@ -86,7 +81,7 @@ diff -u --recursive dovecot-2.3.1-vanilla/m4/want_gssapi.m4 dovecot-2.3.1/m4/wan
    				    #ifdef HAVE_GSSAPI_H
    				    #  include <gssapi.h>
    				    #else
-@@ -62,6 +62,7 @@
+@@ -62,6 +62,7 @@ AC_DEFUN([DOVECOT_WANT_GSSAPI], [
    				    #endif
    				    #include <krb5.h>
    				    #include <string.h>
