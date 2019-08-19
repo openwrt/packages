@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.8.0"
+adb_ver="3.8.1"
 adb_sysver="unknown"
 adb_enabled=0
 adb_debug=0
@@ -443,20 +443,14 @@ f_extconf()
 #
 f_dnsup()
 {
-	local dns_up cache_util cache_rc cnt=0
+	local dns_service dns_up dns_pid dns_procfile cache_util cache_rc cnt=0
 
 	if [ "${adb_dnsflush}" -eq 0 ] && [ "${adb_enabled}" -eq 1 ] && [ "${adb_rc}" -eq 0 ]
 	then
 		case "${adb_dns}" in
 			"dnsmasq")
-				if [ "${adb_dnsvariant}" = "nxdomain" ]
-				then
-					killall -q -HUP "${adb_dns}"
-					cache_rc=${?}
-				elif [ "${adb_dnsvariant% *}" = "null" ]
-				then
-					"/etc/init.d/${adb_dns}" restart >/dev/null 2>&1
-				fi
+				killall -q -HUP "${adb_dns}"
+				cache_rc=${?}
 			;;
 			"unbound")
 				cache_util="$(command -v unbound-control)"
@@ -487,8 +481,11 @@ f_dnsup()
 	adb_rc=1
 	while [ "${cnt}" -le 10 ]
 	do
-		dns_up="$(ubus -S call service list "{\"name\":\"${adb_dns}\"}" | jsonfilter -l1 -e "@[\"${adb_dns}\"].instances.*.running")"
-		if [ "${dns_up}" = "true" ]
+		dns_service="$(ubus -S call service list "{\"name\":\"${adb_dns}\"}")"
+		dns_up="$(printf "%s" "${dns_service}" | jsonfilter -l1 -e "@[\"${adb_dns}\"].instances.*.running")"
+		dns_pid="$(printf "%s" "${dns_service}" | jsonfilter -l1 -e "@[\"${adb_dns}\"].instances.*.pid")"
+		dns_procfile="$(ls -l /proc/${dns_pid}/fd 2>/dev/null | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")"
+		if [ "${dns_up}" = "true" ] && [ -n "${dns_pid}" ] && [ -z "${dns_procfile}" ]
 		then
 			case "${adb_dns}" in
 				"unbound")
@@ -891,7 +888,7 @@ f_bgserv()
 		( "${adb_ubusservice}" &)
 	elif [ -n "${bg_pid}" ] && [ "${status}" = "stop" ] 
 	then
-		kill -HUP ${bg_pid}
+		kill -HUP ${bg_pid} 2>/dev/null
 	fi
 	f_log "debug" "f_bgserv ::: status: ${status:-"-"}, bg_pid: ${bg_pid:-"-"}, dns_filereset: ${adb_dnsfilereset:-"-"}, ubus_service: ${adb_ubusservice:-"-"}"
 }
@@ -1041,9 +1038,9 @@ f_main()
 	then
 		if [ "${adb_dnsfilereset}" = "true" ]
 		then
-			f_bgserv "start"
 			> "${adb_dnsdir}"/"${adb_dnsfile}"
 			f_log "info" "blocklist with overall ${adb_cnt} domains loaded successfully and reset afterwards (${adb_sysver})"
+			f_bgserv "start"
 		else
 			f_log "info" "blocklist with overall ${adb_cnt} domains loaded successfully (${adb_sysver})"
 		fi
@@ -1075,7 +1072,7 @@ f_report()
 		then
 			if [ -n "${bg_pid}" ]
 			then
-				kill -HUP ${bg_pid}
+				kill -HUP ${bg_pid} 2>/dev/null
 				while $(kill -0 ${bg_pid} 2>/dev/null)
 				do
 					sleep 1
