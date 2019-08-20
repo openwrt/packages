@@ -20,11 +20,10 @@
  #include <linux/cec-funcs.h>
 --- a/utils/common/media-info.cpp
 +++ b/utils/common/media-info.cpp
-@@ -20,7 +20,7 @@
- 
+@@ -21,6 +21,7 @@
  #include <linux/media.h>
  
--#include <fstream>
+ #include <fstream>
 +#include <iostream>
  #include <media-info.h>
  
@@ -42,22 +41,20 @@
  #include <map>
 --- a/utils/v4l2-compliance/media-info.cpp
 +++ b/utils/v4l2-compliance/media-info.cpp
-@@ -20,7 +20,7 @@
- 
+@@ -21,6 +21,7 @@
  #include <linux/media.h>
  
--#include <fstream>
+ #include <fstream>
 +#include <iostream>
  #include <media-info.h>
  
  static std::string num2s(unsigned num, bool is_hex = true)
 --- a/utils/v4l2-ctl/media-info.cpp
 +++ b/utils/v4l2-ctl/media-info.cpp
-@@ -20,7 +20,7 @@
- 
+@@ -21,6 +21,7 @@
  #include <linux/media.h>
  
--#include <fstream>
+ #include <fstream>
 +#include <iostream>
  #include <media-info.h>
  
