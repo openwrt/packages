@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.8.1"
+adb_ver="3.8.2"
 adb_sysver="unknown"
 adb_enabled=0
 adb_debug=0
@@ -320,6 +320,9 @@ f_uci()
 					/etc/init.d/firewall reload >/dev/null 2>&1
 				;;
 				*)
+					> "${adb_dnsdir}/${adb_dnsfile}"
+					f_count
+					f_jsnup "running"
 					/etc/init.d/"${adb_dns}" reload >/dev/null 2>&1
 				;;
 			esac
@@ -372,7 +375,7 @@ f_extconf()
 				if [ "${adb_enabled}" -eq 1 ] && [ -z "$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}]" serversfile | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
 				then
 					uci_set dhcp "@dnsmasq[${adb_dnsinstance}]" serversfile "${adb_dnsdir}/${adb_dnsfile}"
-					if [ "${adb_enabled}" -eq 1 ] && [ -n "$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}]" addnhosts | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
+					if [ -n "$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}]" addnhosts | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
 					then
 						uci -q del_list dhcp.@dnsmasq[${adb_dnsinstance}].addnhosts="${adb_dnsdir}/${adb_dnsfile}"
 					fi
@@ -385,7 +388,7 @@ f_extconf()
 				if [ "${adb_enabled}" -eq 1 ] && [ -z "$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}]" addnhosts | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
 				then
 					uci -q add_list dhcp.@dnsmasq[${adb_dnsinstance}].addnhosts="${adb_dnsdir}/${adb_dnsfile}"
-					if [ "${adb_enabled}" -eq 1 ] && [ -n "$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}]" serversfile | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
+					if [ -n "$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}]" serversfile | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
 					then
 						uci_remove dhcp "@dnsmasq[${adb_dnsinstance}]" serversfile
 					fi
@@ -506,7 +509,6 @@ f_dnsup()
 					fi
 				;;
 			esac
-			sleep 1
 			adb_rc=0
 			break
 		fi
@@ -735,7 +737,7 @@ f_query()
 					field=2
 				elif [ "${adb_dnsvariant% *}" = "null" ]
 				then
-					prefix=".*[\\t\\.]"
+					prefix="0\\..*[\\t\\.]"
 					suffix=""
 					field=2
 				fi
@@ -1022,7 +1024,7 @@ f_main()
 	adb_tmpfile="${tmp_file}"
 	f_list merge
 
-	# overall sort and dns restart
+	# tld compression and dns restart
 	#
 	if [ -s "${adb_tmpdir}"/"${adb_dnsfile}" ]
 	then
