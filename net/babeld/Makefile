@@ -14,7 +14,11 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.irif.fr/~jch/software/files/
 PKG_HASH:=202d99c275604507c6ce133710522f1ddfb62cb671c26f1ac2d3ab44af3d5bc4
+
+PKG_MAINTAINER:=Gabriel Kerneis <gabriel@kerneis.info>, \
+	Baptiste Jonglez <openwrt-pkg@bitsofnetworks.org>
 PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -24,19 +28,17 @@ define Package/babeld
   SUBMENU:=Routing and Redirection
   TITLE:=A loop-free distance-vector routing protocol
   URL:=https://www.irif.fr/~jch/software/babel/
-  MAINTAINER:=Gabriel Kerneis <gabriel@kerneis.info>, \
-              Baptiste Jonglez <openwrt-pkg@bitsofnetworks.org>
   DEPENDS:=@IPV6
 endef
 
 define Package/babeld/description
- Babel is a loop-avoiding distance-vector routing protocol roughly based
- on DSDV and AODV, but with provisions for link cost estimation and
- redistribution of routes from other routing protocols.
- While it is optimised for wireless mesh networks, Babel will also work
- efficiently on wired networks. It will generate between 1.2 and 2.4 times
- the amount of routing traffic that RIPng would generate, while
- never counting to infinity.
+  Babel is a loop-avoiding distance-vector routing protocol roughly based
+  on DSDV and AODV, but with provisions for link cost estimation and
+  redistribution of routes from other routing protocols.
+  While it is optimised for wireless mesh networks, Babel will also work
+  efficiently on wired networks. It will generate between 1.2 and 2.4 times
+  the amount of routing traffic that RIPng would generate, while
+  never counting to infinity.
 endef
 
 define Package/babeld/conffiles
