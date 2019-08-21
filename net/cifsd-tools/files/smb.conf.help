@@ -135,7 +135,20 @@
 ;		Veto the Apple specific files that a NetAtalk server
 ;		creates.
 ;		veto files = /.AppleDouble/.bin/.AppleDesktop/Network Trash Folder/
-;
+;	- inherit owner
+;		The ownership for new files and directories should be controlled
+;		by the ownership of the parent directory.
+;		Valid options are yes or no.
+;	- inherit smack
+;		This parameter can be used to ensure that if smack label exist
+;		on parent directories.
+;		Valid options are yes or no.
+;	- force create mode
+;		This parameter specifies a set of UNIX mode bit permissions
+;		that will always be set on a file created by cifsd.
+;	- force directory mode
+;		This parameter specifies a set of UNIX mode bit permissions
+;		that will always be set on a directory created by cifsd.
 ;
 ; Rules to update this file:
 ;	- Every [share] definition should start on new line
@@ -148,13 +161,8 @@
 ;******************************************************************************
 
 [global]
-	server string = CIFSD on OpenWrt
 	netbios name = CIFSD
-	map to guest = Bad User
 
-[share]
+[homes]
 	comment = content server share
-	path = /mnt
-	guest ok = yes
-	create mask = 0777
-	directory mask = 0777
+	path = /tmp
