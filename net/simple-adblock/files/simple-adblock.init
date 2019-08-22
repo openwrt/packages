@@ -704,7 +704,7 @@ boot() {
 
 start_service() {
 	is_enabled 'on_start' || return 1
-	local ip status error action
+	local ip action status error message stats
 	if create_lock; then
 		procd_open_instance "main"
 		procd_set_param command /bin/true
@@ -734,19 +734,20 @@ start_service() {
 			fi
 		fi
 		procd_close_instance
+
 		status="$(tmpfs get status)"
 		error="$(tmpfs get error)"
+		message="$(tmpfs get message)"
+		stats="$(tmpfs get stats)"
 		action="$(tmpfs get triggers)"
-		tmpfs set triggers
-		tmpfs del status
-		tmpfs del message
-		tmpfs del error
-		tmpfs del stats
 
 		case "$1" in
 			download) action="download";;
 			restart|*)
-				if [ ! -s "$outputFile" ] && ! cacheOps 'test' && ! cacheOps 'testGzip'; then
+				if [ "$1" != "restart" ] && [ -s "$outputFile" ] && [ -n "$status" ]; then
+					status
+					exit 0
+				elif [ ! -s "$outputFile" ] && ! cacheOps 'test' && ! cacheOps 'testGzip'; then
 					action="download"
 				elif cacheOps 'test' || cacheOps 'testGzip'; then
 					action="start"
@@ -757,6 +758,12 @@ start_service() {
 				action="${action:-$1}"
 			;;
 		esac
+
+		tmpfs del status
+		tmpfs del error
+		tmpfs del message
+		tmpfs del stats
+		tmpfs set triggers
 
 		case $action in
 			download)
