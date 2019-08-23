@@ -1,4 +1,7 @@
 #!/bin/sh /etc/rc.common
+# Copyright 2017-2019 Stan Grishin (stangri@melmac.net)
+# shellcheck disable=SC2039
+# shellcheck disable=SC1091
 PKG_VERSION=
 
 export START=94
@@ -51,8 +54,8 @@ readonly statusStarting='Starting'
 readonly statusForceReloading='Force-Reloading'
 readonly statusProcessing='Processing'
 readonly statusStopped='Stopped'
+readonly sharedMemoryError="/dev/shm/$packageName-error"
 
-export logmsg
 create_lock() { [ -e "$PIDFile" ] && return 1; touch "$PIDFile"; }
 remove_lock() { [ -e "$PIDFile" ] && rm -f "$PIDFile"; }
 trap remove_lock EXIT
@@ -60,19 +63,24 @@ output_ok() { output 1 "$_OK_"; output 2 "$__OK__\\n"; }
 output_okn() { output 1 "$_OK_\\n"; output 2 "$__OK__\\n"; }
 output_fail() { output 1 "$_FAIL_\\n"; output 2 "$__FAIL__\\n"; }
 output_failn() { output 1 "$_FAIL_"; output 2 "$__FAIL__\\n"; }
+str_replace() { echo "$1" | sed -e "s/$2/$3/g"; }
+str_contains() { [ "$1" != "$(str_replace "$1" "$2" "")" ]; }
+readonly sharedMemoryOutput="/dev/shm/$packageName-output"
 output() {
 # Can take a single parameter (text) to be output at any verbosity
 # Or target verbosity level and text to be output at specifc verbosity
+	local msg memmsg
 	if [ $# -ne 1 ]; then
-		if [ $((verbosity & $1)) -gt 0 ] || [ "$verbosity" == "$1" ]; then shift; else return 0; fi
+		if [ $((verbosity & $1)) -gt 0 ] || [ "$verbosity" = "$1" ]; then shift; else return 0; fi
 	fi
-	[ -t 1 ] && echo -e -n "$1"
-	local msg=$(echo -n "${1/$serviceName /service }" | sed 's|\\033\[[0-9]\?;\?[0-9]\?[0-9]\?m||g');
-	if [ "$(echo -e -n "$msg" | wc -l)" -gt 0 ]; then
-		logger -t "${packageName:-service} [$$]" "$(echo -e -n "${logmsg}${msg}")"
-		logmsg=""
+	[ -t 1 ] && printf "%b" "$1"
+	msg="$(printf "%s" "$(str_replace "$1" "$serviceName " "service ")" | sed 's|\\033\[[0-9]\?;\?[0-9]\?[0-9]\?m||g')";
+	if [ "$(printf "%b" "$msg" | wc -l)" -gt 0 ]; then
+		[ -s "$sharedMemoryOutput" ] && memmsg="$(cat "$sharedMemoryOutput")"
+		logger -t "${packageName:-service} [$$]" "$(printf "%b" "${memmsg}${msg}")"
+		rm -f "$sharedMemoryOutput"
 	else
-		logmsg="${logmsg}${msg}"
+		printf "%b" "$msg" >> "$sharedMemoryOutput"
 	fi
 }
 led_on(){ if [ -n "${1}" ] && [ -e "${1}/trigger" ]; then echo "default-on" > "${1}/trigger" 2>&1; fi; }
@@ -305,7 +313,7 @@ reload_resolver() {
 	esac
 }
 
-tmpfs(){
+tmpfs() {
 	local action="$1" instance="$2" value="$3" 
 	local status message error stats 
 	local readReload readRestart curReload curRestart ret
@@ -397,7 +405,7 @@ tmpfs(){
 	sync
 }
 
-cacheOps(){
+cacheOps() {
 	local R_TMP
 	case "$1" in
 		create|backup)
@@ -442,7 +450,8 @@ is_chaos_calmer() { ubus -S call system board | grep -q "Chaos Calmer"; }
 remove_fw3_redirect() {
 	local name
 	config_get name "$1" "name"
-	if [ -n "$name" ] && [ "$name" != "${name//simple_adblock}" ]; then
+# shellcheck disable=SC2154
+	if [ -n "$name" ] && str_contains "$name" "simple-adblock"; then
 		uci -q del "firewall.$1"
 	fi
 }
@@ -458,7 +467,7 @@ fw3_setup() {
 		uci -q set firewall.@redirect[-1].proto="tcpudp"
 		uci -q set firewall.@redirect[-1].src_dport="53"
 		uci -q set firewall.@redirect[-1].dest_port="53"
-		uci -q set firewall.@redirect[-1].dest_ip="$ip"
+		uci -q set firewall.@redirect[-1].dest_ip="$2"
 		uci -q set firewall.@redirect[-1].reflection="0"
 	fi
 	if [ -n "$(uci changes firewall)" ]; then
@@ -487,13 +496,13 @@ process_url() {
 	if ! $dl_command "$1" $dl_flag "$R_TMP" 2>/dev/null || [ ! -s "$R_TMP" ]; then
 		output 1 "$_FAIL_"
 		output 2 "[DL] $type $label $__FAIL__\\n"
-		echo -e -n "Error: downloading '${1}'.\\n" >> "${jsonFile}.error"
+		printf "%b" "Error: downloading '${1}'.\\n" >> "$sharedMemoryError"
 	else
 		sed -i "$filter" "$R_TMP"
 		if [ ! -s "$R_TMP" ]; then
 			output 1 "$_FAIL_"
 			output 2 "[DL] $type $label $__FAIL__\\n"
-			echo -e -n "Error: parsing '${1}'.\\n" >> "${jsonFile}.error"
+			printf "%b" "Error: parsing '${1}'.\\n" >> "$sharedMemoryError"
 		else
 			cat "${R_TMP}" >> "$D_TMP"
 			output 1 "$_OK_"
@@ -519,7 +528,7 @@ download_lists() {
 	fi
 	touch $A_TMP; touch $B_TMP;
 	output 1 "Downloading lists "
-	rm -f "${jsonFile}.error"
+	rm -f "$sharedMemoryError"
 	if [ -n "$blacklist_hosts_urls" ]; then
 		for hf in ${blacklist_hosts_urls}; do
 			if [ "$parallelDL" -gt 0 ]; then
@@ -548,8 +557,8 @@ download_lists() {
 		done
 	fi
 	wait
-	[ -s "${jsonFile}.error" ] && tmpfs add error "$(cat "${jsonFile}.error")"
-	rm -f "${jsonFile}.error"
+	[ -s "$sharedMemoryError" ] && tmpfs add error "$(cat "$sharedMemoryError")"
+	rm -f "$sharedMemoryError"
 	output 1 "\\n"
 
 	[ -n "$blacklist_domains" ] && for hf in ${blacklist_domains}; do echo "$hf" | sed "$domainsFilter" >> $B_TMP; done
@@ -578,15 +587,15 @@ $(cat $A_TMP)"
 		fi
 	fi
 
-	if [ "$targetDNS" == "dnsmasq.conf" ] || \
-	   [ "$targetDNS" == "dnsmasq.servers" ] || \
-		 [ "$targetDNS" == "unbound.adb_list" ]; then
+	if [ "$targetDNS" = "dnsmasq.conf" ] || \
+	   [ "$targetDNS" = "dnsmasq.servers" ] || \
+		 [ "$targetDNS" = "unbound.adb_list" ]; then
 		# TLD optimization written by Dirk Brenken (dev@brenken.org)
 		output 2 "Optimizing combined list "
 		tmpfs set message "$statusProcessing: optimizing combined list"
 		if awk -F "." '{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "$A_TMP" > "$B_TMP"; then
 			if sort "$B_TMP" > "$A_TMP"; then
-				if awk '{if(NR==1){tld=$NF};while(getline){if($NF!~tld"\\."){print tld;tld=$NF}}print tld}' "$A_TMP" > "$B_TMP"; then
+				if awk '{if(NR=1){tld=$NF};while(getline){if($NF!~tld"\\."){print tld;tld=$NF}}print tld}' "$A_TMP" > "$B_TMP"; then
 					if awk -F "." '{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "$B_TMP" > "$A_TMP"; then
 						if sort "$A_TMP" | uniq > "$B_TMP"; then
 							output_ok
@@ -704,16 +713,17 @@ boot() {
 
 start_service() {
 	is_enabled 'on_start' || return 1
-	local ip status error action
+	local ip action status error message stats
 	if create_lock; then
 		procd_open_instance "main"
 		procd_set_param command /bin/true
 		procd_set_param stdout 1
 		procd_set_param stderr 1
 		network_get_ipaddr ip "lan"
+# shellcheck disable=SC2154
 		if [ "$forceDNS" -ne 0 ] && [ -n "$ip" ]; then
 			if is_chaos_calmer; then
-				fw3_setup "start"
+				fw3_setup "start" "$ip"
 			else
 				procd_open_data
 				json_add_array firewall
@@ -734,19 +744,20 @@ start_service() {
 			fi
 		fi
 		procd_close_instance
+
 		status="$(tmpfs get status)"
 		error="$(tmpfs get error)"
+		message="$(tmpfs get message)"
+		stats="$(tmpfs get stats)"
 		action="$(tmpfs get triggers)"
-		tmpfs set triggers
-		tmpfs del status
-		tmpfs del message
-		tmpfs del error
-		tmpfs del stats
 
 		case "$1" in
 			download) action="download";;
 			restart|*)
-				if [ ! -s "$outputFile" ] && ! cacheOps 'test' && ! cacheOps 'testGzip'; then
+				if [ "$1" != "restart" ] && [ -s "$outputFile" ] && [ -n "$status" ]; then
+					status
+					exit 0
+				elif [ ! -s "$outputFile" ] && ! cacheOps 'test' && ! cacheOps 'testGzip'; then
 					action="download"
 				elif cacheOps 'test' || cacheOps 'testGzip'; then
 					action="start"
@@ -757,6 +768,12 @@ start_service() {
 				action="${action:-$1}"
 			;;
 		esac
+
+		tmpfs del status
+		tmpfs del error
+		tmpfs del message
+		tmpfs del stats
+		tmpfs set triggers
 
 		case $action in
 			download)
@@ -773,7 +790,7 @@ start_service() {
 				reload_resolver 'on_start'
 			;;
 			restart|start)
-				if [ "$action" == "restart" ]; then
+				if [ "$action" = "restart" ]; then
 					output 0 "Restarting $serviceName... "
 					output 3 "Restarting $serviceName...\\n"
 					tmpfs set status "$statusRestarting"
@@ -810,13 +827,13 @@ start_service() {
 
 		if [ -s "$outputFile" ] && [ "$(tmpfs get status)" != "$statusFail" ]; then
 			output 0 "$__OK__\\n";
-			local c="$(wc -l < "$outputFile")"
+			c="$(wc -l < "$outputFile")"
 			output 3 "$serviceName is blocking $c domains "; output_okn
 			tmpfs del message
 			tmpfs set status "$statusSuccess: $c domains blocked (with ${targetDNS})."
 			error="$(tmpfs get error)"
 			if [ -n "$error" ]; then
-				output "${error/Error:/$_ERROR_:}\\n"
+				output "$(str_replace "$error" "Error:" "$_ERROR_:")\\n"
 			fi
 		else
 			output 0 "$__FAIL__\\n";
@@ -881,13 +898,21 @@ check() {
 	load_package_config
 	local string="$1"
 	if [ ! -f "$outputFile" ]; then
-		echo "No local blacklist ('$outputFile') found."
+		echo "No blacklist ('$outputFile') found."
 	elif [ -z "$string" ]; then
 		echo "Usage: /etc/init.d/${packageName} check domain"
 	elif grep -m1 -q "$string" "$outputFile"; then
 		echo "Found $(grep -c "$string" "$outputFile") matches for '$string' in '$outputFile':"
-#		grep "$string" "$outputFile" | sed 's|local=/||;s|/$||;'
-		grep "$string" "$outputFile"
+		case "$targetDNS" in
+			dnsmasq.addnhosts)
+				grep "$string" "$outputFile" | sed 's|^127.0.0.1 ||;s|^:: ||;';;
+			dnsmasq.conf)
+				grep "$string" "$outputFile" | sed 's|local=/||;s|/$||;';;
+			dnsmasq.servers)
+				grep "$string" "$outputFile" | sed 's|server=/||;s|/$||;';;
+			unbound.adb_list)
+				grep "$string" "$outputFile" | sed 's|^local-zone: "||;s|" static$||;';;
+		esac
 	else
 		echo "The $string is not found in current blacklist ('$outputFile')."
 	fi
