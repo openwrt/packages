@@ -8,16 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=softflowd
-PKG_VERSION:=0.9.9
-PKG_RELEASE:=2
+PKG_VERSION:=1.0.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/softflowd
-PKG_HASH:=2313f2c50ea9b3f2db3524e38ec7cd71f9a6e885ac2e3b55ab037bccf8173612
+PKG_SOURCE_URL:=https://codeload.github.com/irino/softflowd/tar.gz/softflowd-$(PKG_VERSION)?
+PKG_HASH:=98aa66026d730211b45fe89670cd6ce50959846d536880b82f5afbca6281e108
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-softflowd-$(PKG_VERSION)
+
 PKG_MAINTAINER:=Ross Vandegrift <ross@kallisti.us>
 PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -26,15 +31,11 @@ define Package/softflowd
   CATEGORY:=Network
   DEPENDS:=+libpcap
   TITLE:=softflowd
-  URL:=https://code.google.com/archive/p/softflowd/
+  URL:=https://github.com/irino/softflowd
 endef
 
 define Package/softflowd/description
 	Software netflow exporter
-endef
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" softflowd softflowctl
 endef
 
 define Package/softflowd/install
