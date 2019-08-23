@@ -1,8 +1,6 @@
-diff --git a/src/ssl/Ssl.c b/src/ssl/Ssl.c
-index 6501f25..9c24ad5 100644
 --- a/src/ssl/Ssl.c
 +++ b/src/ssl/Ssl.c
-@@ -302,8 +302,8 @@ static boolean_t _retry(int socket, int *timeout, int (*callback)(int socket, ti
+@@ -302,8 +302,8 @@ static boolean_t _retry(int socket, int
  
  
  #if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
