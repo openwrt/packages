@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=monit
 PKG_VERSION:=5.25.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://mmonit.com/monit/dist
@@ -63,6 +63,7 @@ endef
 
 CONFIGURE_ARGS += \
 	--without-pam \
+	ac_cv_ipv6=$(if $(CONFIG_IPV6),yes,no) \
 	libmonit_cv_setjmp_available=yes \
 	libmonit_cv_vsnprintf_c99_conformant=yes
 
