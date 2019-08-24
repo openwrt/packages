@@ -61,6 +61,7 @@ define Package/keepalived
   DEPENDS:= \
     +libnl-genl \
     +libmagic \
+    +file \
     +KEEPALIVED_VRRP:kmod-macvlan \
     +KEEPALIVED_VRRP:libnl-route \
     +KEEPALIVED_VRRP:libnfnetlink \
