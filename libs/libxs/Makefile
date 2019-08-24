@@ -1,29 +1,14 @@
 #
-# Copyright (c) 2016-2019  Moddable Tech, Inc.
+# Copyright (C) 2019 Moddable Tech, Inc.
 #
-#   This file is part of the Moddable SDK Tools.
-# 
-#   The Moddable SDK Tools is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation, either version 3 of the License, or
-#   (at your option) any later version.
-# 
-#   The Moddable SDK Tools is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-# 
-#   You should have received a copy of the GNU General Public License
-#   along with the Moddable SDK Tools.  If not, see <http://www.gnu.org/licenses/>.
+# This is free software, licensed under the GNU General Public License v3 or later.
+# See /licenses for more information.
 #
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxs
-PKG_VERSION:=1.0
-PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/Moddable-OpenSource/moddable.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_DATE:=2019-08-14
