@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libuv
 PKG_VERSION:=1.29.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE_FILES:=LICENSE
 
@@ -20,12 +20,11 @@ PKG_SOURCE_URL:=http://dist.libuv.org/dist/v$(PKG_VERSION)/
 PKG_HASH:=1486043da5ccaf86d451a5fe93920c5b66770b132d92b6d0a15d636346ca570c
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
-PKG_BUILD_PARALLEL:=1
 
-PKG_INSTALL:=1
-PKG_FIXUP:=autoreconf
+CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libuv
   SECTION:=libs
@@ -41,36 +40,11 @@ define Package/libuv/description
  pyuv, and others.
 endef
 
-define Build/Configure
-	( cd $(PKG_BUILD_DIR); ./autogen.sh )
-	$(call Build/Configure/Default)
-endef
-
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/include/* \
-		$(1)/usr/include/
-
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libuv.so* \
-		$(1)/usr/lib/
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libuv.a \
-		$(1)/usr/lib/
-
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libuv.pc \
-		$(1)/usr/lib/pkgconfig/
-endef
+CMAKE_OPTIONS += -Dlibuv_buildtests:BOOL=OFF
 
 define Package/libuv/install
 	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libuv.so* \
-		$(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libuv.so $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libuv))
