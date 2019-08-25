@@ -1,0 +1,31 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -1,4 +1,3 @@
+-DISTCHECK_CONFIGURE_FLAGS = --with-systemdsystemunitdir=$$dc_install_base/$(systemdsystemunitdir)
+ BUILT_SOURCES=
+ CLEANFILES=
+ man1_MANS=
+@@ -10,13 +9,6 @@ LDADD = @jose_LIBS@ @http_parser_LIBS@
+ cachedir = $(localstatedir)/cache/$(PACKAGE_NAME)
+ jwkdir = $(localstatedir)/db/$(PACKAGE_NAME)
+ 
+-nodist_systemdsystemunit_DATA = \
+-    units/tangd@.service \
+-    units/tangd.socket \
+-    units/tangd-update.path \
+-    units/tangd-update.service \
+-    units/tangd-keygen.service
+-
+ dist_libexec_SCRIPTS = src/tangd-update src/tangd-keygen
+ dist_bin_SCRIPTS = src/tang-show-keys
+ libexec_PROGRAMS = src/tangd
+@@ -52,9 +44,7 @@ src_tangd_SOURCES = src/http.c src/http.h src/tangd.c
+ AM_TESTS_ENVIRONMENT = SD_ACTIVATE="@SD_ACTIVATE@" PATH=$(srcdir)/src:$(builddir)/src:$(PATH)
+ TESTS = tests/adv tests/rec
+ 
+-CLEANFILES += $(nodist_systemdsystemunit_DATA)
+ EXTRA_DIST = \
+-    $(foreach unit,$(nodist_systemdsystemunit_DATA),$(unit).in) \
+     COPYING \
+     $(TESTS) \
+     $(man_ADOC_FILES)

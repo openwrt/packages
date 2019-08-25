@@ -1,0 +1,97 @@
+From 245a69c0f5784ba89c28301263bcfd5785ebe0ea Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Tue, 30 Jul 2019 17:17:07 -0700
+Subject: [PATCH] zstd: Don't use utime on Linux
+
+utime is deprecated by POSIX 2008 and optionally not available with
+uClibc-ng.
+
+Got rid of a few useless headers in timefn.h.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ programs/platform.h |  2 +-
+ programs/timefn.h   |  6 ------
+ programs/util.c     | 10 ++++++++++
+ programs/util.h     |  5 +++--
+ 4 files changed, 14 insertions(+), 9 deletions(-)
+
+diff --git a/programs/platform.h b/programs/platform.h
+index 38ded8727..5934e59cf 100644
+--- a/programs/platform.h
++++ b/programs/platform.h
+@@ -92,7 +92,7 @@ extern "C" {
+ 
+ #    if defined(__linux__) || defined(__linux)
+ #      ifndef _POSIX_C_SOURCE
+-#        define _POSIX_C_SOURCE 200112L  /* feature test macro : https://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html */
++#        define _POSIX_C_SOURCE 200809L  /* feature test macro : https://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html */
+ #      endif
+ #    endif
+ #    include <unistd.h>  /* declares _POSIX_VERSION */
+diff --git a/programs/timefn.h b/programs/timefn.h
+index d1ddd31b1..2db3765b9 100644
+--- a/programs/timefn.h
++++ b/programs/timefn.h
+@@ -19,12 +19,6 @@ extern "C" {
+ /*-****************************************
+ *  Dependencies
+ ******************************************/
+-#include <sys/types.h>    /* utime */
+-#if defined(_MSC_VER)
+-#  include <sys/utime.h>  /* utime */
+-#else
+-#  include <utime.h>      /* utime */
+-#endif
+ #include <time.h>         /* clock_t, clock, CLOCKS_PER_SEC */
+ 
+ 
+diff --git a/programs/util.c b/programs/util.c
+index fb77d1783..3a2e9e28f 100644
+--- a/programs/util.c
++++ b/programs/util.c
+@@ -54,14 +54,24 @@ int UTIL_getFileStat(const char* infilename, stat_t *statbuf)
+ int UTIL_setFileStat(const char *filename, stat_t *statbuf)
+ {
+     int res = 0;
++#if defined(_WIN32)
+     struct utimbuf timebuf;
++#else
++    struct timespec timebuf[2];
++#endif
+ 
+     if (!UTIL_isRegularFile(filename))
+         return -1;
+ 
++#if defined(_WIN32)
+     timebuf.actime = time(NULL);
+     timebuf.modtime = statbuf->st_mtime;
+     res += utime(filename, &timebuf);  /* set access and modification times */
++#else
++    timebuf[0].tv_sec = time(NULL);
++    timebuf[1].tv_sec = statbuf->st_mtime;
++    res += utimensat(AT_FDCWD, filename, timebuf, 0);  /* set access and modification times */
++#endif
+ 
+ #if !defined(_WIN32)
+     res += chown(filename, statbuf->st_uid, statbuf->st_gid);  /* Copy ownership */
+diff --git a/programs/util.h b/programs/util.h
+index d6e5bb550..71d4c7c77 100644
+--- a/programs/util.h
++++ b/programs/util.h
+@@ -25,12 +25,13 @@ extern "C" {
+ #include <stdio.h>        /* fprintf */
+ #include <sys/types.h>    /* stat, utime */
+ #include <sys/stat.h>     /* stat, chmod */
+-#if defined(_MSC_VER)
++#if defined(_WIN32)
+ #  include <sys/utime.h>  /* utime */
+ #  include <io.h>         /* _chmod */
+ #else
++#  include <fcntl.h>      /* AT_FDCWD */
++#  include <sys/stat.h>   /* utimensat */
+ #  include <unistd.h>     /* chown, stat */
+-#  include <utime.h>      /* utime */
+ #endif
+ #include <time.h>         /* clock_t, clock, CLOCKS_PER_SEC, nanosleep */
+ #include "mem.h"          /* U32, U64 */

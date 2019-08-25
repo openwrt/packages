@@ -1,9 +1,8 @@
 Please make sure that the issue subject starts with `<package-name>: `
 
-This repo here is only for packages maintained in this repo.  For base packages residing in the same repo as the build system and maintained by core devs, please consider opening tickets there for more timely responses
+Also make sure that the package is maintained in this repository and not in base which should be submitted at https://bugs.openwrt.org or in the LuCI repository which should be submitted at https://github.com/openwrt/luci/issues.
 
- - OpenWrt base system: https://bugs.openwrt.org
- - Most LuCI packages: https://github.com/openwrt/luci/issues
+Issues related to releases below 18.06 and forks are not supported or maintained and will be closed.
 
 # Issue template (remove lines from top till here)
 

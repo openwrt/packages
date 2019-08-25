@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
-PKG_VERSION:=v8.16.0
-PKG_RELEASE:=2
+PKG_VERSION:=v8.16.1
+PKG_RELEASE:=1
 PKG_SOURCE:=node-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://nodejs.org/dist/${PKG_VERSION}
-PKG_HASH:=3515e8e01568a5dc4dff3d91a76ebc6724f5fa2fbb58b4b0c5da7b178a2f7340
+PKG_HASH:=d8c190acdf2d967faf49c22df883d31a8d4e249d67852dae3c2d8a0f756b0512
 
 HOST_BUILD_DEPENDS:=python/host
 PKG_BUILD_DEPENDS:=python/host
@@ -103,7 +103,7 @@ CONFIGURE_ARGS:= \
 HOST_CONFIGURE_VARS:=
 
 HOST_CONFIGURE_ARGS:= \
-	--dest-os=linux \
+	--dest-os=$(if $(findstring Darwin,$(HOST_OS)),mac,linux) \
 	--without-snapshot \
 	--prefix=$(STAGING_DIR_HOSTPKG)
 

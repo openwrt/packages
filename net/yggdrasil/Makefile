@@ -1,16 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yggdrasil
-PKG_VERSION:=0.3.5
-PKG_RELEASE:=4
+PKG_VERSION:=0.3.8
+PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=https://codeload.github.com/yggdrasil-network/yggdrasil-go/tar.gz/v$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=2c69029adeb053ad049e90f1e4b7efa986094779868da77464d3c869984e861b
+PKG_SOURCE_URL:=https://codeload.github.com/yggdrasil-network/yggdrasil-go/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=56eebbb63cf2d14897141ce037fb9aec407430718908cfeeb34fff355f08f9af
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-go-$(PKG_VERSION)
 
-PKG_LICENSE:=GPL-3.0
 PKG_MAINTAINER:=William Fleurant <meshnet@protonmail.com>
+PKG_LICENSE:=LGPL-3.0-only
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1

@@ -16,10 +16,10 @@ PKG_INSTALL:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.com/netify.ai/public/netify-agent.git
-PKG_SOURCE_DATE:=2019-06-06
-PKG_SOURCE_VERSION:=v2.88
-#PKG_SOURCE_VERSION:=367ddd2fca4b2edd5e71145e2adea1b58f750214
-PKG_MIRROR_HASH:=8ead41dc074a71626609bced1d584f8df87e39f5ad76dcca76021c1737150089
+PKG_SOURCE_DATE:=2019-08-09
+PKG_SOURCE_VERSION:=v2.91
+#PKG_SOURCE_VERSION:=edb904b417a42a1421474427f03e91e0400d8729
+PKG_MIRROR_HASH:=9a7c6a84fc35677f65ac7ff84f228b0051204fae388869042d7623c141ec4165
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -28,7 +28,7 @@ define Package/netifyd
   CATEGORY:=Network
   TITLE:=Netify Agent
   URL:=http://www.netify.ai/
-  DEPENDS:=+libcurl +libmnl +libnetfilter-conntrack +libjson-c +libpcap +zlib +libpthread
+  DEPENDS:=+ca-bundle +libcurl +libmnl +libnetfilter-conntrack +libjson-c +libpcap +zlib +libpthread @!USE_UCLIBC
   # Explicitly depend on libstdcpp rather than $(CXX_DEPENDS).  At the moment
   # std::unordered_map is only available via libstdcpp which is required for
   # performance reasons.
@@ -54,7 +54,6 @@ TARGET_LDFLAGS+=-Wl,--gc-sections
 CONFIGURE_ARGS+= \
 	--sharedstatedir=/var/run \
 	--enable-lean-and-mean \
-	--disable-ncurses \
 	--disable-libtcmalloc \
 	--without-systemdsystemunitdir \
 	--without-tmpfilesdir

@@ -9,17 +9,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apfree-wifidog
 PKG_VERSION:=3.11.1716
-PKG_RELEASE=1
-
-PKG_LICENSE:=GPL-3.0-or-later
-PKG_LICENSE_FILES:=COPYING
-
-PKG_MAINTAINER:=Dengfeng Liu <liudf0716@gmail.com>
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/liudf0716/apfree_wifidog.git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKG_MIRROR_HASH:=76eda57e40b919091281305344bc57fc732a779d7944f57bd5de87914ba127d1
+
+PKG_MAINTAINER:=Dengfeng Liu <liudf0716@gmail.com>
+PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -29,7 +28,7 @@ define Package/apfree-wifidog
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=+zlib +iptables-mod-extra +iptables-mod-ipopt +kmod-ipt-nat +iptables-mod-nat-extra \
-           +libjson-c +ipset +libip4tc +libevent2 +libevent2-openssl +libuci +px5g 
+           +libjson-c +ipset +libip4tc +libevent2 +libevent2-openssl +libuci +px5g
   TITLE:=Apfree's wireless captive portal solution
   URL:=https://github.com/liudf0716/apfree_wifidog
 endef

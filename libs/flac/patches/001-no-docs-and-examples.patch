@@ -4,11 +4,11 @@
  
  ACLOCAL_AMFLAGS = -I m4
  
--SUBDIRS = doc include m4 man src examples test build objs microbench
+-SUBDIRS = doc include m4 man src test build objs microbench
 +SUBDIRS = include m4 src build objs
  
- EXTRA_DIST = \
- 	COPYING.FDL \
+ if EXAMPLES
+ SUBDIRS += examples
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
 @@ -30,11 +30,6 @@ SUBDIRS = \

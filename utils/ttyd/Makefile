@@ -8,15 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ttyd
-PKG_VERSION:=1.4.2
-PKG_RELEASE:=2
+PKG_VERSION:=1.5.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tsl0922/ttyd/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=ff1a66b418df6cd741868a8ea84f69cd63f15e52e3fa117641ec57d3c37a1315
+PKG_HASH:=817d33d59834f9a76af99f689339722fc1ec9f3c46c9a324665b91cb44d79ee8
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+PKG_MAINTAINER:=Shuanglei Tao <tsl0922@gmail.com>
 
 PKG_BUILD_DEPENDS:=vim/host
 CMAKE_INSTALL:=1
@@ -31,7 +32,6 @@ define Package/ttyd
 	DEPENDS:=+libopenssl +libjson-c +libpthread +libwebsockets-full
 	URL:=https://github.com/tsl0922/ttyd
 	SUBMENU:=Terminal
-	MAINTAINER:=Shuanglei Tao <tsl0922@gmail.com>
 endef
 
 define Package/ttyd/description

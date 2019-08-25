@@ -23,7 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/fontconfig
   SECTION:=xorg-util
   CATEGORY:=Xorg
-  SUBMENU:=font-utils
+  SUBMENU:=Font-Utils
   TITLE:=fontconfig
   DEPENDS:=+libpthread +libexpat +libfreetype
   URL:=http://fontconfig.org/

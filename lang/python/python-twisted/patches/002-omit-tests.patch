@@ -1,6 +1,6 @@
 --- a/src/twisted/python/_setup.py
 +++ b/src/twisted/python/_setup.py
-@@ -173,11 +173,6 @@ class ConditionalExtension(Extension, ob
+@@ -175,11 +175,6 @@ class ConditionalExtension(Extension, ob
  # The C extensions used for Twisted.
  _EXTENSIONS = [
      ConditionalExtension(
@@ -12,7 +12,7 @@
          "twisted.internet.iocpreactor.iocpsupport",
          sources=[
              "src/twisted/internet/iocpreactor/iocpsupport/iocpsupport.c",
-@@ -241,12 +236,11 @@ def getSetupArgs(extensions=_EXTENSIONS)
+@@ -284,12 +279,11 @@ def getSetupArgs(extensions=_EXTENSIONS,
          "incremental >= 16.10.1",
          "Automat >= 0.3.0",
          "hyperlink >= 17.1.1",
@@ -26,7 +26,7 @@
          use_incremental=True,
          setup_requires=["incremental >= 16.10.1"],
          install_requires=requirements,
-@@ -256,7 +250,7 @@ def getSetupArgs(extensions=_EXTENSIONS)
+@@ -299,7 +293,7 @@ def getSetupArgs(extensions=_EXTENSIONS,
          cmdclass=command_classes,
          include_package_data=True,
          exclude_package_data={

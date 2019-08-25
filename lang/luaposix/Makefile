@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2011 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,20 +6,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luaposix
-PKG_VERSION:=v33.2.1
-PKG_RELEASE:=5
+PKG_VERSION:=34.1.1
+PKG_RELEASE:=1
 
-PKG_SOURCE:=release-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/luaposix/luaposix/archive/
-PKG_HASH:=4fb34dfea67f4cf3194cdecc6614c9aea67edc3c4093d34137669ea869c358e1
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-release-$(PKG_VERSION)
-PKG_REMOVE_FILES:=aclocal.m4
-PKG_FIXUP:=autoreconf
+PKG_SOURCE_URL:=https://codeload.github.com/$(PKG_NAME)/$(PKG_NAME)/tar.gz/v$(PKG_VERSION)?
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_HASH:=7948f4ac8b953172e928753632e37ad97cc3014df74b524fe7839f71216a7e90
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 
-PKG_BUILD_DEPENDS:=lua/host
+PKG_BUILD_DEPENDS:=luarocks/host
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -29,9 +24,9 @@ define Package/luaposix
   SUBMENU:=Lua
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=luaposix
-  URL:=http://luaforge.net/projects/luaposix/
-  DEPENDS:=+lua +librt
+  TITLE:=POSIX binding for LuaJIT, Lua 5.1, 5.2 and 5.3
+  URL:=https://github.com/luaposix/luaposix
+  DEPENDS:=+lua +lua-bit32
 endef
 
 define Package/luaposix/description
@@ -39,27 +34,30 @@ define Package/luaposix/description
   to various low level libc functions.
 endef
 
-CONFIGURE_VARS += ac_cv_path_LDOC="true"
+TARGET_CFLAGS += \
+	-I$(STAGING_DIR)/usr/include
 
-TARGET_CFLAGS += -DLUA_USE_LINUX $(FPIC) -std=gnu99
-ifeq ($(CONFIG_USE_MUSL),y)
-  TARGET_CFLAGS += -D_POSIX_PRIORITY_SCHEDULING
-  # Musl doesn't do all of XOPEN_REALTIME, but it does for luaposix.
-  # see https://github.com/luaposix/luaposix/issues/295
-  TARGET_CFLAGS += -D_XOPEN_REALTIME=1
-endif
-
-ifneq ($(CONFIG_USE_GLIBC),)
-  ifeq ($(CONFIG_EGLIBC_OPTION_EGLIBC_UTMP),)
-    TARGET_CFLAGS += -DNO_GETLOGIN
-  endif
-endif
-
+define Build/Compile
+  cd $(PKG_BUILD_DIR) && \
+	LDFLAGS="$(TARGET_LDFLAGS) $(FPIC)" \
+	CFLAGS="$(TARGET_CFLAGS) $(FPIC)" \
+    CC="$(TARGET_CC)" LD="$(TARGET_CC)" \
+    LUA_PKGNAME=lua5.1 \
+    LUA_LIBDIR=$(STAGING_DIR)/usr/lib/lua \
+    luarocks make --force --deps-mode=none --pack-binary-rock luaposix-$(PKG_VERSION)-1.rockspec \
+    LUA_LIBDIR=$(STAGING_DIR)/usr/lib/lua \
+    LUA_PKGNAME=lua5.1 \
+    CC="$(TARGET_CC)" LD="$(TARGET_CC)" \
+	CFLAGS="$(TARGET_CFLAGS) $(FPIC)" \
+	LDFLAGS="$(TARGET_LDFLAGS)"
+endef
 
 define Package/luaposix/install
-	$(INSTALL_DIR) $(1)/usr/lib/lua/posix
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ext/posix/.libs/posix.so $(1)/usr/lib/lua
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/posix.lua $(1)/usr/lib/lua
+	$(INSTALL_DIR) $(1)/usr/lib/lua/posix/sys
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/linux/posix/*.so $(1)/usr/lib/lua/posix/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/linux/posix/sys/*.so $(1)/usr/lib/lua/posix/sys/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/posix/*.lua $(1)/usr/lib/lua/posix/
+	rm -f $(1)/usr/lib/lua/posix/{deprecated,compat}.lua
 endef
 
 $(eval $(call BuildPackage,luaposix))

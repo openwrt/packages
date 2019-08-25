@@ -50,7 +50,6 @@ reload_service()
 stop_service()
 {
 	rc_procd "${ban_script}" stop
-	rc_procd start_service
 }
 
 status()

@@ -52,7 +52,6 @@ reload_service()
 stop_service()
 {
 	rc_procd "${adb_script}" stop
-	rc_procd start_service
 }
 
 restart()
@@ -63,13 +62,13 @@ restart()
 suspend()
 {
 	[ -s "${adb_pidfile}" ] && return 1
-	rc_procd "${adb_script}" suspend
+	rc_procd start_service suspend
 }
 
 resume()
 {
 	[ -s "${adb_pidfile}" ] && return 1
-	rc_procd "${adb_script}" resume
+	rc_procd start_service resume
 }
 
 query()
@@ -91,17 +90,17 @@ status()
 	rtfile="${rtfile:-"/tmp/adb_runtime.json"}"
 	if [ -s "${rtfile}" ]
 	then
-		printf "%s\n" "::: adblock runtime information"
+		printf "%s\\n" "::: adblock runtime information"
 		json_load_file "${rtfile}"
 		json_select data
 		json_get_keys keylist
 		for key in ${keylist}
 		do
 			json_get_var value "${key}"
-			printf "  + %-15s : %s\n" "${key}" "${value}"
+			printf "  + %-15s : %s\\n" "${key}" "${value}"
 		done
 	else
-		printf "%s\n" "::: no adblock runtime information available"
+		printf "%s\\n" "::: no adblock runtime information available"
 	fi
 }
 

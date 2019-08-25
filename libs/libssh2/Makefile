@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libssh2
-PKG_VERSION:=1.8.2
+PKG_VERSION:=1.9.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.libssh2.org/download
-PKG_HASH:=088307d9f6b6c4b8c13f34602e8ff65d21c2dc4d55284dfe15d502c4ee190d67
+PKG_HASH:=d5fb8bd563305fd1074dda90bd053fb2d29fc4bce048d182f96eaa466dfadafd
 
 PKG_FIXUP:=autoreconf
 
@@ -28,6 +28,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_LIBSSH2_OPENSSL
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libssh2
   SECTION:=libs
@@ -46,12 +47,16 @@ define Package/libssh2/config
 	source "$(SOURCE)/Config.in"
 endef
 
-CONFIGURE_ARGS += \
-	--disable-examples-build \
-	--disable-silent-rules \
-	$(if $(CONFIG_LIBSSH2_MBEDTLS),--with-mbedtls --with-libmbedtls-prefix=$(STAGING_DIR)/usr) \
-	$(if $(CONFIG_LIBSSH2_OPENSSL),--with-openssl --with-libssl-prefix=$(STAGING_DIR)/usr) \
-	--with-libz-prefix=$(STAGING_DIR)/usr
+CMAKE_OPTIONS += \
+	-DBUILD_SHARED_LIBS=ON \
+	-DENABLE_ZLIB_COMPRESSION=ON \
+	-DCLEAR_MEMORY=ON
+
+ifeq ($(CONFIG_LIBSSH2_OPENSSL),y)
+	CMAKE_OPTIONS += -DCRYPTO_BACKEND=OpenSSL
+else
+	CMAKE_OPTIONS += -DCRYPTO_BACKEND=mbedTLS
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

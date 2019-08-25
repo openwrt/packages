@@ -27,7 +27,7 @@ define Package/hcxdumptool
   DEPENDS:=+libpcap
   TITLE:=hcxdumptool
   URL:=https://github.com/ZerBea/hcxdumptool
-  SUBMENU:=wireless
+  SUBMENU:=Wireless
 endef
 
 define Package/hcxdumptool/description

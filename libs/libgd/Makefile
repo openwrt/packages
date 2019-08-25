@@ -9,16 +9,17 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgd
 PKG_VERSION:=2.2.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/$(PKG_NAME)/$(PKG_NAME)/releases/download/gd-$(PKG_VERSION)/
 PKG_HASH:=8c302ccbf467faec732f0741a859eef4ecae22fea2d2ab87467be940842bde51
+
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
-
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -29,7 +30,7 @@ define Package/libgd
   CATEGORY:=Libraries
   DEPENDS:=+libjpeg +libpng +LIBGD_TIFF:libtiff +LIBGD_FREETYPE:libfreetype
   TITLE:=The GD graphics library
-  URL:=http://www.libgd.org/
+  URL:=https://libgd.github.io/
   MENU:=1
 endef
 
@@ -84,7 +85,9 @@ else
 endif
 
 CONFIGURE_VARS += \
-	ac_cv_header_iconv_h=no
+	ac_cv_header_iconv_h=no \
+	am_cv_func_iconv_works=no \
+	am_func_iconv=no
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin

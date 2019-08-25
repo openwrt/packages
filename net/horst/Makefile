@@ -28,7 +28,7 @@ MAKE_FLAGS += DEBUG=1 LIBNL=tiny
 define Package/horst
 	SECTION:=net
 	CATEGORY:=Network
-	SUBMENU:=wireless
+	SUBMENU:=Wireless
 	DEPENDS:=+libncurses +libnl-tiny
 	MAINTAINER:=Bruno Randolf <br1@einfach.org>
 	TITLE:=Highly Optimized 802.11 Radio Scanning Tool

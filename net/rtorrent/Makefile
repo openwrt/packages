@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtorrent
-PKG_VERSION:=0.9.7
-PKG_RELEASE:=2
+PKG_VERSION:=0.9.8
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/rakshasa/rtorrent/releases/download/v$(PKG_VERSION)
-PKG_HASH:=5d9842fe48c9582fbea2c7bf9f51412c1ccbba07d059b257039ad53b863fe8bb
+PKG_SOURCE_URL:=https://codeload.github.com/rakshasa/rtorrent/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=bc889ce1dde475ec56aa72ae996912ff58723226a4f4256fef4f1f8636d991d4
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
@@ -23,6 +23,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_REMOVE_FILES:=autogen.sh
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -32,7 +33,7 @@ define Package/rtorrent/Default
   CATEGORY:=Network
   TITLE:=BitTorrent client for ncurses
   URL:=https://github.com/rakshasa/rtorrent
-  DEPENDS:=+libcurl +libtorrent +libncurses +libsigcxx +libpthread
+  DEPENDS:=+libcurl +libtorrent +libncurses +libpthread
 endef
 
 define Package/rtorrent/Default/description
@@ -75,6 +76,8 @@ CONFIGURE_ARGS += \
 ifeq ($(BUILD_VARIANT),rpc)
 CONFIGURE_ARGS += --with-xmlrpc-c
 endif
+
+TARGET_CXXFLAGS += -faligned-new
 
 define Package/rtorrent/install
 	$(INSTALL_DIR) $(1)/usr/bin

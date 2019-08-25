@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.4.9"
+trm_ver="1.4.11"
 trm_sysver="unknown"
 trm_enabled=0
 trm_debug=0
@@ -65,10 +65,9 @@ f_envload()
 		trm_sysver="${sys_model}, ${sys_desc}"
 	fi
 
-	# get eap capabilities and rebind protection setting
+	# get eap capabilities
 	#
 	trm_eap="$("${trm_wpa}" -veap >/dev/null 2>&1; printf "%u" ${?})"
-	trm_rebind="$(uci_get dhcp "@dnsmasq[0]" rebind_protection)"
 
 	# load config and check 'enabled' option
 	#
@@ -169,24 +168,24 @@ f_prep()
 			fi
 		fi
 	fi
-	f_log "debug" "f_prep ::: config: ${config}, mode: ${mode}, network: ${network}, radio: ${radio}, trm_radio: ${trm_radio:-"-"}, trm_active_sta: ${trm_active_sta:-"-"}, proactive: ${proactive}, trm_eap: ${trm_eap:-"-"}, trm_rebind: ${trm_rebind:-"-"}, disabled: ${disabled}"
+	f_log "debug" "f_prep ::: config: ${config}, mode: ${mode}, network: ${network}, radio: ${radio}, trm_radio: ${trm_radio:-"-"}, trm_active_sta: ${trm_active_sta:-"-"}, proactive: ${proactive}, trm_eap: ${trm_eap:-"-"}, disabled: ${disabled}"
 }
 
 # check interface status
 #
 f_check()
 {
-	local IFS ifname radio dev_status last_status config sta_essid sta_bssid result cp_domain wait mode="${1}" status="${2:-"false"}"
+	local IFS ifname radio dev_status config sta_essid sta_bssid result uci_essid uci_bssid login_command bg_pid wait_time mode="${1}" status="${2:-"false"}" cp_domain="${3:-"false"}"
 
 	if [ "${mode}" != "initial" ] && [ "${status}" = "false" ]
 	then
 		ubus call network reload
-		wait=$((trm_maxwait/6))
-		sleep ${wait}
+		wait_time=$((trm_maxwait/6))
+		sleep ${wait_time}
 	fi
 
-	wait=1
-	while [ "${wait}" -le "${trm_maxwait}" ]
+	wait_time=1
+	while [ "${wait_time}" -le "${trm_maxwait}" ]
 	do
 		dev_status="$(ubus -S call network.wireless status 2>/dev/null)"
 		if [ -n "${dev_status}" ]
@@ -206,7 +205,7 @@ f_check()
 						trm_devlist="$(f_trim "${trm_devlist} ${radio}")"
 					fi
 				done
-				if [ "${trm_devlist}" = "${trm_radiolist}" ] || [ "${wait}" -eq "${trm_maxwait}" ]
+				if [ "${trm_devlist}" = "${trm_radiolist}" ] || [ "${wait_time}" -eq "${trm_maxwait}" ]
 				then
 					ifname="${trm_devlist}"
 					break
@@ -224,21 +223,33 @@ f_check()
 					if [ "${mode}" = "initial" ] && [ "${trm_captive}" -eq 1 ]
 					then
 						result="$(${trm_fetch} --timeout=$((trm_maxwait/6)) "${trm_captiveurl}" -O /dev/null 2>&1 | \
-							awk '/^Failed to redirect|^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|^Connection error/{printf "%s" "net nok";exit}')"
+							awk '/^Failed to redirect|^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|Connection error/{printf "%s" "net nok";exit}')"
+						if [ "${cp_domain}" = "true" ]
+						then
+							cp_domain="$(printf "%s" "${result}" | awk -F "[\\'| ]" '/^net cp/{printf "%s" $4}')"
+							uci_essid="$(printf "%s" "${dev_status}" | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].config.ssid')"
+							uci_essid="$(printf "%s" "${uci_essid//[^[:alnum:]_]/_}" | awk '{print tolower($1)}')"
+							uci_bssid="$(printf "%s" "${dev_status}" | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].config.bssid')"
+							uci_bssid="${uci_bssid//[^[:alnum:]_]/_}"
+						fi
 					fi
-					if [ "${trm_ifquality}" -ge "${trm_minquality}" ] && [ "${result%/*}" != "net nok" ]
+					if [ "${trm_ifquality}" -ge "${trm_minquality}" ] && [ "${result}" != "net nok" ]
 					then
 						trm_ifstatus="$(ubus -S call network.interface dump 2>/dev/null | jsonfilter -l1 -e "@.interface[@.device=\"${ifname}\"].up")"
 						if [ "${trm_ifstatus}" = "true" ]
 						then
-							if [ "${mode}" = "sta" ] && [ "${trm_captive}" -eq 1 ] && [ "${trm_rebind:-0}" -eq 1 ] && [ -x "/etc/init.d/dnsmasq" ]
+							if [ "${mode}" = "sta" ] && [ "${trm_captive}" -eq 1 ]
 							then
 								while true
 								do
 									result="$(${trm_fetch} --timeout=$((trm_maxwait/6)) "${trm_captiveurl}" -O /dev/null 2>&1 | \
-										awk '/^Failed to redirect|^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|^Connection error/{printf "%s" "net nok";exit}')"
+										awk '/^Failed to redirect|^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|Connection error/{printf "%s" "net nok";exit}')"
 									cp_domain="$(printf "%s" "${result}" | awk -F "[\\'| ]" '/^net cp/{printf "%s" $4}')"
-									if [ "${trm_netcheck}" -eq 1 ] && [ "${result%/*}" = "net nok" ]
+									uci_essid="$(printf "%s" "${dev_status}" | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].config.ssid')"
+									uci_essid="$(printf "%s" "${uci_essid//[^[:alnum:]_]/_}" | awk '{print tolower($1)}')"
+									uci_bssid="$(printf "%s" "${dev_status}" | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].config.bssid')"
+									uci_bssid="${uci_bssid//[^[:alnum:]_]/_}"
+									if [ "${trm_netcheck}" -eq 1 ] && [ "${result}" = "net nok" ]
 									then
 										trm_ifstatus="${status}"
 										f_jsnup
@@ -249,12 +260,39 @@ f_check()
 										break
 									fi
 									uci -q add_list dhcp.@dnsmasq[0].rebind_domain="${cp_domain}"
-									f_log "info" "captive portal domain '${cp_domain}' added to rebind whitelist"
+									f_log "info" "captive portal domain '${cp_domain}' added to to dhcp rebind whitelist"
+									if [ -z "$(uci_get travelmate "${uci_essid}${uci_bssid}")" ]
+									then
+										uci_add travelmate "login" "${uci_essid}${uci_bssid}"
+										uci_set travelmate "${uci_essid}${uci_bssid}" "command" "none"
+										f_log "info" "captive portal login section '${uci_essid}${uci_bssid}' added to travelmate config section"
+									fi
 								done
 								if [ -n "$(uci -q changes dhcp)" ]
 								then
 									uci_commit dhcp
 									/etc/init.d/dnsmasq reload
+								fi
+								if [ -n "$(uci -q changes travelmate)" ]
+								then
+									uci_commit travelmate
+								fi
+							fi
+							if [ -n "${cp_domain}" ] && [ "${cp_domain}" != "false" ] && [ -n "${uci_essid}" ] && [ "${trm_captive}" -eq 1 ]
+							then
+								trm_connection="${result:-"-"}/${trm_ifquality}"
+								f_jsnup
+								login_command="$(uci_get travelmate "${uci_essid}${uci_bssid}" command)"
+								if [ -x "${login_command}" ]
+								then
+									"${login_command}" >/dev/null 2>&1
+									rc=${?}
+									f_log "info" "captive portal login '${login_command:0:40}' for '${cp_domain}' has been executed with rc '${rc}'"
+									if [ "${rc}" -eq 0 ]
+									then
+										result="$(${trm_fetch} --timeout=$((trm_maxwait/6)) "${trm_captiveurl}" -O /dev/null 2>&1 | \
+											awk '/^Failed to redirect|^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|Connection error/{printf "%s" "net nok";exit}')"
+									fi
 								fi
 							fi
 							trm_connection="${result:-"-"}/${trm_ifquality}"
@@ -267,13 +305,15 @@ f_check()
 						sta_bssid="$(printf "%s" "${dev_status}" | jsonfilter -l1 -e '@.*.interfaces[@.config.mode="sta"].*.bssid')"
 						if [ "${trm_ifquality}" -lt "${trm_minquality}" ]
 						then
+							unset trm_connection
+							trm_ifstatus="${status}"
 							f_log "info" "uplink '${sta_essid:-"-"}/${sta_bssid:-"-"}' is out of range (${trm_ifquality}/${trm_minquality})"
-						elif [ "${trm_netcheck}" -eq 1 ] && [ "${result%/*}" = "net nok" ]
+						elif [ "${trm_netcheck}" -eq 1 ] && [ "${result}" = "net nok" ]
 						then
+							unset trm_connection
+							trm_ifstatus="${status}"
 							f_log "info" "uplink '${sta_essid:-"-"}/${sta_bssid:-"-"}' has no internet (${result})"
 						fi
-						unset trm_connection
-						trm_ifstatus="${status}"
 						f_jsnup
 						break
 					elif [ "${mode}" = "initial" ]
@@ -294,10 +334,10 @@ f_check()
 				fi
 			fi
 		fi
-		wait=$((wait+1))
+		wait_time=$((wait_time+1))
 		sleep 1
 	done
-	f_log "debug" "f_check::: mode: ${mode}, name: ${ifname:-"-"}, status: ${trm_ifstatus}, connection: ${trm_connection:-"-"}, wait: ${wait}, max_wait: ${trm_maxwait}, min_quality: ${trm_minquality}, captive: ${trm_captive}, netcheck: ${trm_netcheck}"
+	f_log "debug" "f_check::: mode: ${mode}, name: ${ifname:-"-"}, status: ${trm_ifstatus}, connection: ${trm_connection:-"-"}, wait: ${wait_time}, max_wait: ${trm_maxwait}, min_quality: ${trm_minquality}, captive: ${trm_captive}, netcheck: ${trm_netcheck}"
 }
 
 # update runtime information
@@ -399,7 +439,7 @@ f_main()
 	local IFS cnt dev config spec scan_list scan_essid scan_bssid scan_quality faulty_list
 	local station_id sta sta_essid sta_bssid sta_radio sta_iface active_essid active_bssid active_radio
 
-	f_check "initial"
+	f_check "initial" "false" "true"
 	f_log "debug" "f_main ::: status: ${trm_ifstatus}, proactive: ${trm_proactive}"
 	if [ "${trm_ifstatus}" != "true" ] || [ "${trm_proactive}" -eq 1 ]
 	then

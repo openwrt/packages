@@ -124,7 +124,7 @@ validate_service_section_service_options() {
 print_options() {
 	local _opt
 	local _value
-	for _opt in $*; do
+	for _opt in "$@"; do
 		eval "_value=\$$_opt"
 		[ -z "$_value" ] || echo "$_opt = $_value" >> "$CONF_FILE"
 	done
@@ -134,7 +134,7 @@ print_bool_options() {
 	local _opt
 	local _bool
 	local _value
-	for _opt in $*; do
+	for _opt in "$@"; do
 		eval "_bool=\$$_opt"
 		[ -z "$_bool" ] || {
 			_value=no
@@ -148,7 +148,7 @@ print_lists_map() {
 	local _opt
 	local _values
 	local _value
-	for _opt in $*; do
+	for _opt in "$@"; do
 		eval "_values=\$$_opt"
 		for _value in $_values; do
 			echo "$_opt = $_value" >> "$CONF_FILE"
@@ -163,7 +163,7 @@ print_lists_reduce() {
 	local _values
 	local _v
 	shift
-	for _opt in $*; do
+	for _opt in "$@"; do
 		_value=
 		eval "_values=\$$_opt"
 		for _v in $_values; do
@@ -178,7 +178,7 @@ print_host_port() {
 	local _opt
 	local _host
 	local _port
-	for _opt in $*; do
+	for _opt in "$@"; do
 		eval "_host=\${${_opt}_host}"
 		eval "_port=\${${_opt}_port}"
 		[ -z "$_host" ] || [ -z "$_port" ] || echo "$_opt = $_host:$_port" >> "$CONF_FILE"
@@ -190,7 +190,7 @@ print_optional_host_port() {
 	local _host
 	local _port
 	local _value
-	for _opt in $*; do
+	for _opt in "$@"; do
 		eval "_host=\${${_opt}_host}"
 		eval "_port=\${${_opt}_port}"
 		[ -z "$_port" ] || {
@@ -376,10 +376,10 @@ service_triggers() {
 	procd_add_reload_trigger stunnel
 
 	procd_open_validate
-	validate_globals_section
-	validate_globals_section_service_options
-	validate_service_section
-	validate_service_section_service_options
+	validate_globals_section "$@"
+	validate_globals_section_service_options "$@"
+	validate_service_section "$@"
+	validate_service_section_service_options "$@"
 	procd_close_validate
 }
 

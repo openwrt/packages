@@ -22,7 +22,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/pixiewps
   SECTION:=net
   CATEGORY:=Network
-  SUBMENU:=wireless
+  SUBMENU:=Wireless
   TITLE:=An offline WPS bruteforce utility
   URL:=https://github.com/wiire-a/pixiewps
   DEPENDS:=+libpthread

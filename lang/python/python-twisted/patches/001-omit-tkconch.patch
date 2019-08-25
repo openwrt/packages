@@ -1,6 +1,6 @@
 --- a/src/twisted/python/_setup.py
 +++ b/src/twisted/python/_setup.py
-@@ -147,7 +147,6 @@ _CONSOLE_SCRIPTS = [
+@@ -149,7 +149,6 @@ _CONSOLE_SCRIPTS = [
      "conch = twisted.conch.scripts.conch:run",
      "mailmail = twisted.mail.scripts.mailmail:run",
      "pyhtmlizer = twisted.scripts.htmlizer:run",

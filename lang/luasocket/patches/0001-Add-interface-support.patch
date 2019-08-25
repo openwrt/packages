@@ -18,7 +18,7 @@ new file mode 100644
 index 0000000..db231aa
 --- /dev/null
 +++ b/src/if.c
-@@ -0,0 +1,113 @@
+@@ -0,0 +1,117 @@
 +/*
 + * $Id: if.c $
 + *
@@ -55,7 +55,11 @@ index 0000000..db231aa
 +{
 +    lua_pushstring(L, "iface");
 +    lua_newtable(L);
++#if LUA_VERSION_NUM < 503
 +    luaL_openlib(L, NULL, func, 0);
++#else
++    luaL_setfuncs(L, func, 0);
++#endif
 +    lua_settable(L, -3);
 +    return 0;
 +}
@@ -169,7 +173,7 @@ diff --git a/src/luasocket.c b/src/luasocket.c
 index e6ee747..85d41a6 100644
 --- a/src/luasocket.c
 +++ b/src/luasocket.c
-@@ -31,6 +31,7 @@
+@@ -21,6 +21,7 @@
  #include "tcp.h"
  #include "udp.h"
  #include "select.h"
@@ -177,7 +181,7 @@ index e6ee747..85d41a6 100644
  
  /*-------------------------------------------------------------------------*\
  * Internal function prototypes
-@@ -51,6 +52,7 @@ static const luaL_Reg mod[] = {
+@@ -41,6 +42,7 @@ static const luaL_Reg mod[] = {
      {"tcp", tcp_open},
      {"udp", udp_open},
      {"select", select_open},
@@ -189,15 +193,16 @@ diff --git a/src/makefile b/src/makefile
 index 8d3521e..09d4882 100644
 --- a/src/makefile
 +++ b/src/makefile
-@@ -262,6 +262,7 @@ SOCKET_OBJS= \
- 	auxiliar.$(O) \
+
+@@ -303,6 +303,7 @@ SOCKET_OBJS= \
+ 	compat.$(O) \
  	options.$(O) \
  	inet.$(O) \
 +	if.$(O) \
  	$(SOCKET) \
  	except.$(O) \
  	select.$(O) \
-@@ -387,6 +388,7 @@ auxiliar.$(O): auxiliar.c auxiliar.h
+@@ -440,6 +441,7 @@ auxiliar.$(O): auxiliar.c auxiliar.h
  buffer.$(O): buffer.c buffer.h io.h timeout.h
  except.$(O): except.c except.h
  inet.$(O): inet.c inet.h socket.h io.h timeout.h usocket.h
@@ -209,17 +214,19 @@ diff --git a/src/options.c b/src/options.c
 index 8ac2a14..1c73e6f 100644
 --- a/src/options.c
 +++ b/src/options.c
-@@ -3,6 +3,9 @@
- * LuaSocket toolkit
- \*=========================================================================*/
- #include <string.h> 
+@@ -7,7 +7,10 @@
+ #include "options.h"
+ #include "inet.h"
+ #include <string.h>
+-
 +#include <sys/types.h>
 +#include <sys/socket.h>
 +#include <net/if.h>
- 
- #include "lauxlib.h"
- 
-@@ -285,6 +288,12 @@ static int opt_ip6_setmembership(lua_State *L, p_socket ps, int level, int name)
++ 
+ /*=========================================================================*\
+ * Internal functions prototypes
+ \*=========================================================================*/
+@@ -388,6 +391,12 @@ static int opt_ip6_setmembership(lua_Sta
      if (!lua_isnil(L, -1)) {
          if (lua_isnumber(L, -1)) {
              val.ipv6mr_interface = (unsigned int) lua_tonumber(L, -1);
@@ -232,6 +239,5 @@ index 8ac2a14..1c73e6f 100644
          } else
            luaL_argerror(L, -1, "number 'interface' field expected");
      }
--- 
+--
 1.8.4.rc3
-

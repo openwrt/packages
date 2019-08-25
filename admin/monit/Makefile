@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=monit
-PKG_VERSION:=5.25.2
-PKG_RELEASE:=2
+PKG_VERSION:=5.26.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://mmonit.com/monit/dist
-PKG_HASH:=aa0ce6361d1155e43e30a86dcff00b2003d434f221c360981ced830275abc64a
+PKG_HASH:=87fc4568a3af9a2be89040efb169e3a2e47b262f99e78d5ddde99dd89f02f3c2
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_LICENSE:=AGPL-3.0
@@ -63,6 +63,7 @@ endef
 
 CONFIGURE_ARGS += \
 	--without-pam \
+	ac_cv_ipv6=$(if $(CONFIG_IPV6),yes,no) \
 	libmonit_cv_setjmp_available=yes \
 	libmonit_cv_vsnprintf_c99_conformant=yes
 

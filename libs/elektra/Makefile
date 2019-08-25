@@ -15,7 +15,7 @@ PKG_NAME:=elektra
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.md
 PKG_VERSION:=0.8.21
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 # Use this for official releasees
 PKG_HASH:=51892570f18d1667d0da4d0908a091e41b41c20db9835765677109a3d150cd26
@@ -29,7 +29,8 @@ PKG_SOURCE_URL:=http://ftp.libelektra.org/ftp/elektra/releases
 #PKG_SOURCE_VERSION:=e97efb29a94f3a49cb952d06552fcf53708ea8c7
 #PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
 
-PKG_BUILD_DEPENDS:=elektra/host swig/host
+HOST_BUILD_DEPENDS:=swig/host
+PKG_BUILD_DEPENDS:=elektra/host lua
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -41,7 +42,7 @@ define Package/libelektra/Default
   CATEGORY:=Libraries
   TITLE:=Elektra
   URL:=http://www.libelektra.org/
-  SUBMENU:=libelektra
+  SUBMENU:=LibElektra
 endef
 
 define Package/libelektra/Default-description
@@ -261,7 +262,7 @@ endef
 define Package/libelektra-lua
   $(call Package/libelektra/Default)
   TITLE:=Elektra lua plugin
-  DEPENDS:=+libelektra-core +lua +libstdcpp
+  DEPENDS:=+libelektra-core +lua5.3 +libstdcpp
 endef
 
 define Package/libelektra-lua/description

@@ -1,0 +1,33 @@
+--- a/vfs_cache.c
++++ b/vfs_cache.c
+@@ -232,7 +232,7 @@ int __init cifsd_inode_hash_init(void)
+ 	size = bucketsize << inode_hash_shift;
+ 
+ 	/* init master fp hash table */
+-	inode_hashtable = __vmalloc(size, GFP_ATOMIC, PAGE_KERNEL);
++	inode_hashtable = vmalloc(size);
+ 	if (!inode_hashtable)
+ 		return -ENOMEM;
+ 
+--- b/vfs.c
++++ b/vfs.c
+@@ -17,6 +17,8 @@
+ #include <linux/fsnotify.h>
+ #include <linux/dcache.h>
+ #include <linux/fiemap.h>
++#include <linux/slab.h>
++#include <linux/vmalloc.h>
+ 
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+ #include <linux/sched/xacct.h>
+--- b/vfs_cache.c
++++ b/vfs_cache.c
+@@ -5,6 +5,8 @@
+  */
+ 
+ #include <linux/fs.h>
++#include <linux/slab.h>
++#include <linux/vmalloc.h>
+ 
+ /* @FIXME */
+ #include "glob.h"

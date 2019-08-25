@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
 PKG_VERSION:=5.9.0
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
@@ -83,7 +83,6 @@ COLLECTD_PLUGINS_DISABLED:= \
 	pinba \
 	python \
 	redis \
-	routeros \
 	rrdcached \
 	serial \
 	sigrok \
@@ -165,6 +164,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	powerdns \
 	processes \
 	protocols \
+	routeros \
 	rrdtool \
 	sensors \
 	snmp \
@@ -176,6 +176,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	teamspeak2 \
 	ted \
 	thermal \
+	threshold \
 	unixsock \
 	uptime \
 	users \
@@ -406,6 +407,7 @@ $(eval $(call BuildPlugin,postgresql,PostgreSQL status input,postgresql,+PACKAGE
 $(eval $(call BuildPlugin,powerdns,PowerDNS server status input,powerdns,))
 $(eval $(call BuildPlugin,processes,process status input,processes,+PACKAGE_collectd-mod-processes:libmnl))
 $(eval $(call BuildPlugin,protocols,network protocols input,protocols,))
+$(eval $(call BuildPlugin,routeros,MikroTik RouterOS input,routeros,+PACKAGE_collectd-mod-routeros:librouteros))
 $(eval $(call BuildPlugin,rrdtool,RRDtool output,rrdtool,+PACKAGE_collectd-mod-rrdtool:librrd1))
 $(eval $(call BuildPlugin,sensors,lm_sensors input,sensors,+PACKAGE_collectd-mod-sensors:libsensors))
 $(eval $(call BuildPlugin,snmp,SNMP input,snmp,+PACKAGE_collectd-mod-snmp:libnetsnmp))
@@ -417,6 +419,7 @@ $(eval $(call BuildPlugin,teamspeak2,TeamSpeak2 input,teamspeak2,))
 $(eval $(call BuildPlugin,ted,The Energy Detective input,ted,))
 $(eval $(call BuildPlugin,tcpconns,TCP connection tracking input,tcpconns,))
 $(eval $(call BuildPlugin,thermal,system temperatures input,thermal,))
+$(eval $(call BuildPlugin,threshold,Notifications and thresholds,threshold,))
 $(eval $(call BuildPlugin,unixsock,unix socket output,unixsock,))
 $(eval $(call BuildPlugin,uptime,uptime status input,uptime,))
 $(eval $(call BuildPlugin,users,user logged in status input,users,))

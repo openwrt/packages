@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Michael Heimpold <mhei@heimpold.de>
+# Copyright (C) 2018-2019 Michael Heimpold <mhei@heimpold.de>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgpiod
-PKG_VERSION:=1.3
+PKG_VERSION:=1.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/libs/libgpiod/
-PKG_HASH:=6ec837f23e8f2196e5976dec4ac81403170830075e7f33ede1394eaf67f2e962
+PKG_HASH:=ebde83aaf14be3abd33e7a90faa487a2ee231e242897afe7fdefb765386b3c8b
 
-PKG_LICENSE:=LGPL-2.1+
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>

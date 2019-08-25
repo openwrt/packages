@@ -9,14 +9,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=softethervpn
-PKG_VERSION:=4.28-9669
-PKG_VERREL:=beta
-PKG_VERDATE:=2018.09.11
-PKG_RELEASE:=3
+PKG_VERSION:=4.29-9680
+PKG_VERREL:=rtm
+PKG_VERDATE:=2019.02.28
+PKG_RELEASE:=1
 
 PKG_SOURCE:=softether-src-v$(PKG_VERSION)-$(PKG_VERREL).tar.gz
 PKG_SOURCE_URL:=http://www.softether-download.com/files/softether/v$(PKG_VERSION)-$(PKG_VERREL)-$(PKG_VERDATE)-tree/Source_Code/
-PKG_HASH:=1e641fa227a732b3eec3fe8bdcf4d4fd2b1d0b0a5084119126c1216d2ec1b545
+PKG_HASH:=e6035fa7d9aaf59bdb342cd7ab5ecfdff89811a875f62a3230208cdc8a4e26e4
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/v$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)/v$(PKG_VERSION)
@@ -25,7 +25,7 @@ PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_DEPENDS:=softethervpn/host
-HOST_BUILD_DEPENDS:=readline/host
+HOST_BUILD_DEPENDS:=readline/host libiconv/host
 
 HAMCORE_SE2:=$(STAGING_DIR_HOST)/share/softethervpn/hamcore.se2
 
@@ -62,9 +62,6 @@ endef
 TARGET_CFLAGS += \
 	$(if $(CONFIG_OPENSSL_WITH_SSL3),,-DSSL_OP_NO_SSLv3) \
 	$(if $(filter mips mipsel,$(ARCH)),-minterlink-mips16)
-
-TARGET_LDFLAGS += \
-	-liconv
 
 # Select 32 or 64 bit Makefile for target build depending on 64bit config symbol
 MAKE_FLAGS += \

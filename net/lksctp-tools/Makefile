@@ -8,19 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lksctp-tools
-PKG_VERSION:=1.0.16
+PKG_VERSION:=1.0.18
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/lksctp
-PKG_HASH:=0903dd526b7f30a89d5031aa2c82757612becc38ed7bc6e4f972f8deae351f26
+PKG_SOURCE_URL:=https://codeload.github.com/sctp/lksctp-tools/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=3e9ab5b3844a8b65fc8152633aafe85f406e6da463e53921583dfc4a443ff03a
 
+PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -28,7 +29,7 @@ define Package/lksctp-tools/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=SCTP user-land
-  URL:=http://lksctp.sourceforge.net
+  URL:=https://github.com/sctp/lksctp-tools
 endef
 
 define Package/libsctp
@@ -37,29 +38,26 @@ $(call Package/lksctp-tools/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+= library
-  URL:=http://lksctp.sourceforge.net
   DEPENDS:=+kmod-sctp
 endef
 
 define Package/sctp
 $(call Package/lksctp-tools/Default)
   TITLE+= (meta)
-  URL:=http://lksctp.sourceforge.net
   DEPENDS:=+libsctp +sctp-tools
 endef
 
 define Package/sctp-tools
 $(call Package/lksctp-tools/Default)
   TITLE+= tools
-  URL:=http://lksctp.sourceforge.net
   DEPENDS:=+libsctp
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/include/netinet \
-		$(STAGING_DIR)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/include/netinet
+	$(INSTALL_DATA) \
+		$(PKG_INSTALL_DIR)/usr/include/netinet/sctp.h \
+		$(1)/usr/include/netinet
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/libsctp.{a,so*} \
@@ -73,16 +71,12 @@ define Package/libsctp/install
 		$(1)/usr/lib/
 endef
 
-define Package/sctp/install
-	:
-endef
-
 define Package/sctp-tools/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) \
+	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/bin/checksctp \
 		$(1)/usr/bin/
-	$(CP) \
+	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/bin/sctp_{darn,status,test} \
 		$(1)/usr/bin/
 endef

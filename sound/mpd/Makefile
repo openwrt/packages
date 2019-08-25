@@ -7,14 +7,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
 PKG_VERSION:=0.20.23
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.20/
 PKG_HASH:=503e5f9f237290f568ff7956ab2f9aed563594bf749f19b8fe994fb21434afea
-PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
-PKG_LICENSE:=GPL-2.0
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
@@ -48,7 +48,7 @@ endef
 define Package/mpd-full
 $(call Package/mpd/Default)
   TITLE+= (full)
-  DEPENDS+= +libffmpeg +libid3tag +libmms +libupnp +libshout +pulseaudio-daemon
+  DEPENDS+= +libffmpeg +libid3tag +libmms +libupnp +libshout +pulseaudio-daemon +yajl
   PROVIDES:=mpd
   VARIANT:=full
 endef
@@ -166,7 +166,8 @@ ifeq ($(BUILD_VARIANT),full)
 	--enable-recorder-output \
 	--enable-shout \
 	--enable-pulse \
-	--disable-vorbis
+	--disable-vorbis \
+	--enable-soundcloud
 endif
 
 ifeq ($(BUILD_VARIANT),mini)
@@ -179,6 +180,7 @@ ifeq ($(BUILD_VARIANT),mini)
 	--disable-id3 \
 	--disable-mms \
 	--disable-shout \
+	--disable-soundcloud \
 	--disable-pulse \
 	--enable-vorbis \
 	--with-tremor=yes \

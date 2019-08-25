@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zstd
-PKG_VERSION:=1.4.0
-PKG_RELEASE:=4
+PKG_VERSION:=1.4.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/facebook/zstd/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=63be339137d2b683c6d19a9e34f4fb684790e864fee13c7dd40e197a64c705c1
+PKG_HASH:=7a6e1dad34054b35e2e847eb3289be8820a5d378228802239852f913c6dcf6a7
 
 PKG_MAINTAINER:=Amol Bhave <ambhave@fb.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -21,13 +21,6 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-ifeq ($(CONFIG_ZSTD_OPTIMIZE_O3),y)
-	TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS))
-	TARGET_CFLAGS += -O3
-	TARGET_CXXFLAGS := $(filter-out -O%,$(TARGET_CXXFLAGS))
-	TARGET_CXXFLAGS += -O3
-endif
-
 define Package/zstd/Default
 	SUBMENU:=Compression
 	URL:=https://github.com/facebook/zstd
@@ -38,6 +31,7 @@ $(call Package/zstd/Default)
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE:=zstd library.
+	MENU:=1
 endef
 
 define Package/libzstd/description
@@ -48,6 +42,7 @@ endef
 define Package/libzstd/config
 	config ZSTD_OPTIMIZE_O3
 		bool "Use all optimizations (-O3)"
+		depends on PACKAGE_libzstd
 		default y
 		help
 			This enables additional optmizations using the -O3 compilation flag.
@@ -65,6 +60,13 @@ define Package/zstd/description
 	Zstandard - Fast real-time compression algorithm.
 	This package provides the zstd binaries.
 endef
+
+ifeq ($(CONFIG_ZSTD_OPTIMIZE_O3),y)
+TARGET_CFLAGS:= $(filter-out -O%,$(TARGET_CFLAGS)) -O3
+endif
+
+TARGET_CFLAGS += -flto
+TARGET_LDFLAGS += -Wl,--as-needed
 
 define Package/libzstd/install
 	$(INSTALL_DIR) $(1)/usr/lib

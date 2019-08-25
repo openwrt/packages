@@ -343,7 +343,7 @@ main (int argc, char **argv)
 		printf("Attempting to map 0x%lx bytes at address 0x%08lx\n",
 			real_len, real_addr);
 
-	mfd = open("/dev/mem", (memfunc == MEM_READ) ? O_RDONLY : O_RDWR);
+	mfd = open("/dev/mem", (memfunc == MEM_READ) ? (O_RDONLY | O_SYNC) : (O_RDWR | O_SYNC));
 	if (mfd == -1) {
 		perror("open /dev/mem");
 		fprintf(stderr, "Is CONFIG_DEVMEM activated?\n");

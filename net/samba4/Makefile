@@ -2,24 +2,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.9.8
-PKG_RELEASE:=1
+PKG_VERSION:=4.9.11
+PKG_RELEASE:=3
 
-PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
-PKG_LICENSE:=GPL-3.0-only
-PKG_LICENSE_FILES:=COPYING
-
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.heanet.ie/mirrors/ftp.samba.org/stable/ \
 		https://ftp.gwdg.de/pub/samba/stable/ \
 		https://ftp.riken.jp/net/samba/samba/stable/ \
 		http://www.nic.funet.fi/index/samba/pub/samba/stable/ \
 		http://samba.mirror.bit.nl/samba/ftp/stable/ \
 		https://download.samba.org/pub/samba/stable/
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=82ebb7c3f1847c39341dd97ff8b73f40fa83f5f794daeceb80f3c349ace3cf56
+PKG_HASH:=bb736624d16f7369e395de2f15fec153b554f76f95864015b4ce1f2ae53e817b
+
+PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
+PKG_LICENSE:=GPL-3.0-only
+PKG_LICENSE_FILES:=COPYING
 
 # samba4=(asn1_compile) e2fsprogs=(compile_et) nfs-kernel-server=(rpcgen)
-HOST_BUILD_DEPENDS:=nfs-kernel-server/host e2fsprogs/host
+HOST_BUILD_DEPENDS:=python/host nfs-kernel-server/host e2fsprogs/host
 PKG_BUILD_DEPENDS:=samba4/host
 
 PKG_CONFIG_DEPENDS:= \
@@ -43,7 +43,7 @@ define Package/samba4/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Samba $(PKG_VERSION)
-  URL:=http://www.samba.org/
+  URL:=https://www.samba.org/
 endef
 
 define Package/samba4/Default/description
@@ -57,20 +57,19 @@ endef
 define Package/samba4-libs
   $(call Package/samba4/Default)
   TITLE+= libs
-  DEPENDS:= +zlib +libtirpc +libpopt +libcomerr \
+  DEPENDS:= +zlib +libtirpc +libpopt +libcomerr +libreadline \
 	+PACKAGE_libcap:libcap +PACKAGE_libpthread:libpthread +PACKAGE_libnettle:libnettle \
 	+PACKAGE_libgcrypt:libgcrypt +PACKAGE_libpam:libpam +PACKAGE_dbus:dbus +PACKAGE_libavahi-client:libavahi-client \
 	+SAMBA4_SERVER_VFS:attr \
 	+SAMBA4_SERVER_ACL:acl +SAMBA4_SERVER_ACL:attr \
 	+SAMBA4_SERVER_AVAHI:libavahi-client \
-	+SAMBA4_SERVER_AD_DC:python-base +SAMBA4_SERVER_AD_DC:libopenssl +SAMBA4_SERVER_AD_DC:libgnutls +SAMBA4_SERVER_AD_DC:libopenldap +SAMBA4_SERVER_AD_DC:jansson +SAMBA4_SERVER_AD_DC:libarchive
+	+SAMBA4_SERVER_AD_DC:python-base +SAMBA4_SERVER_AD_DC:python-crypto +SAMBA4_SERVER_AD_DC:libopenssl +SAMBA4_SERVER_AD_DC:libgnutls +SAMBA4_SERVER_AD_DC:libopenldap +SAMBA4_SERVER_AD_DC:jansson +SAMBA4_SERVER_AD_DC:libarchive
 endef
 
 define Package/samba4-server
   $(call Package/samba4/Default)
   TITLE+= server
   DEPENDS:= +samba4-libs
-  EXTRA_DEPENDS:=$(if $(CONFIG_SAMBA4_SERVER_AD_DC),python-crypto,)
 endef
 
 define Package/samba4-server/description
@@ -453,7 +452,7 @@ ifeq ($(CONFIG_SAMBA4_SERVER_ACL),y)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/sharesec $(1)/usr/bin/
 endif
 	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/samba $(1)/etc/init.d
-	$(INSTALL_DATA) ./files/samba.config $(1)/etc/config/samba4
+	$(INSTALL_CONF) ./files/samba.config $(1)/etc/config/samba4
 	$(INSTALL_DATA) ./files/smb.conf.template $(1)/etc/samba
 	$(INSTALL_BIN) ./files/samba.init $(1)/etc/init.d/samba4
 endef

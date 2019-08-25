@@ -10,31 +10,32 @@ PKG_NAME:=switchdev-poller
 PKG_VERSION:=1.0.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
-PKG_LICENSE:=GPLv2
+PKG_LICENSE:=GPL-2.0-or-later
 
-PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 include $(INCLUDE_DIR)/package.mk
 
 define Package/switchdev-poller
    SECTION:=net
    CATEGORY:=Network
+   TITLE:=Poll switchdev ports to bring CPU ports up/down
    DEPENDS:=+swconfig
-   TITLE:=Poll switchdev port to bring CPU ports up/down
    PKGARCH:=all
 endef
 
 define Package/switchdev-poller/description
-This service monitors switchdev ports and brings down CPU ports when
-all related non-CPU vlan ports are also down. Otherwise, it brings
-the port up.
-
+  This service monitors switchdev ports and brings down CPU ports when
+  all related non-CPU vlan ports are also down. Otherwise, it brings
+  the port up.
 endef
 
 define Build/Compile
 endef
 
 define Package/switchdev-poller/install
-	$(CP) ./files/* $(1)
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/switchdev-poller.init $(1)/etc/init.d/switchdev-poller
+	$(INSTALL_DIR) $(1)/usr/lib/switchdev-poller
+	$(INSTALL_BIN) ./files/switchdev-poller $(1)/usr/lib/switchdev-poller/switchdev-poller
 endef
 
 $(eval $(call BuildPackage,switchdev-poller))

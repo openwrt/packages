@@ -1,6 +1,6 @@
 --- a/src/makefile
 +++ b/src/makefile
-@@ -345,18 +345,18 @@ none:
+@@ -397,18 +398,18 @@ none:
  all: $(SOCKET_SO) $(MIME_SO)
  
  $(SOCKET_SO): $(SOCKET_OBJS)
@@ -21,5 +21,5 @@
 -	$(LD) $(SERIAL_OBJS) $(LDFLAGS)$@
 +	$(CC) $(SERIAL_OBJS) $(LDFLAGS)$@
  
- install: 
+ install:
  	$(INSTALL_DIR) $(INSTALL_TOP_LDIR)

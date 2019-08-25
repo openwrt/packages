@@ -1,0 +1,11 @@
+--- a/Modules/posixmodule.c
++++ b/Modules/posixmodule.c
+@@ -3070,7 +3070,7 @@ done:
+     if (arg == Py_None) {
+         /* optional time values not given */
+         Py_BEGIN_ALLOW_THREADS
+-        res = utime(path, NULL);
++        res = utimes(path, NULL);
+         Py_END_ALLOW_THREADS
+     }
+     else if (!PyTuple_Check(arg) || PyTuple_Size(arg) != 2) {
