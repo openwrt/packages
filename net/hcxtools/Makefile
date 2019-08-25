@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hcxtools
-PKG_VERSION:=5.1.6
-PKG_RELEASE:=2
+PKG_VERSION:=5.2.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/zerbea/hcxtools/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=19d2800c6f9339dd552ebc3e7195860f208a9856340b4db1aeaeb4a234557ca6
+PKG_HASH:=1e8120c5451a38645ade0be4255d3c7f4a837b7611b44d4a5a066e563ad8a112
 
 PKG_MAINTAINER:=Andreas Nilsen <adde88@gmail.com>
 PKG_LICENSE:=MIT
