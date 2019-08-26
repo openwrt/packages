@@ -197,10 +197,6 @@ start_service() {
 	procd_close_instance
 }
 
-stop_service() {
-	killall -9 babeld
-}
-
 service_triggers() {
 	procd_add_reload_trigger babeld
 }
