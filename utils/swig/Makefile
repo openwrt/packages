@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=swig
-PKG_VERSION:=4.0.0
+PKG_VERSION:=4.0.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
-PKG_HASH:=e8a39cd6437e342cdcbd5af27a9bf11b62dc9efec9248065debcb8276fcbb925
+PKG_HASH:=7a00b4d0d53ad97a14316135e2d702091cd5f193bb58bcfcd8bc59d41e7887a9
 PKG_INSTALL:=1
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>, Hirokazu MORIKAWA <morikw2@gmail.com>
