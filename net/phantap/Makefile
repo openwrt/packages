@@ -11,9 +11,9 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/nccgroup/phantap
-PKG_MIRROR_HASH:=d81f7b52f2259af093240446674b41ce354222aa7d851504fbc445f3a7c1431e
-PKG_SOURCE_DATE:=2019.08.13
-PKG_SOURCE_VERSION:=f5420af847dd53b2d4cf2b5c2551239709d51bf7
+PKG_MIRROR_HASH:=0751687e35c8f4a56e2cbeae7b16a5d9b8f8ec4c58e315ee8675064f5ae2d899
+PKG_SOURCE_DATE:=2019.08.25
+PKG_SOURCE_VERSION:=2ccec016b1a30338fe5764424e1e16534239abb9
 
 PKG_MAINTAINER:=Diana Dragusin <diana.dragusin@nccgroup.com>, \
     Etienne Champetier <champetier.etienne@gmail.com>
@@ -34,7 +34,7 @@ define Package/phantap
   $(call Package/phantap/Default)
   TITLE:=PhanTap
   PKGARCH:=all
-  DEPENDS:=+ebtables +tcpdump +ip-full +kmod-br-netfilter +kmod-ebtables-ipv4
+  DEPENDS:=+ebtables +libpcap +ip-full +kmod-br-netfilter +kmod-ebtables-ipv4
 endef
 
 define Package/phantap/conffiles
@@ -42,20 +42,9 @@ define Package/phantap/conffiles
 endef
 
 define Package/phantap/description
-  PhanTap or Phantom tap is a small set of scripts that allow you to setup a network tap
-  that automatically impersonate a victim device, allowing you to access internet using
-  the IP & MAC of the victim. To speak to machines in the same L2, see PhanTap learn
-endef
-
-define Package/phantap-learn
-  $(call Package/phantap/Default)
-  TITLE:=PhanTap-learn
-  DEPENDS:=+libpcap +ip-full
-endef
-
-define Package/phantap-learn/description
-  PhanTap learn listens to multicast / broadcast / arp traffic to fill the arp table
-  and add routes to the discovered IPs.
+  PhanTap or Phantom tap is a small set of scripts and C code that allow you to setup a
+  network tap that automatically impersonate a victim device, allowing you to access
+  internet using the IP & MAC of the victim.
 endef
 
 define Package/phantap/install
@@ -69,18 +58,8 @@ define Package/phantap/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/etc/init.d/phantap $(1)/etc/init.d/
 	$(INSTALL_DIR) $(1)/etc/sysctl.d
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/etc/sysctl.d/12-phantap.conf $(1)/etc/sysctl.d/
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/usr/bin/phantap $(1)/usr/bin/
-endef
-
-define Package/phantap-learn/install
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/etc/hotplug.d/iface/00-phantap-learn $(1)/etc/hotplug.d/iface/
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/etc/init.d/phantap-learn $(1)/etc/init.d/
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/phantap-learn $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,phantap))
-$(eval $(call BuildPackage,phantap-learn))
