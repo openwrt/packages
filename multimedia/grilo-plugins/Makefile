@@ -48,9 +48,7 @@ endef
 
 CONFIGURE_ARGS += \
         --enable-static \
-        --without-libiconv-prefix \
-        --without-libintl-prefix \
-        --without-x \
+        --enable-compile-warnings=minimum
 
 MAKE_FLAGS += \
         GLIB_COMPILE_RESOURCES="$(STAGING_DIR_HOSTPKG)/bin/glib-compile-resources"
