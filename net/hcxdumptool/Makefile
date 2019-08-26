@@ -1,4 +1,4 @@
-#
+					#
 # Copyright (C) 2019 Andreas Nilsen <adde88@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -45,7 +45,7 @@ define Build/Compile
 endef
 
 define Package/hcxdumptool/install
-	$(INSTALL_DIR) $(1)/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hcxdumptool $(1)/usr/sbin/
 endef
 
