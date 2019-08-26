@@ -13,7 +13,7 @@ PKG_SOURCE_URL:=https://github.com/Moddable-OpenSource/moddable.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_DATE:=2019-08-14
 PKG_SOURCE_VERSION:=d53090efd417f08d521ad81d4f68169058dff4b6
-PKG_MIRROR_HASH:=9da42794b73fb186a448b994d44a3daaeba18bbdf973eb84547ad87e36a7d79f
+PKG_MIRROR_HASH:=dddee840f3e68e51f8dacac5dfbbf13f411c6bdad24d68531820a8a6c931ef60
 
 PKG_MAINTAINER:=Brian Friedkin <brian@moddable.tech>
 PKG_LICENSE:=GPL-3.0-or-later LGPL-3.0-or-later
