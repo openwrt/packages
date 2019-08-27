@@ -1,4 +1,4 @@
-if PACKAGE_docker-ce
+menu "Kernel features for Docker"
 	config DOCKER_KERNEL_OPTIONS
 		bool "Enable Basic kernel support for Docker"
 		default n
@@ -9,7 +9,7 @@ if PACKAGE_docker-ce
 		select KERNEL_CPUSETS
 		select KERNEL_MEMCG
 		select KERNEL_KEYS
-		select KERNEL_LXC_MISC
+		select KERNEL_DEVPTS_MULTIPLE_INSTANCES
 		select KERNEL_POSIX_MQUEUE
 		help
 		  Select needed kernel options for Docker. Options include
@@ -81,4 +81,4 @@ if PACKAGE_docker-ce
 			select PACKAGE_kmod-fs-btrfs
 			select KERNEL_BTRFS_FS_POSIX_ACL
 	endmenu
-endif
+endmenu
