@@ -3,27 +3,28 @@
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
-# 
+#
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luarocks
 PKG_VERSION:=2.2.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=e4cf874c9bce34a5accd41daaf51a3213763b8b6f7f658ca4d13a70a7ddb1c0c
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/keplerproject/luarocks.git
+PKG_SOURCE_URL:=https://github.com/keplerproject/luarocks
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_MIRROR_HASH:=e4cf874c9bce34a5accd41daaf51a3213763b8b6f7f658ca4d13a70a7ddb1c0c
 
 PKG_MAINTAINER:=Amr Hassan <amr.hassan@gmail.com>
-PKG_INSTALL=1
-PKG_BUILD_DEPENDS:=lua/host
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=COPYING
+
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=lua/host zip/host
 HOST_BUILD_DEPENDS:=$(PKG_BUILD_DEPENDS)
-PKG_LICENSE=GPL
-HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)-$(PKG_VERSION)
+HOST_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk

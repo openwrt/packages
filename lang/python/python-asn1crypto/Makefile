@@ -61,5 +61,8 @@ endef
 
 $(eval $(call PyPackage,python-asn1crypto))
 $(eval $(call BuildPackage,python-asn1crypto))
+$(eval $(call BuildPackage,python-asn1crypto-src))
+
 $(eval $(call Py3Package,python3-asn1crypto))
 $(eval $(call BuildPackage,python3-asn1crypto))
+$(eval $(call BuildPackage,python3-asn1crypto-src))

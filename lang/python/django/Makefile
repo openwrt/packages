@@ -35,6 +35,7 @@ define Package/django/Default
   CATEGORY:=Languages
   TITLE:=The web framework for perfectionists with deadlines.
   URL:=https://www.djangoproject.com/
+  MENU:=1
 endef
 
 define Package/python-django

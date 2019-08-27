@@ -74,5 +74,8 @@ PYTHON_PKG_SETUP_GLOBAL_ARGS:=$(PYTHON3_PKG_SETUP_GLOBAL_ARGS)
 
 $(eval $(call PyPackage,python-evdev))
 $(eval $(call BuildPackage,python-evdev))
+$(eval $(call BuildPackage,python-evdev-src))
+
 $(eval $(call Py3Package,python3-evdev))
 $(eval $(call BuildPackage,python3-evdev))
+$(eval $(call BuildPackage,python3-evdev-src))

@@ -5,13 +5,11 @@ START=90
 
 boot() {
 	[ ! -d /var/spool/msmtp ] && {
-		mkdir -m 0770 -p /var/spool/msmtp
-		chown msmtp:msmtp /var/spool/msmtp
+		mkdir -m1777 -p /var/spool/msmtp
 	}
 
 	[ ! -d /var/lock/msmtp ] && {
-		mkdir -m 0770 -p /var/lock/msmtp
-		chown msmtp:msmtp /var/lock/msmtp
+		mkdir -m1777 -p /var/lock/msmtp
 	}
 }
 

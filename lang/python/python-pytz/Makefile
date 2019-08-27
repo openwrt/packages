@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pytz
-PKG_VERSION:=2019.1
-PKG_RELEASE:=2
+PKG_VERSION:=2019.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=pytz-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pytz
-PKG_HASH:=d747dd3d23d77ef44c6a3526e274af6efeb0a6f1afd5a69ba4d5be4098c8e141
+PKG_HASH:=26c0b32e437e54a18161324a2fca3c4b9846b74a8dccddd843113109e1116b32
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-pytz-$(PKG_VERSION)
 

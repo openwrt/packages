@@ -189,7 +189,7 @@ process_config() {
 	config_get ReadThreads globals ReadThreads 2
 	printf "ReadThreads \"%s\"\n" "$ReadThreads" >> "$COLLECTD_CONF"
 
-	config_get Hostname globals Hostname "$(hostname)"
+	config_get Hostname globals Hostname "$(uname -n)"
 	printf "Hostname \"%s\"\n" "$Hostname" >> "$COLLECTD_CONF"
 
 	printf "\n" >> "$COLLECTD_CONF"
@@ -199,16 +199,14 @@ process_config() {
 }
 
 start_service() {
+	process_config
+
 	procd_open_instance
 	procd_set_param command /usr/sbin/collectd
 	procd_append_param command -C "$COLLECTD_CONF"
-	procd_append_param command -f # don't daemonize, procd will handle that for us
+	procd_append_param command -f # don't daemonize
 	procd_set_param nice "$NICEPRIO"
-
-	process_config
-
-	# set auto respawn behavior
+	procd_set_param stderr 1
 	procd_set_param respawn
 	procd_close_instance
 }
-

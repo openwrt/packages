@@ -42,6 +42,9 @@ define Package/log4cplus/description
   configuration. It is modeled after the Java log4j API.
 endef
 
+CMAKE_HOST_OPTIONS += \
+	-DCMAKE_INSTALL_LIBDIR:PATH=lib
+
 CMAKE_OPTIONS += \
 	-DLOG4CPLUS_BUILD_LOGGINGSERVER:BOOL=OFF \
 	-DLOG4CPLUS_BUILD_TESTING:BOOL=OFF \
