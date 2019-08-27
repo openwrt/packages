@@ -4,7 +4,8 @@
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
-START=50
+START=70
+STOP=30
 
 USERS_C=/var/etc/nut/upsd.users
 UPSD_C=/var/etc/nut/upsd.conf
@@ -255,7 +256,9 @@ start_driver_instance() {
 	[ "$havedriver" != 1 ] && return
 
 	# If wanting a specific instance, only start it
-	[ "$requested" != "$cfg" ] && [ x"$requested" != x ] && return 0
+	if [ "$requested" != "$cfg" ] && [ "$request" != "" ]; then
+		return 0
+	fi
 
 	mkdir -p "$(dirname "$UPS_C")"
 	chmod 0755 "$UPS_C"
@@ -284,12 +287,39 @@ start_driver_instance() {
 	procd_close_instance
 }
 
+interface_triggers() {
+	local action="$1"
+	local triggerlist trigger
+
+	config_get triggerlist upsd triggerlist
+
+	. /lib/functions/network.sh
+
+	if [ -n "$triggerlist" ]; then
+		for trigger in $triggerlist; do
+			if [ "$action" = "add_trigger" ]; then
+				procd_add_interface_trigger "interface.*" "$trigger" /etc/init.d/nut-server reload
+			else
+				network_is_up "$trigger" && return 0
+			fi
+		done
+	else
+		if [ "$action" = "add_trigger" ]; then
+			procd_add_raw_trigger "interface.*.up" 2000 /etc/init.d/nut-server reload
+		else
+			ubus call network.device status | grep -q '"up": true' && return 0
+		fi
+	fi
+	[ "$action" = "add_trigger" ] || return 1
+}
+
 start_server_instance() {
 	local cfg="$1"
 
 	[ "$haveserver" != 1 ] && return
+	interface_triggers "check_interface_up" || return
 
-	procd_open_instance "upsd"
+	procd_open_instance "$cfg"
 	procd_set_param respawn
 	procd_set_param stderr 0
 	procd_set_param stdout 1
@@ -298,29 +328,39 @@ start_server_instance() {
 }
 
 start_service() {
-	local havedriver haveserver
 	local STATEPATH=/var/run/nut
 
 	# Avoid hotplug inadvertenly restarting driver during
 	# forced shutdown
 	[ -f /var/run/killpower ] && return 0
-	[ -f /var/run/nut/disable-hotplug ] && return 0
 
 	config_load nut_server
 
 	build_config
-	config_foreach start_driver_instance driver "$@"
 
-	start_server_instance "upsd"
+	case $@ in
+	"")
+		config_foreach start_driver_instance driver "$@"
+		start_server_instance upsd
+		;;
+	*upsd*)
+		start_server_instance upsd
+		;;
+	*)
+		config_foreach start_driver_instance driver "$@"
+		;;
+	esac
 }
 
 reload_service() {
-	stop
+	stop_service "$@"
 	sleep 2
-	local havedriver haveserver
-	start
+	start_service "$@"
 }
 
 service_triggers() {
+	config_load nut_server
+
+	interface_triggers "add_trigger"
 	procd_add_reload_trigger "nut_server"
 }
