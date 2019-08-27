@@ -109,7 +109,8 @@ nut_user_add() {
 }
 
 build_server_config() {
-        mkdir -m 0755 -p "$(dirname "$UPSD_C")"
+        mkdir -p "$(dirname "$UPSD_C")"
+	chmod 0640 "$UPS_C"
 	rm -f "$USERS_C"
 	rm -f "$UPSD_C"
 	rm -f /var/etc/nut/nut.conf
@@ -229,7 +230,7 @@ build_global_driver_config() {
 build_config() {
 	local STATEPATH=/var/run/nut
 
-        mkdir -m 0755 -p "$(dirname "$UPS_C")"
+        mkdir -p "$(dirname "$UPS_C")"
 	rm -f "$UPS_C"
 	echo "# Config file automatically generated from UCI config" > "$UPS_C"
 	chmod 0640 "$UPS_C"
@@ -256,7 +257,8 @@ start_driver_instance() {
 	# If wanting a specific instance, only start it
 	[ "$requested" != "$cfg" ] && [ x"$requested" != x ] && return 0
 
-	mkdir -m 0755 -p "$(dirname "$UPS_C")"
+	mkdir -p "$(dirname "$UPS_C")"
+	chmod 0755 "$UPS_C"
 
 	upsd_statepath
 	build_config
