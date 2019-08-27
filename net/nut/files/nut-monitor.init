@@ -153,7 +153,7 @@ build_config() {
 	config_foreach nut_upsmon_add master master
 	config_foreach nut_upsmon_add slave slave
 
-	[ ! -s "$(cat /var/etc/nut/nut.conf)" ] && {
+	[ ! -s /var/etc/nut/nut.conf ] && {
 		echo "MODE=netclient" >>/var/etc/nut/nut.conf
 		chmod 640 /var/etc/nut/nut.conf
 		chgrp $(id -gn ${runas:-root}) /var/etc/nut/nut.conf
