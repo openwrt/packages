@@ -20,7 +20,11 @@ PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)$(VIMVER)
 PKG_BUILD_PARALLEL:=1
 
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)$(VIMVER)
+HOST_BUILD_PARALLEL:=1
+
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 define Package/vim/Default
   SECTION:=utils
@@ -237,3 +241,4 @@ $(eval $(call BuildPackage,vim-fuller))
 $(eval $(call BuildPackage,vim-runtime))
 $(eval $(call BuildPackage,vim-help))
 $(eval $(call BuildPackage,xxd))
+$(eval $(call HostBuild))
