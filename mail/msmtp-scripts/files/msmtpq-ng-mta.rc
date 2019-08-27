@@ -14,9 +14,9 @@
 #MSMTPQ_NG=msmtpq-ng
 #MSMTPQ_NG_QUEUE=msmtpq-ng-queue
 #MSMTP_CONF=/etc/msmtprc
-#EMAIL_CONN_TEST=p
-EMAIL_CONN_TEST_PING=openwrt.org
+EMAIL_CONN_TEST=n
+#EMAIL_CONN_TEST_PING=openwrt.org
 #EMAIL_CONN_TEST_IP=8.8.8.8
-#EMAIL_CONN_TEST_SITE=www.debian.org
+EMAIL_CONN_TEST_SITE=openwrt.org
 #MSMTP_HOLD_SMTP_MAIL=true
 #MSMTP_HOLD_CLI_MAIL=false

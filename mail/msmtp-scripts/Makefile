@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msmtp-scripts
 PKG_VERSION:=1.2.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://launchpad.net/$(PKG_NAME)/1.2/$(PKG_VERSION)/+download
@@ -116,6 +116,7 @@ define Package/msmtpq-ng/install
 	$(INSTALL_DATA) ./files/msmtpq-ng.rc $(1)/etc/msmtpq-ng.rc
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_BUILD_DIR)/src/usr/bin/msmtpq-ng $(1)/usr/bin/
+	$(SED) "s,nc -vz,printf \"HEAD / HTTP/1.1\\\\r\\\\nHost: \$$$${EMAIL_CONN_TEST_SITE}\\\\r\\\\n\\\\r\\\\n\"|nc," $(1)/usr/bin/msmtpq-ng
 	$(CP) $(PKG_BUILD_DIR)/src/usr/bin/msmtpq-ng-queue $(1)/usr/bin/
 endef
 
