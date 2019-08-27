@@ -10,23 +10,13 @@ PKG_HASH:=d6c8aff7af59c7d0082ee3018c97f73b0421e81a49bb28ad9f66a36da5cd6ec7
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
-PKG_BUILD_PARALLEL:=1
-
 include $(INCLUDE_DIR)/package.mk
-
-define Package/cgroupfs-mount/config
-config CGROUPFS_MOUNT_CGROUPS
-	depends on PACKAGE_cgroupfs-mount
-	bool "Enable support for cgroups in the kernel"
-	default y
-	select KERNEL_CGROUPS
-endef
 
 define Package/cgroupfs-mount
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=cgroup mount scripts
-  DEPENDS:=+mount-utils
+  DEPENDS:=@KERNEL_CGROUPS +mount-utils
   MENU:=1
 endef
 
