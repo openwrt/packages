@@ -31,10 +31,9 @@ get_write_driver_config() {
 }
 
 upsd_statepath() {
-	local cfg="$1"
 	local statepath
 
-	config_get statepath "$cfg" statepath "/var/run/nut"
+	config_get statepath upsd statepath /var/run/nut
 	STATEPATH="$statepath"
 }
 
@@ -64,7 +63,7 @@ upsd_config() {
     config_get runas "$cfg" runas
     RUNAS="$runas"
 
-    config_get statepath "$cfg" statepath "/var/run/nut"
+    config_get statepath "$cfg" statepath /var/run/nut
     STATEPATH="$statepath"
 
     config_get maxage "$cfg" maxage
@@ -128,13 +127,14 @@ build_server_config() {
 	chmod 0644 /var/etc/nut/nut.conf
 
 	[ -d "${STATEPATH}" ] || {
-		mkdir -m 0750 -p "${STATEPATH}"
+		mkdir -p "${STATEPATH}"
+		chmod 0750 "${STATEPATH}"
 	}
 
 	if [ -n "$RUNAS" ]; then
-		chown $RUNAS:$(id -gn $RUNAS) "${STATEPATH}"
-		chgrp $(id -gn $RUNAS) "$USERS_C"
-		chgrp $(id -gn $RUNAS) "$UPSD_C"
+		chown "$RUNAS":"$(id -gn "$RUNAS")" "${STATEPATH}"
+		chgrp "$(id -gn "$RUNAS")" "$USERS_C"
+		chgrp "$(id -gn "$RUNAS")" "$UPSD_C"
 	fi
 	haveserver=1
 }
@@ -235,13 +235,11 @@ build_config() {
 	chmod 0640 "$UPS_C"
 
 	config_load nut_server
-	config_foreach upsd_statepath upsd
 
 	upsd_runas
 	config_foreach build_global_driver_config driver_global
 	config_foreach build_driver_config driver
-	[ -n "$RUNAS" ] && chgrp $(id -gn $RUNAS) "$UPS_C"
-
+	upsd_statepath
 	build_server_config
 	[ -n "$RUNAS" ] && chgrp "$(id -gn "$RUNAS")" "$UPS_C"
 }
@@ -260,18 +258,19 @@ start_driver_instance() {
 
 	mkdir -m 0755 -p "$(dirname "$UPS_C")"
 
-	[ ! -s "$UPS_C" ] && build_config
+	upsd_statepath
+	build_config
 
 	# Avoid hotplug inadvertenly restarting driver during
 	# forced shutdown
 	[ -f /var/run/killpower ] && return 0
-	[ -d /var/run/nut ] && [ -f /var/run/nut/disable-hotplug ] && return 0
-
-
-	config_foreach upsd_statepath upsd
+	if [ -d /var/run/nut ] && [ -f /var/run/nut/disable-hotplug ]; then
+	       return 0
+	fi
 
 	if [ -n "$RUNAS" ]; then
-		chown $RUNAS:$(id -gn $RUNAS) "${STATEPATH}"
+		chown "$RUNAS":"$(id -gn "$RUNAS")" "${STATEPATH}"
+		chgrp "$(id -gn "$RUNAS")" "$UPS_C"
 	fi
 
 	config_get driver "$cfg" driver "usbhid-ups"
