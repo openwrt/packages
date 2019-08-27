@@ -39,12 +39,11 @@ upsd_statepath() {
 }
 
 upsd_runas() {
-	local cfg="$1"
 	local runas
 
-	[ -n "$RUNAS" ] && return
+	[ -n "$RUNAS" ] && return 0
 
-	config_get runas "$cfg" runas
+	config_get runas upsd runas
 	RUNAS="$runas"
 }
 
@@ -223,7 +222,6 @@ build_global_driver_config() {
 	get_write_driver_config "$cfg" synchronous
 	config_get runas "$cfg" user
 	RUNAS="$runas"
-	upsd_runas
 
 	echo "" >>$UPS_C
 }
@@ -239,11 +237,13 @@ build_config() {
 	config_load nut_server
 	config_foreach upsd_statepath upsd
 
+	upsd_runas
 	config_foreach build_global_driver_config driver_global
 	config_foreach build_driver_config driver
 	[ -n "$RUNAS" ] && chgrp $(id -gn $RUNAS) "$UPS_C"
 
 	build_server_config
+	[ -n "$RUNAS" ] && chgrp "$(id -gn "$RUNAS")" "$UPS_C"
 }
 
 start_driver_instance() {
@@ -284,8 +284,7 @@ start_driver_instance() {
 }
 
 start_server_instance() {
-	local RUNAS
-	build_config
+	local cfg="$1"
 
 	[ "$haveserver" != 1 ] && return
 
@@ -300,7 +299,6 @@ start_server_instance() {
 start_service() {
 	local havedriver haveserver
 	local STATEPATH=/var/run/nut
-	local RUNAS
 
 	# Avoid hotplug inadvertenly restarting driver during
 	# forced shutdown
