@@ -15,6 +15,8 @@ PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Ansuel Smith <ansuelsmth@gmail.com>
 
+PKG_BUILD_DEPENDS:=python3/host
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/uwsgi-cgi
@@ -39,7 +41,8 @@ define Package/uwsgi-cgi/description
 endef
 
 MAKE_VARS+=\
-	CPP=$(TARGET_CROSS)cpp
+	CPP=$(TARGET_CROSS)cpp \
+	PYTHON=$(STAGING_DIR_HOSTPKG)/bin/python3
 
 define Build/Compile
 	$(call Build/Compile/Default,PROFILE=cgi)
