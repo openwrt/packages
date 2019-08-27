@@ -74,6 +74,40 @@ define Package/msmtpq-ng-mta/description
  and postsuper symlinks to wrappers that configure
  msmtpq-ng for use as the system mail transport
  agent via the sendmail command.
+
+**NB**: In order for msmtpq-ng-mta aka sendmail to
+send mail for non-root users (not just queue it
+after failing), the user must have permissions to
+access /etc/msmtprc -- package msmtp sets msmtprc
+to rw only by root by default as a security measure
+(it _can_ contain information like passwords with
+which to send mail through your email server).
+
+There are a couple of choices.  One is to leave
+the default permissions (in which cases the mail
+will queue and fail to send until the mailq -q
+runner which runs in a root crontab sends the mail).
+Another is to give any non-root daemon users (or
+any other users) group access (i.e. create a
+group for all the users who should be able to
+send mail, add the users to it, and give the
+group read-only permissions on the msmtrpc).
+A final option (which is only resonable if you
+have no secrets in msmtprc because you are
+sending unauthenticated mail to a server that
+accepts mail directly for the intended user --
+usually that means a self-hosted system mail
+server, rather than trying to send mail to
+public servers (which don't typically accept
+mail from normal user IP addresses, even if
+you ISP doesn't block the traffic) is to
+make msmtprc world readable.
+
+The first option is probably the best choice
+for most users, as it just means a 15
+minute delay in the mail getting off the
+system, and doesn't involve special permissions
+for non-root daemons or users.
 endef
 
 define Package/msmtpq-ng-mta-smtpd
