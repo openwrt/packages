@@ -6,19 +6,20 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_SOURCE_VERSION:=8bd996400d087028ba56b724abc1f5b378eaa77f
-
 PKG_NAME:=crconf
-PKG_VERSION:=pre2-$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://git.code.sf.net/p/crconf/code
-PKG_MIRROR_HASH:=f772306c0b005c18f481b73e3be193dba5ebb9f6f3bf20cb3f67c4a80dac0613
+PKG_SOURCE_DATE:=2018-03-02
+PKG_SOURCE_VERSION:=8bd996400d087028ba56b724abc1f5b378eaa77f
+PKG_MIRROR_HASH:=454307cb40a8743b53933cbdd4d9367996ffcf1bd2946413d2862cf050df3bca
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_LICENSE:=GPL-2.0-only
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -36,6 +37,8 @@ define Package/crconf/description
   Example: https://wiki.strongswan.org/projects/strongswan/wiki/Pcrypt
   Most interesting stuff you can find on https://wiki.strongswan.org
 endef
+
+MAKE_FLAGS += CFLAGS="$(TARGET_CFLAGS) -I../include"
 
 define Package/crconf/install
 	$(INSTALL_DIR) $(1)/sbin
