@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libssh2
 PKG_VERSION:=1.9.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.libssh2.org/download
@@ -49,6 +49,7 @@ endef
 
 CMAKE_OPTIONS += \
 	-DBUILD_SHARED_LIBS=ON \
+	-DBUILD_TESTING=OFF \
 	-DENABLE_ZLIB_COMPRESSION=ON \
 	-DCLEAR_MEMORY=ON
 
