@@ -1,0 +1,53 @@
+From: Debian QA Group <packages@qa.debian.org>
+Date: Sat, 12 Nov 2016 01:16:08 +1100
+Subject: 80_vtysh__vtysh.c__privs
+
+---
+ vtysh/vtysh.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/vtysh/vtysh.c b/vtysh/vtysh.c
+index 9a8aedd..d182363 100644
+--- a/vtysh/vtysh.c
++++ b/vtysh/vtysh.c
+@@ -26,6 +26,8 @@
+ #include <sys/wait.h>
+ #include <sys/resource.h>
+ #include <sys/stat.h>
++#include <sys/types.h>
++#include <grp.h>
+ 
+ #include <readline/readline.h>
+ #include <readline/history.h>
+@@ -2101,6 +2103,9 @@ write_config_integrated(void)
+   FILE *fp;
+   char *integrate_sav = NULL;
+ 
++  /* Setting file permissions */
++  struct group *quagga_vty_group;
++
+   integrate_sav = malloc (strlen (integrate_default) +
+ 			  strlen (CONF_BACKUP_EXT) + 1);
+   strcpy (integrate_sav, integrate_default);
+@@ -2128,6 +2133,21 @@ write_config_integrated(void)
+   vtysh_config_dump (fp);
+ 
+   fclose (fp);
++	
++  errno = 0;
++  if ((quagga_vty_group = getgrnam(VTY_GROUP)) == NULL) 
++    {
++      fprintf (stdout, "%% Can't get group %s: %s (%d)\n",
++        VTY_GROUP, strerror(errno), errno);
++      return CMD_WARNING;
++    }    
++
++  if ((chown(integrate_default, -1, quagga_vty_group->gr_gid)) != 0)
++    {
++      fprintf (stdout,"%% Can't chown configuration file %s: %s (%d)\n", 
++	integrate_default, strerror(errno), errno);
++      return CMD_WARNING;
++    }
+ 
+   if (chmod (integrate_default, CONFIGFILE_MASK) != 0)
+     {
