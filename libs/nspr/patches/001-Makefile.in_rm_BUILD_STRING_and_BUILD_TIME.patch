@@ -26,7 +26,7 @@ diff --git a/lib/ds/Makefile.in b/lib/ds/Makefile.in
 index e737791..b578476 100644
 --- a/nspr/lib/ds/Makefile.in
 +++ b/nspr/lib/ds/Makefile.in
-@@ -114,13 +114,7 @@ GARBAGE += $(TINC)
+@@ -110,13 +110,7 @@ GARBAGE += $(TINC)
  
  $(TINC):
  	@$(MAKE_OBJDIR)
@@ -45,7 +45,7 @@ diff --git a/lib/libc/src/Makefile.in b/lib/libc/src/Makefile.in
 index e8a6d9f..978ed28 100644
 --- a/nspr/lib/libc/src/Makefile.in
 +++ b/nspr/lib/libc/src/Makefile.in
-@@ -116,13 +116,7 @@ GARBAGE += $(TINC)
+@@ -112,13 +112,7 @@ GARBAGE += $(TINC)
  
  $(TINC):
  	@$(MAKE_OBJDIR)
@@ -64,7 +64,7 @@ diff --git a/lib/prstreams/Makefile.in b/lib/prstreams/Makefile.in
 index aeb2944..f318097 100644
 --- a/nspr/lib/prstreams/Makefile.in
 +++ b/nspr/lib/prstreams/Makefile.in
-@@ -116,13 +116,7 @@ endif
+@@ -110,13 +110,7 @@ endif
  
  $(TINC):
  	@$(MAKE_OBJDIR)
@@ -83,7 +83,7 @@ diff --git a/pr/src/Makefile.in b/pr/src/Makefile.in
 index 19c5a69..b4ac31c 100644
 --- a/nspr/pr/src/Makefile.in
 +++ b/nspr/pr/src/Makefile.in
-@@ -326,13 +326,7 @@ GARBAGE += $(TINC)
+@@ -310,13 +310,7 @@ GARBAGE += $(TINC)
  
  $(TINC):
  	@$(MAKE_OBJDIR)
