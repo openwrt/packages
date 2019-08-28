@@ -1,0 +1,10 @@
+Index: uwsgi-2.0.18/Makefile
+===================================================================
+--- uwsgi-2.0.18.orig/Makefile
++++ uwsgi-2.0.18/Makefile
+@@ -1,4 +1,4 @@
+-PYTHON := python
++PYTHON ?= python3
+ 
+ all:
+ 	$(PYTHON) uwsgiconfig.py --build $(PROFILE)
