@@ -30,12 +30,5 @@ define Package/django2/description
   The web framework for perfectionists with deadlines.
 endef
 
-define Py3Package/xxx/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/django-admin.py $(1)/usr/bin/
-	# fix python exec path
-	sed -i 's_#!.*_#!/usr/bin/python3_g' $(1)/usr/bin/django-admin.py
-endef
-
 $(eval $(call Py3Package,django2))
 $(eval $(call BuildPackage,django2))
