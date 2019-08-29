@@ -13,7 +13,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.8.3"
+adb_ver="3.8.4"
 adb_basever=""
 adb_enabled=0
 adb_debug=0
@@ -56,7 +56,8 @@ f_load()
 
 	# get system information
 	#
-	adb_sysver="$(ubus -S call system board 2>/dev/null | jsonfilter -e '@.model' -e '@.release.description' | awk '{ORS="\n";printf"%s, ",$0}')"
+	adb_sysver="$(ubus -S call system board 2>/dev/null | jsonfilter -e '@.model' -e '@.release.description' | \
+		awk 'BEGIN{ORS=", "}{print $0}' | awk '{print substr($0,1,length($0)-2)}')"
 
 	# parse 'global' and 'extra' section by callback
 	#
@@ -865,7 +866,7 @@ f_jsnup()
 	if [ "${adb_mail}" -eq 1 ] && [ -x "${adb_mailservice}" ] && \
 		{ [ "${status}" = "error" ] || { [ "${status}" = "enabled" ] && [ "${adb_cnt}" -le "${adb_mcnt}" ]; } }
 	then
-		("${adb_mailservice}" >/dev/null 2>&1)&
+		("${adb_mailservice}" "${adb_ver}" >/dev/null 2>&1)&
 		bg_pid="${!}"
 	fi
 	f_log "debug" "f_jsnup  ::: status: ${status:-"-"}, cnt: ${adb_cnt}, mail: ${adb_mail}, mail_service: ${adb_mailservice}, mail_cnt: ${adb_mcnt}, mail_pid: ${bg_pid:-"-"}"
@@ -900,7 +901,7 @@ f_bgserv()
 	if [ -z "${bg_pid}" ] && [ "${status}" = "start" ] \
 		&& [ -x "${adb_ubusservice}" ] && [ "${adb_dnsfilereset}" = "true" ]
 	then
-		( "${adb_ubusservice}" &)
+		( "${adb_ubusservice}" "${adb_ver}" &)
 	elif [ -n "${bg_pid}" ] && [ "${status}" = "stop" ] 
 	then
 		kill -HUP "${bg_pid}" 2>/dev/null
