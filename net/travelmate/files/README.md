@@ -12,6 +12,7 @@ To avoid these kind of deadlocks, travelmate will set all station interfaces to 
 * fast uplink connections
 * support all kinds of uplinks, incl. hidden and enterprise uplinks
 * continuously checks the existing uplink connection (quality), e.g. for conditional uplink (dis-) connections
+* automatically add open uplinks to your wireless config, e.g. hotel captive portals
 * captive portal detection with internet online check and a 'heartbeat' function to keep the uplink connection up & running
 * captive portal auto-login hook (configured via uci/LuCI), you could reference an external script for captive portal auto-logins (see example below)
 * proactively scan and switch to a higher prioritized uplink, despite of an already existing connection
@@ -47,6 +48,7 @@ To avoid these kind of deadlocks, travelmate will set all station interfaces to 
     * trm\_debug => enable/disable debug logging (bool/default: '0', disabled)
     * trm\_captive => enable/disable the captive portal detection (bool/default: '1', enabled)
     * trm\_proactive => enable/disable the proactive uplink switch (bool/default: '1', enabled)
+    * trm\_autoadd => automatically add open uplinks to your wireless config (bool/default: '0', disabled)
     * trm\_minquality => minimum signal quality threshold as percent for conditional uplink (dis-) connections (int/default: '35', valid range: 20-80)
     * trm\_maxwait => how long (in seconds) should travelmate wait for a successful wlan interface reload action (int/default: '30', valid range: 20-40)
     * trm\_maxretry => how many times should travelmate try to connect to an uplink (int/default: '3', valid range: 1-10)
@@ -56,9 +58,9 @@ To avoid these kind of deadlocks, travelmate will set all station interfaces to 
     * trm\_triggerdelay => additional trigger delay in seconds before travelmate processing begins (int/default: '2')
 
 ## Captive Portal auto-logins
-For automated captive portal logins you could reference external shell scripts. All login scripts should be executable and located in '/etc/travelmate' with the extension '.login'. The provided 'wifionice.login' script example requires curl and automates the login to german ICE hotspots, it also explains the principle approach to extract runtime data like security tokens for a succesful login. Hopefully more scripts for different captive portals will be provided by the community ...
+For automated captive portal logins you could reference external shell scripts. All login scripts should be executable and located in '/etc/travelmate' with the extension '.login'. The provided 'wifionice.login' script example requires curl and automates the login to german ICE hotspots, it also explains the principle approach to extract runtime data like security tokens for a successful login. Hopefully more scripts for different captive portals will be provided by the community ...
 
-A typical/succesful captive portal login looks like this:
+A typical/successful captive portal login looks like this:
 <pre><code>
 [...]
 Mon Aug  5 10:15:48 2019 user.info travelmate-1.4.10[1481]: travelmate instance started ::: action: start, pid: 1481
