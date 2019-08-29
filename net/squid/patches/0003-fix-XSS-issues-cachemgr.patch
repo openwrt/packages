@@ -1,0 +1,30 @@
+commit ec0d0f39cf28da14eead0ba5e777e95855bc2f67
+Author: Amos Jeffries <yadij@users.noreply.github.com>
+Date:   2019-06-08 21:09:23 +0000
+
+    Fix Digest auth parameter parsing (#415)
+    
+    Only remove quoting if the domain=, uri= or qop= parameter
+    value is surrounded by double-quotes.
+
+diff --git a/src/auth/digest/Config.cc b/src/auth/digest/Config.cc
+index 674dd93..d2cd2e9 100644
+--- a/src/auth/digest/Config.cc
++++ b/src/auth/digest/Config.cc
+@@ -781,14 +781,14 @@ Auth::Digest::Config::decode(char const *proxy_auth, const char *aRequestRealm)
+             if (keyName == SBuf("domain",6) || keyName == SBuf("uri",3)) {
+                 // domain is Special. Not a quoted-string, must not be de-quoted. But is wrapped in '"'
+                 // BUG 3077: uri= can also be sent to us in a mangled (invalid!) form like domain
+-                if (*p == '"' && *(p + vlen -1) == '"') {
++                if (vlen > 1 && *p == '"' && *(p + vlen -1) == '"') {
+                     value.limitInit(p+1, vlen-2);
+                 }
+             } else if (keyName == SBuf("qop",3)) {
+                 // qop is more special.
+                 // On request this must not be quoted-string de-quoted. But is several values wrapped in '"'
+                 // On response this is a single un-quoted token.
+-                if (*p == '"' && *(p + vlen -1) == '"') {
++                if (vlen > 1 && *p == '"' && *(p + vlen -1) == '"') {
+                     value.limitInit(p+1, vlen-2);
+                 } else {
+                     value.limitInit(p, vlen);

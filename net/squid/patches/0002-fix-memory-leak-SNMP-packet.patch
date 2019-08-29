@@ -1,0 +1,22 @@
+commit bc9786119f058a76ddf0625424bc33d36460b9a2 (refs/remotes/origin/v3.5)
+Author: flozilla <fishyflow@gmail.com>
+Date:   2018-10-24 14:12:01 +0200
+
+    Fix memory leak when parsing SNMP packet (#313)
+    
+    SNMP queries denied by snmp_access rules and queries with certain
+    unsupported SNMPv2 commands were leaking a few hundred bytes each. Such
+    queries trigger "SNMP agent query DENIED from..." WARNINGs in cache.log.
+
+diff --git a/src/snmp_core.cc b/src/snmp_core.cc
+index c4d21c1..16c2993 100644
+--- a/src/snmp_core.cc
++++ b/src/snmp_core.cc
+@@ -409,6 +409,7 @@ snmpDecodePacket(SnmpRequest * rq)
+             snmpConstructReponse(rq);
+         } else {
+             debugs(49, DBG_IMPORTANT, "WARNING: SNMP agent query DENIED from : " << rq->from);
++            snmp_free_pdu(PDU);
+         }
+         xfree(Community);
+ 
