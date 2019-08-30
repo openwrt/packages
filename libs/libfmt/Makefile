@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libfmt
-PKG_VERSION:=5.3.0
+PKG_VERSION:=6.0.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_NAME:=fmt
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/fmtlib/$(PKG_SOURCE_NAME)/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=defa24a9af4c622a7134076602070b45721a43c51598c8456ec6f2c4dbb51c89
+PKG_HASH:=f1907a58d5e86e6c382e51441d92ad9e23aea63827ba47fd647eacc0d3a16c78
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
-PKG_LICENSE:=BSD-2-Clause
+PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.rst
 
 CMAKE_INSTALL:=1
@@ -46,17 +46,6 @@ endef
 define Package/libfmt/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfmt.so* $(1)/usr/lib/
-endef
-
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/fmt
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/fmt/*.h $(1)/usr/include/fmt/
-
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfmt.so* $(1)/usr/lib/
-
-	$(INSTALL_DIR) $(1)/usr/lib/cmake
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/cmake/* $(1)/usr/lib/cmake/
 endef
 
 $(eval $(call BuildPackage,libfmt))
