@@ -67,7 +67,7 @@ config sainfo 'client'
 	option  p2_proposal	'std_p2'
 
 config tunnel 'Office'
-	option	enabled		1
+	option	enabled		0
 # initial_contact
 #	option	init		1
 	option	remote		'vpn.example.tld'
@@ -86,7 +86,7 @@ config tunnel 'Office'
 #		ONE sainfo. Otherwise resulting racoon
 #		configuration will be unusable
 config tunnel 'Incoming'
-	option	enabled		1
+	option	enabled		0
 	option	remote		'anonymous'
 	option	pre_shared_key	'testitnow'
 	option	exchange_mode	'aggressive,main'
@@ -96,7 +96,7 @@ config tunnel 'Incoming'
 	list	sainfo		'welcome'
 
 config tunnel 'Client'
-	option	enabled		1
+	option	enabled		0
 	option	remote		'vpn.example.tld'
 	option	username	'testuser'
 	option	password	'testW0rD'
