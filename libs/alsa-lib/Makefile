@@ -8,24 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alsa-lib
-PKG_VERSION:=1.1.8
+PKG_VERSION:=1.1.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.alsa-project.org/pub/lib/ \
 		http://distfiles.gentoo.org/distfiles/
+PKG_HASH:=488373aef5396682f3a411a6d064ae0ad196b9c96269d0bb912fbdeec94b994b
 
-PKG_HASH:=3cdc3a93a6427a26d8efab4ada2152e64dd89140d981f6ffa003e85be707aedf
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Peter Wagner <tripolar@gmx.at>
 
-PKG_LICENSE:=LGPLv2.1 GPLv2
-PKG_LICENSE_FILES:=COPYING aserver/COPYING
-
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
-PKG_CHECK_FORMAT_SECURITY:=0
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -35,6 +32,8 @@ define Package/alsa-lib
   TITLE:=ALSA (Advanced Linux Sound Architecture) library
   URL:=http://www.alsa-project.org/
   DEPENDS:=@AUDIO_SUPPORT +kmod-sound-core +libpthread +librt
+  LICENSE:=LGPLv2.1-or-later
+  LICENSE_FILES:=COPYING
 endef
 
 define Package/alsa-lib/description
