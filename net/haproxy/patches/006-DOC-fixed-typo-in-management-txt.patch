@@ -1,0 +1,27 @@
+commit 7c80af0fb53f2a1d93a597f7d97cc67996e36be2
+Author: n9@users.noreply.github.com <n9@users.noreply.github.com>
+Date:   Fri Aug 23 11:21:05 2019 +0200
+
+    DOC: fixed typo in management.txt
+    
+    replaced fot -> for
+    added two periods
+    
+    (cherry picked from commit 25a1c8e4539c12c19a3fe04aabe563cdac5e36db)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/doc/management.txt b/doc/management.txt
+index 616a040b..ad6011e5 100644
+--- a/doc/management.txt
++++ b/doc/management.txt
+@@ -1549,8 +1549,8 @@ enable agent <backend>/<server>
+   level "admin".
+ 
+ enable dynamic-cookie backend <backend>
+-  Enable the generation of dynamic cookies fot the backend <backend>
+-  A secret key must also be provided
++  Enable the generation of dynamic cookies for the backend <backend>.
++  A secret key must also be provided.
+ 
+ enable frontend <frontend>
+   Resume a frontend which was temporarily stopped. It is possible that some of

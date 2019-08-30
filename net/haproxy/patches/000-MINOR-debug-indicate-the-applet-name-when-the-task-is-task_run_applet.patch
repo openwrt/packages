@@ -1,0 +1,46 @@
+commit 3a761682a65e7e7f7baf172f58b15e567a685387
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Wed Aug 21 14:12:19 2019 +0200
+
+    MINOR: debug: indicate the applet name when the task is task_run_applet()
+    
+    This allows to figure what applet is currently being executed (and likely
+    hung).
+    
+    (cherry picked from commit a512b02f67a30ab5519d04f8c8b1263415321c85)
+    [wt: backported to improve troubleshooting when the watchdog fires]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/debug.c b/src/debug.c
+index 3077e97c..36cc9e71 100644
+--- a/src/debug.c
++++ b/src/debug.c
+@@ -90,6 +90,7 @@ void ha_thread_dump(struct buffer *buf, int thr, int calling_tid)
+ void ha_task_dump(struct buffer *buf, const struct task *task, const char *pfx)
+ {
+ 	const struct stream *s = NULL;
++	const struct appctx __maybe_unused *appctx = NULL;
+ 
+ 	if (!task) {
+ 		chunk_appendf(buf, "0\n");
+@@ -110,7 +111,7 @@ void ha_task_dump(struct buffer *buf, const struct task *task, const char *pfx)
+ 		              task->call_date ? " ns ago" : "");
+ 
+ 	chunk_appendf(buf, "%s"
+-	              "  fct=%p (%s) ctx=%p\n",
++	              "  fct=%p (%s) ctx=%p",
+ 	              pfx,
+ 	              task->process,
+ 	              task->process == process_stream ? "process_stream" :
+@@ -119,6 +120,11 @@ void ha_task_dump(struct buffer *buf, const struct task *task, const char *pfx)
+ 		      "?",
+ 	              task->context);
+ 
++	if (task->process == task_run_applet && (appctx = task->context))
++		chunk_appendf(buf, "(%s)\n", appctx->applet->name);
++	else
++		chunk_appendf(buf, "\n");
++
+ 	if (task->process == process_stream && task->context)
+ 		s = (struct stream *)task->context;
+ 	else if (task->process == task_run_applet && task->context)
