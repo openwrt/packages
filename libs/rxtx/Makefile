@@ -27,7 +27,7 @@ define Package/rxtx
   CATEGORY:=Libraries
   TITLE:=RX/TX Support for Java serial communications
   URL:=http://rxtx.qbang.org/wiki/index.php/Main_Page
-  DEPENDS:=+libpthread
+  DEPENDS:=+libpthread +classpath
 endef
 
 define Package/rxtx/description
