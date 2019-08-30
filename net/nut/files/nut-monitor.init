@@ -1,16 +1,19 @@
 #!/bin/sh /etc/rc.common
 
-START=51
+START=82
+STOP=28
 USE_PROCD=1
 UPSMON_C=/var/etc/nut/upsmon.conf
 
 nut_upsmon_conf() {
 	local cfg="$1"
+	local RUNAS val optval
 
 	echo "# Config file automatically generated from UCI config" > "$UPSMON_C"
 
-	config_get runas "$cfg" runas
-	[ -n "$runas" ] && echo "RUN_AS_USER $runas" >> $UPSMON_C
+	config_get RUNAS "$cfg" runas
+	[ -n "$RUNAS" ] && echo "RUN_AS_USER $RUNAS" >> "$UPSMON_C"
+	runas="$RUNAS"
 
 	config_get val "$cfg" minsupplies 1
 	echo "MINSUPPLIES $val" >> "$UPSMON_C"
@@ -143,7 +146,6 @@ nut_upsmon_add() {
 }
 
 build_config() {
-	local runas
 	mkdir -m 0750 -p "$(dirname "$UPSMON_C")"
 
 	config_load nut_monitor
@@ -151,7 +153,7 @@ build_config() {
 	config_foreach nut_upsmon_add master master
 	config_foreach nut_upsmon_add slave slave
 
-	[ ! -s "$(cat /var/etc/nut/nut.conf)" ] && {
+	[ ! -s /var/etc/nut/nut.conf ] && {
 		echo "MODE=netclient" >>/var/etc/nut/nut.conf
 		chmod 640 /var/etc/nut/nut.conf
 		chgrp $(id -gn ${runas:-root}) /var/etc/nut/nut.conf
@@ -161,32 +163,65 @@ build_config() {
 	[ -s "$UPSMON_C" ] && chgrp $(id -gn ${runas:-root}) "$UPSMON_C"
 }
 
+interface_triggers() {
+	local action="$1"
+	local triggerlist trigger
+
+	config_get triggerlist "upsmon" triggerlist
+
+	. "${IPKG_INSTROOT}"/lib/functions/network.sh
+
+	if [ -n "$triggerlist" ]; then
+		for trigger in $triggerlist; do
+			if [ "$action" = "add_trigger" ]; then
+				procd_add_interface_trigger "interface.*" "$trigger" /etc/init.d/nut-monitor restart
+			else
+				network_is_up "$trigger" && return 0
+			fi
+		done
+	else
+		if [ "$action" = "add_trigger" ]; then
+			procd_add_raw_trigger "interface.*.up" 2000 /etc/init.d/nut-monitor restart
+		else
+			ubus call network.device status | grep -q '"up": true' && return 0
+		fi
+	fi
+	[ "$action" = "add_trigger" ] || return 1
+}
+
 start_service() {
+	local runas
 	local havemon havems
 	build_config
 
 	[ "$havemon" != 1 ] && return
 	[ "$havems" != 1 ] && return
+	interface_triggers "check_interface_up" || return 0
 
 	procd_open_instance "upsmon"
-	procd_set_param respawn
-	procd_set_param stderr 0
-	procd_set_param stdout 1
+	procd_set_param respawn 10 20 6
+	procd_set_param stderr 1
+	procd_set_param stdout 0
 	procd_set_param command /usr/sbin/upsmon -D
 	procd_close_instance
 }
 
 reload_service() {
 	if pgrep upsmon >/dev/null 2>/dev/null; then
+		local runas
 		build_config
 		/usr/sbin/upsmon -c reload
 	else
-		stop
-		sleep 2
-		start_service
+		restart
 	fi
 }
 
+stop_service() {
+	upsmon -c stop
+}
+
 service_triggers() {
+	config_load nut_monitor
+	interface_triggers "add_trigger"
 	procd_add_reload_trigger "nut_monitor"
 }
