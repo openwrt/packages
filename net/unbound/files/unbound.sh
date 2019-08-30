@@ -582,7 +582,7 @@ unbound_conf() {
 
 
   if [ "$UB_N_THREADS" -gt 1 ] \
-  && $PROG -h | grep -q "linked libs:.*libevent" ; then
+  && $PROG -V | grep -q "Linked libs:.*libevent" ; then
     # heavy variant using "threads" may need substantial resources
     echo "  num-threads: 2" >> $UB_CORE_CONF
   else
