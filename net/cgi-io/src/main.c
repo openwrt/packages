@@ -263,6 +263,64 @@ postdecode(char **fields, int n_fields)
 	return (found >= n_fields);
 }
 
+static char *
+canonicalize_path(const char *path, size_t len)
+{
+	char *canonpath, *cp;
+	const char *p, *e;
+
+	if (path == NULL || *path == '\0')
+		return NULL;
+
+	canonpath = datadup(path, len);
+
+	if (canonpath == NULL)
+		return NULL;
+
+	/* normalize */
+	for (cp = canonpath, p = path, e = path + len; p < e; ) {
+		if (*p != '/')
+			goto next;
+
+		/* skip repeating / */
+		if ((p + 1 < e) && (p[1] == '/')) {
+			p++;
+			continue;
+		}
+
+		/* /./ or /../ */
+		if ((p + 1 < e) && (p[1] == '.')) {
+			/* skip /./ */
+			if ((p + 2 >= e) || (p[2] == '/')) {
+				p += 2;
+				continue;
+			}
+
+			/* collapse /x/../ */
+			if ((p + 2 < e) && (p[2] == '.') && ((p + 3 >= e) || (p[3] == '/'))) {
+				while ((cp > canonpath) && (*--cp != '/'))
+					;
+
+				p += 3;
+				continue;
+			}
+		}
+
+next:
+		*cp++ = *p++;
+	}
+
+	/* remove trailing slash if not root / */
+	if ((cp > canonpath + 1) && (cp[-1] == '/'))
+		cp--;
+	else if (cp == canonpath)
+		*cp++ = '/';
+
+	*cp = '\0';
+
+	return canonpath;
+}
+
 static int
 response(bool success, const char *message)
 {
@@ -417,6 +475,9 @@ data_begin_cb(multipart_parser *p)
 		if (!st.filename)
 			return response(false, "File data without name");
 
+		if (!session_access(st.sessionid, st.filename, "write"))
+			return response(false, "Access to path denied by ACL");
+
 		st.tempfd = mkstemp(tmpname);
 
 		if (st.tempfd < 0)
@@ -438,7 +499,7 @@ data_cb(multipart_parser *p, const char *data, size_t len)
 		break;
 
 	case PART_FILENAME:
-		st.filename = datadup(data, len);
+		st.filename = canonicalize_path(data, len);
 		break;
 
 	case PART_FILEMODE:
