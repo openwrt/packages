@@ -29,7 +29,7 @@ define Package/opennhrp
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=VPN
-  DEPENDS:=+libcares +ipsec-tools +ip +kmod-gre
+  DEPENDS:=+libcares +ip +kmod-gre
   KCONFIG:=CONFIG_ARPD=y
   TITLE:=NBMA Next Hop Resolution Protocol
   URL:=http://opennhrp.sourceforge.net/
