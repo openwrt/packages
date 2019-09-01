@@ -15,7 +15,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.lighttpd.net/lighttpd/releases-1.4.x
 PKG_HASH:=cf14cce2254a96d8fcb6d3181e1a3c29a8f832531c3e86ff6f2524ecda9a8721
 
-PKG_LICENSE:=BSD-3c
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:lighttpd:lighttpd
 
@@ -31,11 +32,10 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
 define Package/lighttpd/Default
-  SUBMENU:=Web Servers/Proxies
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://www.lighttpd.net/
-  MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+  SUBMENU:=Web Servers/Proxies
+  URL:=https://www.lighttpd.net/
 endef
 
 define Package/lighttpd
