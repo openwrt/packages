@@ -1,0 +1,56 @@
+From 2105dae0f9d7a964375ce681e53cb165375f84c1 Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Sun, 1 Jul 2018 12:38:28 -0400
+Subject: [PATCH] [mod_alias] security: potential path traversal with specific
+ configs
+
+Security: potential path traversal of a single directory above the alias
+target with a specific mod_alias config where the alias which is matched
+does not end in '/', but alias target filesystem path does end in '/'.
+
+e.g. server.docroot = "/srv/www/host/HOSTNAME/docroot"
+     alias.url = ( "/img" => "/srv/www/hosts/HOSTNAME/images/" )
+
+If a malicious URL "/img../" were passed, the request would be
+for directory "/srv/www/hosts/HOSTNAME/images/../" which would resolve
+to "/srv/www/hosts/HOSTNAME/".  If mod_dirlisting were enabled, which
+is not the default, this would result in listing the contents of the
+directory above the alias.  An attacker might also try to directly
+access files anywhere under that path, which is one level above the
+intended aliased path.
+
+credit: Orange Tsai(@orange_8361) from DEVCORE
+
+Fixes CVE-2018-19052
+---
+ src/mod_alias.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/src/mod_alias.c b/src/mod_alias.c
+index 18569943..eec14f24 100644
+--- a/src/mod_alias.c
++++ b/src/mod_alias.c
+@@ -181,6 +181,21 @@ PHYSICALPATH_FUNC(mod_alias_physical_handler) {
+ 					strncmp(uri_ptr, ds->key->ptr, alias_len))) {
+ 			/* matched */
+
++			/* check for path traversal in url-path following alias if key
++			 * does not end in slash, but replacement value ends in slash */
++			if (uri_ptr[alias_len] == '.') {
++				char *s = uri_ptr + alias_len + 1;
++				if (*s == '.') ++s;
++				if (*s == '/' || *s == '\0') {
++					size_t vlen = buffer_string_length(ds->value);
++					if (0 != alias_len && ds->key->ptr[alias_len-1] != '/'
++					    && 0 != vlen && ds->value->ptr[vlen-1] == '/') {
++						con->http_status = 403;
++						return HANDLER_FINISHED;
++					}
++				}
++			}
++
+ 			buffer_copy_buffer(con->physical.basedir, ds->value);
+ 			buffer_copy_buffer(srv->tmp_buf, ds->value);
+ 			buffer_append_string(srv->tmp_buf, uri_ptr + alias_len);
+--
+2.20.1

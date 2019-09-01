@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
 PKG_VERSION:=1.4.48
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.lighttpd.net/lighttpd/releases-1.4.x
@@ -31,7 +31,7 @@ define Package/lighttpd/Default
   SUBMENU:=Web Servers/Proxies
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://www.lighttpd.net/
+  URL:=https://www.lighttpd.net/
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 endef
 
