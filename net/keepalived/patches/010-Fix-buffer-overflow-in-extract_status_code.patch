@@ -1,0 +1,57 @@
+From f28015671a4b04785859d1b4b1327b367b6a10e9 Mon Sep 17 00:00:00 2001
+From: Quentin Armitage <quentin@armitage.org.uk>
+Date: Tue, 24 Jul 2018 09:28:43 +0100
+Subject: [PATCH] Fix buffer overflow in extract_status_code()
+
+Issue #960 identified that the buffer allocated for copying the
+HTTP status code could overflow if the http response was corrupted.
+
+This commit changes the way the status code is read, avoids copying
+data, and also ensures that the status code is three digits long,
+is non-negative and occurs on the first line of the response.
+
+Signed-off-by: Quentin Armitage <quentin@armitage.org.uk>
+---
+ lib/html.c | 23 +++++++++--------------
+ 1 file changed, 9 insertions(+), 14 deletions(-)
+
+diff --git a/lib/html.c b/lib/html.c
+index 5a3eaeac..69d3bd2d 100644
+--- a/lib/html.c
++++ b/lib/html.c
+@@ -58,23 +58,18 @@ size_t extract_content_length(char *buffer, size_t size)
+  */
+ int extract_status_code(char *buffer, size_t size)
+ {
+-	char *buf_code;
+-	char *begin;
+ 	char *end = buffer + size;
+-	size_t inc = 0;
+-	int code;
+-
+-	/* Allocate the room */
+-	buf_code = (char *)MALLOC(10);
++	unsigned long code;
+ 
+ 	/* Status-Code extraction */
+-	while (buffer < end && *buffer++ != ' ') ;
+-	begin = buffer;
+-	while (buffer < end && *buffer++ != ' ')
+-		inc++;
+-	strncat(buf_code, begin, inc);
+-	code = atoi(buf_code);
+-	FREE(buf_code);
++	while (buffer < end && *buffer != ' ' && *buffer != '\r')
++		buffer++;
++	buffer++;
++	if (buffer + 3 >= end || *buffer == ' ' || buffer[3] != ' ')
++		return 0;
++	code = strtoul(buffer, &end, 10);
++	if (buffer + 3 != end)
++		return 0;
+ 	return code;
+ }
+ 
+-- 
+2.20.1
+
