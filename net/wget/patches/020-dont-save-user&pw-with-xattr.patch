@@ -1,0 +1,112 @@
+From 3cdfb594cf75f11cdbb9702ac5e856c332ccacfa Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20R=C3=BChsen?= <tim.ruehsen@gmx.de>
+Date: Wed, 26 Dec 2018 14:38:18 +0100
+Subject: Don't save user/pw with --xattr
+
+Also the Referer info is reduced to scheme+host+port.
+
+* src/ftp.c (getftp): Change params of set_file_metadata()
+* src/http.c (gethttp): Change params of set_file_metadata()
+* src/xattr.c (set_file_metadata): Remove user/password from origin URL,
+  reduce Referer value to scheme/host/port.
+* src/xattr.h: Change prototype of set_file_metadata()
+---
+ src/ftp.c   |  2 +-
+ src/http.c  |  4 ++--
+ src/xattr.c | 24 ++++++++++++++++++++----
+ src/xattr.h |  3 ++-
+ 4 files changed, 25 insertions(+), 8 deletions(-)
+
+--- a/src/ftp.c
++++ b/src/ftp.c
+@@ -1580,7 +1580,7 @@ Error in server response, closing contro
+ 
+ #ifdef ENABLE_XATTR
+   if (opt.enable_xattr)
+-    set_file_metadata (u->url, NULL, fp);
++    set_file_metadata (u, NULL, fp);
+ #endif
+ 
+   fd_close (local_sock);
+--- a/src/http.c
++++ b/src/http.c
+@@ -4120,9 +4120,9 @@ gethttp (const struct url *u, struct url
+   if (opt.enable_xattr)
+     {
+       if (original_url != u)
+-        set_file_metadata (u->url, original_url->url, fp);
++        set_file_metadata (u, original_url, fp);
+       else
+-        set_file_metadata (u->url, NULL, fp);
++        set_file_metadata (u, NULL, fp);
+     }
+ #endif
+ 
+--- a/src/xattr.c
++++ b/src/xattr.c
+@@ -21,6 +21,7 @@
+ #include <string.h>
+ 
+ #include "log.h"
++#include "utils.h"
+ #include "xattr.h"
+ 
+ #ifdef USE_XATTR
+@@ -57,7 +58,7 @@ write_xattr_metadata (const char *name,
+ #endif /* USE_XATTR */
+ 
+ int
+-set_file_metadata (const char *origin_url, const char *referrer_url, FILE *fp)
++set_file_metadata (const struct url *origin_url, const struct url *referrer_url, FILE *fp)
+ {
+   /* Save metadata about where the file came from (requested, final URLs) to
+    * user POSIX Extended Attributes of retrieved file.
+@@ -67,13 +68,28 @@ set_file_metadata (const char *origin_ur
+    * [http://0pointer.de/lennart/projects/mod_mime_xattr/].
+    */
+   int retval = -1;
++  char *value;
+ 
+   if (!origin_url || !fp)
+     return retval;
+ 
+-  retval = write_xattr_metadata ("user.xdg.origin.url", escnonprint_uri (origin_url), fp);
+-  if ((!retval) && referrer_url)
+-    retval = write_xattr_metadata ("user.xdg.referrer.url", escnonprint_uri (referrer_url), fp);
++  value = url_string (origin_url, URL_AUTH_HIDE);
++  retval = write_xattr_metadata ("user.xdg.origin.url", escnonprint_uri (value), fp);
++  xfree (value);
++
++  if (!retval && referrer_url)
++    {
++	  struct url u;
++
++	  memset(&u, 0, sizeof(u));
++      u.scheme = referrer_url->scheme;
++      u.host = referrer_url->host;
++      u.port = referrer_url->port;
++
++      value = url_string (&u, 0);
++      retval = write_xattr_metadata ("user.xdg.referrer.url", escnonprint_uri (value), fp);
++      xfree (value);
++    }
+ 
+   return retval;
+ }
+--- a/src/xattr.h
++++ b/src/xattr.h
+@@ -16,12 +16,13 @@
+    along with this program; if not, see <http://www.gnu.org/licenses/>.  */
+ 
+ #include <stdio.h>
++#include <url.h>
+ 
+ #ifndef _XATTR_H
+ #define _XATTR_H
+ 
+ /* Store metadata name/value attributes against fp. */
+-int set_file_metadata (const char *origin_url, const char *referrer_url, FILE *fp);
++int set_file_metadata (const struct url *origin_url, const struct url *referrer_url, FILE *fp);
+ 
+ #if defined(__linux)
+ /* libc on Linux has fsetxattr (5 arguments). */
