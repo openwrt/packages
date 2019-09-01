@@ -1,0 +1,60 @@
+From c125d24762962d91050d925fbbd9e6f30b2302f8 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20R=C3=BChsen?= <tim.ruehsen@gmx.de>
+Date: Wed, 26 Dec 2018 13:51:48 +0100
+Subject: Don't use extended attributes (--xattr) by default
+
+* src/init.c (defaults): Set enable_xattr to false by default
+* src/main.c (print_help): Reverse option logic of --xattr
+* doc/wget.texi: Add description for --xattr
+
+Users may not be aware that the origin URL and Referer are saved
+including credentials, and possibly access tokens within
+the urls.
+---
+ doc/wget.texi | 8 ++++++++
+ src/init.c    | 4 ----
+ src/main.c    | 2 +-
+ 3 files changed, 9 insertions(+), 5 deletions(-)
+
+--- a/doc/wget.texi
++++ b/doc/wget.texi
+@@ -540,6 +540,14 @@ right NUMBER.
+ Set preferred location for Metalink resources. This has effect if multiple
+ resources with same priority are available.
+ 
++@cindex xattr
++@item --xattr
++Enable use of file system's extended attributes to save the
++original URL and the Referer HTTP header value if used.
++
++Be aware that the URL might contain private information like
++access tokens or credentials.
++
+ 
+ @cindex force html
+ @item -F
+--- a/src/init.c
++++ b/src/init.c
+@@ -509,11 +509,7 @@ defaults (void)
+   opt.hsts = true;
+ #endif
+ 
+-#ifdef ENABLE_XATTR
+-  opt.enable_xattr = true;
+-#else
+   opt.enable_xattr = false;
+-#endif
+ }
+ 
+ /* Return the user's home directory (strdup-ed), or NULL if none is
+--- a/src/main.c
++++ b/src/main.c
+@@ -754,7 +754,7 @@ Download:\n"),
+ #endif
+ #ifdef ENABLE_XATTR
+     N_("\
+-       --no-xattr                  turn off storage of metadata in extended file attributes\n"),
++       --xattr                     turn on storage of metadata in extended file attributes\n"),
+ #endif
+     "\n",
+ 
