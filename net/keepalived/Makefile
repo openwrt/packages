@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
-PKG_VERSION:=1.4.4
+PKG_VERSION:=1.4.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.keepalived.org/software
-PKG_HASH:=147c2b3b782223128551fd0a1564eaa30ed84a94b68c50ec5087747941314704
+PKG_SOURCE_URL:=https://www.keepalived.org/software
+PKG_HASH:=c7be18f6f90c8da6cc18cd8a90971b7a7da3823df091fcc7500d130fdb010c4d
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
@@ -29,7 +29,7 @@ define Package/keepalived
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Failover and monitoring daemon for LVS clusters
-  URL:=http://www.keepalived.org/
+  URL:=https://www.keepalived.org/
   DEPENDS:= \
     +PACKAGE_libnl-genl:libnl-genl \
     +libopenssl \
