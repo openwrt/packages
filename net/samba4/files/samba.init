@@ -211,9 +211,9 @@ start_service() {
 	fi
 	# lower priority using renice (if found)
 	if [ -x /usr/bin/renice ]; then
-		[ -x /usr/sbin/samba ] && renice -n 2 "$(pidof samba)"
-		[ -x /usr/sbin/smbd ] && renice -n 2 "$(pidof smbd)"
-		[ -x /usr/sbin/nmbd ] && renice -n 2 "$(pidof nmbd)"
-		[ -x /usr/sbin/winbindd ] && renice -n 2 "$(pidof winbindd)"
+		[ -x /usr/sbin/samba ] && renice -n 2 $(pidof samba)
+		[ -x /usr/sbin/smbd ] && renice -n 2 $(pidof smbd)
+		[ -x /usr/sbin/nmbd ] && renice -n 2 $(pidof nmbd)
+		[ -x /usr/sbin/winbindd ] && renice -n 2 $(pidof winbindd)
 	fi
 }
