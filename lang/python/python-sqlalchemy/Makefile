@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-sqlalchemy
-PKG_VERSION:=1.3.5
+PKG_VERSION:=1.3.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=SQLAlchemy-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/S/SQLAlchemy/
-PKG_HASH:=c30925d60af95443458ebd7525daf791f55762b106049ae71e18f8dd58084c2f
+PKG_HASH:=0459bf0ea6478f3e904de074d65769a11d74cdc34438ab3159250c96d089aef0
 PKG_BUILD_DIR:=$(BUILD_DIR)/SQLAlchemy-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
