@@ -1,5 +1,3 @@
-diff --git a/alsaloop/Makefile.am b/alsaloop/Makefile.am
-index 4cdf20b..0715b02 100644
 --- a/alsaloop/Makefile.am
 +++ b/alsaloop/Makefile.am
 @@ -1,9 +1,9 @@
@@ -15,21 +13,6 @@ index 4cdf20b..0715b02 100644
  # LDFLAGS = -static
  # CFLAGS += -g -Wall
  
-diff --git a/alsaloop/Makefile.in b/alsaloop/Makefile.in
-index 374cbcc..25dbae3 100644
---- a/alsaloop/Makefile.in
-+++ b/alsaloop/Makefile.in
-@@ -51,7 +51,7 @@ PRE_UNINSTALL = :
- POST_UNINSTALL = :
- build_triplet = @build@
- host_triplet = @host@
--@HAVE_SAMPLERATE_TRUE@am__append_1 = -lsamplerate
-+# @HAVE_SAMPLERATE_TRUE@am__append_1 = -lsamplerate
- bin_PROGRAMS = alsaloop$(EXEEXT)
- subdir = alsaloop
- DIST_COMMON = $(noinst_HEADERS) $(srcdir)/Makefile.am \
-diff --git a/configure.ac b/configure.ac
-index 3e8f1e8..487e5de 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -38,8 +38,8 @@ AC_CHECK_HEADERS([alsa/use-case.h], [have_ucm="yes"], [have_ucm="no"],
