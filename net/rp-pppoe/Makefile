@@ -9,8 +9,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rp-pppoe
 PKG_VERSION:=3.12
-PKG_RELEASE:=6
-PKG_LICENSE:=LGPL-2.0+
+PKG_RELEASE:=7
+PKG_LICENSE:=LGPL-2.0-or-later
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://roaringpenguin.com/files/download

@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pkg-config
 PKG_VERSION:=0.29.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://pkg-config.freedesktop.org/releases/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=6fc69c01688c9458a57eb9a1664c9aba372ccda420a02bf4429fe610e7e7d591
 PKG_MAINTAINER:=Heinrich Schuchardt <xypron.glpk@gmx.de>
-PKG_LICENSE:=GPL-2+
+PKG_LICENSE:=GPL-2.0-or-later
 
 PKG_ASLR_PIE:=1
 PKG_INSTALL:=1

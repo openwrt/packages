@@ -8,8 +8,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=remserial
 PKG_VERSION:=1.4
-PKG_RELEASE:=1
-PKG_LICENSE:=GPL-2.0+
+PKG_RELEASE:=2
+PKG_LICENSE:=GPL-2.0-or-later
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://lpccomp.bc.ca/remserial/

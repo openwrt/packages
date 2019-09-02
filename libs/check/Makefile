@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=check
 PKG_VERSION:=0.12.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/libcheck/check/releases/download/$(PKG_VERSION)
 PKG_HASH:=464201098bee00e90f5c4bdfa94a5d3ead8d641f9025b560a27755a83b824234
 
-PKG_LICENSE:=LGPL-2.1+
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING.LESSER
 PKG_MAINTAINER:=Eduardo Abinader <eduardoabinader@gmail.com>
 

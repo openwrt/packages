@@ -7,13 +7,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpc
 PKG_VERSION:=0.30
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.musicpd.org/download/mpc/0
 PKG_HASH:=65fc5b0a8430efe9acbe6e261127960682764b20ab994676371bdc797d867fce
 
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 

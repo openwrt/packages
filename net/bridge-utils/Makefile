@@ -10,14 +10,14 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=bridge-utils
 PKG_VERSION:=1.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/net/$(PKG_NAME)
 PKG_HASH:=cc67efb5d5fb8928a6569b3fade2b4042ec17da04678dab127d96b46489e26c8
 PKG_MAINTAINER:=Nikolay Martynov <mar.kolya@gmail.com>
 
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_FIXUP:=autoreconf
 

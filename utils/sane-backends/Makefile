@@ -10,13 +10,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sane-backends
 PKG_VERSION:=1.0.27
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://fossies.org/linux/misc \
     https://alioth.debian.org/frs/download.php/file/4146/
 PKG_HASH:=293747bf37275c424ebb2c833f8588601a60b2f9653945d5a3194875355e36c9
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
-PKG_LICENSE:=GPL-2.0 GPL-2.0+
+PKG_LICENSE:=GPL-2.0 GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING LICENSE
 PKG_CPE_ID:=cpe:/a:sane-backends_project:sane-backends
 

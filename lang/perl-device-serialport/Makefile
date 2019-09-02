@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-device-serialport
 PKG_VERSION:=1.04
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/C/CO/COOK/
 PKG_SOURCE:=Device-SerialPort-$(PKG_VERSION).tar.gz
 PKG_HASH:=d392567cb39b4ea606c0e0acafd8ed72320311b995336ece5fcefcf9b150e9d7
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_MAINTAINER:=Paul Oranje <por@xs4all.nl>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Device-SerialPort-$(PKG_VERSION)

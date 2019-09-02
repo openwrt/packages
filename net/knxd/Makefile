@@ -12,7 +12,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knxd
 PKG_VERSION:=0.14.29
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/knxd/knxd/tar.gz/$(PKG_VERSION)?
@@ -20,7 +20,7 @@ PKG_HASH:=4513328dd5ecfc17955e6884e938d652dbd33b82797893ae9ad768a247a0f63e
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_PARALLEL:=1

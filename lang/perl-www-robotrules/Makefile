@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-www-robotrules
 PKG_VERSION:=6.02
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GA/GAAS
 PKG_SOURCE:=WWW-RobotRules-$(PKG_VERSION).tar.gz
 PKG_HASH:=46b502e7a288d559429891eeb5d979461dd3ecc6a5c491ead85d165b6e03a51e
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/WWW-RobotRules-$(PKG_VERSION)

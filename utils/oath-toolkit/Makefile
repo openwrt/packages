@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oath-toolkit
 PKG_VERSION:=2.6.2
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=oath-toolkit-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SAVANNAH/oath-toolkit
 PKG_HASH:=b03446fa4b549af5ebe4d35d7aba51163442d255660558cd861ebce536824aa0
 
 PKG_MAINTAINER:=Fam Zheng <fam@euphon.net>
-PKG_LICENSE:=LGPL-2.0+ GPL-3.0+
+PKG_LICENSE:=LGPL-2.0-or-later GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:nongnu:oath_toolkit
 
