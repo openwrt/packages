@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-gmpy2
 PKG_VERSION:=2.0.8
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=gmpy2-$(PKG_VERSION).zip
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/g/gmpy2
@@ -17,7 +17,7 @@ PKG_HASH:=dd233e3288b90f21b0bb384bcc7a7e73557bb112ccf0032ad52aa614eb373d3f
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-gmpy2-$(PKG_VERSION)
 
-PKG_LICENSE:=LGPL-3.0+
+PKG_LICENSE:=LGPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING.LESSER
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 

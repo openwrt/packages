@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openobex
 PKG_VERSION:=1.7.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-Source.tar.gz
 PKG_SOURCE_URL:=@SF/openobex
@@ -17,7 +17,7 @@ PKG_HASH:=158860aaea52f0fce0c8e4b64550daaae06df2689e05834697b7e8c7d73dd4fc
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-Source
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
-PKG_LICENSE:=GPL-2.0+ LGPL-2.1+
+PKG_LICENSE:=GPL-2.0-or-later LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:openobex:openobex
 

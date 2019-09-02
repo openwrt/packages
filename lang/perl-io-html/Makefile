@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-io-html
 PKG_VERSION:=1.001
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/C/CJ/CJM
 PKG_SOURCE:=IO-HTML-$(PKG_VERSION).tar.gz
 PKG_HASH:=ea78d2d743794adc028bc9589538eb867174b4e165d7d8b5f63486e6b828e7e0
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/IO-HTML-$(PKG_VERSION)

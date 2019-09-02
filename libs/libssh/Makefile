@@ -7,12 +7,12 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_LICENSE:=LGPL-2.1+ BSD-2-Clause
+PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 
 PKG_NAME:=libssh
 PKG_VERSION:=0.7.6
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.libssh.org/files/0.7/
