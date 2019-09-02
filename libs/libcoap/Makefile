@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcoap
 PKG_VERSION:=4.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/obgm/libcoap/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=9523e38da6ee8b2a8f5ce83ded64107dd1e514c7ad00cd74ccfe3454b679c271
 
 PKG_MAINTAINER:=Anton Glukhov <anton.a.glukhov@gmail.com>
-PKG_LICENSE:=GPL-2.0+ BSD-2-Clause
+PKG_LICENSE:=GPL-2.0-or-later BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING LICENSE.GPL LICENSE.BSD
 
 PKG_FIXUP:=autoreconf

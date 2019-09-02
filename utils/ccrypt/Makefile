@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ccrypt
 PKG_VERSION:=1.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/ccrypt
 PKG_HASH:=b19c47500a96ee5fbd820f704c912f6efcc42b638c0a6aa7a4e3dc0a6b51a44f
 PKG_MAINTAINER:=Hannu Nyman <hannu.nyman@iki.fi>
-PKG_LICENSE:=GPLv2+
+PKG_LICENSE:=GPL-2.0-or-later
 
 PKG_FIXUP:=autoreconf
 

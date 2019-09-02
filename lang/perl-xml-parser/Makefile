@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-xml-parser
 PKG_VERSION:=2.44
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/T/TO/TODDR/
 PKG_SOURCE:=XML-Parser-$(PKG_VERSION).tar.gz
 PKG_HASH:=1ae9d07ee9c35326b3d9aad56eae71a6730a73a116b9fe9e8a4758b7cc033216
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/XML-Parser-$(PKG_VERSION)

@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-uri
 PKG_VERSION:=1.72
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/E/ET/ETHER/
 PKG_SOURCE:=URI-$(PKG_VERSION).tar.gz
 PKG_HASH:=35f14431d4b300de4be1163b0b5332de2d7fbda4f05ff1ed198a8e9330d40a32
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/URI-$(PKG_VERSION)

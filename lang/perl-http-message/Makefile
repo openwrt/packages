@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-http-message
 PKG_VERSION:=6.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/E/ET/ETHER
 PKG_SOURCE:=HTTP-Message-$(PKG_VERSION).tar.gz
 PKG_HASH:=e7b368077ae6a188d99920411d8f52a8e5acfb39574d4f5c24f46fd22533d81b
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/HTTP-Message-$(PKG_VERSION)

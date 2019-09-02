@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgcrypt
 PKG_VERSION:=1.8.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.gnupg.org/ftp/gcrypt/libgcrypt/
 PKG_HASH:=f638143a0672628fde0cad745e9b14deb85dffb175709cacc1f4fe24b93f2227
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-PKG_LICENSE:=LGPL-2.1+ GPL-2.0+
+PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gnupg:libgcrypt
 

@@ -13,13 +13,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcpproxy
 PKG_VERSION:=1.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.spreadspace.org/tcpproxy/releases/
 PKG_HASH:=446104b3abefda73b1255e5197702acbeb36b3aada251ad39e1e5ab55292683b
 PKG_MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
-PKG_LICENSE:=GPL-3.0+
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 include $(INCLUDE_DIR)/package.mk
 

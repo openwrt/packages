@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-net-http
 PKG_VERSION:=6.09
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/E/ET/ETHER
 PKG_SOURCE:=Net-HTTP-$(PKG_VERSION).tar.gz
 PKG_HASH:=52762b939d84806908ba544581c5708375f7938c3c0e496c128ca3fbc425e58d
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Net-HTTP-$(PKG_VERSION)

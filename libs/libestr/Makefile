@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libestr
 PKG_VERSION:=0.1.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://libestr.adiscon.com/files/download/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=46632b2785ff4a231dcf241eeb0dcb5fc0c7d4da8ee49cf5687722cdbe8b2024
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
-PKG_LICENSE:=LGPL-2.1+
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf

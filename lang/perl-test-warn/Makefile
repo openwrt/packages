@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-test-warn
 PKG_VERSION:=0.30
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/C/CH/CHORNY
 PKG_SOURCE:=Test-Warn-$(PKG_VERSION).tar.gz
 PKG_HASH:=8197555b94189d919349a03f7058f83861f145af9bee59f505bfe47562144e41
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Test-Warn-$(PKG_VERSION)

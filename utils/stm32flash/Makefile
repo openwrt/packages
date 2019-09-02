@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stm32flash
 PKG_VERSION:=0.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
 PKG_HASH:=97aa9422ef02e82f7da9039329e21a437decf972cb3919ad817f70ac9a49e306
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 PKG_MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=gpl-2.0.txt
 include $(INCLUDE_DIR)/package.mk
 
