@@ -1,6 +1,6 @@
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=sqlparse
+PKG_NAME:=python3-sqlparse
 PKG_VERSION:=0.3.0
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD
@@ -16,7 +16,7 @@ PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/sqlparse
+define Package/python3-sqlparse
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
@@ -26,9 +26,9 @@ define Package/sqlparse
   VARIANT:=python3
 endef
 
-define Package/sqlparse/description
+define Package/python3-sqlparse/description
   A non-validating SQL parser module. It provides support for parsing, splitting and formatting SQL statements.
 endef
 
-$(eval $(call Py3Package,sqlparse))
-$(eval $(call BuildPackage,sqlparse))
+$(eval $(call Py3Package,python3-sqlparse))
+$(eval $(call BuildPackage,python3-sqlparse))
