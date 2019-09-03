@@ -1,17 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
-PKG_VERSION:=3.22.1
+PKG_VERSION:=3.23.1
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
-PKG_LICENSE:=LGPL-2.1+
-PKG_LICENSE_FILES:=COPYING
+PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING LGPL.txt GPL.txt
 PKG_CPE_ID:=cpe:/a:balabit:syslog-ng
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/balabit/syslog-ng/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
-PKG_HASH:=0656443776fa554320cb81bbebeac72bdf871298dd2ebef7413c393aec4d74c8
+PKG_HASH:=fb36cfc1982831f74143b77a924ee79714745b5e2b3ff59d086d09a77d0acd38
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -25,9 +25,9 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/syslog-ng
   SECTION:=admin
   CATEGORY:=Administration
-  DEPENDS:=+libpcre +glib2 +libopenssl +libpthread +librt +zlib +libdbi +libjson-c +libcurl +libuuid
   TITLE:=A powerful syslog daemon
   URL:=https://www.syslog-ng.com/products/open-source-log-management/
+  DEPENDS:=+libpcre +glib2 +libopenssl +libpthread +librt +zlib +libdbi +libjson-c +libcurl +libuuid
 endef
 
 define Package/syslog-ng/description
