@@ -1,0 +1,100 @@
+Index: libuwifi-2019-05-27/ccan/build_assert/_info
+===================================================================
+--- libuwifi-2019-05-27.orig/ccan/build_assert/_info
++++ libuwifi-2019-05-27/ccan/build_assert/_info
+@@ -1,4 +1,4 @@
+-#include "config.h"
++#include "../config.h"
+ #include <stdio.h>
+ #include <string.h>
+ 
+Index: libuwifi-2019-05-27/ccan/check_type/_info
+===================================================================
+--- libuwifi-2019-05-27.orig/ccan/check_type/_info
++++ libuwifi-2019-05-27/ccan/check_type/_info
+@@ -1,4 +1,4 @@
+-#include "config.h"
++#include "../config.h"
+ #include <stdio.h>
+ #include <string.h>
+ 
+Index: libuwifi-2019-05-27/ccan/check_type/check_type.h
+===================================================================
+--- libuwifi-2019-05-27.orig/ccan/check_type/check_type.h
++++ libuwifi-2019-05-27/ccan/check_type/check_type.h
+@@ -1,7 +1,7 @@
+ /* CC0 (Public domain) - see LICENSE file for details */
+ #ifndef CCAN_CHECK_TYPE_H
+ #define CCAN_CHECK_TYPE_H
+-#include "config.h"
++#include "../config.h"
+ 
+ /**
+  * check_type - issue a warning or build failure if type is not correct.
+Index: libuwifi-2019-05-27/ccan/container_of/_info
+===================================================================
+--- libuwifi-2019-05-27.orig/ccan/container_of/_info
++++ libuwifi-2019-05-27/ccan/container_of/_info
+@@ -1,4 +1,4 @@
+-#include "config.h"
++#include "../config.h"
+ #include <stdio.h>
+ #include <string.h>
+ 
+Index: libuwifi-2019-05-27/ccan/container_of/container_of.h
+===================================================================
+--- libuwifi-2019-05-27.orig/ccan/container_of/container_of.h
++++ libuwifi-2019-05-27/ccan/container_of/container_of.h
+@@ -3,7 +3,7 @@
+ #define CCAN_CONTAINER_OF_H
+ #include <stddef.h>
+ 
+-#include "config.h"
++#include "../config.h"
+ #include <ccan/check_type/check_type.h>
+ 
+ /**
+Index: libuwifi-2019-05-27/ccan/list/_info
+===================================================================
+--- libuwifi-2019-05-27.orig/ccan/list/_info
++++ libuwifi-2019-05-27/ccan/list/_info
+@@ -1,4 +1,4 @@
+-#include "config.h"
++#include "../config.h"
+ #include <stdio.h>
+ #include <string.h>
+ 
+Index: libuwifi-2019-05-27/ccan/str/_info
+===================================================================
+--- libuwifi-2019-05-27.orig/ccan/str/_info
++++ libuwifi-2019-05-27/ccan/str/_info
+@@ -1,4 +1,4 @@
+-#include "config.h"
++#include "../config.h"
+ #include <stdio.h>
+ #include <string.h>
+ 
+Index: libuwifi-2019-05-27/ccan/str/debug.c
+===================================================================
+--- libuwifi-2019-05-27.orig/ccan/str/debug.c
++++ libuwifi-2019-05-27/ccan/str/debug.c
+@@ -1,5 +1,5 @@
+ /* CC0 (Public domain) - see LICENSE file for details */
+-#include "config.h"
++#include "../config.h"
+ #include <ccan/str/str_debug.h>
+ #include <assert.h>
+ #include <ctype.h>
+Index: libuwifi-2019-05-27/ccan/str/str.h
+===================================================================
+--- libuwifi-2019-05-27.orig/ccan/str/str.h
++++ libuwifi-2019-05-27/ccan/str/str.h
+@@ -1,7 +1,7 @@
+ /* CC0 (Public domain) - see LICENSE file for details */
+ #ifndef CCAN_STR_H
+ #define CCAN_STR_H
+-#include "config.h"
++#include "../config.h"
+ #include <string.h>
+ #include <stdbool.h>
+ #include <limits.h>
