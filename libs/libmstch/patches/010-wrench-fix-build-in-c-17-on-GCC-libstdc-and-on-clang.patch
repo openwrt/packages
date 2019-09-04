@@ -1,0 +1,138 @@
+From ee63b2717de7261c95733bc1742d8dfc3317429e Mon Sep 17 00:00:00 2001
+From: "Damien Buhl (alias daminetreg)" <damien.buhl@lecbna.org>
+Date: Thu, 6 Sep 2018 05:07:03 +0200
+Subject: [PATCH] :wrench: fix build in c++17 on GCC libstdc++ and on
+ clang+libc++.
+
+---
+ CMakeLists.txt                 | 3 +--
+ include/mstch/mstch.hpp        | 4 ++--
+ src/render_context.cpp         | 4 ++--
+ src/state/in_section.cpp       | 6 +++---
+ src/state/outside_section.cpp  | 4 ++--
+ src/visitor/render_node.hpp    | 2 +-
+ src/visitor/render_section.hpp | 4 ++--
+ 7 files changed, 13 insertions(+), 14 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 8d8e0c7..7ee9f01 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -6,12 +6,11 @@ option(WITH_BENCHMARK "enable building benchmark executable" OFF)
+ 
+ set(CMAKE_INCLUDE_CURRENT_DIR ON)
+ set(CMAKE_INCLUDE_CURRENT_DIR_IN_INTERFACE ON)
+-set(CMAKE_BUILD_TYPE Release)
+ 
+ set(mstch_VERSION 1.0.1)
+ 
+ if(NOT MSVC)
+-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -O3")
++  add_compile_options(-Wall -Wextra)
+ endif()
+ 
+ add_subdirectory(src)
+diff --git a/include/mstch/mstch.hpp b/include/mstch/mstch.hpp
+index 58d3330..0af9e4d 100644
+--- a/include/mstch/mstch.hpp
++++ b/include/mstch/mstch.hpp
+@@ -97,11 +97,11 @@ using node = boost::make_recursive_variant<
+     std::nullptr_t, std::string, int, double, bool,
+     internal::lambda_t<boost::recursive_variant_>,
+     std::shared_ptr<internal::object_t<boost::recursive_variant_>>,
+-    std::map<const std::string, boost::recursive_variant_>,
++    std::map<std::string, boost::recursive_variant_>,
+     std::vector<boost::recursive_variant_>>::type;
+ using object = internal::object_t<node>;
+ using lambda = internal::lambda_t<node>;
+-using map = std::map<const std::string, node>;
++using map = std::map<std::string, node>;
+ using array = std::vector<node>;
+ 
+ std::string render(
+diff --git a/src/render_context.cpp b/src/render_context.cpp
+index 90b2ffc..756114d 100644
+--- a/src/render_context.cpp
++++ b/src/render_context.cpp
+@@ -41,8 +41,8 @@ const mstch::node& render_context::find_node(
+         {&find_node(token.substr(0, token.rfind('.')), current_nodes)});
+   else
+     for (auto& node: current_nodes)
+-      if (visit(has_token(token), *node))
+-        return visit(get_token(token, *node), *node);
++      if (mstch::visit(has_token(token), *node))
++        return mstch::visit(get_token(token, *node), *node);
+   return null_node;
+ }
+ 
+diff --git a/src/state/in_section.cpp b/src/state/in_section.cpp
+index a139913..0062493 100644
+--- a/src/state/in_section.cpp
++++ b/src/state/in_section.cpp
+@@ -16,9 +16,9 @@ std::string in_section::render(render_context& ctx, const token& token) {
+       auto& node = ctx.get_node(m_start_token.name());
+       std::string out;
+ 
+-      if (m_type == type::normal && !visit(is_node_empty(), node))
+-        out = visit(render_section(ctx, m_section, m_start_token.delims()), node);
+-      else if (m_type == type::inverted && visit(is_node_empty(), node))
++      if (m_type == type::normal && !mstch::visit(is_node_empty(), node))
++        out = mstch::visit(render_section(ctx, m_section, m_start_token.delims()), node);
++      else if (m_type == type::inverted && mstch::visit(is_node_empty(), node))
+         out = render_context::push(ctx).render(m_section);
+ 
+       ctx.set_state<outside_section>();
+diff --git a/src/state/outside_section.cpp b/src/state/outside_section.cpp
+index c9817b1..46e204b 100644
+--- a/src/state/outside_section.cpp
++++ b/src/state/outside_section.cpp
+@@ -18,9 +18,9 @@ std::string outside_section::render(
+       ctx.set_state<in_section>(in_section::type::inverted, token);
+       break;
+     case token::type::variable:
+-      return visit(render_node(ctx, flag::escape_html), ctx.get_node(token.name()));
++      return mstch::visit(render_node(ctx, flag::escape_html), ctx.get_node(token.name()));
+     case token::type::unescaped_variable:
+-      return visit(render_node(ctx, flag::none), ctx.get_node(token.name()));
++      return mstch::visit(render_node(ctx, flag::none), ctx.get_node(token.name()));
+     case token::type::text:
+       return token.raw();
+     case token::type::partial:
+diff --git a/src/visitor/render_node.hpp b/src/visitor/render_node.hpp
+index 633dd4d..d5d5b40 100644
+--- a/src/visitor/render_node.hpp
++++ b/src/visitor/render_node.hpp
+@@ -38,7 +38,7 @@ class render_node: public boost::static_visitor<std::string> {
+ 
+   std::string operator()(const lambda& value) const {
+     template_type interpreted{value([this](const mstch::node& n) {
+-      return visit(render_node(m_ctx), n);
++      return mstch::visit(render_node(m_ctx), n);
+     })};
+     auto rendered = render_context::push(m_ctx).render(interpreted);
+     return (m_flag == flag::escape_html) ? html_escape(rendered) : rendered;
+diff --git a/src/visitor/render_section.hpp b/src/visitor/render_section.hpp
+index f2d5259..ac753e3 100644
+--- a/src/visitor/render_section.hpp
++++ b/src/visitor/render_section.hpp
+@@ -31,7 +31,7 @@ class render_section: public boost::static_visitor<std::string> {
+     for (auto& token: m_section)
+       section_str += token.raw();
+     template_type interpreted{fun([this](const mstch::node& n) {
+-      return visit(render_node(m_ctx), n);
++      return mstch::visit(render_node(m_ctx), n);
+     }, section_str), m_delims};
+     return render_context::push(m_ctx).render(interpreted);
+   }
+@@ -42,7 +42,7 @@ class render_section: public boost::static_visitor<std::string> {
+       return render_context::push(m_ctx, array).render(m_section);
+     else
+       for (auto& item: array)
+-        out += visit(render_section(
++        out += mstch::visit(render_section(
+             m_ctx, m_section, m_delims, flag::keep_array), item);
+     return out;
+   }
+-- 
+2.17.1
+

@@ -1,0 +1,26 @@
+From 6dd1986dc8b713c212def7f8eab7f38e705f17a5 Mon Sep 17 00:00:00 2001
+From: Kira Backes <home_kira@kira-game.home.kirab.de>
+Date: Wed, 6 Feb 2019 16:56:47 +0100
+Subject: [PATCH] Fix assignment of string literals to node (conversion to
+ bool)
+
+---
+ include/mstch/mstch.hpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/include/mstch/mstch.hpp b/include/mstch/mstch.hpp
+index 2ea9855..bb86e78 100644
+--- a/include/mstch/mstch.hpp
++++ b/include/mstch/mstch.hpp
+@@ -118,6 +118,8 @@ struct node : std::variant<
+   node() : base_type(std::in_place_type<std::monostate>) {}
+ 
+   explicit node(const char* value) : base_type(std::in_place_type<std::string>, value) {}
++  
++  node& operator=(const char* value) { return *this = std::string{value}; }
+ 
+   base_type& base() { return *this; }
+   base_type const& base() const { return *this; }
+-- 
+2.17.1
+
