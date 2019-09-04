@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libuwifi
 PKG_VERSION:=2019-05-27
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/br101/libuwifi.git
@@ -37,8 +37,12 @@ MAKE_FLAGS += DEBUG=0 LIBNL=tiny BUILD_RADIOTAP=0
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/uwifi
+
 	$(CP) $(PKG_BUILD_DIR)/include/uwifi/*.h $(1)/usr/include/uwifi
+	$(CP) $(PKG_BUILD_DIR)/linux/*.h $(1)/usr/include/uwifi
+
 	$(CP) $(PKG_BUILD_DIR)/ccan $(1)/usr/include/
+	$(CP) $(PKG_BUILD_DIR)/config.h $(1)/usr/include/ccan/
 
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/build/libuwifi.{a,so*} $(1)/usr/lib/
