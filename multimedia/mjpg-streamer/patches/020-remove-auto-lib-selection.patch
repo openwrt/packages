@@ -30,12 +30,13 @@
 -        add_definitions(-DNO_LIBJPEG)
 -    endif (NOT JPEG_LIB)
 +#    if (NOT JPEG_LIB)
-+#        add_definitions(-DNO_LIBJPEG)
++        add_definitions(-DNO_LIBJPEG)
 +#    endif (NOT JPEG_LIB)
  
      MJPG_STREAMER_PLUGIN_COMPILE(input_uvc dynctrl.c
                                             input_uvc.c
-                                            jpeg_utils.c
+-                                           jpeg_utils.c
++#                                           jpeg_utils.c
                                             v4l2uvc.c)
  
 -    if (V4L2_LIB)
