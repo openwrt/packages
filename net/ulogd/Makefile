@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ulogd
 PKG_VERSION:=2.0.7
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://netfilter.org/projects/ulogd/files/ \
@@ -188,6 +188,7 @@ ULOGD_EXTRA_PLUGINS:= \
 	inppkt_UNIXSOCK \
 	output_GPRINT \
 	output_GRAPHITE \
+	output_IPFIX \
 	output_LOGEMU \
 	output_OPRINT \
 
