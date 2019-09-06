@@ -113,6 +113,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * **runtime information:** the adblock status is available via _/etc/init.d/adblock status_ (see example below)
 * **debug logging:** for script debugging please set the config option 'adb\_debug' to '1' and check the runtime output with _logread -e "adblock"_
 * **storage expansion:** to process and store all blocklist sources at once it might be helpful to enlarge your temp directory with a swap partition => see [OpenWrt Wiki](https://openwrt.org/docs/guide-user/storage/fstab) for further details
+* **coreutils sort:** To speedup adblock processing in particular with many enabled blocklist sources it's recommended to install the additional package 'coreutils-sort'
 * **add white- / blacklist entries:** add domain black- or whitelist entries to always-deny or -allow certain (sub) domains, by default both lists are empty and located in _/etc/adblock_. Please add one domain per line - ip addresses, wildcards & regex are _not_ allowed (see example below). You need to refresh your blocklists after changes to these static lists.
 * **download queue size:** for further download & list processing performance improvements you can raise the 'adb\_maxqueue' value, e.g. '8' or '16' should be safe
 * **scheduled list updates:** for a scheduled call of the adblock service add an appropriate crontab entry (see example below)
@@ -146,6 +147,9 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     * adb\_blacklist => full path to the static blacklist file (default: '/etc/adblock/adblock.blacklist')
     * adb\_whitelist => full path to the static whitelist file (default: '/etc/adblock/adblock.whitelist')
     * adb\_triggerdelay => additional trigger delay in seconds before adblock processing begins (int/default: '2')
+    * adb\_maxtld => disable the tld compression, if the number of blocked domains is greater than this value (int/default: '100000')
+    * adb\_portlist => space separated list of fw ports which should be redirected locally (default: '53 853 5353')
+    * adb\_dnsinotify => disable adblock triggered restarts and the 'DNS File Reset' for dns backends with autoload features (bool/default: 'false', disabled)
     * adb\_dnsflush => flush DNS cache after adblock processing, i.e. enable the old restart behavior (bool/default: '0', disabled)
     * adb\_repiface => reporting interface used by tcpdump, set to 'any' for multiple interfaces (default: 'br-lan')
     * adb\_replisten => space separated list of reporting port(s) used by tcpdump (default: '53')
