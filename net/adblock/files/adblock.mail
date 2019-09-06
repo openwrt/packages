@@ -1,5 +1,4 @@
 #!/bin/sh
-#
 # send mail script for adblock notifications
 # written by Dirk Brenken (dev@brenken.org)
 # Please note: you have to manually install and configure the package 'msmtp' before using this script
