@@ -9,7 +9,7 @@ PECL_NAME:=krb5
 PECL_LONGNAME:=Bindings for the Kerberos library
 
 PKG_VERSION:=1.1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_HASH:=3301e047fc7dc3574da19b2a4b18e15feca5ad39db9335c3353a8e16b855c35b
 
 PKG_NAME:=php7-pecl-krb5
@@ -18,7 +18,7 @@ PKG_SOURCE_URL:=http://pecl.php.net/get/
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
-PKG_LICENSE:=BSD
+PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DEPENDS:=php7
