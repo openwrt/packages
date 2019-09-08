@@ -39,6 +39,9 @@ start_instance() {
 			return
 		fi
 
+		# ensure that the symlink target exists
+		mkdir -p $(dirname $path)
+
 		ln -s $config_path $path
 	fi
 
