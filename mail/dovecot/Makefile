@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dovecot
-PKG_VERSION:=2.3.7.1
+PKG_VERSION:=2.3.7.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dovecot.org/releases/2.3
-PKG_HASH:=c5a51d6f76e6e9c843df69e52a364a4c65c4c60e0c51d992eaa45f22f71803c3
+PKG_HASH:=666ce084760a47e601d49a9be3c7993c48789d332631e8dfb45f443b367b1260
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=LGPL-2.1-only MIT BSD-3-Clause
@@ -43,8 +43,7 @@ define Package/dovecot
   TITLE:=An IMAP and POP3 daemon
   URL:=https://www.dovecot.org/
   DEPENDS:=+DOVECOT_GSSAPI:krb5-libs +DOVECOT_LDAP:libopenldap +DOVECOT_MYSQL:libmysqlclient +DOVECOT_PGSQL:libpq +DOVECOT_SQLITE:libsqlite3 +libopenssl +librt +zlib +libbz2 +libcap +DOVECOT_ICU:icu $(ICONV_DEPENDS)
-  USERID:=dovecot=59:dovecot=59
-  USERID:=dovenull=60:dovenull=60
+  USERID:=dovecot=59:dovecot=59 dovenull=60:dovenull=60
   ABI_VERSION:=$(PKG_VERSION)
 endef
 
