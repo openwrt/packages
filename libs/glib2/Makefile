@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
 PKG_VERSION:=2.58.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_BUILD_DIR:=$(BUILD_DIR)/glib-$(PKG_VERSION)
@@ -47,6 +47,7 @@ endef
 TARGET_CFLAGS += -Wno-error=implicit-function-declaration
 
 HOST_CONFIGURE_ARGS += \
+	--disable-libelf \
 	--disable-selinux \
 	--with-libiconv=gnu \
 	--with-pcre=internal \
