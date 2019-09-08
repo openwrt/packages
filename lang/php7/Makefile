@@ -6,18 +6,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=7.2.21
+PKG_VERSION:=7.2.22
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
-PKG_LICENSE:=PHPv3.01
+PKG_LICENSE:=PHP-3.01
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:php:php
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.php.net/distributions/
-PKG_HASH:=de06aff019d8f5079115795bd7d8eedd4cd03daecb62d58abb18f492dd995c95
+PKG_HASH:=eb597fcf8dc0a6211a42a6346de4f63ee166829a6df6d8ed767fe14be8d1c3a3
 
 PKG_FIXUP:=libtool autoreconf
 PKG_BUILD_PARALLEL:=1
