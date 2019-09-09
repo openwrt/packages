@@ -77,8 +77,9 @@ if [ "$mode" == "sources" ] ; then
 	exit 0
 fi
 
-legacy=
-[ "$ver" == "3" ] && legacy="-b"
+if [ "$ver" == "3" ] ; then
+	legacy="-b"
+fi
 # default max recursion is 10
 max_recursion_level=20
 
