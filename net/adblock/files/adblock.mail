@@ -1,0 +1,70 @@
+#!/bin/sh
+# send mail script for adblock notifications
+# written by Dirk Brenken (dev@brenken.org)
+# Please note: you have to manually install and configure the package 'msmtp' before using this script
+
+# This is free software, licensed under the GNU General Public License v3.
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+LC_ALL=C
+PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+
+if [ -r "/lib/functions.sh" ]
+then
+	. "/lib/functions.sh"
+	adb_debug="$(uci_get adblock extra adb_debug "0")"
+	adb_msender="$(uci_get adblock extra adb_msender "no-reply@adblock")"
+	adb_mreceiver="$(uci_get adblock extra adb_mreceiver)"
+	adb_mtopic="$(uci_get adblock extra adb_mtopic "adblock notification")"
+	adb_mprofile="$(uci_get adblock extra adb_mprofile "adb_notify")"
+fi
+adb_ver="${1}"
+adb_mail="$(command -v msmtp)"
+adb_rc=1
+
+if [ "${adb_debug}" -eq 1 ]
+then
+	debug="--debug"
+fi
+
+# mail header & receiver check
+#
+if [ -z "${adb_mreceiver}" ]
+then
+	logger -p "err" -t "adblock-${adb_ver}[${$}]" "please set the mail receiver with the 'adb_mreceiver' option"
+	exit ${adb_rc}
+fi
+adb_mhead="From: ${adb_msender}\\nTo: ${adb_mreceiver}\\nSubject: ${adb_mtopic}\\nReply-to: ${adb_msender}\\nMime-Version: 1.0\\nContent-Type: text/html\\nContent-Disposition: inline\\n\\n"
+
+# info preparation
+#
+sys_info="$(strings /etc/banner 2>/dev/null; ubus call system board | sed -e 's/\"release\": {//' | sed -e 's/^[ \t]*//' | sed -e 's/[{}\",]//g' | sed -e 's/[ ]/  \t/' | sed '/^$/d' 2>/dev/null)"
+adb_info="$(/etc/init.d/adblock status 2>/dev/null)"
+if [ -f "/var/log/messages" ]
+then
+	log_info="$(awk '/adblock-/{NR=1;max=79;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max),"&#8629;"} else {print " ",substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}' /var/log/messages)"
+else
+	log_info="$(logread -e "adblock-" | awk '{NR=1;max=79;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max),"&#8629;"} else {print " ",substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}')"
+fi
+
+# mail body
+#
+adb_mtext="<html><body><pre style='display:block;font-family:monospace;font-size:1rem;padding:20;background-color:#f3eee5;white-space:pre'>"
+adb_mtext="${adb_mtext}\\n<strong>++\\n++ System Information ++\\n++</strong>\\n${sys_info}"
+adb_mtext="${adb_mtext}\\n\\n<strong>++\\n++ Adblock Information ++\\n++</strong>\\n${adb_info}"
+adb_mtext="${adb_mtext}\\n\\n<strong>++\\n++ Logfile Information ++\\n++</strong>\\n${log_info}"
+adb_mtext="${adb_mtext}</pre></body></html>"
+
+# send mail
+#
+if [ -x "${adb_mail}" ]
+then
+	printf "%b" "${adb_mhead}${adb_mtext}" 2>/dev/null | "${adb_mail}" ${debug} -a "${adb_mprofile}" "${adb_mreceiver}" >/dev/null 2>&1
+	adb_rc=${?}
+	logger -p "info" -t "adblock-${adb_ver}[${$}]" "mail sent to '${adb_mreceiver}' with rc '${adb_rc}'"
+else
+	logger -p "err" -t "adblock-${adb_ver}[${$}]" "msmtp mail daemon not found"
+fi
+
+exit ${adb_rc}

@@ -60,6 +60,9 @@ smb_add_share()
 	local read_list
 	local hide_dot_files
 	local veto_files
+	local inherit_owner
+	local force_create_mode
+	local force_directory_mode
 
 	config_get name $1 name
 	config_get path $1 path
@@ -76,6 +79,9 @@ smb_add_share()
 	config_get read_list $1 read_list
 	config_get_bool hide_dot_files	$1 hide_dot_files	0
 	config_get veto_files $1 veto_files
+	config_get inherit_owner $1 inherit_owner
+	config_get force_create_mode $1 force_create_mode
+	config_get force_directory_mode $1 force_directory_mode
 
 	[ -z "$name" ] || [ -z "$path" ] && return
 
@@ -92,11 +98,14 @@ smb_add_share()
 
 		[ -n "$create_mask" ] && printf "\tcreate mask = %s\n" "$create_mask"
 		[ -n "$dir_mask" ] && printf "\tdirectory mask = %s\n" "$dir_mask"
+		[ -n "$force_create_mode" ] && printf "\tforce create mode = %s\n" "$force_create_mode"
+		[ -n "$force_directory_mode" ] && printf "\tforce directory mode = %s\n" "$force_directory_mode"
 
 		[ -n "$browseable" ] && printf "\tbrowseable = %s\n" "$browseable"
 		[ -n "$read_only" ] && printf "\tread only = %s\n" "$read_only"
 		[ -n "$writeable" ] && printf "\twriteable = %s\n" "$writeable"
 		[ -n "$guest_ok" ] && printf "\tguest ok = %s\n" "$guest_ok"
+		[ -n "$inherit_owner" ] && printf "\tinherit owner = %s\n" "$inherit_owner"
 
 		[ -n "$write_list" ] && printf "\twrite list = %s\n" "$write_list"
 		[ -n "$read_list" ] && printf "\tread list = %s\n" "$read_list"
@@ -139,11 +148,6 @@ start_service()
 		exit 1
 	fi
 
-	[ -f /tmp/cifsd.lock ] && rm /tmp/cifsd.lock
-
-	# try remove again before start
-	[ -e /sys/module/cifsd ] && rmmod cifsd > /dev/null 2>&1
-
 	modprobe cifsd 2> /dev/null
 	if [ ! -e /sys/module/cifsd ]; then
 		logger -t 'cifsd' "modprobe of cifsd module failed, can\'t start cifsd!"
@@ -154,4 +158,26 @@ start_service()
 	procd_open_instance
 	procd_set_param command /usr/sbin/cifsd --n
 	procd_close_instance
+}
+
+stop_service()
+{
+	logger -t 'cifsd' "Stopping CIFSD userspace service."
+	killall cifsd > /dev/null 2>&1
+	sleep 1
+	[ -e /sys/class/cifsd-control/kill_server ] && echo hard > /sys/class/cifsd-control/kill_server
+	sleep 2
+	[ -e /sys/module/cifsd ] && rmmod cifsd > /dev/null 2>&1
+	# With open smb connections rmmod takes longer
+	if [ -e /sys/module/cifsd ]; then
+		sleep 5
+		rmmod cifsd > /dev/null 2>&1
+	fi
+	[ -f /tmp/cifsd.lock ] && rm /tmp/cifsd.lock
+}
+
+reload_service() {
+	stop_service "$@"
+	sleep 1
+	start_service "$@"
 }

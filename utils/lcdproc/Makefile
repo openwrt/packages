@@ -9,17 +9,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lcdproc
 PKG_VERSION:=0.5.9
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/lcdproc/lcdproc/releases/download/v$(PKG_VERSION)/
 PKG_HASH:=d48a915496c96ff775b377d2222de3150ae5172bfb84a6ec9f9ceab962f97b83
+
 PKG_MAINTAINER:=Harald Geyer <harald@ccbib.org>, \
 		Philip Prindeville <philipp@redfish-solutions.com>
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
-
-PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -109,19 +108,12 @@ This package contains display drivers with external dependencies:
 $(LCDPROC_OTHER_DRIVERS_TEXT)
 endef
 
-
-# not everything groks --disable-nls
-DISABLE_NLS:=
-
 CONFIGURE_ARGS += \
 	--disable-libX11 \
 	--disable-libhid \
 	--disable-libpng \
 	--disable-freetype \
 	--enable-drivers='all,!g15,!g15driver,!glcdlib,!irman,!lirc,!mdm166a,!mx5000,!svga,!xosd'
-
-# can't use -Wformat=2 because MUSL is somewhat broken
-TARGET_CFLAGS+=-Wall
 
 MAKE_FLAGS += \
         CFLAGS="$(TARGET_CFLAGS)" \

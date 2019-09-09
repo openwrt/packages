@@ -1,98 +1,148 @@
+diff --git a/Makefile b/Makefile
+index 10c1142..2a94df4 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -1,58 +1,36 @@
+@@ -1,121 +1,52 @@
  T=openssl
 +.PHONY: install clean
  
 -PREFIX		?=/usr/local
--LIB_OPTION	?= -shared 
+-CC		:= $(CROSS)$(CC)
+-AR		:= $(CROSS)$(AR)
+-LD		:= $(CROSS)$(LD)
 +PKGC ?= pkg-config
  
--#Lua auto detect
--LUA_VERSION ?= $(shell pkg-config luajit --print-provides)
--ifeq ($(LUA_VERSION),)                         ############ Not use luajit
--LUAV		?= $(shell lua -e "_,_,v=string.find(_VERSION,'Lua (.+)');print(v)")
--LUA_CFLAGS	?= -I$(PREFIX)/include/lua$(LUAV)
--LUA_LIBS	?= -L$(PREFIX)/lib 
--LUA_LIBDIR	?= $(PREFIX)/lib/lua/$(LUAV)
--else
--LUAV		?= $(shell lua -e "_,_,v=string.find(_VERSION,'Lua (.+)');print(v)")
--LUA_CFLAGS	?= $(shell pkg-config luajit --cflags)
--LUA_LIBS	?= $(shell pkg-config luajit --libs)
--LUA_LIBDIR	?= $(PREFIX)/lib/lua/$(LUAV)
--endif
-+LIB_OPTION	= -shared 
- 
 -#OS auto detect
--SYS := $(shell gcc -dumpmachine)
-+# lua's package config can be under various names
-+LUAPKGC := $(shell for pc in lua lua5.1 lua5.2 lua5.3; do \
-+		$(PKGC) --exists $$pc && echo $$pc && break; \
-+	done)
- 
--ifneq (, $(findstring linux, $(SYS)))
--# Do linux things
--LDFLAGS		    = -fPIC -lrt -ldl
--OPENSSL_LIBS	?= $(shell pkg-config openssl --libs) 
+-ifneq (,$(TARGET_SYS))
+-  SYS		:= $(TARGET_SYS)
+-else
+-  SYS		:= $(shell gcc -dumpmachine)
+-endif
+-
+-#Lua auto detect
+-LUA_VERSION	:= $(shell pkg-config luajit --print-provides)
+-ifeq ($(LUA_VERSION),)
+-  # Not found luajit package, try lua
+-  LUA_VERSION	:= $(shell pkg-config lua --print-provides)
+-  ifeq ($(LUA_VERSION),)
+-    # Not found lua package, try from prefix
+-    LUA_VERSION := $(shell lua -e "_,_,v=string.find(_VERSION,'Lua (.+)');print(v)")
+-    LUA_CFLAGS	?= -I$(PREFIX)/include/lua$(LUA_VERSION)
+-    LUA_LIBS	?= -L$(PREFIX)/lib -llua
+-    LUA_LIBDIR	?= $(PREFIX)/lib/lua/$(LUA_VERSION)
+-  else
+-    # Found lua package
+-    LUA_VERSION	:= $(shell lua -e "_,_,v=string.find(_VERSION,'Lua (.+)');print(v)")
+-    LUA_CFLAGS	?= $(shell pkg-config lua --cflags)
+-    LUA_LIBS	?= $(shell pkg-config lua --libs)
+-    LUA_LIBDIR	?= $(PREFIX)/lib/lua/$(LUA_VERSION)
+-  endif
+-else
+-  # Found luajit package
+-  LUA_VERSION	:= $(shell luajit -e "_,_,v=string.find(_VERSION,'Lua (.+)');print(v)")
+-  LUA_CFLAGS	?= $(shell pkg-config luajit --cflags)
+-  LUA_LIBS	?= $(shell pkg-config luajit --libs)
+-  LUA_LIBDIR	?= $(PREFIX)/lib/lua/$(LUA_VERSION)
+-endif
+-
+-#OpenSSL auto detect
 -OPENSSL_CFLAGS	?= $(shell pkg-config openssl --cflags)
--CFLAGS		    = -fPIC $(OPENSSL_CFLAGS) $(LUA_CFLAGS) 
+-OPENSSL_LIBS	?= $(shell pkg-config openssl --static --libs)
+-
+-ifneq (, $(findstring linux, $(SYS)))
+-  # Do linux things
+-  CFLAGS	 = -fpic
+-  LDFLAGS	 = -Wl,--no-undefined -fpic -lrt -ldl -lm
 -endif
+-
 -ifneq (, $(findstring apple, $(SYS)))
--# Do darwin things
--LDFLAGS		    = -fPIC -lrt -ldl
-+BUILD_DIR = $(shell pwd)
-+
-+# LUA include/libraries build flags
-+#LUAV		?= $(shell lua -e "_,_,v=string.find(_VERSION,'Lua (.+)');print(v)")
-+LUA_LIBDIR := $(shell $(PKGC) --variable=libdir $(LUAPKGC))
-+LUA_CFLAGS := $(shell $(PKGC) --cflags $(LUAPKGC))
-+LUA_LIBS := $(shell $(PKGC) --libs-only-L $(LUAPKGC))
-+#LUA_LIBDIR	?= $(PREFIX)/lib/lua/$(LUAV)
-+
-+# openssl include/libraries build flags
-+LDFLAGS		   += -lrt -ldl $(OPENSSL_LIBS) $(LUA_LIBS)
- OPENSSL_LIBS	?= $(shell pkg-config openssl --libs) 
- OPENSSL_CFLAGS	?= $(shell pkg-config openssl --cflags)
--CFLAGS		    = -fPIC $(OPENSSL_CFLAGS) $(LUA_CFLAGS)
+-  # Do darwin things
+-  CFLAGS	 = -fPIC
+-  LDFLAGS	 = -fPIC -undefined dynamic_lookup -ldl
+-  #MACOSX_DEPLOYMENT_TARGET="10.3"
+-  CC		:= MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET} $(CC)
 -endif
++LIB_OPTION	= -shared
++LUAPKGC = lua
+ 
 -ifneq (, $(findstring mingw, $(SYS)))
--# Do mingw things
--V			= $(shell lua -e "v=string.gsub('$(LUAV)','%.','');print(v)")
--LDFLAGS		= -mwindows -lcrypt32 -lssl -lcrypto -lws2_32 $(PREFIX)/bin/lua$(V).dll 
--LUA_CFLAGS	= -DLUA_LIB -DLUA_BUILD_AS_DLL -I$(PREFIX)/include/
--CFLAGS		= $(OPENSSL_CFLAGS) $(LUA_CFLAGS)
+-  # Do mingw things
+-  CFLAGS	 = -DLUA_LIB -DLUA_BUILD_AS_DLL -DWIN32_LEAN_AND_MEAN
 -endif
+-
 -ifneq (, $(findstring cygwin, $(SYS)))
--# Do cygwin things
--OPENSSL_LIBS	?= $(shell pkg-config openssl --libs) 
--OPENSSL_CFLAGS  ?= $(shell pkg-config openssl --cflags)
--CFLAGS		= -fPIC $(OPENSSL_CFLAGS) $(LUA_CFLAGS)
+-  # Do cygwin things
+-  CFLAGS	 = -fPIC
 -endif
--#custome config
++# LUA include/libraries build flags
++LUA_CFLAGS  := $(shell $(PKGC) --cflags $(LUAPKGC))
++LUA_LIBS_DIR := $(shell $(PKGC) --libs $(LUAPKGC))
+ 
+-ifneq (, $(findstring iOS, $(SYS)))
+-  # Do iOS things
+-  CFLAGS	 = -fPIC
+-  LDFLAGS	 = -fPIC -ldl
+-endif
 +# openssl include/libraries build flags
-+LOCAL_INCLUDE = -I$(BUILD_DIR)/deps
-+CFLAGS		   += -fPIC -DPTHREADS $(LOCAL_INCLUDE) $(OPENSSL_CFLAGS) $(LUA_CFLAGS) 
++OPENSSL_CFLAGS      ?= $(shell $(PKGC) openssl --cflags)
++OPENSSL_LIBS_DIR    ?= $(shell $(PKGC) openssl --libs)
+ 
+-#custom config
++LDFLAGS		= -Wl,--no-undefined -fpic -lrt -ldl -lm $(OPENSSL_LIBS_DIR) $(LUA_LIBS_DIR)
++CFLAGS          += -fPIC -DPTHREADS $(OPENSSL_CFLAGS) $(LUA_CFLAGS)
  ifeq (.config, $(wildcard .config))
- include .config
+-  include .config
++include .config
  endif
  
 -LIBNAME= $T.so.$V
 +LIBNAME= $T.so
  
- #LIB_OPTION= -bundle -undefined dynamic_lookup #for MacOS X
+-CFLAGS		+= $(OPENSSL_CFLAGS) $(LUA_CFLAGS) $(TARGET_FLAGS)
+-LDFLAGS		+= -shared $(OPENSSL_LIBS) $(LUA_LIBS)
+ # Compilation directives
+ WARN_MIN	 = -Wall -Wno-unused-value
+ WARN		 = -Wall
+ WARN_MOST	 = $(WARN) -W -Waggregate-return -Wcast-align -Wmissing-prototypes -Wnested-externs -Wshadow -Wwrite-strings -pedantic
+ CFLAGS		+= -g $(WARN_MIN) -DPTHREADS -Ideps -Ideps/lua-compat -Ideps/auxiliar
  
-@@ -68,11 +46,12 @@ OBJS=src/asn1.o src/auxiliar.o src/bio.o
+-
+ OBJS=src/asn1.o deps/auxiliar/auxiliar.o src/bio.o src/cipher.o src/cms.o src/compat.o src/crl.o src/csr.o src/dh.o src/digest.o src/dsa.o \
  src/ec.o src/engine.o src/hmac.o src/lbn.o src/lhash.o src/misc.o src/ocsp.o src/openssl.o src/ots.o src/pkcs12.o src/pkcs7.o    \
- src/pkey.o src/rsa.o src/ssl.o src/th-lock.o src/util.o src/x509.o src/xattrs.o src/xexts.o src/xname.o src/xstore.o src/xalgor.o src/callback.o 
+ src/pkey.o src/rsa.o src/ssl.o src/th-lock.o src/util.o src/x509.o src/xattrs.o src/xexts.o src/xname.o src/xstore.o \
+ src/xalgor.o src/callback.o src/srp.o deps/auxiliar/subsidiar.o
  
 -.c.o:
--	$(CC) -c -o $@ $?
+-	$(CC) $(CFLAGS) -c -o $@ $?
 +%.o: %.c
 +	$(CC) $(CFLAGS) -c $< -o $@
  
  all: $T.so
- 	echo $(SYS)
+-	@echo "Target system: "$(SYS)
+-
+-$T.so: lib$T.a
+-	$(CC) -o $@ src/openssl.o -L. -l$T $(LDFLAGS)
++	echo $(SYS)
 +	$(CC) $(LDFLAGS) $(LIB_OPTION) $(OBJS) -o $@
  
- $T.so: $(OBJS)
- 	MACOSX_DEPLOYMENT_TARGET="10.3"; export MACOSX_DEPLOYMENT_TARGET; $(CC) $(CFLAGS) $(LIB_OPTION) -o $T.so $(OBJS) $(OPENSSL_LIBS) $(LUA_LIBS) $(LDFLAGS)
+-lib$T.a: $(OBJS)
+-	$(AR) rcs $@ $?
++$T.so: $(OBJS)
++	echo "LUA LIBS_DIR: " $(LUA_LIBS_DIR)
++	$(CC) $(CFLAGS) $(LIB_OPTION) -o $T.so $(OBJS) $(LDFLAGS)
+ 
+ install: all
+ 	mkdir -p $(LUA_LIBDIR)
+ 	cp $T.so $(LUA_LIBDIR)
+ 
+-info:
+-	@echo "Target system: "$(SYS)
+-	@echo "CC:" $(CC)
+-	@echo "AR:" $(AR)
+-	@echo "PREFIX:" $(PREFIX)
+-
+ clean:
+-	rm -f $T.so lib$T.a $(OBJS)
+-
+-# vim: ts=8 sw=8 noet
++	rm -f $T.so $(OBJS)

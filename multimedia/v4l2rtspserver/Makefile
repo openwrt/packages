@@ -7,17 +7,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l2rtspserver
-PKG_VERSION:=0.1.6
+PKG_VERSION:=0.1.8
 PKG_RELEASE:=1
 
 #cannot use codeload as this uses submodules
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/mpromonet/v4l2rtspserver
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=9e076d2ecac08d5cbd0af7cfaa355e077e03fe35be73259ae7f520e2ef4243f8
+PKG_MIRROR_HASH:=2df448435fa169b1611e619496ec529baa4caa59627a8a508fb6db59c31e42be
 
-LIVE555_VERSION:=2019.02.03
-LIVE555_HASH:=1c938d91553eff224c7a860f8f38b3256028704b474a3fc6bcf2eddc42268710
+LIVE555_VERSION:=2019.08.28
+LIVE555_HASH:=a3dcd157865186cf883c3a80b4bb09637e91fff96b234b2c780a7f7dcc7a35dc
 LIVE555_FILE:=live.$(LIVE555_VERSION).tar.gz
 
 PKG_MAINTAINER:=Roger Dammit <rogerdammit@gmail.com>
@@ -53,14 +53,12 @@ define Download/live555
 	HASH:=$(LIVE555_HASH)
 endef
 
-TARGET_CFLAGS += -flto
-TARGET_CXXFLAGS += -fno-rtti
-TARGET_LDFLAGS += -Wl,--gc-sections
+TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
-CMAKE_OPTIONS += -DALSA=OFF -DLIVE555CFLAGS="-DSOCKLEN_T=socklen_t -D_LARGEFILE_SOURCE=1 -D_FILE_OFFSET_BITS=64 -DLOCALE_NOT_USED -DNO_SSTREAM=1 -DALLOW_RTSP_SERVER_PORT_REUSE=1" 
+CMAKE_OPTIONS += -DALSA=OFF -DLIVE555CFLAGS="$(TARGET_CFLAGS) -DSOCKLEN_T=socklen_t -D_LARGEFILE_SOURCE=1 -D_FILE_OFFSET_BITS=64 -DLOCALE_NOT_USED -DNO_SSTREAM=1 -DALLOW_RTSP_SERVER_PORT_REUSE=1"
 
-
-define Build/Prepare	
+define Build/Prepare
 	$(Build/Prepare/Default)
 
 	# download live555
@@ -69,11 +67,9 @@ define Build/Prepare
 	$(TAR) -xf $(DL_DIR)/$(LIVE555_FILE) --strip=1 -C $(PKG_BUILD_DIR)/live
 endef
 
-
 define Package/v4l2rtspserver/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/v4l2rtspserver-$(PKG_VERSION) $(1)/usr/bin/
-	mv $(1)/usr/bin/v4l2rtspserver-$(PKG_VERSION) $(1)/usr/bin/v4l2rtspserver
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/v4l2rtspserver $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/v4l2rtspserver.init $(1)/etc/init.d/v4l2rtspserver

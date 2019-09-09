@@ -1,0 +1,21 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+PROG=/usr/bin/syncthing
+
+start_service() {
+    [ -d /var/syncthing/ ] || mkdir /var/syncthing/
+
+    local gui_address home
+    config_load "syncthing"
+    config_get gui_address syncthing gui_address "http://127.0.0.1:8384"
+    config_get home syncthing home "/etc/syncthing/"
+
+    procd_open_instance
+    procd_set_param command "$PROG"
+    procd_append_param command -gui-address="$gui_address"
+    procd_append_param command -home="$home"
+    procd_set_param respawn
+    procd_close_instance
+}

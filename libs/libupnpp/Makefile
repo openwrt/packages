@@ -8,18 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libupnpp
-PKG_VERSION:=0.17.0
+PKG_VERSION:=0.17.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.lesbonscomptes.com/upmpdcli/downloads
-PKG_HASH:=7035dda48207c254cbd8cd64e4e679a9e5f085a35d28c19bc2ddeba0deaff58b
+PKG_HASH:=90403b55583e932a9a04905a01bf452016a56aecbeade5c9e1454a5fbb6f01b0
+
 PKG_MAINTAINER:=Petko Bordjukov <bordjukov@gmail.com>
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 

@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cgi-io
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_LICENSE:=GPL-2.0+
 

@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2017 Yousong Zhou
+# Copyright (C) 2017-2019 Yousong Zhou
 
 START=99
 
@@ -12,13 +12,14 @@ pservice_list_cb() {
 	procd_append_param "$param" "$val"
 }
 
-pservice() {
+pservice_instance() {
 	local cfg="$1"
 
-	eval "$(validate_pservice_section "$cfg" pservice_validate_mklocal)"
-	validate_pservice_section "$cfg" || return 1
 	[ "$disabled" = 0 ] || return 0
-	[ -x "$command" ] || return 1
+	[ -x "$command" ] || {
+		echo "$command is not executable" >&2
+		return 1
+	}
 
 	procd_open_instance "$name"
 	procd_set_param command "$command"
@@ -39,43 +40,20 @@ pservice() {
 
 start_service() {
 	config_load 'pservice'
-	config_foreach pservice pservice
-}
-
-stop_service() {
-	true
+	config_foreach validate_pservice_section pservice pservice_instance
 }
 
 service_triggers() {
-	procd_open_validate
-	validate_pservice_section
-	procd_close_validate
-}
-
-pservice_validate_mklocal() {
-	local tuple opts
-
-	shift 2
-	for tuple in "$@"; do
-		opts="${tuple%%:*} $opts"
-	done
-	[ -z "$opts" ] || echo "local $opts"
-}
-
-pservice_validate() {
-	uci_validate_section pservice "$@"
+	procd_add_validation validate_pservice_section
 }
 
 validate_pservice_section() {
-	local cfg="$1"; shift
-	local func="$1"; shift
-
-	"${func:-pservice_validate}" pservice "$cfg" \
+	uci_load_validate pservice pservice "$1" "$2" \
 		"disabled:bool:0" \
 		"name:string" \
 		"env:regex('^[a-zA-Z_][a-zA-Z0-9_]*=.*$')" \
 		"command:file" \
-		"args:list(string)" \
+		"args:string" \
 		"stderr:bool:0" \
 		"stdout:bool:0" \
 		"respawn_threshold:uinteger:3600" \

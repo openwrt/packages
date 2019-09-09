@@ -25,6 +25,9 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
+# This avoids generating man pages
+CONFIGURE_VARS += ac_cv_prog_A2X=
+
 define Package/tang
   SECTION:=utils
   TITLE:=tang v$(PKG_VERSION) - daemon for binding data to the presence of a third party

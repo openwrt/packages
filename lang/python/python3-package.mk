@@ -44,6 +44,7 @@ define Py3Package
     EXTRA_DEPENDS:=
     TITLE+= (sources)
     USERID:=
+    MENU:=
   endef
 
   define Package/$(1)-src/description

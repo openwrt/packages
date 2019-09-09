@@ -1,9 +1,0 @@
-if PACKAGE_node-mozilla-iot-gateway
-
-	comment "Optional features"
-
-	config MOIT_enable-plugin-support
-		bool "Enable packages needed for some plugins"
-		default y
-
-endif

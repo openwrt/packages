@@ -32,6 +32,7 @@ Hooks/Prepare/Pre += prepare_source_directory
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_ASLR_PIE:=0
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk

@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-oauthlib
-PKG_VERSION:=3.0.2
+PKG_VERSION:=3.1.0
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
@@ -15,7 +15,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=oauthlib-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/o/oauthlib
-PKG_HASH:=b4d99ae8ccfb7d33ba9591b59355c64eef5241534aa3da2e4c0435346b84bc8e
+PKG_HASH:=bee41cc35fcca6e988463cacc3bcb8a96224f470ca547e697b604cc697b2f889
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-oauthlib-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk

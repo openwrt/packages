@@ -2,7 +2,7 @@ version: 2.0
 jobs:
   build:
     docker:
-      - image: docker.io/openwrtorg/packages-cci:v1.0.3
+      - image: docker.io/openwrtorg/packages-cci:v1.0.4
     environment:
       - SDK_HOST: "downloads.openwrt.org"
       - SDK_PATH: "snapshots/targets/ath79/generic"
@@ -94,6 +94,11 @@ jobs:
           working_directory: ~/build_dir
           command: |
              tar Jxf ~/sdk/$SDK_FILE --strip=1
+             touch .config
+             make prepare-tmpinfo scripts/config/conf
+             ./scripts/config/conf --defconfig=.config Config.in
+             make prereq
+             rm .config
              cat > feeds.conf <<EOF
              src-git base https://github.com/openwrt/openwrt.git;$BRANCH
              src-link packages $HOME/openwrt_packages
@@ -145,7 +150,11 @@ jobs:
 
              for PKG in $PKGS ; do
                  echo_blue "===+ Building: $PKG"
-                 make "package/$PKG/compile" -j3 V=s
+                 make "package/$PKG/compile" -j3 V=s || {
+                        RET=$?
+                        echo_red "===+ Building: $PKG failed, rebuilding with -j1 for human readable error log"
+                        make "package/$PKG/compile" -j1 V=s; exit $RET
+                 }
              done
 
       - store_artifacts:
