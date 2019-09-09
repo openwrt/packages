@@ -14,8 +14,8 @@ append_params() {
 		IFS="$LIST_SEP"
 		for v in $v; do
 			[ -n "$v" ] && (
-				echo "\"$p\": $v," | sed -e 's|_|-|g' >> $config_file
-			)
+				echo "\"$p\": $v," | sed -e 's|_|-|g'
+			) >> "$config_file"
 		done
 		unset IFS
 	done
@@ -28,9 +28,9 @@ append_params_quotes() {
 		IFS="$LIST_SEP"
 		for v in $v; do
 			[ -n "$v" ] && (
-				echo -n "\"$p" | sed -e 's|/|\\/|g;s|_|-|g' >> $config_file; \
-				echo "\": \"$v\"," >> $config_file
-			)
+				printf "\"%s" "$p" | sed -e 's|/|\\/|g;s|_|-|g'; \
+				echo "\": \"$v\","
+			) >> "$config_file"
 		done
 		unset IFS
 	done
@@ -51,7 +51,6 @@ transmission() {
 	local download_dir config_dir
 	local mem_percentage
 	local nice
-	local cmdline
 	local web_home
 
 	section_enabled "$section" || return 1
@@ -73,16 +72,16 @@ transmission() {
 	fi
 
 	config_file="$config_dir/settings.json"
-	[ -d $config_dir ] || {
-		mkdir -p $config_dir
-		chmod 0755 $config_dir
-		touch $config_file
-		[ -z "$user" ] || chown -R "$user:$group" $config_dir
+	[ -d "$config_dir" ] || {
+		mkdir -p "$config_dir"
+		chmod 0755 "$config_dir"
+		touch "$config_file"
+		[ -z "$user" ] || chown -R "$user:$group" "$config_dir"
 	}
 
 	[ "$config_overwrite" = 0 ] || {
 
-		echo "{" > $config_file
+		echo "{" > "$config_file"
 
 		append_params "$cfg" \
 			alt_speed_down alt_speed_enabled alt_speed_time_begin alt_speed_time_day \
@@ -107,20 +106,24 @@ transmission() {
 			peer_congestion_algorithm peer_socket_tos rpc_bind_address rpc_password rpc_url \
 			rpc_username rpc_host_whitelist rpc_whitelist script_torrent_done_filename watch_dir
 
-		echo "\"invalid-key\": false" >> $config_file
-		echo "}" >> $config_file
-
+		{
+			echo "\"invalid-key\": false"
+			echo "}"
+		} >> "$config_file"
 	}
 
-	cmdline="transmission-daemon -g $config_dir -f"
 	procd_open_instance
-	procd_set_param command $cmdline
-	procd_set_param user $user
-	procd_set_param group $group
-	procd_set_param nice $nice
+	procd_set_param command "/usr/bin/transmission-daemon"
+	procd_append_param "-f"
+	procd_append_param "--log-error"
+	procd_append_param "-g $config_dir"
+	procd_set_param user "$user"
+	procd_set_param group "$group"
+	procd_set_param nice "$nice"
+	procd_set_param stderr 1
 	procd_set_param respawn retry=60
 
-	if test -z $USE; then
+	if [ -z "$USE" ]; then
 		procd_set_param limits core="0 0"
 	else
 		procd_set_param limits core="0 0" as="$USE $USE"
@@ -132,8 +135,8 @@ transmission() {
 	fi
 
 	procd_add_jail transmission log
-	procd_add_jail_mount $config_file
-	procd_add_jail_mount_rw $download_dir
+	procd_add_jail_mount "$config_file"
+	procd_add_jail_mount_rw "$download_dir"
 	procd_close_instance
 }
 

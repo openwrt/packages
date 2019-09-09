@@ -9,18 +9,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
 PKG_VERSION:=2.94
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GITHUB/transmission/transmission-releases/master
 PKG_HASH:=35442cc849f91f8df982c3d0d479d650c6ca19310a994eccdaa79a4af3916b7d
-PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
+PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -31,7 +29,7 @@ define Package/transmission/template
   SECTION:=net
   CATEGORY:=Network
   TITLE:=BitTorrent client
-  URL:=http://www.transmissionbt.com
+  URL:=https://www.transmissionbt.com
   DEPENDS:=+libcurl +libevent2 +libminiupnpc +libnatpmp +libpthread +librt +zlib
 endef
 
@@ -120,7 +118,7 @@ define Package/transmission-daemon-openssl/conffiles
 endef
 Package/transmission-daemon-mbedtls/conffiles = $(Package/transmission-daemon-openssl/conffiles)
 
-TARGET_CFLAGS += -flto
+TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
 TARGET_LDFLAGS += -Wl,--gc-sections -Wl,--as-needed
 
 CONFIGURE_ARGS += \
