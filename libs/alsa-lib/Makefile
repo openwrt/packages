@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alsa-lib
 PKG_VERSION:=1.1.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.alsa-project.org/pub/lib/ \
@@ -55,10 +55,16 @@ CONFIGURE_ARGS+= \
 		--with-versioned=no
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/include/sys/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/alsa \
 		$(1)/usr/include/
+	$(INSTALL_DATA) \
+		$(PKG_INSTALL_DIR)/usr/include/asoundlib.h \
+		$(1)/usr/include/
+	$(INSTALL_DATA) \
+		$(PKG_INSTALL_DIR)/usr/include/sys/asoundlib.h \
+		$(1)/usr/include/sys/
 
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) \
