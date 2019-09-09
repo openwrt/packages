@@ -9,12 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtorrent
 PKG_VERSION:=0.9.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/rakshasa/rtorrent/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=bc889ce1dde475ec56aa72ae996912ff58723226a4f4256fef4f1f8636d991d4
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -23,7 +22,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_REMOVE_FILES:=autogen.sh
+PKG_BUILD_DEPENDS:=libtorrent
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -33,7 +32,7 @@ define Package/rtorrent/Default
   CATEGORY:=Network
   TITLE:=BitTorrent client for ncurses
   URL:=https://github.com/rakshasa/rtorrent
-  DEPENDS:=+libcurl +libtorrent +libncurses +libpthread
+  DEPENDS:=+libcurl +libncurses +libpthread +libopenssl +libstdcpp +zlib
 endef
 
 define Package/rtorrent/Default/description
@@ -66,8 +65,8 @@ $(call Package/rtorrent/Default/description)
 endef
 
 CONFIGURE_ARGS += \
-	--enable-shared \
-	--disable-static \
+	--enable-static \
+	--disable-shared \
 	--disable-debug \
 	--with-libcurl="$(STAGING_DIR)/usr" \
 	--with-ncurses \
@@ -78,6 +77,7 @@ CONFIGURE_ARGS += --with-xmlrpc-c
 endif
 
 TARGET_CXXFLAGS += -faligned-new
+TARGET_LDFLAGS += -lcrypto -lz
 
 define Package/rtorrent/install
 	$(INSTALL_DIR) $(1)/usr/bin
