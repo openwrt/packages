@@ -12,14 +12,13 @@ $(call Package/python/Default)
   LICENSE:=MIT
   LICENSE_FILES:=LICENSE
 #  CPE_ID:=cpe:/a:python:setuptools # not currently handled this way by uscan
-  DEPENDS:=+python
+  DEPENDS:=+python +python-pkg-resources
 endef
 
 define PyPackage/python-setuptools/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/python$(PYTHON_VERSION)/site-packages
 	$(CP) $(PKG_BUILD_DIR)/install-setuptools/usr/bin/* $(1)/usr/bin
 	$(CP) \
-		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON_VERSION)/site-packages/pkg_resources \
 		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON_VERSION)/site-packages/setuptools \
 		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON_VERSION)/site-packages/setuptools-$(PYTHON_SETUPTOOLS_VERSION).dist-info \
 		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON_VERSION)/site-packages/easy_install.py \
