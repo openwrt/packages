@@ -12,7 +12,7 @@ include ../python-version.mk
 
 PKG_NAME:=python
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
@@ -39,6 +39,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
 PKG_CONFIG_DEPENDS:= \
+	CONFIG_PACKAGE_python-pkg-resources \
 	CONFIG_PACKAGE_python-setuptools CONFIG_PACKAGE_python-pip \
 	CONFIG_PYTHON_BLUETOOTH_SUPPORT
 
@@ -169,6 +170,14 @@ define Build/Prepare
 endef
 
 ifdef CONFIG_PACKAGE_python-setuptools
+PYTHON_SETUPTOOLS_BUILD:=1
+endif
+
+ifdef CONFIG_PACKAGE_python-pkg-resources
+PYTHON_SETUPTOOLS_BUILD:=1
+endif
+
+ifeq ($(PYTHON_SETUPTOOLS_BUILD),1)
 define Build/Compile/python-setuptools
 	$(HOST_PYTHON_PIP) \
 		--disable-pip-version-check \
