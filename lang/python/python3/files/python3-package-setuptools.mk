@@ -12,7 +12,7 @@ $(call Package/python3/Default)
   LICENSE:=MIT
   LICENSE_FILES:=LICENSE
 #  CPE_ID:=cpe:/a:python:setuptools # not currently handled this way by uscan
-  DEPENDS:=+python3
+  DEPENDS:=+python3 +python3-pkg-resources
 endef
 
 define Py3Package/python3-setuptools/install
@@ -20,7 +20,6 @@ define Py3Package/python3-setuptools/install
 	$(CP) $(PKG_BUILD_DIR)/install-setuptools/usr/bin/easy_install-* $(1)/usr/bin
 	$(LN) easy_install-$(PYTHON3_VERSION) $(1)/usr/bin/easy_install-3
 	$(CP) \
-		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON3_VERSION)/site-packages/pkg_resources \
 		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON3_VERSION)/site-packages/setuptools \
 		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON3_VERSION)/site-packages/setuptools-$(PYTHON3_SETUPTOOLS_VERSION).dist-info \
 		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON3_VERSION)/site-packages/easy_install.py \
