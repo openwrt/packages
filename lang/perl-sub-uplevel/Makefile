@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-sub-uplevel
 PKG_VERSION:=0.25
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/D/DA/DAGOLDEN
 PKG_SOURCE:=Sub-Uplevel-$(PKG_VERSION).tar.gz
 PKG_HASH:=2dcca582a7ea5bada576eb27c4be1d1b064fb22175bdbd6d696c45d083560505
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Sub-Uplevel-$(PKG_VERSION)

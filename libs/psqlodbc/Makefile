@@ -6,14 +6,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=psqlodbc
 PKG_VERSION:=11.00.0000
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.postgresql.org/pub/odbc/versions/src
 PKG_HASH:=703e6b87022f95ffa00d9f86c8f0a877f8a55b9b3be0942081f382e794112a86
 
 PKG_MAINTAINER:=
-PKG_LICENSE:=LGPL-2.0+
+PKG_LICENSE:=LGPL-2.0-or-later
 PKG_LICENSE_FILES:=license.txt
 
 PKG_BUILD_DEPENDS:=unixodbc/host

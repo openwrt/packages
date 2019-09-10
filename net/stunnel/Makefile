@@ -9,9 +9,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stunnel
 PKG_VERSION:=5.55
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
 PKG_LICENSE_FILES:=COPYING COPYRIGHT.GPL
 PKG_CPE_ID:=cpe:/a:stunnel:stunnel

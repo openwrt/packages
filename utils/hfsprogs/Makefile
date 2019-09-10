@@ -9,9 +9,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hfsprogs
 PKG_VERSION:=332.25
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
-PKG_LICENSE:=GPL-3.0+
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
