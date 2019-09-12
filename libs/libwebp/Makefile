@@ -49,7 +49,7 @@ CONFIGURE_ARGS += \
 TARGET_CFLAGS += $(FPIC) -flto
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include
+	$(INSTALL_DIR) $(1)/usr/include/webp
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/webp/* $(1)/usr/include/webp/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libwebp* $(1)/usr/lib/
