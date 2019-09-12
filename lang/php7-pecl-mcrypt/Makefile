@@ -9,7 +9,7 @@ PECL_NAME:=mcrypt
 PECL_LONGNAME:=Bindings for the libmcrypt library
 
 PKG_VERSION:=1.0.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_HASH:=4d21dd20bfdc3cf4d43c967abdd137224f9c56258ca28ee0bc66ce130e01cae4
 
 PKG_NAME:=php7-pecl-mcrypt
@@ -18,7 +18,7 @@ PKG_SOURCE_URL:=http://pecl.php.net/get/
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
-PKG_LICENSE:=PHPv3.01
+PKG_LICENSE:=PHP-3.01
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DEPENDS:=php7
