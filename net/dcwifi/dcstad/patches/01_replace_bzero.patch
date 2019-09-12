@@ -1,0 +1,11 @@
+--- a/src/main.c
++++ b/src/main.c
+@@ -190,7 +190,7 @@ main( int argc, char *argv[] ) {
+   rv = 1; /* failure unless proven otherwise */
+ 
+   /* first initialize and parse the command line */
+-  bzero(&cfg, sizeof(cfg));
++  memset(&cfg, 0, sizeof(cfg));
+   parse_cmdline(&cfg, argc, argv);
+ 
+   dcwloginfof("%s\n", "DCW Station Daemon Starting Up...");

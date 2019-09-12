@@ -1,0 +1,11 @@
+--- a/dcwlinux/macremapper_driver.cxx
++++ b/dcwlinux/macremapper_driver.cxx
+@@ -174,7 +174,7 @@ void MacRemapperDriver::ApplyClientTrafficPolicy(const dcw::MacAddress& primaryA
+   }
+ 
+   //populate our remap ioctl()
+-  bzero(&re, sizeof(re));
++  memset(&re, 0, sizeof(re));
+   strncpy(re.filter_name, policy.trafficFilterProfile->GetName(), sizeof(re.filter_name));
+   memcpy(re.match_macaddr, primaryAddr.Value, sizeof(re.match_macaddr));
+ 
