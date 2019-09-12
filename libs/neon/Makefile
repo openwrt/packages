@@ -15,6 +15,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://web.archive.org/web/20170923042221/http://webdav.org:80/neon/
 PKG_HASH:=db0bd8cdec329b48f53a6f00199c92d5ba40b0f015b153718d1b15d3d967fbca
 
+PKG_CPE_ID:=cpe:/a:webdav:neon
+
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk

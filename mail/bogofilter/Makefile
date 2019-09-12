@@ -13,6 +13,7 @@ PKG_RELEASE:=5
 
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:bogofilter:bogofilter
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/bogofilter

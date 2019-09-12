@@ -19,6 +19,7 @@ PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:dosfstools_project:dosfstools
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf

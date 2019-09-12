@@ -29,6 +29,7 @@ PKG_HASH:=495a0a61f26404070fe8a719d80406dc7f337623788e445b92a9f6de512ab9de
 
 PKG_MAINTAINER:=Vitaly Protsko <villy@sft.ru>
 PKG_LICENCE:=GPL-2.0
+PKG_CPE_ID:=cpe:/a:joseph_allen:joe
 
 include $(INCLUDE_DIR)/package.mk
 

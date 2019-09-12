@@ -16,6 +16,7 @@ PKG_SOURCE_URL:=https://github.com/xinetd-org/xinetd/archive
 PKG_HASH:=bf4e060411c75605e4dcbdf2ac57c6bd9e1904470a2f91e01ba31b50a80a5be3
 PKG_LICENSE:=xinetd
 PKG_LICENSE_FILES:=COPYRIGHT
+PKG_CPE_ID:=cpe:/a:xinetd:xinetd
 
 PKG_INSTALL:=1
 

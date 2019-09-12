@@ -9,6 +9,7 @@ PKG_VERSION:=11.3
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
+PKG_CPE_ID:=cpe:/a:postgresql:postgresql
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=\

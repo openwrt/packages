@@ -18,6 +18,8 @@ PKG_HASH:=eaae8af0ac742dc7d542c9439ac72f1f385ce838392dc849cae4536af9210094
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
+PKG_CPE_ID:=cpe:/a:xiph:speex
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libspeex

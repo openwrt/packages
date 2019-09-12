@@ -18,6 +18,7 @@ PKG_HASH:=c7d247c0cad2d2e718eaca2e2dff051136a1347a92097abf19ebf65ea2870131
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:=Arnaud Sautaux <arnaud.sautaux@infoteam.ch>
+PKG_CPE_ID:=cpe:/a:erlang:erlang
 
 PKG_BUILD_DEPENDS:=erlang/host openssl
 PKG_USE_MIPS16:=0

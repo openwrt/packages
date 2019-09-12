@@ -17,6 +17,7 @@ PKG_HASH:=d76d79edc31cf76e782b9f697420d3defbcc91778c3c650658086a1b748e8792
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:muscle:pcsc-lite
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

@@ -17,6 +17,7 @@ PKG_SOURCE_URL:=http://download.qemu.org/
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
+PKG_CPE_ID:=cpe:/a:qemu:qemu
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1

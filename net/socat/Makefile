@@ -17,6 +17,7 @@ PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2.0 OpenSSL
 PKG_LICENSE_FILES:=COPYING COPYING.OpenSSL
+PKG_CPE_ID:=cpe:/a:dest-unreach:socat
 
 PKG_INSTALL:=1
 

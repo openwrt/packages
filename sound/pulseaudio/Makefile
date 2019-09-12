@@ -16,6 +16,7 @@ PKG_SOURCE_URL:=https://freedesktop.org/software/pulseaudio/releases/
 PKG_HASH:=809668ffc296043779c984f53461c2b3987a45b7a25eb2f0a1d11d9f23ba4055
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=GPL LICENSE
+PKG_CPE_ID:=cpe:/a:pulseaudio:pulseaudio
 
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=intltool/host

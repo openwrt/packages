@@ -19,6 +19,7 @@ PKG_HASH:=9636d7fd89ebb3756c13a9a3387736ca6d56ccf66ec0580d512f07b21db0fa69
 PKG_MAINTAINER:=Nikil Mehta <nikil.mehta@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:bitlbee:bitlbee
 
 PKG_INSTALL:=1
 

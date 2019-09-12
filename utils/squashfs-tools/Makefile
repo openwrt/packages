@@ -12,6 +12,7 @@ PKG_VERSION:=4.3
 PKG_RELEASE:=6
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:phillip_lougher:squashfs
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/plougher/squashfs-tools

@@ -16,6 +16,7 @@ PKG_SOURCE_URL:=@APACHE/apr/
 PKG_HASH:=d3e12f7b6ad12687572a3a39475545a072608f4ba03a6ce8a3778f607dd0035b
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=Apache License
+PKG_CPE_ID:=cpe:/a:apache:apr-util
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 build/ltmain.sh

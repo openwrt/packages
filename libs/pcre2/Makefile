@@ -18,6 +18,7 @@ PKG_HASH:=f29e89cc5de813f45786580101aaee3984a65818631d4ddbda7b32f699b87c2e
 PKG_MAINTAINER:=Shane Peelar <lookatyouhacker@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENCE
+PKG_CPE_ID:=cpe:/a:pcre:pcre
 
 PKG_FIXUP:=autoreconf
 

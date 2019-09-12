@@ -18,6 +18,7 @@ PKG_HASH:=18d8f1bf92c13c4d611502dbd6759e3a766ddc8467ec8a2eda3f589e40b9ac9c
 PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:debian:cifs-utils
 
 include $(INCLUDE_DIR)/package.mk
 
