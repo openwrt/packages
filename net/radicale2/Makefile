@@ -10,6 +10,7 @@ PKG_MAINTAINER:=Daniel Dickinson <cshored@thecshore.com>
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:radicale:radicale
 
 PKG_SOURCE:=Radicale-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/R/Radicale/

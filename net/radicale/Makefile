@@ -13,6 +13,7 @@ PKG_MAINTAINER:=
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:radicale:radicale
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/Kozea/Radicale

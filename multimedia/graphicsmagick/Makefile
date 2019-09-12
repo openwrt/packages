@@ -16,6 +16,7 @@ PKG_HASH:=69ee4ac6a49a818098f47f51c4f430ca9bb2493cb3594f322eb211b8aeb71f41
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=Copyright.txt
 PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
+PKG_CPE_ID:=cpe:/a:graphicsmagick:graphicsmagick
 
 PKG_BUILD_PARALLEL:=1
 DISABLE_NLS:=

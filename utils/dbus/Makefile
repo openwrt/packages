@@ -16,6 +16,7 @@ PKG_SOURCE_URL:=https://dbus.freedesktop.org/releases/dbus/
 PKG_HASH:=9546f226011a1e5d9d77245fe5549ef25af4694053189d624d0d6ac127ecf5f8
 PKG_MAINTAINER:=
 PKG_LICENSE:=AFL-2.1
+PKG_CPE_ID:=cpe:/a:freedesktop:dbus
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1

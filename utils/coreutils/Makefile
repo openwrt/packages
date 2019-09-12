@@ -15,6 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/coreutils
 PKG_HASH:=e831b3a86091496cdba720411f9748de81507798f6130adeaef872d206e1b057
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
+PKG_CPE_ID:=cpe:/a:gnu:coreutils
 
 PKG_BUILD_PARALLEL:=1
 

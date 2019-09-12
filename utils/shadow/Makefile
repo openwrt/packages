@@ -16,6 +16,7 @@ PKG_SOURCE_URL:=https://github.com/shadow-maint/shadow/releases/download/$(PKG_V
 PKG_HASH:=0998c8d84242a231ab0acb7f8613927ff5bcff095f8aa6b79478893a03f05583
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=BSD-3-Clause
+PKG_CPE_ID:=cpe:/a:debian:shadow
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1

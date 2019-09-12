@@ -18,6 +18,7 @@ PKG_HASH:=ad0cd2de2c87b9ba8086b43957a0de3eb2eb565c7159d5f53ccbba3feb915f4e
 PKG_LICENSE:=TCL
 PKG_LICENSE_FILES:=license.terms
 PKG_MAINTAINER:=Joe Mistachkin <joe@mistachkin.com>
+PKG_CPE_ID:=cpe:/a:tcl_tk:tcl_tk
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)$(PKG_VERSION)

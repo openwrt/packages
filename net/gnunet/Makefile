@@ -11,6 +11,7 @@ PKG_HASH:=98e0355ff0627bf88112b3b92a7522e98c0ae6071fc45efda5a33daed28199b3
 PKG_LICENSE:=AGPL-3.0
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_CPE_ID:=cpe:/a:gnunet:gnunet
 
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=gettext-version

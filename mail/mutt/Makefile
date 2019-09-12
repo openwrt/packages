@@ -19,6 +19,7 @@ PKG_HASH:=ca12448784ed7b6c86d498921e18bc7b152d45494a452df56a7a0c8aaf13f98f
 PKG_MAINTAINER:=Phil Eichinger <phil@zankapfel.net>
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=GPL
+PKG_CPE_ID:=cpe:/a:mutt:mutt
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

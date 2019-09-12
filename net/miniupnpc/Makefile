@@ -18,6 +18,7 @@ PKG_HASH:=a0c46bcf6065d6351a8fa6a0a18dc57d10a16908dbb470908fd2e423511514ec
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=BSD-3c
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:miniupnp_project:miniupnp
 
 PKG_INSTALL:=1
 

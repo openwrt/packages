@@ -16,6 +16,7 @@ PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.or
 PKG_HASH:=15b1e10c7dd6253ab5d791fe9b9cb84624e24c118aecd9b90251b4e60daa0933
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
+PKG_CPE_ID:=cpe:/a:strongswan:strongswan
 
 PKG_MOD_AVAILABLE:= \
 	addrblock \

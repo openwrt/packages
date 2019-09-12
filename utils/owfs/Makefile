@@ -17,6 +17,7 @@ PKG_HASH:=b8d33eba57d4a2f6c8a11ff23f233e3248bd75a42c8219b058a888846edd8717
 
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=GPL-2.0
+PKG_CPE_ID:=cpe:/a:owfs:owfs
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

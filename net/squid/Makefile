@@ -19,6 +19,7 @@ PKG_HASH:=015bade5d3a4905142c4c605df5c4216471e3d8338079955e0e44b0ae0303d41
 
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 PKG_LICENSE:=GPL-2.0-or-later
+PKG_CPE_ID:=cpe:/a:squid-cache:squid
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1

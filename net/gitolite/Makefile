@@ -15,6 +15,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=2166a61b14de19e605b14f4a13a070fbfd5ecd247b6fd725108f111198a2c121
 PKG_SOURCE_URL:=https://codeload.github.com/sitaramc/gitolite/tar.gz/v$(PKG_VERSION)?
 
+PKG_CPE_ID:=cpe:/a:sitaram_chamarty:gitolite
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/gitolite

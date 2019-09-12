@@ -13,6 +13,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/faac/faad2-src/$(PKG_NAME)-2.8.0
 PKG_HASH:=985c3fadb9789d2815e50f4ff714511c79c2710ac27a4aaaf5c0c2662141426d
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_CPE_ID:=cpe:/a:audiocoding:faad2
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
