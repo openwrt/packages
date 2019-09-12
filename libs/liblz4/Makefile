@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liblz4
-PKG_VERSION:=1.9.1
-PKG_RELEASE:=2
+PKG_VERSION:=1.9.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/lz4/lz4/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f8377c89dad5c9f266edc0be9b73595296ecafd5bfa1000de148096c50052dc4
+PKG_HASH:=658ba6191fa44c92280d4aa2c271b0f4fbc0e34d249578dd05e50e76d0e5efcc
 PKG_BUILD_DIR:=$(BUILD_DIR)/lz4-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Darik Horn <dajhorn@vanadac.com>
