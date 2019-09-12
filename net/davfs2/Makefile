@@ -18,6 +18,7 @@ PKG_HASH:=587c6a25ad78109995a7ccb8e60aa1c491b149f2c99d47033f3d5e648430ad2f
 PKG_MAINTAINER:=Federico Di Marco <fededim@gmail.com>
 PKG_LICENSE:=GPL-3
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:davfs2:davfs2
 
 PKG_FIXUP:=gettext-version autoreconf
 PKG_BUILD_PARALLEL:=1

@@ -27,6 +27,7 @@ PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=Copying Artistic README
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>, \
 		Philip Prindeville <philipp@redfish-solutions.com>
+PKG_CPE_ID:=cpe:/a:perl:perl
 
 # Build settings
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/$(PKG_NAME)-$(PKG_VERSION)

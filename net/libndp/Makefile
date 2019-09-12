@@ -12,6 +12,7 @@ PKG_VERSION:=1.7
 PKG_RELEASE:=1
 PKG_LICENSE:=LGPL-2.1
 PKG_MAINTAINER:=Thomas Guyot-Sionnest <tguyot@gmail.com>
+PKG_CPE_ID:=cpe:/a:libndp:libndp
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://libndp.org/files/

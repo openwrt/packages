@@ -20,6 +20,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME).$(PKG_VERSION)
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0 LGPL-2.1
 PKG_LICENSE_FILES:=COPYING COPYING.lib
+PKG_CPE_ID:=cpe:/a:heinz_mauelshagen:lvm2
 
 include $(INCLUDE_DIR)/package.mk
 

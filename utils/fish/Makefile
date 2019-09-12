@@ -13,6 +13,7 @@ PKG_SOURCE_URL:=https://github.com/fish-shell/fish-shell/releases/download/$(PKG
 PKG_HASH:=14728ccc6b8e053d01526ebbd0822ca4eb0235e6487e832ec1d0d22f1395430e
 PKG_MAINTAINER:=Curtis Jiang <jqqqqqqqqqq@gmail.com>, Hao Dong <halbertdong@gmail.com>
 PKG_LICENSE:=GPL-2.0
+PKG_CPE_ID:=cpe:/a:fishshell:fish
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

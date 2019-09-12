@@ -16,6 +16,7 @@ PKG_SOURCE_URL:=https://www.cipherdyne.org/fwknop/download
 PKG_HASH:=f6c09bec97ed8e474a98ae14f9f53e1bcdda33393f20667b6af3fb6bb894ca77
 PKG_MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>
 PKG_LICENSE:=GPL-2.0-or-later
+PKG_CPE_ID:=cpe:/a:cipherdyne:fwknop
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk

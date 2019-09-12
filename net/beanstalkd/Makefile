@@ -19,6 +19,7 @@ PKG_HASH:=6d5155ab347b731640495b1f0df6a4a849e84194d2ef0c2ec6af3879ee1aca2c
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:wildbit:beanstalkd
 
 include $(INCLUDE_DIR)/package.mk
 

@@ -19,6 +19,7 @@ PKG_SOURCE_URL:=https://gpl.savoirfairelinux.net/pub/mirrors/openldap/openldap-r
 PKG_HASH:=d9523ffcab5cd14b709fcf3cb4d04e8bc76bb8970113255f372bc74954c6074d
 PKG_LICENSE:=OLDAP-2.8
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:openldap:openldap
 
 PKG_FIXUP:=autoreconf
 

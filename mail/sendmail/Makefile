@@ -19,6 +19,7 @@ PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
 
 PKG_LICENSE:=Sendmail
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:sendmail:sendmail
 
 PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=openssl

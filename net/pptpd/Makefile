@@ -18,6 +18,8 @@ PKG_HASH:=8fcd8b8a42de2af59e9fe8cbaa9f894045c977f4d038bbd6346a8522bb7f06c0
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
+PKG_CPE_ID:=cpe:/a:poptop:pptp_server
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/pptpd

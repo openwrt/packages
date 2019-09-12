@@ -17,6 +17,7 @@ PKG_HASH:=ded4c9f73731cd48fec3b6bdaccce896473b6d8e337e9612e16cf1431bb1169d
 PKG_MAINTAINER:=Daniel Dickinson <cshored@thecshore.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:gnu:findutils
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1

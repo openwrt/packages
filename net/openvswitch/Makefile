@@ -23,6 +23,7 @@ PKG_HASH:=13fd42703180b4b1146c7e97926d09225485868cc2fbbd58dc0c421b4b8fe8f8
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:openvswitch:openvswitch
 
 PKG_BUILD_DEPENDS+=python3/host python-six/host
 PKG_USE_MIPS16:=0

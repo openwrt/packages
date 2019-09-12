@@ -12,6 +12,7 @@ PKG_RELEASE:=3
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_CPE_ID:=cpe:/a:snort:snort
 
 PKG_SOURCE:=snort-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.snort.org/downloads/snortplus/

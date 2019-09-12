@@ -23,6 +23,8 @@ HOST_BUILD_DEPENDS:=gettext-full/host libiconv/host libffi/host
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
 
+PKG_CPE_ID:=cpe:/a:gnome:glib
+
 PKG_FIXUP:=autoreconf
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/glib-$(PKG_VERSION)

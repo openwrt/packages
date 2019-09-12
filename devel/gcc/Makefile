@@ -31,6 +31,8 @@ PKG_INSTALL:=1
 PKG_FIXUP:=libtool
 PKG_BUILD_PARALLEL:=1
 
+PKG_CPE_ID:=cpe:/a:gnu:gcc
+
 ifeq ($(PKG_VERSION),7.3.0)
 	PKG_HASH:=832ca6ae04636adbb430e865a1451adf6979ab44ca1c8374f61fba65645ce15c
 endif

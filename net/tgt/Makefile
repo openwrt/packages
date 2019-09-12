@@ -13,6 +13,7 @@ PKG_HASH:=6736d799a202ff665549359859441c6d2b5e3425bffef9ee60ab5a101342a40d
 
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
+PKG_CPE_ID:=cpe:/a:zaal:tgt
 
 PKG_USE_MIPS16:=0
 PKG_INSTALL:=1

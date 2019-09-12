@@ -8,6 +8,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/pupnp
 PKG_HASH:=188d3f786d92fe14191f17634d2d87847eee7d2b568a5257ea23262fec9973d6
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_CPE_ID:=cpe:/a:portable_sdk_for_upnp_project:portable_sdk_for_upnp
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1

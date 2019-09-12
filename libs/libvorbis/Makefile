@@ -16,6 +16,7 @@ PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:xiph.org:libvorbis
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

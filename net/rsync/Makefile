@@ -18,6 +18,7 @@ PKG_HASH:=55cc554efec5fdaad70de921cd5a5eeb6c29a95524c715f3bbf849235b0800c0
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:rsync:rsync
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1

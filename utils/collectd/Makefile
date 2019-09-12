@@ -19,6 +19,7 @@ PKG_HASH:=7b220f8898a061f6e7f29a8c16697d1a198277f813da69474a67911097c0626b
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libltdl/aclocal.m4
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>, Hannu Nyman <hannu.nyman@iki.fi>
+PKG_CPE_ID:=cpe:/a:collectd:collectd
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1

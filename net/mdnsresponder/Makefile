@@ -16,6 +16,7 @@ PKG_SOURCE_URL:=https://opensource.apple.com/tarballs/mDNSResponder/IETF/
 PKG_HASH:=b3a76fd35cf2d561546c2fbeaea1e5998b7e04b8330afb918ea5fbdeb202162c
 PKG_MAINTAINER:=
 PKG_LICENSE:=Apache-2.0
+PKG_CPE_ID:=cpe:/a:apple:mdnsresponder
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/mDNSResponder-$(PKG_VERSION)
 

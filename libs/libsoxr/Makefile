@@ -20,6 +20,7 @@ PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=LICENCE
+PKG_CPE_ID:=cpe:/a:sox:sox
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
