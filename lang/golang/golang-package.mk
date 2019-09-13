@@ -275,7 +275,6 @@ define GoPackage/Build/Compile
 			mips|mipsle)     installsuffix="$(GO_MIPS)" ;; \
 			mips64|mips64le) installsuffix="$(GO_MIPS64)" ;; \
 			esac ; \
-			trimpath="all=-trimpath=$(GO_PKG_BUILD_DIR)" ; \
 			ldflags="all=-linkmode external -extldflags '$(TARGET_LDFLAGS)'" ; \
 			pkg_gcflags="$(GO_PKG_GCFLAGS)" ; \
 			pkg_ldflags="$(GO_PKG_LDFLAGS)" ; \
@@ -284,8 +283,7 @@ define GoPackage/Build/Compile
 			done ; \
 			go install \
 				$$$${installsuffix:+-installsuffix $$$$installsuffix} \
-				-gcflags "$$$$trimpath" \
-				-asmflags "$$$$trimpath" \
+				-trimpath \
 				-ldflags "$$$$ldflags" \
 				-v \
 				$$$${pkg_gcflags:+-gcflags "$$$$pkg_gcflags"} \
