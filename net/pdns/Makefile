@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pdns
-PKG_VERSION:=4.1.13
+PKG_VERSION:=4.2.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
-PKG_HASH:=e7ea9c628a03652d2ca9e048525d44ac5628a9fede45e510ff9ba756ae2f5f25
+PKG_HASH:=222007f25e25aad71ac7d8b7f1797a4bcb30781e456d74ed00396e53828a903a
 
 PKG_MAINTAINER:=James Taylor <james@jtaylor.id.au>
 PKG_LICENCE:=GPL-2.0-only
@@ -64,7 +64,7 @@ endef
 define Package/pdns-tools
   $(call Package/pdns/Default)
   TITLE:=Tools for DNS debugging by PowerDNS
-  DEPENDS+=+boost +boost-program_options +libopenssl +p11-kit +protobuf
+  DEPENDS+=+boost +boost-program_options +libcurl +libmbedtls +libopenssl +p11-kit +protobuf
 endef
 
 define Package/pdns-tools/description
@@ -88,9 +88,26 @@ define Package/pdns-tools/description
     * saxfr: AXFR zones and show extra information
 endef
 
+define Package/pdns-ixfrdist
+  $(call Package/pdns/Default)
+  TITLE:=Redistribute zones via AXFR and IXFR
+  DEPENDS+=+boost +boost-program_options +libopenssl +libyaml-cpp +p11-kit +protobuf
+endef
+
+define Package/pdns-ixfrdist/description
+  PowerDNS is a versatile nameserver which supports a large number
+  of different backends ranging from simple zonefiles to relational
+  databases and load balancing/failover algorithms.
+  PowerDNS tries to emphasize speed and security.
+
+  This package contains the ixfrdist tool that can redistribute multiple versions
+  of zones over AXFR and IXFR. This tool does not require any part of the
+  PowerDNS server components to work.
+endef
+
 define Package/pdns
   $(call Package/pdns/Default)
-  DEPENDS+=+boost +boost-program_options +liblua +libopenssl +libsodium +libsqlite3 +p11-kit
+  DEPENDS+=+boost +boost-program_options +libcurl +liblua +libopenssl +libsqlite3 +p11-kit
 endef
 
 define Package/pdns/config
@@ -137,12 +154,14 @@ define DefinePdnsBackend
   endef
 endef
 
+$(eval $(call DefinePdnsBackend,geoip,,libmaxminddb libyaml-cpp,,GeoIP))
 $(eval $(call DefinePdnsBackend,mysql,,libmysqlclient,gmysql,MySQL))
 $(eval $(call DefinePdnsBackend,odbc,,unixodbc,godbc,ODBC))
 $(eval $(call DefinePdnsBackend,pgsql,,libpq,gpgsql,PostgreSQL))
 $(eval $(call DefinePdnsBackend,sqlite3,,libsqlite3,gsqlite3,SQLite 3))
 $(eval $(call DefinePdnsBackend,ldap,,libopenldap krb5-libs,,OpenLDAP))
 $(eval $(call DefinePdnsBackend,lua,,lua liblua,,Lua))
+$(eval $(call DefinePdnsBackend,lua2,,lua liblua,,Lua2))
 $(eval $(call DefinePdnsBackend,mydns,,libmysqlclient,,MyDNS))
 $(eval $(call DefinePdnsBackend,pipe,,,,Pipe))
 $(eval $(call DefinePdnsBackend,remote,,,,Remote))
@@ -161,8 +180,10 @@ CONFIGURE_ARGS+= \
 	--with-mysql-includes=$(STAGING_DIR)/usr \
 	$(if $(CONFIG_PACKAGE_pdns-tools),--enable-tools,) \
 	--with-protobuf \
-	--enable-libsodium \
-	--enable-experimental-pkcs11
+	--without-libsodium \
+	--enable-experimental-pkcs11 \
+	--enable-lua-records \
+	$(if $(CONFIG_PACKAGE_pdns-ixfrdist),--enable-ixfrdist,)
 
 define Package/pdns/install
 	$(INSTALL_DIR) $(1)/etc/powerdns
@@ -183,24 +204,33 @@ define Package/pdns/Default/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/powerdns/pdns/lib$(PDNS_BACKEND_$(2)_LIB)backend.so $(1)/usr/lib/powerdns/pdns/
 endef
 
+define Package/pdns-ixfrdist/install
+	$(INSTALL_DIR) $(1)/etc/powerdns
+	$(CP) $(PKG_INSTALL_DIR)/etc/powerdns/ixfrdist.example.yml $(1)/etc/powerdns/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ixfrdist $(1)/usr/bin/
+endef
+
 define Package/pdns-tools/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/calidns $(1)/usr/bin/
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dnsbulktest $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/zone2ldap $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dnsgram $(1)/usr/bin/
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dnspcap2protobuf $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dnsreplay $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dnsscan $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dnsscope $(1)/usr/bin/
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dnstcpbench $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dnswasher $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dumresp $(1)/usr/bin/
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ixplore $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/pdns_notify $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/nproxy $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/nsec3dig $(1)/usr/bin/
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/pdns_notify $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/saxfr $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/stubquery $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ixplore $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/sdig $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/calidns $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dnsbulktest $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dnstcpbench $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dnspcap2protobuf $(1)/usr/bin/
 endef
 
 define BuildPdnsBackend
@@ -214,3 +244,4 @@ endef
 $(foreach backend,$(PDNS_BACKENDS),$(eval $(call BuildPdnsBackend,$(backend))))
 $(eval $(call BuildPackage,pdns))
 $(eval $(call BuildPackage,pdns-tools))
+$(eval $(call BuildPackage,pdns-ixfrdist))
