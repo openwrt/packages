@@ -62,8 +62,7 @@ endef
 CMAKE_OPTIONS += \
 	-DBoost_NO_BOOST_CMAKE=ON \
 	-DBUILD_TESTS=OFF \
-	-DEXAMPLES=OFF \
-	-DFTDI_EEPROM=OFF
+	-DEXAMPLES=OFF
 
 define Package/libftdi1/install
 	$(INSTALL_DIR) $(1)/usr/bin
