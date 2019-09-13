@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=leptonica
 PKG_VERSION:=1.78.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.leptonica.org/source/
@@ -30,7 +30,7 @@ define Package/libleptonica
   CATEGORY:=Libraries
   TITLE:=A library for efficient image processing and image analysis operations
   URL:=http://www.leptonica.org/
-  DEPENDS:=+giflib +libjpeg +libpng +libtiff +zlib
+  DEPENDS:=+giflib +libjpeg +libpng +libtiff +libwebp +zlib
 endef
 
 TARGET_CFLAGS:=$(filter-out -O%,$(TARGET_CFLAGS)) -O3
