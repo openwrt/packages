@@ -1,0 +1,12 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -194,6 +194,9 @@ find_package(Gflags REQUIRED)
+ # find glog::glog to satisfy the folly dep.
+ find_package(Glog REQUIRED)
+ 
++find_package(Boost REQUIRED COMPONENTS system thread filesystem regex context
++                                       date_time program_options)
++
+ include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
+ 
+ include_directories(SYSTEM ${GFLAGS_INCLUDE_DIR})
