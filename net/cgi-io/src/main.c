@@ -369,14 +369,16 @@ response(bool success, const char *message)
 }
 
 static int
-failure(int e, const char *message)
+failure(int code, int e, const char *message)
 {
-	printf("Status: 500 Internal Server failure\r\n");
+	printf("Status: %d %s\r\n", code, message);
 	printf("Content-Type: text/plain\r\n\r\n");
 	printf("%s", message);
 
 	if (e)
 		printf(": %s", strerror(e));
+
+	printf("\n");
 
 	return -1;
 }
@@ -661,29 +663,29 @@ main_download(int argc, char **argv)
 	postdecode(fields, 4);
 
 	if (!fields[1] || !session_access(fields[1], "cgi-io", "download", "read"))
-		return failure(0, "Download permission denied");
+		return failure(403, 0, "Download permission denied");
 
 	if (!fields[3] || !session_access(fields[1], "file", fields[3], "read"))
-		return failure(0, "Access to path denied by ACL");
+		return failure(403, 0, "Access to path denied by ACL");
 
 	if (stat(fields[3], &s))
-		return failure(errno, "Failed to stat requested path");
+		return failure(404, errno, "Failed to stat requested path");
 
 	if (!S_ISREG(s.st_mode) && !S_ISBLK(s.st_mode))
-		return failure(0, "Requested path is not a regular file or block device");
+		return failure(403, 0, "Requested path is not a regular file or block device");
 
 	for (p = fields[5]; p && *p; p++)
 		if (!isalnum(*p) && !strchr(" ()<>@,;:[]?.=%", *p))
-			return failure(0, "Invalid characters in filename");
+			return failure(400, 0, "Invalid characters in filename");
 
 	for (p = fields[7]; p && *p; p++)
 		if (!isalnum(*p) && !strchr(" .;=/-", *p))
-			return failure(0, "Invalid characters in mimetype");
+			return failure(400, 0, "Invalid characters in mimetype");
 
 	rfd = open(fields[3], O_RDONLY);
 
 	if (rfd < 0)
-		return failure(errno, "Failed to open requested path");
+		return failure(500, errno, "Failed to open requested path");
 
 	if (S_ISBLK(s.st_mode))
 		ioctl(rfd, BLKGETSIZE64, &size);
@@ -740,15 +742,15 @@ main_backup(int argc, char **argv)
 	char *fields[] = { "sessionid", NULL };
 
 	if (!postdecode(fields, 1) || !session_access(fields[1], "cgi-io", "backup", "read"))
-		return failure(0, "Backup permission denied");
+		return failure(403, 0, "Backup permission denied");
 
 	if (pipe(fds))
-		return failure(errno, "Failed to spawn pipe");
+		return failure(500, errno, "Failed to spawn pipe");
 
 	switch ((pid = fork()))
 	{
 	case -1:
-		return failure(errno, "Failed to fork process");
+		return failure(500, errno, "Failed to fork process");
 
 	case 0:
 		dup2(fds[1], 1);
