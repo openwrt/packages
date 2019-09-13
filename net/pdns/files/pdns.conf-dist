@@ -50,16 +50,6 @@
 # api-key=
 
 #################################
-# api-logfile	Location of the server logfile (used by the REST API)
-#
-# api-logfile=/var/log/pdns.log
-
-#################################
-# api-readonly	Disallow data modification through the REST API when set
-#
-# api-readonly=no
-
-#################################
 # axfr-lower-serial	Also AXFR a zone from a master with a lower serial
 #
 # axfr-lower-serial=no
@@ -70,9 +60,19 @@
 # cache-ttl=20
 
 #################################
+# carbon-instance	If set overwrites the the instance name default
+#
+# carbon-instance=auth
+
+#################################
 # carbon-interval	Number of seconds between carbon (graphite) updates
 #
 # carbon-interval=30
+
+#################################
+# carbon-namespace	If set overwrites the first part of the carbon string
+#
+# carbon-namespace=pdns
 
 #################################
 # carbon-ourname	If set, overrides our reported hostname for carbon stats
@@ -108,6 +108,11 @@
 # daemon	Operate as a daemon
 #
 # daemon=no
+
+#################################
+# default-api-rectify	Default API-RECTIFY value for zones
+#
+# default-api-rectify=yes
 
 #################################
 # default-ksk-algorithm	Default KSK algorithm
@@ -155,7 +160,7 @@
 # default-zsk-size=0
 
 #################################
-# direct-dnskey	Fetch DNSKEY RRs from backend during DNSKEY synthesis
+# direct-dnskey	Fetch DNSKEY, CDS and CDNSKEY RRs from backend during DNSKEY or CDS/CDNSKEY synthesis
 #
 # direct-dnskey=no
 
@@ -173,11 +178,6 @@
 # disable-syslog	Disable logging to syslog, useful when running inside a supervisor that logs stdout
 #
 # disable-syslog=no
-
-#################################
-# disable-tcp	Do not listen to TCP queries
-#
-# disable-tcp=no
 
 #################################
 # distributor-threads	Default number of Distributor (backend) threads to start
@@ -213,6 +213,11 @@
 # edns-subnet-processing	If we should act on EDNS Subnet options
 #
 # edns-subnet-processing=no
+
+#################################
+# enable-lua-records	Process LUA records for all zones (metadata overrides this)
+#
+# enable-lua-records=no
 
 #################################
 # entropy-source	If set, read entropy from this file
@@ -320,6 +325,11 @@
 # lua-prequery-script=
 
 #################################
+# lua-records-exec-limit	LUA records scripts execution limit (instructions count). Values <= 0 mean no limit
+#
+# lua-records-exec-limit=1000
+
+#################################
 # master	Act as a master
 #
 # master=no
@@ -400,11 +410,6 @@
 # only-notify=0.0.0.0/0,::/0
 
 #################################
-# out-of-zone-additional-processing	Do out of zone additional processing
-#
-# out-of-zone-additional-processing=yes
-
-#################################
 # outgoing-axfr-expand-alias	Expand ALIAS records during outgoing AXFR
 #
 # outgoing-axfr-expand-alias=no
@@ -465,9 +470,19 @@
 # reuseport=no
 
 #################################
+# rng	Specify the random number generator to use. Valid values are auto,sodium,openssl,getrandom,arc4random,urandom.
+#
+# rng=auto
+
+#################################
 # security-poll-suffix	Domain name from which to query security update notifications
 #
 # security-poll-suffix=secpoll.powerdns.com.
+
+#################################
+# send-signed-notify	Send TSIG secured NOTIFY if TSIG key is configured for a domain
+#
+# send-signed-notify=yes
 
 #################################
 # server-id	Returned when queried for 'id.server' TXT or NSID, defaults to hostname - disabled or custom
@@ -532,7 +547,7 @@
 #################################
 # superslave	Act as a superslave
 #
-# superslave=yes
+# superslave=no
 
 #################################
 # tcp-control-address	If set, PowerDNS can be controlled over TCP on this address
@@ -577,7 +592,7 @@
 #################################
 # udp-truncation-threshold	Maximum UDP response size before we truncate
 #
-# udp-truncation-threshold=1680
+# udp-truncation-threshold=1232
 
 #################################
 # version-string	PowerDNS version in packets - full, anonymous, powerdns or custom
@@ -598,6 +613,16 @@
 # webserver-allow-from	Webserver/API access is only allowed from these subnets
 #
 # webserver-allow-from=127.0.0.1,::1
+
+#################################
+# webserver-loglevel	Amount of logging in the webserver (none, normal, detailed)
+#
+# webserver-loglevel=normal
+
+#################################
+# webserver-max-bodysize	Webserver/API maximum request/response body size in megabytes
+#
+# webserver-max-bodysize=2
 
 #################################
 # webserver-password	Password required for accessing the webserver
