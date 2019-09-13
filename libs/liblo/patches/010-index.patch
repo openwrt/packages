@@ -1,0 +1,15 @@
+--- a/src/server.c
++++ b/src/server.c
+@@ -2006,11 +2006,8 @@ static void dispatch_method(lo_server s, const char *path,
+ 
+                     tmp = (char*) malloc(strlen(it->path + len) + 1);
+                     strcpy(tmp, it->path + len);
+-#if defined(WIN32) || defined(_MSC_VER)
+                     sec = strchr(tmp, '/');
+-#else
+-                    sec = index(tmp, '/');
+-#endif
++
+                     if (sec)
+                         *sec = '\0';
+                     slend = sl;

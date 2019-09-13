@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liblo
 PKG_VERSION:=0.30
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/liblo
@@ -44,6 +44,13 @@ $(call Package/liblo/Default)
   TITLE+= utilities
   DEPENDS:= +liblo
 endef
+
+CONFIGURE_ARGS += \
+	$(if $(CONFIG_IPV6),--enable,--disable)-ipv6 \
+	--enable-threads \
+	--disable-examples \
+	--disable-network-tests \
+	--disable-tests
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
