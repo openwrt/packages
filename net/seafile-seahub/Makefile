@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python-package.mk
 
 SEAFILE_PYTHON_DEPENDS:= \
-	simplejson chardet dateutil mysql pytz qrcode requests requests-oauthlib \
+	simplejson chardet dateutil mysqlclient pytz qrcode requests requests-oauthlib \
 	django django-constance django-appconf django-compressor django-formtools \
 	django-jsonfield django-picklefield django-postoffice django-restframework \
 	pillow django-simple-captcha django-statici18n django-webpack-loader
