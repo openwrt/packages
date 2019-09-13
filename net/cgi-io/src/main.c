@@ -26,6 +26,9 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/sendfile.h>
+#include <sys/ioctl.h>
+#include <linux/fs.h>
 
 #include <libubus.h>
 #include <libubox/blobmsg.h>
@@ -646,6 +649,84 @@ main_upload(int argc, char *argv[])
 }
 
 static int
+main_download(int argc, char **argv)
+{
+	char *fields[] = { "sessionid", NULL, "path", NULL, "filename", NULL, "mimetype", NULL };
+	unsigned long long size = 0;
+	char *p, buf[4096];
+	ssize_t len = 0;
+	struct stat s;
+	int rfd;
+
+	postdecode(fields, 4);
+
+	if (!fields[1] || !session_access(fields[1], "cgi-io", "download", "read"))
+		return failure(0, "Download permission denied");
+
+	if (!fields[3] || !session_access(fields[1], "file", fields[3], "read"))
+		return failure(0, "Access to path denied by ACL");
+
+	if (stat(fields[3], &s))
+		return failure(errno, "Failed to stat requested path");
+
+	if (!S_ISREG(s.st_mode) && !S_ISBLK(s.st_mode))
+		return failure(0, "Requested path is not a regular file or block device");
+
+	for (p = fields[5]; p && *p; p++)
+		if (!isalnum(*p) && !strchr(" ()<>@,;:[]?.=%", *p))
+			return failure(0, "Invalid characters in filename");
+
+	for (p = fields[7]; p && *p; p++)
+		if (!isalnum(*p) && !strchr(" .;=/-", *p))
+			return failure(0, "Invalid characters in mimetype");
+
+	rfd = open(fields[3], O_RDONLY);
+
+	if (rfd < 0)
+		return failure(errno, "Failed to open requested path");
+
+	if (S_ISBLK(s.st_mode))
+		ioctl(rfd, BLKGETSIZE64, &size);
+	else
+		size = (unsigned long long)s.st_size;
+
+	printf("Status: 200 OK\r\n");
+	printf("Content-Type: %s\r\n", fields[7] ? fields[7] : "application/octet-stream");
+
+	if (fields[5])
+		printf("Content-Disposition: attachment; filename=\"%s\"\r\n", fields[5]);
+
+	printf("Content-Length: %llu\r\n\r\n", size);
+	fflush(stdout);
+
+	while (size > 0) {
+		len = sendfile(1, rfd, NULL, size);
+
+		if (len == -1) {
+			if (errno == ENOSYS || errno == EINVAL) {
+				while ((len = read(rfd, buf, sizeof(buf))) > 0)
+					fwrite(buf, len, 1, stdout);
+
+				fflush(stdout);
+				break;
+			}
+
+			if (errno == EINTR || errno == EAGAIN)
+				continue;
+		}
+
+		if (len <= 0)
+			break;
+
+		size -= len;
+	}
+
+	close(rfd);
+
+	return 0;
+}
+
+static int
 main_backup(int argc, char **argv)
 {
 	pid_t pid;
@@ -718,6 +799,8 @@ int main(int argc, char **argv)
 {
 	if (strstr(argv[0], "cgi-upload"))
 		return main_upload(argc, argv);
+	else if (strstr(argv[0], "cgi-download"))
+		return main_download(argc, argv);
 	else if (strstr(argv[0], "cgi-backup"))
 		return main_backup(argc, argv);
 
