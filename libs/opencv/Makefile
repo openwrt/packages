@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opencv
 PKG_VERSION:=4.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/opencv/opencv
@@ -43,7 +43,7 @@ define Package/opencv
   CATEGORY:=Libraries
   TITLE:=OpenCV
   URL:=https://opencv.org/
-  DEPENDS:=+libpthread +librt +libatomic +libstdcpp +zlib +libjpeg
+  DEPENDS:=+libpthread +librt +libatomic +libstdcpp +zlib +libjpeg +libwebp
 endef
 
 CMAKE_OPTIONS += \
