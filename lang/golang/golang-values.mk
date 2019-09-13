@@ -27,6 +27,7 @@ unexport \
   CC_FOR_TARGET CXX_FOR_TARGET GO_DISTFLAGS GO_GCFLAGS GO_LDFLAGS GOBUILDTIMELOGFILE GOROOT_BOOTSTRAP \
   BOOT_GO_GCFLAGS GOEXPERIMENT GOBOOTSTRAP_TOOLEXEC
   # there are more magic environment variables to track down, but ain't nobody got time for that
+  # deliberately left untouched: GOPROXY GONOPROXY GOSUMDB GONOSUMDB GOPRIVATE
 
 go_arch=$(subst \
   aarch64,arm64,$(subst \
