@@ -138,7 +138,7 @@
 
 "no-ip.pl"		"http://[USERNAME]:[PASSWORD]@update.no-ip.pl/?hostname=[DOMAIN]"
 
-"now-dns.com"		"https://[USERNAME]:[PASSWORD]@now-dns.com/update?hostname=[DOMAIN]"	"good|nochg"
+"now-dns.com"		"https://[USERNAME]:[PASSWORD]@now-dns.com/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 "nsupdate.info"		"http://[USERNAME]:[PASSWORD]@ipv4.nsupdate.info/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
