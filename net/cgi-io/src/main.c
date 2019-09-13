@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#define _GNU_SOURCE /* splice(), SPLICE_F_MORE */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -736,7 +738,6 @@ main_backup(int argc, char **argv)
 	int len;
 	int status;
 	int fds[2];
-	char buf[4096];
 	char datestr[16] = { 0 };
 	char hostname[64] = { 0 };
 	char *fields[] = { "sessionid", NULL };
@@ -768,7 +769,6 @@ main_backup(int argc, char **argv)
 		return -1;
 
 	default:
-		fcntl(fds[0], F_SETFL, fcntl(fds[0], F_GETFL) | O_NONBLOCK);
 		now = time(NULL);
 		strftime(datestr, sizeof(datestr) - 1, "%Y-%m-%d", localtime(&now));
 
@@ -780,15 +780,13 @@ main_backup(int argc, char **argv)
 		printf("Content-Disposition: attachment; "
 		       "filename=\"backup-%s-%s.tar.gz\"\r\n\r\n", hostname, datestr);
 
+		fflush(stdout);
+
 		do {
-			waitpid(pid, &status, 0);
+			len = splice(fds[0], NULL, 1, NULL, 4096, SPLICE_F_MORE);
+		} while (len > 0);
 
-			while ((len = read(fds[0], buf, sizeof(buf))) > 0) {
-				fwrite(buf, len, 1, stdout);
-				fflush(stdout);
-			}
-
-		} while (!WIFEXITED(status));
+		waitpid(pid, &status, 0);
 
 		close(fds[0]);
 		close(fds[1]);
