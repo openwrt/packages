@@ -9,17 +9,18 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libftdi1
 PKG_VERSION:=1.4
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.intra2net.com/en/developer/libftdi/download/
 PKG_HASH:=ec36fb49080f834690c24008328a5ef42d3cf584ef4060f3a35aa4681cb31b74
-PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
-PKG_LICENSE:=LGPL-2.0
+PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
+PKG_LICENSE:=LGPL-2.1-only
 PKG_LICENSE_FILES:=COPYING.LIB
 
-PKG_INSTALL:=1
+CMAKE_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
@@ -58,26 +59,11 @@ define Package/ftdi_eeprom/description
   read. Otherwise, you will still get the old values.
 endef
 
-CMAKE_OPTIONS:= \
+CMAKE_OPTIONS += \
+	-DBoost_NO_BOOST_CMAKE=ON \
 	-DBUILD_TESTS=OFF \
-	-DBoost_NO_BOOST_CMAKE=ON
-
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/libftdi1/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/libftdi1/ftdi.h $(1)/usr/include/libftdi1/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libftdi1.{a,so*} $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/lib/cmake/libftdi1
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/cmake/libftdi1/* $(1)/usr/lib/cmake/libftdi1/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libftdi1.pc $(1)/usr/lib/pkgconfig/libftdi1.pc
-	$(SED) \
-		's,/usr/include,$$$${prefix}/include,g' \
-		 $(1)/usr/lib/pkgconfig/libftdi1.pc
-	$(SED) \
-		's,/usr/lib,$$$${prefix}/lib,g' \
-		 $(1)/usr/lib/pkgconfig/libftdi1.pc
-endef
+	-DEXAMPLES=OFF \
+	-DFTDI_EEPROM=OFF
 
 define Package/libftdi1/install
 	$(INSTALL_DIR) $(1)/usr/bin
