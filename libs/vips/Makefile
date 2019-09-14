@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vips
-PKG_VERSION:=8.7.4
-PKG_RELEASE:=3
+PKG_VERSION:=8.8.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/libvips/libvips/releases/download/v$(PKG_VERSION)
-PKG_HASH:=ce7518a8f31b1d29a09b3d7c88e9852a5a2dcb3ee1501524ab477e433383f205
+PKG_HASH:=aba3f97d60c344c5d40ffcec524460e378dab939f873ec5d155bbc510a4fbd5d
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1-or-later
