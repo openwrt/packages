@@ -23,7 +23,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_BUILD_DEPENDS:=scons/host
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/scons.mk
+include ../../devel/scons/scons.mk
 
 define Package/smartsnmpd
   SECTION:=net

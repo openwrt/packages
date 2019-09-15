@@ -15,12 +15,14 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SAVANNAH/$(PKG_NAME)
 PKG_HASH:=27dd24d45b2ac69baab7933da2bf6ae5fb0be90130f67e753c110a3477155f39
 
+PKG_BUILD_DEPENDS:=scons/host
+
 PKG_MAINTAINER:=Pushpal Sidhu <psidhu.devel@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/scons.mk
+include ../../devel/scons/scons.mk
 
 define Package/gpsd/Default
   DEPENDS+= +libusb-1.0
