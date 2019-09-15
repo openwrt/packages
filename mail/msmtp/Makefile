@@ -49,6 +49,7 @@ $(call Package/msmtp/Default)
   DEPENDS+= +libgnutls +ca-bundle
   TITLE+= (with SSL support)
   VARIANT:=ssl
+  DEFAULT_VARIANT:=1
 endef
 
 define Package/msmtp/conffiles
@@ -64,6 +65,7 @@ define Package/msmtp-nossl
 $(call Package/msmtp/Default)
   TITLE+= (without SSL support)
   VARIANT:=nossl
+  PROVIDES:=msmtp
 endef
 
 define Package/msmtp-nossl/description
@@ -74,7 +76,10 @@ endef
 define Package/msmtp-mta
 $(call Package/msmtp/Default)
   TITLE+= (as MTA)
-  DEPENDS+=@(PACKAGE_msmtp||PACKAGE_msmtp-nossl)
+  DEPENDS+=+msmtp
+  ALTERNATIVES:=\
+	100:/usr/sbin/sendmail:/usr/bin/msmtp \
+	100:/usr/lib/sendmail:/usr/bin/msmtp
 endef
 
 define Package/msmtp-mta/description
@@ -85,7 +90,7 @@ endef
 
 define Package/msmtp-queue
 $(call Package/msmtp/Default)
-  DEPENDS+= +bash @(PACKAGE_msmtp||PACKAGE_msmtp-nossl)
+  DEPENDS+= +bash +msmtp
   TITLE+= (queue scripts)
 endef
 
@@ -119,8 +124,6 @@ endef
 
 define Package/msmtp-mta/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/lib
-	ln -sf ../bin/msmtp $(1)/usr/sbin/sendmail
-	ln -sf ../bin/msmtp $(1)/usr/lib/sendmail
 endef
 
 Package/msmtp-nossl/conffiles = $(Package/msmtp/conffiles)
