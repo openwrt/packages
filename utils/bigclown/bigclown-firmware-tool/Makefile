@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bigclown-firmware-tool
-PKG_VERSION:=1.3.0
+PKG_VERSION:=1.4.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/bigclownlabs/bch-firmware-tool/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=2ba459148a5f23773ab14d0f5d5cc381c441d758cb9f23cdbec18b30b07675ab
+PKG_HASH:=076acd25af717fa9cc0ce180e2e863cfce8957d00cc24e982f44c91bae10f956
 PKG_BUILD_DIR:=$(BUILD_DIR)/bch-firmware-tool-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
