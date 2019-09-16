@@ -108,6 +108,20 @@ config globals 'globals'
 #	list VerboseInterface 'br-lan'
 #	list QDisc 'br-lan'
 
+#config plugin 'network'
+#	option enable '1'
+#	option TimeToLive '128'
+#	option Forward '1'
+#	option CacheFlush '86400'
+
+#config network_listen
+#	option host '0.0.0.0'
+#	option port '25826'
+
+#config network_server
+#	option host '1.1.1.1'
+#	option port '25826'
+
 #config plugin 'nut'
 #	option enable '0'
 #	option UPS 'myupsname'
