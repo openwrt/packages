@@ -30,6 +30,13 @@ config globals 'globals'
 #	option StoreRates '0'
 #	option DataDir '/tmp'
 
+#config plugin 'curl'
+#	option enable '0'
+
+#config curl_page
+#	option name 'test'
+#	option url 'http://finance.google.com/finance?q=NYSE%3AAMD%22'
+
 #config plugin 'df'
 #	option enable '0'
 #	list Device '/dev/mtdblock/4'
