@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=scapy
-PKG_VERSION:=2.4.2
+PKG_VERSION:=2.4.3
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
-PKG_LICENSE_FILES:=PKG-INFO
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/secdev/scapy/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=141ee386cf6f296e8c9fae94a40a5386ac2d9bfa43a3870b13f575200c46b5f8
+PKG_HASH:=6cacd9ebe2beeb06b10ff57bff3632222755e9d62f1b38e71b02edab6e71d776
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
