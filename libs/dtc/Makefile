@@ -46,6 +46,7 @@ define Package/fdt-utils
   CATEGORY:=Utilities
   TITLE:=Flat Device Tree Utilities
   URL:=https://git.kernel.org/pub/scm/utils/dtc/dtc.git
+  DEPENDS:=+libfdt
 endef
 
 define Package/fdt-utils/install
