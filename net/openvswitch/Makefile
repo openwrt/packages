@@ -15,11 +15,11 @@ include $(INCLUDE_DIR)/kernel.mk
 #  - Check and update kmod dependencies when necessary (runtime module load check in the least)
 #
 PKG_NAME:=openvswitch
-PKG_VERSION:=2.11.1
-PKG_RELEASE:=2
+PKG_VERSION:=2.12.0
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
-PKG_HASH:=c1296ae44a7b176150915e33bc497cc0a7a02caeba84ea43ce9b6a2509d9b5dc
+PKG_HASH:=13fd42703180b4b1146c7e97926d09225485868cc2fbbd58dc0c421b4b8fe8f8
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -40,7 +40,7 @@ include ../../lang/python/python3-package.mk
 
 ovs_kmod_packages:=
 ovs_kmod_intree_kernel_patchver_min:=3.10
-ovs_kmod_intree_kernel_patchver_max:=4.18
+ovs_kmod_intree_kernel_patchver_max:=5.0
 ovs_kmod_intree_not_supported:=$(strip $(call kernel_patchver_lt,$(ovs_kmod_intree_kernel_patchver_min))$(call kernel_patchver_gt,$(ovs_kmod_intree_kernel_patchver_max)))
 ovs_kmod_intree_dir:=$(PKG_BUILD_DIR)/datapath/linux
 ovs_kmod_upstream_dir:=$(LINUX_DIR)/net/openvswitch
@@ -111,14 +111,19 @@ $(eval $(call OvsKmodPackageTemplate,openvswitch-geneve))
 #    will be pulled in by kmod-gre6.  NOTE that tunnel6.ko itself cannot be
 #    enabled and selected on its own
 #
+#  - kmod-ipt-conntrack-extra: required for nf_conncount.ko
+#
 ovs_kmod_openvswitch-intree_title:=Open vSwitch kernel datapath (in tree)
 ovs_kmod_openvswitch-intree_depends:=\
 	  +kmod-lib-crc32c \
 	  +kmod-nf-nat \
 	  +IPV6:kmod-nf-nat6 \
 	  +kmod-nf-conntrack \
-	  +IPV6:kmod-nf-conntrack6 \
-	  +kmod-gre +IPV6:kmod-gre6 \
+	  +(IPV6&&(LINUX_4_9||LINUX_4.14)):kmod-nf-conntrack6 \
+	  +(LINUX_4_9||LINUX_4.14):kmod-gre \
+	  +(IPV6&&(LINUX_4_9||LINUX_4.14)):kmod-gre6 \
+	  +(!LINUX_4_9&&!LINUX_4.14):kmod-udptunnel4 \
+	  +(!LINUX_4_9&&!LINUX_4.14):kmod-ipt-conntrack-extra \
 
 ovs_kmod_openvswitch-intree_files:= $(ovs_kmod_intree_dir)/openvswitch.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-intree))
