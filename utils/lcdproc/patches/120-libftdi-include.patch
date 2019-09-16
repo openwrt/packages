@@ -1,0 +1,44 @@
+--- a/server/drivers/hd44780-low.h
++++ b/server/drivers/hd44780-low.h
+@@ -26,7 +26,7 @@
+ #endif
+ 
+ #ifdef HAVE_LIBFTDI
+-# include <ftdi.h>
++# include <libftdi1/ftdi.h>
+ #endif
+ 
+ #include "i2c.h"
+--- a/server/drivers/i2500vfd.c
++++ b/server/drivers/i2500vfd.c
+@@ -32,7 +32,7 @@
+ #include <stdio.h>
+ #include <unistd.h>
+ #include <string.h>
+-#include <ftdi.h>
++#include <libftdi1/ftdi.h>
+ 
+ #include "lcd.h"
+ #include "i2500vfd.h"
+--- a/server/drivers/lis.c
++++ b/server/drivers/lis.c
+@@ -41,7 +41,7 @@
+ #include <errno.h>
+ #include <pthread.h>
+ 
+-#include <ftdi.h>
++#include <libftdi1/ftdi.h>
+ 
+ #include "lcd.h"
+ #include "lis.h"
+--- a/server/drivers/ula200.c
++++ b/server/drivers/ula200.c
+@@ -30,7 +30,7 @@
+ #include <string.h>
+ #include <errno.h>
+ 
+-#include <ftdi.h>
++#include <libftdi1/ftdi.h>
+ 
+ #include "lcd.h"
+ #include "ula200.h"
