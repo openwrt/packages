@@ -73,6 +73,61 @@ process_curl_page() {
 	printf "\\t</Page>\n" >> "$COLLECTD_CONF"
 }
 
+process_network() {
+	local cfg="$1"
+
+	local TimeToLive Forward CacheFlush
+
+	printf "<Plugin network>\n" >> "$COLLECTD_CONF"
+	config_foreach process_network_sections network_listen "listen"
+	config_foreach process_network_sections network_server "server"
+
+	config_get TimeToLive "$cfg" TimeToLive
+	[ -z "$TimeToLive" ] || {
+		printf "\\tTimeToLive %s\n" "${TimeToLive}" >> "$COLLECTD_CONF"
+	}
+
+	config_get CacheFlush "$cfg" CacheFlush
+	[ -z "$CacheFlush" ] || {
+		printf "\\tCacheFlush %s\n" "${CacheFlush}" >> "$COLLECTD_CONF"
+	}
+
+	config_get_bool Forward "$cfg" Forward
+	if [ "$value" = "0" ]; then
+		printf "\\tForward false\n" >> "$COLLECTD_CONF"
+	else
+		printf "\\tForward true\n" >> "$COLLECTD_CONF"
+	fi
+
+	printf "</Plugin>\n\n" >> "$COLLECTD_CONF"
+}
+
+process_network_sections() {
+	local cfg="$1"
+	local section="$2"
+
+	local host port output
+
+	config_get host "$cfg" host
+	[ -z "$host" ] && {
+		$LOG notice "No host option in config $cfg defined"
+		return 0
+	}
+
+	if [ "$section" = "server" ]; then
+		output="Server \"$host\""
+	else
+		output="Listen \"$host\""
+	fi
+
+	config_get port "$cfg" port
+	if [ -z "$port" ]; then
+		printf "\\t%s\n" "${output}" >> "$COLLECTD_CONF"
+	else
+		printf "\\t%s \"%s\"\n" "${output}" "${port}" >> "$COLLECTD_CONF"
+	fi
+}
+
 CONFIG_LIST=""
 add_list_option() {
 	local value="$1"
@@ -171,6 +226,10 @@ process_plugins() {
 		curl)
 			CONFIG_STRING=""
 			process_curl
+			;;
+		network)
+			CONFIG_STRING=""
+			process_network "$cfg"
 			;;
 		*)
 			CONFIG_STRING=""
