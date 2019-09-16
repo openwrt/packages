@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-schema
-PKG_VERSION:=0.7.0
+PKG_VERSION:=0.7.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 
 PKG_SOURCE_URL:=https://codeload.github.com/keleshev/schema/tar.gz/v$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=6c6da2154c0f63025127a1ecb3b2f07b95ec8dd029663fc74ab2e972bf770c72
+PKG_HASH:=0edc47b343450c116dd67267b6951b43916b2e6893e896da1eefb7a69ef7c83d
 PKG_BUILD_DIR:=$(BUILD_DIR)/schema-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
