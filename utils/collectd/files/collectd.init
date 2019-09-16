@@ -44,6 +44,35 @@ process_exec_sections() {
 	fi
 }
 
+process_curl() {
+	printf "<Plugin curl>\n" >> "$COLLECTD_CONF"
+	config_foreach process_curl_page curl_page
+	printf "</Plugin>\n\n" >> "$COLLECTD_CONF"
+}
+
+process_curl_page() {
+	local cfg="$1"
+
+	local name url
+
+	config_get name "$cfg" name
+	[ -z "$name" ] && {
+		$LOG notice "No name option in config $cfg defined"
+		return 0
+	}
+
+	config_get url "$cfg" url
+	[ -z "$url" ] && {
+		$LOG notice "No URL option in config $cfg defined"
+		return 0
+	}
+
+	printf "\\t<Page \"%s\">\n" "${name}" >> "$COLLECTD_CONF"
+	printf "\\t\\tURL \"%s\"\n" "${url}" >> "$COLLECTD_CONF"
+	printf "\\t\\tMeasureResponseTime true\n" >> "$COLLECTD_CONF"
+	printf "\\t</Page>\n" >> "$COLLECTD_CONF"
+}
+
 CONFIG_LIST=""
 add_list_option() {
 	local value="$1"
@@ -138,6 +167,10 @@ process_plugins() {
 		exec)
 			CONFIG_STRING=""
 			process_exec
+			;;
+		curl)
+			CONFIG_STRING=""
+			process_curl
 			;;
 		*)
 			CONFIG_STRING=""
