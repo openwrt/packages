@@ -8,6 +8,11 @@ config globals 'globals'
 #	option Interval '30'
 #	option ReadThreads '2'
 
+#config plugin 'apcups'
+#	option enable '0'
+#	option Host 'localhost'
+#	option Port '3551'
+
 #config plugin 'conntrack'
 #	option enable '0'
 
