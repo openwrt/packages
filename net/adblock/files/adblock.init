@@ -106,7 +106,7 @@ status()
 
 service_triggers()
 {
-	local trigger="$(uci_get adblock global adb_trigger)" 
+	local trigger="$(uci_get adblock global adb_trigger)"
 	local delay="$(uci_get adblock extra adb_triggerdelay "2")"
 
 	PROCD_RELOAD_DELAY=$((delay*1000))
