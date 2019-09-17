@@ -13,7 +13,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.8.5"
+adb_ver="3.8.6"
 adb_basever=""
 adb_enabled=0
 adb_debug=0
@@ -164,6 +164,7 @@ f_load()
 		f_extconf
 		f_temp
 		f_rmdns
+		f_bgserv "stop"
 		f_jsnup "disabled"
 		f_log "info" "adblock is currently disabled, please set the config option 'adb_enabled' to '1' to use this service"
 		exit 0
@@ -181,23 +182,26 @@ f_load()
 		sleep "${adb_triggerdelay}"
 	fi
 
-	while [ "${cnt}" -le 30 ]
-	do
-		dns_up="$(ubus -S call service list "{\"name\":\"${adb_dns}\"}" 2>/dev/null | jsonfilter -l1 -e "@[\"${adb_dns}\"].instances.*.running" 2>/dev/null)"
-		if [ "${dns_up}" = "true" ]
-		then
-			break
-		fi
-		sleep 1
-		cnt=$((cnt+1))
-	done
+	if [ "${adb_action}" != "stop" ]
+	then
+		while [ "${cnt}" -le 30 ]
+		do
+			dns_up="$(ubus -S call service list "{\"name\":\"${adb_dns}\"}" 2>/dev/null | jsonfilter -l1 -e "@[\"${adb_dns}\"].instances.*.running" 2>/dev/null)"
+			if [ "${dns_up}" = "true" ]
+			then
+				break
+			fi
+			sleep 1
+			cnt=$((cnt+1))
+		done
 
-	if [ "${dns_up}" != "true" ] || [ -z "${adb_dns}" ] || [ ! -x "$(command -v "${adb_dns}")" ]
-	then
-		f_log "err" "'${adb_dns}' not running or executable"
-	elif [ ! -d "${adb_dnsdir}" ]
-	then
-		f_log "err" "'${adb_dnsdir}' dns backend directory not found"
+		if [ "${dns_up}" != "true" ] || [ -z "${adb_dns}" ] || [ ! -x "$(command -v "${adb_dns}")" ]
+		then
+			f_log "err" "dns backend '${adb_dns}' not running or executable"
+		elif [ ! -d "${adb_dnsdir}" ]
+		then
+			f_log "err" "dns backend directory '${adb_dnsdir}' not found"
+		fi
 	fi
 
 	# inotify check
@@ -208,7 +212,7 @@ f_load()
 		then
 			adb_dnsfilereset="false"
 		fi
-		f_log "info" "Inotify is enabled for '${adb_dns}', adblock restart and file reset will be disabled"
+		f_log "info" "inotify is enabled for '${adb_dns}', adblock restart and file reset will be disabled"
 	fi
 }
 
@@ -226,7 +230,7 @@ f_env()
 	#
 	if [ ! -d "${adb_backupdir}" ]
 	then
-		f_log "err" "the backup directory '${adb_backupdir}' does not exist/is not mounted yet, please create the directory or raise the 'adb_triggerdelay' to defer the adblock start"
+		f_log "err" "backup directory '${adb_backupdir}' does not exist/is not mounted yet, please create the directory or raise the 'adb_triggerdelay' to defer the adblock start"
 	fi
 
 	# check fetch utility
@@ -304,15 +308,23 @@ f_rmtemp()
 #
 f_rmdns()
 {
-	if [ -n "${adb_dns}" ]
+	local status dns_status rc
+
+	status="$(ubus -S call service list '{"name":"adblock"}' 2>/dev/null | jsonfilter -l1 -e '@["adblock"].instances.*.running' 2>/dev/null)"
+	if [ -n "${adb_dns}" ] && [ -n "${status}" ]
 	then
+		dns_status="$(ubus -S call service list "{\"name\":\"${adb_dns}\"}" 2>/dev/null | jsonfilter -l1 -e "@[\"${adb_dns}\"].instances.*.running" 2>/dev/null)"
 		printf "%s\\n" "${adb_dnsheader}" > "${adb_dnsdir}/${adb_dnsfile}"
 		> "${adb_rtfile}"
-		rm -f "${adb_backupdir}/${adb_dnsprefix}"*.gz
-		f_dnsup 4
-		f_rmtemp
+		rm "${adb_backupdir}/${adb_dnsprefix}".*.gz 2>/dev/null
+		rc="${?}"
+		if [ "${rc}" -eq 0 ] && [ -n "${dns_status}" ]
+		then
+			f_dnsup 4
+		fi
 	fi
-	f_log "debug" "f_rmdns  ::: dns: ${adb_dns}, dns_dir: ${adb_dnsdir}, dns_file: ${adb_dnsfile}, rt_file: ${adb_rtfile}, backup_dir: ${adb_backupdir}"
+	f_rmtemp
+	f_log "debug" "f_rmdns  ::: status: ${status:-"-"}, dns_status: ${dns_status:-"-"}, rc: ${rc:-"-"}, dns: ${adb_dns}, dns_dir: ${adb_dnsdir}, dns_file: ${adb_dnsfile}, rt_file: ${adb_rtfile}, backup_dir: ${adb_backupdir}"
 }
 
 # commit uci changes
@@ -908,6 +920,7 @@ f_log()
 		if [ "${class}" = "err" ]
 		then
 			f_rmdns
+			f_bgserv "stop"
 			f_jsnup "error"
 			logger -p "${class}" -t "adblock-${adb_ver}[${$}]" "Please also check 'https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md'"
 			exit 1
