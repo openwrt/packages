@@ -17,6 +17,7 @@ PKG_HASH:=ab18331e37766b13dbb07d1f115bda3d794917baf502d0ca2b2b8fff014b88f2
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:samba:samba
 
 # samba4=(asn1_compile) e2fsprogs=(compile_et) nfs-kernel-server=(rpcgen)
 HOST_BUILD_DEPENDS:=python/host nfs-kernel-server/host e2fsprogs/host

@@ -18,6 +18,7 @@ PKG_HASH:=ad2b40acf1421316ec15800dcde0f587ab31d7d6f891fa8b9967c4ded93c013e
 PKG_MAINTAINER:=Uwe Kleine-König <uwe+openwrt@kleine-koenig.org>
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=README
+PKG_CPE_ID:=cpe:/a:kryo:iodine
 
 include $(INCLUDE_DIR)/package.mk
 

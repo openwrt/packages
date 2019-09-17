@@ -20,6 +20,7 @@ PKG_BUILD_DEPENDS:=scons/host
 PKG_MAINTAINER:=Pushpal Sidhu <psidhu.devel@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:berlios:gps_daemon
 
 include $(INCLUDE_DIR)/package.mk
 include ../../devel/scons/scons.mk

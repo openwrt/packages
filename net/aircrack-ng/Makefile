@@ -12,6 +12,7 @@ PKG_VERSION:=1.5.2
 PKG_RELEASE:=$(PKG_SOURCE_VERSION)
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:aircrack-ng:aircrack-ng
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/aircrack-ng/aircrack-ng.git

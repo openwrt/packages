@@ -17,6 +17,7 @@ PKG_HASH:=4175d588f600e2877503c781c5d75320dfce572669fcab7604434b07ec5c0d5d
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:miniupnp_project:miniupnpd
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/version.mk

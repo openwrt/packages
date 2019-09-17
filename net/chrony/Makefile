@@ -18,6 +18,7 @@ PKG_HASH:=4e02795b1260a4ec51e6ace84149036305cc9fc340e65edb9f8452aa611339b5
 PKG_MAINTAINER:=Miroslav Lichvar <mlichvar0@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:tuxfamily:chrony
 
 PKG_BUILD_DEPENDS:=pps-tools
 

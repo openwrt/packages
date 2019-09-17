@@ -18,6 +18,7 @@ PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:media-libs:libid3tag
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

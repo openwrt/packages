@@ -16,6 +16,7 @@ PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=LGPLv2.1
 PKG_LICENSE_FILES:=COPYING.LIB
+PKG_CPE_ID:=cpe:/a:libmms_project:libmms
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

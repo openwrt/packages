@@ -19,6 +19,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/Radicale-$(PKG_VERSION)
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:radicale:radicale
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk

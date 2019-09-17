@@ -12,6 +12,7 @@ PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Leonid Esman <leonid.esman@gmail.com>
+PKG_CPE_ID:=cpe:/a:lynx:lynx
 PKG_SOURCE:=$(PKG_NAME)$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://invisible-mirror.net/archives/lynx/tarballs/ \
                 https://ftp.icm.edu.pl/packages/lynx/tarballs/ \

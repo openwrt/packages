@@ -19,6 +19,7 @@ PKG_MAINTAINER:=Harald Geyer <harald@ccbib.org>, \
 		Philip Prindeville <philipp@redfish-solutions.com>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:lcdproc:lcdproc
 
 include $(INCLUDE_DIR)/package.mk
 

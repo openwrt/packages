@@ -18,6 +18,7 @@ PKG_HASH:=8c302ccbf467faec732f0741a859eef4ecae22fea2d2ab87467be940842bde51
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:libgd:gd_graphics_library
 
 CMAKE_INSTALL:=1
 PKG_BUILD_PARALLEL:=1

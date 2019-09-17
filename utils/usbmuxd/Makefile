@@ -15,6 +15,7 @@ PKG_RELEASE:=1
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING.GPLv2
+PKG_CPE_ID:=cpe:/a:nikias_bassen:usbmuxd
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
 PKG_SOURCE_URL=https://codeload.github.com/libimobiledevice/usbmuxd/tar.gz/$(PKG_SOURCE_VERSION)?

@@ -18,6 +18,7 @@ PKG_HASH:=b960541c499619efd6afe1fa795402e4733c8e11ebf9fafccc0bb4bccdc5b514
 PKG_MAINTAINER:=Julen Landa Alustiza <julen@zokormazo.info>
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:gnu:grep
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1

@@ -20,6 +20,7 @@ PKG_HASH:=b89de7064ab54dac454a266cfe5d8bf66940cb5ed048d0c30674ea62e7ecef9d
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=Copyright
+PKG_CPE_ID:=cpe:/a:tcsh:tcsh
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 

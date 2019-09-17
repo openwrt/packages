@@ -16,6 +16,8 @@ PKG_SOURCE_URL:=http://www.banu.com/pub/tinyproxy/1.8/
 PKG_HASH:=be559b54eb4772a703ad35239d1cb59d32f7cf8a739966742622d57df88b896e
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 
+PKG_CPE_ID:=cpe:/a:banu:tinyproxy
+
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk

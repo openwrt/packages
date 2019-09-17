@@ -18,6 +18,7 @@ PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:minicom:minicom
 
 PKG_FIXUP:=autoreconf
 

@@ -18,6 +18,7 @@ PKG_HASH:=3db7ff18cba9274da1d2176fb3c7cbe23926a8e58d5c8e244ad55c62d38ba09e
 
 PKG_LICENSE:=BSD-2c
 PKG_LICENSE_FILES:=
+PKG_CPE_ID:=cpe:/a:roy_marples:dhcpcd
 
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
