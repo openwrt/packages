@@ -128,6 +128,45 @@ process_network_sections() {
 	fi
 }
 
+process_iptables() {
+	local cfg="$1"
+
+	printf "<Plugin iptables>\n" >> "$COLLECTD_CONF"
+	config_foreach process_iptables_sections iptables_match
+	printf "</Plugin>\n\n" >> "$COLLECTD_CONF"
+}
+
+process_iptables_sections() {
+	local cfg="$1"
+
+	local table chain
+
+	config_get table "$cfg" table
+	[ -z "$table" ] && {
+		$LOG notice "No table option in config $cfg defined"
+		return 0
+	}
+
+	config_get chain "$cfg" chain
+	[ -z "$chain" ] && {
+		$LOG notice "No chain option in config $cfg defined"
+		return 0
+	}
+
+	config_get index "$cfg" index
+	[ -z "$index" ] && {
+		$LOG notice "No index option in config $cfg defined"
+		return 0
+	}
+
+	config_get name "$cfg" name
+	if [ -z "$name" ]; then
+		printf "\\tChain %s %s %s\n" "${table}" "${chain}" "${index}" >> "$COLLECTD_CONF"
+	else
+		printf "\\tChain %s %s %s \"%s\"\n" "${table}" "${chain}" "${index}" "${name}">> "$COLLECTD_CONF"
+	fi
+}
+
 CONFIG_LIST=""
 add_list_option() {
 	local value="$1"
@@ -230,6 +269,10 @@ process_plugins() {
 		network)
 			CONFIG_STRING=""
 			process_network "$cfg"
+			;;
+		iptables)
+			CONFIG_STRING=""
+			process_iptables
 			;;
 		*)
 			CONFIG_STRING=""
