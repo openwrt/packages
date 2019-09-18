@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pdns
 PKG_VERSION:=4.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
@@ -175,6 +175,7 @@ CONFIGURE_ARGS+= \
 	--sysconfdir=/etc/powerdns \
 	--libdir=/usr/lib/powerdns  \
 	--with-dynmodules="$(foreach backend,$(PDNS_BACKENDS),$(if $(CONFIG_PACKAGE_pdns-backend-$(backend)),$(PDNS_BACKEND_$(backend)_LIB),))" \
+	--with-lua="lua" \
 	--with-modules="bind random" \
 	--with-mysql-lib=$(STAGING_DIR)/usr \
 	--with-mysql-includes=$(STAGING_DIR)/usr \
