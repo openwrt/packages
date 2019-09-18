@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mjpg-streamer
 PKG_VERSION:=2018-10-25
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>, \
 		Ted Hess <thess@kitschensync.net>
 
@@ -24,7 +24,7 @@ PKG_LICENSE_FILES:=LICENSE
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-PKG_BUILD_DEPENDS:=MJPG_STREAMER_V4L2:libv4l
+PKG_BUILD_DEPENDS:=MJPG_STREAMER_V4L2:libv4l libzmq libprotobuf-c
 
 define Package/mjpg-streamer
   SECTION:=multimedia
@@ -32,19 +32,149 @@ define Package/mjpg-streamer
   TITLE:=MJPG-streamer
   DEPENDS:=+libpthread +libjpeg +MJPG_STREAMER_V4L2:libv4l
   URL:=https://github.com/jacksonliam/mjpg-streamer
-  MENU:=1
 endef
 
-define Package/mjpg-streamer/description
+define Package/mjpg-streamer/Default/description
  Streaming application for Linux-UVC compatible webcams
 endef
 
-define Package/mjpg-streamer/config
-  source "$(SOURCE)/Config.in"
+define Package/mjpg-streamer/description
+$(call Package/mjpg-streamer/Default/description)
 endef
 
 define Package/mjpg-streamer/conffiles
 /etc/config/mjpg-streamer
+endef
+
+define Package/mjpg-streamer/config
+if PACKAGE_mjpg-streamer-input-uvc
+
+config MJPG_STREAMER_V4L2
+	bool "Build input_uvc with libv4l2 (camera controls)"
+	default n
+	select PACKAGE_libv4l
+endif
+endef
+
+define Package/mjpg-streamer/Default
+  SECTION:=multimedia
+  CATEGORY:=Multimedia
+  TITLE:=MJPG-streamer
+  URL:=https://github.com/jacksonliam/mjpg-streamer
+  DEPENDS:=mjpg-streamer
+endef
+
+define Package/mjpg-streamer-input-file
+$(call Package/mjpg-streamer/Default)
+  TITLE+= (file input)
+endef
+
+define Package/mjpg-streamer-input-file/description
+$(call Package/mjpg-streamer/Default/description)
+
+This package provides the file input plugin.
+endef
+
+define Package/mjpg-streamer-input-uvc
+$(call Package/mjpg-streamer/Default)
+  TITLE+= (UVC input)
+endef
+
+define Package/mjpg-streamer-input-uvc/description
+$(call Package/mjpg-streamer/Default/description)
+
+This package provides the UVC input plugin.
+endef
+
+define Package/mjpg-streamer-input-http
+$(call Package/mjpg-streamer/Default)
+  TITLE+= (HTTP input)
+endef
+
+define Package/mjpg-streamer-input-http/description
+$(call Package/mjpg-streamer/Default/description)
+
+This package provides the http input plugin.
+endef
+
+define Package/mjpg-streamer-output-rtsp
+$(call Package/mjpg-streamer/Default)
+  TITLE+= (RTSP output)
+endef
+
+define Package/mjpg-streamer-output-rtsp/description
+$(call Package/mjpg-streamer/Default/description)
+
+This package provides the RTSP output plugin.
+endef
+
+define Package/mjpg-streamer-output-udp
+$(call Package/mjpg-streamer/Default)
+  TITLE+= (UDP output)
+endef
+
+define Package/mjpg-streamer-output-udp/description
+$(call Package/mjpg-streamer/Default/description)
+
+This package provides the UDP output plugin.
+endef
+
+define Package/mjpg-streamer-output-file
+$(call Package/mjpg-streamer/Default)
+  TITLE+= (file output)
+endef
+
+define Package/mjpg-streamer-output-file/description
+$(call Package/mjpg-streamer/Default/description)
+
+This package provides the file output plugin.
+endef
+
+define Package/mjpg-streamer-output-http
+$(call Package/mjpg-streamer/Default)
+  TITLE+= (HTTP output)
+endef
+
+define Package/mjpg-streamer-output-http/description
+$(call Package/mjpg-streamer/Default/description)
+
+This package provides the HTTP output plugin.
+endef
+
+define Package/mjpg-streamer-output-zmq
+$(call Package/mjpg-streamer/Default)
+  TITLE+= (zmq output)
+  DEPENDS+= +libzmq +libprotobuf-c
+endef
+
+define Package/mjpg-streamer-output-zmq/description
+$(call Package/mjpg-streamer/Default/description)
+
+This package provides the ZeroMQ output plugin.
+endef
+
+define Package/mjpg-streamer-www
+$(call Package/mjpg-streamer/Default)
+  TITLE+= (full www)
+  CONFLICTS:=mjpg-streamer-www-simple
+endef
+
+define Package/mjpg-streamer-www/description
+$(call Package/mjpg-streamer/Default/description)
+
+This package provides full version of the web content.
+Includes cambozola applet.
+endef
+
+define Package/mjpg-streamer-www-simple
+$(call Package/mjpg-streamer/Default)
+  TITLE+= (simple www)
+endef
+
+define Package/mjpg-streamer-www-simple/description
+$(call Package/mjpg-streamer/Default/description)
+
+This package provides simple version of the web content.
 endef
 
 CAMBOZOLA:=cambozola-0.936.tar.gz
@@ -67,7 +197,7 @@ define Build/Prepare
 	$(Build/Patch)
     # Fetch latest cambozola that works with latest Java(s)
     # Yes, I know this is ugly
-    ifeq ($(CONFIG_MJPG_STREAMER_WWW),y)
+    ifneq ($(CONFIG_PACKAGE_mjpg-streamer-www),)
 	$(eval $(call Download,cambozola))
 	$(TAR) -xf $(DL_DIR)/$(CAMBOZOLA) --strip=2 --wildcards \
 		-C $(PKG_BUILD_DIR)/www */dist/cambozola.jar
@@ -76,9 +206,10 @@ endef
 
 define Build/Configure
     $(RM) $(PKG_BUILD_DIR)/plugins/input_uvc/uvcvideo.h
+$(call Build/Configure/Default)
 endef
 
-    TARGET_LDFLAGS+= -ljpeg
+TARGET_LDFLAGS+= -ljpeg
 
 ifeq ($(CONFIG_MJPG_STREAMER_V4L2),y)
     TARGET_CFLAGS+= -DUSE_LIBV4L2
@@ -87,41 +218,72 @@ endif
 
 define Package/mjpg-streamer/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/mjpg_streamer $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mjpg_streamer $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/config
 	$(CP) ./files/mjpg-streamer.config $(1)/etc/config/mjpg-streamer
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/mjpg-streamer.init $(1)/etc/init.d/mjpg-streamer
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
 	$(INSTALL_DATA) ./files/mjpg-streamer.hotplug $(1)/etc/hotplug.d/usb/20-mjpg-streamer
-	$(INSTALL_DIR) $(1)/usr/lib
-ifeq ($(CONFIG_MJPG_STREAMER_INPUT_FILE),y)
-	$(CP) $(PKG_BUILD_DIR)/input_file.so $(1)/usr/lib
-endif
-ifeq ($(CONFIG_MJPG_STREAMER_INPUT_UVC),y)
-	$(CP) $(PKG_BUILD_DIR)/input_uvc.so $(1)/usr/lib
-endif
-ifeq ($(CONFIG_MJPG_STREAMER_INPUT_HTTP),y)
-	$(CP) $(PKG_BUILD_DIR)/input_http.so $(1)/usr/lib
-endif
-ifeq ($(CONFIG_MJPG_STREAMER_OUTPUT_RTSP),y)
-	$(CP) $(PKG_BUILD_DIR)/output_rtsp.so $(1)/usr/lib
-endif
-ifeq ($(CONFIG_MJPG_STREAMER_OUTPUT_UDP),y)
-	$(CP) $(PKG_BUILD_DIR)/output_udp.so $(1)/usr/lib
-endif
-ifeq ($(CONFIG_MJPG_STREAMER_OUTPUT_FILE),y)
-	$(CP) $(PKG_BUILD_DIR)/output_file.so $(1)/usr/lib
-endif
-ifeq ($(CONFIG_MJPG_STREAMER_OUTPUT_HTTP),y)
-	$(CP) $(PKG_BUILD_DIR)/output_http.so $(1)/usr/lib
+endef
+
+define Package/mjpg-streamer-input-file/install
+	$(INSTALL_DIR) $(1)/usr/lib/mjpg-streamer
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/mjpg-streamer/input_file.so $(1)/usr/lib/mjpg-streamer
+endef
+
+define Package/mjpg-streamer-input-uvc/install
+	$(INSTALL_DIR) $(1)/usr/lib/mjpg-streamer
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/mjpg-streamer/input_uvc.so $(1)/usr/lib/mjpg-streamer
+endef
+
+define Package/mjpg-streamer-input-http/install
+	$(INSTALL_DIR) $(1)/usr/lib/mjpg-streamer
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/mjpg-streamer/input_http.so $(1)/usr/lib/mjpg-streamer
+endef
+
+define Package/mjpg-streamer-output-rtsp/install
+	$(INSTALL_DIR) $(1)/usr/lib/mjpg-streamer
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/mjpg-streamer/output_rtsp.so $(1)/usr/lib/mjpg-streamer
+endef
+
+define Package/mjpg-streamer-output-udp/install
+	$(INSTALL_DIR) $(1)/usr/lib/mjpg-streamer
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/mjpg-streamer/output_udp.so $(1)/usr/lib/mjpg-streamer
+endef
+
+define Package/mjpg-streamer-output-file/install
+	$(INSTALL_DIR) $(1)/usr/lib/mjpg-streamer
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/mjpg-streamer/output_file.so $(1)/usr/lib/mjpg-streamer
+endef
+
+define Package/mjpg-streamer-output-http/install
+	$(INSTALL_DIR) $(1)/usr/lib/mjpg-streamer
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/mjpg-streamer/output_http.so $(1)/usr/lib/mjpg-streamer
+endef
+
+define Package/mjpg-streamer-output-zmq/install
+	$(INSTALL_DIR) $(1)/usr/lib/mjpg-streamer
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/mjpg-streamer/output_zmqserver.so $(1)/usr/lib/mjpg-streamer
+endef
+
+define Package/mjpg-streamer-www/install
 	$(INSTALL_DIR) $(1)/www/webcam
-    ifeq ($(CONFIG_MJPG_STREAMER_WWW),y)
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/www/* $(1)/www/webcam
-    else
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/www/stream_simple.html $(1)/www/webcam/index.html
-    endif
-endif
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mjpg-streamer/www/* $(1)/www/webcam
+endef
+
+define Package/mjpg-streamer-www-simple/install
+	$(INSTALL_DIR) $(1)/www/webcam
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mjpg-streamer/www/stream_simple.html $(1)/www/webcam/index.html
 endef
 
 $(eval $(call BuildPackage,mjpg-streamer))
+$(eval $(call BuildPackage,mjpg-streamer-input-file))
+$(eval $(call BuildPackage,mjpg-streamer-input-uvc))
+$(eval $(call BuildPackage,mjpg-streamer-input-http))
+$(eval $(call BuildPackage,mjpg-streamer-output-rtsp))
+$(eval $(call BuildPackage,mjpg-streamer-output-file))
+$(eval $(call BuildPackage,mjpg-streamer-output-http))
+$(eval $(call BuildPackage,mjpg-streamer-output-zmq))
+$(eval $(call BuildPackage,mjpg-streamer-www))
+$(eval $(call BuildPackage,mjpg-streamer-www-simple))
