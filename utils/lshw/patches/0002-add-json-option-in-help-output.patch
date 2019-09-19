@@ -1,0 +1,25 @@
+From 503c76a35a9e97a098af7c1ac793a7e13c07ce70 Mon Sep 17 00:00:00 2001
+From: Chandni Verma <chandni@linux.vnet.ibm.com>
+Date: Thu, 8 Sep 2016 14:29:08 +0530
+Subject: [PATCH] Adding -json option in -help output
+
+-json works perfectly and is a recognized lshw option already.
+It was only missed in printing. Nothing more needs to be done.
+
+Signed-off-by: Chandni Verma <chandni@linux.vnet.ibm.com>
+
+Github PR: https://github.com/lyonel/lshw/pull/20
+---
+ src/lshw.cc | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/src/lshw.cc
++++ b/src/lshw.cc
+@@ -28,6 +28,7 @@ void usage(const char *progname)
+   fprintf(stderr, _("\nformat can be\n"));
+   fprintf(stderr, _("\t-html           output hardware tree as HTML\n"));
+   fprintf(stderr, _("\t-xml            output hardware tree as XML\n"));
++  fprintf(stderr, _("\t-json           output hardware tree as a JSON object\n"));
+   fprintf(stderr, _("\t-short          output hardware paths\n"));
+   fprintf(stderr, _("\t-businfo        output bus information\n"));
+   if(getenv("DISPLAY") && exists(SBINDIR"/gtk-lshw"))
