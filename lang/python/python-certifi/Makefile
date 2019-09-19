@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-certifi
-PKG_VERSION:=2019.6.16
+PKG_VERSION:=2019.9.11
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
@@ -15,7 +15,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=certifi-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/c/certifi
-PKG_HASH:=945e3ba63a0b9f577b1395204e13c3a231f9bc0223888be653286534e5873695
+PKG_HASH:=e4f3620cfea4f83eedc95b24abd9cd56f3c4b146dd0177e83a21b4eb49e21e50
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-certifi-$(PKG_VERSION)
 
