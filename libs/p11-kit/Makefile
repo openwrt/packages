@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=p11-kit
-PKG_VERSION:=0.23.16.1
-PKG_RELEASE:=2
+PKG_VERSION:=0.23.17
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/p11-glue/p11-kit/releases/download/$(PKG_VERSION)
-PKG_HASH:=4b34e92ae36fa493e0d94366c767f06d5f9951e3d8581d10fd935d738db1574d
+PKG_HASH:=5447b25d66c05f86cce5bc8856f7a074be84c186730e32c74069ca03386d7c1e
 
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
