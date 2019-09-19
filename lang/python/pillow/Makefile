@@ -18,6 +18,7 @@ PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_LICENSE:=CUSTOM
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:python:pillow
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk

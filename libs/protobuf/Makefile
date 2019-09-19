@@ -17,6 +17,7 @@ PKG_HASH:=97f6cdaa0724d5a8cd3375d5f5cf4bd253d5ad5291154f533ed0d94a9d501ef3
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:google:protobuf
 
 PKG_BUILD_DEPENDS:=protobuf/host
 

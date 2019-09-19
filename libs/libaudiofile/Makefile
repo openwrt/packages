@@ -14,6 +14,7 @@ PKG_SOURCE_URL:=@GNOME/$(PKG_NAME)/0.3
 PKG_HASH:=ea2449ad3f201ec590d811db9da6d02ffc5e87a677d06b92ab15363d8cb59782
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_CPE_ID:=cpe:/a:audiofile:audiofile
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL=1

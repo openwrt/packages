@@ -16,6 +16,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/seccomp/libseccomp/releases/download/v$(PKG_VERSION)/
 PKG_HASH:=1ca3735249af66a1b2f762fe6e710fcc294ad7185f1cc961e5bd83f9988006e8
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <nmav@gnutls.org>
+PKG_CPE_ID:=cpe:/a:libseccomp_project:libseccomp
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
