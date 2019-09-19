@@ -21,6 +21,7 @@ PKG_BUILD_DEPENDS:=libtirpc
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_CPE_ID:=cpe:/a:twistedmatrix:twisted
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk

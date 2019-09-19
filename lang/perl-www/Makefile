@@ -17,6 +17,7 @@ PKG_HASH:=6f349d45c21b1ec0501c4437dfcb70570940e6c3d5bff783bd91d4cddead8322
 
 PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_CPE_ID:=cpe:/a:search.cpan:libwww-perl
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/libwww-perl-$(PKG_VERSION)
 

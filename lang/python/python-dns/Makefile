@@ -18,6 +18,7 @@ PKG_HASH:=4bf5c5c12a4478ee7860ab176659cf64c4899ee76752d826b082f8af723c5cf9
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
+PKG_CPE_ID:=cpe:/a:debian:python-dns
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-dnspython-$(PKG_VERSION)
 
