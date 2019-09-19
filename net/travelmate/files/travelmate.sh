@@ -13,7 +13,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.4.12"
+trm_ver="1.4.13"
 trm_enabled=0
 trm_debug=0
 trm_iface="trm_wwan"
@@ -185,7 +185,7 @@ f_net()
 #
 f_check()
 {
-	local IFS ifname radio dev_status config sta_essid sta_bssid result uci_essid uci_bssid login_command wait_time mode="${1}" status="${2:-"false"}" cp_domain="${3:-"false"}"
+	local IFS ifname radio dev_status config sta_essid sta_bssid result uci_essid uci_bssid login_command login_command_args wait_time mode="${1}" status="${2:-"false"}" cp_domain="${3:-"false"}"
 
 	if [ "${mode}" != "initial" ] && [ "${status}" = "false" ]
 	then
@@ -293,9 +293,10 @@ f_check()
 								login_command="$(uci_get "travelmate" "${uci_essid}${uci_bssid}" "command")"
 								if [ -x "${login_command}" ]
 								then
-									"${login_command}" >/dev/null 2>&1
+									login_command_args="$(uci_get "travelmate" "${uci_essid}${uci_bssid}" "command_args")"
+									"${login_command}" ${login_command_args} >/dev/null 2>&1
 									rc=${?}
-									f_log "info" "captive portal login '${login_command:0:40}' for '${cp_domain}' has been executed with rc '${rc}'"
+									f_log "info" "captive portal login '${login_command:0:40} ${login_command_args}' for '${cp_domain}' has been executed with rc '${rc}'"
 									if [ "${rc}" -eq 0 ]
 									then
 										result="$(f_net)"
