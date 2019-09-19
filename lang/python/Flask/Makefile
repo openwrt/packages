@@ -15,6 +15,7 @@ PKG_HASH:=ad7c6d841e64296b962296c2c2dabc6543752985727af86a975072dea984b6f3
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:palletsprojects:flask
 
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk

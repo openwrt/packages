@@ -8,6 +8,7 @@ PKG_NAME:=python-decorator
 PKG_VERSION:=4.3.2
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
+PKG_CPE_ID:=cpe:/a:python:decorator
 
 PKG_SOURCE_URL:=https://codeload.github.com/micheles/decorator/tar.gz/$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz

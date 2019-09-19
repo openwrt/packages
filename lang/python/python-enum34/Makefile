@@ -20,6 +20,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-enum34-$(PKG_VERSION)
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=enum/LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_CPE_ID:=cpe:/a:python:enum34
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk

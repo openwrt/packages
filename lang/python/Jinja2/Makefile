@@ -15,6 +15,7 @@ PKG_HASH:=065c4f02ebe7f7cf559e49ee5a95fb800a9e4528727aec6f24402a5374c65013
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:pocoo:jinja2
 
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk

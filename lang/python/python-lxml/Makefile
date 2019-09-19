@@ -21,6 +21,7 @@ PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$
 PKG_LICENSE:=BSD
 PKG_LICENSE_FILES:=LICENSES.txt
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_CPE_ID:=cpe:/a:lxml:lxml
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk

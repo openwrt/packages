@@ -16,6 +16,7 @@ PKG_SOURCE_URL:=@SF/$(PKG_NAME)
 PKG_HASH:=b55af0bbdf5acc02d1eb6ab18da2acd77a400bafd074489003f3df09676332bb
 PKG_MAINTAINER:=Adam Gensler <openwrt@a.gnslr.us>
 PKG_LICENSE:=GPL-2.0
+PKG_CPE_ID:=cpe:/a:netcat:netcat
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
