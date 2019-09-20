@@ -6,21 +6,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpc
-PKG_VERSION:=0.30
-PKG_RELEASE:=3
+PKG_VERSION:=0.32
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.musicpd.org/download/mpc/0
-PKG_HASH:=65fc5b0a8430efe9acbe6e261127960682764b20ab994676371bdc797d867fce
+PKG_HASH:=7961d95b7ce019996beab281cf957e905667c989c53fffd13ade5e62fea331c7
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
-PKG_FIXUP:=autoreconf
+PKG_BUILD_DEPENDS:=meson/host
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include ../../devel/meson/meson.mk
+
+MESON_ARGS+=-Diconv=disabled -Ddocumentation=disabled
 
 define Package/mpc
   SECTION:=sound
@@ -35,15 +38,6 @@ define Package/mpc/description
 	It is typically controlled over a network using one of it's many
 	clients including mpc(console), gmpc(gnome), phpmp(php) etc.
 	this is MPC
-endef
-
-CONFIGURE_ARGS+= --disable-iconv
-
-# Newer sources require meson/ninja to build so...
-# Use our hacked-up version of the mpc v0.28 autotools.
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	$(CP) ./autotools-files/* $(PKG_BUILD_DIR)/
 endef
 
 define Package/mpc/install
