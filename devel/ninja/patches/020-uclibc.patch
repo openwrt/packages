@@ -1,0 +1,30 @@
+From 76abf78aac8c56606fb52ea874873d790b9044da Mon Sep 17 00:00:00 2001
+From: "Pawel Hajdan, Jr" <phajdan.jr@chromium.org>
+Date: Mon, 2 Jan 2017 10:42:35 +0000
+Subject: [PATCH] Fix build with uclibc
+
+Resolves #985
+
+This is based on musl implementation,
+http://git.musl-libc.org/cgit/musl/commit/?id=20cbd607759038dca57f84ef7e7b5d44a3088574
+(thanks to jbergstroem@ for reference)
+---
+ src/util.cc | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+--- a/src/util.cc
++++ b/src/util.cc
+@@ -572,6 +572,13 @@ double GetLoadAverage() {
+     return -0.0f;
+   return 1.0 / (1 << SI_LOAD_SHIFT) * si.loads[0];
+ }
++#elif defined(__UCLIBC__)
++double GetLoadAverage() {
++  struct sysinfo si;
++  if (sysinfo(&si) != 0)
++    return -0.0f;
++  return 1.0 / (1 << SI_LOAD_SHIFT) * si.loads[0];
++}
+ #else
+ double GetLoadAverage() {
+   double loadavg[3] = { 0.0f, 0.0f, 0.0f };
