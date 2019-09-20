@@ -333,6 +333,11 @@ process_config() {
 	config_foreach process_plugins plugin
 }
 
+service_triggers()
+{
+	procd_add_reload_trigger "collectd"
+}
+
 start_service() {
 	process_config
 
@@ -344,4 +349,8 @@ start_service() {
 	procd_set_param stderr 1
 	procd_set_param respawn
 	procd_close_instance
+}
+
+reload_service() {
+	restart "$@"
 }
