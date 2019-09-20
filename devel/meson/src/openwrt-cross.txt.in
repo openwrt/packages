@@ -1,0 +1,25 @@
+[binaries]
+c = '@CC@'
+cpp = '@CXX@'
+ar = '@AR@'
+strip = '@STRIP@'
+nm = '@NM@'
+ld = '@LD@'
+pkgconfig = '@PKGCONFIG@'
+
+[properties]
+c_args = [@CFLAGS@]
+c_link_args = [@LDFLAGS@]
+cpp_args = [@CXXFLAGS@]
+cpp_link_args = [@LDFLAGS@]
+needs_exe_wrapper = true
+
+[host_machine]
+system = 'linux'
+cpu_family = '@ARCH@'
+cpu = '@CPU@'
+endian = '@ENDIAN@'
+
+[paths]
+prefix = '/usr'
+libdir = 'lib'
