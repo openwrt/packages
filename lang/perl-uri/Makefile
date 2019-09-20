@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-uri
-PKG_VERSION:=1.72
-PKG_RELEASE:=2
+PKG_VERSION:=1.76
+PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/E/ET/ETHER/
 PKG_SOURCE:=URI-$(PKG_VERSION).tar.gz
-PKG_HASH:=35f14431d4b300de4be1163b0b5332de2d7fbda4f05ff1ed198a8e9330d40a32
-
-PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
-PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
-
+PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/O/OA/OALDERS
+PKG_HASH:=b2c98e1d50d6f572483ee538a6f4ccc8d9185f91f0073fd8af7390898254413e
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/URI-$(PKG_VERSION)
+
+PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 include ../perl/perlmod.mk
@@ -28,7 +28,7 @@ define Package/perl-uri
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Manipulates and accesses URI strings
-  URL:=http://search.cpan.org/dist/URI/
+  URL:=https://search.cpan.org/dist/URI/
   DEPENDS:=perl +perlbase-essential +perlbase-integer +perlbase-mime +perlbase-scalar +perlbase-utf8
 endef
 
