@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-www-mechanize
-PKG_VERSION:=1.75
-PKG_RELEASE:=2
+PKG_VERSION:=1.92
+PKG_RELEASE:=1
 
 PKG_SOURCE:=WWW-Mechanize-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/E/ET/ETHER/
-PKG_HASH:=5310051feb66c6ef9f7a4c070c66ec6092932129fc9cd18bba009ce999b7930b
-
-PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
-PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
-
+PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/O/OA/OALDERS
+PKG_HASH:=48e0dbfd611087ec027c6d6ecd6ad9af3c5d8d2027e6e803134c9df2cd6584c0
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/WWW-Mechanize-$(PKG_VERSION)
+
+PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 include ../perl/perlmod.mk
@@ -28,7 +28,7 @@ define Package/perl-www-mechanize
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Perl WWW Mechanize
-  URL:=http://search.cpan.org/dist/WWW-Mechanize/
+  URL:=https://search.cpan.org/dist/WWW-Mechanize/
   DEPENDS:=perl +perl-cgi +perl-html-form +perl-html-parser +perl-html-tree +perl-http-daemon +perl-http-message +perl-http-server-simple +perl-test-warn +perl-uri +perl-www +perlbase-base +perlbase-essential +perlbase-file +perlbase-findbin +perlbase-getopt +perlbase-pod +perlbase-test
 endef
 
