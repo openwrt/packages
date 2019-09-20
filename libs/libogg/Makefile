@@ -8,20 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libogg
-PKG_VERSION:=1.3.3
+PKG_VERSION:=1.3.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://downloads.xiph.org/releases/ogg/
-PKG_HASH:=4f3fc6178a533d392064f14776b23c397ed4b9f48f5de297aba73b643f955c08
-PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_HASH:=c163bc12bc300c401b6aa35907ac682671ea376f13ae0969a220f7ddf71893fe
 
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
-
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -29,7 +29,8 @@ define Package/libogg
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=libogg
-  URL:=http://xiph.org/ogg/
+  URL:=https://xiph.org/ogg/
+  ABI_VERSION:=0
 endef
 
 define Package/libogg/description
@@ -39,6 +40,8 @@ the Ogg bitstream makes seeking, time stamping and error recovery
 possible, as well as mixing several sepearate, concurrent media
 streams into a single physical bitstream.
 endef
+
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/ogg/
@@ -53,7 +56,7 @@ endef
 
 define Package/libogg/install
 	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libogg.so.* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libogg))
