@@ -9,17 +9,18 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libftdi
 PKG_VERSION:=0.20
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.intra2net.com/en/developer/libftdi/download/
 PKG_HASH:=3176d5b5986438f33f5208e690a8bfe90941be501cc0a72118ce3d338d4b838e
-PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
+PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_LICENSE:=LGPL-2.0
 PKG_LICENSE_FILES:=COPYING.LIB
 
-PKG_INSTALL:=1
+CMAKE_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
@@ -39,21 +40,14 @@ define Package/libftdi/description
   The library is linked with your program in userspace, no kernel driver required.
 endef
 
-CMAKE_OPTIONS += -DBoost_NO_BOOST_CMAKE=ON
-
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/ftdi.h $(1)/usr/include/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libftdi.{a,so*} $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libftdi.pc $(1)/usr/lib/pkgconfig/libftdi.pc
-	$(SED) \
-		's,/usr/include,$$$${prefix}/include,g' \
-		 $(1)/usr/lib/pkgconfig/libftdi.pc
-	$(SED) \
-		's,/usr/lib,$$$${prefix}/lib,g' \
-		 $(1)/usr/lib/pkgconfig/libftdi.pc
+	$(call Build/InstallDev/cmake,$(1))
+	$(SED) 's,/usr/bin,/usr,g' $(1)/usr/lib/pkgconfig/libftdi.pc
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libftdi.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libftdi.pc
+	$(SED) 's,/usr/bin,/usr,g' $(1)/usr/lib/pkgconfig/libftdipp.pc
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libftdipp.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libftdipp.pc
 endef
 
 define Package/libftdi/install
