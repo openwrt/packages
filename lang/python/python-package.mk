@@ -35,6 +35,10 @@ ifdef CONFIG_USE_MIPS16
   TARGET_CFLAGS += -mno-mips16 -mno-interlink-mips16
 endif
 
+define PyShebang
+$(SED) "1"'!'"b;s,^#"'!'".*python.*,#"'!'"/usr/bin/python2," -i --follow-symlinks $(1)
+endef
+
 define PyPackage
 
   define Package/$(1)-src
@@ -74,11 +78,13 @@ define PyPackage
 
   define Package/$(1)/install
 	$$(call PyPackage/$(1)/install,$$(1))
-	SED="$(SED)" \
 	$(SHELL) $(python_mk_path)python-package-install.sh "2" \
 		"$(PKG_INSTALL_DIR)" "$$(1)" \
 		"$(HOST_PYTHON_BIN)" "$$(2)" \
-		"$$$$$$$$$$(call shvar,PyPackage/$(1)/filespec)"
+		"$$$$$$$$$$(call shvar,PyPackage/$(1)/filespec)" && \
+	if [ -d "$$(1)/usr/bin" ]; then \
+		$(call PyShebang,$$(1)/usr/bin/*) ; \
+	fi
   endef
 
   define Package/$(1)-src/install

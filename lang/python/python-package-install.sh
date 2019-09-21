@@ -54,20 +54,12 @@ python="$4"
 mode="$5"
 filespec="$6"
 
-SED="${SED:-sed -e}"
-
 find "$src_dir" -name "*.exe" -delete
 
 process_filespec "$src_dir" "$dst_dir" "$filespec" || {
 	echo "process filespec error-ed"
 	exit 1
 }
-
-usr_bin_dir="$dst_dir/usr/bin"
-
-if [ -d "$usr_bin_dir" ] ; then
-	$SED "1"'!'"b;s,^#"'!'".*python.*,#"'!'"/usr/bin/python${ver}," -i --follow-symlinks $usr_bin_dir/*
-fi
 
 if [ "$mode" == "sources" ] ; then
 	# Copy only python source files
@@ -77,8 +69,9 @@ if [ "$mode" == "sources" ] ; then
 	exit 0
 fi
 
-legacy=
-[ "$ver" == "3" ] && legacy="-b"
+if [ "$ver" == "3" ] ; then
+	legacy="-b"
+fi
 # default max recursion is 10
 max_recursion_level=20
 

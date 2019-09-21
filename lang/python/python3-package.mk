@@ -34,6 +34,10 @@ ifdef CONFIG_USE_MIPS16
   TARGET_CFLAGS += -mno-mips16 -mno-interlink-mips16
 endif
 
+define Py3Shebang
+$(SED) "1"'!'"b;s,^#"'!'".*python.*,#"'!'"/usr/bin/python3," -i --follow-symlinks $(1)
+endef
+
 define Py3Package
 
   define Package/$(1)-src
@@ -73,12 +77,14 @@ define Py3Package
 
   define Package/$(1)/install
 	$$(call Py3Package/$(1)/install,$$(1))
-	SED="$(SED)" \
 	$(SHELL) $(python3_mk_path)python-package-install.sh "3" \
 		"$(PKG_INSTALL_DIR)" "$$(1)" \
 		"$(HOST_PYTHON3_BIN)" "$$(2)" \
-		"$$$$$$$$$$(call shvar,Py3Package/$(1)/filespec)"
-  endef
+		"$$$$$$$$$$(call shvar,Py3Package/$(1)/filespec)" && \
+ 	if [ -d "$$(1)/usr/bin" ]; then \
+		$(call Py3Shebang,$$(1)/usr/bin/*) ; \
+	fi
+ endef
 
   define Package/$(1)-src/install
 	$$(call Package/$(1)/install,$$(1),sources)
