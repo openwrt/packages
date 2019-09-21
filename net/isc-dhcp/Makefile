@@ -60,7 +60,7 @@ define Package/isc-dhcp-relay/description
 endef
 
 define Package/isc-dhcp-relay-ipv4/description
-$(call Package/isc-dhcp-relay-ipv6/description)
+$(call Package/isc-dhcp-relay/description)
  This package is compiled with IPv4 support only.
 endef
 
