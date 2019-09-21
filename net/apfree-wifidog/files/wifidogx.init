@@ -280,6 +280,6 @@ start_service() {
 	procd_close_instance
 }
 
-status() {
+status_service() {
 	/usr/bin/wdctlx status
 }

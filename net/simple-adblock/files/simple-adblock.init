@@ -1028,9 +1028,9 @@ killcache() {
 	return 0
 }
 
-status() {
+status_service() {
 	local status="$(tmpfs get status)" error="$(tmpfs get error)" message="$(tmpfs get message)"
-	if [ -n "$status" ] && [ -n "$message" ]; then 
+	if [ -n "$status" ] && [ -n "$message" ]; then
 		status="${status}: $message"
 	fi
 	[ -n "$status" ] && output "$serviceName $status\\n"

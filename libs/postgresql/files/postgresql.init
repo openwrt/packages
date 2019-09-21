@@ -6,9 +6,6 @@ PROG=/usr/bin/postmaster
 
 USE_PROCD=1
 
-EXTRA_COMMANDS="status"
-EXTRA_HELP="        status  Show current status of the PostgreSQL server"
-
 fix_hosts() {
 	# make sure localhost (without a dot) is in /etc/hosts
 	grep -q 'localhost$' /etc/hosts || echo '127.0.0.1 localhost' >> /etc/hosts
@@ -71,7 +68,7 @@ stop_service() {
 	/usr/bin/pg_ctl stop -U postgres -D "${pgdata}" -s
 }
 
-status() {
+status_service() {
 	config_load "postgresql"
 	config_get pgdata config PGDATA
 	/usr/bin/pg_ctl status -U postgres -D "${pgdata}"
