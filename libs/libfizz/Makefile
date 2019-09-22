@@ -1,13 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libfizz
-PKG_VERSION:=2019.09.09.00
+PKG_VERSION:=2019.09.22.00
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/facebookincubator/fizz/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=c8e0317fb16b283784ef8607440d0077b4425d1a28d74ea6b083a385bcfb14f6
-PKG_BUILD_DIR:=$(BUILD_DIR)/fizz-$(PKG_VERSION)
+PKG_SOURCE_VERSION:=0ccff0813dea8d3f730d9c3a1b80e6936522d3f3
+PKG_SOURCE_URL:=https://codeload.github.com/facebookincubator/fizz/tar.gz/$(PKG_SOURCE_VERSION)?
+PKG_HASH:=32a8de32e7a83e53ad44931ac637f6e17ce7f81bd65bc835f14d59442041e7f6
+PKG_BUILD_DIR:=$(BUILD_DIR)/fizz-$(PKG_SOURCE_VERSION)
 
 PKG_MAINTAINER:=Amol Bhave <ambhave@fb.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -34,7 +35,6 @@ define Package/libfizz/description
 endef
 
 CMAKE_OPTIONS += \
-	-DBoost_NO_BOOST_CMAKE=ON \
 	-DBUILD_EXAMPLES=OFF
 
 TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -flto
