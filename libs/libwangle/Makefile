@@ -1,13 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwangle
-PKG_VERSION:=2019.09.09.00
+PKG_VERSION:=2019.09.22.00
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/facebook/wangle/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=b790ba6b975b90d7935e4ae12f84c77d6be9f9a94308a3e0b974d83cf0e01d8b
-PKG_BUILD_DIR:=$(BUILD_DIR)/wangle-$(PKG_VERSION)
+PKG_SOURCE_VERSION:=fb79e25af6d4e184587b62475fb3444643ae8867
+PKG_SOURCE_URL:=https://codeload.github.com/facebook/wangle/tar.gz/$(PKG_SOURCE_VERSION)?
+PKG_HASH:=e973cad492d025c93af49c245b1f77b484df09a4d70ade069648d633d5a85e0e
+PKG_BUILD_DIR:=$(BUILD_DIR)/wangle-$(PKG_SOURCE_VERSION)
 
 PKG_MAINTAINER:=Amol Bhave <ambhave@fb.com>
 PKG_LICENSE:=Apache-2.0
@@ -27,9 +28,6 @@ define Package/libwangle
   TITLE:=Wangle: C++ networking library
   URL:=https://github.com/facebook/wangle
 endef
-
-CMAKE_OPTIONS += \
-	-DBoost_NO_BOOST_CMAKE=ON
 
 TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -flto
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
