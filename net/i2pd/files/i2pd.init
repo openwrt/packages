@@ -11,7 +11,7 @@ PROG=/usr/sbin/i2pd
 USER="i2pd"
 GROUP="i2pd"
 PIDFILE=/var/run/i2pd.pid
-#DATADIR=/var/lib/i2pd
+DATADIR=/var/lib/i2pd
 CONFFILE=/etc/i2pd/i2pd.conf
 
 . /lib/functions.sh
@@ -23,14 +23,13 @@ i2pd_start() {
 	local data_dir
 	local addressbook_dir
 
-	config_get data_dir "$cfg" data_dir
+	config_get data_dir "$cfg" data_dir "$DATADIR"
 	config_get addressbook_dir "$cfg" addressbook_dir
 
 	## Setting up data dir
 	if [ ! -d "$data_dir" ]; then
 		mkdir -p "$data_dir"
 		ln -s /usr/share/i2pd/certificates "$data_dir/certificates"
-		ln -s /etc/i2pd/tunnels.conf "$data_dir/tunnels.conf"
 		if [ -n "$addressbook_dir" ]; then
 			if [ ! -d "$addressbook_dir" ]; then
 				mkdir -p "$addressbook_dir"
@@ -49,6 +48,9 @@ i2pd_start() {
 	procd_set_param command "$PROG" --service --conf="$CONFFILE" --pidfile "$PIDFILE"
 	## Don't know about i2pd user's HOME
 	procd_set_param env "HOME=$DATADIR"
+	## For debugging, provide about 512 MB on external storage for coredump and adjust /proc/sys/kernel/core_pattern
+	# echo "/tmp/coredumps/core.%e.%p.%s.%t" > /proc/sys/kernel/core_pattern
+	# procd_set_param limits core="unlimited unlimited"
 	procd_set_param limits nofile=4096
 	procd_set_param stdout 1
 	procd_set_param stderr 1
