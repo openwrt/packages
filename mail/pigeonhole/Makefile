@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dovecot-pigeonhole
-PKG_VERSION_PLUGIN:=0.5.5
+PKG_VERSION_PLUGIN:=0.5.7.2
 PKG_VERSION_DOVECOT:=$(shell make --no-print-directory -C ../dovecot/ val.PKG_VERSION V=s)
 PKG_VERSION:=$(PKG_VERSION_DOVECOT)-$(PKG_VERSION_PLUGIN)
 PKG_RELEASE:=1
@@ -17,7 +17,7 @@ DOVECOT_VERSION:=2.3
 
 PKG_SOURCE:=dovecot-$(DOVECOT_VERSION)-pigeonhole-$(PKG_VERSION_PLUGIN).tar.gz
 PKG_SOURCE_URL:=https://pigeonhole.dovecot.org/releases/$(DOVECOT_VERSION)
-PKG_HASH:=cbaa106e1c2b23824420efdd6a9f8572c64c8dccf75a3101a899b6ddb25149a5
+PKG_HASH:=d59d0c5c5225a126e5b98bf95d75e8dd368bdeeb3da2e9766dbe4fddaa9411b0
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING COPYING.LGPL
 PKG_CPE_ID:=cpe:/a:dovecot:pigeonhole
