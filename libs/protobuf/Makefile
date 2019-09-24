@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=protobuf
 PKG_VERSION:=3.8.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-cpp-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/google/protobuf/releases/download/v$(PKG_VERSION)
@@ -68,7 +68,10 @@ endef
 
 CMAKE_HOST_OPTIONS += \
 	-Dprotobuf_BUILD_PROTOC_BINARIES=ON \
-	-Dprotobuf_BUILD_TESTS=OFF
+	-Dprotobuf_BUILD_TESTS=OFF \
+	-DBUILD_SHARED_LIBS=ON \
+	-DCMAKE_SKIP_RPATH=OFF \
+	-DCMAKE_INSTALL_RPATH="${STAGING_DIR_HOSTPKG}/lib"
 
 CMAKE_OPTIONS += \
 	-Dprotobuf_BUILD_PROTOC_BINARIES=ON \
