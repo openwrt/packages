@@ -8,11 +8,9 @@ Subject: [PATCH] Get compatible with potential irssi abi 8, and drop polling
  core/quassel-net.c | 64 ++++++++++++++++++++++++++++++++++++++--------
  2 files changed, 53 insertions(+), 10 deletions(-)
 
-diff --git a/core/Makefile b/core/Makefile
-index c1c65fc..987bd7b 100644
 --- a/core/Makefile
 +++ b/core/Makefile
-@@ -16,7 +16,6 @@ SSL_CFLAGS=$(shell pkg-config --cflags openssl)
+@@ -16,7 +16,6 @@ SSL_CFLAGS=$(shell pkg-config --cflags o
  SSL_LDLAGS=$(shell pkg-config --libs openssl)
  OBJECTS:=quasselc-connector.o quassel-core.o
  OBJECTS+=quassel-net.o quassel-msgs.o quassel-cmds.o
@@ -20,11 +18,9 @@ index c1c65fc..987bd7b 100644
  OBJECTS+=quassel-fe-window.o quassel-fe-level.o quassel-cfg.o
  
  LDFLAGS ?=
-diff --git a/core/quassel-net.c b/core/quassel-net.c
-index 8a6eb55..5db7fe0 100644
 --- a/core/quassel-net.c
 +++ b/core/quassel-net.c
-@@ -132,10 +132,10 @@ static SERVER_REC* quassel_server_init_connect(SERVER_CONNECT_REC* conn) {
+@@ -132,10 +132,10 @@ static SERVER_REC* quassel_server_init_c
  	ret->got = 0;
  	server_connect_ref(SERVER_CONNECT(conn));
  
@@ -37,7 +33,7 @@ index 8a6eb55..5db7fe0 100644
  
  	ret->channels_join = quassel_irssi_channels_join;
  	ret->send_message = quassel_irssi_send_message;
-@@ -161,12 +161,59 @@ void quassel_net_init(CHAT_PROTOCOL_REC* rec) {
+@@ -161,12 +161,59 @@ void quassel_net_init(CHAT_PROTOCOL_REC*
  	signal_add_first("server connected", (SIGNAL_FUNC) sig_connected);
  }
  
@@ -113,6 +109,3 @@ index 8a6eb55..5db7fe0 100644
  }
  
  void quassel_irssi_init_nack(void *arg) {
--- 
-2.17.1
-

@@ -8,4 +8,4 @@
 +    LDFLAGS += $(shell pkg-config --libs quasselc)
  endif
  
- CFLAGS+=-std=gnu11 -Wall -Wextra -Werror -g $(IRSSI_CFLAGS) $(QUASSELC_FLAGS) -Wmissing-prototypes -Wmissing-declarations
+ CFLAGS+=-std=gnu11 -Wall -Wextra -g $(IRSSI_CFLAGS) $(QUASSELC_FLAGS) -Wmissing-prototypes -Wmissing-declarations
