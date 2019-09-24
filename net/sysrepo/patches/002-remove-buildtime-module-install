@@ -1,8 +1,6 @@
-Index: sysrepo-0.7.5/CMakeLists.txt
-===================================================================
---- sysrepo-0.7.5.orig/CMakeLists.txt
-+++ sysrepo-0.7.5/CMakeLists.txt
-@@ -303,7 +303,7 @@ install (FILES ${INTERNAL_YANGS} DESTINA
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -310,7 +310,7 @@ install (FILES ${INTERNAL_YANGS} DESTINA
  
  # install NACM YANG module
  if(ENABLE_NACM)
@@ -11,7 +9,7 @@ Index: sysrepo-0.7.5/CMakeLists.txt
  endif(ENABLE_NACM)
  
  find_package(PkgConfig QUIET)
-@@ -327,9 +327,9 @@ if(WITH_SYSTEMD)
+@@ -334,9 +334,9 @@ if(WITH_SYSTEMD)
          FILES_MATCHING PATTERN "*.service")
  endif()
  
@@ -22,5 +20,5 @@ Index: sysrepo-0.7.5/CMakeLists.txt
 +#INSTALL_YANG("nc-notifications" "" "666")
 +#INSTALL_YANG("notifications" "" "666")
  
- if(GEN_LANGUAGE_BINDINGS)
-     add_subdirectory(swig)
+ # uninstall
+ add_custom_target(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_MODULE_PATH}/uninstall.cmake")
