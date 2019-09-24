@@ -19,6 +19,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/SQLAlchemy-$(PKG_VERSION)
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:sqlalchemy:sqlalchemy
 
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk

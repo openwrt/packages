@@ -11,6 +11,7 @@ PKG_NAME:=python-simplejson
 PKG_VERSION:=3.16.0
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
+PKG_CPE_ID:=cpe:/a:simplejson_project:simplejson
 
 PKG_SOURCE:=simplejson-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/s/simplejson

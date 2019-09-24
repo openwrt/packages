@@ -16,6 +16,7 @@ PKG_SOURCE_URL:=https://github.com/martinh/libconfuse/releases/download/v$(PKG_V
 PKG_HASH:=a9240b653d02e8cfc52db48e8c4224426e528e1faa09b65e8ca08a197fad210b
 PKG_MAINTAINER:=
 PKG_LICENSE:=ISC
+PKG_CPE_ID:=cpe:/a:libconfuse_project:libconfuse
 
 include $(INCLUDE_DIR)/package.mk
 

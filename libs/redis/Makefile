@@ -11,6 +11,8 @@ PKG_HASH:=2139009799d21d8ff94fc40b7f36ac46699b9e1254086299f8d3b223ca54a375
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:pivotal_software:redis
+
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk

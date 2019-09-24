@@ -17,6 +17,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-cryptodome-$(PKG_VERSION)
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE.rst
 PKG_MAINTAINER:=Richard Yu <yurichard3839@gmail.com>
+PKG_CPE_ID:=cpe:/a:pycryptodome:pycryptodome
 
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
