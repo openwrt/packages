@@ -24,12 +24,13 @@ PKG_LICENSE_FILES:=LICENSE
 HOST_BUILD_DEPENDS:=protobuf/host
 PKG_BUILD_DEPENDS:=protobuf
 
-PKG_INSTALL:=1
+CMAKE_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 CMAKE_SOURCE_SUBDIR:=build-cmake
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libprotobuf-c
   TITLE:=Protocol Buffers library
