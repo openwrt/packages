@@ -1,0 +1,53 @@
+commit 489bbd321e46c110ab9d92fb91725870d7c40491
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Tue Sep 24 10:43:03 2019 +0200
+
+    BUG/MEDIUM: checks: make sure the connection is ready before trying to recv
+    
+    As identified in issue #278, the backport of commit c594039225 ("BUG/MINOR:
+    checks: do not uselessly poll for reads before the connection is up")
+    introduced a regression in 2.0 when default checks are enabled (not
+    "option tcp-check"), but it did not affect 2.1.
+    
+    What happens is that in 2.0 and earlier we have the fd cache which makes
+    a speculative call to the I/O functions after an attempt to connect, and
+    the __event_srv_chk_r() function was absolutely not designed to be called
+    while a connection attempt is still pending. Thus what happens is that the
+    test for success/failure expects the verdict to be final before waking up
+    the check task, and since the connection is not yet validated, it fails.
+    It will usually work over the loopback depending on scheduling, which is
+    why it doesn't fail in reg tests.
+    
+    In 2.1 after the failed connect(), we subscribe to polling and usually come
+    back with a validated connection, so the function is not expected to be
+    called before it completes, except if it happens as a side effect of some
+    spurious wake calls, which should not have any effect on such a check.
+    
+    The other check types are not impacted by this issue because they all
+    check for a minimum data length in the buffer, and wait for more data
+    until they are satisfied.
+    
+    This patch fixes the issue by explicitly checking that the connection
+    is established before trying to read or to give a verdict. This way the
+    function becomes safe to call regardless of the connection status (even
+    if it's still totally ugly).
+    
+    This fix must be backported to 2.0.
+    
+    (cherry picked from commit 0f0393fc0d2badc5ea329844691f06ba28827f78)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/checks.c b/src/checks.c
+index b088da2e..06f47ad9 100644
+--- a/src/checks.c
++++ b/src/checks.c
+@@ -875,6 +875,9 @@ static void __event_srv_chk_r(struct conn_stream *cs)
+ 		}
+ 	}
+ 
++	/* the rest of the code below expects the connection to be ready! */
++	if (!(conn->flags & CO_FL_CONNECTED) && !done)
++		goto wait_more_data;
+ 
+ 	/* Intermediate or complete response received.
+ 	 * Terminate string in b_head(&check->bi) buffer.
