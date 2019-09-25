@@ -1,0 +1,83 @@
+commit 96b88f2e605e76f2a472cf9fa83398ff242d47bb
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Mon Sep 23 15:28:20 2019 +0200
+
+    BUG/MAJOR: mux-h2: Handle HEADERS frames received after a RST_STREAM frame
+    
+    As stated in the RFC7540#5.1, an endpoint that receives any frame other than
+    PRIORITY after receiving a RST_STREAM MUST treat that as a stream error of type
+    STREAM_CLOSED. However, frames carrying compression state must still be
+    processed before being dropped to keep the HPACK decoder synchronized. This had
+    to be the purpose of the commit 8d9ac3ed8b ("BUG/MEDIUM: mux-h2: do not abort
+    HEADERS frame before decoding them"). But, the test on the frame type was
+    inverted.
+    
+    This bug is major because desynchronizing the HPACK decoder leads to mixup
+    indexed headers in messages. From the time an HEADERS frame is received and
+    ignored for a closed stream, wrong headers may be sent to the following streams.
+    
+    This patch may fix several bugs reported on github (#116, #290, #292). It must
+    be backported to 2.0 and 1.9.
+    
+    (cherry picked from commit 6884aa3eb00d1a5eb6f9c81a3a00288c13652938)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/mux_h2.c b/src/mux_h2.c
+index e6bfd03d..eb773a26 100644
+--- a/src/mux_h2.c
++++ b/src/mux_h2.c
+@@ -2106,6 +2106,9 @@ static struct h2s *h2c_frt_handle_headers(struct h2c *h2c, struct h2s *h2s)
+  */
+ static struct h2s *h2c_bck_handle_headers(struct h2c *h2c, struct h2s *h2s)
+ {
++	struct buffer rxbuf = BUF_NULL;
++	unsigned long long body_len = 0;
++	uint32_t flags = 0;
+ 	int error;
+ 
+ 	if (!b_size(&h2c->dbuf))
+@@ -2114,7 +2117,18 @@ static struct h2s *h2c_bck_handle_headers(struct h2c *h2c, struct h2s *h2s)
+ 	if (b_data(&h2c->dbuf) < h2c->dfl && !b_full(&h2c->dbuf))
+ 		return NULL; // incomplete frame
+ 
+-	error = h2c_decode_headers(h2c, &h2s->rxbuf, &h2s->flags, &h2s->body_len);
++	if (h2s->st != H2_SS_CLOSED) {
++		error = h2c_decode_headers(h2c, &h2s->rxbuf, &h2s->flags, &h2s->body_len);
++	}
++	else {
++		/* the connection was already killed by an RST, let's consume
++		 * the data and send another RST.
++		 */
++		error = h2c_decode_headers(h2c, &rxbuf, &flags, &body_len);
++		h2s_error(h2s, H2_ERR_STREAM_CLOSED);
++		h2c->st0 = H2_CS_FRAME_E;
++		goto send_rst;
++	}
+ 
+ 	/* unrecoverable error ? */
+ 	if (h2c->st0 >= H2_CS_ERROR)
+@@ -2150,6 +2164,15 @@ static struct h2s *h2c_bck_handle_headers(struct h2c *h2c, struct h2s *h2s)
+ 	}
+ 
+ 	return h2s;
++
++ send_rst:
++	/* make the demux send an RST for the current stream. We may only
++	 * do this if we're certain that the HEADERS frame was properly
++	 * decompressed so that the HPACK decoder is still kept up to date.
++	 */
++	h2_release_buf(h2c, &rxbuf);
++	h2c->st0 = H2_CS_FRAME_E;
++	return h2s;
+ }
+ 
+ /* processes a DATA frame. Returns > 0 on success or zero on missing data.
+@@ -2459,7 +2482,7 @@ static void h2_process_demux(struct h2c *h2c)
+ 				goto strm_err;
+ 			}
+ 
+-			if (h2s->flags & H2_SF_RST_RCVD && h2_ft_bit(h2c->dft) & H2_FT_HDR_MASK) {
++			if (h2s->flags & H2_SF_RST_RCVD && !(h2_ft_bit(h2c->dft) & H2_FT_HDR_MASK)) {
+ 				/* RFC7540#5.1:closed: an endpoint that
+ 				 * receives any frame other than PRIORITY after
+ 				 * receiving a RST_STREAM MUST treat that as a
