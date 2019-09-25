@@ -79,8 +79,8 @@ local function scrape()
   dsl_max_datarate({direction="up"}, dsl_stat.max_data_rate_up)
 
   -- dsl errors
-  dsl_error_seconds_total({err="forward error correction",loc="near"}, dsl_stat.errors_fec_near)
-  dsl_error_seconds_total({err="forward error correction",loc="far"}, dsl_stat.errors_fec_far)
+  dsl_error_seconds_total({err="forward error correction",loc="near"}, dsl_stat.errors_fecs_near)
+  dsl_error_seconds_total({err="forward error correction",loc="far"}, dsl_stat.errors_fecs_far)
   dsl_error_seconds_total({err="errored",loc="near"}, dsl_stat.errors_es_near)
   dsl_error_seconds_total({err="errored",loc="far"}, dsl_stat.errors_es_near)
   dsl_error_seconds_total({err="severely errored",loc="near"}, dsl_stat.errors_ses_near)
