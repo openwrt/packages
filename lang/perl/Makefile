@@ -11,7 +11,7 @@ include perlver.mk
 
 PKG_NAME:=perl
 PKG_VERSION:=$(PERL_VERSION)
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_URL:=\
 		https://cpan.metacpan.org/src/5.0 \
@@ -105,6 +105,7 @@ define Build/Configure
 	                                -Dowrt:threads=$(if $(CONFIG_PERL_THREADS),yes,no) \
 	                                -Dowrt:staging_dir='$(STAGING_DIR)' \
 	                                -Dowrt:host_perl_prefix='$(HOST_PERL_PREFIX)' \
+	                                -Dsysroot='$(TOOLCHAIN_DIR)' \
 	                                files/version.config \
 	                                files/base.config \
 	                                files/$(patsubst i386,i486,$(ARCH)).config \
