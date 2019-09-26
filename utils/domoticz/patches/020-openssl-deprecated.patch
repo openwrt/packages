@@ -8,8 +8,6 @@ OpenSSL has initialization deprecated.
  main/WebServerHelper.cpp | 2 ++
  1 file changed, 2 insertions(+)
 
-diff --git a/main/WebServerHelper.cpp b/main/WebServerHelper.cpp
-index 98ebcf7b4..0a028595c 100644
 --- a/main/WebServerHelper.cpp
 +++ b/main/WebServerHelper.cpp
 @@ -37,7 +37,9 @@ namespace http {
