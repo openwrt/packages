@@ -46,6 +46,11 @@ define Package/libprotobuf-c/description
   internal RPC protocols and file formats.
 endef
 
+CMAKE_HOST_OPTIONS += \
+	-DBUILD_SHARED_LIBS=ON \
+	-DCMAKE_SKIP_RPATH=OFF \
+	-DCMAKE_INSTALL_RPATH="${STAGING_DIR_HOSTPKG}/lib"
+
 CMAKE_OPTIONS += \
 	-DBUILD_SHARED_LIBS=ON
 
