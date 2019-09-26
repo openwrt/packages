@@ -32,7 +32,7 @@ define Package/liburcu
 	CATEGORY:=Libraries
 	TITLE:=User-space Read-Copy-Update library
 	URL:=https://lttng.org/
-	DEPENDS:=+libpthread @!TARGET_arc770 @1TARGET_archs38
+	DEPENDS:=+libpthread @!TARGET_arc770 @!TARGET_archs38
 endef
 
 define Package/liburcu/description
