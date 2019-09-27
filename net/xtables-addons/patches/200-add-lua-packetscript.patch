@@ -18134,7 +18134,7 @@
 +
 --- a/extensions/Kbuild
 +++ b/extensions/Kbuild
-@@ -27,6 +27,7 @@ obj-${build_pknock}      += pknock/
+@@ -28,6 +28,7 @@ obj-${build_pknock}      += pknock/
  obj-${build_psd}         += xt_psd.o
  obj-${build_quota2}      += xt_quota2.o
  obj-${build_rtsp}        += rtsp/
@@ -18144,14 +18144,14 @@
  -include ${M}/Kbuild.*
 --- a/extensions/Mbuild
 +++ b/extensions/Mbuild
-@@ -22,3 +22,4 @@ obj-${build_pknock}      += pknock/
+@@ -23,3 +23,4 @@ obj-${build_pknock}      += pknock/
  obj-${build_psd}         += libxt_psd.so
  obj-${build_quota2}      += libxt_quota2.so
  obj-${build_gradm}       += libxt_gradm.so
 +obj-${build_LUA}         += LUA/
 --- a/mconfig
 +++ b/mconfig
-@@ -23,3 +23,4 @@ build_pknock=m
+@@ -24,3 +24,4 @@ build_pknock=m
  build_psd=m
  build_quota2=m
  build_rtsp=m

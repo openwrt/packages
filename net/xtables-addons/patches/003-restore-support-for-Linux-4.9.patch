@@ -23,10 +23,10 @@ diff --git a/configure.ac b/configure.ac
 index 0d3aa72..1cea354 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -59,7 +59,7 @@ if test -n "$kbuilddir"; then
- 		echo "$kmajor.$kminor.$kmicro.$kstable in $kbuilddir";
- 		if test "$kmajor" -gt 5 -o "$kmajor" -eq 5 -a "$kminor" -gt 0; then
+@@ -61,7 +61,7 @@ if test -n "$kbuilddir"; then
  			echo "WARNING: That kernel version is not officially supported yet. Continue at own luck.";
+ 		elif test "$kmajor" -eq 5 -a "$kminor" -ge 0; then
+ 			:
 -		elif test "$kmajor" -eq 4 -a "$kminor" -ge 14; then
 +		elif test "$kmajor" -eq 4 -a "$kminor" -ge 9; then
  			:
@@ -141,7 +141,7 @@ diff --git a/extensions/xt_DELUDE.c b/extensions/xt_DELUDE.c
 index 618de5e..221f342 100644
 --- a/extensions/xt_DELUDE.c
 +++ b/extensions/xt_DELUDE.c
-@@ -146,7 +146,13 @@ delude_tg(struct sk_buff *skb, const struct xt_action_param *par)
+@@ -151,7 +151,13 @@ delude_tg(struct sk_buff *skb, const struct xt_action_param *par)
  	 * a problem, as that is supported since Linux 2.6.35. But since we do not
  	 * actually want to have a connection open, we are still going to drop it.
  	 */
@@ -243,7 +243,7 @@ diff --git a/extensions/xt_TARPIT.c b/extensions/xt_TARPIT.c
 index cb98e9e..b78683c 100644
 --- a/extensions/xt_TARPIT.c
 +++ b/extensions/xt_TARPIT.c
-@@ -431,7 +431,12 @@ tarpit_tg4(struct sk_buff *skb, const struct xt_action_param *par)
+@@ -436,7 +436,12 @@ tarpit_tg4(struct sk_buff *skb, const struct xt_action_param *par)
  	/* We are not interested in fragments */
  	if (iph->frag_off & htons(IP_OFFSET))
  		return NF_DROP;
@@ -256,7 +256,7 @@ index cb98e9e..b78683c 100644
  	return NF_DROP;
  }
  
-@@ -472,7 +477,12 @@ tarpit_tg6(struct sk_buff *skb, const struct xt_action_param *par)
+@@ -477,7 +482,12 @@ tarpit_tg6(struct sk_buff *skb, const struct xt_action_param *par)
  		pr_debug("addr is not unicast.\n");
  		return NF_DROP;
  	}
