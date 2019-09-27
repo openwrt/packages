@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsoxr
 PKG_VERSION:=0.1.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=@SF/project/soxr/
 PKG_SOURCE:=soxr-$(PKG_VERSION)-Source.tar.xz
@@ -17,13 +17,12 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/soxr-$(PKG_VERSION)-Source
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Mike Brady <mikebrady@eircom.net>
-
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=LICENCE
 PKG_CPE_ID:=cpe:/a:sox:sox
 
+CMAKE_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -32,7 +31,7 @@ define Package/libsoxr
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=The SoX Resampler library
-  URL:=http://sourceforge.net/projects/soxr/
+  URL:=https://sourceforge.net/projects/soxr/
   DEPENDS:= +libpthread
 endef
 
@@ -44,14 +43,6 @@ endef
 CMAKE_OPTIONS:= -DBUILD_TESTS=0 -DBUILD_EXAMPLES=0
 CMAKE_OPTIONS+= -DHAVE_WORDS_BIGENDIAN_EXITCODE=$(if $(CONFIG_BIG_ENDIAN),0,1)
 CMAKE_OPTIONS+= -DWITH_OPENMP=0
-
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/soxr.h $(1)/usr/include/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsoxr.so* $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/soxr.pc $(1)/usr/lib/pkgconfig/
-endef
 
 define Package/libsoxr/install
 	$(INSTALL_DIR) $(1)/usr/lib
