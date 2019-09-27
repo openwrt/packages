@@ -11,13 +11,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zeromq
 PKG_VERSION:=4.1.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=GPL-3.0+
 PKG_LICENSE_FILES:=LICENCE.txt
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:= https://github.com/zeromq/zeromq4-1/releases/download/v$(PKG_VERSION)/
+PKG_SOURCE_URL:=https://github.com/zeromq/zeromq4-1/releases/download/v$(PKG_VERSION)/
 PKG_HASH:=e99f44fde25c2e4cb84ce440f87ca7d3fe3271c2b8cfbc67d55e4de25e6fe378
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
@@ -32,7 +32,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/libzmq/default
   TITLE:=ZeroMQ - Message Queue engine
-  URL:=http://www.zeromq.org/
+  URL:=https://www.zeromq.org/
   SECTION:=libs
   CATEGORY:=Libraries
   DEPENDS:=+libuuid +libpthread +librt $(CXX_DEPENDS)
