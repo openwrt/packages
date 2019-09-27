@@ -1,8 +1,6 @@
-Index: sysrepo-0.7.0-7aa2f18d234267403147df92c0005c871f0aa840/src/common/sr_utils.c
-===================================================================
---- sysrepo-0.7.0-7aa2f18d234267403147df92c0005c871f0aa840.orig/src/common/sr_utils.c
-+++ sysrepo-0.7.0-7aa2f18d234267403147df92c0005c871f0aa840/src/common/sr_utils.c
-@@ -460,14 +460,24 @@ sr_fd_set_nonblock(int fd)
+--- a/src/common/sr_utils.c
++++ b/src/common/sr_utils.c
+@@ -477,14 +477,24 @@ sr_fd_set_nonblock(int fd)
  
  #if defined(SO_PEERCRED)
  

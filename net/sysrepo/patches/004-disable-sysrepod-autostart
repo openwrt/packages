@@ -1,7 +1,5 @@
-Index: sysrepo-0.7.5/src/clientlib/client_library.c
-===================================================================
---- sysrepo-0.7.5.orig/src/clientlib/client_library.c
-+++ sysrepo-0.7.5/src/clientlib/client_library.c
+--- a/src/clientlib/client_library.c
++++ b/src/clientlib/client_library.c
 @@ -396,13 +396,13 @@ sr_connect(const char *app_name, const s
          if (opts & SR_CONN_DAEMON_REQUIRED) {
              if ((opts & SR_CONN_DAEMON_START) && (0 == getuid())) {

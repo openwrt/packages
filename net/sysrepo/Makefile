@@ -7,16 +7,17 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_LICENSE:=ASL-2.0
-PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
-
 PKG_NAME:=sysrepo
 PKG_VERSION:=0.7.7
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/sysrepo/sysrepo/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=2bf8cb4d810d19231eba1e549f58f3a0ce068d170a5e7b212b927396098560e4
+
+PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
+PKG_LICENSE:=Apache-2.0
+PKG_LICENSE_FILES:=LICENSE
 
 CMAKE_INSTALL:=1
 
@@ -38,8 +39,8 @@ PKG_BUILD_DEPENDS:=SYSREPO_BINDINGS:swig/host
 define Package/libsysrepo
   SECTION:=utils
   CATEGORY:=Utilities
-  URL:=$(PKG_SOURCE_URL)
   TITLE:=YANG-based data store library
+  URL:=https://www.sysrepo.org/
   DEPENDS:=+libyang +libprotobuf-c +libev +libredblack +librt +libpthread +SYSREPO_BINDINGS:libstdcpp +SYSREPO_PYTHON:python-base +SYSREPO_LUA:lua
   MENU:=1
 endef
@@ -47,24 +48,24 @@ endef
 define Package/sysrepo
   SECTION:=utils
   CATEGORY:=Utilities
-  URL:=$(PKG_SOURCE_URL)
   TITLE:=YANG-based data store daemon and plugin
+  URL:=https://www.sysrepo.org/
   DEPENDS:=+libsysrepo
 endef
 
 define Package/sysrepoctl
   SECTION:=utils
   CATEGORY:=Utilities
-  URL:=$(PKG_SOURCE_URL)
   TITLE:=sysrepo cli tool
+  URL:=https://www.sysrepo.org/
   DEPENDS:=+libsysrepo
 endef
 
 define Package/sysrepocfg
   SECTION:=utils
   CATEGORY:=Utilities
-  URL:=$(PKG_SOURCE_URL)
   TITLE:=sysrepo configuration tool
+  URL:=https://www.sysrepo.org/
   DEPENDS:=+libsysrepo
 endef
 

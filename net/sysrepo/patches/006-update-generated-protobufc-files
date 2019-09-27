@@ -1,7 +1,5 @@
-Index: sysrepo-0.7.7/src/common/sysrepo.pb-c.c
-===================================================================
---- sysrepo-0.7.7.orig/src/common/sysrepo.pb-c.c
-+++ sysrepo-0.7.7/src/common/sysrepo.pb-c.c
+--- a/src/common/sysrepo.pb-c.c
++++ b/src/common/sysrepo.pb-c.c
 @@ -8013,7 +8013,7 @@ const ProtobufCMessageDescriptor sr__eve
    (ProtobufCMessageInit) sr__event_notif_replay_resp__init,
    NULL,NULL,NULL    /* reserved[123] */
@@ -51,10 +49,8 @@ Index: sysrepo-0.7.7/src/common/sysrepo.pb-c.c
    sr__data_provide_req__field_descriptors,
    sr__data_provide_req__field_indices_by_name,
    3,  sr__data_provide_req__number_ranges,
-Index: sysrepo-0.7.7/src/common/sysrepo.pb-c.h
-===================================================================
---- sysrepo-0.7.7.orig/src/common/sysrepo.pb-c.h
-+++ sysrepo-0.7.7/src/common/sysrepo.pb-c.h
+--- a/src/common/sysrepo.pb-c.h
++++ b/src/common/sysrepo.pb-c.h
 @@ -1630,10 +1630,11 @@ struct  _Sr__DataProvideReq
    char *subscriber_address;
    uint32_t subscription_id;
