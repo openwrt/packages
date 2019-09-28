@@ -1,0 +1,167 @@
+From ea21389dda401457198fb214aa2c981a45ed9528 Mon Sep 17 00:00:00 2001
+From: Ashwin Ramaswami <aramaswamis@gmail.com>
+Date: Tue, 3 Sep 2019 09:42:53 -0700
+Subject: [PATCH] [3.7] bpo-37764: Fix infinite loop when parsing unstructured
+ email headers. (GH-15239) (GH-15654)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+…aders. (GH-15239)
+
+Fixes a case in which email._header_value_parser.get_unstructured hangs the system for some invalid headers. This covers the cases in which the header contains either:
+- a case without trailing whitespace
+- an invalid encoded word
+
+https://bugs.python.org/issue37764
+
+This fix should also be backported to 3.7 and 3.8
+
+https://bugs.python.org/issue37764
+(cherry picked from commit c5b242f87f31286ad38991bc3868cf4cfbf2b681)
+
+Co-authored-by: Ashwin Ramaswami <aramaswamis@gmail.com>
+
+
+
+
+
+https://bugs.python.org/issue37764
+---
+ Lib/email/_header_value_parser.py             | 19 ++++++++++++++---
+ .../test_email/test__header_value_parser.py   | 16 ++++++++++++++
+ Lib/test/test_email/test_email.py             | 21 +++++++++++++++++++
+ Misc/ACKS                                     |  1 +
+ .../2019-08-27-01-13-05.bpo-37764.qv67PQ.rst  |  1 +
+ 5 files changed, 55 insertions(+), 3 deletions(-)
+ create mode 100644 Misc/NEWS.d/next/Security/2019-08-27-01-13-05.bpo-37764.qv67PQ.rst
+
+--- a/Lib/email/_header_value_parser.py
++++ b/Lib/email/_header_value_parser.py
+@@ -931,6 +931,10 @@ class EWWhiteSpaceTerminal(WhiteSpaceTer
+         return ''
+ 
+ 
++class _InvalidEwError(errors.HeaderParseError):
++    """Invalid encoded word found while parsing headers."""
++
++
+ # XXX these need to become classes and used as instances so
+ # that a program can't change them in a parse tree and screw
+ # up other parse trees.  Maybe should have  tests for that, too.
+@@ -1035,7 +1039,10 @@ def get_encoded_word(value):
+         raise errors.HeaderParseError(
+             "expected encoded word but found {}".format(value))
+     remstr = ''.join(remainder)
+-    if len(remstr) > 1 and remstr[0] in hexdigits and remstr[1] in hexdigits:
++    if (len(remstr) > 1 and
++        remstr[0] in hexdigits and
++        remstr[1] in hexdigits and
++        tok.count('?') < 2):
+         # The ? after the CTE was followed by an encoded word escape (=XX).
+         rest, *remainder = remstr.split('?=', 1)
+         tok = tok + '?=' + rest
+@@ -1047,7 +1054,7 @@ def get_encoded_word(value):
+     try:
+         text, charset, lang, defects = _ew.decode('=?' + tok + '?=')
+     except ValueError:
+-        raise errors.HeaderParseError(
++        raise _InvalidEwError(
+             "encoded word format invalid: '{}'".format(ew.cte))
+     ew.charset = charset
+     ew.lang = lang
+@@ -1097,9 +1104,12 @@ def get_unstructured(value):
+             token, value = get_fws(value)
+             unstructured.append(token)
+             continue
++        valid_ew = True
+         if value.startswith('=?'):
+             try:
+                 token, value = get_encoded_word(value)
++            except _InvalidEwError:
++                valid_ew = False
+             except errors.HeaderParseError:
+                 # XXX: Need to figure out how to register defects when
+                 # appropriate here.
+@@ -1121,7 +1131,10 @@ def get_unstructured(value):
+         # Split in the middle of an atom if there is a rfc2047 encoded word
+         # which does not have WSP on both sides. The defect will be registered
+         # the next time through the loop.
+-        if rfc2047_matcher.search(tok):
++        # This needs to only be performed when the encoded word is valid;
++        # otherwise, performing it on an invalid encoded word can cause
++        # the parser to go in an infinite loop.
++        if valid_ew and rfc2047_matcher.search(tok):
+             tok, *remainder = value.partition('=?')
+         vtext = ValueTerminal(tok, 'vtext')
+         _validate_xtext(vtext)
+--- a/Lib/test/test_email/test__header_value_parser.py
++++ b/Lib/test/test_email/test__header_value_parser.py
+@@ -383,6 +383,22 @@ class TestParser(TestParserMixin, TestEm
+             [errors.InvalidHeaderDefect],
+             '')
+ 
++    def test_get_unstructured_without_trailing_whitespace_hang_case(self):
++        self._test_get_x(self._get_unst,
++            '=?utf-8?q?somevalue?=aa',
++            'somevalueaa',
++            'somevalueaa',
++            [errors.InvalidHeaderDefect],
++            '')
++
++    def test_get_unstructured_invalid_ew(self):
++        self._test_get_x(self._get_unst,
++            '=?utf-8?q?=somevalue?=',
++            '=?utf-8?q?=somevalue?=',
++            '=?utf-8?q?=somevalue?=',
++            [],
++            '')
++
+     # get_qp_ctext
+ 
+     def test_get_qp_ctext_only(self):
+--- a/Lib/test/test_email/test_email.py
++++ b/Lib/test/test_email/test_email.py
+@@ -5367,6 +5367,27 @@ Content-Type: application/x-foo;
+         eq(language, 'en-us')
+         eq(s, 'My Document For You')
+ 
++    def test_should_not_hang_on_invalid_ew_messages(self):
++        messages = ["""From: user@host.com
++To: user@host.com
++Bad-Header:
++ =?us-ascii?Q?LCSwrV11+IB0rSbSker+M9vWR7wEDSuGqmHD89Gt=ea0nJFSaiz4vX3XMJPT4vrE?=
++ =?us-ascii?Q?xGUZeOnp0o22pLBB7CYLH74Js=wOlK6Tfru2U47qR?=
++ =?us-ascii?Q?72OfyEY2p2=2FrA9xNFyvH+fBTCmazxwzF8nGkK6D?=
++
++Hello!
++""", """From: ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ <xxx@xxx>
++To: "xxx" <xxx@xxx>
++Subject:   ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
++MIME-Version: 1.0
++Content-Type: text/plain; charset="windows-1251";
++Content-Transfer-Encoding: 8bit
++
++ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
++"""]
++        for m in messages:
++            with self.subTest(m=m):
++                msg = email.message_from_string(m)
+ 
+ 
+ # Tests to ensure that signed parts of an email are completely preserved, as
+--- a/Misc/ACKS
++++ b/Misc/ACKS
+@@ -1305,6 +1305,7 @@ Burton Radons
+ Abhilash Raj
+ Shorya Raj
+ Dhushyanth Ramasamy
++Ashwin Ramaswami
+ Jeff Ramnani
+ Bayard Randel
+ Varpu Rantala
+--- /dev/null
++++ b/Misc/NEWS.d/next/Security/2019-08-27-01-13-05.bpo-37764.qv67PQ.rst
+@@ -0,0 +1 @@
++Fixes email._header_value_parser.get_unstructured going into an infinite loop for a specific case in which the email header does not have trailing whitespace, and the case in which it contains an invalid encoded word. Patch by Ashwin Ramaswami.
+\ No newline at end of file
