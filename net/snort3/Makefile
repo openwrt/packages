@@ -8,19 +8,19 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=snort3
 PKG_VERSION:=3.0.0-beta
 PKG_VERSION_SHORT:=3.0.0
-PKG_RELEASE:=3
-
-PKG_LICENSE:=GPL-2.0
-PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-PKG_CPE_ID:=cpe:/a:snort:snort
+PKG_RELEASE:=4
 
 PKG_SOURCE:=snort-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.snort.org/downloads/snortplus/
 PKG_HASH:=ea4079c551002e4d83586f05b3ecdae72706a46ec223339b87ce60f7ae30b8a2
-
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/snort-$(PKG_VERSION_SHORT)
-PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
+
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_LICENSE:=GPL-2.0-only
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:snort:snort
+
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
