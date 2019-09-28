@@ -75,8 +75,8 @@ ovs_kmod_openvswitch_depends:=\
 	  +IPV6:kmod-nf-nat6 \
 	  +kmod-nf-conntrack \
 	  +IPV6:kmod-nf-conntrack6 \
-	  +(!LINUX_4_9&&!LINUX_4.14):kmod-nsh \
-	  +(!LINUX_4_9&&!LINUX_4.14):kmod-ipt-conntrack-extra \
+	  +(!LINUX_4_9&&!LINUX_4_14):kmod-nsh \
+	  +(!LINUX_4_9&&!LINUX_4_14):kmod-ipt-conntrack-extra \
 
 ovs_kmod_openvswitch_files:=$(ovs_kmod_upstream_dir)/openvswitch.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch))
@@ -120,11 +120,11 @@ ovs_kmod_openvswitch-intree_depends:=\
 	  +kmod-nf-nat \
 	  +IPV6:kmod-nf-nat6 \
 	  +kmod-nf-conntrack \
-	  +(IPV6&&(LINUX_4_9||LINUX_4.14)):kmod-nf-conntrack6 \
-	  +(LINUX_4_9||LINUX_4.14):kmod-gre \
-	  +(IPV6&&(LINUX_4_9||LINUX_4.14)):kmod-gre6 \
-	  +(!LINUX_4_9&&!LINUX_4.14):kmod-udptunnel4 \
-	  +(!LINUX_4_9&&!LINUX_4.14):kmod-ipt-conntrack-extra \
+	  +(IPV6&&(LINUX_4_9||LINUX_4_14)):kmod-nf-conntrack6 \
+	  +(LINUX_4_9||LINUX_4_14):kmod-gre \
+	  +(IPV6&&(LINUX_4_9||LINUX_4_14)):kmod-gre6 \
+	  +(!LINUX_4_9&&!LINUX_4_14):kmod-udptunnel4 \
+	  +(!LINUX_4_9&&!LINUX_4_14):kmod-ipt-conntrack-extra \
 
 ovs_kmod_openvswitch-intree_files:= $(ovs_kmod_intree_dir)/openvswitch.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-intree))
