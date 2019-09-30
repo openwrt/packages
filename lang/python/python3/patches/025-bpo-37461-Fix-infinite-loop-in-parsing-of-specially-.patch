@@ -1,0 +1,56 @@
+From 391511ccaaf0050970dfbe95bf2df1bcf6c33440 Mon Sep 17 00:00:00 2001
+From: "Miss Islington (bot)"
+ <31488909+miss-islington@users.noreply.github.com>
+Date: Wed, 17 Jul 2019 10:02:05 -0700
+Subject: [PATCH] bpo-37461: Fix infinite loop in parsing of specially crafted
+ email headers (GH-14794)
+
+* bpo-37461: Fix infinite loop in parsing of specially crafted email headers.
+
+Some crafted email header would cause the get_parameter method to run in an
+infinite loop causing a DoS attack surface when parsing those headers. This
+patch fixes that by making sure the DQUOTE character is handled to prevent
+going into an infinite loop.
+(cherry picked from commit a4a994bd3e619cbaff97610a1cee8ffa87c672f5)
+
+Co-authored-by: Abhilash Raj <maxking@users.noreply.github.com>
+---
+ Lib/email/_header_value_parser.py                          | 3 +++
+ Lib/test/test_email/test__header_value_parser.py           | 7 +++++++
+ .../next/Security/2019-07-16-08-11-00.bpo-37461.1Ahz7O.rst | 2 ++
+ 3 files changed, 12 insertions(+)
+ create mode 100644 Misc/NEWS.d/next/Security/2019-07-16-08-11-00.bpo-37461.1Ahz7O.rst
+
+--- a/Lib/email/_header_value_parser.py
++++ b/Lib/email/_header_value_parser.py
+@@ -2387,6 +2387,9 @@ def get_parameter(value):
+         while value:
+             if value[0] in WSP:
+                 token, value = get_fws(value)
++            elif value[0] == '"':
++                token = ValueTerminal('"', 'DQUOTE')
++                value = value[1:]
+             else:
+                 token, value = get_qcontent(value)
+             v.append(token)
+--- a/Lib/test/test_email/test__header_value_parser.py
++++ b/Lib/test/test_email/test__header_value_parser.py
+@@ -2621,6 +2621,13 @@ class Test_parse_mime_parameters(TestPar
+             # Defects are apparent missing *0*, and two 'out of sequence'.
+             [errors.InvalidHeaderDefect]*3),
+ 
++        # bpo-37461: Check that we don't go into an infinite loop.
++        'extra_dquote': (
++            'r*="\'a\'\\"',
++            ' r="\\""',
++            'r*=\'a\'"',
++            [('r', '"')],
++            [errors.InvalidHeaderDefect]*2),
+     }
+ 
+ @parameterize
+--- /dev/null
++++ b/Misc/NEWS.d/next/Security/2019-07-16-08-11-00.bpo-37461.1Ahz7O.rst
+@@ -0,0 +1,2 @@
++Fix an inifite loop when parsing specially crafted email headers. Patch by
++Abhilash Raj.
