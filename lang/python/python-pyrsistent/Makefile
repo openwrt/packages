@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyrsistent
-PKG_VERSION:=0.15.3
+PKG_VERSION:=0.15.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=pyrsistent-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pyrsistent/
-PKG_HASH:=50cffebc87ca91b9d4be2dcc2e479272bcb466b5a0487b6c271f7ddea6917e14
+PKG_HASH:=34b47fa169d6006b32e99d4b3c4031f155e6e68ebcc107d6454852e8e0ee6533
 PKG_BUILD_DIR:=$(BUILD_DIR)/pyrsistent-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
