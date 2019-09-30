@@ -9,12 +9,12 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=macremapper
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ewsi/$(PKG_NAME)/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f054201dd805ce005b89606a507b58a5717d383a4339c69dfdc02f0202935437
+PKG_HASH:=f9580427803123d13d50f3422623a37212034a5d72a485f9c04904f19509e4bb
 
 PKG_MAINTAINER:=Carey Sonsino <careys@edgewaterwireless.com>
 PKG_LICENSE:=GPL-2.0-only

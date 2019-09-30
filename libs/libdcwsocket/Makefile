@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdcwsocket
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ewsi/$(PKG_NAME)/tar.gz/v$(PKG_VERSION)?
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_HASH:=c7f6c69a5246fe1f184c21585f0805ceaca09c3c087ae439ded7ed4d25c7a3fa
+PKG_HASH:=71383c4d8c5f58c1299a3717d7de9a8b5dabfd51a2dcf9993248f2709908d23a
 
 PKG_MAINTAINER:=Carey Sonsino <careys@edgewaterwireless.com>
 PKG_LICENSE:=Apache-2.0

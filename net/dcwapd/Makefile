@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dcwapd
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ewsi/$(PKG_NAME)/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=750a08abccd88d9aeda942307f76ce5711181c06f9f3e8fded5cb5ce42bac323
+PKG_HASH:=58e52bf4e7526b2f26319740549dbcc6f6ab505f587815ee8731e40f7fecb625
 
 PKG_MAINTAINER:=Carey Sonsino <careys@edgewaterwireless.com>
 PKG_LICENSE:=Apache-2.0

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mrmctl
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=macremapper-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ewsi/macremapper/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f054201dd805ce005b89606a507b58a5717d383a4339c69dfdc02f0202935437
+PKG_HASH:=f9580427803123d13d50f3422623a37212034a5d72a485f9c04904f19509e4bb
 PKG_BUILD_DIR:=$(BUILD_DIR)/macremapper-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Carey Sonsino <careys@edgewaterwireless.com>
@@ -26,9 +26,10 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 
 define Package/mrmctl
-  SECTION:=utils
-  CATEGORY:=Utilities
-  TITLE:=mrmctl utility (macremapper kernel module)
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=Routing and Redirection
+  TITLE:=Dual-Channel WiFi macremapper utility
   URL:=https://www.edgewaterwireless.com
   DEPENDS:= +kmod-macremapper
 endef
