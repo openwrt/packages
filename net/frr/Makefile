@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
 PKG_VERSION:=7.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://github.com/FRRouting/frr/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -229,6 +229,7 @@ define Build/Configure
 	--disable-capabilities \
 	--disable-ospfclient \
 	--disable-doc \
+	--disable-backtrace \
 	--with-vtysh-pager=cat \
 	--localstatedir=/var/run/frr \
 	--sysconfdir=/etc/frr/ \
