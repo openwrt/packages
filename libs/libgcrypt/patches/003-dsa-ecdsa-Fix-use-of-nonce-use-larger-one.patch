@@ -1,0 +1,103 @@
+From 93718eeee932b95cbf6cea6ca0002554fd4583be Mon Sep 17 00:00:00 2001
+From: NIIBE Yutaka <gniibe@fsij.org>
+Date: Thu, 8 Aug 2019 17:42:02 +0900
+Subject: [PATCH] dsa,ecdsa: Fix use of nonce, use larger one.
+
+* cipher/dsa-common.c (_gcry_dsa_modify_k): New.
+* cipher/pubkey-internal.h (_gcry_dsa_modify_k): New.
+* cipher/dsa.c (sign): Use _gcry_dsa_modify_k.
+* cipher/ecc-ecdsa.c (_gcry_ecc_ecdsa_sign): Likewise.
+* cipher/ecc-gost.c (_gcry_ecc_gost_sign): Likewise.
+
+--
+
+Cherry-picked master commit of:
+	7c2943309d14407b51c8166c4dcecb56a3628567
+
+CVE-id: CVE-2019-13627
+GnuPG-bug-id: 4626
+Signed-off-by: NIIBE Yutaka <gniibe@fsij.org>
+---
+ cipher/dsa-common.c      | 24 ++++++++++++++++++++++++
+ cipher/dsa.c             |  2 ++
+ cipher/ecc-ecdsa.c       |  2 ++
+ cipher/ecc-gost.c        |  2 ++
+ cipher/pubkey-internal.h |  1 +
+ 5 files changed, 31 insertions(+)
+
+--- a/cipher/dsa-common.c
++++ b/cipher/dsa-common.c
+@@ -30,6 +30,30 @@
+ 
+ 
+ /*
++ * Modify K, so that computation time difference can be small,
++ * by making K large enough.
++ *
++ * Originally, (EC)DSA computation requires k where 0 < k < q.  Here,
++ * we add q (the order), to keep k in a range: q < k < 2*q (or,
++ * addming more q, to keep k in a range: 2*q < k < 3*q), so that
++ * timing difference of the EC multiply (or exponentiation) operation
++ * can be small.  The result of (EC)DSA computation is same.
++ */
++void
++_gcry_dsa_modify_k (gcry_mpi_t k, gcry_mpi_t q, int qbits)
++{
++  gcry_mpi_t k1 = mpi_new (qbits+2);
++
++  mpi_resize (k, (qbits+2+BITS_PER_MPI_LIMB-1) / BITS_PER_MPI_LIMB);
++  k->nlimbs = k->alloced;
++  mpi_add (k, k, q);
++  mpi_add (k1, k, q);
++  mpi_set_cond (k, k1, !mpi_test_bit (k, qbits));
++
++  mpi_free (k1);
++}
++
++/*
+  * Generate a random secret exponent K less than Q.
+  * Note that ECDSA uses this code also to generate D.
+  */
+--- a/cipher/dsa.c
++++ b/cipher/dsa.c
+@@ -606,6 +606,8 @@ sign (gcry_mpi_t r, gcry_mpi_t s, gcry_m
+       k = _gcry_dsa_gen_k (skey->q, GCRY_STRONG_RANDOM);
+     }
+ 
++  _gcry_dsa_modify_k (k, skey->q, qbits);
++
+   /* r = (a^k mod p) mod q */
+   mpi_powm( r, skey->g, k, skey->p );
+   mpi_fdiv_r( r, r, skey->q );
+--- a/cipher/ecc-ecdsa.c
++++ b/cipher/ecc-ecdsa.c
+@@ -103,6 +103,8 @@ _gcry_ecc_ecdsa_sign (gcry_mpi_t input,
+           else
+             k = _gcry_dsa_gen_k (skey->E.n, GCRY_STRONG_RANDOM);
+ 
++          _gcry_dsa_modify_k (k, skey->E.n, qbits);
++
+           _gcry_mpi_ec_mul_point (&I, k, &skey->E.G, ctx);
+           if (_gcry_mpi_ec_get_affine (x, NULL, &I, ctx))
+             {
+--- a/cipher/ecc-gost.c
++++ b/cipher/ecc-gost.c
+@@ -94,6 +94,8 @@ _gcry_ecc_gost_sign (gcry_mpi_t input, E
+           mpi_free (k);
+           k = _gcry_dsa_gen_k (skey->E.n, GCRY_STRONG_RANDOM);
+ 
++          _gcry_dsa_modify_k (k, skey->E.n, qbits);
++
+           _gcry_mpi_ec_mul_point (&I, k, &skey->E.G, ctx);
+           if (_gcry_mpi_ec_get_affine (x, NULL, &I, ctx))
+             {
+--- a/cipher/pubkey-internal.h
++++ b/cipher/pubkey-internal.h
+@@ -80,6 +80,7 @@ _gcry_rsa_pss_verify (gcry_mpi_t value,
+ 
+ 
+ /*-- dsa-common.c --*/
++void _gcry_dsa_modify_k (gcry_mpi_t k, gcry_mpi_t q, int qbits);
+ gcry_mpi_t _gcry_dsa_gen_k (gcry_mpi_t q, int security_level);
+ gpg_err_code_t _gcry_dsa_gen_rfc6979_k (gcry_mpi_t *r_k,
+                                         gcry_mpi_t dsa_q, gcry_mpi_t dsa_x,
