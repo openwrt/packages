@@ -70,7 +70,7 @@ endef
 define Package/kea-ctrl
 	$(call Package/kea/Default)
 	TITLE+=Control
-	DEPENDS:=+kea-dhcp4 \
+	DEPENDS:=+procps-ng +procps-ng-ps +kea-dhcp4 \
 	+IPV6:kea-dhcp6 +kea-dhcp-ddns
 endef
 define Package/kea-ctrl/description
