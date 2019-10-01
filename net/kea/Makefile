@@ -60,7 +60,7 @@ define Package/kea-libs
 	$(call Package/kea/Default)
 	TITLE+=Libraries
 	DEPENDS:=+libopenssl +log4cplus \
-	+boost +boost-python3 +boost-system
+	+boost +boost-system
 endef
 define Package/kea-libs/description
 		Kea required Libraries.
@@ -197,7 +197,7 @@ endef
 
 define Package/kea-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so.* $(1)/usr/lib/
 endef
 
 define Package/kea-dhcp4/install
