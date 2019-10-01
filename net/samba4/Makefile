@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
 PKG_VERSION:=4.9.13
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.heanet.ie/mirrors/ftp.samba.org/stable/ \
@@ -58,8 +58,8 @@ endef
 define Package/samba4-libs
   $(call Package/samba4/Default)
   TITLE+= libs
-  DEPENDS:= +zlib +libtirpc +libpopt +libcomerr +libreadline \
-	+PACKAGE_libcap:libcap +PACKAGE_libpthread:libpthread +PACKAGE_libnettle:libnettle \
+  DEPENDS:= +zlib +libtirpc +libpopt +libcomerr +libreadline +libcap \
+	+PACKAGE_libpthread:libpthread +PACKAGE_libnettle:libnettle \
 	+PACKAGE_libgcrypt:libgcrypt +PACKAGE_libpam:libpam +PACKAGE_dbus:dbus +PACKAGE_libavahi-client:libavahi-client \
 	+SAMBA4_SERVER_VFS:attr \
 	+SAMBA4_SERVER_ACL:acl +SAMBA4_SERVER_ACL:attr \
