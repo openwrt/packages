@@ -1,0 +1,24 @@
+--- a/userland/mrmctl/mrmctl.c
++++ b/userland/mrmctl/mrmctl.c
+@@ -139,7 +139,7 @@ remap(int argc, char **argv) {
+   if (argc < 5) return 1; /* defensive */
+ 
+   /* initialize variables and put things into human-readable variable names */
+-  bzero(&re, sizeof(re));
++  memset(&re, 0, sizeof(re));
+   filter_name   = argv[2];
+   match_macaddr = argv[3];
+ 
+diff --git a/userland/mrmfilterparser/mrm_filter_conf_parser.c b/userland/mrmfilterparser/mrm_filter_conf_parser.c
+index 926fa76..f5c54c1 100644
+--- a/userland/mrmfilterparser/mrm_filter_conf_parser.c
++++ b/userland/mrmfilterparser/mrm_filter_conf_parser.c
+@@ -319,7 +319,7 @@ filter_file_loadf(struct mrm_filter_config * const output, FILE * const f) {
+     return -1;
+ 
+   output->rules_active = 0;
+-  bzero(output->rules, sizeof(output->rules)); /* defensive */
++  memset(output->rules, 0, sizeof(output->rules)); /* defensive */
+ 
+   for (linenum = 1; fgets(buf, sizeof(buf), f) != NULL; linenum++) {
+ 
