@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=procps-ng
 PKG_VERSION:=3.3.15
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/procps-ng
@@ -73,7 +73,7 @@ define GenPlugin
    $(call Package/procps-ng/Default)
    DEPENDS:=procps-ng
    TITLE:=Applet $(2) from the procps-ng package
-   DEFAULT:=y
+   DEFAULT:=n
    ALTERNATIVES:=200:$(3)/$(2):$(3)/$(1)
  endef
 
