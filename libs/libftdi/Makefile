@@ -40,7 +40,9 @@ define Package/libftdi/description
   The library is linked with your program in userspace, no kernel driver required.
 endef
 
-CMAKE_OPTIONS += -DBoost_NO_BOOST_CMAKE=ON
+CMAKE_OPTIONS += \
+	-DBoost_NO_BOOST_CMAKE=ON \
+	-DEXAMPLES=OFF
 
 define Build/InstallDev
 	$(call Build/InstallDev/cmake,$(1))
