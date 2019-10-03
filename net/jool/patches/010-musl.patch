@@ -1,0 +1,24 @@
+--- a/src/usr/argp/main.c
++++ b/src/usr/argp/main.c
+@@ -8,6 +8,7 @@
+ #include <errno.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <getopt.h>
+ 
+ #include "command.h"
+ #include "log.h"
+--- a/src/usr/iptables/Makefile
++++ b/src/usr/iptables/Makefile
+@@ -34,9 +34,9 @@ uninstall:
+ 	rm -f ${DESTDIR}${XTABLES_SO_DIR}/libxt_JOOL_SIIT.so
+ 	rm -f ${DESTDIR}${XTABLES_SO_DIR}/libxt_JOOL.so
+ lib%.so: lib%.o
+-	gcc -shared -fPIC ${LDFLAGS} -o $@ $^;
++	${CC} -shared -fPIC ${LDFLAGS} -o $@ $^;
+ lib%.o: lib%.c
+-	gcc ${DEFAULT_CFLAGS} ${CFLAGS} -D_INIT=lib$*_init -fPIC -c -o $@ $<;
++	${CC} ${DEFAULT_CFLAGS} ${CFLAGS} -D_INIT=lib$*_init -fPIC -c -o $@ $<;
+ clean distclean:
+ 	rm -f *.so
+ distdir:
