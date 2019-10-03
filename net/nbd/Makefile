@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 # -liconv due to glib2, to be revisited later
 include $(INCLUDE_DIR)/nls.mk
 
-PKG_BUILD_DEPENDS:=glib2 gettext
+PKG_BUILD_DEPENDS:=gettext
 
 define Package/nbd
   SECTION:=net
