@@ -918,7 +918,7 @@ start_service() {
 		case "$1" in
 			download) action='download';;
 			restart|*)
-				if [ -s "$outputFile" ] && [ -n "$status" ]; then
+				if [ -s "$outputFile" ] && [ -n "$status" ] && [ -z "$error" ]; then
 					status
 					exit 0
 				elif [ ! -s "$outputFile" ] && ! cacheOps 'test' && ! cacheOps 'testGzip'; then
