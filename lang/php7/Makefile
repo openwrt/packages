@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=7.2.22
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -250,6 +250,7 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-gd),)
 	--with-gd=shared \
 	--with-jpeg-dir="$(STAGING_DIR)/usr" \
 	--with-png-dir="$(STAGING_DIR)/usr" \
+	--with-webp-dir="$(STAGING_DIR)/usr" \
 	--without-xpm-dir \
 	--enable-gd-native-ttf \
 	--disable-gd-jis-conv
@@ -623,7 +624,7 @@ $(eval $(call BuildModule,dom,DOM,+@PHP7_LIBXML +PACKAGE_php7-mod-dom:libxml2))
 $(eval $(call BuildModule,exif,EXIF))
 $(eval $(call BuildModule,fileinfo,Fileinfo))
 $(eval $(call BuildModule,ftp,FTP,+PACKAGE_php7-mod-ftp:libopenssl))
-$(eval $(call BuildModule,gd,GD graphics,+PACKAGE_php7-mod-gd:libjpeg +PACKAGE_php7-mod-gd:libpng +PHP7_LIBFREETYPE:libfreetype))
+$(eval $(call BuildModule,gd,GD graphics,+PACKAGE_php7-mod-gd:libjpeg +PACKAGE_php7-mod-gd:libpng +PACKAGE_php7-mod-gd:libwebp +PHP7_LIBFREETYPE:libfreetype))
 $(eval $(call BuildModule,gettext,Gettext,+PACKAGE_php7-mod-gettext:libintl-full))
 $(eval $(call BuildModule,gmp,GMP,+PACKAGE_php7-mod-gmp:libgmp))
 $(eval $(call BuildModule,hash,Hash))
