@@ -161,6 +161,22 @@ If you specify ```google.com``` as a domain to be whitelisted, you will have acc
 
 In general, whatever domain is specified to be whitelisted; it, along with with its subdomains will be whitelisted, but not any fake domains containing it.
 
+## How It Does Not Work
+
+For most of the [DNS Resolution Options](#dns-resolution-option) to work, your local LAN clients need to be set to use your router's DNS (by default ```192.168.1.1```). The ```dnsmasq.addnhosts``` is the only option which can help you block ads if your local LAN clients are NOT using your router's DNS. There are multiple ways your local LAN clients can be set to NOT use your router's DNS:
+
+  1. Hardcoded on the device. Some Android Lollipop 5.0 phones, some media-centric tablets and some streaming devices for example are known to have hardcoded DNS servers and they ignore your router's DNS settings. You can fix this by either:
+      - Rooting your device and changing it from hardcoded DNS servers to obtaining DNS servers from DHCP.
+      - Enabling ```simple-adblock```'s ```force_dns``` setting to override the hardcoded DNS on your device.
+  2. Manually set on the device. Instead of setting your device to obtain the DNS settings via DHCP, you can set the DNS servers manually. There are some guides online which recommend manually changing the DNS servers on your computer to Google's (8.8.8.8) or Cloudflare's (1.1.1.1) or OpenDNS (208.67.222.222). You can fix this by either:
+      - Changing the on-device DNS settings from manual to obtaining DNS servers from DHCP and changing your [router's DNS settings](https://openwrt.org/docs/guide-user/base-system/dhcp#all_options) to use the DNS from Google, Cloudflare or OpenDNS respectively.
+      - Enabling ```simple-adblock```'s ```force_dns``` setting to override the hardcoded DNS on your device.
+  3. Sent to your device from router via [DHCP Options](https://openwrt.org/docs/guide-user/base-system/dhcp_configuration#dhcp_options). You can fix this by either:
+      - Removing [DHCP Options](https://openwrt.org/docs/guide-user/base-system/dhcp_configuration#dhcp_options) 5 and 6 from your router's ```/etc/config/dhcp``` file.
+      - Enabling ```simple-adblock```'s ```force_dns``` setting to override the hardcoded DNS on your device.
+  4. By using the DNS-over-TLS, DNS-over-HTTPS or DNSCrypt on your local device or (if supported) by browser on your local device. You can fix this only by:
+      - Stopping/removing/disabling DNS-over-TLS, DNS-over-HTTPS or DNSCrypt on your local device and using the secure DNS on your router instead. There are merits to all three of the options above, I can recommend the ```https_dns_proxy``` and ```luci-app-https_dns_proxy``` packages for enabling DNS-over-HTTPS on your router.
+
 ## Documentation / Discussion
 
 Please head to [OpenWrt Forum](https://forum.openwrt.org/t/simple-adblock-fast-lean-and-fully-uci-luci-configurable-adblocking/1327/) for discussion of this package.
