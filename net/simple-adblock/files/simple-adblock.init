@@ -8,9 +8,10 @@ export START=94
 export USE_PROCD=1
 export LC_ALL=C
 
-export EXTRA_COMMANDS='check dl killcache status'
+export EXTRA_COMMANDS='check dl killcache sizes status'
 export EXTRA_HELP='	check	Checks if specified domain is found in current blacklist
 	dl	Force-redownloads all the list
+	sizes	Shows the file-sizes of enabled block-lists (by downloading them one by one)
 	status	Shows the service last-run status'
 
 readonly packageName='simple-adblock'
@@ -918,7 +919,7 @@ start_service() {
 		case "$1" in
 			download) action='download';;
 			restart|*)
-				if [ -s "$outputFile" ] && [ -n "$status" ]; then
+				if [ -s "$outputFile" ] && [ -n "$status" ] && [ -z "$error" ]; then
 					status
 					exit 0
 				elif [ ! -s "$outputFile" ] && ! cacheOps 'test' && ! cacheOps 'testGzip'; then
@@ -1083,4 +1084,47 @@ check() {
 	else
 		echo "The $string is not found in current blacklist ('$outputFile')."
 	fi
+}
+
+sizes() {
+	local i
+	load_package_config
+	echo "# $(date)"
+
+	for i in $blacklist_domains_urls; do
+		[ "${i//melmac}" != "$i" ] && continue
+		if $dl_command "$i" $dl_flag /tmp/sast 2>/dev/null && [ -s /tmp/sast ]; then
+			echo "# File size: $(du -sh /tmp/sast | awk '{print $1}')"
+			if compare_versions "$(du -sk /tmp/sast)" "500"; then
+				echo "# blocklist too big for most routers"
+			elif compare_versions "$(du -sk /tmp/sast)" "100"; then
+				echo "# blocklist may be too big for some routers"
+			fi
+			rm -rf /tmp/sast
+			echo "  list blacklist_domains_url '$i'"
+			echo ""
+		else
+			echo "# site was down on last check"
+			echo "#  list blacklist_domains_url '$i'"
+			echo ""
+		fi
+	done
+
+	for i in $blacklist_hosts_urls; do
+		if $dl_command "$i" $dl_flag /tmp/sast 2>/dev/null && [ -s /tmp/sast ]; then
+			echo "# File size: $(du -sh /tmp/sast | awk '{print $1}')"
+			if compare_versions "$(du -sk /tmp/sast)" "500"; then
+				echo "# blocklist too big for most routers"
+			elif compare_versions "$(du -sk /tmp/sast)" "100"; then
+				echo "# blocklist may be too big for some routers"
+			fi
+			rm -rf /tmp/sast
+			echo "  list blacklist_hosts_url '$i'"
+			echo ""
+		else
+			echo "# site was down on last check"
+			echo "#  list blacklist_hosts_url '$i'"
+			echo ""
+		fi
+	done
 }
