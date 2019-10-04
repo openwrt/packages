@@ -13,29 +13,31 @@ local function scrape()
   for dev, dev_table in pairs(status) do
     for _, intf in ipairs(dev_table['interfaces']) do
       local ifname = intf['ifname']
-      local iw = iwinfo[iwinfo.type(ifname)]
-      local labels = {
-        channel = iw.channel(ifname),
-        ssid = iw.ssid(ifname),
-        bssid = iw.bssid(ifname),
-        mode = iw.mode(ifname),
-        ifname = ifname,
-        country = iw.country(ifname),
-        frequency = iw.frequency(ifname),
-        device = dev,
-      }
+      if ifname ~= nil then
+        local iw = iwinfo[iwinfo.type(ifname)]
+        local labels = {
+          channel = iw.channel(ifname),
+          ssid = iw.ssid(ifname),
+          bssid = iw.bssid(ifname),
+          mode = iw.mode(ifname),
+          ifname = ifname,
+          country = iw.country(ifname),
+          frequency = iw.frequency(ifname),
+          device = dev,
+        }
 
-      local qc = iw.quality(ifname) or 0
-      local qm = iw.quality_max(ifname) or 0
-      local quality = 0
-      if qc > 0 and qm > 0 then
-        quality = math.floor((100 / qm) * qc)
+        local qc = iw.quality(ifname) or 0
+        local qm = iw.quality_max(ifname) or 0
+        local quality = 0
+        if qc > 0 and qm > 0 then
+          quality = math.floor((100 / qm) * qc)
+        end
+
+        metric_wifi_network_quality(labels, quality)
+        metric_wifi_network_noise(labels, iw.noise(ifname) or 0)
+        metric_wifi_network_bitrate(labels, iw.bitrate(ifname) or 0)
+        metric_wifi_network_signal(labels, iw.signal(ifname) or -255)
       end
-
-      metric_wifi_network_quality(labels, quality)
-      metric_wifi_network_noise(labels, iw.noise(ifname) or 0)
-      metric_wifi_network_bitrate(labels, iw.bitrate(ifname) or 0)
-      metric_wifi_network_signal(labels, iw.signal(ifname) or -255)
     end
   end
 end
