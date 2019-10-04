@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-simplejson
 PKG_VERSION:=3.16.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=MIT
 PKG_CPE_ID:=cpe:/a:simplejson_project:simplejson
 
@@ -35,14 +35,14 @@ endef
 define Package/python-simplejson
 $(call Package/python-simplejson/Default)
   TITLE:=Simple, fast, extensible JSON encoder/decoder for Python 2
-  DEPENDS:=+PACKAGE_python-simplejson:python-light
+  DEPENDS:=+PACKAGE_python-simplejson:python-light +PACKAGE_python-simplejson:python-decimal
   VARIANT:=python
 endef
 
 define Package/python3-simplejson
 $(call Package/python-simplejson/Default)
   TITLE:=Simple, fast, extensible JSON encoder/decoder for Python3
-  DEPENDS:=+PACKAGE_python3-simplejson:python3-light
+  DEPENDS:=+PACKAGE_python3-simplejson:python3-light +PACKAGE_python3-simplejson:python3-decimal
   VARIANT:=python3
 endef
 
