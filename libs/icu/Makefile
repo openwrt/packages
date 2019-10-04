@@ -28,6 +28,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_BUILD_DEPENDS:=icu/host
+HOST_BUILD_DEPENDS:=python3/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
