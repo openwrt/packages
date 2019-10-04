@@ -5,7 +5,7 @@ START=30
 USE_PROCD=1
 
 EXTRA_COMMANDS="refresh status"
-EXTRA_HELP="	refresh	Refresh ipsets only (no new download!)
+EXTRA_HELP="	refresh	Refresh ipsets without new list downloads
 	status	Print runtime information"
 
 ban_init="/etc/init.d/banip"
@@ -53,9 +53,9 @@ stop_service()
 	rc_procd "${ban_script}" stop
 }
 
-status()
+status_service()
 {
-	local key keylist value 
+	local key keylist value
 	local rtfile="$(uci_get banip global ban_rtfile "/tmp/ban_runtime.json")"
 
 	json_load_file "${rtfile}" >/dev/null 2>&1
@@ -76,14 +76,14 @@ status()
 
 service_triggers()
 {
-	local ban_iface="$(uci_get banip global ban_iface)"
+	local iface iface_list="$(uci_get banip global ban_iface)"
 	local delay="$(uci_get banip extra ban_triggerdelay "2")"
 	local type="$(uci_get banip extra ban_starttype "start")"
 
 	PROCD_RELOAD_DELAY=$((${delay}*1000))
-	if [ -n "${ban_iface}" ]
+	if [ -n "${iface_list}" ]
 	then
-		for iface in ${ban_iface}
+		for iface in ${iface_list}
 		do
 			procd_add_interface_trigger "interface.*.up" "${iface}" "${ban_init}" "${type}"
 		done
