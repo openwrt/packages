@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=banip
-PKG_VERSION:=0.2.1
+PKG_VERSION:=0.3.0
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
@@ -17,7 +17,7 @@ define Package/banip
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Ban incoming and/or outgoing ip adresses via ipsets
-	DEPENDS:=+jshn +jsonfilter +ip +ipset +iptables
+	DEPENDS:=+jshn +jsonfilter +ip +ipset +iptables +ca-bundle
 	PKGARCH:=all
 endef
 
@@ -45,7 +45,7 @@ endef
 
 define Package/banip/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) ./files/banip.sh $(1)/usr/bin/
+	$(INSTALL_BIN) ./files/banip.sh $(1)/usr/bin
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/banip.init $(1)/etc/init.d/banip
@@ -54,9 +54,10 @@ define Package/banip/install
 	$(INSTALL_CONF) ./files/banip.conf $(1)/etc/config/banip
 
 	$(INSTALL_DIR) $(1)/etc/banip
-	$(INSTALL_CONF) ./files/banip.blacklist $(1)/etc/banip/
-	$(INSTALL_CONF) ./files/banip.whitelist $(1)/etc/banip/
-	
+	$(INSTALL_BIN) ./files/banip.service $(1)/etc/banip
+	$(INSTALL_CONF) ./files/banip.blacklist $(1)/etc/banip
+	$(INSTALL_CONF) ./files/banip.whitelist $(1)/etc/banip
+
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/firewall
 	$(INSTALL_DATA) ./files/banip.hotplug $(1)/etc/hotplug.d/firewall/30-banip
 endef

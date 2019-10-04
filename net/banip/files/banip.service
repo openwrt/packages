@@ -1,0 +1,27 @@
+#!/bin/sh
+# log service to trace failed ssh/luci logins and conditionally refresh banIP
+# written by Dirk Brenken (dev@brenken.org)
+
+# This is free software, licensed under the GNU General Public License v3.
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+LC_ALL=C
+PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+
+if [ -r "/lib/functions.sh" ]
+then
+	. "/lib/functions.sh"
+	ban_sshdaemon="$(uci_get banip extra ban_sshdaemon "dropbear")"
+fi
+ban_ver="${1}"
+ban_log="$(command -v logread)"
+
+if [ -x "${ban_log}" ]
+then
+	logger -p "info" -t "banIP-${ban_ver}[${$}]" "log/banIP service started"
+	"${ban_log}" -f -e "${ban_sshdaemon}\|luci: failed login" | \
+		{ grep -qE "Exit before auth|luci: failed login|[0-9]+ \[preauth\]$"; [ $? -eq 0 ] && /etc/init.d/banip refresh; }
+else
+	logger -p "err" -t "banIP-${ban_ver}[${$}]" "can't start log/banIP service"
+fi
