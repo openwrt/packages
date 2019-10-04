@@ -1,20 +1,21 @@
 # banIP - ban incoming and/or outgoing ip adresses via ipsets
 
 ## Description
-IP address blocking is commonly used to protect against brute force attacks, prevent disruptive or unautherized address(es) from access or it can be used to restrict access to or from a particular geographic area — for example.  
+IP address blocking is commonly used to protect against brute force attacks, prevent disruptive or unauthorized address(es) from access or it can be used to restrict access to or from a particular geographic area — for example.  
 
 ## Main Features
 * support many IP blocklist sources (free for private usage, for commercial use please check their individual licenses):
 * zero-conf like automatic installation & setup, usually no manual changes needed
-* supports four different download utilities: uclient-fetch, wget, curl, aria2c
+* automatically selects one of the following download utilities: aria2c, curl, uclient-fetch, wget
 * Really fast downloads & list processing as they are handled in parallel as background jobs in a configurable 'Download Queue'
 * full IPv4 and IPv6 support
 * ipsets (one per source) are used to ban a large number of IP addresses
 * supports blocking by ASN numbers
 * supports blocking by iso country codes
 * supports local white & blacklist (IPv4, IPv6 & CIDR notation), located by default in /etc/banip/banip.whitelist and /etc/banip/banip.blacklist
-* auto-add unsuccessful ssh login attempts to 'dropbear' or 'sshd' to local blacklist (see 'ban_autoblacklist' option)
+* auto-add unsuccessful LuCI and ssh login attempts via 'dropbear' or 'sshd' to local blacklist (see 'ban_autoblacklist' option)
 * auto-add the uplink subnet to local whitelist (see 'ban_autowhitelist' option)
+* provides a small background log monitor to ban unsuccessful login attempts in real-time
 * per source configuration of SRC (incoming) and DST (outgoing)
 * integrated IPSet-Lookup
 * integrated RIPE-Lookup
@@ -29,8 +30,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 
 ## Prerequisites
 * [OpenWrt](https://openwrt.org), tested with the stable release series (19.07) and with the latest snapshot
-* a download utility:
-    * to support all blocklist sources a full version with ssl support of 'wget', 'uclient-fetch' with one of the 'libustream-*' ssl libraries, 'aria2c' or 'curl' is required
+* download utility: 'uclient-fetch' with one of the 'libustream-*' ssl libraries, 'wget',  'aria2c' or 'curl' is required
 
 ## Installation & Usage
 * install 'banip' (_opkg install banip_)
@@ -47,8 +47,8 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * the following options apply to the 'global' config section:
     * ban\_enabled => main switch to enable/disable banIP service (bool/default: '0', disabled)
     * ban\_automatic => determine the L2/L3 WAN network device automatically (bool/default: '1', enabled)
-    * ban\_fetchutil => name of the used download utility: 'uclient-fetch', 'wget', 'curl', 'aria2c', 'wget-nossl'. 'busybox' (default: 'uclient-fetch')
-    * ban\_iface => space separated list of WAN network interface(s)/device(s) used by banIP (default: automatically set by banIP ('ban_automatic'))
+    * ban\_iface => space separated list of WAN network interface(s)/device(s) used by banIP (default: not set, automatically detected)
+    * ban\_realtime => a small log/banIP background monitor to block SSH/LuCI brute force attacks in realtime (bool/default: 'false', disabled)
 
 * the following options apply to the 'extra' config section:
     * ban\_debug => enable/disable banIP debug output (bool/default: '0', disabled)
@@ -56,8 +56,9 @@ IP address blocking is commonly used to protect against brute force attacks, pre
     * ban\_triggerdelay => additional trigger delay in seconds before banIP processing begins (int/default: '2')
     * ban\_backupdir => target directory for banIP backups (default: '/tmp')
     * ban\_sshdaemon => select the SSH daemon for logfile parsing, 'dropbear' or 'sshd' (default: 'dropbear')
-    * ban\_starttype => select the used start type during boot, 'start' or 'reload' (default: 'start')
+    * ban\_starttype => select the used start type during boot, 'start', 'refresh' or 'reload' (default: 'start')
     * ban\_maxqueue => size of the download queue to handle downloads & IPSet processing in parallel (int/default: '4')
+    * ban\_fetchutil => name of the used download utility: 'uclient-fetch', 'wget', 'curl', 'aria2c' (default: not set, automatically detected)
     * ban\_fetchparm => special config options for the download utility (default: not set)
     * ban\_autoblacklist => store auto-addons temporary in ipset and permanently in local blacklist as well (bool/default: '1', enabled)
     * ban\_autowhitelist => store auto-addons temporary in ipset and permanently in local whitelist as well (bool/default: '1', enabled)
@@ -69,12 +70,12 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 /etc/init.d/banip status
 ::: banIP runtime information
   + status     : enabled
-  + version    : 0.2.0
-  + fetch_info : /bin/uclient-fetch (libustream-ssl)
-  + ipset_info : 11 IPSets with overall 118359 IPs/Prefixes
+  + version    : 0.3.0
+  + util_info  : /usr/bin/aria2c, true
+  + ipset_info : 10 IPSets with overall 106729 IPs/Prefixes
   + backup_dir : /tmp
-  + last_run   : 09.09.2019 16:49:40
-  + system     : UBNT-ERX, OpenWrt SNAPSHOT r10962-c19b9f9a26
+  + last_run   : 03.10.2019 19:15:25
+  + system     : UBNT-ERX, OpenWrt SNAPSHOT r11102-ced4c0e635
 </code></pre>
   
 **cronjob for a regular IPSet blocklist update (/etc/crontabs/root):**
