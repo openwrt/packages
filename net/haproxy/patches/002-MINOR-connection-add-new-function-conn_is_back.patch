@@ -1,0 +1,33 @@
+commit a196f480348402a263aa65eed55261e9a59d2da7
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Thu Sep 6 14:52:21 2018 +0200
+
+    MINOR: connection: add new function conn_is_back()
+    
+    This function returns true if the connection is a backend connection
+    and false if it's a frontend connection.
+    
+    (cherry picked from commit 57f8185625f967f868187d336f995fac28f83fc5)
+    [wt: backported since used by next commit]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/include/proto/connection.h b/include/proto/connection.h
+index 352f2fcc..31e746a1 100644
+--- a/include/proto/connection.h
++++ b/include/proto/connection.h
+@@ -912,6 +912,15 @@ static inline const struct mux_ops *alpn_get_mux(const struct ist token, int htt
+ 	return fallback;
+ }
+ 
++/* returns 0 if the connection is valid and is a frontend connection, otherwise
++ * returns 1 indicating it's a backend connection. And uninitialized connection
++ * also returns 1 to better handle the usage in the middle of initialization.
++ */
++static inline int conn_is_back(const struct connection *conn)
++{
++	return !objt_listener(conn->target);
++}
++
+ /* finds the best mux for incoming connection <conn> and mode <http_mode> for
+  * the proxy. Null cannot be returned unless there's a serious bug somewhere
+  * else (no fallback mux registered).

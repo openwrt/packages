@@ -1,0 +1,39 @@
+commit ae6824e2c836f1714827e9d3f585e729ea022f30
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Sun May 5 06:54:22 2019 +0200
+
+    BUG/MEDIUM: checks: make sure the warmup task takes the server lock
+    
+    The server warmup task is used when a server uses the "slowstart"
+    parameter. This task affects the server's weight and maxconn, and may
+    dequeue pending connections from the queue. This must be done under
+    the server's lock, which was not the case.
+    
+    This must be backported to 1.9 and 1.8.
+    
+    (cherry picked from commit 4fc49a9aabacc8028877e2dcbdb54d8a19c398c4)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 207ba5a6bc1c03f2ba15ac3cd49bfa756fb760bb)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/checks.c b/src/checks.c
+index 1ecc4050..fbe14ca1 100644
+--- a/src/checks.c
++++ b/src/checks.c
+@@ -1445,12 +1445,16 @@ static struct task *server_warmup(struct task *t)
+ 	    (s->next_state != SRV_ST_STARTING))
+ 		return t;
+ 
++	HA_SPIN_LOCK(SERVER_LOCK, &s->lock);
++
+ 	/* recalculate the weights and update the state */
+ 	server_recalc_eweight(s);
+ 
+ 	/* probably that we can refill this server with a bit more connections */
+ 	pendconn_grab_from_px(s);
+ 
++	HA_SPIN_UNLOCK(SERVER_LOCK, &s->lock);
++
+ 	/* get back there in 1 second or 1/20th of the slowstart interval,
+ 	 * whichever is greater, resulting in small 5% steps.
+ 	 */
