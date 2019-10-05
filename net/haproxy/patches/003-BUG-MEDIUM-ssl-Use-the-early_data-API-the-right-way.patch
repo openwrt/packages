@@ -1,0 +1,77 @@
+commit ad838cae47c15dc0be018be6c081e241d41ed45f
+Author: Olivier Houchard <ohouchard@haproxy.com>
+Date:   Fri May 3 20:56:19 2019 +0200
+
+    BUG/MEDIUM: ssl: Use the early_data API the right way.
+    
+    We can only read early data if we're a server, and write if we're a client,
+    so don't attempt to mix both.
+    
+    This should be backported to 1.8 and 1.9.
+    
+    (cherry picked from commit 010941f87605e8219d25becdbc652350a687d6a2)
+    [wt: minor context adjustments due to latest SSL API changes in 2.0]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 3d14cbddd971f8f301f795c8446ae2bcadab6cc2)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/backend.c b/src/backend.c
+index 0cf14cfd..c43fb72f 100644
+--- a/src/backend.c
++++ b/src/backend.c
+@@ -1214,10 +1214,8 @@ int connect_server(struct stream *s)
+ 	    (srv->ssl_ctx.options & SRV_SSL_O_EARLY_DATA) &&
+ 		    (cli_conn->flags & CO_FL_EARLY_DATA) &&
+ 		    !channel_is_empty(si_oc(&s->si[1])) &&
+-		    srv_conn->flags & CO_FL_SSL_WAIT_HS) {
++		    srv_conn->flags & CO_FL_SSL_WAIT_HS)
+ 		srv_conn->flags &= ~(CO_FL_SSL_WAIT_HS | CO_FL_WAIT_L6_CONN);
+-		srv_conn->flags |= CO_FL_EARLY_SSL_HS;
+-	}
+ #endif
+ 
+ 	if (err != SF_ERR_NONE)
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 1fc01c1c..76767242 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -5549,7 +5549,7 @@ static int ssl_sock_from_buf(struct connection *conn, struct buffer *buf, int fl
+ 	if (!conn->xprt_ctx)
+ 		goto out_error;
+ 
+-	if (conn->flags & CO_FL_HANDSHAKE)
++	if (conn->flags & (CO_FL_HANDSHAKE | CO_FL_EARLY_SSL_HS))
+ 		/* a handshake was requested */
+ 		return 0;
+ 
+@@ -5578,7 +5578,7 @@ static int ssl_sock_from_buf(struct connection *conn, struct buffer *buf, int fl
+ 		}
+ 
+ #if (OPENSSL_VERSION_NUMBER >= 0x10101000L)
+-		if (!SSL_is_init_finished(conn->xprt_ctx)) {
++		if (!SSL_is_init_finished(conn->xprt_ctx) && conn_is_back(conn)) {
+ 			unsigned int max_early;
+ 
+ 			if (objt_listener(conn->target))
+@@ -5593,8 +5593,7 @@ static int ssl_sock_from_buf(struct connection *conn, struct buffer *buf, int fl
+ 			if (try + conn->sent_early_data > max_early) {
+ 				try -= (try + conn->sent_early_data) - max_early;
+ 				if (try <= 0) {
+-					if (!(conn->flags & CO_FL_EARLY_SSL_HS))
+-						conn->flags |= CO_FL_SSL_WAIT_HS | CO_FL_WAIT_L6_CONN;
++					conn->flags |= CO_FL_SSL_WAIT_HS | CO_FL_WAIT_L6_CONN;
+ 					break;
+ 				}
+ 			}
+@@ -5602,10 +5601,8 @@ static int ssl_sock_from_buf(struct connection *conn, struct buffer *buf, int fl
+ 			if (ret == 1) {
+ 				ret = written_data;
+ 				conn->sent_early_data += ret;
+-				if (objt_server(conn->target)) {
+-					conn->flags &= ~CO_FL_EARLY_SSL_HS;
++				if (objt_server(conn->target))
+ 					conn->flags |= CO_FL_SSL_WAIT_HS | CO_FL_WAIT_L6_CONN | CO_FL_EARLY_DATA;
+-				}
+ 
+ 			}
+ 

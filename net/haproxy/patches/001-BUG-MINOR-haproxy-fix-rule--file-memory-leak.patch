@@ -1,0 +1,32 @@
+commit ccb3136727d1fd5efccd4689199aa29f530f6ed0
+Author: Dragan Dosen <ddosen@haproxy.com>
+Date:   Tue Apr 30 00:38:36 2019 +0200
+
+    BUG/MINOR: haproxy: fix rule->file memory leak
+    
+    When using the "use_backend" configuration directive, the configuration
+    file name stored as rule->file was not freed in some situations. This
+    was introduced in commit 4ed1c95 ("MINOR: http/conf: store the
+    use_backend configuration file and line for logs").
+    
+    This patch should be backported to 1.9, 1.8 and 1.7.
+    
+    (cherry picked from commit 2a7c20f602e5d40e9f23c703fbcb12e3af762337)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 60277d1a38b45b014478d33627a9bbb99cc9ee9e)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/haproxy.c b/src/haproxy.c
+index 6ea17a0c..61169243 100644
+--- a/src/haproxy.c
++++ b/src/haproxy.c
+@@ -2123,8 +2123,8 @@ void deinit(void)
+ 			if (rule->cond) {
+ 				prune_acl_cond(rule->cond);
+ 				free(rule->cond);
+-				free(rule->file);
+ 			}
++			free(rule->file);
+ 			free(rule);
+ 		}
+ 

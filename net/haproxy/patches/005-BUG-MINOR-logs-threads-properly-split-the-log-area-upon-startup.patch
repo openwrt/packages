@@ -1,0 +1,108 @@
+commit dc90debd638a2aa94e062e66c00b1b8a9ab3c115
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Sun May 5 10:11:39 2019 +0200
+
+    BUG/MINOR: logs/threads: properly split the log area upon startup
+    
+    If logs were emitted before creating the threads, then the dataptr pointer
+    keeps a copy of the end of the log header. Then after the threads are
+    created, the headers are reallocated for each thread. However the end
+    pointer was not reset until the end of the first second, which may result
+    in logs emitted by multiple threads during the first second to be mangled,
+    or possibly in some cases to use a memory area that was reused for something
+    else. The fix simply consists in reinitializing the end pointers immediately
+    when the threads are created.
+    
+    This fix must be backported to 1.9 and 1.8.
+    
+    (cherry picked from commit 55e2f5ad14a6d9ec39c218296ad3f1a521cc74a1)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 55c3bd480fbbbb4692368655d3d4a425b5248e2a)
+    [wt: ctx, buf->chunk]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/log.c b/src/log.c
+index 313fa55d..1d8cf335 100644
+--- a/src/log.c
++++ b/src/log.c
+@@ -212,11 +212,13 @@ char default_rfc5424_sd_log_format[] = "- ";
+  * update_log_hdr().
+  */
+ THREAD_LOCAL char *logheader = NULL;
++THREAD_LOCAL char *logheader_end = NULL;
+ 
+ /* This is a global syslog header for messages in RFC5424 format. It is
+  * updated by update_log_hdr_rfc5424().
+  */
+ THREAD_LOCAL char *logheader_rfc5424 = NULL;
++THREAD_LOCAL char *logheader_rfc5424_end = NULL;
+ 
+ /* This is a global syslog message buffer, common to all outgoing
+  * messages. It contains only the data part.
+@@ -986,11 +988,10 @@ char *lf_port(char *dst, struct sockaddr *sockaddr, size_t size, struct logforma
+ static char *update_log_hdr(const time_t time)
+ {
+ 	static THREAD_LOCAL long tvsec;
+-	static THREAD_LOCAL char *dataptr = NULL; /* backup of last end of header, NULL first time */
+ 	static THREAD_LOCAL struct chunk host = { NULL, 0, 0 };
+ 	static THREAD_LOCAL int sep = 0;
+ 
+-	if (unlikely(time != tvsec || dataptr == NULL)) {
++	if (unlikely(time != tvsec || logheader_end == NULL)) {
+ 		/* this string is rebuild only once a second */
+ 		struct tm tm;
+ 		int hdr_len;
+@@ -1016,12 +1017,12 @@ static char *update_log_hdr(const time_t time)
+ 		if (hdr_len < 0 || hdr_len > global.max_syslog_len)
+ 			hdr_len = global.max_syslog_len;
+ 
+-		dataptr = logheader + hdr_len;
++		logheader_end = logheader + hdr_len;
+ 	}
+ 
+-	dataptr[0] = 0; // ensure we get rid of any previous attempt
++	logheader_end[0] = 0; // ensure we get rid of any previous attempt
+ 
+-	return dataptr;
++	return logheader_end;
+ }
+ 
+ /* Re-generate time-based part of the syslog header in RFC5424 format at
+@@ -1031,10 +1032,9 @@ static char *update_log_hdr(const time_t time)
+ static char *update_log_hdr_rfc5424(const time_t time)
+ {
+ 	static THREAD_LOCAL long tvsec;
+-	static THREAD_LOCAL char *dataptr = NULL; /* backup of last end of header, NULL first time */
+ 	const char *gmt_offset;
+ 
+-	if (unlikely(time != tvsec || dataptr == NULL)) {
++	if (unlikely(time != tvsec || logheader_rfc5424_end == NULL)) {
+ 		/* this string is rebuild only once a second */
+ 		struct tm tm;
+ 		int hdr_len;
+@@ -1056,12 +1056,12 @@ static char *update_log_hdr_rfc5424(const time_t time)
+ 		if (hdr_len < 0 || hdr_len > global.max_syslog_len)
+ 			hdr_len = global.max_syslog_len;
+ 
+-		dataptr = logheader_rfc5424 + hdr_len;
++		logheader_rfc5424_end = logheader_rfc5424 + hdr_len;
+ 	}
+ 
+-	dataptr[0] = 0; // ensure we get rid of any previous attempt
++	logheader_rfc5424_end[0] = 0; // ensure we get rid of any previous attempt
+ 
+-	return dataptr;
++	return logheader_rfc5424_end;
+ }
+ 
+ /*
+@@ -1369,7 +1369,9 @@ static void deinit_log_buffers_per_thread()
+ int init_log_buffers()
+ {
+ 	logheader = my_realloc2(logheader, global.max_syslog_len + 1);
++	logheader_end = NULL;
+ 	logheader_rfc5424 = my_realloc2(logheader_rfc5424, global.max_syslog_len + 1);
++	logheader_rfc5424_end = NULL;
+ 	logline = my_realloc2(logline, global.max_syslog_len + 1);
+ 	logline_rfc5424 = my_realloc2(logline_rfc5424, global.max_syslog_len + 1);
+ 	if (!logheader || !logline_rfc5424 || !logline || !logline_rfc5424)
