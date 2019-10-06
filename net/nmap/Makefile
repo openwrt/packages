@@ -75,6 +75,13 @@ $(call Package/nmap/default)
   TITLE:=Network packet generation tool / ping utility
 endef
 
+define Package/nping-ssl
+$(call Package/nmap/default)
+  DEPENDS:=$(NPING_DEPENDS) +libopenssl
+  VARIANT:=ssl
+  TITLE:=Nping (with OpenSSL support)
+endef
+
 define Package/ndiff
 $(call Package/nmap/default)
   DEPENDS:=$(NDIFF_DEPENDS)
@@ -135,10 +142,15 @@ define Package/nping/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/nping $(1)/usr/bin/
 endef
 
+define Package/nping-ssl/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/nping $(1)/usr/bin/
+endef
 
 $(eval $(call BuildPackage,nmap))
 $(eval $(call BuildPackage,nmap-ssl))
 $(eval $(call BuildPackage,ncat))
 $(eval $(call BuildPackage,ncat-ssl))
 $(eval $(call BuildPackage,nping))
+$(eval $(call BuildPackage,nping-ssl))
 $(eval $(call BuildPackage,ndiff))
