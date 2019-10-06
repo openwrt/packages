@@ -2,7 +2,7 @@
 # Copyright 2017-2019 Stan Grishin (stangri@melmac.net)
 # shellcheck disable=SC2039
 # shellcheck disable=SC1091
-PKG_VERSION=
+PKG_VERSION='dev-test'
 
 export START=94
 export USE_PROCD=1
@@ -69,14 +69,15 @@ output_ok() { output 1 "$_OK_"; output 2 "$__OK__\\n"; }
 output_okn() { output 1 "$_OK_\\n"; output 2 "$__OK__\\n"; }
 output_fail() { output 1 "$_FAIL_"; output 2 "$__FAIL__\\n"; }
 output_failn() { output 1 "$_FAIL_\\n"; output 2 "$__FAIL__\\n"; }
-str_replace() { echo "$1" | sed -e "s/$2/$3/g"; }
+str_replace() { printf "%b" "$1" | sed -e "s/$(printf "%b" "$2")/$(printf "%b" "$3")/g"; }
 str_contains() { test "$1" != "$(str_replace "$1" "$2" '')"; }
 compare_versions() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
 is_chaos_calmer() { ubus -S call system board | grep -q 'Chaos Calmer'; }
 is_ipset_procd() { compare_versions "$(sed -ne 's/^Version: //p' /usr/lib/opkg/info/firewall.control)" "2019-09-18"; }
 led_on(){ if [ -n "${1}" ] && [ -e "${1}/trigger" ]; then echo 'default-on' > "${1}/trigger" 2>&1; fi; }
 led_off(){ if [ -n "${1}" ] &&  [ -e "${1}/trigger" ]; then echo 'none' > "${1}/trigger" 2>&1; fi; }
-dnsmasq_kill() { killall -q -HUP dnsmasq; }
+dnsmasq_hup() { killall -q -HUP dnsmasq; }
+dnsmasq_kill() { killall -q -KILL dnsmasq; }
 dnsmasq_restart() { /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
 unbound_restart() { /etc/init.d/unbound restart >/dev/null 2>&1; }
 
@@ -255,7 +256,7 @@ is_enabled() {
 	output "$_ERROR_: $serviceName failed to discover WAN gateway.\\n"; return 1;
 }
 
-reload_resolver() {
+dnsOps() {
 	local param output_text
 	case $1 in
 		on_start)
@@ -273,7 +274,7 @@ reload_resolver() {
 					if ! uci -q get dhcp.@dnsmasq["$dnsInstance"].addnhosts | grep -q "$addnhostsFile"; then
 						uci add_list dhcp.@dnsmasq["$dnsInstance"].addnhosts="$addnhostsFile"
 					fi
-					param=dnsmasq_kill
+					param=dnsmasq_hup
 					output_text='Reloading DNSMASQ'
 					;;
 				dnsmasq.conf)
@@ -297,7 +298,7 @@ reload_resolver() {
 					if [ "$(uci -q get dhcp.@dnsmasq["$dnsInstance"].serversfile)" != "$serversFile" ]; then
 						uci set dhcp.@dnsmasq["$dnsInstance"].serversfile="$serversFile"
 					fi
-					param=dnsmasq_kill
+					param=dnsmasq_hup
 					output_text='Reloading DNSMASQ'
 					;;
 				unbound.adb_list)
@@ -335,10 +336,9 @@ reload_resolver() {
 			fi
 			;;
 		on_stop)
-			cacheOps 'create'
 			case "$targetDNS" in
 				dnsmasq.addnhosts | dnsmasq.servers)
-					param=dnsmasq_kill
+					param=dnsmasq_hup
 					;;
 				dnsmasq.conf | dnsmasq.ipset)
 					param=dnsmasq_restart
@@ -475,11 +475,11 @@ cacheOps() {
 	local R_TMP
 	case "$1" in
 		create|backup)
-			[ -f "$outputFile" ] && mv "$outputFile" "$outputCache" >/dev/null 2>/dev/null
+			[ -s "$outputFile" ] && { mv -f "$outputFile" "$outputCache"; true > "$outputFile"; } >/dev/null 2>/dev/null
 			return $?
 			;;
 		restore|use)
-			[ -f "$outputCache" ] && mv "$outputCache" "$outputFile" >/dev/null 2>/dev/null
+			[ -s "$outputCache" ] && mv "$outputCache" "$outputFile" >/dev/null 2>/dev/null
 			return $?
 			;;
 		test)
@@ -646,7 +646,7 @@ download_lists() {
 	rm -f "$A_TMP" "$B_TMP" "$outputFile" "$outputCache" "$outputGzip"
 	if [ "$(awk '/^MemFree/ {print int($2/1000)}' "/proc/meminfo")" -lt 32 ]; then
 		output 3 'Low free memory, restarting resolver... '
-		if reload_resolver 'quiet'; then
+		if dnsOps 'quiet'; then
 			output_okn
 		else 
 			output_fail
@@ -850,163 +850,165 @@ boot() {
 start_service() {
 	is_enabled 'on_start' || return 1
 	local action status error message stats
-	if create_lock; then
-		if is_chaos_calmer || ! is_ipset_procd; then
-			if [ "$forceDNS" -ne 0 ]; then
-				fw3Ops 'insert' 'dns_redirect'
-			else
-				fw3Ops 'remove' 'dns_redirect'
-			fi
-			if [ "$targetDNS" = 'dnsmasq.ipset' ]; then
-				fw3Ops 'insert' 'ipset'
-			else
-				fw3Ops 'remove' 'ipset'
-			fi
-			procd_open_instance 'main'
-			procd_set_param command /bin/true
-			procd_set_param stdout 1
-			procd_set_param stderr 1
-			procd_close_instance
-		else
-			procd_open_instance 'main'
-			procd_set_param command /bin/true
-			procd_set_param stdout 1
-			procd_set_param stderr 1
-			procd_open_data
-			json_add_array firewall
-			if [ "$forceDNS" -ne 0 ]; then
-				json_add_object ''
-				json_add_string type redirect
-				json_add_string name simple_adblock_dns_redirect
-				json_add_string target DNAT
-				json_add_string src lan
-				json_add_string proto tcpudp
-				json_add_string src_dport 53
-				json_add_string dest_port 53
-				json_add_string reflection 0
-				json_close_object
-			fi
-			if [ "$targetDNS" = 'dnsmasq.ipset' ]; then
-				json_add_object ''
-				json_add_string type ipset
-				json_add_string name adb
-				json_add_string match dest_net
-				json_add_string storage hash
-				json_add_string enabled 1
-				json_close_object
-				json_add_object ''
-				json_add_string type rule
-				json_add_string name simple_adblock_ipset_rule
-				json_add_string ipset adb
-				json_add_string src lan
-				json_add_string dest '*'
-				json_add_string proto tcpudp
-				json_add_string target REJECT
-				json_add_string enabled 1
-				json_close_object
-			fi
-			json_close_array
-			procd_close_data
-			procd_close_instance
-		fi
-
-		status="$(tmpfs get status)"
-		error="$(tmpfs get error)"
-		message="$(tmpfs get message)"
-		stats="$(tmpfs get stats)"
-		action="$(tmpfs get triggers)"
-
-		case "$1" in
-			download) action='download';;
-			restart|*)
-				if [ -s "$outputFile" ] && [ -n "$status" ] && [ -z "$error" ]; then
-					status
-					exit 0
-				elif [ ! -s "$outputFile" ] && ! cacheOps 'test' && ! cacheOps 'testGzip'; then
-					action='download'
-				elif cacheOps 'test' || cacheOps 'testGzip'; then
-					action='start'
-				fi
-				if [ -n "$error" ]; then 
-					action='download'
-				fi
-				action="${action:-$1}"
-			;;
-		esac
-
-		tmpfs del all
-		tmpfs set triggers
-
-		case $action in
-			download)
-				if [ -s "$outputFile" ] || cacheOps 'test' || cacheOps 'testGzip'; then
-					output 0 "Force-reloading $serviceName... "
-					output 3 "Force-reloading $serviceName...\\n"
-					tmpfs set status "$statusForceReloading"
-				else
-					output 0 "Starting $serviceName... "
-					output 3 "Starting $serviceName...\\n"
-					tmpfs set status "$statusStarting"
-				fi
-				download_lists
-				reload_resolver 'on_start'
-			;;
-			restart|start)
-				if [ "$action" = 'restart' ]; then
-					output 0 "Restarting $serviceName... "
-					output 3 "Restarting $serviceName...\\n"
-					tmpfs set status "$statusRestarting"
-				else
-					output 0 "Starting $serviceName... "
-					output 3 "Starting $serviceName...\\n"
-					tmpfs set status "$statusStarting"
-				fi
-				if cacheOps 'testGzip' && ! cacheOps 'test' && [ ! -s "$outputFile" ]; then
-					output 3 'Found compressed cache file, unpacking it '
-					tmpfs set message 'found compressed cache file, unpacking it.'
-					if cacheOps 'unpackGzip'; then
-						output_okn
-					else
-						output_fail
-						output "$_ERROR_: $serviceName failed to unpack compressed cache!\\n"
-						tmpfs add error 'Error: Failed to unpack compressed cache.'
-						return 1
-					fi
-				fi
-				if cacheOps 'test' && [ ! -s "$outputFile" ]; then
-					output 3 'Found cache file, reusing it '
-					tmpfs set message 'found cache file, reusing it.'
-					if cacheOps 'restore'; then 
-						output_okn
-					else 
-						output_fail
-						tmpfs add error "Error: moving '$outputCache' to '$outputFile'."
-					fi
-				fi
-				reload_resolver 'on_start'
-			;;
-		esac
-
-		if [ -s "$outputFile" ] && [ "$(tmpfs get status)" != "$statusFail" ]; then
-			output 0 "$__OK__\\n";
-			c="$(wc -l < "$outputFile")"
-			output 3 "$serviceName is blocking $c domains (with ${targetDNS}) "; output_okn
-			tmpfs del message
-			tmpfs set status "$statusSuccess: $c domains blocked (with ${targetDNS})."
-			error="$(tmpfs get error)"
-			if [ -n "$error" ]; then
-				output "$(str_replace "$error" "Error:" "$_ERROR_:")\\n"
-			fi
-		else
-			output 0 "$__FAIL__\\n";
-			tmpfs set status "$statusFail"
-			tmpfs add error 'Error: Failed to create blocklist.'
-		fi
-		remove_lock
-	else
+	if ! create_lock; then
 		output 3 "$serviceName: another instance is starting up "; output_fail
 		return 0
 	fi
+
+	status="$(tmpfs get status)"
+	error="$(tmpfs get error)"
+	message="$(tmpfs get message)"
+	stats="$(tmpfs get stats)"
+	action="$(tmpfs get triggers)"
+
+	if [ "$action" = 'download' ] || [ "$1" = 'download' ] || [ -n "$error" ]; then
+		action='download'
+	elif [ ! -s "$outputFile" ] && ! cacheOps 'test' && ! cacheOps 'testGzip'; then
+		action='download'
+	elif [ ! -s "$outputFile" ] && cacheOps 'testGzip' || cacheOps 'test'; then
+		action='restore'
+	elif [ "$action" = 'restart' ] || [ "$1" = 'restart' ]; then
+		action='restart'
+	elif [ -s "$outputFile" ] && [ -n "$status" ] && [ -z "$error" ]; then
+		if [ "$1" != 'hotplug' ]; then status; fi
+		exit 0
+	else
+		action='download'
+	fi
+
+	tmpfs del all
+	tmpfs set triggers
+
+	if is_chaos_calmer || ! is_ipset_procd; then
+		if [ "$forceDNS" -ne 0 ]; then
+			fw3Ops 'insert' 'dns_redirect'
+		else
+			fw3Ops 'remove' 'dns_redirect'
+		fi
+		if [ "$targetDNS" = 'dnsmasq.ipset' ]; then
+			fw3Ops 'insert' 'ipset'
+		else
+			fw3Ops 'remove' 'ipset'
+		fi
+		procd_open_instance 'main'
+		procd_set_param command /bin/true
+		procd_set_param stdout 1
+		procd_set_param stderr 1
+		procd_close_instance
+	else
+		procd_open_instance 'main'
+		procd_set_param command /bin/true
+		procd_set_param stdout 1
+		procd_set_param stderr 1
+		procd_open_data
+		json_add_array firewall
+		if [ "$forceDNS" -ne 0 ]; then
+			json_add_object ''
+			json_add_string type redirect
+			json_add_string name simple_adblock_dns_redirect
+			json_add_string target DNAT
+			json_add_string src lan
+			json_add_string proto tcpudp
+			json_add_string src_dport 53
+			json_add_string dest_port 53
+			json_add_string reflection 0
+			json_close_object
+		fi
+		if [ "$targetDNS" = 'dnsmasq.ipset' ]; then
+			json_add_object ''
+			json_add_string type ipset
+			json_add_string name adb
+			json_add_string match dest_net
+			json_add_string storage hash
+			json_add_string enabled 1
+			json_close_object
+			json_add_object ''
+			json_add_string type rule
+			json_add_string name simple_adblock_ipset_rule
+			json_add_string ipset adb
+			json_add_string src lan
+			json_add_string dest '*'
+			json_add_string proto tcpudp
+			json_add_string target REJECT
+			json_add_string enabled 1
+			json_close_object
+		fi
+		json_close_array
+		procd_close_data
+		procd_close_instance
+	fi
+
+	if [ "$action" = 'restore' ]; then
+		output 0 "Starting $serviceName... "
+		output 3 "Starting $serviceName...\\n"
+		tmpfs set status "$statusStarting"
+		if cacheOps 'testGzip' && ! cacheOps 'test' && [ ! -s "$outputFile" ]; then
+			output 3 'Found compressed cache file, unpacking it '
+			tmpfs set message 'found compressed cache file, unpacking it.'
+			if cacheOps 'unpackGzip'; then
+				output_okn
+			else
+				output_fail
+				output "$_ERROR_: $serviceName failed to unpack compressed cache!\\n"
+				action='download'
+			fi
+		fi
+		if cacheOps 'test' && [ ! -s "$outputFile" ]; then
+			output 3 'Found cache file, reusing it '
+			tmpfs set message 'found cache file, reusing it.'
+			if cacheOps 'restore'; then 
+				output_okn
+				dnsOps 'on_start'
+			else 
+				output_fail
+				output "$_ERROR_: $serviceName failed to move '$outputCache' to '$outputFile'!\\n"
+				action='download'
+			fi
+		fi
+	fi
+	case "$action" in
+		download)
+			if [ -s "$outputFile" ] || cacheOps 'test' || cacheOps 'testGzip'; then
+				output 0 "Force-reloading $serviceName... "
+				output 3 "Force-reloading $serviceName...\\n"
+				tmpfs set status "$statusForceReloading"
+			else
+				output 0 "Starting $serviceName... "
+				output 3 "Starting $serviceName...\\n"
+				tmpfs set status "$statusStarting"
+			fi
+			download_lists
+			dnsOps 'on_start'
+		;;
+		restart)
+			output 0 "Restarting $serviceName... "
+			output 3 "Restarting $serviceName...\\n"
+			tmpfs set status "$statusRestarting"
+			dnsOps 'on_start'
+		;;
+		start)
+			output 0 "Starting $serviceName... "
+			output 3 "Starting $serviceName...\\n"
+			tmpfs set status "$statusStarting"
+			dnsOps 'on_start'
+		;;
+	esac
+	if [ -s "$outputFile" ] && [ "$(tmpfs get status)" != "$statusFail" ]; then
+		output 0 "$__OK__\\n";
+		c="$(wc -l < "$outputFile")"
+		output 3 "$serviceName is blocking $c domains (with ${targetDNS}) "; output_okn
+		tmpfs del message
+		tmpfs set status "$statusSuccess: $c domains blocked (with ${targetDNS})."
+		error="$(tmpfs get error)"
+		if [ -n "$error" ]; then
+			output "$(str_replace "$error" "Error:" "$_ERROR_:")\\n"
+		fi
+	else
+		output 0 "$__FAIL__\\n";
+		tmpfs set status "$statusFail"
+		tmpfs add error 'Error: Failed to create blocklist or restart DNS resolver.'
+	fi
+	remove_lock
 }
 
 service_started() { is_ipset_procd && procd_set_config_changed firewall; }
@@ -1040,8 +1042,8 @@ stop_service() {
 	fw3Ops 'remove' 'all'
 	if [ -s "$outputFile" ]; then
 		output "Stopping $serviceName... "
-		tmpfs del triggers
-		if reload_resolver 'on_stop'; then
+		cacheOps 'create'
+		if dnsOps 'on_stop'; then
 			led_off "$led"
 			output 0 "$__OK__\\n"; output_okn
 			tmpfs set status "$statusStopped"
@@ -1059,7 +1061,7 @@ check() {
 	load_package_config
 	local string="$1" 
 	local c="$(grep -c "$string" "$outputFile")"
-	if [ ! -f "$outputFile" ]; then
+	if [ ! -s "$outputFile" ]; then
 		echo "No blacklist ('$outputFile') found."
 	elif [ -z "$string" ]; then
 		echo "Usage: /etc/init.d/${packageName} check string"
