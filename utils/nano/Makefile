@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nano
-PKG_VERSION:=4.4
+PKG_VERSION:=4.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/nano
-PKG_HASH:=2af222e0354848ffaa3af31b5cd0a77917e9cb7742cd073d762f3c32f0f582c7
+PKG_HASH:=ded5c38f5ecd9de2b624e0db8013a375c169d3fbbd49575967b868847df8f533
 
-PKG_LICENSE:=GPL-3.0+
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>, Hannu Nyman <hannu.nyman@iki.fi>
+PKG_CPE_ID:=cpe:/a:gnu:nano
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
