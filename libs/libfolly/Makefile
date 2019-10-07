@@ -1,14 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libfolly
-PKG_VERSION:=2019.09.22.00
+PKG_VERSION:=2019.10.07.00
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_VERSION:=af2373b9858c61685eb6eb2f1db99d9a31edd58e
-PKG_SOURCE_URL:=https://codeload.github.com/facebook/folly/tar.gz/$(PKG_SOURCE_VERSION)?
-PKG_HASH:=fbf25a96e5487fcd959ff50ff1c5413c8e18b8aaa9af3d2406156d750167affd
-PKG_BUILD_DIR:=$(BUILD_DIR)/folly-$(PKG_SOURCE_VERSION)
+PKG_SOURCE_URL:=https://codeload.github.com/facebook/folly/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=3c8ab22e551ff73509aa008454d5e15da9a05b64bc20450459c3da2471729fff
+PKG_BUILD_DIR:=$(BUILD_DIR)/folly-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Amol Bhave <ambhave@fb.com>
 PKG_LICENSE:=Apache-2.0
@@ -25,7 +24,7 @@ define Package/libfolly
   CATEGORY:=Libraries
   TITLE:=An open-source C++ library developed and used at Facebook.
   URL:=https://github.com/facebook/folly
-  DEPENDS:=+boost +boost-context +boost-date_time +boost-filesystem +boost-program_options +boost-regex \
+  DEPENDS:=+boost +boost-context +boost-filesystem +boost-program_options +boost-regex \
 	+libopenssl +libdouble-conversion +libevent2 +glog +libsodium +libaio +libatomic \
 	+libbz2 +zlib +libzstd +liblzma +liblz4 +PACKAGE_libunwind:libunwind
 endef
@@ -39,8 +38,8 @@ define Package/libfolly/description
 endef
 
 CMAKE_OPTIONS += \
+	-DBUILD_SHARED_LIBS=ON \
 	-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-	-DCXX_STD=c++14 \
 	-DFOLLY_HAVE_UNALIGNED_ACCESS_EXITCODE=OFF \
 	-DFOLLY_HAVE_UNALIGNED_ACCESS_EXITCODE__TRYRUN_OUTPUT=OFF \
 	-DFOLLY_HAVE_LINUX_VDSO_EXITCODE=OFF \
@@ -48,8 +47,7 @@ CMAKE_OPTIONS += \
 	-DFOLLY_HAVE_WCHAR_SUPPORT_EXITCODE=OFF \
 	-DFOLLY_HAVE_WCHAR_SUPPORT_EXITCODE__TRYRUN_OUTPUT=OFF \
 	-DHAVE_VSNPRINTF_ERRORS_EXITCODE=OFF \
-	-DHAVE_VSNPRINTF_ERRORS_EXITCODE__TRYRUN_OUTPUT=OFF \
-	-DBUILD_SHARED_LIBS=ON
+	-DHAVE_VSNPRINTF_ERRORS_EXITCODE__TRYRUN_OUTPUT=OFF
 
 TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -flto
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
