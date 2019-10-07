@@ -1,0 +1,10 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -49,7 +49,6 @@ find_package(
+     program_options
+     regex
+     system
+-    thread
+ )
+ include_directories(${Boost_INCLUDE_DIRS})
+ 
