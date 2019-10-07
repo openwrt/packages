@@ -1,0 +1,11 @@
+--- a/thrift/cmake/FBThriftConfig.cmake.in
++++ b/thrift/cmake/FBThriftConfig.cmake.in
+@@ -20,7 +20,7 @@ set_and_check(FBTHRIFT_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
+ if (WIN32)
+   set_and_check(FBTHRIFT_COMPILER "@PACKAGE_BIN_INSTALL_DIR@/thrift1.exe")
+ else()
+-  set_and_check(FBTHRIFT_COMPILER "@PACKAGE_BIN_INSTALL_DIR@/thrift1")
++#  set_and_check(FBTHRIFT_COMPILER "@PACKAGE_BIN_INSTALL_DIR@/thrift1")
+ endif()
+ 
+ if (NOT TARGET FBThrift::thriftcpp2)
