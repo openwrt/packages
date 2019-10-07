@@ -31,7 +31,7 @@ define Package/poco
   CATEGORY:=Libraries
   TITLE:=Poco C++ libraries
   URL:=https://www.pocoproject.org/
-  DEPENDS:=+libstdcpp +libpthread +librt @!arc
+  DEPENDS:=+libstdcpp +libpthread +librt +libopenssl @!arc
   MAINTAINER:=Jean-Michel Julien <jean-michel.julien@trilliantinc.com>
 endef
 
