@@ -1,8 +1,6 @@
-Index: folly-2019.05.06.00/CMakeLists.txt
-===================================================================
---- folly-2019.05.06.00.orig/CMakeLists.txt
-+++ folly-2019.05.06.00/CMakeLists.txt
-@@ -109,17 +109,19 @@ configure_file(
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -112,17 +112,19 @@ configure_file(
  auto_sources(files "*.cpp" "RECURSE" "${FOLLY_DIR}")
  auto_sources(hfiles "*.h" "RECURSE" "${FOLLY_DIR}")
 
@@ -29,7 +27,7 @@ Index: folly-2019.05.06.00/CMakeLists.txt
      "Benchmark.cpp$"
      "Test.cpp$"
  )
-@@ -172,7 +174,7 @@ list(APPEND hfiles
+@@ -175,7 +177,7 @@ list(APPEND hfiles
  if (NOT FOLLY_USE_SYMBOLIZER)
    REMOVE_MATCHES_FROM_LISTS(files hfiles
      MATCHES
