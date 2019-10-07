@@ -332,7 +332,7 @@ endef
 $(eval $(call DefineBoostLibrary,atomic,system))
 $(eval $(call DefineBoostLibrary,chrono,system))
 $(eval $(call DefineBoostLibrary,container))
-$(eval $(call DefineBoostLibrary,context,chrono system thread,,!boost-context-exclude))
+$(eval $(call DefineBoostLibrary,context,chrono system,,!boost-context-exclude))
 $(eval $(call DefineBoostLibrary,contract,system))
 $(eval $(call DefineBoostLibrary,coroutine,system chrono context thread,,!boost-coroutine-exclude))
 $(eval $(call DefineBoostLibrary,date_time))
