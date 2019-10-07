@@ -9,11 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=poco
-PKG_VERSION:=1.9.0-all
+_PKG_VERSION:=1.9.0
+PKG_VERSION:=$(_PKG_VERSION)-all
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://pocoproject.org/releases/$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://pocoproject.org/releases/$(PKG_NAME)-$(_PKG_VERSION)
 PKG_HASH:=b6e33898588e74337efec4e8d8b9b277bb653b08318a79215f9aa4a3ff1ea9fd
 
 PKG_LICENSE:=BSL-1.0
