@@ -1,0 +1,11 @@
+--- a/wangle/CMakeLists.txt
++++ b/wangle/CMakeLists.txt
+@@ -56,7 +56,7 @@ if (NOT folly_FOUND)
+ endif()
+ 
+ find_package(fizz CONFIG REQUIRED)
+-find_package(Boost REQUIRED COMPONENTS system thread filesystem regex context
++find_package(Boost REQUIRED COMPONENTS system filesystem regex context
+                                        program_options)
+ find_package(OpenSSL REQUIRED)
+ find_package(Glog REQUIRED)
