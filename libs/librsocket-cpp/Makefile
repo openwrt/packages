@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=librsocket-cpp
-PKG_SOURCE_DATE:=2019-09-22
-PKG_SOURCE_VERSION:=b268907312af589828634c143b9f35b58cd6cfea
+PKG_SOURCE_DATE:=2019-10-07
+PKG_SOURCE_VERSION:=0a469f7a84d9e3c3ddcb6931df701a5dae536589
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/rsocket/rsocket-cpp/tar.gz/$(PKG_SOURCE_VERSION)?
-PKG_HASH:=7ab4655d3d8148ce689f74a116ae7393d9e802f91d0dfd697ffd8daeff800e61
+PKG_HASH:=c10e498039d676946a11f6a45201575cdb3f1f582752693d7b1901aa434f3146
 PKG_BUILD_DIR:=$(BUILD_DIR)/rsocket-cpp-$(PKG_SOURCE_VERSION)
 
 PKG_MAINTAINER:=Amol Bhave <ambhave@fb.com>
@@ -48,8 +48,22 @@ endef
 CMAKE_OPTIONS += \
 	-DBUILD_BENCHMARKS=OFF \
 	-DBUILD_EXAMPLES=OFF \
+	-DBUILD_SHARED_LIBS=ON \
 	-DBUILD_TESTS=OFF \
 	-DCMAKE_POSITION_INDEPENDENT_CODE=ON
+
+TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -flto
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+
+define Package/librsocket-cpp/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libReactiveSocket.so* $(1)/usr/lib/
+endef
+
+define Package/libyarpl/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libyarpl*.so* $(1)/usr/lib/
+endef
 
 $(eval $(call BuildPackage,librsocket-cpp))
 $(eval $(call BuildPackage,libyarpl))
