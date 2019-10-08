@@ -1,0 +1,79 @@
+From b33f93bea332211afae037e4b6f379f0876302d1 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Tue, 8 Oct 2019 20:51:54 -0700
+Subject: [PATCH] Add some extra flushes before getline/cin
+
+These are not covered by the previous commits.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ diskio-unix.cc | 2 +-
+ gptcurses.cc   | 4 ++--
+ parttypes.cc   | 2 +-
+ support.cc     | 2 +-
+ 4 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/diskio-unix.cc b/diskio-unix.cc
+index d9f8b8d..c38fda5 100644
+--- a/diskio-unix.cc
++++ b/diskio-unix.cc
+@@ -92,7 +92,7 @@ int DiskIO::OpenForRead(void) {
+ #if defined(__linux__) && !defined(EFI)
+          if (isOpen && realFilename.substr(0,4) == "/dev") {
+             ostringstream modelNameFilename;
+-            modelNameFilename << "/sys/block" << realFilename.substr(4,512) << "/device/model";
++            modelNameFilename << "/sys/block" << realFilename.substr(4,512) << "/device/model" << flush;
+             ifstream modelNameFile(modelNameFilename.str().c_str());
+             if (modelNameFile.is_open()) {
+                getline(modelNameFile, modelName);
+diff --git a/gptcurses.cc b/gptcurses.cc
+index 4ebfde1..ca6f4ea 100644
+--- a/gptcurses.cc
++++ b/gptcurses.cc
+@@ -418,7 +418,7 @@ void GPTDataCurses::Verify(void) {
+    def_prog_mode();
+    endwin();
+    GPTData::Verify();
+-   cout << "\nPress the <Enter> key to continue: ";
++   cout << "\nPress the <Enter> key to continue: " << flush;
+    cin.get(junk);
+    reset_prog_mode();
+    refresh();
+@@ -816,7 +816,7 @@ void ShowTypes(void) {
+    def_prog_mode();
+    endwin();
+    tempType.ShowAllTypes(LINES - 3);
+-   cout << "\nPress the <Enter> key to continue: ";
++   cout << "\nPress the <Enter> key to continue: " << flush;
+    cin.get(junk);
+    reset_prog_mode();
+    refresh();
+diff --git a/parttypes.cc b/parttypes.cc
+index cd225d1..6c2c8c6 100644
+--- a/parttypes.cc
++++ b/parttypes.cc
+@@ -524,7 +524,7 @@ void PartType::ShowAllTypes(int maxLines) const {
+             if (thisType->next) {
+                cout << "\n";
+                if ((maxLines > 0) && (lineCount++ % maxLines) == 0) {
+-                  cout << "Press the <Enter> key to see more codes: ";
++                  cout << "Press the <Enter> key to see more codes: " << flush;
+                   getline(cin, line);
+                } // if reached screen line limit
+             } // if there's another entry following this one
+diff --git a/support.cc b/support.cc
+index 891caad..645ef5d 100644
+--- a/support.cc
++++ b/support.cc
+@@ -123,7 +123,7 @@ uint64_t GetSectorNum(uint64_t low, uint64_t high, uint64_t def, uint64_t sSize,
+    char line[255];
+ 
+    do {
+-      cout << prompt;
++      cout << prompt << flush;
+       cin.getline(line, 255);
+       if (!cin.good())
+          exit(5);
+-- 
+2.17.1
+
