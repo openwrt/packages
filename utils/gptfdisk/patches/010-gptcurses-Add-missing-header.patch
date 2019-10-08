@@ -1,0 +1,27 @@
+From 9e6016b07ff6d1de5143d3dfefb58fb4268a78e1 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Mon, 7 Oct 2019 15:34:43 -0700
+Subject: [PATCH 1/4] gptcurses: Add missing header
+
+Needed with uClibc++ as it doesn't implicitly include it.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ gptcurses.cc | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/gptcurses.cc b/gptcurses.cc
+index 3e9b240..4ebfde1 100644
+--- a/gptcurses.cc
++++ b/gptcurses.cc
+@@ -19,6 +19,7 @@
+  *
+  */
+ 
++#include <clocale>
+ #include <iostream>
+ #include <string>
+ #include <sstream>
+-- 
+2.17.1
+
