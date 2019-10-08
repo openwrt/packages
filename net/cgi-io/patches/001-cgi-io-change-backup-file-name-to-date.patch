@@ -1,0 +1,23 @@
+From: Florian Eckert <fe@dev.tdt.de>
+Date: Tue, 8 Oct 2019 14:00:02 +0200
+Subject: [PATCH] cgi-io: change backup file name to date
+
+more useful if the user has more than one file since file sorting then
+sorts by date and hostnam
+
+Signed-off-by: Florian Eckert <fe@dev.tdt.de>
+---
+ main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/main.c
++++ b/main.c
+@@ -853,7 +853,7 @@ main_backup(int argc, char **argv)
+ 		printf("Status: 200 OK\r\n");
+ 		printf("Content-Type: application/x-targz\r\n");
+ 		printf("Content-Disposition: attachment; "
+-		       "filename=\"backup-%s-%s.tar.gz\"\r\n\r\n", hostname, datestr);
++		       "filename=\"%s-backup-%s.tar.gz\"\r\n\r\n", datestr, hostname);
+ 
+ 		fflush(stdout);
+ 
