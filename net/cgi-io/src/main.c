@@ -37,6 +37,7 @@
 
 #include "multipart_parser.h"
 
+#define READ_BLOCK 4096
 
 enum part {
 	PART_UNKNOWN,
@@ -389,7 +390,7 @@ static int
 filecopy(void)
 {
 	int len;
-	char buf[4096];
+	char buf[READ_BLOCK];
 
 	if (!st.filedata)
 	{
@@ -625,7 +626,8 @@ static int
 main_upload(int argc, char *argv[])
 {
 	int rem, len;
-	char buf[4096];
+	bool done = false;
+	char buf[READ_BLOCK];
 	multipart_parser *p;
 
 	p = init_parser();
@@ -638,16 +640,13 @@ main_upload(int argc, char *argv[])
 
 	while ((len = read(0, buf, sizeof(buf))) > 0)
 	{
-		rem = multipart_parser_execute(p, buf, len);
-
-		if (rem < len)
-			break;
+		if (!done) {
+			rem = multipart_parser_execute(p, buf, len);
+			done = (rem < len);
+		}
 	}
 
 	multipart_parser_free(p);
-
-	/* read remaining post data */
-	while ((len = read(0, buf, sizeof(buf))) > 0);
 
 	return 0;
 }
@@ -657,7 +656,7 @@ main_download(int argc, char **argv)
 {
 	char *fields[] = { "sessionid", NULL, "path", NULL, "filename", NULL, "mimetype", NULL };
 	unsigned long long size = 0;
-	char *p, buf[4096];
+	char *p, buf[READ_BLOCK];
 	ssize_t len = 0;
 	struct stat s;
 	int rfd;
@@ -677,7 +676,7 @@ main_download(int argc, char **argv)
 		return failure(403, 0, "Requested path is not a regular file or block device");
 
 	for (p = fields[5]; p && *p; p++)
-		if (!isalnum(*p) && !strchr(" ()<>@,;:[]?.=%", *p))
+		if (!isalnum(*p) && !strchr(" ()<>@,;:[]?.=%-", *p))
 			return failure(400, 0, "Invalid characters in filename");
 
 	for (p = fields[7]; p && *p; p++)
@@ -783,7 +782,7 @@ main_backup(int argc, char **argv)
 		fflush(stdout);
 
 		do {
-			len = splice(fds[0], NULL, 1, NULL, 4096, SPLICE_F_MORE);
+			len = splice(fds[0], NULL, 1, NULL, READ_BLOCK, SPLICE_F_MORE);
 		} while (len > 0);
 
 		waitpid(pid, &status, 0);
