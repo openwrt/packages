@@ -39,6 +39,13 @@ define Package/kea/Default
   URL:=https://www.isc.org/kea
 endef
 
+
+###### *************************************************************************
+define Package/kea
+	$(call Package/kea/Default)
+  TITLE+=ISC Kea
+endef
+# shown in LuCI package description
 define Package/kea/description
   Kea is an open source DHCPv4/DHCPv6 server being developed by Internet
   Systems Consortium. Kea is a high-performance, extensible DHCP server
@@ -48,56 +55,95 @@ define Package/kea/description
   management REST interface, and a DHCP benchmarking tool, perfdhcp.
 endef
 
+###### *************************************************************************
 define Package/kea-libs
 	$(call Package/kea/Default)
-	TITLE+= Libraries
+	TITLE+=Libraries
 	DEPENDS:=+libopenssl +log4cplus \
-		+boost +boost-python3 +boost-system
+	+boost +boost-system
+endef
+define Package/kea-libs/description
+		Kea required Libraries.
 endef
 
-define Package/kea-dhcp4
-	$(call Package/kea/Default)
-	TITLE+= DHCP Server v4
-	DEPENDS:=+kea-libs
-endef
-
-define Package/kea-dhcp6
-	$(call Package/kea/Default)
-	TITLE+= DHCP Server v6
-	DEPENDS:=@IPV6 +kea-libs
-endef
-
-define Package/kea-dhcp-ddns
-	$(call Package/kea/Default)
-	TITLE+= DHCP - DDNS
-	DEPENDS:=+kea-libs
-endef
-
-define Package/kea-admin
-	$(call Package/kea/Default)
-	TITLE+= Admin
-	DEPENDS:= +kea-libs
-endef
-
+###### *************************************************************************
 define Package/kea-ctrl
 	$(call Package/kea/Default)
-	TITLE+= Control
-	DEPENDS:= +kea-dhcp4 +IPV6:kea-dhcp6 \
-		+kea-dhcp-ddns
+	TITLE+=Control
+	DEPENDS:=+procps-ng +procps-ng-ps +kea-dhcp4 \
+	+IPV6:kea-dhcp6 +kea-dhcp-ddns
+endef
+define Package/kea-ctrl/description
+	Tool to start, stop, reconfigure, and report status for the Kea servers.
 endef
 
+###### *************************************************************************
+define Package/kea-dhcp4
+	$(call Package/kea/Default)
+	TITLE+=DHCP Server v4
+	DEPENDS:=+kea-libs
+endef
+define Package/kea-dhcp4/description
+    The DHCPv4 server process. This process responds to DHCPv4 queries from clients.
+endef
+
+###### *************************************************************************
+define Package/kea-dhcp6
+	$(call Package/kea/Default)
+	TITLE+=DHCP Server v6
+	DEPENDS:=@IPV6 +kea-libs
+endef
+define Package/kea-dhcp6/description
+    The DHCPv6 server process. This process responds to DHCPv6 queries from clients.
+endef
+
+###### *************************************************************************
+define Package/kea-dhcp-ddns
+	$(call Package/kea/Default)
+	TITLE+=DHCP Dynamic DNS
+	DEPENDS:=+kea-libs
+endef
+define Package/kea-dhcp-ddns/description
+		The DHCP Dynamic DNS process. This process acts as an intermediary between
+the DHCP servers and DNS servers. It receives name update requests from the
+DHCP servers and sends DNS Update messages to the DNS servers.
+endef
+
+###### *************************************************************************
+define Package/kea-admin
+	$(call Package/kea/Default)
+	TITLE+=Admin
+	DEPENDS:=+kea-libs
+endef
+define Package/kea-admin/description
+   	A useful tool for database backend maintenance (creating a new database,
+checking versions, upgrading etc.).
+endef
+
+##### *************************************************************************
 define Package/kea-lfc
 	$(call Package/kea/Default)
-	TITLE+= lfc
+	TITLE+=lfc
 	DEPENDS:=+kea-libs
 endef
+define Package/kea-lfc/description
+    This process removes redundant information from the files used to provide
+persistent storage for the memfile data base backend. While it can be run
+standalone, it is normally run as and when required by the Kea DHCP servers.
+endef
 
+##### *************************************************************************
 define Package/kea-perfdhcp
 	$(call Package/kea/Default)
-	TITLE+= perfdhcp
+	TITLE+=perfdhcp (Benchmarking)
 	DEPENDS:=+kea-libs
 endef
+define Package/kea-perfdhcp/description
+     A DHCP benchmarking tool which simulates multiple clients to test both
+DHCPv4 and DHCPv6 server performance.
+endef
 
+###### *************************************************************************
 HOST_CONFIGURE_ARGS += \
 	--with-boost-include="$(STAGING_DIR_HOSTPKG)" \
 	--with-log4cplus="$(STAGING_DIR_HOSTPKG)" \
@@ -151,7 +197,7 @@ endef
 
 define Package/kea-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so.* $(1)/usr/lib/
 endef
 
 define Package/kea-dhcp4/install
@@ -198,10 +244,10 @@ endef
 
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,kea-libs))
+$(eval $(call BuildPackage,kea-ctrl))
 $(eval $(call BuildPackage,kea-dhcp4))
 $(eval $(call BuildPackage,kea-dhcp6))
 $(eval $(call BuildPackage,kea-dhcp-ddns))
 $(eval $(call BuildPackage,kea-admin))
-$(eval $(call BuildPackage,kea-ctrl))
 $(eval $(call BuildPackage,kea-lfc))
 $(eval $(call BuildPackage,kea-perfdhcp))
