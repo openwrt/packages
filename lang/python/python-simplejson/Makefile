@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-simplejson
 PKG_VERSION:=3.16.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=MIT
 PKG_CPE_ID:=cpe:/a:simplejson_project:simplejson
 
@@ -54,6 +54,16 @@ define Package/python3-simplejson/description
 $(call Package/python-simplejson/description)
 .
 (Variant for Python3)
+endef
+
+define PyPackage/python-simplejson/filespec
++|$(PYTHON_PKG_DIR)
+-|$(PYTHON_PKG_DIR)/simplejson/tests
+endef
+
+define Py3Package/python3-simplejson/filespec
++|$(PYTHON3_PKG_DIR)
+-|$(PYTHON3_PKG_DIR)/simplejson/tests
 endef
 
 $(eval $(call PyPackage,python-simplejson))
