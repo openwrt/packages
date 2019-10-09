@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.16.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
@@ -196,6 +196,8 @@ ifneq ($(BUILD_VARIANT),all-module)
   endif
   ifneq ($(CONFIG_NGINX_HTTP_UWSGI),y)
     ADDITIONAL_MODULES += --without-http_uwsgi_module
+  else
+    config_files += uwsgi_params
   endif
   ifneq ($(CONFIG_NGINX_HTTP_SCGI),y)
     ADDITIONAL_MODULES += --without-http_scgi_module
