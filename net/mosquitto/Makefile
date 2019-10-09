@@ -28,7 +28,7 @@ define Package/mosquitto/default
   TITLE:=mosquitto - an MQTT message broker
   URL:=http://www.mosquitto.org/
   MAINTAINER:=Karl Palsson <karlp@etactica.com>
-  DEPENDS:= +librt +libuuid
+  DEPENDS:= +librt
   USERID:=mosquitto=200:mosquitto=200
 endef
 
