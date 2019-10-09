@@ -13,7 +13,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-ban_ver="0.3.0"
+ban_ver="0.3.1"
 ban_basever=""
 ban_enabled=0
 ban_automatic="1"
@@ -127,7 +127,7 @@ f_envload()
 #
 f_envcheck()
 {
-	local util utils packages tmp cnt=0
+	local util utils packages iface tmp cnt=0 cnt_max=0
 
 	# check backup directory
 	#
@@ -189,12 +189,25 @@ f_envcheck()
 	then
 		while [ "${cnt}" -le 30 ]
 		do
-			network_find_wan ban_iface
-			if [ -z "${ban_iface}" ]
+			network_find_wan iface
+			if [ -n "${iface}" ] && [ -z "$(printf "%s\\n" "${ban_iface}" | grep -F "${iface}")" ]
 			then
-				network_find_wan6 ban_iface
+				ban_iface="${ban_iface} ${iface}"
+				if [ "${cnt_max}" -eq 0 ]
+				then
+					cnt_max=$((cnt+5))
+				fi
 			fi
-			if [ -z "${ban_iface}" ]
+			network_find_wan6 iface
+			if [ -n "${iface}" ] && [ -z "$(printf "%s\\n" "${ban_iface}" | grep -F "${iface}")" ]
+			then
+				ban_iface="${ban_iface} ${iface}"
+				if [ "${cnt_max}" -eq 0 ]
+				then
+					cnt_max=$((cnt+5))
+				fi
+			fi
+			if [ -z "${ban_iface}" ] || [ "${cnt}" -le "${cnt_max}" ]
 			then
 				network_flush_cache
 				cnt=$((cnt+1))
@@ -208,23 +221,23 @@ f_envcheck()
 	for iface in ${ban_iface}
 	do
 		network_get_device tmp "${iface}"
-		if [ -n "${tmp}" ]
+		if [ -n "${tmp}" ] && [ -z "$(printf "%s\\n" "${ban_dev}" | grep -F "${tmp}")" ]
 		then
 			ban_dev="${ban_dev} ${tmp}"
 		else
 			network_get_physdev tmp "${iface}"
-			if [ -n "${tmp}" ]
+			if [ -n "${tmp}" ] && [ -z "$(printf "%s\\n" "${ban_dev}" | grep -F "${tmp}")" ]
 			then
 				ban_dev="${ban_dev} ${tmp}"
 			fi
 		fi
 		network_get_subnets tmp "${iface}"
-		if [ -n "${tmp}" ]
+		if [ -n "${tmp}" ] && [ -z "$(printf "%s\\n" "${ban_subnets}" | grep -F "${tmp}")" ]
 		then
 			ban_subnets="${ban_subnets} ${tmp}"
 		fi
 		network_get_subnets6 tmp "${iface}"
-		if [ -n "${tmp}" ]
+		if [ -n "${tmp}" ] && [ -z "$(printf "%s\\n" "${ban_subnets6}" | grep -F "${tmp}")" ]
 		then
 			ban_subnets6="${ban_subnets6} ${tmp}"
 		fi
@@ -234,7 +247,7 @@ f_envcheck()
 	then
 		f_log "err" "wan interface(s)/device(s) (${ban_iface:-"-"}/${ban_dev:-"-"}) not found, please please check your configuration"
 	else
-		ban_dev_all="$(${ban_ip} link show | awk 'BEGIN{FS="[@: ]"}/^[0-9:]/{if(($3!="lo")&&($3!="br-lan")){print $3}}')"
+		ban_dev_all="$(${ban_ip} link show | awk 'BEGIN{FS="[@: ]"}/^[0-9:]/{if($3!="lo"){print $3}}')"
 		f_jsnup "running"
 		f_log "info" "start banIP processing (${ban_action})"
 	fi
