@@ -1,6 +1,6 @@
 --- a/kernelmod/main.c
 +++ b/kernelmod/main.c
-@@ -91,8 +91,11 @@ modinit( void ) {
+@@ -98,8 +98,11 @@ modinit( void ) {
  
    rv = mrm_rcdb_init();
    if (rv != 0) return rv;
@@ -13,7 +13,7 @@
    mrm_init_ctlfile(); /* XXX not checking for failure! */
  
    printk(KERN_INFO "MRM The MAC Address Re-Mapper is now in the kernel\n");
-@@ -103,7 +106,11 @@ modinit( void ) {
+@@ -110,7 +113,11 @@ modinit( void ) {
  static void __exit
  modexit( void ) {
    mrm_destroy_ctlfile();

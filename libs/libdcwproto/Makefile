@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdcwproto
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ewsi/$(PKG_NAME)/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=5bda395c648aa12eb90515c29024029738fde1a8f73a2cbc553be1c6962c2629
+PKG_HASH:=b3d12f2533eafbb293bbf27608ff39520508d955a084f33894c594f39d2f7c8e
 
 PKG_MAINTAINER:=Carey Sonsino <careys@edgewaterwireless.com>
 PKG_LICENSE:=Apache-2.0

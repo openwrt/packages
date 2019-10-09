@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dcstad
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ewsi/$(PKG_NAME)/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=3b146ea22bc5480d8264c5ea269831d25993673aa90a9e82dc2dc601a111da55
+PKG_HASH:=3bed8a5051c92cd41ba3477d2db211df8f10fd6e49946f0b74cf643464c1c201
 
 PKG_MAINTAINER:=Carey Sonsino <careys@edgewaterwireless.com>
 PKG_LICENSE:=Apache-2.0
