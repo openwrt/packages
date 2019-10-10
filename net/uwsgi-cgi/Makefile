@@ -62,7 +62,9 @@ define Package/uwsgi-cgi/install
 endef
 
 define Package/uwsgi-cgi-luci-support/install
-
+	$(INSTALL_DIR) $(1)/etc/uwsgi/vassals
+	$(INSTALL_DATA) ./files-luci-support/luci-webui.ini $(1)/etc/uwsgi/vassals/luci-webui.ini
+	$(INSTALL_DATA) ./files-luci-support/luci-cgi_io.ini $(1)/etc/uwsgi/vassals/luci-cgi_io.ini
 endef
 
 $(eval $(call BuildPackage,uwsgi-cgi))
