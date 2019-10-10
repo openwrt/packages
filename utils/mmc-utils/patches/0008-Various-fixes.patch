@@ -1,7 +1,7 @@
-From 6ace4329870d9d7b2a2c3603af316b3f1a75e9f2 Mon Sep 17 00:00:00 2001
+From dacd9d2950f5f6559cde1ceec3035ab77e9698ad Mon Sep 17 00:00:00 2001
 From: Stephane Fillod <f8cfe@free.fr>
 Date: Tue, 15 Jan 2019 15:06:03 +0100
-Subject: [PATCH 8/9] Various fixes
+Subject: [PATCH] Various fixes
 
 These warnings were mainly found using cppcheck.
 
@@ -174,7 +174,7 @@ index 63504d2..06cc0b8 100644
  	}
  }
 diff --git a/mmc_cmds.c b/mmc_cmds.c
-index 19a9da1..9402112 100644
+index fb37189..8f4a476 100644
 --- a/mmc_cmds.c
 +++ b/mmc_cmds.c
 @@ -252,6 +252,7 @@ int do_writeprotect_boot_get(int nargs, char **argv)
@@ -255,7 +255,7 @@ index 19a9da1..9402112 100644
  		}
  
  		reg = ext_csd[EXT_CSD_WR_REL_PARAM];
-@@ -1805,6 +1813,7 @@ int do_sanitize(int nargs, char **argv)
+@@ -1837,6 +1845,7 @@ int do_sanitize(int nargs, char **argv)
  		exit(1);
  	}
  
@@ -263,7 +263,7 @@ index 19a9da1..9402112 100644
  	return ret;
  
  }
-@@ -2390,6 +2399,7 @@ int do_cache_ctrl(int value, int nargs, char **argv)
+@@ -2422,6 +2431,7 @@ int do_cache_ctrl(int value, int nargs, char **argv)
  		exit(1);
  	}
  
