@@ -129,8 +129,4 @@ $(eval $(call RequireCommand,xsltproc, \
         $(PKG_NAME) requires xsltproc installed on the host-system. \
 ))
 
-$(eval $(call RequireCommand,intltoolize, \
-        $(PKG_NAME) requires intltool installed on the host-system. \
-))
-
 $(eval $(call BuildPackage,modemmanager))
