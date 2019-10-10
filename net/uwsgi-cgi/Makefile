@@ -51,12 +51,18 @@ endef
 define Package/uwsgi-cgi/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/uwsgi $(1)/usr/sbin/
+
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/uwsgi.init $(1)/etc/init.d/uwsgi
+	
+	$(INSTALL_DIR) $(1)/etc/uwsgi
+	$(INSTALL_DATA) ./files/emperor.ini $(1)/etc/uwsgi/emperor.ini
+
+	$(INSTALL_DIR) $(1)/etc/uwsgi/vassals
 endef
 
 define Package/uwsgi-cgi-luci-support/install
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files-luci-support/uwsgi.init $(1)/etc/init.d/uwsgi
-	$(INSTALL_BIN) ./files-luci-support/uwsgi.conf $(1)/etc/uwsgi.conf
+
 endef
 
 $(eval $(call BuildPackage,uwsgi-cgi))
