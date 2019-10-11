@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.16.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
@@ -82,7 +82,7 @@ define Package/nginx/default
   TITLE:=Nginx web server
   URL:=http://nginx.org/
   DEPENDS:=+NGINX_PCRE:libpcre +NGINX_SSL:libopenssl \
-	+NGINX_HTTP_GZIP:zlib +NGINX_LUA:liblua +libpthread +NGINX_DAV:libexpat
+	+NGINX_HTTP_GZIP:zlib +NGINX_LUA:liblua +libpthread +NGINX_DAV:libxml2
 endef
 
 define Package/nginx/description
@@ -111,7 +111,7 @@ Package/nginx-ssl/description = $(Package/nginx/description) \
 define Package/nginx-all-module
   $(Package/nginx/default)
   TITLE += with ALL module selected
-  DEPENDS:=+libpcre +libopenssl +zlib +liblua +libpthread +libexpat
+  DEPENDS:=+libpcre +libopenssl +zlib +liblua +libpthread +libxml2
   VARIANT:=all-module
   PROVIDES:=nginx
 endef
@@ -521,18 +521,19 @@ endif
 
 ifeq ($(CONFIG_NGINX_DAV),y)
   define Download/nginx-dav-ext-module
-    VERSION:=430fd774fe838a04f1a5defbf1dd571d42300cf9
+    VERSION:=f5e30888a256136d9c550bf1ada77d6ea78a48af
     SUBDIR:=nginx-dav-ext-module
-    FILE:=nginx-dav-ext-module-$$(VERSION).tar.gz
+    FILE:=nginx-dav-ext-module-$$(VERSION).tar.xz
     URL:=https://github.com/arut/nginx-dav-ext-module.git
-    MIRROR_HASH:=0566053a8756423ecab455fd9d218cec1e017598fcbb3d6415a06f816851611e
+    MIRROR_HASH:=70bb4c3907f4b783605500ba494e907aede11f8505702e370012abb3c177dc5b
     PROTO:=git
   endef
   $(eval $(call Download,nginx-dav-ext-module))
 
   define Prepare/nginx-dav-ext-module
 	$(eval $(Download/nginx-dav-ext-module))
-	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+	xzcat $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+	$(call PatchDir,$(PKG_BUILD_DIR),./patches-dav-nginx)
   endef
 endif
 
