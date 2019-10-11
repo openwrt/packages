@@ -1,15 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=docker-ce
-PKG_VERSION:=19.03.1
+PKG_VERSION:=19.03.2
 PKG_RELEASE:=2
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=components/cli/LICENSE components/engine/LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/docker/docker-ce/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=dad9123e203751ce9981bc34773721593655231c32412e310e748b18f10f0053
-PKG_SOURCE_VERSION:=74b1e89e8a
+PKG_HASH:=46b52f92cb258e038e3f29624e75a52e4d2f91502f56edeac0f0b2661b3b9c3d
+PKG_SOURCE_VERSION:=6a30dfca03
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
@@ -45,7 +45,7 @@ define Package/docker-ce
   TITLE:=Docker Community Edition
   URL:=https://www.docker.com/
   DEPENDS:=$(GO_ARCH_DEPENDS) @TARGET_x86_64 +btrfs-progs +ca-certificates +cgroupfs-mount +containerd +libdevmapper +libnetwork +tini \
-           +DOCKER_SECCOMP:libseccomp +iptables-mod-extra +kmod-br-netfilter +kmod-ikconfig +kmod-nf-ipvs +kmod-veth
+           +DOCKER_SECCOMP:libseccomp +iptables-mod-extra +kmod-br-netfilter +kmod-ikconfig +kmod-nf-conntrack-netlink +kmod-nf-ipvs +kmod-veth
   USERID:=docker:docker
   MENU:=1
 endef

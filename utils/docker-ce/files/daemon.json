@@ -1,3 +1,4 @@
 {
-    "data-root": "/opt/docker/"
+    "data-root": "/opt/docker/",
+    "log-level": "warn"
 }
