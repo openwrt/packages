@@ -6,20 +6,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=expat
-PKG_VERSION:=2.2.5
+PKG_VERSION:=2.2.9
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/expat
-PKG_HASH:=d9dc32efba7e74f788fcc4f212a43216fc37cf5f23f4c2339664d473353aedf6
-PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>, \
-		Ted Hess <thess@kitschensync.net>
+PKG_HASH:=1ea6965b15c2106b6bbe883397271c80dfa0331cdf821b2c319591b55eadc0a4
 
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:libexpat:expat
 
 PKG_FIXUP:=autoreconf
-
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -41,7 +40,11 @@ TARGET_CFLAGS += $(FPIC)
 
 CONFIGURE_ARGS += \
 	--enable-shared \
-	--enable-static
+	--enable-static \
+	--without-docbook
+
+HOST_CONFIGURE_ARGS += \
+	--without-docbook
 
 define Host/Install
 	$(MAKE) -C $(HOST_BUILD_DIR) install
