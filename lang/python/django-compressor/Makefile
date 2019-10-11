@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-compressor
 PKG_VERSION:=2.2
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=django_compressor-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/d/$(PKG_NAME)/
@@ -39,11 +39,11 @@ define Package/python-$(PKG_NAME)
 $(call Package/$(PKG_NAME)/Default)
   DEPENDS:= \
 	+PACKAGE_python-$(PKG_NAME):python \
-	python-django \
+	python-django1 \
 	+PACKAGE_python-$(PKG_NAME):python-django-appconf \
 	+PACKAGE_python-$(PKG_NAME):python-rcssmin
   VARIANT:=python
-  MDEPENDS:=python-django
+  MDEPENDS:=python-django1
 endef
 
 define Package/python-$(PKG_NAME)/description
