@@ -7,10 +7,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-ranged-response
 PKG_VERSION:=0.2.0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/d/${PKG_NAME}
+PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/d/$(PKG_NAME)/
 PKG_HASH:=f71fff352a37316b9bead717fc76e4ddd6c9b99c4680cdf4783b9755af1cf985
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
@@ -37,9 +37,9 @@ define Package/python-$(PKG_NAME)
 $(call Package/$(PKG_NAME)/Default)
   DEPENDS:= \
 	+PACKAGE_python-$(PKG_NAME):python \
-	python-django
+	python-django1
   VARIANT:=python
-  MDEPENDS:=python-django
+  MDEPENDS:=python-django1
 endef
 
 define Package/python-$(PKG_NAME)/description

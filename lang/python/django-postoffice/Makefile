@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-postoffice
 PKG_VERSION:=3.1.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=django-post_office-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/d/django-post_office
@@ -39,10 +39,10 @@ define Package/python-$(PKG_NAME)
 $(call Package/$(PKG_NAME)/Default)
   DEPENDS:= \
 	+PACKAGE_python-$(PKG_NAME):python \
-	python-django \
+	python-django1 \
 	+PACKAGE_python-$(PKG_NAME):python-django-jsonfield
   VARIANT:=python
-  MDEPENDS:=python-django
+  MDEPENDS:=python-django1
 endef
 
 define Package/python-$(PKG_NAME)/description
