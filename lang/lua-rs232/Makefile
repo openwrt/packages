@@ -8,19 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-rs232
-PKG_VERSION:=1.0.3
-PKG_RELEASE:=2
+PKG_RELEASE:=1
+
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/srdgame/librs232
+PKG_SOURCE_DATE:=2019-09-17
+PKG_SOURCE_VERSION:=1c29a279484ee4850611b76a6571566e0ec133bb
+PKG_MIRROR_HASH:=c9063a729935135278f17dd98ca31757acfd4405bdf9f6e49d77ed0df8ddc823
+
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=COPYING
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=fb2f6453537e10beb2cd99d30eb1b4259ab75452992ca8a65d621186cf320960
-PKG_SOURCE_URL:=https://github.com/srdgame/librs232.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=a9d463181e7f7034fe6a55bc38e845fb04fa93ba
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=lua/host
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -37,27 +40,25 @@ define Package/lua-rs232/description
   multiplatform library for serial communications over RS-232
 endef
 
-CONFIGURE_ARGS += \
-	--with-lua-inc=$(STAGING_DIR)/usr/include \
-	--with-lua-lib=$(STAGING_DIR)/usr/lib
+TARGET_CFLAGS += -ffunction-sections -fdata-sections
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
-#define Build/Configure
-#	( cd "$(PKG_BUILD_DIR)"; ./autogen.sh )
-#	$(call Build/Configure/Default)
-#endef
-define Build/Configure
-endef
-
-define Build/Compile
-	(cd "$(PKG_BUILD_DIR)"; $(TARGET_CC)  src/rs232.c src/rs232_posix.c bindings/lua/luars232.c -DLUAROCKS_HACK -std=gnu99 -I./include -I$(STAGING_DIR)/usr/include -L$(STAGING_DIR)/usr/lib -fPIC -shared -o luars232.so)
-endef
-
-define Build/Install
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include/librs232
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/librs232/rs232* $(1)/usr/include/librs232
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/librs232* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/lua/5.1
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/lua/5.1/luars232* $(1)/usr/lib/lua/5.1
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/librs232.pc $(1)/usr/lib/pkgconfig
 endef
 
 define Package/lua-rs232/install
-	$(INSTALL_DIR) $(1)/usr/lib/lua
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/luars232.so $(1)/usr/lib/lua/
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/librs232.so* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/lua/5.1
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/lua/5.1/luars232* $(1)/usr/lib/lua/5.1
 endef
 
 $(eval $(call BuildPackage,lua-rs232))
