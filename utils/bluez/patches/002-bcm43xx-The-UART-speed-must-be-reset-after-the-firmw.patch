@@ -8,9 +8,11 @@ Subject: [PATCH 2/4] bcm43xx: The UART speed must be reset after the firmware
  tools/hciattach_bcm43xx.c | 6 ++----
  1 file changed, 2 insertions(+), 4 deletions(-)
 
---- a/tools/hciattach_bcm43xx.c
-+++ b/tools/hciattach_bcm43xx.c
-@@ -366,11 +366,8 @@ int bcm43xx_init(int fd, int def_speed,
+Index: bluez-5.51/tools/hciattach_bcm43xx.c
+===================================================================
+--- bluez-5.51.orig/tools/hciattach_bcm43xx.c
++++ bluez-5.51/tools/hciattach_bcm43xx.c
+@@ -367,11 +367,8 @@ int bcm43xx_init(int fd, int def_speed,
  		return -1;
  
  	if (bcm43xx_locate_patch(FIRMWARE_DIR, chip_name, fw_path)) {
@@ -23,7 +25,7 @@ Subject: [PATCH 2/4] bcm43xx: The UART speed must be reset after the firmware
  		if (bcm43xx_load_firmware(fd, fw_path))
  			return -1;
  
-@@ -380,6 +377,7 @@ int bcm43xx_init(int fd, int def_speed,
+@@ -381,6 +378,7 @@ int bcm43xx_init(int fd, int def_speed,
  			return -1;
  		}
  
