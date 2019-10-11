@@ -126,6 +126,7 @@ static char *
 checksum(const char *applet, size_t sumlen, const char *file)
 {
 	pid_t pid;
+	int r;
 	int fds[2];
 	static char chksum[65];
 
@@ -154,10 +155,14 @@ checksum(const char *applet, size_t sumlen, const char *file)
 
 	default:
 		memset(chksum, 0, sizeof(chksum));
-		read(fds[0], chksum, sumlen);
+		r = read(fds[0], chksum, sumlen);
+
 		waitpid(pid, NULL, 0);
 		close(fds[0]);
 		close(fds[1]);
+
+		if (r < 0)
+			return NULL;
 	}
 
 	return chksum;
@@ -442,7 +447,7 @@ header_field(multipart_parser *p, const char *data, size_t len)
 static int
 header_value(multipart_parser *p, const char *data, size_t len)
 {
-	int i, j;
+	size_t i, j;
 
 	if (!st.is_content_disposition)
 		return 0;
@@ -500,6 +505,8 @@ data_begin_cb(multipart_parser *p)
 static int
 data_cb(multipart_parser *p, const char *data, size_t len)
 {
+	int wlen = len;
+
 	switch (st.parttype)
 	{
 	case PART_SESSIONID:
@@ -515,14 +522,14 @@ data_cb(multipart_parser *p, const char *data, size_t len)
 		break;
 
 	case PART_FILEDATA:
-		if (write(st.tempfd, data, len) != len)
+		if (write(st.tempfd, data, len) != wlen)
 		{
 			close(st.tempfd);
 			return response(false, "I/O failure while writing temporary file");
 		}
 
 		if (!st.filedata)
-			st.filedata = !!len;
+			st.filedata = !!wlen;
 
 		break;
 
@@ -734,6 +741,7 @@ main_backup(int argc, char **argv)
 {
 	pid_t pid;
 	time_t now;
+	int r;
 	int len;
 	int status;
 	int fds[2];
@@ -760,7 +768,9 @@ main_backup(int argc, char **argv)
 		close(fds[0]);
 		close(fds[1]);
 
-		chdir("/");
+		r = chdir("/");
+		if (r < 0)
+			return failure(500, errno, "Failed chdir('/')");
 
 		execl("/sbin/sysupgrade", "/sbin/sysupgrade",
 		      "--create-backup", "-", NULL);
