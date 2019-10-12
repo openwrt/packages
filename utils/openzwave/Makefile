@@ -16,7 +16,6 @@ PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://old.openzwave.com/downloads
 PKG_HASH:=4ecf39787aaf278c203764069b581dbc26094ce57cafeab4a0c1f012d2c0ac69
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk

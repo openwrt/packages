@@ -15,8 +15,6 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://lsm.foobar.fi/download
 PKG_HASH:=33210209ca38b3bfef1a9180f765266a134fc811dea8bc06450a3bd48d1d083e
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-
 include $(INCLUDE_DIR)/package.mk
 
 define Package/foolsm

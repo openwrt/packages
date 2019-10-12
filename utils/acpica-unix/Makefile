@@ -18,7 +18,6 @@ PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>
 
 PKG_LICENSE:=GPL-2.0
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_FORTIFY_SOURCE:=0
 PKG_BUILD_PARALLEL:=1
 

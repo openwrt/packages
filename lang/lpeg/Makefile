@@ -17,8 +17,6 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.inf.puc-rio.br/~roberto/lpeg/
 PKG_HASH:=6aad270b91d1b1c6fd75f68e162329a04a644e50e917d55f46cc8384b7120004
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-
 include $(INCLUDE_DIR)/package.mk
 
 define Package/lpeg
