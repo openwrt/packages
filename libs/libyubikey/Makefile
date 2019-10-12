@@ -11,8 +11,6 @@ PKG_MAINTAINER:=Stuart B. Wilkins <stuwilkins@mac.com>
 PKG_LICENSE_FILES:=COPYING
 PKG_LICENSE:=BSD-2-Clause
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/libyubikey-$(PKG_VERSION)
-
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libyubikey

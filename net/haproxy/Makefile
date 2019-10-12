@@ -16,7 +16,6 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.haproxy.org/download/2.0/src
 PKG_HASH:=552a708b8b6efd0f241f5d9fd7ad4168d37ce17cdb6dcb6239c2e519f0a63c75
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>, \
 		Christian Lachner <gladiac@gmail.com>

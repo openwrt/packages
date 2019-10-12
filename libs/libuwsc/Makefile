@@ -14,7 +14,6 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/libuwsc/releases/download/v$(PKG_VERSION)
 PKG_HASH:=bae2cd13eda86876ebcf99a38a069f5e8c01717713d2fec25031051b9c47624b
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Jianhui Zhao <jianhuizhao329@gmail.com>
 PKG_LICENSE:=MIT

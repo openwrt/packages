@@ -20,7 +20,6 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_MAINTAINER:=Mirko Vogt <mirko@openwrt.org>
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk

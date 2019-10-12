@@ -18,7 +18,6 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://thrysoee.dk/editline/
 PKG_HASH:=6dff036660d478bfaa14e407fc5de26d22da1087118c897b1a3ad2e90cb7bf39
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk

@@ -13,7 +13,6 @@ PKG_RELEASE:=3
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mikebrady/shairport-sync/tar.gz/$(PKG_VERSION)?
 PKG_HASH:=4f1ee142b887842727ae0c310e21c83ea2386518e841a25c7ddb015d08b54eba
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Mike Brady <mikebrady@eircom.net>

@@ -12,8 +12,6 @@ PKG_LICENSE_FILES:=COPYING
 PKG_LICENSE:=BSD-2-Clause
 PKG_BUILD_DEPENDS:=curl
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/ykclient-$(PKG_VERSION)
-
 include $(INCLUDE_DIR)/package.mk
 
 define Package/ykclient
