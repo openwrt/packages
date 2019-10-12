@@ -1,7 +1,7 @@
 --- a/Makefile.linux
 +++ b/Makefile.linux
-@@ -23,16 +23,16 @@
- #
+@@ -24,16 +24,16 @@
+ CONFIG_OPTIONS += --firewall=iptables
  #CFLAGS = -O -g -DDEBUG
  CFLAGS ?= -Os
 -CFLAGS += -fno-strict-aliasing
