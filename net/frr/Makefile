@@ -13,7 +13,6 @@ PKG_RELEASE:=2
 PKG_SOURCE_URL:=https://github.com/FRRouting/frr/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_HASH:=2a4210565e7b41d366f7b9f5f745917d67a0b159f3b6bd49d75f9e730557db2f
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 
 PKG_CONFIG_DEPENDS:= \
