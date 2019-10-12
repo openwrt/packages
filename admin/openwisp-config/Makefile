@@ -8,7 +8,6 @@ PKG_NAME:=openwisp-config
 PKG_VERSION:=0.4.5
 PKG_RELEASE:=2
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/openwisp/openwisp-config.git

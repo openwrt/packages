@@ -20,8 +20,6 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_CPE_ID:=cpe:/a:gnu:wget
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
-
 include $(INCLUDE_DIR)/package.mk
 
 define Package/wget/Default

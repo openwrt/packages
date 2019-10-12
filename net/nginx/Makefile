@@ -20,8 +20,6 @@ PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 PKG_LICENSE:=2-clause BSD-like license
 PKG_CPE_ID:=cpe:/a:nginx:nginx
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
-
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1

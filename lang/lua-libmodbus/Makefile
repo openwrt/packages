@@ -13,8 +13,6 @@ PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_MAINTAINER:=Karl Palsson <karlp@etactica.com>
 PKG_LICENSE:=MIT
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/lua-libmodbus-$(PKG_VERSION)
-
 include $(INCLUDE_DIR)/package.mk
 
 define Package/lua-libmodbus

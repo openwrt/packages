@@ -22,7 +22,6 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MIRROR_HASH:=175d4d9b69c3195ef850eaffd8ac63d012a052089b4a9d074b4d3aef96888b8f
 
 PKG_FIXUP:=autoreconf
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 # As warned by upstream maintainer and binutils 
