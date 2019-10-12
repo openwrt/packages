@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uwsgi-cgi
 PKG_VERSION:=2.0.18
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL= \
 	https://projects.unbit.it/downloads \
@@ -51,12 +51,20 @@ endef
 define Package/uwsgi-cgi/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/uwsgi $(1)/usr/sbin/
+
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/uwsgi.init $(1)/etc/init.d/uwsgi
+	
+	$(INSTALL_DIR) $(1)/etc/uwsgi
+	$(INSTALL_DATA) ./files/emperor.ini $(1)/etc/uwsgi/emperor.ini
+
+	$(INSTALL_DIR) $(1)/etc/uwsgi/vassals
 endef
 
 define Package/uwsgi-cgi-luci-support/install
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files-luci-support/uwsgi.init $(1)/etc/init.d/uwsgi
-	$(INSTALL_BIN) ./files-luci-support/uwsgi.conf $(1)/etc/uwsgi.conf
+	$(INSTALL_DIR) $(1)/etc/uwsgi/vassals
+	$(INSTALL_DATA) ./files-luci-support/luci-webui.ini $(1)/etc/uwsgi/vassals/luci-webui.ini
+	$(INSTALL_DATA) ./files-luci-support/luci-cgi_io.ini $(1)/etc/uwsgi/vassals/luci-cgi_io.ini
 endef
 
 $(eval $(call BuildPackage,uwsgi-cgi))
