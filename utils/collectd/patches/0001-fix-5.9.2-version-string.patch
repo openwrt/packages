@@ -1,0 +1,11 @@
+--- a/version-gen.sh
++++ b/version-gen.sh
+@@ -1,6 +1,6 @@
+ #!/bin/sh
+ 
+-DEFAULT_VERSION="5.9.0.git"
++DEFAULT_VERSION="5.9.2"
+ 
+ if [ -d .git ]; then
+ 	VERSION="`git describe --dirty=+ --abbrev=7 2> /dev/null | grep collectd | sed -e 's/^collectd-//' -e 's/-/./g'`"
+
