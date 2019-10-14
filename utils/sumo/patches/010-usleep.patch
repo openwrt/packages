@@ -1,0 +1,73 @@
+From d35215b50bfea42c8a1d884c65fda1dee8b62d50 Mon Sep 17 00:00:00 2001
+From: Michael Behrisch <michael.behrisch@dlr.de>
+Date: Fri, 4 Oct 2019 11:41:29 +0200
+Subject: [PATCH] removing usleep, refs #12, fix #6133
+
+---
+ src/utils/foxtools/FXSingleEventThread.cpp   |  9 +++------
+ src/utils/iodevices/OutputDevice_Network.cpp | 17 ++++-------------
+ 2 files changed, 7 insertions(+), 19 deletions(-)
+
+diff --git a/src/utils/foxtools/FXSingleEventThread.cpp b/src/utils/foxtools/FXSingleEventThread.cpp
+index 4b12fb920f..f545c18439 100644
+--- a/src/utils/foxtools/FXSingleEventThread.cpp
++++ b/src/utils/foxtools/FXSingleEventThread.cpp
+@@ -35,6 +35,8 @@
+ #else
+ #include <process.h>
+ #endif
++#include <chrono>
++#include <thread>
+ 
+ #ifndef WIN32
+ # define PIPE_READ 0
+@@ -137,12 +139,7 @@ FXSingleEventThread::onThreadEvent(FXObject*, FXSelector, void*) {
+ 
+ void
+ FXSingleEventThread::sleep(long ms) {
+-#ifdef WIN32
+-    Sleep(ms);
+-#else
+-    long long us = ms * 1000;
+-    usleep(us);
+-#endif
++    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+ }
+ 
+ 
+diff --git a/src/utils/iodevices/OutputDevice_Network.cpp b/src/utils/iodevices/OutputDevice_Network.cpp
+index 2c20ce96aa..6bde32e1e6 100644
+--- a/src/utils/iodevices/OutputDevice_Network.cpp
++++ b/src/utils/iodevices/OutputDevice_Network.cpp
+@@ -21,15 +21,10 @@
+ // ==========================================================================
+ // included modules
+ // ==========================================================================
+-#include <config.h> // #ifdef _MSC_VER
++#include <config.h>
+ 
+-#ifdef WIN32
+-#define NOMINMAX
+-#include <windows.h>
+-#undef NOMINMAX
+-#else
+-#include <unistd.h>
+-#endif
++#include <thread>
++#include <chrono>
+ #include <vector>
+ #include "OutputDevice_Network.h"
+ #include "foreign/tcpip/socket.h"
+@@ -57,11 +52,7 @@ OutputDevice_Network::OutputDevice_Network(const std::string& host,
+             if (wait == 9000) {
+                 throw IOError(toString(e.what()) + " (host: " + host + ", port: " + toString(port) + ")");
+             }
+-#ifdef WIN32
+-            Sleep(wait);
+-#else
+-            usleep(wait * 1000);
+-#endif
++            std::this_thread::sleep_for(std::chrono::milliseconds(wait));
+         }
+     }
+     myFilename = host + ":" + toString(port);
