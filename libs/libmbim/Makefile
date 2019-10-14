@@ -9,11 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmbim
 PKG_VERSION:=1.20.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/libmbim
-PKG_HASH=2cf7c6c7aa9e962a589f61bff2766035b61792ef961131a21fcbbe043f91a866
+PKG_HASH:=2cf7c6c7aa9e962a589f61bff2766035b61792ef961131a21fcbbe043f91a866
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas.smith@telcoantennas.com.au>
 
@@ -21,6 +21,7 @@ PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 CONFIGURE_ARGS += \
 	--disable-static \
@@ -52,6 +53,10 @@ define Package/mbim-utils
   LICENSE:=GPL-2.0-or-later
   LICENSE_FILES:=COPYING
 endef
+
+CONFIGURE_ARGS += \
+	--without-udev \
+	--without-udev-base-dir
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
