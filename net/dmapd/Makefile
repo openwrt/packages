@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
-PKG_LICENSE:=GPLv2
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -22,6 +22,7 @@ PKG_HASH:=ab372ff217d2a74a33d62098fe501da663e5dded0df67e2c2c83d968fa9ac7b9
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
