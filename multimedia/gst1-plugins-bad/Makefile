@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
-PKG_VERSION:=1.16.0
+PKG_VERSION:=1.16.1
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -20,7 +20,7 @@ PKG_LICENSE_FILES:=COPYING.LIB COPYING
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-bad-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-bad/
-PKG_HASH:=22139de35626ada6090bdfa3423b27b7fc15a0198331d25c95e6b12cb1072b05
+PKG_HASH:=56481c95339b8985af13bac19b18bc8da7118c2a7d9440ed70e7dcd799c2adb5
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -247,6 +247,7 @@ $(eval $(call GstBuildPlugin,bayer,bayer support,video,,))
 $(eval $(call GstBuildPlugin,camerabin,camerabin support,basecamerabinsrc photography pbutils app,,))
 #$(eval $(call GstBuildPlugin,dataurisrc,dataurisrc support,,,))
 $(eval $(call GstBuildPlugin,debugutilsbad,debugutils support,video,,))
+$(eval $(call GstBuildPlugin,dtls,DTLS support,,,+libopenssl))
 $(eval $(call GstBuildPlugin,dvdspu,dvdspu support,video,,))
 $(eval $(call GstBuildPlugin,fbdevsink,fbdev support,video,,))
 $(eval $(call GstBuildPlugin,festival,festival support,audio,,))
