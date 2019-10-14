@@ -13,11 +13,10 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.open-mpi.org/release/$(PKG_NAME)/v2.1
 PKG_HASH:=19429752f772cf68321196970ffb10dafd7e02ab38d2b3382b157c78efd10862
 
-PKG_LICENSE:=BSD-3-Clause
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=COPYING
 PKG_INSTALL:=1
-
-PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
