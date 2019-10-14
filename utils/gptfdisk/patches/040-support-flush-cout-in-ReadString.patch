@@ -1,0 +1,27 @@
+From 185f73b1084936f85beddd4523a302cb1f906234 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Mon, 7 Oct 2019 15:41:53 -0700
+Subject: [PATCH 4/4] support: flush cout in ReadString
+
+uClibc++ does not implicitly do this.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ support.cc | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/support.cc b/support.cc
+index 1107993..891caad 100644
+--- a/support.cc
++++ b/support.cc
+@@ -55,6 +55,7 @@ string ReadString(void) {
+ string ReadString(void) {
+    string inString;
+ 
++   cout << flush;
+    getline(cin, inString);
+    if (!cin.good())
+       exit(5);
+-- 
+2.17.1
+
