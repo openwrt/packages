@@ -11,7 +11,7 @@ PKG_NAME:=bogofilter
 PKG_VERSION:=1.2.5
 PKG_RELEASE:=1
 
-PKG_LICENSE:=GPLv2
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:bogofilter:bogofilter
 
