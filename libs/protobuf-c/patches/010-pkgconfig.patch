@@ -15,14 +15,14 @@
  INSTALL(CODE "EXECUTE_PROCESS (COMMAND ln -sf protoc-gen-c protoc-c WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)")
  ENDIF()
  
-+CONFIGURE_FILE ("libprotobufc.pc.in" "libprotobufc.pc" @ONLY)
-+INSTALL (FILES "../libprotobufc.pc" DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
++CONFIGURE_FILE ("libprotobuf-c.pc.in" "libprotobuf-c.pc" @ONLY)
++INSTALL (FILES "../libprotobuf-c.pc" DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 +
  INCLUDE(Dart)
  
  SET(DART_TESTING_TIMEOUT 5)
 --- /dev/null
-+++ b/build-cmake/libprotobufc.pc.in
++++ b/build-cmake/libprotobuf-c.pc.in
 @@ -0,0 +1,14 @@
 +prefix=@CMAKE_INSTALL_PREFIX@
 +exec_prefix=@CMAKE_INSTALL_PREFIX@
