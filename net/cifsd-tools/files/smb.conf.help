@@ -54,6 +54,11 @@
 ;		the number of minutes of inactivity before a connection is
 ;		considered dead, and it is disconnected. The deadtime only
 ;		takes effect if the number of open files is zero.
+;	- root directory
+;		Sets up a root (base) directory for all shares. In some
+;		sense it's equal to chroot(). When this option set all shares'
+;               paths become relative to root directory, IOW the file name
+;               lookup resolves '/root directory/share path/file path' path.
 ;
 ; Supported [share] level parameters list:
 ;	- comment
