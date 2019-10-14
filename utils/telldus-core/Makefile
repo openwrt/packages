@@ -7,14 +7,19 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=telldus-core
 PKG_VERSION:=2.1.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
-PKG_LICENSE:=LGPL-2.1
-PKG_BUILD_DEPENDS:=argp-standalone
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.telldus.com/TellStick/Software/telldus-core/
 PKG_HASH:=a20f6c74814afc23312d2c93ebbb37fdea9deaaee05ae7b6a6275e11e4662014
-PKG_INSTALL:=1
+
+PKG_MAINTAINER:=Peter Liedholm <PeterFromSwe884@gmail.com>
+PKG_LICENSE:=LGPL-2.1-or-later
+PKG_LICENSE_FILES:=LICENSE
+
+CMAKE_INSTALL:=1
+PKG_BUILD_PARALLEL:=0
+PKG_BUILD_DEPENDS:=!USE_GLIBC:argp-standalone
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -24,8 +29,7 @@ define Package/telldus-core
 	SECTION:=utils
 	CATEGORY:=Utilities
 	TITLE:=Telldus TellStick USB interface
-	URL:=http://www.telldus.com
-	MAINTAINER:=Peter Liedholm <PeterFromSwe884@gmail.com>
+	URL:=https://telldus.com
 	DEPENDS:=+confuse +libftdi +libstdcpp $(ICONV_DEPENDS)
 endef
 
@@ -34,17 +38,17 @@ define Package/telldus-core/description
 	MUST be built with full language support, (don't know how to DEPEND that)
 endef
 
+define Package/telldus-core/conffiles
+/etc/tellstick.conf
+endef
+
 CMAKE_OPTIONS+=\
 	-DBUILD_LIBTELLDUS-CORE=1 \
 	-DBUILD_TDTOOL=1 \
 	-DGENERATE_MAN=0 \
 	-DICONV_LIBRARY=-liconv
 
-TARGET_CXXFLAGS += -fpermissive
-
-define Package/telldus-core/conffiles
-/etc/tellstick.conf
-endef
+TARGET_CXXFLAGS += $(if $(ICONV_FULL),-D_FREEBSD)
 
 define Package/telldus-core/install
 	$(INSTALL_DIR)  $(1)/usr/bin
