@@ -12,22 +12,20 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knxd
 PKG_VERSION:=0.14.29
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/knxd/knxd/tar.gz/$(PKG_VERSION)?
 PKG_HASH:=4513328dd5ecfc17955e6884e938d652dbd33b82797893ae9ad768a247a0f63e
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
-
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=argp-standalone
-
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=!USE_GLIBC:argp-standalone
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -35,7 +33,7 @@ define Package/knxd
   SECTION:=net
   CATEGORY:=Network
   TITLE:=EIB KNX daemon
-  DEPENDS:=+libusb-1.0 +libstdcpp +libev +libfmt
+  DEPENDS:=+libusb-1.0 +libev +libfmt
 endef
 
 define Package/knxd/description
@@ -47,14 +45,8 @@ define Package/knxd/conffiles
 /etc/config/knxd
 endef
 
-TARGET_CXXFLAGS+= -std=c++0x
-TARGET_CXX=$(TARGET_CC)
-
 CONFIGURE_ARGS+= \
 	--disable-systemd
-
-EXTRA_LDFLAGS+= \
-	-largp -lstdc++
 
 define Package/knxd/install
 	$(INSTALL_DIR) $(1)/usr/lib
