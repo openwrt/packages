@@ -27,6 +27,7 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 define Package/libxslt
   SECTION:=libs
@@ -126,6 +127,15 @@ define Build/InstallDev
 	 $(if $(CONFIG_PACKAGE_libexslt),$(call Build/InstallDev/Exslt,$(1),$(2)))
 endef
 
+HOST_CONFIGURE_ARGS+= \
+	--disable-silent-rules \
+	--enable-static \
+	--without-python \
+	--without-crypto \
+	--without-debug \
+	--without-mem-debug \
+	--without-debugger
+
 define Package/libxslt/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) \
@@ -150,3 +160,4 @@ endef
 $(eval $(call BuildPackage,libxslt))
 $(eval $(call BuildPackage,libexslt))
 $(eval $(call BuildPackage,xsltproc))
+$(eval $(call HostBuild))
