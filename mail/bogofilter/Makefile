@@ -20,6 +20,7 @@ PKG_SOURCE_URL:=@SF/project/bogofilter/bogofilter-stable/
 PKG_HASH:=3248a1373bff552c500834adbea4b6caee04224516ae581fb25a4c6a6dee89ea
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
