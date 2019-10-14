@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
-PKG_VERSION:=3.23.1
+PKG_VERSION:=3.24.1
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
@@ -11,7 +11,7 @@ PKG_CPE_ID:=cpe:/a:balabit:syslog-ng
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/balabit/syslog-ng/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
-PKG_HASH:=fb36cfc1982831f74143b77a924ee79714745b5e2b3ff59d086d09a77d0acd38
+PKG_HASH:=d4d0a0357b452be96b69d6f741129275530d8f0451e35adc408ad5635059fa3d
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
