@@ -1,0 +1,11 @@
+diff -u --recursive snort-2.9.15-vanilla/src/dynamic-preprocessors/appid/service_plugins/service_rpc.c snort-2.9.15/src/dynamic-preprocessors/appid/service_plugins/service_rpc.c
+--- snort-2.9.15-vanilla/src/dynamic-preprocessors/appid/service_plugins/service_rpc.c	2019-10-03 02:42:31.000000000 -0400
++++ snort-2.9.15/src/dynamic-preprocessors/appid/service_plugins/service_rpc.c	2019-10-13 16:16:37.146329944 -0400
+@@ -32,6 +32,7 @@
+ #include "flow.h"
+ #include "service_api.h"
+ 
++#include <tirpc/rpc/rpcent.h>
+ #if defined(FREEBSD) || defined(OPENBSD)
+ #include "rpc/rpc.h"
+ #endif
