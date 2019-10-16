@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uwsgi-cgi
 PKG_VERSION:=2.0.18
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_URL= \
 	https://projects.unbit.it/downloads \
