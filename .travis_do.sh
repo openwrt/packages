@@ -5,7 +5,7 @@
 set -e
 
 SDK_HOME="$HOME/sdk"
-SDK_PATH=https://downloads.lede-project.org/snapshots/targets/ar71xx/generic/
+SDK_PATH=https://downloads.openwrt.org/snapshots/targets/ar71xx/generic/
 SDK=-sdk-ar71xx-generic_
 PACKAGES_DIR="$PWD"
 
