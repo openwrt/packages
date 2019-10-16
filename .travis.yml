@@ -3,7 +3,7 @@ git:
   quiet: true
 
 language: c
-dist: trusty
+dist: bionic
 sudo: false
 cache:
   directories:
