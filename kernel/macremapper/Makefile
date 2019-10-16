@@ -36,7 +36,7 @@ define KernelPackage/macremapper/description
   Linux kernel module for implementation the DCW filtering mechanism
 endef
 
-MAKE_FLAGS += KERNEL_SRC=$(LINUX_DIR)
+MAKE_FLAGS += KERNEL_SRC=$(LINUX_DIR) ARCH=$(LINUX_KARCH)
 MAKE_PATH:=kernelmod
 
 $(eval $(call KernelPackage,macremapper))
