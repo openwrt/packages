@@ -13,7 +13,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.71.0
 PKG_SOURCE_VERSION:=1_71_0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
@@ -332,7 +332,7 @@ endef
 $(eval $(call DefineBoostLibrary,atomic,system))
 $(eval $(call DefineBoostLibrary,chrono,system))
 $(eval $(call DefineBoostLibrary,container))
-$(eval $(call DefineBoostLibrary,context,chrono system thread,,!boost-context-exclude))
+$(eval $(call DefineBoostLibrary,context,chrono system,,!boost-context-exclude))
 $(eval $(call DefineBoostLibrary,contract,system))
 $(eval $(call DefineBoostLibrary,coroutine,system chrono context thread,,!boost-coroutine-exclude))
 $(eval $(call DefineBoostLibrary,date_time))
@@ -367,7 +367,7 @@ define Host/Compile
 
 	( cd $(HOST_BUILD_DIR) ; \
 		./bootstrap.sh --prefix=$(STAGING_DIR_HOSTPKG) \
-			--with-libraries=atomic,context,date_time,filesystem,headers,program_options,regex,system,thread ;\
+			--with-libraries=context,filesystem,program_options,regex,system ;\
 		./b2 --ignore-site-config install )
 endef
 
