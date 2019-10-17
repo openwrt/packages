@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=crtmpserver
 PKG_SOURCE_DATE:=2015-10-04
 PKG_SOURCE_VERSION:=b866fffca37c3b967a8878499cd2b91aa2587f34
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/shiretu/crtmpserver/tar.gz/$(PKG_SOURCE_VERSION)?
@@ -18,18 +18,23 @@ PKG_HASH:=3744bef060129fda6f7902eb64f566b0d5049864dc542b2882c550b083ef82aa
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
-PKG_LICENSE:=GPL-3.0
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_PARALLEL:=1
+CMAKE_INSTALL:=1
+CMAKE_SOURCE_SUBDIR:=builders/cmake
+PKG_BUILD_PARALLEL:=0
 
+include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/crtmpserver
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+libstdcpp +libopenssl +liblua
+  DEPENDS:=$(CXX_DEPENDS) +libopenssl +liblua
   TITLE:=C++ RTMP Server
+  URL:=https://github.com/shiretu/crtmpserver
 endef
 
 define Package/crtmpserver/description
@@ -52,42 +57,28 @@ define Package/crtmpserver/conffiles
 /etc/crtmpserver.lua
 endef
 
-# XXX: this hack handles the usr/bin vs bin difference of backfire and trunk
-TS_BASE:=$(wildcard $(TOOLCHAIN_DIR)/bin/$(TARGET_CC))
-TS_BASE:=$(dir $(if $(TS_BASE),$(TS_BASE),$(wildcard $(TOOLCHAIN_DIR)/usr/bin/$(TARGET_CC))))
+CMAKE_OPTIONS += \
+	-DCRTMPSERVER_INSTALL_PREFIX="$(CMAKE_INSTALL_PREFIX)" \
+	-DDL_INCLUDE_PATH="$(TOOLCHAIN_DIR)/include" \
+	-DLUA_INCLUDE_PATH_="$(STAGING_DIR)/usr/include" \
+	-DLUA_LIBRARY_PATH_="$(STAGING_DIR)/usr/lib/liblua.so" \
+	-DOPENSSL_INCLUDE_PATH="$(STAGING_DIR)/usr/include" \
 
-define Build/Configure
-	(cd $(PKG_BUILD_DIR)/builders/make; \
-		cp linux.mk linux-openwrt-uclibc.mk; \
-		$(SED) 's,^TOOLCHAIN_BASE[[:space:]]*=.*,TOOLCHAIN_BASE=$(TS_BASE),' \
-			-e 's,^TOOLCHAIN_PREFIX[[:space:]]*=.*,TOOLCHAIN_PREFIX=$(TARGET_CROSS),' \
-			-e 's,^CCOMPILER[[:space:]]*=.*,CCOMPILER=$(TARGET_CC),' \
-			-e 's,^CXXCOMPILER[[:space:]]*=.*,CXXCOMPILER=$(TARGET_CXX) -std=gnu++03,' \
-			-e 's,^OPTIMIZATIONS[[:space:]]*=.*,OPTIMIZATIONS=-O2,' \
-			-e 's,^SSL_BASE[[:space:]]*=.*,SSL_BASE=$(STAGING_DIR)/usr,' \
-			linux-openwrt-uclibc.mk)
-	(cd $(PKG_BUILD_DIR)/sources/common/include/; \
-		echo '#define CRTMPSERVER_VERSION_RELEASE_NUMBER "$(PKG_VERSION)\n"' > version.h; \
-		echo '#define CRTMPSERVER_VERSION_CODE_NAME "Git\n"'                >> version.h)
-endef
-
-define Build/Compile
-	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/builders/make \
-		PLATFORM=linux-openwrt-uclibc -Wno-error -j6
-endef
+TARGET_CXXFLAGS +=-std=c++11 -ffunction-sections -fdata-sections
+TARGET_LDFLAGS +=-Wl,--gc-sections,--as-needed
 
 define Package/crtmpserver/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/builders/make/output/dynamic/crtmpserver $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/crtmpserver $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/usr/lib/crtmpserver
-	$(CP) $(PKG_BUILD_DIR)/builders/make/output/dynamic/*.so $(1)/usr/lib/crtmpserver/
-	$(foreach app,flvplayback samplefactory admin stresstest appselector vptests applestreamingclient proxypublish, \
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/crtmpserver/lib* $(1)/usr/lib/crtmpserver
+	$(foreach app,flvplayback samplefactory admin stresstest appselector vptests proxypublish, \
 		$(INSTALL_DIR) $(1)/usr/lib/crtmpserver/$(app); \
-		$(INSTALL_BIN) $(PKG_BUILD_DIR)/builders/make/output/dynamic/applications/$(app)/lib$(app).so \
+		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/crtmpserver/applications/$(app)/lib$(app).so \
 			$(1)/usr/lib/crtmpserver/$(app)/; \
 	)
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/builders/make/output/dynamic/crtmpserver.lua $(1)/etc/
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/usr/etc/crtmpserver.lua.sample $(1)/etc/
 	$(INSTALL_DIR) $(1)/usr/share/crtmpserver/appselector
 	$(INSTALL_DIR) $(1)/usr/share/crtmpserver/media
 	$(INSTALL_DIR) $(1)/etc/init.d

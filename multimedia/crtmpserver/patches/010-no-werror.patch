@@ -1,0 +1,31 @@
+--- a/builders/cmake/CMakeLists.txt
++++ b/builders/cmake/CMakeLists.txt
+@@ -140,8 +124,6 @@ ADD_DEFINITIONS(-DHAS_LUA)
+ #ADD_DEFINITIONS(-DUSE_MEM_POOL)
+ #ADD_DEFINITIONS(-DDEBUG_MEM_POOL)
+ 
+-SET(GENERIC_FLAGS "-Wall -Werror")
+-
+ #add 64 bit support for 32 but platforms
+ ADD_DEFINITIONS(-D__USE_FILE_OFFSET64)
+ ADD_DEFINITIONS(-D_FILE_OFFSET_BITS=64)
+--- a/sources/thelib/src/streaming/streamcapabilities.cpp
++++ b/sources/thelib/src/streaming/streamcapabilities.cpp
+@@ -28,7 +28,7 @@
+ 
+ #define CHECK_BA_LIMITS(name,length) \
+ if(ba.AvailableBits()<length) { \
+-	FATAL("Unable to read `"name"` value. Not enough bits. Wanted: %u; Have: %u", \
++	FATAL("Unable to read \"name\" value. Not enough bits. Wanted: %u; Have: %u", \
+ 		(uint32_t)length, ba.AvailableBits()); \
+ 	return false; \
+ }
+@@ -43,7 +43,7 @@ if(ba.AvailableBits()<length) { \
+ { \
+ 	uint64_t ___value___=0; \
+ 	if(!ba.ReadExpGolomb(___value___)) { \
+-		FATAL("Unable to read `"name"` value"); \
++		FATAL("Unable to read \"name\" value"); \
+ 		return false; \
+ 	} \
+ 	v[name]=(type)___value___; \
