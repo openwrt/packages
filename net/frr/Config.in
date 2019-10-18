@@ -1,0 +1,18 @@
+
+if PACKAGE_frr
+comment "SSL support"
+
+choice
+        prompt "Selected SSL MD5 library"
+        default FRR_INTERNAL
+
+        config FRR_OPENSSL
+                bool "OpenSSL"
+
+        config FRR_INTERNAL
+                bool "internal SSL support"
+endchoice
+
+comment Packages
+
+endif
