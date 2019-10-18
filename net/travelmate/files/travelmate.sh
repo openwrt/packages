@@ -13,7 +13,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.4.13"
+trm_ver="1.5.0"
 trm_enabled=0
 trm_debug=0
 trm_iface="trm_wwan"
@@ -52,7 +52,7 @@ f_trim()
 #
 f_envload()
 {
-	local IFS
+	local IFS check wpa_checks
 
 	# (re-)initialize global list variables
 	#
@@ -63,9 +63,18 @@ f_envload()
 	trm_sysver="$(ubus -S call system board 2>/dev/null | jsonfilter -e '@.model' -e '@.release.description' | \
 		awk 'BEGIN{ORS=", "}{print $0}' | awk '{print substr($0,1,length($0)-2)}')"
 
-	# get eap capabilities
+	# get wpa_supplicant capabilities
 	#
-	trm_eap="$("${trm_wpa}" -veap >/dev/null 2>&1; printf "%u" "${?}")"
+	wpa_checks="eap sae owe"
+	for check in ${wpa_checks}
+	do
+		if [ -x "${trm_wpa}" ]
+		then
+			eval "trm_${check}check=\"$("${trm_wpa}" -v${check} >/dev/null 2>&1; printf "%u" "${?}")\""
+		else
+			eval "trm_${check}check=\"1\""
+		fi
+	done
 
 	# load config and check 'enabled' option
 	#
@@ -133,13 +142,14 @@ f_envload()
 #
 f_prep()
 {
-	local IFS mode network radio disabled eaptype config="${1}" proactive="${2}"
+	local IFS mode network radio encryption eaptype disabled config="${1}" proactive="${2}"
 
 	mode="$(uci_get "wireless" "${config}" "mode")"
 	network="$(uci_get "wireless" "${config}" "network")"
 	radio="$(uci_get "wireless" "${config}" "device")"
-	disabled="$(uci_get "wireless" "${config}" "disabled")"
+	encryption="$(uci_get "wireless" "${config}" "encryption")"
 	eaptype="$(uci_get "wireless" "${config}" "eap_type")"
+	disabled="$(uci_get "wireless" "${config}" "disabled")"
 
 	if [ -n "${config}" ] && [ -n "${radio}" ] && [ -n "${mode}" ] && [ -n "${network}" ]
 	then
@@ -160,13 +170,18 @@ f_prep()
 			then
 				trm_active_sta="${config}"
 			fi
-			if [ -z "${eaptype}" ] || { [ -n "${eaptype}" ] && [ "${trm_eap:-1}" -eq 0 ]; }
+			if [ -z "${eaptype}" ] || { [ -n "${eaptype}" ] && [ "${trm_eapcheck}" -eq 0 ]; }
 			then
-				trm_stalist="$(f_trim "${trm_stalist} ${config}-${radio}")"
+				if { [ "${encryption%-*}" != "sae" ] && [ "${encryption%-*}" != "wpa3" ] && [ "${encryption}" != "owe" ]; } || \
+					{ { [ "${encryption%-*}" = "sae" ] || [ "${encryption%-*}" = "wpa3" ]; } && [ "${trm_saecheck}" -eq 0 ]; } || \
+					{ [ "${encryption}" = "owe" ] && [ "${trm_owecheck}" -eq 0 ]; }
+				then
+					trm_stalist="$(f_trim "${trm_stalist} ${config}-${radio}")"
+				fi
 			fi
 		fi
 	fi
-	f_log "debug" "f_prep ::: config: ${config}, mode: ${mode}, network: ${network}, radio: ${radio}, trm_radio: ${trm_radio:-"-"}, trm_active_sta: ${trm_active_sta:-"-"}, proactive: ${proactive}, trm_eap: ${trm_eap:-"-"}, disabled: ${disabled}"
+	f_log "debug" "f_prep ::: config: ${config}, mode: ${mode}, network: ${network}, radio: ${radio}, trm_radio: ${trm_radio:-"-"}, trm_active_sta: ${trm_active_sta:-"-"}, proactive: ${proactive}, trm_eapcheck: ${trm_eapcheck:-"-"}, trm_saecheck: ${trm_saecheck:-"-"}, trm_owecheck: ${trm_owecheck:-"-"}, disabled: ${disabled}"
 }
 
 # check net status
@@ -296,7 +311,7 @@ f_check()
 									login_command_args="$(uci_get "travelmate" "${uci_essid}${uci_bssid}" "command_args")"
 									"${login_command}" ${login_command_args} >/dev/null 2>&1
 									rc=${?}
-									f_log "info" "captive portal login '${login_command:0:40} ${login_command_args}' for '${cp_domain}' has been executed with rc '${rc}'"
+									f_log "info" "captive portal login '${login_command:0:40} ${login_command_args:0:20}' for '${cp_domain}' has been executed with rc '${rc}'"
 									if [ "${rc}" -eq 0 ]
 									then
 										result="$(f_net)"
@@ -352,7 +367,7 @@ f_check()
 #
 f_jsnup()
 {
-	local IFS config d1 d2 d3 last_date last_station sta_iface sta_radio sta_essid sta_bssid last_status dev_status status="${trm_ifstatus}" faulty_list faulty_station="${1}"
+	local IFS config d1 d2 d3 last_date last_station sta_iface sta_radio sta_essid sta_bssid last_status dev_status wpa_status status="${trm_ifstatus}" faulty_list faulty_station="${1}"
 
 	dev_status="$(ubus -S call network.wireless status 2>/dev/null)"
 	if [ -n "${dev_status}" ]
@@ -375,7 +390,7 @@ f_jsnup()
 		json_get_var last_status "travelmate_status"
 		if [ "${last_status}" = "running / not connected" ] || [ "${last_station}" != "${sta_radio:-"-"}/${sta_essid:-"-"}/${sta_bssid:-"-"}" ]
 		then
-			last_date="$(/bin/date "+%Y.%m.%d-%H:%M:%S")"
+			last_date="$(date "+%Y.%m.%d-%H:%M:%S")"
 		fi
 	elif [ "${status}" = "error" ]
 	then
@@ -387,14 +402,14 @@ f_jsnup()
 	fi
 	if [ -z "${last_date}" ]
 	then
-		last_date="$(/bin/date "+%Y.%m.%d-%H:%M:%S")"
+		last_date="$(date "+%Y.%m.%d-%H:%M:%S")"
 	fi
 
 	json_get_var faulty_list "faulty_stations"
 	if [ -n "${faulty_list}" ] && [ "${trm_listexpiry}" -gt 0 ]
 	then
-		d1="$(/bin/date -d "${last_date}" "+%s")"
-		d2="$(/bin/date "+%s")"
+		d1="$(date -d "${last_date}" "+%s")"
+		d2="$(date "+%s")"
 		d3=$(((d2 - d1)/60))
 		if [ "${d3}" -ge "${trm_listexpiry}" ]
 		then
@@ -407,14 +422,34 @@ f_jsnup()
 		if [ -z "$(printf "%s" "${faulty_list}" | grep -Fo "${faulty_station}")" ]
 		then
 			faulty_list="$(f_trim "${faulty_list} ${faulty_station}")"
-			last_date="$(/bin/date "+%Y.%m.%d-%H:%M:%S")"
+			last_date="$(date "+%Y.%m.%d-%H:%M:%S")"
 		fi
+	fi
+
+	if [ "${trm_eapcheck}" -eq 0 ]
+	then
+		wpa_status="EAP"
+	else
+		wpa_status="-"
+	fi
+	if [ "${trm_saecheck}" -eq 0 ]
+	then
+		wpa_status="${wpa_status}/SAE"
+	else
+		wpa_status="${wpa_status}/-"
+	fi
+	if [ "${trm_owecheck}" -eq 0 ]
+	then
+		wpa_status="${wpa_status}/OWE"
+	else
+		wpa_status="${wpa_status}/-"
 	fi
 	json_add_string "travelmate_status" "${status}"
 	json_add_string "travelmate_version" "${trm_ver}"
 	json_add_string "station_id" "${sta_radio:-"-"}/${sta_essid:-"-"}/${sta_bssid:-"-"}"
 	json_add_string "station_interface" "${sta_iface:-"-"}"
 	json_add_string "faulty_stations" "${faulty_list}"
+	json_add_string "wpa_capabilities" "${wpa_status:-"-"}"
 	json_add_string "last_rundate" "${last_date}"
 	json_add_string "system" "${trm_sysver}"
 	json_dump > "${trm_rtfile}"
