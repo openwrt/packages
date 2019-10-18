@@ -52,7 +52,7 @@ stop_service()
 	rc_procd "${trm_script}" stop
 }
 
-status()
+status_service()
 {
 	local key keylist value rtfile="$(uci_get travelmate global trm_rtfile)"
 
@@ -79,7 +79,12 @@ service_triggers()
 	local delay="$(uci_get travelmate global trm_triggerdelay)"
 
 	PROCD_RELOAD_DELAY=$((${delay:-2} * 1000))
-	procd_add_interface_trigger "interface.*.down" "${trigger:-"trm_wwan"}" "${trm_init}" reload
+	if [ -n "${trigger}" ]
+	then
+		procd_add_interface_trigger "interface.*.down" "${trigger}" "${trm_init}" reload
+	else
+		procd_add_raw_trigger "interface.*.down" ${PROCD_RELOAD_DELAY} "${trm_init}" reload
+	fi
 	procd_add_config_trigger "config.change" "wireless" "${trm_init}" reload
 	procd_add_config_trigger "config.change" "travelmate" "${trm_init}" restart
 }

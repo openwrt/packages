@@ -9,11 +9,10 @@ then
 	exit 1
 fi
 
-
-response="$("${cmd}" $url -d "password=$2&pwd=$2&username=$1" \
+response="$("${cmd}" $url -d "username=${1}&password=${2}" \
 	--header "Content-Type:application/x-www-form-urlencoded" -s)"
 
-if echo "${response}" | grep -q "${success_string}";
+if [ -n "$(printf "%s" "${response}" | grep "${success_string}")" ]
 then
 	exit 0
 else
