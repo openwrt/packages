@@ -1,6 +1,6 @@
 --- a/configure
 +++ b/configure
-@@ -15273,7 +15273,7 @@ $as_echo_n "checking ABIFLAGS... " >&6;
+@@ -15142,7 +15142,7 @@ $as_echo_n "checking ABIFLAGS... " >&6;
  $as_echo "$ABIFLAGS" >&6; }
  { $as_echo "$as_me:${as_lineno-$LINENO}: checking SOABI" >&5
  $as_echo_n "checking SOABI... " >&6; }
@@ -11,7 +11,7 @@
  
 --- a/configure.ac
 +++ b/configure.ac
-@@ -4736,7 +4736,7 @@ AC_SUBST(SOABI)
+@@ -4633,7 +4633,7 @@ AC_SUBST(SOABI)
  AC_MSG_CHECKING(ABIFLAGS)
  AC_MSG_RESULT($ABIFLAGS)
  AC_MSG_CHECKING(SOABI)
@@ -19,4 +19,4 @@
 +SOABI='cpython-'`echo $VERSION | tr -d .`
  AC_MSG_RESULT($SOABI)
  
- AC_SUBST(EXT_SUFFIX)
+ # Release and debug (Py_DEBUG) ABI are compatible, but not Py_TRACE_REFS ABI
