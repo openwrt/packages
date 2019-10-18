@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fio
-PKG_VERSION:=3.15
+PKG_VERSION:=3.16
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://brick.kernel.dk/snaps
-PKG_HASH:=246369954833e0d6be5ef4f9c47968adafcb4a0751badca2cdd80700b4bc5784
+PKG_HASH:=77f5b6e11f8d7f08416af100359ec295620673ddacef370f840f2a4e1a33119e
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
