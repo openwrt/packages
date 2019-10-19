@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netdata
-PKG_VERSION:=1.18.0
+PKG_VERSION:=1.18.1
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>, Daniel Engberg <daniel.engberg.lists@pyret.net>
@@ -18,9 +18,10 @@ PKG_CPE_ID:=cpe:/a:my-netdata:netdata
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/netdata/netdata/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=8396e818f8fe5c1ce345e99a74da8204970810095047dcf5feffee28d35cc937
+PKG_HASH:=c788ec01f5228768cbf5032324e041defbac3aaa57a074b98038444fc46ba2d4
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_USE_MIPS16:=0
 
