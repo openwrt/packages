@@ -12,11 +12,9 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  imap-send.c | 2 ++
  1 file changed, 2 insertions(+)
 
-diff --git a/imap-send.c b/imap-send.c
-index b4eb886e2..877a4e368 100644
 --- a/imap-send.c
 +++ b/imap-send.c
-@@ -284,8 +284,10 @@ static int ssl_socket_connect(struct imap_socket *sock, int use_tls_only, int ve
+@@ -284,8 +284,10 @@ static int ssl_socket_connect(struct ima
  	int ret;
  	X509 *cert;
  
@@ -27,6 +25,3 @@ index b4eb886e2..877a4e368 100644
  
  	meth = SSLv23_method();
  	if (!meth) {
--- 
-2.20.1
-
