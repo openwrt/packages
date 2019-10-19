@@ -9,7 +9,7 @@ menu "Libraries"
 			very large package
 		default n
 	config INCLUDE_STATIC_LIBPTHREAD
-		bool "Include static libptread on target"
+		bool "Include static libpthread on target"
 		help
 			Copies libpthread.a to target device
 			Increases the size of an already
@@ -27,8 +27,13 @@ menu "Libraries"
 		bool "Generate spec file for easy static c++ linking on target"
 		help
 			Creates a spec file for gcc to eliminate the need for
-			-lstdc++, libgcc_pic and -static-libstdc flags when
+			-lstdc++, -libgcc_pic and -static-libstdc flags when
 			statically linking c++ programs
+			This doesn't work if the package is built into the
+			image, you need to generate the spec file after
+			installing the image. For example run:
+			g++ -dumpspecs |sed s/--start-group}\ %G\ %L\ /--start-group}\ %G\ %L\ -lstdc++\ -lgcc_pic\ / >/usr/lib/gcc/x86_64-openwrt-linux-musl/7.4.0/specs
+			on a x86_64 system
 		default n
 endmenu
 

@@ -17,14 +17,14 @@ define Package/gcc
   CATEGORY:=Development
   TITLE:=gcc
   MAINTAINER:=Noble Pepper <gccmaintain@noblepepper.com>
-  DEPENDS:= +binutils +libstdcpp @!arc
+  DEPENDS:= +binutils +libstdcpp @!arc @GCC_VERSION=7.4.0
   MENU:=1
 endef
 
 PKG_NAME:=gcc
 # PKG_VERSION=7.3.0
 PKG_VERSION=7.4.0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 PKG_SOURCE_URL:=@GNU/gcc/gcc-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_INSTALL:=1
@@ -58,8 +58,10 @@ ifeq ($(CONFIG_INCLUDE_STATIC_LIBSTDC),y)
 endif
 
 ifeq ($(CONFIG_INCLUDE_STATIC_LINK_SPEC),y)
-	INSTALL_STATIC_SPEC=g++ -dumpspecs |sed s/--start-group}\ %G\ %L\ /--start-group}\ %G\ %L\ -lstdc++\ -lgcc_pic\ / >/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)/specs
-	REMOVE_STATIC_SPEC=rm /usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)/specs
+	ifeq ($(CONFIG_PACKAGE_gcc),m)
+		INSTALL_STATIC_SPEC=g++ -dumpspecs |sed s/--start-group}\ %G\ %L\ /--start-group}\ %G\ %L\ -lstdc++\ -lgcc_pic\ / >/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)/specs
+		REMOVE_STATIC_SPEC=rm /usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)/specs
+	endif
 endif
 
 include $(INCLUDE_DIR)/package.mk
