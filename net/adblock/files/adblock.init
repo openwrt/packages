@@ -83,9 +83,9 @@ report()
 	rc_procd "${adb_script}" report "${1:-"+"}" "${2:-"50"}" "${3:-"false"}" "${4:-"true"}"
 }
 
-status()
+status_service()
 {
-	local key keylist value 
+	local key keylist value
 	local rtfile="$(uci_get adblock extra adb_rtfile "/tmp/adb_runtime.json")"
 
 	if [ -s "${rtfile}" ]

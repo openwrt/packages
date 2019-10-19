@@ -269,8 +269,9 @@ Finally enable email support and add a valid email address in LuCI.
 [...]
 ```
   
-**Cronjob for a regular block list update (`/etc/crontabs/root`):**
+**Cronjob for regular block list updates (`/etc/crontabs/root`):**
 
+The following command as a cron job updates each individual block list from their source so that they hold the most current domains to block:
 ```
 0 06 * * *    /etc/init.d/adblock reload
 ```
