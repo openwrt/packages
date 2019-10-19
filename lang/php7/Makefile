@@ -533,6 +533,10 @@ define Package/php7-fastcgi/install
 	$(INSTALL_BIN) ./files/php7-fastcgi.init $(1)/etc/init.d/php7-fastcgi
 endef
 
+define Package/php7-fastcgi/conffiles
+/etc/config/php7-fastcgi
+endef
+
 define Package/php7-fpm/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sapi/fpm/php-fpm $(1)/usr/bin/php-fpm
