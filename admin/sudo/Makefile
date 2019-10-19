@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sudo
-PKG_VERSION:=1.8.27
+PKG_VERSION:=1.8.28p1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.sudo.ws/dist
-PKG_HASH:=7beb68b94471ef56d8a1036dbcdc09a7b58a949a68ffce48b83f837dd33e2ec0
+PKG_HASH:=23ba5a84af31e3b5ded58d4be6d3f6939a495a55561fba92c6941b79a6e8b027
 
-PKG_MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
+PKG_MAINTAINER:=
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=doc/LICENSE
 PKG_CPE_ID:=cpe:/a:todd_miller:sudo
