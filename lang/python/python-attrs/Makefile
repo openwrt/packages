@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-attrs
-PKG_VERSION:=19.2.0
+PKG_VERSION:=19.3.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=attrs-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/a/attrs
-PKG_HASH:=f913492e1663d3c36f502e5e9ba6cd13cf19d7fab50aa13239e420fef95e1396
+PKG_HASH:=f7b7ce16570fe9965acd6d30101a28f62fb4a7f9e926b3bbc9b61f8b04247e72
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-attrs-$(PKG_VERSION)
 
