@@ -11,15 +11,14 @@ PKG_NAME:=python-dpkt
 PKG_VERSION:=1.9.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=dpkt-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/d/dpkt
+PYPI_NAME:=dpkt
 PKG_HASH:=52a92ecd5ca04d5bd852bb11cb2eac4bbe38b42a7c472e0d950eeb9f82a81e54
-PKG_BUILD_DIR:=$(BUILD_DIR)/dpkt-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Andrew McConachie <andrew@depht.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 

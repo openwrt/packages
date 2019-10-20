@@ -11,15 +11,14 @@ PKG_NAME:=python-pyrsistent
 PKG_VERSION:=0.15.4
 PKG_RELEASE:=1
 
-PKG_SOURCE:=pyrsistent-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pyrsistent/
+PYPI_NAME:=pyrsistent
 PKG_HASH:=34b47fa169d6006b32e99d4b3c4031f155e6e68ebcc107d6454852e8e0ee6533
-PKG_BUILD_DIR:=$(BUILD_DIR)/pyrsistent-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.mit
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

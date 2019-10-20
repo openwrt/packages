@@ -4,19 +4,16 @@ PKG_NAME:=botocore
 PKG_VERSION:=1.12.66
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/b/botocore
+PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=25c39ecc71356287cf79d66981ec77deca374e28043b19b2f818d48aa34272a1
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-botocore-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
 PKG_LICENSE:=MIT
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-botocore/Default
   SUBMENU:=Python

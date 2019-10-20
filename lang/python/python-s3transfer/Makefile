@@ -4,19 +4,16 @@ PKG_NAME:=s3transfer
 PKG_VERSION:=0.2.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/s/s3transfer
+PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=f23d5cb7d862b104401d9021fc82e5fa0e0cf57b7660a1331425aab0c691d021
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-s3transfer-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
 PKG_LICENSE:=MIT
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-s3transfer/Default
   SECTION:=lang

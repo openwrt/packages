@@ -11,16 +11,14 @@ PKG_NAME:=python-xmltodict
 PKG_VERSION:=0.12.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=xmltodict-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/x/xmltodict/
+PYPI_NAME:=xmltodict
 PKG_HASH:=50d8c638ed7ecb88d90561beedbf720c9b4e851a9fa6c47ebd64e99d166d8a21
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/xmltodict-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

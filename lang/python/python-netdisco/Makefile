@@ -11,16 +11,14 @@ PKG_NAME:=python-netdisco
 PKG_VERSION:=2.6.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=netdisco-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/n/netdisco
+PYPI_NAME:=netdisco
 PKG_HASH:=2b3aca14a1807712a053f11fd80dc251dd821ee4899aefece515287981817762
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/netdisco-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.md
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

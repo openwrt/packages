@@ -8,8 +8,7 @@ PKG_NAME:=Jinja2
 PKG_VERSION:=2.10.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/J/Jinja2
+PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=065c4f02ebe7f7cf559e49ee5a95fb800a9e4528727aec6f24402a5374c65013
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
@@ -17,6 +16,7 @@ PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:pocoo:jinja2
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

@@ -12,14 +12,14 @@ PKG_NAME:=maxminddb
 PKG_VERSION:=1.5.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/m/maxminddb/
+PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=449a1713d37320d777d0db286286ab22890f0a176492ecf3ad8d9319108f2f79
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

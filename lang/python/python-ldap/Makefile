@@ -14,10 +14,10 @@ PKG_MAINTAINER:=Dmitry Trefilov <the-alien@live.ru>
 PKG_LICENSE:=Python-style
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/python-ldap
+PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=41975e79406502c092732c57ef0c2c2eb318d91e8e765f81f5d4ab6c1db727c5
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 

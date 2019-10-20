@@ -11,21 +11,17 @@ PKG_NAME:=python-constantly
 PKG_VERSION:=15.1.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=constantly-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/c/constantly
+PYPI_NAME:=constantly
 PKG_HASH:=586372eb92059873e29eba4f9dec8381541b4d3834660707faf8ba59146dfc35
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-constantly-$(PKG_VERSION)
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-constantly/Default
   SECTION:=lang

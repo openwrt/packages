@@ -13,17 +13,13 @@ PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Eneas U de Queiroz 
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
 
-PKG_SOURCE:=jdcal-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/j/jdcal
+PYPI_NAME:=jdcal
 PKG_HASH:=472872e096eb8df219c23f2689fc336668bdb43d194094b5cc1707e1640acfc8
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-jdcal-$(PKG_VERSION)
-
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-jdcal/Default
   SUBMENU:=Python

@@ -12,19 +12,16 @@ PKG_VERSION:=1.4.4
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 
-PKG_SOURCE:=mysqlclient-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/m/mysqlclient
+PYPI_NAME:=mysqlclient
 PKG_HASH:=9c737cc55a5dc8dd3583a942d5a9b21be58d16f00f5fefca4e575e7d9682e98c
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-mysqlclient-$(PKG_VERSION)
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
 # python-mysqlclient needs iconv
 include $(INCLUDE_DIR)/nls.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-mysqlclient/Default
   SUBMENU:=Python
