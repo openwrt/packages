@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cffi
-PKG_VERSION:=1.12.3
+PKG_VERSION:=1.13.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=cffi-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/c/cffi
-PKG_HASH:=041c81822e9f84b1d9c401182e174996f0bae9991f33725d059b771744290774
+PKG_HASH:=8fe230f612c18af1df6f348d02d682fe2c28ca0a6c3856c99599cdacae7cf226
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-cffi-$(PKG_VERSION)
 
