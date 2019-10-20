@@ -11,20 +11,17 @@ PKG_NAME:=django1
 PKG_VERSION:=1.11.25
 PKG_RELEASE:=1
 
-PKG_SOURCE:=Django-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/D/Django
+PYPI_NAME:=Django
 PKG_HASH:=5314e8586285d532b7aa5c6d763b0248d9a977a37efec86d30f0212b82e8ef66
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-django-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE LICENSE.python
 PKG_CPE_ID:=cpe:/a:djangoproject:django
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/django1/Default
   SUBMENU:=Python

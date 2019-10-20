@@ -11,16 +11,14 @@ PKG_NAME:=python-markdown
 PKG_VERSION:=3.1.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=Markdown-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/m/markdown/
+PYPI_NAME:=Markdown
 PKG_HASH:=2e50876bcdd74517e7b71f3e7a76102050edec255b3983403f1a63e7c8a41e7a
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/Markdown-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.md
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

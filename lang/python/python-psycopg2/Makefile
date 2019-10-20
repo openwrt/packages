@@ -11,10 +11,8 @@ PKG_NAME:=python-psycopg2
 PKG_VERSION:=2.7.6.1
 PKG_RELEASE:=2
 
-PKG_SOURCE:=psycopg2-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/psycopg2
+PYPI_NAME:=psycopg2
 PKG_HASH:=27959abe64ca1fc6d8cd11a71a1f421d8287831a3262bd4cacd43bbf43cc3c82
-PKG_BUILD_DIR:=$(BUILD_DIR)/psycopg2-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Dmitry Trefilov <the-alien@live.ru>
 PKG_LICENSE:=LGPL-3.0-or-later
@@ -22,6 +20,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DEPENDS:=python/host
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 

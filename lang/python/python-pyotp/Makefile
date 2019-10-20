@@ -11,14 +11,14 @@ PKG_NAME:=pyotp
 PKG_VERSION:=2.2.7
 PKG_RELEASE:=1
 
-PKG_SOURCE:=pyotp-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pyotp
+PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=be0ffeabddaa5ee53e7204e7740da842d070cf69168247a3d0c08541b84de602
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

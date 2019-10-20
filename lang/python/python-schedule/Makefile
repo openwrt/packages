@@ -11,15 +11,14 @@ PKG_NAME:=python-schedule
 PKG_VERSION:=0.6.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=schedule-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/s/schedule/
+PYPI_NAME:=schedule
 PKG_HASH:=f9fb5181283de4db6e701d476dd01b6a3dd81c38462a54991ddbb9d26db857c9
-PKG_BUILD_DIR:=$(BUILD_DIR)/schedule-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

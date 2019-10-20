@@ -4,19 +4,16 @@ PKG_NAME:=jmespath
 PKG_VERSION:=0.9.3
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/j/jmespath
+PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=6a81d4c9aa62caf061cb517b4d9ad1dd300374cd4706997aff9cd6aedd61fc64
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-jmespath-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
 PKG_LICENSE:=MIT
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-jmespath/Default
   SUBMENU:=Python

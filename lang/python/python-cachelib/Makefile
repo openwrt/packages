@@ -8,15 +8,14 @@ PKG_NAME:=python-cachelib
 PKG_VERSION:=0.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=cachelib-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/c/cachelib
+PYPI_NAME:=cachelib
 PKG_HASH:=8b889b509d372095357b8705966e1282d40835c4126d7c2b07fd414514d8ae8d
-PKG_BUILD_DIR:=$(BUILD_DIR)/cachelib-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Stepan Henek <stepan.henek@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

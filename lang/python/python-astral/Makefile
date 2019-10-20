@@ -11,21 +11,17 @@ PKG_NAME:=python-astral
 PKG_VERSION:=1.10.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=astral-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/a/astral/
+PYPI_NAME:=astral
 PKG_HASH:=d2a67243c4503131c856cafb1b1276de52a86e5b8a1d507b7e08bee51cb67bf1
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-astral-$(PKG_VERSION)
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-astral/Default
   SECTION:=lang

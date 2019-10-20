@@ -13,13 +13,12 @@ PKG_RELEASE:=1
 PKG_MAINTAINER:=Micke Prag <micke.prag@telldus.se>
 PKG_LICENSE:=MIT
 
-PKG_SOURCE:=crcmod-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://pypi.python.org/packages/source/c/crcmod/
+PYPI_NAME:=crcmod
 PKG_HASH:=dc7051a0db5f2bd48665a990d3ec1cc305a466a77358ca4492826f41f283601e
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/crcmod-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=python
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 

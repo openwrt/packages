@@ -11,16 +11,14 @@ PKG_NAME:=python-zeroconf
 PKG_VERSION:=0.23.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=zeroconf-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/source/z/zeroconf/
+PYPI_NAME:=zeroconf
 PKG_HASH:=e0c333b967c48f8b2e5cc94a1d4d28893023fb06dfd797ee384a94cdd1d0eef5
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/zeroconf-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=COPYING
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

@@ -11,14 +11,15 @@ PKG_NAME:=async-timeout
 PKG_VERSION:=3.0.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=async-timeout-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/a/async-timeout/
+PYPI_NAME:=async_timeout
+PYPI_SOURCE_NAME:=async-timeout
 PKG_HASH:=0c3c816a028d47f659d6ff5c745cb2acf1f966da1fe5c19c77a70282b25f4c5f
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

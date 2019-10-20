@@ -12,17 +12,13 @@ PKG_RELEASE:=1
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Eneas U de Queiroz <cote2004-github@yahoo.com>
 PKG_LICENSE:=MIT
 
-PKG_SOURCE:=et_xmlfile-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/e/et_xmlfile
+PYPI_NAME:=et_xmlfile
 PKG_HASH:=614d9722d572f6246302c4491846d2c393c199cfa4edc9af593437691683335b
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-et_xmlfile-$(PKG_VERSION)
-
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-et_xmlfile/Default
   SUBMENU:=Python

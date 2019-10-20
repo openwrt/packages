@@ -4,15 +4,14 @@ PKG_NAME:=boto3
 PKG_VERSION:=1.9.135
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/b/boto3
+PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=5e5805992e873e5687b5ef3b4c56c386ccb4df1c3364f8b8601d289e2f275be1
-PKG_BUILD_DIR:=$(BUILD_DIR)/boto3-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

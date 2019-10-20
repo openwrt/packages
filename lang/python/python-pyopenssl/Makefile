@@ -11,8 +11,7 @@ PKG_NAME:=python-pyopenssl
 PKG_VERSION:=19.0.0
 PKG_RELEASE:=2
 
-PKG_SOURCE:=pyOpenSSL-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pyOpenSSL
+PYPI_NAME:=pyOpenSSL
 PKG_HASH:=aeca66338f6de19d1aa46ed634c3b9ae519a64b458f8468aec688e7e3c20f200
 
 PKG_LICENSE:=Apache-2.0
@@ -20,13 +19,10 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_CPE_ID:=cpe:/a:pyopenssl_project:pyopenssl
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-pyopenssl-$(PKG_VERSION)
-
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-pyopenssl/Default
   SECTION:=lang

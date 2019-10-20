@@ -11,15 +11,14 @@ PKG_NAME:=python-cachetools
 PKG_VERSION:=3.1.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=cachetools-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/c/cachetools/
+PYPI_NAME:=cachetools
 PKG_HASH:=8ea2d3ce97850f31e4a08b0e2b5e6c34997d7216a9d2c98e0f3978630d4da69a
-PKG_BUILD_DIR:=$(BUILD_DIR)/cachetools-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

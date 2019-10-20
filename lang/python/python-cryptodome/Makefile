@@ -8,22 +8,18 @@ PKG_NAME:=python-cryptodome
 PKG_VERSION:=3.9.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=pycryptodome-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pycryptodome
+PYPI_NAME:=pycryptodome
 PKG_HASH:=dbeb08ad850056747aa7d5f33273b7ce0b9a77910604a1be7b7a6f2ef076213f
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-cryptodome-$(PKG_VERSION)
 
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE.rst
 PKG_MAINTAINER:=Richard Yu <yurichard3839@gmail.com>
 PKG_CPE_ID:=cpe:/a:pycryptodome:pycryptodome
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 PYTHON_PKG_SETUP_ARGS:=
 PYTHON_PKG_SETUP_VARS:= \

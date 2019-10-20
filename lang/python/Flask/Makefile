@@ -8,8 +8,7 @@ PKG_NAME:=Flask
 PKG_VERSION:=1.1.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/F/Flask
+PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=13f9f196f330c7c2c5d7a5cf91af894110ca0215ac051b5844701f2bfd934d52
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
@@ -17,6 +16,7 @@ PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.rst
 PKG_CPE_ID:=cpe:/a:palletsprojects:flask
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

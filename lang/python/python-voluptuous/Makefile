@@ -11,21 +11,17 @@ PKG_NAME:=python-voluptuous
 PKG_VERSION:=0.11.7
 PKG_RELEASE:=1
 
-PKG_SOURCE:=voluptuous-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/v/voluptuous/
+PYPI_NAME:=voluptuous
 PKG_HASH:=2abc341dbc740c5e2302c7f9b8e2e243194fb4772585b991931cb5b22e9bf456
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-voluptuous-$(PKG_VERSION)
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-voluptuous/Default
   SECTION:=lang

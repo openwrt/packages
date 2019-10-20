@@ -8,15 +8,15 @@ PKG_NAME:=python-intelhex
 PKG_VERSION:=2.2.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=intelhex-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/i/intelhex/
+PYPI_NAME:=IntelHex
+PYPI_SOURCE_NAME:=intelhex
 PKG_HASH:=009d8511e0d50639230c39af9607deee771cf026f67ef7507a8c3fd4fa927832
-PKG_BUILD_DIR:=$(BUILD_DIR)/intelhex-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

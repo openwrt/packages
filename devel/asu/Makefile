@@ -10,15 +10,12 @@ PKG_RELEASE=2
 
 PKG_LICENSE:=GPL-3.0
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/a/asu/
+PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=e60027cd531cc5b9b20d3321acc06fdf0cdd894004919800575b8235343ba8ef
 
 PKG_BUILD_DEPENDS:=python3
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
-
+include ../../lang/python/pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
 

@@ -9,12 +9,11 @@ PKG_VERSION:=5.2.2
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 
-PKG_SOURCE_URL:=https://pypi.python.org/packages/source/i/influxdb/
-PKG_SOURCE:=influxdb-$(PKG_VERSION).tar.gz
+PYPI_NAME:=influxdb
 PKG_HASH:=afeff28953a91b4ea1aebf9b5b8258a4488d0e49e2471db15ea43fd2c8533143
 PKG_LICENSE:=MIT
-PKG_BUILD_DIR:=$(BUILD_DIR)/influxdb-$(PKG_VERSION)
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

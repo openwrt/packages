@@ -8,21 +8,17 @@ PKG_NAME:=pycurl
 PKG_VERSION:=7.43.0.3
 PKG_RELEASE:=1
 
-PKG_SOURCE:=pycurl-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pycurl
+PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=6f08330c5cf79fa8ef68b9912b9901db7ffd34b63e225dce74db56bb21deda8e
 
 PKG_MAINTAINER:=Waldemar Konik <informatyk74@interia.pl>
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING-LGPL
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-curl-$(PKG_VERSION)
-
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-curl/Default
   CATEGORY:=Languages

@@ -11,20 +11,16 @@ PKG_NAME:=python-pyptlib
 PKG_VERSION:=0.0.6
 PKG_RELEASE:=3
 
-PKG_SOURCE:=pyptlib-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pyptlib
+PYPI_NAME:=pyptlib
 PKG_HASH:=b98472e3d9e8f4689d3913ca8f89afa5e6cc5383dcd8686987606166f9dac607
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-pyptlib-$(PKG_VERSION)
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-pyptlib/Default
   SECTION:=lang

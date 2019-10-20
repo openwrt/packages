@@ -11,8 +11,7 @@ PKG_NAME:=aiohttp
 PKG_VERSION:=3.5.4
 PKG_RELEASE:=1
 
-PKG_SOURCE:=aiohttp-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/a/aiohttp/
+PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=9c4c83f4fa1938377da32bc2d59379025ceeee8e24b89f72fcbccd8ca22dc9bf
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
@@ -20,6 +19,7 @@ PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:aio-libs_project:aiohttp
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

@@ -11,16 +11,14 @@ PKG_NAME:=python-ifaddr
 PKG_VERSION:=0.1.6
 PKG_RELEASE:=1
 
-PKG_SOURCE:=ifaddr-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/i/ifaddr/
+PYPI_NAME:=ifaddr
 PKG_HASH:=c19c64882a7ad51a394451dabcbbed72e98b5625ec1e79789924d5ea3e3ecb93
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/ifaddr-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

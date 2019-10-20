@@ -13,16 +13,13 @@ PKG_RELEASE:=3
 PKG_LICENSE:=MIT
 PKG_CPE_ID:=cpe:/a:simplejson_project:simplejson
 
-PKG_SOURCE:=simplejson-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/s/simplejson
+PYPI_NAME:=simplejson
 PKG_HASH:=b1f329139ba647a9548aa05fb95d046b4a677643070dc2afc05fa2e975d09ca5
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-simplejson-$(PKG_VERSION)
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-simplejson/Default
   SUBMENU:=Python

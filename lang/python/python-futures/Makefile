@@ -4,18 +4,15 @@ PKG_NAME:=futures
 PKG_VERSION:=3.2.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/f/futures
+PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=9ec02aa7d674acb8618afb127e27fde7fc68994c0437ad759fa094a574adb265
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-futures-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
 PKG_LICENSE:=MIT
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-futures
   SUBMENU:=Python
