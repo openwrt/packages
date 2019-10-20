@@ -9,7 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
-PKG_VERSION:=9.14.6
+PKG_VERSION:=9.14.7
 PKG_RELEASE:=1
 USERID:=bind=57:bind=57
 
@@ -22,7 +22,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 	https://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION) \
 	https://ftp.isc.org/isc/bind9/$(PKG_VERSION)
-PKG_HASH:=8967a040ed900e1800293b9874357fc2f267f33c723aa617268e163bd921edfe
+PKG_HASH:=cea0f54e5908f77ffd21eb312ee9dd4f3f8f93ca312c6118f27d6c0fba45291d
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
