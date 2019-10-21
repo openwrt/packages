@@ -34,7 +34,7 @@ TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/sys
-	$(CP) $(PKG_BUILD_DIR)/timepps.h $(1)/usr/include/sys/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/timepps.h $(1)/usr/include/sys/
 endef
 
 define Package/pps-tools/install
