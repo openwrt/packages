@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntp
 PKG_VERSION:=4.2.8p13
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/
@@ -33,13 +33,26 @@ define Package/ntpd/Default
   TITLE:=ISC ntp
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
   URL:=http://www.ntp.org/
-  DEPENDS:=+libopenssl +libpthread +libcap
+  DEPENDS:=+libopenssl +libpthread +libcap +NTPD_SNTP:libevent2-pthreads
 endef
 
 define Package/ntpd/Default/description
  The ISC ntp suite is a collection of tools used to synchronize the
  system clock with remote NTP time servers and run/monitor local NTP
  servers.
+endef
+
+define Package/ntpd/config
+    if PACKAGE_ntpd  || \
+       PACKAGE_ntpdate || \
+       PACKAGE_ntp-utils || \
+       PACKAGE_ntp-keygen
+
+        config NTPD_SNTP
+          bool "Enable SNTP support"
+          default n
+
+    endif
 endef
 
 define Package/ntpd
@@ -110,6 +123,10 @@ CONFIGURE_ARGS += \
 	--with-crypto \
 	--with-openssl-incdir="$(STAGING_DIR)/usr/include" \
 	--with-openssl-libdir="$(STAGING_DIR)/usr/lib"
+
+ifeq ($(CONFIG_NTPD_SNTP),)
+	CONFIGURE_ARGS += --without-sntp
+endif
 
 define Package/ntpd/install
 	$(INSTALL_DIR) $(1)/sbin
