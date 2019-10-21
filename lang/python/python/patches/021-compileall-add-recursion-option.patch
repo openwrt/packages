@@ -1,5 +1,3 @@
-diff --git a/Lib/compileall.py b/Lib/compileall.py
-index 5cfa8bed3f..8716c9c0ca 100644
 --- a/Lib/compileall.py
 +++ b/Lib/compileall.py
 @@ -152,10 +152,10 @@ def main():
