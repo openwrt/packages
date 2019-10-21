@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=findutils
-PKG_VERSION:=4.6.0
-PKG_RELEASE:=4
+PKG_VERSION:=4.7.0
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
-PKG_HASH:=ded4c9f73731cd48fec3b6bdaccce896473b6d8e337e9612e16cf1431bb1169d
+PKG_HASH:=c5fefbdf9858f7e4feb86f036e1247a54c79fc2d8e4b7064d5aaa1f47dfa789a
 
 PKG_MAINTAINER:=Daniel Dickinson <cshored@thecshore.com>
 PKG_LICENSE:=GPL-3.0-or-later
