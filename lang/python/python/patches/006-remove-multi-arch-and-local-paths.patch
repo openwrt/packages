@@ -1,6 +1,6 @@
 --- a/setup.py
 +++ b/setup.py
-@@ -454,13 +454,8 @@ class PyBuildExt(build_ext):
+@@ -500,13 +500,8 @@ class PyBuildExt(build_ext):
              os.unlink(tmpfile)
  
      def detect_modules(self):
