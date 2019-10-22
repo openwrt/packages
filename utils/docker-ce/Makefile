@@ -1,15 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=docker-ce
-PKG_VERSION:=19.03.3
-PKG_RELEASE:=2
+PKG_VERSION:=19.03.4
+PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=components/cli/LICENSE components/engine/LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/docker/docker-ce/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=63b0d28608f32573b9c03fa46247c6f959e9c08133ddf30a71276919de0194c0
-PKG_SOURCE_VERSION:=a872fc2f86
+PKG_HASH:=b279493f74f0d91253c7cb4b49e0b4be139de0a1d164303ce6814028d642d656
+PKG_SOURCE_VERSION:=9013bf583a # SHA1 used within the docker executables
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
@@ -23,7 +23,7 @@ endef
 
 # values from respective '.installer' files at https://github.com/docker/docker-ce/blob/v$(PKG_VERSION)/components/engine/hack/dockerfile/install/
 $(eval $(call CheckExpectedSrcVer,../containerd/Makefile,b34a5c8af56e510852c35414db4c1f4fa6172339))
-$(eval $(call CheckExpectedSrcVer,../libnetwork/Makefile,45c710223c5fbf04dc3028b9a90b51892e36ca7f))
+$(eval $(call CheckExpectedSrcVer,../libnetwork/Makefile,3eb39382bfa6a3c42f83674ab080ae13b0e34e5d))
 $(eval $(call CheckExpectedSrcVer,../runc/Makefile,3e425f80a8c931f88e6d94a8c831b9d5aa481657))
 $(eval $(call CheckExpectedSrcVer,../tini/Makefile,fec3683b971d9c3ef73f284f176672c44b448662))
 
