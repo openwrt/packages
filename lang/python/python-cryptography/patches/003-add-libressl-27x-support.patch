@@ -1,0 +1,182 @@
+From d651daa2ffab54f0b7f9ab1177db7c58486bc785 Mon Sep 17 00:00:00 2001
+From: Paul Kehrer <paul.l.kehrer@gmail.com>
+Date: Thu, 31 May 2018 10:35:40 +0800
+Subject: [PATCH] LibreSSL 2.7.x support
+
+Pull request: https://github.com/pyca/cryptography/pull/4270
+Fixes issue: https://github.com/openwrt/packages/issues/10329
+introduced with Python 2.7.17
+
+---
+ src/_cffi_src/openssl/bio.py          |  2 +-
+ src/_cffi_src/openssl/cryptography.py |  2 ++
+ src/_cffi_src/openssl/dh.py           |  2 +-
+ src/_cffi_src/openssl/dsa.py          |  2 +-
+ src/_cffi_src/openssl/rsa.py          |  2 +-
+ src/_cffi_src/openssl/ssl.py          |  2 +-
+ src/_cffi_src/openssl/x509.py         | 23 +++++++++++++----------
+ src/_cffi_src/openssl/x509_vfy.py     |  4 +++-
+ 8 files changed, 23 insertions(+), 16 deletions(-)
+
+diff --git a/src/_cffi_src/openssl/bio.py b/src/_cffi_src/openssl/bio.py
+index 2d9659e..9176d13 100644
+--- a/src/_cffi_src/openssl/bio.py
++++ b/src/_cffi_src/openssl/bio.py
+@@ -135,7 +135,7 @@ void BIO_clear_retry_flags(BIO *);
+ """
+
+ CUSTOMIZATIONS = """
+-#if CRYPTOGRAPHY_OPENSSL_LESS_THAN_110PRE4
++#if CRYPTOGRAPHY_OPENSSL_LESS_THAN_110 && !CRYPTOGRAPHY_LIBRESSL_27_OR_GREATER
+ int BIO_up_ref(BIO *b) {
+     CRYPTO_add(&b->references, 1, CRYPTO_LOCK_BIO);
+     return 1;
+diff --git a/src/_cffi_src/openssl/cryptography.py b/src/_cffi_src/openssl/cryptography.py
+index 9095e3a..a46c178 100644
+--- a/src/_cffi_src/openssl/cryptography.py
++++ b/src/_cffi_src/openssl/cryptography.py
+@@ -25,6 +25,8 @@ INCLUDES = """
+ #include <windows.h>
+ #endif
+
++#define CRYPTOGRAPHY_LIBRESSL_27_OR_GREATER \
++    (CRYPTOGRAPHY_IS_LIBRESSL && LIBRESSL_VERSION_NUMBER >= 0x2070000fL)
+ #define CRYPTOGRAPHY_OPENSSL_102_OR_GREATER \
+     (OPENSSL_VERSION_NUMBER >= 0x10002000 && !CRYPTOGRAPHY_IS_LIBRESSL)
+ #define CRYPTOGRAPHY_OPENSSL_102L_OR_GREATER \
+diff --git a/src/_cffi_src/openssl/dh.py b/src/_cffi_src/openssl/dh.py
+index 7ab06ae..2b6c825 100644
+--- a/src/_cffi_src/openssl/dh.py
++++ b/src/_cffi_src/openssl/dh.py
+@@ -46,7 +46,7 @@ int Cryptography_i2d_DHxparams_bio(BIO *bp, DH *x);
+
+ CUSTOMIZATIONS = """
+ /* These functions were added in OpenSSL 1.1.0-pre5 (beta2) */
+-#if CRYPTOGRAPHY_OPENSSL_LESS_THAN_110PRE5
++#if CRYPTOGRAPHY_OPENSSL_LESS_THAN_110 && !CRYPTOGRAPHY_LIBRESSL_27_OR_GREATER
+ void DH_get0_pqg(const DH *dh,
+                  const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
+ {
+diff --git a/src/_cffi_src/openssl/dsa.py b/src/_cffi_src/openssl/dsa.py
+index d61b692..00b6adb 100644
+--- a/src/_cffi_src/openssl/dsa.py
++++ b/src/_cffi_src/openssl/dsa.py
+@@ -35,7 +35,7 @@ int DSA_generate_parameters_ex(DSA *, int, unsigned char *, int,
+
+ CUSTOMIZATIONS = """
+ /* These functions were added in OpenSSL 1.1.0-pre5 (beta2) */
+-#if CRYPTOGRAPHY_OPENSSL_LESS_THAN_110PRE5
++#if CRYPTOGRAPHY_OPENSSL_LESS_THAN_110 && !CRYPTOGRAPHY_LIBRESSL_27_OR_GREATER
+ void DSA_get0_pqg(const DSA *d,
+                   const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
+ {
+diff --git a/src/_cffi_src/openssl/rsa.py b/src/_cffi_src/openssl/rsa.py
+index 459d5cb..f505127 100644
+--- a/src/_cffi_src/openssl/rsa.py
++++ b/src/_cffi_src/openssl/rsa.py
+@@ -87,7 +87,7 @@ int (*EVP_PKEY_CTX_set0_rsa_oaep_label)(EVP_PKEY_CTX *, unsigned char *,
+ #endif
+
+ /* These functions were added in OpenSSL 1.1.0-pre5 (beta2) */
+-#if CRYPTOGRAPHY_OPENSSL_LESS_THAN_110PRE5
++#if CRYPTOGRAPHY_OPENSSL_LESS_THAN_110 && !CRYPTOGRAPHY_LIBRESSL_27_OR_GREATER
+ int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
+ {
+     /* If the fields n and e in r are NULL, the corresponding input
+diff --git a/src/_cffi_src/openssl/ssl.py b/src/_cffi_src/openssl/ssl.py
+index 7f9eff0..69e30ae 100644
+--- a/src/_cffi_src/openssl/ssl.py
++++ b/src/_cffi_src/openssl/ssl.py
+@@ -453,7 +453,7 @@ const SSL_METHOD *SSL_CTX_get_ssl_method(SSL_CTX *ctx) {
+
+ /* Added in 1.1.0 in the great opaquing, but we need to define it for older
+    OpenSSLs. Such is our burden. */
+-#if CRYPTOGRAPHY_OPENSSL_LESS_THAN_110
++#if CRYPTOGRAPHY_OPENSSL_LESS_THAN_110 && !CRYPTOGRAPHY_LIBRESSL_27_OR_GREATER
+ /* from ssl/ssl_lib.c */
+ size_t SSL_get_client_random(const SSL *ssl, unsigned char *out, size_t outlen)
+ {
+diff --git a/src/_cffi_src/openssl/x509.py b/src/_cffi_src/openssl/x509.py
+index 394c37c..f3e6d93 100644
+--- a/src/_cffi_src/openssl/x509.py
++++ b/src/_cffi_src/openssl/x509.py
+@@ -339,7 +339,7 @@ void X509_REQ_get0_signature(const X509_REQ *, const ASN1_BIT_STRING **,
+ CUSTOMIZATIONS = """
+ /* Added in 1.0.2 beta but we need it in all versions now due to the great
+    opaquing. */
+-#if CRYPTOGRAPHY_OPENSSL_LESS_THAN_102
++#if CRYPTOGRAPHY_OPENSSL_LESS_THAN_102 && !CRYPTOGRAPHY_LIBRESSL_27_OR_GREATER
+ /* from x509/x_x509.c version 1.0.2 */
+ void X509_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
+                          const X509 *x)
+@@ -383,6 +383,17 @@ X509_REVOKED *Cryptography_X509_REVOKED_dup(X509_REVOKED *rev) {
+    opaquing. */
+ #if CRYPTOGRAPHY_OPENSSL_LESS_THAN_110
+
++int i2d_re_X509_REQ_tbs(X509_REQ *req, unsigned char **pp)
++{
++    req->req_info->enc.modified = 1;
++    return i2d_X509_REQ_INFO(req->req_info, pp);
++}
++int i2d_re_X509_CRL_tbs(X509_CRL *crl, unsigned char **pp) {
++    crl->crl->enc.modified = 1;
++    return i2d_X509_CRL_INFO(crl->crl, pp);
++}
++
++#if !CRYPTOGRAPHY_LIBRESSL_27_OR_GREATER
+ int X509_up_ref(X509 *x) {
+    return CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
+ }
+@@ -401,15 +412,6 @@ void X509_REQ_get0_signature(const X509_REQ *req, const ASN1_BIT_STRING **psig,
+     if (palg != NULL)
+         *palg = req->sig_alg;
+ }
+-int i2d_re_X509_REQ_tbs(X509_REQ *req, unsigned char **pp)
+-{
+-    req->req_info->enc.modified = 1;
+-    return i2d_X509_REQ_INFO(req->req_info, pp);
+-}
+-int i2d_re_X509_CRL_tbs(X509_CRL *crl, unsigned char **pp) {
+-    crl->crl->enc.modified = 1;
+-    return i2d_X509_CRL_INFO(crl->crl, pp);
+-}
+
+ void X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,
+                              const X509_ALGOR **palg)
+@@ -428,4 +430,5 @@ const ASN1_INTEGER *X509_REVOKED_get0_serialNumber(const X509_REVOKED *x)
+     return x->serialNumber;
+ }
+ #endif
++#endif
+ """
+diff --git a/src/_cffi_src/openssl/x509_vfy.py b/src/_cffi_src/openssl/x509_vfy.py
+index 58069eb..ad5fb07 100644
+--- a/src/_cffi_src/openssl/x509_vfy.py
++++ b/src/_cffi_src/openssl/x509_vfy.py
+@@ -246,6 +246,7 @@ static const long X509_V_FLAG_SUITEB_128_LOS_ONLY = 0;
+ static const long X509_V_FLAG_SUITEB_192_LOS = 0;
+ static const long X509_V_FLAG_SUITEB_128_LOS = 0;
+
++#if !CRYPTOGRAPHY_LIBRESSL_27_OR_GREATER
+ int (*X509_VERIFY_PARAM_set1_host)(X509_VERIFY_PARAM *, const char *,
+                                    size_t) = NULL;
+ int (*X509_VERIFY_PARAM_set1_email)(X509_VERIFY_PARAM *, const char *,
+@@ -256,6 +257,7 @@ int (*X509_VERIFY_PARAM_set1_ip_asc)(X509_VERIFY_PARAM *, const char *) = NULL;
+ void (*X509_VERIFY_PARAM_set_hostflags)(X509_VERIFY_PARAM *,
+                                         unsigned int) = NULL;
+ #endif
++#endif
+
+ /* OpenSSL 1.0.2+ or Solaris's backport */
+ #ifdef X509_V_FLAG_PARTIAL_CHAIN
+@@ -285,7 +287,7 @@ int X509_OBJECT_get_type(const X509_OBJECT *x) {
+ }
+ #endif
+
+-#if CRYPTOGRAPHY_OPENSSL_LESS_THAN_110PRE5
++#if CRYPTOGRAPHY_OPENSSL_LESS_THAN_110 && !CRYPTOGRAPHY_LIBRESSL_27_OR_GREATER
+ /* from x509/x509_vfy.c */
+ X509 *X509_STORE_CTX_get0_cert(X509_STORE_CTX *ctx)
+ {
+--
+2.20.1
