@@ -77,20 +77,22 @@ CONFIGURE_ARGS += \
 ifeq ($(BUILD_VARIANT),all)
 	CONFIGURE_ARGS += \
 		--typical
+	POCO_LIBS={Foundation,XML,JSON,Net,Util,Crypto,NetSSL,Encodings}
 else
 	CONFIGURE_ARGS += \
 		--poquito \
 		--minimal
+	POCO_LIBS={Foundation,XML,JSON,Net,Util}
 endif
 
 define Package/poco/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libPoco{Foundation,XML,JSON,Net,Util}.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libPoco$(POCO_LIBS).so* $(1)/usr/lib/
 endef
 
 define Package/poco-all/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libPoco{Foundation,XML,JSON,Net,Util,Crypto,NetSSL,Encodings}.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libPoco$(POCO_LIBS).so* $(1)/usr/lib/
 endef
 
 define Build/InstallDev
@@ -98,8 +100,9 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/Poco $(1)/usr/include/
 
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libPoco{Foundation,XML,JSON,Net,Util}.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libPoco$(POCO_LIBS).so* $(1)/usr/lib/
 endef
+
 
 $(eval $(call BuildPackage,poco))
 $(eval $(call BuildPackage,poco-all))
