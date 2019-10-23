@@ -54,6 +54,12 @@ get_listeners() {
     done
 }
 
+run_acme()
+{
+    debug "Running acme.sh as '$ACME $@'"
+    $ACME "$@"
+}
+
 pre_checks()
 {
     main_domain="$1"
@@ -218,7 +224,7 @@ issue_cert()
             moved_staging=1
         else
             log "Found previous cert config. Issuing renew."
-            $ACME --home "$STATE_DIR" --renew -d "$main_domain" $acme_args && ret=0 || ret=1
+            run_acme --home "$STATE_DIR" --renew -d "$main_domain" $acme_args && ret=0 || ret=1
             post_checks
             return $ret
         fi
@@ -246,7 +252,7 @@ issue_cert()
         acme_args="$acme_args --webroot $webroot"
     fi
 
-    if ! $ACME --home "$STATE_DIR" --issue $acme_args; then
+    if ! run_acme --home "$STATE_DIR" --issue $acme_args; then
         failed_dir="$STATE_DIR/${main_domain}.failed-$(date +%s)"
         err "Issuing cert for $main_domain failed. Moving state to $failed_dir"
         [ -d "$STATE_DIR/$main_domain" ] && mv "$STATE_DIR/$main_domain" "$failed_dir"
