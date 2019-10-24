@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-slugify
-PKG_VERSION:=3.0.3
+PKG_VERSION:=3.0.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/python-slugify/
-PKG_HASH:=a9f468227cb11e20e251670d78e1b5f6b0b15dd37bbd5c9814a25a904e44ff66
+PKG_HASH:=8653d589308c91c67fe5c97a2afda0cfac9492061e69c0db90d1aef68fcd2332
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT
