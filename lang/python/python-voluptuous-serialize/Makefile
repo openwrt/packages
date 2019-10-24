@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=voluptuous-serialize
-PKG_VERSION:=2.2.0
+PKG_VERSION:=2.3.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/v/voluptuous-serialize/
-PKG_HASH:=8b31660c7efdba0eb97ba65390b63cc62cc99ae3cd25d00e1873b183b38ef13d
+PKG_HASH:=740cd00ce2ecf0f3345d550163fdd2f20de2e0a60c3c678450e68314c2f592f5
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=Apache-2.0
