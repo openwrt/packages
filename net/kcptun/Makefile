@@ -1,12 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kcptun
-PKG_VERSION:=20190809
+PKG_VERSION:=20190924
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/xtaci/kcptun/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=79dc1c31320552fcd76a31a83a515debb9ab7dbcf831c39346512f590d6b150d
+PKG_SOURCE_DATE:=2019-09-24
+PKG_HASH:=40d24575b1604bb046f713aebed4f722990b8b2e245f1ad385fb51df956d3a24
 
 PKG_MAINTAINER:=Dengfeng Liu <liudf0716@gmail.com>, Chao Liu <expiron18@gmail.com>
 PKG_LICENSE:=MIT
@@ -28,7 +29,7 @@ define Package/kcptun-config
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
-  TITLE:=kcptun config scripts
+  TITLE:=Kcptun Config Scripts
   URL:=https://github.com/xtaci/kcptun
 endef
 
