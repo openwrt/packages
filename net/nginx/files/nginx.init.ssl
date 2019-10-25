@@ -1,0 +1,254 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2015 OpenWrt.org
+
+START=80
+
+USE_PROCD=1
+
+LAN_LISTEN="/var/lib/nginx/lan.listen"
+LAN_SSL_LISTEN="/var/lib/nginx/lan_ssl.listen"
+ADD_SSL_FCT="add_ssl"
+CRON_CMD="'/etc/init.d/nginx' '${ADD_SSL_FCT}' '\$'"
+NGX_INCLUDE="    include '\$';"
+NGX_SERVER_NAME="    server_name * '\$' *;"
+NGX_SSL_CRT="    ssl_certificate '\$.crt';"
+NGX_SSL_KEY="    ssl_certificate_key '\$.key';"
+NGX_SSL_SESSION_CACHE="    ssl_session_cache shared:SSL:32k;"
+NGX_SSL_SESSION_TIMEOUT="    ssl_session_timeout 64m;"
+NAME="_lan"
+PREFIX="/etc/nginx/conf.d/_lan"
+
+EXTRA_COMMANDS="${ADD_SSL_FCT}"
+EXTRA_HELP="	${ADD_SSL_FCT}\
+	If needed, generate a self-signed certificate for the domain (arg) and
+		add suitable ssl directives to its .conf in /etc/nginx/conf.d/"
+
+__esc_newlines() {
+    echo "${1}" | sed -E 's/$/\\n/' | tr -d '\n' | sed -E 's/\\n$/\n/'
+}
+
+__esc_sed_rhs() {
+    __esc_newlines "${1}" |  sed -E 's/[&/\]/\\&/g'
+}
+
+_sed_rhs() {
+    __esc_sed_rhs "$(echo "${1}" | sed -E "s/[$]/$(__esc_sed_rhs "${2}")/g")"
+}
+
+__esc_regex() {
+    __esc_newlines "${1}" | sed -E 's/[^^_a-zA-Z0-9-]/[&]/g; s/\^/\\^/g'
+}
+
+_regex() {
+    __esc_regex "${1}" | sed -E -e 's/^(:?\[\s])+/^\\s*/' \
+        -e 's/(:?\[\s])+\[[*]]/(:?\\s.*)?/g' \
+        -e 's/(:?\[\s])+/\\s+/g' \
+        -e 's/(:?\[\s])*\[[;]]/\\s*;/g' \
+        -e "s/\[['\"]]/['\"]?/g" \
+        -e "s/\[[$]]/$(__esc_sed_rhs "$(__esc_regex "${2}")")/g"
+}
+
+_echo_sed() {
+    echo "" | sed -E "c${1}"
+}
+
+_is_certificate_valid_else_echo_genkey_cmd() {
+    local REMAINING="34300800" # about 13 months > ${CRON_CHECK}
+    local GENKEY_COMMON_OPT=" -newkey ec -pkeyopt ec_paramgen_curve:secp384r1 "
+    if [ -x "$(readlink -f /usr/bin/openssl)" ]
+    then
+        [ -r "$(readlink -f "${PREFIX}.crt")" ] \
+        && [ -r "$(readlink -f "${PREFIX}.key")" ] \
+        && /usr/bin/openssl x509 -checkend "${REMAINING}" -in "${PREFIX}.crt" \
+        && return 0
+        echo "/usr/bin/openssl req -x509 -nodes ${GENKEY_COMMON_OPT}"
+    else
+        [ -r "$(readlink -f "${PREFIX}.crt")" ] \
+        && [ -r "$(readlink -f "${PREFIX}.key")" ] \
+        && [ "${2}" == "assume-valid-as-default" ] \
+        && return 0
+        [ -x "$(readlink -f /usr/sbin/px5g)" ] \
+        && echo "/usr/sbin/px5g selfsigned ${GENKEY_COMMON_OPT}"
+    fi
+    return 1
+}
+
+_add_ssl_directives_to_server_conf() {
+    local NAME="${1}"
+    local DEFAULT="${2}"
+    local CONF="$(grep -vE "$(_regex "${NGX_INCLUDE}" \
+        "${LAN_LISTEN}${DEFAULT}")" "${PREFIX}.conf" 2>/dev/null)"
+    local ADDS=""
+    echo "${CONF}" \
+        | grep -qE "$(_regex "${NGX_INCLUDE}" "${LAN_SSL_LISTEN}${DEFAULT}")" \
+    || ADDS="${ADDS}\n$(_sed_rhs "${NGX_INCLUDE}" "${LAN_SSL_LISTEN}${DEFAULT}")"
+    echo "${CONF}" | grep -qE "$(_regex "${NGX_SSL_CRT}" "${PREFIX}")" \
+    || ADDS="${ADDS}\n$(_sed_rhs "${NGX_SSL_CRT}" "${PREFIX}")"
+    echo "${CONF}" | grep -qE "$(_regex "${NGX_SSL_KEY}" "${PREFIX}")" \
+    || ADDS="${ADDS}\n$(_sed_rhs "${NGX_SSL_KEY}" "${PREFIX}")"
+    echo "${CONF}" | grep -qE "^\s*ssl_session_cache\s" \
+    || ADDS="${ADDS}\n$(_sed_rhs "${NGX_SSL_SESSION_CACHE}" "${NAME}")"
+    echo "${CONF}" | grep -qE "^\s*ssl_session_timeout\s" \
+    || ADDS="${ADDS}\n$(_sed_rhs "${NGX_SSL_SESSION_TIMEOUT}" "")"
+    if [ -n "${ADDS}" ]
+    then
+        ADDS="$(echo "${ADDS}" | sed -E 's/^\\n//')"
+        echo "${CONF}" | grep -qE "$(_regex "${NGX_SERVER_NAME}" "${NAME}")" \
+        && echo "${CONF}" \
+            | sed -E "/$(_regex "${NGX_SERVER_NAME}" "${NAME}")/a\\${ADDS}" \
+            > "${PREFIX}.conf" \
+        && _echo_sed "Added directives to ${PREFIX}.conf:\n${ADDS}" \
+        || _echo_sed "Cannot add directives to ${PREFIX}.conf, missing:\
+            \n$(_sed_rhs "${NGX_SERVER_NAME}" "${NAME}")\n${ADDS}"
+    fi
+    return 0
+}
+
+_remove_ssl_directives_from_server_conf() {
+    local NAME="${1}"
+    local DEFAULT="${2}"
+    local CONF="$(cat ${PREFIX}.conf 2>/dev/null)"
+    if echo "${CONF}" | grep -qE "$(_regex "${NGX_INCLUDE}" \
+        "${LAN_SSL_LISTEN}${DEFAULT}")" \
+    || echo "${CONF}" | grep -qE "$(_regex "${NGX_SSL_CRT}" "${PREFIX}")" \
+    || echo "${CONF}" | grep -qE "$(_regex "${NGX_SSL_KEY}" "${PREFIX}")"
+    then
+        _echo_sed " Removing from ${PREFIX}.conf:\
+            \n$(_sed_rhs "${NGX_INCLUDE}" "${LAN_SSL_LISTEN}${DEFAULT}")\
+            \n$(_sed_rhs "${NGX_SSL_CRT}" "${PREFIX}")\
+            \n$(_sed_rhs "${NGX_SSL_KEY}" "${PREFIX}")"
+        echo "${CONF}" \
+            | sed -E -e "/$(_regex "${NGX_INCLUDE}" \
+                    "${LAN_SSL_LISTEN}${DEFAULT}")/d" \
+                -e "/$(_regex "${NGX_SERVER_NAME}" "${NAME}")/i\
+                    \\$(_sed_rhs "${NGX_INCLUDE}" "${LAN_LISTEN}${DEFAULT}")" \
+                -e "/$(_regex "${NGX_SSL_CRT}" "${PREFIX}")/d" \
+                -e "/$(_regex "${NGX_SSL_KEY}" "${PREFIX}")/d" \
+            > ${PREFIX}.conf
+    fi
+    return 0
+}
+
+_create_ssl_certificate() {
+    local GENKEY_CMD="${2}"
+    local LIFE_TIME="1188" # about 39 months > 2*${CRON_CHECK} + ${REMAINING}
+    local KEY_NEW=$(mktemp "${PREFIX}.key.new-XXXXXX")
+    local CRT_NEW=$(mktemp "${PREFIX}.key.new-XXXXXX")
+    local NONCE=$(dd if=/dev/urandom bs=1 count=4 | hexdump -e '1/1 "%02x"')
+    # or eval ${GENKEY_CMD} '-days "${LIFE_TIME}" …' or "$BIN" $(echo "$OPT"):
+    ${GENKEY_CMD} -days "${LIFE_TIME}" -keyout "${KEY_NEW}" -out "${CRT_NEW}" \
+        -subj /C="ZZ"/ST="Somewhere"/L="None"/O="OpenWrt${NONCE}"/CN="OpenWrt"\
+    && sync \
+    && mv "${KEY_NEW}" "${PREFIX}.key" \
+    && mv "${CRT_NEW}" "${PREFIX}.crt"
+    return $?
+}
+
+_try_using_cron_to_recreate_certificate() {
+    local NAME="${1}"
+    local CRON_CHECK="3 3 12 12 *" # all 12 months (on each 12.12. at 03:03)
+    if [ -x "$(readlink -f /etc/init.d/cron)" ] \
+    && /etc/init.d/cron status >/dev/null
+    then
+        ! cat /etc/crontabs/root 2>/dev/null \
+            | grep -qE "$(_regex "${CRON_CMD}" "${NAME}")" \
+        && _echo_sed "${CRON_CHECK} $(_sed_rhs "${CRON_CMD}" "${NAME}")" \
+        >> /etc/crontabs/root \
+        && /etc/init.d/cron reload \
+        && echo "Rebuild the ssl certificate for '${NAME}' annually with cron."
+    else
+        echo "Cron unavailable to re-create the ssl certificate for '${NAME}'."
+    fi
+    return 0
+}
+
+_add_ssl_if_needed() {
+    [ ${#} -eq 2 ] || return 2
+    # 1. argument: [domain name] (use _ for LAN)
+    # 2. argument: [assume-expired-as-default|assume-valid-as-default]
+    # return: 0 if there is a valid certificate (before or now), else 1.
+    # CRON_CHECK="3 3 12 12 *" # all 12 months (on each 12.12. at 03:03)
+    # REMAINING="34300800" # about 13 months > ${CRON_CHECK}
+    # LIFE_TIME="1188" # about 39 months > 2*${CRON_CHECK} + ${REMAINING}
+    local ASSUME="${2}"
+    local DEFAULT=".default"
+    if [ "${1}" != "${NAME}" ]
+    then
+        DEFAULT=""
+        NAME="${1}"
+        PREFIX="/etc/nginx/conf.d/${NAME}"
+    fi
+    local GENKEY_CMD
+    GENKEY_CMD="\
+        $(_is_certificate_valid_else_echo_genkey_cmd "${NAME}" "${ASSUME}")" \
+    && _add_ssl_directives_to_server_conf "${NAME}" "${DEFAULT}" \
+    && _try_using_cron_to_recreate_certificate "${NAME}" \
+    && return 0
+    [ -z "${GENKEY_CMD}" ] \
+    && echo "Cannot create create ssl certificate, no binary found." \
+    && _remove_ssl_directives_from_server_conf "${NAME}" "${DEFAULT}" \
+    && return 1
+    _create_ssl_certificate "${NAME}" "${GENKEY_CMD}" \
+    || return 1
+    _add_ssl_directives_to_server_conf "${NAME}" "${DEFAULT}"
+    _try_using_cron_to_recreate_certificate "${NAME}"
+    return 0
+}
+
+add_ssl() {
+    _add_ssl_if_needed "${@}" "assume-expired-as-default"
+}
+
+_create_lan_listen() {
+    local PORT="80"
+    local LISTEN
+    for IP in $(ifstatus lan | grep '"address"' | cut -d'"' -f4);
+    do
+        # if IPv6:
+        echo ${IP} | grep -qE '^([0-9a-f]{1,4}|:)(:[0-9a-f]{0,4}){1,7}$' \
+        && LISTEN="${LISTEN}         listen [${IP}]:${PORT};\n" \
+        && continue
+        # if IPv4:
+        echo ${IP} | grep -qE '^([12]?[1-9]?[0-9]\.){0,3}[12]?[1-9]?[0-9]$' \
+        && LISTEN="${LISTEN}         listen ${IP}:${PORT};\n"
+    done
+    printf "# This file is re-created if Nginx starts or a LAN address changes.
+         listen 127.0.0.1:${PORT};
+         listen [::1]:${PORT};\n${LISTEN}" > "${LAN_LISTEN}"
+}
+
+start_service() {
+	[ -d /var/log/nginx ] || mkdir -p /var/log/nginx
+	[ -d /var/lib/nginx ] || mkdir -p /var/lib/nginx
+	_create_lan_listen
+	sed -E 's/:80;/:80 default_server;/' "${LAN_LISTEN}" \
+		> "${LAN_LISTEN}.default"
+	_add_ssl_if_needed "${NAME}" "assume-valid-as-default" \
+	&& sed -E 's/:80;/:443 ssl;/' "${LAN_LISTEN}" > "${LAN_SSL_LISTEN}" \
+	&& sed -E 's/:80;/:443 ssl default_server;/' "${LAN_LISTEN}" \
+		> "${LAN_SSL_LISTEN}.default"
+
+	procd_open_instance
+	NCPUS="$(grep -c '^processor\s*:' /proc/cpuinfo)"
+	procd_set_param command /usr/sbin/nginx -c /etc/nginx/nginx.conf \
+		-g "daemon off; worker_processes $NCPUS;"
+	procd_set_param stdout 1;
+	procd_set_param stderr 1;
+	procd_set_param file /etc/nginx/nginx.conf /etc/nginx/conf.d/*.conf \
+		/etc/nginx/conf.d/*.locations "${LAN_LISTEN}" \
+		"${LAN_LISTEN}.default"
+	procd_append_param file /etc/nginx/conf.d/*.crt \
+		/etc/nginx/conf.d/*.key "${LAN_SSL_LISTEN}" \
+		"${LAN_SSL_LISTEN}.default"
+	procd_set_param respawn
+	procd_close_instance
+}
+
+stop_service() {
+	rm -f "${LAN_LISTEN}" "${LAN_LISTEN}.default"
+	rm -f "${LAN_SSL_LISTEN}" "${LAN_SSL_LISTEN}.default"
+}
+
+service_triggers() {
+	procd_add_reload_interface_trigger lan
+}

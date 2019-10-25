@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.17.5
+PKG_VERSION:=1.17.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
-PKG_HASH:=63ee35e15a75af028ffa1f995e2b9c120b59ef5f1b61a23b8a4c33c262fc10c3
+PKG_HASH:=3cb4a5314dc0ab0a4e8a7b51ae17c027133417a45cc6c5a96e3dd80141c237b6
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Ansuel Smith <ansuelsmth@gmail.com>
@@ -130,7 +130,7 @@ define Package/nginx-ssl/config
   source "$(SOURCE)/Config_ssl.in"
 endef
 
-config_files=nginx.conf mime.types
+config_files=mime.types
 
 define Package/nginx/conffiles
 /etc/nginx/
@@ -358,7 +358,7 @@ CONFIGURE_ARGS += \
 			--prefix=/usr \
 			--conf-path=/etc/nginx/nginx.conf \
 			$(ADDITIONAL_MODULES) \
-			--error-log-path=/var/log/nginx/error.log \
+			--error-log-path=stderr \
 			--pid-path=/var/run/nginx.pid \
 			--lock-path=/var/lock/nginx.lock \
 			--http-log-path=/var/log/nginx/access.log \
@@ -371,26 +371,20 @@ CONFIGURE_ARGS += \
 			--without-http_upstream_zone_module
 
 define Package/nginx-mod-luci/install
-	$(INSTALL_DIR) $(1)/etc/nginx
-	$(INSTALL_BIN) ./files-luci-support/luci_uwsgi.conf $(1)/etc/nginx/luci_uwsgi.conf
-	$(INSTALL_BIN) ./files-luci-support/luci_nginx.conf $(1)/etc/nginx/luci_nginx.conf
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files-luci-support/60_nginx-luci-support $(1)/etc/uci-defaults/60_nginx-luci-support
+	$(INSTALL_DIR) $(1)/etc/nginx/conf.d
+	$(INSTALL_CONF) ./files-luci-support/luci.locations $(1)/etc/nginx/conf.d/
 endef
 
-define Package/nginx-mod-luci-ssl/install
-	$(Package/nginx-mod-luci/install)
-	$(INSTALL_DIR) $(1)/etc/nginx
-	$(INSTALL_BIN) ./files-luci-support/luci_nginx_ssl.conf $(1)/etc/nginx/luci_nginx_ssl.conf
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files-luci-support/70_nginx-luci-support-ssl $(1)/etc/uci-defaults/70_nginx-luci-support-ssl
-endef
+Package/nginx-mod-luci-ssl/install = $(Package/nginx-mod-luci/install)
 
 define Package/nginx/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/nginx $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/nginx
 	$(INSTALL_DATA) $(addprefix $(PKG_INSTALL_DIR)/etc/nginx/,$(config_files)) $(1)/etc/nginx/
+	$(INSTALL_CONF) ./files/nginx.conf $(1)/etc/nginx/
+	$(INSTALL_DIR) $(1)/etc/nginx/conf.d
+	$(INSTALL_CONF) ./files/_lan.conf $(1)/etc/nginx/conf.d/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/nginx.init $(1)/etc/init.d/nginx
 ifeq ($(CONFIG_NGINX_NAXSI),y)
@@ -402,8 +396,41 @@ endif
 	$(if $(CONFIG_NGINX_NAXSI),$(chmod 0640 $(1)/etc/nginx/naxsi_core.rules))
 endef
 
-Package/nginx-ssl/install = $(Package/nginx/install)
-Package/nginx-all-module/install = $(Package/nginx/install)
+define Package/nginx-ssl/install
+	$(call Package/nginx/install, $(1))
+	$(INSTALL_CONF) ./files/_redirect2ssl.conf $(1)/etc/nginx/conf.d/
+	$(INSTALL_BIN) ./files/nginx.init.ssl $(1)/etc/init.d/nginx
+endef
+
+Package/nginx-all-module/install = $(Package/nginx-ssl/install)
+
+define Package/nginx-ssl/prerm
+#!/bin/sh
+[ -z "$${IPKG_INSTROOT}" ] || exit 0
+CRON_REGEX="\s[/]etc[/]init[.]d[/]nginx\s"
+[ -x "$$(readlink -f /etc/init.d/nginx)" ] \
+&& source /etc/init.d/nginx \
+&& CRON_REGEX="$$(_regex "$${CRON_CMD}" "$${NAME}")" \
+&& [ -w "$$(readlink -f "$${PREFIX}.conf")" ] \
+&& sed -i -E -e "/$$(_regex "$${NGX_INCLUDE}" "$${LAN_SSL_LISTEN}.default")/d"\
+	-e "/$$(_regex "$${NGX_SERVER_NAME}" "$${NAME}")/i\
+		\\$$(_sed_rhs "$${NGX_INCLUDE}" "$${LAN_LISTEN}.default")" \
+	-e "/$$(_regex "$${NGX_SSL_CRT}" "$${PREFIX}")/d" \
+	-e "/$$(_regex "$${NGX_SSL_KEY}" "$${PREFIX}")/d" \
+	-e "/$$(_regex "$${NGX_SSL_SESSION_CACHE}" "$${NAME}")/d" \
+	-e "/$$(_regex "$${NGX_SSL_SESSION_TIMEOUT}" "")/d" \
+	"$${PREFIX}.conf" \
+&& rm -f "$${PREFIX}.crt" "$${PREFIX}.key"
+[ -w "$$(readlink -f "/etc/crontabs/root")" ] \
+&& grep -qE "$${CRON_REGEX}" /etc/crontabs/root \
+&& sed -i -E "/$${CRON_REGEX}/d" /etc/crontabs/root \
+&& [ -x "$$(readlink -f /etc/init.d/cron)" ] \
+&& /etc/init.d/cron running \
+&& /etc/init.d/cron reload
+exit 0
+endef
+
+Package/nginx-all-module/prerm = $(Package/nginx-ssl/prerm)
 
 define Build/Prepare
 	$(Build/Prepare/Default)
