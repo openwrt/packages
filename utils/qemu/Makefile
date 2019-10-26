@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
 PKG_VERSION:=4.1.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_HASH:=656e60218689bdeec69903087fd7582d5d3e72238d02f4481d8dc6d79fd909c6
 PKG_SOURCE_URL:=http://download.qemu.org/
@@ -147,6 +147,20 @@ qemu-firmware-efi-title:=QEMU build of iPXE EFI roms
 qemu-firmware-efi-files:=efi-*.rom
 $(eval $(call qemu-firmware,efi))
 
+define Package/qemu-keymaps
+  SECTION:=utils
+  CATEGORY:=Utilities
+  SUBMENU:=Virtualization
+  TITLE:=QEMU reverse keymaps for use with -k argument
+  URL:=http://www.qemu.org
+  DEPENDS:=$(QEMU_DEPS_IN_HOST)
+endef
+
+define Package/qemu-keymaps/install
+	$(INSTALL_DIR) $(1)/usr/share/qemu/keymaps
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/qemu/keymaps/* $(1)/usr/share/qemu/keymaps
+endef
+
 
 # Naming rules used in qemu Makefile.target
 define qemu-prog_
@@ -175,6 +189,10 @@ define qemu-target
     TITLE:=QEMU target $(1)
     URL:=http://www.qemu.org
     DEPENDS:= +glib2 +libpthread +zlib $(CXX_DEPENDS) $(QEMU_DEPS_IN_HOST) $(qemu-target-$(1)-deps) \
+	+QEMU_UI_VNC:qemu-keymaps \
+	+QEMU_UI_VNC_JPEG:libjpeg \
+	+QEMU_UI_VNC_PNG:libpng \
+	+QEMU_UI_VNC_SASL:libsasl2 \
 	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +pixman +qemu-firmware-efi $(ICONV_DEPENDS))
   endef
 
@@ -211,6 +229,30 @@ qemu-target-x86_64-softmmu-extra-files:= \
 $(foreach target,$(qemu-target-list), \
   $(eval $(call qemu-target,$(target))) \
 )
+
+define Package/qemu-$(firstword $(qemu-target-list))/config
+if $(subst $(space),||,$(foreach target,$(qemu-target-list),PACKAGE_qemu-$(target)))
+config QEMU_UI_VNC
+	bool "QEMU VNC support"
+	default y
+
+config QEMU_UI_VNC_JPEG
+	bool "QEMU VNC jpeg tight encoding support"
+	default n
+	depends on QEMU_UI_VNC
+
+config QEMU_UI_VNC_PNG
+	bool "QEMU VNC png tight encoding support"
+	default n
+	depends on QEMU_UI_VNC
+
+config QEMU_UI_VNC_SASL
+	bool "QEMU VNC SASL auth support"
+	default n
+	depends on QEMU_UI_VNC
+
+endif
+endef
 
 
 # QEMU configure script does not recognize these options
@@ -279,10 +321,10 @@ CONFIGURE_ARGS +=			\
 	--disable-sdl-image		\
 	--disable-spice			\
 	--disable-virglrenderer		\
-	--disable-vnc			\
-	--disable-vnc-jpeg		\
-	--disable-vnc-png		\
-	--disable-vnc-sasl		\
+	--$(if $(CONFIG_QEMU_UI_VNC),enable,disable)-vnc			\
+	--$(if $(CONFIG_QEMU_UI_VNC_JPEG),enable,disable)-vnc-jpeg		\
+	--$(if $(CONFIG_QEMU_UI_VNC_PNG),enable,disable)-vnc-png		\
+	--$(if $(CONFIG_QEMU_UI_VNC_SASL),enable,disable)-vnc-sasl		\
 	--disable-vte			\
 	--enable-curses			\
 	--enable-iconv			\
@@ -389,6 +431,7 @@ $(eval $(call BuildPackage,qemu-ga))
 $(eval $(call BuildPackage,qemu-bridge-helper))
 $(eval $(call BuildPackage,qemu-img))
 $(eval $(call BuildPackage,qemu-nbd))
+$(eval $(call BuildPackage,qemu-keymaps))
 $(foreach p,$(QEMU_PACKAGES), \
   $(eval $(call BuildPackage,$(p))) \
 )
