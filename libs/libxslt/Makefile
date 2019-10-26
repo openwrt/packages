@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxslt
 PKG_VERSION:=1.1.33
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -25,6 +25,8 @@ PKG_MAINTAINER:=Jiri Slachta <jiri@slachta.eu>
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+
+HOST_BUILD_DEPENDS:=libxml2/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -130,6 +132,7 @@ endef
 HOST_CONFIGURE_ARGS+= \
 	--disable-silent-rules \
 	--enable-static \
+	--with-libxml-prefix=$(STAGING_DIR_HOSTPKG) \
 	--without-python \
 	--without-crypto \
 	--without-debug \
