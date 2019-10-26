@@ -41,14 +41,13 @@ EOF
 
   # create the firewall zone
   uci -q batch <<-EOF >/dev/null
-    add firewall zone
-    set firewall.@zone[-1].name=yggdrasil
-    add_list firewall.@zone[-1].network=yggdrasil
-    set firewall.@zone[-1].input=REJECT
-    set firewall.@zone[-1].output=ACCEPT
-    set firewall.@zone[-1].forward=REJECT
-    set firewall.@zone[-1].conntrack=1
-    set firewall.@zone[-1].family=ipv6
+    set firewall.yggdrasil=zone
+    set firewall.yggdrasil.name=yggdrasil
+    add_list firewall.yggdrasil.network=yggdrasil
+    set firewall.yggdrasil.input=REJECT
+    set firewall.yggdrasil.output=ACCEPT
+    set firewall.yggdrasil.forward=REJECT
+    set firewall.yggdrasil.conntrack=1
 EOF
 
   # allow ICMP from yggdrasil zone, e.g. ping6
