@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
 PKG_VERSION:=4.1.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_HASH:=656e60218689bdeec69903087fd7582d5d3e72238d02f4481d8dc6d79fd909c6
 PKG_SOURCE_URL:=http://download.qemu.org/
@@ -23,10 +23,11 @@ PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
 
+PKG_BUILD_DEPENDS+=spice-protocol
+
 include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/package.mk
-
 
 QEMU_DEPS_IN_GUEST := @(TARGET_x86_64||TARGET_armvirt||TARGET_arm64||TARGET_malta)
 QEMU_DEPS_IN_HOST := @(TARGET_x86_64||TARGET_sunxi)
@@ -193,6 +194,7 @@ define qemu-target
 	+QEMU_UI_VNC_JPEG:libjpeg \
 	+QEMU_UI_VNC_PNG:libpng \
 	+QEMU_UI_VNC_SASL:libsasl2 \
+	+QEMU_UI_SPICE:libspice-server \
 	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +pixman +qemu-firmware-efi $(ICONV_DEPENDS))
   endef
 
@@ -250,6 +252,9 @@ config QEMU_UI_VNC_SASL
 	bool "QEMU VNC SASL auth support"
 	default n
 	depends on QEMU_UI_VNC
+
+config QEMU_UI_SPICE
+	bool "QEMU SPICE ui support"
 
 endif
 endef
@@ -319,7 +324,7 @@ CONFIGURE_ARGS +=			\
 	--disable-gtk			\
 	--disable-sdl			\
 	--disable-sdl-image		\
-	--disable-spice			\
+	--$(if $(CONFIG_QEMU_UI_SPICE),enable,disable)-spice			\
 	--disable-virglrenderer		\
 	--$(if $(CONFIG_QEMU_UI_VNC),enable,disable)-vnc			\
 	--$(if $(CONFIG_QEMU_UI_VNC_JPEG),enable,disable)-vnc-jpeg		\
