@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxml2
 PKG_VERSION:=2.9.9
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://xmlsoft.org/sources/
@@ -136,8 +136,11 @@ HOST_CONFIGURE_ARGS += \
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(2)/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/xml2-config $(2)/bin/
-	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(2)/bin/xml2-config
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/xml2-config \
+		$(2)/bin/$(GNU_TARGET_NAME)-xml2-config
+	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
+		$(2)/bin/$(GNU_TARGET_NAME)-xml2-config
+	$(LN) $(GNU_TARGET_NAME)-xml2-config $(2)/bin/xml2-config
 
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libxml2 $(1)/usr/include/
@@ -154,6 +157,12 @@ define Build/InstallDev
 
 	$(INSTALL_DIR) $(2)/share/aclocal/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/aclocal/* $(2)/share/aclocal
+endef
+
+define Host/Install
+	$(call Host/Install/Default)
+	mv $(1)/bin/xml2-config $(1)/bin/$(GNU_HOST_NAME)-xml2-config
+	$(LN) $(GNU_HOST_NAME)-xml2-config $(1)/bin/xml2-config
 endef
 
 define Package/libxml2/install
