@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmbim
 PKG_VERSION:=1.20.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/libmbim
@@ -20,6 +20,8 @@ PKG_MAINTAINER:=Nicholas Smith <nicholas.smith@telcoantennas.com.au>
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
+PKG_FIXUP:=autoreconf
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
@@ -27,7 +29,9 @@ CONFIGURE_ARGS += \
 	--disable-static \
 	--disable-gtk-doc \
 	--disable-gtk-doc-html \
-	--disable-gtk-doc-pdf
+	--disable-gtk-doc-pdf \
+	--disable-silent-rules \
+	--enable-more-warnings=yes
 
 define Package/libmbim
   SECTION:=libs
