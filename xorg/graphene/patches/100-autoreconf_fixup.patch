@@ -1,0 +1,11 @@
+--- a/doc/Makefile.am	2019-02-24 22:48:24.286506354 +0200
++++ b/doc/Makefile.am	2019-02-24 22:48:51.311253133 +0200
+@@ -39,7 +39,7 @@
+ AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_builddir)/src $(GRAPHENE_CFLAGS)
+ GTKDOC_LIBS = $(top_builddir)/src/libgraphene-1.0.la $(GRAPHENE_LIBS)
+ 
+-include $(top_srcdir)/gtk-doc.make
++#include $(top_srcdir)/gtk-doc.make
+ 
+ if ENABLE_GTK_DOC
+ TESTS_ENVIRONMENT = \

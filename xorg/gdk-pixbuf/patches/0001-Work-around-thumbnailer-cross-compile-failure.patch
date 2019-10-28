@@ -1,0 +1,47 @@
+From 6646e8aadc4030d891ac27c25494e5793d59dc85 Mon Sep 17 00:00:00 2001
+From: Jussi Kukkonen <jussi.kukkonen@intel.com>
+Date: Wed, 22 Feb 2017 11:24:39 +0200
+Subject: [PATCH] Work-around thumbnailer cross-compile failure
+
+Install gdk-pixbuf-print-mime-types that's needed for thumbnail
+metadata generation.
+
+Use native gdk-pixbuf-print-mime-types when generating the thumbnail
+metadata. This works but the mime types will come from native
+loader.cache (which will only contain in-tree loaders), not from the
+target loader.cache.
+
+The upstream issue is https://bugzilla.gnome.org/show_bug.cgi?id=779057
+
+Upstream-Status: Inappropriate [workaround]
+Signed-off-by: Jussi Kukkonen <jussi.kukkonen@intel.com>
+---
+ thumbnailer/Makefile.am | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/thumbnailer/Makefile.am b/thumbnailer/Makefile.am
+index c9fe123..b0c6c70 100644
+--- a/thumbnailer/Makefile.am
++++ b/thumbnailer/Makefile.am
+@@ -1,5 +1,4 @@
+-bin_PROGRAMS = gdk-pixbuf-thumbnailer
+-noinst_PROGRAMS = gdk-pixbuf-print-mime-types
++bin_PROGRAMS = gdk-pixbuf-thumbnailer gdk-pixbuf-print-mime-types
+ 
+ gdk_pixbuf_thumbnailer_SOURCES = gdk-pixbuf-thumbnailer.c gnome-thumbnailer-skeleton.c gnome-thumbnailer-skeleton.h
+ gdk_pixbuf_thumbnailer_CPPFLAGS =			\
+@@ -25,9 +24,9 @@ gdk_pixbuf_print_mime_types_LDADD =			\
+ 
+ thumbnailerdir = $(datadir)/thumbnailers/
+ thumbnailer_DATA = gdk-pixbuf-thumbnailer.thumbnailer
+-gdk-pixbuf-thumbnailer.thumbnailer: gdk-pixbuf-thumbnailer.thumbnailer.in Makefile gdk-pixbuf-print-mime-types$(EXEEXT) $(top_builddir)/gdk-pixbuf/loaders.cache
++gdk-pixbuf-thumbnailer.thumbnailer: gdk-pixbuf-thumbnailer.thumbnailer.in Makefile gdk-pixbuf-print-mime-types$(EXEEXT)
+ 	$(AM_V_GEN) $(SED) -e "s|\@bindir\@|$(bindir)|"						\
+-	-e "s|\@mimetypes\@|`GDK_PIXBUF_MODULE_FILE=$(top_builddir)/gdk-pixbuf/loaders.cache GDK_PIXBUF_PIXDATA=$(top_builddir)/gdk-pixbuf/gdk-pixbuf-pixdata $(builddir)/gdk-pixbuf-print-mime-types`|" \
++	-e "s|\@mimetypes\@|`gdk-pixbuf-print-mime-types`|" \
+ 	$< > $@
+ 
+ EXTRA_DIST = gdk-pixbuf-thumbnailer.thumbnailer.in
+-- 
+2.1.4
+

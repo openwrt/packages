@@ -1,0 +1,11 @@
+--- a/Makefile.am	2019-02-25 22:53:57.905658160 +0200
++++ b/Makefile.am	2019-02-25 22:54:27.514352556 +0200
+@@ -1,7 +1,7 @@
+ ## Makefile.am for GTK+
+ include $(top_srcdir)/Makefile.decl
+ 
+-SRC_SUBDIRS = gdk gtk modules demos tests perf
++SRC_SUBDIRS = gdk gtk modules tests perf
+ SUBDIRS = po po-properties $(SRC_SUBDIRS) docs m4macros build
+ 
+ # require automake 1.4

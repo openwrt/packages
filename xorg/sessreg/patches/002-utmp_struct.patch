@@ -1,0 +1,14 @@
+--- a/sessreg.c	2019-03-19 18:05:21.980911011 +0200
++++ b/sessreg.c	2019-03-19 18:05:35.345219890 +0200
+@@ -202,9 +202,9 @@
+ 	int		wtmp;
+ #endif
+ 	time_t		current_time;
+-#ifdef USE_UTMP
++//#ifdef USE_UTMP
+ 	struct utmp	utmp_entry;
+-#endif
++//#endif
+ #ifdef USE_UTMPX
+ 	struct utmpx	utmpx_entry;
+ #endif

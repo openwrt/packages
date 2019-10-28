@@ -1,0 +1,11 @@
+--- a/utils/lit/lit/formats/googletest.py
++++ b/utils/lit/lit/formats/googletest.py
+@@ -42,7 +42,7 @@
+         for ln in output.splitlines(False):  # Don't keep newlines.
+             ln = lit.util.to_string(ln)
+ 
+-            if 'Running main() from gtest_main.cc' in ln:
++            if ln.startswith('Running main() from '):
+                 # Upstream googletest prints this to stdout prior to running
+                 # tests. LLVM removed that print statement in r61540, but we
+                 # handle it here in case upstream googletest is being used.

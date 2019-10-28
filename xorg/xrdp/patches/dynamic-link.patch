@@ -1,0 +1,22 @@
+diff --git a/xrdp/Makefile.am b/xrdp/Makefile.am
+index a259ef3..0d8e66f 100644
+--- a/xrdp/Makefile.am
++++ b/xrdp/Makefile.am
+@@ -23,7 +23,7 @@ endif
+ if XRDP_RFXCODEC
+ AM_CPPFLAGS += -DXRDP_RFXCODEC
+ AM_CPPFLAGS += -I$(top_srcdir)/librfxcodec/include
+-XRDP_EXTRA_LIBS += $(top_builddir)/librfxcodec/src/.libs/librfxencode.a
++XRDP_EXTRA_LIBS += $(top_builddir)/librfxcodec/src/librfxencode.la
+ endif
+ 
+ if XRDP_PIXMAN
+@@ -35,7 +35,7 @@ endif
+ if XRDP_PAINTER
+ AM_CPPFLAGS += -DXRDP_PAINTER
+ AM_CPPFLAGS += -I$(top_srcdir)/libpainter/include
+-XRDP_EXTRA_LIBS += $(top_builddir)/libpainter/src/.libs/libpainter.a
++XRDP_EXTRA_LIBS += $(top_builddir)/libpainter/src/libpainter.la
+ endif
+ 
+ sbin_PROGRAMS = \

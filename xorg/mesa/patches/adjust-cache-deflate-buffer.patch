@@ -1,0 +1,16 @@
+diff -ru mesa-18.1.7.orig/src/util/disk_cache.c mesa-18.1.7/src/util/disk_cache.c
+--- mesa-18.1.7.orig/src/util/disk_cache.c	2018-08-24 19:25:19.000000000 +0300
++++ mesa-18.1.7/src/util/disk_cache.c	2018-12-14 13:59:15.433631846 +0200
+@@ -721,8 +721,11 @@
+ /* From the zlib docs:
+  *    "If the memory is available, buffers sizes on the order of 128K or 256K
+  *    bytes should be used."
++ *
++ * But that is performance optimization for large files. To keep stack usage
++ * in sensible amount (wrt. musl default stack) we use smaller stack on Alpine.
+  */
+-#define BUFSIZE 256 * 1024
++#define BUFSIZE 4 * 1024
+ 
+ /**
+  * Compresses cache entry in memory and writes it to disk. Returns the size

@@ -1,0 +1,10 @@
+--- a/configure.ac	2019-01-24 23:29:20.430287206 +0200
++++ b/configure.ac	2019-01-24 23:29:28.758417338 +0200
+@@ -383,7 +383,6 @@
+ 		man/Makefile
+ 		man/xkb/Makefile
+ 		src/Makefile
+-		src/util/Makefile
+ 		src/xcms/Makefile
+ 		src/xlibi18n/Makefile
+ 		modules/Makefile

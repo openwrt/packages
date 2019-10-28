@@ -1,0 +1,46 @@
+From 54179bea29de8f77336eedede68e87b1b1d473a6 Mon Sep 17 00:00:00 2001
+From: James Le Cuirot <chewi@gentoo.org>
+Date: Wed, 13 Feb 2019 23:22:06 +0000
+Subject: [PATCH] Don't build xserver with -I$(includedir) as it breaks
+ cross-compiling
+
+This is where to install headers to, not where to find headers to
+build against. Toolchains should know where to locate their system
+headers while non-system headers should be found using
+pkg-config. Users with bizarre setups where the toolchain really
+cannot find the system headers should set CPPFLAGS.
+---
+ unix/xserver/hw/vnc/Makefile.am | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/unix/xserver/hw/vnc/Makefile.am b/unix/xserver/hw/vnc/Makefile.am
+index 470424b51..ee18bf990 100644
+--- a/unix/xserver/hw/vnc/Makefile.am
++++ b/unix/xserver/hw/vnc/Makefile.am
+@@ -23,7 +23,7 @@ libvnccommon_la_SOURCES = $(HDRS) \
+ 
+ libvnccommon_la_CPPFLAGS = -DVENDOR_RELEASE="$(VENDOR_RELEASE)" -I$(TIGERVNC_SRCDIR)/unix/common \
+ 	-DVENDOR_STRING="\"$(VENDOR_STRING)\"" -I$(TIGERVNC_SRCDIR)/common -UHAVE_CONFIG_H \
+-	-I$(TIGERVNC_SRCDIR)/unix/vncconfig $(XVNC_CPPFLAGS) ${XSERVERLIBS_CFLAGS} -I$(includedir) \
++	-I$(TIGERVNC_SRCDIR)/unix/vncconfig $(XVNC_CPPFLAGS) ${XSERVERLIBS_CFLAGS} \
+ 	-I$(top_srcdir)/include
+ 
+ bin_PROGRAMS = Xvnc
+@@ -43,7 +43,7 @@ Xvnc_CPPFLAGS = $(XVNC_CPPFLAGS) -DTIGERVNC -DNO_MODULE_EXTS \
+ 	-UHAVE_CONFIG_H \
+ 	-DXFree86Server -DVENDOR_RELEASE="$(VENDOR_RELEASE)" \
+ 	-DVENDOR_STRING="\"$(VENDOR_STRING)\"" -I$(TIGERVNC_SRCDIR)/common -I$(TIGERVNC_SRCDIR)/unix/common \
+-	-I$(top_srcdir)/include ${XSERVERLIBS_CFLAGS} -I$(includedir)
++	-I$(top_srcdir)/include ${XSERVERLIBS_CFLAGS}
+ 
+ Xvnc_LDADD = $(XVNC_LIBS) libvnccommon.la $(COMMON_LIBS) \
+ 	$(XSERVER_LIBS) $(XSERVER_SYS_LIBS) $(XVNC_SYS_LIBS) -lX11
+@@ -64,7 +64,7 @@ libvnc_la_CPPFLAGS = $(XVNC_CPPFLAGS) -I$(TIGERVNC_SRCDIR)/common -UHAVE_CONFIG_
+ 	-I$(top_srcdir)/hw/xfree86/os-support \
+ 	-I$(top_srcdir)/hw/xfree86/os-support/bus \
+ 	-I$(top_srcdir)/include \
+-	${XSERVERLIBS_CFLAGS} -I$(includedir)
++	${XSERVERLIBS_CFLAGS}
+ 
+ libvnc_la_LDFLAGS = -module -avoid-version -Wl,-z,now
+ 

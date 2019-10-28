@@ -1,0 +1,33 @@
+Fix failures in AllocationTests/MappedMemoryTest.* on aarch64:
+
+    Failing Tests (8):
+        LLVM-Unit :: Support/./SupportTests/AllocationTests/MappedMemoryTest.AllocAndRelease/3
+        LLVM-Unit :: Support/./SupportTests/AllocationTests/MappedMemoryTest.DuplicateNear/3
+        LLVM-Unit :: Support/./SupportTests/AllocationTests/MappedMemoryTest.EnabledWrite/3
+        LLVM-Unit :: Support/./SupportTests/AllocationTests/MappedMemoryTest.MultipleAllocAndRelease/3
+        LLVM-Unit :: Support/./SupportTests/AllocationTests/MappedMemoryTest.SuccessiveNear/3
+        LLVM-Unit :: Support/./SupportTests/AllocationTests/MappedMemoryTest.UnalignedNear/3
+        LLVM-Unit :: Support/./SupportTests/AllocationTests/MappedMemoryTest.ZeroNear/3
+        LLVM-Unit :: Support/./SupportTests/AllocationTests/MappedMemoryTest.ZeroSizeNear/3
+
+Upstream-Issue: https://bugs.llvm.org/show_bug.cgi?id=14278#c10
+
+--- a/lib/Support/Unix/Memory.inc
++++ b/lib/Support/Unix/Memory.inc
+@@ -54,7 +54,7 @@
+       llvm::sys::Memory::MF_EXEC:
+     return PROT_READ | PROT_WRITE | PROT_EXEC;
+   case llvm::sys::Memory::MF_EXEC:
+-#if defined(__FreeBSD__)
++#if defined(__FreeBSD__) || (defined(__linux__) && defined(__aarch64__))
+     // On PowerPC, having an executable page that has no read permission
+     // can have unintended consequences.  The function InvalidateInstruction-
+     // Cache uses instructions dcbf and icbi, both of which are treated by
+@@ -62,6 +62,7 @@
+     // executing these instructions will result in a segmentation fault.
+     // Somehow, this problem is not present on Linux, but it does happen
+     // on FreeBSD.
++    // The same problem is present even on aarch64 Linux (at least on musl).
+     return PROT_READ | PROT_EXEC;
+ #else
+     return PROT_EXEC;

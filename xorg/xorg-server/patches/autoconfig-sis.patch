@@ -1,0 +1,21 @@
+--- ./hw/xfree86/common/xf86pciBus.c.orig	2011-09-24 10:53:45.421697668 +0000
++++ ./hw/xfree86/common/xf86pciBus.c	2011-09-24 10:55:56.416250708 +0000
+@@ -1200,9 +1200,15 @@
+             break;
+         }
+         break;
+-    case 0x1039:
+-        driverList[0] = "sis";
+-        break;
++	case 0x1039:
++	    switch (dev->device_id)
++	    {
++		case 0x6350: case 0x6351:
++		    driverList[0] = "sisimedia"; driverList[1] = "sis"; break;
++		default:
++		    driverList[0] = "sis"; break;
++	    }
++	    break;
+     case 0x126f:
+         driverList[0] = "siliconmotion";
+         break;

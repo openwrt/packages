@@ -1,0 +1,13 @@
+--- a/sessreg.h	2019-03-19 18:01:01.122941150 +0200
++++ b/sessreg.h	2019-03-19 17:59:42.341166073 +0200
+@@ -62,8 +62,8 @@
+ #endif
+ 
+ #ifdef HAVE_UTMPX_H
+-# include <utmpx.h>
+-# define USE_UTMPX
++//# include <utmpx.h>
++//# define USE_UTMPX
+ #endif
+ 
+ #ifdef HAVE_SYS_PARAM_H

@@ -1,0 +1,12 @@
+--- a/keygen/Makefile.am	2018-12-25 06:49:24.000000000 +0200
++++ b/keygen/Makefile.am	2019-02-10 16:36:54.162207444 +0200
+@@ -20,7 +20,8 @@
+ install-data-hook:
+ 	umask 077 && \
+ 	if [ ! -f $(DESTDIR)$(xrdpsysconfdir)/rsakeys.ini ]; then \
+-	  ./xrdp-keygen xrdp $(DESTDIR)$(xrdpsysconfdir)/rsakeys.ini; \
++	#  ./xrdp-keygen xrdp $(DESTDIR)$(xrdpsysconfdir)/rsakeys.ini; \
++	  echo "" > $(DESTDIR)$(xrdpsysconfdir)/rsakeys.ini; \
+ 	fi && \
+ 	if [ ! -f $(DESTDIR)$(xrdpsysconfdir)/cert.pem ]; then \
+ 	  $(OPENSSL) req -x509 -newkey rsa:2048 -sha256 -nodes \

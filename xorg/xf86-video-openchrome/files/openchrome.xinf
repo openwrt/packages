@@ -1,0 +1,39 @@
+# NOTE: Comments in openchrome 0.2.1 driver source indicate this device does not
+# exist in the wild, so it has been disabled for now.
+#alias pcivideo:v00001106d00003022sv*sd*bc*sc*i* openchrome
+
+# 1106:3108 - K8M800 (PCI_CHIP_VT3204)
+alias pcivideo:v00001106d00003108sv*sd*bc*sc*i* openchrome
+
+# 1106:3118 - PM800/PM880/CN400 (PCI_CHIP_VT3259)
+alias pcivideo:v00001106d00003118sv*sd*bc*sc*i* openchrome
+
+# 1106:3122 - CLE266 (PCI_CHIP_CLE3122)
+alias pcivideo:v00001106d00003122sv*sd*bc*sc*i* openchrome
+
+# 1106:7205 - KM400/KN400 (PCI_CHIP_VT3205)
+alias pcivideo:v00001106d00007205sv*sd*bc*sc*i* openchrome
+
+# 1106:3344 - VM800 (PCI_CHIP_VT3314)
+alias pcivideo:v00001106d00003344sv*sd*bc*sc*i* openchrome
+
+# 1106:3157 - CX700 (PCI_CHIP_VT3324)
+alias pcivideo:v00001106d00003157sv*sd*bc*sc*i* openchrome
+
+# 1106:3343 - P4M890 (PCI_CHIP_VT3327)
+alias pcivideo:v00001106d00003343sv*sd*bc*sc*i* openchrome
+
+# 1106:3230 - K8M890 (PCI_CHIP_VT3336)
+alias pcivideo:v00001106d00003230sv*sd*bc*sc*i* openchrome
+
+# 1106:3371 - P4M900 (PCI_CHIP_VT3364)
+alias pcivideo:v00001106d00003371sv*sd*bc*sc*i* openchrome
+
+# 1106:1122 - VX800 (PCI_CHIP_VT3353)
+alias pcivideo:v00001106d00001122sv*sd*bc*sc*i* openchrome
+
+# 1106:5122 - VX855 (PCI_CHIP_VT3409)
+alias pcivideo:v00001106d00005122sv*sd*bc*sc*i* openchrome
+
+# 1106:7122 - VX855 (PCI_CHIP_VT3410)
+alias pcivideo:v00001106d00007122sv*sd*bc*sc*i* openchrome

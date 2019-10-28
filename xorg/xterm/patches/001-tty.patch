@@ -1,0 +1,40 @@
+--- a/main.c	2019-03-20 21:19:24.808926430 +0200
++++ b/main.c	2019-03-20 21:20:02.637805786 +0200
+@@ -4137,10 +4137,10 @@
+ 			/* make /dev/tty work */
+ 			ioctl(ttyfd, TCSETCTTY, 0);
+ #endif
+-#if ((defined(__GLIBC__) && defined(__FreeBSD_kernel__)) || defined(__GNU__)) && defined(TIOCSCTTY)
++//#if ((defined(__GLIBC__) && defined(__FreeBSD_kernel__)) || defined(__GNU__)) && defined(TIOCSCTTY)
+ 			/* make /dev/tty work */
+ 			ioctl(ttyfd, TIOCSCTTY, 0);
+-#endif
++//#endif
+ #ifdef USE_SYSV_PGRP
+ 			/* We need to make sure that we are actually
+ 			 * the process group leader for the pty.  If
+@@ -4157,9 +4157,9 @@
+ #endif /* USE_SYSV_PGRP */
+ 		    }
+ 		    perror("open ttydev");
+-#ifdef TIOCSCTTY
++//#ifdef TIOCSCTTY
+ 		    ioctl(ttyfd, TIOCSCTTY, 0);
+-#endif
++//#endif
+ 		    /* let our master know that the open failed */
+ 		    handshake.status = PTY_BAD;
+ 		    handshake.error = errno;
+@@ -4548,10 +4548,10 @@
+ 	    }
+ 
+ #if !defined(USE_SYSV_PGRP)
+-#ifdef TIOCSCTTY
++//#ifdef TIOCSCTTY
+ 	    setsid();
+ 	    ioctl(0, TIOCSCTTY, 0);
+-#endif
++//#endif
+ 	    ioctl(0, TIOCSPGRP, (char *) &pgrp);
+ 	    setpgrp(0, 0);
+ 	    close(open(ttydev, O_WRONLY));

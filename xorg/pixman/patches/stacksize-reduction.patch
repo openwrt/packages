@@ -1,0 +1,35 @@
+Reduce the stack footprint of pixman's function
+general_composite_rect() which allocates a large buffer
+`stack_scanline_buffer`. Make it `static __thread` instead.
+
+--- a/pixman/pixman-general.c	2015-12-27 21:37:37.000000000 +0100
++++ b/pixman/pixman-general.c	2016-05-05 12:24:47.346661080 +0200
+@@ -128,8 +128,8 @@
+                          pixman_composite_info_t *info)
+ {
+     PIXMAN_COMPOSITE_ARGS (info);
+-    uint8_t stack_scanline_buffer[3 * SCANLINE_BUFFER_LENGTH];
+-    uint8_t *scanline_buffer = (uint8_t *) stack_scanline_buffer;
++    static __thread uint8_t static_scanline_buffer[3 * SCANLINE_BUFFER_LENGTH];
++    uint8_t *scanline_buffer = (uint8_t *) static_scanline_buffer;
+     uint8_t *src_buffer, *mask_buffer, *dest_buffer;
+     pixman_iter_t src_iter, mask_iter, dest_iter;
+     pixman_combine_32_func_t compose;
+@@ -158,7 +158,7 @@
+     if (width <= 0 || _pixman_multiply_overflows_int (width, Bpp * 3))
+ 	return;
+ 
+-    if (width * Bpp * 3 > sizeof (stack_scanline_buffer) - 15 * 3)
++    if (width * Bpp * 3 > sizeof (static_scanline_buffer) - 15 * 3)
+     {
+ 	scanline_buffer = pixman_malloc_ab_plus_c (width, Bpp * 3, 15 * 3);
+ 
+@@ -232,7 +232,7 @@
+     if (dest_iter.fini)
+ 	dest_iter.fini (&dest_iter);
+     
+-    if (scanline_buffer != (uint8_t *) stack_scanline_buffer)
++    if (scanline_buffer != (uint8_t *) static_scanline_buffer)
+ 	free (scanline_buffer);
+ }
+ 

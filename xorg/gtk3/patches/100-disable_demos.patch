@@ -1,0 +1,19 @@
+--- a/Makefile.in	2019-02-25 01:49:53.173476119 +0200
++++ b/Makefile.in	2019-02-25 01:50:21.154108928 +0200
+@@ -574,7 +574,7 @@
+ ## Makefile.am for GTK+
+ include $(top_srcdir)/Makefile.decl
+ 
+-SRC_SUBDIRS = gdk gsk gtk modules demos tests testsuite examples
++SRC_SUBDIRS = gdk gsk gtk modules tests testsuite examples
+ SUBDIRS = po po-properties $(SRC_SUBDIRS) docs win32
+ 
+ ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
+@@ -586,7 +586,6 @@
+ 	gsk/gen-gsk-gresources-xml.py \
+ 	gtk/gen-gtk-gresources-xml.py \
+ 	gtk/gentypefuncs.py \
+-	demos/gtk-demo/geninclude.py \
+ 	gdk/wayland/genprotocolfiles.py \
+ 	build-aux/meson/post-install.sh \
+ 	$()

@@ -1,0 +1,17 @@
+--- a/gtk/Makefile.am	2019-02-25 22:52:09.695127096 +0200
++++ b/gtk/Makefile.am	2019-02-25 22:52:22.871434677 +0200
+@@ -1447,10 +1447,10 @@
+ 
+ gtkbuiltincache.h: @REBUILD@ stamp-icons
+ 	$(MAKE) $(AM_MAKEFLAGS) gtk-update-icon-cache$(EXEEXT)
+-	$(gtk_update_icon_cache_program) --force --ignore-theme-index		\
+-	   --include-image-data							\
+-	   --source builtin_icons stock-icons > gtkbuiltincache.h.tmp &&        \
+-	mv gtkbuiltincache.h.tmp gtkbuiltincache.h
++#	$(gtk_update_icon_cache_program) --force --ignore-theme-index		\
++#	   --include-image-data							\
++#	   --source builtin_icons stock-icons > gtkbuiltincache.h.tmp &&        \
++#	mv gtkbuiltincache.h.tmp gtkbuiltincache.h
+ 
+ EXTRA_DIST +=                   \
+ 	$(STOCK_ICONS)		\

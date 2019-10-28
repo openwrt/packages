@@ -1,0 +1,11 @@
+--- a/src/evdev.c	2019-02-03 23:55:14.894745054 +0200
++++ b/src/evdev.c	2019-02-03 23:55:36.010419806 +0200
+@@ -245,7 +245,7 @@
+         goto out;
+ 
+ 
+-    devpath = udev_device_get_devpath(device);
++    devpath = udev_device_get_syspath(device);
+     if (!devpath)
+         goto out;
+ 

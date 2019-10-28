@@ -1,0 +1,28 @@
+2011-02-09	Jeremy Huddleston <jeremyhu@freedesktop.org
+
+	#240956
+	* configure.ac	add support to enable readonly test segment on x86
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -539,6 +539,20 @@
+ 
+ AM_CONDITIONAL(BUILD_SHARED, test "x$enable_shared" = xyes)
+ 
++
++dnl readonly text segment on x86 hardened platforms
++AC_ARG_ENABLE([glx_rts],
++    [AS_HELP_STRING([--enable-glx-rts],
++        [on x86, use a readonly text segment for libGL @<:@default=disabled@:>@])],
++    [enable_glx_rts="$enableval"],
++    [enable_glx_rts=no])
++if test "x$enable_glx_rts" = xyes; then
++    DEFINES="$DEFINES -DGLX_X86_READONLY_TEXT"
++else
++    enable_glx_rts=no
++fi
++
++
+ dnl
+ dnl other compiler options
+ dnl

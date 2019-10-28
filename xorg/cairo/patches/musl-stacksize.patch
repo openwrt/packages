@@ -1,0 +1,23 @@
+Reduce the footprint of stack frame usage by turning
+some large(r) structures as `static __thread` instead.
+
+--- a/src/cairo-rectangular-scan-converter.c	2015-10-27 22:04:21.000000000 +0100
++++ b/src/cairo-rectangular-scan-converter.c	2016-05-07 04:25:26.640851782 +0200
+@@ -489,7 +489,7 @@
+ 	  cairo_span_renderer_t	*renderer,
+ 	  rectangle_t **rectangles)
+ {
+-    sweep_line_t sweep_line;
++    static __thread sweep_line_t sweep_line;
+     rectangle_t *start, *stop;
+     cairo_status_t status;
+ 
+@@ -656,7 +656,7 @@
+ 					    cairo_span_renderer_t	*renderer)
+ {
+     cairo_rectangular_scan_converter_t *self = converter;
+-    rectangle_t *rectangles_stack[CAIRO_STACK_ARRAY_LENGTH (rectangle_t *)];
++    static __thread rectangle_t *rectangles_stack[CAIRO_STACK_ARRAY_LENGTH (rectangle_t *)];
+     rectangle_t **rectangles;
+     struct _cairo_rectangular_scan_converter_chunk *chunk;
+     cairo_status_t status;

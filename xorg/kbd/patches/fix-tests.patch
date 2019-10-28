@@ -1,0 +1,41 @@
+busybox readlink doesn't accept -e, and in these cases -f has the same effect.
+--- a/tests/alt-is-meta.in
++++ b/tests/alt-is-meta.in
+@@ -1,6 +1,6 @@
+ #!/bin/sh -efu
+ 
+-cwd="$(readlink -ev "${0%/*}")"
++cwd="$(readlink -fv "${0%/*}")"
+ 
+ cd "$cwd"
+ 
+--- a/tests/dumpkeys-bkeymap.in
++++ b/tests/dumpkeys-bkeymap.in
+@@ -1,6 +1,6 @@
+ #!/bin/sh -efu
+ 
+-cwd="$(readlink -ev "${0%/*}")"
++cwd="$(readlink -fv "${0%/*}")"
+ 
+ cd "$cwd"
+ 
+--- a/tests/dumpkeys-fulltable.in
++++ b/tests/dumpkeys-fulltable.in
+@@ -1,6 +1,6 @@
+ #!/bin/sh -efu
+ 
+-cwd="$(readlink -ev "${0%/*}")"
++cwd="$(readlink -fv "${0%/*}")"
+ 
+ cd "$cwd"
+ 
+--- a/tests/dumpkeys-mktable.in
++++ b/tests/dumpkeys-mktable.in
+@@ -1,6 +1,6 @@
+ #!/bin/sh -efu
+ 
+-cwd="$(readlink -ev "${0%/*}")"
++cwd="$(readlink -fv "${0%/*}")"
+ 
+ cd "$cwd"
+ 

@@ -1,0 +1,71 @@
+diff -ur vte-0.28.2.orig/src/vte.c vte-0.28.2/src/vte.c
+--- vte-0.28.2.orig/src/vte.c	2011-08-29 00:31:45.000000000 +0300
++++ vte-0.28.2/src/vte.c	2014-06-26 04:20:52.409371214 +0300
+@@ -5806,10 +5806,10 @@
+ 				p++;
+ 			}
+ 		}
+-		if (terminal->pvt->screen->bracketed_paste_mode)
++		if (terminal->pvt->bracketed_paste_mode)
+ 			vte_terminal_feed_child(terminal, "\e[200~", -1);
+ 		vte_terminal_feed_child(terminal, paste, length);
+-		if (terminal->pvt->screen->bracketed_paste_mode)
++		if (terminal->pvt->bracketed_paste_mode)
+ 			vte_terminal_feed_child(terminal, "\e[201~", -1);
+ 		g_free(paste);
+ 	}
+@@ -14065,14 +14065,12 @@
+ 	pvt->normal_screen.linefeed_mode = FALSE;
+ 	pvt->normal_screen.origin_mode = FALSE;
+ 	pvt->normal_screen.reverse_mode = FALSE;
+-	pvt->normal_screen.bracketed_paste_mode = FALSE;
+ 	pvt->alternate_screen.scrolling_restricted = FALSE;
+ 	pvt->alternate_screen.sendrecv_mode = TRUE;
+ 	pvt->alternate_screen.insert_mode = FALSE;
+ 	pvt->alternate_screen.linefeed_mode = FALSE;
+ 	pvt->alternate_screen.origin_mode = FALSE;
+ 	pvt->alternate_screen.reverse_mode = FALSE;
+-	pvt->alternate_screen.bracketed_paste_mode = FALSE;
+ 	pvt->cursor_visible = TRUE;
+ 	/* Reset the encoding. */
+ 	vte_terminal_set_encoding(terminal, NULL);
+@@ -14102,6 +14100,8 @@
+ 	pvt->mouse_last_y = 0;
+ 	/* Clear modifiers. */
+ 	pvt->modifiers = 0;
++	/* Reset miscellaneous stuff. */
++	pvt->bracketed_paste_mode = FALSE;
+ 	/* Cause everything to be redrawn (or cleared). */
+ 	vte_terminal_maybe_scroll_to_bottom(terminal);
+ 	_vte_invalidate_all(terminal);
+diff -ur vte-0.28.2.orig/src/vte-private.h vte-0.28.2/src/vte-private.h
+--- vte-0.28.2.orig/src/vte-private.h	2011-08-17 00:52:48.000000000 +0300
++++ vte-0.28.2/src/vte-private.h	2014-06-26 04:20:52.410371214 +0300
+@@ -219,7 +219,6 @@
+ 		gboolean sendrecv_mode;	/* sendrecv mode */
+ 		gboolean insert_mode;	/* insert mode */
+ 		gboolean linefeed_mode;	/* linefeed mode */
+-		gboolean bracketed_paste_mode;
+ 		struct vte_scrolling_region {
+ 			int start, end;
+ 		} scrolling_region;	/* the region we scroll in */
+@@ -274,6 +273,7 @@
+ 	gboolean text_modified_flag;
+ 	gboolean text_inserted_flag;
+ 	gboolean text_deleted_flag;
++	gboolean bracketed_paste_mode;
+ 
+ 	/* Scrolling options. */
+ 	gboolean scroll_background;
+diff -ur vte-0.28.2.orig/src/vteseq.c vte-0.28.2/src/vteseq.c
+--- vte-0.28.2.orig/src/vteseq.c	2014-06-26 04:08:49.998358634 +0300
++++ vte-0.28.2/src/vteseq.c	2014-06-26 04:34:00.214384933 +0300
+@@ -737,7 +737,7 @@
+ 		 GINT_TO_POINTER(TRUE),
+ 		 NULL, NULL},
+ 		/* 2004: Bracketed paste mode. */
+-		{2004, &terminal->pvt->screen->bracketed_paste_mode, NULL, NULL,
++		{2004, &terminal->pvt->bracketed_paste_mode, NULL, NULL,
+ 		 GINT_TO_POINTER(FALSE),
+ 		 GINT_TO_POINTER(TRUE),
+ 		 NULL, NULL,},

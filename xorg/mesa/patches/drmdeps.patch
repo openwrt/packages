@@ -1,0 +1,41 @@
+--- a/src/gallium/winsys/radeon/drm/Makefile.am
++++ b/src/gallium/winsys/radeon/drm/Makefile.am
+@@ -7,4 +7,6 @@
+ 
+ noinst_LTLIBRARIES = libradeonwinsys.la
+ 
++libradeonwinsys_la_LIBADD = -ldrm_radeon
++
+ libradeonwinsys_la_SOURCES = $(C_SOURCES)
+--- a/src/gallium/winsys/radeon/drm/Makefile.in
++++ b/src/gallium/winsys/radeon/drm/Makefile.in
+@@ -119,7 +119,7 @@
+ CONFIG_CLEAN_FILES =
+ CONFIG_CLEAN_VPATH_FILES =
+ LTLIBRARIES = $(noinst_LTLIBRARIES)
+-libradeonwinsys_la_LIBADD =
++libradeonwinsys_la_LIBADD = -ldrm_radeon
+ am__objects_1 = radeon_drm_bo.lo radeon_drm_cs.lo \
+ 	radeon_drm_surface.lo radeon_drm_winsys.lo
+ am_libradeonwinsys_la_OBJECTS = $(am__objects_1)
+--- a/src/gallium/winsys/amdgpu/drm/Makefile.am
++++ b/src/gallium/winsys/amdgpu/drm/Makefile.am
+@@ -11,6 +11,6 @@
+ noinst_LTLIBRARIES = libamdgpuwinsys.la
+ 
+ libamdgpuwinsys_la_LIBADD = \
+-   $(top_builddir)/src/amd/addrlib/libamdgpu_addrlib.la
++   $(top_builddir)/src/amd/addrlib/libamdgpu_addrlib.la -ldrm_amdgpu
+ 
+ libamdgpuwinsys_la_SOURCES = $(C_SOURCES)
+--- a/src/gallium/winsys/amdgpu/drm/Makefile.in
++++ b/src/gallium/winsys/amdgpu/drm/Makefile.in
+@@ -572,7 +572,7 @@
+ AM_CXXFLAGS = $(AM_CFLAGS)
+ noinst_LTLIBRARIES = libamdgpuwinsys.la
+ libamdgpuwinsys_la_LIBADD = \
+-   $(top_builddir)/src/amd/addrlib/libamdgpu_addrlib.la
++   $(top_builddir)/src/amd/addrlib/libamdgpu_addrlib.la -ldrm_amdgpu
+ 
+ libamdgpuwinsys_la_SOURCES = $(C_SOURCES)
+ all: all-am
