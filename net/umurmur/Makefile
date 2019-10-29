@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=umurmur
 PKG_VERSION:=0.2.17
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/umurmur/umurmur/tar.gz/$(PKG_VERSION)?
@@ -77,20 +77,20 @@ endef
 Package/umurmur-mbedtls/install = $(Package/umurmur-openssl/install)
 
 CMAKE_OPTIONS += \
-	-DLIBCONFIG_INCLUDE_DIR="$(STAGING_DIR)/include" \
-	-DLIBCONFIG_LIBRARIES="$(STAGING_DIR)/lib" \
-	-DLIBCONFIG_LIB_DIR="$(STAGING_DIR)/lib" \
-	-DPROTOBUFC_INCLUDE_DIR="$(STAGING_DIR)/include" \
-	-DPROTOBUFC_LIBRARIES="$(STAGING_DIR)/lib" \
-	-DPROTOBUFC_LIB_DIR="$(STAGING_DIR)/lib"
+	-DLIBCONFIG_INCLUDE_DIR="$(STAGING_DIR)/usr/include" \
+	-DLIBCONFIG_LIBRARIES="$(STAGING_DIR)/usr/lib" \
+	-DLIBCONFIG_LIB_DIR="$(STAGING_DIR)/usr/lib" \
+	-DPROTOBUFC_INCLUDE_DIR="$(STAGING_DIR)/usr/include" \
+	-DPROTOBUFC_LIBRARIES="$(STAGING_DIR)/usr/lib" \
+	-DPROTOBUFC_LIB_DIR="$(STAGING_DIR)/usr/lib"
 
 ifeq ($(BUILD_VARIANT),openssl)
 CMAKE_OPTIONS += -DSSL=openssl
 else
 CMAKE_OPTIONS += -DSSL=mbedtls \
-	-DMBEDTLS_INCLUDE_DIR="$(STAGING_DIR)/include/mbedtls" \
-	-DMBEDTLS_LIBRARIES="$(STAGING_DIR)/lib" \
-	-DMBEDTLS_LIB_DIR="$(STAGING_DIR)/lib"
+	-DMBEDTLS_INCLUDE_DIR="$(STAGING_DIR)/usr/include/mbedtls" \
+	-DMBEDTLS_LIBRARIES="$(STAGING_DIR)/usr/lib" \
+	-DMBEDTLS_LIB_DIR="$(STAGING_DIR)/usr/lib"
 endif
 
 $(eval $(call BuildPackage,umurmur-openssl))
