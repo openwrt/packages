@@ -43,3 +43,14 @@ Adopted to OpenWrt target. Most likely these changes go elsewhere when done righ
  ENDIF (APPLE)
  
  
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -62,7 +62,7 @@ IF(DOXYGEN_FOUND)
+ 	SET(DOXY_CONFIG ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+ 
+ 	CONFIGURE_FILE(
+-		"${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in"
++		"${CMAKE_CURRENT_SOURCE_DIR}/CMakeDoxyfile.in"
+ 		${DOXY_CONFIG} @ONLY
+ 	)
+ 
