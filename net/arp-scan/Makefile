@@ -25,13 +25,17 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/arp-scan
+define Package/arp-scan/default
+  SUBMENU:=arp-scan
   SECTION:=net
   CATEGORY:=Network
+  URL:=https://github.com/royhills/arp-scan
+endef
+
+define Package/arp-scan
+$(call Package/arp-scan/default)
   TITLE:=ARP scanner
   DEPENDS:=+libpcap
-  URL:=https://github.com/royhills/arp-scan
-  PKG_MAINTAINER:=Sergey Urushkin <urusha.v1.0@gmail.com>
 endef
 
 define Package/arp-scan/description
@@ -43,4 +47,36 @@ define Package/arp-scan/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/arp-scan $(1)/usr/bin/
 endef
 
+define Package/arp-scan/postinst
+cat <<EOF
+
+Please install the arp-scan-database package in order to let arp-scan
+display additional information about vendor/manufacturer for each
+discovered device.
+
+EOF
+endef
+
 $(eval $(call BuildPackage,arp-scan))
+
+define Package/arp-scan-database
+$(call Package/arp-scan/default)
+  TITLE:=MAC database for ARP scanner
+endef
+
+define Package/arp-scan-database/description
+    MAC database for ARP scanner
+endef
+
+define Package/arp-scan-database/install
+	$(INSTALL_DIR) $(1)/usr/share/arp-scan
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/ieee-iab.txt $(1)/usr/share/arp-scan/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/ieee-oui.txt $(1)/usr/share/arp-scan/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/mac-vendor.txt $(1)/usr/share/arp-scan/
+endef
+
+define Package/arp-scan-database/postrm
+	$(RM) -rf $(1)/usr/share/arp-scan
+endef
+
+$(eval $(call BuildPackage,arp-scan-database))
