@@ -65,7 +65,7 @@ PIANOD_CLIENT:=pianod-client-compiled-51.tar.gz
 define Download/pianod-client
   URL:=http://deviousfish.com/Downloads/pianod/
   FILE:=$(PIANOD_CLIENT)
-  MD5SUM:=abbdee5627bcee6a00c8304da8b4e2e7
+  HASH:=1596ec2da30992e4008bbd6654333b025165399c3c7e22078f35bee6a438c5ad
 endef
 
 define Package/pianod/conffiles

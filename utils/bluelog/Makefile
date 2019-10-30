@@ -18,7 +18,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/Bluelog-$(PKG_VERSION)
 
 OUI_SOURCE:=oui-2016-05-30.txt.gz
 OUI_URL:=https://sources.openwrt.org/
-OUI_MD5SUM:=38048729fdb5a7a7e0c5db6a51dc2dd1
+OUI_HASH:=19d0b02eeb0d42507ee17b637a295782c14956fe1ac4803589ed93ef92c4fad5
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -67,7 +67,7 @@ endef
 define Download/oui.txt
   FILE:=$(OUI_SOURCE)
   URL:=$(OUI_URL)
-  MD5SUM:=$(OUI_MD5SUM)
+  HASH:=$(OUI_HASH)
 endef
 
 TARGET_CFLAGS += -DOPENWRT
