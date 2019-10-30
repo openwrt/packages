@@ -1,6 +1,6 @@
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -121,9 +121,8 @@ endif(WIN32)
+@@ -122,9 +122,8 @@ endif(WIN32)
  
  # Install pkg-config file
  
@@ -22,7 +22,7 @@
  Name: avro-c
  Description: C library for parsing Avro data
  Version: @VERSION@
- URL: http://avro.apache.org/
+ URL: https://avro.apache.org/
 -Libs: -L@prefix@/lib -lavro
 -Cflags: -I@prefix@/include
 +Libs: -L${libdir} -lavro
