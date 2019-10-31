@@ -15,6 +15,11 @@ adb_init="/etc/init.d/adblock"
 adb_script="/usr/bin/adblock.sh"
 adb_pidfile="/var/run/adblock.pid"
 
+if [ -s "${adb_pidfile}" ] && [ "${action}" != "help" ] && [ "${action}" != "status" ]
+then
+	exit 1
+fi
+
 boot()
 {
 	adb_boot=1
@@ -61,25 +66,21 @@ restart()
 
 suspend()
 {
-	[ -s "${adb_pidfile}" ] && return 1
 	rc_procd start_service suspend
 }
 
 resume()
 {
-	[ -s "${adb_pidfile}" ] && return 1
 	rc_procd start_service resume
 }
 
 query()
 {
-	[ -s "${adb_pidfile}" ] && return 1
 	rc_procd "${adb_script}" query "${1}"
 }
 
 report()
 {
-	[ -s "${adb_pidfile}" ] && return 1
 	rc_procd "${adb_script}" report "${1:-"+"}" "${2:-"50"}" "${3:-"false"}" "${4:-"true"}"
 }
 
@@ -106,16 +107,29 @@ status_service()
 
 service_triggers()
 {
-	local trigger="$(uci_get adblock global adb_trigger)"
+	local trigger trigger_list="$(uci_get adblock global adb_trigger)"
 	local delay="$(uci_get adblock extra adb_triggerdelay "2")"
+	local type="$(uci_get adblock extra adb_starttype "start")"
 
 	PROCD_RELOAD_DELAY=$((delay*1000))
-	if [ -n "${trigger}" ] && [ "${trigger}" != "none" ] && [ "${trigger}" != "timed" ]
+	
+	if [ -z "${trigger_list}" ] && [ -r "/lib/functions/network.sh" ]
 	then
-		procd_add_interface_trigger "interface.*.up" "${trigger}" "${adb_init}" start
-	elif [ -z "${trigger}" ]
+		. "/lib/functions/network.sh"
+		network_find_wan trigger_list
+	fi
+
+	if [ -n "${trigger_list}" ]
 	then
-		procd_add_raw_trigger "interface.*.up" ${PROCD_RELOAD_DELAY} "${adb_init}" start
+		for trigger in ${trigger_list}
+		do
+			if [ "${trigger}" != "none" ] && [ "${trigger}" != "timed" ]
+			then
+				procd_add_interface_trigger "interface.*.up" "${trigger}" "${adb_init}" "${type}"
+			fi
+		done
+	else
+		procd_add_raw_trigger "interface.*.up" ${PROCD_RELOAD_DELAY} "${adb_init}" "${type}"
 	fi
 	procd_add_reload_trigger "adblock"
 }
