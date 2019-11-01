@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-md5
-PKG_VERSION:=1.2
+PKG_VERSION:=1.3
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=89a186d9e8bb43a6d45207eeba2883600854ea05befda55b38f7ac215b0d5615
+PKG_MIRROR_HASH:=675b8ba144d14cbe66abfd360d9a8861a18d5b69966768d6cdc78ca3c9fe0baf
 PKG_SOURCE_URL:=https://github.com/keplerproject/md5.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=024b65738b4434860777fc43d7cacaefea29ec60
+PKG_SOURCE_VERSION:=2a98633d7587a4900cfa7cbed340f377f4acd930
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_INSTALL:=1
@@ -60,6 +60,7 @@ define Build/Compile
 endef
 
 define Build/Install
+	mkdir -p $(PKG_INSTALL_DIR)/usr/lib/lua
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		LUA_LIBDIR="$(PKG_INSTALL_DIR)/usr/lib/lua" \
 		LUA_DIR="$(PKG_INSTALL_DIR)/usr/lib/lua" \
