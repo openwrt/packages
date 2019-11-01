@@ -8,21 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpg123
-PKG_VERSION:=1.25.10
+PKG_VERSION:=1.25.13
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/mpg123
-PKG_HASH:=6c1337aee2e4bf993299851c70b7db11faec785303cfca3a5c3eb5f329ba7023
+PKG_HASH:=90306848359c793fd43b9906e52201df18775742dc3c81c06ab67a806509890a
+
 PKG_MAINTAINER:=Zoltan HERPAI <wigyori@uid0.hu>
-
-PKG_FIXUP:=libtool
-
-PKG_LICENSE:=LGPL-2.1 GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:mpg123:mpg123
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -35,6 +33,7 @@ define Package/libmpg123
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=fast console mpeg audio decoder library
+  LICENSE:=LGPL-2.1-or-later
   DEPENDS:=+libltdl
 endef
 
@@ -43,6 +42,7 @@ define Package/libout123
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Library for continuous playback of audio streams via various platform-specific output methods
+  LICENSE:=LGPL-2.1-or-later
   DEPENDS:=+libltdl
 endef
 
@@ -51,6 +51,7 @@ define Package/mpg123
   SECTION:=sound
   CATEGORY:=Sound
   TITLE:=fast console mpeg audio player
+  LICENSE:=GPL-2.0-or-later
   DEPENDS+=+libmpg123 +alsa-lib +libout123
 endef
 
