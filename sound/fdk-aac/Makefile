@@ -9,8 +9,8 @@ PKG_NAME:=fdk-aac
 PKG_VERSION:=2.0.1
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL=https://codeload.github.com/mstorsjo/fdk-aac/tar.gz/v$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/mstorsjo/fdk-aac/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=a4142815d8d52d0e798212a5adea54ecf42bcd4eec8092b37a8cb615ace91dc6
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
@@ -23,6 +23,10 @@ PKG_BUILD_PARALLEL:=1
 
 PKG_CONFIG_DEPENDS:= CONFIG_FDK-AAC_OPTIMIZE_SPEED
 
+ifeq ($(BUILD_VARIANT),free)
+PATCH_DIR:=./patches-free
+endif
+
 ifeq ($(CONFIG_FDK-AAC_OPTIMIZE_SPEED),y)
 	TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS))
 	TARGET_CFLAGS += $(TARGET_CFLAGS) -O2 -flto
@@ -33,20 +37,48 @@ endif
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/fdk-aac
+define Package/fdk-aac/Default
   SECTION:=sound
   CATEGORY:=Sound
-  DEPENDS:=@BUILD_PATENTED
   TITLE:=Fraunhofer FDK AAC Codec Library
   URL:=https://sourceforge.net/projects/opencore-amr/
 endef
 
-define Package/fdk-aac/description
+define Package/fdk-aac/Default/description
   Port of the Fraunhofer FDK AAC Codec Library for Android
 endef
 
+define Package/fdk-aac/Default/config
+  source "$(SOURCE)/Config.in"
+endef
+
+define Package/fdk-aac
+  $(call Package/fdk-aac/Default)
+  DEPENDS:=@BUILD_PATENTED
+  VARIANT:=nonfree
+endef
+
+define Package/fdk-aac/description
+  $(call Package/fdk-aac/Default/description)
+  This is the full patent encumbered version.
+endef
+
 define Package/fdk-aac/config
-	source "$(SOURCE)/Config.in"
+  $(call Package/fdk-aac/Default/config)
+endef
+
+define Package/fdk-aac-free
+  $(call Package/fdk-aac/Default)
+  VARIANT:=free
+endef
+
+define Package/fdk-aac-free/description
+  $(call Package/fdk-aac/Default/description)
+  This is the free version that only supports LC-AAC.
+endef
+
+define Package/fdk-aac-free/config
+  $(call Package/fdk-aac/Default/config)
 endef
 
 define Build/InstallDev
@@ -63,4 +95,10 @@ define Package/fdk-aac/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfdk-aac.so* $(1)/usr/lib/
 endef
 
+define Package/fdk-aac-free/install
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfdk-aac.so* $(1)/usr/lib/
+endef
+
 $(eval $(call BuildPackage,fdk-aac))
+$(eval $(call BuildPackage,fdk-aac-free))
