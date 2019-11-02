@@ -1,0 +1,112 @@
+commit 27ebcefd41b3e44395c3fe71939ef98b03f98e7b
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Fri Oct 25 10:21:01 2019 +0200
+
+    BUG/MAJOR: stream-int: Don't receive data from mux until SI_ST_EST is reached
+    
+    This bug is pretty pernicious and have serious consequences : In 2.1, an
+    infinite loop in process_stream() because the backend stream-interface remains
+    in the ready state (SI_ST_RDY). In 2.0, a call in loop to process_stream()
+    because the stream-interface remains blocked in the connect state
+    (SI_ST_CON). In both cases, it happens after a connection retry attempt. In 1.9,
+    it seems to not happen. But it may be just by chance or just because it is
+    harder to get right conditions to trigger the bug. However, reading the code,
+    the bug seems to exist too.
+    
+    Here is how the bug happens in 2.1. When we try to establish a new connection to
+    a server, the corresponding stream-interface is first set to the connect state
+    (SI_ST_CON). When the underlying connection is known to be connected (the flag
+    CO_FL_CONNECTED set), the stream-interface is switched to the ready state
+    (SI_ST_RDY). It is a transient state between the connect state (SI_ST_CON) and
+    the established state (SI_ST_EST). It must be handled on the next call to
+    process_stream(), which is responsible to operate the transition. During all
+    this time, errors can occur. A connection error or a client abort. The transient
+    state SI_ST_RDY was introduced to let a chance to process_stream() to catch
+    these errors before considering the connection as fully established.
+    Unfortunatly, if a read0 is catched in states SI_ST_CON or SI_ST_RDY, it is
+    possible to have a shutdown without transition to SI_ST_DIS (in fact, here,
+    SI_ST_CON is swichted to SI_ST_RDY). This happens if the request was fully
+    received and analyzed. In this case, the flag SI_FL_NOHALF is set on the backend
+    stream-interface. If an error is also reported during the connect, the behavior
+    is undefined because an error is returned to the client and a connection retry
+    is performed. So on the next connection attempt to the server, if another error
+    is reported, a client abort is detected. But the shutdown for writes was already
+    done. So the transition to the state SI_ST_DIS is impossible. We stay in the
+    state SI_ST_RDY. Because it is a transient state, we loop in process_stream() to
+    perform the transition.
+    
+    It is hard to understand how the bug happens reading the code and even harder to
+    explain. But there is a trivial way to hit the bug by sending h2 requests to a
+    server only speaking h1. For instance, with the following config :
+    
+      listen tst
+        bind *:80
+        server www 127.0.0.1:8000 proto h2 # in reality, it is a HTTP/1.1 server
+    
+    It is a configuration error, but it is an easy way to observe the bug. Note it
+    may happen with a valid configuration.
+    
+    So, after a careful analyzis, it appears that si_cs_recv() should never be
+    called for a not fully established stream-interface. This way the connection
+    retries will be performed before reporting an error to the client. Thus, if a
+    shutdown is performed because a read0 is handled, the stream-interface is
+    inconditionnaly set to the transient state SI_ST_DIS.
+    
+    This patch must be backported to 2.0 and 1.9. However on these versions, this
+    patch reveals a design flaw about connections and a bad way to perform the
+    connection retries. We are working on it.
+    
+    (cherry picked from commit 04400bc7875fcc362495b0f25e75ba6fc2f44850)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/stream_interface.c b/src/stream_interface.c
+index ef0fea7f..211fe2d7 100644
+--- a/src/stream_interface.c
++++ b/src/stream_interface.c
+@@ -1215,6 +1215,10 @@ int si_cs_recv(struct conn_stream *cs)
+ 	int read_poll = MAX_READ_POLL_LOOPS;
+ 	int flags = 0;
+ 
++	/* If not established yet, do nothing. */
++	if (si->state != SI_ST_EST)
++		return 0;
++
+ 	/* If another call to si_cs_recv() failed, and we subscribed to
+ 	 * recv events already, give up now.
+ 	 */
+@@ -1293,8 +1297,6 @@ int si_cs_recv(struct conn_stream *cs)
+ 			ic->total += ret;
+ 			cur_read += ret;
+ 			ic->flags |= CF_READ_PARTIAL;
+-			if (si->state == SI_ST_CON)
+-				si->state = SI_ST_RDY;
+ 		}
+ 
+ 		if (cs->flags & CS_FL_EOS)
+@@ -1391,8 +1393,6 @@ int si_cs_recv(struct conn_stream *cs)
+ 
+ 		ic->flags |= CF_READ_PARTIAL;
+ 		ic->total += ret;
+-		if (si->state == SI_ST_CON)
+-			si->state = SI_ST_RDY;
+ 
+ 		if ((ic->flags & CF_READ_DONTWAIT) || --read_poll <= 0) {
+ 			/* we're stopped by the channel's policy */
+@@ -1544,16 +1544,7 @@ static void stream_int_read0(struct stream_interface *si)
+ 
+ 	si_done_get(si);
+ 
+-	/* Don't change the state to SI_ST_DIS yet if we're still
+-	 * in SI_ST_CON, otherwise it means sess_establish() hasn't
+-	 * been called yet, and so the analysers would not run. However
+-	 * it's fine to switch to SI_ST_RDY as we have really validated
+-	 * the connection.
+-	 */
+-	if (si->state == SI_ST_EST)
+-		si->state = SI_ST_DIS;
+-	else if (si->state == SI_ST_CON)
+-		si->state = SI_ST_RDY;
++	si->state = SI_ST_DIS;
+ 	si->exp = TICK_ETERNITY;
+ 	return;
+ }

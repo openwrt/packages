@@ -1,0 +1,65 @@
+commit 41898a216e92c80c1354b67613834be1b3e97864
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Fri Oct 25 14:16:14 2019 +0200
+
+    MINOR: config: warn on presence of "\n" in header values/replacements
+    
+    Yves Lafon reported an interesting case where an old rsprep rule used
+    to conditionally append a header field by inserting a \n in the exising
+    value was breaking H2 in HTX mode, with the browser rightfully reporting
+    a PROTOCOL_ERROR when facing the \n. In legacy mode, since the response
+    is first parsed again as an HTTP/1 message before being converted to H2
+    the issue does not happen. We should definitely discourage from using
+    this old trick nowadays, http-request and http-response rules were made
+    exactly to end this. Let's detect this and emit a warning when present.
+    In 2.0 there is already a warning recalling that these rules are
+    deprecated and which explains what to do instead, so the user now gets
+    all the relevant information to convert them.
+    
+    There is no upstream commit ID for this patch because these rules were
+    indeed removed from 2.1. This patch could be backported to 1.9 as it
+    can also trigger the problem when HTX is enabled.
+
+diff --git a/src/cfgparse-listen.c b/src/cfgparse-listen.c
+index 5454f3bb..9c3e107a 100644
+--- a/src/cfgparse-listen.c
++++ b/src/cfgparse-listen.c
+@@ -294,6 +294,12 @@ static int create_cond_regex_rule(const char *file, int line,
+ 		goto err_free;
+ 	}
+ 
++	if (repl && strchr(repl, '\n')) {
++		ha_warning("parsing [%s:%d] : '%s' : hack involving '\\n' character in replacement string will fail with HTTP/2.\n",
++			 file, line, cmd);
++		ret_code |= ERR_WARN;
++	}
++
+ 	if (dir == SMP_OPT_DIR_REQ && warnif_misplaced_reqxxx(px, file, line, cmd))
+ 		ret_code |= ERR_WARN;
+ 
+@@ -4039,6 +4045,12 @@ stats_error_parsing:
+ 			goto out;
+ 		}
+ 
++		if (strchr(args[1], '\n')) {
++			ha_warning("parsing [%s:%d] : '%s' : hack involving '\\n' character in new header value will fail with HTTP/2.\n",
++				   file, linenum, args[0]);
++			err_code |= ERR_WARN;
++		}
++
+ 		wl = calloc(1, sizeof(*wl));
+ 		wl->cond = cond;
+ 		wl->s = strdup(args[1]);
+@@ -4157,6 +4169,12 @@ stats_error_parsing:
+ 			goto out;
+ 		}
+ 
++		if (strchr(args[1], '\n')) {
++			ha_warning("parsing [%s:%d] : '%s' : hack involving '\\n' character in new header value will fail with HTTP/2.\n",
++				   file, linenum, args[0]);
++			err_code |= ERR_WARN;
++		}
++
+ 		wl = calloc(1, sizeof(*wl));
+ 		wl->cond = cond;
+ 		wl->s = strdup(args[1]);
