@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libyang
-PKG_VERSION:=0.16-r3
-PKG_RELEASE:=4
+PKG_VERSION:=1.0-r4
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/CESNET/libyang/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=4745460dedc4ba17d8bcfc39ad9ba0d1b91bbe82b55b9417a090390909ba8ca5
+PKG_HASH:=411f0c675b0858f8deabc0545e33fbd791ff7c7a5b7d2c27e347e3973d5b8ae4
 
 CMAKE_INSTALL:=1
 
@@ -25,6 +25,9 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
+
+CMAKE_BINARY_DIR = $(PKG_BUILD_DIR)/build_cmake
+MAKE_PATH = build_cmake
 
 define Package/libyang
   SECTION:=libs
@@ -78,7 +81,7 @@ endef
 
 define Package/yanglint/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/yanglint $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/yanglint $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,libyang))
