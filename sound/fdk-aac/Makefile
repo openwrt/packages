@@ -6,18 +6,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fdk-aac
-PKG_VERSION:=2.0.0
+PKG_VERSION:=2.0.1
 PKG_RELEASE:=1
+
+PKG_SOURCE_URL=https://codeload.github.com/mstorsjo/fdk-aac/tar.gz/v$(PKG_VERSION)?
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_HASH:=a4142815d8d52d0e798212a5adea54ecf42bcd4eec8092b37a8cb615ace91dc6
+
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=Fraunhofer-FDK-AAC-for-Android
 PKG_LICENSE_FILES:=NOTICE
 
-PKG_SOURCE_URL=https://codeload.github.com/mstorsjo/fdk-aac/tar.gz/v$(PKG_VERSION)?
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=6e6c7921713788e31df655911e1d42620b057180b00bf16874f5d630e1d5b9a2
-
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 PKG_CONFIG_DEPENDS:= CONFIG_FDK-AAC_OPTIMIZE_SPEED
 
@@ -47,11 +49,6 @@ define Package/fdk-aac/config
 	source "$(SOURCE)/Config.in"
 endef
 
-define Package/fdk-aac/install
-	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfdk-aac.so* $(1)/usr/lib/
-endef
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/fdk-aac $(1)/usr/include
@@ -59,6 +56,11 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfdk-aac.{la,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/fdk-aac.pc $(1)/usr/lib/pkgconfig/
+endef
+
+define Package/fdk-aac/install
+	$(INSTALL_DIR) $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfdk-aac.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,fdk-aac))
