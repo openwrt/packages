@@ -13,7 +13,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.8.7"
+adb_ver="3.8.8"
 adb_basever=""
 adb_enabled=0
 adb_debug=0
@@ -43,6 +43,7 @@ adb_repdir="/tmp"
 adb_reputil="$(command -v tcpdump)"
 adb_repchunkcnt="5"
 adb_repchunksize="1"
+adb_logger="$(command -v logger)"
 adb_action="${1:-"start"}"
 adb_pidfile="/var/run/adblock.pid"
 adb_ubusservice="/etc/adblock/adblock.service"
@@ -105,6 +106,7 @@ f_load()
 	if [ -z "${adb_basever}" ] || [ "${adb_ver%.*}" != "${adb_basever}" ]
 	then
 		f_log "info" "your adblock config seems to be too old, please update your config with the '--force-maintainer' opkg option"
+		f_rmtemp
 		exit 0
 	fi
 
@@ -916,13 +918,24 @@ f_log()
 
 	if [ -n "${log_msg}" ] && { [ "${class}" != "debug" ] || [ "${adb_debug}" -eq 1 ]; }
 	then
-		logger -p "${class}" -t "adblock-${adb_ver}[${$}]" "${log_msg}"
+		if [ -x "${adb_logger}" ]
+		then
+			"${adb_logger}" -p "${class}" -t "adblock-${adb_ver}[${$}]" "${log_msg}"
+		else
+			printf "%s %s %s\\n" "${class}" "adblock-${adb_ver}[${$}]" "${log_msg}"
+		fi
 		if [ "${class}" = "err" ]
 		then
 			f_rmdns
 			f_bgserv "stop"
 			f_jsnup "error"
-			logger -p "${class}" -t "adblock-${adb_ver}[${$}]" "Please also check 'https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md'"
+			log_msg="Please also check 'https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md'"
+			if [ -x "${adb_logger}" ]
+			then
+				"${adb_logger}" -p "${class}" -t "adblock-${adb_ver}[${$}]" "${log_msg}"
+			else
+				printf "%s %s %s\\n" "${class}" "adblock-${adb_ver}[${$}]" "${log_msg}"
+			fi
 			exit 1
 		fi
 	fi
@@ -934,11 +947,11 @@ f_bgserv()
 {
 	local bg_pid status="${1}"
 
-	bg_pid="$(pgrep -f "^/bin/sh ${adb_ubusservice}|^/bin/ubus -S -M r -m invoke monitor|^grep -qF \"method\":\"set\",\"data\":\\{\"name\":\"${adb_dns}\"" | awk '{ORS=" "; print $1}')"
+	bg_pid="$(pgrep -f "^/bin/sh ${adb_ubusservice}.*|^/bin/ubus -S -M r -m invoke monitor|^grep -qF \"method\":\"set\",\"data\":\\{\"name\":\"${adb_dns}\"" | awk '{ORS=" "; print $1}')"
 	if [ -z "${bg_pid}" ] && [ "${status}" = "start" ] \
 		&& [ -x "${adb_ubusservice}" ] && [ "${adb_dnsfilereset}" = "true" ]
 	then
-		( "${adb_ubusservice}" "${adb_ver}" &)
+		( "${adb_ubusservice}" "${adb_ver}" & )
 	elif [ -n "${bg_pid}" ] && [ "${status}" = "stop" ] 
 	then
 		kill -HUP "${bg_pid}" 2>/dev/null
