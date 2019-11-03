@@ -12,6 +12,11 @@ ban_init="/etc/init.d/banip"
 ban_script="/usr/bin/banip.sh"
 ban_pidfile="/var/run/banip.pid"
 
+if [ -s "${ban_pidfile}" ] && [ "${action}" != "help" ] && [ "${action}" != "status" ]
+then
+	exit 1
+fi
+
 boot()
 {
 	ban_boot="1"
@@ -39,7 +44,6 @@ start_service()
 
 refresh()
 {
-	[ -s "${ban_pidfile}" ] && return 1
 	rc_procd start_service refresh
 }
 
@@ -51,6 +55,11 @@ reload_service()
 stop_service()
 {
 	rc_procd "${ban_script}" stop
+}
+
+restart()
+{
+	rc_procd start_service restart
 }
 
 status_service()
@@ -76,16 +85,23 @@ status_service()
 
 service_triggers()
 {
-	local iface iface_list="$(uci_get banip global ban_iface)"
+	local trigger trigger_list="$(uci_get banip global ban_trigger)"
 	local delay="$(uci_get banip extra ban_triggerdelay "2")"
 	local type="$(uci_get banip extra ban_starttype "start")"
 
 	PROCD_RELOAD_DELAY=$((${delay}*1000))
-	if [ -n "${iface_list}" ]
+
+	if [ -z "${trigger_list}" ] && [ -r "/lib/functions/network.sh" ]
 	then
-		for iface in ${iface_list}
+		. "/lib/functions/network.sh"
+		network_find_wan trigger_list
+	fi
+
+	if [ -n "${trigger_list}" ]
+	then
+		for trigger in ${trigger_list}
 		do
-			procd_add_interface_trigger "interface.*.up" "${iface}" "${ban_init}" "${type}"
+			procd_add_interface_trigger "interface.*.up" "${trigger}" "${ban_init}" "${type}"
 		done
 	else
 		procd_add_raw_trigger "interface.*.up" ${PROCD_RELOAD_DELAY} "${ban_init}" "${type}"
