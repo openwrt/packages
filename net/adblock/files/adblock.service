@@ -16,12 +16,22 @@ then
 fi
 adb_ver="${1}"
 adb_ubus="$(command -v ubus)"
+adb_logger="$(command -v logger)"
 
 if [ -x "${adb_ubus}" ] && [ -n "${adb_dns}" ]
 then
-	logger -p "info" -t "adblock-${adb_ver}[${$}]" "ubus/adblock service started"
 	"${adb_ubus}" -S -M r -m invoke monitor | \
 		{ grep -qE "\"method\":\"(set|signal)\",\"data\":\{\"name\":\"${adb_dns}\""; [ $? -eq 0 ] && /etc/init.d/adblock start; }
+	class="info"
+	log_msg="ubus/adblock service started"
 else
-	logger -p "err" -t "adblock-${adb_ver}[${$}]" "can't start ubus/adblock service"
+	class="err"
+	log_msg="can't start ubus/adblock service"
 fi
+if [ -x "${adb_logger}" ]
+then
+	"${adb_logger}" -p "${class}" -t "adblock-${adb_ver}[${$}]" "${log_msg}"
+else
+	printf "%s %s %s\\n" "${class}" "adblock-${adb_ver}[${$}]" "${log_msg}"
+fi
+
