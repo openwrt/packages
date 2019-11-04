@@ -1,0 +1,47 @@
+--- a/server/reds.c
++++ b/server/reds.c
+@@ -33,7 +33,9 @@
+ #include <sys/mman.h>
+ #include <ctype.h>
+ 
++#include <openssl/bn.h>
+ #include <openssl/err.h>
++#include <openssl/rsa.h>
+ 
+ #if HAVE_SASL
+ #include <sasl/sasl.h>
+@@ -2745,11 +2747,6 @@ static void openssl_thread_setup(void)
+     CRYPTO_set_id_callback(pthreads_thread_id);
+     CRYPTO_set_locking_callback(pthreads_locking_callback);
+ }
+-#else
+-static inline void openssl_thread_setup(void)
+-{
+-}
+-#endif
+ 
+ static gpointer openssl_global_init(gpointer arg)
+ {
+@@ -2760,6 +2757,12 @@ static gpointer openssl_global_init(gpointer arg)
+ 
+     return NULL;
+ }
++#else
++static inline gpointer openssl_global_init(gpointer arg)
++{
++    return NULL;
++}
++#endif
+ 
+ static int reds_init_ssl(RedsState *reds)
+ {
+@@ -2784,7 +2787,9 @@ static int reds_init_ssl(RedsState *reds)
+     }
+ 
+     SSL_CTX_set_options(reds->ctx, ssl_options);
++#if OPENSSL_VERSION_NUMBER < 0x1010000FL
+     SSL_CTX_set_ecdh_auto(reds->ctx, 1);
++#endif
+ 
+     /* Load our keys and certificates*/
+     return_code = SSL_CTX_use_certificate_chain_file(reds->ctx, reds->config->ssl_parameters.certs_file);
