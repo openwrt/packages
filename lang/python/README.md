@@ -171,33 +171,6 @@ This section will describe both, and then it can be inferred which is for which.
 
 Packaging for both Python & Python3 uses the `VARIANT` mechanism for packaging inside OpenWrt. (#### FIXME: find a link for this later if it exists)
 
-### PKG_BUILD_DIR
-
-It's important when packaging for both Python & Python3 to override this variable, so that the build directory differs for each variant.
-
-Typically it's just something like:
-```
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-pyasn1-$(PKG_VERSION)
-```
-Where `pyasn1` should be some other name, or maybe `PKG_NAME`
-
-This should be added before this include:
-```
-include $(INCLUDE_DIR)/package.mk
-```
-
-### PKG_UNPACK
-
-In many cases, this needs to be overriden. This is usually because the way Python packages are archived, don't follow the convention of other `tar.gz` packages.
-
-So, something like:
-```
-PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
-```
-should be added.
-
-It's not important whether this is after or before `include $(INCLUDE_DIR)/package.mk`
-
 ### Include python[3]-package.mk
 
 If packaging for Python, add this after  `include $(INCLUDE_DIR)/package.mk`
