@@ -26,7 +26,7 @@ PKG_BUILD_DEPENDS:=SYSREPO_BINDINGS:swig/host
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 ifeq ($(CONFIG_SYSREPO_PYTHON),y)
-$(call include_mk, python-package.mk)
+$(call include_mk, python3-package.mk)
 endif
 
 define Package/libsysrepo/config
@@ -38,7 +38,7 @@ define Package/libsysrepo
   CATEGORY:=Libraries
   TITLE:=YANG-based data store library
   URL:=https://www.sysrepo.org/
-  DEPENDS:=+libyang +libprotobuf-c +libev +libredblack +librt +libpthread +SYSREPO_BINDINGS:libstdcpp +SYSREPO_PYTHON:python-base +SYSREPO_LUA:lua
+  DEPENDS:=+libyang +libprotobuf-c +libev +libredblack +librt +libpthread +SYSREPO_BINDINGS:libstdcpp +SYSREPO_PYTHON:python3-base +SYSREPO_LUA:lua
   MENU:=1
 endef
 
@@ -98,7 +98,8 @@ endif
 ifeq ($(CONFIG_SYSREPO_PYTHON),y)
 CMAKE_OPTIONS += \
 	-DGEN_PYTHON_BINDINGS:BOOL=TRUE \
-	-DGEN_PYTHON_VERSION=2
+	-DGEN_PYTHON_VERSION=3 \
+	-DGEN_PYTHON3_TESTS:BOOL=FALSE
 endif
 
 ifeq ($(CONFIG_SYSREPO_BINDINGS),y)
@@ -136,8 +137,8 @@ ifeq ($(CONFIG_SYSREPO_PYTHON),y)
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/swig/libSysrepo-cpp.so* $(1)/usr/lib
 	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/swig/python2/libsysrepoPython2.py $(1)$(PYTHON_PKG_DIR)
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/swig/python2/_libsysrepoPython2.so $(1)$(PYTHON_PKG_DIR)
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/swig/python3/libsysrepoPython3.py $(1)$(PYTHON_PKG_DIR)
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/swig/python3/_libsysrepoPython3.so $(1)$(PYTHON_PKG_DIR)
 endif
 
 ifeq ($(CONFIG_SYSREPO_LUA),y)
