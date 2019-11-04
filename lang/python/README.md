@@ -187,6 +187,43 @@ Order doesn't matter between `python-package.mk` & `python3-package.mk`.
 
 These will make sure that build rules for Python or Python3 can be specified and picked up for build.
 
+### Include pypi.mk (optional)
+
+If the package source code will be downloaded from [pypi.org](https://pypi.org/), including `pypi.mk` can help simplify the package Makefile.
+
+To use `pypi.mk`, add this **before** `include $(INCLUDE_DIR)/package.mk`:
+```
+include ../pypi.mk
+```
+
+`pypi.mk` has several `PYPI_*` variables that must/can be set (see below); these should be set before `pypi.mk` is included, i.e. before the `include ../pypi.mk` line.
+
+`pypi.mk` also provides default values for `PKG_SOURCE` and `PKG_SOURCE_URL`, so these variables may be omitted.
+
+One variable is required:
+
+* `PYPI_NAME`: Package name on pypi.org. This should match the PyPI name exactly.
+
+  For example (from the `python-yaml` package):
+  ```
+  PYPI_NAME:=PyYAML
+  ```
+
+These variables are optional:
+
+* `PYPI_SOURCE_NAME`: Package name component of the source tarball filename  
+  Default: Same value as `PYPI_NAME`
+
+* `PYPI_SOURCE_EXT`: File extension of the source tarball filename  
+  Default: `tar.gz`
+
+`pypi.mk` constructs the default `PKG_SOURCE` value from these variables (and `PKG_VERSION`):
+```
+PKG_SOURCE?=$(PYPI_SOURCE_NAME)-$(PKG_VERSION).$(PYPI_SOURCE_EXT)
+```
+
+The `PYPI_SOURCE_*` variables allow this default `PKG_SOURCE` value to be customized as necessary.
+
 ### Add Package/<PKG_NAME> OpenWrt definitions
 
 This part is similar to default OpenWrt packages.
