@@ -6,15 +6,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unrar
-PKG_VERSION:=5.8.1
+PKG_VERSION:=5.8.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=unrarsrc-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.rarlab.com/rar
-PKG_HASH:=035f1f436f0dc2aea09aec146b9cc3e47ca2442f2c62b4ad9374c7c9cc20e632
+PKG_HASH:=3591685c8f5bbcb0be09de3d0a0544adb88966b9cccb80986f6cd2b534fd91a6
+
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>, \
 		Ted Hess <thess@kitschensync.net>
-
 PKG_LICENSE:=UnRAR
 PKG_LICENSE_FILES:=license.txt
 PKG_CPE_ID:=cpe:/a:rarlab:unrar
