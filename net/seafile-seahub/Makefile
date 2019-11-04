@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-seahub
 PKG_VERSION:=6.3.4
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/haiwen/seahub/tar.gz/v$(PKG_VERSION)-server?
@@ -38,7 +38,6 @@ define Package/seafile-seahub
   TITLE:=Seafile server - seahub component
   URL:=https://seafile.com/
   DEPENDS:=+python \
-	+django-simple-captcha +django-statici18n +django-webpack-loader \
 	+python-flup +gunicorn +openpyxl \
 	$(foreach dep,$(SEAFILE_PYTHON_DEPENDS),+python-$(dep))
 endef
