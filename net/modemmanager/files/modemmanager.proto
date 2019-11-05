@@ -375,7 +375,7 @@ proto_modemmanager_teardown() {
 	}
 
 	# load bearer connection method
-	bearerstatus=$(mmcli --bearer "${bearerpath}")
+	bearerstatus=$(mmcli --bearer "${bearerpath}" --output-keyvalue)
 	bearermethod=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.method")
 	[ -n "${bearermethod}" ] || {
 		echo "couldn't load bearer method"
