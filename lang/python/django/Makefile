@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django
-PKG_VERSION:=2.2.6
+PKG_VERSION:=2.2.7
 PKG_RELEASE:=1
 
 PYPI_NAME:=Django
-PKG_HASH:=a8ca1033acac9f33995eb2209a6bf18a4681c3e5269a878e9a7e0b7384ed1ca3
+PKG_HASH:=16040e1288c6c9f68c6da2fe75ebde83c0a158f6f5d54f4c5177b0c1478c5b86
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -36,13 +36,20 @@ define Package/python3-django
 $(call Package/django/Default)
   DEPENDS:= \
 	+PACKAGE_python3-django:python3 \
-	+PACKAGE_python3-django:python3-pytz
+	+PACKAGE_python3-django:python3-pytz \
+	+PACKAGE_python3-django:python3-sqlparse
   VARIANT:=python3
 endef
 
 define Package/python3-django/description
     The web framework for perfectionists with deadlines (LTS 2.2 series).
     Python3 only.
+endef
+
+define Py3Package/python3-django/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/django-admin.py \
+		$(1)/usr/bin/django-admin
 endef
 
 $(eval $(call Py3Package,python3-django))
