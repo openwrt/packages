@@ -1,0 +1,58 @@
+From 2fdfb4404ab811cb00227a3de111437b829e55cf Mon Sep 17 00:00:00 2001
+From: Hongxu Jia <hongxu.jia@windriver.com>
+Date: Wed, 17 Jul 2019 17:34:04 +0800
+Subject: [PATCH] imporve hardcoded CC on cross compile
+
+Since commit applied in moby [61a3285 Support cross-compile for arm]
+it hardcoded var-CC to support cross-compile for arm
+
+Correct it with "${parameter:-word}" format, it is helpful for user
+define toolchains
+
+(Use Default Values.  If parameter is unset or null, the expansion of
+word is substituted.  Otherwise, the value of parameter is substituted.)
+
+Signed-off-by: Hongxu Jia <hongxu.jia@windriver.com>
+Upstream-commit: 3c701e4db1b8646c2324ae524b4e7ca1b1147a07
+Component: engine
+---
+ components/engine/hack/make/.binary | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/components/engine/hack/make/.binary b/components/engine/hack/make/.binary
+index 53de6749e5..66f4ca05f3 100644
+--- a/components/engine/hack/make/.binary
++++ b/components/engine/hack/make/.binary
+@@ -44,27 +44,27 @@ if [ "$(go env GOOS)/$(go env GOARCH)" != "$(go env GOHOSTOS)/$(go env GOHOSTARC
+ 	# must be cross-compiling!
+ 	case "$(go env GOOS)/$(go env GOARCH)" in
+ 		windows/amd64)
+-			export CC=x86_64-w64-mingw32-gcc
++			export CC="${CC:-x86_64-w64-mingw32-gcc}"
+ 			export CGO_ENABLED=1
+ 			;;
+ 		linux/arm)
+ 			case "${GOARM}" in
+ 			5|"")
+-				export CC=arm-linux-gnueabi-gcc
++				export CC="${CC:-arm-linux-gnueabi-gcc}"
+ 				export CGO_ENABLED=1
+ 				;;
+ 			7)
+-				export CC=arm-linux-gnueabihf-gcc
++				export CC="${CC:-arm-linux-gnueabihf-gcc}"
+ 				export CGO_ENABLED=1
+ 				;;
+ 			esac
+ 			;;
+ 		linux/arm64)
+-			export CC=aarch64-linux-gnu-gcc
++			export CC="${CC:-aarch64-linux-gnu-gcc}"
+ 			export CGO_ENABLED=1
+ 			;;
+ 		linux/amd64)
+-			export CC=x86_64-linux-gnu-gcc
++			export CC="${CC:-x86_64-linux-gnu-gcc}"
+ 			export CGO_ENABLED=1
+ 			;;
+ 	esac
