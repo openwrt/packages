@@ -175,7 +175,9 @@ modemmanager_connected_method_dhcp() {
 	json_add_string name "${interface}_4"
 	json_add_string ifname "@${interface}"
 	json_add_string proto "dhcp"
+	proto_add_dynamic_defaults
 	[ -n "$metric" ] && json_add_int metric "${metric}"
+	json_close_object
 	ubus call network add_dynamic "$(json_dump)"
 }
 
