@@ -13,7 +13,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-ban_ver="0.3.5"
+ban_ver="0.3.6"
 ban_basever=""
 ban_enabled=0
 ban_automatic="1"
@@ -221,21 +221,24 @@ f_envcheck()
 			cnt=$((cnt+1))
 			sleep 1
 		done
-		utils="aria2c curl wget uclient-fetch"
-		for util in ${utils}
-		do
-			if { [ "${util}" = "uclient-fetch" ] && [ -n "$(printf "%s\\n" "${packages}" | grep "^libustream-")" ]; } || \
-				{ [ "${util}" = "wget" ] && [ -n "$(printf "%s\\n" "${packages}" | grep "^wget -")" ]; } || \
-				{ [ "${util}" != "uclient-fetch" ] && [ "${util}" != "wget" ]; }
-			then
-				ban_fetchutil="$(command -v "${util}")"
-				if [ -x "${ban_fetchutil}" ]
+		if [ -n "${packages}" ]
+		then
+			utils="aria2c curl wget uclient-fetch"
+			for util in ${utils}
+			do
+				if { [ "${util}" = "uclient-fetch" ] && [ -n "$(printf "%s\\n" "${packages}" | grep "^libustream-")" ]; } || \
+					{ [ "${util}" = "wget" ] && [ -n "$(printf "%s\\n" "${packages}" | grep "^wget -")" ]; } || \
+					{ [ "${util}" != "uclient-fetch" ] && [ "${util}" != "wget" ]; }
 				then
-					break
+					ban_fetchutil="$(command -v "${util}")"
+					if [ -x "${ban_fetchutil}" ]
+					then
+						break
+					fi
 				fi
-			fi
-			unset ban_fetchutil util
-		done
+				unset ban_fetchutil util
+			done
+		fi
 	else
 		util="${ban_fetchutil}"
 		ban_fetchutil="$(command -v "${util}")"
@@ -296,7 +299,7 @@ f_temp()
 		f_log "err" "the temp directory '/tmp' does not exist or has not been mounted yet, please create the directory or raise the 'ban_triggerdelay' to defer the banIP start"
 	fi
 
-	if [ ! -s "${ban_pidfile}" ]
+	if [ ! -f "${ban_pidfile}" ] || [ ! -s "${ban_pidfile}" ]
 	then
 		printf "%s" "${$}" > "${ban_pidfile}"
 	fi
@@ -582,13 +585,6 @@ f_log()
 			f_ipset destroy
 			f_rmbackup
 			f_rmtemp
-			log_msg="Please also check 'https://github.com/openwrt/packages/blob/master/net/banip/files/README.md'"
-			if [ -x "${ban_logger}" ]
-			then
-				"${ban_logger}" -p "${class}" -t "banIP-${ban_ver}[${$}]" "${log_msg}"
-			else
-				printf "%s %s %s\\n" "${class}" "banIP-${ban_ver}[${$}]" "${log_msg}"
-			fi
 			exit 1
 		fi
 	fi
