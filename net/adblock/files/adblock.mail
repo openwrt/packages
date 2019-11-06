@@ -25,6 +25,24 @@ adb_logger="$(command -v logger)"
 adb_logread="$(command -v logread)"
 adb_rc=1
 
+f_log()
+{
+	local class="${1}" log_msg="${2}"
+
+	if [ -x "${adb_logger}" ]
+	then
+		"${adb_logger}" -p "${class}" -t "adblock-${adb_ver}[${$}]" "${log_msg}"
+	else
+		printf "%s %s %s\\n" "${class}" "adblock-${adb_ver}[${$}]" "${log_msg}"
+	fi
+}
+
+if [ -z "${adb_mreceiver}" ]
+then
+	f_log "err" "please set the mail receiver with the 'adb_mreceiver' option"
+	exit ${adb_rc}
+fi
+
 if [ "${adb_debug}" -eq 1 ]
 then
 	debug="--debug"
@@ -58,20 +76,8 @@ if [ -x "${adb_mail}" ] && [ -n "${adb_mreceiver}" ]
 then
 	printf "%b" "${adb_mhead}${adb_mtext}" 2>/dev/null | "${adb_mail}" ${debug} -a "${adb_mprofile}" "${adb_mreceiver}" >/dev/null 2>&1
 	adb_rc=${?}
-	class="info"
-	log_msg="mail sent to '${adb_mreceiver}' with rc '${adb_rc}'"
-elif [ -z "${adb_mreceiver}" ]
-then
-	class="err"
-	log_msg="please set the mail receiver with the 'adb_mreceiver' option"
+	f_log "info" "mail sent to '${adb_mreceiver}' with rc '${adb_rc}'"
 else
-	class="err"
-	log_msg="msmtp mail daemon not found"
-fi
-if [ -x "${adb_logger}" ]
-then
-	"${adb_logger}" -p "${class}" -t "adblock-${adb_ver}[${$}]" "${log_msg}"
-else
-	printf "%s %s %s\\n" "${class}" "adblock-${adb_ver}[${$}]" "${log_msg}"
+	f_log "err" "msmtp mail daemon not found"
 fi
 exit ${adb_rc}
