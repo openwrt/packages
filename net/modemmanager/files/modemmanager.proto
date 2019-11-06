@@ -17,8 +17,8 @@ cdr2mask ()
 	set -- $(( 5 - ($1 / 8) )) 255 255 255 255 $(( (255 << (8 - ($1 % 8))) & 255 )) 0 0 0
 	if [ "$1" -gt 1 ]
 	then
-		shift "$1" 
-	else 
+		shift "$1"
+	else
 		shift
 	fi
 	echo "${1-0}"."${2-0}"."${3-0}"."${4-0}"
@@ -111,7 +111,7 @@ modemmanager_cleanup_connection() {
 	}
 }
 
-modemmanager_connected_method_ppp() {
+modemmanager_connected_method_ppp_ipv4() {
 	local interface="$1"
 	local ttyname="$2"
 	local username="$3"
@@ -139,7 +139,7 @@ modemmanager_connected_method_ppp() {
 		ip-down-script /lib/netifd/ppp-down
 }
 
-modemmanager_disconnected_method_ppp() {
+modemmanager_disconnected_method_ppp_ipv4() {
 	local interface="$1"
 
 	echo "running disconnection (ppp method)"
@@ -163,12 +163,13 @@ modemmanager_disconnected_method_ppp() {
 	proto_kill_command "$interface"
 }
 
-modemmanager_connected_method_dhcp() {
+modemmanager_connected_method_dhcp_ipv4() {
 	local interface="$1"
 	local wwan="$2"
 	local metric="$3"
 
 	proto_init_update "${wwan}" 1
+	proto_set_keep 1
 	proto_send_update "${interface}"
 
 	json_init
@@ -181,16 +182,7 @@ modemmanager_connected_method_dhcp() {
 	ubus call network add_dynamic "$(json_dump)"
 }
 
-modemmanager_disconnected_method_dhcp() {
-	local interface="$1"
-
-	echo "running disconnection (dhcp method)"
-
-	proto_init_update "*" 0
-	proto_send_update "${interface}"
-}
-
-modemmanager_connected_method_static() {
+modemmanager_connected_method_static_ipv4() {
 	local interface="$1"
 	local wwan="$2"
 	local address="$3"
@@ -218,6 +210,7 @@ modemmanager_connected_method_static() {
 	# TODO: mtu reporting in proto handler
 
 	proto_init_update "${wwan}" 1
+	proto_set_keep 1
 	echo "adding IPv4 address ${address}, netmask ${mask}"
 	proto_add_ipv4_address "${address}" "${mask}"
 	[ -n "${gateway}" ] && {
@@ -236,10 +229,75 @@ modemmanager_connected_method_static() {
 	proto_send_update "${interface}"
 }
 
-modemmanager_disconnected_method_static() {
+modemmanager_connected_method_dhcp_ipv6() {
+	local interface="$1"
+	local wwan="$2"
+	local metric="$3"
+
+	proto_init_update "${wwan}" 1
+	proto_set_keep 1
+	proto_send_update "${interface}"
+
+	json_init
+	json_add_string name "${interface}_6"
+	json_add_string ifname "@${interface}"
+	json_add_string proto "dhcpv6"
+	proto_add_dynamic_defaults
+	json_add_string extendprefix 1 # RFC 7278: Extend an IPv6 /64 Prefix to LAN
+	[ -n "$metric" ] && json_add_int metric "${metric}"
+	json_close_object
+	ubus call network add_dynamic "$(json_dump)"
+}
+
+modemmanager_connected_method_static_ipv6() {
+	local interface="$1"
+	local wwan="$2"
+	local address="$3"
+	local prefix="$4"
+	local gateway="$5"
+	local mtu="$6"
+	local dns1="$7"
+	local dns2="$8"
+	local metric="$9"
+
+	[ -n "${address}" ] || {
+		proto_notify_error "${interface}" ADDRESS_MISSING
+		return
+	}
+
+	[ -n "${prefix}" ] || {
+		proto_notify_error "${interface}" PREFIX_MISSING
+		return
+	}
+
+	# TODO: mtu reporting in proto handler
+
+	proto_init_update "${wwan}" 1
+	proto_set_keep 1
+	echo "adding IPv6 address ${address}, prefix ${prefix}"
+	proto_add_ipv6_address "${address}" "128"
+	proto_add_ipv6_prefix "${address}/${prefix}"
+	[ -n "${gateway}" ] && {
+		echo "adding default IPv6 route via ${gateway}"
+		proto_add_ipv6_route "${gateway}" "128"
+		proto_add_ipv6_route "::0" "0" "${gateway}" "" "" "${address}/${prefix}"
+	}
+	[ -n "${dns1}" ] && {
+		echo "adding primary DNS at ${dns1}"
+		proto_add_dns_server "${dns1}"
+	}
+	[ -n "${dns2}" ] && {
+		echo "adding secondary DNS at ${dns2}"
+		proto_add_dns_server "${dns2}"
+	}
+	[ -n "$metric" ] && json_add_int metric "${metric}"
+	proto_send_update "${interface}"
+}
+
+modemmanager_disconnected_method_common() {
 	local interface="$1"
 
-	echo "running disconnection (static method)"
+	echo "running disconnection (common)"
 
 	proto_init_update "*" 0
 	proto_send_update "${interface}"
@@ -259,10 +317,11 @@ proto_modemmanager_setup() {
 	local interface="$1"
 
 	local modempath modemstatus bearercount bearerpath connectargs bearerstatus beareriface
+	local bearermethod_ipv4 bearermethod_ipv6
 	local operatorname operatorid registration accesstech signalquality
 
 	local device apn username password pincode iptype metric
-	
+
 	local address prefix gateway mtu dns1 dns2
 
 	json_get_vars device apn username password pincode iptype metric
@@ -294,9 +353,12 @@ proto_modemmanager_setup() {
 	# always cleanup before attempting a new connection, just in case
 	modemmanager_cleanup_connection "${modemstatus}"
 
+	# ip type IPv4 is assumed if none explicitly given
+	[ -z "${iptype}" ] && iptype="ipv4"
+
 	# setup connect args; APN mandatory (even if it may be empty)
 	echo "starting connection with apn '${apn}'..."
-	connectargs="apn=${apn}${username:+,user=${username}}${password:+,password=${password}}${pincode:+,pin=${pincode}}${iptype:+,ip-type=${iptype}}"
+	connectargs="apn=${apn},ip-type=${iptype}${username:+,user=${username}}${password:+,password=${password}}${pincode:+,pin=${pincode}}"
 	mmcli --modem="${device}" --timeout 120 --simple-connect="${connectargs}" || {
 		proto_notify_error "${interface}" CONNECT_FAILED
 		proto_block_restart "${interface}"
@@ -330,30 +392,66 @@ proto_modemmanager_setup() {
 
 	# load network interface and method information
 	beareriface=$(modemmanager_get_field "${bearerstatus}" "bearer.status.interface")
-	bearermethod=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.method")
-	echo "connection setup required in interface ${beareriface}: ${bearermethod}"
+	[ "$iptype" = "ipv4" ] || [ "$iptype" = "ipv4v6" ] && {
+		bearermethod_ipv4=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.method")
+		echo "IPv4 connection setup required in interface ${interface}: ${bearermethod_ipv4}"
+	}
+	[ "$iptype" = "ipv6" ] || [ "$iptype" = "ipv4v6" ] && {
+		bearermethod_ipv6=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.method")
+		echo "IPv6 connection setup required in interface ${interface}: ${bearermethod_ipv6}"
+	}
 
-	case "${bearermethod}" in
-	"dhcp")
-		modemmanager_connected_method_dhcp "${interface}" "${beareriface}" "${metric}"
-		;;
-	"static")
-		address=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.address")
-		prefix=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.prefix")
-		gateway=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.gateway")
-		mtu=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.mtu")
-		dns1=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.dns.value\[1\]")
-		dns2=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.dns.value\[2\]")
-		modemmanager_connected_method_static "${interface}" "${beareriface}" "${address}" "${prefix}" "${gateway}" "${mtu}" "${dns1}" "${dns2}" "${metric}"
-		;;
-	"ppp")
-		modemmanager_connected_method_ppp "${interface}" "${beareriface}" "${username}" "${password}"
-		;;
-	*)
-		proto_notify_error "${interface}" UNKNOWN_METHOD
-		return 1
-		;;
-	esac
+	# setup IPv4
+	[ -n "${bearermethod_ipv4}" ] && {
+		case "${bearermethod_ipv4}" in
+		"dhcp")
+			modemmanager_connected_method_dhcp_ipv4 "${interface}" "${beareriface}" "${metric}"
+			;;
+		"static")
+			address=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.address")
+			prefix=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.prefix")
+			gateway=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.gateway")
+			mtu=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.mtu")
+			dns1=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.dns.value\[1\]")
+			dns2=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.dns.value\[2\]")
+			modemmanager_connected_method_static_ipv4 "${interface}" "${beareriface}" "${address}" "${prefix}" "${gateway}" "${mtu}" "${dns1}" "${dns2}" "${metric}"
+			;;
+		"ppp")
+			modemmanager_connected_method_ppp_ipv4 "${interface}" "${beareriface}" "${username}" "${password}"
+			;;
+		*)
+			proto_notify_error "${interface}" UNKNOWN_METHOD
+			return 1
+			;;
+		esac
+	}
+
+	# setup IPv6
+	# note: if using ipv4v6, both IPv4 and IPv6 settings will have the same MTU and metric values reported
+	[ -n "${bearermethod_ipv6}" ] && {
+		case "${bearermethod_ipv6}" in
+		"dhcp")
+			modemmanager_connected_method_dhcp_ipv6 "${interface}" "${beareriface}" "${metric}"
+			;;
+		"static")
+			address=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.address")
+			prefix=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.prefix")
+			gateway=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.gateway")
+			mtu=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.mtu")
+			dns1=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.dns.value\[1\]")
+			dns2=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.dns.value\[2\]")
+			modemmanager_connected_method_static_ipv6 "${interface}" "${beareriface}" "${address}" "${prefix}" "${gateway}" "${mtu}" "${dns1}" "${dns2}" "${metric}"
+			;;
+		"ppp")
+			proto_notify_error "${interface}" "unsupported method"
+			return 1
+			;;
+		*)
+			proto_notify_error "${interface}" UNKNOWN_METHOD
+			return 1
+			;;
+		esac
+	}
 
 	return 0
 }
@@ -362,9 +460,10 @@ proto_modemmanager_teardown() {
 	local interface="$1"
 
 	local modemstatus bearerpath errorstring
+	local bearermethod_ipv4 bearermethod_ipv6
 
-	local device lowpower
-	json_get_vars device lowpower
+	local device lowpower iptype
+	json_get_vars device lowpower iptype
 
 	echo "stopping network"
 
@@ -376,27 +475,23 @@ proto_modemmanager_teardown() {
 		return
 	}
 
-	# load bearer connection method
+	# ip type IPv4 is assumed if none explicitly given
+	[ -z "${iptype}" ] && iptype="ipv4"
+
+	# load bearer connection methods
 	bearerstatus=$(mmcli --bearer "${bearerpath}" --output-keyvalue)
-	bearermethod=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.method")
-	[ -n "${bearermethod}" ] || {
-		echo "couldn't load bearer method"
-		return
+	[ "$iptype" = "ipv4" ] || [ "$iptype" = "ipv4v6" ] && {
+		bearermethod_ipv4=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.method")
+		echo "IPv4 connection teardown required in interface ${interface}: ${bearermethod_ipv4}"
+	}
+	[ "$iptype" = "ipv6" ] || [ "$iptype" = "ipv4v6" ] && {
+		bearermethod_ipv6=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.method")
+		echo "IPv6 connection teardown required in interface ${interface}: ${bearermethod_ipv6}"
 	}
 
-	case "${bearermethod}" in
-	"dhcp")
-		modemmanager_disconnected_method_dhcp "${interface}"
-		;;
-	"static")
-		modemmanager_disconnected_method_static "${interface}"
-		;;
-	"ppp")
-		modemmanager_disconnected_method_ppp "${interface}"
-		;;
-	*)
-		;;
-	esac
+	# disconnection handling only requires special treatment in IPv4/PPP
+	[ "${bearermethod_ipv4}" = "ppp" ] && modemmanager_disconnected_method_ppp_ipv4 "${interface}"
+	modemmanager_disconnected_method_common "${interface}"
 
 	# disconnect
 	mmcli --modem="${device}" --simple-disconnect ||
