@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsoup
 PKG_VERSION:=2.68.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/$(PKG_NAME)/2.68
@@ -18,8 +18,6 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gnome:libsoup
 
 PKG_BUILD_DEPENDS:=meson/host glib2/host
-PKG_BUILD_PARALLEL:=1
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
