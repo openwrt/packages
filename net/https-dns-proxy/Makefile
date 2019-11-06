@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=https_dns_proxy
 PKG_VERSION:=2018-04-23
-PKG_RELEASE=3
+PKG_RELEASE=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_MIRROR_HASH:=24b7e4238c37e646f33eee3a374f6b7beb5c167b9c5008cc13b51e5f1f3a44ea
@@ -16,10 +16,12 @@ PKG_LICENSE:=MIT
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+CMAKE_OPTIONS += -DCLANG_TIDY_EXE=
+
 define Package/https_dns_proxy
   SECTION:=net
   CATEGORY:=Network
-  TITLE:=DNS over HTTPS proxy server
+  TITLE:=DNS over HTTPS Proxy Server
   DEPENDS:=+libcares +libcurl +libev +ca-bundle
 endef
 
