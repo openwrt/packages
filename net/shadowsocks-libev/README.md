@@ -165,11 +165,15 @@ Check if things are in place
 	netstat -lntp | grep -E '8053|1100'
 	ps ww | grep ss-
 
-Edit `/etc/config/dhcp`, add a line to the first dnsmasq section like the following to let it use local tunnel endpoint for upstream dns query
+Edit `/etc/config/dhcp`, making sure options are present in the first dnsmasq section like the following to let it use local tunnel endpoint for upstream dns query.
+Option `noresolv` instructs dnsmasq to not use other dns servers like advertised by local isp.
+Option `localuse` intends to make sure the device you are configuring also uses this dnsmasq instance as the resolver, not the ones from other sources.
 
 	config dnsmasq
 		...
 		list server '127.0.0.1#8053'
+		option noresolv 1
+		option localuse 1
 
 Restart dnsmasq
 
