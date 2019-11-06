@@ -13,7 +13,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.5.1"
+trm_ver="1.5.2"
 trm_enabled=0
 trm_debug=0
 trm_iface="trm_wwan"
@@ -34,6 +34,7 @@ trm_rtfile="/tmp/trm_runtime.json"
 trm_fetch="$(command -v uclient-fetch)"
 trm_iwinfo="$(command -v iwinfo)"
 trm_wpa="$(command -v wpa_supplicant)"
+trm_logger="$(command -v logger)"
 trm_action="${1:-"start"}"
 trm_pidfile="/var/run/travelmate.pid"
 
@@ -100,6 +101,7 @@ f_envload()
 	if [ "${trm_enabled}" -ne 1 ]
 	then
 		f_log "info" "travelmate is currently disabled, please set 'trm_enabled' to '1' to use this service"
+		> "${trm_pidfile}"
 		exit 0
 	fi
 
@@ -482,12 +484,17 @@ f_log()
 
 	if [ -n "${log_msg}" ] && { [ "${class}" != "debug" ] || [ "${trm_debug}" -eq 1 ]; }
 	then
-		logger -p "${class}" -t "travelmate-${trm_ver}[${$}]" "${log_msg}"
+		if [ -x "${trm_logger}" ]
+		then
+			"${trm_logger}" -p "${class}" -t "travelmate-${trm_ver}[${$}]" "${log_msg}"
+		else
+			printf "%s %s %s\\n" "${class}" "travelmate-${trm_ver}[${$}]" "${log_msg}"
+		fi
 		if [ "${class}" = "err" ]
 		then
 			trm_ifstatus="error"
 			f_jsnup
-			logger -p "${class}" -t "travelmate-${trm_ver}[${$}]" "Please check 'https://github.com/openwrt/packages/blob/master/net/travelmate/files/README.md' (${trm_sysver})"
+			> "${trm_pidfile}"
 			exit 1
 		fi
 	fi
@@ -705,8 +712,9 @@ do
 		done
 	elif [ "${trm_action}" = "stop" ]
 	then
-		> "${trm_rtfile}"
 		f_log "info" "travelmate instance stopped ::: action: ${trm_action}, pid: $(cat ${trm_pidfile} 2>/dev/null)"
+		> "${trm_rtfile}"
+		> "${trm_pidfile}"
 		exit 0
 	else
 		f_log "info" "travelmate instance started ::: action: ${trm_action}, pid: ${$}"
