@@ -10,12 +10,4 @@ diff -urN a/configure.ac b/configure.ac
                         [],
                         [dnet.h],
                         [intf_open],
-@@ -959,7 +959,7 @@
- 
-    if test $have_dnet = "no"; then
- 		AC_MSG_ERROR(
--		   [dnet-config was not found on your PATH. Please configure without dnet (using --without-dnet) or install dnet - http://libdnet.sourceforge.net])
-+		   [dnet was not found. Please configure without dnet (using --without-dnet) or install dnet - http://libdnet.sourceforge.net])
-    fi
- fi
  
