@@ -13,19 +13,23 @@ ban_sshdaemon="${2}"
 ban_logger="$(command -v logger)"
 ban_logread="$(command -v logread)"
 
+f_log()
+{
+	local class="${1}" log_msg="${2}"
+
+	if [ -x "${ban_logger}" ]
+	then
+		"${ban_logger}" -p "${class}" -t "banIP-${ban_ver}[${$}]" "${log_msg}"
+	else
+		printf "%s %s %s\\n" "${class}" "banIP-${ban_ver}[${$}]" "${log_msg}"
+	fi
+}
+
 if [ -x "${ban_logread}" ]
 then
+	f_log "info" "log/banIP service started"
 	"${ban_logread}" -f -e "${ban_sshdaemon}\|luci: failed login" | \
 		{ grep -qE "Exit before auth|luci: failed login|[0-9]+ \[preauth\]$"; [ $? -eq 0 ] && /etc/init.d/banip refresh; }
-	class="info"
-	log_msg="log/banIP service started"
 else
-	class="err"
-	log_msg="can't start log/banIP service"
-fi
-if [ -x "${ban_logger}" ]
-then
-	"${ban_logger}" -p "${class}" -t "banIP-${ban_ver}[${$}]" "${log_msg}"
-else
-	printf "%s %s %s\\n" "${class}" "banIP-${ban_ver}[${$}]" "${log_msg}"
+	f_log "err" "can't start log/banIP service"
 fi
