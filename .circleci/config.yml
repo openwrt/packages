@@ -148,7 +148,16 @@ jobs:
                  echo_green "=> Package check OK"
              done
 
+             make \
+                 -f .config \
+                 -f tmp/.packagedeps \
+                 -f <(echo '$(info $(sort $(package-y) $(package-m)))'; echo -en 'a:\n\t@:') \
+              | tr ' ' '\n' >enabled-package-subdirs.txt
              for PKG in $PKGS ; do
+                 if ! grep -m1 -qE "(^|/)$PKG$" enabled-package-subdirs.txt; then
+                        echo_red "===+ Building: $PKG skipped. It cannot be enabled with $SDK_FILE"
+                        continue
+                 fi
                  echo_blue "===+ Building: $PKG"
                  make "package/$PKG/compile" -j3 V=s || {
                         RET=$?
