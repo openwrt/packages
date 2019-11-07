@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-html-form
-PKG_VERSION:=6.03
-PKG_RELEASE:=2
+PKG_VERSION:=6.04
+PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GA/GAAS
 PKG_SOURCE:=HTML-Form-$(PKG_VERSION).tar.gz
-PKG_HASH:=68c01d94f005d5ca9c4d55ad2a1bf3a8d034a5fc6db187d91a4c42f3fdc9fc36
-
-PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
-PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
-
+PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/O/OA/OALDERS
+PKG_HASH:=9cd557a8b61b9a98deceff259c4fb1d82df729ff9d0388f655b364dd16480080
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/HTML-Form-$(PKG_VERSION)
+
+PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 include ../perl/perlmod.mk
@@ -28,7 +28,7 @@ define Package/perl-html-form
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Class that represents an HTML form element
-  URL:=http://search.cpan.org/dist/HTML-Form/
+  URL:=https://search.cpan.org/dist/HTML-Form/
   DEPENDS:=perl +perl-html-parser +perl-http-message +perl-uri +perlbase-encode +perlbase-essential
 endef
 

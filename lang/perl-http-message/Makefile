@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-http-message
-PKG_VERSION:=6.11
-PKG_RELEASE:=2
+PKG_VERSION:=6.18
+PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/E/ET/ETHER
 PKG_SOURCE:=HTTP-Message-$(PKG_VERSION).tar.gz
-PKG_HASH:=e7b368077ae6a188d99920411d8f52a8e5acfb39574d4f5c24f46fd22533d81b
-
-PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
-PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
-
+PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/O/OA/OALDERS
+PKG_HASH:=d060d170d388b694c58c14f4d13ed908a2807f0e581146cef45726641d809112
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/HTTP-Message-$(PKG_VERSION)
+
+PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 include ../perl/perlmod.mk
@@ -28,7 +28,7 @@ define Package/perl-http-message
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=HTTP style messages
-  URL:=http://search.cpan.org/dist/HTTP-Message/
+  URL:=https://search.cpan.org/dist/HTTP-Message/
   DEPENDS:=perl +perl-encode-locale +perl-http-date +perl-io-html +perl-lwp-mediatypes +perl-uri +perlbase-base +perlbase-compress +perlbase-encode +perlbase-essential +perlbase-io +perlbase-mime
 endef
 
