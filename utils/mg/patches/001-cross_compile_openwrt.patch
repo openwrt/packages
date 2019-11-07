@@ -1,7 +1,7 @@
 diff -urN a/configure b/configure
 --- a/configure	2019-03-03 22:17:03.000000000 +0900
 +++ b/configure	2019-06-04 13:08:41.418919319 +0900
-@@ -3,51 +3,21 @@
+@@ -3,52 +3,7 @@
  # This configure script written by Brian Callahan <bcallah@openbsd.org>
  # and released into the Public Domain.
  
@@ -50,25 +50,12 @@ diff -urN a/configure b/configure
 -    fi
 -  done
 -  return 1
+-}
 +cc="$CC"
-+
-+fgetlncheck() {
-+  cat << EOF > conftest.c
-+#include <stdio.h>
-+int main(void){fgetln(NULL,NULL);return 0;}
-+EOF
-+  $cc $tflags -o conftest conftest.c > /dev/null 2>&1
-+  if [ $? -eq 0 ] ; then
-+    rm -f conftest conftest.c
-+    return 0
-+  else
-+    rm -f conftest conftest.c
-+    return 1
-+  fi
- }
  
  fparselncheck() {
-@@ -211,18 +181,19 @@
+   cat << EOF > conftest.c
+@@ -214,18 +184,19 @@
    fi
  }
  
@@ -96,7 +83,7 @@ diff -urN a/configure b/configure
    fi
  }
  
-@@ -290,54 +261,9 @@
+@@ -303,54 +274,9 @@
    ldflags="${ldflags}-static"
  fi
  
@@ -120,7 +107,7 @@ diff -urN a/configure b/configure
 -fi
 -
 -printf "checking for OS... "
--libs='-lncurses'
+-libs='-lncursesw'
 -os=`uname -s`
 -echo "$os"
 -
@@ -130,7 +117,7 @@ diff -urN a/configure b/configure
 -    ;;
 -  "xDarwin")
 -    cflags="$cflags -DMSG_NOSIGNAL=SO_NOSIGPIPE -DLOGIN_NAME_MAX=MAXLOGNAME"
--    libs="$libs -lutil"
+-    libs="-lncurses -lutil"
 -    ;;
 -  "xFreeBSD")
 -    cflags="$cflags -D__dead=__dead2 -DLOGIN_NAME_MAX=MAXLOGNAME"
@@ -141,7 +128,7 @@ diff -urN a/configure b/configure
 -    ;;
 -  "xNetBSD")
 -    cflags="$cflags -D_OPENBSD_SOURCE"
--    libs="$libs -lutil"
+-    libs="-lcurses -lutil"
 -    ;;
 -  "xDragonFly")
 -    cflags="$cflags -D__dead=__dead2 -DLOGIN_NAME_MAX=MAXLOGNAME"
@@ -154,44 +141,6 @@ diff -urN a/configure b/configure
  
  cat << EOF > config.h
  /* This file generated automatically by configure.  */
-@@ -357,6 +283,15 @@
- 
- EOF
- 
-+printf "checking for fgetln... "
-+fgetlncheck
-+if [ $? -eq 0 ] ; then
-+    echo "#define HAVE_FGETLN" >> config.h
-+    echo "yes"
-+else
-+    echo "no"
-+fi
-+
- printf "checking for fparseln... "
- fparselncheck
- if [ $? -eq 0 ] ; then
-diff -urN a/fparseln.c b/fparseln.c
---- a/fparseln.c	2019-03-03 22:17:03.000000000 +0900
-+++ b/fparseln.c	2019-06-04 13:05:38.815543338 +0900
-@@ -74,6 +74,8 @@
- #include "util.h"
- #endif
- 
-+#ifndef HAVE_FGETLN
-+
- static char *
- fgetln(FILE *fp, size_t *len)
- {
-@@ -119,6 +121,8 @@
- 	return buf;
- }
- 
-+#endif /* !HAVE_FGETLN */
-+
- static int isescaped(const char *, const char *, int);
- 
- /* isescaped():
-diff -urN a/linux.h b/linux.h
 --- a/linux.h	2019-03-03 22:17:03.000000000 +0900
 +++ b/linux.h	2019-06-04 13:45:21.787063324 +0900
 @@ -7,6 +7,7 @@

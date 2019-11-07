@@ -13,7 +13,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.8.6-2"
+adb_ver="3.8.9"
 adb_basever=""
 adb_enabled=0
 adb_debug=0
@@ -43,6 +43,7 @@ adb_repdir="/tmp"
 adb_reputil="$(command -v tcpdump)"
 adb_repchunkcnt="5"
 adb_repchunksize="1"
+adb_logger="$(command -v logger)"
 adb_action="${1:-"start"}"
 adb_pidfile="/var/run/adblock.pid"
 adb_ubusservice="/etc/adblock/adblock.service"
@@ -105,6 +106,7 @@ f_load()
 	if [ -z "${adb_basever}" ] || [ "${adb_ver%.*}" != "${adb_basever}" ]
 	then
 		f_log "info" "your adblock config seems to be too old, please update your config with the '--force-maintainer' opkg option"
+		f_rmtemp
 		exit 0
 	fi
 
@@ -281,13 +283,12 @@ f_temp()
 	if [ -d "/tmp" ] && [ -z "${adb_tmpdir}" ]
 	then
 		adb_tmpdir="$(mktemp -p /tmp -d)"
-		adb_tmpload="$(mktemp -p "${adb_tmpdir}" -tu)"
 		adb_tmpfile="$(mktemp -p "${adb_tmpdir}" -tu)"
 	elif [ ! -d "/tmp" ]
 	then
 		f_log "err" "the temp directory '/tmp' does not exist/is not mounted yet, please create the directory or raise the 'adb_triggerdelay' to defer the adblock start"
 	fi
-	if [ ! -s "${adb_pidfile}" ]
+	if [ ! -f "${adb_pidfile}" ] || [ ! -s "${adb_pidfile}" ]
 	then
 		printf "%s" "${$}" > "${adb_pidfile}"
 	fi
@@ -916,13 +917,17 @@ f_log()
 
 	if [ -n "${log_msg}" ] && { [ "${class}" != "debug" ] || [ "${adb_debug}" -eq 1 ]; }
 	then
-		logger -p "${class}" -t "adblock-${adb_ver}[${$}]" "${log_msg}"
+		if [ -x "${adb_logger}" ]
+		then
+			"${adb_logger}" -p "${class}" -t "adblock-${adb_ver}[${$}]" "${log_msg}"
+		else
+			printf "%s %s %s\\n" "${class}" "adblock-${adb_ver}[${$}]" "${log_msg}"
+		fi
 		if [ "${class}" = "err" ]
 		then
 			f_rmdns
 			f_bgserv "stop"
 			f_jsnup "error"
-			logger -p "${class}" -t "adblock-${adb_ver}[${$}]" "Please also check 'https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md'"
 			exit 1
 		fi
 	fi
@@ -934,11 +939,11 @@ f_bgserv()
 {
 	local bg_pid status="${1}"
 
-	bg_pid="$(pgrep -f "^/bin/sh ${adb_ubusservice}|^/bin/ubus -S -M r -m invoke monitor|^grep -qF \"method\":\"set\",\"data\":\\{\"name\":\"${adb_dns}\"" | awk '{ORS=" "; print $1}')"
+	bg_pid="$(pgrep -f "^/bin/sh ${adb_ubusservice}.*|^/bin/ubus -S -M r -m invoke monitor|^grep -qF \"method\":\"set\",\"data\":\\{\"name\":\"${adb_dns}\"" | awk '{ORS=" "; print $1}')"
 	if [ -z "${bg_pid}" ] && [ "${status}" = "start" ] \
 		&& [ -x "${adb_ubusservice}" ] && [ "${adb_dnsfilereset}" = "true" ]
 	then
-		( "${adb_ubusservice}" "${adb_ver}" &)
+		( "${adb_ubusservice}" "${adb_ver}" & )
 	elif [ -n "${bg_pid}" ] && [ "${status}" = "stop" ] 
 	then
 		kill -HUP "${bg_pid}" 2>/dev/null
@@ -966,8 +971,8 @@ f_main()
 		src_url="$(eval printf "%s" \"\$\{adb_src_${src_name}\}\")"
 		src_rset="$(eval printf "%s" \"\$\{adb_src_rset_${src_name}\}\")"
 		src_cat="$(eval printf "%s" \"\$\{adb_src_cat_${src_name}\}\")"
-		src_tmpload="${adb_tmpload}.${src_name}"
-		src_tmpfile="${adb_tmpfile}.${src_name}"
+		src_tmpload="${adb_tmpfile}.${src_name}.load"
+		src_tmpfile="${adb_tmpfile}.${src_name}.file"
 		src_rc=4
 
 		# basic pre-checks

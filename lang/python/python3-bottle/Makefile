@@ -11,16 +11,15 @@ PKG_NAME:=python3-bottle
 PKG_VERSION:=0.12.17
 PKG_RELEASE:=1
 
-PKG_SOURCE:=bottle-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/b/bottle
+PYPI_NAME:=bottle
 PKG_HASH:=e9eaa412a60cc3d42ceb42f58d15864d9ed1b92e9d630b8130c871c5bb16107c
-PKG_BUILD_DIR:=$(BUILD_DIR)/bottle-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:bottlepy:bottle
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

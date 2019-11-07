@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
-PKG_VERSION:=2.0.18
-PKG_RELEASE:=2
+PKG_VERSION:=2.0.19
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.keepalived.org/software
-PKG_HASH:=1423a2b1b8e541211029b9e1e1452e683bbe5f4b0b287eddd609aaf5ff024fd0
+PKG_HASH:=0e2f8454765bc6a5fa26758bd9cec18aae42882843cdd24848aff0ae65ce4ca7
 
 PKG_CPE_ID:=cpe:/a:keepalived:keepalived
 PKG_LICENSE:=GPL-2.0-or-later
@@ -86,7 +86,9 @@ endef
 
 CONFIGURE_ARGS+= \
 	--with-init=SYSV \
-	--disable-nftables
+	--disable-nftables \
+	--disable-track-process \
+	--with-run-dir="/var/run"
 
 ifeq ($(CONFIG_KEEPALIVED_VRRP),)
 CONFIGURE_ARGS += \

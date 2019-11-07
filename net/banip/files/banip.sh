@@ -13,7 +13,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-ban_ver="0.3.1"
+ban_ver="0.3.6"
 ban_basever=""
 ban_enabled=0
 ban_automatic="1"
@@ -26,7 +26,6 @@ ban_autoblacklist=1
 ban_autowhitelist=1
 ban_realtime="false"
 ban_fetchutil=""
-ban_ip="$(command -v ip)"
 ban_ipt="$(command -v iptables)"
 ban_ipt_save="$(command -v iptables-save)"
 ban_ipt_restore="$(command -v iptables-restore)"
@@ -34,12 +33,13 @@ ban_ipt6="$(command -v ip6tables)"
 ban_ipt6_save="$(command -v ip6tables-save)"
 ban_ipt6_restore="$(command -v ip6tables-restore)"
 ban_ipset="$(command -v ipset)"
+ban_logger="$(command -v logger)"
 ban_chain="banIP"
 ban_action="${1:-"start"}"
 ban_pidfile="/var/run/banip.pid"
 ban_rtfile="/tmp/ban_runtime.json"
 ban_logservice="/etc/banip/banip.service"
-ban_sshdaemon="dropbear"
+ban_sshdaemon=""
 ban_setcnt=0
 ban_cnt=0
 
@@ -102,6 +102,7 @@ f_envload()
 	if [ -z "${ban_basever}" ] || [ "${ban_ver%.*}" != "${ban_basever}" ]
 	then
 		f_log "info" "your banIP config seems to be too old, please update your config with the '--force-maintainer' opkg option"
+		f_rmtemp
 		exit 0
 	fi
 
@@ -129,61 +130,17 @@ f_envcheck()
 {
 	local util utils packages iface tmp cnt=0 cnt_max=0
 
+	f_jsnup "running"
+	f_log "info" "start banIP processing (${ban_action})"
+
 	# check backup directory
 	#
 	if [ ! -d "${ban_backupdir}" ]
 	then
-		f_log "err" "the backup directory '${ban_backupdir}' does not exist/is not mounted yet, please create the directory or raise the 'ban_triggerdelay' to defer the banIP start"
+		f_log "err" "the backup directory '${ban_backupdir}' does not exist or has not been mounted yet, please create the directory or raise the 'ban_triggerdelay' to defer the banIP start"
 	fi
 
-	# check fetch utility
-	#
-	if [ -z "${ban_fetchutil}" ]
-	then
-		utils="aria2c curl wget uclient-fetch"
-		packages="$(opkg list-installed 2>/dev/null)"
-		for util in ${utils}
-		do
-			if { [ "${util}" = "uclient-fetch" ] && [ -n "$(printf "%s\\n" "${packages}" | grep "^libustream-")" ]; } || \
-				{ [ "${util}" = "wget" ] && [ -n "$(printf "%s\\n" "${packages}" | grep "^wget -")" ]; } || \
-				{ [ "${util}" != "uclient-fetch" ] && [ "${util}" != "wget" ]; }
-			then
-				ban_fetchutil="$(command -v "${util}")"
-				if [ -x "${ban_fetchutil}" ]
-				then
-					break
-				fi
-			fi
-			unset ban_fetchutil util
-		done
-	else
-		util="${ban_fetchutil}"
-		ban_fetchutil="$(command -v "${util}")"
-		if [ ! -x "${ban_fetchutil}" ]
-		then
-			unset ban_fetchutil util
-		fi
-	fi
-	case "${util}" in
-		"aria2c")
-			ban_fetchparm="${ban_fetchparm:-"--timeout=20 --allow-overwrite=true --auto-file-renaming=false --check-certificate=true --dir=" " -o"}"
-		;;
-		"curl")
-			ban_fetchparm="${ban_fetchparm:-"--connect-timeout 20 -o"}"
-		;;
-		"uclient-fetch")
-			ban_fetchparm="${ban_fetchparm:-"--timeout=20 -O"}"
-		;;
-		"wget")
-			ban_fetchparm="${ban_fetchparm:-"--no-cache --no-cookies --max-redirect=0 --timeout=20 -O"}"
-		;;
-	esac
-	if [ -z "${ban_fetchutil}" ] || [ -z "${ban_fetchparm}" ]
-	then
-		f_log "err" "download utility with SSL support not found, please install 'uclient-fetch' with a 'libustream-*' variant or another download utility like 'wget', 'curl' or 'aria2'"
-	fi
-
-	# get wan device and wan subnets
+	# get wan devices and wan subnets
 	#
 	if [ "${ban_automatic}" = "1" ]
 	then
@@ -242,14 +199,90 @@ f_envcheck()
 			ban_subnets6="${ban_subnets6} ${tmp}"
 		fi
 	done
+	ban_dev_all="$(ip link show 2>/dev/null | awk 'BEGIN{FS="[@: ]"}/^[0-9:]/{if($3!="lo"){print $3}}')"
 
-	if [ -z "${ban_iface}" ] || [ -z "${ban_dev}" ]
+	if [ -z "${ban_iface}" ] || [ -z "${ban_dev}" ] || [ -z "${ban_dev_all}" ]
 	then
 		f_log "err" "wan interface(s)/device(s) (${ban_iface:-"-"}/${ban_dev:-"-"}) not found, please please check your configuration"
+	fi
+
+	# check fetch utility
+	#
+	if [ -z "${ban_fetchutil}" ]
+	then
+		cnt_max=$((cnt+5))
+		while [ -z "${packages}" ]
+		do
+			packages="$(opkg list-installed 2>/dev/null)"
+			if [ "${cnt}" -gt "${cnt_max}" ]
+			then
+				break
+			fi
+			cnt=$((cnt+1))
+			sleep 1
+		done
+		if [ -n "${packages}" ]
+		then
+			utils="aria2c curl wget uclient-fetch"
+			for util in ${utils}
+			do
+				if { [ "${util}" = "uclient-fetch" ] && [ -n "$(printf "%s\\n" "${packages}" | grep "^libustream-")" ]; } || \
+					{ [ "${util}" = "wget" ] && [ -n "$(printf "%s\\n" "${packages}" | grep "^wget -")" ]; } || \
+					{ [ "${util}" != "uclient-fetch" ] && [ "${util}" != "wget" ]; }
+				then
+					ban_fetchutil="$(command -v "${util}")"
+					if [ -x "${ban_fetchutil}" ]
+					then
+						break
+					fi
+				fi
+				unset ban_fetchutil util
+			done
+		fi
 	else
-		ban_dev_all="$(${ban_ip} link show | awk 'BEGIN{FS="[@: ]"}/^[0-9:]/{if($3!="lo"){print $3}}')"
-		f_jsnup "running"
-		f_log "info" "start banIP processing (${ban_action})"
+		util="${ban_fetchutil}"
+		ban_fetchutil="$(command -v "${util}")"
+		if [ ! -x "${ban_fetchutil}" ]
+		then
+			unset ban_fetchutil util
+		fi
+	fi
+	case "${util}" in
+		"aria2c")
+			ban_fetchparm="${ban_fetchparm:-"--timeout=20 --allow-overwrite=true --auto-file-renaming=false --check-certificate=true --dir=" " -o"}"
+		;;
+		"curl")
+			ban_fetchparm="${ban_fetchparm:-"--connect-timeout 20 -o"}"
+		;;
+		"uclient-fetch")
+			ban_fetchparm="${ban_fetchparm:-"--timeout=20 -O"}"
+		;;
+		"wget")
+			ban_fetchparm="${ban_fetchparm:-"--no-cache --no-cookies --max-redirect=0 --timeout=20 -O"}"
+		;;
+	esac
+	if [ -z "${ban_fetchutil}" ] || [ -z "${ban_fetchparm}" ]
+	then
+		f_log "err" "download utility with SSL support not found, please install 'uclient-fetch' with a 'libustream-*' variant or another download utility like 'wget', 'curl' or 'aria2'"
+	fi
+
+	# check ssh daemon
+	#
+	if [ -z "${ban_sshdaemon}" ]
+	then
+		utils="dropbear sshd"
+		for util in ${utils}
+		do
+			if [ -x "$(command -v "${util}")" ]
+			then
+				ban_sshdaemon="${util}"
+				break
+			fi
+		done
+	fi
+	if [ -z "${ban_sshdaemon}" ]
+	then
+		f_log "err" "ssh daemon not found, please install 'dropbear' or 'sshd'"
 	fi
 }
 
@@ -260,14 +293,13 @@ f_temp()
 	if [ -d "/tmp" ] && [ -z "${ban_tmpdir}" ]
 	then
 		ban_tmpdir="$(mktemp -p /tmp -d)"
-		ban_tmpload="$(mktemp -p "${ban_tmpdir}" -tu)"
 		ban_tmpfile="$(mktemp -p "${ban_tmpdir}" -tu)"
 	elif [ ! -d "/tmp" ]
 	then
-		f_log "err" "the temp directory '/tmp' does not exist/is not mounted yet, please create the directory or raise the 'ban_triggerdelay' to defer the banIP start"
+		f_log "err" "the temp directory '/tmp' does not exist or has not been mounted yet, please create the directory or raise the 'ban_triggerdelay' to defer the banIP start"
 	fi
 
-	if [ ! -s "${ban_pidfile}" ]
+	if [ ! -f "${ban_pidfile}" ] || [ ! -s "${ban_pidfile}" ]
 	then
 		printf "%s" "${$}" > "${ban_pidfile}"
 	fi
@@ -453,19 +485,23 @@ f_ipset()
 				if [ -s "${tmp_file}" ] && [ -z "$("${ban_ipset}" -q -n list "${src_name}")" ]
 				then
 					"${ban_ipset}" -q create "${src_name}" hash:"${src_settype}" hashsize 64 maxelem 262144 family "${src_setipv}" counters
+					out_rc="${?}"
 				else
 					"${ban_ipset}" -q flush "${src_name}"
-				fi
-				if [ -s "${tmp_file}" ]
-				then
-					"${ban_ipset}" -! restore < "${tmp_file}"
 					out_rc="${?}"
-					"${ban_ipset}" -q save "${src_name}" > "${tmp_file}"
-					cnt="$(($(wc -l 2>/dev/null < "${tmp_file}")-1))"
-					cnt_cidr="$(grep -cF "/" "${tmp_file}")"
-					cnt_ip="$((cnt-cnt_cidr))"
-					printf "%s\\n" "1" > "${tmp_set}"
-					printf "%s\\n" "${cnt}" > "${tmp_cnt}"
+				fi
+				if [ -s "${tmp_file}" ] && [ "${out_rc}" -eq 0 ]
+				then
+					"${ban_ipset}" -q -! restore < "${tmp_file}"
+					out_rc="${?}"
+					if [ "${out_rc}" -eq 0 ]
+					then
+						"${ban_ipset}" -q save "${src_name}" > "${tmp_file}"
+						cnt="$(($(wc -l 2>/dev/null < "${tmp_file}")-1))"
+						cnt_cidr="$(grep -cF "/" "${tmp_file}")"
+						cnt_ip="$((cnt-cnt_cidr))"
+						printf "%s\\n" "${cnt}" > "${tmp_cnt}"
+					fi
 				fi
 				f_iptadd
 			fi
@@ -478,12 +514,11 @@ f_ipset()
 			then
 				"${ban_ipset}" -q save "${src_name}" > "${tmp_file}"
 				out_rc="${?}"
-				if [ -s "${tmp_file}" ]
+				if [ -s "${tmp_file}" ] && [ "${out_rc}" -eq 0 ]
 				then
 					cnt="$(($(wc -l 2>/dev/null < "${tmp_file}")-1))"
 					cnt_cidr="$(grep -cF "/" "${tmp_file}")"
 					cnt_ip="$((cnt-cnt_cidr))"
-					printf "%s\\n" "1" > "${tmp_set}"
 					printf "%s\\n" "${cnt}" > "${tmp_cnt}"
 				fi
 				f_iptadd
@@ -538,14 +573,18 @@ f_log()
 
 	if [ -n "${log_msg}" ] && { [ "${class}" != "debug" ] || [ "${ban_debug}" -eq 1 ]; }
 	then
-		logger -p "${class}" -t "banIP-${ban_ver}[${$}]" "${log_msg}"
+		if [ -x "${ban_logger}" ]
+		then
+			"${ban_logger}" -p "${class}" -t "banIP-${ban_ver}[${$}]" "${log_msg}"
+		else
+			printf "%s %s %s\\n" "${class}" "banIP-${ban_ver}[${$}]" "${log_msg}"
+		fi
 		if [ "${class}" = "err" ]
 		then
 			f_jsnup error
 			f_ipset destroy
 			f_rmbackup
 			f_rmtemp
-			logger -p "${class}" -t "banIP-${ban_ver}[${$}]" "Please also check 'https://github.com/openwrt/packages/blob/master/net/banip/files/README.md'"
 			exit 1
 		fi
 	fi
@@ -561,8 +600,8 @@ f_bgserv()
 	if [ -z "${bg_pid}" ] && [ "${status}" = "start" ] \
 		&& [ -x "${ban_logservice}" ] && [ "${ban_realtime}" = "true" ]
 	then
-		( "${ban_logservice}" "${ban_ver}" &)
-	elif [ -n "${bg_pid}" ] && [ "${status}" = "stop" ] 
+		( "${ban_logservice}" "${ban_ver}" "${ban_sshdaemon}" & )
+	elif [ -n "${bg_pid}" ] && [ "${status}" = "stop" ]
 	then
 		kill -HUP "${bg_pid}" 2>/dev/null
 	fi
@@ -624,12 +663,10 @@ f_main()
 		src_cat="$(eval printf "%s" \"\$\{ban_src_cat_${src_name%_6*}\}\")"
 		src_addon=""
 		src_rc=4
-		tmp_load="${ban_tmpload}.${src_name}"
-		tmp_file="${ban_tmpfile}.${src_name}"
-		tmp_raw="${tmp_load}.raw"
+		tmp_load="${ban_tmpfile}.${src_name}.load"
+		tmp_file="${ban_tmpfile}.${src_name}.file"
+		tmp_raw="${tmp_file}.raw"
 		tmp_cnt="${tmp_file}.cnt"
-		tmp_set="${tmp_file}.setcnt"
-
 		# basic pre-checks
 		#
 		f_log "debug" "f_main  ::: name: ${src_name}, src_on: ${src_on:-"-"}"
@@ -818,14 +855,14 @@ f_main()
 	done
 	wait
 
-	for cnt in $(cat "${ban_tmpfile}".*.setcnt 2>/dev/null)
-	do
-		ban_setcnt="$((ban_setcnt+cnt))"
-	done
 	for cnt in $(cat "${ban_tmpfile}".*.cnt 2>/dev/null)
 	do
 		ban_cnt="$((ban_cnt+cnt))"
 	done
+	if [ "${ban_cnt}" -gt 0 ]
+	then
+		ban_setcnt="$(ls "${ban_tmpfile}".*.cnt 2>/dev/null | wc -l)"
+	fi
 	f_log "info" "${ban_setcnt} IPSets with overall ${ban_cnt} IPs/Prefixes loaded successfully (${ban_sysver})"
 	f_bgserv "start"
 	f_jsnup

@@ -7,24 +7,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pillow
-PKG_VERSION:=6.2.0
+PKG_VERSION:=6.2.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=Pillow-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/P/Pillow
-PKG_HASH:=4548236844327a718ce3bb182ab32a16fa2050c61e334e959f554cac052fb0df
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-Pillow-$(PKG_VERSION)
+PYPI_NAME:=Pillow
+PKG_HASH:=bf4e972a88f8841d8fdc6db1a75e0f8d763e66e3754b03006cbc3854d89f1cb1
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=HPND
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:python:pillow
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-pillow/Default
   SUBMENU:=Python

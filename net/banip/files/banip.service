@@ -8,20 +8,28 @@
 
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-
-if [ -r "/lib/functions.sh" ]
-then
-	. "/lib/functions.sh"
-	ban_sshdaemon="$(uci_get banip extra ban_sshdaemon "dropbear")"
-fi
 ban_ver="${1}"
-ban_log="$(command -v logread)"
+ban_sshdaemon="${2}"
+ban_logger="$(command -v logger)"
+ban_logread="$(command -v logread)"
 
-if [ -x "${ban_log}" ]
+f_log()
+{
+	local class="${1}" log_msg="${2}"
+
+	if [ -x "${ban_logger}" ]
+	then
+		"${ban_logger}" -p "${class}" -t "banIP-${ban_ver}[${$}]" "${log_msg}"
+	else
+		printf "%s %s %s\\n" "${class}" "banIP-${ban_ver}[${$}]" "${log_msg}"
+	fi
+}
+
+if [ -x "${ban_logread}" ]
 then
-	logger -p "info" -t "banIP-${ban_ver}[${$}]" "log/banIP service started"
-	"${ban_log}" -f -e "${ban_sshdaemon}\|luci: failed login" | \
+	f_log "info" "log/banIP service started"
+	"${ban_logread}" -f -e "${ban_sshdaemon}\|luci: failed login" | \
 		{ grep -qE "Exit before auth|luci: failed login|[0-9]+ \[preauth\]$"; [ $? -eq 0 ] && /etc/init.d/banip refresh; }
 else
-	logger -p "err" -t "banIP-${ban_ver}[${$}]" "can't start log/banIP service"
+	f_log "err" "can't start log/banIP service"
 fi

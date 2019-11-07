@@ -11,21 +11,17 @@ PKG_NAME:=python-pyasn1-modules
 PKG_VERSION:=0.2.7
 PKG_RELEASE:=1
 
-PKG_SOURCE:=pyasn1-modules-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pyasn1-modules
+PYPI_NAME:=pyasn1-modules
 PKG_HASH:=0c35a52e00b672f832e5846826f1fb7507907f7d52fba6faa9e3c4cbe874fe4b
 
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-pyasn1-modules-$(PKG_VERSION)
-
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-pyasn1-modules/Default
   SECTION:=lang

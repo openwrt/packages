@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmpdclient
 PKG_VERSION:=2.16
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_HASH:=fa6bdab67c0e0490302b38f00c27b4959735c3ec8aef7a88327adb1407654464
@@ -17,10 +17,11 @@ PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
+PKG_BUILD_DEPENDS:=meson/host
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include ../../devel/meson/meson.mk
 
 define Package/libmpdclient
     TITLE:=libmpdclient
@@ -33,14 +34,7 @@ define Package/libmpdclient/description
     A stable, documented, asynchronous API library for interfacing MPD in the C, C++ & Objective C languages.
 endef
 
-CONFIGURE_ARGS+= --disable-documentation
-
-# Newer sources require meson/ninja to build so...
-# Use our hacked-up version of the libmpdclient v2.11 autotools.
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	$(CP) ./autotools-files/* $(PKG_BUILD_DIR)/
-endef
+MESON_ARGS+=-Ddocumentation=false
 
 define Build/InstallDev
 	$(INSTALL_DIR) \

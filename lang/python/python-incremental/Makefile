@@ -11,21 +11,17 @@ PKG_NAME:=python-incremental
 PKG_VERSION:=17.5.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=incremental-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/i/incremental
+PYPI_NAME:=incremental
 PKG_HASH:=7b751696aaf36eebfab537e458929e194460051ccad279c72b755a167eebd4b3
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-incremental-$(PKG_VERSION)
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-incremental/Default
   SECTION:=lang

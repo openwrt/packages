@@ -8,17 +8,14 @@ PKG_VERSION:=1.7.1
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/passlib
+PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=3d948f64138c25633613f303bcc471126eae67c04d5e3f6b7b8ce6242f8653e0
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-passlib-$(PKG_VERSION)
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/passlib/Default
   SUBMENU:=Python

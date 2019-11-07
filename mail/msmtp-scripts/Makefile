@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msmtp-scripts
-PKG_VERSION:=1.2.4
-PKG_RELEASE:=2
+PKG_VERSION:=1.2.5.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://launchpad.net/$(PKG_NAME)/1.2/$(PKG_VERSION)/+download
-PKG_HASH:=fc85ab8ed1348be584adfc1feb89f51daed7404e9e8643652ff31d2af00f1cf5
+PKG_HASH:=757aa297a0e0283399fffdc460044bfeb653673695fc02c92215a5e32d104151
 PKG_MAINTAINER:=Daniel F. Dickinson <cshored@thecshore.com>
 
 PKG_LICENSE:=GPL-3.0-or-later

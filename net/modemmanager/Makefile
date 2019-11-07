@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modemmanager
-PKG_VERSION:=1.10.6
-PKG_RELEASE:=1
+PKG_VERSION:=1.10.8
+PKG_RELEASE:=3
 
 PKG_SOURCE:=ModemManager-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/ModemManager
-PKG_HASH=3c2ca73782215664141042422759899ca9846440fc26d6223c7cf7ea4dd3c996
+PKG_HASH:=cbe174078dbdf3f746a55f0004353d3c27da2a31da553036d90fc7dc34a0169a
 PKG_BUILD_DIR:=$(BUILD_DIR)/ModemManager-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas.smith@telcoantennas.com.au>
@@ -22,6 +22,10 @@ LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+
+PKG_BUILD_DEPENDS:=glib2/host libxslt/host
+
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -73,6 +77,10 @@ define Build/Prepare
 	( cd "$(PKG_BUILD_DIR)"; \
 		printf "all:\ninstall:\n" >po/Makefile.in.in; \
 	)
+	$(SED) 's|^\(GLIB_MKENUMS\)=.*|\1=$(STAGING_DIR_HOSTPKG)/bin/glib-mkenums|' \
+		$(PKG_BUILD_DIR)/configure.ac
+	$(SED) 's|^\(GDBUS_CODEGEN\)=.*|\1=$(STAGING_DIR_HOSTPKG)/bin/gdbus-codegen|' \
+		$(PKG_BUILD_DIR)/configure.ac
 endef
 
 define Build/InstallDev
@@ -124,9 +132,5 @@ define Package/modemmanager/install
 	$(INSTALL_DIR) $(1)/lib/netifd/proto
 	$(INSTALL_BIN) ./files/modemmanager.proto $(1)/lib/netifd/proto/modemmanager.sh
 endef
-
-$(eval $(call RequireCommand,xsltproc, \
-        $(PKG_NAME) requires xsltproc installed on the host-system. \
-))
 
 $(eval $(call BuildPackage,modemmanager))

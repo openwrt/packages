@@ -11,20 +11,16 @@ PKG_NAME:=python-txsocksx
 PKG_VERSION:=1.15.0.2
 PKG_RELEASE:=4
 
-PKG_SOURCE:=txsocksx-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/t/txsocksx
+PYPI_NAME:=txsocksx
 PKG_HASH:=4f79b5225ce29709bfcee45e6f726e65b70fd6f1399d1898e54303dbd6f8065f
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-txsocksx-$(PKG_VERSION)
 
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 PYTHON_PKG_SETUP_VARS:= \
   PKG_VERSION="$(PKG_VERSION)"

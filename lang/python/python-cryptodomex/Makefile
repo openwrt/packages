@@ -8,21 +8,17 @@ PKG_NAME:=python-cryptodomex
 PKG_VERSION:=3.9.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=pycryptodomex-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pycryptodomex
+PYPI_NAME:=pycryptodomex
 PKG_HASH:=8b604f4fa1de456d6d19771b01c2823675a75a2c60e51a6b738f71fdfe865370
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-cryptodomex-$(PKG_VERSION)
 
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE.rst
 PKG_MAINTAINER:=Richard Yu <yurichard3839@gmail.com>
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 PYTHON_PKG_SETUP_ARGS:=
 PYTHON_PKG_SETUP_VARS:= \

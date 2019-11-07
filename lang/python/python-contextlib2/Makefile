@@ -9,11 +9,10 @@ PKG_VERSION:=0.5.5
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 
-PKG_SOURCE_URL:=https://pypi.python.org/packages/source/c/contextlib2/
-PKG_SOURCE:=contextlib2-$(PKG_VERSION).tar.gz
+PYPI_NAME:=contextlib2
 PKG_HASH:=509f9419ee91cdd00ba34443217d5ca51f5a364a404e1dce9e8979cea969ca48
-PKG_BUILD_DIR:=$(BUILD_DIR)/contextlib2-$(PKG_VERSION)
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

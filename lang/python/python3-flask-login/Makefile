@@ -12,14 +12,14 @@ PKG_NAME:=Flask-Login
 PKG_VERSION:=0.4.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/f/flask-login/
+PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=c815c1ac7b3e35e2081685e389a665f2c74d7e077cb93cecabaea352da4752ec
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

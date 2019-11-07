@@ -11,14 +11,13 @@ PKG_NAME:=python-pcapy
 PKG_VERSION:=0.11.4
 PKG_RELEASE:=2
 
-PKG_SOURCE:=pcapy-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pcapy
+PYPI_NAME:=pcapy
 PKG_HASH:=aa239913678d7ba116e66057a37f914de7726aecd11d00db470127df115c4e78
-PKG_BUILD_DIR:=$(BUILD_DIR)/pcapy-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Andrew McConachie <andrew@depht.com>
 PKG_LICENSE:=Apache-1.1
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk

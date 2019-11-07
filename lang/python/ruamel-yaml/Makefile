@@ -11,21 +11,17 @@ PKG_NAME:=ruamel-yaml
 PKG_VERSION:=0.15.100
 PKG_RELEASE:=1
 
-PKG_SOURCE:=ruamel.yaml-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/r/ruamel.yaml/
+PYPI_NAME:=ruamel.yaml
 PKG_HASH:=8e42f3067a59e819935a2926e247170ed93c8f0b2ab64526f888e026854db2e4
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-ruamel.yaml-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/ruamel-yaml/Default
   SECTION:=lang

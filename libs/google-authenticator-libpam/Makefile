@@ -40,7 +40,7 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/security/* $(1)/lib/security/
 endef
 
-define Package/libpam-google-authenticator/install
+define Package/google-authenticator-libpam/install
 	$(INSTALL_DIR) $(1)/usr/lib/security
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/security/*.so* \
 	    $(1)/usr/lib/security/

@@ -11,11 +11,8 @@ PKG_NAME:=python-pycparser
 PKG_VERSION:=2.19
 PKG_RELEASE:=2
 
-PKG_SOURCE:=pycparser-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pycparser
+PYPI_NAME:=pycparser
 PKG_HASH:=a988718abfad80b6b157acce7bf130a30876d27603738ac39f140993246b25b3
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-pycparser-$(PKG_VERSION)
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -24,11 +21,10 @@ PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 HOST_PYTHON_PACKAGE_BUILD_DEPENDS:="ply==3.10"
 HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="ply==3.10"
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-pycparser/Default
   SECTION:=lang

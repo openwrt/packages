@@ -11,21 +11,17 @@ PKG_NAME:=python-automat
 PKG_VERSION:=0.8.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=Automat-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/A/Automat
+PYPI_NAME:=Automat
 PKG_HASH:=269a09dfb063a3b078983f4976d83f0a0d3e6e7aaf8e27d8df1095e09dc4a484
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-automat-$(PKG_VERSION)
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 PYTHON_PKG_SETUP_VARS:= \
   PKG_VERSION="$(PKG_VERSION)"

@@ -11,21 +11,17 @@ PKG_NAME:=python-zope-interface
 PKG_VERSION:=4.6.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=zope.interface-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/z/zope.interface
+PYPI_NAME:=zope.interface
 PKG_HASH:=1b3d0dcabc7c90b470e59e38a9acaa361be43b3a6ea644c0063951964717f0e5
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-zope-interface-$(PKG_VERSION)
 
 PKG_LICENSE:=ZPL-2.1
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-zope-interface/Default
   SECTION:=lang

@@ -1,10 +1,10 @@
 --- a/setup.py
 +++ b/setup.py
-@@ -591,8 +591,9 @@ class PyBuildExt(build_ext):
+@@ -631,8 +631,9 @@ class PyBuildExt(build_ext):
          # directly since an inconsistently reproducible issue comes up where
          # the environment variable is not set even though the value were passed
          # into configure and stored in the Makefile (issue found on OS X 10.3).
-+        rt_lib_dirs = [] if cross_compiling else self.compiler.runtime_library_dirs
++        rt_lib_dirs = [] if CROSS_COMPILING else self.compiler.runtime_library_dirs
          for env_var, arg_name, dir_list in (
 -                ('LDFLAGS', '-R', self.compiler.runtime_library_dirs),
 +                ('LDFLAGS', '-R', rt_lib_dirs),

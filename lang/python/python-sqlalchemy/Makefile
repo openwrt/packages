@@ -11,16 +11,15 @@ PKG_NAME:=python-sqlalchemy
 PKG_VERSION:=1.3.7
 PKG_RELEASE:=1
 
-PKG_SOURCE:=SQLAlchemy-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/S/SQLAlchemy/
+PYPI_NAME:=SQLAlchemy
 PKG_HASH:=0459bf0ea6478f3e904de074d65769a11d74cdc34438ab3159250c96d089aef0
-PKG_BUILD_DIR:=$(BUILD_DIR)/SQLAlchemy-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:sqlalchemy:sqlalchemy
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 

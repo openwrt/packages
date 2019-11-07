@@ -10,16 +10,18 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=klish
 PKG_VERSION:=2.1.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://libcode.org/attachments/download/70/
-PKG_LICENSE:=BSD-3-Clause
-PKG_LICENSE_FILES:=LICENCE
-PKG_MAINTAINER:=Takashi Umeno <umeno.takashi@gmail.com>
 PKG_HASH:=a89dd1027dce713407b6d68e836c8fdead56406dcfc650da84da8e0b92c9b2e5
 
+PKG_MAINTAINER:=Takashi Umeno <umeno.takashi@gmail.com>
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=LICENCE
+
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -28,12 +30,12 @@ define Package/klish/default
   CATEGORY:=Utilities
   SUBMENU:=Shells
   TITLE:=Kommand Line Interface SHell ($(1))
-  URL:=http://libcode.org/projects/klish/
+  URL:=https://libcode.org/projects/klish/
 endef
 
 define Package/klish
 $(call Package/klish/default,main tool)
-  DEPENDS:=+libstdcpp +libxml2
+  DEPENDS:=+libxml2
 endef
 
 define Package/klish/description
@@ -50,10 +52,9 @@ define Package/klish/description
  More information about these tools is to be found on the klish web site.
 endef
 
-TARGET_LDFLAGS += -lxml2 -lz
-TARGET_CFLAGS += -D_XOPEN_SOURCE=500
-
 CONFIGURE_ARGS += --with-libxml2
+
+TARGET_CFLAGS += -D_XOPEN_SOURCE=500
 
 define Package/klish/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -72,11 +73,11 @@ define Package/klish-xml-files
   CATEGORY:=Utilities
   DEPENDS:=klish
   TITLE:=klish sample XML files
-  URL:=http://code.google.com/p/klish/
+  URL:=https://libcode.org/projects/klish/
 endef
 
 define Package/klish-xml-files/description
-  This is a set of sample XML files for klish. 
+  This is a set of sample XML files for klish.
 endef
 
 define Package/klish-xml-files/install

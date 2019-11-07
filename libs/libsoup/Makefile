@@ -6,24 +6,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsoup
-PKG_VERSION:=2.65.1
-PKG_RELEASE:=3
+PKG_VERSION:=2.68.2
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/$(PKG_NAME)/2.65
-PKG_HASH:=3f3718623338f1bd7d7899dae2bdb613348212d59999a27432120afc1435ff04
+PKG_SOURCE_URL:=@GNOME/$(PKG_NAME)/2.68
+PKG_HASH:=51ad3001a946fe3bcf29b692dc9ffe05cdf702ea6ca0ee8c3099a99a2f4e3933
 
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gnome:libsoup
 
-PKG_BUILD_DEPENDS:=intltool/host
-PKG_BUILD_PARALLEL:=1
-PKG_FIXUP:=autoreconf
+PKG_BUILD_DEPENDS:=meson/host glib2/host
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+include ../../devel/meson/meson.mk
 
 define Package/libsoup
   SECTION:=libs
@@ -34,17 +33,16 @@ define Package/libsoup
   DEPENDS:=+glib2 +libxml2 +libgnutls +libsqlite3 +libpsl $(ICONV_DEPENDS) $(INTL_DEPENDS)
 endef
 
-CONFIGURE_ARGS += \
-		--disable-debug \
-		--disable-glibtest \
-		--disable-gtk-doc-html \
-		--disable-introspection \
-		--disable-more-warnings \
-		--disable-vala \
-		--without-apache-httpd \
-		--without-gnome \
-		--without-gssapi \
-		--without-ntlm-auth
+MESON_ARGS += \
+	-Dtests=false \
+	-Dinstalled_tests=false \
+	-Dgtk_doc=false \
+	-Dintrospection=disabled \
+	-Dtls_check=false \
+	-Dvapi=disabled \
+	-Dgnome=false \
+	-Dgssapi=disabled \
+	-Dntlm=disabled \
 
 define package/libsoup/decription
 Libsoup is an HTTP library implementation in C
@@ -54,7 +52,7 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/{lib/pkgconfig,include/libsoup-2.4/libsoup}
 
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libsoup-2.4.{so*,la,a} \
+		$(PKG_INSTALL_DIR)/usr/lib/libsoup-2.4.so* \
 		$(1)/usr/lib/
 
 	$(INSTALL_DATA) \

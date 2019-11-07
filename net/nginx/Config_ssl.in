@@ -15,6 +15,13 @@ config NGINX_DAV
 		Enable the HTTP and WebDAV methods PUT, DELETE, MKCOL, COPY and MOVE.
 	default n
 
+config NGINX_UBUS
+	bool
+	prompt "Enable UBUS module"
+	help
+		Enable UBUS api support directly from the server.
+	default y
+
 config NGINX_FLV
 	bool
 	prompt "Enable FLV module"
