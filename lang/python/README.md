@@ -376,13 +376,13 @@ define PyPackage/python-example/filespec
 endef
 ```
 
-If there is an `examples` directory and `test_*.py` files that can be omitted to save space, this can be specified as:
+If the package installs a `example_package` directory inside `PYTHON_PKG_DIR`, and there is an `examples` directory and `test_*.py` files that can be omitted to save space, this can be specified as:
 
 ```
 define PyPackage/python-example/filespec
 +|$(PYTHON_PKG_DIR)
--|$(PYTHON_PKG_DIR)/examples
--|$(PYTHON_PKG_DIR)/test_*.py
+-|$(PYTHON_PKG_DIR)/example_package/examples
+-|$(PYTHON_PKG_DIR)/example_package/test_*.py
 endef
 ```
 
