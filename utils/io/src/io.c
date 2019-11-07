@@ -68,7 +68,7 @@ memread_memory(unsigned long phys_addr, void *addr, int len, int iosize)
 				printf(" %04x", *(unsigned short *)addr);
 				break;
 			case 4:
-				printf(" %08lx", *(unsigned long *)addr);
+				printf(" %08x", *(unsigned int *)addr);
 				break;
 			}
 			i += iosize;
