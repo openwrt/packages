@@ -1004,7 +1004,7 @@ mwan3_set_user_iptables_rule()
 			case $proto in
 				tcp|udp)
 				[ "$global_logging" = "1" ] && [ "$rule_logging" = "1" ] && {
-					$IPT -A mwan3_rules \
+					$IPT4 -A mwan3_rules \
 						-p $proto \
 						-s $src_ip \
 						-d $dest_ip $ipset \
