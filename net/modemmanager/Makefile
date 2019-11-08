@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modemmanager
-PKG_VERSION:=1.10.8
-PKG_RELEASE:=3
+PKG_VERSION:=1.12.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=ModemManager-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/ModemManager
-PKG_HASH:=cbe174078dbdf3f746a55f0004353d3c27da2a31da553036d90fc7dc34a0169a
+PKG_HASH:=3daca86164145fffb589939433f596c13fa077c9a187c0d5820fdd5b4e4a6424
 PKG_BUILD_DIR:=$(BUILD_DIR)/ModemManager-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas.smith@telcoantennas.com.au>
@@ -116,6 +116,9 @@ define Package/modemmanager/install
 
 	$(INSTALL_DIR) $(1)/usr/share/dbus-1/system-services
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/dbus-1/system-services/org.freedesktop.ModemManager1.service $(1)/usr/share/dbus-1/system-services
+
+	$(INSTALL_DIR) $(1)/usr/share/ModemManager
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/ModemManager/*.conf $(1)/usr/share/ModemManager
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/modemmanager.init $(1)/etc/init.d/modemmanager
