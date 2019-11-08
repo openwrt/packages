@@ -1,11 +1,12 @@
 #!/bin/sh
 #
+
+[ "${ACTION}" != "add" ] && exit 0
+
 ban_pidfile="/var/run/banip.pid"
 ban_enabled="$(/etc/init.d/banip enabled; printf "%u" "${?}")"
-
-if [ "${ban_enabled}" = "1" ] || [ ! -f "${ban_pidfile}" ] || [ -s "${ban_pidfile}" ] || [ "${ACTION}" != "add" ]
+if [ "${ban_enabled}" = "0" ] && [ ! -s "${ban_pidfile}" ]
 then
-	exit 0
-else
 	/etc/init.d/banip refresh
 fi
+exit 0
