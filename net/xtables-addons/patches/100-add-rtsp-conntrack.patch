@@ -655,7 +655,7 @@
 +		}
 +
 +		nf_ct_expect_init(rtp_exp, NF_CT_EXPECT_CLASS_DEFAULT,
-+				  nf_ct_l3num(ct), &srvaddr,
++				  nf_ct_l3num(ct), NULL,
 +				  &ct->tuplehash[!dir].tuple.dst.u3,
 +				  IPPROTO_UDP, NULL, &be_loport);
 +
@@ -672,7 +672,7 @@
 +			}
 +
 +			nf_ct_expect_init(rtcp_exp, NF_CT_EXPECT_CLASS_DEFAULT,
-+					  nf_ct_l3num(ct), &srvaddr,
++					  nf_ct_l3num(ct), NULL,
 +					  &ct->tuplehash[!dir].tuple.dst.u3,
 +					  IPPROTO_UDP, NULL, &be_hiport);
 +
