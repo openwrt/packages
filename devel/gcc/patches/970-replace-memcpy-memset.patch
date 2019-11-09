@@ -1,0 +1,44 @@
+diff --recursive -u gcc-7.4.0-vanilla/libitm/beginend.cc gcc-7.4.0/libitm/beginend.cc
+--- gcc-7.4.0-vanilla/libitm/beginend.cc	2017-01-01 07:07:43.905435000 -0500
++++ gcc-7.4.0/libitm/beginend.cc	2019-11-09 00:31:10.093128945 -0500
+@@ -431,7 +431,7 @@
+   // Save everything that we might have to restore on restarts or aborts.
+   jb = tx->jb;
+   undolog_size = tx->undolog.size();
+-  memcpy(&alloc_actions, &tx->alloc_actions, sizeof(alloc_actions));
++  alloc_actions = tx->alloc_actions;
+   user_actions_size = tx->user_actions.size();
+   id = tx->id;
+   prop = tx->prop;
+@@ -449,7 +449,7 @@
+   // commits of nested transactions. Allocation actions must be committed
+   // before committing the snapshot.
+   tx->jb = jb;
+-  memcpy(&tx->alloc_actions, &alloc_actions, sizeof(alloc_actions));
++  tx->alloc_actions = alloc_actions;
+   tx->id = id;
+   tx->prop = prop;
+ }
+@@ -485,7 +485,7 @@
+       prop = cp->prop;
+       if (cp->disp != abi_disp())
+ 	set_abi_disp(cp->disp);
+-      memcpy(&alloc_actions, &cp->alloc_actions, sizeof(alloc_actions));
++      alloc_actions = cp->alloc_actions;
+       nesting = cp->nesting;
+     }
+   else
+diff --recursive -u gcc-7.4.0-vanilla/libitm/method-ml.cc gcc-7.4.0/libitm/method-ml.cc
+--- gcc-7.4.0-vanilla/libitm/method-ml.cc	2017-01-01 07:07:43.905435000 -0500
++++ gcc-7.4.0/libitm/method-ml.cc	2019-11-09 01:12:58.674388557 -0500
+@@ -138,7 +138,9 @@
+     // This store is only executed while holding the serial lock, so relaxed
+     // memory order is sufficient here.  Same holds for the memset.
+     time.store(0, memory_order_relaxed);
+-    memset(orecs, 0, sizeof(atomic<gtm_word>) * L2O_ORECS);
++    void *p = orecs;
++    memset(p, 0, sizeof(atomic<gtm_word>) * L2O_ORECS);
++
+   }
+ };
+ 
