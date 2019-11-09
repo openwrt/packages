@@ -1,0 +1,48 @@
+commit d4f20fadd9c3145de0eb5f5434f57b9fffc61062
+Author: William Lallemand <wlallemand@haproxy.com>
+Date:   Fri Oct 25 21:10:14 2019 +0200
+
+    BUG/MINOR: cli: don't call the kw->io_release if kw->parse failed
+    
+    The io_release() callback of the cli_kw is supposed to be used to clean
+    what an io_handler() has made. It is called once the work in the IO
+    handler is finished, or when the connection was aborted by the client.
+    
+    This patch fixes a bug where the io_release callback was called even
+    when the parse() callback failed. Which means that the io_release() could
+    called even if the io_handler() was not called.
+    
+    Should be backported in every versions that have a cli_kw->release().
+    (as far as 1.7)
+    
+    (cherry picked from commit 90b098c921e15f912dbde42658e34780f0ba446d)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/cli.c b/src/cli.c
+index 9a9f80f9..c063fbf0 100644
+--- a/src/cli.c
++++ b/src/cli.c
+@@ -570,10 +570,19 @@ static int cli_parse_request(struct appctx *appctx)
+ 
+ 	appctx->io_handler = kw->io_handler;
+ 	appctx->io_release = kw->io_release;
+-	/* kw->parse could set its own io_handler or ip_release handler */
+-	if ((!kw->parse || kw->parse(args, payload, appctx, kw->private) == 0) && appctx->io_handler) {
+-		appctx->st0 = CLI_ST_CALLBACK;
+-	}
++
++	if (kw->parse && kw->parse(args, payload, appctx, kw->private) != 0)
++		goto fail;
++
++	/* kw->parse could set its own io_handler or io_release handler */
++	if (!appctx->io_handler)
++		goto fail;
++
++	appctx->st0 = CLI_ST_CALLBACK;
++	return 1;
++fail:
++	appctx->io_handler = NULL;
++	appctx->io_release = NULL;
+ 	return 1;
+ }
+ 
