@@ -13,7 +13,7 @@ ban_script="/usr/bin/banip.sh"
 ban_pidfile="/var/run/banip.pid"
 
 if [ -s "${ban_pidfile}" ] && \
-	[ "${action}" != "help" ] && [ "${action}" != "status" ] && [ "${action}" != "boot" ]
+	[ "${action}" != "help" ] && [ "${action}" != "status" ] && [ "${action}" != "boot" ] && [ "${action}" != "enabled" ]
 then
 	exit 1
 fi
