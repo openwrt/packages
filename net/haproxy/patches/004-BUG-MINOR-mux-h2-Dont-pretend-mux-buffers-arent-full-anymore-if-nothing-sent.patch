@@ -1,0 +1,33 @@
+commit 074230876d05bdf3fe33893889b326da14ab8ae9
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Thu Oct 24 10:31:01 2019 +0200
+
+    BUG/MINOR: mux-h2: Don't pretend mux buffers aren't full anymore if nothing sent
+    
+    In h2_send(), when something is sent, we remove the flags
+    (H2_CF_MUX_MFULL|H2_CF_DEM_MROOM) on the h2 connection. This way, we are able to
+    wake up all streams waiting to send data. Unfortunatly, these flags are
+    unconditionally removed, even when nothing was sent. So if the h2c is blocked
+    because the mux buffers are full and we are unable to send anything, all streams
+    in the send_list are woken up for nothing. Now, we only remove these flags if at
+    least a send succeeds.
+    
+    This patch must be backport to 2.0.
+    
+    (cherry picked from commit 69fe5cea213afd0c7465094e9dfead93143dcf3f)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/mux_h2.c b/src/mux_h2.c
+index afa68e80..ac34a723 100644
+--- a/src/mux_h2.c
++++ b/src/mux_h2.c
+@@ -2943,7 +2943,8 @@ static int h2_send(struct h2c *h2c)
+ 			offer_buffers(NULL, tasks_run_queue);
+ 
+ 		/* wrote at least one byte, the buffer is not full anymore */
+-		h2c->flags &= ~(H2_CF_MUX_MFULL | H2_CF_DEM_MROOM);
++		if (sent)
++			h2c->flags &= ~(H2_CF_MUX_MFULL | H2_CF_DEM_MROOM);
+ 	}
+ 
+ 	if (conn->flags & CO_FL_SOCK_WR_SH) {
