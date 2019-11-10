@@ -16,7 +16,7 @@ adb_script="/usr/bin/adblock.sh"
 adb_pidfile="/var/run/adblock.pid"
 
 if [ -s "${adb_pidfile}" ] && \
-	[ "${action}" != "help" ] && [ "${action}" != "status" ] && [ "${action}" != "boot" ]
+	[ "${action}" != "help" ] && [ "${action}" != "status" ] && [ "${action}" != "boot" ] && [ "${action}" != "enabled" ]
 then
 	exit 1
 fi
