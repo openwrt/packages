@@ -1,0 +1,48 @@
+From 214736dce643ce3ee257da017373e88cc19d2d3b Mon Sep 17 00:00:00 2001
+From: Frediano Ziglio <fziglio@redhat.com>
+Date: Thu, 20 Jun 2019 13:26:11 +0100
+Subject: [PATCH] reds: Fix SSL_CTX_set_ecdh_auto call for some old OpenSSL
+
+SSL_CTX_set_ecdh_auto is not defined in some old versions of OpenSSL
+
+Signed-off-by: Frediano Ziglio <fziglio@redhat.com>
+Acked-by: Jeremy White <jwhite@codeweavers.com>
+---
+ configure.ac  | 9 +++++++++
+ server/reds.c | 2 ++
+ 2 files changed, 11 insertions(+)
+
+diff --git a/configure.ac b/configure.ac
+index e12d7e85..49c009d4 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -209,6 +209,15 @@ AC_SUBST(SSL_CFLAGS)
+ AC_SUBST(SSL_LIBS)
+ AS_VAR_APPEND([SPICE_REQUIRES], [" openssl"])
+ 
++save_CFLAGS="$CFLAGS"
++CFLAGS="$CFLAGS $SSL_CFLAGS"
++AC_CHECK_DECLS([SSL_CTX_set_ecdh_auto], [], [], [
++AC_INCLUDES_DEFAULT
++#include <openssl/err.h>
++#include <openssl/ssl.h>
++])
++CFLAGS="$save_CFLAGS"
++
+ AC_CHECK_LIB(jpeg, jpeg_destroy_decompress,
+     AC_MSG_CHECKING([for jpeglib.h])
+     AC_TRY_CPP(
+diff --git a/server/reds.c b/server/reds.c
+index 792e9838..b4061fbc 100644
+--- a/server/reds.c
++++ b/server/reds.c
+@@ -2937,7 +2937,9 @@ static int reds_init_ssl(RedsState *reds)
+     }
+ 
+     SSL_CTX_set_options(reds->ctx, ssl_options);
++#if HAVE_DECL_SSL_CTX_SET_ECDH_AUTO || defined(SSL_CTX_set_ecdh_auto)
+     SSL_CTX_set_ecdh_auto(reds->ctx, 1);
++#endif
+ 
+     /* Load our keys and certificates*/
+     return_code = SSL_CTX_use_certificate_chain_file(reds->ctx, reds->config->ssl_parameters.certs_file);

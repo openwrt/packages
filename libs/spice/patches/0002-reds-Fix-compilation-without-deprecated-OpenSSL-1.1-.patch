@@ -1,0 +1,78 @@
+From 5bc932f7a71ede7d8ecd9d88804af95a2eb955c0 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Sun, 3 Nov 2019 15:34:33 -0800
+Subject: [PATCH] reds: Fix compilation without deprecated OpenSSL 1.1 APIs
+
+Missing headers for BN_ and RSA_ functions.
+
+Initialization is deprecated with 1.1.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+Acked-by: Frediano Ziglio <fziglio@redhat.com>
+---
+AUTHORS hunk removed as it does not apply (with 0.14.2 at least)
+
+ AUTHORS       |  1 +
+ server/reds.c | 24 ++++++++++++++++--------
+ 2 files changed, 17 insertions(+), 8 deletions(-)
+
+diff --git a/server/reds.c b/server/reds.c
+index c55aa3f8..dc03ef3a 100644
+--- a/server/reds.c
++++ b/server/reds.c
+@@ -36,7 +36,9 @@
+ #include <ws2tcpip.h>
+ #endif
+ 
++#include <openssl/bn.h>
+ #include <openssl/err.h>
++#include <openssl/rsa.h>
+ 
+ #if HAVE_SASL
+ #include <sasl/sasl.h>
+@@ -2838,13 +2840,8 @@ static void openssl_thread_setup(void)
+     CRYPTO_set_id_callback(pthreads_thread_id);
+     CRYPTO_set_locking_callback(pthreads_locking_callback);
+ }
+-#else
+-static inline void openssl_thread_setup(void)
+-{
+-}
+-#endif
+ 
+-static gpointer openssl_global_init(gpointer arg)
++static gpointer openssl_global_init_once(gpointer arg)
+ {
+     SSL_library_init();
+     SSL_load_error_strings();
+@@ -2854,9 +2851,20 @@ static gpointer openssl_global_init(gpointer arg)
+     return NULL;
+ }
+ 
+-static int reds_init_ssl(RedsState *reds)
++static inline void openssl_global_init(void)
+ {
+     static GOnce openssl_once = G_ONCE_INIT;
++    g_once(&openssl_once, openssl_global_init_once, NULL);
++}
++
++#else
++static inline void openssl_global_init(void)
++{
++}
++#endif
++
++static int reds_init_ssl(RedsState *reds)
++{
+     const SSL_METHOD *ssl_method;
+     int return_code;
+     /* Limit connection to TLSv1.1 or newer.
+@@ -2865,7 +2873,7 @@ static int reds_init_ssl(RedsState *reds)
+     long ssl_options = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION | SSL_OP_NO_TLSv1;
+ 
+     /* Global system initialization*/
+-    g_once(&openssl_once, openssl_global_init, NULL);
++    openssl_global_init();
+ 
+     /* Create our context*/
+     /* SSLv23_method() handles TLSv1.x in addition to SSLv2/v3 */
