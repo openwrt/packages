@@ -13,7 +13,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-ban_ver="0.3.8"
+ban_ver="0.3.9"
 ban_basever=""
 ban_enabled=0
 ban_automatic="1"
