@@ -1,0 +1,33 @@
+commit 74a1e4393f7a7b194abb4f428fd02c7c088f6c67
+Author: William Dauchy <w.dauchy@criteo.com>
+Date:   Wed Oct 23 19:31:36 2019 +0200
+
+    MINOR: tcp: avoid confusion in time parsing init
+    
+    We never enter val_fc_time_value when an associated fetcher such as `fc_rtt` is
+    called without argument.  meaning `type == ARGT_STOP` will never be true and so
+    the default `data.sint = TIME_UNIT_MS` will never be set.  remove this part to
+    avoid thinking default data.sint is set to ms while reading the code.
+    
+    Signed-off-by: William Dauchy <w.dauchy@criteo.com>
+    
+    [Cf: This patch may safely backported as far as 1.7. But no matter if not.]
+    
+    (cherry picked from commit b705b4d7d308d1132a772f3ae2d6113447022a60)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/proto_tcp.c b/src/proto_tcp.c
+index c3578ea2..cfd58e60 100644
+--- a/src/proto_tcp.c
++++ b/src/proto_tcp.c
+@@ -1569,10 +1569,6 @@ smp_fetch_dport(const struct arg *args, struct sample *smp, const char *kw, void
+  */
+ static int val_fc_time_value(struct arg *args, char **err)
+ {
+-	if (args[0].type == ARGT_STOP) {
+-		args[0].type = ARGT_SINT;
+-		args[0].data.sint = TIME_UNIT_MS;
+-	}
+ 	if (args[0].type == ARGT_STR) {
+ 		if (strcmp(args[0].data.str.area, "us") == 0) {
+ 			free(args[0].data.str.area);
