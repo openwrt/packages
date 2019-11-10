@@ -6,21 +6,22 @@
 #
 
 include $(TOPDIR)/rules.mk
+include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=libpfring
 PKG_VERSION:=7.4.0
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Banglang Huang <banglang.huang@foxmail.com>
-
-PKG_LICENSE:=LGPL-2.1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ntop/PF_RING/tar.gz/$(PKG_VERSION)?
 PKG_HASH:=e1c9cb44d8072854220f493c56fa5cba99a6b8336883939dc18b3e30c2954b68
-PKG_BUILD_DIR:=$(BUILD_DIR)/PF_RING-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/PF_RING-$(PKG_VERSION)
 
-PKG_INSTALL:=1
+PKG_MAINTAINER:=Banglang Huang <banglang.huang@foxmail.com>
+
 PKG_FIXUP:=patch-libtool
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -33,6 +34,8 @@ define Package/libpfring
   TITLE:=Library for PR_RING (package process framework)
   URL:=https://github.com/ntop/pf_ring
   DEPENDS:=+kmod-pf-ring +libpcap +libpthread
+  LICENSE:=LGPL-2.1-or-later
+  LICENSE_FILES:=LICENSE
 endef
 
 define Package/libpfring/description
@@ -42,28 +45,46 @@ define Package/libpfring/description
   traffic balancers or packet filters in a matter of lines of codes.
 endef
 
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/include/* \
-		$(1)/usr/include/
+define KernelPackage/pf-ring
+  SUBMENU:=Network Support
+  TITLE:=PF_RING Kernel driver
+  FILES:=$(PKG_BUILD_DIR)/kernel/pf_ring.ko
+  AUTOLOAD:=$(call AutoLoad,90,pf_ring,1)
+  LICENSE:=GPL-2.0-or-later
+endef
 
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libpfring.so* \
-		$(1)/usr/lib/
+define KernelPackage/pf-ring/description
+  Kernel module for libpf-ring package
 endef
 
 CONFIGURE_VARS += \
 	MACHINE="$(ARCH)" \
 	ac_cv_lib_nl_3_nl_socket_alloc=no
 
+define Build/Compile
+	$(MAKE) -C "$(LINUX_DIR)" \
+		KERNEL_DIR="$(LINUX_DIR)" \
+		ARCH="$(LINUX_KARCH)" \
+		CROSS_COMPILE="$(TARGET_CROSS)" \
+		SUBDIRS="$(PKG_BUILD_DIR)/kernel" \
+		EXTRA_CFLAGS="$(EXTRA_CFLAGS) -I$(PKG_BUILD_DIR)/kernel" \
+		modules
+	$(call Build/Compile/Default)
+endef
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
+
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpfring.so* $(1)/usr/lib/
+endef
+
 define Package/libpfring/install
 	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libpfring.so* \
-		$(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpfring.so* $(1)/usr/lib/
 	$(LN) libpfring.so $(1)/usr/lib/libpfring.so.1
 endef
 
 $(eval $(call BuildPackage,libpfring))
+$(eval $(call KernelPackage,pf-ring))
