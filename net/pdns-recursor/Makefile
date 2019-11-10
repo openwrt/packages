@@ -25,7 +25,7 @@ define Package/pdns-recursor
   SUBMENU:=IP Addresses and Names
   USERID:=pdns:pdns
   TITLE:=PowerDNS Recursor
-  DEPENDS:=+boost +boost-context +libatomic +liblua +libopenssl +protobuf
+  DEPENDS:=+boost +boost-context +boost-thread +libatomic +liblua +libopenssl +protobuf
   URL:=https://www.powerdns.com/recursor.html
 endef
 
