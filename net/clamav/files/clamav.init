@@ -30,7 +30,7 @@ validate_clamav_section() {
 		'ScanPE:string' \
 		'DisableCertCheck:string' \
 		'ScanELF:string' \
-		'DetectBrokenExecutables:string' \
+		'AlertBrokenExecutables:string' \
 		'ScanOLE2:string' \
 		'ScanPDF:string' \
 		'ScanSWF:string' \
@@ -38,7 +38,7 @@ validate_clamav_section() {
 		'ScanPartialMessages:string' \
 		'ScanArchive:string' \
 		'TemporaryDirectory:string' \
-		'ArchiveBlockEncrypted:string' \
+		'AlertEncrypted:string' \
 		'MaxFileSize:string' \
 		'LocalSocket:string' \
 		'User:string' \
@@ -79,7 +79,7 @@ start_clamav_instance() {
 	echo "ScanPE " $ScanPE >> $CLAMD_CONFIGFILE
 	echo "DisableCertCheck " $DisableCertCheck >> $CLAMD_CONFIGFILE
 	echo "ScanELF " $ScanELF >> $CLAMD_CONFIGFILE
-	echo "DetectBrokenExecutables " $DetectBrokenExecutables >> $CLAMD_CONFIGFILE
+	echo "AlertBrokenExecutables " $AlertBrokenExecutables >> $CLAMD_CONFIGFILE
 	echo "ScanOLE2 " $ScanOLE2 >> $CLAMD_CONFIGFILE
 	echo "ScanPDF " $ScanPDF >> $CLAMD_CONFIGFILE
 	echo "ScanSWF " $ScanSWF >> $CLAMD_CONFIGFILE
@@ -87,7 +87,7 @@ start_clamav_instance() {
 	echo "ScanPartialMessages " $ScanPartialMessages >> $CLAMD_CONFIGFILE
 	echo "ScanArchive " $ScanArchive >> $CLAMD_CONFIGFILE
 	echo "TemporaryDirectory " $TemporaryDirectory >> $CLAMD_CONFIGFILE
-	echo "ArchiveBlockEncrypted " $ArchiveBlockEncrypted >> $CLAMD_CONFIGFILE
+	echo "AlertEncrypted " $AlertEncrypted >> $CLAMD_CONFIGFILE
 	echo "MaxFileSize " $MaxFileSize >> $CLAMD_CONFIGFILE
 	echo "LocalSocket " $LocalSocket >> $CLAMD_CONFIGFILE
 	echo "User " $User >> $CLAMD_CONFIGFILE
