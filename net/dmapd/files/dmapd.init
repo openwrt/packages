@@ -10,13 +10,9 @@ start_service() {
 		mkdir -m 0755 -p /var/run/dmapd
 		chown dmapd:dmapd /var/run/dmapd
 	}
-	[ -d /var/db/dmapd/DAAP ] || {
-		mkdir -m 0755 -p /var/db/dmapd/DAAP
-		chown dmapd:dmapd /var/db/dmapd/DAAP
-	}
-	[ -d /var/db/dmapd/DPAP ] || {
-		mkdir -m 0755 -p /var/db/dmapd/DPAP
-		chown dmapd:dmapd /var/db/dmapd/DPAP
+	[ -d /var/db/dmapd ] || {
+		mkdir -m 0755 -p /var/db/dmapd
+		chown dmapd:dmapd /var/db/dmapd
 	}
 	mkdir -m 0755 -p /var/lock/subsys
 	mkdir -m 0755 -p /var/media/music
