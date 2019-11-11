@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
 PKG_VERSION:=6.3.4
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 PKG_LICENSE:=GPL-3.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -40,8 +40,8 @@ define Package/seafile-server
     TITLE:=Seafile server
     URL:=https://seafile.com/
     DEPENDS:=+libarchive +libopenssl +glib2 +libsearpc +seafile-ccnet +seafile-seahub +sqlite3-cli \
-		+python-mysqlclient +python-urllib3 \
-		+jansson +libevent2 +libevent2-openssl +zlib +libzdb +libsqlite3 +libmysqlclient +oniguruma \
+		+python-mysqlclient +python-urllib3 +jansson +libevent2 +libevent2-openssl \
+		+libevent2-pthreads +zlib +libzdb +libsqlite3 +libmysqlclient +oniguruma \
 		+libpthread +libuuid +bash +procps-ng +procps-ng-pkill +SEAFILE_FUSE_SUPPORT:libfuse $(ICONV_DEPENDS)
     MENU:=1
 endef
