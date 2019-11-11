@@ -5,16 +5,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-paho-mqtt
-PKG_VERSION:=1.4.0
+PKG_VERSION:=1.5.0
 PKG_RELEASE:=1
-PKG_LICENSE:=Eclipse Public License v1.0 / Eclipse Distribution License v1.0
+
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>, Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_LICENSE:=EPL-1.0 Eclipse Distribution License v1.0
+PKG_LICENSE_FILES:=epl-v10 edl-v10
 
-PKG_SOURCE:=paho-mqtt-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/25/63/db25e62979c2a716a74950c9ed658dce431b5cb01fde29eb6cba9489a904
-PKG_HASH:=e440a052b46d222e184be3be38676378722072fcd4dfd2c8f509fb861a7b0b79
-PKG_BUILD_DIR:=$(BUILD_DIR)/paho-mqtt-$(PKG_VERSION)
+PYPI_NAME:=paho-mqtt
+PKG_HASH:=e3d286198baaea195c8b3bc221941d25a3ab0e1507fc1779bdb7473806394be4
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
