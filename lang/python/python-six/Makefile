@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-six
-PKG_VERSION:=1.12.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.13.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=six-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/s/six
-PKG_HASH:=d16a0141ec1a18405cd4ce8b4613101da75da0e9a7aec5bdd4fa804d0e0eba73
+PKG_HASH:=30f610279e8b2578cab6db20741130331735c781b56053c59c4076da27f06b66
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-six-$(PKG_VERSION)
 
