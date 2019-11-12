@@ -1,0 +1,17 @@
+--- a/etc/opennhrp-script
++++ b/etc/opennhrp-script
+@@ -13,14 +13,9 @@ peer-up)
+ 		ip route add $ARGS proto 42 mtu $NHRP_DESTMTU
+ 	fi
+ 	echo "Create link from $NHRP_SRCADDR ($NHRP_SRCNBMA) to $NHRP_DESTADDR ($NHRP_DESTNBMA)"
+-	racoonctl establish-sa -w isakmp inet $NHRP_SRCNBMA $NHRP_DESTNBMA || exit 1
+-	racoonctl establish-sa -w esp inet $NHRP_SRCNBMA $NHRP_DESTNBMA gre || exit 1 
+ 	;;
+ peer-down)
+ 	echo "Delete link from $NHRP_SRCADDR ($NHRP_SRCNBMA) to $NHRP_DESTADDR ($NHRP_DESTNBMA)"
+-	if [ "$NHRP_PEER_DOWN_REASON" != "lower-down" ]; then
+-		racoonctl delete-sa isakmp inet $NHRP_SRCNBMA $NHRP_DESTNBMA
+-	fi
+ 	ip route del $NHRP_DESTNBMA src $NHRP_SRCNBMA proto 42
+ 	;;
+ route-up)

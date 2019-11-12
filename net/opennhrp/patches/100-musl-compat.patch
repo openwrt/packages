@@ -1,0 +1,20 @@
+--- a/nhrp/opennhrp.c
++++ b/nhrp/opennhrp.c
+@@ -9,6 +9,7 @@
+ #include <ctype.h>
+ #include <stdio.h>
+ #include <errno.h>
++#include <fcntl.h>
+ #include <malloc.h>
+ #include <stddef.h>
+ #include <string.h>
+--- a/nhrp/nhrp_common.h
++++ b/nhrp/nhrp_common.h
+@@ -12,6 +12,7 @@
+ #include <stdint.h>
+ #include <stdlib.h>
+ #include <sys/time.h>
++#include <sys/types.h>
+ #include <linux/if_ether.h>
+ 
+ struct nhrp_interface;
