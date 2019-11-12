@@ -63,7 +63,7 @@ ifup()
 
 	status=$(ubus -S call network.interface.$1 status)
 	[ -n "$status" ] && {
-		json_load $status
+		json_load "$status"
 		json_get_vars up l3_device 
 	}
 
