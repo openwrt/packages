@@ -61,7 +61,7 @@ ifup()
 		exit 0
 	}
 
-	json_load $(ubus -S call network.interface.$1 status)
+	json_load "$(ubus -S call network.interface.$1 status)"
 	json_get_vars up l3_device
 	config_get enabled "$1" enabled 0
 
