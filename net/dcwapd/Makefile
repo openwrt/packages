@@ -71,6 +71,6 @@ define Package/dcwapd/install
 
 #	Init script
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/dcwapd.init.d $(1)/etc/init.d/dcwapd
+	$(INSTALL_BIN) ./files/dcwapd.init $(1)/etc/init.d/dcwapd
 endef
 $(eval $(call BuildPackage,dcwapd))
