@@ -48,7 +48,7 @@ CMAKE_OPTIONS += \
 	-DLIBTINS_ENABLE_TCP_STREAM_CUSTOM_DATA=OFF \
 	-DLIBTINS_ENABLE_WPA2=OFF
 
-TARGET_CXXFLAGS += -fno-rtti -ffunction-sections -fdata-sections -flto
+TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -flto
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 define Package/libtins/install
