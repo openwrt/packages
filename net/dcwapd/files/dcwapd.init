@@ -1,30 +1,25 @@
-#!/bin/sh
+#!/bin/sh /etc/rc.common
 
-#
-# Dual Channel Wi-Fi Startup Script
-#
-# This script creates the proper network bridge configuration
-#  necessary for Dual Channel Wi-Fi, and starts the dcwapd daemon
-#
+USE_PROCD=1
 
-verbose=1
+START=99
+STOP=01
 
-uciconfig=dcwapd
-
-result=
-
+CONFIGURATION=dcwapd
+VERBOSE=1
 # NOTE: all functions write the result to the $result variable
+result=
 
 get_channelsets()
 {
 	# default to empty
 	result=
-	channelsets=$(uci show $uciconfig | grep "=channel-set$")
+	channelsets=$(uci show $CONFIGURATION | grep "=channel-set$")
 	for channelset in $channelsets; do
-		channelset=$(echo "$channelset" | sed -rn "s/$uciconfig\.(.*)=.*/\1/p")
+		channelset=$(echo "$channelset" | sed -rn "s/$CONFIGURATION\.(.*)=.*/\1/p")
 		result="$result $channelset"
 	done
-	if [ $verbose -eq 1 ]; then
+	if [ $VERBOSE -eq 1 ]; then
 		echo "Channel Sets: $result" 2>&1 | logger
 	fi
 }
@@ -35,9 +30,9 @@ get_channelset_enabled()
 	# default to disabled
 	result=0
 	if [ -n "$1" ]; then
-		result=$(uci get $uciconfig."$1".enabled)
+		result=$(uci get $CONFIGURATION."$1".enabled)
 	fi
-	if [ $verbose -eq 1 ]; then
+	if [ $VERBOSE -eq 1 ]; then
 		echo "Channel Set \"$1\" Enabled: $result" 2>&1 | logger
 	fi
 }
@@ -47,9 +42,9 @@ get_primary_bridge()
 {
 	result=
 	if [ -n "$1" ]; then
-		result=$(uci get $uciconfig."$1".bridge)
+		result=$(uci get $CONFIGURATION."$1".bridge)
 	fi
-	if [ $verbose -eq 1 ]; then
+	if [ $VERBOSE -eq 1 ]; then
 		echo "Channel Set \"$1\" Primary Bridge: $result" 2>&1 | logger
 	fi
 }
@@ -60,9 +55,9 @@ get_datachannels()
 	# default to empty
 	result=
 	if [ -n "$1" ]; then
-		result=$(uci get $uciconfig."$1".data_channels)
+		result=$(uci get $CONFIGURATION."$1".data_channels)
 	fi
-	if [ $verbose -eq 1 ]; then
+	if [ $VERBOSE -eq 1 ]; then
 		echo "Channel Set \"$1\" Data Channels: $result" 2>&1 | logger
 	fi
 }
@@ -118,10 +113,10 @@ set_iface_init_state()
 			fi
 
 			# save the initial network
-			if [ $verbose -eq 1 ]; then
+			if [ $VERBOSE -eq 1 ]; then
 				echo "Saving '$iface' initial network '$init_net'" 2>&1 | logger
 			fi
-			uci set $uciconfig.init_net."$iface"="$init_net"
+			uci set $CONFIGURATION.init_net."$iface"="$init_net"
 			uci commit
 
 			# save the initial network in the result variable
@@ -135,7 +130,7 @@ get_iface_init_state()
 {
 	result=
 	if [ -n "$1" ];then
-		init_net=$(uci get $uciconfig.init_net."$iface")
+		init_net=$(uci get $CONFIGURATION.init_net."$iface")
 
 		# if the response starts with "uci: ", it was an error not the real result
 		err=$(echo "$init_net" | grep "^uci: ")
@@ -143,7 +138,7 @@ get_iface_init_state()
 			# no error, set the result
 			result=$init_net
 
-			if [ $verbose -eq 1 ]; then
+			if [ $VERBOSE -eq 1 ]; then
 				echo "Got '$iface' initial network '$init_net'" 2>&1 | logger
 			fi
 		fi
@@ -154,19 +149,19 @@ get_iface_init_state()
 datachannel_up()
 {
 	if [ -n "$1" ]; then
-		bridge=$(uci get $uciconfig."$1".bridge)
-		interfaces=$(uci get $uciconfig."$1".interfaces)
-                if [ $verbose -eq 1 ]; then
+		bridge=$(uci get $CONFIGURATION."$1".bridge)
+		interfaces=$(uci get $CONFIGURATION."$1".interfaces)
+		if [ $VERBOSE -eq 1 ]; then
 			echo "Creating Data Channel Bridge: $bridge" 2>&1 | logger
 		fi
 
 		get_bridge_network_name "$bridge"
 		netname=$result
 		if [ -n "$netname" ]; then
-		    uci set network."$netname"=interface
-		    uci set network."$netname".type=bridge
-		    uci set network."$netname".proto=static
-		    uci set network."$netname".bridge_empty='1'
+			uci set network."$netname"=interface
+			uci set network."$netname".type=bridge
+			uci set network."$netname".proto=static
+			uci set network."$netname".bridge_empty='1'
 		fi
 
 		# create the bridge
@@ -182,7 +177,7 @@ datachannel_up()
 			get_wifi_iface_num "$iface"
 			iface_num=$result
 			if [ -n "$iface_num" ]; then
-			    uci set wireless.@wifi-iface[$iface_num].network="$netname"
+				uci set wireless.@wifi-iface[$iface_num].network="$netname"
 			fi
 
 			# manually put the interface into the data bridge
@@ -211,10 +206,10 @@ datachannel_up()
 datachannel_down()
 {
 	if [ -n "$1" ]; then
-		bridge=$(uci get $uciconfig."$1".bridge)
-		interfaces=$(uci get $uciconfig."$1".interfaces)
+		bridge=$(uci get $CONFIGURATION."$1".bridge)
+		interfaces=$(uci get $CONFIGURATION."$1".interfaces)
 		for iface in $interfaces; do
-			if [ $verbose -eq 1 ]; then
+			if [ $VERBOSE -eq 1 ]; then
 				echo "Deconfiguring Data Channel Interface: $iface" 2>&1 | logger
 			fi
 
@@ -228,16 +223,16 @@ datachannel_down()
 				brctl addif "$init_bridge" "$iface" 2>&1 | logger
 
 				# update uci with the new bridge and interface configuration
-			        get_wifi_iface_num "$iface"
+				get_wifi_iface_num "$iface"
 				iface_num=$result
 				get_bridge_network_name "$init_bridge"
 				netname=$result
 				if [ -n "$iface_num" ] && [ -n "$netname" ]; then
-				    uci set wireless.@wifi-iface[$iface_num].network="$netname"
+					uci set wireless.@wifi-iface[$iface_num].network="$netname"
 				fi
 			fi
 		done
-		if [ $verbose -eq 1 ]; then
+		if [ $VERBOSE -eq 1 ]; then
 			echo "Deconfiguring Data Channel Bridge: $bridge" 2>&1 | logger
 		fi
 
@@ -245,7 +240,7 @@ datachannel_down()
 		get_bridge_network_name "$bridge"
 		netname=$result
 		if [ -n "$netname" ]; then
-		    uci delete network."$netname"
+			uci delete network."$netname"
 		fi
 
 		# commit uci changes and reload the network
@@ -253,4 +248,79 @@ datachannel_down()
 		/etc/init.d/network reload
 		#`/etc/init.d/network restart`
 	fi
+}
+
+start_service() {
+	config_load "$CONFIGURATION"
+	local enabled
+
+	config_get enabled general enabled
+	if [ "$enabled" != "1" ]; then
+		echo "dcwapd is disabled in UCI"
+		return 1
+	fi
+
+	get_channelsets
+	# get the list of channel sets
+	channelsets=$result
+
+	for channelset in $channelsets; do
+	if [ -n "$channelset" ]; then
+		get_channelset_enabled "$channelset"
+		enabled=$result
+		if [ "$enabled" = "1" ]; then
+			# the channel set is enabled
+
+			# get the list of data channels used by the channel set
+			get_datachannels "$channelset"
+			datachannels=$result
+			for datachannel in $datachannels; do
+				datachannel_up "$datachannel"
+			done
+		fi
+	fi
+	done
+
+	procd_open_instance
+	procd_set_param file /etc/config/dcwapd
+	procd_set_param command dcwapd
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+stop_service() {
+	get_channelsets
+	# get the list of channel sets
+	channelsets=$result
+
+	for channelset in $channelsets; do
+	if [ -n "$channelset" ]; then
+# we don't care if it is enabled, tear it down
+#		get_channelset_enabled $channelset
+#		enabled=$result
+#		if [ $enabled = "1" ]; then
+#			# the channel set is enabled
+
+			# get the list of data channels used by the channel set
+			get_datachannels "$channelset"
+			datachannels=$result
+			for datachannel in $datachannels; do
+				datachannel_down "$datachannel"
+			done
+#		fi
+	fi
+	done
+
+	sleep 1
+}
+
+service_triggers()
+{
+	procd_add_reload_trigger dcwapd
+}
+
+reload_service() {
+	stop
+	start
 }
