@@ -655,7 +655,7 @@ Subject: [PATCH 4/4] fixes
              b->gpio_count++;
 --- a/src/gpio/gpio.c
 +++ b/src/gpio/gpio.c
-@@ -113,6 +113,8 @@
+@@ -114,6 +114,8 @@
          close(export);
      }
  
