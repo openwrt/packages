@@ -17,12 +17,12 @@ first_boot_genConfig()
   json_get_var board_name board_name
 
   uci set yggdrasil.yggdrasil.IfName="ygg0"
-  uci set yggdrasil.NodeInfo=yggdrasil
-  uci set yggdrasil.NodeInfo.kernel="$kernel"
-  uci set yggdrasil.NodeInfo.hostname="$hostname"
-  uci set yggdrasil.NodeInfo.system="$system"
-  uci set yggdrasil.NodeInfo.model="$model"
-  uci set yggdrasil.NodeInfo.board_name="$board_name"
+  uci set yggdrasil.@NodeInfo[0]=NodeInfo
+  uci set yggdrasil.@NodeInfo[0].kernel="$kernel"
+  uci set yggdrasil.@NodeInfo[0].hostname="$hostname"
+  uci set yggdrasil.@NodeInfo[0].system="$system"
+  uci set yggdrasil.@NodeInfo[0].model="$model"
+  uci set yggdrasil.@NodeInfo[0].board_name="$board_name"
   uci commit yggdrasil
 }
 
