@@ -29,9 +29,9 @@ function UCI.defaults()
     },
     TunnelRouting = {
         Enable = false,
-        IPv6RemoteSubnets = { },
+        IPv6RemoteSubnets = setmetatable({ }, {__jsontype = "object"}),
         IPv6LocalSubnets = { },
-        IPv4RemoteSubnets = { },
+        IPv4RemoteSubnets = setmetatable({ }, {__jsontype = "object"}),
         IPv4LocalSubnets = { }
     },
     SwitchOptions = { MaxTotalQueueSize = 4194304 }
@@ -109,13 +109,13 @@ function UCI.get()
       obj.TunnelRouting.Enable = to_bool(config.TunnelRouting_Enable)
   end
   cursor:foreach("yggdrasil", "ipv6_remote_subnet", function (s) 
-      table.insert(obj.TunnelRouting.IPv6RemoteSubnets, s.subnet)
+      obj.TunnelRouting.IPv6RemoteSubnets[s.subnet] = s.key
   end)
   cursor:foreach("yggdrasil", "ipv6_local_subnet", function (s) 
       table.insert(obj.TunnelRouting.IPv6LocalSubnets, s.subnet)
   end)
   cursor:foreach("yggdrasil", "ipv4_remote_subnet", function (s) 
-      table.insert(obj.TunnelRouting.IPv4RemoteSubnets, s.subnet)
+      obj.TunnelRouting.IPv4RemoteSubnets[s.subnet] = s.key
   end)
   cursor:foreach("yggdrasil", "ipv4_local_subnet", function (s) 
       table.insert(obj.TunnelRouting.IPv4LocalSubnets, s.subnet)
@@ -186,9 +186,21 @@ function UCI.set(obj)
 
   -- tunnel routing config
   cursor:set("yggdrasil", "yggdrasil", "TunnelRouting_Enable", to_int(obj.TunnelRouting.Enable)) 
-  set_values(cursor, "ipv6_remote_subnet", "subnet", obj.TunnelRouting.IPv6RemoteSubnets)
+  if obj.TunnelRouting.IPv6RemoteSubnets ~= nil then
+      for subnet, key in pairs(obj.TunnelRouting.IPv6RemoteSubnets) do
+          local name = cursor:add("yggdrasil", "ipv6_remote_subnet")
+          cursor:set("yggdrasil", name, "subnet", subnet)
+          cursor:set("yggdrasil", name, "key", key)
+      end
+  end
   set_values(cursor, "ipv6_local_subnet", "subnet", obj.TunnelRouting.IPv6LocalSubnets)
-  set_values(cursor, "ipv4_remote_subnet", "subnet", obj.TunnelRouting.IPv4RemoteSubnets)
+  if obj.TunnelRouting.IPv4RemoteSubnets ~= nil then
+      for subnet, key in pairs(obj.TunnelRouting.IPv4RemoteSubnets) do
+          local name = cursor:add("yggdrasil", "ipv4_remote_subnet")
+          cursor:set("yggdrasil", name, "subnet", subnet)
+          cursor:set("yggdrasil", name, "key", key)
+      end
+  end
   set_values(cursor, "ipv4_local_subnet", "subnet", obj.TunnelRouting.IPv4LocalSubnets)
   -- /tunnel routing config
 
