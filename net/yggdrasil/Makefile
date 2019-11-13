@@ -61,6 +61,10 @@ define Package/yggdrasil/install
 		$(1)/usr/sbin
 
 	$(INSTALL_BIN) \
+		./files/ygguci \
+		$(1)/usr/sbin
+
+	$(INSTALL_BIN) \
 		./files/yggdrasil.defaults \
 		$(1)/etc/uci-defaults/yggdrasil
 
