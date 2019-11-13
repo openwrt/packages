@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yggdrasil
 PKG_VERSION:=0.3.11
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/yggdrasil-network/yggdrasil-go/tar.gz/v$(PKG_VERSION)?
@@ -21,8 +21,8 @@ GO_PKG:=github.com/yggdrasil-network/yggdrasil-go
 GO_PKG_BUILD_PKG:=github.com/yggdrasil-network/yggdrasil-go/cmd/...
 
 GO_PKG_LDFLAGS_X:= \
-  github.com/yggdrasil-network/yggdrasil-go/src/yggdrasil.buildName=yggdrasil-openwrt \
-  github.com/yggdrasil-network/yggdrasil-go/src/yggdrasil.buildVersion=$(PKG_VERSION)
+  github.com/yggdrasil-network/yggdrasil-go/src/version.buildName=yggdrasil-openwrt \
+  github.com/yggdrasil-network/yggdrasil-go/src/version.buildVersion=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
