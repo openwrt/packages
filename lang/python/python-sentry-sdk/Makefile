@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-sentry-sdk
-PKG_VERSION:=0.12.3
+PKG_VERSION:=0.13.2
 PKG_RELEASE:=1
 
 PYPI_NAME:=sentry-sdk
-PKG_HASH:=15e51e74b924180c98bcd636cb4634945b0a99a124d50b433c3a9dc6a582e8db
+PKG_HASH:=ff1fa7fb85703ae9414c8b427ee73f8363232767c9cd19158f08f6e4f0b58fc7
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=BSD-2-Clause
