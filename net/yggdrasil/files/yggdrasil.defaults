@@ -1,12 +1,13 @@
 #!/bin/sh
 
-yggConfig="/etc/yggdrasil.conf"
+yggConfig="/etc/config/yggdrasil"
 
 first_boot_genConfig()
 {
   . /usr/share/libubox/jshn.sh
   boardcfg=$(ubus call system board)
-  yggcfg=$(yggdrasil -genconf -json | grep NodeInfo -v)
+  touch ${yggConfig}
+  yggdrasil -genconf -json | ygguci set
 
   json_load "$boardcfg"
   json_get_var kernel     kernel
@@ -14,23 +15,22 @@ first_boot_genConfig()
   json_get_var system     system
   json_get_var model      model
   json_get_var board_name board_name
+  nodeinfo='{"kernel": "'$kernel'", "hostname":"'$hostname'", "system": "'$system'", "model": "'$model'", "board_name": "'$board_name'"}'
 
-  json_load "$yggcfg"
-  json_add_string "IfName" "ygg0"
-  json_add_object "NodeInfo"
-  json_add_string "kernel"      "$kernel"
-  json_add_string "hostname"    "$hostname"
-  json_add_string "system"      "$system"
-  json_add_string "model"       "$model"
-  json_add_string "board_name"  "$board_name"
-  json_close_object
-  json_dump
+  uci set yggdrasil.yggdrasil.IfName="ygg0"
+  uci set yggdrasil.yggdrasil.NodeInfo="$nodeinfo"
+  uci commit yggdrasil
 }
 
-if [ ! -e ${yggConfig} ]; then
+if [ -e /etc/yggdrasil.conf ]; then
+  echo "config: import config from /etc/yggdrasil.conf to /etc/config/yggdrasil" | logger -t yggdrasil 
+  touch ${yggConfig}
+  cat /etc/yggdrasil.conf | ygguci set
+  mv /etc/yggdrasil.conf /etc/yggdrasil.conf.bak 
+elif [ ! -e ${yggConfig} ]; then
   echo "first_boot: adding system board details to NodeInfo[] in NEW config: ${yggConfig}" | logger -t yggdrasil
 
-  first_boot_genConfig > ${yggConfig}
+  first_boot_genConfig
 
   # create the network interface
   uci -q batch <<-EOF >/dev/null

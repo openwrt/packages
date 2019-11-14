@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yggdrasil
 PKG_VERSION:=0.3.11
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/yggdrasil-network/yggdrasil-go/tar.gz/v$(PKG_VERSION)?
@@ -33,7 +33,7 @@ define Package/yggdrasil
 	SUBMENU:=Routing and Redirection
 	TITLE:=Yggdrasil supports end-to-end encrypted IPv6 networks
 	URL:=https://yggdrasil-network.github.io/
-	DEPENDS:=$(GO_ARCH_DEPENDS) @IPV6 +kmod-tun
+	DEPENDS:=$(GO_ARCH_DEPENDS) @IPV6 +kmod-tun +dkjson +libuci-lua
 endef
 
 define Package/yggdrasil/description
@@ -44,6 +44,10 @@ define Package/yggdrasil/description
  allow advanced link aggregation bonding on per-stream basis.
  In turn, a single stream will span across multiple network
  interfaces simultaneously with much greater throughput.
+endef
+
+define Package/yggdrasil/conffiles
+/etc/config/yggdrasil
 endef
 
 define Package/yggdrasil/install
@@ -58,6 +62,10 @@ define Package/yggdrasil/install
 
 	$(INSTALL_BIN) \
 		$(GO_PKG_BUILD_BIN_DIR)/yggdrasilctl \
+		$(1)/usr/sbin
+
+	$(INSTALL_BIN) \
+		./files/ygguci \
 		$(1)/usr/sbin
 
 	$(INSTALL_BIN) \
