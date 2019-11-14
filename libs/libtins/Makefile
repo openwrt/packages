@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtins
 PKG_VERSION:=4.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mfontanini/libtins/tar.gz/v$(PKG_VERSION)?
@@ -48,7 +48,7 @@ CMAKE_OPTIONS += \
 	-DLIBTINS_ENABLE_TCP_STREAM_CUSTOM_DATA=OFF \
 	-DLIBTINS_ENABLE_WPA2=OFF
 
-TARGET_CXXFLAGS += -fno-rtti -ffunction-sections -fdata-sections -flto
+TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -flto
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 define Package/libtins/install
