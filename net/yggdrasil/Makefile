@@ -33,7 +33,7 @@ define Package/yggdrasil
 	SUBMENU:=Routing and Redirection
 	TITLE:=Yggdrasil supports end-to-end encrypted IPv6 networks
 	URL:=https://yggdrasil-network.github.io/
-	DEPENDS:=$(GO_ARCH_DEPENDS) @IPV6 +kmod-tun +dkjson
+	DEPENDS:=$(GO_ARCH_DEPENDS) @IPV6 +kmod-tun +dkjson +libuci-lua
 endef
 
 define Package/yggdrasil/description
