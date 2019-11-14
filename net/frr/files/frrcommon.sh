@@ -144,7 +144,7 @@ daemon_start() {
 	daemon_prep "$daemon" "$inst" || return 1
 	if test ! -d "$V_PATH"; then
 		mkdir -p "$V_PATH"
-		chown frr "$V_PATH"
+		chown $FRR_USER "$V_PATH"
 	fi
 
 	eval wrap="\$${daemon}_wrap"
