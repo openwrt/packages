@@ -4,18 +4,17 @@
 START=30
 USE_PROCD=1
 
-EXTRA_COMMANDS="refresh status"
-EXTRA_HELP="	refresh	Refresh ipsets without new list downloads
-	status	Print runtime information"
+EXTRA_COMMANDS="refresh"
+EXTRA_HELP="	refresh	Refresh ipsets without new list downloads"
 
 ban_init="/etc/init.d/banip"
 ban_script="/usr/bin/banip.sh"
 ban_pidfile="/var/run/banip.pid"
 
-if [ -s "${ban_pidfile}" ] && \
-	[ "${action}" != "help" ] && [ "${action}" != "status" ] && [ "${action}" != "boot" ] && [ "${action}" != "enabled" ]
+if [ -s "${ban_pidfile}" ] && { [ "${action}" = "start" ] || [ "${action}" = "stop" ] || \
+	[ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "refresh" ]; }
 then
-	exit 1
+	exit 0
 fi
 
 boot()
