@@ -14,7 +14,6 @@ PKG_MAINTAINER:=Leong Hui Wong <wong.leonghui@gmail.com>
 PKG_LICENSE:=blessing
 PKG_LICENSE_FILES:=COPYING
 
-PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -34,9 +33,6 @@ define Package/leech/description
 endef
 
 define Build/Compile
-endef
-
-define Build/Install
 endef
 
 define Package/leech/install
