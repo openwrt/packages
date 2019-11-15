@@ -13,7 +13,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-ban_ver="0.3.9"
+ban_ver="0.3.10"
 ban_basever=""
 ban_enabled=0
 ban_automatic="1"
@@ -96,6 +96,16 @@ f_envload()
 	#
 	config_load banip
 	config_foreach parse_config source
+
+	# log daemon check
+	#
+	if [ "$(/etc/init.d/log running; printf "%u" "${?}")" -eq 1 ]
+	then
+		unset ban_logger
+		f_log "info" "your log daemon 'logd' is not running, please enable 'logd' to use this service"
+		f_rmtemp
+		exit 1
+	fi
 
 	# version check
 	#
