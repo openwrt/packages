@@ -37,7 +37,7 @@ index 9bba1cf7a..038109d35 100644
  #   include "limits.h"
  
  # else // BOOST_WINDOW_API
-@@ -1451,6 +1453,22 @@ namespace detail
+@@ -1459,6 +1461,22 @@ namespace detail
                          system::error_code* ec)
    {
  #   ifdef BOOST_POSIX_API
@@ -60,7 +60,7 @@ index 9bba1cf7a..038109d35 100644
  
      struct stat path_stat;
      if (error(::stat(p.c_str(), &path_stat)!= 0,
-@@ -1462,6 +1480,8 @@ namespace detail
+@@ -1470,6 +1488,8 @@ namespace detail
      error(::utime(p.c_str(), &buf)!= 0 ? BOOST_ERRNO : 0,
        p, ec, "boost::filesystem::last_write_time");
  
