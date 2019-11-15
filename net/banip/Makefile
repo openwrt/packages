@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=banip
-PKG_VERSION:=0.3.9
+PKG_VERSION:=0.3.10
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
@@ -17,7 +17,7 @@ define Package/banip
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Ban incoming and/or outgoing ip adresses via ipsets
-	DEPENDS:=+jshn +jsonfilter +ip +ipset +iptables +ca-bundle
+	DEPENDS:=+jshn +jsonfilter +ip +ipset +iptables +ca-bundle +logd
 	PKGARCH:=all
 endef
 
