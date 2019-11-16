@@ -44,8 +44,8 @@ when --enable-debug configure option is used in Makefile.
      while ((loop == 0) && (nanosleep(&ts_wait, &ts_wait) != 0)) {
        if (errno != EINTR) {
 --- a/src/daemon/plugin.c
-+++ a/src/daemon/plugin.c
-@@ -578,10 +578,11 @@
++++ b/src/daemon/plugin.c
+@@ -585,10 +585,11 @@ static void *plugin_read_thread(void __a
  
      /* Check, if `rf_next_read' is in the past. */
      if (rf->rf_next_read < now) {
