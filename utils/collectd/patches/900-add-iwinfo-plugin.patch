@@ -12,7 +12,7 @@
  
  #
  # Checks for typedefs, structures, and compiler characteristics.
-@@ -6394,6 +6399,7 @@ plugin_ipc="no"
+@@ -6397,6 +6402,7 @@ plugin_ipc="no"
  plugin_ipmi="no"
  plugin_ipvs="no"
  plugin_irq="no"
@@ -20,7 +20,7 @@
  plugin_load="no"
  plugin_log_logstash="no"
  plugin_mcelog="no"
-@@ -6828,6 +6834,7 @@ AC_PLUGIN([ipmi],                [$plugi
+@@ -6841,6 +6847,7 @@ AC_PLUGIN([ipmi],                [$plugi
  AC_PLUGIN([iptables],            [$with_libiptc],             [IPTables rule counters])
  AC_PLUGIN([ipvs],                [$plugin_ipvs],              [IPVS connection statistics])
  AC_PLUGIN([irq],                 [$plugin_irq],               [IRQ statistics])
@@ -28,7 +28,7 @@
  AC_PLUGIN([java],                [$with_java],                [Embed the Java Virtual Machine])
  AC_PLUGIN([load],                [$plugin_load],              [System load])
  AC_PLUGIN([log_logstash],        [$plugin_log_logstash],      [Logstash json_event compatible logging])
-@@ -7197,6 +7204,7 @@ AC_MSG_RESULT([    libyajl . . . . . . .
+@@ -7212,6 +7219,7 @@ AC_MSG_RESULT([    libyajl . . . . . . .
  AC_MSG_RESULT([    oracle  . . . . . . . $with_oracle])
  AC_MSG_RESULT([    protobuf-c  . . . . . $have_protoc_c])
  AC_MSG_RESULT([    protoc 3  . . . . . . $have_protoc3])
@@ -36,7 +36,7 @@
  AC_MSG_RESULT()
  AC_MSG_RESULT([  Features:])
  AC_MSG_RESULT([    daemon mode . . . . . $enable_daemon])
-@@ -7257,6 +7265,7 @@ AC_MSG_RESULT([    ipmi  . . . . . . . .
+@@ -7274,6 +7282,7 @@ AC_MSG_RESULT([    ipmi  . . . . . . . .
  AC_MSG_RESULT([    iptables  . . . . . . $enable_iptables])
  AC_MSG_RESULT([    ipvs  . . . . . . . . $enable_ipvs])
  AC_MSG_RESULT([    irq . . . . . . . . . $enable_irq])
@@ -46,7 +46,7 @@
  AC_MSG_RESULT([    logfile . . . . . . . $enable_logfile])
 --- a/src/collectd.conf.in
 +++ b/src/collectd.conf.in
-@@ -138,6 +138,7 @@
+@@ -140,6 +140,7 @@
  #@BUILD_PLUGIN_IPTABLES_TRUE@LoadPlugin iptables
  #@BUILD_PLUGIN_IPVS_TRUE@LoadPlugin ipvs
  #@BUILD_PLUGIN_IRQ_TRUE@LoadPlugin irq
@@ -54,7 +54,7 @@
  #@BUILD_PLUGIN_JAVA_TRUE@LoadPlugin java
  @BUILD_PLUGIN_LOAD_TRUE@@BUILD_PLUGIN_LOAD_TRUE@LoadPlugin load
  #@BUILD_PLUGIN_LPAR_TRUE@LoadPlugin lpar
-@@ -767,6 +768,12 @@
+@@ -775,6 +776,12 @@
  #	IgnoreSelected true
  #</Plugin>
  
@@ -69,7 +69,7 @@
  #	JVMArg "-Djava.class.path=@prefix@/share/collectd/java/collectd-api.jar"
 --- a/src/collectd.conf.pod
 +++ b/src/collectd.conf.pod
-@@ -3803,6 +3803,27 @@ and all other interrupts are collected.
+@@ -3873,6 +3873,27 @@ and all other interrupts are collected.
  
  =back
  
@@ -259,10 +259,10 @@
 +stations                value:GAUGE:0:256
  swap                    value:GAUGE:0:1099511627776
  swap_io                 value:DERIVE:0:U
- tcp_connections         value:GAUGE:0:4294967295
+ sysevent                value:GAUGE:0:1
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -1150,6 +1150,14 @@ irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+@@ -1165,6 +1165,14 @@ irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  irq_la_LIBADD = libignorelist.la
  endif
  
