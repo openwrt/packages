@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.16.1
-PKG_RELEASE:=5
+PKG_VERSION:=1.17.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
-PKG_HASH:=f11c2a6dd1d3515736f0324857957db2de98be862461b5a542a3ac6188dbe32b
+PKG_HASH:=63ee35e15a75af028ffa1f995e2b9c120b59ef5f1b61a23b8a4c33c262fc10c3
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Ansuel Smith <ansuelsmth@gmail.com>
@@ -547,18 +547,18 @@ endif
 
 ifeq ($(CONFIG_NGINX_UBUS),y)
   define Download/nginx-ubus-module
-    VERSION:=29537c50018153375376b11febd5e4f1da6ba54e
+    VERSION:=4547af00991357c9bc3bf4266b7c1547841bf204
     SUBDIR:=nginx-ubus-module
-    FILE:=nginx-ubus-module-$$(VERSION).tar.gz
+    FILE:=nginx-ubus-module-$$(VERSION).tar.xz
     URL:=https://github.com/Ansuel/nginx-ubus-module.git
-    MIRROR_HASH:=85a465a2d24e018f9aabfc6c9b1610e48593c7f2169f88ac4c0d535605aeb5e1
+    MIRROR_HASH:=4e354934bd5fbd82b3d4c5ada19459c0f12162186a7a101a6426e2e1f30a8236
     PROTO:=git
   endef
   $(eval $(call Download,nginx-ubus-module))
 
   define Prepare/nginx-ubus-module
 	$(eval $(Download/nginx-ubus-module))
-	gzip -dc $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+	xzcat $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
   endef
 endif
 
