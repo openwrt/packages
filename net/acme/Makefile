@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acme
 PKG_VERSION:=2.8.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/Neilpang/acme.sh/tar.gz/$(PKG_VERSION)?
@@ -80,7 +80,7 @@ define Package/luci-app-acme
   SECTION:=luci
   CATEGORY:=LuCI
   TITLE:=ACME package - LuCI interface
-  DEPENDS:= lua luci-base +acme
+  DEPENDS:= lua luci-base luci-compat +acme
   SUBMENU:=3. Applications
   PKGARCH:=all
 endef
