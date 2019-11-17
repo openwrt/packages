@@ -298,23 +298,6 @@ $(subst $(space),$(newline),$(MARIADB_CLIENT_EXTRA))
 
 endef
 
-define Package/mariadb-common
-  $(call Package/mariadb/Default)
-  TITLE:=MariaDB database common files
-  DEPENDS:=
-endef
-
-define Package/mariadb-common/conffiles
-$(CONF_DIR)/my.cnf
-endef
-
-define Package/mariadb-common/description
-$(call Package/mariadb/description/Default)
-
-This package includes shared files, for example $(CONF_DIR)/my.cnf.
-
-endef
-
 define Package/mariadb-server
   $(call Package/mariadb/Default)
   DEPENDS:=mariadb-server-base
@@ -559,11 +542,6 @@ define Package/mariadb-client-extra/install
 	$(foreach b,$(MARIADB_CLIENT_EXTRA),$(call Package/mariadb/install/bin,$(1),$(b));)
 endef
 
-define Package/mariadb-common/install
-	$(INSTALL_DIR) $(1)$(CONF_DIR)
-	$(INSTALL_CONF) conf/my.cnf $(1)$(CONF_DIR)
-endef
-
 define Package/mariadb-server/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(foreach b,$(MARIADB_SERVER),$(call Package/mariadb/install/bin,$(1),$(b));)
@@ -622,7 +600,6 @@ $(eval $(call BuildPackage,libmariadb))
 $(eval $(call BuildPackage,mariadb-client))
 $(eval $(call BuildPackage,mariadb-client-base))
 $(eval $(call BuildPackage,mariadb-client-extra))
-$(eval $(call BuildPackage,mariadb-common))
 $(eval $(call BuildPackage,mariadb-server))
 $(eval $(call BuildPackage,mariadb-server-base))
 $(eval $(call BuildPackage,mariadb-server-extra))
