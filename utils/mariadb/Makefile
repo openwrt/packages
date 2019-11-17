@@ -545,8 +545,25 @@ This package provides the $(1) plugin.
   define Package/mariadb-server-plugin-$(subst _,-,$(1))/install
 	  $(INSTALL_DIR) $$(1)$(PLUGIN_DIR)
 	  $(call Package/mariadb/install/plugin,$$(1),$(1))
+ifeq ($(1),auth_pam)
+	  $(CP) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/auth_pam_tool_dir \
+		  $$(1)$(PLUGIN_DIR)
+endif
+ifeq ($(1),ha_spider)
+	  $(INSTALL_DIR) $$(1)$(SHARE_DIR)
+	  $(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/install_spider.sql \
+		  $$(1)$(SHARE_DIR)
+endif
   endef
   $$(eval $$(call BuildPackage,mariadb-server-plugin-$(subst _,-,$(1))))
+endef
+
+define Package/mariadb-server-plugin-auth-pam/postinst
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+  chown mariadb /usr/lib/mariadb/plugin/auth_pam_tool_dir > /dev/null 2>&1
+fi
+exit 0
 endef
 
 $(eval $(call HostBuild))
@@ -580,4 +597,3 @@ $(eval $(call BuildPlugin,server_audit,))
 $(eval $(call BuildPlugin,simple_password_check,))
 $(eval $(call BuildPlugin,sql_errlog,))
 $(eval $(call BuildPlugin,wsrep_info,))
-
