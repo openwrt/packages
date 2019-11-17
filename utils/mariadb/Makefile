@@ -20,8 +20,8 @@ PKG_SOURCE_URL := \
 
 PKG_HASH:=cd50fddf86c2a47405737e342f78ebd40d5716f0fb32b976245de713bed01421
 PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
-PKG_LICENSE:=GPL-2.0 LGPL-2.1
-PKG_LICENSE_FILES:=COPYING THIRDPARTY libmariadb/COPYING.LIB
+PKG_LICENSE:=GPL-2.0
+PKG_LICENSE_FILES:=COPYING THIRDPARTY
 
 PKG_CPE_ID:=cpe:/a:mariadb:mariadb
 
@@ -61,9 +61,6 @@ MARIADB_DISABLE_PLUGINS := \
 	fulltext \
 	versioning
 
-MARIADB_LIB_PLUGINS := \
-	auth_gssapi_client
-
 MARIADB_SERVER_PLUGINS := \
 	auth_ed25519 \
 	auth_gssapi \
@@ -90,11 +87,8 @@ MARIADB_SERVER_PLUGINS := \
 	wsrep_info
 
 PKG_CONFIG_DEPENDS := \
-	$(patsubst %,CONFIG_PACKAGE_lib$(PKG_NAME)-plugin-%,$(subst _,-,$(MARIADB_LIB_PLUGINS))) \
 	$(patsubst %,CONFIG_PACKAGE_$(PKG_NAME)-server-plugin-%,$(subst _,-,$(MARIADB_SERVER_PLUGINS))) \
 	CONFIG_PACKAGE_mariadb-server
-
-plugin-auth_gssapi_client       := PLUGIN_AUTH_GSSAPI_CLIENT
 
 plugin-auth_ed25519             := PLUGIN_AUTH_ED25519
 plugin-auth_gssapi              := PLUGIN_AUTH_GSSAPI
@@ -212,32 +206,6 @@ endef
 
 define Package/mariadb/description/Default
 MariaDB is a very fast and robust SQL database server.
-endef
-
-define Package/libmariadb/Default
-  SECTION:=libs
-  CATEGORY:=Libraries
-  URL:=https://mariadb.org/
-endef
-
-define Package/libmariadb
-  $(call Package/libmariadb/Default)
-  DEPENDS:=+mariadb-common \
-	  $(MARIADB_COMMON_DEPENDS)
-  TITLE:=MariaDB database client library
-  MENU:=1
-  PROVIDES:=libmariadbclient libmysqlclient libmysqlclient-r
-endef
-
-define Package/libmariadb/conffiles
-$(CONF_DIR)/conf.d/50-client.cnf
-endef
-
-define Package/libmariadb/description
-$(call Package/mariadb/description/Default)
-
-This package includes the client library.
-
 endef
 
 define Package/mariadb/Default
@@ -437,8 +405,12 @@ CMAKE_OPTIONS += \
 	-DICONV_LIBRARIES=$(ICONV_PREFIX)/lib/libiconv.$(if $(CONFIG_BUILD_NLS),so,a)
 
 CMAKE_OPTIONS += \
-	$(foreach p,$(MARIADB_LIB_PLUGINS),-D$(plugin-$(p))=$(if $(CONFIG_PACKAGE_lib$(PKG_NAME)-plugin-$(subst _,-,$(p))),DYNAMIC,OFF)) \
 	$(foreach p,$(MARIADB_SERVER_PLUGINS),-D$(plugin-$(p))=$(if $(CONFIG_PACKAGE_$(PKG_NAME)-server-plugin-$(subst _,-,$(p))),DYNAMIC,NO))
+
+# Disable some client library plugins
+CMAKE_OPTIONS += \
+	-DCLIENT_PLUGIN_AUTH_GSSAPI_CLIENT=OFF \
+	-DCLIENT_PLUGIN_REMOTE_IO=OFF
 
 # Set CMAKE_FIND_ROOT_PATH_MODE_INCLUDE and CMAKE_FIND_ROOT_PATH_MODE_LIBRARY
 # to BOTH as otherwise the host build will not find some required dependencies
@@ -500,27 +472,9 @@ define Build/Prepare
 	$(foreach p,$(MARIADB_DISABLE_PLUGINS),$(call Package/mariadb/disable/plugin,$(PKG_BUILD_DIR),$(p));)
 endef
 
+# Define Build/InstallDev, otherwise build system starts installing files into
+# staging area, which would interfere with mariadb-connector-c.
 define Build/InstallDev
-	$(INSTALL_DIR) $(2)/bin $(1)/usr/bin $(1)/usr/include $(1)/usr/lib/mysql $(1)/usr/lib/pkgconfig $(1)/usr/share/aclocal
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mysql_config $(1)/usr/bin
-	$(LN) $(STAGING_DIR)/usr/bin/mysql_config $(2)/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/mysql $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{mariadb,mysqlclient}*.so* $(1)/usr/lib
-	cd $(1)/usr/lib/mysql; $(LN) ../lib{mariadb,mysqlclient}*.so* .
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libmariadb.pc $(1)/usr/lib/pkgconfig
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/aclocal/mysql.m4 $(1)/usr/share/aclocal
-endef
-
-define Package/libmariadb/install
-	$(INSTALL_DIR) $(1)$(CONF_DIR)/conf.d
-	$(INSTALL_DIR) $(1)$(PLUGIN_DIR)
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{mariadb,mysqlclient}*.so* $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/caching_sha2_password.so $(1)$(PLUGIN_DIR)
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/client_ed25519.so $(1)$(PLUGIN_DIR)
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/dialog.so $(1)$(PLUGIN_DIR)
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/mysql_clear_password.so $(1)$(PLUGIN_DIR)
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/sha256_password.so $(1)$(PLUGIN_DIR)
-	$(INSTALL_CONF) conf/50-client.cnf $(1)$(CONF_DIR)/conf.d
 endef
 
 define Package/mariadb-client/install
@@ -577,26 +531,25 @@ define Package/mariadb-server-extra/install
 endef
 
 define BuildPlugin
-  define Package/$(1)-plugin-$(subst _,-,$(2))
-    $(call Package/$(subst mariadb-server,mariadb,$(1))/Default)
-    TITLE:=$(1) plugin
-    DEPENDS:=$(1) $(patsubst +%,+PACKAGE_$(1)-plugin-$(subst _,-,$(2)):%,$(3))
+  define Package/mariadb-server-plugin-$(subst _,-,$(1))
+    $(call Package/mariadb/Default)
+    TITLE:=mariadb-server plugin
+    DEPENDS:=mariadb-server $(patsubst +%,+PACKAGE_mariadb-server-plugin-$(subst _,-,$(1)):%,$(2))
   endef
-  define Package/$(1)-plugin-$(subst _,-,$(2))/description
+  define Package/mariadb-server-plugin-$(subst _,-,$(1))/description
     $(call Package/mariadb/description/Default)
 
-This package provides the $(2) plugin.
+This package provides the $(1) plugin.
 
   endef
-  define Package/$(1)-plugin-$(subst _,-,$(2))/install
+  define Package/mariadb-server-plugin-$(subst _,-,$(1))/install
 	  $(INSTALL_DIR) $$(1)$(PLUGIN_DIR)
-	  $(call Package/mariadb/install/plugin,$$(1),$(2))
+	  $(call Package/mariadb/install/plugin,$$(1),$(1))
   endef
-  $$(eval $$(call BuildPackage,$(1)-plugin-$(subst _,-,$(2))))
+  $$(eval $$(call BuildPackage,mariadb-server-plugin-$(subst _,-,$(1))))
 endef
 
 $(eval $(call HostBuild))
-$(eval $(call BuildPackage,libmariadb))
 $(eval $(call BuildPackage,mariadb-client))
 $(eval $(call BuildPackage,mariadb-client-base))
 $(eval $(call BuildPackage,mariadb-client-extra))
@@ -604,28 +557,27 @@ $(eval $(call BuildPackage,mariadb-server))
 $(eval $(call BuildPackage,mariadb-server-base))
 $(eval $(call BuildPackage,mariadb-server-extra))
 
-$(eval $(call BuildPlugin,libmariadb,auth_gssapi_client,+krb5-libs))
-$(eval $(call BuildPlugin,mariadb-server,auth_ed25519,))
-$(eval $(call BuildPlugin,mariadb-server,auth_gssapi,+krb5-libs))
-$(eval $(call BuildPlugin,mariadb-server,auth_pam,+libpam))
-$(eval $(call BuildPlugin,mariadb-server,auth_pam_v1,+libpam))
-$(eval $(call BuildPlugin,mariadb-server,disks,))
-$(eval $(call BuildPlugin,mariadb-server,feedback,))
-$(eval $(call BuildPlugin,mariadb-server,file_key_management,))
-$(eval $(call BuildPlugin,mariadb-server,ha_archive,))
-$(eval $(call BuildPlugin,mariadb-server,ha_blackhole,))
-$(eval $(call BuildPlugin,mariadb-server,ha_connect,+libxml2))
-$(eval $(call BuildPlugin,mariadb-server,ha_federated,))
-$(eval $(call BuildPlugin,mariadb-server,ha_federatedx,))
-$(eval $(call BuildPlugin,mariadb-server,ha_sphinx,))
-$(eval $(call BuildPlugin,mariadb-server,ha_spider,))
-$(eval $(call BuildPlugin,mariadb-server,handlersocket,))
-$(eval $(call BuildPlugin,mariadb-server,locales,))
-$(eval $(call BuildPlugin,mariadb-server,metadata_lock_info,))
-$(eval $(call BuildPlugin,mariadb-server,query_cache_info,))
-$(eval $(call BuildPlugin,mariadb-server,query_response_time,))
-$(eval $(call BuildPlugin,mariadb-server,server_audit,))
-$(eval $(call BuildPlugin,mariadb-server,simple_password_check,))
-$(eval $(call BuildPlugin,mariadb-server,sql_errlog,))
-$(eval $(call BuildPlugin,mariadb-server,wsrep_info,))
+$(eval $(call BuildPlugin,auth_ed25519,))
+$(eval $(call BuildPlugin,auth_gssapi,+krb5-libs))
+$(eval $(call BuildPlugin,auth_pam,+libpam))
+$(eval $(call BuildPlugin,auth_pam_v1,+libpam))
+$(eval $(call BuildPlugin,disks,))
+$(eval $(call BuildPlugin,feedback,))
+$(eval $(call BuildPlugin,file_key_management,))
+$(eval $(call BuildPlugin,ha_archive,))
+$(eval $(call BuildPlugin,ha_blackhole,))
+$(eval $(call BuildPlugin,ha_connect,+libxml2))
+$(eval $(call BuildPlugin,ha_federated,))
+$(eval $(call BuildPlugin,ha_federatedx,))
+$(eval $(call BuildPlugin,ha_sphinx,))
+$(eval $(call BuildPlugin,ha_spider,))
+$(eval $(call BuildPlugin,handlersocket,))
+$(eval $(call BuildPlugin,locales,))
+$(eval $(call BuildPlugin,metadata_lock_info,))
+$(eval $(call BuildPlugin,query_cache_info,))
+$(eval $(call BuildPlugin,query_response_time,))
+$(eval $(call BuildPlugin,server_audit,))
+$(eval $(call BuildPlugin,simple_password_check,))
+$(eval $(call BuildPlugin,sql_errlog,))
+$(eval $(call BuildPlugin,wsrep_info,))
 
