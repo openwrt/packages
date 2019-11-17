@@ -131,7 +131,7 @@ start_service() {
 	    }
 	  '
 
-	if [ ! -f "$datadir/mysql/tables_priv.MYD" ]; then
+	if [ ! -f "$datadir/mysql/tables_priv.MAD" ]; then
 		local args="--force"
 		local basedir=$(mysqld_get_param basedir)
 		[ -n "$basedir" ] && args="$args --basedir=$basedir"

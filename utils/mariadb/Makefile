@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.2.26
+PKG_VERSION:=10.4.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -18,7 +18,7 @@ PKG_SOURCE_URL := \
 	https://ftp.yz.yamagata-u.ac.jp/pub/dbms/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
 	https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=152fe941c4f2a352b2b3a4db1ef64e70235fd9ff055af62ad7bda9f2b2191528
+PKG_HASH:=cd50fddf86c2a47405737e342f78ebd40d5716f0fb32b976245de713bed01421
 PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
 PKG_LICENSE:=GPL-2.0 LGPL-2.1
 PKG_LICENSE_FILES:=COPYING THIRDPARTY libmariadb/COPYING.LIB
@@ -39,6 +39,8 @@ CONF_DIR:=/etc/mysql
 PLUGIN_DIR:=/usr/lib/mariadb/plugin
 SHARE_DIR:=/usr/share/mariadb
 
+MARIADB_SOCKET=/var/run/mysqld/mysqld.sock
+
 MARIADB_DISABLE_ENGINES := \
 	cassandra \
 	example \
@@ -56,7 +58,8 @@ MARIADB_DISABLE_PLUGINS := \
 	daemon_example \
 	debug_key_management \
 	example_key_management \
-	fulltext
+	fulltext \
+	versioning
 
 MARIADB_LIB_PLUGINS := \
 	auth_gssapi_client
@@ -65,6 +68,7 @@ MARIADB_SERVER_PLUGINS := \
 	auth_ed25519 \
 	auth_gssapi \
 	auth_pam \
+	auth_pam_v1 \
 	disks \
 	feedback \
 	file_key_management \
@@ -80,8 +84,6 @@ MARIADB_SERVER_PLUGINS := \
 	metadata_lock_info \
 	query_cache_info \
 	query_response_time \
-	semisync_master \
-	semisync_slave \
 	server_audit \
 	simple_password_check \
 	sql_errlog \
@@ -97,6 +99,7 @@ plugin-auth_gssapi_client       := PLUGIN_AUTH_GSSAPI_CLIENT
 plugin-auth_ed25519             := PLUGIN_AUTH_ED25519
 plugin-auth_gssapi              := PLUGIN_AUTH_GSSAPI
 plugin-auth_pam                 := PLUGIN_AUTH_PAM
+plugin-auth_pam_v1              := PLUGIN_AUTH_PAM_V1
 plugin-disks                    := PLUGIN_DISKS
 plugin-feedback                 := PLUGIN_FEEDBACK
 plugin-file_key_management      := PLUGIN_FILE_KEY_MANAGEMENT
@@ -112,8 +115,6 @@ plugin-locales                  := PLUGIN_LOCALES
 plugin-metadata_lock_info       := PLUGIN_METADATA_LOCK_INFO
 plugin-query_cache_info         := PLUGIN_QUERY_CACHE_INFO
 plugin-query_response_time      := PLUGIN_QUERY_RESPONSE_TIME
-plugin-semisync_master          := PLUGIN_SEMISYNC_MASTER
-plugin-semisync_slave           := PLUGIN_SEMISYNC_SLAVE
 plugin-server_audit             := PLUGIN_SERVER_AUDIT
 plugin-simple_password_check    := PLUGIN_SIMPLE_PASSWORD_CHECK
 plugin-sql_errlog               := PLUGIN_SQL_ERRLOG
@@ -142,7 +143,11 @@ MARIADB_SERVER := \
 	mysqld
 
 MARIADB_SERVER_EXTRA := \
-	aria* \
+	aria_chk \
+	aria_dump_log \
+	aria_ftdump \
+	aria_pack \
+	aria_read_log \
 	mariabackup \
 	msql2mysql \
 	myisam_ftdump \
@@ -162,7 +167,10 @@ MARIADB_SERVER_EXTRA := \
 	perror \
 	replace \
 	resolve_stack_dump \
-	wsrep_sst_*
+	wsrep_sst_mariabackup \
+	wsrep_sst_mysqldump \
+	wsrep_sst_rsync \
+	wsrep_sst_rsync_wan
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -193,6 +201,9 @@ endef
 
 define Package/mariadb/install/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(2) $(1)/usr/bin
+	cd "$(PKG_INSTALL_DIR)/usr/bin"; find . -maxdepth 1 -type l \
+		-regex './$(subst mysql,mariadb[-]*,$(subst _,-,$(2)))' \
+		| xargs  -I{} $(CP) {} "$(1)/usr/bin"
 endef
 
 define Package/mariadb/install/plugin
@@ -411,9 +422,9 @@ CMAKE_OPTIONS += \
 	-DINSTALL_SCRIPTDIR=bin \
 	-DINSTALL_SQLBENCHDIR="" \
 	-DINSTALL_SUPPORTFILESDIR=share/mariadb \
-	-DINSTALL_UNIX_ADDRDIR=/var/run/mysqld/mysqld.sock \
+	-DINSTALL_UNIX_ADDRDIR=$(MARIADB_SOCKET) \
 	-DMYSQL_DATADIR=/var/lib/mysql \
-	-DMYSQL_UNIX_ADDR=/var/run/mysqld/mysqld.sock \
+	-DMYSQL_UNIX_ADDR=$(MARIADB_SOCKET) \
 	-DSKIP_TESTS=ON \
 	-DWITH_DEBUG=OFF \
 	-DWITH_EMBEDDED_SERVER=OFF \
@@ -426,6 +437,7 @@ CMAKE_OPTIONS += \
 	-DWITH_LIBARCHIVE=OFF \
 	-DWITH_LIBWRAP=OFF \
 	-DWITH_MARIABACKUP=ON \
+	-DWITH_NUMA=OFF \
 	-DWITH_PCRE=system \
 	-DWITH_SAFEMALLOC=OFF \
 	-DWITH_SSL=system \
@@ -575,12 +587,15 @@ define Package/mariadb-server-base/install
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/mysql_performance_tables.sql $(1)$(SHARE_DIR)
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/mysql_system_tables.sql $(1)$(SHARE_DIR)
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/mysql_system_tables_data.sql $(1)$(SHARE_DIR)
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/mysql_test_db.sql $(1)$(SHARE_DIR)
 endef
 
 define Package/mariadb-server-extra/install
 	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/bin/wsrep_sst_common $(1)/usr/bin
 	$(SED) 's,/bin/bash,/bin/sh,g' $(PKG_INSTALL_DIR)/usr/bin/wsrep_sst_*
 	$(foreach b,$(MARIADB_SERVER_EXTRA),$(call Package/mariadb/install/bin,$(1),$(b));)
+	cd $(1)/usr/bin; $(LN) mariabackup mariadb-backup
 endef
 
 define BuildPlugin
@@ -616,6 +631,7 @@ $(eval $(call BuildPlugin,libmariadb,auth_gssapi_client,+krb5-libs))
 $(eval $(call BuildPlugin,mariadb-server,auth_ed25519,))
 $(eval $(call BuildPlugin,mariadb-server,auth_gssapi,+krb5-libs))
 $(eval $(call BuildPlugin,mariadb-server,auth_pam,+libpam))
+$(eval $(call BuildPlugin,mariadb-server,auth_pam_v1,+libpam))
 $(eval $(call BuildPlugin,mariadb-server,disks,))
 $(eval $(call BuildPlugin,mariadb-server,feedback,))
 $(eval $(call BuildPlugin,mariadb-server,file_key_management,))
@@ -631,8 +647,6 @@ $(eval $(call BuildPlugin,mariadb-server,locales,))
 $(eval $(call BuildPlugin,mariadb-server,metadata_lock_info,))
 $(eval $(call BuildPlugin,mariadb-server,query_cache_info,))
 $(eval $(call BuildPlugin,mariadb-server,query_response_time,))
-$(eval $(call BuildPlugin,mariadb-server,semisync_master,))
-$(eval $(call BuildPlugin,mariadb-server,semisync_slave,))
 $(eval $(call BuildPlugin,mariadb-server,server_audit,))
 $(eval $(call BuildPlugin,mariadb-server,simple_password_check,))
 $(eval $(call BuildPlugin,mariadb-server,sql_errlog,))

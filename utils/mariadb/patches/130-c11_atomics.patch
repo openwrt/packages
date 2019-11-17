@@ -1,112 +1,64 @@
-Description: Fix mips missing atomics primitives
- On mips we don't have native support for 64bit atomic operations. Make use
- of libatomic to emulate them.
 Author: Vicențiu Ciorbaru <vicentiu@mariadb.org>
+Date:   Fri Dec 21 19:14:04 2018 +0200
+
+   Link with libatomic to enable C11 atomics support
+
+   Some architectures (mips) require libatomic to support proper
+   atomic operations. Check first if support is available without
+   linking, otherwise use the library.
 
 --- a/configure.cmake
 +++ b/configure.cmake
-@@ -128,7 +128,7 @@ IF(UNIX)
-   ENDIF()
-   FIND_PACKAGE(Threads)
- 
--  SET(CMAKE_REQUIRED_LIBRARIES 
-+  LIST(APPEND CMAKE_REQUIRED_LIBRARIES
-     ${LIBM} ${LIBNSL} ${LIBBIND} ${LIBCRYPT} ${LIBSOCKET} ${LIBDL} ${CMAKE_THREAD_LIBS_INIT} ${LIBRT} ${LIBEXECINFO})
-   # Need explicit pthread for gcc -fsanitize=address
-   IF(CMAKE_USE_PTHREADS_INIT AND CMAKE_C_FLAGS MATCHES "-fsanitize=")
-@@ -952,7 +952,26 @@ ELSEIF(NOT WITH_ATOMIC_OPS)
-     long long int *ptr= &var;
-     return (int)__atomic_load_n(ptr, __ATOMIC_SEQ_CST);
-   }"
--  HAVE_GCC_C11_ATOMICS)
-+  HAVE_GCC_C11_ATOMICS_WITHOUT_LIBATOMIC)
-+  IF(HAVE_GCC_C11_ATOMICS_WITHOUT_LIBATOMIC)
+@@ -866,7 +866,25 @@ int main()
+   long long int *ptr= &var;
+   return (int)__atomic_load_n(ptr, __ATOMIC_SEQ_CST);
+ }"
+-HAVE_GCC_C11_ATOMICS)
++HAVE_GCC_C11_ATOMICS_WITHOUT_LIBATOMIC)
++IF (HAVE_GCC_C11_ATOMICS_WITHOUT_LIBATOMIC)
++  SET(HAVE_GCC_C11_ATOMICS True)
++ELSE()
++  SET(OLD_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
++  LIST(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
++  CHECK_CXX_SOURCE_COMPILES("
++  int main()
++  {
++    long long int var= 1;
++    long long int *ptr= &var;
++    return (int)__atomic_load_n(ptr, __ATOMIC_SEQ_CST);
++  }"
++  HAVE_GCC_C11_ATOMICS_WITH_LIBATOMIC)
++  IF(HAVE_GCC_C11_ATOMICS_WITH_LIBATOMIC)
 +    SET(HAVE_GCC_C11_ATOMICS True)
-+  ELSE()
-+    SET(OLD_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
-+    LIST(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
-+    CHECK_CXX_SOURCE_COMPILES("
-+    int main()
-+    {
-+      long long int var= 1;
-+      long long int *ptr= &var;
-+      return (int)__atomic_load_n(ptr, __ATOMIC_SEQ_CST);
-+    }"
-+    HAVE_GCC_C11_ATOMICS_WITH_LIBATOMIC)
-+    IF(HAVE_GCC_C11_ATOMICS_WITH_LIBATOMIC)
-+      SET(HAVE_GCC_C11_ATOMICS True)
-+    ELSE()
-+      SET(CMAKE_REQUIRED_LIBRARIES ${OLD_CMAKE_REQUIRED_LIBRARIES})
-+    ENDIF()
 +  ENDIF()
- ELSE()
-   MESSAGE(FATAL_ERROR "${WITH_ATOMIC_OPS} is not a valid value for WITH_ATOMIC_OPS!")
- ENDIF()
---- a/include/atomic/gcc_builtins.h
-+++ b/include/atomic/gcc_builtins.h
-@@ -16,6 +16,7 @@
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1335  USA */
++  SET(CMAKE_REQUIRED_LIBRARIES ${OLD_CMAKE_REQUIRED_LIBRARIES})
++ENDIF()
  
-+#if defined (HAVE_GCC_ATOMIC_BUILTINS)
- #define make_atomic_add_body(S)                     \
-   v= __sync_fetch_and_add(a, v);
- #define make_atomic_fas_body(S)                     \
-@@ -26,6 +27,20 @@
-   sav= __sync_val_compare_and_swap(a, cmp_val, set);\
-   if (!(ret= (sav == cmp_val))) *cmp= sav
- 
-+#elif defined(HAVE_GCC_C11_ATOMICS)
-+
-+#define make_atomic_add_body(S)                     \
-+  v= __atomic_fetch_add(a, v, __ATOMIC_SEQ_CST)
-+#define make_atomic_fas_body(S)                     \
-+  v= __atomic_exchange_n(a, v, __ATOMIC_SEQ_CST)
-+#define make_atomic_cas_body(S)                     \
-+  int ## S sav;                                     \
-+  ret= __atomic_compare_exchange_n(a, cmp, set,     \
-+                                   0,               \
-+                                   __ATOMIC_SEQ_CST,\
-+                                   __ATOMIC_SEQ_CST);
-+#endif
-+
- #ifdef MY_ATOMIC_MODE_DUMMY
- #define make_atomic_load_body(S)   ret= *a
- #define make_atomic_store_body(S)  *a= v
+ IF(WITH_VALGRIND)
+   SET(HAVE_valgrind 1)
 --- a/mysys/CMakeLists.txt
 +++ b/mysys/CMakeLists.txt
-@@ -81,6 +81,10 @@ IF(HAVE_BFD_H)
-   TARGET_LINK_LIBRARIES(mysys bfd)  
- ENDIF(HAVE_BFD_H)
+@@ -72,6 +72,10 @@ TARGET_LINK_LIBRARIES(mysys dbug strings
+  ${LIBNSL} ${LIBM} ${LIBRT} ${LIBDL} ${LIBSOCKET} ${LIBEXECINFO} ${CRC32_LIBRARY})
+ DTRACE_INSTRUMENT(mysys)
  
-+IF(HAVE_GCC_C11_ATOMICS_WITH_LIBATOMIC)
++IF (HAVE_GCC_C11_ATOMICS_WITH_LIBATOMIC)
 +  TARGET_LINK_LIBRARIES(mysys atomic)
 +ENDIF()
 +
- IF (WIN32)
-   TARGET_LINK_LIBRARIES(mysys IPHLPAPI)  
- ENDIF(WIN32)
+ IF(HAVE_BFD_H)
+   TARGET_LINK_LIBRARIES(mysys bfd)  
+ ENDIF(HAVE_BFD_H)
 --- a/sql/CMakeLists.txt
 +++ b/sql/CMakeLists.txt
-@@ -170,6 +170,10 @@ TARGET_LINK_LIBRARIES(sql ${MYSQLD_STATI
-   ${SSL_LIBRARIES}
-   ${LIBSYSTEMD})
+@@ -190,6 +190,10 @@ ELSE()
+   SET(MYSQLD_SOURCE main.cc ${DTRACE_PROBES_ALL})
+ ENDIF()
  
-+IF(HAVE_GCC_C11_ATOMICS_WITH_LIBATOMIC)
++IF (HAVE_GCC_C11_ATOMICS_WITH_LIBATOMIC)
 +  TARGET_LINK_LIBRARIES(sql atomic)
 +ENDIF()
 +
- IF(WIN32)
-   SET(MYSQLD_SOURCE main.cc nt_servc.cc message.rc)
-   TARGET_LINK_LIBRARIES(sql psapi)
---- a/include/my_atomic.h
-+++ b/include/my_atomic.h
-@@ -126,7 +126,7 @@
- #include "atomic/generic-msvc.h"
- #elif defined(HAVE_SOLARIS_ATOMIC)
- #include "atomic/solaris.h"
--#elif defined(HAVE_GCC_ATOMIC_BUILTINS)
-+#elif defined(HAVE_GCC_ATOMIC_BUILTINS) || defined(HAVE_GCC_C11_ATOMICS)
- #include "atomic/gcc_builtins.h"
- #elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
- #include "atomic/x86-gcc.h"
+ 
+ IF(MSVC AND NOT WITHOUT_DYNAMIC_PLUGINS)
+ 
