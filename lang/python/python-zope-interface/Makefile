@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-zope-interface
-PKG_VERSION:=4.6.0
+PKG_VERSION:=4.7.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=zope.interface-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/z/zope.interface
-PKG_HASH:=1b3d0dcabc7c90b470e59e38a9acaa361be43b3a6ea644c0063951964717f0e5
+PKG_HASH:=4bb937e998be9d5e345f486693e477ba79e4344674484001a0b646be1d530487
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-zope-interface-$(PKG_VERSION)
 
