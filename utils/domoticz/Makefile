@@ -12,7 +12,7 @@ PKG_VERSION_MAJOR:=4
 PKG_VERSION_PATCH:=10717
 PKG_COMMIT:=
 PKG_VERSION:=$(PKG_VERSION_MAJOR).$(PKG_VERSION_PATCH)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 ifeq ($(PKG_COMMIT),)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -54,6 +54,7 @@ define Package/domoticz
 	+libopenzwave \
 	+libsqlite3 \
 	+libstdcpp \
+	+telldus-core \
 	+zlib
 endef
 
