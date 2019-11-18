@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
 PKG_VERSION:=7.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://github.com/FRRouting/frr/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -177,7 +177,9 @@ define Build/Configure
 	--sysconfdir=/etc/frr/ \
 	$(if $(CONFIG_FRR_OPENSSL),--with-crypto=openssl,) \
 	$(foreach m,$(PKG_DAEMON_AVAILABLE), \
-	$(if $(CONFIG_PACKAGE_frr-$(m)),--enable-$(m),--disable-$(m)) ) \
+	$(call autoconf_bool,CONFIG_PACKAGE_frr-$(m),$(m)) ) \
+	$(call autoconf_bool,CONFIG_PACKAGE_frr-vtysh,vtysh) \
+	$(call autoconf_bool,CONFIG_PACKAGE_frr-libfrr,zebra) \
 )
 endef
 
@@ -212,6 +214,11 @@ define Package/frr-libfrr/install
 	$(INSTALL_DIR) $(1)/etc/frr
 	chmod 0750 $(1)/etc/frr
 	$(INSTALL_CONF) ./files/{frr.conf,daemons} $(1)/etc/frr/
+endef
+
+define Package/frr-vtysh/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/vtysh/.libs/vtysh $(1)/usr/bin/
 endef
 
 $(eval $(call HostBuild))
