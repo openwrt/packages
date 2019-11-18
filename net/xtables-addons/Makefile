@@ -24,6 +24,7 @@ PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=GPL-2.0
 
 PKG_FIXUP:=autoreconf
+PKG_ASLR_PIE:=0
 
 include $(INCLUDE_DIR)/package.mk
 
