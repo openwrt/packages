@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-www-mechanize
-PKG_VERSION:=1.92
+PKG_VERSION:=1.95
 PKG_RELEASE:=1
 
 PKG_SOURCE:=WWW-Mechanize-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/O/OA/OALDERS
-PKG_HASH:=48e0dbfd611087ec027c6d6ecd6ad9af3c5d8d2027e6e803134c9df2cd6584c0
+PKG_HASH:=3ab36267bcbfe245ca4578caff475558dab171f756319b92a92b58dd410f22f0
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/WWW-Mechanize-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
