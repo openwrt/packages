@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-www
-PKG_VERSION:=6.39
+PKG_VERSION:=6.41
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/O/OA/OALDERS
 PKG_SOURCE:=libwww-perl-$(PKG_VERSION).tar.gz
-PKG_HASH:=9a8d7747938aa75d7d524c71574ae7f99ca66a5dac8255a7f7759f373e7774d5
+PKG_HASH:=8e271add59a2b773839b902a58a9c955b42008700df93eae1aa37167483a064a
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/libwww-perl-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
