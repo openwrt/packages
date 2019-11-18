@@ -353,12 +353,9 @@ proto_modemmanager_setup() {
 	# always cleanup before attempting a new connection, just in case
 	modemmanager_cleanup_connection "${modemstatus}"
 
-	# ip type IPv4 is assumed if none explicitly given
-	[ -z "${iptype}" ] && iptype="ipv4"
-
 	# setup connect args; APN mandatory (even if it may be empty)
 	echo "starting connection with apn '${apn}'..."
-	connectargs="apn=${apn},ip-type=${iptype}${username:+,user=${username}}${password:+,password=${password}}${pincode:+,pin=${pincode}}"
+	connectargs="apn=${apn}${iptype:+,ip-type=${iptype}}${username:+,user=${username}}${password:+,password=${password}}${pincode:+,pin=${pincode}}"
 	mmcli --modem="${device}" --timeout 120 --simple-connect="${connectargs}" || {
 		proto_notify_error "${interface}" CONNECT_FAILED
 		proto_block_restart "${interface}"
@@ -392,17 +389,12 @@ proto_modemmanager_setup() {
 
 	# load network interface and method information
 	beareriface=$(modemmanager_get_field "${bearerstatus}" "bearer.status.interface")
-	[ "$iptype" = "ipv4" ] || [ "$iptype" = "ipv4v6" ] && {
-		bearermethod_ipv4=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.method")
-		echo "IPv4 connection setup required in interface ${interface}: ${bearermethod_ipv4}"
-	}
-	[ "$iptype" = "ipv6" ] || [ "$iptype" = "ipv4v6" ] && {
-		bearermethod_ipv6=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.method")
-		echo "IPv6 connection setup required in interface ${interface}: ${bearermethod_ipv6}"
-	}
+	bearermethod_ipv4=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.method")
+	bearermethod_ipv6=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.method")
 
 	# setup IPv4
 	[ -n "${bearermethod_ipv4}" ] && {
+		echo "IPv4 connection setup required in interface ${interface}: ${bearermethod_ipv4}"
 		case "${bearermethod_ipv4}" in
 		"dhcp")
 			modemmanager_connected_method_dhcp_ipv4 "${interface}" "${beareriface}" "${metric}"
@@ -429,6 +421,7 @@ proto_modemmanager_setup() {
 	# setup IPv6
 	# note: if using ipv4v6, both IPv4 and IPv6 settings will have the same MTU and metric values reported
 	[ -n "${bearermethod_ipv6}" ] && {
+		echo "IPv6 connection setup required in interface ${interface}: ${bearermethod_ipv6}"
 		case "${bearermethod_ipv6}" in
 		"dhcp")
 			modemmanager_connected_method_dhcp_ipv6 "${interface}" "${beareriface}" "${metric}"
@@ -475,19 +468,14 @@ proto_modemmanager_teardown() {
 		return
 	}
 
-	# ip type IPv4 is assumed if none explicitly given
-	[ -z "${iptype}" ] && iptype="ipv4"
-
 	# load bearer connection methods
 	bearerstatus=$(mmcli --bearer "${bearerpath}" --output-keyvalue)
-	[ "$iptype" = "ipv4" ] || [ "$iptype" = "ipv4v6" ] && {
-		bearermethod_ipv4=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.method")
+	bearermethod_ipv4=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.method")
+	[ -n "${bearermethod_ipv4}" ] &&
 		echo "IPv4 connection teardown required in interface ${interface}: ${bearermethod_ipv4}"
-	}
-	[ "$iptype" = "ipv6" ] || [ "$iptype" = "ipv4v6" ] && {
-		bearermethod_ipv6=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.method")
+	bearermethod_ipv6=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.method")
+	[ -n "${bearermethod_ipv6}" ] &&
 		echo "IPv6 connection teardown required in interface ${interface}: ${bearermethod_ipv6}"
-	}
 
 	# disconnection handling only requires special treatment in IPv4/PPP
 	[ "${bearermethod_ipv4}" = "ppp" ] && modemmanager_disconnected_method_ppp_ipv4 "${interface}"
