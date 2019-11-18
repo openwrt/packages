@@ -3,16 +3,15 @@
 START=25
 USE_PROCD=1
 
-EXTRA_COMMANDS="status"
-EXTRA_HELP="	status	Print runtime information"
-
 trm_init="/etc/init.d/travelmate"
 trm_script="/usr/bin/travelmate.sh"
 trm_pidfile="/var/run/travelmate.pid"
 
 boot()
 {
-	ubus -t 30 wait_for network.interface network.wireless 2>/dev/null
+	local iface="$(uci_get travelmate global trm_iface)"
+
+	ubus -t 30 wait_for network.wireless network.interface."${iface:-"trm_wwan"}" 2>/dev/null
 	rc_procd start_service
 }
 
