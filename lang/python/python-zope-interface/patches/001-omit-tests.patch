@@ -1,6 +1,6 @@
 --- a/setup.py
 +++ b/setup.py
-@@ -122,7 +122,7 @@ setup(name='zope.interface',
+@@ -124,7 +124,7 @@ setup(name='zope.interface',
          "Framework :: Zope :: 3",
          "Topic :: Software Development :: Libraries :: Python Modules",
        ],
@@ -9,7 +9,7 @@
        package_dir={'': 'src'},
        namespace_packages=["zope"],
        cmdclass={
-@@ -130,6 +130,7 @@ setup(name='zope.interface',
+@@ -132,6 +132,7 @@ setup(name='zope.interface',
        },
        test_suite='zope.interface.tests',
        include_package_data=True,
