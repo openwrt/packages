@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-html-form
-PKG_VERSION:=6.04
+PKG_VERSION:=6.05
 PKG_RELEASE:=1
 
 PKG_SOURCE:=HTML-Form-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/O/OA/OALDERS
-PKG_HASH:=9cd557a8b61b9a98deceff259c4fb1d82df729ff9d0388f655b364dd16480080
+PKG_HASH:=36c6c601ca829719f6651be1b80872028f82bec1712608dd860deeb67da32492
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/HTML-Form-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
