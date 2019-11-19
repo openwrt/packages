@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cache-domains
-PKG_VERSION:=1.0.0
+PKG_VERSION:=2.0.0
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
@@ -17,13 +17,16 @@ define Package/cache-domains/default
 endef
 
 define Package/cache-domains/description/default
-Service to dynamically configure the local DNS (dnsmasq) to redirect game content servers to a LAN cache.
+hotplug script to dynamically configure the local DNS (dnsmasq) to redirect game content servers to a LAN cache.
 Definitive list dynamically obtained from https://github.com/uklans/cache-domains.
 endef
 
 define Package/cache-domains/install/default
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/cache-domains.init $(1)/etc/init.d/cache-domains
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) ./files/cache-domains $(1)/usr/bin/
+
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface/
+	$(INSTALL_BIN) ./files/30-cache-domains $(1)/etc/hotplug.d/iface/
 endef
 
 Build/Compile=# Nothing to compile, just install the scripts
