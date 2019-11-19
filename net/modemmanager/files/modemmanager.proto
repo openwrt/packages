@@ -311,6 +311,7 @@ proto_modemmanager_init_config() {
 	proto_config_add_string	 pincode
 	proto_config_add_string	 iptype
 	proto_config_add_boolean lowpower
+	proto_config_add_defaults
 }
 
 proto_modemmanager_setup() {
