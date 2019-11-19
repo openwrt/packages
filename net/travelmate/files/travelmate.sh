@@ -13,7 +13,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.5.2"
+trm_ver="1.5.3"
 trm_enabled=0
 trm_debug=0
 trm_iface="trm_wwan"
@@ -31,6 +31,8 @@ trm_listexpiry=0
 trm_radio=""
 trm_connection=""
 trm_rtfile="/tmp/trm_runtime.json"
+trm_wifi="$(command -v wifi)"
+trm_wificmd="reload"
 trm_fetch="$(command -v uclient-fetch)"
 trm_iwinfo="$(command -v iwinfo)"
 trm_wpa="$(command -v wpa_supplicant)"
@@ -38,20 +40,9 @@ trm_logger="$(command -v logger)"
 trm_action="${1:-"start"}"
 trm_pidfile="/var/run/travelmate.pid"
 
-# trim leading and trailing whitespace characters
-#
-f_trim()
-{
-	local IFS trim="${1}"
-
-	trim="${trim#"${trim%%[![:space:]]*}"}"
-	trim="${trim%"${trim##*[![:space:]]}"}"
-	printf '%s' "${trim}"
-}
-
 # load travelmate environment
 #
-f_envload()
+f_env()
 {
 	local IFS check wpa_checks
 
@@ -63,19 +54,6 @@ f_envload()
 	#
 	trm_sysver="$(ubus -S call system board 2>/dev/null | jsonfilter -e '@.model' -e '@.release.description' | \
 		awk 'BEGIN{ORS=", "}{print $0}' | awk '{print substr($0,1,length($0)-2)}')"
-
-	# get wpa_supplicant capabilities
-	#
-	wpa_checks="eap sae owe"
-	for check in ${wpa_checks}
-	do
-		if [ -x "${trm_wpa}" ]
-		then
-			eval "trm_${check}check=\"$("${trm_wpa}" -v${check} >/dev/null 2>&1; printf "%u" "${?}")\""
-		else
-			eval "trm_${check}check=\"1\""
-		fi
-	done
 
 	# load config and check 'enabled' option
 	#
@@ -103,6 +81,37 @@ f_envload()
 		f_log "info" "travelmate is currently disabled, please set 'trm_enabled' to '1' to use this service"
 		> "${trm_pidfile}"
 		exit 0
+	fi
+
+	# get wpa_supplicant capabilities
+	#
+	wpa_checks="eap sae owe"
+	for check in ${wpa_checks}
+	do
+		if [ -x "${trm_wpa}" ]
+		then
+			eval "trm_${check}check=\"$("${trm_wpa}" -v${check} >/dev/null 2>&1; printf "%u" "${?}")\""
+		else
+			eval "trm_${check}check=\"1\""
+		fi
+	done
+
+	# get wifi reconf capabilities
+	#
+	if [ -n "$(grep -F "reconf" "${trm_wifi}" 2>/dev/null)" ]
+	then
+		trm_wificmd="reconf"
+	fi
+
+	# enable 'disabled' wifi devices
+	#
+	config_load wireless
+	config_foreach f_prepdev wifi-device
+	if [ -n "$(uci -q changes "wireless")" ]
+	then
+		uci_commit "wireless"
+		"${trm_wifi}" "${trm_wificmd}"
+		sleep $((trm_maxwait/6))
 	fi
 
 	# validate input ranges
@@ -138,6 +147,18 @@ f_envload()
 		json_init
 		json_add_object "data"
 	fi
+	f_log "debug" "f_env     ::: trm_eapcheck: ${trm_eapcheck:-"-"}, trm_saecheck: ${trm_saecheck:-"-"}, trm_owecheck: ${trm_owecheck:-"-"}, trm_wificmd: ${trm_wificmd}"
+}
+
+# trim leading and trailing whitespace characters
+#
+f_trim()
+{
+	local IFS trim="${1}"
+
+	trim="${trim#"${trim%%[![:space:]]*}"}"
+	trim="${trim%"${trim##*[![:space:]]}"}"
+	printf '%s' "${trim}"
 }
 
 # prepare the 'wifi-device' sections
@@ -151,7 +172,7 @@ f_prepdev()
 	then
 		uci_set wireless "${config}" disabled 0
 	fi
-	f_log "debug" "f_prepdev ::: config: ${config}, disabled: ${disabled}"
+	f_log "debug" "f_prepdev ::: config: ${config}, disabled: ${disabled:-"-"}"
 }
 
 # prepare the 'wifi-iface' sections
@@ -201,7 +222,7 @@ f_prepif()
 			fi
 		fi
 	fi
-	f_log "debug" "f_prepif  ::: config: ${config}, mode: ${mode}, network: ${network}, radio: ${radio}, trm_radio: ${trm_radio:-"-"}, trm_active_sta: ${trm_active_sta:-"-"}, proactive: ${proactive}, trm_eapcheck: ${trm_eapcheck:-"-"}, trm_saecheck: ${trm_saecheck:-"-"}, trm_owecheck: ${trm_owecheck:-"-"}, disabled: ${disabled}"
+	f_log "debug" "f_prepif  ::: config: ${config}, mode: ${mode}, network: ${network}, radio: ${radio}, trm_radio: ${trm_radio:-"-"}, trm_active_sta: ${trm_active_sta:-"-"}, proactive: ${proactive}, disabled: ${disabled}"
 }
 
 # check net status
@@ -220,16 +241,14 @@ f_net()
 #
 f_check()
 {
-	local IFS ifname radio dev_status config sta_essid sta_bssid result uci_essid uci_bssid login_command login_command_args wait_time mode="${1}" status="${2:-"false"}" cp_domain="${3:-"false"}"
+	local IFS ifname radio dev_status config sta_essid sta_bssid result uci_essid uci_bssid login_command login_command_args wait_time=1 mode="${1}" status="${2:-"false"}" cp_domain="${3:-"false"}"
 
-	if [ "${mode}" != "initial" ] && [ "${status}" = "false" ]
+	if [ "${mode}" != "initial" ] && [ "${mode}" != "dev" ] && [ "${status}" = "false" ]
 	then
-		ubus call network reload
-		wait_time=$((trm_maxwait/6))
-		sleep "${wait_time}"
+		"${trm_wifi}" "${trm_wificmd}"
+		sleep $((trm_maxwait/6))
 	fi
 
-	wait_time=1
 	while [ "${wait_time}" -le "${trm_maxwait}" ]
 	do
 		dev_status="$(ubus -S call network.wireless status 2>/dev/null)"
@@ -507,18 +526,11 @@ f_main()
 	local IFS cnt dev config spec scan_list scan_essid scan_bssid scan_open scan_quality uci_essid cfg_essid faulty_list
 	local station_id sta sta_essid sta_bssid sta_radio sta_iface active_essid active_bssid active_radio
 
-	config_load wireless
-	config_foreach f_prepdev wifi-device
-	if [ -n "$(uci -q changes "wireless")" ]
-	then
-		uci_commit "wireless"
-		ubus call network reload
-		sleep $((trm_maxwait/6))
-	fi
 	f_check "initial" "false" "true"
 	f_log "debug" "f_main    ::: status: ${trm_ifstatus}, proactive: ${trm_proactive}"
 	if [ "${trm_ifstatus}" != "true" ] || [ "${trm_proactive}" -eq 1 ]
 	then
+		config_load wireless
 		config_foreach f_prepif wifi-iface ${trm_proactive}
 		if [ "${trm_ifstatus}" = "true" ] && [ -n "${trm_active_sta}" ] && [ "${trm_proactive}" -eq 1 ]
 		then
@@ -687,7 +699,7 @@ fi
 
 # control travelmate actions
 #
-f_envload
+f_env
 while true
 do
 	if [ -z "${trm_action}" ]
@@ -721,6 +733,6 @@ do
 		unset trm_action
 	fi
 	json_cleanup
-	f_envload
+	f_env
 	f_main
 done
