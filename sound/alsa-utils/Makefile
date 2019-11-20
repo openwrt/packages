@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alsa-utils
-PKG_VERSION:=1.1.9
+PKG_VERSION:=1.2.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.alsa-project.org/pub/utils/ \
 		http://distfiles.gentoo.org/distfiles/
-PKG_HASH:=5ddf2cbddb4bd1a4a2a6492a09c25898b08c3ad64893c3655be14194cf0a213a
+PKG_HASH:=44807bd578c5f6df6e91a11b8d37e546424a5a1ea8d8e659ee359fe01730e4f3
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -50,13 +50,18 @@ define Package/alsa-utils-tests
   URL:=https://www.alsa-project.org/
 endef
 
-CONFIGURE_ARGS+= \
+CONFIGURE_ARGS += \
 	--disable-rpath \
 	--disable-alsatest \
 	--disable-bat \
 	--disable-xmlto \
 	--disable-rst2man \
 	--with-curses=ncursesw
+
+CONFIGURE_VARS += \
+	ac_cv_header_samplerate_h=no
+
+TARGET_LDFLAGS += -latopology
 
 define Package/alsa-utils/install
 	$(INSTALL_DIR) $(1)/usr/{s,}bin
