@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modemmanager
 PKG_VERSION:=1.12.0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=ModemManager-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/ModemManager
@@ -122,6 +122,9 @@ define Package/modemmanager/install
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/modemmanager.init $(1)/etc/init.d/modemmanager
+
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
+	$(INSTALL_DATA) ./files/25-modemmanager-usb $(1)/etc/hotplug.d/usb
 
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/net
 	$(INSTALL_DATA) ./files/25-modemmanager-net $(1)/etc/hotplug.d/net
