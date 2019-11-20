@@ -173,13 +173,11 @@ include $(INCLUDE_DIR)/nls.mk
 
 MARIADB_COMMON_DEPENDS := \
 	$(ICONV_DEPENDS) \
-	+libopenssl \
-	+zlib
-
-MARIADB_COMMON_DEPENDS_EXE := \
-	$(MARIADB_COMMON_DEPENDS) \
 	+libatomic \
-	+libstdcpp
+	+libopenssl \
+	+libstdcpp \
+	+zlib \
+	@!USE_UCLIBC
 
 # Pass CPPFLAGS in the CFLAGS as otherwise the build system will
 # ignore them.
@@ -235,7 +233,7 @@ define Package/mariadb-client-base
   $(call Package/mariadb/Default)
   TITLE:=MariaDB database client base
   DEPENDS:=mariadb-common \
-	  $(MARIADB_COMMON_DEPENDS_EXE) \
+	  $(MARIADB_COMMON_DEPENDS) \
 	  +libedit
 endef
 
@@ -286,7 +284,7 @@ endef
 define Package/mariadb-server-base
   $(call Package/mariadb/Default)
   DEPENDS:=mariadb-common \
-	  $(MARIADB_COMMON_DEPENDS_EXE) \
+	  $(MARIADB_COMMON_DEPENDS) \
 	  +libaio \
 	  +liblzma \
 	  +libpcre \
