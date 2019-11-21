@@ -5,7 +5,7 @@
  #endif
  
 -#ifdef NID_blake2b512
-+#ifndef OPENSSL_NO_BLAKE2
++#if defined(NID_blake2b512) && !defined(OPENSSL_NO_BLAKE2)
  #define PY_OPENSSL_HAS_BLAKE2 1
  #endif
  
