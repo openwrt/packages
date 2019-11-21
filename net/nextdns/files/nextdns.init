@@ -23,12 +23,17 @@ dnsmasq_reload() {
         fi
 }
 
+handle_host_config() {
+    host_config_args="$host_config_args -config=$1"
+}
+
 start_service() {
         config_load nextdns
         config_get_bool enabled main enabled "1"
         rm -f /tmp/dnsmasq.d/nextdns.conf
         if [ "$enabled" = "1" ]; then
                 config_get config main config ""
+                config_list_foreach main host_config handle_host_config
                 config_get listen main listen "127.0.0.1:5342"
                 config_get_bool report_client_info main report_client_info "1"
                 config_get_bool hardened_privacy main hardened_privacy "0"
@@ -44,8 +49,10 @@ start_service() {
                 fi
 
                 procd_open_instance
+                # shellcheck disable=SC2086
                 procd_set_param command "$PROG" run \
                         -listen="$listen" \
+                        $host_config_args \
                         -config="$config" \
                         -report-client-info="$report_client_info" \
                         -hardened-privacy="$hardened_privacy" \
