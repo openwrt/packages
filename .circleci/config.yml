@@ -63,9 +63,9 @@ jobs:
           name: Download the SDK
           working_directory: ~/sdk
           command: |
-             curl "https://$SDK_HOST/$SDK_PATH/sha256sums" -sS -o sha256sums
-             curl "https://$SDK_HOST/$SDK_PATH/sha256sums.asc" -fs -o sha256sums.asc || true
-             curl "https://$SDK_HOST/$SDK_PATH/sha256sums.sig" -fs -o sha256sums.sig || true
+             curl "https://$SDK_HOST/$SDK_PATH/sha256sums" -vs -o sha256sums
+             curl "https://$SDK_HOST/$SDK_PATH/sha256sums.asc" -vs -o sha256sums.asc
+             curl "https://$SDK_HOST/$SDK_PATH/sha256sums.sig" -vs -o sha256sums.sig
              if [ ! -f sha256sums.asc ] && [ ! -f sha256sums.sig ]; then
                  echo_red "Missing sha256sums signature files"
                  exit 1
@@ -88,7 +88,7 @@ jobs:
              fi
              PATTERN=$(echo "$SDK_FILE\$" | sed -e 's/\./\\./g' -e 's/\*/.*/g')
              FILENAME=$(grep -m1 -o "$PATTERN" sha256sums)
-             curl "https://$SDK_HOST/$SDK_PATH/$FILENAME" -sS -o "$FILENAME"
+             curl "https://$SDK_HOST/$SDK_PATH/$FILENAME" -vs -o "$FILENAME"
              sha256sum -c --ignore-missing sha256sums
 
       - run:
