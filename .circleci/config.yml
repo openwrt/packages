@@ -4,7 +4,7 @@ jobs:
     docker:
       - image: docker.io/openwrtorg/packages-cci:v1.0.5
     environment:
-      - SDK_HOST: "cdn.openwrt.org"
+      - SDK_HOST: "downloads.openwrt.org"
       - SDK_PATH: "snapshots/targets/ath79/generic"
       - SDK_FILE: "openwrt-sdk-ath79-generic_*.Linux-x86_64.tar.xz"
       - BRANCH: "master"
@@ -86,9 +86,7 @@ jobs:
                      exit 1
                  fi
              fi
-             PATTERN=$(echo "$SDK_FILE\$" | sed -e 's/\./\\./g' -e 's/\*/.*/g')
-             FILENAME=$(grep -m1 -o "$PATTERN" sha256sums)
-             curl "https://$SDK_HOST/$SDK_PATH/$FILENAME" -sS -o "$FILENAME"
+             rsync -av "$SDK_HOST::downloads/$SDK_PATH/$SDK_FILE" .
              sha256sum -c --ignore-missing sha256sums
 
       - run:
