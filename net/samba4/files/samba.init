@@ -33,6 +33,7 @@ smb_header() {
 	config_get_bool DISABLE_NETBIOS	$1 disable_netbios	0
 	config_get_bool DISABLE_AD_DC	$1 disable_ad_dc	0
 	config_get_bool DISABLE_WINBIND	$1 disable_winbind	0
+	config_get_bool DISABLE_ASYNC_IO $1 disable_async_io	0
 
 	mkdir -p /var/etc
 	sed -e "s#|NAME|#$hostname#g" \
@@ -47,20 +48,13 @@ smb_header() {
 		if [ "$DISABLE_NETBIOS" -eq 1 ] || [ ! -x /usr/sbin/nmbd ]; then
 			printf "\tdisable netbios = yes\n"
 		fi
-
-		local homes
-		config_get_bool homes $1 homes 0
-		[ $homes -gt 0 ] && {
-			cat <<EOT
-
-[homes]
-	comment     = Home Directories
-	browsable   = no
-	writable = yes
-	read only   = no
-	create mask = 0750
-EOT
-		}
+		
+		if [ "$DISABLE_ASYNC_IO" -eq 1 ]; then
+			printf "\taio read size = 0\n"
+			printf "\taio write size = 0\n"
+			# sendfile bug: https://bugzilla.samba.org/show_bug.cgi?id=14095
+			printf "\tuse sendfile = no\n"
+		fi
 	} >> /var/etc/smb.conf
 
 	[ -e /etc/samba/smb.conf ] || ln -nsf /var/etc/smb.conf /etc/samba/smb.conf
