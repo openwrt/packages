@@ -27,20 +27,22 @@ start_freshclam_instance() {
 
 	[ -f /tmp/freshclam.pid ] && echo "already running" && return 0
 
-	mkdir -p $DatabaseDirectory
+	mkdir -p "$DatabaseDirectory"
 	mkdir -p /etc/clamav
 	touch /tmp/freshclam.log
 	touch /tmp/freshclam.pid
 
-	mkdir -p $(dirname $FRESHCLAM_CONFIGFILE)
-	ln -sf $freshclam_config_file $FRESHCLAM_CONFIGFILE
+	mkdir -p "$(dirname $FRESHCLAM_CONFIGFILE)"
+	ln -sf "$freshclam_config_file" "$FRESHCLAM_CONFIGFILE"
 
-	echo "UpdateLogFile " $UpdateLogFile > $FRESHCLAM_CONFIGFILE
-	echo "DatabaseMirror " $DatabaseMirror >> $FRESHCLAM_CONFIGFILE
-	echo "NotifyClamd " $NotifyClamd >> $FRESHCLAM_CONFIGFILE
-	echo "DatabaseOwner " $DatabaseOwner >> $FRESHCLAM_CONFIGFILE
-	echo "CompressLocalDatabase " $CompressLocalDatabase >> $FRESHCLAM_CONFIGFILE
-	echo "DatabaseDirectory " $DatabaseDirectory >> $FRESHCLAM_CONFIGFILE
+	{
+	echo "UpdateLogFile " "$UpdateLogFile"
+	echo "DatabaseMirror " "$DatabaseMirror"
+	echo "NotifyClamd " "$NotifyClamd"
+	echo "DatabaseOwner " "$DatabaseOwner"
+	echo "CompressLocalDatabase " "$CompressLocalDatabase"
+	echo "DatabaseDirectory " "$DatabaseDirectory"
+	} > "$FRESHCLAM_CONFIGFILE"
 
 	procd_open_instance
 	procd_set_param command $PROG -d --config-file=$FRESHCLAM_CONFIGFILE -p /tmp/freshclam.pid --no-warnings
@@ -56,8 +58,8 @@ start_service()
 stop_service()
 {
 	[ ! -f /tmp/freshclam.pid ] && echo "not running" && return 0
-	PID=`cat /tmp/freshclam.pid`
-	kill $PID
+	PID=$(cat /tmp/freshclam.pid)
+	kill "$PID"
 	rm -f /tmp/freshclam.pid
 }
 

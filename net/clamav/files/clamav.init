@@ -30,7 +30,7 @@ validate_clamav_section() {
 		'ScanPE:string' \
 		'DisableCertCheck:string' \
 		'ScanELF:string' \
-		'DetectBrokenExecutables:string' \
+		'AlertBrokenExecutables:string' \
 		'ScanOLE2:string' \
 		'ScanPDF:string' \
 		'ScanSWF:string' \
@@ -38,7 +38,7 @@ validate_clamav_section() {
 		'ScanPartialMessages:string' \
 		'ScanArchive:string' \
 		'TemporaryDirectory:string' \
-		'ArchiveBlockEncrypted:string' \
+		'AlertEncrypted:string' \
 		'MaxFileSize:string' \
 		'LocalSocket:string' \
 		'User:string' \
@@ -52,47 +52,49 @@ start_clamav_instance() {
 		return 1
 	}
 
-	mkdir -p $DatabaseDirectory
+	mkdir -p "$DatabaseDirectory"
 	mkdir -p /etc/clamav/
 	mkdir -p /var/run/clamav/
 	chmod a+rw /var/run/clamav
 
-	mkdir -p $(dirname $CLAMD_CONFIGFILE)
-	ln -sf $clamd_config_file $CLAMD_CONFIGFILE
+	mkdir -p "$(dirname $CLAMD_CONFIGFILE)"
+	ln -sf "$clamd_config_file" "$CLAMD_CONFIGFILE"
 
-	echo "LogFile " $LogFile > $CLAMD_CONFIGFILE
-	echo "LogFileMaxSize " $LogFileMaxSize >> $CLAMD_CONFIGFILE
-	echo "LogVerbose " $LogVerbose >> $CLAMD_CONFIGFILE
-	echo "ExtendedDetectionInfo " $ExtendedDetectionInfo >> $CLAMD_CONFIGFILE
-	echo "LogTime " $LogTime >> $CLAMD_CONFIGFILE
-	echo "OfficialDatabaseOnly " $OfficialDatabaseOnly >> $CLAMD_CONFIGFILE
-	echo "StreamMinPort " $StreamMinPort >> $CLAMD_CONFIGFILE
-	echo "StreamMaxPort " $StreamMaxPort >> $CLAMD_CONFIGFILE
-	echo "MaxThreads " $MaxThreads >> $CLAMD_CONFIGFILE
-	echo "ReadTimeout " $ReadTimeout >> $CLAMD_CONFIGFILE
-	echo "CommandReadTimeout " $CommandReadTimeout >> $CLAMD_CONFIGFILE
-	echo "MaxDirectoryRecursion " $MaxDirectoryRecursion >> $CLAMD_CONFIGFILE
-	echo "FollowDirectorySymlinks " $FollowDirectorySymlinks >> $CLAMD_CONFIGFILE
-	echo "FollowFileSymlinks " $FollowFileSymlinks >> $CLAMD_CONFIGFILE
-	echo "SelfCheck " $SelfCheck >> $CLAMD_CONFIGFILE
-	echo "DetectPUA " $DetectPUA >> $CLAMD_CONFIGFILE
-	echo "ScanPE " $ScanPE >> $CLAMD_CONFIGFILE
-	echo "DisableCertCheck " $DisableCertCheck >> $CLAMD_CONFIGFILE
-	echo "ScanELF " $ScanELF >> $CLAMD_CONFIGFILE
-	echo "DetectBrokenExecutables " $DetectBrokenExecutables >> $CLAMD_CONFIGFILE
-	echo "ScanOLE2 " $ScanOLE2 >> $CLAMD_CONFIGFILE
-	echo "ScanPDF " $ScanPDF >> $CLAMD_CONFIGFILE
-	echo "ScanSWF " $ScanSWF >> $CLAMD_CONFIGFILE
-	echo "ScanMail " $ScanMail >> $CLAMD_CONFIGFILE
-	echo "ScanPartialMessages " $ScanPartialMessages >> $CLAMD_CONFIGFILE
-	echo "ScanArchive " $ScanArchive >> $CLAMD_CONFIGFILE
-	echo "TemporaryDirectory " $TemporaryDirectory >> $CLAMD_CONFIGFILE
-	echo "ArchiveBlockEncrypted " $ArchiveBlockEncrypted >> $CLAMD_CONFIGFILE
-	echo "MaxFileSize " $MaxFileSize >> $CLAMD_CONFIGFILE
-	echo "LocalSocket " $LocalSocket >> $CLAMD_CONFIGFILE
-	echo "User " $User >> $CLAMD_CONFIGFILE
-	echo "ExitOnOOM " $ExitOnOOM >> $CLAMD_CONFIGFILE
-	echo "DatabaseDirectory " $DatabaseDirectory >> $CLAMD_CONFIGFILE
+	{
+	echo "LogFile " "$LogFile"
+	echo "LogFileMaxSize " "$LogFileMaxSize"
+	echo "LogVerbose " "$LogVerbose"
+	echo "ExtendedDetectionInfo " "$ExtendedDetectionInfo"
+	echo "LogTime " "$LogTime"
+	echo "OfficialDatabaseOnly " "$OfficialDatabaseOnly"
+	echo "StreamMinPort " "$StreamMinPort"
+	echo "StreamMaxPort " "$StreamMaxPort"
+	echo "MaxThreads " "$MaxThreads"
+	echo "ReadTimeout " "$ReadTimeout"
+	echo "CommandReadTimeout " "$CommandReadTimeout"
+	echo "MaxDirectoryRecursion " "$MaxDirectoryRecursion"
+	echo "FollowDirectorySymlinks " "$FollowDirectorySymlinks"
+	echo "FollowFileSymlinks " "$FollowFileSymlinks"
+	echo "SelfCheck " "$SelfCheck"
+	echo "DetectPUA " "$DetectPUA"
+	echo "ScanPE " "$ScanPE"
+	echo "DisableCertCheck " "$DisableCertCheck"
+	echo "ScanELF " "$ScanELF"
+	echo "AlertBrokenExecutables " "$AlertBrokenExecutables"
+	echo "ScanOLE2 " "$ScanOLE2"
+	echo "ScanPDF " "$ScanPDF"
+	echo "ScanSWF " "$ScanSWF"
+	echo "ScanMail " "$ScanMail"
+	echo "ScanPartialMessages " "$ScanPartialMessages"
+	echo "ScanArchive " "$ScanArchive"
+	echo "TemporaryDirectory " "$TemporaryDirectory"
+	echo "AlertEncrypted " "$AlertEncrypted"
+	echo "MaxFileSize " "$MaxFileSize"
+	echo "LocalSocket " "$LocalSocket"
+	echo "User " "$User"
+	echo "ExitOnOOM " "$ExitOnOOM"
+	echo "DatabaseDirectory " "$DatabaseDirectory"
+	} > "$CLAMD_CONFIGFILE"
 
 	procd_open_instance
 	procd_set_param command $PROG -c $CLAMD_CONFIGFILE
