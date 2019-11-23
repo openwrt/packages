@@ -13,7 +13,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-adb_ver="3.8.11"
+adb_ver="3.8.12"
 adb_basever=""
 adb_enabled=0
 adb_debug=0
@@ -536,6 +536,7 @@ f_dnsup()
 		else
 			"/etc/init.d/${adb_dns}" restart >/dev/null 2>&1
 		fi
+		sleep 5
 
 		while [ "${cnt}" -le 10 ]
 		do
@@ -565,7 +566,6 @@ f_dnsup()
 					;;
 				esac
 				out_rc=0
-				sleep 1
 				break
 			fi
 			cnt=$((cnt+1))
