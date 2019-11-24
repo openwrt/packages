@@ -30,9 +30,9 @@ Index: httpd-2.4.25/server/util.c
 ===================================================================
 --- httpd-2.4.25.orig/server/util.c
 +++ httpd-2.4.25/server/util.c
-@@ -96,6 +96,16 @@
- #undef APLOG_MODULE_INDEX
- #define APLOG_MODULE_INDEX AP_CORE_MODULE_INDEX
+@@ -102,6 +102,16 @@
+ #define AP_MAX_FNMATCH_DIR_DEPTH (128)
+ #endif
  
 +#define T_ESCAPE_SHELL_CMD    (0x01)
 +#define T_ESCAPE_PATH_SEGMENT (0x02)
