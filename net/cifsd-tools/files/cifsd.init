@@ -74,10 +74,10 @@ smb_add_share()
 	config_get read_only $1 read_only
 	config_get writeable $1 writeable
 	config_get guest_ok $1 guest_ok
-	config_get_bool force_root	$1 force_root	0
+	config_get_bool force_root $1 force_root 0
 	config_get write_list $1 write_list
 	config_get read_list $1 read_list
-	config_get_bool hide_dot_files	$1 hide_dot_files	0
+	config_get hide_dot_files $1 hide_dot_files
 	config_get veto_files $1 veto_files
 	config_get inherit_owner $1 inherit_owner
 	config_get force_create_mode $1 force_create_mode
@@ -103,14 +103,19 @@ smb_add_share()
 
 		[ -n "$browseable" ] && printf "\tbrowseable = %s\n" "$browseable"
 		[ -n "$read_only" ] && printf "\tread only = %s\n" "$read_only"
-		[ -n "$writeable" ] && printf "\twriteable = %s\n" "$writeable"
+		# possible upstream bug?
+		if [ "$read_only" = "no" ]; then
+			printf "\twriteable = yes\n"
+		else
+			[ -n "$writeable" ] && printf "\twriteable = %s\n" "$writeable"
+		fi
 		[ -n "$guest_ok" ] && printf "\tguest ok = %s\n" "$guest_ok"
 		[ -n "$inherit_owner" ] && printf "\tinherit owner = %s\n" "$inherit_owner"
 
 		[ -n "$write_list" ] && printf "\twrite list = %s\n" "$write_list"
 		[ -n "$read_list" ] && printf "\tread list = %s\n" "$read_list"
 
-		[ "$hide_dot_files" -eq 1 ] && printf "\thide dot files = %s\n" "yes"
+		[ -n "$hide_dot_files" ] && printf "\thide dot files = %s\n" "$hide_dot_files"
 		[ -n "$veto_files" ] && printf "\tveto files = %s\n" "$veto_files"
 	} >> /var/etc/cifs/smb.conf
 }
