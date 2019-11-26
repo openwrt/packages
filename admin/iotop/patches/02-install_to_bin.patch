@@ -1,0 +1,16 @@
+--- ./setup.py-orig	2019-11-26 10:14:27.000000000 +0100
++++ ./setup.py	2019-11-26 13:30:00.403150112 +0100
+@@ -4,13 +4,6 @@ from distutils.core import setup
+ from distutils.command import install as distutils_install
+ from iotop.version import VERSION
+ 
+-# Dirty hack to make setup.py install the iotop script to sbin/ instead of bin/
+-# while still honoring the choice of installing into local/ or not.
+-if hasattr(distutils_install, 'INSTALL_SCHEMES'):
+-    for d in distutils_install.INSTALL_SCHEMES.values():
+-        if d.get('scripts', '').endswith('/bin'):
+-            d['scripts'] = d['scripts'][:-len('/bin')] + '/sbin'
+-
+ setup(name='iotop',
+       version=VERSION,
+       description='Per process I/O bandwidth monitor',

@@ -1,0 +1,19 @@
+--- ./iotop.py-orig	2013-05-27 00:44:18.000000000 +0200
++++ ./iotop.py	2019-11-26 13:32:22.383729370 +0100
+@@ -1,4 +1,4 @@
+-#!/usr/bin/python
++#!/usr/bin/python3
+ # iotop: Display I/O usage of processes in a top like UI
+ # Copyright (c) 2007, 2008 Guillaume Chazarain <guichaz@gmail.com>
+ # GPL version 2 or later
+--- ./setup.py-orig	2013-05-27 00:44:18.000000000 +0200
++++ ./setup.py	2019-11-23 02:30:27.237162616 +0100
+@@ -7,7 +7,7 @@ from iotop.version import VERSION
+ # Dirty hack to make setup.py install the iotop script to sbin/ instead of bin/
+ # while still honoring the choice of installing into local/ or not.
+ if hasattr(distutils_install, 'INSTALL_SCHEMES'):
+-    for d in distutils_install.INSTALL_SCHEMES.itervalues():
++    for d in distutils_install.INSTALL_SCHEMES.values():
+         if d.get('scripts', '').endswith('/bin'):
+             d['scripts'] = d['scripts'][:-len('/bin')] + '/sbin'
+ 
