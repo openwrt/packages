@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcre2
 PKG_VERSION:=10.32
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/pcre/$(PKG_NAME)/$(PKG_VERSION)
@@ -25,12 +25,19 @@ PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
+PKG_CONFIG_DEPENDS:=\
+	CONFIG_PCRE2_JIT_ENABLED
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libpcre2/default
   SECTION:=libs
   CATEGORY:=Libraries
   URL:=https://www.pcre.org/
+endef
+
+define Package/libpcre2/config
+  source "$(SOURCE)/Config.in"
 endef
 
 define Package/libpcre2
@@ -53,7 +60,8 @@ TARGET_CFLAGS += $(FPIC)
 
 CONFIGURE_ARGS += \
 	--enable-pcre2-16 \
-	--enable-pcre2-32 
+	--enable-pcre2-32 \
+	$(if $(CONFIG_PCRE2_JIT_ENABLED),--enable-jit,--disable-jit)
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS)"
