@@ -8,17 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libplist
-PKG_VERSION:=2.0.0
-PKG_RELEASE:=5
+PKG_SOURCE_VERSION:=2.1.0
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://www.libimobiledevice.org/downloads
-PKG_HASH:=3a7e9694c2d9a85174ba1fa92417cfabaea7f6d19631e544948dc7e17e82f602
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/libimobiledevice/libplist
+PKG_MIRROR_HASH:=452ef5d6e87461a8b7a47a2274878cf200ccf480b4e81924f22ec1c445e353d0
 
-PKG_MAINTAINER:=Lukasz Baj <l.baj@radytek.com>
-PKG_LICENSE:=LGPL-2.1-or-later
-PKG_LICENSE_FILES:=COPYING.LESSER
+PKG_MAINTAINER:=
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -40,6 +39,8 @@ define Package/libplist
   CATEGORY:=Libraries
   DEPENDS:=+libxml2
   TITLE+= library
+  PKG_LICENSE:=LGPL-2.1-or-later
+  PKG_LICENSE_FILES:=COPYING.LESSER
 endef
 
 define Package/libplist/description
@@ -52,6 +53,8 @@ define Package/libplistcxx
   CATEGORY:=Libraries
   DEPENDS:=+libplist $(CXX_DEPENDS)
   TITLE+= C++ library
+  PKG_LICENSE:=LGPL-2.1-or-later
+  PKG_LICENSE_FILES:=COPYING.LESSER
 endef
 
 define Package/libplistcxx/description
@@ -65,6 +68,8 @@ define Package/libplist-utils
   CATEGORY:=Utilities
   DEPENDS:=+libplist
   TITLE+= converter
+  LICENSE:=GPL-2.0-or-later
+  LICENSE_FILES:=COPYING
 endef
 
 define Package/libplist-utils/description
