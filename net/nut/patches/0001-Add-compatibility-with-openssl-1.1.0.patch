@@ -1,43 +1,101 @@
-From fcbf18c92918ce5e81d0aab62a7aed5c2245ea4d Mon Sep 17 00:00:00 2001
-From: Eneas U de Queiroz <cote2004-github@yahoo.com>
-Date: Fri, 1 Jun 2018 11:17:28 -0300
-Subject: [PATCH 1/2] Add compatibility with openssl 1.1.0
+commit 612c05efb3c3b243da603a3a050993281888b6e3
+Author: Arjen de Korte <build+github@de-korte.org>
+Date:   Fri Mar 15 10:17:32 2019 +0100
 
-Minor adjustments were needed:
-* Openssl 1.1 libs do not need to be initialized.
-* TLSv*_method became TLS_*_method.
+    Add support for openssl-1.1.0 (#504)
+    
+    * Add support for openssl-1.1.0
+    
+    * Allow TLSv1 and higher (not just TLSv1)
+    
+    * Fix check for empty string
+    
+    * Report TLS handshake in debug mode
+    
+    * Update nut_check_libopenssl.m4
+    
+    * Update upsclient.c
+    
+    * Update netssl.c
 
-Signed-off-by: Eneas U de Queiroz <cote2004-github@yahoo.com>
----
- clients/upsclient.c        | 5 ++++-
- m4/nut_check_libopenssl.m4 | 2 +-
- server/netssl.c            | 7 +++++--
- 3 files changed, 10 insertions(+), 4 deletions(-)
-
-diff --git a/clients/upsclient.c b/clients/upsclient.c
-index b90587b0..053d60fb 100644
 --- a/clients/upsclient.c
 +++ b/clients/upsclient.c
-@@ -316,10 +316,13 @@ int upscli_init(int certverify, const char *certpath,
+@@ -299,11 +299,6 @@ int upscli_init(int certverify, const ch
+ {
+ #ifdef WITH_OPENSSL
+ 	int ret, ssl_mode = SSL_VERIFY_NONE;
+-#if OPENSSL_VERSION_NUMBER >= 0x10000000L
+-	const SSL_METHOD	*ssl_method;
+-#else
+-	SSL_METHOD	*ssl_method;
+-#endif
+ #elif defined(WITH_NSS) /* WITH_OPENSSL */
+ 	SECStatus	status;
+ #endif /* WITH_OPENSSL | WITH_NSS */
+@@ -315,22 +310,32 @@ int upscli_init(int certverify, const ch
+ 	}
  	
  #ifdef WITH_OPENSSL
- 	
-+# if OPENSSL_VERSION_NUMBER < 0x10100000L
- 	SSL_library_init();
- 	SSL_load_error_strings();
-+#  define TLS_client_method TLSv1_client_method
-+# endif /* OPENSSL_VERSION_NUMBER < 0x10100000L */
+-	
+-	SSL_library_init();
+-	SSL_load_error_strings();
  
 -	ssl_method = TLSv1_client_method();
-+	ssl_method = TLS_client_method();
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++	SSL_load_error_strings();
++	SSL_library_init();
  
- 	if (!ssl_method) {
- 		return 0;
-diff --git a/m4/nut_check_libopenssl.m4 b/m4/nut_check_libopenssl.m4
-index 1b875077..7eb401cd 100644
+-	if (!ssl_method) {
+-		return 0;
+-	}
++	ssl_ctx = SSL_CTX_new(SSLv23_client_method());
++#else
++	ssl_ctx = SSL_CTX_new(TLS_client_method());
++#endif
+ 
+-	ssl_ctx = SSL_CTX_new(ssl_method);
+ 	if (!ssl_ctx) {
+ 		upslogx(LOG_ERR, "Can not initialize SSL context");
+ 		return -1;
+ 	}
+ 	
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++	/* set minimum protocol TLSv1 */
++	SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
++#else
++	ret = SSL_CTX_set_min_proto_version(ssl_ctx, TLS1_VERSION);
++	if (ret != 1) {
++		upslogx(LOG_ERR, "Can not set minimum protocol to TLSv1");
++		return -1;
++	}
++#endif
++
+ 	if (!certpath) {
+ 		if (certverify == 1) {
+ 			upslogx(LOG_ERR, "Can not verify certificate if any is specified");
+@@ -737,7 +742,7 @@ static int upscli_sslinit(UPSCONN_t *ups
+ 	switch(res)
+ 	{
+ 	case 1:
+-		upsdebugx(3, "SSL connected");
++		upsdebugx(3, "SSL connected (%s)", SSL_get_version(ups->ssl));
+ 		break;
+ 	case 0:
+ 		upslog_with_errno(1, "SSL_connect do not accept handshake.");
+--- a/clients/upssched.c
++++ b/clients/upssched.c
+@@ -794,7 +794,7 @@ static void parse_at(const char *ntype,
+ 	}
+ 
+ 	if (!strcmp(cmd, "EXECUTE")) {
+-		if (ca1 == '\0') {
++		if (ca1[0] == '\0') {
+ 			upslogx(LOG_ERR, "Empty EXECUTE command argument");
+ 			return;
+ 		}
 --- a/m4/nut_check_libopenssl.m4
 +++ b/m4/nut_check_libopenssl.m4
-@@ -58,7 +58,7 @@ if test -z "${nut_have_libopenssl_seen}"; then
+@@ -58,7 +58,7 @@ if test -z "${nut_have_libopenssl_seen}"
  
  	dnl check if openssl is usable
  	AC_CHECK_HEADERS(openssl/ssl.h, [nut_have_openssl=yes], [nut_have_openssl=no], [AC_INCLUDES_DEFAULT])
@@ -46,28 +104,63 @@ index 1b875077..7eb401cd 100644
  
  	if test "${nut_have_openssl}" = "yes"; then
  		nut_with_ssl="yes"
-diff --git a/server/netssl.c b/server/netssl.c
-index c2f40989..0289e296 100644
 --- a/server/netssl.c
 +++ b/server/netssl.c
-@@ -387,12 +387,15 @@ void ssl_init(void)
+@@ -274,7 +274,7 @@ void net_starttls(nut_ctype_t *client, i
+ 	{
+ 	case 1:
+ 		client->ssl_connected = 1;
+-		upsdebugx(3, "SSL connected");
++		upsdebugx(3, "SSL connected (%s)", SSL_get_version(client->ssl));
+ 		break;
+ 		
+ 	case 0:
+@@ -370,13 +370,7 @@ void ssl_init(void)
+ {
+ #ifdef WITH_NSS
+ 	SECStatus status;
+-#elif defined(WITH_OPENSSL)
+-#if OPENSSL_VERSION_NUMBER >= 0x10000000L
+-	const SSL_METHOD	*ssl_method;
+-#else
+-	SSL_METHOD	*ssl_method;
+-#endif
+-#endif /* WITH_NSS|WITH_OPENSSL */
++#endif /* WITH_NSS */
+ 
+ 	if (!certfile) {
+ 		return;
+@@ -386,18 +380,29 @@ void ssl_init(void)
  
  #ifdef WITH_OPENSSL
  
-+# if OPENSSL_VERSION_NUMBER < 0x10100000L
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
  	SSL_load_error_strings();
  	SSL_library_init();
-+#  define TLS_server_method TLSv1_server_method
-+# endif /* OPENSSL_VERSION_NUMBER < 0x10100000L */
  
 -	if ((ssl_method = TLSv1_server_method()) == NULL) {
-+	if ((ssl_method = TLS_server_method()) == NULL) {
++	ssl_ctx = SSL_CTX_new(SSLv23_server_method());
++#else
++	ssl_ctx = SSL_CTX_new(TLS_server_method());
++#endif
++
++	if (!ssl_ctx) {
  		ssl_debug();
 -		fatalx(EXIT_FAILURE, "TLSv1_server_method failed");
-+		fatalx(EXIT_FAILURE, "TLS_server_method failed");
++		fatalx(EXIT_FAILURE, "SSL_CTX_new failed");
  	}
  
- 	if ((ssl_ctx = SSL_CTX_new(ssl_method)) == NULL) {
--- 
-2.16.1
-
+-	if ((ssl_ctx = SSL_CTX_new(ssl_method)) == NULL) {
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++	/* set minimum protocol TLSv1 */
++	SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
++#else
++	if (SSL_CTX_set_min_proto_version(ssl_ctx, TLS1_VERSION) != 1) {
+ 		ssl_debug();
+-		fatalx(EXIT_FAILURE, "SSL_CTX_new failed");
++		fatalx(EXIT_FAILURE, "SSL_CTX_set_min_proto_version(TLS1_VERSION)");
+ 	}
++#endif
+ 
+ 	if (SSL_CTX_use_certificate_chain_file(ssl_ctx, certfile) != 1) {
+ 		ssl_debug();
