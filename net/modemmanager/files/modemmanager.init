@@ -6,14 +6,14 @@ START=70
 
 stop_service() {
 	# Load common utils
-	. /etc/modemmanager/modemmanager.common
+	. /usr/share/ModemManager/modemmanager.common
 	# Set all configured interfaces as unavailable
 	mm_cleanup_interfaces
 }
 
 start_service() {
 	# Load common utils
-	. /etc/modemmanager/modemmanager.common
+	. /usr/share/ModemManager/modemmanager.common
 
 	# Always make sure the rundir exists
 	mkdir -m 0755 -p "${MODEMMANAGER_RUNDIR}"

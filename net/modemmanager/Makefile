@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modemmanager
 PKG_VERSION:=1.12.0
-PKG_RELEASE:=3
+PKG_RELEASE:=8
 
 PKG_SOURCE:=ModemManager-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/ModemManager
@@ -119,18 +119,19 @@ define Package/modemmanager/install
 
 	$(INSTALL_DIR) $(1)/usr/share/ModemManager
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/ModemManager/*.conf $(1)/usr/share/ModemManager
+	$(INSTALL_DATA) ./files/modemmanager.common $(1)/usr/share/ModemManager
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/modemmanager.init $(1)/etc/init.d/modemmanager
+
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
+	$(INSTALL_DATA) ./files/25-modemmanager-usb $(1)/etc/hotplug.d/usb
 
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/net
 	$(INSTALL_DATA) ./files/25-modemmanager-net $(1)/etc/hotplug.d/net
 
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/tty
 	$(INSTALL_DATA) ./files/25-modemmanager-tty $(1)/etc/hotplug.d/tty
-
-	$(INSTALL_DIR) $(1)/etc/modemmanager
-	$(INSTALL_DATA) ./files/modemmanager.common $(1)/etc/modemmanager/modemmanager.common
 
 	$(INSTALL_DIR) $(1)/lib/netifd/proto
 	$(INSTALL_BIN) ./files/modemmanager.proto $(1)/lib/netifd/proto/modemmanager.sh
