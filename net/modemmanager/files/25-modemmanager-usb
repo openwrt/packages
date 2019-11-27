@@ -7,7 +7,7 @@
 [ -z "${INTERFACE}" ] || exit
 
 # Load common utilities
-. /etc/modemmanager/modemmanager.common
+. /usr/share/ModemManager/modemmanager.common
 
 mm_clear_modem_wait_status "/sys${DEVPATH}"
 mm_cleanup_interface_by_sysfspath "/sys${DEVPATH}"

@@ -3,7 +3,7 @@
 # Copyright (C) 2016 Aleksander Morgado <aleksander@aleksander.es>
 
 # Load hotplug common utilities
-. /etc/modemmanager/modemmanager.common
+. /usr/share/ModemManager/modemmanager.common
 
 # We require a device name
 [ -n "$DEVNAME" ] || exit
