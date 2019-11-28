@@ -2,8 +2,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.9.15
-PKG_RELEASE:=2
+PKG_VERSION:=4.9.16
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.heanet.ie/mirrors/ftp.samba.org/stable/ \
@@ -12,15 +12,15 @@ PKG_SOURCE_URL:=https://ftp.heanet.ie/mirrors/ftp.samba.org/stable/ \
 		http://www.nic.funet.fi/index/samba/pub/samba/stable/ \
 		http://samba.mirror.bit.nl/samba/ftp/stable/ \
 		https://download.samba.org/pub/samba/stable/
-PKG_HASH:=377102b80b97941bf0d131b828cae8415190e5bdd2928c2e2c954e29f1904496
+PKG_HASH:=613987fac719ed90f3daad6ca12517329f0754dd51c573f6b3623e6b03cb3916
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:samba:samba
 
-# samba4=(asn1_compile) e2fsprogs=(compile_et) nfs-kernel-server=(rpcgen)
-HOST_BUILD_DEPENDS:=python/host nfs-kernel-server/host e2fsprogs/host
+# samba4=(asn1_compile,compile_et) nfs-kernel-server=(rpcgen)
+HOST_BUILD_DEPENDS:=python/host nfs-kernel-server/host
 PKG_BUILD_DEPENDS:=samba4/host
 
 PKG_CONFIG_DEPENDS:= \
@@ -30,8 +30,6 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_SAMBA4_SERVER_VFSX \
 	CONFIG_SAMBA4_SERVER_QUOTAS \
 	CONFIG_SAMBA4_SERVER_ACL \
-	CONFIG_SAMBA4_SERVER_AD_DC \
-	CONFIG_SAMBA4_SERVER_WINBIND \
 	CONFIG_PACKAGE_kmod-fs-btrfs \
 	CONFIG_PACKAGE_kmod-fs-xfs
 
@@ -58,13 +56,11 @@ endef
 define Package/samba4-libs
   $(call Package/samba4/Default)
   TITLE+= libs
-  DEPENDS:= +zlib +libtirpc +libpopt +libcomerr +libreadline \
-	+PACKAGE_libcap:libcap +PACKAGE_libpthread:libpthread +PACKAGE_libnettle:libnettle \
-	+PACKAGE_libgcrypt:libgcrypt +PACKAGE_libpam:libpam +PACKAGE_dbus:dbus +PACKAGE_libavahi-client:libavahi-client \
+  DEPENDS:= +zlib +libtirpc +libpopt +libcomerr +libreadline +libcap \
+	+PACKAGE_libpthread:libpthread +PACKAGE_libnettle:libnettle +PACKAGE_libgcrypt:libgcrypt +PACKAGE_libpam:libpam +PACKAGE_dbus:dbus +PACKAGE_libavahi-client:libavahi-client \
 	+SAMBA4_SERVER_VFS:attr \
 	+SAMBA4_SERVER_ACL:acl +SAMBA4_SERVER_ACL:attr \
-	+SAMBA4_SERVER_AVAHI:libavahi-client \
-	+SAMBA4_SERVER_AD_DC:python-base +SAMBA4_SERVER_AD_DC:python-crypto +SAMBA4_SERVER_AD_DC:libopenssl +SAMBA4_SERVER_AD_DC:libgnutls +SAMBA4_SERVER_AD_DC:libopenldap +SAMBA4_SERVER_AD_DC:jansson +SAMBA4_SERVER_AD_DC:libarchive
+	+SAMBA4_SERVER_AVAHI:libavahi-client
 endef
 
 define Package/samba4-server
@@ -80,7 +76,6 @@ define Package/samba4-server/description
   HINT: https://fitzcarraldoblog.wordpress.com/2016/10/17/a-correct-method-of-configuring-samba-for-browsing-smb-shares-in-a-home-network/
 endef
 
-# BUG: We cant add DEPENDS:= +SAMBA4_SERVER_AD_DC:python-crypto, so this only happens here via select!
 define Package/samba4-server/config
   select PACKAGE_wsdd2
   source "$(SOURCE)/Config.in"
@@ -240,24 +235,13 @@ ifeq ($(CONFIG_SAMBA4_SERVER_ACL),y)
 else
 	CONFIGURE_ARGS += --without-acl-support
 endif
-ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
-	CONFIGURE_ARGS += --enable-gnutls --with-dnsupdate --with-ads --with-ldap
-	TARGET_CFLAGS := -I$(STAGING_DIR)/usr/include/python2.7 $(TARGET_CFLAGS)
-else
-	CONFIGURE_ARGS += --without-ad-dc --without-json-audit --without-libarchive --disable-python --nopyc --nopyo \
-		--disable-gnutls --without-dnsupdate --without-ads --without-ldap
-	CONFIGURE_VARS += \
-		python_LDFLAGS="" \
-		python_LIBDIR=""
-endif
-ifeq ($(CONFIG_SAMBA4_SERVER_WINBIND),y)
-	CONFIGURE_ARGS += --with-winbind
-else
-	CONFIGURE_ARGS += --without-winbind
-endif
+# features
+CONFIGURE_ARGS += --without-ad-dc --without-json-audit --without-libarchive --disable-python --nopyc --nopyo \
+	--disable-gnutls --without-dnsupdate --without-ads --without-ldap
+CONFIGURE_VARS += \
+	python_LDFLAGS="" \
+	python_LIBDIR=""
 
-SAMBA4_IDMAP_MODULES :=
-SAMBA4_IDMAP_MODULES_SHARED :=
 SAMBA4_PDB_MODULES :=pdb_smbpasswd,pdb_tdbsam,
 SAMBA4_AUTH_MODULES :=auth_builtin,auth_sam,auth_unix,auth_script,
 SAMBA4_VFS_MODULES :=vfs_default,
@@ -283,24 +267,9 @@ ifeq ($(CONFIG_SAMBA4_SERVER_ACL),y)
 	# vfs_zfsacl needs https://github.com/zfsonlinux/zfs/tree/master/include/sys/zfs_acl.h
 	# vfs_nfs4acl_xattr needs https://github.com/notriddle/libdrpc/blob/master/rpc/xdr.h
 endif
-ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
-	SAMBA4_PDB_MODULES :=$(SAMBA4_PDB_MODULES)pdb_samba_dsdb,pdb_ldapsam,
-	SAMBA4_AUTH_MODULES :=$(SAMBA4_AUTH_MODULES)auth_samba4,
-	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_audit,vfs_extd_audit,vfs_full_audit,
-endif
-ifeq ($(CONFIG_SAMBA4_SERVER_WINBIND),y)
-	SAMBA4_IDMAP_MODULES :=$(SAMBA4_IDMAP_MODULES)idmap_tdb,idmap_passdb,idmap_nss,nss_info_template,
-	SAMBA4_IDMAP_MODULES_SHARED :=$(SAMBA4_IDMAP_MODULES_SHARED)idmap_autorid,idmap_rid,idmap_hash,idmap_tdb2,idmap_script,
-ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
-	SAMBA4_IDMAP_MODULES_SHARED :=$(SAMBA4_IDMAP_MODULES_SHARED)idmap_ad,idmap_ldap,idmap_rfc2307,
-	# idmap_ad needs --with-ads
-	# idmap_rfc2307 needs ldap headers
-endif
-	SAMBA4_AUTH_MODULES :=$(SAMBA4_AUTH_MODULES)auth_winbind,
-endif
 
-SAMBA4_MODULES :=${SAMBA4_VFS_MODULES}${SAMBA4_AUTH_MODULES}${SAMBA4_PDB_MODULES}${SAMBA4_IDMAP_MODULES}
-SAMBA4_MODULES_SHARDED :=${SAMBA4_VFS_MODULES_SHARED}${SAMBA4_IDMAP_MODULES_SHARED}
+SAMBA4_MODULES :=${SAMBA4_VFS_MODULES}${SAMBA4_AUTH_MODULES}${SAMBA4_PDB_MODULES}
+SAMBA4_MODULES_SHARDED :=${SAMBA4_VFS_MODULES_SHARED}
 
 CONFIGURE_ARGS += \
 		--with-static-modules=$(SAMBA4_MODULES)!DEFAULT,!FORCED \
@@ -320,12 +289,6 @@ endif
 ifeq ($(CONFIG_SAMBA4_SERVER_NETBIOS),y)
 	BUILD_TARGETS_SERVER :=$(BUILD_TARGETS_SERVER),nmbd
 endif
-ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
-	BUILD_TARGETS_SERVER :=$(BUILD_TARGETS_SERVER),samba,nsstest,ntlm_auth,samba4kinit,samba4kgetcred,samba4kpasswd,samba4ktutil
-endif
-ifeq ($(CONFIG_SAMBA4_SERVER_WINBIND),y)
-	BUILD_TARGETS_SERVER :=$(BUILD_TARGETS_SERVER),winbindd,wbinfo,winbind_krb5_locator
-endif
 # CONFIG_PACKAGE_samba4-client
 BUILD_TARGETS_CLIENT :=client/smbclient,client/cifsdd
 # CONFIG_PACKAGE_samba4-admin
@@ -336,13 +299,9 @@ BUILD_TARGETS_UTILS :=smbstatus,smbtree,smbget,mvxattr,nmblookup
 # lib bundling
 # NOTE: bundle + make private, we want to avoid version configuration (build, link) conflicts
 CONFIGURE_ARGS += --builtin-libraries=talloc,tevent,tevent-util,texpect,tdb,ldb,tdr,cmocka
-HOST_CONFIGURE_ARGS += --builtin-libraries=replace --nonshared-binary=asn1_compile
-
-ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
-CONFIGURE_ARGS += --bundled-libraries=talloc,tevent,tevent-util,texpect,tdb,ldb,tdr,cmocka,replace,pytalloc-util,pyldb-util,roken,wind,hx509,asn1,heimbase,hcrypto,krb5,gssapi,heimntlm,hdb,kdc,NONE
-else
+HOST_CONFIGURE_ARGS += --builtin-libraries=replace --nonshared-binary=asn1_compile,compile_et
+#CONFIGURE_ARGS += --bundled-libraries=talloc,tevent,tevent-util,texpect,tdb,ldb,tdr,cmocka,replace,!asn1_compile,!compile_et,!popt
 CONFIGURE_ARGS += --bundled-libraries=talloc,tevent,tevent-util,texpect,tdb,ldb,tdr,cmocka,replace,roken,wind,hx509,asn1,heimbase,hcrypto,krb5,gssapi,heimntlm,hdb,kdc,NONE
-endif
 # BUG: --private-libraries, Does not work for System possible libs, will not get "samba4" suffix!
 CONFIGURE_ARGS += --private-libraries=talloc,tevent,tevent-util,texpect,tdb,ldb,tdr,cmocka,replace
 # CONFIGURE_ARGS += --disable-symbol-versions
@@ -350,23 +309,22 @@ CONFIGURE_ARGS += --private-libraries=talloc,tevent,tevent-util,texpect,tdb,ldb,
 define Host/Compile
 	(cd $(HOST_BUILD_DIR); \
 		./buildtools/bin/waf build \
-		--targets=asn1_compile \
+		--targets=asn1_compile,compile_et \
 	)
 endef
 
 define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/bin/asn1_compile $(STAGING_DIR_HOSTPKG)/bin/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/bin/compile_et $(STAGING_DIR_HOSTPKG)/bin/
 endef
 
 define Build/Prepare
 	$(Build/Prepare/Default)
-ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),)
 	# un-bundle dnspython
 	$(SED) '/"dns.resolver":/d' $(PKG_BUILD_DIR)/third_party/wscript
 	# unbundle iso8601
 	$(SED) '/"iso8601":/d' $(PKG_BUILD_DIR)/third_party/wscript
-endif
 endef
 
 define Build/Configure
@@ -379,7 +337,7 @@ define Build/Configure
 	$(call Build/Configure/Default)
 endef
 
-# BUG: We need to use "waf install --targets=" otherwise a "make install" or "waf install" will retrigger a full recompile of all possible targets!
+# Note: We need to build via "waf install --targets=". Why do we also need to add the modules as targets here?
 define Build/Compile
 	(cd $(PKG_BUILD_DIR); \
 		./buildtools/bin/waf install \
@@ -398,20 +356,13 @@ define Package/samba4-libs/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/samba/*.so* $(1)/usr/lib/
 	
-	$(INSTALL_DIR) $(1)/usr/lib/samba/vfs $(1)/usr/lib/samba/idmap $(1)/usr/lib/samba/ldb $(1)/usr/lib/samba/krb5
-	if [ -d $(PKG_INSTALL_DIR)/usr/lib/samba/idmap ]; then \
-		$(CP) $(PKG_INSTALL_DIR)/usr/lib/samba/idmap $(1)/usr/lib/samba/; \
-	fi
+	$(INSTALL_DIR) $(1)/usr/lib/samba/vfs $(1)/usr/lib/samba/ldb $(1)/usr/lib/samba/krb5
 	if [ -d $(PKG_INSTALL_DIR)/usr/lib/samba/vfs ]; then \
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/samba/vfs $(1)/usr/lib/samba/; \
 	fi
 	if [ -d $(PKG_INSTALL_DIR)/usr/lib/samba/krb5 ]; then \
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/samba/krb5 $(1)/usr/lib/samba/; \
 	fi
-ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
-	$(INSTALL_DIR) $(1)/usr/lib/python2.7
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/python2.7 $(1)/usr/lib/
-endif
 endef
 
 define Package/samba4-client/install
@@ -436,18 +387,8 @@ define Package/samba4-server/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{smbpasswd,pdbedit,testparm} $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/smbd $(1)/usr/sbin/
-ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{samba-tool,ntlm_auth,smbtar} $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/{samba,samba-gpupdate,samba_dnsupdate,samba_kcc,samba_spnupdate,samba_upgradedns} $(1)/usr/sbin/
-	# waf does not install those?
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/{samba4kinit,samba4kgetcred,samba4kpasswd,samba4ktutil} $(1)/usr/bin/
-endif
 ifeq ($(CONFIG_SAMBA4_SERVER_NETBIOS),y)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/nmbd $(1)/usr/sbin/
-endif
-ifeq ($(CONFIG_SAMBA4_SERVER_WINBIND),y)
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/wbinfo $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/winbindd $(1)/usr/sbin/
 endif
 ifeq ($(CONFIG_SAMBA4_SERVER_ACL),y)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/sharesec $(1)/usr/bin/
@@ -465,10 +406,6 @@ define Package/samba4-server/conffiles
 /etc/samba/smbpasswd
 /etc/samba/secrets.tdb
 /etc/samba/passdb.tdb
-/etc/samba/idmap.ldb
-/etc/samba/lmhosts
-/etc/nsswitch.conf
-/etc/krb5.conf
 endef
 
 $(eval $(call HostBuild))
