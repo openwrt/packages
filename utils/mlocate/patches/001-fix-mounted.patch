@@ -1,0 +1,10 @@
+--- a/src/updatedb.c
++++ b/src/updatedb.c
+@@ -15,6 +15,7 @@ Street, Fifth Floor, Boston, MA 02110-13
+
+ Author: Miloslav Trmac <mitr@redhat.com> */
+ #include <config.h>
++#include <paths.h>
+
+ #include <arpa/inet.h>
+ #include <assert.h>
