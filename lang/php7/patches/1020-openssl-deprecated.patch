@@ -39,7 +39,7 @@
  	php_info_print_table_row(2, "OpenSSL Header Version", OPENSSL_VERSION_TEXT);
  	php_info_print_table_row(2, "Openssl default config", default_ssl_conf_filename);
  	php_info_print_table_end();
-@@ -2361,11 +2367,11 @@ PHP_FUNCTION(openssl_x509_parse)
+@@ -2364,11 +2370,11 @@ PHP_FUNCTION(openssl_x509_parse)
  	add_assoc_string(return_value, "serialNumberHex", hex_serial);
  	OPENSSL_free(hex_serial);
  
@@ -55,7 +55,7 @@
  
  	tmpstr = (char *)X509_alias_get0(cert, NULL);
  	if (tmpstr) {
-@@ -3455,8 +3461,8 @@ PHP_FUNCTION(openssl_csr_sign)
+@@ -3459,8 +3465,8 @@ PHP_FUNCTION(openssl_csr_sign)
  		php_openssl_store_errors();
  		goto cleanup;
  	}
@@ -66,7 +66,7 @@
  	i = X509_set_pubkey(new_cert, key);
  	if (!i) {
  		php_openssl_store_errors();
-@@ -6072,7 +6078,7 @@ PHP_FUNCTION(openssl_seal)
+@@ -6092,7 +6098,7 @@ PHP_FUNCTION(openssl_seal)
  
  	/* allocate one byte extra to make room for \0 */
  	buf = emalloc(data_len + EVP_CIPHER_CTX_block_size(ctx));
@@ -75,7 +75,7 @@
  
  	if (EVP_SealInit(ctx, cipher, eks, eksl, &iv_buf[0], pkeys, nkeys) <= 0 ||
  			!EVP_SealUpdate(ctx, buf, &len1, (unsigned char *)data, (int)data_len) ||
-@@ -6622,7 +6628,7 @@ PHP_FUNCTION(openssl_encrypt)
+@@ -6645,7 +6651,7 @@ PHP_FUNCTION(openssl_encrypt)
  	if (free_iv) {
  		efree(iv);
  	}
@@ -84,7 +84,7 @@
  	EVP_CIPHER_CTX_free(cipher_ctx);
  }
  /* }}} */
-@@ -6709,7 +6715,7 @@ PHP_FUNCTION(openssl_decrypt)
+@@ -6732,7 +6738,7 @@ PHP_FUNCTION(openssl_decrypt)
  	if (base64_str) {
  		zend_string_release(base64_str);
  	}
@@ -103,15 +103,15 @@
 +#define HAVE_TLS 1
 +#endif
 +
-+#ifndef OPENSSL_NO_TLS1_METHOD
++#if PHP_OPENSSL_API_VERSION < 0x10100
 +#define HAVE_TLS1 1
 +#endif
 +
-+#ifndef OPENSSL_NO_TLS1_1_METHOD
++#if PHP_OPENSSL_API_VERSION < 0x10100
  #define HAVE_TLS11 1
 +#endif
 +
-+#ifndef OPENSSL_NO_TLS1_2_METHOD
++#if PHP_OPENSSL_API_VERSION < 0x10100
  #define HAVE_TLS12 1
 +#endif
  
@@ -131,7 +131,7 @@
  
  /* Simplify ssl context option retrieval */
  #define GET_VER_OPT(name) \
-@@ -960,9 +974,23 @@ static const SSL_METHOD *php_openssl_select_crypto_method(zend_long method_value
+@@ -968,9 +982,23 @@ static const SSL_METHOD *php_openssl_select_crypto_method(zend_long method_value
  		php_error_docref(NULL, E_WARNING,
  				"SSLv3 unavailable in the OpenSSL library against which PHP is linked");
  		return NULL;
@@ -155,7 +155,7 @@
  	} else if (method_value == STREAM_CRYPTO_METHOD_TLSv1_1) {
  #ifdef HAVE_TLS11
  		return is_client ? TLSv1_1_client_method() : TLSv1_1_server_method();
-@@ -1014,9 +1042,11 @@ static int php_openssl_get_crypto_method_ctx_flags(int method_flags) /* {{{ */
+@@ -1022,9 +1050,11 @@ static int php_openssl_get_crypto_method_ctx_flags(int method_flags) /* {{{ */
  		ssl_ctx_options |= SSL_OP_NO_SSLv3;
  	}
  #endif
