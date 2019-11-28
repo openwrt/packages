@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-simplejson
-PKG_VERSION:=3.16.0
-PKG_RELEASE:=3
+PKG_VERSION:=3.17.0
+PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 PKG_CPE_ID:=cpe:/a:simplejson_project:simplejson
 
 PYPI_NAME:=simplejson
-PKG_HASH:=b1f329139ba647a9548aa05fb95d046b4a677643070dc2afc05fa2e975d09ca5
+PKG_HASH:=2b4b2b738b3b99819a17feaf118265d0753d5536049ea570b3c43b51c4701e81
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
