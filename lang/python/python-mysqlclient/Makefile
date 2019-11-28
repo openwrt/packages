@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-mysqlclient
-PKG_VERSION:=1.4.5
+PKG_VERSION:=1.4.6
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 
 PYPI_NAME:=mysqlclient
-PKG_HASH:=e80109b0ae8d952b900b31b623181532e5e89376d707dcbeb63f99e69cefe559
+PKG_HASH:=f3fdaa9a38752a3b214a6fe79d7cae3653731a53e577821f9187e67cbecb2e16
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 include ../pypi.mk
