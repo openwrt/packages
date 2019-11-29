@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libugpio
-PKG_VERSION:=0.0.6
-PKG_RELEASE:=2
+PKG_VERSION:=0.0.7
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/mhei/libugpio/releases/download/v$(PKG_VERSION)
-PKG_HASH:=07d96b46560f42843e46869f45f53d48afee71f9bbcf06f43267fafad0d50b05
+PKG_HASH:=4e0ae6f9cd3d670eb5ba9595a24696a034fda3c7c1900aa9d2cae5a4cd9dab64
 
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING.LESSER
@@ -60,7 +60,7 @@ endef
 
 define Package/libugpio/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libugpio.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libugpio.so.* $(1)/usr/lib/
 endef
 
 define Package/gpioctl-sysfs/install
