@@ -49,7 +49,7 @@ preconfigure() {
         echo "pass: ${PASS}"
         echo
         echo "It is also recommended to follow the steps in"
-        echo "https://wiki.openwrt.org/doc/uci/uhttpd#securing_uhttpd"
+        echo "https://openwrt.org/docs/guide-user/services/webserver/uhttpd#securing_uhttpd"
         echo "to secure access to uhttpd."
     fi
 }
