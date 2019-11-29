@@ -1,0 +1,5 @@
+#!/bin/sh
+
+rndc-confgen -a
+
+exit 0
