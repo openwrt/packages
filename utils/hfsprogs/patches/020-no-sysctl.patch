@@ -1,0 +1,192 @@
+diff --git a/fsck_hfs.tproj/cache.c b/fsck_hfs.tproj/cache.c
+index 90911c7..bb4692f 100644
+--- a/fsck_hfs.tproj/cache.c
++++ b/fsck_hfs.tproj/cache.c
+@@ -168,7 +168,7 @@ void CalculateCacheSizes(uint64_t cacheSize, uint32_t *calcBlockSize, uint32_t *
+ 	if (cacheSize > max_size_t ||
+ 		cacheSize > MaxCacheSize) {
+ 		if (debug) {
+-			printf ("\tCache size should be greater than %uM and less than %luM\n", MinCacheSize/(1024*1024), max_size_t/(1024*1024));
++			printf ("\tCache size should be greater than %uM and less than %uM\n", MinCacheSize/(1024*1024), max_size_t/(1024*1024));
+ 		}
+ 		cacheSize = MaxCacheSize;
+ 	}
+@@ -1044,10 +1044,10 @@ out:
+  *				 the length of buffer.
+  *		ENXIO  - invalid disk offset
+  */
+-int CacheWriteBufferToDisk (Cache_t *cache, uint64_t offset, uint32_t write_len, u_char *buffer, uint32_t buf_len)
++int CacheWriteBufferToDisk (Cache_t *cache, uint64_t offset, uint32_t write_len, uint8_t *buffer, uint32_t buf_len)
+ {
+ 	int error;
+-	u_char *write_buffer = NULL;
++	uint8_t *write_buffer = NULL;
+ 	uint32_t io_count;
+ 	uint32_t buf_offset;
+ 	uint32_t bytes_remain;
+diff --git a/fsck_hfs.tproj/cache.h b/fsck_hfs.tproj/cache.h
+index d5a661e..0e3f4d8 100644
+--- a/fsck_hfs.tproj/cache.h
++++ b/fsck_hfs.tproj/cache.h
+@@ -251,6 +251,6 @@ int CacheCopyDiskBlocks (Cache_t *cache, uint64_t from_offset, uint64_t to_offse
+  * If no buffer is provided or if length of buffer is zero, the function
+  * writes zeros on disk from offset upto write_len bytes.
+  */
+-int CacheWriteBufferToDisk (Cache_t *cache, uint64_t offset, uint32_t write_len, u_char *buffer, uint32_t buf_len);
++int CacheWriteBufferToDisk (Cache_t *cache, uint64_t offset, uint32_t write_len, uint8_t *buffer, uint32_t buf_len);
+ #endif
+ 
+diff --git a/fsck_hfs.tproj/dfalib/SControl.c b/fsck_hfs.tproj/dfalib/SControl.c
+index 0a87ac7..e40311c 100644
+--- a/fsck_hfs.tproj/dfalib/SControl.c
++++ b/fsck_hfs.tproj/dfalib/SControl.c
+@@ -326,7 +326,7 @@ DoAgain:
+ 	dataArea.DrvNum				= fsReadRef;
+ 	dataArea.liveVerifyState 	= liveMode;
+ 	dataArea.scanCount		= scanCount;
+-    	if (strncpy(dataArea.deviceNode, rdevnode, sizeof(dataArea.deviceNode)) != strlen(rdevnode)) {
++    	if (strlen(strncpy(dataArea.deviceNode, rdevnode, sizeof(dataArea.deviceNode))) != strlen(rdevnode)) {
+ 		dataArea.deviceNode[0] = '\0';
+ 	}
+     	
+diff --git a/fsck_hfs.tproj/dfalib/SVerify1.c b/fsck_hfs.tproj/dfalib/SVerify1.c
+index 4ddaa8c..b7726a9 100644
+--- a/fsck_hfs.tproj/dfalib/SVerify1.c
++++ b/fsck_hfs.tproj/dfalib/SVerify1.c
+@@ -3454,7 +3454,7 @@ OSErr	VLockedChk( SGlobPtr GPtr )
+ 	}
+ 	else		//	Because we don't have the unicode converters, just fill it with a dummy name.
+ 	{
+-		CopyMemory( "\x0dPure HFS Plus", calculatedVCB->vcbVN, sizeof(Str27) );
++		memcpy(calculatedVCB->vcbVN, "\x0dPure HFS Plus", sizeof(Str27) );
+ 	}
+ 		
+ 	GPtr->TarBlock = hint;
+diff --git a/fsck_hfs.tproj/dfalib/Scavenger.h b/fsck_hfs.tproj/dfalib/Scavenger.h
+index d71b3eb..cce261e 100644
+--- a/fsck_hfs.tproj/dfalib/Scavenger.h
++++ b/fsck_hfs.tproj/dfalib/Scavenger.h
+@@ -46,9 +46,8 @@
+ #include <sys/kauth.h>
+ #include <sys/syslimits.h>
+ #endif
+-#include <sys/errno.h>
++#include <errno.h>
+ #include <sys/param.h>
+-#include <sys/sysctl.h>
+ #include <sys/mount.h>
+ #include <hfs/hfs_mount.h>
+ 
+diff --git a/fsck_hfs.tproj/fsck_hfs.c b/fsck_hfs.tproj/fsck_hfs.c
+index 446a27a..b02166c 100644
+--- a/fsck_hfs.tproj/fsck_hfs.c
++++ b/fsck_hfs.tproj/fsck_hfs.c
+@@ -256,7 +256,7 @@ main(argc, argv)
+ 				break;
+ 			}
+ 		case 'v':
+-			fprintf(stderr, "%s: version %s\n", progname, VERSION);
++			fprintf(stderr, "%s: version %s\n", progname, "VERSION");
+ 			exit(0);
+ 			break;
+ 		case 'y':
+diff --git a/fsck_hfs.tproj/fsck_messages.c b/fsck_hfs.tproj/fsck_messages.c
+index 6c2d265..3536dfc 100644
+--- a/fsck_hfs.tproj/fsck_messages.c
++++ b/fsck_hfs.tproj/fsck_messages.c
+@@ -84,7 +84,7 @@ printv(fsck_ctx_t c, const char *fmt, va_list ap)
+ 
+ 	if (c == NULL)
+ 		return;
+-	__va_copy(ap2, ap);	// Just in case we need it
++	va_copy(ap2, ap);	// Just in case we need it
+ 	length = vsnprintf(buf, BUFSIZ, fmt, ap);
+ 	if (length > BUFSIZ) {
+ 		// We need to allocate space for it
+diff --git a/fsck_hfs.tproj/utilities.c b/fsck_hfs.tproj/utilities.c
+index 7ad4fe8..1a6e615 100644
+--- a/fsck_hfs.tproj/utilities.c
++++ b/fsck_hfs.tproj/utilities.c
+@@ -55,7 +55,7 @@
+ #include <stddef.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
+-#include <sys/errno.h>
++#include <errno.h>
+ #if LINUX
+ #include <limits.h>
+ #include <signal.h>
+@@ -70,13 +70,13 @@
+ #include <string.h>
+ #include <unistd.h> 
+ #include <stdlib.h>
+-#include <sys/sysctl.h>
+ 
+ #include "fsck_hfs.h"
+ 
+ char *rawname __P((char *name));
+ char *unrawname __P((char *name));
+ 
++va_list empty_va_list;
+ 
+ int
+ reply(char *question)
+@@ -225,11 +225,11 @@ rawname(char *name)
+ 	(void)strncpy(rawbuf, name, sizeof(rawbuf));
+ 	*dp = '/';
+ #if LINUX
+-	(void)strncat(rawbuf, "/", sizeof(rawbuf));
++	(void)strncat(rawbuf, "/", sizeof("/"));
+ #else
+-	(void)strncat(rawbuf, "/r", sizeof(rawbuf));
++	(void)strncat(rawbuf, "/r", sizeof("/r"));
+ #endif
+-	(void)strncat(rawbuf, &dp[1], sizeof(rawbuf));
++	(void)strncat(rawbuf, &dp[1], sizeof(&dp[1]));
+ 
+ 	return (rawbuf);
+ }
+@@ -547,8 +547,8 @@ setup_logging(void)
+ 		cur_in_mem = in_mem_log;
+ 
+ 		t = time(NULL);
+-		print_to_mem(DO_STR, "\n%s: ", cdevname ? cdevname : "UNKNOWN-DEV", NULL); 
+-		print_to_mem(DO_STR, "fsck_hfs run at %s", ctime(&t), NULL);
++		print_to_mem(DO_STR, "\n%s: ", cdevname ? cdevname : "UNKNOWN-DEV", empty_va_list);
++		print_to_mem(DO_STR, "fsck_hfs run at %s", ctime(&t), empty_va_list);
+ 
+ 		if (live_fsck && log_file) {
+ 		    pthread_cond_init(&mem_buf_cond, NULL);
+@@ -670,7 +670,7 @@ static int need_prefix=1;
+ 	LOG_PREFIX;				\
+ 	fprintf(log_file, fmt, str);		\
+     } else { \
+-	print_to_mem(DO_STR, fmt, str, NULL);	\
++	print_to_mem(DO_STR, fmt, str, empty_va_list);	\
+     }
+ 
+ 
+@@ -792,7 +792,7 @@ vplog(const char *fmt, va_list ap)
+ 
+     if (!live_fsck) {
+         /* copy va_list as it will be used again later */
+-		__va_copy(ap_stdout, ap);
++		va_copy(ap_stdout, ap);
+ 		vfprintf(stdout, fmt, ap_stdout);
+     }
+ 
+diff --git a/newfs_hfs.tproj/makehfs.c b/newfs_hfs.tproj/makehfs.c
+index 7315dbc..1e0d68a 100644
+--- a/newfs_hfs.tproj/makehfs.c
++++ b/newfs_hfs.tproj/makehfs.c
+@@ -36,9 +36,8 @@
+ #include <time.h>
+ #include "missing.h"
+ #endif
+-#include <sys/errno.h>
++#include <errno.h>
+ #include <sys/stat.h>
+-#include <sys/sysctl.h>
+ #if !LINUX
+ #include <sys/vmmeter.h>
+ #endif
