@@ -12,7 +12,7 @@ PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.7.8
 # Release == build
 # increase on changes of services files or tld_names.dat
-PKG_RELEASE:=12
+PKG_RELEASE:=13
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=
@@ -36,7 +36,7 @@ define Package/ddns-scripts
 endef
 # shown in LuCI package description
 define Package/ddns-scripts/description
-    Dynamic DNS Client scripts (with IPv6 support) - Info: http://wiki.openwrt.org/doc/howto/ddns.client
+    Dynamic DNS Client scripts (with IPv6 support) - Info: https://openwrt.org/docs/guide-user/services/ddns/client
 endef
 # shown in menuconfig <Help>
 define Package/ddns-scripts/config
@@ -50,7 +50,7 @@ define Package/ddns-scripts/config
 		  - log file support
 		  - support to run once
 		Version: $(PKG_VERSION)-$(PKG_RELEASE)
-		Info   : http://wiki.openwrt.org/doc/howto/ddns.client
+		Info   : https://openwrt.org/docs/guide-user/services/ddns/client
 endef
 
 ###### *************************************************************************
