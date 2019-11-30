@@ -9,7 +9,7 @@ PECL_NAME:=krb5
 PECL_LONGNAME:=Bindings for the Kerberos library
 
 PKG_VERSION:=1.1.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_HASH:=3301e047fc7dc3574da19b2a4b18e15feca5ad39db9335c3353a8e16b855c35b
 
 PKG_NAME:=php7-pecl-krb5
@@ -31,7 +31,9 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 include ../php7/pecl.mk
 
-CONFIGURE_ARGS+= --with-krb5=shared,"$(STAGING_DIR)/usr"
+CONFIGURE_ARGS+= \
+	--with-krb5=shared,"$(STAGING_DIR)/usr" \
+	--with-krb5config=$(STAGING_DIR)/usr/bin/krb5-config
 
 $(eval $(call PECLPackage,krb5,$(PECL_LONGNAME),+krb5-libs,30))
 $(eval $(call BuildPackage,$(PKG_NAME)))
