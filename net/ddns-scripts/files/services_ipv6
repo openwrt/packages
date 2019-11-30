@@ -38,10 +38,10 @@
 #.no-ip.com / noip.com	!!! Please install additional package "ddns-scripts_no-ip_com"
 #.route53-v1		!!! Please install additional package "ddns-scripts_route53-v1"
 
-"afraid.org-basicauth"	"http://[USERNAME]:[PASSWORD]@freedns.afraid.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
-"afraid.org-keyauth"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
-"afraid.org-v2-basic"	"http://[USERNAME]:[PASSWORD]@v6.sync.afraid.org/u/?h=[DOMAIN]&ip=[IP]"
-"afraid.org-v2-token"	"http://v6.sync.afraid.org/u/[PASSWORD]/?address=[IP]"
+"afraid.org-basicauth"	"https://[USERNAME]:[PASSWORD]@freedns.afraid.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
+"afraid.org-keyauth"	"https://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
+"afraid.org-v2-basic"	"https://[USERNAME]:[PASSWORD]@v6.sync.afraid.org/u/?h=[DOMAIN]&ip=[IP]"
+"afraid.org-v2-token"	"https://v6.sync.afraid.org/u/[PASSWORD]/?address=[IP]"
 
 "all-inkl.com"		"http://[USERNAME]:[PASSWORD]@dyndns.kasserver.com/?myip=[IP]"
 
