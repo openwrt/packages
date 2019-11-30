@@ -29,7 +29,7 @@ if [ -x "${ban_logread}" ]
 then
 	f_log "info" "log/banIP service started"
 	"${ban_logread}" -f -e "${ban_sshdaemon}\|luci: failed login" | \
-		{ grep -qE "Exit before auth|luci: failed login|[0-9]+ \[preauth\]$"; [ $? -eq 0 ] && /etc/init.d/banip refresh; }
+		{ grep -q "Exit before auth\|luci: failed login\|error: maximum authentication attempts exceeded"; [ $? -eq 0 ] && /etc/init.d/banip refresh; }
 else
 	f_log "err" "can't start log/banIP service"
 fi

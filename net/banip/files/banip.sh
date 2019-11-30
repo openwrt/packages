@@ -13,7 +13,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-ban_ver="0.3.10"
+ban_ver="0.3.11"
 ban_basever=""
 ban_enabled=0
 ban_automatic="1"
@@ -280,13 +280,16 @@ f_envcheck()
 	#
 	if [ -z "${ban_sshdaemon}" ]
 	then
-		utils="dropbear sshd"
+		utils="sshd dropbear"
 		for util in ${utils}
 		do
 			if [ -x "$(command -v "${util}")" ]
 			then
-				ban_sshdaemon="${util}"
-				break
+				if [ "$("/etc/init.d/${util}" enabled; printf "%u" ${?})" -eq 0 ]
+				then
+					ban_sshdaemon="${util}"
+					break
+				fi
 			fi
 		done
 	fi
@@ -636,7 +639,13 @@ f_main()
 	local src_name src_on src_url src_rset src_setipv src_settype src_ruletype src_cat src_log src_addon src_ts src_rc
 	local wan_input wan_forward lan_input lan_forward target_src target_dst ssh_log luci_log
 
-	ssh_log="$(logread -e "${ban_sshdaemon}" | grep -o "${ban_sshdaemon}.*" | sed 's/:[0-9]*$//g')"
+	if [ "${ban_sshdaemon}" = "dropbear" ]
+	then
+		ssh_log="$(logread -e "${ban_sshdaemon}" | grep -o "${ban_sshdaemon}.*" | sed 's/:[0-9]*$//g')"
+	elif [ "${ban_sshdaemon}" = "sshd" ]
+	then
+		ssh_log="$(logread -e "${ban_sshdaemon}" | grep -o "${ban_sshdaemon}.*" | sed 's/ port.*$//g')"
+	fi
 	luci_log="$(logread -e "luci: failed login" | grep -o "luci:.*")"
 	mem_total="$(awk '/^MemTotal/ {print int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
 	mem_free="$(awk '/^MemFree/ {print int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
@@ -748,7 +757,7 @@ f_main()
 								done
 							elif [ "${ban_sshdaemon}" = "sshd" ]
 							then
-								src_addon="$(printf "%s\\n" "${ssh_log}" | grep -E "[0-9]+ \[preauth\]$" | awk 'match($0,/([0-9]{1,3}\.){3}[0-9]{1,3}$/){ORS=" ";print substr($0,RSTART,RLENGTH)}')"
+								src_addon="$(printf "%s\\n" "${ssh_log}" | grep -F "error: maximum authentication attempts exceeded" | awk 'match($0,/([0-9]{1,3}\.){3}[0-9]{1,3}$/){ORS=" ";print substr($0,RSTART,RLENGTH)}')"
 							fi
 							src_addon="${src_addon} $(printf "%s\\n" "${luci_log}" | awk 'match($0,/([0-9]{1,3}\.){3}[0-9]{1,3}$/){ORS=" ";print substr($0,RSTART,RLENGTH)}')"
 						;;
@@ -762,7 +771,7 @@ f_main()
 								done
 							elif [ "${ban_sshdaemon}" = "sshd" ]
 							then
-								src_addon="$(printf "%s\\n" "${ssh_log}" | grep -E "[0-9]+ \[preauth\]$" | awk 'match($0,/(([0-9A-f]{0,4}::?){1,7}[0-9A-f]{0,4}$)/){ORS=" ";print substr($0,RSTART,RLENGTH)}')"
+								src_addon="$(printf "%s\\n" "${ssh_log}" | grep -F "error: maximum authentication attempts exceeded" | awk 'match($0,/(([0-9A-f]{0,4}::?){1,7}[0-9A-f]{0,4}$)/){ORS=" ";print substr($0,RSTART,RLENGTH)}')"
 							fi
 							src_addon="${src_addon} $(printf "%s\\n" "${luci_log}" | awk 'match($0,/(([0-9A-f]{0,4}::?){1,7}[0-9A-f]{0,4}$)/){ORS=" ";print substr($0,RSTART,RLENGTH)}')"
 						;;
