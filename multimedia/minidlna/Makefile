@@ -10,8 +10,8 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=minidlna
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL=git://minidlna.git.sourceforge.net/gitroot/minidlna/minidlna
 PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:https://git.code.sf.net/p/minidlna/git
 PKG_SOURCE_DATE:=2018-04-10
 PKG_SOURCE_VERSION:=799e6cf505ec470b2bf0ae4118143380aa16b837
 PKG_MIRROR_HASH:=67cc817e671de99e5a3f5ed237f89e22470f1de94819bcaba86c0ba821104af5
