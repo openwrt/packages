@@ -1,0 +1,21 @@
+From c9bef916853c709fbf7f305da36da33ac4881660 Mon Sep 17 00:00:00 2001
+From: Mr-DaveDev <MotionMrDaveDev@gmail.com>
+Date: Sun, 1 Dec 2019 14:30:10 -0700
+Subject: [PATCH] Remove poll option for mhd
+
+closes #1063
+---
+ webu.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/webu.c
++++ b/webu.c
+@@ -1828,7 +1828,7 @@ static void webu_mhd_opts(struct mhdstar
+ static void webu_mhd_flags(struct mhdstart_ctx *mhdst){
+ 
+     /* This sets the MHD startup flags based upon what user put into configuration */
+-    mhdst->mhd_flags = MHD_USE_THREAD_PER_CONNECTION | MHD_USE_POLL| MHD_USE_SELECT_INTERNALLY;
++    mhdst->mhd_flags = MHD_USE_THREAD_PER_CONNECTION;
+ 
+     if (mhdst->ipv6) mhdst->mhd_flags = mhdst->mhd_flags | MHD_USE_DUAL_STACK;
+ 
