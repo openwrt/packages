@@ -33,7 +33,7 @@
  ifeq (,$(filter-out WIN%,$(OS_TARGET)))
 --- a/nss/coreconf/Linux.mk	2019-04-01 10:08:59.129269177 +0300
 +++ b/nss/coreconf/Linux.mk	2019-04-01 10:09:15.557782574 +0300
-@@ -139,6 +139,7 @@
+@@ -143,6 +143,7 @@
  	DEFINES		+= -D_REENTRANT
  endif
  
@@ -41,7 +41,7 @@
  DSO_CFLAGS		= -fPIC
  DSO_LDOPTS		= -shared $(ARCHFLAG) -Wl,--gc-sections
  # The linker on Red Hat Linux 7.2 and RHEL 2.1 (GNU ld version 2.11.90.0.8)
-@@ -149,6 +150,7 @@
+@@ -153,6 +154,7 @@
  ZDEFS_FLAG		= -Wl,-z,defs
  DSO_LDOPTS		+= $(if $(findstring 2.11.90.0.8,$(shell ld -v)),,$(ZDEFS_FLAG))
  LDFLAGS			+= $(ARCHFLAG) -z noexecstack
@@ -51,7 +51,7 @@
  # library directories.
 --- a/nss/coreconf/Linux.mk	2019-04-01 23:10:19.091912203 +0300
 +++ b/nss/coreconf/Linux.mk	2019-04-06 14:07:13.499169075 +0300
-@@ -140,7 +140,7 @@
+@@ -144,7 +144,7 @@
  endif
  
  ifndef USE_NATIVE
