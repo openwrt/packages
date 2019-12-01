@@ -10,7 +10,7 @@ Description:             Adds auto-generated nss.pc and nss-config script, and
 diff -Naurp nss-3.28-orig/nss/Makefile nss-3.28/nss/Makefile
 --- nss-3.28-orig/nss/Makefile	2016-12-21 05:56:27.000000000 -0600
 +++ nss-3.28/nss/Makefile	2016-12-26 22:24:52.695146032 -0600
-@@ -46,7 +46,7 @@ include $(CORE_DEPTH)/coreconf/rules.mk
+@@ -47,7 +47,7 @@ include $(CORE_DEPTH)/coreconf/rules.mk
  # (7) Execute "local" rules. (OPTIONAL).                              #
  #######################################################################
  
