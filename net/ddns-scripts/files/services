@@ -43,10 +43,10 @@
 
 "able.or.kr"		"http://able.or.kr/ddns/src/update.php?hostname=[DOMAIN]&myip=[IP]&ddnsuser=[USERNAME]&pwd=[PASSWORD]"
 
-"afraid.org-basicauth"	"http://[USERNAME]:[PASSWORD]@freedns.afraid.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
-"afraid.org-keyauth"	"http://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
-"afraid.org-v2-basic"	"http://[USERNAME]:[PASSWORD]@sync.afraid.org/u/?h=[DOMAIN]&ip=[IP]"
-"afraid.org-v2-token"	"http://sync.afraid.org/u/[PASSWORD]/?address=[IP]"
+"afraid.org-basicauth"	"https://[USERNAME]:[PASSWORD]@freedns.afraid.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
+"afraid.org-keyauth"	"https://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
+"afraid.org-v2-basic"	"https://[USERNAME]:[PASSWORD]@sync.afraid.org/u/?h=[DOMAIN]&ip=[IP]"
+"afraid.org-v2-token"	"https://sync.afraid.org/u/[PASSWORD]/?address=[IP]"
 
 "all-inkl.com"		"http://[USERNAME]:[PASSWORD]@dyndns.kasserver.com/?myip=[IP]"
 
