@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opensc
 PKG_VERSION:=0.19.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_HASH:=2c5a0e4df9027635290b9c0f3addbbf0d651db5ddb0ab789cb0e978f02fd5826
 
 PKG_LICENSE:=LGPL-2.1-or-later
