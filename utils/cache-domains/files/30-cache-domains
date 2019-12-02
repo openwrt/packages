@@ -1,0 +1,8 @@
+#!/bin/sh
+
+source /lib/functions/network.sh
+network_find_wan WAN_IFACE
+
+if [ "${ACTION}" == "ifup" ] && [ "${INTERFACE}" == "${WAN_IFACE}" ] && [ ! -d /var/cache-domains ]; then
+	/usr/bin/cache-domains configure
+fi
