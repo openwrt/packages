@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=p11-kit
 PKG_VERSION:=0.23.18.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/p11-glue/p11-kit/releases/download/$(PKG_VERSION)
@@ -46,6 +46,9 @@ CONFIGURE_ARGS+= \
 	--disable-trust-module \
 	--without-libffi \
 	--without-systemd
+
+CONFIGURE_VARS += \
+	ac_cv_have_decl_program_invocation_short_name=yes
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/p11-kit-1/p11-kit/
