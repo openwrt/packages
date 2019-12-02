@@ -14,7 +14,7 @@ PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.gnupg.org/ftp/gcrypt/gnutls/v3.6
-PKG_HASH:=148466872f231cf59bfdbbc314b3d1de4a0d116151a956b0fdbc450d9b4d463a
+PKG_HASH:=fbba12f3db9a55dbf027e14111755817ec44b57eabec3e8089aac8ac6f533cf8
 #PKG_FIXUP:=autoreconf gettext-version
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <nmav@gnutls.org>
 PKG_LICENSE:=LGPL-2.1-or-later
