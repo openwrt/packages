@@ -19,14 +19,19 @@ proto_openconnect_init_config() {
 	proto_config_add_string "token_script"
 	proto_config_add_string "os"
 	proto_config_add_string "csd_wrapper"
+	proto_config_add_array 'form_entry:regex("[^:]+:[^=]+=.*")'
 	no_device=1
 	available=1
+}
+
+proto_openconnect_add_form_entry() {
+	[ -n "$1" ] && append cmdline "--form-entry $1"
 }
 
 proto_openconnect_setup() {
 	local config="$1"
 
-	json_get_vars server port interface username serverhash authgroup password password2 token_mode token_secret token_script os csd_wrapper mtu juniper
+	json_get_vars server port interface username serverhash authgroup password password2 token_mode token_secret token_script os csd_wrapper mtu juniper form_entry
 
 	grep -q tun /proc/modules || insmod tun
 	ifname="vpn-$config"
@@ -87,6 +92,8 @@ proto_openconnect_setup() {
 	[ -n "$token_secret" ] && append cmdline "--token-secret=$token_secret"
 	[ -n "$os" ] && append cmdline "--os=$os"
 	[ -n "$csd_wrapper" ] && [ -x "$csd_wrapper" ] && append cmdline "--csd-wrapper=$csd_wrapper"
+
+	json_for_each_item proto_openconnect_add_form_entry form_entry
 
 	proto_export INTERFACE="$config"
 	logger -t openconnect "executing 'openconnect $cmdline'"

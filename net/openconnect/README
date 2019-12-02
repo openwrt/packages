@@ -33,6 +33,9 @@ config interface 'MYVPN'
 	# Juniper vpn support
 	#option juniper '1'
 
+	# Authentication form responses
+	#list form_entry FORM:OPT=VAL
+
 The additional files are also used:
 /etc/openconnect/user-cert-vpn-MYVPN.pem: The user certificate
 /etc/openconnect/user-key-vpn-MYVPN.pem: The user private key
