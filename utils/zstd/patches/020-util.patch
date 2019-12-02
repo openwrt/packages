@@ -1,0 +1,22 @@
+From 612a06eb3ef7f42739ace99fbca6ad63b788d46c Mon Sep 17 00:00:00 2001
+From: Sergey Dryabzhinsky <sergey.dryabzhinsky+github@gmail.com>
+Date: Tue, 19 Nov 2019 23:24:00 +0300
+Subject: [PATCH] Update util.c
+
+---
+ programs/util.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/programs/util.c b/programs/util.c
+index d3ffc1133..aa75ca6d4 100644
+--- a/programs/util.c
++++ b/programs/util.c
+@@ -73,7 +73,7 @@ int UTIL_setFileStat(const char *filename, stat_t *statbuf)
+     {
+         /* (atime, mtime) */
+         struct timespec timebuf[2] = { {0, UTIME_NOW} };
+-        timebuf[1] = statbuf->st_mtime;
++        timebuf[1].tv_sec = statbuf->st_mtime;
+         res += utimensat(AT_FDCWD, filename, timebuf, 0);
+     }
+ #endif

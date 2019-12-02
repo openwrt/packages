@@ -1,0 +1,23 @@
+From f62cf1fff5dabcfaaa8c85638723bc19842f52f4 Mon Sep 17 00:00:00 2001
+From: Sergey Dryabzhinsky <sergey.dryabzhinsky+github@gmail.com>
+Date: Tue, 19 Nov 2019 23:15:28 +0300
+Subject: [PATCH] Fix typo in util.c
+
+There must be mtim*e*
+---
+ programs/util.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/programs/util.c b/programs/util.c
+index 5d15450d2..d3ffc1133 100644
+--- a/programs/util.c
++++ b/programs/util.c
+@@ -73,7 +73,7 @@ int UTIL_setFileStat(const char *filename, stat_t *statbuf)
+     {
+         /* (atime, mtime) */
+         struct timespec timebuf[2] = { {0, UTIME_NOW} };
+-        timebuf[1] = statbuf->st_mtim;
++        timebuf[1] = statbuf->st_mtime;
+         res += utimensat(AT_FDCWD, filename, timebuf, 0);
+     }
+ #endif
