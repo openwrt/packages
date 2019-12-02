@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=7.2.26
+PKG_VERSION:=7.4.1
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
@@ -16,21 +16,18 @@ PKG_CPE_ID:=cpe:/a:php:php
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.php.net/distributions/
-PKG_HASH:=1dd3bc875e105f5c9d21fb4dc240670bd2c22037820ff03890f5ab883c88b78d
+PKG_HASH:=561bb866bdd509094be00f4ece7c3543ec971c4d878645ee81437e291cffc762
 
-PKG_FIXUP:=libtool autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
-PHP7_MODULES = \
+PHP7_MODULES= \
 	bcmath \
 	calendar ctype curl \
-	fileinfo \
 	dom \
 	exif \
-	ftp \
+	fileinfo filter ftp \
 	gettext gd gmp \
-	hash \
 	iconv imap intl \
 	json \
 	ldap \
@@ -39,11 +36,12 @@ PHP7_MODULES = \
 	pcntl pdo pdo-mysql pdo-pgsql pdo-sqlite pgsql phar \
 	session shmop simplexml snmp soap sockets sqlite3 sysvmsg sysvsem sysvshm \
 	tokenizer \
-	xml xmlreader xmlwriter zip \
+	xml xmlreader xmlwriter \
+	zip
 
 PKG_CONFIG_DEPENDS:= \
 	$(patsubst %,CONFIG_PACKAGE_php7-mod-%,$(PHP7_MODULES)) \
-	CONFIG_PHP7_FILTER CONFIG_PHP7_LIBXML CONFIG_PHP7_SYSTEMTZDATA CONFIG_PHP7_LIBFREETYPE
+	CONFIG_PHP7_LIBXML CONFIG_PHP7_SYSTEMTZDATA
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -63,11 +61,6 @@ define Package/php7/Default/description
 endef
 
 define Package/php7/config
-	config PHP7_FILTER
-		bool "PHP7 Filter support"
-		depends on PACKAGE_php7-cli || PACKAGE_php7-cgi
-		default y
-
 	config PHP7_LIBXML
 		bool "PHP7 LIBXML support"
 		depends on PACKAGE_php7-cli || PACKAGE_php7-cgi
@@ -85,7 +78,7 @@ endef
 define Package/php7
   $(call Package/php7/Default)
 
-  DEPENDS:=+libpcre +zlib \
+  DEPENDS:=+libpcre2 +zlib \
            +PHP7_LIBXML:libxml2 \
            +PHP7_SYSTEMTZDATA:zoneinfo-core
 endef
@@ -143,13 +136,6 @@ define Package/php7-fpm/description
   This package contains the FastCGI Process Manager of the PHP7 interpreter.
 endef
 
-define Package/php7-mod-gd/config
-  config PHP7_LIBFREETYPE
-	bool "Enable Freetype 2 support in php7-mod-gd"
-	depends on PACKAGE_php7-mod-gd
-	default y
-endef
-
 define Package/php7-mod-intl/config
   config PHP7_FULLICUDATA
 	bool "Add dependency to full ICU Data"
@@ -186,9 +172,8 @@ CONFIGURE_ARGS+= \
 	--disable-short-tags \
 	\
 	--without-valgrind \
-	--with-pcre-regex="$(STAGING_DIR)/usr" \
-	--with-zlib="$(STAGING_DIR)/usr" \
-	  --with-zlib-dir="$(STAGING_DIR)/usr"
+	--with-external-pcre \
+	--with-zlib="$(STAGING_DIR)/usr"
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-bcmath),)
   CONFIGURE_ARGS+= --enable-bcmath=shared
@@ -209,21 +194,9 @@ else
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-curl),)
-  CONFIGURE_ARGS+= --with-curl=shared,"$(STAGING_DIR)/usr"
+  CONFIGURE_ARGS+= --with-curl=shared
 else
   CONFIGURE_ARGS+= --without-curl
-endif
-
-ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-fileinfo),)
-  CONFIGURE_ARGS+= --enable-fileinfo=shared
-else
-  CONFIGURE_ARGS+= --disable-fileinfo
-endif
-
-ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-gettext),)
-  CONFIGURE_ARGS+= --with-gettext=shared,"$(STAGING_DIR)/usr/lib/libintl-full"
-else
-  CONFIGURE_ARGS+= --without-gettext
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-dom),)
@@ -238,6 +211,18 @@ else
   CONFIGURE_ARGS+= --disable-exif
 endif
 
+ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-fileinfo),)
+  CONFIGURE_ARGS+= --enable-fileinfo=shared,"$(STAGING_DIR)/usr"
+else
+  CONFIGURE_ARGS+= --disable-fileinfo
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-filter),)
+  CONFIGURE_ARGS+= --enable-filter=shared,"$(STAGING_DIR)/usr"
+else
+  CONFIGURE_ARGS+= --disable-filter
+endif
+
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-ftp),)
   CONFIGURE_ARGS+= --enable-ftp=shared
 else
@@ -246,32 +231,22 @@ endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-gd),)
   CONFIGURE_ARGS+= \
-	--with-gd=shared \
-	--with-jpeg-dir="$(STAGING_DIR)/usr" \
-	--with-png-dir="$(STAGING_DIR)/usr" \
-	--with-webp-dir="$(STAGING_DIR)/usr" \
-	--without-xpm-dir \
-	--enable-gd-native-ttf \
-	--disable-gd-jis-conv
+	--enable-gd=shared,"$(STAGING_DIR)/usr" \
+	--with-external-gd
 else
-  CONFIGURE_ARGS+= --without-gd
+  CONFIGURE_ARGS+= --disable-gd
 endif
-ifneq ($(CONFIG_PHP7_LIBFREETYPE),)
-  CONFIGURE_ARGS+= --with-freetype-dir="$(STAGING_DIR)"
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-gettext),)
+  CONFIGURE_ARGS+= --with-gettext=shared,"$(STAGING_DIR)/usr/lib/libintl-full"
 else
-  CONFIGURE_ARGS+= --without-freetype-dir
+  CONFIGURE_ARGS+= --without-gettext
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-gmp),)
   CONFIGURE_ARGS+= --with-gmp=shared,"$(STAGING_DIR)/usr"
 else
   CONFIGURE_ARGS+= --without-gmp
-endif
-
-ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-hash),)
-  CONFIGURE_ARGS+= --enable-hash=shared
-else
-  CONFIGURE_ARGS+= --disable-hash
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-iconv),)
@@ -283,7 +258,7 @@ endif
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-imap),)
   CONFIGURE_ARGS+= \
 		--with-imap=shared,"$(STAGING_DIR)/usr" \
-		--with-imap-kerberos=no \
+		--with-kerberos=no \
 		--with-imap-ssl="$(STAGING_DIR)/usr"
 else
   CONFIGURE_ARGS+= --without-imap
@@ -305,13 +280,15 @@ endif
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-ldap),)
   CONFIGURE_ARGS+= \
 	--with-ldap=shared,"$(STAGING_DIR)/usr" \
-	--with-ldap-sasl="$(STAGING_DIR)/usr"
+	--with-ldap-sasl
 else
   CONFIGURE_ARGS+= --without-ldap
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-mbstring),)
-  CONFIGURE_ARGS+= --enable-mbstring=shared --enable-mbregex
+  CONFIGURE_ARGS+= \
+	--enable-mbstring=shared \
+	--enable-mbregex
 else
   CONFIGURE_ARGS+= --disable-mbstring
 endif
@@ -336,7 +313,7 @@ endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-openssl)$(CONFIG_PACKAGE_php7-mod-ftp)$(CONFIG_PACKAGE_php7-mod-imap)$(CONFIG_PACKAGE_php7-mod-snmp),)
   CONFIGURE_ARGS+= \
-	--with-openssl=shared,"$(STAGING_DIR)/usr" \
+	--with-openssl=shared \
 	--with-kerberos=no \
 	--with-openssl-dir="$(STAGING_DIR)/usr"
 else
@@ -362,7 +339,7 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-pdo),)
     CONFIGURE_ARGS+= --without-pdo-pgsql
   endif
   ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-pdo-sqlite),)
-    CONFIGURE_ARGS+= --with-pdo-sqlite=shared,"$(STAGING_DIR)/usr"
+    CONFIGURE_ARGS+= --with-pdo-sqlite=shared
   else
     CONFIGURE_ARGS+= --without-pdo-sqlite
   endif
@@ -419,7 +396,7 @@ else
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-sqlite3),)
-  CONFIGURE_ARGS+= --with-sqlite3=shared,"$(STAGING_DIR)/usr"
+  CONFIGURE_ARGS+= --with-sqlite3=shared
 else
   CONFIGURE_ARGS+= --without-sqlite3
 endif
@@ -450,10 +427,8 @@ endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-xml),)
   CONFIGURE_ARGS+= --enable-xml=shared,"$(STAGING_DIR)/usr"
-  ifneq ($(CONFIG_PHP7_LIBXML),)
-    CONFIGURE_ARGS+= --with-libxml-dir="$(STAGING_DIR)/usr/include/libxml2"
-  else
-    CONFIGURE_ARGS+= --with-libexpat-dir="$(STAGING_DIR)/usr"
+  ifneq ($(CONFIG_PHP7_LIBXML),y)
+    CONFIGURE_ARGS+= --with-expat
   endif
 else
   CONFIGURE_ARGS+= --disable-xml
@@ -472,22 +447,15 @@ else
 endif
 
 ifneq ($(CONFIG_PACKAGE_php7-mod-zip),)
-  CONFIGURE_ARGS+= --enable-zip=shared
+  CONFIGURE_ARGS+= --with-zip=shared,"$(STAGING_DIR)/usr"
 else
-  CONFIGURE_ARGS+= --disable-zip
-endif
-
-ifneq ($(SDK)$(CONFIG_PHP7_FILTER),)
-  CONFIGURE_ARGS+= --enable-filter
-else
-  CONFIGURE_ARGS+= --disable-filter
+  CONFIGURE_ARGS+= --without-zip
 endif
 
 ifneq ($(SDK)$(CONFIG_PHP7_LIBXML),)
-  CONFIGURE_ARGS+= --enable-libxml
-  CONFIGURE_ARGS+= --with-libxml-dir="$(STAGING_DIR)/usr/include/libxml2"
+  CONFIGURE_ARGS+= --with-libxml
 else
-  CONFIGURE_ARGS+= --disable-libxml
+  CONFIGURE_ARGS+= --without-libxml
 endif
 
 ifneq ($(CONFIG_PHP7_SYSTEMTZDATA),)
@@ -501,7 +469,8 @@ CONFIGURE_VARS+= \
 	php_cv_cc_rpath="no" \
 	iconv_impl_name="gnu_libiconv" \
 	ac_cv_php_xml2_config_path="$(STAGING_DIR)/host/bin/xml2-config" \
-	ac_cv_u8t_decompose=yes
+	ac_cv_u8t_decompose=yes \
+	ac_cv_have_pcre2_jit=no
 
 define Package/php7/conffiles
 /etc/php.ini
@@ -561,7 +530,7 @@ endef
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
-	( cd $(PKG_BUILD_DIR); touch configure.in; ./buildconf --force )
+	( cd $(PKG_BUILD_DIR); touch configure.ac; ./buildconf --force )
 endef
 
 define Build/InstallDev
@@ -626,19 +595,19 @@ $(eval $(call BuildModule,curl,cURL,+PACKAGE_php7-mod-curl:libcurl))
 $(eval $(call BuildModule,dom,DOM,+@PHP7_LIBXML +PACKAGE_php7-mod-dom:libxml2))
 $(eval $(call BuildModule,exif,EXIF))
 $(eval $(call BuildModule,fileinfo,Fileinfo))
+$(eval $(call BuildModule,filter,Filter))
 $(eval $(call BuildModule,ftp,FTP,+PACKAGE_php7-mod-ftp:libopenssl))
-$(eval $(call BuildModule,gd,GD graphics,+PACKAGE_php7-mod-gd:libjpeg +PACKAGE_php7-mod-gd:libpng +PACKAGE_php7-mod-gd:libwebp +PHP7_LIBFREETYPE:libfreetype))
+$(eval $(call BuildModule,gd,GD graphics,+PACKAGE_php7-mod-gd:libgd))
 $(eval $(call BuildModule,gettext,Gettext,+PACKAGE_php7-mod-gettext:libintl-full))
 $(eval $(call BuildModule,gmp,GMP,+PACKAGE_php7-mod-gmp:libgmp))
-$(eval $(call BuildModule,hash,Hash))
 $(eval $(call BuildModule,iconv,iConv,$(ICONV_DEPENDS)))
 $(eval $(call BuildModule,imap,IMAP,+PACKAGE_php7-mod-imap:libopenssl +PACKAGE_libpam:libpam +PACKAGE_php7-mod-imap:uw-imap))
 $(eval $(call BuildModule,intl,Internationalization Functions,+PACKAGE_php7-mod-intl:icu +PHP7_FULLICUDATA:icu-full-data))
 $(eval $(call BuildModule,json,JSON))
 $(eval $(call BuildModule,ldap,LDAP,+PACKAGE_php7-mod-ldap:libopenldap +PACKAGE_php7-mod-ldap:libsasl2))
-$(eval $(call BuildModule,mbstring,MBString))
+$(eval $(call BuildModule,mbstring,MBString,+PACKAGE_php7-mod-mbstring:oniguruma))
 $(eval $(call BuildModule,mysqli,MySQL Improved Extension,+PACKAGE_php7-mod-mysqli:php7-mod-mysqlnd,30))
-$(eval $(call BuildModule,mysqlnd,MySQL Native Driver,+php7-mod-hash))
+$(eval $(call BuildModule,mysqlnd,MySQL Native Driver))
 $(eval $(call BuildModule,opcache,OPcache,,,zend))
 $(eval $(call BuildModule,openssl,OpenSSL,+PACKAGE_php7-mod-openssl:libopenssl,15))
 $(eval $(call BuildModule,pcntl,PCNTL))
@@ -647,7 +616,7 @@ $(eval $(call BuildModule,pdo-mysql,PDO driver for MySQL,+php7-mod-pdo +PACKAGE_
 $(eval $(call BuildModule,pdo-pgsql,PDO driver for PostgreSQL,+php7-mod-pdo +PACKAGE_php7-mod-pdo-pgsql:libpq))
 $(eval $(call BuildModule,pdo-sqlite,PDO driver for SQLite 3.x,+php7-mod-pdo +PACKAGE_php7-mod-pdo-sqlite:libsqlite3 +PACKAGE_php7-mod-pdo-sqlite:librt))
 $(eval $(call BuildModule,pgsql,PostgreSQL,+PACKAGE_php7-mod-pgsql:libpq))
-$(eval $(call BuildModule,phar,Phar Archives,+php7-mod-hash))
+$(eval $(call BuildModule,phar,Phar Archives))
 $(eval $(call BuildModule,session,Session))
 $(eval $(call BuildModule,shmop,Shared Memory))
 $(eval $(call BuildModule,simplexml,SimpleXML,+@PHP7_LIBXML +PACKAGE_php7-mod-simplexml:libxml2))
@@ -662,4 +631,4 @@ $(eval $(call BuildModule,tokenizer,Tokenizer))
 $(eval $(call BuildModule,xml,XML,+PHP7_LIBXML:libxml2 +!PHP7_LIBXML:libexpat))
 $(eval $(call BuildModule,xmlreader,XMLReader,+@PHP7_LIBXML +PACKAGE_php7-mod-dom:php7-mod-dom +PACKAGE_php7-mod-xmlreader:libxml2))
 $(eval $(call BuildModule,xmlwriter,XMLWriter,+@PHP7_LIBXML +PACKAGE_php7-mod-xmlwriter:libxml2))
-$(eval $(call BuildModule,zip,ZIP,+PACKAGE_php7-mod-zip:zlib))
+$(eval $(call BuildModule,zip,ZIP,+PACKAGE_php7-mod-zip:libzip))

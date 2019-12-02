@@ -11,7 +11,7 @@ diff --git a/sapi/fpm/status.html.in b/sapi/fpm/status.html.in
 index 86492d7..31c31ff 100644
 --- a/sapi/fpm/status.html.in
 +++ b/sapi/fpm/status.html.in
-@@ -71,11 +71,6 @@
+@@ -70,11 +70,6 @@
  				<tr class="h"><th>PID&darr;</th><th>Start Time</th><th>Start Since</th><th>Requests Served</th><th>Request Duration</th><th>Request method</th><th>Request URI</th><th>Content Length</th><th>User</th><th>Script</th><th>Last Request %CPU</th><th>Last Request Memory</th></tr>
  			</table>
  		</div>
