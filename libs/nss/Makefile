@@ -7,14 +7,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nss
-PKG_VERSION:=3.47
+PKG_VERSION:=3.47.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
     https://download.cdn.mozilla.net/pub/security/$(PKG_NAME)/releases/NSS_$(subst .,_,$(PKG_VERSION))_RTM/src \
     https://archive.mozilla.org/pub/security/$(PKG_NAME)/releases/NSS_$(subst .,_,$(PKG_VERSION))_RTM/src
-PKG_HASH:=6cd0c4438b616bdacc0b5f25ff1506b0d07ee97ea6c95d514c5487200a155fa7
+PKG_HASH:=1ae3d1cb1de345b258788f2ef6b10a460068034c3fd64f42427a183d8342a6fb
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENCE:=MPL-2.0
@@ -56,6 +56,10 @@ LBITS = $(shell $(TARGET_CC) -dM -E - </dev/null | grep -q "__LP64__" && echo 64
 
 ifeq ($(LBITS),64)
     export USE_64=1
+endif
+
+ifeq ($(CONFIG_CPU_TYPE),"xscale")
+TARGET_CFLAGS+= -mfloat-abi=softfp
 endif
 
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
