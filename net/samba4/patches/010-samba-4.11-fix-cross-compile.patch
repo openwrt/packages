@@ -1,0 +1,1279 @@
+From a4d369a9d630c3aba8374bf8637dd203880a8b70 Mon Sep 17 00:00:00 2001
+From: Uri Simchoni <uri@samba.org>
+Date: Mon, 7 Oct 2019 00:36:42 +0300
+Subject: [PATCH 1/6] waf: upgrade to 2.0.18
+
+This is required to get the new test_args parameter to conf.check, which
+facilitates passing arguments to configuration test programs.
+
+BUG: https://bugzilla.samba.org/show_bug.cgi?id=13846
+
+Signed-off-by: Uri Simchoni <uri@samba.org>
+Reviewed-by: Andrew Bartlett <abartlet@samba.org>
+(cherry picked from commit 09e282ec8173f2935bdb579e0396f269ce712e0d)
+---
+ buildtools/bin/waf                            |   2 +-
+ buildtools/wafsamba/wafsamba.py               |   2 +-
+ third_party/waf/waflib/Configure.py           |  20 +-
+ third_party/waf/waflib/Context.py             |   6 +-
+ third_party/waf/waflib/Scripting.py           |   7 +-
+ third_party/waf/waflib/TaskGen.py             |   2 +-
+ third_party/waf/waflib/Tools/asm.py           |  37 +++-
+ third_party/waf/waflib/Tools/c_aliases.py     |   6 +-
+ third_party/waf/waflib/Tools/c_config.py      |   9 +-
+ third_party/waf/waflib/Tools/c_tests.py       |   3 +-
+ third_party/waf/waflib/Tools/gas.py           |   1 +
+ third_party/waf/waflib/Tools/javaw.py         |   2 +-
+ third_party/waf/waflib/Tools/nasm.py          |   5 +
+ third_party/waf/waflib/Tools/python.py        |  27 ++-
+ third_party/waf/waflib/extras/doxygen.py      |  11 +-
+ third_party/waf/waflib/extras/fast_partial.py |  28 ++-
+ third_party/waf/waflib/extras/genpybind.py    | 194 ++++++++++++++++++
+ third_party/waf/waflib/extras/local_rpath.py  |   8 +-
+ third_party/waf/waflib/extras/objcopy.py      |   9 +-
+ 19 files changed, 329 insertions(+), 50 deletions(-)
+ create mode 100644 third_party/waf/waflib/extras/genpybind.py
+
+diff --git a/buildtools/bin/waf b/buildtools/bin/waf
+index 8413f2332b7..11ce8e7480a 100755
+--- a/buildtools/bin/waf
++++ b/buildtools/bin/waf
+@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
+ 
+ import os, sys, inspect
+ 
+-VERSION="2.0.17"
++VERSION="2.0.18"
+ REVISION="x"
+ GIT="x"
+ INSTALL="x"
+diff --git a/buildtools/wafsamba/wafsamba.py b/buildtools/wafsamba/wafsamba.py
+index 76d65ebfcb6..205d5b4ac32 100644
+--- a/buildtools/wafsamba/wafsamba.py
++++ b/buildtools/wafsamba/wafsamba.py
+@@ -38,7 +38,7 @@ LIB_PATH="shared"
+ 
+ os.environ['PYTHONUNBUFFERED'] = '1'
+ 
+-if Context.HEXVERSION not in (0x2001100,):
++if Context.HEXVERSION not in (0x2001200,):
+     Logs.error('''
+ Please use the version of waf that comes with Samba, not
+ a system installed version. See http://wiki.samba.org/index.php/Waf
+diff --git a/third_party/waf/waflib/Configure.py b/third_party/waf/waflib/Configure.py
+index db09c0e3a40..5762eb66954 100644
+--- a/third_party/waf/waflib/Configure.py
++++ b/third_party/waf/waflib/Configure.py
+@@ -524,7 +524,7 @@ def run_build(self, *k, **kw):
+ 	Though this function returns *0* by default, the build may set an attribute named *retval* on the
+ 	build context object to return a particular value. See :py:func:`waflib.Tools.c_config.test_exec_fun` for example.
+ 
+-	This function also provides a limited cache. To use it, provide the following option::
++	This function also features a cache which can be enabled by the following option::
+ 
+ 		def options(opt):
+ 			opt.add_option('--confcache', dest='confcache', default=0,
+@@ -535,10 +535,21 @@ def run_build(self, *k, **kw):
+ 		$ waf configure --confcache
+ 
+ 	"""
+-	lst = [str(v) for (p, v) in kw.items() if p != 'env']
+-	h = Utils.h_list(lst)
++	buf = []
++	for key in sorted(kw.keys()):
++		v = kw[key]
++		if hasattr(v, '__call__'):
++			buf.append(Utils.h_fun(v))
++		else:
++			buf.append(str(v))
++	h = Utils.h_list(buf)
+ 	dir = self.bldnode.abspath() + os.sep + (not Utils.is_win32 and '.' or '') + 'conf_check_' + Utils.to_hex(h)
+ 
++	cachemode = kw.get('confcache', getattr(Options.options, 'confcache', None))
++
++	if not cachemode and os.path.exists(dir):
++		shutil.rmtree(dir)
++
+ 	try:
+ 		os.makedirs(dir)
+ 	except OSError:
+@@ -549,7 +560,6 @@ def run_build(self, *k, **kw):
+ 	except OSError:
+ 		self.fatal('cannot use the configuration test folder %r' % dir)
+ 
+-	cachemode = getattr(Options.options, 'confcache', None)
+ 	if cachemode == 1:
+ 		try:
+ 			proj = ConfigSet.ConfigSet(os.path.join(dir, 'cache_run_build'))
+@@ -589,7 +599,7 @@ def run_build(self, *k, **kw):
+ 		else:
+ 			ret = getattr(bld, 'retval', 0)
+ 	finally:
+-		if cachemode == 1:
++		if cachemode:
+ 			# cache the results each time
+ 			proj = ConfigSet.ConfigSet()
+ 			proj['cache_run_build'] = ret
+diff --git a/third_party/waf/waflib/Context.py b/third_party/waf/waflib/Context.py
+index d0759aada58..e3305fa3341 100644
+--- a/third_party/waf/waflib/Context.py
++++ b/third_party/waf/waflib/Context.py
+@@ -11,13 +11,13 @@ from waflib import Utils, Errors, Logs
+ import waflib.Node
+ 
+ # the following 3 constants are updated on each new release (do not touch)
+-HEXVERSION=0x2001100
++HEXVERSION=0x2001200
+ """Constant updated on new releases"""
+ 
+-WAFVERSION="2.0.17"
++WAFVERSION="2.0.18"
+ """Constant updated on new releases"""
+ 
+-WAFREVISION="6bc6cb599c702e985780e9f705b291b812123693"
++WAFREVISION="314689b8994259a84f0de0aaef74d7ce91f541ad"
+ """Git revision when the waf version is updated"""
+ 
+ ABI = 20
+diff --git a/third_party/waf/waflib/Scripting.py b/third_party/waf/waflib/Scripting.py
+index ae17a8b4503..68dccf29ce0 100644
+--- a/third_party/waf/waflib/Scripting.py
++++ b/third_party/waf/waflib/Scripting.py
+@@ -332,7 +332,12 @@ def distclean(ctx):
+ 		else:
+ 			remove_and_log(env.out_dir, shutil.rmtree)
+ 
+-		for k in (env.out_dir, env.top_dir, env.run_dir):
++		env_dirs = [env.out_dir]
++		if not ctx.options.no_lock_in_top:
++			env_dirs.append(env.top_dir)
++		if not ctx.options.no_lock_in_run:
++			env_dirs.append(env.run_dir)
++		for k in env_dirs:
+ 			p = os.path.join(k, Options.lockfile)
+ 			remove_and_log(p, os.remove)
+ 
+diff --git a/third_party/waf/waflib/TaskGen.py b/third_party/waf/waflib/TaskGen.py
+index 532b7d5cdb4..f8f92bd57c1 100644
+--- a/third_party/waf/waflib/TaskGen.py
++++ b/third_party/waf/waflib/TaskGen.py
+@@ -905,7 +905,7 @@ def process_subst(self):
+ 		# paranoid safety measure for the general case foo.in->foo.h with ambiguous dependencies
+ 		for xt in HEADER_EXTS:
+ 			if b.name.endswith(xt):
+-				tsk.ext_in = tsk.ext_in + ['.h']
++				tsk.ext_out = tsk.ext_out + ['.h']
+ 				break
+ 
+ 		inst_to = getattr(self, 'install_path', None)
+diff --git a/third_party/waf/waflib/Tools/asm.py b/third_party/waf/waflib/Tools/asm.py
+index b6f26fb3df3..a57e83bb5ec 100644
+--- a/third_party/waf/waflib/Tools/asm.py
++++ b/third_party/waf/waflib/Tools/asm.py
+@@ -34,9 +34,22 @@ Support for pure asm programs and libraries should also work::
+ 			target = 'asmtest')
+ """
+ 
+-from waflib import Task
++import re
++from waflib import Errors, Logs, Task
+ from waflib.Tools.ccroot import link_task, stlink_task
+ from waflib.TaskGen import extension
++from waflib.Tools import c_preproc
++
++re_lines = re.compile(
++	'^[ \t]*(?:%)[ \t]*(ifdef|ifndef|if|else|elif|endif|include|import|define|undef)[ \t]*(.*)\r*$',
++	re.IGNORECASE | re.MULTILINE)
++
++class asm_parser(c_preproc.c_parser):
++	def filter_comments(self, node):
++		code = node.read()
++		code = c_preproc.re_nl.sub('', code)
++		code = c_preproc.re_cpp.sub(c_preproc.repl, code)
++		return re_lines.findall(code)
+ 
+ class asm(Task.Task):
+ 	"""
+@@ -45,6 +58,28 @@ class asm(Task.Task):
+ 	color = 'BLUE'
+ 	run_str = '${AS} ${ASFLAGS} ${ASMPATH_ST:INCPATHS} ${DEFINES_ST:DEFINES} ${AS_SRC_F}${SRC} ${AS_TGT_F}${TGT}'
+ 
++	def scan(self):
++		if self.env.ASM_NAME == 'gas':
++			return c_preproc.scan(self)
++			Logs.warn('There is no dependency scanner for Nasm!')
++			return  [[], []]
++		elif self.env.ASM_NAME == 'nasm':
++			Logs.warn('The Nasm dependency scanner is incomplete!')
++
++		try:
++			incn = self.generator.includes_nodes
++		except AttributeError:
++			raise Errors.WafError('%r is missing the "asm" feature' % self.generator)
++
++		if c_preproc.go_absolute:
++			nodepaths = incn
++		else:
++			nodepaths = [x for x in incn if x.is_child_of(x.ctx.srcnode) or x.is_child_of(x.ctx.bldnode)]
++
++		tmp = asm_parser(nodepaths)
++		tmp.start(self.inputs[0], self.env)
++		return (tmp.nodes, tmp.names)
++
+ @extension('.s', '.S', '.asm', '.ASM', '.spp', '.SPP')
+ def asm_hook(self, node):
+ 	"""
+diff --git a/third_party/waf/waflib/Tools/c_aliases.py b/third_party/waf/waflib/Tools/c_aliases.py
+index c9d53692e8f..985e048bdb7 100644
+--- a/third_party/waf/waflib/Tools/c_aliases.py
++++ b/third_party/waf/waflib/Tools/c_aliases.py
+@@ -47,10 +47,12 @@ def sniff_features(**kw):
+ 		if x in exts:
+ 			feats.append('cxx')
+ 			break
+-
+ 	if 'c' in exts or 'vala' in exts or 'gs' in exts:
+ 		feats.append('c')
+ 
++	if 's' in exts or 'S' in exts:
++		feats.append('asm')
++
+ 	for x in 'f f90 F F90 for FOR'.split():
+ 		if x in exts:
+ 			feats.append('fc')
+@@ -66,7 +68,7 @@ def sniff_features(**kw):
+ 	if typ in ('program', 'shlib', 'stlib'):
+ 		will_link = False
+ 		for x in feats:
+-			if x in ('cxx', 'd', 'fc', 'c'):
++			if x in ('cxx', 'd', 'fc', 'c', 'asm'):
+ 				feats.append(x + typ)
+ 				will_link = True
+ 		if not will_link and not kw.get('features', []):
+diff --git a/third_party/waf/waflib/Tools/c_config.py b/third_party/waf/waflib/Tools/c_config.py
+index d546be95614..80580cc9fcb 100644
+--- a/third_party/waf/waflib/Tools/c_config.py
++++ b/third_party/waf/waflib/Tools/c_config.py
+@@ -659,20 +659,21 @@ class test_exec(Task.Task):
+ 	"""
+ 	color = 'PINK'
+ 	def run(self):
++		cmd = [self.inputs[0].abspath()] + getattr(self.generator, 'test_args', [])
+ 		if getattr(self.generator, 'rpath', None):
+ 			if getattr(self.generator, 'define_ret', False):
+-				self.generator.bld.retval = self.generator.bld.cmd_and_log([self.inputs[0].abspath()])
++				self.generator.bld.retval = self.generator.bld.cmd_and_log(cmd)
+ 			else:
+-				self.generator.bld.retval = self.generator.bld.exec_command([self.inputs[0].abspath()])
++				self.generator.bld.retval = self.generator.bld.exec_command(cmd)
+ 		else:
+ 			env = self.env.env or {}
+ 			env.update(dict(os.environ))
+ 			for var in ('LD_LIBRARY_PATH', 'DYLD_LIBRARY_PATH', 'PATH'):
+ 				env[var] = self.inputs[0].parent.abspath() + os.path.pathsep + env.get(var, '')
+ 			if getattr(self.generator, 'define_ret', False):
+-				self.generator.bld.retval = self.generator.bld.cmd_and_log([self.inputs[0].abspath()], env=env)
++				self.generator.bld.retval = self.generator.bld.cmd_and_log(cmd, env=env)
+ 			else:
+-				self.generator.bld.retval = self.generator.bld.exec_command([self.inputs[0].abspath()], env=env)
++				self.generator.bld.retval = self.generator.bld.exec_command(cmd, env=env)
+ 
+ @feature('test_exec')
+ @after_method('apply_link')
+diff --git a/third_party/waf/waflib/Tools/c_tests.py b/third_party/waf/waflib/Tools/c_tests.py
+index f858df5763c..7a4094f2450 100644
+--- a/third_party/waf/waflib/Tools/c_tests.py
++++ b/third_party/waf/waflib/Tools/c_tests.py
+@@ -224,6 +224,7 @@ def check_endianness(self):
+ 	def check_msg(self):
+ 		return tmp[0]
+ 	self.check(fragment=ENDIAN_FRAGMENT, features='c grep_for_endianness',
+-		msg='Checking for endianness', define='ENDIANNESS', tmp=tmp, okmsg=check_msg)
++		msg='Checking for endianness', define='ENDIANNESS', tmp=tmp,
++		okmsg=check_msg, confcache=None)
+ 	return tmp[0]
+ 
+diff --git a/third_party/waf/waflib/Tools/gas.py b/third_party/waf/waflib/Tools/gas.py
+index 77afed7038f..4a8745afd7e 100644
+--- a/third_party/waf/waflib/Tools/gas.py
++++ b/third_party/waf/waflib/Tools/gas.py
+@@ -16,3 +16,4 @@ def configure(conf):
+ 	conf.env.ASLNK_TGT_F = ['-o']
+ 	conf.find_ar()
+ 	conf.load('asm')
++	conf.env.ASM_NAME = 'gas'
+diff --git a/third_party/waf/waflib/Tools/javaw.py b/third_party/waf/waflib/Tools/javaw.py
+index fd1cf469abf..ceb08c28c87 100644
+--- a/third_party/waf/waflib/Tools/javaw.py
++++ b/third_party/waf/waflib/Tools/javaw.py
+@@ -246,7 +246,7 @@ def use_javac_files(self):
+ 				self.javac_task.dep_nodes.extend(tg.jar_task.outputs)
+ 			else:
+ 				if hasattr(tg, 'outdir'):
+-					base_node = tg.outdir.abspath()
++					base_node = tg.outdir
+ 				else:
+ 					base_node = tg.path.get_bld()
+ 
+diff --git a/third_party/waf/waflib/Tools/nasm.py b/third_party/waf/waflib/Tools/nasm.py
+index 411d5826b5d..9c51c18de18 100644
+--- a/third_party/waf/waflib/Tools/nasm.py
++++ b/third_party/waf/waflib/Tools/nasm.py
+@@ -24,3 +24,8 @@ def configure(conf):
+ 	conf.env.ASLNK_TGT_F = ['-o']
+ 	conf.load('asm')
+ 	conf.env.ASMPATH_ST = '-I%s' + os.sep
++	txt = conf.cmd_and_log(conf.env.AS + ['--version'])
++	if 'yasm' in txt.lower():
++		conf.env.ASM_NAME = 'yasm'
++	else:
++		conf.env.ASM_NAME = 'nasm'
+diff --git a/third_party/waf/waflib/Tools/python.py b/third_party/waf/waflib/Tools/python.py
+index 63a8917d7c1..7c45a76ffd2 100644
+--- a/third_party/waf/waflib/Tools/python.py
++++ b/third_party/waf/waflib/Tools/python.py
+@@ -79,14 +79,19 @@ def process_py(self, node):
+ 	"""
+ 	Add signature of .py file, so it will be byte-compiled when necessary
+ 	"""
+-	assert(hasattr(self, 'install_path')), 'add features="py"'
++	assert(hasattr(self, 'install_path')), 'add features="py" for target "%s" in "%s/wscript".' % (self.target, self.path.nice_path())
++	self.install_from = getattr(self, 'install_from', None)
++	relative_trick = getattr(self, 'relative_trick', True)
++	if self.install_from:
++		assert isinstance(self.install_from, Node.Node), \
++		'add features="py" for target "%s" in "%s/wscript" (%s).' % (self.target, self.path.nice_path(), type(self.install_from))
+ 
+ 	# where to install the python file
+ 	if self.install_path:
+ 		if self.install_from:
+-			self.add_install_files(install_to=self.install_path, install_from=node, cwd=self.install_from, relative_trick=True)
++			self.add_install_files(install_to=self.install_path, install_from=node, cwd=self.install_from, relative_trick=relative_trick)
+ 		else:
+-			self.add_install_files(install_to=self.install_path, install_from=node, relative_trick=True)
++			self.add_install_files(install_to=self.install_path, install_from=node, relative_trick=relative_trick)
+ 
+ 	lst = []
+ 	if self.env.PYC:
+@@ -96,9 +101,11 @@ def process_py(self, node):
+ 
+ 	if self.install_path:
+ 		if self.install_from:
+-			pyd = Utils.subst_vars("%s/%s" % (self.install_path, node.path_from(self.install_from)), self.env)
++			target_dir = node.path_from(self.install_from) if relative_trick else node.name
++			pyd = Utils.subst_vars("%s/%s" % (self.install_path, target_dir), self.env)
+ 		else:
+-			pyd = Utils.subst_vars("%s/%s" % (self.install_path, node.path_from(self.path)), self.env)
++			target_dir = node.path_from(self.path) if relative_trick else node.name
++			pyd = Utils.subst_vars("%s/%s" % (self.install_path, target_dir), self.env)
+ 	else:
+ 		pyd = node.abspath()
+ 
+@@ -115,7 +122,7 @@ def process_py(self, node):
+ 		tsk.pyd = pyd
+ 
+ 		if self.install_path:
+-			self.add_install_files(install_to=os.path.dirname(pyd), install_from=pyobj, cwd=node.parent.get_bld(), relative_trick=True)
++			self.add_install_files(install_to=os.path.dirname(pyd), install_from=pyobj, cwd=node.parent.get_bld(), relative_trick=relative_trick)
+ 
+ class pyc(Task.Task):
+ 	"""
+@@ -433,11 +440,11 @@ def check_python_headers(conf, features='pyembed pyext'):
+ 
+ 	# Code using the Python API needs to be compiled with -fno-strict-aliasing
+ 	if env.CC_NAME == 'gcc':
+-		env.append_value('CFLAGS_PYEMBED', ['-fno-strict-aliasing'])
+-		env.append_value('CFLAGS_PYEXT', ['-fno-strict-aliasing'])
++		env.append_unique('CFLAGS_PYEMBED', ['-fno-strict-aliasing'])
++		env.append_unique('CFLAGS_PYEXT', ['-fno-strict-aliasing'])
+ 	if env.CXX_NAME == 'gcc':
+-		env.append_value('CXXFLAGS_PYEMBED', ['-fno-strict-aliasing'])
+-		env.append_value('CXXFLAGS_PYEXT', ['-fno-strict-aliasing'])
++		env.append_unique('CXXFLAGS_PYEMBED', ['-fno-strict-aliasing'])
++		env.append_unique('CXXFLAGS_PYEXT', ['-fno-strict-aliasing'])
+ 
+ 	if env.CC_NAME == "msvc":
+ 		from distutils.msvccompiler import MSVCCompiler
+diff --git a/third_party/waf/waflib/extras/doxygen.py b/third_party/waf/waflib/extras/doxygen.py
+index 423d8455025..20cd9e1a852 100644
+--- a/third_party/waf/waflib/extras/doxygen.py
++++ b/third_party/waf/waflib/extras/doxygen.py
+@@ -85,6 +85,12 @@ class doxygen(Task.Task):
+ 		if not getattr(self, 'pars', None):
+ 			txt = self.inputs[0].read()
+ 			self.pars = parse_doxy(txt)
++
++			# Override with any parameters passed to the task generator
++			if getattr(self.generator, 'pars', None):
++				for k, v in self.generator.pars.items():
++					self.pars[k] = v
++
+ 			if self.pars.get('OUTPUT_DIRECTORY'):
+ 				# Use the path parsed from the Doxyfile as an absolute path
+ 				output_node = self.inputs[0].parent.get_bld().make_node(self.pars['OUTPUT_DIRECTORY'])
+@@ -94,11 +100,6 @@ class doxygen(Task.Task):
+ 			output_node.mkdir()
+ 			self.pars['OUTPUT_DIRECTORY'] = output_node.abspath()
+ 
+-			# Override with any parameters passed to the task generator
+-			if getattr(self.generator, 'pars', None):
+-				for k, v in self.generator.pars.items():
+-					self.pars[k] = v
+-
+ 			self.doxy_inputs = getattr(self, 'doxy_inputs', [])
+ 			if not self.pars.get('INPUT'):
+ 				self.doxy_inputs.append(self.inputs[0].parent)
+diff --git a/third_party/waf/waflib/extras/fast_partial.py b/third_party/waf/waflib/extras/fast_partial.py
+index 71b8318eecb..90a94723bb8 100644
+--- a/third_party/waf/waflib/extras/fast_partial.py
++++ b/third_party/waf/waflib/extras/fast_partial.py
+@@ -18,6 +18,7 @@ Usage::
+ 		opt.load('fast_partial')
+ 
+ Assumptions:
++* Start with a clean build (run "waf distclean" after enabling)
+ * Mostly for C/C++/Fortran targets with link tasks (object-only targets are not handled)
+   try it in the folder generated by utils/genbench.py
+ * For full project builds: no --targets and no pruning from subfolders
+@@ -131,12 +132,18 @@ class bld_proxy(object):
+ 			data[x] = getattr(self, x)
+ 		db = os.path.join(self.variant_dir, Context.DBFILE + self.store_key)
+ 
+-		try:
+-			waflib.Node.pickle_lock.acquire()
++		with waflib.Node.pickle_lock:
+ 			waflib.Node.Nod3 = self.node_class
+-			x = Build.cPickle.dumps(data, Build.PROTOCOL)
+-		finally:
+-			waflib.Node.pickle_lock.release()
++			try:
++				x = Build.cPickle.dumps(data, Build.PROTOCOL)
++			except Build.cPickle.PicklingError:
++				root = data['root']
++				for node_deps in data['node_deps'].values():
++					for idx, node in enumerate(node_deps):
++						# there may be more cross-context Node objects to fix,
++						# but this should be the main source
++						node_deps[idx] = root.find_node(node.abspath())
++				x = Build.cPickle.dumps(data, Build.PROTOCOL)
+ 
+ 		Logs.debug('rev_use: storing %s', db)
+ 		Utils.writef(db + '.tmp', x, m='wb')
+@@ -393,12 +400,17 @@ def is_stale(self):
+ 		Logs.debug('rev_use: must post %r because this is a clean build')
+ 		return True
+ 
+-	# 3. check if the configuration changed
+-	if os.stat(self.bld.bldnode.find_node('c4che/build.config.py').abspath()).st_mtime > dbstat:
++	# 3.a check if the configuration exists
++	cache_node = self.bld.bldnode.find_node('c4che/build.config.py')
++	if not cache_node:
++		return True
++
++	# 3.b check if the configuration changed
++	if os.stat(cache_node.abspath()).st_mtime > dbstat:
+ 		Logs.debug('rev_use: must post %r because the configuration has changed', self.name)
+ 		return True
+ 
+-	# 3.a any tstamp data?
++	# 3.c any tstamp data?
+ 	try:
+ 		f_deps = self.bld.f_deps
+ 	except AttributeError:
+diff --git a/third_party/waf/waflib/extras/genpybind.py b/third_party/waf/waflib/extras/genpybind.py
+new file mode 100644
+index 00000000000..ac206ee8a8b
+--- /dev/null
++++ b/third_party/waf/waflib/extras/genpybind.py
+@@ -0,0 +1,194 @@
++import os
++import pipes
++import subprocess
++import sys
++
++from waflib import Logs, Task, Context
++from waflib.Tools.c_preproc import scan as scan_impl
++# ^-- Note: waflib.extras.gccdeps.scan does not work for us,
++# due to its current implementation:
++# The -MD flag is injected into the {C,CXX}FLAGS environment variable and
++# dependencies are read out in a separate step after compiling by reading
++# the .d file saved alongside the object file.
++# As the genpybind task refers to a header file that is never compiled itself,
++# gccdeps will not be able to extract the list of dependencies.
++
++from waflib.TaskGen import feature, before_method
++
++
++def join_args(args):
++    return " ".join(pipes.quote(arg) for arg in args)
++
++
++def configure(cfg):
++    cfg.load("compiler_cxx")
++    cfg.load("python")
++    cfg.check_python_version(minver=(2, 7))
++    if not cfg.env.LLVM_CONFIG:
++        cfg.find_program("llvm-config", var="LLVM_CONFIG")
++    if not cfg.env.GENPYBIND:
++        cfg.find_program("genpybind", var="GENPYBIND")
++
++    # find clang reasource dir for builtin headers
++    cfg.env.GENPYBIND_RESOURCE_DIR = os.path.join(
++            cfg.cmd_and_log(cfg.env.LLVM_CONFIG + ["--libdir"]).strip(),
++            "clang",
++            cfg.cmd_and_log(cfg.env.LLVM_CONFIG + ["--version"]).strip())
++    if os.path.exists(cfg.env.GENPYBIND_RESOURCE_DIR):
++        cfg.msg("Checking clang resource dir", cfg.env.GENPYBIND_RESOURCE_DIR)
++    else:
++        cfg.fatal("Clang resource dir not found")
++
++
++@feature("genpybind")
++@before_method("process_source")
++def generate_genpybind_source(self):
++    """
++    Run genpybind on the headers provided in `source` and compile/link the
++    generated code instead.  This works by generating the code on the fly and
++    swapping the source node before `process_source` is run.
++    """
++    # name of module defaults to name of target
++    module = getattr(self, "module", self.target)
++
++    # create temporary source file in build directory to hold generated code
++    out = "genpybind-%s.%d.cpp" % (module, self.idx)
++    out = self.path.get_bld().find_or_declare(out)
++
++    task = self.create_task("genpybind", self.to_nodes(self.source), out)
++    # used to detect whether CFLAGS or CXXFLAGS should be passed to genpybind
++    task.features = self.features
++    task.module = module
++    # can be used to select definitions to include in the current module
++    # (when header files are shared by more than one module)
++    task.genpybind_tags = self.to_list(getattr(self, "genpybind_tags", []))
++    # additional include directories
++    task.includes = self.to_list(getattr(self, "includes", []))
++    task.genpybind = self.env.GENPYBIND
++
++    # Tell waf to compile/link the generated code instead of the headers
++    # originally passed-in via the `source` parameter. (see `process_source`)
++    self.source = [out]
++
++
++class genpybind(Task.Task): # pylint: disable=invalid-name
++    """
++    Runs genpybind on headers provided as input to this task.
++    Generated code will be written to the first (and only) output node.
++    """
++    quiet = True
++    color = "PINK"
++    scan = scan_impl
++
++    @staticmethod
++    def keyword():
++        return "Analyzing"
++
++    def run(self):
++        if not self.inputs:
++            return
++
++        args = self.find_genpybind() + self._arguments(
++                resource_dir=self.env.GENPYBIND_RESOURCE_DIR)
++
++        output = self.run_genpybind(args)
++
++        # For debugging / log output
++        pasteable_command = join_args(args)
++
++        # write generated code to file in build directory
++        # (will be compiled during process_source stage)
++        (output_node,) = self.outputs
++        output_node.write("// {}\n{}\n".format(
++            pasteable_command.replace("\n", "\n// "), output))
++
++    def find_genpybind(self):
++        return self.genpybind
++
++    def run_genpybind(self, args):
++        bld = self.generator.bld
++
++        kwargs = dict(cwd=bld.variant_dir)
++        if hasattr(bld, "log_command"):
++            bld.log_command(args, kwargs)
++        else:
++            Logs.debug("runner: {!r}".format(args))
++        proc = subprocess.Popen(
++            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs)
++        stdout, stderr = proc.communicate()
++
++        if not isinstance(stdout, str):
++            stdout = stdout.decode(sys.stdout.encoding, errors="replace")
++        if not isinstance(stderr, str):
++            stderr = stderr.decode(sys.stderr.encoding, errors="replace")
++
++        if proc.returncode != 0:
++            bld.fatal(
++                "genpybind returned {code} during the following call:"
++                "\n{command}\n\n{stdout}\n\n{stderr}".format(
++                    code=proc.returncode,
++                    command=join_args(args),
++                    stdout=stdout,
++                    stderr=stderr,
++                ))
++
++        if stderr.strip():
++            Logs.debug("non-fatal warnings during genpybind run:\n{}".format(stderr))
++
++        return stdout
++
++    def _include_paths(self):
++        return self.generator.to_incnodes(self.includes + self.env.INCLUDES)
++
++    def _inputs_as_relative_includes(self):
++        include_paths = self._include_paths()
++        relative_includes = []
++        for node in self.inputs:
++            for inc in include_paths:
++                if node.is_child_of(inc):
++                    relative_includes.append(node.path_from(inc))
++                    break
++            else:
++                self.generator.bld.fatal("could not resolve {}".format(node))
++        return relative_includes
++
++    def _arguments(self, genpybind_parse=None, resource_dir=None):
++        args = []
++        relative_includes = self._inputs_as_relative_includes()
++        is_cxx = "cxx" in self.features
++
++        # options for genpybind
++        args.extend(["--genpybind-module", self.module])
++        if self.genpybind_tags:
++            args.extend(["--genpybind-tag"] + self.genpybind_tags)
++        if relative_includes:
++            args.extend(["--genpybind-include"] + relative_includes)
++        if genpybind_parse:
++            args.extend(["--genpybind-parse", genpybind_parse])
++
++        args.append("--")
++
++        # headers to be processed by genpybind
++        args.extend(node.abspath() for node in self.inputs)
++
++        args.append("--")
++
++        # options for clang/genpybind-parse
++        args.append("-D__GENPYBIND__")
++        args.append("-xc++" if is_cxx else "-xc")
++        has_std_argument = False
++        for flag in self.env["CXXFLAGS" if is_cxx else "CFLAGS"]:
++            flag = flag.replace("-std=gnu", "-std=c")
++            if flag.startswith("-std=c"):
++                has_std_argument = True
++            args.append(flag)
++        if not has_std_argument:
++            args.append("-std=c++14")
++        args.extend("-I{}".format(n.abspath()) for n in self._include_paths())
++        args.extend("-D{}".format(p) for p in self.env.DEFINES)
++
++        # point to clang resource dir, if specified
++        if resource_dir:
++            args.append("-resource-dir={}".format(resource_dir))
++
++        return args
+diff --git a/third_party/waf/waflib/extras/local_rpath.py b/third_party/waf/waflib/extras/local_rpath.py
+index b2507e17a10..e3923d9b9d4 100644
+--- a/third_party/waf/waflib/extras/local_rpath.py
++++ b/third_party/waf/waflib/extras/local_rpath.py
+@@ -2,18 +2,20 @@
+ # encoding: utf-8
+ # Thomas Nagy, 2011 (ita)
+ 
++import copy
+ from waflib.TaskGen import after_method, feature
+ 
+ @after_method('propagate_uselib_vars')
+ @feature('cprogram', 'cshlib', 'cxxprogram', 'cxxshlib', 'fcprogram', 'fcshlib')
+ def add_rpath_stuff(self):
+-	all = self.to_list(getattr(self, 'use', []))
++	all = copy.copy(self.to_list(getattr(self, 'use', [])))
+ 	while all:
+ 		name = all.pop()
+ 		try:
+ 			tg = self.bld.get_tgen_by_name(name)
+ 		except:
+ 			continue
+-		self.env.append_value('RPATH', tg.link_task.outputs[0].parent.abspath())
+-		all.extend(self.to_list(getattr(tg, 'use', [])))
++		if hasattr(tg, 'link_task'):
++			self.env.append_value('RPATH', tg.link_task.outputs[0].parent.abspath())
++			all.extend(self.to_list(getattr(tg, 'use', [])))
+ 
+diff --git a/third_party/waf/waflib/extras/objcopy.py b/third_party/waf/waflib/extras/objcopy.py
+index 82d8359ecf7..bb7ca6ef224 100644
+--- a/third_party/waf/waflib/extras/objcopy.py
++++ b/third_party/waf/waflib/extras/objcopy.py
+@@ -15,7 +15,7 @@ objcopy_flags		  Additional flags passed to objcopy.
+ """
+ 
+ from waflib.Utils import def_attrs
+-from waflib import Task
++from waflib import Task, Options
+ from waflib.TaskGen import feature, after_method
+ 
+ class objcopy(Task.Task):
+@@ -46,5 +46,8 @@ def map_objcopy(self):
+ 		self.add_install_files(install_to=self.objcopy_install_path, install_from=task.outputs[0])
+ 
+ def configure(ctx):
+-	ctx.find_program('objcopy', var='OBJCOPY', mandatory=True)
+-
++	program_name = 'objcopy'
++	prefix = getattr(Options.options, 'cross_prefix', None)
++	if prefix:
++		program_name = '{}-{}'.format(prefix, program_name)
++	ctx.find_program(program_name, var='OBJCOPY', mandatory=True)
+-- 
+2.23.0
+
+
+From db85325682fdc625707b2f192b6408009ff91f24 Mon Sep 17 00:00:00 2001
+From: Uri Simchoni <uri@samba.org>
+Date: Mon, 7 Oct 2019 00:37:17 +0300
+Subject: [PATCH 2/6] wafsamba: use test_args instead of exec_args to support
+ cross-compilation
+
+exec_args seems to have been a custom addition to Samba's copy of waf.
+Upstream Waf has an identically-purposed parameter called test_args.
+
+This parameter is being used for addiing runtime args to test programs that
+are being run during configuration phases.
+
+BUG: https://bugzilla.samba.org/show_bug.cgi?id=13846
+
+Signed-off-by: Uri Simchoni <uri@samba.org>
+Reviewed-by: Andrew Bartlett <abartlet@samba.org>
+(cherry picked from commit e00e93350288dc212fed3f1be2adf78dcb6e58e7)
+---
+ buildtools/wafsamba/samba_autoconf.py | 6 +++---
+ buildtools/wafsamba/samba_cross.py    | 2 +-
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/buildtools/wafsamba/samba_autoconf.py b/buildtools/wafsamba/samba_autoconf.py
+index 8e5dfb87102..62d3e20a15c 100644
+--- a/buildtools/wafsamba/samba_autoconf.py
++++ b/buildtools/wafsamba/samba_autoconf.py
+@@ -423,9 +423,9 @@ def CHECK_CODE(conf, code, define,
+     cflags.extend(ccflags)
+ 
+     if on_target:
+-        exec_args = conf.SAMBA_CROSS_ARGS(msg=msg)
++        test_args = conf.SAMBA_CROSS_ARGS(msg=msg)
+     else:
+-        exec_args = []
++        test_args = []
+ 
+     conf.COMPOUND_START(msg)
+ 
+@@ -440,7 +440,7 @@ def CHECK_CODE(conf, code, define,
+                      type=type,
+                      msg=msg,
+                      quote=quote,
+-                     exec_args=exec_args,
++                     test_args=test_args,
+                      define_ret=define_ret)
+     except Exception:
+         if always:
+diff --git a/buildtools/wafsamba/samba_cross.py b/buildtools/wafsamba/samba_cross.py
+index 8863c2c53e7..60ddf967237 100644
+--- a/buildtools/wafsamba/samba_cross.py
++++ b/buildtools/wafsamba/samba_cross.py
+@@ -139,7 +139,7 @@ class cross_Popen(Utils.subprocess.Popen):
+ 
+ @conf
+ def SAMBA_CROSS_ARGS(conf, msg=None):
+-    '''get exec_args to pass when running cross compiled binaries'''
++    '''get test_args to pass when running cross compiled binaries'''
+     if not conf.env.CROSS_COMPILE:
+         return []
+ 
+-- 
+2.23.0
+
+
+From fe645e2b2069a29e4145a06d084091f5e0a034cc Mon Sep 17 00:00:00 2001
+From: Uri Simchoni <uri@samba.org>
+Date: Mon, 7 Oct 2019 00:37:31 +0300
+Subject: [PATCH 3/6] wafsamba: avoid pre-forking if cross-compilation is
+ enabled
+
+Waf supports pre-forking to run configuration tests, but this
+doesn't play well with Samba's cross-compilation support, because
+Samba monkey-patches the actual fork+exec, which doesn't happen
+in a pre-forked process pool.
+
+This patch emulates the impact of WAF_NO_PREFORK env var when
+cross-compilation is enabled.
+
+The blueprint for the solution has been suggested by Thomas Nagy
+in https://bugzilla.samba.org/show_bug.cgi?id=13846#c7 (item #2)
+
+BUG: https://bugzilla.samba.org/show_bug.cgi?id=13846
+
+Signed-off-by: Uri Simchoni <uri@samba.org>
+Reviewed-by: Andrew Bartlett <abartlet@samba.org>
+(cherry picked from commit 5a4ade953420a4122c80d291ac53310abd6a279c)
+---
+ buildtools/wafsamba/samba_cross.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/buildtools/wafsamba/samba_cross.py b/buildtools/wafsamba/samba_cross.py
+index 60ddf967237..6fca470f2b7 100644
+--- a/buildtools/wafsamba/samba_cross.py
++++ b/buildtools/wafsamba/samba_cross.py
+@@ -147,6 +147,8 @@ def SAMBA_CROSS_ARGS(conf, msg=None):
+     if real_Popen is None:
+         real_Popen  = Utils.subprocess.Popen
+         Utils.subprocess.Popen = cross_Popen
++        Utils.run_process = Utils.run_regular_process
++        Utils.get_process = Utils.alloc_process_pool = Utils.nada
+ 
+     ret = []
+ 
+-- 
+2.23.0
+
+
+From e9b3ee9fe832dbddf7048dfd0a7e74fa052302ad Mon Sep 17 00:00:00 2001
+From: Uri Simchoni <uri@samba.org>
+Date: Mon, 7 Oct 2019 00:37:41 +0300
+Subject: [PATCH 4/6] wafsamba: pass environment to cross-execute tests
+
+This can come in handy for cross-execute scripts in general, and
+is particularly required by the samba-xc test for cross-answers /
+cross-execute, because Samba sets LD_LIBRARY_PATH during rpath
+checks, and the test program needs that in order to successfully
+run.
+
+BUG: https://bugzilla.samba.org/show_bug.cgi?id=13846
+
+Signed-off-by: Uri Simchoni <uri@samba.org>
+Reviewed-by: Andrew Bartlett <abartlet@samba.org>
+(cherry picked from commit fdfd69840902f4b13db2a204a0ca87a578b61b85)
+---
+ buildtools/wafsamba/samba_cross.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/buildtools/wafsamba/samba_cross.py b/buildtools/wafsamba/samba_cross.py
+index 6fca470f2b7..0868a855a0d 100644
+--- a/buildtools/wafsamba/samba_cross.py
++++ b/buildtools/wafsamba/samba_cross.py
+@@ -120,7 +120,8 @@ class cross_Popen(Utils.subprocess.Popen):
+             if use_answers:
+                 p = real_Popen(newargs,
+                                stdout=Utils.subprocess.PIPE,
+-                               stderr=Utils.subprocess.PIPE)
++                               stderr=Utils.subprocess.PIPE,
++                               env=kw.get('env', {}))
+                 ce_out, ce_err = p.communicate()
+                 ans = (p.returncode, samba_utils.get_string(ce_out))
+                 add_answer(ca_file, msg, ans)
+-- 
+2.23.0
+
+
+From f675bb1fd573124956b851e7b2b4a10ef9663afa Mon Sep 17 00:00:00 2001
+From: Uri Simchoni <uri@samba.org>
+Date: Wed, 9 Oct 2019 21:53:43 +0300
+Subject: [PATCH 5/6] autobuild: harden samba-xc test suite
+
+Add more checks which directly test the behavior of
+--cross-answers and --cross-execute.
+
+Previous test tested things in a round-about way, checking
+that running in all three modes (native, cross-execute,
+cross-answers) yields the same result. It was vulnerable
+to a degradation in which cross-compilation modes didn't
+work at all and were running native tests, which is
+what happened with the upgrade of waf.
+
+The added tests check the following:
+- That cross-excute with cross-answers sets the cross-answers file
+- That the content of cross-answers file actually affects the build
+  configuration
+- That a missing line in cross-answers fails the build
+
+BUG: https://bugzilla.samba.org/show_bug.cgi?id=13846
+
+Signed-off-by: Uri Simchoni <uri@samba.org>
+Reviewed-by: Andrew Bartlett <abartlet@samba.org>
+
+Autobuild-User(master): Uri Simchoni <uri@samba.org>
+Autobuild-Date(master): Sun Oct 20 13:29:58 UTC 2019 on sn-devel-184
+
+(cherry picked from commit 649d15bb969b6d27fd4554f49600366bb3df4712)
+---
+ script/autobuild.py | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/script/autobuild.py b/script/autobuild.py
+index cf665bd6a7c..41a373b9b90 100755
+--- a/script/autobuild.py
++++ b/script/autobuild.py
+@@ -442,12 +442,22 @@ tasks = {
+         ("configure-native", "./configure.developer --with-selftest-prefix=./bin/ab" + samba_configure_params),
+         ("configure-cross-execute", "./configure.developer --out ./bin-xe --cross-compile --cross-execute=script/identity_cc.sh" \
+             " --cross-answers=./bin-xe/cross-answers.txt --with-selftest-prefix=./bin-xe/ab" + samba_configure_params),
++        ("verify-cross-execute-output", "grep '^Checking value of NSIG' ./bin-xe/cross-answers.txt"),
+         ("configure-cross-answers", "./configure.developer --out ./bin-xa --cross-compile" \
+             " --cross-answers=./bin-xe/cross-answers.txt --with-selftest-prefix=./bin-xa/ab" + samba_configure_params),
+         ("compare-results", "script/compare_cc_results.py "
+             "./bin/c4che/default{} "
+             "./bin-xe/c4che/default{} "
+             "./bin-xa/c4che/default{}".format(*([CACHE_SUFFIX]*3))),
++        ("modify-cross-answers", "sed -i.bak -e 's/^\\(Checking value of NSIG:\\) .*/\\1 \"1234\"/' ./bin-xe/cross-answers.txt"),
++        ("configure-cross-answers-modified", "./configure.developer --out ./bin-xa2 --cross-compile" \
++            " --cross-answers=./bin-xe/cross-answers.txt --with-selftest-prefix=./bin-xa2/ab" + samba_configure_params),
++        ("verify-cross-answers", "test $(sed -n -e 's/VALUEOF_NSIG = \\(.*\\)/\\1/p' ./bin-xa2/c4che/default{})" \
++            " = \"'1234'\"".format(CACHE_SUFFIX)),
++        ("invalidate-cross-answers", "sed -i.bak -e '/^Checking value of NSIG/d' ./bin-xe/cross-answers.txt"),
++        ("configure-cross-answers-fail", "./configure.developer --out ./bin-xa3 --cross-compile" \
++            " --cross-answers=./bin-xe/cross-answers.txt --with-selftest-prefix=./bin-xa3/ab" + samba_configure_params + \
++            " ; test $? -ne 0"),
+         ],
+ 
+     # test build with -O3 -- catches extra warnings and bugs, tests the ad_dc environments
+-- 
+2.23.0
+
+
+From d0c09023fb2b84a7cc1fc747fe420c5b6a37c553 Mon Sep 17 00:00:00 2001
+From: Uri Simchoni <uri@samba.org>
+Date: Thu, 28 Nov 2019 21:19:51 +0200
+Subject: [PATCH 6/6] ldb: Release ldb 2.0.8
+
+* Upgrade waf to version 2.0.18 to match the rest of Samba 4.11.x
+
+BUG: https://bugzilla.samba.org/show_bug.cgi?id=13846
+
+Signed-off-by: Uri Simchoni <uri@samba.org>
+---
+ lib/ldb/ABI/ldb-2.0.8.sigs        | 283 ++++++++++++++++++++++++++++++
+ lib/ldb/ABI/pyldb-util-2.0.8.sigs |   2 +
+ lib/ldb/wscript                   |   2 +-
+ 3 files changed, 286 insertions(+), 1 deletion(-)
+ create mode 100644 lib/ldb/ABI/ldb-2.0.8.sigs
+ create mode 100644 lib/ldb/ABI/pyldb-util-2.0.8.sigs
+
+diff --git a/lib/ldb/ABI/ldb-2.0.8.sigs b/lib/ldb/ABI/ldb-2.0.8.sigs
+new file mode 100644
+index 00000000000..5049dc64ce1
+--- /dev/null
++++ b/lib/ldb/ABI/ldb-2.0.8.sigs
+@@ -0,0 +1,283 @@
++ldb_add: int (struct ldb_context *, const struct ldb_message *)
++ldb_any_comparison: int (struct ldb_context *, void *, ldb_attr_handler_t, const struct ldb_val *, const struct ldb_val *)
++ldb_asprintf_errstring: void (struct ldb_context *, const char *, ...)
++ldb_attr_casefold: char *(TALLOC_CTX *, const char *)
++ldb_attr_dn: int (const char *)
++ldb_attr_in_list: int (const char * const *, const char *)
++ldb_attr_list_copy: const char **(TALLOC_CTX *, const char * const *)
++ldb_attr_list_copy_add: const char **(TALLOC_CTX *, const char * const *, const char *)
++ldb_base64_decode: int (char *)
++ldb_base64_encode: char *(TALLOC_CTX *, const char *, int)
++ldb_binary_decode: struct ldb_val (TALLOC_CTX *, const char *)
++ldb_binary_encode: char *(TALLOC_CTX *, struct ldb_val)
++ldb_binary_encode_string: char *(TALLOC_CTX *, const char *)
++ldb_build_add_req: int (struct ldb_request **, struct ldb_context *, TALLOC_CTX *, const struct ldb_message *, struct ldb_control **, void *, ldb_request_callback_t, struct ldb_request *)
++ldb_build_del_req: int (struct ldb_request **, struct ldb_context *, TALLOC_CTX *, struct ldb_dn *, struct ldb_control **, void *, ldb_request_callback_t, struct ldb_request *)
++ldb_build_extended_req: int (struct ldb_request **, struct ldb_context *, TALLOC_CTX *, const char *, void *, struct ldb_control **, void *, ldb_request_callback_t, struct ldb_request *)
++ldb_build_mod_req: int (struct ldb_request **, struct ldb_context *, TALLOC_CTX *, const struct ldb_message *, struct ldb_control **, void *, ldb_request_callback_t, struct ldb_request *)
++ldb_build_rename_req: int (struct ldb_request **, struct ldb_context *, TALLOC_CTX *, struct ldb_dn *, struct ldb_dn *, struct ldb_control **, void *, ldb_request_callback_t, struct ldb_request *)
++ldb_build_search_req: int (struct ldb_request **, struct ldb_context *, TALLOC_CTX *, struct ldb_dn *, enum ldb_scope, const char *, const char * const *, struct ldb_control **, void *, ldb_request_callback_t, struct ldb_request *)
++ldb_build_search_req_ex: int (struct ldb_request **, struct ldb_context *, TALLOC_CTX *, struct ldb_dn *, enum ldb_scope, struct ldb_parse_tree *, const char * const *, struct ldb_control **, void *, ldb_request_callback_t, struct ldb_request *)
++ldb_casefold: char *(struct ldb_context *, TALLOC_CTX *, const char *, size_t)
++ldb_casefold_default: char *(void *, TALLOC_CTX *, const char *, size_t)
++ldb_check_critical_controls: int (struct ldb_control **)
++ldb_comparison_binary: int (struct ldb_context *, void *, const struct ldb_val *, const struct ldb_val *)
++ldb_comparison_fold: int (struct ldb_context *, void *, const struct ldb_val *, const struct ldb_val *)
++ldb_connect: int (struct ldb_context *, const char *, unsigned int, const char **)
++ldb_control_to_string: char *(TALLOC_CTX *, const struct ldb_control *)
++ldb_controls_except_specified: struct ldb_control **(struct ldb_control **, TALLOC_CTX *, struct ldb_control *)
++ldb_debug: void (struct ldb_context *, enum ldb_debug_level, const char *, ...)
++ldb_debug_add: void (struct ldb_context *, const char *, ...)
++ldb_debug_end: void (struct ldb_context *, enum ldb_debug_level)
++ldb_debug_set: void (struct ldb_context *, enum ldb_debug_level, const char *, ...)
++ldb_delete: int (struct ldb_context *, struct ldb_dn *)
++ldb_dn_add_base: bool (struct ldb_dn *, struct ldb_dn *)
++ldb_dn_add_base_fmt: bool (struct ldb_dn *, const char *, ...)
++ldb_dn_add_child: bool (struct ldb_dn *, struct ldb_dn *)
++ldb_dn_add_child_fmt: bool (struct ldb_dn *, const char *, ...)
++ldb_dn_add_child_val: bool (struct ldb_dn *, const char *, struct ldb_val)
++ldb_dn_alloc_casefold: char *(TALLOC_CTX *, struct ldb_dn *)
++ldb_dn_alloc_linearized: char *(TALLOC_CTX *, struct ldb_dn *)
++ldb_dn_canonical_ex_string: char *(TALLOC_CTX *, struct ldb_dn *)
++ldb_dn_canonical_string: char *(TALLOC_CTX *, struct ldb_dn *)
++ldb_dn_check_local: bool (struct ldb_module *, struct ldb_dn *)
++ldb_dn_check_special: bool (struct ldb_dn *, const char *)
++ldb_dn_compare: int (struct ldb_dn *, struct ldb_dn *)
++ldb_dn_compare_base: int (struct ldb_dn *, struct ldb_dn *)
++ldb_dn_copy: struct ldb_dn *(TALLOC_CTX *, struct ldb_dn *)
++ldb_dn_escape_value: char *(TALLOC_CTX *, struct ldb_val)
++ldb_dn_extended_add_syntax: int (struct ldb_context *, unsigned int, const struct ldb_dn_extended_syntax *)
++ldb_dn_extended_filter: void (struct ldb_dn *, const char * const *)
++ldb_dn_extended_syntax_by_name: const struct ldb_dn_extended_syntax *(struct ldb_context *, const char *)
++ldb_dn_from_ldb_val: struct ldb_dn *(TALLOC_CTX *, struct ldb_context *, const struct ldb_val *)
++ldb_dn_get_casefold: const char *(struct ldb_dn *)
++ldb_dn_get_comp_num: int (struct ldb_dn *)
++ldb_dn_get_component_name: const char *(struct ldb_dn *, unsigned int)
++ldb_dn_get_component_val: const struct ldb_val *(struct ldb_dn *, unsigned int)
++ldb_dn_get_extended_comp_num: int (struct ldb_dn *)
++ldb_dn_get_extended_component: const struct ldb_val *(struct ldb_dn *, const char *)
++ldb_dn_get_extended_linearized: char *(TALLOC_CTX *, struct ldb_dn *, int)
++ldb_dn_get_ldb_context: struct ldb_context *(struct ldb_dn *)
++ldb_dn_get_linearized: const char *(struct ldb_dn *)
++ldb_dn_get_parent: struct ldb_dn *(TALLOC_CTX *, struct ldb_dn *)
++ldb_dn_get_rdn_name: const char *(struct ldb_dn *)
++ldb_dn_get_rdn_val: const struct ldb_val *(struct ldb_dn *)
++ldb_dn_has_extended: bool (struct ldb_dn *)
++ldb_dn_is_null: bool (struct ldb_dn *)
++ldb_dn_is_special: bool (struct ldb_dn *)
++ldb_dn_is_valid: bool (struct ldb_dn *)
++ldb_dn_map_local: struct ldb_dn *(struct ldb_module *, void *, struct ldb_dn *)
++ldb_dn_map_rebase_remote: struct ldb_dn *(struct ldb_module *, void *, struct ldb_dn *)
++ldb_dn_map_remote: struct ldb_dn *(struct ldb_module *, void *, struct ldb_dn *)
++ldb_dn_minimise: bool (struct ldb_dn *)
++ldb_dn_new: struct ldb_dn *(TALLOC_CTX *, struct ldb_context *, const char *)
++ldb_dn_new_fmt: struct ldb_dn *(TALLOC_CTX *, struct ldb_context *, const char *, ...)
++ldb_dn_remove_base_components: bool (struct ldb_dn *, unsigned int)
++ldb_dn_remove_child_components: bool (struct ldb_dn *, unsigned int)
++ldb_dn_remove_extended_components: void (struct ldb_dn *)
++ldb_dn_replace_components: bool (struct ldb_dn *, struct ldb_dn *)
++ldb_dn_set_component: int (struct ldb_dn *, int, const char *, const struct ldb_val)
++ldb_dn_set_extended_component: int (struct ldb_dn *, const char *, const struct ldb_val *)
++ldb_dn_update_components: int (struct ldb_dn *, const struct ldb_dn *)
++ldb_dn_validate: bool (struct ldb_dn *)
++ldb_dump_results: void (struct ldb_context *, struct ldb_result *, FILE *)
++ldb_error_at: int (struct ldb_context *, int, const char *, const char *, int)
++ldb_errstring: const char *(struct ldb_context *)
++ldb_extended: int (struct ldb_context *, const char *, void *, struct ldb_result **)
++ldb_extended_default_callback: int (struct ldb_request *, struct ldb_reply *)
++ldb_filter_attrs: int (struct ldb_context *, const struct ldb_message *, const char * const *, struct ldb_message *)
++ldb_filter_from_tree: char *(TALLOC_CTX *, const struct ldb_parse_tree *)
++ldb_get_config_basedn: struct ldb_dn *(struct ldb_context *)
++ldb_get_create_perms: unsigned int (struct ldb_context *)
++ldb_get_default_basedn: struct ldb_dn *(struct ldb_context *)
++ldb_get_event_context: struct tevent_context *(struct ldb_context *)
++ldb_get_flags: unsigned int (struct ldb_context *)
++ldb_get_opaque: void *(struct ldb_context *, const char *)
++ldb_get_root_basedn: struct ldb_dn *(struct ldb_context *)
++ldb_get_schema_basedn: struct ldb_dn *(struct ldb_context *)
++ldb_global_init: int (void)
++ldb_handle_get_event_context: struct tevent_context *(struct ldb_handle *)
++ldb_handle_new: struct ldb_handle *(TALLOC_CTX *, struct ldb_context *)
++ldb_handle_use_global_event_context: void (struct ldb_handle *)
++ldb_handler_copy: int (struct ldb_context *, void *, const struct ldb_val *, struct ldb_val *)
++ldb_handler_fold: int (struct ldb_context *, void *, const struct ldb_val *, struct ldb_val *)
++ldb_init: struct ldb_context *(TALLOC_CTX *, struct tevent_context *)
++ldb_ldif_message_redacted_string: char *(struct ldb_context *, TALLOC_CTX *, enum ldb_changetype, const struct ldb_message *)
++ldb_ldif_message_string: char *(struct ldb_context *, TALLOC_CTX *, enum ldb_changetype, const struct ldb_message *)
++ldb_ldif_parse_modrdn: int (struct ldb_context *, const struct ldb_ldif *, TALLOC_CTX *, struct ldb_dn **, struct ldb_dn **, bool *, struct ldb_dn **, struct ldb_dn **)
++ldb_ldif_read: struct ldb_ldif *(struct ldb_context *, int (*)(void *), void *)
++ldb_ldif_read_file: struct ldb_ldif *(struct ldb_context *, FILE *)
++ldb_ldif_read_file_state: struct ldb_ldif *(struct ldb_context *, struct ldif_read_file_state *)
++ldb_ldif_read_free: void (struct ldb_context *, struct ldb_ldif *)
++ldb_ldif_read_string: struct ldb_ldif *(struct ldb_context *, const char **)
++ldb_ldif_write: int (struct ldb_context *, int (*)(void *, const char *, ...), void *, const struct ldb_ldif *)
++ldb_ldif_write_file: int (struct ldb_context *, FILE *, const struct ldb_ldif *)
++ldb_ldif_write_redacted_trace_string: char *(struct ldb_context *, TALLOC_CTX *, const struct ldb_ldif *)
++ldb_ldif_write_string: char *(struct ldb_context *, TALLOC_CTX *, const struct ldb_ldif *)
++ldb_load_modules: int (struct ldb_context *, const char **)
++ldb_map_add: int (struct ldb_module *, struct ldb_request *)
++ldb_map_delete: int (struct ldb_module *, struct ldb_request *)
++ldb_map_init: int (struct ldb_module *, const struct ldb_map_attribute *, const struct ldb_map_objectclass *, const char * const *, const char *, const char *)
++ldb_map_modify: int (struct ldb_module *, struct ldb_request *)
++ldb_map_rename: int (struct ldb_module *, struct ldb_request *)
++ldb_map_search: int (struct ldb_module *, struct ldb_request *)
++ldb_match_message: int (struct ldb_context *, const struct ldb_message *, const struct ldb_parse_tree *, enum ldb_scope, bool *)
++ldb_match_msg: int (struct ldb_context *, const struct ldb_message *, const struct ldb_parse_tree *, struct ldb_dn *, enum ldb_scope)
++ldb_match_msg_error: int (struct ldb_context *, const struct ldb_message *, const struct ldb_parse_tree *, struct ldb_dn *, enum ldb_scope, bool *)
++ldb_match_msg_objectclass: int (const struct ldb_message *, const char *)
++ldb_mod_register_control: int (struct ldb_module *, const char *)
++ldb_modify: int (struct ldb_context *, const struct ldb_message *)
++ldb_modify_default_callback: int (struct ldb_request *, struct ldb_reply *)
++ldb_module_call_chain: char *(struct ldb_request *, TALLOC_CTX *)
++ldb_module_connect_backend: int (struct ldb_context *, const char *, const char **, struct ldb_module **)
++ldb_module_done: int (struct ldb_request *, struct ldb_control **, struct ldb_extended *, int)
++ldb_module_flags: uint32_t (struct ldb_context *)
++ldb_module_get_ctx: struct ldb_context *(struct ldb_module *)
++ldb_module_get_name: const char *(struct ldb_module *)
++ldb_module_get_ops: const struct ldb_module_ops *(struct ldb_module *)
++ldb_module_get_private: void *(struct ldb_module *)
++ldb_module_init_chain: int (struct ldb_context *, struct ldb_module *)
++ldb_module_load_list: int (struct ldb_context *, const char **, struct ldb_module *, struct ldb_module **)
++ldb_module_new: struct ldb_module *(TALLOC_CTX *, struct ldb_context *, const char *, const struct ldb_module_ops *)
++ldb_module_next: struct ldb_module *(struct ldb_module *)
++ldb_module_popt_options: struct poptOption **(struct ldb_context *)
++ldb_module_send_entry: int (struct ldb_request *, struct ldb_message *, struct ldb_control **)
++ldb_module_send_referral: int (struct ldb_request *, char *)
++ldb_module_set_next: void (struct ldb_module *, struct ldb_module *)
++ldb_module_set_private: void (struct ldb_module *, void *)
++ldb_modules_hook: int (struct ldb_context *, enum ldb_module_hook_type)
++ldb_modules_list_from_string: const char **(struct ldb_context *, TALLOC_CTX *, const char *)
++ldb_modules_load: int (const char *, const char *)
++ldb_msg_add: int (struct ldb_message *, const struct ldb_message_element *, int)
++ldb_msg_add_empty: int (struct ldb_message *, const char *, int, struct ldb_message_element **)
++ldb_msg_add_fmt: int (struct ldb_message *, const char *, const char *, ...)
++ldb_msg_add_linearized_dn: int (struct ldb_message *, const char *, struct ldb_dn *)
++ldb_msg_add_steal_string: int (struct ldb_message *, const char *, char *)
++ldb_msg_add_steal_value: int (struct ldb_message *, const char *, struct ldb_val *)
++ldb_msg_add_string: int (struct ldb_message *, const char *, const char *)
++ldb_msg_add_value: int (struct ldb_message *, const char *, const struct ldb_val *, struct ldb_message_element **)
++ldb_msg_canonicalize: struct ldb_message *(struct ldb_context *, const struct ldb_message *)
++ldb_msg_check_string_attribute: int (const struct ldb_message *, const char *, const char *)
++ldb_msg_copy: struct ldb_message *(TALLOC_CTX *, const struct ldb_message *)
++ldb_msg_copy_attr: int (struct ldb_message *, const char *, const char *)
++ldb_msg_copy_shallow: struct ldb_message *(TALLOC_CTX *, const struct ldb_message *)
++ldb_msg_diff: struct ldb_message *(struct ldb_context *, struct ldb_message *, struct ldb_message *)
++ldb_msg_difference: int (struct ldb_context *, TALLOC_CTX *, struct ldb_message *, struct ldb_message *, struct ldb_message **)
++ldb_msg_element_compare: int (struct ldb_message_element *, struct ldb_message_element *)
++ldb_msg_element_compare_name: int (struct ldb_message_element *, struct ldb_message_element *)
++ldb_msg_element_equal_ordered: bool (const struct ldb_message_element *, const struct ldb_message_element *)
++ldb_msg_find_attr_as_bool: int (const struct ldb_message *, const char *, int)
++ldb_msg_find_attr_as_dn: struct ldb_dn *(struct ldb_context *, TALLOC_CTX *, const struct ldb_message *, const char *)
++ldb_msg_find_attr_as_double: double (const struct ldb_message *, const char *, double)
++ldb_msg_find_attr_as_int: int (const struct ldb_message *, const char *, int)
++ldb_msg_find_attr_as_int64: int64_t (const struct ldb_message *, const char *, int64_t)
++ldb_msg_find_attr_as_string: const char *(const struct ldb_message *, const char *, const char *)
++ldb_msg_find_attr_as_uint: unsigned int (const struct ldb_message *, const char *, unsigned int)
++ldb_msg_find_attr_as_uint64: uint64_t (const struct ldb_message *, const char *, uint64_t)
++ldb_msg_find_common_values: int (struct ldb_context *, TALLOC_CTX *, struct ldb_message_element *, struct ldb_message_element *, uint32_t)
++ldb_msg_find_duplicate_val: int (struct ldb_context *, TALLOC_CTX *, const struct ldb_message_element *, struct ldb_val **, uint32_t)
++ldb_msg_find_element: struct ldb_message_element *(const struct ldb_message *, const char *)
++ldb_msg_find_ldb_val: const struct ldb_val *(const struct ldb_message *, const char *)
++ldb_msg_find_val: struct ldb_val *(const struct ldb_message_element *, struct ldb_val *)
++ldb_msg_new: struct ldb_message *(TALLOC_CTX *)
++ldb_msg_normalize: int (struct ldb_context *, TALLOC_CTX *, const struct ldb_message *, struct ldb_message **)
++ldb_msg_remove_attr: void (struct ldb_message *, const char *)
++ldb_msg_remove_element: void (struct ldb_message *, struct ldb_message_element *)
++ldb_msg_rename_attr: int (struct ldb_message *, const char *, const char *)
++ldb_msg_sanity_check: int (struct ldb_context *, const struct ldb_message *)
++ldb_msg_sort_elements: void (struct ldb_message *)
++ldb_next_del_trans: int (struct ldb_module *)
++ldb_next_end_trans: int (struct ldb_module *)
++ldb_next_init: int (struct ldb_module *)
++ldb_next_prepare_commit: int (struct ldb_module *)
++ldb_next_read_lock: int (struct ldb_module *)
++ldb_next_read_unlock: int (struct ldb_module *)
++ldb_next_remote_request: int (struct ldb_module *, struct ldb_request *)
++ldb_next_request: int (struct ldb_module *, struct ldb_request *)
++ldb_next_start_trans: int (struct ldb_module *)
++ldb_op_default_callback: int (struct ldb_request *, struct ldb_reply *)
++ldb_options_copy: const char **(TALLOC_CTX *, const char **)
++ldb_options_find: const char *(struct ldb_context *, const char **, const char *)
++ldb_options_get: const char **(struct ldb_context *)
++ldb_pack_data: int (struct ldb_context *, const struct ldb_message *, struct ldb_val *, uint32_t)
++ldb_parse_control_from_string: struct ldb_control *(struct ldb_context *, TALLOC_CTX *, const char *)
++ldb_parse_control_strings: struct ldb_control **(struct ldb_context *, TALLOC_CTX *, const char **)
++ldb_parse_tree: struct ldb_parse_tree *(TALLOC_CTX *, const char *)
++ldb_parse_tree_attr_replace: void (struct ldb_parse_tree *, const char *, const char *)
++ldb_parse_tree_copy_shallow: struct ldb_parse_tree *(TALLOC_CTX *, const struct ldb_parse_tree *)
++ldb_parse_tree_walk: int (struct ldb_parse_tree *, int (*)(struct ldb_parse_tree *, void *), void *)
++ldb_qsort: void (void * const, size_t, size_t, void *, ldb_qsort_cmp_fn_t)
++ldb_register_backend: int (const char *, ldb_connect_fn, bool)
++ldb_register_extended_match_rule: int (struct ldb_context *, const struct ldb_extended_match_rule *)
++ldb_register_hook: int (ldb_hook_fn)
++ldb_register_module: int (const struct ldb_module_ops *)
++ldb_rename: int (struct ldb_context *, struct ldb_dn *, struct ldb_dn *)
++ldb_reply_add_control: int (struct ldb_reply *, const char *, bool, void *)
++ldb_reply_get_control: struct ldb_control *(struct ldb_reply *, const char *)
++ldb_req_get_custom_flags: uint32_t (struct ldb_request *)
++ldb_req_is_untrusted: bool (struct ldb_request *)
++ldb_req_location: const char *(struct ldb_request *)
++ldb_req_mark_trusted: void (struct ldb_request *)
++ldb_req_mark_untrusted: void (struct ldb_request *)
++ldb_req_set_custom_flags: void (struct ldb_request *, uint32_t)
++ldb_req_set_location: void (struct ldb_request *, const char *)
++ldb_request: int (struct ldb_context *, struct ldb_request *)
++ldb_request_add_control: int (struct ldb_request *, const char *, bool, void *)
++ldb_request_done: int (struct ldb_request *, int)
++ldb_request_get_control: struct ldb_control *(struct ldb_request *, const char *)
++ldb_request_get_status: int (struct ldb_request *)
++ldb_request_replace_control: int (struct ldb_request *, const char *, bool, void *)
++ldb_request_set_state: void (struct ldb_request *, int)
++ldb_reset_err_string: void (struct ldb_context *)
++ldb_save_controls: int (struct ldb_control *, struct ldb_request *, struct ldb_control ***)
++ldb_schema_attribute_add: int (struct ldb_context *, const char *, unsigned int, const char *)
++ldb_schema_attribute_add_with_syntax: int (struct ldb_context *, const char *, unsigned int, const struct ldb_schema_syntax *)
++ldb_schema_attribute_by_name: const struct ldb_schema_attribute *(struct ldb_context *, const char *)
++ldb_schema_attribute_fill_with_syntax: int (struct ldb_context *, TALLOC_CTX *, const char *, unsigned int, const struct ldb_schema_syntax *, struct ldb_schema_attribute *)
++ldb_schema_attribute_remove: void (struct ldb_context *, const char *)
++ldb_schema_attribute_remove_flagged: void (struct ldb_context *, unsigned int)
++ldb_schema_attribute_set_override_handler: void (struct ldb_context *, ldb_attribute_handler_override_fn_t, void *)
++ldb_schema_set_override_GUID_index: void (struct ldb_context *, const char *, const char *)
++ldb_schema_set_override_indexlist: void (struct ldb_context *, bool)
++ldb_search: int (struct ldb_context *, TALLOC_CTX *, struct ldb_result **, struct ldb_dn *, enum ldb_scope, const char * const *, const char *, ...)
++ldb_search_default_callback: int (struct ldb_request *, struct ldb_reply *)
++ldb_sequence_number: int (struct ldb_context *, enum ldb_sequence_type, uint64_t *)
++ldb_set_create_perms: void (struct ldb_context *, unsigned int)
++ldb_set_debug: int (struct ldb_context *, void (*)(void *, enum ldb_debug_level, const char *, va_list), void *)
++ldb_set_debug_stderr: int (struct ldb_context *)
++ldb_set_default_dns: void (struct ldb_context *)
++ldb_set_errstring: void (struct ldb_context *, const char *)
++ldb_set_event_context: void (struct ldb_context *, struct tevent_context *)
++ldb_set_flags: void (struct ldb_context *, unsigned int)
++ldb_set_modules_dir: void (struct ldb_context *, const char *)
++ldb_set_opaque: int (struct ldb_context *, const char *, void *)
++ldb_set_require_private_event_context: void (struct ldb_context *)
++ldb_set_timeout: int (struct ldb_context *, struct ldb_request *, int)
++ldb_set_timeout_from_prev_req: int (struct ldb_context *, struct ldb_request *, struct ldb_request *)
++ldb_set_utf8_default: void (struct ldb_context *)
++ldb_set_utf8_fns: void (struct ldb_context *, void *, char *(*)(void *, void *, const char *, size_t))
++ldb_setup_wellknown_attributes: int (struct ldb_context *)
++ldb_should_b64_encode: int (struct ldb_context *, const struct ldb_val *)
++ldb_standard_syntax_by_name: const struct ldb_schema_syntax *(struct ldb_context *, const char *)
++ldb_strerror: const char *(int)
++ldb_string_to_time: time_t (const char *)
++ldb_string_utc_to_time: time_t (const char *)
++ldb_timestring: char *(TALLOC_CTX *, time_t)
++ldb_timestring_utc: char *(TALLOC_CTX *, time_t)
++ldb_transaction_cancel: int (struct ldb_context *)
++ldb_transaction_cancel_noerr: int (struct ldb_context *)
++ldb_transaction_commit: int (struct ldb_context *)
++ldb_transaction_prepare_commit: int (struct ldb_context *)
++ldb_transaction_start: int (struct ldb_context *)
++ldb_unpack_data: int (struct ldb_context *, const struct ldb_val *, struct ldb_message *)
++ldb_unpack_data_flags: int (struct ldb_context *, const struct ldb_val *, struct ldb_message *, unsigned int)
++ldb_unpack_get_format: int (const struct ldb_val *, uint32_t *)
++ldb_val_dup: struct ldb_val (TALLOC_CTX *, const struct ldb_val *)
++ldb_val_equal_exact: int (const struct ldb_val *, const struct ldb_val *)
++ldb_val_map_local: struct ldb_val (struct ldb_module *, void *, const struct ldb_map_attribute *, const struct ldb_val *)
++ldb_val_map_remote: struct ldb_val (struct ldb_module *, void *, const struct ldb_map_attribute *, const struct ldb_val *)
++ldb_val_string_cmp: int (const struct ldb_val *, const char *)
++ldb_val_to_time: int (const struct ldb_val *, time_t *)
++ldb_valid_attr_name: int (const char *)
++ldb_vdebug: void (struct ldb_context *, enum ldb_debug_level, const char *, va_list)
++ldb_wait: int (struct ldb_handle *, enum ldb_wait_type)
+diff --git a/lib/ldb/ABI/pyldb-util-2.0.8.sigs b/lib/ldb/ABI/pyldb-util-2.0.8.sigs
+new file mode 100644
+index 00000000000..74d6719d2bc
+--- /dev/null
++++ b/lib/ldb/ABI/pyldb-util-2.0.8.sigs
+@@ -0,0 +1,2 @@
++pyldb_Dn_FromDn: PyObject *(struct ldb_dn *)
++pyldb_Object_AsDn: bool (TALLOC_CTX *, PyObject *, struct ldb_context *, struct ldb_dn **)
+diff --git a/lib/ldb/wscript b/lib/ldb/wscript
+index 750306fbddb..5b5c42d1431 100644
+--- a/lib/ldb/wscript
++++ b/lib/ldb/wscript
+@@ -1,7 +1,7 @@
+ #!/usr/bin/env python
+ 
+ APPNAME = 'ldb'
+-VERSION = '2.0.7'
++VERSION = '2.0.8'
+ 
+ import sys, os
+ 
+-- 
+2.23.0
+
