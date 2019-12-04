@@ -8,6 +8,11 @@ config globals 'globals'
 #	option Interval '30'
 #	option ReadThreads '2'
 
+#config plugin 'apcups'
+#	option enable '0'
+#	option Host 'localhost'
+#	option Port '3551'
+
 #config plugin 'conntrack'
 #	option enable '0'
 
@@ -24,6 +29,13 @@ config globals 'globals'
 #	option enable '0'
 #	option StoreRates '0'
 #	option DataDir '/tmp'
+
+#config plugin 'curl'
+#	option enable '0'
+
+#config curl_page
+#	option name 'test'
+#	option url 'http://finance.google.com/finance?q=NYSE%3AAMD%22'
 
 #config plugin 'df'
 #	option enable '0'
@@ -69,6 +81,15 @@ config globals 'globals'
 #	list Interface 'br-lan'
 #	option IgnoreSelected '0'
 
+#config plugin 'iptables'
+#	option enable '1'
+
+#config iptables_match
+#	option table 'nat'
+#	option chain 'zone_wan_postrouting'
+#	option index '1'
+#	option name 'WLAN-Clients traffic'
+
 #config plugin 'irq'
 #	option enable '0'
 #	list Irq '2'
@@ -95,6 +116,20 @@ config globals 'globals'
 #	option IgnoreSelected '0'
 #	list VerboseInterface 'br-lan'
 #	list QDisc 'br-lan'
+
+#config plugin 'network'
+#	option enable '1'
+#	option TimeToLive '128'
+#	option Forward '1'
+#	option CacheFlush '86400'
+
+#config network_listen
+#	option host '0.0.0.0'
+#	option port '25826'
+
+#config network_server
+#	option host '1.1.1.1'
+#	option port '25826'
 
 #config plugin 'nut'
 #	option enable '0'
