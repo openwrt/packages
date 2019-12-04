@@ -8,16 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libical
-PKG_VERSION:=3.0.4
+PKG_VERSION:=3.0.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=72b216e10233c3f60cb06062facf41f3b0f70615e5a60b47f9853341a0d5d145
+PKG_HASH:=5c8a21c2b732ece4a33e5c862970b4f35a8548bbcda50de5695f6fc211ac4d97
 PKG_SOURCE_URL:=https://github.com/libical/libical/releases/download/v$(PKG_VERSION)/
 
-PKG_LICENSE:=LGPL-2.1 MPL-2.0
-PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Jose Zapater <jzapater@gmail.com>
+PKG_LICENSE:=LGPL-2.1-or-later MPL-2.0
+PKG_LICENSE_FILES:=COPYING
+
+CMAKE_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -39,15 +42,6 @@ define Package/libical/description
 endef
 
 CMAKE_OPTIONS += -DWITH_CXX_BINDINGS=false -DICAL_BUILD_DOCS=false -DICAL_GLIB=false
-
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/libical
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/libical/* $(1)/usr/include/libical/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libical{,ss,vcal}.{a,so*} $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libical.pc $(1)/usr/lib/pkgconfig/
-endef
 
 define Package/libical/install
 	$(INSTALL_DIR) $(1)/usr/lib
