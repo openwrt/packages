@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
-PKG_VERSION:=5.9.0
-PKG_RELEASE:=4
+PKG_VERSION:=5.10.0
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
 	https://github.com/collectd/collectd/releases/download/collectd-$(PKG_VERSION)
-PKG_HASH:=7b220f8898a061f6e7f29a8c16697d1a198277f813da69474a67911097c0626b
+PKG_HASH:=a03359f563023e744c2dc743008a00a848f4cd506e072621d86b6d8313c0375b
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libltdl/aclocal.m4
@@ -82,6 +82,7 @@ COLLECTD_PLUGINS_DISABLED:= \
 	perl \
 	pf \
 	pinba \
+	procevent \
 	python \
 	redis \
 	rrdcached \
@@ -92,6 +93,7 @@ COLLECTD_PLUGINS_DISABLED:= \
 	statsd \
 	swap \
 	synproxy \
+	sysevent \
 	tape \
 	tokyotyrant \
 	turbostat \
@@ -177,6 +179,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	teamspeak2 \
 	ted \
 	thermal \
+	threshold \
 	unixsock \
 	uptime \
 	users \
@@ -419,6 +422,7 @@ $(eval $(call BuildPlugin,teamspeak2,TeamSpeak2 input,teamspeak2,))
 $(eval $(call BuildPlugin,ted,The Energy Detective input,ted,))
 $(eval $(call BuildPlugin,tcpconns,TCP connection tracking input,tcpconns,))
 $(eval $(call BuildPlugin,thermal,system temperatures input,thermal,))
+$(eval $(call BuildPlugin,threshold,Notifications and thresholds,threshold,))
 $(eval $(call BuildPlugin,unixsock,unix socket output,unixsock,))
 $(eval $(call BuildPlugin,uptime,uptime status input,uptime,))
 $(eval $(call BuildPlugin,users,user logged in status input,users,))
