@@ -140,6 +140,7 @@ config_conn() {
 	local dpddelay
 	local inactivity
 	local keyexchange
+	local reqid
 
 	config_get mode                     "$1"           mode "route"
 	config_get local_subnet             "$1"           local_subnet ""
@@ -159,6 +160,7 @@ config_conn() {
 	config_get dpddelay                 "$1"           dpddelay "30s"
 	config_get inactivity               "$1"           inactivity
 	config_get keyexchange              "$1"           keyexchange "ikev2"
+	config_get reqid                    "$1"           reqid
 
 	[ -n "$local_nat" ] && local_subnet=$local_nat
 
@@ -180,6 +182,7 @@ config_conn() {
 	ipsec_xappend "  dpddelay=$dpddelay"
 
 	[ -n "$inactivity" ] && ipsec_xappend "  inactivity=$inactivity"
+	[ -n "$reqid" ] && ipsec_xappend "  reqid=$reqid"
 
 	if [ "$auth_method" = "psk" ]; then
 		ipsec_xappend "  leftauth=psk"
