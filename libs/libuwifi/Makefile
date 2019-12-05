@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libuwifi
-PKG_VERSION:=2019-05-27
-PKG_RELEASE:=2
+PKG_VERSION:=2019-12-05
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/br101/libuwifi.git
-PKG_SOURCE_VERSION:=bb92bc9b041a077488f2fa5a1716902c7bb23e5b
-PKG_MIRROR_HASH:=c6dc795ef6c2cc87d411d3f907974f634a132c3e732db2597f96ff25a05faa05
+PKG_SOURCE_VERSION:=089bfebd3a8da6e39fd93e33c44368b044c23dde
+PKG_MIRROR_HASH:=a99801ad1dfcf459b00adc582d5e6a31dae9ed10529d114e1e26f5760c6a74f8
 
 PKG_MAINTAINER:=Bruno Randolf <br1@einfach.org>, Nick Hainke <vincent@systemli.org>
 PKG_LICENSE:=LGPL-3.0-only
@@ -40,9 +40,6 @@ define Build/InstallDev
 
 	$(CP) $(PKG_BUILD_DIR)/include/uwifi/*.h $(1)/usr/include/uwifi
 	$(CP) $(PKG_BUILD_DIR)/linux/*.h $(1)/usr/include/uwifi
-
-	$(CP) $(PKG_BUILD_DIR)/ccan $(1)/usr/include/
-	$(CP) $(PKG_BUILD_DIR)/config.h $(1)/usr/include/ccan/
 
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/build/libuwifi.{a,so*} $(1)/usr/lib/
