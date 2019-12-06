@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oniguruma
-PKG_VERSION:=6.9.3
+PKG_VERSION:=6.9.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=onig-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/kkos/oniguruma/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=dc6dec742941e24b761cea1b9a2f12e750879107ae69fd80ae1046459d4fb1db
+PKG_HASH:=aea68e5843b627f5fe6d3d6b598845b7f3622910e0568408e7cc2fa6b3690b87
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
