@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=spice
 PKG_VERSION:=0.14.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.spice-space.org/download/releases/spice-server
 PKG_HASH:=b203b3882e06f4c7249a3150d90c84e1a90490d41ead255a3d2cede46f4a29a7
@@ -54,5 +54,6 @@ CONFIGURE_ARGS += \
 	--disable-gstreamer \
 	--disable-smartcard \
 	--disable-statistics \
+	--without-sasl \
 
 $(eval $(call BuildPackage,libspice-server))
