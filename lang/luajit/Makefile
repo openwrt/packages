@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luajit
-PKG_VERSION:=2.1.0-beta3
-PKG_RELEASE:=3
+PKG_VERSION:=2.1.2
+PKG_RELEASE:=1
 
-PKG_SOURCE:=LuaJIT-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://luajit.org/download
-PKG_HASH:=1ad2e34b111c802f9d0cdf019e986909123237a28c746b21295b63c9e785d9c3
-PKG_BUILD_DIR:=$(BUILD_DIR)/LuaJIT-$(PKG_VERSION)
+PKG_SOURCE:=moonjit-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/moonjit/moonjit/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=c3de8e29aa617fc594c043f57636ab9ad71af2b4a3a513932b05f5cdaa4320b2
+PKG_BUILD_DIR:=$(BUILD_DIR)/moonjit-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Morteza Milani <milani@pichak.co>
 PKG_LICENSE:=MIT
@@ -23,7 +23,7 @@ define Package/luajit
  SECTION:=lang
  CATEGORY:=Languages
  TITLE:=LuaJIT
- URL:=https://www.luajit.org
+ URL:=https://github.com/moonjit/moonjit
  DEPENDS:=@(i386||x86_64||arm||armeb||aarch64||powerpc||mips||mipsel)
 endef
 

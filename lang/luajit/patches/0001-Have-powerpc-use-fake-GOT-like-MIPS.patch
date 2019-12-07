@@ -1,0 +1,111 @@
+From 712a43ac6f54fd3eb683c9b57bb304cf87cbd388 Mon Sep 17 00:00:00 2001
+From: Clint Bland <bland.cr@gmail.com>
+Date: Wed, 13 Mar 2019 19:19:16 -0700
+Subject: [PATCH] Have powerpc use fake GOT like MIPS
+
+Fixes: https://github.com/LuaJIT/LuaJIT/issues/481
+Pull request: https://github.com/LuaJIT/LuaJIT/pull/486
+---
+ src/lj_dispatch.c | 15 +++++++++++++++
+ src/lj_dispatch.h | 17 ++++++++++++++++-
+ src/vm_ppc.dasc   |  9 ++++++++-
+ 3 files changed, 39 insertions(+), 2 deletions(-)
+
+diff --git a/src/lj_dispatch.c b/src/lj_dispatch.c
+index 5d6795f8..ab39f7c6 100644
+--- a/src/lj_dispatch.c
++++ b/src/lj_dispatch.c
+@@ -56,6 +56,18 @@ static const ASMFunction dispatch_got[] = {
+ #undef GOTFUNC
+ #endif
+ 
++#if LJ_TARGET_PPC
++#include <math.h>
++LJ_FUNCA_NORET void LJ_FASTCALL lj_ffh_coroutine_wrap_err(lua_State *L,
++							  lua_State *co);
++
++#define GOTFUNC(name)	(ASMFunction)name,
++static const ASMFunction dispatch_got[] = {
++  GOTDEF(GOTFUNC)
++};
++#undef GOTFUNC
++#endif
++
+ /* Initialize instruction dispatch table and hot counters. */
+ void lj_dispatch_init(GG_State *GG)
+ {
+@@ -77,6 +89,9 @@ void lj_dispatch_init(GG_State *GG)
+ #if LJ_TARGET_MIPS
+   memcpy(GG->got, dispatch_got, LJ_GOT__MAX*sizeof(ASMFunction *));
+ #endif
++#if LJ_TARGET_PPC
++  memcpy(GG->got, dispatch_got, LJ_GOT__MAX*4);
++#endif
+ }
+ 
+ #if LJ_HASJIT
+diff --git a/src/lj_dispatch.h b/src/lj_dispatch.h
+index 5bda51a2..23f937fc 100644
+--- a/src/lj_dispatch.h
++++ b/src/lj_dispatch.h
+@@ -66,6 +66,21 @@ GOTDEF(GOTENUM)
+ };
+ #endif
+ 
++#if LJ_TARGET_PPC
++/* Need our own global offset table for the dreaded MIPS calling conventions. */
++#define GOTDEF(_) \
++  _(floor) _(ceil) _(trunc) _(log) _(log10) _(exp) _(sin) _(cos) _(tan) \
++  _(asin) _(acos) _(atan) _(sinh) _(cosh) _(tanh) _(frexp) _(modf) _(atan2) \
++  _(pow) _(fmod) _(ldexp) _(sqrt)
++
++enum {
++#define GOTENUM(name) LJ_GOT_##name,
++GOTDEF(GOTENUM)
++#undef GOTENUM
++  LJ_GOT__MAX
++};
++#endif
++
+ /* Type of hot counter. Must match the code in the assembler VM. */
+ /* 16 bits are sufficient. Only 0.0015% overhead with maximum slot penalty. */
+ typedef uint16_t HotCount;
+@@ -89,7 +104,7 @@ typedef uint16_t HotCount;
+ typedef struct GG_State {
+   lua_State L;				/* Main thread. */
+   global_State g;			/* Global state. */
+-#if LJ_TARGET_MIPS
++#if LJ_TARGET_MIPS || LJ_TARGET_PPC
+   ASMFunction got[LJ_GOT__MAX];		/* Global offset table. */
+ #endif
+ #if LJ_HASJIT
+diff --git a/src/vm_ppc.dasc b/src/vm_ppc.dasc
+index c63f15c3..810e6ac9 100644
+--- a/src/vm_ppc.dasc
++++ b/src/vm_ppc.dasc
+@@ -51,7 +51,12 @@
+ |.macro blex, target; bl extern target; nop; .endmacro
+ |.macro .toc, a, b; a, b; .endmacro
+ |.else
+-|.macro blex, target; bl extern target@plt; .endmacro
++|.macro blex, target
++|  lwz TMP0, DISPATCH_GOT(target)(DISPATCH)
++|  mtctr TMP0
++|  bctrl
++|  //bl extern target@plt
++|.endmacro
+ |.macro .toc, a, b; .endmacro
+ |.endif
+ |.if OPD
+@@ -578,6 +583,8 @@
+ |// Assumes DISPATCH is relative to GL.
+ #define DISPATCH_GL(field)	(GG_DISP2G + (int)offsetof(global_State, field))
+ #define DISPATCH_J(field)	(GG_DISP2J + (int)offsetof(jit_State, field))
++#define GG_DISP2GOT		(GG_OFS(got) - GG_OFS(dispatch))
++#define DISPATCH_GOT(name)	(GG_DISP2GOT + 4*LJ_GOT_##name)
+ |
+ #define PC2PROTO(field)  ((int)offsetof(GCproto, field)-(int)sizeof(GCproto))
+ |
+-- 
+2.24.1
+
