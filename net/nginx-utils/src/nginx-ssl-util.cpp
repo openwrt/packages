@@ -1,4 +1,4 @@
-#define openwrt
+// #define openwrt
 
 #include <iostream>
 #include <string>

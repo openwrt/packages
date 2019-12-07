@@ -1,1 +1,0 @@
-/usr/bin/c++    -rdynamic CMakeFiles/nginx-ssl-util.dir/nginx-ssl-util.cpp.o  -o nginx-ssl-util -lpcre 
