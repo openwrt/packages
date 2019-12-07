@@ -3,7 +3,7 @@
 
 # Relative path conversion top directories.
 set(CMAKE_RELATIVE_PATH_TOP_SOURCE "/home/shared/projects/openwrt-pst/packages/net/nginx-utils/src")
-set(CMAKE_RELATIVE_PATH_TOP_BINARY "/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files")
+set(CMAKE_RELATIVE_PATH_TOP_BINARY "/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build")
 
 # Force unix paths in dependencies.
 set(CMAKE_FORCE_UNIX_PATHS 1)
