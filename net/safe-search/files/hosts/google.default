@@ -5,7 +5,7 @@
 # IMPORTANT: if this file is not working, make sure that dnsmasq is able to READ it!
 #
 # Google Safe Search Host List
-# Generated on Wed Oct 10 10:18:34 CDT 2018
+# Generated on Sat Dec  7 10:21:21 CST 2019
 # From: https://www.google.com/supported_domains
 
 #2001:4860:4802:32::78 forcesafesearch.google.com
@@ -79,7 +79,6 @@
 2001:4860:4802:32::78 google.com.gi
 2001:4860:4802:32::78 google.gl
 2001:4860:4802:32::78 google.gm
-2001:4860:4802:32::78 google.gp
 2001:4860:4802:32::78 google.gr
 2001:4860:4802:32::78 google.com.gt
 2001:4860:4802:32::78 google.gy
@@ -133,7 +132,6 @@
 2001:4860:4802:32::78 google.com.my
 2001:4860:4802:32::78 google.co.mz
 2001:4860:4802:32::78 google.com.na
-2001:4860:4802:32::78 google.com.nf
 2001:4860:4802:32::78 google.com.ng
 2001:4860:4802:32::78 google.com.ni
 2001:4860:4802:32::78 google.ne
@@ -178,7 +176,6 @@
 2001:4860:4802:32::78 google.tg
 2001:4860:4802:32::78 google.co.th
 2001:4860:4802:32::78 google.com.tj
-2001:4860:4802:32::78 google.tk
 2001:4860:4802:32::78 google.tl
 2001:4860:4802:32::78 google.tm
 2001:4860:4802:32::78 google.tn
@@ -272,7 +269,6 @@
 2001:4860:4802:32::78 www.google.com.gi
 2001:4860:4802:32::78 www.google.gl
 2001:4860:4802:32::78 www.google.gm
-2001:4860:4802:32::78 www.google.gp
 2001:4860:4802:32::78 www.google.gr
 2001:4860:4802:32::78 www.google.com.gt
 2001:4860:4802:32::78 www.google.gy
@@ -326,7 +322,6 @@
 2001:4860:4802:32::78 www.google.com.my
 2001:4860:4802:32::78 www.google.co.mz
 2001:4860:4802:32::78 www.google.com.na
-2001:4860:4802:32::78 www.google.com.nf
 2001:4860:4802:32::78 www.google.com.ng
 2001:4860:4802:32::78 www.google.com.ni
 2001:4860:4802:32::78 www.google.ne
@@ -371,7 +366,6 @@
 2001:4860:4802:32::78 www.google.tg
 2001:4860:4802:32::78 www.google.co.th
 2001:4860:4802:32::78 www.google.com.tj
-2001:4860:4802:32::78 www.google.tk
 2001:4860:4802:32::78 www.google.tl
 2001:4860:4802:32::78 www.google.tm
 2001:4860:4802:32::78 www.google.tn
@@ -465,7 +459,6 @@
 216.239.38.120 google.com.gi
 216.239.38.120 google.gl
 216.239.38.120 google.gm
-216.239.38.120 google.gp
 216.239.38.120 google.gr
 216.239.38.120 google.com.gt
 216.239.38.120 google.gy
@@ -519,7 +512,6 @@
 216.239.38.120 google.com.my
 216.239.38.120 google.co.mz
 216.239.38.120 google.com.na
-216.239.38.120 google.com.nf
 216.239.38.120 google.com.ng
 216.239.38.120 google.com.ni
 216.239.38.120 google.ne
@@ -564,7 +556,6 @@
 216.239.38.120 google.tg
 216.239.38.120 google.co.th
 216.239.38.120 google.com.tj
-216.239.38.120 google.tk
 216.239.38.120 google.tl
 216.239.38.120 google.tm
 216.239.38.120 google.tn
@@ -658,7 +649,6 @@
 216.239.38.120 www.google.com.gi
 216.239.38.120 www.google.gl
 216.239.38.120 www.google.gm
-216.239.38.120 www.google.gp
 216.239.38.120 www.google.gr
 216.239.38.120 www.google.com.gt
 216.239.38.120 www.google.gy
@@ -712,7 +702,6 @@
 216.239.38.120 www.google.com.my
 216.239.38.120 www.google.co.mz
 216.239.38.120 www.google.com.na
-216.239.38.120 www.google.com.nf
 216.239.38.120 www.google.com.ng
 216.239.38.120 www.google.com.ni
 216.239.38.120 www.google.ne
@@ -757,7 +746,6 @@
 216.239.38.120 www.google.tg
 216.239.38.120 www.google.co.th
 216.239.38.120 www.google.com.tj
-216.239.38.120 www.google.tk
 216.239.38.120 www.google.tl
 216.239.38.120 www.google.tm
 216.239.38.120 www.google.tn
