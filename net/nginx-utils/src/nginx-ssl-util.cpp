@@ -1,4 +1,5 @@
-// #define openwrt
+#define openwrt
+#include <chrono>
 
 #include <iostream>
 #include <string>
@@ -6,8 +7,8 @@
 #include <streambuf>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <chrono>
 
+#include <functional>
 #ifdef openwrt
 extern "C" {
 #include <libubus.h>
@@ -238,56 +239,93 @@ void try_using_cron_to_recreate_certificate(const string & name)
     }
 }
 
+template<typename S, typename... Strings>
+void test(const char * attr, function<void(void * val)> process,
+                   const S & key, const Strings & ...keys);
+template<typename S, typename... Strings>
+void test(const char * attr, function<void(void * val)> process,
+                   const S & key, const Strings & ...keys)
+{
+    test(attr, process, keys...);
+}
+
+
 #ifdef openwrt
-string create_lan_listen_process(blob_attr * attr, size_t len, bool inner=false);
-string create_lan_listen_process(blob_attr * attr, size_t len, bool inner) {
+
+
+void ubus_traverse(const blob_attr * attr, function<void(void * val)> process);
+void ubus_traverse(const blob_attr * attr, function<void(void * val)> process)
+{}
+template<class T, class ... Types>
+void ubus_traverse(const blob_attr * attr, function<void(void * val)> process,
+                   T key, Types ... keys);
+template<class T, class ... Types>
+void ubus_traverse(const blob_attr * attr, function<void(void * val)> process,
+                   T key, Types ... keys)
+{
+    blob_attr * pos;
+    size_t len;
+    blobmsg_for_each_attr(pos, attr, len) {
+        const char * name = blobmsg_name(pos);
+        if (name != (string)"" && name != (string)key) { continue; }
+        switch (blob_id(pos)) {
+            case BLOBMSG_TYPE_TABLE: [[fallthrough]]
+            case BLOBMSG_TYPE_ARRAY:
+                    name==(string)key ? ubus_traverse(pos, process, keys...)
+                            : ubus_traverse(pos, process, key, keys...);
+                break;
+            default:
+                if (sizeof...(keys)==0 && (string)key==name) {
+                    process(blobmsg_data(pos));
+                }
+        }
+    }
+}
+
+static void create_lan_listen_callback(ubus_request * req, int type,
+                                       blob_attr * msg);
+static void create_lan_listen_callback(ubus_request * req, int type,
+                                       blob_attr * msg)
+{
+    if (!msg) { return; }
     string listen = "# This file is re-created if Nginx starts or"
         " a LAN address changes.\n";
     string listen_default = listen;
     string ssl_listen = listen;
     string ssl_listen_default = listen;
-    blob_attr * pos;
-    blobmsg_for_each_attr(pos, attr, len) {
-        string name = blobmsg_name(pos);
-        void * data = blobmsg_data(pos);
-        size_t sz = blobmsg_data_len(pos);
-        string ip = "";
-        if (name == "address") {
-            return (char *)data;
-        } else if (name == "ipv4-address") {
-            ip = create_lan_listen_process((blob_attr *)data, sz);
-        } else if (name == "ipv6-address") {
-            ip = "[" + create_lan_listen_process((blob_attr *)data, sz) + "]";
-        }
-        if (ip != "" && ip != "[]") {
-            listen += "     listen " + ip + ":80;\n";
-            listen_default += "     listen " + ip + ":80 default_server;\n";
-            ssl_listen += "     listen " + ip + ":443 ssl;\n";
-            ssl_listen_default += "     listen " + ip +
-                ":443 ssl default_server;\n";
-        }
-    }
-    if (inner) { return ""; }
-    listen += "     listen 127.0.0.1:80;\n";
-    listen += "     listen [::1]:80;\n";
-    listen_default += "     listen 127.0.0.1:80 default_server;\n";
-    listen_default += "     listen [::1]:80 default_server;\n";
-    ssl_listen += "     listen 127.0.0.1:443 ssl;\n";
-    ssl_listen += "     listen [::1]:443 ssl;\n";
-    ssl_listen_default += "     listen 127.0.0.1:443 ssl default_server;\n";
-    ssl_listen_default += "     listen [::1]:443 ssl default_server;\n";
+
+    string prefix;
+    string suffix;
+    auto create_it = [&listen, &listen_default, &ssl_listen,
+        &ssl_listen_default, suffix, prefix] (void * val) -> void
+    {
+        string ip = (char *)val;
+        if (ip == "") { return; }
+        ip = prefix + ip + suffix;
+        listen += "\tlisten " + ip + ":80;\n";
+        listen_default += "\tlisten " + ip + ":80 default_server;\n";
+        ssl_listen += "\tlisten " + ip + ":443 ssl;\n";
+        ssl_listen_default += "\tlisten " + ip + ":443 ssl default_server;\n";
+    };
+    prefix = "";
+    suffix = "";
+    ubus_traverse(msg, create_it, "ipv4-address", "address");
+    prefix = "[";
+    suffix = "]";
+    ubus_traverse(msg, create_it, "ipv6-address", "address");
+
+    listen += "\tlisten 127.0.0.1:80;\n";
+    listen += "\tlisten [::1]:80;\n";
+    listen_default += "\tlisten 127.0.0.1:80 default_server;\n";
+    listen_default += "\tlisten [::1]:80 default_server;\n";
+    ssl_listen += "\tlisten 127.0.0.1:443 ssl;\n";
+    ssl_listen += "\tlisten [::1]:443 ssl;\n";
+    ssl_listen_default += "\tlisten 127.0.0.1:443 ssl default_server;\n";
+    ssl_listen_default += "\tlisten [::1]:443 ssl default_server;\n";
     write_file(LAN_LISTEN, listen);
     write_file(LAN_LISTEN+".default", listen_default);
     write_file(LAN_SSL_LISTEN, ssl_listen);
     write_file(LAN_SSL_LISTEN+".default", ssl_listen_default);
-    return "";
-}
-
-static void create_lan_listen_cb(ubus_request * req, int type, blob_attr * msg);
-static void create_lan_listen_cb(ubus_request * req, int type, blob_attr * msg)
-{
-    if (!msg) { return; }
-    create_lan_listen_process(msg, blobmsg_data_len(msg));
 }
 
 static int create_lan_listen();
@@ -301,14 +339,13 @@ static int create_lan_listen()
         static blob_buf req;
         blob_buf_init(&req, 0);
         ret = ubus_invoke(ctx, id, "status", req.head,
-                          create_lan_listen_cb, NULL, 200);
+                          create_lan_listen_callback, NULL, 200);
     }
     if (ctx) { ubus_free(ctx); }
     return ret;
 }
 
 #endif
-
 
 int main(int argc, char * argv[]) {
     auto begin = chrono::steady_clock::now();

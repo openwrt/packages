@@ -189,6 +189,9 @@ ubox:FILEPATH=ubox-NOTFOUND
 //Path to a library.
 ubus:FILEPATH=ubus-NOTFOUND
 
+//Path to a file.
+ubus_include_dir:PATH=ubus_include_dir-NOTFOUND
+
 
 ########################
 # INTERNAL cache entries
