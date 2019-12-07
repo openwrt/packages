@@ -1,3 +1,5 @@
+#define openwrt
+
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -6,200 +8,29 @@
 #include <sys/wait.h>
 #include <chrono>
 
-#define openwrt
-
 #ifdef openwrt
-#ifdef __cplusplus
 extern "C" {
-#endif
 #include <libubus.h>
-#ifdef __cplusplus
 }
 #endif
-#endif
 
-
-// implement *some* <regex> functions using pcre for performance:
-
-#include <pcre.h>
-#include <string>
-#include <iostream>
-
-
-class regex {
-public:
-    regex(const std::string & str) 
-    : re{ pcre_compile(str.c_str(), 0, &errp, &erroffs, NULL) }
-    {
-        if (re==NULL) {
-            std::cerr<<"Regex error: "<<errp<<std::endl;
-            std::cerr<<'\t'<<str<<std::endl;
-            std::cerr<<'\t';
-            while (--erroffs) { std::cerr<<' '; }
-            std::cerr<<'^'<<std::endl;
-        }
-    }
-    
-    ~regex() { if (re) { pcre_free(re); } }
-    
-    inline const pcre * operator()() const { return re; }
-    
-private:
-    const char * errp;
-    int erroffs;
-    pcre * const re;
-};
-
-bool regex_search(const std::string & subj, const regex & rgx);
-bool regex_search(const std::string & subj, const regex & rgx) {
-    int n = pcre_exec(rgx(), NULL, subj.c_str(), subj.length(), 0, 0, NULL, 0);
-    return n>=0;
-}
-
-class smatch {
-public:
-    ~smatch() { if (vec) { delete [] vec; } }
-    
-    std::string suffix() {
-        return str.substr(vec[1]);
-    }
-    std::string prefix() {
-        return str.substr(0, vec[0]);
-    }
-    
-    std::string operator[](int i) const  {
-        if (i<0 || i>=n) { return ""; }
-        int x = vec[2*i];
-        if (x<0) { return ""; }
-        int len = vec[2*i+1] - x;
-        return str.substr(x, len);
-    }
-    
-    friend bool regex_search(const std::string &, smatch &, const regex &);
-private: 
-    const regex * rgx;
-    std::string str;
-    int pos = 0;
-    int * vec = NULL;
-    int n = 0;
-};
-
-bool regex_search(const std::string & subj, smatch & match, const regex & rgx);
-bool regex_search(const std::string & subj, smatch & match, const regex & rgx) {
-    if (rgx()==NULL) {
-        
-    } else {
-        if (match.str != subj || match.rgx != &rgx) {
-            match.pos = 0;
-            match.str = subj;
-            match.rgx = &rgx;
-        }
-        if (match.vec) { delete [] match.vec; }
-        size_t sz = 0;
-        pcre_fullinfo(rgx(), NULL, PCRE_INFO_CAPTURECOUNT, &sz);
-        sz = 3*(sz + 1);
-        match.vec = new int[sz];
-        match.n = pcre_exec(rgx(), NULL, subj.c_str(), subj.length(), 
-                            match.pos, 0, match.vec, sz);
-        if (match.n<0) { return false; }
-        if (match.n==0) { match.n = sz/3; }
-        match.pos = match.vec[0] + 1;
-    }
-    return true;
-}
-
-
-inline void __append_capture_(const char subj[], const int vec[], const int num,
-                              std::string & ret, const int i)
-{
-    int pos = vec[2*i];
-    int len = vec[2*i+1] - pos;
-    ret.append(&subj[pos], len);
-}
-    
-void _append_with_captures(const char subj[], const int vec[], const int num,
-                      std::string & ret, const std::string & str);
-void _append_with_captures(const char subj[], const int vec[], const int num, 
-                      std::string & ret, const std::string & str)
-{
-    size_t index = 0;
-    size_t pos;
-    while ((pos=str.find('$', index)) != std::string::npos) {
-        ret.append(str, index, pos-index);
-        index = pos+1;
-        char chr = str[index++];
-        int n = 0;
-        switch(chr) {
-            case '&': // whole
-                __append_capture_(subj, vec, num, ret, 0);
-                break;
-            case '`': // prefix
-                ret.append(subj, vec[0]);
-                break;
-            case '\'': // suffix
-                ret.append(&subj[vec[1]]);
-                break;
-            default: // number
-                while (isdigit(chr)) {
-                    n = 10*n + chr - '0';
-                    chr = str[index++];
-                }
-                if (n>0 && n<num) { 
-                    __append_capture_(subj, vec, num, ret, n);
-                } else { ret += '$'; }
-                [[fallthrough]];
-            case '$': // escaped
-                ret += chr;
-        }
-    }
-    ret.append(str, index);
-}
-
-std::string regex_replace(const std::string & subj, 
-                     const regex & rgx, 
-                     const std::string & insert);
-std::string regex_replace(const std::string & subj, 
-                          const regex & rgx, 
-                          const std::string & insert)
-{
-    std::string ret = "";
-    const char * const str = subj.c_str();
-    if (rgx()==NULL) {
-        
-    } else {
-        size_t sz = 0;
-        pcre_fullinfo(rgx(), NULL, PCRE_INFO_CAPTURECOUNT, &sz);
-        sz = 3*(sz + 1);
-        int * vec = new int[sz];
-        size_t len = subj.length();
-        size_t pos = 0;
-        while (pos<len) {
-            int n = pcre_exec(rgx(), NULL, str, len, pos, 0, vec, sz);
-            if (n < 0) { break; }
-            if (n==0) { n = sz/3; } // not all captures stored.
-            ret.append(subj, pos, vec[0]-pos);
-            _append_with_captures(str, vec, n, ret, insert);
-            pos = vec[1];
-        }
-        ret.append(subj, pos);
-        delete [] vec;
-    }
-//     std::cout<<ret<<std::endl;
-    return ret;
-}
-
+#include "regex-pcre.hpp"
+// #include <regex>
 
 using namespace std;
 
 
-//TODO: const string CONF_DIR = "/etc/nginx/conf.d/";
+#ifdef openwrt
+const string CONF_DIR = "/etc/nginx/conf.d/";
+#else
 const string CONF_DIR = "";
+#endif
 
 const string LAN_LISTEN = "/var/lib/nginx/lan.listen";
 const string LAN_SSL_LISTEN = "/var/lib/nginx/lan_ssl.listen";
 const string ADD_SSL_FCT = "add_ssl";
-// NAME="_lan"
-// PREFIX="/etc/nginx/conf.d/_lan"
+// const string NAME="_lan"
+// const string PREFIX="/etc/nginx/conf.d/_lan"
 
 class Line {
 public:
@@ -208,7 +39,11 @@ public:
     fn STR;
     const regex RGX;
 };
-    
+// For a compile time regex lib, this must be fixed, use one of these options:
+// * Hand craft or macro concat them (loosing more or less flexibility).
+// * Use Macro concatenation of __VA_ARGS__ with the help of:
+//   https://p99.gforge.inria.fr/p99-html/group__preprocessor__for.html
+// * Use constexpr---not available for strings or char * for now---look at lib.
 #define _LINE_(name, code) \
     Line name{ \
         [](const string & parameter = "$", const string & begin = "\n    ") \
@@ -301,49 +136,56 @@ void write_file(const string & filename, const string str,
 }
 
 
-
-
-
 string get_if_missed(const string & conf, const Line & LINE, const string & val,
-                   const string & begin="\n    ", const int field=2);
+                   const string & indent="\n    ");
 string get_if_missed(const string & conf, const Line & LINE, const string & val, 
-                   const string & begin, const int field)
+                   const string & indent)
 {
+    if (val=="") {
+        return regex_search(conf, LINE.RGX) ? "" : LINE.STR(val, indent);
+    }
     smatch match;
-//     cout<<conf<<endl;
-    while (regex_search(conf, match, LINE.RGX)) {
-//         cout<<match[0]<<"-"<<match[1]<<"-"<<match[2]<<"-"<<match[3]<<"-"<<endl;
-        const string value = match[field];
+    for (auto begin = conf.begin();
+         regex_search(begin, conf.end(), match, LINE.RGX);
+         begin += match.position(0) + 1)
+    {
+        const string value = match.str(match.size() - 1);
         if (value==val || value=="'"+val+"'" || value=='"'+val+'"') {
             return ""; 
         }
     }
-    return LINE.STR(val, begin);
+    return LINE.STR(val, indent);
 }
+
 
 void add_ssl_directives_to(const string & name, const bool isdefault);
 void add_ssl_directives_to(const string & name, const bool isdefault)
 {
     const string prefix = CONF_DIR + name;
-    string conf = read_file(prefix+".conf");
-        
-    for (smatch match; regex_search(conf, match, NGX_SERVER_NAME.RGX); ) {
-        if (match[2].find(name) == string::npos) { continue; } 
-        const string begin = match[1];
+    const string conf = read_file(prefix+".conf");
+    smatch match;
+    for (auto begin = conf.begin();
+         regex_search(conf.begin(), conf.end(), match, NGX_SERVER_NAME.RGX);
+         begin += match.position(0) + 1)
+    {
+        if (match.str(2).find(name) == string::npos) { continue; }
+        const string indent = match.str(1);
         string adds = "";
         adds += isdefault ?
-            get_if_missed(conf, NGX_INCLUDE_LAN_SSL_LISTEN_DEFAULT, "",begin) :
-            get_if_missed(conf, NGX_INCLUDE_LAN_SSL_LISTEN, "", begin);
-        adds += get_if_missed(conf, NGX_SSL_CRT, prefix+".crt", begin);
-        adds += get_if_missed(conf, NGX_SSL_KEY, prefix+".key", begin);
-        adds += get_if_missed(conf, NGX_SSL_SESSION_CACHE, "", begin);
-        adds += get_if_missed(conf, NGX_SSL_SESSION_TIMEOUT, "", begin);
+            get_if_missed(conf, NGX_INCLUDE_LAN_SSL_LISTEN_DEFAULT,"",indent) :
+            get_if_missed(conf, NGX_INCLUDE_LAN_SSL_LISTEN, "", indent);
+        adds += get_if_missed(conf, NGX_SSL_CRT, prefix+".crt", indent);
+        adds += get_if_missed(conf, NGX_SSL_KEY, prefix+".key", indent);
+        adds += get_if_missed(conf, NGX_SSL_SESSION_CACHE, "", indent);
+        adds += get_if_missed(conf, NGX_SSL_SESSION_TIMEOUT, "", indent);
         if (adds.length() > 0) {
-            string conf = match.prefix() + match[0] + adds + match.suffix();
-            conf = isdefault ?
-                   regex_replace(conf, NGX_INCLUDE_LAN_LISTEN_DEFAULT.RGX,"") :
-                   regex_replace(conf, NGX_INCLUDE_LAN_LISTEN.RGX, "");
-            write_file(prefix+".conf", conf);
+            auto pos = begin + match.position(0) + match.length(0);
+            string conf2; // conf is const for iteration.
+            conf2 = string(conf.begin(), pos) + adds + string(pos, conf.end());
+            conf2 = isdefault ?
+                   regex_replace(conf2, NGX_INCLUDE_LAN_LISTEN_DEFAULT.RGX,"") :
+                   regex_replace(conf2, NGX_INCLUDE_LAN_LISTEN.RGX, "");
+//             write_file(prefix+".conf", conf2);
             cout<<"Added SSL directives to "<<prefix<<".conf:"<<adds<<endl;
         }
         return ;
@@ -371,12 +213,13 @@ void try_using_cron_to_recreate_certificate(const string & name);
 void try_using_cron_to_recreate_certificate(const string & name) 
 {
 #ifdef openwrt
-    const string conf = read_file("/etc/crontabs/root");
+    static const char * filename = "/etc/crontabs/root";
 #else 
-    const string conf = read_file("crontabs");
+    static const char * filename = "crontabs";
 #endif
+    string conf = read_file(filename);
     const string CRON_CHECK = "3 3 12 12 *";
-    const string add = get_if_missed(conf, CRON_CMD, name, "", 1);
+    const string add = get_if_missed(conf, CRON_CMD, name);
     if (add.length() > 0) {
 #ifdef openwrt
         int status;
@@ -388,12 +231,7 @@ void try_using_cron_to_recreate_certificate(const string & name)
 #endif
         {
             call("/etc/init.d/cron", "reload");
-            
-#ifdef openwrt
-            write_file("/etc/crontabs/root", CRON_CHECK+add, ios::app);
-#else 
-            write_file("crontabs", CRON_CHECK+add, ios::app);
-#endif
+            write_file(filename, CRON_CHECK+add, ios::app);
             cout<<"Rebuild the ssl certificate for '";
             cout<<name<<"' annually with cron."<<endl;
         }

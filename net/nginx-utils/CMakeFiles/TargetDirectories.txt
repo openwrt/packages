@@ -1,0 +1,7 @@
+/home/shared/projects/openwrt-pst/packages/net/nginx-utils/CMakeFiles/install/strip.dir
+/home/shared/projects/openwrt-pst/packages/net/nginx-utils/CMakeFiles/edit_cache.dir
+/home/shared/projects/openwrt-pst/packages/net/nginx-utils/CMakeFiles/nginx-ssl-util.dir
+/home/shared/projects/openwrt-pst/packages/net/nginx-utils/CMakeFiles/rebuild_cache.dir
+/home/shared/projects/openwrt-pst/packages/net/nginx-utils/CMakeFiles/list_install_components.dir
+/home/shared/projects/openwrt-pst/packages/net/nginx-utils/CMakeFiles/install/local.dir
+/home/shared/projects/openwrt-pst/packages/net/nginx-utils/CMakeFiles/install.dir
