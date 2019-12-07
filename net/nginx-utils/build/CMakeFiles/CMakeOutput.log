@@ -10,38 +10,41 @@ The output was:
 
 Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
 
-The CXX compiler identification is GNU, found in "/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/3.14.6/CompilerIdCXX/a.out"
+The CXX compiler identification is GNU, found in "/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/3.14.6/CompilerIdCXX/a.out"
 
 Determining if the CXX compiler works passed with the following output:
-Change Dir: /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp
+Change Dir: /home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/gmake cmTC_da710/fast 
-/usr/bin/gmake -f CMakeFiles/cmTC_da710.dir/build.make CMakeFiles/cmTC_da710.dir/build
-gmake[1]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_da710.dir/testCXXCompiler.cxx.o
-/usr/bin/c++     -o CMakeFiles/cmTC_da710.dir/testCXXCompiler.cxx.o -c /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp/testCXXCompiler.cxx
-Linking CXX executable cmTC_da710
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_da710.dir/link.txt --verbose=1
-/usr/bin/c++       -rdynamic CMakeFiles/cmTC_da710.dir/testCXXCompiler.cxx.o  -o cmTC_da710 
-gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp'
+Run Build Command(s):/usr/bin/gmake cmTC_61572/fast 
+gmake[1]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+/usr/bin/gmake -f CMakeFiles/cmTC_61572.dir/build.make CMakeFiles/cmTC_61572.dir/build
+gmake[2]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_61572.dir/testCXXCompiler.cxx.o
+/usr/bin/c++     -o CMakeFiles/cmTC_61572.dir/testCXXCompiler.cxx.o -c /home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp/testCXXCompiler.cxx
+Linking CXX executable cmTC_61572
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_61572.dir/link.txt --verbose=1
+/usr/bin/c++       -rdynamic CMakeFiles/cmTC_61572.dir/testCXXCompiler.cxx.o  -o cmTC_61572 
+gmake[2]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
 
 
 Detecting CXX compiler ABI info compiled with the following output:
-Change Dir: /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp
+Change Dir: /home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/gmake cmTC_cd092/fast 
-/usr/bin/gmake -f CMakeFiles/cmTC_cd092.dir/build.make CMakeFiles/cmTC_cd092.dir/build
-gmake[1]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o
-/usr/bin/c++    -v -o CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp
+Run Build Command(s):/usr/bin/gmake cmTC_a5946/fast 
+gmake[1]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+/usr/bin/gmake -f CMakeFiles/cmTC_a5946.dir/build.make CMakeFiles/cmTC_a5946.dir/build
+gmake[2]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o
+/usr/bin/c++    -v -o CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp
 Using built-in specs.
 COLLECT_GCC=/usr/bin/c++
 Target: x86_64-pc-linux-gnu
 Configured with: /var/tmp/portage/sys-devel/gcc-8.2.0-r6/work/gcc-8.2.0/configure --host=x86_64-pc-linux-gnu --build=x86_64-pc-linux-gnu --prefix=/usr --bindir=/usr/x86_64-pc-linux-gnu/gcc-bin/8.2.0 --includedir=/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/include --datadir=/usr/share/gcc-data/x86_64-pc-linux-gnu/8.2.0 --mandir=/usr/share/gcc-data/x86_64-pc-linux-gnu/8.2.0/man --infodir=/usr/share/gcc-data/x86_64-pc-linux-gnu/8.2.0/info --with-gxx-include-dir=/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/include/g++-v8 --with-python-dir=/share/gcc-data/x86_64-pc-linux-gnu/8.2.0/python --enable-objc-gc --enable-languages=c,c++,go,objc,obj-c++,fortran --enable-obsolete --enable-secureplt --disable-werror --with-system-zlib --enable-nls --without-included-gettext --enable-checking=release --with-bugurl=https://bugs.gentoo.org/ --with-pkgversion='Gentoo Hardened 8.2.0-r6 p1.7' --enable-esp --enable-libstdcxx-time --enable-shared --enable-threads=posix --enable-__cxa_atexit --enable-clocale=gnu --enable-multilib --with-multilib-list=m32,m64 --disable-altivec --disable-fixed-point --enable-targets=all --enable-libgomp --disable-libmudflap --disable-libssp --disable-libmpx --disable-systemtap --enable-vtable-verify --enable-lto --with-isl --disable-isl-version-check --enable-default-pie --enable-default-ssp
 Thread model: posix
 gcc version 8.2.0 (Gentoo Hardened 8.2.0-r6 p1.7) 
-COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
- /usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpbase CMakeCXXCompilerABI.cpp -mtune=generic -march=x86-64 -auxbase-strip CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o -version -o /tmp/cc7s54WG.s
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+ /usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpbase CMakeCXXCompilerABI.cpp -mtune=generic -march=x86-64 -auxbase-strip CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o -version -o /tmp/cceYIssk.s
 GNU C++14 (Gentoo Hardened 8.2.0-r6 p1.7) version 8.2.0 (x86_64-pc-linux-gnu)
 	compiled by GNU C version 8.2.0, GMP version 6.1.2, MPFR version 3.1.6, MPC version 1.1.0, isl version isl-0.18-GMP
 
@@ -62,15 +65,15 @@ GNU C++14 (Gentoo Hardened 8.2.0-r6 p1.7) version 8.2.0 (x86_64-pc-linux-gnu)
 
 GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
 Compiler executable checksum: 40e48fc2510a2d84eae29223d9ffcbeb
-COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
- /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/bin/as -v --64 -o CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o /tmp/cc7s54WG.s
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+ /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/bin/as -v --64 -o CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o /tmp/cceYIssk.s
 GNU assembler version 2.32.0 (x86_64-pc-linux-gnu) using BFD version (Gentoo 2.32 p2) 2.32.0
 COMPILER_PATH=/usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/:/usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/:/usr/libexec/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/bin/
 LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../:/lib/:/usr/lib/
-COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
-Linking CXX executable cmTC_cd092
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_cd092.dir/link.txt --verbose=1
-/usr/bin/c++      -v -rdynamic CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_cd092 
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+Linking CXX executable cmTC_a5946
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a5946.dir/link.txt --verbose=1
+/usr/bin/c++      -v -rdynamic CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_a5946 
 Using built-in specs.
 COLLECT_GCC=/usr/bin/c++
 COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/lto-wrapper
@@ -80,10 +83,11 @@ Thread model: posix
 gcc version 8.2.0 (Gentoo Hardened 8.2.0-r6 p1.7) 
 COMPILER_PATH=/usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/:/usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/:/usr/libexec/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/bin/
 LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../:/lib/:/usr/lib/
-COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_cd092' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
- /usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/collect2 -plugin /usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/lto-wrapper -plugin-opt=-fresolution=/tmp/cc7XXkhJ.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -o cmTC_cd092 /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0 -L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../.. CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/crtn.o
-COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_cd092' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
-gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp'
+COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_a5946' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+ /usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/collect2 -plugin /usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/lto-wrapper -plugin-opt=-fresolution=/tmp/ccxrljjo.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -o cmTC_a5946 /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0 -L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../.. CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/crtn.o
+COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_a5946' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+gmake[2]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
 
 
 Parsed CXX implicit include dir info from above output: rv=done
@@ -107,21 +111,22 @@ Parsed CXX implicit include dir info from above output: rv=done
 
 Parsed CXX implicit link information from above output:
   link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
-  ignore line: [Change Dir: /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp]
+  ignore line: [Change Dir: /home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp]
   ignore line: []
-  ignore line: [Run Build Command(s):/usr/bin/gmake cmTC_cd092/fast ]
-  ignore line: [/usr/bin/gmake -f CMakeFiles/cmTC_cd092.dir/build.make CMakeFiles/cmTC_cd092.dir/build]
-  ignore line: [gmake[1]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp']
-  ignore line: [Building CXX object CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o]
-  ignore line: [/usr/bin/c++    -v -o CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [Run Build Command(s):/usr/bin/gmake cmTC_a5946/fast ]
+  ignore line: [gmake[1]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp']
+  ignore line: [/usr/bin/gmake -f CMakeFiles/cmTC_a5946.dir/build.make CMakeFiles/cmTC_a5946.dir/build]
+  ignore line: [gmake[2]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp']
+  ignore line: [Building CXX object CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o]
+  ignore line: [/usr/bin/c++    -v -o CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
   ignore line: [Using built-in specs.]
   ignore line: [COLLECT_GCC=/usr/bin/c++]
   ignore line: [Target: x86_64-pc-linux-gnu]
   ignore line: [Configured with: /var/tmp/portage/sys-devel/gcc-8.2.0-r6/work/gcc-8.2.0/configure --host=x86_64-pc-linux-gnu --build=x86_64-pc-linux-gnu --prefix=/usr --bindir=/usr/x86_64-pc-linux-gnu/gcc-bin/8.2.0 --includedir=/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/include --datadir=/usr/share/gcc-data/x86_64-pc-linux-gnu/8.2.0 --mandir=/usr/share/gcc-data/x86_64-pc-linux-gnu/8.2.0/man --infodir=/usr/share/gcc-data/x86_64-pc-linux-gnu/8.2.0/info --with-gxx-include-dir=/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/include/g++-v8 --with-python-dir=/share/gcc-data/x86_64-pc-linux-gnu/8.2.0/python --enable-objc-gc --enable-languages=c,c++,go,objc,obj-c++,fortran --enable-obsolete --enable-secureplt --disable-werror --with-system-zlib --enable-nls --without-included-gettext --enable-checking=release --with-bugurl=https://bugs.gentoo.org/ --with-pkgversion='Gentoo Hardened 8.2.0-r6 p1.7' --enable-esp --enable-libstdcxx-time --enable-shared --enable-threads=posix --enable-__cxa_atexit --enable-clocale=gnu --enable-multilib --with-multilib-list=m32,m64 --disable-altivec --disable-fixed-point --enable-targets=all --enable-libgomp --disable-libmudflap --disable-libssp --disable-libmpx --disable-systemtap --enable-vtable-verify --enable-lto --with-isl --disable-isl-version-check --enable-default-pie --enable-default-ssp]
   ignore line: [Thread model: posix]
   ignore line: [gcc version 8.2.0 (Gentoo Hardened 8.2.0-r6 p1.7) ]
-  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
-  ignore line: [ /usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpbase CMakeCXXCompilerABI.cpp -mtune=generic -march=x86-64 -auxbase-strip CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o -version -o /tmp/cc7s54WG.s]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
+  ignore line: [ /usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpbase CMakeCXXCompilerABI.cpp -mtune=generic -march=x86-64 -auxbase-strip CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o -version -o /tmp/cceYIssk.s]
   ignore line: [GNU C++14 (Gentoo Hardened 8.2.0-r6 p1.7) version 8.2.0 (x86_64-pc-linux-gnu)]
   ignore line: [	compiled by GNU C version 8.2.0, GMP version 6.1.2, MPFR version 3.1.6, MPC version 1.1.0, isl version isl-0.18-GMP]
   ignore line: []
@@ -142,15 +147,15 @@ Parsed CXX implicit link information from above output:
   ignore line: []
   ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
   ignore line: [Compiler executable checksum: 40e48fc2510a2d84eae29223d9ffcbeb]
-  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
-  ignore line: [ /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/bin/as -v --64 -o CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o /tmp/cc7s54WG.s]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
+  ignore line: [ /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/bin/as -v --64 -o CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o /tmp/cceYIssk.s]
   ignore line: [GNU assembler version 2.32.0 (x86_64-pc-linux-gnu) using BFD version (Gentoo 2.32 p2) 2.32.0]
   ignore line: [COMPILER_PATH=/usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/:/usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/:/usr/libexec/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/bin/]
   ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../:/lib/:/usr/lib/]
-  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
-  ignore line: [Linking CXX executable cmTC_cd092]
-  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_cd092.dir/link.txt --verbose=1]
-  ignore line: [/usr/bin/c++      -v -rdynamic CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_cd092 ]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
+  ignore line: [Linking CXX executable cmTC_a5946]
+  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a5946.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/c++      -v -rdynamic CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_a5946 ]
   ignore line: [Using built-in specs.]
   ignore line: [COLLECT_GCC=/usr/bin/c++]
   ignore line: [COLLECT_LTO_WRAPPER=/usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/lto-wrapper]
@@ -160,13 +165,13 @@ Parsed CXX implicit link information from above output:
   ignore line: [gcc version 8.2.0 (Gentoo Hardened 8.2.0-r6 p1.7) ]
   ignore line: [COMPILER_PATH=/usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/:/usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/:/usr/libexec/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/bin/]
   ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../:/lib/:/usr/lib/]
-  ignore line: [COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_cd092' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
-  link line: [ /usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/collect2 -plugin /usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/lto-wrapper -plugin-opt=-fresolution=/tmp/cc7XXkhJ.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -o cmTC_cd092 /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0 -L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../.. CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/crtn.o]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_a5946' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
+  link line: [ /usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/collect2 -plugin /usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/lto-wrapper -plugin-opt=-fresolution=/tmp/ccxrljjo.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -o cmTC_a5946 /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0 -L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../.. CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/crtn.o]
     arg [/usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/collect2] ==> ignore
     arg [-plugin] ==> ignore
     arg [/usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/liblto_plugin.so] ==> ignore
     arg [-plugin-opt=/usr/libexec/gcc/x86_64-pc-linux-gnu/8.2.0/lto-wrapper] ==> ignore
-    arg [-plugin-opt=-fresolution=/tmp/cc7XXkhJ.res] ==> ignore
+    arg [-plugin-opt=-fresolution=/tmp/ccxrljjo.res] ==> ignore
     arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
     arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
     arg [-plugin-opt=-pass-through=-lc] ==> ignore
@@ -181,7 +186,7 @@ Parsed CXX implicit link information from above output:
     arg [-pie] ==> ignore
     arg [-znow] ==> ignore
     arg [-o] ==> ignore
-    arg [cmTC_cd092] ==> ignore
+    arg [cmTC_a5946] ==> ignore
     arg [/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/Scrt1.o] ==> ignore
     arg [/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../lib64/crti.o] ==> ignore
     arg [/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/crtbeginS.o] ==> ignore
@@ -191,7 +196,7 @@ Parsed CXX implicit link information from above output:
     arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
     arg [-L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/lib] ==> dir [/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../../../x86_64-pc-linux-gnu/lib]
     arg [-L/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../..] ==> dir [/usr/lib/gcc/x86_64-pc-linux-gnu/8.2.0/../../..]
-    arg [CMakeFiles/cmTC_cd092.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+    arg [CMakeFiles/cmTC_a5946.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
     arg [-lstdc++] ==> lib [stdc++]
     arg [-lm] ==> lib [m]
     arg [-lgcc_s] ==> lib [gcc_s]
@@ -215,17 +220,19 @@ Parsed CXX implicit link information from above output:
 
 
 Detecting CXX [-std=c++2a] compiler features compiled with the following output:
-Change Dir: /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp
+Change Dir: /home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/gmake cmTC_1b183/fast 
-/usr/bin/gmake -f CMakeFiles/cmTC_1b183.dir/build.make CMakeFiles/cmTC_1b183.dir/build
-gmake[1]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_1b183.dir/feature_tests.cxx.o
-/usr/bin/c++    -std=c++2a -o CMakeFiles/cmTC_1b183.dir/feature_tests.cxx.o -c /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/feature_tests.cxx
-Linking CXX executable cmTC_1b183
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_1b183.dir/link.txt --verbose=1
-/usr/bin/c++       -rdynamic CMakeFiles/cmTC_1b183.dir/feature_tests.cxx.o  -o cmTC_1b183 
-gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp'
+Run Build Command(s):/usr/bin/gmake cmTC_75e43/fast 
+gmake[1]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+/usr/bin/gmake -f CMakeFiles/cmTC_75e43.dir/build.make CMakeFiles/cmTC_75e43.dir/build
+gmake[2]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_75e43.dir/feature_tests.cxx.o
+/usr/bin/c++    -std=c++2a -o CMakeFiles/cmTC_75e43.dir/feature_tests.cxx.o -c /home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_75e43
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_75e43.dir/link.txt --verbose=1
+/usr/bin/c++       -rdynamic CMakeFiles/cmTC_75e43.dir/feature_tests.cxx.o  -o cmTC_75e43 
+gmake[2]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
 
 
     Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
@@ -288,17 +295,19 @@ gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/ngin
 
 
 Detecting CXX [-std=c++17] compiler features compiled with the following output:
-Change Dir: /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp
+Change Dir: /home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/gmake cmTC_f644d/fast 
-/usr/bin/gmake -f CMakeFiles/cmTC_f644d.dir/build.make CMakeFiles/cmTC_f644d.dir/build
-gmake[1]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_f644d.dir/feature_tests.cxx.o
-/usr/bin/c++    -std=c++17 -o CMakeFiles/cmTC_f644d.dir/feature_tests.cxx.o -c /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/feature_tests.cxx
-Linking CXX executable cmTC_f644d
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f644d.dir/link.txt --verbose=1
-/usr/bin/c++       -rdynamic CMakeFiles/cmTC_f644d.dir/feature_tests.cxx.o  -o cmTC_f644d 
-gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp'
+Run Build Command(s):/usr/bin/gmake cmTC_d3885/fast 
+gmake[1]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+/usr/bin/gmake -f CMakeFiles/cmTC_d3885.dir/build.make CMakeFiles/cmTC_d3885.dir/build
+gmake[2]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_d3885.dir/feature_tests.cxx.o
+/usr/bin/c++    -std=c++17 -o CMakeFiles/cmTC_d3885.dir/feature_tests.cxx.o -c /home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_d3885
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d3885.dir/link.txt --verbose=1
+/usr/bin/c++       -rdynamic CMakeFiles/cmTC_d3885.dir/feature_tests.cxx.o  -o cmTC_d3885 
+gmake[2]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
 
 
     Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
@@ -361,17 +370,19 @@ gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/ngin
 
 
 Detecting CXX [-std=c++14] compiler features compiled with the following output:
-Change Dir: /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp
+Change Dir: /home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/gmake cmTC_e6d7e/fast 
-/usr/bin/gmake -f CMakeFiles/cmTC_e6d7e.dir/build.make CMakeFiles/cmTC_e6d7e.dir/build
-gmake[1]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_e6d7e.dir/feature_tests.cxx.o
-/usr/bin/c++    -std=c++14 -o CMakeFiles/cmTC_e6d7e.dir/feature_tests.cxx.o -c /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/feature_tests.cxx
-Linking CXX executable cmTC_e6d7e
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e6d7e.dir/link.txt --verbose=1
-/usr/bin/c++       -rdynamic CMakeFiles/cmTC_e6d7e.dir/feature_tests.cxx.o  -o cmTC_e6d7e 
-gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp'
+Run Build Command(s):/usr/bin/gmake cmTC_ac583/fast 
+gmake[1]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+/usr/bin/gmake -f CMakeFiles/cmTC_ac583.dir/build.make CMakeFiles/cmTC_ac583.dir/build
+gmake[2]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_ac583.dir/feature_tests.cxx.o
+/usr/bin/c++    -std=c++14 -o CMakeFiles/cmTC_ac583.dir/feature_tests.cxx.o -c /home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_ac583
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ac583.dir/link.txt --verbose=1
+/usr/bin/c++       -rdynamic CMakeFiles/cmTC_ac583.dir/feature_tests.cxx.o  -o cmTC_ac583 
+gmake[2]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
 
 
     Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
@@ -434,17 +445,19 @@ gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/ngin
 
 
 Detecting CXX [-std=c++11] compiler features compiled with the following output:
-Change Dir: /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp
+Change Dir: /home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/gmake cmTC_b732c/fast 
-/usr/bin/gmake -f CMakeFiles/cmTC_b732c.dir/build.make CMakeFiles/cmTC_b732c.dir/build
-gmake[1]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_b732c.dir/feature_tests.cxx.o
-/usr/bin/c++    -std=c++11 -o CMakeFiles/cmTC_b732c.dir/feature_tests.cxx.o -c /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/feature_tests.cxx
-Linking CXX executable cmTC_b732c
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b732c.dir/link.txt --verbose=1
-/usr/bin/c++       -rdynamic CMakeFiles/cmTC_b732c.dir/feature_tests.cxx.o  -o cmTC_b732c 
-gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp'
+Run Build Command(s):/usr/bin/gmake cmTC_c654a/fast 
+gmake[1]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+/usr/bin/gmake -f CMakeFiles/cmTC_c654a.dir/build.make CMakeFiles/cmTC_c654a.dir/build
+gmake[2]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_c654a.dir/feature_tests.cxx.o
+/usr/bin/c++    -std=c++11 -o CMakeFiles/cmTC_c654a.dir/feature_tests.cxx.o -c /home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_c654a
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c654a.dir/link.txt --verbose=1
+/usr/bin/c++       -rdynamic CMakeFiles/cmTC_c654a.dir/feature_tests.cxx.o  -o cmTC_c654a 
+gmake[2]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
 
 
     Feature record: CXX_FEATURE:0cxx_aggregate_default_initializers
@@ -507,17 +520,19 @@ gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/ngin
 
 
 Detecting CXX [-std=c++98] compiler features compiled with the following output:
-Change Dir: /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp
+Change Dir: /home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/gmake cmTC_d1ae2/fast 
-/usr/bin/gmake -f CMakeFiles/cmTC_d1ae2.dir/build.make CMakeFiles/cmTC_d1ae2.dir/build
-gmake[1]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_d1ae2.dir/feature_tests.cxx.o
-/usr/bin/c++    -std=c++98 -o CMakeFiles/cmTC_d1ae2.dir/feature_tests.cxx.o -c /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/feature_tests.cxx
-Linking CXX executable cmTC_d1ae2
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d1ae2.dir/link.txt --verbose=1
-/usr/bin/c++       -rdynamic CMakeFiles/cmTC_d1ae2.dir/feature_tests.cxx.o  -o cmTC_d1ae2 
-gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/CMakeTmp'
+Run Build Command(s):/usr/bin/gmake cmTC_81029/fast 
+gmake[1]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+/usr/bin/gmake -f CMakeFiles/cmTC_81029.dir/build.make CMakeFiles/cmTC_81029.dir/build
+gmake[2]: Entering directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_81029.dir/feature_tests.cxx.o
+/usr/bin/c++    -std=c++98 -o CMakeFiles/cmTC_81029.dir/feature_tests.cxx.o -c /home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_81029
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_81029.dir/link.txt --verbose=1
+/usr/bin/c++       -rdynamic CMakeFiles/cmTC_81029.dir/feature_tests.cxx.o  -o cmTC_81029 
+gmake[2]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
+gmake[1]: Leaving directory '/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles/CMakeTmp'
 
 
     Feature record: CXX_FEATURE:0cxx_aggregate_default_initializers

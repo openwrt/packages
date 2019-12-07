@@ -14,8 +14,8 @@ extern "C" {
 }
 #endif
 
-// #include "regex-pcre.hpp"
-#include <regex>
+#include "regex-pcre.hpp"
+// #include <regex>
 
 using namespace std;
 
@@ -85,32 +85,32 @@ public:
         }() \
     };
 // arg(name, delimiter="") escapes arguments, arg("", delimiter="\n") captures:
-_LINE_(CRON_CMD, 
+_LINE_(CRON_CMD,
        space+arg("/etc/init.d/nginx")+space+arg(ADD_SSL_FCT, "'")+space+arg());
-_LINE_(NGX_SERVER_NAME, 
+_LINE_(NGX_SERVER_NAME,
        begin + arg("server_name") + space + arg("", ";") +end);
-_LINE_(NGX_INCLUDE_LAN_LISTEN, 
+_LINE_(NGX_INCLUDE_LAN_LISTEN,
        begin + arg("include") + space + arg(LAN_LISTEN, "'") +end);
-_LINE_(NGX_INCLUDE_LAN_LISTEN_DEFAULT, 
+_LINE_(NGX_INCLUDE_LAN_LISTEN_DEFAULT,
        begin + arg("include") + space + arg(LAN_LISTEN+".default", "'") +end);
-_LINE_(NGX_INCLUDE_LAN_SSL_LISTEN, 
+_LINE_(NGX_INCLUDE_LAN_SSL_LISTEN,
        begin + arg("include") + space + arg(LAN_SSL_LISTEN, "'") +end);
-_LINE_(NGX_INCLUDE_LAN_SSL_LISTEN_DEFAULT, 
+_LINE_(NGX_INCLUDE_LAN_SSL_LISTEN_DEFAULT,
        begin+ arg("include") +space+ arg(LAN_SSL_LISTEN+".default", "'") +end);
-_LINE_(NGX_SSL_CRT, 
+_LINE_(NGX_SSL_CRT,
        begin+ arg("ssl_certificate") +space+ arg("", ";") +end);
-_LINE_(NGX_SSL_KEY, 
+_LINE_(NGX_SSL_KEY,
        begin+ arg("ssl_certificate_key") + space + arg("", ";") +end);
-_LINE_(NGX_SSL_SESSION_CACHE, 
+_LINE_(NGX_SSL_SESSION_CACHE,
       begin+ arg("ssl_session_cache") +space+ arg("shared:SSL:32k", "'") +end);
-_LINE_(NGX_SSL_SESSION_TIMEOUT, 
+_LINE_(NGX_SSL_SESSION_TIMEOUT,
       begin+ arg("ssl_session_timeout") +space+ arg("64m", "'") +end);
 #undef _LINE_
 
 
 
 string read_file(const string & filename);
-string read_file(const string & filename) 
+string read_file(const string & filename)
 {
     ifstream file(filename, ios::in|ios::ate);
     string str = "";
@@ -125,33 +125,33 @@ string read_file(const string & filename)
     return str;
 }
 
-void write_file(const string & filename, const string str, 
+void write_file(const string & filename, const string str,
                 ios_base::openmode flag=ios::trunc);
-void write_file(const string & filename, const string str, 
+void write_file(const string & filename, const string str,
                 ios_base::openmode flag)
 {
     ofstream file (filename, ios::out|flag);
     if (file.good()) { file<<str<<endl; }
-    file.close();    
+    file.close();
 }
 
 
 string get_if_missed(const string & conf, const Line & LINE, const string & val,
                    const string & indent="\n    ");
-string get_if_missed(const string & conf, const Line & LINE, const string & val, 
+string get_if_missed(const string & conf, const Line & LINE, const string & val,
                    const string & indent)
 {
     if (val=="") {
         return regex_search(conf, LINE.RGX) ? "" : LINE.STR(val, indent);
     }
     smatch match;
-    for (auto begin = conf.begin();
-         regex_search(begin, conf.end(), match, LINE.RGX);
-         begin += match.position(0) + 1)
+    for (auto pos = conf.begin();
+         regex_search(pos, conf.end(), match, LINE.RGX);
+         pos += match.position(0) + match.length(0))
     {
         const string value = match.str(match.size() - 1);
         if (value==val || value=="'"+val+"'" || value=='"'+val+'"') {
-            return ""; 
+            return "";
         }
     }
     return LINE.STR(val, indent);
@@ -164,9 +164,9 @@ void add_ssl_directives_to(const string & name, const bool isdefault)
     const string prefix = CONF_DIR + name;
     const string conf = read_file(prefix+".conf");
     smatch match;
-    for (auto begin = conf.begin();
+    for (auto pos = conf.begin();
          regex_search(conf.begin(), conf.end(), match, NGX_SERVER_NAME.RGX);
-         begin += match.position(0) + 1)
+         pos += match.position(0) + match.length(0))
     {
         if (match.str(2).find(name) == string::npos) { continue; }
         const string indent = match.str(1);
@@ -179,7 +179,7 @@ void add_ssl_directives_to(const string & name, const bool isdefault)
         adds += get_if_missed(conf, NGX_SSL_SESSION_CACHE, "", indent);
         adds += get_if_missed(conf, NGX_SSL_SESSION_TIMEOUT, "", indent);
         if (adds.length() > 0) {
-            auto pos = begin + match.position(0) + match.length(0);
+            pos += match.position(0) + match.length(0);
             string conf2; // conf is const for iteration.
             conf2 = string(conf.begin(), pos) + adds + string(pos, conf.end());
             conf2 = isdefault ?
@@ -205,16 +205,16 @@ int call(const char program[], const char arg[])
             execl(program, program, arg, (char *)NULL);
             exit(EXIT_FAILURE);
         default: //parent
-            return pid;            
+            return pid;
     }
 }
 
 void try_using_cron_to_recreate_certificate(const string & name);
-void try_using_cron_to_recreate_certificate(const string & name) 
+void try_using_cron_to_recreate_certificate(const string & name)
 {
 #ifdef openwrt
     static const char * filename = "/etc/crontabs/root";
-#else 
+#else
     static const char * filename = "crontabs";
 #endif
     string conf = read_file(filename);
@@ -227,7 +227,7 @@ void try_using_cron_to_recreate_certificate(const string & name)
         if (status != 0) {
             cout<<"Cron unavailable to re-create the ssl certificate for '";
             cout<<name<<"'."<<endl;
-        } else 
+        } else
 #endif
         {
             call("/etc/init.d/cron", "reload");
@@ -239,7 +239,7 @@ void try_using_cron_to_recreate_certificate(const string & name)
 }
 
 #ifdef openwrt
-string create_lan_listen_process(blob_attr * attr, size_t len, bool inner=false); 
+string create_lan_listen_process(blob_attr * attr, size_t len, bool inner=false);
 string create_lan_listen_process(blob_attr * attr, size_t len, bool inner) {
     string listen = "# This file is re-created if Nginx starts or"
         " a LAN address changes.\n";
@@ -258,12 +258,12 @@ string create_lan_listen_process(blob_attr * attr, size_t len, bool inner) {
             ip = create_lan_listen_process((blob_attr *)data, sz);
         } else if (name == "ipv6-address") {
             ip = "[" + create_lan_listen_process((blob_attr *)data, sz) + "]";
-        } 
+        }
         if (ip != "" && ip != "[]") {
             listen += "     listen " + ip + ":80;\n";
             listen_default += "     listen " + ip + ":80 default_server;\n";
             ssl_listen += "     listen " + ip + ":443 ssl;\n";
-            ssl_listen_default += "     listen " + ip + 
+            ssl_listen_default += "     listen " + ip +
                 ":443 ssl default_server;\n";
         }
     }
@@ -300,7 +300,7 @@ static int create_lan_listen()
     if (ret==0) {
         static blob_buf req;
         blob_buf_init(&req, 0);
-        ret = ubus_invoke(ctx, id, "status", req.head, 
+        ret = ubus_invoke(ctx, id, "status", req.head,
                           create_lan_listen_cb, NULL, 200);
     }
     if (ctx) { ubus_free(ctx); }
@@ -309,7 +309,7 @@ static int create_lan_listen()
 
 #endif
 
-    
+
 int main(int argc, char * argv[]) {
     auto begin = chrono::steady_clock::now();
     if (argc != 2) {
@@ -318,44 +318,44 @@ int main(int argc, char * argv[]) {
     }
     const string name = argv[1];
 
-    auto 
+    auto
     end = chrono::steady_clock::now();
     cout << "Time difference = " <<
     chrono::duration_cast<chrono::milliseconds>(end - begin).count()
     << " ms" << endl;
     begin = chrono::steady_clock::now();
-    
+
     for (int i=0; i<1; ++i) {
-        
+
 #ifdef openwrt
     create_lan_listen();
-    
-    end = chrono::steady_clock::now();
-    cout << "Time difference = " <<
-    chrono::duration_cast<chrono::milliseconds>(end - begin).count()
-    << " ms" << endl;
-    begin = chrono::steady_clock::now();
+
+//     end = chrono::steady_clock::now();
+//     cout << "Time difference = " <<
+//     chrono::duration_cast<chrono::milliseconds>(end - begin).count()
+//     << " ms" << endl;
+//     begin = chrono::steady_clock::now();
 #endif
-    
+
     add_ssl_directives_to(name, name=="_lan");
-    
-    end = chrono::steady_clock::now();
-    cout << "Time difference = " <<
-    chrono::duration_cast<chrono::milliseconds>(end - begin).count()
-    << " ms" << endl;
-    begin = chrono::steady_clock::now();
-    
+
+//     end = chrono::steady_clock::now();
+//     cout << "Time difference = " <<
+//     chrono::duration_cast<chrono::milliseconds>(end - begin).count()
+//     << " ms" << endl;
+//     begin = chrono::steady_clock::now();
+
     try_using_cron_to_recreate_certificate(name);
-    
+
     }
     end = chrono::steady_clock::now();
     cout << "Time difference = " <<
     chrono::duration_cast<chrono::milliseconds>(end - begin).count()
     << " ms" << endl;
     begin = chrono::steady_clock::now();
-    
+
     return 0;
 }
 
 //TODO: _lan.conf # as seen by: ubus call network.interface.lan status | grep '"address"'
- 
+

@@ -62,7 +62,7 @@ EQUALS = =
 CMAKE_SOURCE_DIR = /home/shared/projects/openwrt-pst/packages/net/nginx-utils/src
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files
+CMAKE_BINARY_DIR = /home/shared/projects/openwrt-pst/packages/net/nginx-utils/build
 
 #=============================================================================
 # Target rules for target CMakeFiles/nginx-ssl-util.dir
@@ -71,7 +71,7 @@ CMAKE_BINARY_DIR = /home/shared/projects/openwrt-pst/packages/net/nginx-utils/fi
 CMakeFiles/nginx-ssl-util.dir/all:
 	$(MAKE) -f CMakeFiles/nginx-ssl-util.dir/build.make CMakeFiles/nginx-ssl-util.dir/depend
 	$(MAKE) -f CMakeFiles/nginx-ssl-util.dir/build.make CMakeFiles/nginx-ssl-util.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles --progress-num=1,2 "Built target nginx-ssl-util"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles --progress-num=1,2 "Built target nginx-ssl-util"
 .PHONY : CMakeFiles/nginx-ssl-util.dir/all
 
 # Include target in all.
@@ -81,9 +81,9 @@ all: CMakeFiles/nginx-ssl-util.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/nginx-ssl-util.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles 2
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/nginx-ssl-util.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/shared/projects/openwrt-pst/packages/net/nginx-utils/build/CMakeFiles 0
 .PHONY : CMakeFiles/nginx-ssl-util.dir/rule
 
 # Convenience name for target.

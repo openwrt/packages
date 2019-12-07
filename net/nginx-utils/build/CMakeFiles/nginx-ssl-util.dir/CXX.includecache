@@ -23,12 +23,6 @@ chrono
 -
 libubus.h
 -
-regex-pcre.hpp
-/home/shared/projects/openwrt-pst/packages/net/nginx-utils/src/regex-pcre.hpp
-
-/home/shared/projects/openwrt-pst/packages/net/nginx-utils/src/regex-pcre.hpp
-pcre.h
--
-string
+regex
 -
 
