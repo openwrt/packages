@@ -8,11 +8,13 @@
      /* Initialize the OpenSSL library */
      status = SSL_library_init();
      if (status != 1)
-@@ -487,6 +488,7 @@ static status_t sstp_init_ssl(sstp_client_st *client, sstp_option_st *opt)
- 
-     /* Load all error strings */
-     SSL_load_error_strings();
-+#endif
+@@ -490,6 +491,9 @@ static status_t sstp_init_ssl(sstp_client_st *client, sstp_option_st *opt)
  
      /* Create a new crypto context */
      client->ssl_ctx = SSL_CTX_new(SSLv23_client_method());
++#else
++    client->ssl_ctx = SSL_CTX_new(TLS_client_method());
++#endif
+     if (client->ssl_ctx == NULL)
+     {
+         log_err("Could not get SSL crypto context");
