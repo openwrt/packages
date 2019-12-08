@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pdns
-PKG_VERSION:=4.2.0
-PKG_RELEASE:=2
+PKG_VERSION:=4.2.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
-PKG_HASH:=222007f25e25aad71ac7d8b7f1797a4bcb30781e456d74ed00396e53828a903a
+PKG_HASH:=f65019986b8fcbb1c6fffebcded04b2b397b84395830f4c63e8d119bcfa1aa28
 
 PKG_MAINTAINER:=James Taylor <james@jtaylor.id.au>
 PKG_LICENCE:=GPL-2.0-only
@@ -19,7 +19,7 @@ PKG_INSTALL:=1
 
 PKG_BUILD_PARALLEL:=1
 
-PKG_BUILD_DEPENDS:=unixodbc/host
+PKG_BUILD_DEPENDS:=unixodbc/host protobuf-c/host
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -128,6 +128,7 @@ endef
 # 2: dependencies on other PowerDNS libraries (short name)
 # 3: dependencies on other packages
 # 4: conditional/inward dependencies
+# 5: friendly display name
 define DefinePdnsBackend
   PDNS_DEPENDS+= +pdns-backend-$(1)
   PKG_CONFIG_DEPENDS+= CONFIG_PACKAGE_pdns-backend$(1)
@@ -140,7 +141,8 @@ define DefinePdnsBackend
   define Package/pdns-backend-$(1)
     $(call Package/pdns/Default)
     TITLE+= ($(1))
-    DEPENDS+= pdns $$(foreach backend,$(2),+pdns-backend-$$(backend)) $(3)
+    DEPENDS+= pdns $$(foreach backend,$(2),+pdns-backend-$$(backend)) \
+	      $$(foreach dependency,$(3),+$$(dependency))
     HIDDEN:=1
   endef
 
@@ -203,6 +205,10 @@ endef
 define Package/pdns/Default/install
 	$(INSTALL_DIR) $(1)/usr/lib/powerdns/pdns
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/powerdns/pdns/lib$(PDNS_BACKEND_$(2)_LIB)backend.so $(1)/usr/lib/powerdns/pdns/
+	if [ "$(PDNS_BACKEND_$(2)_LIB)" == "ldap" ]; then \
+	$(INSTALL_DIR) $(1)/usr/bin; \
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/zone2ldap $(1)/usr/bin/; \
+	fi
 endef
 
 define Package/pdns-ixfrdist/install
@@ -214,7 +220,6 @@ endef
 
 define Package/pdns-tools/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/zone2ldap $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dnsgram $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dnsreplay $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dnsscan $(1)/usr/bin/

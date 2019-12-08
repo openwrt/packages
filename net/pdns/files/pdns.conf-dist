@@ -50,6 +50,11 @@
 # api-key=
 
 #################################
+# axfr-fetch-timeout	Maximum time in seconds for inbound AXFR to start or be idle after starting
+#
+# axfr-fetch-timeout=10
+
+#################################
 # axfr-lower-serial	Also AXFR a zone from a master with a lower serial
 #
 # axfr-lower-serial=no
