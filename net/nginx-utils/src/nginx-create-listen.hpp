@@ -105,7 +105,7 @@ void create_lan_listen_callback(ubus_request * req, int type, blob_attr * msg)
     string prefix;
     string suffix;
     auto create_it = [&listen, &listen_default, &ssl_listen,
-        &ssl_listen_default, suffix, prefix] (const void * val) -> void
+        &ssl_listen_default, &suffix, &prefix] (const void * val) -> void
     {
         string ip = (char *)val;
         if (ip == "") { return; }
