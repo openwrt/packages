@@ -18,15 +18,28 @@ using namespace std;
 static const string LAN_LISTEN = "/var/lib/nginx/lan.listen";
 static const string LAN_SSL_LISTEN = "/var/lib/nginx/lan_ssl.listen";
 
+
 #ifdef openwrt
 
 
 void ubus_traverse(const blob_attr * attr, function<void(void * val)> process);
-void ubus_traverse(const blob_attr * attr, function<void(void * val)> process)
-{}
+
+
+void create_lan_listen_callback(ubus_request * req, int type, blob_attr * msg);
+
+
 template<class T, class ... Types>
 void ubus_traverse(const blob_attr * attr, function<void(void * val)> process,
                    T key, Types ... keys);
+
+
+static int create_lan_listen();
+
+
+void ubus_traverse(const blob_attr * attr, function<void(void * val)> process)
+{}
+
+
 template<class T, class ... Types>
 void ubus_traverse(const blob_attr * attr, function<void(void * val)> process,
                    T key, Types ... keys)
@@ -50,7 +63,7 @@ void ubus_traverse(const blob_attr * attr, function<void(void * val)> process,
     }
 }
 
-void create_lan_listen_callback(ubus_request * req, int type, blob_attr * msg);
+
 void create_lan_listen_callback(ubus_request * req, int type, blob_attr * msg)
 {
     if (!msg) { return; }
@@ -94,7 +107,7 @@ void create_lan_listen_callback(ubus_request * req, int type, blob_attr * msg)
     write_file(LAN_SSL_LISTEN+".default", ssl_listen_default);
 }
 
-static int create_lan_listen();
+
 static int create_lan_listen()
 {
     ubus_context * ctx = ubus_connect(NULL);
@@ -110,6 +123,7 @@ static int create_lan_listen()
     if (ctx) { ubus_free(ctx); }
     return ret;
 }
+
 
 #endif
 

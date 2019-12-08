@@ -1,9 +1,8 @@
 
-#define openwrt
+// #define openwrt
 
 #include <chrono>
 
-#include <unistd.h>
 #include <sys/wait.h>
 #include <iostream>
 #include <string>
@@ -150,7 +149,7 @@ void add_ssl_directives_to(const string & name, const bool isdefault)
             conf2 = isdefault ?
                    regex_replace(conf2, NGX_INCLUDE_LAN_LISTEN_DEFAULT.RGX,"") :
                    regex_replace(conf2, NGX_INCLUDE_LAN_LISTEN.RGX, "");
-//             write_file(prefix+".conf", conf2);
+            write_file(prefix+".conf", conf2);
             cout<<"Added SSL directives to "<<prefix<<".conf:"<<adds<<endl;
         }
         return ;
@@ -159,20 +158,6 @@ void add_ssl_directives_to(const string & name, const bool isdefault)
     cout<<NGX_SERVER_NAME.STR(name, "\n    ")<<endl;
 }
 
-int call(const char program[], const char arg[]);
-int call(const char program[], const char arg[])
-{
-    pid_t pid = fork();
-    switch(pid) {
-        case -1: // could not fork.
-            return -1;
-        case 0: // child, exec never returns.
-            execl(program, program, arg, (char *)NULL);
-            exit(EXIT_FAILURE);
-        default: //parent
-            return pid;
-    }
-}
 
 void try_using_cron_to_recreate_certificate(const string & name);
 void try_using_cron_to_recreate_certificate(const string & name)
