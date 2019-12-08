@@ -1,5 +1,5 @@
 
-// #define openwrt
+#define openwrt
 
 #include <chrono>
 
@@ -10,7 +10,6 @@
 #include "regex-pcre.hpp"
 #include "nginx-create-listen.hpp"
 #include "common.hpp"
-
 using namespace std;
 
 
@@ -207,7 +206,7 @@ int main(int argc, char * argv[]) {
     for (int i=0; i<1; ++i) {
 
 #ifdef openwrt
-    create_lan_listen();
+    ubus_call("network.interface.lan", "status", create_lan_listen_callback);
 
 //     end = chrono::steady_clock::now();
 //     cout << "Time difference = " <<
