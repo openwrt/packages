@@ -11,34 +11,34 @@ namespace std {
 namespace regex_constants {
   enum error_type
     {
-      _S_error_collate,
-      _S_error_ctype,
-      _S_error_escape,
-      _S_error_backref,
-      _S_error_brack,
-      _S_error_paren,
-      _S_error_brace,
-      _S_error_badbrace,
-      _S_error_range,
-      _S_error_space,
-      _S_error_badrepeat,
-      _S_error_complexity,
-      _S_error_stack,
-      _S_error_last
+      _enum_error_collate,
+      _enum_error_ctype,
+      _enum_error_escape,
+      _enum_error_backref,
+      _enum_error_brack,
+      _enum_error_paren,
+      _enum_error_brace,
+      _enum_error_badbrace,
+      _enum_error_range,
+      _enum_error_space,
+      _enum_error_badrepeat,
+      _enum_error_complexity,
+      _enum_error_stack,
+      _enum_error_last
     };
-    static const error_type error_collate(_S_error_collate);
-    static const error_type error_ctype(_S_error_ctype);
-    static const error_type error_escape(_S_error_escape);
-    static const error_type error_backref(_S_error_backref);
-    static const error_type error_brack(_S_error_brack);
-    static const error_type error_paren(_S_error_paren);
-    static const error_type error_brace(_S_error_brace);
-    static const error_type error_badbrace(_S_error_badbrace);
-    static const error_type error_range(_S_error_range);
-    static const error_type error_space(_S_error_space);
-    static const error_type error_badrepeat(_S_error_badrepeat);
-    static const error_type error_complexity(_S_error_complexity);
-    static const error_type error_stack(_S_error_stack);
+    static const error_type error_collate(_enum_error_collate);
+    static const error_type error_ctype(_enum_error_ctype);
+    static const error_type error_escape(_enum_error_escape);
+    static const error_type error_backref(_enum_error_backref);
+    static const error_type error_brack(_enum_error_brack);
+    static const error_type error_paren(_enum_error_paren);
+    static const error_type error_brace(_enum_error_brace);
+    static const error_type error_badbrace(_enum_error_badbrace);
+    static const error_type error_range(_enum_error_range);
+    static const error_type error_space(_enum_error_space);
+    static const error_type error_badrepeat(_enum_error_badrepeat);
+    static const error_type error_complexity(_enum_error_complexity);
+    static const error_type error_stack(_enum_error_stack);
 }
 
 
@@ -239,7 +239,7 @@ string regex_replace(const string & subj,
 
 const regex_constants::error_type regex::pcre_errcode2regex_errcode[86] = {
     //   0  no error
-    regex_constants::error_type::_S_error_last,
+    regex_constants::error_type::_enum_error_last,
     //   1  \ at end of pattern
     regex_constants::error_escape,
     //   2  \c at end of pattern
@@ -259,7 +259,7 @@ const regex_constants::error_type regex::pcre_errcode2regex_errcode[86] = {
     //   9  nothing to repeat
     regex_constants::error_badrepeat,
     //  10  [this code is not in use
-    regex_constants::error_type::_S_error_last,
+    regex_constants::error_type::_enum_error_last,
     //  11  internal error: unexpected repeat
     regex_constants::error_badrepeat,
     //  12  unrecognized character after (? or (?-
@@ -271,13 +271,13 @@ const regex_constants::error_type regex::pcre_errcode2regex_errcode[86] = {
     //  15  reference to non-existent subpattern
     regex_constants::error_backref,
     //  16  erroffset passed as NULL
-    regex_constants::error_type::_S_error_last,
+    regex_constants::error_type::_enum_error_last,
     //  17  unknown option bit(s) set
-    regex_constants::error_type::_S_error_last,
+    regex_constants::error_type::_enum_error_last,
     //  18  missing ) after comment
     regex_constants::error_paren,
     //  19  [this code is not in use
-    regex_constants::error_type::_S_error_last,
+    regex_constants::error_type::_enum_error_last,
     //  20  regular expression is too large
     regex_constants::error_space,
     //  21  failed to get memory
@@ -305,7 +305,7 @@ const regex_constants::error_type regex::pcre_errcode2regex_errcode[86] = {
     //  32  this version of PCRE is compiled without UTF support
     regex_constants::error_collate,
     //  33  [this code is not in use
-    regex_constants::error_type::_S_error_last,
+    regex_constants::error_type::_enum_error_last,
     //  34  character value in \x{} or \o{} is too large
     regex_constants::error_escape,
     //  35  invalid condition (?(0)
@@ -339,13 +339,13 @@ const regex_constants::error_type regex::pcre_errcode2regex_errcode[86] = {
     //  49  too many named subpatterns (maximum 10000)
     regex_constants::error_complexity,
     //  50  [this code is not in use
-    regex_constants::error_type::_S_error_last,
+    regex_constants::error_type::_enum_error_last,
     //  51  octal value is greater than \377 in 8-bit non-UTF-8 mode
     regex_constants::error_escape,
     //  52  internal error: overran compiling workspace
-    regex_constants::error_type::_S_error_last,
+    regex_constants::error_type::_enum_error_last,
     //  53  internal error: previously-checked referenced subpattern not found
-    regex_constants::error_type::_S_error_last,
+    regex_constants::error_type::_enum_error_last,
     //  54  DEFINE group contains more than one branch
     regex_constants::error_backref,
     //  55  repeating a DEFINE group is not allowed
@@ -379,7 +379,7 @@ const regex_constants::error_type regex::pcre_errcode2regex_errcode[86] = {
     //  69  \k is not followed by a braced, angle-bracketed, or quoted name
     regex_constants::error_backref,
     //  70  internal error: unknown opcode in find_fixedlength()
-    regex_constants::error_type::_S_error_last,
+    regex_constants::error_type::_enum_error_last,
     //  71  \N is not supported in a class
     regex_constants::error_ctype,
     //  72  too many forward references

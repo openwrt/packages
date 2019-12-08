@@ -1,35 +1,27 @@
+
 #define openwrt
+
 #include <chrono>
 
-#include <iostream>
-#include <string>
-#include <fstream>
-#include <streambuf>
 #include <unistd.h>
 #include <sys/wait.h>
-
-#include <functional>
-#ifdef openwrt
-extern "C" {
-#include <libubus.h>
-}
-#endif
-
-#include "regex-pcre.hpp"
+#include <iostream>
+#include <string>
 // #include <regex>
+#include "regex-pcre.hpp"
+#include "nginx-create-listen.hpp"
+#include "common.hpp"
 
 using namespace std;
 
 
 #ifdef openwrt
-const string CONF_DIR = "/etc/nginx/conf.d/";
+static const string CONF_DIR = "/etc/nginx/conf.d/";
 #else
-const string CONF_DIR = "";
+static const string CONF_DIR = "";
 #endif
 
-const string LAN_LISTEN = "/var/lib/nginx/lan.listen";
-const string LAN_SSL_LISTEN = "/var/lib/nginx/lan_ssl.listen";
-const string ADD_SSL_FCT = "add_ssl";
+static const string ADD_SSL_FCT = "add_ssl";
 // const string NAME="_lan"
 // const string PREFIX="/etc/nginx/conf.d/_lan"
 
@@ -107,34 +99,6 @@ _LINE_(NGX_SSL_SESSION_CACHE,
 _LINE_(NGX_SSL_SESSION_TIMEOUT,
       begin+ arg("ssl_session_timeout") +space+ arg("64m", "'") +end);
 #undef _LINE_
-
-
-
-string read_file(const string & filename);
-string read_file(const string & filename)
-{
-    ifstream file(filename, ios::in|ios::ate);
-    string str = "";
-    if (file.good()) {
-        size_t size = file.tellg();
-        str.reserve(size);
-        file.seekg(0);
-        str.assign((istreambuf_iterator<char>(file)),
-                istreambuf_iterator<char>());
-    }
-    file.close();
-    return str;
-}
-
-void write_file(const string & filename, const string str,
-                ios_base::openmode flag=ios::trunc);
-void write_file(const string & filename, const string str,
-                ios_base::openmode flag)
-{
-    ofstream file (filename, ios::out|flag);
-    if (file.good()) { file<<str<<endl; }
-    file.close();
-}
 
 
 string get_if_missed(const string & conf, const Line & LINE, const string & val,
@@ -239,113 +203,6 @@ void try_using_cron_to_recreate_certificate(const string & name)
     }
 }
 
-template<typename S, typename... Strings>
-void test(const char * attr, function<void(void * val)> process,
-                   const S & key, const Strings & ...keys);
-template<typename S, typename... Strings>
-void test(const char * attr, function<void(void * val)> process,
-                   const S & key, const Strings & ...keys)
-{
-    test(attr, process, keys...);
-}
-
-
-#ifdef openwrt
-
-
-void ubus_traverse(const blob_attr * attr, function<void(void * val)> process);
-void ubus_traverse(const blob_attr * attr, function<void(void * val)> process)
-{}
-template<class T, class ... Types>
-void ubus_traverse(const blob_attr * attr, function<void(void * val)> process,
-                   T key, Types ... keys);
-template<class T, class ... Types>
-void ubus_traverse(const blob_attr * attr, function<void(void * val)> process,
-                   T key, Types ... keys)
-{
-    blob_attr * pos;
-    size_t len;
-    blobmsg_for_each_attr(pos, attr, len) {
-        const char * name = blobmsg_name(pos);
-        if (name != (string)"" && name != (string)key) { continue; }
-        switch (blob_id(pos)) {
-            case BLOBMSG_TYPE_TABLE: [[fallthrough]]
-            case BLOBMSG_TYPE_ARRAY:
-                    name==(string)key ? ubus_traverse(pos, process, keys...)
-                            : ubus_traverse(pos, process, key, keys...);
-                break;
-            default:
-                if (sizeof...(keys)==0 && (string)key==name) {
-                    process(blobmsg_data(pos));
-                }
-        }
-    }
-}
-
-static void create_lan_listen_callback(ubus_request * req, int type,
-                                       blob_attr * msg);
-static void create_lan_listen_callback(ubus_request * req, int type,
-                                       blob_attr * msg)
-{
-    if (!msg) { return; }
-    string listen = "# This file is re-created if Nginx starts or"
-        " a LAN address changes.\n";
-    string listen_default = listen;
-    string ssl_listen = listen;
-    string ssl_listen_default = listen;
-
-    string prefix;
-    string suffix;
-    auto create_it = [&listen, &listen_default, &ssl_listen,
-        &ssl_listen_default, suffix, prefix] (void * val) -> void
-    {
-        string ip = (char *)val;
-        if (ip == "") { return; }
-        ip = prefix + ip + suffix;
-        listen += "\tlisten " + ip + ":80;\n";
-        listen_default += "\tlisten " + ip + ":80 default_server;\n";
-        ssl_listen += "\tlisten " + ip + ":443 ssl;\n";
-        ssl_listen_default += "\tlisten " + ip + ":443 ssl default_server;\n";
-    };
-    prefix = "";
-    suffix = "";
-    ubus_traverse(msg, create_it, "ipv4-address", "address");
-    prefix = "[";
-    suffix = "]";
-    ubus_traverse(msg, create_it, "ipv6-address", "address");
-
-    listen += "\tlisten 127.0.0.1:80;\n";
-    listen += "\tlisten [::1]:80;\n";
-    listen_default += "\tlisten 127.0.0.1:80 default_server;\n";
-    listen_default += "\tlisten [::1]:80 default_server;\n";
-    ssl_listen += "\tlisten 127.0.0.1:443 ssl;\n";
-    ssl_listen += "\tlisten [::1]:443 ssl;\n";
-    ssl_listen_default += "\tlisten 127.0.0.1:443 ssl default_server;\n";
-    ssl_listen_default += "\tlisten [::1]:443 ssl default_server;\n";
-    write_file(LAN_LISTEN, listen);
-    write_file(LAN_LISTEN+".default", listen_default);
-    write_file(LAN_SSL_LISTEN, ssl_listen);
-    write_file(LAN_SSL_LISTEN+".default", ssl_listen_default);
-}
-
-static int create_lan_listen();
-static int create_lan_listen()
-{
-    ubus_context * ctx = ubus_connect(NULL);
-    if (ctx==NULL) { return -1; }
-    uint32_t id;
-    int ret = ubus_lookup_id(ctx, "network.interface.lan", &id);
-    if (ret==0) {
-        static blob_buf req;
-        blob_buf_init(&req, 0);
-        ret = ubus_invoke(ctx, id, "status", req.head,
-                          create_lan_listen_callback, NULL, 200);
-    }
-    if (ctx) { ubus_free(ctx); }
-    return ret;
-}
-
-#endif
 
 int main(int argc, char * argv[]) {
     auto begin = chrono::steady_clock::now();
