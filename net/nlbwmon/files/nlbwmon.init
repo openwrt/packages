@@ -99,7 +99,7 @@ add_interface_trigger() {
 }
 
 service_triggers() {
-	procd_add_reload_trigger "dhcp" "system"
+	procd_add_reload_trigger "dhcp" "system" "nlbwmon"
 
 	config_load dhcp
 	config_foreach add_interface_trigger dhcp
