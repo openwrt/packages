@@ -5,9 +5,9 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/cifsd-team/cifsd.git
-PKG_SOURCE_DATE:=2019-11-27
-PKG_SOURCE_VERSION:=b8675c8ac144ece00f3e6bcc5436c8ace99e23e9
-PKG_MIRROR_HASH:=3d67af87f30d837f95510663efc42f1451651dc235987408924b56cb277fc8e8
+PKG_SOURCE_DATE:=2019-12-17
+PKG_SOURCE_VERSION:=60c1556d71b74daa5d1707b8cd0859eeef458793
+PKG_MIRROR_HASH:=f73d79798cc74180ad3e5cd9df0321c9a32fcbfaecee646bd3af548332040b0f
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -37,7 +37,8 @@ define KernelPackage/fs-cifsd
 endef
 
 define KernelPackage/fs-cifsd/description
-	Kernel module for a CIFS/SMBv2,3 fileserver.
+  Cifsd is an In-kernel SMB3/CIFS fileserver.
+  It's an implementation of SMB/CIFS protocol in kernel space for sharing files and IPC services over network.
 endef
 
 # broken atm (needs CONFIG_KEYS=y)
