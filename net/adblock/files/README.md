@@ -25,8 +25,6 @@ A lot of people already use adblocker plugins within their desktop browsers, but
         * Daily updates, approx. 1.500 entries
     * [openphish](https://openphish.com)
         * Numerous updates on the same day, approx. 1.800 entries
-    * [ransomware tracker](https://ransomwaretracker.abuse.ch)
-        * Daily updates, approx. 150 entries
     * [reg_cn](https://easylist-downloads.adblockplus.org/easylistchina+easylist.txt)
         * Regional blocklist for China, daily updates, approx. 1.600 entries
     * [reg_cz](https://raw.githubusercontent.com/qxstyles/turris-hole-czech-block-list/master/turris-hole-czech-block-list)
@@ -51,7 +49,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
         * Weekly updates, approx. 21.000 entries
     * [ut_capitole](https://dsi.ut-capitole.fr/blacklists) (categories "cryptojacking" "ddos" "malware" "phishing" "warez" enabled by default)
         * Daily updates, approx. 64.000 entries (a short description of all categories can be found [online](https://dsi.ut-capitole.fr/blacklists/index_en.php))
-    * [whocares](http://someonewhocares.org)
+    * [whocares](https://someonewhocares.org)
         * Weekly updates, approx. 12.000 entries
     * [winhelp](http://winhelp2002.mvps.org)
         * Infrequent updates, approx. 15.000 entries
