@@ -8,19 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prosody
-PKG_VERSION:=0.11.2
-PKG_RELEASE:=3
+PKG_VERSION:=0.11.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://prosody.im/downloads/source
-PKG_HASH:=8911f6dc29b9e0c4edf9e61dc23fa22d77bc42c4caf28b809ab843b2f08e4831
+PKG_HASH:=cfdabd6f42a9fc5db300221967c518c26bd4b6e62def721c1626894d6325bf87
+
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=MIT/X11
-PKG_BUILD_DEPENDS:=lua/host
 PKG_CPE_ID:=cpe:/a:prosody:prosody
-HOST_BUILD_DEPENDS:=$(PKG_BUILD_DEPENDS)
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=lua/host
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -44,7 +45,7 @@ define Package/prosody/conffiles
 /etc/prosody/prosody.cfg.lua
 endef
 
-TARGET_CFLAGS += $(FPIC) -std=gnu99
+TARGET_CFLAGS += $(FPIC)
 TARGET_LDFLAGS += -shared
 
 MAKE_FLAGS += LD="$(TARGET_CC)"
