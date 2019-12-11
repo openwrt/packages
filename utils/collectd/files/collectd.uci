@@ -193,3 +193,6 @@ config globals 'globals'
 #config plugin 'uptime'
 #	option enable '0'
 
+#config plugin 'vmem'
+#	option enable '0'
+#	option Verbose '0'
