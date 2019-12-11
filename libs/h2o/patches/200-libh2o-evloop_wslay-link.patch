@@ -1,0 +1,9 @@
+--- a/libh2o-evloop.pc.in
++++ b/libh2o-evloop.pc.in
+@@ -7,5 +7,5 @@
+ Description: An optimized HTTP/1.x & HTTP/2 library
+ URL: https://h2o.examp1e.net/
+ Version: @LIBRARY_VERSION_MAJOR@.@LIBRARY_VERSION_MINOR@.@LIBRARY_VERSION_PATCH@
+-Libs: -L${libdir} -lh2o-evloop
++Libs: -L${libdir} -lh2o-evloop -lwslay
+ Cflags: -I${includedir}

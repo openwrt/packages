@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnsdist
-PKG_VERSION:=1.3.3
-PKG_RELEASE:=3
+PKG_VERSION:=1.4.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
-PKG_HASH:=9fb24f9032025955169f3c6e9b0a05b6aa9d6441ec47da08d22de1c1aa23e8cf
+PKG_HASH:=a336fa2c3eb381c2464d9d9790014fd6d4505029ed2c1b73ee1dc9115a2f1dc0
 
 PKG_MAINTAINER:=James Taylor <james@jtaylor.id.au>
 PKG_LICENSE:=GPL-2.0-only
@@ -22,22 +22,43 @@ PKG_CONFIG_DEPENDS:= \
 include $(INCLUDE_DIR)/package.mk
 
 define Package/dnsdist/config
-comment "SSL support"
+menu "Configuration"
+	depends on PACKAGE_dnsdist
 
-choice
-        prompt "Selected SSL library"
-        default DNSDIST_OPENSSSL
+	comment "SSL Support"
+	choice
+		prompt "Selected SSL library"
+		default DNSDIST_OPENSSSL
 
-        config DNSDIST_OPENSSL
-                bool "OpenSSL"
+		config DNSDIST_OPENSSL
+			bool "OpenSSL"
 
-        config DNSDIST_GNUTLS
-                bool "GnuTLS"
+		config DNSDIST_GNUTLS
+			bool "GnuTLS"
 
-        config DNSDIST_NOSSL
-                bool "No SSL support"
+		config DNSDIST_NOSSL
+			bool "No SSL support"
 
-endchoice
+	endchoice
+
+	comment "DNS over HTTPS/TLS Support
+	depends on !DNSDIST_NOSSL
+
+	config DNSDIST_DNS_OVER_HTTPS
+	depends on DNSDIST_OPENSSL
+	depends on !DNSDIST_NOSSL
+		bool "DNS over HTTPS Support"
+		help
+			"Enables DNS over HTTPS Support for dnsdist"
+		default y
+
+	config DNSDIST_DNS_OVER_TLS
+	depends on !DNSDIST_NOSSL
+		bool "DNS over TLS Support"
+		help
+			"Enabled DNS over TLS Support for dnsdist"
+		default y
+endmenu
 endef
 
 define Package/dnsdist
@@ -45,7 +66,7 @@ define Package/dnsdist
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
   TITLE:=dnsdist DNS-, DOS- and abuse-aware loadbalancer
-  DEPENDS:=+DNSDIST_OPENSSL:libopenssl +DNSDIST_GNUTLS:libgnutls +protobuf +re2 +libedit +libfstrm +libsodium +lua +boost +libnetsnmp +libatomic
+  DEPENDS:=+DNSDIST_OPENSSL:libopenssl +DNSDIST_GNUTLS:libgnutls +protobuf +re2 +libedit +libfstrm +lua +boost +libnetsnmp +libatomic +libsodium +DNSDIST_DNS_OVER_HTTPS:libh2o-evloop
   URL:=https://dnsdist.org/
 endef
 
@@ -63,15 +84,16 @@ endef
 
 CONFIGURE_ARGS+= \
 	--enable-dnscrypt \
-	$(if $(CONFIG_DNSDIST_NOSSL),,--enable-dns-over-tls) \
-	--enable-fstrm \
-	--enable-libsodium \
-	--enable-protobuf \
-	--enable-re2 \
+	--enable-dnstap \
+	--with-libsodium \
+	--with-protobuf \
+	--with-re2 \
 	--with-lua=lua \
 	--with-net-snmp \
-        $(if $(CONFIG_DNSDIST_GNUTLS),--enable,--disable)-gnutls \
-        $(if $(CONFIG_DNSDIST_OPENSSL),--enable,--disable)-libssl
+	$(if $(CONFIG_DNSDIST_GNUTLS),--with,--without)-gnutls \
+	$(if $(CONFIG_DNSDIST_OPENSSL),--with,--without)-libssl \
+	$(if $(CONFIG_DNSDIST_DNS_OVER_TLS),--enable-dns-over-tls,) \
+	$(if $(CONFIG_DNSDIST_DNS_OVER_HTTPS),--enable-dns-over-https,)
 
 define Package/dnsdist/install
 	$(INSTALL_DIR) $(1)/etc
