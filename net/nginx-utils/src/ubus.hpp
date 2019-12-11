@@ -14,13 +14,6 @@ extern "C" {
 }
 #endif
 
-#include "common.hpp"
-
-using namespace std;
-
-static const string LAN_LISTEN = "/var/lib/nginx/lan.listen";
-static const string LAN_SSL_LISTEN = "/var/lib/nginx/lan_ssl.listen";
-
 
 #ifdef openwrt
 
@@ -28,7 +21,7 @@ static const string LAN_SSL_LISTEN = "/var/lib/nginx/lan_ssl.listen";
 namespace ubus {
 
 
-typedef vector<string> strings;
+typedef std::vector<std::string> strings;
 
 
 inline void append(strings & both) {}
@@ -36,8 +29,8 @@ inline void append(strings & both) {}
 template<class String, class ...Strings>
 inline void append(strings & both, String key, Strings ...filter)
 {
-    both.push_back(move(key));
-    append(both, move(filter)...);
+    both.push_back(std::move(key));
+    append(both, std::move(filter)...);
 }
 
 
@@ -98,8 +91,8 @@ public:
     {
         for(;;) {
             #ifndef NDEBUG
-                cout<<string(i,'>')<<" look for "<<keys[i]<<" (";
-                cout<<cur->key()<<" : "<<(char*)cur->value()<<")"<<endl;
+                std::cout<<std::string(i,'>')<<" look for "<<keys[i]<<" (";
+                std::cout<<cur->key()<<" : "<<(char*)cur->value()<<")"<<std::endl;
             #endif
 
             auto id = blob_id(cur->pos);
@@ -142,8 +135,8 @@ class ubus {
 private:
     ubus_context * ctx = ubus_connect(NULL);
 
-    const shared_ptr<const blob_attr> msg;
-    const shared_ptr<const ubus_request> req;
+    const std::shared_ptr<const blob_attr> msg;
+    const std::shared_ptr<const ubus_request> req;
     const strings keys;
 
     /* Cannot capture *this (the lambda would not be a ubus_data_handler_t).
@@ -157,9 +150,9 @@ private:
     ubus_data_handler_t extractor =
         [](ubus_request * req, int type, blob_attr * msg) -> void
     {
-        static mutex extracting;
-        static shared_ptr<const ubus_request> saved_req;
-        static shared_ptr<const blob_attr> saved_msg;
+        static std::mutex extracting;
+        static std::shared_ptr<const ubus_request> saved_req;
+        static std::shared_ptr<const blob_attr> saved_msg;
         if (type != __UBUS_MSG_LAST) {
             assert (!saved_msg && !saved_req);
 
@@ -184,26 +177,27 @@ private:
             return;
         } else if (req!=NULL && msg!=NULL) {
             auto * preq
-                = reinterpret_cast<shared_ptr<const ubus_request> *>(req);
+                = reinterpret_cast<std::shared_ptr<const ubus_request> *>(req);
             auto * pmsg
-                = reinterpret_cast<shared_ptr<const blob_attr> *>(msg);
+                = reinterpret_cast<std::shared_ptr<const blob_attr> *>(msg);
             assert (*pmsg==NULL && *preq==NULL);
 
-            *preq = move(saved_req);
-            *pmsg = move(saved_msg);
+            *preq = std::move(saved_req);
+            *pmsg = std::move(saved_msg);
 
             extracting.unlock();
             return;
         } else {
-            throw runtime_error("ubus::extractor error: "
-                                "cannot write request/message");
+            throw std::runtime_error("ubus::extractor error: "
+                                     "cannot write request/message");
         }
     };
 
-    ubus(shared_ptr<const blob_attr> message = NULL,
-        shared_ptr<const ubus_request> request = NULL,
+    ubus(std::shared_ptr<const blob_attr> message = NULL,
+        std::shared_ptr<const ubus_request> request = NULL,
         strings filter = _MATCH_ALL_KEYS_)
-    : msg{move(message)}, req{move(request)}, keys{move(filter)}  {}
+    : msg{std::move(message)}, req{std::move(request)}, keys{std::move(filter)}
+    {}
 
     const static iterator iterator_end;
 
@@ -214,8 +208,8 @@ public:
     {
         strings both;
         if (keys!=_MATCH_ALL_KEYS_) { both = keys; }
-        append(both, move(filter)...);
-        return ubus{msg, req, move(both)};
+        append(both, std::move(filter)...);
+        return ubus{msg, req, std::move(both)};
     }
 
     auto begin() { return iterator{msg.get(), keys}; }
@@ -248,9 +242,9 @@ auto call(const char * path, const char * method="")
     }
 
     if (err != 0) {
-        string errmsg = "ubus::call error: " + to_string(err)
+        std::string errmsg = "ubus::call error: " + std::to_string(err)
                         + " cannot invoke " + path + " " + method;
-        throw runtime_error(errmsg.c_str());
+        throw std::runtime_error(errmsg.c_str());
     }
 
     return ret;

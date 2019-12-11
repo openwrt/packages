@@ -10,18 +10,22 @@
 #include "ubus.hpp"
 #include "common.hpp"
 
+
+#include "common.hpp"
+
 using namespace std;
 
+static const string LAN_LISTEN = "/var/lib/nginx/lan.listen";
+static const string LAN_SSL_LISTEN = "/var/lib/nginx/lan_ssl.listen";
+static const string ADD_SSL_FCT = "add_ssl";
+// const string NAME="_lan"
+// const string PREFIX="/etc/nginx/conf.d/_lan"
 
 #ifdef openwrt
 static const string CONF_DIR = "/etc/nginx/conf.d/";
 #else
 static const string CONF_DIR = "";
 #endif
-
-static const string ADD_SSL_FCT = "add_ssl";
-// const string NAME="_lan"
-// const string PREFIX="/etc/nginx/conf.d/_lan"
 
 class Line {
 public:
