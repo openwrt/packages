@@ -1,0 +1,34 @@
+--- a/src/libopensc/sc-ossl-compat.h
++++ b/src/libopensc/sc-ossl-compat.h
+@@ -76,6 +76,21 @@ extern "C" {
+ 	})
+ #endif /* OPENSSL_VERSION_NUMBER =< 0x00907000L */
+ 
++/*
++ * 1.1.0 depracated ERR_load_crypto_strings(), SSL_load_error_strings(), ERR_free_strings()
++ * and ENGINE_load_dynamic.EVP_CIPHER_CTX_cleanup and EVP_CIPHER_CTX_init are replaced
++ * by EVP_CIPHER_CTX_reset.
++ * But for compatability with LibreSSL and older OpenSSL. OpenSC uses the older functions
++ */
++#if OPENSSL_API_COMPAT >= 0x10100000L  && !defined(LIBRESSL_VERSION_NUMBER)
++#define ERR_load_crypto_strings(x) {}
++#define SSL_load_error_strings(x)  {}
++#define ERR_free_strings(x)        {}
++#define ENGINE_load_dynamic(x)     {}
++#define EVP_CIPHER_CTX_cleanup(x) EVP_CIPHER_CTX_reset(x)
++#define EVP_CIPHER_CTX_init(x) EVP_CIPHER_CTX_reset(x)
++#endif
++
+ /*
+  * 1.1 renames RSA_PKCS1_SSLeay to RSA_PKCS1_OpenSSL
+  * use RSA_PKCS1_OpenSSL
+--- a/src/pkcs15init/pkcs15-oberthur-awp.c
++++ b/src/pkcs15init/pkcs15-oberthur-awp.c
+@@ -37,6 +37,7 @@
+ #include "libopensc/asn1.h"
+ 
+ #ifdef ENABLE_OPENSSL
++#include "libopensc/sc-ossl-compat.h"
+ 
+ struct awp_lv zero_lv = { 0, NULL };
+ struct awp_lv x30_lv = { 0x10, (unsigned char *)"0000000000000000" };
