@@ -31,13 +31,7 @@ namespace ubus {
 typedef vector<string> strings;
 
 
-auto & operator<<(ostream & out, strings keys);
-auto & operator<<(ostream & out, strings keys) //TODO
-{ for (auto key : keys) { out<<key<<" "; } return out; }
-
-
 inline void append(strings & both) {}
-
 
 template<class String, class ...Strings>
 inline void append(strings & both, String key, Strings ...filter)
@@ -51,7 +45,9 @@ static const strings _MATCH_ALL_KEYS_ = {"*"};
 
 
 class iterator {
-public:
+    friend class ubus;
+
+private:
     const strings & keys;
     size_t i = 0;
     const blob_attr * pos;
@@ -86,13 +82,6 @@ public:
 
 public:
 
-    string str() //TODO
-    {
-        return to_string((size_t)cur->parent) + "par "
-            + to_string((size_t)cur) + "cur "
-            + to_string((size_t)cur->pos) + "/" + to_string(cur->rem);
-    }
-
     inline auto key() { return blobmsg_name(cur->pos); }
 
     inline auto value() { return blobmsg_data(cur->pos); }
@@ -112,6 +101,7 @@ public:
                 cout<<string(i,'>')<<" look for "<<keys[i]<<" (";
                 cout<<cur->key()<<" : "<<(char*)cur->value()<<")"<<endl;
             #endif
+
             auto id = blob_id(cur->pos);
             if ( (id==BLOBMSG_TYPE_TABLE || id==BLOBMSG_TYPE_ARRAY)
                  && i<keys.size()-1 && matches() && blobmsg_data_len(cur->pos)>0 )
@@ -123,14 +113,17 @@ public:
                     cur->rem -= blob_pad_len(cur->pos);
                     cur->pos = blob_next(cur->pos);
                     auto len = blob_pad_len(cur->pos);
+
                     if (cur->rem>0 && len<=cur->rem && len>=sizeof(blob_attr))
                     { break; }
+
                     //emerge:
                     auto * tmp = const_cast<iterator *>(cur->parent);
                     if (tmp==NULL) {
                         cur->pos = NULL;
                         return *cur;
                     }
+
                     delete cur;
                     cur = tmp;
                     --i;
@@ -144,7 +137,9 @@ public:
 
 
 class ubus {
-public:
+    friend auto call(const char * path, const char * method);
+
+private:
     ubus_context * ctx = ubus_connect(NULL);
 
     const shared_ptr<const blob_attr> msg;
@@ -166,30 +161,37 @@ public:
         static shared_ptr<const ubus_request> saved_req;
         static shared_ptr<const blob_attr> saved_msg;
         if (type != __UBUS_MSG_LAST) {
-            extracting.lock();
             assert (!saved_msg && !saved_req);
-            // print_req(req);
+
+            extracting.lock();
+
             if (req!=NULL) {
                 auto tmp = new ubus_request;
                 memcpy(tmp, req, sizeof(ubus_request));
+
                 saved_req.reset(tmp);
             }
+
             if (msg!=NULL) {
                 size_t len = blob_raw_len(msg);
+
                 auto tmp = malloc(sizeof(blob_attr)+len);
                 memcpy(tmp, msg, len);
+
                 saved_msg.reset((blob_attr *)tmp, free);
             }
+
             return;
         } else if (req!=NULL && msg!=NULL) {
-            // print_req(saved_req);
             auto * preq
                 = reinterpret_cast<shared_ptr<const ubus_request> *>(req);
             auto * pmsg
                 = reinterpret_cast<shared_ptr<const blob_attr> *>(msg);
             assert (*pmsg==NULL && *preq==NULL);
+
             *preq = move(saved_req);
             *pmsg = move(saved_msg);
+
             extracting.unlock();
             return;
         } else {
@@ -203,11 +205,10 @@ public:
         strings filter = _MATCH_ALL_KEYS_)
     : msg{move(message)}, req{move(request)}, keys{move(filter)}  {}
 
-    friend auto call(const char * path, const char * method);
-
     const static iterator iterator_end;
 
 public:
+
     template<class ...Strings>
     auto filter(Strings ...filter)
     {
@@ -222,7 +223,7 @@ public:
     auto end() { return iterator_end; }
 };
 
-const iterator ubus::iterator_end = iterator{};
+const iterator ubus::iterator_end{};
 
 
 auto call(const char * path, const char * method="")
@@ -235,8 +236,10 @@ auto call(const char * path, const char * method="")
     if (err == 0) { // call
         static blob_buf req;
         blob_buf_init(&req, 0);
+
         err = ubus_invoke(ret.ctx, id, method, req.head,
                           ret.extractor, NULL, 200);
+
         if (err==0) { // change the type for writing req and msg:
             ret.extractor((ubus_request *)(&ret.req),
                           __UBUS_MSG_LAST,
