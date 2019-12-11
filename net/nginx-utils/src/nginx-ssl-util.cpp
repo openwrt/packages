@@ -3,13 +3,13 @@
 
 #include <chrono>
 
-#include <sys/wait.h>
 #include <iostream>
 #include <string>
 // #include <regex>
 #include "regex-pcre.hpp"
-#include "nginx-create-listen.hpp"
+#include "ubus.hpp"
 #include "common.hpp"
+
 using namespace std;
 
 
@@ -163,74 +163,97 @@ void try_using_cron_to_recreate_certificate(const string & name)
 {
 #ifdef openwrt
     static const char * filename = "/etc/crontabs/root";
-#else
-    static const char * filename = "crontabs";
-#endif
     string conf = read_file(filename);
     const string CRON_CHECK = "3 3 12 12 *";
     const string add = get_if_missed(conf, CRON_CMD, name);
     if (add.length() > 0) {
-#ifdef openwrt
-        int status;
-        waitpid(call("/etc/init.d/cron", "status"), &status, 0);
-        if (status != 0) {
+        bool active = false;
+        for (auto x : ubus::call("service", "list").filter("cron")) {
+            active = (x!=NULL);
+        }
+        if (active) {
             cout<<"Cron unavailable to re-create the ssl certificate for '";
             cout<<name<<"'."<<endl;
-        } else
-#endif
-        {
-            call("/etc/init.d/cron", "reload");
+        } else {
             write_file(filename, CRON_CHECK+add, ios::app);
+            call("/etc/init.d/cron", "reload");
             cout<<"Rebuild the ssl certificate for '";
             cout<<name<<"' annually with cron."<<endl;
         }
+#endif
     }
 }
 
 
+void create_lan_listen();
+void create_lan_listen()
+{
+#ifdef openwrt
+    string listen = "# This file is re-created if Nginx starts or"
+                    " a LAN address changes.\n";
+    string listen_default = listen;
+    string ssl_listen = listen;
+    string ssl_listen_default = listen;
+
+    auto add_listen = [&listen, &listen_default,
+                       &ssl_listen, &ssl_listen_default]
+        (const string & prefix, string ip, const string & suffix) -> void
+    {
+        if (ip == "") { return; }
+        ip = prefix + ip + suffix;
+        listen += "\tlisten " + ip + ":80;\n";
+        listen_default += "\tlisten " + ip + ":80 default_server;\n";
+        ssl_listen += "\tlisten " + ip + ":443 ssl;\n";
+        ssl_listen_default += "\tlisten " + ip + ":443 ssl default_server;\n";
+    };
+
+    auto lan_status = ubus::call("network.interface.lan", "status");
+    for (auto ip : lan_status.filter("ipv4-address", "", "address")) {
+        add_listen("",  (char *)(ip), "");
+    }
+    for (auto ip : lan_status.filter("ipv6-address", "", "address")) {
+        add_listen("[", (char *)(ip), "]");
+    }
+
+    write_file(LAN_LISTEN, listen);
+    write_file(LAN_LISTEN+".default", listen_default);
+    write_file(LAN_SSL_LISTEN, ssl_listen);
+    write_file(LAN_SSL_LISTEN+".default", ssl_listen_default);
+#endif
+}
+
+
+void time_it(chrono::time_point<chrono::steady_clock> begin);
+void time_it(chrono::time_point<chrono::steady_clock> begin)
+{
+    auto end = chrono::steady_clock::now();
+    cout << "Time difference = " <<
+    chrono::duration_cast<chrono::milliseconds>(end - begin).count()
+    << " ms" << endl;
+}
+
+
 int main(int argc, char * argv[]) {
+#ifdef openwrt
+    cout<<"here"<<endl;
+#endif
+
     auto begin = chrono::steady_clock::now();
     if (argc != 2) {
         cout<<"syntax: "<<argv[0]<<" server_name"<<endl;
         return 2;
     }
     const string name = argv[1];
+    time_it(begin);
 
-    auto
-    end = chrono::steady_clock::now();
-    cout << "Time difference = " <<
-    chrono::duration_cast<chrono::milliseconds>(end - begin).count()
-    << " ms" << endl;
-    begin = chrono::steady_clock::now();
-
-    for (int i=0; i<1; ++i) {
-
-#ifdef openwrt
-    ubus_call("network.interface.lan", "status", create_lan_listen_callback);
-
-//     end = chrono::steady_clock::now();
-//     cout << "Time difference = " <<
-//     chrono::duration_cast<chrono::milliseconds>(end - begin).count()
-//     << " ms" << endl;
-//     begin = chrono::steady_clock::now();
-#endif
+    create_lan_listen();
+    time_it(begin);
 
     add_ssl_directives_to(name, name=="_lan");
-
-//     end = chrono::steady_clock::now();
-//     cout << "Time difference = " <<
-//     chrono::duration_cast<chrono::milliseconds>(end - begin).count()
-//     << " ms" << endl;
-//     begin = chrono::steady_clock::now();
+    time_it(begin);
 
     try_using_cron_to_recreate_certificate(name);
-
-    }
-    end = chrono::steady_clock::now();
-    cout << "Time difference = " <<
-    chrono::duration_cast<chrono::milliseconds>(end - begin).count()
-    << " ms" << endl;
-    begin = chrono::steady_clock::now();
+    time_it(begin);
 
     return 0;
 }

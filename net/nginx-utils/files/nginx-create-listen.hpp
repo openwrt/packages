@@ -91,7 +91,6 @@ static int ubus_call(const char * path, const char * method,
     return ret;
 }
 
-
 void create_lan_listen_callback(ubus_request * req, int type, blob_attr * msg)
 {
     if (!msg) { return; }
@@ -125,7 +124,7 @@ void create_lan_listen_callback(ubus_request * req, int type, blob_attr * msg)
     suffix = "]";
     ubus_traverse(msg, create_it, "ipv6-address", "", "address");
     create_it("::1");
-
+    
     write_file(LAN_LISTEN, listen);
     write_file(LAN_LISTEN+".default", listen_default);
     write_file(LAN_SSL_LISTEN, ssl_listen);
