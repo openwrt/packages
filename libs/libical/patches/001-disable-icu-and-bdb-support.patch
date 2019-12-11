@@ -1,8 +1,6 @@
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 1cc7180..295bc20 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -161,43 +161,43 @@ endif()
+@@ -170,43 +170,43 @@ endif()
  # libicu is highly recommended for RSCALE support
  #  libicu can be found at http://www.icu-project.org
  #  RSCALE info at http://tools.ietf.org/html/rfc7529
