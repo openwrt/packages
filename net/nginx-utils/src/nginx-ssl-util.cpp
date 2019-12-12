@@ -210,8 +210,8 @@ void create_lan_listen()
         ssl_listen += "\tlisten " + ip + ":443 ssl;\n";
         ssl_listen_default += "\tlisten " + ip + ":443 ssl default_server;\n";
     };
-    add_listen("127.0.0.1");
-    add_listen("[::1]");
+    add_listen("", "127.0.0.1", "");
+    add_listen("[", "::1", "]");
 
     auto lan_status = ubus::call("network.interface.lan", "status");
     for (auto ip : lan_status.filter("ipv4-address", "", "address")) {
