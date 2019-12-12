@@ -210,6 +210,8 @@ void create_lan_listen()
         ssl_listen += "\tlisten " + ip + ":443 ssl;\n";
         ssl_listen_default += "\tlisten " + ip + ":443 ssl default_server;\n";
     };
+    add_listen("127.0.0.1");
+    add_listen("[::1]");
 
     auto lan_status = ubus::call("network.interface.lan", "status");
     for (auto ip : lan_status.filter("ipv4-address", "", "address")) {
@@ -238,11 +240,12 @@ void time_it(chrono::time_point<chrono::steady_clock> begin)
 
 
 int main(int argc, char * argv[]) {
+    auto begin = chrono::steady_clock::now();
 #ifdef openwrt
     cout<<"here"<<endl;
 #endif
 
-    auto begin = chrono::steady_clock::now();
+
     if (argc != 2) {
         cout<<"syntax: "<<argv[0]<<" server_name"<<endl;
         return 2;

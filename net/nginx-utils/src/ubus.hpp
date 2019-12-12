@@ -21,10 +21,13 @@ extern "C" {
 namespace ubus {
 
 
+
 typedef std::vector<std::string> strings;
 
 
+
 inline void append(strings & both) {}
+
 
 template<class String, class ...Strings>
 inline void append(strings & both, String key, Strings ...filter)
@@ -34,7 +37,9 @@ inline void append(strings & both, String key, Strings ...filter)
 }
 
 
+
 static const strings _MATCH_ALL_KEYS_ = {"*"};
+
 
 
 class iterator {
@@ -48,10 +53,12 @@ private:
     const iterator * parent = NULL;
     size_t rem = 0;
 
+
     inline bool matches() const {
         return (keys[i]==_MATCH_ALL_KEYS_[0]
                 || blobmsg_name(cur->pos)==keys[i]);
     }
+
 
     iterator(const blob_attr * msg = NULL,
             const strings & filter = _MATCH_ALL_KEYS_)
@@ -64,6 +71,7 @@ private:
         }
     }
 
+
     iterator(const iterator * par)
     : keys{par->keys}, pos{par->pos}, cur{this}, parent{par}
     {
@@ -73,7 +81,12 @@ private:
         }
     }
 
+
 public:
+
+    iterator(const iterator & rhs) = delete;
+
+    iterator(iterator && rhs) = default;
 
     inline auto key() { return blobmsg_name(cur->pos); }
 
@@ -82,6 +95,7 @@ public:
     inline auto type() { return blob_id(cur->pos); }
 
     inline auto operator*() { return blobmsg_data(cur->pos); }
+
 
     inline auto operator!=(const iterator & rhs)
     { return (cur->rem!=rhs.cur->rem || cur->pos!=rhs.cur->pos); }
@@ -131,16 +145,18 @@ public:
 };
 
 
+
 class ubus {
-    friend auto call(const char * path, const char * method);
+//     friend auto call(const char * path, const char * method);
 
 private:
-    static ubus_context * ctx; // lazy initialization in constructor.
-    static const iterator iterator_end;
-
-    const std::shared_ptr<const blob_attr> msg;
-    const std::shared_ptr<const ubus_request> req;
+//     static const iterator iterator_end;
+    static ubus_context * ctx; // lazy initialization when needed.
+    const std::shared_ptr<blob_buf> buf; // reused by childs.
+    const std::shared_ptr<const blob_attr> msg; // initialized by extractor.
+    const std::shared_ptr<const ubus_request> req; // initialized by extractor.
     const strings keys;
+
 
     /* Cannot capture *this (the lambda would not be a ubus_data_handler_t).
     * The signature of this function is fixed, workaround for writing to
@@ -196,15 +212,23 @@ private:
         }
     };
 
-    ubus(std::shared_ptr<const blob_attr> message = NULL,
-        std::shared_ptr<const ubus_request> request = NULL,
+
+    ubus(const std::shared_ptr<blob_buf> & buffer)
+    : buf{buffer}, msg{NULL}, req{NULL} {}
+
+
+    ubus(std::shared_ptr<const blob_attr> message,
+        std::shared_ptr<const ubus_request> request,
         strings filter = _MATCH_ALL_KEYS_)
     : msg{std::move(message)}, req{std::move(request)}, keys{std::move(filter)}
-    {
+    {}
+
+
+    void init_ctx() {
         static std::unique_ptr<ubus_context, decltype(&ubus_free)>
             lazy_ctx{ubus_connect(NULL), ubus_free};
 
-        if (!lazy_ctx) { // it could be available on a later instructor call:
+        if (!lazy_ctx) { // it could be available on a later call:
             static std::mutex connecting;
             connecting.lock();
             if (!lazy_ctx) { lazy_ctx.reset(ubus_connect(NULL)); }
@@ -217,59 +241,89 @@ private:
         ctx = lazy_ctx.get();
     }
 
+
 public:
+
+    ubus(const ubus &) = delete;
+
+    ubus(ubus &&) = default;
+
+    ubus() : buf{new blob_buf}, msg{NULL}, req{NULL}, keys{_MATCH_ALL_KEYS_} {}
+
 
     template<class ...Strings>
     auto filter(Strings ...filter)
     {
-        strings both;
+        strings both = {};
         if (keys!=_MATCH_ALL_KEYS_) { both = keys; }
         append(both, std::move(filter)...);
         return ubus{msg, req, std::move(both)};
     }
 
+
     auto begin() { return iterator{msg.get(), keys}; }
 
-    auto end() { return iterator_end; }
-};
 
-ubus_context * ubus::ctx = NULL;
-
-const iterator ubus::iterator_end{};
-
-
-auto call(const char * path, const char * method="")
-{
-    ubus ret;
-
-    uint32_t id;
-    int err = ubus_lookup_id(ret.ctx, path, &id);
-
-    if (err == 0) { // call
-        static blob_buf req;
-        blob_buf_init(&req, 0);
-
-        err = ubus_invoke(ret.ctx, id, method, req.head,
-                          ret.extractor, NULL, 200);
-
-        if (err==0) { // change the type for writing req and msg:
-            ret.extractor((ubus_request *)(&ret.req),
-                          __UBUS_MSG_LAST,
-                          (blob_attr *)(&ret.msg));
-        }
+    const auto end() {
+        static iterator end{};
+        return std::move(end);
     }
 
-    if (err != 0) {
+
+    auto call(const char * path, const char * method="",
+                       const bool replace=false)
+    {
+        init_ctx();
+
+        uint32_t id;
+        int err = ubus_lookup_id(ctx, path, &id);
+
+        if (err == 0) { // call
+            int timeout = 200;
+            blob_buf_init(buf.get(), 0);
+
+            err = ubus_invoke(ctx, id, method, buf->head,
+                              extractor, NULL, timeout);
+
+            if (err==0) { // change the type for writing req and msg:
+                ubus ret = replace ? std::move(*this) : ubus{buf};
+                extractor((ubus_request *)(&ret.req),
+                            __UBUS_MSG_LAST,
+                            (blob_attr *)(&ret.msg));
+                return ret;
+            }
+        }
+        // err!=0:
         std::string errmsg = "ubus::call error: " + std::to_string(err)
                         + " cannot invoke " + path + " " + method;
         throw std::runtime_error(errmsg.c_str());
     }
 
-    return ret;
+
+};
+
+ubus_context * ubus::ctx = NULL;
+
+// const iterator ubus::iterator_end{};
+
+
+
+auto call(const char * path, const char * method="");
+auto call(const char * path, const char * method)
+{
+    ubus ret{};
+    return std::move(ret.call(path, method, true));
 }
 
 
+
+auto call(ubus & use, const char * path, const char * method="");
+auto call(ubus & use, const char * path, const char * method)
+{ return std::move(use.call(path, method, true)); }
+
+
 } // namespace ubus;
+
 
 
 #endif
