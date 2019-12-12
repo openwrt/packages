@@ -135,7 +135,7 @@ class ubus {
     friend auto call(const char * path, const char * method);
 
 private:
-    static const ubus_context * ctx; // lazy initialization in constructor.
+    static ubus_context * ctx; // lazy initialization in constructor.
     static const iterator iterator_end;
 
     const std::shared_ptr<const blob_attr> msg;
@@ -201,11 +201,19 @@ private:
         strings filter = _MATCH_ALL_KEYS_)
     : msg{std::move(message)}, req{std::move(request)}, keys{std::move(filter)}
     {
-        static const unique_ptr<const ubus_context, decltype(&ubus_free)>
+        static std::unique_ptr<ubus_context, decltype(&ubus_free)>
             lazy_ctx{ubus_connect(NULL), ubus_free};
-        if (!lazy_ctx) {
-            throw std::runtime_error("ubus error: cannot connect context");
+
+        if (!lazy_ctx) { // it could be available on a later instructor call:
+            static std::mutex connecting;
+            connecting.lock();
+            if (!lazy_ctx) { lazy_ctx.reset(ubus_connect(NULL)); }
+            connecting.unlock();
+            if (!lazy_ctx) {
+                throw std::runtime_error("ubus error: cannot connect context");
+            }
         }
+
         ctx = lazy_ctx.get();
     }
 
@@ -225,7 +233,7 @@ public:
     auto end() { return iterator_end; }
 };
 
-const ubus_context * ubus::ctx = NULL;
+ubus_context * ubus::ctx = NULL;
 
 const iterator ubus::iterator_end{};
 
