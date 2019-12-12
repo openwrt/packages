@@ -9,12 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NPM_NAME:=node-hid
 PKG_NAME:=$(PKG_NPM_NAME)
-PKG_VERSION:=0.7.9
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NPM_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://registry.npmjs.org/$(PKG_NPM_NAME)/-/
-PKG_HASH:=a13710ebff0a2d0e60e08442db192a4e891db89d535306d461b8a95ede7dbd90
+PKG_HASH:=a128331388b9a0ac443fb55493e37a9b8043f34699c60453f395ad37b7d5f145
 
 PKG_BUILD_DEPENDS:=node/host
 PKG_USE_MIPS16:=0
@@ -24,6 +24,7 @@ PKG_LICENSE:=MIT or X11
 PKG_LICENSE_FILES:=
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/node-hid
   SUBMENU:=Node.js
@@ -31,7 +32,7 @@ define Package/node-hid
   CATEGORY:=Languages
   TITLE:=Node.js package to access HID devices
   URL:=https://github.com/node-hid/node-hid
-  DEPENDS:=+node +node-npm +libusb-1.0 +hidapi +libudev-fbsd
+  DEPENDS:=+node +node-npm +libusb-1.0 +hidapi +libudev-fbsd $(ICONV_DEPENDS)
 endef
 
 define Package/node-hid/description
@@ -45,6 +46,7 @@ NODEJS_CPU:=$(subst powerpc,ppc,$(subst aarch64,arm64,$(subst x86_64,x64,$(subst
 TMPNPM:=$(shell mktemp -u XXXXXXXXXX)
 
 TARGET_CFLAGS+=$(FPIC) -I$(STAGING_DIR)/usr/include/libusb-1.0
+TARGET_LDFLAGS+=$(if $(ICONV_FULL),-liconv)
 
 define Build/Compile
 	git init $(PKG_BUILD_DIR)
@@ -71,7 +73,7 @@ define Package/node-hid/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/$(PKG_NPM_NAME)/{node_modules,src} \
 		$(1)/usr/lib/node/$(PKG_NPM_NAME)/
 	$(INSTALL_DIR) $(1)/usr/lib/node/$(PKG_NPM_NAME)/build/Release
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/$(PKG_NPM_NAME)/build/Release/HID.node \
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/$(PKG_NPM_NAME)/build/Release/HID*.node \
 		$(1)/usr/lib/node/$(PKG_NPM_NAME)/build/Release/
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(LN) ../lib/node/node-hid/src/show-devices.js $(1)/usr/bin/hid-showdevices
