@@ -84,10 +84,6 @@ private:
 
 public:
 
-    iterator(const iterator & rhs) = delete;
-
-    iterator(iterator && rhs) = default;
-
     inline auto key() { return blobmsg_name(cur->pos); }
 
     inline auto value() { return blobmsg_data(cur->pos); }
@@ -147,10 +143,8 @@ public:
 
 
 class ubus {
-//     friend auto call(const char * path, const char * method);
 
 private:
-//     static const iterator iterator_end;
     static ubus_context * ctx; // lazy initialization when needed.
     const std::shared_ptr<blob_buf> buf; // reused by childs.
     const std::shared_ptr<const blob_attr> msg; // initialized by extractor.
@@ -265,8 +259,8 @@ public:
 
 
     const auto end() {
-        static iterator end{};
-        return std::move(end);
+        static const iterator end{};
+        return end;
     }
 
 
