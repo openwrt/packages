@@ -184,8 +184,8 @@ void try_using_cron_to_recreate_certificate(const string & name)
             cout<<"Rebuild the ssl certificate for '";
             cout<<name<<"' annually with cron."<<endl;
         }
-#endif
     }
+#endif
 }
 
 

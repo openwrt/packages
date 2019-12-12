@@ -91,13 +91,15 @@ public:
     {
         for(;;) {
             #ifndef NDEBUG
-                std::cout<<std::string(i,'>')<<" look for "<<keys[i]<<" (";
-                std::cout<<cur->key()<<" : "<<(char*)cur->value()<<")"<<std::endl;
+                std::cout<<std::string(i,'>')<<" look for "<<keys[i]<<" at ";
+                std::cout<<cur->key()<<" : "<<(char*)cur->value()<<std::endl;
             #endif
 
             auto id = blob_id(cur->pos);
             if ( (id==BLOBMSG_TYPE_TABLE || id==BLOBMSG_TYPE_ARRAY)
-                 && i<keys.size()-1 && matches() && blobmsg_data_len(cur->pos)>0 )
+                 && i<keys.size()-1
+                 && matches()
+                 && blobmsg_data_len(cur->pos)>0 )
             { //immmerge:
                 ++i;
                 cur = new iterator{cur};
@@ -112,7 +114,7 @@ public:
 
                     //emerge:
                     auto * tmp = const_cast<iterator *>(cur->parent);
-                    if (tmp==NULL) {
+                    if (!tmp) {
                         cur->pos = NULL;
                         return *cur;
                     }
@@ -133,7 +135,8 @@ class ubus {
     friend auto call(const char * path, const char * method);
 
 private:
-    ubus_context * ctx = ubus_connect(NULL);
+    static const ubus_context * ctx; // lazy initialization in constructor.
+    static const iterator iterator_end;
 
     const std::shared_ptr<const blob_attr> msg;
     const std::shared_ptr<const ubus_request> req;
@@ -197,9 +200,14 @@ private:
         std::shared_ptr<const ubus_request> request = NULL,
         strings filter = _MATCH_ALL_KEYS_)
     : msg{std::move(message)}, req{std::move(request)}, keys{std::move(filter)}
-    {}
-
-    const static iterator iterator_end;
+    {
+        static const unique_ptr<const ubus_context, decltype(&ubus_free)>
+            lazy_ctx{ubus_connect(NULL), ubus_free};
+        if (!lazy_ctx) {
+            throw std::runtime_error("ubus error: cannot connect context");
+        }
+        ctx = lazy_ctx.get();
+    }
 
 public:
 
@@ -216,6 +224,8 @@ public:
 
     auto end() { return iterator_end; }
 };
+
+const ubus_context * ubus::ctx = NULL;
 
 const iterator ubus::iterator_end{};
 
@@ -251,7 +261,7 @@ auto call(const char * path, const char * method="")
 }
 
 
-}
+} // namespace ubus;
 
 
 #endif
