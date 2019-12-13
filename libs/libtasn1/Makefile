@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtasn1
 PKG_VERSION:=4.12
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
@@ -21,6 +21,7 @@ PKG_LICENSE_FILES:=COPYING.LIB
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 define Package/libtasn1
   SECTION:=libs
@@ -43,7 +44,8 @@ CONFIGURE_ARGS += \
 		--enable-static
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/bin
+	# $(INSTALL_DIR) $(1)/usr/bin
+	# $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libtasn1.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
@@ -57,4 +59,5 @@ define Package/libtasn1/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libtasn1.so.* $(1)/usr/lib/
 endef
 
+$(eval $(call HostBuild))
 $(eval $(call BuildPackage,libtasn1))
