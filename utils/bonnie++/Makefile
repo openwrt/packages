@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bonnie++
 PKG_VERSION:=1.98
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://www.coker.com.au/bonnie++/
@@ -38,11 +38,7 @@ define Package/bonniexx/description
   tests of hard drive and file system performance.
 endef
 
-ifeq ($(CONFIG_USE_UCLIBCXX),y)
-TARGET_LDFLAGS += -nodefaultlibs
-endif
-
-TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -fno-rtti -flto -std=c++98
+TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -fno-rtti -flto
 
 define Package/bonniexx/install
 	$(INSTALL_DIR) $(1)/usr/bin
