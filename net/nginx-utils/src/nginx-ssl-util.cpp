@@ -1,19 +1,19 @@
 
-// #define openwrt
+#define openwrt
 
 #include <chrono>
 
 #include <iostream>
 #include <string>
 // #include <regex>
+#include "common.hpp"
 #include "regex-pcre.hpp"
+#ifdef openwrt
 #include "ubus.hpp"
-#include "common.hpp"
-
-
-#include "common.hpp"
+#endif
 
 using namespace std;
+
 
 static const string LAN_LISTEN = "/var/lib/nginx/lan.listen";
 static const string LAN_SSL_LISTEN = "/var/lib/nginx/lan_ssl.listen";
@@ -26,6 +26,7 @@ static const string CONF_DIR = "/etc/nginx/conf.d/";
 #else
 static const string CONF_DIR = "";
 #endif
+
 
 class Line {
 public:
@@ -53,7 +54,7 @@ public:
             return code; \
         }, \
         []() -> const string { \
-            const string begin = R"((\n\s*))"; \
+            const string begin = R"([{;](\s*))"; \
             const string space = R"(\s+)"; \
             const string end = R"(\s*;)"; \
             const auto arg = \
@@ -99,6 +100,7 @@ _LINE_(NGX_SSL_KEY,
 _LINE_(NGX_SSL_SESSION_CACHE, begin+ arg("ssl_session_cache") +space);
 _LINE_(NGX_SSL_SESSION_TIMEOUT, begin+ arg("ssl_session_timeout") +space);
 #undef _LINE_
+
 
 string get_if_missed(const string & conf, const Line & LINE, const string & val,
                    const string & indent="\n    ");
@@ -190,7 +192,7 @@ void try_using_cron_to_recreate_certificate(const string & name)
     const string CRON_CHECK = "3 3 12 12 *";
     const string add = get_if_missed(conf, CRON_CMD, name);
     if (add.length() > 0) {
-        auto status = ubus::call("service", "list").filter("cron");
+        auto status = ubus::call("service", "list", 1000).filter("cron");
         const bool active = (status.begin() != status.end());
         if (!active) { // with or without instances.
             cout<<"Cron unavailable to re-create the ssl certificate for '";
@@ -202,6 +204,8 @@ void try_using_cron_to_recreate_certificate(const string & name)
             cout<<name<<"' annually with cron."<<endl;
         }
     }
+#else
+cout<<"Skip checking cron for: ... "<<get_if_missed("", CRON_CMD, name)<<endl;
 #endif
 }
 
@@ -256,13 +260,34 @@ void time_it(chrono::time_point<chrono::steady_clock> begin)
 }
 
 
+
+
+// #define THREAD(name, call) call()
+// #define JOIN(name) (void)0
+
+#include <thread>
+#define THREAD(name, call) thread name(call)
+#define JOIN(name) name.join()
+
+/*
+#include <sys/wait.h>
+#define THREAD(name, call) pid_t name = fork(); \
+    switch(name) { \
+        case 0: call(); _exit(0); \
+        case -1: cout<<"error forking "<<call<<", run in main process"<<endl; \
+            call(); \
+    }
+#define JOIN(name) if (name>0) { \
+        int status; \
+        if(waitpid(name, &status, 0) < 0) cout<<"error waiting "<<call<<endl; \
+    }*/
+
+
 int main(int argc, char * argv[]) {
     auto begin = chrono::steady_clock::now();
 #ifdef openwrt
-    cout<<"here"<<endl;
+cout<<"TODO: remove timing and openwrt macro!"<<endl;
 #endif
-
-
     if (argc != 2) {
         cout<<"syntax: "<<argv[0]<<" server_name"<<endl;
         return 2;
@@ -270,15 +295,18 @@ int main(int argc, char * argv[]) {
     const string name = argv[1];
     time_it(begin);
 
-    create_lan_listen();
-    time_it(begin);
+    THREAD(ubus, create_lan_listen);
+
+
+    // checkend_of_certificate || create_selfsigned_certificate
+
 
     add_ssl_directives_to(name, name=="_lan");
-    time_it(begin);
-
     try_using_cron_to_recreate_certificate(name);
     time_it(begin);
 
+    JOIN(ubus);
+    time_it(begin);
     return 0;
 }
 

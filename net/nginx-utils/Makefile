@@ -12,7 +12,7 @@ define Package/nginx-ssl-util
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=Manage (self-signed) SSL certificates for Nginx.
-  DEPENDS:=+libstdcpp +libpcre +libubus +libubox
+  DEPENDS:=+libstdcpp +libpcre +libubus +libubox +libpthread
 endef
 
 define Package/nginx-ssl-util/description

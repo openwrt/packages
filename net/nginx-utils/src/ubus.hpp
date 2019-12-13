@@ -1,24 +1,18 @@
-
 #ifndef __NGINX_CREATE_LISTEN_H
 #define __NGINX_CREATE_LISTEN_H
 
-#include <string>
-
-#ifdef openwrt
 #include <vector>
+#include <string>
 #include <memory>
 #include <mutex>
 #include <cassert>
 extern "C" {
 #include <libubus.h>
 }
-#endif
-
-
-#ifdef openwrt
 
 
 typedef std::vector<std::string> strings;
+
 
 static const strings _MATCH_ALL_KEYS_ = {"*"};
 
@@ -36,15 +30,23 @@ inline void append(strings & both, String key, Strings ...filter)
 
 
 class ubus_iterator {
+
     friend class ubus;
 
 private:
+
     const strings & keys;
+
     const size_t n;
+
     size_t i = 0;
+
     const blob_attr * pos;
+
     ubus_iterator * cur;
+
     const ubus_iterator * parent = NULL;
+
     size_t rem = 0;
 
 
@@ -80,18 +82,25 @@ public:
 
     ubus_iterator(const ubus_iterator & rhs) = delete;
 
+
     ubus_iterator(ubus_iterator && rhs) = default;
+
 
     inline auto key() { return blobmsg_name(cur->pos); }
 
+
     inline auto value() { return blobmsg_data(cur->pos); }
+
 
     inline auto type() { return blob_id(cur->pos); }
 
+
     inline auto operator*() { return blobmsg_data(cur->pos); }
+
 
     inline auto operator!=(const ubus_iterator & rhs)
     { return (cur->rem!=rhs.cur->rem || cur->pos!=rhs.cur->pos); }
+
 
     ubus_iterator & operator++();
 
@@ -102,11 +111,17 @@ public:
 class ubus {
 
 private:
+
     static ubus_context * ctx; // lazy initialization when needed.
+
     static std::mutex buffering;
+
     static blob_buf buffer;
+
     const std::shared_ptr<const blob_attr> msg; // initialized by extractor.
+
     const std::shared_ptr<const ubus_request> req; // initialized by extractor.
+
     const strings keys;
 
 
@@ -124,12 +139,6 @@ private:
     * Between saving and retrieving we lock a mutex for not mixing data:
     */
     static void extractor(ubus_request * req, int type, blob_attr * msg);
-
-
-    ubus(const std::shared_ptr<const blob_attr> & message,
-         const std::shared_ptr<const ubus_request> & request,
-         strings filter = _MATCH_ALL_KEYS_)
-    : msg{message}, req{request}, keys{std::move(filter)} {}
 
 
     static void init_ctx() {
@@ -150,13 +159,30 @@ private:
     }
 
 
+    ubus(const std::shared_ptr<const blob_attr> & message,
+         const std::shared_ptr<const ubus_request> & request,
+         strings filter = _MATCH_ALL_KEYS_)
+    : msg{message}, req{request}, keys{std::move(filter)} {}
+
+
 public:
+
+    ubus() : msg{NULL}, req{NULL}, keys{_MATCH_ALL_KEYS_} {}
+
 
     ubus(const ubus &) = delete;
 
+
     ubus(ubus &&) = default;
 
-    ubus() : msg{NULL}, req{NULL}, keys{_MATCH_ALL_KEYS_} {}
+
+    auto begin() { return ubus_iterator{msg.get(), keys}; }
+
+
+    const auto end() {
+        static ubus_iterator end{};
+        return std::move(end);
+    }
 
 
     template<class ...Strings>
@@ -169,25 +195,13 @@ public:
     }
 
 
-    auto begin() { return ubus_iterator{msg.get(), keys}; }
-
-
-    const auto end() {
-        static ubus_iterator end{};
-        return std::move(end);
-    }
-
-
-    static auto call(const char * path, const char * method="");
-
-
-    std::string request_str() {
+    static std::string request_str(const ubus_request * req) {
         std::string ret{};
         ret += std::to_string(req->status_code) + "status_code ";
-        ret += (req->status_msg ? '+' : '-') + "status_msg ";
-        ret += (req->blocked ? '+' : '-') + "blocked ";
-        ret += (req->cancelled ? '+' : '-') + "cancelled ";
-        ret += (req->notify ? '+' : '-') + "notify ";
+        ret += std::string(req->status_msg ? "+" : "-") + "status_msg ";
+        ret += std::string(req->blocked ? "+" : "-") + "blocked ";
+        ret += std::string(req->cancelled ? "+" : "-") + "cancelled ";
+        ret += std::string(req->notify ? "+" : "-") + "notify ";
         ret += std::to_string(req->peer) + "peer ";
         ret += std::to_string(req->seq) + "seq ";
         ret += std::to_string(req->fd) + "fd ";
@@ -195,6 +209,10 @@ public:
         if (req->priv) { ret += std::string((char *)req->priv) + "priv "; }
         return std::move(ret);
     }
+
+
+    static auto call(const char * path,
+                     const char * method="", const int timeout=500);
 
 };
 
@@ -205,10 +223,11 @@ public:
 
 ubus_context * ubus::ctx = NULL;
 
+
 blob_buf ubus::buffer;
 
-std::mutex ubus::buffering;
 
+std::mutex ubus::buffering;
 
 
 ubus_iterator & ubus_iterator::operator++()
@@ -265,6 +284,7 @@ void ubus::extractor(ubus_request * req, int type, blob_attr * msg)
 
         if (req!=NULL) {
             auto tmp = new(std::nothrow) ubus_request;
+
             if (!tmp) {
                 extracting.unlock();
                 throw std::bad_alloc();
@@ -276,9 +296,6 @@ void ubus::extractor(ubus_request * req, int type, blob_attr * msg)
         }
 
         if (msg!=NULL) {
-//             size_t len = blob_raw_len(msg);
-//             auto tmp = malloc(sizeof(blob_attr)+len);
-//             memcpy(tmp, msg, len);
             auto tmp = blob_memdup(msg);
 
             if (!tmp) {
@@ -295,6 +312,7 @@ void ubus::extractor(ubus_request * req, int type, blob_attr * msg)
             = reinterpret_cast<std::shared_ptr<const ubus_request> *>(req);
         auto * pmsg
             = reinterpret_cast<std::shared_ptr<const blob_attr> *>(msg);
+
         assert (*pmsg==NULL && *preq==NULL);
 
         *preq = std::move(saved_req);
@@ -309,7 +327,7 @@ void ubus::extractor(ubus_request * req, int type, blob_attr * msg)
 }
 
 
-auto ubus::call(const char * path, const char * method)
+auto ubus::call(const char * path, const char * method, const int timeout)
 {
     init_ctx();
 
@@ -317,23 +335,25 @@ auto ubus::call(const char * path, const char * method)
     int err = ubus_lookup_id(ctx, path, &id);
 
     if (err == 0) { // call
-        int timeout = 200;
+        ubus ret{};
 
         buffering.lock();
         blob_buf_init(&buffer, 0);
+        // locking extractor internally:
         err = ubus_invoke(ctx, id, method, buffer.head,
                             extractor, NULL, timeout);
         buffering.unlock();
 
-        ubus ret{};
-        // change the type for writing req and msg:
-        extractor((ubus_request *)(&ret.req),
+        extractor((ubus_request *)(&ret.req), // sic: change type and const!
                     __UBUS_MSG_LAST,
-                    (blob_attr *)(&ret.msg));
+                    (blob_attr *)(&ret.msg)); // sic: change type and const!
+        // unlocking extractor internally.
+
         #ifndef NDEBUG
-            std::cout<<"ubus call "<<path<<" "<<method;
-            std::cout<<" -> "<<ret.request_str()<<std::endl;
+            std::cout<<"ubus call "<<path<<" "<<method<<std::endl;
+            std::cout<<" -> "<<request_str(ret.req.get())<<std::endl;
         #endif
+
         if (err==0) { return ret; }
     }
     // err!=0:
@@ -341,10 +361,6 @@ auto ubus::call(const char * path, const char * method)
     errmsg = errmsg + path + " " + method + " (" + std::to_string(err) + ") ";
     throw std::runtime_error(errmsg.c_str());
 }
-
-
-
-#endif
 
 
 #endif

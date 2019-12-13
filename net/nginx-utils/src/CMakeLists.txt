@@ -16,6 +16,6 @@ ADD_DEFINITIONS(-Wno-unused-parameter -Wmissing-declarations)
 SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
 ADD_EXECUTABLE(nginx-ssl-util nginx-ssl-util.cpp)
-TARGET_LINK_LIBRARIES(nginx-ssl-util ${pcre} ${ubox} ${ubus})#
+TARGET_LINK_LIBRARIES(nginx-ssl-util ${pcre} ${ubox} ${ubus} pthread)#
 
 INSTALL(TARGETS nginx-ssl-util RUNTIME DESTINATION bin)
