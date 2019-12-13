@@ -1,4 +1,4 @@
- 
+
 #ifndef __COMMON_H
 #define __COMMON_H
 
@@ -6,56 +6,79 @@
 #include <string>
 #include <fstream>
 #include <unistd.h>
+#include <cerrno>
+#include <cstring>
 
 
-void write_file(const std::string & filename, const std::string str,
-                std::ios_base::openmode flag=std::ios::trunc);
+// mode: optional ios::binary and/or ios::app (default ios::trunc)
+void write_file(const std::string & name, const std::string str,
+                const std::ios_base::openmode mode=std::ios::trunc);
 
 
-std::string read_file(const std::string & filename);
+// mode: optional ios::binary (internally ios::ate|ios::in)
+std::string read_file(const std::string & name,
+                      const std::ios_base::openmode mode=std::ios::in);
 
 
-int call(const char program[], const char arg[]);
+// all S must be convertible to const char[]
+template<typename ...S>
+pid_t call(const char program[], S... args);
 
 
 
-void write_file(const std::string & filename, const std::string str,
-                std::ios_base::openmode flag)
+// ------------------------- implementation: ----------------------------------
+
+
+void write_file(const std::string & name, const std::string str,
+                const std::ios_base::openmode flag)
 {
-    std::ofstream file (filename, std::ios::out|flag);
-    if (file.good()) { file<<str<<std::endl; }
-    file.close();
-}
-
-
-std::string read_file(const std::string & filename)
-{
-    std::ifstream file(filename, std::ios::in|std::ios::ate);
-    std::string str = "";
-    if (file.good()) {
-        size_t size = file.tellg();
-        str.reserve(size);
-        file.seekg(0);
-        str.assign((std::istreambuf_iterator<char>(file)),
-                std::istreambuf_iterator<char>());
+    std::ofstream file(name, flag);
+    if (!file.good()) {
+        throw std::ofstream::failure("write_file error: cannot open " + name);
     }
+
+    file<<str<<std::flush;
+
     file.close();
-    return str;
 }
 
 
-int call(const char program[], const char arg[])
+std::string read_file(const std::string & name,
+                      const std::ios_base::openmode mode)
+{
+    std::ifstream file(name, mode|std::ios::ate);
+    if (!file.good()) {
+        throw std::ifstream::failure("read_file error: cannot open " + name);
+    }
+
+    std::string ret{};
+    const size_t size = file.tellg();
+    ret.reserve(size);
+
+    file.seekg(0);
+    ret.assign((std::istreambuf_iterator<char>(file)),
+                std::istreambuf_iterator<char>());
+
+    file.close();
+    return move(ret);
+}
+
+
+template<typename ...S>
+pid_t call(const char program[], S... args)
 {
     pid_t pid = fork();
-    switch(pid) {
-        case -1: // could not fork.
-            return -1;
-        case 0: // child, exec never returns.
-            execl(program, program, arg, (char *)NULL);
-            exit(EXIT_FAILURE);
-        default: //parent
-            return pid;
+
+    if (pid==0) { //child:
+        execl(program, program, args..., (char*)NULL);
+        _exit(EXIT_FAILURE);  // exec never returns.
+    } else if (pid>0) { //parent:
+        return pid;
     }
+
+    std::string errmsg = "call error: cannot fork (";
+    errmsg += std::to_string(errno) + "): " + std::strerror(errno);
+    throw std::runtime_error(errmsg.c_str());
 }
 
 

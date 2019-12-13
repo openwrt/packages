@@ -147,13 +147,13 @@ void add_ssl_directives_to(const string & name, const bool isdefault)
         adds += get_if_missed(conf, NGX_SSL_SESSION_TIMEOUT, "", indent);
         if (adds.length() > 0) {
             pos += match.position(0) + match.length(0);
-            string conf2; // conf is const for iteration.
-            conf2 = string(conf.begin(), pos) + adds + string(pos, conf.end());
-            conf2 = isdefault ?
-                   regex_replace(conf2, NGX_INCLUDE_LAN_LISTEN_DEFAULT.RGX,"") :
-                   regex_replace(conf2, NGX_INCLUDE_LAN_LISTEN.RGX, "");
-            write_file(prefix+".conf", conf2);
-            cout<<"Added SSL directives to "<<prefix<<".conf:"<<adds<<endl;
+            string new_conf; // conf is const for iteration.
+            new_conf = string(conf.begin(), pos) + adds + string(pos, conf.end());
+            new_conf = isdefault ?
+                regex_replace(new_conf, NGX_INCLUDE_LAN_LISTEN_DEFAULT.RGX,"") :
+                regex_replace(new_conf, NGX_INCLUDE_LAN_LISTEN.RGX, "");
+            write_file(prefix+".conf", new_conf);
+            cout<<"Added SSL directives to "<<prefix<<".conf: "<<adds<<endl;
         }
         return ;
     }
@@ -167,15 +167,16 @@ void try_using_cron_to_recreate_certificate(const string & name)
 {
 #ifdef openwrt
     static const char * filename = "/etc/crontabs/root";
-    string conf = read_file(filename);
+    string conf{};
+    try {
+        conf = read_file(filename);
+    } catch(const ifstream::failure &) { /* is ok if not found */ }
     const string CRON_CHECK = "3 3 12 12 *";
     const string add = get_if_missed(conf, CRON_CMD, name);
     if (add.length() > 0) {
-        bool active = false;
-        for (auto x : ubus::call("service", "list").filter("cron")) {
-            active = (x!=NULL);
-        }
-        if (active) {
+        auto status = ubus::call("service", "list").filter("cron");
+        const bool active = (status.begin() != status.end());
+        if (!active) { // with or without instances.
             cout<<"Cron unavailable to re-create the ssl certificate for '";
             cout<<name<<"'."<<endl;
         } else {

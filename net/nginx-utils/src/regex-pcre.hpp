@@ -48,7 +48,7 @@ protected:
 
 public:
     explicit regex_error(regex_constants::error_type code,
-                         const char * what="regex_error")
+                         const char * what="regex error")
     : runtime_error(what), errcode(code)
     { }
 
@@ -69,7 +69,7 @@ public:
     : re{ pcre_compile2(str.c_str(), 0, &errcode, &errptr, &erroffset, NULL) }
     {
         if (re==NULL) {
-            string what = (string)"regex_error: " + errptr + '\n';
+            string what = (string)"regex error: " + errptr + '\n';
             what += "    '" + str + "'\n";
             what += string(erroffset+5, ' ') + '^';
             throw regex_error(pcre_errcode2regex_errcode[errcode], what.c_str());
@@ -83,14 +83,25 @@ public:
 
 
 class smatch {
+    friend auto regex_search(const string::const_iterator begin,
+                             const string::const_iterator end,
+                             smatch & match,
+                             const regex & rgx);
+private:
+    string::const_iterator begin;
+    string::const_iterator end;
+    int * vec = NULL;
+    int n = 0;
+    size_t sz = 0;
+
 public:
     smatch() = default;
 
-    auto position(int i=0) const {
+    inline auto position(int i=0) const {
         return (i<0 || i>=n) ? string::npos : vec[2*i];
     }
 
-    auto length(int i=0) const {
+    inline auto length(int i=0) const {
         return (i<0 || i>=n) ? 0 : vec[2*i+1] - vec[2*i];
     }
 
@@ -99,72 +110,70 @@ public:
         int x = vec[2*i];
         if (x<0) { return ""; }
         int y = vec[2*i+1];
-        return string(begin + x, begin + y);
+        return move(string{begin + x, begin + y});
     }
 
-    string format(const string str);
+    auto format(const string & str) const;
 
     size_t size() const { return n; }
 
-    bool empty() const { return n<0; }
+    inline auto empty() const { return n<0; }
 
-    bool ready() const { return vec!=NULL; }
+    inline auto ready() const { return vec!=NULL; }
 
     ~smatch() { if (vec) { delete [] vec; } }
 
-    friend bool regex_search(const string::const_iterator begin,
-                             const string::const_iterator end,
-                             smatch & match, const regex & rgx);
-private:
-    string::const_iterator begin;
-    string::const_iterator end;
-    int * vec = NULL;
-    int n = 0;
 };
 
 
-bool regex_search(const string & subj, const regex & rgx);
+inline auto regex_search(const string & subj, const regex & rgx);
 
 
-string regex_replace(const string & subj,
+auto regex_replace(const string & subj,
                           const regex & rgx,
                           const string & insert);
 
 
-bool regex_search(const string & subj, smatch & match, const regex & rgx);
+inline auto regex_search(const string & subj, smatch & match, const regex & rgx);
 
 
-bool regex_search(const string::const_iterator begin,
+auto regex_search(const string::const_iterator begin,
                   const string::const_iterator end,
-                  smatch & match, const regex & rgx);
+                  smatch & match,
+                  const regex & rgx);
 
 
 
 // ------------------------- implementation: ----------------------------------
 
 
-bool regex_search(const string & subj, const regex & rgx)
+inline auto regex_search(const string & subj, const regex & rgx)
 {
     int n = pcre_exec(rgx(), NULL, subj.c_str(), subj.length(), 0, 0, NULL, 0);
     return n>=0;
 }
 
-bool regex_search(const string::const_iterator begin,
+auto regex_search(const string::const_iterator begin,
                   const string::const_iterator end,
-                  smatch & match, const regex & rgx)
+                  smatch & match,
+                  const regex & rgx)
 {
     if (rgx()==NULL) {
-
+        //TODO
     } else {
-        if (match.vec) { delete [] match.vec; }
         size_t sz = 0;
         pcre_fullinfo(rgx(), NULL, PCRE_INFO_CAPTURECOUNT, &sz);
         sz = 3*(sz + 1);
-        match.vec = new int[sz];
-        match.begin = begin;
-        match.end = end;
+        if (sz > match.sz) {
+            match.sz = 0;
+            if (match.vec) { delete [] match.vec; }
+            match.vec = new int[sz];
+            match.sz = sz;
+        }
         const char * subj = &*begin;
         size_t len = &*end - subj;
+        match.begin = move(begin);
+        match.end = move(end);
         match.n = pcre_exec(rgx(), NULL, subj, len, 0, 0, match.vec, sz);
         if (match.n<0) { return false; }
         if (match.n==0) { match.n = sz/3; }
@@ -173,13 +182,13 @@ bool regex_search(const string::const_iterator begin,
 }
 
 
-bool regex_search(const string & subj, smatch & match, const regex & rgx)
+inline auto regex_search(const string & subj, smatch & match, const regex & rgx)
 {
     return regex_search(subj.begin(), subj.end(), match, rgx);
 }
 
 
-string smatch::format(const string fmt) {
+auto smatch::format(const string & fmt) const {
     string ret = "";
     size_t index = 0, pos;
     while ((pos=fmt.find('$', index)) != string::npos) {
@@ -211,11 +220,11 @@ string smatch::format(const string fmt) {
         }
     }
     ret.append(fmt, index);
-    return ret;
+    return move(ret);
 }
 
 
-string regex_replace(const string & subj,
+auto regex_replace(const string & subj,
                           const regex & rgx,
                           const string & insert)
 {
@@ -229,7 +238,7 @@ string regex_replace(const string & subj,
         ret.append(match.format(insert));
     }
     ret.append(pos, subj.end());
-    return ret;
+    return move(ret);
 }
 
 
