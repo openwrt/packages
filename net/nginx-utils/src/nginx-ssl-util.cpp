@@ -1,5 +1,5 @@
 
-#define openwrt
+// #define openwrt
 
 #include <chrono>
 
@@ -96,12 +96,9 @@ _LINE_(NGX_SSL_CRT,
        begin+ arg("ssl_certificate") +space+ arg("", ";") +end);
 _LINE_(NGX_SSL_KEY,
        begin+ arg("ssl_certificate_key") + space + arg("", ";") +end);
-_LINE_(NGX_SSL_SESSION_CACHE,
-      begin+ arg("ssl_session_cache") +space+ arg("shared:SSL:32k", "'") +end);
-_LINE_(NGX_SSL_SESSION_TIMEOUT,
-      begin+ arg("ssl_session_timeout") +space+ arg("64m", "'") +end);
+_LINE_(NGX_SSL_SESSION_CACHE, begin+ arg("ssl_session_cache") +space);
+_LINE_(NGX_SSL_SESSION_TIMEOUT, begin+ arg("ssl_session_timeout") +space);
 #undef _LINE_
-
 
 string get_if_missed(const string & conf, const Line & LINE, const string & val,
                    const string & indent="\n    ");
@@ -130,33 +127,52 @@ void add_ssl_directives_to(const string & name, const bool isdefault)
 {
     const string prefix = CONF_DIR + name;
     const string conf = read_file(prefix+".conf");
+
     smatch match;
     for (auto pos = conf.begin();
          regex_search(conf.begin(), conf.end(), match, NGX_SERVER_NAME.RGX);
          pos += match.position(0) + match.length(0))
     {
         if (match.str(2).find(name) == string::npos) { continue; }
+
         const string indent = match.str(1);
         string adds = "";
+
         adds += isdefault ?
             get_if_missed(conf, NGX_INCLUDE_LAN_SSL_LISTEN_DEFAULT,"",indent) :
             get_if_missed(conf, NGX_INCLUDE_LAN_SSL_LISTEN, "", indent);
+
         adds += get_if_missed(conf, NGX_SSL_CRT, prefix+".crt", indent);
+
         adds += get_if_missed(conf, NGX_SSL_KEY, prefix+".key", indent);
-        adds += get_if_missed(conf, NGX_SSL_SESSION_CACHE, "", indent);
-        adds += get_if_missed(conf, NGX_SSL_SESSION_TIMEOUT, "", indent);
+
+        {
+            string tmp;
+
+            tmp = get_if_missed(conf, NGX_SSL_SESSION_CACHE, "", indent);
+            if (tmp != "") { adds += tmp + "'shared:SSL:32k';"; }
+
+            tmp = get_if_missed(conf, NGX_SSL_SESSION_TIMEOUT, "", indent);
+            if (tmp != "") { adds += tmp + "64m;"; }
+        }
+
         if (adds.length() > 0) {
-            pos += match.position(0) + match.length(0);
             string new_conf; // conf is const for iteration.
+
+            pos += match.position(0) + match.length(0);
             new_conf = string(conf.begin(), pos) + adds + string(pos, conf.end());
+
             new_conf = isdefault ?
                 regex_replace(new_conf, NGX_INCLUDE_LAN_LISTEN_DEFAULT.RGX,"") :
                 regex_replace(new_conf, NGX_INCLUDE_LAN_LISTEN.RGX, "");
+
             write_file(prefix+".conf", new_conf);
+
             cout<<"Added SSL directives to "<<prefix<<".conf: "<<adds<<endl;
         }
         return ;
     }
+
     cout<<"Cannot add SSL directives to "<<prefix<<".conf, missing:";
     cout<<NGX_SERVER_NAME.STR(name, "\n    ")<<endl;
 }
