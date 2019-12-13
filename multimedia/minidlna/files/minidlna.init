@@ -70,6 +70,7 @@ minidlna_create_config() {
 	minidlna_cfg_addstr "$cfg" model_number '1'
 	minidlna_cfg_addstr "$cfg" minissdpsocket
 	minidlna_cfg_addstr "$cfg" root_container '.'
+	minidlna_cfg_addstr "$cfg" uuid '019f9a56-ff60-44c0-9edc-eae88d09fa05'
 	config_list_foreach "$cfg" "media_dir" minidlna_cfg_add_media_dir
 
 	return 0
