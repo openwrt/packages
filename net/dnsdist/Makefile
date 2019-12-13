@@ -41,7 +41,7 @@ menu "Configuration"
 
 	endchoice
 
-	comment "DNS over HTTPS/TLS Support
+	comment "DNS over HTTPS/TLS Support"
 	depends on !DNSDIST_NOSSL
 
 	config DNSDIST_DNS_OVER_HTTPS
