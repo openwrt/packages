@@ -9,7 +9,7 @@ PECL_NAME:=dio
 PECL_LONGNAME:=Direct I/O functions
 
 PKG_VERSION:=0.1.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_HASH:=aab985e374604379d99c9c93207f2c2959ff141740d1a648c0fbd07e0e08a73e
 
 PKG_NAME:=php7-pecl-$(PECL_NAME)
@@ -23,8 +23,6 @@ PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
 PKG_LICENSE:=PHP-3.01
 PKG_LICENSE_FILES:=LICENSE
-
-PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
