@@ -1,5 +1,5 @@
 # Contributing Guidelines  
-(See <http://wiki.openwrt.org/doc/devel/packages> for overall format and construction)
+(See <https://openwrt.org/docs/guide-developer/packages> for overall format and construction)
 
 
 ### Basic guidelines
@@ -29,7 +29,7 @@ All packages you commit or submit by pull-request should follow these simple gui
 * Have a useful description prefixed with the package name
     (E.g.: "foopkg: Add libzot dependency")
 * Include Signed-off-by in the comment
-    (See <https://dev.openwrt.org/wiki/SubmittingPatches#a10.Signyourwork>)
+    (See <https://openwrt.org/submitting-patches#sign_your_work>)
 
 ### Advice on pull requests:
 

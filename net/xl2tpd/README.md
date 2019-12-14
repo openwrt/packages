@@ -34,7 +34,7 @@ netifd will not do the check and retry.
 
 The following are generic ppp options and should have the same format and
 semantics as with other ppp-related protocols.  See
-[uci/network#protocol_ppp](https://wiki.openwrt.org/doc/uci/network#protocol_ppp_ppp_over_modem)
+[uci/network#protocol_ppp](https://openwrt.org/docs/guide-user/network/wan/wan_interface_protocols#protocol_ppp_ppp_over_modem)
 for details.
 
 	username

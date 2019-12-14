@@ -118,7 +118,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 ## Tweaks
 * **runtime information:** the adblock status is available via _/etc/init.d/adblock status_ (see example below)
 * **debug logging:** for script debugging please set the config option 'adb\_debug' to '1' and check the runtime output with _logread -e "adblock"_
-* **storage expansion:** to process and store all blocklist sources at once it might helpful to enlarge your temp directory with a swap partition => see [OpenWrt Wiki](https://wiki.openwrt.org/doc/uci/fstab) for further details
+* **storage expansion:** to process and store all blocklist sources at once it might helpful to enlarge your temp directory with a swap partition => see [OpenWrt Wiki](https://openwrt.org/docs/guide-user/storage/fstab) for further details
 * **add white- / blacklist entries:** add domain white- or blacklist entries to always-allow or -deny certain (sub) domains, by default both lists are empty and located in _/etc/adblock_. Please add one domain per line - ip addresses, wildcards & regex are _not_ allowed (see example below)
 * **backup & restore blocklists:** enable this feature, to restore automatically the latest compressed backup of your blocklists in case of any processing error (e.g. a single blocklist source is not available during update). Please use an (external) solid partition and _not_ your volatile router temp directory for this
 * **download queue size:** for further download & list processing performance improvements you can raise the 'adb\_maxqueue' value, e.g. '8' or '16' should be safe

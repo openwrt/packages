@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=3.2.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=3ea0c299bd69bc728177128740f0476bc1a2c1de438330df5bbd8f5fc6090712
@@ -84,19 +84,19 @@ endef
 define Package/zabbix-extra-mac80211/description
 An extra package for zabbix-agentd that adds a discovery rule for mac80211 wifi phy and many userparameters.
 It contains an suid helper to allow zabbix-agentd to still run as zabbix user and not as root.
-See http://wiki.openwrt.org/doc/howto/zabbix for ready to use zabbix templates.
+See https://openwrt.org/docs/guide-user/services/network_monitoring/zabbix for ready to use zabbix templates.
 endef
 
 define Package/zabbix-extra-network/description
 An extra package for zabbix-agentd that adds a discovery rule for openwrt network interfaces.
 The idea here is to discover only interfaces listed in /etc/config/network (discover br-lan and not eth0.1 and wlan0)
-See http://wiki.openwrt.org/doc/howto/zabbix for ready to use zabbix templates.
+See https://openwrt.org/docs/guide-user/services/network_monitoring/zabbix for ready to use zabbix templates.
 endef
 
 define Package/zabbix-extra-wifi/description
 An extra package for zabbix-agentd that adds a discovery rule for wifi interfaces and many userparameters.
 As it uses libiwinfo, it works with all wifi devices supported by openwrt.
-See http://wiki.openwrt.org/doc/howto/zabbix for ready to use zabbix templates.
+See https://openwrt.org/docs/guide-user/services/network_monitoring/zabbix for ready to use zabbix templates.
 endef
 
 CONFIGURE_ARGS+= \
