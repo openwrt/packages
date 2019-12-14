@@ -9,7 +9,7 @@ PECL_NAME:=pecl_http
 PECL_LONGNAME:=Extended HTTP Support
 
 PKG_VERSION:=3.2.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_HASH:=cf9d2a2ed335e572366025eca1d69e86c585f96ca07db341839a06f52ee4aa88
 
 PKG_NAME:=php7-pecl-http
@@ -24,8 +24,6 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_BUILD_DEPENDS:=php7 php7-pecl-propro php7-pecl-raphf
 PKG_BUILD_DIR:=$(BUILD_DIR)/pecl-php7/$(PECL_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
-
-PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -56,5 +54,5 @@ CONFIGURE_ARGS+= \
 	--with-http-libidnkit-dir=no \
 	--with-http-libidnkit2-dir=no
 
-$(eval $(call PECLPackage,http,$(PECL_LONGNAME),+icu +libcurl +librt +libevent2 +PACKAGE_libidn:libidn +libidn2 +php7-mod-hash +php7-mod-iconv +php7-mod-session +php7-pecl-raphf +php7-pecl-propro,30))
+$(eval $(call PECLPackage,http,$(PECL_LONGNAME),+icu +libcurl +librt +libevent2 +PACKAGE_libidn:libidn +libidn2 +php7-mod-iconv +php7-mod-session +php7-pecl-raphf +php7-pecl-propro,30))
 $(eval $(call BuildPackage,$(PKG_NAME)))
