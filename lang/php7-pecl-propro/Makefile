@@ -24,7 +24,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_BUILD_DIR:=$(BUILD_DIR)/pecl-php7/$(PECL_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
 
-PKG_FIXUP:=autoreconf
+#PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
