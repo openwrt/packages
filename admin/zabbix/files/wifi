@@ -1,4 +1,4 @@
-#see http://wiki.openwrt.org/doc/howto/zabbix for ready to use templates
+#see https://openwrt.org/docs/guide-user/services/network_monitoring/zabbix for ready to use templates
 
 # wifi interface discovery
 # example: {"data":[{"{#IF}":"wlan0", "{#MODE}":"ap", "{#SSID}":"Openwrt", "{#NET}":"lan", "{#DEV}":"radio0", "{#ENC}":"psk2+ccmp", "{#TYPE}":"mac80211", "{#HWMODE}":"11ng", "{#CHANNEL}":"11", "{#BSSID}":"xx:xx:xx:xx:xx:xx"}]}
