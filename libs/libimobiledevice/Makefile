@@ -8,28 +8,28 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libimobiledevice
-PKG_SOURCE_DATE:=2019-11-29
-PKG_SOURCE_VERSION:=9f79242a441ce37c28db2b84d49621d26418dc53
+PKG_SOURCE_DATE:=2019-12-16
+PKG_SOURCE_VERSION:=d04f8ff2e20c42f74161c9cd66502da17b8b0e70
 PKG_RELEASE:=1
-
-PKG_MAINTAINER:=
-PKG_LICENSE:=LGPL-2.1-or-later
-PKG_LICENSE_FILES:=COPYING.LESSER
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/libimobiledevice
-PKG_MIRROR_HASH:=709a3f8632930be272020a2ff5109aab5a6dddda39580d60e4f5eacace857e08
+PKG_MIRROR_HASH:=f3ea7b5cd9789dc23ddc464bd00f39813116239cfe4ea1f13f58ce5a8413c361
+
+PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
+PKG_LICENSE:=LGPL-2.1-or-later
+PKG_LICENSE_FILES:=COPYING.LESSER
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/nls.mk
 
 define Package/libimobiledevice/Default
   TITLE:=A library that talks to Apple devices.
   URL:=https://www.libimobiledevice.org/
+  SUBMENU:=libimobiledevice
 endef
 
 define Package/libimobiledevice/Default/description
@@ -41,7 +41,9 @@ define Package/libimobiledevice
   $(call Package/libimobiledevice/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=$(ICONV_DEPENDS) +libplist +libusbmuxd +libopenssl
+  DEPENDS:=+libplist +libusbmuxd +libopenssl
+  LICENSE:=LGPL-2.1-or-later
+  LICENSE_FILES:=COPYING.LESSER
 endef
 
 define Package/libimobiledevice/description
@@ -53,6 +55,8 @@ define Package/libimobiledevice-utils
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=+libimobiledevice
+  LICENSE:=GPL-2.0-or-later
+  ICENSE_FILES:=COPYING
 endef
 
 define Package/libimobiledevice-utils/description
@@ -60,7 +64,6 @@ define Package/libimobiledevice-utils/description
   This package contains the libimobiledevice utilities.
 endef
 
-CONFIGURE_VARS += ac_cv_sys_file_offset_bits=64
 CONFIGURE_ARGS += --without-cython
 
 define Build/InstallDev
