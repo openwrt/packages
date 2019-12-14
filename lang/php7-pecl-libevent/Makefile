@@ -10,7 +10,7 @@ PECL_LONGNAME:=Libevent - event notification
 
 PKG_NAME:=php7-pecl-$(PECL_NAME)
 PKG_VERSION=2019-05-30-$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/expressif/pecl-event-libevent.git
@@ -26,8 +26,6 @@ PKG_LICENSE_FILES:=
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/pecl-php7/$(PECL_NAME)-$(PKG_SOURCE_VERSION)
 PKG_BUILD_PARALLEL:=1
-
-PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
