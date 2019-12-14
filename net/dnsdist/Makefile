@@ -66,7 +66,7 @@ define Package/dnsdist
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
   TITLE:=dnsdist DNS-, DOS- and abuse-aware loadbalancer
-  DEPENDS:=+DNSDIST_OPENSSL:libopenssl +DNSDIST_GNUTLS:libgnutls +protobuf +re2 +libcap +libedit +libfstrm +lua +boost +libnetsnmp +libatomic +libsodium +DNSDIST_DNS_OVER_HTTPS:libh2o-evloop
+  DEPENDS:=+DNSDIST_OPENSSL:libopenssl +DNSDIST_GNUTLS:libgnutls +protobuf +re2 +libcap +libedit +libfstrm +lmdb +lua +boost +libnetsnmp +libatomic +libsodium +DNSDIST_DNS_OVER_HTTPS:libh2o-evloop
   URL:=https://dnsdist.org/
 endef
 
