@@ -1,0 +1,27 @@
+From c132a2aa53f3a4ca0ab26395a4936ecf3fd030f2 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 13 Dec 2019 21:50:06 -0800
+Subject: [PATCH] common.cpp: Don't always include cxxabi.h
+
+cxxabi.h is not available with LLVM's libcxx
+---
+ src/common.cpp | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/common.cpp b/src/common.cpp
+index cfa4cb0d81..96873f17a9 100644
+--- a/src/common.cpp
++++ b/src/common.cpp
+@@ -1,8 +1,11 @@
+ // Various functions, mostly string utilities, that are used by most parts of fish.
+ #include "config.h"
+ 
+-#include <ctype.h>
++#ifdef HAVE_BACKTRACE_SYMBOLS
+ #include <cxxabi.h>
++#endif
++
++#include <ctype.h>
+ #include <dlfcn.h>
+ #include <errno.h>
+ #include <fcntl.h>
