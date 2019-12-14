@@ -9,7 +9,7 @@ PECL_NAME:=krb5
 PECL_LONGNAME:=Bindings for the Kerberos library
 
 PKG_VERSION:=1.1.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_HASH:=3301e047fc7dc3574da19b2a4b18e15feca5ad39db9335c3353a8e16b855c35b
 
 PKG_NAME:=php7-pecl-krb5
@@ -24,8 +24,6 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_BUILD_DEPENDS:=php7
 PKG_BUILD_DIR:=$(BUILD_DIR)/pecl-php7/$(PECL_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
-
-PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
