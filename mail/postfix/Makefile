@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postfix
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_VERSION:=3.4.6
 PKG_SOURCE_URL:= \
 	https://cdn.postfix.johnriley.me/mirrors/postfix-release/official/ \
@@ -21,7 +21,6 @@ PKG_LICENSE:=IPL-1.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:postfix:postfix
 
-PKG_BUILD_DEPENDS:=POSTFIX_CDB:tinycdb
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_POSTFIX_TLS \
 	CONFIG_POSTFIX_SASL \
@@ -44,7 +43,7 @@ define Package/postfix
   	postfix=25:postfix=25 \
   	postdrop=26:postdrop=26
   URL:=http://www.postfix.org/
-  DEPENDS:=+POSTFIX_TLS:libopenssl +POSTFIX_SASL:libsasl2 +POSTFIX_LDAP:libopenldap +POSTFIX_DB:libdb47 +POSTFIX_SQLITE:libsqlite3 +POSTFIX_MYSQL:libmysqlclient +POSTFIX_PGSQL:libpq +POSTFIX_EAI:icu +POSTFIX_PCRE:libpcre
+  DEPENDS:=+POSTFIX_CDB:tinycdb +POSTFIX_TLS:libopenssl +POSTFIX_SASL:libsasl2 +POSTFIX_LDAP:libopenldap +POSTFIX_DB:libdb47 +POSTFIX_SQLITE:libsqlite3 +POSTFIX_MYSQL:libmysqlclient +POSTFIX_PGSQL:libpq +POSTFIX_EAI:icu +POSTFIX_PCRE:libpcre
 endef
 
 define Package/postfix/description
