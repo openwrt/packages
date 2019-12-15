@@ -192,7 +192,7 @@ void try_using_cron_to_recreate_certificate(const string & name)
     const string CRON_CHECK = "3 3 12 12 *";
     const string add = get_if_missed(conf, CRON_CMD, name);
     if (add.length() > 0) {
-        auto status = ubus::call("service", "list", 1000).filter("cron");
+        auto status = ubus_call("service", "list", 1000).filter("cron");
         const bool active = (status.begin() != status.end());
         if (!active) { // with or without instances.
             cout<<"Cron unavailable to re-create the ssl certificate for '";
@@ -234,7 +234,7 @@ void create_lan_listen()
     add_listen("", "127.0.0.1", "");
     add_listen("[", "::1", "]");
 
-    auto lan_status = ubus::call("network.interface.lan", "status");
+    auto lan_status = ubus_call("network.interface.lan", "status");
     for (auto ip : lan_status.filter("ipv4-address", "", "address")) {
         add_listen("",  (char *)(ip), "");
     }
@@ -296,7 +296,6 @@ cout<<"TODO: remove timing and openwrt macro!"<<endl;
     time_it(begin);
 
     THREAD(ubus, create_lan_listen);
-
 
     // checkend_of_certificate || create_selfsigned_certificate
 
