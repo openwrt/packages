@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2019 Ian Leonard <antonlacon@gmail.com>
+# Copyright (C) 2017-2020 Ian Leonard <antonlacon@gmail.com>
 # Copyright (C) 2018 Ted Hess <thess@kitschensync.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=3.4.7
-PKG_RELEASE:=4
+PKG_VERSION:=4.2.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
-PKG_HASH:=efd01782fd29b62505c973f5b61a65632d7b435dc9f4a6c97e92e6afd36cf5c8
+PKG_HASH:=cb754255ab0ee2ea5f66f8850e1bd6ad5cac1cd855d0a2f4990fb8c668b0d29c
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Ian Leonard <antonlacon@gmail.com>
 
@@ -203,7 +203,7 @@ FFMPEG_PATENTED_DECODERS:= \
 	hevc \
 	vc1 \
 
-FFMPEG_PATENTED_ENCODERS:=$(FFMPEG_PATENDED_DECODERS)
+FFMPEG_PATENTED_ENCODERS:=$(FFMPEG_PATENTED_DECODERS)
 
 FFMPEG_PATENTED_MUXERS:= \
 	h264 \
@@ -294,32 +294,6 @@ $(call Package/ffmpeg/Default/description)
 endef
 
 Package/ffprobe-custom/description = $(Package/ffprobe/description)
-
-define Package/ffserver
-$(call Package/ffmpeg/Default)
- SECTION:=multimedia
- CATEGORY:=Multimedia
- TITLE+= streaming server
- DEPENDS+= +libffmpeg-full
- VARIANT:=full
-endef
-
-define Package/ffserver-custom
-$(call Package/ffmpeg/Default)
- SECTION:=multimedia
- CATEGORY:=Multimedia
- TITLE+= streaming server (custom)
- DEPENDS+= @!ALL libffmpeg-custom
- VARIANT:=custom
-endef
-
-define Package/ffserver/description
-$(call Package/ffmpeg/Default/description)
- .
- This package contains the FFmpeg streaming server.
-endef
-
-Package/ffserver-custom/description = $(Package/ffserver/description)
 
 define Package/libffmpeg/Default
 $(call Package/ffmpeg/Default)
@@ -751,13 +725,6 @@ endef
 
 Package/ffprobe-custom/install = $(Package/ffprobe/install)
 
-define Package/ffserver/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ffserver $(1)/usr/bin/
-endef
-
-Package/ffserver-custom/install = $(Package/ffserver/install)
-
 define Package/libffmpeg-custom/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avdevice,avformat,avutil}.so.* $(1)/usr/lib/
@@ -787,10 +754,8 @@ Package/libffmpeg-audio-dec/install = $(Package/libffmpeg-custom/install)
 
 $(eval $(call BuildPackage,ffmpeg))
 $(eval $(call BuildPackage,ffprobe))
-$(eval $(call BuildPackage,ffserver))
 $(eval $(call BuildPackage,ffmpeg-custom))
 $(eval $(call BuildPackage,ffprobe-custom))
-$(eval $(call BuildPackage,ffserver-custom))
 $(eval $(call BuildPackage,libffmpeg-audio-dec))
 $(eval $(call BuildPackage,libffmpeg-full))
 $(eval $(call BuildPackage,libffmpeg-mini))
