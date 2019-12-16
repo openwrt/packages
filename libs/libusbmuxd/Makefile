@@ -9,13 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libusbmuxd
 PKG_SOURCE_VERSION:=2.0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/libusbmuxd
 PKG_MIRROR_HASH:=5078125cd4fe8c7294d4f195a8adfd1fc302101daf5d53e4cc242c3097eef8b6
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
+PKG_CPE_ID:=cpe:/a:libimobiledevice:libusbmuxd
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -26,6 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libusbmuxd/Default
   TITLE:=USB multiplexing daemon
   URL:=https://www.libimobiledevice.org/
+  SUBMENU:=libimobiledevice
 endef
 
 define Package/libusbmuxd/Default/description
@@ -83,7 +85,8 @@ endef
 
 define Package/libusbmuxd-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/iproxy $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/iproxy $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/inetcat $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,libusbmuxd))
