@@ -9,9 +9,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnurl
 PKG_VERSION:=7.67.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE_URL:=https://ftp.gnu.org/gnu/gnunet
+PKG_SOURCE_URL:=@GNU/gnunet
 
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -28,7 +28,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/gnurl/Default
   SECTION:=net
   CATEGORY:=Network
-  URL:=https://gnunet.org/gnurl
+  URL:=https://gnunet.org/en/gnurl.html
   MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 endef
 
