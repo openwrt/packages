@@ -11,29 +11,79 @@ extern "C" {
 }
 
 
+//     // example for exploring:
+//     ubus::strings keys{"ipv4-address", "", "*"};
+//     for (auto x : ubus::call("network.interface.lan", "status").filter(keys)) {
+//         std::cout<<blobmsg_name(x)<<": ";
+//         switch (blob_id(x)) {
+//             case BLOBMSG_TYPE_UNSPEC: std::cout<<"[unspecified]"; break;
+//             case BLOBMSG_TYPE_ARRAY: std::cout<<"[array]"; break;
+//             case BLOBMSG_TYPE_TABLE: std::cout<<"[table]"; break;
+//             case BLOBMSG_TYPE_STRING: std::cout<<blobmsg_get_string(x); break;
+//             case BLOBMSG_TYPE_INT64: std::cout<<blobmsg_get_u64(x); break;
+//             case BLOBMSG_TYPE_INT32: std::cout<<blobmsg_get_u32(x); break;
+//             case BLOBMSG_TYPE_INT16: std::cout<<blobmsg_get_u16(x); break;
+//             case BLOBMSG_TYPE_BOOL: std::cout<<blobmsg_get_bool(x); break;
+//             case BLOBMSG_TYPE_DOUBLE: std::cout<<blobmsg_get_double(x); break;
+//             default: std::cout<<"[unknown]";
+//         }
+//         std::cout<<std::endl;
+//     }
+//
+//     // example for checking if there is a key:
+//     if (ubus::call("network.interface.lan", "status").filter("updated")) {
+//         std::cout<<"It has updated. "<<std::endl;
+//     }
+//
+//     // example for getting values:
+//     auto lan_status = ubus::call("network.interface.lan", "status");
+//     for (auto x : lan_status.filter("ipv4-address", "", "address")) {
+//         std::cout<<blobmsg_get_string(x)<<" ";
+//     }
+//     for (auto x : lan_status.filter("ipv6-address", "", "address")) {
+//         std::cout<<"["<<blobmsg_get_string(x)<<"] ";
+//     }
+//     std::cout<<std::endl;
+
+
+
+namespace ubus {
+
+
 typedef std::vector<std::string> strings;
 
 
 static const strings _MATCH_ALL_KEYS_ = {"*"};
 
 
-inline void append(strings & both) {}
+inline void append(strings & dest) {}
+
+
+template<class ...Strings>
+inline void append(strings & dest, strings src, Strings ...more)
+{
+    if (dest.empty()) { dest = std::move(src); }
+    else {
+        dest.reserve(dest.size() + src.size());
+        dest.insert(std::end(dest), std::make_move_iterator(std::begin(src)),
+                                    std::make_move_iterator(std::end(src)));
+    }
+    append(dest, std::move(more)...);
+}
 
 
 template<class String, class ...Strings>
-inline void append(strings & both, String key, Strings ...filter)
+inline void append(strings & dest, String src, Strings ...more)
 {
-    both.push_back(std::move(key));
-    append(both, std::move(filter)...);
+    dest.push_back(std::move(src));
+    append(dest, std::move(more)...);
 }
 
 
 
-class ubus_iterator {
+class iterator {
 
-    friend class ubus;
-
-    friend class ubus_call;
+    friend class message;
 
 private:
 
@@ -45,9 +95,9 @@ private:
 
     const blob_attr * pos;
 
-    ubus_iterator * cur;
+    iterator * cur;
 
-    const ubus_iterator * parent = NULL;
+    const iterator * parent = NULL;
 
     size_t rem = 0;
 
@@ -58,7 +108,7 @@ private:
     }
 
 
-    ubus_iterator(const blob_attr * msg = NULL,
+    iterator(const blob_attr * msg = NULL,
             const strings & filter = _MATCH_ALL_KEYS_)
     : keys{filter}, n{keys.size()-1}, pos{msg}, cur{this}
     {
@@ -70,7 +120,7 @@ private:
     }
 
 
-    ubus_iterator(const ubus_iterator * par)
+    iterator(const iterator * par)
     : keys{par->keys}, n{par->n}, pos{par->pos}, cur{this}, parent{par}
     {
         if (pos!=NULL) {
@@ -82,151 +132,64 @@ private:
 
 public:
 
-    ubus_iterator(const ubus_iterator & rhs) = delete;
+    iterator(iterator && rhs) = default;
 
 
-    ubus_iterator(ubus_iterator && rhs) = default;
+    inline auto operator*() { return const_cast<blob_attr *>(cur->pos); }
 
 
-    inline auto key() { return blobmsg_name(cur->pos); }
-
-
-    inline auto value() { return blobmsg_data(cur->pos); }
-
-
-    inline auto type() { return blob_id(cur->pos); }
-
-
-    inline auto operator*() { return blobmsg_data(cur->pos); }
-
-
-    inline auto operator!=(const ubus_iterator & rhs)
+    inline auto operator!=(const iterator & rhs)
     { return (cur->rem!=rhs.cur->rem || cur->pos!=rhs.cur->pos); }
 
 
-    ubus_iterator & operator++();
+    iterator & operator++();
 
 };
 
 
-class ubus_call {
+
+class message {
 
 private:
 
-    static ubus_context * ctx; // lazy initialization when needed.
-
-    static std::mutex buffering;
-
-    static blob_buf buf;
-
     const std::shared_ptr<const blob_attr> msg; // initialized by callback.
 
-    const std::shared_ptr<const ubus_request> req; // initialized by callback.
-
-    const strings keys;
-
-    /* Cannot capture *this (the lambda would not be a ubus_data_handler_t).
-     * Pass this as priv pointer when invoking and get it back here:
-    */
-    ubus_data_handler_t callback =
-        [](ubus_request * req, int type, blob_attr * msg) -> void
-    {
-        if (!req) { return; }
-        const ubus_call * obj = reinterpret_cast<ubus_call *>(req->priv);
-        if (!obj) { return; }
-
-        auto tmp_req = new ubus_request;
-        memcpy(tmp_req, req, sizeof(ubus_request));
-
-        typedef std::remove_const<decltype(obj->req)>::type obj_req_type;
-        const_cast<obj_req_type &>(obj->req).reset(tmp_req);
-
-        if (!msg) { return; }
-
-        auto tmp_msg = blob_memdup(msg);
-        if (!tmp_msg) { throw std::bad_alloc(); }
-
-        typedef std::remove_const<decltype(obj->msg)>::type obj_msg_type;
-        const_cast<obj_msg_type &>(obj->msg).reset(tmp_msg, free);
-    };
+    const strings keys{_MATCH_ALL_KEYS_};
 
 
-    static void init_ctx() 
-    {
-        static std::unique_ptr<ubus_context, decltype(&ubus_free)>
-            lazy_ctx{ubus_connect(NULL), ubus_free};
-
-        if (!lazy_ctx) { // it could be available on a later call:
-            static std::mutex connecting;
-            connecting.lock();
-            if (!lazy_ctx) { lazy_ctx.reset(ubus_connect(NULL)); }
-            connecting.unlock();
-            if (!lazy_ctx) {
-                throw std::runtime_error("ubus error: cannot connect context");
-            }
-        }
-
-        ctx = lazy_ctx.get();
-    }
-
-    
-    ubus_call(const std::shared_ptr<const blob_attr> & message,
-              const std::shared_ptr<const ubus_request> & request,
-              strings filter = _MATCH_ALL_KEYS_)
-    : msg{message}, req{request}, keys{std::move(filter)} {}
-
-    
 public:
 
-    ubus_call(const ubus_call &) = delete;
+    inline message(message &&) = default;
 
 
-    ubus_call(ubus_call &&) = default;
+    inline message(const std::shared_ptr<const blob_attr> message,
+                        strings filter=_MATCH_ALL_KEYS_)
+    : msg{message}, keys{std::move(filter)} {}
 
 
-    ubus_call(const char * path, const char * method="", const int timeout=500)
-    {
-        init_ctx();
-
-        uint32_t id;
-        int err = ubus_lookup_id(ctx, path, &id);
-
-        if (!err) { // call
-            buffering.lock();
-            blob_buf_init(&buf, 0);
-            err = ubus_invoke(ctx, id, method, buf.head, callback, this, timeout);
-            buffering.unlock();
-            //TODO async?
-        }
-
-        if (err) {
-            std::string errmsg = "ubus::call error: cannot invoke";
-            errmsg +=  " (" + std::to_string(err) + ") " + path + " " + method;
-            throw std::runtime_error(errmsg.c_str());
-        }
-    }
+    auto begin() const { return iterator{msg.get(), keys}; }
 
 
-    auto begin() { return ubus_iterator{msg.get(), keys}; }
-
-
-    const auto end() {
-        static ubus_iterator end{};
+    inline const auto end() const {
+        static iterator end{};
         return std::move(end);
     }
+
+
+    inline operator bool() const { return begin()!=end(); }
 
 
     template<class ...Strings>
     auto filter(Strings ...filter)
     {
         strings both{};
-        if (keys!=_MATCH_ALL_KEYS_) { both = keys; }
+        if (keys != _MATCH_ALL_KEYS_) { both = keys; }
         append(both, std::move(filter)...);
-        return std::move(ubus_call{msg, req, std::move(both)});
+        return std::move(message{msg, std::move(both)});
     }
 
 
-    ~ubus_call() = default;
+    inline ~message() = default;
 
 };
 
@@ -236,140 +199,75 @@ class ubus {
 
 private:
 
-    static ubus_context * ctx; // lazy initialization when needed.
-
     static std::mutex buffering;
 
-    static blob_buf buffer;
 
-    const std::shared_ptr<const blob_attr> msg; // initialized by extractor.
+public:
 
-    const std::shared_ptr<const ubus_request> req; // initialized by extractor.
-
-    const strings keys;
+    ubus() = delete;
 
 
-    /* Cannot capture *this (the lambda would not be a ubus_data_handler_t).
-    *   ubus_data_handler_t extractor = // wrong type!
-    *       [this](ubus_request * req, int type, blob_attr * msg) -> void
-    * So we use the following static function with type ubus_data_handler_t
-    * instead. As its signature is fixed, we use a workaround for writing to
-    * members using type=__UBUS_MSG_LAST as flag. An extraction works as
-    * follows: first give this function as callback to ubus for saving the
-    * values, then get them back _immediately_ by calling it with (writable)
-    * plain pointers to shared_ptrs and the invalid type __UBUS_MSG_LAST; we
-    * must cast the pointers to match the signature:
-    *   extractor((ubus_request *)&req, __UBUS_MSG_LAST, (blob_attr *)&msg);
-    * Between saving and retrieving we lock a mutex for not mixing data:
-    */
-    static void extractor(ubus_request * req, int type, blob_attr * msg);
+    static ubus_context * get_context()
+    {
+        static auto ubus_freeing = [] (ubus_context * ctx) { ubus_free(ctx); };
 
-
-    static void init_ctx() {
-        static std::unique_ptr<ubus_context, decltype(&ubus_free)>
-            lazy_ctx{ubus_connect(NULL), ubus_free};
+        static std::unique_ptr<ubus_context, decltype(ubus_freeing)>
+            lazy_ctx{ubus_connect(NULL), ubus_freeing};
 
         if (!lazy_ctx) { // it could be available on a later call:
             static std::mutex connecting;
+
             connecting.lock();
             if (!lazy_ctx) { lazy_ctx.reset(ubus_connect(NULL)); }
             connecting.unlock();
+
             if (!lazy_ctx) {
                 throw std::runtime_error("ubus error: cannot connect context");
             }
         }
 
-        ctx = lazy_ctx.get();
+        return lazy_ctx.get();
     }
 
 
-    ubus(const std::shared_ptr<const blob_attr> & message,
-         const std::shared_ptr<const ubus_request> & request,
-         strings filter = _MATCH_ALL_KEYS_)
-    : msg{message}, req{request}, keys{std::move(filter)} {}
-
-
-public:
-
-    ubus() : msg{NULL}, req{NULL}, keys{_MATCH_ALL_KEYS_} {}
-
-
-    ubus(const ubus &) = delete;
-
-
-    ubus(ubus &&) = default;
-
-
-    auto begin() { return ubus_iterator{msg.get(), keys}; }
-
-
-    const auto end() {
-        static ubus_iterator end{};
-        return std::move(end);
-    }
-
-
-    template<class ...Strings>
-    auto filter(Strings ...filter)
+    static blob_buf * lock_and_get_shared_blob_buf()
     {
-        strings both{};
-        if (keys!=_MATCH_ALL_KEYS_) { both = keys; }
-        append(both, std::move(filter)...);
-        return std::move(ubus{msg, req, std::move(both)});
+        static blob_buf buf;
+
+        static auto blob_buf_freeing = [] (blob_buf * b) { blob_buf_free(b); };
+        static std::unique_ptr<blob_buf, decltype(blob_buf_freeing)>
+                created_to_free_on_the_end_of_life{&buf, blob_buf_freeing};
+
+        buffering.lock();
+        blob_buf_init(&buf, 0);
+        return &buf;
     }
 
 
-    static std::string request_str(const ubus_request * req) {
-        std::string ret{};
-        ret += std::to_string(req->status_code) + "status_code ";
-        ret += std::string(req->status_msg ? "+" : "-") + "status_msg ";
-        ret += std::string(req->blocked ? "+" : "-") + "blocked ";
-        ret += std::string(req->cancelled ? "+" : "-") + "cancelled ";
-        ret += std::string(req->notify ? "+" : "-") + "notify ";
-        ret += std::to_string(req->peer) + "peer ";
-        ret += std::to_string(req->seq) + "seq ";
-        ret += std::to_string(req->fd) + "fd ";
-        ret += std::to_string((size_t)req->ctx) + "ctx ";
-        if (req->priv) { ret += std::string((char *)req->priv) + "priv "; }
-        return std::move(ret);
-    }
+    static void unlock_shared_blob_buf() { buffering.unlock(); }
 
 
-    static auto call(const char * path,
-                     const char * method="", const int timeout=500);
+    ~ubus() = delete;
 
 };
+
+
+auto call(const char * path, const char * method="", const int timeout=500);
 
 
 
 // ------------------------- implementation: ----------------------------------
 
 
-ubus_context * ubus_call::ctx = NULL;
-
-
-blob_buf ubus_call::buf;
-
-
-std::mutex ubus_call::buffering;
-
-
-
-ubus_context * ubus::ctx = NULL;
-
-
-blob_buf ubus::buffer;
-
-
 std::mutex ubus::buffering;
 
 
-ubus_iterator & ubus_iterator::operator++()
+iterator & iterator::operator++()
 {
     for(;;) {
         #ifndef NDEBUG
             std::cout<<std::string(i,'>')<<" look for "<<keys[i]<<" at ";
-            std::cout<<cur->key()<<" : "<<(char*)cur->value()<<std::endl;
+            std::cout<<blobmsg_name(cur->pos)<<std::endl;
         #endif
 
         auto id = blob_id(cur->pos);
@@ -379,7 +277,7 @@ ubus_iterator & ubus_iterator::operator++()
                 && blobmsg_data_len(cur->pos)>0 )
         { //immmerge:
             ++i;
-            cur = new ubus_iterator{cur};
+            cur = new iterator{cur};
         } else {
             while (true) {
                 cur->rem -= blob_pad_len(cur->pos);
@@ -390,7 +288,7 @@ ubus_iterator & ubus_iterator::operator++()
                 { break; }
 
                 //emerge:
-                auto * tmp = const_cast<ubus_iterator *>(cur->parent);
+                auto * tmp = const_cast<iterator *>(cur->parent);
                 if (!tmp) {
                     cur->pos = NULL;
                     return *cur;
@@ -406,95 +304,55 @@ ubus_iterator & ubus_iterator::operator++()
 }
 
 
-void ubus::extractor(ubus_request * req, int type, blob_attr * msg)
+auto call(const char * path, const char * method, const int timeout)
 {
-    static std::mutex extracting;
-    static std::shared_ptr<const ubus_request> saved_req;
-    static std::shared_ptr<const blob_attr> saved_msg;
-    if (type != __UBUS_MSG_LAST) {
-        assert (!saved_msg && !saved_req);
-
-        extracting.lock();
-
-        if (req!=NULL) {
-            auto tmp = new(std::nothrow) ubus_request;
-
-            if (!tmp) {
-                extracting.unlock();
-                throw std::bad_alloc();
-            }
-
-            memcpy(tmp, req, sizeof(ubus_request));
-
-            saved_req.reset(tmp);
-        }
-
-        if (msg!=NULL) {
-            auto tmp = blob_memdup(msg);
-
-            if (!tmp) {
-                extracting.unlock();
-                throw std::bad_alloc();
-            }
-
-            saved_msg.reset((blob_attr *)tmp, free);
-        }
-
-        return;
-    } else if (req!=NULL && msg!=NULL) {
-        auto * preq
-            = reinterpret_cast<std::shared_ptr<const ubus_request> *>(req);
-        auto * pmsg
-            = reinterpret_cast<std::shared_ptr<const blob_attr> *>(msg);
-
-        assert (*pmsg==NULL && *preq==NULL);
-
-        *preq = std::move(saved_req);
-        *pmsg = std::move(saved_msg);
-
-        extracting.unlock();
-        return;
-    } else {
-        throw std::runtime_error("ubus::extractor error: "
-                                    "cannot write request/message");
-    }
-}
-
-
-auto ubus::call(const char * path, const char * method, const int timeout)
-{
-    init_ctx();
+    auto ctx = ubus::get_context();
 
     uint32_t id;
     int err = ubus_lookup_id(ctx, path, &id);
 
-    if (err == 0) { // call
-        ubus ret{};
+    if (!err) { // call
+        ubus_request req;
+        auto buf = ubus::lock_and_get_shared_blob_buf();
+        err = ubus_invoke_async(ctx, id, method, buf->head, &req);
+        ubus::unlock_shared_blob_buf();
+        if (!err) {
+            typedef std::shared_ptr<const blob_attr> msg_t;
 
-        buffering.lock();
-        blob_buf_init(&buffer, 0);
-        // locking extractor internally:
-        err = ubus_invoke(ctx, id, method, buffer.head,
-                            extractor, NULL, timeout);
-        buffering.unlock();
+            /* Cannot capture anything (msg) the lambda would be another type.
+            * Pass a pointer to where to save the message as priv when invoking
+            * and get it back here:
+            */
+            static ubus_data_handler_t callback =
+                [](ubus_request * req, int type, blob_attr * msg) -> void
+            {
+                if (!req || !msg) { return; }
 
-        extractor((ubus_request *)(&ret.req), // sic: change type and const!
-                    __UBUS_MSG_LAST,
-                    (blob_attr *)(&ret.msg)); // sic: change type and const!
-        // unlocking extractor internally.
+                auto saved = reinterpret_cast<msg_t *>(req->priv);
+                if (!saved || *saved) { return; }
 
-        #ifndef NDEBUG
-            std::cout<<"ubus call "<<path<<" "<<method<<std::endl;
-            std::cout<<" -> "<<request_str(ret.req.get())<<std::endl;
-        #endif
+                saved->reset(blob_memdup(msg), free);
+                if (!*saved) { throw std::bad_alloc(); }
+            };
 
-        if (err==0) { return ret; }
+            msg_t msg;
+            req.priv = &msg;
+            req.data_cb = callback;
+            int timeout = 500;
+
+            err = ubus_complete_request(ctx, &req, timeout);
+
+            if (!err) { return message{msg}; }
+        }
     }
-    // err!=0:
-    std::string errmsg = "ubus::call error: cannot invoke ";
-    errmsg = errmsg + path + " " + method + " (" + std::to_string(err) + ") ";
+
+    std::string errmsg = "ubus::call error: cannot invoke";
+    errmsg +=  " (" + std::to_string(err) + ") " + path + " " + method;
     throw std::runtime_error(errmsg.c_str());
 }
+
+
+} //namespace ubus
 
 
 #endif

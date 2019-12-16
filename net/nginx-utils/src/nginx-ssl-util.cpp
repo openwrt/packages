@@ -128,52 +128,55 @@ void add_ssl_directives_to(const string & name, const bool isdefault);
 void add_ssl_directives_to(const string & name, const bool isdefault)
 {
     const string prefix = CONF_DIR + name;
-    const string conf = read_file(prefix+".conf");
+    try {
+        const string conf = read_file(prefix+".conf");
 
-    smatch match;
-    for (auto pos = conf.begin();
-         regex_search(conf.begin(), conf.end(), match, NGX_SERVER_NAME.RGX);
-         pos += match.position(0) + match.length(0))
-    {
-        if (match.str(2).find(name) == string::npos) { continue; }
-
-        const string indent = match.str(1);
-        string adds = "";
-
-        adds += isdefault ?
-            get_if_missed(conf, NGX_INCLUDE_LAN_SSL_LISTEN_DEFAULT,"",indent) :
-            get_if_missed(conf, NGX_INCLUDE_LAN_SSL_LISTEN, "", indent);
-
-        adds += get_if_missed(conf, NGX_SSL_CRT, prefix+".crt", indent);
-
-        adds += get_if_missed(conf, NGX_SSL_KEY, prefix+".key", indent);
-
+        smatch match;
+        for (auto pos = conf.begin();
+            regex_search(pos, conf.end(), match, NGX_SERVER_NAME.RGX);
+            pos += match.position(0) + match.length(0))
         {
-            string tmp;
+            if (match.str(2).find(name) == string::npos) { continue; }
 
-            tmp = get_if_missed(conf, NGX_SSL_SESSION_CACHE, "", indent);
-            if (tmp != "") { adds += tmp + "'shared:SSL:32k';"; }
+            const string indent = match.str(1);
+            string adds = "";
 
-            tmp = get_if_missed(conf, NGX_SSL_SESSION_TIMEOUT, "", indent);
-            if (tmp != "") { adds += tmp + "64m;"; }
+            adds += isdefault ?
+                get_if_missed(conf, NGX_INCLUDE_LAN_SSL_LISTEN_DEFAULT,"",indent) :
+                get_if_missed(conf, NGX_INCLUDE_LAN_SSL_LISTEN, "", indent);
+
+            adds += get_if_missed(conf, NGX_SSL_CRT, prefix+".crt", indent);
+
+            adds += get_if_missed(conf, NGX_SSL_KEY, prefix+".key", indent);
+
+            {
+                string tmp;
+
+                tmp = get_if_missed(conf, NGX_SSL_SESSION_CACHE, "", indent);
+                if (tmp != "") { adds += tmp + "'shared:SSL:32k';"; }
+
+                tmp = get_if_missed(conf, NGX_SSL_SESSION_TIMEOUT, "", indent);
+                if (tmp != "") { adds += tmp + "64m;"; }
+            }
+
+            if (adds.length() > 0) {
+                string new_conf; // conf is const for iteration.
+
+                pos += match.position(0) + match.length(0);
+                new_conf = string(conf.begin(), pos) + adds + string(pos, conf.end());
+
+                new_conf = isdefault ?
+                    regex_replace(new_conf, NGX_INCLUDE_LAN_LISTEN_DEFAULT.RGX,"") :
+                    regex_replace(new_conf, NGX_INCLUDE_LAN_LISTEN.RGX, "");
+
+                write_file(prefix+".conf", new_conf);
+
+                cout<<"Added SSL directives to "<<prefix<<".conf: "<<adds<<endl;
+            }
+            return ;
         }
 
-        if (adds.length() > 0) {
-            string new_conf; // conf is const for iteration.
-
-            pos += match.position(0) + match.length(0);
-            new_conf = string(conf.begin(), pos) + adds + string(pos, conf.end());
-
-            new_conf = isdefault ?
-                regex_replace(new_conf, NGX_INCLUDE_LAN_LISTEN_DEFAULT.RGX,"") :
-                regex_replace(new_conf, NGX_INCLUDE_LAN_LISTEN.RGX, "");
-
-            write_file(prefix+".conf", new_conf);
-
-            cout<<"Added SSL directives to "<<prefix<<".conf: "<<adds<<endl;
-        }
-        return ;
-    }
+    } catch(const ifstream::failure &) { /* is ok if not found */ }
 
     cout<<"Cannot add SSL directives to "<<prefix<<".conf, missing:";
     cout<<NGX_SERVER_NAME.STR(name, "\n    ")<<endl;
@@ -192,12 +195,11 @@ void try_using_cron_to_recreate_certificate(const string & name)
     const string CRON_CHECK = "3 3 12 12 *";
     const string add = get_if_missed(conf, CRON_CMD, name);
     if (add.length() > 0) {
-        auto status = ubus_call("service", "list", 1000).filter("cron");
-        const bool active = (status.begin() != status.end());
-        if (!active) { // with or without instances.
+        auto service = ubus::call("service", "list", 1000).filter("cron");
+        if (!service) {
             cout<<"Cron unavailable to re-create the ssl certificate for '";
             cout<<name<<"'."<<endl;
-        } else {
+        } else { // active with or without instances:
             write_file(filename, CRON_CHECK+add, ios::app);
             call("/etc/init.d/cron", "reload");
             cout<<"Rebuild the ssl certificate for '";
@@ -234,12 +236,12 @@ void create_lan_listen()
     add_listen("", "127.0.0.1", "");
     add_listen("[", "::1", "]");
 
-    auto lan_status = ubus_call("network.interface.lan", "status");
+    auto lan_status = ubus::call("network.interface.lan", "status");
     for (auto ip : lan_status.filter("ipv4-address", "", "address")) {
-        add_listen("",  (char *)(ip), "");
+        add_listen("",  blobmsg_get_string(ip), "");
     }
     for (auto ip : lan_status.filter("ipv6-address", "", "address")) {
-        add_listen("[", (char *)(ip), "]");
+        add_listen("[", blobmsg_get_string(ip), "]");
     }
 
     write_file(LAN_LISTEN, listen);
@@ -294,6 +296,7 @@ cout<<"TODO: remove timing and openwrt macro!"<<endl;
     }
     const string name = argv[1];
     time_it(begin);
+
 
     THREAD(ubus, create_lan_listen);
 
