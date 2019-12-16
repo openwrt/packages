@@ -319,9 +319,9 @@ auto call(const char * path, const char * method, const int timeout)
         if (!err) {
             typedef std::shared_ptr<const blob_attr> msg_t;
 
-            /* Cannot capture anything (msg) the lambda would be another type.
-            * Pass a pointer to where to save the message as priv when invoking
-            * and get it back here:
+            /* Cannot capture anything (msg), the lambda would be another type.
+            * Pass a location where to save the message as priv pointer when
+            * invoking and get it back here:
             */
             static ubus_data_handler_t callback =
                 [](ubus_request * req, int type, blob_attr * msg) -> void
