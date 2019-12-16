@@ -323,8 +323,7 @@ auto call(const char * path, const char * method, const int timeout)
             * Pass a location where to save the message as priv pointer when
             * invoking and get it back here:
             */
-            static ubus_data_handler_t callback =
-                [](ubus_request * req, int type, blob_attr * msg) -> void
+            req.data_cb = [](ubus_request * req, int type, blob_attr * msg)
             {
                 if (!req || !msg) { return; }
 
@@ -337,7 +336,6 @@ auto call(const char * path, const char * method, const int timeout)
 
             msg_t msg;
             req.priv = &msg;
-            req.data_cb = callback;
             int timeout = 500;
 
             err = ubus_complete_request(ctx, &req, timeout);

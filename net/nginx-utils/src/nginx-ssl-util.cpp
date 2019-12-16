@@ -200,7 +200,7 @@ void try_using_cron_to_recreate_certificate(const string & name)
             cout<<"Cron unavailable to re-create the ssl certificate for '";
             cout<<name<<"'."<<endl;
         } else { // active with or without instances:
-            write_file(filename, CRON_CHECK+add, ios::app);
+            write_file(filename, CRON_CHECK+add+'\n', ios::app);
             call("/etc/init.d/cron", "reload");
             cout<<"Rebuild the ssl certificate for '";
             cout<<name<<"' annually with cron."<<endl;
