@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnsdist
 PKG_VERSION:=1.4.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
@@ -14,6 +14,8 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:powerdns:dnsdist
 
 PKG_INSTALL:=1
+
+PKG_BUILD_DEPENDS:=protobuf/host
 
 PKG_CONFIG_DEPENDS:= \
   CONFIG_DNSDIST_GNUTLS \
@@ -66,7 +68,22 @@ define Package/dnsdist
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
   TITLE:=dnsdist DNS-, DOS- and abuse-aware loadbalancer
-  DEPENDS:=+DNSDIST_OPENSSL:libopenssl +DNSDIST_GNUTLS:libgnutls +protobuf +re2 +libcap +libedit +libfstrm +lua +boost +libnetsnmp +libatomic +libsodium +DNSDIST_DNS_OVER_HTTPS:libh2o-evloop
+  DEPENDS:= \
+	  +DNSDIST_DNS_OVER_HTTPS:libh2o-evloop \
+	  +DNSDIST_GNUTLS:libgnutls \
+	  +DNSDIST_OPENSSL:libopenssl \
+	  +boost \
+	  +libatomic \
+	  +libcap \
+	  +libedit \
+	  +libfstrm \
+	  +libnetsnmp \
+	  +libsodium \
+	  +lmdb \
+	  +lua \
+	  +protobuf \
+	  +re2 \
+	  +tinycdb
   URL:=https://dnsdist.org/
 endef
 
