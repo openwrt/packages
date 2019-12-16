@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -327,6 +327,15 @@ ifeq ($(TARGET),linux-glibc)
+@@ -326,6 +326,15 @@ ifeq ($(TARGET),linux-glibc)
      USE_GETADDRINFO)
  endif
  
