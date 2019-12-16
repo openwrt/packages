@@ -1,0 +1,42 @@
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -6,7 +6,7 @@ IF(NOT HAVE_GETOPT)
+ ENDIF(NOT HAVE_GETOPT)
+ 
+ ADD_EXECUTABLE(zipcmp zipcmp.c ${SRC_EXTRA_FILES})
+-TARGET_LINK_LIBRARIES(zipcmp zip)
++TARGET_LINK_LIBRARIES(zipcmp zip ${FTS_LIB})
+ INSTALL(TARGETS zipcmp RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+ 
+ ADD_EXECUTABLE(zipmerge zipmerge.c ${SRC_EXTRA_FILES})
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -22,6 +22,7 @@ OPTION(BUILD_DOC "Build documentation" O
+ 
+ INCLUDE(CheckFunctionExists)
+ INCLUDE(CheckIncludeFiles)
++INCLUDE(CheckLibraryExists)
+ INCLUDE(CheckSymbolExists)
+ INCLUDE(CheckTypeSize)
+ INCLUDE(CheckCSourceRuns)
+@@ -158,6 +159,20 @@ CHECK_FUNCTION_EXISTS(strtoll HAVE_STRTO
+ CHECK_FUNCTION_EXISTS(strtoull HAVE_STRTOULL)
+ 
+ CHECK_INCLUDE_FILES("sys/types.h;sys/stat.h;fts.h" HAVE_FTS_H)
++# fts functions may be in external library
++IF(HAVE_FTS_H)
++  CHECK_FUNCTION_EXISTS(fts_open HAVE_FTS_OPEN)
++  IF(NOT HAVE_FTS_OPEN)
++    CHECK_LIBRARY_EXISTS(fts fts_open "" HAVE_LIB_FTS)
++  ENDIF(NOT HAVE_FTS_OPEN)
++ENDIF(HAVE_FTS_H)
++
++IF(HAVE_LIB_FTS)
++  SET(FTS_LIB fts)
++ELSE()
++  SET(FTS_LIB "")
++ENDIF()
++
+ CHECK_INCLUDE_FILES(stdbool.h HAVE_STDBOOL_H)
+ CHECK_INCLUDE_FILES(strings.h HAVE_STRINGS_H)
+ CHECK_INCLUDE_FILES(unistd.h HAVE_UNISTD_H)

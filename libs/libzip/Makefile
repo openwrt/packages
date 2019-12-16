@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libzip
 PKG_VERSION:=1.5.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://libzip.org/download/
@@ -50,7 +50,7 @@ define Package/zipcmp
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Compression
-  DEPENDS:=+libzip
+  DEPENDS:=+libzip +USE_MUSL:musl-fts
 endef
 
 define Package/zipcmp/description
