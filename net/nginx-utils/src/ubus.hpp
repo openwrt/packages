@@ -11,40 +11,92 @@ extern "C" {
 }
 
 
-//     // example for exploring:
-//     ubus::strings keys{"ipv4-address", "", "*"};
-//     for (auto x : ubus::call("network.interface.lan", "status").filter(keys)) {
-//         std::cout<<blobmsg_name(x)<<": ";
-//         switch (blob_id(x)) {
-//             case BLOBMSG_TYPE_UNSPEC: std::cout<<"[unspecified]"; break;
-//             case BLOBMSG_TYPE_ARRAY: std::cout<<"[array]"; break;
-//             case BLOBMSG_TYPE_TABLE: std::cout<<"[table]"; break;
-//             case BLOBMSG_TYPE_STRING: std::cout<<blobmsg_get_string(x); break;
-//             case BLOBMSG_TYPE_INT64: std::cout<<blobmsg_get_u64(x); break;
-//             case BLOBMSG_TYPE_INT32: std::cout<<blobmsg_get_u32(x); break;
-//             case BLOBMSG_TYPE_INT16: std::cout<<blobmsg_get_u16(x); break;
-//             case BLOBMSG_TYPE_BOOL: std::cout<<blobmsg_get_bool(x); break;
-//             case BLOBMSG_TYPE_DOUBLE: std::cout<<blobmsg_get_double(x); break;
-//             default: std::cout<<"[unknown]";
-//         }
-//         std::cout<<std::endl;
-//     }
-//
-//     // example for checking if there is a key:
-//     if (ubus::call("network.interface.lan", "status").filter("updated")) {
-//         std::cout<<"It has updated. "<<std::endl;
-//     }
-//
-//     // example for getting values:
-//     auto lan_status = ubus::call("network.interface.lan", "status");
-//     for (auto x : lan_status.filter("ipv4-address", "", "address")) {
-//         std::cout<<blobmsg_get_string(x)<<" ";
-//     }
-//     for (auto x : lan_status.filter("ipv6-address", "", "address")) {
-//         std::cout<<"["<<blobmsg_get_string(x)<<"] ";
+// // example for checking if there is a key:
+// if (ubus::call("service", "list", 1000).filter("cron")) {
+//     std::cout<<"Cron is active (with or without instances) "<<std::endl;
+// }
+
+// // example for getting values:
+// auto lan_status = ubus::call("network.interface.lan", "status");
+// for (auto x : lan_status.filter("ipv6-address", "", "address")) {
+//     std::cout<<"["<<blobmsg_get_string(x)<<"] ";
+// }
+// std::cout<<std::endl;
+
+// // example for exploring:
+// ubus::strings keys{"ipv4-address", "", "*"};
+// for (auto x : ubus::call("network.interface.lan", "status").filter(keys)) {
+//     std::cout<<blobmsg_name(x)<<": ";
+//     switch (blob_id(x)) {
+//         case BLOBMSG_TYPE_UNSPEC: std::cout<<"[unspecified]"; break;
+//         case BLOBMSG_TYPE_ARRAY: std::cout<<"[array]"; break;
+//         case BLOBMSG_TYPE_TABLE: std::cout<<"[table]"; break;
+//         case BLOBMSG_TYPE_STRING: std::cout<<blobmsg_get_string(x); break;
+//         case BLOBMSG_TYPE_INT64: std::cout<<blobmsg_get_u64(x); break;
+//         case BLOBMSG_TYPE_INT32: std::cout<<blobmsg_get_u32(x); break;
+//         case BLOBMSG_TYPE_INT16: std::cout<<blobmsg_get_u16(x); break;
+//         case BLOBMSG_TYPE_BOOL: std::cout<<blobmsg_get_bool(x); break;
+//         case BLOBMSG_TYPE_DOUBLE: std::cout<<blobmsg_get_double(x); break;
+//         default: std::cout<<"[unknown]";
 //     }
 //     std::cout<<std::endl;
+// }
 
+// // example for recursive exploring (output like from the original ubus call)
+// const auto explore = [](auto message) -> void
+// {
+//     auto end = message.end();
+//     auto explore_internal =
+//         [&end](auto & explore_ref, auto it, size_t depth=1) -> void
+//     {
+//         std::cout<<std::endl;
+//         bool first = true;
+//         for (; it!=end; ++it) {
+//             auto * attr = *it;
+//             if (first) { first = false; }
+//             else { std::cout<<",\n"; }
+//             std::cout<<std::string(depth, '\t');
+//             std::string name = blobmsg_name(attr);
+//             if (name != "") {  std::cout<<"\""<<name<<"\": "; }
+//             switch (blob_id(attr)) {
+//                 case BLOBMSG_TYPE_UNSPEC: std::cout<<"(unspecified)"; break;
+//                 case BLOBMSG_TYPE_ARRAY:
+//                     std::cout<<"[";
+//                     explore_ref(explore_ref, ubus::iterator{attr}, depth+1);
+//                     std::cout<<"\n"<<std::string(depth, '\t')<<"]";
+//                     break;
+//                 case BLOBMSG_TYPE_TABLE:
+//                     std::cout<<"{";
+//                     explore_ref(explore_ref, ubus::iterator{attr}, depth+1);
+//                     std::cout<<"\n"<<std::string(depth, '\t')<<"}";
+//                     break;
+//                 case BLOBMSG_TYPE_STRING:
+//                     std::cout<<"\""<<blobmsg_get_string(attr)<<"\"";
+//                     break;
+//                 case BLOBMSG_TYPE_INT64:
+//                     std::cout<<blobmsg_get_u64(attr);
+//                     break;
+//                 case BLOBMSG_TYPE_INT32:
+//                     std::cout<<blobmsg_get_u32(attr);
+//                     break;
+//                 case BLOBMSG_TYPE_INT16:
+//                     std::cout<<blobmsg_get_u16(attr);
+//                     break;
+//                 case BLOBMSG_TYPE_BOOL:
+//                     std::cout<<(blobmsg_get_bool(attr) ? "true" : "false");
+//                     break;
+//                 case BLOBMSG_TYPE_DOUBLE:
+//                     std::cout<<blobmsg_get_double(attr);
+//                     break;
+//                 default: std::cout<<"(unknown)"; break;
+//             }
+//         }
+//     };
+//     std::cout<<"{";
+//     explore_internal(explore_internal, message.begin());
+//     std::cout<<"\n}"<<std::endl;
+// };
+// explore(ubus::call("network.interface.lan","status"));
 
 
 namespace ubus {
@@ -83,8 +135,6 @@ inline void append(strings & dest, String src, Strings ...more)
 
 class iterator {
 
-    friend class message;
-
 private:
 
     const strings & keys;
@@ -108,18 +158,6 @@ private:
     }
 
 
-    iterator(const blob_attr * msg = NULL,
-            const strings & filter = _MATCH_ALL_KEYS_)
-    : keys{filter}, n{keys.size()-1}, pos{msg}, cur{this}
-    {
-        if (pos!=NULL) {
-            rem = blobmsg_data_len(pos);
-            pos = (blob_attr *) blobmsg_data(pos);
-            if (i!=n || !matches()) { ++*this; }
-        }
-    }
-
-
     iterator(const iterator * par)
     : keys{par->keys}, n{par->n}, pos{par->pos}, cur{this}, parent{par}
     {
@@ -132,8 +170,21 @@ private:
 
 public:
 
-    iterator(iterator && rhs) = default;
 
+    iterator(const blob_attr * msg = NULL,
+            const strings & filter = _MATCH_ALL_KEYS_)
+    : keys{filter}, n{keys.size()-1}, pos{msg}, cur{this}
+    {
+        if (pos!=NULL) {
+            rem = blobmsg_data_len(pos);
+            pos = (blob_attr *) blobmsg_data(pos);
+            if (rem==0) { pos = NULL; }
+            else if (i!=n || !matches()) { ++*this; }
+        }
+    }
+
+
+    iterator(iterator && rhs) = default;
 
     inline auto operator*() { return const_cast<blob_attr *>(cur->pos); }
 
