@@ -29,7 +29,8 @@ nut_upscgi_add() {
 }
 
 start() {
-	rm -f $UPSCGI_C
+	mkdir -m 0755 -p "$(dirname "$UPSCGI_C")"
+	rm -f "$UPSCGI_C"
 
 	config_load nut_cgi
 
