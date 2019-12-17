@@ -298,61 +298,6 @@ cout<<"TODO: remove timing and openwrt macro!"<<endl;
     time_it(begin);
 
     
-// example for recursive exploring (output like from the original ubus call)
-const auto explore = [](auto message) -> void
-{
-    auto end = message.end();
-    auto explore_internal = 
-        [&end](auto & explore_ref, auto it, size_t depth=1) -> void
-    {
-        std::cout<<std::endl;
-        bool first = true;
-        for (; it!=end; ++it) {
-            auto * attr = *it;
-            if (first) { first = false; }
-            else { std::cout<<",\n"; }
-            std::cout<<std::string(depth, '\t');
-            std::string name = blobmsg_name(attr);
-            if (name != "") {  std::cout<<"\""<<name<<"\": "; }
-            switch (blob_id(attr)) {
-                case BLOBMSG_TYPE_UNSPEC: std::cout<<"(unspecified)"; break;
-                case BLOBMSG_TYPE_ARRAY:
-                    std::cout<<"[";
-                    explore_ref(explore_ref, ubus::iterator{attr}, depth+1);
-                    std::cout<<"\n"<<std::string(depth, '\t')<<"]";
-                    break;
-                case BLOBMSG_TYPE_TABLE:
-                    std::cout<<"{";
-                    explore_ref(explore_ref, ubus::iterator{attr}, depth+1);
-                    std::cout<<"\n"<<std::string(depth, '\t')<<"}";
-                    break;
-                case BLOBMSG_TYPE_STRING: 
-                    std::cout<<"\""<<blobmsg_get_string(attr)<<"\"";
-                    break;
-                case BLOBMSG_TYPE_INT64: 
-                    std::cout<<blobmsg_get_u64(attr);
-                    break;
-                case BLOBMSG_TYPE_INT32:
-                    std::cout<<blobmsg_get_u32(attr);
-                    break;
-                case BLOBMSG_TYPE_INT16:
-                    std::cout<<blobmsg_get_u16(attr);
-                    break;
-                case BLOBMSG_TYPE_BOOL: 
-                    std::cout<<(blobmsg_get_bool(attr) ? "true" : "false");
-                    break;
-                case BLOBMSG_TYPE_DOUBLE: 
-                    std::cout<<blobmsg_get_double(attr);
-                    break;
-                default: std::cout<<"(unknown)"; break;
-            }
-        }
-    };
-    std::cout<<"{";
-    explore_internal(explore_internal, message.begin());
-    std::cout<<"\n}"<<std::endl;
-};
-explore(ubus::call("network.interface.lan","status"));
     
     
 

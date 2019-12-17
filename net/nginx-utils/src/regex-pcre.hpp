@@ -6,7 +6,9 @@
 #include <pcre.h>
 #include <string>
 
+
 namespace std {
+
 
 namespace regex_constants {
   enum error_type
@@ -42,29 +44,45 @@ namespace regex_constants {
 }
 
 
+
 class regex_error : public runtime_error {
+
 protected:
+
     regex_constants::error_type errcode;
 
+
 public:
+
     explicit regex_error(regex_constants::error_type code,
                          const char * what="regex error")
     : runtime_error(what), errcode(code)
     { }
 
+
     regex_constants::error_type code() const { return errcode; }
+
 };
 
 
+
 class regex {
+
 private:
+
     int errcode;
+
     const char * errptr;
+
     int erroffset;
+
     pcre * const re;
+
     static const regex_constants::error_type pcre_errcode2regex_errcode[86];
 
+
 public:
+
     regex(const string & str)
     : re{ pcre_compile2(str.c_str(), 0, &errcode, &errptr, &erroffset, NULL) }
     {
@@ -72,38 +90,57 @@ public:
             string what = (string)"regex error: " + errptr + '\n';
             what += "    '" + str + "'\n";
             what += string(erroffset+5, ' ') + '^';
-            throw regex_error(pcre_errcode2regex_errcode[errcode], what.c_str());
+
+            throw regex_error(pcre_errcode2regex_errcode[errcode],
+                              what.c_str());
         }
     }
 
+
     ~regex() { if (re) { pcre_free(re); } }
 
+
     inline const pcre * operator()() const { return re; }
+
 };
 
 
+
 class smatch {
+
     friend auto regex_search(const string::const_iterator begin,
                              const string::const_iterator end,
                              smatch & match,
                              const regex & rgx);
+
+
 private:
+
     string::const_iterator begin;
+
     string::const_iterator end;
+
     int * vec = NULL;
+
     int n = 0;
+
     size_t sz = 0;
 
+
 public:
+
     smatch() = default;
+
 
     inline auto position(int i=0) const {
         return (i<0 || i>=n) ? string::npos : vec[2*i];
     }
 
+
     inline auto length(int i=0) const {
         return (i<0 || i>=n) ? 0 : vec[2*i+1] - vec[2*i];
     }
+
 
     string str(int i=0) const { // should we throw errors?
         if (i<0 || i>=n) { return ""; }
@@ -113,13 +150,18 @@ public:
         return move(string{begin + x, begin + y});
     }
 
+
     auto format(const string & str) const;
+
 
     size_t size() const { return n; }
 
+
     inline auto empty() const { return n<0; }
 
+
     inline auto ready() const { return vec!=NULL; }
+
 
     ~smatch() { if (vec) { delete [] vec; } }
 
@@ -153,6 +195,7 @@ inline auto regex_search(const string & subj, const regex & rgx)
     return n>=0;
 }
 
+
 auto regex_search(const string::const_iterator begin,
                   const string::const_iterator end,
                   smatch & match,
@@ -164,17 +207,22 @@ auto regex_search(const string::const_iterator begin,
         size_t sz = 0;
         pcre_fullinfo(rgx(), NULL, PCRE_INFO_CAPTURECOUNT, &sz);
         sz = 3*(sz + 1);
+
         if (sz > match.sz) {
             match.sz = 0;
             if (match.vec) { delete [] match.vec; }
             match.vec = new int[sz];
             match.sz = sz;
         }
+
         const char * subj = &*begin;
         size_t len = &*end - subj;
+
         match.begin = move(begin);
         match.end = move(end);
+
         match.n = pcre_exec(rgx(), NULL, subj, len, 0, 0, match.vec, sz);
+
         if (match.n<0) { return false; }
         if (match.n==0) { match.n = sz/3; }
     }
@@ -190,31 +238,39 @@ inline auto regex_search(const string & subj, smatch & match, const regex & rgx)
 
 auto smatch::format(const string & fmt) const {
     string ret = "";
-    size_t index = 0, pos;
+    size_t index = 0;
+
+    size_t pos;
     while ((pos=fmt.find('$', index)) != string::npos) {
         ret.append(fmt, index, pos-index);
         index = pos + 1;
+
         char chr = fmt[index++];
         int n = 0;
         switch(chr) {
+
             case '&': // match
                 ret += this->str(0);
                 break;
+
             case '`': // prefix
                 ret.append(begin, begin+vec[0]);
                 break;
+
             case '\'': // suffix
                 ret.append(begin+vec[1], end);
                 break;
+
             default: // number => submatch
                 while (isdigit(chr)) {
                     n = 10*n + chr - '0';
                     chr = fmt[index++];
                 }
-                if (n>0) {
-                    ret += str(n);
-                } else { ret += '$'; }
+
+                ret += n>0 ? str(n) : string{"$"};
+
                 [[fallthrough]];
+
             case '$': // escaped
                 ret += chr;
         }
@@ -230,6 +286,7 @@ auto regex_replace(const string & subj,
 {
     string ret = "";
     auto pos = subj.begin();
+
     for (smatch match;
          regex_search(pos, subj.end(), match, rgx);
          pos += match.position(0) + match.length(0))
@@ -237,6 +294,7 @@ auto regex_replace(const string & subj,
         ret.append(pos, pos + match.position(0));
         ret.append(match.format(insert));
     }
+
     ret.append(pos, subj.end());
     return move(ret);
 }
@@ -421,6 +479,8 @@ const regex_constants::error_type regex::pcre_errcode2regex_errcode[86] = {
     regex_constants::error_stack
 };
 
+
 }
+
 
 #endif

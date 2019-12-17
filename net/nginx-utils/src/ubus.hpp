@@ -21,6 +21,9 @@ extern "C" {
 // for (auto x : lan_status.filter("ipv6-address", "", "address")) {
 //     std::cout<<"["<<blobmsg_get_string(x)<<"] ";
 // }
+// for (auto x : lan_status.filter("ipv4-address", "").filter("address")) {
+//     std::cout<<blobmsg_get_string(x)<<" ";
+// }
 // std::cout<<std::endl;
 
 // // example for exploring:
@@ -96,7 +99,7 @@ extern "C" {
 //     explore_internal(explore_internal, message.begin());
 //     std::cout<<"\n}"<<std::endl;
 // };
-// explore(ubus::call("network.interface.lan","status"));
+// explore(ubus::call("network.interface.lan", "status"));
 
 
 namespace ubus {
@@ -115,11 +118,13 @@ template<class ...Strings>
 inline void append(strings & dest, strings src, Strings ...more)
 {
     if (dest.empty()) { dest = std::move(src); }
+
     else {
         dest.reserve(dest.size() + src.size());
         dest.insert(std::end(dest), std::make_move_iterator(std::begin(src)),
                                     std::make_move_iterator(std::end(src)));
     }
+
     append(dest, std::move(more)...);
 }
 
@@ -178,6 +183,7 @@ public:
         if (pos!=NULL) {
             rem = blobmsg_data_len(pos);
             pos = (blob_attr *) blobmsg_data(pos);
+
             if (rem==0) { pos = NULL; }
             else if (i!=n || !matches()) { ++*this; }
         }
@@ -261,7 +267,6 @@ public:
     static ubus_context * get_context()
     {
         static auto ubus_freeing = [] (ubus_context * ctx) { ubus_free(ctx); };
-
         static std::unique_ptr<ubus_context, decltype(ubus_freeing)>
             lazy_ctx{ubus_connect(NULL), ubus_freeing};
 
@@ -364,11 +369,16 @@ auto call(const char * path, const char * method, const int timeout)
 
     if (!err) { // call
         ubus_request req;
+
         auto buf = ubus::lock_and_get_shared_blob_buf();
         err = ubus_invoke_async(ctx, id, method, buf->head, &req);
         ubus::unlock_shared_blob_buf();
+
         if (!err) {
             typedef std::shared_ptr<const blob_attr> msg_t;
+
+            msg_t msg;
+            req.priv = &msg;
 
             /* Cannot capture anything (msg), the lambda would be another type.
             * Pass a location where to save the message as priv pointer when
@@ -385,13 +395,9 @@ auto call(const char * path, const char * method, const int timeout)
                 if (!*saved) { throw std::bad_alloc(); }
             };
 
-            msg_t msg;
-            req.priv = &msg;
-            int timeout = 500;
-
             err = ubus_complete_request(ctx, &req, timeout);
 
-            if (!err) { return message{msg}; }
+            if (!err) { return message{std::move(msg)}; }
         }
     }
 
