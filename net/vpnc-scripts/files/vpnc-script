@@ -210,6 +210,9 @@ case "$reason" in
 	reconnect)
 		run_hooks reconnect
 		;;
+	attempt-reconnect)
+		run_hooks attempt-reconnect
+		;;
 	*)
 		logger -t openconnect "unknown reason '$reason'. Maybe vpnc-script is out of date" 1>&2
 		exit 1
