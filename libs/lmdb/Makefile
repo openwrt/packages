@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lmdb
 PKG_VERSION:=0.9.24
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=LMDB_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/LMDB/lmdb/tar.gz/LMDB_$(PKG_VERSION)?
@@ -65,7 +65,8 @@ define Build/Compile
 		CC="$(TARGET_CC)" \
 		CFLAGS+="$(TARGET_CFLAGS)" \
 		LDFLAGS+="$(TARGET_LDFLAGS)" \
-		FPIC="$(FPIC)"
+		FPIC="$(FPIC)" \
+		AR="$(TARGET_AR)"
 endef
 
 define Build/InstallDev
