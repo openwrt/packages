@@ -778,6 +778,8 @@ main_backup(int argc, char **argv)
 		return -1;
 
 	default:
+		close(fds[1]);
+
 		now = time(NULL);
 		strftime(datestr, sizeof(datestr) - 1, "%Y-%m-%d", localtime(&now));
 
@@ -798,7 +800,6 @@ main_backup(int argc, char **argv)
 		waitpid(pid, &status, 0);
 
 		close(fds[0]);
-		close(fds[1]);
 
 		return 0;
 	}
@@ -1010,6 +1011,8 @@ main_exec(int argc, char **argv)
 		return -1;
 
 	default:
+		close(fds[1]);
+
 		printf("Status: 200 OK\r\n");
 		printf("Content-Type: %s\r\n",
 		       fields[7] ? fields[7] : "application/octet-stream");
@@ -1028,7 +1031,6 @@ main_exec(int argc, char **argv)
 		waitpid(pid, &status, 0);
 
 		close(fds[0]);
-		close(fds[1]);
 		free(args);
 
 		return 0;
