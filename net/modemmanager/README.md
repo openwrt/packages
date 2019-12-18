@@ -20,3 +20,10 @@ Your modem may require additional kernel modules.
         option password 'vodafone'
         option pincode  '7423'
         option lowpower '1'
+
+   Option descriptions
+   device - The full sysfs path to the device you want netifd to configure using modemmanager. Not optional
+   proto - The protocol handler you want netifd to use, in this case 'modemmanager' is the only appropriate value.
+   apn - an optional parameter to specify which access point name you want the modem to connect to. If omitted, the behavior you get is modem specific. Some modems auto connect to an appropriate access point based on the SIM card.
+   pincode - the PIN code needed to unlock the SIM, if any.
+   lowpower - request that the modem operate in low power mode.
