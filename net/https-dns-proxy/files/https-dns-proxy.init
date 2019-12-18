@@ -5,9 +5,20 @@
 export START=80
 export USE_PROCD=1
 
-PROG=/usr/sbin/https_dns_proxy
+PROG=/usr/sbin/https-dns-proxy
 
 xappend() { param="$param $1"; }
+
+append_bool() {
+	local section="$1"
+	local option="$2"
+	local value="$3"
+	local default="$4"
+	local _loctmp
+	[ -z "$default" ] && default="0"
+	config_get_bool _loctmp "$section" "$option" "$default"
+	[ "$_loctmp" != "0" ] && xappend "$value"
+}
 
 append_parm() {
 	local section="$1"
@@ -20,21 +31,37 @@ append_parm() {
 	xappend "$switch $_loctmp"
 }
 
+append_match() {
+	local section="$1"
+	local option="$2"
+	local value="$3"
+	local match="$4"
+	local _loctmp
+	config_get_bool _loctmp "$section" "$option"
+	[ "$_loctmp" = "$match" ] && xappend "$value"
+}
+
 start_instance() {
 	local cfg="$1" param listen_addr listen_port
 
 	append_parm "$cfg" 'listen_addr' '-a' '127.0.0.1'
 	append_parm "$cfg" 'listen_port' '-p' "$p"
 	append_parm "$cfg" 'bootstrap_dns' '-b'
-	append_parm "$cfg" 'url_prefix' '-r'
+	append_parm "$cfg" 'resolver_url' '-r'
 	append_parm "$cfg" 'user' '-u' 'nobody'
 	append_parm "$cfg" 'group' '-g' 'nogroup'
-	append_parm "$cfg" 'subnet_addr' '-e'
+	append_parm "$cfg" 'edns_subnet' '-e'
 	append_parm "$cfg" 'proxy_server' '-t'
+	append_parm "$cfg" 'logfile' '-l'
+	append_bool "$cfg" 'use_http1' '-x'
+	append_match "$cfg" 'verbosity' '-v' '1'
+	append_match "$cfg" 'verbosity' '-vv' '2'
+	append_match "$cfg" 'verbosity' '-vvv' '3'
+	append_match "$cfg" 'verbosity' '-vvvv' '4'
 
 	procd_open_instance
 # shellcheck disable=SC2086
-	procd_set_param command ${PROG} ${param}
+	procd_set_param command ${PROG} -4 ${param}
 	procd_set_param respawn
 	procd_close_instance
 
@@ -47,14 +74,14 @@ start_instance() {
 }
 
 service_triggers() {
-	procd_add_reload_trigger 'https_dns_proxy'
+	procd_add_reload_trigger 'https-dns-proxy'
 }
 
 start_service() {
 	local p=5053
 	dhcp_backup 'create'
-	config_load 'https_dns_proxy'
-	config_foreach start_instance 'https_dns_proxy'
+	config_load 'https-dns-proxy'
+	config_foreach start_instance 'https-dns-proxy'
 	if [ -z "$(uci -q get dhcp.@dnsmasq[0].server)" ]; then
 		dhcp_backup 'restore'
 	fi
@@ -70,6 +97,10 @@ stop_service() {
 		uci -q commit dhcp
 		[ -x /etc/init.d/dnsmasq ] && /etc/init.d/dnsmasq restart >/dev/null 2>&1
 	fi
+}
+
+service_triggers() {
+		procd_add_reload_trigger 'https-dns-proxy'
 }
 
 dnsmasq_add_doh_server() {
