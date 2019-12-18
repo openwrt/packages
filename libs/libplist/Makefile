@@ -9,13 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libplist
 PKG_SOURCE_VERSION:=2.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/libplist
 PKG_MIRROR_HASH:=452ef5d6e87461a8b7a47a2274878cf200ccf480b4e81924f22ec1c445e353d0
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
+PKG_CPE_ID:=cpe:/a:libimobiledevice:libplist
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -27,6 +28,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libplist/Default
   TITLE:=Apple property list
   URL:=https://www.libimobiledevice.org/
+  SUBMENU:=libimobiledevice
 endef
 
 define Package/libplist/Default/description
@@ -62,7 +64,7 @@ define Package/libplistcxx/description
   This package contains the libplist C++ shared library.
 endef
 
-define Package/libplist-utils
+define Package/plistutil
   $(call Package/libplist/Default)
   SECTION:=utils
   CATEGORY:=Utilities
@@ -72,7 +74,7 @@ define Package/libplist-utils
   LICENSE_FILES:=COPYING
 endef
 
-define Package/libplist-utils/description
+define Package/plistutil/description
   $(call Package/libplist/Default/description)
   This package contains the libplist utilities.
 endef
@@ -103,11 +105,11 @@ define Package/libplistcxx/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libplist++.so.* $(1)/usr/lib/
 endef
 
-define Package/libplist-utils/install
+define Package/plistutil/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/plistutil $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,libplist))
 $(eval $(call BuildPackage,libplistcxx))
-$(eval $(call BuildPackage,libplist-utils))
+$(eval $(call BuildPackage,plistutil))
