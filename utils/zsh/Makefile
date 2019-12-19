@@ -92,7 +92,7 @@ grep zsh $${IPKG_INSTROOT}/etc/shells || \
 	echo "/usr/bin/zsh" >> $${IPKG_INSTROOT}/etc/shells
 
 # Backwards compatibility
-if [[ -e /bin/zsh ]] && ([[ ! -L /bin/zsh ]] || [[ "$(readlink -fn $${IPKG_INSTROOT}/bin/zsh)" != "../$(CONFIGURE_PREFIX)/bin/zsh" ]]); then
+if [ -e /bin/zsh ] && { [ ! -L /bin/zsh ] || [ "$(readlink -fn $${IPKG_INSTROOT}/bin/zsh)" != "../$(CONFIGURE_PREFIX)/bin/zsh" ]; }; then
 	ln -fs "../$(CONFIGURE_PREFIX)/bin/zsh" "$${IPKG_INSTROOT}/bin/zsh"
 fi
 endef
