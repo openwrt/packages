@@ -19,7 +19,7 @@
  #include "hpmud.h"
  #include "hp_ipp.h"
  #include "soap.h"
-@@ -145,98 +144,6 @@ static int GetUriLine(char *buf, char *uri, char **tail)
+@@ -145,98 +144,6 @@ static int GetUriLine(char *buf, char *u
     return i;
  }
  
@@ -126,13 +126,13 @@
      char* token = NULL;
      enum HPMUD_RESULT stat;
  
-@@ -304,34 +210,6 @@ static int DevDiscovery(int localOnly)
+@@ -304,33 +210,6 @@ static int DevDiscovery(int localOnly)
          total += AddDevice(uri);
      }
- 
+     memset(message, 0, sizeof(message));
 -    /* Look for Network Scan devices if localonly flag if FALSE. */
 -    if (!localOnly)
--    {
+-    {   
 -        /* Look for all-in-one scan devices for which print queue created */
 -        cnt = GetCupsPrinters(&cups_printer);
 -        for (i=0; i<cnt; i++)
@@ -157,7 +157,6 @@
 -          SendScanEvent("hpaio:/net/HP_Scan_Devices?ip=1.1.1.1", EVENT_ERROR_NO_PROBED_DEVICES_FOUND);
 -        }
 -    }
--
+ 
  bugout:
     return total;
- }
