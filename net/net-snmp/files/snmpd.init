@@ -317,7 +317,7 @@ start_service() {
 	append_parm v1trapaddress host v1trapaddress
 	append_parm trapsess trapsess trapsess
 
-	procd_set_param command $PROG -Lf /dev/null -f
+	procd_set_param command $PROG -Lf /dev/null -f -r
 	procd_set_param file $CONFIGFILE
 	procd_set_param respawn
 
