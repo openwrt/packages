@@ -313,13 +313,15 @@ proto_modemmanager_init_config() {
 	proto_config_add_string	 pincode
 	proto_config_add_string	 iptype
 	proto_config_add_boolean lowpower
+	proto_config_add_int timeout
 	proto_config_add_defaults
 }
 
 proto_modemmanager_setup() {
 	local interface="$1"
 
-	local modempath modemstatus bearercount bearerpath connectargs bearerstatus beareriface
+	local modempath modemstatus bearercount bearerpath connectargs bearerstatus beareriface timeout
+	[ "$timeout" = "" ] && timeout="10"
 	local bearermethod_ipv4 bearermethod_ipv6
 	local operatorname operatorid registration accesstech signalquality
 
@@ -341,6 +343,21 @@ proto_modemmanager_setup() {
 		proto_set_available "${interface}" 0
 		return 1
 	}
+
+	echo "Waiting for Modem initialization"
+	local uninitialized_timeout=0
+	while $(mmcli --modem="${device}" --output-keyvalue) | grep 'error' > /dev/null; do
+		[ -e "$device" ] || return 1
+		if [ "$uninitialized_timeout" -lt "$timeout" ]; then
+			let uninitialized_timeout++
+			sleep 1;
+		else
+			echo "Modem not initialized"
+			proto_notify_error "$interface" MODEM_NOT_INITIALIZED
+			proto_block_restart "$interface"
+			return 1
+		fi
+	done
 
 	# validate that ModemManager is handling the modem at the sysfs path
 	modemstatus=$(mmcli --modem="${device}" --output-keyvalue)
