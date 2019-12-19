@@ -114,11 +114,13 @@ packages.each do
 end
 exit(1) if failed
 
-# Add deps from .so
+# From ruby source: grep -E 'rb_require' -R . | grep -E '\.c:.*rb_require.*'
+# Add dependencies of ruby files from ruby lib.so
 package_files.each do |(pkg,files)| files.each do |file|
 	case file
-	when /\/nkf\.so$/
-		files_requires[file]= files_requires[file] + ["enc/encdb"]
+	when /\/nkf\.so$/    ; files_requires[file]=files_requires[file] + ["enc/encdb"]
+	when /\/objspace\.so$/; files_requires[file]=files_requires[file] + ["tempfile"] 	# dump_output from ext/objspace/objspace_dump.c
+	when /\/openssl\.so$/; files_requires[file]=files_requires[file] + ["digest"] 		# Init_ossl_digest from ext/openssl/ossl_digest.c
 	end
 end; end
 
