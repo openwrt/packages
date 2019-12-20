@@ -1,0 +1,28 @@
+From 44fa79619fcd3a612031931f50723b016b677bf7 Mon Sep 17 00:00:00 2001
+From: Christian Grothoff <christian@grothoff.org>
+Date: Tue, 17 Dec 2019 13:15:40 +0100
+Subject: [PATCH 09/12] nice log message
+
+---
+ src/namestore/gnunet-namestore.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/namestore/gnunet-namestore.c b/src/namestore/gnunet-namestore.c
+index df2b49a62..4c8fd5ce8 100644
+--- a/src/namestore/gnunet-namestore.c
++++ b/src/namestore/gnunet-namestore.c
+@@ -1305,7 +1305,10 @@ default_ego_cb (void *cls,
+   get_default = NULL;
+   if (NULL == ego)
+   {
+-    fprintf (stderr, _ ("No default ego configured in identity service\n"));
++    fprintf (stderr,
++             _ ("No default identity configured for `namestore' subsystem\n"
++                "Run gnunet-identity -s namestore -e $NAME to set the default to $NAME\n"
++                "Run gnunet-identity -d to get a list of choices for $NAME\n"));
+     GNUNET_SCHEDULER_shutdown ();
+     ret = -1;
+     return;
+-- 
+2.24.1
+

@@ -1,0 +1,26 @@
+From 73ee949868200082b7e9131d2f410f289fd1c416 Mon Sep 17 00:00:00 2001
+From: Christian Grothoff <christian@grothoff.org>
+Date: Mon, 16 Dec 2019 17:17:46 +0100
+Subject: [PATCH 05/12] sort using C locale for a more stable sort
+
+---
+ bin/pogen.sh | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/bin/pogen.sh b/bin/pogen.sh
+index 453e0b1d8..b97ef046a 100755
+--- a/bin/pogen.sh
++++ b/bin/pogen.sh
+@@ -1,5 +1,9 @@
+ #!/bin/sh
+ # This script is in the public domain.
++
++# Set language domain to C for a more stable sort!
++export LANG=C
++
+ find src -name "*.c" | grep -v \# | grep -v /test_ | grep -v /perf_  | grep -v _old | grep -v chat | grep -v .libs/ | sort  > po/POTFILES.in
+ grep -l _\( `find src -name "*.h"` | grep -v "platform.h" | grep -v _old | grep -v chat | sort >> po/POTFILES.in
+ 
+-- 
+2.24.1
+

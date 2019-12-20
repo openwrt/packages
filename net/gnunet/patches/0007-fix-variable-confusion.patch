@@ -1,0 +1,25 @@
+From a6380e0e3c37fad3c8920dbb250878b680342b06 Mon Sep 17 00:00:00 2001
+From: Christian Grothoff <christian@grothoff.org>
+Date: Tue, 17 Dec 2019 12:45:02 +0100
+Subject: [PATCH 07/12] fix variable confusion
+
+---
+ src/util/gnunet-qr.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/util/gnunet-qr.c b/src/util/gnunet-qr.c
+index 2dcfc12db..122b81f39 100644
+--- a/src/util/gnunet-qr.c
++++ b/src/util/gnunet-qr.c
+@@ -170,7 +170,7 @@ gnunet_uri (void *cls,
+     GNUNET_array_grow (argv,
+                        argc,
+                        0);
+-    GNUNET_free (orig_uri);
++    GNUNET_free (u);
+   }
+   GNUNET_free (program);
+   if (NULL == p)
+-- 
+2.24.1
+

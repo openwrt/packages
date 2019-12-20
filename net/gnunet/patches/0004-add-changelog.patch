@@ -1,0 +1,335 @@
+From 7d28a76ad5f6fc5db4a207fbd81a31b70cdb3866 Mon Sep 17 00:00:00 2001
+From: "Schanzenbach, Martin" <mschanzenbach@posteo.de>
+Date: Mon, 16 Dec 2019 15:50:56 +0100
+Subject: [PATCH 04/12] add changelog
+
+---
+ ChangeLog      |  3 ++
+ po/POTFILES.in | 96 +++++++++++++++++++++++++-------------------------
+ 2 files changed, 51 insertions(+), 48 deletions(-)
+
+diff --git a/ChangeLog b/ChangeLog
+index be0e21e7b..3942f91de 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,3 +1,6 @@
++Mon Dec 16 09:33:36 2019 +0100
++  Fixed mysql build -schanzen
++
+ Sun Dec 15 12:36:48 2019 +0100
+   Released gnunet 0.12.0 -schanzen
+ 
+diff --git a/po/POTFILES.in b/po/POTFILES.in
+index 8489f49c3..441d0f91d 100644
+--- a/po/POTFILES.in
++++ b/po/POTFILES.in
+@@ -10,13 +10,21 @@ src/arm/arm_monitor_api.c
+ src/arm/gnunet-arm.c
+ src/arm/gnunet-service-arm.c
+ src/arm/mockup-service.c
++src/ats-tests/ats-testing-experiment.c
++src/ats-tests/ats-testing-log.c
++src/ats-tests/ats-testing-preferences.c
++src/ats-tests/ats-testing-traffic.c
++src/ats-tests/ats-testing.c
++src/ats-tests/gnunet-ats-sim.c
++src/ats-tests/gnunet-solver-eval.c
++src/ats-tool/gnunet-ats.c
+ src/ats/ats_api_connectivity.c
+ src/ats/ats_api_performance.c
+ src/ats/ats_api_scanner.c
+ src/ats/ats_api_scheduling.c
+ src/ats/gnunet-ats-solver-eval.c
+-src/ats/gnunet-service-ats_addresses.c
+ src/ats/gnunet-service-ats.c
++src/ats/gnunet-service-ats_addresses.c
+ src/ats/gnunet-service-ats_connectivity.c
+ src/ats/gnunet-service-ats_normalization.c
+ src/ats/gnunet-service-ats_performance.c
+@@ -25,14 +33,6 @@ src/ats/gnunet-service-ats_preferences.c
+ src/ats/gnunet-service-ats_reservations.c
+ src/ats/gnunet-service-ats_scheduling.c
+ src/ats/plugin_ats_proportional.c
+-src/ats-tests/ats-testing.c
+-src/ats-tests/ats-testing-experiment.c
+-src/ats-tests/ats-testing-log.c
+-src/ats-tests/ats-testing-preferences.c
+-src/ats-tests/ats-testing-traffic.c
+-src/ats-tests/gnunet-ats-sim.c
+-src/ats-tests/gnunet-solver-eval.c
+-src/ats-tool/gnunet-ats.c
+ src/auction/gnunet-auction-create.c
+ src/auction/gnunet-auction-info.c
+ src/auction/gnunet-auction-join.c
+@@ -49,8 +49,8 @@ src/cadet/cadet_api_list_peers.c
+ src/cadet/cadet_api_list_tunnels.c
+ src/cadet/cadet_test_lib.c
+ src/cadet/desirability_table.c
+-src/cadet/gnunet-cadet.c
+ src/cadet/gnunet-cadet-profiler.c
++src/cadet/gnunet-cadet.c
+ src/cadet/gnunet-service-cadet.c
+ src/cadet/gnunet-service-cadet_channel.c
+ src/cadet/gnunet-service-cadet_connection.c
+@@ -66,15 +66,15 @@ src/consensus/gnunet-service-consensus.c
+ src/consensus/plugin_block_consensus.c
+ src/conversation/conversation_api.c
+ src/conversation/conversation_api_call.c
+-src/conversation/gnunet-conversation.c
+ src/conversation/gnunet-conversation-test.c
+-src/conversation/gnunet_gst.c
+-src/conversation/gnunet_gst_test.c
+-src/conversation/gnunet-helper-audio-playback.c
++src/conversation/gnunet-conversation.c
+ src/conversation/gnunet-helper-audio-playback-gst.c
+-src/conversation/gnunet-helper-audio-record.c
++src/conversation/gnunet-helper-audio-playback.c
+ src/conversation/gnunet-helper-audio-record-gst.c
++src/conversation/gnunet-helper-audio-record.c
+ src/conversation/gnunet-service-conversation.c
++src/conversation/gnunet_gst.c
++src/conversation/gnunet_gst_test.c
+ src/conversation/microphone.c
+ src/conversation/plugin_gnsrecord_conversation.c
+ src/conversation/speaker.c
+@@ -104,7 +104,6 @@ src/dht/dht_api.c
+ src/dht/dht_test_lib.c
+ src/dht/gnunet-dht-get.c
+ src/dht/gnunet-dht-monitor.c
+-src/dht/gnunet_dht_profiler.c
+ src/dht/gnunet-dht-put.c
+ src/dht/gnunet-service-dht.c
+ src/dht/gnunet-service-dht_clients.c
+@@ -113,6 +112,7 @@ src/dht/gnunet-service-dht_hello.c
+ src/dht/gnunet-service-dht_neighbours.c
+ src/dht/gnunet-service-dht_nse.c
+ src/dht/gnunet-service-dht_routing.c
++src/dht/gnunet_dht_profiler.c
+ src/dht/plugin_block_dht.c
+ src/dns/dns_api.c
+ src/dns/gnunet-dns-monitor.c
+@@ -147,8 +147,8 @@ src/fs/gnunet-auto-share.c
+ src/fs/gnunet-daemon-fsprofiler.c
+ src/fs/gnunet-directory.c
+ src/fs/gnunet-download.c
+-src/fs/gnunet-fs.c
+ src/fs/gnunet-fs-profiler.c
++src/fs/gnunet-fs.c
+ src/fs/gnunet-helper-fs-publish.c
+ src/fs/gnunet-publish.c
+ src/fs/gnunet-search.c
+@@ -168,9 +168,9 @@ src/gns/gns_tld_api.c
+ src/gns/gnunet-bcd.c
+ src/gns/gnunet-dns2gns.c
+ src/gns/gnunet-gns-benchmark.c
+-src/gns/gnunet-gns.c
+ src/gns/gnunet-gns-import.c
+ src/gns/gnunet-gns-proxy.c
++src/gns/gnunet-gns.c
+ src/gns/gnunet-service-gns.c
+ src/gns/gnunet-service-gns_interceptor.c
+ src/gns/gnunet-service-gns_resolver.c
+@@ -186,8 +186,8 @@ src/gnsrecord/gnsrecord_serialization.c
+ src/gnsrecord/plugin_gnsrecord_dns.c
+ src/hello/address.c
+ src/hello/gnunet-hello.c
+-src/hello/hello.c
+ src/hello/hello-ng.c
++src/hello/hello.c
+ src/hostlist/gnunet-daemon-hostlist.c
+ src/hostlist/gnunet-daemon-hostlist_client.c
+ src/hostlist/gnunet-daemon-hostlist_server.c
+@@ -212,8 +212,8 @@ src/namecache/namecache_api.c
+ src/namecache/plugin_namecache_flat.c
+ src/namecache/plugin_namecache_postgres.c
+ src/namecache/plugin_namecache_sqlite.c
+-src/namestore/gnunet-namestore.c
+ src/namestore/gnunet-namestore-fcfsd.c
++src/namestore/gnunet-namestore.c
+ src/namestore/gnunet-service-namestore.c
+ src/namestore/gnunet-zoneimport.c
+ src/namestore/namestore_api.c
+@@ -239,17 +239,17 @@ src/nat/gnunet-service-nat_mini.c
+ src/nat/gnunet-service-nat_stun.c
+ src/nat/nat_api.c
+ src/nat/nat_api_stun.c
+-src/nse/gnunet-nse.c
+ src/nse/gnunet-nse-profiler.c
++src/nse/gnunet-nse.c
+ src/nse/gnunet-service-nse.c
+ src/nse/nse_api.c
+ src/nt/nt.c
+-src/peerinfo/gnunet-service-peerinfo.c
+-src/peerinfo/peerinfo_api.c
+-src/peerinfo/peerinfo_api_notify.c
+ src/peerinfo-tool/gnunet-peerinfo.c
+ src/peerinfo-tool/gnunet-peerinfo_plugins.c
+ src/peerinfo-tool/plugin_rest_peerinfo.c
++src/peerinfo/gnunet-service-peerinfo.c
++src/peerinfo/peerinfo_api.c
++src/peerinfo/peerinfo_api_notify.c
+ src/peerstore/gnunet-peerstore.c
+ src/peerstore/gnunet-service-peerstore.c
+ src/peerstore/peerstore_api.c
+@@ -297,22 +297,22 @@ src/revocation/gnunet-revocation.c
+ src/revocation/gnunet-service-revocation.c
+ src/revocation/plugin_block_revocation.c
+ src/revocation/revocation_api.c
+-src/rps/gnunet-rps.c
+ src/rps/gnunet-rps-profiler.c
++src/rps/gnunet-rps.c
+ src/rps/gnunet-service-rps.c
+ src/rps/gnunet-service-rps_custommap.c
+ src/rps/gnunet-service-rps_sampler.c
+ src/rps/gnunet-service-rps_sampler_elem.c
+ src/rps/gnunet-service-rps_view.c
+-src/rps/rps_api.c
+ src/rps/rps-sampler_client.c
+ src/rps/rps-sampler_common.c
+ src/rps/rps-test_util.c
++src/rps/rps_api.c
+ src/scalarproduct/gnunet-scalarproduct.c
+-src/scalarproduct/gnunet-service-scalarproduct_alice.c
+-src/scalarproduct/gnunet-service-scalarproduct_bob.c
+ src/scalarproduct/gnunet-service-scalarproduct-ecc_alice.c
+ src/scalarproduct/gnunet-service-scalarproduct-ecc_bob.c
++src/scalarproduct/gnunet-service-scalarproduct_alice.c
++src/scalarproduct/gnunet-service-scalarproduct_bob.c
+ src/scalarproduct/scalarproduct_api.c
+ src/secretsharing/gnunet-secretsharing-profiler.c
+ src/secretsharing/gnunet-service-secretsharing.c
+@@ -338,15 +338,16 @@ src/statistics/gnunet-statistics.c
+ src/statistics/statistics_api.c
+ src/template/gnunet-service-template.c
+ src/template/gnunet-template.c
++src/testbed-logger/gnunet-service-testbed-logger.c
++src/testbed-logger/testbed_logger_api.c
+ src/testbed/generate-underlay-topology.c
+ src/testbed/gnunet-daemon-latency-logger.c
+ src/testbed/gnunet-daemon-testbed-blacklist.c
+ src/testbed/gnunet-daemon-testbed-underlay.c
+ src/testbed/gnunet-helper-testbed.c
+-src/testbed/gnunet_mpi_test.c
+ src/testbed/gnunet-service-test-barriers.c
+-src/testbed/gnunet-service-testbed_barriers.c
+ src/testbed/gnunet-service-testbed.c
++src/testbed/gnunet-service-testbed_barriers.c
+ src/testbed/gnunet-service-testbed_cache.c
+ src/testbed/gnunet-service-testbed_connectionpool.c
+ src/testbed/gnunet-service-testbed_cpustatus.c
+@@ -354,20 +355,19 @@ src/testbed/gnunet-service-testbed_links.c
+ src/testbed/gnunet-service-testbed_meminfo.c
+ src/testbed/gnunet-service-testbed_oc.c
+ src/testbed/gnunet-service-testbed_peers.c
+-src/testbed/gnunet_testbed_mpi_spawn.c
+ src/testbed/gnunet-testbed-profiler.c
+-src/testbed-logger/gnunet-service-testbed-logger.c
+-src/testbed-logger/testbed_logger_api.c
+-src/testbed/testbed_api_barriers.c
++src/testbed/gnunet_mpi_test.c
++src/testbed/gnunet_testbed_mpi_spawn.c
+ src/testbed/testbed_api.c
++src/testbed/testbed_api_barriers.c
+ src/testbed/testbed_api_hosts.c
+ src/testbed/testbed_api_operations.c
+ src/testbed/testbed_api_peers.c
+ src/testbed/testbed_api_sd.c
+ src/testbed/testbed_api_services.c
+ src/testbed/testbed_api_statistics.c
+-src/testbed/testbed_api_testbed.c
+ src/testbed/testbed_api_test.c
++src/testbed/testbed_api_testbed.c
+ src/testbed/testbed_api_topology.c
+ src/testbed/testbed_api_underlay.c
+ src/testing/gnunet-testing.c
+@@ -379,34 +379,40 @@ src/transport/gnunet-communicator-tcp.c
+ src/transport/gnunet-communicator-udp.c
+ src/transport/gnunet-communicator-unix.c
+ src/transport/gnunet-helper-transport-bluetooth.c
+-src/transport/gnunet-helper-transport-wlan.c
+ src/transport/gnunet-helper-transport-wlan-dummy.c
++src/transport/gnunet-helper-transport-wlan.c
+ src/transport/gnunet-service-tng.c
+-src/transport/gnunet-service-transport_ats.c
+ src/transport/gnunet-service-transport.c
++src/transport/gnunet-service-transport_ats.c
+ src/transport/gnunet-service-transport_hello.c
+ src/transport/gnunet-service-transport_manipulation.c
+ src/transport/gnunet-service-transport_neighbours.c
+ src/transport/gnunet-service-transport_plugins.c
+ src/transport/gnunet-service-transport_validation.c
+-src/transport/gnunet-transport.c
+ src/transport/gnunet-transport-profiler.c
+ src/transport/gnunet-transport-wlan-receiver.c
+ src/transport/gnunet-transport-wlan-sender.c
++src/transport/gnunet-transport.c
+ src/transport/plugin_transport_http_client.c
+ src/transport/plugin_transport_http_common.c
+ src/transport/plugin_transport_http_server.c
+ src/transport/plugin_transport_smtp.c
+ src/transport/plugin_transport_tcp.c
+ src/transport/plugin_transport_template.c
+-src/transport/plugin_transport_udp_broadcasting.c
+ src/transport/plugin_transport_udp.c
++src/transport/plugin_transport_udp_broadcasting.c
+ src/transport/plugin_transport_unix.c
+ src/transport/plugin_transport_wlan.c
+ src/transport/tcp_connection_legacy.c
+ src/transport/tcp_server_legacy.c
+ src/transport/tcp_server_mst_legacy.c
+ src/transport/tcp_service_legacy.c
++src/transport/transport-testing-filenames.c
++src/transport/transport-testing-loggers.c
++src/transport/transport-testing-main.c
++src/transport/transport-testing-send.c
++src/transport/transport-testing.c
++src/transport/transport-testing2.c
+ src/transport/transport_api2_application.c
+ src/transport/transport_api2_communication.c
+ src/transport/transport_api2_core.c
+@@ -419,12 +425,6 @@ src/transport/transport_api_manipulation.c
+ src/transport/transport_api_monitor_peers.c
+ src/transport/transport_api_monitor_plugins.c
+ src/transport/transport_api_offer_hello.c
+-src/transport/transport-testing2.c
+-src/transport/transport-testing.c
+-src/transport/transport-testing-filenames.c
+-src/transport/transport-testing-loggers.c
+-src/transport/transport-testing-main.c
+-src/transport/transport-testing-send.c
+ src/util/bandwidth.c
+ src/util/benchmark.c
+ src/util/bio.c
+@@ -437,8 +437,8 @@ src/util/configuration_loader.c
+ src/util/container_bloomfilter.c
+ src/util/container_heap.c
+ src/util/container_meta_data.c
+-src/util/container_multihashmap32.c
+ src/util/container_multihashmap.c
++src/util/container_multihashmap32.c
+ src/util/container_multipeermap.c
+ src/util/container_multishortmap.c
+ src/util/container_multiuuidmap.c
+@@ -462,8 +462,8 @@ src/util/dnsparser.c
+ src/util/dnsstub.c
+ src/util/getopt.c
+ src/util/getopt_helpers.c
+-src/util/gnunet-config.c
+ src/util/gnunet-config-diff.c
++src/util/gnunet-config.c
+ src/util/gnunet-ecc.c
+ src/util/gnunet-qr.c
+ src/util/gnunet-resolver.c
+@@ -500,8 +500,8 @@ src/vpn/gnunet-helper-vpn.c
+ src/vpn/gnunet-service-vpn.c
+ src/vpn/gnunet-vpn.c
+ src/vpn/vpn_api.c
+-src/zonemaster/gnunet-service-zonemaster.c
+ src/zonemaster/gnunet-service-zonemaster-monitor.c
++src/zonemaster/gnunet-service-zonemaster.c
+ src/fs/fs_api.h
+ src/testbed/testbed_api.h
+ src/testbed/testbed_api_operations.h
+-- 
+2.24.1
+

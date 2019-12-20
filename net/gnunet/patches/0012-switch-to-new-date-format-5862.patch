@@ -1,0 +1,215 @@
+From f0f45c5113bdc7a6ac0e009b491fdb63d6d6a79a Mon Sep 17 00:00:00 2001
+From: Florian Dold <florian.dold@gmail.com>
+Date: Thu, 19 Dec 2019 12:55:00 +0100
+Subject: [PATCH 12/12] switch to new date format (#5862)
+
+---
+ src/json/json_generator.c | 44 ++++++++++---------
+ src/json/json_helper.c    | 90 +++++++++++++++++++++------------------
+ 2 files changed, 72 insertions(+), 62 deletions(-)
+
+diff --git a/src/json/json_generator.c b/src/json/json_generator.c
+index 6373d65d8..89fd53265 100644
+--- a/src/json/json_generator.c
++++ b/src/json/json_generator.c
+@@ -59,20 +59,22 @@ json_t *
+ GNUNET_JSON_from_time_abs (struct GNUNET_TIME_Absolute stamp)
+ {
+   json_t *j;
+-  char *mystr;
+-  int ret;
+ 
+   GNUNET_assert (GNUNET_OK ==
+                  GNUNET_TIME_round_abs (&stamp));
++
++  j = json_object ();
++
+   if (stamp.abs_value_us == GNUNET_TIME_UNIT_FOREVER_ABS.abs_value_us)
+-    return json_string ("/never/");
+-  ret = GNUNET_asprintf (&mystr,
+-                         "/Date(%llu)/",
+-                         (unsigned long long) (stamp.abs_value_us / (1000LL
+-                                                                     * 1000LL)));
+-  GNUNET_assert (ret > 0);
+-  j = json_string (mystr);
+-  GNUNET_free (mystr);
++  {
++    json_object_set_new (j,
++                         "t_ms",
++                         json_string ("never"));
++    return j;
++  }
++  json_object_set_new (j,
++                       "t_ms",
++                       json_integer ((json_int_t) (stamp.abs_value_us / 1000LL)));
+   return j;
+ }
+ 
+@@ -100,20 +102,22 @@ json_t *
+ GNUNET_JSON_from_time_rel (struct GNUNET_TIME_Relative stamp)
+ {
+   json_t *j;
+-  char *mystr;
+-  int ret;
+ 
+   GNUNET_assert (GNUNET_OK ==
+                  GNUNET_TIME_round_rel (&stamp));
++
++  j = json_object ();
++
+   if (stamp.rel_value_us == GNUNET_TIME_UNIT_FOREVER_REL.rel_value_us)
+-    return json_string ("/forever/");
+-  ret = GNUNET_asprintf (&mystr,
+-                         "/Delay(%llu)/",
+-                         (unsigned long long) (stamp.rel_value_us / (1000LL
+-                                                                     * 1000LL)));
+-  GNUNET_assert (ret > 0);
+-  j = json_string (mystr);
+-  GNUNET_free (mystr);
++  {
++    json_object_set_new (j,
++                         "d_ms",
++                         json_string ("forever"));
++    return j;
++  }
++  json_object_set_new (j,
++                       "d_ms",
++                       json_integer ((json_int_t) (stamp.rel_value_us / 1000LL)));
+   return j;
+ }
+ 
+diff --git a/src/json/json_helper.c b/src/json/json_helper.c
+index a9b933762..e7711a03e 100644
+--- a/src/json/json_helper.c
++++ b/src/json/json_helper.c
+@@ -561,41 +561,42 @@ parse_abs_time (void *cls,
+                 struct GNUNET_JSON_Specification *spec)
+ {
+   struct GNUNET_TIME_Absolute *abs = spec->ptr;
+-  const char *val;
++  json_t *json_t_ms;
+   unsigned long long int tval;
+ 
+-  val = json_string_value (root);
+-  if (NULL == val)
++  if (!json_is_object (root))
+   {
+     GNUNET_break_op (0);
+     return GNUNET_SYSERR;
+   }
+-  if ((0 == strcasecmp (val,
+-                        "/forever/")) ||
+-      (0 == strcasecmp (val,
+-                        "/end of time/")) ||
+-      (0 == strcasecmp (val,
+-                        "/never/")))
+-  {
+-    *abs = GNUNET_TIME_UNIT_FOREVER_ABS;
++  json_t_ms = json_object_get (root, "t_ms");
++  if (json_is_integer (json_t_ms))
++  {
++    tval = json_integer_value (json_t_ms);
++    /* Time is in milliseconds in JSON, but in microseconds in GNUNET_TIME_Absolute */
++    abs->abs_value_us = tval * 1000LL;
++    if ((abs->abs_value_us) / 1000LL != tval)
++    {
++      /* Integer overflow */
++      GNUNET_break_op (0);
++      return GNUNET_SYSERR;
++    }
+     return GNUNET_OK;
+   }
+-  if (1 != sscanf (val,
+-                   "/Date(%llu)/",
+-                   &tval))
++  if (json_is_string (json_t_ms))
+   {
++    const char *val;
++    val = json_string_value (json_t_ms);
++    if ((0 == strcasecmp (val, "never")))
++    {
++      *abs = GNUNET_TIME_UNIT_FOREVER_ABS;
++      return GNUNET_OK;
++    }
+     GNUNET_break_op (0);
+     return GNUNET_SYSERR;
+   }
+-  /* Time is in seconds in JSON, but in microseconds in GNUNET_TIME_Absolute */
+-  abs->abs_value_us = tval * 1000LL * 1000LL;
+-  if ((abs->abs_value_us) / 1000LL / 1000LL != tval)
+-  {
+-    /* Integer overflow */
+-    GNUNET_break_op (0);
+-    return GNUNET_SYSERR;
+-  }
+-  return GNUNET_OK;
++  GNUNET_break_op (0);
++  return GNUNET_SYSERR;
+ }
+ 
+ 
+@@ -715,37 +716,42 @@ parse_rel_time (void *cls,
+                 struct GNUNET_JSON_Specification *spec)
+ {
+   struct GNUNET_TIME_Relative *rel = spec->ptr;
+-  const char *val;
++  json_t *json_d_ms;
+   unsigned long long int tval;
+ 
+-  val = json_string_value (root);
+-  if (NULL == val)
++  if (!json_is_object (root))
+   {
+     GNUNET_break_op (0);
+     return GNUNET_SYSERR;
+   }
+-  if ((0 == strcasecmp (val,
+-                        "/forever/")))
+-  {
+-    *rel = GNUNET_TIME_UNIT_FOREVER_REL;
++  json_d_ms = json_object_get (root, "d_ms");
++  if (json_is_integer (json_d_ms))
++  {
++    tval = json_integer_value (json_d_ms);
++    /* Time is in milliseconds in JSON, but in microseconds in GNUNET_TIME_Absolute */
++    rel->rel_value_us = tval * 1000LL;
++    if ((rel->rel_value_us) / 1000LL != tval)
++    {
++      /* Integer overflow */
++      GNUNET_break_op (0);
++      return GNUNET_SYSERR;
++    }
+     return GNUNET_OK;
+   }
+-  if (1 != sscanf (val,
+-                   "/Delay(%llu)/",
+-                   &tval))
+-  {
+-    GNUNET_break_op (0);
+-    return GNUNET_SYSERR;
+-  }
+-  /* Time is in seconds in JSON, but in microseconds in GNUNET_TIME_Relative */
+-  rel->rel_value_us = tval * 1000LL * 1000LL;
+-  if ((rel->rel_value_us) / 1000LL / 1000LL != tval)
++  if (json_is_string (json_d_ms))
+   {
+-    /* Integer overflow */
++    const char *val;
++    val = json_string_value (json_d_ms);
++    if ((0 == strcasecmp (val, "forever")))
++    {
++      *rel = GNUNET_TIME_UNIT_FOREVER_REL;
++      return GNUNET_OK;
++    }
+     GNUNET_break_op (0);
+     return GNUNET_SYSERR;
+   }
+-  return GNUNET_OK;
++  GNUNET_break_op (0);
++  return GNUNET_SYSERR;
+ }
+ 
+ 
+-- 
+2.24.1
+

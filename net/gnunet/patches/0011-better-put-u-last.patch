@@ -1,0 +1,25 @@
+From c80982c74a02eab0a457fb9a3c3671956b2909ee Mon Sep 17 00:00:00 2001
+From: Christian Grothoff <christian@grothoff.org>
+Date: Wed, 18 Dec 2019 15:27:27 +0100
+Subject: [PATCH 11/12] better put -u last
+
+---
+ src/namestore/namestore.conf.in | 2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/src/namestore/namestore.conf.in b/src/namestore/namestore.conf.in
+index 39de06c6d..733e4e2f8 100644
+--- a/src/namestore/namestore.conf.in
++++ b/src/namestore/namestore.conf.in
+@@ -36,7 +36,7 @@ TEMPORARY_TABLE = NO
+ ASYNC_COMMIT = NO
+ 
+ [uri]
+-gns = gnunet-namestore -u -e 1a
++gns = gnunet-namestore -e 1a -u
+ 
+ 
+ [fcfsd]
+-- 
+2.24.1
+

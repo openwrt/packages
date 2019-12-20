@@ -1,0 +1,58 @@
+From 4446d990f39b4b39a2988c49faac4d1f8a71e31f Mon Sep 17 00:00:00 2001
+From: Christian Grothoff <christian@grothoff.org>
+Date: Sun, 15 Dec 2019 23:26:12 +0100
+Subject: [PATCH 02/12] fix sigpipe crash
+
+---
+ src/util/gnunet-qr.c | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/src/util/gnunet-qr.c b/src/util/gnunet-qr.c
+index be28a6e53..cdeea4db1 100644
+--- a/src/util/gnunet-qr.c
++++ b/src/util/gnunet-qr.c
+@@ -30,7 +30,7 @@
+ #include "gnunet_util_lib.h"
+ 
+ #define LOG(fmt, ...)  \
+-  if (verbose == true) \
++  if (verbose) \
+     printf (fmt, ## __VA_ARGS__)
+ 
+ /**
+@@ -41,7 +41,7 @@ static char *device = "/dev/video0";
+ /**
+  * --verbose option
+  */
+-static int verbose = false;
++static unsigned int verbose;
+ 
+ /**
+  * --silent option
+@@ -79,6 +79,11 @@ maint_child_death (void *cls)
+   if ((GNUNET_OK != GNUNET_OS_process_status (p, &type, &exit_code)) ||
+       (type != GNUNET_OS_PROCESS_EXITED))
+     GNUNET_break (0 == GNUNET_OS_process_kill (p, GNUNET_TERM_SIG));
++  if (NULL != sigpipe)
++  {
++    GNUNET_DISK_pipe_close (sigpipe);
++    sigpipe = NULL;
++  }
+   GNUNET_OS_process_destroy (p);
+ }
+ 
+@@ -126,6 +131,11 @@ gnunet_uri (void *cls,
+     return;
+   }
+   GNUNET_free (subsystem);
++  sigpipe = GNUNET_DISK_pipe (GNUNET_NO,
++                              GNUNET_NO,
++                              GNUNET_NO,
++                              GNUNET_NO);
++  GNUNET_assert (NULL != sigpipe);
+   rt = GNUNET_SCHEDULER_add_read_file (
+     GNUNET_TIME_UNIT_FOREVER_REL,
+     GNUNET_DISK_pipe_handle (sigpipe, GNUNET_DISK_PIPE_END_READ),
+-- 
+2.24.1
+
