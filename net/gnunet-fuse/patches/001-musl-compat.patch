@@ -1,9 +1,9 @@
 --- a/src/fuse/mutex.c
 +++ b/src/fuse/mutex.c
-@@ -71,8 +71,13 @@ GNUNET_mutex_create (int isRecursive)
+@@ -68,8 +68,13 @@ GNUNET_mutex_create (int isRecursive)
    if (isRecursive)
      {
- #if LINUX
+ #ifdef __linux__
 +#if defined(__UCLIBC__) || defined(__GLIBC__)
        GNUNET_assert (0 == pthread_mutexattr_setkind_np
  		     (&attr, PTHREAD_MUTEX_RECURSIVE_NP));
@@ -11,13 +11,13 @@
 +      GNUNET_assert (0 == pthread_mutexattr_settype
 +		     (&attr, PTHREAD_MUTEX_RECURSIVE));
 +#endif
- #elif SOMEBSD || GNUNET_freeBSD || GNUNET_freeBSD5
-       GNUNET_assert (0 == pthread_mutexattr_setkind_np
+ #elif BSD || SOLARIS || OSX || WINDOWS
+       GNUNET_assert (0 == pthread_mutexattr_settype
  		     (&attr, PTHREAD_MUTEX_RECURSIVE));
-@@ -84,11 +89,16 @@ GNUNET_mutex_create (int isRecursive)
+@@ -78,11 +83,16 @@ GNUNET_mutex_create (int isRecursive)
    else
      {
- #if LINUX
+ #ifdef __linux__
 +#if defined(__UCLIBC__) || defined(__GLIBC__)
        GNUNET_assert (0 == pthread_mutexattr_setkind_np
  		     (&attr, PTHREAD_MUTEX_ERRORCHECK_NP));
