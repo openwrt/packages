@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
 PKG_VERSION:=4.11.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.heanet.ie/mirrors/ftp.samba.org/stable/ \
@@ -59,6 +59,7 @@ define Package/samba4-libs
   $(call Package/samba4/Default)
   TITLE+= libs
   DEPENDS:= +libtirpc +libreadline +libpopt +libcap +zlib +libgnutls +libtasn1 +libuuid +libopenssl +USE_GLIBC:libpthread \
+	+PACKAGE_libpam:libpam \
 	+SAMBA4_SERVER_VFS:attr \
 	+SAMBA4_SERVER_VFSX:libaio \
 	+SAMBA4_SERVER_AVAHI:libavahi-client \
