@@ -14,7 +14,7 @@ PKG_RELEASE:=3
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
+PKG_MAINTAINER:=
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
 PKG_SOURCE_URL:=http://archive.ubuntu.com/ubuntu/pool/universe/h/$(PKG_NAME)

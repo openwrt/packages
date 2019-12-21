@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.samba.org/pub/linux-cifs/cifs-utils/
 PKG_HASH:=18d8f1bf92c13c4d611502dbd6759e3a766ddc8467ec8a2eda3f589e40b9ac9c
 
-PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
+PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:debian:cifs-utils

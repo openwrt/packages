@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://www.coker.com.au/bonnie++/
 PKG_HASH:=6e0bcbc08b78856fd998dd7bcb352d4615a99c26c2dc83d5b8345b102bad0b04
 
-PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
+PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=copyright.txt
 

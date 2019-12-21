@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/stoken
 PKG_HASH:=aa2b481b058e4caf068f7e747a2dcf5772bcbf278a4f89bc9efcbf82bcc9ef5a
 
-PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
+PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.1
 PKG_INSTALL:=1
 
