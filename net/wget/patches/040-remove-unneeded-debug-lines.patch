@@ -1,0 +1,32 @@
+From 562eacb76a2b64d5dc80a443f0f739bc9ef76c17 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim=20R=C3=BChsen?= <tim.ruehsen@gmx.de>
+Date: Fri, 5 Apr 2019 13:01:57 +0200
+Subject: * src/iri.c (do_conversion): Remove unneeded debug lines
+
+---
+ src/iri.c | 5 -----
+ 1 file changed, 5 deletions(-)
+
+--- a/src/iri.c
++++ b/src/iri.c
+@@ -151,11 +151,8 @@ do_conversion (const char *tocode, const
+   *out = s = xmalloc (outlen + 1);
+   done = 0;
+ 
+-  DEBUGP (("iconv %s -> %s\n", tocode, fromcode));
+-
+   for (;;)
+     {
+-      DEBUGP (("iconv outlen=%d inlen=%d\n", outlen, inlen));
+       if (iconv (cd, (ICONV_CONST char **) &in, &inlen, out, &outlen) != (size_t)(-1) &&
+           iconv (cd, NULL, NULL, out, &outlen) != (size_t)(-1))
+         {
+@@ -190,8 +187,6 @@ do_conversion (const char *tocode, const
+         }
+       else if (errno == E2BIG) /* Output buffer full */
+         {
+-          logprintf (LOG_VERBOSE,
+-                    _("Reallocate output buffer len=%d outlen=%d inlen=%d\n"), len, outlen, inlen);
+           tooshort++;
+           done = len;
+           len = done + inlen * 2;
