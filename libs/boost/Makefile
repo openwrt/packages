@@ -120,7 +120,7 @@ define Package/boost/config
 	# Invisible config dependency
 	config boost-context-exclude
 		bool
-		default y if (TARGET_arc700 || TARGET_archs38 || TARGET_octeon || TARGET_octeontx)
+		default y if (TARGET_arc770 || TARGET_archs38 || TARGET_octeon || TARGET_octeontx)
 		default n
 
 	config boost-coroutine-exclude
