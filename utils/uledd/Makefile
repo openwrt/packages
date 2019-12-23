@@ -5,10 +5,10 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://github.com/blogic/uledd.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=bc94c7e52009f7ec33b23652502b4754351d8040
-PKG_MIRROR_HASH:=23a407197d6a423bb0b32f381e93ad3676e15f07465d7b53c843a2b510c7c284
+PKG_SOURCE_VERSION:=b7abc41ac4e04131e5a81f0f1de4e4ffb6ae16eb
+PKG_MIRROR_HASH:=751d6336619f282aa571cbd3aa64df9b326da74fc56477a425d49cb2b0a12aea
 PKG_MAINTAINER:=John Crispin <john@phrozen.org>
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=LGPL-2.1-only
 
 CMAKE_INSTALL:=1
 
@@ -18,7 +18,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/uledd
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libubox +libubus
+  DEPENDS:=+libubox +libubus +libblobmsg-json +libjson-c
   TITLE:=PWM/RGB LED ubus frontend
 endef
 
