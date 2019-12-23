@@ -24,7 +24,7 @@ Stubby](https://dnsprivacy.org/wiki/display/DP/About+Stubby) page.
 Installation of this package can be achieved at the command line using `opkg
 install stubby`, or via the LUCI Web Interface. Installing the stubby package
 will also install the required dependency packages, including the
-`ca-certificates` package.
+`ca-bundle` package.
 
 ## Configuration
 
