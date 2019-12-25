@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rpcsvc-proto
 PKG_VERSION:=1.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://github.com/thkukuk/rpcsvc-proto/releases/download/v$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -19,6 +19,7 @@ PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=rpcsvc-proto/host
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/host-build.mk
 
 define Package/rpcsvc-proto
@@ -26,6 +27,7 @@ define Package/rpcsvc-proto
   CATEGORY:=Libraries
   TITLE:=rpcgen and rpcsvc proto.x files from glibc
   URL:=https://github.com/thkukuk/rpcsvc-proto
+  DEPENDS:=$(INTL_DEPENDS)
 endef
 
 define Package/rpcsvc-proto/description
