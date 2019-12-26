@@ -275,7 +275,7 @@ define GoPackage/Build/Compile
 			mips|mipsle)     installsuffix="$(GO_MIPS)" ;; \
 			mips64|mips64le) installsuffix="$(GO_MIPS64)" ;; \
 			esac ; \
-			ldflags="all=-linkmode external -extldflags '$(TARGET_LDFLAGS)'" ; \
+			ldflags="-linkmode external -extldflags '$(TARGET_LDFLAGS)'" ; \
 			pkg_gcflags="$(GO_PKG_GCFLAGS)" ; \
 			pkg_ldflags="$(GO_PKG_LDFLAGS)" ; \
 			for def in $(GO_PKG_LDFLAGS_X); do \
@@ -284,10 +284,10 @@ define GoPackage/Build/Compile
 			go install \
 				$$$${installsuffix:+-installsuffix $$$$installsuffix} \
 				-trimpath \
-				-ldflags "$$$$ldflags" \
+				-ldflags "all=$$$$ldflags" \
 				-v \
 				$$$${pkg_gcflags:+-gcflags "$$$$pkg_gcflags"} \
-				$$$${pkg_ldflags:+-ldflags "$$$$pkg_ldflags"} \
+				$$$${pkg_ldflags:+-ldflags "$$$$pkg_ldflags $$$$ldflags"} \
 				$(1) \
 				$$$$targets ; \
 			retval=$$$$? ; \
