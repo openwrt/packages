@@ -1,0 +1,23 @@
+--- a/src/libs/zbxsysinfo/common/net.c
++++ b/src/libs/zbxsysinfo/common/net.c
+@@ -547,7 +547,7 @@ static int	dns_query(AGENT_REQUEST *request, AGENT_RESULT *result, int short_ans
+ 		return SYSINFO_RET_FAIL;
+ 	}
+ 
+-#if defined(HAVE_RES_NINIT) && !defined(_AIX)
++#if defined(HAVE_RES_NINIT) && !defined(_AIX) && !defined(__UCLIBC__)
+ 	if (-1 == (res = res_nmkquery(&res_state_local, QUERY, zone, C_IN, type, NULL, 0, NULL, buf, sizeof(buf))))
+ #else
+ 	if (-1 == (res = res_mkquery(QUERY, zone, C_IN, type, NULL, 0, NULL, buf, sizeof(buf))))
+@@ -643,7 +643,11 @@ static int	dns_query(AGENT_REQUEST *request, AGENT_RESULT *result, int short_ans
+ 	res_state_local.retrans = retrans;
+ 	res_state_local.retry = retry;
+ 
++#ifndef __UCLIBC__
+ 	res = res_nsend(&res_state_local, buf, res, answer.buffer, sizeof(answer.buffer));
++#else
++	res = res_search(*res_state_local.dnsrch, res, 0, answer.buffer, sizeof(answer.buffer));
++#endif
+ 
+ #	ifdef HAVE_RES_U_EXT	/* Linux */
+ 	if (NULL != ip && '\0' != *ip && AF_INET6 == ip_type)
