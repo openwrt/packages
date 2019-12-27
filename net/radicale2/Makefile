@@ -52,8 +52,14 @@ endef
 
 define Package/radicale2/description
 $(call Package/radicale2-meta/description)
-.
+
 This package contains the python files.
+
+Note that md5 encryption of passwords requires passlib, and
+bcrypt encryption requires passlib + bcrypt.  These are not
+added as hard dependencies as users may be running radicale2
+with a web server doing the authentication instead of radicale2.
+
 endef
 
 define Package/radicale2-examples/description
