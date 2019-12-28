@@ -4,12 +4,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=passlib
-PKG_VERSION:=1.7.1
+PKG_VERSION:=1.7.2
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=3d948f64138c25633613f303bcc471126eae67c04d5e3f6b7b8ce6242f8653e0
+PKG_HASH:=8d666cef936198bc2ab47ee9b0410c94adf2ba798e5a84bf220be079ae7ab6a8
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
