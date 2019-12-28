@@ -1,4 +1,4 @@
-From a2cf8bf645d25f18cbc2ed7ad4b9a25725811afd Mon Sep 17 00:00:00 2001
+From 5169e5328525af28f6b7de087ece10a9bc0a2282 Mon Sep 17 00:00:00 2001
 From: Moritz Warning <moritzwarning@web.de>
 Date: Wed, 2 May 2018 16:06:46 +0200
 Subject: [PATCH 4/4] accept external linker flags
@@ -8,10 +8,10 @@ Subject: [PATCH 4/4] accept external linker flags
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/make-linux.mk b/make-linux.mk
-index 49e14f70..8e766bfb 100644
+index fd164dfa..29ff8813 100644
 --- a/make-linux.mk
 +++ b/make-linux.mk
-@@ -67,7 +67,7 @@ else
+@@ -81,7 +81,7 @@ else
  	override CFLAGS+=-Wall -Wno-deprecated -pthread $(INCLUDES) -DNDEBUG $(DEFS)
  	CXXFLAGS?=-O3 -fstack-protector
  	override CXXFLAGS+=-Wall -Wno-deprecated -std=c++11 -pthread $(INCLUDES) -DNDEBUG $(DEFS)
@@ -21,5 +21,5 @@ index 49e14f70..8e766bfb 100644
  	STRIP+=--strip-all
  endif
 -- 
-2.17.0
+2.22.0
 
