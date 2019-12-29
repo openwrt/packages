@@ -1,0 +1,79 @@
+From 01d0b036179e12284880fb2d29ae579399e5fe91 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 25 Oct 2019 15:05:14 -0700
+Subject: [PATCH] SunRiseSet: Use round instead of std::round.
+
+The latter is not available with uClibc-ng.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ main/SunRiseSet.cpp | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/main/SunRiseSet.cpp b/main/SunRiseSet.cpp
+index 14fe07fee7..dce69bc7ba 100644
+--- a/main/SunRiseSet.cpp
++++ b/main/SunRiseSet.cpp
+@@ -144,7 +144,7 @@ bool SunRiseSet::GetSunRiseSet(const double latit, const double longit, const in
+ 	//astrlen = day_astronomical_twilight_length(year,month,day,longit,latit);
+ 
+ 	double _tmpH;
+-	result.DaylengthMins = static_cast<int>(std::round(modf(daylen, &_tmpH)*60));
++	result.DaylengthMins = static_cast<int>(round(modf(daylen, &_tmpH)*60));
+ 	result.DaylengthHours = static_cast<int>(_tmpH);
+ 
+ 	rs = sun_rise_set(year, month, day, longit, latit, &rise, &set);
+@@ -154,14 +154,14 @@ bool SunRiseSet::GetSunRiseSet(const double latit, const double longit, const in
+ 
+ 	rise = UtcToLocal(rise, timezone);
+ 	set = UtcToLocal(set, timezone);
+-	result.SunAtSouthMin = static_cast<int>(std::round(modf((rise+set)/2.0, &_tmpH)*60));
++	result.SunAtSouthMin = static_cast<int>(round(modf((rise+set)/2.0, &_tmpH)*60));
+ 	result.SunAtSouthHour = static_cast<int>(_tmpH);
+ 
+ 	switch(rs) {
+ 		case 0:
+-			result.SunRiseMin = static_cast<int>(std::round(modf(rise, &_tmpH)*60));
++			result.SunRiseMin = static_cast<int>(round(modf(rise, &_tmpH)*60));
+ 			result.SunRiseHour = static_cast<int>(_tmpH);
+-			result.SunSetMin = static_cast<int>(std::round(modf(set, &_tmpH)*60));
++			result.SunSetMin = static_cast<int>(round(modf(set, &_tmpH)*60));
+ 			result.SunSetHour = static_cast<int>(_tmpH);
+ 			//fix a possible rounding issue above
+ 			if (result.SunRiseMin > 59)
+@@ -189,9 +189,9 @@ bool SunRiseSet::GetSunRiseSet(const double latit, const double longit, const in
+ 		case 0:
+ 			civ_start = UtcToLocal(civ_start, timezone);
+ 			civ_end = UtcToLocal(civ_end, timezone);
+-			result.CivilTwilightStartMin = static_cast<int>(std::round(modf(civ_start, &_tmpH)*60));
++			result.CivilTwilightStartMin = static_cast<int>(round(modf(civ_start, &_tmpH)*60));
+ 			result.CivilTwilightStartHour = static_cast<int>(_tmpH);
+-			result.CivilTwilightEndMin = static_cast<int>(std::round(modf(civ_end, &_tmpH)*60));
++			result.CivilTwilightEndMin = static_cast<int>(round(modf(civ_end, &_tmpH)*60));
+ 			result.CivilTwilightEndHour = static_cast<int>(_tmpH);
+ 			break;
+ 		case +1:
+@@ -208,9 +208,9 @@ bool SunRiseSet::GetSunRiseSet(const double latit, const double longit, const in
+ 		case 0:
+ 			naut_start = UtcToLocal(naut_start, timezone);
+ 			naut_end = UtcToLocal(naut_end, timezone);
+-			result.NauticalTwilightStartMin = static_cast<int>(std::round(modf(naut_start, &_tmpH)*60));
++			result.NauticalTwilightStartMin = static_cast<int>(round(modf(naut_start, &_tmpH)*60));
+ 			result.NauticalTwilightStartHour = static_cast<int>(_tmpH);
+-			result.NauticalTwilightEndMin = static_cast<int>(std::round(modf(naut_end, &_tmpH)*60));
++			result.NauticalTwilightEndMin = static_cast<int>(round(modf(naut_end, &_tmpH)*60));
+ 			result.NauticalTwilightEndHour = static_cast<int>(_tmpH);
+ 			break;
+ 		case +1:
+@@ -227,9 +227,9 @@ bool SunRiseSet::GetSunRiseSet(const double latit, const double longit, const in
+ 		case 0:
+ 			astr_start = UtcToLocal(astr_start, timezone);
+ 			astr_end = UtcToLocal(astr_end, timezone);
+-			result.AstronomicalTwilightStartMin = static_cast<int>(std::round(modf(astr_start, &_tmpH)*60));
++			result.AstronomicalTwilightStartMin = static_cast<int>(round(modf(astr_start, &_tmpH)*60));
+ 			result.AstronomicalTwilightStartHour = static_cast<int>(_tmpH);
+-			result.AstronomicalTwilightEndMin = static_cast<int>(std::round(modf(astr_end, &_tmpH)*60));
++			result.AstronomicalTwilightEndMin = static_cast<int>(round(modf(astr_end, &_tmpH)*60));
+ 			result.AstronomicalTwilightEndHour = static_cast<int>(_tmpH);
+ 			break;
+ 		case +1:
