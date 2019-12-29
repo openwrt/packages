@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg4
-PKG_VERSION:=4.2
+PKG_VERSION:=4.2.1
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=
@@ -15,7 +15,7 @@ PKG_LICENSE_FILES:=COPYING.GPLv2 COPYING.GPLv3 COPYING.LGPLv2.1 COPYING.LGPLv3
 
 PKG_SOURCE:=ffmpeg-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.ffmpeg.org/releases/
-PKG_HASH:=023f10831a97ad93d798f53a3640e55cd564abfeba807ecbe8524dac4fedecd5
+PKG_HASH:=cec7c87e9b60d174509e263ac4011b522385fd0775292e1670ecc1180c9bb6d4
 PKG_BUILD_DIR:=$(BUILD_DIR)/ffmpeg-$(PKG_VERSION)
 
 PKG_FIXUP:=autoreconf
@@ -208,7 +208,7 @@ CONFIGURE_ARGS += \
 	--enable-parser=vorbis,vp8,vp9 \
 	--enable-protocol=async,cache,concat,data \
 	--enable-protocol=file,hls,http,https,icecast \
-	--enable-protocol=pipe,rtmp,tcp,udp,unix \
+	--enable-protocol=pipe,rtmp,rtmps,tcp,udp,unix \
 	--enable-bsf=aac_adtstoasc,chomp,dca_core \
 	--enable-bsf=dump_extradata,eac3_core,extract_extradata \
 	--enable-bsf=h264_metadata,h264_mp4toannexb,hevc_mp4toannexb \
