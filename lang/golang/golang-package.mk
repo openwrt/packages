@@ -275,7 +275,7 @@ define GoPackage/Build/Compile
 			mips|mipsle)     installsuffix="$(GO_MIPS)" ;; \
 			mips64|mips64le) installsuffix="$(GO_MIPS64)" ;; \
 			esac ; \
-			ldflags="-linkmode external -extldflags '$(TARGET_LDFLAGS)'" ; \
+			ldflags="-linkmode external -extldflags '$(TARGET_LDFLAGS:-z%=-Wl,-z,%)'" ; \
 			pkg_gcflags="$(GO_PKG_GCFLAGS)" ; \
 			pkg_ldflags="$(GO_PKG_LDFLAGS)" ; \
 			for def in $(GO_PKG_LDFLAGS_X); do \
