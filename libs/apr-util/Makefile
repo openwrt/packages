@@ -39,14 +39,9 @@ CONFIGURE_ARGS += \
 	--with-pgsql=no \
 	--with-apr="$(STAGING_DIR)/usr/bin/apr-1-config" \
 	--with-expat="$(STAGING_DIR)/usr" \
+	--with-iconv="$(ICONV_PREFIX)" \
 	--without-sqlite2 \
 	--with-sqlite3="$(STAGING_DIR)/usr"
-
-ifdef $(CONFIG_BUILD_NLS)
-	CONFIGURE_ARGS += --with-iconv="$(ICONV_PREFIX)"
-else
-	CONFIGURE_ARGS += --without-iconv
-endif
 
 CONFIGURE_VARS += \
 	ac_cv_file_dbd_apr_dbd_mysql_c=no \
