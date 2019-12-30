@@ -1,0 +1,30 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/pst/projects/openwrt-pst/packages/net/nginx-utils/src/px5g-openssl.hpp
+string
+-
+openssl/bio.h
+-
+openssl/x509.h
+-
+openssl/pem.h
+-
+openssl/err.h
+-
+
+/home/pst/projects/openwrt-pst/packages/net/nginx-utils/src/px5g.cpp
+string
+-
+stdexcept
+-
+iostream
+-
+px5g-openssl.hpp
+/home/pst/projects/openwrt-pst/packages/net/nginx-utils/src/px5g-openssl.hpp
+

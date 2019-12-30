@@ -1,1 +1,1 @@
-/usr/bin/c++    -rdynamic CMakeFiles/nginx-ssl-util.dir/nginx-ssl-util.cpp.o  -o nginx-ssl-util -lpcre 
+/usr/bin/c++    -rdynamic CMakeFiles/nginx-ssl-util.dir/nginx-ssl-util.cpp.o  -o nginx-ssl-util -Wl,-rpath,/usr/local/lib: -lubox /usr/local/lib/libubus.so -lpcre -lssl -lcrypto -lpthread 

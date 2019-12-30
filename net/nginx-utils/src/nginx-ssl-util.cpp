@@ -6,10 +6,10 @@
 #include <iostream>
 #include <string>
 // #include <regex>
-#include "common.hpp"
 #include "regex-pcre.hpp"
+#include "nginx-utils-common.hpp"
 #ifdef openwrt
-#include "ubus.hpp"
+#include "ubus-cxx.hpp"
 #endif
 
 using namespace std;

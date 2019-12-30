@@ -9,7 +9,7 @@ set(CMAKE_MAKEFILE_DEPENDS
   "CMakeCache.txt"
   "CMakeFiles/3.14.6/CMakeCXXCompiler.cmake"
   "CMakeFiles/3.14.6/CMakeSystem.cmake"
-  "/home/shared/projects/openwrt-pst/packages/net/nginx-utils/src/CMakeLists.txt"
+  "/home/pst/projects/openwrt-pst/packages/net/nginx-utils/src/CMakeLists.txt"
   "/usr/share/cmake/Modules/CMakeCXXInformation.cmake"
   "/usr/share/cmake/Modules/CMakeCheckCompilerFlagCommonPatterns.cmake"
   "/usr/share/cmake/Modules/CMakeCommonLanguageInclude.cmake"
@@ -42,5 +42,6 @@ set(CMAKE_MAKEFILE_PRODUCTS
 
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
+  "CMakeFiles/px5g.dir/DependInfo.cmake"
   "CMakeFiles/nginx-ssl-util.dir/DependInfo.cmake"
   )

@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/px5g.dir/px5g.cpp.o  -o px5g -lssl -lcrypto 

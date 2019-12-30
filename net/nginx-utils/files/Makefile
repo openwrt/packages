@@ -48,10 +48,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/shared/projects/openwrt-pst/packages/net/nginx-utils/src
+CMAKE_SOURCE_DIR = /home/pst/projects/openwrt-pst/packages/net/nginx-utils/src
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files
+CMAKE_BINARY_DIR = /home/pst/projects/openwrt-pst/packages/net/nginx-utils/files
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -68,16 +68,17 @@ install/strip/fast: preinstall/fast
 	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
 .PHONY : install/strip/fast
 
-# Special rule for the target edit_cache
-edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
-.PHONY : edit_cache
+# Special rule for the target install/local
+install/local: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
+	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local
 
-# Special rule for the target edit_cache
-edit_cache/fast: edit_cache
-
-.PHONY : edit_cache/fast
+# Special rule for the target install/local
+install/local/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
+	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local/fast
 
 # Special rule for the target rebuild_cache
 rebuild_cache:
@@ -90,6 +91,17 @@ rebuild_cache/fast: rebuild_cache
 
 .PHONY : rebuild_cache/fast
 
+# Special rule for the target edit_cache
+edit_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
+	/usr/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+.PHONY : edit_cache
+
+# Special rule for the target edit_cache
+edit_cache/fast: edit_cache
+
+.PHONY : edit_cache/fast
+
 # Special rule for the target list_install_components
 list_install_components:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Available install components are: \"Unspecified\""
@@ -99,18 +111,6 @@ list_install_components:
 list_install_components/fast: list_install_components
 
 .PHONY : list_install_components/fast
-
-# Special rule for the target install/local
-install/local: preinstall
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
-	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
-.PHONY : install/local
-
-# Special rule for the target install/local
-install/local/fast: preinstall/fast
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
-	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
-.PHONY : install/local/fast
 
 # Special rule for the target install
 install: preinstall
@@ -126,9 +126,9 @@ install/fast: preinstall/fast
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/pst/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles /home/pst/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/pst/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -155,6 +155,19 @@ preinstall/fast:
 depend:
 	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
+
+#=============================================================================
+# Target rules for targets named px5g
+
+# Build rule for target.
+px5g: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 px5g
+.PHONY : px5g
+
+# fast build rule for target.
+px5g/fast:
+	$(MAKE) -f CMakeFiles/px5g.dir/build.make CMakeFiles/px5g.dir/build
+.PHONY : px5g/fast
 
 #=============================================================================
 # Target rules for targets named nginx-ssl-util
@@ -196,6 +209,33 @@ nginx-ssl-util.cpp.s:
 	$(MAKE) -f CMakeFiles/nginx-ssl-util.dir/build.make CMakeFiles/nginx-ssl-util.dir/nginx-ssl-util.cpp.s
 .PHONY : nginx-ssl-util.cpp.s
 
+px5g.o: px5g.cpp.o
+
+.PHONY : px5g.o
+
+# target to build an object file
+px5g.cpp.o:
+	$(MAKE) -f CMakeFiles/px5g.dir/build.make CMakeFiles/px5g.dir/px5g.cpp.o
+.PHONY : px5g.cpp.o
+
+px5g.i: px5g.cpp.i
+
+.PHONY : px5g.i
+
+# target to preprocess a source file
+px5g.cpp.i:
+	$(MAKE) -f CMakeFiles/px5g.dir/build.make CMakeFiles/px5g.dir/px5g.cpp.i
+.PHONY : px5g.cpp.i
+
+px5g.s: px5g.cpp.s
+
+.PHONY : px5g.s
+
+# target to generate assembly for a file
+px5g.cpp.s:
+	$(MAKE) -f CMakeFiles/px5g.dir/build.make CMakeFiles/px5g.dir/px5g.cpp.s
+.PHONY : px5g.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -203,15 +243,19 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... install/strip"
-	@echo "... edit_cache"
+	@echo "... install/local"
+	@echo "... px5g"
 	@echo "... nginx-ssl-util"
 	@echo "... rebuild_cache"
+	@echo "... edit_cache"
 	@echo "... list_install_components"
-	@echo "... install/local"
 	@echo "... install"
 	@echo "... nginx-ssl-util.o"
 	@echo "... nginx-ssl-util.i"
 	@echo "... nginx-ssl-util.s"
+	@echo "... px5g.o"
+	@echo "... px5g.i"
+	@echo "... px5g.s"
 .PHONY : help
 
 

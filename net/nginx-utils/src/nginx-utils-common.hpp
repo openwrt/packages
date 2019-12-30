@@ -1,6 +1,6 @@
 
-#ifndef __COMMON_H
-#define __COMMON_H
+#ifndef __NGINX_UTILS_COMMON_H
+#define __NGINX_UTILS_COMMON_H
 
 #include <iostream>
 #include <string>

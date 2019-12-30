@@ -1,7 +1,8 @@
-/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/install/strip.dir
-/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/edit_cache.dir
-/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/nginx-ssl-util.dir
-/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/rebuild_cache.dir
-/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/list_install_components.dir
-/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/install/local.dir
-/home/shared/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/install.dir
+/home/pst/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/install/strip.dir
+/home/pst/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/install/local.dir
+/home/pst/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/px5g.dir
+/home/pst/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/nginx-ssl-util.dir
+/home/pst/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/rebuild_cache.dir
+/home/pst/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/edit_cache.dir
+/home/pst/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/list_install_components.dir
+/home/pst/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/install.dir

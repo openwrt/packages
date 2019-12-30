@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/pst/projects/openwrt-pst/packages/net/nginx-utils/src/nginx-ssl-util.cpp" "/home/pst/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/nginx-ssl-util.dir/nginx-ssl-util.cpp.o"
+  "/home/pst/projects/openwrt-pst/packages/net/nginx-utils/src/px5g.cpp" "/home/pst/projects/openwrt-pst/packages/net/nginx-utils/files/CMakeFiles/px5g.dir/px5g.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

@@ -1,5 +1,5 @@
-#ifndef __NGINX_CREATE_LISTEN_H
-#define __NGINX_CREATE_LISTEN_H
+#ifndef __UBUS_CXX_H
+#define __UBUS_CXX_H
 
 #include <vector>
 #include <string>
