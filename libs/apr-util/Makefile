@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apr-util
 PKG_VERSION:=1.6.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/apr/
@@ -20,6 +20,15 @@ PKG_CPE_ID:=cpe:/a:apache:apr-util
 
 PKG_BUILD_PARALLEL:=1
 
+PKG_CONFIG_DEPENDS := \
+	CONFIG_PACKAGE_libaprutil-crypto-openssl \
+	CONFIG_PACKAGE_libaprutil-dbd-mysql \
+	CONFIG_PACKAGE_libaprutil-dbd-odbc \
+	CONFIG_PACKAGE_libaprutil-dbd-pgsql \
+	CONFIG_PACKAGE_libaprutil-dbd-sqlite3 \
+	CONFIG_PACKAGE_libaprutil-dbm-gdbm \
+	CONFIG_PACKAGE_libaprutil-ldap
+
 PKG_FIXUP:=autoreconf
 
 PKG_INSTALL:=1
@@ -27,26 +36,91 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
-define Package/libaprutil
+define Package/libaprutil/Default
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libapr +libexpat +libsqlite3 +libuuid $(ICONV_DEPENDS)
-  TITLE:=Apache Portable Runtime Utility Library
   URL:=http://apr.apache.org/
 endef
 
+define Package/libaprutil
+$(call Package/libaprutil/Default)
+  DEPENDS:=+libapr +libexpat +libuuid $(ICONV_DEPENDS)
+  TITLE:=Apache Portable Runtime Utility Library
+endef
+
 CONFIGURE_ARGS += \
-	--with-pgsql=no \
 	--with-apr="$(STAGING_DIR)/usr/bin/apr-1-config" \
 	--with-expat="$(STAGING_DIR)/usr" \
 	--with-iconv="$(ICONV_PREFIX)" \
-	--without-sqlite2 \
-	--with-sqlite3="$(STAGING_DIR)/usr"
+	--without-sqlite2
+
+ifneq ($(CONFIG_PACKAGE_libaprutil-crypto-openssl),)
+CONFIGURE_ARGS += --with-crypto --with-openssl="$(STAGING_DIR)/usr"
+else
+CONFIGURE_ARGS += --without-crypto
+endif
+
+ifneq ($(CONFIG_PACKAGE_libaprutil-dbd-mysql),)
+CONFIGURE_ARGS += --with-mysql="$(STAGING_DIR)/usr"
+else
+CONFIGURE_ARGS += --without-mysql
+endif
+
+ifneq ($(CONFIG_PACKAGE_libaprutil-dbd-odbc),)
+CONFIGURE_ARGS += --with-odbc="$(STAGING_DIR)/usr"
+else
+CONFIGURE_ARGS += --without-odbc
+endif
+
+ifneq ($(CONFIG_PACKAGE_libaprutil-dbd-pgsql),)
+CONFIGURE_ARGS += --with-pgsql="$(STAGING_DIR)/usr"
+else
+CONFIGURE_ARGS += --without-pgsql
+endif
+
+ifneq ($(CONFIG_PACKAGE_libaprutil-dbd-sqlite3),)
+CONFIGURE_ARGS += --with-sqlite3="$(STAGING_DIR)/usr"
+else
+CONFIGURE_ARGS += --without-sqlite3
+endif
+
+ifneq ($(CONFIG_PACKAGE_libaprutil-dbm-gdbm),)
+CONFIGURE_ARGS += --with-gdbm="$(STAGING_DIR)/usr"
+else
+CONFIGURE_ARGS += --without-gdbm
+endif
+
+ifneq ($(CONFIG_PACKAGE_libaprutil-ldap),)
+CONFIGURE_ARGS += \
+	--with-ldap \
+	--with-ldap-include="$(STAGING_DIR)/usr/include" \
+	--with-ldap-lib="$(STAGING_DIR)/usr/lib"
+else
+CONFIGURE_ARGS += \
+	--without-ldap
+endif
 
 CONFIGURE_VARS += \
-	ac_cv_file_dbd_apr_dbd_mysql_c=no \
 	ac_cv_path_ODBC_CONFIG= \
 	APR_BUILD_DIR="$(STAGING_DIR)/usr/share/build-1"
+
+define Package/libaprutil/install/driver
+	$(INSTALL_DIR) $(1)/usr/lib/apr-util-1
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/apr-util-1/apr_$(2)*.so \
+					$(1)/usr/lib/apr-util-1
+endef
+
+define Package/libaprutil/Driver
+define Package/libaprutil-$(subst _,-,$(1))
+$(call Package/libaprutil/Default)
+  TITLE:=libaprutil - $(2) driver
+  DEPENDS:=libaprutil $(patsubst +%,+PACKAGE_libaprutil-$(subst _,-,$(1)):%,$(3))
+endef
+define Package/libaprutil-$(subst _,-,$(1))/install
+$(foreach d,$(1),$(call Package/libaprutil/install/driver,$$(1),$(d));)
+endef
+$$(eval $$(call BuildPackage,libaprutil-$(subst _,-,$(1))))
+endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/include/apr-1/ $(1)/usr/lib  $(1)/usr/lib/pkgconfig/
@@ -54,6 +128,11 @@ define Build/InstallDev
 	 	$(1)/usr/bin/
 	$(CP)   $(PKG_INSTALL_DIR)/usr/include/apr-1/* \
 		$(1)/usr/include/apr-1/
+ifneq ($(CONFIG_PACKAGE_libaprutil-crypto-openssl)$(CONFIG_PACKAGE_libaprutil-dbd-pgsql)$(CONFIG_PACKAGE_libaprutil-dbd-sqlite3)$(CONFIG_PACKAGE_libaprutil-ldap),)
+	$(INSTALL_DIR) $(1)/usr/lib/apr-util-1
+	$(CP)   $(PKG_INSTALL_DIR)/usr/lib/apr-util-1/apr_*{la,a,so*} \
+		$(1)/usr/lib/apr-util-1
+endif
 	$(CP)   $(PKG_INSTALL_DIR)/usr/lib/libaprutil-1.{la,a,so*} \
 		$(1)/usr/lib/
 	$(CP)   $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/apr-util-1.pc \
@@ -71,3 +150,10 @@ define Package/libaprutil/install
 endef
 
 $(eval $(call BuildPackage,libaprutil))
+$(eval $(call Package/libaprutil/Driver,crypto_openssl,OpenSSL,+libopenssl))
+$(eval $(call Package/libaprutil/Driver,dbd_mysql,MySQL,+libmariadb @BROKEN))
+$(eval $(call Package/libaprutil/Driver,dbd_odbc,ODBC,+unixodbc))
+$(eval $(call Package/libaprutil/Driver,dbd_pgsql,PostgreSQL,+libpq))
+$(eval $(call Package/libaprutil/Driver,dbd_sqlite3,SQLite3,+libsqlite3))
+$(eval $(call Package/libaprutil/Driver,dbm_gdbm,GDBM dbm,+libgdbm))
+$(eval $(call Package/libaprutil/Driver,ldap,LDAP,+libopenldap))
