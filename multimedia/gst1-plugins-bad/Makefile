@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
 PKG_VERSION:=1.16.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
 		Ted Hess <thess@kitschensync.net>
@@ -155,6 +155,7 @@ CONFIGURE_ARGS += \
 	--disable-zbar \
 	--disable-srtp \
 	\
+	--with-hls-crypto=nettle \
 	--without-html-dir \
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
