@@ -18,8 +18,9 @@ PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=Apache License
 PKG_CPE_ID:=cpe:/a:apache:apr-util
 
+PKG_BUILD_PARALLEL:=1
+
 PKG_FIXUP:=autoreconf
-PKG_REMOVE_FILES:=aclocal.m4 build/ltmain.sh
 
 PKG_INSTALL:=1
 
@@ -33,9 +34,6 @@ define Package/libaprutil
   TITLE:=Apache Portable Runtime Utility Library
   URL:=http://apr.apache.org/
 endef
-
-TARGET_CFLAGS += $(FPIC)
-TARGET_CPPFLAGS += -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 
 CONFIGURE_ARGS += \
 	--with-pgsql=no \
@@ -54,9 +52,6 @@ CONFIGURE_VARS += \
 	ac_cv_file_dbd_apr_dbd_mysql_c=no \
 	ac_cv_path_ODBC_CONFIG= \
 	APR_BUILD_DIR="$(STAGING_DIR)/usr/share/build-1"
-
-MAKE_FLAGS += \
-	APRUTIL_LIBS="-lsqlite3 $(TARGET_LDFLAGS) -lexpat $(if $(ICONV_FULL),-liconv) -lapr-1 -luuid -lm -lcrypt"
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/include/apr-1/ $(1)/usr/lib  $(1)/usr/lib/pkgconfig/
