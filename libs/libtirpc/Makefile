@@ -1,19 +1,12 @@
-#
-# Copyright (C) 2006-2018 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtirpc
-PKG_VERSION:=1.1.4
-PKG_RELEASE:=2
+PKG_VERSION:=1.2.5
+PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=@SF/libtirpc
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=2ca529f02292e10c158562295a1ffd95d2ce8af97820e3534fe1b0e3aec7561d
+PKG_HASH:=f3b6350c7e9c3cd9c58fc7a5e5f8e6be469cc571bb5eb31eb9790b3e675186ca
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
