@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tor
 PKG_VERSION:=0.4.2.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dist.torproject.org/ \
@@ -89,6 +89,7 @@ define Package/tor/conffiles
 /etc/tor/torrc
 /var/lib/tor/fingerprint
 /var/lib/tor/keys/*
+/etc/config/tor
 endef
 
 CONFIGURE_ARGS += \
@@ -124,6 +125,8 @@ define Package/tor/install
 	$(INSTALL_BIN) ./files/tor.init $(1)/etc/init.d/tor
 	$(INSTALL_DIR) $(1)/etc/tor
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/tor/torrc.sample $(1)/etc/tor/torrc
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/tor.conf $(1)/etc/config/tor
 endef
 
 define Package/tor-gencert/install
