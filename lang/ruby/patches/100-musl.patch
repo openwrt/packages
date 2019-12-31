@@ -1,0 +1,24 @@
+--- a/coroutine/copy/Context.h
++++ b/coroutine/copy/Context.h
+@@ -13,6 +13,7 @@
+ #include <string.h>
+ #include <stdlib.h>
+ #include <alloca.h>
++#include <sys/types.h>
+ 
+ #define COROUTINE __attribute__((noreturn)) void
+ 
+--- a/configure.ac
++++ b/configure.ac
+@@ -2344,7 +2344,10 @@ AS_CASE([$rb_cv_coroutine], [yes|''], [
+             rb_cv_coroutine=copy
+         ],
+         [*], [
+-            rb_cv_coroutine=ucontext
++            AC_CHECK_FUNCS([getcontext swapcontext makecontext],
++                [rb_cv_coroutine=ucontext],
++                [rb_cv_coroutine=copy; break]
++            )
+         ]
+     )
+     AC_MSG_RESULT(${rb_cv_coroutine})
