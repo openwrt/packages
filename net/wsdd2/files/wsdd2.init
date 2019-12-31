@@ -13,8 +13,8 @@ BI_PARM=""
 
 start_service() {
 
-	if [ -e /etc/cifs/smb.conf ] && [ -e /etc/init.d/cifsd ] && /etc/init.d/cifsd running; then
-		SMB_CONF="/etc/cifs/smb.conf"
+	if [ -e /etc/smbd/smb.conf ] && [ -e /etc/init.d/smbd ] && /etc/init.d/smbd running; then
+		SMB_CONF="/etc/smbd/smb.conf"
 	fi
 
 	if [ -e /etc/samba/smb.conf ]; then
@@ -26,7 +26,7 @@ start_service() {
 	fi
 	
 	if [ -z "$SMB_CONF" ]; then
-		logger -p daemon.error -t 'wsdd2' "samba36/4 or cifsd is not running, can't start wsdd2!"
+		logger -p daemon.error -t 'wsdd2' "samba36/4 or smbd is not running, can't start wsdd2!"
 		exit 1
 	fi
 	
@@ -82,5 +82,5 @@ start_service() {
 
 service_triggers() {
 	PROCD_RELOAD_DELAY=1000
-	procd_add_reload_trigger "dhcp" "system" "samba" "samba4" "cifsd"
+	procd_add_reload_trigger "dhcp" "system" "samba" "samba4" "smbd"
 }
