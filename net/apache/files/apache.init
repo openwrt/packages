@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+reload() {
+	apachectl -k restart
+}
+
+restart() {
+	apachectl -k restart
+}
+
+start() {
+	mkdir -p /var/log/apache2 /var/run/apache2
+	apachectl -k start
+}
+
+stop() {
+	apachectl -k stop
+}

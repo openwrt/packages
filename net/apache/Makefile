@@ -105,6 +105,7 @@ define Package/apache/conffiles
 /etc/apache2/extra/proxy-html.conf
 /etc/apache2/magic
 /etc/apache2/mime.types
+/etc/init.d/apache
 endef
 
 define Package/apache-ab
@@ -296,12 +297,6 @@ define Build/InstallDev
 		$(1)/usr/share
 endef
 
-define Package/apache/preinst
-	rm /usr/sbin/httpd
-	echo -e "You should take a look in the initscripts, busybox's httpd \n\
-	uses some parameters which are maybe unsupported by apache."
-endef
-
 define Package/apache/install
 	$(INSTALL_DIR) $(1)/etc/apache2/extra
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/apache2/extra/* \
@@ -328,13 +323,6 @@ define Package/apache/install
 											$(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/{apachectl,httpd} \
 							$(1)/usr/sbin
-endef
-
-define Package/apache/postrm
-	rm -rf /usr/sbin/httpd
-	ln -s /bin/busybox /usr/sbin/httpd
-	echo -e "You may need to change your initscripts back for the use \n\
-		with busybox's httpd."
 endef
 
 define Package/apache-ab/install
