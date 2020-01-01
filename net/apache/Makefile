@@ -58,13 +58,9 @@ define Package/apache/Default
 endef
 
 define Package/apache/Default/description
- The Apache Web Server is a powerful and flexible HTTP/1.1 compliant
- web server.  Originally designed as a replacement for the NCSA HTTP
- Server, it has grown to be the most popular web server on the Internet.
-endef
-
-define Package/apache/config
-  source "$(SOURCE)/Config.in"
+The Apache HTTP Server Project is a collaborative software development
+effort aimed at creating a robust, commercial-grade, featureful, and
+freely-available source code implementation of an HTTP (Web) server.
 endef
 
 define Package/apache
@@ -75,18 +71,9 @@ endef
 
 define Package/apache/description
 $(call Package/apache/Default/description)
- .
- This package contains the Apache web server and utility programs.
- .
- Take care that you don't include apache at the moment into your image
- please select it only as module because busybox will override
- /usr/sbin/httpd. It'll be solved soon. If you need to include this
- package in the image anyway, remove httpd from busybox
- (Base system --> Configuration --> Networking Utilities --> httpd).
- Also you should take care for the initscripts, apache's httpd isn't
- compatible with the one from busybox, so if you want to use apache
- for running your webif, you'll need to change the parameters in the
- scripts and configure the rest in /etc/httpd.conf.
+
+This package contains the Apache web server and utility programs.
+
 endef
 
 define Package/apache/conffiles
@@ -142,8 +129,9 @@ endef
 
 define Package/apache-icons/description
 $(call Package/apache/Default/description)
- .
- This package contains the icons from Apache.
+
+This package contains the icons from Apache.
+
 endef
 
 define Package/apache-suexec
