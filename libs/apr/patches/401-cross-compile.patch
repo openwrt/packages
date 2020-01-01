@@ -1,0 +1,83 @@
+Index: apr-config.in
+===================================================================
+--- a/apr-config.in	(revision 1872036)
++++ b/apr-config.in	(working copy)
+@@ -48,6 +48,14 @@
+ # NOTE: the following line is modified during 'make install': alter with care!
+ location=@APR_CONFIG_LOCATION@
+ 
++# absolute path, but not installed path - we're cross compiling
++case "$0" in
++  "${bindir}/"*) ;;
++  "/"*)         location=crosscompile;
++                APR_TARGET_DIR=${0%${bindir}/apr-${APR_MAJOR_VERSION}-config} ;;
++  *)            ;;
++esac
++
+ show_usage()
+ {
+     cat << EOF
+@@ -93,6 +101,8 @@
+ 
+ if test "$location" = "installed"; then
+     LA_FILE="$libdir/lib${APR_LIBNAME}.la"
++elif test "$location" = "crosscompile"; then
++    LA_FILE="$APR_TARGET_DIR/$libdir/lib${APR_LIBNAME}.la"
+ else
+     LA_FILE="$APR_BUILD_DIR/lib${APR_LIBNAME}.la"
+ fi
+@@ -122,6 +132,8 @@
+     --includedir)
+     if test "$location" = "installed"; then
+         flags="$includedir"
++    elif test "$location" = "crosscompile"; then
++        flags="$APR_TARGET_DIR/$includedir"
+     elif test "$location" = "source"; then
+         flags="$APR_SOURCE_DIR/include"
+     else
+@@ -154,6 +166,8 @@
+     --includes)
+     if test "$location" = "installed"; then
+         flags="$flags -I$includedir $EXTRA_INCLUDES"
++    elif test "$location" = "crosscompile"; then
++        flags="$flags -I$APR_TARGET_DIR/$includedir $EXTRA_INCLUDES"
+     elif test "$location" = "source"; then
+         flags="$flags -I$APR_SOURCE_DIR/include $EXTRA_INCLUDES"
+     else
+@@ -168,6 +182,8 @@
+     --installbuilddir)
+     if test "$location" = "installed"; then
+         echo "${installbuilddir}"
++    elif test "$location" = "crosscompile"; then
++        echo "$APR_TARGET_DIR/${installbuilddir}"
+     elif test "$location" = "source"; then
+         echo "$APR_SOURCE_DIR/build"
+     else
+@@ -184,6 +200,8 @@
+     if test "$location" = "installed"; then
+         ### avoid using -L if libdir is a "standard" location like /usr/lib
+         flags="$flags -L$libdir -l${APR_LIBNAME}"
++    elif test "$location" = "crosscompile"; then
++        flags="$flags -L$APR_TARGET_DIR/$libdir -l${APR_LIBNAME}"
+     else
+         ### this surely can't work since the library is in .libs?
+         flags="$flags -L$APR_BUILD_DIR -l${APR_LIBNAME}"
+@@ -201,6 +219,8 @@
+         # Since the user is specifying they are linking with libtool, we
+         # *know* that -R will be recognized by libtool.
+         flags="$flags -L$libdir -R$libdir -l${APR_LIBNAME}"
++    elif test "$location" = "crosscompile"; then
++        flags="$flags  -L${APR_TARGET_DIR}/$libdir  -l${APR_LIBNAME}"
+     else
+         flags="$flags $LA_FILE"
+     fi
+@@ -225,6 +245,8 @@
+     --apr-libtool)
+     if test "$location" = "installed"; then
+         echo "${installbuilddir}/libtool"
++    elif test "$location" = "crosscompile"; then
++        echo "$APR_TARGET_DIR/${installbuilddir}/libtool"
+     else
+         echo "$APR_BUILD_DIR/libtool"
+     fi
+

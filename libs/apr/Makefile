@@ -18,8 +18,9 @@ PKG_HASH:=a67ca9fcf9c4ff59bce7f428a323c8b5e18667fdea7b0ebad47d194371b0a105
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=Apache-2.0
 
+PKG_BUILD_PARALLEL:=1
+
 PKG_FIXUP:=autoreconf
-PKG_REMOVE_FILES:=aclocal.m4 build/ltmain.sh
 
 PKG_INSTALL:=1
 
@@ -33,10 +34,7 @@ define Package/libapr
   URL:=https://apr.apache.org/
 endef
 
-TARGET_CFLAGS += $(FPIC)
-
 CONFIGURE_ARGS += \
-	--without-pic \
 	--with-devrandom=/dev/urandom \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6)
 
@@ -68,12 +66,6 @@ define Build/InstallDev
 		$(1)/usr/lib/pkgconfig/
 	$(CP)   $(PKG_INSTALL_DIR)/usr/share/build-1/* \
 		$(1)/usr/share/build-1/
-	$(SED) 's,^datadir=\"/usr/share\",datadir=\"$(STAGING_DIR)/usr/share\",g' $(1)/usr/bin/apr-1-config
-	$(SED) 's,^installbuilddir=\"/usr/share/build-1\",installbuilddir=\"$(STAGING_DIR)/usr/share/build-1\",g' $(1)/usr/bin/apr-1-config
-	$(SED) 's,^libdir=\"$$$${exec_prefix}/lib,libdir=\"$(STAGING_DIR)/usr/lib,g' $(1)/usr/bin/apr-1-config
-	$(SED) 's,^includedir=\"$$$${prefix}/include/,includedir=\"$(STAGING_DIR)/usr/include/,g' $(1)/usr/bin/apr-1-config
-	$(SED) 's,-L$$$$libdir,,g' $(1)/usr/bin/apr-1-config
-	$(SED) 's,-R$$$$libdir,,g' $(1)/usr/bin/apr-1-config
 	$(SED) 's,/usr/share/build-1,$(STAGING_DIR)/usr/share/build-1,g' $(1)/usr/share/build-1/apr_rules.mk
 endef
 
