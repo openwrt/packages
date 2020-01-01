@@ -83,20 +83,20 @@ $(call Package/apache/Default/description)
 endef
 
 define Package/apache/conffiles
-/etc/apache/httpd.conf
-/etc/apache/extra/httpd-autoindex.conf
-/etc/apache/extra/httpd-dav.conf
-/etc/apache/extra/httpd-default.conf
-/etc/apache/extra/httpd-info.conf
-/etc/apache/extra/httpd-languages.conf
-/etc/apache/extra/httpd-manual.conf
-/etc/apache/extra/httpd-mpm.conf
-/etc/apache/extra/httpd-multilang-errordoc.conf
-/etc/apache/extra/httpd-ssl.conf
-/etc/apache/extra/httpd-userdir.conf
-/etc/apache/extra/httpd-vhosts.conf
-/etc/apache/magic
-/etc/apache/mime.types
+/etc/apache2/httpd.conf
+/etc/apache2/extra/httpd-autoindex.conf
+/etc/apache2/extra/httpd-dav.conf
+/etc/apache2/extra/httpd-default.conf
+/etc/apache2/extra/httpd-info.conf
+/etc/apache2/extra/httpd-languages.conf
+/etc/apache2/extra/httpd-manual.conf
+/etc/apache2/extra/httpd-mpm.conf
+/etc/apache2/extra/httpd-multilang-errordoc.conf
+/etc/apache2/extra/httpd-ssl.conf
+/etc/apache2/extra/httpd-userdir.conf
+/etc/apache2/extra/httpd-vhosts.conf
+/etc/apache2/magic
+/etc/apache2/mime.types
 endef
 
 define Package/apache-icons
@@ -111,35 +111,40 @@ $(call Package/apache/Default/description)
  This package contains the icons from Apache.
 endef
 
-TARGET_CFLAGS += $(FPIC) -Wno-error
-TARGET_CPPFLAGS += -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
-TARGET_LDFLAGS += -lpthread
+CONFIGURE_ARGS+= \
+	--datadir=/usr/share/apache2 \
+	--disable-authnz-ldap \
+	--disable-imagemap \
+	--disable-ldap \
+	--disable-luajit \
+	--enable-authn-alias \
+	--enable-authn-anon \
+	--enable-cache \
+	--enable-cgi \
+	--enable-cgid \
+	--enable-dbd \
+	--enable-disk-cache \
+	--enable-exception-hook \
+	--enable-file-cache \
+	--enable-layout=OpenWrt \
+	--enable-mem-cache \
+	--enable-mods-shared=all \
+	--enable-mpms-shared=all \
+	--enable-so \
+	--libexecdir=/usr/lib/apache2 \
+	--sysconfdir=/etc/apache2 \
+	--with-apr-util="$(STAGING_DIR)/usr/bin/apu-1-config" \
+	--with-apr="$(STAGING_DIR)/usr/bin/apr-1-config" \
+	--with-mpm=prefork \
+	--with-pcre="$(STAGING_DIR)/usr/bin/pcre-config" \
+	--with-ssl
 
-define Build/Configure
-	$(call Build/Configure/Default, \
-		--with-apr="$(STAGING_DIR)/usr/bin/apr-1-config" \
-		--with-apr-util="$(STAGING_DIR)/usr/bin/apu-1-config" \
-		--with-pcre="$(STAGING_DIR)/usr/bin/pcre-config" \
-		$(ADDITIONAL_MODULES) \
-		--enable-http \
-		--with-crypto \
-		--with-sqlit3="$(STAGING_DIR)/usr" \
-		--with-openssl="$(STAGING_DIR)/usr" \
-		--enable-ssl \
-		--enable-proxy \
-		--disable-md \
-		--disable-disk-cache \
-		--enable-maintainer-mode \
-		--with-mpm=prefork \
-		--with-mpm=worker \
-		--enable-mime-magic \
-		--without-suexec-bin \
-		--sysconfdir=/etc/apache \
-		ap_cv_void_ptr_lt_long=no \
-		logfiledir="/var/log" \
-		runtimedir="/var/run" \
-		EXTRA_LIBS="-ldl -lpthread -lcrypto -lrt -lssl" \
-	)
+CONFIGURE_VARS += \
+	ap_cv_void_ptr_lt_long=no
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(INSTALL_DATA) ./files/openwrt.layout $(PKG_BUILD_DIR)/config.layout
 endef
 
 define Build/InstallDev
