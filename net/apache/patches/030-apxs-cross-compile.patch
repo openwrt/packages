@@ -1,0 +1,62 @@
+Index: support/apxs.in
+===================================================================
+--- a/support/apxs.in	(revision 1535699)
++++ b/support/apxs.in	(revision 1872062)
+@@ -23,10 +23,15 @@
+ ##  Configuration
+ ##
+ 
++#   are we building in a cross compile environment? If so, destdir contains
++#   the base directory of the cross compiled environment, otherwise destdir
++#   is the empty string.
++my $destdir = substr($0, 0, rindex($0, "@exp_bindir@"));
++
+ my %config_vars = ();
+ 
+ my $installbuilddir = "@exp_installbuilddir@";
+-get_config_vars("$installbuilddir/config_vars.mk",\%config_vars);
++get_config_vars($destdir . "$installbuilddir/config_vars.mk",\%config_vars);
+ 
+ # read the configuration variables once
+ 
+@@ -41,10 +46,10 @@
+   qw(SHLTCFLAGS CFLAGS NOTEST_CPPFLAGS EXTRA_CPPFLAGS EXTRA_CFLAGS);
+ my $CFG_LDFLAGS    = join ' ', map { get_vars($_) }
+   qw(LDFLAGS NOTEST_LDFLAGS SH_LDFLAGS);
+-my $includedir     = get_vars("includedir");
++my $includedir     = $destdir . get_vars("includedir");
+ my $CFG_INCLUDEDIR = eval qq("$includedir");
+ my $CFG_CC         = get_vars("CC");
+-my $libexecdir     = get_vars("libexecdir");
++my $libexecdir     = $destdir . get_vars("libexecdir");
+ my $CFG_LIBEXECDIR = eval qq("$libexecdir");
+ my $sbindir        = get_vars("sbindir");
+ my $CFG_SBINDIR    = eval qq("$sbindir");
+@@ -335,7 +340,7 @@
+     }
+ }
+ 
+-my $apr_config = get_vars("APR_CONFIG");
++my $apr_config = $destdir . get_vars("APR_CONFIG");
+ 
+ if (! -x "$apr_config") {
+     error("$apr_config not found!");
+@@ -346,7 +351,7 @@
+ 
+ my $apu_config = "";
+ if ($apr_major_version < 2) {
+-    $apu_config = get_vars("APU_CONFIG");
++    $apu_config = $destdir . get_vars("APU_CONFIG");
+ 
+     if (! -x "$apu_config") {
+         error("$apu_config not found!");
+@@ -501,7 +506,7 @@
+         #  use .so unambigiously for installed shared library modules
+         $t =~ s|\.[^./\\]+$|\.so|;
+         if ($opt_i) {
+-	    push(@cmds, "$installbuilddir/instdso.sh SH_LIBTOOL='" .
++	    push(@cmds, $destdir . "$installbuilddir/instdso.sh SH_LIBTOOL='" .
+                  "$libtool' $f $CFG_LIBEXECDIR");
+ 	    push(@cmds, "chmod 755 $CFG_LIBEXECDIR/$t");
+         }
+

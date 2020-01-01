@@ -1,0 +1,65 @@
+Index: apu-config.in
+===================================================================
+--- a/apu-config.in	(revision 1871981)
++++ b/apu-config.in	(working copy)
+@@ -43,6 +43,14 @@
+ # NOTE: the following line is modified during 'make install': alter with care!
+ location=@APU_CONFIG_LOCATION@
+ 
++# absolute path, but not installed path - we're cross compiling
++case "$0" in
++  "${bindir}/"*) ;;
++  "/"*)         location=crosscompile;
++                APU_TARGET_DIR=${0%${bindir}/apu-${APRUTIL_MAJOR_VERSION}-config} ;;
++  *)            ;;
++esac
++
+ show_usage()
+ {
+     cat << EOF
+@@ -85,6 +93,8 @@
+ 
+ if test "$location" = "installed"; then
+     LA_FILE="$libdir/lib${APRUTIL_LIBNAME}.la"
++elif test "$location" = "crosscompile"; then
++    LA_FILE="$APU_TARGET_DIR/$libdir/lib${APRUTIL_LIBNAME}.la"
+ else
+     LA_FILE="$APU_BUILD_DIR/lib${APRUTIL_LIBNAME}.la"
+ fi
+@@ -129,6 +139,8 @@
+     --includedir)
+     if test "$location" = "installed"; then
+         flags="$includedir"
++    elif test "$location" = "crosscompile"; then
++        flags="$APU_TARGET_DIR/$includedir"
+     elif test "$location" = "source"; then
+         flags="$APU_SOURCE_DIR/include"
+     else
+@@ -141,6 +153,8 @@
+     --includes)
+     if test "$location" = "installed"; then
+         flags="$flags -I$includedir $INCLUDES"
++    elif test "$location" = "crosscompile"; then
++        flags="$flags -I$APU_TARGET_DIR/$includedir $EXTRA_INCLUDES"
+     elif test "$location" = "source"; then
+         flags="$flags -I$APU_SOURCE_DIR/include $INCLUDES"
+     else
+@@ -163,6 +177,8 @@
+     if test "$location" = "installed"; then
+         ### avoid using -L if libdir is a "standard" location like /usr/lib
+         flags="$flags -L$libdir -l$APRUTIL_LIBNAME"
++    elif test "$location" = "crosscompile"; then
++        flags="$flags -L$APU_TARGET_DIR/$libdir -l$APRUTIL_LIBNAME"
+     else
+         flags="$flags -L$APU_BUILD_DIR -l$APRUTIL_LIBNAME"
+     fi
+@@ -179,6 +195,8 @@
+         # Since the user is specifying they are linking with libtool, we
+         # *know* that -R will be recognized by libtool.
+         flags="$flags -L$libdir -R$libdir -l$APRUTIL_LIBNAME"
++    elif test "$location" = "crosscompile"; then
++        flags="$flags  -L${APU_TARGET_DIR}/$libdir  -l$APRUTIL_LIBNAME"
+     else
+         flags="$flags $LA_FILE"
+     fi
+

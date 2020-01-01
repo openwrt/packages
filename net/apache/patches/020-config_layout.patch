@@ -1,0 +1,34 @@
+Index: config.layout
+===================================================================
+--- a/config.layout	(revision 1844484)
++++ b/config.layout	(revision 1872102)
+@@ -409,3 +409,28 @@
+     logfiledir:      ${localstatedir}/log/httpd
+     proxycachedir:   ${localstatedir}/cache/httpd
+ </Layout>
++
++# OpenWrt layout
++<Layout OpenWrt>
++    prefix:          /usr
++    exec_prefix:     ${prefix}
++    bindir:          ${prefix}/bin
++    sbindir:         ${prefix}/sbin
++    libdir:          ${prefix}/lib
++    libexecdir:      ${prefix}/lib+
++    mandir:          ${prefix}/share/man
++    sysconfdir:      /etc+
++    datadir:         ${prefix}/share+
++    installbuilddir: ${datadir}/build
++    errordir:        ${datadir}/error
++    iconsdir:        ${datadir}/icons
++    htdocsdir:       ${datadir}/htdocs
++    manualdir:       /usr/share/doc/apache2/manual
++    cgidir:          ${datadir}/cgi-bin
++    includedir:      ${prefix}/include+
++    localstatedir:   /var
++    runtimedir:      ${localstatedir}/run+
++    logfiledir:      ${localstatedir}/log+
++    proxycachedir:   ${localstatedir}/cache/apache2
++</Layout>
++
+
