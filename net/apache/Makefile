@@ -265,24 +265,21 @@ define Build/Prepare
 endef
 
 define Build/InstallDev
-	rm -rf	$(PKG_INSTALL_DIR)/usr/man/ \
-		$(PKG_INSTALL_DIR)/usr/share/manual/
-	# if you need docs take a look into the build-dir :)
-	$(INSTALL_DIR) $(1)/etc
-	$(CP)   $(PKG_INSTALL_DIR)/etc/* \
-		$(1)/etc
-	$(INSTALL_DIR) $(1)/usr/include/apache
-	$(CP)	$(PKG_INSTALL_DIR)/usr/include/* \
-		$(1)/usr/include/apache
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP)   $(PKG_INSTALL_DIR)/usr/lib/httpd.exp \
-		$(1)/usr/lib
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(CP)   $(PKG_INSTALL_DIR)/usr/sbin/* \
-		$(1)/usr/sbin
-	$(INSTALL_DIR) $(1)/usr/share
-	$(CP)   $(PKG_INSTALL_DIR)/usr/share/* \
-		$(1)/usr/share
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/apxs $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/include/apache2
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/apache2/* \
+					$(1)/usr/include/apache2
+	$(INSTALL_DIR) $(1)/usr/lib/apache2
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/apache2/httpd.exp \
+						$(1)/usr/lib/apache2
+	$(INSTALL_DIR) $(1)/usr/share/apache2/build
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/apache2/build/* \
+				$(1)/usr/share/apache2/build
+	$(SED) 's%/usr/share/apache2/build%$(STAGING_DIR)/usr/share/apache2/build%' \
+		$(1)/usr/bin/apxs
+	$(SED) 's%^prefix =.*%prefix = $(STAGING_DIR)/usr%' \
+		$(1)/usr/share/apache2/build/config_vars.mk
 endef
 
 define Package/apache/install
