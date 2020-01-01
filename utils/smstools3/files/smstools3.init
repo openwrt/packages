@@ -27,7 +27,7 @@ start_service() {
 
 	procd_open_instance
 
-	procd_set_param command $DAEMON -n MAINPROCESS -p$PIDFILE -i$INFOFILE
+	procd_set_param command $DAEMON -t -n MAINPROCESS -p$PIDFILE -i$INFOFILE
 	procd_set_param respawn
 	procd_set_param stdout 1
 
