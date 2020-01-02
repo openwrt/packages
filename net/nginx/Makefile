@@ -230,13 +230,13 @@ ifneq ($(BUILD_VARIANT),all-module)
   ifneq ($(CONFIG_NGINX_HTTP_UPSTREAM_KEEPALIVE),y)
     ADDITIONAL_MODULES += --without-http_upstream_keepalive_module
   endif
-  
+
   ifeq ($(BUILD_VARIANT),ssl)
     ifneq ($(CONFIG_NGINX_SSL),y)
       ADDITIONAL_MODULES += --with-http_ssl_module
     endif
   endif
-  
+
   ifeq ($(CONFIG_NGINX_SSL),y)
     ADDITIONAL_MODULES += --with-http_ssl_module
   endif
@@ -314,7 +314,7 @@ else
 	--with-stream --with-stream_ssl_module --with-stream_ssl_preread_module \
 	--add-module=$(PKG_BUILD_DIR)/nginx-brotli --add-module=$(PKG_BUILD_DIR)/nginx-rtmp \
 	--add-module=$(PKG_BUILD_DIR)/nginx-ts --add-module=$(PKG_BUILD_DIR)/nginx-ubus-module
-  config_files += koi-utf koi-win win-utf fastcgi_params 
+  config_files += koi-utf koi-win win-utf fastcgi_params
 endif
 
 define Package/nginx-mod-luci/default
@@ -324,7 +324,7 @@ define Package/nginx-mod-luci/default
   SUBMENU:=Web Servers/Proxies
   TITLE:=Support file for Nginx
   URL:=http://nginx.org/
-  DEPENDS:=+uwsgi-cgi-luci-support
+  DEPENDS:=+uwsgi +uwsgi-luci-support
 endef
 
 define Package/nginx-mod-luci
