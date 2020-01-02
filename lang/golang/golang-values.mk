@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Jeffery To
+# Copyright (C) 2018, 2020 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -24,6 +24,7 @@ unexport \
   GOBIN \
   GOCACHE \
   GODEBUG \
+  GOENV \
   GOFLAGS \
   GOOS \
   GOPATH \
@@ -38,25 +39,34 @@ unexport \
 
 # Environment variables for use with cgo:
 unexport \
+  AR \
+  CC \
   CGO_ENABLED \
   CGO_CFLAGS   CGO_CFLAGS_ALLOW   CGO_CFLAGS_DISALLOW \
   CGO_CPPFLAGS CGO_CPPFLAGS_ALLOW CGO_CPPFLAGS_DISALLOW \
   CGO_CXXFLAGS CGO_CXXFLAGS_ALLOW CGO_CXXFLAGS_DISALLOW \
   CGO_FFLAGS   CGO_FFLAGS_ALLOW   CGO_FFLAGS_DISALLOW \
-  CGO_LDFLAGS  CGO_LDFLAGS_ALLOW  CGO_LDFLAGS_DISALLOW
+  CGO_LDFLAGS  CGO_LDFLAGS_ALLOW  CGO_LDFLAGS_DISALLOW \
+  CXX \
+  FC
+# Unmodified:
+#   PKG_CONFIG
 
 # Architecture-specific environment variables:
 unexport \
   GOARM \
   GO386 \
   GOMIPS \
-  GOMIPS64
+  GOMIPS64 \
+  GOWASM
 
 # Special-purpose environment variables:
 unexport \
+  GCCGOTOOLDIR \
   GOROOT_FINAL \
-  GO_EXTLINK_ENABLED \
-  GIT_ALLOW_PROTOCOL
+  GO_EXTLINK_ENABLED
+# Unmodified:
+#   GIT_ALLOW_PROTOCOL
 
 # From https://golang.org/cmd/go/#hdr-Module_support
 unexport \
@@ -73,22 +83,33 @@ unexport \
 unexport \
   CC_FOR_TARGET \
   CXX_FOR_TARGET
+# Todo:
+#   CC_FOR_${GOOS}_${GOARCH}
+#   CXX_FOR_${GOOS}_${GOARCH}
 
 # From https://golang.org/doc/install/source#environment
 unexport \
-  GOHOSTARCH
+  GOHOSTOS \
+  GOHOSTARCH \
+  GOPPC64
 
 # From https://golang.org/src/make.bash
 unexport \
   GO_GCFLAGS \
   GO_LDFLAGS \
+  GO_LDSO \
   GO_DISTFLAGS \
   GOBUILDTIMELOGFILE \
   GOROOT_BOOTSTRAP
 
+# From https://golang.org/doc/go1.9#parallel-compile
+unexport \
+  GO19CONCURRENTCOMPILATION
+
 # From https://golang.org/src/cmd/dist/build.go
 unexport \
-  BOOT_GO_GCFLAGS
+  BOOT_GO_GCFLAGS \
+  BOOT_GO_LDFLAGS
 
 # From https://golang.org/src/cmd/dist/buildtool.go
 unexport \
