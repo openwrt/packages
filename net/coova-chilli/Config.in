@@ -1,11 +1,10 @@
 # CoovaChilli advanced configuration
 
-menu "Configuration"
-	depends on PACKAGE_coova-chilli
+if PACKAGE_coova-chilli
 
 config COOVACHILLI_PROXY
-        bool "Enable support for chilli proxy. Required for AAA Proxy through http"
-        default n
+	bool "Enable support for chilli proxy. Required for AAA Proxy through http"
+	default n
 
 config COOVACHILLI_REDIR
 	bool "Enable support for redir server. Required for uamregex"
@@ -46,4 +45,4 @@ config COOVACHILLI_OPENSSL
 
 endchoice
 
-endmenu
+endif
