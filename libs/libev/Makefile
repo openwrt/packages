@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libev
-PKG_VERSION:=4.27
+PKG_VERSION:=4.31
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://dist.schmorp.de/libev/Attic/
-PKG_HASH:=2d5526fc8da4f072dd5c73e18fbb1666f5ef8ed78b73bba12e195cfdd810344e
+PKG_HASH:=ed855d2b52118e32c0c1a6a32bd18c97f9e6711ca511f5ee12de3b9eccc66e5a
 PKG_LICENSE:=BSD-2-Clause
 PKG_MAINTAINER:=Karl Palsson <karlp@tweak.net.au>
 
