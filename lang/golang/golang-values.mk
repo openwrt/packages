@@ -12,22 +12,91 @@ endif
 include $(GO_INCLUDE_DIR)/golang-version.mk
 
 
+# Unset environment variables
+# There are more magic variables to track down, but ain't nobody got time for that
+
+# From https://golang.org/cmd/go/#hdr-Environment_variables
+
+# General-purpose environment variables:
 unexport \
-  GOARCH GOBIN GOCACHE GOFLAGS GOHOSTARCH GOOS GOPATH GORACE GOROOT GOTMPDIR GCCGO \
-  GOGC GODEBUG GOMAXPROCS GOTRACEBACK \
+  GCCGO \
+  GOARCH \
+  GOBIN \
+  GOCACHE \
+  GODEBUG \
+  GOFLAGS \
+  GOOS \
+  GOPATH \
+  GOROOT \
+  GOTMPDIR
+# Unmodified:
+#   GOPRIVATE
+#   GOPROXY
+#   GONOPROXY
+#   GOSUMDB
+#   GONOSUMDB
+
+# Environment variables for use with cgo:
+unexport \
   CGO_ENABLED \
-  CGO_CFLAGS CGO_CFLAGS_ALLOW CGO_CFLAGS_DISALLOW \
+  CGO_CFLAGS   CGO_CFLAGS_ALLOW   CGO_CFLAGS_DISALLOW \
   CGO_CPPFLAGS CGO_CPPFLAGS_ALLOW CGO_CPPFLAGS_DISALLOW \
   CGO_CXXFLAGS CGO_CXXFLAGS_ALLOW CGO_CXXFLAGS_DISALLOW \
-  CGO_FFLAGS CGO_FFLAGS_ALLOW CGO_FFLAGS_DISALLOW \
-  CGO_LDFLAGS CGO_LDFLAGS_ALLOW CGO_LDFLAGS_DISALLOW \
-  GOARM GO386 GOMIPS GOMIPS64 \
-  GO111MODULE \
-  GOROOT_FINAL GO_EXTLINK_ENABLED GIT_ALLOW_PROTOCOL \
-  CC_FOR_TARGET CXX_FOR_TARGET GO_DISTFLAGS GO_GCFLAGS GO_LDFLAGS GOBUILDTIMELOGFILE GOROOT_BOOTSTRAP \
-  BOOT_GO_GCFLAGS GOEXPERIMENT GOBOOTSTRAP_TOOLEXEC
-  # there are more magic environment variables to track down, but ain't nobody got time for that
-  # deliberately left untouched: GOPROXY GONOPROXY GOSUMDB GONOSUMDB GOPRIVATE
+  CGO_FFLAGS   CGO_FFLAGS_ALLOW   CGO_FFLAGS_DISALLOW \
+  CGO_LDFLAGS  CGO_LDFLAGS_ALLOW  CGO_LDFLAGS_DISALLOW
+
+# Architecture-specific environment variables:
+unexport \
+  GOARM \
+  GO386 \
+  GOMIPS \
+  GOMIPS64
+
+# Special-purpose environment variables:
+unexport \
+  GOROOT_FINAL \
+  GO_EXTLINK_ENABLED \
+  GIT_ALLOW_PROTOCOL
+
+# From https://golang.org/cmd/go/#hdr-Module_support
+unexport \
+  GO111MODULE
+
+# From https://golang.org/pkg/runtime/#hdr-Environment_Variables
+unexport \
+  GOGC \
+  GOMAXPROCS \
+  GORACE \
+  GOTRACEBACK
+
+# From https://golang.org/cmd/cgo/#hdr-Using_cgo_with_the_go_command
+unexport \
+  CC_FOR_TARGET \
+  CXX_FOR_TARGET
+
+# From https://golang.org/doc/install/source#environment
+unexport \
+  GOHOSTARCH
+
+# From https://golang.org/src/make.bash
+unexport \
+  GO_GCFLAGS \
+  GO_LDFLAGS \
+  GO_DISTFLAGS \
+  GOBUILDTIMELOGFILE \
+  GOROOT_BOOTSTRAP
+
+# From https://golang.org/src/cmd/dist/build.go
+unexport \
+  BOOT_GO_GCFLAGS
+
+# From https://golang.org/src/cmd/dist/buildtool.go
+unexport \
+  GOBOOTSTRAP_TOOLEXEC
+
+# From https://golang.org/src/cmd/internal/objabi/util.go
+unexport \
+  GOEXPERIMENT
 
 go_arch=$(subst \
   aarch64,arm64,$(subst \
