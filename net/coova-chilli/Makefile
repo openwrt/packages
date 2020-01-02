@@ -27,7 +27,6 @@ PKG_CONFIG_DEPENDS:= \
   COOVACHILLI_MINIPORTAL \
   COOVACHILLI_REDIR \
   COOVACHILLI_USERAGENT \
-  COOVACHILLI_DNSLOG \
   COOVACHILLI_UAMDOMAINFILE \
   COOVACHILLI_LARGELIMITS \
   COOVACHILLI_NOSSL \
@@ -106,7 +105,6 @@ define Build/Configure
 	$(call Build/Configure/Default, \
 	$(if $(CONFIG_COOVACHILLI_PROXY),--enable,--disable)-chilliproxy \
 	$(if $(CONFIG_COOVACHILLI_REDIR),--enable,--disable)-chilliredir \
-	$(if $(CONFIG_COOVACHILLI_DNSLOG),--enable,--disable)-dnslog \
 	$(if $(CONFIG_COOVACHILLI_MINIPORTAL),--enable,--disable)-miniportal \
 	$(if $(CONFIG_COOVACHILLI_USERAGENT),--enable,--disable)-useragent \
 	$(if $(CONFIG_COOVACHILLI_LARGELIMITS),--enable,--disable)-largelimits \
