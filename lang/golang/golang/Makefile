@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Jeffery To
+# Copyright (C) 2018, 2020 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -42,18 +42,25 @@ HOST_GO_VERSION_ID:=cross
 HOST_GO_ROOT:=$(HOST_GO_PREFIX)/lib/go-$(HOST_GO_VERSION_ID)
 
 HOST_GO_VALID_OS_ARCH:= \
-                                android_arm \
-  darwin_386   darwin_amd64     darwin_arm   darwin_arm64 \
-               dragonfly_amd64 \
-  freebsd_386  freebsd_amd64    freebsd_arm \
-  linux_386    linux_amd64      linux_arm    linux_arm64 \
-  netbsd_386   netbsd_amd64     netbsd_arm \
-  openbsd_386  openbsd_amd64    openbsd_arm \
-  plan9_386    plan9_amd64 \
-               solaris_amd64 \
+  android_386  android_amd64  android_arm  android_arm64 \
+  darwin_386   darwin_amd64   darwin_arm   darwin_arm64 \
+  linux_386    linux_amd64    linux_arm    linux_arm64 \
+  openbsd_386  openbsd_amd64  openbsd_arm  openbsd_arm64 \
+  \
+  freebsd_386  freebsd_amd64  freebsd_arm \
+  netbsd_386   netbsd_amd64   netbsd_arm \
+  plan9_386    plan9_amd64    plan9_arm \
+  \
   windows_386  windows_amd64 \
   \
-  linux_ppc64 linux_ppc64le linux_mips linux_mipsle linux_mips64 linux_mips64le
+  dragonfly_amd64 \
+  illumos_amd64 \
+  solaris_amd64 \
+  \
+  aix_ppc64 \
+  js_wasm \
+  \
+  linux_ppc64 linux_ppc64le linux_mips linux_mipsle linux_mips64 linux_mips64le linux_s390x
 
 BOOTSTRAP_SOURCE:=go1.4-bootstrap-20171003.tar.gz
 BOOTSTRAP_SOURCE_URL:=$(GO_SOURCE_URLS)
