@@ -24,14 +24,16 @@ PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=0
 
 PKG_CONFIG_DEPENDS:= \
-  COOVACHILLI_MINIPORTAL \
-  COOVACHILLI_REDIR \
-  COOVACHILLI_USERAGENT \
-  COOVACHILLI_UAMDOMAINFILE \
   COOVACHILLI_LARGELIMITS \
+  COOVACHILLI_MINIPORTAL \
   COOVACHILLI_NOSSL \
+  COOVACHILLI_OPENSSL \
+  COOVACHILLI_PROXY \
+  COOVACHILLI_REDIR \
+  COOVACHILLI_UAMDOMAINFILE \
+  COOVACHILLI_USERAGENT \
   COOVACHILLI_WOLFSSL \
-  COOVACHILLI_OPENSSL
+  IPV6
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/kernel.mk
@@ -139,7 +141,6 @@ define Package/coova-chilli/install
 	$(INSTALL_BIN) files/chilli.init $(1)/etc/init.d/chilli
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) files/chilli.config $(1)/etc/config/chilli
-	$(INSTALL_DIR) $(1)/lib/firewall
 endef
 
 $(eval $(call BuildPackage,coova-chilli))
