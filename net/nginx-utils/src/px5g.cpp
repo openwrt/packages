@@ -193,18 +193,19 @@ void selfsigned(const char * argv[])
     unsigned long days = 30;
     const char * keypath = NULL;
     const char * crtpath = NULL;
-    const char * subject = NULL; 
-    
+    const char * subject = NULL;
+
     bool use_rsa = true;
     int keysize = 512;
     unsigned long exponent = 65537;
-    
+
     int curve = NID_X9_62_prime256v1;
-    
+
     for (; argv[0]; ++argv) {
         if (argv[0]==string{"-der"}) {
             use_pem = false;
         } else if (argv[0]==string{"-days"}) {
+            ++argv;
             try {
                 days = parse_int(argv[0]);
             } catch (...) {
@@ -213,14 +214,14 @@ void selfsigned(const char * argv[])
                 throw_with_nested(runtime_error(errmsg.c_str()));
             }
         }
-        
+
         else if (argv[0]==string{"-newkey"}) {
             ++argv;
 
             if (!argv[0]) {
                 throw runtime_error("selfsigned error: -newkey misses value");
             }
-            
+
             if (argv[0]==string{"ec"}) {
                 use_rsa = false;
             } else if (string(argv[0], 4)=="rsa:") {
@@ -236,7 +237,7 @@ void selfsigned(const char * argv[])
                 throw runtime_error("selfsigned error: invalid algorithm");
             }
         }
-        
+
         else if (argv[0]==string{"-pkeyopt"}) {
             ++argv;
 
@@ -250,7 +251,7 @@ void selfsigned(const char * argv[])
 
             curve = parse_curve(&argv[0][18]);
         }
-        
+
         else if (argv[0]==string{"-keyout"}) {
             ++argv;
 
@@ -267,9 +268,9 @@ void selfsigned(const char * argv[])
                 }
             }
 
-            keypath = (argv[0]==string{"-"} ? NULL : argv[0]);
+            keypath = argv[0];
         }
-        
+
         else if (argv[0]==string{"-out"}) {
             ++argv;
 
@@ -288,7 +289,7 @@ void selfsigned(const char * argv[])
 
             crtpath = (argv[0]==string{"-"} ? NULL : argv[0]);
         }
-        
+
         else if (argv[0]==string{"-subj"}) {
             ++argv;
 
@@ -306,17 +307,17 @@ void selfsigned(const char * argv[])
             }
 
             subject = argv[0];
-        } 
-        
-        else { 
+        }
+
+        else {
             cerr<<"selfsigned warning: skip unknown option "<<argv[0]<<endl;
         }
     }
-    
+
     auto pkey = use_rsa ? gen_rsakey(keysize, exponent) : gen_eckey(curve);
 
     selfsigned(pkey, subject, days, crtpath, use_pem);
-    
+
     if (keypath) { write_key(pkey, keypath, use_pem); }
 }
 
