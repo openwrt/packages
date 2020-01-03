@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.17.5
-PKG_RELEASE:=3
+PKG_VERSION:=1.17.7
+PKG_RELEASE:=1
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
-PKG_HASH:=63ee35e15a75af028ffa1f995e2b9c120b59ef5f1b61a23b8a4c33c262fc10c3
+PKG_HASH:=b62756842807e5693b794e5d0ae289bd8ae5b098e66538b2a91eb80f25c591ff
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Ansuel Smith <ansuelsmth@gmail.com>
@@ -324,7 +324,7 @@ define Package/nginx-mod-luci/default
   SUBMENU:=Web Servers/Proxies
   TITLE:=Support file for Nginx
   URL:=http://nginx.org/
-  DEPENDS:=+uwsgi-cgi-luci-support
+  DEPENDS:=+uwsgi +uwsgi-luci-support
 endef
 
 define Package/nginx-mod-luci
