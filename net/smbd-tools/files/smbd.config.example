@@ -1,5 +1,5 @@
 config globals
-	option 'description'	'Cifsd on OpenWrt'
+	option 'description'	'SMBD on OpenWrt'
 
 config share
 	option name 'testshare'

@@ -3,11 +3,11 @@
 START=98
 USE_PROCD=1
 
-CIFSD_IFACE=""
+SMBD_IFACE=""
 
 smb_header()
 {
-	config_get CIFSD_IFACE $1 interface "lan"
+	config_get SMBD_IFACE $1 interface "lan"
 
 	# resolve interfaces
 	local interfaces
@@ -15,7 +15,7 @@ smb_header()
 		. /lib/functions/network.sh
 
 		local net
-		for net in $CIFSD_IFACE; do
+		for net in $SMBD_IFACE; do
 			local device
 			network_is_up $net || continue
 			network_get_device device "$net"
@@ -28,18 +28,18 @@ smb_header()
 	hostname="$(cat /proc/sys/kernel/hostname)"
 
 	config_get workgroup		$1 workgroup	"WORKGROUP"
-	config_get description		$1 description	"Cifsd on OpenWrt"
+	config_get description		$1 description	"SMBD on OpenWrt"
 
 	sed -e "s#|NAME|#$hostname#g" \
 	    -e "s#|WORKGROUP|#$workgroup#g" \
 	    -e "s#|DESCRIPTION|#$description#g" \
 	    -e "s#|INTERFACES|#$interfaces#g" \
-	    /etc/cifs/smb.conf.template > /var/etc/cifs/smb.conf
+	    /etc/smbd/smb.conf.template > /var/etc/smbd/smb.conf
 
-	[ -e /etc/cifs/smb.conf ] || ln -nsf /var/etc/cifs/smb.conf /etc/cifs/smb.conf
+	[ -e /etc/smbd/smb.conf ] || ln -nsf /var/etc/smbd/smb.conf /etc/smbd/smb.conf
 
-	if [ ! -L /etc/cifs/smb.conf ]; then
-		logger -t 'cifsd' "Local custom /etc/cifs/smb.conf file detected, all UCI/Luci config settings are ignored!"
+	if [ ! -L /etc/smbd/smb.conf ]; then
+		logger -p daemon.warn -t 'smbd' "Local custom /etc/smbd/smb.conf file detected, all UCI/Luci config settings are ignored!"
 	fi
 }
 
@@ -113,15 +113,15 @@ smb_add_share()
 
 		[ -n "$hide_dot_files" ] && printf "\thide dot files = %s\n" "$hide_dot_files"
 		[ -n "$veto_files" ] && printf "\tveto files = %s\n" "$veto_files"
-	} >> /var/etc/cifs/smb.conf
+	} >> /var/etc/smbd/smb.conf
 }
 
 init_config()
 {
-	mkdir -p /var/etc/cifs
+	mkdir -p /var/etc/smbd
 
-	config_load cifsd
-	# allow copy&paste from samba UCI configs (we dont have a cifsd wiki yet)
+	config_load smbd
+	# allow copy&paste from samba UCI configs (we dont have a smbd wiki yet)
 	config_foreach smb_header globals
 	config_foreach smb_header samba
 	config_foreach smb_add_share share
@@ -130,76 +130,68 @@ init_config()
 
 service_triggers()
 {
-	PROCD_RELOAD_DELAY=2000
+	# PROCD_RELOAD_DELAY=1000
 
-	procd_add_reload_trigger "dhcp" "system" "cifsd"
+	procd_add_reload_trigger "dhcp" "system" "smbd"
 
 	local i
-	for i in $CIFSD_IFACE; do
+	for i in $SMBD_IFACE; do
 		procd_add_reload_interface_trigger $i
 	done
+}
+
+kill_server()
+{
+	if [ -e /sys/module/smbd ]; then
+		if [ -e /sys/class/smbd-control/kill_server ]; then
+			logger -p daemon.info -t 'smbd' "triggering kill_server"
+			echo hard > /sys/class/smbd-control/kill_server
+		fi
+	fi
 }
 
 start_service()
 {
 	init_config
 
-	if [ ! -e /etc/cifs/smb.conf ]; then
-		logger -t 'cifsd' "missing config /etc/cifs/smb.conf, needs to-be created manually!"
+	if [ ! -e /etc/smbd/smb.conf ]; then
+		logger -p daemon.error -t 'smbd' "missing config /etc/smbd/smb.conf!"
 		exit 1
-	fi
-
-	if [ -e /sys/module/cifsd ]; then
-		if [ -e /sys/class/cifsd-control/kill_server ]; then
-			# upstream "BUG": ensure changes in smb.conf are reflected on a running kernel-server
-			echo hard > /sys/class/cifsd-control/kill_server
-			# we need a extra timeout for the reset
-			sleep 5
-		fi
 	fi
 	
-	modprobe cifsd 2> /dev/null
-	if [ ! -e /sys/module/cifsd ]; then
-		logger -t 'cifsd' "modprobe of cifsd module failed, can\'t start cifsd!"
+	# NOTE: We don't do a soft-reload via signal, since [global] smb.conf setting changes will be ignored, so always reset hard.
+	kill_server
+	
+	[ ! -e /sys/module/smbd ] && modprobe smbd 2> /dev/null
+	if [ ! -e /sys/module/smbd ]; then
+		logger -p daemon.error -t 'smbd' "modprobe of smbd module failed, can\'t start smbd!"
 		exit 1
 	fi
 
-	logger -t 'cifsd' "Starting CIFS/SMB userspace service."
+	logger -p daemon.notice -t 'smbd' "Starting SMBD userspace service."
 	procd_open_instance
-	procd_set_param command /usr/sbin/cifsd --n
-	procd_set_param file /var/etc/cifs/smb.conf
+	procd_add_mdns "smb" "tcp" "445"
+	procd_set_param command /usr/sbin/usmbd --n
+	procd_set_param file /etc/smbd/smb.conf
+	procd_set_param limits nofile=16384
 	procd_close_instance
 }
 
 stop_service()
 {
-	logger -t 'cifsd' "Stopping CIFSD userspace service."
-	killall cifsd > /dev/null 2>&1
+	logger -p daemon.notice -t 'smbd' "Stopping SMBD userspace service."
+	killall usmbd > /dev/null 2>&1
 	
-	[ -e /sys/module/cifsd ] && rmmod cifsd > /dev/null 2>&1
-	# With open smb connections rmmod is not possible, without waiting for the long 'ipc timeout', so we use 'kill_server'!
-	if [ -e /sys/module/cifsd ]; then
-		logger -t 'cifsd' "triggering kill_server"
-		if [ -e /sys/class/cifsd-control/kill_server ]; then
-			echo hard > /sys/class/cifsd-control/kill_server
-			# we need a extra timeout for the reset
-			sleep 5
-		fi
-	fi
+	[ -e /sys/module/smbd ] && rmmod smbd > /dev/null 2>&1
+	# kill server if we cant rmmod
+	[ -e /sys/module/smbd ] && kill_server
 	# next try
-	[ -e /sys/module/cifsd ] && rmmod cifsd > /dev/null 2>&1
-	# check again
-	if [ -e /sys/module/cifsd ]; then
-		# wait more...
-		sleep 3
-	fi
-	# last try
-	[ -e /sys/module/cifsd ] && rmmod cifsd > /dev/null 2>&1
+	[ -e /sys/module/smbd ] && rmmod smbd > /dev/null 2>&1
 	
-	if [ -e /sys/module/cifsd ]; then
-		logger -t 'cifsd' "module still loaded after 8s timeout"
+	if [ -e /sys/module/smbd ]; then
+		logger -p daemon.error -t 'smbd' "module still loaded after kill_server?"
 	fi
-	[ -f /tmp/cifsd.lock ] && rm /tmp/cifsd.lock
+	[ -f /tmp/smbd.lock ] && rm /tmp/smbd.lock
 }
 
 # reload_service() {
