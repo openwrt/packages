@@ -1,14 +1,14 @@
 --- a/libcap/_makenames.c
 +++ b/libcap/_makenames.c
-@@ -7,7 +7,6 @@
- 
+@@ -8,7 +8,6 @@
  #include <stdio.h>
  #include <stdlib.h>
+ #include <string.h>
 -#include <sys/capability.h>
  
  /*
   * #include 'sed' generated array
-@@ -22,7 +21,7 @@ struct {
+@@ -23,7 +22,7 @@ struct {
  };
  
  /* this should be more than big enough (factor of three at least) */

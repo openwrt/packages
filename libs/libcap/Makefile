@@ -8,18 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcap
-PKG_VERSION:=2.27
-PKG_RELEASE:=3
+PKG_VERSION:=2.30
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/libs/security/linux-privs/libcap2
-PKG_HASH:=dac1792d0118bee6aae6ba7fb93ff1602c6a9bda812fd63916eee1435b9c486a
+PKG_HASH:=a287bae0b0d95e5230a1c4177b835c70774511b631f87c7bd29e91a03e027f11
 
 PKG_MAINTAINER:=Paul Wassi <p.wassi@gmx.at>
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=License
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/kernel.mk
@@ -69,6 +70,7 @@ MAKE_FLAGS += \
     LD="$(TARGET_CC) -Wl,-x -shared" \
     LDFLAGS="$(TARGET_LDFLAGS)" \
     INDENT="| true" \
+    GOLANG="no" \
     PAM_CAP="no" \
     RAISE_SETFCAP="no" \
     DYNAMIC="yes" \

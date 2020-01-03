@@ -1,8 +1,8 @@
 --- a/progs/capsh.c
 +++ b/progs/capsh.c
-@@ -24,6 +24,9 @@
+@@ -25,6 +25,9 @@
  #include <sys/wait.h>
- #include <sys/prctl.h>
+ #include <unistd.h>
  
 +#ifndef SHELL
 +#define SHELL "/bin/sh"
@@ -10,7 +10,7 @@
  #define MAX_GROUPS       100   /* max number of supplementary groups for user */
  
  static char *binary(unsigned long value)
-@@ -692,10 +695,10 @@ int main(int argc, char *argv[], char *envp[])
+@@ -756,10 +759,10 @@ int main(int argc, char *argv[], char *envp[])
  	} else if (!strcmp("--print", argv[i])) {
  	    arg_print();
  	} else if ((!strcmp("--", argv[i])) || (!strcmp("==", argv[i]))) {
@@ -23,7 +23,7 @@
  	    exit(1);
  	} else {
  	usage:
-@@ -720,7 +723,7 @@ int main(int argc, char *argv[], char *envp[])
+@@ -789,7 +792,7 @@ int main(int argc, char *argv[], char *envp[])
  		   "  --killit=<n>   send signal(n) to child\n"
  		   "  --forkfor=<n>  fork and make child sleep for <n> sec\n"
  		   "  ==             re-exec(capsh) with args as for --\n"
