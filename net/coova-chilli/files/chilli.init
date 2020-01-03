@@ -49,7 +49,7 @@ start_chilli() {
 	local cfg="$1"
 	local base="/var/run/chilli_${cfg}"
 
-	config_get_bool disabled "$1" 'disabled' 1
+	config_get_bool disabled "$1" 'disabled' 0
 	[ $disabled = 1 ] && return
 
 	procd_open_instance "$cfg"

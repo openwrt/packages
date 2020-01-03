@@ -24,15 +24,16 @@ PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=0
 
 PKG_CONFIG_DEPENDS:= \
-  COOVACHILLI_MINIPORTAL \
-  COOVACHILLI_REDIR \
-  COOVACHILLI_USERAGENT \
-  COOVACHILLI_DNSLOG \
-  COOVACHILLI_UAMDOMAINFILE \
   COOVACHILLI_LARGELIMITS \
+  COOVACHILLI_MINIPORTAL \
   COOVACHILLI_NOSSL \
+  COOVACHILLI_OPENSSL \
+  COOVACHILLI_PROXY \
+  COOVACHILLI_REDIR \
+  COOVACHILLI_UAMDOMAINFILE \
+  COOVACHILLI_USERAGENT \
   COOVACHILLI_WOLFSSL \
-  COOVACHILLI_OPENSSL
+  IPV6
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/kernel.mk
@@ -41,7 +42,8 @@ define Package/coova-chilli
   SUBMENU:=Captive Portals
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+kmod-tun +librt +COOVACHILLI_WOLFSSL:libwolfssl +COOVACHILLI_OPENSSL:libopenssl
+  DEPENDS:=+kmod-tun +librt +COOVACHILLI_MINIPORTAL:haserl \
+  +COOVACHILLI_WOLFSSL:libwolfssl +COOVACHILLI_OPENSSL:libopenssl
   TITLE:=Wireless LAN HotSpot controller (Coova Chilli Version)
   URL:=https://coova.github.io/
   MENU:=1
@@ -106,7 +108,6 @@ define Build/Configure
 	$(call Build/Configure/Default, \
 	$(if $(CONFIG_COOVACHILLI_PROXY),--enable,--disable)-chilliproxy \
 	$(if $(CONFIG_COOVACHILLI_REDIR),--enable,--disable)-chilliredir \
-	$(if $(CONFIG_COOVACHILLI_DNSLOG),--enable,--disable)-dnslog \
 	$(if $(CONFIG_COOVACHILLI_MINIPORTAL),--enable,--disable)-miniportal \
 	$(if $(CONFIG_COOVACHILLI_USERAGENT),--enable,--disable)-useragent \
 	$(if $(CONFIG_COOVACHILLI_LARGELIMITS),--enable,--disable)-largelimits \
@@ -141,7 +142,6 @@ define Package/coova-chilli/install
 	$(INSTALL_BIN) files/chilli.init $(1)/etc/init.d/chilli
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) files/chilli.config $(1)/etc/config/chilli
-	$(INSTALL_DIR) $(1)/lib/firewall
 endef
 
 $(eval $(call BuildPackage,coova-chilli))
