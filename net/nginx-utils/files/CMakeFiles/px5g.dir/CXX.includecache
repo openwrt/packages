@@ -19,9 +19,15 @@ openssl/err.h
 -
 
 /home/pst/projects/openwrt-pst/packages/net/nginx-utils/src/px5g.cpp
-string
+fcntl.h
 -
-stdexcept
+unistd.h
+-
+stdlib.h
+-
+string.h
+-
+string
 -
 iostream
 -
