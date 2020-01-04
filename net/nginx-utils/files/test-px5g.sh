@@ -61,7 +61,7 @@ test 'cat "$OPENSSL_DER" | ./px5g checkend -der 86400                       ' 1
 
 [ "$PRINT_PASSED" -gt 1 ] && printf "  * in option:\n"
 test 'cat "$OPENSSL_DER" | ./px5g checkend -in /proc/self/fd/0 -der 0       ' 0
-test 'cat "$OPENSSL_DER" | ./px5g checkend -der -in /proc/self/fd/0 -der 99 ' 0
+test 'cat "$OPENSSL_DER" | ./px5g checkend -der -in /proc/self/fd/0 99      ' 0
 
 [ "$PRINT_PASSED" -gt 1 ] && printf "  * wrong:\n"
 test 'cat "$OPENSSL_PEM" | ./px5g checkend -der 0                2>/dev/null' 1

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include <fcntl.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
 
@@ -47,47 +48,6 @@ bool checkend(const char crtpath[],
 
     return (cmp >= 0);
 }
-
-
-// BIO * bio_open_owner(const char keypath[], const bool use_pem=true);
-// BIO * bio_open_owner(const char keypath[], const bool use_pem)
-// {
-//     BIO * bio = NULL;
-//
-//     if (!keypath) {
-//         bio = BIO_new_fp(stdout, BIO_NOCLOSE | (use_pem ? BIO_FP_TEXT : 0));
-//
-//     } else {
-//         //BIO_new_file(keypath, (use_pem ? "w" : "wb") );
-//
-//         auto fd = open(keypath, O_WRONLY | O_CREAT | O_TRUNC, 0600);
-//
-//         if (fd >= 0) {
-//             auto fp = fdopen(fd, (use_pem ? "w" : "wb") );
-//
-//             if (fp) {
-//                 bio = BIO_new_fp(fp, BIO_CLOSE | (use_pem ? BIO_FP_TEXT : 0));
-//                 if (!bio) {
-//                     fclose(fp);
-//                 }
-//             } else {
-//                 close(fd);
-//             }
-//         }
-//     }
-//
-//     if (!bio) {
-//         std::string errmsg{"cannot open for writing "};
-//         errmsg += keypath==NULL ? "stdout" : keypath;
-//         errmsg += "\n";
-//         ERR_print_errors_cb(print_error, &errmsg);
-//         throw std::runtime_error(errmsg.c_str());
-//     }
-//
-//     return bio;
-// }
-
-
 
 void write_key(const EVP_PKEY_ptr & pkey,
                const char keypath[]=NULL, const bool use_pem=true);
@@ -314,7 +274,7 @@ auto subject2name(const char subject[])
 }
 
 
-void selfsigned(const EVP_PKEY_ptr & pkey, const char subject[]="",
+void selfsigned(const EVP_PKEY_ptr & pkey, const char subject[]=NULL,
                 const unsigned long days=30, const char crtpath[]=NULL,
                 const bool use_pem=true);
 void selfsigned(const EVP_PKEY_ptr & pkey, const char subject[],

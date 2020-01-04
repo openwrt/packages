@@ -1,5 +1,4 @@
 
-#include <fcntl.h>
 #include <unistd.h>
 #include <string>
 #include <iostream>
@@ -53,7 +52,7 @@ int checkend(const char * argv[])
                 }
             }
 
-            crtpath = (argv[0]==string{"-"} ? NULL : argv[0]);
+            crtpath = argv[0];
         }
 
         else if (argv[0][0]=='-') {
@@ -111,7 +110,7 @@ void eckey(const char * argv[])
                 }
             }
 
-            keypath = (argv[0]==string{"-"} ? NULL : argv[0]);
+            keypath = argv[0];
         }
 
         else if (argv[0][0]=='-') {
@@ -160,7 +159,7 @@ void rsakey(const char * argv[])
                 }
             }
 
-            keypath = (argv[0]==string{"-"} ? NULL : argv[0]);
+            keypath = argv[0];
         }
 
         else if (argv[0][0]=='-') {
@@ -287,7 +286,7 @@ void selfsigned(const char * argv[])
                 }
             }
 
-            crtpath = (argv[0]==string{"-"} ? NULL : argv[0]);
+            crtpath = argv[0];
         }
 
         else if (argv[0]==string{"-subj"}) {

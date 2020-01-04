@@ -3,11 +3,13 @@
 
 #include <chrono>
 
+#include <cstdio>
 #include <iostream>
 #include <string>
 // #include <regex>
 #include "regex-pcre.hpp"
 #include "nginx-utils-common.hpp"
+#include "px5g-openssl.hpp"
 #ifdef openwrt
 #include "ubus-cxx.hpp"
 #endif
@@ -18,7 +20,7 @@ using namespace std;
 static const string LAN_LISTEN = "/var/lib/nginx/lan.listen";
 static const string LAN_SSL_LISTEN = "/var/lib/nginx/lan_ssl.listen";
 static const string ADD_SSL_FCT = "add_ssl";
-// const string NAME="_lan"
+static const string LAN_NAME="_lan";
 // const string PREFIX="/etc/nginx/conf.d/_lan"
 
 #ifdef openwrt
@@ -35,6 +37,7 @@ public:
     fn STR;
     const regex RGX;
 };
+
 // For a compile time regex lib, this must be fixed, use one of these options:
 // * Hand craft or macro concat them (loosing more or less flexibility).
 // * Use Macro concatenation of __VA_ARGS__ with the help of:
@@ -80,6 +83,7 @@ public:
             return code; \
         }() \
     };
+
 // arg(name, delimiter="") escapes arguments, arg("", delimiter="\n") captures:
 _LINE_(CRON_CMD,
        space+arg("/etc/init.d/nginx")+space+arg(ADD_SSL_FCT, "'")+space+arg()+'\n');
@@ -99,6 +103,7 @@ _LINE_(NGX_SSL_KEY,
        begin+ arg("ssl_certificate_key") + space + arg("", ";") +end);
 _LINE_(NGX_SSL_SESSION_CACHE, begin+ arg("ssl_session_cache") +space);
 _LINE_(NGX_SSL_SESSION_TIMEOUT, begin+ arg("ssl_session_timeout") +space);
+
 #undef _LINE_
 
 
@@ -110,16 +115,20 @@ string get_if_missed(const string & conf, const Line & LINE, const string & val,
     if (val=="") {
         return regex_search(conf, LINE.RGX) ? "" : LINE.STR(val, indent);
     }
-    smatch match;
+
+    smatch match; // assuming last capture has the value!
+
     for (auto pos = conf.begin();
          regex_search(pos, conf.end(), match, LINE.RGX);
          pos += match.position(0) + match.length(0))
     {
         const string value = match.str(match.size() - 1);
+
         if (value==val || value=="'"+val+"'" || value=='"'+val+'"') {
             return "";
         }
     }
+
     return LINE.STR(val, indent);
 }
 
@@ -128,79 +137,88 @@ void add_ssl_directives_to(const string & name, const bool isdefault);
 void add_ssl_directives_to(const string & name, const bool isdefault)
 {
     const string prefix = CONF_DIR + name;
-    try {
-        const string conf = read_file(prefix+".conf");
+    string conf;
 
-        smatch match;
-        for (auto pos = conf.begin();
-            regex_search(pos, conf.end(), match, NGX_SERVER_NAME.RGX);
-            pos += match.position(0) + match.length(0))
+    try { conf = read_file(prefix+".conf"); }
+    catch (...) {
+        cout<<"cannot add SSL directives to "<<prefix<<".conf"<<endl;
+        throw;
+    }
+
+    const string & const_conf = conf; // iteration needs const string.
+    smatch match; // captures str(1)=indentation spaces, str(2)=server name
+    for (auto pos = const_conf.begin();
+        regex_search(pos, const_conf.end(), match, NGX_SERVER_NAME.RGX);
+        pos += match.position(0) + match.length(0))
+    {
+        if (match.str(2).find(name) == string::npos) { continue; }
+
+        const string indent = match.str(1);
+
+        string adds = isdefault ?
+            get_if_missed(conf, NGX_INCLUDE_LAN_SSL_LISTEN_DEFAULT,"",indent) :
+            get_if_missed(conf, NGX_INCLUDE_LAN_SSL_LISTEN, "", indent);
+
+        adds += get_if_missed(conf, NGX_SSL_CRT, prefix+".crt", indent);
+
+        adds += get_if_missed(conf, NGX_SSL_KEY, prefix+".key", indent);
+
         {
-            if (match.str(2).find(name) == string::npos) { continue; }
+            string tmp;
 
-            const string indent = match.str(1);
-            string adds = "";
+            tmp = get_if_missed(conf, NGX_SSL_SESSION_CACHE, "", indent);
+            if (tmp != "") { adds += tmp + "'shared:SSL:32k';"; }
 
-            adds += isdefault ?
-                get_if_missed(conf, NGX_INCLUDE_LAN_SSL_LISTEN_DEFAULT,"",indent) :
-                get_if_missed(conf, NGX_INCLUDE_LAN_SSL_LISTEN, "", indent);
-
-            adds += get_if_missed(conf, NGX_SSL_CRT, prefix+".crt", indent);
-
-            adds += get_if_missed(conf, NGX_SSL_KEY, prefix+".key", indent);
-
-            {
-                string tmp;
-
-                tmp = get_if_missed(conf, NGX_SSL_SESSION_CACHE, "", indent);
-                if (tmp != "") { adds += tmp + "'shared:SSL:32k';"; }
-
-                tmp = get_if_missed(conf, NGX_SSL_SESSION_TIMEOUT, "", indent);
-                if (tmp != "") { adds += tmp + "64m;"; }
-            }
-
-            if (adds.length() > 0) {
-                string new_conf; // conf is const for iteration.
-
-                pos += match.position(0) + match.length(0);
-                new_conf = string(conf.begin(), pos) + adds + string(pos, conf.end());
-
-                new_conf = isdefault ?
-                    regex_replace(new_conf, NGX_INCLUDE_LAN_LISTEN_DEFAULT.RGX,"") :
-                    regex_replace(new_conf, NGX_INCLUDE_LAN_LISTEN.RGX, "");
-
-                write_file(prefix+".conf", new_conf);
-
-                cout<<"Added SSL directives to "<<prefix<<".conf: "<<adds<<endl;
-            }
-            return ;
+            tmp = get_if_missed(conf, NGX_SSL_SESSION_TIMEOUT, "", indent);
+            if (tmp != "") { adds += tmp + "64m;"; }
         }
 
-    } catch(const ifstream::failure &) { /* is ok if not found */ }
+        if (adds.length() > 0) {
+            pos += match.position(0) + match.length(0);
+
+            conf = string(const_conf.begin(), pos) + adds + string(pos, const_conf.end());
+
+            conf = isdefault ?
+                regex_replace(conf, NGX_INCLUDE_LAN_LISTEN_DEFAULT.RGX,"") :
+                regex_replace(conf, NGX_INCLUDE_LAN_LISTEN.RGX, "");
+
+            write_file(prefix+".conf", conf);
+
+            cout<<"Added SSL directives to "<<prefix<<".conf: "<<adds<<endl;
+        }
+
+        return;
+    }
 
     cout<<"Cannot add SSL directives to "<<prefix<<".conf, missing:";
     cout<<NGX_SERVER_NAME.STR(name, "\n    ")<<endl;
 }
 
 
-void try_using_cron_to_recreate_certificate(const string & name);
-void try_using_cron_to_recreate_certificate(const string & name)
+void try_using_cron_to_recreate_certificate(const string & name,
+                                            const string cron_interval);
+void try_using_cron_to_recreate_certificate(const string & name,
+                                            const string cron_interval)
 {
 #ifdef openwrt
     static const char * filename = "/etc/crontabs/root";
+
     string conf{};
-    try {
-        conf = read_file(filename);
-    } catch(const ifstream::failure &) { /* is ok if not found */ }
-    const string CRON_CHECK = "3 3 12 12 *";
+    try { conf = read_file(filename); }
+    catch (const ifstream::failure &) { /* it is ok if not found, create. */ }
+
     const string add = get_if_missed(conf, CRON_CMD, name);
+
     if (add.length() > 0) {
         auto service = ubus::call("service", "list", 1000).filter("cron");
+
         if (!service) {
             cout<<"Cron unavailable to re-create the ssl certificate for '";
             cout<<name<<"'."<<endl;
         } else { // active with or without instances:
-            write_file(filename, CRON_CHECK+add, ios::app);
+
+            write_file(filename, cron_interval+add, ios::app);
+
             call("/etc/init.d/cron", "reload");
             cout<<"Rebuild the ssl certificate for '";
             cout<<name<<"' annually with cron."<<endl;
@@ -252,6 +270,109 @@ void create_lan_listen()
 }
 
 
+void create_ssl_certificate(const string & crtpath, const string & keypath,
+                            const unsigned long days=792);
+void create_ssl_certificate(const string & crtpath, const string & keypath,
+                            const unsigned long days)
+{
+    const int n = 4;
+    char nonce[2*n+1];
+    ifstream urandom{"/dev/urandom"};
+    for (int i=0; i<n && urandom.good(); ++i) {
+        auto byte = (unsigned)urandom.get();
+        const char hex[17] = "0123456789ABCDEF";
+        nonce[2*i] = hex[byte >> 4];
+        nonce[2*i+1] = hex[byte & 0x0f];
+    }
+    urandom.close();
+    nonce[2*n] = '\0';
+
+    const auto tmpcrtpath = crtpath + ".new-" + nonce;
+    const auto tmpkeypath = keypath + ".new-" + nonce;
+
+    try {
+        auto pkey = gen_eckey(NID_secp384r1);
+
+        write_key(pkey, tmpkeypath.c_str());
+
+        string subject {"/C=ZZ/ST=Somewhere/L=None/CN=OpenWrt/O=OpenWrt"};
+        subject += nonce;
+
+        selfsigned(pkey, subject.c_str(), days, tmpcrtpath.c_str());
+
+        if (!checkend(tmpcrtpath.c_str(), days*24*60*60 - 42)) {
+            throw runtime_error("bug: created certificate is not valid!!");
+        }
+
+    } catch (...) {
+        cerr<<"error: cannot create selfsigned certificate, ";
+        cerr<<"removing temporary files ..."<<endl;
+
+        if (remove(tmpcrtpath.c_str())!=0) {
+            auto errmsg = "error: cannot remove "+tmpcrtpath;
+            perror(errmsg.c_str());
+        }
+
+        if (remove(tmpkeypath.c_str())!=0) {
+            auto errmsg = "error: cannot remove "+tmpkeypath;
+            perror(errmsg.c_str());
+        }
+
+        throw;
+    }
+
+    if ( rename(tmpcrtpath.c_str(), crtpath.c_str())!=0 ||
+         rename(tmpkeypath.c_str(), keypath.c_str())!=0 )
+    {
+        auto errmsg = "error: cannot move "+tmpcrtpath+" to "+crtpath;
+        errmsg = ", or "+tmpkeypath+" to "+keypath;
+        perror(errmsg.c_str());
+    }
+
+}
+
+
+void add_ssl_if_needed(const string & name);
+void add_ssl_if_needed(const string & name)
+{
+    const auto crtpath = CONF_DIR + name + ".crt";
+    const auto keypath = CONF_DIR + name + ".key";
+    const auto remaining_seconds = (365 + 32)*24*60*60;
+    const auto validity_days = 3*(365 + 31);
+    const auto cron_interval = "3 3 12 12 *"; // once a year.
+
+    bool is_valid = true;
+
+    if (access(keypath.c_str(), F_OK) == -1) { is_valid = false; }
+
+    else if (access(crtpath.c_str(), F_OK) == -1) { is_valid = false; }
+
+    else {
+        try {
+            if (!checkend(crtpath.c_str(), remaining_seconds)) {
+                is_valid = false;
+            }
+        }
+        catch (...) { // something went wrong, maybe it is in DER format:
+            try {
+                if (!checkend(crtpath.c_str(), remaining_seconds, false)) {
+                    is_valid = false;
+                }
+            }
+            catch (...) { // it has neither DER nor PEM format, rebuild.
+                is_valid = false;
+            }
+        }
+    }
+
+    if (!is_valid) { create_ssl_certificate(crtpath, keypath, validity_days); }
+
+    try_using_cron_to_recreate_certificate(name, cron_interval);
+
+    add_ssl_directives_to(name, name==LAN_NAME);
+}
+
+
 void time_it(chrono::time_point<chrono::steady_clock> begin);
 void time_it(chrono::time_point<chrono::steady_clock> begin)
 {
@@ -290,28 +411,29 @@ int main(int argc, char * argv[]) {
 #ifdef openwrt
 cout<<"TODO: remove timing and openwrt macro!"<<endl;
 #endif
-    if (argc != 2) {
-        cout<<"syntax: "<<argv[0]<<" server_name"<<endl;
+    if (argc < 2) {
+        //TODO more?
+        cerr<<"syntax: "<<argv[0]<<"[create_lan_listen|add_ssl server_name|getenv]"<<endl;
         return 2;
     }
-    const string name = argv[1];
-    time_it(begin);
+//     const string name = argv[2];
 
-    
-    
-    
+    time_it(begin);
 
     THREAD(ubus, create_lan_listen);
 
-    // checkend_of_certificate || create_selfsigned_certificate
+    try { add_ssl_if_needed(LAN_NAME); }
+    catch (...) {
+        //TODO needed for joining
+    }
 
-
-    add_ssl_directives_to(name, name=="_lan");
-    try_using_cron_to_recreate_certificate(name);
     time_it(begin);
 
     JOIN(ubus);
+
     time_it(begin);
+
+
     return 0;
 }
 

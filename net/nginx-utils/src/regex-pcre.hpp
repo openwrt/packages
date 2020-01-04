@@ -147,7 +147,7 @@ public:
         int x = vec[2*i];
         if (x<0) { return ""; }
         int y = vec[2*i+1];
-        return move(string{begin + x, begin + y});
+        return string{begin + x, begin + y};
     }
 
 
@@ -276,7 +276,7 @@ auto smatch::format(const string & fmt) const {
         }
     }
     ret.append(fmt, index);
-    return move(ret);
+    return ret;
 }
 
 
@@ -296,7 +296,7 @@ auto regex_replace(const string & subj,
     }
 
     ret.append(pos, subj.end());
-    return move(ret);
+    return ret;
 }
 
 

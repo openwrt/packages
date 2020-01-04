@@ -60,7 +60,7 @@ std::string read_file(const std::string & name,
                 std::istreambuf_iterator<char>());
 
     file.close();
-    return move(ret);
+    return ret;
 }
 
 
