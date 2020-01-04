@@ -44,12 +44,13 @@ endef
 define Package/knot-libs
 	$(call Package/knot-lib/Default)
 	TITLE+= common DNS and DNSSEC libraries
-	DEPENDS+=+libgnutls +lmdb
+	DEPENDS+=+libgnutls +lmdb @!arc
 endef
 
 define Package/knot-libzscanner
 	$(call Package/knot-lib/Default)
 	TITLE+= zone parser library
+	DEPENDS+=@!arc
 endef
 
 define Package/knot
@@ -166,6 +167,7 @@ define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)/tests check-compile
 endef
 
+ifneq ($(CONFIG_arc),y)
 define Build/InstallDev
 	$(INSTALL_DIR)					$(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.{a,so*}	$(1)/usr/lib/
@@ -182,6 +184,7 @@ define Build/InstallDev
 	$(INSTALL_DIR)							$(1)/usr/lib/pkgconfig
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc	$(1)/usr/lib/pkgconfig/
 endef
+endif
 
 define Package/knot-libs/install
 	$(INSTALL_DIR) 						$(1)/usr/lib
