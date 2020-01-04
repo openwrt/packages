@@ -122,10 +122,12 @@ define Build/Compile
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)
 endef
 
+ifeq ($(CONFIG_arc),)
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib/perl5/$(PERL_VERSION)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/perl5/$(PERL_VERSION) $(1)/usr/lib/perl5/
 endef
+endif
 
 define Package/perl/install
 	$(INSTALL_DIR) $(1)/usr/bin
