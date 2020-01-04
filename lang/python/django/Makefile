@@ -34,10 +34,7 @@ endef
 
 define Package/python3-django
 $(call Package/django/Default)
-  DEPENDS:= \
-	+PACKAGE_python3-django:python3 \
-	+PACKAGE_python3-django:python3-pytz \
-	+PACKAGE_python3-django:python3-sqlparse
+  DEPENDS:= +python3 +python3-pytz +python3-sqlparse
   VARIANT:=python3
 endef
 
