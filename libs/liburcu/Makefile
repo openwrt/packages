@@ -38,12 +38,14 @@ define Package/liburcu/description
 	Userspace Read-Copy-Update library.
 endef
 
+ifeq ($(CONFIG_arc),)
 define Build/InstallDev
 	$(INSTALL_DIR)						$(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/urcu*		$(1)/usr/include/
 	$(INSTALL_DIR)						$(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liburcu*.{a,so*}	$(1)/usr/lib/
 endef
+endif
 
 define Package/liburcu/install
 	$(INSTALL_DIR)					$(1)/usr/lib
