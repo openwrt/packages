@@ -73,18 +73,6 @@ transmission() {
 		USE=$((MEM * mem_percentage * 10))
 	fi
 
-	[ -d "$download_dir" ] || {
-		mkdir -p "$download_dir"
-		chmod 0755 "$download_dir"
-		[ -z "$user" ] || chown -R "$user:$group" "$download_dir"
-	}
-
-	[ "$incomplete_dir_enabled" = "0" ] || [ -d "$incomplete_dir" ] || {
-		mkdir -p "$incomplete_dir"
-		chmod 0755 "$incomplete_dir"
-		[ -z "$user" ] || chown -R "$user:$group" "$incomplete_dir"
-	}
-
 	config_file="$config_dir/settings.json"
 	[ -d "$config_dir" ] || {
 		mkdir -p "$config_dir"
@@ -95,6 +83,18 @@ transmission() {
 		mkdir -p "$config_dir/blocklists"
 		[ -e "$config_dir/stats.json" ] || touch "$config_dir/stats.json"
 		[ -z "$user" ] || chown -R "$user:$group" "$config_dir"
+	}
+
+	[ -d "$download_dir" ] || {
+		mkdir -p "$download_dir"
+		chmod 0755 "$download_dir"
+		[ -z "$user" ] || chown -R "$user:$group" "$download_dir"
+	}
+
+	[ "$incomplete_dir_enabled" = "0" ] || [ -d "$incomplete_dir" ] || {
+		mkdir -p "$incomplete_dir"
+		chmod 0755 "$incomplete_dir"
+		[ -z "$user" ] || chown -R "$user:$group" "$incomplete_dir"
 	}
 
 	[ "$config_overwrite" = 0 ] || {
