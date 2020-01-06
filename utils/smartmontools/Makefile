@@ -72,7 +72,7 @@ define Package/smartd-mail
   $(call Package/smartmontools/Default)
   TITLE+= Email notifications
   PKGARCH=all
-  DEPENDS+= +smartd, +nail, +msmtp-mta
+  DEPENDS+= +smartd +nail +msmtp-mta
 endef
 
 define Package/smartd-mail/description
