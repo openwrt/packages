@@ -227,7 +227,7 @@ public:
     auto begin() const { return iterator{msg.get(), keys}; }
 
 
-    inline const auto end() const {
+    inline auto end() const {
         static iterator end{};
         return std::move(end);
     }

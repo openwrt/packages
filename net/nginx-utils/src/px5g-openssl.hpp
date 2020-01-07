@@ -79,7 +79,7 @@ void write_key(const EVP_PKEY_ptr & pkey,
     }
 
     if (!bio) {
-        std::string errmsg{"cannot open for writing "};
+        std::string errmsg{"write_key error: cannot open "};
         errmsg += keypath==NULL ? "stdout" : keypath;
         errmsg += "\n";
         ERR_print_errors_cb(print_error, &errmsg);

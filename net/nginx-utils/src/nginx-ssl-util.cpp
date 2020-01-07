@@ -17,18 +17,15 @@
 using namespace std;
 
 
-static const string LAN_LISTEN = "/var/lib/nginx/lan.listen";
-static const string LAN_SSL_LISTEN = "/var/lib/nginx/lan_ssl.listen";
-static const string ADD_SSL_FCT = "add_ssl";
-static const string LAN_NAME="_lan";
-// const string PREFIX="/etc/nginx/conf.d/_lan"
-
-#ifdef openwrt
-static const string CONF_DIR = "/etc/nginx/conf.d/";
-#else
-static const string CONF_DIR = "";
-#endif
-
+static const auto PROGRAM_NAME = string{"/usr/bin/nginx-utils"};
+static const auto CONF_DIR = string{"/etc/nginx/conf.d/"};
+static const auto LAN_NAME = string{"_lan"};
+static const auto LAN_LISTEN = string{"/var/lib/nginx/lan.listen"};
+static const auto LAN_SSL_LISTEN = string{"/var/lib/nginx/lan_ssl.listen"};
+static const auto ADD_SSL_FCT = string{"add_ssl"};
+static const auto NGX_SSL_SESSION_TIMEOUT_PARAM = string{"64m;"};
+static const auto NGX_SSL_SESSION_CACHE_PARAM =
+    [](const string name){ return "'shared:SSL:32k';"; };
 
 class Line {
 public:
@@ -45,7 +42,7 @@ public:
 // * Use constexpr---not available for strings or char * for now---look at lib.
 #define _LINE_(name, code) \
     Line name{ \
-        [](const string & parameter = "$", const string & begin = "\n    ") \
+        [](const string & parameter, const string & begin) \
         -> const string { \
             const auto arg = \
             [parameter](const string & str = "", const string & lim="") \
@@ -86,7 +83,7 @@ public:
 
 // arg(name, delimiter="") escapes arguments, arg("", delimiter="\n") captures:
 _LINE_(CRON_CMD,
-       space+arg("/etc/init.d/nginx")+space+arg(ADD_SSL_FCT, "'")+space+arg()+'\n');
+       space+arg(PROGRAM_NAME)+space+arg(ADD_SSL_FCT, "'")+space+arg()+'\n');
 _LINE_(NGX_SERVER_NAME,
        begin + arg("server_name") + space + arg("", ";") +end);
 _LINE_(NGX_INCLUDE_LAN_LISTEN,
@@ -137,13 +134,8 @@ void add_ssl_directives_to(const string & name, const bool isdefault);
 void add_ssl_directives_to(const string & name, const bool isdefault)
 {
     const string prefix = CONF_DIR + name;
-    string conf;
 
-    try { conf = read_file(prefix+".conf"); }
-    catch (...) {
-        cout<<"cannot add SSL directives to "<<prefix<<".conf"<<endl;
-        throw;
-    }
+    string conf = read_file(prefix+".conf");
 
     const string & const_conf = conf; // iteration needs const string.
     smatch match; // captures str(1)=indentation spaces, str(2)=server name
@@ -167,10 +159,10 @@ void add_ssl_directives_to(const string & name, const bool isdefault)
             string tmp;
 
             tmp = get_if_missed(conf, NGX_SSL_SESSION_CACHE, "", indent);
-            if (tmp != "") { adds += tmp + "'shared:SSL:32k';"; }
+            if (tmp != "") { adds += tmp + NGX_SSL_SESSION_CACHE_PARAM(name); }
 
             tmp = get_if_missed(conf, NGX_SSL_SESSION_TIMEOUT, "", indent);
-            if (tmp != "") { adds += tmp + "64m;"; }
+            if (tmp != "") { adds += tmp + NGX_SSL_SESSION_TIMEOUT_PARAM; }
         }
 
         if (adds.length() > 0) {
@@ -195,10 +187,8 @@ void add_ssl_directives_to(const string & name, const bool isdefault)
 }
 
 
-void try_using_cron_to_recreate_certificate(const string & name,
-                                            const string cron_interval);
-void try_using_cron_to_recreate_certificate(const string & name,
-                                            const string cron_interval)
+void use_cron_to_recreate_certificate(const string & name);
+void use_cron_to_recreate_certificate(const string & name)
 {
 #ifdef openwrt
     static const char * filename = "/etc/crontabs/root";
@@ -217,9 +207,11 @@ void try_using_cron_to_recreate_certificate(const string & name,
             cout<<name<<"'."<<endl;
         } else { // active with or without instances:
 
+            const auto cron_interval = "3 3 12 12 *"; // once a year.
             write_file(filename, cron_interval+add, ios::app);
 
             call("/etc/init.d/cron", "reload");
+
             cout<<"Rebuild the ssl certificate for '";
             cout<<name<<"' annually with cron."<<endl;
         }
@@ -280,14 +272,16 @@ void create_ssl_certificate(const string & crtpath, const string & keypath,
 {
     const int n = 4;
     char nonce[2*n+1];
-    ifstream urandom{"/dev/urandom"};
-    for (int i=0; i<n && urandom.good(); ++i) {
-        auto byte = (unsigned)urandom.get();
-        const char hex[17] = "0123456789ABCDEF";
-        nonce[2*i] = hex[byte >> 4];
-        nonce[2*i+1] = hex[byte & 0x0f];
-    }
-    urandom.close();
+    try {
+        ifstream urandom{"/dev/urandom"};
+        for (int i=0; i<n && urandom.good(); ++i) {
+            auto byte = (unsigned)urandom.get();
+            const char hex[17] = "0123456789ABCDEF";
+            nonce[2*i] = hex[byte >> 4];
+            nonce[2*i+1] = hex[byte & 0x0f];
+        }
+        urandom.close();
+    } catch (...) { /* not that problematic, use current content of nonce. */ }
     nonce[2*n] = '\0';
 
     const auto tmpcrtpath = crtpath + ".new-" + nonce;
@@ -338,11 +332,16 @@ void create_ssl_certificate(const string & crtpath, const string & keypath,
 void add_ssl_if_needed(const string & name);
 void add_ssl_if_needed(const string & name)
 {
+    try { add_ssl_directives_to(name, name==LAN_NAME); }
+    catch (...) {
+        cout<<"Cannot add SSL directives to "<<name<<".conf"<<endl;
+        throw;
+    }
+
     const auto crtpath = CONF_DIR + name + ".crt";
     const auto keypath = CONF_DIR + name + ".key";
     const auto remaining_seconds = (365 + 32)*24*60*60;
     const auto validity_days = 3*(365 + 31);
-    const auto cron_interval = "3 3 12 12 *"; // once a year.
 
     bool is_valid = true;
 
@@ -370,21 +369,34 @@ void add_ssl_if_needed(const string & name)
 
     if (!is_valid) { create_ssl_certificate(crtpath, keypath, validity_days); }
 
-    try_using_cron_to_recreate_certificate(name, cron_interval);
-
-    add_ssl_directives_to(name, name==LAN_NAME);
+    try { use_cron_to_recreate_certificate(name); }
+    catch (...) {
+        cout<<"Cannot use cron to rebuild the certificate for "<<name<<endl;
+    }
 }
 
 
-void time_it(chrono::time_point<chrono::steady_clock> begin);
-void time_it(chrono::time_point<chrono::steady_clock> begin)
-{
-    auto end = chrono::steady_clock::now();
-    cout << "Time difference = " <<
-    chrono::duration_cast<chrono::milliseconds>(end - begin).count()
-    << " ms" << endl;
-}
+// void time_it(chrono::time_point<chrono::steady_clock> begin);
+// void time_it(chrono::time_point<chrono::steady_clock> begin)
+// {
+//     auto end = chrono::steady_clock::now();
+//     cout << "Time difference = " <<
+//     chrono::duration_cast<chrono::milliseconds>(end - begin).count()
+//     << " ms" << endl;
+// }
 
+
+/*#include <sys/wait.h>
+#define THREAD(name, call) pid_t name = fork(); \
+    switch(name) { \
+        case 0: call(); _exit(0); \
+        case -1: cout<<"error forking "<<name<<", run in main process"<<endl; \
+            call(); \
+    }
+#define JOIN(name) if (name>0) { \
+        int status; \
+        if(waitpid(name, &status, 0) < 0) cout<<"error waiting "<<name<<endl; \
+    }*/
 
 
 
@@ -395,47 +407,71 @@ void time_it(chrono::time_point<chrono::steady_clock> begin)
 #define THREAD(name, call) thread name(call)
 #define JOIN(name) name.join()
 
-/*
-#include <sys/wait.h>
-#define THREAD(name, call) pid_t name = fork(); \
-    switch(name) { \
-        case 0: call(); _exit(0); \
-        case -1: cout<<"error forking "<<call<<", run in main process"<<endl; \
-            call(); \
-    }
-#define JOIN(name) if (name>0) { \
-        int status; \
-        if(waitpid(name, &status, 0) < 0) cout<<"error waiting "<<call<<endl; \
-    }*/
 
-
-int main(int argc, char * argv[]) {
-    auto begin = chrono::steady_clock::now();
-#ifdef openwrt
-cout<<"TODO: remove timing and openwrt macro!"<<endl;
-#endif
-    if (argc < 2) {
-        //TODO more?
-        cerr<<"syntax: "<<argv[0]<<"[create_lan_listen|add_ssl server_name|getenv]"<<endl;
-        return 2;
-    }
-//     const string name = argv[2];
-
-    time_it(begin);
-
+void init_lan();
+void init_lan()
+{
     THREAD(ubus, create_lan_listen);
 
     try { add_ssl_if_needed(LAN_NAME); }
     catch (...) {
-        //TODO needed for joining
+        JOIN(ubus);
+        throw;
     }
 
-    time_it(begin);
-
     JOIN(ubus);
+}
 
-    time_it(begin);
+void get_env(const string & name=LAN_NAME);
+void get_env(const string & name)
+{
+    const string prefix = CONF_DIR + name;
+    cout<<"NGINX_CONF="<<'"'<<"/etc/nginx/nginx.conf"<<'"'<<endl;
+    cout<<"CONF_DIR="<<'"'<<CONF_DIR<<'"'<<endl;
+    cout<<"LAN_NAME="<<'"'<<LAN_NAME<<'"'<<endl;
+    cout<<"LAN_LISTEN="<<'"'<<LAN_LISTEN<<'"'<<endl;
+    cout<<"LAN_SSL_LISTEN="<<'"'<<LAN_SSL_LISTEN<<'"'<<endl;
+    cout<<"ADD_SSL_FCT="<<'"'<<ADD_SSL_FCT<<'"'<<endl;
+    cout<<"NGX_SSL_CRT="<<'"'<<NGX_SSL_CRT.STR(prefix+".crt", "")<<'"'<<endl;
+    cout<<"NGX_SSL_KEY="<<'"'<<NGX_SSL_KEY.STR(prefix+".key", "")<<'"'<<endl;
+    cout<<"NGX_SSL_SESSION_CACHE="<<'"'<<
+            NGX_SSL_SESSION_CACHE.STR("", "")<<
+            NGX_SSL_SESSION_CACHE_PARAM(name)<<'"'<<endl;
+    cout<<"NGX_SSL_SESSION_TIMEOUT="<<'"'<<
+            NGX_SSL_SESSION_TIMEOUT.STR("", "")<<
+            NGX_SSL_SESSION_TIMEOUT_PARAM<<'"'<<endl;
+}
 
+
+int main(int argc, char * argv[]) {
+#ifdef openwrt
+cout<<"TODO: remove timing and openwrt macro!"<<endl;
+#endif
+
+    //TODO more?
+    string cmds[][2] = {
+        { "init_lan", ""},
+        { ADD_SSL_FCT, " server_name" },
+        { "get_env", " [name]"}
+    };
+
+    if (argc==2 && argv[1]==cmds[0][0]) { init_lan(); }
+
+    else if (argc==3 && argv[1]==cmds[1][0]) { add_ssl_if_needed(argv[2]); }
+
+    else if (argc==2 && argv[1]==cmds[2][0]) { get_env(); }
+
+    else if (argc==3 && argv[1]==cmds[2][0]) { get_env(argv[2]); }
+
+    else {
+        auto usage = string{"usage: "} + argv[0] + " [";
+
+        for (auto cmd : cmds) { usage += cmd[0] + cmd[1] + "|"; }
+
+        usage[usage.size()-1] = ']';
+        cerr<<usage<<endl;
+        return 2;
+    }
 
     return 0;
 }

@@ -67,7 +67,7 @@ int checkend(const char * argv[])
                 throw_with_nested(runtime_error(msg.c_str()));
             }
 
-            seconds = reinterpret_cast<time_t>(num);
+            seconds = (time_t)(num);
 
             if (num!=(intmax_t)seconds) {
                 auto msg = string{"checkend error: time too big "} + argv[0];
