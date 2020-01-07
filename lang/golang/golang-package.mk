@@ -107,7 +107,7 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 # for building packages, not user code
 GO_PKG_PATH:=/usr/share/gocode
 
-GO_PKG_BUILD_PKG?=$(GO_PKG)/...
+GO_PKG_BUILD_PKG?=$(strip $(GO_PKG))/...
 
 GO_PKG_WORK_DIR_NAME:=.go_work
 GO_PKG_WORK_DIR:=$(PKG_BUILD_DIR)/$(GO_PKG_WORK_DIR_NAME)
@@ -116,8 +116,7 @@ GO_PKG_BUILD_DIR:=$(GO_PKG_WORK_DIR)/build
 GO_PKG_CACHE_DIR:=$(GO_PKG_WORK_DIR)/cache
 GO_PKG_TMP_DIR:=$(GO_PKG_WORK_DIR)/tmp
 
-GO_PKG_BUILD_BIN_DIR:=$(GO_PKG_BUILD_DIR)/bin$(if \
-  $(GO_HOST_TARGET_DIFFERENT),/$(GO_OS)_$(GO_ARCH))
+GO_PKG_BUILD_BIN_DIR:=$(GO_PKG_BUILD_DIR)/bin$(if $(GO_HOST_TARGET_DIFFERENT),/$(GO_OS_ARCH))
 
 GO_PKG_BUILD_DEPENDS_SRC:=$(STAGING_DIR)$(GO_PKG_PATH)/src
 
@@ -160,7 +159,7 @@ define GoPackage/Environment/Default
 	CGO_CXXFLAGS="$(filter-out $(GO_CFLAGS_TO_REMOVE),$(TARGET_CXXFLAGS))"
 endef
 
-GoPackage/Environment=$(call GoPackage/Environment/Default,)
+GoPackage/Environment=$(call GoPackage/Environment/Default)
 
 # false if directory does not exist
 GoPackage/is_dir_not_empty=$$$$($(FIND) $(1) -maxdepth 0 -type d \! -empty 2>/dev/null)
@@ -178,7 +177,7 @@ define GoPackage/Build/Configure
 			\! -type d -print | \
 			sed 's|^\./||') ; \
 		\
-		if [ "$(GO_PKG_INSTALL_ALL)" != 1 ]; then \
+		if [ "$(strip $(GO_PKG_INSTALL_ALL))" != 1 ]; then \
 			code=$$$$(echo "$$$$files" | grep '\.\(c\|cc\|cpp\|go\|h\|hh\|hpp\|proto\|s\)$$$$') ; \
 			testdata=$$$$(echo "$$$$files" | grep '\(^\|/\)testdata/') ; \
 			gomod=$$$$(echo "$$$$files" | grep '\(^\|/\)go\.\(mod\|sum\)$$$$') ; \
@@ -193,10 +192,10 @@ define GoPackage/Build/Configure
 		\
 		IFS=$$$$'\n' ; \
 		\
-		echo "Copying files from $(PKG_BUILD_DIR) into $(GO_PKG_BUILD_DIR)/src/$(GO_PKG)" ; \
+		echo "Copying files from $(PKG_BUILD_DIR) into $(GO_PKG_BUILD_DIR)/src/$(strip $(GO_PKG))" ; \
 		for file in $$$$files; do \
 			echo $$$$file ; \
-			dest=$(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/$$$$file ; \
+			dest=$(GO_PKG_BUILD_DIR)/src/$(strip $(GO_PKG))/$$$$file ; \
 			mkdir -p $$$$(dirname $$$$dest) ; \
 			$(CP) $$$$file $$$$dest ; \
 		done ; \
@@ -217,8 +216,8 @@ define GoPackage/Build/Configure
 				base=$$$$(basename $$$$dir) ; \
 				if [ -d $$$$dest/$$$$base ]; then \
 					case $$$$dir in \
-					*$(GO_PKG_PATH)/src/$(GO_PKG)) \
-						echo "$(GO_PKG) is already installed. Please check for circular dependencies." ;; \
+					*$(GO_PKG_PATH)/src/$(strip $(GO_PKG))) \
+						echo "$(strip $(GO_PKG)) is already installed. Please check for circular dependencies." ;; \
 					*) \
 						link_contents $$$$src/$$$$base $$$$dest/$$$$base ;; \
 					esac ; \
@@ -229,7 +228,7 @@ define GoPackage/Build/Configure
 			done ; \
 		} ; \
 		\
-		if [ "$(GO_PKG_SOURCE_ONLY)" != 1 ]; then \
+		if [ "$(strip $(GO_PKG_SOURCE_ONLY))" != 1 ]; then \
 			if [ -d $(GO_PKG_BUILD_DEPENDS_SRC) ]; then \
 				echo "Symlinking directories from $(GO_PKG_BUILD_DEPENDS_SRC) into $(GO_PKG_BUILD_DIR)/src" ; \
 				link_contents $(GO_PKG_BUILD_DEPENDS_SRC) $(GO_PKG_BUILD_DIR)/src ; \
@@ -262,13 +261,13 @@ define GoPackage/Build/Compile
 		done ; \
 		echo ; \
 		\
-		if [ "$(GO_PKG_GO_GENERATE)" = 1 ]; then \
+		if [ "$(strip $(GO_PKG_GO_GENERATE))" = 1 ]; then \
 			echo "Calling go generate" ; \
 			go generate -v $(1) $$$$targets ; \
 			echo ; \
 		fi ; \
 		\
-		if [ "$(GO_PKG_SOURCE_ONLY)" != 1 ]; then \
+		if [ "$(strip $(GO_PKG_SOURCE_ONLY))" != 1 ]; then \
 			echo "Building targets" ; \
 			case $(GO_ARCH) in \
 			arm)             installsuffix="v$(GO_ARM)" ;; \
@@ -276,8 +275,8 @@ define GoPackage/Build/Compile
 			mips64|mips64le) installsuffix="$(GO_MIPS64)" ;; \
 			esac ; \
 			ldflags="-linkmode external -extldflags '$(TARGET_LDFLAGS:-z%=-Wl,-z,%)'" ; \
-			pkg_gcflags="$(GO_PKG_GCFLAGS)" ; \
-			pkg_ldflags="$(GO_PKG_LDFLAGS)" ; \
+			pkg_gcflags="$(strip $(GO_PKG_GCFLAGS))" ; \
+			pkg_ldflags="$(strip $(GO_PKG_LDFLAGS))" ; \
 			for def in $(GO_PKG_LDFLAGS_X); do \
 				pkg_ldflags="$$$$pkg_ldflags -X $$$$def" ; \
 			done ; \
@@ -320,7 +319,7 @@ endef
 define GoPackage/Package/Install/Src
 	dir=$$$$(dirname $(GO_PKG)) ; \
 	$(INSTALL_DIR) $(1)$(GO_PKG_PATH)/src/$$$$dir ; \
-	$(CP) $(GO_PKG_BUILD_DIR)/src/$(GO_PKG) $(1)$(GO_PKG_PATH)/src/$$$$dir/
+	$(CP) $(GO_PKG_BUILD_DIR)/src/$(strip $(GO_PKG)) $(1)$(GO_PKG_PATH)/src/$$$$dir/
 endef
 
 define GoPackage/Package/Install
@@ -329,7 +328,7 @@ define GoPackage/Package/Install
 endef
 
 
-ifneq ($(GO_PKG),)
+ifneq ($(strip $(GO_PKG)),)
   Build/Configure=$(call GoPackage/Build/Configure)
   Build/Compile=$(call GoPackage/Build/Compile)
   Build/InstallDev=$(call GoPackage/Build/InstallDev,$(1))
