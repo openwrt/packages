@@ -9,9 +9,9 @@ NB_PARM=""
 WG_PARM=""
 BI_PARM=""
 
-. /lib/functions/network.sh
-
 start_service() {
+
+	. /lib/functions/network.sh
 
 	if [ -e /etc/smbd/smb.conf ] && [ -e /etc/init.d/smbd ] && /etc/init.d/smbd running; then
 		SMB_CONF="/etc/smbd/smb.conf"
