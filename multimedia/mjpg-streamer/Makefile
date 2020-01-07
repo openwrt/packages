@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mjpg-streamer
 PKG_VERSION:=2018-10-25
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>, \
 		Ted Hess <thess@kitschensync.net>
 
@@ -25,6 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 PKG_BUILD_DEPENDS:=MJPG_STREAMER_V4L2:libv4l zmq protobuf-c/host
+CMAKE_OPTIONS+=-DCMAKE_SKIP_RPATH=FALSE
 
 define Package/mjpg-streamer
   SECTION:=multimedia
