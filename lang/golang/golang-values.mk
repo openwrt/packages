@@ -119,6 +119,9 @@ unexport \
 unexport \
   GOEXPERIMENT
 
+
+# GOOS / GOARCH
+
 go_arch=$(subst \
   aarch64,arm64,$(subst \
   i386,386,$(subst \
@@ -135,28 +138,52 @@ GO_HOST_OS:=$(call tolower,$(HOST_OS))
 GO_HOST_ARCH:=$(call go_arch,$(subst \
   armv6l,arm,$(subst \
   armv7l,arm,$(subst \
-  i486,i386,$(subst \
-  i586,i386,$(subst \
-  i686,i386,$(HOST_ARCH)))))))
+  i686,i386,$(HOST_ARCH)))))
 GO_HOST_OS_ARCH:=$(GO_HOST_OS)_$(GO_HOST_ARCH)
 
-GO_HOST_TARGET_SAME:=$(if $(and $(findstring $(GO_OS_ARCH),$(GO_HOST_OS_ARCH)),$(findstring $(GO_HOST_OS_ARCH),$(GO_OS_ARCH))),1)
-GO_HOST_TARGET_DIFFERENT:=$(if $(GO_HOST_TARGET_SAME),,1)
+ifeq ($(GO_OS_ARCH),$(GO_HOST_OS_ARCH))
+  GO_HOST_TARGET_SAME:=1
+else
+  GO_HOST_TARGET_DIFFERENT:=1
+endif
 
-# ensure binaries can run on older CPUs
-GO_386:=387
+ifeq ($(GO_ARCH),386)
+  # ensure binaries can run on older CPUs
+  GO_386:=387
 
-GO_ARM:=$(if $(CONFIG_arm_v7),7,$(if $(CONFIG_arm_v6),6,$(if $(findstring $(GO_ARCH),arm),5,)))
+  # -fno-plt: causes "unexpected GOT reloc for non-dynamic symbol" errors
+  GO_CFLAGS_TO_REMOVE:=-fno-plt
 
-GO_MIPS:=$(if $(filter $(GO_ARCH),mips mipsle),$(if $(CONFIG_HAS_FPU),hardfloat,softfloat),)
+else ifeq ($(GO_ARCH),arm)
+  ifeq ($(CONFIG_arm_v7),y)
+    GO_ARM:=7
+  else ifeq ($(CONFIG_arm_v6),y)
+    GO_ARM:=6
+  else
+    GO_ARM:=5
+  endif
 
-GO_MIPS64:=$(if $(filter $(GO_ARCH),mips64 mips64le),$(if $(CONFIG_HAS_FPU),hardfloat,softfloat),)
+else ifneq ($(filter $(GO_ARCH),mips mipsle),)
+  ifeq ($(CONFIG_HAS_FPU),y)
+    GO_MIPS:=hardfloat
+  else
+    GO_MIPS:=softfloat
+  endif
 
-# -fno-plt: causes "unexpected GOT reloc for non-dynamic symbol" errors
-# -mips32r2: conflicts with -march=mips32 set by go
-GO_CFLAGS_TO_REMOVE:=$(if \
-$(filter $(GO_ARCH),386),-fno-plt,$(if \
-$(filter $(GO_ARCH),mips mipsle),-mips32r2,))
+  # -mips32r2: conflicts with -march=mips32 set by go
+  GO_CFLAGS_TO_REMOVE:=-mips32r2
+
+else ifneq ($(filter $(GO_ARCH),mips64 mips64le),)
+  ifeq ($(CONFIG_HAS_FPU),y)
+    GO_MIPS64:=hardfloat
+  else
+    GO_MIPS64:=softfloat
+  endif
+
+endif
+
+
+# Target Go
 
 GO_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||mips||mips64||mips64el||mipsel||powerpc64||x86_64)
 
