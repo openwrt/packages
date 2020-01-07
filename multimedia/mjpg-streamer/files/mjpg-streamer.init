@@ -109,6 +109,7 @@ start_instance() {
 	fi
 
 	procd_open_instance
+	procd_set_param env LD_LIBRARY_PATH=/usr/lib/mjpg-streamer
 	procd_set_param command "$PROG" --input "$input_arg" --output "$output_arg"
 	[ "x$output" = 'xhttp' ] && procd_add_mdns "http" "tcp" "$port" "daemon=mjpg-streamer"
 	procd_close_instance

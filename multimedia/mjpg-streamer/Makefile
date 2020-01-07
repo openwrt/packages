@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mjpg-streamer
 PKG_VERSION:=2018-10-25
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>, \
 		Ted Hess <thess@kitschensync.net>
 
@@ -225,6 +225,8 @@ define Package/mjpg-streamer/install
 	$(INSTALL_BIN) ./files/mjpg-streamer.init $(1)/etc/init.d/mjpg-streamer
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
 	$(INSTALL_DATA) ./files/mjpg-streamer.hotplug $(1)/etc/hotplug.d/usb/20-mjpg-streamer
+	$(INSTALL_DIR) $(1)/etc/profile.d/
+	echo "export LD_LIBRARY_PATH=/usr/lib/mjpg-streamer/" > $(1)/etc/profile.d/mjpg-streamer.sh
 endef
 
 define Package/mjpg-streamer-input-file/install
