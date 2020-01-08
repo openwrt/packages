@@ -318,6 +318,7 @@ CONFIGURE_ARGS+= \
 	--enable-ndebug \
 	--enable-shared \
 	--disable-libcapng \
+	--disable-silent-rules \
 
 CONFIGURE_VARS += \
 	ovs_cv_flake8=no \
