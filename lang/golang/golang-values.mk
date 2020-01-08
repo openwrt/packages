@@ -190,3 +190,29 @@ GO_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||mips||mips64||mips64el||mipsel||pow
 GO_TARGET_PREFIX:=/usr
 GO_TARGET_VERSION_ID:=$(GO_VERSION_MAJOR_MINOR)
 GO_TARGET_ROOT:=$(GO_TARGET_PREFIX)/lib/go-$(GO_TARGET_VERSION_ID)
+
+
+# ASLR/PIE
+
+GO_PIE_SUPPORTED_OS_ARCH:= \
+  android_386 android_amd64 android_arm android_arm64 \
+  linux_386   linux_amd64   linux_arm   linux_arm64 \
+  \
+  darwin_amd64 \
+  freebsd_amd64 \
+  \
+  aix_ppc64 \
+  \
+  linux_ppc64le linux_s390x
+
+go_pie_install_suffix=$(if $(filter $(1),aix_ppc64),,shared)
+
+ifneq ($(filter $(GO_HOST_OS_ARCH),$(GO_PIE_SUPPORTED_OS_ARCH)),)
+  GO_HOST_PIE_SUPPORTED:=1
+  GO_HOST_PIE_INSTALL_SUFFIX:=$(call go_pie_install_suffix,$(GO_HOST_OS_ARCH))
+endif
+
+ifneq ($(filter $(GO_OS_ARCH),$(GO_PIE_SUPPORTED_OS_ARCH)),)
+  GO_TARGET_PIE_SUPPORTED:=1
+  GO_TARGET_PIE_INSTALL_SUFFIX:=$(call go_pie_install_suffix,$(GO_OS_ARCH))
+endif

@@ -10,7 +10,7 @@ include ../golang-version.mk
 
 PKG_NAME:=golang
 PKG_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 GO_SOURCE_URLS:=https://dl.google.com/go/ \
                 https://mirrors.ustc.edu.cn/golang/ \
@@ -92,6 +92,18 @@ BOOTSTRAP_UNPACK:=$(HOST_TAR) -C $(BOOTSTRAP_BUILD_DIR) --strip-components=1 -xz
 RSTRIP:=:
 STRIP:=:
 
+ifeq ($(CONFIG_PKG_ASLR_PIE),y)
+  ifeq ($(GO_TARGET_PIE_SUPPORTED),1)
+    PKG_GO_ENABLE_PIE:=1
+    PKG_GO_INSTALL_SUFFIX:=$(GO_TARGET_PIE_INSTALL_SUFFIX)
+  endif
+endif
+
+ifeq ($(GO_HOST_PIE_SUPPORTED),1)
+  HOST_GO_ENABLE_PIE:=1
+  HOST_GO_INSTALL_SUFFIX:=$(GO_HOST_PIE_INSTALL_SUFFIX)
+endif
+
 define Package/golang/Default
 $(call GoPackage/GoSubMenu)
   TITLE:=Go programming language
@@ -158,8 +170,8 @@ endef
 $(eval $(call Download,golang-bootstrap))
 
 $(eval $(call GoCompiler/AddProfile,Bootstrap,$(BOOTSTRAP_BUILD_DIR),,bootstrap,$(GO_HOST_OS_ARCH)))
-$(eval $(call GoCompiler/AddProfile,Host,$(HOST_BUILD_DIR),$(HOST_GO_PREFIX),$(HOST_GO_VERSION_ID),$(GO_HOST_OS_ARCH)))
-$(eval $(call GoCompiler/AddProfile,Package,$(PKG_BUILD_DIR),$(GO_TARGET_PREFIX),$(GO_TARGET_VERSION_ID),$(GO_OS_ARCH)))
+$(eval $(call GoCompiler/AddProfile,Host,$(HOST_BUILD_DIR),$(HOST_GO_PREFIX),$(HOST_GO_VERSION_ID),$(GO_HOST_OS_ARCH),$(HOST_GO_INSTALL_SUFFIX)))
+$(eval $(call GoCompiler/AddProfile,Package,$(PKG_BUILD_DIR),$(GO_TARGET_PREFIX),$(GO_TARGET_VERSION_ID),$(GO_OS_ARCH),$(PKG_GO_INSTALL_SUFFIX)))
 
 define Host/Prepare
 	$(call Host/Prepare/Default)
@@ -167,6 +179,9 @@ define Host/Prepare
 	$(BOOTSTRAP_UNPACK)
 endef
 
+# when https://github.com/golang/go/issues/31544 is fixed,
+# we should be able to set GO_LDFLAGS=-buildmode=pie for host make
+# instead of doing a rebuild for pie
 define Host/Compile
 	$(call GoCompiler/Bootstrap/CheckHost,$(BOOTSTRAP_GO_VALID_OS_ARCH))
 	$(call GoCompiler/Host/CheckHost,$(HOST_GO_VALID_OS_ARCH))
@@ -181,6 +196,21 @@ define Host/Compile
 		CC=$(HOSTCC_NOCACHE) \
 		CXX=$(HOSTCXX_NOCACHE) \
 	)
+
+  ifneq ($(HOST_GO_ENABLE_PIE),)
+	@echo "Rebuilding host Go with PIE"
+
+	( \
+		cd $(HOST_BUILD_DIR)/bin ; \
+		$(CP) go go-nopie ; \
+		CC=$(HOSTCC_NOCACHE) \
+		CXX=$(HOSTCXX_NOCACHE) \
+		./go-nopie install -a -buildmode=pie std cmd ; \
+		retval=$$$$? ; \
+		rm -f go-nopie ; \
+		exit $$$$retval ; \
+	)
+  endif
 endef
 
 # if host and target os/arch are the same,
@@ -194,7 +224,7 @@ define Host/Install
 
 	$(call GoCompiler/Host/Install/BinLinks,)
 
-	rm -rf $(HOST_GO_ROOT)/pkg/$(GO_HOST_OS_ARCH)
+	rm -rf $(HOST_GO_ROOT)/pkg/$(GO_HOST_OS_ARCH)$(if $(HOST_GO_INSTALL_SUFFIX),_$(HOST_GO_INSTALL_SUFFIX))
 
 	$(INSTALL_DIR) $(HOST_GO_ROOT)/openwrt
 	$(INSTALL_BIN) ./files/go-gcc-helper $(HOST_GO_ROOT)/openwrt/
@@ -247,7 +277,7 @@ define Build/Compile
 		PKG_CONFIG=pkg-config \
 		PATH=$(HOST_GO_ROOT)/openwrt:$$$$PATH \
 		$(call GoPackage/Environment) \
-		./go-host install -a -v std cmd ; \
+		./go-host install -a $(if $(PKG_GO_ENABLE_PIE),-buildmode=pie) std cmd ; \
 		retval=$$$$? ; \
 		rm -f go-host ; \
 		exit $$$$retval ; \
