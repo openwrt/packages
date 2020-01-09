@@ -9,7 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ipvsadm
-PKG_VERSION:=1.30
+PKG_VERSION:=1.31
 PKG_MAINTAINER:=Mauro Mozzarelli <mauro@ezplanet.org>, \
 		Florian Eckert <fe@dev.tdt.de>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -17,7 +17,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/kernel/ipvsadm/
-PKG_HASH:=95573d70df473c9f63fc4ac496c044c69e3a6de7ccac119922210c0b44cd7a0c
+PKG_HASH:=1a0a5e25b5a1226435d2fb76341656f83a710183aebb0d204db39c0ec3bedfdb
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
