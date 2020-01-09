@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 CZ.NIC z.s.p.o. (http://www.nic.cz/)
+# Copyright (C) 2019-2020 CZ.NIC z.s.p.o. (http://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=measurement-kit
-PKG_VERSION:=0.10.6
-PKG_RELEASE:=2
+PKG_VERSION:=0.10.8
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/measurement-kit/measurement-kit/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=5ec94e522c3bc43cbf749659c18d4b13bcfbb2874db4d6b4e21b160d76dd5bd0
+PKG_HASH:=773c0f03fa21b56b34a24f97b4fedf96e66b0f49ef549d5c674e63ed43e1c278
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=BSD-2-Clause
@@ -40,7 +40,7 @@ endef
 CONFIGURE_ARGS+= --with-ca-bundle=/etc/ssl/cert.pem
 
 define Build/Configure
-	( cd $(PKG_BUILD_DIR); ./autogen.sh )
+	( cd $(PKG_BUILD_DIR); ./autogen.sh --no-geoip)
 	$(call Build/Configure/Default)
 endef
 
