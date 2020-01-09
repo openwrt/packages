@@ -26,18 +26,39 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-define Package/libgd
+define Package/libgd/default
   SECTION:=libs
   CATEGORY:=Libraries
   DEPENDS:=+libjpeg +libpng +libwebp +LIBGD_TIFF:libtiff +LIBGD_FREETYPE:libfreetype
   TITLE:=The GD graphics library
   URL:=https://libgd.github.io/
-  MENU:=1
 endef
 
-define Package/libgd/description
+define Package/libgd
+  $(call Package/libgd/default)
+  MENU:=1
+  DEPENDS+=+LIBGD_TIFF:libtiff +LIBGD_FREETYPE:libfreetype
+  VARIANT:=default
+endef
+
+define Package/libgd-full
+  $(call Package/libgd/default)
+  DEPENDS+=+libtiff +libfreetype
+  TITLE+=(full)
+  VARIANT:=full
+endef
+
+define Package/libgd/description/default
   GD is an open source code library for the dynamic creation of images by
   programmers. GD creates PNG, JPEG and GIF images, among other formats.
+endef
+
+Package/libgd/description=$(Package/libgd/description/default)
+
+define Package/libgd-full/description
+  $(call Package/libgd/description/default)
+  .
+  This variant of the libgd package is compiled will all features enabled.
 endef
 
 define Package/libgd/config
@@ -69,6 +90,14 @@ CMAKE_OPTIONS += \
 	-DENABLE_XPM=OFF \
 	-DZLIB_INCLUDE_DIR="$(STAGING_DIR)/usr"
 
+ifeq ($(BUILD_VARIANT),full)
+	CMAKE_OPTIONS += \
+		-DENABLE_TIFF=ON \
+		-DFREETYPE_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/freetype2/ \
+		-DENABLE_FREETYPE=ON
+
+else
+
 ifdef CONFIG_LIBGD_TIFF
 	CMAKE_OPTIONS += \
 		-DENABLE_TIFF=ON
@@ -86,9 +115,14 @@ else
 		-DENABLE_FREETYPE=OFF
 endif
 
+endif
+
 define Package/libgd/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgd.so* $(1)/usr/lib/
 endef
 
+Package/libgd-full/install=$(Package/libgd/install)
+
 $(eval $(call BuildPackage,libgd))
+$(eval $(call BuildPackage,libgd-full))
