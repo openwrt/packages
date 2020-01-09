@@ -7,32 +7,36 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcsh
-PKG_VERSION:=6.20.00
-PKG_RELEASE:=2
+PKG_VERSION:=6.22.02
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
-	http://ftp.funet.fi/pub/mirrors/ftp.astron.com/pub/tcsh/ \
-	http://ftp.funet.fi/pub/mirrors/ftp.astron.com/pub/tcsh/old/ \
-	ftp://ftp.astron.com/pub/tcsh/ \
-	ftp://ftp.astron.com/pub/tcsh/old
-PKG_HASH:=b89de7064ab54dac454a266cfe5d8bf66940cb5ed048d0c30674ea62e7ecef9d
+	https://astron.com/pub/tcsh/ \
+	https://astron.com/pub/tcsh/old \
+	https://ftp.funet.fi/pub/mirrors/ftp.astron.com/pub/tcsh \
+	https://ftp.funet.fi/pub/mirrors/ftp.astron.com/pub/tcsh/old
+PKG_HASH:=ed287158ca1b00ba477e8ea57bac53609838ebcfd05fcb05ca95021b7ebe885b
 
+PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=Copyright
 PKG_CPE_ID:=cpe:/a:tcsh:tcsh
 
-PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
+PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/tcsh
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Shells
   TITLE:=Enhanced Berkeley UNIX C shell
-  DEPENDS:=+libncurses
-  URL:=http://www.tcsh.org/
+  DEPENDS:=+libncurses $(ICONV_DEPENDS)
+  URL:=https://www.tcsh.org/
 endef
 
 define Package/tcsh/description
@@ -48,14 +52,15 @@ endef
 
 define Package/tcsh/postinst
 #!/bin/sh
-grep tcsh $${IPKG_INSTROOT}/etc/shells || \
-	echo "/bin/tcsh" >> $${IPKG_INSTROOT}/etc/shells
-	echo "/bin/csh" >> $${IPKG_INSTROOT}/etc/shells
+grep tcsh $${IPKG_INSTROOT}/etc/shells || { \
+	echo "/bin/tcsh"
+	echo "/bin/csh"
+} >> $${IPKG_INSTROOT}/etc/shells
 endef
 
 define Package/tcsh/install
 	$(INSTALL_DIR) $(1)/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tcsh $(1)/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/tcsh $(1)/bin/
 	ln -sf tcsh $(1)/bin/csh
 endef
 
