@@ -23,7 +23,7 @@ IMAGEBUILDER_DEPENDS:= \
     @x86_64 +bash +bzip2 +coreutils +coreutils-stat +diffutils +file \
     +gawk +gcc +getopt +git +git-http +libncurses +make +patch +perl \
     +perlbase-attributes +perlbase-findbin +perlbase-getopt \
-    +perlbase-thread +python-light +tar +unzip +wget +xz +xzdiff \
+    +perlbase-thread +python3-light +tar +unzip +wget +xz +xzdiff \
     +xzgrep +xzless +xz-utils +zlib-dev
 
 define Package/asu
@@ -34,7 +34,7 @@ define Package/asu
     URL:=http://github.com/aparcar/gsoc17-attended-sysupgrade/
     DEPENDS:=$(IMAGEBUILDER_DEPENDS) +pgsql-server +psqlodbcw \
              +python3-ctypes +python3-distutils +python3-flask \
-             +gunicorn +python3-openssl +python3-pyodbc +python3-yaml \
+             +gunicorn3 +python3-openssl +python3-pyodbc +python3-yaml \
              +libustream-mbedtls +ca-certificates +gnupg
     USERID:=asu:asu
     VARIANT:=python3
