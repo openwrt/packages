@@ -11,6 +11,7 @@ START=99
 
 ss_confdir=/var/etc/shadowsocks-libev
 ss_bindir=/usr/bin
+ss_dnsmasq_config="/var/dnsmasq.d/shadowsocks-libev"
 
 ss_mkjson_server_conf() {
 	local cfgserver
@@ -130,6 +131,8 @@ ss_rules() {
 
 	ss_rules_call
 	ss_rules_call -6
+
+	ss_rules_setup_dnsmasq
 }
 
 ss_rules_call() {
@@ -172,6 +175,11 @@ stop_service() {
 		"$bin" -6 -f
 	}
 	rm -rf "$ss_confdir"
+
+	if [ -s "$ss_dnsmasq_config" ]; then
+		rm -f "$ss_dnsmasq_config"
+		ss_rules_dnsmasq_restart
+	fi
 }
 
 service_triggers() {
@@ -266,8 +274,10 @@ validate_ss_rules_section() {
 		'src_ips_checkdst:or(ipaddr,cidr)' \
 		'dst_ips_bypass_file:file' \
 		'dst_ips_bypass:or(ipaddr,cidr)' \
+		'dst_domains_bypass:hostname' \
 		'dst_ips_forward_file:file' \
 		'dst_ips_forward:or(ipaddr,cidr)' \
+		'dst_domains_forward:hostname' \
 		'src_default:or("bypass", "forward", "checkdst"):checkdst' \
 		'dst_default:or("bypass", "forward"):bypass' \
 		'local_default:or("bypass", "forward", "checkdst"):bypass' \
@@ -287,4 +297,64 @@ validate_ss_tunnel_section() {
 	validate_common_client_options_ ss_tunnel "$1" \
 		"$2" \
 		'tunnel_address:regex(".+\:[0-9]+")'
+}
+
+ss_rules_dnsmasq_restart() {
+	if ! /etc/init.d/dnsmasq restart; then
+		logger -s -p daemon.err "Failed to restart dnsmasq"
+	fi
+}
+
+ss_rules_gen_dnsmasq_ipset() {
+	# Comma-separated ipset names should be passed as the last argument
+
+	if [ "$#" -eq 0 ]; then
+		return 0
+	fi
+
+	echo -n ipset=
+
+	local i
+	for i in "$@"; do
+		echo -n "/$i"
+	done
+
+	echo
+}
+
+ss_rules_gen_dnsmasq_config() {
+	ss_rules_gen_dnsmasq_ipset $dst_domains_bypass \
+		ss_rules_dst_bypass,ss_rules6_dst_bypass
+
+	ss_rules_gen_dnsmasq_ipset $dst_domains_forward \
+		ss_rules_dst_forward,ss_rules6_dst_forward
+}
+
+ss_rules_setup_dnsmasq() {
+	local dnsmasq_config_tmp="/var/tmp/shadowsocks-libev.dnsmasq"
+
+	mkdir -p "$(dirname "$ss_dnsmasq_config")"
+	mkdir -p "$(dirname "$dnsmasq_config_tmp")"
+
+	ss_rules_gen_dnsmasq_config >"$dnsmasq_config_tmp"
+
+	if [ ! -s "$ss_dnsmasq_config" ] && [ ! -s "$dnsmasq_config_tmp" ]; then
+		rm -f "$dnsmasq_config_tmp"
+		return 0
+	fi
+
+	# At least one of the configs (old and/or new) is non-empty
+	# (and thus exists)
+
+	if ! cmp -s "$ss_dnsmasq_config" "$dnsmasq_config_tmp"; then
+		rm -f "$ss_dnsmasq_config"
+
+		if [ -e "$dnsmasq_config_tmp" ]; then
+			mv -f "$dnsmasq_config_tmp" "$ss_dnsmasq_config"
+		fi
+
+		ss_rules_dnsmasq_restart
+	fi
+
+	rm -f "$dnsmasq_config_tmp"
 }
