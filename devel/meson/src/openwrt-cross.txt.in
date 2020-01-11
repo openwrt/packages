@@ -1,6 +1,6 @@
 [binaries]
-c = '@CC@'
-cpp = '@CXX@'
+c = [@CC@]
+cpp = [@CXX@]
 ar = '@AR@'
 strip = '@STRIP@'
 nm = '@NM@'

@@ -42,8 +42,8 @@ endef
 
 define Meson/CreateNativeFile
 	$(STAGING_DIR_HOST)/bin/sed \
-		-e "s|@CC@|$(HOSTCC)|" \
-		-e "s|@CXX@|$(HOSTCXX)|" \
+		-e "s|@CC@|$(foreach BIN,$(HOSTCC),'$(BIN)',)|" \
+		-e "s|@CXX@|$(foreach BIN,$(HOSTCXX),'$(BIN)',)|" \
 		-e "s|@PKGCONFIG@|$(PKG_CONFIG)|" \
 		-e "s|@CFLAGS@|$(foreach FLAG,$(HOST_CFLAGS) $(HOST_CPPFLAGS),'$(FLAG)',)|" \
 		-e "s|@CXXFLAGS@|$(foreach FLAG,$(HOST_CXXFLAGS) $(HOST_CPPFLAGS),'$(FLAG)',)|" \
@@ -55,8 +55,8 @@ endef
 
 define Meson/CreateCrossFile
 	$(STAGING_DIR_HOST)/bin/sed \
-		-e "s|@CC@|$(TARGET_CC)|" \
-		-e "s|@CXX@|$(TARGET_CXX)|" \
+		-e "s|@CC@|$(foreach BIN,$(TARGET_CC),'$(BIN)',)|" \
+		-e "s|@CXX@|$(foreach BIN,$(TARGET_CXX),'$(BIN)',)|" \
 		-e "s|@AR@|$(TARGET_AR)|" \
 		-e "s|@STRIP@|$(TARGET_CROSS)strip|" \
 		-e "s|@NM@|$(TARGET_NM)|" \

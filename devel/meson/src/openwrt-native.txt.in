@@ -1,6 +1,6 @@
 [binaries]
-c = '@CC@'
-cpp = '@CXX@'
+c = [@CC@]
+cpp = [@CXX@]
 pkgconfig = '@PKGCONFIG@'
 
 [properties]
