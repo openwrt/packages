@@ -1,0 +1,11 @@
+--- a/tests/Makefile
++++ b/tests/Makefile
+@@ -32,7 +32,7 @@ run_libcap_psx_test: libcap_psx_test
+ 	./libcap_psx_test
+ 
+ libcap_psx_test: libcap_psx_test.c $(DEPS)
+-	$(CC) $(CFLAGS) $(IPATH) $< -o $@ $(LIBCAPLIB) $(LIBPSXLIB) -Wl,-wrap,pthread_create --static
++	$(CC) $(CFLAGS) $(IPATH) $< -o $@ $(LIBCAPLIB) $(LIBPSXLIB) -Wl,-wrap,pthread_create
+ 
+ clean:
+ 	rm -f psx_test psx_test_wrap libcap_psx_test
