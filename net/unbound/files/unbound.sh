@@ -126,7 +126,7 @@ bundle_lan_networks() {
     for ifsubnet in $UB_LIST_NETW_ALL ; do
       case $ifsubnet in
         "${ifdashname}"@*)
-          # Special GLA protection for local block; ULA protected as a catagory
+          # Special GLA protection for local block; ULA protected default
           UB_LIST_NETW_LAN="$UB_LIST_NETW_LAN $ifsubnet"
           ;;
       esac
@@ -472,7 +472,7 @@ unbound_zone() {
         for server in $UB_LIST_ZONE_SERVERS ; do
           if [ "$( valid_subnet_any $server )" = "not" ] ; then
             case $server in
-              *@[0-9]*)
+              *@[0-9]*|*#[A-Za-z0-9]*)
                 # unique Unbound option for server host name
                 servers_host="$servers_host $server"
                 ;;
@@ -483,11 +483,12 @@ unbound_zone() {
                 else
                   servers_host="$servers_host $server${port:+@${port}}"
                 fi
+                ;;
             esac
 
           else
             case $server in
-              *[0-9]@[0-9]*)
+              *@[0-9]*|*#[A-Za-z0-9]*)
                 # unique Unbound option for server address
                 servers_ip="$servers_ip $server"
                 ;;
@@ -498,6 +499,7 @@ unbound_zone() {
                 else
                   servers_ip="$servers_ip $server${port:+@${port}}"
                 fi
+                ;;
             esac
           fi
         done
@@ -1176,7 +1178,7 @@ unbound_hostname() {
                 namerec="  local-data: \"$name. 300 IN AAAA $ifaddr\""
                 echo "$namerec" >> $UB_HOST_CONF
               fi
-            ;;
+              ;;
           esac
         done
         echo >> $UB_HOST_CONF
