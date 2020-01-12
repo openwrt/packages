@@ -18,7 +18,8 @@ PKG_HASH:=133d48298fe5315ae9366a0ec66282fa4040efa5d566174481077ade7d18ea40
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_NAME)-$(PKG_VERSION)
 
-PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
+PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>, \
+		Sebastian Kemper <sebastian_ml@gmx.net>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
