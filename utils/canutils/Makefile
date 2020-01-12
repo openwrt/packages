@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=canutils
 PKG_VERSION:=2018.02.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/linux-can/can-utils/tar.gz/v$(PKG_VERSION)?
@@ -19,6 +19,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/can-utils-$(PKG_VERSION)
 PKG_MAINTAINER:=Anton Glukhov <anton.a.glukhov@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -58,13 +59,6 @@ FILES:=canbusload can-calc-bit-timing candump \
 
 
 $(foreach a,$(FILES),$(eval $(call GenPlugin,$(a))))
-
-MAKE_FLAGS += \
-	PREFIX="$(CONFIGURE_PREFIX)"
-
-define Package/canutils/install
-	true
-endef
 
 define PartInstall
 define Package/canutils-$(1)/install
