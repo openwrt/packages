@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Jeffery To
+# Copyright (C) 2018, 2020 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -51,6 +51,7 @@ endef
 # $(2) destination prefix
 # $(3) go version id
 # $(4) GOOS_GOARCH
+# $(5) install suffix (optional)
 define GoCompiler/Default/Install/Bin
 	$(call GoCompiler/Default/Install/make-dirs,$(2),$(3))
 
@@ -73,7 +74,7 @@ define GoCompiler/Default/Install/Bin
   endif
 
 	$(INSTALL_DIR) $(2)/lib/go-$(3)/pkg
-	$(CP) $(1)/pkg/$(4) $(2)/lib/go-$(3)/pkg/
+	$(CP) $(1)/pkg/$(4)$(if $(5),_$(5)) $(2)/lib/go-$(3)/pkg/
 
 	$(INSTALL_DIR) $(2)/lib/go-$(3)/pkg/tool/$(4)
 	$(INSTALL_BIN) -p $(1)/pkg/tool/$(4)/* $(2)/lib/go-$(3)/pkg/tool/$(4)/
@@ -141,6 +142,7 @@ endef
 # $(3) destination prefix
 # $(4) go version id
 # $(5) GOOS_GOARCH
+# $(6) install suffix (optional)
 define GoCompiler/AddProfile
 
   # $$(1) valid GOOS_GOARCH combinations
@@ -155,7 +157,7 @@ define GoCompiler/AddProfile
 
   # $$(1) override install prefix (optional)
   define GoCompiler/$(1)/Install/Bin
-	$$(call GoCompiler/Default/Install/Bin,$(2),$$(or $$(1),$(3)),$(4),$(5))
+	$$(call GoCompiler/Default/Install/Bin,$(2),$$(or $$(1),$(3)),$(4),$(5),$(6))
   endef
 
   # $$(1) override install prefix (optional)
