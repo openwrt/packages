@@ -165,9 +165,12 @@ int_out()
 
 is_staging()
 {
-    local main_domain="$1"
+    local main_domain
+    local domain_dir
+    main_domain="$1"
+    domain_dir="$2"
 
-    grep -q "acme-staging" "$STATE_DIR/$main_domain/${main_domain}.conf"
+    grep -q "acme-staging" "${domain_dir}/${main_domain}.conf"
     return $?
 }
 
@@ -187,6 +190,7 @@ issue_cert()
     local webroot
     local dns
     local ret
+    local domain_dir
 
     config_get_bool enabled "$section" enabled 0
     config_get_bool use_staging "$section" use_staging
@@ -209,6 +213,12 @@ issue_cert()
 
     [ -n "$webroot" ] || [ -n "$dns" ] || pre_checks "$main_domain" || return 1
 
+    if echo $keylength | grep -q "^ec-"; then
+        domain_dir="$STATE_DIR/${main_domain}_ecc"
+    else
+        domain_dir="$STATE_DIR/${main_domain}"
+    fi
+
     log "Running ACME for $main_domain"
 
     handle_credentials() {
@@ -217,10 +227,10 @@ issue_cert()
     }
     config_list_foreach "$section" credentials handle_credentials
 
-    if [ -e "$STATE_DIR/$main_domain" ]; then
-        if [ "$use_staging" -eq "0" ] && is_staging "$main_domain"; then
+    if [ -e "$domain_dir" ]; then
+        if [ "$use_staging" -eq "0" ] && is_staging "$main_domain" "$domain_dir"; then
             log "Found previous cert issued using staging server. Moving it out of the way."
-            mv "$STATE_DIR/$main_domain" "$STATE_DIR/$main_domain.staging"
+            mv "$domain_dir" "${domain_dir}.staging"
             moved_staging=1
         else
             log "Found previous cert config. Issuing renew."
@@ -253,26 +263,26 @@ issue_cert()
     fi
 
     if ! run_acme --home "$STATE_DIR" --issue $acme_args; then
-        failed_dir="$STATE_DIR/${main_domain}.failed-$(date +%s)"
+        failed_dir="${domain_dir}.failed-$(date +%s)"
         err "Issuing cert for $main_domain failed. Moving state to $failed_dir"
-        [ -d "$STATE_DIR/$main_domain" ] && mv "$STATE_DIR/$main_domain" "$failed_dir"
+        [ -d "$domain_dir" ] && mv "$domain_dir" "$failed_dir"
         if [ "$moved_staging" -eq "1" ]; then
             err "Restoring staging certificate"
-            mv "$STATE_DIR/${main_domain}.staging" "$STATE_DIR/${main_domain}"
+            mv "${domain_dir}.staging" "${domain_dir}"
         fi
         post_checks
         return 1
     fi
 
     if [ -e /etc/init.d/uhttpd ] && [ "$update_uhttpd" -eq "1" ]; then
-        uci set uhttpd.main.key="$STATE_DIR/${main_domain}/${main_domain}.key"
-        uci set uhttpd.main.cert="$STATE_DIR/${main_domain}/fullchain.cer"
+        uci set uhttpd.main.key="${domain_dir}/${main_domain}.key"
+        uci set uhttpd.main.cert="${domain_dir}/fullchain.cer"
         # commit and reload is in post_checks
     fi
 
     if [ -e /etc/init.d/nginx ] && [ "$update_nginx" -eq "1" ]; then
-        sed -i "s#ssl_certificate\ .*#ssl_certificate $STATE_DIR/${main_domain}/fullchain.cer;#g" /etc/nginx/nginx.conf
-        sed -i "s#ssl_certificate_key\ .*#ssl_certificate_key $STATE_DIR/${main_domain}/${main_domain}.key;#g" /etc/nginx/nginx.conf
+        sed -i "s#ssl_certificate\ .*#ssl_certificate ${domain_dir}/fullchain.cer;#g" /etc/nginx/nginx.conf
+        sed -i "s#ssl_certificate_key\ .*#ssl_certificate_key ${domain_dir}/${main_domain}.key;#g" /etc/nginx/nginx.conf
         # commit and reload is in post_checks
     fi
 
