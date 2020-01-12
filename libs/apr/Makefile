@@ -9,17 +9,19 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apr
 PKG_VERSION:=1.6.5
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/apr/
 PKG_HASH:=a67ca9fcf9c4ff59bce7f428a323c8b5e18667fdea7b0ebad47d194371b0a105
 
-PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
+PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>, \
+		Sebastian Kemper <sebastian_ml@gmx.net>
 PKG_LICENSE:=Apache-2.0
 
+PKG_BUILD_PARALLEL:=1
+
 PKG_FIXUP:=autoreconf
-PKG_REMOVE_FILES:=aclocal.m4 build/ltmain.sh
 
 PKG_INSTALL:=1
 
@@ -33,10 +35,7 @@ define Package/libapr
   URL:=https://apr.apache.org/
 endef
 
-TARGET_CFLAGS += $(FPIC)
-
 CONFIGURE_ARGS += \
-	--without-pic \
 	--with-devrandom=/dev/urandom \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6)
 
