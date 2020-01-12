@@ -81,14 +81,18 @@ start() {
 	local db_dir
 	local log_dir
 	local user
+	local var
 
 	config_load 'minidlna'
 	config_get_bool enabled config 'enabled' '0'
 
 	[ "$enabled" -gt 0 ] || return 1
 
+	config_get val "config" uuid
+	[ "$val" = '' ] && uci set  minidlna.config.uuid=$(cat /proc/sys/kernel/random/uuid) && uci commit
+
 	minidlna_create_config config || return 1
-	
+
 	config_get db_dir config 'db_dir' '/var/run/minidlna'
 	config_get log_dir config 'log_dir' '/var/log/minidlna'
 	config_get user config 'user' 'root'
