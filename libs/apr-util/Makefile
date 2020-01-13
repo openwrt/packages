@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apr-util
 PKG_VERSION:=1.6.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/apr/
@@ -152,7 +152,7 @@ endef
 
 $(eval $(call BuildPackage,libaprutil))
 $(eval $(call Package/libaprutil/Driver,crypto_openssl,OpenSSL,+libopenssl))
-$(eval $(call Package/libaprutil/Driver,dbd_mysql,MySQL,+libmariadb @BROKEN))
+$(eval $(call Package/libaprutil/Driver,dbd_mysql,MySQL,+libmariadb))
 $(eval $(call Package/libaprutil/Driver,dbd_odbc,ODBC,+unixodbc))
 $(eval $(call Package/libaprutil/Driver,dbd_pgsql,PostgreSQL,+libpq))
 $(eval $(call Package/libaprutil/Driver,dbd_sqlite3,SQLite3,+libsqlite3))
