@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apache
 PKG_VERSION:=2.4.41
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE_NAME:=httpd
 
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.bz2
@@ -40,7 +40,8 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_apache-mod-session-crypto \
 	CONFIG_PACKAGE_apache-mod-suexec \
 	CONFIG_PACKAGE_apache-mod-webdav \
-	CONFIG_PACKAGE_apache-suexec
+	CONFIG_PACKAGE_apache-suexec \
+	CONFIG_PACKAGE_libaprutil-dbm-gdbm
 
 PKG_FIXUP:=autoreconf
 
@@ -67,7 +68,7 @@ endef
 define Package/apache
 $(call Package/apache/Default)
   USERID:=apache=377:apache=377
-  DEPENDS:=+libapr +libaprutil +libpcre
+  DEPENDS:=+PACKAGE_libaprutil-dbm-gdbm:libgdbm +libapr +libaprutil +libpcre
 endef
 
 define Package/apache/description
@@ -169,7 +170,6 @@ define Package/apache/install/mod
 endef
 
 CONFIGURE_ARGS+= \
-	--$(if $(CONFIG_PACKAGE_apache-mod-deflate),en,dis)able-deflate \
 	--$(if $(CONFIG_PACKAGE_apache-mod-http2),en,dis)able-http2 \
 	--$(if $(CONFIG_PACKAGE_apache-mod-lua),en,dis)able-lua \
 	--$(if $(CONFIG_PACKAGE_apache-mod-md),en,dis)able-md \
@@ -200,6 +200,16 @@ CONFIGURE_ARGS+= \
 	--with-mpm=prefork \
 	--with-pcre="$(STAGING_DIR)/usr/bin/pcre-config" \
 	--with-ssl
+
+ifneq ($(CONFIG_PACKAGE_apache-mod-deflate),)
+CONFIGURE_ARGS+= \
+	--enable-deflate \
+	--with-z="$(STAGING_DIR)/usr"
+else
+CONFIGURE_ARGS+= \
+	--disable-deflate \
+	--without-z
+endif
 
 ifneq ($(CONFIG_PACKAGE_apache-mod-ldap),)
 CONFIGURE_ARGS+= \
