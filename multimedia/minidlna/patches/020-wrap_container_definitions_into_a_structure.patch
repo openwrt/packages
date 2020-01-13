@@ -9,6 +9,8 @@ Subject: [PATCH] Wrap container definitions into a structure
  scanner.c    | 33 ++++++---------------------------
  3 files changed, 39 insertions(+), 27 deletions(-)
 
+diff --git a/containers.c b/containers.c
+index f5cece1..19a0bb1 100644
 --- a/containers.c
 +++ b/containers.c
 @@ -23,6 +23,31 @@
@@ -42,7 +44,9 @@ Subject: [PATCH] Wrap container definitions into a structure
 +
  #define NINETY_DAYS "7776000"
  
- static const char *music_id = MUSIC_ID;
+ const char *music_id = MUSIC_ID;
+diff --git a/containers.h b/containers.h
+index aef77c5..1fcf7cd 100644
 --- a/containers.h
 +++ b/containers.h
 @@ -16,6 +16,14 @@
@@ -60,9 +64,11 @@ Subject: [PATCH] Wrap container definitions into a structure
  struct magic_container_s {
  	const char *name;
  	const char *objectid_match;
+diff --git a/scanner.c b/scanner.c
+index a730567..eb26c9e 100644
 --- a/scanner.c
 +++ b/scanner.c
-@@ -529,30 +529,7 @@ insert_file(const char *name, const char
+@@ -529,30 +529,7 @@ insert_file(const char *name, const char *path, const char *parentID, int object
  int
  CreateDatabase(void)
  {
@@ -114,5 +120,5 @@ Subject: [PATCH] Wrap container definitions into a structure
 -	for( i=0; magic_containers[i].objectid_match; i++ )
 +	for( int i=0; magic_containers[i].objectid_match; i++ )
  	{
- 		const struct magic_container_s *magic = &magic_containers[i];
+ 		struct magic_container_s *magic = &magic_containers[i];
  		if (!magic->name)
