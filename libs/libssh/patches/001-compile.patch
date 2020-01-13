@@ -1,27 +1,16 @@
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -35,10 +35,6 @@ include(DefineInstallationPaths)
- include(DefineOptions.cmake)
- include(CPackConfig.cmake)
- 
--# disallow in-source build
--include(MacroEnsureOutOfSourceBuild)
--macro_ensure_out_of_source_build("${PROJECT_NAME} requires an out of source build. Please create a separate build directory and run 'cmake /path/to/${PROJECT_NAME} [options]' there.")
--
- # search for libraries
- if (WITH_ZLIB)
-     find_package(ZLIB REQUIRED)
+diff --git a/ConfigureChecks.cmake b/ConfigureChecks.cmake
+index c8bb2aa..344ba59 100644
 --- a/ConfigureChecks.cmake
 +++ b/ConfigureChecks.cmake
 @@ -5,7 +5,6 @@ include(CheckFunctionExists)
  include(CheckLibraryExists)
  include(CheckTypeSize)
- include(CheckCXXSourceCompiles)
+ include(CheckStructHasMember)
 -include(TestBigEndian)
  
- set(PACKAGE ${APPLICATION_NAME})
- set(VERSION ${APPLICATION_VERSION})
-@@ -276,6 +275,8 @@ if (WITH_GSSAPI AND NOT GSSAPI_FOUND)
+ set(PACKAGE ${PROJECT_NAME})
+ set(VERSION ${PROJECT_VERSION})
+@@ -465,6 +464,8 @@ if (WITH_GSSAPI AND NOT GSSAPI_FOUND)
  endif (WITH_GSSAPI AND NOT GSSAPI_FOUND)
  
  # ENDIAN
@@ -29,7 +18,7 @@
 -    test_big_endian(WORDS_BIGENDIAN)
 -endif (NOT WIN32)
 +if (WITH_BIG_ENDIAN)
-+  set(WORDS_BIGENDIAN 1)
++    set(WORDS_BIGENDIAN 1)
 +else (WITH_BIG_ENDIAN)
-+  set(WORDS_BIGENDIAN 0)
++    set(WORDS_BIGENDIAN 0)
 +endif (WITH_BIG_ENDIAN)
