@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-appconf
 PKG_VERSION:=1.0.2
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=6a4d9aea683b4c224d97ab8ee11ad2d29a37072c0c6c509896dd9857466fb261
@@ -47,10 +47,12 @@ endef
 define Package/python3-$(PKG_NAME)
 $(call Package/$(PKG_NAME)/Default)
   DEPENDS:= \
-	+PACKAGE_python3-$(PKG_NAME):python3 \
-	python3-django
+	+PACKAGE_python3-$(PKG_NAME):python3
+  # FIXME: restore these when django1 goes away; for now, this avoids
+  #        some circular deps, which require a bit more work to fix
+  #	python3-django
   VARIANT:=python3
-  MDEPENDS:=python3-django
+  #MDEPENDS:=python3-django
 endef
 
 define Package/python3-$(PKG_NAME)/description

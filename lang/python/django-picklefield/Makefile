@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-picklefield
 PKG_VERSION:=1.1.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=ce7fee5c6558fe5dc8924993d994ccde75bb75b91cd82787cbd4c92b95a69f9c
@@ -47,10 +47,12 @@ endef
 define Package/python3-$(PKG_NAME)
 $(call Package/$(PKG_NAME)/Default)
   DEPENDS:= \
-	+PACKAGE_python3-$(PKG_NAME):python3 \
-	python3-django
+	+PACKAGE_python3-$(PKG_NAME):python3
+  # FIXME: restore these when django1 goes away; for now, this avoids
+  #        some circular deps, which require a bit more work to fix
+  #	python3-django
   VARIANT:=python3
-  MDEPENDS:=python3-django
+  #MDEPENDS:=python3-django
 endef
 
 define Package/python3-$(PKG_NAME)/description

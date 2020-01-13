@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-postoffice
 PKG_VERSION:=3.1.0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PYPI_NAME:=django-post-office
 PYPI_SOURCE_NAME:=django-post_office
@@ -51,10 +51,12 @@ define Package/python3-$(PKG_NAME)
 $(call Package/$(PKG_NAME)/Default)
   DEPENDS:= \
 	+PACKAGE_python3-$(PKG_NAME):python3 \
-	python3-django \
 	+PACKAGE_python3-$(PKG_NAME):python3-django-jsonfield
+  # FIXME: restore these when django1 goes away; for now, this avoids
+  #        some circular deps, which require a bit more work to fix
+  #	python3-django
   VARIANT:=python3
-  MDEPENDS:=python3-django
+  #MDEPENDS:=python3-django
 endef
 
 define Package/python3-$(PKG_NAME)/description

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-constance
 PKG_VERSION:=2.3.1
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=a49735063b2c30015d2e52a90609ea9798da722ed070f091de51714758a5d018
@@ -46,10 +46,12 @@ endef
 define Package/python3-django-constance
 $(call Package/python-django-constance/Default)
   DEPENDS:= \
-	+PACKAGE_python3-django-constance:python3 \
-	python3-django
+	+PACKAGE_python3-django-constance:python3
+  # FIXME: restore these when django1 goes away; for now, this avoids
+  #        some circular deps, which require a bit more work to fix
+  #	python3-django
   VARIANT:=python3
-  MDEPENDS:=python3-django
+  #MDEPENDS:=python3-django
 endef
 
 define Package/python3-django-constance/description

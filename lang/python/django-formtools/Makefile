@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-formtools
 PKG_VERSION:=2.1
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=7703793f1675aa6e871f9fed147e8563816d7a5b9affdc5e3459899596217f7c
@@ -46,10 +46,12 @@ endef
 define Package/python3-$(PKG_NAME)
 $(call Package/$(PKG_NAME)/Default)
   DEPENDS:= \
-	+PACKAGE_python3-$(PKG_NAME):python3 \
-	python3-django
+	+PACKAGE_python3-$(PKG_NAME):python3
+  # FIXME: restore these when django1 goes away; for now, this avoids
+  #        some circular deps, which require a bit more work to fix
+  #	python3-django
   VARIANT:=python3
-  MDEPENDS:=python3-django
+  #MDEPENDS:=python3-django
 endef
 
 define Package/python3-$(PKG_NAME)/description

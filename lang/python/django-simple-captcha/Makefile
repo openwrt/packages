@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-simple-captcha
 PKG_VERSION:=0.5.12
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mbi/django-simple-captcha/tar.gz/v$(PKG_VERSION)?
@@ -57,11 +57,13 @@ $(call Package/$(PKG_NAME)/Default)
   DEPENDS:= \
 	+PACKAGE_python3-$(PKG_NAME):python3 \
 	+PACKAGE_python3-$(PKG_NAME):python3-six \
-	python3-django \
 	+PACKAGE_python3-$(PKG_NAME):python3-pillow \
 	+PACKAGE_python3-$(PKG_NAME):python3-django-ranged-response
+  # FIXME: restore these when django1 goes away; for now, this avoids
+  #        some circular deps, which require a bit more work to fix
+  # 	python3-django
   VARIANT:=python3
-  MDEPENDS:=python3-django
+  #MDEPENDS:=python3-django
 endef
 
 define Package/python3-$(PKG_NAME)/description
