@@ -120,6 +120,14 @@ GO_PKG_BUILD_BIN_DIR:=$(GO_PKG_BUILD_DIR)/bin$(if $(GO_HOST_TARGET_DIFFERENT),/$
 
 GO_PKG_BUILD_DEPENDS_SRC:=$(STAGING_DIR)$(GO_PKG_PATH)/src
 
+ifeq ($(CONFIG_PKG_ASLR_PIE),y)
+  ifeq ($(strip $(PKG_ASLR_PIE)),1)
+    ifeq ($(GO_TARGET_PIE_SUPPORTED),1)
+      GO_PKG_ENABLE_PIE:=1
+    endif
+  endif
+endif
+
 # sstrip causes corrupted section header size
 ifneq ($(CONFIG_USE_SSTRIP),)
   ifneq ($(CONFIG_DEBUG),)
@@ -281,6 +289,7 @@ define GoPackage/Build/Compile
 				pkg_ldflags="$$$$pkg_ldflags -X $$$$def" ; \
 			done ; \
 			go install \
+				$(if $(GO_PKG_ENABLE_PIE),-buildmode pie) \
 				$$$${installsuffix:+-installsuffix $$$$installsuffix} \
 				-trimpath \
 				-ldflags "all=$$$$ldflags" \
