@@ -40,7 +40,6 @@ endef
 define GenPlugin
   define Package/$(addprefix canutils-,$(1))
     $(call Package/canutils/Default)
-    DEPENDS:=canutils
     TITLE:=Utility $(1) from the CAN utilities
   endef
 
