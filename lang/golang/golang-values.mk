@@ -155,9 +155,31 @@ ifeq ($(GO_ARCH),386)
   GO_CFLAGS_TO_REMOVE:=-fno-plt
 
 else ifeq ($(GO_ARCH),arm)
-  ifeq ($(CONFIG_arm_v7),y)
+  GO_TARGET_FPU:=$(word 2,$(subst +,$(space),$(call qstrip,$(CONFIG_CPU_TYPE))))
+
+  # FPU names from https://gcc.gnu.org/onlinedocs/gcc-8.3.0/gcc/ARM-Options.html#index-mfpu-1
+  # see also https://github.com/gcc-mirror/gcc/blob/gcc-8_3_0-release/gcc/config/arm/arm-cpus.in
+  #
+  # Assumptions:
+  #
+  # * -d16 variants (16 instead of 32 double-precision registers) acceptable
+  #   Go doesn't appear to check the HWCAP_VFPv3D16 flag in
+  #   https://github.com/golang/go/blob/release-branch.go1.13/src/runtime/os_linux_arm.go
+  #
+  # * Double-precision required
+  #   Based on no evidence(!)
+  #   Excludes vfpv3xd, vfpv3xd-fp16, fpv4-sp-d16, fpv5-sp-d16
+
+  GO_ARM_7_FPUS:= \
+    vfpv3 vfpv3-fp16 vfpv3-d16 vfpv3-d16-fp16 neon neon-vfpv3 neon-fp16 \
+    vfpv4 vfpv4-d16 neon-vfpv4 \
+    fpv5-d16 fp-armv8 neon-fp-armv8 crypto-neon-fp-armv8
+
+  GO_ARM_6_FPUS:=vfp vfpv2
+
+  ifneq ($(filter $(GO_TARGET_FPU),$(GO_ARM_7_FPUS)),)
     GO_ARM:=7
-  else ifeq ($(CONFIG_arm_v6),y)
+  else ifneq ($(filter $(GO_TARGET_FPU),$(GO_ARM_6_FPUS)),)
     GO_ARM:=6
   else
     GO_ARM:=5
