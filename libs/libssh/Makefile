@@ -11,16 +11,17 @@ PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 
 PKG_NAME:=libssh
-PKG_VERSION:=0.7.6
-PKG_RELEASE:=4
+PKG_VERSION:=0.9.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://www.libssh.org/files/0.7/
-PKG_HASH:=1d607d3859274f755942324afb0f887ee22edd157f9596a2e69e3a28ec6d1092
+PKG_SOURCE_URL:=https://www.libssh.org/files/0.9/
+PKG_HASH:=2c8b5f894dced58b3d629f16f3afa6562c20b4bdc894639163cf657833688f0c
 
 PKG_CPE_ID:=cpe:/a:libssh:libssh
 
 CMAKE_INSTALL:=1
+CMAKE_BINARY_SUBDIR:=build
 
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
