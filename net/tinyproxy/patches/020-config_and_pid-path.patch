@@ -1,13 +1,20 @@
---- a/src/main.c
-+++ b/src/main.c
-@@ -326,8 +326,8 @@ static void initialize_config_defaults (
-         conf->errorpages = NULL;
-         conf->stathost = safestrdup (TINYPROXY_STATHOST);
-         conf->idletimeout = MAX_IDLE_TIME;
--        conf->logf_name = safestrdup (LOCALSTATEDIR "/log/tinyproxy/tinyproxy.log");
--        conf->pidpath = safestrdup (LOCALSTATEDIR "/run/tinyproxy/tinyproxy.pid");
-+        conf->logf_name = safestrdup (LOCALSTATEDIR "/log/tinyproxy.log");
-+        conf->pidpath = safestrdup (LOCALSTATEDIR "/tinyproxy.pid");
- }
+--- a/etc/tinyproxy.conf.in
++++ b/etc/tinyproxy.conf.in
+@@ -93,7 +93,7 @@ StatFile "@pkgdatadir@/stats.html"
+ # exclusive. If neither Syslog nor LogFile are specified, output goes
+ # to stdout.
+ #
+-#LogFile "@localstatedir@/log/tinyproxy/tinyproxy.log"
++LogFile "@localstatedir@/log/tinyproxy.log"
  
- /**
+ #
+ # Syslog: Tell tinyproxy to use syslog instead of a logfile.  This
+@@ -124,7 +124,7 @@ LogLevel Info
+ # can be used for signalling purposes.
+ # If not specified, no pidfile will be written.
+ #
+-#PidFile "@localstatedir@/run/tinyproxy/tinyproxy.pid"
++PidFile "@localstatedir@/tinyproxy.pid"
+ 
+ #
+ # XTinyproxy: Tell Tinyproxy to include the X-Tinyproxy header, which
