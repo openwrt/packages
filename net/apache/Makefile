@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apache
 PKG_VERSION:=2.4.41
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_SOURCE_NAME:=httpd
 
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.bz2
@@ -40,8 +40,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_apache-mod-session-crypto \
 	CONFIG_PACKAGE_apache-mod-suexec \
 	CONFIG_PACKAGE_apache-mod-webdav \
-	CONFIG_PACKAGE_apache-suexec \
-	CONFIG_PACKAGE_libaprutil-dbm-gdbm
+	CONFIG_PACKAGE_apache-suexec
 
 PKG_FIXUP:=autoreconf
 
@@ -68,7 +67,7 @@ endef
 define Package/apache
 $(call Package/apache/Default)
   USERID:=apache=377:apache=377
-  DEPENDS:=+PACKAGE_libaprutil-dbm-gdbm:libgdbm +libapr +libaprutil +libpcre
+  DEPENDS:=+libapr +libaprutil +libpcre
 endef
 
 define Package/apache/description
