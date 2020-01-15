@@ -92,10 +92,12 @@ BOOTSTRAP_UNPACK:=$(HOST_TAR) -C $(BOOTSTRAP_BUILD_DIR) --strip-components=1 -xz
 RSTRIP:=:
 STRIP:=:
 
-ifeq ($(CONFIG_PKG_ASLR_PIE),y)
+ifdef CONFIG_PKG_ASLR_PIE_ALL
   ifeq ($(GO_TARGET_PIE_SUPPORTED),1)
     PKG_GO_ENABLE_PIE:=1
     PKG_GO_INSTALL_SUFFIX:=$(GO_TARGET_PIE_INSTALL_SUFFIX)
+  else
+    $(warning PIE buildmode is not supported for $(GO_OS)/$(GO_ARCH))
   endif
 endif
 
