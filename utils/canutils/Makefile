@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=canutils
 PKG_VERSION:=2018.02.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/linux-can/can-utils/tar.gz/v$(PKG_VERSION)?
@@ -40,7 +40,6 @@ endef
 define GenPlugin
   define Package/$(addprefix canutils-,$(1))
     $(call Package/canutils/Default)
-    DEPENDS:=canutils
     TITLE:=Utility $(1) from the CAN utilities
   endef
 
