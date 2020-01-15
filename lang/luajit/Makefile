@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luajit
 PKG_VERSION:=2.1.0-beta3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=LuaJIT-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://luajit.org/download
@@ -44,7 +44,8 @@ define Build/Compile
 		DPREFIX=$(PKG_INSTALL_DIR)/usr \
 		PREFIX=/usr \
 		TARGET_SYS=Linux \
-		TARGET_CFLAGS="$(TARGET_CFLAGS)"
+		TARGET_CFLAGS="$(TARGET_CFLAGS)" \
+		BUILDMODE=dynamic
 	rm -rf $(PKG_INSTALL_DIR)
 	mkdir -p $(PKG_INSTALL_DIR)
 	$(MAKE) -C $(PKG_BUILD_DIR) \
