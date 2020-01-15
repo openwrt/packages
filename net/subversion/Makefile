@@ -30,7 +30,7 @@ define Package/subversion/Default
   CATEGORY:=Network
   SUBMENU:=Version Control Systems
   TITLE:=A compelling replacement for CVS
-  DEPENDS:=+PACKAGE_unixodbc:unixodbc +libaprutil +libmagic $(ICONV_DEPENDS) $(INTL_DEPENDS)
+  DEPENDS:=+PACKAGE_unixodbc:unixodbc +libaprutil +libmagic +libsqlite3 $(ICONV_DEPENDS) $(INTL_DEPENDS)
   URL:=https://subversion.apache.org/
 endef
 
