@@ -120,10 +120,22 @@ GO_PKG_BUILD_BIN_DIR:=$(GO_PKG_BUILD_DIR)/bin$(if $(GO_HOST_TARGET_DIFFERENT),/$
 
 GO_PKG_BUILD_DEPENDS_SRC:=$(STAGING_DIR)$(GO_PKG_PATH)/src
 
-ifeq ($(CONFIG_PKG_ASLR_PIE),y)
+ifdef CONFIG_PKG_ASLR_PIE_ALL
   ifeq ($(strip $(PKG_ASLR_PIE)),1)
     ifeq ($(GO_TARGET_PIE_SUPPORTED),1)
       GO_PKG_ENABLE_PIE:=1
+    else
+      $(warning PIE buildmode is not supported for $(GO_OS)/$(GO_ARCH))
+    endif
+  endif
+endif
+
+ifdef CONFIG_PKG_ASLR_PIE_REGULAR
+  ifeq ($(strip $(PKG_ASLR_PIE_REGULAR)),1)
+    ifeq ($(GO_TARGET_PIE_SUPPORTED),1)
+      GO_PKG_ENABLE_PIE:=1
+    else
+      $(warning PIE buildmode is not supported for $(GO_OS)/$(GO_ARCH))
     endif
   endif
 endif
