@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=backuppc
 PKG_VERSION:=3.3.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=BackupPC-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/backuppc
@@ -25,7 +25,7 @@ define Package/backuppc
   CATEGORY:=Administration
   TITLE:=high-performance, enterprise-grade system for backing up PCs
   URL:=https://sourceforge.net/projects/backuppc/
-  DEPENDS:=+perl +perl-www +perl-cgi +perlbase-digest +perlbase-compress +perlbase-archive +perlbase-data +perlbase-storable +perlbase-getopt +perl-file-rsyncp +openssh-client +tar +bzip2 +samba36-client +rsync +iputils-ping
+  DEPENDS:=+perl +perl-www +perl-cgi +perlbase-digest +perlbase-compress +perlbase-archive +perlbase-data +perlbase-storable +perlbase-getopt +perl-file-rsyncp +openssh-client +tar +bzip2 +samba4-client +rsync +iputils-ping
 endef
 
 define Package/backuppc/description
