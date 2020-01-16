@@ -62,6 +62,7 @@ endef
 CMAKE_OPTIONS += \
 	-DBoost_NO_BOOST_CMAKE=ON \
 	-DBUILD_TESTS=OFF \
+	-DDOCUMENTATION=OFF \
 	-DEXAMPLES=OFF
 
 define Build/InstallDev
