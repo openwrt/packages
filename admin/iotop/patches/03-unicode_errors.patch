@@ -1,0 +1,13 @@
+--- ./iotop/data.py-orig	2020-01-16 11:21:12.827874630 +0100
++++ ./iotop/data.py	2020-01-16 11:43:56.467458186 +0100
+@@ -285,8 +285,8 @@ class ProcessInfo(DumpableObject):
+     def get_cmdline(self):
+         # A process may exec, so we must always reread its cmdline
+         try:
+-            proc_cmdline = open('/proc/%d/cmdline' % self.pid)
+-            cmdline = proc_cmdline.read(4096)
++            proc_cmdline = open('/proc/%d/cmdline' % self.pid, 'rb')
++            cmdline = proc_cmdline.read(4096).decode('utf-8', errors='replace')
+         except IOError:
+             return '{no such process}'
+         proc_status = parse_proc_pid_status(self.pid)
