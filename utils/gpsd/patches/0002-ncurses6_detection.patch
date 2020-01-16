@@ -1,8 +1,6 @@
-Index: gpsd-3.16/SConstruct
-===================================================================
---- gpsd-3.16.orig/SConstruct
-+++ gpsd-3.16/SConstruct
-@@ -672,6 +672,10 @@ else:
+--- a/SConstruct
++++ b/SConstruct
+@@ -874,6 +874,10 @@ else:
                  ncurseslibs += pkg_config('tinfo', rpath_hack=True)
          # It's not yet known whether rpath_hack is appropriate for
          # ncurses5-config.
