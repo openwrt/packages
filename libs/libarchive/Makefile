@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libarchive
-PKG_VERSION:=3.4.0
+PKG_VERSION:=3.4.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/libarchive/libarchive/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=c160d3c45010a51a924208f13f6b7b956dabdf8c5c60195df188a599028caa7c
+PKG_HASH:=772e8b066d84d2f15c89a6cfcba482878eb1270f56aa1d484710e904d84cc4c1
 
 PKG_MAINTAINER:=Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
 PKG_LICENSE:=BSD-2-Clause
