@@ -656,7 +656,7 @@ config policy
   option dest_addr 'amazonaws.com netflix.com nflxext.com nflximg.net nflxso.net nflxvideo.net dvd.netflix.com'
 ```
 
-#### Example Includes
+#### Example Custom User Files Includes
 
 ```text
 config include
@@ -664,6 +664,66 @@ config include
 
 config include
   option path '/etc/vpn-policy-routing.aws.user'
+```
+
+#### Basic OpenVPN Client Config
+
+There are multiple guides online on how to configure the OpenVPN client on OpenWrt "the easy way", and they usually result either in a kill-switch configuration or configuration where the OpenVPN tunnel  cannot be properly (and separately from WAN) routed, either way, incompatible with the VPN Policy-Based Routing.
+
+Below is the sample OpenVPN client configuration for OpenWrt which is guaranteed to work. If you have already deviated from the instructions below (ie: made any changes to any of the ```wan``` or ```lan``` configurations in either ```/etc/config/network``` or ```/etc/config/firewall```), you will need to start from scratch with a fresh OpenWrt install.
+
+Relevant part of ```/etc/config/vpn-policy-routing```:
+
+```text
+config vpn-policy-routing 'config'
+  list supported_interface 'vpnc'
+  ...
+```
+
+The recommended network/firewall settings are below.
+
+Relevant part of ```/etc/config/network``` (**DO NOT** modify default OpenWrt network settings for neither ```wan``` nor ```lan```):
+
+```text
+config interface 'vpnc'
+  option proto 'none'
+  option ifname 'ovpnc0'
+```
+
+Relevant part of ```/etc/config/firewall``` (**DO NOT** modify default OpenWrt firewall settings for neither ```wan``` nor ```lan```):
+
+```text
+config zone
+  option name 'vpnc'
+  option network 'vpnc'
+  option input 'REJECT'
+  option forward 'REJECT'
+  option output 'ACCEPT'
+  option masq '1'
+  option mtu_fix '1'
+
+config forwarding
+  option src 'lan'
+  option dest 'vpnc'
+```
+
+If you have a Guest Network, add the following to the ```/etc/config/firewall```:
+
+```text
+config forwarding
+  option src 'guest'
+  option dest 'vpnc'
+```
+
+Relevant part of ```/etc/config/openvpn``` (configure the rest of the client connection for your specifics by either referring to an existing ```.ovpn``` file or thru the OpenWrt uci settings):
+
+```text
+config openvpn 'vpnc'
+  option enabled '1'
+  option client '1'
+  option dev_type 'tun'
+  option dev 'ovpnc0'
+  ...
 ```
 
 ## Footnotes/Known Issues
