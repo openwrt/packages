@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libseccomp
 PKG_VERSION:=2.4.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -67,7 +67,7 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib/pkgconfig
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/include/seccomp.h \
+		$(PKG_INSTALL_DIR)/usr/include/seccomp*.h \
 		$(1)/usr/include/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/libseccomp.{a,so*} \
