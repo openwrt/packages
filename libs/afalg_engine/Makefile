@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=afalg_engine
 PKG_VERSION:=1.0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/cotequeiroz/afalg_engine/archive/v$(PKG_VERSION)
@@ -22,10 +22,7 @@ PKG_CONFIG_DEPENDS:= CONFIG_AFALG_ZERO_COPY
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-$(eval $(shell grep "^ENGINES_DIR" "$(TOPDIR)/package/libs/openssl/Makefile"))
-ifeq ($(ENGINES_DIR),)
-  ENGINES_DIR:=engines-1.1
-endif
+ENGINES_DIR:=engines-1.1
 
 define Package/libopenssl-afalg_sync
     SECTION:=libs
@@ -59,7 +56,7 @@ endef
 
 CMAKE_OPTIONS += \
 	-DOPENSSL_ENGINES_DIR=/usr/lib/$(ENGINES_DIR) \
-	-DUSE_ZERO_COPY=$(if $(AFALG_ZERO_COPY),ON,OFF)
+	-DUSE_ZERO_COPY=$(if $(CONFIG_AFALG_ZERO_COPY),ON,OFF)
 
 define Package/libopenssl-afalg_sync/install
 	$(INSTALL_DIR) $(1)/usr/lib/$(ENGINES_DIR)
