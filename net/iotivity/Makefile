@@ -227,7 +227,7 @@ endef
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); \
 		$(SCONS_VARS) \
-		python2.7 $(STAGING_DIR_HOST)/bin/scons.py \
+		python2.7 $(STAGING_DIR_HOSTPKG)/bin/scons \
 			$(SCONS_OPTIONS) \
 	)
 endef
