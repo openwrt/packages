@@ -1,5 +1,5 @@
---- a/engine/SCons/Platform/__init__.py
-+++ b/engine/SCons/Platform/__init__.py
+--- a/scons-local-3.1.2/SCons/Platform/__init__.py
++++ b/scons-local-3.1.2/SCons/Platform/__init__.py
 @@ -65,6 +65,8 @@ def platform_default():
      care about the machine architecture.
      """

@@ -8,19 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=scons
-PKG_VERSION:=3.1.1
+PKG_VERSION:=3.1.2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/scons \
-		https://fossies.org/linux/misc/
-PKG_HASH:=4cea417fdd7499a36f407923d03b4b7000b0f9e8fd7b31b316b9ce7eba9143a5
+PKG_SOURCE:=$(PKG_NAME)-local-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=@SF/scons
+PKG_HASH:=642e90860b746fa18fac08c7a22de6bfa86110ae7c56d7f136f7e5fb0d8f4f44
 
 PKG_LICENSE:=MIT
-PKG_LICENSE_FILES:=LICENSE
+PKG_LICENSE_FILES:=scons-LICENSE
 PKG_MAINTAINER:=
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
+
+HOST_UNPACK:=$(DECOMPRESS_CMD) $(HOST_TAR) -C $(HOST_BUILD_DIR) $(TAR_OPTIONS)
 
 define Package/scons
   SECTION:=devel
@@ -44,12 +45,16 @@ define Host/Compile
 endef
 
 define Host/Install
-	./files/pywrap.sh $(HOST_BUILD_DIR)/setup.py install --prefix=$(STAGING_DIR_HOST)
-	rm -f $(STAGING_DIR_HOST)/bin/scons*.py
-	for bin in $(STAGING_DIR_HOST)/bin/scons*; do \
-		mv "$$$$bin" "$$$$bin.py";                \
-		cp ./files/pywrap.sh "$$$$bin";           \
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin
+	for py in $(HOST_BUILD_DIR)/*.py; do \
+		bin=$$$${py%.py} ; \
+		$(CP) $$$$py $$$$bin ; \
+		$(SED) '1c#!$(STAGING_DIR_HOST)/bin/python' $$$$bin ; \
+		$(INSTALL_BIN) $$$$bin $(STAGING_DIR_HOSTPKG)/bin/ ; \
 	done
+
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/lib/scons
+	$(CP) $(HOST_BUILD_DIR)/scons-local-$(PKG_VERSION)/* $(STAGING_DIR_HOSTPKG)/lib/scons/
 endef
 
 $(eval $(call BuildPackage,scons))
