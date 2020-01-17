@@ -27,20 +27,18 @@ i2pd_start() {
 	config_get addressbook_dir "$cfg" addressbook_dir
 
 	## Setting up data dir
-	if [ ! -d "$data_dir" ]; then
+	[ -d "$data_dir" ] || {
 		mkdir -p "$data_dir"
+		chown "$USER:$GROUP" "$data_dir"
 		ln -s /usr/share/i2pd/certificates "$data_dir/certificates"
-		if [ -n "$addressbook_dir" ]; then
-			if [ ! -d "$addressbook_dir" ]; then
-				mkdir -p "$addressbook_dir"
-			fi
+		[ -n "$addressbook_dir" ] && {
+			[ -d "$addressbook_dir" ] || mkdir -p "$addressbook_dir"
+			chown "$USER:$GROUP" "$addressbook_dir"
 			ln -s "$addressbook_dir" "$data_dir/addressbook"
-		fi
-	fi
+		}
+	}
 
 	## We need permissions
-	chown "$USER:$GROUP" "$data_dir"
-	chown "$USER:$GROUP" "$addressbook_dir"
 	touch "$PIDFILE"
 	chown "$USER:adm" "$PIDFILE"
 
@@ -67,11 +65,7 @@ start_service() {
 	config_cb() {
 		local type="$1"
 		local name="$2"
-		if [ "$type" = "i2pd" ]; then
-			if [ -n "$instance" ] && [ "$instance" = "$name" ]; then
-				instance_found=1
-			fi
-		fi
+		[ "$type" = "i2pd" ] && [ -n "$instance" ] && [ "$instance" = "$name" ] && instance_found=1
 	}
 
 	config_load i2pd
