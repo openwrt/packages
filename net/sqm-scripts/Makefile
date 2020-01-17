@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=sqm-scripts
 PKG_SOURCE_VERSION:=ab763cba8b1516b3afa99760e0ca884f8b8d93b8
 PKG_VERSION:=1.4.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=GPLv2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE).tar.xz
@@ -51,7 +51,7 @@ define Package/luci-app-sqm
   TITLE:=SQM Scripts - LuCI interface
   MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
   PKGARCH:=all
-  DEPENDS:= +lua +luci-base +luci-compat +sqm-scripts
+  DEPENDS:=+luci-compat +sqm-scripts
   SUBMENU:=3. Applications
 endef
 
