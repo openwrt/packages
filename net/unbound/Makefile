@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unbound
 PKG_VERSION:=1.9.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nlnetlabs.nl/downloads/unbound
@@ -39,7 +39,7 @@ endef
 define Package/unbound-daemon
   $(call Package/unbound/Default)
   TITLE+= (daemon, light traffic)
-  DEPENDS+= +libunbound
+  DEPENDS+= +libunbound-light
   VARIANT:=light
 endef
 
@@ -62,17 +62,18 @@ define Package/unbound-daemon-heavy/description
   'libpthread' to better handle large networks with heavy query loads.
 endef
 
-define Package/libunbound
+define Package/libunbound-light
   $(call Package/unbound/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   SUBMENU:=Networking
   TITLE+= (library, light traffic)
   VARIANT:=light
+  PROVIDES:=libunbound
   DEFAULT_VARIANT:=1
 endef
 
-define Package/libunbound/description
+define Package/libunbound-light/description
   This package contains the Unbound shared library with basic includes
   necessary to meet the needs of UCI/LuCI configuration optoins.
 endef
@@ -218,12 +219,12 @@ endef
 
 Package/unbound-daemon-heavy/install = $(Package/unbound-daemon/install)
 
-define Package/libunbound/install
+define Package/libunbound-light/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libunbound.so.* $(1)/usr/lib/
 endef
 
-Package/libunbound-heavy/install = $(Package/libunbound/install)
+Package/libunbound-heavy/install = $(Package/libunbound-light/install)
 
 define Package/unbound-anchor/install
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -252,7 +253,7 @@ endef
 
 $(eval $(call BuildPackage,unbound-daemon))
 $(eval $(call BuildPackage,unbound-daemon-heavy))
-$(eval $(call BuildPackage,libunbound))
+$(eval $(call BuildPackage,libunbound-light))
 $(eval $(call BuildPackage,libunbound-heavy))
 $(eval $(call BuildPackage,unbound-anchor))
 $(eval $(call BuildPackage,unbound-checkconf))
