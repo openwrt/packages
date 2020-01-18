@@ -102,7 +102,7 @@ transmission() {
 			cache_size_mb download_queue_enabled download_queue_size \
 			dht_enabled encryption idle_seeding_limit idle_seeding_limit_enabled \
 			incomplete_dir_enabled lazy_bitfield_enabled lpd_enabled message_level \
-			peer_limit_global peer_limit_per_torrent peer_port \
+			peer_id_ttl_hours peer_limit_global peer_limit_per_torrent peer_port \
 			peer_port_random_high peer_port_random_low peer_port_random_on_start \
 			pex_enabled port_forwarding_enabled preallocation prefetch_enabled \
 			ratio_limit ratio_limit_enabled rename_partial_files rpc_authentication_required \
@@ -111,7 +111,7 @@ transmission() {
 			seed_queue_enabled seed_queue_size \
 			speed_limit_down speed_limit_down_enabled speed_limit_up \
 			speed_limit_up_enabled start_added_torrents trash_original_torrent_files \
-			umask upload_slots_per_torrent utp_enabled scrape_paused_torrents \
+			umask upload_slots_per_torrent utp_enabled \
 			watch_dir_enabled rpc_host_whitelist_enabled
 
 		append_params_quotes "$cfg" \
