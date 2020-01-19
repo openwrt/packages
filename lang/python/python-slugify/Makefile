@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2019-2020 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-slugify
-PKG_VERSION:=3.0.3
+PKG_VERSION:=4.0.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=a9f468227cb11e20e251670d78e1b5f6b0b15dd37bbd5c9814a25a904e44ff66
+PKG_HASH:=a8fc3433821140e8f409a9831d13ae5deccd0b033d4744d94b31fea141bdd84c
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT
