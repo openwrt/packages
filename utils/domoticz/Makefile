@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016 - 2017  Stijn Tintel <stijn@linux-ipv6.be>
+# Copyright (C) 2016 - 2020  Stijn Tintel <stijn@linux-ipv6.be>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,21 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=domoticz
-PKG_VERSION_MAJOR:=4
-PKG_VERSION_PATCH:=10717
-PKG_COMMIT:=
-PKG_VERSION:=$(PKG_VERSION_MAJOR).$(PKG_VERSION_PATCH)
-PKG_RELEASE:=3
+PKG_VERSION:=2020.1
+PKG_RELEASE:=1
 
-ifeq ($(PKG_COMMIT),)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/domoticz/domoticz/archive/$(PKG_VERSION)/$(PKG_SOURCE)
-else
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_COMMIT).tar.gz
-PKG_SOURCE_URL:=https://github.com/domoticz/domoticz/archive/$(PKG_COMMIT)/$(PKG_SOURCE)
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_COMMIT)
-endif
-PKG_HASH:=c053a2161942529f56b748945ec297dcd67f449e68029fc886893a528891ad86
+PKG_HASH:=d0c17b2082dad8a8caeed888b7d4c191975e74a2808b5d078305f5327b82442d
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=License.txt
@@ -80,15 +71,6 @@ TARGET_CXXFLAGS+=-DWITH_GPIO -flto
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
-	# Fix APPVERSION/APPDATE since we don't build from a git tree
-	sed -i 's/#define APPVERSION.*/#define APPVERSION $(PKG_VERSION_PATCH)/' \
-		 $(PKG_BUILD_DIR)/appversion.default
-	COMMITDATE=`tar tvfz $(DL_DIR)/$(PKG_SOURCE) --full-time | sed 's/.* \(20..-..-.. ..:..:..\) domoticz-.*/\1/;q'`; \
-	COMMITTS=`date --date="$$$${COMMITDATE}" +%s`; \
-	sed -i "s/#define APPDATE.*/#define APPDATE $$$${COMMITTS}/" $(PKG_BUILD_DIR)/appversion.default
-ifneq ($(PKG_COMMIT),)
-	sed -i "s/#define APPHASH.*/#define APPHASH \"$(shell echo $(PKG_COMMIT) | cut -c1-8)\"/" $(PKG_BUILD_DIR)/appversion.default
-endif
 	# Remove unwanted scripts
 	cd $(PKG_BUILD_DIR)/scripts && rm -rf \
 		buienradar_rain_example.pl \
