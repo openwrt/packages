@@ -22,6 +22,7 @@ define Package/serdisplib
   CATEGORY:=Libraries
   TITLE:=serdisplib
   URL:=http://serdisplib.sourceforge.net/
+  DEPENDS:=+libusb-compat
 endef
 
 define Package/serdisplib/description
