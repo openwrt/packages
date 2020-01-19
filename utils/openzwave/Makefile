@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2017  Hauke Mehrtens <hauke@hauke-m.de>
-# Copyright (C) 2016 - 2017  Stijn Tintel <stijn@linux-ipv6.be>
+# Copyright (C) 2016 - 2020  Stijn Tintel <stijn@linux-ipv6.be>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,13 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openzwave
-PKG_REV:=164
-PKG_VERSION:=1.4.$(PKG_REV)
-PKG_RELEASE:=2
+PKG_VERSION:=1.6.1063
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://old.openzwave.com/downloads
-PKG_HASH:=4ecf39787aaf278c203764069b581dbc26094ce57cafeab4a0c1f012d2c0ac69
+PKG_HASH:=8b1b674f825cd3623d2aa9c286edbb05c0ff6537d5d3ee891ae98e21d28de26b
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -58,14 +57,15 @@ MAKE_FLAGS += \
 	LD="$(TARGET_CROSS)g++" \
 	LIBDIR="$(PKG_BUILD_DIR)" \
 	PREFIX=$(CONFIGURE_PREFIX) \
+	USE_HID="no" \
+	ar_option="q" \
 	instlibdir=/usr/lib \
 	pkgconfigdir=/usr/lib/pkgconfig \
 	sysconfdir=/etc/openzwave
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
-	rm $(PKG_BUILD_DIR)/cpp/src/platform/HidController.*
-	sed -i -e '/hidapi/d;/HidController/d' $(PKG_BUILD_DIR)/distfiles.mk
+	sed -i -e 's/-O3 //;s/-Werror //' $(PKG_BUILD_DIR)/cpp/build/Makefile
 endef
 
 define Package/libopenzwave/install
