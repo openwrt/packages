@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.17.7
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
@@ -72,7 +72,8 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_RTMP_MODULE \
 	CONFIG_NGINX_TS_MODULE \
 	CONFIG_OPENSSL_ENGINE \
-	CONFIG_OPENSSL_WITH_NPN
+	CONFIG_OPENSSL_WITH_NPN \
+	CONFIG_NGINX_NOPCRE
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -95,13 +96,16 @@ endef
 
 define Package/nginx
   $(Package/nginx/default)
+  DEPENDS += +!NGINX_SSL:nginx-util +NGINX_SSL&&NGINX_PCRE:nginx-ssl-util \
+	+NGINX_SSL&&NGINX_NOPCRE:nginx-ssl-util-nopcre
   VARIANT:=no-ssl
 endef
 
 define Package/nginx-ssl
   $(Package/nginx/default)
   TITLE += with SSL support
-  DEPENDS +=+libopenssl
+  DEPENDS += +libopenssl +NGINX_PCRE:nginx-ssl-util \
+	+!NGINX_PCRE:nginx-ssl-util-nopcre
   VARIANT:=ssl
   PROVIDES:=nginx
 endef
@@ -114,7 +118,7 @@ define Package/nginx-all-module
   $(Package/nginx/default)
   TITLE += with ALL module selected
   DEPENDS:=+libpcre +libopenssl +zlib +liblua +libpthread +libxml2 \
-   +libubus +libblobmsg-json +libjson-c
+   +libubus +libblobmsg-json +libjson-c +nginx-ssl-util
   VARIANT:=all-module
   PROVIDES:=nginx
 endef
@@ -124,13 +128,17 @@ Package/nginx-all-module/description = $(Package/nginx/description) \
 
 define Package/nginx/config
   source "$(SOURCE)/Config.in"
+config NGINX_NOPCRE
+	bool
+	default y if !NGINX_PCRE
+	default n if NGINX_PCRE
 endef
 
 define Package/nginx-ssl/config
   source "$(SOURCE)/Config_ssl.in"
 endef
 
-config_files=nginx.conf mime.types
+config_files=mime.types
 
 define Package/nginx/conffiles
 /etc/nginx/
@@ -358,7 +366,7 @@ CONFIGURE_ARGS += \
 			--prefix=/usr \
 			--conf-path=/etc/nginx/nginx.conf \
 			$(ADDITIONAL_MODULES) \
-			--error-log-path=/var/log/nginx/error.log \
+			--error-log-path=stderr \
 			--pid-path=/var/run/nginx.pid \
 			--lock-path=/var/lock/nginx.lock \
 			--http-log-path=/var/log/nginx/access.log \
@@ -371,26 +379,21 @@ CONFIGURE_ARGS += \
 			--without-http_upstream_zone_module
 
 define Package/nginx-mod-luci/install
-	$(INSTALL_DIR) $(1)/etc/nginx
-	$(INSTALL_BIN) ./files-luci-support/luci_uwsgi.conf $(1)/etc/nginx/luci_uwsgi.conf
-	$(INSTALL_BIN) ./files-luci-support/luci_nginx.conf $(1)/etc/nginx/luci_nginx.conf
+	$(INSTALL_DIR) $(1)/etc/nginx/conf.d
+	$(INSTALL_CONF) ./files-luci-support/luci.locations $(1)/etc/nginx/conf.d/
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files-luci-support/60_nginx-luci-support $(1)/etc/uci-defaults/60_nginx-luci-support
 endef
 
-define Package/nginx-mod-luci-ssl/install
-	$(Package/nginx-mod-luci/install)
-	$(INSTALL_DIR) $(1)/etc/nginx
-	$(INSTALL_BIN) ./files-luci-support/luci_nginx_ssl.conf $(1)/etc/nginx/luci_nginx_ssl.conf
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files-luci-support/70_nginx-luci-support-ssl $(1)/etc/uci-defaults/70_nginx-luci-support-ssl
-endef
+Package/nginx-mod-luci-ssl/install = $(Package/nginx-mod-luci/install)
 
 define Package/nginx/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/nginx $(1)/usr/sbin/
-	$(INSTALL_DIR) $(1)/etc/nginx
+	$(INSTALL_DIR) $(1)/etc/nginx/conf.d
 	$(INSTALL_DATA) $(addprefix $(PKG_INSTALL_DIR)/etc/nginx/,$(config_files)) $(1)/etc/nginx/
+	$(INSTALL_CONF) ./files/nginx.conf $(1)/etc/nginx/
+	$(INSTALL_CONF) ./files/_lan.conf $(1)/etc/nginx/conf.d/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/nginx.init $(1)/etc/init.d/nginx
 ifeq ($(CONFIG_NGINX_NAXSI),y)
@@ -400,10 +403,45 @@ ifeq ($(CONFIG_NGINX_NAXSI),y)
 endif
 	$(if $(CONFIG_NGINX_NAXSI),$($(INSTALL_BIN) $(PKG_BUILD_DIR)/nginx-naxsi/naxsi_config/naxsi_core.rules $(1)/etc/nginx))
 	$(if $(CONFIG_NGINX_NAXSI),$(chmod 0640 $(1)/etc/nginx/naxsi_core.rules))
+ifeq ($(CONFIG_NGINX_SSL),y)
+	$(INSTALL_CONF) ./files/_redirect2ssl.conf $(1)/etc/nginx/conf.d/
+endif
+ifneq ($(CONFIG_IPV6),y)
+	$(SED) '/listen\s*\[/d' $(1)/etc/nginx/conf.d/*.conf # without IPv6 [::]
+endif
 endef
 
-Package/nginx-ssl/install = $(Package/nginx/install)
-Package/nginx-all-module/install = $(Package/nginx/install)
+define Package/nginx-ssl/install
+	$(call Package/nginx/install, $(1))
+	$(INSTALL_CONF) ./files/_redirect2ssl.conf $(1)/etc/nginx/conf.d/
+ifneq ($(CONFIG_IPV6),y)
+	$(SED) '/listen\s*\[/d' $(1)/etc/nginx/conf.d/*.conf # without IPv6 [::]
+endif
+endef
+
+Package/nginx-all-module/install = $(Package/nginx-ssl/install)
+
+define Package/nginx-ssl/prerm
+#!/bin/sh
+[ -z "$${IPKG_INSTROOT}" ] || exit 0
+if [ "$${PKG_UPGRADE}" == "1" ]; then
+	eval $$(/usr/bin/nginx-util get_env)
+	TMP_CRT=$$(mktemp -p "$${CONF_DIR}" "$${LAN_NAME}.crt.tmp-XXXXXX")
+	ln -f "$${CONF_DIR}$${LAN_NAME}.crt" "$${TMP_CRT}"
+	TMP_KEY=$$(mktemp -p "$${CONF_DIR}" "$${LAN_NAME}.key.tmp-XXXXXX")
+	ln -f "$${CONF_DIR}$${LAN_NAME}.key" "$${TMP_KEY}"
+fi
+/usr/bin/nginx-util del_ssl
+[ -f "$${TMP_CRT}" ] && mv -f "$${TMP_CRT}" "$${CONF_DIR}$${LAN_NAME}.crt"
+[ -f "$${TMP_KEY}" ] && mv -f "$${TMP_KEY}" "$${CONF_DIR}$${LAN_NAME}.key"
+exit 0
+endef
+
+ifeq ($(CONFIG_NGINX_SSL),y)
+Package/nginx/prerm = $(Package/nginx-ssl/prerm)
+endif
+
+Package/nginx-all-module/prerm = $(Package/nginx-ssl/prerm)
 
 define Build/Prepare
 	$(Build/Prepare/Default)
