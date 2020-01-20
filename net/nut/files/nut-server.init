@@ -203,8 +203,8 @@ build_driver_config() {
 		fi
 	}
 
-	config_list_foreach "$cfg" other other
-	config_list_foreach "$cfg" other otherflag
+	config_list_foreach "$cfg" other other other
+	config_list_foreach "$cfg" otherflag other otherflag
 	echo "" >>$UPS_C
 	havedriver=1
 }
