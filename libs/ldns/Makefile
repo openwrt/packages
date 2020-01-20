@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ldns
-PKG_VERSION:=1.7.0
-PKG_RELEASE:=5
+PKG_VERSION:=1.7.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.nlnetlabs.nl/downloads/ldns
-PKG_HASH:=c19f5b1b4fb374cfe34f4845ea11b1e0551ddc67803bd6ddd5d2a20f0997a6cc
+PKG_HASH:=8ac84c16bdca60e710eea75782356f3ac3b55680d40e1530d7cea474ac208229
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Eric Luehrsen <ericluehrsen@gmail.com>
 PKG_CPE_ID:=cpe:/a:nlnetlabs:ldns
 
 PKG_FIXUP:=autoreconf
@@ -55,15 +55,31 @@ define Package/drill
 endef
 
 define Package/drill/description
-  drill is a tool to designed to get all sorts of information out of the DNS. It
-  is specificly designed to be used with DNSSEC.
+  ldns includes the drill tool, which is much like dig from BIND. It was
+  designed with DNSSEC in mind and should be a useful debugging/query tool
+  for DNSSEC.
+endef
+
+define Package/ldns-examples
+  $(call Package/libldns/Default)
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=IP Addresses and Names
+  TITLE:=Example programs from NLNetLabs ldns library
+  DEPENDS+= +libldns +libpcap +drill
+endef
+
+define Package/ldns-examples/description
+  A few example programs are included in the source of ldns. They include tools
+  which can create DNSSEC keys and DNSSEC zone files.
 endef
 
 CONFIGURE_ARGS += \
-	--disable-dane-ta-usage \
-	--disable-ecdsa \
+	--disable-dsa \
 	--disable-gost \
+	--enable-ecdsa \
 	--with-drill \
+	--with-examples \
 	--with-ssl="$(STAGING_DIR)/usr"
 
 define Build/InstallDev
@@ -85,5 +101,33 @@ define Package/drill/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/drill $(1)/usr/bin/
 endef
 
+define Package/ldns-examples/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-chaos $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-compare-zones $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-dane $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-dpa $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-gen-zone $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-key2ds $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-keyfetcher $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-keygen $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-mx $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-notify $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-nsec3-hash $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-read-zone $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-revoke $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-rrsig $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-signzone $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-test-edns $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-testns $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-update $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-verify-zone $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-version $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-walk $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-zcat $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ldns-zsplit $(1)/usr/bin/
+endef
+
 $(eval $(call BuildPackage,libldns))
 $(eval $(call BuildPackage,drill))
+$(eval $(call BuildPackage,ldns-examples))
