@@ -91,7 +91,8 @@ void get_env()
     std::cout<<"LAN_LISTEN="<<"'"<<LAN_LISTEN<<"'"<<std::endl;
 #ifdef NGINX_OPENSSL
     std::cout<<"LAN_SSL_LISTEN="<<"'"<<LAN_SSL_LISTEN<<"'"<<std::endl;
-    std::cout<<"SSL_SESSION_CACHE_ARG="<<"'"<<LAN_NAME<<"'"<<std::endl;
+    std::cout<<"SSL_SESSION_CACHE_ARG="<<"'"<<SSL_SESSION_CACHE_ARG(LAN_NAME)<<
+        "'"<<std::endl;
     std::cout<<"SSL_SESSION_TIMEOUT_ARG="<<"'"<<SSL_SESSION_TIMEOUT_ARG<<"'\n";
     std::cout<<"ADD_SSL_FCT="<<"'"<<ADD_SSL_FCT<<"'"<<std::endl;
 #endif

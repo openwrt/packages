@@ -100,7 +100,7 @@ void del_ssl_directives_from(const std::string & name, bool isdefault);
 void del_ssl(const std::string & name);
 
 
-static constexpr auto _begin = _Line{
+constexpr auto _begin = _Line{
     [](const std::string & /*param*/, const std::string & begin) -> std::string
     { return begin; },
 
@@ -110,7 +110,7 @@ static constexpr auto _begin = _Line{
 };
 
 
-static constexpr auto _space = _Line{
+constexpr auto _space = _Line{
     [](const std::string & /*param*/, const std::string & /*begin*/)
         -> std::string
     { return std::string{" "}; },
@@ -121,7 +121,7 @@ static constexpr auto _space = _Line{
 };
 
 
-static constexpr auto _newline = _Line{
+constexpr auto _newline = _Line{
     [](const std::string & /*param*/, const std::string & /*begin*/)
         -> std::string
     { return std::string{"\n"}; },
@@ -132,7 +132,7 @@ static constexpr auto _newline = _Line{
 };
 
 
-static constexpr auto _end = _Line{
+constexpr auto _end = _Line{
     [](const std::string & /*param*/, const std::string & /*begin*/)
         -> std::string
     { return std::string{";"}; },
@@ -144,7 +144,7 @@ static constexpr auto _end = _Line{
 
 
 template<char clim='\0'>
-static constexpr auto _capture = _Line{
+constexpr auto _capture = _Line{
     [](const std::string & param, const std::string & /*begin*/) -> std::string
     { return '\'' + param + '\''; },
 
@@ -159,10 +159,14 @@ static constexpr auto _capture = _Line{
 
 
 template<const std::string_view & strptr, char clim='\0'>
-static constexpr auto _escape = _Line{
+constexpr auto _escape = _Line{
     [](const std::string &  /*param*/, const std::string & /*begin*/)
         -> std::string
-    { return clim + std::string{strptr.data()} + clim; },
+    {
+        return clim=='\0' ?
+            std::string{strptr.data()} :
+            clim + std::string{strptr.data()} + clim;
+    },
 
     [](const std::string & /*param*/, const std::string & /*begin*/)
         -> std::string
@@ -184,17 +188,17 @@ static constexpr auto _escape = _Line{
 };
 
 
-static constexpr std::string_view _server_name = "server_name";
+constexpr std::string_view _server_name = "server_name";
 
-static constexpr std::string_view _include = "include";
+constexpr std::string_view _include = "include";
 
-static constexpr std::string_view _ssl_certificate = "ssl_certificate";
+constexpr std::string_view _ssl_certificate = "ssl_certificate";
 
-static constexpr std::string_view _ssl_certificate_key = "ssl_certificate_key";
+constexpr std::string_view _ssl_certificate_key = "ssl_certificate_key";
 
-static constexpr std::string_view _ssl_session_cache = "ssl_session_cache";
+constexpr std::string_view _ssl_session_cache = "ssl_session_cache";
 
-static constexpr std::string_view _ssl_session_timeout = "ssl_session_timeout";
+constexpr std::string_view _ssl_session_timeout = "ssl_session_timeout";
 
 
 // For a compile time regex lib, this must be fixed, use one of these options:

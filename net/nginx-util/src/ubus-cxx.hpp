@@ -109,28 +109,29 @@ extern "C" { //TODO(pst): remove when in upstream
 
 namespace ubus {
 
+using msg_ptr = std::shared_ptr<const blob_attr>;
 
 using strings = std::vector<std::string>;
 
 
-inline void append(strings & /*dest*/) {}
+inline auto concat(strings dest) { return dest; }
 
 
 template<class ...Strings>
-inline void append(strings & dest, strings src, Strings ...more)
+inline auto concat(strings dest, strings src, Strings ...more)
 {
     dest.reserve(dest.size() + src.size());
     dest.insert(std::end(dest), std::make_move_iterator(std::begin(src)),
                 std::make_move_iterator(std::end(src)));
-    append(dest, std::move(more)...);
+    return concat(std::move(dest), std::move(more)...);
 }
 
 
 template<class S, class ...Strings>
-inline void append(strings & dest, S src, Strings ...more)
+inline auto concat(strings dest, S src, Strings ...more)
 {
     dest.push_back(std::move(src));
-    append(dest, std::move(more)...);
+    return concat(std::move(dest), std::move(more)...);
 }
 
 
@@ -208,7 +209,7 @@ public:
     auto operator++() -> iterator &;
 
 
-    inline ~iterator() = default;
+    inline ~iterator() { if (cur.get()==this) { cur.release(); } }
 
 };
 
@@ -218,15 +219,14 @@ class message {
 
 private:
 
-    const std::shared_ptr<const blob_attr> msg{}; // initialized by callback.
+    const msg_ptr msg{}; // initialized by callback.
 
     const strings keys{};
 
 
 public:
 
-    inline explicit message(std::shared_ptr<const blob_attr>  message,
-                        strings filter={""})
+    inline explicit message(msg_ptr  message, strings filter={""})
     : msg{std::move(message)}, keys{std::move(filter)} {}
 
 
@@ -258,7 +258,7 @@ public:
     {
         strings both{};
         if (keys.size()!=1 || !keys[0].empty()) { both = keys; }
-        append(both, std::move(filter)...);
+        both = concat(std::move(both), std::move(filter)...);
         return std::move(message{msg, std::move(both)});
     }
 
@@ -408,20 +408,20 @@ inline auto call(const char * path, const char * method, const int timeout)
         ubus::unlock_shared_blob_buf();
 
         if (err==0) {
-            using msg_t = std::shared_ptr<const blob_attr>;
 
-            msg_t msg;
-            req.priv = &msg;
+            msg_ptr msg;
 
             /* Cannot capture anything (msg), the lambda would be another type.
             * Pass a location where to save the message as priv pointer when
             * invoking and get it back here:
             */
+            req.priv = &msg;
+
             req.data_cb = [](ubus_request * req, int /*type*/, blob_attr * msg)
             {
-                if ((req == nullptr) || (msg == nullptr)) { return; }
+                if (req==nullptr || msg==nullptr) { return; }
 
-                auto saved = static_cast<msg_t *>(req->priv);
+                auto saved = static_cast<msg_ptr *>(req->priv);
                 if (saved==nullptr || *saved) { return; }
 
                 saved->reset(blob_memdup(msg), free);
