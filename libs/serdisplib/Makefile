@@ -11,6 +11,8 @@ PKG_LICENSE:=GPL-2.0
 PLG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
+PKG_BUILD_DEPENDS:=libusb-compat
+
 PKG_FIXUP:=libtool
 
 include $(INCLUDE_DIR)/package.mk
@@ -22,7 +24,6 @@ define Package/serdisplib
   CATEGORY:=Libraries
   TITLE:=serdisplib
   URL:=http://serdisplib.sourceforge.net/
-  DEPENDS:=+libusb-compat
 endef
 
 define Package/serdisplib/description
