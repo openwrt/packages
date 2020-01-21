@@ -15,7 +15,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/$(PKG_NAME)
 	SECTION:=utils
 	CATEGORY:=Utilities
-	MAINTAINER:=Nicolas Pace <nicopace@altermundi.net>
+	MAINTAINER:=Kirill Lukonin <klukonin@gmail.com>
 	URL:=https://github.com/simonwunderlich/FFT_eval
 	TITLE:=Evaluates FFT samples from ath9k, ath10k or ath11k driver
 	DEPENDS:=@PACKAGE_ATH_DEBUG @PACKAGE_ATH_SPECTRAL
