@@ -66,5 +66,4 @@ define Package/hcxtools-custom/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/wlancow2hcxpmk	$(1)/sbin/
 endef
 
-$(eval $(call BuildPackage,hcxtools-custom))
 $(eval $(call BuildPackage,hcxtools))
