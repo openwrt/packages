@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vnstat2
-PKG_VERSION:=2.4
+PKG_VERSION:=2.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=vnstat-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://humdi.net/vnstat
-PKG_HASH:=a0955999abd56d5463d257ffdccc9b1e9ad9ea504de81e64ba4c197f1245abaa
+PKG_HASH:=89276e0a7281943edb554b874078278ad947dc312938a2451e03eb80679f7ff7
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
@@ -19,9 +19,8 @@ PKG_MAINTAINER:=Jan Hoffmann <jan@3e8.eu>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/vnstat-${PKG_VERSION}
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
-
-PKG_BUILD_DEPENDS:=libgd
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -65,25 +64,7 @@ define Package/vnstat2/conffiles
 /etc/config/vnstat
 endef
 
-define Build/Compile/vnstat2
-	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
-		$(TARGET_CONFIGURE_OPTS) \
-		CFLAGS="$(TARGET_CFLAGS)" \
-		LDFLAGS="$(TARGET_LDFLAGS)"
-endef
-
-define Build/Compile/vnstati2
-	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
-		$(TARGET_CONFIGURE_OPTS) \
-		CFLAGS="$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include" \
-		LDFLAGS="$(TARGET_LDFLAGS) -Wl,-rpath-link,$(STAGING_DIR)/usr/lib" \
-		all
-endef
-
-define Build/Compile
-$(call Build/Compile/vnstat2)
-$(call Build/Compile/vnstati2)
-endef
+CONFIGURE_ARGS += --disable-extra-paths
 
 define Package/vnstat2/install
 	$(INSTALL_DIR) $(1)/usr/bin
