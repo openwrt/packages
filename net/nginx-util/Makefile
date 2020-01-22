@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx-util
 PKG_VERSION:=1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -13,13 +13,14 @@ define Package/nginx-util
   SUBMENU:=Web Servers/Proxies
   TITLE:=Builder of LAN listen directives for Nginx
   DEPENDS:=+libstdcpp +libubus +libubox +libpthread
-  PROVIDES:=nginx-util
 endef
 
 define Package/nginx-ssl-util/default
   $(Package/nginx-util)
   TITLE+= and manager of its SSL certificates
-  DEPENDS+=+libopenssl
+  DEPENDS+= +libopenssl
+  CONFLICTS:=nginx-util
+  PROVIDES:=nginx-ssl-util
 endef
 
 define Package/nginx-ssl-util-nopcre
@@ -30,7 +31,7 @@ endef
 define Package/nginx-ssl-util
   $(Package/nginx-ssl-util/default)
   TITLE+= (using PCRE)
-  DEPENDS+=+libpcre
+  DEPENDS+= +libpcre
 endef
 
 define Package/nginx-util/description
