@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zerotier
 PKG_VERSION:=1.2.12
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=GPL-3.0
 
@@ -55,6 +55,10 @@ endef
 # Make binary smaller
 TARGET_CFLAGS += -ffunction-sections -fdata-sections
 TARGET_LDFLAGS += -Wl,--gc-sections
+
+define Package/zerotier/conffiles
+/etc/config/zerotier
+endef
 
 define Package/zerotier/install
 	$(INSTALL_DIR) $(1)/usr/bin
