@@ -31,7 +31,7 @@ extern "C" { //TODO(pst): remove when in upstream
 // std::cout<<std::endl;
 
 // // example for exploring:
-// ubus::strings keys{"ipv4-address", "", "*"};
+// ubus::strings keys{"ipv4-address", "", ""};
 // for (auto x : ubus::call("network.interface.lan", "status").filter(keys)) {
 //     std::cout<<blobmsg_name(x)<<": ";
 //     switch (blob_id(x)) {
@@ -173,8 +173,7 @@ private:
 
 public:
 
-
-    explicit iterator(const blob_attr * msg, const strings & filter)
+    explicit iterator(const blob_attr * msg, const strings & filter={""})
     : keys{filter}, n{keys.size()-1}, pos{msg}, cur{this}
     {
         if (pos!=nullptr) {

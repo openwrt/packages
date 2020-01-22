@@ -13,6 +13,7 @@ void create_lan_listen()
     std::string ssl_listen = listen;
     std::string ssl_listen_default = listen;
 
+#ifndef NO_UBUS
     auto add_listen = [&listen, &listen_default
 #ifdef NGINX_OPENSSL
                        ,&ssl_listen, &ssl_listen_default
@@ -31,10 +32,16 @@ void create_lan_listen()
 #endif
     };
 
-    add_listen("", "127.0.0.1", "");
-    add_listen("[", "::1", "]");
+    auto loopback_status = ubus::call("network.interface.loopback", "status");
 
-#ifndef NO_UBUS
+    for (auto ip : loopback_status.filter("ipv4-address", "", "address")) {
+        add_listen("",  static_cast<const char *>(blobmsg_data(ip)), "");
+    }
+
+    for (auto ip : loopback_status.filter("ipv6-address", "", "address")) {
+        add_listen("[", static_cast<const char *>(blobmsg_data(ip)), "]");
+    }
+
     auto lan_status = ubus::call("network.interface.lan", "status");
 
     for (auto ip : lan_status.filter("ipv4-address", "", "address")) {
