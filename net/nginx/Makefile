@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.17.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
@@ -438,11 +438,11 @@ endif
 
 ifeq ($(CONFIG_NGINX_HTTP_BROTLI),y)
   define Download/nginx-brotli
-    VERSION:=dc37f658ccb5a51d090dc09d1a2aca2f24309869
+    VERSION:=e505dce68acc190cc5a1e780a3b0275e39f160ca
     SUBDIR:=nginx-brotli
     FILE:=ngx-brotli-module-$$(VERSION).tar.xz
-    URL:=https://github.com/eustas/ngx_brotli.git
-    MIRROR_HASH:=6bc0c40ff24f6e0ac616dfddc803bdc7fcf54764ba9dc4f9cecb3a68beedcdaf
+    URL:=https://github.com/google/ngx_brotli.git
+    MIRROR_HASH:=04847f11ef808fed50f44b2af0ef3abf59ff0ffc06dfc7394d9ab51d53fef31f
     PROTO:=git
   endef
   $(eval $(call Download,nginx-brotli))
