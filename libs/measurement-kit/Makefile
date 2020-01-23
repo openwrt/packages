@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=measurement-kit
-PKG_VERSION:=0.10.8
+PKG_VERSION:=0.10.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/measurement-kit/measurement-kit/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=773c0f03fa21b56b34a24f97b4fedf96e66b0f49ef549d5c674e63ed43e1c278
+PKG_HASH:=8ac160fe1f318983b6784d78f612b657ddeed73ddc6371aaa299326196a381e5
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=BSD-2-Clause
@@ -40,7 +40,7 @@ endef
 CONFIGURE_ARGS+= --with-ca-bundle=/etc/ssl/cert.pem
 
 define Build/Configure
-	( cd $(PKG_BUILD_DIR); ./autogen.sh --no-geoip)
+	( cd $(PKG_BUILD_DIR); ./autogen.sh )
 	$(call Build/Configure/Default)
 endef
 
@@ -54,6 +54,8 @@ endef
 define Package/measurement-kit/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/measurement_kit $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/measurement_kit
+	$(CP) $(PKG_BUILD_DIR)/*.mmdb $(1)/etc/measurement_kit
 endef
 
 $(eval $(call BuildPackage,measurement-kit))
