@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx-util
-PKG_VERSION:=1.1
-PKG_RELEASE:=2
+PKG_VERSION:=1.2
+PKG_RELEASE:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -23,15 +23,15 @@ define Package/nginx-ssl-util/default
   PROVIDES:=nginx-ssl-util
 endef
 
-define Package/nginx-ssl-util-nopcre
-  $(Package/nginx-ssl-util/default)
-  TITLE+= (using <regex>)
-endef
-
 define Package/nginx-ssl-util
   $(Package/nginx-ssl-util/default)
   TITLE+= (using PCRE)
   DEPENDS+= +libpcre
+endef
+
+define Package/nginx-ssl-util-nopcre
+  $(Package/nginx-ssl-util/default)
+  TITLE+= (using <regex>)
 endef
 
 define Package/nginx-util/description
