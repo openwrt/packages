@@ -88,10 +88,10 @@ diff -urN a/lib/misc/idLinux.c b/lib/misc/idLinux.c
 diff -urN a/lib/nicInfo/nicInfoPosix.c b/lib/nicInfo/nicInfoPosix.c
 --- a/lib/nicInfo/nicInfoPosix.c
 +++ b/lib/nicInfo/nicInfoPosix.c
-@@ -34,9 +34,13 @@
- #include <sys/socket.h>
+@@ -35,9 +35,13 @@
  #include <sys/stat.h>
  #include <errno.h>
+ #include <limits.h>
 -#if defined(__FreeBSD__) || defined(__APPLE__)
 +#if HAVE_SYS_SYSCTL_H
  # include <sys/sysctl.h>
