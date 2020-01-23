@@ -77,7 +77,7 @@ get_mwan3_status() {
 	local online=0
 	local offline=0
 	local up="0"
-	local enabled pid device time_p time_n time_u time_d
+	local enabled pid device time_p time_n time_u time_d status
 
 	network_get_device device $1
 
@@ -111,6 +111,12 @@ get_mwan3_status() {
 		network_get_uptime uptime "$iface"
 		network_is_up "$iface" && up="1"
 
+		if [ -f "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS" ]; then
+			status="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS")"
+		else
+			status="unknown"
+		fi
+
 		json_add_object "${iface}"
 		json_add_int age "$age"
 		json_add_int online "${online}"
@@ -119,7 +125,7 @@ get_mwan3_status() {
 		json_add_int "score" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/SCORE")"
 		json_add_int "lost" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LOST")"
 		json_add_int "turn" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/TURN")"
-		json_add_string "status" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS")"
+		json_add_string "status" "${status}"
 		json_add_boolean "enabled" "${enabled}"
 		json_add_boolean "running" "${running}"
 		json_add_boolean "up" "${up}"
