@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmbim
 PKG_VERSION:=1.22.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/libmbim
@@ -19,8 +19,6 @@ PKG_MAINTAINER:=Nicholas Smith <nicholas.smith@telcoantennas.com.au>
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-
-PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
