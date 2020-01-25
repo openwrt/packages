@@ -1,0 +1,27 @@
+#!/bin/sh
+
+[ "$ACTION" = "add" ] || exit 0
+[ "$DEVTYPE" = "usb_device" ] || exit 0
+
+SANE_GROUP=scanner
+grep -q -E "^$SANE_GROUP:" /etc/group || exit 0
+
+# Filter SANE known devices
+vendor_product="${PRODUCT%/*}"
+vendorid="$(printf '%04x' "0x0${vendor_product%/*}")"
+productid="$(printf '%04x' "0x0${vendor_product#*/}")"
+grep -s -x -F -q "$productid" "/usr/share/sane/$vendorid"-*.usbid || exit 0
+
+grant() {
+	logger -t "hotplug(usb/20-saned)" "Granting $1 to '$2' for group '$SANE_GROUP'"
+	chgrp "$SANE_GROUP" "$2"
+	chmod "$1" "$2"
+}
+
+# Needed by script /usr/bin/saned to rebind USB devices back to usblp after use
+usblp_bind="/sys/bus/usb/drivers/usblp/bind"
+if [ -e "$usblp_bind" ]; then
+	grant g+w "$usblp_bind"
+fi
+
+grant g+rw "/dev/$DEVNAME"
