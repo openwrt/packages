@@ -1,6 +1,6 @@
 --- a/lib/replace/wscript
 +++ b/lib/replace/wscript
-@@ -340,22 +340,13 @@ def configure(conf):
+@@ -416,22 +416,13 @@ def configure(conf):
  
      conf.CHECK_FUNCS('prctl dirname basename')
  
@@ -29,7 +29,7 @@
  
      conf.CHECK_CODE('''
                  struct ucred cred;
-@@ -698,9 +689,6 @@ def configure(conf):
+@@ -808,9 +799,6 @@ def configure(conf):
  
      # look for a method of finding the list of network interfaces
      for method in ['HAVE_IFACE_GETIFADDRS', 'HAVE_IFACE_AIX', 'HAVE_IFACE_IFCONF', 'HAVE_IFACE_IFREQ']:
@@ -39,8 +39,8 @@
          if conf.CHECK_CODE('''
                             #define %s 1
                             #define NO_CONFIG_H 1
-@@ -713,7 +701,7 @@ def configure(conf):
-                            #include "test/getifaddrs.c"
+@@ -823,7 +811,7 @@ def configure(conf):
+                            #include "tests/getifaddrs.c"
                             ''' % method,
                             method,
 -                           lib='nsl socket' + bsd_for_strlcpy,
@@ -48,11 +48,11 @@
                             addmain=False,
                             execute=True):
              break
-@@ -761,7 +749,6 @@ def build(bld):
+@@ -871,7 +859,6 @@ def build(bld):
                  break
  
      extra_libs = ''
 -    if bld.CONFIG_SET('HAVE_LIBBSD'): extra_libs += ' bsd'
+     if bld.CONFIG_SET('HAVE_LIBRT'): extra_libs += ' rt'
+     if bld.CONFIG_SET('REPLACE_REQUIRES_LIBSOCKET_LIBNSL'): extra_libs += ' socket nsl'
  
-     bld.SAMBA_SUBSYSTEM('LIBREPLACE_HOSTCC',
-         REPLACE_HOSTCC_SOURCE,
