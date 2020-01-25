@@ -98,7 +98,8 @@ MAKE_FLAGS := \
 	GITWEB_JS="/gitweb/gitweb.js" \
 	GITWEB_CSS="/gitweb/gitweb.css" \
 	GITWEB_LOGO="/gitweb/gitweb-logo.png" \
-	GITWEB_FAVICON="/gitweb/gitweb-favicon.png"
+	GITWEB_FAVICON="/gitweb/gitweb-favicon.png" \
+	uname_S="Linux" \
 
 CONFIGURE_ARGS += \
 	--without-iconv \
