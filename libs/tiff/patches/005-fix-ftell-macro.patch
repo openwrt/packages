@@ -1,6 +1,6 @@
 --- a/libtiff/tiffiop.h
 +++ b/libtiff/tiffiop.h
-@@ -286,7 +286,7 @@ struct tiff {
+@@ -302,7 +302,7 @@ struct tiff {
  */
  #if defined(HAVE_FSEEKO)
  #  define fseek(stream,offset,whence)  fseeko(stream,offset,whence)
