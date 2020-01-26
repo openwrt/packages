@@ -5,6 +5,8 @@
 export START=80
 export USE_PROCD=1
 
+dnsmasqConfig=''
+
 PROG=/usr/sbin/https-dns-proxy
 
 xappend() { param="$param $1"; }
@@ -42,7 +44,7 @@ append_match() {
 }
 
 start_instance() {
-	local cfg="$1" param listen_addr listen_port
+	local cfg="$1" param listen_addr listen_port i
 
 	append_parm "$cfg" 'listen_addr' '-a' '127.0.0.1'
 	append_parm "$cfg" 'listen_port' '-p' "$p"
@@ -67,9 +69,14 @@ start_instance() {
 
 	config_get listen_addr "$cfg" 'listen_addr' '127.0.0.1'
 	config_get listen_port "$cfg" 'listen_port' "$p"
-	config_load 'dhcp'
-# shellcheck disable=SC2154
-	config_foreach dnsmasq_add_doh_server 'dnsmasq' "${listen_addr}#${listen_port}"
+	if [ "$dnsmasqConfig" = "*" ]; then
+		config_load 'dhcp'
+		config_foreach dnsmasq_add_doh_server 'dnsmasq' "${listen_addr}#${listen_port}"
+	elif [ -n "$dnsmasqConfig" ]; then
+		for i in $dnsmasqConfig; do
+			dnsmasq_add_doh_server "@dnsmasq[${i}]" "${listen_addr}#${listen_port}"
+		done
+	fi
 	p="$((p+1))"
 }
 
@@ -79,12 +86,11 @@ service_triggers() {
 
 start_service() {
 	local p=5053
+	config_load 'https-dns-proxy'
+	config_get dnsmasqConfig	'config' 'update_dnsmasq_config' '*'
 	dhcp_backup 'create'
 	config_load 'https-dns-proxy'
 	config_foreach start_instance 'https-dns-proxy'
-	if [ -z "$(uci -q get dhcp.@dnsmasq[0].server)" ]; then
-		dhcp_backup 'restore'
-	fi
 	if [ -n "$(uci -q changes dhcp)" ]; then
 		uci -q commit dhcp
 		[ -x /etc/init.d/dnsmasq ] && /etc/init.d/dnsmasq restart >/dev/null 2>&1
@@ -92,6 +98,8 @@ start_service() {
 }
 
 stop_service() {
+	config_load 'https-dns-proxy'
+	config_get dnsmasqConfig	'config' 'update_dnsmasq_config' '*'
 	dhcp_backup 'restore'
 	if [ -n "$(uci -q changes dhcp)" ]; then
 		uci -q commit dhcp
@@ -105,35 +113,49 @@ service_triggers() {
 
 dnsmasq_add_doh_server() {
 	local cfg="$1" value="$2"
+	uci -q del_list dhcp."$cfg".server="$value"
 	uci -q add_list dhcp."$cfg".server="$value"
 }
 
 dnsmasq_create_server_backup() {
-	local cfg="$1" i
-	if ! uci -q get "dhcp.$cfg.doh_backup_server" >/dev/null; then
-		for i in $(uci -q get "dhcp.$cfg.server"); do
-			uci -q add_list dhcp."$cfg".doh_backup_server="$i"
-		done
-	fi
-	uci -q del "dhcp.$cfg.server"
+	local cfg="$1"
+	local i
+	uci -q get "dhcp.$cfg.doh_backup_server" >/dev/null && return 0
+	for i in $(uci -q get "dhcp.$cfg.server"); do
+		uci -q add_list dhcp."$cfg".doh_backup_server="$i"
+		if [ "$i" = "${i//127.0.0.1}" ] && [ "$i" = "$(echo "$i" | tr -d /)" ]; then
+			uci -q del_list dhcp."$cfg".server="$i"
+		fi
+	done
 }
 
 dnsmasq_restore_server_backup() {
-	local cfg="$1" i
+	local cfg="$1"
+	local i
 	if uci -q get "dhcp.$cfg.doh_backup_server" >/dev/null; then
 		uci -q del "dhcp.$cfg.server"
 		for i in $(uci -q get "dhcp.$cfg.doh_backup_server"); do
 			uci -q add_list dhcp."$cfg".server="$i"
 		done
+	uci -q del "dhcp.$cfg.doh_backup_server"
 	fi
 }
 
 dhcp_backup() {
+	local i
 	config_load 'dhcp'
 	case "$1" in
 		create)
-			config_foreach dnsmasq_create_server_backup 'dnsmasq';;
+			if [ "$dnsmasqConfig" = "*" ]; then
+				config_foreach dnsmasq_create_server_backup 'dnsmasq'
+			elif [ -n "$dnsmasqConfig" ]; then
+				for i in $dnsmasqConfig; do
+					dnsmasq_create_server_backup "@dnsmasq[${i}]"
+				done
+			fi
+			;;
 		restore)
-			config_foreach dnsmasq_restore_server_backup 'dnsmasq';;
+			config_foreach dnsmasq_restore_server_backup 'dnsmasq'
+			;;
 	esac
 }
