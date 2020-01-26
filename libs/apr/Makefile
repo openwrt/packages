@@ -18,6 +18,9 @@ PKG_HASH:=a67ca9fcf9c4ff59bce7f428a323c8b5e18667fdea7b0ebad47d194371b0a105
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>, \
 		Sebastian Kemper <sebastian_ml@gmx.net>
 PKG_LICENSE:=Apache-2.0
+PKG_LICENSE_FILES:=LICENSE
+
+PKG_CPE_ID:=cpe:/a:apache:apr
 
 PKG_BUILD_PARALLEL:=1
 
