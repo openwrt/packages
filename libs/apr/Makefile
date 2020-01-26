@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apr
 PKG_VERSION:=1.6.5
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/apr/
@@ -17,6 +17,7 @@ PKG_HASH:=a67ca9fcf9c4ff59bce7f428a323c8b5e18667fdea7b0ebad47d194371b0a105
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>, \
 		Sebastian Kemper <sebastian_ml@gmx.net>
+
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -44,8 +45,11 @@ CONFIGURE_ARGS += \
 
 # XXX: ac_cv_sizeof_struct_iovec=1 is just to trick configure
 CONFIGURE_VARS += \
+	ac_cv_file__dev_zero=yes \
 	ac_cv_func_pthread_mutexattr_setpshared=yes \
 	ac_cv_func_sem_open=yes \
+	ac_cv_func_setpgrp_void=yes \
+	ac_cv_o_nonblock_inherited=no \
 	ac_cv_sizeof_struct_iovec=1 \
 	ac_cv_struct_rlimit=yes \
 	apr_cv_accept4=yes \
@@ -56,7 +60,8 @@ CONFIGURE_VARS += \
 	apr_cv_mutex_robust_shared=yes \
 	apr_cv_process_shared_works=yes \
 	apr_cv_sock_cloexec=yes \
-	apr_cv_tcp_nodelay_with_cork=yes
+	apr_cv_tcp_nodelay_with_cork=yes \
+	apr_cv_use_lfs64=yes
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/include/apr-1 \
