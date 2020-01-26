@@ -28,18 +28,18 @@ smb_header()
 	hostname="$(cat /proc/sys/kernel/hostname)"
 
 	config_get workgroup		$1 workgroup	"WORKGROUP"
-	config_get description		$1 description	"SMBD on OpenWrt"
+	config_get description		$1 description	"Ksmbd on OpenWrt"
 
 	sed -e "s#|NAME|#$hostname#g" \
 	    -e "s#|WORKGROUP|#$workgroup#g" \
 	    -e "s#|DESCRIPTION|#$description#g" \
 	    -e "s#|INTERFACES|#$interfaces#g" \
-	    /etc/smbd/smb.conf.template > /var/etc/smbd/smb.conf
+	    /etc/ksmbd/smb.conf.template > /var/etc/ksmbd/smb.conf
 
-	[ -e /etc/smbd/smb.conf ] || ln -nsf /var/etc/smbd/smb.conf /etc/smbd/smb.conf
+	[ -e /etc/ksmbd/smb.conf ] || ln -nsf /var/etc/ksmbd/smb.conf /etc/ksmbd/smb.conf
 
-	if [ ! -L /etc/smbd/smb.conf ]; then
-		logger -p daemon.warn -t 'smbd' "Local custom /etc/smbd/smb.conf file detected, all UCI/Luci config settings are ignored!"
+	if [ ! -L /etc/ksmbd/smb.conf ]; then
+		logger -p daemon.warn -t 'ksmbd' "Local custom /etc/ksmbd/smb.conf file detected, all UCI/Luci config settings are ignored!"
 	fi
 }
 
@@ -113,26 +113,23 @@ smb_add_share()
 
 		[ -n "$hide_dot_files" ] && printf "\thide dot files = %s\n" "$hide_dot_files"
 		[ -n "$veto_files" ] && printf "\tveto files = %s\n" "$veto_files"
-	} >> /var/etc/smbd/smb.conf
+	} >> /var/etc/ksmbd/smb.conf
 }
 
 init_config()
 {
-	mkdir -p /var/etc/smbd
+	mkdir -p /var/etc/ksmbd
 
-	config_load smbd
-	# allow copy&paste from samba UCI configs (we dont have a smbd wiki yet)
+	config_load ksmbd
 	config_foreach smb_header globals
-	config_foreach smb_header samba
 	config_foreach smb_add_share share
-	config_foreach smb_add_share sambashare
 }
 
 service_triggers()
 {
 	# PROCD_RELOAD_DELAY=1000
 
-	procd_add_reload_trigger "dhcp" "system" "smbd"
+	procd_add_reload_trigger "dhcp" "system" "ksmbd"
 
 	local i
 	for i in $SMBD_IFACE; do
@@ -142,10 +139,10 @@ service_triggers()
 
 kill_server()
 {
-	if [ -e /sys/module/smbd ]; then
-		if [ -e /sys/class/smbd-control/kill_server ]; then
-			logger -p daemon.info -t 'smbd' "triggering kill_server"
-			echo hard > /sys/class/smbd-control/kill_server
+	if [ -e /sys/module/ksmbd ]; then
+		if [ -e /sys/class/ksmbd-control/kill_server ]; then
+			logger -p daemon.info -t 'ksmbd' "triggering kill_server"
+			echo hard > /sys/class/ksmbd-control/kill_server
 		fi
 	fi
 }
@@ -154,44 +151,44 @@ start_service()
 {
 	init_config
 
-	if [ ! -e /etc/smbd/smb.conf ]; then
-		logger -p daemon.error -t 'smbd' "missing config /etc/smbd/smb.conf!"
+	if [ ! -e /etc/ksmbd/smb.conf ]; then
+		logger -p daemon.error -t 'ksmbd' "missing config /etc/ksmbd/smb.conf!"
 		exit 1
 	fi
 	
 	# NOTE: We don't do a soft-reload via signal, since [global] smb.conf setting changes will be ignored, so always reset hard.
 	kill_server
 	
-	[ ! -e /sys/module/smbd ] && modprobe smbd 2> /dev/null
-	if [ ! -e /sys/module/smbd ]; then
-		logger -p daemon.error -t 'smbd' "modprobe of smbd module failed, can\'t start smbd!"
+	[ ! -e /sys/module/ksmbd ] && modprobe ksmbd 2> /dev/null
+	if [ ! -e /sys/module/ksmbd ]; then
+		logger -p daemon.error -t 'ksmbd' "modprobe of ksmbd module failed, can\'t start ksmbd!"
 		exit 1
 	fi
 
-	logger -p daemon.notice -t 'smbd' "Starting SMBD userspace service."
+	logger -p daemon.notice -t 'ksmbd' "Starting Ksmbd userspace service."
 	procd_open_instance
 	procd_add_mdns "smb" "tcp" "445"
 	procd_set_param command /usr/sbin/usmbd --n
-	procd_set_param file /etc/smbd/smb.conf
+	procd_set_param file /etc/ksmbd/smb.conf
 	procd_set_param limits nofile=16384
 	procd_close_instance
 }
 
 stop_service()
 {
-	logger -p daemon.notice -t 'smbd' "Stopping SMBD userspace service."
+	logger -p daemon.notice -t 'ksmbd' "Stopping Ksmbd userspace service."
 	killall usmbd > /dev/null 2>&1
 	
-	[ -e /sys/module/smbd ] && rmmod smbd > /dev/null 2>&1
+	[ -e /sys/module/ksmbd ] && rmmod ksmbd > /dev/null 2>&1
 	# kill server if we cant rmmod
-	[ -e /sys/module/smbd ] && kill_server
+	[ -e /sys/module/ksmbd ] && kill_server
 	# next try
-	[ -e /sys/module/smbd ] && rmmod smbd > /dev/null 2>&1
+	[ -e /sys/module/ksmbd ] && rmmod ksmbd > /dev/null 2>&1
 	
-	if [ -e /sys/module/smbd ]; then
-		logger -p daemon.error -t 'smbd' "module still loaded after kill_server?"
+	if [ -e /sys/module/ksmbd ]; then
+		logger -p daemon.error -t 'ksmbd' "module still loaded after kill_server?"
 	fi
-	[ -f /tmp/smbd.lock ] && rm /tmp/smbd.lock
+	[ -f /tmp/usmbd.lock ] && rm /tmp/usmbd.lock
 }
 
 # reload_service() {
