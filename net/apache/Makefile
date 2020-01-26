@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apache
 PKG_VERSION:=2.4.41
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_SOURCE_NAME:=httpd
 
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.bz2
@@ -297,6 +297,8 @@ define Package/apache/install
 	$(INSTALL_DIR) $(1)/etc/apache2/extra
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/apache2/extra/* \
 					$(1)/etc/apache2/extra
+	$(SED) '/^LoadModule session_crypto_module/s/^/#/' \
+		$(PKG_INSTALL_DIR)/etc/apache2/apache2.conf
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/etc/apache2/{apache2.conf,magic,mime.types} \
 								$(1)/etc/apache2
