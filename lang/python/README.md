@@ -12,13 +12,11 @@
 5. [Build considerations](#build-considerations)
 6. [General folder structure](#general-folder-structure)
 7. [Building a Python[3] package](#building-a-python3-package)
-    1. [PKG_BUILD_DIR](#pkg_build_dir)
-    2. [PKG_UNPACK](#pkg_unpack)
-    3. [Include python[3]-package.mk](#include-python3-packagemk)
-    4. [Add Package/<PKG_NAME> OpenWrt definitions](#add-packagepkg_name-openwrt-definitions)
-    5. [Wrapping things up so that they build](#wrapping-things-up-so-that-they-build)
-    6. [Customizing things](#customizing-things)
-    7. [Host-side Python packages for build](#host-side-python-packages-for-build)
+    1. [Include python[3]-package.mk](#include-python3-packagemk)
+    2. [Add Package/<PKG_NAME> OpenWrt definitions](#add-packagepkg_name-openwrt-definitions)
+    3. [Wrapping things up so that they build](#wrapping-things-up-so-that-they-build)
+    4. [Customizing things](#customizing-things)
+    5. [Host-side Python packages for build](#host-side-python-packages-for-build)
 
 ## Description
 
