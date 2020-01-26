@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apr
 PKG_VERSION:=1.6.5
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/apr/
@@ -17,7 +17,11 @@ PKG_HASH:=a67ca9fcf9c4ff59bce7f428a323c8b5e18667fdea7b0ebad47d194371b0a105
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>, \
 		Sebastian Kemper <sebastian_ml@gmx.net>
+
 PKG_LICENSE:=Apache-2.0
+PKG_LICENSE_FILES:=LICENSE
+
+PKG_CPE_ID:=cpe:/a:apache:apr
 
 PKG_BUILD_PARALLEL:=1
 
@@ -41,44 +45,45 @@ CONFIGURE_ARGS += \
 
 # XXX: ac_cv_sizeof_struct_iovec=1 is just to trick configure
 CONFIGURE_VARS += \
+	ac_cv_file__dev_zero=yes \
+	ac_cv_func_pthread_mutexattr_setpshared=yes \
+	ac_cv_func_sem_open=yes \
+	ac_cv_func_setpgrp_void=yes \
+	ac_cv_o_nonblock_inherited=no \
 	ac_cv_sizeof_struct_iovec=1 \
 	ac_cv_struct_rlimit=yes \
-	ac_cv_func_sem_open=yes \
-	ac_cv_func_pthread_mutexattr_setpshared=yes \
-	apr_cv_mutex_robust_shared=yes \
-	apr_cv_tcp_nodelay_with_cork=yes \
-	apr_cv_sock_cloexec=yes \
-	apr_cv_process_shared_works=yes \
-	apr_cv_mutex_recursive=yes \
-	apr_cv_epoll_create1=yes \
-	apr_cv_epoll=yes \
+	apr_cv_accept4=yes \
 	apr_cv_dup3=yes \
-	apr_cv_accept4=yes
+	apr_cv_epoll=yes \
+	apr_cv_epoll_create1=yes \
+	apr_cv_mutex_recursive=yes \
+	apr_cv_mutex_robust_shared=yes \
+	apr_cv_process_shared_works=yes \
+	apr_cv_sock_cloexec=yes \
+	apr_cv_tcp_nodelay_with_cork=yes \
+	apr_cv_use_lfs64=yes
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/include/apr-1 $(1)/usr/lib $(1)/usr/lib/pkgconfig $(1)/usr/share/build-1
-	$(CP)   $(PKG_INSTALL_DIR)/usr/bin/apr-1-config \
-		$(1)/usr/bin/
-	$(CP)   $(PKG_INSTALL_DIR)/usr/include/apr-1/* \
-		$(1)/usr/include/apr-1/
-	$(CP)   $(PKG_INSTALL_DIR)/usr/lib/libapr-1.{la,a,so*} \
-		$(1)/usr/lib/
-	$(CP)   $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/apr-1.pc \
-		$(1)/usr/lib/pkgconfig/
-	$(CP)   $(PKG_INSTALL_DIR)/usr/share/build-1/* \
-		$(1)/usr/share/build-1/
-	$(SED) 's,^datadir=\"/usr/share\",datadir=\"$(STAGING_DIR)/usr/share\",g' $(1)/usr/bin/apr-1-config
-	$(SED) 's,^installbuilddir=\"/usr/share/build-1\",installbuilddir=\"$(STAGING_DIR)/usr/share/build-1\",g' $(1)/usr/bin/apr-1-config
-	$(SED) 's,^libdir=\"$$$${exec_prefix}/lib,libdir=\"$(STAGING_DIR)/usr/lib,g' $(1)/usr/bin/apr-1-config
-	$(SED) 's,^includedir=\"$$$${prefix}/include/,includedir=\"$(STAGING_DIR)/usr/include/,g' $(1)/usr/bin/apr-1-config
-	$(SED) 's,-L$$$$libdir,,g' $(1)/usr/bin/apr-1-config
-	$(SED) 's,-R$$$$libdir,,g' $(1)/usr/bin/apr-1-config
-	$(SED) 's,/usr/share/build-1,$(STAGING_DIR)/usr/share/build-1,g' $(1)/usr/share/build-1/apr_rules.mk
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/include/apr-1 \
+		$(1)/usr/lib/pkgconfig $(1)/usr/share/build-1
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/apr-1-config \
+						$(1)/usr/bin
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/apr-1/* \
+					$(1)/usr/include/apr-1
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libapr-1.{la,a,so*} $(1)/usr/lib
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/apr-1.pc \
+						$(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/build-1/* $(1)/usr/share/build-1
+	$(SED) '/^prefix=\|^exec_prefix=/s|/usr|$(STAGING_DIR)/usr|' \
+					$(1)/usr/bin/apr-1-config
+	$(SED) '/^datadir=/s|/usr|$$$${prefix}|' $(1)/usr/bin/apr-1-config
+	$(SED) 's,/usr/share/build-1,$(STAGING_DIR)/usr/share/build-1,g' \
+				$(1)/usr/share/build-1/apr_rules.mk
 endef
 
 define Package/libapr/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libapr-1.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libapr-1.so.* $(1)/usr/lib
 endef
 
 $(eval $(call BuildPackage,libapr))

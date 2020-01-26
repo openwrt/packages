@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apache
 PKG_VERSION:=2.4.41
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_SOURCE_NAME:=httpd
 
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.bz2
@@ -78,7 +78,7 @@ This package contains the Apache web server and utility programs.
 endef
 
 define Package/apache/conffiles
-/etc/apache2/httpd.conf
+/etc/apache2/apache2.conf
 /etc/apache2/extra/httpd-autoindex.conf
 /etc/apache2/extra/httpd-dav.conf
 /etc/apache2/extra/httpd-default.conf
@@ -93,7 +93,7 @@ define Package/apache/conffiles
 /etc/apache2/extra/proxy-html.conf
 /etc/apache2/magic
 /etc/apache2/mime.types
-/etc/init.d/apache
+/etc/init.d/apache2
 endef
 
 define Package/apache-ab
@@ -198,6 +198,7 @@ CONFIGURE_ARGS+= \
 	--with-apr="$(STAGING_DIR)/usr/bin/apr-1-config" \
 	--with-mpm=prefork \
 	--with-pcre="$(STAGING_DIR)/usr/bin/pcre-config" \
+	--with-program-name=apache2 \
 	--with-ssl
 
 ifneq ($(CONFIG_PACKAGE_apache-mod-deflate),)
@@ -296,11 +297,13 @@ define Package/apache/install
 	$(INSTALL_DIR) $(1)/etc/apache2/extra
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/apache2/extra/* \
 					$(1)/etc/apache2/extra
+	$(SED) '/^LoadModule session_crypto_module/s/^/#/' \
+		$(PKG_INSTALL_DIR)/etc/apache2/apache2.conf
 	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/etc/apache2/{httpd.conf,magic,mime.types} \
-							$(1)/etc/apache2
+		$(PKG_INSTALL_DIR)/etc/apache2/{apache2.conf,magic,mime.types} \
+								$(1)/etc/apache2
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/apache.init $(1)/etc/init.d/apache
+	$(INSTALL_BIN) ./files/apache2.init $(1)/etc/init.d/apache2
 	$(INSTALL_DIR) $(1)/usr/lib/apache2
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/apache2/*.so \
 					$(1)/usr/lib/apache2
@@ -316,7 +319,7 @@ define Package/apache/install
 	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/bin/{dbmmanage,htdbm,htdigest,htpasswd,httxt2dbm,logresolve} \
 											$(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/{apachectl,httpd} \
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/{apachectl,apache2} \
 							$(1)/usr/sbin
 endef
 
