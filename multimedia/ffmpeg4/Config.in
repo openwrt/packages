@@ -17,7 +17,9 @@ config ffmpeg4_LICENSING
 	Following changes it to version 3:
 	Support for mbed TLS
 
-	Following makes it non distributable:
+	Following makes it non distributable and requires
+	"Compile with support for patented functionality"
+	to be set.
 	Support for FDK-AAC and OpenSSL
 
 	More information here:
@@ -45,7 +47,7 @@ config ffmpeg4_FEAT_DASH
 
 config ffmpeg4_LIB_FDK-AAC
   bool "Enable FDK-AAC (AAC encoding) support"
-  default y if !mips && !mips64
+  default n
 
 config ffmpeg4_LIB_LAME
   bool "Enable LAME (MP3 encoding) support"
@@ -69,7 +71,7 @@ config ffmpeg4_LIB_LIBOPUS
 
 config ffmpeg4_LIB_LIBX264
   bool "Enable x264 (h264 encoding) support"
-  default y if arm || aarch64
+  default n
 
 config ffmpeg4_OPT_PERFORMANCE
   bool "Optimize for performance"
