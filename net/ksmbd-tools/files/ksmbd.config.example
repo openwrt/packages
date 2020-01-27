@@ -1,5 +1,5 @@
 config globals
-	option 'description'	'SMBD on OpenWrt'
+	option 'description'	'Ksmbd on OpenWrt'
 
 config share
 	option name 'testshare'
