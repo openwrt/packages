@@ -9,12 +9,12 @@ NB_PARM=""
 WG_PARM=""
 BI_PARM=""
 
-. /lib/functions/network.sh
-
 start_service() {
 
-	if [ -e /etc/smbd/smb.conf ] && [ -e /etc/init.d/smbd ] && /etc/init.d/smbd running; then
-		SMB_CONF="/etc/smbd/smb.conf"
+	. /lib/functions/network.sh
+
+	if [ -e /etc/ksmbd/smb.conf ] && [ -e /etc/init.d/ksmbd ] && /etc/init.d/ksmbd running; then
+		SMB_CONF="/etc/ksmbd/smb.conf"
 	fi
 
 	if [ -e /etc/samba/smb.conf ]; then
@@ -26,7 +26,7 @@ start_service() {
 	fi
 	
 	if [ -z "$SMB_CONF" ]; then
-		logger -p daemon.error -t 'wsdd2' "samba36/4 or smbd is not running, can't start wsdd2!"
+		logger -p daemon.error -t 'wsdd2' "samba36/4 or ksmbd is not running, can't start wsdd2!"
 		exit 1
 	fi
 	
