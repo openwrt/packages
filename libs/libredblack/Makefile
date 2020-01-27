@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libredblack
 PKG_VERSION:=1.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/libredblack
@@ -39,6 +39,7 @@ endef
 
 CONFIGURE_ARGS += --without-rbgen
 CONFIGURE_VARS += lt_cv_prog_cc_pic=$(FPIC)
+MAKE_FLAGS += CFLAGS="$(TARGET_CFLAGS)"
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib
