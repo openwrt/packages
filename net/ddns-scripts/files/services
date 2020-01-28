@@ -57,7 +57,7 @@
 "ddns.com.br"		"http://[DOMAIN]:[PASSWORD]@members.ddns.com.br/nic/update?hostname=[DOMAIN]&myip=[IP]"
 
 # "ddnss.de"		"http://[USERNAME]:[PASSWORD]@ip4.ddnss.de/upd.php?host=[DOMAIN]&ip=[IP]"	"good|nochg"
-"ddnss.de"		"http://ip4.ddnss.de/upd.php?user=[USERNAME]&pwd=[PASSWORD]&host=[DOMAIN]&ip=[IP]"	"good|nochg"
+"ddnss.de"		"http://ip4.ddnss.de/upd.php?user=[USERNAME]&pwd=[PASSWORD]&host=[DOMAIN]&ip=[IP]"	"Updated|No change"
 
 "ddo.jp"		"http://free.ddo.jp/dnsupdate.php?dn=[DOMAIN]&pw=[PASSWORD]&ip=[IP]"
 
