@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2019-2020 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-sqlalchemy
-PKG_VERSION:=1.3.12
+PKG_VERSION:=1.3.13
 PKG_RELEASE:=1
 
 PYPI_NAME:=SQLAlchemy
-PKG_HASH:=bfb8f464a5000b567ac1d350b9090cf081180ec1ab4aa87e7bca12dab25320ec
+PKG_HASH:=64a7b71846db6423807e96820993fa12a03b89127d278290ca25c0b11ed7b4fb
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT
