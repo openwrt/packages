@@ -4,13 +4,13 @@
 START=60
 USE_PROCD=1
 
-. /lib/functions/network.sh
-
 _log() {
 	logger -p daemon.info -t prometheus-node-exporter-lua "$@"
 }
 
 start_service() {
+	. /lib/functions/network.sh
+
 	local interface ipv6 port bind
 
 	config_load prometheus-node-exporter-lua.main
