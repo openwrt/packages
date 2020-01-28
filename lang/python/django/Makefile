@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django
 PKG_VERSION:=3.0.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=Django
 PKG_HASH:=8c3575f81e11390893860d97e1e0154c47512f180ea55bd84ce8fa69ba8051ca
@@ -34,7 +34,7 @@ endef
 
 define Package/python3-django
 $(call Package/django/Default)
-  DEPENDS:= +python3 +python3-pytz +python3-sqlparse
+  DEPENDS:= +python3 +python3-pytz +python3-sqlparse +python3-asgiref
   VARIANT:=python3
 endef
 
