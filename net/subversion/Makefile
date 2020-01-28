@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=subversion
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_VERSION:=1.13.0
 PKG_SOURCE_URL:=@APACHE/subversion
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -78,10 +78,6 @@ endef
 define Package/subversion-server/conffiles
 /etc/config/subversion
 endef
-
-TARGET_CFLAGS += $(FPIC)
-APU_LIBS=$(shell $(STAGING_DIR)/usr/bin/apu-1-config --link-libtool --libs)
-TARGET_LDFLAGS += $(APU_LIBS)
 
 CONFIGURE_ARGS += \
 	--with-apr="$(STAGING_DIR)/usr/bin/apr-1-config" \
