@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016-2019 eGloo, Incorporated
+# Copyright (C) 2016-2020 eGloo, Incorporated
 #
 # This is free software, licensed under the GNU General Public License v2.
 
@@ -16,10 +16,10 @@ PKG_INSTALL:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.com/netify.ai/public/netify-agent.git
-PKG_SOURCE_DATE:=2019-12-07
-PKG_SOURCE_VERSION:=v2.98
-#PKG_SOURCE_VERSION:=a204805151bc5c35ad09e21913dac25deed13f95
-PKG_MIRROR_HASH:=d235df7f77380e188db75fb885491bf46b2a7a3454f7bf2c85269aeff8f92220
+PKG_SOURCE_DATE:=2020-01-28
+PKG_SOURCE_VERSION:=v2.99
+#PKG_SOURCE_VERSION:=39e4fa272d8a4c83391e1b7d34cd8e071caef317
+PKG_MIRROR_HASH:=86106fc526ffcb3631ee306504874491646e7b2baa273b8e7ea8c411f83ac99d
 
 include $(INCLUDE_DIR)/package.mk
 
