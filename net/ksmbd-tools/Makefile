@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ksmbd-tools
 PKG_VERSION:=3.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/cifsd-team/$(PKG_NAME)/archive/$(PKG_VERSION)/
@@ -73,6 +73,19 @@ define Package/ksmbd-utils/config
 		default n
 endef
 
+define Package/ksmbd-avahi-service
+  $(call Package/ksmbd-tools/Default)
+  TITLE+= (Avahi service)
+  DEPENDS+=+avahi-daemon
+endef
+
+define Package/ksmbd-avahi-service/description
+  installs: smb.service
+
+  This package contains the service definition for announcing the
+  Ksmbd (smb/445) Daemon service via mDNS/DNS-SD.
+endef
+
 CONFIGURE_ARGS += \
 	--disable-shared \
 	--enable-static
@@ -102,6 +115,11 @@ ifeq ($(CONFIG_KSMBD_UTILS_SHAREADD),y)
 endif
 endef
 
+define Package/ksmbd-avahi-service/install
+	$(INSTALL_DIR) $(1)/etc/avahi/services
+	$(INSTALL_DATA) ./files/smb.service $(1)/etc/avahi/services/
+endef
+
 define Package/ksmbd-server/conffiles
 /etc/config/ksmbd
 /etc/ksmbd/smb.conf.template
@@ -109,5 +127,10 @@ define Package/ksmbd-server/conffiles
 /etc/ksmbd/ksmbdpwd.db
 endef
 
+define Package/ksmbd-avahi-service/conffiles
+/etc/avahi/services/smb.service
+endef
+
 $(eval $(call BuildPackage,ksmbd-server))
 $(eval $(call BuildPackage,ksmbd-utils))
+$(eval $(call BuildPackage,ksmbd-avahi-service))
