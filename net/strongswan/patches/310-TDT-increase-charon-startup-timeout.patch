@@ -1,0 +1,11 @@
+--- a/src/starter/invokecharon.c
++++ b/src/starter/invokecharon.c
+@@ -213,7 +213,7 @@ int starter_start_charon (starter_config
+ 					return 0;
+ 				}
+ 			}
+-			for (i = 0; i < 500 && _charon_pid; i++)
++			for (i = 0; i < 1500 && _charon_pid; i++)
+ 			{
+ 				/* wait for charon for a maximum of 500 x 20 ms = 10 s */
+ 				usleep(20000);
