@@ -1,6 +1,6 @@
 --- a/radsecproxy.c
 +++ b/radsecproxy.c
-@@ -3385,15 +3385,13 @@ int radsecproxy_main(int argc, char **ar
+@@ -3005,15 +3005,13 @@ int radsecproxy_main(int argc, char **argv) {
  	options.loglevel = loglevel;
      else if (options.loglevel)
  	debug_set_level(options.loglevel);
