@@ -1,0 +1,21 @@
+# [1] For this option, refer also to mstpctl.
+# Also, mstpctl does the validation for this option.
+# These option types show up as set<option> commands in mstpctl.
+
+#config bridge 'switch0'
+#	option index		0	# all ports attached to this switch must reference this index
+#	option name		'switch0'	# name is currently just informative; not used in mstpd
+#	option enable		0	# this will add/remove the bridge to mstpd
+#	option treeprio		7	# STP bridge priority (0-15) [1]
+#	option maxage		6	# Bridge max age (6-40) [1]
+#	option fdelay		4	# Bridge Forward Delay (4-30) [1]
+#	option maxhops		6	# Bridge Max Hops (6-40) [1]
+#	option hello		1	# Bridge Hello Time (1-10) [1]
+#	option ageing		10	# Bridge Aging Time (10-1000000) [1]
+#	option forcevers	'rstp'	# Force STP protocol version ('stp', 'rstp', 'mstp'). Default is 'rstp' [1]
+#	option txholdcount	1	# Bridge Tx Hold Count (1-10) [1]
+
+#config bridge_port 'switch0_port0'
+#	option br_index		0	# must point to a valid bridge index; see 'index' option in bridge section
+#	option port_name	'some_port_name'	# name is currently just informative; not used in mstpd
+#	option bpduguard	1	# Bridge Port - Enable BPDU guard [1]

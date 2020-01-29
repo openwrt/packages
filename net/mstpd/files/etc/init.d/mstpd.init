@@ -90,7 +90,7 @@ start_service() {
 
 	# reload config on respawn
 	procd_open_trigger
-	procd_add_raw_trigger "instance.start" 2000 "/etc/init.d/mstpd" "reload"
+	procd_add_raw_trigger "instance.update" 2000 "/etc/init.d/mstpd" "reload"
 	procd_close_trigger
 
 	procd_close_instance
@@ -102,7 +102,6 @@ service_running() {
 
 reload_service() {
 	if ! running ; then
-		start
 		return
 	fi
 
