@@ -126,6 +126,13 @@ endef
 $$(eval $$(call BuildPackage,libaprutil-$(subst _,-,$(1))))
 endef
 
+# PKG_CONFIG_DEPENDS trigger configure, but the compile afterward may be
+# incomplete if the build directory is not cleaned before. This is not a
+# general observation, yet it is valid for apr-util :/
+define Build/Compile
+	$(call Build/Compile/Default,clean all)
+endef
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/include/apr-1 \
 				$(1)/usr/lib/pkgconfig
