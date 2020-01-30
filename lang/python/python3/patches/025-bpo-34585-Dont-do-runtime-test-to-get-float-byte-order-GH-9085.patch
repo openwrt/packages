@@ -1,0 +1,209 @@
+From 2a9c3805ddedf282881ef7811a561c70b74f80b1 Mon Sep 17 00:00:00 2001
+From: Ross Burton <ross@burtonini.com>
+Date: Wed, 19 Sep 2018 07:25:48 +0100
+Subject: [PATCH] closes bpo-34585: Don't do runtime test to get float byte
+ order. (GH-9085)
+
+Currently configure.ac uses AC_RUN_IFELSE to determine the byte order of doubles, but this silently fails under cross compilation and Python doesn't do floats properly.
+
+Instead, steal a macro from autoconf-archive which compiles code using magic doubles (which encode to ASCII) and grep for the representation in the binary.
+
+RFC because this doesn't yet handle the weird ancient ARMv4 OABI 'mixed-endian' encoding properly. This encoding is ancient and I don't believe the union of "Python 3.8 users" and "OABI users" has anything in. Should the support for this just be dropped too? Alternatively, someone will need to find an OABI toolchain to verify the encoding of the magic double.
+---
+ .../2018-09-18-16-28-31.bpo-34585.CGMu0h.rst  |  3 +
+ configure.ac                                  | 76 +++--------------
+ m4/ax_c_float_words_bigendian.m4              | 83 +++++++++++++++++++
+ 3 files changed, 99 insertions(+), 63 deletions(-)
+ create mode 100644 Misc/NEWS.d/next/Build/2018-09-18-16-28-31.bpo-34585.CGMu0h.rst
+ create mode 100644 m4/ax_c_float_words_bigendian.m4
+
+diff --git a/Misc/NEWS.d/next/Build/2018-09-18-16-28-31.bpo-34585.CGMu0h.rst b/Misc/NEWS.d/next/Build/2018-09-18-16-28-31.bpo-34585.CGMu0h.rst
+new file mode 100644
+index 0000000000000..01318e6e46a32
+--- /dev/null
++++ b/Misc/NEWS.d/next/Build/2018-09-18-16-28-31.bpo-34585.CGMu0h.rst
+@@ -0,0 +1,3 @@
++Check for floating-point byte order in configure.ac using compilation tests
++instead of executing code, so that these checks work in cross-compiled
++builds.
+diff --git a/configure.ac b/configure.ac
+index 03638f8ae9bc7..96331ec221be2 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -4206,74 +4206,24 @@ fi
+ # * Check for various properties of floating point *
+ # **************************************************
+ 
+-AC_MSG_CHECKING(whether C doubles are little-endian IEEE 754 binary64)
+-AC_CACHE_VAL(ac_cv_little_endian_double, [
+-AC_RUN_IFELSE([AC_LANG_SOURCE([[
+-#include <string.h>
+-int main() {
+-    double x = 9006104071832581.0;
+-    if (memcmp(&x, "\x05\x04\x03\x02\x01\xff\x3f\x43", 8) == 0)
+-        return 0;
+-    else
+-        return 1;
+-}
+-]])],
+-[ac_cv_little_endian_double=yes],
+-[ac_cv_little_endian_double=no],
+-[ac_cv_little_endian_double=no])])
+-AC_MSG_RESULT($ac_cv_little_endian_double)
+-if test "$ac_cv_little_endian_double" = yes
+-then
+-  AC_DEFINE(DOUBLE_IS_LITTLE_ENDIAN_IEEE754, 1,
+-  [Define if C doubles are 64-bit IEEE 754 binary format, stored
+-   with the least significant byte first])
+-fi
+-
+-AC_MSG_CHECKING(whether C doubles are big-endian IEEE 754 binary64)
+-AC_CACHE_VAL(ac_cv_big_endian_double, [
+-AC_RUN_IFELSE([AC_LANG_SOURCE([[
+-#include <string.h>
+-int main() {
+-    double x = 9006104071832581.0;
+-    if (memcmp(&x, "\x43\x3f\xff\x01\x02\x03\x04\x05", 8) == 0)
+-        return 0;
+-    else
+-        return 1;
+-}
+-]])],
+-[ac_cv_big_endian_double=yes],
+-[ac_cv_big_endian_double=no],
+-[ac_cv_big_endian_double=no])])
+-AC_MSG_RESULT($ac_cv_big_endian_double)
+-if test "$ac_cv_big_endian_double" = yes
++AX_C_FLOAT_WORDS_BIGENDIAN
++if test "$ax_cv_c_float_words_bigendian" = "yes"
+ then
+   AC_DEFINE(DOUBLE_IS_BIG_ENDIAN_IEEE754, 1,
+   [Define if C doubles are 64-bit IEEE 754 binary format, stored
+    with the most significant byte first])
+-fi
+-
+-# Some ARM platforms use a mixed-endian representation for doubles.
+-# While Python doesn't currently have full support for these platforms
+-# (see e.g., issue 1762561), we can at least make sure that float <-> string
+-# conversions work.
+-AC_MSG_CHECKING(whether C doubles are ARM mixed-endian IEEE 754 binary64)
+-AC_CACHE_VAL(ac_cv_mixed_endian_double, [
+-AC_RUN_IFELSE([AC_LANG_SOURCE([[
+-#include <string.h>
+-int main() {
+-    double x = 9006104071832581.0;
+-    if (memcmp(&x, "\x01\xff\x3f\x43\x05\x04\x03\x02", 8) == 0)
+-        return 0;
+-    else
+-        return 1;
+-}
+-]])],
+-[ac_cv_mixed_endian_double=yes],
+-[ac_cv_mixed_endian_double=no],
+-[ac_cv_mixed_endian_double=no])])
+-AC_MSG_RESULT($ac_cv_mixed_endian_double)
+-if test "$ac_cv_mixed_endian_double" = yes
++elif test "$ax_cv_c_float_words_bigendian" = "no"
+ then
++  AC_DEFINE(DOUBLE_IS_LITTLE_ENDIAN_IEEE754, 1,
++  [Define if C doubles are 64-bit IEEE 754 binary format, stored
++   with the least significant byte first])
++else
++  # Some ARM platforms use a mixed-endian representation for doubles.
++  # While Python doesn't currently have full support for these platforms
++  # (see e.g., issue 1762561), we can at least make sure that float <-> string
++  # conversions work.
++  # FLOAT_WORDS_BIGENDIAN doesnt actually detect this case, but if it's not big
++  # or little, then it must be this?
+   AC_DEFINE(DOUBLE_IS_ARM_MIXED_ENDIAN_IEEE754, 1,
+   [Define if C doubles are 64-bit IEEE 754 binary format, stored
+    in ARM mixed-endian order (byte order 45670123)])
+diff --git a/m4/ax_c_float_words_bigendian.m4 b/m4/ax_c_float_words_bigendian.m4
+new file mode 100644
+index 0000000000000..216b90d803187
+--- /dev/null
++++ b/m4/ax_c_float_words_bigendian.m4
+@@ -0,0 +1,83 @@
++# ===============================================================================
++#  https://www.gnu.org/software/autoconf-archive/ax_c_float_words_bigendian.html
++# ===============================================================================
++#
++# SYNOPSIS
++#
++#   AX_C_FLOAT_WORDS_BIGENDIAN([ACTION-IF-TRUE], [ACTION-IF-FALSE], [ACTION-IF-UNKNOWN])
++#
++# DESCRIPTION
++#
++#   Checks the ordering of words within a multi-word float. This check is
++#   necessary because on some systems (e.g. certain ARM systems), the float
++#   word ordering can be different from the byte ordering. In a multi-word
++#   float context, "big-endian" implies that the word containing the sign
++#   bit is found in the memory location with the lowest address. This
++#   implementation was inspired by the AC_C_BIGENDIAN macro in autoconf.
++#
++#   The endianness is detected by first compiling C code that contains a
++#   special double float value, then grepping the resulting object file for
++#   certain strings of ASCII values. The double is specially crafted to have
++#   a binary representation that corresponds with a simple string. In this
++#   implementation, the string "noonsees" was selected because the
++#   individual word values ("noon" and "sees") are palindromes, thus making
++#   this test byte-order agnostic. If grep finds the string "noonsees" in
++#   the object file, the target platform stores float words in big-endian
++#   order. If grep finds "seesnoon", float words are in little-endian order.
++#   If neither value is found, the user is instructed to specify the
++#   ordering.
++#
++# LICENSE
++#
++#   Copyright (c) 2008 Daniel Amelang <dan@amelang.net>
++#
++#   Copying and distribution of this file, with or without modification, are
++#   permitted in any medium without royalty provided the copyright notice
++#   and this notice are preserved. This file is offered as-is, without any
++#   warranty.
++
++#serial 11
++
++AC_DEFUN([AX_C_FLOAT_WORDS_BIGENDIAN],
++  [AC_CACHE_CHECK(whether float word ordering is bigendian,
++                  ax_cv_c_float_words_bigendian, [
++
++ax_cv_c_float_words_bigendian=unknown
++AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
++
++double d = 90904234967036810337470478905505011476211692735615632014797120844053488865816695273723469097858056257517020191247487429516932130503560650002327564517570778480236724525140520121371739201496540132640109977779420565776568942592.0;
++
++]])], [
++
++if grep noonsees conftest.$ac_objext >/dev/null ; then
++  ax_cv_c_float_words_bigendian=yes
++fi
++if grep seesnoon conftest.$ac_objext >/dev/null ; then
++  if test "$ax_cv_c_float_words_bigendian" = unknown; then
++    ax_cv_c_float_words_bigendian=no
++  else
++    ax_cv_c_float_words_bigendian=unknown
++  fi
++fi
++
++])])
++
++case $ax_cv_c_float_words_bigendian in
++  yes)
++    m4_default([$1],
++      [AC_DEFINE([FLOAT_WORDS_BIGENDIAN], 1,
++                 [Define to 1 if your system stores words within floats
++                  with the most significant word first])]) ;;
++  no)
++    $2 ;;
++  *)
++    m4_default([$3],
++      [AC_MSG_ERROR([
++
++Unknown float word ordering. You need to manually preset
++ax_cv_c_float_words_bigendian=no (or yes) according to your system.
++
++    ])]) ;;
++esac
++
++])# AX_C_FLOAT_WORDS_BIGENDIAN
