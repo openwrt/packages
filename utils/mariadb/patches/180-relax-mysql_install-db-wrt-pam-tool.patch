@@ -24,8 +24,8 @@
 +# we can revisit.
 +if test -n ""
  then
-   chown $user "$pamtooldir/auth_pam_tool_dir" && \
-   chmod 0700 "$pamtooldir/auth_pam_tool_dir"
+   if test -z "$srcdir" -a "$in_rpm" -eq 0
+   then
 @@ -499,6 +509,10 @@ then
          echo
      fi
