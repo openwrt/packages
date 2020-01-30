@@ -53,7 +53,7 @@ $(call Package/gunicorn/Default)
 endef
 
 define Package/python3-gunicorn/description
-$(call define Package/python-gunicorn/description)
+$(call Package/python-gunicorn/description)
 .
 (Variant for Python3)
 endef
@@ -89,7 +89,7 @@ $(call Package/gunicorn/Default)
 endef
 
 define Package/gunicorn3/description
-$(call define Package/gunicorn/description)
+$(call Package/gunicorn/description)
 .
 (Variant for Python3)
 endef

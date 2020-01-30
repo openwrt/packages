@@ -23,46 +23,46 @@ include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
 
-define Package/$(PKG_NAME)/Default
+define Package/django-appconf/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Helper class for handling config defaults
-  URL:=https://$(PKG_NAME).readthedocs.io
+  URL:=https://django-appconf.readthedocs.io
 endef
 
-define Package/python-$(PKG_NAME)
-$(call Package/$(PKG_NAME)/Default)
+define Package/python-django-appconf
+$(call Package/django-appconf/Default)
   DEPENDS:= \
-	+PACKAGE_python-$(PKG_NAME):python \
+	+PACKAGE_python-django-appconf:python \
 	python-django1
   VARIANT:=python
   MDEPENDS:=python-django1
 endef
 
-define Package/python-$(PKG_NAME)/description
+define Package/python-django-appconf/description
   A helper class for handling configuration defaults of packaged apps gracefully
 endef
 
-define Package/python3-$(PKG_NAME)
-$(call Package/$(PKG_NAME)/Default)
+define Package/python3-django-appconf
+$(call Package/django-appconf/Default)
   DEPENDS:= \
-	+PACKAGE_python3-$(PKG_NAME):python3 \
+	+PACKAGE_python3-django-appconf:python3 \
 	python3-django
   VARIANT:=python3
   MDEPENDS:=python3-django
 endef
 
-define Package/python3-$(PKG_NAME)/description
-$(call define Package/python-$(PKG_NAME)/description)
+define Package/python3-django-appconf/description
+$(call Package/python-django-appconf/description)
 .
 (Variant for Python3)
 endef
 
-$(eval $(call PyPackage,python-$(PKG_NAME)))
-$(eval $(call BuildPackage,python-$(PKG_NAME)))
-$(eval $(call BuildPackage,python-$(PKG_NAME)-src))
+$(eval $(call PyPackage,python-django-appconf))
+$(eval $(call BuildPackage,python-django-appconf))
+$(eval $(call BuildPackage,python-django-appconf-src))
 
-$(eval $(call Py3Package,python3-$(PKG_NAME)))
-$(eval $(call BuildPackage,python3-$(PKG_NAME)))
-$(eval $(call BuildPackage,python3-$(PKG_NAME)-src))
+$(eval $(call Py3Package,python3-django-appconf))
+$(eval $(call BuildPackage,python3-django-appconf))
+$(eval $(call BuildPackage,python3-django-appconf-src))

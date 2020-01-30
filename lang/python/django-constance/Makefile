@@ -53,7 +53,7 @@ $(call Package/python-django-constance/Default)
 endef
 
 define Package/python3-django-constance/description
-$(call define Package/python-django-constance/description)
+$(call Package/python-django-constance/description)
 .
 (Variant for Python3)
 endef

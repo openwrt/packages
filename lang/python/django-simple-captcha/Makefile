@@ -27,7 +27,7 @@ include ../python3-package.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
-define Package/$(PKG_NAME)/Default
+define Package/django-simple-captcha/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
@@ -35,45 +35,45 @@ define Package/$(PKG_NAME)/Default
   URL:=https://github.com/mbi/django-simple-captcha
 endef
 
-define Package/python-$(PKG_NAME)
-$(call Package/$(PKG_NAME)/Default)
+define Package/python-django-simple-captcha
+$(call Package/django-simple-captcha/Default)
   DEPENDS:= \
-	+PACKAGE_python-$(PKG_NAME):python \
-	+PACKAGE_python-$(PKG_NAME):python-six \
+	+PACKAGE_python-django-simple-captcha:python \
+	+PACKAGE_python-django-simple-captcha:python-six \
 	python-django1 \
-	+PACKAGE_python-$(PKG_NAME):python-pillow \
-	+PACKAGE_python-$(PKG_NAME):python-django-ranged-response
+	+PACKAGE_python-django-simple-captcha:python-pillow \
+	+PACKAGE_python-django-simple-captcha:python-django-ranged-response
   VARIANT:=python
   MDEPENDS:=python-django1
 endef
 
-define Package/python-$(PKG_NAME)/description
+define Package/python-django-simple-captcha/description
   Django Simple Captcha is an extremely simple, yet highly customizable Django
   application to add captcha images to any Django form.
 endef
 
-define Package/python3-$(PKG_NAME)
-$(call Package/$(PKG_NAME)/Default)
+define Package/python3-django-simple-captcha
+$(call Package/django-simple-captcha/Default)
   DEPENDS:= \
-	+PACKAGE_python3-$(PKG_NAME):python3 \
-	+PACKAGE_python3-$(PKG_NAME):python3-six \
+	+PACKAGE_python3-django-simple-captcha:python3 \
+	+PACKAGE_python3-django-simple-captcha:python3-six \
 	python3-django \
-	+PACKAGE_python3-$(PKG_NAME):python3-pillow \
-	+PACKAGE_python3-$(PKG_NAME):python3-django-ranged-response
+	+PACKAGE_python3-django-simple-captcha:python3-pillow \
+	+PACKAGE_python3-django-simple-captcha:python3-django-ranged-response
   VARIANT:=python3
   MDEPENDS:=python3-django
 endef
 
-define Package/python3-$(PKG_NAME)/description
-$(call define Package/python-$(PKG_NAME)/description)
+define Package/python3-django-simple-captcha/description
+$(call Package/python-django-simple-captcha/description)
 .
 (Variant for Python3)
 endef
 
-$(eval $(call PyPackage,python-$(PKG_NAME)))
-$(eval $(call BuildPackage,python-$(PKG_NAME)))
-$(eval $(call BuildPackage,python-$(PKG_NAME)-src))
+$(eval $(call PyPackage,python-django-simple-captcha))
+$(eval $(call BuildPackage,python-django-simple-captcha))
+$(eval $(call BuildPackage,python-django-simple-captcha-src))
 
-$(eval $(call Py3Package,python3-$(PKG_NAME)))
-$(eval $(call BuildPackage,python3-$(PKG_NAME)))
-$(eval $(call BuildPackage,python3-$(PKG_NAME)-src))
+$(eval $(call Py3Package,python3-django-simple-captcha))
+$(eval $(call BuildPackage,python3-django-simple-captcha))
+$(eval $(call BuildPackage,python3-django-simple-captcha-src))

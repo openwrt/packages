@@ -36,6 +36,6 @@ define Package/python3-netifaces/description
   Portable network interface information.
 endef
 
-$(eval $(call Py3Package,$(PKG_NAME)))
-$(eval $(call BuildPackage,$(PKG_NAME)))
-$(eval $(call BuildPackage,$(PKG_NAME)-src))
+$(eval $(call Py3Package,python3-netifaces))
+$(eval $(call BuildPackage,python3-netifaces))
+$(eval $(call BuildPackage,python3-netifaces-src))
