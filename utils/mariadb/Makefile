@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.2.26
+PKG_VERSION:=10.2.31
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -18,7 +18,7 @@ PKG_SOURCE_URL := \
 	https://ftp.yz.yamagata-u.ac.jp/pub/dbms/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
 	https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=152fe941c4f2a352b2b3a4db1ef64e70235fd9ff055af62ad7bda9f2b2191528
+PKG_HASH:=321f744c322ecbc06feddd290d5ee0bf7c68e92cb61fd93c9450eb9c05683151
 PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
 PKG_LICENSE:=GPL-2.0 LGPL-2.1
 PKG_LICENSE_FILES:=COPYING THIRDPARTY libmariadb/COPYING.LIB
