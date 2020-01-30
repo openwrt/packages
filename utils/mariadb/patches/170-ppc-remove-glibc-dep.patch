@@ -27,17 +27,16 @@ directly was the first solution adopted in MariaDB [2].
 
 --- a/storage/xtradb/include/ut0ut.h
 +++ b/storage/xtradb/include/ut0ut.h
-@@ -84,8 +84,7 @@ private:
-    independent way by using YieldProcessor. */
+@@ -85,7 +85,7 @@ private:
  #  define UT_RELAX_CPU() YieldProcessor()
- # elif defined(__powerpc__)
--#include <sys/platform/ppc.h>
+ # elif defined(__powerpc__) && defined __GLIBC__
+ #include <sys/platform/ppc.h>
 -#  define UT_RELAX_CPU() __ppc_get_timebase()
 +#  define UT_RELAX_CPU() __builtin_ppc_get_timebase()
  # else
  #  define UT_RELAX_CPU() ((void)0) /* avoid warning for an empty statement */
  # endif
-@@ -99,9 +98,8 @@ private:
+@@ -99,9 +99,8 @@ private:
  #endif
  
  # if defined(HAVE_HMT_PRIORITY_INSTRUCTION)
