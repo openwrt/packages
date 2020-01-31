@@ -7,12 +7,12 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=django-restframework
-PKG_VERSION:=3.11.0
+PKG_NAME:=django1-restframework
+PKG_VERSION:=3.9.4
 PKG_RELEASE:=1
 
 PYPI_NAME:=djangorestframework
-PKG_HASH:=e782087823c47a26826ee5b6fa0c542968219263fb3976ec3c31edab23a4001f
+PKG_HASH:=c12869cfd83c33d579b17b3cb28a2ae7322a53c3ce85580c2a2ebe4e3f56c4fb
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -20,25 +20,23 @@ PKG_LICENSE_FILES:=LICENSE.md
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python3-package.mk
+include ../python-package.mk
 
-define Package/python3-django-restframework
+define Package/python-django-restframework
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Web APIs for Django, made easy.
   URL:=https://www.django-rest-framework.org
-  DEPENDS:=+python3 python3-django
-  VARIANT:=python3
-  MDEPENDS:=python3-django
+  DEPENDS:=+python python-django1
+  VARIANT:=python
+  MDEPENDS:=python-django1
 endef
 
-define Package/python3-django-restframework/description
+define Package/python-django-restframework/description
   Web APIs for Django, made easy.
-.
-(Variant for Python3)
 endef
 
-$(eval $(call Py3Package,python3-django-restframework))
-$(eval $(call BuildPackage,python3-django-restframework))
-$(eval $(call BuildPackage,python3-django-restframework-src))
+$(eval $(call PyPackage,python-django-restframework))
+$(eval $(call BuildPackage,python-django-restframework))
+$(eval $(call BuildPackage,python-django-restframework-src))
