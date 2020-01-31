@@ -64,7 +64,7 @@ endef
 define Package/mpd-mini
 $(call Package/mpd/Default)
   TITLE+= (mini)
-  DEPENDS+= +libmpg123 +libvorbisidec
+  DEPENDS+= +libmad +libvorbisidec
   PROVIDES:=mpd
   VARIANT:=mini
 endef
@@ -132,7 +132,7 @@ MESON_ARGS += \
 	-Dflac=enabled \
 	-Dfluidsynth=disabled \
 	-Dgme=disabled \
-	-Dmad=disabled \
+	-Dmpg123=disabled \
 	-Dmikmod=disabled \
 	-Dmodplug=disabled \
 	-Dmpcdec=disabled \
@@ -174,7 +174,7 @@ ifeq ($(BUILD_VARIANT),full)
 	-Dsoundcloud=enabled \
 	-Did3tag=enabled \
 	-Dffmpeg=enabled \
-	-Dmpg123=disabled \
+	-Dmad=disabled \
 	-Dtremor=disabled \
 	-Dvorbis=enabled \
 	-Dfifo=true \
@@ -194,7 +194,7 @@ ifeq ($(BUILD_VARIANT),mini)
 	-Dsoundcloud=disabled \
 	-Did3tag=disabled \
 	-Dffmpeg=disabled \
-	-Dmpg123=enabled \
+	-Dmad=enabled \
 	-Dtremor=enabled \
 	-Dvorbis=disabled \
 	-Dfifo=false \
