@@ -33,7 +33,7 @@ define Package/mpd/Default
   TITLE:=Music Player Daemon
   URL:=https://www.musicpd.org/
   DEPENDS:= +zlib +libcurl +libpthread +libmpdclient +libstdcpp $(ICONV_DEPENDS) \
-	    +AUDIO_SUPPORT:alsa-lib +boost +libexpat +libflac
+	    +AUDIO_SUPPORT:alsa-lib +boost +libexpat +libflac +USE_UCLIBC:icu
 endef
 
 define Package/mpd/Default/description
@@ -158,8 +158,8 @@ MESON_ARGS += \
 	-Dsolaris_output=disabled \
 	-Ddbus=disabled \
 	-Dexpat=enabled \
-	-Dicu=disabled \
-	-Diconv=enabled \
+	-Dicu=$(if $(CONFIG_USE_UCLIBC),enabled,disabled) \
+	-Diconv=$(if $(CONFIG_USE_UCLIBC),disabled,enabled) \
 	-Dpcre=disabled \
 	-Dsqlite=disabled \
 	-Dzlib=enabled \
