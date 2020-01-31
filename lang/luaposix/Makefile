@@ -34,6 +34,8 @@ define Package/luaposix/description
   to various low level libc functions.
 endef
 
+TARGET_PATH_PKG:=$(CURDIR)/scripts:$(TARGET_PATH_PKG)
+
 TARGET_CFLAGS += \
 	-I$(STAGING_DIR)/usr/include
 
