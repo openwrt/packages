@@ -38,7 +38,7 @@ Date:   Fri Dec 21 19:14:04 2018 +0200
    SET(HAVE_valgrind 1)
 --- a/mysys/CMakeLists.txt
 +++ b/mysys/CMakeLists.txt
-@@ -72,6 +72,10 @@ TARGET_LINK_LIBRARIES(mysys dbug strings
+@@ -79,6 +79,10 @@ TARGET_LINK_LIBRARIES(mysys dbug strings
   ${LIBNSL} ${LIBM} ${LIBRT} ${LIBDL} ${LIBSOCKET} ${LIBEXECINFO} ${CRC32_LIBRARY})
  DTRACE_INSTRUMENT(mysys)
  
