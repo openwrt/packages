@@ -70,7 +70,7 @@ define Build/InstallDev
 						$(1)/usr/bin
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/apr-1/* \
 					$(1)/usr/include/apr-1
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libapr-1.{la,a,so*} $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libapr-1.{a,so*} $(1)/usr/lib
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/apr-1.pc \
 						$(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/build-1/* $(1)/usr/share/build-1

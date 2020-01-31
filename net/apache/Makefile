@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apache
 PKG_VERSION:=2.4.41
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_SOURCE_NAME:=httpd
 
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.bz2
@@ -282,8 +282,6 @@ define Build/InstallDev
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/apache2/* \
 					$(1)/usr/include/apache2
 	$(INSTALL_DIR) $(1)/usr/lib/apache2
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/apache2/httpd.exp \
-						$(1)/usr/lib/apache2
 	$(INSTALL_DIR) $(1)/usr/share/apache2/build
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/apache2/build/* \
 				$(1)/usr/share/apache2/build
@@ -308,8 +306,6 @@ define Package/apache/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/apache2/*.so \
 					$(1)/usr/lib/apache2
 	rm -f $(1)/usr/lib/apache2/mod_{*ldap,dav*,deflate,http2,lbmethod_*,lua,md,proxy*,proxy_html,session_crypto,ssl,suexec,xml2enc}.so
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/apache2/httpd.exp \
-						$(1)/usr/lib/apache2
 	$(INSTALL_DIR) $(1)/usr/share/apache2/{cgi-bin,htdocs}
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/apache2/cgi-bin/* \
 					$(1)/usr/share/apache2/cgi-bin

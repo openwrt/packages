@@ -126,17 +126,22 @@ endef
 $$(eval $$(call BuildPackage,libaprutil-$(subst _,-,$(1))))
 endef
 
+# PKG_CONFIG_DEPENDS trigger configure, but the compile afterward may be
+# incomplete if the build directory is not cleaned before. This is not a
+# general observation, yet it is valid for apr-util :/
+define Build/Compile
+	$(call Build/Compile/Default,clean all)
+endef
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/include/apr-1 \
 				$(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/apu-1-config $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/apr-1/* $(1)/usr/include/apr-1
-ifneq ($(CONFIG_PACKAGE_libaprutil-crypto-openssl)$(CONFIG_PACKAGE_libaprutil-dbd-pgsql)$(CONFIG_PACKAGE_libaprutil-dbd-sqlite3)$(CONFIG_PACKAGE_libaprutil-ldap),)
 	$(INSTALL_DIR) $(1)/usr/lib/apr-util-1
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/apr-util-1/apr_*{la,a,so*} \
-					$(1)/usr/lib/apr-util-1
-endif
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libaprutil-1.{la,a,so*} \
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/apr-util-1/apr_*.{a,so} \
+			$(1)/usr/lib/apr-util-1 2>/dev/null || :
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libaprutil-1.{a,so*} \
 						$(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/apr-util-1.pc \
 					$(1)/usr/lib/pkgconfig
