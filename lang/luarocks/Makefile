@@ -26,6 +26,9 @@ PKG_BUILD_DEPENDS:=lua/host
 HOST_BUILD_DEPENDS:=$(PKG_BUILD_DEPENDS)
 HOST_BUILD_PARALLEL:=1
 
+HOST_BUILD_PREFIX:=$(STAGING_DIR)/host
+HOST_BUILD_DIR:=$(BUILD_DIR)/host/$(PKG_NAME)-$(PKG_VERSION)
+
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 
@@ -49,11 +52,15 @@ CONFIGURE_ARGS = \
     --with-lua=$(STAGING_DIR_HOSTPKG)
 
 HOST_CONFIGURE_ARGS= \
-    --prefix=$(STAGING_DIR_HOSTPKG) \
-    --sysconfdir=$(STAGING_DIR_HOSTPKG)/etc \
+    --prefix=$(STAGING_DIR)/host \
+    --sysconfdir=$(STAGING_DIR)/host/etc \
     --with-lua=$(STAGING_DIR_HOSTPKG)
 
 CONFIGURE_VARS = \
+	LUAROCKS_UNAME_S="Linux" \
+	LUAROCKS_UNAME_M="$(ARCH)"
+
+HOST_CONFIGURE_VARS = \
 	LUAROCKS_UNAME_S="Linux" \
 	LUAROCKS_UNAME_M="$(ARCH)"
 
