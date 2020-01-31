@@ -46,6 +46,6 @@ endef
 
 PYTHON3_PKG_SETUP_ARGS:=
 
-$(eval $(call Py3Package,$(PKG_NAME)))
-$(eval $(call BuildPackage,$(PKG_NAME)))
-$(eval $(call BuildPackage,$(PKG_NAME)-src))
+$(eval $(call Py3Package,python3-pyroute2))
+$(eval $(call BuildPackage,python3-pyroute2))
+$(eval $(call BuildPackage,python3-pyroute2-src))

@@ -36,6 +36,6 @@ define Package/python-unidecode/description
   Unidecode, lossy ASCII transliterations of Unicode text
 endef
 
-$(eval $(call Py3Package,$(PKG_NAME)))
-$(eval $(call BuildPackage,$(PKG_NAME)))
-$(eval $(call BuildPackage,$(PKG_NAME)-src))
+$(eval $(call Py3Package,python3-unidecode))
+$(eval $(call BuildPackage,python3-unidecode))
+$(eval $(call BuildPackage,python3-unidecode-src))
