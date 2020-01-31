@@ -1,0 +1,146 @@
+From 506b806e253af7cc37e269b79cc3e099d02cf81a Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Mon, 3 Feb 2020 15:50:46 -0800
+Subject: [PATCH 3/3] treewide: get rid of C math function usage
+
+Boost does not seem to offer an overload for lrint.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ src/ReplayGainGlobal.cxx                    | 2 +-
+ src/ReplayGainInfo.cxx                      | 3 +--
+ src/decoder/Bridge.cxx                      | 5 +++--
+ src/decoder/plugins/MpcdecDecoderPlugin.cxx | 3 +--
+ src/mixer/plugins/AlsaMixerPlugin.cxx       | 3 +--
+ src/mixer/plugins/SoftwareMixerPlugin.cxx   | 5 +++--
+ src/util/Math.hxx                           | 6 ++++++
+ 7 files changed, 16 insertions(+), 11 deletions(-)
+
+--- a/src/ReplayGainGlobal.cxx
++++ b/src/ReplayGainGlobal.cxx
+@@ -22,10 +22,10 @@
+ #include "config/Param.hxx"
+ #include "config/Data.hxx"
+ #include "util/RuntimeError.hxx"
++#include "util/Math.hxx"
+ 
+ #include <assert.h>
+ #include <stdlib.h>
+-#include <math.h>
+ 
+ static float
+ ParsePreamp(const char *s)
+--- a/src/ReplayGainInfo.cxx
++++ b/src/ReplayGainInfo.cxx
+@@ -19,8 +19,7 @@
+ 
+ #include "ReplayGainInfo.hxx"
+ #include "ReplayGainConfig.hxx"
+-
+-#include <math.h>
++#include "util/Math.hxx"
+ 
+ float
+ ReplayGainTuple::CalculateScale(const ReplayGainConfig &config) const noexcept
+--- a/src/decoder/Bridge.cxx
++++ b/src/decoder/Bridge.cxx
+@@ -33,9 +33,10 @@
+ #include "util/ConstBuffer.hxx"
+ #include "util/StringBuffer.hxx"
+ 
++#include <cmath>
++
+ #include <assert.h>
+ #include <string.h>
+-#include <math.h>
+ 
+ DecoderBridge::~DecoderBridge()
+ {
+@@ -591,7 +592,7 @@ DecoderBridge::SubmitReplayGain(const ReplayGainInfo *new_replay_gain_info)
+ 			const auto &tuple = new_replay_gain_info->Get(rgm);
+ 			const auto scale =
+ 				tuple.CalculateScale(dc.replay_gain_config);
+-			dc.replay_gain_db = 20.0 * log10f(scale);
++			dc.replay_gain_db = 20.0 * std::log10(scale);
+ 		}
+ 
+ 		replay_gain_info = *new_replay_gain_info;
+--- a/src/decoder/plugins/MpcdecDecoderPlugin.cxx
++++ b/src/decoder/plugins/MpcdecDecoderPlugin.cxx
+@@ -26,6 +26,7 @@
+ #include "util/Domain.hxx"
+ #include "util/Macros.hxx"
+ #include "util/Clamp.hxx"
++#include "util/Math.hxx"
+ #include "util/ScopeExit.hxx"
+ #include "Log.hxx"
+ 
+@@ -33,8 +34,6 @@
+ 
+ #include <exception>
+ 
+-#include <math.h>
+-
+ struct mpc_decoder_data {
+ 	InputStream &is;
+ 	DecoderClient *client;
+--- a/src/mixer/plugins/AlsaMixerPlugin.cxx
++++ b/src/mixer/plugins/AlsaMixerPlugin.cxx
+@@ -26,6 +26,7 @@
+ #include "event/Call.hxx"
+ #include "util/ASCII.hxx"
+ #include "util/Domain.hxx"
++#include "util/Math.hxx"
+ #include "util/RuntimeError.hxx"
+ #include "Log.hxx"
+ 
+@@ -35,8 +36,6 @@ extern "C" {
+ 
+ #include <alsa/asoundlib.h>
+ 
+-#include <math.h>
+-
+ #define VOLUME_MIXER_ALSA_DEFAULT		"default"
+ #define VOLUME_MIXER_ALSA_CONTROL_DEFAULT	"PCM"
+ static constexpr unsigned VOLUME_MIXER_ALSA_INDEX_DEFAULT = 0;
+--- a/src/mixer/plugins/SoftwareMixerPlugin.cxx
++++ b/src/mixer/plugins/SoftwareMixerPlugin.cxx
+@@ -22,8 +22,9 @@
+ #include "filter/plugins/VolumeFilterPlugin.hxx"
+ #include "pcm/Volume.hxx"
+ 
++#include <cmath>
++
+ #include <assert.h>
+-#include <math.h>
+ 
+ class SoftwareMixer final : public Mixer {
+ 	Filter *filter = nullptr;
+@@ -73,7 +74,7 @@ PercentVolumeToSoftwareVolume(unsigned volume) noexcept
+ 	if (volume >= 100)
+ 		return PCM_VOLUME_1;
+ 	else if (volume > 0)
+-		return pcm_float_to_volume((exp(volume / 25.0) - 1) /
++		return pcm_float_to_volume((std::exp(volume / 25.0) - 1) /
+ 					   (54.5981500331F - 1));
+ 	else
+ 		return 0;
+--- a/src/util/Math.hxx
++++ b/src/util/Math.hxx
+@@ -31,10 +31,16 @@
+ #define MATH_HXX
+ 
+ #ifdef __UCLIBC__
++#include <boost/math/special_functions/pow.hpp>
+ #include <boost/math/special_functions/round.hpp>
++using boost::math::iround;
++using boost::math::pow;
+ using boost::math::lround;
++#define lrint iround
+ #else
+ #include <cmath>
++using std::pow;
++using std::lrint;
+ using std::lround;
+ #endif
+ 
