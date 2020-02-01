@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=measurement-kit
 PKG_VERSION:=0.10.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/measurement-kit/measurement-kit/tar.gz/v$(PKG_VERSION)?
@@ -38,6 +38,8 @@ define Package/measurement-kit/description
 endef
 
 CONFIGURE_ARGS+= --with-ca-bundle=/etc/ssl/cert.pem
+
+TARGET_CFLAGS += $(if $(CONFIG_USE_UCLIBC),-DCATCH_CONFIG_GLOBAL_NEXTAFTER)
 
 define Build/Configure
 	( cd $(PKG_BUILD_DIR); ./autogen.sh )
