@@ -25,4 +25,17 @@ if [ -f "/etc/nginx/luci_nginx.conf" ] && [ -f "/etc/nginx/nginx.conf" ]; then
 	fi
 fi
 
+if nginx -V 2>&1 | grep -q ubus; then
+	if [ -z "$(cat /etc/nginx/luci_uwsgi.conf | grep ubus)" ]; then
+		cat <<EOT >> /etc/nginx/luci_uwsgi.conf
+
+location /ubus {
+        ubus_interpreter;
+        ubus_socket_path /var/run/ubus.sock;
+        ubus_parallel_req 2;
+}
+EOT
+	fi
+fi
+
 exit 0
