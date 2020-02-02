@@ -1,0 +1,36 @@
+commit a95b302da71065e443477c2cbcd852ebb52d6db3
+Author: Olivier Houchard <cognet@ci0.org>
+Date:   Fri Jan 24 15:17:38 2020 +0100
+
+    BUG/MEDIUM: ssl: Don't forget to free ctx->ssl on failure.
+    
+    In ssl_sock_init(), if we fail to allocate the BIO, don't forget to free
+    the SSL *, or we'd end up with a memory leak.
+    
+    This should be backported to 2.1 and 2.0.
+    
+    (cherry picked from commit efe5e8e99890b24dcfb8c925d98bf82e2fdf0b9f)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index c6888c128..6841813b5 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -5790,6 +5790,8 @@ static int ssl_sock_init(struct connection *conn, void **xprt_ctx)
+ 		}
+ 		ctx->bio = BIO_new(ha_meth);
+ 		if (!ctx->bio) {
++			SSL_free(ctx->ssl);
++			ctx->ssl = NULL;
+ 			if (may_retry--) {
+ 				pool_gc(NULL);
+ 				goto retry_connect;
+@@ -5866,6 +5868,8 @@ static int ssl_sock_init(struct connection *conn, void **xprt_ctx)
+ 
+ 		ctx->bio = BIO_new(ha_meth);
+ 		if (!ctx->bio) {
++			SSL_free(ctx->ssl);
++			ctx->ssl = NULL;
+ 			if (may_retry--) {
+ 				pool_gc(NULL);
+ 				goto retry_accept;

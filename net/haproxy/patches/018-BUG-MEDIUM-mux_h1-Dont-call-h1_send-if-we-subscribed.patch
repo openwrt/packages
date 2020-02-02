@@ -1,0 +1,31 @@
+commit da6d362ab057217dfdd61a581c6596af4d0ac767
+Author: Olivier Houchard <cognet@ci0.org>
+Date:   Wed Jan 15 19:13:32 2020 +0100
+
+    BUG/MEDIUM: mux_h1: Don't call h1_send if we subscribed().
+    
+    In h1_snd_buf(), only attempt to call h1_send() if we haven't
+    already subscribed.
+    It makes no sense to do it if we subscribed, as we know we failed
+    to send before, and will create a useless call to sendto(), and
+    in 2.2, the call to raw_sock_from_buf() will disable polling if
+    it is enabled.
+    
+    This should be backported to 2.2, 2.1, 2.0 and 1.9.
+    
+    (cherry picked from commit 68787ef70a2e0fe19d0ab753dab8ed5c90cb4398)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/mux_h1.c b/src/mux_h1.c
+index b44204845..d93a7eab5 100644
+--- a/src/mux_h1.c
++++ b/src/mux_h1.c
+@@ -2670,7 +2670,7 @@ static size_t h1_snd_buf(struct conn_stream *cs, struct buffer *buf, size_t coun
+ 			break;
+ 		total += ret;
+ 		count -= ret;
+-		if (!h1_send(h1c))
++		if ((h1c->wait_event.events & SUB_RETRY_SEND) || !h1_send(h1c))
+ 			break;
+ 	}
+ 

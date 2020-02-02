@@ -1,0 +1,30 @@
+commit 03abacf806d155ca50fae612c0f999071625dd1d
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Thu Jan 23 11:47:13 2020 +0100
+
+    CLEANUP: stats: shut up a wrong null-deref warning from gcc 9.2
+    
+    As reported in bug #447, gcc 9.2 invents impossible code paths and then
+    complains that we don't check for our pointers to be NULL... This code
+    path is not critical, better add the test to shut it up than try to
+    help it being less creative.
+    
+    This code hasn't changed for a while, so it could help distros to
+    backport this to older releases.
+    
+    (cherry picked from commit 027d206b57bec59397eb6fb23f8ff4e3a2edb2e1)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/stats.c b/src/stats.c
+index 32236f457..befa75b30 100644
+--- a/src/stats.c
++++ b/src/stats.c
+@@ -2400,7 +2400,7 @@ static void stats_dump_html_head(struct appctx *appctx, struct uri_auth *uri)
+ 	              "-->\n"
+ 	              "</style></head>\n",
+ 	              (appctx->ctx.stats.flags & STAT_SHNODE) ? " on " : "",
+-	              (appctx->ctx.stats.flags & STAT_SHNODE) ? (uri->node ? uri->node : global.node) : ""
++	              (appctx->ctx.stats.flags & STAT_SHNODE) ? (uri && uri->node ? uri->node : global.node) : ""
+ 	              );
+ }
+ 

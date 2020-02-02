@@ -1,0 +1,129 @@
+commit 04184b70503780533533f9ff15cf43af2c0eb820
+Author: Emmanuel Hocdet <manu@gandi.net>
+Date:   Fri Dec 20 17:47:12 2019 +0100
+
+    BUG/MINOR: ssl: ssl_sock_load_pem_into_ckch is not consistent
+    
+    "set ssl cert <filename> <payload>" CLI command should have the same
+    result as reload HAproxy with the updated pem file (<filename>).
+    Is not the case, DHparams/cert-chain is kept from the previous
+    context if no DHparams/cert-chain is set in the context (<payload>).
+    
+    This patch should be backport to 2.1
+    
+    (cherry picked from commit 6b5b44e10fa1c5da18a120fd78082317036900e2)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/include/common/tools.h b/include/common/tools.h
+index 398383ad3..961060109 100644
+--- a/include/common/tools.h
++++ b/include/common/tools.h
+@@ -33,6 +33,8 @@
+ #define MAX(a, b) (((a) > (b)) ? (a) : (b))
+ #endif
+ 
++#define SWAP(a, b) do { typeof(a) t; t = a; a = b; b = t; } while(0)
++
+ /* return an integer of type <ret> with only the highest bit set. <ret> may be
+  * both a variable or a type.
+  */
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 4f1e7e78e..b65da399f 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -3112,7 +3112,8 @@ static int ssl_sock_load_pem_into_ckch(const char *path, char *buf, struct cert_
+ 	X509 *ca;
+ 	X509 *cert = NULL;
+ 	EVP_PKEY *key = NULL;
+-	DH *dh;
++	DH *dh = NULL;
++	STACK_OF(X509) *chain = NULL;
+ 
+ 	if (buf) {
+ 		/* reading from a buffer */
+@@ -3150,13 +3151,6 @@ static int ssl_sock_load_pem_into_ckch(const char *path, char *buf, struct cert_
+ 
+ 	dh = PEM_read_bio_DHparams(in, NULL, NULL, NULL);
+ 	/* no need to return an error there, dh is not mandatory */
+-
+-	if (dh) {
+-		if (ckch->dh)
+-			DH_free(ckch->dh);
+-		ckch->dh = dh;
+-	}
+-
+ #endif
+ 
+ 	/* Seek back to beginning of file */
+@@ -3180,39 +3174,19 @@ static int ssl_sock_load_pem_into_ckch(const char *path, char *buf, struct cert_
+ 		goto end;
+ 	}
+ 
+-	/* Key and Cert are good, we can use them in the ckch */
+-	if (ckch->key) /* free the previous key */
+-		EVP_PKEY_free(ckch->key);
+-	ckch->key = key;
+-	key = NULL;
+-
+-	if (ckch->cert) /* free the previous cert */
+-		X509_free(ckch->cert);
+-	ckch->cert = cert;
+-	cert = NULL;
+-
+ 	/* Look for a Certificate Chain */
+-	ca = PEM_read_bio_X509(in, NULL, NULL, NULL);
+-	if (ca) {
+-		/* there is a chain a in the PEM, clean the previous one in the CKCH */
+-		if (ckch->chain) /* free the previous chain */
+-			sk_X509_pop_free(ckch->chain, X509_free);
+-		ckch->chain = sk_X509_new_null();
+-		if (!sk_X509_push(ckch->chain, ca)) {
++	while ((ca = PEM_read_bio_X509(in, NULL, NULL, NULL))) {
++		if (chain == NULL)
++			chain = sk_X509_new_null();
++		if (!sk_X509_push(chain, ca)) {
+ 			X509_free(ca);
+ 			goto end;
+ 		}
+ 	}
+-	/* look for other crt in the chain */
+-	while ((ca = PEM_read_bio_X509(in, NULL, NULL, NULL)))
+-		if (!sk_X509_push(ckch->chain, ca)) {
+-			X509_free(ca);
+-			goto end;
+-		}
+ 
+ 	/* no chain */
+-	if (ckch->chain == NULL) {
+-		ckch->chain = sk_X509_new_null();
++	if (chain == NULL) {
++		chain = sk_X509_new_null();
+ 	}
+ 
+ 	ret = ERR_get_error();
+@@ -3222,6 +3196,12 @@ static int ssl_sock_load_pem_into_ckch(const char *path, char *buf, struct cert_
+ 		goto end;
+ 	}
+ 
++	/* no error, fill ckch with new context, old context will be free at end: */
++	SWAP(ckch->key, key);
++	SWAP(ckch->dh, dh);
++	SWAP(ckch->cert, cert);
++	SWAP(ckch->chain, chain);
++
+ 	ret = 0;
+ 
+ end:
+@@ -3231,8 +3211,12 @@ end:
+ 		BIO_free(in);
+ 	if (key)
+ 		EVP_PKEY_free(key);
++	if (dh)
++		DH_free(dh);
+ 	if (cert)
+ 		X509_free(cert);
++	if (chain)
++		sk_X509_pop_free(chain, X509_free);
+ 
+ 	return ret;
+ }

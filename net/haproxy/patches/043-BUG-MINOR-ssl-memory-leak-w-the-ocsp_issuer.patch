@@ -1,0 +1,29 @@
+commit c91a4d8dda53f3fb0ab98335f201a30f926349bc
+Author: William Lallemand <wlallemand@haproxy.org>
+Date:   Thu Jan 23 11:53:13 2020 +0100
+
+    BUG/MINOR: ssl: memory leak w/ the ocsp_issuer
+    
+    This patch frees the ocsp_issuer in
+    ssl_sock_free_cert_key_and_chain_contents().
+    
+    Shoudl be backported in 2.1.
+    
+    (cherry picked from commit 5c3c96fd361f7ab6ae237af802d04fe31720da1b)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 180637e6b..af285938e 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -2965,6 +2965,10 @@ static void ssl_sock_free_cert_key_and_chain_contents(struct cert_key_and_chain
+ 		free(ckch->ocsp_response);
+ 		ckch->ocsp_response = NULL;
+ 	}
++
++	if (ckch->ocsp_issuer)
++		X509_free(ocsp_issuer);
++	ckch->ocsp_issuer = NULL;
+ }
+ 
+ /*

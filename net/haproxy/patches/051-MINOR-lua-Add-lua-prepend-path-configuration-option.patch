@@ -1,0 +1,98 @@
+commit c5438ed610bde49957d8d406f6e98a481e68bef3
+Author: Tim Duesterhus <tim@bastelstu.be>
+Date:   Sun Jan 12 13:55:40 2020 +0100
+
+    MINOR: lua: Add lua-prepend-path configuration option
+    
+    lua-prepend-path allows the administrator to specify a custom Lua library
+    path to load custom Lua modules that are useful within the context of HAProxy
+    without polluting the global Lua library folder.
+    
+    (cherry picked from commit dd74b5f2372f610cfa60e8cb2e151e2de377357e)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/doc/configuration.txt b/doc/configuration.txt
+index 36291a339..54d155b36 100644
+--- a/doc/configuration.txt
++++ b/doc/configuration.txt
+@@ -598,6 +598,7 @@ The following keywords are supported in the "global" section :
+    - log-tag
+    - log-send-hostname
+    - lua-load
++   - lua-prepend-path
+    - mworker-max-reloads
+    - nbproc
+    - nbthread
+@@ -1037,6 +1038,31 @@ lua-load <file>
+   This global directive loads and executes a Lua file. This directive can be
+   used multiple times.
+ 
++lua-prepend-path <string> [<type>]
++  Prepends the given string followed by a semicolon to Lua's package.<type>
++  variable.
++  <type> must either be "path" or "cpath". If <type> is not given it defaults
++  to "path".
++
++  Lua's paths are semicolon delimited lists of patterns that specify how the
++  `require` function attempts to find the source file of a library. Question
++  marks (?) within a pattern will be replaced by module name. The path is
++  evaluated left to right. This implies that paths that are prepended later
++  will be checked earlier.
++
++  As an example by specifying the following path:
++
++    lua-prepend-path /usr/share/haproxy-lua/?/init.lua
++    lua-prepend-path /usr/share/haproxy-lua/?.lua
++
++  When `require "example"` is being called Lua will first attempt to load the
++  /usr/share/haproxy-lua/example.lua script, if that does not exist the
++  /usr/share/haproxy-lua/example/init.lua will be attempted and the default
++  paths if that does not exist either.
++
++  See https://www.lua.org/pil/8.1.html for the details within the Lua
++  documentation.
++
+ master-worker [no-exit-on-failure]
+   Master-worker mode. It is equivalent to the command line "-W" argument.
+   This mode will launch a "master" which will monitor the "workers". Using
+diff --git a/src/hlua.c b/src/hlua.c
+index 10d615211..a245f9b7d 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -7474,8 +7474,36 @@ static int hlua_prepend_path(struct hlua ctx, char *type, char *path)
+ 	return 0;
+ }
+ 
++static int hlua_config_prepend_path(char **args, int section_type, struct proxy *curpx,
++                                    struct proxy *defpx, const char *file, int line,
++                                    char **err)
++{
++	char *path;
++	char *type = "path";
++	if (too_many_args(2, args, err, NULL)) {
++		return -1;
++	}
++
++	if (!(*args[1])) {
++		memprintf(err, "'%s' expects to receive a <path> as argument", args[0]);
++		return -1;
++	}
++	path = args[1];
++
++	if (*args[2]) {
++		if (strcmp(args[2], "path") != 0 && strcmp(args[2], "cpath") != 0) {
++			memprintf(err, "'%s' expects <type> to either be 'path' or 'cpath'", args[0]);
++			return -1;
++		}
++		type = args[2];
++	}
++
++	return hlua_prepend_path(gL, type, path);
++}
++
+ /* configuration keywords declaration */
+ static struct cfg_kw_list cfg_kws = {{ },{
++	{ CFG_GLOBAL, "lua-prepend-path",         hlua_config_prepend_path },
+ 	{ CFG_GLOBAL, "lua-load",                 hlua_load },
+ 	{ CFG_GLOBAL, "tune.lua.session-timeout", hlua_session_timeout },
+ 	{ CFG_GLOBAL, "tune.lua.task-timeout",    hlua_task_timeout },

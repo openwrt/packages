@@ -1,0 +1,30 @@
+commit ad9954f2e723d37fed3a3a777fa6eecfa930fd11
+Author: Olivier Houchard <ohouchard@haproxy.com>
+Date:   Wed Jan 22 15:31:09 2020 +0100
+
+    BUG/MEDIUM: netscaler: Don't forget to allocate storage for conn->src/dst.
+    
+    In conn_recv_netscaler_cip(), don't forget to allocate conn->src and
+    conn->dst, as those are now dynamically allocated. Not doing so results in
+    getting a crash when using netscaler.
+    This should fix github issue #460.
+    
+    This should be backported to 2.1.
+    
+    (cherry picked from commit 1a9dbe58a66516e6acc504ed2f185fd9d86a5e6d)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/connection.c b/src/connection.c
+index 7a2ab2499..b48049e5a 100644
+--- a/src/connection.c
++++ b/src/connection.c
+@@ -740,6 +740,9 @@ int conn_recv_netscaler_cip(struct connection *conn, int flag)
+ 	if (!conn_ctrl_ready(conn))
+ 		goto fail;
+ 
++	if (!sockaddr_alloc(&conn->src) || !sockaddr_alloc(&conn->dst))
++		goto fail;
++
+ 	if (!fd_recv_ready(conn->handle.fd))
+ 		goto not_ready;
+ 

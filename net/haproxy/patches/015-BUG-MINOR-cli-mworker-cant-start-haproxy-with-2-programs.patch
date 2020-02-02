@@ -1,0 +1,37 @@
+commit 796ff4d975bde2bb7fda2876a31bbdc697c2b2ba
+Author: William Lallemand <wlallemand@haproxy.com>
+Date:   Tue Jan 14 15:25:02 2020 +0100
+
+    BUG/MINOR: cli/mworker: can't start haproxy with 2 programs
+    
+    When trying to start HAProxy with the master CLI and more than one
+    program in the configuration, it refuses to start with:
+    
+    [ALERT] 013/132926 (1378) : parsing [cur--1:0] : proxy 'MASTER', another server named 'cur--1' was already defined at line 0, please use distinct names.
+    [ALERT] 013/132926 (1378) : Fatal errors found in configuration.
+    
+    The problem is that haproxy tries to create a server for the MASTER
+    proxy but only the worker are supposed to be in the server list.
+    
+    Fix issue #446.
+    
+    Must be backported as far as 2.0.
+    
+    (cherry picked from commit a31b09e982a76cdf8761edb25d1569cb76a8ff37)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/cli.c b/src/cli.c
+index 77db8be88..d68e2b299 100644
+--- a/src/cli.c
++++ b/src/cli.c
+@@ -2455,6 +2455,10 @@ int mworker_cli_proxy_create()
+ 		int port1, port2, port;
+ 		struct protocol *proto;
+ 
++		/* only the workers support the master CLI */
++		if (!(child->options & PROC_O_TYPE_WORKER))
++			continue;
++
+ 		newsrv = new_server(mworker_proxy);
+ 		if (!newsrv)
+ 			goto error;

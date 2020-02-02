@@ -1,0 +1,62 @@
+commit 4fa1de1be89e1d64771a8e8cc725f991ece21819
+Author: Tim Duesterhus <tim@bastelstu.be>
+Date:   Sun Jan 12 13:55:41 2020 +0100
+
+    MINOR: lua: Add HLUA_PREPEND_C?PATH build option
+    
+    This complements the lua-prepend-path configuration option to allow
+    distro maintainers to add a default path for HAProxy specific Lua
+    libraries.
+    
+    (cherry picked from commit 541fe1ec52a0f9e1912dea5b3a784406dbdfad22)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/Makefile b/Makefile
+index 8399f6ca3..bb494fac3 100644
+--- a/Makefile
++++ b/Makefile
+@@ -88,6 +88,8 @@
+ #           installation only.
+ #   DOCDIR  is set to "$(PREFIX)/doc/haproxy" by default and is used for
+ #           installation only.
++#   HLUA_PREPEND_PATH may be used to prepend a folder to Lua's default package.path.
++#   HLUA_PREPEND_CPATH may be used to prepend a folder to Lua's default package.cpath.
+ #
+ # Other variables :
+ #   PCRE_CONFIG    : force the binary path to get pcre config (by default
+@@ -546,6 +548,14 @@ LUA_INC := $(firstword $(foreach lib,lua5.3 lua53 lua,$(call check_lua_inc,$(lib
+ ifneq ($(LUA_INC),)
+ OPTIONS_CFLAGS  += -I$(LUA_INC)
+ endif
++ifneq ($(HLUA_PREPEND_PATH),)
++OPTIONS_CFLAGS  += -DHLUA_PREPEND_PATH=$(HLUA_PREPEND_PATH)
++BUILD_OPTIONS += HLUA_PREPEND_PATH=$(HLUA_PREPEND_PATH)
++endif
++ifneq ($(HLUA_PREPEND_CPATH),)
++OPTIONS_CFLAGS  += -DHLUA_PREPEND_CPATH=$(HLUA_PREPEND_CPATH)
++BUILD_OPTIONS += HLUA_PREPEND_CPATH=$(HLUA_PREPEND_CPATH)
++endif
+ endif
+ 
+ OPTIONS_LDFLAGS += $(LUA_LD_FLAGS) -l$(LUA_LIB_NAME) -lm
+diff --git a/src/hlua.c b/src/hlua.c
+index a245f9b7d..8ace405d4 100644
+--- a/src/hlua.c
++++ b/src/hlua.c
+@@ -7651,6 +7651,16 @@ void hlua_init(void)
+ 
+ 	/* Initialise lua. */
+ 	luaL_openlibs(gL.T);
++#define HLUA_PREPEND_PATH_TOSTRING1(x) #x
++#define HLUA_PREPEND_PATH_TOSTRING(x) HLUA_PREPEND_PATH_TOSTRING1(x)
++#ifdef HLUA_PREPEND_PATH
++	hlua_prepend_path(gL, "path", HLUA_PREPEND_PATH_TOSTRING(HLUA_PREPEND_PATH));
++#endif
++#ifdef HLUA_PREPEND_CPATH
++	hlua_prepend_path(gL, "cpath", HLUA_PREPEND_PATH_TOSTRING(HLUA_PREPEND_CPATH));
++#endif
++#undef HLUA_PREPEND_PATH_TOSTRING
++#undef HLUA_PREPEND_PATH_TOSTRING1
+ 
+ 	/* Set safe environment for the initialisation. */
+ 	if (!SET_SAFE_LJMP(gL.T)) {

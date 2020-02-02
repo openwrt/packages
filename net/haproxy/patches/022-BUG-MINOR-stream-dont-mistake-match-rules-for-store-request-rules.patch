@@ -1,0 +1,70 @@
+commit 791df6f59a268e432ef7bc675084acaa6f1a2ed8
+Author: Jerome Magnin <jmagnin@haproxy.com>
+Date:   Thu Jan 16 17:37:21 2020 +0100
+
+    BUG/MINOR: stream: don't mistake match rules for store-request rules
+    
+    In process_sticking_rules() we only want to apply the first store-request
+    rule for a given table, but when doing so we need to make sure we only
+    count actual store-request rules when we list the sticking rules.
+    
+    Failure to do so leads to not being able to write store-request and match
+    sticking rules in any order as a match rule after a store-request rule
+    will be ignored.
+    
+    The following configuration reproduces the issue:
+    
+      global
+        stats socket /tmp/foobar
+    
+      defaults
+        mode http
+    
+      frontend in
+        bind *:8080
+        default_backend bar
+    
+      backend bar
+        server s1 127.0.0.1:21212
+        server s2 127.0.0.1:21211
+        stick store-request req.hdr(foo)
+        stick match req.hdr(foo)
+        stick-table type string size 10
+    
+      listen foo
+        bind *:21212
+        bind *:21211
+        http-request deny deny_status 200 if { dst_port 21212 }
+        http-request deny
+    
+    This patch fixes issue #448 and should be backported as far as 1.6.
+    
+    (cherry picked from commit bee00ad080ff9359df8a670e891a6c2bce4acc39)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/stream.c b/src/stream.c
+index 4efc16bd7..2dd7141aa 100644
+--- a/src/stream.c
++++ b/src/stream.c
+@@ -1786,13 +1786,15 @@ static int process_sticking_rules(struct stream *s, struct channel *req, int an_
+ 		 * An example could be a store of the IP address from an HTTP
+ 		 * header first, then from the source if not found.
+ 		 */
+-		for (i = 0; i < s->store_count; i++) {
+-			if (rule->table.t == s->store[i].table)
+-				break;
+-		}
++		if (rule->flags & STK_IS_STORE) {
++			for (i = 0; i < s->store_count; i++) {
++				if (rule->table.t == s->store[i].table)
++					break;
++			}
+ 
+-		if (i !=  s->store_count)
+-			continue;
++			if (i !=  s->store_count)
++				continue;
++		}
+ 
+ 		if (rule->cond) {
+ 	                ret = acl_exec_cond(rule->cond, px, sess, s, SMP_OPT_DIR_REQ|SMP_OPT_FINAL);
