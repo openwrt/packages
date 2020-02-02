@@ -45,7 +45,7 @@ start_service() {
 	if [ -n "$wg_name" ]; then
 		WG_PARM="-G $wg_name"
 	else
-		NB_PARM="-G WORKGROUP"
+		WG_PARM="-G WORKGROUP"
 	fi
 
 	# resolve lan interface (BUG: No multi-interface binds atm)
@@ -82,5 +82,5 @@ start_service() {
 
 service_triggers() {
 	PROCD_RELOAD_DELAY=1000
-	procd_add_reload_trigger "dhcp" "system" "samba" "samba4" "smbd"
+	procd_add_reload_trigger "dhcp" "system" "samba" "samba4" "ksmbd"
 }
