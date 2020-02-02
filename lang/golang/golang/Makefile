@@ -18,11 +18,12 @@ GO_SOURCE_URLS:=https://dl.google.com/go/ \
 
 PKG_SOURCE:=go$(PKG_VERSION).src.tar.gz
 PKG_SOURCE_URL:=$(GO_SOURCE_URLS)
-PKG_HASH:=aae5be954bdc40bcf8006eb77e8d8a5dde412722bc8effcdaf9772620d06420c
+PKG_HASH:=e4ad42cc5f5c19521fbbbde3680995f2546110b5c6aa2b48c3754ff7af9b41f4
 
+PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_CPE_ID:=cpe:/a:golang:go
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_DIR:=$(BUILD_DIR)/go-$(PKG_VERSION)
