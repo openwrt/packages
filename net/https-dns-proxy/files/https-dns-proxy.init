@@ -46,12 +46,16 @@ start_instance() {
 	append_parm "$cfg" 'proxy_server' '-t'
 	append_parm "$cfg" 'logfile' '-l'
 	append_bool "$cfg" 'use_http1' '-x'
-	append_bool "$cfg" 'ipv4_resolvers' '-4'
 
 	config_get verbosity "$cfg" 'verbosity' "0"
 	for i in $(seq 1 $verbosity); do
 		xappend "-v"
 	done
+
+	config_get_bool ipv6_resolvers_only "$cfg" 'ipv6_resolvers_only' '0'
+	if [ "$ipv6_resolvers_only" == 0 ]; then
+		xappend "-4"
+	fi
 
 	procd_open_instance
 # shellcheck disable=SC2086
@@ -64,22 +68,12 @@ start_instance() {
 	config_get listen_addr "$cfg" 'listen_addr' '127.0.0.1'
 	config_get listen_port "$cfg" 'listen_port' "$p"
 
-	# Don't add the any address to dnsmasq
-	case $listen_addr in
-		0.0.0.0|::ffff:0.0.0.0)
-			listen_addr='127.0.0.1'
-			;;
-		::)
-			listen_addr='::1'
-			;;
-	esac
-
 	if [ "$dnsmasqConfig" = "*" ]; then
 		config_load 'dhcp'
-		config_foreach dnsmasq_add_doh_server 'dnsmasq' "${listen_addr}#${listen_port}"
+		config_foreach dnsmasq_add_doh_server 'dnsmasq' "${listen_addr}" "${listen_port}"
 	elif [ -n "$dnsmasqConfig" ]; then
 		for i in $dnsmasqConfig; do
-			dnsmasq_add_doh_server "@dnsmasq[${i}]" "${listen_addr}#${listen_port}"
+			dnsmasq_add_doh_server "@dnsmasq[${i}]" "${listen_addr}" "${listen_port}"
 		done
 	fi
 	p="$((p+1))"
@@ -117,9 +111,20 @@ service_triggers() {
 }
 
 dnsmasq_add_doh_server() {
-	local cfg="$1" value="$2"
-	uci -q del_list dhcp."$cfg".server="$value"
-	uci -q add_list dhcp."$cfg".server="$value"
+	local cfg="$1" address="$2" port="$3"
+
+	# Don't add the any address to dnsmasq
+	case $address in
+		0.0.0.0|::ffff:0.0.0.0)
+			address='127.0.0.1'
+			;;
+		::)
+			address='::1'
+			;;
+	esac
+
+	uci -q del_list dhcp."$cfg".server="$address#$port"
+	uci -q add_list dhcp."$cfg".server="$address#$port"
 }
 
 dnsmasq_create_server_backup() {
