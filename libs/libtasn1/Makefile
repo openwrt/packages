@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtasn1
-PKG_VERSION:=4.15.0
-PKG_RELEASE:=2
+PKG_VERSION:=4.16.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
-PKG_HASH:=dd77509fe8f5304deafbca654dc7f0ea57f5841f41ba530cff9a5bf71382739e
+PKG_HASH:=0e0fb0903839117cb6e3b56e68222771bebf22ad7fc2295a0ed7d576e8d4329d
 
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
