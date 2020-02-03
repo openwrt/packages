@@ -8,28 +8,29 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadow
-PKG_VERSION:=4.6
-PKG_RELEASE:=2
+PKG_VERSION:=4.8.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/shadow-maint/shadow/releases/download/$(PKG_VERSION)
-PKG_HASH:=0998c8d84242a231ab0acb7f8613927ff5bcff095f8aa6b79478893a03f05583
-PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+PKG_HASH:=a3ad4630bdc41372f02a647278a8c3514844295d36eefe68ece6c3a641c1ae62
+
+PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:debian:shadow
 
-PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
 SHADOW_APPLETS := \
-	chage chpasswd chfn chsh expiry faillog gpasswd \
-	groupadd groupdel groupmems groupmod groups \
-	lastlog login newgidmap newgrp newuidmap nologin \
-	passwd su \
+	chage chfn chgpasswd chpasswd chsh expiry faillog gpasswd \
+	groupadd groupdel groupmems groupmod groups grpck grpconv grpunconv \
+	lastlog login logoutd newgidmap newgrp newuidmap newusers nologin \
+	passwd pwck pwconv pwunconv su \
 	useradd userdel usermod vipw
 
 CONFIGURE_ARGS += \
@@ -39,7 +40,11 @@ CONFIGURE_ARGS += \
 	--without-acl \
 	--without-attr \
 	--without-tcb \
-	--without-nscd
+	--without-nscd \
+	--with-bcrypt
+
+CONFIGURE_VARS += \
+	ac_cv_func_ruserok=no
 
 define Package/shadow/Default
   SECTION:=utils
@@ -122,6 +127,16 @@ endef
 define Package/shadow-common/install
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/login.defs $(1)/etc/
+	$(SED) 's,SU_NAME,#SU_NAME,g' $(1)/etc/login.defs
+ifeq ($(CONFIG_USE_MUSL),y)
+ifeq ($(CONFIG_MUSL_DISABLE_CRYPT_SIZE_HACK),y)
+	$(SED) 's,#ENCRYPT_METHOD DES,ENCRYPT_METHOD BCRYPT,g' $(1)/etc/login.defs
+else
+	$(SED) 's,#ENCRYPT_METHOD DES,ENCRYPT_METHOD MD5,g' $(1)/etc/login.defs
+endif # CONFIG_MUSL_DISABLE_CRYPT_SIZE_HACK
+else
+	$(SED) 's,#ENCRYPT_METHOD DES,ENCRYPT_METHOD SHA512,g' $(1)/etc/login.defs
+endif # CONFIG_USE_MUSL
 endef
 
 define Package/shadow-utils/install
