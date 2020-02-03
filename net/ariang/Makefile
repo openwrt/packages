@@ -61,8 +61,8 @@ endef
 
 define Package/ariang-nginx/install
 	$(Package/ariang/install)
-	$(INSTALL_DIR) $(1)/etc/nginx
-	$(INSTALL_BIN) ./files/ariang.conf $(1)/etc/nginx/ariang.conf
+	$(INSTALL_DIR) $(1)/etc/nginx/conf.d/
+	$(INSTALL_BIN) ./files/ariang.locations $(1)/etc/nginx/conf.d/
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/80_ariang-nginx-support $(1)/etc/uci-defaults/80_ariang-nginx-support
 endef
