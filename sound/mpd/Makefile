@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.21.16
+PKG_VERSION:=0.21.19
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.21/
-PKG_HASH:=30cf1bddf7d7388487276745ad3515f134e07f0c57f9f97cb2b5d3befd4a4d92
+PKG_SOURCE_URL:=https://www.musicpd.org/download/mpd/0.21/
+PKG_HASH:=d3275e11d85637adde250cadf3b4f5aec2144228f0d8085767493fc46c55b2f9
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -31,7 +31,7 @@ define Package/mpd/Default
   SECTION:=sound
   CATEGORY:=Sound
   TITLE:=Music Player Daemon
-  URL:=http://www.musicpd.org/
+  URL:=https://www.musicpd.org/
   DEPENDS:= +zlib +libcurl +libpthread +libmpdclient +libstdcpp $(ICONV_DEPENDS) \
 	    +AUDIO_SUPPORT:alsa-lib +boost +libexpat +libflac
 endef
