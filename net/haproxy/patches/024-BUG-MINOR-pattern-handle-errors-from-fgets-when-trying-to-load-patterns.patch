@@ -1,0 +1,44 @@
+commit bfa549da979e13f6c6a2e2defb7bbda5efa908f5
+Author: Jerome Magnin <jmagnin@haproxy.com>
+Date:   Fri Jan 17 16:09:33 2020 +0100
+
+    BUG/MINOR: pattern: handle errors from fgets when trying to load patterns
+    
+    We need to do some error handling after we call fgets to make sure everything
+    went fine. If we don't users can be fooled into thinking they can load pattens
+    from directory because cfgparse doesn't flinch. This applies to acl patterns
+    map files.
+    
+    This should be backported to all supported versions.
+    
+    (cherry picked from commit 3c79d4bdc47e151a97d7acdd99382bd9ca3927a5)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/pattern.c b/src/pattern.c
+index ec7e9556a..33e0e17f2 100644
+--- a/src/pattern.c
++++ b/src/pattern.c
+@@ -2328,6 +2328,11 @@ int pat_ref_read_from_file_smp(struct pat_ref *ref, const char *filename, char *
+ 		}
+ 	}
+ 
++	if (ferror(file)) {
++		memprintf(err, "error encountered while reading  <%s> : %s",
++				filename, strerror(errno));
++		goto out_close;
++	}
+ 	/* succes */
+ 	ret = 1;
+ 
+@@ -2385,6 +2390,11 @@ int pat_ref_read_from_file(struct pat_ref *ref, const char *filename, char **err
+ 		}
+ 	}
+ 
++	if (ferror(file)) {
++		memprintf(err, "error encountered while reading  <%s> : %s",
++				filename, strerror(errno));
++		goto out_close;
++	}
+ 	ret = 1; /* success */
+ 
+  out_close:

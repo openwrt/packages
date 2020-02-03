@@ -1,0 +1,32 @@
+commit 8015ba0c4a9333967059bdf7c302f7a71e5ec5ea
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Mon Jan 6 11:37:00 2020 +0100
+
+    BUG/MINOR: proxy: Fix input data copy when an error is captured
+    
+    In proxy_capture_error(), input data are copied in the error snapshot. The copy
+    must take care of the data wrapping. But the length of the first block is
+    wrong. It should be the amount of contiguous input data that can be copied
+    starting from the input's beginning. But the mininum between the input length
+    and the buffer size minus the input length is used instead. So it is a problem
+    if input data are wrapping or if more than the half of the buffer is used by
+    input data.
+    
+    This patch must be backported as far as 1.9.
+    
+    (cherry picked from commit 47a7210b9d377d91777f39241fab54d5f83b2728)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/proxy.c b/src/proxy.c
+index 1abd6654f..2d02b1b5d 100644
+--- a/src/proxy.c
++++ b/src/proxy.c
+@@ -1546,7 +1546,7 @@ void proxy_capture_error(struct proxy *proxy, int is_back,
+ 	es->buf_len = buf_len;
+ 	es->ev_id   = ev_id;
+ 
+-	len1 = b_size(buf) - buf_len;
++	len1 = b_size(buf) - b_peek_ofs(buf, buf_out);
+ 	if (len1 > buf_len)
+ 		len1 = buf_len;
+ 

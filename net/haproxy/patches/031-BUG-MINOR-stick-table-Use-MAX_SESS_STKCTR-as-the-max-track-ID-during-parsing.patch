@@ -1,0 +1,56 @@
+commit 1781e3834bb4a0b74d88d467bddc11e8fb811f17
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Wed Dec 18 10:25:46 2019 +0100
+
+    BUG/MINOR: stick-table: Use MAX_SESS_STKCTR as the max track ID during parsing
+    
+    During the parsing of the sc-inc-gpc0, sc-inc-gpc1 and sc-inc-gpt1 actions, the
+    maximum stick table track ID allowed is tested against ACT_ACTION_TRK_SCMAX. It
+    is the action number and not the maximum number of stick counters. Instead,
+    MAX_SESS_STKCTR must be used.
+    
+    This patch must be backported to all stable versions.
+    
+    (cherry picked from commit 28436e23d313d5986ddb97c9b4a5a0e5e78b2a42)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/stick_table.c b/src/stick_table.c
+index 1b70b468e..7b648475b 100644
+--- a/src/stick_table.c
++++ b/src/stick_table.c
+@@ -1916,9 +1916,9 @@ static enum act_parse_ret parse_inc_gpc0(const char **args, int *arg, struct pro
+ 			return ACT_RET_PRS_ERR;
+ 		}
+ 
+-		if (rule->arg.gpc.sc >= ACT_ACTION_TRK_SCMAX) {
++		if (rule->arg.gpc.sc >= MAX_SESS_STKCTR) {
+ 			memprintf(err, "invalid stick table track ID. The max allowed ID is %d",
+-			          ACT_ACTION_TRK_SCMAX-1);
++			          MAX_SESS_STKCTR-1);
+ 			return ACT_RET_PRS_ERR;
+ 		}
+ 	}
+@@ -1998,9 +1998,9 @@ static enum act_parse_ret parse_inc_gpc1(const char **args, int *arg, struct pro
+ 			return ACT_RET_PRS_ERR;
+ 		}
+ 
+-		if (rule->arg.gpc.sc >= ACT_ACTION_TRK_SCMAX) {
++		if (rule->arg.gpc.sc >= MAX_SESS_STKCTR) {
+ 			memprintf(err, "invalid stick table track ID. The max allowed ID is %d",
+-			          ACT_ACTION_TRK_SCMAX-1);
++			          MAX_SESS_STKCTR-1);
+ 			return ACT_RET_PRS_ERR;
+ 		}
+ 	}
+@@ -2107,9 +2107,9 @@ static enum act_parse_ret parse_set_gpt0(const char **args, int *arg, struct pro
+ 			return ACT_RET_PRS_ERR;
+ 		}
+ 
+-		if (rule->arg.gpt.sc >= ACT_ACTION_TRK_SCMAX) {
++		if (rule->arg.gpt.sc >= MAX_SESS_STKCTR) {
+ 			memprintf(err, "invalid stick table track ID '%s'. The max allowed ID is %d",
+-			          args[*arg-1], ACT_ACTION_TRK_SCMAX-1);
++			          args[*arg-1], MAX_SESS_STKCTR-1);
+ 			return ACT_RET_PRS_ERR;
+ 		}
+ 	}

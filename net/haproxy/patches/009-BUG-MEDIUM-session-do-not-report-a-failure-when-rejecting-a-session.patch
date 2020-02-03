@@ -1,0 +1,39 @@
+commit 1d12549a19c06f84c934c87487a58b8f63d205ea
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Tue Jan 7 18:03:09 2020 +0100
+
+    BUG/MEDIUM: session: do not report a failure when rejecting a session
+    
+    In session_accept_fd() we can perform a synchronous call to
+    conn_complete_session() and if it succeeds the connection is accepted
+    and turned into a session. If it fails we take it as an error while it
+    is not, in this case, it's just that a tcp-request rule has decided to
+    reject the incoming connection. The problem with reporting such an event
+    as an error is that the failed status is passed down to the listener code
+    which decides to disable accept() for 100ms in order to leave some time
+    for transient issues to vanish, and that's not what we want to do here.
+    
+    This fix must be backported as far as 1.7. In 1.7 the code is a bit
+    different as tcp_exec_l5_rules() is called directly from within
+    session_new_fd() and ret=0 must be assigned there.
+    
+    (cherry picked from commit e5891ca6c14c46d5f3a2169ede75b7fbb225216f)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/session.c b/src/session.c
+index 126ba78a6..111fc61e3 100644
+--- a/src/session.c
++++ b/src/session.c
+@@ -288,6 +288,12 @@ int session_accept_fd(struct listener *l, int cfd, struct sockaddr_storage *addr
+ 	if (conn_complete_session(cli_conn) >= 0)
+ 		return 1;
+ 
++	/* if we reach here we have deliberately decided not to keep this
++	 * session (e.g. tcp-request rule), so that's not an error we should
++	 * try to protect against.
++	 */
++	ret = 0;
++
+ 	/* error unrolling */
+  out_free_sess:
+ 	 /* prevent call to listener_release during session_free. It will be

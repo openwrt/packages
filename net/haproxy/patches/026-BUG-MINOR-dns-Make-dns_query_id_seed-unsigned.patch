@@ -1,0 +1,32 @@
+commit bf61c6cd41f59e68221eda04e0e4a10d9fafab48
+Author: Tim Duesterhus <tim@bastelstu.be>
+Date:   Sat Jan 18 02:04:12 2020 +0100
+
+    BUG/MINOR: dns: Make dns_query_id_seed unsigned
+    
+    Left shifting of large signed values and negative values is undefined.
+    
+    In a test script clang's ubsan rightfully complains:
+    
+    > runtime error: left shift of 1934242336581872173 by 13 places cannot be represented in type 'int64_t' (aka 'long')
+    
+    This bug was introduced in the initial version of the DNS resolver
+    in 325137d603aa81bd24cbd8c99d816dd42291daa7. The fix must be backported
+    to HAProxy 1.6+.
+    
+    (cherry picked from commit fcac33d0c1138ef22914c3b36518c1df105c9b72)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/dns.c b/src/dns.c
+index 8ea6fb271..a7e43dfe3 100644
+--- a/src/dns.c
++++ b/src/dns.c
+@@ -54,7 +54,7 @@
+ struct list dns_resolvers  = LIST_HEAD_INIT(dns_resolvers);
+ struct list dns_srvrq_list = LIST_HEAD_INIT(dns_srvrq_list);
+ 
+-static THREAD_LOCAL int64_t dns_query_id_seed = 0; /* random seed */
++static THREAD_LOCAL uint64_t dns_query_id_seed = 0; /* random seed */
+ 
+ DECLARE_STATIC_POOL(dns_answer_item_pool, "dns_answer_item", sizeof(struct dns_answer_item));
+ DECLARE_STATIC_POOL(dns_resolution_pool,  "dns_resolution",  sizeof(struct dns_resolution));

@@ -1,0 +1,65 @@
+commit 630583cc735de8036ca9963a6e093d5fef90157e
+Author: Christopher Faulet <cfaulet@haproxy.com>
+Date:   Tue Jan 14 15:05:56 2020 +0100
+
+    BUG/MINOR: tcp-rules: Fix memory releases on error path during action parsing
+    
+    When an error occurred during the parsing of a TCP action, if some memory was
+    allocated, it should be released before exiting.  Here, the fix consists for
+    replace a call to free() on a sample expression by a call to
+    release_sample_expr().
+    
+    This patch may be backported to all supported versions.
+    
+    (cherry picked from commit fdb6fbfa9a7b730939865b79bfbca3af278113b8)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/tcp_rules.c b/src/tcp_rules.c
+index 86b4df538..27cc0c20b 100644
+--- a/src/tcp_rules.c
++++ b/src/tcp_rules.c
+@@ -694,7 +694,7 @@ static int tcp_parse_request_rule(char **args, int arg, int section_type,
+ 			memprintf(err,
+ 			          "'%s %s %s' : fetch method '%s' extracts information from '%s', none of which is available here",
+ 			          args[0], args[1], args[kw], args[arg-1], sample_src_names(expr->fetch->use));
+-			free(expr);
++			release_sample_expr(expr);
+ 			return -1;
+ 		}
+ 
+@@ -704,7 +704,7 @@ static int tcp_parse_request_rule(char **args, int arg, int section_type,
+ 				memprintf(err,
+ 					  "'%s %s %s' : missing length value",
+ 					  args[0], args[1], args[kw]);
+-				free(expr);
++				release_sample_expr(expr);
+ 				return -1;
+ 			}
+ 			/* we copy the table name for now, it will be resolved later */
+@@ -713,7 +713,7 @@ static int tcp_parse_request_rule(char **args, int arg, int section_type,
+ 				memprintf(err,
+ 					  "'%s %s %s' : length must be > 0",
+ 					  args[0], args[1], args[kw]);
+-				free(expr);
++				release_sample_expr(expr);
+ 				return -1;
+ 			}
+ 			arg++;
+@@ -772,7 +772,7 @@ static int tcp_parse_request_rule(char **args, int arg, int section_type,
+ 			memprintf(err,
+ 			          "'%s %s %s' : fetch method '%s' extracts information from '%s', none of which is available here",
+ 			          args[0], args[1], args[kw], args[arg-1], sample_src_names(expr->fetch->use));
+-			free(expr);
++			release_sample_expr(expr);
+ 			return -1;
+ 		}
+ 
+@@ -785,7 +785,7 @@ static int tcp_parse_request_rule(char **args, int arg, int section_type,
+ 				memprintf(err,
+ 					  "'%s %s %s' : missing table name",
+ 					  args[0], args[1], args[kw]);
+-				free(expr);
++				release_sample_expr(expr);
+ 				return -1;
+ 			}
+ 			/* we copy the table name for now, it will be resolved later */

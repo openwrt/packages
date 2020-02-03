@@ -1,0 +1,36 @@
+commit 16a997d2b725eabc6ceec94f57cc25e005845e4d
+Author: Emmanuel Hocdet <manu@gandi.net>
+Date:   Thu Jan 16 15:15:49 2020 +0100
+
+    BUG/MINOR: ssl: ssl_sock_load_sctl_from_file memory leak
+    
+    "set ssl cert <filename.sctl> <payload>" CLI command must free
+    previous context.
+    
+    This patch should be backport to 2.1
+    
+    (cherry picked from commit 224a087a271b513b3f0a0f08ed23cde42919e0f6)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 1ec3a84bb..4f1e7e78e 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -1445,10 +1445,14 @@ static int ssl_sock_load_sctl_from_file(const char *sctl_path, char *buf, struct
+ 		sctl = NULL;
+ 		goto end;
+ 	}
+-	ret = 0;
+-	/* TODO: free the previous SCTL in the ckch */
++	/* no error, fill ckch with new context, old context must be free */
++	if (ckch->sctl) {
++		free(ckch->sctl->area);
++		ckch->sctl->area = NULL;
++		free(ckch->sctl);
++	}
+ 	ckch->sctl = sctl;
+-
++	ret = 0;
+ end:
+ 	if (fd != -1)
+ 		close(fd);

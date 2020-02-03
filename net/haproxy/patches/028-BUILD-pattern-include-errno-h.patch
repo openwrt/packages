@@ -1,0 +1,28 @@
+commit fb815462c6720c63d45e8fc09c35c49de6160888
+Author: Jerome Magnin <jmagnin@haproxy.com>
+Date:   Fri Jan 17 18:01:20 2020 +0100
+
+    BUILD: pattern: include errno.h
+    
+    Commit 3c79d4bdc introduced the use of errno in pattern.c without
+    including errno.h.
+    If we build haproxy without any option errno is not defined and the
+    build fails.
+    
+    (cherry picked from commit b8bd6d7efd6db5d964eae902e8f3c09a757b12a9)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+    
+    [Cf: I miissed this one during my last backports]
+
+diff --git a/src/pattern.c b/src/pattern.c
+index 33e0e17f2..90067cd23 100644
+--- a/src/pattern.c
++++ b/src/pattern.c
+@@ -12,6 +12,7 @@
+ 
+ #include <ctype.h>
+ #include <stdio.h>
++#include <errno.h>
+ 
+ #include <common/config.h>
+ #include <common/standard.h>

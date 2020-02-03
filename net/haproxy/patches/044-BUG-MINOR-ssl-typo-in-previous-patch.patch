@@ -1,0 +1,27 @@
+commit 5d5c377717cfd5230150985c55322f1c5bb61a4e
+Author: William Lallemand <wlallemand@haproxy.org>
+Date:   Thu Jan 23 11:59:02 2020 +0100
+
+    BUG/MINOR: ssl: typo in previous patch
+    
+    The previous patch 5c3c96f ("BUG/MINOR: ssl: memory leak w/ the
+    ocsp_issuer") contains a typo that prevent it to build.
+    
+    Should be backported in 2.1.
+    
+    (cherry picked from commit dad239d08be1f2abe7e54d9332f1eb87acebf987)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index af285938e..713c8aedd 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -2967,7 +2967,7 @@ static void ssl_sock_free_cert_key_and_chain_contents(struct cert_key_and_chain
+ 	}
+ 
+ 	if (ckch->ocsp_issuer)
+-		X509_free(ocsp_issuer);
++		X509_free(ckch->ocsp_issuer);
+ 	ckch->ocsp_issuer = NULL;
+ }
+ 

@@ -1,0 +1,33 @@
+commit 77ec6260f99e7f41f22235bcc1905eb8b15c7eb8
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Fri Jan 24 17:52:37 2020 +0100
+
+    BUG/MINOR: tcpchecks: fix the connect() flags regarding delayed ack
+    
+    In issue #465, we see that Coverity detected dead code in checks.c
+    which is in fact a missing parenthesis to build the connect() flags
+    consecutive to the API change in commit fdcb007ad8 ("MEDIUM: proto:
+    Change the prototype of the connect() method.").
+    
+    The impact should be imperceptible as in the best case it may have
+    resulted in a missed optimization trying to save a syscall or to merge
+    outgoing packets.
+    
+    It may be backported as far as 2.0 though it's not critical.
+    
+    (cherry picked from commit 74ab7d2b80cf3930e2b3957c9234953a632c5226)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/checks.c b/src/checks.c
+index 2b7fc09c6..952114e95 100644
+--- a/src/checks.c
++++ b/src/checks.c
+@@ -2962,7 +2962,7 @@ static int tcpcheck_main(struct check *check)
+ 			ret = SF_ERR_INTERNAL;
+ 			if (proto && proto->connect)
+ 				ret = proto->connect(conn,
+-						     CONNECT_HAS_DATA /* I/O polling is always needed */ | (next && next->action == TCPCHK_ACT_EXPECT) ? 0 : CONNECT_DELACK_ALWAYS);
++						     CONNECT_HAS_DATA /* I/O polling is always needed */ | ((next && next->action == TCPCHK_ACT_EXPECT) ? 0 : CONNECT_DELACK_ALWAYS));
+ 			if (conn_ctrl_ready(conn) &&
+ 				check->current_step->conn_opts & TCPCHK_OPT_SEND_PROXY) {
+ 				conn->send_proxy_ofs = 1;
