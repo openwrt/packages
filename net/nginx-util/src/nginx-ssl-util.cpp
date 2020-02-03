@@ -106,7 +106,7 @@ constexpr auto _begin = _Line{
 
     [](const std::string & /*param*/, const std::string & /*begin*/)
         -> std::string
-    { return R"([{;](\s*))"; }
+    { return R"([{;](?:\s*#[^\n]*(?=\n))*(\s*))"; }
 };
 
 
@@ -139,7 +139,7 @@ constexpr auto _end = _Line{
 
     [](const std::string & /*param*/, const std::string & /*begin*/)
         -> std::string
-    { return std::string{R"(\s*;)"}; }
+    { return std::string{R"(\s*;(?:[\t ]*#[^\n]*)?)"}; }
 };
 
 
@@ -256,7 +256,7 @@ auto get_if_missed(const std::string & conf, const Line & LINE,
          rgx::regex_search(pos, conf.end(), match, LINE.RGX());
          pos += match.position(0) + match.length(0))
     {
-        const std::string_view value = match.str(match.size() - 1);
+        const std::string value = match.str(match.size() - 1);
 
         if (value==val || value=="'"+val+"'" || value=='"'+val+'"') {
             return "";
@@ -278,13 +278,12 @@ auto delete_if(const std::string & conf, const rgx::regex & rgx,
          rgx::regex_search(pos, conf.end(), match, rgx);
          pos += match.position(0) + match.length(0))
     {
-        const std::string_view value = match.str(match.size() - 1);
-        
-        auto skip = 1; // one for delimiter!
+        const std::string value = match.str(match.size() - 1);
+        auto len = match.position(1);
         if (compare && value!=val && value!="'"+val+"'" && value!='"'+val+'"') {
-            skip = match.length(0);
+            len = match.position(0) + match.length(0);
         }
-        ret.append(pos, pos + match.position(0) + skip);
+        ret.append(pos, pos + len);
     }
 
     ret.append(pos, conf.end());
@@ -559,7 +558,7 @@ void del_ssl_directives_from(const std::string & name, const bool isdefault)
             get_if_missed(conf, NGX_INCLUDE_LAN_LISTEN, "", indent);
 
         if (adds.length() > 0) {
-            pos += match.position(0) + 1;
+            pos += match.position(1);
 
             conf = std::string(const_conf.begin(), pos) + adds
                     + std::string(pos, const_conf.end());
@@ -609,10 +608,9 @@ void del_ssl(const std::string & name)
 
             auto line = const_conf.substr(prev, curr-prev+1);
 
-            line = delete_if(line, CRON_CMD.RGX(), std::string{name}, true);
-
-            if (line.substr(0,line.size()-1)==CRON_INTERVAL) { changed = true; }
-            else { conf += line; }
+            if (line==delete_if(line,CRON_CMD.RGX(),std::string{name},true)) {
+                conf += line;
+            } else { changed = true; }
 
             prev = curr + 1;
         }
