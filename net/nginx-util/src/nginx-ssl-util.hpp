@@ -1,3 +1,6 @@
+#ifndef __NGINX_SSL_UTIL_HPP
+#define __NGINX_SSL_UTIL_HPP
+
 #include <thread>
 
 #ifdef NO_PCRE
@@ -491,12 +494,7 @@ void use_cron_to_recreate_certificate(const std::string & name)
 
 void add_ssl_if_needed(const std::string & name)
 {
-    try { add_ssl_directives_to(name, name==LAN_NAME); }
-    catch (...) {
-        std::cerr<<"add_ssl_if_needed error: ";
-        std::cerr<<"cannot add SSL directives to "<<name<<".conf"<<std::endl;
-        throw;
-    }
+    add_ssl_directives_to(name, name==LAN_NAME); // let it throw.
 
     const auto crtpath = std::string{CONF_DIR} + name + ".crt";
     const auto keypath = std::string{CONF_DIR} + name + ".key";
@@ -655,6 +653,4 @@ void del_ssl(const std::string & name)
 }
 
 
-// reuse main(...) and common functions:
-#define NGINX_OPENSSL
-#include "nginx-util.cpp"
+#endif

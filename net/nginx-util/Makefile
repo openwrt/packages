@@ -1,13 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx-util
-PKG_VERSION:=1.2
+PKG_VERSION:=1.3
 PKG_RELEASE:=1
+PKG_MAINTAINER:=Peter Stadler <peter.stadler@student.uibk.ac.at>
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-define Package/nginx-util
+CMAKE_OPTIONS+= -DUBUS=y
+CMAKE_OPTIONS+= -DVERSION=$(PKG_VERSION)
+
+define Package/nginx-util/default
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
@@ -15,23 +19,29 @@ define Package/nginx-util
   DEPENDS:=+libstdcpp +libubus +libubox +libpthread
 endef
 
+define Package/nginx-util
+  $(Package/nginx-util/default)
+  CONFLICTS:=nginx-ssl-util
+endef
+
 define Package/nginx-ssl-util/default
-  $(Package/nginx-util)
+  $(Package/nginx-util/default)
   TITLE+= and manager of its SSL certificates
   DEPENDS+= +libopenssl
   CONFLICTS:=nginx-util
-  PROVIDES:=nginx-ssl-util
 endef
 
 define Package/nginx-ssl-util
   $(Package/nginx-ssl-util/default)
   TITLE+= (using PCRE)
   DEPENDS+= +libpcre
+  CONFLICTS+= nginx-ssl-util-nopcre
 endef
 
 define Package/nginx-ssl-util-nopcre
   $(Package/nginx-ssl-util/default)
   TITLE+= (using <regex>)
+  CONFLICTS+= nginx-ssl-util
 endef
 
 define Package/nginx-util/description
