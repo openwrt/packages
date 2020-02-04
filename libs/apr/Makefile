@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apr
-PKG_VERSION:=1.6.5
-PKG_RELEASE:=5
+PKG_VERSION:=1.7.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/apr/
-PKG_HASH:=a67ca9fcf9c4ff59bce7f428a323c8b5e18667fdea7b0ebad47d194371b0a105
+PKG_HASH:=e2e148f0b2e99b8e5c6caa09f6d4fb4dd3e83f744aa72a952f94f5a14436f7ea
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>, \
 		Sebastian Kemper <sebastian_ml@gmx.net>
@@ -44,11 +44,18 @@ CONFIGURE_ARGS += \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6)
 
 # XXX: ac_cv_sizeof_struct_iovec=1 is just to trick configure
+# XXX: don't set apr_cv_use_lfs64=yes, see
+#      https://www.openwall.com/lists/musl/2020/02/03/18
+# XXX: the atomic builtins used require 8-byte intrinsics, which are available
+#      on all 64-bit architectures and some arm as well as x86 32-bit platforms
 CONFIGURE_VARS += \
+	ap_cv_atomic_builtins=$(if $(CONFIG_ARCH_64BIT),yes,no) \
 	ac_cv_file__dev_zero=yes \
 	ac_cv_func_pthread_mutexattr_setpshared=yes \
 	ac_cv_func_sem_open=yes \
 	ac_cv_func_setpgrp_void=yes \
+	ac_cv_mmap__dev_zero=yes \
+	ac_cv_negative_eai=yes \
 	ac_cv_o_nonblock_inherited=no \
 	ac_cv_sizeof_struct_iovec=1 \
 	ac_cv_struct_rlimit=yes \
@@ -56,12 +63,18 @@ CONFIGURE_VARS += \
 	apr_cv_dup3=yes \
 	apr_cv_epoll=yes \
 	apr_cv_epoll_create1=yes \
+	apr_cv_gai_addrconfig=yes \
 	apr_cv_mutex_recursive=yes \
 	apr_cv_mutex_robust_shared=yes \
 	apr_cv_process_shared_works=yes \
+	apr_cv_pthreads_lib=-lpthread \
 	apr_cv_sock_cloexec=yes \
-	apr_cv_tcp_nodelay_with_cork=yes \
-	apr_cv_use_lfs64=yes
+	apr_cv_tcp_nodelay_with_cork=yes
+
+ifeq ($(call qstrip,$(CONFIG_LIBC)),musl)
+CONFIGURE_VARS += \
+	ac_cv_strerror_r_rc_int=yes
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/include/apr-1 \

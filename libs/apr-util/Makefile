@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apr-util
 PKG_VERSION:=1.6.1
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/apr/
@@ -106,7 +106,13 @@ endif
 
 CONFIGURE_VARS += \
 	ac_cv_path_ODBC_CONFIG= \
+	apu_cv_weak_symbols=yes \
 	APR_BUILD_DIR="$(STAGING_DIR)/usr/share/build-1"
+
+ifeq ($(CONFIG_USE_GLIBC)$(CONFIG_USE_MUSL),y)
+CONFIGURE_VARS += \
+	apu_cv_explicit_bzero=yes
+endif
 
 define Package/libaprutil/install/driver
 	$(INSTALL_DIR) $(1)/usr/lib/apr-util-1
@@ -135,10 +141,9 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/include/apr-1 \
-				$(1)/usr/lib/pkgconfig
+		$(1)/usr/lib/apr-util-1 $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/apu-1-config $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/apr-1/* $(1)/usr/include/apr-1
-	$(INSTALL_DIR) $(1)/usr/lib/apr-util-1
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/apr-util-1/apr_*.{a,so} \
 			$(1)/usr/lib/apr-util-1 2>/dev/null || :
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libaprutil-1.{a,so*} \
