@@ -9,8 +9,6 @@ ifeq ($(origin GO_INCLUDE_DIR),undefined)
   GO_INCLUDE_DIR:=$(dir $(lastword $(MAKEFILE_LIST)))
 endif
 
-include $(GO_INCLUDE_DIR)/golang-version.mk
-
 
 # Unset environment variables
 # There are more magic variables to track down, but ain't nobody got time for that
@@ -208,10 +206,6 @@ endif
 # Target Go
 
 GO_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||mips||mips64||mips64el||mipsel||powerpc64||x86_64)
-
-GO_TARGET_PREFIX:=/usr
-GO_TARGET_VERSION_ID:=$(GO_VERSION_MAJOR_MINOR)
-GO_TARGET_ROOT:=$(GO_TARGET_PREFIX)/lib/go-$(GO_TARGET_VERSION_ID)
 
 
 # ASLR/PIE
