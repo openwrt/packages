@@ -1,0 +1,80 @@
+--- a/nmap_error.cc
++++ b/nmap_error.cc
+@@ -135,6 +135,7 @@
+ #include "xml.h"
+ 
+ #include <errno.h>
++#include <time.h>
+ 
+ extern NmapOps o;
+ 
+--- a/nping/EchoServer.cc
++++ b/nping/EchoServer.cc
+@@ -131,6 +131,7 @@
+ #include "EchoServer.h"
+ #include "EchoHeader.h"
+ #include "NEPContext.h"
++#include <ctime>
+ #include <vector>
+ #include "nsock.h"
+ #include "output.h"
+@@ -281,12 +282,12 @@ int EchoServer::nep_listen_socket(){
+         server_addr6.sin6_len = sizeof(struct sockaddr_in6);
+     #endif
+     /* Bind to local address and the specified port */
+-    if( bind(master_sd, (struct sockaddr *)&server_addr6, sizeof(server_addr6)) != 0 ){
++    if( ::bind(master_sd, (struct sockaddr *)&server_addr6, sizeof(server_addr6)) != 0 ){
+         nping_warning(QT_3, "Failed to bind to source address %s. Trying to bind to port %d...", IPtoa(server_addr6.sin6_addr), port);
+         /* If the bind failed for the supplied address, just try again with in6addr_any */
+         if( o.spoofSource() ){
+             server_addr6.sin6_addr = in6addr_any;
+-            if( bind(master_sd, (struct sockaddr *)&server_addr6, sizeof(server_addr6)) != 0 ){
++            if( ::bind(master_sd, (struct sockaddr *)&server_addr6, sizeof(server_addr6)) != 0 ){
+                 nping_fatal(QT_3, "Could not bind to port %d (%s).", port, strerror(errno));
+             }else{ 
+                 nping_print(VB_1, "Server bound to port %d", port);
+@@ -319,12 +320,12 @@ int EchoServer::nep_listen_socket(){
+ #endif
+ 
+     /* Bind to local address and the specified port */
+-    if( bind(master_sd, (struct sockaddr *)&server_addr4, sizeof(server_addr4)) != 0 ){
++    if( ::bind(master_sd, (struct sockaddr *)&server_addr4, sizeof(server_addr4)) != 0 ){
+         nping_warning(QT_3, "Failed to bind to source address %s. Trying to bind to port %d...", IPtoa(server_addr4.sin_addr), port);
+         /* If the bind failed for the supplied address, just try again with in6addr_any */
+         if( o.spoofSource() ){
+             server_addr4.sin_addr.s_addr=INADDR_ANY;
+-            if( bind(master_sd, (struct sockaddr *)&server_addr4, sizeof(server_addr4)) != 0 ){
++            if( ::bind(master_sd, (struct sockaddr *)&server_addr4, sizeof(server_addr4)) != 0 ){
+                 nping_fatal(QT_3, "Could not bind to port %d (%s).", port, strerror(errno));
+             }else{
+                 nping_print(VB_1, "Server bound to port %d", port);
+--- a/osscan.cc
++++ b/osscan.cc
+@@ -151,6 +151,7 @@
+ #endif
+ 
+ #include <algorithm>
++#include <ctime>
+ #include <list>
+ #include <set>
+ 
+--- a/osscan2.cc
++++ b/osscan2.cc
+@@ -145,6 +145,7 @@
+ 
+ #include "struct_ip.h"
+ 
++#include <ctime>
+ #include <list>
+ #include <math.h>
+ 
+--- a/service_scan.cc
++++ b/service_scan.cc
+@@ -173,6 +173,7 @@
+ #endif
+ 
+ #include <algorithm>
++#include <ctime>
+ #include <list>
+ 
+ extern NmapOps o;
