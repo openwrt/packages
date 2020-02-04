@@ -6,19 +6,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squeezelite
-PKG_VERSION:=1.9.1-1130
-PKG_RELEASE:=2
-
-PKG_LICENSE:=GPL-3.0
-PKG_LICENSE_FILES:=LICENSE.txt
-PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_VERSION:=1.9.6-1210
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/ralph-irving/squeezelite.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=451cad8da651073d18118fb9ca39faef550825ff
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=e6082b486e364c8cbd7db96fc06dc5243242a3ac786113e42e3061c06ea8889e
+PKG_SOURCE_URL:=https://github.com/ralph-irving/squeezelite
+PKG_SOURCE_VERSION:=1b7a17616cd2bbd9935c710dc33cda11cd0de45e
+PKG_MIRROR_HASH:=5993fa5fcacd1640962bc60f88a93faa4fcac74a767fbf820b40a27c338a9062
+
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=LICENSE.txt
+
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -118,10 +118,6 @@ ifeq ($(BUILD_VARIANT),full)
 endif
 
 MAKE_FLAGS+=OPTS="$(opts)"
-
-# Squeezelite uses functions which are deprecated in recent ffmpeg versions.
-# See https://github.com/ralph-irving/squeezelite/issues/60
-TARGET_CFLAGS+=-Wno-deprecated-declarations
 
 define Package/squeezelite/install
 	$(INSTALL_DIR) $(1)/usr/bin
