@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
 PKG_VERSION:=10.4.12
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := \
@@ -559,7 +559,8 @@ endef
 define Package/mariadb-server-plugin-auth-pam/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
-  chown mariadb /usr/lib/mariadb/plugin/auth_pam_tool_dir > /dev/null 2>&1
+  chown root:mariadb /usr/lib/mariadb/plugin/auth_pam_tool_dir > /dev/null 2>&1
+  chmod 0750 /usr/lib/mariadb/plugin/auth_pam_tool_dir > /dev/null 2>&1
 fi
 exit 0
 endef
