@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmraa
-PKG_VERSION:=2.0.0
-PKG_RELEASE:=2
+PKG_VERSION:=2.1.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/intel-iot-devkit/mraa/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=c9f3c3741c6894be5516adecfe6b55a38960b6718b268a9afd645f7955e5a716
+PKG_SOURCE_URL:=https://codeload.github.com/eclipse/mraa/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=5351ce9eb654014d8ea7f43bdb2d17e6d1955536938a2ea0d467f4008e614345
 PKG_BUILD_DIR:=$(BUILD_DIR)/mraa-$(PKG_VERSION)
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>, Hirokazu MORIKAWA <morikw2@gmail.com>
@@ -38,8 +38,8 @@ define Package/libmraa/Default
   SECTION:=libs
   CATEGORY:=Libraries
   SUBMENU:=IoT
-  TITLE:=Intel IoT lowlevel IO library
-  URL:=https://github.com/intel-iot-devkit/mraa
+  TITLE:=Eclipse MRAA lowlevel IO library
+  URL:=https://projects.eclipse.org/projects/iot.mraa
 endef
 
 define Package/libmraa/Default/description
@@ -52,7 +52,7 @@ endef
 
 define Package/libmraa
   $(call Package/libmraa/Default)
-  TITLE:=Intel IoT lowlevel IO C/C++ library
+  TITLE:=Eclipse MRAA lowlevel IO C/C++ library
   DEPENDS:=+libstdcpp +libjson-c @!arc @!armeb @!powerpc
 endef
 
@@ -64,7 +64,7 @@ endef
 
 define Package/libmraa-node
   $(call Package/libmraa/Default)
-  TITLE:=Intel IoT lowlevel IO Node.js library
+  TITLE:=Eclipse MRAA lowlevel IO Node.js library
   DEPENDS:=+libmraa +node
 endef
 
@@ -76,7 +76,7 @@ endef
 
 define Package/libmraa-python
   $(call Package/libmraa/Default)
-  TITLE:=Intel IoT lowlevel IO Python library
+  TITLE:=Eclipse MRAA lowlevel IO Python library
   DEPENDS:=+libmraa +python-light
 endef
 
@@ -88,7 +88,7 @@ endef
 
 define Package/libmraa-python3
   $(call Package/libmraa/Default)
-  TITLE:=Intel IoT lowlevel IO Python3 library
+  TITLE:=Eclipse MRAA lowlevel IO Python3 library
   DEPENDS:=+libmraa +python3-light
 endef
 
