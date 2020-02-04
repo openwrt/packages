@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=forked-daapd
-PKG_VERSION:=26.5
-PKG_RELEASE:=2
+PKG_VERSION:=27.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/ejurgensen/$(PKG_NAME)/releases/download/$(PKG_VERSION)/
-PKG_HASH:=6d12e5c1c078ff406413a08a65327c3b23d80605a997d3b219322a5c6a05923c
+PKG_HASH:=e11f86d7de5b7743e388d88f17adb8967d30c4c6c9b4bee2d85d3e7ee2d1849f
 
 PKG_FIXUP:=autoreconf
 PKG_USE_MIPS16:=0
