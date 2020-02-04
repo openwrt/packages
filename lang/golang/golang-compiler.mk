@@ -59,7 +59,7 @@ define GoCompiler/Default/Install/Bin
 
 	$(INSTALL_DATA) -p $(1)/VERSION $(2)/lib/go-$(3)/
 
-	for file in AUTHORS CONTRIBUTING.md CONTRIBUTORS LICENSE PATENTS README README.md; do \
+	for file in AUTHORS CONTRIBUTING.md CONTRIBUTORS LICENSE PATENTS README.md SECURITY.md; do \
 		if [ -f $(1)/$$$$file ]; then \
 			$(INSTALL_DATA) -p $(1)/$$$$file $(2)/share/go-$(3)/ ; \
 		fi ; \
