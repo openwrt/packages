@@ -1,0 +1,28 @@
+From d5341ccfe1a29f8d88c279d246ddd4e0b53fbecc Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Sun, 2 Feb 2020 16:08:36 -0800
+Subject: [PATCH] [clang-tidy] add missing comma
+
+Found with bugprone-suspicious-missing-comma
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ src/decoder/plugins/FfmpegDecoderPlugin.cxx | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/decoder/plugins/FfmpegDecoderPlugin.cxx b/src/decoder/plugins/FfmpegDecoderPlugin.cxx
+index 6be0448b9..2bc1fb4ae 100644
+--- a/src/decoder/plugins/FfmpegDecoderPlugin.cxx
++++ b/src/decoder/plugins/FfmpegDecoderPlugin.cxx
+@@ -762,7 +762,7 @@ static const char *const ffmpeg_mime_types[] = {
+ 	"audio/aac",
+ 	"audio/aacp",
+ 	"audio/ac3",
+-	"audio/aiff"
++	"audio/aiff",
+ 	"audio/amr",
+ 	"audio/basic",
+ 	"audio/flac",
+-- 
+2.24.1
+
