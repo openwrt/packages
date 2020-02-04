@@ -40,7 +40,7 @@ Signed-off-by: Bernd Kuhls <bernd.kuhls@t-online.de>
  
  # get substituted into some targets
  APR_MAJOR_VERSION=@APR_MAJOR_VERSION@
-@@ -137,8 +139,13 @@ tools/gen_test_char.lo: tools/gen_test_c
+@@ -136,8 +138,13 @@ tools/gen_test_char.lo: tools/gen_test_c
  	$(APR_MKDIR) tools
  	$(LT_COMPILE)
  

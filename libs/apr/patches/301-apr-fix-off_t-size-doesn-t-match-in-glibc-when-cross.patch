@@ -35,7 +35,7 @@ Upstream-Status: Pending
 
 --- a/configure.in
 +++ b/configure.in
-@@ -1785,7 +1785,7 @@ else
+@@ -1809,7 +1809,7 @@ else
      socklen_t_value="int"
  fi
  
@@ -44,25 +44,25 @@ Upstream-Status: Pending
  
  if test "$ac_cv_sizeof_pid_t" = "$ac_cv_sizeof_short"; then
      pid_t_fmt='#define APR_PID_T_FMT "hd"'
-@@ -1854,7 +1854,7 @@ APR_CHECK_TYPES_COMPATIBLE(ssize_t, long
- APR_CHECK_TYPES_COMPATIBLE(size_t, unsigned int, [size_t_fmt="u"])
- APR_CHECK_TYPES_COMPATIBLE(size_t, unsigned long, [size_t_fmt="lu"])
+@@ -1881,7 +1881,7 @@ APR_CHECK_TYPES_FMT_COMPATIBLE(size_t, u
+ APR_CHECK_TYPES_FMT_COMPATIBLE(size_t, unsigned int, u, [size_t_fmt="u"])
+ ])
  
 -APR_CHECK_SIZEOF_EXTENDED([#include <sys/types.h>], ssize_t, 8)
 +AC_CHECK_SIZEOF(ssize_t)
  
+ dnl the else cases below should no longer occur;
  AC_MSG_CHECKING([which format to use for apr_ssize_t])
- if test -n "$ssize_t_fmt"; then
-@@ -1871,7 +1871,7 @@ fi
+@@ -1899,7 +1899,7 @@ fi
  
  ssize_t_fmt="#define APR_SSIZE_T_FMT \"$ssize_t_fmt\""
  
 -APR_CHECK_SIZEOF_EXTENDED([#include <stddef.h>], size_t, 8)
 +AC_CHECK_SIZEOF(size_t)
  
+ # else cases below should no longer occur;
  AC_MSG_CHECKING([which format to use for apr_size_t])
- if test -n "$size_t_fmt"; then
-@@ -1888,7 +1888,7 @@ fi
+@@ -1917,7 +1917,7 @@ fi
  
  size_t_fmt="#define APR_SIZE_T_FMT \"$size_t_fmt\""
  
