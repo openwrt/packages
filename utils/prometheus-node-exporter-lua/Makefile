@@ -4,8 +4,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
-PKG_VERSION:=2019.11.17
-PKG_RELEASE:=2
+PKG_VERSION:=2020.02.03
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -56,6 +56,12 @@ define Package/prometheus-node-exporter-lua-wifi_stations
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (wifi_stations collector)
   DEPENDS:=prometheus-node-exporter-lua +libiwinfo-lua +libubus-lua
+endef
+
+define Package/prometheus-node-exporter-lua-hostapd_stations
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (hostapd_stations collector) - Requires a full hostapd / wpad build
+  DEPENDS:=prometheus-node-exporter-lua +hostapd-utils +lua-bit32 +libubus-lua
 endef
 
 define Package/prometheus-node-exporter-lua-bmx6
@@ -128,6 +134,11 @@ define Package/prometheus-node-exporter-lua-wifi_stations/install
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/wifi_stations.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
+define Package/prometheus-node-exporter-lua-hostapd_stations/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/hostapd_stations.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
 define Package/prometheus-node-exporter-lua-bmx6/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/bmx6.lua $(1)/usr/lib/lua/prometheus-collectors/
@@ -158,6 +169,7 @@ $(eval $(call BuildPackage,prometheus-node-exporter-lua-nat_traffic))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-netstat))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi_stations))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-hostapd_stations))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx6))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx7))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-textfile))
