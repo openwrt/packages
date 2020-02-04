@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apache
 PKG_VERSION:=2.4.41
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 PKG_SOURCE_NAME:=httpd
 
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.bz2
@@ -268,6 +268,7 @@ CONFIGURE_ARGS+= \
 endif
 
 CONFIGURE_VARS += \
+	ac_cv_gettid=yes \
 	ap_cv_void_ptr_lt_long=no
 
 define Build/Prepare
