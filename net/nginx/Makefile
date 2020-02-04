@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.17.7
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
@@ -360,6 +360,8 @@ ifeq ($(CONFIG_NGINX_LUA),y)
   CONFIGURE_VARS += LUA_INC=$(STAGING_DIR)/usr/include \
 					LUA_LIB=$(STAGING_DIR)/usr/lib
 endif
+
+CONFIGURE_VARS += CONFIG_BIG_ENDIAN=$(CONFIG_BIG_ENDIAN)
 
 CONFIGURE_ARGS += \
 			--crossbuild=Linux::$(ARCH) \
