@@ -6,11 +6,13 @@
 #
 
 include $(TOPDIR)/rules.mk
-include ../golang-version.mk
+
+GO_VERSION_MAJOR_MINOR:=1.13
+GO_VERSION_PATCH:=7
 
 PKG_NAME:=golang
 PKG_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 GO_SOURCE_URLS:=https://dl.google.com/go/ \
                 https://mirrors.ustc.edu.cn/golang/ \
@@ -33,6 +35,10 @@ PKG_USE_MIPS16:=0
 PKG_GO_WORK_DIR:=$(PKG_BUILD_DIR)/.go_work
 PKG_GO_HOST_CACHE_DIR:=$(PKG_GO_WORK_DIR)/host_cache
 PKG_GO_TARGET_CACHE_DIR:=$(PKG_GO_WORK_DIR)/target_cache
+
+PKG_GO_PREFIX:=/usr
+PKG_GO_VERSION_ID:=$(GO_VERSION_MAJOR_MINOR)
+PKG_GO_ROOT:=$(PKG_GO_PREFIX)/lib/go-$(PKG_GO_VERSION_ID)
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/go-$(PKG_VERSION)
 HOST_BUILD_PARALLEL:=1
@@ -178,7 +184,7 @@ $(eval $(call Download,golang-bootstrap))
 
 $(eval $(call GoCompiler/AddProfile,Bootstrap,$(BOOTSTRAP_BUILD_DIR),,bootstrap,$(GO_HOST_OS_ARCH)))
 $(eval $(call GoCompiler/AddProfile,Host,$(HOST_BUILD_DIR),$(HOST_GO_PREFIX),$(HOST_GO_VERSION_ID),$(GO_HOST_OS_ARCH),$(HOST_GO_INSTALL_SUFFIX)))
-$(eval $(call GoCompiler/AddProfile,Package,$(PKG_BUILD_DIR),$(GO_TARGET_PREFIX),$(GO_TARGET_VERSION_ID),$(GO_OS_ARCH),$(PKG_GO_INSTALL_SUFFIX)))
+$(eval $(call GoCompiler/AddProfile,Package,$(PKG_BUILD_DIR),$(PKG_GO_PREFIX),$(PKG_GO_VERSION_ID),$(GO_OS_ARCH),$(PKG_GO_INSTALL_SUFFIX)))
 
 define Host/Prepare
 	$(call Host/Prepare/Default)
@@ -278,8 +284,9 @@ define Build/Compile
 
 	( \
 		cd $(PKG_BUILD_DIR)/bin ; \
+		export $(call GoPackage/Environment/Target) ; \
 		$(CP) go go-host ; \
-		GOROOT_FINAL=$(GO_TARGET_ROOT) \
+		GOROOT_FINAL=$(PKG_GO_ROOT) \
 		GOCACHE=$(PKG_GO_TARGET_CACHE_DIR) \
 		GOENV=off \
 		GO_GCC_HELPER_CC="$(TARGET_CC)" \
@@ -289,7 +296,6 @@ define Build/Compile
 		CXX=g++ \
 		PKG_CONFIG=pkg-config \
 		PATH=$(HOST_GO_ROOT)/openwrt:$$$$PATH \
-		$(call GoPackage/Environment) \
 		./go-host install -a $(if $(PKG_GO_ENABLE_PIE),-buildmode=pie) std cmd ; \
 		retval=$$$$? ; \
 		rm -f go-host ; \
@@ -298,16 +304,16 @@ define Build/Compile
 endef
 
 define Package/golang/install
-	$(call GoCompiler/Package/Install/Bin,$(1)$(GO_TARGET_PREFIX))
-	$(call GoCompiler/Package/Install/BinLinks,$(1)$(GO_TARGET_PREFIX))
+	$(call GoCompiler/Package/Install/Bin,$(1)$(PKG_GO_PREFIX))
+	$(call GoCompiler/Package/Install/BinLinks,$(1)$(PKG_GO_PREFIX))
 endef
 
 define Package/golang-doc/install
-	$(call GoCompiler/Package/Install/Doc,$(1)$(GO_TARGET_PREFIX))
+	$(call GoCompiler/Package/Install/Doc,$(1)$(PKG_GO_PREFIX))
 endef
 
 define Package/golang-src/install
-	$(call GoCompiler/Package/Install/Src,$(1)$(GO_TARGET_PREFIX))
+	$(call GoCompiler/Package/Install/Src,$(1)$(PKG_GO_PREFIX))
 endef
 
 # src/debug contains ELF executables as test data
