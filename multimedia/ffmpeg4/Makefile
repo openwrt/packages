@@ -44,13 +44,13 @@ define Package/ffmpeg4
   CATEGORY:=Multimedia
   DEPENDS:=+libpthread +zlib \
     +ffmpeg4_FEAT_DASH:libxml2 \
-    +ffmpeg4_LIB_FDK-AAC:fdk-aac +ffmpeg4_LIB_FDK-AAC:@BUILD_PATENTED \
+    +ffmpeg4_LIB_FDK-AAC:fdk-aac \
     +ffmpeg4_LIB_LAME:lame-lib \
     +ffmpeg4_LIB_MBEDTLS:libmbedtls \
     +ffmpeg4_LIB_OPENSSL:libopenssl \
     +ffmpeg4_LIB_LIBOPUS:libopus \
     +ffmpeg4_LIB_LIBVORBIS:libvorbis \
-    +ffmpeg4_LIB_LIBX264:libx264 +ffmpeg4_LIB_LIBX264:@BUILD_PATENTED
+    +ffmpeg4_LIB_LIBX264:libx264
   TITLE:=FFmpeg $(PKG_VERSION)
   URL:=https://www.ffmpeg.org/
   PROVIDES:=libffmpeg libffmpeg-full libffmpeg-mini libffmpeg-custom libffmpeg-audio-dec ffmpeg
@@ -59,7 +59,7 @@ endef
 define Package/ffmpeg4-ffprobe
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+ffmpeg4
+  DEPENDS:=ffmpeg4
   TITLE:=ffprobe for FFmpeg $(PKG_VERSION)
   URL:=https://www.ffmpeg.org/
 endef
@@ -249,7 +249,7 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_ffmpeg4_LIB_LIBOPUS),--enable-decoder=libopus --enable-encoder=libopus --enable-libopus,--disable-libopus) \
 	$(if $(CONFIG_ffmpeg4_LIB_LIBVORBIS),--enable-decoder=libvorbis --enable-encoder=libvorbis --enable-libvorbis,--disable-libvorbis) \
 	$(if $(CONFIG_ffmpeg4_LIB_LIBX264),--enable-encoder=libx264 --enable-encoder=libx264rgb --enable-libx264 --enable-gpl,--disable-libx264) \
-	$(if $(CONFIG_ffmpeg4_OPT_PERFORMANCE),,--enable-small) \
+	$(if $(CONFIG_ffmpeg4_OPT_PERFORMANCE),,--enable-small)
 
 ### Platform specific fixes
 

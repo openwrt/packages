@@ -27,15 +27,15 @@ config ffmpeg4_LICENSING
 
 config ffmpeg4_ENC_FLV
   bool "Enable builtin FLV encoder"
-  default y if !mips && !mips64
+  default y if !mips && !mipsel && !mips64
 
 config ffmpeg4_ENC_MJPEG
   bool "Enable builtin MJPEG encoder"
-  default y if !mips && !mips64
+  default y if !mips && !mipsel && !mips64
 
 config ffmpeg4_ENC_MPEG4
   bool "Enable builtin MPEG4 encoder"
-  default y if !mips && !mips64
+  default y if !mips && !mipsel && !mips64
 
 config ffmpeg4_ENC_PNG
   bool "Enable builtin PNG encoder"
@@ -51,7 +51,7 @@ config ffmpeg4_LIB_FDK-AAC
 
 config ffmpeg4_LIB_LAME
   bool "Enable LAME (MP3 encoding) support"
-  default y if !mips && !mips64
+  default y if !mips && !mipsel && !mips64
 
 config ffmpeg4_LIB_MBEDTLS
   bool "Enable mbed TLS support"
@@ -75,7 +75,7 @@ config ffmpeg4_LIB_LIBX264
 
 config ffmpeg4_OPT_PERFORMANCE
   bool "Optimize for performance"
-  default y if !mips && !mips64
+  default y if !mips && !mipsel && !mips64
 
 endmenu
 
