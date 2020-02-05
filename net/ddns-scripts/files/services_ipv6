@@ -103,3 +103,4 @@
 
 "zzzz.io"		"http://zzzz.io/api/v1/update/[DOMAIN]/?token=[PASSWORD]&type=aaaa&ip=[IP]"	"Updated|No change"
 
+"dnspod.cn"             "update_dnspod_cn.sh"

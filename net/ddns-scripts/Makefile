@@ -171,6 +171,7 @@ define Package/ddns-scripts/install
 
 	$(INSTALL_DIR)  $(1)/usr/lib/ddns
 	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/dynamic_dns_*.sh $(1)/usr/lib/ddns
+	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/update_dnspod_cn.sh ${1}/usr/lib/ddns
 endef
 define Package/ddns-scripts/postinst
 	#!/bin/sh
