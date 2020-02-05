@@ -48,10 +48,9 @@ define Package/python3-django-restframework39
 $(call Package/django-restframework39/Default)
   DEPENDS:= \
 	+PACKAGE_python3-django-restframework39:python3 \
-	python3-django
+	+PACKAGE_python3-django-restframework39:python3-django1
   CONFLICTS:=python3-django-restframework
   VARIANT:=python3
-  MDEPENDS:=python3-django
 endef
 
 define Package/python3-django-restframework39/description

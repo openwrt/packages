@@ -1,0 +1,23 @@
+#!/bin/sh
+shell_code=''' '
+# shell code
+if command -v python3.8 > /dev/null && test -e /usr/lib/python3.8/site-packages/django/bin/django-admin.pyc
+then
+    exec python3.8 "$0" "$@"
+elif command -v python2.7 > /dev/null && test -e /usr/lib/python2.7/site-packages/django/bin/django-admin.pyc
+then
+    exec python2.7 "$0" "$@"
+else
+    echo "Cannot find installed version of python-django1 or python3-django1." >&2
+    exit 1
+fi
+
+python_code='''
+# python code
+# ONLY use DOUBLE quotes <"> after this line
+from django.core import management
+
+if __name__ == "__main__":
+    management.execute_from_command_line()
+
+# End of Python code. Do not modify this line. #'

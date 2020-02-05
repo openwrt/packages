@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-restframework
 PKG_VERSION:=3.11.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=djangorestframework
 PKG_HASH:=e782087823c47a26826ee5b6fa0c542968219263fb3976ec3c31edab23a4001f
@@ -28,9 +28,8 @@ define Package/python3-django-restframework
   CATEGORY:=Languages
   TITLE:=Web APIs for Django, made easy.
   URL:=https://www.django-rest-framework.org
-  DEPENDS:=+python3 python3-django
+  DEPENDS:=+python3 +django
   VARIANT:=python3
-  MDEPENDS:=python3-django
 endef
 
 define Package/python3-django-restframework/description

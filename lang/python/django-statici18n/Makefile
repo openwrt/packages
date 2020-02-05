@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-statici18n
 PKG_VERSION:=1.8.2
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=ba9eeb3c4517027922645999359f8335fbb9fea04c457123cfbd6b4a36cbeda4
@@ -48,9 +48,8 @@ define Package/python3-django-statici18n
 $(call Package/django-statici18n/Default)
   DEPENDS:= \
 	+PACKAGE_python3-django-statici18n:python3 \
-	python3-django
+	+PACKAGE_python3-django-statici18n:python3-django1
   VARIANT:=python3
-  MDEPENDS:=python3-django
 endef
 
 define Package/python3-django-statici18n/description

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-picklefield
 PKG_VERSION:=1.1.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=ce7fee5c6558fe5dc8924993d994ccde75bb75b91cd82787cbd4c92b95a69f9c
@@ -48,9 +48,8 @@ define Package/python3-django-picklefield
 $(call Package/django-picklefield/Default)
   DEPENDS:= \
 	+PACKAGE_python3-django-picklefield:python3 \
-	python3-django
+	+PACKAGE_python3-django-picklefield:python3-django1
   VARIANT:=python3
-  MDEPENDS:=python3-django
 endef
 
 define Package/python3-django-picklefield/description

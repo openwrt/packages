@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-webpack-loader
 PKG_VERSION:=0.6.0
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=60bab6b9a037a5346fad12d2a70a6bc046afb33154cf75ed640b93d3ebd5f520
@@ -46,9 +46,8 @@ define Package/python3-django-webpack-loader
 $(call Package/django-webpack-loader/Default)
   DEPENDS:= \
 	+PACKAGE_python3-django-webpack-loader:python3 \
-	python3-django
+	+PACKAGE_python3-django-webpack-loader:python3-django1
   VARIANT:=python3
-  MDEPENDS:=python3-django
 endef
 
 define Package/python3-django-webpack-loader/description

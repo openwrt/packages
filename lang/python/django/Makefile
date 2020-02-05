@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django
 PKG_VERSION:=3.0.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=Django
 PKG_HASH:=2f1ba1db8648484dd5c238fb62504777b7ad090c81c5f1fd8d5eb5ec21b5f283
@@ -23,18 +23,15 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/django/Default
+define Package/python3-django
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=The web framework for perfectionists with deadlines.
   URL:=https://www.djangoproject.com/
-  MENU:=1
-endef
-
-define Package/python3-django
-$(call Package/django/Default)
   DEPENDS:= +python3 +python3-pytz +python3-sqlparse +python3-asgiref
+  CONFLICTS:=python3-django1 python-django1-common
+  PROVIDES:=django
   VARIANT:=python3
 endef
 

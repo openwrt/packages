@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-postoffice
 PKG_VERSION:=3.1.0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PYPI_NAME:=django-post-office
 PYPI_SOURCE_NAME:=django-post_office
@@ -51,10 +51,9 @@ define Package/python3-django-postoffice
 $(call Package/django-postoffice/Default)
   DEPENDS:= \
 	+PACKAGE_python3-django-postoffice:python3 \
-	python3-django \
+	+PACKAGE_python3-django-postoffice:python3-django1 \
 	+PACKAGE_python3-django-postoffice:python3-django-jsonfield
   VARIANT:=python3
-  MDEPENDS:=python3-django
 endef
 
 define Package/python3-django-postoffice/description

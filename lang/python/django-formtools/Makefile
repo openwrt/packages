@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-formtools
 PKG_VERSION:=2.1
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=7703793f1675aa6e871f9fed147e8563816d7a5b9affdc5e3459899596217f7c
@@ -47,9 +47,8 @@ define Package/python3-django-formtools
 $(call Package/django-formtools/Default)
   DEPENDS:= \
 	+PACKAGE_python3-django-formtools:python3 \
-	python3-django
+	+PACKAGE_python3-django-formtools:python3-django1
   VARIANT:=python3
-  MDEPENDS:=python3-django
 endef
 
 define Package/python3-django-formtools/description

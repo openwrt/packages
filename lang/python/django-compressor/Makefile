@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-compressor
 PKG_VERSION:=2.2
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PYPI_NAME:=$(PKG_NAME)
 PYPI_SOURCE_NAME:=django_compressor
@@ -54,11 +54,10 @@ define Package/python3-django-compressor
 $(call Package/django-compressor/Default)
   DEPENDS:= \
 	+PACKAGE_python3-django-compressor:python3 \
-	python3-django \
+	+PACKAGE_python3-django-compressor:python3-django1 \
 	+PACKAGE_python3-django-compressor:python3-django-appconf \
 	+PACKAGE_python3-django-compressor:python3-rcssmin
   VARIANT:=python3
-  MDEPENDS:=python3-django
 endef
 
 define Package/python3-django-compressor/description
