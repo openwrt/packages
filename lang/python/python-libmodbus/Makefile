@@ -3,7 +3,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=python-libmodbus
 PKG_VERSION:=0.0.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
@@ -28,7 +28,7 @@ $(call Package/python-libmodbus/Default)
   TITLE:=python-libmodbus
   DEPENDS:=+libmodbus \
      +PACKAGE_python-libmodbus:python-light \
-     +PACKAGE_python-libmodbus:python-ctypes
+     +PACKAGE_python-libmodbus:python-cffi
   VARIANT:=python
 endef
 
@@ -37,7 +37,7 @@ $(call Package/python-libmodbus/Default)
   TITLE:=pylibmodbus
   DEPENDS:=+libmodbus \
      +PACKAGE_python3-libmodbus:python3-light \
-     +PACKAGE_python3-libmodbus:python3-ctypes
+     +PACKAGE_python3-libmodbus:python3-cffi
   VARIANT:=python3
 endef
 
