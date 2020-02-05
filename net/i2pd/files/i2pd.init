@@ -15,16 +15,16 @@ DATADIR=/var/lib/i2pd
 
 start_service() {
 	## RAM
-	if [ ! -d $DATADIR ]; then
+	[ -d $DATADIR ] || {
 		mkdir -p $DATADIR
+		chown $USER:$GROUP $DATADIR
 		ln -s /usr/share/i2pd/certificates  $DATADIR/certificates
 		ln -s /etc/i2pd/tunnels.conf $DATADIR/tunnels.conf
 		# for peoples who not possible to use http reseeding
 		ln -s /etc/i2pd/addressbook $DATADIR/addressbook
-	fi
+	}
 
 	## We need permissions
-	chown $USER:$GROUP $DATADIR
 	touch $PIDFILE
 	chown $USER:adm $PIDFILE
 
