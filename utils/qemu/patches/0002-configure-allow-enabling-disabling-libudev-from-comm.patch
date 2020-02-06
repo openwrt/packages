@@ -1,7 +1,7 @@
-From 39b07d1742475f2c60ae2c80f3f2853bb556e0b1 Mon Sep 17 00:00:00 2001
+From 2a6ab8342245c8dc2a09478d8eb0292e2dbcecf2 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Tue, 2 Apr 2019 06:31:31 +0000
-Subject: [PATCH 2/4] configure: allow enabling/disabling libudev from command
+Subject: [PATCH 2/5] configure: allow enabling/disabling libudev from command
  line
 
 ---
@@ -9,12 +9,12 @@ Subject: [PATCH 2/4] configure: allow enabling/disabling libudev from command
  1 file changed, 4 insertions(+)
 
 diff --git a/configure b/configure
-index f4d949b35b..939f54178b 100755
+index b52d2cb406..efe06f3c2b 100755
 --- a/configure
 +++ b/configure
-@@ -1518,6 +1518,10 @@ for opt do
+@@ -1539,6 +1539,10 @@ for opt do
    ;;
-   --disable-libpmem) libpmem=no
+   --disable-plugins) plugins="no"
    ;;
 +  --enable-libudev) libudev=yes
 +  ;;

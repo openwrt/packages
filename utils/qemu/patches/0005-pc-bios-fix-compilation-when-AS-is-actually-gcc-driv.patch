@@ -1,7 +1,7 @@
-From 8cff6a5f07f66103809e6bf4a26c512d70ab2841 Mon Sep 17 00:00:00 2001
+From b6223a90ebbb5729e41b4fcb3bc9ac309ec04784 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Sat, 24 Feb 2018 13:46:31 +0800
-Subject: [PATCH 4/4] pc-bios: fix compilation when $(AS) is actually gcc
+Subject: [PATCH 5/5] pc-bios: fix compilation when $(AS) is actually gcc
  driver
 
 ---
