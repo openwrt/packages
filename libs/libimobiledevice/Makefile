@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libimobiledevice
-PKG_SOURCE_DATE:=2019-12-16
-PKG_SOURCE_VERSION:=d04f8ff2e20c42f74161c9cd66502da17b8b0e70
+PKG_SOURCE_DATE:=2020-01-20
+PKG_SOURCE_VERSION:=61babf5f54e7734ebf3044af4c6294524d4b29b5
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/libimobiledevice
-PKG_MIRROR_HASH:=f3ea7b5cd9789dc23ddc464bd00f39813116239cfe4ea1f13f58ce5a8413c361
+PKG_MIRROR_HASH:=7e3bb5dbb252bb49caed15dffdecc1269a688f0c3af9e8fcad2624c5e60851c5
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
