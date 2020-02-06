@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# Copyright (c) 2018 Gregory L. Dietsche <Gregory.Dietsche@cuw.edu>
+# This is free software, licensed under the MIT License
+#
+uci del_list dhcp.@dnsmasq[0].addnhosts=/etc/safe-search/enabled
+uci add_list dhcp.@dnsmasq[0].addnhosts=/etc/safe-search/enabled
+uci commit dhcp
+
+#/etc/init.d/dnsmasq reload #safe-search-update does this for us.
+/usr/sbin/safe-search-update
+
+exit 0

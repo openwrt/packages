@@ -1,0 +1,28 @@
+From 31d1f45cd63ec142fc559ea4f8a70bd4a1151c42 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Mon, 7 Oct 2019 15:39:14 -0700
+Subject: [PATCH 3/4] support: flush cout in GetNumber
+
+uClibc++ does not implicitly do this before getline.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ support.cc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/support.cc b/support.cc
+index 5ab8a23..1107993 100644
+--- a/support.cc
++++ b/support.cc
+@@ -73,7 +73,7 @@ uint64_t GetNumber(uint64_t low, uint64_t high, uint64_t def, const string & pro
+ 
+    if (low != high) { // bother only if low and high differ...
+       do {
+-         cout << prompt;
++         cout << prompt << flush;
+          cin.getline(line, 255);
+          if (!cin.good())
+             exit(5);
+-- 
+2.17.1
+

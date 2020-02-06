@@ -1,0 +1,15 @@
+menu "Configuration"
+depends on PACKAGE_modemmanager
+
+	config MODEMMANAGER_WITH_MBIM
+		bool "Include MBIM support"
+		default y
+		help
+		  Compile ModemManager with MBIM support
+
+	config MODEMMANAGER_WITH_QMI
+		bool "Include QMI support"
+		default y
+		help
+		  Compile ModemManager with QMI support
+endmenu

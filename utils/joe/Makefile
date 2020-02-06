@@ -20,15 +20,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=joe
-PKG_VERSION:=4.4
+PKG_VERSION:=4.6
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=@SF/joe-editor
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=a5704828bbca29acb9e200414fef522c66cdf9ce28150f402d6767da43460979
-PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL:=@SF/joe-editor
+PKG_HASH:=495a0a61f26404070fe8a719d80406dc7f337623788e445b92a9f6de512ab9de
+
 PKG_MAINTAINER:=Vitaly Protsko <villy@sft.ru>
 PKG_LICENCE:=GPL-2.0
+PKG_CPE_ID:=cpe:/a:joseph_allen:joe
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -37,7 +38,7 @@ define Package/joe
   CATEGORY:=Utilities
   SUBMENU:=Editors
   TITLE:=JOE - Joes own editor
-  URL:=http://sourceforge.net/projects/joe-editor/
+  URL:=https://sourceforge.net/projects/joe-editor/
   DEPENDS:=+libncurses
 endef
 

@@ -23,10 +23,6 @@ config GNUTLS_HEARTBEAT
 	bool "enable DTLS heartbeat support"
 	default y
 
-config GNUTLS_OPENPGP
-	bool "enable OPENPGP authentication support"
-	default n
-
 config GNUTLS_SRP
 	bool "enable SRP authentication support"
 	default n

@@ -1,0 +1,11 @@
+diff -urN a/hidapi/linux/hid.c b/hidapi/linux/hid.c
+--- a/hidapi/linux/hid.c	1985-10-26 17:15:00.000000000 +0900
++++ b/hidapi/linux/hid.c	2019-12-12 11:15:11.164454207 +0900
+@@ -24,6 +24,7 @@
+ /* C */
+ #include <stdio.h>
+ #include <string.h>
++#include <stdarg.h>
+ #include <stdlib.h>
+ #include <locale.h>
+ #include <errno.h>

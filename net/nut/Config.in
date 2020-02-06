@@ -29,4 +29,4 @@
 		bool "Build with suport for serial drivers"
 		help
 			If you have a UPS connected via serial cable, select this.
-		default n
+		default y

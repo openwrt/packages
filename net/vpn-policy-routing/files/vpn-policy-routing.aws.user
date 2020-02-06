@@ -1,0 +1,11 @@
+#!/bin/sh
+# This file is heavily based on code from https://github.com/Xentrk/netflix-vpn-bypass/blob/master/IPSET_Netflix.sh
+
+TARGET_IPSET='wan'
+
+TARGET_URL="https://ip-ranges.amazonaws.com/ip-ranges.json"
+TARGET_FNAME="/var/tmp_aws_ip_ranges"
+
+curl "$TARGET_URL" 2>/dev/null | grep "ip_prefix" | sed 's/^.*\"ip_prefix\": \"//; s/\",//' > "$TARGET_FNAME"
+awk -v ipset="$TARGET_IPSET" '{print "add " ipset " " $1}' "$TARGET_FNAME" | ipset restore -!
+rm -f "$TARGET_FNAME"

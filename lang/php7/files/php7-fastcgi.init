@@ -11,12 +11,12 @@ start_instance() {
 	local port
 
 	config_get_bool enabled "$section" 'enabled' 0
-	config_get port "$section" 'port' 1026
+	config_get port "$section" 'port'
 
 	[ $enabled -gt 0 ] || return 1
 
 	PHP_FCGI_CHILDREN='' \
-	service_start /usr/bin/php-fcgi -b $port
+	service_start /usr/bin/php-fcgi ${port:+-b $port}
 }
 
 start() {

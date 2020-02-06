@@ -1,0 +1,23 @@
+From d7293d64d503fcbde442d69a3e11c55bf6f1374a Mon Sep 17 00:00:00 2001
+From: Paul Kehrer <paul.l.kehrer@gmail.com>
+Date: Mon, 25 Feb 2019 11:05:46 +0800
+Subject: [PATCH] set Cryptography_HAS_NEXTPROTONEG to 0 for pyOpenSSL
+
+we can remove this symbol in like...5 years.
+---
+ src/_cffi_src/openssl/ssl.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/_cffi_src/openssl/ssl.py b/src/_cffi_src/openssl/ssl.py
+index 0e8610f988..e3a7790ee1 100644
+--- a/src/_cffi_src/openssl/ssl.py
++++ b/src/_cffi_src/openssl/ssl.py
+@@ -623,7 +623,7 @@
+ static const long Cryptography_HAS_SSL_OP_MSIE_SSLV2_RSA_PADDING = 1;
+ static const long Cryptography_HAS_SSL_OP_NO_TICKET = 1;
+ static const long Cryptography_HAS_SSL_SET_SSL_CTX = 1;
+-static const long Cryptography_HAS_NEXTPROTONEG = 1;
++static const long Cryptography_HAS_NEXTPROTONEG = 0;
+ 
+ /* SSL_get0_param was added in OpenSSL 1.0.2. */
+ #if CRYPTOGRAPHY_OPENSSL_LESS_THAN_102 && !CRYPTOGRAPHY_LIBRESSL_27_OR_GREATER

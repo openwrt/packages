@@ -8,19 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=jpeg
-PKG_VERSION:=9a
-PKG_RELEASE:=1
+PKG_VERSION:=9c
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)src.v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.ijg.org/files
-PKG_HASH:=3a753ea48d917945dd54a2d97de388aa06ca2eb1066cbfdc6652036349fe05a7
+PKG_HASH:=650250979303a649e21f87b5ccd02672af1ea6954b911342ea491f351ceb7122
 
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=IJG
 PKG_LICENSE_FILES:=README
 
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=libltdl
+PKG_BUILD_DEPENDS:=libtool
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -74,6 +74,8 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/j{config,error,morecfg}.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libjpeg.{a,so*} $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libjpeg.pc $(1)/usr/lib/pkgconfig/
 endef
 
 define Package/libjpeg/install

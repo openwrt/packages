@@ -25,6 +25,18 @@ start() {
 			append args "-i $ifname"
 		fi
 	done
+	config_get interfaces ipv4 upstream_interfaces
+	for net in $interfaces; do
+		if network_get_device ifname "$net"; then
+			append args "-iu $ifname"
+		fi
+	done
+	config_get interfaces ipv4 downstream_interfaces
+	for net in $interfaces; do
+		if network_get_device ifname "$net"; then
+			append args "-id $ifname"
+		fi
+	done
 
 	# link selection sub-option (RFC3527)
 	local link_selection

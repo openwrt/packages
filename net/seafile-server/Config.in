@@ -9,8 +9,4 @@ config SEAFILE_FUSE_SUPPORT
 config SEAFILE_CONSOLE_SUPPORT
 	bool "Enable seafile server console"
 	default n
-
-config SEAFILE_RIAK_SUPPORT
-	bool "Enable support for riak backend"
-	default n
 endmenu

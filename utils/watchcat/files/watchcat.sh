@@ -52,7 +52,7 @@ watchcat_ping() {
 		time_now="${time_now%%.*}"
 		time_lastcheck="$time_now"
 
-		for host in "$pinghosts"
+		for host in $pinghosts
 		do
 			if ping -c 1 "$host" &> /dev/null
 			then

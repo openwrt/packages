@@ -1,0 +1,20 @@
+Not needed for 8.16
+
+--- a/sendmail/tls.c
++++ b/sendmail/tls.c
+@@ -1325,13 +1325,8 @@ inittls(ctx, req, options, srv, certfile, keyfile, cacertpath, cacertfile, dhpar
+ 		}
+ 
+ #if _FFR_TLS_EC
+-		ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+-		if (ecdh != NULL)
+-		{
+-			SSL_CTX_set_options(*ctx, SSL_OP_SINGLE_ECDH_USE);
+-			SSL_CTX_set_tmp_ecdh(*ctx, ecdh);
+-			EC_KEY_free(ecdh);
+-		}
++		SSL_CTX_set_options(*ctx, SSL_OP_SINGLE_ECDH_USE);
++		SSL_CTX_set_ecdh_auto(*ctx, 1);
+ #endif /* _FFR_TLS_EC */
+ 
+ 	}

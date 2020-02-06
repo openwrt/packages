@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2006-2012 OpenWrt.org
-# Copyright (C) 2017      Leonardo Medici
+# Copyright (C) 2017-2019 Leonardo Medici
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,14 +9,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgphoto2
-PKG_VERSION:=2.5.16
+PKG_VERSION:=2.5.23
 PKG_RELEASE:=1
 PORT_VERSION:=0.12.0
 PKG_MAINTAINER:=Leonardo Medici <leonardo_medici@me.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/gphoto
-PKG_HASH:=e757416d1623e01a9d0d294b2e790162e434c0964f50d3b7ff1a3424b62a2906
+PKG_HASH:=d8af23364aa40fd8607f7e073df74e7ace05582f4ba13f1724d12d3c97e8852d
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING
 
@@ -434,7 +434,7 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-rpath \
-	--with-camlibs="all" \
+	--with-camlibs="all,outdated" \
 	--with-gdlib=no \
 	--with-libexif=no \
 	--with-libusb=no \
@@ -476,7 +476,7 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgphoto2{,_port}.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libgphoto2.pc $(1)/usr/lib/pkgconfig/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libgphoto2{,_port}.pc $(1)/usr/lib/pkgconfig/
 	$(SED) 's,-I$$$${prefix}/include/gphoto2,,g' $(1)/usr/bin/gphoto2{,-port}-config
 	$(SED) 's,-I$$$${prefix}/include,,g' $(1)/usr/bin/gphoto2{,-port}-config
 	# remove annoying recursive symlink

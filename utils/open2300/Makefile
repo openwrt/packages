@@ -1,4 +1,4 @@
-# 
+#
 # Copyright (C) 2010 segal.ubi.pt
 # Copyright (C) 2014 nunojpg@gmail.com
 # Copyright (C) 2015 dev@localnet.hu
@@ -10,19 +10,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=open2300
-PKG_VERSION:=1.12
-PKG_RELEASE:=5
-PKG_LICENSE:=GPL-2.0+
-PKG_LICENSE_FILES:=COPYING
+PKG_SOURCE_DATE:=2014-03-04
+PKG_SOURCE_VERSION:=1af8ae609da66f8e1b745533c19095c9758bfb0b
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=svn
-PKG_SOURCE_URL:=http://www.lavrsen.dk/svn/open2300/trunk
-PKG_SOURCE_VERSION:=r12
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_CHECK_FORMAT_SECURITY:=0
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/wezm/open2300
+PKG_MIRROR_HASH:=3287ca1c70e736dd1c6c3abb01e0d986f91573c7c54b9adabdc437309dc4fd56
 
 PKG_MAINTAINER:=Gabor SZOLLOSI <dev@localnet.hu>
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -36,9 +34,6 @@ endef
 define Package/open2300/description
   This is an utility suite used to communicate with and collect data from a WS23XX wheather station.
 endef
-
-MAKE_FLAGS += \
-	CFLAGS="$(TARGET_CFLAGS) -DVERSION=\"$(PKG_VERSION)\""
 
 define Package/open2300/install
 	$(INSTALL_DIR) $(1)/usr/bin

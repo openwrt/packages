@@ -8,17 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acpica-unix
-PKG_VERSION:=20170929
+PKG_VERSION:=20181213
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://acpica.org/sites/$(subst -unix,,$(PKG_NAME))/files/$(PKG_SOURCE_URL)
-PKG_HASH:=c786868ae6c7a4c7bca19a5ca66bfb16740cad5c1c01b21642932f2f0dea9cc8
+PKG_SOURCE_URL:=https://acpica.org/sites/$(patsubst %-unix,%,$(PKG_NAME))/files/$(PKG_SOURCE_URL)
+PKG_HASH:=fc90006775c635ba86c5bbf08590ac98ab10e1f9eff6d8951385f57dd3a6f8ed
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>
 
 PKG_LICENSE:=GPL-2.0
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_FORTIFY_SOURCE:=0
 PKG_BUILD_PARALLEL:=1
 

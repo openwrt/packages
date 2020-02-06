@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cshark
-PKG_VERSION=2015-11-24-$(PKG_SOURCE_VERSION)
-PKG_RELEASE=3
+PKG_SOURCE_DATE:=2018-08-20
+PKG_SOURCE_VERSION:=7a7cf7f35074b85c6fb0c52067e640d2433ef73b
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/cloudshark/cshark.git
-PKG_SOURCE_SUBDIR=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=e575ab3d35d75a6f70488001fcba45690ebe9b3e
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
-PKG_MIRROR_HASH:=280d2711308a5b051a43788519ae6857394690d3155fe954388c43cd9035ec84
+PKG_MIRROR_HASH:=b09822e93d7de7f4aa9fa018c304ebc52dd3419de3dd2eff463986d3a3b8ca71
+
+PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
+PKG_LICENSE:=BSD-2-Clause
 
 PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -28,14 +28,12 @@ define Package/cshark
   SECTION:=net
   CATEGORY:=Network
   TITLE:=CloudShark capture tool
-  URL:=http://www.cloudshark.org/
+  URL:=https://cloudshark.io/
   DEPENDS:=+libjson-c +libpcap +libuci +libubox +libuclient +libustream-mbedtls
-  MAINTAINER:=Luka Perkov <luka@openwrt.org>
 endef
 
 CMAKE_OPTIONS = \
-	-DCMAKE_INSTALL_PREFIX=/usr \
-	-DWITH_DEBUG=OFF \
+	-DWITH_DEBUG=OFF
 
 define Package/cshark/conffiles
 /etc/config/cshark

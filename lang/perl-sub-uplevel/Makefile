@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-sub-uplevel
-PKG_VERSION:=0.25
+PKG_VERSION:=0.2800
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/D/DA/DAGOLDEN
 PKG_SOURCE:=Sub-Uplevel-$(PKG_VERSION).tar.gz
-PKG_HASH:=2dcca582a7ea5bada576eb27c4be1d1b064fb22175bdbd6d696c45d083560505
-
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
-PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
-
+PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/D/DA/DAGOLDEN
+PKG_HASH:=b4f3f63b80f680a421332d8851ddbe5a8e72fcaa74d5d1d98f3c8cc4a3ece293
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Sub-Uplevel-$(PKG_VERSION)
+
+PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 include ../perl/perlmod.mk
@@ -28,7 +28,7 @@ define Package/perl-sub-uplevel
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Apparently run a function in a higher stack frame
-  URL:=http://search.cpan.org/dist/Sub-Uplevel/
+  URL:=https://search.cpan.org/dist/Sub-Uplevel/
   DEPENDS:=perl +perlbase-essential
 endef
 

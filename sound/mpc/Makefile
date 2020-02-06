@@ -6,18 +6,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpc
-PKG_VERSION:=0.28
+PKG_VERSION:=0.32
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.musicpd.org/download/mpc/0
-PKG_HASH:=a4337d06c85dc81a638821d30fce8a137a58d13d510be34a11c1cce95cabc547
+PKG_SOURCE_URL:=https://www.musicpd.org/download/mpc/0
+PKG_HASH:=7961d95b7ce019996beab281cf957e905667c989c53fffd13ade5e62fea331c7
 
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
+PKG_BUILD_DEPENDS:=meson/host
+PKG_INSTALL:=1
+
 include $(INCLUDE_DIR)/package.mk
+include ../../devel/meson/meson.mk
+
+MESON_ARGS+=-Diconv=disabled -Ddocumentation=disabled
 
 define Package/mpc
   SECTION:=sound
@@ -34,23 +40,9 @@ define Package/mpc/description
 	this is MPC
 endef
 
-define Build/Configure
-$(call Build/Configure/Default, \
-	--disable-iconv \
-)
-endef
-
-define Build/Compile
-$(call Build/Compile/Default,\
-		CFLAGS="$(TARGET_CFLAGS) -std=gnu99" \
-		prefix="/usr" \
-		all \
-)
-endef
-
 define Package/mpc/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mpc $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mpc $(1)/usr/bin/
 	$(INSTALL_BIN) ./files/pls-handler.sh $(1)/usr/bin/
 endef
 

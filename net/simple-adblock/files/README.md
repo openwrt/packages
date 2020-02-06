@@ -1,132 +1,188 @@
 # Simple AdBlock
-A simple DNSMASQ-based AdBlocking service for OpenWrt/LEDE Project. Loosely based on [bole5's](https://forum.openwrt.org/profile.php?id=45571) idea with major performance improvements, added features and Web UI (as a separate package); inspired by @dibdot's innovation.
+
+A simple DNSMASQ/Unbound-based AdBlocking service for OpenWrt/LEDE Project.
 
 ## Features
-- Supports OpenWrt Designated Driver and LEDE Project.
-- Super-fast due to the nature of supported block lists and backgrounding of already downloaded data while next list is downloading.
-- Supports both hosts files and domains lists for blocking (to keep it lean and fast).
+
+- Super-fast due to the nature of supported block lists and parallel downloading/processing of the blacklists.
+- Supports hosts files and domains lists for blocking.
 - Everything is configurable from Web UI.
 - Allows you to easily add your own domains to whitelist or blacklist.
-- Allows you to easily add URLs to your own blocked hosts or domains lists to block/whitelist (just put whitelisted domains one per line).
-- Requires no configuration for the download utility wherever you want to use wget/libopenssl or uclient-fetch/libustream-mbedtls.
-- Installs dependencies automatically (DD/LEDE-default uclient-fetch libustream-mbedtls).
-- Doesn't stay in memory -- creates the list of blocked domains and then uses DNSMASQ and firewall rules to serve "domain not found reply".
-- As some of the default lists are using https, reliably works with either wget/libopenssl or uclient-fetch/libustream-mbedtls.
-- Very lightweight and easily hackable, the whole script is just one /etc/init.d/simple-adblock file.
-- Logs single entry in the system log with the number of blocked domains if verbosity is set to 0.
-- Retains the downloaded/sorted adblocking list on service stop and reuses it on service start (use reload if you want to force re-download of the list).
-- Blocks ads served over https.
+- Allows you to easily add URLs to your own blocked hosts or domains lists to block/whitelist (just put whitelisted domains one per line in the file you're linking).
+- Supports multiple modes of AdBlocking implementations with DNSMASQ and Unbound.
+- Doesn't stay in memory -- creates the list of blocked domains and then uses DNSMASQ/Unbound and firewall rules to serve NXDOMAIN or 127.0.0.1 reply or to reject access (depending on settings)  for blocked domains.
+- As some of the default lists are using https, reliably works with either wget/libopenssl,  uclient-fetch/libustream-mbedtls or curl.
+- Very lightweight and easily hackable, the whole script is just one ```/etc/init.d/simple-adblock``` file.
+- Retains the downloaded/sorted AdBlocking list on service stop and reuses it on service start (use ```dl``` command if you want to force re-download of the list).
+- Has an option to store a compressed copy of the AdBlocking list in persistent memory which survives reboots.
+- Blocks ads served over https (unlike PixelServ-derived solutions).
+- Blocks ads inside browsers with [DNS-over-HTTPS proxy](https://en.wikipedia.org/wiki/DNS_over_HTTPS) built-in, like [Mozilla Firefox](https://support.mozilla.org/en-US/kb/firefox-dns-over-https#w_about-dns-over-https) or [Google Chrome/Chromium](https://blog.chromium.org/2019/09/experimenting-with-same-provider-dns.html) -- with the ```dnsmasq.ipset``` option.
 - Proudly made in Canada, using locally-sourced electrons.
 
-If you want a more robust AdBlocking, supporting free memory detection and complex block lists, check out [@dibdot's adblock](https://github.com/openwrt/packages/tree/master/net/adblock/files).
+If you want a more robust AdBlocking, supporting free memory detection and complex block lists, supporting IDN, check out [net/adblock](https://github.com/openwrt/packages/tree/master/net/adblock/files).
 
+## Screenshots (luci-app-simple-adblock)
 
-## Screenshot (luci-app-simple-adblock)
-![screenshot](https://raw.githubusercontent.com/stangri/screenshots/master/simple-adblock/screenshot04.png "screenshot")
+Service Status
 
+![screenshot](https://raw.githubusercontent.com/stangri/openwrt_packages/master/screenshots/simple-adblock/screenshot08-status.png "Service Status")
+
+Configuration - Basic Configuration
+
+![screenshot](https://raw.githubusercontent.com/stangri/openwrt_packages/master/screenshots/simple-adblock/screenshot08-config-basic.png "Configuration - Basic Configuration")
+
+Configuration - Advanced Configuration
+
+![screenshot](https://raw.githubusercontent.com/stangri/openwrt_packages/master/screenshots/simple-adblock/screenshot08-config-advanced.png "Configuration - Advanced Configuration")
+
+Whitelist and Blocklist Management
+
+![screenshot](https://raw.githubusercontent.com/stangri/openwrt_packages/master/screenshots/simple-adblock/screenshot08-lists.png "Whitelist and Blocklist Management")
 
 ## Requirements
-This service requires the following packages to be installed on your router: ```dnsmasq``` or ```dnsmasq-full``` and either ```wget``` and ```libopenssl``` (for OpenWrt CC 15.05.1) or ```uclient-fetch``` and ```libustream-mbedtls``` (for OpenWrt DD trunk and all LEDE Project release and snapshot builds). Additionally installation of ```coreutils-sort``` is highly recommended as it speeds up blocklist processing.
+
+This service requires the following packages to be installed on your router: ```dnsmasq``` or ```dnsmasq-full``` or ```unbound``` and either ```ca-certificates```, ```wget``` and ```libopenssl``` (for OpenWrt 15.05.1) or ```uclient-fetch``` and ```libustream-mbedtls``` (for LEDE Project and OpenWrt 18.06.xx or newer). Additionally installation of ```coreutils-sort``` is highly recommended as it speeds up blocklist processing.
 
 To satisfy the requirements for connect to your router via ssh and run the following commands:
-###### OpenWrt CC 15.05.1
+
+### How to use DNSMASQ ipset
+
+The ```dnsmasq.ipset``` option requires you to install ```ipset``` and  ```dnsmasq-full``` instead of the ```dnsmasq```. To do that, connect to your router via ssh and run the following command:
+
 ```sh
-opkg update; opkg install wget libopenssl coreutils-sort dnsmasq
+opkg update; opkg remove dnsmasq; opkg install dnsmasq-full ipset;
 ```
 
-###### LEDE Project and OpenWrt DD trunk
+### OpenWrt 15.05.1 Requirements
+
+```sh
+opkg update; opkg install ca-certificates wget libopenssl coreutils-sort dnsmasq
+```
+
+### LEDE Project 17.01.x and OpenWrt 18.xx (or newer) Requirements
+
 ```sh
 opkg update; opkg install uclient-fetch libustream-mbedtls coreutils-sort dnsmasq
 ```
 
-###### IPv6 Support
+### IPv6 Support
+
 For IPv6 support additionally install ```ip6tables-mod-nat``` and ```kmod-ipt-nat6``` packages from Web UI or run the following in the command line:
+
 ```sh
 opkg update; opkg install ip6tables-mod-nat kmod-ipt-nat6
 ```
 
-###### Speed up blocklist processing with coreutils-sort
+### Speed Up Blocklist Processing
+
 The ```coreutils-sort``` is an optional, but recommended package as it speeds up sorting and removing duplicates from the merged list dramatically. If opkg complains that it can't install ```coreutils-sort``` because /usr/bin/sort is already provided by busybox, you can run ```opkg --force-overwrite install coreutils-sort```.
 
+## Unmet Dependencies
 
-#### Unmet dependencies
 If you are running a development (trunk/snapshot) build of OpenWrt/LEDE Project on your router and your build is outdated (meaning that packages of the same revision/commit hash are no longer available and when you try to satisfy the [requirements](#requirements) you get errors), please flash either current LEDE release image or current development/snapshot image.
 
+## How To Install
 
-## How to install
-Install ```simple-adblock``` and  ```luci-app-simple-adblock``` packages from Web UI or run the following in the command line:
+Install ```simple-adblock``` and ```luci-app-simple-adblock``` packages from Web UI or run the following in the command line:
+
 ```sh
 opkg update; opkg install simple-adblock luci-app-simple-adblock
 ```
 
-If ```simple-adblock``` and  ```luci-app-simple-adblock``` packages are not found in the official feed/repo for your version of OpenWrt/LEDE Project, you will need to [add a custom repo to your router](#add-custom-repo-to-your-router) first.
+If ```simple-adblock``` and ```luci-app-simple-adblock``` packages are not found in the official feed/repo for your version of OpenWrt/LEDE Project, you will need to [add a custom repo to your router](https://github.com/stangri/openwrt_packages/blob/master/README.md#on-your-router) first.
 
+## Default Settings
 
-#### Add custom repo to your router
-If your router is not set up with the access to repository containing these packages you will need to add custom repository to your router by connecting to your router via ssh and running the following commands:
+Default configuration has service disabled (use Web UI to enable/start service or run ```uci set simple-adblock.config.enabled=1; uci commit simple-adblock;```) and selected ad/malware lists suitable for routers with 64Mb RAM.
 
-###### OpenWrt CC 15.05.1
-```sh
-opkg update; opkg install wget libopenssl
-echo -e -n 'untrusted comment: public key 7ffc7517c4cc0c56\nRWR//HUXxMwMVnx7fESOKO7x8XoW4/dRidJPjt91hAAU2L59mYvHy0Fa\n' > /tmp/stangri-repo.pub && opkg-key add /tmp/stangri-repo.pub
-! grep -q 'stangri_repo' /etc/opkg/customfeeds.conf && echo 'src/gz stangri_repo https://raw.githubusercontent.com/stangri/openwrt-repo/master' >> /etc/opkg/customfeeds.conf
-opkg update
-```
+If your router has less then 64Mb RAM, edit the configuration file, located at ```/etc/config/simple-adblock```. The configuration file has lists in ascending order starting with smallest ones and each list has a preceding comment indicating its size, comment out or delete the lists you don't want or your router can't handle.
 
-###### LEDE Project and OpenWrt DD trunk
-```sh
-opkg update; opkg install uclient-fetch libustream-mbedtls
-echo -e -n 'untrusted comment: public key 7ffc7517c4cc0c56\nRWR//HUXxMwMVnx7fESOKO7x8XoW4/dRidJPjt91hAAU2L59mYvHy0Fa\n' > /tmp/stangri-repo.pub && opkg-key add /tmp/stangri-repo.pub
-! grep -q 'stangri_repo' /etc/opkg/customfeeds.conf && echo 'src/gz stangri_repo https://raw.githubusercontent.com/stangri/openwrt-repo/master' >> /etc/opkg/customfeeds.conf
-opkg update
-```
+## How To Customize
 
-
-#### Default Settings
-Default configuration has service disabled (use Web UI to enable/start service or run ```uci set simple-adblock.config.enabled=1```) and selected ad/malware lists suitable for routers with 64Mb RAM. The configuration file has lists in descending order starting with biggest ones, comment out or delete the lists you don't want or your router can't handle.
-
-
-## How to customize
 You can use Web UI (found in Services/Simple AdBlock) to add/remove/edit links to:
-- hosts files (127.0.0.1 or 0.0.0.0 followed by space and domain name per line) to be blocked.
-- domains lists (one domain name per line) to be blocked.
-- domains lists (one domain name per line) to be whitelisted. It is useful if you want to run simple-adblock on multiple routers and maintain one centralized whitelist which you can publish on a web-server.
 
-Please note that these lists **have** to include either ```http://``` or ```https://``` prefix. Some of the top block lists (both hosts files and domains lists) suitable for routers with at least 8MB RAM are used in the default simple-adblock installation.
+- [hosts files](https://en.wikipedia.org/wiki/Hosts_(file)) (127.0.0.1 or 0.0.0.0 followed by space and domain name per line) to be blocked.
+- domains lists (one domain name per line) to be blocked.
+- domains lists (one domain name per line) to be whitelisted. It is useful if you want to run ```simple-adblock``` on multiple routers and maintain one centralized whitelist which you can publish on a web-server.
+
+Please note that these lists **must** include either ```http://``` or ```https://``` (or, if ```curl``` is installed the ```file://```) prefix. Some of the top block lists (both hosts files and domains lists) suitable for routers with at least 8MB RAM are used in the default ```simple-adblock``` installation.
 
 You can also use Web UI to add individual domains to be blocked or whitelisted.
 
-If you want to use CLI to customize simple-adblock config, you can probably figure out how to do it by looking at the contents of ```/etc/config/simple-adblock``` or output of the ```uci show simple-adblock``` command.
+If you want to use CLI to customize ```simple-adblock``` config, refer to the [Customization Settings](#customization-settings) section.
 
-## How does it work
-This service downloads (and processes in the background, removing comments and other useless data) lists of hosts and domains to be blocked, combines those lists into one big block list, removes duplicates and sorts it and then removes your whitelisted domains from the block list before converting to to dnsmasq-compatible file and restarting dnsmasq. The result of the process is that dnsmasq returns "domain not found" for the blocked domains.
+## How To Use
+
+Once the service is enabled in the [config file](#default-settings), run ```/etc/init.d/simple-adblock start``` to start the service. Either ```/etc/init.d/simple-adblock restart``` or ```/etc/init.d/simple-adblock reload``` will only restart the service and/or re-download the lists if there were relevant changes in the config file since the last successful start. Had the previous start resulted in any error, either ```/etc/init.d/simple-adblock start```, ```/etc/init.d/simple-adblock restart``` or ```/etc/init.d/simple-adblock reload``` will attempt to re-download the lists.
+
+If you want to force simple-adblock to re-download the lists, run ```/etc/init.d/simple-adblock dl```.
+
+If you want to check if the specific domain (or part of the domain name) is being blocked, run ```/etc/init.d/simple-adblock check test-domain.com```.
+
+## Configuration Settings
+
+In the Web UI the ```simple-adblock``` settings are split into ```basic``` and ```advanced``` settings. The full list of configuration parameters of ```simple-adblock.config``` section is:
+
+|Web UI Section|Parameter|Type|Default|Description|
+| --- | --- | --- | --- | --- |
+|Basic|enabled|boolean|0|Enable/disable the ```simple-adblock``` service.|
+|Basic|verbosity|integer|2|Can be set to 0, 1 or 2 to control the console and system log output verbosity of the ```simple-adblock``` service.|
+|Basic|force_dns|boolean|1|Force router's DNS to local devices which may have different/hardcoded DNS server settings. If enabled, creates a firewall rule to intercept DNS requests from local devices to external DNS servers and redirect them to router.|
+|Basic|led|string|none|Use one of the router LEDs to indicate the AdBlocking status.|
+|Advanced|dns|string|dnsmasq.servers|DNS resolution option. See [table below](#dns-resolution-option) for addtional information.|
+|Advanced|ipv6_enabled|boolean|0|Add IPv6 entries to block-list if ```dnsmasq.addnhosts``` is used. This option is only visible in Web UI if the ```dnsmasq.addnhosts``` is selected as the DNS resolution option.|
+|Advanced|boot_delay|integer|120|Delay service activation for that many seconds on boot up. You can shorten it to 10-30 seconds on modern fast routers. Routers with built-in modems may require longer boot delay.|
+|Advanced|download_timeout|integer|10|Time-out downloads if no reply received within that many last seconds.|
+|Advanced|curl_retry|integer|3|If ```curl``` is installed and detected, attempt that many retries for failed downloads.|
+|Advanced|parallel_downloads|boolean|1|If enabled, all downloads are completed concurrently, if disabled -- sequentioally. Concurrent downloads dramatically speed up service loading.|
+|Advanced|debug|boolean|0|If enabled, output service full debug to ```/tmp/simple-adblock.log```. Please note that the debug file may clog up the router's RAM on some devices. Use with caution.|
+|Advanced|allow_non_ascii|boolean|0|Enable support for non-ASCII characters in the final AdBlocking file. Only enable if your target service supports non-ASCII characters. If you enable this on the system where DNS resolver doesn't support non-ASCII characters, it will crash. Use with caution.|
+|Advanced|compressed_cache|boolean|0|Create compressed cache of the AdBlocking file in router's persistent memory. Only recommended to be used on routers with large ROM and/or routers with metered/flaky internet connection.|
+||whitelist_domain|list/string||List of white-listed domains.|
+||whitelist_domains_url|list/string||List of URL(s) to text files containing white-listed domains. **Must** include either ```http://``` or ```https://``` (or, if ```curl``` is installed the ```file://```) prefix. Useful if you want to keep/publish a single white-list for multiple routers.|
+||blacklist_domains_url|list/string||List of URL(s) to text files containing black-listed domains. **Must** include either ```http://``` or ```https://``` (or, if ```curl``` is installed the ```file://```) prefix.|
+||blacklist_hosts_url|list/string||List of URL(s) to [hosts files](https://en.wikipedia.org/wiki/Hosts_(file)) containing black-listed domains. **Must** include either ```http://``` or ```https://``` (or, if ```curl``` is installed the ```file://```) prefix.|
+
+### DNS Resolution Option
+
+Currently supported options are:
+
+|Option|Explanation|
+| --- | --- |
+|```dnsmasq.addnhosts```|Creates the DNSMASQ additional hosts file ```/var/run/simple-adblock.addnhosts``` and modifies DNSMASQ settings, so that DNSMASQ resolves all blocked domains to "local machine": 127.0.0.1. This option doesn't allow block-list optimization (by removing secondary level domains if the top-level domain is also in the block-list), so it results in a much larger block-list file, but, unlike other DNSMASQ-based options, it has almost no effect on the DNS look up speed. This option also allows quick reloads of DNSMASQ on block-list updates.|
+|```dnsmasq.conf```|Creates the DNSMASQ config file ```/var/dnsmasq.d/simple-adblock``` so that DNSMASQ replies with NXDOMAIN: "domain not found". This option allows the block-list optimization (by removing secondary level domains if the top-level domain is also in the block-list), resulting in the smaller block-list file. This option will slow down DNS look up speed somewhat.|
+|```dnsmasq.ipset```|Creates the DNSMASQ ipset file ```/var/dnsmasq.d/simple-adblock.ipset``` and the firewall rule to reject the matching requests. This is the only option for AdBlocking if you're using a browser with [DNS-over-HTTPS proxy](https://en.wikipedia.org/wiki/DNS_over_HTTPS) built-in, like [Mozilla Firefox](https://support.mozilla.org/en-US/kb/firefox-dns-over-https#w_about-dns-over-https) or [Google Chrome/Chromium](https://blog.chromium.org/2019/09/experimenting-with-same-provider-dns.html). This option allows the block-list optimization (by removing secondary level domains if the top-level domain is also in the block-list), resulting in the smaller block-list file. This option requires you install ```dnsmasq-full``` and ```ipset``` [as described here](#how-to-use-dnsmasq-ipset).<br/>PLEASE NOTE, that unlike other options which are truly domain name based blocking, this is essentially an IP address based blocking, ie: if you try to block ```google-analytics.com``` with this option, it may also block/break things like YouTube, Hangouts and other Google services if they share IP address(es) with ```google-analytics.com```.|
+|```dnsmasq.servers```|Creates the DNSMASQ servers file ```/var/run/simple-adblock.servers``` and modifies DNSMASQ settings so that DNSMASQ replies with NXDOMAIN: "domain not found". This option allows the block-list optimization (by removing secondary level domains if the top-level domain is also in the block-list), resulting in the smaller block-list file. This option will slow down DNS look up speed somewhat. This is a default setting as it results in the smaller block-file and allows quick reloads of DNSMASQ.|
+|```unbound.adb_list```|Creates the Unbound config file ```/var/lib/unbound/adb_list.simple-adblock``` so that Unbound replies with NXDOMAIN: "domain not found". This option allows the block-list optimization (by removing secondary level domains if the top-level domain is also in the block-list), resulting in the smaller block-list file.|
+
+## How Does It Work
+
+This service downloads (and processes in the background, removing comments and other useless data) lists of hosts and domains to be blocked, combines those lists into one big block list, removes duplicates and sorts it and then removes your whitelisted domains from the block list before converting to to DNSMASQ/Unbound-compatible file and restarting DNSMASQ/Unbound if needed. The result of the process is that DNSMASQ/Unbound return NXDOMAIN or 127.0.0.1 (depending on settings) for the blocked domains.
 
 If you specify ```google.com``` as a domain to be whitelisted, you will have access to ```google.com```, ```www.google.com```, ```analytics.google.com```, but not fake domains like ```email-google.com``` or ```drive.google.com.verify.signin.normandeassociation.com``` for example. If you only want to allow ```www.google.com``` while blocking all other ```google.com``` subdomains, just specify ```www.google.com``` as domain to be whitelisted.
 
 In general, whatever domain is specified to be whitelisted; it, along with with its subdomains will be whitelisted, but not any fake domains containing it.
 
+## How It Does Not Work
+
+For most of the [DNS Resolution Options](#dns-resolution-option) to work, your local LAN clients need to be set to use your router's DNS (by default ```192.168.1.1```). The ```dnsmasq.addnhosts``` is the only option which can help you block ads if your local LAN clients are NOT using your router's DNS. There are multiple ways your local LAN clients can be set to NOT use your router's DNS:
+
+  1. Hardcoded on the device. Some Android Lollipop 5.0 phones, some media-centric tablets and some streaming devices for example are known to have hardcoded DNS servers and they ignore your router's DNS settings. You can fix this by either:
+      - Rooting your device and changing it from hardcoded DNS servers to obtaining DNS servers from DHCP.
+      - Enabling ```simple-adblock```'s ```force_dns``` setting to override the hardcoded DNS on your device.
+  2. Manually set on the device. Instead of setting your device to obtain the DNS settings via DHCP, you can set the DNS servers manually. There are some guides online which recommend manually changing the DNS servers on your computer to Google's (8.8.8.8) or Cloudflare's (1.1.1.1) or OpenDNS (208.67.222.222). You can fix this by either:
+      - Changing the on-device DNS settings from manual to obtaining DNS servers from DHCP and changing your [router's DNS settings](https://openwrt.org/docs/guide-user/base-system/dhcp#all_options) to use the DNS from Google, Cloudflare or OpenDNS respectively.
+      - Enabling ```simple-adblock```'s ```force_dns``` setting to override the hardcoded DNS on your device.
+  3. Sent to your device from router via [DHCP Options](https://openwrt.org/docs/guide-user/base-system/dhcp_configuration#dhcp_options). You can fix this by either:
+      - Removing [DHCP Options](https://openwrt.org/docs/guide-user/base-system/dhcp_configuration#dhcp_options) 5 and 6 from your router's ```/etc/config/dhcp``` file.
+      - Enabling ```simple-adblock```'s ```force_dns``` setting to override the hardcoded DNS on your device.
+  4. By using the DNS-over-TLS, DNS-over-HTTPS or DNSCrypt on your local device or (if supported) by browser on your local device. You can fix this only by:
+      - Stopping/removing/disabling DNS-over-TLS, DNS-over-HTTPS or DNSCrypt on your local device and using the secure DNS on your router instead. There are merits to all three of the options above, I can recommend the ```https_dns_proxy``` and ```luci-app-https_dns_proxy``` packages for enabling DNS-over-HTTPS on your router.
+
 ## Documentation / Discussion
-Please head to [OpenWrt Forum](https://forum.openwrt.org/viewtopic.php?pid=307950) or [LEDE Project Forum](https://forum.lede-project.org/t/simple-adblock-fast-lean-and-fully-uci-luci-configurable-adblocking/1327/) for discussion of this package.
 
-## What's New
-1.5.7:
-- Much stricter filters for hosts and domains lists resulting in better garbage removal.
+Please head to [OpenWrt Forum](https://forum.openwrt.org/t/simple-adblock-fast-lean-and-fully-uci-luci-configurable-adblocking/1327/) for discussion of this package.
 
-1.5.6:
-- Better handling of service start/enable from Web UI and enabled flag management.
+## Thanks
 
-1.5.5:
-- Implemented support to set one of the router LEDs on/off based on the AdBlocking status.
-- Fixed the output bug when verbosity=1.
-
-1.5.3:
-- No longer using enabled in config file, Simple AdBlocking Web UI now enables/disables service directly.
-
-1.5.1:
-- Reworked console/system log output logic and formatting.
-
-1.5.0:
-- Processes already downloaded lists in the background while downloading next list from config, dramatically increasing overall speed.
-
-1.0.0:
-- Initial release
+I'd like to thank everyone who helped create, test and troubleshoot this service. Special thanks to [@hnyman](https://github.com/hnyman) for general package/luci guidance, [@dibdot](https://github.com/dibdot) for general guidance and block-list optimization code, [@ckuethe](https://github.com/ckuethe) for the curl support, non-ASCII filtering and compressed cache code, [@EricLuehrsen](https://github.com/EricLuehrsen) for the Unbound support information, [@mushoz]( https://github.com/mushoz) for performance testing and [@phasecat](https://forum.openwrt.org/u/phasecat/summary) for submitting various bugs and testing.

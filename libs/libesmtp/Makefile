@@ -9,18 +9,15 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libesmtp
 PKG_VERSION:=1.0.6
-PKG_RELEASE:=3
+PKG_RELEASE:=5
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
-PKG_LICENSE:=LGPL-2.0+
+PKG_LICENSE:=LGPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/tru7/libesmtp.git
-PKG_SOURCE_VERSION=10e9a6df9f76da610941addf71b9a3cbf94f2e9f
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=6f703766be05cc0cd861790ee041d1c2910b6d6e7bb8805ed739839c7801bfcc
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=http://brianstafford.info/libesmtp
+PKG_HASH:=d0a61a5c52d99fa7ce7d00ed0a07e341dbda67101dbed1ab0cdae3f37db4eb0b
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -31,7 +28,7 @@ define Package/libesmtp
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=A Library for Posting Electronic Mail
-  URL:=https://github.com/tru7/libesmtp.git
+  URL:=http://brianstafford.info/libesmtp/
   DEPENDS:=+libpthread +libopenssl
 endef
 

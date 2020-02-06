@@ -10,17 +10,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntripcaster
 PKG_VERSION:=0.1.5
+PKG_RELEASE:=3
 
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/nunojpg/ntripcaster/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=2184af9821cf73bac1df229f1e61ca1d3e288c9de6087bee1ae218b54c588452
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/nunojpg/ntripcaster.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=03878920195cf854b38a1ea424f1cae57353fa87
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=264656e5f9f9583c477208f005371124bfcbb7ba548f418eb5f1215059d1294b
-
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=GPL-2.0-or-later
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 
@@ -31,7 +27,7 @@ define Package/ntripcaster
   CATEGORY:=Network
   SUBMENU:=NTRIP
   TITLE:=Standard Ntrip Broadcaster
-  URL:=http://igs.bkg.bund.de/ntrip/download
+  URL:=https://igs.bkg.bund.de/ntrip
   DEPENDS:=+libpthread
 endef
 

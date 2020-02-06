@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lrzsz
 PKG_VERSION:=0.12.20
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ohse.de/uwe/releases/
 PKG_HASH:=c28b36b14bddb014d9e9c97c52459852f97bd405f89113f30bee45ed92728ff1
 
 PKG_MAINTAINER:=Hsing-Wang Liao <kuoruan@gmail.com>
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1

@@ -26,7 +26,7 @@ __URL=$(echo $__UPDURL | sed -e "s#\[USERNAME\]#$URL_USER#g" -e "s#\[PASSWORD\]#
 
 do_transfer "$__URL" || return 1
 
-write_log 7 "'no-ip.com' answered:\n$(cat $DATFILE)"
+write_log 7 "'no-ip.com' answered:${N}$(cat $DATFILE)"
 # analyse provider answers
 # "good [IP_ADR]"	= successful
 # "nochg [IP_ADR]"	= no change but OK
@@ -43,7 +43,7 @@ __URL=$(echo $__UPDURL | sed -e "s#\[USERNAME\]#$URL_USER#g" -e "s#\[PASSWORD\]#
 
 do_transfer "$__URL" || return 1
 
-write_log 7 "'no-ip.com' answered:\n$(cat $DATFILE)"
+write_log 7 "'no-ip.com' answered:${N}$(cat $DATFILE)"
 # analyse provider answers
 # "good [IP_ADR]"	= successful
 # "nochg [IP_ADR]"	= no change but OK

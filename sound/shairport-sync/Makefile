@@ -7,20 +7,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shairport-sync
-PKG_VERSION:=2.8.6
-PKG_RELEASE:=2
+PKG_VERSION:=3.3.5
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/mikebrady/shairport-sync.git
-PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=892a8c8c5302026501c07f2e75c0d51963167143c96875f12578f7e7c9dadc96
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/mikebrady/shairport-sync/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=9757dd7f19c0bc28cb06a6753305c3ed89da2d271d069b36d1b12173309c1459
+
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Mike Brady <mikebrady@eircom.net>
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_SOURCE_SUBDIR)
-
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING LICENSES shairport.c
 
@@ -35,7 +30,7 @@ define Package/shairport-sync/default
   TITLE:=AirPlay compatible audio player
   DEPENDS:=@AUDIO_SUPPORT +libpthread +alsa-lib +libconfig +libdaemon +libpopt
   PROVIDES:=shairport-sync
-  URL:=http://github.com/mikebrady/shairport-sync
+  URL:=https://github.com/mikebrady/shairport-sync
 endef
 
 define Package/shairport-sync-openssl
@@ -113,7 +108,7 @@ define Package/shairport-sync/default/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/shairport-sync.init $(1)/etc/init.d/shairport-sync
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/shairport-sync.config $(1)/etc/config/shairport-sync
+	$(INSTALL_CONF) ./files/shairport-sync.config $(1)/etc/config/shairport-sync
 endef
 
 Package/shairport-sync-openssl/install = $(Package/shairport-sync/default/install)

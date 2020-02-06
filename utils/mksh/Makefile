@@ -9,24 +9,26 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mksh
-PKG_VERSION:=55
+PKG_VERSION:=56c
 PKG_RELEASE:=1
 
-PKG_MAINTAINER:=Thorsten Glaser <tg@mirbsd.org>
+PKG_MAINTAINER:=Thorsten Glaser <tg@mirbsd.org>, \
+		Alif M. Ahmad <alive4ever@live.com>
 PKG_LICENSE:=MirOS
 
 PKG_SOURCE:=$(PKG_NAME)-R$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=http://www.mirbsd.org/MirOS/dist/mir/mksh \
 		http://pub.allbsd.org/MirOS/dist/mir/mksh
-PKG_HASH:=ced42cb4a181d97d52d98009eed753bd553f7c34e6991d404f9a8dcb45c35a57
+PKG_HASH:=dd86ebc421215a7b44095dc13b056921ba81e61b9f6f4cdab08ca135d02afb77
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/mksh
-  SECTION:=shells
-  CATEGORY:=Base system
+  SECTION:=utils
+  CATEGORY:=Utilities
+  SUBMENU:=Shells
   TITLE:=MirBSD Korn Shell
   DEPENDS:=$(DEP)
   URL:=http://mirbsd.de/mksh

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015-2016 OpenWrt.org
+# Copyright (C) 2015-2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,47 +8,43 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cffi
-PKG_VERSION:=1.11.0
+PKG_VERSION:=1.13.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=cffi-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/4e/32/4070bdf32812c89eb635c80880a5caa2e0189aa7999994c265577e5154f3
-PKG_HASH:=5f4ff33371c6969b39b293d9771ee91e81d26f9129be093ca1b7be357fcefd15
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-cffi-$(PKG_VERSION)
+PYPI_NAME:=cffi
+PKG_HASH:=599a1e8ff057ac530c9ad1778293c665cb81a791421f46922d80a86473c13346
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 
-HOST_PYTHON_PACKAGE_BUILD_DEPENDS:="cffi==$(PKG_VERSION)"
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="cffi==$(PKG_VERSION)"
-
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
-$(call include_mk, python3-package.mk)
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
+include ../python-package.mk
+include ../python3-package.mk
 
 define Package/python-cffi/Default
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=http://cffi.readthedocs.org/
+  TITLE:=C Foreign Function Interface
+  URL:=https://cffi.readthedocs.org/
   DEPENDS:=+libffi
 endef
 
 define Package/python-cffi
 $(call Package/python-cffi/Default)
-  TITLE:=python-cffi
-  DEPENDS+=+PACKAGE_python-cffi:python-light +PACKAGE_python-cffi:python-pycparser
+  DEPENDS+= \
+      +PACKAGE_python-cffi:python-light \
+      +PACKAGE_python-cffi:python-pycparser
   VARIANT:=python
 endef
 
 define Package/python3-cffi
 $(call Package/python-cffi/Default)
-  TITLE:=python3-cffi
-  DEPENDS+=+PACKAGE_python3-cffi:python3-light +PACKAGE_python3-cffi:python3-pycparser
+  DEPENDS+= \
+      +PACKAGE_python3-cffi:python3-light \
+      +PACKAGE_python3-cffi:python3-pycparser
   VARIANT:=python3
 endef
 
@@ -64,6 +60,8 @@ endef
 
 $(eval $(call PyPackage,python-cffi))
 $(eval $(call BuildPackage,python-cffi))
+$(eval $(call BuildPackage,python-cffi-src))
 
 $(eval $(call Py3Package,python3-cffi))
 $(eval $(call BuildPackage,python3-cffi))
+$(eval $(call BuildPackage,python3-cffi-src))

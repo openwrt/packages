@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2006-2015 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,19 +6,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=socat
-PKG_VERSION:=1.7.3.2
-PKG_RELEASE:=1
+PKG_VERSION:=1.7.3.3
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.dest-unreach.org/socat/download
-PKG_HASH:=e3561f808739383eb10fada1e5d4f26883f0311b34fd0af7837d0c95ef379251
+PKG_HASH:=0dd63ffe498168a4aac41d307594c5076ff307aa0ac04b141f8f1cec6594d04a
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
-
-PKG_LICENSE:=GPL-2.0 OpenSSL
+PKG_LICENSE:=GPL-2.0-or-later OpenSSL
 PKG_LICENSE_FILES:=COPYING COPYING.OpenSSL
+PKG_CPE_ID:=cpe:/a:dest-unreach:socat
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -63,11 +62,24 @@ ifneq ($(CONFIG_SOCAT_SSL),y)
   CONFIGURE_ARGS+= --disable-openssl
 endif
 
+# PowerPC has different TERMIOS bits
+ifneq ($(findstring powerpc,$(CONFIG_ARCH)),)
+  CONFIGURE_VARS += \
+	  sc_cv_sys_crdly_shift=12 \
+	  sc_cv_sys_tabdly_shift=10 \
+	  sc_cv_sys_csize_shift=8
+else
+  CONFIGURE_VARS += \
+	  sc_cv_sys_crdly_shift=9 \
+	  sc_cv_sys_tabdly_shift=11 \
+	  sc_cv_sys_csize_shift=4
+endif
+
 CONFIGURE_VARS += \
 	sc_cv_termios_ispeed="no" \
-	sc_cv_sys_crdly_shift=9 \
-	sc_cv_sys_tabdly_shift=11 \
-	sc_cv_sys_csize_shift=4
+	ac_cv_header_bsd_libutil_h=no \
+	ac_cv_lib_bsd_openpty=no \
+	BUILD_DATE=$(SOURCE_DATE_EPOCH)
 
 define Package/socat/install
 	$(INSTALL_DIR) $(1)/usr/bin

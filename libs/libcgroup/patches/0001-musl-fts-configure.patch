@@ -1,0 +1,24 @@
+diff --git a/configure.in b/configure.in
+index 75f4a51..f70b37c 100644
+--- a/configure.in
++++ b/configure.in
+@@ -193,6 +193,19 @@ if test x$with_pam = xtrue; then
+ 		header files!])])
+ fi
+ 
++AC_CHECK_LIB(
++	[fts],
++	[fts_open],
++	[],
++	[AC_MSG_ERROR([Cannot compile without fts!])]
++)
++
++AC_CHECK_HEADERS(
++	[fts.h],
++	[],
++	[AC_MSG_ERROR([Cannot compile without fts.h])]
++)
++
+ AC_CONFIG_FILES([Makefile
+ 	tests/Makefile
+ 	tests/tools/testenv.sh

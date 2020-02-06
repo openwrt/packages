@@ -8,20 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=file
-PKG_VERSION:=5.25
-PKG_RELEASE:=2
+PKG_VERSION:=5.37
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://sources.lede-project.org/ \
-	http://pkgs.fedoraproject.org/lookaside/pkgs/file/ \
+PKG_SOURCE_URL:=https://src.fedoraproject.org/lookaside/pkgs/file/ \
 	http://download.openpkg.org/components/cache/file/ \
 	ftp://ftp.astron.com/pub/file/
-PKG_HASH:=3735381563f69fb4239470b8c51b876a80425348b8285a7cded8b61d6b890eca
+PKG_HASH:=e9c13967f7dd339a3c241b7710ba093560b9a33013491318e88e6b8b57bae07f
 
 PKG_LICENSE:=BSD-2c
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -29,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/file/Default
   TITLE:=File type determination
-  URL:=ftp://ftp.astron.com/pub/file/
+  URL:=https://darwinsys.com/file/
   MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 endef
 
@@ -49,13 +47,18 @@ $(call Package/file/Default)
   DEPENDS:=+zlib
 endef
 
+TARGET_CFLAGS += $(FPIC)
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
+	--disable-libseccomp \
+	--disable-rpath \
+	--disable-warnings \
+	--without-pic
 
 MAKE_PATH := src
-
-TARGET_CFLAGS += $(FPIC)
 
 define Build/Compile/magic
 	( cd $(PKG_BUILD_DIR)/magic/Magdir; \
@@ -86,9 +89,6 @@ define Package/file/install
 	$(SED) "/^#/d" $(PKG_INSTALL_DIR)/usr/share/file/magic
 	$(SED) "/^$$$$/d" $(PKG_INSTALL_DIR)/usr/share/file/magic
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/file/magic $(1)/usr/share/misc/
-
-	# For some reason both "magic" and "magic.mgc" MUST exist
-	ln -sf magic $(1)/usr/share/misc/magic.mgc
 endef
 
 define Package/libmagic/install

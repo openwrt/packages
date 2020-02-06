@@ -9,8 +9,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sshtunnel
 PKG_VERSION:=4
-PKG_RELEASE:=1
-PKG_LICENSE:=GPL-2.0+
+PKG_RELEASE:=3
+PKG_LICENSE:=GPL-2.0-or-later
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 
@@ -22,6 +22,7 @@ define Package/sshtunnel
   SUBMENU:=SSH
   TITLE:=Manages Local and Remote openssh ssh(1) tunnels
   DEPENDS:=+openssh-client
+  PKGARCH:=all
 endef
 
 define Package/sshtunnel/description

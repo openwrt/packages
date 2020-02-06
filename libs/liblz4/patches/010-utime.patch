@@ -1,0 +1,72 @@
+From e9d5a3cbbb47eb0f785a409d836225b592b250f3 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Tue, 30 Jul 2019 22:13:51 -0700
+Subject: [PATCH] util.h: Remove deprecated utime for non-Windows
+
+utime was deprecated in POSIX 2008.
+---
+ programs/platform.h |  2 +-
+ programs/util.h     | 17 ++++++++++++++++-
+ 2 files changed, 17 insertions(+), 2 deletions(-)
+
+diff --git a/programs/platform.h b/programs/platform.h
+index c0b38402..7e2cb58f 100644
+--- a/programs/platform.h
++++ b/programs/platform.h
+@@ -86,7 +86,7 @@ extern "C" {
+ #  else
+ #    if defined(__linux__) || defined(__linux)
+ #      ifndef _POSIX_C_SOURCE
+-#        define _POSIX_C_SOURCE 200112L  /* use feature test macro */
++#        define _POSIX_C_SOURCE 200809L  /* use feature test macro */
+ #      endif
+ #    endif
+ #    include <unistd.h>  /* declares _POSIX_VERSION */
+diff --git a/programs/util.h b/programs/util.h
+index 1dd515ce..112dddbf 100644
+--- a/programs/util.h
++++ b/programs/util.h
+@@ -37,12 +37,17 @@ extern "C" {
+ #include <assert.h>
+ #include <sys/types.h>    /* stat, utime */
+ #include <sys/stat.h>     /* stat */
+-#if defined(_MSC_VER)
++#if defined(_WIN32)
+ #  include <sys/utime.h>  /* utime */
+ #  include <io.h>         /* _chmod */
+ #else
+ #  include <unistd.h>     /* chown, stat */
++#if PLATFORM_POSIX_VERSION < 200809L
+ #  include <utime.h>      /* utime */
++#else
++#  include <fcntl.h>      /* AT_FDCWD */
++#  include <sys/stat.h>   /* for utimensat */
++#endif
+ #endif
+ #include <time.h>         /* time */
+ #include <limits.h>       /* INT_MAX */
+@@ -287,14 +292,24 @@ UTIL_STATIC int UTIL_isRegFile(const char* infilename);
+ UTIL_STATIC int UTIL_setFileStat(const char *filename, stat_t *statbuf)
+ {
+     int res = 0;
++#if defined(_WIN32) || (PLATFORM_POSIX_VERSION < 200809L)
+     struct utimbuf timebuf;
++#else
++    struct timespec timebuf[2] = {};
++#endif
+ 
+     if (!UTIL_isRegFile(filename))
+         return -1;
+ 
++#if defined(_WIN32) || (PLATFORM_POSIX_VERSION < 200809L)
+     timebuf.actime = time(NULL);
+     timebuf.modtime = statbuf->st_mtime;
+     res += utime(filename, &timebuf);  /* set access and modification times */
++#else
++    timebuf[0].tv_nsec = UTIME_NOW;
++    timebuf[1].tv_sec = statbuf->st_mtime;
++    res += utimensat(AT_FDCWD, filename, timebuf, 0);  /* set access and modification times */
++#endif
+ 
+ #if !defined(_WIN32)
+     res += chown(filename, statbuf->st_uid, statbuf->st_gid);  /* Copy ownership */

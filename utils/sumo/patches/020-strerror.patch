@@ -1,0 +1,26 @@
+--- a/src/foreign/zstr/strict_fstream.hpp
++++ b/src/foreign/zstr/strict_fstream.hpp
+@@ -33,17 +33,17 @@ static std::string strerror()
+     {
+         buff = "Unknown error";
+     }
+-#elif __APPLE__ || ((_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && ! _GNU_SOURCE)
++#elif defined(__GLIBC__)
++// GNU-specific strerror_r()
++    auto p = strerror_r(errno, &buff[0], buff.size());
++    std::string tmp(p, std::strlen(p));
++    std::swap(buff, tmp);
++#else
+ // XSI-compliant strerror_r()
+     if (strerror_r(errno, &buff[0], buff.size()) != 0)
+     {
+         buff = "Unknown error";
+     }
+-#else
+-// GNU-specific strerror_r()
+-    auto p = strerror_r(errno, &buff[0], buff.size());
+-    std::string tmp(p, std::strlen(p));
+-    std::swap(buff, tmp);
+ #endif
+     buff.resize(buff.find('\0'));
+     return buff;

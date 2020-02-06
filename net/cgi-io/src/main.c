@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#define _GNU_SOURCE /* splice(), SPLICE_F_MORE */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -26,12 +28,16 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/sendfile.h>
+#include <sys/ioctl.h>
+#include <linux/fs.h>
 
 #include <libubus.h>
 #include <libubox/blobmsg.h>
 
 #include "multipart_parser.h"
 
+#define READ_BLOCK 4096
 
 enum part {
 	PART_UNKNOWN,
@@ -89,7 +95,7 @@ session_access_cb(struct ubus_request *req, int type, struct blob_attr *msg)
 }
 
 static bool
-session_access(const char *sid, const char *obj, const char *func)
+session_access(const char *sid, const char *scope, const char *obj, const char *func)
 {
 	uint32_t id;
 	bool allow = false;
@@ -103,7 +109,7 @@ session_access(const char *sid, const char *obj, const char *func)
 
 	blob_buf_init(&req, 0);
 	blobmsg_add_string(&req, "ubus_rpc_session", sid);
-	blobmsg_add_string(&req, "scope", "cgi-io");
+	blobmsg_add_string(&req, "scope", scope);
 	blobmsg_add_string(&req, "object", obj);
 	blobmsg_add_string(&req, "function", func);
 
@@ -117,11 +123,12 @@ out:
 }
 
 static char *
-md5sum(const char *file)
+checksum(const char *applet, size_t sumlen, const char *file)
 {
 	pid_t pid;
+	int r;
 	int fds[2];
-	static char md5[33];
+	static char chksum[65];
 
 	if (pipe(fds))
 		return NULL;
@@ -141,20 +148,24 @@ md5sum(const char *file)
 		close(fds[0]);
 		close(fds[1]);
 
-		if (execl("/bin/busybox", "/bin/busybox", "md5sum", file, NULL))
+		if (execl("/bin/busybox", "/bin/busybox", applet, file, NULL))
 			return NULL;
 
 		break;
 
 	default:
-		memset(md5, 0, sizeof(md5));
-		read(fds[0], md5, 32);
+		memset(chksum, 0, sizeof(chksum));
+		r = read(fds[0], chksum, sumlen);
+
 		waitpid(pid, NULL, 0);
 		close(fds[0]);
 		close(fds[1]);
+
+		if (r < 0)
+			return NULL;
 	}
 
-	return md5;
+	return chksum;
 }
 
 static char *
@@ -263,10 +274,68 @@ postdecode(char **fields, int n_fields)
 	return (found >= n_fields);
 }
 
+static char *
+canonicalize_path(const char *path, size_t len)
+{
+	char *canonpath, *cp;
+	const char *p, *e;
+
+	if (path == NULL || *path == '\0')
+		return NULL;
+
+	canonpath = datadup(path, len);
+
+	if (canonpath == NULL)
+		return NULL;
+
+	/* normalize */
+	for (cp = canonpath, p = path, e = path + len; p < e; ) {
+		if (*p != '/')
+			goto next;
+
+		/* skip repeating / */
+		if ((p + 1 < e) && (p[1] == '/')) {
+			p++;
+			continue;
+		}
+
+		/* /./ or /../ */
+		if ((p + 1 < e) && (p[1] == '.')) {
+			/* skip /./ */
+			if ((p + 2 >= e) || (p[2] == '/')) {
+				p += 2;
+				continue;
+			}
+
+			/* collapse /x/../ */
+			if ((p + 2 < e) && (p[2] == '.') && ((p + 3 >= e) || (p[3] == '/'))) {
+				while ((cp > canonpath) && (*--cp != '/'))
+					;
+
+				p += 3;
+				continue;
+			}
+		}
+
+next:
+		*cp++ = *p++;
+	}
+
+	/* remove trailing slash if not root / */
+	if ((cp > canonpath + 1) && (cp[-1] == '/'))
+		cp--;
+	else if (cp == canonpath)
+		*cp++ = '/';
+
+	*cp = '\0';
+
+	return canonpath;
+}
+
 static int
 response(bool success, const char *message)
 {
-	char *md5;
+	char *chksum;
 	struct stat s;
 
 	printf("Status: 200 OK\r\n");
@@ -274,9 +343,22 @@ response(bool success, const char *message)
 
 	if (success)
 	{
-		if (!stat(st.filename, &s) && (md5 = md5sum(st.filename)) != NULL)
-			printf("\t\"size\": %u,\n\t\"checksum\": \"%s\"\n",
-				   (unsigned int)s.st_size, md5);
+		if (!stat(st.filename, &s))
+			printf("\t\"size\": %u,\n", (unsigned int)s.st_size);
+		else
+			printf("\t\"size\": null,\n");
+
+		chksum = checksum("md5sum", 32, st.filename);
+		printf("\t\"checksum\": %s%s%s,\n",
+			chksum ? "\"" : "",
+			chksum ? chksum : "null",
+			chksum ? "\"" : "");
+
+		chksum = checksum("sha256sum", 64, st.filename);
+		printf("\t\"sha256sum\": %s%s%s\n",
+			chksum ? "\"" : "",
+			chksum ? chksum : "null",
+			chksum ? "\"" : "");
 	}
 	else
 	{
@@ -295,14 +377,16 @@ response(bool success, const char *message)
 }
 
 static int
-failure(int e, const char *message)
+failure(int code, int e, const char *message)
 {
-	printf("Status: 500 Internal Server failure\r\n");
+	printf("Status: %d %s\r\n", code, message);
 	printf("Content-Type: text/plain\r\n\r\n");
 	printf("%s", message);
 
 	if (e)
 		printf(": %s", strerror(e));
+
+	printf("\n");
 
 	return -1;
 }
@@ -311,7 +395,7 @@ static int
 filecopy(void)
 {
 	int len;
-	char buf[4096];
+	char buf[READ_BLOCK];
 
 	if (!st.filedata)
 	{
@@ -363,7 +447,7 @@ header_field(multipart_parser *p, const char *data, size_t len)
 static int
 header_value(multipart_parser *p, const char *data, size_t len)
 {
-	int i, j;
+	size_t i, j;
 
 	if (!st.is_content_disposition)
 		return 0;
@@ -404,6 +488,9 @@ data_begin_cb(multipart_parser *p)
 		if (!st.filename)
 			return response(false, "File data without name");
 
+		if (!session_access(st.sessionid, "file", st.filename, "write"))
+			return response(false, "Access to path denied by ACL");
+
 		st.tempfd = mkstemp(tmpname);
 
 		if (st.tempfd < 0)
@@ -418,6 +505,8 @@ data_begin_cb(multipart_parser *p)
 static int
 data_cb(multipart_parser *p, const char *data, size_t len)
 {
+	int wlen = len;
+
 	switch (st.parttype)
 	{
 	case PART_SESSIONID:
@@ -425,7 +514,7 @@ data_cb(multipart_parser *p, const char *data, size_t len)
 		break;
 
 	case PART_FILENAME:
-		st.filename = datadup(data, len);
+		st.filename = canonicalize_path(data, len);
 		break;
 
 	case PART_FILEMODE:
@@ -433,14 +522,14 @@ data_cb(multipart_parser *p, const char *data, size_t len)
 		break;
 
 	case PART_FILEDATA:
-		if (write(st.tempfd, data, len) != len)
+		if (write(st.tempfd, data, len) != wlen)
 		{
 			close(st.tempfd);
 			return response(false, "I/O failure while writing temporary file");
 		}
 
 		if (!st.filedata)
-			st.filedata = !!len;
+			st.filedata = !!wlen;
 
 		break;
 
@@ -456,7 +545,7 @@ data_end_cb(multipart_parser *p)
 {
 	if (st.parttype == PART_SESSIONID)
 	{
-		if (!session_access(st.sessionid, "upload", "write"))
+		if (!session_access(st.sessionid, "cgi-io", "upload", "write"))
 		{
 			errno = EPERM;
 			return response(false, "Upload permission denied");
@@ -544,7 +633,8 @@ static int
 main_upload(int argc, char *argv[])
 {
 	int rem, len;
-	char buf[4096];
+	bool done = false;
+	char buf[READ_BLOCK];
 	multipart_parser *p;
 
 	p = init_parser();
@@ -557,16 +647,91 @@ main_upload(int argc, char *argv[])
 
 	while ((len = read(0, buf, sizeof(buf))) > 0)
 	{
-		rem = multipart_parser_execute(p, buf, len);
-
-		if (rem < len)
-			break;
+		if (!done) {
+			rem = multipart_parser_execute(p, buf, len);
+			done = (rem < len);
+		}
 	}
 
 	multipart_parser_free(p);
 
-	/* read remaining post data */
-	while ((len = read(0, buf, sizeof(buf))) > 0);
+	return 0;
+}
+
+static int
+main_download(int argc, char **argv)
+{
+	char *fields[] = { "sessionid", NULL, "path", NULL, "filename", NULL, "mimetype", NULL };
+	unsigned long long size = 0;
+	char *p, buf[READ_BLOCK];
+	ssize_t len = 0;
+	struct stat s;
+	int rfd;
+
+	postdecode(fields, 4);
+
+	if (!fields[1] || !session_access(fields[1], "cgi-io", "download", "read"))
+		return failure(403, 0, "Download permission denied");
+
+	if (!fields[3] || !session_access(fields[1], "file", fields[3], "read"))
+		return failure(403, 0, "Access to path denied by ACL");
+
+	if (stat(fields[3], &s))
+		return failure(404, errno, "Failed to stat requested path");
+
+	if (!S_ISREG(s.st_mode) && !S_ISBLK(s.st_mode))
+		return failure(403, 0, "Requested path is not a regular file or block device");
+
+	for (p = fields[5]; p && *p; p++)
+		if (!isalnum(*p) && !strchr(" ()<>@,;:[]?.=%-", *p))
+			return failure(400, 0, "Invalid characters in filename");
+
+	for (p = fields[7]; p && *p; p++)
+		if (!isalnum(*p) && !strchr(" .;=/-", *p))
+			return failure(400, 0, "Invalid characters in mimetype");
+
+	rfd = open(fields[3], O_RDONLY);
+
+	if (rfd < 0)
+		return failure(500, errno, "Failed to open requested path");
+
+	if (S_ISBLK(s.st_mode))
+		ioctl(rfd, BLKGETSIZE64, &size);
+	else
+		size = (unsigned long long)s.st_size;
+
+	printf("Status: 200 OK\r\n");
+	printf("Content-Type: %s\r\n", fields[7] ? fields[7] : "application/octet-stream");
+
+	if (fields[5])
+		printf("Content-Disposition: attachment; filename=\"%s\"\r\n", fields[5]);
+
+	printf("Content-Length: %llu\r\n\r\n", size);
+	fflush(stdout);
+
+	while (size > 0) {
+		len = sendfile(1, rfd, NULL, size);
+
+		if (len == -1) {
+			if (errno == ENOSYS || errno == EINVAL) {
+				while ((len = read(rfd, buf, sizeof(buf))) > 0)
+					fwrite(buf, len, 1, stdout);
+
+				fflush(stdout);
+				break;
+			}
+
+			if (errno == EINTR || errno == EAGAIN)
+				continue;
+		}
+
+		if (len <= 0)
+			break;
+
+		size -= len;
+	}
+
+	close(rfd);
 
 	return 0;
 }
@@ -576,24 +741,24 @@ main_backup(int argc, char **argv)
 {
 	pid_t pid;
 	time_t now;
+	int r;
 	int len;
 	int status;
 	int fds[2];
-	char buf[4096];
 	char datestr[16] = { 0 };
 	char hostname[64] = { 0 };
 	char *fields[] = { "sessionid", NULL };
 
-	if (!postdecode(fields, 1) || !session_access(fields[1], "backup", "read"))
-		return failure(0, "Backup permission denied");
+	if (!postdecode(fields, 1) || !session_access(fields[1], "cgi-io", "backup", "read"))
+		return failure(403, 0, "Backup permission denied");
 
 	if (pipe(fds))
-		return failure(errno, "Failed to spawn pipe");
+		return failure(500, errno, "Failed to spawn pipe");
 
 	switch ((pid = fork()))
 	{
 	case -1:
-		return failure(errno, "Failed to fork process");
+		return failure(500, errno, "Failed to fork process");
 
 	case 0:
 		dup2(fds[1], 1);
@@ -603,7 +768,9 @@ main_backup(int argc, char **argv)
 		close(fds[0]);
 		close(fds[1]);
 
-		chdir("/");
+		r = chdir("/");
+		if (r < 0)
+			return failure(500, errno, "Failed chdir('/')");
 
 		execl("/sbin/sysupgrade", "/sbin/sysupgrade",
 		      "--create-backup", "-", NULL);
@@ -611,7 +778,8 @@ main_backup(int argc, char **argv)
 		return -1;
 
 	default:
-		fcntl(fds[0], F_SETFL, fcntl(fds[0], F_GETFL) | O_NONBLOCK);
+		close(fds[1]);
+
 		now = time(NULL);
 		strftime(datestr, sizeof(datestr) - 1, "%Y-%m-%d", localtime(&now));
 
@@ -623,18 +791,247 @@ main_backup(int argc, char **argv)
 		printf("Content-Disposition: attachment; "
 		       "filename=\"backup-%s-%s.tar.gz\"\r\n\r\n", hostname, datestr);
 
+		fflush(stdout);
+
 		do {
-			waitpid(pid, &status, 0);
+			len = splice(fds[0], NULL, 1, NULL, READ_BLOCK, SPLICE_F_MORE);
+		} while (len > 0);
 
-			while ((len = read(fds[0], buf, sizeof(buf))) > 0) {
-				fwrite(buf, len, 1, stdout);
-				fflush(stdout);
-			}
-
-		} while (!WIFEXITED(status));
+		waitpid(pid, &status, 0);
 
 		close(fds[0]);
+
+		return 0;
+	}
+}
+
+
+static const char *
+lookup_executable(const char *cmd)
+{
+	size_t plen = 0, clen = strlen(cmd) + 1;
+	static char path[PATH_MAX];
+	char *search, *p;
+	struct stat s;
+
+	if (!stat(cmd, &s) && S_ISREG(s.st_mode))
+		return cmd;
+
+	search = getenv("PATH");
+
+	if (!search)
+		search = "/bin:/usr/bin:/sbin:/usr/sbin";
+
+	p = search;
+
+	do {
+		if (*p != ':' && *p != '\0')
+			continue;
+
+		plen = p - search;
+
+		if ((plen + clen) >= sizeof(path))
+			continue;
+
+		strncpy(path, search, plen);
+		sprintf(path + plen, "/%s", cmd);
+
+		if (!stat(path, &s) && S_ISREG(s.st_mode))
+			return path;
+
+		search = p + 1;
+	} while (*p++);
+
+	return NULL;
+}
+
+static char **
+parse_command(const char *cmdline)
+{
+	const char *p = cmdline, *s;
+	char **argv = NULL, *out;
+	size_t arglen = 0;
+	int argnum = 0;
+	bool esc;
+
+	while (isspace(*cmdline))
+		cmdline++;
+
+	for (p = cmdline, s = p, esc = false; p; p++) {
+		if (esc) {
+			esc = false;
+		}
+		else if (*p == '\\' && p[1] != 0) {
+			esc = true;
+		}
+		else if (isspace(*p) || *p == 0) {
+			if (p > s) {
+				argnum += 1;
+				arglen += sizeof(char *) + (p - s) + 1;
+			}
+
+			s = p + 1;
+		}
+
+		if (*p == 0)
+			break;
+	}
+
+	if (arglen == 0)
+		return NULL;
+
+	argv = calloc(1, arglen + sizeof(char *));
+
+	if (!argv)
+		return NULL;
+
+	out = (char *)argv + sizeof(char *) * (argnum + 1);
+	argv[0] = out;
+
+	for (p = cmdline, s = p, esc = false, argnum = 0; p; p++) {
+		if (esc) {
+			esc = false;
+			*out++ = *p;
+		}
+		else if (*p == '\\' && p[1] != 0) {
+			esc = true;
+		}
+		else if (isspace(*p) || *p == 0) {
+			if (p > s) {
+				*out++ = ' ';
+				argv[++argnum] = out;
+			}
+
+			s = p + 1;
+		}
+		else {
+			*out++ = *p;
+		}
+
+		if (*p == 0)
+			break;
+	}
+
+	argv[argnum] = NULL;
+	out[-1] = 0;
+
+	return argv;
+}
+
+static int
+main_exec(int argc, char **argv)
+{
+	char *fields[] = { "sessionid", NULL, "command", NULL, "filename", NULL, "mimetype", NULL };
+	int i, devnull, status, fds[2];
+	bool allowed = false;
+	ssize_t len = 0;
+	const char *exe;
+	char *p, **args;
+	pid_t pid;
+
+	postdecode(fields, 4);
+
+	if (!fields[1] || !session_access(fields[1], "cgi-io", "exec", "read"))
+		return failure(403, 0, "Exec permission denied");
+
+	for (p = fields[5]; p && *p; p++)
+		if (!isalnum(*p) && !strchr(" ()<>@,;:[]?.=%-", *p))
+			return failure(400, 0, "Invalid characters in filename");
+
+	for (p = fields[7]; p && *p; p++)
+		if (!isalnum(*p) && !strchr(" .;=/-", *p))
+			return failure(400, 0, "Invalid characters in mimetype");
+
+	args = fields[3] ? parse_command(fields[3]) : NULL;
+
+	if (!args)
+		return failure(400, 0, "Invalid command parameter");
+
+	/* First check if we find an ACL match for the whole cmdline ... */
+	allowed = session_access(fields[1], "file", args[0], "exec");
+
+	/* Now split the command vector... */
+	for (i = 1; args[i]; i++)
+		args[i][-1] = 0;
+
+	/* Find executable... */
+	exe = lookup_executable(args[0]);
+
+	if (!exe) {
+		free(args);
+		return failure(404, 0, "Executable not found");
+	}
+
+	/* If there was no ACL match, check for a match on the executable */
+	if (!allowed && !session_access(fields[1], "file", exe, "exec")) {
+		free(args);
+		return failure(403, 0, "Access to command denied by ACL");
+	}
+
+	if (pipe(fds)) {
+		free(args);
+		return failure(500, errno, "Failed to spawn pipe");
+	}
+
+	switch ((pid = fork()))
+	{
+	case -1:
+		free(args);
+		close(fds[0]);
 		close(fds[1]);
+		return failure(500, errno, "Failed to fork process");
+
+	case 0:
+		devnull = open("/dev/null", O_RDWR);
+
+		if (devnull > -1) {
+			dup2(devnull, 0);
+			dup2(devnull, 2);
+			close(devnull);
+		}
+		else {
+			close(0);
+			close(2);
+		}
+
+		dup2(fds[1], 1);
+		close(fds[0]);
+		close(fds[1]);
+
+		if (chdir("/") < 0) {
+			free(args);
+			return failure(500, errno, "Failed chdir('/')");
+		}
+
+		if (execv(exe, args) < 0) {
+			free(args);
+			return failure(500, errno, "Failed execv(...)");
+		}
+
+		return -1;
+
+	default:
+		close(fds[1]);
+
+		printf("Status: 200 OK\r\n");
+		printf("Content-Type: %s\r\n",
+		       fields[7] ? fields[7] : "application/octet-stream");
+
+		if (fields[5])
+			printf("Content-Disposition: attachment; filename=\"%s\"\r\n",
+			       fields[5]);
+
+		printf("\r\n");
+		fflush(stdout);
+
+		do {
+			len = splice(fds[0], NULL, 1, NULL, READ_BLOCK, SPLICE_F_MORE);
+		} while (len > 0);
+
+		waitpid(pid, &status, 0);
+
+		close(fds[0]);
+		free(args);
 
 		return 0;
 	}
@@ -644,8 +1041,12 @@ int main(int argc, char **argv)
 {
 	if (strstr(argv[0], "cgi-upload"))
 		return main_upload(argc, argv);
+	else if (strstr(argv[0], "cgi-download"))
+		return main_download(argc, argv);
 	else if (strstr(argv[0], "cgi-backup"))
 		return main_backup(argc, argv);
+	else if (strstr(argv[0], "cgi-exec"))
+		return main_exec(argc, argv);
 
 	return -1;
 }

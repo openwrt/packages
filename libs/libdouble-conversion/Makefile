@@ -8,18 +8,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdouble-conversion
-PKG_VERSION:=2.0
-PKG_RELEASE:=1
+PKG_VERSION:=3.1.5
+PKG_RELEASE:=3
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=0d25506a2e7fb52928963313343e0237e890059e
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=7466f634421f3136174cbc2b00635788509a3312894de28367f31d891fd401ad
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/google/double-conversion.git
+PKG_SOURCE:=double-conversion-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/google/double-conversion/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=a63ecb93182134ba4293fd5f22d6e08ca417caafa244afaa751cbfddf6415b13
+
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/double-conversion-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/double-conversion-$(PKG_VERSION)
+
+PKG_MAINTAINER:=
+PKG_LICENSE:=BSD-3c
 PKG_LICENSE_FILES:=COPYING LICENSE
 
+CMAKE_INSTALL:=1
+
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libdouble-conversion
@@ -32,37 +38,23 @@ endef
 
 define Package/libdouble-conversion/description
   double-conversion provides binary-decimal and decimal-binary routines for IEEE doubles.
-  
+
   The library consists of efficient conversion routines that have been extracted
   from the V8 JavaScript engine. The code has been refactored and improved so that
   it can be used more easily in other projects.
 endef
 
 CMAKE_OPTIONS += \
-  -DBUILD_SHARED_LIBS=ON \
-  -DBUILD_TESTING=OFF
+	-DBUILD_SHARED_LIBS=ON \
+	-DBUILD_TESTING=OFF
 
-define Build/InstallDev
-	$(INSTALL_DIR) \
-	  $(1)/usr/lib \
-	  $(1)/usr/include/double-conversion
-
-	$(CP) \
-	  $(PKG_INSTALL_DIR)/usr/include/* \
-	  $(1)/usr/include/
-
-	$(INSTALL_DATA) \
-	  $(PKG_INSTALL_DIR)/usr/lib/lib*.so* \
-	  $(1)/usr/lib/
-endef
+TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -fno-rtti -flto
+TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Package/libdouble-conversion/install
-	$(INSTALL_DIR) \
-	  $(1)/usr/lib
-
-	$(INSTALL_DATA) \
-	  $(PKG_INSTALL_DIR)/usr/lib/lib*.so* \
-	  $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib*.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libdouble-conversion))
+$(eval $(call HostBuild))

@@ -8,30 +8,28 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libimobiledevice
-PKG_VERSION:=1.2.1
-PKG_RELEASE:=2
-
-PKG_MAINTAINER:=Lukasz Baj <l.baj@radytek.com>
-PKG_LICENSE:=LGPL-2.1+
-PKG_LICENSE_FILES:=COPYING.LESSER
+PKG_SOURCE_DATE:=2020-01-20
+PKG_SOURCE_VERSION:=61babf5f54e7734ebf3044af4c6294524d4b29b5
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/libimobiledevice/libimobiledevice.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=13bf235cac2201747de11652cf14fe2714ca0718
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=4e8892b27f20216f86d69b36ad2229fca87cdf0a10f8d3e145d01841a492562a
+PKG_SOURCE_URL:=https://github.com/libimobiledevice/libimobiledevice
+PKG_MIRROR_HASH:=7e3bb5dbb252bb49caed15dffdecc1269a688f0c3af9e8fcad2624c5e60851c5
+
+PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
+PKG_LICENSE:=LGPL-2.1-or-later
+PKG_LICENSE_FILES:=COPYING.LESSER
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/nls.mk
-$(call include_mk, python-package.mk)
 
 define Package/libimobiledevice/Default
   TITLE:=A library that talks to Apple devices.
-  URL:=http://www.libimobiledevice.org/
+  URL:=https://www.libimobiledevice.org/
+  SUBMENU:=libimobiledevice
 endef
 
 define Package/libimobiledevice/Default/description
@@ -43,7 +41,9 @@ define Package/libimobiledevice
   $(call Package/libimobiledevice/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=$(ICONV_DEPENDS) +libplist +libusbmuxd +libopenssl
+  DEPENDS:=+libplist +libusbmuxd +libopenssl
+  LICENSE:=LGPL-2.1-or-later
+  LICENSE_FILES:=COPYING.LESSER
 endef
 
 define Package/libimobiledevice/description
@@ -55,6 +55,8 @@ define Package/libimobiledevice-utils
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=+libimobiledevice
+  LICENSE:=GPL-2.0-or-later
+  ICENSE_FILES:=COPYING
 endef
 
 define Package/libimobiledevice-utils/description
@@ -62,17 +64,7 @@ define Package/libimobiledevice-utils/description
   This package contains the libimobiledevice utilities.
 endef
 
-CONFIGURE_VARS += \
-	libusbmuxd_CFLAGS="-I$(STAGING_DIR)/usr/include" \
-	libusbmuxd_LIBS="-L$(STAGING_DIR)/usr/lib -lusbmuxd" \
-	openssl_CFLAGS=" " \
-	openssl_LIBS="-L$(STAGING_DIR)/usr/lib -lssl -lcrypto"
-
-CONFIGURE_ARGS += \
-	--without-cython \
-	--disable-largefile
-
-TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib
+CONFIGURE_ARGS += --without-cython
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

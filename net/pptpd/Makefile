@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pptpd
 PKG_VERSION:=1.4.0
-PKG_RELEASE:=3
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/poptop
@@ -18,7 +18,7 @@ PKG_HASH:=8fcd8b8a42de2af59e9fe8cbaa9f894045c977f4d038bbd6346a8522bb7f06c0
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
-PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
+PKG_CPE_ID:=cpe:/a:poptop:pptp_server
 
 include $(INCLUDE_DIR)/package.mk
 

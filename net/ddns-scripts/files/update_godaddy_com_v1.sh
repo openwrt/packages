@@ -4,7 +4,7 @@
 #
 # script for sending updates to godaddy.com
 #.based on GoDaddy.sh v1.0 by Nazar78 @ TeaNazaR.com
-#.2017 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+#.2017-2018 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
 # GoDaddy Documentation at https://developer.godaddy.com/doc
 #
 # This script is parsed by dynamic_dns_functions.sh inside send_update() function
@@ -18,7 +18,7 @@
 #
 
 # check parameters
-[ -z "$CURL_SSL" ] && write_log 14 "GoDaddy communication require cURL with SSL support. Please install"
+[ -z "$CURL" ] && [ -z "$CURL_SSL" ] && write_log 14 "GoDaddy communication require cURL with SSL support. Please install"
 [ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing key as 'username'"
 [ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing secret as 'password'"
 [ $use_https -eq 0 ] && use_https=1	# force HTTPS
@@ -85,6 +85,7 @@ godaddy_transfer() {
 		write_log 7 "$(cat $DATFILE)"
 		return 1
 	}
+	return 0
 }
 
 # Build base command to use

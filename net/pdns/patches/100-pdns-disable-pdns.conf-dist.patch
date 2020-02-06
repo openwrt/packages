@@ -1,0 +1,34 @@
+--- a/pdns/Makefile.am
++++ b/pdns/Makefile.am
+@@ -69,11 +69,9 @@
+ 	backends/gsql/gsqlbackend.gcda \
+ 	backends/gsql/gsqlbackend.gcno \
+ 	backends/gsql/gsqlbackend.gcov \
+-	dnsmessage.pb.cc dnsmessage.pb.h \
+-	pdns.conf-dist
++	dnsmessage.pb.cc dnsmessage.pb.h
+ 
+ noinst_SCRIPTS = pdns.init
+-sysconf_DATA = pdns.conf-dist
+ 
+ sbin_PROGRAMS = pdns_server
+ bin_PROGRAMS = \
+@@ -113,7 +111,7 @@
+ bin_PROGRAMS += \
+ 	ixfrdist
+ 
+-sysconf_DATA += \
++sysconf_DATA = \
+ 	ixfrdist.example.yml
+ endif
+ 
+@@ -1256,9 +1254,6 @@
+ endif
+ endif
+ 
+-pdns.conf-dist: pdns_server
+-	$(AM_V_GEN)./pdns_server --no-config --config 2>/dev/null > $@
+-
+ testrunner_SOURCES = \
+ 	arguments.cc \
+ 	auth-caches.cc auth-caches.hh \

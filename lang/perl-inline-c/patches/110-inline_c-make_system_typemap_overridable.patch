@@ -1,6 +1,6 @@
 --- a/lib/Inline/C.pm
 +++ b/lib/Inline/C.pm
-@@ -438,22 +438,28 @@ sub get_maps {
+@@ -457,22 +457,28 @@ sub get_maps {
      print STDERR "get_maps Stage\n" if $o->{CONFIG}{BUILD_NOISY};
      my $typemap = '';
      my $file;

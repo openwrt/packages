@@ -6,43 +6,42 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=7.1.10
-PKG_RELEASE:=1
+PKG_VERSION:=7.4.2
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
-
-PKG_LICENSE:=PHPv3.01
+PKG_LICENSE:=PHP-3.01
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:php:php
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.php.net/distributions/
-PKG_HASH:=2b8efa771a2ead0bb3ae67b530ca505b5b286adc873cca9ce97a6e1d6815c50b
+PKG_HASH:=98284deac017da0d426117ecae7599a1f1bf62ae3911e8bc16c4403a8f4bdf13
 
-PKG_FIXUP:=libtool autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
-PHP7_MODULES = \
+PHP7_MODULES= \
+	bcmath \
 	calendar ctype curl \
-	fileinfo \
 	dom \
 	exif \
-	ftp \
+	fileinfo filter ftp \
 	gettext gd gmp \
-	hash \
-	iconv intl \
+	iconv imap intl \
 	json \
 	ldap \
-	mbstring mcrypt mysqli \
+	mbstring mysqli mysqlnd \
 	opcache openssl \
 	pcntl pdo pdo-mysql pdo-pgsql pdo-sqlite pgsql phar \
 	session shmop simplexml snmp soap sockets sqlite3 sysvmsg sysvsem sysvshm \
 	tokenizer \
-	xml xmlreader xmlwriter zip \
+	xml xmlreader xmlwriter \
+	zip
 
 PKG_CONFIG_DEPENDS:= \
 	$(patsubst %,CONFIG_PACKAGE_php7-mod-%,$(PHP7_MODULES)) \
-	CONFIG_PHP7_FILTER CONFIG_PHP7_LIBXML CONFIG_PHP7_SYSTEMTZDATA
+	CONFIG_PHP7_LIBXML CONFIG_PHP7_SYSTEMTZDATA
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -62,11 +61,6 @@ define Package/php7/Default/description
 endef
 
 define Package/php7/config
-	config PHP7_FILTER
-		bool "PHP7 Filter support"
-		depends on PACKAGE_php7-cli || PACKAGE_php7-cgi
-		default y
-
 	config PHP7_LIBXML
 		bool "PHP7 LIBXML support"
 		depends on PACKAGE_php7-cli || PACKAGE_php7-cgi
@@ -74,7 +68,6 @@ define Package/php7/config
 	config PHP7_SYSTEMTZDATA
 		bool "Use system timezone data instead of php's built-in database"
 		depends on PACKAGE_php7-cli || PACKAGE_php7-cgi
-		select PACKAGE_zoneinfo-core
 		default y
 		help
 			Enabling this feature automatically selects the zoneinfo-core package
@@ -85,8 +78,9 @@ endef
 define Package/php7
   $(call Package/php7/Default)
 
-  DEPENDS:=+libpcre +zlib \
-           +PHP7_LIBXML:libxml2
+  DEPENDS:=+libpcre2 +zlib \
+           +PHP7_LIBXML:libxml2 \
+           +PHP7_SYSTEMTZDATA:zoneinfo-core
 endef
 
 define Package/php7/description
@@ -142,6 +136,22 @@ define Package/php7-fpm/description
   This package contains the FastCGI Process Manager of the PHP7 interpreter.
 endef
 
+define Package/php7-mod-intl/config
+  config PHP7_FULLICUDATA
+	bool "Add dependency to full ICU Data"
+	depends on PACKAGE_php7-mod-intl
+	default n
+endef
+
+define Package/php7-mod-intl/description
+  Note that this package depends in ICU library which is built without data
+  by default. This is to satisfy programs build and run dependencies but to
+  keep the installed footprint small on the target system(s).
+  However, the data is required to make the ICU library useful - and thus
+  directly affects PHPs ICU extension, too - so consider to also
+  select/install package 'icu-full-data'.
+endef
+
 # not everything groks --disable-nls
 DISABLE_NLS:=
 
@@ -151,6 +161,7 @@ CONFIGURE_ARGS+= \
 	--enable-fpm \
 	--enable-shared \
 	--disable-static \
+	--with-pic \
 	--disable-rpath \
 	--disable-debug \
 	--disable-phpdbg \
@@ -160,8 +171,15 @@ CONFIGURE_ARGS+= \
 	--with-config-file-scan-dir=/etc/php7 \
 	--disable-short-tags \
 	\
-	--with-zlib="$(STAGING_DIR)/usr" \
-	  --with-zlib-dir="$(STAGING_DIR)/usr"
+	--without-valgrind \
+	--with-external-pcre \
+	--with-zlib="$(STAGING_DIR)/usr"
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-bcmath),)
+  CONFIGURE_ARGS+= --enable-bcmath=shared
+else
+  CONFIGURE_ARGS+= --disable-bcmath
+endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-calendar),)
   CONFIGURE_ARGS+= --enable-calendar=shared
@@ -176,21 +194,9 @@ else
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-curl),)
-  CONFIGURE_ARGS+= --with-curl=shared,"$(STAGING_DIR)/usr"
+  CONFIGURE_ARGS+= --with-curl=shared
 else
   CONFIGURE_ARGS+= --without-curl
-endif
-
-ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-fileinfo),)
-  CONFIGURE_ARGS+= --enable-fileinfo=shared
-else
-  CONFIGURE_ARGS+= --disable-fileinfo
-endif
-
-ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-gettext),)
-  CONFIGURE_ARGS+= --with-gettext=shared,"$(STAGING_DIR)/usr/lib/libintl-full"
-else
-  CONFIGURE_ARGS+= --without-gettext
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-dom),)
@@ -205,6 +211,18 @@ else
   CONFIGURE_ARGS+= --disable-exif
 endif
 
+ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-fileinfo),)
+  CONFIGURE_ARGS+= --enable-fileinfo=shared,"$(STAGING_DIR)/usr"
+else
+  CONFIGURE_ARGS+= --disable-fileinfo
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-filter),)
+  CONFIGURE_ARGS+= --enable-filter=shared,"$(STAGING_DIR)/usr"
+else
+  CONFIGURE_ARGS+= --disable-filter
+endif
+
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-ftp),)
   CONFIGURE_ARGS+= --enable-ftp=shared
 else
@@ -213,15 +231,16 @@ endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-gd),)
   CONFIGURE_ARGS+= \
-	--with-gd=shared \
-	--without-freetype-dir \
-	--with-jpeg-dir="$(STAGING_DIR)/usr" \
-	--with-png-dir="$(STAGING_DIR)/usr" \
-	--without-xpm-dir \
-	--enable-gd-native-ttf \
-	--disable-gd-jis-conv
+	--enable-gd=shared,"$(STAGING_DIR)/usr" \
+	--with-external-gd
 else
-  CONFIGURE_ARGS+= --without-gd
+  CONFIGURE_ARGS+= --disable-gd
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-gettext),)
+  CONFIGURE_ARGS+= --with-gettext=shared,"$(STAGING_DIR)/usr/lib/libintl-full"
+else
+  CONFIGURE_ARGS+= --without-gettext
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-gmp),)
@@ -230,16 +249,19 @@ else
   CONFIGURE_ARGS+= --without-gmp
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-hash),)
-  CONFIGURE_ARGS+= --enable-hash=shared
-else
-  CONFIGURE_ARGS+= --disable-hash
-endif
-
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-iconv),)
   CONFIGURE_ARGS+= --with-iconv=shared,"$(ICONV_PREFIX)"
 else
   CONFIGURE_ARGS+= --without-iconv
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-imap),)
+  CONFIGURE_ARGS+= \
+		--with-imap=shared,"$(STAGING_DIR)/usr" \
+		--with-kerberos=no \
+		--with-imap-ssl="$(STAGING_DIR)/usr"
+else
+  CONFIGURE_ARGS+= --without-imap
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-intl),)
@@ -258,27 +280,29 @@ endif
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-ldap),)
   CONFIGURE_ARGS+= \
 	--with-ldap=shared,"$(STAGING_DIR)/usr" \
-	--with-ldap-sasl="$(STAGING_DIR)/usr"
+	--with-ldap-sasl
 else
   CONFIGURE_ARGS+= --without-ldap
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-mbstring),)
-  CONFIGURE_ARGS+= --enable-mbstring=shared --enable-mbregex
+  CONFIGURE_ARGS+= \
+	--enable-mbstring=shared \
+	--enable-mbregex
 else
   CONFIGURE_ARGS+= --disable-mbstring
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-mcrypt),)
-  CONFIGURE_ARGS+= --with-mcrypt=shared,"$(STAGING_DIR)/usr"
-else
-  CONFIGURE_ARGS+= --without-mcrypt
-endif
-
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-mysqli),)
-  CONFIGURE_ARGS+= --with-mysqli=shared,"$(STAGING_DIR)/usr/bin/mysql_config"
+  CONFIGURE_ARGS+= --with-mysqli=shared
 else
   CONFIGURE_ARGS+= --without-mysqli
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-mysqlnd),)
+  CONFIGURE_ARGS+= --enable-mysqlnd=shared
+else
+  CONFIGURE_ARGS+= --disable-mysqlnd
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-opcache),)
@@ -287,9 +311,9 @@ else
   CONFIGURE_ARGS+= --disable-opcache
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-openssl)$(CONFIG_PACKAGE_php7-mod-snmp),)
+ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-openssl)$(CONFIG_PACKAGE_php7-mod-ftp)$(CONFIG_PACKAGE_php7-mod-imap)$(CONFIG_PACKAGE_php7-mod-snmp),)
   CONFIGURE_ARGS+= \
-	--with-openssl=shared,"$(STAGING_DIR)/usr" \
+	--with-openssl=shared \
 	--with-kerberos=no \
 	--with-openssl-dir="$(STAGING_DIR)/usr"
 else
@@ -305,7 +329,7 @@ endif
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-pdo),)
   CONFIGURE_ARGS+= --enable-pdo=shared
   ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-pdo-mysql),)
-    CONFIGURE_ARGS+= --with-pdo-mysql=shared,"$(STAGING_DIR)/usr"
+    CONFIGURE_ARGS+= --with-pdo-mysql=shared
   else
     CONFIGURE_ARGS+= --without-pdo-mysql
   endif
@@ -315,7 +339,7 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-pdo),)
     CONFIGURE_ARGS+= --without-pdo-pgsql
   endif
   ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-pdo-sqlite),)
-    CONFIGURE_ARGS+= --with-pdo-sqlite=shared,"$(STAGING_DIR)/usr"
+    CONFIGURE_ARGS+= --with-pdo-sqlite=shared
   else
     CONFIGURE_ARGS+= --without-pdo-sqlite
   endif
@@ -372,7 +396,7 @@ else
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-sqlite3),)
-  CONFIGURE_ARGS+= --with-sqlite3=shared,"$(STAGING_DIR)/usr"
+  CONFIGURE_ARGS+= --with-sqlite3=shared
 else
   CONFIGURE_ARGS+= --without-sqlite3
 endif
@@ -403,10 +427,8 @@ endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php7-mod-xml),)
   CONFIGURE_ARGS+= --enable-xml=shared,"$(STAGING_DIR)/usr"
-  ifneq ($(CONFIG_PHP7_LIBXML),)
-    CONFIGURE_ARGS+= --with-libxml-dir="$(STAGING_DIR)/usr/include/libxml2"
-  else
-    CONFIGURE_ARGS+= --with-libexpat-dir="$(STAGING_DIR)/usr"
+  ifneq ($(CONFIG_PHP7_LIBXML),y)
+    CONFIGURE_ARGS+= --with-expat
   endif
 else
   CONFIGURE_ARGS+= --disable-xml
@@ -425,38 +447,34 @@ else
 endif
 
 ifneq ($(CONFIG_PACKAGE_php7-mod-zip),)
-  CONFIGURE_ARGS+= --enable-zip=shared
+  CONFIGURE_ARGS+= --with-zip=shared,"$(STAGING_DIR)/usr"
 else
-  CONFIGURE_ARGS+= --disable-zip
-endif
-
-ifneq ($(SDK)$(CONFIG_PHP7_FILTER),)
-  CONFIGURE_ARGS+= --enable-filter
-else
-  CONFIGURE_ARGS+= --disable-filter
+  CONFIGURE_ARGS+= --without-zip
 endif
 
 ifneq ($(SDK)$(CONFIG_PHP7_LIBXML),)
-  CONFIGURE_ARGS+= --enable-libxml
-  CONFIGURE_ARGS+= --with-libxml-dir="$(STAGING_DIR)/usr/include/libxml2"
+  CONFIGURE_ARGS+= --with-libxml
 else
-  CONFIGURE_ARGS+= --disable-libxml
+  CONFIGURE_ARGS+= --without-libxml
 endif
 
-#ifneq ($(CONFIG_PHP7_SYSTEMTZDATA),)
-#  CONFIGURE_ARGS+= --with-system-tzdata
-#else
-#  CONFIGURE_ARGS+= --without-system-tzdata
-#endif
+ifneq ($(CONFIG_PHP7_SYSTEMTZDATA),)
+  CONFIGURE_ARGS+= --with-system-tzdata
+else
+  CONFIGURE_ARGS+= --without-system-tzdata
+endif
 
 CONFIGURE_VARS+= \
 	ac_cv_c_bigendian_php=$(if $(CONFIG_BIG_ENDIAN),yes,no) \
 	php_cv_cc_rpath="no" \
 	iconv_impl_name="gnu_libiconv" \
 	ac_cv_php_xml2_config_path="$(STAGING_DIR)/host/bin/xml2-config" \
+	ac_cv_u8t_decompose=yes \
+	ac_cv_have_pcre2_jit=no
 
 define Package/php7/conffiles
 /etc/php.ini
+/etc/php7/
 endef
 
 define Package/php7/install
@@ -483,6 +501,10 @@ define Package/php7-fastcgi/install
 	$(INSTALL_BIN) ./files/php7-fastcgi.init $(1)/etc/init.d/php7-fastcgi
 endef
 
+define Package/php7-fastcgi/conffiles
+/etc/config/php7-fastcgi
+endef
+
 define Package/php7-fpm/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sapi/fpm/php-fpm $(1)/usr/bin/php-fpm
@@ -500,9 +522,15 @@ define Package/php7-fpm/install
 	$(INSTALL_BIN) ./files/php7-fpm.init $(1)/etc/init.d/php7-fpm
 endef
 
+define Package/php7-fpm/conffiles
+/etc/php7-fpm.conf
+/etc/php7-fpm.d/
+/etc/config/php7-fpm
+endef
+
 define Build/Prepare
 	$(call Build/Prepare/Default)
-	( cd $(PKG_BUILD_DIR); touch configure.in; ./buildconf --force )
+	( cd $(PKG_BUILD_DIR); touch configure.ac; ./buildconf --force )
 endef
 
 define Build/InstallDev
@@ -560,33 +588,35 @@ $(eval $(call BuildPackage,php7-fastcgi))
 $(eval $(call BuildPackage,php7-fpm))
 
 #$(eval $(call BuildModule,NAME,TITLE[,PKG DEPENDS]))
+$(eval $(call BuildModule,bcmath,Bcmath))
 $(eval $(call BuildModule,calendar,Calendar))
 $(eval $(call BuildModule,ctype,Ctype))
 $(eval $(call BuildModule,curl,cURL,+PACKAGE_php7-mod-curl:libcurl))
 $(eval $(call BuildModule,dom,DOM,+@PHP7_LIBXML +PACKAGE_php7-mod-dom:libxml2))
 $(eval $(call BuildModule,exif,EXIF))
 $(eval $(call BuildModule,fileinfo,Fileinfo))
+$(eval $(call BuildModule,filter,Filter))
 $(eval $(call BuildModule,ftp,FTP,+PACKAGE_php7-mod-ftp:libopenssl))
-$(eval $(call BuildModule,gd,GD graphics,+PACKAGE_php7-mod-gd:libjpeg +PACKAGE_php7-mod-gd:libpng))
+$(eval $(call BuildModule,gd,GD graphics,+PACKAGE_php7-mod-gd:libgd-full))
 $(eval $(call BuildModule,gettext,Gettext,+PACKAGE_php7-mod-gettext:libintl-full))
 $(eval $(call BuildModule,gmp,GMP,+PACKAGE_php7-mod-gmp:libgmp))
-$(eval $(call BuildModule,hash,Hash))
 $(eval $(call BuildModule,iconv,iConv,$(ICONV_DEPENDS)))
-$(eval $(call BuildModule,intl,Internationalization Functions,+PACKAGE_php7-mod-intl:icu))
+$(eval $(call BuildModule,imap,IMAP,+PACKAGE_php7-mod-imap:libopenssl +PACKAGE_libpam:libpam +PACKAGE_php7-mod-imap:uw-imap))
+$(eval $(call BuildModule,intl,Internationalization Functions,+PACKAGE_php7-mod-intl:icu +PHP7_FULLICUDATA:icu-full-data))
 $(eval $(call BuildModule,json,JSON))
 $(eval $(call BuildModule,ldap,LDAP,+PACKAGE_php7-mod-ldap:libopenldap +PACKAGE_php7-mod-ldap:libsasl2))
-$(eval $(call BuildModule,mbstring,MBString))
-$(eval $(call BuildModule,mcrypt,Mcrypt,+PACKAGE_php7-mod-mcrypt:libmcrypt +PACKAGE_php7-mod-mcrypt:libltdl))
-$(eval $(call BuildModule,mysqli,MySQL Improved Extension,+PACKAGE_php7-mod-mysqli:libmysqlclient))
+$(eval $(call BuildModule,mbstring,MBString,+PACKAGE_php7-mod-mbstring:oniguruma))
+$(eval $(call BuildModule,mysqli,MySQL Improved Extension,+PACKAGE_php7-mod-mysqli:php7-mod-mysqlnd,30))
+$(eval $(call BuildModule,mysqlnd,MySQL Native Driver,+PACKAGE_php7-mod-openssl:php7-mod-openssl))
 $(eval $(call BuildModule,opcache,OPcache,,,zend))
-$(eval $(call BuildModule,openssl,OpenSSL,+PACKAGE_php7-mod-openssl:libopenssl))
+$(eval $(call BuildModule,openssl,OpenSSL,+PACKAGE_php7-mod-openssl:libopenssl,15))
 $(eval $(call BuildModule,pcntl,PCNTL))
 $(eval $(call BuildModule,pdo,PHP Data Objects))
-$(eval $(call BuildModule,pdo-mysql,PDO driver for MySQL,+php7-mod-pdo +PACKAGE_php7-mod-pdo-mysql:libmysqlclient))
+$(eval $(call BuildModule,pdo-mysql,PDO driver for MySQL,+php7-mod-pdo +PACKAGE_php7-mod-pdo-mysql:php7-mod-mysqlnd))
 $(eval $(call BuildModule,pdo-pgsql,PDO driver for PostgreSQL,+php7-mod-pdo +PACKAGE_php7-mod-pdo-pgsql:libpq))
 $(eval $(call BuildModule,pdo-sqlite,PDO driver for SQLite 3.x,+php7-mod-pdo +PACKAGE_php7-mod-pdo-sqlite:libsqlite3 +PACKAGE_php7-mod-pdo-sqlite:librt))
 $(eval $(call BuildModule,pgsql,PostgreSQL,+PACKAGE_php7-mod-pgsql:libpq))
-$(eval $(call BuildModule,phar,Phar Archives,+php7-mod-hash))
+$(eval $(call BuildModule,phar,Phar Archives))
 $(eval $(call BuildModule,session,Session))
 $(eval $(call BuildModule,shmop,Shared Memory))
 $(eval $(call BuildModule,simplexml,SimpleXML,+@PHP7_LIBXML +PACKAGE_php7-mod-simplexml:libxml2))
@@ -599,6 +629,6 @@ $(eval $(call BuildModule,sysvsem,System V shared memory))
 $(eval $(call BuildModule,sysvshm,System V semaphore))
 $(eval $(call BuildModule,tokenizer,Tokenizer))
 $(eval $(call BuildModule,xml,XML,+PHP7_LIBXML:libxml2 +!PHP7_LIBXML:libexpat))
-$(eval $(call BuildModule,xmlreader,XMLReader,+@PHP7_LIBXML +PACKAGE_php7-mod-xmlreader:libxml2))
+$(eval $(call BuildModule,xmlreader,XMLReader,+@PHP7_LIBXML +PACKAGE_php7-mod-dom:php7-mod-dom +PACKAGE_php7-mod-xmlreader:libxml2))
 $(eval $(call BuildModule,xmlwriter,XMLWriter,+@PHP7_LIBXML +PACKAGE_php7-mod-xmlwriter:libxml2))
-$(eval $(call BuildModule,zip,ZIP,+PACKAGE_php7-mod-zip:zlib))
+$(eval $(call BuildModule,zip,ZIP,+PACKAGE_php7-mod-zip:libzip))

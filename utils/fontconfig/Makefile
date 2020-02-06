@@ -15,6 +15,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://fontconfig.org/release/
 PKG_HASH:=dc62447533bca844463a3c3fd4083b57c90f18a70506e7a9f4936b5a1e516a99
 
+PKG_CPE_ID:=cpe:/a:fontconfig_project:fontconfig
+
 PKG_FIXUP:=libtool
 PKG_INSTALL:=1
 
@@ -23,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/fontconfig
   SECTION:=xorg-util
   CATEGORY:=Xorg
-  SUBMENU:=font-utils
+  SUBMENU:=Font-Utils
   TITLE:=fontconfig
   DEPENDS:=+libpthread +libexpat +libfreetype
   URL:=http://fontconfig.org/

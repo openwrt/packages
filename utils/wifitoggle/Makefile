@@ -11,8 +11,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wifitoggle
 PKG_VERSION:=1
-PKG_RELEASE:=5
-PKG_LICENSE:=GPL-2.0+
+PKG_RELEASE:=6
+PKG_LICENSE:=GPL-2.0-or-later
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 
@@ -22,6 +22,7 @@ define Package/wifitoggle
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Script to toggle Wi-Fi with a button and UCI config
+  PKGARCH:=all
 endef
 
 define Package/wifitoggle/description

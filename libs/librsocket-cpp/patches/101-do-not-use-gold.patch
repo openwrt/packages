@@ -1,0 +1,10 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -67,7 +67,6 @@
+   if (RSOCKET_ASAN)
+     set(ASAN_FLAGS -fsanitize=address,undefined)
+   endif ()
+-  set(EXTRA_LINK_FLAGS ${EXTRA_LINK_FLAGS} -fuse-ld=gold)
+
+ elseif (${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
+   if (RSOCKET_ASAN)

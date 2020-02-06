@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lzmq
-PKG_VERSION:=0.4.3
+PKG_VERSION:=0.4.4
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/zeromq/lzmq/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=51ec00117b0570db82b1eba7b62e95d7e98c880a028584b195a98b433dd8edd1
+PKG_HASH:=cf70200045b8bcb0e929c338ad421b6a291cf1038053532888dc201af3224d8b
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -25,7 +25,7 @@ define Package/lzmq
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Lua ZeroMQ binding
-  URL:=https://github.com/moteus/lzmq/
+  URL:=https://github.com/zeromq/lzmq
   DEPENDS:= +lua +libzmq
 endef
 

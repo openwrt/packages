@@ -26,7 +26,7 @@ start_instance() {
 	local section="$1"
 
 	config_get_bool enabled "$section" 'enabled' '0'
-	[ $enabled -gt 0 ] || return 1
+	[ "$enabled" -gt 0 ] || return 1
 
 	config_get pid_file "$section" 'pid_file'
 
@@ -51,7 +51,8 @@ start_instance() {
 }
 
 start_service() {
-        mkdir -m 0755 -p /var/empty
+        mkdir -p /var/empty
+        chmod 0755 /var/empty
 
 	config_load 'softflowd'
 	config_foreach start_instance 'softflowd'

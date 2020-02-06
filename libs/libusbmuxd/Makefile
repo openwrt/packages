@@ -8,28 +8,26 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libusbmuxd
-PKG_VERSION:=1.1.0
+PKG_SOURCE_VERSION:=2.0.1
 PKG_RELEASE:=2
 
-PKG_MAINTAINER:=Lukasz Baj <l.baj@radytek.com>
-PKG_LICENSE:=LGPL-2.1+
-PKG_LICENSE_FILES:=COPYING.LGPLv2.1
-
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/libimobiledevice/libusbmuxd.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=4397b3376dc4e4cb1c991d0aed61ce6482614196
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=e145b567cdefb1d2536f3eec863769c77474ce9a5d9c4c81ab0a75dc6fe3056a
+PKG_SOURCE_URL:=https://github.com/libimobiledevice/libusbmuxd
+PKG_MIRROR_HASH:=5078125cd4fe8c7294d4f195a8adfd1fc302101daf5d53e4cc242c3097eef8b6
+
+PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
+PKG_CPE_ID:=cpe:/a:libimobiledevice:libusbmuxd
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libusbmuxd/Default
   TITLE:=USB multiplexing daemon
-  URL:=http://www.libimobiledevice.org/
+  URL:=https://www.libimobiledevice.org/
+  SUBMENU:=libimobiledevice
 endef
 
 define Package/libusbmuxd/Default/description
@@ -46,6 +44,8 @@ define Package/libusbmuxd
   CATEGORY:=Libraries
   TITLE+= library
   DEPENDS:=+libplist +libpthread +libxml2 +zlib
+  PKG_LICENSE:=LGPL-2.1-or-later
+  PKG_LICENSE_FILES:=COPYING
 endef
 
 define Package/libusbmuxd/description
@@ -59,6 +59,7 @@ define Package/libusbmuxd-utils
   CATEGORY:=Utilities
   TITLE+= utilies
   DEPENDS:=+libusbmuxd
+  LICENSE:=GPL-2.0-or-later
 endef
 
 define Package/libusbmuxd-utils/description
@@ -84,7 +85,8 @@ endef
 
 define Package/libusbmuxd-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/iproxy $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/iproxy $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/inetcat $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,libusbmuxd))

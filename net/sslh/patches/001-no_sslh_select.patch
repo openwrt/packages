@@ -1,15 +1,15 @@
-diff --git a/Makefile b/Makefile
-index b1cf9ce..28f90c3 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -65,16 +65,12 @@ all: sslh $(MAN) echosrv
+@@ -68,7 +68,7 @@ all: sslh $(MAN) echosrv $(CONDITIONAL_T
  version.h:
  	./genver.sh >version.h
  
 -sslh: sslh-fork sslh-select
 +sslh: sslh-fork
  
- sslh-fork: version.h $(OBJS) sslh-fork.o Makefile common.h
+ $(OBJS): version.h
+ 
+@@ -76,10 +76,6 @@ sslh-fork: version.h $(OBJS) sslh-fork.o
  	$(CC) $(CFLAGS) $(LDFLAGS) -o sslh-fork sslh-fork.o $(OBJS) $(LIBS)
  	#strip sslh-fork
  
@@ -20,7 +20,7 @@ index b1cf9ce..28f90c3 100644
  systemd-sslh-generator: systemd-sslh-generator.o
  	$(CC) $(CFLAGS) $(LDFLAGS) -o systemd-sslh-generator systemd-sslh-generator.o -lconfig
  
-@@ -110,7 +106,7 @@ distclean: clean
+@@ -115,7 +111,7 @@ distclean: clean
  	rm -f tags cscope.*
  
  clean:

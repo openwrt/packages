@@ -1,0 +1,12 @@
+--- a/src/pppoe.h
++++ b/src/pppoe.h
+@@ -132,6 +132,9 @@ typedef unsigned long UINT32_t;
+ #endif
+ 
+ #include <netinet/in.h>
++/* avoid redefinitions if <linux/in.h> and <linux/in6.h> get included. */
++#define _LINUX_IN_H
++#define _LINUX_IN6_H
+ 
+ #ifdef HAVE_NETINET_IF_ETHER_H
+ #include <sys/types.h>

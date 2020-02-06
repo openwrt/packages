@@ -8,19 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsyslog
-PKG_VERSION:=8.18.0
-PKG_RELEASE:=1
+PKG_VERSION:=8.39.0
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.rsyslog.com/files/download/rsyslog/
-PKG_HASH:=94346237ecfa22c9f78cebc3f18d59056f5d9846eb906c75beaa7e486f02c695
+PKG_SOURCE_URL:=https://www.rsyslog.com/files/download/rsyslog/
+PKG_HASH:=c71f96fed6538de397df25da602384f6ee2cb67329d9f3362af2a18508616ab4
 
-PKG_MAINTAINER:=Dov Murik <dmurik@us.ibm.com>
+PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:rsyslog:rsyslog
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
-PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -28,8 +29,8 @@ define Package/rsyslog
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Enhanced system logging and kernel message trapping daemons
-  URL:=http://www.rsyslog.com/
-  DEPENDS:=+libestr +libfastjson +libuuid +zlib +USE_UCLIBC:libpthread +USE_UCLIBC:librt
+  URL:=https://www.rsyslog.com/
+  DEPENDS:=+libestr +libfastjson +libuuid +zlib
 endef
 
 define Package/rsyslog/conffiles
@@ -38,10 +39,9 @@ endef
 
 CONFIGURE_ARGS+= \
 	--disable-libgcrypt \
-	--disable-liblogging-stdlog
-
-TARGET_CFLAGS += \
-	-std=c99
+	--disable-fmhttp \
+	--disable-default-tests \
+	--disable-libsystemd
 
 define Package/rsyslog/install
 	$(INSTALL_DIR) $(1)/usr/sbin

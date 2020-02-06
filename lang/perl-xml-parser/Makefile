@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-xml-parser
-PKG_VERSION:=2.44
+PKG_VERSION:=2.46
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/T/TO/TODDR/
 PKG_SOURCE:=XML-Parser-$(PKG_VERSION).tar.gz
-PKG_HASH:=1ae9d07ee9c35326b3d9aad56eae71a6730a73a116b9fe9e8a4758b7cc033216
+PKG_HASH:=d331332491c51cccfb4cb94ffc44f9cd73378e618498d4a37df9e043661c515d
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/XML-Parser-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/perl/XML-Parser-$(PKG_VERSION)
@@ -24,9 +24,9 @@ HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/perl/XML-Parser-$(PKG_VERSION)
 HOST_BUILD_DEPENDS:=perl/host expat/host
 
 EXPAT_LIBPATH:=$(STAGING_DIR)/usr/lib
-EXPAT_INCPATH=$(STAGING_DIR)/usr/include
+EXPAT_INCPATH:=$(STAGING_DIR)/usr/include
 HOST_EXPAT_LIBPATH:=$(STAGING_DIR_HOSTPKG)/lib
-HOST_EXPAT_INCPATH=$(STAGING_DIR_HOSTPKG)/include
+HOST_EXPAT_INCPATH:=$(STAGING_DIR_HOSTPKG)/include
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -52,7 +52,7 @@ endef
 
 define Build/Configure
 	$(call perlmod/Configure,EXPATLIBPATH=$(EXPAT_LIBPATH) EXPATINCPATH=$(EXPAT_INCPATH),,)
-	
+
 	$(call FixupExpat,$(PKG_BUILD_DIR),$(EXPAT_LIBPATH),$(EXPAT_INCPATH))
 	$(call perlmod/Configure,,,$(PKG_BUILD_DIR)/Expat)
 endef

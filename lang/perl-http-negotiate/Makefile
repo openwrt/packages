@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-http-negotiate
 PKG_VERSION:=6.01
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GA/GAAS
 PKG_SOURCE:=HTTP-Negotiate-$(PKG_VERSION).tar.gz
 PKG_HASH:=1c729c1ea63100e878405cda7d66f9adfd3ed4f1d6cacaca0ee9152df728e016
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/HTTP-Negotiate-$(PKG_VERSION)

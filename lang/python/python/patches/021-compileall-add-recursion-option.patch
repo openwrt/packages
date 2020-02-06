@@ -1,0 +1,31 @@
+--- a/Lib/compileall.py
++++ b/Lib/compileall.py
+@@ -152,10 +152,10 @@ def main():
+     """Script main program."""
+     import getopt
+     try:
+-        opts, args = getopt.getopt(sys.argv[1:], 'lfqd:x:i:')
++        opts, args = getopt.getopt(sys.argv[1:], 'lr:fqd:x:i:')
+     except getopt.error, msg:
+         print msg
+-        print "usage: python compileall.py [-l] [-f] [-q] [-d destdir] " \
++        print "usage: python compileall.py [-l] [-r recursion] [-f] [-q] [-d destdir] " \
+               "[-x regexp] [-i list] [directory|file ...]"
+         print
+         print "arguments: zero or more file and directory names to compile; " \
+@@ -164,6 +164,7 @@ def main():
+         print
+         print "options:"
+         print "-l: don't recurse into subdirectories"
++        print "-r recursion: control the maximum recursion level"
+         print "-f: force rebuild even if timestamps are up-to-date"
+         print "-q: output only error messages"
+         print "-d destdir: directory to prepend to file paths for use in " \
+@@ -187,6 +188,7 @@ def main():
+     flist = None
+     for o, a in opts:
+         if o == '-l': maxlevels = 0
++        if o == '-r': maxlevels = int(a)
+         if o == '-d': ddir = a
+         if o == '-f': force = 1
+         if o == '-q': quiet = 1

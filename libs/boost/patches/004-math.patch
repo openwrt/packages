@@ -1,0 +1,30 @@
+From 5f19fd7dc6c4dd37fb0409f08a0b7dbb887dd516 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Thu, 19 Dec 2019 17:46:46 -0800
+Subject: [PATCH] roots: Fix fma_workaround
+
+fma takes three parameters, not one.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ include/boost/math/tools/roots.hpp | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/boost/math/tools/roots.hpp b/boost/math/tools/roots.hpp
+index 8b3ab7eb9..5d7936bb2 100644
+--- a/boost/math/tools/roots.hpp
++++ b/boost/math/tools/roots.hpp
+@@ -861,10 +861,10 @@ Complex complex_newton(F g, Complex guess, int max_iterations = std::numeric_lim
+ namespace detail
+ {
+ #if defined(BOOST_GNU_STDLIB) && !defined(_GLIBCXX_USE_C99_MATH_TR1)
+-float fma_workaround(float f) { return ::fmaf(f); }
+-double fma_workaround(double f) { return ::fma(f); }
++inline float fma_workaround(float x, float y, float z) { return ::fmaf(x, y, z); }
++inline double fma_workaround(double x, double y, double z) { return ::fma(x, y, z); }
+ #ifndef BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
+-long double fma_workaround(long double f) { return ::fmal(f); }
++inline long double fma_workaround(long double x, long double y, long double z) { return ::fmal(x, y, z); }
+ #endif
+ #endif            
+ template<class T>

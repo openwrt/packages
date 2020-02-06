@@ -1,7 +1,9 @@
 git:
   depth: 10
+  quiet: true
+
 language: c
-dist: trusty
+dist: bionic
 sudo: false
 cache:
   directories:

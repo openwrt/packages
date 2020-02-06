@@ -5,43 +5,79 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pycurl
-PKG_VERSION:=7.43.0
+PKG_VERSION:=7.43.0.5
 PKG_RELEASE:=1
+
+PYPI_NAME:=$(PKG_NAME)
+PKG_HASH:=ec7dd291545842295b7b56c12c90ffad2976cc7070c98d7b1517b7b6cd5994b3
+
 PKG_MAINTAINER:=Waldemar Konik <informatyk74@interia.pl>
 PKG_LICENSE:=LGPL-2.1
-PKG_LICENSE_FILE=COPYING-LGPL
+PKG_LICENSE_FILES:=COPYING-LGPL
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://dl.bintray.com/pycurl/pycurl/
-PKG_HASH:=aa975c19b79b6aa6c0518c0cc2ae33528900478f0b500531dbcdbf05beec584c
-
-PKG_BUILD_DEPENDS:=python libcurl
-
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
+include ../python3-package.mk
 
-define Package/python-curl
+define Package/python-curl/Default
   CATEGORY:=Languages
   SECTION:=lang
   SUBMENU:=Python
   TITLE:=Python module interface to the cURL library
   URL:=http://pycurl.io/
-  DEPENDS:=+python +libcurl
+  DEPENDS:=+libcurl
+endef
+
+define Package/python-curl
+$(call Package/python-curl/Default)
+  DEPENDS+=+PACKAGE_python-curl:python
+  VARIANT:=python
 endef
 
 define Package/python-curl/description
-Python module interface to the cURL library.
+PycURL is a Python interface to libcurl, the multiprotocol file transfer library.
 endef
 
-define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
+define Package/python3-curl
+$(call Package/python-curl/Default)
+  DEPENDS+=+PACKAGE_python3-curl:python3
+  VARIANT:=python3
 endef
 
-define Package/python-curl/install
-	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
-	$(CP) \
-		$(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
-		$(1)$(PYTHON_PKG_DIR)
+define Package/python3-curl/description
+$(call Package/python-curl/description)
+.
+(Variant for Python3)
 endef
 
+PYTHON_PKG_SETUP_ARGS:=
+PYTHON3_PKG_SETUP_ARGS:=
+
+ifdef CONFIG_LIBCURL_OPENSSL
+  PYTHON_PKG_SETUP_ARGS+=--with-openssl
+  PYTHON3_PKG_SETUP_ARGS+=--with-openssl
+endif
+
+ifdef CONFIG_LIBCURL_GNUTLS
+  PYTHON_PKG_SETUP_ARGS+=--with-gnutls
+  PYTHON3_PKG_SETUP_ARGS+=--with-gnutls
+endif
+
+ifdef CONFIG_LIBCURL_MBEDTLS
+  PYTHON_PKG_SETUP_ARGS+=--with-mbedtls
+  PYTHON3_PKG_SETUP_ARGS+=--with-mbedtls
+endif
+
+ifdef CONFIG_LIBCURL_WOLFSSL
+  PYTHON_PKG_SETUP_ARGS+=--with-wolfssl
+  PYTHON3_PKG_SETUP_ARGS+=--with-wolfssl
+endif
+
+$(eval $(call PyPackage,python-curl))
 $(eval $(call BuildPackage,python-curl))
+$(eval $(call BuildPackage,python-curl-src))
+
+$(eval $(call Py3Package,python3-curl))
+$(eval $(call BuildPackage,python3-curl))
+$(eval $(call BuildPackage,python3-curl-src))

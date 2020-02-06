@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coreutils
-PKG_VERSION:=8.23
-PKG_RELEASE:=3
+PKG_VERSION:=8.30
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/coreutils
-PKG_HASH:=ec43ca5bcfc62242accb46b7f121f6b684ee21ecd7d075059bf650ff9e37b82d
-PKG_BUILD_DEPENDS:=libpthread
+PKG_HASH:=e831b3a86091496cdba720411f9748de81507798f6130adeaef872d206e1b057
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
+PKG_CPE_ID:=cpe:/a:gnu:coreutils
 
 PKG_BUILD_PARALLEL:=1
 
@@ -31,6 +31,30 @@ COREUTILS_APPLETS := \
 	shuf sleep sort split stat stdbuf stty sum sync tac tail tee test	\
 	timeout touch tr true truncate tsort tty uname unexpand	uniq unlink	\
 	uptime users vdir wc who whoami yes
+
+DIR_BIN := \
+	base64 cat chgrp chmod chown cp date dd echo false kill link ln ls	\
+	mkdir mknod mktemp mv nice printenv pwd rm rmdir sleep stat stty sync	\
+	touch true uname
+
+DIR_USR_BIN := \
+	basename cksum comm cut dirname du env expand expr factor fold groups	\
+	head hostid id install logname md5sum mkfifo nl nohup nproc od paste	\
+	printf readlink realpath seq sha1sum sha256sum sha512sum shred shuf	\
+	sort split sum tac tail tee test timeout tr truncate tty unexpand uniq	\
+	unlink uptime users wc who whoami yes
+
+DIR_USR_SBIN := \
+	chroot
+
+# BusyBox does not provide these yet
+DIR_OTHERS := \
+	chcon csplit dir dircolors fmt join pathchk pinky pr ptx runcon		\
+	sha224sum sha384sum stdbuf tsort vdir
+
+$(eval $(foreach a,$(DIR_BIN),ALTS_$(a):=300:/bin/$(a):/usr/bin/gnu-$(a)$(newline)))
+$(eval $(foreach a,$(DIR_USR_BIN),ALTS_$(a):=300:/usr/bin/$(a):/usr/bin/gnu-$(a)$(newline)))
+$(eval $(foreach a,$(DIR_USR_SBIN),ALTS_$(a):=300:/usr/sbin/$(a):/usr/bin/gnu-$(a)$(newline)))
 
 DEPENDS_sort = +libpthread
 DEPENDS_timeout = +librt
@@ -69,6 +93,7 @@ define GenPlugin
    $(call Package/coreutils/Default)
    DEPENDS:=coreutils $(DEPENDS_$(2))
    TITLE:=Utility $(2) from the GNU core utilities
+   ALTERNATIVES:=$(ALTS_$(2))
  endef
 
  define Package/$(1)/description
@@ -106,7 +131,7 @@ endef
 define BuildPlugin
   define Package/$(1)/install
 	$(INSTALL_DIR) $$(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(2) $$(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(2) $$(1)/usr/bin/$(if $(ALTS_$(2)),gnu-$(2),$(2))
 	$(foreach f,$(FILES_$(2)),
 		$(INSTALL_DIR) $$(1)/$(dir $(f))
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/$(f) $$(1)/$(f)

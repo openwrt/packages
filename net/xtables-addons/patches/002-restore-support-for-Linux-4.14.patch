@@ -1,0 +1,78 @@
+Restore support for kernel 4.14
+This reverts commit bf63a25a64c9223435c26e6543ba749834b47752.
+---
+ configure.ac                  |  2 +-
+ extensions/compat_xtables.h   |  4 ++--
+ extensions/pknock/xt_pknock.c | 16 ++++++++++++++++
+ 3 files changed, 19 insertions(+), 3 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 7631f6b..0d3aa72 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -61,7 +61,7 @@ if test -n "$kbuilddir"; then
+ 			echo "WARNING: That kernel version is not officially supported yet. Continue at own luck.";
+ 		elif test "$kmajor" -eq 5 -a "$kminor" -ge 0; then
+ 			:
+-		elif test "$kmajor" -eq 4 -a "$kminor" -ge 18; then
++		elif test "$kmajor" -eq 4 -a "$kminor" -ge 14; then
+ 			:
+ 		else
+ 			echo "WARNING: That kernel version is not officially supported.";
+diff --git a/extensions/compat_xtables.h b/extensions/compat_xtables.h
+index d08354a..faf5dd8 100644
+--- a/extensions/compat_xtables.h
++++ b/extensions/compat_xtables.h
+@@ -8,8 +8,8 @@
+ 
+ #define DEBUGP Use__pr_debug__instead
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
+-#	warning Kernels below 4.15 not supported.
++#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
++#	warning Kernels below 4.14 not supported.
+ #endif
+ 
+ #if defined(CONFIG_NF_CONNTRACK) || defined(CONFIG_NF_CONNTRACK_MODULE)
+diff --git a/extensions/pknock/xt_pknock.c b/extensions/pknock/xt_pknock.c
+index c76901a..7be0345 100644
+--- a/extensions/pknock/xt_pknock.c
++++ b/extensions/pknock/xt_pknock.c
+@@ -357,10 +357,18 @@ has_logged_during_this_minute(const struct peer *peer)
+  *
+  * @r: rule
+  */
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
+ static void peer_gc(struct timer_list *tl)
++#else
++static void peer_gc(unsigned long r)
++#endif
+ {
+ 	unsigned int i;
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
+ 	struct xt_pknock_rule *rule = from_timer(rule, tl, timer);
++#else
++	struct xt_pknock_rule *rule = (struct xt_pknock_rule *)r;
++#endif
+ 	struct peer *peer;
+ 	struct list_head *pos, *n;
+ 
+@@ -467,7 +475,15 @@ add_rule(struct xt_pknock_mtinfo *info)
+ 	rule->peer_head      = alloc_hashtable(peer_hashsize);
+ 	if (rule->peer_head == NULL)
+ 		goto out;
++
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
+ 	timer_setup(&rule->timer, peer_gc, 0);
++#else
++	init_timer(&rule->timer);
++	rule->timer.function	= peer_gc;
++	rule->timer.data	= (unsigned long)rule;
++#endif
++
+ 	rule->status_proc = proc_create_data(info->rule_name, 0, pde,
+ 	                    &pknock_proc_ops, rule);
+ 	if (rule->status_proc == NULL)
+-- 
+2.21.0
+

@@ -15,6 +15,7 @@ PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_LICENSE:=LGPLv2.1
 PKG_LICENSE_FILES:=COPYING.LIB
+PKG_CPE_ID:=cpe:/a:mcrypt:libmcrypt
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/mcrypt

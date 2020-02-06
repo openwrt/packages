@@ -1,6 +1,6 @@
 --- a/ext/phar/config.m4	2016-08-17 21:50:58.000000000 +0200
 +++ b/ext/phar/config.m4	2016-09-20 22:21:28.494934775 +0200
-@@ -26,7 +26,7 @@
+@@ -19,7 +19,7 @@
    fi
    PHP_ADD_EXTENSION_DEP(phar, hash, true)
    PHP_ADD_EXTENSION_DEP(phar, spl, true)
@@ -9,9 +9,9 @@
  
    PHP_INSTALL_HEADERS([ext/phar], [php_phar.h])
  
---- a/configure.in	2016-09-20 22:26:38.000000000 +0200
-+++ b/configure.in	2016-09-20 22:42:30.380101556 +0200
-@@ -1448,13 +1448,13 @@
+--- a/configure.ac	2016-09-20 22:26:38.000000000 +0200
++++ b/configure.ac	2016-09-20 22:42:30.380101556 +0200
+@@ -1430,13 +1430,13 @@
  INLINE_CFLAGS="$INLINE_CFLAGS $standard_libtool_flag"
  CXXFLAGS="$CXXFLAGS $standard_libtool_flag \$(PROF_FLAGS)"
  

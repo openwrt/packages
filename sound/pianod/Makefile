@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pianod
-PKG_VERSION:=174.07
+PKG_VERSION:=174.09
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://github.com/thess/pianod-sc/releases/download/$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=eee969926c095497893fbd28711258a31efb2d2301da87563dbcd101d8771bff
+PKG_HASH:=744c833ee17a7c95068c6925f4301f342bcad838ad8e48b40a19fd6739533eac
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
@@ -65,7 +65,7 @@ PIANOD_CLIENT:=pianod-client-compiled-51.tar.gz
 define Download/pianod-client
   URL:=http://deviousfish.com/Downloads/pianod/
   FILE:=$(PIANOD_CLIENT)
-  MD5SUM:=abbdee5627bcee6a00c8304da8b4e2e7
+  HASH:=1596ec2da30992e4008bbd6654333b025165399c3c7e22078f35bee6a438c5ad
 endef
 
 define Package/pianod/conffiles

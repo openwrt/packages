@@ -9,17 +9,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=memcached
-PKG_VERSION:=1.5.2
+PKG_VERSION:=1.5.14
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://memcached.org/files
-PKG_HASH:=9ac93113bdb5d037e79c61277386564ac2e5e31d49e594f11e554e4c149b7245
+PKG_SOURCE_URL:=https://memcached.org/files
+PKG_HASH:=9c5bdf29a780fb6c6f7c9eaaeeda0583efdf663193758c3e316c969a510af2a9
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
-
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:memcachedb:memcached
 
 PKG_INSTALL:=1
 
@@ -30,7 +30,7 @@ define Package/memcached
   CATEGORY:=Network
   DEPENDS:=+libevent2 +libpthread
   TITLE:=The high-performance, distributed memory object caching system
-  URL:=http://memcached.org/
+  URL:=https://memcached.org/
 endef
 
 define Package/memcached/description
@@ -53,12 +53,6 @@ CONFIGURE_ARGS += \
 	--disable-dtrace \
 	--disable-coverage \
 	--disable-sasl
-
-TARGET_CFLAGS += \
-	-std=gnu99
-
-TARGET_LDFLAGS = \
-	-L$(STAGING_DIR)/usr/lib/libevent -L$(STAGING_DIR)/usr/lib -L$(STAGING_DIR)/lib
 
 define Package/memcached/install
 	$(INSTALL_DIR) $(1)/usr/bin

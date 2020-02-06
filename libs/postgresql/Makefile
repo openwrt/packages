@@ -5,10 +5,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
-PKG_VERSION:=9.6.4
+PKG_VERSION:=12.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
+PKG_CPE_ID:=cpe:/a:postgresql:postgresql
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=\
@@ -16,12 +17,12 @@ PKG_SOURCE_URL:=\
 	http://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
 	ftp://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
 
-PKG_HASH:=2b3ab16d82e21cead54c08b95ce3ac480696944a68603b6c11b3205b7376ce13
+PKG_HASH:=a09bf3abbaf6763980d0f8acbb943b7629a8b20073de18d867aecdb7988483ed
 
 PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
 PKG_MACRO_PATHS:=config
-PKG_BUILD_DEPENDS += readline/host postgresql/host
+PKG_BUILD_DEPENDS:=postgresql/host
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/host-build.mk
@@ -30,10 +31,10 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libpq
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+zlib +libreadline +libpthread +libncursesw
+  DEPENDS:=+libpthread
   TITLE:=PostgreSQL client library
   URL:=http://www.postgresql.org/
-  SUBMENU:=database
+  SUBMENU:=Database
 endef
 
 define Package/libpq/description
@@ -43,10 +44,10 @@ endef
 define Package/pgsql-cli
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq +librt
+  DEPENDS:=+libncursesw +libpq +libreadline +librt +zlib
   TITLE:=Command Line Interface (CLI) to PostgreSQL databases
   URL:=http://www.postgresql.org/
-  SUBMENU:=database
+  SUBMENU:=Database
 endef
 
 define Package/pgsql-cli/description
@@ -56,10 +57,10 @@ endef
 define Package/pgsql-cli-extra
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq +librt
+  DEPENDS:=+libncursesw +libpq +libreadline +librt +zlib
   TITLE:=Command Line extras for PostgreSQL databases
   URL:=http://www.postgresql.org/
-  SUBMENU:=database
+  SUBMENU:=Database
 endef
 
 define Package/pgsql-cli-extra/description
@@ -69,10 +70,10 @@ endef
 define Package/pgsql-server
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libpq +librt +pgsql-cli
+  DEPENDS:=+pgsql-cli
   TITLE:=PostgreSQL databases Server
   URL:=http://www.postgresql.org/
-  SUBMENU:=database
+  SUBMENU:=Database
   USERID:=postgres=5432:postgres=5432
 endef
 
@@ -88,23 +89,19 @@ PGSQL_SERVER_BIN := \
 	pg_dump \
 	pg_dumpall \
 	pg_isready \
-	pg_receivexlog \
 	pg_recvlogical \
-	pg_resetxlog \
+	pg_resetwal \
 	pg_restore \
 	pg_standby \
 	pg_upgrade \
-	pg_xlogdump \
 	postgres \
 	initdb
 
 PGSQL_CLI_EXTRA_BIN := \
 	clusterdb	\
 	createdb	\
-	createlang	\
 	createuser	\
 	dropdb		\
-	droplang	\
 	dropuser	\
 	pgbench		\
 	reindexdb	\
@@ -112,7 +109,9 @@ PGSQL_CLI_EXTRA_BIN := \
 
 PGSQL_CONFIG_VARS:= \
 	pgac_cv_snprintf_long_long_int_format="%lld" \
-	pgac_cv_snprintf_size_t_support=yes
+	pgac_cv_snprintf_size_t_support=yes \
+	USE_DEV_URANDOM=1 \
+	ZIC=zic
 
 ifeq ($(CONFIG_USE_UCLIBC),y)
 # PostgreSQL does not build against uClibc with locales
@@ -137,6 +136,7 @@ HOST_CONFIGURE_ARGS += \
 			--without-python \
 			--without-readline \
 			--without-tcl \
+			--without-systemd \
 			--with-zlib="yes" \
 			--enable-depend
 
@@ -151,17 +151,15 @@ CONFIGURE_ARGS += \
 			--without-perl \
 			--without-python \
 			--without-tcl \
+			--without-systemd \
 			--with-zlib="yes" \
 			--enable-depend \
-			$(if $(CONFIG_TARGET_avr32),--disable-spinlocks)
+			$(if $(CONFIG_arc),--disable-spinlocks)
 
-EXTRA_CFLAGS:= -I$(PKG_BUILD_DIR)/src/include/
-
-# Need a native ecpg, pg_config and zic for build
+# Need a native zic and pg_config for build
 define Host/Compile
-	$(MAKE) -C $(HOST_BUILD_DIR)/src/bin/pg_config CC="$(HOSTCC)"
-	$(MAKE) -C $(HOST_BUILD_DIR)/src/interfaces/ecpg/preproc CC="$(HOSTCC)"
-	$(MAKE) -C $(HOST_BUILD_DIR)/src/timezone CC="$(HOSTCC)"
+	+$(HOST_MAKE_VARS) MAKELEVEL=0 $(MAKE) -C $(HOST_BUILD_DIR)/src/bin/pg_config CC="$(HOSTCC)"
+	+$(HOST_MAKE_VARS) MAKELEVEL=0 $(MAKE) -C $(HOST_BUILD_DIR)/src/timezone CC="$(HOSTCC)"
 endef
 
 define Host/Install
@@ -170,16 +168,12 @@ define Host/Install
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/port/libpgport.a $(STAGING_DIR_HOSTPKG)/lib/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/bin/pg_config/pg_config $(STAGING_DIR_HOSTPKG)/lib/
 	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin/
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/interfaces/ecpg/preproc/ecpg $(STAGING_DIR_HOSTPKG)/bin/
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/timezone/zic $(STAGING_DIR_HOSTPKG)/bin/
 endef
 
-define Build/Configure
-	$(Build/Configure/Default)
-	$(SED) 's@ECPG = ../../preproc/ecpg@ECPG = $(STAGING_DIR_HOSTPKG)/bin/ecpg@' $(PKG_BUILD_DIR)/src/interfaces/ecpg/test/Makefile.regress
+define Build/Compile
+	$(MAKE) -C $(PKG_BUILD_DIR) MAKELEVEL=0 all contrib
 endef
-
-TARGET_CFLAGS += $(FPIC) -lpthread
 
 # because PROFILE means something else in the project Makefile
 unexport PROFILE

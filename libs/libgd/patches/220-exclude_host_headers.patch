@@ -1,0 +1,11 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -89,8 +89,6 @@
+ 	GV_LT(VERSION GDLIB_LIB_VERSION)
+ 	MESSAGE(STATUS "gd shared lib version ${GDLIB_LIB_SOVERSION} (${GDLIB_LIB_VERSION})")
+ 
+-	SET(CMAKE_REQUIRED_INCLUDES "/usr/include" "/usr/local/include")
+-
+ 	include(CheckIncludeFiles)
+ 	include(CheckIncludeFile)
+ 

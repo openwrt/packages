@@ -8,16 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avahi
-PKG_VERSION:=0.6.32
-PKG_RELEASE:=2
+PKG_VERSION:=0.7
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/lathiat/avahi/releases/download/v$(PKG_VERSION)
-PKG_HASH:=d54991185d514a0aba54ebeb408d7575b60f5818a772e28fa0e18b98bc1db454
+PKG_SOURCE_URL:=https://github.com/lathiat/avahi/releases/download/v$(PKG_VERSION) \
+		https://avahi.org/download
+PKG_HASH:=57a99b5dfe7fdae794e3d1ee7a62973a368e91e414bd0dfa5d84434de5b14804
+
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_CPE_ID:=cpe:/a:avahi:avahi
 
-PKG_BUILD_DEPENDS:=libexpat libdaemon libgdbm intltool/host libpthread dbus
-
+PKG_BUILD_DEPENDS:=intltool/host
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=autogen.sh
 
@@ -271,8 +273,6 @@ CONFIGURE_ARGS+= \
 	--disable-dbm \
 	--enable-gdbm \
 	--enable-libdaemon \
-	$(and $(CONFIG_PACKAGE_libavahi-compat-libdnssd),ifeq ($(BUILD_VARIANT),dbus),\
-		--enable-compat-libdns_sd) \
 	--disable-python \
 	--disable-pygtk \
 	--disable-python-dbus \
@@ -301,6 +301,10 @@ CONFIGURE_ARGS+= \
 endif
 
 ifeq ($(BUILD_VARIANT),dbus)
+ifneq ($(CONFIG_PACKAGE_libavahi-compat-libdnssd),)
+CONFIGURE_ARGS += \
+	--enable-compat-libdns_sd
+endif
 CONFIGURE_ARGS += \
 	--enable-dbus
 else
@@ -317,11 +321,20 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libavahi-* $(1)/usr/lib/
-ifeq ($(CONFIG_PACKAGE_libavahi-compat-libdnssd)-$(BUILD_VARIANT),y-dbus)
+ifneq ($(CONFIG_PACKAGE_libavahi-compat-libdnssd),)
+ifeq ($(BUILD_VARIANT),dbus)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdns_sd* $(1)/usr/lib/
 endif
+endif
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/* $(1)/usr/lib/pkgconfig/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/* $(1)/usr/lib/pkgconfig/
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/avahi-core.pc
+ifneq ($(CONFIG_PACKAGE_libavahi-compat-libdnssd),)
+ifeq ($(BUILD_VARIANT),dbus)
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/avahi-client.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/avahi-compat-libdns_sd.pc
+endif
+endif
 endef
 
 define Package/libavahi/install
@@ -344,7 +357,7 @@ endef
 
 define Package/libavahi-compat-libdnssd/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdns_sd.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdns_sd.so* $(1)/usr/lib/
 endef
 
 define Package/avahi-utils/install

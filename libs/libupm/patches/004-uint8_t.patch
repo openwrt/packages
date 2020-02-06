@@ -1,0 +1,106 @@
+diff -urN a/src/bma250e/bma250e.cxx b/src/bma250e/bma250e.cxx
+--- a/src/bma250e/bma250e.cxx	2019-05-09 00:06:25.000000000 +0900
++++ b/src/bma250e/bma250e.cxx	2019-05-13 16:43:04.344536227 +0900
+@@ -195,35 +195,35 @@
+             fifoConfig(mode, axes);
+         }
+         if(tok.substr(0, 20) == "setInterruptEnable0:") {
+-            u_int8_t bits = (u_int8_t)std::stoul(tok.substr(20), nullptr, 0);
++            uint8_t bits = (uint8_t)std::stoul(tok.substr(20), nullptr, 0);
+             setInterruptEnable0(bits);
+         }
+         if(tok.substr(0, 20) == "setInterruptEnable1:") {
+-            u_int8_t bits = (u_int8_t)std::stoul(tok.substr(20), nullptr, 0);
++            uint8_t bits = (uint8_t)std::stoul(tok.substr(20), nullptr, 0);
+             setInterruptEnable1(bits);
+         }
+         if(tok.substr(0, 20) == "setInterruptEnable2:") {
+-            u_int8_t bits = (u_int8_t)std::stoul(tok.substr(20), nullptr, 0);
++            uint8_t bits = (uint8_t)std::stoul(tok.substr(20), nullptr, 0);
+             setInterruptEnable2(bits);
+         }
+         if(tok.substr(0, 17) == "setInterruptMap0:") {
+-            u_int8_t bits = (u_int8_t)std::stoul(tok.substr(17), nullptr, 0);
++            uint8_t bits = (uint8_t)std::stoul(tok.substr(17), nullptr, 0);
+             setInterruptMap0(bits);
+         }
+         if(tok.substr(0, 17) == "setInterruptMap1:") {
+-            u_int8_t bits = (u_int8_t)std::stoul(tok.substr(17), nullptr, 0);
++            uint8_t bits = (uint8_t)std::stoul(tok.substr(17), nullptr, 0);
+             setInterruptMap1(bits);
+         }
+         if(tok.substr(0, 17) == "setInterruptMap2:") {
+-            u_int8_t bits = (u_int8_t)std::stoul(tok.substr(17), nullptr, 0);
++            uint8_t bits = (uint8_t)std::stoul(tok.substr(17), nullptr, 0);
+             setInterruptMap2(bits);
+         }
+         if(tok.substr(0, 16) == "setInterruptSrc:") {
+-            u_int8_t bits = (u_int8_t)std::stoul(tok.substr(16), nullptr, 0);
++            uint8_t bits = (uint8_t)std::stoul(tok.substr(16), nullptr, 0);
+             setInterruptSrc(bits);
+         }
+         if(tok.substr(0, 26) == "setInterruptOutputControl:") {
+-            u_int8_t bits = (u_int8_t)std::stoul(tok.substr(26), nullptr, 0);
++            uint8_t bits = (uint8_t)std::stoul(tok.substr(26), nullptr, 0);
+             setInterruptOutputControl(bits);
+         }
+         if(tok.substr(0, 26) == "setInterruptLatchBehavior:") {
+diff -urN a/src/bmg160/bmg160.cxx b/src/bmg160/bmg160.cxx
+--- a/src/bmg160/bmg160.cxx	2019-05-09 00:06:25.000000000 +0900
++++ b/src/bmg160/bmg160.cxx	2019-05-13 16:44:25.516304666 +0900
+@@ -173,23 +173,23 @@
+             fifoConfig(mode, axes);
+         }
+         if(tok.substr(0, 20) == "setInterruptEnable0:") {
+-            u_int8_t bits = (u_int8_t)std::stoul(tok.substr(20), nullptr, 0);
++            uint8_t bits = (uint8_t)std::stoul(tok.substr(20), nullptr, 0);
+             setInterruptEnable0(bits);
+         }
+         if(tok.substr(0, 17) == "setInterruptMap0:") {
+-            u_int8_t bits = (u_int8_t)std::stoul(tok.substr(17), nullptr, 0);
++            uint8_t bits = (uint8_t)std::stoul(tok.substr(17), nullptr, 0);
+             setInterruptMap0(bits);
+         }
+         if(tok.substr(0, 17) == "setInterruptMap1:") {
+-            u_int8_t bits = (u_int8_t)std::stoul(tok.substr(17), nullptr, 0);
++            uint8_t bits = (uint8_t)std::stoul(tok.substr(17), nullptr, 0);
+             setInterruptMap1(bits);
+         }
+         if(tok.substr(0, 16) == "setInterruptSrc:") {
+-            u_int8_t bits = (u_int8_t)std::stoul(tok.substr(16), nullptr, 0);
++            uint8_t bits = (uint8_t)std::stoul(tok.substr(16), nullptr, 0);
+             setInterruptSrc(bits);
+         }
+         if(tok.substr(0, 26) == "setInterruptOutputControl:") {
+-            u_int8_t bits = (u_int8_t)std::stoul(tok.substr(26), nullptr, 0);
++            uint8_t bits = (uint8_t)std::stoul(tok.substr(26), nullptr, 0);
+             setInterruptOutputControl(bits);
+         }
+         if(tok.substr(0, 26) == "setInterruptLatchBehavior:") {
+diff -urN a/src/bmm150/bmm150.cxx b/src/bmm150/bmm150.cxx
+--- a/src/bmm150/bmm150.cxx	2019-05-09 00:06:25.000000000 +0900
++++ b/src/bmm150/bmm150.cxx	2019-05-13 16:45:03.228197100 +0900
+@@ -170,19 +170,19 @@
+             setOpmode(opmode);
+         }
+         if(tok.substr(0, 19) == "setInterruptEnable:") {
+-            u_int8_t bits = (u_int8_t)std::stoul(tok.substr(19), nullptr, 0);
++            uint8_t bits = (uint8_t)std::stoul(tok.substr(19), nullptr, 0);
+             setInterruptEnable(bits);
+         }
+         if(tok.substr(0, 19) == "setInterruptConfig:") {
+-            u_int8_t bits = (u_int8_t)std::stoul(tok.substr(19), nullptr, 0);
++            uint8_t bits = (uint8_t)std::stoul(tok.substr(19), nullptr, 0);
+             setInterruptConfig(bits);
+         }
+         if(tok.substr(0, 17) == "setRepetitionsXY:") {
+-            u_int8_t reps = (u_int8_t)std::stoul(tok.substr(17), nullptr, 0);
++            uint8_t reps = (uint8_t)std::stoul(tok.substr(17), nullptr, 0);
+             setRepetitionsXY(reps);
+         }
+         if(tok.substr(0, 16) == "setRepetitionsZ:") {
+-            u_int8_t reps = (u_int8_t)std::stoul(tok.substr(16), nullptr, 0);
++            uint8_t reps = (uint8_t)std::stoul(tok.substr(16), nullptr, 0);
+             setRepetitionsZ(reps);
+         }
+         if(tok.substr(0, 14) == "setPresetMode:") {

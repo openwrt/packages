@@ -1,0 +1,96 @@
+diff --git a/src/node_crypto.cc b/src/node_crypto.cc
+index c3779c0..611fb43 100644
+--- a/src/node_crypto.cc
++++ b/src/node_crypto.cc
+@@ -43,6 +43,11 @@
+ #include <string.h>
+ #include <vector>
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++#define X509_get0_notBefore X509_get_notBefore
++#define X509_get0_notAfter X509_get_notAfter
++#endif
++
+ #define THROW_AND_RETURN_IF_NOT_STRING_OR_BUFFER(val, prefix)                  \
+   do {                                                                         \
+     if (!Buffer::HasInstance(val) && !val->IsString()) {                       \
+@@ -536,6 +541,7 @@ void SecureContext::Init(const FunctionCallbackInfo<Value>& args) {
+       method = SSLv23_server_method();
+     } else if (strcmp(*sslmethod, "SSLv23_client_method") == 0) {
+       method = SSLv23_client_method();
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+     } else if (strcmp(*sslmethod, "TLSv1_method") == 0) {
+       method = TLSv1_method();
+     } else if (strcmp(*sslmethod, "TLSv1_server_method") == 0) {
+@@ -554,6 +560,14 @@ void SecureContext::Init(const FunctionCallbackInfo<Value>& args) {
+       method = TLSv1_2_server_method();
+     } else if (strcmp(*sslmethod, "TLSv1_2_client_method") == 0) {
+       method = TLSv1_2_client_method();
++#else
++    } else if (strcmp(*sslmethod, "TLS_method") == 0) {
++      method = TLS_method();
++    } else if (strcmp(*sslmethod, "TLS_server_method") == 0) {
++      method = TLS_server_method();
++    } else if (strcmp(*sslmethod, "TLS_client_method") == 0) {
++      method = TLS_client_method();
++#endif
+     } else {
+       return env->ThrowError("Unknown method");
+     }
+@@ -1799,7 +1813,7 @@ static Local<Object> X509ToObject(Environment* env, X509* cert) {
+     rsa = nullptr;
+   }
+ 
+-  ASN1_TIME_print(bio, X509_get_notBefore(cert));
++  ASN1_TIME_print(bio, X509_get0_notBefore(cert));
+   BIO_get_mem_ptr(bio, &mem);
+   info->Set(context, env->valid_from_string(),
+             String::NewFromUtf8(env->isolate(), mem->data,
+@@ -1807,7 +1821,7 @@ static Local<Object> X509ToObject(Environment* env, X509* cert) {
+                                 mem->length)).FromJust();
+   (void) BIO_reset(bio);
+ 
+-  ASN1_TIME_print(bio, X509_get_notAfter(cert));
++  ASN1_TIME_print(bio, X509_get0_notAfter(cert));
+   BIO_get_mem_ptr(bio, &mem);
+   info->Set(context, env->valid_to_string(),
+             String::NewFromUtf8(env->isolate(), mem->data,
+@@ -6191,8 +6205,12 @@ void TimingSafeEqual(const FunctionCallbackInfo<Value>& args) {
+ }
+ 
+ void InitCryptoOnce() {
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+   SSL_load_error_strings();
+   OPENSSL_no_config();
++#else
++  OPENSSL_init_crypto(OPENSSL_INIT_NO_LOAD_CONFIG, NULL);
++#endif
+ 
+   // --openssl-config=...
+   if (!openssl_config.empty()) {
+@@ -6214,10 +6232,10 @@ void InitCryptoOnce() {
+     }
+   }
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
+   SSL_library_init();
+   OpenSSL_add_all_algorithms();
+ 
+-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+   crypto_lock_init();
+   CRYPTO_set_locking_callback(crypto_lock_cb);
+   CRYPTO_THREADID_set_callback(crypto_threadid_cb);
+diff --git a/src/node_crypto.h b/src/node_crypto.h
+index 58f5b72..875a787 100644
+--- a/src/node_crypto.h
++++ b/src/node_crypto.h
+@@ -37,6 +37,9 @@
+ #include "v8.h"
+ 
+ #include <openssl/ssl.h>
++#include <openssl/bn.h>
++#include <openssl/rsa.h>
++#include <openssl/dh.h>
+ #include <openssl/ec.h>
+ #include <openssl/ecdh.h>
+ #ifndef OPENSSL_NO_ENGINE

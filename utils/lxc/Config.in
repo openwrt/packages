@@ -6,7 +6,8 @@ config LXC_KERNEL_OPTIONS
 	default n
 	select KERNEL_CGROUPS
 	select KERNEL_NAMESPACES
-	select KERNEL_LXC_MISC
+	select KERNEL_DEVPTS_MULTIPLE_INSTANCES
+	select KERNEL_POSIX_MQUEUE
 	select KERNEL_CGROUP_SCHED
 	select KERNEL_FAIR_GROUP_SCHED
 	select KERNEL_RT_GROUP_SCHED
@@ -14,6 +15,7 @@ config LXC_KERNEL_OPTIONS
 	select KERNEL_MEMCG
 	select KERNEL_MEMCG_KMEM
 	select KERNEL_CPUSETS
+	select PACKAGE_kmod-ikconfig
 	help
 	  Select needed kernel options for LXC related utilities. Options
 	  include cgroups, namespaces and other miscellaneous options. These
@@ -37,6 +39,7 @@ config LXC_BUSYBOX_OPTIONS
 config LXC_SECCOMP
 	bool "Enable support for seccomp in LXC"
 	default KERNEL_SECCOMP
+	depends on !arc
 	help
 	  Build LXC with support for seccomp filters.
 	  Select libseccomp which also pulls-in the needed kernel features.

@@ -1,6 +1,6 @@
 --- a/src/subshell/common.c
 +++ b/src/subshell/common.c
-@@ -843,16 +843,9 @@ init_subshell_precmd (char *precmd, size
+@@ -865,16 +865,9 @@ init_subshell_precmd (char *precmd, size
           * "PS1='$($PRECMD)$ '\n",
           */
          g_snprintf (precmd, buff_size,

@@ -7,19 +7,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hamlib
-PKG_VERSION:=3.0.1
+PKG_VERSION:=3.3
 PKG_RELEASE:=1
-PKG_HASH:=3fec97ea326d02aa8f35834c4af34194a3f544e6212f391397d788c566b44e32
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/hamlib
-PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
+PKG_HASH:=c90b53949c767f049733b442cd6e0a48648b55d99d4df5ef3f852d985f45e880
 
+PKG_MAINTAINER:=Vasilis Tsiligiannis <acinonyx@openwrt.gr>
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=COPYING
 
-PKG_MAINTAINER:=Vasilis Tsiligiannis <acinonyx@openwrt.gr>
+PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
+PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 

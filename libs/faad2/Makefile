@@ -6,13 +6,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=faad2
-PKG_VERSION:=2.8.1
-PKG_RELEASE:=1
+PKG_VERSION:=2.8.8
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/faac/faad2-src/$(PKG_NAME)-2.8.0
-PKG_HASH:=f4042496f6b0a60f5ded6acd11093230044ef8a2fd965360c1bbd5b58780933d
+PKG_HASH:=985c3fadb9789d2815e50f4ff714511c79c2710ac27a4aaaf5c0c2662141426d
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_CPE_ID:=cpe:/a:audiocoding:faad2
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -48,7 +49,6 @@ $(call Package/faad2/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+=library
-  DEPENDS:=@BUILD_PATENTED
   MENU:=1
 endef
 
@@ -63,10 +63,6 @@ CONFIGURE_ARGS+= --without-xmms
 ifeq ($(CONFIG_SOFT_FLOAT),y)
 	TARGET_CFLAGS+= -DFIXED_POINT
 	CONFIGURE_ARGS+= -nfp
-endif
-
-ifeq ($(CONFIG_USE_UCLIBC),y)
-	CONFIGURE_VARS+= CPPFLAGS="-fno-builtin-cos -fno-builtin-sin -fno-builtin-log"
 endif
 
 define Build/InstallDev

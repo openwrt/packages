@@ -9,16 +9,20 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=classpath
 PKG_VERSION:=0.99
-PKG_RELEASE:=1
-PKG_LICENSE:=GPL-2.0
-PKG_MAINTAINER:=Dana H. Myers <k6jq@comcast.net>
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/classpath
 PKG_HASH:=f929297f8ae9b613a1a167e231566861893260651d913ad9b6c11933895fecc8
 
-PKG_FIXUP:=autoreconf
+PKG_MAINTAINER:=Dana H. Myers <k6jq@comcast.net>
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:gnu:classpath
+
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=jamvm/host
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -26,7 +30,7 @@ define Package/classpath
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=GNU Classpath
-  URL:=http://www.gnu.org/software/classpath/
+  URL:=https://www.gnu.org/software/classpath/
   DEPENDS:=+alsa-lib +libgmp +libmagic
 endef
 
@@ -40,16 +44,17 @@ define Package/classpath-tools
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=GNU Classpath tools
-  URL:=http://www.gnu.org/software/classpath/
+  URL:=https://www.gnu.org/software/classpath/
 endef
 
 define Download/antlr
-  URL:=http://www.antlr.org/download
+  URL:=https://www.antlr.org/download
   FILE:=antlr-3.4-complete.jar
   HASH:=9d3e866b610460664522520f73b81777b5626fb0a282a5952b9800b751550bf7
 endef
 $(eval $(call Download,antlr))
 
+EXTRA_CFLAGS += -Wno-error=implicit-fallthrough
 CONFIGURE_ARGS += \
 	--with-gmp="$(STAGING_DIR)/usr" \
 	--without-x \

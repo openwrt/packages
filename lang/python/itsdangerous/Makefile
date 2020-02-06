@@ -5,36 +5,35 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=itsdangerous
-PKG_VERSION:=0.24
-PKG_RELEASE:=1
+PKG_VERSION:=1.1.0
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/dc/b4/a60bcdba945c00f6d608d8975131ab3f25b22f2bcfe1dab221165194b2d4/
-PKG_HASH:=cbb3fcf8d3e33df861709ecaf89d9e6629cff0a217bc2848f1b41cd30d360519
-PKG_BUILD_DEPENDS:=python python3
+PYPI_NAME:=$(PKG_NAME)
+PKG_HASH:=321b033d07f2a4136d3ec762eac9f16a10ccd60f53c0c91af90217ace7ba1f19
+
+PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-$(PKG_NAME)-$(PKG_VERSION)
-PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
-
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python3-package.mk)
+include ../python3-package.mk
 
 define Package/python3-itsdangerous
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=http://github.com/mitsuhiko/itsdangerous
-  TITLE:=python3-itsdangerous
+  TITLE:=ItsDangerous
+  URL:=https://palletsprojects.com/p/itsdangerous/
   DEPENDS:=+python3-light
   VARIANT:=python3
 endef
 
 define Package/python3-itsdangerous/description
-Various helpers to pass trusted data to untrusted environments and back.
+  Various helpers to pass trusted data to untrusted environments and back.
 endef
 
 $(eval $(call Py3Package,python3-itsdangerous))
 $(eval $(call BuildPackage,python3-itsdangerous))
+$(eval $(call BuildPackage,python3-itsdangerous-src))
+

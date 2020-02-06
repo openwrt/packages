@@ -8,19 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mailsend
-PKG_VERSION:=1.17b15
+PKG_VERSION:=1.19
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/muquit/mailsend/archive/$(PKG_VERSION)
-PKG_HASH:=73cb1b2455de95ab126e3682bf19c62e6baabee00f449da692be0bebd3ceb26b
+PKG_HASH:=565ef6be26c58ef75065c5519eae8dd55bae3142928619696b28d242b73493f7
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYRIGHT
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 

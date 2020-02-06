@@ -1,0 +1,35 @@
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+include $(TOPDIR)/rules.mk
+
+PECL_NAME:=mcrypt
+PECL_LONGNAME:=Bindings for the libmcrypt library
+
+PKG_VERSION:=1.0.3
+PKG_RELEASE:=2
+PKG_HASH:=affd675843a079e9efd49ac2f723286dd5bcb0916315aa53e2ae5edd5eadb034
+
+PKG_NAME:=php7-pecl-mcrypt
+PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz
+PKG_SOURCE_URL:=http://pecl.php.net/get/
+
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+
+PKG_LICENSE:=PHP-3.01
+PKG_LICENSE_FILES:=LICENSE
+
+PKG_BUILD_DEPENDS:=php7
+PKG_BUILD_DIR:=$(BUILD_DIR)/pecl-php7/$(PECL_NAME)-$(PKG_VERSION)
+PKG_BUILD_PARALLEL:=1
+
+include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
+include ../php7/pecl.mk
+
+CONFIGURE_ARGS+= --with-mcrypt=shared,"$(STAGING_DIR)/usr"
+
+$(eval $(call PECLPackage,mcrypt,$(PECL_LONGNAME),+libmcrypt +libltdl,30))
+$(eval $(call BuildPackage,$(PKG_NAME)))

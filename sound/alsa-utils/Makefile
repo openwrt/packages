@@ -8,15 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alsa-utils
-PKG_VERSION:=1.1.0
+PKG_VERSION:=1.1.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.alsa-project.org/pub/utils/ \
-		http://alsa.cybermirror.org/utils/
-PKG_HASH:=3b1c3135b76e14532d3dd23fb15759ddd7daf9ffbc183f7a9a0a3a86374748f1
-PKG_INSTALL:=1
+		http://distfiles.gentoo.org/distfiles/
+PKG_HASH:=5ddf2cbddb4bd1a4a2a6492a09c25898b08c3ad64893c3655be14194cf0a213a
+
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
+
+PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -25,7 +31,7 @@ define Package/alsa-utils
   CATEGORY:=Sound
   DEPENDS:=+alsa-lib +libncursesw +libpthread
   TITLE:=ALSA (Advanced Linux Sound Architecture) utilities
-  URL:=http://www.alsa-project.org/
+  URL:=https://www.alsa-project.org/
 endef
 
 define Package/alsa-utils-seq
@@ -33,7 +39,7 @@ define Package/alsa-utils-seq
   CATEGORY:=Sound
   DEPENDS:=+alsa-lib +libpthread
   TITLE:=ALSA sequencer utilities
-  URL:=http://www.alsa-project.org/
+  URL:=https://www.alsa-project.org/
 endef
 
 define Package/alsa-utils-tests
@@ -41,15 +47,16 @@ define Package/alsa-utils-tests
   CATEGORY:=Sound
   TITLE:=ALSA utilities test data (adds ~1.3M to image)
   DEPENDS:=+alsa-lib +libpthread
-  URL:=http://www.alsa-project.org/
+  URL:=https://www.alsa-project.org/
 endef
 
 CONFIGURE_ARGS+= \
-		--disable-rpath \
-		--disable-alsatest \
-		--disable-bat \
-		--disable-xmlto \
-		--with-curses=ncursesw
+	--disable-rpath \
+	--disable-alsatest \
+	--disable-bat \
+	--disable-xmlto \
+	--disable-rst2man \
+	--with-curses=ncursesw
 
 define Package/alsa-utils/install
 	$(INSTALL_DIR) $(1)/usr/{s,}bin
@@ -71,6 +78,10 @@ define Package/alsa-utils-seq/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/amidi $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/aplaymidi $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/arecordmidi $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/iecset $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/alsaloop $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/alsatplg $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/alsaucm $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/aseqdump $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/aseqnet $(1)/usr/bin/
 endef

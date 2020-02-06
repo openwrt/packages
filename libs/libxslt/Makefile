@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2014 - 2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,24 +8,28 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxslt
-PKG_VERSION:=1.1.28
-PKG_RELEASE:=2
+PKG_VERSION:=1.1.33
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 	http://xmlsoft.org/sources/ \
 	ftp://fr.rpmfind.net/pub/libxml/
-PKG_HASH:=5fc7151a57b89c03d7b825df5a0fae0a8d5f05674c0e7cf2937ecec4d54a028c
+PKG_HASH:=8e36605144409df979cab43d835002f63988f3dc94d5d3537c12796db90e38c8
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:xmlsoft:libxslt
 
 PKG_MAINTAINER:=Jiri Slachta <jiri@slachta.eu>
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
+HOST_BUILD_DEPENDS:=libxml2/host
+
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 define Package/libxslt
   SECTION:=libs
@@ -54,7 +58,7 @@ endef
 define Package/xsltproc
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libxml2 +libxslt +libexslt
+  DEPENDS:=+libxslt +PACKAGE_xsltproc:libexslt
   TITLE:=Gnome XSLT xsltproc Utility
   URL:=http://xmlsoft.org/XSLT/
 endef
@@ -64,6 +68,7 @@ define Package/xsltproc/description
 endef
 
 CONFIGURE_ARGS+= \
+	--disable-silent-rules \
 	--enable-shared \
 	--enable-static \
 	--without-python \
@@ -71,8 +76,6 @@ CONFIGURE_ARGS+= \
 	--without-debug \
 	--without-mem-debug \
 	--without-debugger \
-
-TARGET_CFLAGS += $(FPIC)
 
 define Build/InstallDev/Xslt
 	$(INSTALL_DIR) $(1)/usr/bin $(2)/bin $(1)/usr/include/libxslt \
@@ -126,17 +129,27 @@ define Build/InstallDev
 	 $(if $(CONFIG_PACKAGE_libexslt),$(call Build/InstallDev/Exslt,$(1),$(2)))
 endef
 
+HOST_CONFIGURE_ARGS+= \
+	--disable-silent-rules \
+	--enable-static \
+	--with-libxml-prefix=$(STAGING_DIR_HOSTPKG) \
+	--without-python \
+	--without-crypto \
+	--without-debug \
+	--without-mem-debug \
+	--without-debugger
+
 define Package/libxslt/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libxslt.so.* \
+		$(PKG_INSTALL_DIR)/usr/lib/libxslt.so* \
 		$(1)/usr/lib/
 endef
 
 define Package/libexslt/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libexslt.so.* \
+		$(PKG_INSTALL_DIR)/usr/lib/libexslt.so* \
 		$(1)/usr/lib/
 endef
 
@@ -150,3 +163,4 @@ endef
 $(eval $(call BuildPackage,libxslt))
 $(eval $(call BuildPackage,libexslt))
 $(eval $(call BuildPackage,xsltproc))
+$(eval $(call HostBuild))

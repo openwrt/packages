@@ -11,7 +11,7 @@ Subject: [PATCH] Don't rebuild everything when the Makefile's timestamp
 
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -112,7 +112,7 @@ clean:
+@@ -128,7 +128,7 @@ clean:
  distclean: clean
  	rm -rf $(DISTCLEAN)
  
@@ -22,7 +22,7 @@ Subject: [PATCH] Don't rebuild everything when the Makefile's timestamp
  	$(Q)$(CXX) $(CXXFLAGS) -c -o $@ $< -MD -MF .depend/$*.dep -MT $@
 --- a/modules/Makefile.in
 +++ b/modules/Makefile.in
-@@ -112,12 +112,12 @@ install_datadir:
+@@ -127,12 +127,12 @@ install_datadir:
  clean:
  	rm -rf $(CLEAN)
  

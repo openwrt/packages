@@ -7,48 +7,71 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pillow
-PKG_VERSION:=3.3.1
-PKG_RELEASE=1
-PKG_LICENSE:=CUSTOM
+PKG_VERSION:=6.2.1
+PKG_RELEASE:=1
+
+PYPI_NAME:=Pillow
+PKG_HASH:=bf4e972a88f8841d8fdc6db1a75e0f8d763e66e3754b03006cbc3854d89f1cb1
+
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_LICENSE:=HPND
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:python:pillow
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/python-pillow/Pillow.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=aab33141f381d5577cdef9033b7fdff79122a10c
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=e7c36bcf89614337d9abc4d07780da0b346a745be7a9aa55b398fa427549273c
-PKG_BUILD_DEPENDS:=python python-setuptools
-
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
+include ../python3-package.mk
 
-define Package/pillow
-    SUBMENU:=Python
-    SECTION:=lang
-    CATEGORY:=Languages
-    TITLE:=The friendly PIL fork
-    MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
-    URL:=https://python-pillow.org/
-    DEPENDS:=+python +libfreetype +libjpeg +zlib +libtiff
+define Package/python-pillow/Default
+  SUBMENU:=Python
+  SECTION:=lang
+  CATEGORY:=Languages
+  TITLE:=The friendly PIL fork
+  URL:=https://python-pillow.org/
+  DEPENDS:=+libfreetype +libjpeg +libtiff +zlib
 endef
 
-define Package/pillow/description
-    The friendly PIL fork
+define Package/python-pillow
+$(call Package/python-pillow/Default)
+  DEPENDS+=+PACKAGE_python-pillow:python
+  VARIANT:=python
 endef
 
-define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
+define Package/python-pillow/description
+  The friendly PIL fork
 endef
 
-define Package/pillow/install
-	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) \
-		$(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
-		$(1)$(PYTHON_PKG_DIR)/
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin
-	$(CP) $(PKG_BUILD_DIR)/LICENSE $(1)$(PYTHON_PKG_DIR)/PIL/
+define Package/python3-pillow
+$(call Package/python-pillow/Default)
+  DEPENDS+=+PACKAGE_python3-pillow:python3
+  VARIANT:=python3
 endef
 
-$(eval $(call BuildPackage,pillow))
+define Package/python3-pillow/description
+$(call Package/python-pillow/description)
+.
+(Variant for Python3)
+endef
+
+PYTHON3_PKG_SETUP_GLOBAL_ARGS += build_ext \
+	--enable-zlib \
+	--enable-jpeg \
+	--enable-tiff \
+	--enable-freetype \
+	--disable-lcms \
+	--disable-webp \
+	--disable-webpmux \
+	--disable-jpeg2000 \
+	--disable-imagequant \
+	--disable-platform-guessing
+
+PYTHON_PKG_SETUP_GLOBAL_ARGS:=$(PYTHON3_PKG_SETUP_GLOBAL_ARGS)
+
+$(eval $(call PyPackage,python-pillow))
+$(eval $(call BuildPackage,python-pillow))
+$(eval $(call BuildPackage,python-pillow-src))
+
+$(eval $(call Py3Package,python3-pillow))
+$(eval $(call BuildPackage,python3-pillow))
+$(eval $(call BuildPackage,python3-pillow-src))

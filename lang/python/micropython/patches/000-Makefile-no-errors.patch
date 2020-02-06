@@ -1,0 +1,13 @@
+diff --git a/ports/unix/Makefile b/ports/unix/Makefile
+index cbdd3f3..0ab157d 100644
+--- a/ports/unix/Makefile
++++ b/ports/unix/Makefile
+@@ -21,7 +21,7 @@ INC +=  -I$(TOP)
+ INC += -I$(BUILD)
+ 
+ # compiler settings
+-CWARN = -Wall -Werror
++CWARN = -Wall
+ CWARN += -Wpointer-arith -Wuninitialized
+ CFLAGS = $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA)
+ 

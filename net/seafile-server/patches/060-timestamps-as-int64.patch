@@ -1,7 +1,6 @@
-diff -rupN seafile-server-5.1.1.orig/lib/repo.vala seafile-server-5.1.1/lib/repo.vala
---- seafile-server-5.1.1.orig/lib/repo.vala	2016-04-19 15:44:32.000000000 +0200
-+++ seafile-server-5.1.1/lib/repo.vala	2016-04-25 21:29:33.327962235 +0200
-@@ -30,7 +30,7 @@ public class Repo : Object {
+--- a/lib/repo.vala
++++ b/lib/repo.vala
+@@ -34,7 +34,7 @@ public class Repo : Object {
      // data format version
      public int version { get; set; }
  
@@ -9,8 +8,8 @@ diff -rupN seafile-server-5.1.1.orig/lib/repo.vala seafile-server-5.1.1/lib/repo
 +    public int64  last_modify { get; set; }
      public int64  size { get; set; }
      public int64  file_count { get; set; }
-     public string head_cmmt_id { get; set; }
-@@ -40,7 +40,7 @@ public class Repo : Object {
+     public string last_modifier { get; set; }
+@@ -45,7 +45,7 @@ public class Repo : Object {
      public string repo_id { get; set; }
      public string repo_name { get; set; }
      public string repo_desc { get; set; }
@@ -19,7 +18,7 @@ diff -rupN seafile-server-5.1.1.orig/lib/repo.vala seafile-server-5.1.1/lib/repo
  
      // Section 2: Encryption related
      // Members in this section should be set for every Repo object
-@@ -63,7 +63,7 @@ public class Repo : Object {
+@@ -68,7 +68,7 @@ public class Repo : Object {
          get { return _relay_id; }
          set { _relay_id = value; }
      }
@@ -28,7 +27,7 @@ diff -rupN seafile-server-5.1.1.orig/lib/repo.vala seafile-server-5.1.1/lib/repo
      public bool auto_sync { get; set; }
      public bool worktree_invalid { get; set; }
  
-@@ -155,7 +155,7 @@ public class DeletedEntry : Object {
+@@ -162,7 +162,7 @@ public class DeletedEntry : Object {
      public string obj_name { get; set; }
      public string basedir { get; set; }
      public int mode { get; set; }

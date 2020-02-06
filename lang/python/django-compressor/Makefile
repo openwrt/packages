@@ -8,42 +8,69 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-compressor
-PKG_VERSION:=2.1.1
-PKG_RELEASE:=1
+PKG_VERSION:=2.2
+PKG_RELEASE:=6
+
+PYPI_NAME:=$(PKG_NAME)
+PYPI_SOURCE_NAME:=django_compressor
+PKG_HASH:=9616570e5b08e92fa9eadc7a1b1b49639cce07ef392fc27c74230ab08075b30f
+
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE
 
-PKG_SOURCE:=django_compressor-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/38/58/03098a826062b856956c7169a8f778ec2b8e2767ddc63da0629062df5621/
-PKG_BUILD_DIR:=$(BUILD_DIR)/django_compressor-$(PKG_VERSION)/
-PKG_HASH:=9200400046ee00a5c1b4e2fbab97704fd2514f9b59d5649c8a365c3cf06c82e8
-PKG_BUILD_DEPENDS:=python python-setuptools
-
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
+include ../python3-package.mk
 
-define Package/django-compressor
+define Package/django-compressor/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
-  TITLE:=Compresses linked and inline JavaScript or CSS into single cached files.
-  URL:=http://django-compressor.readthedocs.org/
-  DEPENDS:=+python +django
+  TITLE:=Compress CSS/JS into single cached files
+  URL:=https://django-compressor.readthedocs.io
 endef
 
-define Package/django-compressor/description
+define Package/python-django-compressor
+$(call Package/django-compressor/Default)
+  DEPENDS:= \
+	+PACKAGE_python-django-compressor:python \
+	python-django1 \
+	+PACKAGE_python-django-compressor:python-django-appconf \
+	+PACKAGE_python-django-compressor:python-rcssmin
+  VARIANT:=python
+  MDEPENDS:=python-django1
+endef
+
+define Package/python-django-compressor/description
   Compresses linked and inline JavaScript or CSS into single cached files.
+  Note that the JavaScript filter is not being installed as a dependency.
+  You'll need to build the rjsmin module (it is not par of the openwrt standard
+  feeds) to use JavaScript functionality.
 endef
 
-define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
+define Package/python3-django-compressor
+$(call Package/django-compressor/Default)
+  DEPENDS:= \
+	+PACKAGE_python3-django-compressor:python3 \
+	python3-django \
+	+PACKAGE_python3-django-compressor:python3-django-appconf \
+	+PACKAGE_python3-django-compressor:python3-rcssmin
+  VARIANT:=python3
+  MDEPENDS:=python3-django
 endef
 
-define Package/django-compressor/install
-	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
-	$(CP) \
-	    $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
-	    $(1)$(PYTHON_PKG_DIR)
+define Package/python3-django-compressor/description
+$(call Package/python-django-compressor/description)
+.
+(Variant for Python3)
 endef
 
-$(eval $(call BuildPackage,django-compressor))
+$(eval $(call PyPackage,python-django-compressor))
+$(eval $(call BuildPackage,python-django-compressor))
+$(eval $(call BuildPackage,python-django-compressor-src))
+
+$(eval $(call Py3Package,python3-django-compressor))
+$(eval $(call BuildPackage,python3-django-compressor))
+$(eval $(call BuildPackage,python3-django-compressor-src))

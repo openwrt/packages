@@ -1,7 +1,4 @@
 #
-# Copyright (C) 2009-2015 OpenWrt.org
-# Copyright (C) 2009 David Cooper <dave@kupesoft.com>
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -9,15 +6,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l-utils
-PKG_VERSION:=1.10.0
+PKG_VERSION:=1.16.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://www.linuxtv.org/downloads/v4l-utils
-PKG_HASH:=78ead27ee58a701d7c6342303cf4520bdd4a2b88a7813bc99a0b389307e4336b
+PKG_SOURCE_URL:=https://www.linuxtv.org/downloads/v4l-utils
+PKG_HASH:=f9dac1878e3d5636eab7f56bb209fdfc66b94ee8a2aae54dcb4282fe63a678ae
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
-
 PKG_LICENSE:=GPL-2.0 LGPL-2.1
 PKG_LICENSE_FILES:=COPYING COPYING.libv4l
 
@@ -33,7 +29,7 @@ include $(INCLUDE_DIR)/nls.mk
 
 define Package/libv4l/Default
   TITLE:=Video 4 Linux
-  URL:=http://www.linuxtv.org/
+  URL:=https://www.linuxtv.org/
 endef
 
 define Package/libv4l/Default/description
@@ -68,7 +64,7 @@ define Package/v4l-utils
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE+= utilities
-  DEPENDS := +libv4l $(CXX_DEPENDS) $(ICONV_DEPENDS)
+  DEPENDS := +libv4l $(CXX_DEPENDS) $(ICONV_DEPENDS) $(INTL_DEPENDS)
 endef
 
 define Package/v4l-utils/description
@@ -76,27 +72,29 @@ define Package/v4l-utils/description
   This package contains the video4linux utilities.
 endef
 
-TARGET_CFLAGS += $(FPIC)
-TARGET_LDFLAGS += -largp
+TARGET_CFLAGS += -flto
+TARGET_LDFLAGS += -largp -Wl,--gc-sections
 
 CONFIGURE_ARGS+= \
+	--disable-bpf \
 	--disable-doxygen-doc \
 	--disable-libdvbv5 \
 	--disable-qv4l2 \
+	--disable-qvidcap \
 	--without-jpeg \
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libv4l{1,2,convert}.{a,so*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libv4l{1,2,convert,2rds}.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libv4l{1,2,convert}.pc $(1)/usr/lib/pkgconfig/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libv4l{1,2,convert,2rds}.pc $(1)/usr/lib/pkgconfig/
 endef
 
 define Package/libv4l/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libv4l{1,2,convert}.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libv4l{1,2,convert,2rds}.so.* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/libv4l
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libv4l/v4l{1compat,2convert}.so $(1)/usr/lib/libv4l/
 endef
@@ -106,10 +104,11 @@ define Package/v4l-utils/install
 	$(CP) $(PKG_INSTALL_DIR)/etc/rc_maps.cfg $(1)/etc/
 	$(CP) $(PKG_INSTALL_DIR)/etc/rc_keymaps $(1)/etc/
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/{cx18,ivtv}-ctl $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/{rds,media,cx18,ivtv}-ctl $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/decode_tm6000 $(1)/usr/bin/
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ir-keytable $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ir-{ctl,keytable} $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/v4l2-{compliance,ctl,sysfs-path} $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/cec-{compliance,ctl,follower} $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,libv4l))

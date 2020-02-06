@@ -1,7 +1,6 @@
-diff -Naur mailman-2.1.18-1/configure mailman-2.1.18-1_patched/configure
---- mailman-2.1.18-1/configure	2014-10-26 12:00:38.090360119 +0300
-+++ mailman-2.1.18-1_patched/configure	2014-10-26 12:00:21.323016430 +0300
-@@ -2236,35 +2236,35 @@
+--- a/configure
++++ b/configure
+@@ -2255,35 +2255,35 @@ fi
  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $version" >&5
  $as_echo "$version" >&6; }
  

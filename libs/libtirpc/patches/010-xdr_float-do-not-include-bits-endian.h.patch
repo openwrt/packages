@@ -1,0 +1,31 @@
+From d04f4d6f0e682f16b0ce96839ab4eadade591eb1 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Tue, 21 Jan 2020 11:51:16 -0500
+Subject: [PATCH] xdr_float: do not include bits/endian.h
+
+bits/endian.h is an internal header. endian.h should be included.
+
+Fixes compilation with recent musl.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+Signed-off-by: Steve Dickson <steved@redhat.com>
+---
+ src/xdr_float.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/xdr_float.c b/src/xdr_float.c
+index 26bc865..349d48f 100644
+--- a/src/xdr_float.c
++++ b/src/xdr_float.c
+@@ -83,7 +83,7 @@ static struct sgl_limits {
+ };
+ #else
+ 
+-#include <bits/endian.h>
++#include <endian.h>
+ #define IEEEFP
+ 
+ #endif /* vax */
+-- 
+2.20.1
+

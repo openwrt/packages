@@ -8,9 +8,9 @@ include $(TOPDIR)/rules.mk
 PECL_NAME:=raphf
 PECL_LONGNAME:=Resource and persistent handles factory
 
-PKG_VERSION:=2.0.0
+PKG_VERSION:=2.0.1
 PKG_RELEASE:=2
-PKG_HASH:=95a59ea0dc3fc172805a6acd8327b122dd159b0a85b253826166457a05efa411
+PKG_HASH:=da3566db17422e5ef08b7ff144162952aabc14cb22407cc6b1d2a2d095812bd0
 
 PKG_NAME:=php7-pecl-raphf
 PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz
@@ -23,8 +23,6 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/pecl-php7/$(PECL_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
-
-PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk

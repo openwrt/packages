@@ -1,0 +1,156 @@
+commit 53f802b06a8c165c39cb1b9a3455366e1293d1ed
+Author: William Lallemand <wlallemand@haproxy.org>
+Date:   Thu Jan 16 15:32:08 2020 +0100
+
+    BUG/MEDIUM: cli: _getsocks must send the peers sockets
+    
+    This bug prevents to reload HAProxy when you have both the seamless
+    reload (-x / expose-fd listeners) and the peers.
+    
+    Indeed the _getsocks command does not send the FDs of the peers
+    listeners, so if no reuseport is possible during the bind, the new
+    process will fail to bind and exits.
+    
+    With this feature, it is not possible to fallback on the SIGTTOU method
+    if we didn't receive all the sockets, because you can't close() the
+    sockets of the new process without closing those of the previous
+    process, they are the same.
+    
+    Should fix bug #443.
+    
+    Must be backported as far as 1.8.
+    
+    (cherry picked from commit 5fd3b28c9c071376a9bffb427b25872ffc068601)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/cli.c b/src/cli.c
+index d68e2b299..2dca17552 100644
+--- a/src/cli.c
++++ b/src/cli.c
+@@ -1612,6 +1612,7 @@ static int _getsocks(char **args, char *payload, struct appctx *appctx, void *pr
+ 	int *tmpfd;
+ 	int tot_fd_nb = 0;
+ 	struct proxy *px;
++	struct peers *prs;
+ 	int i = 0;
+ 	int fd = -1;
+ 	int curoff = 0;
+@@ -1664,6 +1665,22 @@ static int _getsocks(char **args, char *payload, struct appctx *appctx, void *pr
+ 		}
+ 		px = px->next;
+ 	}
++	prs = cfg_peers;
++	while (prs) {
++		if (prs->peers_fe) {
++			struct listener *l;
++
++			list_for_each_entry(l, &prs->peers_fe->conf.listeners, by_fe) {
++				/* Only transfer IPv4/IPv6/UNIX sockets */
++				if (l->state >= LI_ZOMBIE &&
++				    (l->proto->sock_family == AF_INET ||
++				     l->proto->sock_family == AF_INET6 ||
++				     l->proto->sock_family == AF_UNIX))
++					tot_fd_nb++;
++			}
++		}
++		prs = prs->next;
++	}
+ 	if (tot_fd_nb == 0)
+ 		goto out;
+ 
+@@ -1687,7 +1704,6 @@ static int _getsocks(char **args, char *payload, struct appctx *appctx, void *pr
+ 	cmsg->cmsg_type = SCM_RIGHTS;
+ 	tmpfd = (int *)CMSG_DATA(cmsg);
+ 
+-	px = proxies_list;
+ 	/* For each socket, e message is sent, containing the following :
+ 	 *  Size of the namespace name (or 0 if none), as an unsigned char.
+ 	 *  The namespace name, if any
+@@ -1704,6 +1720,7 @@ static int _getsocks(char **args, char *payload, struct appctx *appctx, void *pr
+ 		goto out;
+ 	}
+ 	iov.iov_base = tmpbuf;
++	px = proxies_list;
+ 	while (px) {
+ 		struct listener *l;
+ 
+@@ -1737,7 +1754,6 @@ static int _getsocks(char **args, char *payload, struct appctx *appctx, void *pr
+ 				    sizeof(l->options));
+ 				curoff += sizeof(l->options);
+ 
+-
+ 				i++;
+ 			} else
+ 				continue;
+@@ -1758,10 +1774,70 @@ static int _getsocks(char **args, char *payload, struct appctx *appctx, void *pr
+ 				}
+ 				curoff = 0;
+ 			}
+-
+ 		}
+ 		px = px->next;
+ 	}
++	/* should be done for peers too */
++	prs = cfg_peers;
++	while (prs) {
++		if (prs->peers_fe) {
++			struct listener *l;
++
++			list_for_each_entry(l, &prs->peers_fe->conf.listeners, by_fe) {
++				int ret;
++				/* Only transfer IPv4/IPv6 sockets */
++				if (l->state >= LI_ZOMBIE &&
++				    (l->proto->sock_family == AF_INET ||
++				     l->proto->sock_family == AF_INET6 ||
++				     l->proto->sock_family == AF_UNIX)) {
++					memcpy(&tmpfd[i % MAX_SEND_FD], &l->fd, sizeof(l->fd));
++					if (!l->netns)
++						tmpbuf[curoff++] = 0;
++#ifdef USE_NS
++					else {
++						char *name = l->netns->node.key;
++						unsigned char len = l->netns->name_len;
++						tmpbuf[curoff++] = len;
++						memcpy(tmpbuf + curoff, name, len);
++						curoff += len;
++					}
++#endif
++					if (l->interface) {
++						unsigned char len = strlen(l->interface);
++						tmpbuf[curoff++] = len;
++						memcpy(tmpbuf + curoff, l->interface, len);
++						curoff += len;
++					} else
++						tmpbuf[curoff++] = 0;
++					memcpy(tmpbuf + curoff, &l->options,
++					       sizeof(l->options));
++					curoff += sizeof(l->options);
++
++					i++;
++				} else
++					continue;
++				if ((!(i % MAX_SEND_FD))) {
++					iov.iov_len = curoff;
++					if (sendmsg(fd, &msghdr, 0) != curoff) {
++						ha_warning("Failed to transfer sockets\n");
++						goto out;
++					}
++					/* Wait for an ack */
++					do {
++						ret = recv(fd, &tot_fd_nb,
++							   sizeof(tot_fd_nb), 0);
++					} while (ret == -1 && errno == EINTR);
++					if (ret <= 0) {
++						ha_warning("Unexpected error while transferring sockets\n");
++						goto out;
++					}
++					curoff = 0;
++				}
++			}
++		}
++		prs = prs->next;
++	}
++
+ 	if (i % MAX_SEND_FD) {
+ 		iov.iov_len = curoff;
+ 		cmsg->cmsg_len = CMSG_LEN((i % MAX_SEND_FD) * sizeof(int));

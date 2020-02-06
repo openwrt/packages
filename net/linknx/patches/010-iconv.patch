@@ -1,0 +1,50 @@
+From 8c025865f7cc57761d2227b897ba3980090391c2 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Mon, 24 Jun 2019 14:13:34 -0700
+Subject: [PATCH] Use AM_ICONV for properly supporting libiconv
+
+AM_ICONV does multiple things like checking the function parameters to
+avoid const problems.
+---
+ configure.ac             | 1 +
+ src/Makefile.am          | 2 +-
+ src/objectcontroller.cpp | 2 +-
+ 3 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 22f242c..23582cb 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -10,6 +10,7 @@ PKG_CONFIG=`which pkg-config`
+ AC_PROG_CXX
+ AC_PROG_CC
+ AC_PROG_RANLIB
++AM_ICONV
+ AC_CHECK_PTHSEM(2.0.4,yes,yes,no)
+ AC_CHECK_HEADER(argp.h,,[AC_MSG_ERROR([argp_parse not found])])
+ AC_SEARCH_LIBS(argp_parse,argp,,[AC_MSG_ERROR([argp_parse not found])])
+diff --git a/src/Makefile.am b/src/Makefile.am
+index 6a4f493..6e0dc03 100644
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -7,5 +7,5 @@ B64_CFLAGS=
+ B64_LIBS=
+ endif
+ AM_CPPFLAGS=-I$(top_srcdir)/include -I$(top_srcdir)/ticpp $(B64_CFLAGS) $(PTH_CPPFLAGS) $(LIBCURL_CPPFLAGS) $(LOG4CPP_CFLAGS) $(LUA_CFLAGS) $(MYSQL_CFLAGS) $(ESMTP_CFLAGS)
+-linknx_LDADD=$(top_srcdir)/ticpp/libticpp.a $(B64_LIBS) $(PTH_LDFLAGS) $(PTH_LIBS) $(LIBCURL) $(LOG4CPP_LIBS) $(LUA_LIBS) $(MYSQL_LIBS) $(ESMTP_LIBS) -lm
++linknx_LDADD=$(top_srcdir)/ticpp/libticpp.a $(LIBICONV) $(B64_LIBS) $(PTH_LDFLAGS) $(PTH_LIBS) $(LIBCURL) $(LOG4CPP_LIBS) $(LUA_LIBS) $(MYSQL_LIBS) $(ESMTP_LIBS) -lm
+ linknx_SOURCES=linknx.cpp logger.cpp ruleserver.cpp objectcontroller.cpp eibclient.c threads.cpp timermanager.cpp  persistentstorage.cpp xmlserver.cpp smsgateway.cpp emailgateway.cpp knxconnection.cpp services.cpp suncalc.cpp  luacondition.cpp ioport.cpp ruleserver.h objectcontroller.h threads.h timermanager.h persistentstorage.h xmlserver.h smsgateway.h emailgateway.h knxconnection.h services.h suncalc.h luacondition.h ioport.h logger.h
+diff --git a/src/objectcontroller.cpp b/src/objectcontroller.cpp
+index fb2fc3a..7622491 100644
+--- a/src/objectcontroller.cpp
++++ b/src/objectcontroller.cpp
+@@ -2925,7 +2925,7 @@ std::string StringObjectValue::transcode(const std::string &source, const std::s
+ 	iconv_t conversionDescriptor = iconv_open((targetEncoding + "//TRANSLIT").c_str(), sourceEncoding.c_str());
+ 	char cSource[source.size()];
+ 	memcpy(cSource, source.c_str(), source.size() + 1);
+-	char *sourceStart = &cSource[0];
++	ICONV_CONST char *sourceStart = &cSource[0];
+ 	size_t sourceLength = source.size();
+ 	const size_t targetLength = source.size() * 5; // Should be pretty enough even in worst cases.
+ 	char targetChars[targetLength];
+

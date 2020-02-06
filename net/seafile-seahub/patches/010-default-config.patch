@@ -1,6 +1,5 @@
-diff -rupN seahub-3.1.7-server.orig/seahub/settings.py seahub-3.1.7-server/seahub/settings.py
---- seahub-3.1.7-server.orig/seahub/settings.py	2014-10-20 09:32:35.000000000 +0200
-+++ seahub-3.1.7-server/seahub/settings.py	2014-12-10 15:47:21.625104606 +0100
+--- a/seahub/settings.py
++++ b/seahub/settings.py
 @@ -46,7 +46,7 @@ SITE_ID = 1
  
  # If you set this to False, Django will make some optimizations so as not
@@ -10,8 +9,8 @@ diff -rupN seahub-3.1.7-server.orig/seahub/settings.py seahub-3.1.7-server/seahu
  
  # If you set this to False, Django will not format dates, numbers and
  # calendars according to the current locale.
-@@ -209,7 +209,7 @@ SHOW_REPO_DOWNLOAD_BUTTON = False
- REPO_PASSWORD_MIN_LENGTH = 8
+@@ -339,7 +339,7 @@ SHARE_LINK_EMAIL_LANGUAGE = ''
+ ENABLE_UPLOAD_LINK_VIRUS_CHECK = False
  
  # mininum length for user's password
 -USER_PASSWORD_MIN_LENGTH = 6
@@ -19,12 +18,12 @@ diff -rupN seahub-3.1.7-server.orig/seahub/settings.py seahub-3.1.7-server/seahu
  
  # LEVEL based on four types of input:
  # num, upper letter, lower letter, other symbols
-@@ -218,7 +218,7 @@ USER_PASSWORD_STRENGTH_LEVEL = 3
+@@ -348,7 +348,7 @@ USER_PASSWORD_STRENGTH_LEVEL = 3
  
  # default False, only check USER_PASSWORD_MIN_LENGTH
  # when True, check password strength level, STRONG(or above) is allowed
 -USER_STRONG_PASSWORD_REQUIRED = False
 +USER_STRONG_PASSWORD_REQUIRED = True
  
- # Using server side crypto by default, otherwise, let user choose crypto method.
- FORCE_SERVER_CRYPTO = True
+ # Force user to change password when admin add/reset a user.
+ FORCE_PASSWORD_CHANGE = True

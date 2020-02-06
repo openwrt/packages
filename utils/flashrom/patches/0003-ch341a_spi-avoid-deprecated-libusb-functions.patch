@@ -1,0 +1,40 @@
+From 291764a70e6d8b212680e311bfb0825abf2b9a2f Mon Sep 17 00:00:00 2001
+From: Alex James <theracermaster@gmail.com>
+Date: Sat, 14 Apr 2018 22:59:57 -0500
+Subject: ch341a_spi: Avoid deprecated libusb functions
+
+libusb 1.0.22 marked libusb_set_debug as deprecated. For such versions
+of libusb, use libusb_set_option instead.
+
+Change-Id: Ib71ebe812316eaf49136979a942a946ef9e4d487
+Signed-off-by: Alex James <theracermaster@gmail.com>
+Reviewed-on: https://review.coreboot.org/25681
+Tested-by: Nico Huber <nico.h@gmx.de>
+Reviewed-by: David Hendricks <david.hendricks@gmail.com>
+---
+ ch341a_spi.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+(limited to 'ch341a_spi.c')
+
+diff --git a/ch341a_spi.c b/ch341a_spi.c
+index 95e9c95..ee18624 100644
+--- a/ch341a_spi.c
++++ b/ch341a_spi.c
+@@ -444,7 +444,12 @@ int ch341a_spi_init(void)
+ 		return -1;
+ 	}
+ 
+-	libusb_set_debug(NULL, 3); // Enable information, warning and error messages (only).
++	/* Enable information, warning, and error messages (only). */
++#if LIBUSB_API_VERSION < 0x01000106
++	libusb_set_debug(NULL, 3);
++#else
++	libusb_set_option(NULL, LIBUSB_OPTION_LOG_LEVEL, LIBUSB_LOG_LEVEL_INFO);
++#endif
+ 
+ 	uint16_t vid = devs_ch341a_spi[0].vendor_id;
+ 	uint16_t pid = devs_ch341a_spi[0].device_id;
+-- 
+cgit v1.1
+

@@ -1,0 +1,10 @@
+--- a/native/jni/java-math/gnu_java_math_GMP.c
++++ b/native/jni/java-math/gnu_java_math_GMP.c
+@@ -1132,6 +1132,7 @@
+         break;
+       case 1:
+         res = mpz_popcount (_this);
++      __attribute__((fallthrough));
+       default:
+         JCL_ThrowException (env, "java/lang/Error",
+                             "Unexpected sign value for a native MPI");

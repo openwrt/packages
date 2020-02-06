@@ -8,15 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsync
-PKG_VERSION:=3.1.2
-PKG_RELEASE:=2
+PKG_VERSION:=3.1.3
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.samba.org/pub/rsync/src
-PKG_HASH:=ecfa62a7fa3c4c18b9eccd8c16eaddee4bd308a76ea50b5c02a5840f09c0a1c2
+PKG_HASH:=55cc554efec5fdaad70de921cd5a5eeb6c29a95524c715f3bbf849235b0800c0
+
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
-PKG_LICENSE:=GPL-3.0
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:rsync:rsync
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -29,7 +31,7 @@ define Package/rsync
   SUBMENU:=File Transfer
   TITLE:=Fast remote file copy program (like rcp)
   DEPENDS:=+libpopt +RSYNC_xattr:libattr +RSYNC_acl:libacl +RSYNC_zlib:zlib
-  URL:=http://rsync.samba.org/
+  URL:=https://rsync.samba.org/
   MENU:=1
 endef
 
@@ -60,13 +62,21 @@ else
 	CONFIGURE_ARGS+= --with-included-zlib=yes
 endif
 
+ifeq ($(CONFIG_IPV6),y)
+    TARGET_CFLAGS+= -DINET6
+else
+    CONFIGURE_ARGS+= --disable-ipv6
+endif
+
+CONFIGURE_VARS += rsync_cv_HAVE_GETTIMEOFDAY_TZ=yes
+
 define Package/rsyncd
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=File Transfer
   TITLE:=Rsync daemon
   DEPENDS:=+rsync
-  URL:=http://rsync.samba.org/
+  URL:=https://rsync.samba.org/
 endef
 
 define Package/rsync/description

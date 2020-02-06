@@ -1,0 +1,15 @@
+--- a/SConstruct
++++ b/SConstruct
+@@ -1047,12 +1047,6 @@ else:
+             confdefs.append("/* #undef HAVE_%s_H */\n"
+                             % hdr.replace("/", "_").upper())
+ 
+-    sizeof_time_t = config.CheckSizeOf("time_t")
+-    confdefs.append("#define SIZEOF_TIME_T %s\n" % sizeof_time_t)
+-    announce("sizeof(time_t) is %s" % sizeof_time_t)
+-    if 4 >= int(sizeof_time_t):
+-        announce("WARNING: time_t is too small.  It will fail in 2038")
+-
+     # check function after libraries, because some function require libraries
+     # for example clock_gettime() require librt on Linux glibc < 2.17
+     for f in ("cfmakeraw", "clock_gettime", "daemon", "fcntl", "fork",

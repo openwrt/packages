@@ -1,8 +1,6 @@
-diff --git a/core/Makefile b/core/Makefile
-index 389855c..2f81417 100644
 --- a/core/Makefile
 +++ b/core/Makefile
-@@ -44,7 +44,7 @@ irssi/network-openssl.o: CFLAGS:=$(IRSSI_CFLAGS)
+@@ -49,7 +49,7 @@ irssi/network-openssl.o: CFLAGS:=$(IRSSI
  quasselc-connector.o: CFLAGS:=$(CFLAGS)
  
  $(TARGET): $(OBJECTS)

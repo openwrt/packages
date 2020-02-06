@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2015 OpenWrt.org
+# Copyright (C) 2007-2019 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tinc
-PKG_VERSION:=1.0.32
-PKG_RELEASE:=1
+PKG_VERSION:=1.0.36
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.tinc-vpn.org/packages
-PKG_HASH:=4db24feaff8db4bbb7edb7a4b8f5f8edc39b26eb5feccc99e8e67a6960c05587
+PKG_SOURCE_URL:=https://www.tinc-vpn.org/packages
+PKG_HASH:=40f73bb3facc480effe0e771442a706ff0488edea7a5f2505d4ccb2aa8163108
 
+PKG_CPE_ID:=cpe:/a:tinc:tinc
+
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -40,6 +43,9 @@ CONFIGURE_ARGS += \
 	--with-kernel="$(LINUX_DIR)" \
 	--with-zlib="$(STAGING_DIR)/usr" \
 	--with-lzo-include="$(STAGING_DIR)/usr/include/lzo"
+
+CONFIGURE_VARS += \
+	ac_cv_have_decl_OpenSSL_add_all_algorithms=yes
 
 define Package/tinc/install
 	$(INSTALL_DIR) $(1)/usr/sbin

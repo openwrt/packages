@@ -1,17 +1,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luv
+PKG_VERSION:=1.22.0-1
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/luvit/luv.git
-PKG_SOURCE_VERSION:=1.9.1-1
-PKG_SOURCE_DATE:=2016-12-16
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/luvit/luv/releases/download/$(PKG_VERSION)
+PKG_HASH:=27886acb3d3f531a3d6ca70360d2593ddf1a8d4daf94ca3beea14d9381227ff7
 
+PKG_MAINTAINER:=Morteza Milani <milani@pichak.co>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
-
-PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -22,7 +21,6 @@ define Package/luv
   CATEGORY:=Languages
   TITLE:=Luv
   URL:=https://github.com/luvit/luv
-  MAINTAINER:=Morteza Milani <milani@pichak.co>
   DEPENDS:=+libuv +!LUV_USE_LUAJIT_ENGINE:lua
 endef
 

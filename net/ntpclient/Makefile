@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntpclient
-PKG_VERSION:=2010_365
-PKG_RELEASE:=1
+PKG_VERSION:=2015_365
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://doolittle.icarus.com/ntpclient/
-PKG_HASH:=9ad9b028385082fb804167f464e2db0a0b3d33780acd399327e64898b8fcfddd
+PKG_SOURCE_URL:=http://doolittle.icarus.com/ntpclient
+PKG_HASH:=95c3646919a9a2278fa384aa8e37117b250577ff8b09b8c93ba53e04e729b54b
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2.0
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-2010
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-2015
 
 include $(INCLUDE_DIR)/package.mk
 

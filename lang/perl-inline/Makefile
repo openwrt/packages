@@ -8,15 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-inline
-PKG_VERSION:=0.80
+PKG_VERSION:=0.83
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/I/IN/INGY
 PKG_SOURCE:=Inline-$(PKG_VERSION).tar.gz
-PKG_HASH:=7e2bd984b1ebd43e336b937896463f2c6cb682c956cbd2c311a464363d2ccef6
+PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/T/TI/TINITA
+PKG_HASH:=171a8e5f66faf88fe5ef4de7126267cd8fb2503483432eabc3b88ac7d5be4239
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Inline-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/perl/Inline-$(PKG_VERSION)
@@ -32,7 +33,7 @@ define Package/perl-inline
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Write subroutines in other languages
-  URL:=http://search.cpan.org/dist/Inline/
+  URL:=https://search.cpan.org/dist/Inline/
   DEPENDS:=perl +perlbase-base +perlbase-config +perlbase-cwd +perlbase-digest +perlbase-essential +perlbase-fcntl +perlbase-file
 endef
 

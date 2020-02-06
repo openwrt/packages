@@ -8,23 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mtr
-PKG_REV:=dd2b75080bc5406ba0b438953b36b72204ba114b
-PKG_VERSION:=0.85+newdns-$(PKG_REV)
-PKG_RELEASE:=2
+PKG_VERSION:=0.93
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/traviscross/mtr.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=$(PKG_REV)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=4911c96ee4b3c31692664a845dccddabdfef107646d4861b21fd4053bd2b76e8
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=ftp://ftp.bitwizard.nl/mtr
+PKG_HASH:=229c673d637bd7dbb96471623785a47e85da0b1944978200c949994c1e6af10d
 
-PKG_LICENSE:=GPL-2.0+
+PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:matt_kimball_and_roger_wolff:mtr
 
 PKG_INSTALL:=1
-
-PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -33,8 +30,7 @@ define Package/mtr
   CATEGORY:=Network
   DEPENDS:=+libncurses
   TITLE:=Full screen ncurses traceroute tool
-  URL:=http://www.bitwizard.nl/mtr/
-  PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
+  URL:=https://www.bitwizard.nl/mtr/
 endef
 
 define Package/mtr/description
@@ -48,27 +44,19 @@ define Package/mtr/description
 	running statistics about each machine.
 endef
 
+TARGET_CFLAGS += -ffunction-sections -fdata-sections
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+
 CONFIGURE_ARGS += \
 	--without-gtk \
-	--without-glib \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6)
 
-define Build/Configure
-	(cd $(PKG_BUILD_DIR); touch \
-		configure.in \
-		aclocal.m4 \
-		Makefile.in \
-		img/Makefile.in \
-		stamp-h.in \
-		config.h.in \
-		configure \
-	);
-	$(call Build/Configure/Default)
-endef
+CONFIGURE_VARS += ac_cv_lib_cap_cap_set_proc=no
 
 define Package/mtr/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/mtr $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/mtr-packet $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,mtr))

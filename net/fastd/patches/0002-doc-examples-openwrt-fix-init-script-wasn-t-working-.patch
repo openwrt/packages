@@ -1,0 +1,29 @@
+From c29b4b0e3cc5bf68129fd0f94f424950b7888deb Mon Sep 17 00:00:00 2001
+Message-Id: <c29b4b0e3cc5bf68129fd0f94f424950b7888deb.1567630068.git.mschiffer@universe-factory.net>
+From: Wilfried Klaebe <wklaebe@users.noreply.github.com>
+Date: Sat, 31 Aug 2019 21:44:13 +0200
+Subject: [PATCH] doc: examples/openwrt: fix init script, wasn't working with
+ two VPNs
+
+If two VPNs were configured via uci, the init script complained about
+the peer group of its peers not matching its net.
+---
+ doc/examples/openwrt/fastd.init | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/doc/examples/openwrt/fastd.init b/doc/examples/openwrt/fastd.init
+index 15737b403ec2..4ba69ece9887 100644
+--- a/doc/examples/openwrt/fastd.init
++++ b/doc/examples/openwrt/fastd.init
+@@ -233,7 +233,7 @@ generate_peer_group_config() {
+ 	config_get group_parent "$group" parent
+ 	[ "$parent" = "$group_parent" ] || return 0
+ 
+-	if [ "$net" != "$peer_net" ]; then
++	if [ "$net" != "$group_net" ]; then
+ 		[ -z "$parent" ] || error "warning: the parent of peer group '$group' doesn't match its net, the peer group will be ignored"
+ 		return 0
+ 	fi
+-- 
+2.23.0
+

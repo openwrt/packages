@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
-PKG_VERSION:=2.1.0
-PKG_RELEASE:=1
-
-PKG_LICENSE:=LGPL-2.1+ BSD-2-Clause GPL-2.0
-PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
+PKG_VERSION:=2.1.1
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://linuxcontainers.org/downloads/lxc/
-PKG_HASH:=394407305a409eb1f95fe06e7718acfe89b1d5df267b0c6aafb1d714e2038de2
+PKG_HASH:=68663a67450a8d6734e137eac54cc7077209fb15c456eec401a2c26e6386eff6
+
+PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause GPL-2.0
+PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
 PKG_BUILD_DEPENDS:=lua
 PKG_BUILD_PARALLEL:=1
@@ -68,6 +68,22 @@ endef
 
 define Package/lxc-auto/conffiles
 /etc/config/lxc-auto
+endef
+
+define Package/lxc-unprivileged
+  $(call Package/lxc/Default)
+  TITLE:=Helper script for unprivileged containers support
+  DEPENDS:=+shadow-utils +shadow-newuidmap +shadow-newgidmap
+endef
+
+define Package/lxc-unprivileged/description
+ Support for unprivileged containers requires newuidmap and newguidmap.
+ This package makes sure they are available & have correct permissions.
+endef
+
+define Package/lxc-unprivileged/install
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DATA) ./files/lxc-unprivileged.defaults $(1)/etc/uci-defaults/lxc-unprivileged
 endef
 
 define Package/lxc/config
@@ -125,8 +141,12 @@ endef
 
 CONFIGURE_ARGS += \
 	--disable-apparmor \
+	--disable-cgmanager \
 	--disable-doc \
 	--disable-examples \
+	--disable-gnutls \
+	--disable-selinux \
+	--disable-python \
 	--enable-lua=yes \
 	--with-lua-pc="$(STAGING_DIR)/usr/lib/pkgconfig/lua.pc"
 
@@ -156,6 +176,8 @@ define Build/InstallDev
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lxc.pc \
 		$(1)/usr/lib/pkgconfig/
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/lxc.pc
+	$(SED) 's,/usr/lib,$$$${prefix}/lib,g' $(1)/usr/lib/pkgconfig/lxc.pc
 endef
 
 
@@ -271,6 +293,7 @@ $(eval $(call BuildPackage,liblxc))
 $(eval $(call BuildPackage,lxc-lua))
 $(eval $(call BuildPackage,lxc-init))
 $(eval $(call BuildPackage,lxc-auto))
+$(eval $(call BuildPackage,lxc-unprivileged))
 $(foreach u,$(LXC_APPLETS_BIN),$(eval $(call GenPlugin,$(u),$(DEPENDS_APPLETS),"/usr/bin")))
 $(foreach u,$(LXC_APPLETS_LIB),$(eval $(call GenPlugin,$(u),$(DEPENDS_APPLETS),"/usr/lib/lxc")))
 $(foreach u,$(LXC_SCRIPTS),$(eval $(call GenPlugin,$(u),,"/usr/bin")))

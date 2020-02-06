@@ -8,27 +8,37 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcre
-PKG_VERSION:=8.41
+PKG_VERSION:=8.43
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
-PKG_HASH:=e62c7eac5ae7c0e7286db61ff82912e1c0b7a0c13706616e94a7dd729321b530
+PKG_HASH:=91e762520003013834ac1adb4a938d53b22a216341c061b0cf05603b290faf6b
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENCE
+PKG_CPE_ID:=cpe:/a:pcre:pcre
 
 PKG_FIXUP:=autoreconf
 
 PKG_INSTALL:=1
 
+PKG_CONFIG_DEPENDS:=\
+	CONFIG_PACKAGE_libpcrecpp \
+	CONFIG_PCRE_JIT_ENABLED
+
+include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libpcre/default
   SECTION:=libs
   CATEGORY:=Libraries
-  URL:=http://www.pcre.org/
+  URL:=https://www.pcre.org/
+endef
+
+define Package/libpcre/config
+  source "$(SOURCE)/Config.in"
 endef
 
 define Package/libpcre
@@ -44,7 +54,7 @@ endef
 define Package/libpcrecpp
   $(call Package/libpcre/default)
   TITLE:=C++ wrapper for Perl Compatible Regular Expression library
-  DEPENDS:=+libpcre +libstdcpp
+  DEPENDS:=+libpcre $(CXX_DEPENDS)
 endef
 
 TARGET_CFLAGS += $(FPIC)
@@ -53,13 +63,9 @@ CONFIGURE_ARGS += \
 	--enable-utf8 \
 	--enable-unicode-properties \
 	--enable-pcre16 \
+	$(if $(CONFIG_PCRE_JIT_ENABLED),--enable-jit,--disable-jit) \
 	--with-match-limit-recursion=16000 \
-
-ifneq ($(CONFIG_PACKAGE_libpcrecpp),)
-  CONFIGURE_ARGS+= --enable-cpp
-else
-  CONFIGURE_ARGS+= --disable-cpp
-endif
+	$(if $(CONFIG_PACKAGE_libpcrecpp),--enable,--disable)-cpp
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS)"

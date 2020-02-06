@@ -1,28 +1,61 @@
---- a/utils/rds-ctl/rds-ctl.cpp
-+++ b/utils/rds-ctl/rds-ctl.cpp
-@@ -29,6 +29,7 @@
- #include <inttypes.h>
- #include <getopt.h>
- #include <sys/types.h>
-+#include <ctype.h>
- #include <fcntl.h>
+--- a/utils/cec-ctl/cec-ctl.cpp
++++ b/utils/cec-ctl/cec-ctl.cpp
+@@ -18,6 +18,7 @@
  #include <errno.h>
  #include <sys/ioctl.h>
-@@ -36,6 +37,7 @@
- #include <dirent.h>
- #include <config.h>
- #include <signal.h>
-+#include <time.h>
+ #include <stdarg.h>
++#include <ctime>
+ #include <cerrno>
+ #include <string>
+ #include <vector>
+--- a/utils/cec-follower/cec-follower.h
++++ b/utils/cec-follower/cec-follower.h
+@@ -9,6 +9,7 @@
+ #define _CEC_FOLLOWER_H_
  
+ #include <stdarg.h>
++#include <ctime>
+ #include <cerrno>
+ #include <string>
+ #include <linux/cec-funcs.h>
+--- a/utils/common/media-info.cpp
++++ b/utils/common/media-info.cpp
+@@ -21,6 +21,7 @@
+ #include <linux/media.h>
+ 
+ #include <fstream>
++#include <iostream>
+ #include <media-info.h>
+ 
+ static std::string num2s(unsigned num, bool is_hex = true)
+--- a/utils/rds-ctl/rds-ctl.cpp
++++ b/utils/rds-ctl/rds-ctl.cpp
+@@ -27,6 +27,8 @@
  #include <linux/videodev2.h>
- #include <libv4l2.h>
---- a/utils/v4l2-ctl/v4l2-ctl-streaming.cpp
-+++ b/utils/v4l2-ctl/v4l2-ctl-streaming.cpp
-@@ -14,6 +14,7 @@
- #include <sys/mman.h>
- #include <dirent.h>
- #include <math.h>
-+#include <time.h>
+ #include <libv4l2rds.h>
  
- #include "v4l2-ctl.h"
++#include <cctype>
++#include <ctime>
+ #include <list>
+ #include <vector>
+ #include <map>
+--- a/utils/v4l2-compliance/media-info.cpp
++++ b/utils/v4l2-compliance/media-info.cpp
+@@ -21,6 +21,7 @@
+ #include <linux/media.h>
  
+ #include <fstream>
++#include <iostream>
+ #include <media-info.h>
+ 
+ static std::string num2s(unsigned num, bool is_hex = true)
+--- a/utils/v4l2-ctl/media-info.cpp
++++ b/utils/v4l2-ctl/media-info.cpp
+@@ -21,6 +21,7 @@
+ #include <linux/media.h>
+ 
+ #include <fstream>
++#include <iostream>
+ #include <media-info.h>
+ 
+ static std::string num2s(unsigned num, bool is_hex = true)

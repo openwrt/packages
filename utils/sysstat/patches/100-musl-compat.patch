@@ -1,16 +1,16 @@
 --- a/sa_common.c
 +++ b/sa_common.c
-@@ -28,6 +28,7 @@
+@@ -29,6 +29,7 @@
  #include <dirent.h>
  #include <fcntl.h>
  #include <libgen.h>
 +#include <limits.h>
  #include <sys/types.h>
  #include <sys/stat.h>
- 
+ #include <ctype.h>
 --- a/common.c
 +++ b/common.c
-@@ -30,6 +30,7 @@
+@@ -32,6 +32,7 @@
  #include <dirent.h>
  #include <ctype.h>
  #include <libgen.h>

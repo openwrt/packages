@@ -8,15 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sudo
-PKG_VERSION:=1.8.21p2
+PKG_VERSION:=1.8.28p1
 PKG_RELEASE:=1
-PKG_LICENSE:=ISC
-PKG_LICENSE_FILES:=doc/LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.sudo.ws/dist
-PKG_HASH:=74c5746cd33a814e2431c39faf0d76f7f8a697379bd073862e3b156cf0d76368
+PKG_SOURCE_URL:=https://www.sudo.ws/dist
+PKG_HASH:=23ba5a84af31e3b5ded58d4be6d3f6939a495a55561fba92c6941b79a6e8b027
 
+PKG_MAINTAINER:=
+PKG_LICENSE:=ISC
+PKG_LICENSE_FILES:=doc/LICENSE
+PKG_CPE_ID:=cpe:/a:todd_miller:sudo
+
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 PKG_BUILD_DEPENDS:=sudo/host
@@ -27,8 +31,7 @@ define Package/sudo
   SECTION:=admin
   CATEGORY:=Administration
   TITLE:=Delegate authority to run commands
-  URL:=http://www.sudo.ws/
-  MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
+  URL:=https://www.sudo.ws/
 endef
 
 define Package/sudo/description

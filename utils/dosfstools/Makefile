@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dosfstools
 PKG_VERSION:=4.1
-PKG_RELEASE:=1
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/dosfstools/dosfstools/releases/download/v$(PKG_VERSION)/ \
@@ -17,8 +17,9 @@ PKG_SOURCE_URL:=https://github.com/dosfstools/dosfstools/releases/download/v$(PK
 PKG_HASH:=e6b2aca70ccc3fe3687365009dd94a2e18e82b688ed4e260e04b7412471cc173
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
-PKG_LICENSE:=GPL-3.0+
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:dosfstools_project:dosfstools
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf

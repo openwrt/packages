@@ -10,5 +10,5 @@
 	[ "$ACTION" = "ifdown" ] && {
 		/etc/init.d/autossh stop
 	}
-	
+
 }

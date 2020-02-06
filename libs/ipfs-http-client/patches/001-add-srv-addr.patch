@@ -1,0 +1,247 @@
+--- a/test/block.cc	2019-11-22 18:16:53.973272202 +0300
++++ b/test/block.cc	2019-11-22 18:16:58.245249328 +0300
+@@ -24,9 +24,16 @@
+ #include <sstream>
+ #include <stdexcept>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     /** [ipfs::Client::BlockPut] */
+     ipfs::Json block;
+--- a/test/config.cc	2019-11-22 18:16:53.973272202 +0300
++++ b/test/config.cc	2019-11-22 18:16:58.245249328 +0300
+@@ -23,9 +23,16 @@
+ #include <iostream>
+ #include <stdexcept>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     /** [ipfs::Client::ConfigSet] */
+     client.ConfigSet("Datastore.StorageMax", "20GB");
+--- a/test/dht.cc	2019-11-22 18:16:53.973272202 +0300
++++ b/test/dht.cc	2019-11-22 18:16:58.245249328 +0300
+@@ -23,9 +23,16 @@
+ #include <iostream>
+ #include <stdexcept>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     ipfs::Json add_result;
+     client.FilesAdd(
+--- a/test/error.cc	2019-11-22 18:16:53.973272202 +0300
++++ b/test/error.cc	2019-11-22 18:16:58.245249328 +0300
+@@ -35,16 +35,23 @@
+ }
+ }  // namespace ipfs
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client_cant_connect("localhost", 57);
++    ipfs::Client client_cant_connect(srvaddr, 57);
+ 
+     ipfs::test::must_fail("client.Version()", [&client_cant_connect]() {
+       ipfs::Json version;
+       client_cant_connect.Version(&version);
+     });
+ 
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     std::string object_id;
+     client.ObjectNew(&object_id);
+--- a/test/files.cc	2019-11-22 18:16:53.973272202 +0300
++++ b/test/files.cc	2019-11-22 18:16:58.245249328 +0300
+@@ -24,9 +24,16 @@
+ #include <sstream>
+ #include <stdexcept>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     /** [ipfs::Client::FilesGet] */
+     std::stringstream contents;
+--- a/test/generic.cc	2019-11-22 18:16:53.973272202 +0300
++++ b/test/generic.cc	2019-11-22 18:16:58.245249328 +0300
+@@ -24,16 +24,23 @@
+ #include <stdexcept>
+ #include <utility>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+     /** [ipfs::Client::Client] */
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+     /** [ipfs::Client::Client] */
+ 
+     ipfs::Client clientA(client);
+     clientA = client;
+     ipfs::Client clientB(std::move(clientA));
+-    ipfs::Client clientC("localhost", 5001);
++    ipfs::Client clientC(srvaddr, 5001);
+     clientC = std::move(clientB);
+ 
+ #pragma GCC diagnostic push
+--- a/test/key.cc	2019-11-22 18:16:53.973272202 +0300
++++ b/test/key.cc	2019-11-22 18:16:58.245249328 +0300
+@@ -26,9 +26,16 @@
+ 
+ using Json = nlohmann::json;
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     /** [ipfs::Client::KeyGen] */
+     std::string key_id;
+--- a/test/name.cc	2019-11-22 18:16:53.973272202 +0300
++++ b/test/name.cc	2019-11-22 18:16:58.245249328 +0300
+@@ -24,9 +24,16 @@
+ #include <sstream>
+ #include <stdexcept>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     // We need a key here, so as not to clobber the "self" key.
+     std::string key_id;
+--- a/test/object.cc	2019-11-22 18:16:53.973272202 +0300
++++ b/test/object.cc	2019-11-22 18:16:58.245249328 +0300
+@@ -24,9 +24,16 @@
+ #include <stdexcept>
+ #include <string>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     /** [ipfs::Client::ObjectNew] */
+     std::string object_id;
+--- a/test/pin.cc	2019-11-22 18:16:53.973272202 +0300
++++ b/test/pin.cc	2019-11-23 23:09:57.507400418 +0300
+@@ -23,9 +23,16 @@
+ #include <stdexcept>
+ #include <string>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     std::string object_id;
+ 
+--- a/test/swarm.cc	2019-11-22 18:16:53.973272202 +0300
++++ b/test/swarm.cc	2019-11-23 23:10:07.199342933 +0300
+@@ -23,9 +23,16 @@
+ #include <stdexcept>
+ #include <string>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     /** [ipfs::Client::SwarmAddrs] */
+     ipfs::Json addresses;

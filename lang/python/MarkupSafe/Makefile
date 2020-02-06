@@ -5,36 +5,34 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=MarkupSafe
-PKG_VERSION:=1.0
-PKG_RELEASE:=1
+PKG_VERSION:=1.1.1
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/4d/de/32d741db316d8fdb7680822dd37001ef7a448255de9699ab4bfcbdf4172b/
-PKG_HASH:=a6be69091dac236ea9c6bc7d012beab42010fa914c459791d627dad4910eb665
-PKG_BUILD_DEPENDS:=python python3
-PKG_LICENSE:=BSD-3-Clause
-PKG_LICENSE_FILES:=LICENSE
+PYPI_NAME:=$(PKG_NAME)
+PKG_HASH:=29872e92839765e546828bb7754a68c418d927cd064fd4708fab9fe9c8bb116b
+
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=LICENSE.rst
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-$(PKG_NAME)-$(PKG_VERSION)
-PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
-
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python3-package.mk)
+include ../python3-package.mk
 
 define Package/python3-markupsafe
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=http://github.com/pallets/markupsafe/
-  TITLE:=python3-markupsafe
+  TITLE:=MarkupSafe
+  URL:=https://palletsprojects.com/p/markupsafe/
   DEPENDS:=+python3-light
   VARIANT:=python3
 endef
 
 define Package/python3-markupsafe/description
-MarkupSafe implements a XML/HTML/XHTML Markup safe string for Python
+  MarkupSafe implements a text object that escapes characters so it is safe to use in HTML and XML.
 endef
 
 $(eval $(call Py3Package,python3-markupsafe))
 $(eval $(call BuildPackage,python3-markupsafe))
+$(eval $(call BuildPackage,python3-markupsafe-src))

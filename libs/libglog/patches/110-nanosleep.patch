@@ -1,0 +1,24 @@
+From d7b02b6929baf5b21ee6e15a700b4fc82d962e9c Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Thu, 25 Jul 2019 19:14:42 -0700
+Subject: [PATCH] googletest: Switch to nanosleep
+
+usleep is deprecated and optionally not available with uClibc-ng.
+---
+ src/googletest.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/googletest.h b/src/googletest.h
+index 49ddbc0a..39fb29fb 100644
+--- a/src/googletest.h
++++ b/src/googletest.h
+@@ -574,7 +574,8 @@ class Thread {
+ 
+ static inline void SleepForMilliseconds(int t) {
+ #ifndef OS_WINDOWS
+-  usleep(t * 1000);
++  const struct timespec req = {0, t * 1000 * 1000};
++  nanosleep(&req, NULL);
+ #else
+   Sleep(t);
+ #endif

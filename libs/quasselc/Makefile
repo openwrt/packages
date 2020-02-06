@@ -8,26 +8,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quasselc
+PKG_SOURCE_DATE:=2017-01-11
+PKG_SOURCE_VERSION:=a0a1e6bd87d3eac68b5369972d1c2035cfe47e94
+PKG_RELEASE:=2
 
-# quasselc upstream doesn't release versions (at least, at the moment),
-# so use commit date for PKG_VERSION and embed commit hash into PKG_RELEASE.
-PKG_VERSION:=2015-04-06
-PKG_SOURCE_VERSION:=fcd966966924e3d9af0954db56117e2f48767ea1
-PKG_RELEASE:=1.$(PKG_SOURCE_VERSION)
-
-PKG_LICENSE:=GPL-3.0+
-
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/phhusson/QuasselC
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.bz2
-PKG_MIRROR_HASH:=80ca463c20f934a3730fb51c69f5299e2d35ca53a06f0ca746d3de97dbfc360b
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/phhusson/QuasselC/tar.gz/$(PKG_SOURCE_VERSION)?
+PKG_HASH:=fe7b48a13c0e6dad81cdae18069d4f5607af64d73a3201f42d79548170dde510
+PKG_BUILD_DIR:=$(BUILD_DIR)/QuasselC-$(PKG_SOURCE_VERSION)
 
 PKG_MAINTAINER:=Ben Rosser <rosser.bjr@gmail.com>
+PKG_LICENSE:=LGPL-3.0
+PKG_LICENSE_FILES:=COPYING.LESSER
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 MAKE_FLAGS += prefix=$(STAGING_DIR)/usr libdir=$(STAGING_DIR)/usr/lib includedir=$(STAGING_DIR)/usr/include
 MAKE_INSTALL_FLAGS += prefix=/usr libdir=/usr/lib includedir=/usr/include

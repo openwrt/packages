@@ -1,0 +1,13 @@
+Index: shorewall6-5.1.9/configfiles/shorewall6.conf
+===================================================================
+--- shorewall6-5.1.9.orig/configfiles/shorewall6.conf	2017-12-18 08:13:01.999494346 +0100
++++ shorewall6-5.1.9/configfiles/shorewall6.conf	2017-12-18 08:13:37.253618974 +0100
+@@ -94,7 +94,7 @@
+ 
+ PERL=/usr/bin/perl
+ 
+-PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin:/usr/local/sbin"
++PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+ 
+ RESTOREFILE=restore
+ 

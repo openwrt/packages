@@ -8,26 +8,26 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sstp-client
-PKG_VERSION:=1.0.11
+PKG_VERSION:=1.0.13
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/sstp-client/$(PKG_VERSION)
-PKG_HASH:=1b851b504030ed5522ced431217a5c700b35e8bb72d6f5b40b006c7becb8fb20
-PKG_LICENSE=GPLv2
+PKG_HASH:=961258fca0795d8ad60b047942cf7cb53d025d353fd1e4ba08c2b75799f5321b
+
+PKG_MAINTAINER:=Federico Di Marco <fededim@gmail.com>
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
-
-TARGET_CPPFLAGS += -I$(PKG_BUILD_DIR)/include
 
 define Package/sstp-client
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=VPN
-  DEPENDS=+libevent2 +libopenssl +ppp
+  DEPENDS=+libevent2 +libopenssl +ppp +resolveip
   TITLE:=SSTP-Client is a SSTP client for Linux.
   URL:=http://sstp-client.sourceforge.net/
-  MAINTAINER:=Federico Di Marco <fededim@gmail.com>
 endef
 
 define Package/sstp-client/description
@@ -48,6 +48,8 @@ define Package/sstp-client/conffiles
 /etc/ppp/peers/peer-sstp-example.txt
 endef
 
+TARGET_CPPFLAGS += -I$(PKG_BUILD_DIR)/include
+
 define Package/sstp-client/install
 	$(INSTALL_DIR) $(1)/usr/{bin,lib}
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/.libs/sstpc $(1)/usr/bin/
@@ -55,7 +57,9 @@ define Package/sstp-client/install
 	$(CP) $(PKG_BUILD_DIR)/src/pppd-plugin/.libs/*.so* $(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/etc
-	$(CP) files/etc $(1) 
+	$(CP) files/etc $(1)
+	$(INSTALL_DIR) $(1)/lib/netifd/proto
+	$(INSTALL_BIN) ./files/lib/netifd/proto/sstp.sh $(1)/lib/netifd/proto
 endef
 
 $(eval $(call BuildPackage,sstp-client))

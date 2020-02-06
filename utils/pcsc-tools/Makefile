@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcsc-tools
-PKG_VERSION=1.5.2
+PKG_VERSION=1.5.4
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Daniel Engberg <daniel.engberg.lists@pyret.net>
+PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://ludovic.rousseau.free.fr/softwares/pcsc-tools/
-PKG_HASH:=ff4e087c76700aa5a25dd7d0bc4f55bb4a5e71cd4f0d6b5301babe0b434f86fc
+PKG_HASH:=c39e6abba781895220c68df5e5d2f0f9547c7a676eebec3f1ddcff8794377c93
 
 PKG_FIXUP:=autoreconf
 

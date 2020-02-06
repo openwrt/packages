@@ -20,15 +20,21 @@ Additional changes of the patch as of mksh-R55
 * Use `/etc/mkshrc` as default startup file, so there is no need to
   manually source it during interactive session.
 
+From: Alif M. A. <alive4ever@live.com>
+Date: Thu, 11 Jan 2018 02:13:46 +0000
+Subject: [PATCH] Refresh 100-dot_mkshrc for mksh-R55
+
+Refreshed 100-dot_mkshrc for mksh-r56b
+
 ---
 Reviewed-by: Thorsten Glaser <tg at mirbsd.org>
 Signed-off-by: Alif M. A. <alive4ever at live.com>
 
 --- a/dot.mkshrc
 +++ b/dot.mkshrc
-@@ -56,10 +56,9 @@
- 	done
- )
+@@ -63,10 +63,9 @@
+ 	EDITOR=
+ done
  
 -\\builtin alias ls=ls l='ls -F' la='l -a' ll='l -l' lo='l -alo'
 -\: "${HOSTNAME:=$(\\builtin ulimit -c 0; \\builtin print -r -- $(hostname \

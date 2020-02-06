@@ -1,35 +1,48 @@
 # Contributing Guidelines  
-(See <http://wiki.openwrt.org/doc/devel/packages> for overall format and construction)
+Ref: <https://openwrt.org/docs/guide-developer/packages> for overall format and construction
 
 
 ### Basic guidelines
 
 All packages you commit or submit by pull-request should follow these simple guidelines:
-* Package a version which is still maintained by the upstream author.
-* Will be updated regularly to maintained and supported versions.
+
+* Package a version which is still maintained by the upstream author and will be updated regularly with supported versions.
 * Have no dependencies outside the OpenWrt core packages or this repository feed.
 * Have been tested to compile with the correct includes and dependencies. Please also test with "Compile with full language support" found under "General Build Settings" set if language support is relevant to your package.
-* Do NOT use a rolling source file (e.g. foo-latest.tar.gz) or the head of a branch as source for the package since that would create unpredictable builds which change over time.
 * Best of all -- it works as expected!
+
+### Package Sources (archives and repositories)
+
+* PKG_SOURCE should reference the smallest available archive. In order of preference: xz (most compressed), bzip2, gz and zip. As a last resort, downloads from source repositories can be used.
+* PKG_SOURCE_URL should link to an official release archive. Use of HTTPS: is preferred. If a source archive is not available, a locally generated archive fetched using git, svn, cvs or in rare circumstances, hg or bzr.
+* Convenience macros for popular mirrors are defined. Using these macros will make your package downloads more robust by mapping to a list of possible source mirrors for archive availability.
+    - @SF - Sourceforge (downloads.sourceforge.net) with 5 retries due to re-directs
+    - @GITHUB - Github (raw.githubusercontent.com) with 5 retries due to re-directs
+    - @GNU - 8 regional servers
+    - @GNOME - 8 regional servers
+    - @SAVANNAH - 8 regional servers
+    - @APACHE - 8 regional servers
+    - @KERNEL - Linux kernel archives & mirrors
+* Please *DO NOT* use an archive which changes over time. A version labeled "latest" is not constant each download. Also, using the head of a branch will create unpredictable results which can be different each build.
 
 #### Makefile contents should contain:
 
-* An up-to-date copyright notice. Use OpenWrt if no other present or supply your own.
-* A (PKG_)MAINTAINER definition listing either yourself or another person in the field.
-    (E.g.: PKG_MAINTAINER:= Joe D. Hacker `<jdh@jdhs-email-provider.org`>)
+* Provide an up-to-date Copyright notice or **none**. Copyright should not be assigned to OpenWrt unless you are explicitly requested by or working under contract to OpenWrt. Assigning a Copyright to yourself or organization you represent is acceptable.
+* A (PKG_)MAINTAINER definition listing either yourself and/or another person responsible for this package (E.g.: PKG_MAINTAINER:= Joe D. Hacker `<jdh@jdhs-email-provider.org`>). Listing multiple maintainers is encouraged in order to keep the package active and up-to-date. Leaving this blank will also be accepted, however the review process may not be as quick as one with a maintainer.
 * A PKG_LICENSE tag declaring the main license of the package.
-    (E.g.: PKG_LICENSE:=GPL-2.0+) Please use SPDX identifiers if possible (see list at the bottom).
+    (E.g.: PKG_LICENSE:=GPL-2.0-or-later) Please use SPDX identifiers if possible (see list at the bottom).
 * An optional PKG_LICENSE_FILES tag including the filenames of the license-files in the source-package.
     (E.g.: PKG_LICENSE_FILES:=COPYING)
 * PKG_RELEASE should be initially set to 1 or reset to 1 if the software version is changed. You should increment it if the package itself has changed. For example, modifying a support script, changing configure options like --disable* or --enable* switches, or if you changed something in the package which causes the resulting binaries to be different. Changes like correcting md5sums, changing mirror URLs, adding a maintainer field or updating a comment or copyright year in a Makefile do not require a change to PKG_RELEASE.
 * Avoid reuse of PKG_NAME in call, define and eval lines to improve readability.
 
+
 #### Commits in your pull-requests should:
 
 * Have a useful description prefixed with the package name
     (E.g.: "foopkg: Add libzot dependency")
-* Include Signed-off-by in the comment
-    (See <https://dev.openwrt.org/wiki/SubmittingPatches#a10.Signyourwork>)
+* Include Signed-off-by tag in the commit comments.
+    See: [Sign your work](https://openwrt.org/submitting-patches#sign_your_work)
 
 ### Advice on pull requests:
 
@@ -74,7 +87,7 @@ Pull requests are the easiest way to contribute changes to git repos at Github. 
 * If you are unsure if your change is suitable, please use a pull request.
 
 ### Common LICENSE tags (short list)  
-(Complete list can be found at: <http://spdx.org/licenses>)
+(Complete list can be found at: <https://spdx.org/licenses>)
 
 | Full Name | Identifier  |
 |---|:---|
@@ -82,30 +95,30 @@ Pull requests are the easiest way to contribute changes to git repos at Github. 
 |Apache License 1.1|Apache-1.1|
 |Apache License 2.0|Apache-2.0|
 |Artistic License 1.0|Artistic-1.0|
-|Artistic License 1.0 (Perl)|Artistic-1.0-Perl|
 |Artistic License 1.0 w/clause 8|Artistic-1.0-cl8|
+|Artistic License 1.0 (Perl)|Artistic-1.0-Perl|
 |Artistic License 2.0|Artistic-2.0|
-|BSD 2-clause "Simplified" License|BSD-2-Clause|
-|BSD 2-clause FreeBSD License|BSD-2-Clause-FreeBSD|
-|BSD 2-clause NetBSD License|BSD-2-Clause-NetBSD|
-|BSD 3-clause "New" or "Revised" License|BSD-3-Clause|
-|BSD 3-clause Clear License|BSD-3-Clause-Clear|
-|BSD 4-clause "Original" or "Old" License|BSD-4-Clause|
-|BSD Protection License|BSD-Protection|
+|BSD 2-Clause "Simplified" License|BSD-2-Clause|
+|BSD 2-Clause FreeBSD License|BSD-2-Clause-FreeBSD|
+|BSD 2-Clause NetBSD License|BSD-2-Clause-NetBSD|
+|BSD 3-Clause "New" or "Revised" License|BSD-3-Clause|
 |BSD with attribution|BSD-3-Clause-Attribution|
+|BSD 3-Clause Clear License|BSD-3-Clause-Clear|
+|BSD 4-Clause "Original" or "Old" License|BSD-4-Clause|
 |BSD-4-Clause (University of California-Specific)|BSD-4-Clause-UC|
-|GNU General Public License v1.0 only|GPL-1.0|
-|GNU General Public License v1.0 or later|GPL-1.0+|
-|GNU General Public License v2.0 only|GPL-2.0|
-|GNU General Public License v2.0 or later|GPL-2.0+|
-|GNU General Public License v3.0 only|GPL-3.0|
-|GNU General Public License v3.0 or later|GPL-3.0+|
-|GNU Lesser General Public License v2.1 only|LGPL-2.1|
-|GNU Lesser General Public License v2.1 or later|LGPL-2.1+|
-|GNU Lesser General Public License v3.0 only|LGPL-3.0|
-|GNU Lesser General Public License v3.0 or later|LGPL-3.0+|
-|GNU Library General Public License v2 only|LGPL-2.0|
-|GNU Library General Public License v2 or later|LGPL-2.0+|
+|BSD Protection License|BSD-Protection|
+|GNU General Public License v1.0 only|GPL-1.0-only|
+|GNU General Public License v1.0 or later|GPL-1.0-or-later|
+|GNU General Public License v2.0 only|GPL-2.0-only|
+|GNU General Public License v2.0 or later|GPL-2.0-or-later|
+|GNU General Public License v3.0 only|GPL-3.0-only|
+|GNU General Public License v3.0 or later|GPL-3.0-or-later|
+|GNU Lesser General Public License v2.1 only|LGPL-2.1-only|
+|GNU Lesser General Public License v2.1 or later|LGPL-2.1-or-later|
+|GNU Lesser General Public License v3.0 only|LGPL-3.0-only|
+|GNU Lesser General Public License v3.0 or later|LGPL-3.0-or-later|
+|GNU Library General Public License v2 only|LGPL-2.0-only|
+|GNU Library General Public License v2 or later|LGPL-2.0-or-later|
 |Fair License|Fair|
 |ISC License|ISC|
 |MIT License|MIT|

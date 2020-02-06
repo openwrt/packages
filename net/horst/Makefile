@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=horst
 PKG_VERSION:=5.1
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/br101/horst/archive/v$(PKG_VERSION)/
 PKG_HASH:=74b4cb1143d93c73c3b4bbbe0c36f89a790401bde9e894e94e2a27339ca384d9
 
 PKG_MAINTAINER:=Bruno Randolf <br1@einfach.org>
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_PARALLEL:=1
@@ -28,7 +28,7 @@ MAKE_FLAGS += DEBUG=1 LIBNL=tiny
 define Package/horst
 	SECTION:=net
 	CATEGORY:=Network
-	SUBMENU:=wireless
+	SUBMENU:=Wireless
 	DEPENDS:=+libncurses +libnl-tiny
 	MAINTAINER:=Bruno Randolf <br1@einfach.org>
 	TITLE:=Highly Optimized 802.11 Radio Scanning Tool

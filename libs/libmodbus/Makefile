@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmodbus
-PKG_VERSION:=3.1.4
+PKG_VERSION:=3.1.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://libmodbus.org/releases
-PKG_HASH:=c8c862b0e9a7ba699a49bc98f62bdffdfafd53a5716c0e162696b4bf108d3637
+PKG_HASH:=d7d9fa94a16edb094e5fdf5d87ae17a0dc3f3e3d687fead81835d9572cf87c16
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
-PKG_LICENSE:=GPL-3.0+ LGPL-2.1+
-PKG_LICENSE_FILES:=COPYING COPYING.LESSER
+PKG_LICENSE:=LGPL-2.1-or-later
+PKG_LICENSE_FILES:=COPYING.LESSER
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -50,7 +50,7 @@ endef
 
 define Package/libmodbus/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmodbus.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmodbus.so.* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libmodbus))

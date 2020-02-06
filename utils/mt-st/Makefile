@@ -9,14 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mt-st
 PKG_VERSION:=1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)
-PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.ibiblio.org/pub/Linux/system/backup/
 PKG_HASH:=945cb4f3d9957dabe768f5941a9148b746396836c797b25f020c84319ba8170d
 
+PKG_MAINTAINER:=Giuseppe Magnotta <giuseppe.magnotta@gmail.com>
 PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
@@ -26,7 +25,6 @@ define Package/mt-st
   CATEGORY:=Utilities
   TITLE:=Magnetic tape control tools for Linux SCSI tapes
   URL:=http://ftp.ibiblio.org/pub/Linux/system/backup/
-  MAINTAINER:=Giuseppe Magnotta <giuseppe.magnotta@gmail.com>
 endef
 
 define Package/mt-st/description

@@ -1,0 +1,145 @@
+commit 7195d4b9396687e67da196cb92ef25b4bd6938d8
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Fri Jan 17 16:19:34 2020 +0100
+
+    BUG/MEDIUM: connection: add a mux flag to indicate splice usability
+    
+    Commit c640ef1a7d ("BUG/MINOR: stream-int: avoid calling rcv_buf() when
+    splicing is still possible") fixed splicing in TCP and legacy mode but
+    broke it badly in HTX mode.
+    
+    What happens in HTX mode is that the channel's to_forward value remains
+    set to CHN_INFINITE_FORWARD during the whole transfer, and as such it is
+    not a reliable signal anymore to indicate whether more data are expected
+    or not. Thus, when data are spliced out of the mux using rcv_pipe(), even
+    when the end is reached (that only the mux knows about), the call to
+    rcv_buf() to get the final HTX blocks completing the message were skipped
+    and there was often no new event to wake this up, resulting in transfer
+    timeouts at the end of large objects.
+    
+    All this goes down to the fact that the channel has no more information
+    about whether it can splice or not despite being the one having to take
+    the decision to call rcv_pipe() or not. And we cannot afford to call
+    rcv_buf() inconditionally because, as the commit above showed, this
+    reduces the forwarding performance by 2 to 3 in TCP and legacy modes
+    due to data lying in the buffer preventing splicing from being used
+    later.
+    
+    The approach taken by this patch consists in offering the muxes the ability
+    to report a bit more information to the upper layers via the conn_stream.
+    This information could simply be to indicate that more data are awaited
+    but the real need being to distinguish splicing and receiving, here
+    instead we clearly report the mux's willingness to be called for splicing
+    or not. Hence the flag's name, CS_FL_MAY_SPLICE.
+    
+    The mux sets this flag when it knows that its buffer is empty and that
+    data waiting past what is currently known may be spliced, and clears it
+    when it knows there's no more data or that the caller must fall back to
+    rcv_buf() instead.
+    
+    The stream-int code now uses this to determine if splicing may be used
+    or not instead of looking at the rcv_pipe() callbacks through the whole
+    chain. And after the rcv_pipe() call, it checks the flag again to decide
+    whether it may safely skip rcv_buf() or not.
+    
+    All this bitfield dance remains a bit complex and it starts to appear
+    obvious that splicing vs reading should be a decision of the mux based
+    on permission granted by the data layer. This would however increase
+    the API's complexity but definitely need to be thought about, and should
+    even significantly simplify the data processing layer.
+    
+    The way it was integrated in mux-h1 will also result in no more calls
+    to rcv_pipe() on chunked encoded data, since these ones are currently
+    disabled at the mux level. However once the issue with chunks+splice
+    is fixed, it will be important to explicitly check for curr_len|CHNK
+    to set MAY_SPLICE, so that we don't call rcv_buf() after each chunk.
+    
+    This fix must be backported to 2.1 and 2.0.
+    
+    (cherry picked from commit 17ccd1a3560a634a17d276833ff41b8063b72206)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/include/types/connection.h b/include/types/connection.h
+index 165a683ae..f2aa63c33 100644
+--- a/include/types/connection.h
++++ b/include/types/connection.h
+@@ -95,7 +95,7 @@ enum {
+ 	CS_FL_EOS           = 0x00001000,  /* End of stream delivered to data layer */
+ 	/* unused: 0x00002000 */
+ 	CS_FL_EOI           = 0x00004000,  /* end-of-input reached */
+-	/* unused: 0x00008000 */
++	CS_FL_MAY_SPLICE    = 0x00008000,  /* caller may use rcv_pipe() only if this flag is set */
+ 	CS_FL_WAIT_FOR_HS   = 0x00010000,  /* This stream is waiting for handhskae */
+ 	CS_FL_KILL_CONN     = 0x00020000,  /* must kill the connection when the CS closes */
+ 
+diff --git a/src/mux_h1.c b/src/mux_h1.c
+index d93a7eab5..b76a58fe4 100644
+--- a/src/mux_h1.c
++++ b/src/mux_h1.c
+@@ -489,6 +489,9 @@ static struct conn_stream *h1s_new_cs(struct h1s *h1s)
+ 	if (h1s->flags & H1S_F_NOT_FIRST)
+ 		cs->flags |= CS_FL_NOT_FIRST;
+ 
++	if (global.tune.options & GTUNE_USE_SPLICE)
++		cs->flags |= CS_FL_MAY_SPLICE;
++
+ 	if (stream_create_from_cs(cs) < 0) {
+ 		TRACE_DEVEL("leaving on stream creation failure", H1_EV_STRM_NEW|H1_EV_STRM_END|H1_EV_STRM_ERR, h1s->h1c->conn, h1s);
+ 		goto err;
+@@ -1275,6 +1278,11 @@ static size_t h1_process_data(struct h1s *h1s, struct h1m *h1m, struct htx **htx
+ 		goto end;
+ 	}
+ 
++	if (h1m->state == H1_MSG_DATA && h1m->curr_len && h1s->cs)
++		h1s->cs->flags |= CS_FL_MAY_SPLICE;
++	else if (h1s->cs)
++		h1s->cs->flags &= ~CS_FL_MAY_SPLICE;
++
+ 	*ofs += ret;
+ 
+   end:
+@@ -2725,6 +2733,9 @@ static int h1_rcv_pipe(struct conn_stream *cs, struct pipe *pipe, unsigned int c
+ 		TRACE_STATE("read0 on connection", H1_EV_STRM_RECV, cs->conn, h1s);
+ 	}
+ 
++	if (h1m->state != H1_MSG_DATA || !h1m->curr_len)
++		cs->flags &= ~CS_FL_MAY_SPLICE;
++
+ 	TRACE_LEAVE(H1_EV_STRM_RECV, cs->conn, h1s);
+ 	return ret;
+ }
+diff --git a/src/mux_pt.c b/src/mux_pt.c
+index 6cbc689ce..2ac7d4715 100644
+--- a/src/mux_pt.c
++++ b/src/mux_pt.c
+@@ -111,6 +111,8 @@ static int mux_pt_init(struct connection *conn, struct proxy *prx, struct sessio
+ 	conn->ctx = ctx;
+ 	ctx->cs = cs;
+ 	cs->flags |= CS_FL_RCV_MORE;
++	if (global.tune.options & GTUNE_USE_SPLICE)
++		cs->flags |= CS_FL_MAY_SPLICE;
+ 	return 0;
+ 
+  fail_free:
+diff --git a/src/stream_interface.c b/src/stream_interface.c
+index 012ac71e0..a2ea7d779 100644
+--- a/src/stream_interface.c
++++ b/src/stream_interface.c
+@@ -1268,7 +1268,7 @@ int si_cs_recv(struct conn_stream *cs)
+ 	/* First, let's see if we may splice data across the channel without
+ 	 * using a buffer.
+ 	 */
+-	if (conn->xprt->rcv_pipe && conn->mux->rcv_pipe &&
++	if (cs->flags & CS_FL_MAY_SPLICE &&
+ 	    (ic->pipe || ic->to_forward >= MIN_SPLICE_FORWARD) &&
+ 	    ic->flags & CF_KERN_SPLICING) {
+ 		if (c_data(ic)) {
+@@ -1327,7 +1327,7 @@ int si_cs_recv(struct conn_stream *cs)
+ 		ic->pipe = NULL;
+ 	}
+ 
+-	if (ic->pipe && ic->to_forward && !(flags & CO_RFL_BUF_FLUSH)) {
++	if (ic->pipe && ic->to_forward && !(flags & CO_RFL_BUF_FLUSH) && cs->flags & CS_FL_MAY_SPLICE) {
+ 		/* don't break splicing by reading, but still call rcv_buf()
+ 		 * to pass the flag.
+ 		 */

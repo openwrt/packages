@@ -1,0 +1,8 @@
+#!/bin/sh
+
+uci -q get gnunet.psycstore || uci set gnunet.psycstore=gnunet-config
+
+uci -q batch <<EOF
+	set gnunet.psycstore.DATABASE=mysql
+	commit gnunet
+EOF

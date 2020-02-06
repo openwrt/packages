@@ -1,0 +1,52 @@
+diff -u --recursive snort-3.0.0-vanilla/daqs/daq_file.c snort-3.0.0/daqs/daq_file.c
+--- snort-3.0.0-vanilla/daqs/daq_file.c	2018-08-28 02:01:02.000000000 -0400
++++ snort-3.0.0/daqs/daq_file.c	2019-03-28 23:03:25.292770141 -0400
+@@ -33,7 +33,7 @@
+ 
+ #include <sys/types.h>
+ #include <sys/time.h>
+-#include <sys/unistd.h>
++#include <unistd.h>
+ 
+ #include <daq_api.h>
+ #include <sfbpf_dlt.h>
+diff -u --recursive snort-3.0.0-vanilla/daqs/daq_hext.c snort-3.0.0/daqs/daq_hext.c
+--- snort-3.0.0-vanilla/daqs/daq_hext.c	2018-08-28 02:01:02.000000000 -0400
++++ snort-3.0.0/daqs/daq_hext.c	2019-03-28 22:54:15.738207157 -0400
+@@ -35,7 +35,7 @@
+ #include <arpa/inet.h>
+ #include <sys/types.h>
+ #include <sys/time.h>
+-#include <sys/unistd.h>
++#include <unistd.h>
+ #include <sys/socket.h>
+ 
+ #include <daq_api.h>
+diff -u --recursive snort-3.0.0-vanilla/src/network_inspectors/appid/service_plugins/service_rpc.cc snort-3.0.0/src/network_inspectors/appid/service_plugins/service_rpc.cc
+--- snort-3.0.0-vanilla/src/network_inspectors/appid/service_plugins/service_rpc.cc	2018-08-28 02:01:02.000000000 -0400
++++ snort-3.0.0/src/network_inspectors/appid/service_plugins/service_rpc.cc	2019-03-28 22:32:04.211783669 -0400
+@@ -27,6 +27,7 @@
+ 
+ #include <netdb.h>
+ 
++#include <tirpc/rpc/rpcent.h>
+ #if defined(__FreeBSD__) || defined(__OpenBSD__)
+ #include <rpc/rpc.h>
+ #elif defined(__sun)
+diff -u --recursive snort-3.0.0-vanilla/src/utils/util.cc snort-3.0.0/src/utils/util.cc
+--- snort-3.0.0-vanilla/src/utils/util.cc	2018-08-28 02:01:02.000000000 -0400
++++ snort-3.0.0/src/utils/util.cc	2019-03-28 22:16:16.860942230 -0400
+@@ -605,13 +605,8 @@
+ {
+     static THREAD_LOCAL char buf[128];
+ 
+-#if (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE < 200112L && \
+-        defined(_XOPEN_SOURCE) && _XOPEN_SOURCE < 600) || _GNU_SOURCE
+-    return strerror_r(errnum, buf, sizeof(buf));
+-#else
+     (void)strerror_r(errnum, buf, sizeof(buf));
+     return buf;
+-#endif
+ }
+ 
+ char* snort_strndup(const char* src, size_t dst_size)

@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-http-daemon
-PKG_VERSION:=6.01
+PKG_VERSION:=6.06
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GA/GAAS
 PKG_SOURCE:=HTTP-Daemon-$(PKG_VERSION).tar.gz
-PKG_HASH:=43fd867742701a3f9fcc7bd59838ab72c6490c0ebaf66901068ec6997514adc2
-
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
-PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
-
+PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/O/OA/OALDERS
+PKG_HASH:=fc03a161b54553f766457a4267e7066767f54ad01cacfe9a91d7caa2a0319bad
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/HTTP-Daemon-$(PKG_VERSION)
+
+PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
+PKG_LICENSE_FILES:=LICENCE
 
 include $(INCLUDE_DIR)/package.mk
 include ../perl/perlmod.mk

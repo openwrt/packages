@@ -9,18 +9,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntripclient
-PKG_VERSION:=1.5.0
+PKG_VERSION:=1.51
+PKG_RELEASE:=2
 
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/nunojpg/ntripclient/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=d668e87b2260ef262e2066ac0ed217ec77478170deaf76ff48f2116a23c48ae5
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/nunojpg/ntripclient.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=dcfb2cb3e6f31b7291a94e7f86379c78ffc0d44e
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=8d16f2bd0295a2e77fe8651e5f973c3ca4cf0d62fc4d671ebb54cfa8dc7debd0
-
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=GPL-2.0-or-later
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 

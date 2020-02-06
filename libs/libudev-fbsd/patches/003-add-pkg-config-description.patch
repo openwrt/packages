@@ -1,6 +1,6 @@
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -11,6 +11,7 @@ install(TARGETS udev LIBRARY DESTINATION
+@@ -26,6 +26,7 @@ install(TARGETS udev LIBRARY DESTINATION
  install(FILES libudev.h DESTINATION include)
  
  set(PKG_CONFIG_NAME libudev)

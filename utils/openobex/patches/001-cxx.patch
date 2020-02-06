@@ -1,10 +1,13 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 813f900..a0942e8 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1,6 +1,6 @@
- cmake_minimum_required ( VERSION 2.8.5 FATAL_ERROR )
+@@ -1,7 +1,7 @@
+ cmake_minimum_required ( VERSION 3.1 FATAL_ERROR )
  
--project ( openobex C )
-+project ( openobex C CXX )
+ project ( openobex
+-  LANGUAGES C
++  LANGUAGES C CXX
+   VERSION 1.7.2
+ )
  
- #
- # The project version

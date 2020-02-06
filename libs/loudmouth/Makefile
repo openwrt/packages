@@ -9,29 +9,27 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=loudmouth
 PKG_VERSION:=1.5.3
-PKG_RELEASE:=1
+PKG_RELEASE:=4
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/mcabber/loudmouth/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=12972fcffd9bbcc4a3b2b9fbf4b0e549f7b4caf0f11c8d2af2059087ce4e8792
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-
 PKG_LICENSE:=LGPLv2.1
 PKG_LICENSE_FILES:=COPYING
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=46a3f1a13a6ec5ff5377c028ce25bc723ab86247af40e686aa2b24718a5cd0d1
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/mcabber/loudmouth.git
-PKG_SOURCE_VERSION:=$(PKG_VERSION)
-
 PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/loudmouth
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+glib2 +libopenssl
+  DEPENDS:=+glib2 +libopenssl +PACKAGE_krb5-libs:krb5-libs
   TITLE:=loudmouth
   URL:=https://github.com/mcabber/loudmouth
 endef
@@ -41,8 +39,14 @@ define Package/loudmouth/description
 endef
 
 CONFIGURE_ARGS += \
-	--with-ssl=openssl \
-	--with-idn=no
+	--disable-debug \
+	--without-compile-warnings \
+	--without-idn \
+	--with-ssl=openssl
+
+CONFIGURE_VARS += \
+	ac_cv_lib_crypto_BIO_f_base64=yes \
+	ac_cv_lib_ssl_SSL_new=yes
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/

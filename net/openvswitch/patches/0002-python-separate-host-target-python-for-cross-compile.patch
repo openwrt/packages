@@ -1,0 +1,41 @@
+From e2d9b5d6fc33d7b9cbb7dc16832c5c86e6470966 Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <zhouyousong@yunionyun.com>
+Date: Tue, 21 Aug 2018 12:21:05 +0000
+Subject: [PATCH 2/4] python: separate host/target python for cross-compile
+
+At the moment, python-six is a requirement for openvswitch python
+library on target machine.
+
+Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
+---
+ Makefile.am       | 2 +-
+ m4/openvswitch.m4 | 2 ++
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index ff1f94b48..417f53230 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -60,7 +60,7 @@ endif
+ # foo/__init__.pyc will cause Python to ignore foo.py.
+ run_python = \
+ 	PYTHONPATH=$(top_srcdir)/python$(psep)$$PYTHONPATH \
+-	PYTHONDONTWRITEBYTECODE=yes $(PYTHON)
++	PYTHONDONTWRITEBYTECODE=yes $(PYTHON_HOST)
+ 
+ ALL_LOCAL =
+ BUILT_SOURCES =
+diff --git a/m4/openvswitch.m4 b/m4/openvswitch.m4
+index cd6b51d86..6dc9d630b 100644
+--- a/m4/openvswitch.m4
++++ b/m4/openvswitch.m4
+@@ -456,7 +456,9 @@ AC_DEFUN([OVS_CHECK_PYTHON],
+       fi])
+     AC_SUBST([PYTHON])
+     PYTHON=$ovs_cv_python
++    PYTHON_HOST=$ovs_cv_python_host
+     AC_SUBST([HAVE_PYTHON])
++    AM_MISSING_PROG([PYTHON_HOST], [python])
+     HAVE_PYTHON=yes
+     AM_CONDITIONAL([HAVE_PYTHON], [test "$HAVE_PYTHON" = yes])])
+ 

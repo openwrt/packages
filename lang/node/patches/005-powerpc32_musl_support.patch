@@ -1,0 +1,16 @@
+--- a/deps/v8/src/libsampler/sampler.cc
++++ b/deps/v8/src/libsampler/sampler.cc
+@@ -456,8 +456,12 @@
+       reinterpret_cast<void*>(ucontext->uc_mcontext.regs->gpr[PT_R1]);
+   state->fp =
+       reinterpret_cast<void*>(ucontext->uc_mcontext.regs->gpr[PT_R31]);
+-#else
++#elif V8_TARGET_ARCH_32_BIT
+   // Some C libraries, notably Musl, define the regs member as a void pointer
++  state->pc = reinterpret_cast<void*>(ucontext->uc_mcontext.gregs[32]);
++  state->sp = reinterpret_cast<void*>(ucontext->uc_mcontext.gregs[1]);
++  state->fp = reinterpret_cast<void*>(ucontext->uc_mcontext.gregs[31]);
++#else
+   state->pc = reinterpret_cast<void*>(ucontext->uc_mcontext.gp_regs[32]);
+   state->sp = reinterpret_cast<void*>(ucontext->uc_mcontext.gp_regs[1]);
+   state->fp = reinterpret_cast<void*>(ucontext->uc_mcontext.gp_regs[31]);

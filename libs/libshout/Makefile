@@ -6,21 +6,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libshout
-PKG_VERSION:=2.4.1
+PKG_VERSION:=2.4.3
 PKG_RELEASE:=1
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://downloads.us.xiph.org/releases/libshout/
-PKG_HASH:=f3acb8dec26f2dbf6df778888e0e429a4ce9378a9d461b02a7ccbf2991bbf24d
+PKG_SOURCE_URL:=https://downloads.us.xiph.org/releases/libshout/
+PKG_HASH:=0d8af55d1141bf90710bcd41a768c9cc5adb251502a0af1dd22c8da215d40dfe
 
-PKG_LICENSE:=LGPL-2.0+
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_LICENSE:=LGPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>, \
-		Ted Hess <thess@kitschensync.net>
+PKG_CPE_ID:=cpe:/a:libshout:libshout
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -77,21 +77,22 @@ Package/libshout-full/description=$(Package/libshout/description/default)
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
-	--disable-speex
+	--disable-speex \
+	--without-pic
 
 ifeq ($(BUILD_VARIANT),notheora)
   CONFIGURE_ARGS += --disable-theora
 endif
 
 ifeq ($(BUILD_VARIANT),nossl)
-  CONFIGURE_ARGS += --disable-theora --with-openssl="no"
+  CONFIGURE_ARGS += --disable-theora --without-openssl
 endif
 
 CONFIGURE_VARS += \
 	VORBIS_CFLAGS="-I$(STAGING_DIR)/usr/include/tremor/" \
 	VORBIS_LIBS="$(TARGET_LDFLAGS) -lvorbisidec" \
 
-TARGET_CFLAGS += $(FPIC) -Wl,-rpath-link="$(STAGING_DIR)/usr/lib"
+TARGET_CFLAGS += $(FPIC)
 
 PACKAGE_CONFIG_FILE=shout$(if $(findstring $(BUILD_VARIANT),full),-full).pc
 

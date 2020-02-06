@@ -9,15 +9,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opencv
-PKG_VERSION:=3.1.0
+PKG_VERSION:=4.1.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).zip
-PKG_SOURCE_URL:=http://sourceforge.net/projects/opencvlibrary/files/opencv-unix/$(PKG_VERSION)/
-PKG_HASH:=1f6990249fdb82804fff40e96fa6d99949023ab0e3277eae4bd459b374e622a4
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/opencv/opencv
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
+PKG_MIRROR_HASH:=1bd1cad4fa5c8f21499a45869fea40b7886026c048129a01be87b092178258c1
 
+PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
+
+CMAKE_INSTALL:=1
+CMAKE_BINARY_SUBDIR:=build
+PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -35,14 +42,12 @@ define Package/opencv
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=OpenCV
-  URL:=http://opencv.org/
-  MAINTAINER:=WRTnode Team <pub@wrtnode.com>
-  DEPENDS:=+libpthread +librt +libstdcpp +zlib +libjpeg
+  URL:=https://opencv.org/
+  DEPENDS:=+libpthread +librt +libatomic +libstdcpp +zlib +libjpeg +libwebp
 endef
 
-PKG_INSTALL:=1
-
-CMAKE_OPTIONS += -DBUILD_opencv_gpu:BOOL=OFF \
+CMAKE_OPTIONS += \
+	-DBUILD_opencv_gpu:BOOL=OFF \
 	-DWITH_1394:BOOL=OFF -DBUILD_opencv_stitching:BOOL=OFF \
 	-DBUILD_opencv_superres:BOOL=OFF -DBUILD_opencv_ts:BOOL=OFF \
 	-DBUILD_opencv_highgui:BOOL=OFF \
@@ -51,19 +56,12 @@ CMAKE_OPTIONS += -DBUILD_opencv_gpu:BOOL=OFF \
 	-DWITH_GSTREAMER:BOOL=OFF \
 	-DWITH_LIBV4L:BOOL=OFF \
 	-DWITH_PNG:BOOL=OFF \
+	-DWITH_GTK:BOOL=OFF \
 	-DWITH_TIFF:BOOL=OFF \
 	-DCMAKE_VERBOSE:BOOL=OFF \
 	-DENABLE_PRECOMPILED_HEADERS=OFF
 
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/opencv $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/opencv2 $(1)/usr/include/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libopencv* $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/opencv.pc $(1)/usr/lib/pkgconfig/
-endef
+TARGET_LDFLAGS += -latomic
 
 define Package/opencv/install
 	$(INSTALL_DIR) $(1)/usr/lib

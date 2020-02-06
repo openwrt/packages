@@ -1,0 +1,27 @@
+From 14454285d7ef5b9cd134c86059933036c1aa2fef Mon Sep 17 00:00:00 2001
+From: Moritz Warning <moritzwarning@web.de>
+Date: Mon, 23 Apr 2018 22:12:31 +0200
+Subject: [PATCH 1/4] find miniupnpc.h in staging directory
+
+---
+ make-linux.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/make-linux.mk b/make-linux.mk
+index b81c7aeb..a547125d 100644
+--- a/make-linux.mk
++++ b/make-linux.mk
+@@ -29,8 +29,8 @@ TIMESTAMP=$(shell date +"%Y%m%d%H%M")
+ # otherwise build into binary as done on Mac and Windows.
+ ONE_OBJS+=osdep/PortMapper.o
+ override DEFS+=-DZT_USE_MINIUPNPC
+-MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2..*"' /usr/include/miniupnpc/miniupnpc.h && echo 1)
+-#MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2.."' /usr/include/miniupnpc/miniupnpc.h && echo 1)
++MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2..*"' $(STAGING_DIR)/usr/include/miniupnpc/miniupnpc.h && echo 1)
++#MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2.."' $(STAGING_DIR)/usr/include/miniupnpc/miniupnpc.h && echo 1)
+ ifeq ($(MINIUPNPC_IS_NEW_ENOUGH),1)
+ 	override DEFS+=-DZT_USE_SYSTEM_MINIUPNPC
+ 	LDLIBS+=-lminiupnpc
+-- 
+2.22.0
+

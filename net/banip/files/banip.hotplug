@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+[ "${ACTION}" != "add" ] && exit 0
+
+ban_iface="wan"
+[ -r "/lib/functions/network.sh" ] && { . "/lib/functions/network.sh"; network_find_wan ban_iface; }
+[ "${INTERFACE}" != "${ban_iface}" ] && exit 0
+
+ban_pidfile="/var/run/banip.pid"
+ban_enabled="$(/etc/init.d/banip enabled; printf "%u" "${?}")"
+if [ "${ban_enabled}" = "0" ] && [ ! -s "${ban_pidfile}" ]
+then
+	/etc/init.d/banip refresh
+fi
+exit 0

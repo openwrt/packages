@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
-PKG_VERSION:=v6.11.2
-PKG_RELEASE:=3
+PKG_VERSION:=v8.16.1
+PKG_RELEASE:=1
 PKG_SOURCE:=node-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://nodejs.org/dist/${PKG_VERSION}
-PKG_HASH:=04af4992238b19124ea56f1bcfda36827613a24eb3b00fc3b50f261a415a26e4
+PKG_SOURCE_URL:=https://nodejs.org/dist/${PKG_VERSION}
+PKG_HASH:=d8c190acdf2d967faf49c22df883d31a8d4e249d67852dae3c2d8a0f756b0512
 
 HOST_BUILD_DEPENDS:=python/host
 PKG_BUILD_DEPENDS:=python/host
@@ -26,6 +26,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>, Adrian Panella <ianchi74@outlook.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:nodejs:node.js
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -35,8 +36,10 @@ define Package/node
   CATEGORY:=Languages
   SUBMENU:=Node.js
   TITLE:=Node.js is a platform built on Chrome's JavaScript runtime
-  URL:=http://nodejs.org/
-  DEPENDS:=+libstdcpp +libopenssl +zlib +USE_UCLIBC:libpthread +USE_UCLIBC:librt +NODEJS_ICU:icu
+  URL:=https://nodejs.org/
+  DEPENDS:=@(HAS_FPU||KERNEL_MIPS_FPU_EMULATOR) @!arc @!armeb \
+	   +libstdcpp +libopenssl +zlib +libnghttp2 +libuv +libhttp-parser \
+	   +NODEJS_ICU:icu
 endef
 
 define Package/node/description
@@ -50,7 +53,7 @@ define Package/node-npm
   CATEGORY:=Languages
   SUBMENU:=Node.js
   TITLE:=NPM stands for Node Package Manager
-  URL:=http://npmjs.com/
+  URL:=https://npmjs.com/
   DEPENDS:=+node
 endef
 
@@ -59,13 +62,13 @@ define Package/node-npm/description
 endef
 
 define Package/node/config
-	menu "Module Selection"
+	if PACKAGE_node
 
 	config NODEJS_ICU
 		bool "enable i18n features"
 		default n
 
-	endmenu
+	endif
 endef
 
 NODEJS_CPU:=$(subst powerpc,ppc,$(subst aarch64,arm64,$(subst x86_64,x64,$(subst i386,ia32,$(ARCH)))))
@@ -73,62 +76,35 @@ NODEJS_CPU:=$(subst powerpc,ppc,$(subst aarch64,arm64,$(subst x86_64,x64,$(subst
 MAKE_VARS+= \
 	DESTCPU=$(NODEJS_CPU)
 
+CONFIGURE_VARS:= \
+	CC="$(TARGET_CC) $(TARGET_OPTIMIZATION)" \
+	CXX="$(TARGET_CXX) $(TARGET_OPTIMIZATION)" \
+	CC_host="$(HOSTCC)" \
+	CXX_host="$(HOSTCXX)"
+
 CONFIGURE_ARGS:= \
 	--dest-cpu=$(NODEJS_CPU) \
 	--dest-os=linux \
 	--without-snapshot \
 	--shared-zlib \
 	--shared-openssl \
+	--shared-nghttp2 \
+	--shared-libuv \
+	--shared-http-parser \
+	--with-intl=$(if $(CONFIG_NODEJS_ICU),system-icu,none) \
+	$(if $(findstring mips,$(NODEJS_CPU)), \
+		$(if $(CONFIG_SOFT_FLOAT),--with-mips-float-abi=soft)) \
+	$(if $(findstring +neon,$(CONFIG_CPU_TYPE)),--with-arm-fpu=neon) \
+	$(if $(findstring +vfp",$(CONFIG_CPU_TYPE)),--with-arm-fpu=vfp) \
+	$(if $(findstring +vfpv3",$(CONFIG_CPU_TYPE)),--with-arm-fpu=vfpv3-d16) \
+	$(if $(findstring +vfpv4",$(CONFIG_CPU_TYPE)),--with-arm-fpu=vfpv3) \
 	--prefix=/usr
-
-ifneq ($(findstring arm,$(NODEJS_CPU)),)
-ifeq ($(CONFIG_SOFT_FLOAT),y)
-CONFIGURE_ARGS+= --with-arm-float-abi=softfp
-else
-
-CONFIGURE_ARGS+= --with-arm-float-abi=hard
-
-ifneq ($(findstring vfp,$(CONFIG_CPU_TYPE)),)
-ARM_FPU=vfp
-endif
-
-ifneq ($(findstring vfpv3,$(CONFIG_CPU_TYPE)),)
-ARM_FPU=vfpv3
-endif
-
-ifneq ($(findstring vfpv3-d16,$(CONFIG_CPU_TYPE)),)
-ARM_FPU=vfpv3-d16
-endif
-
-ifneq ($(findstring neon,$(CONFIG_CPU_TYPE)),)
-ARM_FPU=neon
-endif
-
-CONFIGURE_ARGS+= --with-arm-fpu=$(ARM_FPU)
-endif
-endif
-
-ifneq ($(findstring mips,$(NODEJS_CPU)),)
-ifeq ($(CONFIG_SOFT_FLOAT),y)
-CONFIGURE_ARGS+= \
-	--with-mips-float-abi=soft
-endif
-endif
-
-ifeq ($(CONFIG_NODEJS_ICU),y)
-CONFIGURE_ARGS+= \
-	--with-intl=system-icu
-else
-CONFIGURE_ARGS+= \
-	--with-intl=none
-endif
 
 HOST_CONFIGURE_VARS:=
 
 HOST_CONFIGURE_ARGS:= \
-	--dest-os=linux \
+	--dest-os=$(if $(findstring Darwin,$(HOST_OS)),mac,linux) \
 	--without-snapshot \
-	--shared-zlib \
 	--prefix=$(STAGING_DIR_HOSTPKG)
 
 HOST_CONFIGURE_CMD:=python ./configure
@@ -145,9 +121,10 @@ endef
 
 define Package/node-npm/install
 	mkdir -p $(1)/usr/bin $(1)/usr/lib/node_modules/npm/{bin,lib,node_modules}
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/npm $(1)/usr/bin/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/npm/{package.json,LICENSE,cli.js} $(1)/usr/lib/node_modules/npm
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/{npm,npx} $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/npm/{package.json,LICENSE} $(1)/usr/lib/node_modules/npm
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/npm/bin/npm-cli.js $(1)/usr/lib/node_modules/npm/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/npm/bin/npx-cli.js $(1)/usr/lib/node_modules/npm/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/npm/lib/* $(1)/usr/lib/node_modules/npm/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/npm/node_modules/* $(1)/usr/lib/node_modules/npm/node_modules/
 endef

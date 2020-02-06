@@ -8,15 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-file-sharedir-install
-PKG_VERSION:=0.10
+PKG_VERSION:=0.13
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GW/GWYN
 PKG_SOURCE:=File-ShareDir-Install-$(PKG_VERSION).tar.gz
-PKG_HASH:=708af71dec4dfb5a8cf9a5e863b566714c3f65f0a76722302de5a07ee202e6f7
+PKG_SOURCE_URL:=https://www.cpan.org/authors/id/E/ET/ETHER
+PKG_HASH:=45befdf0d95cbefe7c25a1daf293d85f780d6d2576146546e6828aad26e580f9
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
+PKG_LICENSE_FILES:=LICENSE
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/perl/File-ShareDir-Install-$(PKG_VERSION)
 HOST_BUILD_DEPENDS:=perl/host
@@ -31,7 +32,7 @@ define Package/perl-file-sharedir-install
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Install read-only data files
-  URL:=http://search.cpan.org/dist/File-ShareDir-Install/
+  URL:=https://search.cpan.org/dist/File-ShareDir-Install/
   DEPENDS:=perl +perlbase-essential +perlbase-extutils +perlbase-file +perlbase-io
 endef
 

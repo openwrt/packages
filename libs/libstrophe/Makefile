@@ -8,22 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libstrophe
-PKG_VERSION:=0.9.1
+PKG_VERSION:=0.9.3
 PKG_RELEASE=1
 
-PKG_LICENSE:=GPL-3.0
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Chih-Wei Chen <changeway@gmail.com>
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=https://github.com/strophe/libstrophe
-PKG_SOURCE_SUBDIR=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=9931ad4fa2aa7f204c608010eb2ebf84bcf7d542
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=6a499bcfc7c52db6765957ff38f48a344ad121ac0b665fd3d4adb7d8deadc427
+PKG_SOURCE_URL:=https://codeload.github.com/strophe/libstrophe/tar.gz/$(PKG_VERSION)?
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_HASH:=8a3b79f62177ed59c01d4d4108357ff20bd933d53b845ee4e350d304c051a4fe
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_libstrophe-libxml2 \
@@ -58,7 +57,11 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/ $(1)/usr/
 
 	$(INSTALL_DIR) $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libstrophe.{la,a,so*} $(1)/usr/lib/
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libstrophe.pc \
+		$(1)/usr/lib/pkgconfig/
 endef
 
 define Package/libstrophe/install

@@ -1,0 +1,33 @@
+From 68fe97ef6b05e3709cd4b67c7681dcfc63bfaf80 Mon Sep 17 00:00:00 2001
+From: Moritz Warning <moritzwarning@web.de>
+Date: Mon, 30 Apr 2018 16:14:30 +0200
+Subject: [PATCH 2/4] remove -pie
+
+fixes relocation "against `a local symbol' can not be used
+when making a shared object; recompile with -fPIC" error
+---
+ make-linux.mk | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/make-linux.mk b/make-linux.mk
+index a547125d..13244741 100644
+--- a/make-linux.mk
++++ b/make-linux.mk
+@@ -77,11 +77,11 @@ ifeq ($(ZT_DEBUG),1)
+ 	# C25519 in particular is almost UNUSABLE in -O0 even on a 3ghz box!
+ node/Salsa20.o node/SHA512.o node/C25519.o node/Poly1305.o: CXXFLAGS=-Wall -O2 -g -pthread $(INCLUDES) $(DEFS)
+ else
+-	CFLAGS?=-O3 -fstack-protector -fPIE
++	CFLAGS?=-O3 -fstack-protector
+ 	override CFLAGS+=-Wall -Wno-deprecated -pthread $(INCLUDES) -DNDEBUG $(DEFS)
+-	CXXFLAGS?=-O3 -fstack-protector -fPIE
++	CXXFLAGS?=-O3 -fstack-protector
+ 	override CXXFLAGS+=-Wall -Wno-deprecated -std=c++11 -pthread $(INCLUDES) -DNDEBUG $(DEFS)
+-	LDFLAGS=-pie -Wl,-z,relro,-z,now
++	LDFLAGS=-Wl,-z,relro,-z,now
+ 	STRIP?=strip
+ 	STRIP+=--strip-all
+ endif
+-- 
+2.22.0
+

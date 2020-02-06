@@ -1,0 +1,76 @@
+#!/bin/sh /etc/rc.common
+
+# shellcheck disable=SC2034 disable=SC2154
+
+USE_PROCD=1
+
+# starts after network starts
+START=21
+# stops before networking stops
+STOP=89
+
+PROG=/usr/sbin/nextdns
+
+add_dnsmasq_opt() {
+        mkdir -p /tmp/dnsmasq.d
+        echo "$1" >> /tmp/dnsmasq.d/nextdns.conf
+}
+
+dnsmasq_reload() {
+        # Reload dnsmasq is already running.
+        if /etc/init.d/dnsmasq running; then
+                /etc/init.d/dnsmasq reload
+        fi
+}
+
+handle_host_config() {
+    host_config_args="$host_config_args -config=$1"
+}
+
+start_service() {
+        config_load nextdns
+        config_get_bool enabled main enabled "1"
+        rm -f /tmp/dnsmasq.d/nextdns.conf
+        if [ "$enabled" = "1" ]; then
+                config_get config main config ""
+                config_list_foreach main host_config handle_host_config
+                config_get listen main listen "127.0.0.1:5342"
+                config_get_bool report_client_info main report_client_info "1"
+                config_get_bool hardened_privacy main hardened_privacy "0"
+                config_get_bool log_queries main log_queries "0"
+
+                # Add a custom configuration for dnsmasq.
+                server=$(echo "$listen" | sed -e 's/:/#/')
+                add_dnsmasq_opt "server=$server"
+                add_dnsmasq_opt "no-resolv"
+                if [ "$report_client_info" = "1" ]; then
+                        add_dnsmasq_opt "add-mac"
+                        add_dnsmasq_opt "add-subnet=32,128"
+                fi
+
+                procd_open_instance
+                # shellcheck disable=SC2086
+                procd_set_param command "$PROG" run \
+                        -listen="$listen" \
+                        $host_config_args \
+                        -config="$config" \
+                        -report-client-info="$report_client_info" \
+                        -hardened-privacy="$hardened_privacy" \
+                        -log-queries="$log_queries"
+                procd_set_param stdout 1
+                procd_set_param stderr 1
+                procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
+                procd_close_instance
+        fi
+
+        dnsmasq_reload
+}
+
+stop_service() {
+        rm -f /tmp/dnsmasq.d/nextdns.conf
+        dnsmasq_reload
+}
+
+service_triggers() {
+        procd_add_reload_trigger "nextdns"
+}

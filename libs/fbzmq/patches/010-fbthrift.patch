@@ -1,0 +1,13 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -34,6 +34,10 @@ find_package(Threads REQUIRED)
+ find_package(Boost 1.67.0 MODULE
+   COMPONENTS
+     context
++    filesystem
++    program_options
++    regex
++    system
+   REQUIRED
+ )
+ 

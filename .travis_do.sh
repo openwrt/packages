@@ -5,8 +5,8 @@
 set -e
 
 SDK_HOME="$HOME/sdk"
-SDK_PATH=https://downloads.lede-project.org/snapshots/targets/ar71xx/generic/
-SDK=lede-sdk-ar71xx-generic_gcc-5.5.0_musl.Linux-x86_64
+SDK_PATH=https://downloads.openwrt.org/snapshots/targets/ar71xx/generic/
+SDK=-sdk-ar71xx-generic_
 PACKAGES_DIR="$PWD"
 
 echo_red()   { printf "\033[1;31m$*\033[m\n"; }
@@ -33,6 +33,14 @@ exec_status() {
 	return 0
 }
 
+get_sdk_file() {
+	if [ -e "$SDK_HOME/sha256sums" ] ; then
+		grep -- "$SDK" "$SDK_HOME/sha256sums" | awk '{print $2}' | sed 's/*//g'
+	else
+		false
+	fi
+}
+
 # download will run on the `before_script` step
 # The travis cache will be used (all files under $HOME/sdk/). Meaning
 # We don't have to download the file again
@@ -45,30 +53,50 @@ download_sdk() {
 	wget "$SDK_PATH/sha256sums.gpg" -O sha256sums.asc
 
 	# LEDE Build System (LEDE GnuPG key for unattended build jobs)
-	gpg --import $PACKAGES_DIR/.travis/626471F1.asc
+	gpg --import $PACKAGES_DIR/.keys/626471F1.asc
 	echo '54CC74307A2C6DC9CE618269CD84BCED626471F1:6:' | gpg --import-ownertrust
 	# LEDE Release Builder (17.01 "Reboot" Signing Key)
-	gpg --import $PACKAGES_DIR/.travis/D52BBB6B.asc
+	gpg --import $PACKAGES_DIR/.keys/D52BBB6B.asc
 	echo 'B09BE781AE8A0CD4702FDCD3833C6010D52BBB6B:6:' | gpg --import-ownertrust
 
+	echo_blue "=== Verifying sha256sums signature"
 	gpg --verify sha256sums.asc
-	grep "$SDK" sha256sums > sha256sums.small
+	echo_blue "=== Verified sha256sums signature."
+	if ! grep -- "$SDK" sha256sums > sha256sums.small ; then
+		echo_red "=== Can not find $SDK file in sha256sums."
+		echo_red "=== Is \$SDK out of date?"
+		false
+	fi
 
 	# if missing, outdated or invalid, download again
 	if ! sha256sum -c ./sha256sums.small ; then
-		wget "$SDK_PATH/$SDK.tar.xz" -O "$SDK.tar.xz"
+		local sdk_file
+		sdk_file="$(get_sdk_file)"
+		echo_blue "=== sha256 doesn't match or SDK file wasn't downloaded yet."
+		echo_blue "=== Downloading a fresh version"
+		wget "$SDK_PATH/$sdk_file" -O "$sdk_file"
 	fi
 
 	# check again and fail here if the file is still bad
-	sha256sum -c ./sha256sums.small
+	echo_blue "Checking sha256sum a second time"
+	if ! sha256sum -c ./sha256sums.small ; then
+		echo_red "=== SDK can not be verified!"
+		false
+	fi
 	echo_blue "=== SDK is up-to-date"
 }
 
 # test_package will run on the `script` step.
 # test_package call make download check for very new/modified package
 test_packages2() {
+	local commit_range=$TRAVIS_COMMIT_RANGE
+	if [ -z "$TRAVIS_PULL_REQUEST_SHA" ]; then
+		echo_blue "Using only the latest commit, since we're not in a Pull Request"
+		commit_range=HEAD~1
+	fi
+
 	# search for new or modified packages. PKGS will hold a list of package like 'admin/muninlite admin/monit ...'
-	PKGS=$(git diff --diff-filter=d --name-only "$TRAVIS_COMMIT_RANGE" | grep 'Makefile$' | grep -v '/files/' | awk -F'/Makefile' '{ print $1 }')
+	PKGS=$(git diff --diff-filter=d --name-only "$commit_range" | grep 'Makefile$' | grep -v '/files/' | awk -F'/Makefile' '{ print $1 }')
 
 	if [ -z "$PKGS" ] ; then
 		echo_blue "No new or modified packages found!"
@@ -83,7 +111,7 @@ test_packages2() {
 	echo_blue "=== Setting up SDK"
 	tmp_path=$(mktemp -d)
 	cd "$tmp_path"
-	tar Jxf "$SDK_HOME/$SDK.tar.xz" --strip=1
+	tar Jxf "$SDK_HOME/$(get_sdk_file)" --strip=1
 
 	# use github mirrors to spare lede servers
 	cat > feeds.conf <<EOF
@@ -107,8 +135,11 @@ EOF
 		pkg_name=$(echo "$pkg_dir" | awk -F/ '{ print $NF }')
 		echo_blue "=== $pkg_name: Starting quick tests"
 
-		exec_status 'WARNING|ERROR' make "package/$pkg_name/download" V=s || RET=1
-		exec_status 'WARNING|ERROR' make "package/$pkg_name/check" V=s || RET=1
+		exec_status '^ERROR' make "package/$pkg_name/download" V=s || RET=1
+		badhash_msg_regex="HASH does not match "
+		badhash_msg_regex="$badhash_msg_regex|HASH uses deprecated hash,"
+		badhash_msg_regex="$badhash_msg_regex|HASH is missing,"
+		exec_status '^ERROR'"|$badhash_msg_regex" make "package/$pkg_name/check" V=s || RET=1
 
 		echo_blue "=== $pkg_name: quick tests done"
 	done
@@ -142,6 +173,10 @@ EOF
 
 test_commits() {
 	RET=0
+	if [ -z "$TRAVIS_PULL_REQUEST_SHA" ]; then
+		echo_blue "Skipping commits tests (not in a Pull Request)"
+		return 0
+	fi
 	for commit in $(git rev-list ${TRAVIS_COMMIT_RANGE/.../..}); do
 		echo_blue "=== Checking commit '$commit'"
 		if git show --format='%P' -s $commit | grep -qF ' '; then
@@ -158,7 +193,7 @@ test_commits() {
 		fi
 
 		subject="$(git show -s --format=%s $commit)"
-		if echo "$subject" | grep -q -e '^[0-9A-Za-z,/-]\+: ' -e '^Revert '; then
+		if echo "$subject" | grep -q -e '^[0-9A-Za-z,/_-]\+: ' -e '^Revert '; then
 			echo_green "Commit subject line seems ok ($subject)"
 		else
 			echo_red "Commit subject line MUST start with '<package name>: ' ($subject)"
@@ -186,19 +221,15 @@ echo_blue "=== Travis ENV"
 env
 echo_blue "=== Travis ENV"
 
-while true; do
-	# if clone depth is too small, git rev-list / diff return incorrect or empty results
-	C="$(git rev-list ${TRAVIS_COMMIT_RANGE/.../..} | tail -n1)" 2>/dev/null
-	[ -n "$C" -a "$C" != "a22de9b74cf9579d1ce7e6cf1845b4afa4277b00" ] && break
-	echo_blue "Fetching 50 commits more"
-	git fetch origin --deepen=50
-done
-
-if [ "$TRAVIS_PULL_REQUEST" = false ] ; then
-	echo "Only Pull Requests are supported at the moment." >&2
-	exit 0
+if [ -n "$TRAVIS_PULL_REQUEST_SHA" ]; then
+	while true; do
+		# if clone depth is too small, git rev-list / diff return incorrect or empty results
+		C="$(git rev-list ${TRAVIS_COMMIT_RANGE/.../..} | tail -n1)" 2>/dev/null
+		[ -n "$C" -a "$C" != "a22de9b74cf9579d1ce7e6cf1845b4afa4277b00" ] && break
+		echo_blue "Fetching 50 commits more"
+		git fetch origin --deepen=50
+	done
 fi
-
 
 if [ $# -ne 1 ] ; then
 	cat <<EOF

@@ -9,13 +9,15 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtool
 PKG_VERSION:=2.4.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/libtool
 PKG_HASH:=7c87a8c2c8c0fc9cd5019e402bed4292462d00a718a7cd5f11218153bf28b26f
 PKG_MAINTAINER:=Heinrich Schuchardt <xypron.glpk@gmx.de>
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_CPE_ID:=cpe:/a:gnu:libtool
+
 PKG_BUILD_DIR = $(BUILD_DIR)/libtool-bin/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_INSTALL:=1

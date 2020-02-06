@@ -9,20 +9,22 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bluelog
 PKG_VERSION:=1.1.2
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://ftp.digifail.com/software/bluelog
-PKG_HASH:=9750b007daffaffecea3b8dd2332bf74cc24955c307861197a20d04d845bc412
+PKG_SOURCE:=Bluelog-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/MS3FGX/Bluelog/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=ebbc1357e14bc46cbddd8390cdbd29c0131b09b8ab680a1c382164ef076cb53e
+PKG_BUILD_DIR:=$(BUILD_DIR)/Bluelog-$(PKG_VERSION)
 
 OUI_SOURCE:=oui-2016-05-30.txt.gz
-OUI_URL:=http://sources.lede-project.org/
-OUI_MD5SUM:=38048729fdb5a7a7e0c5db6a51dc2dd1
+OUI_URL:=https://sources.openwrt.org/
+OUI_HASH:=19d0b02eeb0d42507ee17b637a295782c14956fe1ac4803589ed93ef92c4fad5
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -31,7 +33,7 @@ define Package/bluelog/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Bluetooth scanner and logger
-  URL:=http://www.digifail.com/software/bluelog.shtml
+  URL:=https://github.com/MS3FGX/Bluelog
   DEPENDS:=+bluez-libs +kmod-bluetooth
 endef
 
@@ -65,7 +67,7 @@ endef
 define Download/oui.txt
   FILE:=$(OUI_SOURCE)
   URL:=$(OUI_URL)
-  MD5SUM:=$(OUI_MD5SUM)
+  HASH:=$(OUI_HASH)
 endef
 
 TARGET_CFLAGS += -DOPENWRT

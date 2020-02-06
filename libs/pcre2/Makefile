@@ -8,27 +8,36 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcre2
-PKG_VERSION:=10.30
+PKG_VERSION:=10.34
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=@SF/$(PKG_NAME)
-PKG_HASH:=90bd41c605d30e3745771eb81928d779f158081a51b2f314bbcc1f73de5773db
-PKG_MAINTAINER:=Shane Peelar <lookatyouhacker@gmail.com>
+PKG_SOURCE_URL:=@SF/pcre/$(PKG_NAME)/$(PKG_VERSION)
+PKG_HASH:=74c473ffaba9e13db6951fd146e0143fe9887852ce73406a03277af1d9b798ca
 
+PKG_MAINTAINER:=Shane Peelar <lookatyouhacker@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENCE
+PKG_CPE_ID:=cpe:/a:pcre:pcre
 
 PKG_FIXUP:=autoreconf
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+
+PKG_CONFIG_DEPENDS:=\
+	CONFIG_PCRE2_JIT_ENABLED
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libpcre2/default
   SECTION:=libs
   CATEGORY:=Libraries
-  URL:=http://www.pcre.org/
+  URL:=https://www.pcre.org/
+endef
+
+define Package/libpcre2/config
+  source "$(SOURCE)/Config.in"
 endef
 
 define Package/libpcre2
@@ -51,7 +60,8 @@ TARGET_CFLAGS += $(FPIC)
 
 CONFIGURE_ARGS += \
 	--enable-pcre2-16 \
-	--enable-pcre2-32 
+	--enable-pcre2-32 \
+	$(if $(CONFIG_PCRE2_JIT_ENABLED),--enable-jit,--disable-jit)
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS)"

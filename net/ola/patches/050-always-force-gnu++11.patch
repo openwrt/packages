@@ -1,0 +1,21 @@
+Index: ola-0.10.6/configure.ac
+===================================================================
+--- ola-0.10.6.orig/configure.ac
++++ ola-0.10.6/configure.ac
+@@ -72,8 +72,6 @@ AM_CONDITIONAL([SUPPORTS_GNU_PLUS_PLUS_1
+ require_gnu_plus_plus_11="no"
+ AS_IF([test "x$ac_cv_gnu_plus_plus_11" = xyes],
+       [AS_IF([test "x$ac_cv_gnu_plus_plus_98" = xyes],
+-             [AS_IF([test "x$enable_unittests" = xno],
+-                    [CXXFLAGS="$CXXFLAGS -std=gnu++98"],
+                     [PKG_CHECK_MODULES([CPPUNIT1], [cppunit < 1.14.0],
+                                        [CXXFLAGS="$CXXFLAGS -std=gnu++98"],
+                                        [PKG_CHECK_MODULES([CPPUNIT2], [cppunit >= 1.14.0],
+@@ -81,7 +79,6 @@ AS_IF([test "x$ac_cv_gnu_plus_plus_11" =
+                                                           [AC_MSG_WARN([OLA requires std::auto_ptr support.])])
+                                        ])
+                     ])
+-             ])
+       ])
+ AS_IF([test "x$require_gnu_plus_plus_11" = xyes],
+       [CXXFLAGS="$CXXFLAGS -std=gnu++11"])

@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pv
-PKG_VERSION:=1.5.3
+PKG_VERSION:=1.6.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://www.ivarch.com/programs/sources/
-PKG_HASH:=76f3999b1c3b3027163dce6ef667cdf8dafb75218ee25e54a03bfe590478f90e
+PKG_SOURCE_URL:=https://www.ivarch.com/programs/sources
+PKG_HASH:=608ef935f7a377e1439c181c4fc188d247da10d51a19ef79bcdee5043b0973f1
 PKG_LICENSE:=Artistic-2.0
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 
@@ -26,7 +26,7 @@ define Package/pv
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Shell pipeline element to meter data passing through
-  URL:=http://www.ivarch.com/programs/pv.shtml
+  URL:=https://www.ivarch.com/programs/pv.shtml
 endef
 
 define Package/pv/description

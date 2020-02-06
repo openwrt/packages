@@ -1,0 +1,20 @@
+--- a/src/server.c
++++ b/src/server.c
+@@ -6,6 +6,7 @@
+ #include <getopt.h>
+ #include <signal.h>
+ #include <sys/stat.h>
++#include <syslog.h>
+ 
+ #include <libwebsockets.h>
+ #include <json.h>
+@@ -418,7 +419,8 @@ main(int argc, char **argv) {
+         return -1;
+     }
+ 
+-    lws_set_log_level(debug_level, NULL);
++    openlog("ttyd", LOG_NDELAY | LOG_PID, LOG_DAEMON);
++    lws_set_log_level(debug_level, lwsl_emit_syslog);
+ 
+ #if LWS_LIBRARY_VERSION_MAJOR >= 2
+     char server_hdr[128] = "";

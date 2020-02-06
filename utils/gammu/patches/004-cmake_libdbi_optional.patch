@@ -1,14 +1,14 @@
 --- a/configure
 +++ b/configure
-@@ -36,6 +36,7 @@ Usage: ./configure [options]
- --with-python=<path> path to Python interpreter
+@@ -37,6 +37,7 @@ Usage: ./configure [options]
+ --disable-iconv     disable iconv support
  --without-gnapplet  disable installation of gnapplet
  --without-completion disable installation of bash completion script
 +--without-libdbi	disable libdbi support
  
  All enable params have their disable counterparts.
  
-@@ -61,6 +62,7 @@ CMAKE_PYTHON=
+@@ -61,6 +62,7 @@ CMAKE_PROTECTION=
  CMAKE_GNAP=
  CMAKE_COMPLETE=
  CMAKE_ICONV=
@@ -16,7 +16,7 @@
  
  # process command line
  while [ "$#" -gt 0 ] ; do
-@@ -120,6 +122,9 @@ while [ "$#" -gt 0 ] ; do
+@@ -117,6 +119,9 @@ while [ "$#" -gt 0 ] ; do
          --without-completion)
              CMAKE_COMPLETE="-DINSTALL_BASH_COMPLETION=OFF"
              ;;
@@ -26,9 +26,9 @@
          --build=*)
              ;;
          --disable-dependency-tracking)
-@@ -156,4 +161,4 @@ fi
+@@ -153,4 +158,4 @@ fi
  cd "$BUILD_DIR"
  
  # invoke cmake to do configuration
--cmake $SOURCE_DIR $CMAKE_ROOT $CMAKE_PREFIX $CMAKE_SHARED $CMAKE_DEBUG $CMAKE_BACKUP $CMAKE_CROSS $CMAKE_PROTECTION $CMAKE_PYTHON $CMAKE_GNAP $CMAKE_COMPLETE $CMAKE_ICONV
-+cmake $SOURCE_DIR $CMAKE_ROOT $CMAKE_PREFIX $CMAKE_SHARED $CMAKE_DEBUG $CMAKE_BACKUP $CMAKE_CROSS $CMAKE_PROTECTION $CMAKE_PYTHON $CMAKE_GNAP $CMAKE_COMPLETE $CMAKE_ICONV $CMAKE_LIBDBI
+-cmake $SOURCE_DIR $CMAKE_ROOT $CMAKE_PREFIX $CMAKE_SHARED $CMAKE_DEBUG $CMAKE_BACKUP $CMAKE_CROSS $CMAKE_PROTECTION $CMAKE_GNAP $CMAKE_COMPLETE $CMAKE_ICONV
++cmake $SOURCE_DIR $CMAKE_ROOT $CMAKE_PREFIX $CMAKE_SHARED $CMAKE_DEBUG $CMAKE_BACKUP $CMAKE_CROSS $CMAKE_PROTECTION $CMAKE_GNAP $CMAKE_COMPLETE $CMAKE_ICONV $CMAKE_LIBDBI

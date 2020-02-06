@@ -1,0 +1,16 @@
+#
+# Copyright (c) 2019 Gregory L. Dietsche <Gregory.Dietsche@cuw.edu>
+# This is free software, licensed under the MIT License
+#
+
+#
+# IMPORTANT: if this file is not working, make sure that dnsmasq is able to READ it!
+#
+
+#50.16.250.179 safe.duckduckgo.com
+#54.208.102.2 safe.duckduckgo.com
+#52.204.96.252 safe.duckduckgo.com
+
+50.16.250.179 duckduckgo.com
+54.208.102.2 duckduckgo.com
+52.204.96.252 duckduckgo.com

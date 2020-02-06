@@ -9,9 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ssmtp
 PKG_VERSION:=2.64
-PKG_RELEASE:=5
+PKG_RELEASE:=7
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_CPE_ID:=cpe:/a:ssmtp:ssmtp
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.bz2
 PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/s/ssmtp

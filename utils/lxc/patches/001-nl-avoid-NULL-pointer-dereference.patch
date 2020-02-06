@@ -1,0 +1,37 @@
+From c8f05589644d6b719e5a2c7fc548604f248be9be Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Rafa=C5=82=20Mi=C5=82ecki?= <rafal@milecki.pl>
+Date: Sun, 29 Jul 2018 17:44:06 +0200
+Subject: [PATCH] nl: avoid NULL pointer dereference
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+It's a valid case to call nla_put() with NULL data and 0 len. It's done e.g. in
+the nla_put_attr().
+
+There has to be a check for data in nla_put() as passing NULL to the memcpy()
+is not allowed. Even if length is 0, both pointers have to be valid.
+
+For a reference see C99 standard (7.21.1/2), it says: "pointer arguments on
+such a call shall still have valid values".
+
+Reported-by: Daniel Gimpelevich <daniel@gimpelevich.san-francisco.ca.us>
+Signed-off-by: Rafał Miłecki <rafal@milecki.pl>
+[christian.brauner@ubuntu.com: adapted commit message]
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+---
+ src/lxc/nl.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/src/lxc/nl.c
++++ b/src/lxc/nl.c
+@@ -61,7 +61,8 @@ static int nla_put(struct nlmsg *nlmsg,
+ 	rta = NLMSG_TAIL(nlmsg->nlmsghdr);
+ 	rta->rta_type = attr;
+ 	rta->rta_len = rtalen;
+-	memcpy(RTA_DATA(rta), data, len);
++	if (data && len)
++		memcpy(RTA_DATA(rta), data, len);
+ 	nlmsg->nlmsghdr->nlmsg_len = tlen;
+ 	return 0;
+ }

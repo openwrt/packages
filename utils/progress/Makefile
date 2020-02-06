@@ -8,15 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=progress
-PKG_VERSION:=0.13.1
+PKG_VERSION:=0.14
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/Xfennec/progress.git
-PKG_SOURCE_VERSION:=f6894b827c638af5cf8c5c622e66491c179ba2eb
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
-PKG_MIRROR_HASH:=143047dd44f78c10763446097bcadc551e99a7a8fefc484ef5a65d7bcbe8c181
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/Xfennec/progress/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=214a0d84b3ee5dde57ec9952ec9aa68ad9261fb336ef025324b344ed7ab48af1
 
 PKG_MAINTAINER:=Nikil Mehta <nikil.mehta@gmail.com>
 PKG_LICENSE:=GPL-3.0

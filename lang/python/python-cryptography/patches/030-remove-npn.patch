@@ -1,0 +1,22 @@
+From b0b50b6bbbdf3abadc70b64c56e25b872721a7f3 Mon Sep 17 00:00:00 2001
+From: Paul Kehrer <paul.l.kehrer@gmail.com>
+Date: Mon, 25 Feb 2019 11:12:10 +0800
+Subject: [PATCH] remove another NPN related definition
+
+---
+ src/_cffi_src/openssl/ssl.py | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/src/_cffi_src/openssl/ssl.py b/src/_cffi_src/openssl/ssl.py
+index e3a7790ee1..f98f576838 100644
+--- a/src/_cffi_src/openssl/ssl.py
++++ b/src/_cffi_src/openssl/ssl.py
+@@ -139,8 +139,6 @@
+ static const long TLS_ST_BEFORE;
+ static const long TLS_ST_OK;
+ 
+-static const long OPENSSL_NPN_NEGOTIATED;
+-
+ typedef ... SSL_METHOD;
+ typedef ... SSL_CTX;
+ 

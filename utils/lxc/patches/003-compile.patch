@@ -1,6 +1,6 @@
 --- a/src/lxc/confile_utils.c
 +++ b/src/lxc/confile_utils.c
-@@ -690,7 +690,7 @@ bool parse_limit_value(const char **value, unsigned long *res)
+@@ -677,7 +677,7 @@
  	char *endptr = NULL;
  
  	if (strncmp(*value, "unlimited", sizeof("unlimited") - 1) == 0) {

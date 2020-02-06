@@ -18,6 +18,7 @@ PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:media-libs:libid3tag
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -41,6 +42,11 @@ TARGET_CFLAGS += $(FPIC)
 
 CONFIGURE_VARS += CC="$(TARGET_CC) $(TARGET_CFLAGS)"
 
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(SED) 's,@VERSION@,$(PKG_VERSION),g' $(PKG_BUILD_DIR)/id3tag.pc
+endef
+
 define Build/Configure
 	$(call Build/Configure/Default, \
 		--enable-shared \
@@ -55,6 +61,8 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/id3tag.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libid3tag.so* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig/
+	$(CP) $(PKG_BUILD_DIR)/id3tag.pc $(1)/usr/lib/pkgconfig/
 endef
 
 define Package/libid3tag/install

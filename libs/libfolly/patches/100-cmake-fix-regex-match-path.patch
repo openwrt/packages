@@ -1,0 +1,38 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -112,17 +112,19 @@ configure_file(
+ auto_sources(files "*.cpp" "RECURSE" "${FOLLY_DIR}")
+ auto_sources(hfiles "*.h" "RECURSE" "${FOLLY_DIR}")
+
++string(REPLACE + \\+ FOLLY_DIR_ESCAPED ${FOLLY_DIR})
++
+ # Exclude tests, benchmarks, and other standalone utility executables from the
+ # library sources.  Test sources are listed separately below.
+ REMOVE_MATCHES_FROM_LISTS(files hfiles
+   MATCHES
+-    "^${FOLLY_DIR}/build/"
+-    "^${FOLLY_DIR}/experimental/exception_tracer/"
+-    "^${FOLLY_DIR}/experimental/pushmi/"
+-    "^${FOLLY_DIR}/futures/exercises/"
+-    "^${FOLLY_DIR}/logging/example/"
+-    "^${FOLLY_DIR}/(.*/)?test/"
+-    "^${FOLLY_DIR}/tools/"
++    "^${FOLLY_DIR_ESCAPED}/build/"
++    "^${FOLLY_DIR_ESCAPED}/experimental/exception_tracer/"
++    "^${FOLLY_DIR_ESCAPED}/experimental/pushmi/"
++    "^${FOLLY_DIR_ESCAPED}/futures/exercises/"
++    "^${FOLLY_DIR_ESCAPED}/logging/example/"
++    "^${FOLLY_DIR_ESCAPED}/(.*/)?test/"
++    "^${FOLLY_DIR_ESCAPED}/tools/"
+     "Benchmark.cpp$"
+     "Test.cpp$"
+ )
+@@ -175,7 +177,7 @@ list(APPEND hfiles
+ if (NOT FOLLY_USE_SYMBOLIZER)
+   REMOVE_MATCHES_FROM_LISTS(files hfiles
+     MATCHES
+-      "^${FOLLY_DIR}/experimental/symbolizer/"
++      "^${FOLLY_DIR_ESCAPED}/experimental/symbolizer/"
+   )
+   list(REMOVE_ITEM files
+     ${FOLLY_DIR}/SingletonStackTrace.cpp

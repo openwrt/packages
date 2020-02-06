@@ -1,0 +1,135 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+START=95
+
+BIN=/usr/bin/wifidog-ng
+
+global_dhcp_host_white=1
+
+validate_gateway_section() {
+	uci_load_validate wifidog-ng gateway "$1" "$2" \
+		'enabled:bool:0' \
+		'interface:uci("network", "@interface"):lan' \
+		'dhcp_host_white:bool:1'
+}
+
+start_wifidog() {
+	[ "$2" = 0 ] || {
+		echo "validation gateway failed" >&2
+		exit 1
+	}
+
+	[ $enabled = 1 ] || exit 0
+
+	[ $dhcp_host_white = 1 ] || global_dhcp_host_white=0
+
+	# timeout = 24.855 days
+	ipset -! create wifidog-ng-mac hash:mac timeout 2147483
+	ipset -! create wifidog-ng-ip hash:ip
+
+	modprobe wifidog-ng
+	echo "enabled=1" > /proc/wifidog-ng/config
+
+	procd_open_instance
+	procd_set_param command $BIN
+	procd_set_param respawn
+	procd_close_instance
+}
+
+validate_server_section() {
+	uci_load_validate wifidog-ng server "$1" "$2" \
+		'host:host'
+}
+
+parse_server() {
+	[ "$2" = 0 ] || {
+		echo "validation server failed" >&2
+		exit 1
+	}
+
+	if validate_data ip4addr "$host" 2> /dev/null; then
+		ipset add wifidog-ng-ip $host
+	else
+		echo "ipset=/$host/wifidog-ng-ip" >> /tmp/dnsmasq.d/wifidog-ng
+	fi
+}
+
+validate_validated_user_section() {
+	uci_load_validate wifidog-ng validated_user "$1" "$2" \
+		'mac:macaddr'
+}
+
+parse_validated_user() {
+	[ "$2" = 0 ] || {
+		echo "validation validated_user failed" >&2
+		exit 1
+	}
+
+	[ -n "$mac" ] && ipset add wifidog-ng-mac $mac
+}
+
+validate_validated_domain_section() {
+	uci_load_validate wifidog-ng validated_domain "$1" "$2" \
+		'domain:host'
+}
+
+parse_validated_domain() {
+	[ "$2" = 0 ] || {
+		echo "validation validated_domain failed" >&2
+		exit 1
+	}
+
+	[ -n "$domain" ] && echo "ipset=/$domain/wifidog-ng-ip" >> /tmp/dnsmasq.d/wifidog-ng
+}
+
+validate_dhcp_host_section() {
+	uci_load_validate dhcp host "$1" "$2" \
+		'mac:macaddr'
+}
+
+parse_dhcp_host() {
+	[ "$2" = 0 ] || {
+		echo "validation validated dhcp host failed" >&2
+		exit 1
+	}
+
+	[ -n "$mac" ] && ipset add wifidog-ng-mac $mac
+}
+
+start_service() {
+	config_load wifidog-ng
+	config_foreach validate_gateway_section gateway start_wifidog
+
+	echo -n > /tmp/dnsmasq.d/wifidog-ng
+
+	config_foreach validate_server_section server parse_server
+	config_foreach validate_validated_user_section validated_user parse_validated_user
+	config_foreach validate_validated_domain_section validated_domain parse_validated_domain
+
+	[ $global_dhcp_host_white = 1 ] && {
+		config_load dhcp
+		config_foreach validate_dhcp_host_section host parse_dhcp_host
+	}
+
+	/etc/init.d/dnsmasq restart &
+}
+
+stop_service() {
+	rmmod wifidog-ng
+
+	ipset destroy wifidog-ng-mac
+	ipset destroy wifidog-ng-ip
+}
+
+service_triggers() {
+	procd_add_reload_trigger "wifidog-ng"
+
+	procd_open_validate
+	validate_gateway_section
+	validate_server_section
+	validate_validated_user_section
+	validate_validated_domain_section
+	validate_dhcp_host_section
+	procd_close_validate
+}

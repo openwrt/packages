@@ -1,0 +1,11 @@
+--- a/yarpl/Refcounted.h
++++ b/yarpl/Refcounted.h
+@@ -42,7 +42,7 @@ std::shared_ptr<T> atomic_exchange(
+   auto refptr = ar->ref.lock();
+   auto old = std::move(*refptr);
+   *refptr = std::move(r);
+-  return std::move(old);
++  return old;
+ }
+ 
+ template <typename T>

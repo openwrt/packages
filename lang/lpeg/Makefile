@@ -8,16 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lpeg
-PKG_VERSION:=0.12.2
-PKG_RELEASE:=2
+PKG_VERSION:=1.0.2
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.inf.puc-rio.br/~roberto/lpeg/
-PKG_HASH:=6aad270b91d1b1c6fd75f68e162329a04a644e50e917d55f46cc8384b7120004
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_HASH:=48d66576051b6c78388faad09b70493093264588fcd0f258ddaab1cdd4a15ffe
 
 include $(INCLUDE_DIR)/package.mk
 

@@ -8,20 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alpine
-PKG_VERSION:=2.20
+PKG_VERSION:=2.21.9999
 PKG_RELEASE:=2
 
-PKG_SOURCE_URL:=http://patches.freeiz.com/alpine/release/src/
+PKG_SOURCE_PROTO:=git
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=ed639b6e5bb97e6b0645c85262ca6a784316195d461ce8d8411999bf80449227
+PKG_SOURCE_URL:=http://repo.or.cz/alpine.git
+PKG_SOURCE_VERSION:=d3e6f3932f2af9deca8eed09e30a55e9bd524362
+PKG_MIRROR_HASH:=72f9e8c4c3ecbd5f73f527af98ad23f716fcede3af0ab0400c6e0bc9b1288e30
 
 PKG_MAINTAINER:=Antti Seppälä <a.seppala@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -31,7 +34,7 @@ define Package/alpine/Default
   CATEGORY:=Mail
   DEPENDS:=+libopenssl +libncurses +libpthread +libpam $(ICONV_DEPENDS) $(INTL_DEPENDS)
   TITLE:=Alternatively Licensed Program for Internet News and Email
-  URL:=http://www.washington.edu/alpine
+  URL:=http://alpine.x10host.com/alpine/
 endef
 
 define Package/alpine/Default/description

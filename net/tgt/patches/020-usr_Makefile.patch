@@ -1,5 +1,3 @@
-diff --git a/usr/Makefile b/usr/Makefile
-index d4e3eaf..ec1c9a3 100644
 --- a/usr/Makefile
 +++ b/usr/Makefile
 @@ -1,11 +1,11 @@

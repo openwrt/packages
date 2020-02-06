@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdaq
-PKG_VERSION:=2.0.4
-PKG_RELEASE:=2
+PKG_VERSION:=2.2.2
+PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=https://www.snort.org/downloads/snort/ \
-	@SF/snort
+PKG_SOURCE_URL:=https://www.snort.org/downloads/snortplus/
 PKG_SOURCE:=daq-$(PKG_VERSION).tar.gz
-PKG_HASH:=a294aa3d01cd8902bf842d320e7f2c043af9ead95d0e7198c3b71a0dbc9d253c
+PKG_HASH:=7cd818cabb1ad35360e83076e54775f07165ee71407dc672d147e27d3cd37f7b
 PKG_BUILD_DIR:=$(BUILD_DIR)/daq-$(PKG_VERSION)
 
 PKG_LICENSE:=GPL-2.0
-PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+
+PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -42,14 +43,6 @@ CONFIGURE_ARGS+= \
 	--with-dnet-libraries="$(STAGING_DIR)/usr/lib" \
 	--with-libpcap-includes="$(STAGING_DIR)/usr/include" \
 	--with-libpcap-libraries="$(STAGING_DIR)/usr/lib" \
-
-define Build/Compile
-	$(MAKE) $(MAKE_FLAGS) -C $(PKG_BUILD_DIR)
-endef
-
-define Build/Install
-	$(MAKE) $(MAKE_FLAGS) -C $(PKG_BUILD_DIR) install DESTDIR=$(PKG_INSTALL_DIR)
-endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/include

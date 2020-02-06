@@ -25,7 +25,9 @@ require_regex_ignore=/^require ([a-zA-Z\$]|["']$|.*\/$)/
 require_ignore=%w{drb/invokemethod16 foo rubygems/defaults/operating_system win32console java Win32API
                   builder/xchar json/pure simplecov win32/sspi rdoc/markdown/literals_1_8 enumerator win32/resolv rbtree
                   nqxml/streamingparser nqxml/treeparser xmlscan/parser xmlscan/scanner xmltreebuilder xml/parser xmlparser xml/encoding-ja xmlencoding-ja
-                  iconv uconv win32ole gettext/po_parser gettext/mo libxml psych.jar psych_jars jar-dependencies thread minitest/proveit}
+                  iconv uconv win32ole gettext/po_parser gettext/mo libxml psych.jar psych_jars jar-dependencies thread minitest/proveit
+		bundler pry bcrypt net/http/pipeline capistrano/version rubygems/builder rubygems/format diff/lcs graphviz
+	}
 
 builtin_enc=[
 	Encoding.find("ASCII-8BIT"),
@@ -112,11 +114,13 @@ packages.each do
 end
 exit(1) if failed
 
-# Add deps from .so
+# From ruby source: grep -E 'rb_require' -R . | grep -E '\.c:.*rb_require.*'
+# Add dependencies of ruby files from ruby lib.so
 package_files.each do |(pkg,files)| files.each do |file|
 	case file
-	when /\/nkf\.so$/
-		files_requires[file]= files_requires[file] + ["enc/encdb"]
+	when /\/nkf\.so$/    ; files_requires[file]=files_requires[file] + ["enc/encdb"]
+	when /\/objspace\.so$/; files_requires[file]=files_requires[file] + ["tempfile"] 	# dump_output from ext/objspace/objspace_dump.c
+	when /\/openssl\.so$/; files_requires[file]=files_requires[file] + ["digest"] 		# Init_ossl_digest from ext/openssl/ossl_digest.c
 	end
 end; end
 

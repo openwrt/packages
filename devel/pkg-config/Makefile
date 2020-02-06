@@ -8,16 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pkg-config
-PKG_VERSION:=0.29.1
-PKG_RELEASE:=1
+PKG_VERSION:=0.29.2
+PKG_RELEASE:=3
 
-PKG_SOURCE_URL:=http://pkgconfig.freedesktop.org/releases/
+PKG_SOURCE_URL:=https://pkg-config.freedesktop.org/releases/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=beb43c9e064555469bd4390dcfd8030b1536e0aa103f08d7abf7ae8cac0cb001
+PKG_HASH:=6fc69c01688c9458a57eb9a1664c9aba372ccda420a02bf4429fe610e7e7d591
+
 PKG_MAINTAINER:=Heinrich Schuchardt <xypron.glpk@gmx.de>
-PKG_LICENSE:=GPL-2+
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -26,8 +29,9 @@ define Package/pkg-config
   SECTION:=devel
   CATEGORY:=Development
   TITLE:=pkg-config
-  URL:=http://www.freedesktop.org/wiki/Software/pkg-config/
+  URL:=https://www.freedesktop.org/wiki/Software/pkg-config/
   DEPENDS:=+glib2 $(INTL_DEPENDS)
+  CONFLICTS:=pkgconf
 endef
 
 define Package/pkg-config/description
@@ -37,6 +41,8 @@ define Package/pkg-config/description
   for instance, rather than hard-coding values on where to find glib (or
   other libraries).
 endef
+
+TARGET_CFLAGS += $(FPIC)
 
 define Package/pkg-config/install
 	$(INSTALL_DIR) $(1)/usr/bin

@@ -1,0 +1,67 @@
+commit f298352f4042ac2b0db5c12484c9d84f234fe3cd
+Author: Emmanuel Hocdet <manu@gandi.net>
+Date:   Wed Jan 22 17:02:53 2020 +0100
+
+    BUG/MINOR: ssl/cli: ocsp_issuer must be set w/ "set ssl cert"
+    
+    ocsp_issuer is primary set from ckch->chain when PEM is loaded from file,
+    but not set when PEM is loaded via CLI payload. Set ckch->ocsp_issuer in
+    ssl_sock_load_pem_into_ckch to fix that.
+    
+    Should be backported in 2.1.
+    
+    (cherry picked from commit 078156d06399282ae467a9d1a450a42238870028)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 713c8aedd..2cc5ae80e 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -3113,6 +3113,7 @@ static int ssl_sock_load_pem_into_ckch(const char *path, char *buf, struct cert_
+ {
+ 	BIO *in = NULL;
+ 	int ret = 1;
++	int i;
+ 	X509 *ca;
+ 	X509 *cert = NULL;
+ 	EVP_PKEY *key = NULL;
+@@ -3226,6 +3227,15 @@ static int ssl_sock_load_pem_into_ckch(const char *path, char *buf, struct cert_
+ 	SWAP(ckch->cert, cert);
+ 	SWAP(ckch->chain, chain);
+ 
++	/* check if one of the certificate of the chain is the issuer */
++	for (i = 0; i < sk_X509_num(ckch->chain); i++) {
++		X509 *issuer = sk_X509_value(ckch->chain, i);
++		if (X509_check_issued(issuer, ckch->cert) == X509_V_OK) {
++			ckch->ocsp_issuer = issuer;
++			X509_up_ref(issuer);
++			break;
++		}
++	}
+ 	ret = 0;
+ 
+ end:
+@@ -3303,22 +3313,8 @@ static int ssl_sock_load_files_into_ckch(const char *path, struct cert_key_and_c
+ 
+ #ifndef OPENSSL_IS_BORINGSSL /* Useless for BoringSSL */
+ 	if (ckch->ocsp_response) {
+-		X509 *issuer;
+-		int i;
+-
+-		/* check if one of the certificate of the chain is the issuer */
+-		for (i = 0; i < sk_X509_num(ckch->chain); i++) {
+-			issuer = sk_X509_value(ckch->chain, i);
+-			if (X509_check_issued(issuer, ckch->cert) == X509_V_OK) {
+-				ckch->ocsp_issuer = issuer;
+-				X509_up_ref(ckch->ocsp_issuer);
+-				break;
+-			} else
+-				issuer = NULL;
+-		}
+-
+ 		/* if no issuer was found, try to load an issuer from the .issuer */
+-		if (!issuer) {
++		if (!ckch->ocsp_issuer) {
+ 			struct stat st;
+ 			char fp[MAXPATHLEN+1];
+ 

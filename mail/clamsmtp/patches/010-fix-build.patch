@@ -1,0 +1,19 @@
+--- a/configure.in
++++ b/configure.in
+@@ -78,16 +78,6 @@ AC_CHECK_HEADERS([limits.h err.h paths.h],,)
+ AC_CHECK_HEADERS([unistd.h stdio.h stddef.h fcntl.h stdlib.h assert.h errno.h stdarg.h string.h netdb.h], ,
+     [echo "ERROR: Required C header missing"; exit 1])
+ 
+-# Check for linux type transparent proxy support
+-AC_CHECK_HEADERS([linux/netfilter_ipv4.h],
+-   AC_DEFINE(LINUX_TRANSPARENT_PROXY, 1, [Whether the system supports a linux type transparent proxy]),
+-   , 
+-   [[
+-   #ifdef HAVE_LIMITS_H
+-   #include <limits.h>
+-   #endif
+-   ]] )
+-
+ # Checks for typedefs, structures, and compiler characteristics.
+ AC_C_CONST
+ AC_TYPE_SIZE_T

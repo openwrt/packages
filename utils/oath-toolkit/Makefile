@@ -9,14 +9,19 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oath-toolkit
 PKG_VERSION:=2.6.2
-PKG_RELEASE:=1
+PKG_RELEASE:=5
+
 PKG_SOURCE:=oath-toolkit-$(PKG_VERSION).tar.gz
-PKG_HASH:=b03446fa4b549af5ebe4d35d7aba51163442d255660558cd861ebce536824aa0
 PKG_SOURCE_URL:=@SAVANNAH/oath-toolkit
-PKG_LICENSE:=LGPL-2.0+ GPL-3.0+
-PKG_LICENSE_FILES:=COPYING
-PKG_INSTALL:=1
+PKG_HASH:=b03446fa4b549af5ebe4d35d7aba51163442d255660558cd861ebce536824aa0
+
 PKG_MAINTAINER:=Fam Zheng <fam@euphon.net>
+PKG_LICENSE:=LGPL-2.0-or-later GPL-3.0-or-later
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:nongnu:oath_toolkit
+
+PKG_BUILD_PARALLEL:=1
+PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -43,7 +48,7 @@ define Package/oath-toolkit/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/oathtool $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/liboath.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liboath.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,oath-toolkit))

@@ -1,0 +1,13 @@
+diff -urN a/lib/wiper/wiperPosix.c b/lib/wiper/wiperPosix.c
+--- a/lib/wiper/wiperPosix.c
++++ b/lib/wiper/wiperPosix.c
+@@ -43,6 +43,9 @@
+ #  include <libgen.h>
+ # endif /* __FreeBSD_version >= 500000 */
+ #endif
++#if defined(__linux__)
++#include <sys/sysmacros.h>
++#endif
+ #include <unistd.h>
+ 
+ #include "vmware.h"

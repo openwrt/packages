@@ -8,28 +8,27 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=emailrelay
-PKG_VERSION:=1.9
-PKG_RELEASE:=4
+PKG_VERSION:=2.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-src.tar.gz
 PKG_SOURCE_URL:=@SF/emailrelay/$(PKG_VERSION)
-PKG_HASH:=869a3e2d053237d7f63784acc25e748af2dbf2d9b9c5c48e4a5269d4e4b5bda0
+PKG_HASH:=dcb1fc0cbb3d5407554685616e7ef691f30f733b4484979be0794c9d5f563762
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_MAINTAINER:=Federico Di Marco <fededim@gmail.com>
+PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=COPYING
 
-PKG_CONFIG_DEPENDS:=CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG CONFIG_EMAILRELAY_SSL 
+PKG_CONFIG_DEPENDS:=CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG CONFIG_EMAILRELAY_SSL
 
-
-#include $(INCLUDE_DIR)/uclibc++.mk   # $(CXX_DEPENDS)
 include $(INCLUDE_DIR)/package.mk
 
 define Package/emailrelay
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+EMAILRELAY_SSL:libopenssl +libstdcpp 
+  DEPENDS:=+EMAILRELAY_SSL:libopenssl +libstdcpp
   TITLE:=A simple SMTP proxy and MTA
   URL:=http://emailrelay.sourceforge.net/
-  MAINTAINER:=Federico Di Marco <fededim@gmail.com>
   MENU:=1
 endef
 
@@ -42,7 +41,7 @@ config EMAILRELAY_SUPPORT_VERBOSE_DBG
 	help
 	  Enables support for extended logging (must also be explicitely enabled by using command line switch --debug when starting emailrelay)
 
-config EMAILRELAY_SSL 
+config EMAILRELAY_SSL
 	bool "Enable support for OpenSSL"
 	depends on PACKAGE_emailrelay
 	default y
@@ -54,60 +53,60 @@ endef
 
 
 define Package/emailrelay/description
- Emailrelay is a simple SMTP proxy and store-and-forward message transfer agent (MTA). 
- 
- When running as a proxy all e-mail messages can be passed through 
-  a user-defined program, such as a spam filter, which can drop, 
-  re-address or edit messages as they pass through. When running 
-  as a store-and-forward MTA incoming messages are stored in a 
-  local spool directory, and then forwarded to the next SMTP 
-  server on request.
+ Emailrelay is a simple SMTP proxy and store-and-forward message transfer agent (MTA).
+
+ When running as a proxy all e-mail messages can be passed through
+ a user-defined program, such as a spam filter, which can drop,
+ re-address or edit messages as they pass through. When running
+ as a store-and-forward MTA incoming messages are stored in a
+ local spool directory, and then forwarded to the next SMTP
+ server on request.
 endef
 
 
 define Package/emailrelay/conffiles
+/etc/config/emailrelay
 /etc/emailrelay.auth
 endef
 
 
 CONFIGURE_ARGS += \
-	--with-pam=no \
-	--enable-testing=no
-
-CONFIGURE_VARS += \
-	CXXFLAGS="$$$$CXXFLAGS -fno-rtti"	
-
+	--without-doxygen \
+	--without-man2html \
+	--without-mbedtls \
+	--without-pam \
+	--disable-bsd \
+	--disable-gui \
+	--disable-mac \
+	--disable-testing \
+	--disable-windows
 
 ifeq ($(CONFIG_EMAILRELAY_SSL),y)
 	CONFIGURE_ARGS += \
 		--with-openssl
 else
 	CONFIGURE_ARGS += \
-		--with-openssl=no
+		--without-openssl
 endif
-
 
 ifeq ($(CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG),y)
 	CONFIGURE_ARGS += \
 		--enable-debug=yes
 endif
 
-ifeq ($(CONFIG_OPENSSL_WITH_SSL3),y)
-	CONFIGURE_VARS += \
-		CXXFLAGS="$$$$CXXFLAGS -DSSL3_SUPPORT"	
-endif
+TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -flto
+TARGET_CXXFLAGS += -Wl,--gc-sections,--as-needed
 
 define Package/emailrelay/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-filter-copy $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-passwd $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-poke $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-submit $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/tmp/spool
-	$(INSTALL_DIR) $(1)/tmp/spool/emailrelay
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DATA) files/$(PKG_NAME).auth $(1)/etc/
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) files/$(PKG_NAME).config $(1)/etc/config/$(PKG_NAME)
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/$(PKG_NAME).init $(1)/etc/init.d/$(PKG_NAME)
 endef

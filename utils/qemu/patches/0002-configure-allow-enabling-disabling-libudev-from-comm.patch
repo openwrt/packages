@@ -1,0 +1,25 @@
+From 2a6ab8342245c8dc2a09478d8eb0292e2dbcecf2 Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Tue, 2 Apr 2019 06:31:31 +0000
+Subject: [PATCH 2/5] configure: allow enabling/disabling libudev from command
+ line
+
+---
+ configure | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/configure b/configure
+index b52d2cb406..efe06f3c2b 100755
+--- a/configure
++++ b/configure
+@@ -1539,6 +1539,10 @@ for opt do
+   ;;
+   --disable-plugins) plugins="no"
+   ;;
++  --enable-libudev) libudev=yes
++  ;;
++  --disable-libudev) libudev=no
++  ;;
+   --disable-fortify-source) fortify_source="no"
+   ;;
+   *)

@@ -1,0 +1,54 @@
+--- a/Makefile
++++ b/Makefile
+@@ -420,7 +420,7 @@ endif
+ # Disable all drivers needing raw access (memory, PCI, port I/O) on
+ # architectures with unknown raw access properties.
+ # Right now those architectures are alpha hppa m68k sh s390
+-ifneq ($(ARCH),$(filter $(ARCH),x86 mips ppc arm sparc))
++ifneq ($(ARCH),$(filter $(ARCH),x86 mips ppc arm sparc arc))
+ ifeq ($(CONFIG_INTERNAL), yes)
+ UNSUPPORTED_FEATURES += CONFIG_INTERNAL=yes
+ else
+--- a/hwaccess.h
++++ b/hwaccess.h
+@@ -87,6 +87,13 @@
+ /* SPARC is big endian in general (but allows to access data in little endian too). */
+ #define __FLASHROM_BIG_ENDIAN__ 1
+ 
++#elif IS_ARC
++#ifdef __arceb__
++#define __FLASHROM_BIG_ENDIAN__ 1
++#else
++#define __FLASHROM_LITTLE_ENDIAN__ 1
++#endif
++
+ #endif /* IS_? */
+ 
+ #if !defined (__FLASHROM_BIG_ENDIAN__) && !defined (__FLASHROM_LITTLE_ENDIAN__)
+@@ -378,6 +385,8 @@ int libpayload_wrmsr(int addr, msr_t msr);
+ 
+ /* Non memory mapped I/O is not supported on ARM. */
+ 
++#elif IS_ARC
++
+ #else
+ 
+ #error Unknown architecture, please check if it supports PCI port IO.
+diff --git a/platform.h b/platform.h
+index b2fdcd0..2e68e71 100644
+--- a/platform.h
++++ b/platform.h
+@@ -75,9 +75,12 @@
+ #elif defined(__s390__) || defined(__s390x__) || defined(__zarch__)
+ 	#define __FLASHROM_ARCH__ "s390"
+ 	#define IS_S390 1
++#elif defined (__arc__)
++	#define __FLASHROM_ARCH__ "arc"
++	#define IS_ARC 1
+ #endif
+ 
+-#if !(IS_X86 || IS_MIPS || IS_PPC || IS_ARM || IS_SPARC || IS_ALPHA || IS_HPPA || IS_M68K || IS_SH || IS_S390)
++#if !(IS_X86 || IS_MIPS || IS_PPC || IS_ARM || IS_SPARC || IS_ALPHA || IS_HPPA || IS_M68K || IS_SH || IS_S390 || IS_ARC)
+ #error Unknown architecture
+ #endif
+ 

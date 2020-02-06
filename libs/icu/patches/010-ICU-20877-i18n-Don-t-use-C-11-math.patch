@@ -1,0 +1,40 @@
+From 8fda72f6d8e442c5382f21cdd884e2c962bb53bd Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Wed, 11 Dec 2019 13:25:32 -0800
+Subject: [PATCH] ICU-20877 i18n: Don't use C++11 math
+
+It's not available with some libc implementations. Specifically,
+BIONIC and uClibc-ng. uprv_ variants are available.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ i18n/decimfmt.cpp               | 2 +-
+ i18n/number_decimalquantity.cpp | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/i18n/decimfmt.cpp b/i18n/decimfmt.cpp
+index 4015250e273..0cbaca7e099 100644
+--- a/i18n/decimfmt.cpp
++++ b/i18n/decimfmt.cpp
+@@ -1801,7 +1801,7 @@ bool DecimalFormat::fastFormatDouble(double input, UnicodeString& output) const
+         return false;
+     }
+     if (std::isnan(input)
+-            || std::trunc(input) != input
++            || uprv_trunc(input) != input
+             || input <= INT32_MIN
+             || input > INT32_MAX) {
+         return false;
+diff --git a/i18n/number_decimalquantity.cpp b/i18n/number_decimalquantity.cpp
+index abbc23de032..778feb141b4 100644
+--- a/i18n/number_decimalquantity.cpp
++++ b/i18n/number_decimalquantity.cpp
+@@ -452,7 +452,7 @@ void DecimalQuantity::_setToDoubleFast(double n) {
+         for (; i <= -22; i += 22) n /= 1e22;
+         n /= DOUBLE_MULTIPLIERS[-i];
+     }
+-    auto result = static_cast<int64_t>(std::round(n));
++    auto result = static_cast<int64_t>(uprv_round(n));
+     if (result != 0) {
+         _setToLong(result);
+         scale -= fracLength;

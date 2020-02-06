@@ -6,77 +6,6 @@ g_pslfile=/usr/share/public_suffix_list.dat.gz
 g_pslerr=0
 g_cfgfile="ddns"
 
-# modify "cloudflare.com-v1" domain to new syntax
-# returns "host[.subdom]@domain.TLD" of given FQDN #############################
-mod_cloudflare_v1_domain() {
-	# $1	entry to validate/split
-	[ -f "$g_pslfile" ] || return 1
-
-	[ $# -ne 1 -o -z "$1" ] && \
-		{ printf "%s\\n" "mod_cloudflare_v1_domain() - Invalid number of parameters" >&2; return 1; }
-
-	local mcd_fqdn=$1
-	local mcd_fsub=""
-	local mcd_fdom=""
-	local mcd_ctld=""
-	local mcd_ftld=""
-
-	# check if already new syntax, "@" inside string
-	if [ $( printf "%s" "$mcd_fqdn" | grep -cF "@" 2>/dev/null ) -gt 0 ]; then
-		# already done
-		printf "%s" "$mcd_fqdn"
-		return 0
-	fi
-
-	# we need to do in one line because otherwise sh doesn't work correctly
-	# to lower | replace "." to " " | awk invert word order
-	set -- $(printf %s "$mcd_fqdn" | tr [A-Z] [a-z] | tr "." " " \
-			| awk '{do printf "%s"(NF>1?OFS:ORS),$NF;while (--NF)}' )
-
-	while [ -n "${1:-}" ] ; do			# as long we have parameters
-		if [ -z "$mcd_ctld" ]; then 		# first loop
-			mcd_ctld="$1"			# CURRENT TLD to look at
-			shift
-		else
-			mcd_ctld="$1.$mcd_ctld"		# Next TLD to look at
-			shift
-		fi
-		# check if TLD exact match in public_suffix_name.dat, save TLD
-		zcat $g_pslfile | grep -E "^$mcd_ctld$" >/dev/null 2>&1 && {
-			mcd_ftld="$mcd_ctld"		# save found
-			mcd_fdom="${1:-}"		# save domain next step might be invalid
-			continue
-		}
-		# check if match any "*" in public_suffix_name.dat,
-		zcat $g_pslfile | grep -E "^\*.$mcd_ctld$" >/dev/null 2>&1 && {
-			[ -z "${1:-}" ] && break	# no more data break
-			# check if next level TLD match excludes "!" in tld_names.dat
-			if zcat $g_pslfile | grep -E "^!$1.$mcd_ctld$" >/dev/null 2>&1 ; then
-				mcd_ftld="$mcd_ctld"	# Yes
-			else
-				mcd_ftld="$1.$mcd_ctld"
-				shift
-			fi
-			mcd_fdom="$1"; shift
-		}
-		[ -n "$mcd_ftld" ] && break	# we have something valid, break
-	done
-
-	# the leftover parameters are the HOST/SUBDOMAIN
-	while [ -n "${1:-}" ]; do
-		mcd_fsub="${1}${mcd_fsub:+.$mcd_fsub}"	# remember we need to invert
-		shift					# and insert dot if mcd_fsub not empty
-	done
-
-	# now validate found data
-	[ -z "$mcd_ftld" ] && { printf "%s\\n" "mod_cloudflare_v1_domain() - no TLD not found in '$mcd_fqdn'" >&1; return 1; }
-	[ -z "$mcd_fdom" ] && { printf "%s\\n" "mod_cloudflare_v1_domain() - no registrable Domain not found in '$mcd_fqdn'" >&1; return 1; }
-
-	# return data
-	printf "%s" "${mcd_fsub:+${mcd_fsub}@}${mcd_fdom}.${mcd_ftld}"
-	return 0
-}
-
 # modify timer settings from interval and unit to dhms format
 timer2dhms() {
 # $1	Number and
@@ -144,40 +73,12 @@ update_config() {
 								$uc_uci set $g_cfgfile.$uc_name.$uc_var="afraid.org-keyauth";;
 							Bind-nsupdate)
 								$uc_uci set $g_cfgfile.$uc_name.$uc_var="bind-nsupdate";;
-							CloudFlare|cloudflare\.com|cloudflare\.com-v1)
-								# verify if lookup_host is set
-								$uc_uci get $g_cfgfile.$uc_name.lookup_host >/dev/null 2>&1 || {
-									ucv_domain=$($uc_uci get $g_cfgfile.$uc_name.domain 2>/dev/null)
-									$uc_uci set $g_cfgfile.$uc_name.lookup_host="$ucv_domain"
-								}
-								if [ -f "$g_pslfile" ]; then
-									# change value of domain/upd_object to new syntax
-									# there is no sort order inside uci data so we need multiple checks
-									ucv_domain=$($uc_uci get $g_cfgfile.$uc_name.domain 2>/dev/null)
-									ucv_object=$($uc_uci get $g_cfgfile.$uc_name.upd_object 2>/dev/null)
-									# still old option domain
-									if [ -n "$ucv_domain" ]; then
-										ucv_new=$(mod_cloudflare_v1_domain "$ucv_domain") || g_pslerr=1
-										# no error save data save data
-										[ $g_pslerr -eq 0 ] && \
-											$uc_uci set $g_cfgfile.$uc_name.domain="$ucv_new"
-									fi
-									# already new option upd_object
-									if [ -n "$ucv_object" ]; then
-										ucv_new=$(mod_cloudflare_v1_domain "$ucv_object") || g_pslerr=1
-										# no error save data save data
-										[ $g_pslerr -eq 0 ] && \
-											$uc_uci set $g_cfgfile.$uc_name.upd_object="$ucv_new"
-									fi
-								fi
-								unset ucv_domain ucv_object ucv_new
-								# set new option value
-								$uc_uci set $g_cfgfile.$uc_name.$uc_var="cloudflare.com-v1"
-								;;
 							dyndns\.org|dyndns\.com)
 								$uc_uci set $g_cfgfile.$uc_name.$uc_var="dyn.com";;
 							free\.editdns\.net)
 								$uc_uci set $g_cfgfile.$uc_name.$uc_var="editdns.net";;
+							FreeDNS\.42\.pl)
+								$uc_uci set $g_cfgfile.$uc_name.$uc_var="freedns.42.pl";;
 							domains\.google\.com)
 								$uc_uci set $g_cfgfile.$uc_name.$uc_var="google.com";;
 							loopia\.com)
@@ -204,15 +105,6 @@ update_config() {
 							# there is no sort order inside uci data so we need multiple checks
 							uco_provider=$($uc_uci get $g_cfgfile.$uc_name.upd_provider 2>/dev/null) || \
 								uco_provider=$($uc_uci get $g_cfgfile.$uc_name.service_name 2>/dev/null)
-							if [ "$uco_provider" = "CloudFlare" \
-							  -o "$uco_provider" = "cloudflare.com" \
-							  -o "$uco_provider" = "cloudflare.com-v1" ]; then
-								ucv_new=$(mod_cloudflare_v1_domain "$uc_val") || g_pslerr=1
-								# no error save data save data
-								[ $g_pslerr -eq 0 ] && \
-									$uc_uci set $g_cfgfile.$uc_name.$uc_var="$ucv_new"
-								unset ucv_new
-							fi
 							unset uco_provider
 						fi
 						# rename option domain to option upd_object

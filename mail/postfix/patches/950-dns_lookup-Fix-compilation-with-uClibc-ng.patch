@@ -1,0 +1,36 @@
+From 4fe5b1f216f1643080299bdb35e07f07b9c2caae Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Thu, 2 May 2019 22:28:57 -0700
+Subject: [PATCH] dns_lookup: Fix compilation with uClibc-ng
+
+uClibc-ng does not have res_send or res_nsend. ifdef the entire function.
+---
+ src/dns/dns_lookup.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/dns/dns_lookup.c b/src/dns/dns_lookup.c
+index 1ea98b3..d7771d4 100644
+--- a/src/dns/dns_lookup.c
++++ b/src/dns/dns_lookup.c
+@@ -311,6 +311,10 @@ typedef struct DNS_REPLY {
+ static int dns_res_query(const char *name, int class, int type,
+ 			         unsigned char *answer, int anslen)
+ {
++#ifdef __UCLIBC__
++    msg_info("dns_res_query() is not supported under uClibc");
++    return 0;
++#else
+     unsigned char msg_buf[MAX_DNS_QUERY_SIZE];
+     HEADER *reply_header = (HEADER *) answer;
+     int     len;
+@@ -369,6 +373,7 @@ static int dns_res_query(const char *name, int class, int type,
+ 	}
+ 	return (len);
+     }
++#endif
+ }
+ 
+ /* dns_res_search - res_search() that can return negative replies */
+-- 
+2.17.1
+

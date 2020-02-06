@@ -1,0 +1,28 @@
+From 5542b160fa73e5e81e83c2d8dd1b79c3023094ee Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Mon, 7 Oct 2019 15:36:31 -0700
+Subject: [PATCH 2/4] support: Flush cout in GetYN
+
+uClibc++ does not implicitly flush cout before getline.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ support.cc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/support.cc b/support.cc
+index d47965a..5ab8a23 100644
+--- a/support.cc
++++ b/support.cc
+@@ -101,7 +101,7 @@ char GetYN(void) {
+    do {
+       if ( again ) { cout << "Your option? " ; }
+       again = 1 ;
+-      cout << "(Y/N): ";
++      cout << "(Y/N): " << flush;
+       line = ReadString();
+       response = toupper(line[0]);
+    } while ((response != 'Y') && (response != 'N'));
+-- 
+2.17.1
+

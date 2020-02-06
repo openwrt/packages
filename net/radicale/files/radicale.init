@@ -4,6 +4,11 @@
 START=80
 STOP=10
 
+EXTRA_COMMANDS="export_storage"
+EXTRA_HELP="	export_storage <PATH>
+	- export the storage into the specified folder
+	- <PATH> can be directly used with the default storage backend of Radicale 2.x.x."
+
 CFGDIR=/var/etc/radicale
 SYSCFG=$CFGDIR/config
 LOGCFG=$CFGDIR/logging
@@ -160,6 +165,30 @@ _set_permission() {
 		exit 1
 	}
 	chgrp -R radicale $DATADIR
+}
+
+export_storage() {
+	# if already running do nothing
+	local _PID=$(eval "$PGREP")
+	kill -1 $_PID 2>/dev/null && {
+		echo "Export failed !!! - Service running !" >&2
+		logger -p user.error -t "radicale[$_PID]" "Export failed !!! - Service running !"
+		return 1
+	}
+
+	[ $# -ne 1 ] || [ ! -d $1 ] && {
+		echo "Export failed !!! Directory not given or does not exist !" >&2
+		logger -p user.error -t "radicale[----]" "Export failed !!! Directory not given or does not exist !"
+		return 1
+	}
+
+	_uci2radicale
+	_set_permission
+
+	chmod 775 $1
+	chgrp radicale $1
+
+	radicale --config=$SYSCFG --export-storage $1/export
 }
 
 boot() {

@@ -1,3 +1,50 @@
+--- a/m4/ogg.m4
++++ b/m4/ogg.m4
+@@ -29,7 +29,7 @@ XIPH_GCC_WARNING([-I$ogg_prefix/include],,
+       ])
+ AC_CACHE_CHECK([for libogg], xt_cv_lib_ogg,
+ [dnl
+-OGG_LIBS="-logg"
++OGG_LIBS="-lvorbisidec"
+ 
+ #
+ # check if the installed Ogg is sufficiently new.
+diff --git a/m4/vorbis.m4 b/m4/vorbis.m4
+index 17add29..066dc2a 100644
+--- a/m4/vorbis.m4
++++ b/m4/vorbis.m4
+@@ -38,9 +38,9 @@ if test "x$vorbis_prefix" != "x$ogg_prefix"; then
+             ])
+ fi
+ 
+-VORBIS_LIBS="-lvorbis"
+-VORBISFILE_LIBS="-lvorbisfile"
+-VORBISENC_LIBS="-lvorbisenc"
++VORBIS_LIBS="-lvorbisidec"
++VORBISFILE_LIBS="-lvorbisidec"
++VORBISENC_LIBS="-lvorbisidec"
+ 
+ xt_save_LIBS="$LIBS"
+ xt_save_LDFLAGS="$LDFLAGS"
+@@ -58,18 +58,6 @@ AC_TRY_LINK_FUNC(ogg_stream_init, [xt_lib_vorbis=ok],
+             )
+         ])
+ 
+-if test "x$xt_lib_vorbis" = "xok"; then
+-#
+-# Now check if the installed Vorbis is sufficiently new.
+-#
+-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+-#include <vorbis/codec.h>
+-#include <vorbis/vorbisenc.h>
+-        ], [
+-struct ovectl_ratemanage_arg a;
+-])],,[xt_lib_vorbis="old version found"])
+-AC_MSG_RESULT([$xt_lib_vorbis])
+-fi
+ CPPFLAGS="$xt_save_CPPFLAGS"
+ LIBS="$xt_save_LIBS"
+ LDFLAGS="$xt_save_LDFLAGS"
 --- a/src/format_vorbis.c
 +++ b/src/format_vorbis.c
 @@ -19,7 +19,7 @@
@@ -17,7 +64,7 @@
  
  typedef struct vorbis_codec_tag
  {
-@@ -583,3 +584,91 @@ static refbuf_t *process_vorbis_page (og
+@@ -583,3 +584,91 @@ static refbuf_t *process_vorbis_page (ogg_state_t *ogg_info,
      return NULL;
  }
  
@@ -109,48 +156,3 @@
 +  oggpack_writeclear(&opb);
 +  return 0;
 +}
---- a/m4/vorbis.m4
-+++ b/m4/vorbis.m4
-@@ -38,9 +38,9 @@ if test "x$vorbis_prefix" != "x$ogg_pref
-             ])
- fi
- 
--VORBIS_LIBS="-lvorbis"
--VORBISFILE_LIBS="-lvorbisfile"
--VORBISENC_LIBS="-lvorbisenc"
-+VORBIS_LIBS="-lvorbisidec"
-+VORBISFILE_LIBS="-lvorbisidec"
-+VORBISENC_LIBS="-lvorbisidec"
- 
- xt_save_LIBS="$LIBS"
- xt_save_LDFLAGS="$LDFLAGS"
-@@ -58,18 +58,6 @@ AC_TRY_LINK_FUNC(ogg_stream_init, [xt_li
-             )
-         ])
- 
--if test "x$xt_lib_vorbis" = "xok"; then
--#
--# Now check if the installed Vorbis is sufficiently new.
--#
--AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
--#include <vorbis/codec.h>
--#include <vorbis/vorbisenc.h>
--        ], [
--struct ovectl_ratemanage_arg a;
--])],,[xt_lib_vorbis="old version found"])
--AC_MSG_RESULT([$xt_lib_vorbis])
--fi
- CPPFLAGS="$xt_save_CPPFLAGS"
- LIBS="$xt_save_LIBS"
- LDFLAGS="$xt_save_LDFLAGS"
---- a/m4/ogg.m4
-+++ b/m4/ogg.m4
-@@ -29,7 +29,7 @@ XIPH_GCC_WARNING([-I$ogg_prefix/include]
-       ])
- AC_CACHE_CHECK([for libogg], xt_cv_lib_ogg,
- [dnl
--OGG_LIBS="-logg"
-+OGG_LIBS="-lvorbisidec"
- 
- #
- # check if the installed Ogg is sufficiently new.

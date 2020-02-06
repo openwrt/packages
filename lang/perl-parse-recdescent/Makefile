@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-parse-recdescent
-PKG_VERSION:=1.967013
-PKG_RELEASE:=1
+PKG_VERSION:=1.967015
+PKG_RELEASE:=2
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/J/JT/JTBRAUN
+PKG_SOURCE_URL:=https://www.cpan.org/authors/id/J/JT/JTBRAUN
 PKG_SOURCE:=Parse-RecDescent-$(PKG_VERSION).tar.gz
-PKG_HASH:=226590d3850cd1678deb0190d5207b3477fb9070a8ca6f18d8999daf44485930
+PKG_HASH:=1943336a4cb54f1788a733f0827c0c55db4310d5eae15e542639c9dd85656e37
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/perl/Parse-RecDescent-$(PKG_VERSION)

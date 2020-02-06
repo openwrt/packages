@@ -8,23 +8,26 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openocd
-PKG_VERSION:=v0.10.0
+PKG_SOURCE_VERSION:=v0.10.0-1000-gdb23c13d
+PKG_VERSION:=$(PKG_SOURCE_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://git.code.sf.net/p/openocd/code
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=ef8a71daa581a3a2296fd3dafff21de2ca7b86319ec3a5c24ed6a216d1fdff45
+PKG_SOURCE_URL:=git://git.code.sf.net/p/openocd/code
+PKG_MIRROR_HASH:=6f8c0ecf240427654ad5e911b44f78996da931209280f4a19c1215802ff14638
+
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_MAINTAINER:=Paul Fertser <fercerpav@gmail.com>
+PKG_CPE_ID:=cpe:/a:openocd:open_on-chip_debugger
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
+
+PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_openocd_with_usb
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -34,7 +37,18 @@ define Package/openocd
   CATEGORY:=Utilities
   TITLE:=OpenOCD Utility
   URL:=http://openocd.sf.net/
-  DEPENDS:=+libusb-1.0 +libusb-compat +libftdi1 +hidapi
+  DEPENDS:=+PACKAGE_openocd_with_usb:libusb-1.0 \
+	+PACKAGE_openocd_with_usb:libusb-compat \
+	+PACKAGE_openocd_with_usb:libftdi1 \
+	+PACKAGE_openocd_with_usb:hidapi
+endef
+
+define Package/openocd/config
+  if PACKAGE_openocd
+	config PACKAGE_openocd_with_usb
+		bool "Build with support for USB adapters."
+		default y
+  endif
 endef
 
 define Package/openocd/description
@@ -55,12 +69,20 @@ the GNU GDB program (and the others who talk GDB protocol, e.g. IDA
 Pro).
 endef
 
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	-$(RM) $(PKG_BUILD_DIR)/guess-rev.sh
+endef
+
 CONFIGURE_ARGS += \
 	--prefix="/usr" \
 	--disable-werror \
 	MAKEINFO=true \
+	$(if $(CONFIG_PACKAGE_openocd_with_usb),,PKG_CONFIG=false) \
 	--enable-dummy \
 	--enable-sysfsgpio
+
+TARGET_CFLAGS += -DRELSTR=\\\"-$(PKG_VERSION)-$(PKG_RELEASE)-OpenWrt\\\"
 
 define Build/Compile
         +$(MAKE_VARS) \

@@ -8,15 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgpg-error
-PKG_VERSION:=1.12
-PKG_RELEASE:=1
+PKG_VERSION:=1.36
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=ftp://ftp.gnupg.org/gcrypt/libgpg-error
-PKG_HASH:=cafc9ed6a87c53a35175d5a1220a96ca386696eef2fa059cc0306211f246e55f
+PKG_SOURCE_URL:=https://mirrors.dotsrc.org/gcrypt/libgpg-error \
+		http://ring.ksc.gr.jp/archives/net/gnupg/libgpg-error \
+		https://www.gnupg.org/ftp/gcrypt/libgpg-error
+PKG_HASH:=babd98437208c163175c29453f8681094bcaf92968a15cafb1a276076b33c97c
+
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_LICENSE:=LGPL-2.1-or-later
+PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -24,8 +31,7 @@ define Package/libgpg-error
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=GnuPG error handling helper library
-  URL:=http://www.gnupg.org/related_software/libgpg-error/
-  MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+  URL:=https://www.gnupg.org/related_software/libgpg-error/
 endef
 
 define Package/libgpg-error/description
@@ -36,12 +42,13 @@ define Package/libgpg-error/description
 	future.
 endef
 
-TARGET_CFLAGS += $(FPIC)
-
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
-	--disable-rpath
+	--disable-doc \
+	--disable-languages \
+	--disable-rpath \
+	--disable-tests
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(2)/bin $(1)/usr/bin

@@ -1,0 +1,69 @@
+diff --git a/lib/asyncsocket/asyncsocket.c b/lib/asyncsocket/asyncsocket.c
+index 07a5d04b..01181a95 100644
+--- a/lib/asyncsocket/asyncsocket.c
++++ b/lib/asyncsocket/asyncsocket.c
+@@ -86,7 +86,7 @@
+ #include "random.h"
+ #include "asyncsocket.h"
+ #include "asyncSocketBase.h"
+-#include "poll.h"
++#include "vm_poll.h"
+ #include "log.h"
+ #include "err.h"
+ #include "hostinfo.h"
+diff --git a/lib/hgfsServer/hgfsServer.c b/lib/hgfsServer/hgfsServer.c
+index 46224551..fc691286 100644
+--- a/lib/hgfsServer/hgfsServer.c
++++ b/lib/hgfsServer/hgfsServer.c
+@@ -48,7 +48,7 @@
+ #include "hgfsServerOplock.h"
+ #include "hgfsDirNotify.h"
+ #include "userlock.h"
+-#include "poll.h"
++#include "vm_poll.h"
+ #include "mutexRankLib.h"
+ #include "vm_basic_asm.h"
+ #include "unicodeOperations.h"
+diff --git a/lib/include/asyncsocket.h b/lib/include/asyncsocket.h
+index 95a5e464..a4b4e5aa 100644
+--- a/lib/include/asyncsocket.h
++++ b/lib/include/asyncsocket.h
+@@ -164,7 +164,7 @@ typedef struct AsyncSocket AsyncSocket;
+  * Or the client can specify its favorite poll class and locking behavior.
+  * Use of IVmdbPoll is only supported for regular sockets and for Attach.
+  */
+-#include "poll.h"
++#include "vm_poll.h"
+ struct IVmdbPoll;
+ typedef struct AsyncSocketPollParams {
+    int flags;               /* Default 0, only POLL_FLAG_NO_BULL is valid */
+diff --git a/lib/include/pollImpl.h b/lib/include/pollImpl.h
+index 46442e55..8bc66997 100644
+--- a/lib/include/pollImpl.h
++++ b/lib/include/pollImpl.h
+@@ -44,7 +44,7 @@
+ #define INCLUDE_ALLOW_USERLEVEL
+ #include "includeCheck.h"
+ 
+-#include "poll.h"
++#include "vm_poll.h"
+ #include "vm_basic_asm.h"
+ 
+ #if defined(__cplusplus)
+diff --git a/lib/include/poll.h b/lib/include/vm_poll.h
+similarity index 100%
+rename from lib/include/poll.h
+rename to lib/include/vm_poll.h
+diff --git a/lib/rpcIn/rpcin.c b/lib/rpcIn/rpcin.c
+index 47a3380e..660382c6 100644
+--- a/lib/rpcIn/rpcin.c
++++ b/lib/rpcIn/rpcin.c
+@@ -57,7 +57,7 @@
+ 
+ #if defined(VMTOOLS_USE_VSOCKET)
+ #  include <glib.h>
+-#  include "poll.h"
++#  include "vm_poll.h"
+ #  include "asyncsocket.h"
+ #  include "vmci_defs.h"
+ #include "dataMap.h"

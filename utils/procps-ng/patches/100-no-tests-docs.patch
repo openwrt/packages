@@ -1,6 +1,6 @@
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -13,10 +13,7 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
+@@ -14,10 +14,7 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
  
  ACLOCAL_AMFLAGS = -I m4
  SUBDIRS = \
@@ -14,7 +14,7 @@
  LDADD = ./proc/libprocps.la $(CYGWINFLAGS)
 --- a/configure.ac
 +++ b/configure.ac
-@@ -256,8 +256,5 @@ AC_CHECK_FUNCS([__fpending alarm atexit
+@@ -292,8 +292,5 @@ AC_CHECK_FUNCS([__fpending alarm atexit dup2 gethostname getpagesize gettimeofda
  
  AC_CONFIG_FILES([Makefile
                   include/Makefile

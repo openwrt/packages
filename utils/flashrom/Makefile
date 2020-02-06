@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2016 OpenWrt.org
+# Copyright (C) 2010-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,21 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=flashrom
-PKG_VERSION:=0.9.9
+PKG_VERSION:=1.0
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://download.flashrom.org/releases
+PKG_SOURCE_URL:=https://download.flashrom.org/releases
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_HASH:=cb3156b0f63eb192024b76c0814135930297aac41f80761a5d293de769783c45
+PKG_HASH:=3702fa215ba5fb5af8e54c852d239899cfa1389194c1e51cb2a170c4dc9dee64
+
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_SOURCE_SUBDIR)
-
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include flashrom.mk
@@ -37,7 +36,7 @@ define Package/flashrom/default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=FlashROM Utility
-  URL:=http://www.flashrom.org/
+  URL:=https://www.flashrom.org/
 endef
 
 define Package/flashrom

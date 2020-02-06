@@ -1,0 +1,10 @@
+--- a/bfd_packet.c	2019-08-15 02:45:47.270120616 +0300
++++ b/bfd_packet.c	2019-08-15 02:44:38.266117706 +0300
+@@ -34,7 +34,6 @@
+ #include <linux/if_packet.h>
+ #include <linux/udp.h>
+ #include <linux/ip.h>
+-#include <linux/ipv6.h>
+ 
+ #include <arpa/inet.h>
+ #include <sys/types.h>

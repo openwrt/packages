@@ -8,19 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dynapoint
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Tobias Ilte <tobias.ilte@campus.tu-berlin.de>
-PKG_LICENSE:=GPL-3.0+
+PKG_LICENSE:=GPL-3.0-or-later
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/dynapoint
     SECTION:=net
     CATEGORY:=Network
-    SUBMENU:=wireless
+    SUBMENU:=Wireless
     DEPENDS:=+lua +libubus-lua +libuci-lua +libubox-lua +luci-lib-nixio
     TITLE:=Dynamic access point manager
+    PKGARCH:=all
 endef
 
 define Package/dynapoint/description

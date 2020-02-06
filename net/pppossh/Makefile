@@ -19,6 +19,7 @@ define Package/pppossh
   CATEGORY:=Network
   TITLE:=PPPoSSH (Point-to-Point Protocol over SSH)
   DEPENDS:=+ppp +resolveip @(PACKAGE_dropbear||PACKAGE_openssh-client)
+  PKGARCH:=all
 endef
 
 define Package/pppossh/description

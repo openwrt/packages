@@ -1,6 +1,5 @@
-diff -rupN seafile-server-5.1.1.orig/scripts/seaf-fsck.sh seafile-server-5.1.1/scripts/seaf-fsck.sh
---- seafile-server-5.1.1.orig/scripts/seaf-fsck.sh	2016-04-21 11:05:26.000000000 +0200
-+++ seafile-server-5.1.1/scripts/seaf-fsck.sh	2016-04-22 09:10:13.075581325 +0200
+--- a/scripts/seaf-fsck.sh
++++ b/scripts/seaf-fsck.sh
 @@ -7,7 +7,7 @@ INSTALLPATH=$(dirname "${SCRIPT}")
  TOPDIR=$(dirname "${INSTALLPATH}")
  default_ccnet_conf_dir=${TOPDIR}/ccnet
@@ -10,9 +9,8 @@ diff -rupN seafile-server-5.1.1.orig/scripts/seaf-fsck.sh seafile-server-5.1.1/s
  
  export PATH=${INSTALLPATH}/seafile/bin:$PATH
  export SEAFILE_LD_LIBRARY_PATH=${INSTALLPATH}/seafile/lib/:${INSTALLPATH}/seafile/lib64:${LD_LIBRARY_PATH}
-diff -rupN seafile-server-5.1.1.orig/scripts/seaf-gc.sh seafile-server-5.1.1/scripts/seaf-gc.sh
---- seafile-server-5.1.1.orig/scripts/seaf-gc.sh	2016-04-21 11:05:26.000000000 +0200
-+++ seafile-server-5.1.1/scripts/seaf-gc.sh	2016-04-22 09:10:27.211581999 +0200
+--- a/scripts/seaf-gc.sh
++++ b/scripts/seaf-gc.sh
 @@ -7,7 +7,7 @@ INSTALLPATH=$(dirname "${SCRIPT}")
  TOPDIR=$(dirname "${INSTALLPATH}")
  default_ccnet_conf_dir=${TOPDIR}/ccnet
@@ -22,9 +20,8 @@ diff -rupN seafile-server-5.1.1.orig/scripts/seaf-gc.sh seafile-server-5.1.1/scr
  seaf_gc_opts=""
  
  export PATH=${INSTALLPATH}/seafile/bin:$PATH
-diff -rupN seafile-server-5.1.1.orig/scripts/setup-seafile-mysql.sh seafile-server-5.1.1/scripts/setup-seafile-mysql.sh
---- seafile-server-5.1.1.orig/scripts/setup-seafile-mysql.sh	2016-04-21 11:05:26.000000000 +0200
-+++ seafile-server-5.1.1/scripts/setup-seafile-mysql.sh	2016-04-22 09:11:50.083585953 +0200
+--- a/scripts/setup-seafile-mysql.sh
++++ b/scripts/setup-seafile-mysql.sh
 @@ -40,15 +40,10 @@ function check_python_executable() {
  function check_python_module () {
      module=$1
@@ -65,10 +62,9 @@ diff -rupN seafile-server-5.1.1.orig/scripts/setup-seafile-mysql.sh seafile-serv
  export PYTHON=$PYTHON
 +export PYTHONPATH="/usr/share/seafile/seafile-server/seahub/thirdpart:$PYTHONPATH"
  
- exec $PYTHON "$python_script"
-diff -rupN seafile-server-5.1.1.orig/scripts/sqlite2mysql.sh seafile-server-5.1.1/scripts/sqlite2mysql.sh
---- seafile-server-5.1.1.orig/scripts/sqlite2mysql.sh	2016-04-21 11:05:26.000000000 +0200
-+++ seafile-server-5.1.1/scripts/sqlite2mysql.sh	2016-04-22 09:02:22.047558854 +0200
+ exec $PYTHON "$python_script" "$@"
+--- a/scripts/sqlite2mysql.sh
++++ b/scripts/sqlite2mysql.sh
 @@ -1,4 +1,4 @@
 -#!/bin/sh
 +#!/bin/bash

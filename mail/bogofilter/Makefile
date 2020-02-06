@@ -8,17 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bogofilter
-PKG_VERSION:=1.2.4
-PKG_RELEASE:=4
+PKG_VERSION:=1.2.5
+PKG_RELEASE:=1
 
-PKG_LICENSE:=GPLv2
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:bogofilter:bogofilter
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=@SF/bogofilter
-PKG_HASH:=e10287a58d135feaea26880ce7d4b9fa2841fb114a2154bf7da8da98aab0a6b4
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=@SF/project/bogofilter/bogofilter-stable/
+PKG_HASH:=3248a1373bff552c500834adbea4b6caee04224516ae581fb25a4c6a6dee89ea
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -39,6 +41,10 @@ CONFIGURE_ARGS += \
 	--disable-unicode \
 	--with-libdb-prefix=$(STAGING_DIR) \
 	--with-included-gsl
+
+define Package/bogofilter/conffiles
+/etc/bogofilter.cf
+endef
 
 define Package/bogofilter/install
 	$(INSTALL_DIR)  $(1)/etc/ \

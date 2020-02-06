@@ -1,0 +1,10 @@
+--- a/src/shared/util.h
++++ b/src/shared/util.h
+@@ -26,6 +26,7 @@
+ #include <alloca.h>
+ #include <byteswap.h>
+ #include <string.h>
++#include <endian.h>
+ 
+ #if __BYTE_ORDER == __LITTLE_ENDIAN
+ #define le16_to_cpu(val) (val)

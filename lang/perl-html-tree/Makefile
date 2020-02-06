@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-html-tree
 PKG_VERSION:=3.23
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/P/PE/PETEK/
 PKG_SOURCE:=HTML-Tree-$(PKG_VERSION).tar.gz
 PKG_HASH:=f5175acf262f3710dce899796ea3e353049939400b100706d03df2f08803c8de
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/HTML-Tree-$(PKG_VERSION)

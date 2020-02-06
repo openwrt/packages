@@ -8,18 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liblo
-PKG_VERSION:=0.28
-PKG_RELEASE:=1
+PKG_VERSION:=0.30
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/liblo
-PKG_HASH:=da94a9b67b93625354dd89ff7fe31e5297fc9400b6eaf7378c82ee1caf7db909
+PKG_HASH:=30a7c9de49a25ed7f2425a7a7415f5b14739def62431423d3419ea26fb978d1b
 
-PKG_LICENSE:=LGPL-2.1+
+PKG_MAINTAINER:=
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -44,8 +45,12 @@ $(call Package/liblo/Default)
   DEPENDS:= +liblo
 endef
 
-TARGET_CFLAGS += \
-	-Wno-error=maybe-uninitialized \
+CONFIGURE_ARGS += \
+	$(if $(CONFIG_IPV6),--enable,--disable)-ipv6 \
+	--enable-threads \
+	--disable-examples \
+	--disable-network-tests \
+	--disable-tests
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

@@ -317,6 +317,53 @@ out:
 }
 
 static int
+rpc_lxc_info(struct ubus_context *ctx, struct ubus_object *obj,
+	     struct ubus_request_data *req, const char *method,
+	     struct blob_attr *msg)
+{
+	struct blob_attr *tb[__RPC_LXC_RENAME_MAX];
+	struct rpc_lxc *l = NULL;
+	char **addresses;
+	void *k;
+	pid_t initpid;
+
+	blobmsg_parse(rpc_lxc_min_policy, __RPC_LXC_MAX, tb, blob_data(msg), blob_len(msg));
+
+	l = rpc_lxc_init(tb);
+	if (!l)
+		return UBUS_STATUS_INVALID_ARGUMENT;
+
+	if (!l->container->is_running(l->container) &&
+	    !l->container->is_defined(l->container))
+		return UBUS_STATUS_NOT_FOUND;
+
+	blob_buf_init(&buf, 0);
+
+	blobmsg_add_string(&buf, "name", l->container->name);
+
+	blobmsg_add_string(&buf, "state", l->container->state(l->container));
+
+	initpid = l->container->init_pid(l->container);
+	if (initpid >= 0)
+		blobmsg_add_u32(&buf, "pid", initpid);
+
+	k = blobmsg_open_array(&buf, "ips");
+	addresses = l->container->get_ips(l->container, NULL, NULL, 0);
+	if (addresses) {
+		int i;
+
+		for (i = 0; addresses[i]; i++)
+			blobmsg_add_string(&buf, "ip", addresses[i]);
+	}
+	blobmsg_close_array(&buf, k);
+
+	ubus_send_reply(ctx, req, buf.head);
+	rpc_lxc_done(l);
+
+	return UBUS_STATUS_OK;
+}
+
+static int
 rpc_lxc_rename(struct ubus_context *ctx, struct ubus_object *obj,
 		struct ubus_request_data *req, const char *method,
 		struct blob_attr *msg)
@@ -480,6 +527,7 @@ rpc_lxc_api_init(const struct rpc_daemon_ops *o, struct ubus_context *ctx)
 		UBUS_METHOD("stop", rpc_lxc_stop, rpc_lxc_min_policy),
 		UBUS_METHOD("freeze", rpc_lxc_freeze, rpc_lxc_min_policy),
 		UBUS_METHOD("unfreeze", rpc_lxc_unfreeze, rpc_lxc_min_policy),
+		UBUS_METHOD("info", rpc_lxc_info, rpc_lxc_min_policy),
 		UBUS_METHOD("rename", rpc_lxc_rename, rpc_lxc_rename_policy),
 		UBUS_METHOD("create", rpc_lxc_create, rpc_lxc_create_policy),
 		UBUS_METHOD("destroy", rpc_lxc_destroy, rpc_lxc_min_policy),

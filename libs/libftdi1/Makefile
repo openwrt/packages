@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014-2016 OpenWrt.org
+# Copyright (C) 2014-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,21 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libftdi1
-PKG_VERSION:=1.3
-PKG_RELEASE:=1
+PKG_VERSION:=1.4
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.intra2net.com/en/developer/libftdi/download/
-PKG_HASH:=9a8c95c94bfbcf36584a0a58a6e2003d9b133213d9202b76aec76302ffaa81f4
-PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
+PKG_HASH:=ec36fb49080f834690c24008328a5ef42d3cf584ef4060f3a35aa4681cb31b74
 
-PKG_LICENSE:=LGPL-2.0
+PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
+PKG_LICENSE:=LGPL-2.1-only
 PKG_LICENSE_FILES:=COPYING.LIB
 
-PKG_INSTALL:=1
+CMAKE_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
-
-CMAKE_OPTIONS:=-DBUILD_TESTS=OFF
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -60,21 +59,20 @@ define Package/ftdi_eeprom/description
   read. Otherwise, you will still get the old values.
 endef
 
+CMAKE_OPTIONS += \
+	-DBoost_NO_BOOST_CMAKE=ON \
+	-DBUILD_TESTS=OFF \
+	-DDOCUMENTATION=OFF \
+	-DEXAMPLES=OFF
+
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/libftdi1/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/libftdi1/ftdi.h $(1)/usr/include/libftdi1/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libftdi1.{a,so*} $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/lib/cmake/libftdi1
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/cmake/libftdi1/* $(1)/usr/lib/cmake/libftdi1/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libftdi1.pc $(1)/usr/lib/pkgconfig/libftdi1.pc
-	$(SED) \
-		's,/usr/include,$$$${prefix}/include,g' \
-		 $(1)/usr/lib/pkgconfig/libftdi1.pc
-	$(SED) \
-		's,/usr/lib,$$$${prefix}/lib,g' \
-		 $(1)/usr/lib/pkgconfig/libftdi1.pc
+	$(call Build/InstallDev/cmake,$(1))
+	$(SED) 's,/usr/bin,/usr,g' $(1)/usr/lib/pkgconfig/libftdi1.pc
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libftdi1.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libftdi1.pc
+	$(SED) 's,/usr/bin,/usr,g' $(1)/usr/lib/pkgconfig/libftdipp1.pc
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libftdipp1.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libftdipp1.pc
 endef
 
 define Package/libftdi1/install

@@ -1,0 +1,11 @@
+diff -u --recursive snort-3.0.0-vanilla/cmake/include_libraries.cmake snort-3.0.0/cmake/include_libraries.cmake
+--- snort-3.0.0-vanilla/cmake/include_libraries.cmake	2018-08-28 02:01:02.000000000 -0400
++++ snort-3.0.0/cmake/include_libraries.cmake	2019-04-18 21:25:25.627070082 -0400
+@@ -14,7 +14,6 @@
+ endif (ENABLE_UNIT_TESTS)
+ 
+ # optional libraries
+-find_package(LibLZMA QUIET)
+ find_package(Asciidoc QUIET)
+ find_package(DBLATEX QUIET)
+ find_package(Ruby QUIET 1.8.7)

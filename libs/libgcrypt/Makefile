@@ -8,14 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgcrypt
-PKG_VERSION:=1.6.6
+PKG_VERSION:=1.8.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=ftp://ftp.gnupg.org/gcrypt/libgcrypt
-PKG_HASH:=f9461b4619bb78b273a88d468915750d418e89a3ea3b641bab0563a9af4b04d0
+PKG_SOURCE_URL:=https://www.gnupg.org/ftp/gcrypt/libgcrypt/
+PKG_HASH:=3b4a2a94cb637eff5bdebbcaf46f4d95c4f25206f459809339cdada0eb577ac3
 
-PKG_FIXUP:=patch-libtool
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_CPE_ID:=cpe:/a:gnupg:libgcrypt
+
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -26,8 +28,9 @@ define Package/libgcrypt
   CATEGORY:=Libraries
   DEPENDS:=+libgpg-error
   TITLE:=GNU crypto library
-  URL:=http://directory.fsf.org/security/libgcrypt.html
-  MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+  URL:=https://www.gnupg.org/related_software/libgcrypt/
+  LICENSE:=LGPL-2.1-or-later
+  LICENSE_FILES:=COPYING.LIB
 endef
 
 define Package/libgcrypt/description
@@ -45,6 +48,7 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-asm \
+	--disable-doc \
 	--with-gpg-error-prefix="$(STAGING_DIR)/usr"
 
 TARGET_CFLAGS += $(FPIC)

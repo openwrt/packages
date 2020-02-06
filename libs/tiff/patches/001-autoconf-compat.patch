@@ -9,7 +9,7 @@
  ACLOCAL_AMFLAGS = -I m4
  
  docfiles = \
-@@ -61,7 +61,7 @@ distcheck-hook:
+@@ -60,7 +60,7 @@ distcheck-hook:
  	rm -rf $(distdir)/_build/cmake
  	rm -rf $(distdir)/_inst/cmake
  

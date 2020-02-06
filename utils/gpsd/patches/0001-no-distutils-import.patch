@@ -1,0 +1,26 @@
+--- a/SConstruct
++++ b/SConstruct
+@@ -42,7 +42,6 @@ import re
+ import subprocess
+ import sys
+ import time
+-from distutils import sysconfig
+ import SCons
+ 
+ 
+@@ -669,6 +668,7 @@ def GetPythonValue(context, name, imp, e
+     context.Message('Obtaining Python %s... ' % name)
+     context.sconf.cached = 0  # Avoid bogus "(cached)"
+     if not env['target_python']:
++        from distutils import sysconfig
+         status, value = 0, str(eval(expr))
+     else:
+         command = [target_python_path, '-c', '%s; print(%s)' % (imp, expr)]
+@@ -1218,6 +1218,7 @@ if helping:
+ 
+     # If helping just get usable config info from the local Python
+     target_python_path = ''
++    from distutils import sysconfig
+     py_config_text = str(eval(PYTHON_CONFIG_CALL))
+     python_libdir = str(eval(PYTHON_LIBDIR_CALL))
+ 

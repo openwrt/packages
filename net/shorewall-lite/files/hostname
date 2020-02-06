@@ -1,2 +1,2 @@
 #!/bin/sh
-cat /proc/sys/kernel/hostname
+uci get system.@system[0].hostname

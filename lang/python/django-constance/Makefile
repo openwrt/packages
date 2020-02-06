@@ -8,41 +8,60 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-constance
-PKG_VERSION:=1.3.4
-PKG_RELEASE:=1
+PKG_VERSION:=2.3.1
+PKG_RELEASE:=4
+
+PYPI_NAME:=$(PKG_NAME)
+PKG_HASH:=a49735063b2c30015d2e52a90609ea9798da722ed070f091de51714758a5d018
+
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/0c/19/74c6bbf29a7882bab377db7a4ca30b43e09173dc1e6cabe163dc8d6a3931/
-PKG_HASH:=212eba25cc7d4690abd802ec81fb2a511f68bc3eab1dd45ea805296449377b48
-PKG_BUILD_DEPENDS:=python python-setuptools
-
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python-package.mk
+include ../python3-package.mk
 
-define Package/django-constance
+define Package/python-django-constance/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
   TITLE:=Django live settings with pluggable backends, including Redis.
   URL:=https://github.com/jazzband/django-constance
-  DEPENDS:=+python +django
 endef
 
-define Package/django-constance/description
+define Package/python-django-constance
+$(call Package/python-django-constance/Default)
+  DEPENDS:= \
+	+PACKAGE_python-django-constance:python \
+	python-django1
+  VARIANT:=python
+  MDEPENDS:=python-django1
+endef
+
+define Package/python-django-constance/description
   Django live settings with pluggable backends, including Redis.
 endef
 
-define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
+define Package/python3-django-constance
+$(call Package/python-django-constance/Default)
+  DEPENDS:= \
+	+PACKAGE_python3-django-constance:python3 \
+	python3-django
+  VARIANT:=python3
+  MDEPENDS:=python3-django
 endef
 
-define Package/django-constance/install
-	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
-	$(CP) \
-	    $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
-	    $(1)$(PYTHON_PKG_DIR)
+define Package/python3-django-constance/description
+$(call Package/python-django-constance/description)
+.
+(Variant for Python3)
 endef
 
-$(eval $(call BuildPackage,django-constance))
+$(eval $(call PyPackage,python-django-constance))
+$(eval $(call BuildPackage,python-django-constance))
+$(eval $(call BuildPackage,python-django-constance-src))
+
+$(eval $(call Py3Package,python3-django-constance))
+$(eval $(call BuildPackage,python3-django-constance))
+$(eval $(call BuildPackage,python3-django-constance-src))

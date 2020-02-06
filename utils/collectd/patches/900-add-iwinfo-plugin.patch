@@ -1,32 +1,34 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -804,6 +804,9 @@ AC_CACHE_CHECK([whether clock_boottime a
- 		       [c_cv_have_clock_boottime_monotonic="no"]))
- 
+@@ -712,6 +712,11 @@ AC_CACHE_CHECK([whether clock_boottime a
+   ]
+ )
  
 +# For the iwinfo plugin
-+AC_CHECK_LIB(iwinfo, iwinfo_backend, [with_iwinfo="yes"], [with_iwinfo="no (libiwinfo not found)"], [])
-+
- # For the turbostat plugin
- have_asm_msrindex_h="no"
- AC_CHECK_HEADERS(asm/msr-index.h, [have_asm_msrindex_h="yes"])
-@@ -6035,6 +6038,7 @@ plugin_interface="no"
++AC_CHECK_LIB([iwinfo], [iwinfo_backend],
++    [with_iwinfo="yes"],
++    [with_iwinfo="no (libiwinfo not found)"]
++)
+ 
+ #
+ # Checks for typedefs, structures, and compiler characteristics.
+@@ -6397,6 +6402,7 @@ plugin_ipc="no"
  plugin_ipmi="no"
  plugin_ipvs="no"
  plugin_irq="no"
 +plugin_iwinfo="no"
  plugin_load="no"
  plugin_log_logstash="no"
- plugin_memory="no"
-@@ -6505,6 +6509,7 @@ AC_PLUGIN([ipmi],                [$plugi
- AC_PLUGIN([iptables],            [$with_libiptc],           [IPTables rule counters])
- AC_PLUGIN([ipvs],                [$plugin_ipvs],            [IPVS connection statistics])
- AC_PLUGIN([irq],                 [$plugin_irq],             [IRQ statistics])
-+AC_PLUGIN([iwinfo],              [$with_iwinfo],            [Common iwinfo wireless statistics])
- AC_PLUGIN([java],                [$with_java],              [Embed the Java Virtual Machine])
- AC_PLUGIN([load],                [$plugin_load],            [System load])
- AC_PLUGIN([log_logstash],        [$plugin_log_logstash],    [Logstash json_event compatible logging])
-@@ -6886,6 +6891,7 @@ AC_MSG_RESULT([    libyajl . . . . . . .
+ plugin_mcelog="no"
+@@ -6841,6 +6847,7 @@ AC_PLUGIN([ipmi],                [$plugi
+ AC_PLUGIN([iptables],            [$with_libiptc],             [IPTables rule counters])
+ AC_PLUGIN([ipvs],                [$plugin_ipvs],              [IPVS connection statistics])
+ AC_PLUGIN([irq],                 [$plugin_irq],               [IRQ statistics])
++AC_PLUGIN([iwinfo],              [$with_iwinfo],              [Common iwinfo wireless statistics])
+ AC_PLUGIN([java],                [$with_java],                [Embed the Java Virtual Machine])
+ AC_PLUGIN([load],                [$plugin_load],              [System load])
+ AC_PLUGIN([log_logstash],        [$plugin_log_logstash],      [Logstash json_event compatible logging])
+@@ -7212,6 +7219,7 @@ AC_MSG_RESULT([    libyajl . . . . . . .
  AC_MSG_RESULT([    oracle  . . . . . . . $with_oracle])
  AC_MSG_RESULT([    protobuf-c  . . . . . $have_protoc_c])
  AC_MSG_RESULT([    protoc 3  . . . . . . $have_protoc3])
@@ -34,7 +36,7 @@
  AC_MSG_RESULT()
  AC_MSG_RESULT([  Features:])
  AC_MSG_RESULT([    daemon mode . . . . . $enable_daemon])
-@@ -6942,6 +6948,7 @@ AC_MSG_RESULT([    ipmi  . . . . . . . .
+@@ -7274,6 +7282,7 @@ AC_MSG_RESULT([    ipmi  . . . . . . . .
  AC_MSG_RESULT([    iptables  . . . . . . $enable_iptables])
  AC_MSG_RESULT([    ipvs  . . . . . . . . $enable_ipvs])
  AC_MSG_RESULT([    irq . . . . . . . . . $enable_irq])
@@ -44,7 +46,7 @@
  AC_MSG_RESULT([    logfile . . . . . . . $enable_logfile])
 --- a/src/collectd.conf.in
 +++ b/src/collectd.conf.in
-@@ -135,6 +135,7 @@
+@@ -140,6 +140,7 @@
  #@BUILD_PLUGIN_IPTABLES_TRUE@LoadPlugin iptables
  #@BUILD_PLUGIN_IPVS_TRUE@LoadPlugin ipvs
  #@BUILD_PLUGIN_IRQ_TRUE@LoadPlugin irq
@@ -52,7 +54,7 @@
  #@BUILD_PLUGIN_JAVA_TRUE@LoadPlugin java
  @BUILD_PLUGIN_LOAD_TRUE@@BUILD_PLUGIN_LOAD_TRUE@LoadPlugin load
  #@BUILD_PLUGIN_LPAR_TRUE@LoadPlugin lpar
-@@ -649,6 +650,12 @@
+@@ -775,6 +776,12 @@
  #	IgnoreSelected true
  #</Plugin>
  
@@ -67,7 +69,7 @@
  #	JVMArg "-Djava.class.path=@prefix@/share/collectd/java/collectd-api.jar"
 --- a/src/collectd.conf.pod
 +++ b/src/collectd.conf.pod
-@@ -3143,6 +3143,27 @@ and all other interrupts are collected.
+@@ -3873,6 +3873,27 @@ and all other interrupts are collected.
  
  =back
  
@@ -117,9 +119,9 @@
 + **/
 +
 +#include "collectd.h"
-+#include "common.h"
 +#include "plugin.h"
-+#include "utils_ignorelist.h"
++#include "utils/common/common.h"
++#include "utils/ignorelist/ignorelist.h"
 +
 +#include <stdint.h>
 +#include <iwinfo.h>
@@ -248,29 +250,30 @@
 +	plugin_register_config("iwinfo", iwinfo_config, config_keys, config_keys_num);
 +	plugin_register_read("iwinfo", iwinfo_read);
 +}
---- a/src/Makefile.am
-+++ b/src/Makefile.am
-@@ -568,6 +568,13 @@ irq_la_SOURCES = irq.c
- irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+--- a/src/types.db
++++ b/src/types.db
+@@ -240,6 +240,7 @@ snr                     value:GAUGE:0:U
+ spam_check              value:GAUGE:0:U
+ spam_score              value:GAUGE:U:U
+ spl                     value:GAUGE:U:U
++stations                value:GAUGE:0:256
+ swap                    value:GAUGE:0:1099511627776
+ swap_io                 value:DERIVE:0:U
+ sysevent                value:GAUGE:0:1
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -1165,6 +1165,14 @@ irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+ irq_la_LIBADD = libignorelist.la
  endif
  
 +if BUILD_PLUGIN_IWINFO
 +pkglib_LTLIBRARIES += iwinfo.la
-+iwinfo_la_SOURCES = iwinfo.c
-+iwinfo_la_LDFLAGS = -module -avoid-version
-+iwinfo_la_LIBADD = -liwinfo
++iwinfo_la_SOURCES = src/iwinfo.c
++#iwinfo_la_LDFLAGS = -module -avoid-version
++iwinfo_la_LDFLAGS = $(PLUGIN_LDFLAGS)
++iwinfo_la_LIBADD = -liwinfo libignorelist.la
 +endif
 +
  if BUILD_PLUGIN_JAVA
  pkglib_LTLIBRARIES += java.la
- java_la_SOURCES = java.c
---- a/src/types.db
-+++ b/src/types.db
-@@ -260,6 +260,7 @@ voltage_threshold       value:GAUGE:U:U,
- vs_memory               value:GAUGE:0:9223372036854775807
- vs_processes            value:GAUGE:0:65535
- vs_threads              value:GAUGE:0:65535
-+stations                value:GAUGE:0:256
- 
- #
- # Legacy types
+ java_la_SOURCES = src/java.c

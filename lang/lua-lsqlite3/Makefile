@@ -8,18 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lsqlite3
-PKG_VERSION:=0.9.3
+PKG_VERSION:=0.9.5
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).zip
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=http://lua.sqlite.org/index.cgi/zip/lsqlite3_fsl09w.zip
-PKG_HASH:=b857df8b66d01a803378cc86e56b787958beffdc8b851ad304f4ce8c7f0e9dbb
+PKG_SOURCE:=lsqlite3_fsl09y.zip
+PKG_SOURCE_URL:=http://lua.sqlite.org/index.cgi/zip/
+PKG_HASH:=d38402aa7640055d260c1246c36e6d6d31b425a25a805431f13695694466b722
 
 PKG_LICENSE:=MIT
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(PKG_NAME)_fsl09w.zip
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(basename $(PKG_SOURCE))
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -38,21 +37,21 @@ endef
 
 TARGET_CFLAGS += $(FPIC) -std=gnu99
 TARGET_CPPFLAGS += -DLUA_USE_LINUX
-TARGET_LDFLAGS += -llua -lsqlite3 -lpthread
+TARGET_LDFLAGS += -lsqlite3 -lpthread
 
 define Build/Compile
 	$(TARGET_CC) $(TARGET_CFLAGS) $(TARGET_CPPFLAGS) \
-		-c $(PKG_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/lsqlite3.c \
-		-o $(PKG_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/lsqlite3.o \
-		-DSQLITE_VERSION="$(PKG_VERSION)"
+		-c $(PKG_BUILD_DIR)/lsqlite3.c \
+		-o $(PKG_BUILD_DIR)/lsqlite3.o \
+		-DLSQLITE_VERSION=\"$(PKG_VERSION)\"
 	$(TARGET_CC) $(TARGET_LDFLAGS) -shared \
-		$(PKG_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/lsqlite3.o \
-		-o $(PKG_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/lsqlite3.so
+		$(PKG_BUILD_DIR)/lsqlite3.o \
+		-o $(PKG_BUILD_DIR)/lsqlite3.so
 endef
 
 define Package/lsqlite3/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua
-	$(CP) $(PKG_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/*.so $(1)/usr/lib/lua/
+	$(CP) $(PKG_BUILD_DIR)/*.so $(1)/usr/lib/lua/
 endef
 
 $(eval $(call BuildPackage,lsqlite3))

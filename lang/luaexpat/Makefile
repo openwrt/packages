@@ -15,6 +15,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://matthewwild.co.uk/projects/luaexpat
 PKG_HASH:=d060397960d87b2c89cf490f330508b7def1a0677bdc120531c571609fc57dc3
 
+PKG_CPE_ID:=cpe:/a:matthewwild:luaexpat
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/luaexpat

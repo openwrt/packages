@@ -2,7 +2,7 @@ diff --git a/Makefile.am b/Makefile.am
 index 22647be..7dcf0de 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -32,7 +32,7 @@ AM_DISTCHECK_CONFIGURE_FLAGS = --enable-python-libs
+@@ -45,7 +45,7 @@ AM_DISTCHECK_CONFIGURE_FLAGS = --enable-python-libs
  COMMON_CXXFLAGS_ONLY_WARNINGS = \
      -I$(top_srcdir)/include \
      -I$(top_builddir)/include \

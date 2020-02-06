@@ -1,0 +1,22 @@
+From 77dfef9dd14987b091c2d4fc9475690759e1f4d7 Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <zhouyousong@yunionyun.com>
+Date: Tue, 21 Aug 2018 13:02:21 +0000
+Subject: [PATCH 4/4] build: disable building tests
+
+Signed-off-by: Yousong Zhou <zhouyousong@yunionyun.com>
+---
+ Makefile.am | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index 417f53230..3fc630f33 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -480,7 +480,6 @@ include m4/automake.mk
+ include lib/automake.mk
+ include ofproto/automake.mk
+ include utilities/automake.mk
+-include tests/automake.mk
+ include include/automake.mk
+ include third-party/automake.mk
+ include debian/automake.mk

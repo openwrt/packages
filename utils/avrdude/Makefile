@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avrdude
 PKG_VERSION:=6.3
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SAVANNAH/$(PKG_NAME)
 PKG_HASH:=0f9f731b6394ca7795b88359689a7fa1fba818c6e1d962513eb28da670e0a196
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
@@ -30,8 +30,8 @@ define Package/avrdude
   CATEGORY:=Utilities
   SUBMENU:=Microcontroller programming
   TITLE:=AVR Downloader/UploaDEr
-  URL:=http://www.nongnu.org/avrdude/
-  DEPENDS:=+libncurses +libreadline +libusb-compat +libftdi1 +libelf1
+  URL:=https://www.nongnu.org/avrdude/
+  DEPENDS:=+libncurses +libreadline +libusb-compat +libftdi1 +libelf
 endef
 
 define Package/avrdude/description

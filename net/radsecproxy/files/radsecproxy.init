@@ -13,10 +13,10 @@ append_params() {
 	local value
 	local section="$1"
 	shift
-	for param in $*; do
+	for param in "$@"; do
 		config_get value "$section" "$param"
 		[ -z "$value" ] && {
-			param=$(echo $param | tr [A-Z] [a-z])
+			param=$(echo "$param" | tr 'A-Z' 'a-z')
 			config_get value "$section" "$param"
 		}
 		IFS="$LIST_SEP"
@@ -32,10 +32,10 @@ append_bools() {
 	local value
 	local section="$1"
 	shift
-	for param in $*; do
+	for param in "$@"; do
 		config_get_bool value "$section" "$param"
 		[ -z "$value" ] && {
-			param=$(echo $param | tr [A-Z] [a-z])
+			param=$(echo "$param" | tr 'A-Z' 'a-z')
 			config_get_bool value "$section" "$param"
 		}
 		[ -n "$value" ] && {

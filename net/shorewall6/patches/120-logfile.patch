@@ -1,0 +1,22 @@
+Index: shorewall6-5.1.4.1/configfiles/shorewall6.conf
+===================================================================
+--- shorewall6-5.1.4.1.orig/configfiles/shorewall6.conf	2017-10-05 11:28:34.893849703 +0200
++++ shorewall6-5.1.4.1/configfiles/shorewall6.conf	2017-10-05 11:29:13.047785350 +0200
+@@ -34,7 +34,7 @@
+ #			       L O G G I N G
+ ###############################################################################
+ 
+-LOG_LEVEL="info"
++LOG_LEVEL="warn"
+ 
+ BLACKLIST_LOG_LEVEL=
+ 
+@@ -100,7 +100,7 @@
+ 
+ SHOREWALL_SHELL=/bin/sh
+ 
+-SUBSYSLOCK=/var/lock/subsys/shorewall6
++SUBSYSLOCK=/var/lock/shorewall6
+ 
+ TC=
+ 

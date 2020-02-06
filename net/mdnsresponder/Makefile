@@ -8,14 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mDNSResponder
-PKG_VERSION:=576.30.4
-PKG_RELEASE:=1
+PKG_VERSION:=IETF104
+PKG_RELEASE:=2
 
 PKG_SOURCE:=mDNSResponder-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://opensource.apple.com/tarballs/mDNSResponder/
-PKG_HASH:=4737cb51378377e11d0edb7bcdd1bec79cbdaa7b27ea09c13e3006e58f8d92c0
-PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+PKG_SOURCE_URL:=https://opensource.apple.com/tarballs/mDNSResponder/IETF/
+PKG_HASH:=b3a76fd35cf2d561546c2fbeaea1e5998b7e04b8330afb918ea5fbdeb202162c
+PKG_MAINTAINER:=
 PKG_LICENSE:=Apache-2.0
+PKG_CPE_ID:=cpe:/a:apple:mdnsresponder
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/mDNSResponder-$(PKG_VERSION)
 

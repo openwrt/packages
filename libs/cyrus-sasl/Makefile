@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cyrus-sasl
-PKG_VERSION:=2.1.26
+PKG_VERSION:=2.1.27
 PKG_RELEASE:=3
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://ftp.cyrusimap.org/cyrus-sasl/
-PKG_HASH:=8fbc5136512b59bb793657f36fadda6359cae3b08f01fd16b3d406f1345b7bc3
+PKG_SOURCE_URL:=https://www.cyrusimap.org/releases/
+PKG_HASH:=26866b1549b00ffd020f188a43c258017fa1c382b3ddadd8201536f72efb05d5
 
 PKG_LICENSE:=BSD-4c BSD
 PKG_LICENSE_FILES:=COPYING cmulocal/COPYING saslauthd/COPYING
+PKG_CPE_ID:=cpe:/a:cmu:cyrus-sasl
 
 PKG_FIXUP:=autoreconf
 PKG_MACRO_PATHS:=cmulocal config ../cmulocal ../config
@@ -100,11 +101,13 @@ define Build/InstallDev
 	ln -sf libsasl2.so $(1)/usr/lib/libsasl.so
 	$(INSTALL_DIR) $(1)/usr/lib/sasl2
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/sasl2/lib*.{a,so*} $(1)/usr/lib/sasl2/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libsasl2.pc $(1)/usr/lib/pkgconfig/
 endef
 
 define Package/libsasl2/install
 	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsasl2.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsasl2.so.* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/sasl2
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/sasl2/lib*.so* $(1)/usr/lib/sasl2/
 endef

@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2014-2016 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 # updated to work with latest source from abrasive
@@ -9,27 +7,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsoxr
-PKG_VERSION:=0.1.1
-PKG_RELEASE:=3
+PKG_VERSION:=0.1.3
+PKG_RELEASE:=2
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://git.code.sf.net/p/soxr/code
-PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=939259d5c02bbe55cf8329e7bd05ce4d660e37d5c97fcbb0fdeef04f11a63e7f
+PKG_SOURCE_URL:=@SF/project/soxr/
+PKG_SOURCE:=soxr-$(PKG_VERSION)-Source.tar.xz
+PKG_HASH:=b111c15fdc8c029989330ff559184198c161100a59312f5dc19ddeb9b5a15889
+PKG_BUILD_DIR:=$(BUILD_DIR)/soxr-$(PKG_VERSION)-Source
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Mike Brady <mikebrady@eircom.net>
-
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=LICENCE
+PKG_CPE_ID:=cpe:/a:sox:sox
 
-PKG_FIXUP:=libtool
-PKG_REMOVE_FILES:=autogen.sh
-
+CMAKE_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -38,7 +31,7 @@ define Package/libsoxr
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=The SoX Resampler library
-  URL:=http://sourceforge.net/projects/soxr/
+  URL:=https://sourceforge.net/projects/soxr/
   DEPENDS:= +libpthread
 endef
 
@@ -50,14 +43,6 @@ endef
 CMAKE_OPTIONS:= -DBUILD_TESTS=0 -DBUILD_EXAMPLES=0
 CMAKE_OPTIONS+= -DHAVE_WORDS_BIGENDIAN_EXITCODE=$(if $(CONFIG_BIG_ENDIAN),0,1)
 CMAKE_OPTIONS+= -DWITH_OPENMP=0
-
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/soxr.h $(1)/usr/include/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsoxr.so* $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/soxr.pc $(1)/usr/lib/pkgconfig/
-endef
 
 define Package/libsoxr/install
 	$(INSTALL_DIR) $(1)/usr/lib

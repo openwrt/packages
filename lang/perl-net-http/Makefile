@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-net-http
-PKG_VERSION:=6.09
+PKG_VERSION:=6.19
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/E/ET/ETHER
 PKG_SOURCE:=Net-HTTP-$(PKG_VERSION).tar.gz
-PKG_HASH:=52762b939d84806908ba544581c5708375f7938c3c0e496c128ca3fbc425e58d
-
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
-PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
-
+PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/O/OA/OALDERS
+PKG_HASH:=52b76ec13959522cae64d965f15da3d99dcb445eddd85d2ce4e4f4df385b2fc4
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Net-HTTP-$(PKG_VERSION)
+
+PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 include ../perl/perlmod.mk
@@ -28,7 +28,7 @@ define Package/perl-net-http
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Low-level HTTP connection (client)
-  URL:=http://search.cpan.org/dist/Net-HTTP/
+  URL:=https://search.cpan.org/dist/Net-HTTP/
   DEPENDS:=perl +perl-uri +perlbase-compress +perlbase-essential +perlbase-io
 endef
 

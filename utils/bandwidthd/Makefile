@@ -8,18 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bandwidthd
-PKG_VERSION:=2.0.1-34
-PKG_RELEASE:=1
+PKG_VERSION:=2.0.1-35
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/NethServer/bandwidthd/archive/$(PKG_VERSION)
-PKG_HASH:=41803a202956ae99b095f98ce92e5637dad62d25509ccd5cff9a8913626a4226
+PKG_SOURCE_URL:=https://codeload.github.com/NethServer/bandwidthd/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=75f526d9e81c5a543accbb9e197b6b582c293aa20d6cdfc8be5cef43046981c5
 
 PKG_MAINTAINER:=Jean-Michel Lacroix <lacroix@lepine-lacroix.info>
 
 PKG_LICENSE:=GPL-2.0
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_FIXUP:=autoreconf
 
@@ -140,7 +138,7 @@ CONFIGURE_ARGS += \
 	ac_cv_lib_sqlite3_sqlite3_open=no
 endif
 
-EXTRA_CFLAGS+= $(TARGET_CPPFLAGS)
+EXTRA_CFLAGS+= $(TARGET_CPPFLAGS) -fgnu89-inline
 EXTRA_LDFLAGS+= $(TARGET_LDFLAGS) -Wl,-rpath-link,$(STAGING_DIR)/usr/lib
 
 define Package/bandwidthd/install

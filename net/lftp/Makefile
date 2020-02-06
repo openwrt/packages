@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lftp
-PKG_VERSION:=4.8.2
-PKG_RELEASE:=2
+PKG_VERSION:=4.8.4
+PKG_RELEASE:=3
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://lftp.tech/ftp/ \
 		https://mirror.csclub.uwaterloo.ca/gentoo-distfiles/distfiles/
 		
-PKG_HASH:=5c875b8476e05e856ebc8eec458e43317b2bebd6ed5f7725a733d4591548cd9c
+PKG_HASH:=4ebc271e9e5cea84a683375a0f7e91086e5dac90c5d51bb3f169f75386107a62
 
 
-PKG_LICENSE:=GPL-3.0+
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:alexander_v._lukyanov:lftp
 
 include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
@@ -46,7 +47,7 @@ CONFIGURE_ARGS += \
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
 	--without-gnutls \
-	--without-libidn \
+	--without-libidn2 \
 	--without-libresolv \
 	--with-openssl="$(STAGING_DIR)/usr" \
 	--with-readline="$(STAGING_DIR)/usr" \

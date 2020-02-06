@@ -8,18 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort
-PKG_VERSION:=2.9.7.2
-PKG_RELEASE:=4
+PKG_VERSION:=2.9.15
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
-PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_CPE_ID:=cpe:/a:snort:snort
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.snort.org/downloads/snort/ \
 	@SF/$(PKG_NAME)
-PKG_HASH:=db57c532919d9ababac127f29dbdc05ed832394880e46cad81a5dde713ccb4be
+PKG_HASH:=bfb437746446ef72a03c501db13cd6da5edd2b41f55c80c437ba288be6da7dba
 
-PKG_BUILD_DEPENDS:=librpc
+PKG_BUILD_DEPENDS:=libtirpc
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -30,7 +31,7 @@ define Package/snort
   SUBMENU:=Firewall
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libdaq +libdnet +libopenssl +libpcap +libpcre +libpthread +libuuid +zlib +SNORT_LZMA:liblzma
+  DEPENDS:=+libdaq +libdnet +libnghttp2 +libopenssl +libpcap +libpcre +libpthread +libtirpc +libuuid +zlib +luajit +SNORT_LZMA:liblzma
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
@@ -71,6 +72,8 @@ CONFIGURE_VARS += \
 
 MAKE_FLAGS += \
 	extra_incl=""
+	
+TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include/tirpc
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/include/snort/dynamic_preproc

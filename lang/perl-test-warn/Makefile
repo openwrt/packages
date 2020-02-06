@@ -8,17 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-test-warn
-PKG_VERSION:=0.30
+PKG_VERSION:=0.36
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/C/CH/CHORNY
 PKG_SOURCE:=Test-Warn-$(PKG_VERSION).tar.gz
-PKG_HASH:=8197555b94189d919349a03f7058f83861f145af9bee59f505bfe47562144e41
-
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
-PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
-
+PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/B/BI/BIGJ
+PKG_HASH:=ecbca346d379cef8d3c0e4ac0c8eb3b2613d737ffaaeae52271c38d7bf3c6cda
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Test-Warn-$(PKG_VERSION)
+
+PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 
 include $(INCLUDE_DIR)/package.mk
 include ../perl/perlmod.mk
@@ -28,7 +27,7 @@ define Package/perl-test-warn
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Perl extension to test methods for warnings
-  URL:=http://search.cpan.org/dist/Test-Warn/
+  URL:=https://search.cpan.org/dist/Test-Warn/
   DEPENDS:=perl +perl-sub-uplevel +perlbase-essential +perlbase-test
 endef
 

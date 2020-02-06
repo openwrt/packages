@@ -9,16 +9,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gammu
-PKG_VERSION:=1.38.4
-PKG_RELEASE:=1
+PKG_VERSION:=1.41.0
+PKG_RELEASE:=2
 
-PKG_SOURCE_URL:=http://dl.cihar.com/gammu/releases/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=a8ba1dc52ee82562abd57e9546c409f2f887f45187aae012fe43af0b730611ae
-PKG_MAINTAINER:=Vitaly Protsko <villy@sft.ru>
-PKG_LICENCE:=GPL-2.0
+PKG_SOURCE_URL:=https://dl.cihar.com/gammu/releases
+PKG_HASH:=8426b69b07b259de301f41163fab5587935e27b94cc5eefab9277773b3e4df8f
 
-PKG_INSTALL:=1
+PKG_MAINTAINER:=Vitaly Protsko <villy@sft.ru>
+PKG_LICENCE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
+
+CMAKE_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -28,10 +31,10 @@ define Package/gammu
 	SECTION:=utils
 	CATEGORY:=Utilities
 	TITLE:=Cell phone/modem SMS and control tool
-	URL:=http://dl.cihar.com/gammu/releases/
+	URL:=https://wammu.eu/gammu/
 	DEPENDS:=+libpthread +libcurl +glib2 $(ICONV_DEPENDS) $(INTL_DEPENDS)
-	DEPENDS+=+PACKAGE_python:python +PACKAGE_bluez-libs:bluez-libs
-	DEPENDS+=+PACKAGE_libmysqlclient:libmysqlclient +PACKAGE_unixodbc:unixodbc +PACKAGE_libpq:libpq
+	DEPENDS+=+PACKAGE_bluez-libs:bluez-libs
+	DEPENDS+=+PACKAGE_libmariadb:libmariadb +PACKAGE_unixodbc:unixodbc +PACKAGE_libpq:libpq
 	DEPENDS+=+PACKAGE_libusb-1.0:libusb-1.0
 endef
 
@@ -46,19 +49,12 @@ CMAKE_OPTIONS += -DICONV_INCLUDE_DIRS:PATH=$(ICONV_PREFIX)/include
 CMAKE_OPTIONS += -DICONV_LIBRARIES:STRING=iconv
 endif
 
-define Build/InstallDev
-	mkdir -p $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/gammu $(1)/usr/include/
-	mkdir -p $(1)/usr/lib
-	$(CP)    $(PKG_INSTALL_DIR)/usr/lib$(LIB_SUFFIX)/lib{Gammu*,gsmsd*} $(1)/usr/lib/
-endef
-
 define Package/gammu/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gammu $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gammu-{smsd,smsd-inject,smsd-monitor} $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib$(LIB_SUFFIX)/lib{Gammu*,gsmsd*} $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{Gammu*,gsmsd*} $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/gammu $(1)/etc/config/gammu

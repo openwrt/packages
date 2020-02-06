@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2007-2011 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,17 +6,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fcgi
-PKG_VERSION:=2.4.0
+PKG_VERSION:=2.4.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.fastcgi.com/dist/
-PKG_HASH:=66fc45c6b36a21bf2fbbb68e90f780cc21a9da1fffbae75e76d2b4402d3f05b9
-
-PKG_FIXUP:=libtool-ucxx
+PKG_SOURCE:=$(PKG_NAME)2-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/FastCGI-Archives/fcgi2/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=1fe83501edfc3a7ec96bb1e69db3fd5ea1730135bd73ab152186fd0b437013bc
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)2-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Jacob Siverskog <jacob@teenageengineering.com>
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE.TERMS
 
+PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/uclibc++.mk
@@ -27,13 +28,13 @@ include $(INCLUDE_DIR)/package.mk
 define Package/fcgi/Default
   SECTION:=libs
   CATEGORY:=Libraries
-  URL:=http://www.fastcgi.com/
+  URL:=https://fastcgi-archives.github.io/
 endef
 
 define Package/fcgi
   $(call Package/fcgi/Default)
   MENU:=1
-  DEPENDS:= +libpthread
+  DEPENDS:=+libpthread
   TITLE:=Shared library of FastCGI
 endef
 
@@ -49,14 +50,8 @@ define Package/fcgi/description
  server specific APIs.
 endef
 
-TARGET_CFLAGS += $(FPIC)
-
-CONFIGURE_ARGS += \
-	--enable-shared \
-	--enable-static \
-
-CONFIGURE_VARS += \
-	LIBS="-lm" \
+TARGET_CXXFLAGS += -fno-rtti -flto
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

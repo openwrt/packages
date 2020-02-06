@@ -24,24 +24,26 @@ start_service() {
 	procd_set_param file $CONFIGFILE
 	procd_set_param respawn
 	procd_close_instance
-	
+
 	# before we can call xappend
-	mkdir -p $(dirname $CONFIGFILE)
+	mkdir -p "$(dirname $CONFIGFILE)"
 
 	echo "-- auto-generated config file from /etc/config/smartsnmpd" > $CONFIGFILE
-	
-	config_get PORT smartsnmpd port 161
-	echo "port = $PORT" >> $CONFIGFILE
-	
-	config_get RO_COMMUNITY smartsnmpd ro_community 'public'
-	config_get RW_COMMUNITY smartsnmpd rw_community 'private'
-	echo "ro_community = '$RO_COMMUNITY'" >> $CONFIGFILE
-	echo "rw_community = '$RW_COMMUNITY'" >> $CONFIGFILE
 
-	config_get MIB_MODULE_PATH smartsnmpd mib_module_path '/usr/lib/lua/smartsnmp/mibs/'
-	echo "mib_module_path = '$MIB_MODULE_PATH'" >> $CONFIGFILE
+	{
+		config_get PORT smartsnmpd port 161
+		echo "port = $PORT"
 
-	echo "mib_modules = {" >> $CONFIGFILE
-	config_foreach smartsnmpd_mib_module smartsnmpd_module 
-	echo "}" >> $CONFIGFILE
+		config_get RO_COMMUNITY smartsnmpd ro_community 'public'
+		config_get RW_COMMUNITY smartsnmpd rw_community 'private'
+		echo "ro_community = '$RO_COMMUNITY'"
+		echo "rw_community = '$RW_COMMUNITY'"
+
+		config_get MIB_MODULE_PATH smartsnmpd mib_module_path '/usr/lib/lua/smartsnmp/mibs/'
+		echo "mib_module_path = '$MIB_MODULE_PATH'"
+
+		echo "mib_modules = {"
+		config_foreach smartsnmpd_mib_module smartsnmpd_module
+		echo "}"
+	} >> $CONFIGFILE
 }

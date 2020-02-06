@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2006-2016 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,16 +6,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unrar
-PKG_VERSION:=5.4.5
+PKG_VERSION:=5.8.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=unrarsrc-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.rarlab.com/rar
-PKG_HASH:=e470c584332422893fb52e049f2cbd99e24dc6c6da971008b4e2ae4284f8796c
-PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
+PKG_SOURCE_URL:=https://www.rarlab.com/rar
+PKG_HASH:=0b7cb2307ef7e65f631496376ce2fdf98b9b0f2136dc4467408ef63f3bf92f96
 
+PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>, \
+		Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=UnRAR
 PKG_LICENSE_FILES:=license.txt
+PKG_CPE_ID:=cpe:/a:rarlab:unrar
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-$(BUILD_VARIANT)/unrar
 PKG_INSTALL:=1
@@ -25,10 +25,16 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
+ifeq ($(CONFIG_USE_UCLIBCXX),y)
+TARGET_LDFLAGS +=-nodefaultlibs
+endif
+TARGET_CXXFLAGS +=-fno-rtti -flto
+TARGET_LDFLAGS +=$(FPIC) -Wl,--gc-sections
+
 define Package/unrar/Default
   TITLE:=UnRAR
   SUBMENU:=Compression
-  URL:=http://www.rarlab.com/
+  URL:=https://www.rarlab.com/
   DEPENDS:=$(CXX_DEPENDS) +libpthread
 endef
 
@@ -57,9 +63,6 @@ define Package/libunrar/description
   UnRAR library is a shared library that provides file extraction from RAR
   archives
 endef
-
-MAKE_FLAGS += \
-	LDFLAGS="$(TARGET_LDFLAGS) -lpthread"
 
 ifeq ($(BUILD_VARIANT),lib)
 define Build/Compile

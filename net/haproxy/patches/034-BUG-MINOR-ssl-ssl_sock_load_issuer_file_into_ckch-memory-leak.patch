@@ -1,0 +1,31 @@
+commit 414139aa263974b1a8513c50a822e44c4767c66f
+Author: Emmanuel Hocdet <manu@gandi.net>
+Date:   Thu Jan 16 14:45:00 2020 +0100
+
+    BUG/MINOR: ssl: ssl_sock_load_issuer_file_into_ckch memory leak
+    
+    "set ssl cert <filename.issuer> <payload>" CLI command must free
+    previous context.
+    
+    This patch should be backport to 2.1
+    
+    (cherry picked from commit eb73dc34bbfbb5ffe8d9f3eb9d07fe981c938d8f)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/src/ssl_sock.c b/src/ssl_sock.c
+index 2c19fa5b3..1ec3a84bb 100644
+--- a/src/ssl_sock.c
++++ b/src/ssl_sock.c
+@@ -3076,8 +3076,11 @@ static int ssl_sock_load_issuer_file_into_ckch(const char *path, char *buf, stru
+ 		          *err ? *err : "", path);
+ 		goto end;
+ 	}
+-	ret = 0;
++	/* no error, fill ckch with new context, old context must be free */
++	if (ckch->ocsp_issuer)
++		X509_free(ckch->ocsp_issuer);
+ 	ckch->ocsp_issuer = issuer;
++	ret = 0;
+ 
+ end:
+ 

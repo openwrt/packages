@@ -1,4 +1,4 @@
-# 
+#
 # Copyright (C) 2014-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -7,18 +7,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtklib
-PKG_VERSION:=2.4.3_b24
-PKG_RELEASE:=$(PKG_SOURCE_VERSION)
+PKG_VERSION:=2.4.3_b32
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/tomojitakasu/RTKLIB.git
-PKG_SOURCE_VERSION:=1cec90a9ffa424908ad1a4ca3d52f33f9b94d1f7
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=edda6c29ba3d2f5401145a1497e88646fa0c13afc31ade7bdd982bd8e8081c6a
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_LICENSE:=BSD-2-Clause
+PKG_SOURCE_URL:=https://github.com/tomojitakasu/RTKLIB
+PKG_SOURCE_VERSION:=6e5ddadb737c54d4a43c43feeeb4e244c51b4286
+PKG_MIRROR_HASH:=b6ada49b6667a98e935055e718bf9a5712030cddc1694d1be7c0ab0e98bdc7b8
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
+PKG_LICENSE:=BSD-2-Clause
+
+PKG_BUILD_PARALLEL:=0
 
 include $(INCLUDE_DIR)/package.mk
 

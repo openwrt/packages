@@ -7,21 +7,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtl-ais
-PKG_VERSION:=20151213
+PKG_VERSION:=0.3
+PKG_RELEASE:=4
 
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
-
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/dgiardini/rtl-ais.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=b805be0164475e58a73b57763a8cbbf8a2bd0ded
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=0bf15869935e4496108ade4f7e9c1f7990b11ce53c9c1e0c9e81bc7f082b33b5
-
-PKG_LICENSE:=GPL-2.0+
-PKG_LICENSE_FILES:=COPYING
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/dgiardini/rtl-ais/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=01e2b675226ec403c409cec8b55999008f5c7aa9e82d6c0ba085ef13b200ceb1
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -41,6 +36,8 @@ endef
 define Package/rtl-ais/conffiles
 /etc/config/rtl_ais
 endef
+
+TARGET_CFLAGS += -std=gnu89
 
 define Package/rtl-ais/install
 	$(INSTALL_DIR) $(1)/usr/bin

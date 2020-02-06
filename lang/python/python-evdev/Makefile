@@ -9,23 +9,19 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=python-evdev
-PKG_VERSION:=0.7.0
+PKG_VERSION:=1.3.0
 PKG_RELEASE:=1
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_MAINTAINER:=Paulo Costa <me@paulo.costa.nom.br>, Alexandru Ardelean <ardeleanalex@gmail.com>
 
-PKG_SOURCE:=evdev-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/67/15/eac376f3e1fc1960a54439c21459b2582e68340001aff83b4ace9e5bd110
-PKG_HASH:=57edafc469a414f58b51af1bfb9ee2babb9f626dd2df530d71c1176871850aa1
+PYPI_NAME:=evdev
+PKG_HASH:=b1c649b4fed7252711011da235782b2c260b32e004058d62473471e5cd30634d
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-evdev-$(PKG_VERSION)
-
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
-$(call include_mk, python3-package.mk)
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
+include ../python-package.mk
+include ../python3-package.mk
 
 define Package/python-evdev/Default
   SUBMENU:=Python
@@ -63,21 +59,19 @@ $(call Package/python-evdev/description)
 (Variant for Python3)
 endef
 
-define PyBuild/Compile
-	$(call Build/Compile/PyMod,, build \
-		build_ecodes  --evdev-headers="$(LINUX_DIR)/include/uapi/linux/input.h:$(LINUX_DIR)/include/uapi/linux/input-event-codes.h" \
-		build_ext \
-		install --root="$(PKG_INSTALL_DIR)" --prefix="/usr")
-endef
+LINUX_EVDEV_HEADERS="$(LINUX_DIR)/include/uapi/linux/input.h:$(LINUX_DIR)/include/uapi/linux/input-event-codes.h"
 
-define Py3Build/Compile
-	$(call Build/Compile/Py3Mod,, build \
-		build_ecodes  --evdev-headers="$(LINUX_DIR)/include/uapi/linux/input.h:$(LINUX_DIR)/include/uapi/linux/input-event-codes.h" \
-		build_ext \
-		install --root="$(PKG_INSTALL_DIR)" --prefix="/usr")
-endef
+PYTHON3_PKG_SETUP_GLOBAL_ARGS:= \
+	build build_ecodes \
+	--evdev-headers="$(LINUX_EVDEV_HEADERS)" \
+	build_ext
+
+PYTHON_PKG_SETUP_GLOBAL_ARGS:=$(PYTHON3_PKG_SETUP_GLOBAL_ARGS)
 
 $(eval $(call PyPackage,python-evdev))
 $(eval $(call BuildPackage,python-evdev))
+$(eval $(call BuildPackage,python-evdev-src))
+
 $(eval $(call Py3Package,python3-evdev))
 $(eval $(call BuildPackage,python3-evdev))
+$(eval $(call BuildPackage,python3-evdev-src))

@@ -1,0 +1,30 @@
+commit 5e06a678544b1fde2517a10041e802265f098e0b
+Author: Olivier Houchard <ohouchard@haproxy.com>
+Date:   Fri Jan 10 16:46:48 2020 +0100
+
+    BUG/MEDIUM: tasks: Use the MT macros in tasklet_free().
+    
+    In tasklet_free(), to attempt to remove ourself, use MT_LIST_DEL, we can't
+    just use LIST_DEL(), as we theorically could be in the shared tasklet list.
+    
+    This should be backported to 2.1.
+    
+    (cherry picked from commit 3c4f40acbf6cd33b874b224a89ee2a64eb3035d5)
+    Signed-off-by: Christopher Faulet <cfaulet@haproxy.com>
+
+diff --git a/include/proto/task.h b/include/proto/task.h
+index bba71930c..f237d0dd2 100644
+--- a/include/proto/task.h
++++ b/include/proto/task.h
+@@ -397,10 +397,8 @@ static inline void task_destroy(struct task *t)
+ /* Should only be called by the thread responsible for the tasklet */
+ static inline void tasklet_free(struct tasklet *tl)
+ {
+-	if (!LIST_ISEMPTY(&tl->list)) {
+-		LIST_DEL(&tl->list);
++	if (MT_LIST_DEL((struct mt_list *)&tl->list))
+ 		_HA_ATOMIC_SUB(&tasks_run_queue, 1);
+-	}
+ 
+ 	pool_free(pool_head_tasklet, tl);
+ 	if (unlikely(stopping))

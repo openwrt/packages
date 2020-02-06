@@ -1,0 +1,14 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -542,8 +542,8 @@ AC_TRY_COMPILE([
+ AC_MSG_CHECKING(for usuable C++11 regex)
+-AC_TRY_RUN([
++AC_TRY_COMPILE([
+ #include <regex>
+-#include <iostream>
+-int main() {
++#include <iostream>],
++[int main() {
+   const std::regex regex(".*");
+   const std::string string = "This should match!";
+   const auto result = std::regex_search(string, regex);

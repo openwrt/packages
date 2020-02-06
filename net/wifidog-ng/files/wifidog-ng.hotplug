@@ -1,0 +1,3 @@
+[ "$ACTION" = "add" -o "$ACTION" = "update" ] || exit 0
+ubus list wifidog-ng > /dev/null 2>&1 || exit 0
+ubus call wifidog-ng roam "{\"mac\":\"$MACADDR\", \"ip\":\"$IPADDR\"}"

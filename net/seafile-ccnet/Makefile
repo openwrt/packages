@@ -8,33 +8,31 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-ccnet
-PKG_VERSION:=6.0.7
-PKG_RELEASE=$(PKG_SOURCE_VERSION)-1
+PKG_VERSION:=6.3.4
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-3.0
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/haiwen/ccnet-server.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=a0de32b9cfeca98ab93d84cacbe9d315d7ecca35
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=b7ac0e5775aff91746e7bfc297b6cf788c9e7372084e28762467f8bd75cee2f8
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/haiwen/ccnet-server/tar.gz/v$(PKG_VERSION)-server?
+PKG_HASH:=ab3d5bda728f87c71929a6247c9f74c5209b9b8e44bafa77db91e8de590ec6ef
+PKG_BUILD_DIR:=$(BUILD_DIR)/ccnet-server-$(PKG_VERSION)-server
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-$(call include_mk, python-package.mk)
+include ../../lang/python/python-package.mk
 
 define Package/seafile-ccnet
     SECTION:=net
     CATEGORY:=Network
     TITLE:=Seafile server - ccnet component
-    MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
     URL:=http://seafile.com/
     DEPENDS:=+libsearpc +libevent2 +libopenssl \
 		+glib2 +python +libzdb +libuuid \
 		+libpthread +libsqlite3 +jansson $(ICONV_DEPENDS)
-    EXTRA_DEPENDS:=libsearpc (=6.0.7-8998e7b2c5587f0b94c48db24e2952d08def5add-1)
 endef
 
 define Package/seafile-ccnet/description

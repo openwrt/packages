@@ -34,6 +34,73 @@
  #ifdef HAVE_FCNTL_H
  #include <fcntl.h>
  #endif
+--- /dev/null
++++ b/src/compat.h
+@@ -0,0 +1,64 @@
++#ifndef _COMPAT_H
++#define _COMPAT_H
++
++#ifndef _PATH_MOUNTED
++# define _PATH_MOUNTED "/proc/mounts"
++#endif
++
++#ifndef _PATH_MNTTAB
++# define _PATH_MNTTAB "/etc/fstab"
++#endif
++
++#ifdef HAVE_ERROR_H
++# include <error.h>
++#else
++# include <stdio.h>
++# include <stdarg.h>
++# include <stdlib.h>
++# include <string.h>
++static void error_at_line(int status, int errnum, const char *filename,
++                          unsigned int linenum, const char *format, ...)
++{
++	va_list ap;
++
++	fflush(stdout);
++
++	if (filename != NULL)
++		fprintf(stderr, "%s:%u: ", filename, linenum);
++
++	va_start(ap, format);
++	vfprintf(stderr, format, ap);
++	va_end(ap);
++
++	if (errnum != 0)
++		fprintf(stderr, ": %s", strerror(errnum));
++
++	fprintf(stderr, "\n");
++
++	if (status != 0)
++		exit(status);
++}
++
++#define error(status, errnum, format...) \
++	error_at_line(status, errnum, NULL, 0, format)
++
++#endif /* HAVE_ERROR_H */
++
++#ifndef HAVE_CANONICALIZE_FILE_NAME
++#include <limits.h>
++#include <string.h>
++#include <stdlib.h>
++static char * canonicalize_file_name(const char *path)
++{
++	char buf[PATH_MAX] = { };
++
++	snprintf(buf, sizeof(buf) - 1, "%s", path);
++
++	if (!realpath(path, buf))
++		return NULL;
++
++	return strdup(buf);
++}
++#endif
++
++#endif /* _COMPAT_H */
 --- a/src/dav_fuse.c
 +++ b/src/dav_fuse.c
 @@ -47,6 +47,9 @@
@@ -125,70 +192,3 @@
      }
  
      session = ne_session_create(args->scheme, args->host, args->port);
---- /dev/null
-+++ b/src/compat.h
-@@ -0,0 +1,64 @@
-+#ifndef _COMPAT_H
-+#define _COMPAT_H
-+
-+#ifndef _PATH_MOUNTED
-+# define _PATH_MOUNTED "/proc/mounts"
-+#endif
-+
-+#ifndef _PATH_MNTTAB
-+# define _PATH_MNTTAB "/etc/fstab"
-+#endif
-+
-+#ifdef HAVE_ERROR_H
-+# include <error.h>
-+#else
-+# include <stdio.h>
-+# include <stdarg.h>
-+# include <stdlib.h>
-+# include <string.h>
-+static void error_at_line(int status, int errnum, const char *filename,
-+                          unsigned int linenum, const char *format, ...)
-+{
-+	va_list ap;
-+
-+	fflush(stdout);
-+
-+	if (filename != NULL)
-+		fprintf(stderr, "%s:%u: ", filename, linenum);
-+
-+	va_start(ap, format);
-+	vfprintf(stderr, format, ap);
-+	va_end(ap);
-+
-+	if (errnum != 0)
-+		fprintf(stderr, ": %s", strerror(errnum));
-+
-+	fprintf(stderr, "\n");
-+
-+	if (status != 0)
-+		exit(status);
-+}
-+
-+#define error(status, errnum, format...) \
-+	error_at_line(status, errnum, NULL, 0, format)
-+
-+#endif /* HAVE_ERROR_H */
-+
-+#ifndef HAVE_CANONICALIZE_FILE_NAME
-+#include <limits.h>
-+#include <string.h>
-+#include <stdlib.h>
-+static char * canonicalize_file_name(const char *path)
-+{
-+	char buf[PATH_MAX] = { };
-+
-+	snprintf(buf, sizeof(buf) - 1, "%s", path);
-+
-+	if (!realpath(path, buf))
-+		return NULL;
-+
-+	return strdup(buf);
-+}
-+#endif
-+
-+#endif /* _COMPAT_H */

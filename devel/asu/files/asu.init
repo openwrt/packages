@@ -1,0 +1,40 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=01
+
+USE_PROCD=1
+PROG=/usr/bin/flask
+
+start_service() {
+    . /lib/functions/postgresql.sh
+
+    local pgdata=$(uci get postgresql.config.PGDATA)
+    local i=0
+
+    while ! pg_server_ready "$pgdata"; do
+      sleep 1
+      [ $((i++)) -gt 30 ] && return 1
+    done
+
+    i=0
+    while ! pg_test_db asu asu; do
+      sleep 1
+      [ $((i++)) -gt 30 ] && return 1
+    done
+
+    FLASK_APP=asu $PROG loaddb
+
+    procd_open_instance asu_main
+    procd_set_param user asu
+    procd_set_param group asu
+    procd_set_param command gunicorn3 asu:app
+    procd_close_instance
+
+    procd_open_instance main_worker
+    procd_set_param user asu
+    procd_set_param group asu
+    procd_set_param env FLASK_APP=asu
+    procd_set_param command $PROG run_worker
+    procd_close_instance
+}

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2017 OpenWrt.org
+# Copyright (C) Alexandru Ardelean <ardeleanalex@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,59 +8,47 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django
-PKG_VERSION:=1.8.18
-PKG_RELEASE=1
+PKG_VERSION:=3.0.2
+PKG_RELEASE:=2
+
+PYPI_NAME:=Django
+PKG_HASH:=8c3575f81e11390893860d97e1e0154c47512f180ea55bd84ce8fa69ba8051ca
+
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=LICENSE LICENSE.python
+PKG_CPE_ID:=cpe:/a:djangoproject:django
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/django/django.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=2d4bc5a60aa8a076689667c550ded96b87bc463e
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MIRROR_HASH:=c82c2cc338ae46ba8572d9960fc98dca932edc43a00f011fed102810a86185ae
-PKG_BUILD_DEPENDS:=python python-setuptools
-
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../python3-package.mk
 
-define Package/django
-    SUBMENU:=Python
-    SECTION:=lang
-    CATEGORY:=Languages
-    TITLE:=The web framework for perfectionists with deadlines.
-    MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
-    URL:=https://www.djangoproject.com/
-    DEPENDS:=+python
+define Package/django/Default
+  SUBMENU:=Python
+  SECTION:=lang
+  CATEGORY:=Languages
+  TITLE:=The web framework for perfectionists with deadlines.
+  URL:=https://www.djangoproject.com/
+  MENU:=1
 endef
 
-define Package/django/description
-    The web framework for perfectionists with deadlines.
+define Package/python3-django
+$(call Package/django/Default)
+  DEPENDS:= +python3 +python3-pytz +python3-sqlparse +python3-asgiref
+  VARIANT:=python3
 endef
 
-define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix=/usr --root=$(PKG_INSTALL_DIR))
+define Package/python3-django/description
+    The web framework for perfectionists with deadlines (LTS 2.2 series).
+    Python3 only.
 endef
 
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
+define Py3Package/python3-django/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) \
-	    $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
-	    $(1)$(PYTHON_PKG_DIR)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/django-admin.py \
-	    $(1)/usr/bin
+		$(1)/usr/bin/django-admin
 endef
 
-define Package/django/install
-	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) \
-	    $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
-	    $(1)$(PYTHON_PKG_DIR)
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/django-admin.py \
-	    $(1)/usr/bin
-	# fix python exec path
-	sed -i 's/#!.*/#!\/usr\/bin\/python/g' $(1)/usr/bin/django-admin.py
-endef
-
-$(eval $(call BuildPackage,django))
+$(eval $(call Py3Package,python3-django))
+$(eval $(call BuildPackage,python3-django))
+$(eval $(call BuildPackage,python3-django-src))

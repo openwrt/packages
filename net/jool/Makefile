@@ -5,46 +5,39 @@
 # See /LICENSE for more information.
 
 include $(TOPDIR)/rules.mk
+include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=jool
-PKG_VERSION:=2017.03.09
-PKG_RELEASE:=1
+PKG_VERSION:=4.0.6
+PKG_RELEASE:=2
 
-PKG_LICENSE:=GPL-3.0
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/NICMx/Jool/releases/download/v$(PKG_VERSION)
+PKG_HASH:=d9314c9de421c1fa854be83ab8ad6b4ad5062a01a9865a97bb87c5850d1c2b2a
+
+PKG_MAINTAINER:=
+PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/NICMx/Jool.git
-PKG_SOURCE_VERSION:=997a81bb5f5e9d82aa122fd37b7c890e44a245dd
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_SOURCE_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.xz
-PKG_MIRROR_HASH:=a2c41119be251d4d962234fc78d7122568a5e62484969cc4e80229a0c7422fd4
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
+PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=USE_UCLIBC:argp-standalone USE_MUSL:argp-standalone
+PKG_BUILD_DEPENDS:=!USE_GLIBC:argp-standalone
 
-PKG_FIXUP:=autoreconf
-
-include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/package.mk
-
-MAKE_PATH:=usr
-CONFIGURE_PATH:=usr
 
 define Build/Compile
 	$(MAKE) -C "$(LINUX_DIR)" \
 		KERNEL_DIR="$(LINUX_DIR)" \
 		ARCH="$(LINUX_KARCH)" \
 		CROSS_COMPILE="$(TARGET_CROSS)" \
-		SUBDIRS="$(PKG_BUILD_DIR)/mod/stateful" \
+		SUBDIRS="$(PKG_BUILD_DIR)/src/mod/nat64" \
 		V="$(V)" \
 		modules
 	$(MAKE) -C "$(LINUX_DIR)" \
 		KERNEL_DIR="$(LINUX_DIR)" \
 		ARCH="$(LINUX_KARCH)" \
 		CROSS_COMPILE="$(TARGET_CROSS)" \
-		SUBDIRS="$(PKG_BUILD_DIR)/mod/stateless" \
+		SUBDIRS="$(PKG_BUILD_DIR)/src/mod/siit" \
 		V="$(V)" \
 		modules
 	$(call Build/Compile/Default)
@@ -54,7 +47,6 @@ define Package/jool/Default
   SECTION:=net
   CATEGORY:=Network
   URL:=https://www.jool.mx
-  MAINTAINER:=Dan Luedtke <mail@danrl.com>
 endef
 
 define Package/jool/Default/description
@@ -80,10 +72,11 @@ define KernelPackage/jool
     @IPV6 \
     +kmod-crypto-md5 \
     +kmod-nf-conntrack \
-    +kmod-nf-conntrack6
+    +kmod-nf-conntrack6 \
+    +kmod-nf-ipt
   FILES:= \
-    $(PKG_BUILD_DIR)/mod/stateful/jool.$(LINUX_KMOD_SUFFIX) \
-    $(PKG_BUILD_DIR)/mod/stateless/jool_siit.$(LINUX_KMOD_SUFFIX)
+    $(PKG_BUILD_DIR)/src/mod/nat64/jool.$(LINUX_KMOD_SUFFIX) \
+    $(PKG_BUILD_DIR)/src/mod/siit/jool_siit.$(LINUX_KMOD_SUFFIX)
 endef
 
 define KernelPackage/jool/description
@@ -95,7 +88,7 @@ endef
 define Package/jool-tools
   $(call Package/jool/Default)
   TITLE:=Jool userspace control programs
-  DEPENDS:=+libnl +ethtool
+  DEPENDS:=+libnl +libxtables
 endef
 
 define Package/jool-tools/description
@@ -104,10 +97,19 @@ define Package/jool-tools/description
   This package provides the userspace control programs for Jool.
 endef
 
+CONFIGURE_ARGS += \
+	--disable-shared \
+	--without-bash-completion-dir
+
+CONFIGURE_VARS += \
+	ac_cv_func_memset=yes \
+	ac_cv_func_strcasecmp=yes
+
 define Package/jool-tools/install
-	$(INSTALL_DIR) $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/usr/stateful/jool       $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/usr/stateless/jool_siit $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/jool		$(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/joold		$(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/jool_siit	$(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,jool))

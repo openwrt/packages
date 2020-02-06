@@ -1,0 +1,68 @@
+From 95d82acc57bb7d8bae431f7a6ce0707aac3ef33f Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Thu, 5 Sep 2019 19:41:13 -0700
+Subject: [PATCH] Use eventfd() function with uClibc
+
+The Boost eventfd code either directly makes the eventfd system call
+using __NR_eventfd (when __GLIBC_MINOR is less than 8), or otherwise
+uses the eventfd() function provided by the C library.
+
+However, since uClibc pretends to be glibc 2.2, the Boost eventfd code
+directly uses the system call. While it works fine on most
+architectures, it doesn't on ARC since __NR_eventfd is not defined on
+this architecture. However, eventfd() is properly implemented.
+
+So, this patch adjusts the logic used by Boost to consider uClibc as a
+C library providing the eventfd() function.
+
+Signed-off-by: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ a/boost/asio/detail/impl/eventfd_select_interrupter.ipp  | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/boost/asio/detail/impl/eventfd_select_interrupter.ipp b/boost/asio/detail/impl/eventfd_select_interrupter.ipp
+index 38d4b2a61..e16cc8b00 100644
+--- a/boost/asio/detail/impl/eventfd_select_interrupter.ipp
++++ b/boost/asio/detail/impl/eventfd_select_interrupter.ipp
+@@ -23,11 +23,11 @@
+ #include <sys/stat.h>
+ #include <sys/types.h>
+ #include <fcntl.h>
+-#if __GLIBC__ == 2 && __GLIBC_MINOR__ < 8
++#if __GLIBC__ == 2 && __GLIBC_MINOR__ < 2
+ # include <asm/unistd.h>
+-#else // __GLIBC__ == 2 && __GLIBC_MINOR__ < 8
++#else // __GLIBC__ == 2 && __GLIBC_MINOR__ < 2
+ # include <sys/eventfd.h>
+-#endif // __GLIBC__ == 2 && __GLIBC_MINOR__ < 8
++#endif // __GLIBC__ == 2 && __GLIBC_MINOR__ < 2
+ #include <boost/asio/detail/cstdint.hpp>
+ #include <boost/asio/detail/eventfd_select_interrupter.hpp>
+ #include <boost/asio/detail/throw_error.hpp>
+@@ -46,14 +46,14 @@ eventfd_select_interrupter::eventfd_select_interrupter()
+ 
+ void eventfd_select_interrupter::open_descriptors()
+ {
+-#if __GLIBC__ == 2 && __GLIBC_MINOR__ < 8
++#if __GLIBC__ == 2 && __GLIBC_MINOR__ < 2
+   write_descriptor_ = read_descriptor_ = syscall(__NR_eventfd, 0);
+   if (read_descriptor_ != -1)
+   {
+     ::fcntl(read_descriptor_, F_SETFL, O_NONBLOCK);
+     ::fcntl(read_descriptor_, F_SETFD, FD_CLOEXEC);
+   }
+-#else // __GLIBC__ == 2 && __GLIBC_MINOR__ < 8
++#else // __GLIBC__ == 2 && __GLIBC_MINOR__ < 2
+ # if defined(EFD_CLOEXEC) && defined(EFD_NONBLOCK)
+   write_descriptor_ = read_descriptor_ =
+     ::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+@@ -70,7 +70,7 @@ void eventfd_select_interrupter::open_descriptors()
+       ::fcntl(read_descriptor_, F_SETFD, FD_CLOEXEC);
+     }
+   }
+-#endif // __GLIBC__ == 2 && __GLIBC_MINOR__ < 8
++#endif // __GLIBC__ == 2 && __GLIBC_MINOR__ < 2
+ 
+   if (read_descriptor_ == -1)
+   {

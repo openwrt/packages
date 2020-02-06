@@ -1,0 +1,35 @@
+#!/bin/sh
+# log service to trace failed ssh/luci logins and conditionally refresh banIP
+# written by Dirk Brenken (dev@brenken.org)
+
+# This is free software, licensed under the GNU General Public License v3.
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+LC_ALL=C
+PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+ban_ver="${1}"
+ban_sshdaemon="${2}"
+ban_logger="$(command -v logger)"
+ban_logread="$(command -v logread)"
+
+f_log()
+{
+	local class="${1}" log_msg="${2}"
+
+	if [ -x "${ban_logger}" ]
+	then
+		"${ban_logger}" -p "${class}" -t "banIP-${ban_ver}[${$}]" "${log_msg}"
+	else
+		printf "%s %s %s\\n" "${class}" "banIP-${ban_ver}[${$}]" "${log_msg}"
+	fi
+}
+
+if [ -x "${ban_logread}" ]
+then
+	f_log "info" "log/banIP service started"
+	"${ban_logread}" -f -e "${ban_sshdaemon}\|luci: failed login" | \
+		{ grep -q "Exit before auth\|luci: failed login\|error: maximum authentication attempts exceeded"; [ $? -eq 0 ] && /etc/init.d/banip refresh; }
+else
+	f_log "err" "can't start log/banIP service"
+fi

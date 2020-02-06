@@ -8,21 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luasql
-PKG_VERSION:=2.3.0
+PKG_VERSION:=2.4.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=b6251065656bf3e066d90d492dd06eec2c2cc76ab4b94187ce3ed9620d41f741
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/keplerproject/luasql.git
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/keplerproject/luasql/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=db2458a8c8c5f3bc717e4030fe2878f1ad8d71e437ec6149c381eebad5d525c5
 
+PKG_MAINTAINER:=
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=docs/us/license.html
-PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -31,7 +26,7 @@ define Package/luasql/Default
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Lua SQL binding
-  URL:=http://keplerproject.github.io/luasql/
+  URL:=https://keplerproject.github.io/luasql/
   DEPENDS:= +lua
 endef
 
@@ -86,24 +81,21 @@ TARGET_CFLAGS += $(FPIC) -std=gnu99
 TARGET_CPPFLAGS += -DLUA_USE_LINUX
 
 ifeq ($(BUILD_VARIANT),mysql)
-  TARGET_CPPFLAGS += -I$(STAGING_DIR)/usr/include/mysql
-  TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib/mysql -lmysqlclient -lz
+  MAKE_FLAGS += DRIVER_INCS_mysql='-I$(STAGING_DIR)/usr/include/mysql' \
+		DRIVER_LIBS_mysql='$(TARGET_LDFLAGS) -L$(STAGING_DIR)/usr/lib/mysql -lmysqlclient -lz'
 endif
 
 ifeq ($(BUILD_VARIANT),postgres)
-  TARGET_LDFLAGS += -lpq
+  MAKE_FLAGS += DRIVER_LIBS_postgres='$(TARGET_LDFLAGS) -lpq'
 endif
 
 ifeq ($(BUILD_VARIANT),sqlite3)
-  TARGET_LDFLAGS += -lsqlite3 -lpthread
+  MAKE_FLAGS += DRIVER_LIBS_sqlite='$(TARGET_LDFLAGS) -lsqlite3 -lpthread'
 endif
 
 MAKE_FLAGS += \
-	T="$(BUILD_VARIANT)" \
-	DRIVER_INCS="$(TARGET_CPPFLAGS)" \
-	DRIVER_LIBS="$(TARGET_LDFLAGS)" \
 	CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
-	lib
+	$(BUILD_VARIANT)
 
 define Package/Install/Default
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luasql

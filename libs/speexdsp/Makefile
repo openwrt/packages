@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=speexdsp
-PKG_VERSION:=1.2rc3
+PKG_VERSION:=1.2.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://downloads.us.xiph.org/releases/speex/
-PKG_HASH:=4ae688600039f5d224bdf2e222d2fbde65608447e4c2f681585e4dca6df692f1
+PKG_SOURCE_URL:=https://downloads.us.xiph.org/releases/speex/
+PKG_HASH:=682042fc6f9bee6294ec453f470dadc26c6ff29b9c9e9ad2ffc1f4312fd64771
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

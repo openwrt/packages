@@ -1,0 +1,14 @@
+Tests build can fail for arc700 for the following causes
+
+ - Missing -stack-protector-all argument when building test progs
+ - Missing linker flag -lgmodule-2.0 -lffi
+
+--- a/server/Makefile.am.orig	2019-12-25 18:31:59.133981942 +0800
++++ b/server/Makefile.am	2019-12-25 18:32:06.308976585 +0800
+@@ -1,5 +1,5 @@
+ NULL =
+-SUBDIRS = . tests
++SUBDIRS = .
+ 
+ check-valgrind:
+ 	$(MAKE) -C tests check-valgrind

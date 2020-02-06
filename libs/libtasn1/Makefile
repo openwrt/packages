@@ -8,26 +8,30 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtasn1
-PKG_VERSION:=4.12
+PKG_VERSION:=4.16.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
-PKG_HASH:=6753da2e621257f33f5b051cc114d417e5206a0818fe0b1ecfd6153f70934753
-PKG_LICENSE:=LGPLv2.1+
+PKG_HASH:=0e0fb0903839117cb6e3b56e68222771bebf22ad7fc2295a0ed7d576e8d4329d
+
+PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING.LIB
+PKG_CPE_ID:=cpe:/a:gnu:libtasn1
 
 #PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 define Package/libtasn1
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=An ASN.1 and DER structures manipulation library
-  MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
-  URL:=ftp://ftp.gnu.org/gnu/libtasn1/
+  URL:=https://www.gnu.org/software/libtasn1/
 endef
 
 define Package/libtasn1/description
@@ -35,15 +39,18 @@ define Package/libtasn1/description
  Distinguish Encoding Rules (DER) manipulation.
 endef
 
-TARGET_CFLAGS += $(FPIC)
+TARGET_CFLAGS += -ffunction-sections -fdata-sections
+TARGET_LDFLAGS += -Wl,--gc-sections
 
 CONFIGURE_ARGS += \
-		--enable-shared \
-		--disable-gcc-warnings \
-		--enable-static
+	--disable-doc \
+	--disable-gcc-warnings \
+	--disable-ld-version-script \
+	--disable-valgrind-tests
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/bin
+	# $(INSTALL_DIR) $(1)/usr/bin
+	# $(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libtasn1.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
@@ -57,4 +64,5 @@ define Package/libtasn1/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libtasn1.so.* $(1)/usr/lib/
 endef
 
+$(eval $(call HostBuild))
 $(eval $(call BuildPackage,libtasn1))

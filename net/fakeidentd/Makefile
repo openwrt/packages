@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fakeidentd
 PKG_VERSION:=2.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).c
 PKG_SOURCE_URL:=http://distfiles.gentoo.org/distfiles/
 PKG_HASH:=75b321e5d9dddcea2b38035b62ac30f2175ed43f3f187be6da19aaa67c4fe165
 PKG_MAINTAINER:=Daniel Gimpelevich <daniel@gimpelevich.san-francisco.ca.us>
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=GPL-2.0-or-later
 UNPACK_CMD=$(CP) $(DL_DIR)/$(PKG_SOURCE) $(1)/
 
 include $(INCLUDE_DIR)/package.mk

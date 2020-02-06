@@ -8,26 +8,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quassel-irssi
+PKG_SOURCE_DATE:=2017-11-30
+PKG_SOURCE_VERSION:=079be662dde374a383646256108a4974c2bc7796
+PKG_RELEASE:=3
 
-# quassel-irssi upstream doesn't release versions (at least, at the moment),
-# so use commit date for PKG_VERSION and embed commit hash into PKG_RELEASE.
-PKG_VERSION:=2016-09-11
-PKG_SOURCE_VERSION:=cbd9bd7f4ac44260d9fcafb809fdf153cde193e5
-PKG_RELEASE:=1.$(PKG_SOURCE_VERSION)
-
-PKG_LICENSE:=GPL-3.0+
-
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/phhusson/quassel-irssi
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.bz2
-PKG_MIRROR_HASH:=fd13b2497e3b0d0779e0ce3d8b27c37e207d2a73b5b6dc0cb2799bd4472fc5e1
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/phhusson/quassel-irssi/tar.gz/$(PKG_SOURCE_VERSION)?
+PKG_HASH:=c276a92a47f8edf5ae1d9db0e72a69d078f2f3f80e055853fc6d06099d898966
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 
 PKG_MAINTAINER:=Ben Rosser <rosser.bjr@gmail.com>
+PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=core/COPYING
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 MAKE_PATH := core
 MAKE_VARS += SYSTEM_QUASSELC=1 IRSSI_CFLAGS="$(TARGET_CFLAGS) $(EXTRA_CFLAGS) $(TARGET_CPPFLAGS) $(EXTRA_CPPFLAGS)" IRSSI_INCLUDE=$(STAGING_DIR)/usr/include/irssi
