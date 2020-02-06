@@ -30,12 +30,12 @@ PKG_CONFIG_DEPENDS:= \
   CONFIG_ffmpeg4_FEAT_DASH \
   CONFIG_ffmpeg4_LIB_FDK-AAC \
   CONFIG_ffmpeg4_LIB_LAME \
-  CONFIG_ffmpeg4_LIB_MBEDTLS \
-  CONFIG_ffmpeg4_LIB_OPENSSL \
   CONFIG_ffmpeg4_LIB_LIBOPUS \
   CONFIG_ffmpeg4_LIB_LIBVORBIS \
   CONFIG_ffmpeg4_LIB_LIBX264 \
-  CONFIG_ffmpeg4_OPT_PERFORMANCE
+  CONFIG_ffmpeg4_OPT_PERFORMANCE \
+  CONFIG_ffmpeg4_LIB_MBEDTLS \
+  CONFIG_ffmpeg4_LIB_OPENSSL
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -46,11 +46,12 @@ define Package/ffmpeg4
     +ffmpeg4_FEAT_DASH:libxml2 \
     +ffmpeg4_LIB_FDK-AAC:fdk-aac \
     +ffmpeg4_LIB_LAME:lame-lib \
-    +ffmpeg4_LIB_MBEDTLS:libmbedtls \
-    +ffmpeg4_LIB_OPENSSL:libopenssl \
     +ffmpeg4_LIB_LIBOPUS:libopus \
     +ffmpeg4_LIB_LIBVORBIS:libvorbis \
-    +ffmpeg4_LIB_LIBX264:libx264
+    +ffmpeg4_LIB_LIBX264:libx264 \
+    +ffmpeg4_LIB_MBEDTLS:libmbedtls \
+    +ffmpeg4_LIB_OPENSSL:libopenssl
+
   TITLE:=FFmpeg $(PKG_VERSION)
   URL:=https://www.ffmpeg.org/
   PROVIDES:=libffmpeg libffmpeg-full libffmpeg-mini libffmpeg-custom libffmpeg-audio-dec ffmpeg

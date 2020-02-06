@@ -2,8 +2,6 @@ if PACKAGE_ffmpeg4
 
 menu "Configuration"
 
-comment "Only select one SSL library"
-
 config ffmpeg4_LICENSING
   bool "See help for licensing information"
   help
@@ -24,6 +22,7 @@ config ffmpeg4_LICENSING
 
 	More information here:
 	https://github.com/FFmpeg/FFmpeg/blob/master/LICENSE.md
+  default n
 
 config ffmpeg4_ENC_FLV
   bool "Enable builtin FLV encoder"
@@ -53,16 +52,8 @@ config ffmpeg4_LIB_LAME
   bool "Enable LAME (MP3 encoding) support"
   default y if !mips && !mipsel && !mips64
 
-config ffmpeg4_LIB_MBEDTLS
-  bool "Enable mbed TLS support"
-  default y
-
 config ffmpeg4_LIB_LIBVORBIS
   bool "Enable Ogg Vorbis (de/encoding) support using libvorbis"
-  default n
-
-config ffmpeg4_LIB_OPENSSL
-  bool "Enable OpenSSL support"
   default n
 
 config ffmpeg4_LIB_LIBOPUS
@@ -78,5 +69,18 @@ config ffmpeg4_OPT_PERFORMANCE
   default y if !mips && !mipsel && !mips64
 
 endmenu
+
+choice
+
+  prompt "SSL Library"
+  default ffmpeg4_LIB_MBEDTLS
+
+config ffmpeg4_LIB_MBEDTLS
+  bool "mbed TLS"
+
+config ffmpeg4_LIB_OPENSSL
+  bool "OpenSSL"
+
+endchoice
 
 endif
