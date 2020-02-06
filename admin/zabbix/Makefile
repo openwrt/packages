@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=4.0.16
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/zabbix
@@ -21,8 +21,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:zabbix:zabbix
 
 PKG_INSTALL:=1
-
-PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 
 PKG_CONFIG_DEPENDS:= \
   CONFIG_ZABBIX_GNUTLS \
@@ -162,6 +161,9 @@ CONFIGURE_ARGS+= \
 	--with-zlib=$(STAGING_DIR)/usr/include \
 	$(if $(CONFIG_ZABBIX_GNUTLS),--with-gnutls="$(STAGING_DIR)/usr") \
 	$(if $(CONFIG_ZABBIX_OPENSSL),--with-openssl="$(STAGING_DIR)/usr")
+
+CONFIGURE_VARS += \
+	ac_cv_header_sys_sysinfo_h=no
 
 MAKE_FLAGS += ARCH="linux"
 
