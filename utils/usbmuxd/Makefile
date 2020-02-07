@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=usbmuxd
 PKG_SOURCE_DATE:=2020-01-20
 PKG_SOURCE_VERSION:=8a69f1a78a58476f77b66916091d2405d0cd815f
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/libimobiledevice/usbmuxd
@@ -49,7 +49,7 @@ define Package/usbmuxd/conffiles
 /etc/lockdown/SystemConfiguration.plist
 endef
 
-CONFIGURE_ARGS += --without-systemd
+CONFIGURE_ARGS += --with-systemd
 
 define Package/usbmuxd/install
 	$(INSTALL_DIR) $(1)/etc/init.d
