@@ -345,7 +345,6 @@ define Package/freeradius3-mod-realm
 endef
 
 define Package/freeradius3-mod-realm/conffiles
-/etc/freeradius3/proxy.conf
 /etc/freeradius3/mods-available/realm
 /etc/freeradius3/mods-enabled/realm
 endef
