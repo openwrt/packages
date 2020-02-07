@@ -1,0 +1,80 @@
+--- a/src/modules/rlm_python/configure
++++ b/src/modules/rlm_python/configure
+@@ -2928,15 +2928,15 @@ fi
+ 
+ 
+ 	if test x$fail = x; then
+-		PY_PREFIX=`${PYTHON_BIN} -c 'import sys ; print(sys.prefix)'`
++		PY_PREFIX="$OPENWRTTARGET_PY_PREFIX"
+ 		{ $as_echo "$as_me:${as_lineno-$LINENO}: Python sys.prefix \"${PY_PREFIX}\"" >&5
+ $as_echo "$as_me: Python sys.prefix \"${PY_PREFIX}\"" >&6;}
+ 
+-		PY_EXEC_PREFIX=`${PYTHON_BIN} -c 'import sys ; print(sys.exec_prefix)'`
++		PY_EXEC_PREFIX="$OPENWRTTARGET_PY_PREFIX"
+ 		{ $as_echo "$as_me:${as_lineno-$LINENO}: Python sys.exec_prefix \"${PY_EXEC_PREFIX}\"" >&5
+ $as_echo "$as_me: Python sys.exec_prefix \"${PY_EXEC_PREFIX}\"" >&6;}
+ 
+-		PY_SYS_VERSION=`${PYTHON_BIN} -c 'import sys ; print(sys.version[0:3])'`
++		PY_SYS_VERSION="$OPENWRTTARGET_PY_SYS_VERSION"
+ 		{ $as_echo "$as_me:${as_lineno-$LINENO}: Python sys.version \"${PY_SYS_VERSION}\"" >&5
+ $as_echo "$as_me: Python sys.version \"${PY_SYS_VERSION}\"" >&6;}
+ 
+--- a/src/modules/rlm_python/configure.ac
++++ b/src/modules/rlm_python/configure.ac
+@@ -65,13 +65,13 @@ if test x$with_[]modname != xno; then
+ 	)
+ 
+ 	if test x$fail = x; then
+-		PY_PREFIX=`${PYTHON_BIN} -c 'import sys ; print(sys.prefix)'`
++		PY_PREFIX="$OPENWRTTARGET_PY_PREFIX"
+ 		AC_MSG_NOTICE([Python sys.prefix \"${PY_PREFIX}\"])
+ 
+-		PY_EXEC_PREFIX=`${PYTHON_BIN} -c 'import sys ; print(sys.exec_prefix)'`
++		PY_EXEC_PREFIX="$OPENWRTTARGET_PY_PREFIX"
+ 		AC_MSG_NOTICE([Python sys.exec_prefix \"${PY_EXEC_PREFIX}\"])
+ 
+-		PY_SYS_VERSION=`${PYTHON_BIN} -c 'import sys ; print(sys.version[[0:3]])'`
++		PY_SYS_VERSION="$OPENWRTTARGET_PY_SYS_VERSION"
+ 		AC_MSG_NOTICE([Python sys.version \"${PY_SYS_VERSION}\"])
+ 
+ 		if test "x$PY_LIB_DIR" = "x"; then
+--- a/src/modules/rlm_python3/configure
++++ b/src/modules/rlm_python3/configure
+@@ -2928,15 +2928,15 @@ fi
+ 
+ 
+ 	if test x$fail = x; then
+-		PY_PREFIX=`${PYTHON3_BIN} -c 'import sys ; print(sys.prefix)'`
++		PY_PREFIX="$OPENWRTTARGET_PY3_PREFIX"
+ 		{ $as_echo "$as_me:${as_lineno-$LINENO}: Python sys.prefix \"${PY_PREFIX}\"" >&5
+ $as_echo "$as_me: Python sys.prefix \"${PY_PREFIX}\"" >&6;}
+ 
+-		PY_EXEC_PREFIX=`${PYTHON3_BIN} -c 'import sys ; print(sys.exec_prefix)'`
++		PY_EXEC_PREFIX="$OPENWRTTARGET_PY3_PREFIX"
+ 		{ $as_echo "$as_me:${as_lineno-$LINENO}: Python sys.exec_prefix \"${PY_EXEC_PREFIX}\"" >&5
+ $as_echo "$as_me: Python sys.exec_prefix \"${PY_EXEC_PREFIX}\"" >&6;}
+ 
+-		PY_SYS_VERSION=`${PYTHON3_BIN} -c 'import sys ; print(sys.version[0:3])'`
++		PY_SYS_VERSION="$OPENWRTTARGET_PY3_SYS_VERSION"
+ 		{ $as_echo "$as_me:${as_lineno-$LINENO}: Python sys.version \"${PY_SYS_VERSION}\"" >&5
+ $as_echo "$as_me: Python sys.version \"${PY_SYS_VERSION}\"" >&6;}
+ 
+--- a/src/modules/rlm_python3/configure.ac
++++ b/src/modules/rlm_python3/configure.ac
+@@ -65,13 +65,13 @@ if test x$with_[]modname != xno; then
+ 	)
+ 
+ 	if test x$fail = x; then
+-		PY_PREFIX=`${PYTHON3_BIN} -c 'import sys ; print(sys.prefix)'`
++		PY_PREFIX="$OPENWRTTARGET_PY3_PREFIX"
+ 		AC_MSG_NOTICE([Python sys.prefix \"${PY_PREFIX}\"])
+ 
+-		PY_EXEC_PREFIX=`${PYTHON3_BIN} -c 'import sys ; print(sys.exec_prefix)'`
++		PY_EXEC_PREFIX="$OPENWRTTARGET_PY3_PREFIX"
+ 		AC_MSG_NOTICE([Python sys.exec_prefix \"${PY_EXEC_PREFIX}\"])
+ 
+-		PY_SYS_VERSION=`${PYTHON3_BIN} -c 'import sys ; print(sys.version[[0:3]])'`
++		PY_SYS_VERSION="$OPENWRTTARGET_PY3_SYS_VERSION"
+ 		AC_MSG_NOTICE([Python sys.version \"${PY_SYS_VERSION}\"])
+ 
+ 		if test "x$PY_LIB_DIR" = "x"; then
