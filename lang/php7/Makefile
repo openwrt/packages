@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=7.2.26
+PKG_VERSION:=7.2.27
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
@@ -17,7 +17,7 @@ PKG_CPE_ID:=cpe:/a:php:php
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.php.net/distributions/
-PKG_HASH:=1dd3bc875e105f5c9d21fb4dc240670bd2c22037820ff03890f5ab883c88b78d
+PKG_HASH:=7bd0fb9e3b63cfe53176d1f3565cd686f90b3926217158de5ba57091f49e4c32
 
 PKG_FIXUP:=libtool autoreconf
 PKG_BUILD_PARALLEL:=1
