@@ -7,7 +7,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=zipp
 PKG_HASH:=b338014b9bc7102ca69e0fb96ed07215a8954d2989bc5d83658494ab2ba634af
 
-PKG_MAINTAINER:=Paul Spooren <mail@aparcar.org>, Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
