@@ -26,12 +26,14 @@ start_sysstat_instance() {
 
 	[ -d /var/log/sysstat ] || mkdir -p /var/log/sysstat
 
-	echo "HISTORY=$log_history" > $SYSSTAT_CFG
-	echo "COMPRESSAFTER=$compressafter" >> $SYSSTAT_CFG
-	echo "SADC_OPTIONS=\"$sadc_options\"" >> $SYSSTAT_CFG
-	echo "SA_DIR=\"$sa_dir\"" >> $SYSSTAT_CFG
-	echo "ZIP=\"$zip\"" >> $SYSSTAT_CFG
-	echo "ENABLED=\"$enabled\"" >> $SYSSTAT_CFG
+	{
+		echo "HISTORY=$log_history"
+		echo "COMPRESSAFTER=$compressafter"
+		echo "SADC_OPTIONS=\"$sadc_options\""
+		echo "SA_DIR=\"$sa_dir\""
+		echo "ZIP=\"$zip\""
+		echo "ENABLED=\"$enabled\""
+	} > $SYSSTAT_CFG
 
 	procd_open_instance
 	procd_set_param command $PROG -S DISK -F -L -

@@ -8,26 +8,30 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sysstat
-PKG_VERSION:=12.0.5
+PKG_VERSION:=12.2.1
 PKG_RELEASE:=1
-
-PKG_LICENSE:=GPL-2.0
-PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
-PKG_CPE_ID:=cpe:/a:sysstat:sysstat
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://pagesperso-orange.fr/sebastien.godard/
-PKG_HASH:=58583b0776b9addec69e42eebd6dd1a8e976da8a36bad2422659a1ad6c1a2600
+PKG_HASH:=8edb0e19b514ac560a098a02933a4735b881296d61014db89bf80f05dd7a4732
+
+PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:sysstat_project:sysstat
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/sysstat
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Sysstat performance monitoring tools
   URL:=http://pagesperso-orange.fr/sebastien.godard/index.html
+  DEPENDS:=$(INTL_DEPENDS)
 endef
 
 define Package/sysstat/description
@@ -47,9 +51,7 @@ CONFIGURE_VARS+= \
 
 CONFIGURE_ARGS+= \
 	--disable-documentation \
-	--disable-largefile \
-	--disable-sensors \
-	--disable-nls
+	--disable-sensors
 
 define Package/sysstat/install
 	$(INSTALL_DIR) $(1)/usr/lib/sysstat
