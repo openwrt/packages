@@ -96,6 +96,24 @@ define Package/apache/conffiles
 /etc/init.d/apache2
 endef
 
+define Package/apache/postinst
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+  echo
+  echo "o-------------------------------------------------------------------o"
+  echo "| Apache package changes                                            |"
+  echo "o-------------------------------------------------------------------o"
+  echo "| - The server binary was renamed from httpd to apache2             |"
+  echo "| - A simple init script is installed (/etc/init.d/apache2)         |"
+  echo "| - The server runs as user apache by default now                   |"
+  echo "| - Configuration resides in /etc/apache2 instead of /etc/apache    |"
+  echo "| - Modules are installed to /usr/lib/apache2                       |"
+  echo "o-------------------------------------------------------------=^_^=-o"
+  echo
+fi
+exit 0
+endef
+
 define Package/apache-ab
 $(call Package/apache/Default)
   TITLE:=Apache benchmark utility
