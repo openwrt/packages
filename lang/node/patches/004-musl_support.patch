@@ -1,0 +1,61 @@
+diff -urN a/deps/v8/src/base/platform/condition-variable.cc b/deps/v8/src/base/platform/condition-variable.cc
+--- a/deps/v8/src/base/platform/condition-variable.cc	2019-09-05 00:36:23.000000000 +0900
++++ b/deps/v8/src/base/platform/condition-variable.cc	2019-09-12 15:10:01.063792083 +0900
+@@ -16,7 +16,7 @@
+ 
+ ConditionVariable::ConditionVariable() {
+ #if (V8_OS_FREEBSD || V8_OS_NETBSD || V8_OS_OPENBSD || \
+-     (V8_OS_LINUX && V8_LIBC_GLIBC))
++     V8_OS_LINUX)
+   // On Free/Net/OpenBSD and Linux with glibc we can change the time
+   // source for pthread_cond_timedwait() to use the monotonic clock.
+   pthread_condattr_t attr;
+@@ -92,7 +92,7 @@
+       &native_handle_, &mutex->native_handle(), &ts);
+ #else
+ #if (V8_OS_FREEBSD || V8_OS_NETBSD || V8_OS_OPENBSD || \
+-     (V8_OS_LINUX && V8_LIBC_GLIBC))
++     V8_OS_LINUX)
+   // On Free/Net/OpenBSD and Linux with glibc we can change the time
+   // source for pthread_cond_timedwait() to use the monotonic clock.
+   result = clock_gettime(CLOCK_MONOTONIC, &ts);
+diff -urN a/deps/v8/src/base/platform/platform-posix.cc b/deps/v8/src/base/platform/platform-posix.cc
+--- a/deps/v8/src/base/platform/platform-posix.cc	2019-09-05 00:36:23.000000000 +0900
++++ b/deps/v8/src/base/platform/platform-posix.cc	2019-09-12 15:10:01.063792083 +0900
+@@ -773,7 +773,7 @@
+ #if V8_OS_MACOSX
+     // Default on Mac OS X is 512kB -- bump up to 1MB
+     stack_size = 1 * 1024 * 1024;
+-#elif V8_OS_AIX
++#elif V8_OS_AIX || !defined(__GLIBC__)
+     // Default on AIX is 96kB -- bump up to 2MB
+     stack_size = 2 * 1024 * 1024;
+ #endif
+diff -urN a/deps/v8/src/codegen/external-reference-table.cc b/deps/v8/src/codegen/external-reference-table.cc
+--- a/deps/v8/src/codegen/external-reference-table.cc	2019-09-05 00:36:23.000000000 +0900
++++ b/deps/v8/src/codegen/external-reference-table.cc	2019-09-12 15:09:41.959828134 +0900
+@@ -9,7 +9,7 @@
+ #include "src/ic/stub-cache.h"
+ #include "src/logging/counters.h"
+ 
+-#if defined(DEBUG) && defined(V8_OS_LINUX) && !defined(V8_OS_ANDROID)
++#if defined(DEBUG) && defined(V8_OS_LINUX) && !defined(V8_OS_ANDROID) && defined(V8_LIBC_GLIBC)
+ #define SYMBOLIZE_FUNCTION
+ #include <execinfo.h>
+ #include <vector>
+diff -urN a/deps/v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc b/deps/v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc
+--- a/deps/v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc	2019-09-05 00:36:23.000000000 +0900
++++ b/deps/v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc	2019-09-12 15:10:01.063792083 +0900
+@@ -134,8 +134,10 @@
+     // The function may have already been optimized by OSR.  Simply continue.
+     // Use a mutex to make sure that functions marked for install
+     // are always also queued.
+-    base::MutexGuard access_output_queue_(&output_queue_mutex_);
+-    output_queue_.push(job);
++    {
++      base::MutexGuard access_output_queue_(&output_queue_mutex_);
++      output_queue_.push(job);
++    }
+   }
+ 
+   isolate_->stack_guard()->RequestInstallCode();

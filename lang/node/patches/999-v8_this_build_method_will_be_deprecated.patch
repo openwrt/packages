@@ -1,0 +1,37 @@
+diff -urN a/configure.py b/configure.py
+--- a/configure.py	2019-09-05 00:36:21.000000000 +0900
++++ b/configure.py	2019-09-27 11:49:55.445800884 +0900
+@@ -1202,6 +1202,25 @@
+     options.build_v8_with_gn = FetchDeps(v8_path)
+   o['variables']['build_v8_with_gn'] = b(options.build_v8_with_gn)
+ 
++def configure_v8_deprecated(o):
++  target_arch = options.dest_cpu
++  if target_arch == 'x86':
++    target_arch = 'ia32'
++  if target_arch == 'x86_64':
++    target_arch = 'x64'
++
++  if target_arch in ('mips', 'mips64'):
++    o['variables']['v8_use_snapshot'] = 'false'
++  elif target_arch in ('mipsel', 'mips64el'):
++    o['variables']['v8_enable_embedded_builtins'] = 0
++  elif target_arch == 'x64':
++    if options.with_intl in (None, 'none'):
++      o['variables']['v8_enable_embedded_builtins'] = 0
++  elif target_arch == 'ia32':
++    if options.with_intl in (None, 'none'):
++      o['variables']['v8_enable_embedded_builtins'] = 1
++    else:
++      o['variables']['v8_enable_embedded_builtins'] = 0
+ 
+ def configure_openssl(o):
+   variables = o['variables']
+@@ -1632,6 +1651,7 @@
+ configure_intl(output)
+ configure_static(output)
+ configure_inspector(output)
++configure_v8_deprecated(output)
+ 
+ # variables should be a root level element,
+ # move everything else to target_defaults

@@ -1,0 +1,14 @@
+diff -urN a/node.gypi b/node.gypi
+--- a/node.gypi	2019-09-05 00:36:25.000000000 +0900
++++ b/node.gypi	2019-09-13 09:57:54.073191914 +0900
+@@ -142,6 +142,10 @@
+         'deps/http_parser/http_parser.gyp:http_parser',
+         'deps/llhttp/llhttp.gyp:llhttp'
+       ],
++    }, {
++      'dependencies': [
++        'deps/llhttp/llhttp.gyp:llhttp'
++      ],
+     } ],
+ 
+     [ 'node_shared_cares=="false"', {

@@ -1,15 +1,15 @@
---- a/configure
-+++ b/configure
-@@ -60,7 +60,7 @@
+--- a/configure.py
++++ b/configure.py
+@@ -48,7 +48,7 @@
  
  valid_os = ('win', 'mac', 'solaris', 'freebsd', 'openbsd', 'linux',
-             'android', 'aix')
+             'android', 'aix', 'cloudabi')
 -valid_arch = ('arm', 'arm64', 'ia32', 'mips', 'mipsel', 'mips64el', 'ppc',
 +valid_arch = ('arm', 'arm64', 'ia32', 'mips', 'mipsel', 'mips64', 'mips64el', 'ppc',
-               'ppc64', 'x32','x64', 'x86', 'x86_64', 's390', 's390x')
+               'ppc64', 'x32','x64', 'x86', 'x86_64', 's390x')
  valid_arm_float_abi = ('soft', 'softfp', 'hard')
  valid_arm_fpu = ('vfp', 'vfpv3', 'vfpv3-d16', 'neon')
-@@ -795,6 +795,9 @@
+@@ -883,6 +883,9 @@
    if rtn == 'mipsel' and '_LP64' in k:
      rtn = 'mips64el'
  
@@ -19,7 +19,7 @@
    return rtn
  
  
-@@ -877,7 +880,7 @@
+@@ -981,7 +984,7 @@
  
    if target_arch == 'arm':
      configure_arm(o)

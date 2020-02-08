@@ -1,6 +1,6 @@
 --- a/deps/v8/src/base/cpu.cc
 +++ b/deps/v8/src/base/cpu.cc
-@@ -144,6 +144,7 @@
+@@ -143,6 +143,7 @@
        ".set push\n\t"
        ".set noreorder\n\t"
        ".set oddspreg\n\t"
