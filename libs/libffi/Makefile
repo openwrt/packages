@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libffi
 PKG_VERSION:=3.2.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://sourceware.org/pub/libffi/
@@ -44,15 +44,6 @@ code written in another language. The libffi library really only provides the
 lowest, machine dependent layer of a fully featured foreign function interface.
 A layer must exist above libffi that handles type conversions for values passed
 between the two languages.
-endef
-
-CONFIGURE_PATH = build
-CONFIGURE_CMD = ../configure
-MAKE_PATH = build
-
-define Build/Configure
-	mkdir -p $(PKG_BUILD_DIR)/build
-	$(Build/Configure/Default)
 endef
 
 define Build/InstallDev
