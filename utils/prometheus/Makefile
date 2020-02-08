@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus
-PKG_VERSION:=2.10.0
-PKG_RELEASE:=2
+PKG_VERSION:=2.15.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/prometheus/prometheus/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=0362f4aa2fb44cc2c572df140da742bdf99fe9f338157a83f6634694fd693000
+PKG_HASH:=42cc464ffcede82d077be10e0b5cf6eff6bf62ed2b85cc5cb4ae9be73b7ed245
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
