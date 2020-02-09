@@ -1,12 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rpcsvc-proto
-PKG_VERSION:=1.4
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=https://github.com/thkukuk/rpcsvc-proto/releases/download/v$(PKG_VERSION)/
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=867e46767812784d8dda6d8d931d6fabb30168abb02d87a2a205be6d5a2934a7
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/thkukuk/rpcsvc-proto.git
+PKG_SOURCE_DATE:=2020-01-16
+PKG_SOURCE_VERSION:=daba1f3aa715551bd83770053a15153f0e40d27f
+PKG_MIRROR_HASH:=38ac6ad69327d4498cebc5b97519210f0643a8c47a3a3409cbae01806631694b
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=BSD-3-clause
