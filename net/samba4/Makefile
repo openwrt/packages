@@ -2,17 +2,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.11.4
-PKG_RELEASE:=2
+PKG_VERSION:=4.11.6
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://ftp.heanet.ie/mirrors/ftp.samba.org/stable/ \
+PKG_SOURCE_URL:= \
 		https://ftp.gwdg.de/pub/samba/stable/ \
+		https://ftp.heanet.ie/mirrors/ftp.samba.org/stable/ \
 		https://ftp.riken.jp/net/samba/samba/stable/ \
 		http://www.nic.funet.fi/index/samba/pub/samba/stable/ \
 		http://samba.mirror.bit.nl/samba/ftp/stable/ \
 		https://download.samba.org/pub/samba/stable/
-PKG_HASH:=b95471ba450757109dce65acfe75dafc719c5cc5d464fc65ee442433a461db24
+PKG_HASH:=91438f4d7b71f673421435fa7f26b03b613f214139636ce50af35bc2ff09ef38
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-3.0-only
