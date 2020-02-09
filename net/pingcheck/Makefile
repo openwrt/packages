@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pingcheck
 PKG_VERSION:=2019-10-08
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_MIRROR_HASH:=0bf82809ce36106825d1a757c4624efcbab1829c1a9bf9e1e055e75ebf83403d
@@ -37,7 +37,7 @@ endef
 
 define Package/pingcheck/description
 Checks by using "ping" (ICMP echo) or by opening connections to TCP port 80
-wether a configured host (normally on the internet) can be reached via a
+whether a configured host (normally on the internet) can be reached via a
 specific interface. Then makes this information available via ubus and triggers
 "online" and "offline" scripts.
 endef
