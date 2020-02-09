@@ -208,7 +208,7 @@ public:
     auto operator++() -> iterator &;
 
 
-    inline ~iterator() { if (cur.get()==this) { cur.release(); } }
+    inline ~iterator() { if (cur.get()==this) { static_cast<void>(cur.release()); } }
 
 };
 
