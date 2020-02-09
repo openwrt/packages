@@ -27,14 +27,25 @@ smb_header()
 	local hostname
 	hostname="$(cat /proc/sys/kernel/hostname)"
 
-	config_get workgroup		$1 workgroup	"WORKGROUP"
-	config_get description		$1 description	"Ksmbd on OpenWrt"
+	config_get workgroup $1 workgroup "WORKGROUP"
+	config_get description $1 description "Ksmbd on OpenWrt"
+	config_get_bool ALLOW_LEGACY_PROTOCOLS $1 allow_legacy_protocols 0
 
 	sed -e "s#|NAME|#$hostname#g" \
 	    -e "s#|WORKGROUP|#$workgroup#g" \
 	    -e "s#|DESCRIPTION|#$description#g" \
 	    -e "s#|INTERFACES|#$interfaces#g" \
 	    /etc/ksmbd/smb.conf.template > /var/etc/ksmbd/smb.conf
+		
+	{
+		printf "\n######### Dynamic written config options #########\n"
+
+		if [ "$ALLOW_LEGACY_PROTOCOLS" -eq 1 ]; then
+			logger -p daemon.info -t 'ksmbd' "Legacy Protocols allowed, don't use this option for secure environments!"
+			printf "\tserver min protocol = NT1\n"
+			printf "\tserver signing = disabled\n"
+		fi
+	} >> /var/etc/ksmbd/smb.conf
 
 	[ -e /etc/ksmbd/smb.conf ] || ln -nsf /var/etc/ksmbd/smb.conf /etc/ksmbd/smb.conf
 
@@ -168,7 +179,7 @@ start_service()
 	logger -p daemon.notice -t 'ksmbd' "Starting Ksmbd userspace service."
 	procd_open_instance
 	procd_add_mdns "smb" "tcp" "445"
-	procd_set_param command /usr/sbin/usmbd --n
+	procd_set_param command /usr/sbin/ksmbd.mountd --n
 	procd_set_param file /etc/ksmbd/smb.conf
 	procd_set_param limits nofile=16384
 	procd_close_instance
@@ -177,7 +188,7 @@ start_service()
 stop_service()
 {
 	logger -p daemon.notice -t 'ksmbd' "Stopping Ksmbd userspace service."
-	killall usmbd > /dev/null 2>&1
+	killall ksmbd.mountd > /dev/null 2>&1
 	
 	[ -e /sys/module/ksmbd ] && rmmod ksmbd > /dev/null 2>&1
 	# kill server if we cant rmmod
@@ -188,7 +199,7 @@ stop_service()
 	if [ -e /sys/module/ksmbd ]; then
 		logger -p daemon.error -t 'ksmbd' "module still loaded after kill_server?"
 	fi
-	[ -f /tmp/usmbd.lock ] && rm /tmp/usmbd.lock
+	[ -f /tmp/ksmbd.lock ] && rm /tmp/ksmbd.lock
 }
 
 # reload_service() {
