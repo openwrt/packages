@@ -27,15 +27,16 @@ smb_header() {
 	local hostname
 	hostname="$(cat /proc/sys/kernel/hostname)"
 
-	config_get workgroup		$1 workgroup	"WORKGROUP"
-	config_get description		$1 description	"Samba on OpenWrt"
-	config_get charset		$1 charset	"UTF-8"
+	config_get workgroup $1 workgroup "WORKGROUP"
+	config_get description $1 description "Samba on OpenWrt"
+	config_get charset $1 charset "UTF-8"
 
-	config_get_bool MACOS		$1 macos		0
-	config_get_bool DISABLE_NETBIOS	$1 disable_netbios	0
-	config_get_bool DISABLE_AD_DC	$1 disable_ad_dc	0
-	config_get_bool DISABLE_WINBIND	$1 disable_winbind	0
-	config_get_bool DISABLE_ASYNC_IO $1 disable_async_io	0
+	config_get_bool MACOS $1 macos 0
+	config_get_bool DISABLE_NETBIOS $1 disable_netbios 0
+	config_get_bool DISABLE_AD_DC $1 disable_ad_dc 0
+	config_get_bool DISABLE_WINBIND $1 disable_winbind 0
+	config_get_bool DISABLE_ASYNC_IO $1 disable_async_io 0
+	config_get_bool ALLOW_LEGACY_PROTOCOLS $1 allow_legacy_protocols 0
 
 	mkdir -p /var/etc
 	sed -e "s#|NAME|#$hostname#g" \
@@ -50,12 +51,19 @@ smb_header() {
 		if [ "$DISABLE_NETBIOS" -eq 1 ] || [ ! -x /usr/sbin/nmbd ]; then
 			printf "\tdisable netbios = yes\n"
 		fi
-		
+
 		if [ "$DISABLE_ASYNC_IO" -eq 1 ]; then
 			printf "\taio read size = 0\n"
 			printf "\taio write size = 0\n"
 			# sendfile bug: https://bugzilla.samba.org/show_bug.cgi?id=14095
 			printf "\tuse sendfile = no\n"
+		fi
+
+		if [ "$ALLOW_LEGACY_PROTOCOLS" -eq 1 ]; then
+			logger -p daemon.info -t 'samba4-server' "Legacy Protocols allowed, don't use this option for secure environments!"
+			printf "\tserver min protocol = NT1\n"
+			printf "\tlanman auth = yes\n"
+			printf "\tntlm auth = ntlmv1-permitted\n"
 		fi
 	} >> /var/etc/smb.conf
 
