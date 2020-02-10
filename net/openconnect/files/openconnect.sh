@@ -3,6 +3,13 @@
 . ../netifd-proto.sh
 init_proto "$@"
 
+append_args() {
+	while [ $# -gt 0 ]; do
+		append cmdline "'${1//\'/\'\\\'\'}'"
+		shift
+	done
+}
+
 proto_openconnect_init_config() {
 	proto_config_add_string "server"
 	proto_config_add_int "port"
@@ -25,7 +32,7 @@ proto_openconnect_init_config() {
 }
 
 proto_openconnect_add_form_entry() {
-	[ -n "$1" ] && append cmdline "--form-entry $1"
+	[ -n "$1" ] && append_args --form-entry "$1"
 }
 
 proto_openconnect_setup() {
@@ -46,31 +53,31 @@ proto_openconnect_setup() {
 
 	[ -n "$port" ] && port=":$port"
 
-	cmdline="$server$port -i "$ifname" --non-inter --syslog --script /lib/netifd/vpnc-script"
-	[ -n "$mtu" ] && cmdline="$cmdline --mtu $mtu"
+	append_args "$server$port" -i "$ifname" --non-inter --syslog --script /lib/netifd/vpnc-script
+	[ -n "$mtu" ] && append_args --mtu "$mtu"
 
 	# migrate to standard config files
 	[ -f "/etc/config/openconnect-user-cert-vpn-$config.pem" ] && mv "/etc/config/openconnect-user-cert-vpn-$config.pem" "/etc/openconnect/user-cert-vpn-$config.pem"
 	[ -f "/etc/config/openconnect-user-key-vpn-$config.pem" ] && mv "/etc/config/openconnect-user-key-vpn-$config.pem" "/etc/openconnect/user-key-vpn-$config.pem"
 	[ -f "/etc/config/openconnect-ca-vpn-$config.pem" ] && mv "/etc/config/openconnect-ca-vpn-$config.pem" "/etc/openconnect/ca-vpn-$config.pem"
 
-	[ -f /etc/openconnect/user-cert-vpn-$config.pem ] && append cmdline "-c /etc/openconnect/user-cert-vpn-$config.pem"
-	[ -f /etc/openconnect/user-key-vpn-$config.pem ] && append cmdline "--sslkey /etc/openconnect/user-key-vpn-$config.pem"
+	[ -f /etc/openconnect/user-cert-vpn-$config.pem ] && append_args -c "/etc/openconnect/user-cert-vpn-$config.pem"
+	[ -f /etc/openconnect/user-key-vpn-$config.pem ] && append_args --sslkey "/etc/openconnect/user-key-vpn-$config.pem"
 	[ -f /etc/openconnect/ca-vpn-$config.pem ] && {
-		append cmdline "--cafile /etc/openconnect/ca-vpn-$config.pem"
-		append cmdline "--no-system-trust"
+		append_args --cafile "/etc/openconnect/ca-vpn-$config.pem"
+		append_args --no-system-trust
 	}
 
 	if [ "${juniper:-0}" -gt 0 ]; then
-		append cmdline "--juniper"
+		append_args --juniper
 	fi
 
 	[ -n "$serverhash" ] && {
-		append cmdline " --servercert=$serverhash"
-		append cmdline "--no-system-trust"
+		append_args "--servercert=$serverhash"
+		append_args --no-system-trust
 	}
-	[ -n "$authgroup" ] && append cmdline "--authgroup $authgroup"
-	[ -n "$username" ] && append cmdline "-u $username"
+	[ -n "$authgroup" ] && append_args --authgroup "$authgroup"
+	[ -n "$username" ] && append_args -u "$username"
 	[ -n "$password" ] || [ "$token_mode" = "script" ] && {
 		umask 077
 		mkdir -p /var/etc
@@ -85,13 +92,13 @@ proto_openconnect_setup() {
 				proto_setup_failed "$config"
 			}
 		}
-		append cmdline "--passwd-on-stdin"
+		append_args --passwd-on-stdin
 	}
 
-	[ -n "$token_mode" -a "$token_mode" != "script" ] && append cmdline "--token-mode=$token_mode"
-	[ -n "$token_secret" ] && append cmdline "--token-secret=$token_secret"
-	[ -n "$os" ] && append cmdline "--os=$os"
-	[ -n "$csd_wrapper" ] && [ -x "$csd_wrapper" ] && append cmdline "--csd-wrapper=$csd_wrapper"
+	[ -n "$token_mode" -a "$token_mode" != "script" ] && append_args "--token-mode=$token_mode"
+	[ -n "$token_secret" ] && append_args "--token-secret=$token_secret"
+	[ -n "$os" ] && append_args "--os=$os"
+	[ -n "$csd_wrapper" ] && [ -x "$csd_wrapper" ] && append_args "--csd-wrapper=$csd_wrapper"
 
 	json_for_each_item proto_openconnect_add_form_entry form_entry
 
@@ -99,9 +106,9 @@ proto_openconnect_setup() {
 	logger -t openconnect "executing 'openconnect $cmdline'"
 
 	if [ -f "$pwfile" ]; then
-		proto_run_command "$config" /usr/sbin/openconnect-wrapper $pwfile $cmdline
+		eval "proto_run_command '$config' /usr/sbin/openconnect-wrapper '$pwfile' $cmdline"
 	else
-		proto_run_command "$config" /usr/sbin/openconnect $cmdline
+		eval "proto_run_command '$config' /usr/sbin/openconnect $cmdline"
 	fi
 }
 
