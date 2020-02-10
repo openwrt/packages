@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx-util
 PKG_VERSION:=1.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Peter Stadler <peter.stadler@student.uibk.ac.at>
 
 include $(INCLUDE_DIR)/package.mk
@@ -15,27 +15,27 @@ define Package/nginx-util/default
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
-  TITLE:=Builder of LAN listen directives for Nginx
+  TITLE:=Nginx configurator
   DEPENDS:=+libstdcpp +libubus +libubox +libpthread
 endef
 
 define Package/nginx-util
   $(Package/nginx-util/default)
-  CONFLICTS:=nginx-ssl-util
+  CONFLICTS:=nginx-ssl-util-nopcre nginx-ssl-util
 endef
 
 define Package/nginx-ssl-util/default
   $(Package/nginx-util/default)
-  TITLE+= and manager of its SSL certificates
+  TITLE+= including SSL
   DEPENDS+= +libopenssl
-  CONFLICTS:=nginx-util
+  CONFLICTS:=,nginx-util
 endef
 
 define Package/nginx-ssl-util
   $(Package/nginx-ssl-util/default)
   TITLE+= (using PCRE)
   DEPENDS+= +libpcre
-  CONFLICTS+= nginx-ssl-util-nopcre
+  CONFLICTS+= ,nginx-ssl-util-nopcre
 endef
 
 define Package/nginx-ssl-util-nopcre
