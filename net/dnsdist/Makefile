@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnsdist
 PKG_VERSION:=1.4.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
@@ -14,7 +14,9 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:powerdns:dnsdist
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
+PKG_ASLR_PIE:=0
 PKG_BUILD_DEPENDS:=protobuf/host
 
 PKG_CONFIG_DEPENDS:= \
@@ -103,6 +105,7 @@ CONFIGURE_ARGS+= \
 	--enable-dnscrypt \
 	--enable-dnstap \
 	--with-libsodium \
+	--with-pic \
 	--with-protobuf \
 	--with-re2 \
 	--with-lua=lua \
