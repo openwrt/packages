@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bigclown-mqtt2influxdb
-PKG_VERSION:=1.2.0
+PKG_VERSION:=1.3.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://codeload.github.com/bigclownlabs/bch-mqtt2influxdb/tar.gz/v$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=60a3ba8a3d76356ed46fbb7bcbedaf439b7edc2dfc2d43232c9250db80c77387
+PKG_HASH:=56e1de1f83cb2c5fd5f280c29917c5c25021c36311075c12414733dd0d701697
 PKG_LICENSE:=MIT
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 PKG_BUILD_DIR:=$(BUILD_DIR)/bch-mqtt2influxdb-$(PKG_VERSION)
