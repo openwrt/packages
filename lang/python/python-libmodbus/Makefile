@@ -2,14 +2,14 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=python-libmodbus
-PKG_VERSION:=0.0.2
-PKG_RELEASE:=3
+PKG_VERSION:=0.5.0
+PKG_RELEASE:=1
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
 PYPI_NAME:=pylibmodbus
-PKG_HASH:=c6d72f291426758b546cc88a1cdf85c33afa6011192a5d88a5117d44814ffc0e
+PKG_HASH:=80f837304ffa8476145ea643f6b98aa94b205013a96f1e5173d7bdc776426aee
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -20,7 +20,7 @@ define Package/python-libmodbus/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  URL:=https://github.com/stephane/pylibmodbus
+  URL:=https://pypi.org/project/pylibmodbus
 endef
 
 define Package/python-libmodbus
