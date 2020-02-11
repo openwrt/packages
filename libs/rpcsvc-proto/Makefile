@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rpcsvc-proto
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/thkukuk/rpcsvc-proto.git
@@ -17,6 +17,7 @@ PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=autogen.sh
 PKG_INSTALL:=1
 
+HOST_BUILD_DEPENDS:=gettext-full/host
 PKG_BUILD_DEPENDS:=rpcsvc-proto/host
 
 include $(INCLUDE_DIR)/package.mk
