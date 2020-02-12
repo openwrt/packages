@@ -40,6 +40,13 @@ define Build/Compile
 		SUBDIRS="$(PKG_BUILD_DIR)/src/mod/siit" \
 		V="$(V)" \
 		modules
+	$(MAKE) -C "$(LINUX_DIR)" \
+		KERNEL_DIR="$(LINUX_DIR)" \
+		ARCH="$(LINUX_KARCH)" \
+		CROSS_COMPILE="$(TARGET_CROSS)" \
+		SUBDIRS="$(PKG_BUILD_DIR)/src/mod/common" \
+		V="$(V)" \
+		modules
 	$(call Build/Compile/Default)
 endef
 
@@ -75,6 +82,7 @@ define KernelPackage/jool
     +kmod-nf-conntrack6 \
     +kmod-nf-ipt
   FILES:= \
+    $(PKG_BUILD_DIR)/src/mod/common/jool_common.$(LINUX_KMOD_SUFFIX) \
     $(PKG_BUILD_DIR)/src/mod/nat64/jool.$(LINUX_KMOD_SUFFIX) \
     $(PKG_BUILD_DIR)/src/mod/siit/jool_siit.$(LINUX_KMOD_SUFFIX)
 endef
@@ -110,6 +118,12 @@ define Package/jool-tools/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/jool		$(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/joold		$(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/jool_siit	$(1)/usr/bin/
+
+	$(INSTALL_DIR) $(1)/usr/lib/iptables
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/iptables/libxt_JOOL_SIIT.so \
+		$(1)/usr/lib/iptables
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/iptables/libxt_JOOL.so \
+		$(1)/usr/lib/iptables
 endef
 
 $(eval $(call BuildPackage,jool))
