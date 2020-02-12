@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016-2017 OpenWrt.org
+# Copyright (C) 2016-2020 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=webui-aria2
-PKG_SOURCE_DATE:=2017-05-22
+PKG_SOURCE_DATE:=2018-12-09
+PKG_SOURCE_VERSION:=fb9d758d5cdc2be0867ee9502c44fd17560f5d24
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/ziahamza/webui-aria2
-PKG_MIRROR_HASH:=331d966657a7f0174a1e20a607cae64a67165f130912b757e4c7398d73595961
-PKG_SOURCE_VERSION:=d1ce5b992680f4d03eeee899ed8280cbcab8961a
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/ziahamza/webui-aria2/tar.gz/$(PKG_SOURCE_VERSION)?
+PKG_HASH:=4cddcbd64a7b20baf0c2c31cb3c07d0fa01576a12c4e6feefd0840acd3f65919
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -40,18 +41,12 @@ define Build/Compile
 endef
 
 define Package/webui-aria2/install
-	$(INSTALL_DIR) \
-		$(1)/www/webui-aria2 \
-		$(1)/www/webui-aria2/flags/4x3
+	$(INSTALL_DIR) $(1)/www/webui-aria2 
 
 	$(CP) \
-		$(PKG_BUILD_DIR)/{css,fonts,js} \
-		$(PKG_BUILD_DIR)/{LICENSE,configuration.js,favicon.ico,index.html} \
+		$(PKG_BUILD_DIR)/docs/* \
+		$(PKG_BUILD_DIR)/{LICENSE,favicon.ico} \
 		$(1)/www/webui-aria2
-
-	$(CP) \
-		$(PKG_BUILD_DIR)/flags/4x3/{cn,cz,de,es,fr,it,nl,pl,ru,th,tr,tw,us}.svg \
-		$(1)/www/webui-aria2/flags/4x3
 endef
 
 $(eval $(call BuildPackage,webui-aria2))
