@@ -8,21 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=udpxy
-PKG_SOURCE_VERSION:=53e4672a7522311c40e9f6110ff256041c52c8b4
-PKG_VERSION:=2016-09-18-$(PKG_SOURCE_VERSION)
+PKG_VERSION:=1.0-24.1
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/pcherenkov/udpxy.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=bb6ca16706b011cc473d296ebc6d6e57fe5cfc2a0fc46e81399fba01d6484b3e
-PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
+PKG_SOURCE_URL:=https://codeload.github.com/pcherenkov/udpxy/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=27e5d3d2bae29522354d1505a3cc931c96953846d68eeb25bb99fe9b0cb6cbe0
 
-PKG_LICENSE:=GPL-3.0
-PKG_LICENSE_FILES:=gpl.txt
+PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
+PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=chipmunk/gpl.txt
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
