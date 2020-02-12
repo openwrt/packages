@@ -20,7 +20,7 @@ _err() {
 
 append_params() {
 	local p v args
-	for p in $*; do
+	for p in "$@"; do
 		eval "v=\$$p"
 		[ -n "$v" ] && args="$args -o $p=$v"
 	done
@@ -80,8 +80,8 @@ validate_tunnelD_section() {
 validate_tunnelW_section() {
 	uci_load_validate sshtunnel tunnelW "$1" "$2" \
 		'vpntype:or("ethernet", "point-to-point"):point-to-point' \
-		'localdev:or("any", min(1))' \
-		'remotedev:or("any", min(1))'
+		'localdev:or("any", min(0))' \
+		'remotedev:or("any", min(0))'
 }
 
 load_tunnelR() {
@@ -96,7 +96,7 @@ load_tunnelR() {
 	[ -n "$remoteport" -a -n "$localport" -a -n "$remoteaddress" ] || { _err "tunnelR $1: missing required options"; return 1; }
 
 	# count nr of valid sections to make sure there are at least one
-	let count++
+	count=$((count+=1))
 
 	_log "tunnelR at $server: -R $remoteaddress:$remoteport:$localaddress:$localport"
 	append_string "ARGS_tunnels" "-R $remoteaddress:$remoteport:$localaddress:$localport"
@@ -114,7 +114,7 @@ load_tunnelL() {
 	[ -n "$remoteport" -a -n "$localport" -a -n "$remoteaddress" ] || { _err "tunnelL $1: missing required options"; return 1; }
 
 	# count nr of valid sections to make sure there are at least one
-	let count++
+	count=$((count+=1))
 
 	_log "tunnelL at $server: -L $localaddress:$localport:$remoteaddress:$remoteport"
 	append_string "ARGS_tunnels" "-L $localaddress:$localport:$remoteaddress:$remoteport"
@@ -132,7 +132,7 @@ load_tunnelD() {
 	[ -n "$localport" ] || { _err "tunnelD $1: missing localport"; return 1; }
 
 	# count nr of valid sections to make sure there are at least one
-	let count++
+	count=$((count+=1))
 
 	_log "proxy via $server: -D $localaddress:$localport"
 	append_string "ARGS_tunnels" "-D $localaddress:$localport"
@@ -152,10 +152,10 @@ load_tunnelW() {
 	[ "$user" = "root" ] || { _err "tunnelW $1: root is required for tun"; return 1; }
 
 	# count nr of valid sections to make sure there are at least one
-	let count++
+	count=$((count+=1))
 
-	_log "tunnelW to $server: -w $localdev:$remotedev -o Tunnel=$vpntype"
-	append_string "ARGS_tunnels" "-w $localdev:$remotedev -o Tunnel=$vpntype"
+	_log "tunnelW to $server: -o Tunnel=$vpntype -w $localdev:$remotedev"
+	append_string "ARGS_tunnels" "-o Tunnel=$vpntype -w $localdev:$remotedev"
 }
 
 load_server() {
