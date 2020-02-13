@@ -20,8 +20,6 @@ Signed-off-by: Eneas U de Queiroz <cote2004-github@yahoo.com>
  tools/ccnet-init.c                             |  2 ++
  7 files changed, 23 insertions(+), 8 deletions(-)
 
-diff --git a/lib/rsa.c b/lib/rsa.c
-index 7cca150..d969a62 100644
 --- a/lib/rsa.c
 +++ b/lib/rsa.c
 @@ -4,6 +4,7 @@
@@ -36,11 +34,10 @@ index 7cca150..d969a62 100644
  generate_private_key(u_int bits)
  {
  	RSA *private = NULL;
--
++	BIGNUM *e = NULL;
+ 
 -	private = RSA_generate_key(bits, 35, NULL, NULL);
 -	if (private == NULL)
-+	BIGNUM *e = NULL;
-+
 +	private = RSA_new();
 +	e = BN_new();
 +	if (private == NULL || e == NULL || !BN_set_word(e, 35) ||
@@ -53,11 +50,9 @@ index 7cca150..d969a62 100644
 +	BN_free(e);
  	return private;
  }
-diff --git a/net/common/processors/keepalive-proc.c b/net/common/processors/keepalive-proc.c
-index 609d102..42a0c23 100644
 --- a/net/common/processors/keepalive-proc.c
 +++ b/net/common/processors/keepalive-proc.c
-@@ -401,7 +401,7 @@ static void send_challenge(CcnetProcessor *processor)
+@@ -401,7 +401,7 @@ static void send_challenge(CcnetProcesso
      unsigned char *buf;
      int len;
  
@@ -66,7 +61,7 @@ index 609d102..42a0c23 100644
      buf = public_key_encrypt (peer->pubkey, priv->random_buf, 40, &len);
      ccnet_processor_send_update (processor, "311", NULL, (char *)buf, len);
  
-@@ -434,7 +434,7 @@ static void send_challenge_user(CcnetProcessor *processor, CcnetUser *user)
+@@ -434,7 +434,7 @@ static void send_challenge_user(CcnetPro
  
      ccnet_debug ("[Keepalive] Send user challenge to %.8s\n",
                   processor->peer->id);
@@ -75,11 +70,9 @@ index 609d102..42a0c23 100644
      buf = public_key_encrypt (user->pubkey, priv->random_buf, 40, &len);
      ccnet_processor_send_update (processor, "321", NULL, (char *)buf, len);
  
-diff --git a/net/common/processors/keepalive2-proc.c b/net/common/processors/keepalive2-proc.c
-index d3e799e..d81c266 100644
 --- a/net/common/processors/keepalive2-proc.c
 +++ b/net/common/processors/keepalive2-proc.c
-@@ -306,7 +306,7 @@ static void send_challenge(CcnetProcessor *processor)
+@@ -306,7 +306,7 @@ static void send_challenge(CcnetProcesso
      unsigned char *buf;
      int len;
  
@@ -88,11 +81,9 @@ index d3e799e..d81c266 100644
      buf = public_key_encrypt (peer->pubkey, priv->random_buf, 40, &len);
      if (len < 0) {
          ccnet_debug ("[Keepalive] Failed to encrypt challenge "
-diff --git a/net/common/processors/sendsessionkey-proc.c b/net/common/processors/sendsessionkey-proc.c
-index 3ec2757..10c3340 100644
 --- a/net/common/processors/sendsessionkey-proc.c
 +++ b/net/common/processors/sendsessionkey-proc.c
-@@ -124,7 +124,7 @@ generate_session_key (CcnetProcessor *processor, int *len_p)
+@@ -124,7 +124,7 @@ generate_session_key (CcnetProcessor *pr
      unsigned char random_buf[40];
      SHA_CTX s;
  
@@ -101,11 +92,9 @@ index 3ec2757..10c3340 100644
      
      SHA1_Init (&s);
      SHA1_Update (&s, random_buf, sizeof(random_buf));
-diff --git a/net/common/processors/sendsessionkey-v2-proc.c b/net/common/processors/sendsessionkey-v2-proc.c
-index c1c6924..4805ba6 100644
 --- a/net/common/processors/sendsessionkey-v2-proc.c
 +++ b/net/common/processors/sendsessionkey-v2-proc.c
-@@ -125,7 +125,7 @@ generate_session_key (CcnetProcessor *processor, int *len_p)
+@@ -125,7 +125,7 @@ generate_session_key (CcnetProcessor *pr
      unsigned char random_buf[40];
      SHA_CTX s;
  
@@ -114,11 +103,9 @@ index c1c6924..4805ba6 100644
      
      SHA1_Init (&s);
      SHA1_Update (&s, random_buf, sizeof(random_buf));
-diff --git a/net/server/user-mgr.c b/net/server/user-mgr.c
-index 8a356f0..7a3f5cb 100644
 --- a/net/server/user-mgr.c
 +++ b/net/server/user-mgr.c
-@@ -816,9 +816,13 @@ hash_password_pbkdf2_sha256 (const char *passwd,
+@@ -816,9 +816,13 @@ hash_password_pbkdf2_sha256 (const char
      char salt_str[SHA256_DIGEST_LENGTH*2+1];
  
      if (!RAND_bytes (salt, sizeof(salt))) {
@@ -132,11 +119,9 @@ index 8a356f0..7a3f5cb 100644
      }
  
      PKCS5_PBKDF2_HMAC (passwd, strlen(passwd),
-diff --git a/tools/ccnet-init.c b/tools/ccnet-init.c
-index 4748962..28c9995 100644
 --- a/tools/ccnet-init.c
 +++ b/tools/ccnet-init.c
-@@ -162,7 +162,9 @@ main(int argc, char **argv)
+@@ -108,7 +108,9 @@ main(int argc, char **argv)
  
      config_dir = ccnet_expand_path (config_dir);
      /* printf("[conf_dir=%s\n]", config_dir); */
@@ -146,6 +131,3 @@ index 4748962..28c9995 100644
  
      if (RAND_status() != 1) {   /* it should be seeded automatically */
          fprintf(stderr, "PRNG is not seeded\n");
--- 
-2.19.1
-
