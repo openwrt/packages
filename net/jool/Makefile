@@ -9,7 +9,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=jool
 PKG_VERSION:=4.0.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/NICMx/Jool/releases/download/v$(PKG_VERSION)
