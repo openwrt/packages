@@ -1,0 +1,25 @@
+--- a/miniupnpd.c
++++ b/miniupnpd.c
+@@ -1727,21 +1727,7 @@ init(int argc, char * * argv, struct runtime_vars * v)
+ 		}
+ 	}
+ 
+-	if(debug_flag)
+-	{
+-		pid = getpid();
+-	}
+-	else
+-	{
+-#ifdef USE_DAEMON
+-		if(daemon(0, 0)<0) {
+-			perror("daemon()");
+-		}
+-		pid = getpid();
+-#else
+-		pid = daemonize();
+-#endif
+-	}
++	pid = getpid();
+ 
+ 	openlog_option = LOG_PID|LOG_CONS;
+ 	if(debug_flag)
