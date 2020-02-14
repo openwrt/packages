@@ -78,6 +78,7 @@ upnpd() {
 	config_get serial_number config serial_number
 	config_get model_number config model_number
 	config_get uuid config uuid
+	config_get use_stun config use_stun 0
 	config_get stun_host config stun_host
 	config_get stun_port config stun_port
 	config_get notify_interval config notify_interval
