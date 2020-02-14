@@ -1,6 +1,6 @@
---- bluez-5.51.orig/Makefile.in
-+++ bluez-5.51/Makefile.in
-@@ -3125,7 +3125,7 @@ unit_tests = $(am__append_54) unit/test-
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -3209,7 +3209,7 @@ unit_tests = $(am__append_54) unit/test-eir unit/test-uuid \
  @CLIENT_TRUE@					client/gatt.h client/gatt.c
  
  @CLIENT_TRUE@client_bluetoothctl_LDADD = gdbus/libgdbus-internal.la src/libshared-glib.la \
@@ -9,7 +9,7 @@
  
  @ZSH_COMPLETIONS_TRUE@zshcompletiondir = $(ZSH_COMPLETIONDIR)
  @ZSH_COMPLETIONS_TRUE@dist_zshcompletion_DATA = completion/zsh/_bluetoothctl
-@@ -3358,7 +3358,7 @@ unit_tests = $(am__append_54) unit/test-
+@@ -3443,7 +3443,7 @@ unit_tests = $(am__append_54) unit/test-eir unit/test-uuid \
  
  @MESH_TRUE@@TOOLS_TRUE@tools_meshctl_LDADD = gdbus/libgdbus-internal.la src/libshared-glib.la \
  @MESH_TRUE@@TOOLS_TRUE@				lib/libbluetooth-internal.la \
@@ -18,7 +18,7 @@
  
  @DEPRECATED_TRUE@@TOOLS_TRUE@tools_hciattach_SOURCES = tools/hciattach.c tools/hciattach.h \
  @DEPRECATED_TRUE@@TOOLS_TRUE@						tools/hciattach_st.c \
-@@ -3411,7 +3411,7 @@ unit_tests = $(am__append_54) unit/test-
+@@ -3496,7 +3496,7 @@ unit_tests = $(am__append_54) unit/test-eir unit/test-uuid \
  @READLINE_TRUE@						tools/obex-client-tool.c
  
  @READLINE_TRUE@tools_obex_client_tool_LDADD = lib/libbluetooth-internal.la \
@@ -27,7 +27,7 @@
  
  @READLINE_TRUE@tools_obex_server_tool_SOURCES = $(gobex_sources) $(btio_sources) \
  @READLINE_TRUE@						tools/obex-server-tool.c
-@@ -3420,15 +3420,15 @@ unit_tests = $(am__append_54) unit/test-
+@@ -3505,15 +3505,15 @@ unit_tests = $(am__append_54) unit/test-eir unit/test-uuid \
  @READLINE_TRUE@tools_bluetooth_player_SOURCES = tools/bluetooth-player.c
  @READLINE_TRUE@tools_bluetooth_player_LDADD = gdbus/libgdbus-internal.la \
  @READLINE_TRUE@				src/libshared-glib.la \
@@ -46,7 +46,7 @@
  
  @DEPRECATED_TRUE@@READLINE_TRUE@attrib_gatttool_SOURCES = attrib/gatttool.c attrib/att.c attrib/gatt.c \
  @DEPRECATED_TRUE@@READLINE_TRUE@				attrib/gattrib.c btio/btio.c \
-@@ -3437,7 +3437,7 @@ unit_tests = $(am__append_54) unit/test-
+@@ -3522,7 +3522,7 @@ unit_tests = $(am__append_54) unit/test-eir unit/test-uuid \
  @DEPRECATED_TRUE@@READLINE_TRUE@				client/display.h
  
  @DEPRECATED_TRUE@@READLINE_TRUE@attrib_gatttool_LDADD = lib/libbluetooth-internal.la \
