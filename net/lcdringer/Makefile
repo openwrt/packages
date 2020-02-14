@@ -31,7 +31,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/lcdringer
   SECTION:=network
   CATEGORY:=Network
-  DEPENDS:=+libgee +libgstreamer1 +loudmouth @TARGET_brcm2708
+  DEPENDS:=+libgee +libgstreamer1 +loudmouth @TARGET_bcm27xx
   TITLE:=lcdringer
   URL:=https://www.flyn.org/projects/lcdringer/
 endef
