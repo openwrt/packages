@@ -9,7 +9,7 @@
                'ppc64', 'x32','x64', 'x86', 'x86_64', 's390x')
  valid_arm_float_abi = ('soft', 'softfp', 'hard')
  valid_arm_fpu = ('vfp', 'vfpv3', 'vfpv3-d16', 'neon')
-@@ -883,6 +883,9 @@
+@@ -896,6 +896,9 @@
    if rtn == 'mipsel' and '_LP64' in k:
      rtn = 'mips64el'
  
@@ -19,7 +19,7 @@
    return rtn
  
  
-@@ -981,7 +984,7 @@
+@@ -1001,7 +1004,7 @@
  
    if target_arch == 'arm':
      configure_arm(o)
