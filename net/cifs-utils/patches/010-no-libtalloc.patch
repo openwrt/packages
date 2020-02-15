@@ -1,5 +1,3 @@
-diff --git a/data_blob.h b/data_blob.h
-index 3d96147..c20749d 100644
 --- a/data_blob.h
 +++ b/data_blob.h
 @@ -23,7 +23,7 @@
