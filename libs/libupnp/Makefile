@@ -1,18 +1,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libupnp
-PKG_VERSION:=1.8.4
-PKG_RELEASE:=2
+PKG_VERSION:=1.12.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/pupnp
-PKG_HASH:=188d3f786d92fe14191f17634d2d87847eee7d2b568a5257ea23262fec9973d6
-PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
-PKG_CPE_ID:=cpe:/a:portable_sdk_for_upnp_project:portable_sdk_for_upnp
+PKG_HASH:=1bda3939976a9a2901382233db39379ce993b59a0e7fd0dd781212a44a9b44a2
 
-PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:libupnp_project:libupnp
+
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -46,10 +48,8 @@ define Package/libupnp-sample/description
 TVcontrolpoint & tvdevice sample applications run inside /etc/upnp-tvdevice/
 endef
 
-TARGET_CFLAGS += -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -flto
+TARGET_CFLAGS += -flto
 TARGET_LDFLAGS += -flto
-
-CONFIGURE_VARS += ac_cv_lib_compat_ftime=no
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
