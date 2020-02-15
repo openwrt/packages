@@ -8,12 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sslh
-PKG_VERSION:=v1.19c
-PKG_RELEASE:=2
+PKG_VERSION:=v1.20
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://rutschle.net/tech/sslh/
-PKG_HASH:=bb11dfa88b27ae1ec825a1b8156000c3f17f7e8f042311f19b7a249193c47bf3
+PKG_HASH:=a7f49b0a1cfcb7bb9d97f5ffa932bff11c5f65d9a9bd8fe1812481dee5855116
+
+PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
@@ -26,7 +28,6 @@ define Package/sslh
   TITLE:=SSL/SSH multiplexer
   DEPENDS:=+libconfig +USE_UCLIBC:libpcre +USE_MUSL:libpcre
   URL:=https://rutschle.net/tech/sslh/README.html
-  PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 endef
 
 define Package/sslh/conffiles
