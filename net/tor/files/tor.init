@@ -48,6 +48,5 @@ start_service() {
 	procd_set_param command /usr/sbin/tor --runasdaemon 0
 	procd_append_param command -f "$TORRC_GEN"
 	procd_set_param respawn
-	procd_set_param pidfile /var/run/tor.pid
 	procd_close_instance
 }
