@@ -8,18 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lftp
-PKG_VERSION:=4.8.4
-PKG_RELEASE:=3
+PKG_VERSION:=4.9.1
+PKG_RELEASE:=1
+
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://lftp.tech/ftp/ \
+PKG_SOURCE_URL:=https://lftp.tech/ftp/ \
 		https://mirror.csclub.uwaterloo.ca/gentoo-distfiles/distfiles/
-		
-PKG_HASH:=4ebc271e9e5cea84a683375a0f7e91086e5dac90c5d51bb3f169f75386107a62
+PKG_HASH:=5969fcaefd102955dd882f3bcd8962198bc537224749ed92f206f415207a024b
 
-
+PKG_MAINTAINER:=Federico Di Marco <fededim@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:alexander_v._lukyanov:lftp
+PKG_CPE_ID:=cpe:/a:lftp_project:lftp
+
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
@@ -30,8 +33,7 @@ define Package/lftp
   CATEGORY:=Network
   DEPENDS:=+libncurses +libopenssl +libreadline $(CXX_DEPENDS) +libexpat +zlib
   TITLE:=a sophisticated file transfer program with command line interface.
-  MAINTAINER:=Federico Di Marco <fededim@gmail.com>
-  URL:=http://lftp.yar.ru/
+  URL:=https://lftp.yar.ru/
 endef
 
 define Package/lftp/description
@@ -54,11 +56,9 @@ CONFIGURE_ARGS += \
 	--with-zlib="$(STAGING_DIR)/usr" \
 	--disable-static
 
-TARGET_CXXFLAGS+= -std=c++11
-
 define Package/lftp/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/lftp $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/lftp $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,lftp))
