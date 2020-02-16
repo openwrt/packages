@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpc
-PKG_VERSION:=2.1.20190824
+PKG_VERSION:=2.1.20191224
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://miniupnp.tuxfamily.org/files
-PKG_HASH:=1fadefea0ecdceb3e35bb5d901f0db880c826740e93148ddfb087b4b4389e165
+PKG_HASH:=447b427854b6c027ea28bc838b18582c5a7e71db84f6ff36df93bd91e46d66cf
 
-PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
+PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:miniupnp_project:miniupnp
