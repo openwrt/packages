@@ -1,0 +1,32 @@
+From eafa625a34fd5d8bec18eddfccbca55ce77b4849 Mon Sep 17 00:00:00 2001
+From: Alexey Brodkin <abrodkin@synopsys.com>
+Date: Thu, 1 Nov 2018 17:36:17 +0200
+Subject: [PATCH] Add support of ARC architecture (#82)
+
+More info about ARC architecture is here: [1] & [2].
+We need ARC supported here for many things like:
+ - ICU (see [3])
+ - Qt5 etc
+
+[1] https://www.synopsys.com/designware-ip/processor-solutions/arc-processors.html
+[2] https://en.wikipedia.org/wiki/ARC_(processor)
+[3] https://unicode-org.atlassian.net/browse/ICU-20155
+
+Fixes #81
+---
+ i18n/double-conversion-utils.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/i18n/double-conversion-utils.h b/i18n/double-conversion-utils.h
+index 41c5b02..2e1be0d 100644
+--- a/i18n/double-conversion-utils.h
++++ b/i18n/double-conversion-utils.h
+@@ -86,7 +86,7 @@ inline void abort_noreturn() { abort(); }
+     defined(__SH4__) || defined(__alpha__) || \
+     defined(_MIPS_ARCH_MIPS32R2) || defined(__ARMEB__) || \
+     defined(__AARCH64EL__) || defined(__aarch64__) || \
+-    defined(__riscv)
++    defined(__riscv) || defined(__arc__)
+ #define DOUBLE_CONVERSION_CORRECT_DOUBLE_OPERATIONS 1
+ #elif defined(__mc68000__)
+ #undef DOUBLE_CONVERSION_CORRECT_DOUBLE_OPERATIONS
