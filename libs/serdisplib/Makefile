@@ -1,21 +1,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=serdisplib
-PKG_VERSION:=2.01
+PKG_VERSION:=2.02
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/serdisplib
-PKG_HASH:=a0a4eb6339de33f694e8eec1731bbe31789493434f747998a8788c2d0e6c324b
-PKG_LICENSE:=GPL-2.0
-PLG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_HASH:=447b74007dc157b0378044245649850b26432b9185b6540ff681fcb0765c4d8b
 
-PKG_FIXUP:=libtool
+PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_LICENSE:=GPL-2.0-or-later
+PLG_LICENSE_FILES:=COPYING
+
+PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=libusb-compat
 
 include $(INCLUDE_DIR)/package.mk
-
-CONFIGURE_ARGS += --enable-dynloading --disable-statictools
 
 define Package/serdisplib
   SECTION:=libs
@@ -49,27 +51,29 @@ define Package/serdisplib-tools/description
  * touchscreen_tool
 endef
 
-TARGET_CFLAGS += $(FPIC)
+CONFIGURE_ARGS += \
+	--enable-dynloading \
+	--disable-statictools
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/serdisplib
-	$(CP) $(PKG_BUILD_DIR)/include/serdisplib/*.h $(1)/usr/include/serdisplib
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/serdisplib/*.h $(1)/usr/include/serdisplib
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_BUILD_DIR)/lib/*.{a,so*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libserdisp.{a,so*} $(1)/usr/lib/
 endef
 
 define Package/serdisplib/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_BUILD_DIR)/lib/*.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libserdisp.so* $(1)/usr/lib/
 endef
 
 define Package/serdisplib-tools/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tools/l4m132c_tool $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tools/l4m320t_tool $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tools/multidisplay $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tools/sdcmegtron_tool $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tools/touchscreen_tool $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/l4m132c_tool $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/l4m320t_tool $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/multidisplay $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/sdcmegtron_tool $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/touchscreen_tool $(1)/usr/bin
 endef
 
 $(eval $(call BuildPackage,serdisplib))

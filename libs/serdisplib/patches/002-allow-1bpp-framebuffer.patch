@@ -1,8 +1,6 @@
-Index: serdisplib-2.01/src/serdisp_specific_framebuffer.c
-===================================================================
---- serdisplib-2.01.orig/src/serdisp_specific_framebuffer.c
-+++ serdisplib-2.01/src/serdisp_specific_framebuffer.c
-@@ -306,13 +306,15 @@ serdisp_t* serdisp_framebuffer_setup(con
+--- a/src/serdisp_specific_framebuffer.c
++++ b/src/serdisp_specific_framebuffer.c
+@@ -312,13 +312,15 @@ serdisp_t* serdisp_framebuffer_setup(con
  
      if (fb_success) {
        /* check if colour mode is supported */
