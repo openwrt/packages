@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=3.4.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
@@ -482,12 +482,10 @@ ifeq ($(ARCH),x86_64)
 	FFMPEG_CONFIGURE+= --enable-lto
 endif
 
-ifneq ($(CONFIG_TARGET_x86),)
-ifeq ($(CONFIG_NASM),y)
+ifeq ($(CONFIG_FFMPEG_X86ASM),y)
   FFMPEG_CONFIGURE += --enable-x86asm
 else
   FFMPEG_CONFIGURE += --disable-x86asm
-endif
 endif
 
 ifeq ($(BUILD_VARIANT),full)
