@@ -1,0 +1,39 @@
+--- a/boost/math/tools/roots.hpp
++++ b/boost/math/tools/roots.hpp
+@@ -796,12 +796,24 @@ Complex complex_newton(F g, Complex guess, int max_iterations=std::numeric_limit
+ // https://stackoverflow.com/questions/48979861/numerically-stable-method-for-solving-quadratic-equations/50065711
+ namespace detail
+ {
++#if defined(BOOST_GNU_STDLIB) && !defined(_GLIBCXX_USE_C99_MATH_TR1)
++inline float fma_workaround(float x, float y, float z) { return ::fmaf(x, y, z); }
++inline double fma_workaround(double x, double y, double z) { return ::fma(x, y, z); }
++#ifndef BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
++inline long double fma_workaround(long double x, long double y, long double z) { return ::fmal(x, y, z); }
++#endif
++#endif
+     template<class T>
+     inline T discriminant(T const & a, T const & b, T const & c)
+     {
+         T w = 4*a*c;
++#if defined(BOOST_GNU_STDLIB) && !defined(_GLIBCXX_USE_C99_MATH_TR1)
++        T e = fma_workaround(-c, 4*a, w);
++        T f = fma_workaround(b, b, -w);
++#else
+         T e = std::fma(-c, 4*a, w);
+         T f = std::fma(b, b, -w);
++#endif
+         return f + e;
+     }
+ }
+@@ -809,7 +821,11 @@ namespace detail
+ template<class T>
+ auto quadratic_roots(T const& a, T const& b, T const& c)
+ {
++#if defined(BOOST_GNU_STDLIB) && !defined(_GLIBCXX_USE_C99_MATH_TR1)
++    using boost::math::copysign;
++#else
+     using std::copysign;
++#endif
+     using std::sqrt;
+     if constexpr (std::is_integral<T>::value)
+     {
