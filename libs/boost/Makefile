@@ -13,7 +13,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.71.0
 PKG_SOURCE_VERSION:=1_71_0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
