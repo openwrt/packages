@@ -1,0 +1,18 @@
+--- ./setup.py-orig	2018-09-26 20:57:49.000000000 +0200
++++ ./setup.py	2019-12-04 00:53:04.127116405 +0100
+@@ -91,14 +91,7 @@ def which(name, flags=os.X_OK):  # Taken
+ 
+ 
+ def use_system():
+-    install_type = os.environ.get("SODIUM_INSTALL")
+-
+-    if install_type == "system":
+-        # If we are forcing system installs, don't compile the bundled one
+-        return True
+-    else:
+-        # By default we just use the bundled copy
+-        return False
++    return True
+ 
+ 
+ class Distribution(Distribution):
