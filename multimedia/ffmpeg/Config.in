@@ -1,3 +1,11 @@
+config FFMPEG_X86ASM
+	bool "Compile x86 ASM"
+	depends on (x86_64 || (i386 && !(TARGET_x86_geode || TARGET_x86_legacy)))
+	help
+		This compiles ffmpeg with x86 assembly optimizations. This option is needed as NASM is
+		totally broken with CPU_TYPE=pentium.
+	default y
+
 if PACKAGE_libffmpeg-custom
 
 comment "Build Licensing"
