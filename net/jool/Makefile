@@ -9,7 +9,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=jool
 PKG_VERSION:=4.0.6
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/NICMx/Jool/releases/download/v$(PKG_VERSION)
@@ -30,6 +30,13 @@ define Build/Compile
 		KERNEL_DIR="$(LINUX_DIR)" \
 		ARCH="$(LINUX_KARCH)" \
 		CROSS_COMPILE="$(TARGET_CROSS)" \
+		SUBDIRS="$(PKG_BUILD_DIR)/src/mod/common" \
+		V="$(V)" \
+		modules
+	$(MAKE) -C "$(LINUX_DIR)" \
+		KERNEL_DIR="$(LINUX_DIR)" \
+		ARCH="$(LINUX_KARCH)" \
+		CROSS_COMPILE="$(TARGET_CROSS)" \
 		SUBDIRS="$(PKG_BUILD_DIR)/src/mod/nat64" \
 		V="$(V)" \
 		modules
@@ -38,13 +45,6 @@ define Build/Compile
 		ARCH="$(LINUX_KARCH)" \
 		CROSS_COMPILE="$(TARGET_CROSS)" \
 		SUBDIRS="$(PKG_BUILD_DIR)/src/mod/siit" \
-		V="$(V)" \
-		modules
-	$(MAKE) -C "$(LINUX_DIR)" \
-		KERNEL_DIR="$(LINUX_DIR)" \
-		ARCH="$(LINUX_KARCH)" \
-		CROSS_COMPILE="$(TARGET_CROSS)" \
-		SUBDIRS="$(PKG_BUILD_DIR)/src/mod/common" \
 		V="$(V)" \
 		modules
 	$(call Build/Compile/Default)
