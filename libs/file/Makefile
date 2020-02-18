@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=file
-PKG_VERSION:=5.37
+PKG_VERSION:=5.38
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://src.fedoraproject.org/lookaside/pkgs/file/ \
 	http://download.openpkg.org/components/cache/file/ \
 	ftp://ftp.astron.com/pub/file/
-PKG_HASH:=e9c13967f7dd339a3c241b7710ba093560b9a33013491318e88e6b8b57bae07f
+PKG_HASH:=593c2ffc2ab349c5aea0f55fedfe4d681737b6b62376a9b3ad1e77b2cc19fa34
 
-PKG_LICENSE:=BSD-2c
+PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
+PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
@@ -28,7 +29,6 @@ include $(INCLUDE_DIR)/package.mk
 define Package/file/Default
   TITLE:=File type determination
   URL:=https://darwinsys.com/file/
-  MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 endef
 
 define Package/file
