@@ -1,7 +1,10 @@
-From b8ed7496963aafdb6ec3415c4efd1ff98a7e8a1d Mon Sep 17 00:00:00 2001
+From 6b3250a3fb4a854d19980868ed187ca21f0e5ed8 Mon Sep 17 00:00:00 2001
 From: Rosen Penev <rosenp@gmail.com>
 Date: Mon, 3 Feb 2020 15:26:50 -0800
-Subject: [PATCH 2/3] volume_mapping: get rid of exp10 workaround
+Subject: [PATCH] volume_mapping: get rid of exp10 workaround
+
+exp10 is a GNU function, is not part of C++, and is not available
+everywhere.
 
 pow(10,x) is an alternative that works just as well.
 
@@ -47,6 +50,3 @@ index 61a7138af..beecce640 100644
  		volume = volume * (1 - min_norm) + min_norm;
  	}
  	value = lrint_dir(6000.0 * log10(volume), dir) + max;
--- 
-2.24.1
-
