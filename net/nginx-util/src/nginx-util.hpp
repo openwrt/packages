@@ -17,8 +17,13 @@
 #include "ubus-cxx.hpp"
 #endif
 
+#include "uci-cxx.hpp"
 
 static constexpr auto NGINX_UTIL = std::string_view{"/usr/bin/nginx-util"};
+
+static constexpr auto VAR_UCI_CONF =std::string_view{"/var/lib/nginx/uci.conf"};
+
+static constexpr auto UCI_CONF = std::string_view{"/etc/nginx/uci.conf"};
 
 static constexpr auto NGINX_CONF = std::string_view{"/etc/nginx/nginx.conf"};
 
@@ -26,9 +31,11 @@ static constexpr auto CONF_DIR = std::string_view{"/etc/nginx/conf.d/"};
 
 static constexpr auto LAN_NAME = std::string_view{"_lan"};
 
+static auto constexpr MANAGE_SSL = std::string_view{"uci_manage_ssl"};
+
 static constexpr auto LAN_LISTEN =std::string_view{"/var/lib/nginx/lan.listen"};
 
-static constexpr auto LAN_LISTEN_DEFAULT =
+static constexpr auto LAN_LISTEN_DEFAULT = //TODO(pst) deprecate
     std::string_view{"/var/lib/nginx/lan.listen.default"};
 
 
@@ -48,6 +55,12 @@ auto call(const std::string & program, S... args) -> pid_t;
 
 
 void create_lan_listen();
+
+
+void init_uci(const uci::package & pkg);
+
+
+auto is_enabled(const uci::package & pkg) -> bool;
 
 
 void init_lan();

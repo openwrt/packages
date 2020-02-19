@@ -105,12 +105,15 @@ public:
     inline auto operator=(regex &&) -> regex & = delete;
 
 
-    explicit regex(const std::string & str)
-    : re{ pcre_compile2(str.c_str(), 0, &errcode, &errptr, &erroffset,nullptr) }
+    explicit regex(const std::string & str) : regex(str.c_str()) {}
+
+
+    explicit regex(const char * const str)
+    : re{ pcre_compile2(str, 0, &errcode, &errptr, &erroffset,nullptr) }
     {
         if (re==nullptr) {
             std::string what = std::string("regex error: ") + errptr + '\n';
-            what += "    '" + str + "'\n";
+            what += "    '" + std::string{str} + "'\n";
             what += "     " + std::string(erroffset, ' ') + '^';
 
             throw regex_error(errcode_pcre2regex.at(errcode), what.c_str());

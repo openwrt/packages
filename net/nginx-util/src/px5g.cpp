@@ -1,6 +1,7 @@
 #include "px5g-openssl.hpp"
 #include <array>
 #include <iostream>
+#include <numeric>
 #include <string>
 #include <string_view>
 #include <unistd.h>
@@ -422,10 +423,13 @@ auto main(int argc, const char ** argv) -> int
 
     catch (const std::exception & e)  {
 
-        auto usage = std::string{"usage: \n"}  ;
-        for (auto cmd : cmds) {
-            usage += std::string{4, ' '} + *argv +" "+ cmd[0] + cmd[1] +"\n";
-        }
+        auto usage = std::accumulate(
+            cmds.begin(),
+            cmds.end(),
+            std::string{"usage: \n"},
+            [=](const auto &use, const auto &cmd)
+            { return use+ std::string{4, ' '} + *argv +" "+cmd[0]+cmd[1]+"\n"; }
+        );
 
         std::cerr<<usage<<std::flush;
 

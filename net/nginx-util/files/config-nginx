@@ -1,0 +1,11 @@
+
+config main global
+	option uci_enable 'true'
+
+config server '_lan'
+	list listen '80 default_server'
+	list listen '[::]:80 default_server'
+	option server_name '_lan'
+	list include 'restrict_locally'
+	list include 'conf.d/*.locations'
+	option access_log 'off; # logd openwrt'
