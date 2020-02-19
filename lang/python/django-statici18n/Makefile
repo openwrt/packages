@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-statici18n
-PKG_VERSION:=1.8.2
-PKG_RELEASE:=6
+PKG_VERSION:=1.9.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=ba9eeb3c4517027922645999359f8335fbb9fea04c457123cfbd6b4a36cbeda4
+PKG_HASH:=913dd056c1abcbe129b1db806cb4cfb821c4077d7e857d6eb29043ea64f4d1d0
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -35,7 +35,9 @@ define Package/python-django-statici18n
 $(call Package/django-statici18n/Default)
   DEPENDS:= \
 	+PACKAGE_python-django-statici18n:python \
-	python-django1
+	python-django1 \
+	+PACKAGE_python-django-statici18n:python-django-appconf \
+	+PACKAGE_python-django-statici18n:python-six
   VARIANT:=python
   MDEPENDS:=python-django1
 endef
@@ -48,7 +50,9 @@ define Package/python3-django-statici18n
 $(call Package/django-statici18n/Default)
   DEPENDS:= \
 	+PACKAGE_python3-django-statici18n:python3 \
-	+PACKAGE_python3-django-statici18n:python3-django1
+	+PACKAGE_python3-django-statici18n:python3-django1 \
+	+PACKAGE_python3-django-statici18n:python3-django-appconf \
+	+PACKAGE_python3-django-statici18n:python3-six
   VARIANT:=python3
 endef
 
