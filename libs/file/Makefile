@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=file
 PKG_VERSION:=5.38
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://src.fedoraproject.org/lookaside/pkgs/file/ \
@@ -44,7 +44,7 @@ $(call Package/file/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+= library
-  DEPENDS:=+zlib
+  DEPENDS:=+zlib +liblzma +libbz2
 endef
 
 TARGET_CFLAGS += $(FPIC)
@@ -53,6 +53,9 @@ TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
+	--enable-bzlib \
+	--enable-xzlib \
+	--enable-zlib \
 	--disable-libseccomp \
 	--disable-rpath \
 	--disable-warnings \
