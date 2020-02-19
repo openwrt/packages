@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-jsonfield
 PKG_VERSION:=1.0.1
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=6c0afd5554739365b55d86e285cf966cc3a45682fff963463364ea1f6511ca3e
@@ -48,9 +48,8 @@ define Package/python3-django-jsonfield
 $(call Package/django-jsonfield/Default)
   DEPENDS:= \
 	+PACKAGE_python3-django-jsonfield:python3 \
-	python3-django
+	+PACKAGE_python3-django-jsonfield:python3-django1
   VARIANT:=python3
-  MDEPENDS:=python3-django
 endef
 
 define Package/python3-django-jsonfield/description

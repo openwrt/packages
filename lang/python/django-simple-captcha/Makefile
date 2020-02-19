@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-simple-captcha
 PKG_VERSION:=0.5.12
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mbi/django-simple-captcha/tar.gz/v$(PKG_VERSION)?
@@ -57,11 +57,10 @@ $(call Package/django-simple-captcha/Default)
   DEPENDS:= \
 	+PACKAGE_python3-django-simple-captcha:python3 \
 	+PACKAGE_python3-django-simple-captcha:python3-six \
-	python3-django \
+	+PACKAGE_python3-django-simple-captcha:python3-django1 \
 	+PACKAGE_python3-django-simple-captcha:python3-pillow \
 	+PACKAGE_python3-django-simple-captcha:python3-django-ranged-response
   VARIANT:=python3
-  MDEPENDS:=python3-django
 endef
 
 define Package/python3-django-simple-captcha/description

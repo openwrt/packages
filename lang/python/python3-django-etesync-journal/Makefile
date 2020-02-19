@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-etesync-journal
 PKG_VERSION:=1.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=django-etesync-journal
 PKG_HASH:=1b481f592217186482be9faee686f0c132790db4177deb1f5152b73e99ac6338
@@ -21,9 +21,8 @@ define Package/python3-django-etesync-journal
   CATEGORY:=Languages
   TITLE:=The server side implementation of the EteSync protocol.
   URL:=https://www.etesync.com/
-  DEPENDS:=python3-django +python3-django-restframework +python3-light
+  DEPENDS:=+django +python3-django-restframework +python3-light
   VARIANT:=python3
-  MDEPENDS:=python3-django
 endef
 
 define Package/python3-django-etesync-journal/description
