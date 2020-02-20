@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-appconf
-PKG_VERSION:=1.0.2
-PKG_RELEASE:=6
+PKG_VERSION:=1.0.3
+PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=6a4d9aea683b4c224d97ab8ee11ad2d29a37072c0c6c509896dd9857466fb261
+PKG_HASH:=35f13ca4d567f132b960e2cd4c832c2d03cb6543452d34e29b7ba10371ba80e3
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -35,7 +35,8 @@ define Package/python-django-appconf
 $(call Package/django-appconf/Default)
   DEPENDS:= \
 	+PACKAGE_python-django-appconf:python \
-	python-django1
+	python-django1 \
+	+PACKAGE_python-django-appconf:python-six
   VARIANT:=python
   MDEPENDS:=python-django1
 endef
@@ -48,7 +49,8 @@ define Package/python3-django-appconf
 $(call Package/django-appconf/Default)
   DEPENDS:= \
 	+PACKAGE_python3-django-appconf:python3 \
-	+PACKAGE_python3-django-appconf:python3-django1
+	+PACKAGE_python3-django-appconf:python3-django1 \
+	+PACKAGE_python3-django-appconf:python3-six
   VARIANT:=python3
 endef
 
