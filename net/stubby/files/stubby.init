@@ -227,6 +227,8 @@ start_service() {
         mv "$config_file_tmp" "$stubby_config"
     fi
 
+    chmod 0644 "$stubby_config"
+
     config_get command_line_arguments "global" command_line_arguments ""
 
     config_get log_level "global" log_level ""
