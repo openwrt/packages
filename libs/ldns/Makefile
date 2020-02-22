@@ -9,20 +9,20 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ldns
 PKG_VERSION:=1.7.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.nlnetlabs.nl/downloads/ldns
 PKG_HASH:=8ac84c16bdca60e710eea75782356f3ac3b55680d40e1530d7cea474ac208229
 
+PKG_MAINTAINER:=Eric Luehrsen <ericluehrsen@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Eric Luehrsen <ericluehrsen@gmail.com>
 PKG_CPE_ID:=cpe:/a:nlnetlabs:ldns
 
 PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 

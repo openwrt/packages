@@ -1,8 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -859,10 +859,10 @@
- AC_ARG_WITH(xcode-sdk, AC_HELP_STRING([--with-xcode-sdk], 
-  [Set xcode SDK version. Default is autodetect]), 
+@@ -881,7 +881,7 @@ AC_ARG_WITH(xcode-sdk, AC_HELP_STRING([--with-xcode-sdk],
   [],[with_xcode_sdk="yes"])
  if test "x_$with_xcode_sdk" != "x_no" ; then
     # check OSX deployment target, if needed
