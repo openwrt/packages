@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vala
-PKG_VERSION:=0.46.5
+PKG_VERSION:=0.46.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/vala/0.46
-PKG_HASH:=1a7847d2599d902c805a58b95b72b69e64c0223c2f6220163998a7ab4b42db1d
+PKG_HASH:=ef31649932872f094971d46453b21c60a41661670f98afa334062425b4aec47a
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -30,6 +30,7 @@ define Package/vala
   CATEGORY:=Languages
   TITLE:=C-sharp like language for the GObject system
   URL:=https://wiki.gnome.org/Projects/Vala
+  BUILDONLY:=1
 endef
 
 define Package/vala/description
