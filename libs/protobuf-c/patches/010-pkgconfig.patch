@@ -3,7 +3,7 @@
 @@ -1,7 +1,10 @@
  SET(PACKAGE protobuf-c)
  SET(PACKAGE_NAME protobuf-c)
- SET(PACKAGE_VERSION 1.3.2)
+ SET(PACKAGE_VERSION 1.3.3)
 +set(PACKAGE_URL https://github.com/protobuf-c/protobuf-c)
 +set(PACKAGE_DESCRIPTION "Protocol Buffers implementation in C")
  
@@ -11,7 +11,7 @@
  
  CMAKE_MINIMUM_REQUIRED(VERSION 2.8 FATAL_ERROR)
  
-@@ -137,6 +140,9 @@ IF(CMAKE_HOST_UNIX)
+@@ -141,6 +144,9 @@ IF(CMAKE_HOST_UNIX)
  INSTALL(CODE "EXECUTE_PROCESS (COMMAND ln -sf protoc-gen-c protoc-c WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)")
  ENDIF()
  

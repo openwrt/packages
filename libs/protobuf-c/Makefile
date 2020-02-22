@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libprotobuf-c
-PKG_VERSION:=1.3.2
-PKG_RELEASE:=4
+PKG_VERSION:=1.3.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=protobuf-c-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/protobuf-c/protobuf-c/releases/download/v$(PKG_VERSION)
-PKG_HASH:=53f251f14c597bdb087aecf0b63630f434d73f5a10fc1ac545073597535b9e74
+PKG_HASH:=22956606ef50c60de1fabc13a78fbc50830a0447d780467d3c519f84ad527e78
 PKG_BUILD_DIR:=$(BUILD_DIR)/protobuf-c-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/protobuf-c-$(PKG_VERSION)
 
