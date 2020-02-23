@@ -5,29 +5,36 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bigclown-mqtt2influxdb
-PKG_VERSION:=1.2.0
+PKG_VERSION:=1.3.0
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=https://codeload.github.com/bigclownlabs/bch-mqtt2influxdb/tar.gz/v$(PKG_VERSION)?
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=60a3ba8a3d76356ed46fbb7bcbedaf439b7edc2dfc2d43232c9250db80c77387
-PKG_LICENSE:=MIT
-PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
-PKG_BUILD_DIR:=$(BUILD_DIR)/bch-mqtt2influxdb-$(PKG_VERSION)
+PYPI_NAME:=mqtt2influxdb
+PKG_HASH:=1b4b3b13f5b2f092bcd27846d94e91ad6f05141b2daea5167a7d58b09a782639
 
+PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE
+
+include ../../../lang/python/pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../../../lang/python/python3-package.mk
 
-define Package/$(PKG_NAME)
+define Package/bigclown-mqtt2influxdb
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=BigClown
-  URL:=https://github.com/bigclownlabs/bch-mqtt2influxdb
   TITLE:=BigCLown MQTT to Influxdb bridge
-  DEPENDS:=+python3-paho-mqtt +python3-yaml +python3-influxdb +python3-jsonpath-ng +python3-schema
+  URL:=https://github.com/bigclownlabs/bch-mqtt2influxdb
+  DEPENDS:= \
+    +python3-paho-mqtt \
+    +python3-yaml \
+    +python3-influxdb \
+    +python3-jsonpath-ng \
+    +python3-schema
+  VARIANT:=python3
 endef
 
-define Py3Package/$(PKG_NAME)/install
+define Py3Package/bigclown-mqtt2influxdb/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 
@@ -36,14 +43,9 @@ define Py3Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./files/config.yml $(1)/etc/bigclown-mqtt2influxdb.yml
 endef
 
-define Package/$(PKG_NAME)/conffiles
+define Package/bigclown-mqtt2influxdb/conffiles
 /etc/bigclown-mqtt2influxdb.yml
 endef
 
-define Build/Compile
-	sed -i 's/@@VERSION@@/$(PKG_VERSION)/' "$(PKG_BUILD_DIR)/setup.py"
-	$(call Py3Build/Compile/Default)
-endef
-
-$(eval $(call Py3Package,$(PKG_NAME)))
-$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call Py3Package,bigclown-mqtt2influxdb))
+$(eval $(call BuildPackage,bigclown-mqtt2influxdb))
