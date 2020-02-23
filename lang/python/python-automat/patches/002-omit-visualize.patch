@@ -1,7 +1,7 @@
 --- a/setup.py
 +++ b/setup.py
 @@ -27,15 +27,6 @@ setup(
-         "attrs>=16.1.0",
+         "attrs>=19.2.0",
          "six",
      ],
 -    extras_require={
