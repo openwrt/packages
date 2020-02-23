@@ -12,7 +12,7 @@ UCI = {}
 function UCI.defaults()
 	return { 
 		AdminListen = "unix:///var/run/yggdrasil.sock", IfName = "ygg0", 
-		NodeInfoPrivacy = false, IfTAPMode = false,
+		NodeInfoPrivacy = false,
 		LinkLocalTCPPort = 0, IfMTU = 65535,
 
 		Peers = { }, Listen = { }, MulticastInterfaces = { }, AllowedEncryptionPublicKeys = { },
@@ -55,7 +55,7 @@ function UCI.get()
 	obj.AdminListen = config.AdminListen or obj.AdminListen
 	obj.IfName = config.IfName or obj.IfName
 	obj.NodeInfo = dkjson.decode(config.NodeInfo) or obj.NodeInfo
-	for _, v in pairs({ "NodeInfoPrivacy", "IfTAPMode" }) do
+	for _, v in pairs({ "NodeInfoPrivacy" }) do
 		if config[v] ~= nil then obj[v] = to_bool(config[v]) end
 	end
 	for _, v in pairs({ "LinkLocalTCPPort", "IfMTU" }) do
@@ -145,7 +145,6 @@ function UCI.set(obj)
 	cursor:set("yggdrasil", "yggdrasil", "IfName", obj.IfName) 
 	cursor:set("yggdrasil", "yggdrasil", "NodeInfoPrivacy", to_int(obj.NodeInfoPrivacy)) 
 	cursor:set("yggdrasil", "yggdrasil", "NodeInfo", dkjson.encode(obj.NodeInfo)) 
-	cursor:set("yggdrasil", "yggdrasil", "IfTAPMode", to_int(obj.IfTAPMode)) 
 	cursor:set("yggdrasil", "yggdrasil", "LinkLocalTCPPort", obj.LinkLocalTCPPort)
 	cursor:set("yggdrasil", "yggdrasil", "IfMTU", obj.IfMTU)
 
