@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 CZ.NIC z.s.p.o. (http://www.nic.cz/)
+# Copyright (C) 2019-2020 CZ.NIC z.s.p.o. (http://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=Flask-Login
-PKG_VERSION:=0.4.1
+PKG_NAME:=python-flask-login
+PKG_VERSION:=0.5.0
 PKG_RELEASE:=1
 
-PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=c815c1ac7b3e35e2081685e389a665f2c74d7e077cb93cecabaea352da4752ec
+PYPI_NAME:=Flask-Login
+PKG_HASH:=6d33aef15b5bcead780acc339464aae8a6e28f13c90d8b1cf9de8b549d1c0b4b
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT
