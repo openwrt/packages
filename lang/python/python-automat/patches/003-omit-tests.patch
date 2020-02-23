@@ -8,7 +8,7 @@
 +    packages=find_packages(exclude=["*._test", "*._test.*"]),
      package_dir={'automat': 'automat'},
      install_requires=[
-         "attrs>=16.1.0",
+         "attrs>=19.2.0",
 @@ -30,6 +30,7 @@ setup(
      author='Glyph',
      author_email='glyph@twistedmatrix.com',
