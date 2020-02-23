@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unbound
 PKG_VERSION:=1.10.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nlnetlabs.nl/downloads/unbound
@@ -52,7 +52,7 @@ define Package/unbound-daemon-heavy
   $(call Package/unbound/Default)
   TITLE+= (daemon, heavy traffic)
   URL:=https://nlnetlabs.nl/documentation/unbound/howto-optimise
-  DEPENDS+= +libunbound-heavy +libpthread +libevent2 +libevent2-pthreads
+  DEPENDS+= +libunbound-heavy +libpthread +libevent2 +libevent2-pthreads +libmnl
   VARIANT:=heavy
   PROVIDES:=unbound-daemon
 endef
@@ -60,6 +60,7 @@ endef
 define Package/unbound-daemon-heavy/description
   This package contains the Unbound daemon including 'libevent' and
   'libpthread' to better handle large networks with heavy query loads.
+  It also offers ipset support.
 endef
 
 define Package/libunbound-light
@@ -75,7 +76,7 @@ endef
 
 define Package/libunbound-light/description
   This package contains the Unbound shared library with basic includes
-  necessary to meet the needs of UCI/LuCI configuration optoins.
+  necessary to meet the needs of UCI/LuCI configuration options.
 endef
 
 define Package/libunbound-heavy
@@ -85,14 +86,15 @@ define Package/libunbound-heavy
   SUBMENU:=Networking
   TITLE+= (library, heavy traffic)
   URL:=https://nlnetlabs.nl/documentation/unbound/howto-optimise
-  DEPENDS+= +libpthread +libevent2 +libevent2-pthreads
+  DEPENDS+= +libpthread +libevent2 +libevent2-pthreads +libmnl
   VARIANT:=heavy
   PROVIDES:=libunbound
 endef
 
 define Package/libunbound-heavy/description
   This package contains the Unbound shared library including 'libevent' and
-  'libpthread' to better handle large networks with heavy query loads.
+  'libpthread' to better handle large networks with heavy query loads. It
+  also offers ipset support.
 endef
 
 define Package/unbound-anchor
@@ -161,8 +163,10 @@ CONFIGURE_ARGS += \
 
 ifeq ($(BUILD_VARIANT),heavy)
 	CONFIGURE_ARGS += \
+		--enable-ipset \
 		--with-pthreads \
 		--with-libevent="$(STAGING_DIR)/usr" \
+		--with-libmnl="$(STAGING_DIR)/usr" \
 		--enable-event-api
 else
     CONFIGURE_ARGS += \
