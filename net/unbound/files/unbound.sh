@@ -470,7 +470,7 @@ unbound_zone() {
 
       if [ -n "$UB_LIST_ZONE_NAMES" ] && [ -n "$UB_LIST_ZONE_SERVERS" ] ; then
         for server in $UB_LIST_ZONE_SERVERS ; do
-          if [ "$( valid_subnet_any $server )" = "not" ] ; then
+          if [ "$( is_ip $server )" = "not" ] ; then
             case $server in
               *@[0-9]*|*#[A-Za-z0-9]*)
                 # unique Unbound option for server host name
