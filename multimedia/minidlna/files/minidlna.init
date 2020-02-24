@@ -1,16 +1,12 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2010 OpenWrt.org
 
-START=50
+START=81
 
-SERVICE_USE_PID=1
-SERVICE_PID_FILE=/var/run/minidlna/minidlna.pid
+PROG=/usr/sbin/minidlnad
+USE_PROCD=1
 
 MINIDLNA_CONFIG_FILE="/var/etc/minidlna.conf"
-
-minidlna_cfg_append() {
-	echo "$1" >> "$MINIDLNA_CONFIG_FILE"
-}
 
 minidlna_cfg_addbool() {
 	local cfg="$1"
@@ -20,7 +16,7 @@ minidlna_cfg_addbool() {
 
 	config_get_bool val "$cfg" "$key" "$def"
 	[ "$val" -gt 0 ] && val="yes" || val="no"
-	minidlna_cfg_append "$key=$val"
+	echo "$key=$val"
 }
 
 minidlna_cfg_addstr() {
@@ -30,12 +26,12 @@ minidlna_cfg_addstr() {
 	local val
 
 	config_get val "$cfg" "$key" "$def"
-	[ -n "$val" ] && minidlna_cfg_append "$key=$val"
+	[ -n "$val" ] && echo "$key=$val"
 }
 
 minidlna_cfg_add_media_dir() {
 	local val=$1
-	minidlna_cfg_append "media_dir=$val"
+	echo "media_dir=$val"
 }
 
 minidlna_create_config() {
@@ -46,18 +42,18 @@ minidlna_create_config() {
 	config_get port "$cfg" port
 	config_get interface "$cfg" interface
 
-	[ -z "$interface" -o -t "$port" ] && return 1
+	{ [ -z "$interface" ] || [ -t "$port" ]; } && return 1
 
 	mkdir -p /var/etc
-	echo "# this file is generated automatically, don't edit" > "$MINIDLNA_CONFIG_FILE"
+	{
+	echo "# this file is generated automatically, don't edit"
 
-	minidlna_cfg_append "port=$port"
-	minidlna_cfg_append "network_interface=$interface"
+	echo "port=$port"
+	echo "network_interface=$interface"
 
 	minidlna_cfg_addstr "$cfg" friendly_name
 	minidlna_cfg_addstr "$cfg" user
 	minidlna_cfg_addstr "$cfg" db_dir
-	minidlna_cfg_addstr "$cfg" log_dir
 	minidlna_cfg_addstr "$cfg" log_level 'error'
 	minidlna_cfg_addbool "$cfg" inotify '1'
 	minidlna_cfg_addbool "$cfg" enable_tivo '0'
@@ -72,16 +68,16 @@ minidlna_create_config() {
 	minidlna_cfg_addstr "$cfg" root_container '.'
 	minidlna_cfg_addstr "$cfg" uuid '019f9a56-ff60-44c0-9edc-eae88d09fa05'
 	config_list_foreach "$cfg" "media_dir" minidlna_cfg_add_media_dir
+	} > "$MINIDLNA_CONFIG_FILE"
 
 	return 0
 }
 
-start() {
+start_service() {
 	local enabled
 	local db_dir
-	local log_dir
 	local user
-	local var
+	local val
 
 	config_load 'minidlna'
 	config_get_bool enabled config 'enabled' '0'
@@ -89,20 +85,31 @@ start() {
 	[ "$enabled" -gt 0 ] || return 1
 
 	config_get val "config" uuid
-	[ "$val" = '' ] && uci set  minidlna.config.uuid=$(cat /proc/sys/kernel/random/uuid) && uci commit
+	[ "$val" = '' ] && uci set minidlna.config.uuid="$(cat /proc/sys/kernel/random/uuid)" && uci commit
 
 	minidlna_create_config config || return 1
 
 	config_get db_dir config 'db_dir' '/var/run/minidlna'
-	config_get log_dir config 'log_dir' '/var/log/minidlna'
-	config_get user config 'user' 'root'
+	config_get user config 'user' 'minidlna'
 
-	mkdir -m 0755 -p "$db_dir" "$log_dir"
-	chown -R "$user" "$db_dir" "$log_dir"
+	[ -d "$db_dir" ] || {
+		mkdir -m 755 -p "$db_dir"
+		chown -R "$user":"$user" "$db_dir"
+	}
 
-	service_start /usr/bin/minidlna -f "$MINIDLNA_CONFIG_FILE"
+	procd_open_instance
+	procd_set_param command "$PROG"
+	procd_append_param command -S -f "$MINIDLNA_CONFIG_FILE"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
 }
 
-stop() {
-	service_stop /usr/bin/minidlna
+reload_service() {
+	procd_send_signal "$PROG"
+}
+
+service_triggers() {
+	procd_add_reload_trigger "minidlna"
 }

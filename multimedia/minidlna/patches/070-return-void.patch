@@ -1,0 +1,21 @@
+From ce34745bb19a649c8570ef0a3da9ffd5e941548e Mon Sep 17 00:00:00 2001
+From: Daniel Kamil Kozar <dkk089@gmail.com>
+Date: Sun, 30 Dec 2018 22:49:50 +0100
+Subject: [PATCH] No return in a function returning non-void
+
+---
+ upnpdescgen.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/upnpdescgen.c b/upnpdescgen.c
+index 85ce185..78d5754 100644
+--- a/upnpdescgen.c
++++ b/upnpdescgen.c
+@@ -525,6 +525,7 @@ genXML(char *str, int *len, int *tmplen, const struct XMLElt *p)
+ 			pile[top].eltname = eltname;
+ 		}
+ 	}
++	return str;
+ }
+ 
+ /* genRootDesc() :
