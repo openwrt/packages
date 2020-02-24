@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btrfs-progs
 PKG_VERSION:=5.4.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs
@@ -30,7 +30,15 @@ define Package/btrfs-progs
   SUBMENU:=Filesystem
   TITLE:=Btrfs filesystems utilities
   URL:=https://btrfs.wiki.kernel.org/
-  DEPENDS:=+libattr +libuuid +zlib +libblkid +liblzo +libpthread +BTRFS_PROGS_ZSTD:libzstd
+  DEPENDS:= \
+    +libattr \
+    +libuuid \
+    +zlib \
+    +libblkid \
+    +liblzo \
+    +libpthread \
+    +kmod-fs-btrfs \
+    +BTRFS_PROGS_ZSTD:libzstd
 endef
 
 define Package/btrfs-progs/description
