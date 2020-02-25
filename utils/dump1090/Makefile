@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dump1090
-PKG_VERSION:=3.7.2
+PKG_VERSION:=3.8.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/flightaware/dump1090/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=a4f8edd051e0a663a92b848bde4ab7c47cb8bce812bb368cba42bbb4b5c83f71
+PKG_HASH:=ad9d1eba1274cc0977a8068ecb00ad64cbc0785db7f50a487e4d2439a92095d7
 
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -28,7 +28,7 @@ define Package/dump1090/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Mode S decoder for the Realtek RTL2832U
-  URL:=https://github.com/mutability/dump1090
+  URL:=https://github.com/flightaware/dump1090
 endef
 
 define Package/dump1090
