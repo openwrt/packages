@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-zipp
-PKG_VERSION:=2.2.0
+PKG_VERSION:=3.0.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=zipp
-PKG_HASH:=5c56e330306215cd3553342cfafc73dda2c60792384117893f3a83f8a1209f50
+PKG_HASH:=7c0f8e91abc0dc07a5068f315c52cb30c66bfbc581e5b50704c8a2f6ebae794a
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT
@@ -21,11 +21,11 @@ define Package/python3-zipp
   SUBMENU:=Python
   TITLE:=Zipfile object wrapper
   URL:=https://github.com/jaraco/zipp
-  DEPENDS:=+python3-light +python3-more-itertools
+  DEPENDS:=+python3-light
   VARIANT:=python3
 endef
 
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="setuptools_scm[toml] >= 3.4.1"
 
 define Package/python3-zipp/description
   Backport of pathlib-compatible object wrapper for zip files
