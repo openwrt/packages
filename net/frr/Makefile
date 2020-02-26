@@ -7,12 +7,12 @@
 
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
-PKG_VERSION:=7.2.1
+PKG_VERSION:=7.3
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://github.com/FRRouting/frr/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=774585564dc00e67c4eb51521cb2a8e584031364916514860227af07b638a408
+PKG_HASH:=529e1bbc3a20d55e94c38a95513bcf971d4b403ecb00afdaf0c229e3f560b2b6
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 
 PKG_DAEMON_AVAILABLE:= \
@@ -46,7 +46,6 @@ PKG_CONFIG_DEPENDS:= \
 
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=python3/host
-PKG_FIXUP:=autoreconf
 PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
