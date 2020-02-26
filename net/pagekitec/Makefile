@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pagekitec
-PKG_REV:=0.91.191211
+PKG_REV:=0.91.200218
 PKG_VERSION:=$(PKG_REV)C
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
