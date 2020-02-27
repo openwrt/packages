@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=u2pnpd
 PKG_VERSION:=0.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/mhei/u2pnpd/releases/download/v$(PKG_VERSION)
@@ -39,6 +39,8 @@ define Package/u2pnpd/description
   can easily double-click on an icon to open the web frontend of this device without
   knowing the IP address.
 endef
+
+TARGET_CFLAGS += -D_FILE_OFFSET_BITS=64
 
 define Package/u2pnpd/install
 	$(INSTALL_DIR) $(1)/usr/bin
