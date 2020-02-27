@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=containerd
 PKG_VERSION:=1.2.10
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -68,6 +68,7 @@ endef
 # Avoid installing binaries
 define Build/InstallDev
 	$(call Build/Compile/Default,clean)
+	rm -f $(STAMP_BUILT)
 	$(call GoPackage/Build/InstallDev,$(1))
 endef
 
