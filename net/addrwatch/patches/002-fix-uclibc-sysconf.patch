@@ -1,6 +1,6 @@
 --- a/src/addrwatch.c
 +++ b/src/addrwatch.c
-@@ -485,7 +485,7 @@ int main(int argc, char *argv[])
+@@ -501,7 +501,7 @@ int main(int argc, char *argv[])
  	argp_parse(&argp, argc, argv, 0, &optind, 0);
  
  	if (!cfg.hostname) {
