@@ -34,7 +34,7 @@
          '<@(icu_src_genccode)',
 --- a/tools/v8_gypfiles/v8.gyp	2019-06-27 19:12:20.000000000 +0900
 +++ b/tools/v8_gypfiles/v8.gyp	2019-07-01 14:40:48.292020880 +0900
-@@ -1258,6 +1258,7 @@
+@@ -1265,6 +1265,7 @@
      {
        'target_name': 'bytecode_builtins_list_generator',
        'type': 'executable',
@@ -42,7 +42,7 @@
        'conditions': [
          ['want_separate_host_toolset', {
            'toolsets': ['host'],
-@@ -1281,6 +1282,8 @@
+@@ -1288,6 +1289,8 @@
      {
        'target_name': 'mksnapshot',
        'type': 'executable',
@@ -51,7 +51,7 @@
        'dependencies': [
          'v8_base_without_compiler',
          'v8_compiler_for_mksnapshot',
-@@ -1303,6 +1306,7 @@
+@@ -1310,6 +1313,7 @@
      {
        'target_name': 'torque',
        'type': 'executable',
@@ -59,7 +59,7 @@
        'dependencies': [
          'torque_base',
          # "build/win:default_exe_manifest",
-@@ -1341,6 +1345,7 @@
+@@ -1348,6 +1352,7 @@
      {
        'target_name': 'torque-language-server',
        'type': 'executable',
@@ -67,7 +67,7 @@
        'conditions': [
          ['want_separate_host_toolset', {
            'toolsets': ['host'],
-@@ -1368,6 +1373,8 @@
+@@ -1375,6 +1380,8 @@
      {
        'target_name': 'gen-regexp-special-case',
        'type': 'executable',
