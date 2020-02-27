@@ -37,6 +37,10 @@
 
 #include "multipart_parser.h"
 
+#ifndef O_TMPFILE
+#define O_TMPFILE	(020000000 | O_DIRECTORY)
+#endif
+
 #define READ_BLOCK 4096
 #define POST_LIMIT 131072
 
