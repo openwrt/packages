@@ -8,15 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=addrwatch
-PKG_VERSION:=1.0.1
-PKG_RELEASE:=3
+PKG_VERSION:=1.0.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/fln/addrwatch/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=be70150a357558481de8488665da1d6efdfa5dc37666d9fa68e8e73a8b59ade6
-PKG_LICENSE:=GPL-3.0
+PKG_SOURCE_URL:=https://github.com/fln/addrwatch/releases/download/v$(PKG_VERSION)
+PKG_HASH:=f04e143da881cd63c299125b592cfb85e4812abbd146f419a1894c00f2ae6208
+
+PKG_MAINTAINER:=Ondrej Caletka <ondrej@caletka.cz>
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_FIXUP:=autoreconf
+
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=USE_UCLIBC:argp-standalone USE_MUSL:argp-standalone
 
 include $(INCLUDE_DIR)/package.mk
@@ -27,7 +31,6 @@ define Package/addrwatch
   DEPENDS:=+libpcap +libevent2
   TITLE:=IPv4/IPv6 and ethernet address pairing tool
   URL:=https://github.com/fln/addrwatch
-  MAINTAINER:=Ondrej Caletka <ondrej@caletka.cz>
 endef
 
 define Package/addrwatch/description
@@ -42,8 +45,8 @@ define Package/addrwatch/conffiles
 endef
 
 define Package/addrwatch/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/addrwatch $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/etc/config $(1)/etc/init.d
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/addrwatch $(1)/usr/bin/
 	$(INSTALL_BIN) ./files/addrwatch.init $(1)/etc/init.d/addrwatch
 	$(INSTALL_CONF) ./files/addrwatch.config $(1)/etc/config/addrwatch
 endef
