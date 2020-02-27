@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=log4cplus
-PKG_VERSION:=2.0.4
-PKG_RELEASE:=2
+PKG_VERSION:=2.0.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
-PKG_HASH:=faf15f3651e2d0f9f9cf2c1bfcb38ec4962f22f4a671410453a27c0976da5e36
+PKG_HASH:=6046f0867ce4734f298418c7b7db0d35c27403090bb751d98e6e76aa4935f1af
 
 PKG_MAINTAINER:=BangLang Huang <banglang.huang@foxmail.com>, Rosy Song <rosysong@rosinson.com>
 PKG_LICENSE:=BSD-2-Clause Apache-2.0
@@ -41,9 +41,6 @@ define Package/log4cplus/description
   flexible, and arbitrarily granular control over log management and
   configuration. It is modeled after the Java log4j API.
 endef
-
-CMAKE_HOST_OPTIONS += \
-	-DCMAKE_INSTALL_LIBDIR:PATH=lib
 
 CMAKE_OPTIONS += \
 	-DLOG4CPLUS_BUILD_LOGGINGSERVER:BOOL=OFF \
