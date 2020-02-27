@@ -37,6 +37,8 @@ libupnpp defines useful objects over libupnp and can be used to create both devi
 and control points. It is shared by upmpdcli and upplay.
 endef
 
+TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lm)
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libupnpp $(1)/usr/include/
