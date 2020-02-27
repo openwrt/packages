@@ -42,6 +42,8 @@ define Package/upmpdcli/config
 	source "$(SOURCE)/Config.in"
 endef
 
+TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lm)
+
 define Package/upmpdcli/install
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/upmpdcli.conf $(1)/etc/
