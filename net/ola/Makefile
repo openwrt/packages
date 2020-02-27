@@ -66,6 +66,7 @@ HOST_CONFIGURE_ARGS += \
 	--disable-doxygen-doc
 
 HOST_LDFLAGS += -Wl,-rpath="$(STAGING_DIR_HOSTPKG)/lib"
+TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lm)
 
 # only build the ola_protoc thingy
 define Host/Compile
