@@ -7,11 +7,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libirecovery
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/libirecovery
-PKG_SOURCE_VERSION:=db36196d8d9db5a1f92e6934cf931cd00a6ead2d
+PKG_SOURCE_VERSION:=2bd64e6d9c82c547bdd15cb32a74c1de5fd53bd8
 PKG_MIRROR_HASH:=eff43fbb0140ba653b514ef5c0a6ecc715dd05d8a61d405775573ae5f78995d7
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
