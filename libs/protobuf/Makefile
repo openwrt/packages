@@ -81,7 +81,7 @@ CMAKE_OPTIONS += \
 	-Dprotobuf_WITH_ZLIB=ON \
 	-DBUILD_SHARED_LIBS=ON
 
-TARGET_LDFLAGS += -latomic
+TARGET_LDFLAGS += -latomic $(if $(CONFIG_USE_GLIBC),-lm)
 
 define Build/InstallDev
 	$(call Build/InstallDev/cmake,$(1))
