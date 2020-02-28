@@ -20,7 +20,6 @@ boot()
 
 generate_config()
 {
-    local config_file="$1"
     local round_robin
     local tls_authentication
     local tls_query_padding_blocksize
@@ -205,7 +204,7 @@ generate_config()
     }
 
     config_foreach handle_resolver resolver
-} > "$config_file"
+} > "$config_file_tmp"
 
 start_service() {
     local config_file_tmp
@@ -223,10 +222,11 @@ start_service() {
         cp "$stubby_manual_config" "$stubby_config"
     else
         config_file_tmp="$stubby_config.$$"
-        generate_config "$config_file_tmp"
+        generate_config
         mv "$config_file_tmp" "$stubby_config"
     fi
-    chmod 0644 "$stubby_config"
+    chown stubby:stubby "$stubby_config"
+    chmod 0400 "$stubby_config"
 
     config_get command_line_arguments "global" command_line_arguments ""
 
