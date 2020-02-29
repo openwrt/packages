@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linknx
 PKG_VERSION:=0.0.1.37
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-${PKG_VERSION}.tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/linknx/linknx/tar.gz/$(PKG_VERSION)?
@@ -41,9 +41,6 @@ CONFIGURE_ARGS+= \
 	--with-lua \
 	--with-libcurl \
 	--without-mysql
-
-EXTRA_LDFLAGS+= \
-	-fno-builtin
 
 define Package/linknx/install
 	$(INSTALL_DIR) $(1)/usr/bin
