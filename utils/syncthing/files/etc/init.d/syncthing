@@ -1,14 +1,24 @@
 #!/bin/sh /etc/rc.common
 
-START=99
+START=90
+STOP=10
+
+USE_PROCD=1
+NICEPRIO=19
 
 PROG=/usr/bin/syncthing
 
 start_service() {
     [ -d /var/syncthing/ ] || mkdir /var/syncthing/
 
-    local gui_address home
+    local gui_address home enabled
     config_load "syncthing"
+
+    # The first version had the service enabled by default,
+    #   so preserving the old behaviour
+    config_get_bool enabled syncthing enabled 1
+    [ "$enabled" -gt 0 ] || return 0
+
     config_get gui_address syncthing gui_address "http://127.0.0.1:8384"
     config_get home syncthing home "/etc/syncthing/"
 
@@ -17,5 +27,6 @@ start_service() {
     procd_append_param command -gui-address="$gui_address"
     procd_append_param command -home="$home"
     procd_set_param respawn
+    procd_set_param nice "$NICEPRIO"
     procd_close_instance
 }
