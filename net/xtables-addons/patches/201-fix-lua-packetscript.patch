@@ -22,6 +22,15 @@
  {
  	uint32_t  verdict;
  	lua_packet_segment *p;
+@@ -79,7 +79,7 @@ lua_tg(struct sk_buff *pskb, const struc
+ 
+ 	L = lua_envs[info->state_id]->L;
+ 
+-	if (!skb_make_writable(pskb, pskb->len))
++	if (skb_ensure_writable(pskb, pskb->len))
+ 		return NF_DROP;
+ 
+ 	/* call the function provided by --function parameter or the default 'process_packet' defined in Lua */
 @@ -88,11 +88,11 @@ lua_tg(struct sk_buff *pskb, const struc
  	/* push the lua_packet_segment as a parameter */
  	p = (lua_packet_segment *)lua_newuserdata(L, sizeof(lua_packet_segment));
