@@ -1,0 +1,61 @@
+From d6498794e5657c38215641c89288d8bd7fd3e697 Mon Sep 17 00:00:00 2001
+From: ariasuni <perso@hack-libre.org>
+Date: Tue, 1 Jan 2019 12:20:57 +0100
+Subject: [PATCH] exfat: return actual access time instead of zero
+
+---
+ exfat_core.c | 22 +++++++++++++++++++++-
+ 1 file changed, 21 insertions(+), 1 deletion(-)
+
+--- a/exfat_core.c
++++ b/exfat_core.c
+@@ -1170,7 +1170,14 @@ s32 ffsGetStat(struct inode *inode, DIR_
+ 	info->ModifyTimestamp.Second = tm.sec;
+ 	info->ModifyTimestamp.MilliSecond = 0;
+ 
+-	memset((char *) &info->AccessTimestamp, 0, sizeof(DATE_TIME_T));
++	p_fs->fs_func->get_entry_time(ep, &tm, TM_ACCESS);
++	info->AccessTimestamp.Year = tm.year;
++	info->AccessTimestamp.Month = tm.mon;
++	info->AccessTimestamp.Day = tm.day;
++	info->AccessTimestamp.Hour = tm.hour;
++	info->AccessTimestamp.Minute = tm.min;
++	info->AccessTimestamp.Second = tm.sec;
++	info->AccessTimestamp.MilliSecond = 0;
+ 
+ 	*(uni_name.name) = 0x0;
+ 	/* XXX this is very bad for exfat cuz name is already included in es.
+@@ -1271,6 +1278,13 @@ s32 ffsSetStat(struct inode *inode, DIR_
+ 	tm.year = info->ModifyTimestamp.Year;
+ 	p_fs->fs_func->set_entry_time(ep, &tm, TM_MODIFY);
+ 
++	tm.sec  = info->AccessTimestamp.Second;
++	tm.min  = info->AccessTimestamp.Minute;
++	tm.hour = info->AccessTimestamp.Hour;
++	tm.day  = info->AccessTimestamp.Day;
++	tm.mon  = info->AccessTimestamp.Month;
++	tm.year = info->AccessTimestamp.Year;
++	p_fs->fs_func->set_entry_time(ep, &tm, TM_ACCESS);
+ 
+ 	p_fs->fs_func->set_entry_size(ep2, info->Size);
+ 
+@@ -2755,6 +2769,9 @@ void fat_get_entry_time(DENTRY_T *p_entr
+ 		t = GET16_A(ep->modify_time);
+ 		d = GET16_A(ep->modify_date);
+ 		break;
++	case TM_ACCESS:
++		d = GET16_A(ep->access_date);
++		break;
+ 	}
+ 
+ 	tp->sec  = (t & 0x001F) << 1;
+@@ -2810,6 +2827,9 @@ void fat_set_entry_time(DENTRY_T *p_entr
+ 		SET16_A(ep->modify_time, t);
+ 		SET16_A(ep->modify_date, d);
+ 		break;
++	case TM_ACCESS:
++		SET16_A(ep->access_date, d);
++		break;
+ 	}
+ } /* end of fat_set_entry_time */
+ 
