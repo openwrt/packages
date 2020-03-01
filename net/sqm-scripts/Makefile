@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=sqm-scripts
 PKG_SOURCE_VERSION:=ab763cba8b1516b3afa99760e0ca884f8b8d93b8
 PKG_VERSION:=1.4.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/tohojo/sqm-scripts
@@ -57,18 +57,9 @@ define Package/luci-app-sqm/description
 endef
 
 define Package/luci-app-sqm/install
-	make -C $(PKG_BUILD_DIR) DESTDIR=$(1) PLATFORM=openwrt install-luci
-endef
-
-define Package/luci-app-sqm/postinst
-#!/bin/sh
-which uci > /dev/null || exit 0
-uci -q get ucitrack.@sqm[0] > /dev/null || {
-  uci add ucitrack sqm > /dev/null
-  uci set ucitrack.@sqm[0].init=sqm
-  uci add_list ucitrack.@firewall[0].affects=sqm
-  uci commit
-}
+	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR=$(1) PLATFORM=openwrt install-luci
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/luci-app-sqm.defaults $(1)/etc/uci-defaults
 endef
 
 define Package/luci-app-sqm/postrm
