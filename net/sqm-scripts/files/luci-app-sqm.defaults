@@ -1,0 +1,8 @@
+#!/bin/sh
+
+uci -q get ucitrack.@sqm[0] >/dev/null || {
+	uci add ucitrack sqm > /dev/null
+	uci set ucitrack.@sqm[0].init=sqm
+	uci add_list ucitrack.@firewall[0].affects=sqm
+	uci commit
+}
