@@ -37,7 +37,7 @@ proto_bonding_init_config() {
 
 	proto_config_add_string "bonding_policy"
 	proto_config_add_string "link_monitoring"
-	proto_config_add_string "slaves"
+#	proto_config_add_string "slaves"
 	proto_config_add_string "all_slaves_active"
 
 	proto_config_add_string "min_links"
@@ -56,7 +56,7 @@ proto_bonding_init_config() {
 	proto_config_add_string "num_grat_arp__num_unsol_na"
 
 	proto_config_add_string "arp_interval"
-	proto_config_add_string "arp_ip_target"
+#	proto_config_add_string "arp_ip_target"
 	proto_config_add_string "arp_all_targets"
 	proto_config_add_string "arp_validate"
 
@@ -69,6 +69,12 @@ proto_bonding_init_config() {
 proto_bonding_setup() {
 	local cfg="$1"
 	local link="bonding-$cfg"
+
+	# # Load following values explicitly as MultiValue/DynamicList is not supported up to now
+	local slaves arp_ip_target
+	config_load network
+	config_get slaves "$cfg" slaves ""
+	config_get arp_ip_target "$cfg" arp_ip_target ""
 
 	# Check for loaded kernel bonding driver (/sys/class/net/bonding_masters exists)
 	[ -f "$BONDING_MASTERS" ] || {
@@ -129,8 +135,10 @@ proto_bonding_setup() {
 	case "$link_monitoring" in
 
 		arp)
-			local arp_interval arp_ip_target arp_all_targets arp_validate
-			json_get_vars arp_interval arp_ip_target arp_all_targets arp_validate
+#			local arp_interval arp_ip_target arp_all_targets arp_validate
+			local arp_interval arp_all_targets arp_validate
+#			json_get_vars arp_interval arp_ip_target arp_all_targets arp_validate
+			json_get_vars arp_interval arp_all_targets arp_validate
 
 			[ -n "$arp_interval" -a "$arp_interval" != 0 ] && echo "$arp_interval" > /sys/class/net/"$link"/bonding/arp_interval
 
@@ -155,8 +163,8 @@ proto_bonding_setup() {
 	esac
 
 	# Add slaves to bonding interface
-	local slaves
-	json_get_vars slaves
+#	local slaves
+#	json_get_vars slaves
 
 	for slave in $slaves; do
 
