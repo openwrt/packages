@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=x264
 PKG_VERSION:=snapshot-20190324-2245
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.videolan.org/x264/snapshots/
@@ -39,6 +39,8 @@ ifneq ($(findstring cortex-a,$(CPU_TYPE)),)
       MAKE_FLAGS+= AS=nasm
     endif
     else
+    CONFIGURE_VARS+= AS=
+    MAKE_FLAGS+= AS=
     CONFIGURE_ARGS += --disable-asm
   endif
 endif
@@ -56,9 +58,9 @@ CONFIGURE_ARGS += \
 define Package/libx264
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=H264/AVC free codec library.
+  TITLE:=H264/AVC free codec library
   DEPENDS:=+libpthread @BUILD_PATENTED
-  URL:=http://www.videolan.org/developers/x264.html
+  URL:=https://www.videolan.org/developers/x264.html
 endef
 
 define Package/libx264/description
