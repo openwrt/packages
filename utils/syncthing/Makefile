@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=syncthing
 PKG_VERSION:=1.4.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=syncthing-source-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/syncthing/syncthing/releases/download/v$(PKG_VERSION)
@@ -32,6 +32,7 @@ define Package/syncthing
   DEPENDS:=$(GO_ARCH_DEPENDS)
   SECTION:=utils
   CATEGORY:=Utilities
+  USERID:=syncthing:syncthing
 endef
 
 GO_PKG_LDFLAGS_X:=\
