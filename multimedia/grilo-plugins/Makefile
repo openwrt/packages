@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grilo-plugins
-PKG_VERSION:=0.3.10
+PKG_VERSION:=0.3.11
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -15,7 +15,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/grilo-plugins/0.3/
-PKG_HASH:=803b360fdb6d5fde1e647bdc40c16de3031b1a95b347b48b65fe4fc27a548d4a
+PKG_HASH:=dde2e605b1994341c6bf012493e056b406b08571834dea3b3c671d5b8b1dcd73
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -89,8 +89,7 @@ endef
 $(eval $(call BuildPackage,grilo-plugins))
 
 $(eval $(call BuildPlugin,dleyna,DLNA sharing,dleyna,,30))
-# This is currently disabled because it won't work with libdmapsharing-4.0.so
-#$(eval $(call BuildPlugin,dmap,DAAP and DPAP sharing,daap dpap,libdmapsharing,30))
+$(eval $(call BuildPlugin,dmap,DAAP and DPAP sharing,daap dpap,libdmapsharing,30))
 $(eval $(call BuildPlugin,gravatar,Gravatar provider,gravatar,,30))
 $(eval $(call BuildPlugin,jamendo,Jamendo sharing,jamendo,,30))
 $(eval $(call BuildPlugin,magnatune,Magnatune sharing,magnatune,,30))
