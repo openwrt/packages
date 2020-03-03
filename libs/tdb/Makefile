@@ -29,7 +29,6 @@ define Package/tdb
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Trivial Database
-  DEPNEDS:=+libattr
   URL:=http://sourceforge.net/projects/tdb/
   MAINTAINER:=Dmitry V. Zimin <pfzim@mail.ru>
 endef
