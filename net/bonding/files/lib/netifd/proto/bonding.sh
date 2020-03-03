@@ -107,6 +107,15 @@ proto_bonding_setup() {
 			set_driver_values primary primary_reselect lp_interval tlb_dynamic_lb resend_igmp xmit_hash_policy
 		;;
 
+		balance-xor)
+			echo "$bonding_policy" > /sys/class/net/"$link"/bonding/mode
+			set_driver_values xmit_hash_policy
+		;;
+
+		broadcast)
+			echo "$bonding_policy" > /sys/class/net/"$link"/bonding/mode
+		;;
+
 		active-backup)
 			echo "$bonding_policy" > /sys/class/net/"$link"/bonding/mode
 			set_driver_values primary primary_reselect fail_over_mac num_grat_arp__num_unsol_na xmit_hash_policy
