@@ -30,7 +30,7 @@ diff --git a/gptcurses.cc b/gptcurses.cc
 index 4ebfde1..ca6f4ea 100644
 --- a/gptcurses.cc
 +++ b/gptcurses.cc
-@@ -418,7 +418,7 @@ void GPTDataCurses::Verify(void) {
+@@ -422,7 +422,7 @@ void GPTDataCurses::Verify(void) {
     def_prog_mode();
     endwin();
     GPTData::Verify();
@@ -39,7 +39,7 @@ index 4ebfde1..ca6f4ea 100644
     cin.get(junk);
     reset_prog_mode();
     refresh();
-@@ -816,7 +816,7 @@ void ShowTypes(void) {
+@@ -820,7 +820,7 @@ void ShowTypes(void) {
     def_prog_mode();
     endwin();
     tempType.ShowAllTypes(LINES - 3);
@@ -52,20 +52,20 @@ diff --git a/parttypes.cc b/parttypes.cc
 index cd225d1..6c2c8c6 100644
 --- a/parttypes.cc
 +++ b/parttypes.cc
-@@ -524,7 +524,7 @@ void PartType::ShowAllTypes(int maxLines) const {
-             if (thisType->next) {
-                cout << "\n";
-                if ((maxLines > 0) && (lineCount++ % maxLines) == 0) {
--                  cout << "Press the <Enter> key to see more codes: ";
-+                  cout << "Press the <Enter> key to see more codes: " << flush;
-                   getline(cin, line);
-                } // if reached screen line limit
-             } // if there's another entry following this one
+@@ -530,7 +530,7 @@ void PartType::ShowAllTypes(int maxLines) const {
+ 
+    cout.unsetf(ios::uppercase);
+    if (maxLines > 0) {
+-      cout << "Type search string, or <Enter> to show all codes: ";
++      cout << "Type search string, or <Enter> to show all codes: " << flush;
+       matchString = ToLower(ReadString());
+    } // if
+    while (thisType != NULL) {
 diff --git a/support.cc b/support.cc
 index 891caad..645ef5d 100644
 --- a/support.cc
 +++ b/support.cc
-@@ -123,7 +123,7 @@ uint64_t GetSectorNum(uint64_t low, uint64_t high, uint64_t def, uint64_t sSize,
+@@ -127,7 +127,7 @@ uint64_t GetSectorNum(uint64_t low, uint64_t high, uint64_t def, uint64_t sSize,
     char line[255];
  
     do {
