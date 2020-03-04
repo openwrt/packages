@@ -5,14 +5,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=irqbalance
-PKG_VERSION:=1.2.0
-PKG_RELEASE:=4
+PKG_VERSION:=1.6.0
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/Irqbalance/irqbalance.git
-PKG_SOURCE_VERSION:=0e0dd4cfe5464de2f81eaef504eab7183f1fb030
-PKG_MIRROR_HASH:=c826e78babfc26f777a5791b2a6ea95b61453ba3e3c5803d4428cc803216bc5c
+PKG_SOURCE_VERSION:=b47eea84cbb93f533b0cba2f1aaf9ca4da8706b9
+PKG_MIRROR_HASH:=ce1cd84cd315492d4260786735eae81e49515ec3eebe652920a7dc57b93c0c2c
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_LICENSE:=GPLv2
 
@@ -23,9 +23,13 @@ PKG_REMOVE_FILES:=autogen.sh
 
 PKG_BUILD_PARALLEL:=1
 
+# -liconv due to glib2, to be revisited later
+include $(INCLUDE_DIR)/nls.mk
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/irqbalance
+  PKG_BUILD_DEPENDS:=glib2
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=IRQ usage balancing for multi-core systems
@@ -42,7 +46,12 @@ CONFIGURE_ARGS+= \
 	--disable-numa \
 	--with-libcap_ng=no \
 	--with-systemd=no \
-	--without-glib2
+	--without-irqbalance-ui \
+	--enable-static=glib2
+
+CONFIGURE_VARS += \
+	GLIB2_LIBS="$(STAGING_DIR)/usr/lib/libglib-2.0.a \
+		$(STAGING_DIR)/usr/lib/libiconv-stub/lib/libiconv.a"
 
 define Package/irqbalance/install
 	$(INSTALL_DIR) $(1)/usr/sbin
