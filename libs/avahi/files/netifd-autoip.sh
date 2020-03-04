@@ -9,7 +9,7 @@ proto_autoip_setup() {
 	local iface="$2"
 
 	proto_export "INTERFACE=$config"
-	proto_run_command "$config" avahi-autoipd $iface
+	proto_run_command "$config" avahi-autoipd "$iface"
 }
 
 proto_autoip_teardown() {

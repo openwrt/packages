@@ -1,26 +1,11 @@
-From ef0ea001f6dd13d6a2e0bc17d13f595d2829f8a8 Mon Sep 17 00:00:00 2001
-From: Jeremiah McConnell <miah@miah.com>
-Date: Fri, 15 Jun 2018 11:31:10 -0600
-Subject: [PATCH] move runtime_dir to /var/run
-
-Upstream transitioned to using /run as runtime_dir for 0.7.  Revert
-that change for procd compatibility.
-
-Signed-off-by: Jeremiah McConnell <miah@miah.com>
----
- configure.ac | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/configure.ac b/configure.ac
-index 72d61478..8f6e9768 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -984,7 +984,7 @@ AC_DEFINE_UNQUOTED(AVAHI_AUTOIPD_GROUP,"$AVAHI_AUTOIPD_GROUP", [Group for runnin
+--- a/configure
++++ b/configure
+@@ -24638,7 +24638,7 @@ _ACEOF
  #
  # Avahi runtime dir
  #
 -avahi_runtime_dir="/run"
 +avahi_runtime_dir="${localstatedir}/run"
  avahi_socket="${avahi_runtime_dir}/avahi-daemon/socket"
- AC_SUBST(avahi_runtime_dir)
- AC_SUBST(avahi_socket)
+ 
+ 
