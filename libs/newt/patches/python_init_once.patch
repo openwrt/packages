@@ -14,7 +14,7 @@ Last-Updated: 2014-06-11
      suspend.cb = NULL;
      suspend.data = NULL;
      
-     newtInit();
+
 +    if (init_newt) { 
 +	newtInit();
 +	init_newt = 0;
