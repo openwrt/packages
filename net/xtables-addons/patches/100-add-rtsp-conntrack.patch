@@ -7,7 +7,7 @@
 +obj-m += nf_conntrack_rtsp.o
 --- /dev/null
 +++ b/extensions/rtsp/netfilter_helpers.h
-@@ -0,0 +1,133 @@
+@@ -0,0 +1,144 @@
 +/*
 + * Helpers for netfiler modules.  This file provides implementations for basic
 + * functions such as strncasecmp(), etc.
@@ -23,6 +23,8 @@
 +
 +/* Only include these functions for kernel code. */
 +#ifdef __KERNEL__
++
++#include <net/netfilter/nf_conntrack_expect.h>
 +
 +#include <linux/ctype.h>
 +#define iseol(c) ( (c) == '\r' || (c) == '\n' )
@@ -138,6 +140,15 @@
 +}
 +#endif /* NF_NEED_NEXTLINE */
 +
++static inline int rtsp_nf_ct_expect_related(struct nf_conntrack_expect *expect)
++{
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,3,0)
++	return nf_ct_expect_related(expect, 0);
++#else
++	return nf_ct_expect_related(expect);
++#endif
++}
++
 +#endif /* __KERNEL__ */
 +
 +#endif /* _NETFILTER_HELPERS_H */
@@ -235,7 +246,7 @@
 +#endif /* _NETFILTER_MIME_H */
 --- /dev/null
 +++ b/extensions/rtsp/nf_conntrack_rtsp.c
-@@ -0,0 +1,761 @@
+@@ -0,0 +1,756 @@
 +/*
 + * RTSP extension for IP connection tracking
 + * (C) 2003 by Tom Marshall <tmarshall at real.com>
@@ -288,7 +299,6 @@
 +#include <net/tcp.h>
 +
 +#include <net/netfilter/nf_conntrack.h>
-+#include <net/netfilter/nf_conntrack_expect.h>
 +#include <net/netfilter/nf_conntrack_helper.h>
 +#include <net/netfilter/nf_conntrack_zones.h>
 +#include "nf_conntrack_rtsp.h"
@@ -316,7 +326,7 @@
 +MODULE_PARM_DESC(ports, "port numbers of RTSP servers");
 +module_param(max_outstanding, int, 0400);
 +MODULE_PARM_DESC(max_outstanding, "max number of outstanding SETUP requests per RTSP session");
-+module_param(setup_timeout, int, 0400);
++module_param(setup_timeout, uint, 0400);
 +MODULE_PARM_DESC(setup_timeout, "timeout on for unestablished data channels");
 +
 +static char *rtsp_buffer;
@@ -704,8 +714,8 @@
 +					  &expinfo, rtp_exp, rtcp_exp);
 +#endif
 +		else {
-+			if (nf_ct_expect_related(rtp_exp) == 0) {
-+				if (rtcp_exp && nf_ct_expect_related(rtcp_exp) != 0) {
++			if (rtsp_nf_ct_expect_related(rtp_exp) == 0) {
++				if (rtcp_exp && rtsp_nf_ct_expect_related(rtcp_exp) != 0) {
 +					nf_ct_unexpect_related(rtp_exp);
 +					pr_info("nf_conntrack_expect_related failed for rtcp\n");
 +					ret = NF_DROP;
@@ -942,10 +952,6 @@
 +		printk("nf_conntrack_rtsp: max_outstanding must be a positive integer\n");
 +		return -EBUSY;
 +	}
-+	if (setup_timeout < 0) {
-+		printk("nf_conntrack_rtsp: setup_timeout must be a positive integer\n");
-+		return -EBUSY;
-+	}
 +
 +	rtsp_exp_policy.max_expected = max_outstanding;
 +	rtsp_exp_policy.timeout = setup_timeout;
@@ -1076,7 +1082,7 @@
 +#endif /* _IP_CONNTRACK_RTSP_H */
 --- /dev/null
 +++ b/extensions/rtsp/nf_nat_rtsp.c
-@@ -0,0 +1,636 @@
+@@ -0,0 +1,635 @@
 +/*
 + * RTSP extension for TCP NAT alteration
 + * (C) 2003 by Tom Marshall <tmarshall at real.com>
@@ -1125,7 +1131,6 @@
 +#endif
 +#include <net/netfilter/nf_nat_helper.h>
 +#include "nf_conntrack_rtsp.h"
-+#include <net/netfilter/nf_conntrack_expect.h>
 +
 +#include <linux/inet.h>
 +#include <linux/ctype.h>
@@ -1281,7 +1286,7 @@
 +	case pb_single:
 +		for (loport = prtspexp->loport; loport != 0; loport++) { /* XXX: improper wrap? */
 +			rtp_t->dst.u.udp.port = htons(loport);
-+			if (nf_ct_expect_related(rtp_exp) == 0) {
++			if (rtsp_nf_ct_expect_related(rtp_exp) == 0) {
 +				pr_debug("using port %hu\n", loport);
 +				break;
 +			}
@@ -1294,12 +1299,12 @@
 +	case pb_range:
 +		for (loport = prtspexp->loport; loport != 0; loport += 2) { /* XXX: improper wrap? */
 +			rtp_t->dst.u.udp.port = htons(loport);
-+			if (nf_ct_expect_related(rtp_exp) != 0) {
++			if (rtsp_nf_ct_expect_related(rtp_exp) != 0) {
 +				continue;
 +			}
 +			hiport = loport + 1;
 +			rtcp_exp->tuple.dst.u.udp.port = htons(hiport);
-+			if (nf_ct_expect_related(rtcp_exp) != 0) {
++			if (rtsp_nf_ct_expect_related(rtcp_exp) != 0) {
 +				nf_ct_unexpect_related(rtp_exp);
 +				continue;
 +			}
@@ -1322,14 +1327,14 @@
 +	case pb_discon:
 +		for (loport = prtspexp->loport; loport != 0; loport++) { /* XXX: improper wrap? */
 +			rtp_t->dst.u.udp.port = htons(loport);
-+			if (nf_ct_expect_related(rtp_exp) == 0) {
++			if (rtsp_nf_ct_expect_related(rtp_exp) == 0) {
 +				pr_debug("using port %hu (1 of 2)\n", loport);
 +				break;
 +			}
 +		}
 +		for (hiport = prtspexp->hiport; hiport != 0; hiport++) { /* XXX: improper wrap? */
 +			rtp_t->dst.u.udp.port = htons(hiport);
-+			if (nf_ct_expect_related(rtp_exp) == 0) {
++			if (rtsp_nf_ct_expect_related(rtp_exp) == 0) {
 +				pr_debug("using port %hu (2 of 2)\n", hiport);
 +				break;
 +			}

@@ -6,21 +6,17 @@ This reverts commit bf63a25a64c9223435c26e6543ba749834b47752.
  extensions/pknock/xt_pknock.c | 16 ++++++++++++++++
  3 files changed, 19 insertions(+), 3 deletions(-)
 
-diff --git a/configure.ac b/configure.ac
-index 7631f6b..0d3aa72 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -61,7 +61,7 @@ if test -n "$kbuilddir"; then
  			echo "WARNING: That kernel version is not officially supported yet. Continue at own luck.";
  		elif test "$kmajor" -eq 5 -a "$kminor" -ge 0; then
  			:
--		elif test "$kmajor" -eq 4 -a "$kminor" -ge 18; then
+-		elif test "$kmajor" -eq 4 -a "$kminor" -ge 15; then
 +		elif test "$kmajor" -eq 4 -a "$kminor" -ge 14; then
  			:
  		else
  			echo "WARNING: That kernel version is not officially supported.";
-diff --git a/extensions/compat_xtables.h b/extensions/compat_xtables.h
-index d08354a..faf5dd8 100644
 --- a/extensions/compat_xtables.h
 +++ b/extensions/compat_xtables.h
 @@ -8,8 +8,8 @@
@@ -34,11 +30,9 @@ index d08354a..faf5dd8 100644
  #endif
  
  #if defined(CONFIG_NF_CONNTRACK) || defined(CONFIG_NF_CONNTRACK_MODULE)
-diff --git a/extensions/pknock/xt_pknock.c b/extensions/pknock/xt_pknock.c
-index c76901a..7be0345 100644
 --- a/extensions/pknock/xt_pknock.c
 +++ b/extensions/pknock/xt_pknock.c
-@@ -357,10 +357,18 @@ has_logged_during_this_minute(const struct peer *peer)
+@@ -356,10 +356,18 @@ has_logged_during_this_minute(const stru
   *
   * @r: rule
   */
@@ -57,7 +51,7 @@ index c76901a..7be0345 100644
  	struct peer *peer;
  	struct list_head *pos, *n;
  
-@@ -467,7 +475,15 @@ add_rule(struct xt_pknock_mtinfo *info)
+@@ -466,7 +474,15 @@ add_rule(struct xt_pknock_mtinfo *info)
  	rule->peer_head      = alloc_hashtable(peer_hashsize);
  	if (rule->peer_head == NULL)
  		goto out;
@@ -73,6 +67,3 @@ index c76901a..7be0345 100644
  	rule->status_proc = proc_create_data(info->rule_name, 0, pde,
  	                    &pknock_proc_ops, rule);
  	if (rule->status_proc == NULL)
--- 
-2.21.0
-
