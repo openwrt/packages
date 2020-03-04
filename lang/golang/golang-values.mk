@@ -29,6 +29,7 @@ unexport \
   GOROOT \
   GOTMPDIR
 # Unmodified:
+#   GOINSECURE
 #   GOPRIVATE
 #   GOPROXY
 #   GONOPROXY

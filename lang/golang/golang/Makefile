@@ -7,8 +7,8 @@
 
 include $(TOPDIR)/rules.mk
 
-GO_VERSION_MAJOR_MINOR:=1.13
-GO_VERSION_PATCH:=8
+GO_VERSION_MAJOR_MINOR:=1.14
+GO_VERSION_PATCH:=
 
 PKG_NAME:=golang
 PKG_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
@@ -20,7 +20,7 @@ GO_SOURCE_URLS:=https://dl.google.com/go/ \
 
 PKG_SOURCE:=go$(PKG_VERSION).src.tar.gz
 PKG_SOURCE_URL:=$(GO_SOURCE_URLS)
-PKG_HASH:=b13bf04633d4d8cf53226ebeaace8d4d2fd07ae6fa676d0844a688339debec34
+PKG_HASH:=6d643e46ad565058c7a39dac01144172ef9bd476521f42148be59249e4b74389
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -53,10 +53,10 @@ HOST_GO_ROOT:=$(HOST_GO_PREFIX)/lib/go-$(HOST_GO_VERSION_ID)
 HOST_GO_VALID_OS_ARCH:= \
   android_386  android_amd64  android_arm  android_arm64 \
   darwin_386   darwin_amd64   darwin_arm   darwin_arm64 \
+  freebsd_386  freebsd_amd64  freebsd_arm  freebsd_arm64 \
   linux_386    linux_amd64    linux_arm    linux_arm64 \
-  openbsd_386  openbsd_amd64  openbsd_arm  openbsd_arm64 \
   \
-  freebsd_386  freebsd_amd64  freebsd_arm \
+  openbsd_386  openbsd_amd64  openbsd_arm \
   netbsd_386   netbsd_amd64   netbsd_arm \
   plan9_386    plan9_amd64    plan9_arm \
   \
@@ -69,7 +69,9 @@ HOST_GO_VALID_OS_ARCH:= \
   aix_ppc64 \
   js_wasm \
   \
-  linux_ppc64 linux_ppc64le linux_mips linux_mipsle linux_mips64 linux_mips64le linux_s390x
+  linux_ppc64 linux_ppc64le \
+  linux_mips linux_mipsle linux_mips64 linux_mips64le \
+  linux_riscv64 linux_s390x
 
 BOOTSTRAP_SOURCE:=go1.4-bootstrap-20171003.tar.gz
 BOOTSTRAP_SOURCE_URL:=$(GO_SOURCE_URLS)
