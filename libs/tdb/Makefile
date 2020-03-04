@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tdb
 PKG_VERSION:=1.3.16
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -17,6 +17,7 @@ PKG_SOURCE_URL:=https://www.samba.org/ftp/tdb/
 PKG_HASH:=6a3fc2616567f23993984ada3cea97d953a27669ffd1bfbbe961f26e0cf96cc5
 
 PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=python/host
 
 include $(INCLUDE_DIR)/package.mk
 # for $(LINUX_VERSION)
