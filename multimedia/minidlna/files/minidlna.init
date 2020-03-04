@@ -45,7 +45,6 @@ minidlna_create_config() {
 	{ [ -z "$interface" ] || [ -t "$port" ]; } && return 1
 
 	mkdir -p /var/etc
-	{
 	echo "# this file is generated automatically, don't edit"
 
 	echo "port=$port"
@@ -68,10 +67,10 @@ minidlna_create_config() {
 	minidlna_cfg_addstr "$cfg" root_container '.'
 	minidlna_cfg_addstr "$cfg" uuid '019f9a56-ff60-44c0-9edc-eae88d09fa05'
 	config_list_foreach "$cfg" "media_dir" minidlna_cfg_add_media_dir
-	} > "$MINIDLNA_CONFIG_FILE"
+	}
 
 	return 0
-}
+} > "$MINIDLNA_CONFIG_FILE"
 
 start_service() {
 	local enabled
@@ -104,12 +103,4 @@ start_service() {
 	procd_set_param stderr 1
 	procd_set_param respawn
 	procd_close_instance
-}
-
-reload_service() {
-	procd_send_signal "$PROG"
-}
-
-service_triggers() {
-	procd_add_reload_trigger "minidlna"
 }
