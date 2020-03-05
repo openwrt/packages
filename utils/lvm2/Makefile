@@ -9,18 +9,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=LVM2
-PKG_VERSION:=2.03.05
+PKG_VERSION:=2.03.08
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://sourceware.org/pub/lvm2
-PKG_HASH:=ca52815c999b20c6d25e3192f142f081b93d01f07b9d787e99664b169dba2700
+PKG_HASH:=6e0261dc9f6ab0ef1fc4a63d105a73e06eb536a273a9d6c2ccc414548c8e1ec8
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME).$(PKG_VERSION)
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0 LGPL-2.1
 PKG_LICENSE_FILES:=COPYING COPYING.lib
 PKG_CPE_ID:=cpe:/a:heinz_mauelshagen:lvm2
+
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -53,11 +55,11 @@ define Package/lvm2/description
 endef
 
 CONFIGURE_ARGS += \
-  --disable-o_direct \
-  --with-default-pid-dir=/var/run \
-  --with-default-dm-run-dir=/var/run \
-  --with-default-run-dir=/var/run/lvm \
-  --with-default-locking-dir=/var/lock/lvm
+	--disable-o_direct \
+	--with-default-pid-dir=/var/run \
+	--with-default-dm-run-dir=/var/run \
+	--with-default-run-dir=/var/run/lvm \
+	--with-default-locking-dir=/var/lock/lvm
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
