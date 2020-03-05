@@ -1,1 +1,0 @@
-export ENV=/etc/shinit
