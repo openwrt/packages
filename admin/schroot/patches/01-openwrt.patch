@@ -1,0 +1,219 @@
+--- ./configure.ac-orig	2019-12-09 12:56:45.217308628 +0100
++++ ./configure.ac	2019-12-09 12:57:18.667492923 +0100
+@@ -284,22 +284,8 @@ if test -z "$DOXYGEN"; then
+   HAVE_DOXYGEN="no"
+ fi
+ HAVE_LVM="yes"
+-AC_PATH_PROG([LVCREATE], [lvcreate], [], [$PATH:/sbin:/usr/sbin])
+-AC_PATH_PROG([LVREMOVE], [lvremove], [], [$PATH:/sbin:/usr/sbin])
+-if test -z "$LVCREATE" || test -z "$LVREMOVE"; then
+-  HAVE_LVM="no"
+-fi
+ HAVE_BTRFS="yes"
+-AC_PATH_PROG([BTRFS], [btrfs], [], [$PATH:/sbin:/usr/sbin])
+-AC_PATH_PROG([BTRFSCTL], [btrfsctl], [], [$PATH:/sbin:/usr/sbin])
+-if test -z "$BTRFS" || test -z "$BTRFSCTL"; then
+-  HAVE_BTRFS="no"
+-fi
+ HAVE_LOOPBACK="yes"
+-AC_PATH_PROG([LOSETUP], [losetup], [], [$PATH:/sbin:/usr/sbin])
+-if test -z "$LOSETUP"; then
+-  HAVE_LOOPBACK="no"
+-fi
+ 
+ 
+ # Check for host platform
+@@ -336,7 +322,6 @@ PKG_CHECK_MODULES([UUID], [uuid],
+                   [HAVE_UUID=yes],
+                   [HAVE_UUID=no])
+ 
+-AM_PATH_CPPUNIT([1.10.0], [HAVE_CPPUNIT=yes])
+ AM_CONDITIONAL([USE_UNIT_TESTS], [test -n "$HAVE_CPPUNIT"])
+ 
+ SCHROOT_CFLAGS="$UUID_CFLAGS"
+@@ -688,42 +673,25 @@ if test "$BOOST_PROGRAM_OPTIONS_VALIDATI
+ fi
+ 
+ dnl Note the use of quadrigraphs to quote [ and ] in regexes.
+-AH_TEMPLATE(HAVE_REGEX_REGEX, [Set if the <regex> header file includes std::regex])
+ AH_TEMPLATE(HAVE_BOOST_REGEX, [Set if the <boost/regex.hpp> header file includes boost::regex])
+-AC_MSG_CHECKING([for std::regex])
+-define([testprog], [AC_LANG_PROGRAM([#include <regex>],
+-                                   [std::regex foo("^foo@<:@bar@:>@$");
+-                                    std::regex bar("^foo@<:@bar@:>@$", std::regex::extended);
+-                                    std::regex check("^@<:@^:/,.@:>@@<:@^:/,@:>@*$", std::regex::extended);])])
+-AC_RUN_IFELSE(testprog,
+-  [AC_MSG_RESULT([yes])
+-   AC_DEFINE(HAVE_REGEX_REGEX, 1)],
+-  [dnl Check if std::regex is present but broken.
+-define([testprog], [AC_LANG_PROGRAM([#include <regex>],
+-                                   [std::regex foo("^foo@<:@bar@:>@$");
+-                                    std::regex bar("^foo@<:@bar@:>@$", std::regex::extended);])])
++AC_MSG_CHECKING([for boost::regex in -lboost_regex])
++saved_LIBS="${LIBS}"
++LIBS="${saved_LIBS} -lboost_regex"
++define([testprog], [AC_LANG_PROGRAM([#include <boost/regex.hpp>],
++                                [boost::regex("^foo@<:@bar@:>@$");
++                                 boost::regex bar("^foo@<:@bar@:>@$", boost::regex::extended);])])
+ AC_LINK_IFELSE(testprog,
+-  [AC_MSG_RESULT([broken])],
+-  [AC_MSG_RESULT([no])])
+-   AC_MSG_CHECKING([for boost::regex in -lboost_regex])
+-   saved_LIBS="${LIBS}"
+-   LIBS="${saved_LIBS} -lboost_regex"
+-   define([testprog], [AC_LANG_PROGRAM([#include <boost/regex.hpp>],
+-                                   [boost::regex("^foo@<:@bar@:>@$");
+-                                    boost::regex bar("^foo@<:@bar@:>@$", boost::regex::extended);])])
+-   AC_LINK_IFELSE(testprog,
+-                  [AC_MSG_RESULT([yes])
+-                   AC_DEFINE(HAVE_BOOST_REGEX, 1)
+-                   BOOST_LIBS="${BOOST_LIBS} -lboost_regex"],
+-                  [LIBS="${saved_LIBS} -lboost_regex-mt"
+-                   AC_LINK_IFELSE(testprog,
+-                          [AC_MSG_RESULT([yes])
+-                           AC_DEFINE(HAVE_BOOST_REGEX, 1)
+-                           BOOST_LIBS="${BOOST_LIBS} -lboost_regex-mt"],
+-                          [AC_MSG_RESULT([no])
+-                    AC_MSG_FAILURE([libboost_regex (Boost C++ Libraries) is not installed, but is required by schroot])])])
+-   LIBS="${saved_LIBS}"
+-])
++               [AC_MSG_RESULT([yes])
++                AC_DEFINE(HAVE_BOOST_REGEX, 1)
++                BOOST_LIBS="${BOOST_LIBS} -lboost_regex"],
++               [LIBS="${saved_LIBS} -lboost_regex-mt"
++                AC_LINK_IFELSE(testprog,
++                       [AC_MSG_RESULT([yes])
++                        AC_DEFINE(HAVE_BOOST_REGEX, 1)
++                        BOOST_LIBS="${BOOST_LIBS} -lboost_regex-mt"],
++                       [AC_MSG_RESULT([no])
++                 AC_MSG_FAILURE([libboost_regex (Boost C++ Libraries) is not installed, but is required by schroot])])])
++LIBS="${saved_LIBS}"
+ 
+ AC_MSG_CHECKING([for boost::iostreams in -lboost_iostreams])
+ saved_LIBS="${LIBS}"
+--- ./bin/schroot-base/schroot-base-run.h-orig	2019-12-09 04:23:51.881428446 +0100
++++ ./bin/schroot-base/schroot-base-run.h	2019-12-09 04:24:14.934887089 +0100
+@@ -61,8 +61,8 @@ namespace schroot_base
+         std::cout.imbue(std::locale());
+         std::cerr.imbue(std::locale());
+ 
+-        bindtextdomain (SBUILD_MESSAGE_CATALOGUE, SCHROOT_LOCALE_DIR);
+-        textdomain (SBUILD_MESSAGE_CATALOGUE);
++        //bindtextdomain (SBUILD_MESSAGE_CATALOGUE, SCHROOT_LOCALE_DIR);
++        //textdomain (SBUILD_MESSAGE_CATALOGUE);
+ 
+         typename options_type::ptr opts(new options_type);
+         main_type kit(opts);
+--- ./sbuild/sbuild-feature.h-orig	2019-12-09 04:23:51.881428446 +0100
++++ ./sbuild/sbuild-feature.h	2019-12-09 04:24:14.934887089 +0100
+@@ -24,6 +24,7 @@
+ #include <string>
+ 
+ #include <boost/format.hpp>
++#include <libintl.h>
+ 
+ namespace sbuild
+ {
+--- ./etc/setup.d/20copyfiles-orig	2018-11-03 14:26:12.000000000 +0100
++++ ./etc/setup.d/20copyfiles	2019-12-09 13:56:45.277145648 +0100
+@@ -39,9 +39,9 @@ copy_file()
+         if [ -e "$2" ]; then
+ 
+             # Device and inode
+-            da=$(/usr/bin/stat --format="%d %i" "$1")
++            da=$(/bin/stat --format="%d %i" "$1")
+             # This one can fail since it might not exist yet
+-            db=$(/usr/bin/stat --format="%d %i" "$2" 2>/dev/null || :)
++            db=$(/bin/stat --format="%d %i" "$2" 2>/dev/null || :)
+ 
+             if [ "$da" = "$db" ]; then
+                 COPY="false"
+--- ./etc/setup.d/20nssdatabases-orig	2018-11-03 14:26:12.000000000 +0100
++++ ./etc/setup.d/20nssdatabases	2019-12-09 13:57:34.397419039 +0100
+@@ -29,7 +29,7 @@ set -e
+ dup_nss()
+ {
+     info "Copying $1 database to $2"
+-    getent "$1" > "$2"
++    cat "/etc/$1" > "$2"
+ }
+ 
+ if [ $STAGE = "setup-start" ] || [ $STAGE = "setup-recover" ]; then
+@@ -42,9 +42,9 @@ if [ $STAGE = "setup-start" ] || [ $STAG
+                 fi
+ 
+                 # Device and inode
+-                dr=$(/usr/bin/stat --format="%d %i" "/etc/$db")
++                dr=$(/bin/stat --format="%d %i" "/etc/$db")
+                 # This one can fail since it might not exist yet
+-                dc=$(/usr/bin/stat --format="%d %i" "${CHROOT_PATH}/etc/$db" 2>/dev/null || :)
++                dc=$(/bin/stat --format="%d %i" "${CHROOT_PATH}/etc/$db" 2>/dev/null || :)
+ 
+                 # If the database inside and outside the chroot is the
+                 # same, it's very likely that dup_nss would blank the
+diff -X /home/jmarcet/.rsync-filter -pru ./etc/profile-templates/all/all/nssdatabases ./etc/profile-templates/all/all/nssdatabases
+--- ./etc/profile-templates/all/all/nssdatabases	2018-11-03 14:26:12.000000000 +0100
++++ ./etc/profile-templates/all/all/nssdatabases	2019-12-09 14:03:12.799297723 +0100
+@@ -4,4 +4,4 @@
+ passwd
+ shadow
+-group
+-gshadow
++#group
++#gshadow
+diff -X /home/jmarcet/.rsync-filter -pru ./etc/profile-templates/buildd/all/nssdatabases ./etc/profile-templates/buildd/all/nssdatabases
+--- ./etc/profile-templates/buildd/all/nssdatabases	2018-11-03 14:26:12.000000000 +0100
++++ ./etc/profile-templates/buildd/all/nssdatabases	2019-12-09 14:03:12.802631074 +0100
+@@ -4,4 +4,4 @@
+ passwd
+ shadow
+-group
+-gshadow
++#group
++#gshadow
+diff -X /home/jmarcet/.rsync-filter -pru ./etc/profile-templates/default/all/nssdatabases ./etc/profile-templates/default/all/nssdatabases
+--- ./etc/profile-templates/default/all/nssdatabases	2018-11-03 14:26:12.000000000 +0100
++++ ./etc/profile-templates/default/all/nssdatabases	2019-12-09 14:03:12.809297778 +0100
+@@ -1,4 +1,4 @@
+ services
+ protocols
+-networks
++#networks
+ hosts
+diff -X /home/jmarcet/.rsync-filter -pru ./etc/profile-templates/desktop/all/nssdatabases ./etc/profile-templates/desktop/all/nssdatabases
+--- ./etc/profile-templates/desktop/all/nssdatabases	2018-11-03 14:26:12.000000000 +0100
++++ ./etc/profile-templates/desktop/all/nssdatabases	2019-12-09 14:03:12.812631129 +0100
+@@ -1,4 +1,4 @@
+ services
+ protocols
+-networks
++#networks
+ hosts
+diff -X /home/jmarcet/.rsync-filter -pru ./etc/profile-templates/default/linux/fstab ./etc/profile-templates/default/linux/fstab
+--- ./etc/profile-templates/default/linux/fstab	2018-11-03 14:26:12.000000000 +0100
++++ ./etc/profile-templates/default/linux/fstab	2019-12-09 14:18:46.970887080 +0100
+@@ -7,7 +7,7 @@
+ # to run additional services in the chroot.  However, note that this
+ # may potentially cause undesirable behaviour on upgrades, such as
+ # killing services on the host.
+-#/run           /run            none    rw,bind         0       0
++/run           /run            none    rw,bind         0       0
+ #/run/lock      /run/lock       none    rw,bind         0       0
+-#/dev/shm       /dev/shm        none    rw,bind         0       0
+-#/run/shm       /run/shm        none    rw,bind         0       0
++/tmp/shm       /dev/shm        none    rw,bind         0       0
++/tmp/shm       /run/shm        none    rw,bind         0       0
+diff -X /home/jmarcet/.rsync-filter -pru ./etc/profile-templates/desktop/linux/fstab ./etc/profile-templates/desktop/linux/fstab
+--- ./etc/profile-templates/desktop/linux/fstab	2018-11-03 14:26:12.000000000 +0100
++++ ./etc/profile-templates/desktop/linux/fstab	2019-12-09 14:22:14.148555674 +0100
+@@ -12,7 +12,7 @@
+ # to run additional services in the chroot.  However, note that this
+ # may potentially cause undesirable behaviour on upgrades, such as
+ # killing services on the host.
+-#/run           /run            none    rw,bind         0       0
++/run           /run            none    rw,bind         0       0
+ #/run/lock      /run/lock       none    rw,bind         0       0
+-#/dev/shm       /dev/shm        none    rw,bind         0       0
+-#/run/shm       /run/shm        none    rw,bind         0       0
++/tmp/shm       /dev/shm        none    rw,bind         0       0
++/tmp/shm       /run/shm        none    rw,bind         0       0
