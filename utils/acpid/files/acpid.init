@@ -4,22 +4,16 @@
 START=99
 STOP=80
 
-ACPID_BIN="/usr/sbin/acpid"
-ACPID_PID="/var/run/acpid.pid"
+USE_PROCD=1
 
-start() {
-    [ -x "$ACPID_BIN" ] || return 1
-    start-stop-daemon -S -x $ACPID_BIN -p $ACPID_PID
+start_service() {
+	procd_open_instance
+	procd_set_param command "/usr/sbin/acpid"
+	procd_append_param command -f
+	procd_append_param command -S
+	procd_set_param pidfile "/var/run/acpid.pid"
 }
 
-boot() {
-	# Do nothing on boot
-    	[ -x "$ACPID_BIN" ] || return 1
-	start-stop-daemon -S -x $ACPID_BIN -p $ACPID_PID
-	exit 0
-}
-
-stop() {
-	service_kill ${ACPID_BIN##*/} $ACPID_PID
-	rm -f $ACPID_PID
+reload_service()\ {
+	procd_send_signal "acpid"
 }
