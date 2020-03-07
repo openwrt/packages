@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
-PKG_VERSION:=3.25.1
-PKG_RELEASE:=2
+PKG_VERSION:=3.26.1
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later
@@ -10,8 +10,8 @@ PKG_LICENSE_FILES:=COPYING LGPL.txt GPL.txt
 PKG_CPE_ID:=cpe:/a:balabit:syslog-ng
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/balabit/syslog-ng/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
-PKG_HASH:=34cb9673bcde58d543890e6c1189f466f938e199f227c524a6fa2f47f4db6817
+PKG_SOURCE_URL:=https://github.com/syslog-ng/syslog-ng/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
+PKG_HASH:=90214223864df252cea80dbb35c88a2464edcbbb2c9fbc6f6f6c13ee60cb62cd
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -85,7 +85,8 @@ define Package/syslog-ng/install
 	$(INSTALL_DATA) ./files/syslog-ng.conf $(1)/etc
 	touch $(1)/etc/syslog-ng.d/.keep
 
-	$(INSTALL_BIN) ./files/logread $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/sbin
+	$(INSTALL_BIN) ./files/logread $(1)/sbin
 endef
 
 define Package/syslog-ng/postinst
