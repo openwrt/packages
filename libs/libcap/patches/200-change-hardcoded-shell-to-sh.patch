@@ -10,7 +10,7 @@
  #define MAX_GROUPS       100   /* max number of supplementary groups for user */
  
  static char *binary(unsigned long value)
-@@ -768,10 +771,10 @@ int main(int argc, char *argv[], char *envp[])
+@@ -775,10 +778,10 @@ int main(int argc, char *argv[], char *envp[])
  	} else if (!strcmp("--print", argv[i])) {
  	    arg_print();
  	} else if ((!strcmp("--", argv[i])) || (!strcmp("==", argv[i]))) {
@@ -23,7 +23,7 @@
  	    exit(1);
  	} else if (!strncmp("--has-p=", argv[i], 8)) {
  	    cap_value_t cap;
-@@ -869,7 +872,7 @@ int main(int argc, char *argv[], char *envp[])
+@@ -888,7 +891,7 @@ int main(int argc, char *argv[], char *envp[])
  		   "  --killit=<n>   send signal(n) to child\n"
  		   "  --forkfor=<n>  fork and make child sleep for <n> sec\n"
  		   "  ==             re-exec(capsh) with args as for --\n"

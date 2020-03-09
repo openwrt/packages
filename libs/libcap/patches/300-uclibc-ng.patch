@@ -7,5 +7,5 @@
 -	$(CC) $(CFLAGS) $(IPATH) $< -o $@ $(LIBCAPLIB) $(LIBPSXLIB) -Wl,-wrap,pthread_create --static
 +	$(CC) $(CFLAGS) $(IPATH) $< -o $@ $(LIBCAPLIB) $(LIBPSXLIB) -Wl,-wrap,pthread_create
  
- clean:
- 	rm -f psx_test psx_test_wrap libcap_psx_test
+ run_libcap_launch_test: libcap_launch_test libcap_psx_launch_test noop
+ 	sudo ./libcap_launch_test
