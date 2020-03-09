@@ -244,7 +244,7 @@ config_remote() {
 		local ipdest
 
 		[ "$remote_gateway" = "%any" ] && ipdest="1.1.1.1" || ipdest="$remote_gateway"
-		local_gateway=`ip route get $ipdest | awk -F"src" '/src/{gsub(/ /,"");print $2}'`
+		local_gateway="$(ip -j route get "$ipdest" | jsonfilter -e '@[0].gateway')"
 	}
 
 	[ -n "$local_identifier" ] && secret_xappend -n "$local_identifier " || secret_xappend -n "$local_gateway "
