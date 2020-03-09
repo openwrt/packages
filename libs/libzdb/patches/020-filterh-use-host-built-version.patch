@@ -1,11 +1,11 @@
---- a/Makefile.in
-+++ b/Makefile.in
-@@ -476,7 +476,7 @@ DIST_SUBDIRS = . test
- EXTRA_DIST = README AUTHORS CHANGES COPYING bootstrap doc test src tools config
- LIBRARY_NAME = zdb
- RE2CFLAGS = -b
--FILTERH = ./tools/bin/filterh
-+FILTERH = $(STAGING_DIR_HOSTPKG)/bin/filterh
- AM_CPPFLAGS = $(CPPFLAGS) $(DBCPPFLAGS) -Isrc -Isrc/util -Isrc/net \
- 	-Isrc/db -Isrc/db/oracle -Isrc/exceptions
- pkgconfigdir = $(libdir)/pkgconfig
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -12,7 +12,7 @@ LIBRARY_NAME    = zdb
+ 
+ RE2C		= @RE2C@
+ RE2CFLAGS       = -b
+-FILTERH         = ./tools/bin/filterh
++FILTERH         = $(STAGING_DIR_HOSTPKG)/bin/filterh
+ 
+ AM_CPPFLAGS     = $(CPPFLAGS) $(DBCPPFLAGS)
+ AM_CPPFLAGS     += -Isrc -Isrc/util -Isrc/net -Isrc/db -Isrc/db/oracle -Isrc/exceptions
