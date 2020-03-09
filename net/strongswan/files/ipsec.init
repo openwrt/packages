@@ -135,6 +135,7 @@ config_conn() {
 	local ikelifetime
 	local lifetime
 	local margintime
+	local mark
 	local keyingtries
 	local dpdaction
 	local dpddelay
@@ -155,6 +156,7 @@ config_conn() {
 	config_get ikelifetime              "$1"           ikelifetime "3h"
 	config_get lifetime                 "$1"           lifetime "1h"
 	config_get margintime               "$1"           margintime "9m"
+	config_get mark                     "$1"           mark ""
 	config_get keyingtries              "$1"           keyingtries "3"
 	config_get dpdaction                "$1"           dpdaction "none"
 	config_get dpddelay                 "$1"           dpddelay "30s"
@@ -173,6 +175,8 @@ config_conn() {
 
 	[ -n "$local_firewall" ] && ipsec_xappend "  leftfirewall=$local_firewall"
 	[ -n "$remote_firewall" ] && ipsec_xappend "  rightfirewall=$remote_firewall"
+
+	[ -n "$mark" ] && ipsec_xappend "  mark=$mark"
 
 	ipsec_xappend "  ikelifetime=$ikelifetime"
 	ipsec_xappend "  lifetime=$lifetime"
