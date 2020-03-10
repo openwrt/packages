@@ -46,6 +46,8 @@ define Package/sed/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin
 endef
 
+CONFIGURE_ARGS+= --disable-acl
+
 define Package/sed/postinst
 #!/bin/sh
 [ -L "$${IPKG_INSTROOT}/bin/sed" ] && rm -f "$${IPKG_INSTROOT}/bin/sed"
