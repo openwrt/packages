@@ -89,7 +89,7 @@ endef
 include $(INCLUDE_DIR)/kernel-defaults.mk
 
 define Build/Compile
-	$(MAKE) $(KERNEL_MAKEOPTS) SUBDIRS="$(PKG_BUILD_DIR)" modules
+	$(MAKE) $(KERNEL_MAKEOPTS) M="$(PKG_BUILD_DIR)" modules
 endef
 
 $(eval $(call BuildPackage,wifidog-ng-nossl))
