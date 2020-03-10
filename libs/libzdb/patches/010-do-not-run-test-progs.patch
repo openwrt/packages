@@ -1,0 +1,19 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -454,16 +454,6 @@ if test $ondarwin -eq 1; then
+ else
+     stdc="gnu"
+ fi
+-AC_RUN_IFELSE(
+-[AC_LANG_PROGRAM([], [dnl
+-        #ifdef __STDC_VERSION__
+-        #if __STDC_VERSION__ >= 201112L
+-        return 0;
+-        #endif
+-        #endif
+-        return 1;
+-        ])], [CFLAGS="$CFLAGS -std=${stdc}11"], [CFLAGS="$CFLAGS -std=${stdc}99"])
+-AC_CHECK_HEADERS([stdint.h stdbool.h], [], [AC_MSG_ERROR([toolchain does not have C99 headers])])
+ 
+ # ---------------------------------------------------------------------------
+ # Outputs
