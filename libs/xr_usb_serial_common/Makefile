@@ -34,7 +34,7 @@ define Build/Compile
 	+$(MAKE) $(PKG_JOBS) -C "$(LINUX_DIR)" \
 		ARCH="$(LINUX_KARCH)" \
 		CROSS_COMPILE="$(TARGET_CROSS)" \
-		SUBDIRS="$(PKG_BUILD_DIR)/xr_usb_serial_common-1a" \
+		M="$(PKG_BUILD_DIR)/xr_usb_serial_common-1a" \
 		modules
 endef
 
