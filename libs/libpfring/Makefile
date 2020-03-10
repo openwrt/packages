@@ -66,7 +66,7 @@ define Build/Compile
 		KERNEL_DIR="$(LINUX_DIR)" \
 		ARCH="$(LINUX_KARCH)" \
 		CROSS_COMPILE="$(TARGET_CROSS)" \
-		SUBDIRS="$(PKG_BUILD_DIR)/kernel" \
+		M="$(PKG_BUILD_DIR)/kernel" \
 		EXTRA_CFLAGS="$(EXTRA_CFLAGS) -I$(PKG_BUILD_DIR)/kernel" \
 		modules
 	$(call Build/Compile/Default)
