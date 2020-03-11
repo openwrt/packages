@@ -35,12 +35,12 @@ endef
 define Package/cascoda-sdk/description
   Cascoda Utilities: This package installs the following utilities
 
-	cliapp               - A command line interface to the Openthread stack.
-	sniffer              - An example program for sniffing 802.15.4 traffic on a specific channel.
-	ncpapp               - Network Co-Processor for interacting with openthread wpantund.
-	ot-server-standalone - A server program able to connect to thread devices and interpret sensor data.
-	serial-adapter       - A useful program for interacting with a serial application running on baremetal.
-	usb_test             - An application that tests the USB communications link for reliability and speed.
+	ca-ot-cliapp            - A command line interface to the Openthread stack.
+	ca-sniffer              - An example program for sniffing 802.15.4 traffic on a specific channel.
+	ca-ot-ncpapp            - Network Co-Processor for interacting with openthread wpantund.
+	ca-ot-server-standalone - A server program able to connect to thread devices and interpret sensor data.
+	ca-serial-adapter       - A useful program for interacting with a serial application running on baremetal.
+	ca-comm-check           - An application that tests the USB communications link for reliability and speed.
 endef
 
 CMAKE_OPTIONS += -DBUILD_TESTING:Bool=OFF
