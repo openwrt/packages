@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=asgiref
-PKG_VERSION:=3.2.3
+PKG_VERSION:=3.2.5
 PKG_RELEASE:=1
 
 PYPI_NAME:=asgiref
-PKG_HASH:=7e06d934a7718bf3975acbf87780ba678957b87c7adc056f13b6215d610695a0
+PKG_HASH:=c8f49dd3b42edcc51d09dd2eea8a92b3cfc987ff7e6486be734b4d0cbfd5d315
 
 PKG_MAINTAINER:=Peter Stadler <peter.stadler@student.uibk.ac.at>
 PKG_LICENSE:=BSD-3-Clause
