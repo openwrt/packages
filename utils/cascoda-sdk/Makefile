@@ -52,12 +52,12 @@ endef
 
 define Package/cascoda-sdk/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_BUILD_DIR)/bin/cliapp $(1)/usr/bin
-	$(CP) $(PKG_BUILD_DIR)/bin/sniffer $(1)/usr/bin
-	$(CP) $(PKG_BUILD_DIR)/bin/ncpapp $(1)/usr/bin
-	$(CP) $(PKG_BUILD_DIR)/bin/ot-server-standalone $(1)/usr/bin
-	$(CP) $(PKG_BUILD_DIR)/bin/serial-adapter $(1)/usr/bin
-	$(CP) $(PKG_BUILD_DIR)/bin/usb_test $(1)/usr/bin
+	$(CP) $(PKG_BUILD_DIR)/bin/cliapp $(1)/usr/bin/ca-ot-cliapp
+	$(CP) $(PKG_BUILD_DIR)/bin/sniffer $(1)/usr/bin/ca-sniffer
+	$(CP) $(PKG_BUILD_DIR)/bin/ncpapp $(1)/usr/bin/ca-ot-ncpapp
+	$(CP) $(PKG_BUILD_DIR)/bin/ot-server-standalone $(1)/usr/bin/ca-ot-server-standalone
+	$(CP) $(PKG_BUILD_DIR)/bin/serial-adapter $(1)/usr/bin/ca-serial-adapter
+	$(CP) $(PKG_BUILD_DIR)/bin/usb_test $(1)/usr/bin/ca-comm-check
 endef
 
 $(eval $(call BuildPackage,cascoda-sdk))
