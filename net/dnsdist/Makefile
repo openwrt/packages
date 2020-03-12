@@ -32,7 +32,7 @@ menu "Configuration"
 	comment "SSL Support"
 	choice
 		prompt "Selected SSL library"
-		default DNSDIST_OPENSSSL
+		default DNSDIST_OPENSSL
 
 		config DNSDIST_OPENSSL
 			bool "OpenSSL"
