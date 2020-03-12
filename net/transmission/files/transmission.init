@@ -145,6 +145,7 @@ transmission() {
 
 	procd_add_jail transmission log
 	procd_add_jail_mount "$config_file"
+	procd_add_jail_mount "/etc/resolv.conf"
 	procd_add_jail_mount_rw "$config_dir/resume"
 	procd_add_jail_mount_rw "$config_dir/torrents"
 	procd_add_jail_mount_rw "$config_dir/blocklists"
