@@ -88,7 +88,7 @@ The https-dns-proxy instance settings are:
 |group|String|nogroup|Local group to run instance under.|
 |use_http1|Boolean|0|If set to 1, use HTTP/1 on installations with broken/outdated ```curl``` package. Included for posterity reasons, you will most likely not ever need it on OpenWrt.|
 |verbosity|Integer|0|logging verbosity level. fatal = 0, error = 1, warning = 2, info = 3, debug = 4|
-|ipv6_resolvers_only|Boolean|0|If set to 1, Forces IPv6 DNS resolvers instead of IPv4|
+|use_ipv6_resolvers_only|Boolean|0|If set to 1, Forces IPv6 DNS resolvers instead of IPv4|
 
 ## Thanks
 

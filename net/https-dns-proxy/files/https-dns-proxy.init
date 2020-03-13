@@ -48,12 +48,14 @@ start_instance() {
 	append_bool "$cfg" 'use_http1' '-x'
 
 	config_get verbosity "$cfg" 'verbosity' "0"
+# shellcheck disable=SC2086,SC2154
 	for i in $(seq 1 $verbosity); do
 		xappend "-v"
 	done
 
-	config_get_bool ipv6_resolvers_only "$cfg" 'ipv6_resolvers_only' '0'
-	if [ "$ipv6_resolvers_only" == 0 ]; then
+	config_get_bool ipv6_resolvers_only "$cfg" 'use_ipv6_resolvers_only' '0'
+# shellcheck disable=SC2154
+	if [ "$ipv6_resolvers_only" = 0 ]; then
 		xappend "-4"
 	fi
 
@@ -123,8 +125,8 @@ dnsmasq_add_doh_server() {
 			;;
 	esac
 
-	uci -q del_list dhcp."$cfg".server="$address#$port"
-	uci -q add_list dhcp."$cfg".server="$address#$port"
+	uci -q del_list "dhcp.$cfg.server=${address}#${port}"
+	uci -q add_list "dhcp.$cfg.server=${address}#${port}"
 }
 
 dnsmasq_create_server_backup() {
@@ -134,7 +136,7 @@ dnsmasq_create_server_backup() {
 	for i in $(uci -q get "dhcp.$cfg.server"); do
 		uci -q add_list dhcp."$cfg".doh_backup_server="$i"
 		if [ "$i" = "${i//127.0.0.1}" ] && [ "$i" = "$(echo "$i" | tr -d /)" ]; then
-			uci -q del_list dhcp."$cfg".server="$i"
+			uci -q del_list "dhcp.$cfg.server=$i"
 		fi
 	done
 }
@@ -145,7 +147,7 @@ dnsmasq_restore_server_backup() {
 	if uci -q get "dhcp.$cfg.doh_backup_server" >/dev/null; then
 		uci -q del "dhcp.$cfg.server"
 		for i in $(uci -q get "dhcp.$cfg.doh_backup_server"); do
-			uci -q add_list dhcp."$cfg".server="$i"
+			uci -q add_list "dhcp.$cfg.server=$i"
 		done
 	uci -q del "dhcp.$cfg.doh_backup_server"
 	fi
