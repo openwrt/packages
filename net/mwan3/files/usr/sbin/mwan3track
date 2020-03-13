@@ -132,11 +132,17 @@ main() {
 			if [ $host_up_count -lt $reliability ]; then
 				case "$track_method" in
 					ping)
+						# pinging IPv6 hosts with an interface is troublesome
+						# https://bugs.openwrt.org/index.php?do=details&task_id=2897
+						# so get the IP address of the interface and use that instead				   
+						if echo $track_ip | grep -q ':'; then
+￼							ADDR=$(ip -6 addr ls dev "$DEVICE" | sed -ne 's/ *inet6 \([^ \/]*\).* scope global.*/\1/p')
+						fi
 						if [ $check_quality -eq 0 ]; then
-							ping -I $DEVICE -c $count -W $timeout -s $size -t $max_ttl -q $track_ip &> /dev/null
+							ping -I ${ADDR:-$DEVICE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip &> /dev/null
 							result=$?
 						else
-							ping_result="$(ping -I $DEVICE -c $count -W $timeout -s $size -t $max_ttl -q $track_ip | tail -2)"
+							ping_result="$(ping -I ${ADDR:-$DEVICE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip | tail -2)"
 							loss="$(echo "$ping_result" | grep "packet loss" |  cut -d "," -f3 | awk '{print $1}' | sed -e 's/%//')"
 							if [ "$loss" -eq 100 ]; then
 								latency=999999
