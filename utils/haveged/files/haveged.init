@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 
-START=13
+START=01
 USE_PROCD=1
 
 HAVEGED_THRESHOLD=1024
