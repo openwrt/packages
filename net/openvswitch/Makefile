@@ -29,6 +29,7 @@ PKG_BUILD_DEPENDS+=python3/host python-six/host
 PKG_USE_MIPS16:=0
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
+PKG_ASLR_PIE:=0
 PKG_INSTALL:=1
 
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
