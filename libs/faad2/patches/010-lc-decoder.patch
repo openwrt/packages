@@ -1,0 +1,48 @@
+From 8552fd53aaf5059ed769a0564330816beacaca98 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Tue, 10 Mar 2020 17:38:29 -0700
+Subject: [PATCH] fix compilation with LC_ONLY_DECODER
+
+881b5e263f25a8a8b714e83407fc2c9dab407e40 broke compilation by always
+defining DRN and DRM_PS. Fix this and place the define where it belongs.
+---
+ libfaad/Makefile.am | 2 +-
+ libfaad/common.h    | 7 +++++--
+ 2 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/libfaad/Makefile.am b/libfaad/Makefile.am
+index 8ed57ae..7d9c71f 100644
+--- a/libfaad/Makefile.am
++++ b/libfaad/Makefile.am
+@@ -32,5 +32,5 @@ libfaad_la_SOURCES = bits.c cfft.c decoder.c drc.c \
+ 
+ libfaad_drm_la_LDFLAGS = ${libfaad_la_LDFLAGS}
+ libfaad_drm_la_LIBADD = ${libfaad_la_LIBADD}
+-libfaad_drm_la_CFLAGS = ${libfaad_la_CFLAGS} -DDRM -DDRM_PS
++libfaad_drm_la_CFLAGS = ${libfaad_la_CFLAGS} -DDRM_SUPPORT
+ libfaad_drm_la_SOURCES = ${libfaad_la_SOURCES}
+diff --git a/libfaad/common.h b/libfaad/common.h
+index 8b78807..76722e4 100644
+--- a/libfaad/common.h
++++ b/libfaad/common.h
+@@ -91,8 +91,10 @@ extern "C" {
+ /* Allow decoding of LD profile AAC */
+ #define LD_DEC
+ /* Allow decoding of Digital Radio Mondiale (DRM) */
+-//#define DRM
+-//#define DRM_PS
++#ifdef DRM_SUPPORT
++#define DRM
++#define DRM_PS
++#endif
+ 
+ /* LD can't do without LTP */
+ #ifdef LD_DEC
+@@ -115,6 +117,7 @@ extern "C" {
+   #undef MAIN_DEC
+   #undef SSR_DEC
+   #undef DRM
++  #undef DRM_PS
+   #undef ALLOW_SMALL_FRAMELENGTH
+   #undef ERROR_RESILIENCE
+ #endif

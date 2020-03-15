@@ -1,0 +1,35 @@
+From 4ae9873a80ea47858d20f1d590aaf816c3aebb20 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Tue, 10 Mar 2020 20:13:57 -0700
+Subject: [PATCH] fix compilation without SBR/PS_DEC
+
+The bits.h include needs to be in mp4.h as it uses the bitfield struct.
+---
+ libfaad/mp4.c | 1 -
+ libfaad/mp4.h | 1 +
+ 2 files changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libfaad/mp4.c b/libfaad/mp4.c
+index 9f0198a..dbcff83 100644
+--- a/libfaad/mp4.c
++++ b/libfaad/mp4.c
+@@ -33,7 +33,6 @@
+ 
+ #include <stdlib.h>
+ 
+-#include "bits.h"
+ #include "mp4.h"
+ #include "syntax.h"
+ 
+diff --git a/libfaad/mp4.h b/libfaad/mp4.h
+index 5a94be4..d99a3e3 100644
+--- a/libfaad/mp4.h
++++ b/libfaad/mp4.h
+@@ -35,6 +35,7 @@
+ extern "C" {
+ #endif
+ 
++#include "bits.h"
+ #include "neaacdec.h"
+ 
+ int8_t AudioSpecificConfig2(uint8_t *pBuffer,
