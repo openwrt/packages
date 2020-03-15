@@ -7,15 +7,17 @@ PKG_RELEASE:=1
 PKG_SOURCE:=miredo-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.remlab.net/files/miredo/
 PKG_HASH:=fa26d2f4a405415833669e2e2e22677b225d8f83600844645d5683535ea43149
-PKG_LICENSE:=GPL-2.0-or-later
-PKG_LICENSE_FILES:=COPYING
 
-PKG_CONFIG_DEPENDS := \
+PKG_CONFIG_DEPENDS:= \
 	CONFIG_IPV6 \
 	CONFIG_TUN
 PKG_BUILD_PARALLEL:=1
+PKG_CHECK_FORMAT_SECURITY:=0
 PKG_INSTALL:=1
+
 PKG_MAINTAINER:=
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -29,8 +31,7 @@ CONFIGURE_ARGS+= \
 
 TARGET_CFLAGS+= $(FPIC) \
 		-ffunction-sections \
-		-fdata-sections \
-		-Wno-format-security
+		-fdata-sections
 
 TARGET_LDFLAGS += -Wl,--gc-sections
 
