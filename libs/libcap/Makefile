@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcap
-PKG_VERSION:=2.32
+PKG_VERSION:=2.33
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/libs/security/linux-privs/libcap2
-PKG_HASH:=1005e3d227f2340ad1e3360ef8b69d15e3c72a29c09f4894d7aac038bd26e2be
+PKG_HASH:=08edeaba2757021aeec45c4eeec52566675e0e0f5d4f057284d729e04f2643d6
 
 PKG_MAINTAINER:=Paul Wassi <p.wassi@gmx.at>
 PKG_LICENSE:=GPL-2.0-only
@@ -79,6 +79,8 @@ MAKE_FLAGS += \
 ifneq ($(CONFIG_PACKAGE_libcap-bin-capsh-shell),)
 TARGET_CFLAGS += -DSHELL='\"$(CONFIG_PACKAGE_libcap-bin-capsh-shell)\"'
 endif
+
+TARGET_CFLAGS += $(if $(CONFIG_USE_MUSL),-Dpthread_yield=sched_yield)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/sys
