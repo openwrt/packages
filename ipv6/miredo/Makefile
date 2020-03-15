@@ -7,7 +7,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=miredo-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.remlab.net/files/miredo/
 PKG_HASH:=fa26d2f4a405415833669e2e2e22677b225d8f83600844645d5683535ea43149
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_CONFIG_DEPENDS := \
@@ -28,8 +28,6 @@ CONFIGURE_ARGS+= \
 		--without-libintl-prefix
 
 TARGET_CFLAGS+= $(FPIC) \
-		-std=gnu99 \
-		-O3 \
 		-ffunction-sections \
 		-fdata-sections \
 		-Wno-format-security
@@ -41,7 +39,6 @@ define Package/miredo
 	CATEGORY:=Network
 	TITLE:=Teredo IPv6 tunneling utility
 	URL:=https://www.remlab.net/miredo/
-	VERSION:=$(PKG_VERSION)
 	DEPENDS:=@IPV6 +libpthread +librt +kmod-tun
 endef
 
