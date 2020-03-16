@@ -1,11 +1,11 @@
-# 
+#
 # This is free software, licensed under the GNU General Public License v2.
 #
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ipfs-http-client
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Leonid Esman <leonid.esman@gmail.com>
 PKG_LICENSE:=MIT
@@ -16,12 +16,15 @@ PKG_SOURCE_URL:=https://github.com/vasild/cpp-ipfs-http-client.git
 PKG_SOURCE_DATE:=2019-11-05
 PKG_SOURCE_VERSION:=763e59ad698f3e3846f85df11e01c18ef3fbc401
 PKG_MIRROR_HASH:=a2b5721faf0d43ddb4a892245ef382666149c83f3f97e558e1a6acf2402fb9fd
+
+PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=nlohmannjson
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/ipfs-http-client/Default/description
-  IPFS (the InterPlanetary File System) is the Distributed Web. 
+  IPFS (the InterPlanetary File System) is the Distributed Web.
   Specs, docs, sources, links: https://ipfs.io/ and https://github.com/ipfs.
   This is Vasil Dimov's C++ IPFS HTTP API client library.
 endef
@@ -31,7 +34,7 @@ define Package/libipfs-http-client
   CATEGORY:=Libraries
   TITLE:=IPFS client library
   URL:=https://github.com/vasild/cpp-ipfs-http-client
-  DEPENDS:= +libcurl +libstdcpp
+  DEPENDS:= +libcurl +libstdcpp +libatomic
 endef
 
 define Package/libipfs-http-client/description
@@ -52,21 +55,27 @@ define Package/ipfs-http-client-tests/description
   This package contains library tests.
 endef
 
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_BUILD_DIR)/include/* $(1)/usr/include
-	$(CP) $(PKG_BUILD_DIR)/libipfs-http-client.a $(1)/usr/lib
-endef
+CMAKE_OPTIONS += \
+	-DBUILD_SHARED_LIBS=ON \
+	-DENABLE_TESTING=ON
 
 define Package/libipfs-http-client/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_BUILD_DIR)/libipfs-http-client.so* $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libipfs-http-client.so* $(1)/usr/lib
 endef
 
 define Package/ipfs-http-client-tests/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/ipfs-* $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/block	$(1)/usr/bin/ipfs-block
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/config	$(1)/usr/bin/ipfs-config
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/dht	$(1)/usr/bin/ipfs-dht
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/files	$(1)/usr/bin/ipfs-files
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/generic	$(1)/usr/bin/ipfs-generic
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/key	$(1)/usr/bin/ipfs-key
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/name	$(1)/usr/bin/ipfs-name
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/object	$(1)/usr/bin/ipfs-object
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/pin	$(1)/usr/bin/ipfs-pin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/swarm	$(1)/usr/bin/ipfs-swarm
 endef
 
 $(eval $(call BuildPackage,libipfs-http-client))
