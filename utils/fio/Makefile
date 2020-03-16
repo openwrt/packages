@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fio
 PKG_VERSION:=3.19
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://brick.kernel.dk/snaps
 PKG_HASH:=4b6db7eaee26d6fd33bf210eb73b6d37f5d45adcc88726866ad030565f3ccc06
 
-PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
+PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
