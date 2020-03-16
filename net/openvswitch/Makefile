@@ -16,7 +16,7 @@ include $(INCLUDE_DIR)/kernel.mk
 #
 PKG_NAME:=openvswitch
 PKG_VERSION:=2.11.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
 PKG_HASH:=c1296ae44a7b176150915e33bc497cc0a7a02caeba84ea43ce9b6a2509d9b5dc
