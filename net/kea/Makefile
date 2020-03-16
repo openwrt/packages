@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kea
-PKG_VERSION:=1.6.0
-PKG_RELEASE:=7
+PKG_VERSION:=1.6.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.isc.org/isc/kea/$(PKG_VERSION)
-PKG_HASH:=44ed48c729e4618fffcf0086529b469f7232990983187b2f71fce89f1ac6e270
+PKG_HASH:=2af7336027143c3e98d8d1d44165b2c2cbb0252a92bd88f6dd4d2c6adb69d7b5
 
 PKG_MAINTAINER:=BangLang Huang<banglang.huang@foxmail.com>, Rosy Song<rosysong@rosinson.com>
 PKG_LICENSE:=MPL-2.0
