@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-picklefield
-PKG_VERSION:=1.1.0
-PKG_RELEASE:=5
+PKG_VERSION:=2.1.1
+PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=ce7fee5c6558fe5dc8924993d994ccde75bb75b91cd82787cbd4c92b95a69f9c
+PKG_HASH:=67a5e156343e3b032cac2f65565f0faa81635a99c7da74b0f07a0f5db467b646
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
@@ -22,6 +22,11 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
+
+PYTHON_PKG_SETUP_VARS:= \
+  PKG_VERSION="$(PKG_VERSION)"
+PYTHON3_PKG_SETUP_VARS:= \
+  PKG_VERSION="$(PKG_VERSION)"
 
 define Package/django-picklefield/Default
   SUBMENU:=Python

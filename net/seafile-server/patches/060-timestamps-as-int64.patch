@@ -9,7 +9,7 @@
      public int64  size { get; set; }
      public int64  file_count { get; set; }
      public string last_modifier { get; set; }
-@@ -45,7 +45,7 @@ public class Repo : Object {
+@@ -46,7 +46,7 @@ public class Repo : Object {
      public string repo_id { get; set; }
      public string repo_name { get; set; }
      public string repo_desc { get; set; }
@@ -18,7 +18,7 @@
  
      // Section 2: Encryption related
      // Members in this section should be set for every Repo object
-@@ -68,7 +68,7 @@ public class Repo : Object {
+@@ -70,7 +70,7 @@ public class Repo : Object {
          get { return _relay_id; }
          set { _relay_id = value; }
      }
@@ -27,7 +27,7 @@
      public bool auto_sync { get; set; }
      public bool worktree_invalid { get; set; }
  
-@@ -162,7 +162,7 @@ public class DeletedEntry : Object {
+@@ -164,7 +164,7 @@ public class DeletedEntry : Object {
      public string obj_name { get; set; }
      public string basedir { get; set; }
      public int mode { get; set; }

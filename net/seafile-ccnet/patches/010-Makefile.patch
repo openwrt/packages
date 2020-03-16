@@ -5,21 +5,7 @@
  
  AM_CPPFLAGS = @GLIB2_CFLAGS@ -I$(top_srcdir)/include \
  	-I$(top_srcdir)/include/ccnet \
-@@ -72,11 +73,11 @@ ccnet-client.c: ccnet-object.h
- 
- ccnet-object.h: ${ccnet_object_define}
- 	rm -f $@
--	valac --pkg posix ${ccnet_object_define} -C -H ccnet-object.h
-+	"$(STAGING_DIR_HOSTPKG)/bin/valac" --pkg posix ${ccnet_object_define} -C -H ccnet-object.h
- 
- ccnetobj.c: ${ccnet_object_define}
- 	rm -f $@
--	valac -C --pkg posix ${ccnet_object_define}
-+	"$(STAGING_DIR_HOSTPKG)/bin/valac" -C --pkg posix ${ccnet_object_define}
- 
- searpc_gen = searpc-signature.h searpc-marshal.h
- 
-@@ -86,7 +87,7 @@ rpc_table.stamp: ${top_srcdir}/lib/rpc_table.py
+@@ -85,7 +86,7 @@ rpc_table.stamp: ${top_srcdir}/lib/rpc_t
  	@rm -f rpc_table.tmp
  	@touch rpc_table.tmp
  	@echo "[libsearpc]: generating rpc header files"

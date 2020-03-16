@@ -1,0 +1,19 @@
+From 9b2e2dc65213fb22ed400dc54e4c2279564df62b Mon Sep 17 00:00:00 2001
+From: ly1217 <yu.liu@seafile.com>
+Date: Thu, 31 Oct 2019 00:31:38 -0700
+Subject: [PATCH] Fix memory leak.
+
+---
+ lib/searpc-named-pipe-transport.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/lib/searpc-named-pipe-transport.c
++++ b/lib/searpc-named-pipe-transport.c
+@@ -377,6 +377,7 @@ void searpc_free_client_with_pipe_transp
+     close(pipe_client->pipe_fd);
+ #endif
+     g_free (pipe_client);
++    g_free (data->service);
+     g_free (data);
+     searpc_client_free (client);
+ }

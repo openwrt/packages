@@ -6,16 +6,7 @@
  pcfiles = libseafile.pc
  pkgconfig_DATA = $(pcfiles)
  pkgconfigdir = $(libdir)/pkgconfig
-@@ -33,7 +35,7 @@ seafile_HEADERS = seafile-object.h
- 
- seafile-object.h: ${seafile_object_define}
- 	rm -f $@
--	valac --pkg posix ${seafile_object_define} -C -H seafile-object.h
-+	"$(STAGING_DIR_HOSTPKG)/bin/valac" --pkg posix ${seafile_object_define} -C -H seafile-object.h
- 
- DISTCLEANFILES = ${searpc_gen}
- 
-@@ -56,7 +58,7 @@ rpc_table.stamp: ${top_srcdir}/lib/rpc_table.py
+@@ -56,7 +58,7 @@ rpc_table.stamp: ${top_srcdir}/lib/rpc_t
  	@rm -f rpc_table.tmp
  	@touch rpc_table.tmp
  	@echo "[libsearpc]: generating rpc header files"
@@ -24,15 +15,6 @@
  	@echo "[libsearpc]: done"
  	@mv -f rpc_table.tmp $@
  
-@@ -66,7 +68,7 @@ vala.stamp: ${seafile_object_define}
- 	rm -f ${seafile_object_gen}
- 	@rm -f vala.tmp
- 	@touch vala.tmp
--	valac -C --pkg posix $^
-+	"$(STAGING_DIR_HOSTPKG)/bin/valac" -C --pkg posix $^
- 	@mv -f vala.tmp $@
- 
- ${seafile_object_gen}: vala.stamp
 @@ -82,5 +84,5 @@ install-data-local:
  if MACOS
  	sed -i '' -e "s|(DESTDIR)|${DESTDIR}|g" $(pcfiles)

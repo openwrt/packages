@@ -26,7 +26,7 @@ define Package/django-ranged-response/Default
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Add Content-Range: to FileResponse
-  URL:=https://github.com/wearespindle/django-ranged-fileresponse
+  URL:=https://github.com/i3thuan5/django-ranged-response
 endef
 
 define Package/python-django-ranged-response
