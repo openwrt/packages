@@ -1,7 +1,7 @@
 --- a/setup.py
 +++ b/setup.py
 @@ -71,15 +71,6 @@ data = dict(
-         version='1.1.9',
+         version='1.1.10',
          url='https://bitbucket.org/stoneleaf/enum34',
          packages=packages,
 -        package_data={
