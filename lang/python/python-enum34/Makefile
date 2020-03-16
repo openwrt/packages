@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-enum34
-PKG_VERSION:=1.1.9
+PKG_VERSION:=1.1.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=enum34-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/e/enum34
-PKG_HASH:=13ef9a1c478203252107f66c25b99b45b1865693ca1284aab40dafa7e1e7ac17
+PKG_HASH:=cce6a7477ed816bd2542d03d53db9f0db935dd013b70f336a95c73979289f248
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-enum34-$(PKG_VERSION)
 
