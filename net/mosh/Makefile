@@ -19,11 +19,9 @@ PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=protobuf/host
-PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -92,6 +90,9 @@ CONFIGURE_ARGS += \
 	--disable-compile-warnings \
 	--disable-hardening \
 	--without-utempter
+
+CONFIGURE_VARS += \
+	ac_cv_have_decl_ffs=yes
 
 TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -flto -std=c++11
 TARGET_LDFLAGS += -Wl,--gc-sections -lncurses
