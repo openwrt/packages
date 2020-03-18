@@ -3,109 +3,111 @@
 START=50
 USE_PROCD=1
 
-. $IPKG_INSTROOT/lib/functions/network.sh
+. "$IPKG_INSTROOT"/lib/functions/network.sh
 
 setup_config() {
-	config_get port         $1 port "4443"
-	config_get max_clients  $1 max_clients "8"
-	config_get max_same     $1 max_same "2"
-	config_get dpd          $1 dpd "120"
-	config_get predictable_ips  $1 predictable_ips "1"
-	config_get compression  $1 compression "0"
-	config_get udp          $1 udp "1"
-	config_get udp_port     $1 udp_port ""
-	config_get auth         $1 auth "plain"
-	config_get cisco_compat $1 cisco_compat "1"
-	config_get ipaddr       $1 ipaddr ""
-	config_get netmask      $1 netmask ""
-	config_get ip6addr      $1 ip6addr ""
-	config_get proxy_arp    $1 proxy_arp "0"
-	config_get ping_leases  $1 ping_leases "0"
-	config_get split_dns    $1 split_dns "0"
-	config_get default_domain  $1 default_domain ""
+	config_get port         "$1" port "4443"
+	config_get max_clients  "$1" max_clients "8"
+	config_get max_same     "$1" max_same "2"
+	config_get dpd          "$1" dpd "120"
+	config_get predictable_ips  "$1" predictable_ips "1"
+	config_get compression  "$1" compression "0"
+	config_get udp          "$1" udp "1"
+	config_get udp_port     "$1" udp_port ""
+	config_get auth         "$1" auth "plain"
+	config_get cisco_compat "$1" cisco_compat "1"
+	config_get ipaddr       "$1" ipaddr ""
+	config_get netmask      "$1" netmask ""
+	config_get ip6addr      "$1" ip6addr ""
+	config_get proxy_arp    "$1" proxy_arp "0"
+	config_get ping_leases  "$1" ping_leases "0"
+	config_get split_dns    "$1" split_dns "0"
+	config_get default_domain  "$1" default_domain ""
 
 	# Enable proxy arp, and make sure that ping leases is set to true in that case,
 	# to prevent conflicts.
-	if test "$proxy_arp" = 1;then
+	if [ "$proxy_arp" = 1 ]; then
 		local ip
 		# IP address is empty. Auto-configure LAN + VPN.
-		if test -z "$ipaddr";then
+		[ -z "$ipaddr" ] && {
 			local mask
 			mask=$(uci get network.lan.netmask)
-			if test "$mask" = "255.255.255.0";then
+			[ "$mask" = "255.255.255.0" ] && {
 				uci set dhcp.lan.start=100
 				uci set dhcp.lan.limit=91
-			fi
+			}
 			network_get_ipaddr ip lan
 			ipaddr="$(echo $ip|cut -d . -f1,2,3).192"
 			netmask="255.255.255.192"
-		fi
+		}
 
-		if test -z "$ip6addr";then
+		[ -z "$ip6addr" ] && {
 			network_get_ipaddr6 ip6addr lan
 			# Append ipv6 prefix
-			test -n "$ip6addr" && ip6addr="$ip6addr/96"
-		fi
+			[ -n "$ip6addr" ] && ip6addr="$ip6addr/96"
+		}
 
 		ping_leases=1
 		local ifname
 		if network_get_device ifname lan; then
-			test -n "$ipaddr" && sysctl -w "net.ipv4.conf.$ifname.proxy_arp"=1 >/dev/null
-			test -n "$ip6addr" && sysctl -w "net.ipv6.conf.$ifname.proxy_ndp"=1 >/dev/null
+			[ -n "$ipaddr" ] && sysctl -w "net.ipv4.conf.$ifname.proxy_arp"=1 >/dev/null
+			[ -n "$ip6addr" ] && sysctl -w "net.ipv6.conf.$ifname.proxy_ndp"=1 >/dev/null
 		fi
 	else
-		test -z "$ipaddr" && ipaddr="192.168.100.0"
-		test -z "$netmask" && netmask="255.255.255.0"
+		[ -z "$ipaddr" ] && ipaddr="192.168.100.0"
+		[ -z "$netmask" ] && netmask="255.255.255.0"
 	fi
 
 	enable_default_domain="#"
 	enable_udp="#"
 	enable_compression="#"
 	enable_split_dns="#"
-	test $predictable_ips = "0" && predictable_ips="false"
-	test $predictable_ips = "1" && predictable_ips="true"
-	test $cisco_compat = "0" && cisco_compat="false"
-	test $cisco_compat = "1" && cisco_compat="true"
-	test $ping_leases = "0" && ping_leases="false"
-	test $ping_leases = "1" && ping_leases="true"
-	test $udp = "1" && enable_udp=""
-	test $split_dns = "1" && enable_split_dns=""
-	test $compression = "1" && enable_compression=""
+	[ "$predictable_ips" = "0" ] && predictable_ips="false"
+	[ "$predictable_ips" = "1" ] && predictable_ips="true"
+	[ "$cisco_compat" = "0" ] && cisco_compat="false"
+	[ "$cisco_compat" = "1" ] && cisco_compat="true"
+	[ "$ping_leases" = "0" ] && ping_leases="false"
+	[ "$ping_leases" ] = "1" && ping_leases="true"
+	[ "$udp" = "1" ] && enable_udp=""
+	[ "$split_dns" = "1" ] && enable_split_dns=""
+	[ "$compression" = "1" ] && enable_compression=""
 
-	test -z $udp_port && udp_port="$port"
-	test -z $default_domain && default_domain=$(uci get dhcp.@dnsmasq[0].domain)
-	test -n $default_domain && enable_default_domain=""
-	test -z $ip6addr && enable_ipv6="#"
+	[ -z "$udp_port" ] && udp_port="$port"
+	[ -z "$default_domain" ] && default_domain=$(uci get dhcp.@dnsmasq[0].domain)
+	[ -n "$default_domain" ] && enable_default_domain=""
+	[ -z "$ip6addr" ] && enable_ipv6="#"
 
-	test $auth = "plain" && authsuffix="\[passwd=/var/etc/ocpasswd\]"
+	[ "$auth" = "plain" ] && authsuffix="\[passwd=/var/etc/ocpasswd\]"
 
 	dyndns="false"
-	hostname=`uci show ddns 2>/dev/null|grep domain|head -1|cut -d '=' -f 2`
+	hostname=$(uci show ddns 2>/dev/null|grep domain|head -1|cut -d '=' -f 2)
 	[ -n "$hostname" ] && dyndns="true"
 
 	mkdir -p /var/etc
-	sed -e "s/|PORT|/$port/g" \
-	    -e "s/|UDP_PORT|/$udp_port/g" \
-	    -e "s/|MAX_CLIENTS|/$max_clients/g" \
-	    -e "s/|MAX_SAME|/$max_same/g" \
-	    -e "s/|DPD|/$dpd/g" \
-	    -e "s#|AUTH|#$auth$authsuffix#g" \
-	    -e "s#|DYNDNS|#$dyndns#g" \
-	    -e "s/|PREDICTABLE_IPS|/$predictable_ips/g" \
-	    -e "s/|DEFAULT_DOMAIN|/$default_domain/g" \
-	    -e "s/|ENABLE_DEFAULT_DOMAIN|/$enable_default_domain/g" \
-	    -e "s/|ENABLE_SPLIT_DNS|/$enable_split_dns/g" \
-	    -e "s/|CISCO_COMPAT|/$cisco_compat/g" \
-	    -e "s/|PING_LEASES|/$ping_leases/g" \
-	    -e "s/|UDP|/$enable_udp/g" \
-	    -e "s/|COMPRESSION|/$enable_compression/g" \
-	    -e "s/|IPV4ADDR|/$ipaddr/g" \
-	    -e "s/|NETMASK|/$netmask/g" \
-	    -e "s#|IPV6ADDR|#$ip6addr#g" \
-	    -e "s/|ENABLE_IPV6|/$enable_ipv6/g" \
-	    /etc/ocserv/ocserv.conf.template > /var/etc/ocserv.conf
+	{
+		sed -e "s/|PORT|/$port/g" \
+		    -e "s/|UDP_PORT|/$udp_port/g" \
+		    -e "s/|MAX_CLIENTS|/$max_clients/g" \
+		    -e "s/|MAX_SAME|/$max_same/g" \
+		    -e "s/|DPD|/$dpd/g" \
+		    -e "s#|AUTH|#$auth$authsuffix#g" \
+		    -e "s#|DYNDNS|#$dyndns#g" \
+		    -e "s/|PREDICTABLE_IPS|/$predictable_ips/g" \
+		    -e "s/|DEFAULT_DOMAIN|/$default_domain/g" \
+		    -e "s/|ENABLE_DEFAULT_DOMAIN|/$enable_default_domain/g" \
+		    -e "s/|ENABLE_SPLIT_DNS|/$enable_split_dns/g" \
+		    -e "s/|CISCO_COMPAT|/$cisco_compat/g" \
+		    -e "s/|PING_LEASES|/$ping_leases/g" \
+		    -e "s/|UDP|/$enable_udp/g" \
+		    -e "s/|COMPRESSION|/$enable_compression/g" \
+		    -e "s/|IPV4ADDR|/$ipaddr/g" \
+		    -e "s/|NETMASK|/$netmask/g" \
+		    -e "s#|IPV6ADDR|#$ip6addr#g" \
+		    -e "s/|ENABLE_IPV6|/$enable_ipv6/g" \
+		    /etc/ocserv/ocserv.conf.template
 
-	test -f /etc/ocserv/ocserv.conf.local && cat /etc/ocserv/ocserv.conf.local >> /var/etc/ocserv.conf
+		[ -f /etc/ocserv/ocserv.conf.local ] && cat /etc/ocserv/ocserv.conf.local
+	} > /var/etc/ocserv.conf
 }
 
 setup_users() {
@@ -113,9 +115,9 @@ setup_users() {
 	local group
 	local password
 
-	config_get name $1 name
-	config_get group $1 group '*'
-	config_get password $1 password
+	config_get name "$1" name
+	config_get group "$1" group '*'
+	config_get password "$1" password
 
 	[ -z "$name" -o -z "$password" ] && return
 
@@ -123,10 +125,8 @@ setup_users() {
 }
 
 setup_routes() {
-	local routes
-
-	config_get ip $1 ip
-	config_get netmask $1 netmask
+	config_get ip "$1" ip
+	config_get netmask "$1" netmask
 
 	[ -z "$ip" -o -z "$netmask" ] && return
 
@@ -134,9 +134,7 @@ setup_routes() {
 }
 
 setup_dns() {
-	local routes
-
-	config_get ip $1 ip
+	config_get ip "$1" ip
 
 	[ -z "$ip" ] && return
 
@@ -144,10 +142,10 @@ setup_dns() {
 }
 
 start_service() {
-	local hostname iface
+	local hostname
 
-	hostname=`uci show ddns 2>/dev/null|grep domain|head -1|cut -d '=' -f 2`
-	[ -z "$hostname" ] && hostname=`uci get system.@system[0].hostname 2>/dev/null`
+	hostname=$(uci show ddns 2>/dev/null|grep domain|head -1|cut -d '=' -f 2)
+	[ -z "$hostname" ] && hostname=$(uci get system.@system[0].hostname 2>/dev/null)
 
 	[ -f /etc/config/ocserv-dir/ca-key.pem ] && mv /etc/config/ocserv-dir/ca-key.pem /etc/ocserv/ca-key.pem
 	[ -f /etc/config/ocserv-dir/ca.pem ] && mv /etc/config/ocserv-dir/ca.pem /etc/ocserv/ca.pem
@@ -159,11 +157,13 @@ start_service() {
 		logger -t ocserv "Generating CA certificate..."
 		mkdir -p /etc/ocserv/pki/
 		certtool --bits 2048 --generate-privkey --outfile /etc/ocserv/ca-key.pem >/dev/null 2>&1
-		echo "cn=$hostname CA" >/etc/ocserv/pki/ca.tmpl
-		echo "expiration_days=-1" >>/etc/ocserv/pki/ca.tmpl
-		echo "serial=1" >>/etc/ocserv/pki/ca.tmpl
-		echo "ca" >>/etc/ocserv/pki/ca.tmpl
-		echo "cert_signing_key" >>/etc/ocserv/pki/ca.tmpl
+		{
+			echo "cn=$hostname CA"
+			echo "expiration_days=-1"
+			echo "serial=1"
+			echo "ca"
+			echo "cert_signing_key"
+		} > /etc/ocserv/pki/ca.tmpl
 
 		certtool --template /etc/ocserv/pki/ca.tmpl \
 			--generate-self-signed --load-privkey /etc/ocserv/ca-key.pem \
@@ -175,11 +175,13 @@ start_service() {
 		logger -t ocserv "Generating server certificate..."
 		mkdir -p /etc/ocserv/pki/
 		certtool --bits 2048 --generate-privkey --outfile /etc/ocserv/server-key.pem >/dev/null 2>&1
-		echo "cn=$hostname" >/etc/ocserv/pki/server.tmpl
-		echo "serial=2" >>/etc/ocserv/pki/server.tmpl
-		echo "expiration_days=-1" >>/etc/ocserv/pki/server.tmpl
-		echo "signing_key" >>/etc/ocserv/pki/server.tmpl
-		echo "encryption_key" >>/etc/ocserv/pki/server.tmpl
+		{
+			echo "cn=$hostname"
+			echo "serial=2"
+			echo "expiration_days=-1"
+			echo "signing_key"
+			echo "encryption_key"
+		} > /etc/ocserv/pki/server.tmpl
 		certtool --template /etc/ocserv/pki/server.tmpl \
 			--generate-certificate --load-privkey /etc/ocserv/server-key.pem \
 			--load-ca-certificate /etc/ocserv/ca.pem --load-ca-privkey \

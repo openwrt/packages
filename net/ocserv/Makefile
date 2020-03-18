@@ -9,17 +9,19 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ocserv
 PKG_VERSION:=0.12.6
-PKG_RELEASE:=1
-PKG_USE_MIPS16:=0
+PKG_RELEASE:=2
 
-PKG_BUILD_DIR :=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=ftp://ftp.infradead.org/pub/ocserv/
 PKG_HASH:=b75544bbccf299a0e6b4639af516ecc3393f9f9fe22179a619a7711e80f65cec
 
+PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+
 #PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_OCSERV_PAM \
@@ -38,7 +40,6 @@ define Package/ocserv
   SUBMENU:=VPN
   TITLE:=OpenConnect VPN server
   URL:=http://www.infradead.org/ocserv/
-  MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
   DEPENDS:= +OCSERV_RADIUS:libradcli +OCSERV_HTTP_PARSER:libhttp-parser +OCSERV_SECCOMP:libseccomp +libgnutls +certtool +libncurses +libreadline +OCSERV_PAM:libpam +OCSERV_PROTOBUF:libprotobuf-c +libev +kmod-tun
   USERID:=ocserv=72:ocserv=72
 endef
@@ -55,7 +56,7 @@ endef
 EXTRA_CPPFLAGS+=-I$(STAGING_DIR)/usr/include/readline/
 EXTRA_LDFLAGS+=-lncurses
 
-CONFIGURE_ARGS+= \
+CONFIGURE_ARGS += \
 	--with-pager="" \
 	--with-libreadline-prefix="$(STAGING_DIR)/" \
 	--without-libnl \
@@ -64,26 +65,11 @@ CONFIGURE_ARGS+= \
 	--with-libev-prefix="$(STAGING_DIR)/" \
 	--without-lz4 \
 	--with-local-talloc \
-
-ifneq ($(CONFIG_OCSERV_PAM),y)
-CONFIGURE_ARGS += --without-pam
-endif
-
-ifneq ($(CONFIG_OCSERV_RADIUS),y)
-CONFIGURE_ARGS += --without-radius
-endif
-
-ifneq ($(CONFIG_OCSERV_SECCOMP),y)
-CONFIGURE_ARGS += --disable-seccomp
-endif
-
-ifneq ($(CONFIG_OCSERV_PROTOBUF),y)
-CONFIGURE_ARGS += --without-protobuf
-endif
-
-ifneq ($(CONFIG_OCSERV_HTTP_PARSER),y)
-CONFIGURE_ARGS += --without-http-parser
-endif
+	--with$(if $(CONFIG_OCSERV_PAM),,out)-pam \
+	--with$(if $(CONFIG_OCSERV_RADIUS),,out)-radius \
+	--with$(if $(CONFIG_OCSERV_PROTOBUF),,out)-protobuf \
+	--with$(if $(CONFIG_OCSERV_HTTP_PARSER),,out)-http-parser \
+	--$(if $(CONFIG_OCSERV_SECCOMP),en,dis)able-seccomp
 
 define Package/ocserv/conffiles
 /etc/config/ocserv
