@@ -13,6 +13,6 @@ choice
                 bool "internal SSL support"
 endchoice
 
-comment Packages
+comment "Packages"
 
 endif
