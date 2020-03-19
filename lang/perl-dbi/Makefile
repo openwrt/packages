@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-dbi
-PKG_VERSION:=1.642
+PKG_VERSION:=1.643
 PKG_RELEASE:=1
 
 PKG_SOURCE:=DBI-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.cpan.org/authors/id/T/TI/TIMB/
-PKG_HASH:=3f2025023a56286cebd15cb495e36ccd9b456c3cc229bf2ce1f69e9ebfc27f5d
+PKG_HASH:=8a2b993db560a2c373c174ee976a51027dd780ec766ae17620c20393d2e836fa
 
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
