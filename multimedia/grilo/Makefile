@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grilo
 PKG_VERSION:=0.3.12
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/grilo/0.3/
@@ -58,13 +58,13 @@ define Build/InstallDev
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc \
 		$(1)/usr/lib/pkgconfig/
-	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/share/vala-$($(STAGING_DIR_HOSTPKG)/bin/valac --api-version)/vapi/
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/share/vala-`$(STAGING_DIR_HOSTPKG)/bin/valac --api-version`/vapi/
 	# Note: this are compiled elsewhere because grilo refuses to
 	# generate VAPI files unless gobject-introspection exists;
 	# OpenWrt does not yet have a gobject-introspection package.
 	$(INSTALL_DATA) \
 		./files/*.vapi \
-		$(STAGING_DIR_HOSTPKG)/share/vala-$($(STAGING_DIR_HOSTPKG)/bin/valac --api-version)/vapi
+		$(STAGING_DIR_HOSTPKG)/share/vala-`$(STAGING_DIR_HOSTPKG)/bin/valac --api-version`/vapi
 endef
 
 define Package/grilo/install
