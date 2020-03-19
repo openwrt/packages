@@ -1,0 +1,43 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -1423,34 +1423,34 @@ 
+ 		do
+-			if test -f "${d}/include/json/json.h"
++			if test -f "${d}/include/json-c/json.h"
+ 			then
+ 				if test ${d} != /usr
+ 				then
+ 					libjson_cflags="-I ${d}/include"
+ 					LIBS="$LIBS -L${d}/lib"
+ 				fi
+ 				have_libjson="yes"
++				have_libjson_c="yes"
+-			elif test -f "${d}/include/json-c/json.h"
++			elif test -f "${d}/include/json/json.h"
+ 			then
+ 				if test ${d} != /usr
+ 				then
+ 					libjson_cflags="-I ${d}/include"
+ 					LIBS="$LIBS -L${d}/lib"
+ 				fi
+ 				have_libjson="yes"
+-				have_libjson_c="yes"
+ 			fi
+ 		done
+ 		;;
+ 	*)
+-		if test -f "${use_libjson}/include/json/json.h"
++		if test -f "${use_libjson}/include/json-c/json.h"
+ 		then
+ 			libjson_cflags="-I${use_libjson}/include"
+ 			LIBS="$LIBS -L${use_libjson}/lib"
+ 			have_libjson="yes"
++			have_libjson_c="yes"
+-		elif test -f "${use_libjson}/include/json-c/json.h"
++		elif test -f "${use_libjson}/include/json/json.h"
+ 		then
+ 			libjson_cflags="-I${use_libjson}/include"
+ 			LIBS="$LIBS -L${use_libjson}/lib"
+ 			have_libjson="yes"
+-			have_libjson_c="yes"
+ 		else
