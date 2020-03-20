@@ -40,7 +40,6 @@ define Package/gitolite
 
   TITLE:=Easy administration of git repositories
   URL:=http://gitolite.com/gitolite
-  MAINTAINER:=Daniel Dickinson <cshored@thecshore.com>
   USERID:=git=382:git=382
 endef
 

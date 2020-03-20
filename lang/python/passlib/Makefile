@@ -21,7 +21,6 @@ define Package/passlib/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  MAINTAINER:=Daniel Dickinson <cshored@thecshore.com>
   TITLE:=Comprehensive password hashing framework
   URL:=https://bitbucket.org/ecollins/passlib
 endef
