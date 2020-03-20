@@ -14,7 +14,6 @@ PKG_RELEASE:=20
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.networkupstools.org/source/2.7/
 PKG_HASH:=980e82918c52d364605c0703a5dcf01f74ad2ef06e3d365949e43b7d406d25a7
-PKG_MAINTAINER:=Daniel Dickinson <cshored@thecshore.com>
 PKG_LICENSE:=GPL-2.0-or-later GPL-3.0-or-later GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=LICENSE-GPL2 LICENSE-GPL3 COPYING
 PKG_FIXUP:=autoreconf
