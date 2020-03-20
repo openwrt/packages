@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modemmanager
-PKG_VERSION:=1.12.6
+PKG_VERSION:=1.12.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=ModemManager-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/ModemManager
-PKG_HASH:=2eb3353ee5518005c51d429308695c69d8c38cf2fd9102b04f785c03a0cc624c
+PKG_HASH:=68b53d0615ba0d3e2bbf386ed029dfe644a6a30a79ab8d85523527bb4e713aff
 PKG_BUILD_DIR:=$(BUILD_DIR)/ModemManager-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas.smith@telcoantennas.com.au>
