@@ -1,5 +1,7 @@
+-- 
 -- to work you need to have installed nut-upsc package and configured with name nutdev1
 -- or change here in command with your own name from nutdev1 -> your custom ups name
+--
 local function split(s, delimiter)
     result = {}; 
     for match in (s..delimiter):gmatch("(.-)"..delimiter) do
