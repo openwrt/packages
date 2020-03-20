@@ -41,7 +41,7 @@ new file mode 100644
 index 0000000..0c035a7
 --- /dev/null
 +++ b/pico/bin/pico2wave.c
-@@ -0,0 +1,341 @@
+@@ -0,0 +1,342 @@
 +/* pico2wave.c
 +
 + * Copyright (C) 2009 Mathieu Parent <math.parent@gmail.com>
@@ -65,6 +65,7 @@ index 0000000..0c035a7
 +
 +#include <popt.h>
 +#include <stdio.h>
++#include <stdint.h>
 +#include <stdlib.h>
 +#include <string.h>
 +
