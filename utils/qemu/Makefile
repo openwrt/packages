@@ -259,6 +259,13 @@ config QEMU_UI_SPICE
 endif
 endef
 
+PKG_CONFIG_DEPENDS += \
+	CONFIG_QEMU_UI_VNC \
+	CONFIG_QEMU_UI_VNC_JPEG \
+	CONFIG_QEMU_UI_VNC_PNG \
+	CONFIG_QEMU_UI_VNC_SASL \
+	CONFIG_QEMU_UI_SPICE \
+
 
 # QEMU configure script does not recognize these options
 CONFIGURE_ARGS:=$(filter-out	\
