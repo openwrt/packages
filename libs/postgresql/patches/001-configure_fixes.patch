@@ -1,8 +1,6 @@
-diff --git a/configure.in b/configure.in
-index 9082c5b..2c04edc 100644
 --- a/configure.in
 +++ b/configure.in
-@@ -2283,36 +2283,6 @@ if test "$with_python" = yes; then
+@@ -2285,36 +2285,6 @@ if test "$with_python" = yes; then
    CPPFLAGS=$ac_save_CPPFLAGS
  fi
  
