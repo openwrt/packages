@@ -144,7 +144,6 @@ comment "External Libraries"
 config FFMPEG_CUSTOM_SELECT_libfdk-aac
 	bool "Fraunhofer FDK AAC encoding library (libfdk-aac)"
 	depends on FFMPEG_CUSTOM_NONFREE
-	depends on FFMPEG_CUSTOM_PATENTED
 	depends on PACKAGE_fdk-aac
 
 config FFMPEG_CUSTOM_SELECT_libmp3lame
