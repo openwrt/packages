@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-inline
-PKG_VERSION:=0.83
+PKG_VERSION:=0.86
 PKG_RELEASE:=1
 
 PKG_SOURCE:=Inline-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/T/TI/TINITA
-PKG_HASH:=171a8e5f66faf88fe5ef4de7126267cd8fb2503483432eabc3b88ac7d5be4239
+PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/I/IN/INGY
+PKG_HASH:=510a7de2d011b0db80b0874e8c0f7390010991000ae135cff7474df1e6d51e3a
 
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl

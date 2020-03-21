@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-cgi
-PKG_VERSION:=4.44
+PKG_VERSION:=4.46
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://www.cpan.org/authors/id/L/LE/LEEJO
 PKG_SOURCE:=CGI-$(PKG_VERSION).tar.gz
-PKG_HASH:=12435fb7ebd3585c47b6d60ee4f5c7d6a7c114a2827d2b5acf3d62aa9fcf1208
+PKG_HASH:=788998ddc33ca382e5d7ce72c6c0ea1d8366c93067371fe2f14239ddea2e4298
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/CGI-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>, \
