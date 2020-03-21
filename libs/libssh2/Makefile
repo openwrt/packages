@@ -23,45 +23,70 @@ PKG_CPE_ID:=cpe:/a:libssh2:libssh2
 CMAKE_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
-PKG_CONFIG_DEPENDS:= \
-	CONFIG_LIBSSH2_MBEDTLS \
-	CONFIG_LIBSSH2_OPENSSL
-
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-define Package/libssh2
+define Package/libssh2/Default
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=SSH2 library
   URL:=https://www.libssh2.org/
-  DEPENDS:=+LIBSSH2_MBEDTLS:libmbedtls +LIBSSH2_OPENSSL:libopenssl +zlib
+  DEPENDS:=+zlib
+  PROVIDES:=libssh2
   ABI_VERSION:=1
 endef
 
-define Package/libssh2/description
- libssh2 is a client-side C library implementing the SSH2 protocol.
+define Package/libssh2-mbedtls
+$(call Package/libssh2/Default)
+  TITLE+= (mbedtls)
+  DEPENDS+= +PACKAGE_libssh2-mbedtls:libmbedtls
+  VARIANT:=mbedtls
+  DEFAULT_VARIANT:=1
 endef
 
-define Package/libssh2/config
-	source "$(SOURCE)/Config.in"
+define Package/libssh2-openssl
+$(call Package/libssh2/Default)
+  TITLE+= (openssl)
+  DEPENDS+= +PACKAGE_libssh2-openssl:libopenssl
+  VARIANT:=openssl
 endef
+
+define Package/libssh2/Default/description
+  libssh2 is a client-side C library implementing the SSH2 protocol.
+endef
+
+define Package/libssh2-mbedtls/description
+$(call Package/libssh2/Default/description)
+
+  This package contains libssh2 compiled with support for mbed TLS.
+endef
+
+define Package/libssh2-openssl/description
+$(call Package/libssh2/Default/description)
+
+  This package contains libssh2 compiled with support for OpenSSL.
+endef
+
+ifeq ($(BUILD_VARIANT),mbedtls)
+  LIBSSH2_CRYPTO_BACKEND:=mbedTLS
+else ifeq ($(BUILD_VARIANT),openssl)
+  LIBSSH2_CRYPTO_BACKEND:=OpenSSL
+endif
 
 CMAKE_OPTIONS += \
 	-DBUILD_SHARED_LIBS=ON \
 	-DBUILD_TESTING=OFF \
 	-DENABLE_ZLIB_COMPRESSION=ON \
-	-DCLEAR_MEMORY=ON
+	-DCLEAR_MEMORY=ON \
+	-DCRYPTO_BACKEND=$(LIBSSH2_CRYPTO_BACKEND)
 
-ifeq ($(CONFIG_LIBSSH2_OPENSSL),y)
-	CMAKE_OPTIONS += -DCRYPTO_BACKEND=OpenSSL
-else
-	CMAKE_OPTIONS += -DCRYPTO_BACKEND=mbedTLS
-endif
-
-define Package/libssh2/install
+define Package/libssh2/Default/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libssh2.so.$(ABI_VERSION)* $(1)/usr/lib/
 endef
 
-$(eval $(call BuildPackage,libssh2))
+Package/libssh2-mbedtls/install=$(Package/libssh2/Default/install)
+Package/libssh2-openssl/install=$(Package/libssh2/Default/install)
+
+$(eval $(call BuildPackage,libssh2-mbedtls))
+$(eval $(call BuildPackage,libssh2-openssl))
