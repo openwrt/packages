@@ -12,7 +12,7 @@ PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.7.8
 # Release == build
 # increase on changes of services files or tld_names.dat
-PKG_RELEASE:=16
+PKG_RELEASE:=17
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=
@@ -125,6 +125,21 @@ define Package/ddns-scripts_route53-v1/description
 	"option username" to be a valid AWS access key id
 	"option password" to be the matching AWS secret key id
 	"option domain" to contain the hosted zone ID
+endef
+
+###### *************************************************************************
+define Package/ddns-scripts_cnkuai_cn
+    $(call Package/ddns-scripts/Default)
+    TITLE:=CnKuai API
+    DEPENDS:=ddns-scripts +curl +giflib-utils
+endef
+define Package/ddns-scripts_cnkuai_cn/description
+	Dynamic DNS Client scripts extension for CnKuai.Note: You
+	must also install giflib-utils.
+	It requires:
+	"option username" to be a valid CnKuai control panel id
+	"option password" to be the matching CnKuai control panel password
+	"option domain" to contain the domain
 endef
 
 ###### *************************************************************************
@@ -437,6 +452,47 @@ define Package/ddns-scripts_route53-v1/prerm
 endef
 
 ###### *************************************************************************
+define Package/ddns-scripts_cnkuai_cn/preinst
+	#!/bin/sh
+	# if NOT run buildroot then stop service
+	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
+	exit 0	# suppress errors
+endef
+define Package/ddns-scripts_cnkuai_cn/install
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_cnkuai_cn
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_cnkuai_cn.sh $(1)/usr/lib/ddns
+endef
+define Package/ddns-scripts_cnkuai_cn/postinst
+	#!/bin/sh
+	# remove old services file entries
+	/bin/sed -i '/cnkuai.cn/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
+	/bin/sed -i '/cnkuai.cn/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
+	# and create new
+	printf "%s\\t%s\\n" '"cnkuai.cn"' '"update_cnkuai_cn.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
+	printf "%s\\t%s\\n" '"cnkuai.cn"' '"update_cnkuai_cn.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
+	# on real system restart service if enabled
+	[ -z "$${IPKG_INSTROOT}" ] && {
+		[ -x /etc/uci-defaults/ddns_cnkuai_cn ] && \
+			/etc/uci-defaults/ddns_cnkuai_cn && \
+				rm -f /etc/uci-defaults/cnkuai.cn >/dev/null 2>&1
+		/etc/init.d/ddns enabled \
+			&& /etc/init.d/ddns start >/dev/null 2>&1
+	}
+	exit 0	# suppress errors
+endef
+define Package/ddns-scripts_cnkuai_cn/prerm
+	#!/bin/sh
+	# if NOT run buildroot then stop service
+	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop				>/dev/null 2>&1
+	# remove services file entries
+	/bin/sed -i 'cnkuai.cn/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
+	/bin/sed -i 'cnkuai.cn/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
+	exit 0	# suppress errors
+endef
+
+###### *************************************************************************
 $(eval $(call BuildPackage,ddns-scripts))
 $(eval $(call BuildPackage,ddns-scripts_cloudflare.com-v4))
 $(eval $(call BuildPackage,ddns-scripts_freedns_42_pl))
@@ -444,3 +500,4 @@ $(eval $(call BuildPackage,ddns-scripts_godaddy.com-v1))
 $(eval $(call BuildPackage,ddns-scripts_no-ip_com))
 $(eval $(call BuildPackage,ddns-scripts_nsupdate))
 $(eval $(call BuildPackage,ddns-scripts_route53-v1))
+$(eval $(call BuildPackage,ddns-scripts_cnkuai_cn))
