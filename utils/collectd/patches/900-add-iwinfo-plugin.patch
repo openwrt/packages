@@ -12,23 +12,23 @@
  
  #
  # Checks for typedefs, structures, and compiler characteristics.
-@@ -6397,6 +6402,7 @@ plugin_ipc="no"
- plugin_ipmi="no"
+@@ -6586,6 +6591,7 @@ plugin_ipmi="no"
+ plugin_ipstats="no"
  plugin_ipvs="no"
  plugin_irq="no"
 +plugin_iwinfo="no"
  plugin_load="no"
  plugin_log_logstash="no"
  plugin_mcelog="no"
-@@ -6841,6 +6847,7 @@ AC_PLUGIN([ipmi],                [$plugi
- AC_PLUGIN([iptables],            [$with_libiptc],             [IPTables rule counters])
+@@ -7047,6 +7053,7 @@ AC_PLUGIN([iptables],            [$with_
+ AC_PLUGIN([ipstats],             [$plugin_ipstats],           [IP packet statistics])
  AC_PLUGIN([ipvs],                [$plugin_ipvs],              [IPVS connection statistics])
  AC_PLUGIN([irq],                 [$plugin_irq],               [IRQ statistics])
 +AC_PLUGIN([iwinfo],              [$with_iwinfo],              [Common iwinfo wireless statistics])
  AC_PLUGIN([java],                [$with_java],                [Embed the Java Virtual Machine])
  AC_PLUGIN([load],                [$plugin_load],              [System load])
  AC_PLUGIN([log_logstash],        [$plugin_log_logstash],      [Logstash json_event compatible logging])
-@@ -7212,6 +7219,7 @@ AC_MSG_RESULT([    libyajl . . . . . . .
+@@ -7424,6 +7431,7 @@ AC_MSG_RESULT([    libyajl . . . . . . .
  AC_MSG_RESULT([    oracle  . . . . . . . $with_oracle])
  AC_MSG_RESULT([    protobuf-c  . . . . . $have_protoc_c])
  AC_MSG_RESULT([    protoc 3  . . . . . . $have_protoc3])
@@ -36,8 +36,8 @@
  AC_MSG_RESULT()
  AC_MSG_RESULT([  Features:])
  AC_MSG_RESULT([    daemon mode . . . . . $enable_daemon])
-@@ -7274,6 +7282,7 @@ AC_MSG_RESULT([    ipmi  . . . . . . . .
- AC_MSG_RESULT([    iptables  . . . . . . $enable_iptables])
+@@ -7491,6 +7499,7 @@ AC_MSG_RESULT([    iptables  . . . . . .
+ AC_MSG_RESULT([    ipstats . . . . . . . $enable_ipstats])
  AC_MSG_RESULT([    ipvs  . . . . . . . . $enable_ipvs])
  AC_MSG_RESULT([    irq . . . . . . . . . $enable_irq])
 +AC_MSG_RESULT([    iwinfo  . . . . . . . $enable_iwinfo])
@@ -46,7 +46,7 @@
  AC_MSG_RESULT([    logfile . . . . . . . $enable_logfile])
 --- a/src/collectd.conf.in
 +++ b/src/collectd.conf.in
-@@ -140,6 +140,7 @@
+@@ -145,6 +145,7 @@
  #@BUILD_PLUGIN_IPTABLES_TRUE@LoadPlugin iptables
  #@BUILD_PLUGIN_IPVS_TRUE@LoadPlugin ipvs
  #@BUILD_PLUGIN_IRQ_TRUE@LoadPlugin irq
@@ -54,7 +54,7 @@
  #@BUILD_PLUGIN_JAVA_TRUE@LoadPlugin java
  @BUILD_PLUGIN_LOAD_TRUE@@BUILD_PLUGIN_LOAD_TRUE@LoadPlugin load
  #@BUILD_PLUGIN_LPAR_TRUE@LoadPlugin lpar
-@@ -775,6 +776,12 @@
+@@ -813,6 +814,12 @@
  #	IgnoreSelected true
  #</Plugin>
  
@@ -69,7 +69,7 @@
  #	JVMArg "-Djava.class.path=@prefix@/share/collectd/java/collectd-api.jar"
 --- a/src/collectd.conf.pod
 +++ b/src/collectd.conf.pod
-@@ -3873,6 +3873,27 @@ and all other interrupts are collected.
+@@ -4164,6 +4164,27 @@ and all other interrupts are collected.
  
  =back
  
@@ -252,7 +252,7 @@
 +}
 --- a/src/types.db
 +++ b/src/types.db
-@@ -240,6 +240,7 @@ snr                     value:GAUGE:0:U
+@@ -258,6 +258,7 @@ snr                     value:GAUGE:0:U
  spam_check              value:GAUGE:0:U
  spam_score              value:GAUGE:U:U
  spl                     value:GAUGE:U:U
@@ -262,7 +262,7 @@
  sysevent                value:GAUGE:0:1
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -1165,6 +1165,14 @@ irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+@@ -1237,6 +1237,14 @@ irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  irq_la_LIBADD = libignorelist.la
  endif
  
