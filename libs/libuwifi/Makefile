@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libuwifi
-PKG_VERSION:=2019-12-05
-PKG_RELEASE:=3
+PKG_VERSION:=2020-03-10
+PKG_RELEASE:=4
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/br101/libuwifi.git
-PKG_SOURCE_VERSION:=089bfebd3a8da6e39fd93e33c44368b044c23dde
-PKG_MIRROR_HASH:=a99801ad1dfcf459b00adc582d5e6a31dae9ed10529d114e1e26f5760c6a74f8
+PKG_SOURCE_VERSION:=0bfb8949c7a766555042f64be3d5ea9f8ed52690
+PKG_MIRROR_HASH:=79be6f8b603bc76bae983ebd007a203c6ebfa069efbb233aaf09ccdff502310d
 
 PKG_MAINTAINER:=Bruno Randolf <br1@einfach.org>, Nick Hainke <vincent@systemli.org>
 PKG_LICENSE:=LGPL-3.0-only
