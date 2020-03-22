@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
 PKG_VERSION:=0.21.20
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.musicpd.org/download/mpd/0.21/
@@ -33,7 +33,7 @@ define Package/mpd/Default
   TITLE:=Music Player Daemon
   URL:=https://www.musicpd.org/
   DEPENDS:= +zlib +libcurl +libpthread +libmpdclient +libstdcpp $(ICONV_DEPENDS) \
-	    +AUDIO_SUPPORT:alsa-lib +boost +libexpat +libflac +USE_UCLIBC:icu
+	    +AUDIO_SUPPORT:alsa-lib +boost +libexpat +libflac +libfaad2 +USE_UCLIBC:icu
 endef
 
 define Package/mpd/Default/description
@@ -73,7 +73,7 @@ define Package/mpd-mini/description
 $(call Package/mpd/Default/description)
  .
  This package contains a minimal Music Player Daemon, with support for
- only Flac, MP3 & OGG media types & only file: & http: protocols.
+ only FLAC, AAC, MP3 & OGG media types & only file: & http: protocols.
 endef
 
 define Package/mpd-mini/conffiles
@@ -131,7 +131,7 @@ MESON_ARGS += \
 	-Dchromaprint=disabled \
 	-Dadplug=disabled \
 	-Daudiofile=disabled \
-	-Dfaad=disabled \
+	-Dfaad=enabled \
 	-Dflac=enabled \
 	-Dfluidsynth=disabled \
 	-Dgme=disabled \
