@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fdk-aac
 PKG_VERSION:=2.0.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mstorsjo/fdk-aac/tar.gz/v$(PKG_VERSION)?
@@ -23,7 +23,7 @@ PKG_BUILD_PARALLEL:=1
 
 PKG_CONFIG_DEPENDS:= CONFIG_FDK-AAC_OPTIMIZE_SPEED
 
-ifeq ($(CONFIG_BUILD_PATENTED),y)
+ifneq ($(CONFIG_BUILD_PATENTED),y)
 PATCH_DIR:=./patches-free
 endif
 
