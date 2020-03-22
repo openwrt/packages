@@ -21,20 +21,6 @@ PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
 
-CONFIGURE_ARGS+= \
-		--enable-shared \
-		--enable-static \
-		--disable-binreloc \
-		--with-pic \
-		--without-libiconv-prefix \
-		--without-libintl-prefix
-
-TARGET_CFLAGS+= $(FPIC) \
-		-ffunction-sections \
-		-fdata-sections
-
-TARGET_LDFLAGS += -Wl,--gc-sections
-
 define Package/miredo
 	SECTION:=net
 	CATEGORY:=Network
@@ -49,6 +35,24 @@ define Package/miredo/description
  the Teredo specification (client, relay and server). It is meant to provide
  IPv6 connectivity even from behind NAT devices.
 endef
+
+CONFIGURE_ARGS+= \
+	--enable-shared \
+	--enable-static \
+	--disable-binreloc \
+	--with-pic \
+	--without-libiconv-prefix \
+	--without-libintl-prefix
+
+CONFIGURE_VARS += \
+	ac_cv_header_sys_capability_h=no
+
+TARGET_CFLAGS+= \
+	$(FPIC) \
+	-ffunction-sections \
+	-fdata-sections
+
+TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Package/miredo/install
 	$(INSTALL_DIR) $(1)/usr/lib
