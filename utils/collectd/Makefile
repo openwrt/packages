@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
-PKG_VERSION:=5.10.0
-PKG_RELEASE:=4
+PKG_VERSION:=5.11.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
 	https://github.com/collectd/collectd/releases/download/collectd-$(PKG_VERSION)
-PKG_HASH:=a03359f563023e744c2dc743008a00a848f4cd506e072621d86b6d8313c0375b
+PKG_HASH:=37b10a806e34aa8570c1cafa6006c604796fae13cc2e1b3e630d33dcba9e5db2
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libltdl/aclocal.m4
@@ -32,12 +32,15 @@ COLLECTD_PLUGINS_DISABLED:= \
 	aquaero \
 	barometer \
 	battery \
+	buddyinfo \
+	capabilities \
 	ceph \
 	cgroups \
 	cpusleep \
 	curl_json \
 	curl_xml \
 	dbi \
+	dcpmm \
 	dpdkevents \
 	dpdkstat \
 	drbd \
@@ -53,8 +56,10 @@ COLLECTD_PLUGINS_DISABLED:= \
 	intel_rdt \
 	ipc \
 	ipmi \
+	ipstats \
 	ipvs \
 	java \
+	logparser \
 	log_logstash \
 	lvm \
 	lpar \
@@ -84,10 +89,12 @@ COLLECTD_PLUGINS_DISABLED:= \
 	pinba \
 	procevent \
 	python \
+	redfish \
 	redis \
 	rrdcached \
 	serial \
 	sigrok \
+	slurm \
 	smart \
 	snmp_agent \
 	statsd \
@@ -97,10 +104,12 @@ COLLECTD_PLUGINS_DISABLED:= \
 	tape \
 	tokyotyrant \
 	turbostat \
+	ubi \
 	uuid \
 	varnish \
 	virt \
 	vserver \
+	write_influxdb_udp \
 	write_kafka \
 	write_log \
 	write_mongodb \
