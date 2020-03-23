@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libupnp
 PKG_VERSION:=1.8.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/pupnp
@@ -47,6 +47,25 @@ endef
 define Package/libupnp-sample/description
 TVcontrolpoint & tvdevice sample applications run inside /etc/upnp-tvdevice/
 endef
+
+CONFIGURE_ARGS += \
+	--enable-client \
+	--enable-device \
+	--enable-gena \
+	--enable-reuseaddr \
+	--enable-gena \
+	--enable-webserver \
+	--enable-ssdp \
+	--enable-soap \
+	--enable-tools \
+	--enable-blocking_tcp_connections \
+	--enable-samples \
+	--disable-debug \
+	--disable-optssdp \
+	--disable-unspecified_server \
+	--disable-open_ssl \
+	--disable-scriptsupport \
+	--disable-postwrite
 
 TARGET_CFLAGS += -flto
 TARGET_LDFLAGS += -flto
