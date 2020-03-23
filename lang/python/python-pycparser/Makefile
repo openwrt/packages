@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pycparser
-PKG_VERSION:=2.19
-PKG_RELEASE:=2
+PKG_VERSION:=2.20
+PKG_RELEASE:=1
 
 PKG_SOURCE:=pycparser-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/p/pycparser
-PKG_HASH:=a988718abfad80b6b157acce7bf130a30876d27603738ac39f140993246b25b3
+PKG_HASH:=2d475327684562c3a96cc71adf7dc8c4f0565175cf86b6d7a404ff4c771f15f0
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-pycparser-$(PKG_VERSION)
 
