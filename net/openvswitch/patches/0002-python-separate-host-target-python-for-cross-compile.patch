@@ -1,41 +1,37 @@
-From e2d9b5d6fc33d7b9cbb7dc16832c5c86e6470966 Mon Sep 17 00:00:00 2001
-From: Yousong Zhou <zhouyousong@yunionyun.com>
-Date: Tue, 21 Aug 2018 12:21:05 +0000
-Subject: [PATCH 2/4] python: separate host/target python for cross-compile
-
-At the moment, python-six is a requirement for openvswitch python
-library on target machine.
+From c17f9e73b543043b438dee6759ae20047ee33d4a Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Fri, 20 Mar 2020 15:11:31 +0800
+Subject: [PATCH] python: separate host/target python for cross-compile
 
 Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
 ---
  Makefile.am       | 2 +-
- m4/openvswitch.m4 | 2 ++
- 2 files changed, 3 insertions(+), 1 deletion(-)
+ m4/openvswitch.m4 | 1 +
+ 2 files changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/Makefile.am b/Makefile.am
-index ff1f94b48..417f53230 100644
+index b279303d1..6140b2c7f 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -60,7 +60,7 @@ endif
  # foo/__init__.pyc will cause Python to ignore foo.py.
  run_python = \
  	PYTHONPATH=$(top_srcdir)/python$(psep)$$PYTHONPATH \
--	PYTHONDONTWRITEBYTECODE=yes $(PYTHON)
-+	PYTHONDONTWRITEBYTECODE=yes $(PYTHON_HOST)
+-	PYTHONDONTWRITEBYTECODE=yes $(PYTHON3)
++	PYTHONDONTWRITEBYTECODE=yes $(PYTHON3_HOST)
  
  ALL_LOCAL =
  BUILT_SOURCES =
 diff --git a/m4/openvswitch.m4 b/m4/openvswitch.m4
-index cd6b51d86..6dc9d630b 100644
+index add3aabcc..839eb7bda 100644
 --- a/m4/openvswitch.m4
 +++ b/m4/openvswitch.m4
-@@ -456,7 +456,9 @@ AC_DEFUN([OVS_CHECK_PYTHON],
-       fi])
-     AC_SUBST([PYTHON])
-     PYTHON=$ovs_cv_python
-+    PYTHON_HOST=$ovs_cv_python_host
-     AC_SUBST([HAVE_PYTHON])
-+    AM_MISSING_PROG([PYTHON_HOST], [python])
-     HAVE_PYTHON=yes
-     AM_CONDITIONAL([HAVE_PYTHON], [test "$HAVE_PYTHON" = yes])])
+@@ -383,6 +383,8 @@ else:
+      AC_MSG_ERROR([Python 3.4 or later is required but not found in $PATH, please install it or set $PYTHON3 to point to it])
+    fi
+    AC_ARG_VAR([PYTHON3])
++   PYTHON3_HOST=$ovs_cv_python3_host
++   AM_MISSING_PROG([PYTHON3_HOST], [python3])
+    PYTHON3=$ovs_cv_python3])
  
+ dnl Checks for flake8.

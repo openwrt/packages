@@ -1,13 +1,14 @@
 #
 # Copyright (C) 2013 Julius Schulz-Zander <julius@net.t-labs.tu-berlin.de>
 # Copyright (C) 2014-2017 OpenWrt.org
-# Copyright (C) 2018-2019 Yousong Zhou <yszhou4tech@gmail.com>
+# Copyright (C) 2018-2020 Yousong Zhou <yszhou4tech@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
+include ./openvswitch.mk
 
 # Checklist on version bump
 #
@@ -15,16 +16,17 @@ include $(INCLUDE_DIR)/kernel.mk
 #  - Check and update kmod dependencies when necessary (runtime module load check in the least)
 #
 PKG_NAME:=openvswitch
-PKG_VERSION:=2.12.0
-PKG_RELEASE:=4
+PKG_VERSION:=$(ovs_version)
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
-PKG_HASH:=13fd42703180b4b1146c7e97926d09225485868cc2fbbd58dc0c421b4b8fe8f8
+PKG_HASH:=dd5f727427e36cab22bdeae61529d8c8fccacc53d968cfa7658f7f935ddda531
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:openvswitch:openvswitch
 
+PKG_BUILD_DIR:=$(ovs_builddir)
 PKG_BUILD_DEPENDS+=python3/host python-six/host
 PKG_USE_MIPS16:=0
 PKG_BUILD_PARALLEL:=1
@@ -35,7 +37,6 @@ PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-host.mk
-include ../../lang/python/python-package.mk
 include ../../lang/python/python3-package.mk
 
 
@@ -154,31 +155,6 @@ ovs_kmod_openvswitch-lisp-intree_depends:= +kmod-openvswitch-intree
 ovs_kmod_openvswitch-lisp-intree_files:= $(ovs_kmod_intree_dir)/vport-lisp.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-lisp-intree))
 
-
-ovs_packages:=
-ovs_package_name=$(if $(filter openvswitch,$(1)),openvswitch,openvswitch-$(1))
-define OvsPackageTemplate
-  define Package/$(call ovs_package_name,$(1))
-     SECTION:=net
-     SUBMENU:=Open vSwitch
-     CATEGORY:=Network
-     URL:=https://www.openvswitch.org
-     TITLE:=$(ovs_$(1)_title)
-     HIDDEN:=$(ovs_$(1)_hidden)
-     DEPENDS:=$(ovs_$(1)_depends) +libatomic +libunbound
-  endef
-
-  define Package/$(call ovs_package_name,$(1))/install
-	$(foreach f,$(ovs_$(1)_files),
-		$(INSTALL_DIR) $$(1)/$(dir $(f))
-		$(CP) $(PKG_INSTALL_DIR)/$(f) $$(1)/$(dir $(f))
-	)
-	$(ovs_$(1)_install)
-  endef
-
-  ovs_packages+=$(call ovs_package_name,$(1))
-endef
-
 # Dependency review
 #
 #	for f in sbin/*;   do echo $f; readelf -d $f | grep -i shared; done
@@ -204,13 +180,6 @@ ovs_libovsdb_hidden:=1
 ovs_libovsdb_depends:=+librt
 ovs_libovsdb_files:=usr/lib/libovsdb*.so*
 $(eval $(call OvsPackageTemplate,libovsdb))
-
-
-ovs_libovn_title:=Open vSwitch (libovn.so)
-ovs_libovn_hidden:=1
-ovs_libovn_depends:=+librt
-ovs_libovn_files:=usr/lib/libovn*.so*
-$(eval $(call OvsPackageTemplate,libovn))
 
 
 ovs_vswitchd_title:=Open vSwitch (ovs-vswitchd)
@@ -264,46 +233,6 @@ ovs_openvswitch_files:= usr/share/openvswitch/vswitch.ovsschema
 $(eval $(call OvsPackageTemplate,openvswitch))
 
 
-ovs_ovn-common_title:=Open Virtual Network (common files)
-ovs_ovn-common_hidden:=1
-ovs_ovn-common_depends:=+librt +openvswitch-common +openvswitch-libopenvswitch +openvswitch-libovn +openvswitch-libovsdb
-ovs_ovn-common_files:= \
-	usr/share/openvswitch/scripts/ovn-ctl \
-	$(foreach b,ovn-nbctl ovn-sbctl ovn-trace ovn-detrace,usr/bin/$(b))
-define ovs_ovn-common_install
-	$$(INSTALL_DIR) $$(1)/usr/share/openvswitch/scripts
-	$$(LN) /usr/share/openvswitch/scripts/ovs-ctl-wrapper $$(1)/usr/bin/ovn-ctl
-endef
-$(eval $(call OvsPackageTemplate,ovn-common))
-
-
-ovs_ovn-north_title:=Open Virtual Network (north package)
-ovs_ovn-north_hidden:=
-ovs_ovn-north_depends:=+openvswitch-ovsdb +openvswitch-ovn-common
-ovs_ovn-north_files:=\
-	usr/share/openvswitch/ovn-nb.ovsschema \
-	usr/share/openvswitch/ovn-sb.ovsschema \
-	usr/bin/ovn-northd
-$(eval $(call OvsPackageTemplate,ovn-north))
-
-
-ovs_ovn-host_title:=Open Virtual Network (chassis package)
-ovs_ovn-host_hidden:=
-ovs_ovn-host_depends:=+openvswitch +openvswitch-ovn-common
-ovs_ovn-host_files:=usr/bin/ovn-controller
-$(eval $(call OvsPackageTemplate,ovn-host))
-
-
-ovs_python_title:=Open vSwitch (Python library)
-ovs_python_hidden:=
-ovs_python_depends:=+PACKAGE_openvswitch-python:python +PACKAGE_openvswitch-python:python-six
-define ovs_python_install
-	$$(INSTALL_DIR) $$(1)$$(PYTHON_PKG_DIR)
-	$$(CP) $$(PKG_INSTALL_DIR)/usr/share/openvswitch/python/ovs $$(1)$$(PYTHON_PKG_DIR)
-endef
-$(eval $(call OvsPackageTemplate,python))
-
-
 ovs_python3_title:=Open vSwitch (Python3 library)
 ovs_python3_hidden:=
 ovs_python3_depends:=+PACKAGE_openvswitch-python3:python3 +PACKAGE_openvswitch-python3:python3-six
@@ -322,10 +251,9 @@ CONFIGURE_ARGS+= \
 
 CONFIGURE_VARS += \
 	ovs_cv_flake8=no \
-	ovs_cv_python=$(PYTHON3) \
-	ovs_cv_python_host=$(HOST_PYTHON3_BIN) \
+	ovs_cv_python3=$(PYTHON3) \
+	ovs_cv_python3_host=$(HOST_PYTHON3_BIN) \
 	ovs_cv_sphinx=no \
-	ovs_cv_python2=no \
 	KARCH=$(LINUX_KARCH) \
 
 ovs_intree_kmod_configs:=CONFIG_PACKAGE_kmod-openvswitch-intree

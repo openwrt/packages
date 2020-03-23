@@ -5,9 +5,8 @@
 
 START=15
 
-ovs_script_dir=/usr/share/openvswitch/scripts
-ovs_ctl="$ovs_script_dir/ovs-ctl"; [ -x "$ovs_ctl" ] || ovs_ctl=:
-ovn_ctl="$ovs_script_dir/ovn-ctl"; [ -x "$ovn_ctl" ] || ovn_ctl=:
+ovs_ctl="/usr/share/openvswitch/scripts/ovs-ctl"; [ -x "$ovs_ctl" ] || ovs_ctl=:
+ovn_ctl="/usr/share/ovn/scripts/ovn-ctl"; [ -x "$ovn_ctl" ] || ovn_ctl=:
 
 EXTRA_COMMANDS=status
 
