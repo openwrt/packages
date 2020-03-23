@@ -21,6 +21,7 @@ add_instance() {
 	procd_open_instance
 	procd_set_param command $APP
 	procd_append_param command -s
+	procd_append_param command -Y json:/tmp/pagekite.status.json
 	[ $static -eq 1 ] && procd_append_param command -S
 	[ $simple_http -eq 1 ] && procd_append_param command 80 http $kitename 0 $kitesecret
 	[ $simple_ssh -eq 1 ] && procd_append_param command 22 raw-22 $kitename 0 $kitesecret
