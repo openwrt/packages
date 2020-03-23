@@ -43,6 +43,7 @@ COLLECTD_PLUGINS_DISABLED:= \
 	dcpmm \
 	dpdkevents \
 	dpdkstat \
+	dpdk_telemetry \
 	drbd \
 	fhcount \
 	genericjmx \
