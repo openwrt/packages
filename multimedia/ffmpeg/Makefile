@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=3.4.7
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
@@ -374,7 +374,8 @@ $(call Package/libffmpeg/Default)
  DEPENDS+= +alsa-lib +PACKAGE_libopus:libopus \
     +SOFT_FLOAT:shine \
     +!SOFT_FLOAT:lame-lib \
-    +PACKAGE_libx264:libx264
+    +PACKAGE_libx264:libx264 \
+    +!PACKAGE_libx264:fdk-aac
  VARIANT:=full
 endef
 
