@@ -1,10 +1,9 @@
-diff -r f24487b45cd0 setup.py
---- a/setup.py	Sun May 15 20:28:23 2016 -0700
-+++ b/setup.py	Wed Jul 27 22:49:13 2016 +0800
-@@ -63,15 +63,6 @@
-         version='1.1.6',
+--- a/setup.py
++++ b/setup.py
+@@ -71,15 +71,6 @@ data = dict(
+         version='1.1.10',
          url='https://bitbucket.org/stoneleaf/enum34',
-         packages=['enum'],
+         packages=packages,
 -        package_data={
 -            'enum' : [
 -                'LICENSE',
