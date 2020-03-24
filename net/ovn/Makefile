@@ -33,6 +33,7 @@ PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-host.mk
 
+ovs_common_depends:= +libatomic +libunbound
 
 ovs_libovn_title:=Open vSwitch (libovn.so)
 ovs_libovn_hidden:=1

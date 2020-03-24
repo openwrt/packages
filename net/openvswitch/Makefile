@@ -17,7 +17,7 @@ include ./openvswitch.mk
 #
 PKG_NAME:=openvswitch
 PKG_VERSION:=$(ovs_version)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
 PKG_HASH:=dd5f727427e36cab22bdeae61529d8c8fccacc53d968cfa7658f7f935ddda531
@@ -154,6 +154,8 @@ ovs_kmod_openvswitch-lisp-intree_title:=Open vSwitch LISP tunneling support (in 
 ovs_kmod_openvswitch-lisp-intree_depends:= +kmod-openvswitch-intree
 ovs_kmod_openvswitch-lisp-intree_files:= $(ovs_kmod_intree_dir)/vport-lisp.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-lisp-intree))
+
+ovs_common_depends:= +libatomic +libunbound +libunwind
 
 # Dependency review
 #
