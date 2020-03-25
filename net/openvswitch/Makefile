@@ -272,6 +272,8 @@ endif
 TARGET_CFLAGS += -flto -std=gnu99
 MAKE_VARS += PYTHONPATH="$(HOST_PYTHON3PATH)"
 
+override CONFIG_AUTOREMOVE=
+
 $(foreach p,$(ovs_kmod_packages),\
   $(eval $(call KernelPackage,$(p)))\
 )
