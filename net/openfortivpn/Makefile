@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openfortivpn
-PKG_VERSION:=1.10.0
+PKG_VERSION:=1.13.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/adrienverge/openfortivpn/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=d6ea0c84c0cf811530073fa19865334bb42ab10a780157fe95c4efb3476ad58d
+PKG_HASH:=998fb2b071cdfe3255c2f953cafc6e1496778f9a71dd5aa560b924a44636df87
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later OpenSSL
@@ -44,6 +44,8 @@ endef
 CONFIGURE_ARGS += \
 	--enable-proc \
 	--with-rt_dst="yes" \
+	--disable-resolvconf \
+	--with-resolvconf=DISABLED \
 	--with-pppd="/usr/sbin/pppd"
 
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
