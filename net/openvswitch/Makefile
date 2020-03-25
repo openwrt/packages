@@ -57,7 +57,7 @@ ifeq ($(if $(call ovs_kmod_is_intree,$(1)),$(ovs_kmod_intree_not_supported)),)
      CATEGORY:=Kernel modules
      SUBMENU:=Network Support
      TITLE:=$(ovs_kmod_$(1)_title)
-     DEPENDS:=$(ovs_kmod_$(1)_depends) $(if $(call ovs_kmod_is_intree,$(1)),@DEVEL)
+     DEPENDS:=$(ovs_kmod_$(1)_depends) $(if $(call ovs_kmod_is_intree,$(1)),@IPV6 @DEVEL)
      PROVIDES:=$(call ovs_kmod_package_provides,$(1))
      KCONFIG:=$(ovs_kmod_$(1)_kconfig)
      FILES:=$(ovs_kmod_$(1)_files)
