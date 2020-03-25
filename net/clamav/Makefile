@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=clamav
-PKG_VERSION:=0.101.4
+PKG_VERSION:=0.102.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.clamav.net/downloads/production/
-PKG_HASH:=0bf094f0919d158a578421d66bc2569c8c8181233ba162bb51722f98c802bccd
+PKG_HASH:=89fcdcc0eba329ca84d270df09d2bb89ae55f5024b0c3bddb817512fb2c907d3
 
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr> \
 		Lucian Cristian <lucian.cristian@gmail.com>
@@ -97,6 +97,7 @@ define Package/clamav/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/clamconf $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/clamdscan $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/clamscan $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/clamonacc $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/sigtool $(1)/usr/sbin/
 
 	$(INSTALL_DIR) $(1)/usr/lib
