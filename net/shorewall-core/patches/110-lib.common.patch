@@ -1,8 +1,8 @@
-Index: shorewall-core-5.1.7.2/lib.common
+Index: shorewall-core-5.2.4/lib.common
 ===================================================================
---- shorewall-core-5.1.7.2.orig/lib.common	2017-10-11 08:01:06.191862789 +0200
-+++ shorewall-core-5.1.7.2/lib.common	2017-10-11 08:01:06.187863006 +0200
-@@ -345,7 +345,7 @@
+--- shorewall-core-5.2.4.orig/lib.common	2020-03-25 22:16:13.640263032 +0100
++++ shorewall-core-5.2.4/lib.common	2020-03-25 22:16:13.640263032 +0100
+@@ -347,7 +347,7 @@
  
      if [ -z "$MODULESDIR" ]; then
  	uname=$(uname -r)
@@ -11,7 +11,7 @@ Index: shorewall-core-5.1.7.2/lib.common
  	if [ -n "$extras" ]; then
  	    for directory in $(split "$extras"); do
  		MODULESDIR="$MODULESDIR:/lib/modules/$uname/$directory"
-@@ -399,7 +399,7 @@
+@@ -401,7 +401,7 @@
  
      if [ -z "$MODULESDIR" ]; then
  	uname=$(uname -r)
