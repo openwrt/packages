@@ -1,10 +1,7 @@
 #!/bin/sh
 # ubus monitor to trace dns backend events and conditionally restart adblock
-# written by Dirk Brenken (dev@brenken.org)
-
+# Copyright (c) 2015-2020 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
@@ -32,9 +29,9 @@ f_log()
 
 if [ -x "${adb_ubus}" ] && [ -n "${adb_dns}" ]
 then
-	f_log "info" "ubus/adblock service started"
+	f_log "info" "ubus/adblock monitor started"
 	"${adb_ubus}" -S -M r -m invoke monitor | \
 		{ grep -qE "\"method\":\"(set|signal)\",\"data\":\{\"name\":\"${adb_dns}\""; [ $? -eq 0 ] && /etc/init.d/adblock start; }
 else
-	f_log "err" "can't start ubus/adblock service"
+	f_log "err" "can't start ubus/adblock monitor"
 fi
