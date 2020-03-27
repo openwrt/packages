@@ -21,7 +21,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/nft-qos
   SECTION:=utils
   CATEGORY:=Base system
-  DEPENDS:=+nftables +kmod-nft-netdev +kmod-nft-bridge
+  DEPENDS:=+kmod-nft-netdev +kmod-nft-bridge +nftables
   TITLE:=QoS scripts over nftables
   PKGARCH:=all
 endef
