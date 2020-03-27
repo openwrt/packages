@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grilo-plugins
 PKG_VERSION:=0.3.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPLv2.1
@@ -17,7 +17,6 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/grilo-plugins/0.3/
 PKG_HASH:=dde2e605b1994341c6bf012493e056b406b08571834dea3b3c671d5b8b1dcd73
 
-PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=meson/host
 
@@ -61,6 +60,7 @@ MESON_ARGS += \
 	-Denable-thetvdb=no \
 	-Denable-tmdb=no \
 	-Denable-freebox=no \
+	--wrap-mode=nodownload
 
 define Package/grilo-plugins/install
 	$(INSTALL_DIR) $(1)/usr/lib/grilo-0.3
