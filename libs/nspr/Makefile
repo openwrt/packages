@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nspr
 PKG_VERSION:=4.25
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENCE:=MPL-2.0
 
