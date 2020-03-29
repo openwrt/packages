@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gammu
 PKG_VERSION:=1.41.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://dl.cihar.com/gammu/releases
@@ -24,7 +24,6 @@ CMAKE_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/gammu
@@ -32,22 +31,14 @@ define Package/gammu
 	CATEGORY:=Utilities
 	TITLE:=Cell phone/modem SMS and control tool
 	URL:=https://wammu.eu/gammu/
-	DEPENDS:=+libpthread +libcurl +glib2 $(ICONV_DEPENDS) $(INTL_DEPENDS)
+	DEPENDS:=+libpthread +libcurl +glib2
 	DEPENDS+=+PACKAGE_bluez-libs:bluez-libs
 	DEPENDS+=+PACKAGE_libmariadb:libmariadb +PACKAGE_unixodbc:unixodbc +PACKAGE_libpq:libpq
 	DEPENDS+=+PACKAGE_libusb-1.0:libusb-1.0
 endef
 
-CMAKE_OPTIONS += -DWITH_LibDBI:BOOL=OFF
-ifneq ($(INTL_FULL),)
-CMAKE_OPTIONS += -DLIBINTL_INCLUDE_DIRS:PATH=$(INTL_PREFIX)/include
-CMAKE_OPTIONS += -DLIBINTL_LIBRARIES:STRING=intl
-endif
-ifneq ($(ICONV_FULL),)
-CMAKE_OPTIONS += -DDISABLE_ICONV=OFF
-CMAKE_OPTIONS += -DICONV_INCLUDE_DIRS:PATH=$(ICONV_PREFIX)/include
-CMAKE_OPTIONS += -DICONV_LIBRARIES:STRING=iconv
-endif
+CMAKE_OPTIONS += \
+	-DWITH_LibDBI:BOOL=OFF
 
 define Package/gammu/install
 	$(INSTALL_DIR) $(1)/usr/bin
