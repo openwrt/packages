@@ -130,6 +130,7 @@ In the Web UI the ```simple-adblock``` settings are split into ```basic``` and `
 |Basic|force_dns|boolean|1|Force router's DNS to local devices which may have different/hardcoded DNS server settings. If enabled, creates a firewall rule to intercept DNS requests from local devices to external DNS servers and redirect them to router.|
 |Basic|led|string|none|Use one of the router LEDs to indicate the AdBlocking status.|
 |Advanced|dns|string|dnsmasq.servers|DNS resolution option. See [table below](#dns-resolution-option) for addtional information.|
+||dns_instance|string|0|String of space-separated DNSMASQ instance numbers (or '*' for all) to be affected by the service. See [table below](#dns-resolution-option) for addtional information.|
 |Advanced|ipv6_enabled|boolean|0|Add IPv6 entries to block-list if ```dnsmasq.addnhosts``` is used. This option is only visible in Web UI if the ```dnsmasq.addnhosts``` is selected as the DNS resolution option.|
 |Advanced|boot_delay|integer|120|Delay service activation for that many seconds on boot up. You can shorten it to 10-30 seconds on modern fast routers. Routers with built-in modems may require longer boot delay.|
 |Advanced|download_timeout|integer|10|Time-out downloads if no reply received within that many last seconds.|
@@ -149,10 +150,10 @@ Currently supported options are:
 
 |Option|Explanation|
 | --- | --- |
-|```dnsmasq.addnhosts```|Creates the DNSMASQ additional hosts file ```/var/run/simple-adblock.addnhosts``` and modifies DNSMASQ settings, so that DNSMASQ resolves all blocked domains to "local machine": 127.0.0.1. This option doesn't allow block-list optimization (by removing secondary level domains if the top-level domain is also in the block-list), so it results in a much larger block-list file, but, unlike other DNSMASQ-based options, it has almost no effect on the DNS look up speed. This option also allows quick reloads of DNSMASQ on block-list updates.|
+|```dnsmasq.addnhosts```|Creates the DNSMASQ additional hosts file ```/var/run/simple-adblock.addnhosts``` and modifies DNSMASQ settings, so that DNSMASQ resolves all blocked domains to "local machine": 127.0.0.1. This option doesn't allow block-list optimization (by removing secondary level domains if the top-level domain is also in the block-list), so it results in a much larger block-list file, but, unlike other DNSMASQ-based options, it has almost no effect on the DNS look up speed. This option also allows quick reloads of DNSMASQ on block-list updates. This setting also allows you to configure which DNSMASQ instances would be affected by AdBlocking via ```dns_instance``` option.|
 |```dnsmasq.conf```|Creates the DNSMASQ config file ```/var/dnsmasq.d/simple-adblock``` so that DNSMASQ replies with NXDOMAIN: "domain not found". This option allows the block-list optimization (by removing secondary level domains if the top-level domain is also in the block-list), resulting in the smaller block-list file. This option will slow down DNS look up speed somewhat.|
 |```dnsmasq.ipset```|Creates the DNSMASQ ipset file ```/var/dnsmasq.d/simple-adblock.ipset``` and the firewall rule to reject the matching requests. This is the only option for AdBlocking if you're using a browser with [DNS-over-HTTPS proxy](https://en.wikipedia.org/wiki/DNS_over_HTTPS) built-in, like [Mozilla Firefox](https://support.mozilla.org/en-US/kb/firefox-dns-over-https#w_about-dns-over-https) or [Google Chrome/Chromium](https://blog.chromium.org/2019/09/experimenting-with-same-provider-dns.html). This option allows the block-list optimization (by removing secondary level domains if the top-level domain is also in the block-list), resulting in the smaller block-list file. This option requires you install ```dnsmasq-full``` and ```ipset``` [as described here](#how-to-use-dnsmasq-ipset).<br/>PLEASE NOTE, that unlike other options which are truly domain name based blocking, this is essentially an IP address based blocking, ie: if you try to block ```google-analytics.com``` with this option, it may also block/break things like YouTube, Hangouts and other Google services if they share IP address(es) with ```google-analytics.com```.|
-|```dnsmasq.servers```|Creates the DNSMASQ servers file ```/var/run/simple-adblock.servers``` and modifies DNSMASQ settings so that DNSMASQ replies with NXDOMAIN: "domain not found". This option allows the block-list optimization (by removing secondary level domains if the top-level domain is also in the block-list), resulting in the smaller block-list file. This option will slow down DNS look up speed somewhat. This is a default setting as it results in the smaller block-file and allows quick reloads of DNSMASQ.|
+|```dnsmasq.servers```|Creates the DNSMASQ servers file ```/var/run/simple-adblock.servers``` and modifies DNSMASQ settings so that DNSMASQ replies with NXDOMAIN: "domain not found". This option allows the block-list optimization (by removing secondary level domains if the top-level domain is also in the block-list), resulting in the smaller block-list file. This option will slow down DNS look up speed somewhat. This is a default setting as it results in the smaller block-file and allows quick reloads of DNSMASQ. This setting also allows you to configure which DNSMASQ instances would be affected by AdBlocking via ```dns_instance``` option.|
 |```unbound.adb_list```|Creates the Unbound config file ```/var/lib/unbound/adb_list.simple-adblock``` so that Unbound replies with NXDOMAIN: "domain not found". This option allows the block-list optimization (by removing secondary level domains if the top-level domain is also in the block-list), resulting in the smaller block-list file.|
 
 ## How Does It Work
@@ -178,6 +179,14 @@ For most of the [DNS Resolution Options](#dns-resolution-option) to work, your l
       - Enabling ```simple-adblock```'s ```force_dns``` setting to override the hardcoded DNS on your device.
   4. By using the DNS-over-TLS, DNS-over-HTTPS or DNSCrypt on your local device or (if supported) by browser on your local device. You can fix this only by:
       - Stopping/removing/disabling DNS-over-TLS, DNS-over-HTTPS or DNSCrypt on your local device and using the secure DNS on your router instead. There are merits to all three of the options above, I can recommend the ```https_dns_proxy``` and ```luci-app-https_dns_proxy``` packages for enabling DNS-over-HTTPS on your router.
+  5. If you are running a wireguard "server" on your router and remote clients connect to it, the AdBlocking may not work properly for your remote clients until you add the following to ```/etc/network``` (credit to [dibdot](https://forum.openwrt.org/t/wireguard-and-adblock/49351/6)):
+
+      ```sh
+      config route
+        option interface 'wg0'
+        option target '192.168.1.0'
+        option netmask '255.255.255.0'
+      ```
 
 ## Documentation / Discussion
 
