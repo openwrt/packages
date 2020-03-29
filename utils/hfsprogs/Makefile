@@ -9,18 +9,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hfsprogs
 PKG_VERSION:=332.25
-PKG_RELEASE:=3
-
-PKG_LICENSE:=GPL-3.0-or-later
-PKG_LICENSE_FILES:=COPYING
-
-PKG_MAINTAINER:=
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
 PKG_SOURCE_URL:=http://archive.ubuntu.com/ubuntu/pool/universe/h/$(PKG_NAME)
-PKG_BUILD_DIR:=$(BUILD_DIR)/diskdev_cmds-$(PKG_VERSION)
 PKG_HASH:=74c9aeca899ed7f4bf155c65fc45bf0f250c0f6d57360ea953b1d536d9aa45e6
-PKG_LICENSE:=APSL 2.0
+PKG_BUILD_DIR:=$(BUILD_DIR)/diskdev_cmds-$(PKG_VERSION)
+
+PKG_MAINTAINER:=
+PKG_LICENSE:=APSL-2.0
+PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
