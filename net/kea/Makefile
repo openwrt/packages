@@ -149,7 +149,6 @@ HOST_CONFIGURE_ARGS += \
 	--with-log4cplus="$(STAGING_DIR_HOSTPKG)" \
 	--with-openssl="$(STAGING_DIR_HOST)" \
 	--enable-boost-headers-only \
-	--enable-static-link \
 	--enable-generate-messages
 
 HOST_LDFLAGS += \
