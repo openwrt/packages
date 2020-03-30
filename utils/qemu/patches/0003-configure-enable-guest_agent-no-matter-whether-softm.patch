@@ -1,8 +1,8 @@
 From 296215421441b73bc6eb487f1d4e7e15e0510a77 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Fri, 7 Feb 2020 03:02:44 +0800
-Subject: [PATCH 3/5] configure: enable guest_agent no matter whether softmmu
- is enabled
+Subject: [PATCH] configure: enable guest_agent no matter whether softmmu is
+ enabled
 
 guest_agent as a tool to be run on guest machines does not depend on
 whether there is a softmmu is to be built at this configure/make run

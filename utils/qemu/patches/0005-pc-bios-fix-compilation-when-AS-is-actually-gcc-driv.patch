@@ -1,8 +1,7 @@
 From b6223a90ebbb5729e41b4fcb3bc9ac309ec04784 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Sat, 24 Feb 2018 13:46:31 +0800
-Subject: [PATCH 5/5] pc-bios: fix compilation when $(AS) is actually gcc
- driver
+Subject: [PATCH] pc-bios: fix compilation when $(AS) is actually gcc driver
 
 ---
  pc-bios/optionrom/Makefile | 4 ++--

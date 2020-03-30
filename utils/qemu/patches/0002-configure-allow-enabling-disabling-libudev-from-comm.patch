@@ -1,8 +1,7 @@
 From 2a6ab8342245c8dc2a09478d8eb0292e2dbcecf2 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Tue, 2 Apr 2019 06:31:31 +0000
-Subject: [PATCH 2/5] configure: allow enabling/disabling libudev from command
- line
+Subject: [PATCH] configure: allow enabling/disabling libudev from command line
 
 ---
  configure | 4 ++++
