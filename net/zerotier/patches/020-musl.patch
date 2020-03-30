@@ -1,0 +1,25 @@
+--- a/osdep/OSUtils.hpp
++++ b/osdep/OSUtils.hpp
+@@ -37,9 +37,6 @@
+ #include <sys/time.h>
+ #include <sys/stat.h>
+ #include <arpa/inet.h>
+-#ifdef __LINUX__
+-#include <sys/syscall.h>
+-#endif
+ #endif
+ 
+ #ifndef OMIT_JSON_SUPPORT
+@@ -211,11 +208,8 @@ public:
+ 		return (int64_t)( ((tmp.QuadPart - 116444736000000000LL) / 10000L) + st.wMilliseconds );
+ #else
+ 		struct timeval tv;
+-#ifdef __LINUX__
+-		syscall(SYS_gettimeofday,&tv,0); /* fix for musl libc broken gettimeofday bug */
+-#else
+ 		gettimeofday(&tv,(struct timezone *)0);
+-#endif
++
+ 		return ( (1000LL * (int64_t)tv.tv_sec) + (int64_t)(tv.tv_usec / 1000) );
+ #endif
+ 	};
