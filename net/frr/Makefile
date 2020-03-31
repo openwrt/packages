@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
 PKG_VERSION:=7.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://github.com/FRRouting/frr/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -82,7 +82,7 @@ endef
 define Package/frr-libfrr
   $(call Package/frr/Default)
   TITLE:=zebra library
-  DEPENDS+=+librt +libjson-c +libyang +FRR_OPENSSL:libopenssl
+  DEPENDS+=+librt +libatomic +libjson-c +libyang +FRR_OPENSSL:libopenssl
   CONFLICTS:=quagga-libzebra
 endef
 
@@ -143,6 +143,8 @@ endef
 define Package/frr-libfrr/conffiles
 /etc/frr/
 endef
+
+TARGET_LDFLAGS += -latomic
 
 define Build/Prepare
 	$(Build/Prepare/Default)
