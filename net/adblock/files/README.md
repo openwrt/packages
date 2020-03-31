@@ -130,7 +130,6 @@ Available commands:
 | :---------------- | :------------------------ | :--------------------------------------------------------------------------------------------- |
 | adb_enabled       | 1, enabled                | set to 0 to disable the adblock service                                                        |
 | adb_dns           | -, auto-detected          | 'dnsmasq', 'unbound', 'named', 'kresd' or 'raw'                                                |
-| adb_dnsdir        | -, auto-detected          | path for the generated blocklist file 'adb_list.overall'                                       |
 | adb_fetchutil     | -, auto-detected          | 'uclient-fetch', 'wget', 'curl' or 'aria2c'                                                    |
 | adb_fetchparm     | -, auto-detected          | special config options for the selected download utility                                       |
 | adb_trigger       | -, not set                | trigger network interface or 'not set' to use a time-based startup                             |
@@ -139,11 +138,13 @@ Available commands:
 | adb_nice          | 0, standard prio.         | valid nice level range 0-19 of the adblock processes                                           |
 | adb_forcedns      | 0, disabled               | set to 1 to force DNS requests to the local resolver                                           |
 | adb_maxqueue      | 4                         | size of the download queue to handle downloads & list processing in parallel                   |
+| adb_dnsdir        | -, auto-detected          | path for the generated blocklist file 'adb_list.overall'                                       |
+| adb_dnstimeout    | 10                        | timeout in seconds to wait for a successful DNS backend restart                                |
+| adb_dnsinstance   | 0, first instance         | set to the relevant dns backend instance used by adblock (dnsmasq only)                        |
 | adb_dnsfilereset  | 0, disabled               | set to 1 to purge the final DNS blocklist file after DNS backend loading                       |
 | adb_dnsflush      | 0, disabled               | set to 1 to flush the DNS Cache before & after adblock processing                              |
 | adb_dnsinotify    | -, not set                | set to 1 to prevent adblock triggered restarts for DNS backends with autoload functions        |
 | adb_dnsallow      | -, not set                | set to 1 to disable selective DNS whitelisting (RPZ pass through)                              |
-| adb_dnstimeout    | 10                        | timeout in seconds to wait for a successful DNS backend restart                                |
 | adb_lookupdomain  | example.com               | external domain to check for a successful DNS backend restart or 'false' to disable this check |
 | adb_portlist      | 53 853 5353               | space separated list of firewall ports which should be redirected locally                      |
 | adb_report        | 0, disabled               | set to 1 to enable the background tcpdump gathering process for reporting                      |
@@ -253,7 +254,7 @@ This file is directly parsed in LuCI and accessible via CLI, just call _/etc/ini
   + yoyo                 x         S      general             https://pgl.yoyo.org
 </code></pre>
 
-To add new or edit existing sources extract the compressed JSON file _gunzip /etc/adblock/adblock.sources.gz_. 
+To add new or edit existing sources extract the compressed JSON file _gunzip /etc/adblock/adblock.sources.gz_.  
 A valid JSON source object contains the following required information, e.g.:
 <pre><code>
 	[...]
