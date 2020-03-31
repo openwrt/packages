@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
 PKG_VERSION:=7.1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/haiwen/seafile-server/tar.gz/v$(PKG_VERSION)-server?
@@ -28,7 +28,6 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include ../../lang/python/python-package.mk
 include ../../lang/python/python3-package.mk
 
 # Check that the actual Makefile version-relase match the above.
@@ -127,7 +126,7 @@ CONFIGURE_ARGS += \
 	--enable-python \
 	--with-mysql="$(STAGING_DIR)/usr/bin/mysql_config"
 
-# This is required as python[3]-package.mk overrides the default setting of having interlinking enabled
+# This is required as python3-package.mk overrides the default setting of having interlinking enabled
 ifdef CONFIG_USE_MIPS16
   TARGET_CFLAGS += -minterlink-mips16
 endif
@@ -162,10 +161,8 @@ SEAFILE_SERVER_PYTHON_SCRIPTS:= \
 	setup-seafile-mysql.py \
 	sqlite2mysql.py
 
-# Include Python 2 bindings in this package to maintain compatibility with previous versions
 define Package/seafile-server/install
 	$(INSTALL_DIR) $(1)/usr/{bin,libexec}
-	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)/{seafile,seaserv}
 	$(INSTALL_DIR) $(1)/usr/share/seafile/seafile-server
 	$(INSTALL_DIR) $(1)/etc/{config,init.d,seafile}
 	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
@@ -173,9 +170,6 @@ define Package/seafile-server/install
 	for bin in $(SEAFILE_SERVER_BINARIES) ; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$$$$bin $(1)/usr/libexec/ ; \
 	done
-
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/python/seafile/*.py $(1)$(PYTHON_PKG_DIR)/seafile/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/python/seaserv/*.py $(1)$(PYTHON_PKG_DIR)/seaserv/
 
 	for sh in $(SEAFILE_SERVER_SHELL_SCRIPTS) ; do \
 		$(INSTALL_BIN) $(PKG_BUILD_DIR)/scripts/$$$$sh $(1)/usr/bin/$$$${sh%.sh} ; \
@@ -201,7 +195,6 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/seafile
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/seafile/*.h $(1)/usr/include/seafile/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libseafile.pc $(1)/usr/lib/pkgconfig/
 endef
