@@ -11,7 +11,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-adb_ver="4.0.0"
+adb_ver="4.0.1"
 adb_enabled=0
 adb_debug=0
 adb_forcedns=0
@@ -354,7 +354,7 @@ f_fetch()
 		do
 			if { [ "${util}" = "uclient-fetch" ] && [ -n "$(printf "%s" "${adb_packages}" | grep "^libustream-")" ]; } || \
 				{ [ "${util}" = "wget" ] && [ -n "$(printf "%s" "${adb_packages}" | grep "^wget -")" ]; } || \
-				{ [ "${util}" != "uclient-fetch" ] && [ "${util}" != "wget" ]; }
+				[ "${util}" = "curl" ] || [ "${util}" = "aria2c" ]
 			then
 				if [ -x "$(command -v "${util}")" ]
 				then
@@ -960,7 +960,7 @@ f_switch()
 #
 f_query()
 {
-	local search result prefix suffix field domain="${1}" tld="${1#*.}"
+	local search result prefix suffix field query_start query_end query_timeout=30 domain="${1}" tld="${1#*.}"
 
 	if [ -z "${domain}" ] || [ "${domain}" = "${tld}" ]
 	then
@@ -993,6 +993,7 @@ f_query()
 				field=1
 			;;
 		esac
+		query_start="$(date "+%s")"
 		if [ "${adb_dnsfilereset}" -eq 0 ]
 		then
 			while [ "${domain}" != "${tld}" ]
@@ -1024,6 +1025,12 @@ f_query()
 				if [ "${?}" -eq 0 ]
 				then
 					result="true"
+					query_end="$(date "+%s")"
+					if [ "$((query_end-query_start))" -gt "${query_timeout}" ]
+					then
+						printf "%s\\n\\n" "  - [...]"
+						break
+					fi
 				fi
 			done
 			if [ "${result}" != "true" ]
@@ -1097,7 +1104,7 @@ f_jsnup()
 		json_close_object
 	done
 	json_close_array
-	json_add_string "dns_backend" "${adb_dns}, ${adb_dnsdir}"
+	json_add_string "dns_backend" "${adb_dns:-"-"}, ${adb_dnsdir:-"-"}"
 	json_add_string "run_utils" "${utils:-"-"}"
 	json_add_string "run_ifaces" "trigger: ${adb_trigger:-"-"}, report: ${adb_repiface:-"-"}"	
 	json_add_string "run_directories" "base: ${adb_tmpbase}, backup: ${adb_backupdir}, report: ${adb_reportdir}, jail: ${adb_jaildir}"
