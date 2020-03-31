@@ -26,7 +26,6 @@ PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
-include $(TOPDIR)/feeds/packages/lang/python/python-package.mk
 include $(TOPDIR)/feeds/packages/lang/python/python3-package.mk
 
 CMAKE_OPTIONS=-DENABLEEXAMPLES=0 \
@@ -74,18 +73,6 @@ $(call Package/libmraa/Default/description)
 This package contains the Node.js libraries.
 endef
 
-define Package/libmraa-python
-  $(call Package/libmraa/Default)
-  TITLE:=Eclipse MRAA lowlevel IO Python library
-  DEPENDS:=+libmraa +python-light
-endef
-
-define Package/libmraa-python/description
-$(call Package/libmraa/Default/description)
-
-This package contains the Python libraries.
-endef
-
 define Package/libmraa-python3
   $(call Package/libmraa/Default)
   TITLE:=Eclipse MRAA lowlevel IO Python3 library
@@ -110,12 +97,6 @@ define Package/libmraa-node/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/mraa/* $(1)/usr/lib/node/mraa/
 endef
 
-define Package/libmraa-python/install
-	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/site-packages
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/site-packages/* \
-		$(1)/usr/lib/python$(PYTHON_VERSION)/site-packages/
-endef
-
 define Package/libmraa-python3/install
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/site-packages/* \
@@ -124,5 +105,4 @@ endef
 
 $(eval $(call BuildPackage,libmraa))
 $(eval $(call BuildPackage,libmraa-node))
-$(eval $(call BuildPackage,libmraa-python))
 $(eval $(call BuildPackage,libmraa-python3))
