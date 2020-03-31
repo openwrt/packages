@@ -23,7 +23,6 @@ PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-i2c-tools-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-include ../../lang/python/python-package.mk
 include ../../lang/python/python3-package.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xJf $(DL_DIR)/$(PKG_SOURCE)
@@ -50,23 +49,13 @@ define Package/i2c-tools
   VARIANT:=bin
 endef
 
-define Package/python-smbus
-  $(call Package/i2c/Default)
-  SUBMENU:=Python
-  SECTION:=lang
-  CATEGORY:=Languages
-  TITLE:=Python bindings for the SMBUS
-  DEPENDS:=+PACKAGE_python-smbus:libi2c +PACKAGE_python-smbus:python-light
-  VARIANT:=python
-endef
-
 define Package/python3-smbus
   $(call Package/i2c/Default)
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Python bindings for the SMBUS
-  DEPENDS:=+PACKAGE_python3-smbus:libi2c +PACKAGE_python3-smbus:python3-light
+  DEPENDS:=+libi2c +python3-light
   VARIANT:=python3
 endef
 
@@ -77,10 +66,6 @@ endef
 define Package/i2c-tools/description
  This package contains an heterogeneous set of I2C tools for Linux. These tools
  were originally part of the lm-sensors package.
-endef
-
-define Package/python-smbus/description
- This package contain the python bindings for Linux SMBus access through i2c-dev.
 endef
 
 define Package/python3-smbus/description
@@ -106,10 +91,7 @@ endef
 
 endif # ifeq
 
-PYTHON_PKG_SETUP_ARGS:=
 PYTHON3_PKG_SETUP_ARGS:=
-
-PYTHON_PKG_SETUP_DIR:=py-smbus
 PYTHON3_PKG_SETUP_DIR:=py-smbus
 
 define Package/libi2c/install
@@ -128,7 +110,5 @@ endef
 
 $(eval $(call BuildPackage,libi2c))
 $(eval $(call BuildPackage,i2c-tools))
-$(eval $(call PyPackage,python-smbus))
-$(eval $(call BuildPackage,python-smbus))
 $(eval $(call Py3Package,python3-smbus))
 $(eval $(call BuildPackage,python3-smbus))
