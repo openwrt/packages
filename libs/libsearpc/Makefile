@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsearpc
 PKG_VERSION:=3.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/haiwen/libsearpc/tar.gz/v$(PKG_VERSION)?
@@ -25,7 +25,6 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include ../../lang/python/python-package.mk
 include ../../lang/python/python3-package.mk
 
 define Package/libsearpc
@@ -70,13 +69,9 @@ define Build/InstallDev
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/searpc-codegen.py $(1)/usr/bin/
 endef
 
-# Include Python 2 bindings in this package to maintain compatibility with previous versions
 define Package/libsearpc/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)/pysearpc
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsearpc.so* $(1)/usr/lib/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/pysearpc/*.py $(1)$(PYTHON_PKG_DIR)/pysearpc/
-	rm -f $(1)$(PYTHON_PKG_DIR)/pysearpc/{pygencode,test_pysearpc}.py
 endef
 
 define Py3Build/Compile
