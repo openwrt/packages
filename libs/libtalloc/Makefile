@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=talloc
 PKG_VERSION:=2.3.1
 MAJOR_VERSION:=2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.samba.org/ftp/talloc
@@ -18,8 +18,6 @@ PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=LGPL-3.0-or-later
 
 PKG_BUILD_PARALLEL:=0
-
-HOST_BUILD_DEPENDS:=python/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/kernel.mk

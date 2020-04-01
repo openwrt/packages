@@ -64,7 +64,6 @@ This package provides the following run-time libraries:
  - log
  - math
  - program_options
- - python
  - python3
  - random
  - regex
@@ -80,10 +79,7 @@ There are many more header-only libraries supported by Boost.
 See more at http://www.boost.org/doc/libs/1_72_0/
 endef
 
-PKG_BUILD_DEPENDS:=boost/host PACKAGE_python:python PACKAGE_python3:python3
-
-include ../../lang/python/python-version.mk
-BOOST_PYTHON_VER=$(PYTHON_VERSION)
+PKG_BUILD_DEPENDS:=boost/host PACKAGE_python3:python3
 
 include ../../lang/python/python3-version.mk
 BOOST_PYTHON3_VER=$(PYTHON3_VERSION)
@@ -283,10 +279,10 @@ define Package/boost/config
 
 		$(foreach lib,$(BOOST_LIBS), \
 			config PACKAGE_boost-$(lib)
-			prompt "Boost $(lib) $(if $(findstring python,$(lib)),$(paren_left)v$(if $(findstring 3,$(lib)),$(BOOST_PYTHON3_VER),$(BOOST_PYTHON_VER))$(paren_right) ,)library."
+			prompt "Boost $(lib) $(if $(findstring python3,$(lib)),$(paren_left)v$(BOOST_PYTHON3_VER)$(paren_right) ,)library."
 			default m if ALL
 			$(if $(findstring locale,$(lib)),depends on BUILD_NLS,)\
-			$(if $(findstring python,$(lib)),depends on PACKAGE_$(lib),)\
+			$(if $(findstring python3,$(lib)),depends on PACKAGE_python3,)\
 			$(if $(findstring fiber,$(lib)),depends on !boost-fiber-exclude,)\
 			$(if $(findstring context,$(lib)),depends on !boost-context-exclude,)
 			$(if $(findstring coroutine,$(lib)),depends on !boost-coroutine-exclude,)
@@ -346,7 +342,6 @@ $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem r
 $(eval $(call DefineBoostLibrary,math))
 #$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
 $(eval $(call DefineBoostLibrary,program_options))
-$(eval $(call DefineBoostLibrary,python,,,PACKAGE_python))
 $(eval $(call DefineBoostLibrary,python3,,,PACKAGE_python3))
 $(eval $(call DefineBoostLibrary,random,system))
 $(eval $(call DefineBoostLibrary,regex))
@@ -425,7 +420,7 @@ define Build/Compile
 			$(if $(CONFIG_PACKAGE_boost-test),,--without-test) \
 			--without-python \
 			$(foreach lib,$(BOOST_LIBS), \
-				$(if $(findstring python,$(lib)),, \
+				$(if $(findstring python3,$(lib)),, \
 					$(if $(CONFIG_PACKAGE_boost-$(lib)),, \
 						$(if $(findstring wserialization,$(lib)),,--without-$(lib)) \
 					) \
@@ -437,32 +432,6 @@ define Build/Compile
 			$(if $(CONFIG_PACKAGE_boost-iostreams),-sNO_BZIP2=1 -sZLIB_INCLUDE=$(STAGING_DIR)/usr/include \
 				-sZLIB_LIBPATH=$(STAGING_DIR)/usr/lib) \
 			install ;\
-			$(if $(CONFIG_PACKAGE_boost-python), \
-				echo "using gcc : $(GCC_VERSION) : $(GNU_TARGET_NAME)-gcc : <compileflags>\"$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include/python$(BOOST_PYTHON_VER)/ \" <cxxflags>\"$(TARGET_CXXFLAGS) $(EXTRA_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > \
-					tools/build/src/user-config.jam ; \
-				echo "using python : $(BOOST_PYTHON_VER) : : $(STAGING_DIR)/usr/include/python$(BOOST_PYTHON_VER)/ : $(STAGING_DIR)/usr/lib/libpython$(BOOST_PYTHON_VER).so ;" >> \
-					tools/build/src/user-config.jam; \
-				b2 -a \
-					$(CONFIGURE_ARGS) \
-					--ignore-site-config \
-					--toolset=gcc abi=$(BOOST_ABI) \
-					--disable-long-double \
-					$(if $(CONFIG_boost-variant-release), variant=release,) \
-					$(if $(CONFIG_boost-variant-debug), variant=debug,) \
-					$(if $(CONFIG_boost-variant-profile), variant=profile,) \
-					$(if $(CONFIG_boost-use-name-tags),--layout=tagged,--layout=system) \
-					$(if $(CONFIG_boost-build-type-complete),--build-type=complete,--build-type=minimal) \
-					$(if $(CONFIG_boost-shared-libs),link=shared,) \
-					$(if $(CONFIG_boost-static-libs),link=static,) \
-					$(if $(CONFIG_boost-static-and-shared-libs),link=static$(comma)shared,) \
-					$(if $(CONFIG_boost-runtime-shared),runtime-link=shared,) \
-					$(if $(CONFIG_boost-runtime-static),runtime-link=static,) \
-					$(if $(CONFIG_boost-runtime-static-and-shared),runtime-link=shared$(comma)static,) \
-					$(if $(CONFIG_boost-single-thread),threading=single,) \
-					threading=multi \
-					--with-python \
-				install ;\
-			,) \
 			$(if $(CONFIG_PACKAGE_boost-python3), \
 				echo "using gcc : $(GCC_VERSION) : $(GNU_TARGET_NAME)-gcc : <compileflags>\"$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include/python$(BOOST_PYTHON3_VER)/ \" <cxxflags>\"$(TARGET_CXXFLAGS) $(EXTRA_CXXFLAGS)\" <linkflags>\"$(TARGET_LDFLAGS)\" ;" > \
 					tools/build/src/user-config.jam ; \
@@ -513,10 +482,7 @@ endef
 
 define Package/boost/Default/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(if $(findstring python,$(2)), $(if $(findstring 3,$(2)), \
-		$(CP) $(PKG_INSTALL_DIR)/lib/libboost_python3*.so* $(1)/usr/lib/ , \
-		$(CP) $(PKG_INSTALL_DIR)/lib/libboost_python2*.so* $(1)/usr/lib/ ), \
-	$(CP) $(PKG_INSTALL_DIR)/lib/libboost_$(2)*.so* $(1)/usr/lib/ )
+	$(CP) $(PKG_INSTALL_DIR)/lib/libboost_$(2)*.so* $(1)/usr/lib/
 endef
 
 define Package/boost-test/install

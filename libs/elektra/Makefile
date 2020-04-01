@@ -15,7 +15,7 @@ PKG_NAME:=elektra
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.md
 PKG_VERSION:=0.8.21
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 # Use this for official releasees
 PKG_HASH:=51892570f18d1667d0da4d0908a091e41b41c20db9835765677109a3d150cd26
@@ -234,19 +234,6 @@ $(call Package/libelektra/Default-description)
 This package contains support for storing the key database as yaml files.
 endef
 
-
-define Package/libelektra-python2
-  $(call Package/libelektra/Default)
-  TITLE:=Elektra python2 plugin
-  DEPENDS:=+libelektra-core +python-light +libstdcpp
-endef
-
-define Package/libelektra-python2/description
-$(call Package/libelektra/Default-description)
-
-This package adds python2 support to elektra.
-endef
-
 define Package/libelektra-python3
   $(call Package/libelektra/Default)
   TITLE:=Elektra python3 plugin
@@ -304,7 +291,7 @@ CMAKE_OPTIONS = \
 	-DKDB_DEFAULT_RESOLVER=resolver_fm_pb_b \
 	-DKDB_DEFAULT_STORAGE=ini \
 	-DENABLE_OPTIMIZATIONS=OFF \
-	-DPLUGINS="ALL;-multifile" \
+	-DPLUGINS="ALL;-multifile;-python2" \
 	-DICONV_FIND_REQUIRED=ON \
 	-DICONV_INCLUDE_DIR="$(ICONV_PREFIX)/include" \
 	-DICONV_LIBRARY="$(ICONV_PREFIX)/lib"
@@ -409,11 +396,6 @@ define Package/libelektra-yamlcpp/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-yamlcpp.so $(1)/usr/lib/
 endef
 
-define Package/libelektra-python2/install
-	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-python2.so $(1)/usr/lib/
-endef
-
 define Package/libelektra-python3/install
 	$(INSTALL_DIR) $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-python.so $(1)/usr/lib/
@@ -451,7 +433,6 @@ $(eval $(call BuildPackage,libelektra-xerces))
 $(eval $(call BuildPackage,libelektra-yamlcpp))
 $(eval $(call BuildPackage,libelektra-xml))
 $(eval $(call BuildPackage,libelektra-yajl))
-$(eval $(call BuildPackage,libelektra-python2))
 $(eval $(call BuildPackage,libelektra-python3))
 $(eval $(call BuildPackage,libelektra-lua))
 $(eval $(call BuildPackage,libelektra-extra))
