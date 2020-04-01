@@ -262,13 +262,13 @@ f_dns()
 		esac
 	fi
 
-	if [ -z "${adb_dns}" ] || [ ! -x "$(command -v "${adb_dns}")" ]
+	if [ "${adb_dns}" != "raw" ] && { [ -z "${adb_dns}" ] || [ ! -x "$(command -v "${adb_dns}")" ]; }
 	then
 		f_log "err" "dns backend not found, please set 'adb_dns' manually"
 	fi
 
 	if [ "${adb_dns}" != "raw" ] && { [ "${adb_dnsdir}" = "${adb_tmpbase}" ] || [ "${adb_dnsdir}" = "${adb_backupdir}" ] || \
-		[ "${adb_dnsdir}" = "${adb_reportdir}" ] || [ "${adb_dnsdir}" = "${adb_jaildir}" ] ; }
+		[ "${adb_dnsdir}" = "${adb_reportdir}" ] || [ "${adb_dnsdir}" = "${adb_jaildir}" ]; }
 	then
 		f_log "err" "dns directory '${adb_dnsdir}' has been misconfigured, it must not point to the 'adb_tmpbase', 'adb_backupdir', 'adb_reportdir' or 'adb_jaildir'"
 	fi
