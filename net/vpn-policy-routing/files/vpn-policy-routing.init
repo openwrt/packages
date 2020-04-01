@@ -1,7 +1,6 @@
 #!/bin/sh /etc/rc.common
 # Copyright 2017-2019 Stan Grishin (stangri@melmac.net)
-# shellcheck disable=SC2039
-# shellcheck disable=SC1091
+# shellcheck disable=SC2039,SC1091,SC2018,SC2019
 PKG_VERSION='dev-test'
 
 export START=94
@@ -40,6 +39,9 @@ output_failn() { output 1 "$_FAIL_\\n"; output 2 "$__FAIL__\\n"; }
 # str_contains() { [ "$1" != "$(str_replace "$1" "$2" "")" ]; }
 # shellcheck disable=SC2018,SC2019
 str_to_lower() { echo "$1" | tr 'A-Z' 'a-z'; }
+str_extras_to_underscore() { echo "$1" | tr '[\. ~`!@#$%^&*()\+/,<>?//;:]' '_'; }
+str_extras_to_space() { echo "$1" | tr ';{}' ' '; }
+
 output() {
 # Can take a single parameter (text) to be output at any verbosity
 # Or target verbosity level and text to be output at specifc verbosity
@@ -272,7 +274,7 @@ ips() {
 	else
 		if [[ -z "$appendix" && -z "$remoteIpset" ]] || \
 			 [[ -n "$appendix" && "$localIpset" -eq 0 ]]; then
-		 	return 1
+			return 1
 		fi
 	fi
 
@@ -316,7 +318,7 @@ insert_tor_policy() {
 	[ -n "$lport" ] && param="$param -p tcp -m multiport --sport ${lport//-/:}"
 	[ -n "$raddr" ] && param="$param -d $raddr"
 	[ -n "$rport" ] && param="$param -p $proto -m multiport --dport ${rport//-/:}"
-	[ -n "$comment" ] && param="$param -m comment --comment $(echo "$comment" | tr '[\. ~`!@#$%^&*()\+/,<>?//;:]' '_')"
+	[ -n "$comment" ] && param="$param -m comment --comment $(str_extras_to_underscore "$comment")"
 # Here be dragons
 	return 0
 }
@@ -334,15 +336,11 @@ insert_policy() {
 		return 0
 	fi
 
-	if [ -z "$proto" ] || [ "$proto" = 'all' ]; then
-		if [ -z "${lport}${raddr}${rport}" ] && [ -n "$laddr" ]; then
-			proto='all'
-		elif [ -z "${laddr}${lport}${rport}" ] && [ -n "$raddr" ]; then
-			proto='all'
-		elif [ -n "$lport" ] || [ -n "$rport" ]; then 
+	if [ -z "$proto" ]; then
+		if [ -n "$lport" ] || [ -n "$rport" ]; then 
 			proto='tcp udp'
 		else
-			proto='tcp'
+			proto='all'
 		fi
 	fi
 
@@ -406,7 +404,7 @@ insert_policy() {
 			param="$param -m multiport $valueNeg --dport ${value//-/:}"
 		fi
 
-		[ -n "$comment" ] && param="$param -m comment --comment $(echo "$comment" | tr '[\. ~`!@#$%^&*()\+/,<>?//;:]' '_')"
+		[ -n "$comment" ] && param="$param -m comment --comment $(str_extras_to_underscore "$comment")"
 		ipt "$param" || processPolicyError="${processPolicyError}${_ERROR_}: iptables $param\\n"
 	done
 	return 0
@@ -415,16 +413,16 @@ insert_policy() {
 r_process_policy(){
 	local comment="$1" iface="$2" laddr="$3" lport="$4" raddr="$5" rport="$6" proto="$7" chain="$8" resolved_laddr resolved_raddr i ipsFailFlag
 	if [ "${laddr//[ ;\{\}]/}" != "$laddr" ]; then
-		for i in $(echo "$laddr" | tr ';{}' ' '); do [ -n "$i" ] && r_process_policy "$comment" "$iface" "$i" "$lport" "$raddr" "$rport" "$proto" "$chain"; done
+		for i in $(str_extras_to_space "$laddr"); do [ -n "$i" ] && r_process_policy "$comment" "$iface" "$i" "$lport" "$raddr" "$rport" "$proto" "$chain"; done
 		return 0
 	elif [ "${lport//[ ;\{\}]/}" != "$lport" ]; then
-		for i in $(echo "$lport" | tr ';{}' ' '); do [ -n "$i" ] && r_process_policy "$comment" "$iface" "$laddr" "$i" "$raddr" "$rport" "$proto" "$chain"; done
+		for i in $(str_extras_to_space "$lport"); do [ -n "$i" ] && r_process_policy "$comment" "$iface" "$laddr" "$i" "$raddr" "$rport" "$proto" "$chain"; done
 		return 0
 	elif [ "${raddr//[ ;\{\}]/}" != "$raddr" ]; then
-		for i in $(echo "$raddr" | tr ';{}' ' '); do [ -n "$i" ] && r_process_policy "$comment" "$iface" "$laddr" "$lport" "$i" "$rport" "$proto" "$chain"; done
+		for i in $(str_extras_to_space "$raddr"); do [ -n "$i" ] && r_process_policy "$comment" "$iface" "$laddr" "$lport" "$i" "$rport" "$proto" "$chain"; done
 		return 0
 	elif [ "${rport//[ ;\{\}]/}" != "$rport" ]; then
-		for i in $(echo "$rport" | tr ';{}' ' '); do [ -n "$i" ] && r_process_policy "$comment" "$iface" "$laddr" "$lport" "$raddr" "$i" "$proto" "$chain"; done
+		for i in $(str_extras_to_space "$rport"); do [ -n "$i" ] && r_process_policy "$comment" "$iface" "$laddr" "$lport" "$raddr" "$i" "$proto" "$chain"; done
 		return 0
 	fi
 
@@ -495,8 +493,8 @@ process_policy(){
 	config_get_bool enabled "$1" 'enabled' 1
 
 	[ "$enabled" -gt 0 ] || return 0
+	proto="$(str_to_lower "$proto")"
 	[ "$proto" = 'auto' ] && unset proto
-	[ "$proto" = 'AUTO' ] && unset proto
 
 	comment="${comment:-$name}"
 	output 2 "Routing '$comment' via $iface "
@@ -504,7 +502,7 @@ process_policy(){
 	if [ -z "$comment" ]; then
 		errorSummary="${errorSummary}${_ERROR_}: Policy name is empty\\n"
 		output_fail; return 1;
- 	fi
+	fi
 	if [ -z "${laddr}${lport}${raddr}${rport}" ]; then
 		errorSummary="${errorSummary}${_ERROR_}: Policy '$comment' missing all IPs/ports\\n"
 		output_fail; return 1;
@@ -575,7 +573,7 @@ table_create(){
 			fi
 		done
 		ip -4 route flush cache || ipv4_error=1
-		ip -4 rule add fwmark "$mark" table "$tid" || ipv4_error=1
+		ip -4 rule add fwmark "${mark}/${fwMask}" table "$tid" || ipv4_error=1
 	fi
 
 	if [ "$ipv6Enabled" -ne 0 ]; then
@@ -588,7 +586,7 @@ table_create(){
 				done
 			fi
 			ip -6 route flush cache || ipv6_error=1
-			ip -6 rule add fwmark "$mark" table "$tid" || ipv6_error=1
+			ip -6 rule add fwmark "${mark}/${fwMask}" table "$tid" || ipv6_error=1
 		fi
 	fi
 
@@ -778,7 +776,7 @@ start_service() {
 		done
 
 		if [ "$modprobeStatus" -gt 0 ] && ! is_chaos_calmer; then
-	 		errorSummary="${errorSummary}${_ERROR_}: Failed to load kernel modules\\n"
+			errorSummary="${errorSummary}${_ERROR_}: Failed to load kernel modules\\n"
 		fi
 
 		for i in PREROUTING FORWARD INPUT OUTPUT; do
@@ -806,7 +804,7 @@ start_service() {
 		[ "$dnsmasqNewHash" != "$dnsmasqStoredHash" ] && dnsmasq_restart
 
 		if [ -z "$gatewaySummary" ]; then
-	 		errorSummary="${errorSummary}${_ERROR_}: failed to set up any gateway\\n"
+			errorSummary="${errorSummary}${_ERROR_}: failed to set up any gateway\\n"
 		else
 			output "$serviceName started with gateways:\\n${gatewaySummary}"
 			[ -n "$errorSummary" ] && output "${errorSummary}"
@@ -886,6 +884,7 @@ service_triggers() {
 }
 
 input() { local data; while read -r data; do echo "$data" | tee -a /var/${packageName}-support; done; }
+status_service() { support "$@"; }
 support() {
 	local dist vers out id s param status set_d set_p tableCount i=0 dev dev6
 	is_enabled
