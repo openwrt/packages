@@ -1,9 +1,0 @@
---- a/setup.py
-+++ b/setup.py
-@@ -35,5 +35,5 @@ setup(
-         'version_module_paths': ['txsocksx/_version.py'],
-     },
-     install_requires=install_requires,
--    packages=['txsocksx', 'txsocksx.test'],
-+    packages=['txsocksx'],
- )
