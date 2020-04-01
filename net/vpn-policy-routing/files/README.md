@@ -144,7 +144,7 @@ As per screenshots above, in the Web UI the ```vpn-policy-routing``` configurati
 |Advanced|supported_interface|list/string||Allows to specify the space-separated list of interface names (in lower case) to be explicitly supported by the ```vpn-policy-routing``` service. Can be useful if your OpenVPN tunnels have dev option other than tun\* or tap\*.|
 |Advanced|ignored_interface|list/string||Allows to specify the space-separated list of interface names (in lower case) to be ignored by the ```vpn-policy-routing``` service. Can be useful if running both VPN server and VPN client on the router.|
 |Advanced|boot_timeout|number|30|Allows to specify the time (in seconds) for ```vpn-policy-routing``` service to wait for WAN gateway discovery on boot. Can be useful on devices with ADSL modem built in.|
-|Advanced|iptables_rule_option|append/insert|append|Allows to specify the iptables parameter for rules: ```-A``` for ```append``` and ```-I``` for ```insert```. Append is generally speaking more compatible with other packages/firewall rules. Recommended to change to ```insert``` only to improve compatibility with the ```mwan3``` package.|
+|Advanced|iptables_rule_option|append/insert|append|Allows to specify the iptables parameter for rules: ```-A``` for ```append``` and ```-I``` for ```insert```. Append is generally speaking more compatible with other packages/firewall rules. Recommended to change to ```insert``` only to enable compatibility with the ```mwan3``` package.|
 |Advanced|iprule_enabled|boolean|0|Add an ```ip rule```, not an ```iptables``` entry for policies with just the local address. Use with caution to manipulate policies priorities.|
 |Advanced|icmp_interface|string||Set the default ICMP protocol interface (interface name in lower case). Use with caution.|
 |Advanced|append_src_rules|string||Append local IP Tables rules. Can be used to exclude local IP addresses from destinations for policies with local address set.|
@@ -179,7 +179,7 @@ The ```src_addr```, ```src_port```, ```dest_addr``` and ```dest_port``` options 
 |src_port||List of space-separated local/source ports or port-ranges.|
 |dest_addr||List of space-separated remote/target IP addresses, CIDRs or hostnames/domain names.|
 |dest_port||List of space-separated remote/target ports or port-ranges.|
-|proto|all|Policy protocol, can be any valid protocol from ```/etc/protocols``` for CLI/uci or can be selected from the values set in ```webui_supported_protocol```. To display the ```Protocol``` column for policies in the WebUI, make sure to select ```Enabled``` for ```Show Protocol Column``` in the ```Web UI``` tab.|
+|proto|auto|Policy protocol, can be any valid protocol from ```/etc/protocols``` for CLI/uci or can be selected from the values set in ```webui_supported_protocol```. To display the ```Protocol``` column for policies in the WebUI, make sure to select ```Enabled``` for ```Show Protocol Column``` in the ```Web UI``` tab.<br/>Special cases: ```auto``` will try to intelligently insert protocol-agnostic policy and fall back to TCP/UDP if the protocol must be selected for specific policy; ```all``` will always insert a protocol-agnostic policy (which may fail depending on the policy).|
 |chain|PREROUTING|Policy chain, can be either ```PREROUTING```, ```FORWARDING```, ```INPUT``` or ```OUTPUT```. This setting is case-sensitive. To display the ```Chain``` column for policies in the WebUI, make sure to select ```Enabled``` for ```Show Chain Column``` in the ```Web UI``` tab.|
 
 ### Custom User Files Include Options
@@ -482,7 +482,7 @@ config vpn-policy-routing 'config'
 config policy
   option name 'Wireguard Server'
   option interface 'wan'
-  option proto 'tcp'
+  option proto 'udp'
   option src_port '61820'
   option chain 'OUTPUT'
 ```
@@ -810,7 +810,7 @@ If you want to target traffic using HTTP/3 protocol, you can use the ```AUTO``` 
 
 Some browsers, like [Mozilla Firefox](https://support.mozilla.org/en-US/kb/firefox-dns-over-https#w_about-dns-over-https) or [Google Chrome/Chromium](https://blog.chromium.org/2019/09/experimenting-with-same-provider-dns.html) have [DNS-over-HTTPS proxy](https://en.wikipedia.org/wiki/DNS_over_HTTPS) built-in. Their requests to web-sites cannot be affected if the ```dnsmasq.ipset``` is set for the ```dest_ipset``` option. To fix this, you can try either of the following:
 
-  1. Disable the DNS-over-HTTPS support in your browser and use the OpenWrt's [net/https-dns-proxy](https://github.com/openwrt/packages/tree/master/net/https-dns-proxy) package and set it up either [manually](https://openwrt.org/docs/guide-user/services/dns/doh_dnsmasq_https-dns-proxy?s[]=https&s[]=dns&s[]=proxy) or auto-magically with [https-dns-proxy luci app](https://github.com/openwrt/luci/tree/master/applications/luci-app-https_dns_proxy). You can then continue to use ```dnsmasq.ipset``` setting for the ```dest_ipset``` in VPN Policy Routing.
+  1. Disable the DNS-over-HTTPS support in your browser and use the OpenWrt's [net/https-dns-proxy](https://github.com/openwrt/packages/tree/master/net/https-dns-proxy) package with optional [https-dns-proxy luci app](https://github.com/openwrt/luci/tree/master/applications/luci-app-https_dns_proxy). You can then continue to use ```dnsmasq.ipset``` setting for the ```dest_ipset``` in VPN Policy Routing.
 
   2. Continue using DNS-over-HTTPS in your browser (which, by the way, also limits your options for router-level AdBlocking as described [in ```dnsmasq.ipset``` option description here](https://github.com/openwrt/packages/tree/master/net/simple-adblock/files#dns-resolution-option)), you than would either have to disable the  ```dest_ipset``` or switch it to ```ipset```. Please note, you will lose all the benefits of [```dnsmasq.ipset```](#use-dnsmasq-ipset) option.
 
@@ -843,4 +843,4 @@ WARNING: while paste.ee uploads are unlisted/not indexed at the web-site, they a
 
 ## Thanks
 
-I'd like to thank everyone who helped create, test and troubleshoot this service. Without contributions from [@hnyman](https://github.com/hnyman), [@dibdot](https://github.com/dibdot), [@danrl](https://github.com/danrl), [@tohojo](https://github.com/tohojo), [@cybrnook](https://github.com/cybrnook), [@nidstigator](https://github.com/nidstigator), [@AndreBL](https://github.com/AndreBL) and [@dz0ny](https://github.com/dz0ny) and rigorous testing/bugreporting by [@dziny](https://github.com/dziny), [@bluenote73](https://github.com/bluenote73), [@buckaroo](https://github.com/pgera), [@Alexander-r](https://github.com/Alexander-r), [n8v8R](https://github.com/n8v8R) and [psherman](https://forum.openwrt.org/u/psherman) it wouldn't have been possible. Wireguard/IPv6 support is courtesy of [Mullvad](https://www.mullvad.net), [IVPN](https://www.ivpn.net/) and [WireVPN](https://www.wirevpn.net).
+I'd like to thank everyone who helped create, test and troubleshoot this service. Without contributions from [@hnyman](https://github.com/hnyman), [@dibdot](https://github.com/dibdot), [@danrl](https://github.com/danrl), [@tohojo](https://github.com/tohojo), [@cybrnook](https://github.com/cybrnook), [@nidstigator](https://github.com/nidstigator), [@AndreBL](https://github.com/AndreBL), [@dz0ny](https://github.com/dz0ny), rigorous testing/bugreporting by [@dziny](https://github.com/dziny), [@bluenote73](https://github.com/bluenote73), [@buckaroo](https://github.com/pgera), [@Alexander-r](https://github.com/Alexander-r), [n8v8R](https://github.com/n8v8R), [psherman](https://forum.openwrt.org/u/psherman), multiple contributions from [dl12345](https://github.com/dl12345), [trendy](https://forum.openwrt.org/u/trendy) and feedback from other OpenWrt users it wouldn't have been possible. Wireguard/IPv6 support is courtesy of [Mullvad](https://www.mullvad.net), [IVPN](https://www.ivpn.net/) and [WireVPN](https://www.wirevpn.net).
