@@ -20,7 +20,6 @@ PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleana
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-pyasn1/Default
@@ -31,34 +30,20 @@ define Package/python-pyasn1/Default
   URL:=https://github.com/etingof/pyasn1
 endef
 
-define Package/python-pyasn1
-$(call Package/python-pyasn1/Default)
-  DEPENDS:=+PACKAGE_python-pyasn1:python-light
-  VARIANT:=python
-endef
-
 define Package/python3-pyasn1
 $(call Package/python-pyasn1/Default)
   DEPENDS:=+PACKAGE_python3-pyasn1:python3-light
   VARIANT:=python3
 endef
 
-define Package/python-pyasn1/description
+define Package/python3-pyasn1/description
 This is an implementation of ASN.1 types and codecs in Python programming
 language. It has been first written to support particular protocol (SNMP)
 but then generalized to be suitable for a wide range of protocols
 based on ASN.1 specification.
-endef
-
-define Package/python3-pyasn1/description
-$(call Package/python-pyasn1/description)
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-pyasn1))
-$(eval $(call BuildPackage,python-pyasn1))
-$(eval $(call BuildPackage,python-pyasn1-src))
 
 $(eval $(call Py3Package,python3-pyasn1))
 $(eval $(call BuildPackage,python3-pyasn1))

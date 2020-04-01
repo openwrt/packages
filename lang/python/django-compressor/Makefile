@@ -21,7 +21,6 @@ PKG_LICENSE_FILES:=LICENSE
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/django-compressor/Default
@@ -30,24 +29,6 @@ define Package/django-compressor/Default
   CATEGORY:=Languages
   TITLE:=Compress CSS/JS into single cached files
   URL:=https://django-compressor.readthedocs.io
-endef
-
-define Package/python-django-compressor
-$(call Package/django-compressor/Default)
-  DEPENDS:= \
-	+PACKAGE_python-django-compressor:python \
-	python-django1 \
-	+PACKAGE_python-django-compressor:python-django-appconf \
-	+PACKAGE_python-django-compressor:python-rcssmin
-  VARIANT:=python
-  MDEPENDS:=python-django1
-endef
-
-define Package/python-django-compressor/description
-  Compresses linked and inline JavaScript or CSS into single cached files.
-  Note that the JavaScript filter is not being installed as a dependency.
-  You'll need to build the rjsmin module (it is not par of the openwrt standard
-  feeds) to use JavaScript functionality.
 endef
 
 define Package/python3-django-compressor
@@ -61,14 +42,13 @@ $(call Package/django-compressor/Default)
 endef
 
 define Package/python3-django-compressor/description
-$(call Package/python-django-compressor/description)
+  Compresses linked and inline JavaScript or CSS into single cached files.
+  Note that the JavaScript filter is not being installed as a dependency.
+  You'll need to build the rjsmin module (it is not par of the openwrt standard
+  feeds) to use JavaScript functionality.
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-django-compressor))
-$(eval $(call BuildPackage,python-django-compressor))
-$(eval $(call BuildPackage,python-django-compressor-src))
 
 $(eval $(call Py3Package,python3-django-compressor))
 $(eval $(call BuildPackage,python3-django-compressor))

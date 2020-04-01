@@ -20,7 +20,6 @@ PKG_LICENSE_FILES:=LICENSE.txt
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-pytz/Default
@@ -30,13 +29,6 @@ define Package/python-pytz/Default
   URL:=https://pythonhosted.org/pytz/
 endef
 
-define Package/python-pytz
-$(call Package/python-pytz/Default)
-  TITLE:=World timezone definitions, modern and historical
-  DEPENDS:=+PACKAGE_python-pytz:python-light
-  VARIANT:=python
-endef
-
 define Package/python3-pytz
 $(call Package/python-pytz/Default)
   TITLE:=World timezone definitions, modern and historical for Python3
@@ -44,19 +36,11 @@ $(call Package/python-pytz/Default)
   VARIANT:=python3
 endef
 
-define Package/python-pytz/description
-  World timezone definitions, modern and historical
-endef
-
 define Package/python3-pytz/description
-$(call Package/python-pytz/description)
+  World timezone definitions, modern and historical
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-pytz))
-$(eval $(call BuildPackage,python-pytz))
-$(eval $(call BuildPackage,python-pytz-src))
 
 $(eval $(call Py3Package,python3-pytz))
 $(eval $(call BuildPackage,python3-pytz))

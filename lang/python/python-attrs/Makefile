@@ -20,7 +20,6 @@ PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-attrs/Default
@@ -31,33 +30,19 @@ define Package/python-attrs/Default
   URL:=https://www.attrs.org/
 endef
 
-define Package/python-attrs
-$(call Package/python-attrs/Default)
-  DEPENDS:=+PACKAGE_python-attrs:python-light
-  VARIANT:=python
-endef
-
 define Package/python3-attrs
 $(call Package/python-attrs/Default)
   DEPENDS:=+PACKAGE_python3-attrs:python3-light
   VARIANT:=python3
 endef
 
-define Package/python-attrs/description
+define Package/python3-attrs/description
 attrs is an MIT-licensed Python package with class decorators that ease
 the chores of implementing the most common attribute-related object
 protocols.
-endef
-
-define Package/python3-attrs/description
-$(call Package/python-attrs/description)
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-attrs))
-$(eval $(call BuildPackage,python-attrs))
-$(eval $(call BuildPackage,python-attrs-src))
 
 $(eval $(call Py3Package,python3-attrs))
 $(eval $(call BuildPackage,python3-attrs))

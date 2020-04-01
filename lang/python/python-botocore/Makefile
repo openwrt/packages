@@ -12,7 +12,6 @@ PKG_LICENSE:=MIT
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-botocore/Default
@@ -21,17 +20,6 @@ define Package/python-botocore/Default
   CATEGORY:=Languages
   TITLE:=botocore
   URL:=https://github.com/boto/botocore
-endef
-
-define Package/python-botocore
-$(call Package/python-botocore/Default)
-  DEPENDS:=+PACKAGE_python-botocore:python \
-	+PACKAGE_python-botocore:python-urllib3 \
-	+PACKAGE_python-botocore:python-docutils \
-	+PACKAGE_python-botocore:python-dateutil \
-	+PACKAGE_python-botocore:python-jmespath \
-	+PACKAGE_python-botocore:python-requests
-  VARIANT:=python
 endef
 
 define Package/python3-botocore
@@ -45,20 +33,12 @@ $(call Package/python-botocore/Default)
   VARIANT:=python3
 endef
 
-define Package/python-botocore/description
+define Package/python3-botocore/description
 A low-level interface to a growing number of Amazon Web Services.
 The botocore package is the foundation for the AWS CLI as well as boto3.
-endef
-
-define Package/python3-botocore/description
-$(call Package/python-botocore/description)
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-botocore))
-$(eval $(call BuildPackage,python-botocore))
-$(eval $(call BuildPackage,python-botocore-src))
 
 $(eval $(call Py3Package,python3-botocore))
 $(eval $(call BuildPackage,python3-botocore))

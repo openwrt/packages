@@ -20,7 +20,6 @@ PKG_LICENSE_FILES:=LICENSE
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/ruamel-yaml/Default
@@ -31,13 +30,6 @@ define Package/ruamel-yaml/Default
   URL:=https://bitbucket.org/ruamel/yaml
 endef
 
-define Package/python-ruamel-yaml
-$(call Package/ruamel-yaml/Default)
-  DEPENDS:= \
-      +PACKAGE_python-ruamel-yaml:python-light
-  VARIANT:=python
-endef
-
 define Package/python3-ruamel-yaml
 $(call Package/ruamel-yaml/Default)
   DEPENDS:= \
@@ -45,19 +37,11 @@ $(call Package/ruamel-yaml/Default)
   VARIANT:=python3
 endef
 
-define Package/ruamel-yaml/description
-ruamel-yaml is a YAML parser/emitter that supports roundtrip preservation of comments, seq/map flow style, and map key order
-endef
-
 define Package/python3-ruamel-yaml/description
-$(call Package/ruamel-yaml/description)
+ruamel-yaml is a YAML parser/emitter that supports roundtrip preservation of comments, seq/map flow style, and map key order
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-ruamel-yaml))
-$(eval $(call BuildPackage,python-ruamel-yaml))
-$(eval $(call BuildPackage,python-ruamel-yaml-src))
 
 $(eval $(call Py3Package,python3-ruamel-yaml))
 $(eval $(call BuildPackage,python3-ruamel-yaml))

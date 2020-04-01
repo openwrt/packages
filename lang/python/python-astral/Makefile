@@ -20,7 +20,6 @@ PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-astral/Default
@@ -31,14 +30,6 @@ define Package/python-astral/Default
   URL:=https://github.com/sffjunkie/astral
 endef
 
-define Package/python-astral
-$(call Package/python-astral/Default)
-  DEPENDS+= \
-      +PACKAGE_python-astral:python-light \
-      +PACKAGE_python-astral:python-pytz
-  VARIANT:=python
-endef
-
 define Package/python3-astral
 $(call Package/python-astral/Default)
   DEPENDS+= \
@@ -47,19 +38,11 @@ $(call Package/python-astral/Default)
   VARIANT:=python3
 endef
 
-define Package/python-astral/description
-Astral is a python module for calculating the times of various aspects of the sun and moon.
-endef
-
 define Package/python3-astral/description
-$(call Package/python-astral/description)
+Astral is a python module for calculating the times of various aspects of the sun and moon.
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-astral))
-$(eval $(call BuildPackage,python-astral))
-$(eval $(call BuildPackage,python-astral-src))
 
 $(eval $(call Py3Package,python3-astral))
 $(eval $(call BuildPackage,python3-astral))

@@ -20,7 +20,6 @@ PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-voluptuous/Default
@@ -31,13 +30,6 @@ define Package/python-voluptuous/Default
   URL:=https://github.com/alecthomas/voluptuous
 endef
 
-define Package/python-voluptuous
-$(call Package/python-voluptuous/Default)
-  DEPENDS:= \
-      +PACKAGE_python-voluptuous:python-light
-  VARIANT:=python
-endef
-
 define Package/python3-voluptuous
 $(call Package/python-voluptuous/Default)
   DEPENDS:= \
@@ -45,19 +37,11 @@ $(call Package/python-voluptuous/Default)
   VARIANT:=python3
 endef
 
-define Package/python-voluptuous/description
-It is primarily intended for validating data coming into Python as JSON, YAML, etc.
-endef
-
 define Package/python3-voluptuous/description
-$(call Package/python-voluptuous/description)
+It is primarily intended for validating data coming into Python as JSON, YAML, etc.
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-voluptuous))
-$(eval $(call BuildPackage,python-voluptuous))
-$(eval $(call BuildPackage,python-voluptuous-src))
 
 $(eval $(call Py3Package,python3-voluptuous))
 $(eval $(call BuildPackage,python3-voluptuous))

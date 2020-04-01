@@ -20,7 +20,6 @@ PKG_HASH:=b1c649b4fed7252711011da235782b2c260b32e004058d62473471e5cd30634d
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-evdev/Default
@@ -28,15 +27,6 @@ define Package/python-evdev/Default
   SECTION:=lang
   CATEGORY:=Languages
   URL:=https://github.com/gvalkov/python-evdev
-endef
-
-define Package/python-evdev
-$(call Package/python-evdev/Default)
-  TITLE:=python-evdev
-  DEPENDS:= \
-     +PACKAGE_python-evdev:python-light \
-     +PACKAGE_python-evdev:python-ctypes
-  VARIANT:=python
 endef
 
 define Package/python3-evdev
@@ -48,13 +38,8 @@ $(call Package/python-evdev/Default)
   VARIANT:=python3
 endef
 
-
-define Package/python-evdev/description
-	Bindings to the Linux input handling subsystem
-endef
-
 define Package/python3-evdev/description
-$(call Package/python-evdev/description)
+	Bindings to the Linux input handling subsystem
 .
 (Variant for Python3)
 endef
@@ -65,12 +50,6 @@ PYTHON3_PKG_SETUP_GLOBAL_ARGS:= \
 	build build_ecodes \
 	--evdev-headers="$(LINUX_EVDEV_HEADERS)" \
 	build_ext
-
-PYTHON_PKG_SETUP_GLOBAL_ARGS:=$(PYTHON3_PKG_SETUP_GLOBAL_ARGS)
-
-$(eval $(call PyPackage,python-evdev))
-$(eval $(call BuildPackage,python-evdev))
-$(eval $(call BuildPackage,python-evdev-src))
 
 $(eval $(call Py3Package,python3-evdev))
 $(eval $(call BuildPackage,python3-evdev))

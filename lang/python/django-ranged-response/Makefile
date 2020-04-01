@@ -18,7 +18,6 @@ PKG_LICENSE_FILES:=LICENSE
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/django-ranged-response/Default
@@ -27,19 +26,6 @@ define Package/django-ranged-response/Default
   CATEGORY:=Languages
   TITLE:=Add Content-Range: to FileResponse
   URL:=https://github.com/i3thuan5/django-ranged-response
-endef
-
-define Package/python-django-ranged-response
-$(call Package/django-ranged-response/Default)
-  DEPENDS:= \
-	+PACKAGE_python-django-ranged-response:python \
-	python-django1
-  VARIANT:=python
-  MDEPENDS:=python-django1
-endef
-
-define Package/python-django-ranged-response/description
-  Modified Django FileResponse that adds Content-Range headers.
 endef
 
 define Package/python3-django-ranged-response
@@ -51,14 +37,10 @@ $(call Package/django-ranged-response/Default)
 endef
 
 define Package/python3-django-ranged-response/description
-$(call Package/python-django-ranged-response/description)
+  Modified Django FileResponse that adds Content-Range headers.
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-django-ranged-response))
-$(eval $(call BuildPackage,python-django-ranged-response))
-$(eval $(call BuildPackage,python-django-ranged-response-src))
 
 $(eval $(call Py3Package,python3-django-ranged-response))
 $(eval $(call BuildPackage,python3-django-ranged-response))

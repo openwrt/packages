@@ -18,7 +18,6 @@ PKG_CPE_ID:=cpe:/a:python-gnupg_project:python-gnupg
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-gnupg/Default
@@ -29,13 +28,6 @@ define Package/python-gnupg/Default
   DEPENDS:=+gnupg
 endef
 
-define Package/python-gnupg
-$(call Package/python-gnupg/Default)
-  TITLE:=python-pyodbc
-  DEPENDS+=+PACKAGE_python-gnupg:python-light
-  VARIANT:=python
-endef
-
 define Package/python3-gnupg
 $(call Package/python-gnupg/Default)
   TITLE:=python3-gnupg
@@ -43,7 +35,7 @@ $(call Package/python-gnupg/Default)
   VARIANT:=python3
 endef
 
-define Package/python-gnupg/description
+define Package/python3-gnupg/description
 A Python wrapper for GnuPG
 
 This module allows easy access to GnuPG.s key management, encryption
@@ -53,18 +45,8 @@ and sanitised, and therefore this module should be safe to use in
 networked applications requiring direct user input. It is intended for
 use on Windows, MacOS X, BSD, or Linux, with Python 2.6, Python 2.7,
 Python 3.3, Python 3.4, or PyPy.
-endef
-
-define Package/python3-gnupg/description
-$(call Package/python-gnupg/description)
 
 (Variant for Python3)
-endef
-
-define PyBuild/Compile
-	$(call Build/Compile/PyMod,,\
-		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
-	)
 endef
 
 define Py3Build/Compile
@@ -72,10 +54,6 @@ define Py3Build/Compile
 		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
 	)
 endef
-
-
-$(eval $(call PyPackage,python-gnupg))
-$(eval $(call BuildPackage,python-gnupg))
 
 $(eval $(call Py3Package,python3-gnupg))
 $(eval $(call BuildPackage,python3-gnupg))

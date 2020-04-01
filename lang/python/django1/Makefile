@@ -21,7 +21,6 @@ PKG_CPE_ID:=cpe:/a:djangoproject:django
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/django1/Default
@@ -30,20 +29,6 @@ define Package/django1/Default
   CATEGORY:=Languages
   TITLE:=The web framework for perfectionists with deadlines.
   URL:=https://www.djangoproject.com/
-endef
-
-define Package/python-django1
-$(call Package/django1/Default)
-  DEPENDS:= \
-	+PACKAGE_python-django1:python \
-	+PACKAGE_python-django1:python-pytz \
-	+PACKAGE_python-django1:python-django1-common
-  VARIANT:=python
-  MENU:=1
-endef
-
-define Package/python-django1/description
-  The web framework for perfectionists with deadlines (LTS 1.11 series).
 endef
 
 define Package/python3-django1
@@ -57,7 +42,7 @@ $(call Package/django1/Default)
 endef
 
 define Package/python3-django1/description
-$(call Package/python-django1/description)
+  The web framework for perfectionists with deadlines (LTS 1.11 series).
 .
 (Variant for Python3)
 endef
@@ -67,22 +52,17 @@ $(call Package/django1/Default)
 endef
 
 define Package/python-django1-common/description
-$(call Package/python-django1/description)
+  The web framework for perfectionists with deadlines (LTS 1.11 series).
 .
 This package contains files common to both Python 2.7 and Python 3.
 endef
 
-PyPackage/python-django1/install:=:
 Py3Package/python3-django1/install:=:
 
 define Package/python-django1-common/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/django-admin $(1)/usr/bin
 endef
-
-$(eval $(call PyPackage,python-django1))
-$(eval $(call BuildPackage,python-django1))
-$(eval $(call BuildPackage,python-django1-src))
 
 $(eval $(call Py3Package,python3-django1))
 $(eval $(call BuildPackage,python3-django1))

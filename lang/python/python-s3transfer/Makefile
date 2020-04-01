@@ -12,7 +12,6 @@ PKG_LICENSE:=MIT
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-s3transfer/Default
@@ -23,15 +22,6 @@ define Package/python-s3transfer/Default
   URL:=https://github.com/boto/s3transfer
 endef
 
-define Package/python-s3transfer
-$(call Package/python-s3transfer/Default)
-  DEPENDS:= \
-	+PACKAGE_python-s3transfer:python \
-	+PACKAGE_python-s3transfer:python-botocore \
-	+PACKAGE_python-s3transfer:python-futures
-  VARIANT:=python
-endef
-
 define Package/python3-s3transfer
 $(call Package/python-s3transfer/Default)
   DEPENDS:= \
@@ -40,19 +30,11 @@ $(call Package/python-s3transfer/Default)
   VARIANT:=python3
 endef
 
-define Package/python-s3transfer/description
-S3transfer is a Python library for managing Amazon S3 transfers.
-endef
-
 define Package/python3-s3transfer/description
-$(call Package/python-s3transfer/description)
+S3transfer is a Python library for managing Amazon S3 transfers.
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-s3transfer))
-$(eval $(call BuildPackage,python-s3transfer))
-$(eval $(call BuildPackage,python-s3transfer-src))
 
 $(eval $(call Py3Package,python3-s3transfer))
 $(eval $(call BuildPackage,python3-s3transfer))

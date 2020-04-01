@@ -20,7 +20,6 @@ PKG_LICENSE_FILES:=LICENSE.md
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/django-restframework39/Default
@@ -29,19 +28,6 @@ define Package/django-restframework39/Default
   CATEGORY:=Languages
   TITLE:=Web APIs for Django, made easy.
   URL:=https://www.django-rest-framework.org
-endef
-
-define Package/python-django-restframework39
-$(call Package/django-restframework39/Default)
-  DEPENDS:= \
-	+PACKAGE_python-django-restframework39:python \
-	python-django1
-  VARIANT:=python
-  MDEPENDS:=python-django1
-endef
-
-define Package/python-django-restframework39/description
-  Web APIs for Django, made easy. (3.9 series)
 endef
 
 define Package/python3-django-restframework39
@@ -54,14 +40,10 @@ $(call Package/django-restframework39/Default)
 endef
 
 define Package/python3-django-restframework39/description
-$(call Package/python-django-restframework39/description)
+  Web APIs for Django, made easy. (3.9 series)
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-django-restframework39))
-$(eval $(call BuildPackage,python-django-restframework39))
-$(eval $(call BuildPackage,python-django-restframework39-src))
 
 $(eval $(call Py3Package,python3-django-restframework39))
 $(eval $(call BuildPackage,python3-django-restframework39))

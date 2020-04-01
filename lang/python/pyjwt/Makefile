@@ -18,7 +18,6 @@ PKG_HASH:=8d59a976fb773f3e6a39c85636357c4f0e242707394cadadd9814f5cbaa20e96
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-pyjwt/Default
@@ -29,31 +28,17 @@ define Package/python-pyjwt/Default
   URL:=http://github.com/jpadilla/pyjwt
 endef
 
-define Package/python-pyjwt
-  $(call Package/python-pyjwt/Default)
-  DEPENDS:=+PACKAGE_python-pyjwt:python
-  VARIANT:=python
-endef
-
 define Package/python3-pyjwt
   $(call Package/python-pyjwt/Default)
   DEPENDS:=+PACKAGE_python3-pyjwt:python3
   VARIANT:=python3
 endef
 
-define Package/python-pyjwt/description
-  A Python implementation of RFC 7519.
-endef
-
 define Package/python3-pyjwt/description
-$(call Package/python-pyjwt/description)
+  A Python implementation of RFC 7519.
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-pyjwt))
-$(eval $(call BuildPackage,python-pyjwt))
-$(eval $(call BuildPackage,python-pyjwt-src))
 
 $(eval $(call Py3Package,python3-pyjwt))
 $(eval $(call BuildPackage,python3-pyjwt))

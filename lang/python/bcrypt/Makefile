@@ -16,12 +16,10 @@ PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DEPENDS:=libffi/host
-HOST_PYTHON_PACKAGE_BUILD_DEPENDS:="cffi>=1.1"
 HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="cffi>=1.1"
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/bcrypt/Default
@@ -30,15 +28,6 @@ define Package/bcrypt/Default
   SUBMENU:=Python
   TITLE:=Modern password hashing
   URL:=https://github.com/pyca/bcrypt/
-endef
-
-define Package/python-bcrypt
-$(call Package/bcrypt/Default)
-  DEPENDS:= \
-	+PACKAGE_python-bcrypt:python \
-	+PACKAGE_python-bcrypt:python-cffi \
-	+PACKAGE_python-bcrypt:python-six
-  VARIANT:=python
 endef
 
 define Package/python3-bcrypt
@@ -50,19 +39,11 @@ $(call Package/bcrypt/Default)
   VARIANT:=python3
 endef
 
-define Package/python-bcrypt/description
-  Good password hashing for your software and your servers.
-endef
-
 define Package/python3-bcrypt/description
-$(call Package/python-bcrypt/description)
+  Good password hashing for your software and your servers.
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-bcrypt))
-$(eval $(call BuildPackage,python-bcrypt))
-$(eval $(call BuildPackage,python-bcrypt-src))
 
 $(eval $(call Py3Package,python3-bcrypt))
 $(eval $(call BuildPackage,python3-bcrypt))

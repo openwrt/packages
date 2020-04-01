@@ -21,7 +21,6 @@ PKG_CPE_ID:=cpe:/a:pyopenssl_project:pyopenssl
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-pyopenssl/Default
@@ -30,15 +29,6 @@ define Package/python-pyopenssl/Default
   SUBMENU:=Python
   TITLE:=OpenSSL wrapper
   URL:=https://pyopenssl.org/
-endef
-
-define Package/python-pyopenssl
-$(call Package/python-pyopenssl/Default)
-  DEPENDS:= \
-      +PACKAGE_python-pyopenssl:python-light \
-      +PACKAGE_python-pyopenssl:python-cryptography \
-      +PACKAGE_python-pyopenssl:python-six
-  VARIANT:=python
 endef
 
 define Package/python3-pyopenssl
@@ -50,19 +40,11 @@ $(call Package/python-pyopenssl/Default)
   VARIANT:=python3
 endef
 
-define Package/python-pyopenssl/description
-Python wrapper module around the OpenSSL library
-endef
-
 define Package/python3-pyopenssl/description
-$(call Package/python-pyopenssl/description)
+Python wrapper module around the OpenSSL library
 .
 (Variant for Python3).
 endef
-
-$(eval $(call PyPackage,python-pyopenssl))
-$(eval $(call BuildPackage,python-pyopenssl))
-$(eval $(call BuildPackage,python-pyopenssl-src))
 
 $(eval $(call Py3Package,python3-pyopenssl))
 $(eval $(call BuildPackage,python3-pyopenssl))

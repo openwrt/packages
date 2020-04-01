@@ -20,7 +20,6 @@ PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleana
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-cffi/Default
@@ -32,14 +31,6 @@ define Package/python-cffi/Default
   DEPENDS:=+libffi
 endef
 
-define Package/python-cffi
-$(call Package/python-cffi/Default)
-  DEPENDS+= \
-      +PACKAGE_python-cffi:python-light \
-      +PACKAGE_python-cffi:python-pycparser
-  VARIANT:=python
-endef
-
 define Package/python3-cffi
 $(call Package/python-cffi/Default)
   DEPENDS+= \
@@ -48,19 +39,11 @@ $(call Package/python-cffi/Default)
   VARIANT:=python3
 endef
 
-define Package/python-cffi/description
-Foreign Function Interface for Python calling C code.
-endef
-
 define Package/python3-cffi/description
-$(call Package/python-cffi/description)
+Foreign Function Interface for Python calling C code.
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-cffi))
-$(eval $(call BuildPackage,python-cffi))
-$(eval $(call BuildPackage,python-cffi-src))
 
 $(eval $(call Py3Package,python3-cffi))
 $(eval $(call BuildPackage,python3-cffi))
