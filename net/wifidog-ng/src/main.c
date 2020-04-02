@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2017 jianhui zhao <jianhuizhao329@gmail.com>
+ *  Copyright (C) 2017 jianhui zhao <zhaojh329@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -14,7 +14,9 @@
 #include <linux/tcp.h>
 #include <linux/udp.h>
 #include <net/netfilter/nf_nat.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 1, 0)
 #include <net/netfilter/nf_nat_l3proto.h>
+#endif
 
 #include "utils.h"
 #include "config.h"
@@ -85,7 +87,11 @@ static u32 wifidog_hook(void *priv, struct sk_buff *skb, const struct nf_hook_st
     if (ct->status & IPS_HIJACKED) {
         if (is_allowed_mac(skb, state)) {
             /* Avoid duplication of authentication */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0)
             nf_reset(skb);
+#else
+            nf_reset_ct(skb);
+#endif
             nf_ct_kill(ct);
         }
         return NF_ACCEPT;
@@ -149,7 +155,9 @@ static int __init wifidog_init(void)
     if (ret)
         return ret;
 
-#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 17, 19)
+#if LINUX_VERSION_CODE > KERNEL_VERSION(5, 0, 21)
+    ret = nf_nat_ipv4_register_fn(&init_net, &wifidog_ops);
+#elif LINUX_VERSION_CODE > KERNEL_VERSION(4, 17, 19)
     ret = nf_nat_l3proto_ipv4_register_fn(&init_net, &wifidog_ops);
 #elif LINUX_VERSION_CODE > KERNEL_VERSION(4, 12, 14)
     ret = nf_register_net_hook(&init_net, &wifidog_ops);
@@ -174,7 +182,9 @@ static void __exit wifidog_exit(void)
 {
     deinit_config();
 
-#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 17, 19)
+#if LINUX_VERSION_CODE > KERNEL_VERSION(5, 0, 21)
+    nf_nat_ipv4_unregister_fn(&init_net, &wifidog_ops);
+#elif LINUX_VERSION_CODE > KERNEL_VERSION(4, 17, 19)
     nf_nat_l3proto_ipv4_unregister_fn(&init_net, &wifidog_ops);
 #elif LINUX_VERSION_CODE > KERNEL_VERSION(4, 12, 14)
     nf_unregister_net_hook(&init_net, &wifidog_ops);
@@ -188,5 +198,5 @@ static void __exit wifidog_exit(void)
 module_init(wifidog_init);
 module_exit(wifidog_exit);
 
-MODULE_AUTHOR("jianhui zhao <jianhuizhao329@gmail.com>");
+MODULE_AUTHOR("jianhui zhao <zhaojh329@gmail.com>");
 MODULE_LICENSE("GPL");
