@@ -1,0 +1,20 @@
+--- a/pdns/opensslsigners.cc
++++ b/pdns/opensslsigners.cc
+@@ -29,6 +29,7 @@
+ #if defined(HAVE_LIBCRYPTO_ED25519) || defined(HAVE_LIBCRYPTO_ED448)
+ #include <openssl/evp.h>
+ #endif
++#include <openssl/bn.h>
+ #include <openssl/sha.h>
+ #include <openssl/rand.h>
+ #include <openssl/rsa.h>
+--- a/pdns/pkcs11signers.cc
++++ b/pdns/pkcs11signers.cc
+@@ -15,6 +15,7 @@
+ #include "pdns/lock.hh"
+ 
+ #ifdef HAVE_LIBCRYPTO_ECDSA
++#include <openssl/bn.h>
+ #include <openssl/ec.h>
+ #endif
+ 
