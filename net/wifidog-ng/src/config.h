@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2017 jianhui zhao <jianhuizhao329@gmail.com>
+ *  Copyright (C) 2017 jianhui zhao <zhaojh329@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as

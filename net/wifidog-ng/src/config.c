@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2017 jianhui zhao <jianhuizhao329@gmail.com>
+ *  Copyright (C) 2017 jianhui zhao <zhaojh329@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2 as
@@ -9,6 +9,7 @@
 #include <linux/uaccess.h>
 #include <linux/inetdevice.h>
 #include <linux/seq_file.h>
+#include <linux/version.h>
 
 #include "config.h"
 
@@ -20,6 +21,9 @@ static int update_gw_interface(const char *interface)
     int ret = 0;
     struct net_device *dev;
     struct in_device *in_dev;
+#if LINUX_VERSION_CODE > KERNEL_VERSION(5, 2, 21)
+    const struct in_ifaddr *ifa;
+#endif
 
     dev = dev_get_by_name(&init_net, interface);
     if (!dev) {
@@ -36,15 +40,25 @@ static int update_gw_interface(const char *interface)
         goto QUIT;
     }
 
+#if LINUX_VERSION_CODE > KERNEL_VERSION(5, 2, 21)
+    in_dev_for_each_ifa_rcu(ifa, in_dev) {
+        if (ifa->ifa_flags & IFA_F_SECONDARY)
+            continue;
+#else
     for_primary_ifa(in_dev) {
+#endif
         conf.interface_ipaddr = ifa->ifa_local;
         conf.interface_mask = ifa->ifa_mask;
         conf.interface_broadcast = ifa->ifa_broadcast;
 
         pr_info("Found ip from %s: %pI4\n", interface, &conf.interface_ipaddr);
         break;
+#if LINUX_VERSION_CODE > KERNEL_VERSION(5, 2, 21)
+    }
+#else
     } endfor_ifa(in_dev)
-    
+#endif
+
 QUIT:   
     dev_put(dev);
 

@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wifidog-ng
-PKG_VERSION:=2.0.1
+PKG_VERSION:=2.0.2
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)
@@ -16,7 +16,7 @@ PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_MAINTAINER:=Jianhui Zhao <jianhuizhao329@gmail.com>
+PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
 
