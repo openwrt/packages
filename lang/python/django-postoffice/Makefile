@@ -21,7 +21,6 @@ PKG_LICENSE_FILES:=LICENSE.txt
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/django-postoffice/Default
@@ -30,21 +29,6 @@ define Package/django-postoffice/Default
   CATEGORY:=Languages
   TITLE:=A Django app to monitor and send mail asynchronously
   URL:=https://github.com/ui/django-post_office
-endef
-
-define Package/python-django-postoffice
-$(call Package/django-postoffice/Default)
-  DEPENDS:= \
-	+PACKAGE_python-django-postoffice:python \
-	python-django1 \
-	+PACKAGE_python-django-postoffice:python-django-jsonfield
-  VARIANT:=python
-  MDEPENDS:=python-django1
-endef
-
-define Package/python-django-postoffice/description
-  A Django app to monitor and send mail asynchronously, complete with template
-  support
 endef
 
 define Package/python3-django-postoffice
@@ -57,14 +41,11 @@ $(call Package/django-postoffice/Default)
 endef
 
 define Package/python3-django-postoffice/description
-$(call Package/python-django-postoffice/description)
+  A Django app to monitor and send mail asynchronously, complete with template
+  support
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-django-postoffice))
-$(eval $(call BuildPackage,python-django-postoffice))
-$(eval $(call BuildPackage,python-django-postoffice-src))
 
 $(eval $(call Py3Package,python3-django-postoffice))
 $(eval $(call BuildPackage,python3-django-postoffice))

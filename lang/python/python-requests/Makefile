@@ -21,7 +21,6 @@ PKG_HASH:=b3f43d496c6daba4493e7c431722aeb7dbc6288f52a6e04e7b6023b0247817e6
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-requests/Default
@@ -30,17 +29,6 @@ define Package/python-requests/Default
   CATEGORY:=Languages
   TITLE:=HTTP library for Python
   URL:=https://2.python-requests.org/
-endef
-
-define Package/python-requests
-$(call Package/python-requests/Default)
-  DEPENDS:= \
-	  +PACKAGE_python-requests:python \
-	  +PACKAGE_python-requests:python-chardet \
-	  +PACKAGE_python-requests:python-idna \
-	  +PACKAGE_python-requests:python-urllib3 \
-	  +PACKAGE_python-requests:python-certifi
-  VARIANT:=python
 endef
 
 define Package/python3-requests
@@ -54,19 +42,11 @@ $(call Package/python-requests/Default)
   VARIANT:=python3
 endef
 
-define Package/python-requests/description
-  Requests is the only Non-GMO HTTP library for Python, safe for human consumption
-endef
-
 define Package/python3-requests/description
-$(call Package/python-requests/description)
+  Requests is the only Non-GMO HTTP library for Python, safe for human consumption
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-requests))
-$(eval $(call BuildPackage,python-requests))
-$(eval $(call BuildPackage,python-requests-src))
 
 $(eval $(call Py3Package,python3-requests))
 $(eval $(call BuildPackage,python3-requests))

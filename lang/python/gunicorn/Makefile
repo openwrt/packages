@@ -20,7 +20,6 @@ PKG_LICENSE_FILES:=LICENSE
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/gunicorn/Default
@@ -31,21 +30,6 @@ define Package/gunicorn/Default
   URL:=https://gunicorn.org
 endef
 
-define Package/python-gunicorn
-$(call Package/gunicorn/Default)
-  DEPENDS:=+python
-  VARIANT:=python
-endef
-
-define Package/python-gunicorn/description
-    WSGI HTTP Server for UNIX (libraries)
-endef
-
-define PyPackage/python-gunicorn/filespec
-+|$(PYTHON_PKG_DIR)
--|$(PYTHON_PKG_DIR)/gunicorn/workers/_gaiohttp.py
-endef
-
 define Package/python3-gunicorn
 $(call Package/gunicorn/Default)
   DEPENDS:=+python3
@@ -53,34 +37,15 @@ $(call Package/gunicorn/Default)
 endef
 
 define Package/python3-gunicorn/description
-$(call Package/python-gunicorn/description)
+    WSGI HTTP Server for UNIX (libraries)
 .
 (Variant for Python3)
 endef
 
 # Make sure that the binaries are not installed with the libraries
-# That means adding some empty Py[3]Package/gunicorn[3]/install rules
-define PyPackage/python-gunicorn/install
-	:
-endef
-
+# That means adding some empty Py3Package/gunicorn3/install rules
 define Py3Package/python3-gunicorn/install
 	:
-endef
-
-define Package/gunicorn
-$(call Package/gunicorn/Default)
-  DEPENDS:=+python +python-pkg-resources +python-gunicorn
-endef
-
-define Package/gunicorn/description
-    WSGI HTTP Server for UNIX (daemon)
-endef
-
-define Package/gunicorn/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
-	$(call PyShebang,$(1)/usr/bin/*)
 endef
 
 define Package/gunicorn3
@@ -89,7 +54,7 @@ $(call Package/gunicorn/Default)
 endef
 
 define Package/gunicorn3/description
-$(call Package/gunicorn/description)
+    WSGI HTTP Server for UNIX (daemon)
 .
 (Variant for Python3)
 endef
@@ -104,11 +69,6 @@ define Package/gunicorn3/install
 		$(1)/usr/bin/gunicorn3_paster
 	$(call Py3Shebang,$(1)/usr/bin/*)
 endef
-
-$(eval $(call PyPackage,python-gunicorn))
-$(eval $(call BuildPackage,python-gunicorn))
-$(eval $(call BuildPackage,python-gunicorn-src))
-$(eval $(call BuildPackage,gunicorn))
 
 $(eval $(call Py3Package,python3-gunicorn))
 $(eval $(call BuildPackage,python3-gunicorn))

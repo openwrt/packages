@@ -18,7 +18,6 @@ PKG_HASH:=bee41cc35fcca6e988463cacc3bcb8a96224f470ca547e697b604cc697b2f889
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-oauthlib/Default
@@ -29,32 +28,18 @@ define Package/python-oauthlib/Default
   URL:=https://github.com/oauthlib/oauthlib
 endef
 
-define Package/python-oauthlib
-  $(call Package/python-oauthlib/Default)
-  DEPENDS:=+PACKAGE_python-oauthlib:python-light
-  VARIANT:=python
-endef
-
 define Package/python3-oauthlib
   $(call Package/python-oauthlib/Default)
   DEPENDS:=+PACKAGE_python3-oauthlib:python3-light
   VARIANT:=python3
 endef
 
-define Package/python-oauthlib/description
+define Package/python3-oauthlib/description
   A generic, spec-compliant, thorough implementation of the OAuth request-signing
   logic for Python
-endef
-
-define Package/python3-oauthlib/description
-$(call Package/python-oauthlib/description)
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-oauthlib))
-$(eval $(call BuildPackage,python-oauthlib))
-$(eval $(call BuildPackage,python-oauthlib-src))
 
 $(eval $(call Py3Package,python3-oauthlib))
 $(eval $(call BuildPackage,python3-oauthlib))

@@ -18,7 +18,6 @@ PKG_LICENSE_FILES:=LICENSE
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/django-formtools/Default
@@ -27,20 +26,6 @@ define Package/django-formtools/Default
   CATEGORY:=Languages
   TITLE:=High-level abstractions for Django forms
   URL:=https://django-formtools.readthedocs.io
-endef
-
-define Package/python-django-formtools
-$(call Package/django-formtools/Default)
-  DEPENDS:= \
-	+PACKAGE_python-django-formtools:python \
-	python-django1
-  VARIANT:=python
-  MDEPENDS:=python-django1
-endef
-
-define Package/python-django-formtools/description
-  Django "formtools" is a set of high-level abstractions for Django forms.
-  Currently for form previews and multi-step forms.
 endef
 
 define Package/python3-django-formtools
@@ -52,14 +37,11 @@ $(call Package/django-formtools/Default)
 endef
 
 define Package/python3-django-formtools/description
-$(call Package/python-django-formtools/description)
+  Django "formtools" is a set of high-level abstractions for Django forms.
+  Currently for form previews and multi-step forms.
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-django-formtools))
-$(eval $(call BuildPackage,python-django-formtools))
-$(eval $(call BuildPackage,python-django-formtools-src))
 
 $(eval $(call Py3Package,python3-django-formtools))
 $(eval $(call BuildPackage,python3-django-formtools))

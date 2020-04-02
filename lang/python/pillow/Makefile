@@ -20,7 +20,6 @@ PKG_CPE_ID:=cpe:/a:python:pillow
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-pillow/Default
@@ -32,16 +31,6 @@ define Package/python-pillow/Default
   DEPENDS:=+libfreetype +libjpeg +libtiff +zlib
 endef
 
-define Package/python-pillow
-$(call Package/python-pillow/Default)
-  DEPENDS+=+PACKAGE_python-pillow:python
-  VARIANT:=python
-endef
-
-define Package/python-pillow/description
-  The friendly PIL fork
-endef
-
 define Package/python3-pillow
 $(call Package/python-pillow/Default)
   DEPENDS+=+PACKAGE_python3-pillow:python3
@@ -49,7 +38,7 @@ $(call Package/python-pillow/Default)
 endef
 
 define Package/python3-pillow/description
-$(call Package/python-pillow/description)
+  The friendly PIL fork
 .
 (Variant for Python3)
 endef
@@ -65,12 +54,6 @@ PYTHON3_PKG_SETUP_GLOBAL_ARGS += build_ext \
 	--disable-jpeg2000 \
 	--disable-imagequant \
 	--disable-platform-guessing
-
-PYTHON_PKG_SETUP_GLOBAL_ARGS:=$(PYTHON3_PKG_SETUP_GLOBAL_ARGS)
-
-$(eval $(call PyPackage,python-pillow))
-$(eval $(call BuildPackage,python-pillow))
-$(eval $(call BuildPackage,python-pillow-src))
 
 $(eval $(call Py3Package,python3-pillow))
 $(eval $(call BuildPackage,python3-pillow))

@@ -18,7 +18,6 @@ PKG_LICENSE_FILES:=LICENSE
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-qrcode/Default
@@ -27,20 +26,6 @@ define Package/python-qrcode/Default
   SUBMENU:=Python
   TITLE:=QR Code image generator
   URL:=https://github.com/lincolnloop/python-qrcode
-endef
-
-define Package/python-qrcode
-$(call Package/python-qrcode/Default)
-  DEPENDS:= \
-	+PACKAGE_python-qrcode:python \
-	+PACKAGE_python-qrcode:python-setuptools \
-	+PACKAGE_python-qrcode:python-six \
-	+PACKAGE_python-qrcode:python-pillow
-  VARIANT:=python
-endef
-
-define Package/python-qrcode/description
-  Pure python QR Code generator
 endef
 
 define Package/python3-qrcode
@@ -54,14 +39,10 @@ $(call Package/python-qrcode/Default)
 endef
 
 define Package/python3-qrcode/description
-$(call Package/python-qrcode/description)
+  Pure python QR Code generator
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-qrcode))
-$(eval $(call BuildPackage,python-qrcode))
-$(eval $(call BuildPackage,python-qrcode-src))
 
 $(eval $(call Py3Package,python3-qrcode))
 $(eval $(call BuildPackage,python3-qrcode))

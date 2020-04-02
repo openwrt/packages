@@ -20,7 +20,6 @@ PKG_LICENSE_FILES:=LICENSE
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/django-statici18n/Default
@@ -29,21 +28,6 @@ define Package/django-statici18n/Default
   CATEGORY:=Languages
   TITLE:=Helper for generating JavaScript catalog to static files
   URL:=https://django-statici18n.readthedocs.io
-endef
-
-define Package/python-django-statici18n
-$(call Package/django-statici18n/Default)
-  DEPENDS:= \
-	+PACKAGE_python-django-statici18n:python \
-	python-django1 \
-	+PACKAGE_python-django-statici18n:python-django-appconf \
-	+PACKAGE_python-django-statici18n:python-six
-  VARIANT:=python
-  MDEPENDS:=python-django1
-endef
-
-define Package/python-django-statici18n/description
-  A Django app that provides helper for generating JavaScript catalog to static files.
 endef
 
 define Package/python3-django-statici18n
@@ -57,14 +41,10 @@ $(call Package/django-statici18n/Default)
 endef
 
 define Package/python3-django-statici18n/description
-$(call Package/python-django-statici18n/description)
+  A Django app that provides helper for generating JavaScript catalog to static files.
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-django-statici18n))
-$(eval $(call BuildPackage,python-django-statici18n))
-$(eval $(call BuildPackage,python-django-statici18n-src))
 
 $(eval $(call Py3Package,python3-django-statici18n))
 $(eval $(call BuildPackage,python3-django-statici18n))

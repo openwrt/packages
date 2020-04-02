@@ -19,7 +19,6 @@ PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-dateutil/Default
@@ -30,16 +29,6 @@ define Package/python-dateutil/Default
   URL:=https://dateutil.readthedocs.org/
 endef
 
-define Package/python-dateutil
-$(call Package/python-dateutil/Default)
-  DEPENDS:=+PACKAGE_python-dateutil:python +PACKAGE_python-dateutil:python-six
-  VARIANT:=python
-endef
-
-define Package/python-dateutil/description
-  Extensions to the standard Python datetime module
-endef
-
 define Package/python3-dateutil
 $(call Package/python-dateutil/Default)
   DEPENDS:=+PACKAGE_python3-dateutil:python3 +PACKAGE_python3-dateutil:python3-six
@@ -47,14 +36,11 @@ $(call Package/python-dateutil/Default)
 endef
 
 define Package/python3-dateutil/description
-$(call Package/python-dateutil/description)
+  Extensions to the standard Python datetime module
 .
 (Variant for Python3)
 endef
 
-$(eval $(call PyPackage,python-dateutil))
-$(eval $(call BuildPackage,python-dateutil))
-$(eval $(call BuildPackage,python-dateutil-src))
 $(eval $(call Py3Package,python3-dateutil))
 $(eval $(call BuildPackage,python3-dateutil))
 $(eval $(call BuildPackage,python3-dateutil-src))

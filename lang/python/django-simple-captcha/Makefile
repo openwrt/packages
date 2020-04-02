@@ -22,7 +22,6 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
@@ -33,23 +32,6 @@ define Package/django-simple-captcha/Default
   CATEGORY:=Languages
   TITLE:=Simple Django captcha application
   URL:=https://github.com/mbi/django-simple-captcha
-endef
-
-define Package/python-django-simple-captcha
-$(call Package/django-simple-captcha/Default)
-  DEPENDS:= \
-	+PACKAGE_python-django-simple-captcha:python \
-	+PACKAGE_python-django-simple-captcha:python-six \
-	python-django1 \
-	+PACKAGE_python-django-simple-captcha:python-pillow \
-	+PACKAGE_python-django-simple-captcha:python-django-ranged-response
-  VARIANT:=python
-  MDEPENDS:=python-django1
-endef
-
-define Package/python-django-simple-captcha/description
-  Django Simple Captcha is an extremely simple, yet highly customizable Django
-  application to add captcha images to any Django form.
 endef
 
 define Package/python3-django-simple-captcha
@@ -64,14 +46,11 @@ $(call Package/django-simple-captcha/Default)
 endef
 
 define Package/python3-django-simple-captcha/description
-$(call Package/python-django-simple-captcha/description)
+  Django Simple Captcha is an extremely simple, yet highly customizable Django
+  application to add captcha images to any Django form.
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-django-simple-captcha))
-$(eval $(call BuildPackage,python-django-simple-captcha))
-$(eval $(call BuildPackage,python-django-simple-captcha-src))
 
 $(eval $(call Py3Package,python3-django-simple-captcha))
 $(eval $(call BuildPackage,python3-django-simple-captcha))

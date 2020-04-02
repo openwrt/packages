@@ -18,7 +18,6 @@ PKG_HASH:=ca87b695d3d7864157773a61263e5abb96006e9ff0e021eff90cbe0e1ba18270
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-rcssmin/Default
@@ -29,14 +28,6 @@ define Package/python-rcssmin/Default
     URL:=http://opensource.perlig.de/rcssmin/
 endef
 
-define Package/python-rcssmin
-    $(call Package/python-rcssmin/Default)
-    DEPENDS:= \
-	+PACKAGE_python-rcssmin:python-light \
-	+PACKAGE_python-rcssmin:python-codecs
-    VARIANT:=python
-endef
-
 define Package/python3-rcssmin
     $(call Package/python-rcssmin/Default)
     DEPENDS:= \
@@ -44,23 +35,15 @@ define Package/python3-rcssmin
     VARIANT:=python3
 endef
 
-define Package/python-rcssmin/description
+define Package/python3-rcssmin/description
     This module is a re-implementation aiming for speed instead of maximum compression,
     so it can be used at runtime (rather than during a preprocessing step).
     RCSSmin does syntactical compression only (removing spaces, comments and possibly
     semicolons). It does not provide semantic compression (like removing empty blocks,
     collapsing redundant properties etc).
-endef
-
-define Package/python3-rcssmin/description
-$(call Package/python-rcssmin/description)
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-rcssmin))
-$(eval $(call BuildPackage,python-rcssmin))
-$(eval $(call BuildPackage,python-rcssmin-src))
 
 $(eval $(call Py3Package,python3-rcssmin))
 $(eval $(call BuildPackage,python3-rcssmin))

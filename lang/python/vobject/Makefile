@@ -14,7 +14,6 @@ PKG_HASH:=96512aec74b90abb71f6b53898dd7fe47300cc940104c4f79148f0671f790101
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-vobject/Default
@@ -26,31 +25,18 @@ define Package/python-vobject/Default
   URL:=http://eventable.github.io/vobject/
 endef
 
-define Package/python-vobject
-$(call Package/python-vobject/Default)
-  DEPENDS:=+PACKAGE_python-vobject:python +PACKAGE_python-vobject:python-dateutil
-  VARIANT:=python
-endef
-
 define Package/python3-vobject
 $(call Package/python-vobject/Default)
   DEPENDS:=+PACKAGE_python3-vobject:python3 +PACKAGE_python3-vobject:python3-dateutil
   VARIANT:=python3
 endef
 
-define Package/python-vobject/description
-  vCard and vCalendar support for Python
-endef
-
 define Package/python3-vobject/description
-$(call Package/python-vobject/description)
+  vCard and vCalendar support for Python
 .
 (Variant for Python3)
 endef
 
-$(eval $(call PyPackage,python-vobject))
-$(eval $(call BuildPackage,python-vobject))
-$(eval $(call BuildPackage,python-vobject-src))
 $(eval $(call Py3Package,python3-vobject))
 $(eval $(call BuildPackage,python3-vobject))
 $(eval $(call BuildPackage,python3-vobject-src))

@@ -20,7 +20,6 @@ PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/python-incremental/Default
@@ -31,31 +30,17 @@ define Package/python-incremental/Default
   URL:=https://github.com/twisted/incremental
 endef
 
-define Package/python-incremental
-$(call Package/python-incremental/Default)
-  DEPENDS:=+PACKAGE_python-incremental:python-light
-  VARIANT:=python
-endef
-
 define Package/python3-incremental
 $(call Package/python-incremental/Default)
   DEPENDS:=+PACKAGE_python3-incremental:python3-light
   VARIANT:=python3
 endef
 
-define Package/python-incremental/description
-Incremental is a small library that versions your Python projects.
-endef
-
 define Package/python3-incremental/description
-$(call Package/python-incremental/description)
+Incremental is a small library that versions your Python projects.
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-incremental))
-$(eval $(call BuildPackage,python-incremental))
-$(eval $(call BuildPackage,python-incremental-src))
 
 $(eval $(call Py3Package,python3-incremental))
 $(eval $(call BuildPackage,python3-incremental))

@@ -20,7 +20,6 @@ PKG_LICENSE_FILES:=PKG-INFO
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python-package.mk
 include ../python3-package.mk
 
 define Package/flup/Default
@@ -31,14 +30,6 @@ define Package/flup/Default
   URL:=https://www.saddi.com/software/flup/
 endef
 
-define Package/python-flup
-$(call Package/flup/Default)
-  DEPENDS+= \
-      +PACKAGE_python-flup:python-light \
-      +PACKAGE_python-flup:python-logging
-  VARIANT:=python
-endef
-
 define Package/python3-flup
 $(call Package/flup/Default)
   DEPENDS+= \
@@ -47,19 +38,11 @@ $(call Package/flup/Default)
   VARIANT:=python3
 endef
 
-define Package/python-flup/description
-  Random assortment of WSGI servers.
-endef
-
 define Package/python3-flup/description
-$(call Package/python-flup/description)
+  Random assortment of WSGI servers.
 .
 (Variant for Python3)
 endef
-
-$(eval $(call PyPackage,python-flup))
-$(eval $(call BuildPackage,python-flup))
-$(eval $(call BuildPackage,python-flup-src))
 
 $(eval $(call Py3Package,python3-flup))
 $(eval $(call BuildPackage,python3-flup))
