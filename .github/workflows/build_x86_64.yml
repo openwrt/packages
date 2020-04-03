@@ -1,0 +1,85 @@
+#=================================================
+# Description: Test build OpenWrt using GitHub Actions
+# Lisence: MIT
+# Author: Xiaobo Tian P3TERX
+#=================================================
+
+name: Build_x86_64
+
+on:
+
+  push:
+#    branches:
+#      - master
+
+  pull_request:
+    branches:
+      - master
+
+#  schedule:
+#    - cron: 0 8 * * 5
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+#    - name: Checkout
+#      uses: actions/checkout@master
+#      with:
+#        fetch-depth: 1
+
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo swapoff /swapfile
+        sudo rm -rf /swapfile /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        echo "Update and install ..."
+        sudo -E apt-get update
+        sudo -E apt-get -y install build-essential asciidoc binutils bzip2 \
+        gawk gettext git libncurses5-dev patch unzip zlib1g-dev lib32gcc1 \
+        libc6-dev-i386 subversion flex node-uglify gcc-multilib \
+        p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto \
+        qemu-utils upx-ucl libelf-dev autoconf automake libtool autopoint \
+        device-tree-compiler libuv-dev
+
+    - name: Clone source code
+      env:
+        REPO_URL: https://github.com/openwrt/openwrt
+        REPO_BRANCH: master
+      run: git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
+
+    - name: Update & Install feeds
+      working-directory: ./openwrt
+      run: |
+        cp feeds.conf.default feeds.conf
+        ./scripts/feeds update -a
+        #rm -rf feeds/packages/net/wifidog*
+        ./scripts/feeds install -a
+
+    - name: Configuration Customization - Build_x86_64
+      env:
+        CONFIG_URL: 'http://downloads.openwrt.org/snapshots/targets/x86/64/config.buildinfo'
+      working-directory: ./openwrt
+      run: |
+        [ -e $CONFIG_FILE ] && curl $CONFIG_URL -o .config
+        make defconfig
+
+    - name: Download package
+      working-directory: ./openwrt
+      run: |
+        make download -j$(nproc)
+        find dl -size -1024c -exec ls -l {} \;
+
+    - name: Build firmware
+      working-directory: ./openwrt
+      run: |
+        echo -e "$(nproc) thread build."
+        make V=s VERBOSE=1 -j$(nproc) JOBS=$(nproc)
+
+    - name : Upload artifact
+      uses: actions/upload-artifact@master
+      with:
+        name: OpenWrt
+        path: openwrt/bin
