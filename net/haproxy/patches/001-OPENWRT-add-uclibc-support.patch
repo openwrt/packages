@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -339,6 +339,15 @@ ifeq ($(TARGET),linux-glibc)
+@@ -342,6 +342,15 @@ ifeq ($(TARGET),linux-glibc)
      USE_ACCEPT4 USE_LINUX_SPLICE USE_PRCTL USE_THREAD_DUMP USE_GETADDRINFO)
  endif
  
