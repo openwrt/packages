@@ -119,11 +119,14 @@ list()
 		src_archive="$(uci_get adblock global adb_srcarc "/etc/adblock/adblock.sources.gz")"
 		src_file="$(uci_get adblock global adb_srcfile "/tmp/adb_sources.json")"
 		src_enabled="$(uci -q show adblock.global.adb_sources)"
-		if [ -r "${src_archive}" ]
+		if [ ! -r "${src_file}" ]
 		then
-			zcat "${src_archive}" > "${src_file}"
-		else
-			printf "%s\\n" "::: adblock source archive '${src_archive}' not found"
+			if [ -r "${src_archive}" ]
+			then
+				zcat "${src_archive}" > "${src_file}"
+			else
+				printf "%s\\n" "::: adblock source archive '${src_archive}' not found"
+			fi
 		fi
 		if [ -r "${src_file}" ]
 		then

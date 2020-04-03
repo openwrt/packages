@@ -11,7 +11,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-adb_ver="4.0.1"
+adb_ver="4.0.2"
 adb_enabled=0
 adb_debug=0
 adb_forcedns=0
@@ -39,9 +39,9 @@ adb_blacklist="/etc/adblock/adblock.blacklist"
 adb_whitelist="/etc/adblock/adblock.whitelist"
 adb_ubusservice="/etc/adblock/adblock.monitor"
 adb_mailservice="/etc/adblock/adblock.mail"
-adb_srcarc="/etc/adblock/adblock.sources.gz"
 adb_dnsfile="${adb_dnsprefix}.overall"
 adb_dnsjail="${adb_dnsprefix}.jail"
+adb_srcarc="/etc/adblock/adblock.sources.gz"
 adb_srcfile="${adb_tmpbase}/adb_sources.json"
 adb_rtfile="${adb_tmpbase}/adb_runtime.json"
 adb_loggercmd="$(command -v logger)"
@@ -635,7 +635,7 @@ f_dnsup()
 		"/etc/init.d/${adb_dns}" restart >/dev/null 2>&1
 		restart_rc="${?}"
 	fi
-	if [ "${restart_rc}" -eq 0 ]
+	if [ "${restart_rc}" = "0" ]
 	then
 		while [ "${cnt}" -le "${adb_dnstimeout}" ]
 		do
@@ -655,6 +655,7 @@ f_dnsup()
 					fi
 				else
 					sleep ${adb_dnstimeout}
+					cnt=${adb_dnstimeout}
 					out_rc=0
 					break
 				fi
