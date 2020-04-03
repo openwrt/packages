@@ -46,7 +46,7 @@
  		goto mkcert_error;
  
  	/* set public key in the certificate */
-@@ -6399,7 +6411,7 @@ smp_fetch_ssl_x_notafter(const struct arg *args, struct sample *smp, const char
+@@ -6383,7 +6395,7 @@ smp_fetch_ssl_x_notafter(const struct arg *args, struct sample *smp, const char
  		goto out;
  
  	smp_trash = get_trash_chunk();
@@ -55,7 +55,7 @@
  		goto out;
  
  	smp->data.u.str = *smp_trash;
-@@ -6499,7 +6511,7 @@ smp_fetch_ssl_x_notbefore(const struct a
+@@ -6483,7 +6495,7 @@ smp_fetch_ssl_x_notbefore(const struct a
  		goto out;
  
  	smp_trash = get_trash_chunk();
@@ -64,7 +64,7 @@
  		goto out;
  
  	smp->data.u.str = *smp_trash;
-@@ -9070,7 +9082,9 @@ static void __ssl_sock_init(void)
+@@ -9054,7 +9066,9 @@ static void __ssl_sock_init(void)
  #endif
  
  	xprt_register(XPRT_SSL, &ssl_sock);
@@ -74,7 +74,7 @@
  #if (!defined(OPENSSL_NO_COMP) && !defined(SSL_OP_NO_COMPRESSION))
  	cm = SSL_COMP_get_compression_methods();
  	i = sk_SSL_COMP_num(cm);
-@@ -9079,7 +9093,7 @@ static void __ssl_sock_init(void)
+@@ -9063,7 +9077,7 @@ static void __ssl_sock_init(void)
  	}
  #endif
  
@@ -83,7 +83,7 @@
  	ssl_locking_init();
  #endif
  #if (OPENSSL_VERSION_NUMBER >= 0x1000200fL && !defined OPENSSL_NO_TLSEXT && !defined OPENSSL_IS_BORINGSSL && !defined LIBRESSL_VERSION_NUMBER)
-@@ -9108,8 +9122,8 @@ static void __ssl_sock_init(void)
+@@ -9092,8 +9106,8 @@ static void __ssl_sock_init(void)
  #else /* OPENSSL_IS_BORINGSSL */
  	        OPENSSL_VERSION_TEXT
  		"\nRunning on OpenSSL version : %s%s",
@@ -94,7 +94,7 @@
  #endif
  	memprintf(&ptr, "%s\nOpenSSL library supports TLS extensions : "
  #if OPENSSL_VERSION_NUMBER < 0x00907000L
-@@ -9200,12 +9214,14 @@ static void __ssl_sock_deinit(void)
+@@ -9184,12 +9198,14 @@ static void __ssl_sock_deinit(void)
  	}
  #endif
  
