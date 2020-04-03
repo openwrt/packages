@@ -20,6 +20,13 @@
 		"focus": "compilation",
 		"descurl": "https://gitlab.com/andryou/block/-/blob/master/readme.md"
 	},
+	"anudeep": {
+		"url": "https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt",
+		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
+		"size": "M",
+		"focus": "compilation",
+		"descurl": "https://github.com/anudeepND/blacklist"
+	},
 	"bitcoin": {
 		"url": "https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/master/hosts.txt",
 		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
@@ -68,13 +75,6 @@
 		"size": "XXL",
 		"focus": "compilation",
 		"descurl": "https://github.com/EnergizedProtection/block"
-	},
-	"hphosts": {
-		"url": "https://hosts-file.net/ad_servers.txt",
-		"rule": "/^127\\.0\\.0\\.1[[:space:]]+([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
-		"size": "M",
-		"focus": "general",
-		"descurl": "https://hosts-file.net"
 	},
 	"malwaredomains": {
 		"url": "http://mirror.espoch.edu.ec/malwaredomains/justdomains",
@@ -222,6 +222,13 @@
 		"focus": "compilation",
 		"descurl": "https://github.com/StevenBlack/hosts"
 	},
+	"stopforumspam": {
+		"url": "https://www.stopforumspam.com/downloads/toxic_domains_whole.txt",
+		"rule": "/^[[:space:]]*([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "S",
+		"focus": "spam",
+		"descurl": "https://www.stopforumspam.com"
+	},
 	"sysctl": {
 		"url": "http://sysctl.org/cameleon/hosts",
 		"rule": "/^127\\.0\\.0\\.1[[:space:]]+([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
@@ -269,6 +276,13 @@
 		"size": "S",
 		"focus": "win_telemetry",
 		"descurl": "https://github.com/crazy-max/WindowsSpyBlocker"
+	},
+	"youtube": {
+		"url": "https://raw.githubusercontent.com/kboghdady/youTube_ads_4_pi-hole/master/black.list",
+		"rule": "/^([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "M",
+		"focus": "youtube",
+		"descurl": "https://github.com/kboghdady/youTube_ads_4_pi-hole"
 	},
 	"yoyo": {
 		"url": "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=nohtml&showintro=0&mimetype=plaintext",
