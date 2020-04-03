@@ -1,0 +1,58 @@
+commit 41bf8a4314953769a11b0c09cbac8cc194e3923a
+Author: Frédéric Lécaille <flecaille@haproxy.com>
+Date:   Thu Apr 2 14:24:31 2020 +0200
+
+    BUG/MINOR: protocol_buffer: Wrong maximum shifting.
+    
+    This patch fixes a bad stop condition when decoding a protocol buffer variable integer
+    whose maximum lenghts are 10, shifting a uint64_t value by more than 63.
+    
+    Thank you to Ilya for having reported this issue.
+    
+    Must be backported to 2.1 and 2.0.
+    
+    (cherry picked from commit 876ed55d9b8d0c298b6cac1003ec365a19bf7aad)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit c7a203a6c75e4efff5f3d5d675d925f11b47dba1)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+diff --git a/include/proto/protocol_buffers.h b/include/proto/protocol_buffers.h
+index 69f0bdf8..0426d83d 100644
+--- a/include/proto/protocol_buffers.h
++++ b/include/proto/protocol_buffers.h
+@@ -158,7 +158,7 @@ protobuf_varint(uint64_t *val, unsigned char *pos, size_t len)
+ 
+ 		shift += 7;
+ 		/* The maximum length in bytes of a 64-bit encoded value is 10. */
+-		if (shift > 70)
++		if (shift > 63)
+ 			return 0;
+ 	}
+ 
+@@ -194,7 +194,7 @@ protobuf_decode_varint(uint64_t *val, unsigned char **pos, size_t *len)
+ 
+ 		shift += 7;
+ 		/* The maximum length in bytes of a 64-bit encoded value is 10. */
+-		if (shift > 70)
++		if (shift > 63)
+ 			return 0;
+ 	}
+ 
+@@ -227,7 +227,7 @@ protobuf_skip_varint(unsigned char **pos, size_t *len, size_t vlen)
+ 
+ 		shift += 7;
+ 		/* The maximum length in bytes of a 64-bit encoded value is 10. */
+-		if (shift > 70)
++		if (shift > 63)
+ 			return 0;
+ 	}
+ 
+@@ -263,7 +263,7 @@ protobuf_varint_getlen(unsigned char *pos, size_t len)
+ 
+ 		shift += 7;
+ 		/* The maximum length in bytes of a 64-bit encoded value is 10. */
+-		if (shift > 70)
++		if (shift > 63)
+ 			return -1;
+ 	}
+ 
