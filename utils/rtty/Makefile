@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtty
-PKG_VERSION:=7.1.2
+PKG_VERSION:=7.1.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/rtty/releases/download/v$(PKG_VERSION)
-PKG_HASH:=6faafe75d82edbcfe154da5f1ffc0ddfd14dd88a2315f19aeed7f2631df96f41
+PKG_HASH:=e10ee2048a29e18e6b21c77cb9cf7772eb95646e69567f8b40e85b816d93a3fa
 CMAKE_INSTALL:=1
 
 PKG_LICENSE:=MIT
