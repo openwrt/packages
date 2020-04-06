@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apache
-PKG_VERSION:=2.4.41
+PKG_VERSION:=2.4.43
 PKG_RELEASE:=1
 PKG_SOURCE_NAME:=httpd
 
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/httpd/
-PKG_HASH:=133d48298fe5315ae9366a0ec66282fa4040efa5d566174481077ade7d18ea40
+PKG_HASH:=a497652ab3fc81318cdc2a203090a999150d86461acff97c1065dc910fe10f43
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_NAME)-$(PKG_VERSION)
 
@@ -289,11 +289,6 @@ CONFIGURE_VARS += \
 	ac_cv_gettid=yes \
 	ap_cv_void_ptr_lt_long=no
 
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	$(INSTALL_DATA) ./files/openwrt.layout $(PKG_BUILD_DIR)/config.layout
-endef
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/apxs $(1)/usr/bin
@@ -304,8 +299,6 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/share/apache2/build
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/apache2/build/* \
 				$(1)/usr/share/apache2/build
-	$(SED) 's%/usr/share/apache2/build%$(STAGING_DIR)/usr/share/apache2/build%' \
-		$(1)/usr/bin/apxs
 	$(SED) 's%^prefix =.*%prefix = $(STAGING_DIR)/usr%' \
 		$(1)/usr/share/apache2/build/config_vars.mk
 endef
