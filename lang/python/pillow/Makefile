@@ -7,11 +7,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pillow
-PKG_VERSION:=6.2.1
+PKG_VERSION:=7.1.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=Pillow
-PKG_HASH:=bf4e972a88f8841d8fdc6db1a75e0f8d763e66e3754b03006cbc3854d89f1cb1
+PKG_HASH:=0f89ddc77cf421b8cd34ae852309501458942bf370831b4a9b406156b599a14e
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=HPND
@@ -33,7 +33,7 @@ endef
 
 define Package/python3-pillow
 $(call Package/python-pillow/Default)
-  DEPENDS+=+PACKAGE_python3-pillow:python3
+  DEPENDS+=+python3
   VARIANT:=python3
 endef
 
