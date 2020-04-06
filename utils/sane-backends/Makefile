@@ -55,7 +55,7 @@ define Package/sane-backends/config
 
     config PACKAGE_sane-backends-all
       depends on PACKAGE_sane-backends
-      prompt "Include all SANE backends (sane-backends-all)"
+      tristate "Include all SANE backends (sane-backends-all)"
 
     comment "Backends"
 
@@ -65,7 +65,7 @@ $(foreach backend,$(SANE_BACKENDS), \
       $(call Package/sane-$(backend))
     )\
     config PACKAGE_sane-$(backend)
-      prompt "$(TITLE)"
+      tristate "$(TITLE)"
      $(foreach config_dep,\
        $(filter @%,
          $(foreach v, $(DEPENDS), $(if $(findstring :,$v),,$v))
