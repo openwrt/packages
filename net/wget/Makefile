@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wget
 PKG_VERSION:=1.19.5
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
@@ -46,6 +46,7 @@ $(call Package/wget/Default)
   DEPENDS+= +libopenssl +librt
   TITLE+= (with SSL support)
   VARIANT:=ssl
+  PROVIDES+=wget-ssl
 endef
 
 define Package/wget/description
