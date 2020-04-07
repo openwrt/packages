@@ -75,9 +75,7 @@ define Package/ffmpeg4/description
   and encode without sacrifcing performance (if applicable).
 
   Some customizations can be done but are kept to a minimum for
-  simple configuration and usage. Due to the approach mentioned
-  above and distribution polices this package is not available
-  in binary (compiled) form.
+  simple configuration and usage.
 
   Please respect the above and keep it in mind when creating a
   pull request.
