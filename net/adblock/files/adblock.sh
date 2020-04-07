@@ -4,14 +4,14 @@
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
-# shellcheck disable=1091 disable=2016 disable=2039 disable=2086 disable=2143 disable=2181 disable=2188
+# shellcheck disable=1091,2016,2039,2059,2086,2143,2181,2188
 
 # set initial defaults
 #
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-adb_ver="4.0.2"
+adb_ver="4.0.3"
 adb_enabled=0
 adb_debug=0
 adb_forcedns=0
@@ -310,7 +310,7 @@ f_dns()
 		if [ "${dns_up}" != "true" ]
 		then
 			f_dnsup 4
-			if [ "${rc}" -ne 0 ]
+			if [ "${?}" -ne 0 ]
 			then
 				f_log "err" "dns backend '${adb_dns}' not running or executable"
 			fi
@@ -371,7 +371,7 @@ f_fetch()
 	fi
 	case "${adb_fetchutil}" in
 		"aria2c")
-			adb_fetchparm="${adb_fetchparm:-"--timeout=20 --allow-overwrite=true --auto-file-renaming=false --check-certificate=true --dir=" " -o"}"
+			adb_fetchparm="${adb_fetchparm:-"--timeout=20 --allow-overwrite=true --auto-file-renaming=false --check-certificate=true --dir= -o"}"
 		;;
 		"curl")
 			adb_fetchparm="${adb_fetchparm:-"--connect-timeout 20 --silent --show-error --location -o"}"
@@ -600,13 +600,15 @@ f_extconf()
 		do
 			if [ -z "$(printf "%s" "${fwcfg}" | grep -Fo -m1 "adblock_dns_${port}")" ]
 			then
-				uci_add firewall "redirect" "adblock_dns_${port}"
-				uci_set firewall "adblock_dns_${port}" "name" "Adblock DNS, port ${port}"
-				uci_set firewall "adblock_dns_${port}" "src" "lan"
-				uci_set firewall "adblock_dns_${port}" "proto" "tcp udp"
-				uci_set firewall "adblock_dns_${port}" "src_dport" "${port}"
-				uci_set firewall "adblock_dns_${port}" "dest_port" "${port}"
-				uci_set firewall "adblock_dns_${port}" "target" "DNAT"
+				uci -q batch <<-EOC
+					set firewall."adblock_dns_${port}"="redirect"
+					set firewall."adblock_dns_${port}".name="Adblock DNS, port ${port}"
+					set firewall."adblock_dns_${port}".src="lan"
+					set firewall."adblock_dns_${port}".proto="tcp udp"
+					set firewall."adblock_dns_${port}".src_dport="${port}"
+					set firewall."adblock_dns_${port}".dest_port="${port}"
+					set firewall."adblock_dns_${port}".target="DNAT"
+				EOC
 			fi
 		done
 	elif [ "${adb_enabled}" -eq 0 ] || [ "${adb_forcedns}" -eq 0 ]
@@ -699,7 +701,7 @@ f_list()
 					then
 						eval "${adb_dnsallow}" "${adb_tmpdir}/tmp.raw.${src_name}" > "${adb_tmpdir}/tmp.add.${src_name}"
 						out_rc="${?}"
-						if [ "${out_rc}" -eq 0 ] && [ "${adb_jail}" = "1" ] && [ "${adb_dnssstop}" != "0" ]
+						if [ "${out_rc}" -eq 0 ] && [ "${adb_jail}" = "1" ] && [ "${adb_dnsstop}" != "0" ]
 						then
 							> "${adb_jaildir}/${adb_dnsjail}"
 							if [ -n "${adb_dnsheader}" ]

@@ -31,9 +31,10 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | reg_fi              |         | S    | reg_finland      | [Link](https://github.com/finnish-easylist-addition)             |
 | reg_id              |         | M    | reg_indonesia    | [Link](https://easylist.to)                                      |
 | reg_nl              |         | M    | reg_netherlands  | [Link](https://easylist.to)                                      |
-| reg_pl              |         | S    | reg_poland       | [Link](http://adblocklist.org)                                   |
+| reg_pl              |         | M    | reg_poland       | [Link](https://kadantiscam.netlify.com)                          |
 | reg_ro              |         | M    | reg_romania      | [Link](https://easylist.to)                                      |
 | reg_ru              |         | M    | reg_russia       | [Link](https://easylist.to)                                      |
+| reg_vn              |         | M    | reg_vietnam      | [Link](https://bigdargon.github.io/hostsVN)                      |
 | shallalist          |         | L    | general          | [Link](https://www.shallalist.de)                                |
 | shallalist_porn     |         | XXL  | general+porn     | [Link](https://www.shallalist.de)                                |
 | smarttv             |         | S    | smarttv          | [Link](https://github.com/Perflyst/PiHoleBlocklist)              |
@@ -43,6 +44,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | sysctl              |         | M    | general          | [Link](http://sysctl.org/cameleon)                               |
 | utcapitole          |         | L    | general          | [Link](https://dsi.ut-capitole.fr/blacklists/index_en.php)       |
 | utcapitole_porn     |         | XXL  | general+porn     | [Link](https://dsi.ut-capitole.fr/blacklists/index_en.php)       |
+| wally3k             |         | S    | compilation      | [Link](https://firebog.net/about)                                |
 | whocares            |         | M    | general          | [Link](https://someonewhocares.org)                              |
 | winhelp             |         | S    | general          | [Link](http://winhelp2002.mvps.org)                              |
 | winspy              |         | S    | win_telemetry    | [Link](https://github.com/crazy-max/WindowsSpyBlocker)           |
@@ -91,6 +93,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
   <b>Please note:</b> Devices with less than 128 MByte RAM are _not_ supported!  
 * A usual setup with an enabled DNS backend at minimum - dump AP modes without a working DNS backend are _not_ supported
 * A download utility with SSL support: 'wget', 'uclient-fetch' with one of the 'libustream-*' ssl libraries, 'aria2c' or 'curl' is required
+* A certificate store such as 'ca-bundle' or 'ca-certificates', as adblock checks the validity of the SSL certificates of all download sites by default
 * Optional E-Mail notification support: for E-Mail notifications you need to install the additional 'msmtp' package
 * Optional DNS Query Report support: for DNS reporting you need to install the additional package 'tcpdump-mini' or 'tcpdump'
 * Optional support for gnu awk as alternative to the busybox default, install the additional package 'gawk'
@@ -136,7 +139,7 @@ Available commands:
 | adb_srcfile       | -, /tmp/adb_sources.json           | full path to the used adblock source file, which has a higher precedence than the archive file |
 | adb_dns           | -, auto-detected                   | 'dnsmasq', 'unbound', 'named', 'kresd' or 'raw'                                                |
 | adb_fetchutil     | -, auto-detected                   | 'uclient-fetch', 'wget', 'curl' or 'aria2c'                                                    |
-| adb_fetchparm     | -, auto-detected                   | config options for the selected download utility                                               |
+| adb_fetchparm     | -, auto-detected                   | config options for the selected download utility, e.g. to disable the certificate check        |
 | adb_trigger       | -, not set                         | trigger network interface or 'not set' to use a time-based startup                             |
 | adb_triggerdelay  | 2                                  | additional trigger delay in seconds before adblock processing begins                           |
 | adb_debug         | 0, disabled                        | set to 1 to enable the debug output                                                            |
