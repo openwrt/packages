@@ -12,6 +12,8 @@ config interface 'MYVPN'
 	option serverhash 'AE7FF6A0426F0A0CD0A02EB9EC3C5066FAEB0B25'
 	option defaultroute '0'
 	option authgroup 'DEFAULT'
+	# usergroup option, if required by some servers
+	# option usergroup 'USERGROUP'
 
 	# For second factor auth:
 

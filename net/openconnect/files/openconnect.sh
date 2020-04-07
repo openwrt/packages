@@ -19,6 +19,7 @@ proto_openconnect_init_config() {
 	proto_config_add_string "username"
 	proto_config_add_string "serverhash"
 	proto_config_add_string "authgroup"
+	proto_config_add_string "usergroup"
 	proto_config_add_string "password"
 	proto_config_add_string "password2"
 	proto_config_add_string "token_mode"
@@ -38,7 +39,7 @@ proto_openconnect_add_form_entry() {
 proto_openconnect_setup() {
 	local config="$1"
 
-	json_get_vars server port interface username serverhash authgroup password password2 token_mode token_secret token_script os csd_wrapper mtu juniper form_entry
+	json_get_vars server port interface username serverhash authgroup usergroup password password2 token_mode token_secret token_script os csd_wrapper mtu juniper form_entry
 
 	grep -q tun /proc/modules || insmod tun
 	ifname="vpn-$config"
@@ -77,6 +78,7 @@ proto_openconnect_setup() {
 		append_args --no-system-trust
 	}
 	[ -n "$authgroup" ] && append_args --authgroup "$authgroup"
+	[ -n "$usergroup" ] && append_args --usergroup "$usergroup"
 	[ -n "$username" ] && append_args -u "$username"
 	[ -n "$password" ] || [ "$token_mode" = "script" ] && {
 		umask 077
