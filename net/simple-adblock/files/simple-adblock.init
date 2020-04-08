@@ -1,7 +1,6 @@
 #!/bin/sh /etc/rc.common
-# Copyright 2017-2019 Stan Grishin (stangri@melmac.net)
-# shellcheck disable=SC2039
-# shellcheck disable=SC1091
+# Copyright 2017-2020 Stan Grishin (stangri@melmac.net)
+# shellcheck disable=SC2039,SC1091
 PKG_VERSION='dev-test'
 
 export START=94
@@ -124,7 +123,7 @@ unbound_restart() { /etc/init.d/unbound restart >/dev/null 2>&1; }
 output() {
 # Can take a single parameter (text) to be output at any verbosity
 # Or target verbosity level and text to be output at specifc verbosity
-	local msg memmsg
+	local msg memmsg logmsg
 	if [ $# -ne 1 ]; then
 		if [ $((verbosity & $1)) -gt 0 ] || [ "$verbosity" = "$1" ]; then shift; else return 0; fi
 	fi
@@ -132,7 +131,8 @@ output() {
 	msg="${1//$serviceName /service }";
 	if [ "$(printf "%b" "$msg" | wc -l)" -gt 0 ]; then
 		[ -s "$sharedMemoryOutput" ] && memmsg="$(cat "$sharedMemoryOutput")"
-		logger -t "${packageName:-service} [$$]" "$(printf "%b" "${memmsg}${msg}")"
+		logmsg="$(printf "%b" "${memmsg}${msg}" | sed 's/\x1b\[[0-9;]*m//g')"
+		logger -t "${packageName:-service} [$$]" "$(printf "%b" "$logmsg")"
 		rm -f "$sharedMemoryOutput"
 	else
 		printf "%b" "$msg" >> "$sharedMemoryOutput"
@@ -449,7 +449,9 @@ tmpfs() {
 				triggers)
 					curReload="$parallelDL $debug $dlTimeout $whitelist_domains $blacklist_domains $whitelist_domains_urls $blacklist_domains_urls $blacklist_hosts_urls $targetDNS"
 					curRestart="$compressedCache $forceDNS $led"
-					if [ "$curReload" != "$readReload" ]; then
+					if [ ! -s "$jsonFile" ]; then
+						ret='on_boot'
+					elif [ "$curReload" != "$readReload" ]; then
 						ret='download'
 					elif [ "$curRestart" != "$readRestart" ]; then
 						ret='restart'
@@ -899,7 +901,7 @@ boot() {
 	if create_lock; then
 		sleep "$bootDelay"
 		remove_lock
-		rc_procd start_service && rc_procd service_triggers
+		rc_procd start_service 'on_boot' && rc_procd service_triggers
 	fi
 }
 
@@ -917,12 +919,18 @@ start_service() {
 	stats="$(tmpfs get stats)"
 	action="$(tmpfs get triggers)"
 
-	if [ "$action" = 'download' ] || [ "$1" = 'download' ] || [ -n "$error" ]; then
+	if [ "$action" = 'on_boot' ] || [ "$1" = 'on_boot' ]; then
+		if cacheOps 'testGzip' || cacheOps 'test'; then
+			action='restore'
+		fi
+	elif [ "$action" = 'download' ] || [ "$1" = 'download' ] || [ -n "$error" ]; then
 		action='download'
-	elif [ ! -s "$outputFile" ] && ! cacheOps 'test' && ! cacheOps 'testGzip'; then
-		action='download'
-	elif [ ! -s "$outputFile" ] && cacheOps 'testGzip' || cacheOps 'test'; then
-		action='restore'
+	elif [ ! -s "$outputFile" ]; then 
+		if cacheOps 'testGzip' || cacheOps 'test'; then
+			action='restore'
+		else
+			action='download'
+		fi
 	elif [ "$action" = 'restart' ] || [ "$1" = 'restart' ]; then
 		action='restart'
 	elif [ -s "$outputFile" ] && [ "$status" = "statusSuccess" ] && [ -z "$error" ]; then
