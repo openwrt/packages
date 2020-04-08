@@ -161,11 +161,11 @@
 		"descurl": "https://easylist.to"
 	},
 	"reg_pl": {
-		"url": "http://adblocklist.org/adblock-pxf-polish.txt",
-		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]+\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
+		"url": "https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts_without_controversies.txt",
+		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
 		"size": "S",
 		"focus": "reg_poland",
-		"descurl": "http://adblocklist.org"
+		"descurl": "https://kadantiscam.netlify.com"
 	},
 	"reg_ro": {
 		"url": "https://easylist-downloads.adblockplus.org/rolist+easylist.txt",
@@ -180,6 +180,13 @@
 		"size": "M",
 		"focus": "reg_russia",
 		"descurl": "https://easylist.to"
+	},
+	"reg_vn": {
+		"url": "https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts",
+		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
+		"size": "S",
+		"focus": "reg_vietnam",
+		"descurl": "https://bigdargon.github.io/hostsVN"
 	},
 	"shallalist": {
 		"url": "https://www.shallalist.de/Downloads/shallalist.tar.gz",
@@ -255,6 +262,13 @@
 		"size": "XXL",
 		"focus": "general+porn",
 		"descurl": "https://dsi.ut-capitole.fr/blacklists/index_en.php"
+	},
+	"wally3k": {
+		"url": "https://v.firebog.net/hosts/static/w3kbl.txt",
+		"rule": "/^([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "S",
+		"focus": "compilation",
+		"descurl": "https://firebog.net/about"
 	},
 	"whocares": {
 		"url": "https://someonewhocares.org/hosts/hosts",
