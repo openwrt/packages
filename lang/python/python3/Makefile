@@ -14,7 +14,7 @@ PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -282,6 +282,7 @@ define Py3Package/python3-base/install
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/lib-dynload/
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python3
+	$(LN) python$(PYTHON_VERSION) $(1)/usr/bin/python
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* $(1)/usr/lib/
 endef
 
