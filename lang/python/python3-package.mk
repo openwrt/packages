@@ -142,7 +142,7 @@ PYTHON3_PKG_SETUP_VARS ?=
 
 define Py3Build/Compile/Default
 	$(if $(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS),
-		$(call Build/Compile/HostPy3PipInstall,$(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS))
+		$(call HostPython3/PipInstall,$(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS))
 	)
 	$(call Build/Compile/Py3Mod, \
 		$(PYTHON3_PKG_SETUP_DIR), \

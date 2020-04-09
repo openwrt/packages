@@ -49,7 +49,7 @@ documentation for more information on what is provided.
 endef
 
 define Host/Compile
-	$(call Build/Compile/HostPy3Mod,,install --prefix="" --root="$(STAGING_DIR_HOSTPKG)")
+	$(call HostPython3/ModSetup,,install --prefix="" --root="$(STAGING_DIR_HOSTPKG)")
 endef
 
 Host/Install:=

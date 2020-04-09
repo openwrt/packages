@@ -5,7 +5,7 @@
 # See /LICENSE for more information.
 #
 
-# Note: include this after `include $(TOPDIR)/rules.mk in your package Makefile
+# Note: include this file after `include $(TOPDIR)/rules.mk in your package Makefile
 #       if `python3-package.mk` is included, this will already be included
 
 # For PYTHON3_VERSION
@@ -40,7 +40,7 @@ HOST_PYTHON3_VARS = \
 # $(1) => directory of python script
 # $(2) => python script and its arguments
 # $(3) => additional variables
-define Build/Compile/HostPy3RunHost
+define HostPython3/Run
 	cd "$(if $(strip $(1)),$(strip $(1)),.)" && \
 	$(HOST_PYTHON3_VARS) \
 	$(3) \
@@ -51,7 +51,7 @@ endef
 HOST_PYTHON3_PIP:=$(STAGING_DIR_HOSTPKG)/bin/pip$(PYTHON3_VERSION)
 
 # $(1) => packages to install
-define Build/Compile/HostPy3PipInstall
+define HostPython3/PipInstall
 	$(HOST_PYTHON3_VARS) \
 	$(HOST_PYTHON3_PIP) \
 		--disable-pip-version-check \
@@ -63,8 +63,8 @@ endef
 # $(1) => build subdir
 # $(2) => additional arguments to setup.py
 # $(3) => additional variables
-define Build/Compile/HostPy3Mod
-	$(call Build/Compile/HostPy3RunHost, \
+define HostPython3/ModSetup
+	$(call HostPython3/Run, \
 		$(HOST_BUILD_DIR)/$(strip $(1)), \
 		setup.py $(2), \
 		$(3))

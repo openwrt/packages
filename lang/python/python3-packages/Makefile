@@ -101,7 +101,7 @@ HOST_PYTHON3_PIP_INSTALL_CLEANUP:=$(call HOST_PYTHON3_PIP_INSTALL,$(PKG_INSTALL_
 
 define Build/Compile
 	$(foreach pkg,$(CONFIG_PACKAGE_python3-packages-list-host),
-		$(call Build/Compile/HostPy3RunHost,,$(HOST_PYTHON3_PIP_INSTALL_HOST) $(pkg))
+		$(call HostPython3/Run,,$(HOST_PYTHON3_PIP_INSTALL_HOST) $(pkg))
 	)
 	$(foreach pkg,$(CONFIG_PACKAGE_python3-packages-list),
 		$(call Build/Compile/HostPy3RunTarget,,$(call HOST_PYTHON3_PIP_INSTALL_TARGET,$(pkg)) $(pkg),$(CONFIG_PACKAGE_python3-packages-envs))
