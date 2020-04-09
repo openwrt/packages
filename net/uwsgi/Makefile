@@ -109,7 +109,7 @@ define Build/Compile
 	$(call Build/Compile/Default,plugin.syslog PROFILE=openwrt)
 	$(call Build/Compile/Default,plugin.cgi PROFILE=openwrt)
 	$(call Build/Compile/HostPy3RunTarget, \
-		cd $(PKG_BUILD_DIR), \
+		$(PKG_BUILD_DIR), \
 		uwsgiconfig.py --plugin plugins/python openwrt, \
 		CPP="$(TARGET_CROSS)cpp" \
 		LINUX_UNAME_VERSION=$(LINUX_UNAME_VERSION) \

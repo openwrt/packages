@@ -96,26 +96,32 @@ define Py3Package
   endif # Package/$(1)/install
 endef
 
-# $(1) => commands to execute before running pythons script
+PYTHON3_VARS = \
+	CC="$(TARGET_CC)" \
+	CCSHARED="$(TARGET_CC) $(FPIC)" \
+	CXX="$(TARGET_CXX)" \
+	LD="$(TARGET_CC)" \
+	LDSHARED="$(TARGET_CC) -shared" \
+	CFLAGS="$(TARGET_CFLAGS)" \
+	CPPFLAGS="$(TARGET_CPPFLAGS) -I$(PYTHON3_INC_DIR)" \
+	LDFLAGS="$(TARGET_LDFLAGS) -lpython$(PYTHON3_VERSION)" \
+	_PYTHON_HOST_PLATFORM=linux2 \
+	__PYVENV_LAUNCHER__="/usr/bin/$(PYTHON3)" \
+	PYTHONPATH="$(PYTHON3PATH)" \
+	PYTHONDONTWRITEBYTECODE=1 \
+	PYTHONOPTIMIZE="" \
+	_python_sysroot="$(STAGING_DIR)" \
+	_python_prefix="/usr" \
+	_python_exec_prefix="/usr"
+
+# $(1) => directory of python script
 # $(2) => python script and its arguments
 # $(3) => additional variables
 define Build/Compile/HostPy3RunTarget
-	$(call HostPython3, \
-		$(if $(1),$(1);) \
-		CC="$(TARGET_CC)" \
-		CCSHARED="$(TARGET_CC) $(FPIC)" \
-		CXX="$(TARGET_CXX)" \
-		LD="$(TARGET_CC)" \
-		LDSHARED="$(TARGET_CC) -shared" \
-		CFLAGS="$(TARGET_CFLAGS)" \
-		CPPFLAGS="$(TARGET_CPPFLAGS) -I$(PYTHON3_INC_DIR)" \
-		LDFLAGS="$(TARGET_LDFLAGS) -lpython$(PYTHON3_VERSION)" \
-		_PYTHON_HOST_PLATFORM=linux2 \
-		__PYVENV_LAUNCHER__="/usr/bin/$(PYTHON3)" \
-		$(3) \
-		, \
-		$(2) \
-	)
+	cd "$(if $(strip $(1)),$(strip $(1)),.)" && \
+	$(PYTHON3_VARS) \
+	$(3) \
+	$(HOST_PYTHON3_BIN) $(2)
 endef
 
 # $(1) => build subdir
@@ -124,8 +130,8 @@ endef
 define Build/Compile/Py3Mod
 	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
 	$(call Build/Compile/HostPy3RunTarget, \
-		cd $(PKG_BUILD_DIR)/$(strip $(1)), \
-		./setup.py $(2), \
+		$(PKG_BUILD_DIR)/$(strip $(1)), \
+		setup.py $(2), \
 		$(3))
 endef
 
