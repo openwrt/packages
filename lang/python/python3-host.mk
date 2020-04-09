@@ -8,9 +8,6 @@
 # Note: include this after `include $(TOPDIR)/rules.mk in your package Makefile
 #       if `python3-package.mk` is included, this will already be included
 
-ifneq ($(__python3_host_mk_inc),1)
-__python3_host_mk_inc=1
-
 # For PYTHON3_VERSION
 python3_mk_path:=$(dir $(lastword $(MAKEFILE_LIST)))
 include $(python3_mk_path)python3-version.mk
@@ -91,5 +88,3 @@ define Build/Compile/HostPy3Mod
 		./setup.py $(2), \
 		$(3))
 endef
-
-endif # __python3_host_mk_inc
