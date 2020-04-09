@@ -25,6 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/quota
   SECTION:=utils
   CATEGORY:=Utilities
+  DEPENDS:=+libnl-genl +libtirpc +libwrap
   TITLE:= quota
   URL:=https://sourceforge.net/projects/linuxquota/
 endef
