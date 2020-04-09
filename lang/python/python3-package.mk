@@ -34,7 +34,7 @@ ifdef CONFIG_USE_MIPS16
   TARGET_CFLAGS += -mno-mips16 -mno-interlink-mips16
 endif
 
-define Py3Shebang
+define Python3/FixShebang
 $(SED) "1"'!'"b;s,^#"'!'".*python.*,#"'!'"/usr/bin/python3," -i --follow-symlinks $(1)
 endef
 
@@ -86,7 +86,7 @@ define Py3Package
 		"$(HOST_PYTHON3_BIN)" "$$(2)" \
 		"$$$$$$$$$$(call shvar,Py3Package/$(1)/filespec)" && \
  	if [ -d "$$(1)/usr/bin" ]; then \
-		$(call Py3Shebang,$$(1)/usr/bin/*) ; \
+		$(call Python3/FixShebang,$$(1)/usr/bin/*) ; \
 	fi
  endef
 
@@ -117,7 +117,7 @@ PYTHON3_VARS = \
 # $(1) => directory of python script
 # $(2) => python script and its arguments
 # $(3) => additional variables
-define Build/Compile/HostPy3RunTarget
+define Python3/Run
 	cd "$(if $(strip $(1)),$(strip $(1)),.)" && \
 	$(PYTHON3_VARS) \
 	$(3) \
@@ -127,9 +127,9 @@ endef
 # $(1) => build subdir
 # $(2) => additional arguments to setup.py
 # $(3) => additional variables
-define Build/Compile/Py3Mod
+define Python3/ModSetup
 	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
-	$(call Build/Compile/HostPy3RunTarget, \
+	$(call Python3/Run, \
 		$(PKG_BUILD_DIR)/$(strip $(1)), \
 		setup.py $(2), \
 		$(3))
@@ -144,7 +144,7 @@ define Py3Build/Compile/Default
 	$(if $(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS),
 		$(call HostPython3/PipInstall,$(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS))
 	)
-	$(call Build/Compile/Py3Mod, \
+	$(call Python3/ModSetup, \
 		$(PYTHON3_PKG_SETUP_DIR), \
 		$(PYTHON3_PKG_SETUP_GLOBAL_ARGS) \
 		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \

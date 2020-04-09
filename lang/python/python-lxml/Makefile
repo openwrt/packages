@@ -48,7 +48,7 @@ endef
 TARGET_LDFLAGS += -lxml2 -lxslt -lexslt
 
 define Py3Build/Compile
-	$(call Build/Compile/Py3Mod,, \
+	$(call Python3/ModSetup,, \
 		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
 		--static \
 		--single-version-externally-managed \

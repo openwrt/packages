@@ -37,7 +37,7 @@ define Package/scapy/description
 endef
 
 define Build/Compile
-	$(call Build/Compile/Py3Mod,., \
+	$(call Python3/ModSetup,., \
 		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)", \
 	)
 endef

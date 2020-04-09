@@ -50,7 +50,7 @@ Python 3.3, Python 3.4, or PyPy.
 endef
 
 define Py3Build/Compile
-	$(call Build/Compile/Py3Mod,,\
+	$(call Python3/ModSetup,,\
 		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
 	)
 endef

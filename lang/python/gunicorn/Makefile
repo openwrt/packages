@@ -66,7 +66,7 @@ define Package/gunicorn3/install
 		$(PKG_INSTALL_DIR)/usr/bin/gunicorn \
 		$(1)/usr/bin/gunicorn3
 	$(LN) gunicorn3 $(1)/usr/bin/gunicorn
-	$(call Py3Shebang,$(1)/usr/bin/*)
+	$(call Python3/FixShebang,$(1)/usr/bin/*)
 endef
 
 $(eval $(call Py3Package,python3-gunicorn))
