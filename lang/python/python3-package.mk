@@ -6,6 +6,7 @@
 #
 
 # Note: include this after `include $(TOPDIR)/rules.mk in your package Makefile
+
 python3_mk_path:=$(dir $(lastword $(MAKEFILE_LIST)))
 include $(python3_mk_path)python3-host.mk
 
@@ -34,9 +35,51 @@ ifdef CONFIG_USE_MIPS16
   TARGET_CFLAGS += -mno-mips16 -mno-interlink-mips16
 endif
 
+PYTHON3_VARS = \
+	CC="$(TARGET_CC)" \
+	CCSHARED="$(TARGET_CC) $(FPIC)" \
+	CXX="$(TARGET_CXX)" \
+	LD="$(TARGET_CC)" \
+	LDSHARED="$(TARGET_CC) -shared" \
+	CFLAGS="$(TARGET_CFLAGS)" \
+	CPPFLAGS="$(TARGET_CPPFLAGS) -I$(PYTHON3_INC_DIR)" \
+	LDFLAGS="$(TARGET_LDFLAGS) -lpython$(PYTHON3_VERSION)" \
+	_PYTHON_HOST_PLATFORM=linux2 \
+	__PYVENV_LAUNCHER__="/usr/bin/$(PYTHON3)" \
+	PYTHONPATH="$(PYTHON3PATH)" \
+	PYTHONDONTWRITEBYTECODE=1 \
+	PYTHONOPTIMIZE="" \
+	_python_sysroot="$(STAGING_DIR)" \
+	_python_prefix="/usr" \
+	_python_exec_prefix="/usr"
+
+# $(1) => directory of python script
+# $(2) => python script and its arguments
+# $(3) => additional variables
+define Python3/Run
+	cd "$(if $(strip $(1)),$(strip $(1)),.)" && \
+	$(PYTHON3_VARS) \
+	$(3) \
+	$(HOST_PYTHON3_BIN) $(2)
+endef
+
+# $(1) => build subdir
+# $(2) => additional arguments to setup.py
+# $(3) => additional variables
+define Python3/ModSetup
+	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
+	$(call Python3/Run, \
+		$(PKG_BUILD_DIR)/$(strip $(1)), \
+		setup.py $(2), \
+		$(3))
+endef
+
 define Python3/FixShebang
 $(SED) "1"'!'"b;s,^#"'!'".*python.*,#"'!'"/usr/bin/python3," -i --follow-symlinks $(1)
 endef
+
+
+# Py3Package
 
 define Py3Package
 
@@ -96,44 +139,8 @@ define Py3Package
   endif # Package/$(1)/install
 endef
 
-PYTHON3_VARS = \
-	CC="$(TARGET_CC)" \
-	CCSHARED="$(TARGET_CC) $(FPIC)" \
-	CXX="$(TARGET_CXX)" \
-	LD="$(TARGET_CC)" \
-	LDSHARED="$(TARGET_CC) -shared" \
-	CFLAGS="$(TARGET_CFLAGS)" \
-	CPPFLAGS="$(TARGET_CPPFLAGS) -I$(PYTHON3_INC_DIR)" \
-	LDFLAGS="$(TARGET_LDFLAGS) -lpython$(PYTHON3_VERSION)" \
-	_PYTHON_HOST_PLATFORM=linux2 \
-	__PYVENV_LAUNCHER__="/usr/bin/$(PYTHON3)" \
-	PYTHONPATH="$(PYTHON3PATH)" \
-	PYTHONDONTWRITEBYTECODE=1 \
-	PYTHONOPTIMIZE="" \
-	_python_sysroot="$(STAGING_DIR)" \
-	_python_prefix="/usr" \
-	_python_exec_prefix="/usr"
 
-# $(1) => directory of python script
-# $(2) => python script and its arguments
-# $(3) => additional variables
-define Python3/Run
-	cd "$(if $(strip $(1)),$(strip $(1)),.)" && \
-	$(PYTHON3_VARS) \
-	$(3) \
-	$(HOST_PYTHON3_BIN) $(2)
-endef
-
-# $(1) => build subdir
-# $(2) => additional arguments to setup.py
-# $(3) => additional variables
-define Python3/ModSetup
-	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
-	$(call Python3/Run, \
-		$(PKG_BUILD_DIR)/$(strip $(1)), \
-		setup.py $(2), \
-		$(3))
-endef
+# Py3Build
 
 PYTHON3_PKG_SETUP_DIR ?=
 PYTHON3_PKG_SETUP_GLOBAL_ARGS ?=
