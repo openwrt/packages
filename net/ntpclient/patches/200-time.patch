@@ -8,7 +8,7 @@
  #include <stdio.h>
  #include <sys/types.h>
  #include <stdlib.h>
-@@ -143,8 +144,8 @@ int main(int argc, char ** argv)
+@@ -143,12 +144,12 @@ int main(int argc, char ** argv)
  			"    precision:    %ld\n"
  			"    tolerance:    %ld\n"
  			"-t  tick:         %ld\n"
@@ -19,9 +19,22 @@
  			"    return value: %d (%s)\n",
  		txc.constant,
  		txc.precision, txc.tolerance, txc.tick,
+-		txc.time.tv_sec, txc.time.tv_usec, ret,
++		(int64_t)txc.time.tv_sec, (int64_t)txc.time.tv_usec, ret,
+ 		(ret >= 0 && ret <= 5) ? ret_code_descript[ret] : "error" );
+ 	}
+ 	return (ret<0);
 --- a/ntpclient.c
 +++ b/ntpclient.c
-@@ -181,7 +181,7 @@ static void set_time(struct ntptime *new)
+@@ -29,6 +29,7 @@
+  *  labelled "XXX fixme - non-automatic build configuration".
+  */
+ 
++#include <inttypes.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -181,7 +182,7 @@ static void set_time(struct ntptime *new)
  		exit(1);
  	}
  	if (debug) {
@@ -30,7 +43,7 @@
  	}
  #else
  	/* Traditional Linux way to set the system clock
-@@ -196,7 +196,7 @@ static void set_time(struct ntptime *new)
+@@ -196,7 +197,7 @@ static void set_time(struct ntptime *new)
  		exit(1);
  	}
  	if (debug) {
