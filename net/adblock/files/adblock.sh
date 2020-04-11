@@ -11,7 +11,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-adb_ver="4.0.3"
+adb_ver="4.0.4"
 adb_enabled=0
 adb_debug=0
 adb_forcedns=0
@@ -555,37 +555,26 @@ f_count()
 #
 f_extconf()
 {
-	local config instance port fwcfg
+	local config config_dir config_file port fwcfg
 
 	case "${adb_dns}" in
 		"dnsmasq")
 			config="dhcp"
-			for instance in ${adb_dnsinstance}
-			do
-				if [ "${adb_enabled}" -eq 1 ] && [ -z "$(uci_get dhcp "@dnsmasq[${instance}]" confdir | grep -Fo "${adb_dnsdir}")" ]
-				then
-					uci_set dhcp "@dnsmasq[${instance}]" confdir "${adb_dnsdir}"
-				elif [ "${adb_enabled}" -eq 0 ] && [ -n "$(uci_get dhcp "@dnsmasq[${instance}]" confdir | grep -Fo "${adb_dnsdir}")" ]
-				then
-					uci_remove dhcp "@dnsmasq[${instance}]" confdir
-				fi
-			done
+			config_dir="$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}]" confdir | grep -Fo "${adb_dnsdir}")"
+			if [ "${adb_enabled}" -eq 1 ] && [ -z "${config_dir}" ]
+			then
+				uci_set dhcp "@dnsmasq[${adb_dnsinstance}]" confdir "${adb_dnsdir}" 2>/dev/null
+			fi
 		;;
 		"kresd")
 			config="resolver"
-			if [ "${adb_enabled}" -eq 1 ] && [ -z "$(uci_get resolver kresd rpz_file | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
+			config_file="$(uci_get resolver kresd rpz_file | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")"
+			if [ "${adb_enabled}" -eq 1 ] && [ -z "${config_file}" ]
 			then
 				uci -q add_list resolver.kresd.rpz_file="${adb_dnsdir}/${adb_dnsfile}"
-			elif [ "${adb_enabled}" -eq 0 ] && [ -n "$(uci_get resolver kresd rpz_file | grep -Fo "${adb_dnsdir}/${adb_dnsfile}")" ]
+			elif [ "${adb_enabled}" -eq 0 ] && [ -n "${config_file}" ]
 			then
 				uci -q del_list resolver.kresd.rpz_file="${adb_dnsdir}/${adb_dnsfile}"
-			fi
-			if [ "${adb_enabled}" -eq 1 ] && [ "${adb_dnsflush}" -eq 0 ] && [ "$(uci_get resolver kresd keep_cache)" != "1" ]
-			then
-				uci_set resolver kresd keep_cache "1"
-			elif [ "${adb_enabled}" -eq 0 ] || { [ "${adb_dnsflush}" -eq 1 ] && [ "$(uci_get resolver kresd keep_cache)" = "1" ]; }
-			then
-				uci_set resolver kresd keep_cache "0"
 			fi
 		;;
 	esac
@@ -1464,7 +1453,8 @@ f_report()
 			do
 				(
 					"${adb_dumpcmd}" -tttt -r "${file}" 2>/dev/null | \
-						"${adb_awk}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? /&&/ A[\? ]+|NXDomain|0\.0\.0\.0/{a=$1;b=substr($2,0,8);c=$4;sub(/\.[0-9]+$/,"",c);d=cnt $7;sub(/\*$/,"",d);e=$(NF-1);sub(/[0-9]\/[0-9]\/[0-9]|0\.0\.0\.0/,"NX",e);sub(/\.$/,"",e);sub(/([0-9]{1,3}\.){3}[0-9]{1,3}/,"OK",e);printf "%s\t%s\t%s\t%s\t%s\n",d,e,a,b,c}' >> "${adb_reportdir}/adb_report.raw"
+						"${adb_awk}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? /&&/ A[\? ]+|NXDomain|0\.0\.0\.0/{a=$1;b=substr($2,0,8);c=$4;sub(/\.[0-9]+$/,"",c);d=cnt $7;sub(/\*$/,"",d);
+						e=$(NF-1);sub(/[0-9]\/[0-9]\/[0-9]|0\.0\.0\.0/,"NX",e);sub(/\.$/,"",e);sub(/([0-9]{1,3}\.){3}[0-9]{1,3}/,"OK",e);printf "%s\t%s\t%s\t%s\t%s\n",d,e,a,b,c}' >> "${adb_reportdir}/adb_report.raw"
 				)&
 				hold=$((cnt%adb_maxqueue))
 				if [ "${hold}" -eq 0 ]
@@ -1476,7 +1466,7 @@ f_report()
 			wait
 			if [ -s "${adb_reportdir}/adb_report.raw" ]
 			then
-				sort ${adb_srtopts} -k 3 -k 4 -k 5 -k 1 -ur "${adb_reportdir}/adb_report.raw" | \
+				sort ${adb_srtopts} -k1 -k3 -k4 -k5 -k1 -ur "${adb_reportdir}/adb_report.raw" | \
 					"${adb_awk}" '{currA=($1+0);currB=$1;currC=substr($1,length($1),1);if(reqA==currB){reqA=0;printf "%s\t%s\n",d,$2}else if(currC=="+"){reqA=currA;d=$3"\t"$4"\t"$5"\t"$2}}' > "${adb_reportdir}/adb_report.srt"
 			fi
 
