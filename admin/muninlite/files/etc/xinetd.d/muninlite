@@ -1,10 +1,10 @@
-service munin
+service muninlite
 {
 	socket_type	= stream
 	protocol	= tcp
 	wait		= no
 	user		= root
 	group		= root
-	server		= /usr/sbin/munin-node
+	server		= /usr/sbin/muninlite
 	disable		= no
 }
