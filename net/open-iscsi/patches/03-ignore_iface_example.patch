@@ -1,0 +1,25 @@
+From 16d4899d52b3b88774ac6d9b3cc0f5626f4705da Mon Sep 17 00:00:00 2001
+From: Lee Duncan <lduncan@suse.com>
+Date: Tue, 19 Nov 2019 07:54:41 -0800
+Subject: [PATCH] Ignore iface.example in iface match checks
+
+Just a cleanup, as looking at the example file
+didn't hurt anything, but did waste our time.
+---
+ usr/iface.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/usr/iface.c b/usr/iface.c
+index 323f1675..11f3d2ac 100644
+--- a/usr/iface.c
++++ b/usr/iface.c
+@@ -905,6 +905,9 @@ int iface_for_each_iface(void *data, int skip_def, int *nr_found,
+ 		    !strcmp(iface_dent->d_name, ".."))
+ 			continue;
+ 
++		if (!strcmp(iface_dent->d_name, "iface.example"))
++			continue;
++
+ 		log_debug(5, "iface_for_each_iface found %s",
+ 			 iface_dent->d_name);
+ 		iface = iface_alloc(iface_dent->d_name, &err);
