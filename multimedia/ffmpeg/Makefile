@@ -410,12 +410,6 @@ FFMPEG_CONFIGURE+= \
 	--disable-armv5te \
 	--disable-armv6 \
 	--disable-armv6t2 \
-	--disable-inline-asm \
-	--disable-mipsdsp \
-	--disable-mipsdspr2 \
-	--disable-mipsfpu \
-	--disable-msa \
-	--disable-mmi \
 	--disable-fast-unaligned \
 	--disable-runtime-cpudetect
 
@@ -426,13 +420,6 @@ FFMPEG_CONFIGURE+= \
 else ifneq ($(findstring powerpc,$(CONFIG_ARCH)),)
 FFMPEG_CONFIGURE+= \
 	--disable-altivec
-endif
-
-# libavcodec/mips/aacdec_mips.c build problem
-# XXX: disable use of assembly on MIPS. Patches welcome.
-ifneq ($(findstring mips,$(CONFIG_ARCH)),)
-FFMPEG_CONFIGURE+= \
-        --disable-asm --disable-inline-asm
 endif
 
 # selectively disable optimizations according to arch/cpu type
