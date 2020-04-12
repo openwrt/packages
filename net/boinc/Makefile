@@ -6,14 +6,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=boinc
-PKG_VERSION:=7.16.5
+PKG_VERSION:=7.16.6
 PKG_VERSION_SHORT:=$(shell echo $(PKG_VERSION)| cut -f1,2 -d.)
 PKG_RELEASE:=1
 
 PKG_SOURCE_DATE:=2020-02-25
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/BOINC/boinc/tar.gz/client_release/$(PKG_VERSION_SHORT)/$(PKG_VERSION)?
-PKG_HASH:=33db60991b253e717c6124cce4750ae7729eaab4e54ec718b9e37f87012d668a
+PKG_HASH:=caa567da8d3eb50859efe2eeba1c23c7b27d3b0f15b548136e75302713b25303
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-client_release-$(PKG_VERSION_SHORT)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Christian Dreihsig <christian.dreihsig@t-online.de>, Steffen Moeller <moeller@debian.org>
@@ -75,8 +75,9 @@ define Package/boinc/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/boinc-client.init $(1)/etc/init.d/boinc-client
 	$(INSTALL_DIR) $(1)/opt/boinc
-	$(CP) ./files/global_prefs_override.xml $(1)/opt/boinc/global_prefs_override.xml
-	$(CP) ./files/remote_hosts.cfg $(1)/opt/boinc/remote_hosts.cfg
+	$(INSTALL_DIR) $(1)/usr/share/boinc
+	$(CP) ./files/global_prefs_override.xml $(1)/usr/share/boinc/global_prefs_override.xml
+	$(CP) ./files/remote_hosts.cfg $(1)/usr/share/boinc/remote_hosts.cfg
 endef
 
 $(eval $(call BuildPackage,boinc))

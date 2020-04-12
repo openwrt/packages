@@ -1,15 +1,17 @@
 #!/bin/sh /etc/rc.common
 
+START=99
 USE_PROCD=1
 
 BOINCEXE_NAME=boinc_client
 BOINCDIR=/opt/boinc/
+PRESETDIR=/usr/share/boinc
 BOINCUSR=boinc
 BOINCEXE_OPTS="--check_all_logins --redirectio --dir $BOINCDIR"
-PID_FILE="var/run/$BOINCEXE_NAME.pid"
+PID_FILE="/var/run/$BOINCEXE_NAME.pid"
 
 start_service() {
-   # First Check that BOINCDIR exists...
+   # First check that BOINCDIR exists
    if ! [ -d "$BOINCDIR" ]; then
       if ! mkdir -p $BOINCDIR 2>/dev/null ; then
          echo "ERROR: $BOINCDIR doesn't exist and couldn't be created"
@@ -17,7 +19,14 @@ start_service() {
       fi
    fi
 
-   # ... and that it is accessible by boinc
+   # adjust some presettings if necessary
+   for f in global_prefs_override.xml remote_hosts.cfg; do
+      if ! [ -f $BOINCDIR/$f ]; then
+         cp $PRESETDIR/$f $BOINCDIR
+      fi
+   done
+
+   # and ensure it is accessible by boinc
    BOINCDIR_OWNER="$(ls -ld $BOINCDIR | awk '{print $3}')"
    if [ "$BOINCUSR" != "$BOINCDIR_OWNER" ] ; then
       chown -R $BOINCUSR:$BOINCUSR $BOINCDIR
