@@ -1467,7 +1467,9 @@ f_report()
 			if [ -s "${adb_reportdir}/adb_report.raw" ]
 			then
 				sort ${adb_srtopts} -k1 -k3 -k4 -k5 -k1 -ur "${adb_reportdir}/adb_report.raw" | \
-					"${adb_awk}" '{currA=($1+0);currB=$1;currC=substr($1,length($1),1);if(reqA==currB){reqA=0;printf "%s\t%s\n",d,$2}else if(currC=="+"){reqA=currA;d=$3"\t"$4"\t"$5"\t"$2}}' > "${adb_reportdir}/adb_report.srt"
+					"${adb_awk}" '{currA=($1+0);currB=$1;currC=substr($1,length($1),1);if(reqA==currB){reqA=0;printf "%s\t%s\n",d,$2}else if(currC=="+"){reqA=currA;d=$3"\t"$4"\t"$5"\t"$2}}' | \
+					sort ${adb_srtopts} -k1 -k2 -k3 -k4 -ur > "${adb_reportdir}/adb_report.srt"
+				rm -f "${adb_reportdir}/adb_report.raw"
 			fi
 
 			if [ -s "${adb_reportdir}/adb_report.srt" ]
@@ -1510,8 +1512,8 @@ f_report()
 				search="${search//./\\.}"
 				search="${search//[+*~%\$&\"\' ]/}"
 				"${adb_awk}" "BEGIN{i=0;printf \"%s\",\"\\\"requests\\\": [ \" }/(${search})/{i++;if(i==1)printf \"\{ \\\"date\\\": \\\"%s\\\", \\\"time\\\": \\\"%s\\\", \\\"client\\\": \\\"%s\\\", \\\"domain\\\": \\\"%s\\\", \\\"rc\\\": \\\"%s\\\" }\",\$1,\$2,\$3,\$4,\$5;else if(i<=${count})printf \", { \\\"date\\\": \\\"%s\\\", \\\"time\\\": \\\"%s\\\", \\\"client\\\": \\\"%s\\\", \\\"domain\\\": \\\"%s\\\", \\\"rc\\\": \\\"%s\\\" }\",\$1,\$2,\$3,\$4,\$5}END{printf \"%s\" \" \] } }\n\"}" "${adb_reportdir}/adb_report.srt" >> "${adb_reportdir}/adb_report.json"
+				rm -f "${adb_reportdir}/adb_report.srt"
 			fi
-			rm -f "${adb_reportdir}/adb_report.raw" "${adb_reportdir}/adb_report.srt"
 		fi
 
 		if [ -s "${adb_reportdir}/adb_report.json" ]
