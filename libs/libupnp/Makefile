@@ -1,18 +1,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libupnp
-PKG_VERSION:=1.8.4
-PKG_RELEASE:=2
+PKG_VERSION:=1.8.7
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/pupnp
-PKG_HASH:=188d3f786d92fe14191f17634d2d87847eee7d2b568a5257ea23262fec9973d6
-PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
-PKG_CPE_ID:=cpe:/a:portable_sdk_for_upnp_project:portable_sdk_for_upnp
+PKG_HASH:=e38c69b2b67322e67cd53680db9b02c7c1f720a47a3cd626fd89d57d2dca93b8
 
-PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:libupnp_project:libupnp
+
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
