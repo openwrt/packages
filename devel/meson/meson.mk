@@ -37,7 +37,7 @@ MESON_VARS:=
 MESON_ARGS:=
 
 define Meson
-	$(2) $(STAGING_DIR_HOST)/bin/$(PYTHON) $(MESON_DIR)/meson.py $(1)
+	$(2) $(HOST_PYTHON3_BIN) $(MESON_DIR)/meson.py $(1)
 endef
 
 define Meson/CreateNativeFile
