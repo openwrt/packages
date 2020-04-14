@@ -1,12 +1,25 @@
 #!/bin/sh /etc/rc.common
- 
+
 USE_PROCD=1
 
-START=50
-STOP=50
+START=81
+STOP=81
 
 PROG=/usr/sbin/dawn
 NAME=dawn
+
+wait_for_network()
+{
+	ubus -t 15 wait_for network.interface.$1 2>/dev/null
+}
+
+boot()
+{
+	ubus -t 5 wait_for umdns 2>/dev/null
+	config_load network
+	config_foreach wait_for_network interface
+	rc_procd start_service
+}
 
 reload_service()
 {
@@ -30,7 +43,7 @@ start_service()
 		config_get _tcp_buffer "$1" tcp_port
 	}
 	config_foreach load_tcp_port network
-	
+
 	touch /tmp/dawn_mac_list
 
 	echo "Starting Service..."
