@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quota
 PKG_VERSION:=4.05
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/linuxquota
@@ -25,7 +25,6 @@ include $(INCLUDE_DIR)/package.mk
 define Package/quota
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libnl-genl +libtirpc +libwrap
   TITLE:= quota
   URL:=https://sourceforge.net/projects/linuxquota/
 endef
@@ -35,7 +34,13 @@ define Package/quota/description
 endef
 
 CONFIGURE_ARGS += \
-	--disable-ext2direct
+	--disable-bsd-behaviour \
+	--disable-ext2direct \
+	--disable-ldapmail \
+	--disable-libwrap \
+	--disable-netlink \
+	--disable-rpath \
+	--disable-rpc
 
 define Package/quota/install
 	$(INSTALL_DIR) $(1)/usr/bin
