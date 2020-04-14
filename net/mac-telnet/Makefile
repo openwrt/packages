@@ -63,6 +63,7 @@ define Package/mac-telnet-server/install-extra
 	$(INSTALL_BIN) ./files/mactelnet.init $$(1)/etc/init.d/mactelnet
 	$(INSTALL_DIR) $$(1)/etc/config
 	$(INSTALL_DATA) ./files/mactelnet.config $$(1)/etc/config/mactelnet
+	chmod 0600 /etc/config/mactelnet
 endef
 
 
