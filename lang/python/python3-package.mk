@@ -5,13 +5,12 @@
 # See /LICENSE for more information.
 #
 
-# Note: include this after `include $(TOPDIR)/rules.mk in your package Makefile
+# Note: include this file after `include $(TOPDIR)/rules.mk in your package Makefile
 
 python3_mk_path:=$(dir $(lastword $(MAKEFILE_LIST)))
 include $(python3_mk_path)python3-host.mk
 
 PYTHON3_DIR:=$(STAGING_DIR)/usr
-PYTHON3_BIN_DIR:=$(PYTHON3_DIR)/bin
 PYTHON3_INC_DIR:=$(PYTHON3_DIR)/include/python$(PYTHON3_VERSION)
 PYTHON3_LIB_DIR:=$(PYTHON3_DIR)/lib/python$(PYTHON3_VERSION)
 
@@ -135,7 +134,6 @@ define Py3Package/ProcessFilespec
 endef
 
 define Py3Package
-
   define Package/$(1)-src
     $(call Package/$(1))
     DEPENDS:=
@@ -148,8 +146,9 @@ define Py3Package
   endef
 
   define Package/$(1)-src/description
-    $(call Package/$(1)/description).
-    (Contains the Python3 sources for this package).
+    $$(call Package/$(1)/description)
+
+    This package contains the Python source files for $(1).
   endef
 
   define Package/$(1)-src/config
@@ -163,10 +162,10 @@ define Py3Package
 
   ifndef Py3Package/$(1)/install
     define Py3Package/$(1)/install
-		if [ -d $(PKG_INSTALL_DIR)/usr/bin ]; then \
-			$(INSTALL_DIR) $$(1)/usr/bin ; \
-			$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $$(1)/usr/bin/ ; \
-		fi
+	if [ -d $(PKG_INSTALL_DIR)/usr/bin ]; then \
+		$(INSTALL_DIR) $$(1)/usr/bin ; \
+		$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $$(1)/usr/bin/ ; \
+	fi
     endef
   endif
 
