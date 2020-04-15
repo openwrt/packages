@@ -5,14 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mac-telnet
-PKG_VERSION:=2015-09-02
-PKG_RELEASE=$(PKG_SOURCE_VERSION)+1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/jow-/MAC-Telnet.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL=https://github.com/jow-/MAC-Telnet.git
+PKG_SOURCE_DATE:=2015-09-02
 PKG_SOURCE_VERSION:=37d83cbc9c07266d6c957d27bf75285b305eceab
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 PKG_MIRROR_HASH:=13429f1a870121cdbbfb687e0581967904798000eca1f8f9c1e9dc87dee5669b
 
 PKG_LICENSE:=GPL-2.0-or-later
@@ -62,7 +60,7 @@ define Package/mac-telnet-server/install-extra
 	$(INSTALL_DIR) $$(1)/etc/init.d
 	$(INSTALL_BIN) ./files/mactelnet.init $$(1)/etc/init.d/mactelnet
 	$(INSTALL_DIR) $$(1)/etc/config
-	$(INSTALL_DATA) ./files/mactelnet.config $$(1)/etc/config/mactelnet
+	$(INSTALL_CONF) ./files/mactelnet.config $$(1)/etc/config/mactelnet
 endef
 
 
