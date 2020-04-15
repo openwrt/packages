@@ -121,6 +121,19 @@ endef
 
 # Py3Package
 
+define Py3Package/filespec/Default
++|$(PYTHON3_PKG_DIR)
+endef
+
+# $(1) => package name
+# $(2) => src directory
+# $(3) => dest directory
+define Py3Package/ProcessFilespec
+	$(eval $(call shexport,Py3Package/$(1)/filespec))
+	$(SHELL) $(python3_mk_path)python-package-install.sh \
+		"$(2)" "$(3)" "$$$$$(call shvar,Py3Package/$(1)/filespec)"
+endef
+
 define Py3Package
 
   define Package/$(1)-src
@@ -144,10 +157,8 @@ define Py3Package
   endef
 
   # Add default PyPackage filespec none defined
-  ifndef Py3Package/$(1)/filespec
-    define Py3Package/$(1)/filespec
-      +|$(PYTHON3_PKG_DIR)
-    endef
+  ifeq ($(origin Py3Package/$(1)/filespec),undefined)
+    Py3Package/$(1)/filespec=$$(Py3Package/filespec/Default)
   endif
 
   ifndef Py3Package/$(1)/install
@@ -160,13 +171,9 @@ define Py3Package
   endif
 
   ifndef Package/$(1)/install
-  $(call shexport,Py3Package/$(1)/filespec)
-
     define Package/$(1)/install
 	$$(call Py3Package/$(1)/install,$$(1))
-	$(SHELL) $(python3_mk_path)python-package-install.sh \
-		"$(PKG_INSTALL_DIR)" "$$(1)" \
-		"$$$$$$$$$$(call shvar,Py3Package/$(1)/filespec)"
+	$$(call Py3Package/ProcessFilespec,$(1),$(PKG_INSTALL_DIR),$$(1))
 	$(FIND) $$(1) -name '*.exe' -delete
 	$$(call Python3/CompileAll,$$(1))
 	$$(call Python3/DeleteSourceFiles,$$(1))
@@ -178,9 +185,7 @@ define Py3Package
 
     define Package/$(1)-src/install
 	$$(call Py3Package/$(1)/install,$$(1))
-	$(SHELL) $(python3_mk_path)python-package-install.sh \
-		"$(PKG_INSTALL_DIR)" "$$(1)" \
-		"$$$$$$$$$$(call shvar,Py3Package/$(1)/filespec)"
+	$$(call Py3Package/ProcessFilespec,$(1),$(PKG_INSTALL_DIR),$$(1))
 	$$(call Python3/DeleteNonSourceFiles,$$(1))
 	$$(call Python3/DeleteEmptyDirs,$$(1))
     endef
