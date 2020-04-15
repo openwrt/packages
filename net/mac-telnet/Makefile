@@ -63,6 +63,10 @@ define Package/mac-telnet-server/install-extra
 	$(INSTALL_CONF) ./files/mactelnet.config $$(1)/etc/config/mactelnet
 endef
 
+define Package/mac-telnet-server/conffiles
+/etc/config/mactelnet
+endef
+
 
 $(eval $(call BuildPlugin,server,mactelnetd))
 $(eval $(call BuildPlugin,client,mactelnet))
