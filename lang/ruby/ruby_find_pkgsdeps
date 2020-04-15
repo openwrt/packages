@@ -22,11 +22,12 @@ end
 
 require_regex=/^require ["']([^"']+)["'].*/
 require_regex_ignore=/^require ([a-zA-Z\$]|["']$|.*\/$)/
-require_ignore=%w{drb/invokemethod16 foo rubygems/defaults/operating_system win32console java Win32API
+require_ignore=%w{foo rubygems/defaults/operating_system win32console java Win32API
                   builder/xchar json/pure simplecov win32/sspi rdoc/markdown/literals_1_8 enumerator win32/resolv rbtree
-                  nqxml/streamingparser nqxml/treeparser xmlscan/parser xmlscan/scanner xmltreebuilder xml/parser xmlparser xml/encoding-ja xmlencoding-ja
+                  xmlscan/parser xmlscan/scanner xmltreebuilder xml/parser xmlparser xml/encoding-ja xmlencoding-ja
                   iconv uconv win32ole gettext/po_parser gettext/mo libxml psych.jar psych_jars jar-dependencies thread minitest/proveit
 		bundler pry bcrypt net/http/pipeline capistrano/version rubygems/builder rubygems/format diff/lcs graphviz
+		win32api racc/cparse-jruby.jar profile profiler
 	}
 
 builtin_enc=[
@@ -85,7 +86,7 @@ packages.each do
 						next
 					end
 					if not require_regex =~ line
-						$stderr.puts "Unknown require: '#{line}' at file #{file}:#{lineno}"
+						puts "Unknown require: '#{line}' at file #{file}:#{lineno}"
 						failed=true
 					end
 					require=line.gsub(require_regex,"\\1")
@@ -141,10 +142,12 @@ weak_dependency.merge!({
 "ruby-debuglib"=>["ruby-readline"],				#debug.rb
 "ruby-drb"=>["ruby-openssl"],				 	#drb/ssl.rb
 "ruby-irb"=>["ruby-rdoc", "ruby-readline"],		 	#irb/cmd/help.rb
-"ruby-gems"=>["ruby-openssl","ruby-io-console","ruby-webrick"], #rubygems/commands/cert_command.rb rubygems/user_interaction.rb rubygems/server.rb
+"ruby-gems"=>["ruby-openssl","ruby-io-console","ruby-webrick",  #rubygems/commands/cert_command.rb rubygems/user_interaction.rb rubygems/server.rb
+		"ruby-bundler"],				#rubygems.rb
 "ruby-mkmf"=>["ruby-webrick"], 					#un.rb
 "ruby-net"=>["ruby-openssl","ruby-io-console","ruby-zlib"], 	#net/*.rb
 "ruby-optparse"=>["ruby-uri","ruby-datetime"],			#optparse/date.rb optparse/uri.rb
+"ruby-racc"=>["ruby-gems"],					#/usr/bin/racc*
 "ruby-rake"=>["ruby-net","ruby-gems"],				#rake/contrib/ftptools.rb /usr/bin/rake
 "ruby-rdoc"=>["ruby-gems","ruby-readline","ruby-webrick",	#/usr/bin/rdoc and others
 	       "ruby-io-console"],				#rdoc/stats/normal.rb
@@ -198,11 +201,17 @@ begin
 	package_dependencies.each do
 		|(pkg,deps)|
 		next if deps.empty?
+		deps.each {|dep| puts "#{pkg}: #{dep} also depends on #{pkg}" if package_dependencies[dep].include?(pkg) }
 		deps_new = deps.collect {|dep| [dep] + package_dependencies[dep] }.inject([],:+).uniq.sort
 		if not deps == deps_new
 			puts "#{pkg}: #{deps.join(",")}"
 			puts "#{pkg}: #{deps_new.join(",")}"
 			package_dependencies[pkg]=deps_new
+
+			if deps_new.include?(pkg)
+				$stderr.puts "#{pkg}: Circular dependency detected (#1)!"
+				exit 1
+			end
 			changed=true
 		end
 	end
@@ -218,7 +227,7 @@ puts "Checking for mutual dependencies..."
 package_dependencies.each do
 	|(pkg,deps)|
 	if deps.include? pkg
-		$stderr.puts "#{pkg}: Cycle dependency detected! "
+		$stderr.puts "#{pkg}: Circular dependency detected (#2)!"
 		failed = true
 	end
 end
