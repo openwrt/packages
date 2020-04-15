@@ -362,6 +362,32 @@ define BuildPlugin
 
 endef
 
+define BuildScriptPlugin
+  PKG_CONFIG_DEPENDS+= CONFIG_PACKAGE_collectd-mod-$(1)
+
+  define Package/collectd-mod-$(1)
+  $$(call Package/collectd/Default)
+    TITLE:=$(2) plugin
+    DEPENDS:= $(4)
+  endef
+
+  define Package/collectd-mod-$(1)/install
+	$(INSTALL_DIR) $$(1)/usr/libexec/collectd
+	for m in $(3); do \
+		${INSTALL_BIN} \
+			./files/exec-scripts/$$$$$$$${m}.sh $$(1)/usr/libexec/collectd/ ; \
+	done
+	if [ -f ./files/usr/share/collectd/plugin/$(1).json ]; then \
+		$(INSTALL_DIR) $$(1)/usr/share/collectd/plugin ; \
+		$(INSTALL_DATA) ./files/usr/share/collectd/plugin/$(1).json \
+			$$(1)/usr/share/collectd/plugin/$(1).json ; \
+	fi
+  endef
+
+  $$(eval $$(call BuildPackage,collectd-mod-$(1)))
+
+endef
+
 $(eval $(call BuildPackage,collectd))
 
 #$(eval $(call BuildPlugin,NAME,DESCRIPTION,FILES,DEPENDENCIES))
@@ -434,3 +460,5 @@ $(eval $(call BuildPlugin,vmem,virtual memory usage input,vmem,))
 $(eval $(call BuildPlugin,wireless,wireless status input,wireless,))
 $(eval $(call BuildPlugin,write-graphite,Carbon/Graphite output,write_graphite,+PACKAGE_collectd-mod-write-graphite:libpthread))
 $(eval $(call BuildPlugin,write-http,HTTP POST output,write_http,+PACKAGE_collectd-mod-write-http:libcurl))
+
+$(eval $(call BuildScriptPlugin,sqm,SQM/qdisc collection,sqm_collectd,+PACKAGE_collectd-mod-sqm:collectd-mod-exec))
