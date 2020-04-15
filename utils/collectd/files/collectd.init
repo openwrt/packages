@@ -11,6 +11,11 @@ NICEPRIO=5
 
 CONFIG_STRING=""
 
+[ -d /usr/libexec/collectd ] && {
+	find /usr/libexec/collectd ! -perm 0500 -exec chmod 0500 '{}' '+'
+	find /usr/libexec/collectd ! \( -user nobody -a -group nogroup \) -exec chown nobody:nogroup '{}' '+'
+}
+
 process_exec() {
 	printf "<Plugin exec>\n" >> "$COLLECTD_CONF"
 	config_foreach process_exec_sections exec_input "Exec"
