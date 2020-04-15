@@ -40,7 +40,7 @@ define Package/sshtunnel/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/sshtunnel.init $(1)/etc/init.d/sshtunnel
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/uci_sshtunnel $(1)/etc/config/sshtunnel
+	$(INSTALL_CONF) ./files/uci_sshtunnel $(1)/etc/config/sshtunnel
 endef
 
 $(eval $(call BuildPackage,sshtunnel))
