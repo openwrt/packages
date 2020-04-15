@@ -46,11 +46,4 @@ define Package/muninlite/conffiles
 /etc/xinetd.d/muninlite
 endef
 
-define Build/Configure
-endef
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR)
-endef
-
 $(eval $(call BuildPackage,muninlite))
