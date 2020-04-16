@@ -4,7 +4,9 @@ define DefaultProgrammer
   MAKE_FLAGS += CONFIG_DEFAULT_PROGRAMMER=PROGRAMMER_$(1)
 endef
 define DefineConfig
-  MAKE_FLAGS += NEED_$(1)=$(2)
+  ifeq ($(2),yes)
+    MAKE_FLAGS += NEED_$(1)=$(2)
+  endif
 endef
 define DefineProgrammer
   # Selecting invalid programmers will fail
@@ -57,7 +59,7 @@ $(eval $(call DefineProgrammer,LINUX_SPI,$(FLASHROM_BASIC)))
 $(eval $(call DefineProgrammer,DUMMY,$(FLASHROM_BASIC)))
 
 # FTDI
-$(eval $(call DefineConfig,FTDI,$(FLASHROM_FTDI)))
+$(eval $(call DefineConfig,LIBFTDI,$(FLASHROM_FTDI)))
 $(eval $(call DefineProgrammer,FT2232_SPI,$(FLASHROM_FTDI)))
 $(eval $(call DefineProgrammer,USBBLASTER_SPI,$(FLASHROM_FTDI)))
 
@@ -66,17 +68,18 @@ $(eval $(call DefineConfig,RAW_ACCESS,$(FLASHROM_RAW)))
 $(eval $(call DefineProgrammer,RAYER_SPI,$(FLASHROM_RAW)))
 
 # PCI
-$(eval $(call DefineConfig,PCI,$(FLASHROM_PCI)))
+$(eval $(call DefineConfig,LIBPCI,$(FLASHROM_PCI)))
 $(eval $(call DefineProgrammer,INTERNAL,$(FLASHROM_PCI)))
 $(eval $(call DefineProgrammer,NIC3COM,$(FLASHROM_PCI)))
 $(eval $(call DefineProgrammer,GFXNVIDIA,$(FLASHROM_PCI)))
 $(eval $(call DefineProgrammer,SATASII,$(FLASHROM_PCI)))
-#$(eval $(call DefineProgrammer,ATAHPT,$(FLASHROM_PCI)))
+$(eval $(call DefineProgrammer,ATAHPT,$(FLASHROM_PCI)))
+$(eval $(call DefineProgrammer,ATAPROMISE,$(FLASHROM_PCI)))
 $(eval $(call DefineProgrammer,ATAVIA,$(FLASHROM_PCI)))
 $(eval $(call DefineProgrammer,IT8212,$(FLASHROM_PCI)))
 $(eval $(call DefineProgrammer,DRKAISER,$(FLASHROM_PCI)))
 $(eval $(call DefineProgrammer,NICREALTEK,$(FLASHROM_PCI)))
-#$(eval $(call DefineProgrammer,NICNATSEMI,$(FLASHROM_PCI)))
+$(eval $(call DefineProgrammer,NICNATSEMI,$(FLASHROM_PCI)))
 $(eval $(call DefineProgrammer,NICINTEL,$(FLASHROM_PCI)))
 $(eval $(call DefineProgrammer,NICINTEL_SPI,$(FLASHROM_PCI)))
 $(eval $(call DefineProgrammer,NICINTEL_EEPROM,$(FLASHROM_PCI)))
@@ -89,11 +92,11 @@ $(eval $(call DefineProgrammer,SERPROG,$(FLASHROM_SERIAL)))
 $(eval $(call DefineProgrammer,PONY_SPI,$(FLASHROM_SERIAL)))
 $(eval $(call DefineProgrammer,BUSPIRATE_SPI,$(FLASHROM_SERIAL)))
 
-# USB0
-$(eval $(call DefineConfig,USB0,$(FLASHROM_USB)))
-$(eval $(call DefineProgrammer,PICKIT2_SPI,$(FLASHROM_USB)))
-
 # USB1
-$(eval $(call DefineConfig,USB1,$(FLASHROM_USB)))
+$(eval $(call DefineConfig,LIBUSB1,$(FLASHROM_USB)))
 $(eval $(call DefineProgrammer,CH341A_SPI,$(FLASHROM_USB)))
 $(eval $(call DefineProgrammer,DEDIPROG,$(FLASHROM_USB)))
+$(eval $(call DefineProgrammer,DEVELOPERBOX_SPI,$(FLASHROM_USB)))
+$(eval $(call DefineProgrammer,DIGILENT_SPI,$(FLASHROM_USB)))
+$(eval $(call DefineProgrammer,PICKIT2_SPI,$(FLASHROM_USB)))
+$(eval $(call DefineProgrammer,STLINKV3_SPI,$(FLASHROM_USB)))
