@@ -28,7 +28,7 @@ define Package/htop
   SECTION:=admin
   CATEGORY:=Administration
   TITLE:=Interactive processes viewer
-  DEPENDS:=+libncurses
+  DEPENDS:=+libncurses +libexecinfo
   URL:=https://hisham.hm/htop/
   MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 endef
@@ -46,6 +46,8 @@ CONFIGURE_ARGS += \
 CONFIGURE_VARS += \
 	ac_cv_file__proc_stat=yes \
 	ac_cv_file__proc_meminfo=yes
+
+TARGET_LDFLAGS += -lexecinfo
 
 define Package/htop/install
 	$(INSTALL_DIR) $(1)/usr/bin
