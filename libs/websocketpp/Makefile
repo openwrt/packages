@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=websocketpp
 PKG_VERSION:=0.8.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/zaphoyd/websocketpp/archive/$(PKG_VERSION)/
@@ -26,6 +26,7 @@ define Package/websocketpp
 	CATEGORY:=Libraries
 	TITLE:=WebSocket++
 	URL:=https://www.zaphoyd.com/websocketpp
+	BUILDONLY:=1
 endef
 
 define Package/websocketpp/description
