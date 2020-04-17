@@ -1,0 +1,110 @@
+From c769c9238ad62178f506038178714a1c35aa2769 Mon Sep 17 00:00:00 2001
+From: Stefan Floeren <42731906+stefan-floeren@users.noreply.github.com>
+Date: Tue, 16 Apr 2019 08:38:01 +0200
+Subject: [PATCH 1/4] Replace make_shared with new in some cases
+
+Replace make_shared for asio types that take a lib::ref as a parameter.
+This should fix the ASIO change (boostorg/asio@59066d8) for 1.70,
+while keeping it backwards compatible to older boost versions.
+
+diff --git a/websocketpp/transport/asio/connection.hpp b/websocketpp/transport/asio/connection.hpp
+index 60f88a7..1ccda8f 100644
+--- a/websocketpp/transport/asio/connection.hpp
++++ b/websocketpp/transport/asio/connection.hpp
+@@ -311,9 +311,10 @@ public:
+      * needed.
+      */
+     timer_ptr set_timer(long duration, timer_handler callback) {
+-        timer_ptr new_timer = lib::make_shared<lib::asio::steady_timer>(
+-            lib::ref(*m_io_service),
+-            lib::asio::milliseconds(duration)
++        timer_ptr new_timer(
++            new lib::asio::steady_timer(
++                *m_io_service,
++                lib::asio::milliseconds(duration))
+         );
+ 
+         if (config::enable_multithreading) {
+diff --git a/websocketpp/transport/asio/endpoint.hpp b/websocketpp/transport/asio/endpoint.hpp
+index ddab2c7..4b719a9 100644
+--- a/websocketpp/transport/asio/endpoint.hpp
++++ b/websocketpp/transport/asio/endpoint.hpp
+@@ -195,8 +195,7 @@ public:
+ 
+         m_io_service = ptr;
+         m_external_io_service = true;
+-        m_acceptor = lib::make_shared<lib::asio::ip::tcp::acceptor>(
+-            lib::ref(*m_io_service));
++        m_acceptor.reset(new lib::asio::ip::tcp::acceptor(*m_io_service));
+ 
+         m_state = READY;
+         ec = lib::error_code();
+diff --git a/websocketpp/transport/asio/security/none.hpp b/websocketpp/transport/asio/security/none.hpp
+index 5c8293d..6c7d352 100644
+--- a/websocketpp/transport/asio/security/none.hpp
++++ b/websocketpp/transport/asio/security/none.hpp
+@@ -168,8 +168,7 @@ protected:
+             return socket::make_error_code(socket::error::invalid_state);
+         }
+ 
+-        m_socket = lib::make_shared<lib::asio::ip::tcp::socket>(
+-            lib::ref(*service));
++        m_socket.reset(new lib::asio::ip::tcp::socket(*service));
+ 
+         if (m_socket_init_handler) {
+             m_socket_init_handler(m_hdl, *m_socket);
+diff --git a/websocketpp/transport/asio/security/tls.hpp b/websocketpp/transport/asio/security/tls.hpp
+index c76fd9a..04ac379 100644
+--- a/websocketpp/transport/asio/security/tls.hpp
++++ b/websocketpp/transport/asio/security/tls.hpp
+@@ -193,8 +193,7 @@ protected:
+         if (!m_context) {
+             return socket::make_error_code(socket::error::invalid_tls_context);
+         }
+-        m_socket = lib::make_shared<socket_type>(
+-            _WEBSOCKETPP_REF(*service),lib::ref(*m_context));
++        m_socket.reset(new socket_type(*service, *m_context));
+ 
+         if (m_socket_init_handler) {
+             m_socket_init_handler(m_hdl, get_socket());
+diff --git a/websocketpp/transport/asio/connection.hpp b/websocketpp/transport/asio/connection.hpp
+index 1ccda8f..57dda74 100644
+--- a/websocketpp/transport/asio/connection.hpp
++++ b/websocketpp/transport/asio/connection.hpp
+@@ -462,8 +462,7 @@ protected:
+         m_io_service = io_service;
+
+         if (config::enable_multithreading) {
+-            m_strand = lib::make_shared<lib::asio::io_service::strand>(
+-                lib::ref(*io_service));
++            m_strand.reset(new lib::asio::io_service::strand(*io_service));
+         }
+
+         lib::error_code ec = socket_con_type::init_asio(io_service, m_strand,
+diff --git a/websocketpp/transport/asio/endpoint.hpp b/websocketpp/transport/asio/endpoint.hpp
+index 4b719a9..94509ad 100644
+--- a/websocketpp/transport/asio/endpoint.hpp
++++ b/websocketpp/transport/asio/endpoint.hpp
+@@ -687,9 +687,7 @@ public:
+      * @since 0.3.0
+      */
+     void start_perpetual() {
+-        m_work = lib::make_shared<lib::asio::io_service::work>(
+-            lib::ref(*m_io_service)
+-        );
++        m_work.reset(new lib::asio::io_service::work(*m_io_service));
+     }
+
+     /// Clears the endpoint's perpetual flag, allowing it to exit when empty
+@@ -853,8 +851,7 @@ protected:
+
+         // Create a resolver
+         if (!m_resolver) {
+-            m_resolver = lib::make_shared<lib::asio::ip::tcp::resolver>(
+-                lib::ref(*m_io_service));
++            m_resolver.reset(new lib::asio::ip::tcp::resolver(*m_io_service));
+         }
+
+         tcon->set_uri(u);
+-- 
+2.26.1
