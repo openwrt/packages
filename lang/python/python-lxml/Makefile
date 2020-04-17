@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-lxml
-PKG_VERSION:=4.4.2
-PKG_RELEASE:=3
+PKG_VERSION:=4.5.1
+PKG_RELEASE:=1
 
 PYPI_NAME:=lxml
-PKG_HASH:=eff69ddbf3ad86375c344339371168640951c302450c5d3e9936e98d6459db06
+PKG_HASH:=27ee0faf8077c7c1a589573b1450743011117f1aa1a91d5ae776bbc5ca6070f2
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSES.txt
@@ -40,17 +40,6 @@ define Package/python3-lxml/description
   It extends the ElementTree API significantly to offer support for
   XPath, RelaxNG, XML Schema, XSLT, C14N and much more.
 endef
-
-TARGET_LDFLAGS += -lxml2 -lxslt -lexslt
-
-PYTHON3_PKG_SETUP_ARGS += \
-	--static
-
-PYTHON3_PKG_SETUP_VARS += \
-	INCLUDE="$(STAGING_DIR)/usr/include/ $(STAGING_DIR)/usr/include/libxml2" \
-	LIBRARY="$(STAGING_DIR)/usr/lib $(STAGING_DIR)/lib" \
-	CFLAGS="$(TARGET_CFLAGS)" \
-	LDFLAGS="$(TARGET_LDFLAGS)"
 
 $(eval $(call Py3Package,python3-lxml))
 $(eval $(call BuildPackage,python3-lxml))
