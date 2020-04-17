@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
 PKG_VERSION:=7.1.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/haiwen/seafile-server/tar.gz/v$(PKG_VERSION)-server?
@@ -25,6 +25,7 @@ PKG_BUILD_DEPENDS:=vala/host libevhtp
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PYTHON3_PKG_BUILD:=0
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -111,7 +112,6 @@ define Package/python3-seafile-server
   SUBMENU:=Python
   TITLE:=Python bindings for Seafile server
   DEPENDS:=+python3-light +python3-logging +python3-searpc +python3-seafile-ccnet
-  VARIANT:=python3
 endef
 
 define Package/python3-seafile-server/description
@@ -126,10 +126,8 @@ CONFIGURE_ARGS += \
 	--enable-python \
 	--with-mysql="$(STAGING_DIR)/usr/bin/mysql_config"
 
-# This is required as python3-package.mk overrides the default setting of having interlinking enabled
-ifdef CONFIG_USE_MIPS16
-  TARGET_CFLAGS += -minterlink-mips16
-endif
+CONFIGURE_VARS += \
+	PYTHON="$(HOST_PYTHON3_BIN)"
 
 ifdef CONFIG_GCC_LIBSSP
   TARGET_LDFLAGS += -lssp
@@ -197,13 +195,6 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/seafile/*.h $(1)/usr/include/seafile/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libseafile.pc $(1)/usr/lib/pkgconfig/
-endef
-
-define Py3Build/Compile
-	rm -rf $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/{seafile,seaserv}
-	$(INSTALL_DIR) $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/{seafile,seaserv}
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/python/seafile/*.py $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/seafile/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/python/seaserv/*.py $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/seaserv/
 endef
 
 define Package/seafile-server-fuse/install

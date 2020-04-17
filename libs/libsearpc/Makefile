@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsearpc
 PKG_VERSION:=3.2.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/haiwen/libsearpc.git
@@ -25,6 +25,7 @@ PKG_FIXUP:=autoreconf
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PYTHON3_PKG_BUILD:=0
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -50,18 +51,20 @@ define Package/python3-searpc
   SUBMENU:=Python
   TITLE:=Python bindings for Searpc
   DEPENDS:=+libsearpc +python3-light +python3-logging
-  VARIANT:=python3
 endef
 
 define Package/python3-searpc/description
 $(call Package/libsearpc/description)
 
-  This package contains the Python bindings for Searpc.
+  This package contains Python bindings for Searpc.
 endef
 
 CONFIGURE_ARGS += \
 	--disable-compile-demo \
 	--disable-server-pkg
+
+CONFIGURE_VARS += \
+	PYTHON="$(HOST_PYTHON3_BIN)"
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/{bin,include}
@@ -75,13 +78,6 @@ endef
 define Package/libsearpc/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsearpc.so* $(1)/usr/lib/
-endef
-
-define Py3Build/Compile
-	rm -rf $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/pysearpc
-	$(INSTALL_DIR) $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/pysearpc
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/pysearpc/*.py $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/pysearpc/
-	rm -f $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/pysearpc/{pygencode,test_pysearpc}.py
 endef
 
 Py3Package/python3-searpc/install:=:
