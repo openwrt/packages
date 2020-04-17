@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-compressor
-PKG_VERSION:=2.2
-PKG_RELEASE:=8
+PKG_VERSION:=2.4
+PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
 PYPI_SOURCE_NAME:=django_compressor
-PKG_HASH:=9616570e5b08e92fa9eadc7a1b1b49639cce07ef392fc27c74230ab08075b30f
+PKG_HASH:=d2ed1c6137ddaac5536233ec0a819e14009553fee0a869bea65d03e5285ba74f
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
