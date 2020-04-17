@@ -1,0 +1,24 @@
+From eb473817d73b8740f27955f93950029fdfc9d73e Mon Sep 17 00:00:00 2001
+From: Daniel Kamil Kozar <dkk089@gmail.com>
+Date: Sat, 15 Dec 2018 00:55:20 +0100
+Subject: [PATCH] LG webOS 3.5 devices require audio/flac in order to detect
+ FLAC
+
+Imported from https://sourceforge.net/p/minidlna/patches/176/
+---
+ clients.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/clients.c b/clients.c
+index 42f0d1c..d324eab 100644
+--- a/clients.c
++++ b/clients.c
+@@ -164,7 +164,7 @@ struct client_type_s client_types[] =
+ 
+ 	/* USER-AGENT: Linux/2.6.35 UPnP/1.0 DLNADOC/1.50 INTEL_NMPR/2.0 LGE_DLNA_SDK/1.6.0 */
+ 	{ ELGNetCastDevice,
+-	  FLAG_DLNA | FLAG_CAPTION_RES,
++	  FLAG_DLNA | FLAG_CAPTION_RES | FLAG_MIME_FLAC_FLAC,
+ 	  "LG",
+ 	  "LGE_DLNA_SDK/1.6.0",
+ 	  EUserAgent
