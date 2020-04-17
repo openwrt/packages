@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bigclown-control-tool
 PKG_VERSION:=0.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=bch
 PKG_HASH:=4cd73b92757fce7275a4744baed411c867af2e671c521b90d6690b2320851d58
@@ -32,7 +32,6 @@ define Package/bigclown-control-tool
     +python3-pyserial \
     +python3-yaml \
     +python3-simplejson
-  VARIANT:=python3
 endef
 
 $(eval $(call Py3Package,bigclown-control-tool))

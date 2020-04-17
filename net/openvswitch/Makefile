@@ -32,6 +32,7 @@ PKG_USE_MIPS16:=0
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PYTHON3_PKG_BUILD:=0
 
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 

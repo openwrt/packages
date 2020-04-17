@@ -33,13 +33,14 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_kmod-fs-btrfs \
 	CONFIG_PACKAGE_kmod-fs-xfs
 
+PYTHON3_PKG_BUILD:=0
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/version.mk
-include $(TOPDIR)/feeds/packages/lang/python/python3-host.mk
-#include $(TOPDIR)/feeds/packages/lang/python/python-package.mk
-include $(TOPDIR)/feeds/packages/lang/python/python3-package.mk
+include ../../lang/python/python3-host.mk
+include ../../lang/python/python3-package.mk
 
 define Package/samba4/Default
   SECTION:=net

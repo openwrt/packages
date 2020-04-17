@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=asu
 PKG_VERSION:=0.2.3
-PKG_RELEASE=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=GPL-3.0
 
@@ -37,7 +37,6 @@ define Package/asu
              +gunicorn3 +python3-openssl +python3-pyodbc +python3-yaml \
              +libustream-mbedtls +ca-certificates +gnupg
     USERID:=asu:asu
-    VARIANT:=python3
 endef
 
 define Package/asu/description

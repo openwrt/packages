@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bigclown-mqtt2influxdb
 PKG_VERSION:=1.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=mqtt2influxdb
 PKG_HASH:=1b4b3b13f5b2f092bcd27846d94e91ad6f05141b2daea5167a7d58b09a782639
@@ -31,7 +31,6 @@ define Package/bigclown-mqtt2influxdb
     +python3-influxdb \
     +python3-jsonpath-ng \
     +python3-schema
-  VARIANT:=python3
 endef
 
 define Py3Package/bigclown-mqtt2influxdb/install
