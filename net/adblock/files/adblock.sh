@@ -1496,22 +1496,22 @@ f_report()
 					case "${top}" in
 						"top_clients")
 							"${adb_awk}" '{print $3}' "${adb_reportdir}/adb_report.srt" | sort ${adb_srtopts} | uniq -c | \
-								sort ${adb_srtopts} -nr | "${adb_awk}" '{ORS=" ";if(NR==1)printf "\{ \"count\": \"%s\", \"address\": \"%s\" }",$1,$2; else if(NR<10)printf ", \{ \"count\": \"%s\", \"address\": \"%s\" }",$1,$2}' >> "${adb_reportdir}/adb_report.json"
+								sort ${adb_srtopts} -nr | "${adb_awk}" '{ORS=" ";if(NR==1)printf "{ \"count\": \"%s\", \"address\": \"%s\" }",$1,$2; else if(NR<10)printf ", { \"count\": \"%s\", \"address\": \"%s\" }",$1,$2}' >> "${adb_reportdir}/adb_report.json"
 						;;
 						"top_domains")
 							"${adb_awk}" '{if($5!="NX")print $4}' "${adb_reportdir}/adb_report.srt" | sort ${adb_srtopts} | uniq -c | \
-								sort ${adb_srtopts} -nr | "${adb_awk}" '{ORS=" ";if(NR==1)printf "\{ \"count\": \"%s\", \"address\": \"%s\" }",$1,$2; else if(NR<10)printf ", \{ \"count\": \"%s\", \"address\": \"%s\" }",$1,$2}' >> "${adb_reportdir}/adb_report.json"
+								sort ${adb_srtopts} -nr | "${adb_awk}" '{ORS=" ";if(NR==1)printf "{ \"count\": \"%s\", \"address\": \"%s\" }",$1,$2; else if(NR<10)printf ", { \"count\": \"%s\", \"address\": \"%s\" }",$1,$2}' >> "${adb_reportdir}/adb_report.json"
 						;;
 						"top_blocked")
 							"${adb_awk}" '{if($5=="NX")print $4}' "${adb_reportdir}/adb_report.srt" | sort ${adb_srtopts} | uniq -c | \
-								sort ${adb_srtopts} -nr | "${adb_awk}" '{ORS=" ";if(NR==1)printf "\{ \"count\": \"%s\", \"address\": \"%s\" }",$1,$2; else if(NR<10)printf ", \{ \"count\": \"%s\", \"address\": \"%s\" }",$1,$2}' >> "${adb_reportdir}/adb_report.json"
+								sort ${adb_srtopts} -nr | "${adb_awk}" '{ORS=" ";if(NR==1)printf "{ \"count\": \"%s\", \"address\": \"%s\" }",$1,$2; else if(NR<10)printf ", { \"count\": \"%s\", \"address\": \"%s\" }",$1,$2}' >> "${adb_reportdir}/adb_report.json"
 						;;
 					esac
 					printf "%s" " ], " >> "${adb_reportdir}/adb_report.json"
 				done
 				search="${search//./\\.}"
 				search="${search//[+*~%\$&\"\' ]/}"
-				"${adb_awk}" "BEGIN{i=0;printf \"%s\",\"\\\"requests\\\": [ \" }/(${search})/{i++;if(i==1)printf \"\{ \\\"date\\\": \\\"%s\\\", \\\"time\\\": \\\"%s\\\", \\\"client\\\": \\\"%s\\\", \\\"domain\\\": \\\"%s\\\", \\\"rc\\\": \\\"%s\\\" }\",\$1,\$2,\$3,\$4,\$5;else if(i<=${count})printf \", { \\\"date\\\": \\\"%s\\\", \\\"time\\\": \\\"%s\\\", \\\"client\\\": \\\"%s\\\", \\\"domain\\\": \\\"%s\\\", \\\"rc\\\": \\\"%s\\\" }\",\$1,\$2,\$3,\$4,\$5}END{printf \"%s\" \" \] } }\n\"}" "${adb_reportdir}/adb_report.srt" >> "${adb_reportdir}/adb_report.json"
+				"${adb_awk}" "BEGIN{i=0;printf \"\\\"requests\\\": [ \" }/(${search})/{i++;if(i==1)printf \"{ \\\"date\\\": \\\"%s\\\", \\\"time\\\": \\\"%s\\\", \\\"client\\\": \\\"%s\\\", \\\"domain\\\": \\\"%s\\\", \\\"rc\\\": \\\"%s\\\" }\",\$1,\$2,\$3,\$4,\$5;else if(i<=${count})printf \", { \\\"date\\\": \\\"%s\\\", \\\"time\\\": \\\"%s\\\", \\\"client\\\": \\\"%s\\\", \\\"domain\\\": \\\"%s\\\", \\\"rc\\\": \\\"%s\\\" }\",\$1,\$2,\$3,\$4,\$5}END{printf \" ] } }\n\"}" "${adb_reportdir}/adb_report.srt" >> "${adb_reportdir}/adb_report.json"
 				rm -f "${adb_reportdir}/adb_report.srt"
 			fi
 		fi
