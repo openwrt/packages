@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pulseaudio
 PKG_VERSION:=13.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://freedesktop.org/software/pulseaudio/releases
@@ -156,6 +156,18 @@ define Build/InstallDev
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc \
 		$(1)/usr/lib/pkgconfig
+	$(SED) \
+		's,/usr/include,$$$${prefix}/include,g' \
+		$(1)/usr/lib/pkgconfig/libpulse.pc
+	$(SED) \
+		's,/usr/lib,$$$${exec_prefix}/lib,g' \
+		$(1)/usr/lib/pkgconfig/libpulse.pc
+	$(SED) \
+		's,/usr/include,$$$${prefix}/include,g' \
+		$(1)/usr/lib/pkgconfig/libpulse-simple.pc
+	$(SED) \
+		's,/usr/lib,$$$${exec_prefix}/lib,g' \
+		$(1)/usr/lib/pkgconfig/libpulse-simple.pc
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/*.so* \
 		$(1)/usr/lib/
