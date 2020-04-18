@@ -103,7 +103,7 @@ define Build/Configure/Meson
 		--cross-file $(PKG_BUILD_DIR)/openwrt-cross.txt \
 		$(MESON_ARGS) \
 		$(MESON_BUILD_DIR) \
-		$(PKG_BUILD_DIR), \
+		$(MESON_BUILD_DIR)/.., \
 		$(MESON_VARS))
 endef
 
