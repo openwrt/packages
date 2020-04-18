@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libssh
-PKG_VERSION:=0.9.3
-PKG_RELEASE:=3
+PKG_VERSION:=0.9.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.libssh.org/files/0.9/
-PKG_HASH:=2c8b5f894dced58b3d629f16f3afa6562c20b4bdc894639163cf657833688f0c
+PKG_HASH:=150897a569852ac05aac831dc417a7ba8e610c86ca2e0154a99c6ade2486226b
 
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause
