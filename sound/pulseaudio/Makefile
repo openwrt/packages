@@ -8,34 +8,33 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pulseaudio
-PKG_VERSION:=12.2
-PKG_RELEASE:=4
+PKG_VERSION:=13.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://freedesktop.org/software/pulseaudio/releases/
-PKG_HASH:=809668ffc296043779c984f53461c2b3987a45b7a25eb2f0a1d11d9f23ba4055
+PKG_SOURCE_URL:=https://freedesktop.org/software/pulseaudio/releases
+PKG_HASH:=961b23ca1acfd28f2bc87414c27bb40e12436efcf2158d29721b1e89f3f28057
 
+PKG_MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=GPL LICENSE
 PKG_CPE_ID:=cpe:/a:pulseaudio:pulseaudio
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=intltool/host glib2/host
 PKG_USE_MIPS16:=0
+PKG_BUILD_DEPENDS:=meson/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+include ../../devel/meson/meson.mk
 
 define Package/pulseaudio/Default
   SECTION:=sound
   CATEGORY:=Sound
   DEPENDS:=+libsndfile +libltdl +libpthread +librt +alsa-lib \
-	+libopenssl +libwrap +libcap $(ICONV_DEPENDS) $(INTL_DEPENDS)
+	+libopenssl +libcap $(ICONV_DEPENDS) $(INTL_DEPENDS)
   TITLE:=Network sound server
-  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
-  URL:=http://www.pulseaudio.org
+  URL:=https://www.pulseaudio.org
   PROVIDES:=pulseaudio
   USERID:=pulse=51:pulse=51
 endef
@@ -96,47 +95,54 @@ define Package/pulseaudio-profiles
   URL:=http://www.pulseaudio.org
 endef
 
-CONFIGURE_ARGS += \
-	$(if $(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)),--enable-neon-opt,--disable-neon-opt) \
-	--with-system-user=pulse \
-	--with-system-group=pulse \
-	--with-access-group=audio \
-	--with-database=simple \
-	--enable-alsa \
-	--disable-hal \
-	--disable-gconf \
-	--disable-nls \
-	--disable-manpages \
-	--enable-oss-output \
-	--disable-oss-wrapper \
-	--disable-samplerate \
-	--disable-per-user-esound-socket \
-	--disable-solaris \
-	--disable-gtk2 \
-	--disable-glib2 \
-	--disable-jack \
-	--disable-asyncns \
-	--disable-lirc \
-	--disable-tests \
-	--disable-udev \
-	--without-fftw \
-	--without-soxr \
-	--without-speex
+MESON_ARGS += \
+	-Dgcov=false \
+	-Dman=false \
+	-Dtests=false \
+	-Dsystem_user=pulse \
+	-Dsystem_group=pulse \
+	-Daccess_group=audio \
+	-Ddatabase=simple \
+	-Dlegacy-database-entry-format=false \
+	-Drunning-from-build-tree=false \
+	-Datomic-arm-linux-helpers=false \
+	-Dalsa=enabled \
+	-Dasyncns=disabled \
+	-Dbluez5=false \
+	-Dbluez5-native-headset=false \
+	-Dbluez5-ofono-headset=false \
+	-Dfftw=disabled \
+	-Dglib=disabled \
+	-Dgsettings=disabled \
+	-Dgtk=disabled \
+	-Dhal-compat=false \
+	-Dipv6=true \
+	-Djack=disabled \
+	-Dlirc=disabled \
+	-Dopenssl=enabled \
+	-Dorc=disabled \
+	-Dsamplerate=disabled \
+	-Dsoxr=disabled \
+	-Dspeex=disabled \
+	-Dsystemd=disabled \
+	-Dudev=disabled \
+	-Dx11=disabled \
+	-Dadrian-aec=true \
+	-Dwebrtc-aec=disabled
 
 ifeq ($(BUILD_VARIANT),avahi)
-CONFIGURE_ARGS += \
-	--enable-avahi \
-	--enable-dbus
+MESON_ARGS += \
+	-Davahi=enabled \
+	-Ddbus=enabled
 endif
 
 ifeq ($(BUILD_VARIANT),noavahi)
-CONFIGURE_ARGS += \
-	--disable-avahi \
-	--disable-dbus
+MESON_ARGS += \
+	-Davahi=disabled \
+	-Ddbus=disabled
 endif
 
-CONFIGURE_VARS += \
-	PKG_CONFIG_LIBDIR="$(STAGING_DIR)/usr/lib/pkgconfig"
+TARGET_LDFLAGS += -liconv
 
 define Build/InstallDev
 	$(INSTALL_DIR) \
