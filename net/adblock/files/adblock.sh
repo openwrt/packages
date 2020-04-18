@@ -1255,11 +1255,10 @@ f_main()
 				then
 					if [ -s "${adb_tmpdir}/tmp.rem.whitelist" ]
 					then
-						"${adb_awk}" "${src_rset}" "${src_tmpload}" | \
-						grep -Evf "${adb_tmpdir}/tmp.rem.whitelist" | \
-						"${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' > "${src_tmpsort}"
+						"${adb_awk}" "${src_rset}" "${src_tmpload}" | sed "s/\r//g" | \
+						grep -Evf "${adb_tmpdir}/tmp.rem.whitelist" | "${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' > "${src_tmpsort}"
 					else
-						"${adb_awk}" "${src_rset}" "${src_tmpload}" | \
+						"${adb_awk}" "${src_rset}" "${src_tmpload}" | sed "s/\r//g" | \
 						"${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' > "${src_tmpsort}"
 					fi
 					rm -f "${src_tmpload}"
@@ -1294,11 +1293,10 @@ f_main()
 				then
 					if [ -s "${adb_tmpdir}/tmp.rem.whitelist" ]
 					then
-						"${adb_awk}" "${src_rset}" "${src_tmpload}" | \
-						grep -Evf "${adb_tmpdir}/tmp.rem.whitelist" | \
-						"${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' > "${src_tmpsort}"
+						"${adb_awk}" "${src_rset}" "${src_tmpload}" | sed "s/\r//g" | \
+						grep -Evf "${adb_tmpdir}/tmp.rem.whitelist" | "${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' > "${src_tmpsort}"
 					else
-						"${adb_awk}" "${src_rset}" "${src_tmpload}" | \
+						"${adb_awk}" "${src_rset}" "${src_tmpload}" | sed "s/\r//g" | \
 						"${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' > "${src_tmpsort}"
 					fi
 					rm -f "${src_tmpload}"
