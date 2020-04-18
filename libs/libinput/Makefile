@@ -5,25 +5,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libinput
-PKG_VERSION:=1.7.3
-PKG_RELEASE:=2
+PKG_VERSION:=1.15.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.freedesktop.org/software/libinput/
-PKG_HASH:=096d612d2711f0caa2de544976ff3729e6233511ab373808644cc2dd5affcb1d
+PKG_HASH:=a90efc8f423c3094f2f9f372fb92381b2f3aad62e8b5882a8abe333aa8249c97
 
+PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=meson/host
 
 include $(INCLUDE_DIR)/package.mk
-
-TARGET_CFLAGS+= -std=gnu99
-
-CONFIGURE_ARGS += --disable-libwacom --disable-tests --disable-documentation
+include ../../devel/meson/meson.mk
 
 define Package/libinput
   SECTION:=libs
@@ -41,11 +38,21 @@ define Package/libinput/description
   need to provide the common set of functionality that users expect.
 endef
 
+MESON_ARGS += \
+	-Depoll-dir=no \
+	-Dlibwacom=false \
+	-Ddebug-gui=false \
+	-Dtests=false \
+	-Dinstall-tests=false \
+	-Ddocumentation=false \
+	-Dcoverity=false \
+	-Dzshcompletiondir=no
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.{la,so*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/* $(1)/usr/lib/pkgconfig/
 endef
