@@ -37,6 +37,7 @@ NGINX_WEBSERVER=0
 UPDATE_NGINX=0
 UPDATE_UHTTPD=0
 UPDATE_HAPROXY=0
+USER_CLEANUP=
 
 . /lib/functions.sh
 
@@ -168,6 +169,11 @@ post_checks()
 	/etc/init.d/haproxy restart
 	log "Restarting haproxy..."
     fi
+
+    if [ -n "$USER_CLEANUP" ] && [ -f "$USER_CLEANUP" ]; then
+	log "Running user-provided cleanup script from $USER_CLEANUP."
+	"$USER_CLEANUP" || return 1
+    fi
 }
 
 err_out()
@@ -207,6 +213,8 @@ issue_cert()
     local failed_dir
     local webroot
     local dns
+    local user_setup
+    local user_cleanup
     local ret
     local staging=
     local HOOK=
@@ -220,10 +228,13 @@ issue_cert()
     config_get keylength "$section" keylength
     config_get webroot "$section" webroot
     config_get dns "$section" dns
+    config_get user_setup "$section" user_setup
+    config_get user_cleanup "$section" user_cleanup
 
     UPDATE_NGINX=$update_nginx
     UPDATE_UHTTPD=$update_uhttpd
     UPDATE_HAPROXY=$update_haproxy
+    USER_CLEANUP=$user_cleanup
 
     [ "$enabled" -eq "1" ] || return
 
@@ -237,7 +248,12 @@ issue_cert()
     set -- $domains
     main_domain=$1
 
-    [ -n "$webroot" ] || [ -n "$dns" ] || pre_checks "$main_domain" || return 1
+    if [ -n "$user_setup" ] && [ -f "$user_setup" ]; then
+	log "Running user-provided setup script from $user_setup."
+	"$user_setup" "$main_domain" || return 1
+    else
+	[ -n "$webroot" ] || [ -n "$dns" ] || pre_checks "$main_domain" || return 1
+    fi
 
     log "Running $APP for $main_domain"
 
