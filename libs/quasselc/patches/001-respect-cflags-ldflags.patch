@@ -10,7 +10,20 @@
  VERSION = 0
  INSTALL = install
 -LDLIBS:=$(shell pkg-config glib-2.0 --libs) -lz
-+LDLIBS+=$(shell pkg-config glib-2.0 --libs) -lz
++LDFLAGS+=$(shell pkg-config glib-2.0 --libs) -lz
  
  BOTLIBS := -Wl,-rpath,.
  
+@@ -15,10 +15,10 @@ lib_objects=setters.o getters.o main.o cmds.o negotiation.o io.o symbols.o
+ all: bot libquasselc.so.$(VERSION) quasselc.pc
+ 
+ libquasselc.so.$(VERSION): $(lib_objects)
+-	$(CC) -shared -o $@ -Wl,-soname,libquasselc.so.$(SO_VERSION) $^ $(LDLIBS)
++	$(CC) -shared -o $@ -Wl,-soname,libquasselc.so.$(SO_VERSION) $^ $(LDFLAGS)
+ 
+ bot: bot.o display.o libquasselc.so.$(VERSION)
+-	$(CC) -o $@ $^ $(LDLIBS) $(BOTLIBS)
++	$(CC) -o $@ $^ $(LDFLAGS) $(BOTLIBS)
+ 
+ clean:
+ 	rm -f *.o bot libquasselc.so.$(VERSION) quasselc.pc
