@@ -49,6 +49,8 @@ define Package/smcroute/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/smcroutectl $(1)/usr/bin/
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/smcroute.conf $(1)/etc
 	$(INSTALL_BIN) ./files/smcroute.init $(1)/etc/init.d/smcroute
+	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
+	echo >$(1)/lib/upgrade/keep.d/smcroute /etc/smcroute.conf
 endef
 
 $(eval $(call BuildPackage,smcroute))
