@@ -33,15 +33,17 @@
  ifeq (,$(filter-out WIN%,$(OS_TARGET)))
 --- a/nss/coreconf/Linux.mk	2019-04-01 10:08:59.129269177 +0300
 +++ b/nss/coreconf/Linux.mk	2019-04-01 10:09:15.557782574 +0300
-@@ -143,6 +143,7 @@
+@@ -144,7 +144,8 @@
  	DEFINES		+= -D_REENTRANT
  endif
  
 +ifndef USE_NATIVE
- DSO_CFLAGS		= -fPIC
+-DSO_CFLAGS		= -fPIC
++DSO_CFLAGS		= $(fpic)
  DSO_LDOPTS		= -shared $(ARCHFLAG) -Wl,--gc-sections
  # The linker on Red Hat Linux 7.2 and RHEL 2.1 (GNU ld version 2.11.90.0.8)
-@@ -153,6 +154,7 @@
+ # incorrectly reports undefined references in the libraries we link with, so
+@@ -154,6 +155,7 @@
  ZDEFS_FLAG		= -Wl,-z,defs
  DSO_LDOPTS		+= $(if $(findstring 2.11.90.0.8,$(shell ld -v)),,$(ZDEFS_FLAG))
  LDFLAGS			+= $(ARCHFLAG) -z noexecstack
@@ -49,20 +51,9 @@
  
  # On Maemo, we need to use the -rpath-link flag for even the standard system
  # library directories.
---- a/nss/coreconf/Linux.mk	2019-04-01 23:10:19.091912203 +0300
-+++ b/nss/coreconf/Linux.mk	2019-04-06 14:07:13.499169075 +0300
-@@ -144,7 +144,7 @@
- endif
- 
- ifndef USE_NATIVE
--DSO_CFLAGS		= -fPIC
-+DSO_CFLAGS		= $(fpic)
- DSO_LDOPTS		= -shared $(ARCHFLAG) -Wl,--gc-sections
- # The linker on Red Hat Linux 7.2 and RHEL 2.1 (GNU ld version 2.11.90.0.8)
- # incorrectly reports undefined references in the libraries we link with, so
 --- a/nss/coreconf/Linux.mk	2019-04-06 20:25:36.431663894 +0300
 +++ b/nss/coreconf/Linux.mk	2019-04-06 20:26:23.397129525 +0300
-@@ -107,11 +107,6 @@
+@@ -108,11 +108,6 @@
  endif
  
  ifdef BUILD_OPT
