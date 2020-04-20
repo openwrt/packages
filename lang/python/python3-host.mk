@@ -5,11 +5,8 @@
 # See /LICENSE for more information.
 #
 
-# Note: include this after `include $(TOPDIR)/rules.mk in your package Makefile
+# Note: include this file after `include $(TOPDIR)/rules.mk in your package Makefile
 #       if `python3-package.mk` is included, this will already be included
-
-ifneq ($(__python3_host_mk_inc),1)
-__python3_host_mk_inc=1
 
 # For PYTHON3_VERSION
 python3_mk_path:=$(dir $(lastword $(MAKEFILE_LIST)))
@@ -25,23 +22,7 @@ HOST_PYTHON3_BIN:=$(HOST_PYTHON3_DIR)/bin/python$(PYTHON3_VERSION)
 
 HOST_PYTHON3PATH:=$(HOST_PYTHON3_LIB_DIR):$(HOST_PYTHON3_PKG_DIR)
 
-define HostPython3
-	if [ "$(strip $(3))" == "HOST" ]; then \
-		export PYTHONPATH="$(HOST_PYTHON3PATH)"; \
-		export PYTHONDONTWRITEBYTECODE=0; \
-	else \
-		export PYTHONPATH="$(PYTHON3PATH)"; \
-		export PYTHONDONTWRITEBYTECODE=1; \
-		export _python_sysroot="$(STAGING_DIR)"; \
-		export _python_prefix="/usr"; \
-		export _python_exec_prefix="/usr"; \
-	fi; \
-	export PYTHONOPTIMIZE=""; \
-	$(1) \
-	$(HOST_PYTHON3_BIN) $(2);
-endef
-
-define host_python3_settings
+HOST_PYTHON3_VARS = \
 	ARCH="$(HOST_ARCH)" \
 	CC="$(HOSTCC)" \
 	CCSHARED="$(HOSTCC) $(HOST_FPIC)" \
@@ -51,30 +32,27 @@ define host_python3_settings
 	CFLAGS="$(HOST_CFLAGS)" \
 	CPPFLAGS="$(HOST_CPPFLAGS) -I$(HOST_PYTHON3_INC_DIR)" \
 	LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON3_VERSION) -Wl$(comma)-rpath=$(STAGING_DIR_HOSTPKG)/lib" \
-	_PYTHON_HOST_PLATFORM=linux2
-endef
+	_PYTHON_HOST_PLATFORM=linux2 \
+	PYTHONPATH="$(HOST_PYTHON3PATH)" \
+	PYTHONDONTWRITEBYTECODE=0 \
+	PYTHONOPTIMIZE=""
 
-# $(1) => commands to execute before running pythons script
+# $(1) => directory of python script
 # $(2) => python script and its arguments
 # $(3) => additional variables
-define Build/Compile/HostPy3RunHost
-	$(call HostPython3, \
-		$(if $(1),$(1);) \
-		$(call host_python3_settings) \
-		$(3) \
-		, \
-		$(2) \
-		, \
-		HOST \
-	)
+define HostPython3/Run
+	cd "$(if $(strip $(1)),$(strip $(1)),.)" && \
+	$(HOST_PYTHON3_VARS) \
+	$(3) \
+	$(HOST_PYTHON3_BIN) $(2)
 endef
 
 # Note: I shamelessly copied this from Yousong's logic (from python-packages);
 HOST_PYTHON3_PIP:=$(STAGING_DIR_HOSTPKG)/bin/pip$(PYTHON3_VERSION)
 
 # $(1) => packages to install
-define Build/Compile/HostPy3PipInstall
-	$(call host_python3_settings) \
+define HostPython3/PipInstall
+	$(HOST_PYTHON3_VARS) \
 	$(HOST_PYTHON3_PIP) \
 		--disable-pip-version-check \
 		--cache-dir "$(DL_DIR)/pip-cache" \
@@ -85,11 +63,9 @@ endef
 # $(1) => build subdir
 # $(2) => additional arguments to setup.py
 # $(3) => additional variables
-define Build/Compile/HostPy3Mod
-	$(call Build/Compile/HostPy3RunHost, \
-		cd $(HOST_BUILD_DIR)/$(strip $(1)), \
-		./setup.py $(2), \
+define HostPython3/ModSetup
+	$(call HostPython3/Run, \
+		$(HOST_BUILD_DIR)/$(strip $(1)), \
+		setup.py $(2), \
 		$(3))
 endef
-
-endif # __python3_host_mk_inc

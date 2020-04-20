@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-seahub
 PKG_VERSION:=7.1.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/haiwen/seahub/tar.gz/v$(PKG_VERSION)-server?
@@ -24,6 +24,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/seahub-$(PKG_VERSION)-server
 HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="Django~=1.11"
 
 PKG_BUILD_PARALLEL:=1
+PYTHON3_PKG_BUILD:=0
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
@@ -57,7 +58,6 @@ define Package/seafile-seahub
     +python3-requests-oauthlib \
     +python3-seafile-ccnet \
     +python3-searpc
-  VARIANT:=python3
 endef
 
 define Package/seafile-seahub/description
@@ -75,10 +75,9 @@ MAKE_VARS += \
 	PYTHON="$(HOST_PYTHON3_BIN)" \
 	DJANGO_ADMIN_PY="$(STAGING_DIR_HOSTPKG)/bin/django-admin"
 
-define Py3Build/Compile
-	$(call Build/Compile/HostPy3PipInstall,$(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS))
+define Build/Compile
+	$(call HostPython3/PipInstall,$(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS))
 	$(call Build/Compile/Default,locale)
-	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
 endef
 
 define Py3Package/seafile-seahub/install
@@ -89,6 +88,8 @@ define Py3Package/seafile-seahub/install
 	$(SED) "s/\(SEAFILE_VERSION\s*=\s*\)'\([0-9]\.[0-9]\.[0-9]\)'/\1'$(PKG_VERSION)'/g" $(1)/usr/share/seafile/seafile-server/seahub/seahub/settings.py
 	mv $(1)/usr/share/seafile/seafile-server/seahub/media/avatars $(1)/usr/share/seafile/seafile-server/seahub/media/avatars_default
 endef
+
+Py3Package/seafile-seahub/filespec:=
 
 $(eval $(call Py3Package,seafile-seahub))
 $(eval $(call BuildPackage,seafile-seahub))

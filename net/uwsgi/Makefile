@@ -9,6 +9,7 @@ PKG_SOURCE_URL=https://files.pythonhosted.org/packages/source/u/uwsgi/
 PKG_HASH:=4972ac538800fb2d421027f49b4a1869b66048839507ccf0aa2fda792d99f583
 PKG_BUILD_DIR:=$(BUILD_DIR)/uwsgi-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=python3/host
+PYTHON3_PKG_BUILD:=0
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
@@ -108,8 +109,8 @@ define Build/Compile
 	$(call Build/Compile/Default,plugin.logfile PROFILE=openwrt)
 	$(call Build/Compile/Default,plugin.syslog PROFILE=openwrt)
 	$(call Build/Compile/Default,plugin.cgi PROFILE=openwrt)
-	$(call Build/Compile/HostPy3RunTarget, \
-		cd $(PKG_BUILD_DIR), \
+	$(call Python3/Run, \
+		$(PKG_BUILD_DIR), \
 		uwsgiconfig.py --plugin plugins/python openwrt, \
 		CPP="$(TARGET_CROSS)cpp" \
 		LINUX_UNAME_VERSION=$(LINUX_UNAME_VERSION) \

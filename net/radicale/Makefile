@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=radicale
 PKG_VERSION:=1.1.6
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PYPI_NAME:=Radicale
 PKG_HASH:=c007198ea45ef797344672c681d4c13f8b4aa85c15c41a1156225767a405c92b
@@ -37,7 +37,6 @@ define Package/radicale
       +python3-xml
   USERID:=radicale=5232:radicale=5232
   PROVIDES:=radicale-py2 radicale-py3
-  VARIANT:=python3
 endef
 
 define Package/radicale/description

@@ -14,7 +14,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nmap
 PKG_VERSION:=7.80
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -26,6 +26,7 @@ PKG_CPE_ID:=cpe:/a:nmap:nmap
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PYTHON3_PKG_BUILD:=0
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
@@ -100,7 +101,6 @@ endef
 define Package/ndiff
 $(call Package/nmap/default)
   DEPENDS:=+python3-light +python3-xml
-  VARIANT:=python3
   TITLE:=Utility to compare the results of Nmap scans
 endef
 
@@ -148,10 +148,10 @@ CONFIGURE_VARS += \
 PYTHON3_PKG_SETUP_DIR:=ndiff
 PYTHON3_PKG_SETUP_ARGS:=
 
-ifeq ($(BUILD_VARIANT),python3)
-  Build/Configure:=:
-  Build/Install:=:
-endif
+define Build/Compile
+	$(call Build/Compile/Default,)
+	$(call Py3Build/Compile)
+endef
 
 define Package/nmap/install
 	$(INSTALL_DIR) $(1)/usr/bin

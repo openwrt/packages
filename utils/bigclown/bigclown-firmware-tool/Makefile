@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bigclown-firmware-tool
 PKG_VERSION:=1.5.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=bcf
 PKG_HASH:=50b0351b97e6b1b1d4cb4703491daa6102e7e5b3b750b47fa35182d9eb39ab9c
@@ -34,7 +34,6 @@ define Package/bigclown-firmware-tool
     +python3-requests \
     +python3-click \
     +python3-intelhex
-  VARIANT:=python3
 endef
 
 $(eval $(call Py3Package,bigclown-firmware-tool))

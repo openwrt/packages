@@ -22,6 +22,7 @@ PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PYTHON3_PKG_BUILD:=0
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-ccnet
 PKG_VERSION:=7.1.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/haiwen/ccnet-server/tar.gz/v$(PKG_VERSION)-server?
@@ -25,6 +25,7 @@ PKG_BUILD_DEPENDS:=vala/host
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PYTHON3_PKG_BUILD:=0
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -58,7 +59,6 @@ define Package/python3-seafile-ccnet
   SUBMENU:=Python
   TITLE:=Python bindings for Seafile Ccnet
   DEPENDS:=+seafile-ccnet +python3-light +python3-searpc
-  VARIANT:=python3
 endef
 
 define Package/python3-seafile-ccnet/description
@@ -73,6 +73,9 @@ CONFIGURE_ARGS += \
 	--enable-python \
 	--with-mysql="$(STAGING_DIR)/usr/bin/mysql_config"
 
+CONFIGURE_VARS += \
+	PYTHON="$(HOST_PYTHON3_BIN)"
+
 define Package/seafile-ccnet/install
 	$(INSTALL_DIR) $(1)/usr/{lib,libexec}
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/libexec/
@@ -86,12 +89,6 @@ define Build/InstallDev
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/ccnet/*.h $(1)/usr/include/ccnet/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libccnet.pc $(1)/usr/lib/pkgconfig/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libccnet.{a,la,so*} $(1)/usr/lib/
-endef
-
-define Py3Build/Compile
-	rm -rf $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/ccnet
-	$(INSTALL_DIR) $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/ccnet
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/python/ccnet/*.py $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/ccnet/
 endef
 
 Py3Package/python3-seafile-ccnet/install:=:

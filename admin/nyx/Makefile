@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nyx
 PKG_VERSION:=2.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=nyx
 PKG_HASH:=88521488d1c9052e457b9e66498a4acfaaa3adf3adc5a199892632f129a5390b
@@ -21,7 +21,6 @@ define Package/nyx
   URL:=https://nyx.torproject.org/
   TITLE:=Terminal status monitor for Tor
   DEPENDS:=+python3 +python3-stem
-  VARIANT:=python3
 endef
 
 define Package/nyx/description

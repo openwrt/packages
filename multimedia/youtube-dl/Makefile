@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=youtube-dl
 PKG_VERSION:=2020.3.24
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=youtube_dl
 PKG_HASH:=4b03efe439f7cae26eba909821d1df00a9a4eb82741cb2e8b78fe29702bd4633
@@ -35,7 +35,6 @@ define Package/youtube-dl
     +python3-codecs \
     +python3-ctypes \
     +python3-setuptools
-  VARIANT:=python3
 endef
 
 define Package/youtube-dl/description
