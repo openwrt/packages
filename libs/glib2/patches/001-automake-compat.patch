@@ -1,0 +1,5 @@
+--- /dev/null
++++ b/gtk-doc.make
+@@ -0,0 +1,2 @@
++EXTRA_DIST =
++CLEANFILES =
