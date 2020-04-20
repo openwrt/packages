@@ -8,21 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=p11-kit
-PKG_VERSION:=0.23.18.1
-PKG_RELEASE:=2
+PKG_VERSION:=0.23.20
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/p11-glue/p11-kit/releases/download/$(PKG_VERSION)
-PKG_HASH:=34c3bd8c0050dd7c4e6228aecf0f168de0a1b34562ddbf74a1c70904c2523c6f
+PKG_HASH:=14d86024c3dfd6b967d9bc0b4ec7b2973014fe7423481f4d230a1a63b8aa6104
 
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 
-PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=meson/host
 
 include $(INCLUDE_DIR)/package.mk
+include ../../devel/meson/meson.mk
 
 define Package/p11-kit
   SECTION:=libs
@@ -40,21 +41,19 @@ endef
 
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
-CONFIGURE_ARGS+= \
-	--disable-debug \
-	--disable-rpath \
-	--disable-trust-module \
-	--without-libffi \
-	--without-systemd
-
-CONFIGURE_VARS += \
-	ac_cv_have_decl_program_invocation_short_name=yes
+MESON_ARGS += \
+	-Dhash_impl=internal \
+	-Dlibffi=disabled \
+	-Dtrust_module=disabled \
+	-Dstrict=false \
+	-Dsystemd=disabled \
+	-Dgtk_doc=false \
+	-Dman=false
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/p11-kit-1/p11-kit/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/p11-kit-1/p11-kit/* $(1)/usr/include/p11-kit-1/p11-kit/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libp11-kit.so $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libp11-kit.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/p11-kit-1.pc $(1)/usr/lib/pkgconfig/p11-kit-1.pc
