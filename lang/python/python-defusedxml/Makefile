@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-defusedxml
 PKG_VERSION:=0.6.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
 PKG_LICENSE:=Python-2.0
@@ -20,27 +20,20 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-defusedxml/Default
+define Package/python3-defusedxml
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=XML bomb protection for Python
   URL:=https://github.com/tiran/defusedxml
-endef
-
-define Package/python3-defusedxml
-  $(call Package/python-defusedxml/Default)
   DEPENDS:= \
-	+PACKAGE_python3-defusedxml:python3-light \
-	+PACKAGE_python3-defusedxml:python3-xml
-  VARIANT:=python3
+	+python3-light \
+	+python3-xml
 endef
 
 define Package/python3-defusedxml/description
   The defusedxml package contains several Python-only workarounds and fixes for
   denial of service and other vulnerabilities in Python’s XML libraries.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-defusedxml))

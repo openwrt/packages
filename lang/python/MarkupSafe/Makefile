@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=MarkupSafe
 PKG_VERSION:=1.1.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=29872e92839765e546828bb7754a68c418d927cd064fd4708fab9fe9c8bb116b
@@ -26,7 +26,6 @@ define Package/python3-markupsafe
   TITLE:=MarkupSafe
   URL:=https://palletsprojects.com/p/markupsafe/
   DEPENDS:=+python3-light
-  VARIANT:=python3
 endef
 
 define Package/python3-markupsafe/description

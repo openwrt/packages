@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-cors-headers
 PKG_VERSION:=3.2.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=django-cors-headers
 PKG_HASH:=a5960addecc04527ab26617e51b8ed42f0adab4594b24bb0f3c33e2bd3857c3f
@@ -22,7 +22,6 @@ define Package/python3-django-cors-headers
   TITLE:=Django application for handling the server headers required for Cross-Origin Resource Sharing (CORS).
   URL:=https://github.com/ottoyiu/django-cors-headers
   DEPENDS:=+django +python3-urllib +python3-light
-  VARIANT:=python3
 endef
 
 define Package/python3-django-cors-headers/description

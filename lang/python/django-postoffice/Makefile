@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-postoffice
 PKG_VERSION:=3.2.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=django-post-office
 PYPI_SOURCE_NAME:=django-post_office
@@ -23,28 +23,21 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/django-postoffice/Default
+define Package/python3-django-postoffice
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=A Django app to monitor and send mail asynchronously
   URL:=https://github.com/ui/django-post_office
-endef
-
-define Package/python3-django-postoffice
-$(call Package/django-postoffice/Default)
   DEPENDS:= \
-	+PACKAGE_python3-django-postoffice:python3 \
-	+PACKAGE_python3-django-postoffice:python3-django1 \
-	+PACKAGE_python3-django-postoffice:python3-django-jsonfield
-  VARIANT:=python3
+	+python3 \
+	+python3-django1 \
+	+python3-django-jsonfield
 endef
 
 define Package/python3-django-postoffice/description
   A Django app to monitor and send mail asynchronously, complete with template
   support
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-django-postoffice))

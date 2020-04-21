@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vobject
 PKG_VERSION:=0.9.6.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=Apache-2.0
 
 PYPI_NAME:=$(PKG_NAME)
@@ -16,25 +16,18 @@ include $(INCLUDE_DIR)/package.mk
 
 include ../python3-package.mk
 
-define Package/python-vobject/Default
+define Package/python3-vobject
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   MAINTAINER:=Daniel Dickinson <cshored@thecshore.com>
   TITLE:=VObject
   URL:=http://eventable.github.io/vobject/
-endef
-
-define Package/python3-vobject
-$(call Package/python-vobject/Default)
-  DEPENDS:=+PACKAGE_python3-vobject:python3 +PACKAGE_python3-vobject:python3-dateutil
-  VARIANT:=python3
+  DEPENDS:=+python3 +python3-dateutil
 endef
 
 define Package/python3-vobject/description
   vCard and vCalendar support for Python
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-vobject))

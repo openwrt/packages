@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-gnupg
 PKG_VERSION:=0.4.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=45daf020b370bda13a1429c859fcdff0b766c0576844211446f9266cae97fb0e
@@ -20,19 +20,13 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-gnupg/Default
+define Package/python3-gnupg
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=https://gnupg.readthedocs.io/en/latest/
-  DEPENDS:=+gnupg
-endef
-
-define Package/python3-gnupg
-$(call Package/python-gnupg/Default)
   TITLE:=python3-gnupg
-  DEPENDS+=+PACKAGE_python3-gnupg:python3-light
-  VARIANT:=python3
+  URL:=https://gnupg.readthedocs.io/en/latest/
+  DEPENDS:=+gnupg +python3-light
 endef
 
 define Package/python3-gnupg/description
@@ -45,8 +39,6 @@ and sanitised, and therefore this module should be safe to use in
 networked applications requiring direct user input. It is intended for
 use on Windows, MacOS X, BSD, or Linux, with Python 2.6, Python 2.7,
 Python 3.3, Python 3.4, or PyPy.
-
-(Variant for Python3)
 endef
 
 define Py3Build/Compile

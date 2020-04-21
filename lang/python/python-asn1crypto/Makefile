@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-asn1crypto
 PKG_VERSION:=1.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=asn1crypto
 PKG_HASH:=5a215cb8dc12f892244e3a113fe05397ee23c5c4ca7a69cd6e69811755efc42d
@@ -29,7 +29,6 @@ define Package/python3-asn1crypto
   URL:=https://github.com/wbond/asn1crypto
   TITLE:=Fast pure Python lib for ASN1 structures
   DEPENDS:=+python3-light
-  VARIANT:=python3
 endef
 
 define Package/python3-asn1crypto/description

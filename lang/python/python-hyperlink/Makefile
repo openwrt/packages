@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-hyperlink
 PKG_VERSION:=19.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=hyperlink
 PKG_HASH:=4288e34705da077fada1111a24a0aa08bb1e76699c9ce49876af722441845654
@@ -22,28 +22,21 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-hyperlink/Default
+define Package/python3-hyperlink
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=Pure-Python immutable URLs
   URL:=https://github.com/python-hyper/hyperlink
-endef
-
-define Package/python3-hyperlink
-$(call Package/python-hyperlink/Default)
   DEPENDS:= \
-      +PACKAGE_python3-hyperlink:python3-light \
-      +PACKAGE_python3-hyperlink:python3-idna
-  VARIANT:=python3
+      +python3-light \
+      +python3-idna
 endef
 
 define Package/python3-hyperlink/description
 Hyperlink provides a pure-Python implementation of immutable URLs. Based
 on RFC 3986 and 3987, the Hyperlink URL makes working with both URIs and
 IRIs easy.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-hyperlink))

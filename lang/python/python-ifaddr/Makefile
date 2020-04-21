@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-ifaddr
 PKG_VERSION:=0.1.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=ifaddr
 PKG_HASH:=c19c64882a7ad51a394451dabcbbed72e98b5625ec1e79789924d5ea3e3ecb93
@@ -31,7 +31,6 @@ define Package/python3-ifaddr
   DEPENDS:= \
 	+python3-light \
 	+python3-ctypes
-  VARIANT:=python3
 endef
 
 define Package/python3-ifaddr/description

@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=click-log
 PKG_VERSION:=0.3.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 
 PKG_SOURCE_URL:=https://codeload.github.com/click-contrib/click-log/tar.gz/$(PKG_VERSION)?
@@ -24,7 +24,6 @@ define Package/python3-click-log
   URL:=http://github.com/mitsuhiko/click
   TITLE:=python3-click-log
   DEPENDS:=+python3-click
-  VARIANT:=python3
 endef
 
 define Package/python3-click-log/description

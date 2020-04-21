@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pytest
 PKG_VERSION:=5.4.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=pytest
 PKG_HASH:=84dde37075b8805f3d1f392cc47e38a0e59518fb46a431cfdaf7cf1ce805f970
@@ -41,8 +41,6 @@ define Package/python3-pytest
 	+python3-decimal \
 	+python3-logging \
 	+python3-urllib
-
-  VARIANT:=python3
 endef
 
 define Package/python3-pytest/description

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-lxml
 PKG_VERSION:=4.4.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=lxml
 PKG_HASH:=eff69ddbf3ad86375c344339371168640951c302450c5d3e9936e98d6459db06
@@ -23,26 +23,18 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-lxml/Default
+define Package/python3-lxml
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=https://lxml.de
-  DEPENDS:=+libxml2 +libxslt +libexslt
-endef
-
-define Package/python3-lxml
-$(call Package/python-lxml/Default)
   TITLE:=python3-lxml
-  DEPENDS+=+PACKAGE_python3-lxml:python3-light
-  VARIANT:=python3
+  URL:=https://lxml.de
+  DEPENDS:=+libxml2 +libxslt +libexslt +python3-light
 endef
 
 define Package/python3-lxml/description
 The lxml XML toolkit is a Pythonic binding
 for the C libraries libxml2 and libxslt.
-.
-(Variant for Python3)
 endef
 
 TARGET_LDFLAGS += -lxml2 -lxslt -lexslt

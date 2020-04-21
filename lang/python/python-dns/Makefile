@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-dns
 PKG_VERSION:=1.16.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=dnspython-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.dnspython.org/kits/1.16.0/
@@ -20,31 +20,22 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_CPE_ID:=cpe:/a:debian:python-dns
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-dnspython-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/dnspython-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
-
-define Package/python-dns/Default
+define Package/python3-dns
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=dnspython
   URL:=http://www.dnspython.org/
-endef
-
-define Package/python3-dns
-$(call Package/python-dns/Default)
-  DEPENDS:=+PACKAGE_python3-dns:python3
-  VARIANT:=python3
+  DEPENDS:=+python3
 endef
 
 define Package/python3-dns/description
  dnspython is a DNS toolkit for Python. It supports almost all record types. It can be used for queries, zone transfers, and dynamic updates. It supports TSIG authenticated messages and EDNS0.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-dns))

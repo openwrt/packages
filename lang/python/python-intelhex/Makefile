@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-intelhex
 PKG_VERSION:=2.2.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=IntelHex
 PYPI_SOURCE_NAME:=intelhex
@@ -27,7 +27,6 @@ define Package/python3-intelhex
   TITLE:=python3-intelhex
   URL:=https://github.com/bialix/intelhex
   DEPENDS:=+python3-light
-  VARIANT:=python3
 endef
 
 define Package/python3-intelhex/description

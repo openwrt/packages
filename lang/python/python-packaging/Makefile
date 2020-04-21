@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-packaging
 PKG_VERSION:=20.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=packaging
 PKG_HASH:=3c292b474fda1671ec57d46d739d072bfd495a4f51ad01a055121d81e952b7a3
@@ -28,7 +28,6 @@ define Package/python3-packaging
   TITLE:=Core utilities for Python packages
   URL:=https://github.com/pypa/packaging
   DEPENDS:=+python3-light +python3-pyparsing +python3-six +python3-logging +python3-distutils
-  VARIANT:=python3
 endef
 
 define Package/python3-packaging/description

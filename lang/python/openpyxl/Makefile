@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-openpyxl
 PKG_VERSION:=3.0.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT
@@ -29,13 +29,10 @@ define Package/python3-openpyxl
   TITLE:=A Python library to read/write Excel 2010 xlsx/xlsm files
   URL:=https://openpyxl.readthedocs.org/
   DEPENDS:=+python3 +python3-defusedxml +python3-et_xmlfile +python3-jdcal
-  VARIANT:=python3
 endef
 
 define Package/python3-openpyxl/description
   A Python library to read/write Excel 2010 xlsx/xlsm files
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-openpyxl))

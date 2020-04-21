@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-sqlalchemy
 PKG_VERSION:=1.3.13
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=SQLAlchemy
 PKG_HASH:=64a7b71846db6423807e96820993fa12a03b89127d278290ca25c0b11ed7b4fb
@@ -34,7 +34,6 @@ define Package/python3-sqlalchemy
 	+python3-urllib \
 	+python3-decimal \
 	+python3-logging
-  VARIANT:=python3
 endef
 
 define Package/python3-sqlalchemy/description

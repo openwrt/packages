@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-twisted
 PKG_VERSION:=20.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=Twisted
 PYPI_SOURCE_EXT:=tar.bz2
@@ -26,34 +26,27 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-twisted/Default
+define Package/python3-twisted
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=Asynchronous networking framework
   URL:=https://twistedmatrix.com/
-endef
-
-define Package/python3-twisted
-$(call Package/python-twisted/Default)
   DEPENDS:= \
-      +PACKAGE_python3-twisted:python3-light \
-      +PACKAGE_python3-twisted:python3-attrs \
-      +PACKAGE_python3-twisted:python3-automat \
-      +PACKAGE_python3-twisted:python3-constantly \
-      +PACKAGE_python3-twisted:python3-incremental \
-      +PACKAGE_python3-twisted:python3-hyperlink \
-      +PACKAGE_python3-twisted:python3-setuptools \
-      +PACKAGE_python3-twisted:python3-zope-interface
-  VARIANT:=python3
+      +python3-light \
+      +python3-attrs \
+      +python3-automat \
+      +python3-constantly \
+      +python3-incremental \
+      +python3-hyperlink \
+      +python3-setuptools \
+      +python3-zope-interface
 endef
 
 define Package/python3-twisted/description
 Twisted is a networking engine written in Python, supporting numerous
 protocols. It contains a web server, numerous chat clients, chat servers,
 mail servers, and more.
-.
-(Variant for Python3)
 endef
 
 define Py3Package/python3-twisted/filespec

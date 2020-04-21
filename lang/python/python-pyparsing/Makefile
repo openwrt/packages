@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyparsing
 PKG_VERSION:=2.4.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=pyparsing
 PKG_HASH:=c203ec8783bf771a155b207279b9bccb8dea02d8f0c9e5f8ead507bc3246ecc1
@@ -30,7 +30,6 @@ define Package/python3-pyparsing
   TITLE:=Library for constructing grammar directly in python
   URL:=https://github.com/pyparsing/pyparsing/
   DEPENDS:=+python3-light
-  VARIANT:=python3
 endef
 
 define Package/python3-pyparsing/description

@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=Werkzeug
 PKG_VERSION:=0.16.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=7280924747b5733b246fe23972186c6b348f9ae29724135a6dfc1e53cea433e7
@@ -26,7 +26,6 @@ define Package/python3-werkzeug
   TITLE:=Werkzeug
   URL:=https://palletsprojects.com/p/werkzeug/
   DEPENDS:=+python3-light +python3-email
-  VARIANT:=python3
 endef
 
 define Package/python3-werkzeug/description

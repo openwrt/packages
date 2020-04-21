@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-xmltodict
 PKG_VERSION:=0.12.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=xmltodict
 PKG_HASH:=50d8c638ed7ecb88d90561beedbf720c9b4e851a9fa6c47ebd64e99d166d8a21
@@ -32,7 +32,6 @@ define Package/python3-xmltodict
 	+python3-light \
 	+python3-xml \
 	+python3-urllib
-  VARIANT:=python3
 endef
 
 define Package/python3-xmltodict/description

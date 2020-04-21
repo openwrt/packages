@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-parsley
 PKG_VERSION:=1.3
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PYPI_NAME:=Parsley
 PKG_HASH:=9444278d47161d5f2be76a767809a3cbe6db4db822f46a4fd7481d4057208d41
@@ -24,24 +24,17 @@ include ../python3-package.mk
 
 PYTHON3_PKG_SETUP_ARGS:=
 
-define Package/python-parsley/Default
+define Package/python3-parsley
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=Parsing and pattern matching
   URL:=http://launchpad.net/parsley
-endef
-
-define Package/python3-parsley
-$(call Package/python-parsley/Default)
-  DEPENDS:=+PACKAGE_python3-parsley:python3-light
-  VARIANT:=python3
+  DEPENDS:=+python3-light
 endef
 
 define Package/python3-parsley/description
 Parsing and pattern matching made easy.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-parsley))

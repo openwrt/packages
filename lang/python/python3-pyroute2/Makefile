@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python3-pyroute2
 PKG_VERSION:=0.5.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=pyroute2
 PKG_HASH:=963fce07da2841456d39e3b932b071f6de28d23dadfae014022d67a752916f98
@@ -35,7 +35,6 @@ define Package/python3-pyroute2
 	  +python3-multiprocessing \
 	  +python3-sqlite3 \
 	  +python3-ctypes
-  VARIANT:=python3
 endef
 
 define Package/python3-pyroute2/description

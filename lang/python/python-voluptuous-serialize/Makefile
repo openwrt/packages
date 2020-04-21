@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=voluptuous-serialize
 PKG_VERSION:=2.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=740cd00ce2ecf0f3345d550163fdd2f20de2e0a60c3c678450e68314c2f592f5
@@ -31,7 +31,6 @@ define Package/python3-voluptuous-serialize
   DEPENDS:= \
 	+python3-light \
 	+python3-voluptuous
-  VARIANT:=python3
 endef
 
 define Package/python3-voluptuous-serialize/description

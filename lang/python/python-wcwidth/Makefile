@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-wcwidth
 PKG_VERSION:=0.1.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=wcwidth
 PKG_HASH:=ee73862862a156bf77ff92b09034fc4825dd3af9cf81bc5b360668d425f3c5f1
@@ -30,7 +30,6 @@ define Package/python3-wcwidth
   TITLE:=Terminal width calculation library
   URL:=https://github.com/jquast/wcwidth
   DEPENDS:=+python3-light
-  VARIANT:=python3
 endef
 
 define Package/python3-wcwidth/description

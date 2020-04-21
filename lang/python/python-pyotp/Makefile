@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pyotp
 PKG_VERSION:=2.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=fc537e8acd985c5cbf51e11b7d53c42276fee017a73aec7c07380695671ca1a1
@@ -29,7 +29,6 @@ define Package/python3-pyotp
   TITLE:=Python One-Time Password Library
   URL:=https://github.com/pyauth/pyotp
   DEPENDS:=+python3-light
-  VARIANT:=python3
 endef
 
 define Package/python3-pyotp/description

@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=Flask
 PKG_VERSION:=1.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=13f9f196f330c7c2c5d7a5cf91af894110ca0215ac051b5844701f2bfd934d52
@@ -30,7 +30,6 @@ define Package/python3-flask
            +python3-itsdangerous +python3-jinja2 +python3 +python3-logging \
            +python3-markupsafe +python3-multiprocessing +python3-setuptools \
            +python3-werkzeug
-  VARIANT:=python3
 endef
 
 define Package/python3-flask/description

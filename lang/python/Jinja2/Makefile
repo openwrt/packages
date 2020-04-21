@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=Jinja2
 PKG_VERSION:=2.10.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=9fe95f19286cfefaa917656583d020be14e7859c6b0252588391e47db34527de
@@ -27,7 +27,6 @@ define Package/python3-jinja2
   TITLE:=Jinja2
   URL:=http://jinja.pocoo.org/
   DEPENDS:=+python3-light +python3-markupsafe
-  VARIANT:=python3
 endef
 
 define Package/python3-jinja2/description

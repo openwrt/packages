@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-contextlib2
 PKG_VERSION:=0.5.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 
 PYPI_NAME:=contextlib2
@@ -23,7 +23,6 @@ define Package/python3-contextlib2
   URL:=http://contextlib2.readthedocs.org
   TITLE:=python3-contextlib2
   DEPENDS:=+python3-light
-  VARIANT:=python3
 endef
 
 define Package/python-contextlib2/description

@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=maxminddb
 PKG_VERSION:=1.5.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=d0ce131d901eb11669996b49a59f410efd3da2c6dbe2c0094fe2fef8d85b6336
@@ -30,7 +30,6 @@ define Package/python3-maxminddb
   TITLE:=Reader for the MaxMind DB format
   URL:=https://dev.maxmind.com/
   DEPENDS:=+python3-light +libmaxminddb
-  VARIANT:=python3
 endef
 
 define Package/python3-maxminddb/description

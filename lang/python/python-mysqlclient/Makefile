@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-mysqlclient
 PKG_VERSION:=1.4.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0
 
 PYPI_NAME:=mysqlclient
@@ -22,25 +22,18 @@ include ../python3-package.mk
 # python-mysqlclient needs iconv
 include $(INCLUDE_DIR)/nls.mk
 
-define Package/python-mysqlclient/Default
+define Package/python3-mysqlclient
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
+  TITLE:=MySQL database adapter
   URL:=https://mysqlclient.readthedocs.io/
-endef
-
-define Package/python3-mysqlclient
-  $(call Package/python-mysqlclient/Default)
-  TITLE:=MySQL database adapter for Python3
-  DEPENDS:=+PACKAGE_python3-mysqlclient:python3 +libmysqlclient
-  VARIANT:=python3
+  DEPENDS:=+python3 +libmysqlclient
 endef
 
 define Package/python3-mysqlclient/description
  MySQLdb is an thread-compatible interface to the popular MySQL database
  server that provides the Python database API.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-mysqlclient))

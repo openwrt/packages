@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-astral
 PKG_VERSION:=1.10.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=astral
 PKG_HASH:=d2a67243c4503131c856cafb1b1276de52a86e5b8a1d507b7e08bee51cb67bf1
@@ -22,26 +22,19 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-astral/Default
+define Package/python3-astral
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=Calculations for the position of the sun and moon
   URL:=https://github.com/sffjunkie/astral
-endef
-
-define Package/python3-astral
-$(call Package/python-astral/Default)
   DEPENDS+= \
-      +PACKAGE_python3-astral:python3-light \
-      +PACKAGE_python3-astral:python3-pytz
-  VARIANT:=python3
+      +python3-light \
+      +python3-pytz
 endef
 
 define Package/python3-astral/description
 Astral is a python module for calculating the times of various aspects of the sun and moon.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-astral))

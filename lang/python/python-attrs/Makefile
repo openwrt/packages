@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-attrs
 PKG_VERSION:=19.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=attrs
 PKG_HASH:=f7b7ce16570fe9965acd6d30101a28f62fb4a7f9e926b3bbc9b61f8b04247e72
@@ -22,26 +22,19 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-attrs/Default
+define Package/python3-attrs
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=Classes Without Boilerplate
   URL:=https://www.attrs.org/
-endef
-
-define Package/python3-attrs
-$(call Package/python-attrs/Default)
-  DEPENDS:=+PACKAGE_python3-attrs:python3-light
-  VARIANT:=python3
+  DEPENDS:=+python3-light
 endef
 
 define Package/python3-attrs/description
 attrs is an MIT-licensed Python package with class decorators that ease
 the chores of implementing the most common attribute-related object
 protocols.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-attrs))

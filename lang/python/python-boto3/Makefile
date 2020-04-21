@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=boto3
 PKG_VERSION:=1.9.135
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=5e5805992e873e5687b5ef3b4c56c386ccb4df1c3364f8b8601d289e2f275be1
@@ -25,7 +25,6 @@ define Package/python3-boto3
 	+python3-jmespath \
 	+python3-botocore \
 	+python3-s3transfer
-  VARIANT:=python3
 endef
 
 define Package/python3-boto3/description

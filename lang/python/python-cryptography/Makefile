@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cryptography
 PKG_VERSION:=2.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=cryptography
 PKG_HASH:=0cacd3ef5c604b8e5f59bf2582c076c98a37fe206b31430d0cd08138aff0986e
@@ -26,30 +26,23 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-cryptography/Default
+define Package/python3-cryptography
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=Cryptographic recipes and primitives
   URL:=https://github.com/pyca/cryptography
-  DEPENDS:=+libopenssl
-endef
-
-define Package/python3-cryptography
-$(call Package/python-cryptography/Default)
-  DEPENDS+= \
-      +PACKAGE_python3-cryptography:python3 \
-      +PACKAGE_python3-cryptography:python3-cffi \
-      +PACKAGE_python3-cryptography:python3-six
-  VARIANT:=python3
+  DEPENDS:= \
+      +libopenssl \
+      +python3 \
+      +python3-cffi \
+      +python3-six
 endef
 
 define Package/python3-cryptography/description
 cryptography is a package which provides cryptographic recipes and
 primitives to Python developers.  Our goal is for it to be your "cryptographic
 standard library". It supports Python 2.6-2.7, Python 3.3+, and PyPy 2.6+.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-cryptography))

@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=drf-nested-routers
 PKG_VERSION:=0.91
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=drf-nested-routers
 PKG_HASH:=46e5c3abc15c782cafafd7d75028e8f9121bbc6228e3599bbb48a3daa4585034
@@ -22,7 +22,6 @@ define Package/python3-drf-nested-routers
   TITLE:=Nested resources for the Django Rest Framework
   URL:=https://github.com/alanjds/drf-nested-routers
   DEPENDS:=+python3-django-restframework +django +python3-light
-  VARIANT:=python3
 endef
 
 define Package/python3-drf-nested-routers/description

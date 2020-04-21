@@ -3,7 +3,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=python-libmodbus
 PKG_VERSION:=0.5.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
@@ -15,26 +15,19 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-libmodbus/Default
+define Package/python3-libmodbus
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  URL:=https://pypi.org/project/pylibmodbus
-endef
-
-define Package/python3-libmodbus
-$(call Package/python-libmodbus/Default)
   TITLE:=pylibmodbus
+  URL:=https://pypi.org/project/pylibmodbus
   DEPENDS:=+libmodbus \
-     +PACKAGE_python3-libmodbus:python3-light \
-     +PACKAGE_python3-libmodbus:python3-cffi
-  VARIANT:=python3
+     +python3-light \
+     +python3-cffi
 endef
 
 define Package/python3-libmodbus/description
 	Python Interface for libmodbus written with CFFI.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-libmodbus))
