@@ -138,7 +138,7 @@ define Package/iptgeoip
   # syntax of dependencies permits...
   DEPENDS:=iptables +iptables-mod-geoip \
 		+perl +perlbase-getopt +perlbase-io +perl-text-csv_xs \
-		+!BUSYBOX_CONFIG_WGET:wget +!BUSYBOX_CONFIG_GZIP:gzip +!BUSYBOX_CONFIG_UNZIP:unzip
+		+!BUSYBOX_CONFIG_FEATURE_WGET_HTTPS:wget +!BUSYBOX_CONFIG_ZCAT:gzip
 endef
 
 define Package/iptgeoip/install
