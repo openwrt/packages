@@ -35,7 +35,7 @@ define Package/smcroute/description
 endef
 
 define Package/smcroute/conffiles
-	/etc/smcroute.conf
+/etc/smcroute.conf
 endef
 
 CONFIGURE_ARGS += \
