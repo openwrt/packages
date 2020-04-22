@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2015 OpenWrt.org
+# Copyright (C) 2009-2020 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,23 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
-PKG_VERSION:=21.0
-PKG_RELEASE:=3
+PKG_VERSION:=23.0-rc3
+PKG_RELEASE:=1
 
-PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:= http://www.erlang.org/download/
-PKG_HASH:=c7d247c0cad2d2e718eaca2e2dff051136a1347a92097abf19ebf65ea2870131
+PKG_SOURCE:=OTP-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:= https://github.com/erlang/otp/archive/
+PKG_HASH:=2e23ab9042743803c5b6da0a6380afdc3ed7137f52f7afe801fc022f8de8fc83
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
-PKG_MAINTAINER:=Arnaud Sautaux <arnaud.sautaux@infoteam.ch>
+PKG_MAINTAINER:=Arnaud Sautaux <arnaud.sautaux@infoteam.ch>, Xiaobo Tian <peterwillcn@gmail.com>
 PKG_CPE_ID:=cpe:/a:erlang:erlang
 
 PKG_BUILD_DEPENDS:=erlang/host openssl
 PKG_USE_MIPS16:=0
 
-HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/otp_src_$(PKG_VERSION)
-PKG_BUILD_DIR:=$(BUILD_DIR)/otp_src_$(PKG_VERSION)
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/otp-OTP-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/otp-OTP-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -319,22 +319,19 @@ HOST_CONFIGURE_ARGS += \
 
 HOST_CFLAGS += -D_GNU_SOURCE
 
-define Host/Compile
-	$(MAKE) -C $(HOST_BUILD_DIR) all
-endef
-
 define Host/Install
+  ( ./configure --prefix=$(HOST_BUILD_DIR) )
 	$(MAKE) -C $(HOST_BUILD_DIR) install
 endef
-
 
 # Target
 
 CONFIGURE_ARGS += \
+	--enable-threads \
+	--enable-smp-support \
+	--enable-dynamic-ssl-lib \
 	--disable-hipe \
-	--disable-smp-support \
-	--without-javac \
-	--enable-dynamic-ssl-lib
+	--without-javac
 
 CONFIGURE_VARS += \
 	SHLIB_LD="$(TARGET_CC)" \
@@ -348,8 +345,7 @@ EXTRA_CFLAGS+=-D_GNU_SOURCE
 EXTRA_LDFLAGS+=-lz
 
 define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		noboot
+  ( ./configure --prefix=$(HOST_BUILD_DIR) )
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		INSTALL_PREFIX="$(PKG_INSTALL_DIR)" \
 		install
