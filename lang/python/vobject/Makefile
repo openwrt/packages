@@ -20,7 +20,6 @@ define Package/python3-vobject
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  MAINTAINER:=Daniel Dickinson <cshored@thecshore.com>
   TITLE:=VObject
   URL:=http://eventable.github.io/vobject/
   DEPENDS:=+python3 +python3-dateutil
