@@ -16,7 +16,6 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://chromium.googlesource.com/webm/libvpx
 PKG_MIRROR_HASH:=51e871a928fe98f14fd08285cb9b64c0d540b36b630ee7d47bc464e909366db7
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
