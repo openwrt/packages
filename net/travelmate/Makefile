@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2016-2019 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2016-2020 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 #
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=travelmate
-PKG_VERSION:=1.5.3
+PKG_VERSION:=1.5.4
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
