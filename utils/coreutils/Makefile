@@ -8,13 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coreutils
-PKG_VERSION:=8.31
+PKG_VERSION:=8.32
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/coreutils
-PKG_HASH:=ff7a9c918edce6b4f4b2725e3f9b37b0c4d193531cac49a48b56c4d0d3a9e9fd
+PKG_HASH:=4458d8de7849df44ccab15e16b1548b285224dbba5f08fac070c1c0e0bcc4cfa
+
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
+PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gnu:coreutils
 
 PKG_BUILD_PARALLEL:=1
@@ -115,7 +118,18 @@ endif
 
 CONFIGURE_ARGS += \
 	--disable-xattr \
-	--enable-install-program=su
+	--enable-install-program=su \
+	--enable-threads=posix \
+	--enable-acl \
+	--disable-assert \
+	--disable-rpath \
+	--disable-libsmack \
+	--enable-libcap \
+	--without-linux-crypto \
+	--without-openssl \
+	--$(if $(CONFIG_USE_MUSL),with,without)-included-regex \
+	--without-selinux \
+	--with-gmp
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
