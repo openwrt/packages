@@ -922,6 +922,8 @@ start_service() {
 	if [ "$action" = 'on_boot' ] || [ "$1" = 'on_boot' ]; then
 		if cacheOps 'testGzip' || cacheOps 'test'; then
 			action='restore'
+		else
+			action='download'
 		fi
 	elif [ "$action" = 'download' ] || [ "$1" = 'download' ] || [ -n "$error" ]; then
 		action='download'
