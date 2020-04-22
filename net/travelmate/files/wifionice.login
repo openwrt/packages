@@ -31,7 +31,7 @@ fi
 #
 if [ -n "${sec_token}" ]
 then
-	"${cmd}" "http://${domain}/en/" -H "Cookie: csrf=${sec_token}" --data "login=true&CSRFToken=${sec_token}&connect="
+	"${cmd}" "http://${domain}/en/" -H "Cookie: csrf=${sec_token}" --data "login=true&CSRFToken=${sec_token}&connect=" -s -o /dev/null
 else
 	exit 3
 fi
