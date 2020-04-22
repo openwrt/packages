@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2015 OpenWrt.org
+# Copyright (C) 2009-2020 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
-PKG_VERSION:=21.0
-PKG_RELEASE:=3
+PKG_VERSION:=22.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= http://www.erlang.org/download/
-PKG_HASH:=c7d247c0cad2d2e718eaca2e2dff051136a1347a92097abf19ebf65ea2870131
+PKG_HASH:=5c35b952808fa933ca95a9d259818aee27cb17ca96067da0fda2f035259ee612
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
-PKG_MAINTAINER:=Arnaud Sautaux <arnaud.sautaux@infoteam.ch>
+PKG_MAINTAINER:=Arnaud Sautaux <arnaud.sautaux@infoteam.ch>, Xiaobo Tian <peterwillcn@gmail.com>
 PKG_CPE_ID:=cpe:/a:erlang:erlang
 
 PKG_BUILD_DEPENDS:=erlang/host openssl
@@ -331,10 +331,10 @@ endef
 # Target
 
 CONFIGURE_ARGS += \
+	--enable-threads \
+	--enable-smp-support \
 	--disable-hipe \
-	--disable-smp-support \
-	--without-javac \
-	--enable-dynamic-ssl-lib
+	--without-javac
 
 CONFIGURE_VARS += \
 	SHLIB_LD="$(TARGET_CC)" \
@@ -346,6 +346,7 @@ CONFIGURE_VARS += \
 
 EXTRA_CFLAGS+=-D_GNU_SOURCE
 EXTRA_LDFLAGS+=-lz
+ERL_TOP:=$(PKG_BUILD_DIR)
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
