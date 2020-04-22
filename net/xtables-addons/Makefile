@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=xtables-addons
 PKG_VERSION:=3.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_HASH:=064dd68937d98e6cfcbdf51ef459310d9810c17ab31b21285bc7a76cdcef7c49
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -134,11 +134,10 @@ define Package/iptgeoip
   $(call Package/xtables-addons)
   CATEGORY:=Network
   TITLE:=iptables-mod-geoip support scripts for MaxMind GeoIP databases
-  # we could also use wget-nossl but that's more complicated than our
-  # syntax of dependencies permits...
   DEPENDS:=iptables +iptables-mod-geoip \
 		+perl +perlbase-getopt +perlbase-io +perl-text-csv_xs \
-		+!BUSYBOX_CONFIG_FEATURE_WGET_HTTPS:wget +!BUSYBOX_CONFIG_ZCAT:gzip
+		+perl-net-cidr-lite \
+		+wget-ssl +!BUSYBOX_CONFIG_ZCAT:gzip
 endef
 
 define Package/iptgeoip/install
