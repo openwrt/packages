@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.17.9
+PKG_VERSION:=1.17.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
-PKG_HASH:=7dd65d405c753c41b7fdab9415cfb4bdbaf093ec6d9f7432072d52cb7bcbb689
+PKG_HASH:=a9aa73f19c352a6b166d78e2a664bb3ef1295bbe6d3cc5aa7404bd4664ab4b83
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Ansuel Smith <ansuelsmth@gmail.com>
@@ -426,7 +426,7 @@ Package/nginx-all-module/install = $(Package/nginx-ssl/install)
 define Package/nginx-ssl/prerm
 #!/bin/sh
 [ -z "$${IPKG_INSTROOT}" ] || exit 0
-if [ "$${PKG_UPGRADE}" == "1" ]; then
+if [ "$${PKG_UPGRADE}" = "1" ]; then
 	eval $$(/usr/bin/nginx-util get_env)
 	TMP_CRT=$$(mktemp -p "$${CONF_DIR}" "$${LAN_NAME}.crt.tmp-XXXXXX")
 	ln -f "$${CONF_DIR}$${LAN_NAME}.crt" "$${TMP_CRT}"
@@ -434,8 +434,12 @@ if [ "$${PKG_UPGRADE}" == "1" ]; then
 	ln -f "$${CONF_DIR}$${LAN_NAME}.key" "$${TMP_KEY}"
 fi
 /usr/bin/nginx-util del_ssl
-[ -f "$${TMP_CRT}" ] && mv -f "$${TMP_CRT}" "$${CONF_DIR}$${LAN_NAME}.crt"
-[ -f "$${TMP_KEY}" ] && mv -f "$${TMP_KEY}" "$${CONF_DIR}$${LAN_NAME}.key"
+[ -f "$${TMP_CRT}" ] &&
+rm -f "$${CONF_DIR}$${LAN_NAME}.crt" &&
+mv -f "$${TMP_CRT}" "$${CONF_DIR}$${LAN_NAME}.crt"
+[ -f "$${TMP_KEY}" ] &&
+rm -f "$${CONF_DIR}$${LAN_NAME}.key" &&
+mv -f "$${TMP_KEY}" "$${CONF_DIR}$${LAN_NAME}.key"
 exit 0
 endef
 
