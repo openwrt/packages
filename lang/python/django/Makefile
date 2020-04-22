@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django
 PKG_VERSION:=3.0.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=Django
 PKG_HASH:=d4666c2edefa38c5ede0ec1655424c56dc47ceb04b6d8d62a7eac09db89545c1
@@ -30,7 +30,7 @@ define Package/python3-django
   TITLE:=The web framework for perfectionists with deadlines.
   URL:=https://www.djangoproject.com/
   DEPENDS:= +python3 +python3-pytz +python3-sqlparse +python3-asgiref
-  CONFLICTS:=python3-django1 python-django1-common
+  CONFLICTS:=python3-django1
   PROVIDES:=django
 endef
 
