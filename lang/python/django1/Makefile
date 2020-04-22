@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django1
 PKG_VERSION:=1.11.29
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PYPI_NAME:=Django
 PKG_HASH:=4200aefb6678019a0acf0005cd14cfce3a5e6b9b90d06145fcdd2e474ad4329c
@@ -23,20 +23,15 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/django1/Default
+define Package/python3-django1
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=The web framework for perfectionists with deadlines.
   URL:=https://www.djangoproject.com/
-endef
-
-define Package/python3-django1
-$(call Package/django1/Default)
   DEPENDS:= \
 	+python3 \
-	+python3-pytz \
-	+python-django1-common
+	+python3-pytz
   PROVIDES:=django
 endef
 
@@ -44,25 +39,12 @@ define Package/python3-django1/description
   The web framework for perfectionists with deadlines (LTS 1.11 series).
 endef
 
-define Package/python-django1-common
-$(call Package/django1/Default)
-endef
-
-define Package/python-django1-common/description
-  The web framework for perfectionists with deadlines (LTS 1.11 series).
-.
-This package contains files common to both Python 2.7 and Python 3.
-endef
-
-Py3Package/python3-django1/install:=:
-
-define Package/python-django1-common/install
+define Py3Package/python3-django1/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) ./files/django-admin $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/django-admin.py \
+		$(1)/usr/bin/django-admin
 endef
 
 $(eval $(call Py3Package,python3-django1))
 $(eval $(call BuildPackage,python3-django1))
 $(eval $(call BuildPackage,python3-django1-src))
-
-$(eval $(call BuildPackage,python-django1-common))
