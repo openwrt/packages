@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-zeroconf
 PKG_VERSION:=0.24.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=zeroconf
 PKG_HASH:=f66d38f16026097572939ab78b1f46a97f556bca415491eb0fd094d0b5827dfe
@@ -32,7 +32,6 @@ define Package/python3-zeroconf
 	  +python3-light \
 	  +python3-logging \
 	  +python3-ifaddr
-  VARIANT:=python3
 endef
 
 define Package/python3-zeroconf/description

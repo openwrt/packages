@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyrsistent
 PKG_VERSION:=0.15.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=pyrsistent
 PKG_HASH:=34b47fa169d6006b32e99d4b3c4031f155e6e68ebcc107d6454852e8e0ee6533
@@ -29,7 +29,6 @@ define Package/python3-pyrsistent
   TITLE:=Persistent/Functional/Immutable data structures
   URL:=https://github.com/tobgu/pyrsistent
   DEPENDS:=+python3-light +python3-six
-  VARIANT:=python3
 endef
 
 define Package/python3-pyrsistent/description

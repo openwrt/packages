@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-statici18n
 PKG_VERSION:=1.9.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=913dd056c1abcbe129b1db806cb4cfb821c4077d7e857d6eb29043ea64f4d1d0
@@ -22,28 +22,21 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/django-statici18n/Default
+define Package/python3-django-statici18n
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Helper for generating JavaScript catalog to static files
   URL:=https://django-statici18n.readthedocs.io
-endef
-
-define Package/python3-django-statici18n
-$(call Package/django-statici18n/Default)
   DEPENDS:= \
-	+PACKAGE_python3-django-statici18n:python3 \
-	+PACKAGE_python3-django-statici18n:python3-django1 \
-	+PACKAGE_python3-django-statici18n:python3-django-appconf \
-	+PACKAGE_python3-django-statici18n:python3-six
-  VARIANT:=python3
+	+python3 \
+	+python3-django1 \
+	+python3-django-appconf \
+	+python3-six
 endef
 
 define Package/python3-django-statici18n/description
   A Django app that provides helper for generating JavaScript catalog to static files.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-django-statici18n))

@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-decorator
 PKG_VERSION:=4.3.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 PKG_CPE_ID:=cpe:/a:python:decorator
 
@@ -25,7 +25,6 @@ define Package/python3-decorator
   URL:=https://github.com/micheles/decorator
   TITLE:=python3-decodator
   DEPENDS:=+python3-light
-  VARIANT:=python3
 endef
 
 $(eval $(call Py3Package,python3-decorator))

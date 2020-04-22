@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-qrcode
 PKG_VERSION:=6.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=qrcode
 PKG_HASH:=505253854f607f2abf4d16092c61d4e9d511a3b4392e60bff957a68592b04369
@@ -20,28 +20,21 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-qrcode/Default
+define Package/python3-qrcode
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=QR Code image generator
   URL:=https://github.com/lincolnloop/python-qrcode
-endef
-
-define Package/python3-qrcode
-$(call Package/python-qrcode/Default)
   DEPENDS:= \
-	+PACKAGE_python3-qrcode:python3 \
-	+PACKAGE_python3-qrcode:python3-setuptools \
-	+PACKAGE_python3-qrcode:python3-six \
-	+PACKAGE_python3-qrcode:python3-pillow
-  VARIANT:=python3
+	+python3 \
+	+python3-setuptools \
+	+python3-six \
+	+python3-pillow
 endef
 
 define Package/python3-qrcode/description
   Pure python QR Code generator
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-qrcode))

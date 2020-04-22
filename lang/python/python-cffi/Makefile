@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cffi
 PKG_VERSION:=1.14.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=cffi
 PKG_HASH:=2d384f4a127a15ba701207f7639d94106693b6cd64173d6c8988e2c25f3ac2b6
@@ -22,27 +22,20 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-cffi/Default
+define Package/python3-cffi
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=C Foreign Function Interface
   URL:=https://cffi.readthedocs.org/
-  DEPENDS:=+libffi
-endef
-
-define Package/python3-cffi
-$(call Package/python-cffi/Default)
-  DEPENDS+= \
-      +PACKAGE_python3-cffi:python3-light \
-      +PACKAGE_python3-cffi:python3-pycparser
-  VARIANT:=python3
+  DEPENDS:= \
+      +libffi \
+      +python3-light \
+      +python3-pycparser
 endef
 
 define Package/python3-cffi/description
 Foreign Function Interface for Python calling C code.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-cffi))

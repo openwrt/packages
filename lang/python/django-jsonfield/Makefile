@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-jsonfield
 PKG_VERSION:=2.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=jsonfield
 PKG_HASH:=ed7c5e1829e9453e24a8bebef1e702ffe402e6def6b326f0e0b88764c59a6dc7
@@ -22,28 +22,21 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/django-jsonfield/Default
+define Package/python3-django-jsonfield
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=A reusable Django field to store validated JSON in models
   URL:=https://github.com/rpkilby/jsonfield
-endef
-
-define Package/python3-django-jsonfield
-$(call Package/django-jsonfield/Default)
   DEPENDS:= \
-	+PACKAGE_python3-django-jsonfield:python3 \
-	+PACKAGE_python3-django-jsonfield:python3-django1 \
-	+PACKAGE_python3-django-jsonfield:python3-six
-  VARIANT:=python3
+	+python3 \
+	+python3-django1 \
+	+python3-six
 endef
 
 define Package/python3-django-jsonfield/description
   jsonfield is a reusable model field that allows you to store validated
   JSON, automatically handling serialization to and from the database.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-django-jsonfield))

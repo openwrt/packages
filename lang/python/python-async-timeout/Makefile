@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=async-timeout
 PKG_VERSION:=3.0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=async_timeout
 PYPI_SOURCE_NAME:=async-timeout
@@ -32,7 +32,6 @@ define Package/python3-async-timeout
   DEPENDS:= \
   +python3-light \
   +python3-asyncio
-  VARIANT:=python3
 endef
 
 define Package/python3-async-timeout/description

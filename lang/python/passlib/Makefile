@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=passlib
 PKG_VERSION:=1.7.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=BSD-3-Clause
 
 PYPI_NAME:=$(PKG_NAME)
@@ -16,18 +16,13 @@ include $(INCLUDE_DIR)/package.mk
 
 include ../python3-package.mk
 
-define Package/passlib/Default
+define Package/python3-passlib
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Comprehensive password hashing framework
   URL:=https://bitbucket.org/ecollins/passlib
-endef
-
-define Package/python3-passlib
-$(call Package/passlib/Default)
-  DEPENDS:=+PACKAGE_python3-passlib:python3 +PACKAGE_python3-passlib:python3-dateutil
-  VARIANT:=python3
+  DEPENDS:=+python3 +python3-dateutil
 endef
 
 define Package/python3-passlib/description
@@ -37,8 +32,6 @@ as well as a framework for managing existing password hashes. It’s
 designed to be useful for a wide range of tasks, from verifying a hash
 found in /etc/shadow, to providing full-strength password hashing for
 multi-user applications.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-passlib))

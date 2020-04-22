@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-idna
 PKG_VERSION:=2.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=idna
 PKG_HASH:=7588d1c14ae4c77d74036e8c22ff447b26d0fde8f007354fd48a7814db15b7cb
@@ -22,20 +22,15 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-idna/Default
+define Package/python3-idna
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=IDNA library
   URL:=https://github.com/kjd/idna
-endef
-
-define Package/python3-idna
-$(call Package/python-idna/Default)
   DEPENDS:= \
-      +PACKAGE_python3-idna:python3-light \
-      +PACKAGE_python3-idna:python3-codecs
-  VARIANT:=python3
+      +python3-light \
+      +python3-codecs
 endef
 
 define Package/python3-idna/description
@@ -43,8 +38,6 @@ A library to support the Internationalised Domain Names in Applications
 (IDNA) protocol as specified in RFC 5891. This version of the protocol
 is often referred to as "IDNA2008" and can produce different results
 from the earlier standard from 2003.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-idna))

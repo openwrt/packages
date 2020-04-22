@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-jdcal
 PKG_VERSION:=1.4.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Eneas U de Queiroz <cote2004-github@yahoo.com>
 PKG_LICENSE:=BSD-2-Clause
@@ -20,24 +20,17 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-jdcal/Default
+define Package/python3-jdcal
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Julian dates from proleptic Gregorian and Julian calendars
   URL:=https://github.com/phn/jdcal
-endef
-
-define Package/python3-jdcal
-$(call Package/python-jdcal/Default)
-  DEPENDS:= +PACKAGE_python3-jdcal:python3-light
-  VARIANT:=python3
+  DEPENDS:= +python3-light
 endef
 
 define Package/python3-jdcal/description
   This module contains functions for converting between Julian dates and calendar dates.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-jdcal))

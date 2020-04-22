@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aiohttp
 PKG_VERSION:=3.6.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=fc55b1fec0e4cc1134ffb09ea3970783ee2906dc5dfd7cd16917913f2cfed65b
@@ -40,7 +40,6 @@ define Package/python3-aiohttp
 	+python3-codecs \
 	+python3-cgi \
 	+python3-openssl
-  VARIANT:=python3
 endef
 
 define Package/python3-aiohttp/description

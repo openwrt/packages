@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-service-identity
 PKG_VERSION:=18.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=service_identity
 PKG_HASH:=0858a54aabc5b459d1aafa8a518ed2081a285087f349fe3e55197989232e2e2d
@@ -22,30 +22,23 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-service-identity/Default
+define Package/python3-service-identity
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=Service identity verification
   URL:=https://service-identity.readthedocs.io/
-endef
-
-define Package/python3-service-identity
-$(call Package/python-service-identity/Default)
   DEPENDS:= \
-      +PACKAGE_python3-service-identity:python3-light \
-      +PACKAGE_python3-service-identity:python3-attrs \
-      +PACKAGE_python3-service-identity:python3-cryptography \
-      +PACKAGE_python3-service-identity:python3-pyasn1 \
-      +PACKAGE_python3-service-identity:python3-pyasn1-modules
-  VARIANT:=python3
+      +python3-light \
+      +python3-attrs \
+      +python3-cryptography \
+      +python3-pyasn1 \
+      +python3-pyasn1-modules
 endef
 
 define Package/python3-service-identity/description
 service_identity aspires to give you all the tools you need for
 verifying whether a certificate is valid for the intended purposes.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-service-identity))

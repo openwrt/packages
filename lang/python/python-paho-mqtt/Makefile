@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-paho-mqtt
 PKG_VERSION:=1.5.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=EPL-1.0 Eclipse Distribution License v1.0
@@ -26,7 +26,6 @@ define Package/python3-paho-mqtt
   TITLE:=python3-paho-mqtt
   URL:=http://eclipse.org/paho
   DEPENDS:=+python3-light
-  VARIANT:=python3
 endef
 
 define Package/python3-paho-mqtt/description

@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-oauthlib
 PKG_VERSION:=3.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -20,25 +20,18 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-oauthlib/Default
+define Package/python3-oauthlib
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=OAuth request-signing logic for Python
   URL:=https://github.com/oauthlib/oauthlib
-endef
-
-define Package/python3-oauthlib
-  $(call Package/python-oauthlib/Default)
-  DEPENDS:=+PACKAGE_python3-oauthlib:python3-light
-  VARIANT:=python3
+  DEPENDS:=+python3-light
 endef
 
 define Package/python3-oauthlib/description
   A generic, spec-compliant, thorough implementation of the OAuth request-signing
   logic for Python
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-oauthlib))

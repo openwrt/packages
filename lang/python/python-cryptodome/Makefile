@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cryptodome
 PKG_VERSION:=3.9.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=pycryptodome
 PKG_HASH:=f1add21b6d179179b3c177c33d18a2186a09cc0d3af41ff5ed3f377360b869f2
@@ -24,27 +24,19 @@ PYTHON3_PKG_SETUP_ARGS:=
 PYTHON3_PKG_SETUP_VARS:= \
   CONFIG_BIG_ENDIAN="$(CONFIG_BIG_ENDIAN)"
 
-define Package/python-cryptodome/Default
+define Package/python3-cryptodome
   SECTION:=lang-python
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=A self-contained cryptographic library for Python
   URL:=https://www.pycryptodome.org/
-  DEPENDS:=+libgmp
-endef
-
-define Package/python3-cryptodome
-$(call Package/python-cryptodome/Default)
-  DEPENDS+=+PACKAGE_python3-cryptodome:python3
-  VARIANT:=python3
+  DEPENDS:=+libgmp +python3
   CONFLICTS:=python3-crypto
 endef
 
 define Package/python3-cryptodome/description
 PyCryptodome is a self-contained Python package of low-level
 cryptographic primitives.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-cryptodome))

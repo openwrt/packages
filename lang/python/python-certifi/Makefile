@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-certifi
 PKG_VERSION:=2019.11.28
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
 PKG_LICENSE:=MPL-2.0
@@ -20,25 +20,18 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-certifi/Default
+define Package/python3-certifi
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Python package for Mozilla's CA Bundle
   URL:=http://certifi.io/
-endef
-
-define Package/python3-certifi
-  $(call Package/python-certifi/Default)
-  DEPENDS:=+PACKAGE_python3-certifi:python3-light
-  VARIANT:=python3
+  DEPENDS:=+python3-light
 endef
 
 define Package/python3-certifi/description
   Certifi is a carefully curated collection of Root Certificates for validating the
   trustworthiness of SSL certificates while verifying the identity of TLS hosts.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-certifi))

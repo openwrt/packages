@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-influxdb
 PKG_VERSION:=5.2.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 
 PYPI_NAME:=influxdb
@@ -24,7 +24,6 @@ define Package/python3-influxdb
   URL:=https://github.com/influxdb/influxdb-python
   TITLE:=python3-influxdb
   DEPENDS:=+python3-requests +python3-pytz +python3-six +python3-dateutil
-  VARIANT:=python3
 endef
 
 define Package/python3-influxdb/description

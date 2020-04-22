@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python3-bottle
 PKG_VERSION:=0.12.17
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=bottle
 PKG_HASH:=e9eaa412a60cc3d42ceb42f58d15864d9ed1b92e9d630b8130c871c5bb16107c
@@ -30,7 +30,6 @@ define Package/python3-bottle
 	TITLE:=Fast and simple WSGI-framework for small web-applications
 	URL:=https://bottlepy.org
 	DEPENDS:=+python3
-	VARIANT:=python3
 endef
 
 define Package/python3-bottle/description

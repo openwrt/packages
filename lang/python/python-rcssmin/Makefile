@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-rcssmin
 PKG_VERSION:=1.0.6
-PKG_RELEASE=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Eneas U de Queiroz <cote2004-github@yahoo.com>
 PKG_LICENSE:=Apache-2.0
@@ -20,19 +20,14 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-rcssmin/Default
+define Package/python3-rcssmin
     SUBMENU:=Python
     SECTION:=lang
     CATEGORY:=Languages
     TITLE:=Fast CSS minifier for Python
     URL:=http://opensource.perlig.de/rcssmin/
-endef
-
-define Package/python3-rcssmin
-    $(call Package/python-rcssmin/Default)
     DEPENDS:= \
-	+PACKAGE_python3-rcssmin:python3-light
-    VARIANT:=python3
+	+python3-light
 endef
 
 define Package/python3-rcssmin/description
@@ -41,8 +36,6 @@ define Package/python3-rcssmin/description
     RCSSmin does syntactical compression only (removing spaces, comments and possibly
     semicolons). It does not provide semantic compression (like removing empty blocks,
     collapsing redundant properties etc).
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-rcssmin))

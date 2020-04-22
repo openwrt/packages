@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-gmpy2
 PKG_VERSION:=2.0.8
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PYPI_NAME:=gmpy2
 PYPI_SOURCE_EXT:=zip
@@ -25,19 +25,13 @@ include ../python3-package.mk
 
 PYTHON3_PKG_SETUP_ARGS:=--nompfr
 
-define Package/python-gmpy2/Default
+define Package/python3-gmpy2
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=GMP/MPIR, MPFR, and MPC interface
   URL:=https://github.com/aleaxit/gmpy
-  DEPENDS:=+libgmp
-endef
-
-define Package/python3-gmpy2
-$(call Package/python-gmpy2/Default)
-  DEPENDS+=+PACKAGE_python3-gmpy2:python3-light
-  VARIANT:=python3
+  DEPENDS:=+libgmp +python3-light
 endef
 
 define Package/python3-gmpy2/description
@@ -48,8 +42,6 @@ MPFR (correctly rounded real floating-point arithmetic) and MPC (correctly
 rounded complex floating-point arithmetic) libraries. gmpy2 also updates the
 API and naming conventions to be more consistent and support the additional
 functionality.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-gmpy2))

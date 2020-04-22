@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django1
 PKG_VERSION:=1.11.29
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=Django
 PKG_HASH:=4200aefb6678019a0acf0005cd14cfce3a5e6b9b90d06145fcdd2e474ad4329c
@@ -34,17 +34,14 @@ endef
 define Package/python3-django1
 $(call Package/django1/Default)
   DEPENDS:= \
-	+PACKAGE_python3-django1:python3 \
-	+PACKAGE_python3-django1:python3-pytz \
-	+PACKAGE_python3-django1:python-django1-common
-  VARIANT:=python3
+	+python3 \
+	+python3-pytz \
+	+python-django1-common
   PROVIDES:=django
 endef
 
 define Package/python3-django1/description
   The web framework for perfectionists with deadlines (LTS 1.11 series).
-.
-(Variant for Python3)
 endef
 
 define Package/python-django1-common

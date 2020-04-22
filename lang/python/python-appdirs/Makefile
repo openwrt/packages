@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-appdirs
 PKG_VERSION:=1.4.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 
 PYPI_NAME:=appdirs
@@ -24,7 +24,6 @@ define Package/python3-appdirs
   URL:=https://github.com/ActiveState/appdirs
   TITLE:=python3-appdirs
   DEPENDS:=+python3-light
-  VARIANT:=python3
 endef
 
 define Package/python-appdirs/description

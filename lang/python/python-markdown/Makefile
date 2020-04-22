@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-markdown
 PKG_VERSION:=3.2.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=Markdown
 PKG_HASH:=90fee683eeabe1a92e149f7ba74e5ccdc81cd397bd6c516d93a8da0ef90b6902
@@ -32,7 +32,6 @@ define Package/python3-markdown
 	+python3-light \
 	+python3-setuptools \
 	+python3-logging
-  VARIANT:=python3
 endef
 
 define Package/python3-markdown/description

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-netdisco
 PKG_VERSION:=2.6.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=netdisco
 PKG_HASH:=2b3aca14a1807712a053f11fd80dc251dd821ee4899aefece515287981817762
@@ -32,7 +32,6 @@ define Package/python3-netdisco
 	  +python3-light \
 	  +python3-requests \
 	  +python3-zeroconf
-  VARIANT:=python3
 endef
 
 define Package/python3-netdisco/description

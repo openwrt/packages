@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-simplejson
 PKG_VERSION:=3.17.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=MIT
 PKG_CPE_ID:=cpe:/a:simplejson_project:simplejson
 
@@ -20,25 +20,18 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-simplejson/Default
+define Package/python3-simplejson
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+  TITLE:=Simple, fast, extensible JSON encoder/decoder
   URL:=https://simplejson.readthedocs.org/
-endef
-
-define Package/python3-simplejson
-$(call Package/python-simplejson/Default)
-  TITLE:=Simple, fast, extensible JSON encoder/decoder for Python3
-  DEPENDS:=+PACKAGE_python3-simplejson:python3-light +PACKAGE_python3-simplejson:python3-decimal
-  VARIANT:=python3
+  DEPENDS:=+python3-light +python3-decimal
 endef
 
 define Package/python3-simplejson/description
   Simple, fast, extensible JSON encoder/decoder for Python
-.
-(Variant for Python3)
 endef
 
 define Py3Package/python3-simplejson/filespec

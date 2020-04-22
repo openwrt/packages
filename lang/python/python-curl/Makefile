@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pycurl
 PKG_VERSION:=7.43.0.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=ec7dd291545842295b7b56c12c90ffad2976cc7070c98d7b1517b7b6cd5994b3
@@ -19,25 +19,17 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-curl/Default
+define Package/python3-curl
   CATEGORY:=Languages
   SECTION:=lang
   SUBMENU:=Python
   TITLE:=Python module interface to the cURL library
   URL:=http://pycurl.io/
-  DEPENDS:=+libcurl
-endef
-
-define Package/python3-curl
-$(call Package/python-curl/Default)
-  DEPENDS+=+PACKAGE_python3-curl:python3
-  VARIANT:=python3
+  DEPENDS:=+libcurl +python3
 endef
 
 define Package/python3-curl/description
 PycURL is a Python interface to libcurl, the multiprotocol file transfer library.
-.
-(Variant for Python3)
 endef
 
 PYTHON3_PKG_SETUP_ARGS:=

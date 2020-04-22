@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-automat
 PKG_VERSION:=20.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=Automat
 PKG_HASH:=7979803c74610e11ef0c0d68a2942b152df52da55336e0c9d58daf1831cbdf33
@@ -25,29 +25,22 @@ include ../python3-package.mk
 PYTHON3_PKG_SETUP_VARS:= \
   PKG_VERSION="$(PKG_VERSION)"
 
-define Package/python-automat/Default
+define Package/python3-automat
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=Concise, idiomatic finite-state automata
   URL:=https://github.com/glyph/Automat
-endef
-
-define Package/python3-automat
-$(call Package/python-automat/Default)
   DEPENDS:= \
-      +PACKAGE_python3-automat:python3-light \
-      +PACKAGE_python3-automat:python3-attrs \
-      +PACKAGE_python3-automat:python3-six
-  VARIANT:=python3
+      +python3-light \
+      +python3-attrs \
+      +python3-six
 endef
 
 define Package/python3-automat/description
 Automat is a library for concise, idiomatic Python expression of
 finite-state automata (particularly deterministic finite-state
 transducers).
-.
-(Variant for Python3)
 endef
 
 define Py3Package/python3-automat/filespec

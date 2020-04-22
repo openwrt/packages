@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django
 PKG_VERSION:=3.0.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=Django
 PKG_HASH:=d4666c2edefa38c5ede0ec1655424c56dc47ceb04b6d8d62a7eac09db89545c1
@@ -32,12 +32,10 @@ define Package/python3-django
   DEPENDS:= +python3 +python3-pytz +python3-sqlparse +python3-asgiref
   CONFLICTS:=python3-django1 python-django1-common
   PROVIDES:=django
-  VARIANT:=python3
 endef
 
 define Package/python3-django/description
-    The web framework for perfectionists with deadlines (LTS 2.2 series).
-    Python3 only.
+    The web framework for perfectionists with deadlines.
 endef
 
 define Py3Package/python3-django/install

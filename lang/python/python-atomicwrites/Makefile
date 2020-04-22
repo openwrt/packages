@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-atomicwrites
 PKG_VERSION:=1.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=atomicwrites
 PKG_HASH:=75a9445bac02d8d058d5e1fe689654ba5a6556a1dfd8ce6ec55a0ed79866cfa6
@@ -29,7 +29,6 @@ define Package/python3-atomicwrites
   TITLE:=Atomic file writes
   URL:=https://github.com/untitaker/python-atomicwrites
   DEPENDS:=+python3-light
-  VARIANT:=python3
 endef
 
 define Package/python3-atomicwrites/description

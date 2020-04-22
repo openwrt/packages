@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-compressor
 PKG_VERSION:=2.2
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 PYPI_NAME:=$(PKG_NAME)
 PYPI_SOURCE_NAME:=django_compressor
@@ -23,22 +23,17 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/django-compressor/Default
+define Package/python3-django-compressor
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Compress CSS/JS into single cached files
   URL:=https://django-compressor.readthedocs.io
-endef
-
-define Package/python3-django-compressor
-$(call Package/django-compressor/Default)
   DEPENDS:= \
-	+PACKAGE_python3-django-compressor:python3 \
-	+PACKAGE_python3-django-compressor:python3-django1 \
-	+PACKAGE_python3-django-compressor:python3-django-appconf \
-	+PACKAGE_python3-django-compressor:python3-rcssmin
-  VARIANT:=python3
+	+python3 \
+	+python3-django1 \
+	+python3-django-appconf \
+	+python3-rcssmin
 endef
 
 define Package/python3-django-compressor/description
@@ -46,8 +41,6 @@ define Package/python3-django-compressor/description
   Note that the JavaScript filter is not being installed as a dependency.
   You'll need to build the rjsmin module (it is not par of the openwrt standard
   feeds) to use JavaScript functionality.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-django-compressor))

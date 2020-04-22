@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-schema
 PKG_VERSION:=0.7.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 
 PKG_SOURCE_URL:=https://codeload.github.com/keleshev/schema/tar.gz/v$(PKG_VERSION)?
@@ -24,7 +24,6 @@ define Package/python3-schema
   URL:=https://github.com/keleshev/schema
   TITLE:=python3-schema
   DEPENDS:=+python3-light +python3-contextlib2
-  VARIANT:=python3
 endef
 
 define Package/python3-schema/description

@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=itsdangerous
 PKG_VERSION:=1.1.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=321b033d07f2a4136d3ec762eac9f16a10ccd60f53c0c91af90217ace7ba1f19
@@ -26,7 +26,6 @@ define Package/python3-itsdangerous
   TITLE:=ItsDangerous
   URL:=https://palletsprojects.com/p/itsdangerous/
   DEPENDS:=+python3-light
-  VARIANT:=python3
 endef
 
 define Package/python3-itsdangerous/description

@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pyjwt
 PKG_VERSION:=1.7.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
 PKG_LICENSE:=MIT
@@ -20,24 +20,17 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python-pyjwt/Default
+define Package/python3-pyjwt
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=JSON Web Token implementation in Python
   URL:=http://github.com/jpadilla/pyjwt
-endef
-
-define Package/python3-pyjwt
-  $(call Package/python-pyjwt/Default)
-  DEPENDS:=+PACKAGE_python3-pyjwt:python3
-  VARIANT:=python3
+  DEPENDS:=+python3
 endef
 
 define Package/python3-pyjwt/description
   A Python implementation of RFC 7519.
-.
-(Variant for Python3)
 endef
 
 $(eval $(call Py3Package,python3-pyjwt))

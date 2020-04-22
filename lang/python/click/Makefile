@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=click
 PKG_VERSION:=7.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=$(PKG_NAME)
 PYPI_SOURCE_NAME:=Click
@@ -27,7 +27,6 @@ define Package/python3-click
   TITLE:=Click
   URL:=https://palletsprojects.com/p/click/
   DEPENDS:=+python3-light
-  VARIANT:=python3
 endef
 
 define Package/python3-click/description

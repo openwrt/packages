@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-jsonpath-ng
 PKG_VERSION:=1.4.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 
 PYPI_NAME:=jsonpath-ng
@@ -23,7 +23,6 @@ define Package/python3-jsonpath-ng
   URL:=https://github.com/h2non/jsonpath-ng
   TITLE:=python3-jsonpath-ng
   DEPENDS:=+python3-ply +python3-six +python3-decorator
-  VARIANT:=python3
 endef
 
 $(eval $(call Py3Package,python3-jsonpath-ng))

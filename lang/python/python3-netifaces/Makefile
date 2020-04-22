@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python3-netifaces
 PKG_VERSION:=0.10.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=netifaces
 PKG_HASH:=2dee9ffdd16292878336a58d04a20f0ffe95555465fee7c9bd23b3490ef2abf3
@@ -29,7 +29,6 @@ define Package/python3-netifaces
   TITLE:=Portable network interface information
   URL:=https://github.com/al45tair/netifaces
   DEPENDS:=+python3-light
-  VARIANT:=python3
 endef
 
 define Package/python3-netifaces/description

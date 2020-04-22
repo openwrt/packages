@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python3-speedtest-cli
 PKG_VERSION:=2.1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=speedtest-cli
 PKG_HASH:=cf1d386222f94c324e3125ba9a0d187e46d4a13dca08c023bdb9a23096be2e54
@@ -23,7 +23,6 @@ define Package/python3-speedtest-cli
   URL:=https://github.com/sivel/speedtest-cli
   DEPENDS:=+python3-light +python3-pkg-resources +python3-xml +python3-email \
 	  +python3-urllib +python3-codecs +python3-openssl
-  VARIANT:=python3
 endef
 
 define Package/python3-speedtest-cli/description
