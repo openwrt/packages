@@ -6,19 +6,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdrm
-PKG_VERSION:=2.4.97
+PKG_VERSION:=2.4.101
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://dri.freedesktop.org/libdrm
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=77d0ccda3e10d6593398edb70b1566bfe1a23a39bd3da98ace2147692eadd123
-
-PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_HASH:=ddf31baa8e49473624860bd166ce654dc349873f7a6c7b3305964249315c78a7
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
+PKG_LICENSE:=BSD-3-Clause
+
+PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=meson/host
 
 include $(INCLUDE_DIR)/package.mk
+include ../../devel/meson/meson.mk
 
 define Package/libdrm
   SECTION:=libs
@@ -34,15 +36,25 @@ define Package/libdrm/description
   of the DRI protocol.
 endef
 
-CONFIGURE_ARGS += \
-  --disable-udev \
-  --enable-kms \
-  --disable-omap-experimental-api \
-  --disable-exynos-experimental-api \
-  --disable-tegra-experimental-api \
-  --disable-cairo-tests \
-  --disable-manpages \
-  --disable-valgrind
+MESON_ARGS += \
+	-Dlibkms=false \
+	-Dintel=false \
+	-Dradeon=false \
+	-Damdgpu=false \
+	-Dnouveau=false \
+	-Dvmwgfx=false \
+	-Domap=false \
+	-Dexynos=false \
+	-Dfreedreno=false \
+	-Dtegra=false \
+	-Dvc4=false \
+	-Detnaviv=false \
+	-Dcairo-tests=false \
+	-Dman-pages=false \
+	-Dvalgrind=false \
+	-Dfreedreno-kgsl=false \
+	-Dinstall-test-programs=false \
+	-Dudev=false
 
 define Build/InstallDev
 	$(INSTALL_DIR) \
