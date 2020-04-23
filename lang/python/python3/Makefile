@@ -343,11 +343,11 @@ define Host/Install
 	)
 	$(MAKE) -C $(HOST_BUILD_DIR) install
 	$(if $(wildcard $(HOST_PYTHON3_PKG_DIR)/.setuptools_installed_$(PYTHON3_SETUPTOOLS_VERSION)-$(PYTHON3_SETUPTOOLS_PKG_RELEASE)),,
-		$(call HostPatchDir,$(HOST_PYTHON3_PKG_DIR),./patches-setuptools,)
+		$(call HostPatchDir,$(HOST_PYTHON3_PKG_DIR),./patches-setuptools-host,)
 		touch $(HOST_PYTHON3_PKG_DIR)/.setuptools_installed_$(PYTHON3_SETUPTOOLS_VERSION)-$(PYTHON3_SETUPTOOLS_PKG_RELEASE)
 	)
 	$(if $(wildcard $(HOST_PYTHON3_PKG_DIR)/.pip_installed_$(PYTHON3_PIP_VERSION)-$(PYTHON3_PIP_PKG_RELEASE)),,
-		$(call HostPatchDir,$(HOST_PYTHON3_PKG_DIR),./patches-pip,)
+		$(call HostPatchDir,$(HOST_PYTHON3_PKG_DIR),./patches-pip-host,)
 		touch $(HOST_PYTHON3_PKG_DIR)/.pip_installed_$(PYTHON3_PIP_VERSION)-$(PYTHON3_PIP_PKG_RELEASE)
 	)
 endef
