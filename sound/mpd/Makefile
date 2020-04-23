@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.21.22
+PKG_VERSION:=0.21.23
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.musicpd.org/download/mpd/0.21/
-PKG_HASH:=565687d1899b585350cd66b603e46e5b79affc0a0e36d96d8953c6ccc6f69ba2
+PKG_HASH:=439f522ca9800f375e4fb459ec31e61b3d824fc5c0580ff06dac48b5d21207a3
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=GPL-2.0-or-later
