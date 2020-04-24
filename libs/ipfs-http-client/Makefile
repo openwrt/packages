@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ipfs-http-client
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Leonid Esman <leonid.esman@gmail.com>
 PKG_LICENSE:=MIT
@@ -38,7 +38,7 @@ define Package/libipfs-http-client
 endef
 
 define Package/libipfs-http-client/description
-	$(call Package/ipfs-http-client/Default/description)
+  $(call Package/ipfs-http-client/Default/description)
   This package contains shared library.
 endef
 
@@ -51,13 +51,13 @@ define Package/ipfs-http-client-tests
 endef
 
 define Package/ipfs-http-client-tests/description
-	$(call Package/ipfs-http-client/Default/description)
+  $(call Package/ipfs-http-client/Default/description)
   This package contains library tests.
 endef
 
 CMAKE_OPTIONS += \
 	-DBUILD_SHARED_LIBS=ON \
-	-DENABLE_TESTING=ON
+	-DBUILD_TESTING=ON
 
 define Package/libipfs-http-client/install
 	$(INSTALL_DIR) $(1)/usr/lib
