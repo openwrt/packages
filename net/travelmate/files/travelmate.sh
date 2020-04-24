@@ -1,13 +1,10 @@
 #!/bin/sh
 # travelmate, a wlan connection manager for travel router
-# written by Dirk Brenken (dev@brenken.org)
-
+# Copyright (c) 2016-2020 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-# (s)hellcheck exceptions
-# shellcheck disable=1091 disable=2039 disable=2143 disable=2181 disable=2188
+# set (s)hellcheck exceptions
+# shellcheck disable=1091,2016,2039,2059,2086,2143,2181,2188
 
 # set initial defaults
 #
@@ -572,7 +569,7 @@ f_main()
 				f_log "debug" "f_main    ::: sta_radio: ${sta_radio}, sta_essid: \"${sta_essid}\", sta_bssid: ${sta_bssid:-"-"}"
 				if [ -z "${scan_list}" ]
 				then
-					scan_dev="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -l1 -e "@.${dev}.interfaces.*.ifname")"
+					scan_dev="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -l1 -e "@.${dev}.interfaces[@.config.mode=\"sta\"].ifname")"
 					scan_list="$("${trm_iwinfo}" "${scan_dev:-${dev}}" scan 2>/dev/null | \
 						awk 'BEGIN{FS="[[:space:]]"}/Address:/{var1=$NF}/ESSID:/{var2="";for(i=12;i<=NF;i++)if(var2==""){var2=$i}else{var2=var2" "$i};
 						gsub(/,/,".",var2)}/Quality:/{split($NF,var0,"/")}/Encryption:/{if($NF=="none"){var3="+"}else{var3="-"};printf "%i,%s,%s,%s\n",(var0[1]*100/var0[2]),var1,var2,var3}' | \
@@ -580,7 +577,7 @@ f_main()
 					f_log "debug" "f_main    ::: scan_radio: ${dev}, scan_device: ${scan_dev:-"-"}, scan_buffer: ${trm_scanbuffer}, scan_list: ${scan_list:-"-"}"
 					if [ -z "${scan_list}" ]
 					then
-						f_log "debug" "f_main    ::: no scan results on '${dev}' - continue"
+						f_log "debug" "f_main    ::: no scan results on '${dev}/${scan_dev:-"-"}' - continue"
 						continue 2
 					fi
 				fi
