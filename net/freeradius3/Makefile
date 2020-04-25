@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius3
 PKG_VERSION:=release_3_0_20
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/FreeRADIUS/freeradius-server/archive
@@ -457,6 +457,16 @@ define Package/freeradius3-mod-unix/conffiles
 /etc/freeradius3/mods-enabled/unix
 endef
 
+define Package/freeradius3-mod-rest
+  $(call Package/freeradius3/Default)
+  DEPENDS:=freeradius3 +libcurl +libjson-c
+  TITLE:=Radius REST module
+endef
+
+define Package/freeradius3-mod-rest/conffiles
+/etc/freeradius3/mods-available/rest
+endef
+
 define Package/freeradius3-utils
   $(call Package/freeradius3/Default)
   DEPENDS:=+freeradius3-common
@@ -505,7 +515,6 @@ CONFIGURE_ARGS+= \
 	--without-rlm_python \
 	--without-rlm_redis \
 	--without-rlm_rediswho \
-	--without-rlm_rest \
 	--without-rlm_ruby \
 	--without-rlm_securid \
 	--without-rlm_smsotp \
@@ -630,6 +639,13 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-unix),)
 else
   CONFIGURE_ARGS+= --without-rlm_unix
 endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-rest),)
+  CONFIGURE_ARGS+= --with-rlm_rest
+else
+  CONFIGURE_ARGS+= --without-rlm_rest
+endif
+
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-ldap),)
   CONFIGURE_ARGS+= --with-rlm_ldap \
@@ -778,4 +794,5 @@ $(eval $(call BuildPlugin,freeradius3-mod-sql-sqlite,rlm_sql_sqlite,))
 $(eval $(call BuildPlugin,freeradius3-mod-sqlcounter,rlm_sqlcounter,))
 $(eval $(call BuildPlugin,freeradius3-mod-sqlippool,rlm_sqlippool,))
 $(eval $(call BuildPlugin,freeradius3-mod-unix,rlm_unix,))
+$(eval $(call BuildPlugin,freeradius3-mod-rest,rlm_rest,))
 $(eval $(call BuildPackage,freeradius3-utils))
