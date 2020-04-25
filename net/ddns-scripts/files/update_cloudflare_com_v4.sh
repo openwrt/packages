@@ -85,7 +85,7 @@ cloudflare_transfer() {
 	done
 
 	# check for error
-	grep -q '"success":true' $DATFILE || {
+	grep -q '"success": \?true' $DATFILE || {
 		write_log 4 "CloudFlare reported an error:"
 		write_log 7 "$(cat $DATFILE)"		# report error
 		return 1	# HTTP-Fehler
