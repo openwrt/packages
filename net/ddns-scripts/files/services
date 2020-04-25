@@ -130,7 +130,7 @@
 
 "myonlineportal.net"	"http://[USERNAME]:[PASSWORD]@myonlineportal.net/updateddns?hostname=[DOMAIN]&ip=[IP]"	"good|nochg"
 
-"mythic-beasts.com"	"http://dnsapi4.mythic-beasts.com/?domain=[USERNAME]&password=[PASSWORD]&command=REPLACE%20[DOMAIN]%2060%20A%20DYNAMIC_IP&origin=."
+"mythic-beasts.com"	"http://[USERNAME]:[PASSWORD]@ipv4.api.mythic-beasts.com/beta/dns/dynamic/[DOMAIN]"
 
 "namecheap.com"		"http://dynamicdns.park-your-domain.com/update?host=[USERNAME]&domain=[DOMAIN]&password=[PASSWORD]&ip=[IP]"
 
