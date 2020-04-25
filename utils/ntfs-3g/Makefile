@@ -6,34 +6,34 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntfs-3g
-PKG_RELEASE:=2
-
 PKG_VERSION:=2017.3.23
+PKG_RELEASE:=3
+
 PKG_SOURCE:=$(PKG_NAME)_ntfsprogs-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://www.tuxera.com/opensource/
 PKG_HASH:=3e5a021d7b761261836dcb305370af299793eedbded731df3d6943802e1262d5
 
-PKG_LICENSE:=GPL-2.0 LGPL-2.0
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_LICENSE:=GPL-2.0-only LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING COPYING.LIB
 PKG_CPE_ID:=cpe:/a:ntfs-3g:ntfs-3g
 
-PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
-
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 # release contains fuseext/int hint
 PKG_RELEASE:=$(PKG_RELEASE)$(if $(CONFIG_PACKAGE_NTFS-3G_USE_LIBFUSE),-fuseext,-fuseint)
 
 # define build dir, respect fuseext/int
-PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE)
+PKG_BUILD_DIR:= $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE)
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/ntfs-3g/common
   SECTION:=utils
   CATEGORY:=Utilities
-  URL:=http://www.tuxera.com
+  URL:=https://www.tuxera.com
   SUBMENU:=Filesystem
   TITLE:=Stable Read/Write NTFS Driver
 endef
@@ -161,7 +161,6 @@ define Package/ntfs-3g/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libntfs-3g.so.* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/sbin
 	$(CP) $(PKG_INSTALL_DIR)/sbin/mount.ntfs-3g $(1)/sbin/
-	$(CP) $(PKG_INSTALL_DIR)/sbin/mount.ntfs-3g $(1)/sbin/mount.ntfs
 endef
 
 define Package/ntfs-3g/postinst
