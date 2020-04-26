@@ -74,10 +74,8 @@ MESON_ARGS += \
 	-Dbin_control=false \
 	-Dzlib=disabled \
 	-Dlzma=disabled \
-	-Dlz4=disabled
-
-TARGET_CFLAGS += -flto
-TARGET_LDFLAGS += -Wl,--as-needed
+	-Dlz4=disabled \
+	-Db_lto=true
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
