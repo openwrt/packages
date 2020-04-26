@@ -39,7 +39,7 @@ define Package/p11-kit/description
   way that they are discoverable.
 endef
 
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_LDFLAGS += -Wl,--gc-sections
 
 MESON_ARGS += \
 	-Dhash_impl=internal \
