@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -282,6 +282,11 @@ define Py3Package/python3-base/install
 	$(LN) python$(PYTHON3_VERSION) $(1)/usr/bin/python3
 	$(LN) python$(PYTHON3_VERSION) $(1)/usr/bin/python
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON3_VERSION).so* $(1)/usr/lib/
+  # This depends on being called before filespec is processed
+  ifneq ($(CONFIG_CCACHE),)
+	$(SED) 's|$(TARGET_CC)|$(TARGET_CC_NOCACHE)|g;s|$(TARGET_CXX)|$(TARGET_CXX_NOCACHE)|g' \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/_sysconfigdata.py
+  endif
 endef
 
 Py3Package/python3-light/install:=:

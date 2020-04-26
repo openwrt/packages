@@ -16,6 +16,11 @@ define Py3Package/python3-dev/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/python$(PYTHON3_VERSION)-config $(1)/usr/bin
 	$(LN) python$(PYTHON3_VERSION)-config $(1)/usr/bin/python3-config
 	$(LN) python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)/libpython$(PYTHON3_VERSION).a $(1)/usr/lib/
+  # This depends on being called before filespec is processed
+  ifneq ($(CONFIG_CCACHE),)
+	$(SED) 's|$(TARGET_CC)|$(TARGET_CC_NOCACHE)|g;s|$(TARGET_CXX)|$(TARGET_CXX_NOCACHE)|g' \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)/Makefile
+  endif
 endef
 
 $(eval $(call Py3BasePackage,python3-dev, \
