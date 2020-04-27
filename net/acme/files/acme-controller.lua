@@ -1,7 +1,11 @@
 module("luci.controller.acme", package.seeall)
 
 function index()
-	entry({"admin", "services", "acme"},
+	local page
+
+	page = entry({"admin", "services", "acme"},
 		cbi("acme"),
-		_("ACME certs"), 50).dependent = false
+		_("ACME certs"), 50)
+	page.dependent = false
+	page.acl_depends = { "luci-app-acme" }
 end
