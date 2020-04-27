@@ -25,18 +25,18 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 
 COREUTILS_APPLETS := \
-	base64 basename cat chcon chgrp chmod chown chroot cksum comm cp csplit \
-	cut date dd dir dircolors dirname du echo env expand expr factor	\
-	false fmt fold groups head hostid id install join kill link ln logname	\
-	ls md5sum mkdir mkfifo mknod mktemp mv nice nl nohup nproc od paste	\
-	pathchk pinky pr printenv printf ptx pwd readlink realpath rm rmdir	\
-	runcon seq sha1sum sha224sum sha256sum sha384sum sha512sum shred	\
-	shuf sleep sort split stat stdbuf stty sum sync tac tail tee test	\
-	timeout touch tr true truncate tsort tty uname unexpand	uniq unlink	\
-	uptime users vdir wc who whoami yes
+	base32 base64 basename basenc b2sum cat chcon chgrp chmod chown chroot	\
+	cksum comm cp csplit cut date dd df dir dircolors dirname du echo env	\
+	expand expr factor false fmt fold groups head hostid id install join	\
+	kill link ln logname ls md5sum mkdir mkfifo mknod mktemp mv nice nl	\
+	nohup nproc numfmt od paste pathchk pinky pr printenv printf ptx pwd	\
+	readlink realpath rm rmdir runcon seq sha1sum sha224sum sha256sum	\
+	sha384sum sha512sum shred shuf sleep sort split stat stdbuf stty sum	\
+	sync tac tail tee test timeout touch tr true truncate tsort tty uname	\
+	unexpand uniq unlink uptime users vdir wc who whoami yes
 
 DIR_BIN := \
-	base64 cat chgrp chmod chown cp date dd echo false kill link ln ls	\
+	base64 cat chgrp chmod chown cp date dd df echo false kill link ln ls	\
 	mkdir mknod mktemp mv nice printenv pwd rm rmdir sleep stat stty sync	\
 	touch true uname
 
@@ -52,8 +52,8 @@ DIR_USR_SBIN := \
 
 # BusyBox does not provide these yet
 DIR_OTHERS := \
-	chcon csplit dir dircolors fmt join pathchk pinky pr ptx runcon		\
-	sha224sum sha384sum stdbuf tsort vdir
+	base32 b2sum basenc chcon csplit dir dircolors fmt join numfmt pathchk	\
+	pinky pr ptx runcon sha224sum sha384sum stdbuf tsort vdir
 
 $(eval $(foreach a,$(DIR_BIN),ALTS_$(a):=300:/bin/$(a):/usr/bin/gnu-$(a)$(newline)))
 $(eval $(foreach a,$(DIR_USR_BIN),ALTS_$(a):=300:/usr/bin/$(a):/usr/bin/gnu-$(a)$(newline)))
