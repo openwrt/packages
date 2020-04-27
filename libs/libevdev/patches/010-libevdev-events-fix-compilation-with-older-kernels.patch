@@ -1,0 +1,49 @@
+From e7a2927d5e44209ff61405c9beb3d188eeedc3f6 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Sun, 26 Apr 2020 20:27:58 -0700
+Subject: [PATCH] libevdev-events: fix compilation with older kernels
+
+input_event_(u)sec was introduced in kernel 4.16. Older kernels do not
+have this.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ tools/libevdev-events.c | 5 +++++
+ tools/mouse-dpi-tool.c  | 5 +++++
+ 2 files changed, 10 insertions(+)
+
+diff --git a/tools/libevdev-events.c b/tools/libevdev-events.c
+index 547513e..e5940c9 100644
+--- a/tools/libevdev-events.c
++++ b/tools/libevdev-events.c
+@@ -33,6 +33,11 @@
+ 
+ #include "libevdev/libevdev.h"
+ 
++#ifndef input_event_sec
++#define input_event_sec time.tv_sec
++#define input_event_usec time.tv_usec
++#endif
++
+ static void
+ print_abs_bits(struct libevdev *dev, int axis)
+ {
+diff --git a/tools/mouse-dpi-tool.c b/tools/mouse-dpi-tool.c
+index 9961f3a..c4830e7 100644
+--- a/tools/mouse-dpi-tool.c
++++ b/tools/mouse-dpi-tool.c
+@@ -37,6 +37,11 @@
+ 
+ #include "libevdev/libevdev.h"
+ 
++#ifndef input_event_sec
++#define input_event_sec time.tv_sec
++#define input_event_usec time.tv_usec
++#endif
++
+ #define min(a, b) (((a) < (b)) ? (a) : (b))
+ #define max(a, b) (((a) > (b)) ? (a) : (b))
+ 
+-- 
+2.25.3
+
