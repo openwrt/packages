@@ -183,6 +183,7 @@ issue_cert()
     local update_uhttpd
     local update_nginx
     local keylength
+    local keylength_ecc=0
     local domains
     local main_domain
     local moved_staging=0
@@ -215,6 +216,7 @@ issue_cert()
 
     if echo $keylength | grep -q "^ec-"; then
         domain_dir="$STATE_DIR/${main_domain}_ecc"
+        keylength_ecc=1
     else
         domain_dir="$STATE_DIR/${main_domain}"
     fi
@@ -234,6 +236,7 @@ issue_cert()
             moved_staging=1
         else
             log "Found previous cert config. Issuing renew."
+            [ "$keylength_ecc" -eq "1" ] && acme_args="$acme_args --ecc"
             run_acme --home "$STATE_DIR" --renew -d "$main_domain" $acme_args && ret=0 || ret=1
             post_checks
             return $ret
