@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=websocketpp
-PKG_VERSION:=0.8.1
-PKG_RELEASE:=2
+PKG_VERSION:=0.8.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/zaphoyd/websocketpp/archive/$(PKG_VERSION)/
-PKG_HASH:=178899de48c02853b55b1ea8681599641cedcdfce59e56beaff3dd0874bf0286
+PKG_HASH:=6ce889d85ecdc2d8fa07408d6787e7352510750daa66b5ad44aacb47bea76755
 
 PKG_MAINTAINER:=Bruno Randolf <br1@einfach.org>
 PKG_LICENSE:=BSD-3-Clause
