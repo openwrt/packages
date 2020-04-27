@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -124,6 +124,9 @@ define Package/python3/description
   This package contains the (almost) full Python install.
   It's python3-light + all other packages.
 endef
+
+TARGET_CONFIGURE_OPTS+= \
+	READELF="$(TARGET_CROSS)readelf"
 
 MAKE_FLAGS+=\
 	CROSS_COMPILE=yes \
@@ -282,6 +285,9 @@ define Py3Package/python3-base/install
 	$(LN) python$(PYTHON3_VERSION) $(1)/usr/bin/python3
 	$(LN) python$(PYTHON3_VERSION) $(1)/usr/bin/python
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON3_VERSION).so* $(1)/usr/lib/
+  # This depends on being called before filespec is processed
+	$(SED) 's|$(TARGET_AR)|ar|g;s|$(TARGET_CROSS)readelf|readelf|g;s|$(TARGET_CC)|gcc|g;s|$(TARGET_CXX)|g++|g' \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/_sysconfigdata.py
 endef
 
 Py3Package/python3-light/install:=:
