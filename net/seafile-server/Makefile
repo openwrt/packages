@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
 PKG_VERSION:=7.1.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/haiwen/seafile-server/tar.gz/v$(PKG_VERSION)-server?
@@ -60,6 +60,7 @@ define Package/seafile-server
     +libsqlite3 \
     +libuuid \
     +oniguruma \
+    +procps-ng \
     +procps-ng-pkill \
     +python3-pymysql \
     +python3-seafile-server \
@@ -94,6 +95,7 @@ define Package/seafile-server-fuse
     +libsearpc \
     +libsqlite3 \
     +libuuid \
+    +procps-ng \
     +procps-ng-pkill \
     +seafile-ccnet \
     +seafile-server \
