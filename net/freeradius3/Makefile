@@ -589,11 +589,7 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-python3),)
   CFLAGS+= -fPIC
   CONFIGURE_ARGS+= \
 		--with-modules="rlm_python3" \
-		--with-rlm-python3-include-dir="$(PYTHON3_INC_DIR)" \
-		--with-rlm-python3-lib-dir="$(PYTHON3_LIB_DIR)"
-  CONFIGURE_VARS+= \
-		OPENWRTTARGET_PY3_PREFIX="$(PYTHON3_DIR)" \
-		OPENWRTTARGET_PY3_SYS_VERSION="$(PYTHON3_VERSION)"
+		--with-rlm-python3-config-bin="$(STAGING_DIR)/host/bin/python$(PYTHON3_VERSION)-config"
 else
   CONFIGURE_ARGS+= --without-rlm_python3
 endif
