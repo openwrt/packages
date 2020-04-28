@@ -10,8 +10,6 @@ Follow up to 2a9c3805ddedf282881ef7811a561c70b74f80b1 (bpo-34585).
  pyconfig.h.in |   4 ++
  3 files changed, 51 insertions(+), 100 deletions(-)
 
-diff --git a/aclocal.m4 b/aclocal.m4
-index 6a24d8e6b9c00..030e6877de9f7 100644
 --- a/aclocal.m4
 +++ b/aclocal.m4
 @@ -288,3 +288,4 @@ AS_VAR_COPY([$1], [pkg_cv_][$1])
@@ -19,11 +17,9 @@ index 6a24d8e6b9c00..030e6877de9f7 100644
  ])dnl PKG_CHECK_VAR
  
 +m4_include([m4/ax_c_float_words_bigendian.m4])
-diff --git a/configure b/configure
-index 7b0c734b5e25e..38546d6ca7b40 100755
 --- a/configure
 +++ b/configure
-@@ -13853,131 +13853,77 @@ fi
+@@ -13022,131 +13022,77 @@ fi
  # * Check for various properties of floating point *
  # **************************************************
  
@@ -201,11 +197,9 @@ index 7b0c734b5e25e..38546d6ca7b40 100755
  
  $as_echo "#define DOUBLE_IS_ARM_MIXED_ENDIAN_IEEE754 1" >>confdefs.h
  
-diff --git a/pyconfig.h.in b/pyconfig.h.in
-index 360f79994fafe..41e0479cad2e3 100644
 --- a/pyconfig.h.in
 +++ b/pyconfig.h.in
-@@ -30,6 +30,10 @@
+@@ -36,6 +36,10 @@
  /* Define if --enable-ipv6 is specified */
  #undef ENABLE_IPV6
  
