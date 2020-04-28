@@ -17,20 +17,15 @@ RFC because this doesn't yet handle the weird ancient ARMv4 OABI 'mixed-endian' 
  create mode 100644 Misc/NEWS.d/next/Build/2018-09-18-16-28-31.bpo-34585.CGMu0h.rst
  create mode 100644 m4/ax_c_float_words_bigendian.m4
 
-diff --git a/Misc/NEWS.d/next/Build/2018-09-18-16-28-31.bpo-34585.CGMu0h.rst b/Misc/NEWS.d/next/Build/2018-09-18-16-28-31.bpo-34585.CGMu0h.rst
-new file mode 100644
-index 0000000000000..01318e6e46a32
 --- /dev/null
 +++ b/Misc/NEWS.d/next/Build/2018-09-18-16-28-31.bpo-34585.CGMu0h.rst
 @@ -0,0 +1,3 @@
 +Check for floating-point byte order in configure.ac using compilation tests
 +instead of executing code, so that these checks work in cross-compiled
 +builds.
-diff --git a/configure.ac b/configure.ac
-index 03638f8ae9bc7..96331ec221be2 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -4206,74 +4206,24 @@ fi
+@@ -3862,74 +3862,24 @@ fi],
  # * Check for various properties of floating point *
  # **************************************************
  
@@ -118,9 +113,6 @@ index 03638f8ae9bc7..96331ec221be2 100644
    AC_DEFINE(DOUBLE_IS_ARM_MIXED_ENDIAN_IEEE754, 1,
    [Define if C doubles are 64-bit IEEE 754 binary format, stored
     in ARM mixed-endian order (byte order 45670123)])
-diff --git a/m4/ax_c_float_words_bigendian.m4 b/m4/ax_c_float_words_bigendian.m4
-new file mode 100644
-index 0000000000000..216b90d803187
 --- /dev/null
 +++ b/m4/ax_c_float_words_bigendian.m4
 @@ -0,0 +1,83 @@
