@@ -39,6 +39,11 @@ define Package/bash/description
   incorporates useful features from the Korn and C shells (ksh and csh).
 endef
 
+define Package/bash/conffiles
+/etc/bash.bashrc
+/etc/bash.bash_logout
+endef
+
 # Bash detects and enables certain features by runtest simple piece of code
 # which is not viable when doing cross compilation and default to no in many
 # cases.  Grep for 'cross.compil' in aclocal.m4 and config-bot.h for details
@@ -89,6 +94,7 @@ define Package/bash/install
 	$(INSTALL_DIR) $(1)/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/bash $(1)/bin/
 	$(LN) bash $(1)/bin/rbash
+	$(CP) ./files/* $(1)/
 endef
 
 $(eval $(call BuildPackage,bash))
