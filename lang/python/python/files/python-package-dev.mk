@@ -15,6 +15,8 @@ define PyPackage/python-dev/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/python*config $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config/libpython$(PYTHON_VERSION).a $(1)/usr/lib
+	$(SED) 's|$(TARGET_AR)|ar|g;s|$(TARGET_RANLIB)|ranlib|g;s|$(TARGET_CC)|gcc|g;s|$(TARGET_CXX)|g++|g' \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config/Makefile
 endef
 
 $(eval $(call PyBasePackage,python-dev, \
