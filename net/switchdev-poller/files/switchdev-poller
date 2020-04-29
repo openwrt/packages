@@ -3,9 +3,9 @@
 #  https://www.shellcheck.net/wiki/SC2039 -- In POSIX sh, SC2039: In POSIX sh, string replacement is undefined.
 #  https://www.shellcheck.net/wiki/SC2039 -- In POSIX sh, string indexing is undefined.
 #  https://www.shellcheck.net/wiki/SC1091 -- Not following: /lib/functions.sh:...
-# Copyright (C) 2018 Luiz Angelo Daros de Luca <luizluca@gmail.com>
+# Copyright (C) 2018-2020 Luiz Angelo Daros de Luca <luizluca@gmail.com>
 #
-# Pools switchdev for port changes
+# Pools switch for port changes
 #
 
 [ -n "$NICED" ] && NICED=1 exec nice -n 19 "$0" "$@"
@@ -107,11 +107,8 @@ config_foreach each_switch_vlan switch_vlan
 cleanup() {
 	for device2ports in $devices2ports; do
 		device=${device2ports%=*}
-		ip link show dev ${device}_down >/dev/null 2>&1 && {
-			echo "Bringing up $device on exit..."
-			ip link set dev ${device}_down name ${device}
-			ip link set dev ${device} up >/dev/null 2>&1;
-		}
+		echo "Bringing up $device on exit..."
+		ip link set dev ${device} up >/dev/null 2>&1;
 	done
 	echo "Stopped poller"
 	exit
@@ -140,19 +137,18 @@ for device2ports in $devices2ports; do
 			[ $state = up ] && should_be_up=true
 		done
 
-		if $should_be_up; then
-			ip link show dev ${device}_down >/dev/null 2>&1 && {
-				echo "Bringing up $device..."
-				ip link set dev ${device}_down name ${device}
-				ip link set dev ${device} up >/dev/null 2>&1;
-			}
+		if ip link show dev ${device} | grep -q "DOWN"; then
+			current_up=false
 		else
-			ip link show dev ${device} >/dev/null 2>&1 && {
-				echo "Bringing down $device..."
-				ip link set dev ${device} down >/dev/null 2>&1;
-				ip link set dev ${device} name ${device}_down
-			}
+			current_up=true
+		fi
 
+		if $should_be_up && ! $current_up; then
+			echo "Bringing up $device..."
+			ip link set dev ${device} up >/dev/null 2>&1;
+		elif ! $should_be_up && $current_up; then
+			echo "Bringing down $device..."
+			ip link set dev ${device} down >/dev/null 2>&1;
 		fi
 done )
 sleep 3
