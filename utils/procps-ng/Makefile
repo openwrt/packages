@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=procps-ng
 PKG_VERSION:=3.3.15
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/procps-ng
@@ -22,7 +22,6 @@ PKG_LICENSE_FILES:=COPYING COPYING.LIB
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
-PKG_BUILD_DEPENDS:=gettext libiconv
 
 include $(INCLUDE_DIR)/package.mk
 
