@@ -226,10 +226,15 @@ f_prepif()
 #
 f_net()
 {
-	local IFS result
+	local IFS raw result
 
-	result="$(${trm_fetch} --timeout=$((trm_maxwait/6)) "${trm_captiveurl}" -O /dev/null 2>&1 | tail -n 1)"
-	result="$(printf "%s" "${result//[\?\$\%\&\+\|\'\"\:]*/}" | awk '/^Failed to redirect|^Redirected/{printf "%s" "net cp \047"$NF"\047";exit}/^Download completed/{printf "%s" "net ok";exit}/^Failed|Connection error/{printf "%s" "net nok";exit}')"
+	raw="$(${trm_fetch} --timeout=$((trm_maxwait/6)) "${trm_captiveurl}" -O /dev/null 2>&1 | tail -n 1)"
+	raw="$(printf "%s" "${raw//[\?\$\%\&\+\|\'\"\:\*\=\/]/ }")"
+	result="$(printf "%s" "${raw}" | awk '/^Failed to redirect|^Redirected/{printf "%s","net cp";exit}/^Download completed/{printf "%s","net ok";exit}/^Failed|Connection error/{printf "%s","net nok";exit}')"
+	if [ "${result}" = "net cp" ]
+	then
+		result="$(printf "%s" "${raw//*on /}" | awk 'match($0,/^([[:alnum:]_-]+\.)+[[:alpha:]]+/){printf "%s","net cp \047"substr(tolower($0),RSTART,RLENGTH)"\047"}')"
+	fi
 	printf "%s" "${result}"
 	f_log "debug" "f_net     ::: fetch: ${trm_fetch}, timeout: $((trm_maxwait/6)), url: ${trm_captiveurl}, result: ${result}"
 }
