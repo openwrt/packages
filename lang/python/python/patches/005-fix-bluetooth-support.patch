@@ -1,6 +1,6 @@
 --- a/configure
 +++ b/configure
-@@ -7077,7 +7077,7 @@ sys/param.h sys/poll.h sys/random.h sys/
+@@ -7084,7 +7084,7 @@ sys/param.h sys/poll.h sys/random.h sys/
  sys/termio.h sys/time.h \
  sys/times.h sys/types.h sys/un.h sys/utsname.h sys/wait.h pty.h libutil.h \
  sys/resource.h netpacket/packet.h sysexits.h bluetooth.h \
@@ -9,7 +9,7 @@
  do :
    as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
  ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
-@@ -7299,6 +7299,24 @@ fi
+@@ -7306,6 +7306,24 @@ fi
  fi
  
  
@@ -36,7 +36,7 @@
  do :
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1732,10 +1732,17 @@ sys/param.h sys/poll.h sys/random.h sys/
+@@ -1739,10 +1739,17 @@ sys/param.h sys/poll.h sys/random.h sys/
  sys/termio.h sys/time.h \
  sys/times.h sys/types.h sys/un.h sys/utsname.h sys/wait.h pty.h libutil.h \
  sys/resource.h netpacket/packet.h sysexits.h bluetooth.h \
