@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
 PKG_VERSION:=12.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
 PKG_CPE_ID:=cpe:/a:postgresql:postgresql
@@ -122,6 +122,8 @@ PGSQL_CONFIG_VARS+= \
 		pgac_cv_type_locale_t=no
 endif
 
+HOST_CFLAGS+=-std=gnu99
+TARGET_CFLAGS+=-std=gnu99
 TARGET_CONFIGURE_OPTS+=$(PGSQL_CONFIG_VARS)
 
 HOST_CONFIGURE_ARGS += \
