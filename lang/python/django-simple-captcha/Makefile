@@ -11,14 +11,15 @@ PKG_NAME:=django-simple-captcha
 PKG_VERSION:=0.5.12
 PKG_RELEASE:=4
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/mbi/django-simple-captcha/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=89db73a3883573ad5e22c511948a5500491f9848363174d835a2364750c81a77
+PYPI_NAME:=$(PKG_NAME)
+PYPI_SOURCE_EXT:=zip
+PKG_HASH:=fc25f0425e282aa82d2a65013049a8dc7c0682f8e05d32681c39a0c55ed322bd
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
