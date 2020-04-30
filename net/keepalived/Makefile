@@ -216,6 +216,10 @@ define Package/keepalived/install
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/keepalived/keepalived.conf \
 		$(1)/etc/keepalived/
 
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/etc/uci-defaults/keepalived \
+		$(1)/etc/uci-defaults/keepalived
+
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/keepalived.init \
 		$(1)/etc/init.d/keepalived
