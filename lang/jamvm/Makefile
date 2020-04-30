@@ -24,7 +24,6 @@ PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/host-build.mk
 
 define Package/jamvm
   SUBMENU:=Java
@@ -67,4 +66,3 @@ define Build/InstallDev
 endef
 
 $(eval $(call BuildPackage,jamvm))
-$(eval $(call HostBuild))
