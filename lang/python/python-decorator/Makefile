@@ -5,16 +5,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-decorator
-PKG_VERSION:=4.3.2
-PKG_RELEASE:=2
+PKG_VERSION:=4.4.2
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 PKG_CPE_ID:=cpe:/a:python:decorator
 
-PKG_SOURCE_URL:=https://codeload.github.com/micheles/decorator/tar.gz/$(PKG_VERSION)?
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=c053ec881270608a5aef624a45a7700ec76ceca9d96689506411e1f319085380
-PKG_BUILD_DIR:=$(BUILD_DIR)/decorator-$(PKG_VERSION)
+PYPI_NAME:=decorator
+PKG_HASH:=e3a62f0520172440ca0dcc823749319382e377f37f140a0b99ef45fecb84bfe7
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
