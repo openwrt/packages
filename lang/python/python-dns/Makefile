@@ -11,17 +11,15 @@ PKG_NAME:=python-dns
 PKG_VERSION:=1.16.0
 PKG_RELEASE:=2
 
-PKG_SOURCE:=dnspython-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.dnspython.org/kits/1.16.0/
-PKG_HASH:=4bf5c5c12a4478ee7860ab176659cf64c4899ee76752d826b082f8af723c5cf9
+PYPI_NAME:=dnspython
+PYPI_SOURCE_EXT:=zip
+PKG_HASH:=36c5e8e38d4369a08b6780b7f27d790a292b2b08eea01607865bf0936c558e01
 
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
-PKG_CPE_ID:=cpe:/a:debian:python-dns
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/dnspython-$(PKG_VERSION)
-
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
