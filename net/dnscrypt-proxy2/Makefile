@@ -25,6 +25,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 GO_PKG:=github.com/DNSCrypt/dnscrypt-proxy
+PKG_CONFIG_DEPENDS := CONFIG_$(PKG_NAME)_INCLUDE_GOPROXY
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -37,6 +38,19 @@ define Package/dnscrypt-proxy2
   DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
   CONFLICTS:=dnscrypt-proxy
 endef
+
+define Package/$(PKG_NAME)/config
+config $(PKG_NAME)_INCLUDE_GOPROXY
+	bool "Compiling with GOPROXY proxy"
+	default n
+endef
+
+ifeq ($(CONFIG_$(PKG_NAME)_INCLUDE_GOPROXY),y)
+export GO111MODULE=on
+#export GOPROXY=https://goproxy.io
+export GOPROXY=https://goproxy.cn
+#export GOPROXY=https://mirrors.aliyun.com/goproxy/
+endif
 
 define Package/dnscrypt-proxy2/install
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
@@ -60,8 +74,16 @@ define Package/dnscrypt-proxy2/description
   such as DNSCrypt v2 and DNS-over-HTTPS.
 endef
 
+define Build/Prepare
+	$(call Build/Prepare/Default)
+endef
+
 define Package/dnscrypt-proxy2/conffiles
 /etc/dnscrypt-proxy2/dnscrypt-proxy.toml
+endef
+
+define Build/Compile
+	$(call GoPackage/Build/Compile)
 endef
 
 define Package/golang-github-jedisct1-dnscrypt-proxy2-dev
