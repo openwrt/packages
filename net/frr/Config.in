@@ -13,6 +13,20 @@ choice
                 bool "internal SSL support"
 endchoice
 
+comment "SNMP support"
+
+choice
+        prompt "Enable SNMP support"
+        default FRR_NO_SNMP
+
+        config FRR_SNMP
+                bool "SNMP enable"
+
+        config FRR_NO_SNMP
+                bool "SNMP disable"
+endchoice
+
+
 comment "Packages"
 
 endif

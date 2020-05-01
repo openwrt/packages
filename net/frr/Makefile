@@ -8,12 +8,14 @@
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
 PKG_VERSION:=7.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=https://github.com/FRRouting/frr/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_HASH:=529e1bbc3a20d55e94c38a95513bcf971d4b403ecb00afdaf0c229e3f560b2b6
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
+
+PKG_LICENSE:=GPL-2.0-only LGPL-2.1-only
 
 PKG_DAEMON_AVAILABLE:= \
 	babeld \
@@ -38,15 +40,20 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_IPV6 \
 	CONFIG_FRR_OPENSSL \
 	CONFIG_FRR_INTERNAL \
+	CONFIG_FRR_SNMP \
+	CONFIG_FRR_NO_SNMP \
 	CONFIG_PACKAGE_frr-libfrr \
 	CONFIG_PACKAGE_frr-vtysh \
 	CONFIG_PACKAGE_frr-watchfrr \
 	CONFIG_PACKAGE_frr-zebra \
 	$(patsubst %,CONFIG_PACKAGE_frr-%,$(PKG_DAEMON_AVAILABLE)) \
 
+PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=python3/host
-PKG_LICENSE:=GPL-2.0
+PKG_INSTALL:=1
+
+PKG_BUILD_DEPENDS:=frr/host
+HOST_BUILD_DEPENDS:=python3/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -82,7 +89,7 @@ endef
 define Package/frr-libfrr
   $(call Package/frr/Default)
   TITLE:=zebra library
-  DEPENDS+=+librt +libatomic +libjson-c +libyang +FRR_OPENSSL:libopenssl
+  DEPENDS+=+librt +libatomic +libcap +libjson-c +libyang +FRR_OPENSSL:libopenssl +FRR_SNMP:libnetsnmp
   CONFLICTS:=quagga-libzebra
 endef
 
@@ -128,98 +135,85 @@ define BuildDaemon
 
     define Package/frr-$(1)/install
 	$(INSTALL_DIR) $$(1)/usr/sbin
-	if [ "$(1)" != "fabricd" ]; then \
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/$(1)/.libs/$(1) $$(1)/usr/sbin/; \
-	else \
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/isisd/.libs/$(1) $$(1)/usr/sbin/; fi
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/$(1) $$(1)/usr/sbin/; \
 	if [ "$(1)" == "nhrpd" ]; then \
 	$(INSTALL_DIR) $$(1)/usr/lib; \
-	$(CP) $(PKG_BUILD_DIR)/build/lib/.libs/libfrrcares.so* $$(1)/usr/lib/; fi
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfrrcares.so* $$(1)/usr/lib/; fi
     endef
 
     $$(eval $$(call BuildPackage,frr-$(1)))
 endef
 
 define Package/frr-libfrr/conffiles
-/etc/frr/
+/etc/frr/daemons
+/etc/frr/frr.conf
+/etc/frr/vtysh.conf
 endef
 
-TARGET_LDFLAGS += -latomic
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed -latomic
+TARGET_CFLAGS += -flto
 
-define Build/Prepare
-	$(Build/Prepare/Default)
-	mkdir -p $(PKG_BUILD_DIR)/build
+define Host/Configure
+	$(Host/Configure/Default)
+	$(SED) 's/$$$$(MAKE) $$$$(AM_MAKEFLAGS) install-am/# $$$$(MAKE) $$$$(AM_MAKEFLAGS) install-am/' $(HOST_BUILD_DIR)/Makefile.in
 endef
 
-define Build/Configure
-    ( cd $(PKG_BUILD_DIR)/build/ ; \
-    ../configure \
-	--host="$(GNU_TARGET_NAME)" \
-	--build="$(GNU_HOST_NAME)" \
-	CFLAGS="$(TARGET_CFLAGS) $(EXTRA_CFLAGS)" \
-	CXXFLAGS="$(TARGET_CFLAGS) $(EXTRA_CFLAGS)" \
-	LDFLAGS="$(TARGET_LDFLAGS) $(EXTRA_LDFLAGS)" \
-	HOST_CFLAGS="$(HOST_CFLAGS)" \
-	HOST_LDFLAGS="$(HOST_LDFLAGS)" \
-	BUILD_CPPFLAGS="$(TARGET_CPPLAGS)" \
-	BUILD_CFLAGS="$(TARGET_CFLAGS)" \
-	BUILD_LDFLAGS="$(TARGET_LDFLAGS)" \
+HOST_CONFIGURE_ARGS+= \
+	--enable-clippy-only
+
+define Host/Install
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/lib/clippy $(STAGING_DIR_HOSTPKG)/bin/
+endef
+
+CONFIGURE_ARGS+= \
+	--with-clippy=$(STAGING_DIR_HOSTPKG)/bin/clippy \
 	--prefix=/usr \
 	--enable-shared \
 	--disable-static \
 	--enable-user=network \
 	--enable-group=network \
-	--enable-multipath=16 \
-	--disable-capabilities \
 	--disable-ospfclient \
 	--disable-doc \
 	--disable-backtrace \
 	--localstatedir=/var/run/frr \
 	--sysconfdir=/etc/frr/ \
 	$(if $(CONFIG_FRR_OPENSSL),--with-crypto=openssl,) \
+	$(if $(CONFIG_FRR_SNMP),--enable-snmp,) \
 	$(foreach m,$(PKG_DAEMON_AVAILABLE), \
 	$(call autoconf_bool,CONFIG_PACKAGE_frr-$(m),$(m)) ) \
 	$(call autoconf_bool,CONFIG_PACKAGE_frr-vtysh,vtysh) \
-	$(call autoconf_bool,CONFIG_PACKAGE_frr-libfrr,zebra) \
-)
-endef
+	$(call autoconf_bool,CONFIG_PACKAGE_frr-libfrr,zebra)
 
-#	just speed it up
-NUM_CORES ?= $(shell grep -c "vendor_id" /proc/cpuinfo)
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR)/build -j$(NUM_CORES)
-endef
 
 define Package/frr/install
-	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/frrcommon.sh $(1)/usr/sbin/
-	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/frr $(1)/etc/init.d/
 endef
 
 define Package/frr-watchfrr/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) ./files/watchfrr.sh $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/watchfrr/.libs/watchfrr $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/watchfrr $(1)/usr/sbin/
 endef
 
 define Package/frr-zebra/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/zebra/.libs/zebra $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/zebra $(1)/usr/sbin/
 endef
 
 define Package/frr-libfrr/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_BUILD_DIR)/build/lib/.libs/libfrr.so* $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/etc/frr
-	chmod 0750 $(1)/etc/frr
+	$(INSTALL_DIR) $(1)/usr/lib $(1)/etc/frr
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfrr.so* $(1)/usr/lib/
+	$(if $(CONFIG_FRR_SNMP),$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfrrsnmp.so* $(1)/usr/lib/,)
 	$(INSTALL_CONF) ./files/{frr.conf,daemons} $(1)/etc/frr/
 endef
 
 define Package/frr-vtysh/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/vtysh/.libs/vtysh $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/etc/frr
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/vtysh $(1)/usr/bin/
+	$(INSTALL_CONF) ./files/vtysh.conf $(1)/etc/frr/
 endef
 
 $(eval $(call HostBuild))
