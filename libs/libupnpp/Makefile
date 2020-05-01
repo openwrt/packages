@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libupnpp
-PKG_VERSION:=0.17.2
+PKG_VERSION:=0.18.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.lesbonscomptes.com/upmpdcli/downloads
-PKG_HASH:=5abaaf353a1e9c3482d61ef2627b650285d59f27c1ee60d35b8951952261374f
+PKG_HASH:=c9659cd36ce70c43e9889a6c3a5eeb28e4f799580727826a6c7aef9bef6b6937
 
 PKG_MAINTAINER:=Petko Bordjukov <bordjukov@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -28,7 +28,7 @@ define Package/libupnpp
   SECTION:=libs
   CATEGORY:=Libraries
   URL:=https://www.lesbonscomptes.com/upmpdcli
-  DEPENDS+= +libstdcpp +libexpat +librt +libcurl +libupnp
+  DEPENDS+=+libnpupnp
   TITLE:=The libupnpp C++ library wraps libupnp for easier use by upmpdcli and upplay
 endef
 
