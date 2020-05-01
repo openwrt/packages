@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=xtables-addons
 PKG_VERSION:=3.13
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_HASH:=893c0c4ea09759cda1ab7e68f1281d125e59270f7b59e446204ce686c6a76d65
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -139,6 +139,22 @@ define Package/iptgeoip
 		+wget-ssl +!BUSYBOX_CONFIG_ZCAT:gzip
 endef
 
+define Package/iptgeoip/config
+	menu "Select iptgeoip options"
+		config IPTGEOIP_PRESERVE
+			bool "Preserve across sysupgrades"
+			default n
+			help
+			  Backup and restore during sysupgrade (requires >7MB)
+	endmenu
+endef
+
+ifeq ($(CONFIG_IPTGEOIP_PRESERVE),y)
+define Package/iptgeoip/conffiles
+/usr/share/xt_geoip/
+endef
+endif
+
 define Package/iptgeoip/install
 	$(INSTALL_DIR) $(1)/usr/lib/xtables-addons
 	$(CP) \
@@ -149,6 +165,7 @@ define Package/iptgeoip/install
 		$(PKG_INSTALL_DIR)/usr/bin/xt_geoip_fetch \
 		$(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/share/xt_geoip
+	touch $(1)/usr/share/xt_geoip/.keep
 endef
 
 
