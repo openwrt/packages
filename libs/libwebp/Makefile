@@ -12,10 +12,11 @@ PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 
-PKG_INSTALL:=1
+CMAKE_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libwebp
   SECTION:=libs
@@ -28,33 +29,19 @@ define Package/libwebp/description
   The libwebp package contains a library for the WebP format.
 endef
 
-CONFIGURE_ARGS += \
-	--enable-shared \
-	--disable-static \
-	--disable-neon-rtcd \
-	--disable-gl \
-	--disable-sdl \
-	--disable-gif \
-	--disable-jpeg \
-	--disable-png \
-	--disable-tiff \
-	--disable-wic \
-	--disable-libwebpmux \
-	--disable-libwebpdemux \
-	--disable-libwebpdecoder \
-	--disable-libwebpextras \
-	--without-pic
+CMAKE_OPTIONS += \
+	-DBUILD_SHARED_LIBS=ON \
+	-DWEBP_BUILD_ANIM_UTILS=OFF \
+	-DWEBP_BUILD_CWEBP=OFF \
+	-DWEBP_BUILD_DWEBP=OFF \
+	-DWEBP_BUILD_GIF2WEBP=OFF \
+	-DWEBP_BUILD_IMG2WEBP=OFF \
+	-DWEBP_BUILD_VWEBP=OFF \
+	-DWEBP_BUILD_WEBPINFO=OFF \
+	-DWEBP_BUILD_WEBPMUX=OFF \
+	-DWEBP_BUILD_EXTRAS=OFF
 
-TARGET_CFLAGS += $(FPIC) -flto
-
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/webp
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/webp/* $(1)/usr/include/webp/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libwebp* $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libwebp.pc $(1)/usr/lib/pkgconfig/
-endef
+TARGET_CFLAGS += -flto
 
 define Package/libwebp/install
 	$(INSTALL_DIR) $(1)/usr/lib
