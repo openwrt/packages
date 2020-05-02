@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwebp
-PKG_VERSION:=1.0.3
-PKG_RELEASE:=2
+PKG_VERSION:=1.1.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://storage.googleapis.com/downloads.webmproject.org/releases/webp
-PKG_HASH:=e20a07865c8697bba00aebccc6f54912d6bc333bb4d604e6b07491c1a226b34f
+PKG_HASH:=98a052268cc4d5ece27f76572a7f50293f439c17a98e67c4ea0c7ed6f50ef043
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
