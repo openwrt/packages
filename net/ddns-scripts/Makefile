@@ -12,7 +12,7 @@ PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.7.8
 # Release == build
 # increase on changes of services files or tld_names.dat
-PKG_RELEASE:=19
+PKG_RELEASE:=20
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=
@@ -81,6 +81,26 @@ define Package/ddns-scripts_godaddy.com-v1
 endef
 define Package/ddns-scripts_godaddy.com-v1/description
     Dynamic DNS Client scripts extension for GoDaddy.com (require/install cURL)
+endef
+
+###### *************************************************************************
+define Package/ddns-scripts_digitalocean.com-v2
+    $(call Package/ddns-scripts/Default)
+    TITLE:=digitalocean.com (require cURL)
+    DEPENDS:=ddns-scripts +curl
+endef
+define Package/ddns-scripts_digitalocean.com-v2/description
+    Dynamic DNS Client scripts extension for digitalocean.com (require/install cURL)
+endef
+define Package/ddns-scripts_digitalocean.com-v2/config
+    help
+	The script directly updates a DNS record using the DO API. It requires
+	"option dns_server" to be set to the server to be used by nsupdate.
+	"option domain" the dns domain to update the record for (eg. A-record: home.<example.com>)
+	"option username" the dns record name to update (eg. A-record: <home>.example.com)
+	"option param_opt" the id of the dns record to update (check using chrome inspector in the DO dns tab)
+	"option password" the api token generated in the DO panel
+
 endef
 
 ###### *************************************************************************
@@ -332,6 +352,47 @@ define Package/ddns-scripts_godaddy.com-v1/prerm
 endef
 
 ###### *************************************************************************
+define Package/ddns-scripts_digitalocean.com-v2/preinst
+	#!/bin/sh
+	# if NOT run buildroot then stop service
+	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
+	exit 0	# suppress errors
+endef
+define Package/ddns-scripts_digitalocean.com-v2/install
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_digtalocean.com-v2
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_digitalocean_com_v2.sh $(1)/usr/lib/ddns
+endef
+define Package/ddns-scripts_digitalocean.com-v2/postinst
+	#!/bin/sh
+	# remove old services file entries
+	/bin/sed -i '/digitalocean\.com-v2/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
+	/bin/sed -i '/digitalocean\.com-v2/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
+	# and create new
+	printf "%s\\t%s\\n" '"digitalocean.com-v2"' '"update_digitalocean_com_v2.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
+	printf "%s\\t%s\\n" '"digitalocean.com-v2"' '"update_digitalocean_com_v2.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
+	# on real system restart service if enabled
+	[ -z "$${IPKG_INSTROOT}" ] && {
+		[ -x /etc/uci-defaults/ddns_digitalocean.com-v2 ] && \
+			/etc/uci-defaults/ddns_digitalocean.com-v2 && \
+				rm -f /etc/uci-defaults/ddns_digitalocean.com-v2 >/dev/null 2>&1
+		/etc/init.d/ddns enabled \
+			&& /etc/init.d/ddns start >/dev/null 2>&1
+	}
+	exit 0	# suppress errors
+endef
+define Package/ddns-scripts_digitalocean.com-v2/prerm
+	#!/bin/sh
+	# if NOT run buildroot then stop service
+	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop				>/dev/null 2>&1
+	# remove services file entries
+	/bin/sed -i '/digitalocean\.com-v2/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
+	/bin/sed -i '/digitalocean\.com-v2/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
+	exit 0	# suppress errors
+endef
+
+###### *************************************************************************
 define Package/ddns-scripts_no-ip_com/preinst
 	#!/bin/sh
 	# if NOT run buildroot then stop service
@@ -497,6 +558,7 @@ $(eval $(call BuildPackage,ddns-scripts))
 $(eval $(call BuildPackage,ddns-scripts_cloudflare.com-v4))
 $(eval $(call BuildPackage,ddns-scripts_freedns_42_pl))
 $(eval $(call BuildPackage,ddns-scripts_godaddy.com-v1))
+$(eval $(call BuildPackage,ddns-scripts_digitalocean.com-v2))
 $(eval $(call BuildPackage,ddns-scripts_no-ip_com))
 $(eval $(call BuildPackage,ddns-scripts_nsupdate))
 $(eval $(call BuildPackage,ddns-scripts_route53-v1))
