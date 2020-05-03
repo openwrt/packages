@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright 2017-2019 Stan Grishin (stangri@melmac.net)
+# Copyright 2017-2020 Stan Grishin (stangri@melmac.net)
 # shellcheck disable=SC2039,SC1091,SC2018,SC2019
 PKG_VERSION='dev-test'
 
@@ -13,8 +13,7 @@ readonly __FAIL__='\033[0;31m[\xe2\x9c\x97]\033[0m'
 readonly __PASS__='\033[0;33m[-]\033[0m'
 readonly _ERROR_='\033[0;31mERROR\033[0m'
 readonly _WARNING_='\033[0;33mWARNING\033[0m'
-# readonly readmeURL="https://github.com/openwrt/packages/tree/master/net/vpn-policy-routing/files/README.md"
-readonly readmeURL="https://github.com/stangri/openwrt_packages/blob/master/vpn-policy-routing/files/README.md"
+readonly readmeURL="https://github.com/openwrt/packages/tree/master/net/vpn-policy-routing/files/README.md"
 
 export EXTRA_COMMANDS='support'
 export EXTRA_HELP="	support	Generates output required to troubleshoot routing issues
@@ -28,6 +27,7 @@ readonly serviceName="$packageName $PKG_VERSION"
 readonly PID="/var/run/${packageName}.pid"
 readonly dnsmasqFile="/var/dnsmasq.d/${packageName}"
 readonly userFile="/etc/${packageName}.user"
+readonly sharedMemoryOutput="/dev/shm/$packageName-output"
 create_lock() { [ -e "$PID" ] && return 1; touch "$PID"; }
 remove_lock() { [ -e "$PID" ] && rm -f "$PID"; }
 trap remove_lock EXIT
@@ -45,17 +45,19 @@ str_extras_to_space() { echo "$1" | tr ';{}' ' '; }
 output() {
 # Can take a single parameter (text) to be output at any verbosity
 # Or target verbosity level and text to be output at specifc verbosity
-	local msg
+	local msg memmsg logmsg
 	if [ $# -ne 1 ]; then
 		if [ $((verbosity & $1)) -gt 0 ] || [ "$verbosity" = "$1" ]; then shift; else return 0; fi
 	fi
 	[ -t 1 ] && printf "%b" "$1"
 	msg="${1//$serviceName /service }";
 	if [ "$(printf "%b" "$msg" | wc -l)" -gt 0 ]; then
-		logger -t "${packageName:-service} [$$]" "$(printf "%b" "${logmsg}${msg}")"
-		logmsg=''
+		[ -s "$sharedMemoryOutput" ] && memmsg="$(cat "$sharedMemoryOutput")"
+		logmsg="$(printf "%b" "${memmsg}${msg}" | sed 's/\x1b\[[0-9;]*m//g')"
+		logger -t "${packageName:-service} [$$]" "$(printf "%b" "$logmsg")"
+		rm -f "$sharedMemoryOutput"
 	else
-		logmsg="${logmsg}${msg}"
+		printf "%b" "$msg" >> "$sharedMemoryOutput"
 	fi
 }
 is_installed() { [ -s "/usr/lib/opkg/info/${1}.control" ]; }
@@ -243,6 +245,9 @@ ipt_cleanup() {
 	for i in PREROUTING FORWARD INPUT OUTPUT; do
 		while iptables -t mangle -D $i -m mark --mark 0x0/0xff0000 -j VPR_${i} >/dev/null 2>&1; do : ; done
 	done
+	for i in PREROUTING FORWARD INPUT OUTPUT; do
+		while iptables -t mangle -D $i -j VPR_${i} >/dev/null 2>&1; do : ; done
+	done
 }
 
 # shellcheck disable=SC2086
@@ -313,7 +318,7 @@ insert_tor_policy() {
 	local comment="$1" iface="$2" laddr="$3" lport="$4" raddr="$5" rport="$6" proto="$7" chain="${8:-PREROUTING}"
 	local mark=$(eval echo "\$mark_${iface//-/_}")
 	[ -z "$mark" ] && processPolicyError="${processPolicyError}${_ERROR_}: Unknown fw_mark for ${iface}##"
-	param="-t mangle $insertOption VPR_${chain} 1 -j MARK --set-xmark ${mark}/${fwMask}"
+	param="-t mangle $insertOption VPR_${chain} -j MARK --set-xmark ${mark}/${fwMask}"
 	[ -n "$laddr" ] && param="$param -s $laddr"
 	[ -n "$lport" ] && param="$param -p tcp -m multiport --sport ${lport//-/:}"
 	[ -n "$raddr" ] && param="$param -d $raddr"
@@ -330,6 +335,9 @@ insert_policy() {
 		is_ipv6 "$laddr" && return 0
 		is_ipv6 "$raddr" && return 0
 	fi
+
+	if is_ipv4 "$laddr" && is_ipv6 "$raddr"; then return 0; fi
+	if is_ipv6 "$laddr" && is_ipv4 "$raddr"; then return 0; fi
 
 	if [ -z "$mark" ]; then
 		processPolicyError="${processPolicyError}${_ERROR_}: Unknown fw_mark for ${iface}##"
@@ -597,19 +605,21 @@ table_create(){
 		fi
 		if [ -n "$remoteIpset" ]; then
 			if ips 'create' "${iface}" 'hash:net comment' && ips 'flush' "${iface}"; then
-				ipt -t mangle -I VPR_PREROUTING -m set --match-set "${iface}" dst $appendRemotePolicy -j MARK --set-xmark "${mark}/${fwMask}" || s=1
+				for i in PREROUTING FORWARD INPUT OUTPUT; do
+					ipt -t mangle -I VPR_${i} -m set --match-set "${iface}" dst -j MARK --set-xmark "${mark}/${fwMask}" || s=1
+				done
 			else
 			s=1
 			fi
 		fi
 		if [ "$localIpset" -ne 0 ]; then
 			if ips 'create' "${iface}_ip" 'hash:net comment' && ips 'flush' "${iface}_ip"; then
-				ipt -t mangle -I VPR_PREROUTING -m set --match-set "${iface}_ip" src $appendLocalPolicy -j MARK --set-mark "${mark}/${fwMask}" || s=1
+				ipt -t mangle -I VPR_PREROUTING -m set --match-set "${iface}_ip" src -j MARK --set-mark "${mark}/${fwMask}" || s=1
 			else
 			s=1
 			fi
 			if ips 'create' "${iface}_mac" 'hash:mac comment' && ips 'flush' "${iface}_mac"; then
-				ipt -t mangle -I VPR_PREROUTING -m set --match-set "${iface}_mac" src $appendLocalPolicy -j MARK --set-mark "${mark}/${fwMask}" || s=1
+				ipt -t mangle -I VPR_PREROUTING -m set --match-set "${iface}_mac" src -j MARK --set-mark "${mark}/${fwMask}" || s=1
 			else
 			s=1
 			fi
@@ -781,7 +791,7 @@ start_service() {
 
 		for i in PREROUTING FORWARD INPUT OUTPUT; do
 			ipt -t mangle -N "VPR_${i}"
-			ipt -t mangle "$insertOption" "$i" -m mark --mark "0x00/${fwMask}" -j "VPR_${i}"
+			ipt -t mangle "$insertOption" "$i" -m mark --mark "0x0/${fwMask}" -j "VPR_${i}"
 		done
 
 		output 1 'Processing Interfaces '
@@ -844,7 +854,7 @@ stop_service() {
 	if create_lock; then
 		load_package_config
 		for i in PREROUTING FORWARD INPUT OUTPUT; do
-			ipt -t mangle -D "${i}" -m mark --mark "0x00/${fwMask}" -j "VPR_${i}"
+			ipt -t mangle -D "${i}" -m mark --mark "0x0/${fwMask}" -j "VPR_${i}"
 			ipt -t mangle -F "VPR_${i}"; ipt -t mangle -X "VPR_${i}";
 		done
 		config_load 'network'; config_foreach process_interface 'interface' 'destroy'
@@ -865,22 +875,23 @@ stop_service() {
 
 # shellcheck disable=SC2119
 service_triggers() {
-		local n
-		is_enabled || return 1
+	local n
+	is_enabled || return 1
 
-		procd_open_validate
-			validate_config
-			validate_policy
-			validate_include
-		procd_close_validate
+	procd_open_validate
+		validate_config
+		validate_policy
+		validate_include
+	procd_close_validate
 
-		procd_add_reload_trigger 'firewall' 'openvpn' 'vpn-policy-routing'
-		procd_open_trigger
-			for n in $ifSupported; do procd_add_reload_interface_trigger "$n"; procd_add_interface_trigger "interface.*" "$n" /etc/init.d/${packageName} reload; done;
-#			output "$serviceName monitoring interfaces: $ifSupported\\n"; # output_okn;
-#			for n in $ifAll; do procd_add_reload_interface_trigger "$n"; procd_add_interface_trigger "interface.*" "$n" /etc/init.d/${packageName} reload; done;
-#			output "$serviceName monitoring ALL interfaces: $ifAll"; output_okn;
-		procd_close_trigger
+	procd_add_reload_trigger 'firewall' 'openvpn' 'vpn-policy-routing'
+	procd_open_trigger
+		for n in $ifSupported; do procd_add_reload_interface_trigger "$n"; procd_add_interface_trigger "interface.*" "$n" /etc/init.d/${packageName} reload; done;
+	procd_close_trigger
+
+	if [ "$verbosity" -eq 2 ]; then
+		output "$serviceName monitoring interfaces: $ifSupported.\\n"
+	fi
 }
 
 input() { local data; while read -r data; do echo "$data" | tee -a /var/${packageName}-support; done; }
