@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gerbera
-PKG_VERSION:=1.4.0
+PKG_VERSION:=1.5.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gerbera/gerbera/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=904a9031c85ac805e4c139f363510226952683d7257acd1dee25ba1e97fd7651
+PKG_HASH:=693a99b295bc79d842f036a6d04996d4676ac0791d65f3a1f7aab4badf9fb5ef
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
@@ -28,7 +28,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/gerbera
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+file +libupnp +libsqlite3 +libexif +libexpat +libuuid +libstdcpp $(ICONV_DEPENDS)
+  DEPENDS:=+file +libupnp +libsqlite3 +libexif +libuuid +pugixml +spdlog $(ICONV_DEPENDS)
   TITLE:=A free media server
   URL:=https://gerbera.io
   USERID:=gerbera:gerbera
@@ -43,23 +43,25 @@ define Package/gerbera/conffiles
 endef
 
 CMAKE_OPTIONS += \
+	-DCXX_FILESYSTEM_NO_LINK_NEEDED=$(if $(CONFIG_GCC_USE_VERSION_9),ON,OFF) \
+	-DCXX_FILESYSTEM_STDCPPFS_NEEDED=$(if $(CONFIG_GCC_USE_VERSION_8),OFF,ON) \
 	-DICONV_INCLUDE_DIR=$(ICONV_PREFIX)/include \
 	-DICONV_LIBRARIES=$(ICONV_PREFIX)/lib/libiconv.a \
-	-DWITH_MAGIC=1 \
-	-DWITH_MYSQL=0 \
-	-DWITH_CURL=0 \
-	-DWITH_INOTIFY=1 \
-	-DWITH_JS=0 \
-	-DWITH_TAGLIB=0 \
-	-DWITH_AVCODEC=0 \
-	-DWITH_FFMPEGTHUMBNAILER=0 \
-	-DWITH_EXIF=1 \
-	-DWITH_EXIV2=0 \
-	-DWITH_MATROSKA=0 \
-	-DWITH_SYSTEMD=0 \
-	-DWITH_LASTFM=0 \
-	-DWITH_DEBUG=0 \
-	-DWITH_TESTS=0
+	-DWITH_MAGIC=ON \
+	-DWITH_MYSQL=OFF \
+	-DWITH_CURL=OFF \
+	-DWITH_INOTIFY=ON \
+	-DWITH_JS=OFF \
+	-DWITH_TAGLIB=OFF \
+	-DWITH_AVCODEC=OFF \
+	-DWITH_FFMPEGTHUMBNAILER=OFF \
+	-DWITH_EXIF=ON \
+	-DWITH_EXIV2=OFF \
+	-DWITH_MATROSKA=OFF \
+	-DWITH_SYSTEMD=OFF \
+	-DWITH_LASTFM=OFF \
+	-DWITH_DEBUG=OFF \
+	-DWITH_TESTS=OFF
 
 TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
