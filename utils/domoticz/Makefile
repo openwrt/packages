@@ -32,7 +32,7 @@ define Package/domoticz
   CATEGORY:=Utilities
   TITLE:=Open Source Home Automation System
   URL:=http://domoticz.com/
-  MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
+  MAINTAINER:=
   USERID:=domoticz=6144:domoticz=6144
   DEPENDS:= \
 	+boost \
