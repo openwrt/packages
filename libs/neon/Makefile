@@ -8,16 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=neon
-PKG_VERSION:=0.30.2
-PKG_RELEASE:=4
+PKG_VERSION:=0.31.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://web.archive.org/web/20170923042221/http://webdav.org:80/neon/
-PKG_HASH:=db0bd8cdec329b48f53a6f00199c92d5ba40b0f015b153718d1b15d3d967fbca
+PKG_SOURCE_URL:=https://notroj.github.io/neon
+PKG_HASH:=c9dfcee723050df37ce18ba449d7707b78e7ab8230f3a4c59d9112e17dc2718d
 
+PKG_MAINTAINER:=Federico Di Marco <fededim@gmail.com>
+PKG_LICENSE:=LGPL-2.1-or-later
+PKG_LICENSE_FILES:=src/COPYING.LIB
 PKG_CPE_ID:=cpe:/a:webdav:neon
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -25,9 +29,8 @@ define Package/libneon
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=HTTP and WebDAV client library
-  URL:=http://www.webdav.org/neon/
+  URL:=https://notroj.github.io/neon/
   DEPENDS:=+libopenssl +libexpat +zlib
-  MAINTAINER:=Federico Di Marco <fededim@gmail.com>
 endef
 
 define Package/libneon/description
@@ -44,10 +47,6 @@ define Package/libneon/description
   - WebDAV metadata support; wrappers for PROPFIND and PROPPATCH to simplify property manipulation.
 endef
 
-
-TARGET_CFLAGS += $(FPIC)
-TARGET_CPPFLAGS += -D_GNU_SOURCE
-
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
@@ -56,9 +55,6 @@ CONFIGURE_ARGS += \
 	--without-egd \
 	--without-gssapi \
 	--without-libproxy
-
-CONFIGURE_VARS += \
-	LDFLAGS="$$$$LDFLAGS -lcrypto -lssl"
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -69,8 +65,6 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libneon.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/neon.pc $(1)/usr/lib/pkgconfig/
-	$(SED) 's,-I$$$${includedir}/,-I$(STAGING_DIR)/usr/include/,g' $(1)/usr/bin/neon-config
-	$(SED) 's,-L$$$${libdir},,g' $(1)/usr/bin/neon-config
 endef
 
 define Package/libneon/install
