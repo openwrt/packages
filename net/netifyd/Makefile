@@ -45,6 +45,10 @@ endef
 
 define Package/netifyd/conffiles
 /etc/netifyd.conf
+/etc/config/netifyd
+/etc/netify.d/agent.uuid
+/etc/netify.d/serial.uuid
+/etc/netify.d/site.uuid
 endef
 
 TARGET_CFLAGS+=-ffunction-sections -fdata-sections -Wno-psabi
@@ -85,6 +89,8 @@ endef
 define Package/netifyd/install
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/netifyd.conf $(1)/etc
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/netifyd.config $(1)/etc/config/netifyd
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/netifyd.init $(1)/etc/init.d/netifyd
 	$(INSTALL_DIR) $(1)/usr/sbin
