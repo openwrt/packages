@@ -44,6 +44,9 @@ start_instance() {
 	 # I) sslh config file (cmd line args override file settings)
 	config_get val "${section}" configfile
 	[ -n "${val}" ] && append args "-F${val}"
+	# J) http parameter
+    config_get val "${section}" http
+    [ -n "${val}" ] && append args "--http ${val}"
 
 	# Defaults were removed for --user and --pidfile options
 	# in sslh 1.11; Define them here instead.
