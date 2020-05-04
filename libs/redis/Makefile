@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=redis
-PKG_VERSION:=5.0.9
+PKG_VERSION:=6.0.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://download.redis.io/releases/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=53d0ae164cd33536c3d4b720ae9a128ea6166ebf04ff1add3b85f1242090cb85
+PKG_HASH:=b8756e430479edc162ba9c44dc89ac394316cd482f2dc6b91bcd5fe12593f273
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
@@ -23,6 +23,8 @@ MAKE_FLAGS+= \
 	PREFIX="$(PKG_INSTALL_DIR)/usr" \
 	ARCH=""
 
+TARGET_LDFLAGS += -latomic
+
 define Package/redis/Default
   SUBMENU:=Database
   SECTION:=libs
@@ -33,12 +35,13 @@ endef
 define Package/redis-server
 $(call  Package/redis/Default)
   TITLE:=Redis server
-  DEPENDS:=+libpthread
+  DEPENDS:=+libpthread +libatomic
 endef
 
 define Package/redis-cli
 $(call  Package/redis/Default)
   TITLE:=Redis cli
+  DEPENDS+=+libatomic
 endef
 
 define Package/redis-utils
