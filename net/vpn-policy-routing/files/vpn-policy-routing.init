@@ -152,7 +152,7 @@ is_ipv6_unique_local() { [ "${1:0:2}" = "fc" ] || [ "${1:0:2}" = "fd" ]; }
 is_ipv6_global() { [ "${1:0:4}" = "2001" ]; }
 # is_ipv6_global() { is_ipv6 "$1" && ! is_ipv6_link_local "$1" && ! is_ipv6_link_local "$1"; }
 is_netmask() { local ip="${1%/*}"; [ "$ip" != "$1" ] && is_ipv4 "$ip"; }
-is_domain() { str_contains "$1" '[a-zA-Z]'; }
+is_domain() { [ "${1//[a-zA-Z-]}" != "$1" ]; }
 is_phys_dev() { [ "${1:0:1}" = "@" ] && ip l show | grep -E -q "^\\d+\\W+${1:1}"; }
 is_turris() { /bin/ubus -S call system board | /bin/grep 'Turris' | /bin/grep -q '15.05'; }
 is_chaos_calmer() { ubus -S call system board | grep -q 'Chaos Calmer'; }
