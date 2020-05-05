@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libyang
 PKG_VERSION:=1.0.130
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/CESNET/libyang/tar.gz/v$(PKG_VERSION)?
@@ -34,6 +34,14 @@ define Package/libyang
   DEPENDS:=+libpcre +libpthread
 endef
 
+define Package/libyang-cpp
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=YANG data modeling C++ language library
+  URL:=https://github.com/CESNET/libyang
+  DEPENDS:=+libyang +libstdcpp
+endef
+
 define Package/yanglint
   SECTION:=utils
   CATEGORY:=Utilities
@@ -47,7 +55,12 @@ define Package/libyang/description
  The library is used e.g. in libnetconf2, Netopeer2 or sysrepo projects.
 endef
 
-CMAKE_OPTIONS += -DENABLE_LYD_PRIV:BOOL=ON
+CMAKE_OPTIONS += \
+	-DENABLE_LYD_PRIV:BOOL=ON \
+	-DCMAKE_BUILD_TYPE:String="Release" \
+	-DGEN_LANGUAGE_BINDINGS=ON \
+	-DGEN_PYTHON_BINDINGS=OFF
+
 
 define Package/libyang/install
 	$(INSTALL_DIR) $(1)/usr/lib
@@ -60,10 +73,16 @@ define Package/libyang/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libyang/user_types/* $(1)/usr/lib/libyang/user_types
 endef
 
+define Package/libyang-cpp/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libyang-cpp.so* $(1)/usr/lib/
+endef
+
 define Package/yanglint/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/yanglint $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,libyang))
+$(eval $(call BuildPackage,libyang-cpp))
 $(eval $(call BuildPackage,yanglint))
