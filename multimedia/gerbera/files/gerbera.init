@@ -7,10 +7,12 @@ PROG=/usr/bin/gerbera
 
 start_service() {
 	local enabled
+	local debug
 	local home
 
 	config_load 'gerbera'
 	config_get_bool enabled config 'enabled' '0'
+	config_get_bool debug config 'debug' '0'
 
 	[ "$enabled" -eq 0 ] && {
 		echo "Gerbera not enabled. Please enable in /etc/config/gerbera"
@@ -33,6 +35,7 @@ start_service() {
 	procd_set_param user gerbera
 	procd_set_param group gerbera
 	procd_set_param command "$PROG" -c "$home/config.xml"
+	procd_set_param stdout "$debug"
 	procd_set_param stderr 1
 	procd_close_instance
 }
