@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pulseaudio
 PKG_VERSION:=13.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://freedesktop.org/software/pulseaudio/releases
@@ -96,6 +96,7 @@ define Package/pulseaudio-profiles
 endef
 
 MESON_ARGS += \
+	-Db_lto=true \
 	-Dgcov=false \
 	-Dman=false \
 	-Dtests=false \
@@ -142,7 +143,16 @@ MESON_ARGS += \
 	-Ddbus=disabled
 endif
 
-TARGET_LDFLAGS += -liconv
+TARGET_LDFLAGS += -Wl,--gc-sections -liconv
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+ifneq ($(findstring arm,$(CONFIG_ARCH)),)
+ifeq ($(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)),)
+	$(SED) '/remap_neon\.c/d' $(PKG_BUILD_DIR)/src/pulsecore/meson.build
+endif
+endif
+endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) \
