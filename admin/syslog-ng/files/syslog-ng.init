@@ -11,3 +11,7 @@ start_service() {
 	procd_set_param command /usr/sbin/syslog-ng --foreground
 	procd_close_instance
 }
+
+reload_service() {
+	/usr/sbin/syslog-ng-ctl reload
+}
