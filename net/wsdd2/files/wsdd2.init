@@ -68,7 +68,7 @@ start_service() {
 	[ -n "$ifname" ] && procd_append_param command -i "$ifname"
 	procd_append_param command -N "$NB_PARM"
 	procd_append_param command -G "$WG_PARM"
-	[ "x${BI_PARM}" != "x" ] && procd_append_param command -b "$BI_PARM"
+	[ "x${BI_PARM}" = "x" ] || procd_append_param command -b "$BI_PARM"
 	procd_set_param respawn
 	procd_set_param file "$SMB_CONF"
 	procd_close_instance
