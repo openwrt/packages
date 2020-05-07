@@ -85,7 +85,7 @@ cloudflare_transfer() {
 	done
 
 	# check for error
-	grep -q '"success":true' $DATFILE || {
+	grep -q -E '"success":\s?true' $DATFILE || {
 		write_log 4 "CloudFlare reported an error:"
 		write_log 7 "$(cat $DATFILE)"		# report error
 		return 1	# HTTP-Fehler
@@ -143,7 +143,7 @@ __ZONEID=$(grep -o '"id":"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
 __RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones/$__ZONEID/dns_records?name=$__HOST&type=$__TYPE'"
 cloudflare_transfer || return 1
 # extract record id
-__RECID=$(grep -o '"id":"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
+__RECID=$(grep -o '"id": "[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
 [ -z "$__RECID" ] && {
 	write_log 4 "Could not detect 'record id' for host.domain.tld: '$__HOST'"
 	return 127
