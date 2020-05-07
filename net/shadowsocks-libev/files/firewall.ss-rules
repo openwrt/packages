@@ -1,2 +1,4 @@
 #!/bin/sh
-/etc/init.d/shadowsocks-libev reload
+if /etc/init.d/shadowsocks-libev running; then
+    /etc/init.d/shadowsocks-libev rules
+fi
