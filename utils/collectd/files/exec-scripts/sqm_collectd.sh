@@ -9,7 +9,7 @@ handle_cake() {
 	local ifc ifr tin i
 
 	ifc="$1"
-	ifr="${ifc//./_}"
+	ifr="${ifc//[!0-9A-Za-z]/_}"
 
 	# Overall
 	json_get_vars bytes packets drops backlog qlen
