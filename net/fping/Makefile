@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fping
 PKG_VERSION:=4.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://fping.org/dist/
@@ -46,7 +46,7 @@ CONFIGURE_ARGS+= \
 
 define Package/fping/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/fping $(1)/usr/bin/
+	$(INSTALL_SUID) $(PKG_INSTALL_DIR)/usr/sbin/fping $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,fping))
