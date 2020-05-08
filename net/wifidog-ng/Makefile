@@ -11,13 +11,12 @@ PKG_NAME:=wifidog-ng
 PKG_VERSION:=2.0.2
 PKG_RELEASE:=1
 
-PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)
-
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
 
+include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/wifidog-ng/default
@@ -76,8 +75,6 @@ Package/wifidog-ng-nossl/install = $(Package/wifidog-ng/default/install)
 Package/wifidog-ng-openssl/install = $(Package/wifidog-ng/default/install)
 Package/wifidog-ng-wolfssl/install = $(Package/wifidog-ng/default/install)
 Package/wifidog-ng-mbedtls/install = $(Package/wifidog-ng/default/install)
-
-include $(INCLUDE_DIR)/kernel.mk
 
 define KernelPackage/wifidog-ng
   SUBMENU:=Other modules
