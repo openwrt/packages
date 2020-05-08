@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kismet
 PKG_VERSION:=2016-07-R1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=LGPLv2.1
 PKG_CPE_ID:=cpe:/a:kismet:kismet
@@ -41,10 +41,12 @@ define Package/kismet-client/conffiles
 endef
 
 define Package/kismet-drone/conffiles
+/etc/config/kismet_drone
 /etc/kismet/kismet_drone.conf
 endef
 
 define Package/kismet-server/conffiles
+/etc/config/kismet_server
 /etc/kismet/kismet.conf
 endef
 

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sysstat
 PKG_VERSION:=12.2.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://pagesperso-orange.fr/sebastien.godard/
@@ -40,6 +40,7 @@ define Package/sysstat/description
 endef
 
 define Package/sysstat/conffiles
+/etc/config/sysstat
 /etc/sysstat/sysstat.ioconf
 /etc/sysstat/sysstat
 endef

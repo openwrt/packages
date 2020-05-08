@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=smartsnmpd
 PKG_VERSION:=2015-02-22
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/credosemi/smartsnmp
@@ -56,6 +56,10 @@ define Build/Configure
 			prefix=/usr \
 			$(SCONS_OPTIONS) \
 	)
+endef
+
+define Package/smartsnmpd/conffiles
+/etc/config/smartsnmpd
 endef
 
 define Package/smartsnmpd/install

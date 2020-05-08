@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wifidog-ng
 PKG_VERSION:=2.0.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=LICENSE
@@ -70,6 +70,16 @@ define Package/wifidog-ng/default/install
 	$(INSTALL_DATA) ./files/wifidog-ng.hotplug $(1)/etc/hotplug.d/dhcp/00-wifidog-ng
 	$(CP) ./files/wifidog-ng $(1)/usr/lib/lua
 endef
+
+define Package/wifidog-ng/default/conffiles
+/etc/config/wifidog-ng
+/etc/wifidog-ng
+endef
+
+Package/wifidog-ng-nossl/conffiles = $(Package/wifidog-ng/default/conffiles)
+Package/wifidog-ng-openssl/conffiles = $(Package/wifidog-ng/default/conffiles)
+Package/wifidog-ng-wolfssl/conffiles = $(Package/wifidog-ng/default/conffiles)
+Package/wifidog-ng-mbedtls/conffiles = $(Package/wifidog-ng/default/conffiles)
 
 Package/wifidog-ng-nossl/install = $(Package/wifidog-ng/default/install)
 Package/wifidog-ng-openssl/install = $(Package/wifidog-ng/default/install)

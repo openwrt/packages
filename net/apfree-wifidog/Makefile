@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apfree-wifidog
 PKG_VERSION:=3.11.1716
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/liudf0716/apfree_wifidog.git
@@ -38,6 +38,10 @@ define Package/apfree-wifidog/description
   solution for wireless community groups or individuals who wish to open a free
   Hotspot while still preventing abuse of their Internet connection.
   It's enhanced wifidog
+endef
+
+define Package/apfree-wifidog/conffiles
+/etc/config/wifidogx
 endef
 
 define Package/apfree-wifidog/install

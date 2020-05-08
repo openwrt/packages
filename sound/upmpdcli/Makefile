@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=upmpdcli
 PKG_VERSION:=1.4.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.lesbonscomptes.com/upmpdcli/downloads
@@ -43,6 +43,10 @@ define Package/upmpdcli/config
 endef
 
 TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lm)
+
+define Package/upmpdcli/conffiles
+/etc/config/upmpdcli
+endef
 
 define Package/upmpdcli/install
 	$(INSTALL_DIR) $(1)/etc
