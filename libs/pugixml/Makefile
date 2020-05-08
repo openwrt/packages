@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pugixml
 PKG_VERSION:=1.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/zeux/pugixml/releases/download/v$(PKG_VERSION)
@@ -29,6 +29,7 @@ define Package/pugixml
   TITLE:=pugixml
   URL:=https://github.com/zeux/pugixml
   DEPENDS:=+libstdcpp
+  BUILDONLY:=1
 endef
 
 define Package/pugixml/description
@@ -40,14 +41,6 @@ define Package/pugixml/description
   (which happen automatically during parsing/saving).
 endef
 
-CMAKE_OPTIONS += \
-	-DBUILD_SHARED_LIBS=ON
-
 TARGET_CXXFLAGS += -flto
-
-define Package/pugixml/install
-	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpugixml.so* $(1)/usr/lib/
-endef
 
 $(eval $(call BuildPackage,pugixml))

@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=spdlog
 PKG_VERSION:=1.5.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gabime/spdlog/tar.gz/v$(PKG_VERSION)?
@@ -29,6 +29,7 @@ define Package/spdlog
   TITLE:=spdlog
   URL:=https://github.com/gabime/spdlog
   DEPENDS:=+libfmt
+  BUILDONLY:=1
 endef
 
 define Package/spdlog/description
@@ -36,7 +37,7 @@ define Package/spdlog/description
 endef
 
 CMAKE_OPTIONS += \
-	-DSPDLOG_BUILD_SHARED=ON \
+	-DSPDLOG_BUILD_SHARED=OFF \
 	-DSPDLOG_BUILD_EXAMPLE=OFF \
 	-DSPDLOG_BUILD_EXAMPLE_HO=OFF \
 	-DSPDLOG_BUILD_TESTS=OFF \
@@ -49,10 +50,5 @@ CMAKE_OPTIONS += \
 	-DSPDLOG_NO_EXCEPTIONS=OFF
 
 TARGET_CXXFLAGS += -flto
-
-define Package/spdlog/install
-	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libspdlog.so* $(1)/usr/lib/
-endef
 
 $(eval $(call BuildPackage,spdlog))
