@@ -1,0 +1,413 @@
+--- a/hardware/Comm5Serial.cpp
++++ b/hardware/Comm5Serial.cpp
+@@ -5,6 +5,8 @@
+ #include "../main/Logger.h"
+ #include "../main/RFXtrx.h"
+ 
++using namespace std::placeholders;
++
+ /*
+ 	This driver allows Domoticz to control any I/O module from the MA-4xxx Family
+ 
+@@ -92,7 +94,7 @@ bool Comm5Serial::StartHardware()
+ 		return false;
+ 	}
+ 	m_bIsStarted=true;
+-	setReadCallback(boost::bind(&Comm5Serial::readCallBack, this, _1, _2));
++	setReadCallback(std::bind(&Comm5Serial::readCallBack, this, _1, _2));
+ 
+ 	sOnConnected(this);
+ 	return true;
+--- a/hardware/DenkoviUSBDevices.cpp
++++ b/hardware/DenkoviUSBDevices.cpp
+@@ -16,6 +16,8 @@ enum _edaeUsbState
+ 
+ #define DAE_IO_TYPE_RELAY		2
+ 
++using namespace std::placeholders;
++
+ CDenkoviUSBDevices::CDenkoviUSBDevices(const int ID, const std::string& comPort, const int model) :
+ 	m_szSerialPort(comPort)
+ {
+@@ -78,7 +80,7 @@ bool CDenkoviUSBDevices::StartHardware()
+ 	m_thread = std::make_shared<std::thread>(&CDenkoviUSBDevices::Do_Work, this);
+ 
+ 	m_bIsStarted = true;
+-	setReadCallback(boost::bind(&CDenkoviUSBDevices::readCallBack, this, _1, _2));
++	setReadCallback(std::bind(&CDenkoviUSBDevices::readCallBack, this, _1, _2));
+ 	
+ 	sOnConnected(this);
+ 	return true;
+--- a/hardware/EvohomeRadio.cpp
++++ b/hardware/EvohomeRadio.cpp
+@@ -26,6 +26,8 @@
+ 
+ extern std::string szUserDataFolder;
+ 
++using namespace std::placeholders;
++
+ enum evoCommands
+ {
+ 	cmdSysInfo = 0x10e0,
+@@ -86,27 +88,27 @@ CEvohomeRadio::CEvohomeRadio(const int ID, const std::string& UserContID)
+ 		s_strid >> std::hex >> m_UControllerID;
+ 	}
+ 
+-	RegisterDecoder(cmdZoneTemp, boost::bind(&CEvohomeRadio::DecodeZoneTemp, this, _1));
+-	RegisterDecoder(cmdSetPoint, boost::bind(&CEvohomeRadio::DecodeSetpoint, this, _1));
+-	RegisterDecoder(cmdSetpointOverride, boost::bind(&CEvohomeRadio::DecodeSetpointOverride, this, _1));
+-	RegisterDecoder(cmdDHWState, boost::bind(&CEvohomeRadio::DecodeDHWState, this, _1));
+-	RegisterDecoder(cmdDHWTemp, boost::bind(&CEvohomeRadio::DecodeDHWTemp, this, _1));
+-	RegisterDecoder(cmdControllerMode, boost::bind(&CEvohomeRadio::DecodeControllerMode, this, _1));
+-	RegisterDecoder(cmdSysInfo, boost::bind(&CEvohomeRadio::DecodeSysInfo, this, _1));
+-	RegisterDecoder(cmdZoneName, boost::bind(&CEvohomeRadio::DecodeZoneName, this, _1));
+-	RegisterDecoder(cmdZoneHeatDemand, boost::bind(&CEvohomeRadio::DecodeHeatDemand, this, _1));
+-	RegisterDecoder(cmdOpenThermBridge, boost::bind(&CEvohomeRadio::DecodeOpenThermBridge, this, _1));
+-	RegisterDecoder(cmdOpenThermSetpoint, boost::bind(&CEvohomeRadio::DecodeOpenThermSetpoint, this, _1));
+-	RegisterDecoder(cmdZoneInfo, boost::bind(&CEvohomeRadio::DecodeZoneInfo, this, _1));
+-	RegisterDecoder(cmdControllerHeatDemand, boost::bind(&CEvohomeRadio::DecodeHeatDemand, this, _1));
+-	RegisterDecoder(cmdBinding, boost::bind(&CEvohomeRadio::DecodeBinding, this, _1));
+-	RegisterDecoder(cmdActuatorState, boost::bind(&CEvohomeRadio::DecodeActuatorState, this, _1));
+-	RegisterDecoder(cmdActuatorCheck, boost::bind(&CEvohomeRadio::DecodeActuatorCheck, this, _1));
+-	RegisterDecoder(cmdZoneWindow, boost::bind(&CEvohomeRadio::DecodeZoneWindow, this, _1));
+-	RegisterDecoder(cmdExternalSensor, boost::bind(&CEvohomeRadio::DecodeExternalSensor, this, _1));
+-	RegisterDecoder(cmdDeviceInfo, boost::bind(&CEvohomeRadio::DecodeDeviceInfo, this, _1));
+-	RegisterDecoder(cmdBatteryInfo, boost::bind(&CEvohomeRadio::DecodeBatteryInfo, this, _1));
+-	RegisterDecoder(cmdSync, boost::bind(&CEvohomeRadio::DecodeSync, this, _1));
++	RegisterDecoder(cmdZoneTemp, std::bind(&CEvohomeRadio::DecodeZoneTemp, this, _1));
++	RegisterDecoder(cmdSetPoint, std::bind(&CEvohomeRadio::DecodeSetpoint, this, _1));
++	RegisterDecoder(cmdSetpointOverride, std::bind(&CEvohomeRadio::DecodeSetpointOverride, this, _1));
++	RegisterDecoder(cmdDHWState, std::bind(&CEvohomeRadio::DecodeDHWState, this, _1));
++	RegisterDecoder(cmdDHWTemp, std::bind(&CEvohomeRadio::DecodeDHWTemp, this, _1));
++	RegisterDecoder(cmdControllerMode, std::bind(&CEvohomeRadio::DecodeControllerMode, this, _1));
++	RegisterDecoder(cmdSysInfo, std::bind(&CEvohomeRadio::DecodeSysInfo, this, _1));
++	RegisterDecoder(cmdZoneName, std::bind(&CEvohomeRadio::DecodeZoneName, this, _1));
++	RegisterDecoder(cmdZoneHeatDemand, std::bind(&CEvohomeRadio::DecodeHeatDemand, this, _1));
++	RegisterDecoder(cmdOpenThermBridge, std::bind(&CEvohomeRadio::DecodeOpenThermBridge, this, _1));
++	RegisterDecoder(cmdOpenThermSetpoint, std::bind(&CEvohomeRadio::DecodeOpenThermSetpoint, this, _1));
++	RegisterDecoder(cmdZoneInfo, std::bind(&CEvohomeRadio::DecodeZoneInfo, this, _1));
++	RegisterDecoder(cmdControllerHeatDemand, std::bind(&CEvohomeRadio::DecodeHeatDemand, this, _1));
++	RegisterDecoder(cmdBinding, std::bind(&CEvohomeRadio::DecodeBinding, this, _1));
++	RegisterDecoder(cmdActuatorState, std::bind(&CEvohomeRadio::DecodeActuatorState, this, _1));
++	RegisterDecoder(cmdActuatorCheck, std::bind(&CEvohomeRadio::DecodeActuatorCheck, this, _1));
++	RegisterDecoder(cmdZoneWindow, std::bind(&CEvohomeRadio::DecodeZoneWindow, this, _1));
++	RegisterDecoder(cmdExternalSensor, std::bind(&CEvohomeRadio::DecodeExternalSensor, this, _1));
++	RegisterDecoder(cmdDeviceInfo, std::bind(&CEvohomeRadio::DecodeDeviceInfo, this, _1));
++	RegisterDecoder(cmdBatteryInfo, std::bind(&CEvohomeRadio::DecodeBatteryInfo, this, _1));
++	RegisterDecoder(cmdSync, std::bind(&CEvohomeRadio::DecodeSync, this, _1));
+ }
+ 
+ 
+--- a/hardware/EvohomeSerial.cpp
++++ b/hardware/EvohomeSerial.cpp
+@@ -7,6 +7,8 @@
+ #include "../main/localtime_r.h"
+ #include <boost/exception/diagnostic_information.hpp>
+ 
++using namespace std::placeholders;
++
+ CEvohomeSerial::CEvohomeSerial(const int ID, const std::string &szSerialPort, const int baudrate, const std::string &UserContID) :
+ CEvohomeRadio(ID, UserContID)
+ {
+@@ -64,7 +66,7 @@ bool CEvohomeSerial::OpenSerialDevice()
+ 	}
+ 	m_nBufPtr=0;
+ 	m_bIsStarted=true;
+-	setReadCallback(boost::bind(&CEvohomeSerial::ReadCallback, this, _1, _2));
++	setReadCallback(std::bind(&CEvohomeSerial::ReadCallback, this, _1, _2));
+ 	sOnConnected(this);
+ 	return true;
+ }
+--- a/hardware/MQTT.cpp
++++ b/hardware/MQTT.cpp
+@@ -18,6 +18,8 @@
+ #define TOPIC_IN	"domoticz/in"
+ #define QOS         1
+ 
++using namespace std::placeholders;
++
+ const char* szTLSVersions[3] =
+ {
+ 	"tlsv1",
+@@ -133,8 +135,8 @@ void MQTT::on_connect(int rc)
+ 			_log.Log(LOG_STATUS, "MQTT: connected to: %s:%d", m_szIPAddress.c_str(), m_usIPPort);
+ 			m_IsConnected = true;
+ 			sOnConnected(this);
+-			m_sDeviceReceivedConnection = m_mainworker.sOnDeviceReceived.connect(boost::bind(&MQTT::SendDeviceInfo, this, _1, _2, _3, _4));
+-			m_sSwitchSceneConnection = m_mainworker.sOnSwitchScene.connect(boost::bind(&MQTT::SendSceneInfo, this, _1, _2));
++			m_sDeviceReceivedConnection = m_mainworker.sOnDeviceReceived.connect(std::bind(&MQTT::SendDeviceInfo, this, _1, _2, _3, _4));
++			m_sSwitchSceneConnection = m_mainworker.sOnSwitchScene.connect(std::bind(&MQTT::SendSceneInfo, this, _1, _2));
+ 		}
+ 		subscribe(NULL, m_TopicIn.c_str());
+ 	}
+--- a/hardware/Pinger.cpp
++++ b/hardware/Pinger.cpp
+@@ -25,6 +25,8 @@
+ #define GET_IO_SERVICE(s) ((s).get_io_service())
+ #endif
+ 
++using namespace std::placeholders;
++
+ class pinger
+ 	: private domoticz::noncopyable
+ {
+@@ -87,7 +89,7 @@ private:
+ 				}
+ 				else
+ 				{
+-					timer_.async_wait(boost::bind(&pinger::start_send, this));
++					timer_.async_wait(std::bind(&pinger::start_send, this));
+ 				}
+ 			}
+ 		}
+@@ -100,7 +102,7 @@ private:
+ 
+ 		// Wait for a reply. We prepare the buffer to receive up to 64KB.
+ 		socket_.async_receive(reply_buffer_.prepare(65536),
+-			boost::bind(&pinger::handle_receive, this, _2));
++			std::bind(&pinger::handle_receive, this, _2));
+ 	}
+ 
+ 	void handle_receive(std::size_t length)
+@@ -384,7 +386,7 @@ void CPinger::DoPingHosts()
+ 		if (m_iThreadsRunning < 1000)
+ 		{
+ 			//m_iThreadsRunning++;
+-			boost::thread t(boost::bind(&CPinger::Do_Ping_Worker, this, *itt));
++			boost::thread t(std::bind(&CPinger::Do_Ping_Worker, this, *itt));
+ 			SetThreadName(t.native_handle(), "PingerWorker");
+ 			t.join();
+ 		}
+--- a/hardware/RAVEn.cpp
++++ b/hardware/RAVEn.cpp
+@@ -11,6 +11,8 @@
+ //Rainforest RAVEn USB ZigBee Smart Meter Adapter
+ //https://rainforestautomation.com/rfa-z106-raven/
+ 
++using namespace std::placeholders;
++
+ RAVEn::RAVEn(const int ID, const std::string& devname)
+ : device_(devname), m_wptr(m_buffer), m_currUsage(0), m_totalUsage(0)
+ {
+@@ -46,7 +48,7 @@ bool RAVEn::StartHardware()
+         _log.Log(LOG_ERROR, "RAVEn: Error opening serial port!!!");
+         return false;
+     }
+-    setReadCallback(boost::bind(&RAVEn::readCallback, this, _1, _2));
++    setReadCallback(std::bind(&RAVEn::readCallback, this, _1, _2));
+     m_bIsStarted = true;
+     sOnConnected(this);
+ 
+--- a/hardware/RFLinkSerial.cpp
++++ b/hardware/RFLinkSerial.cpp
+@@ -5,6 +5,8 @@
+ #include "../main/localtime_r.h"
+ #include <boost/exception/diagnostic_information.hpp>
+ 
++using namespace std::placeholders;
++
+ CRFLinkSerial::CRFLinkSerial(const int ID, const std::string& devname) :
+ m_szSerialPort(devname)
+ {
+@@ -181,7 +183,7 @@ bool CRFLinkSerial::OpenSerialDevice()
+ 	m_rfbufferpos = 0;
+ 	m_LastReceivedTime = mytime(NULL);
+ 
+-	setReadCallback(boost::bind(&CRFLinkSerial::readCallback, this, _1, _2));
++	setReadCallback(std::bind(&CRFLinkSerial::readCallback, this, _1, _2));
+ 	sOnConnected(this);
+ 
+ 	return true;
+--- a/hardware/TCPProxy/tcpproxy_server.cpp
++++ b/hardware/TCPProxy/tcpproxy_server.cpp
+@@ -21,6 +21,8 @@
+ #define GET_IO_SERVICE(s) ((s).get_io_service())
+ #endif
+ 
++using namespace std::placeholders;
++
+ namespace tcp_proxy
+ {
+ 	bridge::bridge(boost::asio::io_service& ios)
+@@ -186,8 +188,8 @@ namespace tcp_proxy
+ 			session_ = std::shared_ptr<bridge>(
+ 				new bridge(io_service_)
+ 			);
+-			session_->sDownstreamData.connect( boost::bind( &acceptor::OnDownstreamData, this, _1, _2 ) );
+-			session_->sUpstreamData.connect( boost::bind( &acceptor::OnUpstreamData, this, _1, _2 ) );
++			session_->sDownstreamData.connect( std::bind( &acceptor::OnDownstreamData, this, _1, _2 ) );
++			session_->sUpstreamData.connect( std::bind( &acceptor::OnUpstreamData, this, _1, _2 ) );
+ 
+ 			acceptor_.async_accept(session_->downstream_socket(),
+ 				boost::bind(&acceptor::handle_accept,
+--- a/hardware/ZiBlueSerial.cpp
++++ b/hardware/ZiBlueSerial.cpp
+@@ -8,6 +8,8 @@
+ 
+ #define ZiBlue_RETRY_DELAY 30
+ 
++using namespace std::placeholders;
++
+ CZiBlueSerial::CZiBlueSerial(const int ID, const std::string& devname) :
+ m_szSerialPort(devname)
+ {
+@@ -136,7 +138,7 @@ bool CZiBlueSerial::OpenSerialDevice()
+ 	m_rfbufferpos = 0;
+ 	m_LastReceivedTime = mytime(NULL);
+ 
+-	setReadCallback(boost::bind(&CZiBlueSerial::readCallback, this, _1, _2));
++	setReadCallback(std::bind(&CZiBlueSerial::readCallback, this, _1, _2));
+ 
+ 	sOnConnected(this);
+ 
+--- a/hardware/plugins/PluginTransports.cpp
++++ b/hardware/plugins/PluginTransports.cpp
+@@ -13,6 +13,8 @@
+ #include "icmp_header.hpp"
+ #include "ipv4_header.hpp"
+ 
++using namespace std::placeholders;
++
+ namespace Plugins {
+ 
+ 	void CPluginTransport::handleRead(const boost::system::error_code& e, std::size_t bytes_transferred)
+@@ -972,7 +974,7 @@ namespace Plugins {
+ 				if (m_bConnected)
+ 				{
+ 					pPlugin->MessagePlugin(new onConnectCallback(pPlugin, m_pConnection, 0, "SerialPort " + m_Port + " opened successfully."));
+-					setReadCallback(boost::bind(&CPluginTransportSerial::handleRead, this, _1, _2));
++					setReadCallback(std::bind(&CPluginTransportSerial::handleRead, this, _1, _2));
+ 				}
+ 				else
+ 				{
+--- a/push/FibaroPush.cpp
++++ b/push/FibaroPush.cpp
+@@ -14,6 +14,8 @@
+ #define __STDC_FORMAT_MACROS
+ #include <inttypes.h>
+ 
++using namespace std::placeholders;
++
+ CFibaroPush::CFibaroPush()
+ {
+ 	m_bLinkActive = false;
+@@ -22,7 +24,7 @@ CFibaroPush::CFibaroPush()
+ void CFibaroPush::Start()
+ {
+ 	UpdateActive();
+-	m_sConnection = m_mainworker.sOnDeviceReceived.connect(boost::bind(&CFibaroPush::OnDeviceReceived, this, _1, _2, _3, _4));
++	m_sConnection = m_mainworker.sOnDeviceReceived.connect(std::bind(&CFibaroPush::OnDeviceReceived, this, _1, _2, _3, _4));
+ }
+ 
+ void CFibaroPush::Stop()
+@@ -400,4 +402,4 @@ namespace http {
+ 			root["title"] = "DeleteFibaroLink";
+ 		}
+ 	}
+-}
+\ No newline at end of file
++}
+--- a/push/GooglePubSubPush.cpp
++++ b/push/GooglePubSubPush.cpp
+@@ -21,6 +21,8 @@ extern "C" {
+ #include <boost/python.hpp>
+ #endif
+ 
++using namespace std::placeholders;
++
+ extern std::string szUserDataFolder;
+ 
+ // this should be filled in by the preprocessor
+@@ -38,7 +40,7 @@ CGooglePubSubPush::CGooglePubSubPush()
+ void CGooglePubSubPush::Start()
+ {
+ 	UpdateActive();
+-	m_sConnection = m_mainworker.sOnDeviceReceived.connect(boost::bind(&CGooglePubSubPush::OnDeviceReceived, this, _1, _2, _3, _4));
++	m_sConnection = m_mainworker.sOnDeviceReceived.connect(std::bind(&CGooglePubSubPush::OnDeviceReceived, this, _1, _2, _3, _4));
+ }
+ 
+ void CGooglePubSubPush::Stop()
+--- a/push/HttpPush.cpp
++++ b/push/HttpPush.cpp
+@@ -15,6 +15,8 @@
+ #define __STDC_FORMAT_MACROS
+ #include <inttypes.h>
+ 
++using namespace std::placeholders;
++
+ CHttpPush::CHttpPush()
+ {
+ 	m_bLinkActive = false;
+@@ -23,7 +25,7 @@ CHttpPush::CHttpPush()
+ void CHttpPush::Start()
+ {
+ 	UpdateActive();
+-	m_sConnection = m_mainworker.sOnDeviceReceived.connect(boost::bind(&CHttpPush::OnDeviceReceived, this, _1, _2, _3, _4));
++	m_sConnection = m_mainworker.sOnDeviceReceived.connect(std::bind(&CHttpPush::OnDeviceReceived, this, _1, _2, _3, _4));
+ }
+ 
+ void CHttpPush::Stop()
+--- a/push/InfluxPush.cpp
++++ b/push/InfluxPush.cpp
+@@ -15,6 +15,8 @@
+ #define __STDC_FORMAT_MACROS
+ #include <inttypes.h>
+ 
++using namespace std::placeholders;
++
+ CInfluxPush::CInfluxPush() :
+ 	m_InfluxPort(8086),
+ 	m_bInfluxDebugActive(false)
+@@ -33,7 +35,7 @@ bool CInfluxPush::Start()
+ 	m_thread = std::make_shared<std::thread>(&CInfluxPush::Do_Work, this);
+ 	SetThreadName(m_thread->native_handle(), "InfluxPush");
+ 
+-	m_sConnection = m_mainworker.sOnDeviceReceived.connect(boost::bind(&CInfluxPush::OnDeviceReceived, this, _1, _2, _3, _4));
++	m_sConnection = m_mainworker.sOnDeviceReceived.connect(std::bind(&CInfluxPush::OnDeviceReceived, this, _1, _2, _3, _4));
+ 
+ 	return (m_thread != NULL);
+ }
+--- a/push/WebsocketPush.cpp
++++ b/push/WebsocketPush.cpp
+@@ -3,6 +3,8 @@
+ #include "../webserver/WebsocketHandler.h"
+ #include "../main/mainworker.h"
+ 
++using namespace std::placeholders;
++
+ extern boost::signals2::signal<void(const std::string &Subject, const std::string &Text, const std::string &ExtraData, const int Priority, const std::string & Sound, const bool bFromNotification)> sOnNotificationReceived;
+ 
+ 
+@@ -19,9 +21,9 @@ void CWebSocketPush::Start()
+ 	if (isStarted) {
+ 		return;
+ 	}
+-	m_sConnection = m_mainworker.sOnDeviceReceived.connect(boost::bind(&CWebSocketPush::OnDeviceReceived, this, _1, _2, _3, _4));
+-	m_sNotification = sOnNotificationReceived.connect(boost::bind(&CWebSocketPush::OnNotificationReceived, this, _1, _2, _3, _4, _5, _6));
+-	m_sSceneChanged = m_mainworker.sOnSwitchScene.connect(boost::bind(&CWebSocketPush::OnSceneChange, this, _1, _2));
++	m_sConnection = m_mainworker.sOnDeviceReceived.connect(std::bind(&CWebSocketPush::OnDeviceReceived, this, _1, _2, _3, _4));
++	m_sNotification = sOnNotificationReceived.connect(std::bind(&CWebSocketPush::OnNotificationReceived, this, _1, _2, _3, _4, _5, _6));
++	m_sSceneChanged = m_mainworker.sOnSwitchScene.connect(std::bind(&CWebSocketPush::OnSceneChange, this, _1, _2));
+ 	isStarted = true;
+ }
+ 
+--- a/webserver/proxyclient.cpp
++++ b/webserver/proxyclient.cpp
+@@ -19,6 +19,8 @@
+ 
+ extern std::string szAppVersion;
+ 
++using namespace std::placeholders;
++
+ #define PROXY_TIMEOUT 60
+ #define PONG "PONG"
+ 
+@@ -349,7 +351,7 @@ namespace http {
+ 			// todo: make a map of websocket connections. There can be more than one.
+ 			// open new virtual websocket connection
+ 			// todo: different request_url's can have different websocket handlers
+-			websocket_handlers[pdu->m_requestid] = new CWebsocketHandler(m_pWebEm, boost::bind(&CProxyClient::WS_Write, this, pdu->m_requestid, _1));
++			websocket_handlers[pdu->m_requestid] = new CWebsocketHandler(m_pWebEm, std::bind(&CProxyClient::WS_Write, this, pdu->m_requestid, _1));
+ 			websocket_handlers[pdu->m_requestid]->Start();
+ 		}
+ 
