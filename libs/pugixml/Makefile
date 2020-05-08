@@ -17,7 +17,6 @@ PKG_MAINTAINER:=
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-CMAKE_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -42,5 +41,11 @@ define Package/pugixml/description
 endef
 
 TARGET_CXXFLAGS += -flto
+
+define Build/InstallDev
+	$(call Build/InstallDev/cmake,$(1))
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/pugixml.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/pugixml.pc
+endef
 
 $(eval $(call BuildPackage,pugixml))
