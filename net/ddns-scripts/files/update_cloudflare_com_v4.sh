@@ -85,7 +85,7 @@ cloudflare_transfer() {
 	done
 
 	# check for error
-	grep -q '"success":true' $DATFILE || {
+	grep -q '"success":\s*true' $DATFILE || {
 		write_log 4 "CloudFlare reported an error:"
 		write_log 7 "$(cat $DATFILE)"		# report error
 		return 1	# HTTP-Fehler
@@ -133,7 +133,7 @@ __PRGBASE="$__PRGBASE --header 'Content-Type: application/json' "
 __RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones?name=$__DOMAIN'"
 cloudflare_transfer || return 1
 # extract zone id
-__ZONEID=$(grep -o '"id":"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
+__ZONEID=$(grep -o '"id":\s*"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
 [ -z "$__ZONEID" ] && {
 	write_log 4 "Could not detect 'zone id' for domain.tld: '$__DOMAIN'"
 	return 127
@@ -143,14 +143,14 @@ __ZONEID=$(grep -o '"id":"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
 __RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones/$__ZONEID/dns_records?name=$__HOST&type=$__TYPE'"
 cloudflare_transfer || return 1
 # extract record id
-__RECID=$(grep -o '"id":"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
+__RECID=$(grep -o '"id":\s*"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
 [ -z "$__RECID" ] && {
 	write_log 4 "Could not detect 'record id' for host.domain.tld: '$__HOST'"
 	return 127
 }
 
 # extract current stored IP
-__DATA=$(grep -o '"content":"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
+__DATA=$(grep -o '"content":\s*"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
 
 # check data
 [ $use_ipv6 -eq 0 ] \
@@ -178,7 +178,7 @@ __DATA=$(grep -o '"content":"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
 # update is needed
 # let's build data to send
 # set proxied parameter
-__PROXIED=$(grep -o '"proxied":[^",]*' $DATFILE | grep -o '[^:]*$')
+__PROXIED=$(grep -o '"proxied":\s*[^",]*' $DATFILE | grep -o '[^:]*$')
 
 # use file to work around " needed for json
 cat > $DATFILE << EOF

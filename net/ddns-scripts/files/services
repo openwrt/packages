@@ -57,7 +57,7 @@
 "ddns.com.br"		"http://[DOMAIN]:[PASSWORD]@members.ddns.com.br/nic/update?hostname=[DOMAIN]&myip=[IP]"
 
 # "ddnss.de"		"http://[USERNAME]:[PASSWORD]@ip4.ddnss.de/upd.php?host=[DOMAIN]&ip=[IP]"	"good|nochg"
-"ddnss.de"		"http://ip4.ddnss.de/upd.php?user=[USERNAME]&pwd=[PASSWORD]&host=[DOMAIN]&ip=[IP]"	"good|nochg"
+"ddnss.de"		"http://ip4.ddnss.de/upd.php?user=[USERNAME]&pwd=[PASSWORD]&host=[DOMAIN]&ip=[IP]"	"Updated|No change"
 
 "ddo.jp"		"http://free.ddo.jp/dnsupdate.php?dn=[DOMAIN]&pw=[PASSWORD]&ip=[IP]"
 
@@ -95,8 +95,8 @@
 
 "dyndns.it"		"http://[USERNAME]:[PASSWORD]@update.dyndns.it/nic/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
-"dyn.com"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
-"dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+"dyn.com"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/v3/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+"dyndns.org"		"http://[USERNAME]:[PASSWORD]@members.dyndns.org/v3/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 "dyndnss.net"		"http://www.dyndnss.net/?user=[USERNAME]&pass=[PASSWORD]&domain=[DOMAIN]&updater=other"
 
@@ -114,7 +114,7 @@
 
 "goip.de"		"http://www.goip.de/setip?username=[USERNAME]&password=[PASSWORD]&subdomain=[DOMAIN]&ip=[IP]"
 
-"google.com"		"http://[USERNAME]:[PASSWORD]@domains.google.com/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
+"google.com"		"https://[USERNAME]:[PASSWORD]@domains.google.com/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
 "he.net"		"http://[DOMAIN]:[PASSWORD]@dyn.dns.he.net/nic/update?hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 

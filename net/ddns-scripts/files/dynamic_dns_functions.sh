@@ -21,7 +21,7 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.7.8-11"
+VERSION="2.7.8-13"
 SECTION_ID=""		# hold config's section name
 VERBOSE=0		# default mode is log to console, but easily changed with parameter
 MYPROG=$(basename $0)	# my program call name
@@ -282,11 +282,11 @@ write_log() {
 	[ $__LEVEL -eq 7 ] && return	# no syslog for debug messages
 	__CMD=$(echo -e "$__CMD" | tr -d '\n' | tr '\t' '     ')        # remove \n \t chars
 	[ $__EXIT  -eq 1 ] && {
-		eval "$__CMD"	# force syslog before exit
+		eval '$__CMD'	# force syslog before exit
 		exit 1
 	}
 	[ $use_syslog -eq 0 ] && return
-	[ $((use_syslog + __LEVEL)) -le 7 ] && eval "$__CMD"
+	[ $((use_syslog + __LEVEL)) -le 7 ] && eval '$__CMD'
 
 	return
 }
