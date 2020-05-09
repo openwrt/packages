@@ -205,6 +205,8 @@ issue_cert()
     config_get_bool use_staging "$section" use_staging
     config_get_bool update_uhttpd "$section" update_uhttpd
     config_get_bool update_nginx "$section" update_nginx
+    config_get calias "$section" calias
+    config_get dalias "$section" dalias
     config_get domains "$section" domains
     config_get keylength "$section" keylength
     config_get webroot "$section" webroot
@@ -268,6 +270,16 @@ issue_cert()
     if [ -n "$dns" ]; then
         log "Using dns mode"
         acme_args="$acme_args --dns $dns"
+        if [ -n "$dalias" ]; then
+            log "Using domain alias for dns mode"
+            acme_args="$acme_args --domain-alias $dalias"
+            if [ -n "$calias" ]; then
+                err "Both domain and challenge aliases are defined. Ignoring the challenge alias."
+            fi
+        elif [ -n "$calias" ]; then
+            log "Using challenge alias for dns mode"
+            acme_args="$acme_args --challenge-alias $calias"
+        fi
     elif [ -z "$webroot" ]; then
         log "Using standalone mode"
         acme_args="$acme_args --standalone --listen-v6"

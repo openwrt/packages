@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acme
 PKG_VERSION:=2.8.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/Neilpang/acme.sh/tar.gz/$(PKG_VERSION)?
+PKG_SOURCE_URL:=https://github.com/acmesh-official/acme.sh/archive/$(PKG_VERSION).tar.gz
 PKG_HASH:=fd36cb749466296ded521ceacda3fc841ec76be620900d1116e0492d171c1d9f
 PKG_BUILD_DIR:=$(BUILD_DIR)/acme.sh-$(PKG_VERSION)
 
