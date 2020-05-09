@@ -61,7 +61,7 @@ main() {
 	local recovery_interval down up size
 	local keep_failure_interval check_quality failure_latency
 	local recovery_latency failure_loss recovery_loss
-	local max_ttl httping_ssl
+	local max_ttl httping_ssl gateway_mac
 
 	[ -z "$5" ] && echo "Error: should not be started manually" && exit 0
 
@@ -101,6 +101,7 @@ main() {
 	config_get recovery_latency $1 recovery_latency 500
 	config_get failure_loss $1 failure_loss 40
 	config_get recovery_loss $1 recovery_loss 10
+	config_get gateway_mac $1 gateway_mac ""
 
 	local score=$(($down+$up))
 	local track_ips=$(echo $* | cut -d ' ' -f 5-99)
@@ -130,6 +131,10 @@ main() {
 
 		for track_ip in $track_ips; do
 			if [ $host_up_count -lt $reliability ]; then
+				# There is no default gateway configured so, add an ARP entry to forward this ping to the gateway.
+				if [ -n "$gateway_mac" ]; then
+					ip neigh replace to $track_ip lladdr $gateway_mac dev $DEVICE nud reachable
+				fi
 				case "$track_method" in
 					ping)
 						# pinging IPv6 hosts with an interface is troublesome
