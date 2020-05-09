@@ -36,6 +36,7 @@ mini_snmpd_validation="enabled:bool:0 \
 		auth:bool:1 \
 		community:rangelength(1,32):public \
 		contact:maxlength(255) \
+		description:maxlength(255) \
 		location:maxlength(255) \
 		listen_interface:uciname \
 		udp_port:port \
@@ -212,6 +213,7 @@ start_instance() {
 	append_arg "-c" "$community"
 	append_arg "-L" "$location"
 	append_arg "-C" "$contact"
+	append_arg "-D" "$description"
 	append_arg "-p" $udp_port
 	append_arg "-P" $tcp_port
 	append_arg "-V" "$vendor_oid"
