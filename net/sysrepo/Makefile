@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sysrepo
-PKG_VERSION:=1.4.2
+PKG_VERSION:=1.4.58
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/sysrepo/sysrepo/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=d84d4f092feab83b0a39fef5d0d62bc6ed1f0f8aa274329f2cbf0a95a6528d8a
+PKG_HASH:=9c134658a5b812cd86b9113c30fc01be5a094616f473e747032ccf614af9e4dd
 
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 PKG_LICENSE:=Apache-2.0
