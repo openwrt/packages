@@ -5,12 +5,12 @@
 if [ -x /bin/sysrepoctl ]; then
 	match=$(sysrepoctl -l | grep "ietf-ssh-server ")
 	if [ ! "$match" ]; then
-		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-ssh-server@2016-11-02.yang -p 600
+		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-ssh-server@2019-07-02.yang -p 600
 	fi
 
 	match=$(sysrepoctl -l | grep "ietf-tls-server ")
 	if [ ! "$match" ]; then
-		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-tls-server@2016-11-02.yang -p 600
+		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-tls-server@2019-07-02.yang -p 600
 	fi
 
 	match=$(sysrepoctl -l | grep "iana-crypt-hash ")
@@ -25,7 +25,7 @@ if [ -x /bin/sysrepoctl ]; then
 
 	match=$(sysrepoctl -l | grep "ietf-netconf-server ")
 	if [ ! "$match" ]; then
-		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-netconf-server@2016-11-02.yang -o root:root -p 600
+		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-netconf-server@2019-07-02.yang -o root:root -p 600
 		sysrepoctl -m ietf-netconf-server -e listen
 		sysrepoctl -m ietf-netconf-server -e ssh-listen
 		sysrepoctl -m ietf-netconf-server -e tls-listen
@@ -46,14 +46,7 @@ if [ -x /bin/sysrepoctl ]; then
 
 	match=$(sysrepoctl -l | grep "ietf-netconf-with-defaults ")
 	if [ ! "$match" ]; then
-		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-netconf-with-defaults@2011-06-01.yang -o root:root -p 600
-	fi
-
-	match=$(sysrepoctl -l | grep "ietf-system ")
-	if [ ! "$match" ]; then
-		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-system@2014-08-06.yang -o root:root -p 600
-		sysrepoctl -m ietf-system -e authentication
-		sysrepoctl -m ietf-system -e local-users
+		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-netconf@2013-09-29.yang -o root:root -p 600
 	fi
 
 	match=$(sysrepoctl -l | grep "ietf-datastores ")
@@ -61,10 +54,6 @@ if [ -x /bin/sysrepoctl ]; then
 		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-datastores@2017-08-17.yang -o root:root -p 600
 	fi
 
-	match=$(sysrepoctl -l | grep "ietf-yang-library ")
-	if [ ! "$match" ]; then
-		sysrepoctl --install --yang=/etc/sysrepo/yang/ietf-yang-library@2018-01-17.yang -o root:root -p 600
-	fi
 fi
 
 exit 0
