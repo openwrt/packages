@@ -192,6 +192,10 @@ PYTHON3_PKG_SETUP_GLOBAL_ARGS ?=
 PYTHON3_PKG_SETUP_ARGS ?= --single-version-externally-managed
 PYTHON3_PKG_SETUP_VARS ?=
 
+define Py3Build/FindStdlibDepends
+	$(SHELL) $(python3_mk_path)python3-find-stdlib-depends.sh -n "$(PKG_NAME)" "$(PKG_BUILD_DIR)"
+endef
+
 define Py3Build/Compile/Default
 	$(if $(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS),
 		$(call HostPython3/PipInstall,$(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS))
@@ -205,10 +209,14 @@ define Py3Build/Compile/Default
 	)
 endef
 
+Py3Build/Configure=$(Py3Build/Configure/Default)
 Py3Build/Compile=$(Py3Build/Compile/Default)
 
 PYTHON3_PKG_BUILD ?= 1
 
 ifeq ($(strip $(PYTHON3_PKG_BUILD)),1)
+  ifeq ($(PY3),stdlib)
+    Hooks/Configure/Post+=Py3Build/FindStdlibDepends
+  endif
   Build/Compile=$(Py3Build/Compile)
 endif
