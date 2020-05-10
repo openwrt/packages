@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpg123
 PKG_VERSION:=1.25.13
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/mpg123
@@ -67,14 +67,12 @@ ifeq ($(CONFIG_SOFT_FLOAT),y)
 	CONFIGURE_ARGS+= \
 		--with-cpu=generic_nofpu \
 		--enable-int-quality=yes
+else ifneq ($(findstring neon,$(CONFIG_CPU_TYPE)),)
+	CONFIGURE_ARGS+= \
+		--with-cpu=arm_fpu
 else
 	CONFIGURE_ARGS+= \
 		--with-cpu=generic_fpu
-endif
-
-ifneq ($(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)),)
-        CONFIGURE_ARGS+= \
-                --with-cpu=arm_fpu
 endif
 
 define Build/InstallDev
