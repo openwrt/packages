@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=4.2.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
@@ -424,12 +424,12 @@ endif
 ifneq ($(findstring arm,$(CONFIG_ARCH)),)
 	FFMPEG_CONFIGURE+= --enable-lto
 
-	ifneq ($(findstring vfp,$(CONFIG_TARGET_OPTIMIZATION)),)
+	ifneq ($(findstring vfp,$(CONFIG_CPU_TYPE)),)
 		FFMPEG_CONFIGURE+= --enable-vfp
 	else
 		FFMPEG_CONFIGURE+= --disable-vfp
 	endif
-	ifneq ($(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)),)
+	ifneq ($(findstring neon,$(CONFIG_CPU_TYPE)),)
 		FFMPEG_CONFIGURE+= \
 			--enable-neon \
 			--enable-vfp
