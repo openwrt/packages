@@ -366,6 +366,7 @@ CMAKE_OPTIONS += \
 	-DINSTALL_MANDIR=share/man \
 	-DINSTALL_MYSQLSHAREDIR=share/mariadb \
 	-DINSTALL_MYSQLTESTDIR="" \
+	-DINSTALL_PAMDIR="/lib/security" \
 	-DINSTALL_PLUGINDIR=lib/mariadb/plugin \
 	-DINSTALL_SBINDIR=bin \
 	-DINSTALL_SCRIPTDIR=bin \
@@ -544,8 +545,18 @@ This package provides the $(1) plugin.
 	  $(INSTALL_DIR) $$(1)$(PLUGIN_DIR)
 	  $(call Package/mariadb/install/plugin,$$(1),$(1))
 ifeq ($(1),auth_pam)
-	  $(CP) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/auth_pam_tool_dir \
-		  $$(1)$(PLUGIN_DIR)
+	  $(INSTALL_DIR) -m0750 $$(1)$(PLUGIN_DIR)/auth_pam_tool_dir
+	  $(INSTALL_SUID) \
+		  $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/auth_pam_tool_dir/auth_pam_tool \
+					  $$(1)$(PLUGIN_DIR)/auth_pam_tool_dir
+	  $(INSTALL_DIR) $$(1)/etc/security
+	  $(INSTALL_DATA) \
+		  $(PKG_INSTALL_DIR)/etc/security/user_map.conf \
+					  $$(1)/etc/security
+	  $(INSTALL_DIR) $$(1)/lib/security
+	  $(INSTALL_DATA) \
+		  $(PKG_INSTALL_DIR)/lib/security/pam_user_map.so \
+					  $$(1)/lib/security
 endif
 ifeq ($(1),ha_spider)
 	  $(INSTALL_DIR) $$(1)$(SHARE_DIR)
@@ -556,11 +567,18 @@ endif
   $$(eval $$(call BuildPackage,mariadb-server-plugin-$(subst _,-,$(1))))
 endef
 
+# Directory "auth_pam_tool_dir" is installed with '-m0750' above and
+# contains SUID binary "auth_pam_tool". Below post-install script
+# changes the group of "auth_pam_tool_dir" to mariadb, so user mariadb
+# can access the folder (and the SUID binary). The script only changes
+# the group if the directory is currently owned by "root:root".
 define Package/mariadb-server-plugin-auth-pam/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
-  chown root:mariadb /usr/lib/mariadb/plugin/auth_pam_tool_dir > /dev/null 2>&1
-  chmod 0750 /usr/lib/mariadb/plugin/auth_pam_tool_dir > /dev/null 2>&1
+  dir="/usr/lib/mariadb/plugin/auth_pam_tool_dir"
+  if ! [ -L "$$dir" ] && [ -d "$$dir" ] && [ -O "$$dir" ] && [ -G "$$dir" ]; then
+    chown :mariadb "$$dir"
+  fi
 fi
 exit 0
 endef
