@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
 PKG_VERSION:=10.4.12
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := \
@@ -123,7 +123,6 @@ MARIADB_CLIENT_EXTRA := \
 	mysql_find_rows \
 	mysql_waitpid \
 	mysqlaccess \
-	mysqladmin \
 	mysqldump \
 	mysqlimport \
 	mysqlshow \
@@ -134,7 +133,9 @@ MARIADB_SERVER := \
 	innochecksum \
 	my_print_defaults \
 	mysql_install_db \
-	mysqld
+	mysqladmin \
+	mysqld \
+	mysqld_safe
 
 MARIADB_SERVER_EXTRA := \
 	aria_chk \
@@ -156,6 +157,7 @@ MARIADB_SERVER_EXTRA := \
 	mysql_tzinfo_to_sql \
 	mysqlbinlog \
 	mysqld_multi \
+	mysqld_safe_helper \
 	mysqldumpslow \
 	mysqlhotcopy \
 	perror \
@@ -270,6 +272,10 @@ define Package/mariadb-server
   TITLE:=MariaDB database server
   MENU:=1
   PROVIDES:=mysql-server
+endef
+
+define Package/mariadb-server/conffiles
+/usr/bin/mysqld_safe
 endef
 
 define Package/mariadb-server/description

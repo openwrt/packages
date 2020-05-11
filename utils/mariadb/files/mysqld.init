@@ -4,47 +4,70 @@
 START=95
 STOP=10
 
-USE_PROCD=1
-
-#PROCD_DEBUG=1
-
 NAME=mysqld
 
 LOGGER="/usr/bin/logger -p user.err -s -t $NAME --"
-COMMAND=/usr/bin/$NAME
+
+MYSQLADMIN=/usr/bin/mysqladmin
+MYSQLD=/usr/bin/$NAME
+MYSQLDSAFE=/usr/bin/mysqld_safe
+
+# mysqladmin likes to read /root/.my.cnf which could cause issues.
+export HOME=/etc/mysql
+
+# Safeguard (relative paths, core dumps...)
+cd /
 
 mysqld_get_param() {
-	$COMMAND --print-defaults \
+	$MYSQLD --print-defaults \
 		| tr " " "\n" \
 		| grep -- "--$1" \
 		| tail -n 1 \
 		| cut -d= -f2
 }
 
-start_service() {
-	local conf=/etc/mysql/my.cnf
-	local dir
-	local user
-	local group
-
-	local logfile
-
-	local datadir
-	local logdir=/var/log/mysql
-	local rundir=/var/run/mysqld
-	local tmpdir
-
-	local enabled
-	local log_stderr
-	local log_stdout
-	local options
-
-	local hint="please fix your server configuration in /etc/mysql/"
-
-	if [ ! -x $COMMAND ]; then
-		$LOGGER $COMMAND is missing
-		exit 1
+# Checks if a server is running and accessible.
+#
+# check_alive insists on a pingable server
+# check_dead also fails if there is a lost mysqld in the process list
+#
+# Usage: boolean mysqld_status [check_alive|check_dead]
+mysqld_status() {
+	if $MYSQLADMIN ping >/dev/null 2>&1; then
+		ping_alive=1
+	else
+		ping_alive=0
 	fi
+
+	ps_alive=0
+	pidfile=$(mysqld_get_param pid-file)
+	if [ -f "$pidfile" ] && kill -0 $(cat "$pidfile") >/dev/null 2>&1; then
+		ps_alive=1
+	fi
+
+	if { [ "$1" = check_alive ] && [ $ping_alive = 1 ]; } || \
+		{ [ "$1" = check_dead ] && [ $ping_alive = 0 ] \
+					&& [ $ps_alive = 0 ]; }
+	then
+		return 0 # EXIT_SUCCESS
+	else
+		return 1 # EXIT_FAILURE
+	fi
+}
+
+start() {
+	conf=/etc/mysql/my.cnf
+	logdir=/var/log/mysql
+	rundir=/var/run/mysqld
+
+	hint="please fix your server configuration in /etc/mysql/"
+
+	for i in $MYSQLD $MYSQLADMIN $MYSQLDSAFE; do
+		if [ ! -x $i ]; then
+			$LOGGER $i is missing
+			exit 1
+		fi
+	done
 
 	if [ ! -r $conf ]; then
 		$LOGGER $conf cannot be read
@@ -59,15 +82,10 @@ start_service() {
 		exit 1
 	fi
 
-	config_get_bool log_stderr general log_stderr 1
-	config_get_bool log_stdout general log_stdout 1
-
 	config_get options general options
 
 	datadir=$(mysqld_get_param datadir)
-	logfile=$(mysqld_get_param general_log_file)
 	tmpdir=$(mysqld_get_param tmpdir)
-	user=$(mysqld_get_param user)
 
 	if [ -z "$datadir" ]; then
 		$LOGGER datadir is not set
@@ -81,76 +99,48 @@ start_service() {
 		exit 1
 	fi
 
-	if [ -z "$user" ]; then
-		$LOGGER user is not set
-		$LOGGER $hint
-		exit 1
-	fi
-
-	user_exists "$user" || {
-		$LOGGER user \""$user"\" does not exist
-		$LOGGER $hint
-		exit 1
-	}
-
-	group=$(id -g -n "$user")
-
-	group_exists "$group" || {
-		$LOGGER group \""$group"\" does not exist
-		$LOGGER user \""$user"\" not configured correctly
-		exit 1
-	}
-
-	[ -n "$logfile" ] && logdir=$(dirname "$logfile")
-
-	# do not touch directories that already exist
-	# posix shell does not support arrays, hence using awk
-	awk \
-	  -v user="$user" \
-	  -v group="$group" \
-	  -v a="$datadir" \
-	  -v b="$logdir" \
-	  -v c="$rundir" \
-	  -v d="$tmpdir" \
-	  '
-	    BEGIN {
-	      dir[0]=a
-	      dir[1]=b
-	      dir[2]=c
-	      dir[3]=d
-	      for (x in dir) {
-	        if (system("test ! -e \"" dir[x] "\"" )) {
-	          delete dir[x]
-	        }
-	      }
-	      for (x in dir) {
-	        system("mkdir -p \"" dir[x] "\"" )
-	        system("chmod 750 \"" dir[x] "\"" )
-	        system("chown \"" user "\":\"" group "\" \"" dir[x] "\"" )
-	      }
-	    }
-	  '
-
 	if [ ! -f "$datadir/mysql/tables_priv.MAD" ]; then
-		local args="--force"
-		local basedir=$(mysqld_get_param basedir)
+		args="--force"
+		basedir=$(mysqld_get_param basedir)
 		[ -n "$basedir" ] && args="$args --basedir=$basedir"
 
 		$LOGGER Cannot detect privileges table. You might need to run
-		$LOGGER \'mysql_install_db $args\'
+		$LOGGER \'mysql_install_db "$args"\'
 		$LOGGER to initialize the system tables.
 		exit 1
 	fi
 
-	procd_open_instance
+	# Start daemon
+	if mysqld_status check_alive; then
+		$LOGGER already running
+	else
+		for i in $logdir $rundir; do
+			opts="-m 0750"
+			if ! [ -e $i ]; then
+				# $rundir needs to be accessible for
+				# clients
+				if [ $i = $rundir ]; then
+					opts=
+				fi
+				mkdir -p $opts $i
+				[ -d $i ] && chown mariadb:mariadb $i
+			fi
+		done
 
-	procd_set_param command $COMMAND $options
-
-	# forward stderr to logd
-	procd_set_param stderr $log_stderr
-	# same for stdout
-	procd_set_param stdout $log_stdout
-
-	procd_close_instance
+		$MYSQLDSAFE $options >/dev/null 2>&1 &
+	fi
 }
 
+stop() {
+	if ! mysqld_status check_dead; then
+		$MYSQLADMIN shutdown
+	fi
+}
+
+reload() {
+	if mysqld_status check_alive; then
+		$MYSQLADMIN reload
+	else
+		$LOGGER not running
+	fi
+}
