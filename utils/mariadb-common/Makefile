@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb-common
 PKG_VERSION:=1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
 PKG_LICENSE:=GPL-2.0
@@ -40,7 +40,7 @@ endef
 
 define Package/mariadb-common/install
 	$(INSTALL_DIR) $(1)$(CONF_DIR)
-	$(INSTALL_CONF) conf/my.cnf $(1)$(CONF_DIR)
+	$(INSTALL_DATA) conf/my.cnf $(1)$(CONF_DIR)
 endef
 
 define Build/Compile
