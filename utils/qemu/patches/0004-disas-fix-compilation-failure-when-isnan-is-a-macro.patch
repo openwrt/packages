@@ -1,4 +1,4 @@
-From 3ac531a6bdeecbe40741a76f1dc2b7fa6c11f8ef Mon Sep 17 00:00:00 2001
+From 26dd9766757895c04b33a89865e3886f18146332 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Sat, 24 Feb 2018 13:45:25 +0800
 Subject: [PATCH] disas: fix compilation failure when isnan is a macro

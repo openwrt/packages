@@ -1,6 +1,6 @@
-From 2a6ab8342245c8dc2a09478d8eb0292e2dbcecf2 Mon Sep 17 00:00:00 2001
+From 608b183335725bcc1c2dd8b615551c49ec3b9c88 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
-Date: Tue, 2 Apr 2019 06:31:31 +0000
+Date: Mon, 11 May 2020 10:46:37 +0800
 Subject: [PATCH] configure: allow enabling/disabling libudev from command line
 
 ---
@@ -8,12 +8,12 @@ Subject: [PATCH] configure: allow enabling/disabling libudev from command line
  1 file changed, 4 insertions(+)
 
 diff --git a/configure b/configure
-index b52d2cb406..efe06f3c2b 100755
+index c8d2ac1c3e..cf3f8ffdd7 100755
 --- a/configure
 +++ b/configure
-@@ -1539,6 +1539,10 @@ for opt do
+@@ -1601,6 +1601,10 @@ for opt do
    ;;
-   --disable-plugins) plugins="no"
+   --gdb=*) gdb_bin="$optarg"
    ;;
 +  --enable-libudev) libudev=yes
 +  ;;

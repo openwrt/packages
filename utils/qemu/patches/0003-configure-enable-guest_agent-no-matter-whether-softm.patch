@@ -1,4 +1,4 @@
-From 296215421441b73bc6eb487f1d4e7e15e0510a77 Mon Sep 17 00:00:00 2001
+From 3f07c9cb96b361f07ce637088f818bbe0edbcde3 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Fri, 7 Feb 2020 03:02:44 +0800
 Subject: [PATCH] configure: enable guest_agent no matter whether softmmu is
@@ -13,10 +13,10 @@ Fixes a512590 ("configure: qemu-ga is only needed with softmmu targets")
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/configure b/configure
-index efe06f3c2b..552d16ca8f 100755
+index cf3f8ffdd7..b4af83a01f 100755
 --- a/configure
 +++ b/configure
-@@ -6246,7 +6246,7 @@ fi
+@@ -6414,7 +6414,7 @@ fi
  # Probe for guest agent support/options
  
  if [ "$guest_agent" != "no" ]; then

@@ -9,10 +9,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=4.2.0
-PKG_RELEASE:=3
+PKG_VERSION:=5.0.0
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=d3481d4108ce211a053ef15be69af1bdd9dde1510fda80d92be0f6c3e98768f0
+PKG_HASH:=2f13a92a0fa5c8b69ff0796b59b86b080bbb92ebad5d301a7724dd06b5e78cb6
 PKG_SOURCE_URL:=http://download.qemu.org/
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
@@ -31,6 +31,7 @@ include $(INCLUDE_DIR)/package.mk
 
 QEMU_DEPS_IN_GUEST := @(TARGET_x86_64||TARGET_armvirt||TARGET_arm64||TARGET_malta)
 QEMU_DEPS_IN_HOST := @(TARGET_x86_64||TARGET_sunxi)
+QEMU_DEPS_IN_HOST += $(CXX_DEPENDS)
 
 define Package/virtio-console-helper
   SECTION:=utils
@@ -73,7 +74,7 @@ define Package/qemu-bridge-helper
   SUBMENU:=Virtualization
   TITLE:=QEMU bridge helper
   URL:=http://www.qemu.org
-  DEPENDS:=+glib2 $(CXX_DEPENDS) $(QEMU_DEPS_IN_HOST)
+  DEPENDS:=+glib2 $(QEMU_DEPS_IN_HOST)
 endef
 
 define Package/qemu-bridge-helper/install
@@ -189,7 +190,7 @@ define qemu-target
     SUBMENU:=Virtualization
     TITLE:=QEMU target $(1)
     URL:=http://www.qemu.org
-    DEPENDS:= +glib2 +libpthread +zlib $(CXX_DEPENDS) $(QEMU_DEPS_IN_HOST) $(qemu-target-$(1)-deps) \
+    DEPENDS:= +glib2 +libpthread +zlib $(QEMU_DEPS_IN_HOST) $(qemu-target-$(1)-deps) \
 	+QEMU_UI_VNC:qemu-keymaps \
 	+QEMU_UI_VNC_JPEG:libjpeg \
 	+QEMU_UI_VNC_PNG:libpng \
@@ -296,6 +297,7 @@ CONFIGURE_ARGS +=			\
 	--enable-vhost-net		\
 	--enable-vhost-scsi		\
 	--enable-vhost-user		\
+	--enable-vhost-user-fs		\
 	--enable-vhost-vsock		\
 
 # Image formats support
@@ -361,11 +363,11 @@ CONFIGURE_ARGS +=			\
 	--audio-drv-list=''		\
 	--disable-attr			\
 	--disable-auth-pam		\
-	--disable-bluez			\
 	--disable-brlapi		\
 	--disable-bzip2			\
 	--disable-cap-ng		\
 	--disable-capstone		\
+	--disable-containers		\
 	--disable-curl			\
 	--disable-debug-info		\
 	--disable-debug-mutex		\
@@ -388,11 +390,13 @@ CONFIGURE_ARGS +=			\
 	--disable-lzfse			\
 	--disable-lzo			\
 	--disable-modules		\
+	--disable-module-upgrades	\
 	--disable-mpath			\
 	--disable-netmap		\
 	--disable-nettle		\
 	--disable-numa			\
 	--disable-opengl		\
+	--disable-plugins		\
 	--disable-pvrdma		\
 	--disable-qom-cast-debug	\
 	--disable-rbd			\
@@ -414,7 +418,9 @@ CONFIGURE_ARGS +=			\
 	--disable-vxhs			\
 	--disable-werror		\
 	--disable-xen-pci-passthrough	\
+	--disable-xkbcommon		\
 	--disable-xfsctl		\
+	--disable-zstd			\
 
 CONFIGURE_ARGS += --target-list='$(foreach target,$(qemu-target-list),$(if $(CONFIG_PACKAGE_qemu-$(target)),$(target)))'
 CONFIGURE_ARGS += $(if $(CONFIG_PACKAGE_qemu-ga),--enable-guest-agent)
