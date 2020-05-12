@@ -78,7 +78,7 @@ endif
 
 define Build/Compile
 	( \
-		export $(call GoPackage/Environment) \
+		export $(GO_PKG_VARS) \
 			GITCOMMIT=$(PKG_SOURCE_VERSION) \
 			DOCKER_GITCOMMIT=$(PKG_SOURCE_VERSION) \
 			DOCKER_BUILDTAGS='$(BUILDTAGS)' \

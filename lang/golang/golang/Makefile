@@ -310,7 +310,7 @@ define Build/Compile
 
 	( \
 		cd $(PKG_BUILD_DIR)/bin ; \
-		export $(call GoPackage/Environment/Target) ; \
+		export $(GO_PKG_TARGET_VARS) ; \
 		$(CP) go go-host ; \
 		GOROOT_FINAL=$(PKG_GO_ROOT) \
 		GOCACHE=$(PKG_GO_TARGET_CACHE_DIR) \
