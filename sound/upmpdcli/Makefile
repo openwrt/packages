@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=upmpdcli
-PKG_VERSION:=1.4.7
-PKG_RELEASE:=2
+PKG_VERSION:=1.4.9
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.lesbonscomptes.com/upmpdcli/downloads
-PKG_HASH:=55dec356c98e16f00b1e547f9f4a1c03756317102e91982f93eca8cc4eda115e
+PKG_HASH:=ace5a3166891109d2a874f21306986857ee2620230a77751ed6209f7b5cc9c58
 
 PKG_MAINTAINER:=Petko Bordjukov <bordjukov@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
