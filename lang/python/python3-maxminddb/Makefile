@@ -9,11 +9,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=maxminddb
-PKG_VERSION:=1.5.2
-PKG_RELEASE:=2
+PKG_VERSION:=1.5.4
+PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=d0ce131d901eb11669996b49a59f410efd3da2c6dbe2c0094fe2fef8d85b6336
+PKG_HASH:=f4d28823d9ca23323d113dc7af8db2087aa4f657fafc64ff8f7a8afda871425b
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=Apache-2.0
