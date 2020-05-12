@@ -89,7 +89,12 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 #
 #   Additional go tool link arguments to use when building targets.
 #
-#   e.g. GO_PKG_LDFLAGS:=-s -w
+#   Note that the OpenWrt build system has an option to strip binaries
+#   (enabled by default), so -s (Omit the symbol table and debug
+#   information) and -w (Omit the DWARF symbol table) flags are not
+#   necessary.
+#
+#   e.g. GO_PKG_LDFLAGS:=-r dir1:dir2 -u
 #
 #
 # GO_PKG_LDFLAGS_X - list of string variable definitions, default empty
@@ -147,16 +152,6 @@ ifneq ($(CONFIG_USE_SSTRIP),)
     GO_PKG_STRIP_ARGS:=--strip-all
   endif
   STRIP:=$(TARGET_CROSS)strip $(GO_PKG_STRIP_ARGS)
-  RSTRIP= \
-    export CROSS="$(TARGET_CROSS)" \
-		$(if $(PKG_BUILD_ID),KEEP_BUILD_ID=1) \
-		$(if $(CONFIG_KERNEL_KALLSYMS),NO_RENAME=1) \
-		$(if $(CONFIG_KERNEL_PROFILING),KEEP_SYMBOLS=1); \
-    NM="$(TARGET_CROSS)nm" \
-    STRIP="$(STRIP)" \
-    STRIP_KMOD="$(SCRIPT_DIR)/strip-kmod.sh" \
-    PATCHELF="$(STAGING_DIR_HOST)/bin/patchelf" \
-    $(SCRIPT_DIR)/rstrip.sh
 endif
 
 define GoPackage/GoSubMenu
