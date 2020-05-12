@@ -189,6 +189,43 @@ GO_PKG_VARS=$(GO_PKG_DEFAULT_VARS)
 # do not use for new code; this will be removed after the next OpenWrt release
 GoPackage/Environment=$(GO_PKG_VARS)
 
+GO_PKG_DEFAULT_LDFLAGS= \
+	-buildid '$(SOURCE_DATE_EPOCH)' \
+	-linkmode external \
+	-extldflags '$(patsubst -z%,-Wl$(comma)-z$(comma)%,$(TARGET_LDFLAGS))'
+
+GO_PKG_INSTALL_ARGS= \
+	-v \
+	-trimpath \
+	-ldflags "all=$(GO_PKG_DEFAULT_LDFLAGS)"
+
+ifeq ($(GO_PKG_ENABLE_PIE),1)
+  GO_PKG_INSTALL_ARGS+= -buildmode pie
+endif
+
+ifeq ($(GO_ARCH),arm)
+  GO_PKG_INSTALL_ARGS+= -installsuffix "v$(GO_ARM)"
+
+else ifneq ($(filter $(GO_ARCH),mips mipsle),)
+  GO_PKG_INSTALL_ARGS+= -installsuffix "$(GO_MIPS)"
+
+else ifneq ($(filter $(GO_ARCH),mips64 mips64le),)
+  GO_PKG_INSTALL_ARGS+= -installsuffix "$(GO_MIPS64)"
+
+endif
+
+ifneq ($(strip $(GO_PKG_GCFLAGS)),)
+  GO_PKG_INSTALL_ARGS+= -gcflags "$(GO_PKG_GCFLAGS)"
+endif
+
+GO_PKG_CUSTOM_LDFLAGS= \
+	$(GO_PKG_LDFLAGS) \
+	$(patsubst %,-X %,$(GO_PKG_LDFLAGS_X))
+
+ifneq ($(strip $(GO_PKG_CUSTOM_LDFLAGS)),)
+  GO_PKG_INSTALL_ARGS+= -ldflags "$(GO_PKG_CUSTOM_LDFLAGS) $(GO_PKG_DEFAULT_LDFLAGS)"
+endif
+
 # false if directory does not exist
 GoPackage/is_dir_not_empty=$$$$($(FIND) $(1) -maxdepth 0 -type d \! -empty 2>/dev/null)
 
@@ -290,27 +327,7 @@ define GoPackage/Build/Compile
 		\
 		if [ "$(strip $(GO_PKG_SOURCE_ONLY))" != 1 ]; then \
 			echo "Building targets" ; \
-			case $(GO_ARCH) in \
-			arm)             installsuffix="v$(GO_ARM)" ;; \
-			mips|mipsle)     installsuffix="$(GO_MIPS)" ;; \
-			mips64|mips64le) installsuffix="$(GO_MIPS64)" ;; \
-			esac ; \
-			ldflags="-linkmode external -extldflags '$(TARGET_LDFLAGS:-z%=-Wl,-z,%)'" ; \
-			pkg_gcflags="$(strip $(GO_PKG_GCFLAGS))" ; \
-			pkg_ldflags="$(strip $(GO_PKG_LDFLAGS))" ; \
-			for def in $(GO_PKG_LDFLAGS_X); do \
-				pkg_ldflags="$$$$pkg_ldflags -X $$$$def" ; \
-			done ; \
-			go install \
-				$(if $(GO_PKG_ENABLE_PIE),-buildmode pie) \
-				$$$${installsuffix:+-installsuffix $$$$installsuffix} \
-				-trimpath \
-				-ldflags "all=$$$$ldflags" \
-				-v \
-				$$$${pkg_gcflags:+-gcflags "$$$$pkg_gcflags"} \
-				$$$${pkg_ldflags:+-ldflags "$$$$pkg_ldflags $$$$ldflags"} \
-				$(1) \
-				$$$$targets ; \
+			go install $(GO_PKG_INSTALL_ARGS) $(1) $$$$targets ; \
 			retval=$$$$? ; \
 			echo ; \
 			\
