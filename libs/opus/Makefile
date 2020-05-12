@@ -47,7 +47,7 @@ ifeq ($(CONFIG_SOFT_FLOAT),y)
 		--enable-fixed-point
 endif
 
-ifneq ($(findstring neon,$(CONFIG_CPU_TYPE)),)
+ifneq ($(findstring neon,$(CONFIG_CPU_TYPE))$(findstring aarch64,$(CONFIG_ARCH)),)
 	CONFIGURE_ARGS+= \
 		--enable-fixed-point
 endif

@@ -444,7 +444,7 @@ FFMPEG_CONFIGURE+= \
 	--disable-fast-unaligned \
 	--disable-runtime-cpudetect
 
-else ifneq ($(findstring arm,$(CONFIG_ARCH)),)
+else ifneq ($(findstring arm,$(CONFIG_ARCH))$(findstring aarch64,$(CONFIG_ARCH)),)
 FFMPEG_CONFIGURE+= \
 	--disable-runtime-cpudetect
 # XXX: GitHub issue 3320 ppc cpu with fpu but no altivec (WNDR4700)
@@ -476,6 +476,13 @@ ifneq ($(findstring arm,$(CONFIG_ARCH)),)
 	else
 		FFMPEG_CONFIGURE+= --disable-neon
 	endif
+endif
+
+ifneq ($(findstring aarch64,$(CONFIG_ARCH)),)
+	FFMPEG_CONFIGURE+= \
+		--enable-lto \
+		--enable-neon \
+		--enable-vfp
 endif
 
 ifeq ($(ARCH),x86_64)

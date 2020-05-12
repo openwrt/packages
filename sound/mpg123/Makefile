@@ -70,6 +70,9 @@ ifeq ($(CONFIG_SOFT_FLOAT),y)
 else ifneq ($(findstring neon,$(CONFIG_CPU_TYPE)),)
 	CONFIGURE_ARGS+= \
 		--with-cpu=arm_fpu
+else ifneq ($(findstring aarch64,$(CONFIG_ARCH)),)
+	CONFIGURE_ARGS+= \
+		--with-cpu=aarch64
 else
 	CONFIGURE_ARGS+= \
 		--with-cpu=generic_fpu

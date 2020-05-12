@@ -40,7 +40,8 @@ TARGET_CFLAGS += $(FPIC)
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
-	$(if $(findstring neon,$(CONFIG_CPU_TYPE)),--enable-hardware-optimizations=yes --enable-arm-neon=yes)
+	$(if $(findstring neon,$(CONFIG_CPU_TYPE))$(findstring aarch64,$(CONFIG_ARCH)), \
+		--enable-hardware-optimizations=yes --enable-arm-neon=yes)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin
