@@ -154,6 +154,23 @@ This package provides an assembler, compiler, linker, and compiled
 libraries for the Go programming language.
 endef
 
+define Package/golang/config
+menu "Configuration"
+
+config GOLANG_EXTERNAL_BOOTSTRAP_ROOT
+	string "External bootstrap Go root directory"
+	help
+	  Path to a working Go tree (>= Go 1.4), with bin, pkg, and src
+	  subdirectories and the Go compiler at bin/go.
+
+	  If specified, the existing Go installation will be used to
+	  compile host (buildroot) Go.
+
+	  Leave blank to compile the default bootstrap Go.
+
+endmenu
+endef
+
 define Package/golang-doc
 $(call Package/golang/Default)
   TITLE+= (documentation)
@@ -177,22 +194,29 @@ This package provides the Go programming language source files needed
 for cross-compilation.
 endef
 
+EXTERNAL_BOOTSTRAP_DIR:=$(call qstrip,$(CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT))
+USE_DEFAULT_BOOTSTRAP:=$(if $(EXTERNAL_BOOTSTRAP_DIR),,1)
+
 define Download/golang-bootstrap
   FILE:=$(BOOTSTRAP_SOURCE)
   URL:=$(BOOTSTRAP_SOURCE_URL)
   HASH:=$(BOOTSTRAP_HASH)
 endef
-$(eval $(call Download,golang-bootstrap))
 
-$(eval $(call GoCompiler/AddProfile,Bootstrap,$(BOOTSTRAP_BUILD_DIR),,bootstrap,$(GO_HOST_OS_ARCH)))
 $(eval $(call GoCompiler/AddProfile,Host,$(HOST_BUILD_DIR),$(HOST_GO_PREFIX),$(HOST_GO_VERSION_ID),$(GO_HOST_OS_ARCH),$(HOST_GO_INSTALL_SUFFIX)))
 $(eval $(call GoCompiler/AddProfile,Package,$(PKG_BUILD_DIR),$(PKG_GO_PREFIX),$(PKG_GO_VERSION_ID),$(GO_OS_ARCH),$(PKG_GO_INSTALL_SUFFIX)))
 
-define Host/Prepare
+ifeq ($(USE_DEFAULT_BOOTSTRAP),1)
+  $(eval $(call GoCompiler/AddProfile,Bootstrap,$(BOOTSTRAP_BUILD_DIR),,bootstrap,$(GO_HOST_OS_ARCH)))
+
+  $(eval $(call Download,golang-bootstrap))
+
+  define Host/Prepare
 	$(call Host/Prepare/Default)
 	mkdir -p $(BOOTSTRAP_BUILD_DIR)
 	$(BOOTSTRAP_UNPACK)
-endef
+  endef
+endif
 
 # when https://github.com/golang/go/issues/31544 is fixed,
 # we should be able to set GO_LDFLAGS=-buildmode=pie for host make
@@ -212,7 +236,7 @@ define Host/Compile
 	)
 
 	$(call GoCompiler/Host/Make, \
-		GOROOT_BOOTSTRAP=$(BOOTSTRAP_BUILD_DIR) \
+		GOROOT_BOOTSTRAP=$(if $(USE_DEFAULT_BOOTSTRAP),$(BOOTSTRAP_BUILD_DIR),$(EXTERNAL_BOOTSTRAP_DIR)) \
 		GOCACHE=$(HOST_GO_CACHE_DIR) \
 		CC=$(HOSTCC_NOCACHE) \
 		CXX=$(HOSTCXX_NOCACHE) \
