@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmariadb
 PKG_VERSION:=3.1.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=mariadb-connector-c-$(PKG_VERSION)-src.tar.gz
 PKG_SOURCE_URL := \
@@ -160,7 +160,7 @@ define Package/$(PKG_NAME)/install
 		$(PKG_INSTALL_DIR)$(MARIADB_PLUGIN_DIR)/sha256_password.so \
 		$(1)$(MARIADB_PLUGIN_DIR)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libmariadb.so.$(ABI_VERSION) $(1)/usr/lib
-	$(INSTALL_CONF) conf/50-client.cnf $(1)$(MARIADB_CONF_DIR)/conf.d
+	$(INSTALL_DATA) conf/50-client.cnf $(1)$(MARIADB_CONF_DIR)/conf.d
 endef
 
 define BuildPlugin

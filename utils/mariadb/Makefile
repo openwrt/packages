@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
 PKG_VERSION:=10.4.12
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := \
@@ -116,13 +116,13 @@ plugin-wsrep_info               := PLUGIN_WSREP_INFO
 
 MARIADB_CLIENT := \
 	mysql \
+	mysql_upgrade \
 	mysqlcheck
 
 MARIADB_CLIENT_EXTRA := \
 	mysql_find_rows \
 	mysql_waitpid \
 	mysqlaccess \
-	mysqladmin \
 	mysqldump \
 	mysqlimport \
 	mysqlshow \
@@ -133,8 +133,9 @@ MARIADB_SERVER := \
 	innochecksum \
 	my_print_defaults \
 	mysql_install_db \
-	mysql_upgrade \
-	mysqld
+	mysqladmin \
+	mysqld \
+	mysqld_safe
 
 MARIADB_SERVER_EXTRA := \
 	aria_chk \
@@ -156,6 +157,7 @@ MARIADB_SERVER_EXTRA := \
 	mysql_tzinfo_to_sql \
 	mysqlbinlog \
 	mysqld_multi \
+	mysqld_safe_helper \
 	mysqldumpslow \
 	mysqlhotcopy \
 	perror \
@@ -272,6 +274,10 @@ define Package/mariadb-server
   PROVIDES:=mysql-server
 endef
 
+define Package/mariadb-server/conffiles
+/usr/bin/mysqld_safe
+endef
+
 define Package/mariadb-server/description
 $(call Package/mariadb/description/Default)
 
@@ -366,6 +372,7 @@ CMAKE_OPTIONS += \
 	-DINSTALL_MANDIR=share/man \
 	-DINSTALL_MYSQLSHAREDIR=share/mariadb \
 	-DINSTALL_MYSQLTESTDIR="" \
+	-DINSTALL_PAMDIR="/lib/security" \
 	-DINSTALL_PLUGINDIR=lib/mariadb/plugin \
 	-DINSTALL_SBINDIR=bin \
 	-DINSTALL_SCRIPTDIR=bin \
@@ -486,7 +493,7 @@ endef
 
 define Package/mariadb-client-base/install
 	$(INSTALL_DIR) $(1)$(CONF_DIR)/conf.d
-	$(INSTALL_CONF) conf/50-mysql-clients.cnf $(1)$(CONF_DIR)/conf.d
+	$(INSTALL_DATA) conf/50-mysql-clients.cnf $(1)$(CONF_DIR)/conf.d
 endef
 
 define Package/mariadb-client-extra/install
@@ -507,8 +514,8 @@ define Package/mariadb-server-base/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/mysqld.init $(1)/etc/init.d/mysqld
 	$(SED) '/^[a-z]/s/^/#/' $(PKG_INSTALL_DIR)$(SHARE_DIR)/wsrep.cnf
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)$(SHARE_DIR)/wsrep.cnf $(1)$(CONF_DIR)/conf.d/60-galera.cnf
-	$(INSTALL_CONF) conf/50-server.cnf $(1)$(CONF_DIR)/conf.d
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/wsrep.cnf $(1)$(CONF_DIR)/conf.d/60-galera.cnf
+	$(INSTALL_DATA) conf/50-server.cnf $(1)$(CONF_DIR)/conf.d
 	$(INSTALL_CONF) files/mysqld.config $(1)/etc/config/mysqld
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/charsets/* $(1)$(SHARE_DIR)/charsets
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/english/errmsg.sys $(1)$(SHARE_DIR)/english
@@ -544,8 +551,18 @@ This package provides the $(1) plugin.
 	  $(INSTALL_DIR) $$(1)$(PLUGIN_DIR)
 	  $(call Package/mariadb/install/plugin,$$(1),$(1))
 ifeq ($(1),auth_pam)
-	  $(CP) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/auth_pam_tool_dir \
-		  $$(1)$(PLUGIN_DIR)
+	  $(INSTALL_DIR) -m0750 $$(1)$(PLUGIN_DIR)/auth_pam_tool_dir
+	  $(INSTALL_SUID) \
+		  $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/auth_pam_tool_dir/auth_pam_tool \
+					  $$(1)$(PLUGIN_DIR)/auth_pam_tool_dir
+	  $(INSTALL_DIR) $$(1)/etc/security
+	  $(INSTALL_DATA) \
+		  $(PKG_INSTALL_DIR)/etc/security/user_map.conf \
+					  $$(1)/etc/security
+	  $(INSTALL_DIR) $$(1)/lib/security
+	  $(INSTALL_DATA) \
+		  $(PKG_INSTALL_DIR)/lib/security/pam_user_map.so \
+					  $$(1)/lib/security
 endif
 ifeq ($(1),ha_spider)
 	  $(INSTALL_DIR) $$(1)$(SHARE_DIR)
@@ -556,11 +573,18 @@ endif
   $$(eval $$(call BuildPackage,mariadb-server-plugin-$(subst _,-,$(1))))
 endef
 
+# Directory "auth_pam_tool_dir" is installed with '-m0750' above and
+# contains SUID binary "auth_pam_tool". Below post-install script
+# changes the group of "auth_pam_tool_dir" to mariadb, so user mariadb
+# can access the folder (and the SUID binary). The script only changes
+# the group if the directory is currently owned by "root:root".
 define Package/mariadb-server-plugin-auth-pam/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
-  chown root:mariadb /usr/lib/mariadb/plugin/auth_pam_tool_dir > /dev/null 2>&1
-  chmod 0750 /usr/lib/mariadb/plugin/auth_pam_tool_dir > /dev/null 2>&1
+  dir="/usr/lib/mariadb/plugin/auth_pam_tool_dir"
+  if ! [ -L "$$dir" ] && [ -d "$$dir" ] && [ -O "$$dir" ] && [ -G "$$dir" ]; then
+    chown :mariadb "$$dir"
+  fi
 fi
 exit 0
 endef
