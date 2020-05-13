@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.17.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
@@ -120,7 +120,7 @@ define Package/nginx-all-module
   DEPENDS:=+libpcre +libopenssl +zlib +liblua +libpthread +libxml2 \
    +libubus +libblobmsg-json +libjson-c +nginx-ssl-util
   VARIANT:=all-module
-  PROVIDES:=nginx
+  PROVIDES:=nginx nginx-ssl
 endef
 
 Package/nginx-all-module/description = $(Package/nginx/description) \
@@ -322,7 +322,7 @@ else
 	--with-stream --with-stream_ssl_module --with-stream_ssl_preread_module \
 	--add-module=$(PKG_BUILD_DIR)/nginx-brotli --add-module=$(PKG_BUILD_DIR)/nginx-rtmp \
 	--add-module=$(PKG_BUILD_DIR)/nginx-ts --add-module=$(PKG_BUILD_DIR)/nginx-ubus-module
-  config_files += koi-utf koi-win win-utf fastcgi_params 
+  config_files += koi-utf koi-win win-utf fastcgi_params uwsgi_params
 endif
 
 define Package/nginx-mod-luci/default
