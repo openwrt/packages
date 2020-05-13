@@ -12,7 +12,7 @@ GO_VERSION_PATCH:=2
 
 PKG_NAME:=golang
 PKG_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 GO_SOURCE_URLS:=https://dl.google.com/go/ \
                 https://mirrors.ustc.edu.cn/golang/ \
@@ -101,7 +101,7 @@ PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/
 HOST_UNPACK:=$(HOST_TAR) -C $(HOST_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 BOOTSTRAP_UNPACK:=$(HOST_TAR) -C $(BOOTSTRAP_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(BOOTSTRAP_SOURCE)
 
-# don't strip ELF executables in test data (and go itself)
+# don't strip ELF executables in test data
 RSTRIP:=:
 STRIP:=:
 
@@ -196,6 +196,23 @@ endef
 
 EXTERNAL_BOOTSTRAP_DIR:=$(call qstrip,$(CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT))
 USE_DEFAULT_BOOTSTRAP:=$(if $(EXTERNAL_BOOTSTRAP_DIR),,1)
+
+PKG_GO_LDFLAGS= \
+	-buildid '$(SOURCE_DATE_EPOCH)'
+
+ifeq ($(CONFIG_NO_STRIP)$(CONFIG_DEBUG),)
+  PKG_GO_LDFLAGS+= -s -w
+endif
+
+# setting -trimpath is not necessary here because the paths inside the
+# compiler binary are relative to GOROOT_FINAL (PKG_GO_ROOT), which is
+# static / not dependent on the build environment
+PKG_GO_INSTALL_ARGS= \
+	-ldflags "all=$(PKG_GO_LDFLAGS)"
+
+ifeq ($(PKG_GO_ENABLE_PIE),1)
+  PKG_GO_INSTALL_ARGS+= -buildmode pie
+endif
 
 define Download/golang-bootstrap
   FILE:=$(BOOTSTRAP_SOURCE)
@@ -322,7 +339,7 @@ define Build/Compile
 		CXX=g++ \
 		PKG_CONFIG=pkg-config \
 		PATH=$(HOST_GO_ROOT)/openwrt:$$$$PATH \
-		./go-host install -a $(if $(PKG_GO_ENABLE_PIE),-buildmode=pie) std cmd ; \
+		./go-host install -a $(PKG_GO_INSTALL_ARGS) std cmd ; \
 		retval=$$$$? ; \
 		rm -f go-host ; \
 		exit $$$$retval ; \
