@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nextdns
 PKG_VERSION:=1.5.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
@@ -37,6 +37,10 @@ define Package/nextdns
   TITLE:=NextDNS DNS over HTTPS Proxy
   URL:=https://github.com/nextdns/nextdns
   DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
+endef
+
+define Package/nextdns/conffiles
+/etc/config/nextdns
 endef
 
 define Package/nextdns/install

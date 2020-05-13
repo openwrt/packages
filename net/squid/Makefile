@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squid
 PKG_VERSION:=4.6
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www3.us.squid-cache.org/Versions/v4/ \
@@ -58,6 +58,7 @@ define Package/squid/config
 endef
 
 define Package/squid/conffiles
+  /etc/config/squid
   /etc/squid/squid.conf
 endef
 

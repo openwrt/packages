@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=irqbalance
 PKG_VERSION:=1.6.0
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_PROTO:=git
@@ -63,6 +63,10 @@ endif
 CONFIGURE_VARS += \
 	GLIB2_LIBS="$(GLIB2_LIBS) \
 		$(ICONV_LDFLAGS) -liconv"
+
+define Package/irqbalance/conffiles
+/etc/config/irqbalance
+endef
 
 define Package/irqbalance/install
 	$(INSTALL_DIR) $(1)/usr/sbin

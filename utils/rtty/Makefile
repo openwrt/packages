@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtty
 PKG_VERSION:=7.1.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/rtty/releases/download/v$(PKG_VERSION)
@@ -39,6 +39,14 @@ Package/rtty-openssl=$(call Package/rtty/Default,openssl,+PACKAGE_rtty-openssl:l
 Package/rtty-wolfssl=$(call Package/rtty/Default,wolfssl,+PACKAGE_rtty-wolfssl:libwolfssl)
 Package/rtty-mbedtls=$(call Package/rtty/Default,mbedtls,+PACKAGE_rtty-mbedtls:libmbedtls)
 Package/rtty-nossl=$(call Package/rtty/Default,nossl)
+
+define Package/rtty-openssl/conffiles
+/etc/config/rtty
+endef
+
+Package/rtty-wolfssl/conffiles = $(Package/rtty-openssl/conffiles)
+Package/rtty-mbedtls/conffiles = $(Package/rtty-openssl/conffiles)
+Package/rtty-nossl/conffiles = $(Package/rtty-openssl/conffiles)
 
 ifeq ($(BUILD_VARIANT),openssl)
   CMAKE_OPTIONS += -DRTTY_USE_OPENSSL=ON

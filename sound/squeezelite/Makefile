@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squeezelite
 PKG_VERSION:=1.9.6-1210
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ralph-irving/squeezelite
@@ -118,6 +118,13 @@ ifeq ($(BUILD_VARIANT),full)
 endif
 
 MAKE_FLAGS+=OPTS="$(opts)"
+
+define Package/squeezelite/conffiles
+/etc/config/squeezelite
+endef
+
+Package/squeezelite-mini/conffiles = $(Package/squeezelite/conffiles)
+Package/squeezelite-full/conffiles = $(Package/squeezelite/conffiles)
 
 define Package/squeezelite/install
 	$(INSTALL_DIR) $(1)/usr/bin

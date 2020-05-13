@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kadnode
 PKG_VERSION:=2.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=MIT
 
@@ -75,6 +75,10 @@ MAKE_FLAGS += FEATURES="$(FEATURES)"
 # Make binary smaller
 TARGET_CFLAGS += -ffunction-sections -fdata-sections
 TARGET_LDFLAGS += -Wl,--gc-sections
+
+define Package/kadnode/conffiles
+/etc/config/kadnode
+endef
 
 define Package/kadnode/install
 	$(INSTALL_DIR) $(1)/usr/bin

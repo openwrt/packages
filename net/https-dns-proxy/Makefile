@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=https-dns-proxy
 PKG_VERSION:=2020-04-09
-PKG_RELEASE=1
+PKG_RELEASE=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/aarond10/https_dns_proxy
@@ -24,6 +24,10 @@ define Package/https-dns-proxy
 	TITLE:=DNS Over HTTPS Proxy
 	DEPENDS:=+libcares +libcurl +libev +ca-bundle
 	CONFLICTS:=https_dns_proxy
+endef
+
+define Package/https-dns-proxy/conffiles
+/etc/config/https-dns-proxy
 endef
 
 define Package/https-dns-proxy/install

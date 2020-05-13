@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ttyd
 PKG_VERSION:=1.6.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tsl0922/ttyd/tar.gz/$(PKG_VERSION)?
@@ -35,6 +35,10 @@ endef
 
 define Package/ttyd/description
 ttyd is a command-line tool for sharing terminal over the web.
+endef
+
+define Package/ttyd/conffiles
+/etc/config/ttyd
 endef
 
 define Package/ttyd/install
