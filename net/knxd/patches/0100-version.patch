@@ -1,12 +1,8 @@
 --- a/tools/version.sh  2020-04-08 19:39:40.349461034 +0200
-+++ b/tools/version.sh  2020-04-08 19:40:26.354277094 +0200
-@@ -1,8 +1,2 @@
++++ b/tools/version.sh  2020-05-13 13:40:26.354277094 +0200
+@@ -1,4 +1,3 @@
  #!/bin/sh
--sed -ne '1s/.*(\(.*\)).*/\1/' -e '1s/-1$//' -e '1p' debian/changelog | tr -d "\n"
+
 -test -d .git || exit
--git=$(git rev-parse --short HEAD)
--lgit=$(git rev-parse --short $(git rev-list -1 HEAD debian/changelog) )
--if test "$git" != "$lgit" ; then
--	echo -n ":$git"
--fi
-+echo -n "0.14.35"
+-git describe --tags
++echo -n "0.14.37"
