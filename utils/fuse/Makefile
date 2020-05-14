@@ -9,24 +9,24 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=fuse
-PKG_VERSION:=2.9.7
-PKG_RELEASE:=2
+PKG_VERSION:=2.9.9
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/libfuse/libfuse/releases/download/$(PKG_NAME)-$(PKG_VERSION)
-PKG_HASH:=832432d1ad4f833c20e13b57cf40ce5277a9d33e483205fc63c78111b3358874
+PKG_HASH:=d0e69d5d608cc22ff4843791ad097f554dd32540ddc9bed7638cc6fea7c1b4b5
 
-PKG_LICENSE:=LGPLv2.1 GPLv2
-PKG_LICENSE_FILES:=COPYING.LIB COPYING
+PKG_MAINTAINER:=
 PKG_CPE_ID:=cpe:/a:fuse_project:fuse
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/fuse/Default
   TITLE:=FUSE
-  URL:=http://fuse.sourceforge.net/
+  URL:=https://github.com/libfuse/libfuse
 endef
 
 define Package/fuse/Default/description
@@ -40,6 +40,8 @@ $(call Package/fuse/Default)
   DEPENDS:=+libfuse
   TITLE+= (utilities)
   SUBMENU:=Filesystem
+  LICENSE:=GPL-2.0-only
+  LICENSE_FILES:=COPYING
 endef
 
 define Package/fuse-utils/description
@@ -57,6 +59,8 @@ $(call Package/fuse/Default)
   DEPENDS:=+kmod-fuse +libpthread
   SUBMENU:=Filesystem
   ABI_VERSION:=1
+  LICENSE:=LGPL-2.1-only
+  LICENSE_FILES:=COPYING.LIB
 endef
 
 define Package/libfuse/description
