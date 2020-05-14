@@ -49,7 +49,7 @@ endef
 
 GO_PKG_INSTALL_ALL:=1
 MAKE_PATH:=$(GO_PKG_WORK_DIR_NAME)/build/src/$(GO_PKG)
-MAKE_VARS += $(call GoPackage/Environment)
+MAKE_VARS += $(GO_PKG_VARS)
 MAKE_FLAGS += \
 	DESTDIR="$(PKG_INSTALL_DIR)" \
 	VERSION=$(PKG_VERSION) \
