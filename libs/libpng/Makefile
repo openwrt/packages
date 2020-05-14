@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpng
 PKG_VERSION:=1.6.37
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/libpng
@@ -40,7 +40,8 @@ TARGET_CFLAGS += $(FPIC)
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
-	$(if $(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)),--enable-hardware-optimizations=yes --enable-arm-neon=yes)
+	$(if $(findstring neon,$(CONFIG_CPU_TYPE))$(findstring aarch64,$(CONFIG_ARCH)), \
+		--enable-hardware-optimizations=yes --enable-arm-neon=yes)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin

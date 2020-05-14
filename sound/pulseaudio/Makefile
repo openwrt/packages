@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pulseaudio
 PKG_VERSION:=12.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://freedesktop.org/software/pulseaudio/releases/
@@ -100,7 +100,7 @@ define Package/pulseaudio-profiles
 endef
 
 CONFIGURE_ARGS += \
-	$(if $(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)),--enable-neon-opt,--disable-neon-opt) \
+	$(if $(findstring neon,$(CONFIG_CPU_TYPE)),--enable-neon-opt,--disable-neon-opt) \
 	--with-system-user=pulse \
 	--with-system-group=pulse \
 	--with-access-group=audio \
