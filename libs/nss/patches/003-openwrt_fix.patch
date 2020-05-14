@@ -65,6 +65,15 @@
  ifdef MOZ_DEBUG_SYMBOLS
  	ifdef MOZ_DEBUG_FLAGS
  		OPTIMIZER += $(MOZ_DEBUG_FLAGS)
+@@ -192,7 +192,7 @@
+ endif
+ endif
+
+-MKSHLIB         = $(CC) $(DSO_LDOPTS) -Wl,-soname -Wl,$(@:$(OBJDIR)/%.so=%.so) $(RPATH)
++MKSHLIB         = $(CC) $(DSO_LDOPTS) -Wl,-soname -Wl,$(@:$(OBJDIR)/%.so=%.so) $(RPATH) $(fpic) -Wl,--gc-sections,--as-needed
+
+ ifdef MAPFILE
+ 	MKSHLIB += -Wl,--version-script,$(MAPFILE)
 --- a/nss/coreconf/UNIX.mk	2019-04-06 20:34:24.284157646 +0300
 +++ b/nss/coreconf/UNIX.mk	2019-04-06 20:34:34.760485327 +0300
 @@ -10,7 +10,6 @@
