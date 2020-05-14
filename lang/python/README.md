@@ -11,9 +11,10 @@
 7. [Building a Python package](#building-a-python-package)
     1. [Include python3-package.mk](#include-python3-packagemk)
     2. [Add Package/<PKG_NAME> OpenWrt definitions](#add-packagepkg_name-openwrt-definitions)
-    3. [Wrapping things up so that they build](#wrapping-things-up-so-that-they-build)
-    4. [Customizing things](#customizing-things)
-    5. [Host-side Python packages for build](#host-side-python-packages-for-build)
+    3. [Python package dependencies](#python-package-dependencies)
+    4. [Wrapping things up so that they build](#wrapping-things-up-so-that-they-build)
+    5. [Customizing things](#customizing-things)
+    6. [Host-side Python packages for build](#host-side-python-packages-for-build)
 
 ## Description
 
@@ -201,6 +202,40 @@ Some considerations here (based on the example above):
 * `VARIANT=python3` must be added
 * typically the package is named `Package/python3-<something>` ; this convention makes things easier to follow, though it could work without naming things this way
 * `TITLE` can be something a bit more verbose/neat ; typically the name is short as seen above
+
+### Python package dependencies
+
+Aside from other libraries and programs, every Python package will depend on at least one of these three types of packages:
+
+* The Python interpreter: All Python packages should depend on one of these three interpreter packages:
+
+  * `python3-light` is the best default for most Python packages.
+
+  * `python3-base` should only be used as a dependency if you are certain the bare interpreter is sufficient.
+
+  * `python3` is useful if many (more than three) Python standard library packages are needed.
+
+* Python standard library packages: As noted above, many parts of the Python standard library are packaged separate from the Python interpreter. These packages are defined by the files in [lang/python/python3/files](lang/python/python3/files).
+
+  To find out which of these separate standard library packages are necessary, after completing a draft Makefile (including the `$(eval ...)` lines described in the next section), run `make` with the `configure` target and `PY3=stdlib V=s` in the command line. For example:
+
+  ```
+  make package/python-lxml/configure PY3=stdlib V=s
+  ```
+
+  If the package has been built previously, include the `clean` target to trigger configure again:
+
+  ```
+  make package/python-lxml/{clean,configure} PY3=stdlib V=s
+  ```
+
+  This will search the package for module imports and generate a list of suggested dependencies. Some of the found imports may be false positives, e.g. in example or test files, so examine the matches for more information.
+
+* Other Python packages: The easiest way to find these dependencies is to look for the `install_requires` keyword inside the package's `setup.py` file (it will be a keyword argument to the `setup()` function). This will be a list of run-time dependencies for the package.
+
+  There may already be packages in the packages feed that provide these dependencies. If not, they will need to be packaged for your Python package to function correctly.
+
+  Any packages in a `setup_requires` keyword argument are build-time dependencies that may need to be installed on the host (host Python inside of OpenWrt buildroot, not system Python that is part of the outer computer system). To ensure these build-time dependencies are present, see [Host-side Python packages for build](#host-side-python-packages-for-build). (Note that Setuptools is already installed as part of host Python.)
 
 ### Wrapping things up so that they build
 
