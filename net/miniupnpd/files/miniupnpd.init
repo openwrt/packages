@@ -67,6 +67,7 @@ upnpd() {
 	[ "$enabled" -eq 0 ] && return 1
 
 	config_get external_iface config external_iface
+	config_get external_iface6 config external_iface6
 	config_get external_zone config external_zone
 	config_get external_ip config external_ip
 	config_get internal_iface config internal_iface
@@ -91,17 +92,26 @@ upnpd() {
 
 	. /lib/functions/network.sh
 
-	# manual external interface overrides everything
-	[ -z "$external_iface" ] && {
-		# manual external zone (if dynamically find interfaces
-		# belonging to it) overrides network_find_wan*
-		[ -n "$external_zone" ] && ifname=$(fw3 -q zone "$external_zone" | head -1)
-		[ -z "$external_iface" ] && network_find_wan external_iface
-		[ -z "$external_iface6" ] && network_find_wan6 external_iface6
-	}
-
-	[ -z "$ifname" ] && network_get_device ifname "$external_iface"
-	[ -z "$ifname6" ] && network_get_device ifname6 "$external_iface6"
+	if [ -n "$external_iface" ] ; then
+		network_get_device ifname "$external_iface"
+	else
+		if [ -n "$external_zone" ] ; then
+			ifname=$(fw3 -q zone "$external_zone" 2>/dev/null | head -1)
+		else
+			network_find_wan external_iface && \
+				network_get_device ifname "$external_iface"
+		fi
+	fi
+	if [ -n "$external_iface6" ] ; then
+		network_get_device ifname6 "$external_iface6"
+	else
+		if [ -n "$external_zone" ] ; then
+			ifname6=$(fw3 -q zone "$external_zone" 2>/dev/null | head -1)
+		else
+			network_find_wan6 external_iface6 && \
+				network_get_device ifname6 "$external_iface6"
+		fi
+	fi
 
 	if [ -n "$config_file" ]; then
 		conf="$config_file"
