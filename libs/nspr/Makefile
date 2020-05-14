@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nspr
 PKG_VERSION:=4.25
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENCE:=MPL-2.0
 
@@ -34,7 +34,8 @@ ifeq ($(LBITS),64)
 endif
 
 export MUSL=$(if $(CONFIG_LIBC_USE_GLIBC),0,1)
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed $(FPIC)
+TARGET_CFLAGS += -flto
 
 CONFIGURE_ARGS += \
     --build=$(GNU_HOST_NAME) \
