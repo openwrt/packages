@@ -1,0 +1,30 @@
+From 2c855b76362d1027abea967ac253cae8a7c160c3 Mon Sep 17 00:00:00 2001
+From: Trevor Woerner <twoerner@gmail.com>
+Date: Wed, 6 May 2020 17:38:05 -0400
+Subject: [PATCH] configure.ac: add library if header found (#10)
+
+If the pthread.h header is found, make sure library containing
+"pthread_atfork" is added to the list of libraries against which to link.
+On some hosts (e.g. openSUSE 15.1) "-lpthread" needs to be explicitly added
+in order for the code to compile correctly.
+
+Signed-off-by: Trevor Woerner <twoerner@gmail.com>
+---
+ configure.ac | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/configure.ac b/configure.ac
+index 9d6aca3..4fbe4d3 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -56,7 +56,9 @@ AC_CHECK_HEADERS(sys/xattr.h, [], [
+ 	AC_CHECK_HEADERS(attr/xattr.h, [], [AC_MSG_WARN(attr/xattr.h not found, disabling file system capabilities.)])
+ 	])
+ AC_CHECK_HEADERS(linux/securebits.h, [], [])
+-AC_CHECK_HEADERS(pthread.h, [], [AC_MSG_WARN(pthread.h not found, disabling pthread_atfork.)])
++AC_CHECK_HEADERS(pthread.h,
++	[AC_SEARCH_LIBS(pthread_atfork, pthread)],
++	[AC_MSG_WARN(pthread.h not found, disabling pthread_atfork.)])
+ 
+ AC_C_CONST
+ AC_C_INLINE

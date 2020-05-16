@@ -1,0 +1,11 @@
+diff -ru libcap-ng-0.7.4.orig/src/cap-ng.c libcap-ng-0.7.4/src/cap-ng.c
+--- libcap-ng-0.7.4.orig/src/cap-ng.c	2014-04-24 15:41:43.000000000 -0300
++++ libcap-ng-0.7.4/src/cap-ng.c	2015-04-15 08:45:10.783335463 -0300
+@@ -34,6 +34,7 @@
+ #include <stdarg.h>
+ #include <errno.h>
+ #include <fcntl.h>
++#include <endian.h>
+ #include <byteswap.h>
+ #ifdef HAVE_SYSCALL_H
+ #include <sys/syscall.h>
