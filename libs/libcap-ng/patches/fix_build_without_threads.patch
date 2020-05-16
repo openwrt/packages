@@ -1,0 +1,26 @@
+From 9b5597dc780a9da292f9142899a992cfc6ca081d Mon Sep 17 00:00:00 2001
+From: Fabrice Fontaine <fontaine.fabrice@gmail.com>
+Date: Thu, 7 May 2020 00:19:18 +0200
+Subject: [PATCH] src/cap-ng.c: fix build without threads (#13)
+
+Put pthread_atfork under #ifdef HAVE_PTHREAD_H block
+
+Signed-off-by: Fabrice Fontaine <fontaine.fabrice@gmail.com>
+---
+ src/cap-ng.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/cap-ng.c b/src/cap-ng.c
+index 35fcd7a..97a3dbd 100644
+--- a/src/cap-ng.c
++++ b/src/cap-ng.c
+@@ -166,7 +166,9 @@ static void deinit(void)
+ static void init_lib(void) __attribute__ ((constructor));
+ static void init_lib(void)
+ {
++#ifdef HAVE_PTHREAD_H
+ 	pthread_atfork(NULL, NULL, deinit);
++#endif
+ }
+ 
+ static void init(void)
