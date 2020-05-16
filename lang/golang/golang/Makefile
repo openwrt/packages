@@ -18,7 +18,7 @@ GO_SOURCE_URLS:=https://dl.google.com/go/ \
 
 PKG_SOURCE:=go$(PKG_VERSION).src.tar.gz
 PKG_SOURCE_URL:=$(GO_SOURCE_URLS)
-PKG_HASH:=eb9ccc8bf59ed068e7eff73e154e4f5ee7eec0a47a610fb864e3332a2fdc8b8c
+PKG_HASH:=89ed1abce25ad003521c125d6583c93c1280de200ad221f961085200a6c00679
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -148,6 +148,13 @@ This package provides the Go programming language source files needed
 for cross-compilation.
 endef
 
+PKG_GO_ZBOOTSTRAP_MODS:= \
+	s/defaultGO386 = `[^`]*`/defaultGO386 = `$(if $(GO_386),$(GO_386),387)`/; \
+	s/defaultGOARM = `[^`]*`/defaultGOARM = `$(if $(GO_ARM),$(GO_ARM),5)`/; \
+	s/defaultGOMIPS = `[^`]*`/defaultGOMIPS = `$(if $(GO_MIPS),$(GO_MIPS),hardfloat)`/; \
+	s/defaultGOMIPS64 = `[^`]*`/defaultGOMIPS64 = `$(if $(GO_MIPS64),$(GO_MIPS64),hardfloat)`/; \
+	s/defaultGOPPC64 = `[^`]*`/defaultGOPPC64 = `power8`/;
+
 define Download/golang-bootstrap
   FILE:=$(BOOTSTRAP_SOURCE)
   URL:=$(BOOTSTRAP_SOURCE_URL)
@@ -232,6 +239,11 @@ define Build/Compile
 		PKG_CONFIG=pkg-config \
 		PATH=$(HOST_GO_ROOT)/openwrt:$$$$PATH \
 	)
+
+  ifneq ($(PKG_GO_ZBOOTSTRAP_MODS),)
+	$(SED) '$(PKG_GO_ZBOOTSTRAP_MODS)' \
+		$(PKG_BUILD_DIR)/src/cmd/internal/objabi/zbootstrap.go
+  endif
 
 	@echo "Building target Go second stage"
 
