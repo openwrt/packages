@@ -92,7 +92,7 @@ process_qdisc() {
 		mq) handle_mq "$ifc"
 		;;
 
-		*) echo "Unknown qdisc type" 1>&2
+		*) echo "Unknown qdisc type '$qdisc' on interface '$ifc'" 1>&2
 		;;
 	esac
 	json_cleanup
