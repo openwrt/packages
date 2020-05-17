@@ -6,10 +6,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netatop
 PKG_RELEASE:=1
-PKG_VERSION:=2.0
+PKG_VERSION:=3.1
 PKG_LICENSE:=GPL-2.0
 PKG_SOURCE_URL:=https://www.atoptool.nl/download/
-PKG_HASH:=c66d7ca094d667428924f2faff2afb816b17565e8c3628e43bfa0e1a2e22c20e
+PKG_HASH:=736f43572c31a90748f023f0a5a814bff58d44c0c3f060d776cfd6e6e8435c62
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MAINTAINER:=Toni Uhlig <matzeton@googlemail.com>
