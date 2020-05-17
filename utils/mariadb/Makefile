@@ -121,6 +121,7 @@ plugin-wsrep_info               := PLUGIN_WSREP_INFO
 
 MARIADB_CLIENT := \
 	mysql \
+	mysql_upgrade \
 	mysqlcheck
 
 MARIADB_CLIENT_EXTRA := \
@@ -138,7 +139,6 @@ MARIADB_SERVER := \
 	innochecksum \
 	my_print_defaults \
 	mysql_install_db \
-	mysql_upgrade \
 	mysqld
 
 MARIADB_SERVER_EXTRA := \
