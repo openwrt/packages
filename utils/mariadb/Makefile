@@ -527,7 +527,7 @@ define Package/libmariadb/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/dialog.so $(1)$(PLUGIN_DIR)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/mysql_clear_password.so $(1)$(PLUGIN_DIR)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/sha256_password.so $(1)$(PLUGIN_DIR)
-	$(INSTALL_CONF) conf/50-client.cnf $(1)$(CONF_DIR)/conf.d
+	$(INSTALL_DATA) conf/50-client.cnf $(1)$(CONF_DIR)/conf.d
 endef
 
 define Package/mariadb-client/install
@@ -541,7 +541,7 @@ endef
 
 define Package/mariadb-client-base/install
 	$(INSTALL_DIR) $(1)$(CONF_DIR)/conf.d
-	$(INSTALL_CONF) conf/50-mysql-clients.cnf $(1)$(CONF_DIR)/conf.d
+	$(INSTALL_DATA) conf/50-mysql-clients.cnf $(1)$(CONF_DIR)/conf.d
 endef
 
 define Package/mariadb-client-extra/install
@@ -551,7 +551,7 @@ endef
 
 define Package/mariadb-common/install
 	$(INSTALL_DIR) $(1)$(CONF_DIR)
-	$(INSTALL_CONF) conf/my.cnf $(1)$(CONF_DIR)
+	$(INSTALL_DATA) conf/my.cnf $(1)$(CONF_DIR)
 endef
 
 define Package/mariadb-server/install
@@ -567,8 +567,8 @@ define Package/mariadb-server-base/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/mysqld.init $(1)/etc/init.d/mysqld
 	$(SED) '/^[a-z]/s/^/#/' $(PKG_INSTALL_DIR)$(SHARE_DIR)/wsrep.cnf
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)$(SHARE_DIR)/wsrep.cnf $(1)$(CONF_DIR)/conf.d/60-galera.cnf
-	$(INSTALL_CONF) conf/50-server.cnf $(1)$(CONF_DIR)/conf.d
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/wsrep.cnf $(1)$(CONF_DIR)/conf.d/60-galera.cnf
+	$(INSTALL_DATA) conf/50-server.cnf $(1)$(CONF_DIR)/conf.d
 	$(INSTALL_CONF) files/mysqld.config $(1)/etc/config/mysqld
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/charsets/* $(1)$(SHARE_DIR)/charsets
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/english/errmsg.sys $(1)$(SHARE_DIR)/english
