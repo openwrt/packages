@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libreswan
 PKG_VERSION:=3.32
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.libreswan.org/
@@ -45,7 +45,7 @@ $(call Package/libreswan/Default)
 	+kmod-crypto-aead +kmod-crypto-authenc +kmod-crypto-gcm \
 	+kmod-crypto-hash +kmod-crypto-rng +kmod-ip-vti +kmod-ipsec \
 	+kmod-ipsec4 +kmod-ipt-ipsec +libevent2 +libevent2-pthreads \
-	+libldns +librt +libunbound-heavy +nss-utils +nspr
+	+libldns +librt +libunbound-heavy +nss-utils +nspr +libcap-ng
   PROVIDES:=openswan
   CONFLICTS:=strongswan
   TITLE+= IPsec Server
@@ -69,6 +69,7 @@ TARGET_CFLAGS += -flto
 
 MAKE_FLAGS+= \
     WERROR_CFLAGS=" " \
+    NSS_REQ_AVA_COPY=false \
     USE_LINUX_AUDIT=false \
     USE_LABELED_IPSEC=false \
     USE_NM=false \
@@ -77,11 +78,12 @@ MAKE_FLAGS+= \
     USE_LIBCURL=false \
     USE_GLIBC_KERN_FLIP_HEADERS=true \
     USE_XAUTHPAM=false \
-    USE_LIBCAP_NG=false \
+    USE_LIBCAP_NG=true \
     USE_SYSTEMD_WATCHDOG=false \
     USE_SECCOMP=false\
     INC_USRLOCAL="/usr" \
     FINALRUNDIR="/var/run/pluto" \
+    MODPROBEARGS="-q" \
     ARCH="$(LINUX_KARCH)" \
 
 ifdef CONFIG_LINUX_4_14
