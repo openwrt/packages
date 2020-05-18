@@ -32,6 +32,7 @@ config LXC_BUSYBOX_OPTIONS
 	select BUSYBOX_CONFIG_XZ
 	select BUSYBOX_CONFIG_GETOPT
 	select BUSYBOX_CONFIG_FEATURE_GETOPT_LONG
+	select BUSYBOX_CONFIG_MOUNTPOINT
 	help
 	  Select needed busybox options for lxc-create utility. This include XZ tar
 	  compression, long option support for tar and built-in getopt support.

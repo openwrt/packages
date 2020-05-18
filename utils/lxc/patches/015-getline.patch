@@ -1,6 +1,6 @@
 --- a/src/lxc/utils.h
 +++ b/src/lxc/utils.h
-@@ -59,11 +59,7 @@ extern int mkdir_p(const char *dir, mode_t mode);
+@@ -35,11 +35,7 @@ extern int mkdir_p(const char *dir, mode
  extern char *get_rundir(void);
  
  /* Define getline() if missing from the C library */
@@ -11,5 +11,5 @@
 -#endif
 +#include "../include/getline.h"
  
- /* Define setns() if missing from the C library */
- #ifndef HAVE_SETNS
+ static inline int lxc_set_cloexec(int fd)
+ {

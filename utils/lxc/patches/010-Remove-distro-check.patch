@@ -1,13 +1,23 @@
+From 9f550ca53801b2b9c6c1c7a4d02ad525c704b145 Mon Sep 17 00:00:00 2001
+From: Robert Marko <robert.marko@sartura.hr>
+Date: Thu, 14 May 2020 13:40:53 +0200
+Subject: [PATCH] Remove distro check
+
+Signed-off-by: Robert Marko <robert.marko@sartura.hr>
+---
+ configure.ac | 28 ----------------------------
+ 1 file changed, 28 deletions(-)
+
 --- a/configure.ac
 +++ b/configure.ac
-@@ -47,34 +47,6 @@ AC_GNU_SOURCE
+@@ -64,34 +64,6 @@ fi
  LT_INIT
  AC_SUBST([LIBTOOL_DEPS])
  
 -# Detect the distribution. This is used for the default configuration and
 -# for some distro-specific build options.
 -AC_MSG_CHECKING([host distribution])
--AC_ARG_WITH(distro, AS_HELP_STRING([--with-distro=DISTRO], [Specify the Linux distribution to target: One of redhat, oracle, centos, fedora, suse, gentoo, debian, arch, slackware, plamo, paldo, openmandriva, pardus, sparclinux, altlinux.]))
+-AC_ARG_WITH(distro, AS_HELP_STRING([--with-distro=DISTRO], [Specify the Linux distribution to target: One of redhat, redhatenterpriseserver, oracle, centos, fedora, suse, gentoo, debian, arch, slackware, plamo, paldo, openmandriva, pardus, sparclinux, altlinux.]))
 -if type lsb_release >/dev/null 2>&1 && test "z$with_distro" = "z"; then
 -	with_distro=`lsb_release -is`
 -fi

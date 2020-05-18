@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2013-2015 OpenWrt.org
+# Copyright (C) 2020 Sartura
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
-PKG_VERSION:=2.1.1
-PKG_RELEASE:=5
+PKG_VERSION:=4.0.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://linuxcontainers.org/downloads/lxc/
-PKG_HASH:=68663a67450a8d6734e137eac54cc7077209fb15c456eec401a2c26e6386eff6
+PKG_HASH:=ca336dcdf303fea5ff231d89a9b6278b061c4cffb14f0db0a71a15bdd95a5cb0
 
 PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause GPL-2.0
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
@@ -45,7 +46,7 @@ define Package/lxc/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=LXC userspace tools
-  URL:=http://lxc.sourceforge.net/
+  URL:=https://linuxcontainers.org/
 endef
 
 define Package/lxc
@@ -124,7 +125,7 @@ define Package/liblxc
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=LXC userspace library
-  DEPENDS:= lxc +libcap +libpthread +LXC_SECCOMP:libseccomp
+  DEPENDS:= lxc +libcap +libpthread +LXC_SECCOMP:libseccomp +libopenssl
 endef
 
 define Package/lxc-lua
@@ -149,6 +150,9 @@ CONFIGURE_ARGS += \
 	--disable-python \
 	--enable-lua=yes \
 	--with-lua-pc="$(STAGING_DIR)/usr/lib/pkgconfig/lua.pc"
+
+TARGET_CFLAGS += -Wno-format-nonliteral
+TARGET_LDFLAGS += -lgcc_eh
 
 ifeq ($(CONFIG_LXC_SECCOMP),y)
 CONFIGURE_ARGS += --enable-seccomp

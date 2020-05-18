@@ -1,6 +1,6 @@
---- a/src/lxc/tools/lxc-checkconfig.in
-+++ b/src/lxc/tools/lxc-checkconfig.in
-@@ -3,6 +3,17 @@
+--- a/src/lxc/cmd/lxc-checkconfig.in
++++ b/src/lxc/cmd/lxc-checkconfig.in
+@@ -4,6 +4,17 @@
  # Allow environment variables to override config
  : ${CONFIG:=/proc/config.gz}
  : ${MODNAME:=configs}
