@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.1.44
+PKG_VERSION:=10.1.45
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -18,7 +18,7 @@ PKG_SOURCE_URL := \
 	https://ftp.yz.yamagata-u.ac.jp/pub/dbms/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
 	https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=21f203d361ee8c6e0f5050f3d0c06f3c5a2b87ac28f39e9503b851084a335039
+PKG_HASH:=9d8f0f71f9613b2028ffc5c5be8b98948ec955eb0d89600d18ed7cc04807dad5
 PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -130,6 +130,7 @@ plugin-wsrep_info               := PLUGIN_WSREP_INFO
 
 MARIADB_CLIENT := \
 	mysql \
+	mysql_upgrade \
 	mysqlcheck
 
 MARIADB_CLIENT_EXTRA := \
@@ -147,7 +148,6 @@ MARIADB_SERVER := \
 	innochecksum \
 	my_print_defaults \
 	mysql_install_db \
-	mysql_upgrade \
 	mysqld
 
 MARIADB_SERVER_EXTRA := \
@@ -475,10 +475,10 @@ define Package/mariadb-server/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/mysql/conf.d
 	$(INSTALL_BIN) files/mysqld.init $(1)/etc/init.d/mysqld
-	$(INSTALL_CONF) conf/my.cnf $(1)/etc/mysql
+	$(INSTALL_DATA) conf/my.cnf $(1)/etc/mysql
 	$(INSTALL_CONF) conf/mysqld.default $(1)/etc/default/mysqld
 	$(INSTALL_DIR) $(1)$(PLUGIN_DIR)
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/daemon_example.ini $(1)$(PLUGIN_DIR)
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/daemon_example.ini $(1)$(PLUGIN_DIR)
 	$(INSTALL_DIR) $(1)/usr/share/mysql/english
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/english/errmsg.sys $(1)/usr/share/mysql/english
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/mysql/fill_help_tables.sql $(1)/usr/share/mysql
