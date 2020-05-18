@@ -36,6 +36,7 @@ UB_B_NTP_BOOT=1
 UB_B_QUERY_MIN=0
 UB_B_QRY_MINST=0
 UB_B_AUTH_ROOT=0
+UB_B_QUERY_LOCAL=0
 
 UB_D_CONTROL=0
 UB_D_DOMAIN_TYPE=static
@@ -501,6 +502,12 @@ unbound_zone() {
                 fi
                 ;;
             esac
+
+            case $server in
+               127"."0"."0"."*|::1)
+                 UB_B_QUERY_LOCAL=1
+                 ;;
+            esac
           fi
         done
 
@@ -945,6 +952,13 @@ unbound_conf() {
     {
       echo "  access-control: 0.0.0.0/0 allow"
       echo "  access-control: ::0/0 allow"
+      echo
+    } >> $UB_CORE_CONF
+  fi
+
+  if [ "$UB_B_QUERY_LOCAL" -gt 0 ] ; then
+    {
+      echo "  do-not-query-localhost: no"
       echo
     } >> $UB_CORE_CONF
   fi
