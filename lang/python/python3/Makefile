@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -137,11 +137,6 @@ EXTRA_CFLAGS+= \
 EXTRA_LDFLAGS+= \
 	-L$(PKG_BUILD_DIR)
 
-ENABLE_IPV6:=
-ifeq ($(CONFIG_IPV6),y)
-	ENABLE_IPV6 += --enable-ipv6
-endif
-
 PYTHON_FOR_BUILD:= \
 	_PYTHON_PROJECT_BASE=$(PKG_BUILD_DIR) \
 	_PYTHON_HOST_PLATFORM=linux2 \
@@ -154,18 +149,18 @@ DISABLE_BLUETOOTH:= \
 	ac_cv_header_bluetooth_h=no
 
 CONFIGURE_ARGS+= \
-	--sysconfdir=/etc \
+	--enable-optimizations \
 	--enable-shared \
-	--without-cxx-main \
-	--with-threads \
 	--with-system-ffi \
-	--with-ensurepip=no \
+	--without-cxx-main \
+	--without-ensurepip \
 	--without-pymalloc \
-	$(if $(CONFIG_PYTHON3_BLUETOOTH_SUPPORT),,$(DISABLE_BLUETOOTH)) \
-	PYTHON_FOR_BUILD="$(PYTHON_FOR_BUILD)" \
-	$(ENABLE_IPV6) \
+	$(if $(CONFIG_IPV6),--enable-ipv6) \
+	$(if $(findstring mips,$(CONFIG_ARCH)),,--with-lto) \
 	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
-	OPT="$(TARGET_CFLAGS)"
+	OPT="$(TARGET_CFLAGS)" \
+	PYTHON_FOR_BUILD="$(PYTHON_FOR_BUILD)" \
+	$(if $(CONFIG_PYTHON3_BLUETOOTH_SUPPORT),,$(DISABLE_BLUETOOTH))
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
@@ -311,13 +306,11 @@ HOST_CONFIGURE_VARS += \
 endif
 
 HOST_CONFIGURE_ARGS+= \
+	--enable-optimizations \
+	--with-ensurepip=upgrade \
+	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
 	--without-cxx-main \
 	--without-pymalloc \
-	--with-threads \
-	--prefix=$(HOST_PYTHON3_DIR) \
-	--exec-prefix=$(HOST_PYTHON3_DIR) \
-	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
-	--with-ensurepip=upgrade \
 	CONFIG_SITE=
 
 define Host/Configure
