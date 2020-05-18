@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.2.31
-PKG_RELEASE:=2
+PKG_VERSION:=10.2.32
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := \
@@ -18,7 +18,7 @@ PKG_SOURCE_URL := \
 	https://ftp.yz.yamagata-u.ac.jp/pub/dbms/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
 	https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=321f744c322ecbc06feddd290d5ee0bf7c68e92cb61fd93c9450eb9c05683151
+PKG_HASH:=ea4fb28095e1079297eb3ba7ec5e215c641f2dff37964db778f6e9c37e0189b3
 PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
 PKG_LICENSE:=GPL-2.0 LGPL-2.1
 PKG_LICENSE_FILES:=COPYING THIRDPARTY libmariadb/COPYING.LIB
@@ -121,6 +121,7 @@ plugin-wsrep_info               := PLUGIN_WSREP_INFO
 
 MARIADB_CLIENT := \
 	mysql \
+	mysql_upgrade \
 	mysqlcheck
 
 MARIADB_CLIENT_EXTRA := \
@@ -138,7 +139,6 @@ MARIADB_SERVER := \
 	innochecksum \
 	my_print_defaults \
 	mysql_install_db \
-	mysql_upgrade \
 	mysqld
 
 MARIADB_SERVER_EXTRA := \
@@ -406,6 +406,8 @@ CMAKE_OPTIONS += \
 	-DINSTALL_MANDIR=share/man \
 	-DINSTALL_MYSQLSHAREDIR=share/mariadb \
 	-DINSTALL_MYSQLTESTDIR="" \
+	-DINSTALL_PAMDATADIR="/etc/security" \
+	-DINSTALL_PAMDIR="/lib/security" \
 	-DINSTALL_PLUGINDIR=lib/mariadb/plugin \
 	-DINSTALL_SBINDIR=bin \
 	-DINSTALL_SCRIPTDIR=bin \
@@ -525,7 +527,7 @@ define Package/libmariadb/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/dialog.so $(1)$(PLUGIN_DIR)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/mysql_clear_password.so $(1)$(PLUGIN_DIR)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/sha256_password.so $(1)$(PLUGIN_DIR)
-	$(INSTALL_CONF) conf/50-client.cnf $(1)$(CONF_DIR)/conf.d
+	$(INSTALL_DATA) conf/50-client.cnf $(1)$(CONF_DIR)/conf.d
 endef
 
 define Package/mariadb-client/install
@@ -539,7 +541,7 @@ endef
 
 define Package/mariadb-client-base/install
 	$(INSTALL_DIR) $(1)$(CONF_DIR)/conf.d
-	$(INSTALL_CONF) conf/50-mysql-clients.cnf $(1)$(CONF_DIR)/conf.d
+	$(INSTALL_DATA) conf/50-mysql-clients.cnf $(1)$(CONF_DIR)/conf.d
 endef
 
 define Package/mariadb-client-extra/install
@@ -549,7 +551,7 @@ endef
 
 define Package/mariadb-common/install
 	$(INSTALL_DIR) $(1)$(CONF_DIR)
-	$(INSTALL_CONF) conf/my.cnf $(1)$(CONF_DIR)
+	$(INSTALL_DATA) conf/my.cnf $(1)$(CONF_DIR)
 endef
 
 define Package/mariadb-server/install
@@ -565,8 +567,8 @@ define Package/mariadb-server-base/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/mysqld.init $(1)/etc/init.d/mysqld
 	$(SED) '/^[a-z]/s/^/#/' $(PKG_INSTALL_DIR)$(SHARE_DIR)/wsrep.cnf
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)$(SHARE_DIR)/wsrep.cnf $(1)$(CONF_DIR)/conf.d/60-galera.cnf
-	$(INSTALL_CONF) conf/50-server.cnf $(1)$(CONF_DIR)/conf.d
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/wsrep.cnf $(1)$(CONF_DIR)/conf.d/60-galera.cnf
+	$(INSTALL_DATA) conf/50-server.cnf $(1)$(CONF_DIR)/conf.d
 	$(INSTALL_CONF) files/mysqld.config $(1)/etc/config/mysqld
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/charsets/* $(1)$(SHARE_DIR)/charsets
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/english/errmsg.sys $(1)$(SHARE_DIR)/english
@@ -598,6 +600,16 @@ This package provides the $(2) plugin.
   define Package/$(1)-plugin-$(subst _,-,$(2))/install
 	  $(INSTALL_DIR) $$(1)$(PLUGIN_DIR)
 	  $(call Package/mariadb/install/plugin,$$(1),$(2))
+ifeq ($(2),auth_pam)
+	  $(INSTALL_DIR) $$(1)/etc/security
+	  $(INSTALL_DATA) \
+		  $(PKG_INSTALL_DIR)/etc/security/user_map.conf \
+					  $$(1)/etc/security
+	  $(INSTALL_DIR) $$(1)/lib/security
+	  $(INSTALL_DATA) \
+		  $(PKG_INSTALL_DIR)/lib/security/pam_user_map.so \
+					  $$(1)/lib/security
+endif
   endef
   $$(eval $$(call BuildPackage,$(1)-plugin-$(subst _,-,$(2))))
 endef
