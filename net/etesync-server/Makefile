@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=etesync-server
 PKG_VERSION:=0.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=etesync-server-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/etesync/server/archive/v$(PKG_VERSION)
@@ -12,15 +12,13 @@ PKG_LICENSE:=AGPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Peter Stadler <peter.stadler@student.uibk.ac.at>
 
+PKG_BUILD_PARALLEL:=1
+PYTHON3_PKG_BUILD:=0
+
 PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
-
-# this allows using python3-package.mk with a non-package app (etesync-server):
-define Py3Build/Compile
-	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
-endef
 
 
 define Package/etesync-server
@@ -34,14 +32,15 @@ define Package/etesync-server
 		+python3-django-cors-headers +python3-django-etesync-journal \
 		+uwsgi +uwsgi-python3-plugin +uwsgi-syslog-plugin
 	USERID:=etesync=44312
-	VARIANT:=python3
-	PROVIDES:=etesync-server
 endef
 
 
 define Package/etesync-server/description
 	End-to-End Encrypted Secure Data Sync
 endef
+
+
+Build/Compile:=:
 
 
 define Py3Package/etesync-server/install
@@ -82,6 +81,8 @@ define Py3Package/etesync-server/install
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_BIN) ./files/uwsgi.init $(1)/etc/init.d/etesync-server
 endef
+
+Py3Package/etesync-server/filespec:=
 
 
 define Package/etesync-server/postrm
