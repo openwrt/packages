@@ -41,6 +41,8 @@ define Package/ttyd/conffiles
 /etc/config/ttyd
 endef
 
+TARGET_LDFLAGS += -ldl
+
 define Package/ttyd/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ttyd $(1)/usr/bin/
