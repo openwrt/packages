@@ -8,7 +8,7 @@
 define Package/python-openssl
 $(call Package/python/Default)
   TITLE:=Python $(PYTHON_VERSION) SSL module
-  DEPENDS:=+python-light +libopenssl
+  DEPENDS:=+python-light +libopenssl +ca-certs
 endef
 
 $(eval $(call PyBasePackage,python-openssl, \
