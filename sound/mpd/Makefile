@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
 PKG_VERSION:=0.21.23
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.musicpd.org/download/mpd/0.21/
@@ -33,7 +33,7 @@ define Package/mpd/Default
   TITLE:=Music Player Daemon
   URL:=https://www.musicpd.org/
   DEPENDS:= +zlib +libcurl +libpthread +libmpdclient +libstdcpp $(ICONV_DEPENDS) \
-	    +AUDIO_SUPPORT:alsa-lib +boost +libexpat +libflac +libfaad2 +USE_UCLIBC:icu
+	    +AUDIO_SUPPORT:alsa-lib +boost +libexpat +libflac +libid3tag +libfaad2 +USE_UCLIBC:icu
 endef
 
 define Package/mpd/Default/description
@@ -46,7 +46,7 @@ endef
 define Package/mpd-full
 $(call Package/mpd/Default)
   TITLE+= (full)
-  DEPENDS+= +libffmpeg +libid3tag +libvorbis +libmms +libupnp +libshout +pulseaudio-daemon +yajl
+  DEPENDS+= +libffmpeg +libvorbis +libmms +libupnp +libshout +pulseaudio-daemon +yajl
   PROVIDES:=mpd
   VARIANT:=full
 endef
@@ -128,6 +128,7 @@ MESON_ARGS += \
 	-Dbzip2=disabled \
 	-Diso9660=disabled \
 	-Dzzip=disabled \
+	-Did3tag=enabled \
 	-Dchromaprint=disabled \
 	-Dadplug=disabled \
 	-Daudiofile=disabled \
@@ -175,7 +176,6 @@ ifeq ($(BUILD_VARIANT),full)
 	-Dupnp=enabled \
 	-Dmms=enabled \
 	-Dsoundcloud=enabled \
-	-Did3tag=enabled \
 	-Dffmpeg=enabled \
 	-Dmad=disabled \
 	-Dtremor=disabled \
@@ -195,7 +195,6 @@ ifeq ($(BUILD_VARIANT),mini)
 	-Dupnp=disabled \
 	-Dmms=disabled \
 	-Dsoundcloud=disabled \
-	-Did3tag=disabled \
 	-Dffmpeg=disabled \
 	-Dmad=enabled \
 	-Dtremor=enabled \
