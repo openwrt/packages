@@ -40,7 +40,7 @@
  # Here are a couple of targets for MacOSX again, to install a full
 --- a/configure
 +++ b/configure
-@@ -15181,7 +15181,7 @@ else
+@@ -15213,7 +15213,7 @@ else
  fi
  
  
@@ -51,7 +51,7 @@
    LIBPL='$(prefix)'"/lib/python${VERSION}/config-${LDVERSION}-${PLATFORM_TRIPLET}"
 --- a/configure.ac
 +++ b/configure.ac
-@@ -4667,7 +4667,7 @@ fi
+@@ -4688,7 +4688,7 @@ fi
  
  dnl define LIBPL after ABIFLAGS and LDVERSION is defined.
  AC_SUBST(PY_ENABLE_SHARED)
