@@ -276,6 +276,7 @@ CONFIGURE_ARGS:=$(filter-out	\
 	--program-prefix=%	\
 	--program-suffix=%	\
 	--exec-prefix=%		\
+	--disable-ipv6		\
 	--disable-nls		\
 	, $(CONFIGURE_ARGS))
 
