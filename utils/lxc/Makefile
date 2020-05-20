@@ -16,13 +16,13 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://linuxcontainers.org/downloads/lxc/
 PKG_HASH:=ca336dcdf303fea5ff231d89a9b6278b061c4cffb14f0db0a71a15bdd95a5cb0
 
-PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause GPL-2.0
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
+PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause GPL-2.0
 
-PKG_BUILD_PARALLEL:=1
-
-PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -134,22 +134,18 @@ define Package/lxc-init
 endef
 
 CONFIGURE_ARGS += \
-	--disable-apparmor \
-	--disable-cgmanager \
+	--disable-werror \
+	--disable-rpath \
 	--disable-doc \
-	--disable-examples \
-	--disable-gnutls \
+	--disable-api-docs \
+	--disable-apparmor \
 	--disable-selinux \
-	--disable-python
+	--$(if $(CONFIG_LXC_SECCOMP),en,dis)able-seccomp \
+	--enable-capabilities \
+	--disable-examples
 
-TARGET_CFLAGS += -Wno-format-nonliteral
+TARGET_CFLAGS += -minterlink-mips16
 TARGET_LDFLAGS += -lgcc_eh
-
-ifeq ($(CONFIG_LXC_SECCOMP),y)
-CONFIGURE_ARGS += --enable-seccomp
-else
-CONFIGURE_ARGS += --disable-seccomp
-endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/lxc/
