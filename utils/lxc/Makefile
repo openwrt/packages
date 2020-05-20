@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
 PKG_VERSION:=4.0.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://linuxcontainers.org/downloads/lxc/
@@ -19,7 +19,6 @@ PKG_HASH:=ca336dcdf303fea5ff231d89a9b6278b061c4cffb14f0db0a71a15bdd95a5cb0
 PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause GPL-2.0
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
-PKG_BUILD_DEPENDS:=lua
 PKG_BUILD_PARALLEL:=1
 
 PKG_INSTALL:=1
@@ -128,12 +127,6 @@ define Package/liblxc
   DEPENDS:= lxc +libcap +libpthread +LXC_SECCOMP:libseccomp +libopenssl
 endef
 
-define Package/lxc-lua
-  $(call Package/lxc/Default)
-  TITLE:=LXC Lua bindings
-  DEPENDS:= lxc +liblua +liblxc
-endef
-
 define Package/lxc-init
   $(call Package/lxc/Default)
   TITLE:=LXC Lua bindings
@@ -147,9 +140,7 @@ CONFIGURE_ARGS += \
 	--disable-examples \
 	--disable-gnutls \
 	--disable-selinux \
-	--disable-python \
-	--enable-lua=yes \
-	--with-lua-pc="$(STAGING_DIR)/usr/lib/pkgconfig/lua.pc"
+	--disable-python
 
 TARGET_CFLAGS += -Wno-format-nonliteral
 TARGET_LDFLAGS += -lgcc_eh
@@ -159,11 +150,6 @@ CONFIGURE_ARGS += --enable-seccomp
 else
 CONFIGURE_ARGS += --disable-seccomp
 endif
-
-MAKE_FLAGS += \
-	LUA_INSTALL_CMOD="/usr/lib/lua" \
-	LUA_INSTALL_LMOD="/usr/lib/lua"
-
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/lxc/
@@ -252,17 +238,6 @@ define Package/liblxc/install
 		$(1)/usr/lib/
 endef
 
-define Package/lxc-lua/install
-	$(INSTALL_DIR) $(1)/usr/lib/lua
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/share/lua/5.1/lxc.lua \
-		$(1)/usr/lib/lua/
-	$(INSTALL_DIR) $(1)/usr/lib/lua/lxc
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/lua/5.1/lxc/core.so \
-		$(1)/usr/lib/lua/lxc/
-endef
-
 define Package/lxc-init/install
 	$(INSTALL_DIR) $(1)/sbin
 	$(CP) \
@@ -294,7 +269,6 @@ $(eval $(call BuildPackage,lxc-hooks))
 $(eval $(call BuildPackage,lxc-configs))
 $(eval $(call BuildPackage,lxc-templates))
 $(eval $(call BuildPackage,liblxc))
-$(eval $(call BuildPackage,lxc-lua))
 $(eval $(call BuildPackage,lxc-init))
 $(eval $(call BuildPackage,lxc-auto))
 $(eval $(call BuildPackage,lxc-unprivileged))
