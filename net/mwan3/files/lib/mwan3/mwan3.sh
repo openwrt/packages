@@ -74,7 +74,7 @@ mwan3_rtmon_ipv6()
 	local ret=1
 	local tbl=""
 	mkdir -p /tmp/mwan3rtmon
-	($IP6 route list table main  | grep -v "^default\|^::/0\|^unreachable" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv6.main
+	($IP6 route list table main  | grep -v "^default\|^::/0\|^fe80::/64\|^unreachable" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv6.main
 	while uci get mwan3.@interface[$idx] >/dev/null 2>&1 ; do
 		idx=$((idx+1))
 		tid=$idx
