@@ -16,7 +16,7 @@ include $(INCLUDE_DIR)/kernel.mk
 #
 PKG_NAME:=openvswitch
 PKG_VERSION:=2.11.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
 PKG_HASH:=c1296ae44a7b176150915e33bc497cc0a7a02caeba84ea43ce9b6a2509d9b5dc
@@ -60,7 +60,7 @@ ifeq ($(if $(call ovs_kmod_is_intree,$(1)),$(ovs_kmod_intree_not_supported)),)
      PROVIDES:=$(call ovs_kmod_package_provides,$(1))
      KCONFIG:=$(ovs_kmod_$(1)_kconfig)
      FILES:=$(ovs_kmod_$(1)_files)
-     AUTOLOAD:=$(call AutoProbe,$(foreach m,$(ovs_kmod_$(1)_files),$(patsubst %.ko,%,$(basename $(m)))))
+     AUTOLOAD:=$(call AutoProbe,$(foreach m,$(ovs_kmod_$(1)_files),$(notdir $(patsubst %.ko,%,$(basename $(m))))))
   endef
 
   ovs_kmod_packages+=$(call ovs_kmod_package_name,$(1))
