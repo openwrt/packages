@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cifs-utils
 PKG_VERSION:=6.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.samba.org/pub/linux-cifs/cifs-utils/
@@ -53,6 +53,9 @@ CONFIGURE_ARGS += \
 	--disable-systemd \
 	--disable-man \
 	--without-libcap
+
+CONFIGURE_ARGS += \
+	ac_cv_lib_cap_ng_capng_clear=no
 
 TARGET_CFLAGS += $(FPIC) -ffunction-sections -flto
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
