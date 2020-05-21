@@ -23,11 +23,6 @@ FIND_PATH(ubox_include_dir libubox/blobmsg.h)
 FIND_LIBRARY(ubox NAMES ubox)
 INCLUDE_DIRECTORIES(${ubox_include_dir})
 
-ADD_EXECUTABLE(nginx-util nginx-util.cpp)
-TARGET_COMPILE_DEFINITIONS(nginx-util PUBLIC -DNO_SSL)
-TARGET_LINK_LIBRARIES(nginx-util ${ubox} ${ubus} pthread)
-INSTALL(TARGETS nginx-util RUNTIME DESTINATION bin)
-
 ADD_EXECUTABLE(nginx-ssl-util nginx-util.cpp)
 TARGET_LINK_LIBRARIES(nginx-ssl-util ${ubox} ${ubus} pthread ssl crypto pcre)
 INSTALL(TARGETS nginx-ssl-util RUNTIME DESTINATION bin)
