@@ -276,8 +276,8 @@ CONFIGURE_ARGS:=$(filter-out	\
 	--program-prefix=%	\
 	--program-suffix=%	\
 	--exec-prefix=%		\
-	--disable-ipv6		\
-	--disable-nls		\
+	$(DISABLE_NLS)		\
+	$(DISABLE_IPV6)		\
 	, $(CONFIGURE_ARGS))
 
 # Tell build system of qemu to not add _FORTIFY_SOURCE options and let the base
