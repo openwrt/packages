@@ -23,6 +23,9 @@ define PyPackage/python-setuptools/install
 		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON_VERSION)/site-packages/setuptools-$(PYTHON_SETUPTOOLS_VERSION).dist-info \
 		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON_VERSION)/site-packages/easy_install.py \
 		$(1)/usr/lib/python$(PYTHON_VERSION)/site-packages
+	$(CP) \
+		$(1)/usr/lib/python$(PYTHON_VERSION)/site-packages/setuptools/site-patch.py \
+		$(1)/usr/lib/python$(PYTHON_VERSION)/site-packages/setuptools/site-patch.py.txt
 endef
 
 $(eval $(call PyBasePackage,python-setuptools, \
