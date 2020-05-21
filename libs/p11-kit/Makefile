@@ -62,9 +62,9 @@ endef
 define Package/p11-kit/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libp11-kit.so.* $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/etc/p11-kit/modules/
+	$(INSTALL_DIR) $(1)/etc/pkcs11/modules/
 ifneq ($(CONFIG_PACKAGE_libopensc),)
-	$(CP) ./files/opensc.module $(1)/etc/p11-kit/modules/
+	$(CP) ./files/opensc.module $(1)/etc/pkcs11/modules/
 endif
 endef
 
