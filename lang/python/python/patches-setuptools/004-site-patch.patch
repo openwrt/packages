@@ -1,0 +1,14 @@
+--- a/setuptools/command/easy_install.py
++++ b/setuptools/command/easy_install.py
+@@ -1315,7 +1315,10 @@ class easy_install(Command):
+             return  # already did it, or don't need to
+ 
+         sitepy = os.path.join(self.install_dir, "site.py")
+-        source = resource_string("setuptools", "site-patch.py")
++        try:
++            source = resource_string("setuptools", "site-patch.py")
++        except IOError:
++            source = resource_string("setuptools", "site-patch.py.txt")
+         source = source.decode('utf-8')
+         current = ""
+ 
