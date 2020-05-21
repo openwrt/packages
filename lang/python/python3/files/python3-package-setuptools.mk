@@ -19,6 +19,7 @@ define Py3Package/python3-setuptools/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages
 	$(CP) $(PKG_BUILD_DIR)/install-setuptools/usr/bin/easy_install-* $(1)/usr/bin
 	$(LN) easy_install-$(PYTHON3_VERSION) $(1)/usr/bin/easy_install-3
+	$(LN) easy_install-$(PYTHON3_VERSION) $(1)/usr/bin/easy_install
 	$(CP) \
 		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON3_VERSION)/site-packages/setuptools \
 		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON3_VERSION)/site-packages/setuptools-$(PYTHON3_SETUPTOOLS_VERSION).dist-info \
