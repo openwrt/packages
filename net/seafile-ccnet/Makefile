@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-ccnet
-PKG_VERSION:=7.1.3
-PKG_RELEASE:=2
+PKG_VERSION:=7.1.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/haiwen/ccnet-server/tar.gz/v$(PKG_VERSION)-server?
-PKG_HASH:=148d9b1af9218943de310f3f2e29e542e7279dbfba307a1cdd894bf8b7faf2e8
+PKG_HASH:=b46508a686e7fe8eb9e1515e5384c7d9aca25cf596ef4b8383646e587f1032eb
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=AGPL-3.0-only

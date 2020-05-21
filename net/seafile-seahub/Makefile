@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-seahub
-PKG_VERSION:=7.1.3
-PKG_RELEASE:=2
+PKG_VERSION:=7.1.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/haiwen/seahub/tar.gz/v$(PKG_VERSION)-server?
-PKG_HASH:=a2cf1ad1ff357b06c112f3f80e2e4a2ef109813496c96afc309449f6915e8797
+PKG_HASH:=921ef4373311c06c1192975a294d7d38c12ac34381a7df19542391fc1d810baf
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=Apache-2.0
