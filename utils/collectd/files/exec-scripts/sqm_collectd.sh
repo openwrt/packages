@@ -80,6 +80,8 @@ process_qdisc() {
 
 	ifc="$1"
 	jsn=$(tc -s -j qdisc show dev "$ifc")
+	[ $? ] || return
+
 	# strip leading & trailing []
 	jsn="${jsn#[}" ; jsn="${jsn%]}"
 
