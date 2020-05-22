@@ -15,6 +15,7 @@ define Py3Package/python3-dev/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/python$(PYTHON3_VERSION)-config $(1)/usr/bin
 	$(LN) python$(PYTHON3_VERSION)-config $(1)/usr/bin/python3-config
+	$(LN) python$(PYTHON3_VERSION)-config $(1)/usr/bin/python-config
 	$(LN) python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)/libpython$(PYTHON3_VERSION).a $(1)/usr/lib/
   # This depends on being called before filespec is processed
 	$(SED) 's|$(TARGET_AR)|ar|g;s|$(TARGET_CROSS)readelf|readelf|g;s|$(TARGET_CC)|gcc|g;s|$(TARGET_CXX)|g++|g' \
