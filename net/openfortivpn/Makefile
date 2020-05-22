@@ -32,7 +32,7 @@ define Package/openfortivpn
   CATEGORY:=Network
   TITLE:=Fortinet SSL VPN client
   URL:=https://github.com/adrienverge/openfortivpn
-  DEPENDS:=+ppp +libopenssl
+  DEPENDS:=+ppp +libopenssl +resolveip
 endef
 
 define Package/openfortivpn/description
@@ -50,19 +50,16 @@ CONFIGURE_ARGS += \
 
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
-define Package/openfortivpn/conffiles
-/etc/config/openfortivpn
-endef
-
 define Package/openfortivpn/install
 	$(INSTALL_DIR) \
 	  $(1)/usr/sbin \
-	  $(1)/etc/config \
-	  $(1)/etc/init.d
+          $(1)/lib/netifd/proto \
+	  $(1)/etc/hotplug.d/iface
 
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/openfortivpn $(1)/usr/sbin/
-	$(INSTALL_DATA) ./files/openfortivpn.config $(1)/etc/config/openfortivpn
-	$(INSTALL_BIN) ./files/openfortivpn.init $(1)/etc/init.d/openfortivpn
+	$(INSTALL_BIN) ./files/openfortivpn-wrapper $(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/openfortivpn.sh $(1)/lib/netifd/proto/
+	$(INSTALL_BIN) ./files/14-openforticlient $(1)/etc/hotplug.d/iface/
 endef
 
 $(eval $(call BuildPackage,openfortivpn))
