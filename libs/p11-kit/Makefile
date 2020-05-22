@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=p11-kit
 PKG_VERSION:=0.23.20
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/p11-glue/p11-kit/releases/download/$(PKG_VERSION)
@@ -62,9 +62,9 @@ endef
 define Package/p11-kit/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libp11-kit.so.* $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/etc/p11-kit/modules/
+	$(INSTALL_DIR) $(1)/etc/pkcs11/modules/
 ifneq ($(CONFIG_PACKAGE_libopensc),)
-	$(CP) ./files/opensc.module $(1)/etc/p11-kit/modules/
+	$(CP) ./files/opensc.module $(1)/etc/pkcs11/modules/
 endif
 endef
 
