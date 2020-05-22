@@ -14,7 +14,7 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 
 --- a/db/malloc.c
 +++ b/db/malloc.c
-@@ -56,8 +56,7 @@ xmalloc(
+@@ -44,8 +44,7 @@ xmalloc(
  {
  	void	*ptr;
  

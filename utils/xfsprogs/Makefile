@@ -8,15 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xfsprogs
-PKG_CPE_ID:=cpe:/a:sgi:xfsprogs
-PKG_RELEASE:=4
-PKG_VERSION:=4.11.0
-PKG_SOURCE_URL:=@KERNEL/linux/utils/fs/xfs/xfsprogs
-PKG_HASH:=c3a6d87b564d7738243c507df82276bed982265e345363a95f2c764e8a5f5bb2
+PKG_VERSION:=5.5.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=@KERNEL/linux/utils/fs/xfs/xfsprogs
+PKG_HASH:=cfbb0b136799c48cb79435facd0969c5a60a587a458e2d16f9752771027efbec
+
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_CPE_ID:=cpe:/a:sgi:xfsprogs
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -24,8 +25,8 @@ define Package/xfsprogs/default
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Filesystem
-  DEPENDS:=+libuuid +libpthread +librt
-  URL:=http://oss.sgi.com/projects/xfs
+  DEPENDS:=+libuuid +libpthread
+  URL:=https://xfs.org/
 endef
 
 define Package/xfs-admin
@@ -49,46 +50,40 @@ $(call Package/xfsprogs/default)
 endef
 
 CONFIGURE_ARGS += \
-	--enable-gettext=no \
-	--enable-lib64=no \
-	--enable-blkid=no
+	--disable-gettext \
+	--disable-blkid \
+	--disable-readline \
+	--disable-editline \
+	--disable-termcap \
+	--disable-lib64 \
+	--disable-librt \
+	--disable-ubisan \
+	--disable-addrsan \
+	--disable-threadsan \
+	--disable-scrub \
+	--disable-libicu
 
-TARGET_CFLAGS += \
-	-I$(STAGING_DIR)/usr/include \
-	-D_LARGEFILE64_SOURCE \
-	-D_FILE_OFFSET_BITS=64 \
-	-D_GNU_SOURCE
-
-MAKE_FLAGS += \
-	DEBUG= Q= \
-	PCFLAGS="-Wall" \
-	PKG_PLATFORM=linux \
-	ENABLE_GETTEXT=no
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR)/libxfs crc32table.h CFLAGS="$(HOST_CFLAGS) -I$(PKG_BUILD_DIR)/include"
-	$(call Build/Compile/Default)
-endef
+TARGET_CFLAGS += -DHAVE_MAP_SYNC
 
 define Package/xfs-admin/install
-	mkdir -p $(1)/sbin
+	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/xfs_db $(1)/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/xfs_admin $(1)/sbin
 endef
 
 define Package/xfs-mkfs/install
-	mkdir -p $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/sbin/mkfs.xfs $(1)/usr/sbin
 endef
 
 define Package/xfs-fsck/install
-	mkdir -p $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/sbin/xfs_repair $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/xfs_db $(1)/usr/sbin
 endef
 
 define Package/xfs-growfs/install
-	mkdir -p $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/xfs_growfs $(1)/usr/sbin
 endef
 
