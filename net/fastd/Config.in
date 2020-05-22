@@ -36,16 +36,6 @@ config FASTD_ENABLE_METHOD_NULL
 	depends on PACKAGE_fastd
 	default y
 
-config FASTD_ENABLE_METHOD_XSALSA20_POLY1305
-	bool "Enable xsalsa20-poly1305 method"
-	depends on PACKAGE_fastd
-	default n
-
-
-config FASTD_ENABLE_CIPHER_AES128_CTR
-	bool "Enable the AES128-CTR cipher"
-	depends on PACKAGE_fastd
-	default n
 
 config FASTD_ENABLE_CIPHER_NULL
 	bool "Enable the null cipher"
