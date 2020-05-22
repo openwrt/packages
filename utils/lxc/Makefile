@@ -46,24 +46,25 @@ define Package/lxc/Default
   CATEGORY:=Utilities
   TITLE:=LXC userspace tools
   URL:=https://linuxcontainers.org/
-  DEPENDS:=@!arc
+  DEPENDS:=lxc
 endef
 
 define Package/lxc
   $(call Package/lxc/Default)
+  DEPENDS:=@!arc
   MENU:=1
 endef
 
 define Package/lxc-auto
   $(call Package/lxc/Default)
   TITLE:= (initscript)
-  DEPENDS+=lxc-start +lxc-stop
+  DEPENDS+=+lxc-start +lxc-stop
 endef
 
 define Package/lxc-auto/description
  LXC is the userspace control package for Linux Containers, a lightweight
  virtual system mechanism sometimes described as "chroot on steroids".
- This package adds and initscript for starting and stopping the containers
+ This package adds an initscript for starting and stopping the containers
  on boot and shutdown.
 endef
 
@@ -99,25 +100,21 @@ endef
 define Package/lxc-common
   $(call Package/lxc/Default)
   TITLE:=LXC common files
-  DEPENDS+= lxc
 endef
 
 define Package/lxc-hooks
   $(call Package/lxc/Default)
   TITLE:=LXC virtual machine hooks
-  DEPENDS+= lxc
 endef
 
 define Package/lxc-templates
   $(call Package/lxc/Default)
   TITLE:=LXC virtual machine templates
-  DEPENDS+= lxc
 endef
 
 define Package/lxc-configs
   $(call Package/lxc/Default)
   TITLE:=LXC virtual machine common config files
-  DEPENDS+= lxc
 endef
 
 define Package/liblxc
@@ -125,13 +122,13 @@ define Package/liblxc
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=LXC userspace library
-  DEPENDS+= lxc +libcap +libpthread +LXC_SECCOMP:libseccomp +libopenssl
+  DEPENDS+= +libcap +libpthread +LXC_SECCOMP:libseccomp +libopenssl
 endef
 
 define Package/lxc-init
   $(call Package/lxc/Default)
   TITLE:=LXC Lua bindings
-  DEPENDS+= lxc +liblxc
+  DEPENDS+= +liblxc
 endef
 
 CONFIGURE_ARGS += \
@@ -246,7 +243,7 @@ define GenPlugin
   define Package/lxc-$(1)
     $(call Package/lxc/Default)
     TITLE:=Utility lxc-$(1) from the LXC userspace tools
-    DEPENDS+= lxc +lxc-common $(2) $(DEPENDS_$(1))
+    DEPENDS+= +lxc-common $(2) $(DEPENDS_$(1))
   endef
 
   define Package/lxc-$(1)/install
