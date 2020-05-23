@@ -142,7 +142,9 @@ CONFIGURE_ARGS += \
 	--enable-capabilities \
 	--disable-examples
 
-TARGET_CFLAGS += -minterlink-mips16
+ifdef CONFIG_USE_MIPS16
+  TARGET_CFLAGS += -minterlink-mips16
+endif
 TARGET_LDFLAGS += -lgcc_eh
 
 define Build/InstallDev
