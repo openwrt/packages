@@ -10,20 +10,19 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
 PKG_VERSION:=4.0.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://linuxcontainers.org/downloads/lxc/
 PKG_HASH:=ca336dcdf303fea5ff231d89a9b6278b061c4cffb14f0db0a71a15bdd95a5cb0
 
-PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause GPL-2.0
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
+PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause GPL-2.0
 
-PKG_BUILD_DEPENDS:=lua
-PKG_BUILD_PARALLEL:=1
-
-PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -47,23 +46,25 @@ define Package/lxc/Default
   CATEGORY:=Utilities
   TITLE:=LXC userspace tools
   URL:=https://linuxcontainers.org/
+  DEPENDS:=lxc
 endef
 
 define Package/lxc
   $(call Package/lxc/Default)
+  DEPENDS:=@!arc
   MENU:=1
 endef
 
 define Package/lxc-auto
   $(call Package/lxc/Default)
   TITLE:= (initscript)
-  DEPENDS:=+lxc-start +lxc-stop
+  DEPENDS+=+lxc-start +lxc-stop
 endef
 
 define Package/lxc-auto/description
  LXC is the userspace control package for Linux Containers, a lightweight
  virtual system mechanism sometimes described as "chroot on steroids".
- This package adds and initscript for starting and stopping the containers
+ This package adds an initscript for starting and stopping the containers
  on boot and shutdown.
 endef
 
@@ -74,7 +75,7 @@ endef
 define Package/lxc-unprivileged
   $(call Package/lxc/Default)
   TITLE:=Helper script for unprivileged containers support
-  DEPENDS:=+shadow-utils +shadow-newuidmap +shadow-newgidmap
+  DEPENDS+=+shadow-utils +shadow-newuidmap +shadow-newgidmap
 endef
 
 define Package/lxc-unprivileged/description
@@ -99,25 +100,21 @@ endef
 define Package/lxc-common
   $(call Package/lxc/Default)
   TITLE:=LXC common files
-  DEPENDS:= lxc
 endef
 
 define Package/lxc-hooks
   $(call Package/lxc/Default)
   TITLE:=LXC virtual machine hooks
-  DEPENDS:= lxc
 endef
 
 define Package/lxc-templates
   $(call Package/lxc/Default)
   TITLE:=LXC virtual machine templates
-  DEPENDS:= lxc
 endef
 
 define Package/lxc-configs
   $(call Package/lxc/Default)
   TITLE:=LXC virtual machine common config files
-  DEPENDS:= lxc
 endef
 
 define Package/liblxc
@@ -125,45 +122,28 @@ define Package/liblxc
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=LXC userspace library
-  DEPENDS:= lxc +libcap +libpthread +LXC_SECCOMP:libseccomp +libopenssl
-endef
-
-define Package/lxc-lua
-  $(call Package/lxc/Default)
-  TITLE:=LXC Lua bindings
-  DEPENDS:= lxc +liblua +liblxc
+  DEPENDS+= +libcap +libpthread +LXC_SECCOMP:libseccomp +libopenssl
 endef
 
 define Package/lxc-init
   $(call Package/lxc/Default)
   TITLE:=LXC Lua bindings
-  DEPENDS:= lxc +liblxc
+  DEPENDS+= +liblxc
 endef
 
 CONFIGURE_ARGS += \
-	--disable-apparmor \
-	--disable-cgmanager \
+	--disable-werror \
+	--disable-rpath \
 	--disable-doc \
-	--disable-examples \
-	--disable-gnutls \
+	--disable-api-docs \
+	--disable-apparmor \
 	--disable-selinux \
-	--disable-python \
-	--enable-lua=yes \
-	--with-lua-pc="$(STAGING_DIR)/usr/lib/pkgconfig/lua.pc"
+	--$(if $(CONFIG_LXC_SECCOMP),en,dis)able-seccomp \
+	--enable-capabilities \
+	--disable-examples
 
-TARGET_CFLAGS += -Wno-format-nonliteral
+TARGET_CFLAGS += -minterlink-mips16
 TARGET_LDFLAGS += -lgcc_eh
-
-ifeq ($(CONFIG_LXC_SECCOMP),y)
-CONFIGURE_ARGS += --enable-seccomp
-else
-CONFIGURE_ARGS += --disable-seccomp
-endif
-
-MAKE_FLAGS += \
-	LUA_INSTALL_CMOD="/usr/lib/lua" \
-	LUA_INSTALL_LMOD="/usr/lib/lua"
-
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/lxc/
@@ -252,17 +232,6 @@ define Package/liblxc/install
 		$(1)/usr/lib/
 endef
 
-define Package/lxc-lua/install
-	$(INSTALL_DIR) $(1)/usr/lib/lua
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/share/lua/5.1/lxc.lua \
-		$(1)/usr/lib/lua/
-	$(INSTALL_DIR) $(1)/usr/lib/lua/lxc
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/lua/5.1/lxc/core.so \
-		$(1)/usr/lib/lua/lxc/
-endef
-
 define Package/lxc-init/install
 	$(INSTALL_DIR) $(1)/sbin
 	$(CP) \
@@ -274,7 +243,7 @@ define GenPlugin
   define Package/lxc-$(1)
     $(call Package/lxc/Default)
     TITLE:=Utility lxc-$(1) from the LXC userspace tools
-    DEPENDS:= lxc +lxc-common $(2) $(DEPENDS_$(1))
+    DEPENDS+= +lxc-common $(2) $(DEPENDS_$(1))
   endef
 
   define Package/lxc-$(1)/install
@@ -294,7 +263,6 @@ $(eval $(call BuildPackage,lxc-hooks))
 $(eval $(call BuildPackage,lxc-configs))
 $(eval $(call BuildPackage,lxc-templates))
 $(eval $(call BuildPackage,liblxc))
-$(eval $(call BuildPackage,lxc-lua))
 $(eval $(call BuildPackage,lxc-init))
 $(eval $(call BuildPackage,lxc-auto))
 $(eval $(call BuildPackage,lxc-unprivileged))
