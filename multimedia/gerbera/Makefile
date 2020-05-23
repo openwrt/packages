@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gerbera
 PKG_VERSION:=1.5.0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gerbera/gerbera/tar.gz/v$(PKG_VERSION)?
@@ -19,7 +19,7 @@ PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE.md
 
-PKG_BUILD_DEPENDS:=libmatroska pugixml spdlog
+PKG_BUILD_DEPENDS:=libmatroska pugixml spdlog taglib
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -53,7 +53,7 @@ CMAKE_OPTIONS += \
 	-DWITH_CURL=OFF \
 	-DWITH_INOTIFY=ON \
 	-DWITH_JS=OFF \
-	-DWITH_TAGLIB=OFF \
+	-DWITH_TAGLIB=ON \
 	-DWITH_AVCODEC=OFF \
 	-DWITH_FFMPEGTHUMBNAILER=OFF \
 	-DWITH_EXIF=ON \
