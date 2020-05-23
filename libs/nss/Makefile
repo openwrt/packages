@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nss
 PKG_VERSION:=3.52
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -62,8 +62,15 @@ ifeq ($(CONFIG_CPU_TYPE),"xscale")
 TARGET_CFLAGS+= -mfloat-abi=softfp
 endif
 
+ifneq ($(findstring arm,$(CONFIG_ARCH)),)
+ifeq ($(findstring neon,$(CONFIG_CPU_TYPE)),)
+export NSS_DISABLE_ARM32_NEON
+endif
+endif
+
 export NATIVE_CC=$(HOSTCC)
 export NATIVE_FLAGS=$(HOST_CFLAGS)
+export NSS_ENABLE_WERROR=0
 
 MAKE_FLAGS += \
 	CROSS_COMPILE=1 \
