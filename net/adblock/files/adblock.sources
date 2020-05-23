@@ -49,28 +49,28 @@
 		"descurl": "https://www.dshield.org"
 	},
 	"energized_blugo": {
-		"url": "https://raw.githubusercontent.com/EnergizedProtection/block/master/bluGo/formats/domains.txt",
+		"url": "https://block.energized.pro/bluGo/formats/domains.txt",
 		"rule": "/^([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "XL",
 		"focus": "compilation",
 		"descurl": "https://github.com/EnergizedProtection/block"
 	},
 	"energized_blu": {
-		"url": "https://raw.githubusercontent.com/EnergizedProtection/block/master/blu/formats/domains.txt",
+		"url": "https://block.energized.pro/blu/formats/domains.txt",
 		"rule": "/^([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "XL",
 		"focus": "compilation",
 		"descurl": "https://github.com/EnergizedProtection/block"
 	},
 	"energized_porn": {
-		"url": "https://raw.githubusercontent.com/EnergizedProtection/block/master/porn/formats/domains.txt",
+		"url": "https://block.energized.pro/porn/formats/domains.txt",
 		"rule": "/^([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "XXL",
 		"focus": "compilation+porn",
 		"descurl": "https://github.com/EnergizedProtection/block"
 	},
 	"energized_unified": {
-		"url": "https://raw.githubusercontent.com/EnergizedProtection/block/master/unified/formats/domains.txt",
+		"url": "https://block.energized.pro/unified/formats/domains.txt",
 		"rule": "/^([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "XXL",
 		"focus": "compilation",
