@@ -15,10 +15,11 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | bitcoin             |         | S    | mining           | [Link](https://github.com/hoshsadiq/adblock-nocoin-list)         |
 | disconnect          | x       | S    | general          | [Link](https://disconnect.me)                                    |
 | dshield             |         | XL   | general          | [Link](https://dshield.org)                                      |
-| energized_blugo     |         | XL   | compilation      | [Link](https://github.com/EnergizedProtection/block)             |
-| energized_blu       |         | XL   | compilation      | [Link](https://github.com/EnergizedProtection/block)             |
-| energized_porn      |         | XXL  | compilation+porn | [Link](https://github.com/EnergizedProtection/block)             |
-| energized_unified   |         | XXL  | compilation      | [Link](https://github.com/EnergizedProtection/block)             |
+| energized_blugo     |         | XL   | compilation      | [Link](https://energized.pro)                                    |
+| energized_blu       |         | XL   | compilation      | [Link](https://energized.pro)                                    |
+| energized_porn      |         | XXL  | compilation+porn | [Link](https://energized.pro)                                    |
+| energized_ultimate  |         | XXL  | compilation      | [Link](https://energized.pro)                                    |
+| energized_unified   |         | XXL  | compilation      | [Link](https://energized.pro)                                    |
 | malwaredomains      |         | M    | malware          | [Link](https://malwaredomains.com)                               |
 | malwarelist         |         | S    | malware          | [Link](https://www.malwaredomainlist.com)                        |
 | notracking          |         | XL   | tracking         | [Link](https://github.com/notracking/hosts-blocklists)           |
@@ -35,11 +36,12 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | reg_ro              |         | M    | reg_romania      | [Link](https://easylist.to)                                      |
 | reg_ru              |         | M    | reg_russia       | [Link](https://easylist.to)                                      |
 | reg_vn              |         | M    | reg_vietnam      | [Link](https://bigdargon.github.io/hostsVN)                      |
-| shallalist          |         | L    | general          | [Link](https://www.shallalist.de)                                |
-| shallalist_porn     |         | XXL  | general+porn     | [Link](https://www.shallalist.de)                                |
+| shallalist          |         | L    | general          | [Link](http://www.shallalist.de)                                 |
+| shallalist_porn     |         | XXL  | general+porn     | [Link](http://www.shallalist.de)                                 |
 | smarttv             |         | S    | smarttv          | [Link](https://github.com/Perflyst/PiHoleBlocklist)              |
 | spam404             |         | S    | general          | [Link](https://github.com/Dawsey21)                              |
-| stevenblack         |         | L    | compilation      | [Link](https://github.com/StevenBlack/hosts)                     |
+| stevenblack         |         | L    | compilation+porn | [Link](https://github.com/StevenBlack/hosts)                     |
+| stevenblack_porn    |         | L    | compilation+porn | [Link](https://github.com/StevenBlack/hosts)                     |
 | stopforumspam       |         | S    | spam             | [Link](https://www.stopforumspam.com)                            |
 | sysctl              |         | M    | general          | [Link](http://sysctl.org/cameleon)                               |
 | utcapitole          |         | L    | general          | [Link](https://dsi.ut-capitole.fr/blacklists/index_en.php)       |

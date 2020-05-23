@@ -134,8 +134,8 @@ list()
 			src_enabled="${src_enabled//\'}"
 			printf "%s\\n" "::: Available adblock sources"
 			printf "%s\\n" ":::"
-			printf "%-25s%-10s%-7s%-20s%s\\n" "    Name" "Enabled" "Size" "Focus" "Info URL"
-			printf "%s\\n" "    ------------------------------------------------------------------"
+			printf "%-25s%-10s%-7s%-21s%s\\n" "    Name" "Enabled" "Size" "Focus" "Info URL"
+			printf "%s\\n" "    -------------------------------------------------------------------"
 			json_load_file "${src_file}"
 			json_get_keys keylist
 			for key in ${keylist}
@@ -155,7 +155,7 @@ list()
 						enabled=" "
 					fi
 					src_enabled="${src_enabled/${key}}"
-					printf "  + %-21s%-10s%-7s%-20s%s\\n" "${key}" "${enabled}" "${size}" "${focus}" "${descurl}"
+					printf "  + %-21s%-10s%-7s%-21s%s\\n" "${key:0:20}" "${enabled}" "${size:0:3}" "${focus:0:20}" "${descurl:0:50}"
 				else
 					src_enabled="${src_enabled} ${key}"
 				fi
@@ -168,7 +168,7 @@ list()
 				printf "%s\\n" "    ----------------------------------------------"
 				for key in ${src_enabled}
 				do
-					printf "  - %s\\n" "${key}"
+					printf "  - %s\\n" "${key:0:20}"
 				done
 			fi
 		else

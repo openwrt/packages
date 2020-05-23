@@ -11,7 +11,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-adb_ver="4.0.4"
+adb_ver="4.0.5"
 adb_enabled=0
 adb_debug=0
 adb_forcedns=0
@@ -125,13 +125,20 @@ f_conf()
 
 	if [ ! -r "/etc/config/adblock" ] || [ -n "$(uci -q show adblock.@source[0])" ]
 	then
-		if [ -r "/etc/config/adblock-opkg" ] && [ -z "$(uci -q show adblock-opkg.@source[0])" ]
+		if { [ -r "/etc/config/adblock-opkg" ] && [ -z "$(uci -q show adblock-opkg.@source[0])" ]; } || \
+			{ [ -r "/rom/etc/config/adblock" ] && [ -z "$(uci -q show /rom/etc/config/adblock.@source[0])" ]; }
 		then
 			if [ -r "/etc/config/adblock" ]
 			then
 				cp -pf "/etc/config/adblock" "/etc/config/adblock-backup"
 			fi
-			cp -pf "/etc/config/adblock-opkg" "/etc/config/adblock"
+			if [ -r "/etc/config/adblock-opkg" ]
+			then
+				cp -pf "/etc/config/adblock-opkg" "/etc/config/adblock"
+			elif [ -r "/rom/etc/config/adblock" ]
+			then
+				cp -pf "/rom/etc/config/adblock" "/etc/config/adblock"
+			fi
 			f_log "info" "missing or old adblock config replaced with new valid default config"
 		else
 			f_log "err" "unrecoverable adblock config error, please re-install the package via opkg with the '--force-reinstall --force-maintainer' options"
@@ -242,7 +249,7 @@ f_dns()
 				adb_dnsinstance="${adb_dnsinstance:-"0"}"
 				adb_dnsuser="${adb_dnsuser:-"root"}"
 				adb_dnsdir="${adb_dnsdir:-"/etc/kresd"}"
-				adb_dnsheader="${adb_dnsheader:-"\$TTL 2h\n@ IN SOA localhost. root.localhost. (1 6h 1h 1w 2h)\n  IN NS  localhost.\n"}"
+				adb_dnsheader="${adb_dnsheader:-"\$TTL 2h\n@ IN SOA localhost. root.localhost. (1 6h 1h 1w 2h)\n"}"
 				adb_dnsdeny="${adb_dnsdeny:-"${adb_awk} '{print \"\"\$0\" CNAME .\\n*.\"\$0\" CNAME .\"}'"}"
 				adb_dnsallow="${adb_dnsallow:-"${adb_awk} '{print \"\"\$0\" CNAME rpz-passthru.\\n*.\"\$0\" CNAME rpz-passthru.\"}'"}"
 				adb_dnssafesearch="${adb_dnssafesearch:-"0"}"
