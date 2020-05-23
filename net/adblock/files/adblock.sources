@@ -49,32 +49,39 @@
 		"descurl": "https://www.dshield.org"
 	},
 	"energized_blugo": {
-		"url": "https://raw.githubusercontent.com/EnergizedProtection/block/master/bluGo/formats/domains.txt",
+		"url": "https://block.energized.pro/bluGo/formats/domains.txt",
 		"rule": "/^([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "XL",
 		"focus": "compilation",
-		"descurl": "https://github.com/EnergizedProtection/block"
+		"descurl": "https://energized.pro"
 	},
 	"energized_blu": {
-		"url": "https://raw.githubusercontent.com/EnergizedProtection/block/master/blu/formats/domains.txt",
+		"url": "https://block.energized.pro/blu/formats/domains.txt",
 		"rule": "/^([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "XL",
 		"focus": "compilation",
-		"descurl": "https://github.com/EnergizedProtection/block"
+		"descurl": "https://energized.pro"
 	},
 	"energized_porn": {
-		"url": "https://raw.githubusercontent.com/EnergizedProtection/block/master/porn/formats/domains.txt",
+		"url": "https://block.energized.pro/porn/formats/domains.txt",
 		"rule": "/^([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "XXL",
 		"focus": "compilation+porn",
-		"descurl": "https://github.com/EnergizedProtection/block"
+		"descurl": "https://energized.pro"
 	},
-	"energized_unified": {
-		"url": "https://raw.githubusercontent.com/EnergizedProtection/block/master/unified/formats/domains.txt",
+	"energized_ultimate": {
+		"url": "https://block.energized.pro/ultimate/formats/domains.txt",
 		"rule": "/^([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "XXL",
 		"focus": "compilation",
-		"descurl": "https://github.com/EnergizedProtection/block"
+		"descurl": "https://energized.pro"
+	},
+	"energized_unified": {
+		"url": "https://block.energized.pro/unified/formats/domains.txt",
+		"rule": "/^([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "XXL",
+		"focus": "compilation",
+		"descurl": "https://energized.pro"
 	},
 	"malwaredomains": {
 		"url": "http://mirror.espoch.edu.ec/malwaredomains/justdomains",
@@ -189,24 +196,24 @@
 		"descurl": "https://bigdargon.github.io/hostsVN"
 	},
 	"shallalist": {
-		"url": "https://www.shallalist.de/Downloads/shallalist.tar.gz",
+		"url": "http://www.shallalist.de/Downloads/shallalist.tar.gz",
 		"rule": "/^([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"categories": [
 				"adv", "costtraps", "spyware", "tracker", "warez"
 		],
 		"size": "L",
 		"focus": "general",
-		"descurl": "https://www.shallalist.de"
+		"descurl": "http://www.shallalist.de"
 	},
 	"shallalist_porn": {
-		"url": "https://www.shallalist.de/Downloads/shallalist.tar.gz",
+		"url": "http://www.shallalist.de/Downloads/shallalist.tar.gz",
 		"rule": "/^([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"categories": [
 				"adv", "costtraps", "porn", "spyware", "tracker", "warez"
 		],
 		"size": "XXL",
 		"focus": "general+porn",
-		"descurl": "https://www.shallalist.de"
+		"descurl": "http://www.shallalist.de"
 	},
 	"smarttv": {
 		"url": "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV.txt",
@@ -223,6 +230,13 @@
 		"descurl": "https://github.com/Dawsey21"
 	},
 	"stevenblack": {
+		"url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
+		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
+		"size": "L",
+		"focus": "compilation",
+		"descurl": "https://github.com/StevenBlack/hosts"
+	},
+	"stevenblack_porn": {
 		"url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-gambling-porn-social/hosts",
 		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]+\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
 		"size": "L",

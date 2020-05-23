@@ -6,8 +6,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=4.0.4
-PKG_RELEASE:=4
+PKG_VERSION:=4.0.5
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 
@@ -17,7 +17,7 @@ define Package/adblock
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Powerful adblock script to block ad/abuse domains by using DNS
-	DEPENDS:=+jshn +jsonfilter +coreutils +coreutils-sort +ca-bundle
+	DEPENDS:=+jshn +jsonfilter +coreutils +coreutils-sort +ca-bundle +opkg
 	PKGARCH:=all
 endef
 
