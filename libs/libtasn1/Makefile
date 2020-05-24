@@ -39,6 +39,7 @@ define Package/libtasn1/description
  Distinguish Encoding Rules (DER) manipulation.
 endef
 
+HOST_CFLAGS += -std=gnu99
 TARGET_CFLAGS += -ffunction-sections -fdata-sections
 TARGET_LDFLAGS += -Wl,--gc-sections
 
