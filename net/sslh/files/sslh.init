@@ -47,6 +47,9 @@ start_instance() {
 	# J) http parameter
     config_get val "${section}" http
     [ -n "${val}" ] && append args "--http ${val}"
+	# K) transparent parameter
+	config_get_bool val "${section}" transparent 0
+	[ "${val}" -ne 0 ] && append args "--transparent"
 
 	# Defaults were removed for --user and --pidfile options
 	# in sslh 1.11; Define them here instead.
