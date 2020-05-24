@@ -6,16 +6,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=taglib
-PKG_VERSION:=1.11.1
-PKG_RELEASE:=2
+PKG_VERSION:=1.12-beta-1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/taglib/taglib/releases/download/v$(PKG_VERSION)
-PKG_HASH:=b6d1a5a610aae6ff39d93de5efd0fdc787aa9e9dc1e7026fa4c961b26563526b
+PKG_SOURCE_URL:=https://codeload.github.com/taglib/taglib/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=d2a44be7ca8b7682b218affc9910dcfb027481f402f7c30bd2996392b2429ae4
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING.LGPL
+PKG_CPE_ID:=cpe:/a:taglib:taglib
 
 PKG_BUILD_PARALLEL:=1
 
@@ -39,7 +40,6 @@ define Package/taglib/description
 endef
 
 CMAKE_OPTIONS += \
-	-DHAVE_BOOST_BYTESWAP=OFF \
 	-DBUILD_TESTS=OFF \
 	-DBUILD_EXAMPLES=OFF \
 	-DBUILD_BINDINGS=OFF \
@@ -50,8 +50,6 @@ TARGET_CXXFLAGS += -flto
 define Build/InstallDev
 	$(call Build/InstallDev/cmake,$(1))
 	$(SED) '/^prefix=\|^exec_prefix=/s|/usr|$(STAGING_DIR)/usr|' $(1)/usr/bin/taglib-config
-	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/bin/taglib-config
-	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/bin/taglib-config
 	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/taglib.pc
 	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/taglib.pc
 endef
