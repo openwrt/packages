@@ -110,26 +110,30 @@ start_service() {
 	  -v group="$group" \
 	  -v a="$datadir" \
 	  -v b="$logdir" \
-	  -v c="$rundir" \
-	  -v d="$tmpdir" \
+	  -v c="$tmpdir" \
 	  '
 	    BEGIN {
 	      dir[0]=a
 	      dir[1]=b
 	      dir[2]=c
-	      dir[3]=d
 	      for (x in dir) {
 	        if (system("test ! -e \"" dir[x] "\"" )) {
 	          delete dir[x]
 	        }
 	      }
 	      for (x in dir) {
-	        system("mkdir -p \"" dir[x] "\"" )
-	        system("chmod 750 \"" dir[x] "\"" )
+	        system("mkdir -p -m 0750 \"" dir[x] "\"" )
 	        system("chown \"" user "\":\"" group "\" \"" dir[x] "\"" )
 	      }
 	    }
 	  '
+
+	if ! [ -e "$rundir" ]; then
+		# $rundir needs to be accessible for
+		# clients
+		mkdir -p "$rundir"
+		[ -d "$rundir" ] && chown "$user":"$group" "$rundir"
+	fi
 
 	if [ ! -f "$datadir/mysql/tables_priv.MYD" ]; then
 		local args="--force"
