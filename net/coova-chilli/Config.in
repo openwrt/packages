@@ -26,6 +26,10 @@ config COOVACHILLI_LARGELIMITS
 	bool "Enable larger limits for use with non-embedded systems"
 	default n
 
+config COOVACHILLI_JSONINTERFACE
+	bool "Enable the JSON interface for the CoovaChilli Controller"
+	default n
+
 choice
 	prompt "SSL library"
 	default COOVACHILLI_NOSSL
