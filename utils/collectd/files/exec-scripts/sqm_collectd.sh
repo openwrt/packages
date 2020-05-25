@@ -3,7 +3,7 @@
 . /usr/share/libubox/jshn.sh
 
 HOSTNAME="${COLLECTD_HOSTNAME:-localhost}"
-INTERVAL="${COLLECTD_INTERVAL:-60.000}"
+INTERVAL="${COLLECTD_INTERVAL:-60}"
 
 handle_cake() {
 	local ifc ifr tin i
@@ -79,8 +79,7 @@ process_qdisc() {
 	local ifc jsn
 
 	ifc="$1"
-	jsn=$(tc -s -j qdisc show dev "$ifc")
-	[ $? ] || return
+	jsn=$(tc -s -j qdisc show dev "$ifc") || return
 
 	# strip leading & trailing []
 	jsn="${jsn#[}" ; jsn="${jsn%]}"
@@ -104,5 +103,5 @@ while true ; do
 	for ifc in "$@" ; do
 		process_qdisc "$ifc"
 	done
-	sleep "${INTERVAL%.000}"
+	sleep "${INTERVAL%%.*}"
 done
