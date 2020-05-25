@@ -65,6 +65,9 @@ HOST_CONFIGURE_ARGS += \
 	--disable-doxygen-html \
 	--disable-doxygen-doc
 
+HOST_CPPFLAGS += \
+	-std=gnu++11
+
 # only build the ola_protoc thingy
 define Host/Compile
 	cd $(HOST_BUILD_DIR); \
