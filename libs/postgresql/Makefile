@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
 PKG_VERSION:=12.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
 PKG_CPE_ID:=cpe:/a:postgresql:postgresql
@@ -155,6 +155,8 @@ CONFIGURE_ARGS += \
 			--with-zlib="yes" \
 			--enable-depend \
 			$(if $(CONFIG_arc),--disable-spinlocks)
+
+HOST_CFLAGS += -std=gnu99
 
 # Need a native zic and pg_config for build
 define Host/Compile
