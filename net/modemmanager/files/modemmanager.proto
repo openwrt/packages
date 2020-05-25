@@ -204,10 +204,9 @@ modemmanager_connected_method_static_ipv4() {
 		proto_notify_error "${interface}" PREFIX_MISSING
 		return
 	}
-
 	mask=$(cdr2mask "${prefix}")
 
-	# TODO: mtu reporting in proto handler
+	[ -n "${mtu}" ] && /sbin/ip link set dev "${wwan}" mtu "${mtu}"
 
 	proto_init_update "${wwan}" 1
 	proto_set_keep 1
@@ -270,7 +269,7 @@ modemmanager_connected_method_static_ipv6() {
 		return
 	}
 
-	# TODO: mtu reporting in proto handler
+	[ -n "${mtu}" ] && /sbin/ip link set dev "${wwan}" mtu "${mtu}"
 
 	proto_init_update "${wwan}" 1
 	proto_set_keep 1
