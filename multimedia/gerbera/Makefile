@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gerbera
 PKG_VERSION:=1.4.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gerbera/gerbera/tar.gz/v$(PKG_VERSION)?
@@ -19,6 +19,7 @@ PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE.md
 
+PKG_BUILD_DEPENDS:=taglib
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -50,7 +51,7 @@ CMAKE_OPTIONS += \
 	-DWITH_CURL=0 \
 	-DWITH_INOTIFY=1 \
 	-DWITH_JS=0 \
-	-DWITH_TAGLIB=0 \
+	-DWITH_TAGLIB=1 \
 	-DWITH_AVCODEC=0 \
 	-DWITH_FFMPEGTHUMBNAILER=0 \
 	-DWITH_EXIF=1 \
