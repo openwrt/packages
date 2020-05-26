@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avahi
 PKG_VERSION:=0.8
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/lathiat/avahi/releases/download/v$(PKG_VERSION) \
@@ -251,7 +251,7 @@ $(call Package/avahi/Default/description)
 endef
 
 TARGET_CFLAGS += $(FPIC) -DGETTEXT_PACKAGE
-TARGET_LDFLAGS += $(if $(CONFIG_SSP_SUPPORT),-lssp_nonshared)
+TARGET_LDFLAGS += $(if $(CONFIG_GCC_LIBSSP),-lssp_nonshared)
 
 CONFIGURE_ARGS += \
 	--enable-shared \
