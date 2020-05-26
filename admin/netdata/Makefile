@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netdata
-PKG_VERSION:=1.20.0
+PKG_VERSION:=1.22.0
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>, Daniel Engberg <daniel.engberg.lists@pyret.net>
@@ -18,7 +18,7 @@ PKG_CPE_ID:=cpe:/a:my-netdata:netdata
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/netdata/netdata/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=c739e0fa8d6d7f433c0c7c8016b763e8f70519d67f0b5e7eca9ee5318f210d90
+PKG_HASH:=802a07c30f217a4ec1b0fa19352357af12f64305a060e1bdc4dafd01269a67af
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -64,6 +64,11 @@ CONFIGURE_ARGS += \
 
 define Package/netdata/conffiles
 /etc/netdata/
+endef
+
+define Package/netdata/extra_provides
+    echo 'libcrypto.so.1.1';\
+    echo 'libssl.so.1.1';
 endef
 
 define Package/netdata/install
