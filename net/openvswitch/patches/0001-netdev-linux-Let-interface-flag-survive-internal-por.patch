@@ -1,4 +1,4 @@
-From 6fda3936a85319d6b09108dda67466baa1c93b6c Mon Sep 17 00:00:00 2001
+From 66f96259c596f8f303bd98e5323a447cd60adbb2 Mon Sep 17 00:00:00 2001
 From: Helmut Schaa <helmut.schaa@googlemail.com>
 Date: Wed, 8 Jan 2014 13:48:49 +0100
 Subject: [PATCH] netdev-linux: Let interface flag survive internal port setup

@@ -1,4 +1,4 @@
-From c17f9e73b543043b438dee6759ae20047ee33d4a Mon Sep 17 00:00:00 2001
+From 29c5b1f1b53010a49d2ce1cc59060c334b1a40fc Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Fri, 20 Mar 2020 15:11:31 +0800
 Subject: [PATCH] python: separate host/target python for cross-compile
@@ -6,8 +6,8 @@ Subject: [PATCH] python: separate host/target python for cross-compile
 Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
 ---
  Makefile.am       | 2 +-
- m4/openvswitch.m4 | 1 +
- 2 files changed, 2 insertions(+), 1 deletion(-)
+ m4/openvswitch.m4 | 2 ++
+ 2 files changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/Makefile.am b/Makefile.am
 index b279303d1..6140b2c7f 100644
@@ -23,7 +23,7 @@ index b279303d1..6140b2c7f 100644
  ALL_LOCAL =
  BUILT_SOURCES =
 diff --git a/m4/openvswitch.m4 b/m4/openvswitch.m4
-index add3aabcc..839eb7bda 100644
+index add3aabcc..ada31c491 100644
 --- a/m4/openvswitch.m4
 +++ b/m4/openvswitch.m4
 @@ -383,6 +383,8 @@ else:
