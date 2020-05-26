@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 PRINT_PASSED=2
 
@@ -37,7 +37,7 @@ setpoint_add_ssl() {
     local indent="\n$1"
     local name="$2"
     local default=""
-    [ "${name}" == "${LAN_NAME}" ] && default=".default"
+    [ "${name}" = "${LAN_NAME}" ] && default=".default"
     local prefix="${CONF_DIR}${name}"
 
     local CONF="$(grep -vE "$(_regex "${NGX_INCLUDE}" \
@@ -74,10 +74,17 @@ setpoint_add_ssl() {
 
 # ----------------------------------------------------------------------------
 
+test_setpoint() {
+    [ "$(cat "$1")" = "$2" ] && return
+    echo "$1:"; cat "$1"
+    echo "differs from setpoint:"; echo "$2"
+    [ "${PRINT_PASSED}" -gt 1 ] && pst_exit 1
+}
 
-function test() {
-    eval "$1 2>/dev/null >/dev/null "
-    if [ $? -eq $2 ]
+
+test() {
+    eval "$1 2>/dev/null >/dev/null"
+    if [ "$?" -eq "$2" ]
     then
         [ "${PRINT_PASSED}" -gt 0 ] \
         && printf "%-72s%-1s\n" "$1" "2>/dev/null >/dev/null (-> $2?) passed."
@@ -88,7 +95,7 @@ function test() {
 }
 
 
-[ "$PRINT_PASSED" -gt 0 ] && printf "\nTesting ${NGINX_UTIL} get_env ...\n"
+[ "$PRINT_PASSED" -gt 0 ] && printf "\nTesting %s get_env ...\n" "${NGINX_UTIL}"
 
 eval $("${NGINX_UTIL}" get_env)
 test '[ -n "${NGINX_CONF}" ]' 0
@@ -101,21 +108,21 @@ test '[ -n "${SSL_SESSION_TIMEOUT_ARG}" ]' 0
 test '[ -n "${ADD_SSL_FCT}" ]' 0
 
 
-[ "$PRINT_PASSED" -gt 0 ] && printf "\nPrepare files in ${CONF_DIR} ...\n"
+[ "$PRINT_PASSED" -gt 0 ] && printf "\nPrepare files in %s ...\n" "${CONF_DIR}"
 
-mkdir -p ${CONF_DIR}
+mkdir -p "${CONF_DIR}"
 
-cd ${CONF_DIR}
+cd "${CONF_DIR}" || exit 2
 
 NGX_INCLUDE="include '\$';"
 NGX_SERVER_NAME="server_name * '\$' *;"
 NGX_SSL_CRT="ssl_certificate '\$.crt';"
 NGX_SSL_KEY="ssl_certificate_key '\$.key';"
 NGX_SSL_SESSION_CACHE="ssl_session_cache '$(echo "${SSL_SESSION_CACHE_ARG}" \
-    | sed -E "s/$(__esc_regex ${LAN_NAME})/\$/")';"
+    | sed -E "s/$(__esc_regex "${LAN_NAME}")/\$/")';"
 NGX_SSL_SESSION_TIMEOUT="ssl_session_timeout '${SSL_SESSION_TIMEOUT_ARG}';"
 
-cat > ${LAN_NAME}.sans <<EOF
+cat > "${LAN_NAME}.sans" <<EOF
 # default_server for the LAN addresses getting the IPs by:
 # ifstatus lan | jsonfilter -e '@["ipv4-address","ipv6-address"].*.address'
 server {
@@ -196,56 +203,44 @@ EOF
 CONFS="${CONFS} tab:0"
 
 
-[ "$PRINT_PASSED" -gt 0 ] && printf "\nTesting ${NGINX_UTIL} init_lan ...\n"
+[ "$PRINT_PASSED" -gt 0 ] && printf "\nTesting %s init_lan ...\n" "${NGINX_UTIL}"
 
 mkdir -p "$(dirname "${LAN_LISTEN}")"
 
-cp ${LAN_NAME}.sans ${LAN_NAME}.conf
+cp "${LAN_NAME}.sans" "${LAN_NAME}.conf"
 
-test '${NGINX_UTIL} init_lan' 0
+test '"${NGINX_UTIL}" init_lan' 0
 
 
-[ "$PRINT_PASSED" -gt 0 ] && printf "\nSetup files in ${CONF_DIR} ...\n"
+[ "$PRINT_PASSED" -gt 0 ] && printf "\nSetup files in %s ...\n" "${CONF_DIR}"
 
 for conf in ${CONFS}
-do test 'setpoint_add_ssl "    " '${conf%:*} ${conf#*:}
+do test 'setpoint_add_ssl "    " '"${conf%:*}" "${conf#*:}"
 done
 
 test 'setpoint_add_ssl "\t" tab' 0 # fixes wrong indentation.
 
 
-[ "$PRINT_PASSED" -gt 0 ] && printf "\nTesting ${NGINX_UTIL} add_ssl ...\n"
+[ "$PRINT_PASSED" -gt 0 ] && printf "\nTesting %s add_ssl ...\n" "${NGINX_UTIL}"
 
 cp different_name.sans different_name.with
 
-test '[ "${ADD_SSL_FCT}" == "add_ssl" ] ' 0
+test '[ "${ADD_SSL_FCT}" = "add_ssl" ] ' 0
 
 for conf in ${CONFS}; do
-    name=${conf%:*}
-    cp ${name}.sans ${name}.conf
-    test '${NGINX_UTIL} add_ssl '${name} ${conf#*:}
-    (test '[ "$(cat '${name}'.conf)" == "$(cat '${name}'.with)" ]' 0 >/dev/null)
-    [ "$?" -gt 0 ] && {
-        echo "created ${name}.conf:"; cat "${name}.conf"
-        echo "differs from setpoint:"; cat "${name}.with"
-        exit 1
-    }
+    name="${conf%:*}"
+    cp "${name}.sans" "${name}.conf"
+    test '"${NGINX_UTIL}" add_ssl '"${name}" "${conf#*:}"
+    test_setpoint "${name}.conf" "$(cat "${name}.with")"
 done
 
-
-[ "$PRINT_PASSED" -gt 0 ] && printf "\nTesting ${NGINX_UTIL} del_ssl ...\n"
+[ "$PRINT_PASSED" -gt 0 ] && printf "\nTesting %s del_ssl ...\n" "${NGINX_UTIL}"
 
 sed -i "/server {/a\\    include '${LAN_LISTEN}';" minimal.sans
 
 for conf in ${CONFS}; do
-    name=${conf%:*}
-    cp ${name}.with ${name}.conf
-    test '${NGINX_UTIL} del_ssl '${name} ${conf#*:}
-    (test '[ "$(cat '${name}'.conf)" == "$(cat '${name}'.sans)" ]' 0 >/dev/null)
-    [ "$?" -gt 0 ] && {
-        echo "created ${name}.conf:"; cat "${name}.conf"
-        echo "differs from setpoint:"; cat "${name}.sans"
-        exit 1
-    }
+    name="${conf%:*}"
+    cp "${name}.with" "${name}.conf"
+    test '"${NGINX_UTIL}" del_ssl '"${name}" "${conf#*:}"
+    test_setpoint "${name}.conf" "$(cat "${name}.sans")"
 done
-

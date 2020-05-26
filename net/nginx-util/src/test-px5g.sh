@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 PRINT_PASSED=2
 
@@ -8,7 +8,7 @@ OPENSSL_PEM="$(mktemp)"
 OPENSSL_DER="$(mktemp)"
 
 NONCE=$(dd if=/dev/urandom bs=1 count=4 2>/dev/null | hexdump -e '1/1 "%02x"')
-SUBJECT=/C="ZZ"/ST="Somewhere"/L="None"/O="OpenWrt'$NONCE'"/CN="OpenWrt"
+SUBJECT="/C=ZZ/ST=Somewhere/L=None/O=OpenWrt'$NONCE'/CN=OpenWrt"
 
 openssl req -x509 -nodes -days 1 -keyout /dev/null 2>/dev/null \
     -out "$OPENSSL_PEM" -subj "$SUBJECT" \
@@ -18,9 +18,9 @@ openssl req -x509 -nodes -days 1 -keyout /dev/null 2>/dev/null \
 || ( printf "error: generating DER certificate with openssl"; return 1)
 
 
-function test() {
+test() {
     eval "$1 >/dev/null "
-    if [ $? -eq $2 ]
+    if [ $? -eq "$2" ]
     then
         [ "${PRINT_PASSED}" -gt 0 ] \
         && printf "%-72s%-1s\n" "$1" ">/dev/null (-> $2?) passed."
@@ -130,8 +130,8 @@ test './px5g selfsigned -newkey rsa:666       | openssl x509 -checkend 0    ' 0
 test './px5g selfsigned -newkey ec            | openssl x509 -checkend 0    ' 0
 test './px5g selfsigned -newkey ec -pkeyopt ec_paramgen_curve:secp384r1 \
       | openssl x509 -checkend 0                                        ' 0
-test './px5g selfsigned -subj $SUBJECT | openssl x509 -noout \
-      -subject -nameopt compat | grep -q subject=$SUBJECT    2>/dev/null' 0
+test './px5g selfsigned -subj "$SUBJECT" | openssl x509 -noout \
+      -subject -nameopt compat | grep -q subject="$SUBJECT" 2>/dev/null' 0
 test './px5g selfsigned -out /dev/null -keyout /proc/self/fd/1 \
       | openssl rsa -check 2>/dev/null                                  ' 0
 

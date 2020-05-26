@@ -4,12 +4,14 @@
 #include <array>
 #include <cerrno>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <unistd.h>
+#include <vector>
 
 #ifndef NO_UBUS
 #include "ubus-cxx.hpp"
@@ -61,15 +63,34 @@ void get_env();
 void write_file(const std::string_view & name, const std::string & str,
                 const std::ios_base::openmode flag)
 {
-    std::ofstream file(name.data(), flag);
-    if (!file.good()) {
-        throw std::ofstream::failure(
-            "write_file error: cannot open " + std::string{name});
+    auto tmp = std::string{name};
+
+    if ( (flag & std::ios::ate) == 0 && (flag & std::ios::app) == 0 ) {
+        tmp += ".tmp-XXXXXX";
+        auto fd = mkstemp(&tmp[0]);
+        if (fd==-1 || close(fd)!=0)
+        { throw std::runtime_error("write_file error: cannot access " + tmp); }
     }
 
-    file<<str<<std::flush;
+    try {
+        std::ofstream file(tmp.data(), flag);
+        if (!file.good()) {
+            throw std::ofstream::failure
+                ("write_file error: cannot open " + std::string{tmp});
+        }
 
-    file.close();
+        file<<str<<std::flush;
+
+        file.close();
+    } catch(...) {
+        if (tmp!=name) { remove(tmp.c_str()); } //remove can fail.
+        throw;
+    }
+
+    if (rename(tmp.c_str(), name.data()) != 0) {
+        throw std::runtime_error
+            ("write_file error: cannot move " + tmp + " to " + name.data());
+    }
 }
 
 
@@ -113,7 +134,7 @@ auto call(const char * program, S... args) -> pid_t
 
     std::string errmsg = "call error: cannot fork (";
     errmsg += std::to_string(errno) + "): " + std::strerror(errno);
-    throw std::runtime_error(errmsg.c_str());
+    throw std::runtime_error(errmsg);
 }
 
 
