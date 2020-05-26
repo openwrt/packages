@@ -8,30 +8,28 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=spoofer
-PKG_VERSION:=1.4.3
+PKG_VERSION:=1.4.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.caida.org/projects/spoofer/downloads
-PKG_HASH:=994555b360a095f0e9baed2469ef26bd29610af155ce58b3984d2f1616a74526
+PKG_HASH:=5f045be7269d93efb1ee7918e923e7695c9a36d192c3ada932bb6ae7fba8d15e
 
-PKG_LICENSE:=GPL-3.0
+PKG_MAINTAINER:=Ken Keys <spoofer-info@caida.org>
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_USE_MIPS16:=0
-HOST_BUILD_DEPENDS:=protobuf/host
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=protobuf/host
 
-include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
-
-$(eval $(call HostBuild))
 
 define Package/spoofer
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Measure your ISP's resistance to spoofed IP packets
   URL:=https://spoofer.caida.org/
-  MAINTAINER:=Ken Keys <spoofer-info@caida.org>
   DEPENDS:=+protobuf-lite +libpcap +libpthread +libopenssl
 endef
 
@@ -55,19 +53,15 @@ CONFIGURE_ARGS += \
 CONFIGURE_VARS += \
 	PROTOC=$(STAGING_DIR_HOSTPKG)/bin/protoc
 
-EXTRA_CXXFLAGS += -std=gnu++14
-
-SPOOFER_SRC=$(PKG_BUILD_DIR)
-
 define Package/spoofer/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/prober/spoofer-prober $(1)/usr/bin
-	$(INSTALL_BIN) $(SPOOFER_SRC)/openwrt-files/spoofer $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin//spoofer-prober $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/openwrt-files/spoofer $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) $(SPOOFER_SRC)/openwrt-files/initscript $(1)/etc/init.d/spoofer
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/openwrt-files/initscript $(1)/etc/init.d/spoofer
 	$(INSTALL_DIR) $(1)/usr/share/spoofer
-	$(INSTALL_DATA) $(SPOOFER_SRC)/gd_bundle.crt $(1)/usr/share/spoofer
-	$(INSTALL_DATA) $(SPOOFER_SRC)/openwrt-files/spoofer-lib.sh $(1)/usr/share/spoofer
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/gd_bundle.crt $(1)/usr/share/spoofer
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/openwrt-files/spoofer-lib.sh $(1)/usr/share/spoofer
 endef
 
 $(eval $(call BuildPackage,spoofer))
