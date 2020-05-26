@@ -257,7 +257,7 @@ CONFIGURE_VARS += \
 	ovs_cv_flake8=no \
 	ovs_cv_python3=$(PYTHON3) \
 	ovs_cv_python3_host=$(HOST_PYTHON3_BIN) \
-	ovs_cv_sphinx=no \
+	SPHINXBUILD=none \
 	KARCH=$(LINUX_KARCH) \
 
 ovs_intree_kmod_configs:=CONFIG_PACKAGE_kmod-openvswitch-intree
