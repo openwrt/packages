@@ -8,8 +8,10 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
+#include <stdexcept>
 #include <string>
 #include <unistd.h>
+
 
 static constexpr auto rsa_min_modulus_bits = 512;
 
@@ -52,11 +54,20 @@ inline auto print_error(const char * str, const size_t  /*len*/, void * errmsg)
 }
 
 
+// wrapper for clang-tidy:
+inline auto _BIO_new_fp(FILE * stream, const bool use_pem,
+                        const bool close=false) -> BIO *
+{
+    return BIO_new_fp( stream,  //NOLINTNEXTLINE(hicpp-signed-bitwise) macros:
+            (use_pem ? BIO_FP_TEXT : 0) | (close ? BIO_CLOSE : BIO_NOCLOSE) );
+}
+
+
 auto checkend(const std::string & crtpath,
               const time_t seconds, const bool use_pem) -> bool
 {
     BIO * bio = crtpath.empty() ?
-        BIO_new_fp(stdin, BIO_NOCLOSE | (use_pem ? BIO_FP_TEXT : 0)) :
+        _BIO_new_fp(stdin, use_pem) :
         BIO_new_file(crtpath.c_str(), (use_pem ? "r" : "rb"));
 
     X509 * x509 = nullptr;
@@ -71,7 +82,7 @@ auto checkend(const std::string & crtpath,
     if (x509==nullptr) {
         std::string errmsg{"checkend error: unable to load certificate\n"};
         ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg.c_str());
+        throw std::runtime_error(errmsg);
     }
 
     time_t checktime = time(nullptr) + seconds;
@@ -91,7 +102,7 @@ auto gen_eckey(const int curve) -> EVP_PKEY_ptr
         std::string errmsg{"gen_eckey error: cannot build group for curve id "};
         errmsg += std::to_string(curve) + "\n";
         ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg.c_str());
+        throw std::runtime_error(errmsg);
     }
 
     EC_GROUP_set_asn1_flag(group, OPENSSL_EC_NAMED_CURVE);
@@ -115,18 +126,18 @@ auto gen_eckey(const int curve) -> EVP_PKEY_ptr
         std::string errmsg{"gen_eckey error: cannot build key with curve id "};
         errmsg += std::to_string(curve) + "\n";
         ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg.c_str());
+        throw std::runtime_error(errmsg);
     }
 
     EVP_PKEY_ptr pkey{EVP_PKEY_new(), ::EVP_PKEY_free};
 
-    auto tmp = static_cast<char *>(static_cast<void *>(eckey));
-
-    if (!EVP_PKEY_assign_EC_KEY(pkey.get(), tmp)) {
+    // EVP_PKEY_assign_EC_KEY is a macro casting eckey to char *:
+    //NOLINTNEXTLINE(cppcoreguidelines-pro-type-cstyle-cast)
+    if (!EVP_PKEY_assign_EC_KEY(pkey.get(), eckey)) {
         EC_KEY_free(eckey);
         std::string errmsg{"gen_eckey error: cannot assign EC key to EVP\n"};
         ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg.c_str());
+        throw std::runtime_error(errmsg);
     }
 
     return pkey;
@@ -139,14 +150,14 @@ auto gen_rsakey(const int keysize, const BN_ULONG exponent) -> EVP_PKEY_ptr
         std::string errmsg{"gen_rsakey error: RSA keysize ("};
         errmsg += std::to_string(keysize) + ") out of range [512..";
         errmsg += std::to_string(OPENSSL_RSA_MAX_MODULUS_BITS) + "]";
-        throw std::runtime_error(errmsg.c_str());
+        throw std::runtime_error(errmsg);
     }
     auto bignum = BN_new();
 
     if (bignum == nullptr) {
         std::string errmsg{"gen_rsakey error: cannot get big number struct\n"};
         ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg.c_str());
+        throw std::runtime_error(errmsg);
     }
 
     auto rsa = RSA_new();
@@ -167,18 +178,18 @@ auto gen_rsakey(const int keysize, const BN_ULONG exponent) -> EVP_PKEY_ptr
         errmsg += std::to_string(keysize) + " and exponent ";
         errmsg += std::to_string(exponent) + "\n";
         ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg.c_str());
+        throw std::runtime_error(errmsg);
     }
 
     EVP_PKEY_ptr pkey{EVP_PKEY_new(), ::EVP_PKEY_free};
 
-    auto tmp = static_cast<char *>(static_cast<void *>(rsa));
-
-    if (!EVP_PKEY_assign_RSA(pkey.get(), tmp)) {
+    // EVP_PKEY_assign_RSA is a macro casting rsa to char *:
+    //NOLINTNEXTLINE(cppcoreguidelines-pro-type-cstyle-cast)
+    if (!EVP_PKEY_assign_RSA(pkey.get(), rsa)) {
         RSA_free(rsa);
         std::string errmsg{"gen_rsakey error: cannot assign RSA key to EVP\n"};
         ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg.c_str());
+        throw std::runtime_error(errmsg);
     }
 
     return pkey;
@@ -190,20 +201,21 @@ void write_key(const EVP_PKEY_ptr & pkey,
 {
     BIO * bio = nullptr;
 
-    if (keypath.empty()) {
-        bio = BIO_new_fp( stdout, BIO_NOCLOSE | (use_pem ? BIO_FP_TEXT : 0) );
+    if (keypath.empty()) { bio = _BIO_new_fp(stdout, use_pem); }
 
-    } else { // BIO_new_file(keypath.c_str(), (use_pem ? "w" : "wb") );
+    else { // BIO_new_file(keypath.c_str(), (use_pem ? "w" : "wb") );
 
         static constexpr auto mask = 0600;
         // auto fd = open(keypath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, mask);
+        // creat has no cloexec, alt. triggers cppcoreguidelines-pro-type-vararg
+        //NOLINTNEXTLINE(android-cloexec-creat)
         auto fd = creat(keypath.c_str(), mask); // the same without va_args.
 
         if (fd >= 0) {
             auto fp = fdopen(fd, (use_pem ? "w" : "wb") );
 
             if (fp != nullptr) {
-                bio = BIO_new_fp(fp, BIO_CLOSE | (use_pem ? BIO_FP_TEXT : 0));
+                bio = _BIO_new_fp(fp, use_pem, true);
                 if (bio == nullptr) { fclose(fp); } // (fp owns fd)
             }
             else { close(fd); }
@@ -216,7 +228,7 @@ void write_key(const EVP_PKEY_ptr & pkey,
         errmsg += keypath.empty() ? "stdout" : keypath;
         errmsg += "\n";
         ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg.c_str());
+        throw std::runtime_error(errmsg);
     }
 
     int len = 0;
@@ -249,7 +261,7 @@ void write_key(const EVP_PKEY_ptr & pkey,
         errmsg += keypath.empty() ? "stdout" : keypath;
         errmsg += "\n";
         ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg.c_str());
+        throw std::runtime_error(errmsg);
     }
 }
 
@@ -265,7 +277,7 @@ auto subject2name(const std::string & subject) -> X509_NAME_ptr
     if (!name) {
         std::string errmsg{"subject2name error: cannot create X509 name \n"};
         ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg.c_str());
+        throw std::runtime_error(errmsg);
     }
 
     if (subject.empty()) { return name; }
@@ -287,19 +299,21 @@ auto subject2name(const std::string & subject) -> X509_NAME_ptr
             if (nid == NID_undef) {
                 // skip unknown entries (silently?).
             } else {
-                auto val = static_cast<const unsigned char *>(
-                                static_cast<const void *>(&subject[prev]) );
+                auto val = // X509_NAME_add_entry_by_NID wants it unsigned:
+                    //NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+                    reinterpret_cast<const unsigned char *>(&subject[prev]);
 
                 auto len = i - prev;
 
-                if ( X509_NAME_add_entry_by_NID(name.get(), nid, MBSTRING_ASC,
-                                                  val, len, -1, 0)
+                if ( X509_NAME_add_entry_by_NID(name.get(), nid,
+                        MBSTRING_ASC, //NOLINT(hicpp-signed-bitwise) is macro
+                        val, len, -1, 0)
                     == 0 )
                 {
                     std::string errmsg{"subject2name error: cannot add "};
                     errmsg += "/" + type +"="+ subject.substr(prev, len) +"\n";
                     ERR_print_errors_cb(print_error, &errmsg);
-                    throw std::runtime_error(errmsg.c_str());
+                    throw std::runtime_error(errmsg);
                 }
             }
             chr = '=';
@@ -320,7 +334,7 @@ void selfsigned(const EVP_PKEY_ptr & pkey, const int days,
     if (x509 == nullptr) {
         std::string errmsg{"selfsigned error: cannot create X509 structure\n"};
         ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg.c_str());
+        throw std::runtime_error(errmsg);
     }
 
     auto freeX509_and_throw = [&x509](const std::string & what)
@@ -329,7 +343,7 @@ void selfsigned(const EVP_PKEY_ptr & pkey, const int days,
         std::string errmsg{"selfsigned error: cannot set "};
         errmsg += what + " in X509 certificate\n";
         ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg.c_str());
+        throw std::runtime_error(errmsg);
     };
 
     if (X509_set_version(x509, 2) == 0) { freeX509_and_throw("version"); }
@@ -380,7 +394,7 @@ void selfsigned(const EVP_PKEY_ptr & pkey, const int days,
     }
 
     BIO * bio = crtpath.empty() ?
-        BIO_new_fp(stdout, BIO_NOCLOSE | (use_pem ? BIO_FP_TEXT : 0)) :
+        _BIO_new_fp(stdout, use_pem) :
         BIO_new_file(crtpath.c_str(), (use_pem ? "w" : "wb"));
 
     int len = 0;
@@ -399,7 +413,7 @@ void selfsigned(const EVP_PKEY_ptr & pkey, const int days,
         errmsg += crtpath.empty() ? "stdout" : crtpath;
         errmsg += "\n";
         ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg.c_str());
+        throw std::runtime_error(errmsg);
     }
 }
 

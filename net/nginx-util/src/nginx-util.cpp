@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "nginx-util.hpp"
 
 #ifndef NO_SSL
@@ -121,7 +123,7 @@ void get_env()
 auto main(int argc, char * argv[]) -> int
 {
     // TODO(pst): use std::span when available:
-    auto args = std::basic_string_view{argv, static_cast<size_t>(argc)};
+    auto args = std::basic_string_view<char *>{argv, static_cast<size_t>(argc)};
 
     auto cmds = std::array{
         std::array<std::string_view, 2>{"init_lan", ""},

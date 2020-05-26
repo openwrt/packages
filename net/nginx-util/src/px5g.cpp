@@ -118,7 +118,7 @@ auto checkend(const argv_view & argv) -> int
             } catch (...) {
                 auto errmsg = std::string{"checkend error: invalid time "};
                 errmsg += argv[i];
-                std::throw_with_nested(std::runtime_error(errmsg.c_str()));
+                std::throw_with_nested(std::runtime_error(errmsg));
             }
 
             seconds = static_cast<time_t>(num);
@@ -126,7 +126,7 @@ auto checkend(const argv_view & argv) -> int
             if (num!=static_cast<intmax_t>(seconds)) {
                 auto errmsg = std::string{"checkend error: time too big "};
                 errmsg += argv[i];
-                throw std::runtime_error(errmsg.c_str());
+                throw std::runtime_error(errmsg);
             }
         }
     }
@@ -174,7 +174,7 @@ void eckey(const argv_view & argv)
             if (has_main_option) {
                 throw std::runtime_error
                     ("eckey error: more than one main option");
-            } // else:
+            } //else:
             has_main_option = true;
 
             curve = parse_curve(argv[i]);
@@ -223,7 +223,7 @@ void rsakey(const argv_view & argv)
 
             if (has_main_option) {
                 throw std::runtime_error("rsakey error: more than one keysize");
-            } // else:
+            } //else:
             has_main_option = true;
 
             try {
@@ -231,7 +231,7 @@ void rsakey(const argv_view & argv)
             } catch (...) {
                 std::string errmsg{"rsakey error: invalid keysize "};
                 errmsg += argv[i];
-                std::throw_with_nested(std::runtime_error(errmsg.c_str()));
+                std::throw_with_nested(std::runtime_error(errmsg));
             }
         }
     }
@@ -264,7 +264,7 @@ void selfsigned(const argv_view & argv)
             } catch (...) {
                 std::string errmsg{"selfsigned error: not a number for -days "};
                 errmsg += argv[i].substr(4);
-                std::throw_with_nested(std::runtime_error(errmsg.c_str()));
+                std::throw_with_nested(std::runtime_error(errmsg));
             }
         }
 
@@ -287,7 +287,7 @@ void selfsigned(const argv_view & argv)
                 } catch (...) {
                     std::string errmsg{"selfsigned error: invalid keysize "};
                     errmsg += argv[i].substr(4);
-                    std::throw_with_nested(std::runtime_error(errmsg.c_str()));
+                    std::throw_with_nested(std::runtime_error(errmsg));
                 }
             } else {
                 throw std::runtime_error("selfsigned error: invalid algorithm");

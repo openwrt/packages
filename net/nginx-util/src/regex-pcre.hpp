@@ -1,5 +1,3 @@
-// implementing *some* <regex> functions using pcre for performance:
-
 #ifndef __REGEXP_PCRE_HPP
 #define __REGEXP_PCRE_HPP
 
@@ -11,6 +9,9 @@
 
 
 namespace rgx {
+/* partially implement the std::regex interface using PCRE for performance
+ * (=> pass "match" as non-const reference)
+ */
 
 
 namespace regex_constants {
@@ -130,8 +131,8 @@ class smatch {
 
     friend auto regex_search(std::string::const_iterator begin,
                              std::string::const_iterator end,
-                             smatch & match,
-                             const regex & rgx);
+                             smatch & match, //NOLINT(google-runtime-references)
+                             const regex & rgx); // match std::regex interface.
 
 
 private:
@@ -188,14 +189,15 @@ auto regex_replace(const std::string & subj,
                           const std::string & insert);
 
 
-inline auto regex_search(const std::string & subj, smatch & match,
-                         const regex & rgx);
+inline auto regex_search(const std::string & subj,
+                         smatch & match, //NOLINT(google-runtime-references)
+                         const regex & rgx); // match std::regex interface.
 
 
 auto regex_search(std::string::const_iterator begin,
                   std::string::const_iterator end,
-                  smatch & match,
-                  const regex & rgx);
+                  smatch & match, //NOLINT(google-runtime-references)
+                  const regex & rgx); // match std::regex interface.
 
 
 
@@ -260,12 +262,10 @@ auto smatch::format(const std::string & fmt) const {
         index = pos + 1;
 
         char chr = fmt[index++];
-        int n = 0;
-        static const auto BASE = 10;
         switch(chr) {
 
             case '&': // match
-                ret += this->str(0);
+                ret += str(0);
                 break;
 
             case '`': // prefix
@@ -276,14 +276,20 @@ auto smatch::format(const std::string & fmt) const {
                 ret.append(begin+vec[1], end);
                 break;
 
-            default: // number => submatch
-                while (isdigit(chr) != 0) {
-                    n = BASE*n + chr - '0';
-                    chr = fmt[index++];
-                }
+            default:
+                if (isdigit(chr) != 0) { // one or two digits => submatch:
+                    int num = chr - '0';
+                    chr = fmt[index];
+                    if (isdigit(chr) != 0) { // second digit:
+                        ++index;
+                        static const auto base = 10;
+                        num = num*base + chr - '0';
+                    }
+                    ret += str(num);
+                    break;
+                } //else:
 
-                ret += n>0 ? str(n) : std::string{"$"};
-
+                ret += '$';
                 [[fallthrough]];
 
             case '$': // escaped
