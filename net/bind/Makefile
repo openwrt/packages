@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
 PKG_VERSION:=9.16.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 USERID:=bind=57:bind=57
 
 PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
@@ -83,6 +83,7 @@ define Package/bind-tools
 	DEPENDS:= \
 	+bind-check \
 	+bind-dig \
+	+bind-nslookup \
 	+bind-dnssec \
 	+bind-host \
 	+bind-rndc
@@ -111,6 +112,13 @@ endef
 define Package/bind-dig
   $(call Package/bind/Default)
   TITLE+= DNS excavation tool
+endef
+
+define Package/bind-nslookup
+  $(call Package/bind/Default)
+  TITLE+= nslookup utility
+  ALTERNATIVES:= \
+	  200:/usr/bin/nslookup:/usr/libexec/nslookup-bind
 endef
 
 export BUILD_CC="$(TARGET_CC)"
@@ -234,6 +242,11 @@ define Package/bind-dig/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dig $(1)/usr/bin/
 endef
 
+define Package/bind-nslookup/install
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/nslookup $(1)/usr/libexec/nslookup-bind
+endef
+
 $(eval $(call BuildPackage,bind-libs))
 $(eval $(call BuildPackage,bind-server))
 $(eval $(call BuildPackage,bind-server-filter-aaaa))
@@ -244,3 +257,4 @@ $(eval $(call BuildPackage,bind-check))
 $(eval $(call BuildPackage,bind-dnssec))
 $(eval $(call BuildPackage,bind-host))
 $(eval $(call BuildPackage,bind-dig))
+$(eval $(call BuildPackage,bind-nslookup))
