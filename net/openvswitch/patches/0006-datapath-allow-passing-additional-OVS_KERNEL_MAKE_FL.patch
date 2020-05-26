@@ -1,0 +1,25 @@
+From f29d4866cf566c916000426e0c206db008be4fb3 Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Tue, 26 May 2020 22:45:53 +0800
+Subject: [PATCH] datapath: allow passing additional $(OVS_KERNEL_MAKE_FLAGS)
+
+This can be useful for passing args like -iremap for reproducible builds
+
+Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
+---
+ datapath/linux/Makefile.main.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/datapath/linux/Makefile.main.in b/datapath/linux/Makefile.main.in
+index 6db4aa3ab..6f295387a 100644
+--- a/datapath/linux/Makefile.main.in
++++ b/datapath/linux/Makefile.main.in
+@@ -68,7 +68,7 @@ ifeq (,$(wildcard $(CONFIG_FILE)))
+ endif
+ 
+ default:
+-	$(MAKE) -C $(KSRC) $(if @KARCH@,ARCH=@KARCH@) M=$(builddir) modules
++	$(MAKE) -C $(KSRC) $(OVS_KERNEL_MAKE_FLAGS) $(if @KARCH@,ARCH=@KARCH@) M=$(builddir) modules
+ 
+ modules_install:
+ 	$(MAKE) -C $(KSRC) $(if @KARCH@,ARCH=@KARCH@) M=$(builddir) modules_install

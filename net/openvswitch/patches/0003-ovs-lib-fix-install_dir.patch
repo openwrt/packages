@@ -1,4 +1,4 @@
-From e8203d10706e6289f773bfe84a3fd87f19fcee07 Mon Sep 17 00:00:00 2001
+From 1c0697cb4b57e85deafc0d518b68e0b13ba2995b Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Wed, 14 Mar 2018 16:44:13 +0800
 Subject: [PATCH] ovs-lib: fix install_dir()
