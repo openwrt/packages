@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nextdns
-PKG_VERSION:=1.6.0
+PKG_VERSION:=1.6.3
 PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/nextdns/nextdns.git
-PKG_MIRROR_HASH:=b4f12a3a274ca5b5cf30144e0e60e27b8666d64e0bbe02be93eadf07b6a6d334
+PKG_MIRROR_HASH:=104ec2ffe21f1f1770bce7686e4f117019dfc64f3f6bfd8f8f06cfc1ff44da6d
 
 PKG_MAINTAINER:=Olivier Poitrey <rs@nextdns.io>
 PKG_LICENSE:=MIT
