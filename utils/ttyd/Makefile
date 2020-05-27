@@ -41,7 +41,7 @@ define Package/ttyd/conffiles
 /etc/config/ttyd
 endef
 
-TARGET_LDFLAGS += -ldl
+TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-ldl)
 
 define Package/ttyd/install
 	$(INSTALL_DIR) $(1)/usr/bin
