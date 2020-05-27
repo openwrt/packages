@@ -63,6 +63,7 @@ transmission() {
 	config_get nice "$cfg" nice 0
 	local web_home
 	config_get web_home "$cfg" 'web_home'
+	local seccomp_path
 
 	local MEM
 	MEM=$(sed -ne 's!^MemTotal:[[:space:]]*\([0-9]*\) kB$!\1!p' /proc/meminfo)
@@ -133,7 +134,11 @@ transmission() {
 	procd_set_param nice "$nice"
 	procd_set_param stderr 1
 	procd_set_param respawn
-	procd_set_param seccomp "/etc/seccomp/transmission-daemon.json"
+
+	seccomp_path="/etc/seccomp/transmission-daemon.json"
+	if [ -f "$seccomp_path" ]; then
+		procd_set_param seccomp "$seccomp_path"
+	fi
 
 	if [ -z "$USE" ]; then
 		procd_set_param limits core="0 0"
