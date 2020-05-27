@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=simple-adblock
 PKG_VERSION:=1.8.3
-PKG_RELEASE:=3
+PKG_RELEASE:=9
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 PKG_LICENSE:=GPL-3.0-or-later
 
@@ -21,7 +21,7 @@ endef
 
 define Package/simple-adblock/description
 This service provides DNSMASQ or Unbound based ad blocking.
-Please see the project's README at github for further information.
+Please see the project's README on GitHub for further information.
 
 endef
 
@@ -46,6 +46,8 @@ define Package/simple-adblock/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/simple-adblock.init $(1)/etc/init.d/simple-adblock
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/simple-adblock.conf $(1)/etc/config/simple-adblock
+	$(INSTALL_DIR) $(1)/tmp
+	$(INSTALL_CONF) ./files/simple-adblock.conf.update $(1)/tmp/simple-adblock.conf.update
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_BIN) ./files/simple-adblock.hotplug $(1)/etc/hotplug.d/iface/80-simple-adblock
 endef
@@ -54,6 +56,7 @@ define Package/simple-adblock/postinst
 	#!/bin/sh
 	# check if we are on real system
 	if [ -z "$${IPKG_INSTROOT}" ]; then
+		sed -f /tmp/simple-adblock.conf.update -i /etc/config/simple-adblock || true
 		/etc/init.d/simple-adblock enable
 	fi
 	exit 0
