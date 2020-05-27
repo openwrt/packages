@@ -92,13 +92,18 @@ proto_openfortivpn_setup() {
         [ -n "$password" ] && {
                 umask 077
                 mkdir -p /var/etc
-                pwfile="/var/etc/openfortivpn-$config.passwd"
+                pwfile="/var/etc/openfortivpn/$config.passwd"
                 echo "$password" > "$pwfile"
         }
 
         [ -n "$local_ip" ] || local_ip=192.0.2.1
-        mkdir -p '/etc/ppp/peers'
-        callfile="/etc/ppp/peers/$config"
+        [ -e '/etc/ppp/peers' ] || mkdir -p '/etc/ppp/peers'
+        [ -e '/etc/ppp/peers/openfortivpn' ] || {
+            ln -s -T '/var/etc/openfortivpn/peers' '/etc/ppp/peers/openfortivpn'
+            mkdir -p '/var/etc/openfortivpn/peers'
+        }
+
+        callfile="/var/etc/openfortivpn/peers/$config"
         echo "115200
 :$local_ip
 noipdefault
@@ -114,7 +119,7 @@ lcp-max-configure 40
 ip-up-script /lib/netifd/ppp-up
 ip-down-script /lib/netifd/ppp-down
 mru 1354"  > $callfile
-        append_args "--pppd-call=$config"
+        append_args "--pppd-call=openfortivpn/$config"
 
         proto_export INTERFACE="$ifname"
         logger -t openfortivpn "$config: executing 'openfortivpn $cmdline'"
@@ -127,8 +132,8 @@ mru 1354"  > $callfile
 proto_openfortivpn_teardown() {
         local config="$1"
 
-        pwfile="/var/etc/openfortivpn-$config.passwd"
-        callfile="/etc/ppp/peers/$config"
+        pwfile="/var/etc/openfortivpn/$config.passwd"
+        callfile="/var/etc/openfortivpn/peers/$config"
 
         rm -f $pwfile
         rm -f $callfile
