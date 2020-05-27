@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cryptodome
 PKG_VERSION:=3.9.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=pycryptodome
 PKG_HASH:=f1add21b6d179179b3c177c33d18a2186a09cc0d3af41ff5ed3f377360b869f2
@@ -31,7 +31,7 @@ define Package/python3-cryptodome
   TITLE:=A self-contained cryptographic library for Python
   URL:=https://www.pycryptodome.org/
   DEPENDS:=+libgmp +python3
-  CONFLICTS:=python3-crypto
+  PROVIDES:=python3-crypto
 endef
 
 define Package/python3-cryptodome/description
