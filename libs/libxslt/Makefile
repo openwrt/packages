@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxslt
 PKG_VERSION:=1.1.34
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -73,7 +73,6 @@ CONFIGURE_ARGS += \
 	--without-debug \
 	--without-mem-debug \
 	--without-debugger \
-	--without-profiler \
 	--without-plugins
 
 HOST_CONFIGURE_ARGS += \
