@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acme
 PKG_VERSION:=2.8.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/acmesh-official/acme.sh/archive/$(PKG_VERSION).tar.gz
@@ -55,6 +55,11 @@ define Package/acme/install
 	$(INSTALL_DIR) $(1)/usr/lib/acme
 	$(INSTALL_BIN) ./files/run.sh $(1)/usr/lib/acme/run-acme
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/acme.sh $(1)/usr/lib/acme/acme.sh
+endef
+
+define Package/acme/prerm
+#!/bin/sh
+sed -i '/\/etc\/init\.d\/acme start/d' /etc/crontabs/root
 endef
 
 define Package/acme-dnsapi
