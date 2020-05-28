@@ -23,7 +23,6 @@ PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
 PKG_FIXUP:=autoreconf
 PKG_LIBTOOL_PATHS:=builds/unix
 
-include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libfreetype
@@ -50,11 +49,6 @@ CONFIGURE_ARGS += \
 	--with-bzip2=no \
 	--with-zlib=yes \
 	--with-png=yes
-
-HOST_CONFIGURE_ARGS+= \
-	--with-bzip2=no \
-	--with-zlib=no \
-	--with-png=no
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" all install
@@ -84,5 +78,4 @@ define Package/libfreetype/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfreetype.so.* $(1)/usr/lib/
 endef
 
-$(eval $(call HostBuild))
 $(eval $(call BuildPackage,libfreetype))
