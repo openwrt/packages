@@ -24,16 +24,16 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
  fi
  
  LOCAL_MODE=0
-@@ -323,7 +323,7 @@ The system should then boot normally.
+@@ -346,7 +346,7 @@ The system should then boot normally.
  
- If /boot does not correspond to the boot partition on the sd-card and this
- is not a NOOBS system then the mount point for BOOTFS should be defined
+ If /boot does not correspond to the boot partition and this
+ is not a NOOBS system, then the mount point for BOOTFS should be defined
 -in /etc/default/rpi-eeprom-update by defining the BOOTFS variable.
 +in /etc/bcm27xx-eeprom.conf by defining the BOOTFS variable.
  
  A backup of the current EEPROM config file is written to ${FIRMWARE_BACKUP_DIR}
  before applying the update.
-@@ -345,7 +345,7 @@ Options:
+@@ -368,7 +368,7 @@ Options:
     -u Install the specified VL805 (USB EEPROM) image file.
  
  Environment:
