@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sysstat
-PKG_VERSION:=12.2.1
-PKG_RELEASE:=2
+PKG_VERSION:=12.2.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://pagesperso-orange.fr/sebastien.godard/
-PKG_HASH:=8edb0e19b514ac560a098a02933a4735b881296d61014db89bf80f05dd7a4732
+PKG_HASH:=78388b64acec81378b962e66b40e57acd4b18ff17a849bc9308f95d290248c9c
 
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -47,7 +47,6 @@ endef
 
 CONFIGURE_VARS+= \
 	sa_lib_dir="/usr/lib/sysstat" \
-	sa_dir="/var/log/sysstat" \
 	conf_dir="/etc/sysstat"
 
 CONFIGURE_ARGS+= \
