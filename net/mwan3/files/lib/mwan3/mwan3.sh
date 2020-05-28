@@ -890,12 +890,30 @@ mwan3_set_user_iptables_rule()
 	config_get timeout $1 timeout 600
 	config_get ipset $1 ipset
 	config_get proto $1 proto all
-	config_get src_ip $1 src_ip 0.0.0.0/0
-	config_get src_port $1 src_port 0:65535
-	config_get dest_ip $1 dest_ip 0.0.0.0/0
-	config_get dest_port $1 dest_port 0:65535
+	config_get src_ip $1 src_ip
+	config_get src_iface $1 src_iface
+	network_get_device src_dev $src_iface
+	config_get src_port $1 src_port
+	config_get dest_ip $1 dest_ip
+	config_get dest_port $1 dest_port
 	config_get use_policy $1 use_policy
 	config_get family $1 family any
+
+	[ -z "$dest_ip" ] && unset dest_ip
+	[ -z "$src_ip" ] && unset src_ip
+	[ -z "$ipset" ] && unset ipset
+	[ -z "$src_port" ]  && unset src_port
+	[ -z "$dest_port" ]  && unset dest_port
+	[ "$proto"  != 'tcp' ]  && [ "$proto" != 'udp' ] && {
+		[ -n "$src_port" ] && {
+			$LOG warn "src_port set to '$src_port' but proto set to '$proto' not tcp or udp. src_port will be ignored"
+		}
+		[ -n "$dest_port" ] && {
+			$LOG warn "dest_port set to '$dest_port' but proto set to '$proto' not tcp or udp. dest_port will be ignored"
+		}
+		unset src_port
+		unset dest_port
+	}
 
 	config_get rule_logging $1 logging 0
 	config_get global_logging globals logging 0
@@ -969,144 +987,34 @@ mwan3_set_user_iptables_rule()
 
 			fi
 		fi
+		for IPT in "$IPT4" "$IPT6"; do
+			[ "$family" == "ipv4" ] && [ "$IPT" == "$IPT6" ] && continue
+			[ "$family" == "ipv6" ] && [ "$IPT" == "$IPT4" ] && continue
+			[ "$global_logging" = "1" ] && [ "$rule_logging" = "1" ] && {
+				$IPT -A mwan3_rules \
+				     -p $proto \
+				     ${src_ip:+-s} $src_ip \
+				     ${src_dev:+-i} $src_dev \
+				     ${dest_ip:+-d} $dest_ip\
+				     $ipset \
+				     ${src_port:+-m} ${src_port:+multiport} ${src_port:+--sports} $src_port \
+				     ${dest_port:+-m} ${dest_port:+multiport} ${dest_port:+--dports} $dest_port \
+				     -m mark --mark 0/$MMX_MASK \
+				     -m comment --comment "$1" \
+				     -j LOG --log-level "$loglevel" --log-prefix "MWAN3($1)" &> /dev/null
+			}
 
-		if [ "$family" == "any" ]; then
-
-			for IPT in "$IPT4" "$IPT6"; do
-				case $proto in
-					tcp|udp)
-					[ "$global_logging" = "1" ] && [ "$rule_logging" = "1" ] && {
-						$IPT -A mwan3_rules \
-							-p $proto \
-							-s $src_ip \
-							-d $dest_ip $ipset \
-							-m multiport --sports $src_port \
-							-m multiport --dports $dest_port \
-							-m mark --mark 0/$MMX_MASK \
-							-m comment --comment "$1" \
-							-j LOG --log-level "$loglevel" --log-prefix "MWAN3($1)" &> /dev/null
-					}
-					$IPT -A mwan3_rules \
-						-p $proto \
-						-s $src_ip \
-						-d $dest_ip $ipset \
-						-m multiport --sports $src_port \
-						-m multiport --dports $dest_port \
-						-m mark --mark 0/$MMX_MASK \
-						-m comment --comment "$1" \
-						-j $policy &> /dev/null
-					;;
-					*)
-					[ "$global_logging" = "1" ] && [ "$rule_logging" = "1" ] && {
-						$IPT -A mwan3_rules \
-							-p $proto \
-							-s $src_ip \
-							-d $dest_ip $ipset \
-							-m mark --mark 0/$MMX_MASK \
-							-m comment --comment "$1" \
-							-j LOG --log-level "$loglevel" --log-prefix "MWAN3($1)" &> /dev/null
-					}
-					$IPT -A mwan3_rules \
-						-p $proto \
-						-s $src_ip \
-						-d $dest_ip $ipset \
-						-m mark --mark 0/$MMX_MASK \
-						-m comment --comment "$1" \
-						-j $policy &> /dev/null
-					;;
-				esac
-			done
-
-		elif [ "$family" == "ipv4" ]; then
-
-			case $proto in
-				tcp|udp)
-				[ "$global_logging" = "1" ] && [ "$rule_logging" = "1" ] && {
-					$IPT4 -A mwan3_rules \
-						-p $proto \
-						-s $src_ip \
-						-d $dest_ip $ipset \
-						-m multiport --sports $src_port \
-						-m multiport --dports $dest_port \
-						-m mark --mark 0/$MMX_MASK \
-						-m comment --comment "$1" \
-						-j LOG --log-level "$loglevel" --log-prefix "MWAN3($1)" &> /dev/null
-				}
-				$IPT4 -A mwan3_rules \
-					-p $proto \
-					-s $src_ip \
-					-d $dest_ip $ipset \
-					-m multiport --sports $src_port \
-					-m multiport --dports $dest_port \
-					-m mark --mark 0/$MMX_MASK \
-					-m comment --comment "$1" \
-					-j $policy &> /dev/null
-				;;
-				*)
-				[ "$global_logging" = "1" ] && [ "$rule_logging" = "1" ] && {
-					$IPT4 -A mwan3_rules \
-						-p $proto \
-						-s $src_ip \
-						-d $dest_ip $ipset \
-						-m mark --mark 0/$MMX_MASK \
-						-m comment --comment "$1" \
-						-j LOG --log-level "$loglevel" --log-prefix "MWAN3($1)" &> /dev/null
-				}
-				$IPT4 -A mwan3_rules \
-					-p $proto \
-					-s $src_ip \
-					-d $dest_ip $ipset \
-					-m mark --mark 0/$MMX_MASK \
-					-m comment --comment "$1" \
-					-j $policy &> /dev/null
-				;;
-			esac
-
-		elif [ "$family" == "ipv6" ]; then
-
-			case $proto in
-				tcp|udp)
-				[ "$global_logging" = "1" ] && [ "$rule_logging" = "1" ] && {
-					$IPT6 -A mwan3_rules \
-						-p $proto \
-						-s $src_ip \
-						-d $dest_ip $ipset \
-						-m multiport --sports $src_port \
-						-m multiport --dports $dest_port \
-						-m mark --mark 0/$MMX_MASK \
-						-m comment --comment "$1" \
-						-j LOG --log-level "$loglevel" --log-prefix "MWAN3($1)" &> /dev/null
-				}
-				$IPT6 -A mwan3_rules \
-					-p $proto \
-					-s $src_ip \
-					-d $dest_ip $ipset \
-					-m multiport --sports $src_port \
-					-m multiport --dports $dest_port \
-					-m mark --mark 0/$MMX_MASK \
-					-m comment --comment "$1" \
-					-j $policy &> /dev/null
-				;;
-				*)
-				[ "$global_logging" = "1" ] && [ "$rule_logging" = "1" ] && {
-					$IPT6 -A mwan3_rules \
-						-p $proto \
-						-s $src_ip \
-						-d $dest_ip $ipset \
-						-m mark --mark 0/$MMX_MASK \
-						-m comment --comment "$1" \
-						-j LOG --log-level  "$loglevel" --log-prefix "MWAN3($1)" &> /dev/null
-				}
-				$IPT6 -A mwan3_rules \
-					-p $proto \
-					-s $src_ip \
-					-d $dest_ip $ipset \
-					-m mark --mark 0/$MMX_MASK \
-					-m comment --comment "$1" \
-					-j $policy &> /dev/null
-				;;
-			esac
-		fi
+			$IPT -A mwan3_rules \
+			     -p $proto \
+			     ${src_ip:+-s} $src_ip \
+			     ${src_dev:+-i} $src_dev \
+			     ${dest_ip:+-d} $dest_ip\
+			     $ipset \
+			     ${src_port:+-m} ${src_port:+multiport} ${src_port:+--sports} $src_port \
+			     ${dest_port:+-m} ${dest_port:+multiport} ${dest_port:+--dports} $dest_port \
+			     -m mark --mark 0/$MMX_MASK \
+			     -j $policy &> /dev/null
+		done
 	fi
 }
 
