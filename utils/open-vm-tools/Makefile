@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=open-vm-tools
 PKG_VERSION:=11.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-16036546.tar.gz
 PKG_SOURCE_URL:=https://github.com/vmware/open-vm-tools/releases/download/stable-$(PKG_VERSION)
@@ -25,19 +25,34 @@ PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/open-vm-tools
+define Package/open-vm-tools/Default
   SECTION:=utils
   CATEGORY:=Utilities
+  URL:=https://github.com/vmware/open-vm-tools
+endef
+
+define Package/open-vm-tools
+$(call Package/open-vm-tools/Default)
   DEPENDS:=@TARGET_x86 +glib2 +libpthread +libtirpc
   TITLE:=open-vm-tools
   URL:=https://github.com/vmware/open-vm-tools
   MAINTAINER:=Yuhei OKAWA <tochiro.srchack@gmail.com>
 endef
 
-define Package/open-vm-tools-vm-tools/description
+define Package/open-vm-tools/description
 	Open Virtual Machine Tools for VMware guest OS
 endef
 
+define Package/open-vm-tools-fuse
+$(call Package/open-vm-tools/Default)
+  DEPENDS:=+open-vm-tools +libfuse
+  TITLE:=open-vm-tools-fuse
+  MAINTAINER:=Kagurazaka Kotori <kagurazakakotori@gmail.com>
+endef
+
+define Package/open-vm-tools-fuse/description
+	Shared Folders user mode FUSE client support for VMware guest OS
+endef
 
 CONFIGURE_ARGS+= \
 	--without-icu \
@@ -60,7 +75,6 @@ CONFIGURE_ARGS+= \
 	--without-gtk3 \
 	--without-xerces \
 	--enable-resolutionkms=no
-
 
 define Package/open-vm-tools/install
 	$(INSTALL_DIR) $(1)/etc/init.d/
@@ -114,4 +128,11 @@ define Package/open-vm-tools/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/open-vm-tools/messages/ja/vmtoolsd.vmsg $(1)/usr/share/open-vm-tools/messages/ja/
 endef
 
+define Package/open-vm-tools-fuse/install
+	$(INSTALL_DIR) $(1)/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/vmhgfs-fuse $(1)/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/vmware-vmblock-fuse $(1)/bin/
+endef
+
 $(eval $(call BuildPackage,open-vm-tools))
+$(eval $(call BuildPackage,open-vm-tools-fuse))
