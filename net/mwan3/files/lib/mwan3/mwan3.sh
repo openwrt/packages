@@ -238,25 +238,47 @@ mwan3_set_custom_ipset()
 	$IPS -! add mwan3_connected mwan3_custom_v6
 }
 
-mwan3_set_connected_iptables()
+
+mwan3_set_connected_ipv4()
 {
-	local connected_network_v4 connected_network_v6 source_network_v6
-
-	$IPS -! create mwan3_connected_v4 hash:net
-	$IPS create mwan3_connected_v4_temp hash:net
-
+	local connected_network_v4 candidate_list cidr_list
+	candidate_list=""
+	cidr_list=""
 	for connected_network_v4 in $($IP4 route | awk '{print $1}' | egrep '[0-9]{1,3}(\.[0-9]{1,3}){3}'); do
-		$IPS -! add mwan3_connected_v4_temp "$connected_network_v4"
+		[ -z "${connected_network_v4##*/*}" ] &&
+			cidr_list="$cidr_list $connected_network_v4" ||
+				candidate_list="$candidate_list $connected_network_v4"
 	done
 
 	for connected_network_v4 in $($IP4 route list table 0 | awk '{print $2}' | egrep '[0-9]{1,3}(\.[0-9]{1,3}){3}'); do
+		[ -z "${connected_network_v4##*/*}" ] &&
+			cidr_list="$cidr_list $connected_network_v4" ||
+				candidate_list="$candidate_list $connected_network_v4"
+	done
+
+	for connected_network_v4 in $cidr_list; do
 		$IPS -! add mwan3_connected_v4_temp "$connected_network_v4"
+	done
+	for connected_network_v4 in $candidate_list; do
+		ipset -q test mwan3_connected_v4_temp "$connected_network_v4" ||
+			$IPS -! add mwan3_connected_v4_temp "$connected_network_v4"
 	done
 
 	$IPS add mwan3_connected_v4_temp 224.0.0.0/3
 
 	$IPS swap mwan3_connected_v4_temp mwan3_connected_v4
 	$IPS destroy mwan3_connected_v4_temp
+
+}
+
+mwan3_set_connected_iptables()
+{
+	local connected_network_v6 source_network_v6
+
+	$IPS -! create mwan3_connected_v4 hash:net
+	$IPS create mwan3_connected_v4_temp hash:net
+
+	mwan3_set_connected_ipv4
 
 	$IPS -! create mwan3_connected_v6 hash:net family inet6
 	$IPS create mwan3_connected_v6_temp hash:net family inet6
