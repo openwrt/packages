@@ -26,8 +26,8 @@ PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
-include $(TOPDIR)/feeds/packages/lang/python/python-package.mk
-include $(TOPDIR)/feeds/packages/lang/python/python3-package.mk
+include ../../lang/python/python-package.mk
+include ../../lang/python/python3-package.mk
 
 CMAKE_OPTIONS=-DENABLEEXAMPLES=0 \
 	-DFIRMATA=ON
