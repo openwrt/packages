@@ -91,4 +91,9 @@ define Package/uacme/install
 	$(INSTALL_BIN) ./files/acme.init $(1)/etc/init.d/acme
 endef
 
+define Package/uacme/prerm
+#!/bin/sh
+sed -i '/\/etc\/init\.d\/acme start/d' /etc/crontabs/root
+endef
+
 $(eval $(call BuildPackage,uacme))
