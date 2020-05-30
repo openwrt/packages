@@ -252,7 +252,7 @@ f_dns()
 				adb_dnsheader="${adb_dnsheader:-"\$TTL 2h\n@ IN SOA localhost. root.localhost. (1 6h 1h 1w 2h)\n"}"
 				adb_dnsdeny="${adb_dnsdeny:-"${adb_awk} '{print \"\"\$0\" CNAME .\\n*.\"\$0\" CNAME .\"}'"}"
 				adb_dnsallow="${adb_dnsallow:-"${adb_awk} '{print \"\"\$0\" CNAME rpz-passthru.\\n*.\"\$0\" CNAME rpz-passthru.\"}'"}"
-				adb_dnssafesearch="${adb_dnssafesearch:-"0"}"
+				adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awk} -v item=\"\$item\" '{type=\"AAAA\";if(match(item,/^([0-9]{1,3}\.){3}[0-9]{1,3}$/)){type=\"A\"}}{print \"\"\$0\" \"type\" \"item\"\"}'"}"
 				adb_dnsstop="${adb_dnsstop:-"* CNAME ."}"
 			;;
 			"raw")
@@ -782,7 +782,7 @@ f_list()
 			if [ "${out_rc}" -eq 0 ]
 			then
 				> "${adb_tmpdir}/tmp.safesearch.${src_name}"
-				if [ "${adb_dns}" = "named" ] || [ "${adb_dns}" = "kresd" ]
+				if [ "${adb_dns}" = "named" ]
 				then
 					array="${safe_cname}"
 				else

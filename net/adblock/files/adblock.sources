@@ -106,7 +106,7 @@
 	},
 	"oisd_nl": {
 		"url": "https://dbl.oisd.nl",
-		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
 		"size": "XXL",
 		"focus": "general",
 		"descurl": "https://oisd.nl"
