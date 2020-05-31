@@ -114,19 +114,17 @@ list()
 		if [ -n "$(uci -q changes adblock)" ]
 		then
 			uci_commit adblock
+			"${adb_init}" start
 		fi
 	else
 		src_archive="$(uci_get adblock global adb_srcarc "/etc/adblock/adblock.sources.gz")"
 		src_file="$(uci_get adblock global adb_srcfile "/tmp/adb_sources.json")"
 		src_enabled="$(uci -q show adblock.global.adb_sources)"
-		if [ ! -r "${src_file}" ]
+		if [ -r "${src_archive}" ]
 		then
-			if [ -r "${src_archive}" ]
-			then
-				zcat "${src_archive}" > "${src_file}"
-			else
-				printf "%s\\n" "::: adblock source archive '${src_archive}' not found"
-			fi
+			zcat "${src_archive}" > "${src_file}"
+		else
+			printf "%s\\n" "::: adblock source archive '${src_archive}' not found"
 		fi
 		if [ -r "${src_file}" ]
 		then

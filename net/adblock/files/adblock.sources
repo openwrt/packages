@@ -153,6 +153,13 @@
 		"focus": "reg_finland",
 		"descurl": "https://github.com/finnish-easylist-addition"
 	},
+	"reg_fr": {
+		"url": "https://easylist-downloads.adblockplus.org/liste_fr.txt",
+		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
+		"size": "S",
+		"focus": "reg_france",
+		"descurl": "https://forums.lanik.us/viewforum.php?f=91"
+	},
 	"reg_id": {
 		"url": "https://easylist-downloads.adblockplus.org/abpindo+easylist.txt",
 		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
