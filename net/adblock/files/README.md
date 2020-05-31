@@ -30,6 +30,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | reg_de              |         | M    | reg_germany      | [Link](https://easylist.to)                                      |
 | reg_es              |         | M    | reg_espania      | [Link](https://easylist.to)                                      |
 | reg_fi              |         | S    | reg_finland      | [Link](https://github.com/finnish-easylist-addition)             |
+| reg_fr              |         | S    | reg_france       | [Link](https://forums.lanik.us/viewforum.php?f=91)               |
 | reg_id              |         | M    | reg_indonesia    | [Link](https://easylist.to)                                      |
 | reg_nl              |         | M    | reg_netherlands  | [Link](https://easylist.to)                                      |
 | reg_pl              |         | M    | reg_poland       | [Link](https://kadantiscam.netlify.com)                          |
