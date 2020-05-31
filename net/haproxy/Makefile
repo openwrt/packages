@@ -10,12 +10,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
-PKG_VERSION:=2.1.4
+PKG_VERSION:=2.1.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.haproxy.org/download/2.1/src
-PKG_HASH:=51030ff696d7067162b4d24d354044293aecfbb36d7acc2f840c8d928bfe91cd
+PKG_HASH:=42174ac5836ab243565b888299ec30115c1259e75872696708528260c6700ea1
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>, \
 		Christian Lachner <gladiac@gmail.com>
@@ -86,14 +86,12 @@ ifeq ($(CONFIG_TARGET_x86),y)
 endif
 
 ifeq ($(CONFIG_USE_UCLIBC),y)
-	LINUX_TARGET:=linux-uclibc
-else
-	LINUX_TARGET:=linux-glibc
+	ADDON+=USE_LIBCRYPT=
 endif
 
 ifeq ($(BUILD_VARIANT),ssl)
 	ADDON+=USE_OPENSSL=1
-	ADDON+=ADDLIB="-lcrypto -lm "
+	ADDON+=ADDLIB="-lcrypto -lm"
 endif
 
 ifeq ($(ENABLE_REGPARM),y)
@@ -101,7 +99,7 @@ ifeq ($(ENABLE_REGPARM),y)
 endif
 
 define Build/Compile
-	$(MAKE) TARGET=$(LINUX_TARGET) -C $(PKG_BUILD_DIR) \
+	$(MAKE) TARGET=linux-glibc -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		CC="$(TARGET_CC)" \
 		PCREDIR="$(STAGING_DIR)/usr/" \
@@ -112,7 +110,7 @@ define Build/Compile
 		USE_THREAD=1 USE_PTHREAD_PSHARED=1 \
 		VERSION="$(PKG_VERSION)" SUBVERS="-$(PKG_RELEASE)" \
 		VERDATE="$(shell date -d @$(SOURCE_DATE_EPOCH) '+%Y/%m/%d')" IGNOREGIT=1 \
-		$(ADDON) \
+		$(ADDON) USE_BACKTRACE= \
 		CFLAGS="$(TARGET_CFLAGS) -fno-strict-aliasing -Wdeclaration-after-statement -fwrapv -Wno-format-truncation -Wno-unused-label -Wno-sign-compare -Wno-unused-parameter -Wno-old-style-declaration -Wno-ignored-qualifiers -Wno-clobbered -Wno-missing-field-initializers -Wno-implicit-fallthrough -Wno-stringop-overflow -Wno-cast-function-type -Wtype-limits -Wshift-negative-value -Wshift-overflow=2 -Wduplicated-cond -Wnull-dereference" \
 		LD="$(TARGET_CC)" \
 		LDFLAGS="$(TARGET_LDFLAGS) -latomic" \
