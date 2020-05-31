@@ -13,14 +13,13 @@ Description:             Adds auto-generated nss.pc and nss-config script, and
 diff -Naurp nss-3.28-orig/nss/Makefile nss-3.28/nss/Makefile
 --- nss-3.28-orig/nss/Makefile	2016-12-21 05:56:27.000000000 -0600
 +++ nss-3.28/nss/Makefile	2016-12-26 22:24:52.695146032 -0600
-@@ -47,7 +47,7 @@ include $(CORE_DEPTH)/coreconf/rules.mk
- # (7) Execute "local" rules. (OPTIONAL).                              #
+@@ -48,7 +48,6 @@ include $(CORE_DEPTH)/coreconf/rules.mk
  #######################################################################
  
--nss_build_all: build_nspr all latest
-+nss_build_all: all latest
- 
- nss_clean_all: clobber_nspr clobber
+ nss_build_all:
+-	$(MAKE) build_nspr
+ 	$(MAKE) all
+ 	$(MAKE) latest
  
 diff -Naurp nss-3.28-orig/nss/config/Makefile nss-3.28/nss/config/Makefile
 --- nss-3.28-orig/nss/config/Makefile	1969-12-31 18:00:00.000000000 -0600
@@ -242,9 +241,13 @@ diff -Naurp nss-3.28-orig/nss/config/nss.pc.in nss-3.28/nss/config/nss.pc.in
 diff -Naurp nss-3.28-orig/nss/manifest.mn nss-3.28/nss/manifest.mn
 --- nss-3.28-orig/nss/manifest.mn	2016-12-21 05:56:27.000000000 -0600
 +++ nss-3.28/nss/manifest.mn	2016-12-26 22:24:12.278991843 -0600
-@@ -10,4 +10,4 @@ IMPORTS =	nspr20/v4.8 \
+@@ -10,7 +10,7 @@ IMPORTS =	nspr20/v4.8 \
  
  RELEASE = nss
  
 -DIRS = coreconf lib cmd cpputil gtests
-+DIRS = coreconf lib cmd cpputil gtests config
++DIRS = coreconf lib cmd cpputil config
+ 
+ lib: coreconf
+ cmd: lib
+ 
