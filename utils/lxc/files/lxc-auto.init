@@ -68,4 +68,6 @@ boot() {
 	if [ ! -d /run ]; then
 		ln -s /var/run /run
 	fi
+
+	start
 }
