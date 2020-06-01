@@ -1,0 +1,22 @@
+--- a/image_utils.c
++++ b/image_utils.c
+@@ -190,7 +190,7 @@ jpeg_memory_src(j_decompress_ptr cinfo,
+ 	src->pub.bytes_in_buffer = bufsize;
+ }
+ 
+-jmp_buf setjmp_buffer;
++static jmp_buf setjmp_buffer;
+ /* Don't exit on error like libjpeg likes to do */
+ static void
+ libjpeg_error_handler(j_common_ptr cinfo)
+--- a/metadata.c
++++ b/metadata.c
+@@ -502,7 +502,7 @@ GetAudioMetadata(const char *path, const
+ }
+ 
+ /* For libjpeg error handling */
+-jmp_buf setjmp_buffer;
++static jmp_buf setjmp_buffer;
+ static void
+ libjpeg_error_handler(j_common_ptr cinfo)
+ {
