@@ -28,6 +28,7 @@ config unbound
 	option validator '0'
 	option validator_ntp '1'
 	option verbosity '1'
+	option interface_auto '0'
 	list trigger_interface 'lan'
 	list trigger_interface 'wan'
 	#list domain_insecure 'ntp.example.com'
