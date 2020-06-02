@@ -1,3 +1,14 @@
+--- a/ipc_remote.cc
++++ b/ipc_remote.cc
+@@ -914,7 +914,7 @@ int RootIPCRemote::OpenFDPassSock() {
+ 			return -1;
+ 		}
+ 
+-		if (bind(ipc_fd_fd, (const struct sockaddr *) &unixsock, sizeof(unixsock))) {
++		if (::bind(ipc_fd_fd, (const struct sockaddr *) &unixsock, sizeof(unixsock))) {
+ 			close(ipc_fd_fd);
+ 			_MSG("Failed to bind socket to pass file descriptors: " + 
+ 				 string(strerror(errno)), MSGFLAG_ERROR);
 --- a/packetsource_wext.cc
 +++ b/packetsource_wext.cc
 @@ -405,7 +405,7 @@ void PacketSource_Wext::OpenWpaSupplicant() {
