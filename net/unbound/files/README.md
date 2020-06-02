@@ -259,6 +259,10 @@ config unbound
     Boolean. If enabled version.server, version.bind, id.server, and
     hostname.bind queries are refused.
 
+  option interface_auto '0'
+    Boolean. If enabled DNS replies will have the same source address as
+    the request was sent to.
+
   option listen_port '53'
     Port. Incoming. Where Unbound will listen for queries.
 

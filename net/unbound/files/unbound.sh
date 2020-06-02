@@ -36,6 +36,7 @@ UB_B_NTP_BOOT=1
 UB_B_QUERY_MIN=0
 UB_B_QRY_MINST=0
 UB_B_AUTH_ROOT=0
+UB_B_IF_AUTO=0
 
 UB_D_CONTROL=0
 UB_D_DOMAIN_TYPE=static
@@ -720,6 +721,11 @@ unbound_conf() {
   esac
 
 
+  if [ "$UB_B_IF_AUTO" -gt 0 ] ; then
+    echo "  interface-automatic: yes" >> $UB_CORE_CONF
+  fi
+
+
   case "$UB_D_RESOURCE" in
     # Tiny - Unbound's recommended cheap hardware config
     tiny)   rt_mem=1  ; rt_conn=2  ; rt_buff=1 ;;
@@ -1208,6 +1214,7 @@ unbound_uci() {
   config_get_bool UB_B_LOCL_BLCK  "$cfg" rebind_localhost 0
   config_get_bool UB_B_DNSSEC     "$cfg" validator 0
   config_get_bool UB_B_NTP_BOOT   "$cfg" validator_ntp 1
+  config_get_bool UB_B_IF_AUTO    "$cfg" interface_auto 0
 
   config_get UB_IP_DNS64    "$cfg" dns64_prefix "64:ff9b::/96"
 
