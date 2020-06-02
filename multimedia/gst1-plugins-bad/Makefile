@@ -401,7 +401,7 @@ $(eval $(call GstBuildPlugin,videoframe_audiolevel,videoframe_audiolevel support
 #$(eval $(call GstBuildPlugin,videoparsersbad,videoparsersbad support,,,))
 $(eval $(call GstBuildPlugin,videosignal,videosignal support,,,))
 $(eval $(call GstBuildPlugin,vmnc,vmnc support,,,))
-$(eval $(call GstBuildPlugin,webp,webp support,,,+libwebp))
+#$(eval $(call GstBuildPlugin,webp,webp support,,,+libwebp))
 $(eval $(call GstBuildPlugin,y4mdec,y4mdec support,,,))
 $(eval $(call GstBuildPlugin,yadif,yadif support,,,))
 
