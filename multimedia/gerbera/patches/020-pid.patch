@@ -1,0 +1,22 @@
+--- a/src/util/process.h
++++ b/src/util/process.h
+@@ -35,6 +35,8 @@
+ #include <memory>
+ #include <string>
+ 
++#include <unistd.h>
++
+ // forward declaration
+ class Config;
+ 
+--- a/src/util/process_executor.h
++++ b/src/util/process_executor.h
+@@ -35,6 +35,8 @@
+ #include <string>
+ #include <vector>
+ 
++#include <unistd.h>
++
+ #include "executor.h"
+ 
+ class ProcessExecutor : public Executor {
