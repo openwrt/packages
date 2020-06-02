@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=telldus-core
 PKG_VERSION:=2.1.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.telldus.com/TellStick/Software/telldus-core/
@@ -42,7 +42,7 @@ define Package/telldus-core/conffiles
 /etc/tellstick.conf
 endef
 
-CMAKE_OPTIONS+=\
+CMAKE_OPTIONS += \
 	-DBUILD_LIBTELLDUS-CORE=1 \
 	-DBUILD_TDTOOL=1 \
 	-DGENERATE_MAN=0 \
