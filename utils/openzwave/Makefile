@@ -21,7 +21,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/openzwave/default
   URL:=http://openzwave.com
-  MAINTAINER:=
+  MAINTAINER:=David Woodhouse <dwmw2@infradead.org>
   DEPENDS:=+libpthread +libstdcpp
 endef
 
