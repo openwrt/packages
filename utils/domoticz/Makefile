@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=domoticz
 PKG_VERSION:=2020.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/domoticz/domoticz/archive/$(PKG_VERSION)/$(PKG_SOURCE)
@@ -39,8 +39,9 @@ define Package/domoticz
 	+boost-date_time \
 	+boost-system \
 	+boost-thread \
+	+jsoncpp \
 	+libcurl \
-	+libmosquittopp \
+	+libmosquitto \
 	+libopenssl \
 	+libopenzwave \
 	+libsqlite3 \
@@ -59,6 +60,7 @@ CMAKE_OPTIONS += \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DUSE_BUILTIN_MQTT=no \
 	-DUSE_BUILTIN_SQLITE=no \
+	-DUSE_BUILTIN_JSONCPP=no \
 	-DUSE_STATIC_BOOST=no \
 	-DUSE_STATIC_LIBSTDCXX=no \
 	-DUSE_STATIC_OPENZWAVE=no \
