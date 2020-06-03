@@ -145,6 +145,7 @@ export whitelist_domains blacklist_domains
 export whitelist_domains_urls blacklist_domains_urls blacklist_hosts_urls
 export wan_if wan_gw wanphysdev dl_command serviceStatus dl_flag
 export outputFilter outputFilterIPv6 outputFile outputGzip outputCache ipv6Enabled
+export is_ssl_supported
 
 load_package_config() {
 	config_load "$packageName"
@@ -231,11 +232,11 @@ load_package_config() {
 	fi
 	. /lib/functions/network.sh
 	. /usr/share/libubox/jshn.sh
-	# Prefer curl because it supports the file: scheme.
+	# Prefer curl because it supports the file:// scheme.
 	if [ -x /usr/bin/curl ]; then
 		dl_command="curl --insecure --retry $curlRetry --connect-timeout $dlTimeout --silent"
 		dl_flag="-o"
-	elif wget -V 2>/dev/null | grep -q "+ssl"; then
+	elif wget --version 2>/dev/null | grep -q "+https"; then
 		dl_command="wget --no-check-certificate --timeout $dlTimeout -q"
 		dl_flag="-O"
 	else
@@ -243,6 +244,15 @@ load_package_config() {
 		dl_flag="-O"
 	fi
 	led="${led:+/sys/class/leds/$led}"
+	if curl --version 2>/dev/null | grep -q "https" \
+		|| wget --version 2>/dev/null | grep -q "+https" \
+		|| grep -q "libustream-mbedtls" /usr/lib/opkg/status \
+		|| grep -q "libustream-openssl" /usr/lib/opkg/status \
+		|| grep -q "libustream-wolfssl" /usr/lib/opkg/status; then
+		is_ssl_supported=1
+	else
+		unset is_ssl_supported
+	fi
 }
 
 is_enabled() {
@@ -668,19 +678,25 @@ process_url() {
 	else
 		type='Allowed'; D_TMP="$A_TMP";
 	fi
+	if [ "${1:0:5}" == "https" ] && [ -z "$is_ssl_supported" ]; then
+		output 1 "$_FAIL_"
+		output 2 "[DL] $type $label $__FAIL__\\n"
+		echo "errorNoSSLSupport|${1}" >> "$sharedMemoryError"
+		return 0
+	fi
 	while [ -z "$R_TMP" ] || [ -e "$R_TMP" ]; do
 		R_TMP="$(mktemp -u -q -t ${packageName}_tmp.XXXXXXXX)"
 	done
 	if ! $dl_command "$1" $dl_flag "$R_TMP" 2>/dev/null || [ ! -s "$R_TMP" ]; then
 		output 1 "$_FAIL_"
 		output 2 "[DL] $type $label $__FAIL__\\n"
-		echo "errorDownloadingList=${1}" >> "$sharedMemoryError"
+		echo "errorDownloadingList|${1}" >> "$sharedMemoryError"
 	else
 		sed -i "$filter" "$R_TMP"
 		if [ ! -s "$R_TMP" ]; then
 			output 1 "$_FAIL_"
 			output 2 "[DL] $type $label $__FAIL__\\n"
-			echo "errorParsingList=${1}" >> "$sharedMemoryError"
+			echo "errorParsingList|${1}" >> "$sharedMemoryError"
 		else
 			cat "${R_TMP}" >> "$D_TMP"
 			output 1 "$_OK_"
@@ -1115,8 +1131,8 @@ showstatus() {
 	fi
 	if [ -n "$error" ]; then
 		for c in $error; do
-			url="${c##*=}"
-			c="${c%=*}"
+			url="${c##*|}"
+			c="${c%|*}"
 			case "$c" in
 				errorDownloadingList|errorParsingList)
 					output "$_ERROR_: $(getErrorText "$c") $url!\\n";;
