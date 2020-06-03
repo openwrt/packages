@@ -8,31 +8,29 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-good
-PKG_VERSION:=1.16.0
+PKG_VERSION:=1.16.2
 PKG_RELEASE:=1
+
+PKG_SOURCE:=gst-plugins-good-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-good/
+PKG_HASH:=40bb3bafda25c0b739c8fc36e48380fccf61c4d3f83747e97ac3f9b0171b1319
+PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-good-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
 		Ted Hess <thess@kitschensync.net>
-
-PKG_LICENSE:=LGPLv2
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gstreamer:good_plug-ins
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-good-$(PKG_VERSION)
-PKG_SOURCE:=gst-plugins-good-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-good/
-PKG_HASH:=654adef33380d604112f702c2927574cfc285e31307b79e584113858838bb0fd
-
-PKG_CONFIG_DEPENDS:= \
-	CONFIG_PACKAGE_gst1-mod-lame \
-	CONFIG_PACKAGE_gst1-mod-mpg123 \
-
-PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+include ../../devel/meson/meson.mk
+
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_PACKAGE_gst1-mod-lame \
+	CONFIG_PACKAGE_gst1-mod-mpg123
 
 GST_GOOD_MODULES:=
 
@@ -91,55 +89,93 @@ define Package/gstreamer1-plugins-good/config
 
 endef
 
-GST_COND_SELECT = $(patsubst %,$(if $(CONFIG_PACKAGE_gst1-mod-$(1)),--enable,--disable)-%,$(1))
+GST_COND_SELECT = -D$(1)=$(if $(CONFIG_PACKAGE_gst1-mod-$(1)),en,dis)abled
 
 GST_VERSION:=1.0
 
-CONFIGURE_ARGS += \
-	$(call GST_COND_SELECT,lame) \
+MESON_ARGS += \
+	$(call GST_COND_SELECT,alpha) \
+	$(call GST_COND_SELECT,apetag) \
+	$(call GST_COND_SELECT,audiofx) \
+	$(call GST_COND_SELECT,audioparsers) \
+	$(call GST_COND_SELECT,auparse) \
+	$(call GST_COND_SELECT,autodetect) \
+	$(call GST_COND_SELECT,avi) \
+	$(call GST_COND_SELECT,cutter) \
+	-Ddebugutils=$(if $(CONFIG_PACKAGE_gst1-mod-debug),en,dis)abled \
+	$(call GST_COND_SELECT,deinterlace) \
+	$(call GST_COND_SELECT,dtmf) \
+	$(call GST_COND_SELECT,effectv) \
+	$(call GST_COND_SELECT,equalizer) \
+	$(call GST_COND_SELECT,flv) \
+	-Dflx=$(if $(CONFIG_PACKAGE_gst1-mod-flxdec),en,dis)abled \
+	$(call GST_COND_SELECT,goom) \
+	$(call GST_COND_SELECT,goom2k1) \
+	$(call GST_COND_SELECT,icydemux) \
+	$(call GST_COND_SELECT,id3demux) \
+	$(call GST_COND_SELECT,imagefreeze) \
+	$(call GST_COND_SELECT,interleave) \
+	$(call GST_COND_SELECT,isomp4) \
+	-Dlaw=$(if $(CONFIG_PACKAGE_gst1-mod-mulaw),en,dis)abled \
+	$(call GST_COND_SELECT,level) \
+	$(call GST_COND_SELECT,matroska) \
+	$(call GST_COND_SELECT,monoscope) \
+	$(call GST_COND_SELECT,multifile) \
+	$(call GST_COND_SELECT,multipart) \
+	$(call GST_COND_SELECT,replaygain) \
+	$(call GST_COND_SELECT,rtp) \
+	$(call GST_COND_SELECT,rtpmanager) \
+	$(call GST_COND_SELECT,rtsp) \
+	$(call GST_COND_SELECT,shapewipe) \
+	$(call GST_COND_SELECT,smpte) \
+	$(call GST_COND_SELECT,spectrum) \
+	$(call GST_COND_SELECT,udp) \
+	$(call GST_COND_SELECT,videobox) \
+	$(call GST_COND_SELECT,videofilter) \
+	$(call GST_COND_SELECT,videomixer) \
+	$(call GST_COND_SELECT,wavenc) \
+	$(call GST_COND_SELECT,wavparse) \
+	$(call GST_COND_SELECT,y4m) \
+	\
+	-Daalib=disabled \
+	-Dbz2=disabled \
+	-Dcairo=disabled \
+	-Ddirectsound=disabled \
+        -Ddv=disabled \
+        -Ddv1394=disabled \
+        $(call GST_COND_SELECT,flac) \
+	-Dgdk-pixbuf=disabled \
+	-Dgtk3=disabled \
+	-Djack=disabled \
+        $(call GST_COND_SELECT,jpeg) \
+        $(call GST_COND_SELECT,lame) \
+        -Dlibcaca=disabled \
         $(call GST_COND_SELECT,mpg123) \
+	-Doss=$(if $(CONFIG_PACKAGE_gst1-mod-ossaudio),en,dis)abled \
+        $(call GST_COND_SELECT,oss4) \
+	-Dosxaudio=disabled \
+	-Dosxvideo=disabled \
+        $(call GST_COND_SELECT,png) \
+        -Dpulse=disabled \
+	-Dqt5=disabled \
+        $(call GST_COND_SELECT,shout2) \
+        $(call GST_COND_SELECT,soup) \
+        $(call GST_COND_SELECT,speex) \
+        -Dtaglib=disabled \
+	-Dtwolame=disabled \
+        $(call GST_COND_SELECT,vpx) \
+	-Dwaveform=disabled \
+        -Dwavpack=disabled \
 	\
-	--disable-Bsymbolic \
-	--disable-debug \
-	--disable-examples \
-	--disable-fatal-warnings \
-	--disable-glib-asserts \
-	--disable-gobject-cast-checks \
-	--disable-gtk-doc-html \
-	--disable-rpath \
-	--disable-valgrind \
-	\
-	--disable-aalib \
-	--disable-annodex \
-	--disable-bz2 \
-	--disable-cairo \
-	--disable-directsound \
-	--disable-dv1394 \
-	--disable-esd \
-	--disable-gconf \
-	--disable-gconftool \
-	--disable-gdk_pixbuf \
-	--disable-hal \
-	--disable-libcaca \
-	--disable-libdv \
-	--disable-osx_audio \
-	--disable-osx_video \
-	--disable-pulse \
-	--disable-qtdemux \
-	--disable-rtspmanager \
-	--disable-shout2 \
-	--disable-sunaudio \
-	--disable-wavpack \
-	--disable-x \
-	--disable-xshm \
-	--disable-xvideo \
-	--disable-y4m \
-	--disable-zlib \
-	\
-	--without-gudev \
-	--without-libv4l2 \
-	--without-libiconv-prefix \
-	--without-libintl-prefix
+	-Dximagesrc=disabled \
+	-Dv4l2=$(if $(CONFIG_PACKAGE_gst1-mod-video4linux2),en,dis)abled \
+	-Dexamples=disabled \
+	-Dtests=disabled \
+	-Dnls=enabled \
+	-Dorc=disabled \
+	-Dgobject-cast-checks=disabled \
+	-Dglib-asserts=disabled \
+	-Dglib-checks=disabled
 
 define Package/gst1-plugins-good/install
 	/bin/true
@@ -228,12 +264,11 @@ $(eval $(call GstBuildPlugin,rtpmanager,RTP manager,audio net rtp tag pbutils vi
 $(eval $(call GstBuildPlugin,rtp,RTP,audio rtp tag pbutils video,,))
 $(eval $(call GstBuildPlugin,rtsp,RTSP,net rtp rtsp sdp,,))
 $(eval $(call GstBuildPlugin,shapewipe,shapewipe support,video,,))
-#$(eval $(call GstBuildPlugin,shout2,shout2 support,,,))
+$(eval $(call GstBuildPlugin,shout2,shout2 support,audio,,+libshout))
 $(eval $(call GstBuildPlugin,smpte,smpte support,video,,))
 $(eval $(call GstBuildPlugin,soup,soup input,audio tag,,+libsoup))
 $(eval $(call GstBuildPlugin,spectrum,spectrum data output,audio fft,,))
-#$(eval $(call GstBuildPlugin,speex,speex support,audio tag,,))
-#$(eval $(call GstBuildPlugin,sty4menc,sty4menc support,video,,))
+$(eval $(call GstBuildPlugin,speex,speex support,audio tag,,+libspeex))
 #$(eval $(call GstBuildPlugin,taglib,taglib support,tag,,))
 $(eval $(call GstBuildPlugin,udp,UDP,net,,))
 $(eval $(call GstBuildPlugin,video4linux2,video4linux2 support,video allocators,,+libv4l))
@@ -246,6 +281,7 @@ $(eval $(call GstBuildPlugin,wavenc,Wav encoder,riff,,))
 #$(eval $(call GstBuildPlugin,wavpack,Wav packer,audio riff tag,,))
 $(eval $(call GstBuildPlugin,wavparse,Wav parser,audio riff tag,,))
 #$(eval $(call GstBuildPlugin,ximagesrc,ximagesrc support,video,,))
+#$(eval $(call GstBuildPlugin,y4m,sty4menc support,video,,))
 
 $(eval $(call BuildPackage,gstreamer1-plugins-good))
 $(eval $(call BuildPackage,gst1-plugins-good))

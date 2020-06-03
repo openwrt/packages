@@ -8,20 +8,25 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-base
-PKG_VERSION:=1.16.0
+PKG_VERSION:=1.16.2
 PKG_RELEASE:=1
+
+PKG_SOURCE:=gst-plugins-base-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-base
+PKG_HASH:=b13e73e2fe74a4166552f9577c3dcb24bed077021b9c7fa600d910ec6987816a
+PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-base-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
 		Ted Hess <thess@kitschensync.net>
-
-PKG_LICENSE:=LGPLv2 GPLv2
+PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING.LIB COPYING
 PKG_CPE_ID:=cpe:/a:gstreamer:gst-plugins-base
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-base-$(PKG_VERSION)
-PKG_SOURCE:=gst-plugins-base-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-base
-PKG_HASH:=4093aa7b51e28fb24dfd603893fead8d1b7782f088b05ed0f22a21ef176fb5ae
+PKG_INSTALL:=1
+
+include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
+include ../../devel/meson/meson.mk
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_gst1-mod-alsa \
@@ -30,22 +35,20 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_gst1-mod-audiorate \
 	CONFIG_PACKAGE_gst1-mod-audioresample \
 	CONFIG_PACKAGE_gst1-mod-audiotestsrc \
+	CONFIG_PACKAGE_gst1-mod-playback \
 	CONFIG_PACKAGE_gst1-mod-gio \
 	CONFIG_PACKAGE_gst1-mod-ogg \
+	CONFIG_PACKAGE_gst1-mod-opus \
 	CONFIG_PACKAGE_gst1-mod-tcp \
 	CONFIG_PACKAGE_gst1-mod-theora \
+	CONFIG_PACKAGE_gst1-mod-typefind \
 	CONFIG_PACKAGE_gst1-mod-videoconvert \
+	CONFIG_PACKAGE_gst1-mod-videorate \
+	CONFIG_PACKAGE_gst1-mod-videoscale \
 	CONFIG_PACKAGE_gst1-mod-videotestsrc \
 	CONFIG_PACKAGE_gst1-mod-volume \
 	CONFIG_PACKAGE_gst1-mod-vorbis \
-	CONFIG_PACKAGE_libgst1app \
-
-PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
-
-include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/nls.mk
+	CONFIG_PACKAGE_libgst1app
 
 GST_BASE_LIBS:=
 GST_BASE_MODULES:=
@@ -112,51 +115,58 @@ define Package/gstreamer1-plugins-base/config
 
 endef
 
-GST_COND_SELECT = $(patsubst %,$(if $(CONFIG_PACKAGE_gst1-mod-$(1)),--enable,--disable)-%,$(1))
+GST_COND_SELECT = -D$(1)=$(if $(CONFIG_PACKAGE_gst1-mod-$(1)),en,dis)abled
 
 GST_VERSION:=1.0
 
-CONFIGURE_ARGS += \
-	--disable-debug \
-	--disable-examples \
-	--disable-fatal-warnings \
-	--disable-glib-asserts \
-	--disable-gobject-cast-checks \
-	--disable-gtk-doc-html \
-	--disable-introspection \
-	--disable-rpath \
-	--disable-valgrind \
-	--without-html-dir \
-	--with-pic \
+MESON_ARGS += \
+	-Daudioresample_format=int \
+	-Dgl=disabled \
 	\
-	$(call GST_COND_SELECT,alsa) \
+	$(call GST_COND_SELECT,adder) \
 	$(call GST_COND_SELECT,app) \
 	$(call GST_COND_SELECT,audioconvert) \
+	$(call GST_COND_SELECT,audiomixer) \
 	$(call GST_COND_SELECT,audiorate) \
 	$(call GST_COND_SELECT,audioresample) \
 	$(call GST_COND_SELECT,audiotestsrc) \
-	--disable-cdparanoia \
+	$(call GST_COND_SELECT,compositor) \
+	$(call GST_COND_SELECT,encoding) \
 	$(call GST_COND_SELECT,gio) \
-	--disable-libvisual \
-	$(call GST_COND_SELECT,ogg) \
-	--disable-pango \
-	--disable-subparse \
+	$(call GST_COND_SELECT,overlaycomposition) \
+	$(call GST_COND_SELECT,pbtypes) \
+	$(call GST_COND_SELECT,playback) \
+	$(call GST_COND_SELECT,rawparse) \
+	$(call GST_COND_SELECT,subparse) \
 	$(call GST_COND_SELECT,tcp) \
-	$(call GST_COND_SELECT,theora) \
+	-Dtypefind=$(if $(CONFIG_PACKAGE_gst1-mod-typefindfunctions),en,dis)abled \
+	$(call GST_COND_SELECT,videoconvert) \
 	$(call GST_COND_SELECT,videorate) \
 	$(call GST_COND_SELECT,videoscale) \
-	$(call GST_COND_SELECT,videoconvert) \
 	$(call GST_COND_SELECT,videotestsrc) \
 	$(call GST_COND_SELECT,volume) \
+	\
+	$(call GST_COND_SELECT,alsa) \
+	$(call GST_COND_SELECT,cdparanoia) \
+	$(call GST_COND_SELECT,ogg) \
+	$(call GST_COND_SELECT,opus) \
+	$(call GST_COND_SELECT,pango) \
+	$(call GST_COND_SELECT,theora) \
 	$(call GST_COND_SELECT,vorbis) \
-	--disable-x \
-	--disable-xshm \
-	--disable-xvideo \
+	-Dx11=disabled \
+	-Dxshm=disabled \
+	-Dxvideo=disabled \
 	\
-	--without-libiconv-prefix \
-	--without-libintl-prefix \
-	\
-	--with-audioresample-format=int \
+	-Dexamples=disabled \
+	-Dtests=disabled \
+	-Dtools=disabled \
+	-Dgtk_doc=disabled \
+	-Dintrospection=disabled \
+	-Dnls=enabled \
+	-Dorc=disabled \
+	-Dgobject-cast-checks=disabled \
+	-Dglib-asserts=disabled \
+	-Dglib-checks=disabled
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/gstreamer-$(GST_VERSION)
@@ -166,12 +176,12 @@ define Build/InstallDev
 	)
 	$(INSTALL_DIR) $(1)/usr/lib
 	( cd $(PKG_INSTALL_DIR); $(CP) \
-		./usr/lib/libgst*-$(GST_VERSION).{la,so*} \
+		./usr/lib/libgst*-$(GST_VERSION).so* \
 		$(1)/usr/lib/ \
 	)
 	$(INSTALL_DIR) $(1)/usr/lib/gstreamer-$(GST_VERSION)
 	( cd $(PKG_INSTALL_DIR); $(CP) \
-		./usr/lib/gstreamer-$(GST_VERSION)/libgst*.{la,so} \
+		./usr/lib/gstreamer-$(GST_VERSION)/libgst*.so \
 		$(1)/usr/lib/gstreamer-$(GST_VERSION)/ \
 	)
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
