@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=domoticz
-PKG_VERSION:=2020.1
-PKG_RELEASE:=3
+PKG_VERSION:=2020.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/domoticz/domoticz/archive/$(PKG_VERSION)/$(PKG_SOURCE)
-PKG_HASH:=d0c17b2082dad8a8caeed888b7d4c191975e74a2808b5d078305f5327b82442d
+PKG_HASH:=a02f589daad4eebff1f5e93815c1acd1864cf068f8f5c3185bcdd20207ae395e
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=License.txt
 
-PKG_BUILD_DEPENDS:=python3
+PKG_BUILD_DEPENDS:=python3 minizip cereal
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
@@ -41,6 +41,8 @@ define Package/domoticz
 	+boost-thread \
 	+jsoncpp \
 	+libcurl \
+	+minizip \
+	+lua5.3 \
 	+libmosquitto \
 	+libopenssl \
 	+libopenzwave \
@@ -61,6 +63,8 @@ CMAKE_OPTIONS += \
 	-DUSE_BUILTIN_MQTT=no \
 	-DUSE_BUILTIN_SQLITE=no \
 	-DUSE_BUILTIN_JSONCPP=no \
+	-DUSE_BUILTIN_MINIZIP=no \
+	-DUSE_LUA_STATIC=no \
 	-DUSE_STATIC_BOOST=no \
 	-DUSE_STATIC_LIBSTDCXX=no \
 	-DUSE_STATIC_OPENZWAVE=no \
