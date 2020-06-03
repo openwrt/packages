@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zstd
-PKG_VERSION:=1.4.4
-PKG_RELEASE:=3
+PKG_VERSION:=1.4.5
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/facebook/zstd/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=a364f5162c7d1a455cc915e8e3cf5f4bd8b75d09bc0f53965b0c9ca1383c52c8
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.zst
+PKG_SOURCE_URL:=https://github.com/facebook/zstd/releases/download/v$(PKG_VERSION)
+PKG_HASH:=2c2366874bc449ff539614266d8c0d6ecdb4baf30bb65609c239ab4ed23c03c7
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
@@ -63,6 +63,8 @@ endef
 ifeq ($(CONFIG_ZSTD_OPTIMIZE_O3),y)
 TARGET_CFLAGS:= $(filter-out -O%,$(TARGET_CFLAGS)) -O3
 endif
+
+TARGET_CFLAGS += $(if $(CONFIG_USE_UCLIBC),-D_BSD_SOURCE)
 
 MESON_ARGS += \
 	-Dlegacy_level=1 \
