@@ -64,7 +64,7 @@ ifup()
 	status=$(ubus -S call network.interface.$1 status)
 	[ -n "$status" ] && {
 		json_load "$status"
-		json_get_vars up l3_device 
+		json_get_vars up l3_device
 	}
 
 	config_get enabled "$1" enabled 0
@@ -141,13 +141,19 @@ stop()
 
 	for pid in $(pgrep -f "mwan3rtmon"); do
 		kill -TERM "$pid" > /dev/null 2>&1
-		sleep 1
-		kill -KILL "$pid" > /dev/null 2>&1
 	done
 
 	for pid in $(pgrep -f "mwan3track"); do
 		kill -TERM "$pid" > /dev/null 2>&1
-		sleep 1
+	done
+
+	sleep 1
+
+	for pid in $(pgrep -f "mwan3rtmon"); do
+		kill -KILL "$pid" > /dev/null 2>&1
+	done
+
+	for pid in $(pgrep -f "mwan3track"); do
 		kill -KILL "$pid" > /dev/null 2>&1
 	done
 
