@@ -65,6 +65,8 @@ In this case, Unbound serves your local network directly for all purposes. It wi
 **/etc/config/unbound**:
 ```
 config unbound
+  # likely you want to match domain option between Unbound and dnsmasq
+  option domain 'yourdomain'
   option dhcp_link 'dnsmasq'
   option listen_port '53'
   ...
