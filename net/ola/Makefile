@@ -68,6 +68,9 @@ HOST_CONFIGURE_ARGS += \
 HOST_CPPFLAGS += \
 	-std=gnu++11
 
+CONFIGURE_VARS += \
+	require_gnu_plus_plus_11=yes
+
 HOST_LDFLAGS += -Wl,-rpath="$(STAGING_DIR_HOSTPKG)/lib"
 TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lm)
 
