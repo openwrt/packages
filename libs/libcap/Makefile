@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcap
-PKG_VERSION:=2.33
-PKG_RELEASE:=2
+PKG_VERSION:=2.34
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/libs/security/linux-privs/libcap2
-PKG_HASH:=08edeaba2757021aeec45c4eeec52566675e0e0f5d4f057284d729e04f2643d6
+PKG_HASH:=aecdd42015955068d3d94b7caa9590fcb2de5df53ce53c61a21b912bfc0b1611
 
 PKG_MAINTAINER:=Paul Wassi <p.wassi@gmx.at>
 PKG_LICENSE:=GPL-2.0-only
@@ -89,11 +89,11 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/lib/libcap.{so*,a} $(1)/usr/lib/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/lib/libpsx.a $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libcap.pc $(1)/usr/lib/pkgconfig/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/lib/pkgconfig/libcap.pc $(1)/usr/lib/pkgconfig/
 	$(SED) 's,exec_prefix=,exec_prefix=/usr,g' $(1)/usr/lib/pkgconfig/libcap.pc
 	$(SED) 's,/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libcap.pc
 	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libcap.pc
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libpsx.pc $(1)/usr/lib/pkgconfig/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/lib/pkgconfig/libpsx.pc $(1)/usr/lib/pkgconfig/
 	$(SED) 's,exec_prefix=,exec_prefix=/usr,g' $(1)/usr/lib/pkgconfig/libpsx.pc
 	$(SED) 's,/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libpsx.pc
 	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libpsx.pc
