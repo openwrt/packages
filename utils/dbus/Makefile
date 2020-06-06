@@ -22,7 +22,6 @@ PKG_CPE_ID:=cpe:/a:freedesktop:dbus
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
-include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/dbus/Default
@@ -101,32 +100,6 @@ CONFIGURE_ARGS += \
 	--with-dbus-user=root \
 	--without-x
 
-HOST_CONFIGURE_ARGS+= \
-	--disable-maintainer-mode \
-	--disable-developer \
-	--enable-debug=no \
-	--enable-shared \
-	--disable-static \
-	--disable-verbose-mode \
-	--disable-asserts \
-	--disable-xml-docs \
-	--disable-doxygen-docs \
-	--disable-ducktype-docs \
-	--disable-selinux \
-	--disable-apparmor \
-	--disable-libaudit \
-	--enable-inotify \
-	--disable-kqueue \
-	--disable-console-owner-file \
-	--disable-systemd \
-	--disable-tests \
-	--disable-code-coverage \
-	--disable-x11-autolaunch \
-	--with-system-socket="$(STAGING_DIR_HOSTPKG)/var/run/dbus/system_bus_socket" \
-	--with-system-pid-file="$(STAGING_DIR_HOSTPKG)/var/run/dbus.pid" \
-	--with-dbus-daemondir="$(STAGING_DIR_HOSTPKG)/bin" \
-	--without-x
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/dbus-1.0 $(1)/usr/include/
@@ -168,7 +141,6 @@ define Package/dbus-utils/install
 	$(INSTALL_BIN) 	$(PKG_INSTALL_DIR)/usr/bin/dbus-{monitor,send,update-activation-environment} $(1)/usr/bin/
 endef
 
-$(eval $(call HostBuild))
 $(eval $(call BuildPackage,libdbus))
 $(eval $(call BuildPackage,dbus))
 $(eval $(call BuildPackage,dbus-utils))
