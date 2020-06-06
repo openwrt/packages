@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coova-chilli
 PKG_VERSION:=1.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/coova/coova-chilli/tar.gz/$(PKG_VERSION)?
@@ -24,6 +24,7 @@ PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=0
 
 PKG_CONFIG_DEPENDS:= \
+  COOVACHILLI_JSONINTERFACE \
   COOVACHILLI_LARGELIMITS \
   COOVACHILLI_MINIPORTAL \
   COOVACHILLI_NOSSL \
@@ -43,7 +44,8 @@ define Package/coova-chilli
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=+kmod-tun +librt +COOVACHILLI_MINIPORTAL:haserl \
-  +COOVACHILLI_WOLFSSL:libwolfssl +COOVACHILLI_OPENSSL:libopenssl
+  +COOVACHILLI_WOLFSSL:libwolfssl +COOVACHILLI_OPENSSL:libopenssl \
+  +COOVACHILLI_JSONINTERFACE:libjson-c
   TITLE:=Wireless LAN HotSpot controller (Coova Chilli Version)
   URL:=https://coova.github.io/
   MENU:=1
@@ -111,6 +113,8 @@ define Build/Configure
 	$(if $(CONFIG_COOVACHILLI_MINIPORTAL),--enable,--disable)-miniportal \
 	$(if $(CONFIG_COOVACHILLI_USERAGENT),--enable,--disable)-useragent \
 	$(if $(CONFIG_COOVACHILLI_LARGELIMITS),--enable,--disable)-largelimits \
+	$(if $(CONFIG_COOVACHILLI_JSONINTERFACE),--enable,--disable)-libjson \
+	$(if $(CONFIG_COOVACHILLI_JSONINTERFACE),--enable,--disable)-json \
 	$(if $(CONFIG_COOVACHILLI_UAMDOMAINFILE),--enable,--disable)-uamdomainfile \
 	$(if $(CONFIG_IPV6),--with,--without)-ipv6 \
 	$(if $(CONFIG_COOVACHILLI_WOLFSSL),--with,--without)-cyassl \
