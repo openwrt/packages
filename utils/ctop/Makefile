@@ -25,7 +25,7 @@ define Package/ctop
   CATEGORY:=Utilities
   TITLE:=Top-like interface for container metrics
   URL:=https://ctop.sh/
-  DEPENDS:=$(GO_ARCH_DEPENDS) @!mips
+  DEPENDS:=$(GO_ARCH_DEPENDS) @!mips @!mipsel
 endef
 
 define Package/ctop/description
