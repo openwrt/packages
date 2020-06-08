@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openfortivpn
-PKG_VERSION:=1.13.2
+PKG_VERSION:=1.14.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/adrienverge/openfortivpn/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=998fb2b071cdfe3255c2f953cafc6e1496778f9a71dd5aa560b924a44636df87
+PKG_HASH:=bc62fc6ecaaa6c6f8f2510e14a067a0cb9762158d9460c04555990bba44b50ca
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later OpenSSL
@@ -32,7 +32,7 @@ define Package/openfortivpn
   CATEGORY:=Network
   TITLE:=Fortinet SSL VPN client
   URL:=https://github.com/adrienverge/openfortivpn
-  DEPENDS:=+ppp +libopenssl
+  DEPENDS:=+ppp +libopenssl +resolveip
 endef
 
 define Package/openfortivpn/description
@@ -50,19 +50,16 @@ CONFIGURE_ARGS += \
 
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
-define Package/openfortivpn/conffiles
-/etc/config/openfortivpn
-endef
-
 define Package/openfortivpn/install
 	$(INSTALL_DIR) \
 	  $(1)/usr/sbin \
-	  $(1)/etc/config \
-	  $(1)/etc/init.d
+          $(1)/lib/netifd/proto \
+	  $(1)/etc/hotplug.d/iface
 
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/openfortivpn $(1)/usr/sbin/
-	$(INSTALL_DATA) ./files/openfortivpn.config $(1)/etc/config/openfortivpn
-	$(INSTALL_BIN) ./files/openfortivpn.init $(1)/etc/init.d/openfortivpn
+	$(INSTALL_BIN) ./files/openfortivpn-wrapper $(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/openfortivpn.sh $(1)/lib/netifd/proto/
+	$(INSTALL_BIN) ./files/14-openforticlient $(1)/etc/hotplug.d/iface/
 endef
 
 $(eval $(call BuildPackage,openfortivpn))

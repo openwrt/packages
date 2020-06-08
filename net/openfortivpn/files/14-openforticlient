@@ -1,0 +1,18 @@
+#!/bin/sh
+. /usr/share/libubox/jshn.sh
+[ "$ACTION" != ifup ] && exit
+
+networks=$(uci show network | sed "s/network.\([^.]*\).proto='openfortivpn'/\1/;t;d")
+for i in $networks; do
+    iface=$(uci get "network.${i}.iface_name")
+    iface_success=$?
+    [ $? -eq 0 ] && [ $INTERFACE == "$iface" ] && {
+        logger -t "openfortivpnhotplug" "$ACTION on $INTERFACE to bring up $i"
+        json_load "$(ifstatus $i)"
+        json_get_var autostart autostart
+	[ "$autostart" -eq 0 ] && {
+            logger -t "openfortivpnhotplug" "auto-start was false. bringing $i up"
+            ubus call network.interface up "{ \"interface\" : \"$i\" }"
+        }
+    }
+done
