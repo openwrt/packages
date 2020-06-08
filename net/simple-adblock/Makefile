@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=simple-adblock
 PKG_VERSION:=1.8.3
-PKG_RELEASE:=9
+PKG_RELEASE:=11
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 PKG_LICENSE:=GPL-3.0-or-later
 
@@ -16,12 +16,14 @@ define Package/simple-adblock
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Simple AdBlock Service
+	DEPENDS:=+jshn +jsonfilter
 	PKGARCH:=all
 endef
 
 define Package/simple-adblock/description
-This service provides DNSMASQ or Unbound based ad blocking.
-Please see the project's README on GitHub for further information.
+Simple adblock script to block ad or abuse/malware domains with DNSMASQ or Unbound.
+Script supports local/remote list of domains and hosts-files for both black- and white-listing.
+Please see https://github.com/openwrt/packages/blob/master/net/simple-adblock/files/README.md for more information.
 
 endef
 
