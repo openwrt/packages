@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=flent-tools
-PKG_VERSION:=1.2.2
+PKG_VERSION:=1.3.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tohojo/flent/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=554bb1b5329cd39113cbb34445765ca6868dbf033aa64832d957d4a09d56adc7
+PKG_HASH:=f71793bb924b36d0e4c230182755c3f5dd26cd7f239b1fa6b717d942258cbf9a
 PKG_BUILD_DIR:=$(BUILD_DIR)/flent-$(PKG_VERSION)
 
 PKG_LICENSE:=GPL-3.0-only
@@ -28,7 +28,7 @@ define Package/flent-tools
   TITLE:=Helper programs for the Flent test tool
   URL:=https://flent.org
   MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
-  DEPENDS+=+librt
+  DEPENDS+=+librt +coreutils-sleep +coreutils-date
 endef
 
 define Package/flent-tc_iterate/description
