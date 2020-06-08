@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=less
-PKG_VERSION:=530
-PKG_RELEASE:=2
+PKG_VERSION:=562
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.greenwoodsoftware.com/less
-PKG_HASH:=503f91ab0af4846f34f0444ab71c4b286123f0044a4964f1ae781486c617f2e2
+PKG_HASH:=eab470c7c928132441541aa49b1352c0fc699c30f762dfaeb3bf88e6f0fd701b
 
-PKG_LICENSE:=GPL-3.0
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Julen Landa Alustiza <julen@zokormazo.info>
 PKG_CPE_ID:=cpe:/a:gnu:less
@@ -61,7 +61,7 @@ endef
 
 ifeq ($(BUILD_VARIANT),narrow)
 	CONFIGURE_VARS += \
-		ac_cv_lib_ncursesw_initscr=no		
+		ac_cv_lib_ncursesw_initscr=no
 endif
 
 ifeq ($(BUILD_VARIANT),wide)
