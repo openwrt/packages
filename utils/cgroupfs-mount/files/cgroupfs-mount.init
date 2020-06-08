@@ -9,4 +9,5 @@ boot() {
 	fi
 
 	cgroupfs-mount
+	echo 1 > /sys/fs/cgroup/memory/memory.use_hierarchy
 }
