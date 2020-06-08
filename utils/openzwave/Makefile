@@ -9,19 +9,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openzwave
-PKG_VERSION:=1.6.1063
+PKG_VERSION:=1.6.1134
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://old.openzwave.com/downloads
-PKG_HASH:=8b1b674f825cd3623d2aa9c286edbb05c0ff6537d5d3ee891ae98e21d28de26b
+PKG_HASH:=719e904f5ac022772db81517e918d7994562d68a2820dd161b5c419c39f167d8
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/openzwave/default
   URL:=http://openzwave.com
-  MAINTAINER:=
+  MAINTAINER:=David Woodhouse <dwmw2@infradead.org>
   DEPENDS:=+libpthread +libstdcpp
 endef
 
