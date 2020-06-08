@@ -40,7 +40,6 @@ endef
 
 define Package/xinetd/conffiles
 /etc/config/xinetd
-/etc/xinetd.d/
 endef
 
 TARGET_CFLAGS += -DNO_RPC
