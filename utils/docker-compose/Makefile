@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=docker-compose
 PKG_VERSION:=1.26.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=docker-compose
 PKG_HASH:=7e836102d139aca667d6af53f0f4d942c9459ec24d6dd4f0203d74359b0fd311
@@ -41,7 +41,6 @@ define Package/docker-compose
       +python3-texttable \
       +python3-websocket-client \
       +python3-yaml
-  VARIANT:=python3
 endef
 
 define Package/docker-compose/description

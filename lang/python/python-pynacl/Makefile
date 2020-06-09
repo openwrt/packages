@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pynacl
 PKG_VERSION:=1.4.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=PyNaCl
 PKG_HASH:=54e9a2c849c742006516ad56a88f5c74bf2ce92c9f67435187c3c5953b346505
@@ -28,7 +28,6 @@ define Package/python3-pynacl
   TITLE:=Python binding to the libsodium library
   URL:=https://github.com/pyca/pynacl/
   DEPENDS:=+libsodium +python3-light +python3-cffi +python3-six
-  VARIANT:=python3
 endef
 
 define Package/python3-pynacl/description

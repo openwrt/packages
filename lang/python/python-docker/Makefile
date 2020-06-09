@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-docker
 PKG_VERSION:=4.2.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=docker
 PKG_HASH:=380a20d38fbfaa872e96ee4d0d23ad9beb0f9ed57ff1c30653cbeb0c9c0964f2
@@ -27,7 +27,6 @@ define Package/python3-docker
 	  +python3-light +python3-distutils +python3-logging \
 	  +python3-openssl +python3-paramiko +python3-six +python3-requests \
 	  +python3-websocket-client
-  VARIANT:=python3
 endef
 
 define Package/python3-docker/description
