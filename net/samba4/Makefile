@@ -2,7 +2,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.11.6
+PKG_VERSION:=4.12.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -13,7 +13,7 @@ PKG_SOURCE_URL:= \
 		http://www.nic.funet.fi/index/samba/pub/samba/stable/ \
 		http://samba.mirror.bit.nl/samba/ftp/stable/ \
 		https://download.samba.org/pub/samba/stable/
-PKG_HASH:=91438f4d7b71f673421435fa7f26b03b613f214139636ce50af35bc2ff09ef38
+PKG_HASH:=3fadbca4504937820d0d8a34e500a1efdcc35e0c554f05bd0a844916ae528727
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-3.0-only
@@ -21,7 +21,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:samba:samba
 
 # samba4=(asn1_compile,compile_et) rpcsvc-proto=(rpcgen)
-HOST_BUILD_DEPENDS:=python3/host perl/host rpcsvc-proto/host
+HOST_BUILD_DEPENDS:=python3/host rpcsvc-proto/host perl/host perl-parse-yapp/host
 PKG_BUILD_DEPENDS:=samba4/host libtasn1/host
 
 PKG_CONFIG_DEPENDS:= \
@@ -41,6 +41,7 @@ include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/version.mk
 include ../../lang/python/python3-host.mk
 include ../../lang/python/python3-package.mk
+include ../../lang/perl/perlver.mk
 
 define Package/samba4/Default
   SECTION:=net
@@ -171,6 +172,7 @@ CONFIGURE_ARGS += \
 		--disable-cephfs \
 		--disable-fault-handling \
 		--disable-glusterfs \
+		--disable-spotlight \
 		--enable-fhs \
 		--without-automount \
 		--without-iconv \
@@ -192,6 +194,7 @@ HOST_CONFIGURE_ARGS += \
 		--disable-cephfs \
 		--disable-fault-handling \
 		--disable-glusterfs \
+		--disable-spotlight \
 		--disable-rpath \
 		--disable-rpath-install \
 		--disable-rpath-private-install \
@@ -240,6 +243,9 @@ else
 	CONFIGURE_ARGS += --disable-avahi
 endif
 
+CONFIGURE_VARS += \
+	PERL="$(STAGING_DIR_HOSTPKG)/usr/bin/perl$(PERL_VERSION3)"
+
 # NOTE: We need host python-bin, but target python-config here!
 CONFIGURE_VARS += python_LDFLAGS="" python_LIBDIR=""
 ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
@@ -253,9 +259,9 @@ else
 endif
 
 SAMBA4_PDB_MODULES :=pdb_smbpasswd,pdb_tdbsam,
-SAMBA4_AUTH_MODULES :=auth_builtin,auth_sam,auth_unix,auth_script,
+SAMBA4_AUTH_MODULES :=auth_builtin,auth_sam,auth_unix,
 SAMBA4_VFS_MODULES :=vfs_default,
-SAMBA4_VFS_MODULES_SHARED :=
+SAMBA4_VFS_MODULES_SHARED :=auth_script,
 ifeq ($(CONFIG_SAMBA4_SERVER_VFS),y)
 	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_fruit,vfs_shadow_copy2,vfs_recycle,vfs_fake_perms,vfs_readonly,vfs_cap,vfs_offline,vfs_crossrename,vfs_catia,vfs_streams_xattr,vfs_xattr_tdb,vfs_default_quota,
 ifeq ($(CONFIG_PACKAGE_kmod-fs-btrfs),y)
@@ -305,10 +311,17 @@ CONFIGURE_ARGS += --private-libraries=$(SYSTEM_BUNDLED_LIBS)
 export COMPILE_ET=$(STAGING_DIR_HOSTPKG)/bin/compile_et_samba
 export ASN1_COMPILE=$(STAGING_DIR_HOSTPKG)/bin/asn1_compile_samba
 
-# we dont need GnuTLS for the host helpers
+# need to find host 'yapp'
+HOST_CONFIGURE_VARS+= \
+	PATH="$(STAGING_DIR_HOSTPKG)/usr/bin:$(PATH)"
+CONFIGURE_VARS += \
+	PATH="$(PATH):$(STAGING_DIR_HOSTPKG)/usr/bin"
+ 
+# we dont need GnuTLS/Yapp for the host helpers
 define Host/Prepare
 	$(call Host/Prepare/Default)
 	$(SED) 's,mandatory=True,mandatory=False,g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
+	$(SED) 's,gnutls_version =.*,gnutls_version = gnutls_min_required_version,g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
 endef
 define Host/Compile
 	(cd $(HOST_BUILD_DIR); \
@@ -343,6 +356,11 @@ define Build/Configure
 	# NOTE: special answers for freeBSD/CircleCI
 	echo 'Checking whether POSIX capabilities are available: OK' >> $(PKG_BUILD_DIR)/cross-answers.txt
 	echo 'checking for clnt_create(): OK' >> $(PKG_BUILD_DIR)/cross-answers.txt
+	# HACK: need to update WAF/qemu values (set to NO for now)
+	echo 'Checking value of GNUTLS_CIPHER_AES_128_CFB8: NO' >> $(PKG_BUILD_DIR)/cross-answers.txt
+	echo 'Checking value of GNUTLS_MAC_AES_CMAC_128: NO' >> $(PKG_BUILD_DIR)/cross-answers.txt
+	echo 'Checking whether fcntl supports flags to send direct I/O availability signals: NO' >> $(PKG_BUILD_DIR)/cross-answers.txt
+	echo 'Checking whether fcntl supports setting/geting hints: NO' >> $(PKG_BUILD_DIR)/cross-answers.txt
 	$(call Build/Configure/Default)
 endef
 

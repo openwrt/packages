@@ -1,6 +1,6 @@
---- a/source3/lib/messages.c
-+++ b/source3/lib/messages.c
-@@ -518,7 +518,7 @@ static NTSTATUS messaging_init_internal(
+--- a/source3/lib/messages.c	2020-02-28 09:59:35.000000000 +0100
++++ b/source3/lib/messages.c	2020-05-19 13:35:11.814566657 +0200
+@@ -507,7 +507,7 @@ static NTSTATUS messaging_init_internal(
  		return NT_STATUS_ACCESS_DENIED;
  	}
  
@@ -9,12 +9,12 @@
  	if (priv_path == NULL) {
  		return NT_STATUS_NO_MEMORY;
  	}
-@@ -662,7 +662,7 @@ NTSTATUS messaging_reinit(struct messagi
- 
- 	msg_ctx->msg_dgm_ref = messaging_dgm_ref(
- 		msg_ctx, msg_ctx->event_ctx, &msg_ctx->id.unique_id,
--		private_path("msg.sock"), lck_path,
-+		lock_path(talloc_tos(), "msg.sock"), lck_path,
- 		messaging_recv_cb, msg_ctx, &ret);
- 
- 	if (msg_ctx->msg_dgm_ref == NULL) {
+@@ -670,7 +670,7 @@ NTSTATUS messaging_reinit(struct messagi
+ 		msg_ctx->per_process_talloc_ctx,
+ 		msg_ctx->event_ctx,
+ 		&msg_ctx->id.unique_id,
+-		private_path("msg.sock"),
++		lock_path(talloc_tos(), "msg.sock"),
+ 		lck_path,
+ 		messaging_recv_cb,
+ 		msg_ctx,

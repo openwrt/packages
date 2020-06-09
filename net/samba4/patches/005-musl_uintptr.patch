@@ -15,7 +15,7 @@ diff --git a/third_party/cmocka/cmocka.h b/third_party/cmocka/cmocka.h
 index 303d0ae..a2bfc40 100644
 --- a/third_party/cmocka/cmocka.h
 +++ b/third_party/cmocka/cmocka.h
-@@ -110,7 +110,7 @@
+@@ -111,7 +111,7 @@
      ((LargestIntegralType)(value))
  
  /* Smallest integral type capable of holding a pointer. */
@@ -24,7 +24,7 @@ index 303d0ae..a2bfc40 100644
  # if defined(_WIN32)
      /* WIN32 is an ILP32 platform */
      typedef unsigned int uintptr_t;
-@@ -136,6 +136,8 @@
+@@ -137,6 +137,8 @@
  
  # define _UINTPTR_T
  # define _UINTPTR_T_DEFINED
