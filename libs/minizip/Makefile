@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=minizip
 PKG_VERSION:=2.9.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/nmoinvaz/minizip/archive/
@@ -20,7 +20,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_PARALLEL:=1
 
-CMAKE_OPTIONS:=-DINSTALL_INC_DIR=/usr/include/minizip -DMZ_BZIP2=OFF -DBUILD_SHARED_LIBS=ON
+CMAKE_OPTIONS:=-DINSTALL_INC_DIR=/usr/include/minizip -DMZ_BZIP2=OFF -DBUILD_SHARED_LIBS=ON -DMZ_LIBBSD=OFF
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
