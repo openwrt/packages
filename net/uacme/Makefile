@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uacme
-PKG_VERSION:=1.2.1
-PKG_RELEASE:=2
+PKG_VERSION:=1.4.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ndilieto/uacme/tar.gz/upstream/$(PKG_VERSION)?
-PKG_HASH:=ccd6001e96ec2eb22a1d557bf8dcc4152a567782afc9a1e017a93d7de3b49833
+PKG_HASH:=3f3de5f456907558c4aa0db5654c618becb1b3e057ad217e180c8f72360e7841
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -35,7 +35,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/uacme
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libcurl +LIBCURL_WOLFSSL:libmbedtls
+  DEPENDS:=+libcurl +LIBCURL_WOLFSSL:libmbedtls +acme-common
   TITLE:=lightweight client for ACMEv2
   URL:=https://github.com/ndilieto/uacme
 endef
@@ -60,6 +60,7 @@ if PACKAGE_uacme && LIBCURL_NOSSL
 endif
 endef
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_CFLAGS += -flto
 
 CONFIGURE_ARGS+= \
 	--disable-maintainer-mode \
@@ -70,25 +71,14 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_LIBCURL_OPENSSL),--without-gnutls --without-mbedtls --with-openssl,) \
 	$(if $(CONFIG_LIBCURL_WOLFSSL),--without-gnutls --with-mbedtls --without-openssl,)
 
-define Package/uacme/conffiles
-/etc/config/acme
-/etc/acme
-endef
-
 define Package/uacme/install
 	$(INSTALL_DIR) \
 	 $(1)/usr/sbin \
-	 $(1)/etc/acme \
-	 $(1)/etc/config \
-	 $(1)/etc/init.d \
 	 $(1)/usr/share/uacme
 
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/uacme $(1)/usr/sbin/uacme
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/uacme/uacme.sh $(1)/usr/share/uacme/
 	$(SED) '/^CHALLENGE_PATH=/d' $(1)/usr/share/uacme/uacme.sh
-	$(INSTALL_CONF) ./files/acme.config $(1)/etc/config/acme
-	$(INSTALL_BIN) ./files/run.sh $(1)/usr/share/uacme/run-uacme
-	$(INSTALL_BIN) ./files/acme.init $(1)/etc/init.d/acme
 endef
 
 define Package/uacme/prerm
