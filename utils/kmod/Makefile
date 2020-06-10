@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kmod
 PKG_VERSION:=20
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/kernel/kmod/
@@ -32,6 +32,13 @@ define Package/kmod/Default
   TITLE:=Linux kernel module handling
   URL:=https://www.kernel.org/pub/linux/utils/kernel/kmod/
   DEPENDS:=+zlib
+  ALTERNATIVES:=\
+    200:/sbin/depmod:/sbin/kmod \
+    200:/sbin/insmod:/sbin/kmod \
+    200:/sbin/lsmod:/sbin/kmod \
+    200:/sbin/modinfo:/sbin/kmod \
+    200:/sbin/modprobe:/sbin/kmod \
+    200:/sbin/rmmod:/sbin/kmod
 endef
 
 
@@ -46,21 +53,9 @@ Linux kernel module handling
  insert, remove, list, check properties, resolve dependencies and aliases.
 endef
 
-LEGACY_BINARIES:= \
-	depmod \
-	insmod \
-	lsmod \
-	modinfo \
-	modprobe \
-	rmmod
-
 define Package/kmod/install
 	$(INSTALL_DIR) $(1)/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/kmod $(1)/sbin
-
-	for b in $(LEGACY_BINARIES); do \
-		ln -sf kmod $(1)/sbin/$$$$b ; \
-	done
 endef
 
 
