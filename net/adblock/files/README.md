@@ -27,11 +27,13 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | openphish           |         | S    | phishing         | [Link](https://openphish.com)                                    |
 | phishing_army       |         | S    | phishing         | [Link](https://phishing.army)                                    |
 | reg_cn              |         | M    | reg_china        | [Link](https://easylist.to)                                      |
+| reg_cz              |         | M    | reg_czech+slovak | [Link](https://easylist.to)                                      |
 | reg_de              |         | M    | reg_germany      | [Link](https://easylist.to)                                      |
 | reg_es              |         | M    | reg_espania      | [Link](https://easylist.to)                                      |
 | reg_fi              |         | S    | reg_finland      | [Link](https://github.com/finnish-easylist-addition)             |
 | reg_fr              |         | S    | reg_france       | [Link](https://forums.lanik.us/viewforum.php?f=91)               |
 | reg_id              |         | M    | reg_indonesia    | [Link](https://easylist.to)                                      |
+| reg_kr              |         | M    | reg_korea        | [Link](https://list-kr.github.io)                                |
 | reg_nl              |         | M    | reg_netherlands  | [Link](https://easylist.to)                                      |
 | reg_pl              |         | M    | reg_poland       | [Link](https://kadantiscam.netlify.com)                          |
 | reg_ro              |         | M    | reg_romania      | [Link](https://easylist.to)                                      |
@@ -41,7 +43,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | shallalist_porn     |         | XXL  | general+porn     | [Link](http://www.shallalist.de)                                 |
 | smarttv             |         | S    | smarttv          | [Link](https://github.com/Perflyst/PiHoleBlocklist)              |
 | spam404             |         | S    | general          | [Link](https://github.com/Dawsey21)                              |
-| stevenblack         |         | L    | compilation+porn | [Link](https://github.com/StevenBlack/hosts)                     |
+| stevenblack         |         | L    | compilation      | [Link](https://github.com/StevenBlack/hosts)                     |
 | stevenblack_porn    |         | L    | compilation+porn | [Link](https://github.com/StevenBlack/hosts)                     |
 | stopforumspam       |         | S    | spam             | [Link](https://www.stopforumspam.com)                            |
 | sysctl              |         | M    | general          | [Link](http://sysctl.org/cameleon)                               |
