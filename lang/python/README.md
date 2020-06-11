@@ -20,13 +20,13 @@
 
 This section describes specifics for the Python packages that are present in this repo, and how things are structured.
 
-In terms of license, contributing guide, etc, all of that information is described in the top [README.md](README.md) file, and it applies here as well. This document attempts to cover only technical aspects of Python packages, and maybe some explanations about how things are (and why they are as they are).
+In terms of license, contributing guide, etc, all of that information is described in the top [README.md](../../README.md) file, and it applies here as well. This document attempts to cover only technical aspects of Python packages, and maybe some explanations about how things are (and why they are as they are).
 
 ## Introduction
 
-This sub-tree came to exist after a number of contributions (Python packages) were made to this repo, and the [lang](lang) subtree grew to a point where a decision was made to move all Python packages under [lang/python](lang/python).
+This sub-tree came to exist after a number of contributions (Python packages) were made to this repo, and the [lang](../) subtree grew to a point where a decision was made to move all Python packages under [lang/python](./).
 
-It contains the Python 3 interpreter and Python packages. Most of the Python packages are downloaded from [pypi.org](https://pypi.org/). Python packages from [pypi.org](https://pypi.org/) are typically preferred when adding new packages.
+It contains the Python 3 interpreter and Python packages. Most of the Python packages are downloaded from [pypi.org](https://pypi.org/). Python packages from pypi.org are typically preferred when adding new packages.
 
 If more packages (than the ones packaged here) are needed, they can be downloaded via [pip](https://pip.pypa.io). Note that the versions of `pip` & `setuptools` [available in this repo] are the ones that are packaged inside the Python package (yes, Python comes packaged with `pip` & `setuptools`).
 
@@ -107,22 +107,22 @@ By default, automatic Python byte-code generation is disabled when running a Pyt
 ## General folder structure
 
 The basis of all these packages is:
-* [lang/python/python3](lang/python/python3) - The Python 3.x.y interpreter
+* [lang/python/python3](./python3) - The Python 3.x.y interpreter
 
-This is a normal OpenWrt package, which will build the Python interpreter. This also provides `python3-pip` & `python3-setuptools`. Each Python package is actually split into multiple sub-packages [e.g. python3-email, python3-sqlite3, etc]. This can be viewed inside [lang/python/python3/files](lang/python/python3/files).
+This is a normal OpenWrt package, which will build the Python interpreter. This also provides `python3-pip` & `python3-setuptools`. Each Python package is actually split into multiple sub-packages [e.g. python3-email, python3-sqlite3, etc]. This can be viewed inside [lang/python/python3/files](./python3/files).
 
 The reason for this splitting, is purely to offer a way for some people to package Python in as-minimal-as-possible-and-still-runable way, and also to be somewhat maintainable when packaging. A standard Python installation can take ~20-30 MBs of disk, which can be somewhat big for some people, so there is the `python3-base` package which brings that down to ~5 MBs. This seems to be good enough (and interesting) for a number of people.
 
 The Python interpreter is structured like this:
 * `python3-base`, which is just the minimal package to startup Python and run basic commands
 * `python3` is a meta-package, which installs almost everything (python3-base [plus] Python library [minus] some unit-tests & some windows-y things)
-* `python3-light` is `python3` [minus] packages that are in [lang/python/python3/files](lang/python/python3/files) ; the size of this package may be sensible (and interesting) to another group of people
+* `python3-light` is `python3` [minus] packages that are in [lang/python/python3/files](./python3/files) ; the size of this package may be sensible (and interesting) to another group of people
 
 All other Python packages (aside from the intepreter) typically use these files:
 * **python3-host.mk** - this file contains paths and build rules for running the Python interpreter on the host-side; they also provide paths to host interprete, host Python lib-dir & so on
 * **python3-package.mk**
   * includes **python3-host.mk**
-  * contains all the default build rules for Python packages; these will be detailed below in the [Building a Python package](#Building a Python package) section
+  * contains all the default build rules for Python packages; these will be detailed below in the [Building a Python package](#building-a-python-package) section
 
 **Note** that Python packages don't need to use these files (i.e. `python3-package.mk` & `python3-host.mk`), but they do provide some ease-of-use & reduction of duplicate code. And they do contain some learned-lessons about packaging Python packages, so it's a good idea to use them.
 
@@ -211,7 +211,7 @@ Aside from other libraries and programs, every Python package will depend on at 
 
   * `python3` is useful if many (more than three) Python standard library packages are needed.
 
-* Python standard library packages: As noted above, many parts of the Python standard library are packaged separate from the Python interpreter. These packages are defined by the files in [lang/python/python3/files](lang/python/python3/files).
+* Python standard library packages: As noted above, many parts of the Python standard library are packaged separate from the Python interpreter. These packages are defined by the files in [lang/python/python3/files](./python3/files).
 
   To find out which of these separate standard library packages are necessary, after completing a draft Makefile (including the `$(eval ...)` lines described in the next section), run `make` with the `configure` target and `PY3=stdlib V=s` in the command line. For example:
 
