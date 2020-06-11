@@ -128,8 +128,6 @@ All other Python packages (aside from the intepreter) typically use these files:
 
 ## Building a Python package
 
-Packaging for Python uses the `VARIANT` mechanism for packaging inside OpenWrt. (#### FIXME: find a link for this later if it exists)
-
 ### Include python3-package.mk
 
 Add this after  `include $(INCLUDE_DIR)/package.mk`
@@ -189,7 +187,6 @@ define Package/python3-lxml
   TITLE:=Pythonic XML processing library
   URL:=https://lxml.de
   DEPENDS:=+python3-light +libxml2 +libxslt +libexslt
-  VARIANT:=python3
 endef
 
 define Package/python3-lxml/description
@@ -199,7 +196,6 @@ endef
 ```
 
 Some considerations here (based on the example above):
-* `VARIANT=python3` must be added
 * typically the package is named `Package/python3-<something>` ; this convention makes things easier to follow, though it could work without naming things this way
 * `TITLE` can be something a bit more verbose/neat ; typically the name is short as seen above
 
@@ -334,7 +330,7 @@ endef
 
 ### Host-side Python packages for build
 
-These can be installed via pip and ideally they should only be installed like this, because it's a bit simpler than running them through the OpenWrt build system. Build variants on the host-side build are more complicated (and nearly impossible to do sanely) in the current OpenWrt build system.
+These can be installed via pip and ideally they should only be installed like this, because it's a bit simpler than running them through the OpenWrt build system.
 
 Which is why [for example] if you need python cffi on the host build, it's easier to just add it via:
 ```
