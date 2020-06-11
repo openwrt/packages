@@ -8,10 +8,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=minizip
 PKG_VERSION:=2.9.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
-PKG_SOURCE:=$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/nmoinvaz/minizip/archive/
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/nmoinvaz/minizip/tar.gz/$(PKG_VERSION)?
 PKG_HASH:=f64b2d228a03673a8ec36a53402e2108437226fd9170d49b7f0c0bca94708b93
 
 PKG_MAINTAINER:=David Woodhouse <dwmw2@infradead.org>
@@ -20,10 +20,15 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_PARALLEL:=1
 
-CMAKE_OPTIONS:=-DINSTALL_INC_DIR=/usr/include/minizip -DMZ_BZIP2=OFF -DBUILD_SHARED_LIBS=ON -DMZ_LIBBSD=OFF
-
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
+
+CMAKE_OPTIONS += \
+	-DINSTALL_INC_DIR=/usr/include/minizip \
+	-DBUILD_SHARED_LIBS=ON \
+	-DMZ_BZIP2=OFF \
+	-DMZ_LIBBSD=OFF
+
 
 define Package/minizip
   TITLE:=Fork of the popular zip manipulation library found in the zlib distribution
