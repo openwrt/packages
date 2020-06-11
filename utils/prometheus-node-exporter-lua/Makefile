@@ -94,6 +94,12 @@ define Package/prometheus-node-exporter-lua-ltq-dsl
   DEPENDS:=prometheus-node-exporter-lua @(PACKAGE_ltq-adsl-app||PACKAGE_ltq-vdsl-app)
 endef
 
+define Package/prometheus-node-exporter-lua-thermal_zone
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (thermal_zone collector)
+  DEPENDS:=prometheus-node-exporter-lua +luci-lib-nixio
+endef
+
 Build/Compile=
 
 define Package/prometheus-node-exporter-lua/install
@@ -164,6 +170,11 @@ define Package/prometheus-node-exporter-lua-ltq-dsl/install
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/ltq-dsl.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
+define Package/prometheus-node-exporter-lua-thermal_zone/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/thermal_zone.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-nat_traffic))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-netstat))
@@ -175,3 +186,4 @@ $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx7))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-textfile))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-openwrt))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-ltq-dsl))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-thermal_zone))
