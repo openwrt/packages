@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kmod
 PKG_VERSION:=20
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/kernel/kmod/
@@ -32,6 +32,12 @@ define Package/kmod/Default
   TITLE:=Linux kernel module handling
   URL:=https://www.kernel.org/pub/linux/utils/kernel/kmod/
   DEPENDS:=+zlib
+endef
+
+
+define Package/kmod
+$(call Package/kmod/Default)
+  TITLE+= (tools)
   ALTERNATIVES:=\
     200:/sbin/depmod:/sbin/kmod \
     200:/sbin/insmod:/sbin/kmod \
@@ -39,12 +45,6 @@ define Package/kmod/Default
     200:/sbin/modinfo:/sbin/kmod \
     200:/sbin/modprobe:/sbin/kmod \
     200:/sbin/rmmod:/sbin/kmod
-endef
-
-
-define Package/kmod
-$(call Package/kmod/Default)
-  TITLE+= (tools)
 endef
 
 define Package/kmod/description
