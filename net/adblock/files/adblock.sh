@@ -20,7 +20,7 @@ adb_dnsfilereset=0
 adb_dnsflush=0
 adb_dnstimeout=20
 adb_safesearch=0
-adb_safesearchmod=0
+adb_safesearchmod="disabled"
 adb_report=0
 adb_trigger=""
 adb_triggerdelay=0
@@ -766,16 +766,19 @@ f_list()
 					out_rc="${?}"
 				;;
 				"youtube")
-					if [ "${adb_safesearchmod}" -eq 0 ]
+					if [ "${adb_safesearchmod}" != "disabled" ]
 					then
-						safe_ips="216.239.38.120 2001:4860:4802:32::78"
-						safe_cname="restrict.youtube.com"
-					else
-						safe_ips="216.239.38.119 2001:4860:4802:32::77"
-						safe_cname="restrictmoderate.youtube.com"
+						if [ "${adb_safesearchmod}" == "restrictive" ]
+						then
+							safe_ips="216.239.38.120 2001:4860:4802:32::78"
+							safe_cname="restrict.youtube.com"
+						else # if [ "${adb_safesearchmod}" == "moderate" ]
+							safe_ips="216.239.38.119 2001:4860:4802:32::77"
+							safe_cname="restrictmoderate.youtube.com"
+						fi
+						safe_domains="www.youtube.com m.youtube.com youtubei.googleapis.com youtube.googleapis.com www.youtube-nocookie.com"
+						printf "%s\n" ${safe_domains} > "${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
 					fi
-					safe_domains="www.youtube.com m.youtube.com youtubei.googleapis.com youtube.googleapis.com www.youtube-nocookie.com"
-					printf "%s\n" ${safe_domains} > "${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
 					out_rc="${?}"
 				;;
 			esac

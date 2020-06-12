@@ -169,8 +169,8 @@ Available commands:
 | adb_backup        | 1, enabled                         | set to 0 to disable the backup function                                                        |
 | adb_backupdir     | /tmp                               | path for adblock backups                                                                       |
 | adb_tmpbase       | /tmp                               | path for all adblock related runtime operations, e.g. downloading, sorting, merging etc.       |
-| adb_safesearch    | 0, disabled                        | set to 1 to enforce SafeSearch for google, bing, duckduckgo, yandex, youtube and pixabay       |
-| adb_safesearchmod | 0, disabled                        | set to 1 to enable moderate SafeSearch filters for youtube                                     |
+| adb_safesearch    | 0, disabled                        | set to 1 to enforce SafeSearch for Google, Bing, DuckDuckGo, Yandex, YouTube and Pixabay       |
+| adb_safesearchmod | disabled                           | set to restrictive or moderate to enable SafeSearch filters for YouTube                                     |
 | adb_mail          | 0, disabled                        | set to 1 to enable notification E-Mails in case of a processing errors                         |
 | adb_mailreceiver  | -, not set                         | receiver address for adblock notification E-Mails                                              |
 | adb_mailsender    | no-reply@adblock                   | sender address for adblock notification E-Mails                                                |
