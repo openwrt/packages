@@ -20,6 +20,13 @@
 		"focus": "compilation",
 		"descurl": "https://gitlab.com/andryou/block/-/blob/master/readme.md"
 	},
+	"anti_ad": {
+		"url": "https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-domains.txt",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "L",
+		"focus": "compilation",
+		"descurl": "https://github.com/privacy-protection-tools/anti-AD/blob/master/README.md"
+	},	
 	"anudeep": {
 		"url": "https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt",
 		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
