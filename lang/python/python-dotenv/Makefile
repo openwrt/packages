@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-dotenv
 PKG_VERSION:=0.13.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=python-dotenv
 PKG_HASH:=3b9909bc96b0edc6b01586e1eed05e71174ef4e04c71da5786370cebea53ad74
@@ -21,7 +21,7 @@ define Package/python3-dotenv
   SUBMENU:=Python
   TITLE:=Add .env support to your django/flask apps in development and deployments
   URL:=http://github.com/theskumar/python-dotenv
-  DEPENDS:=+python3-light +python3-click
+  DEPENDS:=+python3-light +python3-logging
   VARIANT:=python3
 endef
 

@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-dockerpty
 PKG_VERSION:=0.4.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=dockerpty
 PKG_HASH:=69a9d69d573a0daa31bcd1c0774eeed5c15c295fe719c61aca550ed1393156ce
@@ -23,7 +23,7 @@ define Package/python3-dockerpty
   SUBMENU:=Python
   TITLE:=Python library to use the pseudo-tty of a docker container
   URL:=https://github.com/d11wtq/dockerpty
-  DEPENDS:=+python3-light +python3-docker +python3-six
+  DEPENDS:=+python3-light +python3-openssl +python3-six
   VARIANT:=python3
 endef
 
