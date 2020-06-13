@@ -4,13 +4,13 @@ A simple DNSMASQ/Unbound-based AdBlocking service for OpenWrt/LEDE Project.
 
 ## Features
 
-- Super-fast due to the nature of supported block lists and parallel downloading/processing of the blacklists.
+- Super-fast due to the nature of supported block-lists and parallel downloading/processing of the block-lists.
 - Supports hosts files and domains lists for blocking.
 - Everything is configurable from Web UI.
-- Allows you to easily add your own domains to whitelist or blacklist.
-- Allows you to easily add URLs to your own blocked hosts or domains lists to block/whitelist (just put whitelisted domains one per line in the file you're linking).
+- Allows you to easily add your own domains to allow-list or block-list.
+- Allows you to easily add URLs to your own blocked hosts or domains lists to allow/block-list (just put allowed domains one per line in the file you're linking).
 - Supports multiple modes of AdBlocking implementations with DNSMASQ and Unbound.
-- Doesn't stay in memory -- creates the list of blocked domains and then uses DNSMASQ/Unbound and firewall rules to serve NXDOMAIN or 127.0.0.1 reply or to reject access (depending on settings)  for blocked domains.
+- Doesn't stay in memory -- creates the list of blocked domains and then uses DNSMASQ/Unbound and firewall rules to serve NXDOMAIN or 127.0.0.1 reply or to reject access (depending on settings) for blocked domains.
 - As some of the default lists are using https, reliably works with either wget/libopenssl,  uclient-fetch/libustream-mbedtls or curl.
 - Very lightweight and easily hackable, the whole script is just one ```/etc/init.d/simple-adblock``` file.
 - Retains the downloaded/sorted AdBlocking list on service stop and reuses it on service start (use ```dl``` command if you want to force re-download of the list).
@@ -19,7 +19,7 @@ A simple DNSMASQ/Unbound-based AdBlocking service for OpenWrt/LEDE Project.
 - Blocks ads inside browsers with [DNS-over-HTTPS proxy](https://en.wikipedia.org/wiki/DNS_over_HTTPS) built-in, like [Mozilla Firefox](https://support.mozilla.org/en-US/kb/firefox-dns-over-https#w_about-dns-over-https) or [Google Chrome/Chromium](https://blog.chromium.org/2019/09/experimenting-with-same-provider-dns.html) -- with the ```dnsmasq.ipset``` option.
 - Proudly made in Canada, using locally-sourced electrons.
 
-If you want a more robust AdBlocking, supporting free memory detection and complex block lists, supporting IDN, check out ```net/adblock``` on [GitHub](https://github.com/openwrt/packages/tree/master/net/adblock/files)/[jsDelivr](https://cdn.jsdelivr.net/gh/openwrt/packages@master/net/adblock/files/README.md).
+If you want a more robust AdBlocking, supporting free memory detection and complex block-lists, supporting IDN, check out ```net/adblock``` on [GitHub](https://github.com/openwrt/packages/tree/master/net/adblock/files)/[jsDelivr](https://cdn.jsdelivr.net/gh/openwrt/packages@master/net/adblock/files/README.md).
 
 ## Screenshots (luci-app-simple-adblock)
 
@@ -35,9 +35,9 @@ Configuration - Advanced Configuration
 
 ![screenshot](https://cdn.jsdelivr.net/gh/stangri/openwrt_packages@master/screenshots/simple-adblock/screenshot08-config-advanced.png "Configuration - Advanced Configuration")
 
-Whitelist and Blocklist Management
+Allowed and Blocked Lists Management
 
-![screenshot](https://cdn.jsdelivr.net/gh/stangri/openwrt_packages@master/screenshots/simple-adblock/screenshot08-lists.png "Whitelist and Blocklist Management")
+![screenshot](https://cdn.jsdelivr.net/gh/stangri/openwrt_packages@master/screenshots/simple-adblock/screenshot09-lists.png "Allow-list and Block-list Management")
 
 ## Requirements
 
@@ -51,7 +51,7 @@ opkg install uclient-fetch libustream-mbedtls ca-bundle ca-certificates; fi
 
 ### Requirements for file:// Scheme
 
-If you want to include some local files as the blocklists or whitelists, you need to install ```curl```:
+If you want to include some local files as the allow-lists or block-lists, you need to install ```curl```:
 
 ```sh
 opkg update; opkg install curl;
@@ -76,9 +76,9 @@ For IPv6 support additionally install ```ip6tables-mod-nat``` and ```kmod-ipt-na
 opkg update; opkg install ip6tables-mod-nat kmod-ipt-nat6;
 ```
 
-### Requirements for Faster Blocklist Processing
+### Requirements for Faster Block-list Processing
 
-The ```coreutils-sort``` is an optional, but recommended package as it speeds up sorting and removing duplicates from the merged list dramatically. If opkg complains that it can't install ```coreutils-sort``` because /usr/bin/sort is already provided by busybox, you can run the following command: 
+The ```coreutils-sort``` is an optional, but recommended package as it speeds up sorting and removing duplicates from the merged list dramatically. If opkg complains that it can't install ```coreutils-sort``` because /usr/bin/sort is already provided by busybox, you can run the following command:
 
 ```sh
 opkg --force-overwrite install coreutils-sort
@@ -110,11 +110,11 @@ You can use Web UI (found in Services/Simple AdBlock) to add/remove/edit links t
 
 - [hosts files](https://en.wikipedia.org/wiki/Hosts_(file)) (127.0.0.1 or 0.0.0.0 followed by space and domain name per line) to be blocked.
 - domains lists (one domain name per line) to be blocked.
-- domains lists (one domain name per line) to be whitelisted. It is useful if you want to run ```simple-adblock``` on multiple routers and maintain one centralized whitelist which you can publish on a web-server.
+- domains lists (one domain name per line) to be allowed. It is useful if you want to run ```simple-adblock``` on multiple routers and maintain one centralized allow-list which you can publish on a web-server.
 
-Please note that these lists **must** include either ```http://``` or ```https://``` (or, if ```curl``` is installed the ```file://```) prefix. Some of the top block lists (both hosts files and domains lists) suitable for routers with at least 8MB RAM are used in the default ```simple-adblock``` installation.
+Please note that these lists **must** include either ```http://``` or ```https://``` (or, if ```curl``` is installed the ```file://```) prefix. Some of the top block-lists (both hosts files and domains lists) suitable for routers with at least 8MB RAM are used in the default ```simple-adblock``` installation.
 
-You can also use Web UI to add individual domains to be blocked or whitelisted.
+You can also use Web UI to add individual domains to be blocked or allowed.
 
 If you want to use CLI to customize ```simple-adblock``` config, refer to the [Customization Settings](#customization-settings) section.
 
@@ -146,10 +146,11 @@ In the Web UI the ```simple-adblock``` settings are split into ```basic``` and `
 |Advanced|debug|boolean|0|If enabled, output service full debug to ```/tmp/simple-adblock.log```. Please note that the debug file may clog up the router's RAM on some devices. Use with caution.|
 |Advanced|allow_non_ascii|boolean|0|Enable support for non-ASCII characters in the final AdBlocking file. Only enable if your target service supports non-ASCII characters. If you enable this on the system where DNS resolver doesn't support non-ASCII characters, it will crash. Use with caution.|
 |Advanced|compressed_cache|boolean|0|Create compressed cache of the AdBlocking file in router's persistent memory. Only recommended to be used on routers with large ROM and/or routers with metered/flaky internet connection.|
-||whitelist_domain|list/string||List of white-listed domains.|
-||whitelist_domains_url|list/string||List of URL(s) to text files containing white-listed domains. **Must** include either ```http://``` or ```https://``` (or, if ```curl``` is installed the ```file://```) prefix. Useful if you want to keep/publish a single white-list for multiple routers.|
-||blacklist_domains_url|list/string||List of URL(s) to text files containing black-listed domains. **Must** include either ```http://``` or ```https://``` (or, if ```curl``` is installed the ```file://```) prefix.|
-||blacklist_hosts_url|list/string||List of URL(s) to [hosts files](https://en.wikipedia.org/wiki/Hosts_(file)) containing black-listed domains. **Must** include either ```http://``` or ```https://``` (or, if ```curl``` is installed the ```file://```) prefix.|
+||allowed_domain|list/string||List of allowed domains.|
+||allowed_domains_url|list/string||List of URL(s) to text files containing allowed domains. **Must** include either ```http://``` or ```https://``` (or, if ```curl``` is installed the ```file://```) prefix. Useful if you want to keep/publish a single allow-list for multiple routers.|
+||blocked_domain|list/string||List of blocked domains.|
+||blocked_domains_url|list/string||List of URL(s) to text files containing blocked domains. **Must** include either ```http://``` or ```https://``` (or, if ```curl``` is installed the ```file://```) prefix.|
+||blocked_hosts_url|list/string||List of URL(s) to [hosts files](https://en.wikipedia.org/wiki/Hosts_(file)) containing block-listed domains. **Must** include either ```http://``` or ```https://``` (or, if ```curl``` is installed the ```file://```) prefix.|
 
 ### DNS Resolution Option
 
@@ -165,11 +166,11 @@ Currently supported options are:
 
 ## How Does It Work
 
-This service downloads (and processes in the background, removing comments and other useless data) lists of hosts and domains to be blocked, combines those lists into one big block list, removes duplicates and sorts it and then removes your whitelisted domains from the block list before converting to to DNSMASQ/Unbound-compatible file and restarting DNSMASQ/Unbound if needed. The result of the process is that DNSMASQ/Unbound return NXDOMAIN or 127.0.0.1 (depending on settings) for the blocked domains.
+This service downloads (and processes in the background, removing comments and other useless data) lists of hosts and domains to be blocked, combines those lists into one big block-list, removes duplicates and sorts it and then removes your allowed domains from the block-list before converting to to DNSMASQ/Unbound-compatible file and restarting DNSMASQ/Unbound if needed. The result of the process is that DNSMASQ/Unbound return NXDOMAIN or 127.0.0.1 (depending on settings) for the blocked domains.
 
-If you specify ```google.com``` as a domain to be whitelisted, you will have access to ```google.com```, ```www.google.com```, ```analytics.google.com```, but not fake domains like ```email-google.com``` or ```drive.google.com.verify.signin.normandeassociation.com``` for example. If you only want to allow ```www.google.com``` while blocking all other ```google.com``` subdomains, just specify ```www.google.com``` as domain to be whitelisted.
+If you specify ```google.com``` as a domain to be allowed, you will have access to ```google.com```, ```www.google.com```, ```analytics.google.com```, but not fake domains like ```email-google.com``` or ```drive.google.com.verify.signin.normandeassociation.com``` for example. If you only want to allow ```www.google.com``` while blocking all other ```google.com``` subdomains, just specify ```www.google.com``` as domain to be allowed.
 
-In general, whatever domain is specified to be whitelisted; it, along with with its subdomains will be whitelisted, but not any fake domains containing it.
+In general, whatever domain is specified to be allowed; it, along with with its subdomains will be allowed, but not any fake domains containing it.
 
 ## How It Does Not Work
 
