@@ -353,9 +353,10 @@ mwan3_set_general_iptables()
 					-j RETURN
 				# do not mangle outgoing echo request
 				$IPT6 -A mwan3_hook \
-				      -m set --match-set mwan3_source_v6 src \
-				      -p ipv6-icmp -m icmp6 --icmpv6-type 128 \
-				      -j RETURN
+					-m set --match-set mwan3_source_v6 src \
+					-p ipv6-icmp \
+					-m icmp6 --icmpv6-type 128 \
+					-j RETURN
 
 			fi
 			$IPT -A mwan3_hook \
@@ -880,8 +881,8 @@ mwan3_set_sticky_iptables()
 
 mwan3_set_user_iptables_rule()
 {
-	local ipset family proto policy src_ip src_port sticky dest_ip
-	local dest_port use_policy timeout rule policy IPT
+	local ipset family proto policy src_ip src_port src_iface src_dev
+	local sticky dest_ip dest_port use_policy timeout rule policy IPT
 	local global_logging rule_logging loglevel
 
 	rule="$1"
