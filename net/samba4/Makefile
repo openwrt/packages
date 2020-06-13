@@ -2,7 +2,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.11.6
+PKG_VERSION:=4.11.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -13,7 +13,7 @@ PKG_SOURCE_URL:= \
 		http://www.nic.funet.fi/index/samba/pub/samba/stable/ \
 		http://samba.mirror.bit.nl/samba/ftp/stable/ \
 		https://download.samba.org/pub/samba/stable/
-PKG_HASH:=91438f4d7b71f673421435fa7f26b03b613f214139636ce50af35bc2ff09ef38
+PKG_HASH:=ad8cef354cf3f3a8835b04c896906b839270bee763d941db52af037ab5ec8dcc
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-3.0-only
@@ -21,8 +21,8 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:samba:samba
 
 # samba4=(asn1_compile,compile_et) rpcsvc-proto=(rpcgen)
-HOST_BUILD_DEPENDS:=python3/host perl/host
-PKG_BUILD_DEPENDS:=samba4/host libtasn1/host rpcsvc-proto/host
+HOST_BUILD_DEPENDS:=python3/host rpcsvc-proto/host perl/host
+PKG_BUILD_DEPENDS:=samba4/host libtasn1/host
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_SAMBA4_SERVER_NETBIOS \
@@ -33,12 +33,13 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_kmod-fs-btrfs \
 	CONFIG_PACKAGE_kmod-fs-xfs
 
+PYTHON3_PKG_BUILD:=0
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/version.mk
 include ../../lang/python/python3-host.mk
-#include ../../lang/python/python-package.mk
 include ../../lang/python/python3-package.mk
 
 define Package/samba4/Default
