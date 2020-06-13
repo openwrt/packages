@@ -50,6 +50,8 @@ smb_header() {
 		printf "\n######### Dynamic written config options #########\n"
 		if [ "$DISABLE_NETBIOS" -eq 1 ] || [ ! -x /usr/sbin/nmbd ]; then
 			printf "\tdisable netbios = yes\n"
+			# note: samba opens port 139 even if netbios is disabled via option above, so adjust listening ports
+			printf "\tsmb ports = 445\n"
 		fi
 
 		if [ "$DISABLE_ASYNC_IO" -eq 1 ]; then
