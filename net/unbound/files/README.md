@@ -65,6 +65,8 @@ In this case, Unbound serves your local network directly for all purposes. It wi
 **/etc/config/unbound**:
 ```
 config unbound
+  # likely you want to match domain option between Unbound and dnsmasq
+  option domain 'yourdomain'
   option dhcp_link 'dnsmasq'
   option listen_port '53'
   ...
@@ -259,7 +261,7 @@ config unbound
     Boolean. If enabled version.server, version.bind, id.server, and
     hostname.bind queries are refused.
 
-  option interface_auto '0'
+  option interface_auto '1'
     Boolean. If enabled DNS replies will have the same source address as
     the request was sent to.
 

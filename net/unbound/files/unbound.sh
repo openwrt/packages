@@ -36,7 +36,7 @@ UB_B_NTP_BOOT=1
 UB_B_QUERY_MIN=0
 UB_B_QRY_MINST=0
 UB_B_AUTH_ROOT=0
-UB_B_IF_AUTO=0
+UB_B_IF_AUTO=1
 
 UB_D_CONTROL=0
 UB_D_DOMAIN_TYPE=static
@@ -1214,7 +1214,7 @@ unbound_uci() {
   config_get_bool UB_B_LOCL_BLCK  "$cfg" rebind_localhost 0
   config_get_bool UB_B_DNSSEC     "$cfg" validator 0
   config_get_bool UB_B_NTP_BOOT   "$cfg" validator_ntp 1
-  config_get_bool UB_B_IF_AUTO    "$cfg" interface_auto 0
+  config_get_bool UB_B_IF_AUTO    "$cfg" interface_auto 1
 
   config_get UB_IP_DNS64    "$cfg" dns64_prefix "64:ff9b::/96"
 
