@@ -261,7 +261,7 @@ config unbound
     Boolean. If enabled version.server, version.bind, id.server, and
     hostname.bind queries are refused.
 
-  option interface_auto '0'
+  option interface_auto '1'
     Boolean. If enabled DNS replies will have the same source address as
     the request was sent to.
 
