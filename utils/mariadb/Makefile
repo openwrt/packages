@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
 PKG_VERSION:=10.4.13
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := \
@@ -116,13 +116,15 @@ plugin-wsrep_info               := PLUGIN_WSREP_INFO
 
 MARIADB_CLIENT := \
 	mysql \
-	mysql_upgrade \
 	mysqlcheck
 
 MARIADB_CLIENT_EXTRA := \
+	msql2mysql \
 	mysql_find_rows \
+	mysql_plugin \
 	mysql_waitpid \
 	mysqlaccess \
+	mysqlbinlog \
 	mysqldump \
 	mysqlimport \
 	mysqlshow \
@@ -133,6 +135,7 @@ MARIADB_SERVER := \
 	innochecksum \
 	my_print_defaults \
 	mysql_install_db \
+	mysql_upgrade \
 	mysqladmin \
 	mysqld \
 	mysqld_safe
@@ -144,18 +147,15 @@ MARIADB_SERVER_EXTRA := \
 	aria_pack \
 	aria_read_log \
 	mariabackup \
-	msql2mysql \
 	myisam_ftdump \
 	myisamchk \
 	myisamlog \
 	myisampack \
 	mysql_convert_table_format \
 	mysql_fix_extensions \
-	mysql_plugin \
 	mysql_secure_installation \
 	mysql_setpermission \
 	mysql_tzinfo_to_sql \
-	mysqlbinlog \
 	mysqld_multi \
 	mysqld_safe_helper \
 	mysqldumpslow \
