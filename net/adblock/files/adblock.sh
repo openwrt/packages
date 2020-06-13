@@ -11,7 +11,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-adb_ver="4.0.5"
+adb_ver="4.0.6"
 adb_enabled=0
 adb_debug=0
 adb_forcedns=0
@@ -20,6 +20,7 @@ adb_dnsfilereset=0
 adb_dnsflush=0
 adb_dnstimeout=20
 adb_safesearch=0
+adb_safesearchlist=""
 adb_safesearchmod=0
 adb_report=0
 adb_trigger=""
@@ -30,6 +31,7 @@ adb_mailcnt=0
 adb_jail=0
 adb_dns=""
 adb_dnsprefix="adb_list"
+adb_locallist="blacklist whitelist"
 adb_tmpbase="/tmp"
 adb_backupdir="/tmp"
 adb_reportdir="/tmp"
@@ -157,7 +159,13 @@ f_conf()
 		{
 			local option="${1}"
 			local value="${2}"
-			eval "${option}=\"$(printf "%s" "${adb_sources}") ${value}\""
+			if [ "${option}" = "adb_sources" ]
+			then
+				eval "${option}=\"$(printf "%s" "${adb_sources}") ${value}\""
+			elif [ "${option}" = "adb_safesearchlist" ]
+			then
+				eval "${option}=\"$(printf "%s" "${adb_safesearchlist}") ${value}\""
+			fi
 		}
 	}
 	config_load adblock
@@ -921,7 +929,7 @@ f_tld()
 #
 f_switch()
 {
-	local status list entry done="false" mode="${1}"
+	local status entry done="false" mode="${1}"
 
 	json_load_file "${adb_rtfile}" >/dev/null 2>&1
 	json_select "data" >/dev/null 2>&1
@@ -1175,8 +1183,7 @@ f_main()
 
 	# white- and blacklist preparation
 	#
-	list="blacklist whitelist"
-	for entry in ${list}
+	for entry in ${adb_locallist}
 	do
 		( f_list "${entry}" "${entry}" )&
 	done
@@ -1185,8 +1192,11 @@ f_main()
 	#
 	if [ "${adb_safesearch}" -eq 1 ] && [ "${adb_dnssafesearch}" != "0" ]
 	then
-		list="google bing duckduckgo pixabay yandex youtube"
-		for entry in ${list}
+		if [ -z "${adb_safesearchlist}" ]
+		then
+			adb_safesearchlist="google bing duckduckgo pixabay yandex youtube"
+		fi
+		for entry in ${adb_safesearchlist}
 		do
 			( f_list safesearch "${entry}" )&
 		done
