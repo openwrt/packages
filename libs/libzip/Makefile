@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libzip
-PKG_VERSION:=1.6.1
+PKG_VERSION:=1.7.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://libzip.org/download/
-PKG_HASH:=705dac7a671b3f440181481e607b0908129a9cf1ddfcba75d66436c0e7d33641
+PKG_HASH:=a020dc1b17a79faa748e43a05f8605d65e403813e8e97ad3a300a90ddba097ac
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
