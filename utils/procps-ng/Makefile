@@ -38,7 +38,7 @@ PROCPS_APPLETS := \
 # busybox alternatives which is also other distributions like debian and centos
 # are doing
 PROCPS_APPLETS_DIR_bin:=kill ps watch
-procps-applets-dir=$(if $(findstring $(1),$(PROCPS_APPLETS_DIR_bin)),/bin,/usr/bin)
+procps-applets-dir=$(if $(filter $(PROCPS_APPLETS_DIR_bin),$(1)),/bin,/usr/bin)
 
 define Package/procps-ng/Default
   SECTION:=utils
