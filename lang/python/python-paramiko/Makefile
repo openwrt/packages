@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-paramiko
 PKG_VERSION:=2.7.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=paramiko
 PKG_HASH:=920492895db8013f6cc0179293147f830b8c7b21fdfc839b6bad760c27459d9f
@@ -25,7 +25,6 @@ define Package/python3-paramiko
   URL:=https://github.com/paramiko/paramiko/
   DEPENDS:=+python3-light +python3-logging +python3-bcrypt \
 	  +python3-cryptography +python3-openssl +python3-pynacl
-  VARIANT:=python3
 endef
 
 define Package/python3-paramiko/description

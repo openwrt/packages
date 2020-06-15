@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-distro
 PKG_VERSION:=1.5.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=distro
 PKG_HASH:=0e58756ae38fbd8fc3020d54badb8eae17c5b9dcbed388b17bb55b8a5928df92
@@ -22,7 +22,6 @@ define Package/python3-distro
   TITLE:=Distro - an OS platform information API
   URL:=https://github.com/nir0s/distro
   DEPENDS:=+python3-light +python3-logging
-  VARIANT:=python3
 endef
 
 define Package/python3-distro/description

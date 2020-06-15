@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-texttable
 PKG_VERSION:=1.6.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=texttable
 PKG_HASH:=eff3703781fbc7750125f50e10f001195174f13825a92a45e9403037d539b4f4
@@ -22,7 +22,6 @@ define Package/python3-texttable
   TITLE:=Module for creating simple ASCII tables
   URL:=https://github.com/foutaise/texttable/
   DEPENDS:=+python3-light +python3-codecs
-  VARIANT:=python3
 endef
 
 define Package/python3-texttable/description

@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-jsonschema
 PKG_VERSION:=3.2.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=jsonschema
 PKG_HASH:=c8a85b28d377cc7737e46e2d9f2b4f44ee3c0e1deac6bf46ddefc7187d30797a
@@ -25,7 +25,6 @@ define Package/python3-jsonschema
   URL:=https://github.com/Julian/jsonschema
   DEPENDS:=+python3-light +python3-attrs +python3-urllib \
 	  +python3-six +python3-pyrsistent +python3-setuptools
-  VARIANT:=python3
 endef
 
 define Package/python3-jsonschema/description

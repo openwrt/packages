@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-websocket-client
 PKG_VERSION:=0.57.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=websocket_client
 PKG_HASH:=d735b91d6d1692a6a181f2a8c9e0238e5f6373356f561bb9dc4c7af36f452010
@@ -22,7 +22,6 @@ define Package/python3-websocket-client
   TITLE:=WebSocket client for Python. hybi13 is supported
   URL:=https://github.com/websocket-client/websocket-client
   DEPENDS:=+python3-light +python3-logging +python3-openssl +python3-six
-  VARIANT:=python3
 endef
 
 define Package/python3-websocket-client/description
