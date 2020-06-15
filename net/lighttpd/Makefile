@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
 PKG_VERSION:=1.4.55
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.lighttpd.net/lighttpd/releases-1.4.x
@@ -138,6 +138,14 @@ else
 	--without-webdav-props
 endif
 
+ifneq ($(SDK)$(CONFIG_PACKAGE_lighttpd-mod-authn_pam),)
+  CONFIGURE_ARGS+= \
+       --with-pam
+else
+  CONFIGURE_ARGS+= \
+       --without-pam
+endif
+
 define Build/Configure
 $(call Build/Configure/Default)
 	# XXX: override pcre (mis)detection by ./configure when cross-compiling
@@ -209,6 +217,7 @@ $(eval $(call BuildPlugin,authn_file,File-based authentication,lighttpd-mod-auth
 $(eval $(call BuildPlugin,authn_gssapi,Kerberos-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_gssapi:krb5-libs,20))
 $(eval $(call BuildPlugin,authn_ldap,LDAP-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_ldap:libopenldap,20))
 $(eval $(call BuildPlugin,authn_mysql,Mysql-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_mysql:libmysqlclient,20))
+$(eval $(call BuildPlugin,authn_pam,PAM-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_pam:libpam,20))
 
 # Finally, everything else.
 $(eval $(call BuildPlugin,access,Access restrictions,,30))
