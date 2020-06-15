@@ -6,6 +6,7 @@
 LOG="logger -t $(basename "$0")[$$] -p"
 INTERFACE=""
 DEVICE=""
+PING="/bin/ping"
 
 IFDOWN_EVENT=0
 
@@ -109,7 +110,10 @@ main() {
 	local sleep_time=0
 	local turn=0
 	local result
+	local ping_protocol=4
 	local ping_result
+	local ping_result_raw
+	local ping_status
 	local loss=0
 	local latency=0
 
@@ -136,16 +140,21 @@ main() {
 						# https://bugs.openwrt.org/index.php?do=details&task_id=2897
 						# so get the IP address of the interface and use that instead
 						if echo $track_ip | grep -q ':'; then
-							ADDR=$(ip -6 addr ls dev "$DEVICE" | sed -ne '/\/128/d' -e 's/ *inet6 \([^ \/]*\).* scope global.*/\1/p')
+						        ADDR=$(ip -6 addr ls dev "$DEVICE" | sed -ne '/\/128/d' -e 's/ *inet6 \([^ \/]*\).* scope global.*/\1/p' | head -n1)
+							[ -z "$ADDR" ] && ADDR=$(ip -6 addr ls dev "$DEVICE" | sed -ne 's/ *inet6 \([^ \/]*\).* scope global.*/\1/p')
+							ping_protocol=6
 						fi
 						if [ $check_quality -eq 0 ]; then
-							ping -I ${ADDR:-$DEVICE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip &> /dev/null
+							$PING -$ping_protocol -I ${ADDR:-$DEVICE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip &> /dev/null
 							result=$?
 						else
-							ping_result="$(ping -I ${ADDR:-$DEVICE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip | tail -2)"
+							ping_result_raw="$($PING -$ping_protocol -I ${ADDR:-$DEVICE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip 2>/dev/null)"
+							ping_status=$?
+							ping_result=$(echo "$ping_result_raw" | tail -n2)
 							loss="$(echo "$ping_result" | grep "packet loss" |  cut -d "," -f3 | awk '{print $1}' | sed -e 's/%//')"
-							if [ "$loss" -eq 100 ]; then
+							if [ "$ping_status" -ne 0 ] || [ "$loss" -eq 100 ]; then
 								latency=999999
+								loss=100
 							else
 								latency="$(echo "$ping_result" | grep -E 'rtt|round-trip' | cut -d "=" -f2 | cut -d "/" -f2 | cut -d "." -f1)"
 							fi
