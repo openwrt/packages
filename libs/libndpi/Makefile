@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libndpi
-PKG_VERSION:=2.8
+PKG_VERSION:=3.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ntop/nDPI/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=f98def4d0e43818317b20e2887ce500b2d6a5a9c8ddb28cf57ae51caae0f33cc
+PKG_HASH:=6808c8c4495343e67863f4d30bb261c1e2daec5628ae0be257ba2a2dea7ec70a
 PKG_BUILD_DIR:=$(BUILD_DIR)/nDPI-$(PKG_VERSION)
 
-PKG_MAINTAINER:=Banglang Huang <banglang.huang@foxmail.com>
-PKG_LICENSE:=LGPLv3
+PKG_MAINTAINER:=Banglang Huang <banglang.huang@foxmail.com>, Toni Uhlig <matzeton@googlemail.com>
+PKG_LICENSE:=LGPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
@@ -45,10 +45,10 @@ define Build/Prepare
 	$(PKG_UNPACK)
 	$(Build/Patch)
 	mv $(PKG_BUILD_DIR)/configure.seed $(PKG_BUILD_DIR)/configure.ac
-	$(SED) "s/@NDPI_MAJOR@/2/g" \
-		-e "s/@NDPI_MINOR@/8/g" \
+	$(SED) "s/@NDPI_MAJOR@/3/g" \
+		-e "s/@NDPI_MINOR@/2/g" \
 		-e "s/@NDPI_PATCH@/0/g" \
-		-e "s/@NDPI_VERSION_SHORT@/2.8.0/g" \
+		-e "s/@NDPI_VERSION_SHORT@/3.2.0/g" \
 		$(PKG_BUILD_DIR)/configure.ac
 endef
 
