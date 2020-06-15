@@ -99,7 +99,7 @@ globals() {
 	local notification_email
 
 	printf '%bscript_user root\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
-	printf '%benabled_script_security\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+	printf '%benable_script_security\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
 
 	config_get notification_email "$1" notification_email
 	print_list_indent notification_email
