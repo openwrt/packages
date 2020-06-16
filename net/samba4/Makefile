@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
 PKG_VERSION:=4.12.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -354,13 +354,7 @@ define Build/Configure
 	echo 'Checking uname release type: "$(LINUX_VERSION)"' >> $(PKG_BUILD_DIR)/cross-answers.txt
 	echo 'Checking uname version type: "$(VERSION_DIST) Linux-$(LINUX_VERSION) $(shell date +%Y-%m-%d)"' >> $(PKG_BUILD_DIR)/cross-answers.txt
 	# NOTE: special answers for freeBSD/CircleCI
-	echo 'Checking whether POSIX capabilities are available: OK' >> $(PKG_BUILD_DIR)/cross-answers.txt
 	echo 'checking for clnt_create(): OK' >> $(PKG_BUILD_DIR)/cross-answers.txt
-	# HACK: need to update WAF/qemu values (set to NO for now)
-	echo 'Checking value of GNUTLS_CIPHER_AES_128_CFB8: NO' >> $(PKG_BUILD_DIR)/cross-answers.txt
-	echo 'Checking value of GNUTLS_MAC_AES_CMAC_128: NO' >> $(PKG_BUILD_DIR)/cross-answers.txt
-	echo 'Checking whether fcntl supports flags to send direct I/O availability signals: NO' >> $(PKG_BUILD_DIR)/cross-answers.txt
-	echo 'Checking whether fcntl supports setting/geting hints: NO' >> $(PKG_BUILD_DIR)/cross-answers.txt
 	$(call Build/Configure/Default)
 endef
 
