@@ -1,34 +1,41 @@
---- a/src/configure
-+++ b/src/configure
-@@ -3676,7 +3676,7 @@ fi
- done
- 
- 
--for ac_header in fcntl.h sys/dlpi.h sys/ioctl.h sys/time.h syslog.h unistd.h net/if_arp.h netinet/if_ether.h getopt.h sys/uio.h sys/param.h fcntl.h net/bpf.h netpacket/packet.h net/ethernet.h asm/types.h linux/if_packet.h linux/if_ether.h sys/socket.h sys/cdefs.h net/if.h net/if_dl.h net/if_ether.h net/if_types.h netinet/if_ether.h net/if_types.h net/if_dl.h
-+for ac_header in fcntl.h sys/dlpi.h sys/ioctl.h sys/time.h syslog.h unistd.h net/if_arp.h getopt.h sys/uio.h sys/param.h fcntl.h net/bpf.h netpacket/packet.h asm/types.h linux/if_packet.h linux/if_ether.h sys/socket.h sys/cdefs.h net/if.h net/if_dl.h net/if_types.h net/if_types.h net/if_dl.h
- do :
-   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
- ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
 --- a/src/if.c
 +++ b/src/if.c
-@@ -30,10 +30,6 @@ static char const RCSID[] =
+@@ -33,9 +33,9 @@
  #include <linux/if_packet.h>
  #endif
  
 -#ifdef HAVE_NET_ETHERNET_H
 -#include <net/ethernet.h>
 -#endif
--
++//#ifdef HAVE_NET_ETHERNET_H
++//#include <net/ethernet.h>
++//#endif
+ 
  #ifdef HAVE_ASM_TYPES_H
  #include <asm/types.h>
- #endif
 --- a/src/plugin.c
 +++ b/src/plugin.c
-@@ -49,7 +49,6 @@ static char const RCSID[] =
+@@ -52,7 +52,7 @@
  #include <unistd.h>
  #include <fcntl.h>
  #include <signal.h>
 -#include <net/ethernet.h>
++//#include <net/ethernet.h>
  #include <net/if_arp.h>
  #include <linux/ppp_defs.h>
  #include <linux/if_pppox.h>
+--- a/src/pppoe.h
++++ b/src/pppoe.h
+@@ -129,9 +129,9 @@ typedef unsigned long UINT32_t;
+ #ifdef HAVE_SYS_SOCKET_H
+ #include <sys/socket.h>
+ #endif
+-#ifndef HAVE_SYS_DLPI_H
+-#include <netinet/if_ether.h>
+-#endif
++//#ifndef HAVE_SYS_DLPI_H
++//#include <netinet/if_ether.h>
++//#endif
+ #endif
+ 
+ 
