@@ -41,7 +41,11 @@ transmission() {
 
 	local enabled
 	config_get_bool enabled "$cfg" enabled 0
-	[ "$enabled" -gt 0 ] || return 1
+	[ "$enabled" -gt 0 ] || {
+		echo "Transmission not enabled. Please enable in /etc/config/transmission"
+		logger -t "transmission" -p "daemon.info" "Transmission not enabled. Please enable in /etc/config/transmission"
+		return 1
+	}
 
 	local config_dir
 	config_get config_dir "$cfg" 'config_dir' '/var/etc/transmission'
