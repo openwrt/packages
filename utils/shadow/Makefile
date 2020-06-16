@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadow
 PKG_VERSION:=4.8.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/shadow-maint/shadow/releases/download/$(PKG_VERSION)
@@ -41,7 +41,7 @@ CONFIGURE_ARGS += \
 	--without-attr \
 	--without-tcb \
 	--without-nscd \
-	--with-bcrypt
+	--with$(if $(CONFIG_MUSL_DISABLE_CRYPT_SIZE_HACK),,out)-bcrypt
 
 CONFIGURE_VARS += \
 	ac_cv_func_ruserok=no
