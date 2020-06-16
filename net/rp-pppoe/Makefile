@@ -8,16 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rp-pppoe
-PKG_VERSION:=3.12
-PKG_RELEASE:=7
-PKG_LICENSE:=LGPL-2.0-or-later
-PKG_CPE_ID:=cpe:/a:roaring_penguin:pppoe
+PKG_VERSION:=3.14
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://roaringpenguin.com/files/download
-PKG_HASH:=00794e04031546b0e9b8cf286f2a6d1ccfc4a621b2a3abb2d7ef2a7ab7cc86c2
+PKG_SOURCE_URL:=https://dianne.skoll.ca/projects/rp-pppoe/download
+PKG_HASH:=7825232f64ab4d618ef074d62d145ae43d6edc91b9a718c6130a4742bac40e2a
+
+PKG_MAINTAINER:=
+PKG_LICENSE:=LGPL-2.0-or-later
+PKG_LICENSE_FILES:=doc/LICENSE
+PKG_CPE_ID:=cpe:/a:roaring_penguin:pppoe
 
 PKG_BUILD_DEPENDS:=ppp
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -25,7 +29,7 @@ define Package/rp-pppoe/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=PPPoE (PPP over Ethernet)
-  URL:=http://roaringpenguin.com/products/pppoe
+  URL:=https://dianne.skoll.ca/projects/rp-pppoe/
   SUBMENU:=Dial-in/up
 endef
 
@@ -99,7 +103,7 @@ $(call Package/rp-pppoe/Default/description)
  This package contains pppoe-sniff.
 endef
 
-TARGET_CFLAGS += -I$(PKG_BUILD_DIR)/src/libevent -isystem $(PKG_BUILD_DIR)/missing-headers
+TARGET_CFLAGS += -I$(PKG_BUILD_DIR)/src/libevent -isystem $(PKG_BUILD_DIR)/missing-headers -D_BSD_SOURCE
 CONFIGURE_PATH := ./src
 CONFIGURE_ARGS += ac_cv_path_PPPD=/usr/sbin/pppd --enable-plugin=$(STAGING_DIR)/usr/include/
 MAKE_FLAGS := DESTDIR="$(PKG_INSTALL_DIR)" PLUGIN_PATH=rp-pppoe.so install
