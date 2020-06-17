@@ -106,7 +106,6 @@ COLLECTD_PLUGINS_DISABLED:= \
 	tape \
 	tokyotyrant \
 	turbostat \
-	ubi \
 	uuid \
 	varnish \
 	virt \
@@ -190,6 +189,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	ted \
 	thermal \
 	threshold \
+	ubi \
 	unixsock \
 	uptime \
 	users \
@@ -453,6 +453,7 @@ $(eval $(call BuildPlugin,ted,The Energy Detective input,ted,))
 $(eval $(call BuildPlugin,tcpconns,TCP connection tracking input,tcpconns,))
 $(eval $(call BuildPlugin,thermal,system temperatures input,thermal,))
 $(eval $(call BuildPlugin,threshold,Notifications and thresholds,threshold,))
+$(eval $(call BuildPlugin,ubi,Unsorted block images,ubi,@NAND_SUPPORT))
 $(eval $(call BuildPlugin,unixsock,unix socket output,unixsock,))
 $(eval $(call BuildPlugin,uptime,uptime status input,uptime,))
 $(eval $(call BuildPlugin,users,user logged in status input,users,))
