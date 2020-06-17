@@ -185,6 +185,11 @@ config globals 'globals'
 #	option IgnoreSelected '0'
 #	list Device ''
 
+#config plugin 'ubi'
+#	option enable '0'
+#	list  Device 'ubi0'
+#	option IgnoreSelected '0'
+
 #config plugin 'unixsock'
 #	option enable '0'
 #	option SocketFile '/var/run/collectd/query.sock'
