@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openssh
 PKG_VERSION:=8.2p1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
@@ -149,7 +149,7 @@ define Package/openssh-sftp-avahi-service/conffiles
 /etc/avahi/services/sftp-ssh.service
 endef
 
-CONFIGURE_ARGS+= \
+CONFIGURE_ARGS += \
 	$(DISABLE_NLS) \
 	--sysconfdir=/etc/ssh \
 	--with-privsep-user=sshd \
@@ -166,7 +166,9 @@ CONFIGURE_ARGS+= \
 	--disable-wtmpx \
 	--without-bsd-auth \
 	--without-kerberos5 \
-	--without-x
+	--without-x \
+	--with-stackprotect \
+	--with$(if $(CONFIG_OPENSSL_ENGINE),,out)-ssl-engine
 
 ifeq ($(BUILD_VARIANT),with-pam)
 CONFIGURE_ARGS += \
@@ -174,16 +176,6 @@ CONFIGURE_ARGS += \
 else
 CONFIGURE_ARGS += \
 	--without-pam
-endif
-
-ifeq ($(CONFIG_OPENSSL_ENGINE),y)
-CONFIGURE_ARGS+= \
-	--with-ssl-engine
-endif
-
-ifneq ($(CONFIG_SSP_SUPPORT),y)
-CONFIGURE_ARGS += \
-	--without-stackprotect
 endif
 
 CONFIGURE_VARS += LD="$(TARGET_CC)"
