@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
 PKG_VERSION:=7.1.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/haiwen/seafile-server/tar.gz/v$(PKG_VERSION)-server?
@@ -134,10 +134,6 @@ CONFIGURE_ARGS += \
 
 CONFIGURE_VARS += \
 	PYTHON="$(HOST_PYTHON3_BIN)"
-
-ifdef CONFIG_GCC_LIBSSP
-  TARGET_LDFLAGS += -lssp
-endif
 
 define Package/seafile-server/conffiles
 /etc/config/seafile-server
