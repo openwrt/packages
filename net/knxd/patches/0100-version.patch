@@ -5,4 +5,4 @@
 
 -test -d .git || exit
 -git describe --tags
-+echo -n "0.14.38"
++echo -n "0.14.39"
