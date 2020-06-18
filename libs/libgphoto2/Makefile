@@ -9,20 +9,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgphoto2
-PKG_VERSION:=2.5.23
+PKG_VERSION:=2.5.25
 PKG_RELEASE:=1
 PORT_VERSION:=0.12.0
-PKG_MAINTAINER:=Leonardo Medici <leonardo_medici@me.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/gphoto
-PKG_HASH:=d8af23364aa40fd8607f7e073df74e7ace05582f4ba13f1724d12d3c97e8852d
-PKG_LICENSE:=LGPL-2.1
+PKG_HASH:=7c0e98f438c2b128186afe16ce7833a12fa36f87d01467e837b9d27e7a167f3a
+
+PKG_MAINTAINER:=Leonardo Medici <leonardo_medici@me.com>
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
 PKG_LIBTOOL_PATHS:=. libgphoto2_port
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
