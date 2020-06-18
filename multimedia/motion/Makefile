@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=motion
 PKG_VERSION:=4.3.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-release-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/Motion-Project/motion/tar.gz/release-$(PKG_VERSION)?
@@ -31,7 +31,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/motion
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+libjpeg +libpthread +libmicrohttpd $(INTL_DEPENDS)
+  DEPENDS:=+libjpeg +libpthread +libmicrohttpd $(INTL_DEPENDS) +TARGET_bcm27xx:bcm27xx-userland
   TITLE:=webcam motion sensing and logging
   URL:=https://motion-project.github.io/
 endef
@@ -42,15 +42,15 @@ define Package/motion/conffiles
 endef
 
 CONFIGURE_ARGS += \
-	--without-optimizecpu \
+	--without-bktr \
+	--without-webp \
+	--with$(if $(CONFIG_TARGET_bcm27xx),,out)-mmal \
 	--without-ffmpeg \
-	--without-jpeg-mmx \
-	--without-sdl \
+	--without-mariadb \
 	--without-mysql \
 	--without-pgsql \
 	--without-sqlite3 \
-	--without-bktr \
-	--without-webp
+	--without-optimizecpu
 
 define Package/motion/install
 	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
