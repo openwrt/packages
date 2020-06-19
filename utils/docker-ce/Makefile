@@ -49,6 +49,10 @@ define Package/docker-ce
   MENU:=1
 endef
 
+define Package/docker-ce/conffiles
+/etc/config/dockerd
+endef
+
 define Package/docker-ce/description
   Docker Engine is used by millions enables containerized applications
   to run anywhere consistently on any infrastructure.
@@ -122,6 +126,9 @@ define Package/docker-ce/install
 
 	$(INSTALL_DIR) $(1)/etc/docker
 	$(INSTALL_CONF) ./files/daemon.json $(1)/etc/docker/
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/etc/config/dockerd $(1)/etc/config/dockerd
 
 	# Must be after systcl 11-br-netfilter.conf from kmod-br-netfilter
 	$(INSTALL_DIR) $(1)/etc/sysctl.d
