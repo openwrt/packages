@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
 PKG_VERSION:=4.12.3
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -215,7 +215,6 @@ HOST_CONFIGURE_ARGS += \
 HOST_CONFIGURE_ARGS += --disable-avahi --without-quotas --without-acl-support --without-winbind \
 	--without-ad-dc --without-json --without-libarchive --disable-python --nopyc --nopyo \
 	--without-dnsupdate --without-ads --without-ldap --without-ldb-lmdb
-HOST_CONFIGURE_VARS += python_LDFLAGS="" python_LIBDIR=""
 
 # Optional AES-NI support - https://lists.samba.org/archive/samba-technical/2017-September/122738.html
 # Support for Nettle wasn't comitted
@@ -243,16 +242,8 @@ else
 	CONFIGURE_ARGS += --disable-avahi
 endif
 
-CONFIGURE_VARS += \
-	PERL="$(STAGING_DIR_HOSTPKG)/usr/bin/perl$(PERL_VERSION3)"
-
-# NOTE: We need host python-bin, but target python-config here!
-CONFIGURE_VARS += python_LDFLAGS="" python_LIBDIR=""
 ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
 	CONFIGURE_ARGS += --without-winbind --without-ldb-lmdb --with-acl-support
-	CONFIGURE_VARS += \
-		PYTHON="$(HOST_PYTHON3_BIN)" \
-		PYTHON_CONFIG="$(STAGING_DIR)/host/bin/$(PYTHON3)-config"
 else
 	CONFIGURE_ARGS += --without-winbind --without-ads --without-ldap --without-ldb-lmdb --without-ad-dc \
 		--without-json --without-libarchive --disable-python --nopyc --nopyo --without-dnsupdate --without-acl-support
@@ -311,13 +302,19 @@ CONFIGURE_ARGS += --private-libraries=$(SYSTEM_BUNDLED_LIBS)
 export COMPILE_ET=$(STAGING_DIR_HOSTPKG)/bin/compile_et_samba
 export ASN1_COMPILE=$(STAGING_DIR_HOSTPKG)/bin/asn1_compile_samba
 
-# need to find host 'yapp'
+# make sure we use the hostpkg build toolset and we need to find host 'yapp'
 HOST_CONFIGURE_VARS+= \
-	PATH="$(STAGING_DIR_HOSTPKG)/usr/bin:$(PATH)"
+	PATH="$(STAGING_DIR_HOSTPKG)/bin:$(STAGING_DIR_HOSTPKG)/usr/bin:$(PATH)"
 CONFIGURE_VARS += \
-	PATH="$(PATH):$(STAGING_DIR_HOSTPKG)/usr/bin"
- 
-# we dont need GnuTLS/Yapp for the host helpers
+	PATH="$(STAGING_DIR_HOSTPKG)/bin:$(STAGING_DIR_HOSTPKG)/usr/bin:$(PATH)"
+
+# we need hostpkg bin and target config	
+ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
+	CONFIGURE_VARS += \
+		PYTHON_CONFIG="$(STAGING_DIR)/host/bin/$(PYTHON3)-config"
+endif
+
+# we dont need GnuTLS for the host helpers
 define Host/Prepare
 	$(call Host/Prepare/Default)
 	$(SED) 's,mandatory=True,mandatory=False,g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
