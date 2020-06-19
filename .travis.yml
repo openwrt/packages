@@ -3,8 +3,8 @@ git:
   quiet: true
 
 language: c
+os: linux
 dist: focal
-sudo: false
 cache:
   directories:
     - $HOME/sdk
