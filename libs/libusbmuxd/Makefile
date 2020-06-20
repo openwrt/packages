@@ -8,17 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libusbmuxd
-PKG_SOURCE_VERSION:=2.0.1
-PKG_RELEASE:=2
+PKG_VERSION:=2.0.2
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/libimobiledevice/libusbmuxd
-PKG_MIRROR_HASH:=5078125cd4fe8c7294d4f195a8adfd1fc302101daf5d53e4cc242c3097eef8b6
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://www.libimobiledevice.org/downloads
+PKG_HASH:=cc6a808553da4efa9fa5638be256d5ae020498795d9d260d280b87074e799b20
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_CPE_ID:=cpe:/a:libimobiledevice:libusbmuxd
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -67,20 +66,21 @@ define Package/libusbmuxd-utils/description
   This package contains the libusbmuxd utilities.
 endef
 
-TARGET_CFLAGS += $(FPIC)
+CONFIGURE_ARGS += \
+	--disable-static
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libusbmuxd.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libusbmuxd-2.0.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libusbmuxd.pc $(1)/usr/lib/pkgconfig/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libusbmuxd-2.0.pc $(1)/usr/lib/pkgconfig/
 endef
 
 define Package/libusbmuxd/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libusbmuxd.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libusbmuxd-2.0.so.* $(1)/usr/lib/
 endef
 
 define Package/libusbmuxd-utils/install

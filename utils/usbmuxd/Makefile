@@ -8,20 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=usbmuxd
-PKG_SOURCE_DATE:=2020-01-20
-PKG_SOURCE_VERSION:=8a69f1a78a58476f77b66916091d2405d0cd815f
-PKG_RELEASE:=2
+PKG_VERSION:=1.1.1
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=https://github.com/libimobiledevice/usbmuxd
-PKG_MIRROR_HASH:=cf6046fccd1a03d7970618b7ad958ef1437f717cc81af706ddf62c09a1746743
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://www.libimobiledevice.org/downloads
+PKG_HASH:=c0ec9700172bf635ccb5bed98daae607d2925c2bc3597f25706ecd9dfbfd2d9e
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING.GPLv2
 PKG_CPE_ID:=cpe:/a:libimobiledevice:usbmuxd
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
