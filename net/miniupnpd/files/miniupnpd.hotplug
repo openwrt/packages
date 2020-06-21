@@ -12,9 +12,9 @@
 [ "$ACTION" != "ifup" ] && procd_running "miniupnpd" "*" && exit 0
 
 tmpconf="/var/etc/miniupnpd.conf"
-external_iface=$(uci get upnpd.config.external_iface)
-external_iface6=$(uci get upnpd.config.external_iface6)
-external_zone=$(uci get upnpd.config.external_zone)
+external_iface=$(uci -q get upnpd.config.external_iface)
+external_iface6=$(uci -q get upnpd.config.external_iface6)
+external_zone=$(uci -q get upnpd.config.external_zone)
 
 . /lib/functions/network.sh
 
@@ -41,6 +41,6 @@ fi
 
 [ "$DEVICE" != "$ifname" ] && [ "$DEVICE" != "$ifname6" ] && exit 0
 
-grep -q "^ext_ifname=$ifname" "$tmpconf" && grep -q "^ext_ifname6=$ifname6" "$tmpconf" && exit 0
+grep -qs "^ext_ifname=$ifname" "$tmpconf" && grep -qs "^ext_ifname6=$ifname6" "$tmpconf" && exit 0
 
 /etc/init.d/miniupnpd restart
