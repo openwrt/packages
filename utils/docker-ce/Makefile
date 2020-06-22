@@ -1,31 +1,30 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=docker-ce
-PKG_VERSION:=19.03.9
+PKG_VERSION:=19.03.11
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=components/cli/LICENSE components/engine/LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/docker/docker-ce/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f1b9e28e789516b4ba741cc4683c2c088e8c4893e2acbd7ac272a75ddeccc1a1
-PKG_SOURCE_VERSION:=9d988398e7 # SHA1 used within the docker executables
+PKG_HASH:=5821b189056d64ca7961c4c93cfa60c1805d0fbe4a1ea2d57ff2122b3dc61ea1
+PKG_SOURCE_VERSION:=42e35e61f3 # SHA1 used within the docker executables
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
-define CheckExpectedSrcVer
-	$(eval SRC_VER:=$(shell grep --only-matching --perl-regexp '(?<=PKG_SOURCE_VERSION:=)(.*)' $(1)))
-	$(if $(subst $(2),,$(SRC_VER)), \
-		$(error ERROR: Expected $(1) source version '$(2)', found '$(SRC_VER)'), \
-		$(info OK: Expected $(1) source version '$(2)', found '$(SRC_VER)') \
+# $(1) = path to dependent package 'Makefile'
+# $(2) = relevant docker-ce '.installer' file
+define EnsureVendoredVersion
+	( \
+		DEP_VER=$$$$( grep --only-matching --perl-regexp '(?<=PKG_SOURCE_VERSION:=)(.*)' "$(1)" ); \
+		VEN_VER=$$$$( grep --only-matching --perl-regexp '(?<=_COMMIT:=)(.*)(?=})' "$(PKG_BUILD_DIR)/components/engine/hack/dockerfile/install/$(2)" ); \
+		if [ $$$$VEN_VER != $$$$DEP_VER ]; then \
+			echo "ERROR: Expected 'PKG_SOURCE_VERSION:=$$$$VEN_VER' in '$(1)', found 'PKG_SOURCE_VERSION:=$$$$DEP_VER'"; \
+			exit 1; \
+		fi \
 	)
 endef
-
-# values from respective '.installer' files at https://github.com/docker/docker-ce/blob/v$(PKG_VERSION)/components/engine/hack/dockerfile/install/
-$(eval $(call CheckExpectedSrcVer,../containerd/Makefile,7ad184331fa3e55e52b890ea95e65ba581ae3429))
-$(eval $(call CheckExpectedSrcVer,../libnetwork/Makefile,0941c3f409260d5f05cfa6fc68420d8ad45ee483))
-$(eval $(call CheckExpectedSrcVer,../runc/Makefile,dc9208a3303feef5b3839f4323d9beb36df0a9dd))
-$(eval $(call CheckExpectedSrcVer,../tini/Makefile,fec3683b971d9c3ef73f284f176672c44b448662))
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
@@ -53,6 +52,16 @@ endef
 define Package/docker-ce/description
   Docker Engine is used by millions enables containerized applications
   to run anywhere consistently on any infrastructure.
+endef
+
+define Build/Prepare
+	$(Build/Prepare/Default)
+
+	# Verify dependencies are the vendored version
+	$(call EnsureVendoredVersion,../containerd/Makefile,containerd.installer)
+	$(call EnsureVendoredVersion,../libnetwork/Makefile,proxy.installer)
+	$(call EnsureVendoredVersion,../runc/Makefile,runc.installer)
+	$(call EnsureVendoredVersion,../tini/Makefile,tini.installer)
 endef
 
 define Build/Configure
