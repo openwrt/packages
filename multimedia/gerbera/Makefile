@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gerbera
 PKG_VERSION:=1.5.0
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gerbera/gerbera/tar.gz/v$(PKG_VERSION)?
@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/gerbera
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+file +libupnp +libsqlite3 +libexif +libuuid +libfmt $(ICONV_DEPENDS)
+  DEPENDS:=+file +libnpupnp +libsqlite3 +libexif +libuuid +libfmt $(ICONV_DEPENDS)
   TITLE:=A free media server
   URL:=https://gerbera.io
   USERID:=gerbera:gerbera
@@ -64,7 +64,11 @@ CMAKE_OPTIONS += \
 	-DWITH_DEBUG=OFF \
 	-DWITH_TESTS=OFF
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
+TARGET_CFLAGS += \
+	-ffunction-sections \
+	-fdata-sections \
+	-flto \
+	-I$(STAGING_DIR)/usr/include/npupnp/upnp
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 define Package/gerbera/install
