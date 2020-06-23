@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unbound
 PKG_VERSION:=1.10.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nlnetlabs.nl/downloads/unbound
@@ -23,6 +23,13 @@ PKG_CPE_ID:=cpe:/a:nlnetlabs:unbound
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+
+PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_libunbound_dnscrypt \
+	CONFIG_PACKAGE_libunbound_ipset \
+	CONFIG_PACKAGE_libunbound_libevent \
+	CONFIG_PACKAGE_libunbound_libpthread \
+	CONFIG_PACKAGE_libunbound_pythonmodule \
+	CONFIG_PACKAGE_libunbound_subnet
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -38,63 +45,34 @@ endef
 
 define Package/unbound-daemon
   $(call Package/unbound/Default)
-  TITLE+= (daemon, light traffic)
-  DEPENDS+= +libunbound-light
-  VARIANT:=light
+  TITLE+= (daemon)
+  DEPENDS+= +libunbound
 endef
 
 define Package/unbound-daemon/description
-  This package contains the Unbound daemon with basic includes
-  necessary to meet the needs of UCI/LuCI configuration optoins.
+  This package contains the Unbound daemon including 'libevent', 'libmnl', and
+  'libpthread' to better handle large networks with heavy query loads. Options
+  are available under libraries/network/libunbound to custom trim Unbound for
+  smaller targets.
 endef
 
-define Package/unbound-daemon-heavy
-  $(call Package/unbound/Default)
-  TITLE+= (daemon, heavy traffic)
-  URL:=https://nlnetlabs.nl/documentation/unbound/howto-optimise
-  DEPENDS+= +libunbound-heavy +libpthread +libevent2 +libevent2-pthreads +libmnl
-  VARIANT:=heavy
-  PROVIDES:=unbound-daemon
-endef
-
-define Package/unbound-daemon-heavy/description
-  This package contains the Unbound daemon including 'libevent' and
-  'libpthread' to better handle large networks with heavy query loads.
-  It also offers ipset support.
-endef
-
-define Package/libunbound-light
+define Package/libunbound
   $(call Package/unbound/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   SUBMENU:=Networking
-  TITLE+= (library, light traffic)
-  VARIANT:=light
-  PROVIDES:=libunbound
-  DEFAULT_VARIANT:=1
+  TITLE+= (library)
+  DEPENDS+=+PACKAGE_libunbound_dnscrypt:libsodium \
+    +PACKAGE_libunbound_ipset:libmnl \
+    +PACKAGE_libunbound_libevent:libevent2 \
+	+PACKAGE_libunbound_libpthread:libpthread \
+	+PACKAGE_libunbound_pythonmodule:python3-base
 endef
 
-define Package/libunbound-light/description
-  This package contains the Unbound shared library with basic includes
-  necessary to meet the needs of UCI/LuCI configuration options.
-endef
-
-define Package/libunbound-heavy
-  $(call Package/unbound/Default)
-  SECTION:=libs
-  CATEGORY:=Libraries
-  SUBMENU:=Networking
-  TITLE+= (library, heavy traffic)
-  URL:=https://nlnetlabs.nl/documentation/unbound/howto-optimise
-  DEPENDS+= +libpthread +libevent2 +libevent2-pthreads +libmnl
-  VARIANT:=heavy
-  PROVIDES:=libunbound
-endef
-
-define Package/libunbound-heavy/description
-  This package contains the Unbound shared library including 'libevent' and
-  'libpthread' to better handle large networks with heavy query loads. It
-  also offers ipset support.
+define Package/libunbound/description
+  This package contains the Unbound library including 'libevent', 'libmnl', and
+  'libpthread' to better handle large networks with heavy query loads. Options
+  are available to custom trim Unbound for smaller targets.
 endef
 
 define Package/unbound-anchor
@@ -147,6 +125,29 @@ define Package/unbound-host/description
   This package contains the Unbound DNS lookup utility.
 endef
 
+define Package/libunbound/config
+	if PACKAGE_libunbound
+	config PACKAGE_libunbound_dnscrypt
+		bool "Build with DNSCRYPT support."
+		default n
+	config PACKAGE_libunbound_ipset
+		bool "Build with IPSET (libmnl) support."
+		default y
+	config PACKAGE_libunbound_libevent
+		bool "Build with expanded network resource (libevent) support."
+		default y
+	config PACKAGE_libunbound_libpthread
+		bool "Build with POSIX threading (libpthread) support."
+		default y
+	config PACKAGE_libunbound_pythonmodule
+		bool "Build with PYTHON module for prototyping and data analysis."
+		default n
+	config PACKAGE_libunbound_subnet
+		bool "Build with SUBNET cache module support."
+		default n
+	endif
+endef
+
 CONFIGURE_ARGS += \
 	--disable-dsa \
 	--disable-gost \
@@ -159,21 +160,17 @@ CONFIGURE_ARGS += \
 	--with-user=unbound \
 	--with-run-dir=/var/lib/unbound \
 	--with-conf-file=/var/lib/unbound/unbound.conf \
-	--with-pidfile=/var/run/unbound.pid
-
-ifeq ($(BUILD_VARIANT),heavy)
-	CONFIGURE_ARGS += \
-		--enable-ipset \
-		--with-pthreads \
-		--with-libevent="$(STAGING_DIR)/usr" \
-		--with-libmnl="$(STAGING_DIR)/usr" \
-		--enable-event-api
-else
-    CONFIGURE_ARGS += \
-		--without-pthreads \
-		--without-solaris-threads \
-		--without-libevent
-endif
+	--with-pidfile=/var/run/unbound.pid \
+    $(if $(CONFIG_PACKAGE_libunbound_dnscrypt), \
+        --enable-dnscrypt --with-libsodium="$(STAGING_DIR)/usr",) \
+    $(if $(CONFIG_PACKAGE_libunbound_ipset), \
+        --enable-ipset --with-libmnl="$(STAGING_DIR)/usr",) \
+    $(if $(CONFIG_PACKAGE_libunbound_libevent), \
+        --enable-event-api --with-libevent="$(STAGING_DIR)/usr",--without-libevent) \
+    $(if $(CONFIG_PACKAGE_libunbound_libpthread), \
+        --with-pthreads,--without-pthreads --without-solaris-threads) \
+    $(if $(CONFIG_PACKAGE_libunbound_python),--with-pythonmodule,) \
+    $(if $(CONFIG_PACKAGE_libunbound_subnet),--enable-subnet,) \
 
 define Package/unbound-daemon/conffiles
 /etc/config/unbound
@@ -182,14 +179,12 @@ define Package/unbound-daemon/conffiles
 /etc/unbound/unbound_srv.conf
 endef
 
-Package/unbound-daemon-heavy/conffiles = $(Package/unbound-daemon/conffiles)
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libunbound.{so*,a,la} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/include
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/unbound.h $(1)/usr/include/
-ifeq ($(BUILD_VARIANT),heavy)
+ifneq ($(CONFIG_PACKAGE_libunbound_libevent),)
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/unbound-event.h $(1)/usr/include/
 endif
 endef
@@ -221,14 +216,10 @@ define Package/unbound-daemon/install
 	$(INSTALL_DATA) ./files/unbound.sh $(1)/usr/lib/unbound/unbound.sh
 endef
 
-Package/unbound-daemon-heavy/install = $(Package/unbound-daemon/install)
-
-define Package/libunbound-light/install
+define Package/libunbound/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libunbound.so.* $(1)/usr/lib/
 endef
-
-Package/libunbound-heavy/install = $(Package/libunbound-light/install)
 
 define Package/unbound-anchor/install
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -256,9 +247,7 @@ define Package/unbound-host/install
 endef
 
 $(eval $(call BuildPackage,unbound-daemon))
-$(eval $(call BuildPackage,unbound-daemon-heavy))
-$(eval $(call BuildPackage,libunbound-light))
-$(eval $(call BuildPackage,libunbound-heavy))
+$(eval $(call BuildPackage,libunbound))
 $(eval $(call BuildPackage,unbound-anchor))
 $(eval $(call BuildPackage,unbound-checkconf))
 $(eval $(call BuildPackage,unbound-control))

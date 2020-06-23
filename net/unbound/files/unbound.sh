@@ -547,7 +547,7 @@ unbound_zone() {
 ##############################################################################
 
 unbound_conf() {
-  local rt_mem rt_conn rt_buff modulestring domain ifsubnet
+  local rt_mem rt_conn rt_buff modulestring domain ifsubnet moduleopts
 
   {
     # server: for this whole function
@@ -768,7 +768,15 @@ unbound_conf() {
 
 
   # Assembly of module-config: options is tricky; order matters
+  moduleopts="$( /usr/sbin/unbound -V )"
   modulestring="iterator"
+
+
+  case $moduleopts in
+  *with-python*)
+    modulestring="python $modulestring"
+    ;;
+  esac
 
 
   if [ "$UB_B_DNSSEC" -gt 0 ] ; then
@@ -787,6 +795,13 @@ unbound_conf() {
 
     modulestring="validator $modulestring"
   fi
+
+
+  case $moduleopts in
+  *enable-subnet*)
+    modulestring="subnetcache $modulestring"
+    ;;
+  esac
 
 
   if [ "$UB_B_DNS64" -gt 0 ] ; then
