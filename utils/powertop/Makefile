@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=powertop
 PKG_VERSION:=2.10
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://01.org/sites/default/files/downloads/
@@ -39,13 +39,10 @@ define Package/powertop/description
  and power management.
 endef
 
-TARGET_CFLAGS += $(FPIC)
-ifeq ($(CONFIG_USE_UCLIBC),y)
-TARGET_CFLAGS += -fno-stack-protector
-endif
-TARGET_LDFLAGS += $(if $(INTL_FULL),-lintl)
-
-CONFIGURE_ARGS += --without-pic
+TARGET_LDFLAGS += \
+	$(if $(INTL_FULL),-lintl) \
+	$(if $(CONFIG_USE_GLIBC),-lm) \
+	$(if $(CONFIG_USE_GLIBC),-lpthread)
 
 define Package/powertop/install
 	$(INSTALL_DIR) $(1)/usr/sbin
