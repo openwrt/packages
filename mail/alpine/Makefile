@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alpine
-PKG_VERSION:=2.22
+PKG_VERSION:=2.23
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://alpine.x10host.com/alpine/release/src
-PKG_HASH:=849567c1b6f71fde3aaa1c97cf0577b12a525d9e22c0ea47797c4bf1cd2bbfdb
+PKG_HASH:=793a61215c005b5fcffb48f642f125915276b7ec7827508dd9e83d4c4da91f7b
 
 PKG_MAINTAINER:=Antti Seppälä <a.seppala@gmail.com>
 PKG_LICENSE:=Apache-2.0
