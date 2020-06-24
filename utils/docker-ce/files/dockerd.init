@@ -58,3 +58,36 @@ start_service() {
 	procd_set_param limits nofile="${nofile} ${nofile}"
 	procd_close_instance
 }
+
+ip4tables_remove_nat() {
+	iptables -t nat -D OUTPUT ! -d 127.0.0.0/8 -m addrtype --dst-type LOCAL -j DOCKER
+	iptables -t nat -D PREROUTING -m addrtype --dst-type LOCAL -j DOCKER
+
+	iptables -t nat -F DOCKER
+	iptables -t nat -X DOCKER
+}
+
+ip4tables_remove_filter() {
+	iptables -t filter -D FORWARD -j DOCKER-USER
+	iptables -t filter -D FORWARD -j DOCKER-ISOLATION-STAGE-1
+	iptables -t filter -D FORWARD -o docker0 -j DOCKER
+
+	iptables -t filter -F DOCKER
+	iptables -t filter -F DOCKER-ISOLATION-STAGE-1
+	iptables -t filter -F DOCKER-ISOLATION-STAGE-2
+	iptables -t filter -F DOCKER-USER
+
+	iptables -t filter -X DOCKER
+	iptables -t filter -X DOCKER-ISOLATION-STAGE-1
+	iptables -t filter -X DOCKER-ISOLATION-STAGE-2
+	iptables -t filter -X DOCKER-USER
+}
+
+ip4tables_remove() {
+	ip4tables_remove_nat
+	ip4tables_remove_filter
+}
+
+stop_service() {
+	ip4tables_remove
+}
