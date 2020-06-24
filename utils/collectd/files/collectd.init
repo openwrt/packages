@@ -320,7 +320,7 @@ process_config() {
 	printf "TypesDB \"%s\"\n" "$TypesDB" >> "$COLLECTD_CONF"
 
 	config_get Interval globals Interval 30
-	printf "Interval \"%s\"\n" "$Interval" >> "$COLLECTD_CONF"
+	printf "Interval %s\n" "$Interval" >> "$COLLECTD_CONF"
 
 	config_get ReadThreads globals ReadThreads 2
 	printf "ReadThreads \"%s\"\n" "$ReadThreads" >> "$COLLECTD_CONF"
