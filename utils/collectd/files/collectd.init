@@ -310,10 +310,6 @@ process_config() {
 	config_get BaseDir globals BaseDir "/var/run/collectd"
 	printf "BaseDir \"%s\"\n" "$BaseDir" >> "$COLLECTD_CONF"
 
-	config_get Include globals Include "/tmp/collectd.d"
-	printf "Include \"%s\"\n" "$Include" >> "$COLLECTD_CONF"
-	mkdir -p "$Include"
-
 	config_get PIDFile globals PIDFile "/var/run/collectd.pid"
 	printf "PIDFile \"%s\"\n" "$PIDFile" >> "$COLLECTD_CONF"
 
@@ -324,13 +320,17 @@ process_config() {
 	printf "TypesDB \"%s\"\n" "$TypesDB" >> "$COLLECTD_CONF"
 
 	config_get Interval globals Interval 30
-	printf "Interval \"%s\"\n" "$Interval" >> "$COLLECTD_CONF"
+	printf "Interval %s\n" "$Interval" >> "$COLLECTD_CONF"
 
 	config_get ReadThreads globals ReadThreads 2
 	printf "ReadThreads \"%s\"\n" "$ReadThreads" >> "$COLLECTD_CONF"
 
 	config_get Hostname globals Hostname "$(uname -n)"
 	printf "Hostname \"%s\"\n" "$Hostname" >> "$COLLECTD_CONF"
+
+	config_get Include globals Include "/tmp/collectd.d"
+	printf "Include \"%s\"\n" "$Include" >> "$COLLECTD_CONF"
+	mkdir -p "$Include"
 
 	printf "\n" >> "$COLLECTD_CONF"
 
