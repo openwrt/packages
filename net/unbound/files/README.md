@@ -217,6 +217,11 @@ config unbound
     Level. Same as previous option only this applies to the WAN. WAN are
     inferred by a UCI `config dhcp` entry that contains the 'option ignore 1'.
 
+  option dns_assist 'none'
+    Program Name. Use DNS helpers found on local host and match to their UCI.
+    Only program 'ipset-dns' is supported so far. NSD and Bind might be useful
+    but they don't have UCI to parse.
+
   option dns64 '0'
     Boolean. Enable DNS64 through Unbound in order to bridge networks that are
     IPV6 only and IPV4 only (see RFC6052).
