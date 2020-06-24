@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-ugly
-PKG_VERSION:=1.16.2
+PKG_VERSION:=1.17.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=gst-plugins-ugly-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-ugly
-PKG_HASH:=5500415b865e8b62775d4742cbb9f37146a50caecfc0e7a6fc0160d3c560fbca
+PKG_HASH:=a5e564107120b5b27c48709c5dfdb266737def5b3eb7aaabaddd304d425d8f21
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-ugly-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -113,7 +113,8 @@ MESON_ARGS += \
 	-Dtests=disabled \
 	-Dgobject-cast-checks=disabled \
 	-Dglib-asserts=disabled \
-	-Dglib-checks=disabled
+	-Dglib-checks=disabled \
+	-Ddoc=disabled
 
 define Package/gst1-plugins-ugly/install
 	/bin/true
