@@ -1,0 +1,22 @@
+--- a/irqbalance.h
++++ b/irqbalance.h
+@@ -158,7 +158,7 @@ extern unsigned int log_mask;
+ #endif /* HAVE_LIBSYSTEMD */
+ 
+ #define SOCKET_PATH "irqbalance"
+-#define SOCKET_TMPFS "/run/irqbalance/"
++#define SOCKET_TMPFS "/var/run/irqbalance/"
+ 
+ #endif /* __INCLUDE_GUARD_IRQBALANCE_H_ */
+ 
+--- a/ui/irqbalance-ui.h
++++ b/ui/irqbalance-ui.h
+@@ -8,7 +8,7 @@
+ #include <glib-unix.h>
+ 
+ #define SOCKET_PATH "irqbalance"
+-#define SOCKET_TMPFS "/run/irqbalance"
++#define SOCKET_TMPFS "/var/run/irqbalance"
+ 
+ #define STATS "stats"
+ #define SET_SLEEP "settings sleep "
