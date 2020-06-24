@@ -1,0 +1,47 @@
+--- a/src/ubi.c
++++ b/src/ubi.c
+@@ -70,13 +70,13 @@ static int ubi_config(const char *key, c
+ } /* int ubi_config */
+ 
+ static void ubi_submit(const char *dev_name, const char *type,
+-                       counter_t value) {
++                       gauge_t value) {
+   value_list_t vl = VALUE_LIST_INIT;
+ 
+   if (ignorelist_match(ignorelist, dev_name) != 0)
+     return;
+ 
+-  vl.values = &(value_t){.counter = value};
++  vl.values = &(value_t){.gauge = value};
+   vl.values_len = 1;
+   sstrncpy(vl.plugin, PLUGIN_NAME, sizeof(vl.plugin));
+   sstrncpy(vl.type_instance, dev_name, sizeof(vl.type_instance));
+@@ -107,7 +107,7 @@ static int ubi_read_dev_attr(const char
+     return -1;
+   }
+ 
+-  ubi_submit(dev_name, attr, (counter_t)val);
++  ubi_submit(dev_name, attr, (gauge_t)val);
+ 
+   return 0;
+ } /* int ubi_read_dev_attr */
+--- a/src/types.db
++++ b/src/types.db
+@@ -7,7 +7,7 @@ apache_scoreboard       value:GAUGE:0:65
+ ath_nodes               value:GAUGE:0:65535
+ ath_stat                value:DERIVE:0:U
+ backends                value:GAUGE:0:65535
+-bad_peb_count           value:COUNTER:0:U
++bad_peb_count           value:GAUGE:0:U
+ bitrate                 value:GAUGE:0:4294967295
+ blocked_clients         value:GAUGE:0:U
+ bucket                  value:GAUGE:0:U
+@@ -140,7 +140,7 @@ job_stats               value:DERIVE:0:U
+ latency                 value:GAUGE:0:U
+ links                   value:GAUGE:0:U
+ load                    shortterm:GAUGE:0:5000, midterm:GAUGE:0:5000, longterm:GAUGE:0:5000
+-max_ec                  value:COUNTER:0:U
++max_ec                  value:GAUGE:0:U
+ media                   value:GAUGE:0:18446744073709551615
+ memory_bandwidth        value:DERIVE:0:U
+ md_disks                value:GAUGE:0:U
