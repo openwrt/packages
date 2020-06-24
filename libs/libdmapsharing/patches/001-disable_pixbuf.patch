@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -117,18 +117,7 @@ dnl make GOBJECT_CFLAGS and GOBJECT_LIBS
+@@ -126,18 +126,7 @@ dnl make GOBJECT_CFLAGS and GOBJECT_LIBS
  AC_SUBST(GOBJECT_CFLAGS)
  AC_SUBST(GOBJECT_LIBS)
  
