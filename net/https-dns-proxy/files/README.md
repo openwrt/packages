@@ -1,6 +1,6 @@
 # DNS Over HTTPS Proxy (https-dns-proxy)
 
-A lean RFC8484-compatible (no JSON API support) DNS-over-HTTPS (DoH) proxy service which supports DoH servers ran by AdGuard, CleanBrowsing, Cloudflare, Google, ODVR (nic.cz) and Quad9. Please see the [README](https://github.com/stangri/openwrt_packages/blob/master/https-dns-proxy/files/README.md) for further information. Based on [@aarond10](https://github.com/aarond10)'s [https-dns-proxy](https://github.com/aarond10/https_dns_proxy).
+A lean RFC8484-compatible (no JSON API support) DNS-over-HTTPS (DoH) proxy service which supports DoH servers ran by AdGuard, CleanBrowsing, Cloudflare, Google, ODVR (nic.cz) and Quad9. Based on [@aarond10](https://github.com/aarond10)'s [https-dns-proxy](https://github.com/aarond10/https_dns_proxy).
 
 ## Features
 
@@ -11,7 +11,7 @@ A lean RFC8484-compatible (no JSON API support) DNS-over-HTTPS (DoH) proxy servi
 
 ## Screenshots (luci-app-https-dns-proxy)
 
-![screenshot](https://raw.githubusercontent.com/stangri/openwrt_packages/master/screenshots/https-dns-proxy/screenshot01.png "https-dns-proxy screenshot")
+![screenshot](https://cdn.jsdelivr.net/gh/stangri/openwrt_packages@master/screenshots/https-dns-proxy/screenshot01.png "https-dns-proxy screenshot")
 
 ## Requirements
 
@@ -78,7 +78,6 @@ The https-dns-proxy instance settings are:
 |Parameter|Type|Default|Description|
 | --- | --- | --- | --- |
 |bootstrap_dns|IP Address||The non-encrypted DNS servers to be used to resolve the DoH server name on start.|
-|edns_subnet|Subnet||EDNS Subnet address can be supplied to supported DoH servers to provide local resolution results.|
 |listen_addr|IP Address|127.0.0.1|The local IP address to listen to requests.|
 |listen_port|port|5053 and up|If this setting is omitted, the service will start the first https-dns-proxy instance on port 5053, second on 5054 and so on.|
 |logfile|Full filepath||Full filepath to the file to log the instance events to.|
