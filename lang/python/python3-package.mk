@@ -5,6 +5,9 @@
 # See /LICENSE for more information.
 #
 
+# Do not build python packages parallel
+PKG_BUILD_PARALLEL:=0
+
 # Note: include this file after `include $(TOPDIR)/rules.mk in your package Makefile
 
 python3_mk_path:=$(dir $(lastword $(MAKEFILE_LIST)))
