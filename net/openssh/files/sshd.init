@@ -38,7 +38,7 @@ shutdown() {
 	# kill active clients
 	for pid in $(pidof sshd)
 	do
-		[ "$pid" == "$$" ] && continue
+		[ "$pid" = "$$" ] && continue
 		[ -e "/proc/$pid/stat" ] && kill $pid
 	done
 }

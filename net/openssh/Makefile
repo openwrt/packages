@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openssh
-PKG_VERSION:=8.2p1
-PKG_RELEASE:=4
+PKG_VERSION:=8.3p1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
 		https://ftp.spline.de/pub/OpenBSD/OpenSSH/portable/
-PKG_HASH:=43925151e6cf6cee1450190c0e9af4dc36b41c12737619edff8bcebdff64e671
+PKG_HASH:=f2befbe0472fe7eb75d23340eb17531cb6b3aac24075e2066b41f814e12387b2
 
 PKG_LICENSE:=BSD ISC
 PKG_LICENSE_FILES:=LICENCE
@@ -150,13 +150,9 @@ define Package/openssh-sftp-avahi-service/conffiles
 endef
 
 CONFIGURE_ARGS += \
-	$(DISABLE_NLS) \
 	--sysconfdir=/etc/ssh \
 	--with-privsep-user=sshd \
 	--with-privsep-path=/var/empty \
-	--enable-shared \
-	--disable-static \
-	--disable-debug \
 	--disable-strip \
 	--disable-etc-default-login \
 	--disable-lastlog \
@@ -166,7 +162,6 @@ CONFIGURE_ARGS += \
 	--disable-wtmpx \
 	--without-bsd-auth \
 	--without-kerberos5 \
-	--without-x \
 	--with-stackprotect \
 	--with$(if $(CONFIG_OPENSSL_ENGINE),,out)-ssl-engine
 
