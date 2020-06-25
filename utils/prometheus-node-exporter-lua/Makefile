@@ -4,8 +4,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
-PKG_VERSION:=2020.02.03
-PKG_RELEASE:=2
+PKG_VERSION:=2020.05.23
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -94,6 +94,12 @@ define Package/prometheus-node-exporter-lua-ltq-dsl
   DEPENDS:=prometheus-node-exporter-lua @(PACKAGE_ltq-adsl-app||PACKAGE_ltq-vdsl-app)
 endef
 
+define Package/prometheus-node-exporter-lua-dnsmasq
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (dnsmasq collector)
+  DEPENDS:=prometheus-node-exporter-lua +libubus-lua
+endef
+
 Build/Compile=
 
 define Package/prometheus-node-exporter-lua/install
@@ -164,6 +170,11 @@ define Package/prometheus-node-exporter-lua-ltq-dsl/install
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/ltq-dsl.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
+define Package/prometheus-node-exporter-lua-dnsmasq/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/dnsmasq.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-nat_traffic))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-netstat))
@@ -175,3 +186,4 @@ $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx7))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-textfile))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-openwrt))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-ltq-dsl))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-dnsmasq))
