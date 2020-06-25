@@ -42,7 +42,6 @@ start_instance() {
 	append_parm "$cfg" 'resolver_url' '-r'
 	append_parm "$cfg" 'user' '-u' 'nobody'
 	append_parm "$cfg" 'group' '-g' 'nogroup'
-	append_parm "$cfg" 'edns_subnet' '-e'
 	append_parm "$cfg" 'proxy_server' '-t'
 	append_parm "$cfg" 'logfile' '-l'
 	append_bool "$cfg" 'use_http1' '-x'
