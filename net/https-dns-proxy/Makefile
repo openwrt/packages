@@ -26,10 +26,6 @@ define Package/https-dns-proxy
 	CONFLICTS:=https_dns_proxy
 endef
 
-define Package/https-dns-proxy/conffiles
-/etc/config/https-dns-proxy
-endef
-
 define Package/https-dns-proxy/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d ${1}/etc/config
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/https_dns_proxy $(1)/usr/sbin/https-dns-proxy
