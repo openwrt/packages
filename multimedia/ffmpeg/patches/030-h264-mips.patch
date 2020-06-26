@@ -6,9 +6,9 @@
  
 +#ifndef __mips16
  #define get_cabac_inline get_cabac_inline_mips
- static av_always_inline int get_cabac_inline(CABACContext *c,
+ static av_always_inline int get_cabac_inline_mips(CABACContext *c,
                                               uint8_t * const state){
-@@ -116,4 +117,5 @@ static av_always_inline int get_cabac_inline(CABACContext *c,
+@@ -116,4 +117,5 @@ static av_always_inline int get_cabac_inline_mips(CABACContext *c,
      return bit;
  }
  
