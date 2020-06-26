@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpam
-PKG_VERSION:=1.3.1
+PKG_VERSION:=1.4.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=Linux-PAM-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/linux-pam/linux-pam/releases/download/v$(PKG_VERSION)
-PKG_HASH:=eff47a4ecd833fbf18de9686632a70ee8d0794b79aecb217ebd0ce11db4cd0db
+PKG_HASH:=cd6d928c51e64139be3bdb38692c68183a509b83d4f2c221024ccd4bcddfd034
 PKG_BUILD_DIR:=$(BUILD_DIR)/Linux-PAM-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
@@ -45,12 +45,16 @@ CONFIGURE_ARGS += \
 	--disable-audit \
 	--disable-cracklib \
 	--disable-db \
-	--disable-prelude \
+	--disable-debug \
+	--disable-doc \
+	--disable-econf \
 	--disable-lckpwdf \
 	--disable-nis \
+	--disable-prelude \
 	--disable-regenerate-docu \
 	--disable-rpath \
 	--disable-selinux \
+	--disable-Werror \
 	--with-gnu-ld \
 	--without-mailspool \
 	--without-xauth
