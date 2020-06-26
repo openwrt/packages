@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=https-dns-proxy
 PKG_VERSION:=2020-04-09
-PKG_RELEASE=2
+PKG_RELEASE=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/aarond10/https_dns_proxy
@@ -24,6 +24,15 @@ define Package/https-dns-proxy
 	TITLE:=DNS Over HTTPS Proxy
 	DEPENDS:=+libcares +libcurl +libev +ca-bundle
 	CONFLICTS:=https_dns_proxy
+endef
+
+define Package/https-dns-proxy/description
+https_dns_proxy is a light-weight DNS<-->HTTPS, non-caching translation proxy for the RFC 8484 DNS-over-HTTPS standard. It receives regular (UDP) DNS requests and issues them via DoH.
+Please see https://github.com/openwrt/packages/blob/master/net/https-dns-proxy/files/README.md for further information.
+endef
+
+define Package/https-dns-proxy/conffiles
+/etc/config/https-dns-proxy
 endef
 
 define Package/https-dns-proxy/install
