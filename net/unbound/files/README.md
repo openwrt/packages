@@ -190,6 +190,11 @@ config zone
   list zone_name '.'
 ```
 
+## Optional Compile Switches
+Unbound can be changed by toggling switches within `make menuconfig` Libraries/Network/libunbound. Disable libevent, libpthread, and ipset to attempt to gain performance and size on small single core targets. These downgrade options are well tested, but they are not needed unless Unbound will not fit. Take care before enabling subnetcache, dnscrypt, and python options. These enhancements are not fully tested within OpenWrt and python is a large dependency. These enhancements are default off and they do not have UCI. You will need to use the files `/etc/unbound/unbound_srv.conf` and `/etc/unbound/unbound_ext.conf` to configure these modules. The `server:` clause line `module: subnetcache validator python iterator` will be filled out if the modules are compiled in.
+
+Note: if you use python, then you will need to manual configure and you cannot use chroot. The scripts are not yet enhanced enough to set up the directory binding.
+
 ## Complete List of UCI Options
 **/etc/config/unbound**:
 ```
@@ -216,6 +221,11 @@ config unbound
   option add_wan_fqdn '0'
     Level. Same as previous option only this applies to the WAN. WAN are
     inferred by a UCI `config dhcp` entry that contains the 'option ignore 1'.
+
+  option dns_assist 'none'
+    Program Name. Use DNS helpers found on local host and match to their UCI.
+    Only program 'ipset-dns' is supported so far. NSD and Bind might be useful
+    but they don't have UCI to parse.
 
   option dns64 '0'
     Boolean. Enable DNS64 through Unbound in order to bridge networks that are
