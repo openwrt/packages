@@ -23,6 +23,13 @@ GO_PKG:=github.com/syncthing/syncthing/
 GO_PKG_BUILD_PKG:=github.com/syncthing/syncthing/cmd/syncthing/
 GO_PKG_INSTALL_EXTRA:=^gui/
 
+GO_PKG_LDFLAGS_X:=\
+	github.com/syncthing/syncthing/lib/build.Version=v$(PKG_VERSION) \
+	github.com/syncthing/syncthing/lib/build.Stamp=$(SOURCE_DATE_EPOCH) \
+	github.com/syncthing/syncthing/lib/build.User=openwrt \
+	github.com/syncthing/syncthing/lib/build.Host=openwrt \
+	github.com/syncthing/syncthing/lib/build.Program=syncthing
+
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
 
@@ -34,13 +41,6 @@ define Package/syncthing
   CATEGORY:=Utilities
   USERID:=syncthing:syncthing
 endef
-
-GO_PKG_LDFLAGS_X:=\
-	github.com/syncthing/syncthing/lib/build.Version=v$(PKG_VERSION) \
-	github.com/syncthing/syncthing/lib/build.Stamp=$(SOURCE_DATE_EPOCH) \
-	github.com/syncthing/syncthing/lib/build.User=openwrt \
-	github.com/syncthing/syncthing/lib/build.Host=openwrt \
-	github.com/syncthing/syncthing/lib/build.Program=syncthing
 
 define Build/Compile
   $(call GoPackage/Build/Compile,-tags noupgrade)
