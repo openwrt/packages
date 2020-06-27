@@ -1,0 +1,59 @@
+name: Test Build
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: ${{ matrix.arch }} build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - x86_64
+          - mips_24kc
+          - arm_cortex-a9_neon
+          - arm_cortex-a9_vfpv3-d16
+          - arc_arc700
+          - aarch64_generic
+          - powerpc_464fp
+          - powerpc_8540
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Determine changed packages
+        run: |
+          PACKAGES="$(git diff --diff-filter=d --name-only origin/master \
+            | grep 'Makefile$' | grep -Ev '/files/|/src/' \
+            | awk -F/ '{ print $(NF-1) }' | tr '\n' ' ')"
+
+          echo "Building $PACKAGES"
+
+          echo "::set-env name=PACKAGES::$PACKAGES"
+
+      - name: Build
+        uses: openwrt/gh-action-sdk@v1
+        env:
+          ARCH: ${{ matrix.arch }}
+          BUILD_LOG: 1
+          IGNORE_ERRORS: ""
+          V: s
+
+      - name: Store packages
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.arch}}-packages
+          path: bin/packages/${{ matrix.arch }}/packages/*.ipk
+
+      - name: Store logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.arch}}-logs
+          path: logs/
+
