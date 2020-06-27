@@ -37,6 +37,7 @@ smb_header() {
 	config_get_bool DISABLE_WINBIND $1 disable_winbind 0
 	config_get_bool DISABLE_ASYNC_IO $1 disable_async_io 0
 	config_get_bool ALLOW_LEGACY_PROTOCOLS $1 allow_legacy_protocols 0
+	config_get_bool ENABLE_EXTRA_TUNING $1 enable_extra_tuning 0
 
 	mkdir -p /var/etc
 	sed -e "s#|NAME|#$hostname#g" \
@@ -48,6 +49,21 @@ smb_header() {
 
 	{
 		printf "\n######### Dynamic written config options #########\n"
+
+		# extra tuning options by community feedback (kinda try&error)
+		if [ "$ENABLE_EXTRA_TUNING" -eq 1 ]; then
+			local socket_opt
+			socket_opt="$(grep -i 'socket options' /etc/samba/smb.conf.template | awk -F'=' '{print $2}' | tr -d '\n')"
+			[ -n "$socket_opt" ] && printf "\tsocket options =%s SO_KEEPALIVE\n" "$socket_opt" # add keepalive, maybe larger buffer? SO_RCVBUF=65536 SO_SNDBUF=65536
+
+			printf "\tmax xmit = 131072\n" # increase smb1 transmit size
+			printf "\tmin receivefile size = 131072\n" # allows zero-copy writes via fs
+			printf "\tfake oplocks = Yes\n" # may corrupt files for simultanous writes to the same files by multiple clients, but might also see big speed boost
+			printf "\tuse sendfile = Yes\n" # enable sendfile, not sure whats with the 2019 bug https://bugzilla.samba.org/show_bug.cgi?id=14095
+			# Removed in 4.12.x in favor of VFS io_uring ; this is per file, so may increase memory useage on many simultanous oplocked files!
+			printf "\twrite cache size = 262144\n" # adds a write cache buffer per file for oplocked files, flushes if size is exhausted
+		fi
+
 		if [ "$DISABLE_NETBIOS" -eq 1 ] || [ ! -x /usr/sbin/nmbd ]; then
 			printf "\tdisable netbios = yes\n"
 			# note: samba opens port 139 even if netbios is disabled via option above, so adjust listening ports
@@ -157,12 +173,14 @@ smb_add_share() {
 
 init_config() {
 	# Create samba dirs
-	[ -d /var/lib/samba ] || mkdir -p /var/lib/samba
-	[ -d /var/cache/samba ] || mkdir -p /var/cache/samba
+	[ -d /var/lib/samba ] || mkdir -m 755 -p /var/lib/samba
+	[ -d /var/cache/samba ] || mkdir -m 755 -p /var/cache/samba
+	[ -d /var/lock ] || mkdir -m 755 -p /var/lock
 	[ -d /var/run/samba ] || mkdir -p /var/run/samba
 	[ -d /var/log/samba ] || mkdir -p /var/log/samba
-	[ -d /var/lock ] || mkdir -p /var/lock
 	chmod 0755 /var/lock
+	chmod 0755 /var/lib/samba
+	chmod 0755 /var/cache/samba
 
 	config_load samba4
 	config_foreach smb_header samba
