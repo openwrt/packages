@@ -8,18 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsync
-PKG_VERSION:=3.1.3
-PKG_RELEASE:=3
+PKG_VERSION:=3.2.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.samba.org/pub/rsync/src
-PKG_HASH:=55cc554efec5fdaad70de921cd5a5eeb6c29a95524c715f3bbf849235b0800c0
+PKG_HASH:=95f2dd62979b500a99b34c1a6453a0787ada0330e4bec7fcffad37b9062d58d3
 
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:rsync:rsync
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -40,35 +41,27 @@ define Package/rsync/config
 endef
 
 CONFIGURE_ARGS += \
-	--with-included-popt=no \
+	--without-included-popt \
 	--disable-debug \
+	--disable-asm \
+	--disable-iconv \
+	--disable-iconv-open \
+	--disable-lz4 \
 	--disable-locale \
+	--disable-md2man \
+	--disable-openssl \
+	--disable-simd \
+	--disable-xxhash \
+	--disable-zstd \
+	--$(if $(CONFIG_RSYNC_xattr),en,dis)able-xattr-support \
+	--$(if $(CONFIG_RSYNC_acl),en,dis)able-acl-support \
+	--with$(if $(CONFIG_RSYNC_zlib),,out)-included-zlib \
+	--$(if $(CONFIG_IPV6),en,dis)able-ipv6
 
-ifeq ($(CONFIG_RSYNC_xattr),y)
-	CONFIGURE_ARGS+= --enable-xattr-support
-else
-	CONFIGURE_ARGS+= --disable-xattr-support
-endif
-
-ifeq ($(CONFIG_RSYNC_acl),y)
-	CONFIGURE_ARGS+= --enable-acl-support
-else
-	CONFIGURE_ARGS+= --disable-acl-support
-endif
-
-ifeq ($(CONFIG_RSYNC_zlib),y)
-	CONFIGURE_ARGS+= --with-included-zlib=no
-else
-	CONFIGURE_ARGS+= --with-included-zlib=yes
-endif
-
-ifeq ($(CONFIG_IPV6),y)
-    TARGET_CFLAGS+= -DINET6
-else
-    CONFIGURE_ARGS+= --disable-ipv6
-endif
-
-CONFIGURE_VARS += rsync_cv_HAVE_GETTIMEOFDAY_TZ=yes
+define Build/Configure
+	$(call Build/Configure/Default)
+	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" reconfigure
+endef
 
 define Package/rsyncd
   SECTION:=net
