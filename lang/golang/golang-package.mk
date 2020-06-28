@@ -115,14 +115,14 @@ GO_PKG_PATH:=/usr/share/gocode
 GO_PKG_BUILD_PKG?=$(strip $(GO_PKG))/...
 
 GO_PKG_WORK_DIR_NAME:=.go_work
-GO_PKG_WORK_DIR:=$(PKG_BUILD_DIR)/$(GO_PKG_WORK_DIR_NAME)
+GO_PKG_WORK_DIR=$(PKG_BUILD_DIR)/$(GO_PKG_WORK_DIR_NAME)
 
-GO_PKG_BUILD_DIR:=$(GO_PKG_WORK_DIR)/build
-GO_PKG_CACHE_DIR:=$(GO_PKG_WORK_DIR)/cache
+GO_PKG_BUILD_DIR=$(GO_PKG_WORK_DIR)/build
+GO_PKG_CACHE_DIR=$(GO_PKG_WORK_DIR)/cache
 
-GO_PKG_BUILD_BIN_DIR:=$(GO_PKG_BUILD_DIR)/bin$(if $(GO_HOST_TARGET_DIFFERENT),/$(GO_OS_ARCH))
+GO_PKG_BUILD_BIN_DIR=$(GO_PKG_BUILD_DIR)/bin$(if $(GO_HOST_TARGET_DIFFERENT),/$(GO_OS_ARCH))
 
-GO_PKG_BUILD_DEPENDS_SRC:=$(STAGING_DIR)$(GO_PKG_PATH)/src
+GO_PKG_BUILD_DEPENDS_SRC=$(STAGING_DIR)$(GO_PKG_PATH)/src
 
 ifdef CONFIG_PKG_ASLR_PIE_ALL
   ifeq ($(strip $(PKG_ASLR_PIE)),1)
@@ -194,37 +194,20 @@ GO_PKG_DEFAULT_LDFLAGS= \
 	-linkmode external \
 	-extldflags '$(patsubst -z%,-Wl$(comma)-z$(comma)%,$(TARGET_LDFLAGS))'
 
-GO_PKG_INSTALL_ARGS= \
-	-v \
-	-trimpath \
-	-ldflags "all=$(GO_PKG_DEFAULT_LDFLAGS)"
-
-ifeq ($(GO_PKG_ENABLE_PIE),1)
-  GO_PKG_INSTALL_ARGS+= -buildmode pie
-endif
-
-ifeq ($(GO_ARCH),arm)
-  GO_PKG_INSTALL_ARGS+= -installsuffix "v$(GO_ARM)"
-
-else ifneq ($(filter $(GO_ARCH),mips mipsle),)
-  GO_PKG_INSTALL_ARGS+= -installsuffix "$(GO_MIPS)"
-
-else ifneq ($(filter $(GO_ARCH),mips64 mips64le),)
-  GO_PKG_INSTALL_ARGS+= -installsuffix "$(GO_MIPS64)"
-
-endif
-
-ifneq ($(strip $(GO_PKG_GCFLAGS)),)
-  GO_PKG_INSTALL_ARGS+= -gcflags "$(GO_PKG_GCFLAGS)"
-endif
-
 GO_PKG_CUSTOM_LDFLAGS= \
 	$(GO_PKG_LDFLAGS) \
 	$(patsubst %,-X %,$(GO_PKG_LDFLAGS_X))
 
-ifneq ($(strip $(GO_PKG_CUSTOM_LDFLAGS)),)
-  GO_PKG_INSTALL_ARGS+= -ldflags "$(GO_PKG_CUSTOM_LDFLAGS) $(GO_PKG_DEFAULT_LDFLAGS)"
-endif
+GO_PKG_INSTALL_ARGS= \
+	-v \
+	-trimpath \
+	-ldflags "all=$(GO_PKG_DEFAULT_LDFLAGS)" \
+	$(if $(filter $(GO_PKG_ENABLE_PIE),1),-buildmode pie) \
+	$(if $(filter $(GO_ARCH),arm),-installsuffix "v$(GO_ARM)") \
+	$(if $(filter $(GO_ARCH),mips mipsle),-installsuffix "$(GO_MIPS)") \
+	$(if $(filter $(GO_ARCH),mips64 mips64le),-installsuffix "$(GO_MIPS64)") \
+	$(if $(GO_PKG_GCFLAGS),-gcflags "$(GO_PKG_GCFLAGS)") \
+	$(if $(GO_PKG_CUSTOM_LDFLAGS),-ldflags "$(GO_PKG_CUSTOM_LDFLAGS) $(GO_PKG_DEFAULT_LDFLAGS)")
 
 # false if directory does not exist
 GoPackage/is_dir_not_empty=$$$$($(FIND) $(1) -maxdepth 0 -type d \! -empty 2>/dev/null)
