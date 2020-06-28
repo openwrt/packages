@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpng
 PKG_VERSION:=1.6.37
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/libpng
@@ -20,11 +20,10 @@ PKG_LICENSE:=Libpng GPL-2.0-or-later BSD-3-Clause
 PKC_LICENSE_FILES:=LICENSE contrib/gregbook/COPYING contrib/gregbook/LICENSE
 PKG_CPE_ID:=cpe:/a:libpng:libpng
 
-PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libpng
   SECTION:=libs
@@ -34,28 +33,26 @@ define Package/libpng
   URL:=http://www.libpng.org/pub/png/libpng.html
 endef
 
-TARGET_CFLAGS += $(FPIC)
+CMAKE_OPTIONS += \
+	-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+	-DPNG_BUILD_ZLIB=ON \
+	-DPNG_SHARED=ON \
+	-DPNG_STATIC=ON \
+	-DPNG_TESTS=OFF \
+	-DPNG_FRAMEWORK=OFF \
+	-DPNG_DEBUG=OFF \
+	-DPNG_HARDWARE_OPTIMIZATIONS=O$(if $(findstring powerpc,$(CONFIG_ARCH)),FF,N) \
+	-Dld-version-script=OFF
 
-CONFIGURE_ARGS += \
-	--enable-shared \
-	--enable-static \
-	$(if $(findstring neon,$(CONFIG_CPU_TYPE))$(findstring aarch64,$(CONFIG_ARCH)), \
-		--enable-hardware-optimizations=yes --enable-arm-neon=yes)
+TARGET_LDFLAGS += -lz
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/libpng{,16}-config $(1)/usr/bin/
+	$(call Build/InstallDev/cmake,$(1))
 	$(SED) \
 		's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
 		$(1)/usr/bin/libpng{,16}-config
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/png{,conf,libconf}.h $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/libpng16 $(1)/usr/include/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpng16.{a,la,so*} $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpng.{a,la,so} $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libpng{,16}.pc $(1)/usr/lib/pkgconfig/
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libpng16.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libpng16.pc
 	$(INSTALL_DIR) $(2)/bin
 	for f in libpng{,16}-config; do \
 		$(LN) ../../usr/bin/$$$$f $(2)/bin/ ; \
