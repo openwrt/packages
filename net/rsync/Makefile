@@ -22,6 +22,7 @@ PKG_CPE_ID:=cpe:/a:rsync:rsync
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -56,6 +57,11 @@ CONFIGURE_ARGS += \
 	--$(if $(CONFIG_RSYNC_acl),en,dis)able-acl-support \
 	--with$(if $(CONFIG_RSYNC_zlib),,out)-included-zlib \
 	--$(if $(CONFIG_IPV6),en,dis)able-ipv6
+
+define Build/Configure
+	$(call Build/Configure/Default)
+	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" reconfigure
+endef
 
 define Package/rsyncd
   SECTION:=net
