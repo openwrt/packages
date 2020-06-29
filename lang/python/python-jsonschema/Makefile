@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-jsonschema
 PKG_VERSION:=3.2.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PYPI_NAME:=jsonschema
 PKG_HASH:=c8a85b28d377cc7737e46e2d9f2b4f44ee3c0e1deac6bf46ddefc7187d30797a
@@ -11,7 +11,8 @@ PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS=setuptools_scm
+PKG_BUILD_PARALLEL:=0
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools_scm
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

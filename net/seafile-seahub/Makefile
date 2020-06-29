@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-seahub
 PKG_VERSION:=7.1.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/haiwen/seahub/tar.gz/v$(PKG_VERSION)-server?
@@ -23,7 +23,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/seahub-$(PKG_VERSION)-server
 
 HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="Django~=1.11"
 
-PKG_BUILD_PARALLEL:=1
+PKG_BUILD_PARALLEL:=0
 PYTHON3_PKG_BUILD:=0
 
 include $(INCLUDE_DIR)/package.mk
