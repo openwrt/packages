@@ -1,0 +1,80 @@
+From 0793c64ee8ebbcea86b7a9dc71c7e28ec08db618 Mon Sep 17 00:00:00 2001
+From: Oliver Jowett <oliver.jowett@flightaware.com>
+Date: Sat, 6 Jun 2020 21:52:04 +0800
+Subject: [PATCH] Clean up linkage of struct Modes to actually make sense.
+
+(how did this work before? But it's been unchanged since at least
+2013..)
+
+Maybe fixes #65
+---
+ dump1090.c | 2 ++
+ dump1090.h | 6 ++++--
+ faup1090.c | 2 ++
+ view1090.c | 3 +++
+ 4 files changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/dump1090.c b/dump1090.c
+index 2b5c4dce..bc1a7bb9 100644
+--- a/dump1090.c
++++ b/dump1090.c
+@@ -51,6 +51,8 @@
+ 
+ #include <stdarg.h>
+ 
++struct _Modes Modes;
++
+ //
+ // ============================= Utility functions ==========================
+ //
+diff --git a/dump1090.h b/dump1090.h
+index 5c7cf73e..1afc3d35 100644
+--- a/dump1090.h
++++ b/dump1090.h
+@@ -295,7 +295,7 @@ struct mag_buf {
+ };
+ 
+ // Program global state
+-struct {                             // Internal state
++struct _Modes {                             // Internal state
+     pthread_t       reader_thread;
+ 
+     pthread_mutex_t data_mutex;      // Mutex to synchronize buffer access
+@@ -397,7 +397,9 @@ struct {                             // Internal state
+     int stats_latest_1min;
+     struct stats stats_5min;
+     struct stats stats_15min;
+-} Modes;
++};
++
++extern struct _Modes Modes;
+ 
+ // The struct we use to store information about a decoded message.
+ struct modesMessage {
+diff --git a/faup1090.c b/faup1090.c
+index cd2be929..cf83db9d 100644
+--- a/faup1090.c
++++ b/faup1090.c
+@@ -49,6 +49,8 @@
+ 
+ #include "dump1090.h"
+ 
++struct _Modes Modes;
++
+ #include <stdarg.h>
+ 
+ void receiverPositionChanged(float lat, float lon, float alt)
+diff --git a/view1090.c b/view1090.c
+index ae925f5e..a8797bb8 100644
+--- a/view1090.c
++++ b/view1090.c
+@@ -28,6 +28,9 @@
+ // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ //
+ #include "dump1090.h"
++
++struct _Modes Modes;
++
+ //
+ // ============================= Utility functions ==========================
+ //
