@@ -332,8 +332,11 @@ These can be installed via pip and ideally they should only be installed like th
 
 Which is why [for example] if you need python cffi on the host build, it's easier to just add it via:
 ```
+PKG_BUILD_PARALLEL:=0
 HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="cffi==$(PKG_VERSION)"
 ```
 [cffi is one of those packages that needs a host-side package installed].
 
 This works reasonably well in the current OpenWrt build system, as binaries get built for this package and get installed in the staging-dir `$(STAGING_DIR)/usr/lib/pythonX.Y/site-packages`.
+
+`PKG_BUILD_PARALLEL:=0` is necessary because installing packages with multiple concurrent pip processes can lead to [errors or unexpected results](https://github.com/pypa/pip/issues/2361).

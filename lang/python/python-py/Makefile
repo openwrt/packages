@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-py
 PKG_VERSION:=1.8.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=py
 PKG_HASH:=5e27081401262157467ad6e7f851b7aa402c5852dbcb3dae06768434de5752aa
@@ -18,11 +18,12 @@ PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
+PKG_BUILD_PARALLEL:=0
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
+
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
-
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
 
 define Package/python3-py
   SUBMENU:=Python

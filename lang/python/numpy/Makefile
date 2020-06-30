@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=numpy
 PKG_VERSION:=1.18.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=34e96e9dae65c4839bd80012023aadd6ee2ccb73ce7fdf3074c62f301e63120b
@@ -20,7 +20,8 @@ PKG_CPE_ID:=cpe:/a:numpy:numpy
 
 # yes, zip... sigh
 PYPI_SOURCE_EXT:=zip
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS="Cython==0.29.19"
+PKG_BUILD_PARALLEL:=0
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="Cython==0.29.19"
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
