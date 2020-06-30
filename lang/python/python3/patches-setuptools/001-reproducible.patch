@@ -5,7 +5,7 @@ Index: b/setuptools/command/easy_install.py
 ===================================================================
 --- a/setuptools/command/easy_install.py
 +++ b/setuptools/command/easy_install.py
-@@ -436,7 +436,7 @@ consider to install to another location,
+@@ -423,7 +423,7 @@ class easy_install(Command):
              for spec in self.args:
                  self.easy_install(spec, not self.no_deps)
              if self.record:
