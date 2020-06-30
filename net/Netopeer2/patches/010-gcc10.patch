@@ -1,0 +1,22 @@
+--- a/cli/commands.h
++++ b/cli/commands.h
+@@ -17,7 +17,7 @@
+ 
+ #include "cli_version.h"
+ 
+-char some_msg[4096];
++static char some_msg[4096];
+ #define INSTRUCTION(format,args...) {snprintf(some_msg,4095,format,##args);printf("\n  %s",some_msg);}
+ #define ERROR(function,format,args...) {snprintf(some_msg,4095,format,##args);fprintf(stderr,"%s: %s\n",function,some_msg);}
+ 
+--- a/src/log.h
++++ b/src/log.h
+@@ -36,7 +36,7 @@ extern uint8_t np2_sr_verbose_level;
+ /**
+  * @brief netopeer2 flag whether to print messages to stderr (only if not daemon).
+  */
+-uint8_t np2_stderr_log;
++extern uint8_t np2_stderr_log;
+ 
+ /**
+  * @brief internal printing function, follows the levels from libnetconf2
