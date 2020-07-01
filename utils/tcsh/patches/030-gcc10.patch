@@ -1,0 +1,22 @@
+From 6974bc35a5cda6eab748e364bd76a860ca66968b Mon Sep 17 00:00:00 2001
+From: zoulasc <christos@zoulas.com>
+Date: Sat, 11 Jan 2020 11:16:51 -0500
+Subject: [PATCH] Remove extra variable definition that cause -fno-common build
+ to fail (Werner Fink)
+
+---
+ tc.sig.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/tc.sig.c b/tc.sig.c
+index 77659ca..576605a 100644
+--- a/tc.sig.c
++++ b/tc.sig.c
+@@ -56,7 +56,6 @@ int alrmcatch_disabled; /* = 0; */
+ int phup_disabled; /* = 0; */
+ int pchild_disabled; /* = 0; */
+ int pintr_disabled; /* = 0; */
+-int handle_interrupt; /* = 0; */
+ 
+ int
+ handle_pending_signals(void)
