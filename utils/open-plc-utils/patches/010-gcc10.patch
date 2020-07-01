@@ -1,0 +1,11 @@
+--- a/plc/plc.h
++++ b/plc/plc.h
+@@ -498,7 +498,7 @@ struct __packed plcproperty
+ 	uint8_t DATA_BUFFER [128];
+ }
+ 
+-plcproperty;
++extern plcproperty;
+ 
+ #ifndef __GNUC__
+ #pragma pack (pop)
