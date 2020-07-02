@@ -36,7 +36,7 @@ proto_openfortivpn_setup() {
 
         [ -n "$iface_name" ] && {
             json_load "$(ifstatus $iface_name)"
-            json_get_var iface_device_name device
+            json_get_var iface_device_name l3_device
             json_get_var iface_device_up up
         }
 
@@ -57,16 +57,6 @@ proto_openfortivpn_setup() {
             proto_notify_error "$config" "failed to resolve server ip for $server"
             proto_setup_failed "$config"
             exit 1
-        }
-
-        [ -n $iface_name ] && {
-            ping -I $iface_device_name -c 1 -w 10 $server_ip > /dev/null 2>&1 || {
-                logger -t "openfortivpn" "$config: failed to ping $server_ip on $iface_device_name"
-                sleep 10
-                proto_notify_error  "$config" "failed to ping $server_ip on $iface_device_name"
-                proto_setup_failed "$config"
-                exit 1
-            }
         }
 
         for ip in $(resolveip -t 10 "$server"); do
