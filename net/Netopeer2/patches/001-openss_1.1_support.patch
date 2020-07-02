@@ -1,6 +1,6 @@
 --- a/cli/commands.c	2020-05-08 16:29:28.284509842 +0300
 +++ b/cli/commands.c	2020-05-08 16:29:38.856397844 +0300
-@@ -1725,7 +1725,7 @@
+@@ -1727,7 +1727,7 @@
      BIO_printf(bio_out, "\n");
  
      BIO_printf(bio_out, "Valid until: ");
