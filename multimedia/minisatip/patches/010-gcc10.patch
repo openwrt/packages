@@ -1,0 +1,43 @@
+From b7a9982022ea54d87d310a041c38c6c69b6e49da Mon Sep 17 00:00:00 2001
+From: Klaas de Waal <klaas@kldo.nl>
+Date: Sun, 17 May 2020 23:00:09 +0200
+Subject: [PATCH] Fix declaration and definition of global variables
+
+Definition of global variable httpc now in utils.c with declaration in utils.h.
+Definition of global variable source_map now in adapter.c with declaration in adapter.h.
+This fixes multiple defined symbol linking errors with linking issue with multiple defined symbols
+in Fedora 32 with gcc version 10.1.1 20200507 (Red Hat 10.1.1-1) (GCC)
+---
+ src/adapter.c | 1 +
+ src/adapter.h | 2 +-
+ src/utils.c   | 2 ++
+ src/utils.h   | 3 ++-
+ 4 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/src/utils.c b/src/utils.c
+index 8c27954..5be35fd 100644
+--- a/src/utils.c
++++ b/src/utils.c
+@@ -63,6 +63,8 @@
+ int MAX_SINFO;
+ char pn[256];
+ 
++Shttp_client *httpc[MAX_HTTPC];
++
+ typedef struct tmpinfo
+ {
+ 	unsigned char enabled;
+diff --git a/src/utils.h b/src/utils.h
+index 6ef1831..efcccfa 100644
+--- a/src/utils.h
++++ b/src/utils.h
+@@ -88,7 +88,8 @@ typedef struct struct_http_client
+ 
+ #define get_httpc(i) ((i >= 0 && i < MAX_HTTPC && httpc[i] && httpc[i]->enabled) ? httpc[i] : NULL)
+ 
+-Shttp_client *httpc[MAX_HTTPC];
++extern Shttp_client *httpc[MAX_HTTPC];
++
+ int http_client(char *url, char *request, void *callback, void *opaque);
+ 
+ unsigned char *getItem(uint32_t key);
