@@ -61,6 +61,7 @@ upnpd() {
 	local upload download log_output port config_file serial_number model_number
 	local use_stun stun_host stun_port uuid notify_interval presentation_url
 	local upnp_lease_file clean_ruleset_threshold clean_ruleset_interval
+	local ipv6_disable
 
 	local enabled
 	config_get_bool enabled config enabled 1
@@ -87,6 +88,7 @@ upnpd() {
 	config_get upnp_lease_file config upnp_lease_file
 	config_get clean_ruleset_threshold config clean_ruleset_threshold
 	config_get clean_ruleset_interval config clean_ruleset_interval
+	config_get ipv6_disable config ipv6_disable 0
 
 	local conf ifname ifname6
 
@@ -139,6 +141,7 @@ upnpd() {
 		upnpd_write_bool system_uptime 1
 		upnpd_write_bool igdv1 0 force_igd_desc_v1
 		upnpd_write_bool use_stun 0 ext_perform_stun
+		upnpd_write_bool ipv6_disable $ipv6_disable
 
 		[ "$use_stun" -eq 0 ] || {
 			[ -n "$stun_host" ] && echo "ext_stun_host=$stun_host"
