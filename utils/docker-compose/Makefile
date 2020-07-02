@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=docker-compose
-PKG_VERSION:=1.26.0
-PKG_RELEASE:=3
+PKG_VERSION:=1.26.2
+PKG_RELEASE:=1
 
 PYPI_NAME:=docker-compose
-PKG_HASH:=7e836102d139aca667d6af53f0f4d942c9459ec24d6dd4f0203d74359b0fd311
+PKG_HASH:=576b0f81d1a1325941b3ce3436efd51f28b9ecd85b10dd6daa7d51793e187b30
 
 PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=Apache-2.0
@@ -37,7 +37,6 @@ define Package/docker-compose
       +python3-openssl \
       +python3-pkg-resources \
       +python3-requests \
-      +python3-six \
       +python3-texttable \
       +python3-websocket-client \
       +python3-yaml
