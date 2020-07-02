@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
 PKG_VERSION:=4.8.24
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_CPE_ID:=cpe:/a:midnight_commander:midnight_commander
