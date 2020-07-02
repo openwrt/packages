@@ -1,6 +1,6 @@
 --- a/miniupnpd.c
 +++ b/miniupnpd.c
-@@ -1727,21 +1727,7 @@ init(int argc, char * * argv, struct runtime_vars * v)
+@@ -1769,21 +1769,7 @@ init(int argc, char * * argv, struct run
  		}
  	}
  

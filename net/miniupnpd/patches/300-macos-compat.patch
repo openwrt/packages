@@ -1,0 +1,36 @@
+--- a/Makefile.linux
++++ b/Makefile.linux
+@@ -94,13 +94,13 @@ $(info please install uuid-dev package /
+ endif # ($(TEST),1)
+ endif # ($(TARGET_OPENWRT,)
+ 
+-GLIBC_VERSION := $(shell ldd --version | head -n 1 | sed 's/^.* //')
+-GLIBC_VERSION_MAJOR = $(shell echo $(GLIBC_VERSION) | cut -f 1 -d . )
+-GLIBC_VERSION_MINOR = $(shell echo $(GLIBC_VERSION) | cut -f 2 -d . )
++#GLIBC_VERSION := $(shell ldd --version | head -n 1 | sed 's/^.* //')
++#GLIBC_VERSION_MAJOR = $(shell echo $(GLIBC_VERSION) | cut -f 1 -d . )
++#GLIBC_VERSION_MINOR = $(shell echo $(GLIBC_VERSION) | cut -f 2 -d . )
+ # clock_gettime() needs -lrt when glibc version < 2.17
+-LDLIBS += $(shell if [ $(GLIBC_VERSION_MAJOR) -lt 2 ] \
+-  || [ \( $(GLIBC_VERSION_MAJOR) -eq 2 \) -a \( $(GLIBC_VERSION_MINOR) -lt 17 \) ] ; \
+-  then echo "-lrt" ; fi )
++#LDLIBS += $(shell if [ $(GLIBC_VERSION_MAJOR) -lt 2 ] \
++#  || [ \( $(GLIBC_VERSION_MAJOR) -eq 2 \) -a \( $(GLIBC_VERSION_MINOR) -lt 17 \) ] ; \
++#  then echo "-lrt" ; fi )
+ 
+ TESTUPNPDESCGENOBJS = testupnpdescgen.o upnpdescgen.o
+ 
+@@ -140,11 +140,11 @@ install:	miniupnpd $(SRCDIR)/miniupnpd.8
+ 	$(INSTALL) $(SRCDIR)/netfilter/ip6tables_init.sh $(DESTDIR)$(ETCINSTALLDIR)
+ 	$(INSTALL) $(SRCDIR)/netfilter/ip6tables_removeall.sh $(DESTDIR)$(ETCINSTALLDIR)
+ 	$(INSTALL) $(SRCDIR)/netfilter/miniupnpd_functions.sh $(DESTDIR)$(ETCINSTALLDIR)
+-	$(INSTALL) --mode=0644 -b $(SRCDIR)/miniupnpd.conf $(DESTDIR)$(ETCINSTALLDIR)
++	$(INSTALL) -m 0644 -b $(SRCDIR)/miniupnpd.conf $(DESTDIR)$(ETCINSTALLDIR)
+ 	$(INSTALL) -d $(DESTDIR)$(PREFIX)/etc/init.d
+ 	$(INSTALL) $(SRCDIR)/linux/miniupnpd.init.d.script $(DESTDIR)$(PREFIX)/etc/init.d/miniupnpd
+ 	$(INSTALL) -d $(DESTDIR)$(MANINSTALLDIR)
+-	$(INSTALL) --mode=0644 $(SRCDIR)/miniupnpd.8 $(DESTDIR)$(MANINSTALLDIR)
++	$(INSTALL) -m 0644 $(SRCDIR)/miniupnpd.8 $(DESTDIR)$(MANINSTALLDIR)
+ 	gzip -f $(DESTDIR)$(MANINSTALLDIR)/miniupnpd.8
+ 
+ # genuuid is using the uuidgen CLI tool which is part of libuuid
