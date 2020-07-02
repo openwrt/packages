@@ -20,7 +20,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/liburing
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=liburing
+  TITLE:=io_uring library
   URL:=https://git.kernel.dk/cgit/liburing
 endef
 
@@ -35,10 +35,6 @@ CONFIGURE_ARGS:=--prefix=$(CONFIGURE_PREFIX) --cc=${TARGET_CC}
 
 ifeq ($(CONFIG_USE_MUSL),y)
 	TARGET_CFLAGS+=-Dloff_t=off_t
-endif
-
-ifeq ($(CONFIG_USE_UCLIBC),y)
-	TARGET_CFLAGS+=-fno-stack-protector
 endif
 
 define Build/Compile
