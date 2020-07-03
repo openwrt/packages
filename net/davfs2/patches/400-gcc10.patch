@@ -1,0 +1,11 @@
+--- a/src/dav_coda.c
++++ b/src/dav_coda.c
+@@ -97,7 +97,7 @@ static unsigned int blocksize;
+ static size_t alignment;
+ 
+ /* Send debug messages to syslog if != 0. */
+-int debug;
++extern int debug;
+ 
+ 
+ /* Private function prototypes */
