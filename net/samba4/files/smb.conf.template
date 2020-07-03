@@ -40,7 +40,7 @@
 	## Set location of smbpasswd ('smbd -b' will show default compiled location)
 	#smb passwd file = /etc/samba/smbpasswd 
 
-	## LAN/WAN options (IPTOS_LOWDELAY TCP_NODELAY) WAN (IPTOS_THROUGHPUT)
+	## LAN (IPTOS_LOWDELAY TCP_NODELAY) WAN (IPTOS_THROUGHPUT) WiFi (SO_KEEPALIVE) try&error for buffer sizes (SO_RCVBUF=65536 SO_SNDBUF=65536)
 	socket options = IPTOS_LOWDELAY TCP_NODELAY
 
 	## If this integer parameter is set to a non-zero value, Samba will read from files asynchronously when the request size is bigger than this value.
@@ -56,7 +56,7 @@
 	#aio write behind = /*.tmp/
 
 	## lower CPU useage if supported and aio is disabled (aio read size = 0 ; aio write size = 0)
-	## currently broken (NOTE: see https://bugzilla.samba.org/show_bug.cgi?id=14095 )
+	## is this still broken? issue is from 2019 (NOTE: see https://bugzilla.samba.org/show_bug.cgi?id=14095 )
 	## (no, yes)
 	#use sendfile = yes
 
