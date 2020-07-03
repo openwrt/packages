@@ -2,8 +2,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.12.3
-PKG_RELEASE:=5
+PKG_VERSION:=4.12.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -13,7 +13,7 @@ PKG_SOURCE_URL:= \
 		http://www.nic.funet.fi/index/samba/pub/samba/stable/ \
 		http://samba.mirror.bit.nl/samba/ftp/stable/ \
 		https://download.samba.org/pub/samba/stable/
-PKG_HASH:=3fadbca4504937820d0d8a34e500a1efdcc35e0c554f05bd0a844916ae528727
+PKG_HASH:=54b41cc6378acae20dd155ba55d78ff171875c2eaa3f05f87b485d3d6891b815
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-3.0-only
@@ -61,7 +61,7 @@ endef
 define Package/samba4-libs
   $(call Package/samba4/Default)
   TITLE+= libs
-  DEPENDS:= +libtirpc +libreadline +libpopt +libcap +zlib +libgnutls +libtasn1 +libuuid +libopenssl +USE_GLIBC:libpthread \
+  DEPENDS:= +libtirpc +libreadline +libpopt +libcap +zlib +libgnutls +libtasn1 +libuuid +libopenssl +libpthread \
 	+PACKAGE_libpam:libpam \
 	+SAMBA4_SERVER_VFS:attr \
 	+SAMBA4_SERVER_VFSX:libaio \
@@ -127,13 +127,15 @@ define Package/samba4-utils/description
   Utilities collection
 endef
 
-TARGET_CFLAGS += $(FPIC) -ffunction-sections -fdata-sections -I$(STAGING_DIR)/usr/include/tirpc
+TARGET_CFLAGS += $(FPIC) -ffunction-sections -fdata-sections
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 # dont mess with sambas private rpath!
 RSTRIP:=:
 
 CONFIGURE_VARS += \
-	CPP="$(TARGET_CROSS)cpp"
+	CPP="$(TARGET_CROSS)cpp" \
+	XSLTPROC=false \
+	WAF_NO_PREFORK=1
 
 CONFIGURE_CMD = ./buildtools/bin/waf
 HOST_CONFIGURE_CMD = ./buildtools/bin/waf
