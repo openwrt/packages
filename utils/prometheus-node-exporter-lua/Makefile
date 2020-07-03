@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
-PKG_VERSION:=2020.06.26
+PKG_VERSION:=2020.07.04
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
@@ -38,6 +38,12 @@ define Package/prometheus-node-exporter-lua-nat_traffic
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (nat_traffic collector)
   DEPENDS:=prometheus-node-exporter-lua
+endef
+
+define Package/prometheus-node-exporter-lua-uci_dhcp_host
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (uci_dhcp_host collector)
+  DEPENDS:=prometheus-node-exporter-lua +libuci-lua
 endef
 
 define Package/prometheus-node-exporter-lua-netstat
@@ -119,6 +125,11 @@ define Package/prometheus-node-exporter-lua-nat_traffic/install
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/nat_traffic.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
+define Package/prometheus-node-exporter-lua-uci_dhcp_host/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/uci_dhcp_host.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
 define Package/prometheus-node-exporter-lua-netstat/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/netstat.lua $(1)/usr/lib/lua/prometheus-collectors/
@@ -167,6 +178,7 @@ endef
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-nat_traffic))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-netstat))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-uci_dhcp_host))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi_stations))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-hostapd_stations))
