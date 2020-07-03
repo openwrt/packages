@@ -2,7 +2,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.11.9
+PKG_VERSION:=4.11.11
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -13,7 +13,7 @@ PKG_SOURCE_URL:= \
 		http://www.nic.funet.fi/index/samba/pub/samba/stable/ \
 		http://samba.mirror.bit.nl/samba/ftp/stable/ \
 		https://download.samba.org/pub/samba/stable/
-PKG_HASH:=ad8cef354cf3f3a8835b04c896906b839270bee763d941db52af037ab5ec8dcc
+PKG_HASH:=457f08a2956534269c784b95cff840250165f1e98f8db725bf64e2fca707ff60
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-3.0-only
@@ -60,7 +60,7 @@ endef
 define Package/samba4-libs
   $(call Package/samba4/Default)
   TITLE+= libs
-  DEPENDS:= +libtirpc +libreadline +libpopt +libcap +zlib +libgnutls +libtasn1 +libuuid +libopenssl +USE_GLIBC:libpthread \
+  DEPENDS:= +libtirpc +libreadline +libpopt +libcap +zlib +libgnutls +libtasn1 +libuuid +libopenssl +libpthread \
 	+PACKAGE_libpam:libpam \
 	+SAMBA4_SERVER_VFS:attr \
 	+SAMBA4_SERVER_VFSX:libaio \
@@ -126,13 +126,15 @@ define Package/samba4-utils/description
   Utilities collection
 endef
 
-TARGET_CFLAGS += $(FPIC) -ffunction-sections -fdata-sections -I$(STAGING_DIR)/usr/include/tirpc
+TARGET_CFLAGS += $(FPIC) -ffunction-sections -fdata-sections
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 # dont mess with sambas private rpath!
 RSTRIP:=:
 
 CONFIGURE_VARS += \
-	CPP="$(TARGET_CROSS)cpp"
+	CPP="$(TARGET_CROSS)cpp" \
+	XSLTPROC=false \
+	WAF_NO_PREFORK=1
 
 CONFIGURE_CMD = ./buildtools/bin/waf
 HOST_CONFIGURE_CMD = ./buildtools/bin/waf
@@ -212,7 +214,6 @@ HOST_CONFIGURE_ARGS += \
 HOST_CONFIGURE_ARGS += --disable-avahi --without-quotas --without-acl-support --without-winbind \
 	--without-ad-dc --without-json --without-libarchive --disable-python --nopyc --nopyo \
 	--without-dnsupdate --without-ads --without-ldap --without-ldb-lmdb
-HOST_CONFIGURE_VARS += python_LDFLAGS="" python_LIBDIR=""
 
 # Optional AES-NI support - https://lists.samba.org/archive/samba-technical/2017-September/122738.html
 # Support for Nettle wasn't comitted
@@ -240,22 +241,17 @@ else
 	CONFIGURE_ARGS += --disable-avahi
 endif
 
-# NOTE: We need host python-bin, but target python-config here!
-CONFIGURE_VARS += python_LDFLAGS="" python_LIBDIR=""
 ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
 	CONFIGURE_ARGS += --without-winbind --without-ldb-lmdb --with-acl-support
-	CONFIGURE_VARS += \
-		PYTHON="$(HOST_PYTHON3_BIN)" \
-		PYTHON_CONFIG="$(STAGING_DIR)/host/bin/$(PYTHON3)-config"
 else
 	CONFIGURE_ARGS += --without-winbind --without-ads --without-ldap --without-ldb-lmdb --without-ad-dc \
 		--without-json --without-libarchive --disable-python --nopyc --nopyo --without-dnsupdate --without-acl-support
 endif
 
 SAMBA4_PDB_MODULES :=pdb_smbpasswd,pdb_tdbsam,
-SAMBA4_AUTH_MODULES :=auth_builtin,auth_sam,auth_unix,auth_script,
+SAMBA4_AUTH_MODULES :=auth_builtin,auth_sam,auth_unix,
 SAMBA4_VFS_MODULES :=vfs_default,
-SAMBA4_VFS_MODULES_SHARED :=
+SAMBA4_VFS_MODULES_SHARED :=auth_script,
 ifeq ($(CONFIG_SAMBA4_SERVER_VFS),y)
 	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_fruit,vfs_shadow_copy2,vfs_recycle,vfs_fake_perms,vfs_readonly,vfs_cap,vfs_offline,vfs_crossrename,vfs_catia,vfs_streams_xattr,vfs_xattr_tdb,vfs_default_quota,
 ifeq ($(CONFIG_PACKAGE_kmod-fs-btrfs),y)
@@ -305,10 +301,23 @@ CONFIGURE_ARGS += --private-libraries=$(SYSTEM_BUNDLED_LIBS)
 export COMPILE_ET=$(STAGING_DIR_HOSTPKG)/bin/compile_et_samba
 export ASN1_COMPILE=$(STAGING_DIR_HOSTPKG)/bin/asn1_compile_samba
 
+# make sure we use the hostpkg build toolset
+HOST_CONFIGURE_VARS+= \
+	PATH="$(STAGING_DIR_HOSTPKG)/bin:$(STAGING_DIR_HOSTPKG)/usr/bin:$(PATH)"
+CONFIGURE_VARS += \
+	PATH="$(STAGING_DIR_HOSTPKG)/bin:$(STAGING_DIR_HOSTPKG)/usr/bin:$(PATH)"
+
+# we need hostpkg bin and target config	
+ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
+	CONFIGURE_VARS += \
+		PYTHON_CONFIG="$(STAGING_DIR)/host/bin/$(PYTHON3)-config"
+endif
+
 # we dont need GnuTLS for the host helpers
 define Host/Prepare
 	$(call Host/Prepare/Default)
 	$(SED) 's,mandatory=True,mandatory=False,g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
+	$(SED) 's,gnutls_version =.*,gnutls_version = gnutls_min_required_version,g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
 endef
 define Host/Compile
 	(cd $(HOST_BUILD_DIR); \
