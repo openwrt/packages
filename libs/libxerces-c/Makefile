@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xerces-c
 PKG_VERSION:=3.2.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@APACHE/xerces/c/3/sources
@@ -19,12 +19,11 @@ PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libxerces-c/Default
   SECTION:=libs
@@ -60,21 +59,20 @@ define Package/libxerces-c-samples/description
   Validating XML parser library for C++ (samples)
 endef
 
-CONFIGURE_ARGS += \
-	--disable-rpath \
-	--enable-msgloader-inmemory \
-	--enable-netaccessor-socket \
-	--enable-transcoder-iconv \
-	--with-pic
-
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+CMAKE_OPTIONS += \
+	-DCMAKE_DISABLE_FIND_PACKAGE_ICU=ON \
+	-Dmessage-loader=inmemory \
+	-Dnetwork-accessor=socket \
+	-Dtranscoder=iconv
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/xercesc/
+	$(INSTALL_DIR) $(1)/usr/include/xercesc
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/xercesc/* $(1)/usr/include/xercesc/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/{*.a,*.so} $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/cmake/XercesC
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/cmake/XercesC/* $(1)/usr/lib/cmake/XercesC
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/xerces-c.pc $(1)/usr/lib/pkgconfig/xerces-c.pc
 endef
 
