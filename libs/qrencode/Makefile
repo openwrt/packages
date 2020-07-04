@@ -17,12 +17,13 @@ PKG_HASH:=c9cb278d3b28dcc36b8d09e8cad51c0eca754eb004cb0247d4703cb4472b58b4
 
 PKG_MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>
 PKG_LICENSE:=LGPL-2.1-or-later
+PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
-PKG_FIXUP:=autoreconf
+PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_qrencode
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libqrencode
   SECTION:=libs
@@ -53,31 +54,23 @@ as a mobile phone with CCD. The capacity of QR Code is up to 7000
 digits or 4000 characters, and is highly robust.
 endef
 
+CMAKE_OPTIONS += \
+	-DCMAKE_DISABLE_FIND_PACKAGE_PNG=ON \
+	-DWITHOUT_PNG=ON \
+	-DWITH_TOOLS=O$(if $(CONFIG_PACKAGE_qrencode),N,FF) \
+	-DWITH_TESTS=OFF \
+	-DBUILD_SHARED_LIBS=ON
 
-CONFIGURE_ARGS+= \
-	--enable-shared \
-	--enable-static \
-	--disable-rpath \
-	--disable-sdltest \
-	--without-tests \
-	--without-png
-
-TARGET_LDFLAGS+= -s
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		$(TARGET_CONFIGURE_OPTS) \
-		CFLAGS="$(TARGET_CFLAGS)" \
-		LDFLAGS="$(TARGET_LDFLAGS)" \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
-		all install
-endef
+TARGET_CFLAGS += -flto
+TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/qrencode.h $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libqrencode.{a,so*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libqrencode.so* $(1)/usr/lib/
 	$(CP) $(PKG_BUILD_DIR)/libqrencode.pc $(1)/usr/lib/pkgconfig/
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libqrencode.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libqrencode.pc
 endef
 
 define Package/libqrencode/install
