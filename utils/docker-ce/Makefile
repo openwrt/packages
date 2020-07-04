@@ -1,15 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=docker-ce
-PKG_VERSION:=19.03.11
+PKG_VERSION:=19.03.12
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=components/cli/LICENSE components/engine/LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/docker/docker-ce/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=5821b189056d64ca7961c4c93cfa60c1805d0fbe4a1ea2d57ff2122b3dc61ea1
-PKG_SOURCE_VERSION:=42e35e61f3 # SHA1 used within the docker executables
+PKG_HASH:=d321f959e41fd9b24c23d95779d30d9ead1120bfddedf157ef5c047cf3d997a1
+PKG_SOURCE_VERSION:=48a66213fe # SHA1 used within the docker executables
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
