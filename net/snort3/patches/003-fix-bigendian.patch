@@ -1,0 +1,43 @@
+--- a/src/codecs/ip/cd_ipv4.cc	2018-08-28 02:01:02.000000000 -0400
++++ b/src/codecs/ip/cd_ipv4.cc	2020-07-04 17:45:57.125755874 -0400
+@@ -358,8 +358,8 @@
+     /* Loopback traffic  - don't use htonl for speed reasons -
+      * s_addr is always in network order */
+ #ifdef WORDS_BIGENDIAN
+-    msb_src = (iph.ip_src >> 24);
+-    msb_dst = (iph.ip_dst >> 24);
++    msb_src = ((*iph).ip_src >> 24);
++    msb_dst = ((*iph).ip_dst >> 24);
+ #else
+     msb_src = (uint8_t)(iph->ip_src & 0xff);
+     msb_dst = (uint8_t)(iph->ip_dst & 0xff);
+--- a/src/network_inspectors/appid/appid_detector.h	2018-08-28 02:01:02.000000000 -0400
++++ b/src/network_inspectors/appid/appid_detector.h	2020-07-04 18:07:24.196714422 -0400
+@@ -52,6 +52,27 @@
+     DETECTOR_TYPE_NOT_SET
+ };
+ 
++#define BYTE_SWAP_16(x) \
++    ((uint16_t)((((uint16_t)(x) & 0xff00) >> 8) | \
++    (((uint16_t)(x) & 0x00ff) << 8)))
++
++#define BYTE_SWAP_32(x) \
++    ((uint32_t)((((uint32_t)(x) & 0xff000000) >> 24) | \
++    (((uint32_t)(x) & 0x00ff0000) >>  8) | \
++    (((uint32_t)(x) & 0x0000ff00) <<  8) | \
++    (((uint32_t)(x) & 0x000000ff) << 24)))
++
++#define BYTE_SWAP_64(x) \
++    ((uint64_t)((((uint64_t)(x) & 0xff00000000000000ULL) >> 56) | \
++    (((uint64_t)(x) & 0x00ff000000000000ULL) >> 40) | \
++    (((uint64_t)(x) & 0x0000ff0000000000ULL) >> 24) | \
++    (((uint64_t)(x) & 0x000000ff00000000ULL) >>  8) | \
++    (((uint64_t)(x) & 0x00000000ff000000ULL) <<  8) | \
++    (((uint64_t)(x) & 0x0000000000ff0000ULL) << 24) | \
++    (((uint64_t)(x) & 0x000000000000ff00ULL) << 40) | \
++    (((uint64_t)(x) & 0x00000000000000ffULL) << 56)))
++
++
+ typedef std::vector<AppRegistryEntry> FlowApplicationInfo;
+ 
+ struct AppIdFlowContentPattern

@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=snort3
 PKG_VERSION:=3.0.0-beta
 PKG_VERSION_SHORT:=3.0.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=snort-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.snort.org/downloads/snortplus/
