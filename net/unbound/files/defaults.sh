@@ -26,7 +26,6 @@ UB_HOST_CONF=$UB_VARDIR/host.conf.tmp
 UB_DHCP_CONF=$UB_VARDIR/dhcp.conf
 UB_ZONE_CONF=$UB_VARDIR/zone.conf.tmp
 UB_CTRL_CONF=$UB_VARDIR/ctrl.conf.tmp
-UB_ASSIST_CONF=$UB_VARDIR/assist.conf.tmp
 UB_SRVMASQ_CONF=$UB_VARDIR/dnsmasq_srv.conf.tmp
 UB_EXTMASQ_CONF=$UB_VARDIR/dnsmasq_ext.conf.tmp
 UB_SRV_CONF=$UB_VARDIR/unbound_srv.conf
