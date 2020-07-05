@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liburcu
 PKG_VERSION:=0.12.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
 PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later MIT
@@ -45,6 +45,8 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/urcu*		$(1)/usr/include/
 	$(INSTALL_DIR)						$(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liburcu*.{a,so*}	$(1)/usr/lib/
+	$(INSTALL_DIR)						$(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc		$(1)/usr/lib/pkgconfig/
 endef
 endif
 
