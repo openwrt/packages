@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpng
 PKG_VERSION:=1.6.37
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/libpng
@@ -41,7 +41,7 @@ CMAKE_OPTIONS += \
 	-DPNG_TESTS=OFF \
 	-DPNG_FRAMEWORK=OFF \
 	-DPNG_DEBUG=OFF \
-	-DPNG_HARDWARE_OPTIMIZATIONS=O$(if $(findstring powerpc,$(CONFIG_ARCH)),FF,N) \
+	-DPNG_HARDWARE_OPTIMIZATIONS=O$(if $(findstring powerpc,$(CONFIG_ARCH))$(findstring mipsel,$(CONFIG_ARCH)),FF,N) \
 	-Dld-version-script=OFF
 
 TARGET_LDFLAGS += -lz
