@@ -1,0 +1,11 @@
+--- a/CMakeLists.txt	2020-07-01 00:06:07.784792469 +0100
++++ b/CMakeLists.txt	2020-07-01 00:07:09.232511018 +0100
+@@ -520,7 +520,7 @@
+   res = strptime(\"20070207111842\", \"%Y%m%d%H%M%S\", &tm);\n
+   if (!res) return 1; return 0; }")
+ 
+-if (HAVE_STRPTIME)
++if (HAVE_STRPTIME AND NOT CMAKE_CROSSCOMPILING)
+   check_c_source_runs("${STRPTIME_TEST_SOURCE}" STRPTIME_WORKS)
+ endif ()
+ 
