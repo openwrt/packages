@@ -8,19 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsync
-PKG_VERSION:=3.2.1
+PKG_VERSION:=3.2.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.samba.org/pub/rsync/src
-PKG_HASH:=95f2dd62979b500a99b34c1a6453a0787ada0330e4bec7fcffad37b9062d58d3
+PKG_HASH:=644bd3841779507665211fd7db8359c8a10670c57e305b4aab61b4e40037afa8
 
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:rsync:rsync
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -40,6 +39,8 @@ define Package/rsync/config
 	source "$(SOURCE)/Config.in"
 endef
 
+TARGET_CFLAGS += $(if $(CONFIG_IPV6),-DINET6,)
+
 CONFIGURE_ARGS += \
 	--without-included-popt \
 	--disable-debug \
@@ -56,12 +57,7 @@ CONFIGURE_ARGS += \
 	--$(if $(CONFIG_RSYNC_xattr),en,dis)able-xattr-support \
 	--$(if $(CONFIG_RSYNC_acl),en,dis)able-acl-support \
 	--with$(if $(CONFIG_RSYNC_zlib),,out)-included-zlib \
-	--$(if $(CONFIG_IPV6),en,dis)able-ipv6
-
-define Build/Configure
-	$(call Build/Configure/Default)
-	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" reconfigure
-endef
+	$(if $(CONFIG_IPV6),,--disable-ipv6)
 
 define Package/rsyncd
   SECTION:=net
