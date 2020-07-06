@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcre
 PKG_VERSION:=8.44
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
@@ -50,6 +50,11 @@ define Package/libpcre16
   TITLE:=A Perl Compatible Regular Expression library (16bit support)
 endef
 
+define Package/libpcre32
+  $(call Package/libpcre/default)
+  TITLE:=A Perl Compatible Regular Expression library (32bit support)
+endef
+
 define Package/libpcrecpp
   $(call Package/libpcre/default)
   TITLE:=C++ wrapper for Perl Compatible Regular Expression library
@@ -62,6 +67,7 @@ CONFIGURE_ARGS += \
 	--enable-utf8 \
 	--enable-unicode-properties \
 	--enable-pcre16 \
+	--enable-pcre32 \
 	$(if $(CONFIG_PCRE_JIT_ENABLED),--enable-jit,--disable-jit) \
 	--with-match-limit-recursion=16000 \
 	$(if $(CONFIG_PACKAGE_libpcrecpp),--enable,--disable)-cpp
@@ -97,6 +103,11 @@ define Package/libpcre16/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpcre16.so* $(1)/usr/lib/
 endef
 
+define Package/libpcre32/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpcre32.so* $(1)/usr/lib/
+endef
+
 define Package/libpcrecpp/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpcrecpp.so.* $(1)/usr/lib/
@@ -104,4 +115,5 @@ endef
 
 $(eval $(call BuildPackage,libpcre))
 $(eval $(call BuildPackage,libpcre16))
+$(eval $(call BuildPackage,libpcre32))
 $(eval $(call BuildPackage,libpcrecpp))
