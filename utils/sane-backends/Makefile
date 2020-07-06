@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sane-backends
 PKG_VERSION:=1.0.30
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://gitlab.com/sane-project/backends/uploads/c3dd60c9e054b5dee1e7b01a7edc98b0
@@ -290,7 +290,7 @@ This package contains the SANE backend for $(2).
   endef
 
   define Package/sane-$(1)/conffiles
-	/etc/sane.d/$(1).conf
+/etc/sane.d/$(1).conf
   endef
 
   $$(eval $$(call BuildPackage,sane-$(1)))
