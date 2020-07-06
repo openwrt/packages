@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=restic-rest-server
 PKG_VERSION:=0.9.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/rest-server-$(PKG_VERSION)
 PKG_SOURCE:=rest-server-$(PKG_VERSION).tar.gz
@@ -31,6 +31,10 @@ define Package/restic-rest-server
   DEPENDS:=$(GO_ARCH_DEPENDS)
   SECTION:=net
   CATEGORY:=Network
+endef
+
+define Package/restic-rest-server/conffiles
+/etc/config/restic-rest-server
 endef
 
 define Package/restic-rest-server/description
