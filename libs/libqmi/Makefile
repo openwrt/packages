@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libqmi
 PKG_VERSION:=1.26.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/libqmi
@@ -22,6 +22,10 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+
+define Package/libqmi/config
+  source "$(SOURCE)/Config.in"
+endef
 
 define Package/libqmi
   SECTION:=libs
@@ -63,6 +67,18 @@ CONFIGURE_ARGS += \
 	--enable-more-warnings=yes \
 	--without-udev \
 	--without-udev-base-dir
+
+ifdef CONFIG_LIBQMI_COLLECTIONS_MINIMAL
+  CONFIGURE_ARGS += --enable-collection=minimal
+endif
+
+ifdef CONFIG_LIBQMI_COLLECTIONS_BASIC
+  CONFIGURE_ARGS += --enable-collection=basic
+endif
+
+ifdef CONFIG_LIBQMI_COLLECTIONS_FULL
+  CONFIGURE_ARGS += --enable-collection=full
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
