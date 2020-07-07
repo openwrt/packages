@@ -1,0 +1,36 @@
+--- a/src/conf.h
++++ b/src/conf.h
+@@ -430,12 +430,12 @@ void clear_trusted_ip_list(void);
+ void del_trusted_ip_list(const char *);
+ 
+ // online clients
+-int 	g_online_clients; // total connected client count
+-char 	*g_version;
+-char	*g_type; // hardware type
+-char	*g_name; // firmware name
+-char	*g_channel_path;
+-char	*g_ssid;
++extern int 	g_online_clients; // total connected client count
++extern char 	*g_version;
++extern char	*g_type; // hardware type
++extern char	*g_name; // firmware name
++extern char	*g_channel_path;
++extern char	*g_ssid;
+ 
+ #define	LOCK_DOMAIN() do { \
+ 	debug(LOG_INFO, "Locking domain"); \
+--- a/src/ping_thread.c
++++ b/src/ping_thread.c
+@@ -43,6 +43,12 @@
+ #include "wd_client.h"
+ 
+ extern time_t started_time;
++int g_online_clients;
++char *g_version;
++char *g_type;
++char *g_name;
++char *g_channel_path;
++char *g_ssid;
+ 
+ static void fw_init_delay();
+ static void ping_work_cb(evutil_socket_t, short, void *);
