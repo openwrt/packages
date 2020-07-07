@@ -17,7 +17,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/gnuplot
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+zlib +libgd
+  DEPENDS:=+zlib +libgd +libncursesw +libreadline
   TITLE:=A portable command-line driven graphing utility
   URL:=http://www.gnuplot.info/
 endef
