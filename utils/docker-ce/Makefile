@@ -124,9 +124,6 @@ define Package/docker-ce/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/dockerd.init $(1)/etc/init.d/dockerd
 
-	$(INSTALL_DIR) $(1)/etc/docker
-	$(INSTALL_CONF) ./files/daemon.json $(1)/etc/docker/
-
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/etc/config/dockerd $(1)/etc/config/dockerd
 
