@@ -14,7 +14,7 @@ PKG_BUGFIX_MAJOR_VERSION:=5
 PKG_BUGFIX_MINOR_VERSION:=.2
 PKG_VERSION:=$(PKG_MAJOR_MINOR_VERSION).$(PKG_BUGFIX_MAJOR_VERSION)$(PKG_BUGFIX_MINOR_VERSION)
 PKG_DIRECTORY:=$(PKG_MAJOR_MINOR_VERSION).$(PKG_BUGFIX_MAJOR_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://shorewall.org/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
 	http://slovakia.shorewall.net/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
@@ -44,7 +44,7 @@ define Package/shorewall-core/description
 endef
 
 define Package/shorewall-core/conffiles
-	/usr/share/shorewall/shorewallrc
+/usr/share/shorewall/shorewallrc
 endef
 
 CONFIGURE_ARGS += \

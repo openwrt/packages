@@ -12,7 +12,7 @@ PKG_NAME:=softethervpn
 PKG_VERSION:=4.29-9680
 PKG_VERREL:=rtm
 PKG_VERDATE:=2019.02.28
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=softether-src-v$(PKG_VERSION)-$(PKG_VERREL).tar.gz
 PKG_SOURCE_URL:=http://www.softether-download.com/files/softether/v$(PKG_VERSION)-$(PKG_VERREL)-$(PKG_VERDATE)-tree/Source_Code/
@@ -131,19 +131,19 @@ Package/softethervpn-bridge/description = $(Package/softethervpn/description)
 Package/softethervpn-client/description = $(Package/softethervpn/description)
 
 define Package/softethervpn-base/conffiles
-  /usr/libexec/softethervpn/lang.config
+/usr/libexec/softethervpn/lang.config
 endef
 
 define Package/softethervpn-server/conffiles
-  /usr/libexec/softethervpn/vpn_server.config
+/usr/libexec/softethervpn/vpn_server.config
 endef
 
 define Package/softethervpn-client/conffiles
-  /usr/libexec/softethervpn/vpn_client.config
+/usr/libexec/softethervpn/vpn_client.config
 endef
 
 define Package/softethervpn-bridge/conffiles
-  /usr/libexec/softethervpn/vpn_bridge.config
+/usr/libexec/softethervpn/vpn_bridge.config
 endef
 
 define Package/softethervpn-base/install

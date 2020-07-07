@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=i2pd
 PKG_VERSION:=2.30.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_BUILD_PARALLEL:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -40,10 +40,10 @@ define Package/i2pd/description
 endef
 
 define Package/i2pd/conffiles
-	/etc/config/i2pd
-	/etc/i2pd/i2pd.conf
-	/etc/i2pd/tunnels.conf
-	/etc/i2pd/tunnels.d/*
+/etc/config/i2pd
+/etc/i2pd/i2pd.conf
+/etc/i2pd/tunnels.conf
+/etc/i2pd/tunnels.d/
 endef
 
 TARGET_LDFLAGS+=-latomic

@@ -39,9 +39,6 @@ define Package/ipmitool/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/ipmitool $(1)/usr/sbin/
 endef
 
-define Package/ipmitool/conffiles
-endef
-
 CONFIGURE_ARGS += \
 	--enable-intf-lan \
 	--enable-intf-lanplus \
