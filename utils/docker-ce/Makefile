@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=docker-ce
 PKG_VERSION:=19.03.12
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=components/cli/LICENSE components/engine/LICENSE
 
@@ -47,6 +47,10 @@ define Package/docker-ce
            +DOCKER_SECCOMP:libseccomp +iptables-mod-extra +kmod-br-netfilter +kmod-ikconfig +kmod-nf-conntrack-netlink +kmod-nf-ipvs +kmod-veth
   USERID:=docker:docker
   MENU:=1
+endef
+
+define Package/docker-ce/conffiles
+/etc/config/dockerd
 endef
 
 define Package/docker-ce/description
@@ -120,8 +124,8 @@ define Package/docker-ce/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/dockerd.init $(1)/etc/init.d/dockerd
 
-	$(INSTALL_DIR) $(1)/etc/docker
-	$(INSTALL_CONF) ./files/daemon.json $(1)/etc/docker/
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/etc/config/dockerd $(1)/etc/config/dockerd
 
 	# Must be after systcl 11-br-netfilter.conf from kmod-br-netfilter
 	$(INSTALL_DIR) $(1)/etc/sysctl.d
