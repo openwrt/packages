@@ -14,7 +14,7 @@ PYTHON_VERSION:=$(PYTHON3_VERSION)
 PYTHON_VERSION_MICRO:=$(PYTHON3_VERSION_MICRO)
 
 PKG_NAME:=python3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -131,7 +131,6 @@ TARGET_CONFIGURE_OPTS+= \
 	READELF="$(TARGET_CROSS)readelf"
 
 MAKE_FLAGS+=\
-	CROSS_COMPILE=yes \
 	LD="$(TARGET_CC)" \
 	PGEN=pgen3
 
@@ -144,13 +143,6 @@ ENABLE_IPV6:=
 ifeq ($(CONFIG_IPV6),y)
 	ENABLE_IPV6 += --enable-ipv6
 endif
-
-PYTHON_FOR_BUILD:= \
-	_PYTHON_PROJECT_BASE=$(PKG_BUILD_DIR) \
-	_PYTHON_HOST_PLATFORM=linux2 \
-	PYTHONPATH="$(PKG_BUILD_DIR)/Lib:$(PKG_BUILD_DIR)/build/lib.linux2-$(PYTHON_VERSION)" \
-	_PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata \
-	$(HOST_PYTHON3_BIN)
 
 DISABLE_BLUETOOTH:= \
 	ac_cv_header_bluetooth_bluetooth_h=no \
@@ -165,7 +157,6 @@ CONFIGURE_ARGS+= \
 	--with-ensurepip=no \
 	--without-pymalloc \
 	$(if $(CONFIG_PYTHON3_BLUETOOTH_SUPPORT),,$(DISABLE_BLUETOOTH)) \
-	PYTHON_FOR_BUILD="$(PYTHON_FOR_BUILD)" \
 	$(ENABLE_IPV6) \
 	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
 	OPT="$(TARGET_CFLAGS)"
@@ -228,6 +219,10 @@ define Build/InstallDev
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION) \
 		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON_VERSION).so* \
 		$(1)/usr/lib/
+	grep \
+		'^_PYTHON_HOST_PLATFORM=' \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON_VERSION)/config-$(PYTHON_VERSION)/Makefile > \
+		$(1)/usr/lib/python$(PYTHON_VERSION)/config-$(PYTHON_VERSION)/Makefile-vars
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/python*.pc \
 		$(1)/usr/lib/pkgconfig

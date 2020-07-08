@@ -50,8 +50,7 @@ define host_python3_settings
 	LDSHARED="$(HOSTCC) -shared" \
 	CFLAGS="$(HOST_CFLAGS)" \
 	CPPFLAGS="$(HOST_CPPFLAGS) -I$(HOST_PYTHON3_INC_DIR)" \
-	LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON3_VERSION) -Wl$(comma)-rpath=$(STAGING_DIR_HOSTPKG)/lib" \
-	_PYTHON_HOST_PLATFORM=linux2
+	LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON3_VERSION) -Wl$(comma)-rpath=$(STAGING_DIR_HOSTPKG)/lib"
 endef
 
 # $(1) => commands to execute before running pythons script
@@ -79,6 +78,7 @@ define Build/Compile/HostPy3PipInstall
 		--disable-pip-version-check \
 		--cache-dir "$(DL_DIR)/pip-cache" \
 		install \
+		--no-binary :all: \
 		$(1)
 endef
 
