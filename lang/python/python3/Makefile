@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -129,20 +129,12 @@ TARGET_CONFIGURE_OPTS+= \
 	READELF="$(TARGET_CROSS)readelf"
 
 MAKE_FLAGS+=\
-	CROSS_COMPILE=yes \
 	LD="$(TARGET_CC)"
 
 EXTRA_CFLAGS+= \
 	-DNDEBUG -fno-inline
 EXTRA_LDFLAGS+= \
 	-L$(PKG_BUILD_DIR)
-
-PYTHON_FOR_BUILD:= \
-	_PYTHON_PROJECT_BASE=$(PKG_BUILD_DIR) \
-	_PYTHON_HOST_PLATFORM=linux2 \
-	PYTHONPATH="$(PKG_BUILD_DIR)/Lib:$(PKG_BUILD_DIR)/build/lib.linux2-$(PYTHON3_VERSION)" \
-	_PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata \
-	$(HOST_PYTHON3_BIN)
 
 DISABLE_BLUETOOTH:= \
 	ac_cv_header_bluetooth_bluetooth_h=no \
@@ -159,7 +151,6 @@ CONFIGURE_ARGS+= \
 	$(if $(findstring mips,$(CONFIG_ARCH)),,--with-lto) \
 	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
 	OPT="$(TARGET_CFLAGS)" \
-	PYTHON_FOR_BUILD="$(PYTHON_FOR_BUILD)" \
 	$(if $(CONFIG_PYTHON3_BLUETOOTH_SUPPORT),,$(DISABLE_BLUETOOTH))
 
 define Build/Prepare
@@ -220,6 +211,10 @@ define Build/InstallDev
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION) \
 		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON3_VERSION).so* \
 		$(1)/usr/lib/
+	grep \
+		'^_PYTHON_HOST_PLATFORM=' \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)/Makefile > \
+		$(1)/usr/lib/python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)/Makefile-vars
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/python*.pc \
 		$(1)/usr/lib/pkgconfig
