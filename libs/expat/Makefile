@@ -36,7 +36,7 @@ define Package/libexpat/description
  A fast, non-validating, stream-oriented XML parsing library.
 endef
 
-CMAKE_OPTIONS += \
+OPTIONS += \
 	-DDOCBOOK_TO_MAN=OFF \
 	-DEXPAT_BUILD_TOOLS=OFF \
 	-DEXPAT_BUILD_EXAMPLES=OFF \
@@ -47,6 +47,9 @@ CMAKE_OPTIONS += \
 	-DEXPAT_DTD=OFF \
 	-DEXPAT_NS=OFF \
 	-DEXPAT_DEV_URANDOM=OFF
+
+CMAKE_OPTIONS += $(OPTIONS)
+CMAKE_HOST_OPTIONS += $(OPTIONS)
 
 define Package/libexpat/install
 	$(INSTALL_DIR) $(1)/usr/lib
