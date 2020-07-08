@@ -11,7 +11,7 @@ PKG_NAME:=mariadb-common
 PKG_VERSION:=1.0
 PKG_RELEASE:=2
 
-PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
+PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0
 
 CONF_DIR:=/etc/mysql
