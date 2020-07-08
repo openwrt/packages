@@ -18,6 +18,8 @@ PKG_SOURCE_URL:=https://www.sqlite.org/2020/
 PKG_LICENSE:=PUBLICDOMAIN
 PKG_LICENSE_FILES:=
 
+PKG_MAINTAINER:=
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-autoconf-$(PKG_VERSION)
 
 PKG_BUILD_PARALLEL:=1
@@ -45,7 +47,6 @@ define Package/sqlite3/Default
   SUBMENU:=Database
   TITLE:=SQLite (v3.x) database engine
   URL:=http://www.sqlite.org/
-  MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
 endef
 
 define Package/sqlite3/Default/description
