@@ -40,6 +40,8 @@ start_ntpd_instance() {
 	# since some of them might be dynamic interfaces (like IPsec
 	# tunnels) which aren't known by ubus.
 
+	mkdir -p "$(dirname "$config_file")"
+
 	trunc
 	emit "driftfile /var/lib/ntp/ntp.drift\n"
 
