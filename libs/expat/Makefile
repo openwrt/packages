@@ -37,7 +37,7 @@ define Package/libexpat/description
 endef
 
 CMAKE_OPTIONS += \
-	-DDOCBOOK_TO_MAN=OFF \
+	-DDOCBOOK_TO_MAN="xmlto man --skip-validation" \
 	-DEXPAT_BUILD_TOOLS=OFF \
 	-DEXPAT_BUILD_EXAMPLES=OFF \
 	-DEXPAT_BUILD_TESTS=OFF \
