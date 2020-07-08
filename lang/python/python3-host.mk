@@ -32,7 +32,6 @@ HOST_PYTHON3_VARS = \
 	CFLAGS="$(HOST_CFLAGS)" \
 	CPPFLAGS="$(HOST_CPPFLAGS) -I$(HOST_PYTHON3_INC_DIR)" \
 	LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON3_VERSION) -Wl$(comma)-rpath=$(STAGING_DIR_HOSTPKG)/lib" \
-	_PYTHON_HOST_PLATFORM=linux2 \
 	PYTHONPATH="$(HOST_PYTHON3PATH)" \
 	PYTHONDONTWRITEBYTECODE=0 \
 	PYTHONOPTIMIZE=""
@@ -57,6 +56,7 @@ define HostPython3/PipInstall
 		--disable-pip-version-check \
 		--cache-dir "$(DL_DIR)/pip-cache" \
 		install \
+		--no-binary :all: \
 		$(1)
 endef
 
