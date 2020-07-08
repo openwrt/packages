@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=foolsm
 PKG_VERSION:=1.0.13
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://lsm.foobar.fi/download
@@ -26,7 +26,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/foolsm
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+ssmtp
+  DEPENDS:=+msmtp
   TITLE:=A link state monitor
   URL:=http://lsm.foobar.fi/
 endef

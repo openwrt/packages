@@ -22,7 +22,7 @@ CONS_WAIT=${11}
 CONS_MISS=${12}
 AVG_RTT=${13}
 
-cat <<EOM | ssmtp ${WARN_EMAIL}
+cat <<EOM | msmtp ${WARN_EMAIL}
 Subject: "LSM: ${NAME} ${STATE}, DEV ${DEVICE}"
 
 Hi,
