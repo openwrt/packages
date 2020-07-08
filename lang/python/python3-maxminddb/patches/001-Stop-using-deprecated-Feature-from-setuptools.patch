@@ -1,0 +1,33 @@
+Adapted from 3aac426[1] to account for a difference in formatting.
+
+[1]: https://github.com/maxmind/MaxMind-DB-Reader-python/commit/3aac426e354f91814f6fd0829baee137b0bb093f
+
+--- a/setup.py
++++ b/setup.py
+@@ -9,7 +9,7 @@ from distutils.command.build_ext import
+ from distutils.errors import (CCompilerError, DistutilsExecError,
+                               DistutilsPlatformError)
+ 
+-from setuptools import setup, Extension, Feature
++from setuptools import setup, Extension
+ 
+ cmdclass = {}
+ PYPY = hasattr(sys, 'pypy_version_info')
+@@ -107,16 +107,7 @@ def find_packages(location):
+ def run_setup(with_cext):
+     kwargs = {}
+     if with_cext:
+-        if Feature:
+-            kwargs['features'] = {
+-                'extension':
+-                Feature(
+-                    "optional C implementation",
+-                    standard=True,
+-                    ext_modules=ext_module)
+-            }
+-        else:
+-            kwargs['ext_modules'] = ext_module
++        kwargs['ext_modules'] = ext_module
+ 
+     setup(
+         name='maxminddb',
