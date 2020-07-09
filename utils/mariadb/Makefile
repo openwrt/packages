@@ -19,7 +19,7 @@ PKG_SOURCE_URL := \
 	https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
 
 PKG_HASH:=45bbbb12d1de8febd9edf630e940c23cf14efd60570c743b268069516a5d91df
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Michal Hrusecky <Michal@Hrusecky.net>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING THIRDPARTY
 

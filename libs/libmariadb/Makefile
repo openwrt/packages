@@ -19,7 +19,7 @@ PKG_SOURCE_URL := \
 	https://downloads.mariadb.org/interstitial/connector-c-$(PKG_VERSION)
 
 PKG_HASH:=431434d3926f4bcce2e5c97240609983f60d7ff50df5a72083934759bb863f7b
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Michal Hrusecky <Michal@Hrusecky.net>
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING.LIB
 
