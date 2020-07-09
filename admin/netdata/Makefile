@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netdata
-PKG_VERSION:=1.20.0
+PKG_VERSION:=1.22.1
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>, Daniel Engberg <daniel.engberg.lists@pyret.net>
@@ -18,7 +18,7 @@ PKG_CPE_ID:=cpe:/a:my-netdata:netdata
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/netdata/netdata/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=c739e0fa8d6d7f433c0c7c8016b763e8f70519d67f0b5e7eca9ee5318f210d90
+PKG_HASH:=6efd785eab82f98892b4b4017cadfa4ce1688985915499bc75f2f888765a3446
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -60,7 +60,8 @@ CONFIGURE_ARGS += \
 	--disable-plugin-cups \
 	--disable-plugin-xenstat \
 	--disable-backend-prometheus-remote-write \
-	--enable-jsonc
+	--disable-unit-tests \
+	--disable-cloud
 
 define Package/netdata/conffiles
 /etc/netdata/
@@ -75,9 +76,6 @@ define Package/netdata/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/netdata $(1)/usr/lib
 	$(CP) $(1)/usr/lib/netdata/conf.d/fping.conf $(1)/etc
 	$(CP) $(1)/usr/lib/netdata/conf.d/health_alarm_notify.conf $(1)/etc
-	rm -rf $(1)/usr/lib/netdata/python.d/python_modules/pyyaml2
-	rm -rf $(1)/usr/lib/netdata/python.d/python_modules/pyyaml3
-	rm -rf $(1)/usr/lib/netdata/python.d/python_modules/urllib3
 	$(CP) $(1)/usr/lib/netdata/plugins.d/tc-qos-helper.sh $(1)/etc
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/netdata $(1)/usr/sbin
@@ -90,6 +88,7 @@ define Package/netdata/install
 	rm $(1)/usr/share/netdata/web/images/*.png
 	rm $(1)/usr/share/netdata/web/images/*.gif
 	rm $(1)/usr/share/netdata/web/images/*.ico
+	rm -rf $(1)/usr/share/netdata/web/old
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/netdata.init $(1)/etc/init.d/netdata
 endef
