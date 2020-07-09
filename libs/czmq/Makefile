@@ -9,31 +9,29 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=czmq
 PKG_VERSION:=4.2.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/zeromq/czmq/releases/download/v$(PKG_VERSION)/
 PKG_HASH:=cfab29c2b3cc8a845749758a51e1dd5f5160c1ef57e2a41ea96e4c2dcc8feceb
 
-PKG_INSTALL:=1
-PKG_FIXUP:=autoreconf
-
-PKG_LICENSE:=MPLv2
-PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_LICENSE:=MPL-2.0
+PKG_LICENSE_FILES:=LICENSE
 
-PKG_ABI_VERSION:=4
+CMAKE_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/autotools.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/czmq
-	SECTION:=libs
-	CATEGORY:=Libraries
-	TITLE:=CZMQ High-level C binding for ZeroMQ
-	URL:=http://czmq.zeromq.org
-	ABI_VERSION:=$(PKG_ABI_VERSION)
-	DEPENDS:=+libzmq +libuuid +libpcre +libmicrohttpd +liblz4 +libcurl
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=CZMQ High-level C binding for ZeroMQ
+  URL:=http://czmq.zeromq.org
+  ABI_VERSION:=4
+  DEPENDS:=+libzmq +libuuid +libpcre +libmicrohttpd +liblz4 +libcurl
 endef
 
 define Package/czmq/description
@@ -41,24 +39,17 @@ define Package/czmq/description
   library, aimed at use in distributed or concurrent applications.
 endef
 
-TARGET_CFLAGS += --std=c99
-CONFIGURE_ARGS += --without-docs
-
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/* $(1)/usr/lib/pkgconfig/
-endef
+CMAKE_OPTIONS += \
+	-DBUILD_TESTING=OFF \
+	-DCMAKECONFIG_INSTALL_DIR=lib/cmake/czmq \
+	-DCMAKE_SKIP_INSTALL_RPATH=ON \
+	-DENABLE_DRAFTS=OFF
 
 define Package/czmq/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/zmakecert $(1)/usr/bin/zmakecert
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/zmakecert $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libczmq.so.$(PKG_VERSION) $(1)/usr/lib/
-	$(LN) /usr/lib/libczmq.so.$(PKG_VERSION) $(1)/usr/lib/libczmq.so
-	$(LN) /usr/lib/libczmq.so.$(PKG_VERSION) $(1)/usr/lib/libczmq.so.$(PKG_ABI_VERSION)
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libczmq.so.* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,czmq))
