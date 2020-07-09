@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=h2o
 PKG_VERSION:=2.2.6
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE_URL:=https://codeload.github.com/h2o/h2o/tar.gz/v${PKG_VERSION}?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -15,7 +15,7 @@ PKG_LICENSE_FILES:=LICENSE
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-PKG_BUILD_DEPENDS:=ruby/host
+PKG_BUILD_DEPENDS:=ruby/host libwslay
 PKG_BUILD_PARALLEL:=1
 
 CMAKE_OPTIONS:= \
@@ -29,7 +29,7 @@ define Package/libh2o-evloop
   CATEGORY:=Libraries
   TITLE:=H2O Library compiled with its own event loop
   URL:=https://h2o.examp1e.net/
-  DEPENDS:=+libwslay +libopenssl +zlib +libyaml +ruby
+  DEPENDS:=+libopenssl +zlib +libyaml +ruby
 endef
 
 define Package/libh2o
@@ -37,7 +37,7 @@ define Package/libh2o
   CATEGORY:=Libraries
   TITLE:=H2O Library compiled with libuv
   URL:=https://h2o.examp1e.net/
-  DEPENDS:=+libuv +libwslay +libopenssl +zlib +libyaml +ruby
+  DEPENDS:=+libuv +libopenssl +zlib +libyaml +ruby
 endef
 
 define Package/libh2o-evloop/install
