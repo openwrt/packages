@@ -10,12 +10,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdmapsharing
-PKG_VERSION:=3.9.8
+PKG_VERSION:=3.9.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=libdmapsharing-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.flyn.org/projects/libdmapsharing/
-PKG_HASH:=66f154602cf4f444ff3de70be74ae75b932f512c031d21374257d349f11f9710
+PKG_HASH:=e216425d61a109f08f0ac93065f4603d1e61ebd85c09802c03a9ecce5bb35094
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -42,7 +42,7 @@ define Package/libdmapsharing/decription
 endef
 
 CONFIGURE_ARGS += \
-	--disable-check \
+	--disable-tests \
 	--disable-gtk-doc \
 	--disable-introspection
 
