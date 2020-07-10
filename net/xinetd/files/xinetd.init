@@ -109,7 +109,7 @@ start_service() {
 	generate_config
 
 	procd_open_instance
-	procd_set_param command $PROG -f $GENERATED_CONF_FILE -pidfile $PIDFILE
+	procd_set_param command $PROG -dontfork -f $GENERATED_CONF_FILE -pidfile $PIDFILE
 	procd_set_param respawn
 	procd_close_instance
 }
