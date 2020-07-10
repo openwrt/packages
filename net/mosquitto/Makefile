@@ -10,16 +10,20 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
 PKG_VERSION:=1.6.10
-PKG_RELEASE:=1
-PKG_LICENSE:=BSD-3-Clause
-PKG_LICENSE_FILES:=LICENSE.txt
-PKG_CPE_ID:=cpe:/a:eclipse:mosquitto
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://mosquitto.org/files/source/
 PKG_HASH:=92d1807717f0f6d57d1ac1207ffdb952e8377e916c7b0bb4718f745239774232
 
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=LICENSE.txt
+PKG_CPE_ID:=cpe:/a:eclipse:mosquitto
+
+PKG_BUILD_PARALLEL:=1
+
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/mosquitto/default
   SECTION:=net
@@ -225,12 +229,24 @@ define Package/libmosquittopp/install
 endef
 
 # Applies to all...
-MAKE_FLAGS += WITH_DOCS=no UNAME=Linux
+CMAKE_OPTIONS += \
+	-DDOCUMENTATION=OFF \
+	-DWITH_ADNS=OFF \
+	-DWITH_BUNDLED_DEPS=ON \
+	-DWITH_DLT=OFF \
+	-DWITH_PERSISTENCE=OFF \
+	-DWITH_PIC=ON \
+	-DWITH_SOCKS=ON \
+	-DWITH_SRV=ON \
+	-DWITH_SYSTEMD=OFF \
+	-DWITH_SYS_TREE=OFF \
+	-DWITH_THREADING=ON
+
 ifeq ($(BUILD_VARIANT),nossl)
-	MAKE_FLAGS += WITH_TLS=no WITH_WEBSOCKETS=no
+	CMAKE_OPTIONS += -DWITH_TLS=OFF -DWITH_WEBSOCKETS=OFF
 else
-	MAKE_FLAGS += WITH_WEBSOCKETS=$(if $(CONFIG_MOSQUITTO_LWS),"yes","no")
-	MAKE_FLAGS += WITH_TLS_PSK=$(if $(CONFIG_OPENSSL_WITH_PSK),"yes","no")
+	CMAKE_OPTIONS += -DWITH_TLS_PSK=O$(if $(CONFIG_OPENSSL_WITH_PSK),N,FF)
+	CMAKE_OPTIONS += -DWITH_WEBSOCKETS=O$(if $(CONFIG_MOSQUITTO_LWS),N,FF)
 endif
 
 $(eval $(call BuildPackage,mosquitto-ssl))
