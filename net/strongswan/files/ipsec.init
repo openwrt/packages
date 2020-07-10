@@ -46,12 +46,12 @@ remove_includes() {
 do_include() {
 	local conf="$1"
 	local uciconf="$2"
-	local backup=`mktemp -t -p /tmp/ ipsec-init-XXXXXX`
+	local backup=$(mktemp -t -p /tmp/ ipsec-init-XXXXXX)
 
 	[ ! -f "${conf}" ] && rm -rf "${conf}"
 	touch "${conf}"
 
-	cat "${conf}" | grep -v "${uciconf}" > "${backup}"
+	grep -v "${uciconf}" "$conf" > "${backup}"
 	mv "${backup}" "${conf}"
 	xappend "${conf}" "include ${uciconf}"
 	file_reset "${uciconf}"
@@ -82,7 +82,7 @@ secret_xappend() {
 }
 
 warning() {
-	echo "WARNING: $@" >&2
+	echo "WARNING: $*" >&2
 }
 
 add_crypto_proposal() {
@@ -230,7 +230,7 @@ config_remote() {
 	config_name=$1
 
 	config_get_bool enabled "$1" enabled 0
-	[ $enabled -eq 0 ] && return
+	[ "$enabled" -eq 0 ] && return
 
 	config_get gateway           "$1" gateway
 	config_get pre_shared_key    "$1" pre_shared_key
@@ -244,7 +244,7 @@ config_remote() {
 		local ipdest
 
 		[ "$remote_gateway" = "%any" ] && ipdest="1.1.1.1" || ipdest="$remote_gateway"
-		local_gateway=`ip route get $ipdest | awk -F"src" '/src/{gsub(/ /,"");print $2}'`
+		local_gateway=$(ip route get "$ipdest" | awk -F"src" '/src/{gsub(/ /,"");print $2}')
 	}
 
 	[ -n "$local_identifier" ] && secret_xappend -n "$local_identifier " || secret_xappend -n "$local_gateway "
@@ -283,14 +283,14 @@ config_ipsec() {
 
 	config_get debug "$1" debug 0
 	config_get_bool rtinstall_enabled "$1" rtinstall_enabled 1
-	[ $rtinstall_enabled -eq 1 ] && install_routes=yes || install_routes=no
+	[ "$rtinstall_enabled" -eq 1 ] && install_routes=yes || install_routes=no
 
 	# prepare extra charon config option ignore_routing_tables
 	for routing_table in $(config_get "$1" "ignore_routing_tables"); do
 		if [ "$routing_table" -ge 0 ] 2>/dev/null; then
 			routing_table_id=$routing_table
 		else
-			routing_table_id=$(sed -n '/[ \t]*[0-9]\+[ \t]\+'$routing_table'[ \t]*$/s/[ \t]*\([0-9]\+\).*/\1/p' /etc/iproute2/rt_tables)
+			routing_table_id=$(sed -n '/[ \t]*[0-9]\+[ \t]\+'"$routing_table"'[ \t]*$/s/[ \t]*\([0-9]\+\).*/\1/p' /etc/iproute2/rt_tables)
 		fi
 
 		[ -n "$routing_table_id" ] && append routing_tables_ignored "$routing_table_id"
@@ -301,7 +301,7 @@ config_ipsec() {
 		WAIT_FOR_INTF=0
 	else
 		for interface in $interface_list; do
-			network_get_device device $interface
+			network_get_device device "$interface"
 			[ -n "$device" ] && append device_list "$device" ","
 		done
 		[ -n "$device_list" ] && WAIT_FOR_INTF=0 || WAIT_FOR_INTF=1
