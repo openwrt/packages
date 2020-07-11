@@ -1,39 +1,42 @@
 #!/bin/sh
 
+set -e
+
 CACHE_DOMAINS_DIR="/var/cache-domains"
 CACHE_DOMAINS_SRC="https://api.github.com/repos/uklans/cache-domains/tarball/master"
 CONFIG_FILE="/etc/cache-domains.json"
 
 configure() {
-	mkdir -p ${CACHE_DOMAINS_DIR}
-	rm -fr ${CACHE_DOMAINS_DIR}/*
+	mkdir -p "${CACHE_DOMAINS_DIR}"
+	rm -fr "${CACHE_DOMAINS_DIR:?}/"*
 
-	if ! wget -qO - ${CACHE_DOMAINS_SRC} | tar -xzC ${CACHE_DOMAINS_DIR}; then
+	if ! wget -qO - "${CACHE_DOMAINS_SRC}" | tar -xzC "${CACHE_DOMAINS_DIR}"; then
+		rm -fr "${CACHE_DOMAINS_DIR}"
 		echo "ERROR: Could not retrieve ${CACHE_DOMAINS_SRC}"
-		return 1
+		exit 1
 	fi
 
 	INITIAL_DIR="$(pwd)"
-	cd ${CACHE_DOMAINS_DIR}/*/scripts/
+	cd "${CACHE_DOMAINS_DIR}/"*"/scripts/"
 
-	if [ ! -f ${CONFIG_FILE} ]; then
-		cp config.example.json ${CONFIG_FILE}
+	if [ ! -f "${CONFIG_FILE}" ]; then
+		cp "config.example.json" "${CONFIG_FILE}"
 		echo "Using example config file ${CONFIG_FILE}"
 	fi
 
-	cp ${CONFIG_FILE} config.json
+	cp "${CONFIG_FILE}" "config.json"
 	./create-dnsmasq.sh
-	cp ./output/dnsmasq/* /var/dnsmasq.d/
+	cp "./output/dnsmasq/"* "/var/dnsmasq.d/"
 
-	cd ${INITIAL_DIR}
+	cd "${INITIAL_DIR}"
 
 	/etc/init.d/dnsmasq restart
 }
 
 cleanup() {
 	# leave dnsmasq in a clean state
-	for FILE in ${CACHE_DOMAINS_DIR}/*/scripts/output/dnsmasq/*; do
-		rm -f /tmp/dnsmasq.d/$(basename ${FILE})
+	for FILE in "${CACHE_DOMAINS_DIR}/"*"/scripts/output/dnsmasq/"*; do
+		rm -f "/tmp/dnsmasq.d/$(basename "${FILE}")"
 	done
 
 	/etc/init.d/dnsmasq restart
