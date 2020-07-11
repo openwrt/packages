@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libebml
-PKG_VERSION:=1.3.10
+PKG_VERSION:=1.4.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/Matroska-Org/libebml/tar.gz/release-$(PKG_VERSION)?
-PKG_HASH:=2562bb9bc3248e956a6ed1148eafe4d7d68759257133083c212d14faa8709d1e
+PKG_HASH:=5ad468d78d21dfcde2901320faad4122ade2a12ecb65ce557b5e15d46671cceb
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-release-$(PKG_VERSION)
 
 PKG_MAINTAINER:=
