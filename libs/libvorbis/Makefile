@@ -6,22 +6,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libvorbis
-PKG_VERSION:=1.3.6
+PKG_VERSION:=1.3.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://downloads.xiph.org/releases/vorbis/
-PKG_HASH:=af00bb5a784e7c9e69f56823de4637c350643deedaf333d0fa86ecdba6fcb415
-PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_HASH:=b33cc4934322bcbf6efcbacf49e3ca01aadbea4114ec9589d1b1e9d20f72954b
 
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:xiph.org:libvorbis
 
-PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libvorbis
   SECTION:=libs
@@ -42,24 +42,23 @@ software entity may make full use of the format without license
 fee, royalty or patent concerns.
 endef
 
+CMAKE_OPTIONS += \
+	-DBUILD_SHARED_LIBS=ON
+
 ifneq ($(findstring arm,$(CONFIG_ARCH)),)
 	TARGET_CFLAGS += -flto
 	TARGET_CXX_FLAGS += -flto
 	TARGET_LDFLAGS += -flto
 endif
 
-CONFIGURE_ARGS+= \
-	--disable-oggtest \
-
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/vorbis/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/vorbis/* $(1)/usr/include/vorbis/
-	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.{so*,a,la} $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/* $(1)/usr/lib/pkgconfig/
-	$(INSTALL_DIR) $(1)/usr/share/aclocal/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/aclocal/* $(1)/usr/share/aclocal/
+	$(call Build/InstallDev/cmake,$(1))
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/vorbisenc.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/vorbisenc.pc
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/vorbisfile.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/vorbisfile.pc
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/vorbis.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/vorbis.pc
 endef
 
 define Package/libvorbis/install
