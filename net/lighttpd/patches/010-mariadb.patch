@@ -1,0 +1,29 @@
+From 04a7d98cb91139d79dd14cbdb0522d3d5898dd12 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 10 Jul 2020 20:40:07 -0700
+Subject: [PATCH] [meson] fix libmariadb dependency
+
+libmariadb is what should be used as only the library portion is used.
+
+Fixes compilation under OpenWrt.
+
+Note that mariadb.pc is a superset that links to libmariadb.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ src/meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/meson.build b/src/meson.build
+index 43ef9540..d39cf1c0 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -387,7 +387,7 @@ if get_option('with_mysql')
+ 	# manual search: extend include path with 'mysql/'
+ 	# header: mysql.h
+ 	# function: mysql_real_connect (-lmariadb)
+-	libmysqlclient = [ dependency('mariadb') ]
++	libmysqlclient = [ dependency('libmariadb') ]
+ 	#-# function: mysql_real_connect (-lmysqlclient)
+ 	#-libmysqlclient = [ dependency('mysqlclient') ]
+ 	conf_data.set('HAVE_MYSQL', true)
