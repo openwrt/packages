@@ -1,0 +1,140 @@
+diff --git a/meson.build b/meson.build
+index 8a590b9..f858a20 100644
+--- a/meson.build
++++ b/meson.build
+@@ -62,7 +62,7 @@ gstreamer_dep = dependency('gstreamer-1.0', required: false)
+ gthread_dep = dependency('gthread-2.0', required: false)
+ json_glib_dep = dependency('json-glib-1.0', required: false)
+ libarchive_dep = dependency('libarchive', required: false)
+-libdmapsharing4_dep = dependency('libdmapsharing-4.0', version: '>= 3.9.4', required: false)
++libdmapsharing4_dep = dependency('libdmapsharing-4.0', version: '>= 3.9.9', required: false)
+ if libdmapsharing4_dep.found()
+     libdmapsharing_dep = libdmapsharing4_dep
+ else
+diff --git a/src/dmap/grl-daap-compat.h b/src/dmap/grl-daap-compat.h
+index da9025f..149e6a0 100644
+--- a/src/dmap/grl-daap-compat.h
++++ b/src/dmap/grl-daap-compat.h
+@@ -38,7 +38,7 @@ guint grl_daap_db_add (DMAPDb *_db, DMAPRecord *_record, GError **error);
+ #define DmapAvRecordInterface DAAPRecordIface
+ #define DMAP_AV_RECORD DAAP_RECORD
+ #define DMAP_TYPE_AV_RECORD DAAP_TYPE_RECORD
+-#define IS_DMAP_AV_RECORD IS_DAAP_RECORD
++#define DMAP_IS_AV_RECORD IS_DAAP_RECORD
+ 
+ static inline DmapRecord *
+ grl_daap_record_factory_create_compat (DmapRecordFactory *factory, gpointer user_data)
+diff --git a/src/dmap/grl-daap-db.c b/src/dmap/grl-daap-db.c
+index e9a1713..46f49bf 100644
+--- a/src/dmap/grl-daap-db.c
++++ b/src/dmap/grl-daap-db.c
+@@ -157,8 +157,8 @@ set_insert (GHashTable *category, const char *category_name, char *set_name, Grl
+ guint
+ grl_daap_db_add (DmapDb *_db, DmapRecord *_record, GError **error)
+ {
+-  g_assert (IS_GRL_DAAP_DB (_db));
+-  g_assert (IS_DMAP_AV_RECORD (_record));
++  g_assert (GRL_IS_DAAP_DB (_db));
++  g_assert (DMAP_IS_AV_RECORD (_record));
+ 
+   GrlDaapDb *db = GRL_DAAP_DB (_db);
+   DmapAvRecord *record = DMAP_AV_RECORD (_record);
+@@ -261,7 +261,7 @@ grl_daap_db_browse (GrlDaapDb *db,
+                     GrlSourceResultCb func,
+                     gpointer user_data)
+ {
+-  g_assert (IS_GRL_DAAP_DB (db));
++  g_assert (GRL_IS_DAAP_DB (db));
+ 
+   int i;
+   guint remaining;
+@@ -319,7 +319,7 @@ grl_daap_db_search (GrlDaapDb *db,
+                     GrlSourceResultCb func,
+                     gpointer user_data)
+ {
+-  g_assert (IS_GRL_DAAP_DB (db));
++  g_assert (GRL_IS_DAAP_DB (db));
+ 
+   gint i, j, k;
+   guint remaining = 0;
+diff --git a/src/dmap/grl-daap-db.h b/src/dmap/grl-daap-db.h
+index ed877e4..16edfce 100644
+--- a/src/dmap/grl-daap-db.h
++++ b/src/dmap/grl-daap-db.h
+@@ -39,11 +39,11 @@ G_BEGIN_DECLS
+   (G_TYPE_CHECK_CLASS_CAST ((k),                                               \
+                              TYPE_GRL_DAAP_DB,                                 \
+                              GrlDaapDbClass))
+-#define IS_GRL_DAAP_DB(o)                                                      \
++#define GRL_IS_DAAP_DB(o)                                                      \
+   (G_TYPE_CHECK_INSTANCE_TYPE ((o),                                            \
+                                 TYPE_GRL_DAAP_DB))
+ 
+-#define IS_GRL_DAAP_DB_CLASS(k)                                                \
++#define GRL_IS_DAAP_DB_CLASS(k)                                                \
+   (G_TYPE_CHECK_CLASS_TYPE ((k),                                               \
+                              TYPE_GRL_DAAP_DB_CLASS))
+ 
+diff --git a/src/dmap/grl-dpap-compat.h b/src/dmap/grl-dpap-compat.h
+index b996464..212fab4 100644
+--- a/src/dmap/grl-dpap-compat.h
++++ b/src/dmap/grl-dpap-compat.h
+@@ -38,7 +38,7 @@ guint grl_dpap_db_add (DMAPDb *_db, DMAPRecord *_record, GError **error);
+ #define DmapImageRecordInterface DPAPRecordIface
+ #define DMAP_IMAGE_RECORD DPAP_RECORD
+ #define DMAP_TYPE_IMAGE_RECORD DPAP_TYPE_RECORD
+-#define IS_DMAP_IMAGE_RECORD IS_DPAP_RECORD
++#define DMAP_IS_IMAGE_RECORD IS_DPAP_RECORD
+ 
+ static inline DmapRecord *
+ grl_dpap_record_factory_create_compat (DmapRecordFactory *factory, gpointer user_data)
+diff --git a/src/dmap/grl-dpap-db.c b/src/dmap/grl-dpap-db.c
+index 56be8b0..833f654 100644
+--- a/src/dmap/grl-dpap-db.c
++++ b/src/dmap/grl-dpap-db.c
+@@ -125,8 +125,8 @@ set_insert (GHashTable *category, const char *category_name, char *set_name, Grl
+ guint
+ grl_dpap_db_add (DmapDb *_db, DmapRecord *_record, GError **error)
+ {
+-  g_assert (IS_GRL_DPAP_DB (_db));
+-  g_assert (IS_DMAP_IMAGE_RECORD (_record));
++  g_assert (GRL_IS_DPAP_DB (_db));
++  g_assert (DMAP_IS_IMAGE_RECORD (_record));
+ 
+   GrlDpapDb *db = GRL_DPAP_DB (_db);
+   DmapImageRecord *record = DMAP_IMAGE_RECORD (_record);
+@@ -207,7 +207,7 @@ grl_dpap_db_browse (GrlDpapDb *db,
+                     GrlSourceResultCb func,
+                     gpointer user_data)
+ {
+-  g_assert (IS_GRL_DPAP_DB (db));
++  g_assert (GRL_IS_DPAP_DB (db));
+ 
+   int i;
+   guint remaining;
+@@ -258,7 +258,7 @@ grl_dpap_db_search (GrlDpapDb *db,
+                     GrlSourceResultCb func,
+                     gpointer user_data)
+ {
+-  g_assert (IS_GRL_DPAP_DB (db));
++  g_assert (GRL_IS_DPAP_DB (db));
+ 
+   gint i, j, k;
+   guint remaining = 0;
+diff --git a/src/dmap/grl-dpap-db.h b/src/dmap/grl-dpap-db.h
+index 23ae4c1..1ee78b4 100644
+--- a/src/dmap/grl-dpap-db.h
++++ b/src/dmap/grl-dpap-db.h
+@@ -39,10 +39,10 @@ G_BEGIN_DECLS
+   (G_TYPE_CHECK_CLASS_CAST ((k),                                               \
+                              TYPE_GRL_DPAP_DB,                                 \
+                              GrlDpapDbClass))
+-#define IS_GRL_DPAP_DB(o)                                                      \
++#define GRL_IS_DPAP_DB(o)                                                      \
+   (G_TYPE_CHECK_INSTANCE_TYPE ((o),                                            \
+                                 TYPE_GRL_DPAP_DB))
+-#define IS_GRL_DPAP_DB_CLASS(k)                                                \
++#define GRL_IS_DPAP_DB_CLASS(k)                                                \
+   (G_TYPE_CHECK_CLASS_TYPE ((k),                                               \
+                              TYPE_GRL_DPAP_DB_CLASS))
+ 
