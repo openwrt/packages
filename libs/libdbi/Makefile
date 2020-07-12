@@ -9,18 +9,18 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdbi
 PKG_VERSION:=0.9.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/libdbi
 PKG_HASH:=dafb6cdca524c628df832b6dd0bf8fabceb103248edb21762c02d3068fca4503
 
-PKG_LICENSE:=LGPL-2.1
+PKG_MAINTAINER:=
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
