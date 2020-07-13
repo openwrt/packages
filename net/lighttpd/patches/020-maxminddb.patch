@@ -1,0 +1,35 @@
+From fd2a12d6362aad2013ba558537647e46419d7595 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 10 Jul 2020 21:20:52 -0700
+Subject: [PATCH] [meson] add missing libmaxminddb section
+
+Fixes the following error when building with -Dwith_maxminddb=true:
+
+meson.build:916:1: ERROR: Unknown variable "libmaxminddb".
+
+A full log can be found at meson-logs/meson-log.txt
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ src/meson.build | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/src/meson.build b/src/meson.build
+index d39cf1c0..2191c9bc 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -255,6 +255,14 @@ if get_option('with_fam')
+ 	conf_data.set('HAVE_FAM_H', true)
+ endif
+ 
++libmaxminddb = []
++if get_option('with_maxminddb')
++	libmaxminddb = [ compiler.find_library('maxminddb') ]
++	if not(compiler.has_function('MMDB_open', args: defs, dependencies: libmaxminddb, prefix: '#include <maxminddb.h>'))
++		error('Couldn\'t find maxminddb.h or MMDB_open in lib maxminddb')
++	endif
++endif
++
+ libgeoip = []
+ if get_option('with_geoip')
+ 	libgeoip = dependency('geoip', required: false)
