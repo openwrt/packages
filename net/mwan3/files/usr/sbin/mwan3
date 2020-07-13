@@ -129,6 +129,7 @@ start()
 
 	uci_toggle_state mwan3 globals enabled "1"
 
+	config_load mwan3
 	config_foreach ifup interface
 }
 
