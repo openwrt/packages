@@ -67,13 +67,12 @@ service_triggers() {
     procd_add_raw_trigger "interface.*.up" 3000 /etc/init.d/unbound restart
 
   elif [ -n "$triggers" ] ; then
-    procd_add_reload_trigger "unbound" "dhcp"
-
-
     for trigger in $triggers ; do
       # User selected triggers to restart at any other time
       procd_add_reload_interface_trigger "$trigger"
     done
+
+    procd_add_reload_trigger "unbound" "dhcp"
 
   else
     procd_add_reload_trigger "unbound" "dhcp"

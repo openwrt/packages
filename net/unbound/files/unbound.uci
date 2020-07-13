@@ -19,6 +19,7 @@ config unbound
 	option protocol 'default'
 	option query_minimize '0'
 	option query_min_strict '0'
+	option rate_limit '0'
 	option rebind_localhost '0'
 	option rebind_protection '1'
 	option recursion 'default'
@@ -34,6 +35,7 @@ config unbound
 	#list domain_insecure 'ntp.example.com'
 
 config zone
+	# cache the root zone all at once to speed up recursion
 	option enabled '0'
 	option fallback '1'
 	option url_dir 'https://www.internic.net/domain/'
@@ -46,6 +48,7 @@ config zone
 	list zone_name 'ip6.arpa.'
 
 config zone
+	# forward ISP account management to DHCP announced DNS servers
 	option enabled '0'
 	option fallback '1'
 	option resolv_conf '1'

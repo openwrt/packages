@@ -43,7 +43,7 @@ rootkey_update() {
   [ -z "$dnssec_age" ] && dnssec_age=9
 
 
-  if [ "$dnssec_age" -gt 90 ] || [ "$dnssec" -lt 1 ] ; then
+  if [ $dnssec_age -gt 90 ] || [ $dnssec -lt 1 ] ; then
     # Feature disabled
     return 0
 
@@ -79,7 +79,7 @@ rootkey_update() {
   fi
 
 
-  if [ "$rootkey_age" -gt "$dnssec_age" ] ; then
+  if [ $rootkey_age -gt $dnssec_age ] ; then
     filestuff=$( cat $UB_RKEY_FILE )
 
 
