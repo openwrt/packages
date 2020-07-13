@@ -9,11 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xinetd
 PKG_VERSION:=2.3.15
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/xinetd-org/xinetd/archive
 PKG_HASH:=bf4e060411c75605e4dcbdf2ac57c6bd9e1904470a2f91e01ba31b50a80a5be3
+
+PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
 PKG_LICENSE:=xinetd
 PKG_LICENSE_FILES:=COPYRIGHT
 PKG_CPE_ID:=cpe:/a:xinetd:xinetd
@@ -27,7 +29,6 @@ define Package/xinetd
   CATEGORY:=Network
   TITLE:=A powerful and secure super-server
   URL:=https://github.com/xinetd-org
-  PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 endef
 
 define Package/xinetd/description
