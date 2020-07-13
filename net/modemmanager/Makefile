@@ -20,7 +20,6 @@ PKG_MAINTAINER:=Nicholas Smith <nicholas.smith@telcoantennas.com.au>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=glib2/host libxslt/host
@@ -76,10 +75,6 @@ define Build/Prepare
 	( cd "$(PKG_BUILD_DIR)"; \
 		printf "all:\ninstall:\n" >po/Makefile.in.in; \
 	)
-	$(SED) 's|^\(GLIB_MKENUMS\)=.*|\1=$(STAGING_DIR_HOSTPKG)/bin/glib-mkenums|' \
-		$(PKG_BUILD_DIR)/configure.ac
-	$(SED) 's|^\(GDBUS_CODEGEN\)=.*|\1=$(STAGING_DIR_HOSTPKG)/bin/gdbus-codegen|' \
-		$(PKG_BUILD_DIR)/configure.ac
 endef
 
 define Build/InstallDev
