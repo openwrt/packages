@@ -43,10 +43,39 @@ process_config() {
 	json_dump > "$DOCKERD_CONF"
 }
 
+process_ac_allowed() {
+	local cfg="$1"
+
+	local iface
+
+	config_get iface "$cfg" iface
+	iptables -A DOCKER-ACCESS-CONTROL -i "$iface" -o docker0 -j RETURN
+
+}
+
+process_ac() {
+	[ -f /etc/config/dockerd ] || {
+		return 0
+	}
+
+	# Add access control
+	iptables -N DOCKER-ACCESS-CONTROL
+
+	config_foreach process_ac_allowed access_control
+
+	iptables -A DOCKER-ACCESS-CONTROL -m conntrack --ctstate ESTABLISHED,RELATED -o docker0 -j RETURN
+	iptables -A DOCKER-ACCESS-CONTROL -m conntrack --ctstate NEW,INVALID -o docker0 -j DROP
+	iptables -A DOCKER-ACCESS-CONTROL -j RETURN
+
+	iptables -N DOCKER-USER
+	iptables -I DOCKER-USER -j DOCKER-ACCESS-CONTROL
+}
+
 start_service() {
 	local nofile=$(cat /proc/sys/fs/nr_open)
 
 	process_config
+	process_ac
 
 	procd_open_instance
 	procd_set_param stderr 1
@@ -76,11 +105,13 @@ ip4tables_remove_filter() {
 	iptables -t filter -F DOCKER-ISOLATION-STAGE-1
 	iptables -t filter -F DOCKER-ISOLATION-STAGE-2
 	iptables -t filter -F DOCKER-USER
+	iptables -t filter -F DOCKER-ACCESS-CONTROL
 
 	iptables -t filter -X DOCKER
 	iptables -t filter -X DOCKER-ISOLATION-STAGE-1
 	iptables -t filter -X DOCKER-ISOLATION-STAGE-2
 	iptables -t filter -X DOCKER-USER
+	iptables -t filter -X DOCKER-ACCESS-CONTROL
 }
 
 ip4tables_remove() {
