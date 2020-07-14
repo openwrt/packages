@@ -46,7 +46,7 @@ mwan3_rtmon_ipv4()
 		idx=$((idx+1))
 		tid=$idx
 		[ "$(uci get mwan3.@interface[$((idx-1))].family)" = "ipv4" ] && {
-			tbl=$($IP4 route list table $tid)
+			tbl=$($IP4 route list table $tid 2>/dev/null)
 			if echo "$tbl" | grep -q ^default; then
 				(echo "$tbl"  | grep -v "^default\|linkdown" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv4.$tid
 				cat /tmp/mwan3rtmon/ipv4.$tid | grep -v -x -F -f /tmp/mwan3rtmon/ipv4.main | while read line; do
@@ -79,7 +79,7 @@ mwan3_rtmon_ipv6()
 		idx=$((idx+1))
 		tid=$idx
 		[ "$(uci get mwan3.@interface[$((idx-1))].family)" = "ipv6" ] && {
-			tbl=$($IP6 route list table $tid)
+			tbl=$($IP6 route list table $tid 2>/dev/null)
 			if echo "$tbl" | grep -q "^default\|^::/0"; then
 				(echo "$tbl"  | grep -v "^default\|^::/0\|^unreachable" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv6.$tid
 				cat /tmp/mwan3rtmon/ipv6.$tid | grep -v -x -F -f /tmp/mwan3rtmon/ipv6.main | while read line; do
