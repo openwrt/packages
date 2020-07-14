@@ -1,0 +1,108 @@
+From 558b7fefacda2056bae7a8a573019a8862983e00 Mon Sep 17 00:00:00 2001
+From: Greg Rose <gvrose8192@gmail.com>
+Date: Thu, 21 May 2020 14:54:03 -0700
+Subject: [PATCH] compat: Backport ipv6_stub change
+
+A patch backported to the Linux stable 4.14 tree and present in the
+latest stable 4.14.181 kernel breaks ipv6_stub usage.
+
+The commit is
+8ab8786f78c3 ("net ipv6_stub: use ip6_dst_lookup_flow instead of ip6_dst_lookup").
+
+Create the compat layer define to check for it and fixup usage in vxlan
+and geneve modules.
+
+Passes Travis here:
+https://travis-ci.org/github/gvrose8192/ovs-experimental/builds/689798733
+
+Signed-off-by: Greg Rose <gvrose8192@gmail.com>
+Signed-off-by: William Tu <u9012063@gmail.com>
+(cherry picked from commit 33f9c873b19a4993183e0c29a76a114646ca2977)
+Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
+---
+ acinclude.m4                   |  2 ++
+ datapath/linux/compat/geneve.c | 11 ++++++++++-
+ datapath/linux/compat/vxlan.c  | 18 +++++++++++++++++-
+ 3 files changed, 29 insertions(+), 2 deletions(-)
+
+diff --git a/acinclude.m4 b/acinclude.m4
+index f124caefb..6d8340ce9 100644
+--- a/acinclude.m4
++++ b/acinclude.m4
+@@ -506,6 +506,8 @@ AC_DEFUN([OVS_CHECK_LINUX_COMPAT], [
+   OVS_GREP_IFELSE([$KSRC/include/net/ip6_fib.h], [rt6_get_cookie],
+                   [OVS_DEFINE([HAVE_RT6_GET_COOKIE])])
+ 
++  OVS_FIND_FIELD_IFELSE([$KSRC/include/net/addrconf.h], [ipv6_stub],
++                        [dst_entry])
+   OVS_GREP_IFELSE([$KSRC/include/net/addrconf.h], [ipv6_dst_lookup.*net],
+                   [OVS_DEFINE([HAVE_IPV6_DST_LOOKUP_NET])])
+   OVS_GREP_IFELSE([$KSRC/include/net/addrconf.h], [ipv6_dst_lookup_flow.*net],
+diff --git a/datapath/linux/compat/geneve.c b/datapath/linux/compat/geneve.c
+index 4bdab6836..bf995aa83 100644
+--- a/datapath/linux/compat/geneve.c
++++ b/datapath/linux/compat/geneve.c
+@@ -962,7 +962,16 @@ static struct dst_entry *geneve_get_v6_dst(struct sk_buff *skb,
+ 			return dst;
+ 	}
+ 
+-#if defined(HAVE_IPV6_DST_LOOKUP_FLOW_NET)
++#if defined(HAVE_IPV6_STUB_WITH_DST_ENTRY) && defined(HAVE_IPV6_DST_LOOKUP_FLOW)
++#ifdef HAVE_IPV6_DST_LOOKUP_FLOW_NET
++	dst = ipv6_stub->ipv6_dst_lookup_flow(geneve->net, gs6->sock->sk, fl6,
++					      NULL);
++#else
++	dst = ipv6_stub->ipv6_dst_lookup_flow(gs6->sock->sk, fl6,
++					      NULL);
++#endif
++	if (IS_ERR(dst)) {
++#elif defined(HAVE_IPV6_DST_LOOKUP_FLOW_NET)
+ 	if (ipv6_stub->ipv6_dst_lookup_flow(geneve->net, gs6->sock->sk, &dst,
+                                             fl6)) {
+ #elif defined(HAVE_IPV6_DST_LOOKUP_FLOW)
+diff --git a/datapath/linux/compat/vxlan.c b/datapath/linux/compat/vxlan.c
+index ff10ae6f4..05ccfb928 100644
+--- a/datapath/linux/compat/vxlan.c
++++ b/datapath/linux/compat/vxlan.c
+@@ -967,7 +967,10 @@ static struct dst_entry *vxlan6_get_route(struct vxlan_dev *vxlan,
+ 	bool use_cache = (dst_cache && ip_tunnel_dst_cache_usable(skb, info));
+ 	struct dst_entry *ndst;
+ 	struct flowi6 fl6;
++#if !defined(HAVE_IPV6_STUB_WITH_DST_ENTRY) || \
++    !defined(HAVE_IPV6_DST_LOOKUP_FLOW)
+ 	int err;
++#endif
+ 
+ 	if (!sock6)
+ 		return ERR_PTR(-EIO);
+@@ -990,7 +993,15 @@ static struct dst_entry *vxlan6_get_route(struct vxlan_dev *vxlan,
+ 	fl6.fl6_dport = dport;
+ 	fl6.fl6_sport = sport;
+ 
+-#if defined(HAVE_IPV6_DST_LOOKUP_FLOW_NET)
++#if defined(HAVE_IPV6_STUB_WITH_DST_ENTRY) && defined(HAVE_IPV6_DST_LOOKUP_FLOW)
++#ifdef HAVE_IPV6_DST_LOOKUP_FLOW_NET
++	ndst = ipv6_stub->ipv6_dst_lookup_flow(vxlan->net, sock6->sock->sk,
++					       &fl6, NULL);
++#else
++	ndst = ipv6_stub->ipv6_dst_lookup_flow(sock6->sock->sk, &fl6, NULL);
++#endif
++	if (unlikely(IS_ERR(ndst))) {
++#elif defined(HAVE_IPV6_DST_LOOKUP_FLOW_NET)
+ 	err = ipv6_stub->ipv6_dst_lookup_flow(vxlan->net, sock6->sock->sk,
+ 					      &ndst, &fl6);
+ #elif defined(HAVE_IPV6_DST_LOOKUP_FLOW)
+@@ -1004,8 +1015,13 @@ static struct dst_entry *vxlan6_get_route(struct vxlan_dev *vxlan,
+ #else
+ 	err = ip6_dst_lookup(vxlan->vn6_sock->sock->sk, &ndst, &fl6);
+ #endif
++#if defined(HAVE_IPV6_STUB_WITH_DST_ENTRY) && defined(HAVE_IPV6_DST_LOOKUP_FLOW)
++		return ERR_PTR(-ENETUNREACH);
++	}
++#else
+ 	if (err < 0)
+ 		return ERR_PTR(err);
++#endif
+ 
+ 	*saddr = fl6.saddr;
+ 	if (use_cache)

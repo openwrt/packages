@@ -1,0 +1,100 @@
+From fd3ba6d1ca4b716630b9bc015698f35773a6dd02 Mon Sep 17 00:00:00 2001
+From: Yi-Hung Wei <yihung.wei@gmail.com>
+Date: Wed, 29 Apr 2020 14:25:50 -0700
+Subject: [PATCH] compat: Fix ipv6_dst_lookup build error
+
+The geneve/vxlan compat code base invokes ipv6_dst_lookup() which is
+recently replaced by ipv6_dst_lookup_flow() in the stable kernel tree.
+
+This causes travis build failure:
+    * https://travis-ci.org/github/openvswitch/ovs/builds/681084038
+
+This patch updates the backport logic to invoke the right function.
+
+Related patch in
+    git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
+
+b9f3e457098e ("net: ipv6_stub: use ip6_dst_lookup_flow instead of
+               ip6_dst_lookup")
+
+Signed-off-by: Yi-Hung Wei <yihung.wei@gmail.com>
+Signed-off-by: William Tu <u9012063@gmail.com>
+(cherry picked from commit 5519e384f6a17f564fef4c5eb39e471e16c77235)
+Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
+---
+ acinclude.m4                   |  3 +++
+ datapath/linux/compat/geneve.c | 11 +++++++----
+ datapath/linux/compat/vxlan.c  | 14 ++++++++------
+ 3 files changed, 18 insertions(+), 10 deletions(-)
+
+diff --git a/acinclude.m4 b/acinclude.m4
+index 84098f2a5..f124caefb 100644
+--- a/acinclude.m4
++++ b/acinclude.m4
+@@ -508,7 +508,10 @@ AC_DEFUN([OVS_CHECK_LINUX_COMPAT], [
+ 
+   OVS_GREP_IFELSE([$KSRC/include/net/addrconf.h], [ipv6_dst_lookup.*net],
+                   [OVS_DEFINE([HAVE_IPV6_DST_LOOKUP_NET])])
++  OVS_GREP_IFELSE([$KSRC/include/net/addrconf.h], [ipv6_dst_lookup_flow.*net],
++                  [OVS_DEFINE([HAVE_IPV6_DST_LOOKUP_FLOW_NET])])
+   OVS_GREP_IFELSE([$KSRC/include/net/addrconf.h], [ipv6_stub])
++  OVS_GREP_IFELSE([$KSRC/include/net/addrconf.h], [ipv6_dst_lookup_flow])
+ 
+   OVS_GREP_IFELSE([$KSRC/include/linux/err.h], [ERR_CAST])
+   OVS_GREP_IFELSE([$KSRC/include/linux/err.h], [IS_ERR_OR_NULL])
+diff --git a/datapath/linux/compat/geneve.c b/datapath/linux/compat/geneve.c
+index c044b1489..4bdab6836 100644
+--- a/datapath/linux/compat/geneve.c
++++ b/datapath/linux/compat/geneve.c
+@@ -962,14 +962,17 @@ static struct dst_entry *geneve_get_v6_dst(struct sk_buff *skb,
+ 			return dst;
+ 	}
+ 
+-#ifdef HAVE_IPV6_DST_LOOKUP_NET
++#if defined(HAVE_IPV6_DST_LOOKUP_FLOW_NET)
++	if (ipv6_stub->ipv6_dst_lookup_flow(geneve->net, gs6->sock->sk, &dst,
++                                            fl6)) {
++#elif defined(HAVE_IPV6_DST_LOOKUP_FLOW)
++	if (ipv6_stub->ipv6_dst_lookup_flow(gs6->sock->sk, &dst, fl6)) {
++#elif defined(HAVE_IPV6_DST_LOOKUP_NET)
+ 	if (ipv6_stub->ipv6_dst_lookup(geneve->net, gs6->sock->sk, &dst, fl6)) {
+-#else
+-#ifdef HAVE_IPV6_STUB
++#elif defined(HAVE_IPV6_STUB)
+ 	if (ipv6_stub->ipv6_dst_lookup(gs6->sock->sk, &dst, fl6)) {
+ #else
+ 	if (ip6_dst_lookup(gs6->sock->sk, &dst, fl6)) {
+-#endif
+ #endif
+ 		netdev_dbg(dev, "no route to %pI6\n", &fl6->daddr);
+ 		return ERR_PTR(-ENETUNREACH);
+diff --git a/datapath/linux/compat/vxlan.c b/datapath/linux/compat/vxlan.c
+index 23118e8b6..ff10ae6f4 100644
+--- a/datapath/linux/compat/vxlan.c
++++ b/datapath/linux/compat/vxlan.c
+@@ -990,17 +990,19 @@ static struct dst_entry *vxlan6_get_route(struct vxlan_dev *vxlan,
+ 	fl6.fl6_dport = dport;
+ 	fl6.fl6_sport = sport;
+ 
+-#ifdef HAVE_IPV6_DST_LOOKUP_NET
+-	err = ipv6_stub->ipv6_dst_lookup(vxlan->net,
+-					 sock6->sock->sk,
++#if defined(HAVE_IPV6_DST_LOOKUP_FLOW_NET)
++	err = ipv6_stub->ipv6_dst_lookup_flow(vxlan->net, sock6->sock->sk,
++					      &ndst, &fl6);
++#elif defined(HAVE_IPV6_DST_LOOKUP_FLOW)
++	err = ipv6_stub->ipv6_dst_lookup_flow(sock6->sock->sk, &ndst, &fl6);
++#elif defined(HAVE_IPV6_DST_LOOKUP_NET)
++	err = ipv6_stub->ipv6_dst_lookup(vxlan->net, sock6->sock->sk,
+ 					 &ndst, &fl6);
+-#else
+-#ifdef HAVE_IPV6_STUB
++#elif defined(HAVE_IPV6_STUB)
+ 	err = ipv6_stub->ipv6_dst_lookup(vxlan->vn6_sock->sock->sk,
+ 					 &ndst, &fl6);
+ #else
+ 	err = ip6_dst_lookup(vxlan->vn6_sock->sock->sk, &ndst, &fl6);
+-#endif
+ #endif
+ 	if (err < 0)
+ 		return ERR_PTR(err);
