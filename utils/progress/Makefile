@@ -8,16 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=progress
-PKG_VERSION:=0.14
+PKG_VERSION:=0.15
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/Xfennec/progress/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=214a0d84b3ee5dde57ec9952ec9aa68ad9261fb336ef025324b344ed7ab48af1
+PKG_HASH:=1ed0ac65a912ef1aa605d524eaddaacae92079cf71182096a7c65cbc61687d1b
 
 PKG_MAINTAINER:=Nikil Mehta <nikil.mehta@gmail.com>
-PKG_LICENSE:=GPL-3.0
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
+
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -46,7 +49,7 @@ endef
 
 define Package/progress/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/progress $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/local/bin/progress $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,progress))
