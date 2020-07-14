@@ -1067,7 +1067,7 @@ mwan3_report_iface_status()
 		IPT="$IPT6"
 	fi
 
-	if [ -z "$id" -o -z "$device" ]; then
+	if [ -z "$id" ] || [ -z "$device" ]; then
 		result="offline"
 	elif [ -n "$($IP rule | awk '$1 == "'$(($id+1000)):'"')" ] && \
 		[ -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" ] && \
