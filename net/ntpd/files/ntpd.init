@@ -75,6 +75,20 @@ start_ntpd_instance() {
 		emit "server $i iburst"
 	done
 
+	if [ -d "/etc/ntpd.d" ]; then
+		local entry
+		for entry in "/etc/ntpd.d"/*.conf; do
+			emit "includefile ${entry}\n"
+		done
+	fi
+
+	if [ -d "/tmp/ntpd.d" ]; then
+		local entry
+		for entry in "/tmp/ntpd.d"/*.conf; do
+			emit "includefile ${entry}\n"
+		done
+	fi
+
 	mkdir -p /var/lib/ntp
 	chown -R ntp:ntp /var/lib/ntp
 
