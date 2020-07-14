@@ -192,7 +192,7 @@ mwan3_get_iface_id()
 	mwan3_get_id()
 	{
 		let _iface_count++
-		[ "$1" == "$_iface" ] && _tmp=$_iface_count
+		[ "$1" = "$_iface" ] && _tmp=$_iface_count
 	}
 	config_foreach mwan3_get_id interface
 	export "$1=$_tmp"
@@ -396,7 +396,7 @@ mwan3_create_iface_iptables()
 
 	[ -n "$id" ] || return 0
 
-	if [ "$family" == "ipv4" ]; then
+	if [ "$family" = "ipv4" ]; then
 		$IPS -! create mwan3_connected list:set
 
 		if ! $IPT4 -S mwan3_ifaces_in &> /dev/null; then
@@ -428,7 +428,7 @@ mwan3_create_iface_iptables()
 			-j mwan3_iface_in_$1
 	fi
 
-	if [ "$family" == "ipv6" ]; then
+	if [ "$family" = "ipv6" ]; then
 		$IPS -! create mwan3_connected_v6 hash:net family inet6
 
 		if ! $IPT6 -S mwan3_ifaces_in &> /dev/null; then
@@ -462,7 +462,7 @@ mwan3_delete_iface_iptables()
 {
 	config_get family $1 family ipv4
 
-	if [ "$family" == "ipv4" ]; then
+	if [ "$family" = "ipv4" ]; then
 
 		$IPT4 -D mwan3_ifaces_in \
 			-m mark --mark 0x0/$MMX_MASK \
@@ -471,7 +471,7 @@ mwan3_delete_iface_iptables()
 		$IPT4 -X mwan3_iface_in_$1 &> /dev/null
 	fi
 
-	if [ "$family" == "ipv6" ]; then
+	if [ "$family" = "ipv6" ]; then
 
 		$IPT6 -D mwan3_ifaces_in \
 			-m mark --mark 0x0/$MMX_MASK \
@@ -490,7 +490,7 @@ mwan3_create_iface_route()
 
 	[ -n "$id" ] || return 0
 
-	if [ "$family" == "ipv4" ]; then
+	if [ "$family" = "ipv4" ]; then
 		if ubus call network.interface.${1}_4 status &>/dev/null; then
 			network_get_gateway route_args ${1}_4
 		else
@@ -513,7 +513,7 @@ mwan3_create_iface_route()
 		mwan3_rtmon_ipv4
 	fi
 
-	if [ "$family" == "ipv6" ]; then
+	if [ "$family" = "ipv6" ]; then
 		if ubus call network.interface.${1}_6 status &>/dev/null; then
 			network_get_gateway6 route_args ${1}_6
 		else
@@ -546,11 +546,11 @@ mwan3_delete_iface_route()
 
 	[ -n "$id" ] || return 0
 
-	if [ "$family" == "ipv4" ]; then
+	if [ "$family" = "ipv4" ]; then
 		$IP4 route flush table $id
 	fi
 
-	if [ "$family" == "ipv6" ]; then
+	if [ "$family" = "ipv6" ]; then
 		$IP6 route flush table $id
 	fi
 }
@@ -564,7 +564,7 @@ mwan3_create_iface_rules()
 
 	[ -n "$id" ] || return 0
 
-	if [ "$family" == "ipv4" ]; then
+	if [ "$family" = "ipv4" ]; then
 
 		while [ -n "$($IP4 rule list | awk '$1 == "'$(($id+1000)):'"')" ]; do
 			$IP4 rule del pref $(($id+1000))
@@ -578,7 +578,7 @@ mwan3_create_iface_rules()
 		$IP4 rule add pref $(($id+2000)) fwmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK lookup $id
 	fi
 
-	if [ "$family" == "ipv6" ]; then
+	if [ "$family" = "ipv6" ]; then
 
 		while [ -n "$($IP6 rule list | awk '$1 == "'$(($id+1000)):'"')" ]; do
 			$IP6 rule del pref $(($id+1000))
@@ -602,7 +602,7 @@ mwan3_delete_iface_rules()
 
 	[ -n "$id" ] || return 0
 
-	if [ "$family" == "ipv4" ]; then
+	if [ "$family" = "ipv4" ]; then
 
 		while [ -n "$($IP4 rule list | awk '$1 == "'$(($id+1000)):'"')" ]; do
 			$IP4 rule del pref $(($id+1000))
@@ -613,7 +613,7 @@ mwan3_delete_iface_rules()
 		done
 	fi
 
-	if [ "$family" == "ipv6" ]; then
+	if [ "$family" = "ipv6" ]; then
 
 		while [ -n "$($IP6 rule list | awk '$1 == "'$(($id+1000)):'"')" ]; do
 			$IP6 rule del pref $(($id+1000))
@@ -698,7 +698,7 @@ mwan3_set_policy()
 
 	config_get family $iface family ipv4
 
-	if [ "$family" == "ipv4" ]; then
+	if [ "$family" = "ipv4" ]; then
 
 		if [ "$(mwan3_get_iface_hotplug_state $iface)" = "online" ]; then
 			if [ "$metric" -lt "$lowest_metric_v4" ]; then
@@ -746,7 +746,7 @@ mwan3_set_policy()
 		fi
 	fi
 
-	if [ "$family" == "ipv6" ]; then
+	if [ "$family" = "ipv6" ]; then
 
 		if [ "$(mwan3_get_iface_hotplug_state $iface)" = "online" ]; then
 			if [ "$metric" -lt "$lowest_metric_v6" ]; then
@@ -858,7 +858,7 @@ mwan3_set_sticky_iptables()
 
 	for iface in $($IPT4 -S $policy | cut -s -d'"' -f2 | awk '{print $1}'); do
 
-		if [ "$iface" == "$1" ]; then
+		if [ "$iface" = "$1" ]; then
 
 			mwan3_get_iface_id id $1
 
@@ -929,11 +929,11 @@ mwan3_set_user_iptables_rule()
 	fi
 
 	if [ -n "$use_policy" ]; then
-		if [ "$use_policy" == "default" ]; then
+		if [ "$use_policy" = "default" ]; then
 			policy="MARK --set-xmark $MMX_DEFAULT/$MMX_MASK"
-		elif [ "$use_policy" == "unreachable" ]; then
+		elif [ "$use_policy" = "unreachable" ]; then
 			policy="MARK --set-xmark $MMX_UNREACHABLE/$MMX_MASK"
-		elif [ "$use_policy" == "blackhole" ]; then
+		elif [ "$use_policy" = "blackhole" ]; then
 			policy="MARK --set-xmark $MMX_BLACKHOLE/$MMX_MASK"
 		else
 			if [ "$sticky" -eq 1 ]; then
@@ -989,8 +989,8 @@ mwan3_set_user_iptables_rule()
 			fi
 		fi
 		for IPT in "$IPT4" "$IPT6"; do
-			[ "$family" == "ipv4" ] && [ "$IPT" == "$IPT6" ] && continue
-			[ "$family" == "ipv6" ] && [ "$IPT" == "$IPT4" ] && continue
+			[ "$family" = "ipv4" ] && [ "$IPT" = "$IPT6" ] && continue
+			[ "$family" = "ipv6" ] && [ "$IPT" = "$IPT4" ] && continue
 			[ "$global_logging" = "1" ] && [ "$rule_logging" = "1" ] && {
 				$IPT -A mwan3_rules \
 				     -p $proto \
@@ -1057,12 +1057,12 @@ mwan3_report_iface_status()
 	config_get enabled "$1" enabled 0
 	config_get family "$1" family ipv4
 
-	if [ "$family" == "ipv4" ]; then
+	if [ "$family" = "ipv4" ]; then
 		IP="$IP4"
 		IPT="$IPT4"
 	fi
 
-	if [ "$family" == "ipv6" ]; then
+	if [ "$family" = "ipv6" ]; then
 		IP="$IP6"
 		IPT="$IPT6"
 	fi
@@ -1079,7 +1079,7 @@ mwan3_report_iface_status()
 		[ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] || \
 		[ -n "$($IP route list table $id default dev $device 2> /dev/null)" ]; then
 		result="error"
-	elif [ "$enabled" == "1" ]; then
+	elif [ "$enabled" = "1" ]; then
 		result="offline"
 	else
 		result="disabled"
