@@ -1146,8 +1146,6 @@ mwan3_report_policies_v6()
 
 mwan3_report_connected_v4()
 {
-	local address
-
 	if [ -n "$($IPT4 -S mwan3_connected 2> /dev/null)" ]; then
 		$IPS -o save list mwan3_connected_v4 | grep add | cut -d " " -f 3
 	fi
@@ -1155,8 +1153,6 @@ mwan3_report_connected_v4()
 
 mwan3_report_connected_v6()
 {
-	local address
-
 	if [ -n "$($IPT6 -S mwan3_connected 2> /dev/null)" ]; then
 		$IPS -o save list mwan3_connected_v6 | grep add | cut -d " " -f 3
 	fi
