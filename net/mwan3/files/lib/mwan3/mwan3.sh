@@ -483,56 +483,44 @@ mwan3_delete_iface_iptables()
 
 mwan3_create_iface_route()
 {
-	local id route_args metric
+	local id via metric
 
-	config_get family $1 family ipv4
-	mwan3_get_iface_id id $1
+	config_get family "$1" family ipv4
+	mwan3_get_iface_id id "$1"
 
 	[ -n "$id" ] || return 0
 
 	if [ "$family" = "ipv4" ]; then
-		if ubus call network.interface.${1}_4 status &>/dev/null; then
-			network_get_gateway route_args ${1}_4
+		if ubus call "network.interface.${1}_4" status &>/dev/null; then
+			network_get_gateway via "${1}_4"
 		else
-			network_get_gateway route_args $1
+			network_get_gateway via "$1"
 		fi
 
-		if [ -n "$route_args" -a "$route_args" != "0.0.0.0" ]; then
-			route_args="via $route_args"
-		else
-			route_args=""
-		fi
+		network_get_metric metric "$1"
 
-		network_get_metric metric $1
-		if [ -n "$metric" -a "$metric" != "0" ]; then
-			route_args="$route_args metric $metric"
-		fi
-
-		$IP4 route flush table $id
-		$IP4 route add table $id default $route_args dev $2
+		$IP4 route flush table "$id"
+		$IP4 route add table "$id" default \
+				${via:+via} $via \
+				${metric:+metric} $metric \
+				dev "$2"
 		mwan3_rtmon_ipv4
 	fi
 
 	if [ "$family" = "ipv6" ]; then
-		if ubus call network.interface.${1}_6 status &>/dev/null; then
-			network_get_gateway6 route_args ${1}_6
+		if ubus call "network.interface.${1}_6" status &>/dev/null; then
+			network_get_gateway6 via "${1}_6"
 		else
-			network_get_gateway6 route_args $1
+			network_get_gateway6 via "$1"
 		fi
 
-		if [ -n "$route_args" -a "$route_args" != "::" ]; then
-			route_args="via $route_args"
-		else
-			route_args=""
-		fi
+		network_get_metric metric "$1"
 
-		network_get_metric metric $1
-		if [ -n "$metric" -a "$metric" != "0" ]; then
-			route_args="$route_args metric $metric"
-		fi
-
-		$IP6 route flush table $id
-		$IP6 route add table $id default $route_args dev $2
+		$IP6 route flush table "$id"
+		$IP6 route add table "$id" default \
+			${via:+via} $via \
+			${metric:+metric} $metric \
+			dev "$2"
 		mwan3_rtmon_ipv6
 	fi
 }
