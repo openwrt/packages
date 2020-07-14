@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=h2o
 PKG_VERSION:=2.2.6
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE_URL:=https://codeload.github.com/h2o/h2o/tar.gz/v${PKG_VERSION}?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -22,8 +22,6 @@ CMAKE_OPTIONS:= \
 	-DBUILD_SHARED_LIBS=ON \
 	-DWITH_MRUBY=OFF
 
-CMAKE_INSTALL:=1
-
 define Package/libh2o-evloop
   SECTION:=libs
   CATEGORY:=Libraries
@@ -38,6 +36,14 @@ define Package/libh2o
   TITLE:=H2O Library compiled with libuv
   URL:=https://h2o.examp1e.net/
   DEPENDS:=+libuv +libopenssl +zlib +libyaml +ruby
+endef
+
+define Build/InstallDev
+	$(call Build/InstallDev/cmake,$(1))
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libh2o-evloop.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libh2o-evloop.pc
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libh2o.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libh2o.pc
 endef
 
 define Package/libh2o-evloop/install
