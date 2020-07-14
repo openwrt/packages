@@ -1,0 +1,11 @@
+--- a/src/upnp_cds.cc
++++ b/src/upnp_cds.cc
+@@ -83,7 +83,7 @@ void ContentDirectoryService::doBrowse(const std::unique_ptr<ActionRequest>& req
+     if (BrowseFlag == "BrowseDirectChildren")
+         flag |= BROWSE_DIRECT_CHILDREN;
+     else if (BrowseFlag != "BrowseMetadata")
+-        throw UpnpException(UPNP_SOAP_E_INVALID_ARGS,
++        throw UpnpException(UPNP_E_INVALID_ARGUMENT,
+             "invalid browse flag: " + BrowseFlag);
+ 
+     auto parent = storage->loadObject(objectID);
