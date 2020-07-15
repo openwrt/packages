@@ -8,15 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=confuse
-PKG_VERSION:=3.2.2
+PKG_VERSION:=3.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/martinh/libconfuse/releases/download/v$(PKG_VERSION)
-PKG_HASH:=a9240b653d02e8cfc52db48e8c4224426e528e1faa09b65e8ca08a197fad210b
+PKG_HASH:=1dd50a0320e135a55025b23fcdbb3f0a81913b6d0b0a9df8cc2fdf3b3dc67010
+
 PKG_MAINTAINER:=
 PKG_LICENSE:=ISC
+PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:libconfuse_project:libconfuse
+
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -42,33 +47,21 @@ define Package/confuse/description
 	before, but was changed to not confuse with other similar libraries.
 endef
 
-TARGET_CFLAGS += $(FPIC)
-
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-rpath \
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
-	--disable-examples
-
-MAKE_FLAGS += \
-	-C $(PKG_BUILD_DIR)/src \
-	DESTDIR="$(PKG_INSTALL_DIR)" \
-	all install \
+	--disable-examples \
+	--with-pic
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/confuse.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libconfuse.{a,so*} $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/*.pc $(1)/usr/lib/pkgconfig/
-endef
-
-define Build/UninstallDev
-	rm -rf \
-	$(STAGING_DIR)/usr/include/confuse.h \
-	$(STAGING_DIR)/usr/lib/libconfuse.{a,so*}
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libconfuse.pc $(1)/usr/lib/pkgconfig/
 endef
 
 define Package/confuse/install
