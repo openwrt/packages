@@ -143,6 +143,10 @@ main() {
 						        ADDR=$(ip -6 addr ls dev "$DEVICE" | sed -ne '/\/128/d' -e 's/ *inet6 \([^ \/]*\).* scope global.*/\1/p' | head -n1)
 							[ -z "$ADDR" ] && ADDR=$(ip -6 addr ls dev "$DEVICE" | sed -ne 's/ *inet6 \([^ \/]*\).* scope global.*/\1/p')
 							ping_protocol=6
+						else
+							ADDR=$(ip -4 addr ls dev "$DEVICE" | sed -ne 's/ *inet \([^ \/]*\).* scope global.*/\1/p')
+						fi
+
 						fi
 						if [ $check_quality -eq 0 ]; then
 							$PING -$ping_protocol -I ${ADDR:-$DEVICE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip &> /dev/null
