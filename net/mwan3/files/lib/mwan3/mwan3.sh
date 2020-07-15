@@ -39,16 +39,17 @@ NO_IPV6=$?
 # otherwise return false
 mwan3_rtmon_ipv4()
 {
-	local tid=1
 	local idx=0
 	local ret=1
 	local tbl=""
+
+	local tid
+
 	mkdir -p /tmp/mwan3rtmon
 	($IP4 route list table main  | grep -v "^default\|linkdown" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv4.main
 	while uci get mwan3.@interface[$idx] >/dev/null 2>&1 ; do
-		idx=$((idx+1))
-		tid=$idx
-		[ "$(uci get mwan3.@interface[$((idx-1))].family)" = "ipv4" ] && {
+		tid=$((idx+1))
+		[ "$(uci get mwan3.@interface[$idx].family)" = "ipv4" ] && {
 			tbl=$($IP4 route list table $tid 2>/dev/null)
 			if echo "$tbl" | grep -q ^default; then
 				(echo "$tbl"  | grep -v "^default\|linkdown" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv4.$tid
@@ -60,9 +61,10 @@ mwan3_rtmon_ipv4()
 				done
 			fi
 		}
-		if [ "$(uci get mwan3.@interface[$((idx-1))].enabled)" = "1" ]; then
+		if [ "$(uci get mwan3.@interface[$idx].enabled)" = "1" ]; then
 			ret=0
 		fi
+		idx=$((idx+1))
 	done
 	rm -f /tmp/mwan3rtmon/ipv4.*
 	return $ret
@@ -72,16 +74,17 @@ mwan3_rtmon_ipv4()
 # otherwise return false
 mwan3_rtmon_ipv6()
 {
-	local tid=1
 	local idx=0
 	local ret=1
 	local tbl=""
+
+	local tid
+
 	mkdir -p /tmp/mwan3rtmon
 	($IP6 route list table main  | grep -v "^default\|^::/0\|^fe80::/64\|^unreachable" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv6.main
 	while uci get mwan3.@interface[$idx] >/dev/null 2>&1 ; do
-		idx=$((idx+1))
-		tid=$idx
-		[ "$(uci get mwan3.@interface[$((idx-1))].family)" = "ipv6" ] && {
+		tid=$((idx+1))
+		[ "$(uci get mwan3.@interface[$idx].family)" = "ipv6" ] && {
 			tbl=$($IP6 route list table $tid 2>/dev/null)
 			if echo "$tbl" | grep -q "^default\|^::/0"; then
 				(echo "$tbl"  | grep -v "^default\|^::/0\|^unreachable" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv6.$tid
@@ -93,9 +96,10 @@ mwan3_rtmon_ipv6()
 				done
 			fi
 		}
-		if [ "$(uci get mwan3.@interface[$((idx-1))].enabled)" = "1" ]; then
+		if [ "$(uci get mwan3.@interface[$idx].enabled)" = "1" ]; then
 			ret=0
 		fi
+		idx=$((idx+1))
 	done
 	rm -f /tmp/mwan3rtmon/ipv6.*
 	return $ret
