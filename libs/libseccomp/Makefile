@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libseccomp
-PKG_VERSION:=2.4.2
-PKG_RELEASE:=2
+PKG_VERSION:=2.4.3
+PKG_RELEASE:=1
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/seccomp/libseccomp/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=b54f27b53884caacc932e75e6b44304ac83586e2abe7a83eca6daecc5440585b
+PKG_HASH:=cf15d1421997fac45b936515af61d209c4fd788af11005d212b3d0fd71e7991d
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <nmav@gnutls.org>
 PKG_CPE_ID:=cpe:/a:libseccomp_project:libseccomp
 
