@@ -327,6 +327,7 @@ modemmanager_disconnected_method_common() {
 	local interface="$1"
 
 	echo "running disconnection (common)"
+	proto_notify_error "${interface}" MM_DISCONNECT_IN_PROGRESS
 
 	proto_init_update "*" 0
 	proto_send_update "${interface}"
@@ -393,9 +394,11 @@ proto_modemmanager_setup() {
 
 	# setup connect args; APN mandatory (even if it may be empty)
 	echo "starting connection with apn '${apn}'..."
+	proto_notify_error "${interface}" MM_CONNECT_IN_PROGRESS
+
 	connectargs="apn=${apn}${iptype:+,ip-type=${iptype}}${cliauth:+,allowed-auth=${cliauth}}${username:+,user=${username}}${password:+,password=${password}}${pincode:+,pin=${pincode}}"
 	mmcli --modem="${device}" --timeout 120 --simple-connect="${connectargs}" || {
-		proto_notify_error "${interface}" CONNECT_FAILED
+		proto_notify_error "${interface}" MM_CONNECT_FAILED
 		proto_block_restart "${interface}"
 		return 1
 	}
@@ -497,6 +500,7 @@ proto_modemmanager_teardown() {
 	json_get_vars device lowpower iptype
 
 	echo "stopping network"
+	proto_notify_error "${interface}" MM_TEARDOWN_IN_PROGRESS
 
 	# load connected bearer information, just the first one should be ok
 	modemstatus=$(mmcli --modem="${device}" --output-keyvalue)
@@ -525,6 +529,7 @@ proto_modemmanager_teardown() {
 
 	# disable
 	mmcli --modem="${device}" --disable
+	proto_notify_error "${interface}" MM_MODEM_DISABLED
 
 	# low power, only if requested
 	[ "${lowpower:-0}" -lt 1 ] ||
