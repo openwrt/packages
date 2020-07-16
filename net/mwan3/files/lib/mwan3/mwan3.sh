@@ -1023,7 +1023,7 @@ mwan3_set_user_iptables_rule()
 				     ${dest_port:+-m} ${dest_port:+multiport} ${dest_port:+--dports} $dest_port \
 				     -m mark --mark 0/$MMX_MASK \
 				     -m comment --comment "$1" \
-				     -j LOG --log-level "$loglevel" --log-prefix "MWAN3($1)" &> /dev/null
+				     -j LOG --log-level "$loglevel" --log-prefix "MWAN3($1)"
 			}
 
 			$IPT -A mwan3_rules \
@@ -1035,7 +1035,7 @@ mwan3_set_user_iptables_rule()
 			     ${src_port:+-m} ${src_port:+multiport} ${src_port:+--sports} $src_port \
 			     ${dest_port:+-m} ${dest_port:+multiport} ${dest_port:+--dports} $dest_port \
 			     -m mark --mark 0/$MMX_MASK \
-			     -j $policy &> /dev/null
+			     -j $policy
 		done
 	fi
 }
