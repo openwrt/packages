@@ -518,6 +518,8 @@ mwan3_create_iface_route()
 		network_get_gateway${V_} via "$1"
 	fi
 
+	( [ -z "$via" ] || [ "$via" = "0.0.0.0" ] || [ "$via" = "::" ] ) && unset via
+
 	network_get_metric metric "$1"
 
 	$IP route flush table "$id"
