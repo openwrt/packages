@@ -1,6 +1,6 @@
 --- a/src/tools.cc
 +++ b/src/tools.cc
-@@ -582,7 +582,8 @@
+@@ -582,7 +582,8 @@ enter_suid(void)
      }
  #else
  
