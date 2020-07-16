@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Jeffery To
+# Copyright (C) 2018-2020 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -56,7 +56,7 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 # GO_PKG_BUILD_PKG - list of build targets, default GO_PKG/...
 #
 #   Build targets for compiling this Go package, i.e. arguments passed
-#   to 'go install'
+#   to 'go install'.
 #
 #   e.g. GO_PKG_BUILD_PKG:=github.com/debian/ratt/cmd/...
 #
@@ -78,16 +78,16 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 #   e.g. GO_PKG_GO_GENERATE:=1
 #
 #
-# GO_PKG_GCFLAGS - list of arguments, default empty
+# GO_PKG_GCFLAGS - list of options, default empty
 #
-#   Additional go tool compile arguments to use when building targets.
+#   Additional go tool compile options to use when building targets.
 #
 #   e.g. GO_PKG_GCFLAGS:=-N -l
 #
 #
-# GO_PKG_LDFLAGS - list of arguments, default empty
+# GO_PKG_LDFLAGS - list of options, default empty
 #
-#   Additional go tool link arguments to use when building targets.
+#   Additional go tool link options to use when building targets.
 #
 #   Note that the OpenWrt build system has an option to strip binaries
 #   (enabled by default), so -s (Omit the symbol table and debug
@@ -100,9 +100,17 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 # GO_PKG_LDFLAGS_X - list of string variable definitions, default empty
 #
 #   Each definition will be passed as the parameter to the -X go tool
-#   link argument, i.e. -ldflags "-X importpath.name=value"
+#   link option, i.e. -ldflags "-X importpath.name=value".
 #
 #   e.g. GO_PKG_LDFLAGS_X:=main.Version=$(PKG_VERSION) main.BuildStamp=$(SOURCE_DATE_EPOCH)
+#
+#
+# GO_PKG_TAGS - list of build tags, default empty
+#
+#   Build tags to consider satisfied during the build, passed as the
+#   parameter to the -tags option for 'go install'.
+#
+#   e.g. GO_PKG_TAGS:=release,noupgrade
 
 # Credit for this package build process (GoPackage/Build/Configure and
 # GoPackage/Build/Compile) belong to Debian's dh-golang completely.
@@ -207,7 +215,8 @@ GO_PKG_INSTALL_ARGS= \
 	$(if $(filter $(GO_ARCH),mips mipsle),-installsuffix "$(GO_MIPS)") \
 	$(if $(filter $(GO_ARCH),mips64 mips64le),-installsuffix "$(GO_MIPS64)") \
 	$(if $(GO_PKG_GCFLAGS),-gcflags "$(GO_PKG_GCFLAGS)") \
-	$(if $(GO_PKG_CUSTOM_LDFLAGS),-ldflags "$(GO_PKG_CUSTOM_LDFLAGS) $(GO_PKG_DEFAULT_LDFLAGS)")
+	$(if $(GO_PKG_CUSTOM_LDFLAGS),-ldflags "$(GO_PKG_CUSTOM_LDFLAGS) $(GO_PKG_DEFAULT_LDFLAGS)") \
+	$(if $(GO_PKG_TAGS),-tags "$(GO_PKG_TAGS)")
 
 # false if directory does not exist
 GoPackage/is_dir_not_empty=$$$$($(FIND) $(1) -maxdepth 0 -type d \! -empty 2>/dev/null)

@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=syncthing
 PKG_VERSION:=1.6.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=syncthing-source-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/syncthing/syncthing/releases/download/v$(PKG_VERSION)
@@ -29,6 +29,7 @@ GO_PKG_LDFLAGS_X:=\
 	github.com/syncthing/syncthing/lib/build.User=openwrt \
 	github.com/syncthing/syncthing/lib/build.Host=openwrt \
 	github.com/syncthing/syncthing/lib/build.Program=syncthing
+GO_PKG_TAGS:=noupgrade
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -40,10 +41,6 @@ define Package/syncthing
   SECTION:=utils
   CATEGORY:=Utilities
   USERID:=syncthing:syncthing
-endef
-
-define Build/Compile
-  $(call GoPackage/Build/Compile,-tags noupgrade)
 endef
 
 define Package/syncthing/conffiles
