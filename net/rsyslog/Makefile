@@ -8,20 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsyslog
-PKG_VERSION:=8.39.0
-PKG_RELEASE:=2
+PKG_VERSION:=8.2006.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.rsyslog.com/files/download/rsyslog/
-PKG_HASH:=c71f96fed6538de397df25da602384f6ee2cb67329d9f3362af2a18508616ab4
+PKG_SOURCE_URL:= \
+	https://fossies.org/linux/misc \
+	https://www.rsyslog.com/files/download/rsyslog
+PKG_HASH:=d9589e64866f2fdc5636af4cae9d60ebf1e3257bb84b81ee953ede6a05878e97
 
 PKG_MAINTAINER:=
-PKG_LICENSE:=GPL-3.0
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:rsyslog:rsyslog
 
-PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
