@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=memcached
-PKG_VERSION:=1.5.14
+PKG_VERSION:=1.6.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://memcached.org/files
-PKG_HASH:=9c5bdf29a780fb6c6f7c9eaaeeda0583efdf663193758c3e316c969a510af2a9
+PKG_HASH:=908f0eecfa559129c9e44edc46f02e73afe8faca355b4efc5c86d902fc3e32f7
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=BSD-3-Clause
@@ -22,6 +22,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:memcachedb:memcached
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -41,18 +42,14 @@ define Package/memcached/conffiles
 /etc/config/memcached
 endef
 
-ifeq ($(CONFIG_BIG_ENDIAN),y)
-CONFIGURE_VARS += ac_cv_c_endian=big
-else
-CONFIGURE_VARS += ac_cv_c_endian=little
-endif
-
 CONFIGURE_ARGS += \
 	--with-libevent=$(STAGING_DIR)/usr/include/libevent \
 	--disable-docs \
 	--disable-dtrace \
 	--disable-coverage \
 	--disable-sasl
+
+CONFIGURE_VARS += ac_cv_c_endian=$(if $(CONFIG_BIG_ENDIAN),big,little)
 
 define Package/memcached/install
 	$(INSTALL_DIR) $(1)/usr/bin
