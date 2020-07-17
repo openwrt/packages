@@ -202,6 +202,13 @@ mwan3_unlock() {
 }
 
 mwan3_lock_clean() {
+	for pid in $(pgrep -f "lock /var/run/mwan3.lock"); do
+		kill -TERM "$pid" > /dev/null 2>&1
+	done
+	sleep 1
+	for pid in $(pgrep -f "lock /var/run/mwan3.lock"); do
+		kill -KILL "$pid" > /dev/null 2>&1
+	done
 	rm -rf /var/run/mwan3.lock
 }
 
