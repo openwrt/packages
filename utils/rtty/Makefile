@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtty
-PKG_VERSION:=7.1.3
-PKG_RELEASE:=2
+PKG_VERSION:=7.1.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/rtty/releases/download/v$(PKG_VERSION)
-PKG_HASH:=e10ee2048a29e18e6b21c77cb9cf7772eb95646e69567f8b40e85b816d93a3fa
+PKG_HASH:=f0b8cf4c4d3d4b34d10097fe430d32ab1576edbf41131d27b6b964e078be1716
 CMAKE_INSTALL:=1
 
 PKG_LICENSE:=MIT
@@ -37,7 +37,7 @@ endef
 
 Package/rtty-openssl=$(call Package/rtty/Default,openssl,+PACKAGE_rtty-openssl:libopenssl)
 Package/rtty-wolfssl=$(call Package/rtty/Default,wolfssl,+PACKAGE_rtty-wolfssl:libwolfssl)
-Package/rtty-mbedtls=$(call Package/rtty/Default,mbedtls,+PACKAGE_rtty-mbedtls:libmbedtls)
+Package/rtty-mbedtls=$(call Package/rtty/Default,mbedtls,+PACKAGE_rtty-mbedtls:libmbedtls +PACKAGE_rtty-mbedtls:zlib)
 Package/rtty-nossl=$(call Package/rtty/Default,nossl)
 
 define Package/rtty-openssl/conffiles
