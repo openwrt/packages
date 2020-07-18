@@ -18,8 +18,10 @@ proto_openfortivpn_init_config() {
         proto_config_add_string "username"
         proto_config_add_string "password"
         proto_config_add_string "trusted_cert"
+        proto_config_add_string "remote_status_check"	
         proto_config_add_int "set_dns"
         proto_config_add_int "pppd_use_peerdns"
+        proto_config_add_int "peerdns"
         proto_config_add_int "metric"
         no_device=1
         available=1
@@ -27,12 +29,13 @@ proto_openfortivpn_init_config() {
 
 proto_openfortivpn_setup() {
         local config="$1"
+        local msg
 
-        json_get_vars host server port iface_name local_ip username password trusted_cert set_dns pppd_use_peerdns metric
+        json_get_vars host server port iface_name local_ip username password trusted_cert \
+	              remote_status_check set_dns pppd_use_peerdns metric
 
         ifname="vpn-$config"
 
-        logger -t openfortivpn "$config: initializing..."
 
         [ -n "$iface_name" ] && {
             json_load "$(ifstatus $iface_name)"
@@ -40,27 +43,48 @@ proto_openfortivpn_setup() {
             json_get_var iface_device_up up
         }
 
-        logger -t "openfortivpn" "$config: $iface_name is status  $iface_device_up"
         [ "$iface_device_up" -eq 1 ] || {
-            logger -t "openfortivpn" "$config: $iface_name is not up $iface_device_up"
-            proto_notify_error "$config" "$iface_name is not up $iface_device_up"
+            msg="$iface_name is not up $iface_device_up"
+            logger -t "openfortivpn" "$config: $msg"
+            proto_notify_error "$config" "$msg"
             proto_block_restart "$config"
             exit 1
         }
 
-
         server_ip=$(resolveip -t 10 "$server")
 
         [ $? -eq 0 ] || {
-            logger -t "openfortivpn" "$config: failed to resolve server ip for $server"
+            msg="$config: failed to resolve server ip for $server"
+            logger -t "openfortivpn" "$msg"
             sleep 10
-            proto_notify_error "$config" "failed to resolve server ip for $server"
+            proto_notify_error "$config" "$msg"
             proto_setup_failed "$config"
             exit 1
         }
 
+	[ "$remote_status_check" = "curl" ] && {
+            curl -k --head -s --connect-timeout 10 ${iface_name:+--interface} $iface_device_name https://$server_ip > /dev/null || {
+		msg="failed to reach https://${server_ip}${iface_name:+ on $iface_device_name}"
+		logger -t "openfortivpn" "$config: $msg"
+		sleep 10
+		proto_notify_error "$config" "$msg"
+		proto_setup_failed "$config"
+		exit 1
+	    }
+	}
+	[ "$remote_status_check" = "ping" ]  && {
+            ping ${iface_name:+-I} $iface_device_name -c 1 -w 10 $server_ip > /dev/null 2>&1 || {
+                msg="$config: failed to ping $server_ip on $iface_device_name"
+		logger -t "openfortvpn" "$config: $msg"
+                sleep 10
+                proto_notify_error "$config" "failed to ping $server_ip on $iface_device_name"
+                proto_setup_failed "$config"
+                exit 1
+            }
+	}
+
         for ip in $(resolveip -t 10 "$server"); do
-                logger -t "openfortivpn" "$config: adding host dependency for $ip on $iface_name at $config"
+                logger -p 6 -t "openfortivpn" "$config: adding host dependency for $ip on $iface_name at $config"
                 proto_add_host_dependency "$config" "$ip" "$iface_name"
         done
 
@@ -112,8 +136,7 @@ mru 1354"  > $callfile
         append_args "--pppd-call=openfortivpn/$config"
 
         proto_export INTERFACE="$ifname"
-        logger -t openfortivpn "$config: executing 'openfortivpn $cmdline'"
-        logger -t openfortivpn "$config: metric is  $metric"
+        logger -p 6 -t openfortivpn "$config: executing 'openfortivpn $cmdline'"
 
         eval "proto_run_command '$config' /usr/sbin/openfortivpn-wrapper '$pwfile' $cmdline"
 
@@ -127,7 +150,6 @@ proto_openfortivpn_teardown() {
 
         rm -f $pwfile
         rm -f $callfile
-        logger -t openfortivpn "$config: bringing down openfortivpn"
         proto_kill_command "$config" 2
 }
 
