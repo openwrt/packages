@@ -108,12 +108,17 @@ end
 
 -- Main program
 
+local listen_all = false
+
 for k,v in ipairs(arg) do
   if (v == "-p") or (v == "--port") then
     port = arg[k+1]
   end
   if (v == "-b") or (v == "--bind") then
     bind = arg[k+1]
+  end
+  if (v == "-a") or (v == "--listen-all") then
+    listen_all = true
   end
 end
 
@@ -128,7 +133,14 @@ end
 ls_fd:close()
 
 if port then
-  server = assert(socket.bind(bind, port))
+  if listen_all then
+    server = assert(socket.tcp6())
+    assert(server:setoption("ipv6-v6only",false))
+    assert(server:bind("::", port))
+    assert(server:listen())
+  else
+    server = assert(socket.bind(bind, port))
+  end
 
   while 1 do
     client = server:accept()
