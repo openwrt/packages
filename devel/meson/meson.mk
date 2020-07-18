@@ -36,6 +36,22 @@ MESON_BUILD_DIR:=$(PKG_BUILD_DIR)/openwrt-build
 MESON_VARS:=
 MESON_ARGS:=
 
+ifneq ($(findstring i386,$(CONFIG_ARCH)),)
+MESON_ARCH:="x86"
+else ifneq ($(findstring powerpc64,$(CONFIG_ARCH)),)
+MESON_ARCH:="ppc64"
+else ifneq ($(findstring powerpc,$(CONFIG_ARCH)),)
+MESON_ARCH:="ppc"
+else ifneq ($(findstring mips64el,$(CONFIG_ARCH)),)
+MESON_ARCH:="mips64"
+else ifneq ($(findstring mipsel,$(CONFIG_ARCH)),)
+MESON_ARCH:="mips"
+else ifneq ($(findstring armeb,$(CONFIG_ARCH)),)
+MESON_ARCH:="arm"
+else
+MESON_ARCH:=$(CONFIG_ARCH)
+endif
+
 define Meson
 	$(2) $(STAGING_DIR_HOST)/bin/$(PYTHON) $(MESON_DIR)/meson.py $(1)
 endef
@@ -65,7 +81,7 @@ define Meson/CreateCrossFile
 		-e "s|@CFLAGS@|$(foreach FLAG,$(TARGET_CFLAGS) $(EXTRA_CFLAGS) $(TARGET_CPPFLAGS) $(EXTRA_CPPFLAGS),'$(FLAG)',)|" \
 		-e "s|@CXXFLAGS@|$(foreach FLAG,$(TARGET_CXXFLAGS) $(EXTRA_CXXFLAGS) $(TARGET_CPPFLAGS) $(EXTRA_CPPFLAGS),'$(FLAG)',)|" \
 		-e "s|@LDFLAGS@|$(foreach FLAG,$(TARGET_LDFLAGS) $(EXTRA_LDFLAGS),'$(FLAG)',)|" \
-		-e "s|@ARCH@|$(ARCH)|" \
+		-e "s|@ARCH@|$(MESON_ARCH)|" \
 		-e "s|@CPU@|$(CONFIG_TARGET_SUBTARGET)|" \
 		-e "s|@ENDIAN@|$(if $(CONFIG_BIG_ENDIAN),big,little)|" \
 		< $(MESON_DIR)/openwrt-cross.txt.in \
