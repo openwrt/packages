@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wsdd2
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/Andy2244/wsdd2.git
