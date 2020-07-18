@@ -20,7 +20,7 @@ PKG_LICENSE:=GPL-3
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:davfs2:davfs2
 
-PKG_FIXUP:=autoreconf
+PKG_FIXUP:=gettext-version autoreconf
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
