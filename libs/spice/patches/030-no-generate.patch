@@ -1,0 +1,13 @@
+--- a/subprojects/spice-common/meson.build
++++ b/subprojects/spice-common/meson.build
+@@ -44,8 +44,8 @@ if get_option('instrumentation') == 'agent'
+ endif
+ 
+ spice_common_generate_code = get_option('generate-code')
+-spice_common_generate_client_code = spice_common_generate_code == 'all' or spice_common_generate_code == 'client'
+-spice_common_generate_server_code = spice_common_generate_code == 'all' or spice_common_generate_code == 'server'
++spice_common_generate_client_code = spice_common_generate_code != 'server'
++spice_common_generate_server_code = spice_common_generate_code != 'client'
+ 
+ #
+ # check for system headers

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=spice
 PKG_VERSION:=0.14.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.spice-space.org/download/releases/spice-server
 PKG_HASH:=551d4be4a07667cf0543f3c895beb6da8a93ef5a9829f2ae47817be5e616a114
@@ -18,17 +18,17 @@ PKG_LICENSE_FILES:=COPYING
 PKG_INSTALL:=1
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
-PKG_FIXUP:=autoreconf
-PKG_BUILD_DEPENDS+=spice-protocol
+PKG_BUILD_DEPENDS+=spice-protocol glib2/host
 
 include $(INCLUDE_DIR)/package.mk
+include ../../devel/meson/meson.mk
 
 define Package/libspice-server
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=SPICE server library
   URL:=https://www.spice-space.org/index.html
-  DEPENDS:=+glib2 +libjpeg +libopenssl +pixman +zlib
+  DEPENDS:=+glib2 +libjpeg +libopenssl +librt +pixman +zlib
 endef
 
 define Package/libspice-server/install
@@ -43,18 +43,28 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib
 endef
 
-# audio codec
-CONFIGURE_ARGS += \
-	--disable-opus \
-	--disable-celt051 \
-
-CONFIGURE_ARGS += \
-	--disable-lz4 \
-	--disable-manual \
-	--disable-gstreamer \
-	--disable-smartcard \
-	--disable-statistics \
-	--without-sasl \
-	--disable-silent-rules \
+MESON_ARGS += \
+	-Dgstreamer=no \
+	-Dlz4=false \
+	-Dsasl=false \
+	-Dcelt051=disabled \
+	-Dopus=disabled \
+	-Dsmartcard=disabled \
+	-Dalignment-checks=false \
+	-Dextra-checks=false \
+	-Dstatistics=false \
+	-Dmanual=false \
+	-Dinstrumentation=no \
+	\
+	-Dspice-common:alignment-checks=false \
+	-Dspice-common:extra-checks=false \
+	-Dspice-common:celt051=disabled \
+	-Dspice-common:opus=disabled \
+	-Dspice-common:instrumentation=no \
+	-Dspice-common:smartcard=disabled \
+	-Dspice-common:python-checks=false \
+	-Dspice-common:manual=false \
+	-Dspice-common:generate-code=none \
+	-Dspice-common:tests=false
 
 $(eval $(call BuildPackage,libspice-server))
