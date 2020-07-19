@@ -18,7 +18,7 @@ GO_SOURCE_URLS:=https://dl.google.com/go/ \
 
 PKG_SOURCE:=go$(PKG_VERSION).src.tar.gz
 PKG_SOURCE_URL:=$(GO_SOURCE_URLS)
-PKG_HASH:=17ba2c4de4d78793a21cc659d9907f4356cd9c8de8b7d0899cdedcef712eba34
+PKG_HASH:=197333e97290e9ea8796f738d61019dcba1c377c2f3961fd6a114918ecc7ab06
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
