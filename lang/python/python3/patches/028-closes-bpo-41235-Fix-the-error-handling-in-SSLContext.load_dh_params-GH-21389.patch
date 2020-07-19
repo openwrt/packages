@@ -1,0 +1,40 @@
+From c8c818b0d73680516d5841597b705a1feeb42113 Mon Sep 17 00:00:00 2001
+From: "Miss Islington (bot)"
+ <31488909+miss-islington@users.noreply.github.com>
+Date: Tue, 7 Jul 2020 21:55:36 -0700
+Subject: [PATCH] closes bpo-41235: Fix the error handling in
+ SSLContext.load_dh_params() (GH-21389)
+
+(cherry picked from commit aebc0495572c5bb85d2bd97d27cf93ab038b5a6a)
+
+Co-authored-by: Zackery Spytz <zspytz@gmail.com>
+---
+ .../next/Library/2020-07-07-21-56-26.bpo-41235.H2csMU.rst   | 1 +
+ Modules/_ssl.c                                              | 6 ++++--
+ 2 files changed, 5 insertions(+), 2 deletions(-)
+ create mode 100644 Misc/NEWS.d/next/Library/2020-07-07-21-56-26.bpo-41235.H2csMU.rst
+
+diff --git a/Misc/NEWS.d/next/Library/2020-07-07-21-56-26.bpo-41235.H2csMU.rst b/Misc/NEWS.d/next/Library/2020-07-07-21-56-26.bpo-41235.H2csMU.rst
+new file mode 100644
+index 0000000000000..c55275bb1c622
+--- /dev/null
++++ b/Misc/NEWS.d/next/Library/2020-07-07-21-56-26.bpo-41235.H2csMU.rst
+@@ -0,0 +1 @@
++Fix the error handling in :meth:`ssl.SSLContext.load_dh_params`.
+diff --git a/Modules/_ssl.c b/Modules/_ssl.c
+index 93cc529e796a0..719f8e8ca308d 100644
+--- a/Modules/_ssl.c
++++ b/Modules/_ssl.c
+@@ -4189,8 +4189,10 @@ _ssl__SSLContext_load_dh_params(PySSLContext *self, PyObject *filepath)
+         }
+         return NULL;
+     }
+-    if (SSL_CTX_set_tmp_dh(self->ctx, dh) == 0)
+-        _setSSLError(NULL, 0, __FILE__, __LINE__);
++    if (!SSL_CTX_set_tmp_dh(self->ctx, dh)) {
++        DH_free(dh);
++        return _setSSLError(NULL, 0, __FILE__, __LINE__);
++    }
+     DH_free(dh);
+     Py_RETURN_NONE;
+ }
