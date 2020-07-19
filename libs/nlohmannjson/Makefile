@@ -5,17 +5,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nlohmannjson
-PKG_VERSION:=3.7.3
+PKG_VERSION:=3.8.0
 PKG_RELEASE:=1
+
+PKG_SOURCE:=json-$(PKG_VERSION).zip
+PKG_SOURCE_URL:=https://codeload.github.com/nlohmann/json/zip/v$(PKG_VERSION)?
+PKG_HASH:=83947cb78d50990b4b931b8dbc8632781bc601baa45b75ece0899c7b98d86c0b
+PKG_BUILD_DIR:=$(BUILD_DIR)/json-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Leonid Esman <leonid.esman@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.MIT
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/json-$(PKG_VERSION)
-PKG_SOURCE:=json-$(PKG_VERSION).zip
-PKG_SOURCE_URL:=https://codeload.github.com/nlohmann/json/zip/v$(PKG_VERSION)?
-PKG_HASH:=e109cd4a9d1d463a62f0a81d7c6719ecd780a52fb80a22b901ed5b6fe43fb45b
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -24,6 +24,7 @@ define Package/nlohmannjson
   CATEGORY:=Libraries
   TITLE:=JSON for Modern C++
   URL:=https://nlohmann.github.io/json/
+  BUILDONLY:=1
 endef
 
 define Package/nlohmannjson/description
