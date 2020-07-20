@@ -1,0 +1,21 @@
+menu "Configuration"
+depends on PACKAGE_libqmi
+
+	config LIBQMI_COLLECTIONS_MINIMAL
+		bool "Build with minimal message collection support"
+		default n
+		help
+		  the bare minimum messages required to control connectivity
+
+	config LIBQMI_COLLECTIONS_BASIC
+		bool "Build with basic message collection support"
+		default y
+		help
+		  all messages and indications that ModemManager requires
+
+	config LIBQMI_COLLECTIONS_FULL
+		bool "Build with full message collection support"
+		default n
+		help
+		  all supported messages and indications
+endmenu
