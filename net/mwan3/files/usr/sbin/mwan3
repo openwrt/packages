@@ -64,7 +64,7 @@ ifup()
 	status=$(ubus -S call network.interface.$1 status)
 	[ -n "$status" ] && {
 		json_load "$status"
-		json_get_vars up l3_device 
+		json_get_vars up l3_device
 	}
 
 	config_get enabled "$1" enabled 0
@@ -90,6 +90,7 @@ policies()
 	echo "Current ipv4 policies:"
 	mwan3_report_policies_v4
 	echo -e
+	[ $NO_IPV6 -ne 0 ] && return
 	echo "Current ipv6 policies:"
 	mwan3_report_policies_v6
 	echo -e
@@ -100,6 +101,7 @@ connected()
 	echo "Directly connected ipv4 networks:"
 	mwan3_report_connected_v4
 	echo -e
+	[ $NO_IPV6 -ne 0 ] && return
 	echo "Directly connected ipv6 networks:"
 	mwan3_report_connected_v6
 	echo -e
@@ -110,6 +112,7 @@ rules()
 	echo "Active ipv4 user rules:"
 	mwan3_report_rules_v4
 	echo -e
+	[ $NO_IPV6 -ne 0 ] && return
 	echo "Active ipv6 user rules:"
 	mwan3_report_rules_v6
 	echo -e
@@ -141,13 +144,19 @@ stop()
 
 	for pid in $(pgrep -f "mwan3rtmon"); do
 		kill -TERM "$pid" > /dev/null 2>&1
-		sleep 1
-		kill -KILL "$pid" > /dev/null 2>&1
 	done
 
 	for pid in $(pgrep -f "mwan3track"); do
 		kill -TERM "$pid" > /dev/null 2>&1
-		sleep 1
+	done
+
+	sleep 1
+
+	for pid in $(pgrep -f "mwan3rtmon"); do
+		kill -KILL "$pid" > /dev/null 2>&1
+	done
+
+	for pid in $(pgrep -f "mwan3track"); do
 		kill -KILL "$pid" > /dev/null 2>&1
 	done
 
@@ -155,7 +164,7 @@ stop()
 	config_foreach mwan3_track_clean interface
 
 	for IP in "$IP4" "$IP6"; do
-
+		[ "$IP" = "$IP6" ] && [ $NO_IPV6 -ne 0 ] && continue
 		for route in $(seq 1 $MWAN3_INTERFACE_MAX); do
 			$IP route flush table $route &> /dev/null
 		done
@@ -166,7 +175,7 @@ stop()
 	done
 
 	for IPT in "$IPT4" "$IPT6"; do
-
+		[ "$IPT" = "$IPT6" ] && [ $NO_IPV6 -ne 0 ] && continue
 		$IPT -D PREROUTING -j mwan3_hook &> /dev/null
 		$IPT -D OUTPUT -j mwan3_hook &> /dev/null
 

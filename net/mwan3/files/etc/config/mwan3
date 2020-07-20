@@ -139,7 +139,12 @@ config rule 'https'
 	option proto 'tcp'
 	option use_policy 'balanced'
 
-config rule 'default_rule'
+config rule 'default_rule_v4'
 	option dest_ip '0.0.0.0/0'
 	option use_policy 'balanced'
+	option family 'ipv4'
 
+config rule 'default_rule_v6'
+	option dest_ip '::/0'
+	option use_policy 'balanced'
+	option family 'ipv6'
