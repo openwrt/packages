@@ -18,7 +18,7 @@ proto_openfortivpn_init_config() {
         proto_config_add_string "username"
         proto_config_add_string "password"
         proto_config_add_string "trusted_cert"
-        proto_config_add_string "remote_status_check"	
+        proto_config_add_string "remote_status_check"
         proto_config_add_int "peerdns"
         proto_config_add_int "metric"
         no_device=1
@@ -30,7 +30,7 @@ proto_openfortivpn_setup() {
         local msg
 
         json_get_vars host server port iface_name local_ip username password trusted_cert \
-	              remote_status_check peerdns metric
+                      remote_status_check peerdns metric
 
         ifname="vpn-$config"
 
@@ -89,7 +89,7 @@ proto_openfortivpn_setup() {
 
 
         [ -n "$port" ] && port=":$port"
-	[ -z "$peerdns" ] && peerdns=1
+        [ -z "$peerdns" ] && peerdns=1
 
         append_args "$server$port" --pppd-ifname="$ifname" --use-syslog  -c /dev/null
         append_args "--set-dns=0"
