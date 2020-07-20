@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. /usr/share/libubox/jshn.sh
+
 IP4="ip -4"
 IP6="ip -6"
 IPS="ipset"
@@ -43,13 +45,20 @@ mwan3_rtmon_ipv4()
 	local ret=1
 	local tbl=""
 
-	local tid
+	local tid family enabled
 
 	mkdir -p /tmp/mwan3rtmon
 	($IP4 route list table main  | grep -v "^default\|linkdown" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv4.main
 	while uci get mwan3.@interface[$idx] >/dev/null 2>&1 ; do
 		tid=$((idx+1))
-		[ "$(uci get mwan3.@interface[$idx].family)" = "ipv4" ] && {
+
+		family="$(uci -q get mwan3.@interface[$idx].family)"
+		[ -z "$family" ] && family="ipv4"
+
+		enabled="$(uci -q get mwan3.@interface[$idx].enabled)"
+		[ -z "$enabled" ] && enabled="0"
+
+		[ "$family" = "ipv4" ] && {
 			tbl=$($IP4 route list table $tid 2>/dev/null)
 			if echo "$tbl" | grep -q ^default; then
 				(echo "$tbl"  | grep -v "^default\|linkdown" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv4.$tid
@@ -61,7 +70,7 @@ mwan3_rtmon_ipv4()
 				done
 			fi
 		}
-		if [ "$(uci get mwan3.@interface[$idx].enabled)" = "1" ]; then
+		if [ "$enabled" = "1" ]; then
 			ret=0
 		fi
 		idx=$((idx+1))
@@ -78,13 +87,21 @@ mwan3_rtmon_ipv6()
 	local ret=1
 	local tbl=""
 
-	local tid
+	local tid family enabled
 
 	mkdir -p /tmp/mwan3rtmon
 	($IP6 route list table main  | grep -v "^default\|^::/0\|^fe80::/64\|^unreachable" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv6.main
 	while uci get mwan3.@interface[$idx] >/dev/null 2>&1 ; do
 		tid=$((idx+1))
-		[ "$(uci get mwan3.@interface[$idx].family)" = "ipv6" ] && {
+
+		family="$(uci -q get mwan3.@interface[$idx].family)"
+		# Set default family to ipv4 that is no mistake
+		[ -z "$family" ] && family="ipv4"
+
+		enabled="$(uci -q get mwan3.@interface[$idx].enabled)"
+		[ -z "$enabled" ] && enabled="0"
+
+		[ "$family" = "ipv6" ] && {
 			tbl=$($IP6 route list table $tid 2>/dev/null)
 			if echo "$tbl" | grep -q "^default\|^::/0"; then
 				(echo "$tbl"  | grep -v "^default\|^::/0\|^unreachable" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv6.$tid
@@ -96,7 +113,7 @@ mwan3_rtmon_ipv6()
 				done
 			fi
 		}
-		if [ "$(uci get mwan3.@interface[$idx].enabled)" = "1" ]; then
+		if [ "$enabled" = "1" ]; then
 			ret=0
 		fi
 		idx=$((idx+1))
@@ -187,6 +204,13 @@ mwan3_unlock() {
 }
 
 mwan3_lock_clean() {
+	for pid in $(pgrep -f "lock /var/run/mwan3.lock"); do
+		kill -TERM "$pid" > /dev/null 2>&1
+	done
+	sleep 1
+	for pid in $(pgrep -f "lock /var/run/mwan3.lock"); do
+		kill -KILL "$pid" > /dev/null 2>&1
+	done
 	rm -rf /var/run/mwan3.lock
 }
 
@@ -1044,7 +1068,18 @@ mwan3_report_iface_status()
 		[ -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" ] && \
 		[ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] && \
 		[ -n "$($IP route list table $id default dev $device 2> /dev/null)" ]; then
-		result="$(mwan3_get_iface_hotplug_state $1)"
+		json_init
+		json_add_string section interfaces
+		json_add_string interface "$1"
+		json_load "$(ubus call mwan3 status "$(json_dump)")"
+		json_select "interfaces"
+		json_select "$1"
+		json_get_vars online uptime
+		json_select ..
+		json_select ..
+		online="$(printf '%02dh:%02dm:%02ds\n' $(($online/3600)) $(($online%3600/60)) $(($online%60)))"
+		uptime="$(printf '%02dh:%02dm:%02ds\n' $(($uptime/3600)) $(($uptime%3600/60)) $(($uptime%60)))"
+		result="$(mwan3_get_iface_hotplug_state $1) $online, uptime $uptime"
 	elif [ -n "$($IP rule | awk '$1 == "'$(($id+1000)):'"')" ] || \
 		[ -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" ] || \
 		[ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] || \
