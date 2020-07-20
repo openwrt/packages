@@ -104,7 +104,7 @@ proto_openfortivpn_setup() {
         [ -n "$username" ] && append_args -u "$username"
         [ -n "$password" ] && {
                 umask 077
-                mkdir -p /var/etc
+                mkdir -p '/var/etc/openfortivpn'
                 pwfile="/var/etc/openfortivpn/$config.passwd"
                 echo "$password" > "$pwfile"
         }
@@ -112,7 +112,7 @@ proto_openfortivpn_setup() {
         [ -n "$local_ip" ] || local_ip=192.0.2.1
         [ -e '/etc/ppp/peers' ] || mkdir -p '/etc/ppp/peers'
         [ -e '/etc/ppp/peers/openfortivpn' ] || {
-            ln -s -T '/var/etc/openfortivpn/peers' '/etc/ppp/peers/openfortivpn'
+            ln -s -T '/var/etc/openfortivpn/peers' '/etc/ppp/peers/openfortivpn' 2> /dev/null
             mkdir -p '/var/etc/openfortivpn/peers'
         }
 
