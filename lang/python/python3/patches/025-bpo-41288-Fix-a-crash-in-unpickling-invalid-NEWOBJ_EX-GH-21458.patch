@@ -1,0 +1,111 @@
+From f56c75ed53dcad4d59dff4377ae463d6b96acd3e Mon Sep 17 00:00:00 2001
+From: "Miss Islington (bot)"
+ <31488909+miss-islington@users.noreply.github.com>
+Date: Mon, 13 Jul 2020 06:05:44 -0700
+Subject: [PATCH] bpo-41288: Fix a crash in unpickling invalid NEWOBJ_EX.
+ (GH-21458)
+
+Automerge-Triggered-By: @tiran
+(cherry picked from commit 4f309abf55f0e6f8950ac13d6ec83c22b8d47bf8)
+
+Co-authored-by: Serhiy Storchaka <storchaka@gmail.com>
+---
+ Lib/test/pickletester.py                      | 18 ++++++++++++
+ .../2020-07-13-15-06-35.bpo-41288.8mn5P-.rst  |  2 ++
+ Modules/_pickle.c                             | 29 ++++++++++++++-----
+ 3 files changed, 41 insertions(+), 8 deletions(-)
+ create mode 100644 Misc/NEWS.d/next/Library/2020-07-13-15-06-35.bpo-41288.8mn5P-.rst
+
+diff --git a/Lib/test/pickletester.py b/Lib/test/pickletester.py
+index 9401043d78d18..ff7bbb0c8a9bf 100644
+--- a/Lib/test/pickletester.py
++++ b/Lib/test/pickletester.py
+@@ -1170,6 +1170,24 @@ def test_compat_unpickle(self):
+             self.assertIs(type(unpickled), collections.UserDict)
+             self.assertEqual(unpickled, collections.UserDict({1: 2}))
+ 
++    def test_bad_reduce(self):
++        self.assertEqual(self.loads(b'cbuiltins\nint\n)R.'), 0)
++        self.check_unpickling_error(TypeError, b'N)R.')
++        self.check_unpickling_error(TypeError, b'cbuiltins\nint\nNR.')
++
++    def test_bad_newobj(self):
++        error = (pickle.UnpicklingError, TypeError)
++        self.assertEqual(self.loads(b'cbuiltins\nint\n)\x81.'), 0)
++        self.check_unpickling_error(error, b'cbuiltins\nlen\n)\x81.')
++        self.check_unpickling_error(error, b'cbuiltins\nint\nN\x81.')
++
++    def test_bad_newobj_ex(self):
++        error = (pickle.UnpicklingError, TypeError)
++        self.assertEqual(self.loads(b'cbuiltins\nint\n)}\x92.'), 0)
++        self.check_unpickling_error(error, b'cbuiltins\nlen\n)}\x92.')
++        self.check_unpickling_error(error, b'cbuiltins\nint\nN}\x92.')
++        self.check_unpickling_error(error, b'cbuiltins\nint\n)N\x92.')
++
+     def test_bad_stack(self):
+         badpickles = [
+             b'.',                       # STOP
+diff --git a/Misc/NEWS.d/next/Library/2020-07-13-15-06-35.bpo-41288.8mn5P-.rst b/Misc/NEWS.d/next/Library/2020-07-13-15-06-35.bpo-41288.8mn5P-.rst
+new file mode 100644
+index 0000000000000..3c3adbabf16ff
+--- /dev/null
++++ b/Misc/NEWS.d/next/Library/2020-07-13-15-06-35.bpo-41288.8mn5P-.rst
+@@ -0,0 +1,2 @@
++Unpickling invalid NEWOBJ_EX opcode with the C implementation raises now
++UnpicklingError instead of crashing.
+diff --git a/Modules/_pickle.c b/Modules/_pickle.c
+index 55affb2c7c479..42ce62fc7cdf4 100644
+--- a/Modules/_pickle.c
++++ b/Modules/_pickle.c
+@@ -5988,23 +5988,30 @@ load_newobj_ex(UnpicklerObject *self)
+     }
+ 
+     if (!PyType_Check(cls)) {
+-        Py_DECREF(kwargs);
+-        Py_DECREF(args);
+         PyErr_Format(st->UnpicklingError,
+                      "NEWOBJ_EX class argument must be a type, not %.200s",
+                      Py_TYPE(cls)->tp_name);
+-        Py_DECREF(cls);
+-        return -1;
++        goto error;
+     }
+ 
+     if (((PyTypeObject *)cls)->tp_new == NULL) {
+-        Py_DECREF(kwargs);
+-        Py_DECREF(args);
+-        Py_DECREF(cls);
+         PyErr_SetString(st->UnpicklingError,
+                         "NEWOBJ_EX class argument doesn't have __new__");
+-        return -1;
++        goto error;
++    }
++    if (!PyTuple_Check(args)) {
++        PyErr_Format(st->UnpicklingError,
++                     "NEWOBJ_EX args argument must be a tuple, not %.200s",
++                     Py_TYPE(args)->tp_name);
++        goto error;
++    }
++    if (!PyDict_Check(kwargs)) {
++        PyErr_Format(st->UnpicklingError,
++                     "NEWOBJ_EX kwargs argument must be a dict, not %.200s",
++                     Py_TYPE(kwargs)->tp_name);
++        goto error;
+     }
++
+     obj = ((PyTypeObject *)cls)->tp_new((PyTypeObject *)cls, args, kwargs);
+     Py_DECREF(kwargs);
+     Py_DECREF(args);
+@@ -6014,6 +6021,12 @@ load_newobj_ex(UnpicklerObject *self)
+     }
+     PDATA_PUSH(self->stack, obj, -1);
+     return 0;
++
++error:
++    Py_DECREF(kwargs);
++    Py_DECREF(args);
++    Py_DECREF(cls);
++    return -1;
+ }
+ 
+ static int
