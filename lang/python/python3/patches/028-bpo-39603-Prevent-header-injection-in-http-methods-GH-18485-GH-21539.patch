@@ -1,0 +1,99 @@
+From f02de961b9f19a5db0ead56305fe0057a78787ae Mon Sep 17 00:00:00 2001
+From: "Miss Islington (bot)"
+ <31488909+miss-islington@users.noreply.github.com>
+Date: Sun, 19 Jul 2020 02:28:45 -0700
+Subject: [PATCH] bpo-39603: Prevent header injection in http methods
+ (GH-18485) (GH-21539)
+
+reject control chars in http method in http.client.putrequest to prevent http header injection
+(cherry picked from commit 8ca8a2e8fb068863c1138f07e3098478ef8be12e)
+
+Co-authored-by: AMIR <31338382+amiremohamadi@users.noreply.github.com>
+---
+ Lib/http/client.py                            | 15 +++++++++++++
+ Lib/test/test_httplib.py                      | 22 +++++++++++++++++++
+ .../2020-02-12-14-17-39.bpo-39603.Gt3RSg.rst  |  2 ++
+ 3 files changed, 39 insertions(+)
+ create mode 100644 Misc/NEWS.d/next/Security/2020-02-12-14-17-39.bpo-39603.Gt3RSg.rst
+
+diff --git a/Lib/http/client.py b/Lib/http/client.py
+index c0ac7db6f40a0..53581eca20587 100644
+--- a/Lib/http/client.py
++++ b/Lib/http/client.py
+@@ -151,6 +151,10 @@
+ #  _is_allowed_url_pchars_re = re.compile(r"^[/!$&'()*+,;=:@%a-zA-Z0-9._~-]+$")
+ # We are more lenient for assumed real world compatibility purposes.
+ 
++# These characters are not allowed within HTTP method names
++# to prevent http header injection.
++_contains_disallowed_method_pchar_re = re.compile('[\x00-\x1f]')
++
+ # We always set the Content-Length header for these methods because some
+ # servers will otherwise respond with a 411
+ _METHODS_EXPECTING_BODY = {'PATCH', 'POST', 'PUT'}
+@@ -1119,6 +1123,8 @@ def putrequest(self, method, url, skip_host=False,
+         else:
+             raise CannotSendRequest(self.__state)
+ 
++        self._validate_method(method)
++
+         # Save the method for use later in the response phase
+         self._method = method
+ 
+@@ -1209,6 +1215,15 @@ def _encode_request(self, request):
+         # ASCII also helps prevent CVE-2019-9740.
+         return request.encode('ascii')
+ 
++    def _validate_method(self, method):
++        """Validate a method name for putrequest."""
++        # prevent http header injection
++        match = _contains_disallowed_method_pchar_re.search(method)
++        if match:
++            raise ValueError(
++                    f"method can't contain control characters. {method!r} "
++                    f"(found at least {match.group()!r})")
++
+     def _validate_path(self, url):
+         """Validate a url for putrequest."""
+         # Prevent CVE-2019-9740.
+diff --git a/Lib/test/test_httplib.py b/Lib/test/test_httplib.py
+index fcd9231666ede..03e049b13fd21 100644
+--- a/Lib/test/test_httplib.py
++++ b/Lib/test/test_httplib.py
+@@ -359,6 +359,28 @@ def test_headers_debuglevel(self):
+         self.assertEqual(lines[2], "header: Second: val")
+ 
+ 
++class HttpMethodTests(TestCase):
++    def test_invalid_method_names(self):
++        methods = (
++            'GET\r',
++            'POST\n',
++            'PUT\n\r',
++            'POST\nValue',
++            'POST\nHOST:abc',
++            'GET\nrHost:abc\n',
++            'POST\rRemainder:\r',
++            'GET\rHOST:\n',
++            '\nPUT'
++        )
++
++        for method in methods:
++            with self.assertRaisesRegex(
++                    ValueError, "method can't contain control characters"):
++                conn = client.HTTPConnection('example.com')
++                conn.sock = FakeSocket(None)
++                conn.request(method=method, url="/")
++
++
+ class TransferEncodingTest(TestCase):
+     expected_body = b"It's just a flesh wound"
+ 
+diff --git a/Misc/NEWS.d/next/Security/2020-02-12-14-17-39.bpo-39603.Gt3RSg.rst b/Misc/NEWS.d/next/Security/2020-02-12-14-17-39.bpo-39603.Gt3RSg.rst
+new file mode 100644
+index 0000000000000..990affc3edd9d
+--- /dev/null
++++ b/Misc/NEWS.d/next/Security/2020-02-12-14-17-39.bpo-39603.Gt3RSg.rst
+@@ -0,0 +1,2 @@
++Prevent http header injection by rejecting control characters in
++http.client.putrequest(...).
