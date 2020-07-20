@@ -8,6 +8,8 @@ for i in $networks; do
     iface_success=$?
     [ $? -eq 0 ] && [ $INTERFACE == "$iface" ] && {
         logger -t "openfortivpnhotplug" "$ACTION on $INTERFACE to bring up $i"
+	load_on_boot=$(uci get network.${i}.auto 2>/dev/null)
+	[ -n "$load_on_boot" ] && [ "$load_on_boot" -eq 0 ] && continue
         json_load "$(ifstatus $i)"
         json_get_var autostart autostart
 	[ "$autostart" -eq 0 ] && {
