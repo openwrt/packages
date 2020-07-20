@@ -415,7 +415,7 @@ mwan3_set_general_iptables()
 
 mwan3_create_iface_iptables()
 {
-	local id family
+	local id family connected_name IPT
 
 	config_get family "$1" family ipv4
 	mwan3_get_iface_id id "$1"
@@ -423,93 +423,73 @@ mwan3_create_iface_iptables()
 	[ -n "$id" ] || return 0
 
 	if [ "$family" = "ipv4" ]; then
-		$IPS -! create mwan3_connected list:set
+		connected_name=mwan3_connected
+		IPT="$IPT4"
+		$IPS -! create $connected_name list:set
 
-		if ! $IPT4 -S mwan3_ifaces_in &> /dev/null; then
-			$IPT4 -N mwan3_ifaces_in
-		fi
-
-		if ! $IPT4 -S "mwan3_iface_in_$1" &> /dev/null; then
-			$IPT4 -N "mwan3_iface_in_$1"
-		fi
-
-		$IPT4 -F "mwan3_iface_in_$1"
-		$IPT4 -A "mwan3_iface_in_$1" \
-			-i "$2" \
-			-m set --match-set mwan3_connected src \
-			-m mark --mark 0x0/$MMX_MASK \
-			-m comment --comment "default" \
-			-j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
-		$IPT4 -A "mwan3_iface_in_$1" \
-			-i "$2" \
-			-m mark --mark 0x0/$MMX_MASK \
-			-m comment --comment "$1" \
-			-j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
-
-		$IPT4 -D mwan3_ifaces_in \
-			-m mark --mark 0x0/$MMX_MASK \
-			-j "mwan3_iface_in_$1" &> /dev/null
-		$IPT4 -A mwan3_ifaces_in \
-			-m mark --mark 0x0/$MMX_MASK \
-			-j "mwan3_iface_in_$1"
+	elif [ "$family" = "ipv6" ] && [ $NO_IPV6 -eq 0 ]; then
+		connected_name=mwan3_connected_v6
+		IPT="$IPT6"
+		$IPS -! create $connected_name hash:net family inet6
+	else
+		return
 	fi
 
-	if [ "$family" = "ipv6" ] && [ $NO_IPV6 = 0 ]; then
-		$IPS -! create mwan3_connected_v6 hash:net family inet6
-
-		if ! $IPT6 -S mwan3_ifaces_in &> /dev/null; then
-			$IPT6 -N mwan3_ifaces_in
-		fi
-
-		if ! $IPT6 -S "mwan3_iface_in_$1" &> /dev/null; then
-			$IPT6 -N "mwan3_iface_in_$1"
-		fi
-
-		$IPT6 -F "mwan3_iface_in_$1"
-		$IPT6 -A "mwan3_iface_in_$1" -i "$2" \
-			-m set --match-set mwan3_connected_v6 src \
-			-m mark --mark 0x0/$MMX_MASK \
-			-m comment --comment "default" \
-			-j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
-		$IPT6 -A "mwan3_iface_in_$1" -i "$2" -m mark --mark 0x0/$MMX_MASK \
-			-m comment --comment "$1" \
-			-j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
-
-		$IPT6 -D mwan3_ifaces_in \
-			-m mark --mark 0x0/$MMX_MASK \
-			-j "mwan3_iface_in_$1" &> /dev/null
-		$IPT6 -A mwan3_ifaces_in \
-			-m mark --mark 0x0/$MMX_MASK \
-			-j "mwan3_iface_in_$1"
+	if ! $IPT -S mwan3_ifaces_in &> /dev/null; then
+		$IPT -N mwan3_ifaces_in
 	fi
+
+	if ! $IPT -S "mwan3_iface_in_$1" &> /dev/null; then
+		$IPT -N "mwan3_iface_in_$1"
+	fi
+
+	$IPT -F "mwan3_iface_in_$1"
+	$IPT -A "mwan3_iface_in_$1" \
+	     -i "$2" \
+	     -m set --match-set $connected_name src \
+	     -m mark --mark 0x0/$MMX_MASK \
+	     -m comment --comment "default" \
+	     -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
+	$IPT -A "mwan3_iface_in_$1" \
+	     -i "$2" \
+	     -m mark --mark 0x0/$MMX_MASK \
+	     -m comment --comment "$1" \
+	     -j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
+
+	$IPT -D mwan3_ifaces_in \
+	     -m mark --mark 0x0/$MMX_MASK \
+	     -j "mwan3_iface_in_$1" &> /dev/null
+	$IPT -A mwan3_ifaces_in \
+	     -m mark --mark 0x0/$MMX_MASK \
+	     -j "mwan3_iface_in_$1"
+
 }
 
 mwan3_delete_iface_iptables()
 {
+	local IPT
 	config_get family "$1" family ipv4
 
 	if [ "$family" = "ipv4" ]; then
-
-		$IPT4 -D mwan3_ifaces_in \
-			-m mark --mark 0x0/$MMX_MASK \
-			-j "mwan3_iface_in_$1" &> /dev/null
-		$IPT4 -F "mwan3_iface_in_$1" &> /dev/null
-		$IPT4 -X "mwan3_iface_in_$1" &> /dev/null
+		IPT="$IPT4"
 	fi
 
-	if [ "$family" = "ipv6" ] && [ $NO_IPV6 = 0 ]; then
-
-		$IPT6 -D mwan3_ifaces_in \
-			-m mark --mark 0x0/$MMX_MASK \
-			-j "mwan3_iface_in_$1" &> /dev/null
-		$IPT6 -F "mwan3_iface_in_$1" &> /dev/null
-		$IPT6 -X "mwan3_iface_in_$1" &> /dev/null
+	if [ "$family" = "ipv6" ]; then
+		[ $NO_IPV6 -ne 0 ] && return
+		IPT="$IPT6"
 	fi
+
+	$IPT -D mwan3_ifaces_in \
+	     -m mark --mark 0x0/$MMX_MASK \
+	     -j "mwan3_iface_in_$1" &> /dev/null
+	$IPT -F "mwan3_iface_in_$1" &> /dev/null
+	$IPT -X "mwan3_iface_in_$1" &> /dev/null
+
 }
 
 mwan3_create_iface_route()
 {
-	local id via metric
+	local id via metric V V_ IP
 
 	config_get family "$1" family ipv4
 	mwan3_get_iface_id id "$1"
@@ -517,38 +497,32 @@ mwan3_create_iface_route()
 	[ -n "$id" ] || return 0
 
 	if [ "$family" = "ipv4" ]; then
-		if ubus call "network.interface.${1}_4" status &>/dev/null; then
-			network_get_gateway via "${1}_4"
-		else
-			network_get_gateway via "$1"
-		fi
-
-		network_get_metric metric "$1"
-
-		$IP4 route flush table "$id"
-		$IP4 route add table "$id" default \
-				${via:+via} $via \
-				${metric:+metric} $metric \
-				dev "$2"
-		mwan3_rtmon_ipv4
+		V=4
+		V_=""
+		IP="$IP4"
+	elif [ "$family" = "ipv6" ]; then
+		V=6
+		V_=6
+		IP="$IP6"
+	else
+		return
 	fi
 
-	if [ "$family" = "ipv6" ] && [ $NO_IPV6 = 0 ]; then
-		if ubus call "network.interface.${1}_6" status &>/dev/null; then
-			network_get_gateway6 via "${1}_6"
-		else
-			network_get_gateway6 via "$1"
-		fi
-
-		network_get_metric metric "$1"
-
-		$IP6 route flush table "$id"
-		$IP6 route add table "$id" default \
-			${via:+via} $via \
-			${metric:+metric} $metric \
-			dev "$2"
-		mwan3_rtmon_ipv6
+	if ubus call network.interface.${1}_${V} status &>/dev/null; then
+		network_get_gateway${V_} via "${1}_${V}"
+	else
+		network_get_gateway${V_} via "$1"
 	fi
+
+	network_get_metric metric "$1"
+
+	$IP route flush table "$id"
+	$IP route add table "$id" default \
+	     ${via:+via} $via \
+	     ${metric:+metric} $metric \
+	     dev "$2"
+	mwan3_rtmon_ipv${V}
+
 }
 
 mwan3_delete_iface_route()
@@ -698,8 +672,9 @@ mwan3_track_signal()
 
 mwan3_set_policy()
 {
-	local iface_count id iface family metric probability weight device
+	local iface_count id iface family metric probability weight device is_lowest is_offline IPT total_weight
 
+	is_lowest=0
 	config_get iface "$1" interface
 	config_get metric "$1" metric 1
 	config_get weight "$1" weight 1
@@ -710,105 +685,74 @@ mwan3_set_policy()
 
 	mwan3_get_iface_id id "$iface"
 
+	[ "$(mwan3_get_iface_hotplug_state "$iface")" = "online" ]
+	is_offline=$?
+
 	[ -n "$id" ] || return 0
 
 	config_get family "$iface" family ipv4
 
 	if [ "$family" = "ipv4" ]; then
-
-		if [ "$(mwan3_get_iface_hotplug_state "$iface")" = "online" ]; then
-			if [ "$metric" -lt "$lowest_metric_v4" ]; then
-
-				total_weight_v4=$weight
-				$IPT4 -F "mwan3_policy_$policy"
-				$IPT4 -A "mwan3_policy_$policy" \
-					-m mark --mark 0x0/$MMX_MASK \
-					-m comment --comment "$iface $weight $weight" \
-					-j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
-
-				lowest_metric_v4=$metric
-
-			elif [ "$metric" -eq "$lowest_metric_v4" ]; then
-
-				total_weight_v4=$(($total_weight_v4+$weight))
-				probability=$(($weight*1000/$total_weight_v4))
-
-				if [ "$probability" -lt 10 ]; then
-					probability="0.00$probability"
-				elif [ $probability -lt 100 ]; then
-					probability="0.0$probability"
-				elif [ $probability -lt 1000 ]; then
-					probability="0.$probability"
-				else
-					probability="1"
-				fi
-
-				probability="-m statistic --mode random --probability $probability"
-
-				$IPT4 -I "mwan3_policy_$policy" \
-					-m mark --mark 0x0/$MMX_MASK "$probability" \
-					-m comment --comment "$iface $weight $total_weight_v4" \
-					-j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
-			fi
-		else
-			[ -n "$device" ] && {
-				$IPT4 -S "mwan3_policy_$policy" | grep -q '.*--comment ".* [0-9]* [0-9]*"' || \
-					$IPT4 -I "mwan3_policy_$policy" \
-					-o "$device" \
-					-m mark --mark 0x0/$MMX_MASK \
-					-m comment --comment "out $iface $device" \
-					-j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
-			}
-		fi
+		IPT="$IPT4"
+	elif [ "$family" = "ipv6" ]; then
+		IPT="$IPT6"
 	fi
 
-	if [ "$family" = "ipv6" ] && [ $NO_IPV6 -eq 0 ]; then
-
-		if [ "$(mwan3_get_iface_hotplug_state "$iface")" = "online" ]; then
-			if [ "$metric" -lt "$lowest_metric_v6" ]; then
-
-				total_weight_v6=$weight
-				$IPT6 -F "mwan3_policy_$policy"
-				$IPT6 -A "mwan3_policy_$policy" \
-					-m mark --mark 0x0/$MMX_MASK \
-					-m comment --comment "$iface $weight $weight" \
-					-j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
-
-				lowest_metric_v6=$metric
-
-			elif [ "$metric" -eq "$lowest_metric_v6" ]; then
-
-				total_weight_v6=$(($total_weight_v6+$weight))
-				probability=$(($weight*1000/$total_weight_v6))
-
-				if [ "$probability" -lt 10 ]; then
-					probability="0.00$probability"
-				elif [ $probability -lt 100 ]; then
-					probability="0.0$probability"
-				elif [ $probability -lt 1000 ]; then
-					probability="0.$probability"
-				else
-					probability="1"
-				fi
-
-				probability="-m statistic --mode random --probability $probability"
-
-				$IPT6 -I "mwan3_policy_$policy" \
-					-m mark --mark 0x0/$MMX_MASK \
-					"$probability" \
-					-m comment --comment "$iface $weight $total_weight_v6" \
-					-j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
-			fi
+	if [ "$family" = "ipv4" ] && [ $is_offline -eq 0 ]; then
+		if [ "$metric" -lt "$lowest_metric_v4" ]; then
+			is_lowest=1
+			total_weight_v4=$weight
+			lowest_metric_v4=$metric
+		elif [ "$metric" -eq "$lowest_metric_v4" ]; then
+		       	total_weight_v4=$(($total_weight_v4+$weight))
+			total_weight=$total_weight_v4
 		else
-			[ -n "$device" ] && {
-				$IPT6 -S "mwan3_policy_$policy" | grep -q '.*--comment ".* [0-9]* [0-9]*"' || \
-					$IPT6 -I "mwan3_policy_$policy" \
-					-o "$device" \
-					-m mark --mark 0x0/$MMX_MASK \
-					-m comment --comment "out $iface $device" \
-					-j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
-			}
+			return
 		fi
+	elif [ "$family" = "ipv6" ] && [ $NO_IPV6 -eq 0 ] && [ $is_offline -eq 0 ]; then
+		if [ "$metric" -lt "$lowest_metric_v6" ]; then
+			is_lowest=1
+			total_weight_v6=$weight
+			lowest_metric_v6=$metric
+		elif [ "$metric" -eq "$lowest_metric_v6" ]; then
+			total_weight_v6=$(($total_weight_v6+$weight))
+			total_weight=$total_weight_v6
+		else
+			return
+		fi
+	fi
+	if [ $is_lowest -eq 1 ]; then
+		$IPT -F "mwan3_policy_$policy"
+		$IPT -A "mwan3_policy_$policy" \
+		     -m mark --mark 0x0/$MMX_MASK \
+		     -m comment --comment "$iface $weight $weight" \
+		     -j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
+	elif [ $is_offline -eq 0 ]; then
+		probability=$(($weight*1000/$total_weight))
+		if [ "$probability" -lt 10 ]; then
+			probability="0.00$probability"
+		elif [ $probability -lt 100 ]; then
+			probability="0.0$probability"
+		elif [ $probability -lt 1000 ]; then
+			probability="0.$probability"
+		else
+			probability="1"
+		fi
+		
+		$IPT -I "mwan3_policy_$policy" \
+			-m mark --mark 0x0/$MMX_MASK \
+			-m statistic \
+			--mode random \
+			--probability "$probability" \
+			-m comment --comment "$iface $weight $total_weight" \
+			-j MARK --set-xmark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK
+	elif [ -n "$device" ]; then
+		$IPT -S "mwan3_policy_$policy" | grep -q '.*--comment ".* [0-9]* [0-9]*"' || \
+			$IPT -I "mwan3_policy_$policy" \
+				-o "$device" \
+				-m mark --mark 0x0/$MMX_MASK \
+				-m comment --comment "out $iface $device" \
+				-j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
 	fi
 }
 
@@ -826,7 +770,7 @@ mwan3_create_policies_iptables()
 
 	for IPT in "$IPT4" "$IPT6"; do
 		[ "$IPT" = "$IPT6" ] && [ $NO_IPV6 -ne 0 ] && continue
-		if ! $IPT -S mwan3_policy_$1 &> /dev/null; then
+		if ! $IPT -S "mwan3_policy_$1" &> /dev/null; then
 			$IPT -N "mwan3_policy_$1"
 		fi
 
