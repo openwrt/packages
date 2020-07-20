@@ -137,7 +137,7 @@ mru 1354"  > $callfile
         proto_export INTERFACE="$ifname"
         logger -p 6 -t openfortivpn "$config: executing 'openfortivpn $cmdline'"
 
-        eval "proto_run_command '$config' /usr/sbin/openfortivpn-wrapper '$pwfile' $cmdline"
+        eval "proto_run_command '$config' /usr/sbin/openfortivpn-wrapper '$pwfile' '$config' $cmdline"
 
 }
 
