@@ -1,6 +1,14 @@
 --- a/contrib/meson/meson.build
 +++ b/contrib/meson/meson.build
-@@ -35,8 +35,8 @@ compiler_msvc = 'msvc'
+@@ -16,7 +16,6 @@ project('lz4', ['c'],
+ 
+ cc = meson.get_compiler('c')
+ pkgconfig = import('pkgconfig')
+-python3 = import('python').find_installation()
+ c_std = get_option('c_std')
+ default_library = get_option('default_library')
+ 
+@@ -35,8 +34,8 @@ compiler_msvc = 'msvc'
  lz4_version = meson.project_version()
  
  lz4_h_file = join_paths(meson.current_source_dir(), '../../lib/lz4.h')
