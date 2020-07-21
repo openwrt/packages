@@ -134,7 +134,6 @@ ip-down-script /lib/netifd/ppp-down
 mru 1354"  > $callfile
         append_args "--pppd-call=openfortivpn/$config"
 
-        proto_export INTERFACE="$ifname"
         logger -p 6 -t openfortivpn "$config: executing 'openfortivpn $cmdline'"
 
         eval "proto_run_command '$config' /usr/sbin/openfortivpn-wrapper '$pwfile' '$config' $cmdline"
