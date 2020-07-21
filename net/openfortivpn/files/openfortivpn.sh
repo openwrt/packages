@@ -1,5 +1,6 @@
 #!/bin/sh
 . /lib/functions.sh
+. /lib/functions/network.sh
 . ../netifd-proto.sh
 init_proto "$@"
 
@@ -36,17 +37,14 @@ proto_openfortivpn_setup() {
 
 
         [ -n "$iface_name" ] && {
-            json_load "$(ifstatus $iface_name)"
-            json_get_var iface_device_name l3_device
-            json_get_var iface_device_up up
-        }
-
-        [ "$iface_device_up" -eq 1 ] || {
-            msg="$iface_name is not up $iface_device_up"
-            logger -t "openfortivpn" "$config: $msg"
-            proto_notify_error "$config" "$msg"
-            proto_block_restart "$config"
-            exit 1
+	    network_get_device iface_device_name "$iface_name"
+            network_is_up "$iface_name" ] || {
+		msg="$iface_name is not up $iface_device_up"
+		logger -t "openfortivpn" "$config: $msg"
+		proto_notify_error "$config" "$msg"
+		proto_block_restart "$config"
+		exit 1
+	    }
         }
 
         server_ip=$(resolveip -t 10 "$server")
