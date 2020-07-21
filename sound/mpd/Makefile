@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.21.24
+PKG_VERSION:=0.21.25
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.musicpd.org/download/mpd/0.21/
-PKG_HASH:=84632a7e82e672b3a6d71651a75d05fb7acd62645c33e3f3af5a1067cfa64cd6
+PKG_HASH:=20a0ad01bf327b2dbeb6ae8e1af952cb0de83d2d63fab0fa4b7183a74765c201
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -33,7 +33,7 @@ define Package/mpd/Default
   TITLE:=Music Player Daemon
   URL:=https://www.musicpd.org/
   DEPENDS:= +zlib +libcurl +libpthread +libmpdclient +libstdcpp $(ICONV_DEPENDS) \
-	    +AUDIO_SUPPORT:alsa-lib +boost +libexpat +libflac +libid3tag +libfaad2 +USE_UCLIBC:icu
+	    +AUDIO_SUPPORT:alsa-lib +boost +libexpat +libflac +libid3tag +libfaad2
 endef
 
 define Package/mpd/Default/description
@@ -46,7 +46,7 @@ endef
 define Package/mpd-full
 $(call Package/mpd/Default)
   TITLE+= (full)
-  DEPENDS+= +libffmpeg +libvorbis +libmms +libupnp +libshout +pulseaudio-daemon +yajl
+  DEPENDS+= +libffmpeg +libvorbis +libmms +libupnp +libshout +AUDIO_SUPPORT:pulseaudio-daemon +yajl
   PROVIDES:=mpd
   VARIANT:=full
 endef
@@ -98,9 +98,12 @@ define Package/mpd-avahi-service/conffiles
 endef
 
 TARGET_LDFLAGS += \
-	$(if $(ICONV_FULL),-liconv,-Wl,--whole-archive -liconv -Wl,--no-whole-archive) \
-	$(if $(CONFIG_USE_GLIBC),-lpthread) \
-	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib/pulseaudio
+	-liconv \
+	$(if $(CONFIG_USE_GLIBC),-lpthread)
+
+ifeq ($(CONFIG_AUDIO_SUPPORT),y)
+	TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib/pulseaudio
+endif
 
 MESON_ARGS += \
 	-Ddocumentation=false \
@@ -152,7 +155,7 @@ MESON_ARGS += \
 	-Dwave_encoder=true \
 	-Dlibsamplerate=disabled \
 	-Dsoxr=disabled \
-	-Dalsa=$(if $(CONFIG_AUDIO_SUPPORT),enabled,disabled) \
+	-Dalsa=$(if $(CONFIG_AUDIO_SUPPORT),en,dis)abled \
 	-Dao=disabled \
 	-Dhttpd=true \
 	-Djack=disabled \
@@ -162,8 +165,8 @@ MESON_ARGS += \
 	-Dsolaris_output=disabled \
 	-Ddbus=disabled \
 	-Dexpat=enabled \
-	-Dicu=$(if $(CONFIG_USE_UCLIBC),enabled,disabled) \
-	-Diconv=$(if $(CONFIG_USE_UCLIBC),disabled,enabled) \
+	-Dicu=disabled \
+	-Diconv=enabled \
 	-Dpcre=disabled \
 	-Dsqlite=disabled \
 	-Dzlib=enabled \
@@ -182,7 +185,7 @@ ifeq ($(BUILD_VARIANT),full)
 	-Dvorbis=enabled \
 	-Dfifo=true \
 	-Dpipe=true \
-	-Dpulse=enabled \
+	-Dpulse=$(if $(CONFIG_AUDIO_SUPPORT),en,dis)abled \
 	-Drecorder=true \
 	-Dshout=enabled \
 	-Dyajl=enabled
