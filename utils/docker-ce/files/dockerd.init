@@ -59,6 +59,15 @@ start_service() {
 	procd_close_instance
 }
 
+reload_service() {
+	process_config
+	procd_send_signal dockerd
+}
+
+service_triggers() {
+	procd_add_reload_trigger 'dockerd'
+}
+
 ip4tables_remove_nat() {
 	iptables -t nat -D OUTPUT ! -d 127.0.0.0/8 -m addrtype --dst-type LOCAL -j DOCKER
 	iptables -t nat -D PREROUTING -m addrtype --dst-type LOCAL -j DOCKER
