@@ -2,11 +2,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
 
-PKG_VERSION:=0.12.2
+PKG_VERSION:=0.13.1
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gnunet
-PKG_HASH:=ac288b047d1156fc5e739062b11242bad0487993631e79781aede620ddf18cd7
+PKG_HASH:=03d76a852e7fd2fc87b7145cb6abd900f73e4ea6097f3caac9e7d9fe8b625696
 
 PKG_LICENSE:=AGPL-3.0
 PKG_LICENSE_FILES:=COPYING
@@ -54,8 +54,8 @@ endef
 define Package/gnunet
 $(call Package/gnunet/Default)
   TITLE+= - a peer-to-peer framework focusing on security
-  DEPENDS:=+libatomic +libgcrypt +libgpg-error +libidn2 +libltdl +libunistring \
-           +librt +zlib $(ICONV_DEPENDS) $(INTL_DEPENDS)
+  DEPENDS:=+libatomic +libgcrypt +libgpg-error +libidn2 +libltdl +libsodium \
+           +libunistring +librt +zlib $(ICONV_DEPENDS) $(INTL_DEPENDS)
   USERID:=gnunet=958:gnunet=958
   MENU:=1
 endef
@@ -187,6 +187,13 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/gnunet/*.h $(1)/usr/include/gnunet
 endef
 
+BIN_abd:=abd
+LIB_abd:=abd
+PLUGIN_abd:=gnsrecord_abd
+LIBEXEC_abd:=service-abd
+CONF_abd:=abd
+DEPENDS_abd:=+gnunet-gns
+
 BIN_auction:=auction-create auction-info auction-join
 LIBEXEC_auction:=service-auction
 CONF_auction:=auction
@@ -260,12 +267,12 @@ LIBEXEC_datastore:=service-datastore
 CONF_datastore:=datastore
 
 
-DEPENDS_reclaim:=+gnunet-gns +gnunet-sqlite +libpbc +libgabe
-BIN_reclaim:=credential reclaim
-LIB_reclaim:=consensus credential abe reclaim reclaimattribute secretsharing
-LIBEXEC_reclaim:=service-consensus service-credential service-reclaim service-secretsharing
-CONF_reclaim:=consensus credential reclaim secretsharing
-PLUGIN_reclaim:=block_consensus gnsrecord_credential gnsrecord_reclaim reclaim_attribute_gnuid
+DEPENDS_reclaim:=+gnunet-gns +gnunet-sqlite +libpbc +libgabe +jansson
+BIN_reclaim:=reclaim
+LIB_reclaim:=consensus abe reclaim reclaimattribute secretsharing
+LIBEXEC_reclaim:=service-consensus service-reclaim service-secretsharing
+CONF_reclaim:=consensus reclaim secretsharing
+PLUGIN_reclaim:=block_consensus gnsrecord_reclaim reclaim_attestation_jwt reclaim_attribute_basic
 
 DEPENDS_rest:=+gnunet-gns +gnunet-reclaim +libmicrohttpd-ssl +jansson
 LIB_rest:=rest json
@@ -331,8 +338,6 @@ PLUGIN_dhtcache-sqlite:=datacache_sqlite
 DEPENDS_fs-sqlite:=+gnunet-datastore +gnunet-sqlite
 PLUGIN_fs-sqlite:=datastore_sqlite
 
-
-
 DEPENDS_utils:=+certtool +openssl-util
 BIN_utils:=gns-proxy-setup-ca transport-certificate-creation
 
@@ -388,6 +393,7 @@ $(eval $(call PostInstFixSUIDPerms,gnunet-transport-wlan))
 $(eval $(call PostInstFixSUIDPerms,gnunet-vpn))
 
 $(eval $(call BuildPackage,gnunet))
+$(eval $(call BuildComponent,abd,credential service components,))
 $(eval $(call BuildComponent,auction,auction components,))
 $(eval $(call BuildComponent,conversation,conversation component,))
 $(eval $(call BuildComponent,curl,cURL wrapper component,))
