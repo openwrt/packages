@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=measurement-kit
-PKG_VERSION:=0.10.11
-PKG_RELEASE:=2
+PKG_VERSION:=0.10.12
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/measurement-kit/measurement-kit/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f9dbf5f721516fd709c13ac5011737b3622076299e3c899a1f70861901ec1b40
+PKG_HASH:=508d9db72579efbe4747dd791771f47299bc5867c72d67a86e371d66d20fd19e
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=BSD-2-Clause
