@@ -26,14 +26,26 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/libsodium
+define Package/libsodium/default
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=P(ortable|ackageable) NaCl-based crypto library
   URL:=https://github.com/jedisct1/libsodium
 endef
 
-define Package/libsodium/description
+define Package/libsodium
+  $(call Package/libsodium/default)
+  VARIANT:=minimal
+  CONFLICTS:=libsodium-full
+endef
+
+define Package/libsodium-full
+  $(call Package/libsodium/default)
+  VARIANT:=full
+  PROVIDES:=libsodium
+endef
+
+define Package/libsodium/description/default
   NaCl (pronounced "salt") is a new easy-to-use high-speed software library for network communication, encryption, decryption, signatures, etc.
   NaCl's goal is to provide all of the core operations needed to build higher-level cryptographic tools.
   Sodium is a portable, cross-compilable, installable, packageable fork of NaCl (based on the latest released upstream version nacl-20110221), with a compatible API.
@@ -42,18 +54,25 @@ define Package/libsodium/description
   And despite the emphasis on higher security, primitives are faster across-the-board than most implementations of the NIST standards.
 endef
 
-define Package/libsodium/config
-menu "Configuration"
-	depends on PACKAGE_libsodium
-	config LIBSODIUM_MINIMAL
-		bool "Compile only what is required for the high-level API (no aes128ctr), should be fine in most cases."
-		default y
-endmenu
+define Package/libsodium/description
+  $(call Package/libsodium/description/default)
+
+  Compile only what is required for the high-level API (no aes128ctr), should be fine in most cases.
 endef
 
-CONFIGURE_ARGS+= \
-	--disable-ssp \
-	$(if $(CONFIG_LIBSODIUM_MINIMAL),--enable,--disable)-minimal
+define Package/libsodium-full/description
+  $(call Package/libsodium/description/default)
+
+  Compile all with all exported symbols.
+endef
+
+CONFIGURE_ARGS+= --disable-ssp
+
+ifeq ($(BUILD_VARIANT),minimal)
+  CONFIGURE_ARGS += --enable-minimal
+else
+  CONFIGURE_ARGS += --disable-minimal
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/sodium
@@ -69,5 +88,8 @@ define Package/libsodium/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsodium.so.* $(1)/usr/lib/
 endef
+Package/libsodium-full/install=$(Package/libsodium/install)
+
 
 $(eval $(call BuildPackage,libsodium))
+$(eval $(call BuildPackage,libsodium-full))
