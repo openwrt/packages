@@ -1,194 +1,378 @@
 #include <iostream>
+#include <numeric>
 
+#include "nginx-ssl-util.hpp"
 #include "nginx-util.hpp"
 
-#ifndef NO_SSL
-#include "nginx-ssl-util.hpp"
-#endif
+static auto constexpr file_comment_auto_created =
+    std::string_view{"# This file is re-created when Nginx starts.\n"};
 
-
-void create_lan_listen()
+// TODO(pst) replace it with blobmsg_get_string if upstream takes const:
+#ifndef NO_UBUS
+static inline auto _pst_get_string(const blob_attr* attr) -> char*
 {
-    std::string listen = "# This file is re-created if Nginx starts or"
-                    " a LAN address changes.\n";
-    std::string listen_default = listen;
-    std::string ssl_listen = listen;
-    std::string ssl_listen_default = listen;
+    return static_cast<char*>(blobmsg_data(attr));
+}
+#endif
 
-    auto add_listen = [&listen, &listen_default
-#ifndef NO_SSL
-                       ,&ssl_listen, &ssl_listen_default
-#endif
-                      ]
-        (const std::string &pre, const std::string &ip, const std::string &suf)
-        -> void
-    {
-        if (ip.empty()) { return; }
-        const std::string val = pre + ip + suf;
-        listen += "\tlisten " + val + ":80;\n";
-        listen_default += "\tlisten " + val + ":80 default_server;\n";
-#ifndef NO_SSL
-        ssl_listen += "\tlisten " + val + ":443 ssl;\n";
-        ssl_listen_default += "\tlisten " + val + ":443 ssl default_server;\n";
-#endif
-    };
+void create_lan_listen()  // create empty files for compatibility:
+{
+    // TODO(pst): replace by dummies after transitioning nginx config to UCI:
+    std::vector<std::string> ips;
 
 #ifndef NO_UBUS
     try {
-        auto loopback_status=ubus::call("network.interface.loopback", "status");
+        auto loopback_status = ubus::call("network.interface.loopback", "status");
 
-        for (auto ip : loopback_status.filter("ipv4-address", "", "address")) {
-            add_listen("",  static_cast<const char *>(blobmsg_data(ip)), "");
+        for (const auto* ip : loopback_status.filter("ipv4-address", "", "address")) {
+            ips.emplace_back(_pst_get_string(ip));
         }
 
-        for (auto ip : loopback_status.filter("ipv6-address", "", "address")) {
-            add_listen("[", static_cast<const char *>(blobmsg_data(ip)), "]");
+        for (const auto* ip : loopback_status.filter("ipv6-address", "", "address")) {
+            ips.emplace_back(std::string{"["} + _pst_get_string(ip) + "]");
         }
-    } catch (const std::runtime_error &) { /* do nothing about it */ }
+    }
+    catch (const std::runtime_error&) { /* do nothing about it */
+    }
 
     try {
         auto lan_status = ubus::call("network.interface.lan", "status");
 
-        for (auto ip : lan_status.filter("ipv4-address", "", "address")) {
-            add_listen("",  static_cast<const char *>(blobmsg_data(ip)), "");
+        for (const auto* ip : lan_status.filter("ipv4-address", "", "address")) {
+            ips.emplace_back(_pst_get_string(ip));
         }
 
-        for (auto ip : lan_status.filter("ipv6-address", "", "address")) {
-            add_listen("[", static_cast<const char *>(blobmsg_data(ip)), "]");
+        for (const auto* ip : lan_status.filter("ipv6-address", "", "address")) {
+            ips.emplace_back(std::string{"["} + _pst_get_string(ip) + "]");
         }
 
-        for (auto ip : lan_status.filter("ipv6-prefix-assignment", "", 
-            "local-address", "address"))
-        {
-            add_listen("[", static_cast<const char *>(blobmsg_data(ip)), "]");
+        for (const auto* ip :
+             lan_status.filter("ipv6-prefix-assignment", "", "local-address", "address")) {
+            ips.emplace_back(std::string{"["} + _pst_get_string(ip) + "]");
         }
-    } catch (const std::runtime_error &) { /* do nothing about it */ }
+    }
+    catch (const std::runtime_error&) { /* do nothing about it */
+    }
 #else
-    add_listen("", "127.0.0.1", "");
+    ips.emplace_back("127.0.0.1");
 #endif
 
+    std::string listen = std::string{file_comment_auto_created};
+    std::string listen_default = std::string{file_comment_auto_created};
+    for (const auto& ip : ips) {
+        listen += "\tlisten " + ip + ":80;\n";
+        listen_default += "\tlisten " + ip + ":80 default_server;\n";
+    }
     write_file(LAN_LISTEN, listen);
     write_file(LAN_LISTEN_DEFAULT, listen_default);
-#ifndef NO_SSL
+
+    std::string ssl_listen = std::string{file_comment_auto_created};
+    std::string ssl_listen_default = std::string{file_comment_auto_created};
+    for (const auto& ip : ips) {
+        ssl_listen += "\tlisten " + ip + ":443 ssl;\n";
+        ssl_listen_default += "\tlisten " + ip + ":443 ssl default_server;\n";
+    }
     write_file(LAN_SSL_LISTEN, ssl_listen);
     write_file(LAN_SSL_LISTEN_DEFAULT, ssl_listen_default);
-#endif
 }
 
+inline auto change_if_starts_with(const std::string_view& subject,
+                                  const std::string_view& prefix,
+                                  const std::string_view& substitute,
+                                  const std::string_view& seperator = " \t\n;") -> std::string
+{
+    auto view = subject;
+    view = view.substr(view.find_first_not_of(seperator));
+    if (view.rfind(prefix, 0) == 0) {
+        if (view.size() == prefix.size()) {
+            return std::string{substitute};
+        }
+        view = view.substr(prefix.size());
+        if (seperator.find(view[0]) != std::string::npos) {
+            auto ret = std::string{substitute};
+            ret += view;
+            return ret;
+        }
+    }
+    return std::string{subject};
+}
 
+inline auto create_server_conf(const uci::section& sec, const std::string& indent = "")
+    -> std::string
+{
+    auto secname = sec.name();
+
+    auto legacypath = std::string{CONF_DIR} + secname + ".conf";
+    if (access(legacypath.c_str(), R_OK) == 0) {
+        auto message = std::string{"skipped UCI server 'nginx."} + secname;
+        message += "' as it could conflict with: " + legacypath + "\n";
+
+        // TODO(pst) std::cerr<<"create_server_conf notice: "<<message;
+
+        return indent + "# " + message;
+    }  // else:
+
+    auto conf = indent + "server { #see uci show 'nginx." + secname + "'\n";
+
+    for (auto opt : sec) {
+        for (auto itm : opt) {
+            if (opt.name().rfind("uci_", 0) == 0) {
+                continue;
+            }
+            // else: standard opt.name()
+
+            auto val = itm.name();
+
+            if (opt.name() == "error_log") {
+                val = change_if_starts_with(val, "logd", "/proc/self/fd/1");
+            }
+
+            else if (opt.name() == "access_log") {
+                val = change_if_starts_with(val, "logd", "stderr");
+            }
+
+            conf += indent + "\t" + opt.name() + " " + itm.name() + ";\n";
+        }
+    }
+
+    conf += indent + "}\n";
+
+    return conf;
+}
+
+void init_uci(const uci::package& pkg)
+{
+    auto conf = std::string{file_comment_auto_created};
+
+    static const auto uci_http_config = std::string_view{"#UCI_HTTP_CONFIG\n"};
+
+    const auto tmpl = read_file(std::string{UCI_CONF} + ".template");
+    auto pos = tmpl.find(uci_http_config);
+
+    if (pos == std::string::npos) {
+        conf += tmpl;
+    }
+
+    else {
+        const auto index = tmpl.find_last_not_of(" \t", pos - 1);
+
+        const auto before = tmpl.begin() + index + 1;
+        const auto middle = tmpl.begin() + pos;
+        const auto after = middle + uci_http_config.length();
+
+        conf.append(tmpl.begin(), before);
+
+        const auto indent = std::string{before, middle};
+        for (auto sec : pkg) {
+            if (sec.type() == std::string_view{"server"}) {
+                conf += create_server_conf(sec, indent) + "\n";
+            }
+        }
+
+        conf.append(after, tmpl.end());
+    }
+
+    write_file(VAR_UCI_CONF, conf);
+}
+
+auto is_enabled(const uci::package& pkg) -> bool
+{
+    for (auto sec : pkg) {
+        if (sec.type() != std::string_view{"main"}) {
+            continue;
+        }
+        if (sec.name() != std::string_view{"global"}) {
+            continue;
+        }
+        for (auto opt : sec) {
+            if (opt.name() != "uci_enable") {
+                continue;
+            }
+            for (auto itm : opt) {
+                if (itm) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+/*
+ * ___________main_thread________________|______________thread_1________________
+ *  create_lan_listen() or do nothing    | config = uci::package("nginx")
+ *  if config_enabled (set in thread_1): | config_enabled = is_enabled(config)
+ *  then init_uci(config)                | check_ssl(config, config_enabled)
+ */
 void init_lan()
 {
     std::exception_ptr ex;
+    std::unique_ptr<uci::package> config;
+    bool config_enabled = false;
+    std::mutex configuring;
 
-#ifndef NO_SSL
-    auto thrd = std::thread([]{ //&ex
-        try { add_ssl_if_needed(std::string{LAN_NAME}); }
+    configuring.lock();
+    auto thrd = std::thread([&config, &config_enabled, &configuring, &ex] {
+        try {
+            config = std::make_unique<uci::package>("nginx");
+            config_enabled = is_enabled(*config);
+            configuring.unlock();
+            check_ssl(*config, config_enabled);
+        }
         catch (...) {
-            std::cerr<<"init_lan notice: no server named "<<LAN_NAME<<std::endl;
-            // not: ex = std::current_exception();
+            std::cerr << "init_lan error: checking UCI file /etc/config/nginx\n";
+            ex = std::current_exception();
         }
     });
-#endif
 
-    try { create_lan_listen(); }
+    try {
+        create_lan_listen();
+    }
     catch (...) {
-        std::cerr<<"init_lan error: cannot create LAN listen files"<<std::endl;
+        std::cerr << "init_lan error: cannot create listen files of local IPs.\n";
         ex = std::current_exception();
     }
 
-#ifndef NO_SSL
+    configuring.lock();
+    if (config_enabled) {
+        try {
+            init_uci(*config);
+        }
+        catch (...) {
+            std::cerr << "init_lan error: cannot create " << VAR_UCI_CONF << " from ";
+            std::cerr << UCI_CONF << ".template using UCI file /etc/config/nginx\n";
+            ex = std::current_exception();
+        }
+    }
+
     thrd.join();
-#endif
-
-    if (ex) { std::rethrow_exception(ex); }
+    if (ex) {
+        std::rethrow_exception(ex);
+    }
 }
-
 
 void get_env()
 {
-    std::cout<<"NGINX_CONF="<<"'"<<NGINX_CONF<<"'"<<std::endl;
-    std::cout<<"CONF_DIR="<<"'"<<CONF_DIR<<"'"<<std::endl;
-    std::cout<<"LAN_NAME="<<"'"<<LAN_NAME<<"'"<<std::endl;
-    std::cout<<"LAN_LISTEN="<<"'"<<LAN_LISTEN<<"'"<<std::endl;
-#ifndef NO_SSL
-    std::cout<<"LAN_SSL_LISTEN="<<"'"<<LAN_SSL_LISTEN<<"'"<<std::endl;
-    std::cout<<"SSL_SESSION_CACHE_ARG="<<"'"<<SSL_SESSION_CACHE_ARG(LAN_NAME)<<
-        "'"<<std::endl;
-    std::cout<<"SSL_SESSION_TIMEOUT_ARG="<<"'"<<SSL_SESSION_TIMEOUT_ARG<<"'\n";
-    std::cout<<"ADD_SSL_FCT="<<"'"<<ADD_SSL_FCT<<"'"<<std::endl;
-#endif
+    std::cout << "UCI_CONF="
+              << "'" << UCI_CONF << "'" << std::endl;
+    std::cout << "NGINX_CONF="
+              << "'" << NGINX_CONF << "'" << std::endl;
+    std::cout << "CONF_DIR="
+              << "'" << CONF_DIR << "'" << std::endl;
+    std::cout << "LAN_NAME="
+              << "'" << LAN_NAME << "'" << std::endl;
+    std::cout << "LAN_LISTEN="
+              << "'" << LAN_LISTEN << "'" << std::endl;
+    std::cout << "LAN_SSL_LISTEN="
+              << "'" << LAN_SSL_LISTEN << "'" << std::endl;
+    std::cout << "SSL_SESSION_CACHE_ARG="
+              << "'" << SSL_SESSION_CACHE_ARG(LAN_NAME) << "'" << std::endl;
+    std::cout << "SSL_SESSION_TIMEOUT_ARG="
+              << "'" << SSL_SESSION_TIMEOUT_ARG << "'\n";
+    std::cout << "ADD_SSL_FCT="
+              << "'" << ADD_SSL_FCT << "'" << std::endl;
+    std::cout << "MANAGE_SSL="
+              << "'" << MANAGE_SSL << "'" << std::endl;
 }
 
-
-auto main(int argc, char * argv[]) -> int
+auto main(int argc, char* argv[]) -> int
 {
     // TODO(pst): use std::span when available:
-    auto args = std::basic_string_view<char *>{argv, static_cast<size_t>(argc)};
+    auto args = std::basic_string_view<char*>{argv, static_cast<size_t>(argc)};
 
     auto cmds = std::array{
         std::array<std::string_view, 2>{"init_lan", ""},
         std::array<std::string_view, 2>{"get_env", ""},
-#ifndef NO_SSL
-        std::array<std::string_view, 2>{ADD_SSL_FCT, " server_name" },
-        std::array<std::string_view, 2>{"del_ssl", " server_name" },
-#endif
+        std::array<std::string_view, 2>{
+            ADD_SSL_FCT, "server_name [manager /path/to/ssl_certificate /path/to/ssl_key]"},
+        std::array<std::string_view, 2>{"del_ssl", "server_name [manager]"},
+        std::array<std::string_view, 2>{"check_ssl", ""},
     };
 
     try {
+        if (argc == 2 && args[1] == cmds[0][0]) {
+            init_lan();
+        }
 
-        if (argc==2 && args[1]==cmds[0][0]) { init_lan(); }
+        else if (argc == 2 && args[1] == cmds[1][0]) {
+            get_env();
+        }
 
-        else if (argc==2 && args[1]==cmds[1][0]) { get_env(); }
+        else if (argc == 3 && args[1] == cmds[2][0]) {
+            add_ssl_if_needed(std::string{args[2]});
+        }
 
-#ifndef NO_SSL
-        else if (argc==3 && args[1]==cmds[2][0])
-        { add_ssl_if_needed(std::string{args[2]});}
+        // NOLINTNEXTLINE(readability-magic-numbers,cppcoreguidelines-avoid-magic-numbers): 6
+        else if (argc == 6 && args[1] == cmds[2][0]) {
+            // NOLINTNEXTLINE(readability-magic-numbers,cppcoreguidelines-avoid-magic-numbers): 5
+            add_ssl_if_needed(std::string{args[2]}, args[3], args[4], args[5]);
+        }
 
-        else if (argc==3 && args[1]==cmds[3][0])
-        { del_ssl(std::string{args[2]}); }
+        else if (argc == 3 && args[1] == cmds[3][0]) {
+            del_ssl(std::string{args[2]});
+        }
 
-        else if (argc==2 && args[1]==cmds[3][0])
-        { del_ssl(std::string{LAN_NAME}); }
-#endif
+        else if (argc == 4 && args[1] == cmds[3][0]) {
+            del_ssl(std::string{args[2]}, args[3]);
+        }
+
+        else if (argc == 2 && args[1] == cmds[3][0])  // TODO(pst) deprecate
+        {
+            try {
+                auto name = std::string{LAN_NAME};
+                if (del_ssl_legacy(name)) {
+                    auto crtpath = std::string{CONF_DIR} + name + ".crt";
+                    remove(crtpath.c_str());
+                    auto keypath = std::string{CONF_DIR} + name + ".key";
+                    remove(keypath.c_str());
+                }
+            }
+            catch (...) { /* do nothing. */
+            }
+        }
+
+        else if (argc == 2 && args[1] == cmds[4][0]) {
+            check_ssl(uci::package{"nginx"});
+        }
 
         else {
-            std::cerr<<"Tool for creating Nginx configuration files (";
+            std::cerr << "Tool for creating Nginx configuration files (";
 #ifdef VERSION
-            std::cerr<<"version "<<VERSION<<" ";
+            std::cerr << "version " << VERSION << " ";
 #endif
-            std::cerr<<"with ";
+            std::cerr << "with libuci, ";
 #ifndef NO_UBUS
-            std::cerr<<"ubus, ";
+            std::cerr << "libubus, ";
 #endif
-#ifndef NO_SSL
-            std::cerr<<"libopenssl, ";
-#ifdef NO_PCRE
-            std::cerr<<"std::regex, ";
-#else
-            std::cerr<<"PCRE, ";
+            std::cerr << "libopenssl, ";
+#ifndef NO_PCRE
+            std::cerr << "PCRE, ";
 #endif
-#endif
-            std::cerr<<"pthread and libstdcpp)."<<std::endl;
+            std::cerr << "pthread and libstdcpp)." << std::endl;
 
-            auto usage = std::string{"usage: "} + *argv + " [";
-            for (auto cmd : cmds) {
-                usage += std::string{cmd[0]};
-                usage += std::string{cmd[1]} + "|";
-            }
-            usage[usage.size()-1] = ']';
-            std::cerr<<usage<<std::endl;
+            auto usage =
+                std::accumulate(cmds.begin(), cmds.end(), std::string{"usage: "} + *argv + " [",
+                                [](const auto& use, const auto& cmd) {
+                                    return use + std::string{cmd[0]} + (cmd[1].empty() ? "" : " ") +
+                                           std::string{cmd[1]} + "|";
+                                });
+            usage[usage.size() - 1] = ']';
+            std::cerr << usage << std::endl;
 
             throw std::runtime_error("main error: argument not recognized");
         }
 
         return 0;
-
     }
 
-    catch (const std::exception & e) { std::cerr<<e.what()<<std::endl; }
+    catch (const std::exception& e) {
+        std::cerr << " * " << *argv << " " << e.what() << "\n";
+    }
 
-    catch (...) { perror("main error"); }
+    catch (...) {
+        std::cerr << " * * " << *argv;
+        perror(" main error");
+    }
 
     return 1;
-
 }
