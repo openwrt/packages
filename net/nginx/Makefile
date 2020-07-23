@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.19.4
+PKG_VERSION:=1.19.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
-PKG_HASH:=61df546927905a0d624f9396bb7a8bc7ca7fd26522ce9714d56a78b73284000e
+PKG_HASH:=b11195a02b1d3285ddf2987e02c6b6d28df41bb1b1dd25f33542848ef4fc33b5
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Ansuel Smith <ansuelsmth@gmail.com>
@@ -82,7 +82,8 @@ define Package/nginx/default
   TITLE:=Nginx web server
   URL:=http://nginx.org/
   DEPENDS:=+libopenssl +libpthread
-  PROVIDES:=nginx
+  # TODO: add PROVIDES when removing nginx
+  # PROVIDES:=nginx
 endef
 
 define Package/nginx/description
@@ -96,8 +97,9 @@ define Package/nginx-ssl
   VARIANT:=ssl
   DEPENDS+= +NGINX_PCRE:libpcre \
 	+NGINX_PCRE:nginx-ssl-util +!NGINX_PCRE:nginx-ssl-util-nopcre \
-	+NGINX_HTTP_GZIP:zlib +NGINX_LUA:liblua +libpthread +NGINX_DAV:libxml2 \
+	+NGINX_HTTP_GZIP:zlib +NGINX_LUA:liblua +NGINX_DAV:libxml2 \
 	+NGINX_UBUS:libubus +NGINX_UBUS:libblobmsg-json +NGINX_UBUS:libjson-c
+  EXTRA_DEPENDS:=nginx-ssl-util$(if $(CONFIG_NGINX_PCRE),,-nopcre) (>=1.5-1) (<2)
   CONFLICTS:=nginx-all-module
 endef
 
@@ -110,6 +112,7 @@ define Package/nginx-all-module
   TITLE += with ALL module selected
   DEPENDS+=+libpcre +nginx-ssl-util +zlib +liblua +libxml2 +libubus \
 	+libblobmsg-json +libjson-c
+  EXTRA_DEPENDS:=nginx-ssl-util (>=1.5-1) (<2)
   VARIANT:=all-module
   PROVIDES += nginx-ssl
 endef
@@ -357,8 +360,6 @@ define Package/nginx-ssl/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/nginx $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/nginx/conf.d
 	$(INSTALL_DATA) $(addprefix $(PKG_INSTALL_DIR)/etc/nginx/,$(config_files)) $(1)/etc/nginx/
-	$(INSTALL_CONF) ./files/nginx.conf $(1)/etc/nginx/
-	$(INSTALL_CONF) ./files/_lan.conf $(1)/etc/nginx/conf.d/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/nginx.init $(1)/etc/init.d/nginx
 ifeq ($(CONFIG_NGINX_NAXSI),y)
@@ -368,10 +369,6 @@ ifeq ($(CONFIG_NGINX_NAXSI),y)
 endif
 	$(if $(CONFIG_NGINX_NAXSI),$($(INSTALL_BIN) $(PKG_BUILD_DIR)/nginx-naxsi/naxsi_config/naxsi_core.rules $(1)/etc/nginx))
 	$(if $(CONFIG_NGINX_NAXSI),$(chmod 0640 $(1)/etc/nginx/naxsi_core.rules))
-	$(INSTALL_CONF) ./files/_redirect2ssl.conf $(1)/etc/nginx/conf.d/
-ifneq ($(CONFIG_IPV6),y)
-	$(SED) '/listen\s*\[/d' $(1)/etc/nginx/conf.d/*.conf # without IPv6 [::]
-endif
 endef
 
 Package/nginx-all-module/install = $(Package/nginx-ssl/install)
@@ -381,8 +378,9 @@ define Package/nginx-ssl/prerm
 [ -z "$${IPKG_INSTROOT}" ] || exit 0
 [ "$${PKG_UPGRADE}" = "1" ] && exit 0
 eval $$(/usr/bin/nginx-util get_env)
-rm -f "$${CONF_DIR}$${LAN_NAME}.crt"
-rm -f "$${CONF_DIR}$${LAN_NAME}.key"
+[ "$$(uci get "nginx.$${LAN_NAME}.$${MANAGE_SSL}")" = "self-signed" ] || exit 0
+rm -f "$$(uci get "nginx.$${LAN_NAME}.ssl_certificate")"
+rm -f "$$(uci get "nginx.$${LAN_NAME}.ssl_certificate_key")"
 exit 0
 endef
 
@@ -545,18 +543,25 @@ ifeq ($(CONFIG_NGINX_UBUS),y)
   endef
 endif
 
+$(eval $(call BuildPackage,nginx-ssl))
+$(eval $(call BuildPackage,nginx-all-module))
+$(eval $(call BuildPackage,nginx-mod-luci))
+
 # TODO: remove after a transition period (together with pkg nginx-util):
 # It is for smoothly substituting nginx and nginx-mod-luci-ssl (by nginx-ssl
 # respectively nginx-mod-luci). Add above commented PROVIDES when removing.
 
-Package/nginx = $(Package/nginx-ssl)
-Package/nginx/install = $(Package/nginx-ssl/install)
-Package/nginx/prerm = $(Package/nginx-ssl/prerm)
-$(eval $(call BuildPackage,nginx))
+define Package/nginx
+  TITLE:=Dummy package for transition when upgrading.
+  DEPENDS:=+nginx-ssl
+  PKGARCH:=all
+endef
 
-$(eval $(call BuildPackage,nginx-ssl))
-$(eval $(call BuildPackage,nginx-all-module))
-$(eval $(call BuildPackage,nginx-mod-luci))
+define Package/nginx/install
+	$(INSTALL_DIR) $(1)/usr/bin
+endef
+
+$(eval $(call BuildPackage,nginx))
 
 define Package/nginx-mod-luci-ssl
   TITLE:=Dummy package for transition when upgrading.
