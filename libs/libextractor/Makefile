@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libextractor
 PKG_VERSION:=1.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 # ToDo:
 # - package missing optional dependencies: libexiv2, gsf, librpm, smf, tidy
@@ -47,7 +47,7 @@ PLUGINS:= \
 	riff \
 	s3m \
 	sid \
-	thumbnailffmpeg:+libffmpeg-full:+libmagic \
+	thumbnailffmpeg:+libffmpeg-full:+libmagic:@BUILD_PATENTED \
 	tiff:+libtiff \
 	wav \
 	xm \
