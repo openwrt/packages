@@ -1,0 +1,288 @@
+From 2939f712d152f7e3ae438cc0f1d96dd9485e7487 Mon Sep 17 00:00:00 2001
+From: Donatas Abraitis <donatas.abraitis@gmail.com>
+Date: Thu, 9 Jul 2020 16:00:27 +0300
+Subject: [PATCH 1/2] bgpd: Add command to show only established sessions
+
+```
+exit1-debian-9# show bgp summary
+
+IPv4 Unicast Summary:
+BGP router identifier 192.168.0.1, local AS number 100 vrf-id 0
+BGP table version 8
+RIB entries 15, using 2880 bytes of memory
+Peers 2, using 43 KiB of memory
+
+Neighbor        V         AS   MsgRcvd   MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd   PfxSnt
+192.168.0.2     4        200        10         6        0    0    0 00:00:35            8        8
+2a02:4780::2    4          0         0         1        0    0    0    never       Active        0
+
+Total number of neighbors 2
+exit1-debian-9# show bgp summary established
+
+IPv4 Unicast Summary:
+BGP router identifier 192.168.0.1, local AS number 100 vrf-id 0
+BGP table version 8
+RIB entries 15, using 2880 bytes of memory
+Peers 2, using 43 KiB of memory
+
+Neighbor        V         AS   MsgRcvd   MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd   PfxSnt
+192.168.0.2     4        200        10         6        0    0    0 00:00:39            8        8
+
+Total number of neighbors 2
+exit1-debian-9# show bgp summary failed
+
+IPv4 Unicast Summary:
+BGP router identifier 192.168.0.1, local AS number 100 vrf-id 0
+BGP table version 8
+RIB entries 15, using 2880 bytes of memory
+Peers 2, using 43 KiB of memory
+
+Neighbor        EstdCnt DropCnt ResetTime Reason
+2a02:4780::2          0       0     never Waiting for peer OPEN
+
+Total number of neighbors 2
+exit1-debian-9#
+```
+
+Signed-off-by: Donatas Abraitis <donatas.abraitis@gmail.com>
+---
+ bgpd/bgp_evpn_vty.c | 11 ++++++++---
+ bgpd/bgp_vty.c      | 43 +++++++++++++++++++++++++++++++------------
+ bgpd/bgp_vty.h      |  3 ++-
+ 3 files changed, 41 insertions(+), 16 deletions(-)
+
+diff --git a/bgpd/bgp_evpn_vty.c b/bgpd/bgp_evpn_vty.c
+index 85604d856d..42987117d4 100644
+--- a/bgpd/bgp_evpn_vty.c
++++ b/bgpd/bgp_evpn_vty.c
+@@ -4077,7 +4077,7 @@ DEFUN(show_bgp_l2vpn_evpn_es,
+  */
+ DEFUN(show_bgp_l2vpn_evpn_summary,
+       show_bgp_l2vpn_evpn_summary_cmd,
+-      "show bgp [vrf VRFNAME] l2vpn evpn summary [failed] [json]",
++      "show bgp [vrf VRFNAME] l2vpn evpn summary [established|failed] [json]",
+       SHOW_STR
+       BGP_STR
+       "bgp vrf\n"
+@@ -4085,6 +4085,7 @@ DEFUN(show_bgp_l2vpn_evpn_summary,
+       L2VPN_HELP_STR
+       EVPN_HELP_STR
+       "Summary of BGP neighbor status\n"
++      "Show only sessions in Established state\n"
+       "Show only sessions not in Established state\n"
+       JSON_STR)
+ {
+@@ -4092,13 +4093,17 @@ DEFUN(show_bgp_l2vpn_evpn_summary,
+ 	bool uj = use_json(argc, argv);
+ 	char *vrf = NULL;
+ 	bool show_failed = false;
++	bool show_established = false;
+ 
+ 	if (argv_find(argv, argc, "vrf", &idx_vrf))
+ 		vrf = argv[++idx_vrf]->arg;
+ 	if (argv_find(argv, argc, "failed", &idx_vrf))
+ 		show_failed = true;
+-	return bgp_show_summary_vty(vty, vrf, AFI_L2VPN, SAFI_EVPN,
+-				    show_failed, uj);
++	if (argv_find(argv, argc, "established", &idx_vrf))
++		show_established = true;
++
++	return bgp_show_summary_vty(vty, vrf, AFI_L2VPN, SAFI_EVPN, show_failed,
++				    show_established, uj);
+ }
+ 
+ /*
+diff --git a/bgpd/bgp_vty.c b/bgpd/bgp_vty.c
+index 67ff31df8f..78521457fd 100644
+--- a/bgpd/bgp_vty.c
++++ b/bgpd/bgp_vty.c
+@@ -8772,7 +8772,8 @@ static void bgp_show_failed_summary(struct vty *vty, struct bgp *bgp,
+ 
+ /* Show BGP peer's summary information. */
+ static int bgp_show_summary(struct vty *vty, struct bgp *bgp, int afi, int safi,
+-			    bool show_failed, bool use_json)
++			    bool show_failed, bool show_established,
++			    bool use_json)
+ {
+ 	struct peer *peer;
+ 	struct listnode *node, *nnode;
+@@ -9104,6 +9105,10 @@ static int bgp_show_summary(struct vty *vty, struct bgp *bgp, int afi, int safi,
+ 				bgp_show_failed_summary(vty, bgp, peer,
+ 							json_peer, 0, use_json);
+ 			} else if (!show_failed) {
++				if (show_established
++				    && bgp_has_peer_failed(peer, afi, safi))
++					continue;
++
+ 				json_peer = json_object_new_object();
+ 				if (peer_dynamic_neighbor(peer)) {
+ 					json_object_boolean_true_add(json_peer,
+@@ -9193,6 +9198,10 @@ static int bgp_show_summary(struct vty *vty, struct bgp *bgp, int afi, int safi,
+ 							max_neighbor_width,
+ 							use_json);
+ 			} else if (!show_failed) {
++				if (show_established
++				    && bgp_has_peer_failed(peer, afi, safi))
++					continue;
++
+ 				memset(dn_flag, '\0', sizeof(dn_flag));
+ 				if (peer_dynamic_neighbor(peer)) {
+ 					dn_flag[0] = '*';
+@@ -9315,7 +9324,8 @@ static int bgp_show_summary(struct vty *vty, struct bgp *bgp, int afi, int safi,
+ }
+ 
+ static void bgp_show_summary_afi_safi(struct vty *vty, struct bgp *bgp, int afi,
+-				      int safi, bool show_failed, bool use_json)
++				      int safi, bool show_failed,
++				      bool show_established, bool use_json)
+ {
+ 	int is_first = 1;
+ 	int afi_wildcard = (afi == AFI_MAX);
+@@ -9358,7 +9368,8 @@ static void bgp_show_summary_afi_safi(struct vty *vty, struct bgp *bgp, int afi,
+ 									 false));
+ 					}
+ 				}
+-				bgp_show_summary(vty, bgp, afi, safi, show_failed,
++				bgp_show_summary(vty, bgp, afi, safi,
++						 show_failed, show_established,
+ 						 use_json);
+ 			}
+ 			safi++;
+@@ -9382,6 +9393,7 @@ static void bgp_show_summary_afi_safi(struct vty *vty, struct bgp *bgp, int afi,
+ 
+ static void bgp_show_all_instances_summary_vty(struct vty *vty, afi_t afi,
+ 					       safi_t safi, bool show_failed,
++					       bool show_established,
+ 					       bool use_json)
+ {
+ 	struct listnode *node, *nnode;
+@@ -9411,7 +9423,7 @@ static void bgp_show_all_instances_summary_vty(struct vty *vty, afi_t afi,
+ 					: bgp->name);
+ 		}
+ 		bgp_show_summary_afi_safi(vty, bgp, afi, safi, show_failed,
+-					  use_json);
++					  show_established, use_json);
+ 	}
+ 
+ 	if (use_json)
+@@ -9421,15 +9433,16 @@ static void bgp_show_all_instances_summary_vty(struct vty *vty, afi_t afi,
+ }
+ 
+ int bgp_show_summary_vty(struct vty *vty, const char *name, afi_t afi,
+-			 safi_t safi, bool show_failed, bool use_json)
++			 safi_t safi, bool show_failed, bool show_established,
++			 bool use_json)
+ {
+ 	struct bgp *bgp;
+ 
+ 	if (name) {
+ 		if (strmatch(name, "all")) {
+-			bgp_show_all_instances_summary_vty(vty, afi, safi,
+-							   show_failed,
+-							   use_json);
++			bgp_show_all_instances_summary_vty(
++				vty, afi, safi, show_failed, show_established,
++				use_json);
+ 			return CMD_SUCCESS;
+ 		} else {
+ 			bgp = bgp_lookup_by_name(name);
+@@ -9444,7 +9457,8 @@ int bgp_show_summary_vty(struct vty *vty, const char *name, afi_t afi,
+ 			}
+ 
+ 			bgp_show_summary_afi_safi(vty, bgp, afi, safi,
+-						  show_failed, use_json);
++						  show_failed, show_established,
++						  use_json);
+ 			return CMD_SUCCESS;
+ 		}
+ 	}
+@@ -9453,7 +9467,7 @@ int bgp_show_summary_vty(struct vty *vty, const char *name, afi_t afi,
+ 
+ 	if (bgp)
+ 		bgp_show_summary_afi_safi(vty, bgp, afi, safi, show_failed,
+-					  use_json);
++					  show_established, use_json);
+ 	else {
+ 		if (use_json)
+ 			vty_out(vty, "{}\n");
+@@ -9468,7 +9482,7 @@ int bgp_show_summary_vty(struct vty *vty, const char *name, afi_t afi,
+ /* `show [ip] bgp summary' commands. */
+ DEFUN (show_ip_bgp_summary,
+        show_ip_bgp_summary_cmd,
+-       "show [ip] bgp [<view|vrf> VIEWVRFNAME] ["BGP_AFI_CMD_STR" ["BGP_SAFI_WITH_LABEL_CMD_STR"]] summary [failed] [json]",
++       "show [ip] bgp [<view|vrf> VIEWVRFNAME] ["BGP_AFI_CMD_STR" ["BGP_SAFI_WITH_LABEL_CMD_STR"]] summary [established|failed] [json]",
+        SHOW_STR
+        IP_STR
+        BGP_STR
+@@ -9476,6 +9490,7 @@ DEFUN (show_ip_bgp_summary,
+        BGP_AFI_HELP_STR
+        BGP_SAFI_WITH_LABEL_HELP_STR
+        "Summary of BGP neighbor status\n"
++       "Show only sessions in Established state\n"
+        "Show only sessions not in Established state\n"
+        JSON_STR)
+ {
+@@ -9483,6 +9498,7 @@ DEFUN (show_ip_bgp_summary,
+ 	afi_t afi = AFI_MAX;
+ 	safi_t safi = SAFI_MAX;
+ 	bool show_failed = false;
++	bool show_established = false;
+ 
+ 	int idx = 0;
+ 
+@@ -9504,10 +9520,13 @@ DEFUN (show_ip_bgp_summary,
+ 
+ 	if (argv_find(argv, argc, "failed", &idx))
+ 		show_failed = true;
++	if (argv_find(argv, argc, "established", &idx))
++		show_established = true;
+ 
+ 	bool uj = use_json(argc, argv);
+ 
+-	return bgp_show_summary_vty(vty, vrf, afi, safi, show_failed, uj);
++	return bgp_show_summary_vty(vty, vrf, afi, safi, show_failed,
++				    show_established, uj);
+ }
+ 
+ const char *get_afi_safi_str(afi_t afi, safi_t safi, bool for_json)
+diff --git a/bgpd/bgp_vty.h b/bgpd/bgp_vty.h
+index d6ca198d09..95eefbc36f 100644
+--- a/bgpd/bgp_vty.h
++++ b/bgpd/bgp_vty.h
+@@ -178,6 +178,7 @@ extern int bgp_vty_find_and_parse_afi_safi_bgp(struct vty *vty,
+ int bgp_vty_find_and_parse_bgp(struct vty *vty, struct cmd_token **argv,
+ 			       int argc, struct bgp **bgp, bool use_json);
+ extern int bgp_show_summary_vty(struct vty *vty, const char *name, afi_t afi,
+-				safi_t safi, bool show_failed, bool use_json);
++				safi_t safi, bool show_failed,
++				bool show_established, bool use_json);
+ 
+ #endif /* _QUAGGA_BGP_VTY_H */
+
+From 2600443342d8e21d30df2b6ca095a5f2d0d4de2d Mon Sep 17 00:00:00 2001
+From: Donatas Abraitis <donatas.abraitis@gmail.com>
+Date: Thu, 9 Jul 2020 16:05:08 +0300
+Subject: [PATCH 2/2] doc: Add 'show bgp summary established' command
+
+Signed-off-by: Donatas Abraitis <donatas.abraitis@gmail.com>
+---
+ doc/user/bgp.rst | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/doc/user/bgp.rst b/doc/user/bgp.rst
+index cb343e8dad..36227db604 100644
+--- a/doc/user/bgp.rst
++++ b/doc/user/bgp.rst
+@@ -2710,6 +2710,12 @@ structure is extended with :clicmd:`show bgp [afi] [safi]`.
+    Show a bgp peer summary for peers that are not succesfully exchanging routes
+    for the specified address family, and subsequent address-family.
+ 
++.. index:: show bgp [afi] [safi] summary established [json]
++.. clicmd:: show bgp [afi] [safi] summary established [json]
++
++   Show a bgp peer summary for peers that are succesfully exchanging routes
++   for the specified address family, and subsequent address-family.
++
+ .. index:: show bgp [afi] [safi] neighbor [PEER]
+ .. clicmd:: show bgp [afi] [safi] neighbor [PEER]
+ 

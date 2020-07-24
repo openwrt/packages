@@ -1,0 +1,83 @@
+From acf6f22d150b0050afbdaf5887b8e25d1614db4c Mon Sep 17 00:00:00 2001
+From: Donatas Abraitis <donatas.abraitis@gmail.com>
+Date: Thu, 2 Jul 2020 11:08:29 +0300
+Subject: [PATCH 1/2] bgpd: Return bool type for ecommunity_add_val and
+ subgroup_announce_check
+
+Signed-off-by: Donatas Abraitis <donatas.abraitis@gmail.com>
+---
+ bgpd/bgp_ecommunity.c | 6 +++---
+ bgpd/bgp_route.c      | 2 +-
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/bgpd/bgp_ecommunity.c b/bgpd/bgp_ecommunity.c
+index d13da74b04..7d5cac4d62 100644
+--- a/bgpd/bgp_ecommunity.c
++++ b/bgpd/bgp_ecommunity.c
+@@ -107,14 +107,14 @@ bool ecommunity_add_val(struct ecommunity *ecom, struct ecommunity_val *eval,
+ 			    p[1] == eval->val[1]) {
+ 				if (overwrite) {
+ 					memcpy(p, eval->val, ECOMMUNITY_SIZE);
+-					return 1;
++					return true;
+ 				}
+-				return 0;
++				return false;
+ 			}
+ 		}
+ 		int ret = memcmp(p, eval->val, ECOMMUNITY_SIZE);
+ 		if (ret == 0)
+-			return 0;
++			return false;
+ 		if (ret > 0) {
+ 			if (!unique)
+ 				break;
+diff --git a/bgpd/bgp_route.c b/bgpd/bgp_route.c
+index 6ae7a59a14..7bfefde482 100644
+--- a/bgpd/bgp_route.c
++++ b/bgpd/bgp_route.c
+@@ -1941,7 +1941,7 @@ bool subgroup_announce_check(struct bgp_node *rn, struct bgp_path_info *pi,
+ 
+ 	/* Codification of AS 0 Processing */
+ 	if (aspath_check_as_zero(attr->aspath))
+-		return 0;
++		return false;
+ 
+ 	if (CHECK_FLAG(bgp->flags, BGP_FLAG_GRACEFUL_SHUTDOWN)) {
+ 		if (peer->sort == BGP_PEER_IBGP
+
+From d5a157b7c377081d23b136b5ba4849abdcbecd97 Mon Sep 17 00:00:00 2001
+From: Donatas Abraitis <donatas.abraitis@gmail.com>
+Date: Thu, 2 Jul 2020 11:39:40 +0300
+Subject: [PATCH 2/2] bgpd: Actually find the sequence number for
+ large-community-list
+
+Signed-off-by: Donatas Abraitis <donatas.abraitis@gmail.com>
+---
+ bgpd/bgp_vty.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/bgpd/bgp_vty.c b/bgpd/bgp_vty.c
+index 9c8f1e1def..67ff31df8f 100644
+--- a/bgpd/bgp_vty.c
++++ b/bgpd/bgp_vty.c
+@@ -17235,8 +17235,7 @@ static int lcommunity_list_set_vty(struct vty *vty, int argc,
+ 	char *cl_name;
+ 	char *seq = NULL;
+ 
+-	argv_find(argv, argc, "(1-4294967295)", &idx);
+-	if (idx)
++	if (argv_find(argv, argc, "(1-4294967295)", &idx))
+ 		seq = argv[idx]->arg;
+ 
+ 	idx = 0;
+@@ -17285,8 +17284,7 @@ static int lcommunity_list_unset_vty(struct vty *vty, int argc,
+ 	int idx = 0;
+ 	char *seq = NULL;
+ 
+-	argv_find(argv, argc, "(1-4294967295)", &idx);
+-	if (idx)
++	if (argv_find(argv, argc, "(1-4294967295)", &idx))
+ 		seq = argv[idx]->arg;
+ 
+ 	idx = 0;
