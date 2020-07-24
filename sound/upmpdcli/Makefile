@@ -1,3 +1,4 @@
+
 #
 # Copyright (C) 2016 OpenWrt.org
 #
@@ -9,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=upmpdcli
 PKG_VERSION:=1.4.12
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.lesbonscomptes.com/upmpdcli/downloads
