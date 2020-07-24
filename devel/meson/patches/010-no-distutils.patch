@@ -1,0 +1,43 @@
+From 18955611bafb1924fd1e188359f62d0799acb77e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Hugo=20Beauz=C3=A9e-Luyssen?= <hugo@beauzee.fr>
+Date: Fri, 24 Apr 2020 15:40:01 +0200
+Subject: [PATCH] modules: python: Fix python detection without distutils
+ module
+
+If distutils isn't present but not required by the called, we can still
+return a valid python installation
+---
+ mesonbuild/modules/python.py | 13 ++++++++-----
+ 1 file changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/mesonbuild/modules/python.py b/mesonbuild/modules/python.py
+index a5c58a25c3..31406847a3 100644
+--- a/mesonbuild/modules/python.py
++++ b/mesonbuild/modules/python.py
+@@ -266,10 +266,13 @@ import sys
+ install_paths = sysconfig.get_paths(scheme='posix_prefix', vars={'base': '', 'platbase': '', 'installed_base': ''})
+ 
+ def links_against_libpython():
+-    from distutils.core import Distribution, Extension
+-    cmd = Distribution().get_command_obj('build_ext')
+-    cmd.ensure_finalized()
+-    return bool(cmd.get_libraries(Extension('dummy', [])))
++    try:
++        from distutils.core import Distribution, Extension
++        cmd = Distribution().get_command_obj('build_ext')
++        cmd.ensure_finalized()
++        return bool(cmd.get_libraries(Extension('dummy', [])))
++    except ModuleNotFoundError:
++        return False
+ 
+ print (json.dumps ({
+   'variables': sysconfig.get_config_vars(),
+@@ -585,7 +588,7 @@ class PythonModule(ExtensionModule):
+             else:
+                 res = ExternalProgramHolder(NonExistingExternalProgram(), state.subproject)
+                 if required:
+-                    raise mesonlib.MesonException('{} is not a valid python or it is missing setuptools'.format(python))
++                    raise mesonlib.MesonException('{} is not a valid python'.format(python))
+ 
+         return res
+ 
