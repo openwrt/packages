@@ -18,7 +18,7 @@ PKG_CPE_ID:=cpe:/a:my-netdata:netdata
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/netdata/netdata/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=761aec15901e09f963361752c6e5b5cb723e342a3c5bf6b0624067fceb2ccdfd
+PKG_HASH:=b6dd13292e0b1fb4137b1f7c0dc3d7c5e8a1bf408b82c2b8394f3751800e0eb5
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -76,9 +76,6 @@ define Package/netdata/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/netdata $(1)/usr/lib
 	$(CP) $(1)/usr/lib/netdata/conf.d/fping.conf $(1)/etc
 	$(CP) $(1)/usr/lib/netdata/conf.d/health_alarm_notify.conf $(1)/etc
-	rm -rf $(1)/usr/lib/netdata/python.d/python_modules/pyyaml2
-	rm -rf $(1)/usr/lib/netdata/python.d/python_modules/pyyaml3
-	rm -rf $(1)/usr/lib/netdata/python.d/python_modules/urllib3
 	$(CP) $(1)/usr/lib/netdata/plugins.d/tc-qos-helper.sh $(1)/etc
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/netdata $(1)/usr/sbin
@@ -91,6 +88,7 @@ define Package/netdata/install
 	rm $(1)/usr/share/netdata/web/images/*.png
 	rm $(1)/usr/share/netdata/web/images/*.gif
 	rm $(1)/usr/share/netdata/web/images/*.ico
+	rm -rf $(1)/usr/share/netdata/web/old
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/netdata.init $(1)/etc/init.d/netdata
 endef
