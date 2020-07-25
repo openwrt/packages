@@ -1,0 +1,9 @@
+--- a/meson.build
++++ b/meson.build
+@@ -188,5 +188,5 @@ plugins = []
+ subdir('ext/libav')
+ subdir('docs')
+ 
+-python3 = import('python').find_installation()
++python3 = 'python3'
+ run_command(python3, '-c', 'import shutil; shutil.copy("hooks/pre-commit.hook", ".git/hooks/pre-commit")')
