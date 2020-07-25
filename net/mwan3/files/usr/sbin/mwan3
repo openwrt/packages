@@ -145,6 +145,7 @@ start()
 
 	config_load mwan3
 	config_foreach ifup interface
+	mwan3_rtmon
 }
 
 stop()
@@ -154,23 +155,13 @@ stop()
 	mwan3_lock "command" "mwan3"
 	uci_toggle_state mwan3 globals enabled "0"
 
-	for pid in $(pgrep -f "mwan3rtmon"); do
-		kill -TERM "$pid" > /dev/null 2>&1
-	done
-
-	for pid in $(pgrep -f "mwan3track"); do
-		kill -TERM "$pid" > /dev/null 2>&1
-	done
+	kill -TERM $(pgrep -f "mwan3rtmon") > /dev/null 2>&1
+	kill -TERM $(pgrep -f "mwan3track") > /dev/null 2>&1
 
 	sleep 1
 
-	for pid in $(pgrep -f "mwan3rtmon"); do
-		kill -KILL "$pid" > /dev/null 2>&1
-	done
-
-	for pid in $(pgrep -f "mwan3track"); do
-		kill -KILL "$pid" > /dev/null 2>&1
-	done
+	kill -KILL $(pgrep -f "mwan3rtmon") > /dev/null 2>&1
+	kill -KILL $(pgrep -f "mwan3track") > /dev/null 2>&1
 
 	config_load mwan3
 	config_foreach mwan3_track_clean interface

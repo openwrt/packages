@@ -1,5 +1,4 @@
 #!/bin/sh
-
 . /usr/share/libubox/jshn.sh
 
 IP4="ip -4"
@@ -37,89 +36,82 @@ MM_UNREACHABLE=""
 command -v ip6tables > /dev/null
 NO_IPV6=$?
 
-# return true(=0) if has any mwan3 interface enabled
-# otherwise return false
-mwan3_rtmon_ipv4()
+mwan3_push_update()
 {
-	local idx=0
-	local ret=1
-	local tbl=""
-
-	local tid family enabled
-
-	mkdir -p /tmp/mwan3rtmon
-	($IP4 route list table main  | grep -v "^default\|linkdown" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv4.main
-	while uci get mwan3.@interface[$idx] >/dev/null 2>&1 ; do
-		tid=$((idx+1))
-
-		family="$(uci -q get mwan3.@interface[$idx].family)"
-		[ -z "$family" ] && family="ipv4"
-
-		enabled="$(uci -q get mwan3.@interface[$idx].enabled)"
-		[ -z "$enabled" ] && enabled="0"
-
-		[ "$family" = "ipv4" ] && {
-			tbl=$($IP4 route list table $tid 2>/dev/null)
-			if echo "$tbl" | grep -q ^default; then
-				(echo "$tbl"  | grep -v "^default\|linkdown" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv4.$tid
-				cat /tmp/mwan3rtmon/ipv4.$tid | grep -v -x -F -f /tmp/mwan3rtmon/ipv4.main | while read line; do
-					$IP4 route del table $tid $line
-				done
-				cat /tmp/mwan3rtmon/ipv4.main | grep -v -x -F -f /tmp/mwan3rtmon/ipv4.$tid | while read line; do
-					$IP4 route add table $tid $line
-				done
-			fi
-		}
-		if [ "$enabled" = "1" ]; then
-			ret=0
-		fi
-		idx=$((idx+1))
-	done
-	rm -f /tmp/mwan3rtmon/ipv4.*
-	return $ret
+	# helper function to build an update string to pass on to
+	# IPTR or IPS RESTORE. Modifies the 'update' variable in
+	# the local scope.
+	update="$update
+$*";
 }
 
-# return true(=0) if has any mwan3 interface enabled
-# otherwise return false
-mwan3_rtmon_ipv6()
+mwan3_update_dev_to_table()
 {
-	local idx=0
-	local ret=1
-	local tbl=""
+	local _tid
+	mwan3_dev_tbl_ipv4=" "
+	mwan3_dev_tbl_ipv6=" "
 
-	local tid family enabled
+	update_table()
+	{
+		local family curr_table device enabled
+		let _tid++
+		config_get family "$1" family ipv4
+		network_get_device device "$1"
+		[ -z "$device" ] && return
+		config_get enabled "$1" enabled
+		[ "$enabled" -eq 0 ] && return
+		curr_table=$(eval "echo	 \"\$mwan3_dev_tbl_${family}\"")
+		export "mwan3_dev_tbl_$family=${curr_table}${device}=$_tid "
+	}
+	network_flush_cache
+	config_foreach update_table interface
+}
 
-	mkdir -p /tmp/mwan3rtmon
-	($IP6 route list table main  | grep -v "^default\|^::/0\|^fe80::/64\|^unreachable" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv6.main
-	while uci get mwan3.@interface[$idx] >/dev/null 2>&1 ; do
-		tid=$((idx+1))
+mwan3_update_iface_to_table()
+{
+	local _tid section family cfgtype curr_table _mwan3_iface_tbl
+	mwan3_iface_tbl=" "
+	update_table()
+	{
+		let _tid++
+		export mwan3_iface_tbl="${mwan3_iface_tbl}${1}=$_tid "
+	}
+	config_foreach update_table interface
+}
 
-		family="$(uci -q get mwan3.@interface[$idx].family)"
-		# Set default family to ipv4 that is no mistake
-		[ -z "$family" ] && family="ipv4"
+mwan3_get_true_iface()
+{
+	local family V
+	_true_iface=$2
+	config_get family "$iface" family ipv4
+	if [ "$family" = "ipv4" ]; then
+		V=4
+	elif [ "$family" = "ipv6" ]; then
+		V=6
+	fi
+	ubus call "network.interface.${iface}_${V}" status &>/dev/null && _true_iface="${iface}_${V}"
+	export "$1=$_true_iface"
+}
 
-		enabled="$(uci -q get mwan3.@interface[$idx].enabled)"
-		[ -z "$enabled" ] && enabled="0"
+mwan3_route_line_dev()
+{
+	# must have mwan3 config already loaded
+	# arg 1 is route device
+	local  _tid route_line route_device route_family entry curr_table
+	route_line=$2
+	route_family=$3
+	route_device=$(echo "$route_line" | sed -ne "s/.*dev \([^ ]*\).*/\1/p")
+	unset "$1"
+	[ -z "$route_device" ] && return
 
-		[ "$family" = "ipv6" ] && {
-			tbl=$($IP6 route list table $tid 2>/dev/null)
-			if echo "$tbl" | grep -q "^default\|^::/0"; then
-				(echo "$tbl"  | grep -v "^default\|^::/0\|^unreachable" | sort -n; echo empty fixup) >/tmp/mwan3rtmon/ipv6.$tid
-				cat /tmp/mwan3rtmon/ipv6.$tid | grep -v -x -F -f /tmp/mwan3rtmon/ipv6.main | while read line; do
-					$IP6 route del table $tid $line
-				done
-				cat /tmp/mwan3rtmon/ipv6.main | grep -v -x -F -f /tmp/mwan3rtmon/ipv6.$tid | while read line; do
-					$IP6 route add table $tid $line
-				done
-			fi
-		}
-		if [ "$enabled" = "1" ]; then
-			ret=0
+	curr_table=$(eval "echo	 \"\$mwan3_dev_tbl_${route_family}\"")
+	for entry in $curr_table; do
+		if [ "${entry%%=*}" = "$route_device" ]; then
+			_tid=${entry##*=}
+			export "$1=$_tid"
+			return
 		fi
-		idx=$((idx+1))
 	done
-	rm -f /tmp/mwan3rtmon/ipv6.*
-	return $ret
 }
 
 # counts how many bits are set to 1
@@ -205,16 +197,10 @@ mwan3_unlock() {
 
 mwan3_get_iface_id()
 {
-	local _tmp _iface _iface_count
-
-	_iface="$2"
-
-	mwan3_get_id()
-	{
-		let _iface_count++
-		[ "$1" = "$_iface" ] && _tmp=$_iface_count
-	}
-	config_foreach mwan3_get_id interface
+	local _tmp
+	[ -z "$mwan3_iface_tbl" ] && mwan3_update_iface_to_table
+	_tmp="${mwan3_iface_tbl##* ${2}=}"
+	_tmp=${_tmp%% *}
 	export "$1=$_tmp"
 }
 
@@ -312,7 +298,7 @@ mwan3_set_connected_iptables()
 
 		$IPS -! create mwan3_source_v6 hash:net family inet6
 		$IPS create mwan3_source_v6_temp hash:net family inet6
-		for source_network_v6 in $($IP6 addr ls  | sed -ne 's/ *inet6 \([^ \/]*\).* scope global.*/\1/p'); do
+		for source_network_v6 in $($IP6 addr ls | sed -ne 's/ *inet6 \([^ \/]*\).* scope global.*/\1/p'); do
 			$IPS -! add mwan3_source_v6_temp "$source_network_v6"
 		done
 		$IPS swap mwan3_source_v6_temp mwan3_source_v6
@@ -506,44 +492,109 @@ mwan3_delete_iface_iptables()
 
 mwan3_create_iface_route()
 {
-	local id via metric V V_ IP
+	local id via metric V V_ IP family
+	local iface device cmd true_iface
 
+	iface=$1
+	device=$2
+	config_get family "$iface" family ipv4
+	mwan3_get_iface_id id "$iface"
+
+	[ -n "$id" ] || return 0
+
+	mwan3_get_true_iface true_iface $iface
+	if [ "$family" = "ipv4" ]; then
+		V_=""
+		IP="$IP4"
+	elif [ "$family" = "ipv6" ]; then
+		V_=6
+		IP="$IP6"
+	fi
+
+	network_get_gateway${V_} via "$true_iface"
+
+	{ [ -z "$via" ] || [ "$via" = "0.0.0.0" ] || [ "$via" = "::" ] ; } && unset via
+
+	network_get_metric metric "$true_iface"
+
+	$IP route flush table "$id"
+	cmd="$IP route add table $id default \
+	     ${via:+via} $via \
+	     ${metric:+metric} $metric \
+	     dev $2"
+	$cmd || LOG warn "ip cmd failed $cmd"
+
+}
+
+mwan3_add_non_default_iface_route()
+{
+	local tid route_line family IP id
 	config_get family "$1" family ipv4
 	mwan3_get_iface_id id "$1"
 
 	[ -n "$id" ] || return 0
 
 	if [ "$family" = "ipv4" ]; then
-		V=4
-		V_=""
 		IP="$IP4"
 	elif [ "$family" = "ipv6" ]; then
-		V=6
-		V_=6
 		IP="$IP6"
-	else
-		return
 	fi
 
-	if ubus call network.interface.${1}_${V} status &>/dev/null; then
-		network_get_gateway${V_} via "${1}_${V}"
-	else
-		network_get_gateway${V_} via "$1"
-	fi
+	mwan3_update_dev_to_table
+	$IP route list table main  | grep -v "^default\|linkdown\|^::/0\|^fe80::/64\|^unreachable" | while read route_line; do
+		mwan3_route_line_dev "tid" "$route_line" "$family"
+		if [ -z "$tid" ] || [ "$tid" = "$id" ]; then
+			$IP route add table $id $route_line ||
+				LOG warn "failed to add $route_line to table $id"
+		fi
 
-	( [ -z "$via" ] || [ "$via" = "0.0.0.0" ] || [ "$via" = "::" ] ) && unset via
-
-	network_get_metric metric "$1"
-
-	$IP route flush table "$id"
-	$IP route add table "$id" default \
-	     ${via:+via} $via \
-	     ${metric:+metric} $metric \
-	     dev "$2"
-	mwan3_rtmon_ipv${V}
-
+	done
 }
 
+mwan3_add_all_nondefault_routes()
+{
+	local tid IP route_line ipv family active_tbls tid
+
+	add_active_tbls()
+	{
+		let tid++
+		config_get family "$1" family ipv4
+		[ "$family" != "$ipv" ] && return
+		$IP route list table $tid 2>/dev/null | grep -q "^default\|^::/0" && {
+			active_tbls="$active_tbls${tid} "
+		}
+	}
+
+	add_route()
+	{
+		let tid++
+		config_get family "$section" family ipv4
+		[ -n "${active_tbls##* $tid *}" ] && return
+		$IP route add table $tid $route_line ||
+			LOG warn "failed to add $route_line to table $tid"
+	}
+
+	mwan3_update_dev_to_table
+	for ipv in ipv4 ipv6; do
+		[ "$ipv" = "ipv6" ] && [ $NO_IPV6 -ne 0 ] && continue
+		if [ "$ipv" = "ipv4" ]; then
+			IP="$IP4"
+		elif [ "$ipv" = "ipv6" ]; then
+			IP="$IP6"
+		fi
+		tid=0
+		active_tbls=" "
+		config_foreach add_active_tbls interface
+		$IP route list table main  | grep -v "^default\|linkdown\|^::/0\|^fe80::/64\|^unreachable" | while read route_line; do
+			mwan3_route_line_dev "tid" "$route_line" "$ipv"
+			if [ -n "$tid" ]; then
+				$IP route add table $tid $route_line
+			else
+				config_foreach add_route interface
+			fi
+		done
+	done
+}
 mwan3_delete_iface_route()
 {
 	local id
@@ -649,12 +700,14 @@ mwan3_delete_iface_ipset_entries()
 
 mwan3_rtmon()
 {
-	pid="$(pgrep -f mwan3rtmon)"
-	if [ "${pid}" != "" ]; then
-		kill -USR1 "${pid}"
-	else
-		[ -x /usr/sbin/mwan3rtmon ] && /usr/sbin/mwan3rtmon &
-	fi
+	local protocol
+	for protocol in "ipv4" "ipv6"; do
+		pid="$(pgrep -f "mwan3rtmon $protocol")"
+		[ "$protocol" = "ipv6" ] && [ $NO_IPV6 -ne 0 ] && continue
+		if [ "${pid}" = "" ]; then
+			[ -x /usr/sbin/mwan3rtmon ] && /usr/sbin/mwan3rtmon $protocol &
+		fi
+	done
 }
 
 mwan3_track()
@@ -667,13 +720,10 @@ mwan3_track()
 	}
 	config_list_foreach "$1" track_ip mwan3_list_track_ips
 
-	for pid in $(pgrep -f "mwan3track $1 $2"); do
-		kill -TERM "$pid" > /dev/null 2>&1
-	done
+	kill -TERM $(pgrep -f "mwan3track $1 $2") > /dev/null 2>&1
 	sleep 1
-	for pid in $(pgrep -f "mwan3track $1 $2"); do
-		kill -KILL "$pid" > /dev/null 2>&1
-	done
+	kill -KILL $(pgrep -f "mwan3track $1 $2") > /dev/null 2>&1
+
 	if [ -n "$track_ips" ]; then
 		[ -x /usr/sbin/mwan3track ] && /usr/sbin/mwan3track "$1" "$2" "$3" "$4" $track_ips &
 	fi
@@ -723,7 +773,7 @@ mwan3_set_policy()
 			total_weight_v4=$weight
 			lowest_metric_v4=$metric
 		elif [ "$metric" -eq "$lowest_metric_v4" ]; then
-		       	total_weight_v4=$(($total_weight_v4+$weight))
+			total_weight_v4=$(($total_weight_v4+$weight))
 			total_weight=$total_weight_v4
 		else
 			return
@@ -757,7 +807,7 @@ mwan3_set_policy()
 		else
 			probability="1"
 		fi
-		
+
 		$IPT -I "mwan3_policy_$policy" \
 			-m mark --mark 0x0/$MMX_MASK \
 			-m statistic \
@@ -885,7 +935,7 @@ mwan3_set_user_iptables_rule()
 	[ -z "$ipset" ] && unset ipset
 	[ -z "$src_port" ]  && unset src_port
 	[ -z "$dest_port" ]  && unset dest_port
-	[ "$proto"  != 'tcp' ]  && [ "$proto" != 'udp' ] && {
+	[ "$proto"  != 'tcp' ]	&& [ "$proto" != 'udp' ] && {
 		[ -n "$src_port" ] && {
 			$LOG warn "src_port set to '$src_port' but proto set to '$proto' not tcp or udp. src_port will be ignored"
 		}

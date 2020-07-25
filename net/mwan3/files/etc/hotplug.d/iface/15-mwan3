@@ -17,6 +17,7 @@ config_load mwan3
 config_get_bool enabled globals 'enabled' '0'
 [ "${enabled}" -gt 0 ] || {
 	mwan3_unlock "$ACTION" "$INTERFACE"
+	mwan3_flush_conntrack "$INTERFACE" "$ACTION"
 	exit 0
 }
 
