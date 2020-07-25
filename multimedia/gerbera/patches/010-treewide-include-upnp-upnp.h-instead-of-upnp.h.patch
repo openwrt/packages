@@ -1,0 +1,156 @@
+From 664b9970687b3d888999f24ef55444add016ba95 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 24 Jul 2020 19:53:08 -0700
+Subject: [PATCH] treewide: include upnp/upnp.h instead of upnp.h
+
+pupnp installs in include/upnp. npupnp installs in include/npupnp/upnp.
+
+This commit helps with compatibility between the two.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ src/action_request.h                     | 2 +-
+ src/iohandler/buffered_io_handler.h      | 2 +-
+ src/iohandler/curl_io_handler.h          | 2 +-
+ src/iohandler/io_handler.h               | 2 +-
+ src/iohandler/io_handler_buffer_helper.h | 2 +-
+ src/subscription_request.h               | 2 +-
+ src/transcoding/transcode_ext_handler.h  | 2 +-
+ src/transcoding/transcode_handler.h      | 2 +-
+ src/util/upnp_clients.cc                 | 2 +-
+ src/util/upnp_headers.h                  | 2 +-
+ 10 files changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/src/action_request.h b/src/action_request.h
+index 4f57bf22..28c9f66e 100644
+--- a/src/action_request.h
++++ b/src/action_request.h
+@@ -35,7 +35,7 @@
+ 
+ #include <memory>
+ #include <pugixml.hpp>
+-#include <upnp.h>
++#include <upnp/upnp.h>
+ 
+ #include "common.h"
+ 
+diff --git a/src/iohandler/buffered_io_handler.h b/src/iohandler/buffered_io_handler.h
+index f110a9b2..d8ec1157 100644
+--- a/src/iohandler/buffered_io_handler.h
++++ b/src/iohandler/buffered_io_handler.h
+@@ -33,7 +33,7 @@
+ #define __BUFFERED_IO_HANDLER_H__
+ 
+ #include <memory>
+-#include <upnp.h>
++#include <upnp/upnp.h>
+ 
+ #include "common.h"
+ #include "io_handler_buffer_helper.h"
+diff --git a/src/iohandler/curl_io_handler.h b/src/iohandler/curl_io_handler.h
+index 809274dd..d87ceefc 100644
+--- a/src/iohandler/curl_io_handler.h
++++ b/src/iohandler/curl_io_handler.h
+@@ -35,7 +35,7 @@
+ #define __CURL_IO_HANDLER_H__
+ 
+ #include <curl/curl.h>
+-#include <upnp.h>
++#include <upnp/upnp.h>
+ 
+ #include "common.h"
+ #include "io_handler_buffer_helper.h"
+diff --git a/src/iohandler/io_handler.h b/src/iohandler/io_handler.h
+index 2dc03118..0b2b962a 100644
+--- a/src/iohandler/io_handler.h
++++ b/src/iohandler/io_handler.h
+@@ -32,7 +32,7 @@
+ #ifndef __IO_HANDLER_H__
+ #define __IO_HANDLER_H__
+ 
+-#include <upnp.h>
++#include <upnp/upnp.h>
+ 
+ #include "common.h"
+ 
+diff --git a/src/iohandler/io_handler_buffer_helper.h b/src/iohandler/io_handler_buffer_helper.h
+index 660ee9d0..9c3b0c94 100644
+--- a/src/iohandler/io_handler_buffer_helper.h
++++ b/src/iohandler/io_handler_buffer_helper.h
+@@ -35,7 +35,7 @@
+ #include <condition_variable>
+ #include <mutex>
+ #include <pthread.h>
+-#include <upnp.h>
++#include <upnp/upnp.h>
+ 
+ #include "common.h"
+ #include "io_handler.h"
+diff --git a/src/subscription_request.h b/src/subscription_request.h
+index 4c15d85b..17d6f7d5 100644
+--- a/src/subscription_request.h
++++ b/src/subscription_request.h
+@@ -33,7 +33,7 @@
+ #ifndef __SUBSCRIPTION_REQUEST_H__
+ #define __SUBSCRIPTION_REQUEST_H__
+ 
+-#include <upnp.h>
++#include <upnp/upnp.h>
+ 
+ #include "common.h"
+ 
+diff --git a/src/transcoding/transcode_ext_handler.h b/src/transcoding/transcode_ext_handler.h
+index 64b5081b..aa197e5a 100644
+--- a/src/transcoding/transcode_ext_handler.h
++++ b/src/transcoding/transcode_ext_handler.h
+@@ -33,7 +33,7 @@
+ #define __TRANSCODE_EXTERNAL_HANDLER_H__
+ 
+ #include <memory>
+-#include <upnp.h>
++#include <upnp/upnp.h>
+ 
+ #include "common.h"
+ #include "transcode_handler.h"
+diff --git a/src/transcoding/transcode_handler.h b/src/transcoding/transcode_handler.h
+index 295f2262..3ba2ba93 100644
+--- a/src/transcoding/transcode_handler.h
++++ b/src/transcoding/transcode_handler.h
+@@ -34,7 +34,7 @@
+ 
+ #include <memory>
+ #include <string>
+-#include <upnp.h>
++#include <upnp/upnp.h>
+ 
+ #include "common.h"
+ 
+diff --git a/src/util/upnp_clients.cc b/src/util/upnp_clients.cc
+index 2033cf31..e866e456 100644
+--- a/src/util/upnp_clients.cc
++++ b/src/util/upnp_clients.cc
+@@ -29,7 +29,7 @@
+ #include "config/config.h"
+ #include "util/tools.h"
+ 
+-#include <upnp.h>
++#include <upnp/upnp.h>
+ 
+ // table of supported clients (sequence of entries matters!)
+ std::vector<struct ClientInfo> Clients::clientInfo = std::vector<struct ClientInfo> {
+diff --git a/src/util/upnp_headers.h b/src/util/upnp_headers.h
+index 306ebfdf..c9896acb 100644
+--- a/src/util/upnp_headers.h
++++ b/src/util/upnp_headers.h
+@@ -28,7 +28,7 @@
+ 
+ #include <map>
+ #include <memory>
+-#include <upnp.h>
++#include <upnp/upnp.h>
+ #include <vector>
+ 
+ class Headers {
+-- 
+2.26.2
+
