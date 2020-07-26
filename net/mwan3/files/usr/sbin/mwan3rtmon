@@ -1,8 +1,9 @@
 #!/bin/sh
+
 . /lib/functions.sh
 . /lib/functions/network.sh
 . /lib/mwan3/mwan3.sh
-
+. /lib/mwan3/common.sh
 
 mwan3_rtmon_route_handle()
 {
