@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=spice
 PKG_VERSION:=0.14.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.spice-space.org/download/releases/spice-server
 PKG_HASH:=551d4be4a07667cf0543f3c895beb6da8a93ef5a9829f2ae47817be5e616a114
@@ -22,6 +22,7 @@ PKG_FIXUP:=autoreconf
 PKG_BUILD_DEPENDS+=spice-protocol
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/libspice-server
   SECTION:=libs
