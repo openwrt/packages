@@ -30,7 +30,7 @@ define Package/rsync
   CATEGORY:=Network
   SUBMENU:=File Transfer
   TITLE:=Fast remote file copy program (like rcp)
-  DEPENDS:=+libpopt +RSYNC_xattr:libattr +RSYNC_acl:libacl +RSYNC_zlib:zlib
+  DEPENDS:=+libpopt +zlib +RSYNC_xattr:libattr +RSYNC_acl:libacl
   URL:=https://rsync.samba.org/
   MENU:=1
 endef
@@ -43,6 +43,7 @@ TARGET_CFLAGS += $(if $(CONFIG_IPV6),-DINET6,)
 
 CONFIGURE_ARGS += \
 	--without-included-popt \
+	--without-included-zlib \
 	--disable-debug \
 	--disable-asm \
 	--disable-iconv \
@@ -56,7 +57,6 @@ CONFIGURE_ARGS += \
 	--disable-zstd \
 	--$(if $(CONFIG_RSYNC_xattr),en,dis)able-xattr-support \
 	--$(if $(CONFIG_RSYNC_acl),en,dis)able-acl-support \
-	--with$(if $(CONFIG_RSYNC_zlib),,out)-included-zlib \
 	$(if $(CONFIG_IPV6),,--disable-ipv6)
 
 define Package/rsyncd
