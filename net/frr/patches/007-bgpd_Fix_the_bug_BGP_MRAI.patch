@@ -1,0 +1,30 @@
+From 2bbe7133eb5cb97ba4b745cd251a8615cd2bd008 Mon Sep 17 00:00:00 2001
+From: Richard Wu <wutong23@baidu.com>
+Date: Fri, 5 Jun 2020 17:54:57 +0800
+Subject: [PATCH] bgpd: Fix the bug that BGP MRAI does not work.
+
+Issue: bgp_process_writes will be called when the fd is writable.
+       And it will bgp_generate_updgrp_packets to generate the
+       update packets no matter MRAI is set or not.
+Fix:   bgp_generate_updgrp_packets thread will return without sending
+       any update when MRAI timer is still running.
+
+Signed-off-by: Richard Wu <wutong23@baidu.com>
+---
+ bgpd/bgp_packet.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/bgpd/bgp_packet.c b/bgpd/bgp_packet.c
+index 29c03f4014..6f1c033f2a 100644
+--- a/bgpd/bgp_packet.c
++++ b/bgpd/bgp_packet.c
+@@ -408,6 +408,9 @@ int bgp_generate_updgrp_packets(struct thread *thread)
+ 	if (peer->bgp->main_peers_update_hold)
+ 		return 0;
+ 
++	if (peer->t_routeadv)
++		return 0;
++
+ 	do {
+ 		s = NULL;
+ 		FOREACH_AFI_SAFI (afi, safi) {
