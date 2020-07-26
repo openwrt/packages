@@ -1,73 +1,11 @@
-From b92c7f86b4be3b200e0f2de713a4c40b28599e61 Mon Sep 17 00:00:00 2001
-From: Egmont Koblinger <egmont@gmail.com>
-Date: Fri, 14 Feb 2020 22:14:19 +0100
-Subject: [PATCH] Ticket #3954: fix mouse handling with newer terminfo entries.
-
-Signed-off-by: Andrew Borodin <aborodin@vmail.ru>
----
- lib/tty/key.c   | 11 +++++++++--
- lib/tty/mouse.c |  6 ++++--
- lib/tty/tty.c   |  9 ++++++++-
- 3 files changed, 21 insertions(+), 5 deletions(-)
-
-diff --git a/lib/tty/key.c b/lib/tty/key.c
-index 1aa5110af0..4abfc71d73 100644
---- a/lib/tty/key.c
-+++ b/lib/tty/key.c
-@@ -2120,8 +2120,15 @@ tty_get_event (struct Gpm_Event *event, gboolean redo_event, gboolean block)
- #endif /* KEY_MOUSE */
-                           || c == MCKEY_EXTENDED_MOUSE))
-     {
--        /* Mouse event */
--        xmouse_get_event (event, c == MCKEY_EXTENDED_MOUSE);
-+        /* Mouse event. See tickets 2956 and 3954 for extended mode detection. */
-+        gboolean extended = c == MCKEY_EXTENDED_MOUSE;
-+
-+#ifdef KEY_MOUSE
-+        extended = extended || (c == KEY_MOUSE && xmouse_seq == NULL
-+                                && xmouse_extended_seq != NULL);
-+#endif /* KEY_MOUSE */
-+
-+        xmouse_get_event (event, extended);
-         c = (event->type != 0) ? EV_MOUSE : EV_NONE;
-     }
-     else if (c == MCKEY_BRACKETED_PASTING_START)
-diff --git a/lib/tty/mouse.c b/lib/tty/mouse.c
-index 0f830ce08a..1bba0cc587 100644
---- a/lib/tty/mouse.c
-+++ b/lib/tty/mouse.c
-@@ -90,8 +90,10 @@ init_mouse (void)
- 
-     case MOUSE_XTERM_NORMAL_TRACKING:
-     case MOUSE_XTERM_BUTTON_EVENT_TRACKING:
--        define_sequence (MCKEY_MOUSE, xmouse_seq, MCKEY_NOACTION);
--        define_sequence (MCKEY_EXTENDED_MOUSE, xmouse_extended_seq, MCKEY_NOACTION);
-+        if (xmouse_seq != NULL)
-+            define_sequence (MCKEY_MOUSE, xmouse_seq, MCKEY_NOACTION);
-+        if (xmouse_extended_seq != NULL)
-+            define_sequence (MCKEY_EXTENDED_MOUSE, xmouse_extended_seq, MCKEY_NOACTION);
-         break;
- 
-     default:
-diff --git a/lib/tty/tty.c b/lib/tty/tty.c
-index 1bca37c476..a232cd96e8 100644
 --- a/lib/tty/tty.c
 +++ b/lib/tty/tty.c
-@@ -361,9 +361,16 @@ tty_init_xterm_support (gboolean is_xterm)
-         }
-     }
- 
--    /* No termcap for SGR extended mouse (yet), hardcode it for now */
-+    /* There's only one termcap entry "kmous", typically containing "\E[M" or "\E[<".
-+     * We need the former in xmouse_seq, the latter in xmouse_extended_seq.
-+     * See tickets 2956 and 3954 for details. */
+@@ -370,7 +370,7 @@ tty_init_xterm_support (gboolean is_xter
      if (xmouse_seq != NULL)
-+    {
-+        if (strcmp (xmouse_seq, ESC_STR "[<") == 0)
+     {
+         if (strcmp (xmouse_seq, ESC_STR "[<") == 0)
+-            xmouse_seq = ESC_STR "[M";
 +            xmouse_seq = NULL;
-+
-         xmouse_extended_seq = ESC_STR "[<";
-+    }
- }
  
- /* --------------------------------------------------------------------------------------------- */
+         xmouse_extended_seq = ESC_STR "[<";
+     }
