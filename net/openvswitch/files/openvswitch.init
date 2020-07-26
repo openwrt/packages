@@ -36,6 +36,8 @@ ovs_action() {
 	for cfgtype in ovs ovn_northd ovn_controller; do
 		config_foreach "ovs_xx" "$cfgtype" "$action" "$cfgtype"
 	done
+
+	config_foreach ovs_bridge_init "ovs_bridge"
 }
 
 ovs_xx() {
@@ -51,7 +53,7 @@ ovs_xx() {
 		status|stop) ;;
 		*)
 			config_get_bool disabled "$cfg" disabled 0
-			[ "$disabled" -le 0 ] || return
+			[ "$disabled" == "0" ] || return
 			;;
 	esac
 
@@ -64,4 +66,22 @@ ovs_xx() {
 			"$ovn_ctl" "${action}_${cfgtype#ovn_}"
 			;;
 	esac
+}
+
+ovs_bridge_init() {
+	local cfg="$1"
+
+	local disabled
+	local name
+	local controller
+
+	config_get_bool disabled "$cfg" disabled 0
+	[ "$disabled" == "0" ] || return
+
+	config_get name "$cfg" name $cfg
+	ovs-vsctl --may-exist add-br "$name"
+
+	config_get controller "$cfg" controller
+	[ -n "$controller" ] && \
+		ovs-vsctl set-controller "$name" "$controller"
 }

@@ -60,3 +60,20 @@ E.g. replace in-tree datapath module with upstream version
 	opkg remove --force-depends kmod-openvswitch-intree
 	opkg install kmod-openvswitch
 	ovs-ctl force-reload-kmod
+
+# UCI configuration options
+
+There are 4 config section types in package openvswitch:
+ovs ovn_northd, ovn_controller & ovs_bridge.
+
+Each of these supports a disabled option, which should be 
+set to 0 to launch the respective daemons.
+
+The ovs_bridge section also supports the options below,
+for initialising a virtual bridge with an OpenFlow controller.
+
+| Name       | Type    | Required | Default                        | Description                                                |
+|------------|---------|----------|--------------------------------|------------------------------------------------------------|
+| disabled   | boolean | no       | 0                              | If set to true, disable initialisation of the named bridge |
+| name       | string  | no       | Inherits UCI config block name | The name of the switch in the OVS daemon                   |
+| controller | string  | no       | (none)                         | The endpoint of an OpenFlow controller for this bridge     |
