@@ -1,75 +1,100 @@
-From 2ebccbb993dca41674de295f2d513abd568f971a Mon Sep 17 00:00:00 2001
+From c454e03731808c8ea056c5609a599a7988dbea98 Mon Sep 17 00:00:00 2001
 From: Jean-Francois Dockes <jf@dockes.org>
 Date: Fri, 13 Mar 2020 09:19:04 +0100
 Subject: [PATCH] Quick changes for working with NPUPNP
 
+(Rebased and made default)
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
 ---
- CMakeLists.txt                           | 12 +++++-------
- src/action_request.cc                    | 11 +++++++++++
- src/device_description_handler.cc        |  4 ++++
- src/file_request_handler.cc              |  4 ++++
+ CMakeLists.txt                           | 34 +++++++++++++++---------
+ src/action_request.cc                    | 11 +++++++-
+ src/device_description_handler.cc        |  4 +++
+ src/file_request_handler.cc              |  4 +++
  src/iohandler/file_io_handler.cc         |  2 ++
  src/iohandler/io_handler.cc              |  2 ++
  src/iohandler/mem_io_handler.cc          |  2 ++
- src/serve_request_handler.cc             |  9 ++++++++-
- src/server.cc                            |  8 ++++++++
+ src/serve_request_handler.cc             |  8 ++++++
+ src/server.cc                            |  8 ++++++
  src/transcoding/transcode_ext_handler.cc |  2 ++
- src/upnp_cds.cc                          | 12 +++++++++++-
- src/upnp_cm.cc                           | 11 +++++++++++
- src/upnp_mrreg.cc                        | 10 +++++++++-
- src/url_request_handler.cc               |  6 ++++++
- src/util/upnp_clients.cc                 | 12 ++++++++++++
- src/util/upnp_headers.cc                 | 14 +++++++++++++-
- src/util/upnp_headers.h                  |  2 ++
- src/web/web_request_handler.cc           |  4 ++++
- 18 files changed, 116 insertions(+), 11 deletions(-)
+ src/upnp_cds.cc                          | 11 ++++++++
+ src/upnp_cm.cc                           | 11 ++++++++
+ src/upnp_mrreg.cc                        | 10 ++++++-
+ src/url_request_handler.cc               |  6 +++++
+ src/util/upnp_clients.cc                 | 12 +++++++++
+ src/util/upnp_headers.cc                 | 14 ++++++++++
+ src/web/web_request_handler.cc           |  4 +++
+ 17 files changed, 130 insertions(+), 15 deletions(-)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 46f2ca5c..b51300d9 100644
+index 81f7818e..d8107660 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -293,13 +293,11 @@ if (LFS_FOUND)
-     target_link_libraries(gerbera ${LFS_LIBRARIES})
- endif()
+@@ -303,23 +303,31 @@ add_definitions(${LFS_DEFINITIONS})
+ add_compile_options(${LFS_COMPILE_OPTIONS})
+ target_link_libraries(libgerbera ${LFS_LIBRARIES})
  
--find_package (LibUpnp REQUIRED)
--include_directories(${UPNP_INCLUDE_DIRS})
--target_link_libraries (gerbera ${UPNP_LIBRARIES})
--
--if (UPNP_VERSION_STRING VERSION_LESS "1.12.1")
--    message(FATAL_ERROR "gerbera requires libupnp 1.12.1 or above.")
+-find_package (pupnp "1.12.1" REQUIRED)
++pkg_check_modules (NPUPNP libnpupnp)
++if (NPUPNP_FOUND)
++    include_directories (${NPUPNP_INCLUDE_DIRS})
++    set(CMAKE_REQUIRED_LIBRARIES npupnp)
++    add_definitions(-DUSING_NPUPNP)
++    target_link_libraries (libgerbera ${NPUPNP_LIBRARIES})
++else()
++    find_package (pupnp "1.12.1" REQUIRED)
+ 
+-set(CMAKE_REQUIRED_LIBRARIES pupnp::pupnp)
++    set(CMAKE_REQUIRED_LIBRARIES pupnp::pupnp)
+ 
+-check_cxx_symbol_exists(UPNP_ENABLE_IPV6 "upnpconfig.h" UPNP_HAS_IPV6)
+-if (NOT UPNP_HAS_IPV6)
+-    message(FATAL_ERROR "Gerbera requires libupnp with IPv6 support.")
 -endif()
-+####  Hard-coded NPUPNP defs for now, just for testing
-+add_definitions(-DUSING_NPUPNP)
-+include_directories(/usr/include/npupnp/upnp)
-+target_link_libraries (gerbera -lnpupnp)
-+set (UPNP_HAS_IPV6 1)
++    check_cxx_symbol_exists(UPNP_ENABLE_IPV6 "upnpconfig.h" UPNP_HAS_IPV6)
++    if (NOT UPNP_HAS_IPV6)
++        message(FATAL_ERROR "Gerbera requires libupnp with IPv6 support.")
++    endif()
  
- if (NOT UPNP_HAS_IPV6)
-     message(FATAL_ERROR "Gerbera requires libupnp with IPv6 support.")
+-check_cxx_symbol_exists(UPNP_MINISERVER_REUSEADDR "upnpconfig.h" UPNP_HAS_REUSEADDR)
+-if (NOT UPNP_HAS_REUSEADDR)
+-    message(WARNING [=[
+-!! It is strongly recommended to build libupnp with --enable-reuseaddr !!
+-Without this option Gerbera will be unable to restart with the same port number.]=])
+-endif()
++    check_cxx_symbol_exists(UPNP_MINISERVER_REUSEADDR "upnpconfig.h" UPNP_HAS_REUSEADDR)
++    if (NOT UPNP_HAS_REUSEADDR)
++        message(WARNING [=[
++    !! It is strongly recommended to build libupnp with --enable-reuseaddr !!
++    Without this option Gerbera will be unable to restart with the same port number.]=])
++    endif()
+ 
+-target_link_libraries (libgerbera pupnp::pupnp)
++    target_link_libraries (libgerbera pupnp::pupnp)
++endif()
+ 
+ find_package(fmt REQUIRED)
+ target_link_libraries(libgerbera fmt::fmt)
 diff --git a/src/action_request.cc b/src/action_request.cc
-index 3aa4a991..29be6aaf 100644
+index fab0e910..0615dc58 100644
 --- a/src/action_request.cc
 +++ b/src/action_request.cc
-@@ -65,11 +65,17 @@ std::string ActionRequest::getServiceID() const
+@@ -65,10 +65,14 @@ std::string ActionRequest::getServiceID() const
  
  std::unique_ptr<pugi::xml_document> ActionRequest::getRequest() const
  {
-+#if !defined(USING_NPUPNP)
-     DOMString cxml = ixmlPrintDocument(UpnpActionRequest_get_ActionRequest(upnp_request));
-+#endif
+-    DOMString cxml = ixmlPrintDocument(UpnpActionRequest_get_ActionRequest(upnp_request));
      auto request = std::make_unique<pugi::xml_document>();
 +#if defined(USING_NPUPNP)
 +    auto ret = request->load_string(upnp_request->xmlAction.c_str());
 +#else
++    DOMString cxml = ixmlPrintDocument(UpnpActionRequest_get_ActionRequest(upnp_request));
      auto ret = request->load_string(cxml);
      ixmlFreeDOMString(cxml);
- 
 +#endif
+ 
      if (ret.status != pugi::xml_parse_status::status_ok)
          throw_std_runtime_error("Unable to parse ixml");
- 
-@@ -94,6 +100,7 @@ void ActionRequest::update()
+@@ -94,6 +98,7 @@ void ActionRequest::update()
          std::string xml = buf.str();
          log_debug("ActionRequest::update(): {}", xml.c_str());
  
@@ -77,13 +102,13 @@ index 3aa4a991..29be6aaf 100644
          IXML_Document* result = nullptr;
          int err = ixmlParseBufferEx(xml.c_str(), &result);
  
-@@ -105,6 +112,10 @@ void ActionRequest::update()
+@@ -105,6 +110,10 @@ void ActionRequest::update()
              UpnpActionRequest_set_ActionResult(upnp_request, result);
              UpnpActionRequest_set_ErrCode(upnp_request, errCode);
          }
 +#else
-+		UpnpActionRequest_set_xmlResponse(upnp_request, xml);
-+		UpnpActionRequest_set_ErrCode(upnp_request, errCode);
++        UpnpActionRequest_set_xmlResponse(upnp_request, xml);
++        UpnpActionRequest_set_ErrCode(upnp_request, errCode);
 +#endif
      } else {
          // ok, here there can be two cases
@@ -105,7 +130,7 @@ index 6aca745e..cf2e8015 100644
      UpnpFileInfo_set_IsDirectory(info, 0);
  }
 diff --git a/src/file_request_handler.cc b/src/file_request_handler.cc
-index e8579b06..615f7e85 100644
+index cfa3eaed..915e411b 100644
 --- a/src/file_request_handler.cc
 +++ b/src/file_request_handler.cc
 @@ -238,7 +238,11 @@ void FileRequestHandler::getInfo(const char* filename, UpnpFileInfo* info)
@@ -163,7 +188,7 @@ index 5574a16d..2916fd12 100644
  #include <sys/types.h>
  #include <unistd.h>
 diff --git a/src/serve_request_handler.cc b/src/serve_request_handler.cc
-index 8eaf46af..b9bd7b25 100644
+index 210140a3..01dde69b 100644
 --- a/src/serve_request_handler.cc
 +++ b/src/serve_request_handler.cc
 @@ -94,7 +94,11 @@ void ServeRequestHandler::getInfo(const char* filename, UpnpFileInfo* info)
@@ -178,11 +203,10 @@ index 8eaf46af..b9bd7b25 100644
      } else {
          throw_std_runtime_error("Not a regular file: " + path);
      }
-@@ -157,8 +161,11 @@ std::unique_ptr<IOHandler> ServeRequestHandler::open(const char* filename,
-             info->is_readable = 0;
+@@ -158,7 +162,11 @@ std::unique_ptr<IOHandler> ServeRequestHandler::open(const char* filename,
          }
  
--
+ 
 +#if defined(USING_NPUPNP)
 +        info->content_type = mimetype;
 +#else
@@ -192,10 +216,10 @@ index 8eaf46af..b9bd7b25 100644
      } else {
          throw_std_runtime_error("Not a regular file: " + path);
 diff --git a/src/server.cc b/src/server.cc
-index 913a4913..7cbabc71 100644
+index a83c28cd..d4ce3e51 100644
 --- a/src/server.cc
 +++ b/src/server.cc
-@@ -398,9 +398,17 @@ int Server::handleUpnpClientEvent(Upnp_EventType eventType, const void* event)
+@@ -393,9 +393,17 @@ int Server::handleUpnpClientEvent(Upnp_EventType eventType, const void* event)
      case UPNP_DISCOVERY_ADVERTISEMENT_ALIVE:
      case UPNP_DISCOVERY_SEARCH_RESULT: {
          auto d_event = reinterpret_cast<const UpnpDiscovery*>(event);
@@ -214,7 +238,7 @@ index 913a4913..7cbabc71 100644
          Clients::addClientByDiscovery(destAddr, userAgent, location);
          break;
 diff --git a/src/transcoding/transcode_ext_handler.cc b/src/transcoding/transcode_ext_handler.cc
-index 4dad0e3f..412c1370 100644
+index 67ee79d9..ffc89eb2 100644
 --- a/src/transcoding/transcode_ext_handler.cc
 +++ b/src/transcoding/transcode_ext_handler.cc
 @@ -37,7 +37,9 @@
@@ -228,7 +252,7 @@ index 4dad0e3f..412c1370 100644
  #include <sys/types.h>
  #include <unistd.h>
 diff --git a/src/upnp_cds.cc b/src/upnp_cds.cc
-index 6491fa78..a758655c 100644
+index 12ffeea2..b44268d3 100644
 --- a/src/upnp_cds.cc
 +++ b/src/upnp_cds.cc
 @@ -284,6 +284,7 @@ void ContentDirectoryService::processSubscriptionRequest(const std::unique_ptr<S
@@ -245,7 +269,7 @@ index 6491fa78..a758655c 100644
      ixmlDocument_free(event);
 +#else
 +    UpnpAcceptSubscriptionXML(
-+		deviceHandle, config->getOption(CFG_SERVER_UDN).c_str(),
++        deviceHandle, config->getOption(CFG_SERVER_UDN).c_str(),
 +        DESC_CDS_SERVICE_ID, xml, request->getSubscriptionID().c_str());
 +#endif
      log_debug("end");
@@ -259,21 +283,19 @@ index 6491fa78..a758655c 100644
      IXML_Document* event = nullptr;
      int err = ixmlParseBufferEx(xml.c_str(), &event);
      if (err != IXML_SUCCESS) {
-@@ -323,8 +330,11 @@ void ContentDirectoryService::sendSubscriptionUpdate(const std::string& containe
-     UpnpNotifyExt(deviceHandle,
-         config->getOption(CFG_SERVER_UDN).c_str(),
+@@ -325,6 +332,10 @@ void ContentDirectoryService::sendSubscriptionUpdate(const std::string& containe
          DESC_CDS_SERVICE_ID, event);
--
+ 
      ixmlDocument_free(event);
 +#else
-+	UpnpNotifyXML(deviceHandle, config->getOption(CFG_SERVER_UDN).c_str(),
-+				  DESC_CDS_SERVICE_ID, xml);
++    UpnpNotifyXML(deviceHandle, config->getOption(CFG_SERVER_UDN).c_str(),
++        DESC_CDS_SERVICE_ID, xml);
 +#endif
  
      log_debug("end");
  }
 diff --git a/src/upnp_cm.cc b/src/upnp_cm.cc
-index aa608480..33f86bd2 100644
+index aa608480..c6553d6f 100644
 --- a/src/upnp_cm.cc
 +++ b/src/upnp_cm.cc
 @@ -127,6 +127,7 @@ void ConnectionManagerService::processSubscriptionRequest(const std::unique_ptr<
@@ -290,8 +312,8 @@ index aa608480..33f86bd2 100644
      ixmlDocument_free(event);
 +#else
 +    UpnpAcceptSubscriptionXML(
-+		deviceHandle, config->getOption(CFG_SERVER_UDN).c_str(),
-+		DESC_CM_SERVICE_ID, xml, request->getSubscriptionID().c_str());
++        deviceHandle, config->getOption(CFG_SERVER_UDN).c_str(),
++        DESC_CM_SERVICE_ID, xml, request->getSubscriptionID().c_str());
 +#endif
  }
  
@@ -310,11 +332,11 @@ index aa608480..33f86bd2 100644
      ixmlDocument_free(event);
 +#else
 +    UpnpNotifyXML(deviceHandle, config->getOption(CFG_SERVER_UDN).c_str(),
-+				  DESC_CM_SERVICE_ID, xml);
++        DESC_CM_SERVICE_ID, xml);
 +#endif
  }
 diff --git a/src/upnp_mrreg.cc b/src/upnp_mrreg.cc
-index 16eefaed..f993f452 100644
+index 16eefaed..342c0cab 100644
 --- a/src/upnp_mrreg.cc
 +++ b/src/upnp_mrreg.cc
 @@ -34,7 +34,9 @@
@@ -342,8 +364,8 @@ index 16eefaed..f993f452 100644
      ixmlDocument_free(event);
 +#else
 +    UpnpAcceptSubscriptionXML(
-+		deviceHandle, config->getOption(CFG_SERVER_UDN).c_str(),
-+		DESC_MRREG_SERVICE_ID, xml, request->getSubscriptionID().c_str());
++        deviceHandle, config->getOption(CFG_SERVER_UDN).c_str(),
++        DESC_MRREG_SERVICE_ID, xml, request->getSubscriptionID().c_str());
 +#endif
  }
  
@@ -375,26 +397,26 @@ index f2a99c94..66af027b 100644
  
      /// \todo transcoding for get_info
 diff --git a/src/util/upnp_clients.cc b/src/util/upnp_clients.cc
-index ab02b58d..7bc85d77 100644
+index e866e456..4bf3033a 100644
 --- a/src/util/upnp_clients.cc
 +++ b/src/util/upnp_clients.cc
-@@ -203,6 +203,15 @@ bool Clients::getInfoByType(const std::string& match, ClientMatchType type, cons
+@@ -268,6 +268,15 @@ bool Clients::getInfoByType(const std::string& match, ClientMatchType type, cons
  
  bool Clients::downloadDescription(const std::string& location, std::unique_ptr<pugi::xml_document>& xml)
  {
 +#if defined(USING_NPUPNP)
-+	std::string description, ct;
-+	int errCode = UpnpDownloadUrlItem(location, description, ct);
++    std::string description, ct;
++    int errCode = UpnpDownloadUrlItem(location, description, ct);
 +    if (errCode != UPNP_E_SUCCESS) {
 +        log_debug("Error obtaining client description from {} -- error = {}", location, errCode);
 +        return false;
 +    }
-+	const char *cxml = description.c_str();
++    const char* cxml = description.c_str();
 +#else
      IXML_Document* descDoc = nullptr;
      int errCode = UpnpDownloadXmlDoc(location.c_str(), &descDoc);
      if (errCode != UPNP_E_SUCCESS) {
-@@ -211,12 +220,15 @@ bool Clients::downloadDescription(const std::string& location, std::unique_ptr<p
+@@ -276,12 +285,15 @@ bool Clients::downloadDescription(const std::string& location, std::unique_ptr<p
      }
  
      DOMString cxml = ixmlPrintDocument(descDoc);
@@ -411,20 +433,34 @@ index ab02b58d..7bc85d77 100644
          log_debug("Unable to parse xml client description from {}", location);
          return false;
 diff --git a/src/util/upnp_headers.cc b/src/util/upnp_headers.cc
-index c05cffe6..19ba88ca 100644
+index ef85106b..aec13850 100644
 --- a/src/util/upnp_headers.cc
 +++ b/src/util/upnp_headers.cc
-@@ -96,18 +96,29 @@ void Headers::writeHeaders(UpnpFileInfo* fileInfo) const
+@@ -25,11 +25,13 @@
+ 
+ #include "upnp_headers.h" // API
+ 
++#if !defined(USING_NPUPNP)
+ #if (UPNP_VERSION > 11201)
+ #include <UpnpExtraHeaders.h>
+ #else
+ #include <ExtraHeaders.h>
+ #endif
++#endif
+ #include <string>
+ 
+ #include "common.h"
+@@ -101,18 +103,29 @@ void Headers::writeHeaders(UpnpFileInfo* fileInfo) const
      if (headers == nullptr)
          return;
  
 +#if defined(USING_NPUPNP)
-+    for (auto iter : *headers) {
-+		fileInfo->response_headers.push_back(iter);
-+	}
++    for (const auto& iter : *headers) {
++        fileInfo->response_headers.push_back(iter);
++    }
 +#else
      auto head = const_cast<UpnpListHead*>(UpnpFileInfo_get_ExtraHeadersList(fileInfo));
-     for (auto iter : *headers) {
+     for (const auto& iter : *headers) {
          UpnpExtraHeaders* h = UpnpExtraHeaders_new();
          UpnpExtraHeaders_set_resp(h, formatHeader(iter, false).c_str());
          UpnpListInsert(head, UpnpListEnd(head), const_cast<UpnpListHead*>(UpnpExtraHeaders_get_node(h)));
@@ -437,43 +473,28 @@ index c05cffe6..19ba88ca 100644
      auto ret = std::make_unique<std::map<std::string, std::string>>();
  
 +#if defined(USING_NPUPNP)
-+	for (const auto& entry : fileInfo->request_headers) {
++    for (const auto& entry : fileInfo->request_headers) {
 +        ret->insert(entry);
-+	}
++    }
 +#else
      auto head = const_cast<UpnpListHead*>(UpnpFileInfo_get_ExtraHeadersList(fileInfo));
      UpnpListIter pos;
      for (pos = UpnpListBegin(head); pos != UpnpListEnd(head); pos = UpnpListNext(head, pos)) {
-@@ -116,6 +127,7 @@ std::unique_ptr<std::map<std::string, std::string>> Headers::readHeaders(UpnpFil
+@@ -121,6 +134,7 @@ std::unique_ptr<std::map<std::string, std::string>> Headers::readHeaders(UpnpFil
          auto add = parseHeader(header);
          ret->insert(add);
      }
--
 +#endif
-+	
+ 
      return ret;
  }
-diff --git a/src/util/upnp_headers.h b/src/util/upnp_headers.h
-index 9677d6e4..dd839236 100644
---- a/src/util/upnp_headers.h
-+++ b/src/util/upnp_headers.h
-@@ -26,7 +26,9 @@
- #ifndef GERBERA_HEADERS_H
- #define GERBERA_HEADERS_H
- 
-+#if !defined(USING_NPUPNP)
- #include <ExtraHeaders.h>
-+#endif
- #include <map>
- #include <memory>
- #include <upnp.h>
 diff --git a/src/web/web_request_handler.cc b/src/web/web_request_handler.cc
-index 71fc9fd5..2ca6601b 100644
+index 60e2d028..117dcbfa 100644
 --- a/src/web/web_request_handler.cc
 +++ b/src/web/web_request_handler.cc
-@@ -120,7 +120,11 @@ void WebRequestHandler::getInfo(const char* filename, UpnpFileInfo* info)
- 
-     contentType = mimetype + "; charset=" + DEFAULT_INTERNAL_CHARSET;
+@@ -112,7 +112,11 @@ void WebRequestHandler::getInfo(const char* filename, UpnpFileInfo* info)
+     std::string mimetype = (returnType == "xml") ? MIMETYPE_XML : MIMETYPE_JSON;
+     std::string contentType = mimetype + "; charset=" + DEFAULT_INTERNAL_CHARSET;
  
 +#if defined(USING_NPUPNP)
 +    UpnpFileInfo_set_ContentType(info, contentType);
@@ -483,3 +504,6 @@ index 71fc9fd5..2ca6601b 100644
      Headers headers;
      headers.addHeader(std::string { "Cache-Control" }, std::string { "no-cache, must-revalidate" });
      headers.writeHeaders(info);
+-- 
+2.26.2
+
