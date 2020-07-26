@@ -1,0 +1,54 @@
+From 93317e7835acf40a9b8b0f7af417240b57ab690a Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Thu, 5 Dec 2019 12:52:13 -0800
+Subject: [PATCH] Add defines for totally deprecated functions
+
+---
+ src/_cffi_src/openssl/conf.py   | 4 ++++
+ src/_cffi_src/openssl/crypto.py | 4 ++++
+ src/_cffi_src/openssl/ssl.py    | 5 +++++
+ 3 files changed, 13 insertions(+)
+
+diff --git a/src/_cffi_src/openssl/conf.py b/src/_cffi_src/openssl/conf.py
+index 9db0162a..6b474d42 100644
+--- a/src/_cffi_src/openssl/conf.py
++++ b/src/_cffi_src/openssl/conf.py
+@@ -18,4 +18,8 @@ void OPENSSL_no_config(void);
+ """
+ 
+ CUSTOMIZATIONS = """
++#if (OPENSSL_API_COMPAT >= 0x10100000L) && !CRYPTOGRAPHY_IS_LIBRESSL
++#define OPENSSL_config(x) 0
++#define OPENSSL_no_config() 0
++#endif
+ """
+diff --git a/src/_cffi_src/openssl/crypto.py b/src/_cffi_src/openssl/crypto.py
+index f3623b21..85541b31 100644
+--- a/src/_cffi_src/openssl/crypto.py
++++ b/src/_cffi_src/openssl/crypto.py
+@@ -124,4 +124,8 @@ void *Cryptography_realloc_wrapper(void *ptr, size_t size, const char *path,
+ void Cryptography_free_wrapper(void *ptr, const char *path, int line) {
+     free(ptr);
+ }
++
++#if (OPENSSL_API_COMPAT >= 0x10100000L) && !CRYPTOGRAPHY_IS_LIBRESSL
++#define CRYPTO_get_locking_callback() 0
++#endif
+ """
+diff --git a/src/_cffi_src/openssl/ssl.py b/src/_cffi_src/openssl/ssl.py
+index e726417d..68c42160 100644
+--- a/src/_cffi_src/openssl/ssl.py
++++ b/src/_cffi_src/openssl/ssl.py
+@@ -792,4 +792,9 @@ int (*SSL_CTX_set_max_early_data)(SSL_CTX *, uint32_t) = NULL;
+ #else
+ static const long Cryptography_HAS_TLSv1_3 = 1;
+ #endif
++
++#if (OPENSSL_API_COMPAT >= 0x10100000L) && !CRYPTOGRAPHY_IS_LIBRESSL
++#define SSL_library_init() 1
++#define SSL_load_error_strings() 0
++#endif
+ """
+-- 
+2.26.2
+
