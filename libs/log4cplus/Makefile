@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=log4cplus
 PKG_VERSION:=2.0.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
@@ -42,11 +42,14 @@ define Package/log4cplus/description
   configuration. It is modeled after the Java log4j API.
 endef
 
-CMAKE_OPTIONS += \
+OPTIONS:= \
 	-DLOG4CPLUS_BUILD_LOGGINGSERVER:BOOL=OFF \
 	-DLOG4CPLUS_BUILD_TESTING:BOOL=OFF \
 	-DUNICODE:BOOL=OFF \
 	-DWITH_ICONV:BOOL=OFF
+
+CMAKE_HOST_OPTIONS += $(OPTIONS)
+CMAKE_OPTIONS += $(OPTIONS)
 
 TARGET_CFLAGS += -flto
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
