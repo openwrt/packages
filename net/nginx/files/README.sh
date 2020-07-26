@@ -40,11 +40,10 @@ for further reading.
   * There is a ''${LAN_NAME}.conf'' containing a default server for the LAN, \
 which includes all ''*.locations''.
   * We can disable parts of the configuration by renaming them.
-  * If we want to install other servers that are also reachable from the LAN, \
-  we can include the ''${LAN_LISTEN}'' file (or ''${LAN_SSL_LISTEN}'' for \
-  HTTPS servers).
-  * If Nginx is installed with SSL support, we have a server \
-in ''_redirect2ssl.conf'' that redirects inexistent URLs to HTTPS, too.
+  * If we want to install other HTTPS servers that are also reachable locally, \
+  we can include the ''${LAN_SSL_LISTEN}'' file.
+  * We have a server in ''_redirect2ssl.conf'' that redirects inexistent URLs \
+  to HTTPS, too.
   * We can create a self-signed certificate and add corresponding directives \
 to e.g. ''${EXAMPLE_COM}.conf'' by invoking \
 <code>$(basename ${NGINX_UTIL}) ${ADD_SSL_FCT} ${EXAMPLE_COM}</code>
@@ -57,7 +56,7 @@ to e.g. ''${EXAMPLE_COM}.conf'' by invoking \
 We modify the configuration by creating different configuration files in the
 ''${CONF_DIR}'' directory.
 The configuration files use the file extensions ''.locations'' and
-''.conf'' (plus ''.crt'' and ''.key'' for Nginx with SSL).
+''.conf'' plus ''.crt'' and ''.key'' for SSL certificates and keys.
 We can disable single configuration parts by giving them another extension,
 e.g., by adding ''.disabled''.
 For the new configuration to take effect, we must reload it by:
@@ -95,14 +94,14 @@ All location blocks in all ''.locations'' files must use different URLs,
 since they are all included in the ''${LAN_NAME}.conf'' that is part of the
 [[#openwrt_s_defaults|OpenWrt’s Defaults]].
 We reserve the ''location /'' for making LuCI available under the root URL,
-e.g. [[http://192.168.1.1/|192.168.1.1/]].
+e.g. [[https://192.168.1.1/|192.168.1.1/]].
 All other sites shouldn’t use the root ''location /'' without suffix.
 We can make other sites available on the root URL of other domain names, e.g.
 on www.example.com/.
 In order to do that, we create a ''.conf'' file for every domain name:
 see the next section [[#new_server_parts|New Server Parts]].
-For Nginx with SSL we can also activate SSL there, as described below in the
-section [[#ssl_server_parts|SSL Server Parts]].
+We can also activate SSL there, as described below in the section
+[[#ssl_server_parts|SSL Server Parts]].
 We use such server parts also for publishing sites to the internet (WAN)
 instead of making them available just in the LAN.
 
@@ -139,26 +138,11 @@ the LAN by default.
 Then the site is reachable under the same path at both domains, e.g., by
 http://192.168.1.1/ex/am/ple as well as by http://example.com/ex/am/ple.
 
-The [[#openwrt_s_defaults|OpenWrt’s Defaults]] include a ''${LAN_NAME}.conf''
-file containing a server part that listens on the LAN address(es) and acts as
-//default_server//.
-For making the domain name accessible in the LAN, too, the corresponding
-server part must listen **explicitly** on the local IP address(es), cf. the
-official documentation on
-[[https://nginx.org/en/docs/http/request_processing.html|request_processing]].
-We can include the file ''${LAN_LISTEN}'' that contains the listen
-directives for all LAN addresses on the HTTP port 80 and is automatically
-updated.
-
-The following example is a simple template, see
-[[https://github.com/search?q=repo%3Aopenwrt%2Fpackages
-+include+${LAN_LISTEN}+extension%3Aconf&type=Code|
-such server parts of other packages]], too:
+The following example is a simple template:
 <code nginx ${CONF_DIR}${EXAMPLE_COM}.conf>
 server {
 	listen 80;
 	listen [::]:80;
-	include '${LAN_LISTEN}';
 	server_name ${EXAMPLE_COM};
 	# location / { … } # root location for this server.
 	include '${CONF_DIR}${EXAMPLE_COM}.locations';
@@ -180,19 +164,23 @@ we only have to adjust the listen directives by adding the //ssl// parameter,
 see the official documentation for
 [[https://nginx.org/en/docs/http/configuring_https_servers.html|
 configuring HTTPS servers]], too.
-For making the domain available also in the LAN, we can include the file
-''${LAN_SSL_LISTEN}'' that contains the listen directives with ssl
-parameter for all LAN addresses on the HTTPS port 443 and is automatically
-updated.
+
+The [[#openwrt_s_defaults|OpenWrt’s Defaults]] include a ''${LAN_NAME}.conf''
+file containing a server part that listens on the LAN address(es) and acts as
+//default_server// with ssl on port 443.
+For making the domain name accessible in the LAN, too, the corresponding
+server part must listen **explicitly** on the local IP address(es), cf. the
+official documentation on
+[[https://nginx.org/en/docs/http/request_processing.html|request_processing]].
+We can include the file ''${LAN_SSL_LISTEN}'' that contains the listen
+directives with ssl parameter for all LAN addresses on the HTTP port 443 and is
+updated automatically.
 
 The official documentation of the SSL module contains an
 [[https://nginx.org/en/docs/http/ngx_http_ssl_module.html#example|
 example]],
 which includes some optimizations.
-The following template is extended similarly, see also
-[[https://github.com/search?q=repo%3Aopenwrt%2Fpackages
-+include+${LAN_SSL_LISTEN}+extension%3Aconf&type=Code|
-other packages providing SSL server parts]]:
+The following template is extended similarly:
 <code nginx ${CONF_DIR}${EXAMPLE_COM}>
 server {
 	listen 443 ssl;
@@ -271,35 +259,22 @@ We can install the location parts of different sites there (see above in the
 This is needed especially for making them available to the WAN as described
 above in the section [[#new_server_parts|New Server Parts]].
 All ''.locations'' become available on the LAN through the file
-''$(basename ${LAN_LISTEN}).default'', which contains one of the following
+''$(basename ${LAN_SSL_LISTEN}).default'', which contains one of the following
 directives for every local IP address:
 <code nginx>
-	listen IPv4:80 default_server;
-	listen [IPv6]:80 default_server;
+	listen IPv4:443 ssl default_server;
+	listen [IPv6]:443 ssl default_server;
 </code>
-The ''${LAN_LISTEN}'' file contains the same directives without the
+The ''${LAN_SSL_LISTEN}'' file contains the same directives without the
 parameter ''default_server''.
 We can include this file in other server parts that should be reachable in the
 LAN through their //server_name//.
-Both files ''${LAN_LISTEN}{,.default}'' are (re-)created if Nginx starts
+Both files ''${LAN_SSL_LISTEN}{,.default}'' are (re-)created if Nginx starts
 through its init for OpenWrt or the LAN interface changes.
 
-=== Additional Defaults for OpenWrt if Nginx is installed with SSL support ===
-
-When Nginx is installed with SSL support, there will be automatically managed
-files ''$(basename ${LAN_SSL_LISTEN}).default'' and
-''$(basename ${LAN_SSL_LISTEN})'' in the directory
-''$(dirname ${LAN_SSL_LISTEN})/'' containing the following directives for all
-IPv4 and IPv6 addresses of the LAN:
-<code nginx>
-	listen IP:443 ssl; # with respectively without: default_server
-</code>
-Both files as well as the ''${LAN_LISTEN}{,.default}'' files are (re-)created
-if Nginx starts through its init for OpenWrt or the LAN interface changes.
-
-For Nginx with SSL there is also the following server part that redirects
-requests for an inexistent ''server_name'' from HTTP to HTTPS (using an invalid
-name, more in the official documentation on
+There is also the following server part that redirects requests for an
+inexistent ''server_name'' from HTTP to HTTPS (using an invalid name, more in
+the official documentation on
 [[https://nginx.org/en/docs/http/request_processing.html|request_processing]]):
 $(code ${CONF_DIR}_redirect2ssl.conf)
 

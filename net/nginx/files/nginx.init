@@ -5,54 +5,70 @@ START=80
 
 USE_PROCD=1
 
+G_OPTS="daemon off;"
+
 NGINX_UTIL="/usr/bin/nginx-util"
 
 eval $("${NGINX_UTIL}" get_env)
 
-start_service() {
+CONF=""
+
+
+nginx_init() {
+	[ -z "${CONF}" ] || return # already called.
+
 	[ -d /var/log/nginx ] || mkdir -p /var/log/nginx
 	[ -d /var/lib/nginx ] || mkdir -p /var/lib/nginx
 
 	${NGINX_UTIL} init_lan
 
+	CONF="${NGINX_CONF}"
+
+	local message
+	message="$(/usr/sbin/nginx -t -c "${CONF}" -g "${G_OPTS}" 2>&1)" ||
+	{
+		echo -e "${message}" | logger -t "nginx_init" -p "daemon.err"
+		logger -s -t "nginx_init" -p "daemon.err" "NOT using conf file!"
+		echo "show config to be used by: nginx -T -c '${CONF}'" >&2
+		exit 1
+	}
+
+	logger -t "nginx_init" -p "daemon.info" "using ${CONF} (the test is ok)"
+}
+
+
+start_service() {
+	nginx_init
+
 	procd_open_instance
-	procd_set_param command /usr/sbin/nginx -c "${NGINX_CONF}" \
-		-g "daemon off;"
+	procd_set_param command /usr/sbin/nginx -c "${CONF}" -g "${G_OPTS}"
 	procd_set_param stdout 1
 	procd_set_param stderr 1
-	procd_set_param file "${LAN_LISTEN}" "${LAN_LISTEN}.default" \
-		"${NGINX_CONF}" "${CONF_DIR}*.conf" "${CONF_DIR}*.locations"
-	[ "${LAN_SSL_LISTEN}" == "" ] \
-	|| procd_append_param file "${CONF_DIR}*.crt" "${CONF_DIR}*.key" \
-		"${LAN_SSL_LISTEN}" "${LAN_SSL_LISTEN}.default"
+	procd_set_param file "${CONF}" "${CONF_DIR}*.crt" "${CONF_DIR}*.key" \
+		"${CONF_DIR}*.conf" "${CONF_DIR}*.locations"
 	procd_set_param respawn
 	procd_close_instance
 }
 
-stop_service() {
-	rm -f "${LAN_LISTEN}" "${LAN_LISTEN}.default"
-	[ "${LAN_SSL_LISTEN}" == "" ] \
-	|| rm -f "${LAN_SSL_LISTEN}" "${LAN_SSL_LISTEN}.default"
-}
 
 service_triggers() {
 	procd_add_reload_interface_trigger loopback
 	procd_add_reload_interface_trigger lan
 }
 
-reload_service() {
-	[ -d /var/log/nginx ] || mkdir -p /var/log/nginx
-	[ -d /var/lib/nginx ] || mkdir -p /var/lib/nginx
 
-	${NGINX_UTIL} init_lan
+reload_service() {
+	nginx_init
 
 	procd_send_signal nginx
 }
+
 
 relog() {
 	[ -d /var/log/nginx ] || mkdir -p /var/log/nginx
 	procd_send_signal nginx '*' USR1
 }
+
 
 EXTRA_COMMANDS="relog"
 EXTRA_HELP="	relog	Reopen log files (without reloading)"
