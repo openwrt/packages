@@ -1,0 +1,53 @@
+From e3f7b84b045952d4c47ce18ddcc8f2c9895d0a52 Mon Sep 17 00:00:00 2001
+Message-Id: <e3f7b84b045952d4c47ce18ddcc8f2c9895d0a52.1595836014.git.tommyhebb@gmail.com>
+From: Thomas Hebb <tommyhebb@gmail.com>
+Date: Mon, 27 Jul 2020 00:30:26 -0700
+Subject: [PATCH] check-reallocarray.sh: Use the same compiler Make does
+
+Currently we hardcode "gcc", which means we get a bogus result any time
+a non-default CC is passed to Make. In fact, it's bogus even when CC is
+not explicitly set, since Make's default is "cc", which isn't
+necessarily the same as "gcc".
+
+Fix the issue by passing the compiler to use to check-reallocarray.sh.
+
+Signed-off-by: Thomas Hebb <tommyhebb@gmail.com>
+---
+ scripts/check-reallocarray.sh | 3 ++-
+ src/Makefile                  | 2 +-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/scripts/check-reallocarray.sh b/scripts/check-reallocarray.sh
+index 74b4a75..d3044ad 100755
+--- a/scripts/check-reallocarray.sh
++++ b/scripts/check-reallocarray.sh
+@@ -1,4 +1,5 @@
+ #!/bin/sh
++# Usage: check-reallocarray.sh cc_path [cc_args...]
+ 
+ tfile=$(mktemp /tmp/test_reallocarray_XXXXXXXX.c)
+ ofile=${tfile%.c}.o
+@@ -13,6 +14,6 @@ int main(void)
+ }
+ EOL
+ 
+-gcc $tfile -o $ofile >/dev/null 2>&1
++"$@" $tfile -o $ofile >/dev/null 2>&1
+ if [ $? -ne 0 ]; then echo "FAIL"; fi
+ /bin/rm -f $tfile $ofile
+diff --git a/src/Makefile b/src/Makefile
+index d0308c3..bb70867 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -10,7 +10,7 @@ TOPDIR = ..
+ INCLUDES := -I. -I$(TOPDIR)/include -I$(TOPDIR)/include/uapi
+ ALL_CFLAGS := $(INCLUDES)
+ 
+-FEATURE_REALLOCARRAY := $(shell $(TOPDIR)/scripts/check-reallocarray.sh)
++FEATURE_REALLOCARRAY := $(shell $(TOPDIR)/scripts/check-reallocarray.sh $(CC))
+ ifneq ($(FEATURE_REALLOCARRAY),)
+ 	ALL_CFLAGS += -DCOMPAT_NEED_REALLOCARRAY
+ endif
+-- 
+2.27.0
+
