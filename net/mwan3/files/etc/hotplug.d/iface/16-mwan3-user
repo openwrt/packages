@@ -8,13 +8,13 @@
 
 	config_load mwan3
 	config_get_bool enabled globals 'enabled' '0'
-	[ ${enabled} -gt 0 ] || {
+	[ "${enabled}" -gt 0 ] || {
 		mwan3_unlock "$ACTION" "user"
 		exit 0
 	}
 
-	config_get enabled "$INTERFACE" enabled 0
-	[ "${enabled}" = "1" ] || {
+	config_get_bool enabled "$INTERFACE" enabled 0
+	[ "${enabled}" -eq 1 ] || {
 		mwan3_unlock "$ACTION" "user"
 		exit 0
 	}
