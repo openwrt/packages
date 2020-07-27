@@ -10,12 +10,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
-PKG_VERSION:=2.1.7
+PKG_VERSION:=2.2.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.haproxy.org/download/2.1/src
-PKG_HASH:=392e6cf18e75fe7e166102e8c4512942890a0b5ae738f6064faab4687f60a339
+PKG_SOURCE_URL:=https://www.haproxy.org/download/2.2/src
+PKG_HASH:=536552af1316807c01de727ad3dac84b3a2f5285db32e9bfdfe234e47ff9d124
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>, \
 		Christian Lachner <gladiac@gmail.com>
@@ -79,11 +79,6 @@ $(call Package/haproxy/Default/description)
 endef
 
 ENABLE_LUA:=y
-ENABLE_REGPARM:=n
-
-ifeq ($(CONFIG_TARGET_x86),y)
-	ENABLE_REGPARM:=y
-endif
 
 ifeq ($(CONFIG_USE_UCLIBC),y)
 	ADDON+=USE_LIBCRYPT=
@@ -92,10 +87,6 @@ endif
 ifeq ($(BUILD_VARIANT),ssl)
 	ADDON+=USE_OPENSSL=1
 	ADDON+=ADDLIB="-lcrypto -lm"
-endif
-
-ifeq ($(ENABLE_REGPARM),y)
-	ADDON+=USE_REGPARM=1
 endif
 
 define Build/Compile
