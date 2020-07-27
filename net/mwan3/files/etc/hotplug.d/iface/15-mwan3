@@ -9,13 +9,13 @@
 [ -n "$INTERFACE" ] || exit 2
 
 if [ "$ACTION" == "ifup" ]; then
-        [ -n "$DEVICE" ] || exit 3
+	[ -n "$DEVICE" ] || exit 3
 fi
 
 mwan3_lock "$ACTION" "$INTERFACE"
 config_load mwan3
 config_get_bool enabled globals 'enabled' '0'
-[ ${enabled} -gt 0 ] || {
+[ "${enabled}" -gt 0 ] || {
 	mwan3_unlock "$ACTION" "$INTERFACE"
 	exit 0
 }
@@ -24,14 +24,14 @@ mwan3_init
 mwan3_set_connected_iptables
 mwan3_set_custom_ipset
 
-config_get enabled $INTERFACE enabled 0
 config_get initial_state $INTERFACE initial_state "online"
-[ "${enabled}" == "1" ] || {
+config_get_bool enabled $INTERFACE 'enabled' '0'
+[ "${enabled}" -eq 1 ] || {
 	mwan3_unlock "$ACTION" "$INTERFACE"
 	exit 0
 }
 
-if [ "$ACTION" == "ifup" ]; then
+if [ "$ACTION" = "ifup" ]; then
 	config_get family $INTERFACE family ipv4
 	if [ "$family" = "ipv4" ]; then
 		ubus call network.interface.${INTERFACE}_4 status &>/dev/null
@@ -72,7 +72,7 @@ case "$ACTION" in
 		mwan3_create_iface_iptables $INTERFACE $DEVICE
 		mwan3_create_iface_rules $INTERFACE $DEVICE
 		mwan3_create_iface_route $INTERFACE $DEVICE
-		if [ ${running} -eq 1 -a "${status}" = "online" ]; then
+		if [ "${running}" -eq 1 ] && [ "${status}" = "online" ]; then
 			$LOG notice "Starting tracker on interface $INTERFACE (${DEVICE:-unknown})"
 			mwan3_set_iface_hotplug_state $INTERFACE "online"
 			mwan3_track $INTERFACE $DEVICE "online" "$src_ip"
