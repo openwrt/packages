@@ -1,0 +1,26 @@
+From f53b80b6b1ede5b89e38219454e0411ee67a9b4b Mon Sep 17 00:00:00 2001
+From: david <16252944+astylos@users.noreply.github.com>
+Date: Thu, 27 Feb 2020 22:54:40 +0000
+Subject: [PATCH] switch order of mastroska and ebml to fix linking issue
+
+---
+ CMakeLists.txt | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index feffa637..62e43650 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -543,10 +543,10 @@ endif()
+ if(WITH_MATROSKA)
+     find_package (Matroska)
+     if (MATROSKA_FOUND AND EBML_FOUND)
+-        include_directories(${EBML_INCLUDE_DIRS})
+-        target_link_libraries (gerbera ${EBML_LIBRARIES})
+         include_directories(${MATROSKA_INCLUDE_DIRS})
+         target_link_libraries (gerbera ${MATROSKA_LIBRARIES})
++        include_directories(${EBML_INCLUDE_DIRS})
++        target_link_libraries (gerbera ${EBML_LIBRARIES})
+         add_definitions(-DHAVE_MATROSKA)
+     else()
+         message(FATAL_ERROR "Matroska not found")

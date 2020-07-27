@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gerbera
 PKG_VERSION:=1.4.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gerbera/gerbera/tar.gz/v$(PKG_VERSION)?
@@ -19,8 +19,9 @@ PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE.md
 
-PKG_BUILD_DEPENDS:=taglib
+PKG_BUILD_DEPENDS:=libmatroska taglib
 PKG_BUILD_PARALLEL:=1
+PKG_CONFIG_DEPENDS:=CONFIG_BUILD_PATENTED
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -29,7 +30,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/gerbera
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+file +libupnp +libsqlite3 +libexif +libexpat +libuuid +libstdcpp $(ICONV_DEPENDS)
+  DEPENDS:=+file +libupnp +libsqlite3 +libexif +libexpat +libuuid +BUILD_PATENTED:libffmpeg +libstdcpp $(ICONV_DEPENDS)
   TITLE:=A free media server
   URL:=https://gerbera.io
   USERID:=gerbera:gerbera
@@ -52,11 +53,11 @@ CMAKE_OPTIONS += \
 	-DWITH_INOTIFY=1 \
 	-DWITH_JS=0 \
 	-DWITH_TAGLIB=1 \
-	-DWITH_AVCODEC=0 \
+	-DWITH_AVCODEC=$(if $(CONFIG_BUILD_PATENTED),ON,OFF) \
 	-DWITH_FFMPEGTHUMBNAILER=0 \
 	-DWITH_EXIF=1 \
 	-DWITH_EXIV2=0 \
-	-DWITH_MATROSKA=0 \
+	-DWITH_MATROSKA=1 \
 	-DWITH_SYSTEMD=0 \
 	-DWITH_LASTFM=0 \
 	-DWITH_DEBUG=0 \
