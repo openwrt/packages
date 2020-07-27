@@ -6,23 +6,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpsl
-PKG_VERSION:=0.21.0
+PKG_VERSION:=0.21.1
 PKG_RELEASE:=1
 
-PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/rockdaboot/libpsl/releases/download/$(PKG_VERSION)
+PKG_HASH:=ac6ce1e1fbd4d0254c4ddb9d37f1fa99dec83619c1253328155206b896210d4c
 
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/rockdaboot/libpsl/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
-PKG_HASH:=41bd1c75a375b85c337b59783f5deb93dbb443fb0a52d257f403df7bd653ee12
-
-PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=meson/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+include ../../devel/meson/meson.mk
 
 define Package/libpsl
   SECTION:=libs
@@ -30,36 +30,29 @@ define Package/libpsl
   TITLE:=C library to handle the Public Suffix List
   URL:=https://github.com/rockdaboot/libpsl
   DEPENDS:=+libidn2 +libunistring $(INTL_DEPENDS)
+  ABI_VERSION:=5
 endef
 
 define Package/libpsl/description
   C library to handle the Public Suffix List
 endef
 
-CONFIGURE_ARGS += \
-	--disable-gtk-doc-html \
-	--disable-man \
-	--disable-rpath
+MESON_ARGS += \
+	-Druntime=libidn2 \
+	-Dbuiltin=libidn2
+
+TARGET_LDFLAGS += -liconv
 
 define Build/InstallDev
-	$(INSTALL_DIR) \
-		$(1)/usr/lib \
-		$(1)/usr/include
-
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/include/* \
-		$(1)/usr/include/
-
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/* \
-		$(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/libpsl.h $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpsl.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libpsl.pc $(1)/usr/lib/pkgconfig/
 endef
 
 define Package/libpsl/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/*.so* \
-		$(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpsl.so.* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libpsl))
