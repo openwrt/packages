@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-base
-PKG_VERSION:=1.17.1
+PKG_VERSION:=1.17.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=gst-plugins-base-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-base
-PKG_HASH:=c0d8a84e3262e706ebc88831ca7349e5ae221274ef362599734573b3d3c028f3
+PKG_HASH:=30bfdaad8faa380fd74c3e74261748e218649786939ad10edfe067a39d4c4996
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-base-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -310,10 +310,10 @@ $(eval $(call GstBuildPlugin,volume,volume,audio controller,,+liboil))
 $(eval $(call GstBuildPlugin,alsa,ALSA audio source/sink,audio tag,,+alsa-lib))
 $(eval $(call GstBuildPlugin,ivorbisdec,Integer Vorbis decoder plugin for devices without floating point,audio tag,,+libvorbisidec))
 #$(eval $(call GstBuildPlugin,cdparanoia,cdparanoia,,+libcdparanoia))
-#$(eval $(call GstBuildPlugin,libvisual,libvisual audio visualization,,+alsa-lib))
+#$(eval $(call GstBuildPlugin,libvisual,libvisual audio visualization,,+libvisual))
 $(eval $(call GstBuildPlugin,ogg,ogg parser muxer demuxer,riff tag pbutils video,,+libogg))
 $(eval $(call GstBuildPlugin,opus,OPUS audio codec,pbutils video,,+libopus))
-#$(eval $(call GstBuildPlugin,pango,Pango text rendering and overlay plugin,,+libopus))
+#$(eval $(call GstBuildPlugin,pango,Pango text rendering and overlay plugin,,+pango))
 $(eval $(call GstBuildPlugin,theora,Theora,tag video,,+libogg +libtheora))
 $(eval $(call GstBuildPlugin,vorbis,Vorbis,audio tag,ogg,+libvorbis))
 
