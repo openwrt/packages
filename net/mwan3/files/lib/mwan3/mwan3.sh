@@ -203,10 +203,6 @@ mwan3_unlock() {
 	lock -u /var/run/mwan3.lock
 }
 
-mwan3_lock_clean() {
-	rm -rf /var/run/mwan3.lock
-}
-
 mwan3_get_iface_id()
 {
 	local _tmp _iface _iface_count
