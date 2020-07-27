@@ -210,7 +210,6 @@ stop()
 
 	mwan3_unlock "command" "mwan3"
 
-	mwan3_lock_clean
 	rm -rf $MWAN3_STATUS_DIR $MWAN3TRACK_STATUS_DIR
 }
 
