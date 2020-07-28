@@ -1,0 +1,92 @@
+--- a/perf/benchmark_radix_tree.cpp
++++ b/perf/benchmark_radix_tree.cpp
+@@ -26,8 +26,8 @@
+     You should have received a copy of the GNU Lesser General Public License
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+-
+-#if __cplusplus >= 201103L
++#include <ios>
++#if __cplusplus >= 201103L && !defined(__UCLIBCXX_MAJOR__)
+ 
+ #include "radix_tree.hpp"
+ #include "trie.hpp"
+--- a/src/atomic_counter.hpp
++++ b/src/atomic_counter.hpp
+@@ -35,7 +35,7 @@
+ 
+ #if defined ZMQ_FORCE_MUTEXES
+ #define ZMQ_ATOMIC_COUNTER_MUTEX
+-#elif (defined __cplusplus && __cplusplus >= 201103L)                          \
++#elif (defined __cplusplus && __cplusplus >= 201103L && !defined(__UCLIBCXX_MAJOR__))                          \
+   || (defined _MSC_VER && _MSC_VER >= 1900)
+ #define ZMQ_ATOMIC_COUNTER_CXX11
+ #elif defined ZMQ_HAVE_ATOMIC_INTRINSICS
+--- a/src/atomic_ptr.hpp
++++ b/src/atomic_ptr.hpp
+@@ -34,7 +34,7 @@
+ 
+ #if defined ZMQ_FORCE_MUTEXES
+ #define ZMQ_ATOMIC_PTR_MUTEX
+-#elif (defined __cplusplus && __cplusplus >= 201103L)                          \
++#elif (defined __cplusplus && __cplusplus >= 201103L && !defined(__UCLIBCXX_MAJOR__))                          \
+   || (defined _MSC_VER && _MSC_VER >= 1900)
+ #define ZMQ_ATOMIC_PTR_CXX11
+ #elif defined ZMQ_HAVE_ATOMIC_INTRINSICS
+--- a/src/blob.hpp
++++ b/src/blob.hpp
+@@ -38,7 +38,7 @@
+ #include <algorithm>
+ #include <ios>
+ 
+-#if __cplusplus >= 201103L || defined(_MSC_VER) && _MSC_VER > 1700
++#if __cplusplus >= 201103L && !defined(__UCLIBCXX_MAJOR__) || defined(_MSC_VER) && _MSC_VER > 1700
+ #define ZMQ_HAS_MOVE_SEMANTICS
+ #define ZMQ_MAP_INSERT_OR_EMPLACE(k, v) emplace (k, v)
+ #define ZMQ_PUSH_OR_EMPLACE_BACK emplace_back
+--- a/src/ctx.cpp
++++ b/src/ctx.cpp
+@@ -544,7 +544,7 @@ void zmq::ctx_t::unregister_endpoints (socket_base_t *socket_)
+                                end = _endpoints.end ();
+          it != end;) {
+         if (it->second.socket == socket_)
+-#if __cplusplus >= 201103L
++#if __cplusplus >= 201103L && !defined(__UCLIBCXX_MAJOR__)
+             it = _endpoints.erase (it);
+ #else
+             _endpoints.erase (it++);
+--- a/src/msg.hpp
++++ b/src/msg.hpp
+@@ -30,8 +30,8 @@
+ #ifndef __ZMQ_MSG_HPP_INCLUDE__
+ #define __ZMQ_MSG_HPP_INCLUDE__
+ 
+-#include <stddef.h>
+-#include <stdio.h>
++#include <cstddef>
++#include <cstdio>
+ 
+ #include "config.hpp"
+ #include "err.hpp"
+--- a/src/options.hpp
++++ b/src/options.hpp
+@@ -305,7 +305,7 @@ int do_getsockopt (void *const optval_,
+ template <typename T>
+ int do_getsockopt (void *const optval_, size_t *const optvallen_, T value_)
+ {
+-#if __cplusplus >= 201103L && (!defined(__GNUC__) || __GNUC__ > 5)
++#if __cplusplus >= 201103L && !defined(__UCLIBCXX_MAJOR__) && (!defined(__GNUC__) || __GNUC__ > 5)
+     static_assert (std::is_trivially_copyable<T>::value,
+                    "invalid use of do_getsockopt");
+ #endif
+--- a/src/radio.cpp
++++ b/src/radio.cpp
+@@ -126,7 +126,7 @@ void zmq::radio_t::xpipe_terminated (pipe_t *pipe_)
+                                    end = _subscriptions.end ();
+          it != end;) {
+         if (it->second == pipe_) {
+-#if __cplusplus >= 201103L
++#if __cplusplus >= 201103L && !defined(__UCLIBCXX_MAJOR__)
+             it = _subscriptions.erase (it);
+ #else
+             _subscriptions.erase (it++);
