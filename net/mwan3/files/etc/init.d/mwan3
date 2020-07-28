@@ -10,17 +10,22 @@ boot() {
 	rc_procd start_service
 }
 
+# FIXME
+# fd 1000 is an inherited lock file descriptor for preventing concurrent
+# init script executions. Close it here to prevent the mwan3 daemon from
+# inheriting it further to avoid holding the lock indefinitely.
+
 reload_service() {
-	/usr/sbin/mwan3 restart
+	/usr/sbin/mwan3 restart 1000>&-
 }
 
 start_service() {
 	[ -n "${mwan3_boot}" ] && return 0
-	/usr/sbin/mwan3 start
+	/usr/sbin/mwan3 start 1000>&-
 }
 
 stop_service() {
-	/usr/sbin/mwan3 stop
+	/usr/sbin/mwan3 stop 1000>&-
 }
 
 service_triggers() {

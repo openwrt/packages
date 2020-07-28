@@ -45,29 +45,38 @@ ifup()
 {
 	local device enabled up l3_device status
 
+	mwan3_lock "command" "mwan3"
+
 	config_load mwan3
 	config_get_bool enabled globals 'enabled' 0
+
 	[ ${enabled} -gt 0 ] || {
 		echo "The service mwan3 is global disabled."
 		echo "Please execute \"/etc/init.d/mwan3 start\" first."
+		mwan3_unlock "command" "mwan3"
 		exit 1
 	}
 
 	if [ -z "$1" ]; then
-		echo "Expecting interface. Usage: mwan3 ifup <interface>" && exit 0
+		echo "Expecting interface. Usage: mwan3 ifup <interface>"
+		mwan3_unlock "command" "mwan3"
+		exit 0
 	fi
 
 	if [ -n "$2" ]; then
-		echo "Too many arguments. Usage: mwan3 ifup <interface>" && exit 0
+		echo "Too many arguments. Usage: mwan3 ifup <interface>"
+		mwan3_unlock "command" "mwan3"
+		exit 0
 	fi
+
+	config_get enabled "$1" enabled 0
+	mwan3_unlock "command" "mwan3"
 
 	status=$(ubus -S call network.interface.$1 status)
 	[ -n "$status" ] && {
 		json_load "$status"
-		json_get_vars up l3_device 
+		json_get_vars up l3_device
 	}
-
-	config_get enabled "$1" enabled 0
 
 	if [ "$up" = "1" ] \
 		&& [ -n "$l3_device" ] \
@@ -90,6 +99,7 @@ policies()
 	echo "Current ipv4 policies:"
 	mwan3_report_policies_v4
 	echo -e
+	[ $NO_IPV6 -ne 0 ] && return
 	echo "Current ipv6 policies:"
 	mwan3_report_policies_v6
 	echo -e
@@ -100,6 +110,7 @@ connected()
 	echo "Directly connected ipv4 networks:"
 	mwan3_report_connected_v4
 	echo -e
+	[ $NO_IPV6 -ne 0 ] && return
 	echo "Directly connected ipv6 networks:"
 	mwan3_report_connected_v6
 	echo -e
@@ -110,6 +121,7 @@ rules()
 	echo "Active ipv4 user rules:"
 	mwan3_report_rules_v4
 	echo -e
+	[ $NO_IPV6 -ne 0 ] && return
 	echo "Active ipv6 user rules:"
 	mwan3_report_rules_v6
 	echo -e
@@ -127,7 +139,9 @@ start()
 {
 	local enabled
 
+	mwan3_lock "command" "mwan3"
 	uci_toggle_state mwan3 globals enabled "1"
+	mwan3_unlock "command" "mwan3"
 
 	config_load mwan3
 	config_foreach ifup interface
@@ -138,16 +152,23 @@ stop()
 	local ipset route rule table IP IPT pid
 
 	mwan3_lock "command" "mwan3"
+	uci_toggle_state mwan3 globals enabled "0"
 
 	for pid in $(pgrep -f "mwan3rtmon"); do
 		kill -TERM "$pid" > /dev/null 2>&1
-		sleep 1
-		kill -KILL "$pid" > /dev/null 2>&1
 	done
 
 	for pid in $(pgrep -f "mwan3track"); do
 		kill -TERM "$pid" > /dev/null 2>&1
-		sleep 1
+	done
+
+	sleep 1
+
+	for pid in $(pgrep -f "mwan3rtmon"); do
+		kill -KILL "$pid" > /dev/null 2>&1
+	done
+
+	for pid in $(pgrep -f "mwan3track"); do
 		kill -KILL "$pid" > /dev/null 2>&1
 	done
 
@@ -155,7 +176,7 @@ stop()
 	config_foreach mwan3_track_clean interface
 
 	for IP in "$IP4" "$IP6"; do
-
+		[ "$IP" = "$IP6" ] && [ $NO_IPV6 -ne 0 ] && continue
 		for route in $(seq 1 $MWAN3_INTERFACE_MAX); do
 			$IP route flush table $route &> /dev/null
 		done
@@ -166,7 +187,7 @@ stop()
 	done
 
 	for IPT in "$IPT4" "$IPT6"; do
-
+		[ "$IPT" = "$IPT6" ] && [ $NO_IPV6 -ne 0 ] && continue
 		$IPT -D PREROUTING -j mwan3_hook &> /dev/null
 		$IPT -D OUTPUT -j mwan3_hook &> /dev/null
 
@@ -189,10 +210,7 @@ stop()
 
 	mwan3_unlock "command" "mwan3"
 
-	mwan3_lock_clean
 	rm -rf $MWAN3_STATUS_DIR $MWAN3TRACK_STATUS_DIR
-
-	uci_toggle_state mwan3 globals enabled "0"
 }
 
 restart() {
