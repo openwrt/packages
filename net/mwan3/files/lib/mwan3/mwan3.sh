@@ -203,17 +203,6 @@ mwan3_unlock() {
 	lock -u /var/run/mwan3.lock
 }
 
-mwan3_lock_clean() {
-	for pid in $(pgrep -f "lock /var/run/mwan3.lock"); do
-		kill -TERM "$pid" > /dev/null 2>&1
-	done
-	sleep 1
-	for pid in $(pgrep -f "lock /var/run/mwan3.lock"); do
-		kill -KILL "$pid" > /dev/null 2>&1
-	done
-	rm -rf /var/run/mwan3.lock
-}
-
 mwan3_get_iface_id()
 {
 	local _tmp _iface _iface_count
