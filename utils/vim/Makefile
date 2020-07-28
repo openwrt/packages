@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vim
-PKG_VERSION:=8.1
-PKG_RELEASE:=6
-VIMVER:=81
+PKG_VERSION:=8.2
+PKG_RELEASE:=1
+VIMVER:=82
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://ftp.vim.org/pub/vim/unix
-PKG_HASH:=8b69fbd01c877dd8ecbbeca1dc66e5e927228d631ac4c2174b9307eb5c827c86
+PKG_HASH:=f087f821831b4fece16a0461d574ccd55a8279f64d635510a1e10225966ced3b
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 PKG_CPE_ID:=cpe:/a:vim:vim
 
@@ -156,7 +156,6 @@ ifneq ($(CONFIG_PACKAGE_vim),)
 define Build/Compile/vim
 	$(call Build/Configure/Default, \
 		--with-features=tiny \
-		--disable-multibyte \
 	)
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" all
@@ -168,7 +167,6 @@ ifneq ($(CONFIG_PACKAGE_vim-full),)
 define Build/Compile/vim-full
 	$(call Build/Configure/Default, \
 		--with-features=normal \
-		--enable-multibyte \
 	)
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" all
@@ -180,7 +178,6 @@ ifneq ($(CONFIG_PACKAGE_vim-fuller),)
 define Build/Compile/vim-fuller
 	$(call Build/Configure/Default, \
 		--with-features=big \
-		--enable-multibyte \
 	)
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" all
