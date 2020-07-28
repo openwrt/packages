@@ -72,6 +72,7 @@ endef
 ovs_kmod_openvswitch_title:=Open vSwitch kernel datapath (upstream)
 ovs_kmod_openvswitch_kconfig:=CONFIG_OPENVSWITCH
 ovs_kmod_openvswitch_depends:=\
+	  @!TARGET_arc770 \
 	  +kmod-lib-crc32c \
 	  +kmod-nf-nat \
 	  +IPV6:kmod-nf-nat6 \
@@ -85,19 +86,19 @@ $(eval $(call OvsKmodPackageTemplate,openvswitch))
 
 ovs_kmod_openvswitch-gre_title:=Open vSwitch GRE tunneling support (upstream)
 ovs_kmod_openvswitch-gre_kconfig:= CONFIG_OPENVSWITCH_GRE
-ovs_kmod_openvswitch-gre_depends:= +kmod-openvswitch +kmod-gre
+ovs_kmod_openvswitch-gre_depends:= @!TARGET_arc770 +kmod-openvswitch +kmod-gre
 ovs_kmod_openvswitch-gre_files:= $(ovs_kmod_upstream_dir)/vport-gre.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-gre))
 
 ovs_kmod_openvswitch-vxlan_title:=Open vSwitch VXLAN tunneling support (upstream)
 ovs_kmod_openvswitch-vxlan_kconfig:= CONFIG_OPENVSWITCH_VXLAN
-ovs_kmod_openvswitch-vxlan_depends:= +kmod-openvswitch +kmod-vxlan
+ovs_kmod_openvswitch-vxlan_depends:= @!TARGET_arc770 +kmod-openvswitch +kmod-vxlan
 ovs_kmod_openvswitch-vxlan_files:= $(ovs_kmod_upstream_dir)/vport-vxlan.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-vxlan))
 
 ovs_kmod_openvswitch-geneve_title:=Open vSwitch Geneve tunneling support (upstream)
 ovs_kmod_openvswitch-geneve_kconfig:= CONFIG_OPENVSWITCH_GENEVE
-ovs_kmod_openvswitch-geneve_depends:= +kmod-openvswitch +kmod-geneve
+ovs_kmod_openvswitch-geneve_depends:= @!TARGET_arc770 +kmod-openvswitch +kmod-geneve
 ovs_kmod_openvswitch-geneve_files:= $(ovs_kmod_upstream_dir)/vport-geneve.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-geneve))
 
@@ -118,6 +119,7 @@ $(eval $(call OvsKmodPackageTemplate,openvswitch-geneve))
 #
 ovs_kmod_openvswitch-intree_title:=Open vSwitch kernel datapath (in tree)
 ovs_kmod_openvswitch-intree_depends:=\
+	  @!TARGET_arc770 \
 	  +kmod-lib-crc32c \
 	  +kmod-nf-nat \
 	  +IPV6:kmod-nf-nat6 \
@@ -132,27 +134,27 @@ ovs_kmod_openvswitch-intree_files:= $(ovs_kmod_intree_dir)/openvswitch.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-intree))
 
 ovs_kmod_openvswitch-gre-intree_title:=Open vSwitch GRE tunneling support (in tree)
-ovs_kmod_openvswitch-gre-intree_depends:= +kmod-openvswitch-intree +kmod-gre
+ovs_kmod_openvswitch-gre-intree_depends:= @!TARGET_arc770 +kmod-openvswitch-intree +kmod-gre
 ovs_kmod_openvswitch-gre-intree_files:= $(ovs_kmod_intree_dir)/vport-gre.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-gre-intree))
 
 ovs_kmod_openvswitch-vxlan-intree_title:=Open vSwitch VXLAN tunneling support (in tree)
-ovs_kmod_openvswitch-vxlan-intree_depends:= +kmod-openvswitch-intree +kmod-vxlan
+ovs_kmod_openvswitch-vxlan-intree_depends:= @!TARGET_arc770 +kmod-openvswitch-intree +kmod-vxlan
 ovs_kmod_openvswitch-vxlan-intree_files:= $(ovs_kmod_intree_dir)/vport-vxlan.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-vxlan-intree))
 
 ovs_kmod_openvswitch-geneve-intree_title:=Open vSwitch Geneve tunneling support (in tree)
-ovs_kmod_openvswitch-geneve-intree_depends:= +kmod-openvswitch-intree +kmod-geneve
+ovs_kmod_openvswitch-geneve-intree_depends:= @!TARGET_arc770 +kmod-openvswitch-intree +kmod-geneve
 ovs_kmod_openvswitch-geneve-intree_files:= $(ovs_kmod_intree_dir)/vport-geneve.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-geneve-intree))
 
 ovs_kmod_openvswitch-stt-intree_title:=Open vSwitch STT tunneling support (in tree)
-ovs_kmod_openvswitch-stt-intree_depends:= +kmod-openvswitch-intree
+ovs_kmod_openvswitch-stt-intree_depends:= @!TARGET_arc770 +kmod-openvswitch-intree
 ovs_kmod_openvswitch-stt-intree_files:= $(ovs_kmod_intree_dir)/vport-stt.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-stt-intree))
 
 ovs_kmod_openvswitch-lisp-intree_title:=Open vSwitch LISP tunneling support (in tree)
-ovs_kmod_openvswitch-lisp-intree_depends:= +kmod-openvswitch-intree
+ovs_kmod_openvswitch-lisp-intree_depends:= @!TARGET_arc770 +kmod-openvswitch-intree
 ovs_kmod_openvswitch-lisp-intree_files:= $(ovs_kmod_intree_dir)/vport-lisp.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-lisp-intree))
 
