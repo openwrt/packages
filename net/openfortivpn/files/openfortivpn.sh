@@ -20,18 +20,19 @@ proto_openfortivpn_init_config() {
         proto_config_add_string "password"
         proto_config_add_string "trusted_cert"
         proto_config_add_string "remote_status_check"
-        proto_config_add_int "peerdns"
-        proto_config_add_int "metric"
+	proto_config_add_defaults
         no_device=1
         available=1
 }
 
 proto_openfortivpn_setup() {
-        local config="$1"
-        local msg
+	local config="$1"
 
+	local msg ifname serverip pwfile callfile default_route_arg
+	local host server port iface_name local_ip username password trusted_cert \
+	              remote_status_check defaultroute peerdns metric
         json_get_vars host server port iface_name local_ip username password trusted_cert \
-                      remote_status_check peerdns metric
+	              remote_status_check defaultroute peerdns metric
 
         ifname="vpn-$config"
 
@@ -87,8 +88,8 @@ proto_openfortivpn_setup() {
 
 
         [ -n "$port" ] && port=":$port"
-        [ -z "$peerdns" ] && peerdns=1
-
+	[ -z "$peerdns" ] && peerdns=1
+	[ "$defaultroute" = 1 ] && defaultroute_arg="defaultroute" || defaultroute_arg=nodefaultroute
         append_args "$server$port" --pppd-ifname="$ifname" --use-syslog  -c /dev/null
         append_args "--set-dns=0"
         append_args "--no-routes"
@@ -123,7 +124,7 @@ noauth
 default-asyncmap
 nopcomp
 receive-all
-defaultroute
+$defaultroute_arg
 nodetach
 ipparam $config
 lcp-max-configure 40
