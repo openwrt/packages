@@ -156,7 +156,7 @@ ovs_kmod_openvswitch-lisp-intree_depends:= +kmod-openvswitch-intree
 ovs_kmod_openvswitch-lisp-intree_files:= $(ovs_kmod_intree_dir)/vport-lisp.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-lisp-intree))
 
-ovs_common_depends:= +libatomic +libunbound +libunwind
+ovs__common_depends:= +libatomic +libunbound +libunwind
 
 # Dependency review
 #
