@@ -18,6 +18,11 @@ json_add_array_string() {
 	json_add_string "" "$1"
 }
 
+boot() {
+	uciadd
+	rc_procd start_service
+}
+
 uciupdate() {
 	local net="$1"
 
