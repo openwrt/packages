@@ -122,6 +122,9 @@ process_config() {
 	json_add_array "registry-mirrors"
 	config_list_foreach globals registry_mirror json_add_array_string
 	json_close_array
+	json_add_array "hosts"
+	config_list_foreach globals hosts json_add_array_string
+	json_close_array
 
 	mkdir -p /tmp/dockerd
 	json_dump > "$DOCKERD_CONF"

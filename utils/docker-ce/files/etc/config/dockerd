@@ -3,5 +3,6 @@ config globals 'globals'
 #	option alt_config_file "/etc/docker/daemon.json"
 	option data_root "/opt/docker/"
 	option log_level "warn"
+	option hosts "unix://var/run/docker.sock"
 #	list registry_mirror "https://<my-docker-mirror-host>"
 #	list registry_mirror "https://hub.docker.com"
