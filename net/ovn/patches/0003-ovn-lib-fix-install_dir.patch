@@ -1,4 +1,4 @@
-From ecf232bf32dd433642bb9da2ac0c2de483b8736a Mon Sep 17 00:00:00 2001
+From 7385d1e67dda100853cf748034220cdbed6b3d7c Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Mon, 23 Mar 2020 15:54:26 +0800
 Subject: [PATCH] ovn-lib: fix install_dir()

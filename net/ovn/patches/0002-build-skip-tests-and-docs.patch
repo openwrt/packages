@@ -1,18 +1,22 @@
-From d048a1e98363197c0d2609f6adb6919bde473df4 Mon Sep 17 00:00:00 2001
+From cea7c74ecc4a0843f29ce1882d7876fff199a721 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Mon, 23 Mar 2020 14:18:30 +0800
-Subject: [PATCH] build: skip building tests
+Subject: [PATCH] build: skip tests and docs
 
 Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
 ---
- Makefile.am | 1 -
- 1 file changed, 1 deletion(-)
+ Makefile.am | 2 --
+ 1 file changed, 2 deletions(-)
 
 diff --git a/Makefile.am b/Makefile.am
-index 04400e184..b2c42d84c 100644
+index 04400e184..c12cfcd11 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -492,7 +492,6 @@ include Documentation/automake.mk
+@@ -488,11 +488,9 @@ dist-docs:
+ 
+ 
+ include automake.mk
+-include Documentation/automake.mk
  include m4/automake.mk
  include lib/automake.mk
  include utilities/automake.mk
