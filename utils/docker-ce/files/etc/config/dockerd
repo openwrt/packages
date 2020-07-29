@@ -7,5 +7,5 @@ config globals 'globals'
 	# If the bip option is changed, dockerd must be restarted.
 	# A service reload is not enough.
 	option bip "172.18.01./24"
-#	list registry_mirror "https://<my-docker-mirror-host>"
-#	list registry_mirror "https://hub.docker.com"
+#	list registry_mirrors "https://<my-docker-mirror-host>"
+#	list registry_mirrors "https://hub.docker.com"

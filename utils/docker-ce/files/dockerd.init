@@ -120,7 +120,7 @@ process_config() {
 	json_add_string "log-level" "$log_level"
 	[ -z "$bip" ] || json_add_string "bip" "$bip"
 	json_add_array "registry-mirrors"
-	config_list_foreach globals registry_mirror json_add_array_string
+	config_list_foreach globals registry_mirrors json_add_array_string
 	json_close_array
 	json_add_array "hosts"
 	config_list_foreach globals hosts json_add_array_string
