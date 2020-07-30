@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
 PKG_VERSION:=2.65.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/glib/2.65
@@ -116,6 +116,11 @@ define Build/InstallDev
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/share/aclocal/*.m4  \
 		$(2)/share/aclocal/
+
+	$(INSTALL_DIR) $(1)/usr/share/glib-2.0
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/share/glib-2.0/codegen \
+		$(1)/usr/share/glib-2.0/
 endef
 
 define Package/glib2/install
