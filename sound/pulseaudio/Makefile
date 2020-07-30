@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pulseaudio
 PKG_VERSION:=13.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://freedesktop.org/software/pulseaudio/releases
@@ -143,7 +143,7 @@ MESON_ARGS += \
 	-Ddbus=disabled
 endif
 
-TARGET_LDFLAGS += -Wl,--gc-sections -liconv
+TARGET_LDFLAGS += -Wl,--gc-sections $(if $(INTL_FULL),-lintl)
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
