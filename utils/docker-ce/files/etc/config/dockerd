@@ -3,5 +3,9 @@ config globals 'globals'
 #	option alt_config_file "/etc/docker/daemon.json"
 	option data_root "/opt/docker/"
 	option log_level "warn"
-#	list registry_mirror "https://<my-docker-mirror-host>"
-#	list registry_mirror "https://hub.docker.com"
+	option hosts "unix://var/run/docker.sock"
+	# If the bip option is changed, dockerd must be restarted.
+	# A service reload is not enough.
+	option bip "172.18.01./24"
+#	list registry_mirrors "https://<my-docker-mirror-host>"
+#	list registry_mirrors "https://hub.docker.com"
