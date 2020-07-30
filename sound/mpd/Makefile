@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
 PKG_VERSION:=0.21.25
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.musicpd.org/download/mpd/0.21/
@@ -96,10 +96,6 @@ endef
 define Package/mpd-avahi-service/conffiles
 /etc/avahi/services/mpd.service
 endef
-
-TARGET_LDFLAGS += \
-	-liconv \
-	$(if $(CONFIG_USE_GLIBC),-lpthread)
 
 ifeq ($(CONFIG_AUDIO_SUPPORT),y)
 	TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib/pulseaudio

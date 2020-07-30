@@ -1,0 +1,51 @@
+From c2da1d47eeaf83d3683555b965a16654561f14b3 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Thu, 30 Jul 2020 16:27:02 -0700
+Subject: [PATCH] icu: fix compilation with const char iconv
+
+libiconv uses const char. Test for it and use it properly to fix
+compilation.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ src/lib/icu/Converter.cxx |  2 +-
+ src/lib/icu/meson.build   | 10 ++++++++++
+ 2 files changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/src/lib/icu/Converter.cxx b/src/lib/icu/Converter.cxx
+index b03543a82..4c459e57e 100644
+--- a/src/lib/icu/Converter.cxx
++++ b/src/lib/icu/Converter.cxx
+@@ -83,7 +83,7 @@ DoConvert(iconv_t conv, const char *src)
+ {
+ 	// TODO: dynamic buffer?
+ 	char buffer[4096];
+-	char *in = const_cast<char *>(src);
++	ICONV_CONST char *in = (ICONV_CONST char *)(src);
+ 	char *out = buffer;
+ 	size_t in_left = strlen(src);
+ 	size_t out_left = sizeof(buffer);
+diff --git a/src/lib/icu/meson.build b/src/lib/icu/meson.build
+index 132e15b89..ac7d1b72a 100644
+--- a/src/lib/icu/meson.build
++++ b/src/lib/icu/meson.build
+@@ -30,6 +30,16 @@ elif not get_option('iconv').disabled()
+     have_iconv = true
+     conf.set('HAVE_ICONV', have_iconv)
+   endif
++  if have_iconv
++    iconvconsttest = '''#include <iconv.h>
++size_t iconv (iconv_t cd, char * *inbuf, size_t *inbytesleft, char * *outbuf, size_t *outbytesleft);
++'''
++    if c_compiler.compiles(iconvconsttest, dependencies : libiconv)
++      conf.set('ICONV_CONST', '')
++    else
++      conf.set('ICONV_CONST', 'const')
++    endif
++  endif
+   if not have_iconv and get_option('iconv').enabled()
+     error('iconv() not available')
+   endif
+-- 
+2.17.1
+
