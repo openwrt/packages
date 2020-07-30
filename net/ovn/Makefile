@@ -10,7 +10,7 @@ include ../openvswitch/openvswitch.mk
 
 PKG_NAME:=ovn
 PKG_VERSION:=20.06.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ovn-org/ovn.git
@@ -33,11 +33,9 @@ PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-host.mk
 
-ovs__common_depends:=+libatomic +librt
-
 ovs_libovn_title:=Open vSwitch (libovn.so)
 ovs_libovn_hidden:=1
-ovs_libovn_depends+=$(ovs__common_depends)
+ovs_libovn_depends+=+libatomic
 ovs_libovn_files:=usr/lib/libovn*.so*
 $(eval $(call OvsPackageTemplate,libovn))
 
@@ -45,7 +43,7 @@ $(eval $(call OvsPackageTemplate,libovn))
 ovs_ovn-common_title:=Open Virtual Network (common files)
 ovs_ovn-common_hidden:=1
 ovs_ovn-common_depends:=+openvswitch-common +openvswitch-libopenvswitch +openvswitch-libovn +openvswitch-libovsdb
-ovs_ovn-common_depends+=$(ovs__common_depends)
+ovs_ovn-common_depends+=+libatomic
 ovs_ovn-common_files:= \
 	usr/share/ovn/scripts/ovn-ctl \
 	usr/share/ovn/scripts/ovn-lib \
@@ -59,7 +57,7 @@ $(eval $(call OvsPackageTemplate,ovn-common))
 ovs_ovn-north_title:=Open Virtual Network (north package)
 ovs_ovn-north_hidden:=
 ovs_ovn-north_depends:=+openvswitch-ovsdb +openvswitch-ovn-common
-ovs_ovn-north_depends+=$(ovs__common_depends)
+ovs_ovn-north_depends+=+libatomic
 ovs_ovn-north_files:=\
 	usr/share/ovn/ovn-nb.ovsschema \
 	usr/share/ovn/ovn-sb.ovsschema \
@@ -70,7 +68,7 @@ $(eval $(call OvsPackageTemplate,ovn-north))
 ovs_ovn-host_title:=Open Virtual Network (chassis package)
 ovs_ovn-host_hidden:=
 ovs_ovn-host_depends:=+openvswitch +openvswitch-ovn-common
-ovs_ovn-host_depends+=$(ovs__common_depends)
+ovs_ovn-host_depends+=+libatomic
 ovs_ovn-host_files:=usr/bin/ovn-controller
 $(eval $(call OvsPackageTemplate,ovn-host))
 

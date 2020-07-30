@@ -17,7 +17,7 @@ include ./openvswitch.mk
 #
 PKG_NAME:=openvswitch
 PKG_VERSION:=$(ovs_version)
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
 PKG_HASH:=dd5f727427e36cab22bdeae61529d8c8fccacc53d968cfa7658f7f935ddda531
@@ -156,8 +156,6 @@ ovs_kmod_openvswitch-lisp-intree_depends:= +kmod-openvswitch-intree
 ovs_kmod_openvswitch-lisp-intree_files:= $(ovs_kmod_intree_dir)/vport-lisp.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-lisp-intree))
 
-ovs__common_depends:=+libatomic +librt
-
 # Dependency review
 #
 #	for f in sbin/*;   do echo $f; readelf -d $f | grep -i shared; done
@@ -167,21 +165,21 @@ ovs__common_depends:=+libatomic +librt
 ovs_libopenvswitch_title:=Open vSwitch (libopenvswitch.so)
 ovs_libopenvswitch_hidden:=1
 ovs_libopenvswitch_depends:=+libopenssl +libunbound +!(arc||arceb):libunwind
-ovs_libopenvswitch_depends+=$(ovs__common_depends)
+ovs_libopenvswitch_depends+=+libatomic
 ovs_libopenvswitch_files:=usr/lib/libopenvswitch*.so*
 $(eval $(call OvsPackageTemplate,libopenvswitch))
 
 
 ovs_libofproto_title:=Open vSwitch (libofproto.so libsflow.so)
 ovs_libofproto_hidden:=1
-ovs_libofproto_depends+=$(ovs__common_depends)
+ovs_libofproto_depends+=+libatomic
 ovs_libofproto_files:=usr/lib/libofproto*.so* usr/lib/libsflow*.so*
 $(eval $(call OvsPackageTemplate,libofproto))
 
 
 ovs_libovsdb_title:=Open vSwitch (libovsdb.so)
 ovs_libovsdb_hidden:=1
-ovs_libovsdb_depends+=$(ovs__common_depends)
+ovs_libovsdb_depends+=+libatomic
 ovs_libovsdb_files:=usr/lib/libovsdb*.so*
 $(eval $(call OvsPackageTemplate,libovsdb))
 
@@ -189,7 +187,7 @@ $(eval $(call OvsPackageTemplate,libovsdb))
 ovs_vswitchd_title:=Open vSwitch (ovs-vswitchd)
 ovs_vswitchd_hidden:=1
 ovs_vswitchd_depends:=+openvswitch-libopenvswitch +openvswitch-libofproto
-ovs_vswitchd_depends+=$(ovs__common_depends)
+ovs_vswitchd_depends+=+libatomic
 ovs_vswitchd_files:=usr/sbin/ovs-vswitchd
 $(eval $(call OvsPackageTemplate,vswitchd))
 
@@ -197,7 +195,7 @@ $(eval $(call OvsPackageTemplate,vswitchd))
 ovs_ovsdb_title:=Open vSwitch (ovsdb-server)
 ovs_ovsdb_hidden:=1
 ovs_ovsdb_depends:=+openvswitch-libopenvswitch +openvswitch-libovsdb
-ovs_ovsdb_depends+=$(ovs__common_depends)
+ovs_ovsdb_depends+=+libatomic
 ovs_ovsdb_files:=usr/sbin/ovsdb-server
 $(eval $(call OvsPackageTemplate,ovsdb))
 
@@ -205,7 +203,7 @@ $(eval $(call OvsPackageTemplate,ovsdb))
 ovs_common_title:=Open vSwitch (common files)
 ovs_common_hidden:=1
 ovs_common_depends:=+openvswitch-libopenvswitch +openvswitch-libofproto +openvswitch-libovsdb
-ovs_common_depends+=$(ovs__common_depends)
+ovs_common_depends+=+libatomic
 ovs_common_files:= \
 	usr/share/openvswitch/scripts/ovs-lib \
 	usr/share/openvswitch/scripts/ovs-ctl \
@@ -237,7 +235,7 @@ ovs_openvswitch_title:=Open vSwitch
 ovs_openvswitch_hidden:=
 ovs_openvswitch_depends:=+coreutils +coreutils-sleep +uuidgen \
 	+openvswitch-common +openvswitch-vswitchd +openvswitch-ovsdb +kmod-openvswitch
-ovs_openvswitch_depends+=$(ovs__common_depends)
+ovs_openvswitch_depends+=+libatomic
 ovs_openvswitch_files:= usr/share/openvswitch/vswitch.ovsschema
 $(eval $(call OvsPackageTemplate,openvswitch))
 
