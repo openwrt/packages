@@ -8,48 +8,34 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sshfs
-PKG_VERSION:=2.10
+PKG_VERSION:=3.7.0
 PKG_RELEASE:=1
 
-PKG_LICENSE:=GPL-2.0
-PKG_MAINTAINER:=Zoltan HERPAI <wigyori@uid0.hu>
-
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/libfuse/sshfs/releases/download/$(PKG_NAME)-$(PKG_VERSION)
-PKG_HASH:=70845dde2d70606aa207db5edfe878e266f9c193f1956dd10ba1b7e9a3c8d101
+PKG_HASH:=6e7e86831f3066b356e7f16e22f1b8a8f177fda05146f6a5eb821c2fd0541c34
 
-include $(INCLUDE_DIR)/package.mk
+PKG_MAINTAINER:=Zoltan HERPAI <wigyori@uid0.hu>
+PKG_LICENSE:=GPL-2.0-only
+PKG_LICENSE_FILES:=COPYING
+
+PKG_INSTALL:=1
+
 include $(INCLUDE_DIR)/nls.mk
+include $(INCLUDE_DIR)/package.mk
+include ../../devel/meson/meson.mk
 
 define Package/sshfs
   TITLE:=SSHFS
-  DEPENDS:=+libfuse +fuse-utils +glib2 +libpthread
+  DEPENDS:=+fuse3-utils +glib2 +libpthread
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Filesystem
-  URL:=http://fuse.sourceforge.net/
+  URL:=https://github.com/libfuse/sshfs
 endef
 
 define Package/sshfs/description
 	Mount remote system over sftp.
-endef
-
-CONFIGURE_VARS += \
-	SSHFS_CFLAGS=" \
-		-D_FILE_OFFSET_BITS=64 \
-		-I$(STAGING_DIR)/usr/include/glib-2.0 \
-		-I$(STAGING_DIR)/usr/lib/glib-2.0/include \
-		-I$(STAGING_DIR)/usr/include/fuse" \
-	SSHFS_LIBS=" \
-		-lglib-2.0 -liconv $(if $(INTL_FULL),-lintl) -lfuse -pthread -lgthread-2.0 \
-		-L$(STAGING_DIR)/usr/lib"
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		ARCH="$(LINUX_KARCH)" \
-		CROSS_COMPILE="$(TARGET_CROSS)" \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
-		all install
 endef
 
 define Package/sshfs/install
