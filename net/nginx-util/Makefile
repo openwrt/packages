@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx-util
 PKG_VERSION:=1.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Peter Stadler <peter.stadler@student.uibk.ac.at>
 
 include $(INCLUDE_DIR)/package.mk
@@ -21,6 +21,7 @@ define Package/nginx-ssl-util/default
   # TODO: remove after a transition period (together with below and pkg nginx):
   # It actually removes nginx-util (replacing it by a dummy pkg) to avoid
   # conflicts with nginx-ssl-util*
+  DEPENDS+= +nginx-util
   EXTRA_DEPENDS:=nginx-util (>=1.4-2)
 endef
 
