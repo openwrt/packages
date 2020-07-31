@@ -6,6 +6,6 @@ config globals 'globals'
 	option hosts "unix://var/run/docker.sock"
 	# If the bip option is changed, dockerd must be restarted.
 	# A service reload is not enough.
-	option bip "172.18.01./24"
+	option bip "172.18.0.1/24"
 #	list registry_mirrors "https://<my-docker-mirror-host>"
 #	list registry_mirrors "https://hub.docker.com"
