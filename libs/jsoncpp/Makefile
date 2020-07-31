@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=jsoncpp
-PKG_VERSION:=1.9.2
-PKG_RELEASE:=2
+PKG_VERSION:=1.9.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/open-source-parsers/jsoncpp/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=77a402fb577b2e0e5d0bdc1cf9c65278915cdb25171e3452c68b6da8a561f8f0
+PKG_HASH:=8593c1d69e703563d94d8c12244e2e18893eeb9a8a9f8aa3d09a327aa45c8f7d
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT
@@ -48,7 +48,8 @@ define Package/jsoncpp/description
 endef
 
 MESON_ARGS += \
-	-Db_lto=true
+	-Db_lto=true \
+	-Dtests=false
 
 TARGET_LDFLAGS += -Wl,--gc-sections
 
