@@ -28,7 +28,8 @@ proto_openfortivpn_init_config() {
 proto_openfortivpn_setup() {
 	local config="$1"
 
-	local msg ifname serverip pwfile callfile default_route_arg
+	local msg ifname ip server_ip pwfile callfile default_route_arg
+
 	local host server port iface_name local_ip username password trusted_cert \
 	              remote_status_check defaultroute peerdns metric
         json_get_vars host server port iface_name local_ip username password trusted_cert \
@@ -38,17 +39,17 @@ proto_openfortivpn_setup() {
 
 
         [ -n "$iface_name" ] && {
-	    network_get_device iface_device_name "$iface_name"
-            network_is_up "$iface_name" ] || {
+		network_get_device iface_device_name "$iface_name"
+		network_is_up "$iface_name"  || {
 		msg="$iface_name is not up $iface_device_up"
 		logger -t "openfortivpn" "$config: $msg"
 		proto_notify_error "$config" "$msg"
 		proto_block_restart "$config"
 		exit 1
-	    }
-        }
+		}
+	}
 
-        server_ip=$(resolveip -t 10 "$server")
+	server_ip=$(resolveip -4 -t 10 "$server")
 
         [ $? -eq 0 ] || {
             msg="$config: failed to resolve server ip for $server"
@@ -80,7 +81,7 @@ proto_openfortivpn_setup() {
             }
 	}
 
-        for ip in $(resolveip -t 10 "$server"); do
+        for ip in $(resolveip -4 -t 10 "$server"); do
                 logger -p 6 -t "openfortivpn" "$config: adding host dependency for $ip on $iface_name at $config"
                 proto_add_host_dependency "$config" "$ip" "$iface_name"
         done
@@ -108,7 +109,7 @@ proto_openfortivpn_setup() {
                 echo "$password" > "$pwfile"
         }
 
-        [ -n "$local_ip" ] || local_ip=192.0.2.1
+        [ -n "$local_ip" ] || local_ip=$server_ip
         [ -e '/etc/ppp/peers' ] || mkdir -p '/etc/ppp/peers'
         [ -e '/etc/ppp/peers/openfortivpn' ] || {
             ln -s -T '/var/etc/openfortivpn/peers' '/etc/ppp/peers/openfortivpn' 2> /dev/null
@@ -134,7 +135,6 @@ mru 1354"  > $callfile
         append_args "--pppd-call=openfortivpn/$config"
 
         logger -p 6 -t openfortivpn "$config: executing 'openfortivpn $cmdline'"
-
         eval "proto_run_command '$config' /usr/sbin/openfortivpn-wrapper '$pwfile' '$config' $cmdline"
 
 }

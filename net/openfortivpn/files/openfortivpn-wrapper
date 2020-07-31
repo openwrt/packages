@@ -21,7 +21,7 @@ trap_with_arg() {
 }
 
 func_trap() {
-    logger "openfortivpn-wrapper[$$]" "sending signal ${1}"
+    logger "openfortivpn-wrapper[$$]" "$config: sending signal ${1}"
     killed=1
     kill -${1} $child 2>/dev/null
 }
