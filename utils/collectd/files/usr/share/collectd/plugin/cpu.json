@@ -2,6 +2,7 @@
 	"bool": [
 		"ValuesPercentage",
 		"ReportByCpu",
-		"ReportByState"
+		"ReportByState",
+		"ReportNumCpu"
 	]
 }
