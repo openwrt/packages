@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vala
 PKG_VERSION:=0.48.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/vala/0.48
@@ -46,7 +46,7 @@ HOST_CONFIGURE_ARGS += \
 	--without-cgraph
 
 HOST_LDFLAGS += \
-	-Wl,--rpath=$(STAGING_DIR_HOSTPKG)/lib
+	-Wl,--rpath,$(STAGING_DIR_HOSTPKG)/lib
 
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,vala))
