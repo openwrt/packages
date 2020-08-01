@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netatalk
 PKG_VERSION:=3.1.12
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/netatalk
@@ -67,6 +67,7 @@ CONFIGURE_ARGS += \
 	--disable-srvloc \
 	--disable-zeroconf \
 	$(if $(CONFIG_SHADOW_PASSWORDS),--with-shadow,--without-shadow) \
+	--without-dtrace \
 	--without-ldap
 
 define Package/netatalk/conffiles
