@@ -50,7 +50,7 @@ define host_python_settings
 	LDSHARED="$(HOSTCC) -shared" \
 	CFLAGS="$(HOST_CFLAGS)" \
 	CPPFLAGS="$(HOST_CPPFLAGS) -I$(HOST_PYTHON_INC_DIR)" \
-	LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON_VERSION) -Wl$(comma)-rpath=$(STAGING_DIR_HOSTPKG)/lib" \
+	LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON_VERSION) -Wl$(comma)-rpath$(comma)$(STAGING_DIR_HOSTPKG)/lib" \
 	_PYTHON_HOST_PLATFORM=linux2
 endef
 
