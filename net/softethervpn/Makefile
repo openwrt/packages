@@ -12,7 +12,7 @@ PKG_NAME:=softethervpn
 PKG_VERSION:=4.29-9680
 PKG_VERREL:=rtm
 PKG_VERDATE:=2019.02.28
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=softether-src-v$(PKG_VERSION)-$(PKG_VERREL).tar.gz
 PKG_SOURCE_URL:=http://www.softether-download.com/files/softether/v$(PKG_VERSION)-$(PKG_VERREL)-$(PKG_VERDATE)-tree/Source_Code/
@@ -40,7 +40,7 @@ HOST_MAKE_FLAGS += -C $(HOST_BUILD_DIR)
 # Select 32 or 64 bit Makefile for host build depending on host architecture
 HOST_MAKE_FLAGS += -f src/makefiles/linux_$(if $(shell uname -m | grep 64),64,32)bit.mak
 
-HOST_LDFLAGS += -Wl,-rpath="$(STAGING_DIR_HOSTPKG)/lib"
+HOST_LDFLAGS += -Wl,-rpath$(comma)$(STAGING_DIR_HOSTPKG)/lib
 # Prevent calling upstream configure
 define Host/Configure
 endef
