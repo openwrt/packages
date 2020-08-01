@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius3
 PKG_VERSION:=release_3_0_21
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/FreeRADIUS/freeradius-server/archive
@@ -52,8 +52,12 @@ endef
 
 define Package/freeradius3/conffiles
 /etc/freeradius3/clients.conf
+/etc/freeradius3/policy.d/accounting
+/etc/freeradius3/policy.d/filter
+/etc/freeradius3/proxy.conf
 /etc/freeradius3/radiusd.conf
-/etc/freeradius3/sites/default
+/etc/freeradius3/sites-available/default
+/etc/freeradius3/sites-enabled/default
 endef
 
 define Package/freeradius3-common
