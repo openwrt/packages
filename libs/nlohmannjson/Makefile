@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nlohmannjson
 PKG_VERSION:=3.8.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=json-$(PKG_VERSION).zip
 PKG_SOURCE_URL:=https://codeload.github.com/nlohmann/json/zip/v$(PKG_VERSION)?
@@ -17,7 +17,11 @@ PKG_MAINTAINER:=Leonid Esman <leonid.esman@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.MIT
 
+PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=meson/host
+
 include $(INCLUDE_DIR)/package.mk
+include ../../devel/meson/meson.mk
 
 define Package/nlohmannjson
   SECTION:=libs
@@ -32,8 +36,10 @@ define Package/nlohmannjson/description
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_BUILD_DIR)/include/nlohmann $(1)/usr/include
+	$(INSTALL_DIR) $(1)/usr/include/nlohmann
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/nlohmann/json.hpp $(1)/usr/include/nlohmann
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/nlohmann_json.pc $(1)/usr/lib/pkgconfig
 endef
 
 $(eval $(call BuildPackage,nlohmannjson))
