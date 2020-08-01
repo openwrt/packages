@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ola
 PKG_VERSION:=0.10.7
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/OpenLightingProject/ola/tar.gz/$(PKG_VERSION)?
@@ -71,7 +71,7 @@ HOST_CPPFLAGS += \
 CONFIGURE_VARS += \
 	require_gnu_plus_plus_11=yes
 
-HOST_LDFLAGS += -Wl,-rpath="$(STAGING_DIR_HOSTPKG)/lib"
+HOST_LDFLAGS += -Wl,-rpath$(comma)$(STAGING_DIR_HOSTPKG)/lib
 TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lm)
 
 # only build the ola_protoc thingy
