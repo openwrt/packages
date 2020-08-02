@@ -8,15 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=scons
-PKG_VERSION:=3.1.2
+PKG_VERSION:=4.0.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-local-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/scons
-PKG_HASH:=642e90860b746fa18fac08c7a22de6bfa86110ae7c56d7f136f7e5fb0d8f4f44
+PKG_HASH:=23c9d37a008b525bdedfe2666a28b9466c4c945d8ba379873cfd0b9006a3d618
 
+PKG_MAINTAINER:=
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=scons-LICENSE
-PKG_MAINTAINER:=
+
+PKG_HOST_ONLY:=1
+HOST_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -27,7 +31,8 @@ define Package/scons
   SECTION:=devel
   CATEGORY:=Development
   TITLE:=scons
-  HIDDEN:=1
+  URL:=https://scons.org/
+  BUILDONLY:=1
 endef
 
 define Package/scons/description
