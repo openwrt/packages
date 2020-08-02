@@ -20,7 +20,7 @@ PKG_CPE_ID:=cpe:/a:graphicsmagick:graphicsmagick
 
 PKG_BUILD_PARALLEL:=1
 DISABLE_NLS:=
-PKG_BUILD_DEPENDS:=zlib freetype libpng libjpeg tiff
+PKG_BUILD_DEPENDS:=zlib freetype libpng libjpeg-turbo tiff
 
 include $(INCLUDE_DIR)/package.mk
 
