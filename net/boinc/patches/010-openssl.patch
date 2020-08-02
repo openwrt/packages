@@ -1,0 +1,31 @@
+--- a/lib/crypt.cpp
++++ b/lib/crypt.cpp
+@@ -44,6 +44,7 @@
+ #include <openssl/engine.h>
+ #include <openssl/err.h>
+ #include <openssl/rsa.h>
++#include <openssl/bn.h>
+ 
+ #ifdef _USING_FCGI_
+ #include "boinc_fcgi.h"
+@@ -720,8 +721,10 @@ char *check_validity(
+     int rbytes;
+     unsigned char md5_md[MD5_DIGEST_LENGTH],  rbuf[2048];
+ 
++#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(HAVE_LIBRESSL)
+     SSL_load_error_strings();
+     SSL_library_init();
++#endif
+ 
+     if (!is_file(origFile)) {
+         return NULL;
+@@ -772,7 +775,9 @@ int cert_verify_file(
+         fflush(stdout);
+         return false;
+     }
++#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(HAVE_LIBRESSL)
+     SSL_library_init();
++#endif
+     if (!is_file(origFile)) return false;
+     FILE* of = boinc_fopen(origFile, "r");
+     if (!of) return false;
