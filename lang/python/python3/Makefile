@@ -264,11 +264,15 @@ define Py3Package/python3/filespec
 endef
 
 HOST_LDFLAGS += \
-	$$$$(pkg-config --static --libs libcrypto libssl) -Wl$(comma)-rpath=$(STAGING_DIR_HOSTPKG)/lib
+	$$$$(pkg-config --static --libs libcrypto libssl) -Wl$(comma)-rpath$(HOST_LD_ARG_CONNECTOR)$(STAGING_DIR_HOSTPKG)/lib
 
 ifeq ($(HOST_OS),Linux)
 HOST_LDFLAGS += \
 	-Wl,--no-as-needed -lrt
+endif
+
+ifeq ($(HOST_OS),Darwin)
+HOST_LDFLAGS += -framework CoreFoundation
 endif
 
 HOST_CONFIGURE_ARGS+= \
