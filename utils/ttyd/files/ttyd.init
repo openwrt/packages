@@ -79,7 +79,7 @@ ttyd_instance()
 		${ssl_cert:+-C $ssl_cert} \
 		${ssl_key:+-K $ssl_key} \
 		${ssl_ca:+-A $ssl_ca} \
-		${debug:+-d}
+		${debug:+-d $debug}
 	config_list_foreach "$1" client_option "procd_append_param command -t"
 	procd_append_param command $command
 	procd_set_param stdout 1
