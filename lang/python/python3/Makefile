@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -170,7 +170,7 @@ ifeq ($(PYTHON3_SETUPTOOLS_BUILD),1)
 define Build/Compile/python3-setuptools
 	$(HOST_PYTHON3_PIP) \
 		--disable-pip-version-check \
-		--cache-dir "$(DL_DIR)/pip-cache" \
+		--cache-dir "$(TMP_DIR)/pip-cache" \
 		install \
 		--ignore-installed \
 		--root=$(PKG_BUILD_DIR)/install-setuptools \
@@ -184,7 +184,7 @@ ifdef CONFIG_PACKAGE_python3-pip
 define Build/Compile/python3-pip
 	$(HOST_PYTHON3_PIP) \
 		--disable-pip-version-check \
-		--cache-dir "$(DL_DIR)/pip-cache" \
+		--cache-dir "$(TMP_DIR)/pip-cache" \
 		install \
 		--ignore-installed \
 		--root=$(PKG_BUILD_DIR)/install-pip \

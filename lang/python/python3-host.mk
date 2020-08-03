@@ -54,7 +54,7 @@ define HostPython3/PipInstall
 	$(HOST_PYTHON3_VARS) \
 	$(HOST_PYTHON3_PIP) \
 		--disable-pip-version-check \
-		--cache-dir "$(DL_DIR)/pip-cache" \
+		--cache-dir "$(TMP_DIR)/pip-cache" \
 		install \
 		--no-binary :all: \
 		$(1)
