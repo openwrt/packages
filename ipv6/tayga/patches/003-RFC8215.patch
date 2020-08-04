@@ -1,0 +1,14 @@
+diff -Naur tayga-0.9.2.orig/addrmap.c tayga-0.9.2/addrmap.c
+--- tayga-0.9.2.orig/addrmap.c	2011-05-25 15:11:30.000000000 +0100
++++ tayga-0.9.2/addrmap.c	2020-07-04 16:24:23.397081572 +0100
+@@ -44,7 +44,9 @@
+ int validate_ip6_addr(const struct in6_addr *a)
+ {
+ 	/* Well-known prefix for NAT64 */
+-	if (a->s6_addr32[0] == WKPF && !a->s6_addr32[1] && !a->s6_addr32[2])
++        if (a->s6_addr32[0] == WKPF &&
++	   (!a->s6_addr32[1] || (a->s6_addr16[2] == htonl(0x0001)))
++	    && !a->s6_addr32[2])
+ 		return 0;
+ 
+ 	/* Reserved per RFC 2373 */
