@@ -133,4 +133,22 @@ define Package/docker-ce/install
 		$(1)/etc/sysctl.d/12-br-netfilter-ip.conf
 endef
 
+define Package/docker-ce/postinst
+#!/bin/sh
+[ -n "$$IPKG_INSTROOT" ] || {
+	/etc/init.d/dockerd enable
+	/etc/init.d/dockerd uciadd
+	/etc/init.d/dockerd start
+}
+endef
+
+define Package/docker-ce/prerm
+#!/bin/sh
+[ -n "$$IPKG_INSTROOT" ] || {
+	/etc/init.d/dockerd disable
+	/etc/init.d/dockerd stop
+	/etc/init.d/dockerd ucidel
+}
+endef
+
 $(eval $(call BuildPackage,docker-ce))
