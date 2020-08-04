@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-py
-PKG_VERSION:=1.8.1
-PKG_RELEASE:=3
+PKG_VERSION:=1.9.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=py
-PKG_HASH:=5e27081401262157467ad6e7f851b7aa402c5852dbcb3dae06768434de5752aa
+PKG_HASH:=9ca6883ce56b4e8da7e79ac18787889fa5206c79dcc67fb065376cd2fe03f342
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT
@@ -31,7 +31,7 @@ define Package/python3-py
   CATEGORY:=Languages
   TITLE:=py
   URL:=https://github.com/pytest-dev/py
-  DEPENDS:=+python3-light
+  DEPENDS:=+python3-light +python3-xml +python3-urllib
 endef
 
 define Package/python3-py/description
