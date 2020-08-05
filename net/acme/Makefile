@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/acme
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+wget-ssl +ca-bundle +openssl-util +socat
+  DEPENDS:=+wget-ssl +ca-bundle +openssl-util +socat +micrond
   TITLE:=ACME (Letsencrypt) client
   URL:=https://acme.sh
   PKGARCH:=all
@@ -59,7 +59,12 @@ endef
 
 define Package/acme/prerm
 #!/bin/sh
-sed -i '/\/etc\/init\.d\/acme start/d' /etc/crontabs/root
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	[ -f "/usr/lib/micron.d/acme" ] && {
+		rm -rf "/usr/lib/micron.d/acme
+		/etc/init.d/micrond restart
+	}
+fi
 endef
 
 define Package/acme-dnsapi

@@ -21,14 +21,15 @@ NGINX_WEBSERVER=0
 UPDATE_NGINX=0
 UPDATE_UHTTPD=0
 USER_CLEANUP=
+MICROND_FILE="/usr/lib/micron.d/acme"
 
 . /lib/functions.sh
 
 check_cron()
 {
-	[ -f "/etc/crontabs/root" ] && grep -q '/etc/init.d/acme' /etc/crontabs/root && return
-	echo "0 0 * * * /etc/init.d/acme start" >> /etc/crontabs/root
-	/etc/init.d/cron start
+	[ -f "$MICROND_FILE" ] && return
+	echo "0 0 * * * /etc/init.d/acme start" > "$MICROND_FILE"
+	/etc/init.d/micrond restart
 }
 
 log()
