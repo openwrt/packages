@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=json-glib
 PKG_VERSION:=1.4.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/json-glib/1.4
@@ -47,6 +47,8 @@ MESON_ARGS += \
 	-Ddocs=false \
 	-Dintrospection=false \
 	-Dman=false
+
+TARGET_LDFLAGS += $(if $(INTL_FULL),-lintl)
 
 # Disable installed-tests; this also indirectly removes
 # build_aux/gen-installed-test.py calls (copied from Gentoo)
