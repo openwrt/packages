@@ -1,0 +1,47 @@
+--- a/src/webu.c
++++ b/src/webu.c
+@@ -1203,7 +1203,7 @@ static void webu_answer_strm_type(struct webui_ctx *webui) {
+ 
+ }
+ 
+-static int webu_answer_ctrl(void *cls
++static enum MHD_Result webu_answer_ctrl(void *cls
+         , struct MHD_Connection *connection
+         , const char *url
+         , const char *method
+@@ -1213,7 +1213,7 @@ static int webu_answer_ctrl(void *cls
+         , void **ptr) {
+ 
+     /* This function "answers" the request for a webcontrol.*/
+-    int retcd;
++    enum MHD_Result retcd;
+     struct webui_ctx *webui = *ptr;
+ 
+     /* Eliminate compiler warnings */
+@@ -1275,7 +1275,7 @@ static int webu_answer_ctrl(void *cls
+ 
+ }
+ 
+-static int webu_answer_strm(void *cls
++static enum MHD_Result webu_answer_strm(void *cls
+         , struct MHD_Connection *connection
+         , const char *url
+         , const char *method
+@@ -1285,7 +1285,7 @@ static int webu_answer_strm(void *cls
+         , void **ptr) {
+ 
+     /* Answer the request for all the streams*/
+-    int retcd;
++    enum MHD_Result retcd;
+     struct webui_ctx *webui = *ptr;
+ 
+     /* Eliminate compiler warnings */
+@@ -1484,7 +1484,7 @@ static void webu_mhd_features_basic(struct mhdstart_ctx *mhdst){
+     #if MHD_VERSION < 0x00094400
+         (void)mhdst;
+     #else
+-        int retcd;
++        enum MHD_Result retcd;
+         retcd = MHD_is_feature_supported (MHD_FEATURE_BASIC_AUTH);
+         if (retcd == MHD_YES){
+             MOTION_LOG(DBG, TYPE_STREAM, NO_ERRNO ,_("Basic authentication: available"));
