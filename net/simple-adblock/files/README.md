@@ -1,5 +1,7 @@
 # Simple AdBlock
 
+[![HitCount](http://hits.dwyl.com/stangri/openwrt/simple-adblock.svg)](http://hits.dwyl.com/stangri/openwrt/simple-adblock)
+
 A simple DNSMASQ/Unbound-based AdBlocking service for OpenWrt/LEDE Project.
 
 ## Features
@@ -186,7 +188,7 @@ For most of the [DNS Resolution Options](#dns-resolution-option) to work, your l
       - Removing [DHCP Options](https://openwrt.org/docs/guide-user/base-system/dhcp_configuration#dhcp_options) 5 and 6 from your router's ```/etc/config/dhcp``` file.
       - Enabling ```simple-adblock```'s ```force_dns``` setting to override the hardcoded DNS on your device.
   4. By using the DNS-over-TLS, DNS-over-HTTPS or DNSCrypt on your local device or (if supported) by browser on your local device. You can fix this only by:
-      - Stopping/removing/disabling DNS-over-TLS, DNS-over-HTTPS or DNSCrypt on your local device and using the secure DNS on your router instead. There are merits to all three of the options above, I can recommend the ```https_dns_proxy``` and ```luci-app-https_dns_proxy``` packages for enabling DNS-over-HTTPS on your router.
+      - Stopping/removing/disabling DNS-over-TLS, DNS-over-HTTPS or DNSCrypt on your local device and using the secure DNS on your router instead. There are merits to all three of the options above, I can recommend the ```https-dns-proxy``` and ```luci-app-https-dns-proxy``` packages for enabling DNS-over-HTTPS on your router.
   5. If you are running a wireguard "server" on your router and remote clients connect to it, the AdBlocking may not work properly for your remote clients until you add the following to ```/etc/network``` (credit to [dibdot](https://forum.openwrt.org/t/wireguard-and-adblock/49351/6)):
 
       ```sh
