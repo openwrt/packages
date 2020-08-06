@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=telldus-core
 PKG_VERSION:=2.1.2
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.telldus.com/TellStick/Software/telldus-core/
@@ -47,8 +47,6 @@ CMAKE_OPTIONS += \
 	-DBUILD_TDTOOL=1 \
 	-DGENERATE_MAN=0 \
 	-DICONV_LIBRARY=-liconv
-
-TARGET_CXXFLAGS += $(if $(ICONV_FULL),-D_FREEBSD)
 
 define Package/telldus-core/install
 	$(INSTALL_DIR)  $(1)/usr/bin
