@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libulfius
-PKG_VERSION:=2.6.7
-PKG_RELEASE:=2
+PKG_VERSION:=2.6.8
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/babelouest/ulfius/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=fbbcf693043409cc1929820b3eae5e1f7b1c93a3a8acec981946988ee3d0e85b
+PKG_HASH:=cb7c2aede096e99a1b70b8ff0fe545c28663709c70819cf7872dc8bda831c3ad
 
 PKG_MAINTAINER:=Toni Uhlig <matzeton@googlemail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
