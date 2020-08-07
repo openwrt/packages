@@ -20,16 +20,22 @@ UB_VARDIR=/var/lib/unbound
 UB_PIDFILE=/var/run/unbound.pid
 
 # conf deconstructed
-UB_TOTAL_CONF=$UB_VARDIR/unbound.conf
 UB_CORE_CONF=$UB_VARDIR/server.conf.tmp
 UB_HOST_CONF=$UB_VARDIR/host.conf.tmp
-UB_DHCP_CONF=$UB_VARDIR/dhcp.conf
 UB_ZONE_CONF=$UB_VARDIR/zone.conf.tmp
 UB_CTRL_CONF=$UB_VARDIR/ctrl.conf.tmp
 UB_SRVMASQ_CONF=$UB_VARDIR/dnsmasq_srv.conf.tmp
 UB_EXTMASQ_CONF=$UB_VARDIR/dnsmasq_ext.conf.tmp
+
+# conf as found
+UB_TOTAL_CONF=$UB_VARDIR/unbound.conf
+UB_DHCP_CONF=$UB_VARDIR/dhcp.conf
 UB_SRV_CONF=$UB_VARDIR/unbound_srv.conf
 UB_EXT_CONF=$UB_VARDIR/unbound_ext.conf
+
+# resolver file complex
+UB_RESOLV_CONF=/tmp/resolv.conf
+UB_RESOLV_AUTO=/tmp/resolv.conf.d/resolv.conf.auto
 
 # TLS keys
 UB_TLS_KEY_FILE="TLS server UCI not implemented"
