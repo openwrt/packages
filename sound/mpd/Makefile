@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
 PKG_VERSION:=0.21.25
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.musicpd.org/download/mpd/0.21/
@@ -18,6 +18,7 @@ PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_CONFIG_DEPENDS:= \
+	CONFIG_BUILD_PATENTED \
 	CONFIG_IPV6 \
 
 PKG_INSTALL:=1
@@ -46,7 +47,7 @@ endef
 define Package/mpd-full
 $(call Package/mpd/Default)
   TITLE+= (full)
-  DEPENDS+= +libffmpeg +libvorbis +libmms +libupnp +libshout +AUDIO_SUPPORT:pulseaudio-daemon +yajl
+  DEPENDS+= +BUILD_PATENTED:libffmpeg +libvorbis +libmms +libupnp +libshout +AUDIO_SUPPORT:pulseaudio-daemon +yajl
   PROVIDES:=mpd
   VARIANT:=full
 endef
@@ -175,7 +176,7 @@ ifeq ($(BUILD_VARIANT),full)
 	-Dupnp=enabled \
 	-Dmms=enabled \
 	-Dsoundcloud=enabled \
-	-Dffmpeg=enabled \
+	-Dffmpeg=$(if $(CONFIG_BUILD_PATENTED),en,dis)abled \
 	-Dmad=disabled \
 	-Dtremor=disabled \
 	-Dvorbis=enabled \
