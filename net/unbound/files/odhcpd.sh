@@ -37,30 +37,39 @@ odhcpd_zonedata() {
 
   if [ -f "$UB_TOTAL_CONF" ] && [ -f "$dhcp_origin" ] \
   && [ "$dhcp_link" = "odhcpd" ] && [ -n "$dhcp_domain" ] ; then
-    local longconf dateconf
+    local longconf dateconf dateoldf
     local dns_ls_add=$UB_VARDIR/dhcp_dns.add
     local dns_ls_del=$UB_VARDIR/dhcp_dns.del
     local dns_ls_new=$UB_VARDIR/dhcp_dns.new
     local dns_ls_old=$UB_VARDIR/dhcp_dns.old
     local dhcp_ls_new=$UB_VARDIR/dhcp_lease.new
 
-    # Capture the lease file which could be changing often
-    sort $dhcp_origin > $dhcp_ls_new
-
 
     if [ ! -f $UB_DHCP_CONF ] || [ ! -f $dns_ls_old ] ; then
       # no old files laying around
+      touch $dns_ls_old
+      sort $dhcp_origin > $dhcp_ls_new
       longconf=freshstart
 
     else
       # incremental at high load or full refresh about each 5 minutes
       dateconf=$(( $( date +%s ) - $( date -r $UB_DHCP_CONF +%s ) ))
+      dateoldf=$(( $( date +%s ) - $( date -r $dns_ls_old +%s ) ))
 
 
       if [ $dateconf -gt 300 ] ; then
+        touch $dns_ls_old
+        sort $dhcp_origin > $dhcp_ls_new
         longconf=longtime
-      else
+
+      elif [ $dateoldf -gt 3 ] ; then
+        touch $dns_ls_old
+        sort $dhcp_origin > $dhcp_ls_new
         longconf=increment
+
+      else
+        # odhcpd is rapidly updating leases a race condition could occur
+        longconf=skip
       fi
     fi
 
@@ -74,6 +83,8 @@ odhcpd_zonedata() {
 
       cp $dns_ls_new $dns_ls_add
       cp $dns_ls_new $dns_ls_old
+      cat $dns_ls_add | $UB_CONTROL_CFG local_datas
+      rm -f $dns_ls_new $dns_ls_del $dns_ls_add $dhcp_ls_new
       ;;
 
     longtime)
@@ -85,9 +96,12 @@ odhcpd_zonedata() {
       awk '{ print $1 }' $dns_ls_old | sort | uniq > $dns_ls_del
       cp $dns_ls_new $dns_ls_add
       cp $dns_ls_new $dns_ls_old
+      cat $dns_ls_del | $UB_CONTROL_CFG local_datas_remove
+      cat $dns_ls_add | $UB_CONTROL_CFG local_datas
+      rm -f $dns_ls_new $dns_ls_del $dns_ls_add $dhcp_ls_new
       ;;
 
-    *)
+    increment)
       # incremental add and prepare the old list for delete later
       # unbound-control can be slow so high DHCP rates cannot run a full list
       awk -v conffile=$UB_DHCP_CONF -v pipefile=$dns_ls_new \
@@ -97,22 +111,14 @@ odhcpd_zonedata() {
 
       sort $dns_ls_new $dns_ls_old $dns_ls_old | uniq -u > $dns_ls_add
       sort $dns_ls_new $dns_ls_old | uniq > $dns_ls_old
+      cat $dns_ls_add | $UB_CONTROL_CFG local_datas
+      rm -f $dns_ls_new $dns_ls_del $dns_ls_add $dhcp_ls_new
+      ;;
+
+    *)
+      echo "do nothing" >/dev/null
       ;;
     esac
-
-
-    if [ -f "$dns_ls_del" ] ; then
-      cat $dns_ls_del | $UB_CONTROL_CFG local_datas_remove
-    fi
-
-
-    if [ -f "$dns_ls_add" ] ; then
-      cat $dns_ls_add | $UB_CONTROL_CFG local_datas
-    fi
-
-
-    # prepare next round
-    rm -f $dns_ls_new $dns_ls_del $dns_ls_add $dhcp_ls_new
   fi
 }
 
