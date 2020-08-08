@@ -8,18 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apache
-PKG_VERSION:=2.4.43
+PKG_VERSION:=2.4.46
 PKG_RELEASE:=1
 PKG_SOURCE_NAME:=httpd
 
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/httpd/
-PKG_HASH:=a497652ab3fc81318cdc2a203090a999150d86461acff97c1065dc910fe10f43
+PKG_HASH:=740eddf6e1c641992b22359cabc66e6325868c3c5e2e3f98faf349b61ecf41ea
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_NAME)-$(PKG_VERSION)
 
-PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>, \
-		Sebastian Kemper <sebastian_ml@gmx.net>
+PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -264,12 +263,9 @@ endif
 ifneq ($(CONFIG_PACKAGE_apache-mod-suexec)$(CONFIG_PACKAGE_apache-suexec),)
 CONFIGURE_ARGS+= \
 	--enable-suexec \
-	--with-suexec-bin=/usr/sbin/suexec \
+	--with-suexec-bin=/usr/lib/apache2/suexec_dir/suexec \
 	--with-suexec-caller=apache \
-	--with-suexec-docroot=/var/www \
-	--with-suexec-logfile=/var/log/apache2/suexec.log \
-	--with-suexec-uidmin=99 \
-	--with-suexec-gidmin=99
+	--with-suexec-logfile=/var/log/apache2/suexec.log
 else
 CONFIGURE_ARGS+= \
 	--disable-suexec
@@ -349,8 +345,9 @@ define Package/apache-icons/install
 endef
 
 define Package/apache-suexec/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/suexec $(1)/usr/sbin
+	$(INSTALL_DIR) -m0750 $(1)/usr/lib/apache2/suexec_dir
+	$(INSTALL_SUID) $(PKG_INSTALL_DIR)/usr/sbin/suexec \
+			$(1)/usr/lib/apache2/suexec_dir
 endef
 
 define Package/apache-utils/install
@@ -358,6 +355,22 @@ define Package/apache-utils/install
 	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/sbin/{checkgid,envvars*,htcacheclean,rotatelogs} \
 									$(1)/usr/sbin
+endef
+
+# Directory "suexec_dir" is installed with '-m0750' above and contains
+# SUID binary "suexec". Below post-install script changes the group of
+# "suexec_dir" to apache, so user apache can access the folder (and the
+# SUID binary). The script only changes the group if the directory is
+# currently owned by "root:root".
+define Package/apache-suexec/postinst
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+  dir="/usr/lib/apache2/suexec_dir"
+  if ! [ -L "$$dir" ] && [ -d "$$dir" ] && [ -O "$$dir" ] && [ -G "$$dir" ]; then
+    chown :apache "$$dir"
+  fi
+fi
+exit 0
 endef
 
 define Package/apache/Module
