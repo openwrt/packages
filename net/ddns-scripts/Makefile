@@ -12,7 +12,7 @@ PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.7.8
 # Release == build
 # increase on changes of services files or tld_names.dat
-PKG_RELEASE:=21
+PKG_RELEASE:=22
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=
