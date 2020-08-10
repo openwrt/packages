@@ -1,0 +1,10 @@
+--- a/src/modules/raop/raop-crypto.c
++++ b/src/modules/raop/raop-crypto.c
+@@ -30,6 +30,7 @@
+ #include <openssl/err.h>
+ #include <openssl/aes.h>
+ #include <openssl/rsa.h>
++#include <openssl/bn.h>
+ 
+ #include <pulse/xmalloc.h>
+ 
