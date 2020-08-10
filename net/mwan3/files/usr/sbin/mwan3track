@@ -23,19 +23,19 @@ if_down() {
 validate_track_method() {
 	case "$1" in
 		ping)
-			which ping 1>/dev/null 2>&1 || {
+			command -v ping 1>/dev/null 2>&1 || {
 				$LOG warn "Missing ping. Please install iputils-ping package or enable ping util and recompile busybox."
 				return 1
 			}
 			;;
 		arping)
-			which arping 1>/dev/null 2>&1 || {
+			command -v arping 1>/dev/null 2>&1 || {
 				$LOG warn "Missing arping. Please install iputils-arping package."
 				return 1
 			}
 			;;
 		httping)
-			which httping 1>/dev/null 2>&1 || {
+			command -v httping 1>/dev/null 2>&1 || {
 				$LOG warn "Missing httping. Please install httping package."
 				return 1
 			}
@@ -45,7 +45,7 @@ validate_track_method() {
 			}
 			;;
 		nping-*)
-			which nping 1>/dev/null 2>&1 || {
+			command -v nping 1>/dev/null 2>&1 || {
 				$LOG warn "Missing nping. Please install nping package."
 				return 1
 			}

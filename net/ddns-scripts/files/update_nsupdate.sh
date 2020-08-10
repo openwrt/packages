@@ -17,8 +17,8 @@
 #
 local __TTL=600		#.preset DNS TTL (in seconds)
 local __RRTYPE __PW __TCP
-local __PROG=$(which nsupdate)			# BIND nsupdate ?
-[ -z "$__PROG" ] && __PROG=$(which knsupdate)	# Knot nsupdate ?
+local __PROG=$(command -v nsupdate)			# BIND nsupdate ?
+[ -z "$__PROG" ] && __PROG=$(command -v knsupdate)	# Knot nsupdate ?
 
 [ -z "$__PROG" ]     && write_log 14 "'nsupdate' or 'knsupdate' not installed !"
 [ -z "$username" ]   && write_log 14 "Service section not configured correctly! Missing 'username'"

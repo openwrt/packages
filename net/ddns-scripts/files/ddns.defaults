@@ -33,7 +33,7 @@ timer2dhms() {
 
 # using function to not confuse function calls with existing ones inside /lib/functions.sh
 update_config() {
-	uc_uci="$(which uci) -q"	# ignore errors
+	uc_uci="$(command -v uci) -q"	# ignore errors
 	uc_cfg=""
 	uc_name=""
 	uc_var=""
