@@ -17,10 +17,10 @@ include ./openvswitch.mk
 #
 PKG_NAME:=openvswitch
 PKG_VERSION:=$(ovs_version)
-PKG_RELEASE:=9
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
-PKG_HASH:=dd5f727427e36cab22bdeae61529d8c8fccacc53d968cfa7658f7f935ddda531
+PKG_HASH:=bf5b19d35c820903c141a40f2a949e2ee047c8c0fd7c5e6e12d2239ed5c90026
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
