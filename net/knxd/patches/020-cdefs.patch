@@ -1,0 +1,25 @@
+--- a/src/include/eibclient.h
++++ b/src/include/eibclient.h
+@@ -27,10 +27,11 @@
+ #ifndef EIBCLIENT_H
+ #define EIBCLIENT_H
+ 
+-#include <sys/cdefs.h>
+ #include <stdint.h>
+ 
+-__BEGIN_DECLS;
++#ifdef __cplusplus
++extern "C" {
++#endif
+ 
+ #include "eibloadresult.h"
+ 
+@@ -935,5 +936,7 @@ int EIB_Cache_LastUpdates2_async (EIBConnection * con, uint32_t start,
+                                   uint32_t * end);
+ 
+ 
+-__END_DECLS
++#ifdef __cplusplus
++}
++#endif
+ #endif
