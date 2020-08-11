@@ -54,7 +54,7 @@ uciadd() {
 
 	# Add network interface
 	if ! uci -q get network.docker >/dev/null; then
-		logger -t "dockerd-init" -p notice "Adding docker default bridge to network uci config (docker0)"
+		logger -t "dockerd-init" -p notice "Adding docker default interface to network uci config (docker)"
 		uci_quiet add network interface
 		uci_quiet rename network.@interface[-1]="docker"
 		uci_quiet set network.docker.ifname="docker0"
@@ -63,9 +63,20 @@ uciadd() {
 		uci_quiet commit network
 	fi
 
+	# Add docker bridge device
+	if ! uci -q get network.docker0 >/dev/null; then
+		logger -t "dockerd-init" -p notice "Adding docker default bridge device to network uci config (docker0)"
+		uci_quiet add network device
+		uci_quiet rename network.@device[-1]="docker0"
+		uci_quiet set network.docker0.type="bridge"
+		uci_quiet set network.docker0.name="docker0"
+		uci_quiet add_list network.docker0.ifname="docker0"
+		uci_quiet commit network
+	fi
+
 	# Add firewall zone
 	if ! uci -q get firewall.docker >/dev/null; then
-		logger -t "dockerd-init" -p notice "Adding docker default bridge firewall zone (docker0)"
+		logger -t "dockerd-init" -p notice "Adding docker default firewall zone to firewall uci config (docker)"
 		uci_quiet add firewall zone
 		uci_quiet rename firewall.@zone[-1]="docker"
 		uci_quiet set firewall.docker.network="docker"
@@ -85,11 +96,15 @@ ucidel() {
 		exit 0
 	}
 
-	logger -t "dockerd-init" -p notice "Deleting docker default bridge network from network uci config (docker0)"
+	logger -t "dockerd-init" -p notice "Deleting docker default bridge device from network uci config (docker0)"
+	uci_quiet delete network.docker0
+	uci_quiet commit network
+
+	logger -t "dockerd-init" -p notice "Deleting docker default interface from network uci config (docker)"
 	uci_quiet delete network.docker
 	uci_quiet commit network
 
-	logger -t "dockerd-init" -p notice "Deleting docker default bridge firewall zone from firewall uci config (docker0)"
+	logger -t "dockerd-init" -p notice "Deleting docker firewall zone from firewall uci config (docker)"
 	uci_quiet delete firewall.docker
 	uci_quiet commit firewall
 

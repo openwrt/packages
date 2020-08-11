@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=docker-ce
 PKG_VERSION:=19.03.12
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=components/cli/LICENSE components/engine/LICENSE
 
@@ -131,6 +131,24 @@ define Package/docker-ce/install
 	$(INSTALL_DIR) $(1)/etc/sysctl.d
 	$(INSTALL_DATA) ./files/etc/sysctl.d/sysctl-br-netfilter-ip.conf \
 		$(1)/etc/sysctl.d/12-br-netfilter-ip.conf
+endef
+
+define Package/docker-ce/postinst
+#!/bin/sh
+[ -n "$$IPKG_INSTROOT" ] || {
+	/etc/init.d/dockerd enable
+	/etc/init.d/dockerd uciadd
+	/etc/init.d/dockerd start
+}
+endef
+
+define Package/docker-ce/prerm
+#!/bin/sh
+[ -n "$$IPKG_INSTROOT" ] || {
+	/etc/init.d/dockerd disable
+	/etc/init.d/dockerd stop
+	/etc/init.d/dockerd ucidel
+}
 endef
 
 $(eval $(call BuildPackage,docker-ce))
