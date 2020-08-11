@@ -1,15 +1,16 @@
 config DOCKER_KERNEL_OPTIONS
 	bool "Enable Basic kernel support for Docker"
 	depends on PACKAGE_docker-ce
-	default n
+	default y
 	select KERNEL_CGROUPS
 	select KERNEL_CGROUP_CPUACCT
+	select KERNEL_CGROUP_DEVICE
+	select KERNEL_CGROUP_FREEZER
 	select KERNEL_CGROUP_SCHED
 	select KERNEL_NAMESPACES
 	select KERNEL_CPUSETS
 	select KERNEL_MEMCG
 	select KERNEL_KEYS
-	select KERNEL_DEVPTS_MULTIPLE_INSTANCES
 	select KERNEL_POSIX_MQUEUE
 	help
 	  Select needed kernel options for Docker. Options include
@@ -35,7 +36,10 @@ config DOCKER_RES_SHAPE
 	select KERNEL_BLK_DEV_THROTTLING
 	select KERNEL_CFQ_GROUP_IOSCHED
 	select KERNEL_CGROUP_PERF
+	select KERNEL_CGROUP_HUGETLB
 	select KERNEL_FAIR_GROUP_SCHED
+	select KERNEL_NET_CLS_CGROUP
+	select KERNEL_CGROUP_NET_PRIO
 	select KERNEL_CFS_BANDWIDTH
 	select KERNEL_RT_GROUP_SCHED
 
