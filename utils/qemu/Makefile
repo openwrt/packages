@@ -32,6 +32,7 @@ include $(INCLUDE_DIR)/package.mk
 QEMU_DEPS_IN_GUEST := @(TARGET_x86_64||TARGET_armvirt||TARGET_arm64||TARGET_malta)
 QEMU_DEPS_IN_HOST := @(TARGET_x86_64||TARGET_sunxi)
 QEMU_DEPS_IN_HOST += $(CXX_DEPENDS)
+QEMU_DEPS_IN_HOST += $(ICONV_DEPENDS)
 
 define Package/virtio-console-helper
   SECTION:=utils
