@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
 PKG_VERSION:=2.65.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/glib/2.65
@@ -24,6 +24,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/glib-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/glib-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=meson/host gettext-full libiconv/host
 HOST_BUILD_DEPENDS:=meson/host gettext-full/host libiconv/host libffi/host
+PKG_CONFIG_DEPENDS:=CONFIG_BUILD_NLS
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/host-build.mk
@@ -111,6 +112,10 @@ define Build/InstallDev
 		$(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+ifneq ($(INTL_FULL),)
+	$(SED) '/^Libs:/s/$$$$/ -lintl/' \
+		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/glib-2.0.pc
+endif
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc \
 		$(1)/usr/lib/pkgconfig
