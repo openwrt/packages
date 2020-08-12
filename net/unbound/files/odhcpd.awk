@@ -36,28 +36,43 @@
   sub( /.*\//, "", cdr ) ;
   sub( /\/.*/, "", adr2 ) ;
   sub( /.*\//, "", cdr2 ) ;
+  
+  # replace common error of "_" in host name with "-"
   gsub( /_/, "-", hst ) ;
 
-
-  if ( hst !~ /^[[:alnum:]]([-[:alnum:]]*[[:alnum:]])?$/ ) {
-    # that is not a valid host name (RFC1123)
-    # above replaced common error of "_" in host name with "-"
-    hst = "-" ;
-  }
-
-
+  # if per-network domain isolation is enabled
   if ( bisolt == 1 ) {
-    # TODO: this might be better with a substituion option,
-    # or per DHCP pool do-not-DNS option, but its getting busy here.
+    # append the per-network isolated domain
+    # TODO: this might be better with a substitution option,
+    # or per DHCP pool do-not-DNS option, but it's getting busy here.
     fqdn = net
     gsub( /\./, "-", fqdn ) ;
-    fqdn = tolower( hst "." fqdn "." domain ) ;
+    suffix = tolower( "." fqdn "." domain ) ;
   }
-
+  
+  # if the hostname is single-level
+  else if ( hst !~ /\./ ) {
+    # append the local domain
+    suffix = tolower( "." domain ) ;
+  }
+  
+  # if the hostname is multi-level
   else {
-    fqdn = tolower( hst "." domain ) ;
+    # append no suffix
+    # TODO: this may also be better with substitution options
+    suffix = "" ;
   }
 
+  # if the host name is valid (RFC1123)
+  if ( hst !~ /^[[:alnum:]]([.-[:alnum:]]*[.[:alnum:]])?$/ ) {
+    # combine with suffix for FQDN
+    fqdn = tolower( hst suffix ) ;
+    
+  # if the host name is invalid
+  else {
+    # set a sentinel value to dump this record
+    hst = "-" ;
+  }
 
   if ((cls == "ipv4") && (hst != "-") && (cdr == 32) && (NF == 9)) {
     # IPV4 ; only for provided hostnames and full /32 assignments
