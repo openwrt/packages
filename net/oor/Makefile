@@ -17,8 +17,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oor
 PKG_VERSION:=1.3.0
-PKG_RELEASE:=2
-
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL=https://github.com/OpenOverlayRouter/oor/releases/download/$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
