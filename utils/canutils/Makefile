@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=canutils
 PKG_VERSION:=2020.02.04
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/linux-can/can-utils/tar.gz/v$(PKG_VERSION)?
@@ -69,6 +69,10 @@ endef
 endef
 
 $(foreach file,$(FILES),$(eval $(call PartInstall,$(file))))
+
+define Package/canutils/install
+	true
+endef
 
 $(eval $(call BuildPackage,canutils))
 $(foreach file,$(FILES),$(eval $(call BuildPackage,canutils-$(file))))
