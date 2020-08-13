@@ -196,11 +196,11 @@
 		"descurl": "https://easylist.to"
 	},
 	"reg_pl": {
-		"url": "https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts_without_controversies.txt",
+		"url": "https://raw.githubusercontent.com/MajkiIT/polish-ads-filter/master/polish-pihole-filters/hostfile.txt",
 		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
 		"size": "S",
 		"focus": "reg_poland",
-		"descurl": "https://kadantiscam.netlify.com"
+		"descurl": "https://www.certyficate.it/"
 	},
 	"reg_ro": {
 		"url": "https://easylist-downloads.adblockplus.org/rolist+easylist.txt",
