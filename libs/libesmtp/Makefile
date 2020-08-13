@@ -16,7 +16,7 @@ PKG_LICENSE:=LGPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://brianstafford.info/libesmtp
+PKG_SOURCE_URL:=https://ftp.osuosl.org/pub/blfs/conglomeration/libesmtp
 PKG_HASH:=d0a61a5c52d99fa7ce7d00ed0a07e341dbda67101dbed1ab0cdae3f37db4eb0b
 
 PKG_BUILD_PARALLEL:=1
@@ -28,7 +28,7 @@ define Package/libesmtp
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=A Library for Posting Electronic Mail
-  URL:=http://brianstafford.info/libesmtp/
+  URL:=https://libesmtp.github.io/
   DEPENDS:=+libpthread +libopenssl
 endef
 
