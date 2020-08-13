@@ -134,7 +134,7 @@ CONFIGURE_ARGS += \
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
-		SHELL="/bin/bash" \
+		SHELL="/bin/sh" \
 		all install
 endef
 
