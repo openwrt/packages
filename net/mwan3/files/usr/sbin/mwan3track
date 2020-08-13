@@ -1,6 +1,7 @@
 #!/bin/sh
 
 . /lib/functions.sh
+. /lib/functions/network.sh
 . /lib/mwan3/common.sh
 
 INTERFACE=""
@@ -9,20 +10,33 @@ PING="/bin/ping"
 
 IFDOWN_EVENT=0
 IFUP_EVENT=0
+TRACK_OUTPUT=$MWAN3TRACK_STATUS_DIR/$INTERFACE/TRACK_OUTPUT
+
+mwan3_init
+
+stop_subprocs() {
+	[ -n "$SLEEP_PID" ] && kill "$SLEEP_PID" && unset SLEEP_PID
+	[ -n "$TRACK_PID" ] && kill "$TRACK_PID" && unset TRACK_PID
+}
 
 clean_up() {
-	LOG notice "Stopping mwan3track for interface \"${INTERFACE}\""
+	LOG notice "Stopping mwan3track for interface \"${INTERFACE}\". Status was \"${STATUS}\""
+	stop_subprocs
 	exit 0
 }
 
 if_down() {
 	LOG info "Detect ifdown event on interface ${INTERFACE} (${DEVICE})"
 	IFDOWN_EVENT=1
+	stop_subprocs
 }
 
 if_up() {
 	LOG info "Detect ifup event on interface ${INTERFACE} (${DEVICE})"
+	IFDOWN_EVENT=0
 	IFUP_EVENT=1
+	STARTED=1
+	stop_subprocs
 }
 
 validate_track_method() {
@@ -63,9 +77,10 @@ validate_track_method() {
 }
 
 disconnected() {
-	echo "offline" > /var/run/mwan3track/$INTERFACE/STATUS
-	get_uptime > /var/run/mwan3track/$INTERFACE/OFFLINE
-	echo "0" > /var/run/mwan3track/$INTERFACE/ONLINE
+	STATUS='offline'
+	echo "offline" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/STATUS
+	get_uptime > $MWAN3TRACK_STATUS_DIR/$INTERFACE/OFFLINE
+	echo "0" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/ONLINE
 	score=0
 	[ "$1" = 1 ] && return
 	LOG notice "Interface $INTERFACE ($DEVICE) is offline"
@@ -73,6 +88,7 @@ disconnected() {
 }
 
 connected() {
+	STATUS='online'
 	echo "online" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/STATUS
 	echo "0" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/OFFLINE
 	get_uptime > $MWAN3TRACK_STATUS_DIR/$INTERFACE/ONLINE
@@ -80,12 +96,48 @@ connected() {
 	lost=0
 	turn=0
 	loss=0
-	[ "$1" = 1 ] && return
 	LOG notice "Interface $INTERFACE ($DEVICE) is online"
-	env -i ACTION="connected" INTERFACE="$INTERFACE" DEVICE="$DEVICE" /sbin/hotplug-call iface
+	env -i FIRSTCONNECT=$1 ACTION="connected" INTERFACE="$INTERFACE" DEVICE="$DEVICE" /sbin/hotplug-call iface
+}
+
+disabled() {
+	STATUS='disabled'
+	echo "disabled" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/STATUS
+	STARTED=0
 }
 
 firstconnect() {
+	local true_iface
+	network_flush_cache
+
+	mwan3_get_true_iface true_iface $INTERFACE
+	network_get_device DEVICE $true_iface
+
+	if [ "$STATUS" != "online" ]; then
+		config_get STATUS $INTERFACE initial_state "online"
+	fi
+
+	if ! network_is_up $true_iface || [ -z "$DEVICE" ]; then
+		disabled
+		return
+	fi
+
+	mwan3_get_src_ip SRC_IP $true_iface
+
+	# pinging IPv6 hosts with an interface is troublesome
+	# https://bugs.openwrt.org/index.php?do=details&task_id=2897
+	# https://bugs.openwrt.org/index.php?do=details&task_id=2167
+	# https://forum.openwrt.org/t/ping-and-traceroute-failing-for-eth0-3-on-ipv6/44680/11
+	# so use the IP address of the interface
+	if [ "$family" = "ipv6" ]; then
+		SOURCE="$SRC_IP"
+	else
+		SOURCE="$DEVICE"
+	fi
+
+	LOG debug "firstconnect: called on $INTERFACE/$true_iface ($DEVICE). Status is $STATUS. SRC_IP is $SRC_IP"
+
+	STARTED=1
 	if [ "$STATUS" = "offline" ]; then
 		disconnected 1
 	else
@@ -107,15 +159,13 @@ main() {
 	local recovery_interval down up size
 	local keep_failure_interval check_quality failure_latency
 	local recovery_latency failure_loss recovery_loss
-	local max_ttl httping_ssl
-
-	[ -z "$5" ] && echo "Error: should not be started manually" && exit 0
+	local max_ttl httping_ssl family track_ips
 
 	INTERFACE=$1
-	DEVICE=$2
-	STATUS=$3
-	SRC_IP=$4
-	mkdir -p /var/run/mwan3track/$INTERFACE
+	STATUS=""
+	STARTED=0
+	mkdir -p $MWAN3TRACK_STATUS_DIR/$INTERFACE
+
 	trap clean_up TERM
 	trap if_down USR1
 	trap if_up USR2
@@ -148,20 +198,23 @@ main() {
 	config_get recovery_latency $INTERFACE recovery_latency 500
 	config_get failure_loss $INTERFACE failure_loss 40
 	config_get recovery_loss $INTERFACE recovery_loss 10
+	local sleep_time result ping_status loss latency
+	mwan3_list_track_ips()
+	{
+		track_ips="$track_ips $1"
+	}
+	config_list_foreach "$1" track_ip mwan3_list_track_ips
 
 	local score=$((down+up))
-	local track_ips=$(echo $* | cut -d ' ' -f 5-99)
 	local host_up_count=0
 	local lost=0
 	local turn=0
-	local ping_protocol=4
-	local sleep_time result ping_result ping_result_raw ping_status loss latency
 
 	firstconnect
 	while true; do
-
+		[ $STARTED -eq 0 ] && { sleep $MAX_SLEEP & SLEEP_PID=$!; wait; }
+		unset SLEEP_PID
 		sleep_time=$interval
-
 		for track_ip in $track_ips; do
 			if [ $host_up_count -lt $reliability ]; then
 				case "$track_method" in
@@ -169,50 +222,47 @@ main() {
 						# pinging IPv6 hosts with an interface is troublesome
 						# https://bugs.openwrt.org/index.php?do=details&task_id=2897
 						# so get the IP address of the interface and use that instead
-						if [ -z ${track_ip##*:*} ]; then
-							ping_protocol=6
-						else
-							unset SRC_IP
-						fi
+
 						if [ $check_quality -eq 0 ]; then
-							$PING -$ping_protocol -I ${SRC_IP:-$DEVICE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip &> /dev/null
+							$PING -${family#ipv} -I ${SOURCE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip &> /dev/null &
+							TRACK_PID=$!
+							wait $TRACK_PID
 							result=$?
 						else
-							ping_result_raw="$($PING -$ping_protocol -I ${SRC_IP:-$DEVICE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip 2>/dev/null)"
+							$PING -${family#ipv} -I ${SOURCE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip 2>/dev/null > $TRACK_OUTPUT &
+							TRACK_PID=$!
+							wait $TRACK_PID
 							ping_status=$?
-							ping_result=$(echo "$ping_result_raw" | tail -n2)
-							loss="$(echo "$ping_result" | grep "packet loss" | cut -d "," -f3 | awk '{print $1}' | sed -e 's/%//')"
+							loss=$(grep $TRACK_OUTPUT "packet loss" | cut -d "," -f3 | awk '{print $1}' | sed -e 's/%//')
 							if [ "$ping_status" -ne 0 ] || [ "$loss" -eq 100 ]; then
 								latency=999999
 								loss=100
 							else
-								latency="$(echo "$ping_result" | grep -E 'rtt|round-trip' | cut -d "=" -f2 | cut -d "/" -f2 | cut -d "." -f1)"
+								latency="$(grep $TRACK_OUTPUT -E 'rtt|round-trip' | cut -d "=" -f2 | cut -d "/" -f2 | cut -d "." -f1)"
 							fi
 						fi
 					;;
 					arping)
-						arping -I $DEVICE -c $count -w $timeout -q $track_ip &> /dev/null
+						arping -I $DEVICE -c $count -w $timeout -q $track_ip &> /dev/null &
+						TRACK_PID=$!
+						wait $TRACK_PID
 						result=$?
 					;;
 					httping)
 						if [ "$httping_ssl" -eq 1 ]; then
-							httping -y $SRC_IP -c $count -t $timeout -q "https://$track_ip" &> /dev/null
+							httping -y $SRC_IP -c $count -t $timeout -q "https://$track_ip" &> /dev/null &
 						else
-							httping -y $SRC_IP -c $count -t $timeout -q "http://$track_ip" &> /dev/null
+							httping -y $SRC_IP -c $count -t $timeout -q "http://$track_ip" &> /dev/null &
 						fi
+						TRACK_PID=$!
+						wait $TRACK_PID
 						result=$?
 					;;
-					nping-tcp)
-						result=$(nping -e $DEVICE -c $count $track_ip --tcp | grep Lost | awk '{print $12}')
-					;;
-					nping-udp)
-						result=$(nping -e $DEVICE -c $count $track_ip --udp | grep Lost | awk '{print $12}')
-					;;
-					nping-icmp)
-						result=$(nping -e $DEVICE -c $count $track_ip --icmp | grep Lost | awk '{print $12}')
-					;;
-					nping-arp)
-						result=$(nping -e $DEVICE -c $count $track_ip --arp | grep Lost | awk '{print $12}')
+					nping-*)
+						nping -c $count $track_ip --${FAMILY#nping-} > $TRACK_OUTPUT &
+						TRACK_PID=$!
+						wait $TRACK_PID
+						result=$(grep $TRACK_OUTPUT Lost | awk '{print $12}')
 					;;
 				esac
 				if [ $check_quality -eq 0 ]; then
@@ -247,11 +297,11 @@ main() {
 							LOG info "Check (${track_method}: latency=${latency}ms loss=${loss}%) success for target \"$track_ip\" on interface $INTERFACE ($DEVICE). Current score: $score"
 						fi
 					else
-						echo "skipped" > /var/run/mwan3track/$INTERFACE/TRACK_${track_ip}
+						echo "skipped" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/TRACK_${track_ip}
 					fi
 				fi
 			else
-				echo "skipped" > /var/run/mwan3track/$INTERFACE/TRACK_${track_ip}
+				echo "skipped" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/TRACK_${track_ip}
 			fi
 		done
 
@@ -287,7 +337,7 @@ main() {
 			fi
 
 			if [ $score -eq $up ]; then
-				connected $INTERFACE $DEVICE
+				connected
 			fi
 		fi
 
@@ -304,7 +354,8 @@ main() {
 
 		if [ "${IFDOWN_EVENT}" -eq 1 ]; then
 			LOG debug "Register ifdown event on interface ${INTERFACE} (${DEVICE})"
-			disconnected 1
+			disabled
+			disconnected
 			IFDOWN_EVENT=0
 		fi
 		if [ "${IFUP_EVENT}" -eq 1 ]; then

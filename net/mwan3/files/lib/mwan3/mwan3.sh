@@ -2,8 +2,6 @@
 
 . /usr/share/libubox/jshn.sh
 
-IP4="ip -4"
-IP6="ip -6"
 IPS="ipset"
 IPT4="iptables -t mangle -w"
 IPT6="ip6tables -t mangle -w"
@@ -42,8 +40,7 @@ mwan3_push_update()
 	# helper function to build an update string to pass on to
 	# IPTR or IPS RESTORE. Modifies the 'update' variable in
 	# the local scope.
-	update="$update
-$*";
+	update="$update"$'\n'"$*";
 }
 
 mwan3_update_dev_to_table()
@@ -196,22 +193,6 @@ mwan3_lock() {
 mwan3_unlock() {
 	#LOG debug "$1 $2 (unlock)"
 	lock -u /var/run/mwan3.lock
-}
-
-mwan3_get_src_ip()
-{
-	local family _src_ip true_iface
-	true_iface=$2
-	unset "$1"
-	config_get family "$true_iface" family ipv4
-	if [ "$family" = "ipv4" ]; then
-		network_get_ipaddr _src_ip "$true_iface"
-		[ -n "$_src_ip" ] || _src_ip="0.0.0.0"
-	elif [ "$family" = "ipv6" ]; then
-		network_get_ipaddr6 _src_ip "$true_iface"
-		[ -n "$_src_ip" ] || _src_ip="::"
-	fi
-	export "$1=$_src_ip"
 }
 
 mwan3_get_iface_id()
@@ -643,39 +624,6 @@ mwan3_delete_iface_ipset_entries()
 	done
 }
 
-mwan3_rtmon()
-{
-	local protocol
-	for protocol in "ipv4" "ipv6"; do
-		pid="$(pgrep -f "mwan3rtmon $protocol")"
-		[ "$protocol" = "ipv6" ] && [ $NO_IPV6 -ne 0 ] && continue
-		if [ "${pid}" = "" ]; then
-			[ -x /usr/sbin/mwan3rtmon ] && /usr/sbin/mwan3rtmon $protocol &
-		fi
-	done
-}
-
-mwan3_track()
-{
-	local track_ips pids
-
-	mwan3_list_track_ips()
-	{
-		track_ips="$track_ips $1"
-	}
-	config_list_foreach "$1" track_ip mwan3_list_track_ips
-
-	# don't match device in case it changed from last launch
-	if pids=$(pgrep -f "mwan3track $1 "); then
-		kill -TERM $pids > /dev/null 2>&1
-		sleep 1
-		kill -KILL $(pgrep -f "mwan3track $1 ") > /dev/null 2>&1
-	fi
-
-	if [ -n "$track_ips" ]; then
-		[ -x /usr/sbin/mwan3track ] && MWAN3_STARTUP=0 /usr/sbin/mwan3track "$1" "$2" "$3" "$4" $track_ips &
-	fi
-}
 
 mwan3_set_policy()
 {
@@ -1066,6 +1014,83 @@ mwan3_set_user_rules()
 
 }
 
+mwan3_interface_hotplug_shutdown()
+{
+	local interface status device ifdown
+	interface="$1"
+	ifdown="$2"
+	[ -f $MWAN3TRACK_STATUS_DIR/$interface/STATUS ] && {
+		status=$(cat $MWAN3TRACK_STATUS_DIR/$interface/STATUS)
+	}
+
+	[ "$status" != "online" ] && [ "$ifdown" != 1 ] && return
+
+	if [ "$ifdown" = 1 ]; then
+		env -i ACTION=ifdown \
+			INTERFACE=$interface \
+			DEVICE=$device \
+			sh /etc/hotplug.d/iface/15-mwan3
+	else
+		[ "$status" = "online" ] && {
+			env -i MWAN3_SHUTDOWN="1" \
+				ACTION="disconnected" \
+				INTERFACE="$interface" \
+				DEVICE="$device" /sbin/hotplug-call iface
+		}
+	fi
+
+}
+
+mwan3_interface_shutdown()
+{
+	mwan3_interface_hotplug_shutdown $1
+	mwan3_track_clean $1
+}
+
+mwan3_ifup()
+{
+	local up l3_device status interface true_iface mwan3_startup
+
+	interface=$1
+	mwan3_startup=$2
+
+	if [ "${mwan3_startup}" != 1 ]; then
+		# It is not necessary to obtain a lock here, because it is obtained in the hotplug
+		# script, but we still want to do the check to print a useful error message
+		/etc/init.d/mwan3 running || {
+			echo 'The service mwan3 is global disabled.'
+			echo 'Please execute "/etc/init.d/mwan3 start" first.'
+			exit 1
+		}
+		config_load mwan3
+	fi
+	mwan3_get_true_iface true_iface $interface
+	status=$(ubus -S call network.interface.$true_iface status)
+
+	[ -n "$status" ] && {
+		json_load "$status"
+		json_get_vars up l3_device
+	}
+	hotplug_startup()
+	{
+		env -i MWAN3_STARTUP=$mwan3_startup ACTION=ifup \
+		    INTERFACE=$interface DEVICE=$l3_device \
+		    sh /etc/hotplug.d/iface/15-mwan3
+	}
+
+	if [ "$up" != "1" ] || [ -z "$l3_device" ]; then
+		return
+	fi
+
+	if [ "${mwan3_startup}" = 1 ]; then
+		hotplug_startup &
+		hotplug_pids="$hotplug_pids $!"
+	else
+		hotplug_startup
+	fi
+
+}
+
 mwan3_set_iface_hotplug_state() {
 	local iface=$1
 	local state=$2
@@ -1081,7 +1106,7 @@ mwan3_get_iface_hotplug_state() {
 
 mwan3_report_iface_status()
 {
-	local device result track_ips tracking IP IPT
+	local device result tracking IP IPT
 
 	mwan3_get_iface_id id "$1"
 	network_get_device device "$1"
@@ -1129,22 +1154,7 @@ mwan3_report_iface_status()
 		result="disabled"
 	fi
 
-	mwan3_list_track_ips()
-	{
-		track_ips="$1 $track_ips"
-	}
-	config_list_foreach "$1" track_ip mwan3_list_track_ips
-
-	if [ -n "$track_ips" ]; then
-		if [ -n "$(pgrep -f "mwan3track $1 $device")" ]; then
-			tracking="active"
-		else
-			tracking="down"
-		fi
-	else
-		tracking="not enabled"
-	fi
-
+	tracking="$(mwan3_get_mwan3track_status $1)"
 	echo " interface $1 is $result and tracking is $tracking"
 }
 

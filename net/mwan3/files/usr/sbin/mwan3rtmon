@@ -31,7 +31,7 @@ mwan3_add_all_routes()
 		config_get family "$1" family ipv4
 		config_get initial_state "$1" initial_state "online"
 		[ "$family" != "$ipv" ] && return
-		if [ "$initial_state" = "online" ] && $IPT -S "mwan3_iface_in_$1" &> /dev/null; then
+		if $IPT -S "mwan3_iface_in_$1" &> /dev/null; then
 			active_tbls="$active_tbls${tid} "
 		fi
 	}

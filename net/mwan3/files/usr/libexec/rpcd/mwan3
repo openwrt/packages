@@ -77,16 +77,13 @@ get_mwan3_status() {
 	local online=0
 	local offline=0
 	local up="0"
-	local enabled pid device time_p time_n time_u time_d status
+	local enabled device time_p time_n time_u time_d status track_status
 
 	network_get_device device $1
 
 	if [ "${iface}" = "${iface_select}" ] || [ "${iface_select}" = "" ]; then
-		pid="$(pgrep -f "mwan3track $iface $device")"
-		if [ "${pid}" != "" ]; then
-			running="1"
-		fi
-
+		track_status="$(mwan3_get_mwan3track_status "$1")"
+		[ "$track_status" = "active" ] && running="1"
 		time_p="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/TIME")"
 		[ -z "${time_p}" ] || {
 			time_n="$(get_uptime)"
