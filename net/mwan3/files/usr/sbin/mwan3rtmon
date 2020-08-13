@@ -54,8 +54,8 @@ mwan3_rtmon_route_handle()
 	}
 	handle_route_cb(){
 		let tid++
-		config_get family "$section" family ipv4
-		[ "$family" != "$route_family" ] && return
+		config_get family "$section" family "any"
+		[ "$family" != "$route_family" ] && [ "$family" != "any" ] && return
 		handle_route
 	}
 

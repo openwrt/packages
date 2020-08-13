@@ -15,3 +15,6 @@ LOG()
 	[ "$facility" = "debug" ] && return
 	logger -t "$SCRIPTNAME[$$]" -p $facility "$*"
 }
+
+MWAN3_STATUS_DIR="/var/run/mwan3"
+MWAN3TRACK_STATUS_DIR="/var/run/mwan3track"

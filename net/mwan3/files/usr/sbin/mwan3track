@@ -1,6 +1,8 @@
 #!/bin/sh
 
 . /lib/functions.sh
+. /lib/mwan3/mwan3.sh
+. /lib/functions/network.sh
 . /lib/mwan3/common.sh
 
 INTERFACE=""
@@ -63,33 +65,33 @@ validate_track_method() {
 }
 
 disconnected() {
-	echo "offline" > /var/run/mwan3track/$INTERFACE/STATUS
-	echo "$(get_uptime)" > /var/run/mwan3track/$INTERFACE/OFFLINE
-	echo "0" > /var/run/mwan3track/$INTERFACE/ONLINE
+	echo "offline" > $MWAN3TRACK_STATUS_DIR/$INTERFACE.$FAMILY/STATUS
+	echo "$(get_uptime)" > $MWAN3TRACK_STATUS_DIR/$INTERFACE.$FAMILY/OFFLINE
+	echo "0" > $MWAN3TRACK_STATUS_DIR/$INTERFACE.$FAMILY/ONLINE
 	score=0
 	[ "$1" == 1 ] && return
-	LOG notice "Interface $INTERFACE ($DEVICE) is offline"
-	env -i ACTION="disconnected" INTERFACE="$INTERFACE" DEVICE="$DEVICE" /sbin/hotplug-call iface
+	LOG notice "Interface $INTERFACE($FAMILY) ($DEVICE) is offline"
+	env -i ACTION="disconnected" INTERFACE="$INTERFACE" DEVICE="$DEVICE" FAMILY="$FAMILY" /sbin/hotplug-call iface
 }
 
 connected() {
-	echo "online" > /var/run/mwan3track/$INTERFACE/STATUS
-	echo "0" > /var/run/mwan3track/$INTERFACE/OFFLINE
-	echo "$(get_uptime)" > /var/run/mwan3track/$INTERFACE/ONLINE
+	echo "online" > $MWAN3TRACK_STATUS_DIR/$INTERFACE.$FAMILY/STATUS
+	echo "0" > $MWAN3TRACK_STATUS_DIR/$INTERFACE.$FAMILY/OFFLINE
+	echo "$(get_uptime)" > $MWAN3TRACK_STATUS_DIR/$INTERFACE.$FAMILY/ONLINE
 	host_up_count=0
 	lost=0
 	turn=0
 	loss=0
 	[ "$1" == 1 ] && return
-	LOG notice "Interface $INTERFACE ($DEVICE) is online"
-	env -i ACTION="connected" INTERFACE="$INTERFACE" DEVICE="$DEVICE" /sbin/hotplug-call iface
+	LOG notice "Interface $INTERFACE($FAMILY) ($DEVICE) is online"
+	env -i ACTION="connected" INTERFACE="$INTERFACE" DEVICE="$DEVICE" FAMILY=$FAMILY /sbin/hotplug-call iface
 }
 
 firstconnect() {
 	if [ "$STATUS" = "offline" ]; then
-		disconnected 1
+		FAMILY=$FAMILY disconnected 1
 	else
-		connected 1
+		FAMILY=$FAMILY connected 1
 	fi
 }
 
@@ -98,10 +100,10 @@ update_status() {
 	track_ip=$1
 	status=$2
 
-	echo "$1" > /var/run/mwan3track/$INTERFACE/TRACK_${track_ip}
+	echo "$1" > $MWAN3TRACK_STATUS_DIR/$INTERFACE.$FAMILY/TRACK_${track_ip}
 	[ -z "$3" ] && return
-	echo "$3" > /var/run/mwan3track/$INTERFACE/LATENCY_${track_ip}
-	echo "$4" > /var/run/mwan3track/$INTERFACE/LOSS_${track_ip}
+	echo "$3" > $MWAN3TRACK_STATUS_DIR/$INTERFACE.$FAMILY/LATENCY_${track_ip}
+	echo "$4" > $MWAN3TRACK_STATUS_DIR/$INTERFACE.$FAMILY/LOSS_${track_ip}
 }
 
 main() {
@@ -113,11 +115,11 @@ main() {
 
 	[ -z "$5" ] && echo "Error: should not be started manually" && exit 0
 
-	INTERFACE=$1
-	DEVICE=$2
-	STATUS=$3
-	SRC_IP=$4
-	mkdir -p /var/run/mwan3track/$INTERFACE
+	family=$1
+	INTERFACE=$2
+	DEVICE=$3
+	STATUS=$4
+	mkdir -p $MWAN3TRACK_STATUS_DIR/$INTERFACE.$family
 	trap clean_up TERM
 	trap if_down USR1
 	trap if_up USR2
@@ -125,15 +127,6 @@ main() {
 	config_load mwan3
 	config_get track_method $INTERFACE track_method ping
 	config_get_bool httping_ssl $INTERFACE httping_ssl 0
-	validate_track_method $track_method $SRC_IP || {
-		track_method=ping
-		if validate_track_method $track_method; then
-			LOG warn "Using ping to track interface $INTERFACE avaliability"
-		else
-			LOG err "No track method avaliable"
-			exit 1
-		fi
-	}
 	config_get reliability $INTERFACE reliability 1
 	config_get count $INTERFACE count 1
 	config_get timeout $INTERFACE timeout 4
@@ -158,8 +151,21 @@ main() {
 	local turn=0
 	local ping_protocol=4
 	local sleep_time result ping_result ping_result_raw  ping_status loss latency
+	local SRC_IP
 
-	firstconnect
+	if [ "$family" = "ipv6" ]; then
+		ping_protocol=6
+		mwan3_get_src_ip6 SRC_IP "$INTERFACE"
+	else
+		ping_protocol=4
+		mwan3_get_src_ip SRC_IP "$INTERFACE"
+	fi
+	validate_track_method $track_method $SRC_IP || {
+		LOG err "track method($track_method) src_ip($SRC_IP) invalid"
+		exit 1
+	}
+
+	FAMILY=$family firstconnect
 	while true; do
 
 		sleep_time=$interval
@@ -171,9 +177,7 @@ main() {
 						# pinging IPv6 hosts with an interface is troublesome
 						# https://bugs.openwrt.org/index.php?do=details&task_id=2897
 						# so get the IP address of the interface and use that instead
-						if [ -z ${track_ip##*:*} ]; then
-							ping_protocol=6
-						else
+						if [ $ping_protocol -eq 4 ]; then
 							unset SRC_IP
 						fi
 						if [ $check_quality -eq 0 ]; then
@@ -220,40 +224,40 @@ main() {
 				if [ $check_quality -eq 0 ]; then
 					if [ $result -eq 0 ]; then
 						let host_up_count++
-						update_status "$track_ip" "up"
+						FAMILY=$family update_status "$track_ip" "up"
 
 						if [ $score -le $up ]; then
-							LOG info "Check ($track_method) success for target \"$track_ip\" on interface $INTERFACE ($DEVICE). Current score: $score"
+							LOG info "Check ($track_method) success for target \"$track_ip\" on interface $INTERFACE($family) ($DEVICE). Current score: $score"
 						fi
 					else
 						let lost++
-						update_status "$track_ip" "down"
+						FAMILY=$family update_status "$track_ip" "down"
 
 						if [ $score -gt $up ]; then
-							LOG info "Check ($track_method) failed for target \"$track_ip\" on interface $INTERFACE ($DEVICE). Current score: $score"
+							LOG info "Check ($track_method) failed for target \"$track_ip\" on interface $INTERFACE($family) ($DEVICE). Current score: $score"
 						fi
 					fi
 				else
 					if [ "$loss" -ge "$failure_loss" -o "$latency" -ge "$failure_latency" ]; then
 						let lost++
-						update_status "$track_ip" "down" $latency $loss
+						FAMILY=$family update_status "$track_ip" "down" $latency $loss
 
 						if [ $score -gt $up ]; then
-							LOG info "Check (${track_method}: latency=${latency}ms loss=${loss}%) failed for target \"$track_ip\" on interface $INTERFACE ($DEVICE). Current score: $score"
+							LOG info "Check (${track_method}: latency=${latency}ms loss=${loss}%) failed for target \"$track_ip\" on interface $INTERFACE($family) ($DEVICE). Current score: $score"
 						fi
 					elif [ "$loss" -le "$recovery_loss" -a "$latency" -le "$recovery_latency" ]; then
 						let host_up_count++
-						update_status "$track_ip" "up" $latency $loss
+						FAMILY=$family update_status "$track_ip" "up" $latency $loss
 
 						if [ $score -le $up ]; then
-							LOG info "Check (${track_method}: latency=${latency}ms loss=${loss}%) success for target \"$track_ip\" on interface $INTERFACE ($DEVICE). Current score: $score"
+							LOG info "Check (${track_method}: latency=${latency}ms loss=${loss}%) success for target \"$track_ip\" on interface $INTERFACE($family) ($DEVICE). Current score: $score"
 						fi
 					else
-						echo "skipped" > /var/run/mwan3track/$INTERFACE/TRACK_${track_ip}
+						echo "skipped" > $MWAN3TRACK_STATUS_DIR/$INTERFACE.$family/TRACK_${track_ip}
 					fi
 				fi
 			else
-				echo "skipped" > /var/run/mwan3track/$INTERFACE/TRACK_${track_ip}
+				echo "skipped" > $MWAN3TRACK_STATUS_DIR/$INTERFACE.$family/TRACK_${track_ip}
 			fi
 		done
 
@@ -270,48 +274,48 @@ main() {
 			fi
 
 			if [ $score -eq $up ]; then
-				disconnected
+				FAMILY=$family disconnected
 				score=0
 			fi
 		else
 			if [ $score -lt $(($down+$up)) ] && [ $lost -gt 0 ]; then
-				LOG info "Lost $(($lost*$count)) ping(s) on interface $INTERFACE ($DEVICE). Current score: $score"
+				LOG info "Lost $(($lost*$count)) ping(s) on interface $INTERFACE($family) ($DEVICE). Current score: $score"
 			fi
 
 			let score++
 			lost=0
 
 			if [ $score -gt $up ]; then
-				echo "online" > /var/run/mwan3track/$INTERFACE/STATUS
+				echo "online" > $MWAN3TRACK_STATUS_DIR/$INTERFACE.$family/STATUS
 				score=$(($down+$up))
 			elif [ $score -le $up ]; then
 				sleep_time=$recovery_interval
 			fi
 
 			if [ $score -eq $up ]; then
-				connected $INTERFACE $DEVICE
+				FAMILY=$family connected $INTERFACE $DEVICE
 			fi
 		fi
 
 		let turn++
-		mkdir -p "/var/run/mwan3track/${1}"
-		echo "${lost}" > /var/run/mwan3track/$INTERFACE/LOST
-		echo "${score}" > /var/run/mwan3track/$INTERFACE/SCORE
-		echo "${turn}" > /var/run/mwan3track/$INTERFACE/TURN
-		echo "$(get_uptime)" > /var/run/mwan3track/$INTERFACE/TIME
+		mkdir -p "$MWAN3TRACK_STATUS_DIR/$INTERFACE.$family"
+		echo "${lost}" > $MWAN3TRACK_STATUS_DIR/$INTERFACE.$family/LOST
+		echo "${score}" > $MWAN3TRACK_STATUS_DIR/$INTERFACE.$family/SCORE
+		echo "${turn}" > $MWAN3TRACK_STATUS_DIR/$INTERFACE.$family/TURN
+		echo "$(get_uptime)" > $MWAN3TRACK_STATUS_DIR/$INTERFACE.$family/TIME
 
 		host_up_count=0
 		sleep "${sleep_time}" &
 		wait
 
 		if [ "${IFDOWN_EVENT}" -eq 1 ]; then
-			LOG debug "Register ifdown event on interface ${INTERFACE} (${DEVICE})"
-			disconnected 1
+			LOG debug "Register ifdown event on interface ${INTERFACE}($family) (${DEVICE})"
+			FAMILY=$family disconnected 1
 			IFDOWN_EVENT=0
 		fi
 		if [ "${IFUP_EVENT}" -eq 1 ]; then
-			LOG debug "Register ifup event on interface ${INTERFACE} (${DEVICE})"
-			firstconnect
+			LOG debug "Register ifup event on interface ${INTERFACE}($family) (${DEVICE})"
+			FAMILY=$family firstconnect
 			IFUP_EVENT=0
 		fi
 	done

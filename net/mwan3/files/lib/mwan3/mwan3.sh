@@ -10,6 +10,7 @@ IPT6="ip6tables -t mangle -w"
 IPT4R="iptables-restore -T mangle -w -n"
 IPT6R="ip6tables-restore -T mangle -w -n"
 CONNTRACK_FILE="/proc/net/nf_conntrack"
+IPv4_REGEX='\([0-9]\{1,3\}\)\.\([0-9]\{1,3\}\)\.\([0-9]\{1,3\}\)\.\([0-9]\{1,3\}\)'
 IPv6_REGEX="([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|"
 IPv6_REGEX="${IPv6_REGEX}([0-9a-fA-F]{1,4}:){1,7}:|"
 IPv6_REGEX="${IPv6_REGEX}([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|"
@@ -23,8 +24,6 @@ IPv6_REGEX="${IPv6_REGEX}fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|"
 IPv6_REGEX="${IPv6_REGEX}::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|"
 IPv6_REGEX="${IPv6_REGEX}([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])"
 
-MWAN3_STATUS_DIR="/var/run/mwan3"
-MWAN3TRACK_STATUS_DIR="/var/run/mwan3track"
 MWAN3_INTERFACE_MAX=""
 DEFAULT_LOWEST_METRIC=256
 MMX_MASK=""
@@ -55,15 +54,20 @@ mwan3_update_dev_to_table()
 
 	update_table()
 	{
-		local family curr_table device enabled
+		local family family_list curr_table device enabled
 		let _tid++
-		config_get family "$1" family ipv4
+		config_get family_list "$1" family "any"
+		[ "$family_list" = "any" ] && family_list="ipv4 ipv6"
+		for family in $family_list; do
+
 		network_get_device device "$1"
-		[ -z "$device" ] && return
+		[ -z "$device" ] && continue
 		config_get enabled "$1" enabled
-		[ "$enabled" -eq 0 ] && return
+		[ "$enabled" -eq 0 ] && continue
 		curr_table=$(eval "echo	 \"\$mwan3_dev_tbl_${family}\"")
 		export "mwan3_dev_tbl_$family=${curr_table}${device}=$_tid "
+
+		done
 	}
 	network_flush_cache
 	config_foreach update_table interface
@@ -83,9 +87,10 @@ mwan3_update_iface_to_table()
 
 mwan3_get_true_iface()
 {
-	local family V
+	local family V iface _true_iface
+	family=$3
+	iface="$2"
 	_true_iface=$2
-	config_get family "$iface" family ipv4
 	if [ "$family" = "ipv4" ]; then
 		V=4
 	elif [ "$family" = "ipv6" ]; then
@@ -199,14 +204,28 @@ mwan3_unlock() {
 
 mwan3_get_src_ip()
 {
-	local family _src_ip true_iface
-	true_iface=$2
+	local family _src_ip INTERFACE true_iface
+	INTERFACE=$2
 	unset "$1"
-	config_get family "$true_iface" family ipv4
+	config_get family "$INTERFACE" family "any"
+	[ "$family" = "any" ] && family="ipv4"
 	if [ "$family" = "ipv4" ]; then
+		mwan3_get_true_iface true_iface "$INTERFACE" $family
 		network_get_ipaddr _src_ip "$true_iface"
 		[ -n "$_src_ip" ] || _src_ip="0.0.0.0"
-	elif [ "$family" = "ipv6" ]; then
+	fi
+	export "$1=$_src_ip"
+}
+
+mwan3_get_src_ip6()
+{
+	local family _src_ip INTERFACE true_iface
+	INTERFACE=$2
+	unset "$1"
+	config_get family $INTERFACE family "any"
+	[ "$family" = "any" ] && family="ipv6"
+	if [ "$family" = "ipv6" ]; then
+		mwan3_get_true_iface true_iface "$INTERFACE" $family
 		network_get_ipaddr6 _src_ip "$true_iface"
 		[ -n "$_src_ip" ] || _src_ip="::"
 	fi
@@ -441,10 +460,12 @@ mwan3_create_iface_iptables()
 {
 	local id family connected_name IPT IPTR current update error
 
-	config_get family "$1" family ipv4
+	config_get family "$1" family "any"
 	mwan3_get_iface_id id "$1"
 
 	[ -n "$id" ] || return 0
+	[ "$family" = "any" ] && family="$3"
+	[ "$family" = "$3" ] || return 0
 
 	if [ "$family" = "ipv4" ]; then
 		connected_name=mwan3_connected
@@ -458,7 +479,7 @@ mwan3_create_iface_iptables()
 		IPTR="$IPT6R"
 		$IPS -! create $connected_name hash:net family inet6
 	else
-		return
+		return 0
 	fi
 	current="$($IPT -S)"
 	update="*mangle"
@@ -496,21 +517,22 @@ mwan3_create_iface_iptables()
 	mwan3_push_update COMMIT
 	mwan3_push_update ""
 	error=$(echo "$update" | $IPTR 2>&1) || LOG error "create_iface_iptables: $error"
-
 }
 
 mwan3_delete_iface_iptables()
 {
-	local IPT
-	config_get family "$1" family ipv4
+	local IPT family
+	config_get family "$1" family "any"
+	[ "$family" = "any" ] && family="$2"
+	[ "$family" = "$2" ] || return
 
 	if [ "$family" = "ipv4" ]; then
 		IPT="$IPT4"
-	fi
-
-	if [ "$family" = "ipv6" ]; then
+	elif [ "$family" = "ipv6" ]; then
 		[ $NO_IPV6 -ne 0 ] && return
 		IPT="$IPT6"
+	else
+		return
 	fi
 
 	$IPT -D mwan3_ifaces_in \
@@ -518,7 +540,6 @@ mwan3_delete_iface_iptables()
 	     -j "mwan3_iface_in_$1" &> /dev/null
 	$IPT -F "mwan3_iface_in_$1" &> /dev/null
 	$IPT -X "mwan3_iface_in_$1" &> /dev/null
-
 }
 
 mwan3_create_iface_route()
@@ -528,18 +549,22 @@ mwan3_create_iface_route()
 
 	iface=$1
 	device=$2
-	config_get family "$iface" family ipv4
+	config_get family "$iface" family "any"
 	mwan3_get_iface_id id "$iface"
 
 	[ -n "$id" ] || return 0
+	[ "$family" = "any" ] && family="$3"
+	[ "$family" = "$3" ] || return 0
 
-	mwan3_get_true_iface true_iface $iface
+	mwan3_get_true_iface true_iface $iface $family
 	if [ "$family" = "ipv4" ]; then
 		V_=""
 		IP="$IP4"
 	elif [ "$family" = "ipv6" ]; then
 		V_=6
 		IP="$IP6"
+	else
+		return 0
 	fi
 
 	network_get_gateway${V_} via "$true_iface"
@@ -554,21 +579,24 @@ mwan3_create_iface_route()
 	     ${metric:+metric} $metric \
 	     dev $2"
 	$cmd || LOG warn "ip cmd failed $cmd"
-
 }
 
 mwan3_add_non_default_iface_route()
 {
 	local tid route_line family IP id
-	config_get family "$1" family ipv4
+	config_get family "$1" family "any"
 	mwan3_get_iface_id id "$1"
 
 	[ -n "$id" ] || return 0
+	[ "$family" = "any" ] && family="$3"
+	[ "$family" = "$3" ] || return
 
 	if [ "$family" = "ipv4" ]; then
 		IP="$IP4"
 	elif [ "$family" = "ipv6" ]; then
 		IP="$IP6"
+	else
+		return
 	fi
 
 	mwan3_update_dev_to_table
@@ -589,8 +617,8 @@ mwan3_add_all_nondefault_routes()
 	add_active_tbls()
 	{
 		let tid++
-		config_get family "$1" family ipv4
-		[ "$family" != "$ipv" ] && return
+		config_get family "$1" family "any"
+		[ "$family" != "$ipv" ] && [ "$family" != "any" ] && return
 		$IP route list table $tid 2>/dev/null | grep -q "^default\|^::/0" && {
 			active_tbls="$active_tbls${tid} "
 		}
@@ -627,12 +655,14 @@ mwan3_add_all_nondefault_routes()
 }
 mwan3_delete_iface_route()
 {
-	local id
+	local id family
 
-	config_get family "$1" family ipv4
+	config_get family "$1" family "any"
 	mwan3_get_iface_id id "$1"
 
 	[ -n "$id" ] || return 0
+	[ "$family" = "any" ] && family="$2"
+	[ "$family" = "$2" ] || return
 
 	if [ "$family" = "ipv4" ]; then
 		$IP4 route flush table "$id"
@@ -647,17 +677,19 @@ mwan3_create_iface_rules()
 {
 	local id family IP
 
-	config_get family "$1" family ipv4
+	config_get family "$1" family "any"
 	mwan3_get_iface_id id "$1"
 
 	[ -n "$id" ] || return 0
+	[ "$family" = "any" ] && family="$3"
+	[ "$family" = "$3" ] || return 0
 
 	if [ "$family" = "ipv4" ]; then
 		IP="$IP4"
 	elif [ "$family" = "ipv6" ] && [ $NO_IPV6 -eq 0 ]; then
 		IP="$IP6"
 	else
-		return
+		return 0
 	fi
 
 	while [ -n "$($IP rule list | awk '$1 == "'$(($id+1000)):'"')" ]; do
@@ -676,17 +708,19 @@ mwan3_delete_iface_rules()
 {
 	local id family
 
-	config_get family "$1" family ipv4
+	config_get family "$1" family "any"
 	mwan3_get_iface_id id "$1"
 
 	[ -n "$id" ] || return 0
+	[ "$family" = "any" ] && family="$2"
+	[ "$family" = "$2" ] || return 0
 
 	if [ "$family" = "ipv4" ]; then
 		IP="$IP4"
 	elif [ "$family" = "ipv6" ] && [ $NO_IPV6 -eq 0 ]; then
 		IP="$IP6"
 	else
-		return
+		return 0
 	fi
 
 	while [ -n "$($IP rule list | awk '$1 == "'$(($id+1000)):'"')" ]; do
@@ -700,13 +734,15 @@ mwan3_delete_iface_rules()
 
 mwan3_delete_iface_ipset_entries()
 {
-	local id setname entry
+	local id setname entry V
 
 	mwan3_get_iface_id id "$1"
 
 	[ -n "$id" ] || return 0
+	V="v4"
+	[ "$2" = "ipv6" ] && V="v6"
 
-	for setname in $(ipset -n list | grep ^mwan3_sticky_); do
+	for setname in $(ipset -n list | grep ^mwan3_sticky_${V}_); do
 		for entry in $(ipset list "$setname" | grep "$(mwan3_id2mask id MMX_MASK | awk '{ printf "0x%08x", $1; }')" | cut -d ' ' -f 1); do
 			$IPS del "$setname" $entry
 		done
@@ -728,28 +764,38 @@ mwan3_rtmon()
 mwan3_track()
 {
 	local track_ips pids
+	local track_ips_v4 track_ips_v6
 
 	mwan3_list_track_ips()
 	{
-		track_ips="$track_ips $1"
+		if echo $1 | grep -q ":"; then
+			track_ips_v6="$track_ips_v6 $1"
+		elif echo $1 | grep -q "$IPv4_REGEX"; then
+			track_ips_v4="$track_ips_v4 $1"
+		else
+			track_ips_v6="$track_ips_v6 $1"
+			track_ips_v4="$track_ips_v4 $1"
+		fi
 	}
 	config_list_foreach "$1" track_ip mwan3_list_track_ips
+	track_ips="$track_ips_v4"
+	[ "$4" = "ipv6" ] && track_ips="$track_ips_v6"
 
 	# don't match device in case it changed from last launch
-	if pids=$(pgrep -f "mwan3track $1 "); then
+	if pids=$(pgrep -f "mwan3track $4 $1 "); then
 		kill -TERM $pids > /dev/null 2>&1
 		sleep 1
-		kill -KILL $(pgrep -f "mwan3track $1 ") > /dev/null 2>&1
+		kill -KILL $(pgrep -f "mwan3track $4 $1 ") > /dev/null 2>&1
 	fi
 
 	if [ -n "$track_ips" ]; then
-		[ -x /usr/sbin/mwan3track ] && MWAN3_STARTUP=0 /usr/sbin/mwan3track "$1" "$2" "$3" "$4" $track_ips &
+		[ -x /usr/sbin/mwan3track ] && MWAN3_STARTUP=0 /usr/sbin/mwan3track $4 "$1" "$2" "$3" $track_ips &
 	fi
 }
 
 mwan3_set_policy()
 {
-	local id iface family metric probability weight device is_lowest is_offline IPT IPTR total_weight current update error
+	local id iface family family_list metric probability weight device is_lowest is_offline IPT IPTR total_weight current update error
 
 	is_lowest=0
 	config_get iface "$1" interface
@@ -764,10 +810,12 @@ mwan3_set_policy()
 
 	[ -n "$id" ] || return 0
 
-	[ "$(mwan3_get_iface_hotplug_state "$iface")" = "online" ]
-	is_offline=$?
+	config_get family_list "$iface" family "any"
+	[ "$family_list" = "any" ] && family_list="ipv4 ipv6"
+	for family in $family_list; do
 
-	config_get family "$iface" family ipv4
+	[ "$(mwan3_get_iface_hotplug_state "$iface" $family)" = "online" ]
+	is_offline=$?
 
 	if [ "$family" = "ipv4" ]; then
 		IPT="$IPT4"
@@ -775,6 +823,8 @@ mwan3_set_policy()
 	elif [ "$family" = "ipv6" ]; then
 		IPT="$IPT6"
 		IPTR="$IPT6R"
+	else
+		continue
 	fi
 	current="$($IPT -S)"
 	update="*mangle"
@@ -788,7 +838,7 @@ mwan3_set_policy()
 			total_weight_v4=$(($total_weight_v4+$weight))
 			total_weight=$total_weight_v4
 		else
-			return
+			continue
 		fi
 	elif [ "$family" = "ipv6" ] && [ $NO_IPV6 -eq 0 ] && [ $is_offline -eq 0 ]; then
 		if [ "$metric" -lt "$lowest_metric_v6" ]; then
@@ -799,7 +849,7 @@ mwan3_set_policy()
 			total_weight_v6=$(($total_weight_v6+$weight))
 			total_weight=$total_weight_v6
 		else
-			return
+			continue
 		fi
 	fi
 	if [ $is_lowest -eq 1 ]; then
@@ -839,6 +889,7 @@ mwan3_set_policy()
 	mwan3_push_update ""
 	error=$(echo "$update" | $IPTR 2>&1) || LOG error "set_policy ($1): $error"
 
+	done
 }
 
 mwan3_create_policies_iptables()
@@ -947,10 +998,12 @@ mwan3_set_user_iptables_rule()
 	config_get dest_ip "$1" dest_ip
 	config_get dest_port "$1" dest_port
 	config_get use_policy "$1" use_policy
-	config_get family "$1" family any
+	config_get family "$1" family "any"
 	config_get rule_logging "$1" logging 0
 	config_get global_logging globals logging 0
 	config_get loglevel globals loglevel notice
+
+	[ "$family" = "any" ] && family="$ipv"
 
 	if [ -n "$src_iface" ]; then
 		network_get_device src_dev "$src_iface"
@@ -1070,7 +1123,7 @@ mwan3_set_user_iptables_rule()
 
 mwan3_set_user_iface_rules()
 {
-	local current iface update family error device is_src_iface
+	local current iface update family family_list error device is_src_iface
 	iface=$1
 	device=$2
 
@@ -1079,7 +1132,9 @@ mwan3_set_user_iface_rules()
 		return
 	fi
 
-	config_get family "$iface" family ipv4
+	config_get family_list "$iface" family "any"
+	[ "$family_list" = "any" ] && family_list="ipv4 ipv6"
+	for family in $family_list; do
 
 	if [ "$family" = "ipv4" ]; then
 		IPT="$IPT4"
@@ -1087,6 +1142,8 @@ mwan3_set_user_iface_rules()
 	elif [ "$family" = "ipv6" ]; then
 		IPT="$IPT6"
 		IPTR="$IPT6R"
+	else
+		continue
 	fi
 	$IPT -S | grep -q "^-A mwan3_rules.*-i $device" && return
 
@@ -1100,6 +1157,8 @@ mwan3_set_user_iface_rules()
 	}
 	config_foreach iface_rule rule
 	[ $is_src_iface -eq 1 ] && mwan3_set_user_rules
+
+	done
 }
 
 mwan3_set_user_rules()
@@ -1139,33 +1198,52 @@ mwan3_set_user_rules()
 mwan3_set_iface_hotplug_state() {
 	local iface=$1
 	local state=$2
+	local family=$3
 
-	echo "$state" > "$MWAN3_STATUS_DIR/iface_state/$iface"
+	echo "$state" > "$MWAN3_STATUS_DIR/iface_state/$iface.$family"
 }
 
 mwan3_get_iface_hotplug_state() {
 	local iface=$1
+	local family=$2
 
-	cat "$MWAN3_STATUS_DIR/iface_state/$iface" 2>/dev/null || echo "offline"
+	cat "$MWAN3_STATUS_DIR/iface_state/$iface.$family" 2>/dev/null || echo "offline"
 }
 
 mwan3_report_iface_status()
 {
-	local device result track_ips tracking IP IPT
+	local device result track_ips tracking IP IPT family family_list
+	local track_ips_v4 track_ips_v6
 
 	mwan3_get_iface_id id "$1"
 	network_get_device device "$1"
 	config_get enabled "$1" enabled 0
-	config_get family "$1" family ipv4
+	config_get family_list "$1" family "any"
+
+	mwan3_list_track_ips()
+	{
+		if echo $1 | grep -q ":"; then
+			track_ips_v6="$track_ips_v6 $1"
+		elif echo $1 | grep -q "$IPv4_REGEX"; then
+			track_ips_v4="$track_ips_v4 $1"
+		else
+			track_ips_v6="$track_ips_v6 $1"
+			track_ips_v4="$track_ips_v4 $1"
+		fi
+	}
+	config_list_foreach "$1" track_ip mwan3_list_track_ips
+
+	[ "$family_list" = "any" ] && family_list="ipv4 ipv6"
+	for family in $family_list; do
 
 	if [ "$family" = "ipv4" ]; then
 		IP="$IP4"
 		IPT="$IPT4"
-	fi
-
-	if [ "$family" = "ipv6" ]; then
+	elif [ "$family" = "ipv6" ]; then
 		IP="$IP6"
 		IPT="$IPT6"
+	else
+		continue
 	fi
 
 	if [ -z "$id" ] || [ -z "$device" ]; then
@@ -1180,12 +1258,14 @@ mwan3_report_iface_status()
 		json_load "$(ubus call mwan3 status "$(json_dump)")"
 		json_select "interfaces"
 		json_select "$1"
+		json_select "$family"
 		json_get_vars online uptime
+		json_select ..
 		json_select ..
 		json_select ..
 		online="$(printf '%02dh:%02dm:%02ds\n' $(($online/3600)) $(($online%3600/60)) $(($online%60)))"
 		uptime="$(printf '%02dh:%02dm:%02ds\n' $(($uptime/3600)) $(($uptime%3600/60)) $(($uptime%60)))"
-		result="$(mwan3_get_iface_hotplug_state $1) $online, uptime $uptime"
+		result="$(mwan3_get_iface_hotplug_state $1 $family) $online, uptime $uptime"
 	elif [ -n "$($IP rule | awk '$1 == "'$(($id+1000)):'"')" ] || \
 		     [ -n "$($IP rule | awk '$1 == "'$(($id+2000)):'"')" ] || \
 		     [ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] || \
@@ -1197,14 +1277,11 @@ mwan3_report_iface_status()
 		result="disabled"
 	fi
 
-	mwan3_list_track_ips()
-	{
-		track_ips="$1 $track_ips"
-	}
-	config_list_foreach "$1" track_ip mwan3_list_track_ips
+	track_ips="$track_ips_v4"
+	[ "$family" = "ipv6" ] && track_ips="$track_ips_v6"
 
 	if [ -n "$track_ips" ]; then
-		if [ -n "$(pgrep -f "mwan3track $1 $device")" ]; then
+		if [ -n "$(pgrep -f "mwan3track $family $1 $device")" ]; then
 			tracking="active"
 		else
 			tracking="down"
@@ -1213,7 +1290,9 @@ mwan3_report_iface_status()
 		tracking="not enabled"
 	fi
 
-	echo " interface $1 is $result and tracking is $tracking"
+	echo " interface $1($family) is $result and tracking is $tracking"
+
+	done
 }
 
 mwan3_report_policies()
@@ -1306,6 +1385,6 @@ mwan3_flush_conntrack()
 
 mwan3_track_clean()
 {
-	rm -rf "$MWAN3_STATUS_DIR/${1}" &> /dev/null
+	rm -rf "$MWAN3_STATUS_DIR/${1}.${2}" &> /dev/null
 	rmdir --ignore-fail-on-non-empty "$MWAN3_STATUS_DIR"
 }

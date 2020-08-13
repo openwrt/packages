@@ -38,8 +38,12 @@ ifdown()
 
 	ACTION=ifdown INTERFACE=$1 /sbin/hotplug-call iface
 
-	kill $(pgrep -f "mwan3track $1 ") &> /dev/null
-	mwan3_track_clean $1
+	for family in "ipv4" "ipv6"; do
+
+	kill $(pgrep -f "mwan3track $family $1 ") &> /dev/null
+	mwan3_track_clean $1 $family
+
+	done
 }
 
 ifup()
@@ -72,7 +76,9 @@ ifup()
 	else
 		enabled=1
 	fi
-	mwan3_get_true_iface true_iface $interface
+	for family in "ipv4" "ipv6"; do
+
+	mwan3_get_true_iface true_iface $interface $family
 	status=$(ubus -S call network.interface.$true_iface status)
 
 	[ -n "$status" ] && {
@@ -81,8 +87,8 @@ ifup()
 	}
 	hotplug_startup()
 	{
-		MWAN3_STARTUP=$MWAN3_STARTUP ACTION=ifup INTERFACE=$interface DEVICE=$l3_device TRUE_INTERFACE=$true_iface sh /etc/hotplug.d/iface/15-mwan3
-		MWAN3_STARTUP=$MWAN3_STARTUP ACTION=ifup INTERFACE=$interface DEVICE=$l3_device TRUE_INTERFACE=$true_iface sh /etc/hotplug.d/iface/16-mwan3-user
+		MWAN3_STARTUP=$MWAN3_STARTUP ACTION=ifup INTERFACE=$interface DEVICE=$l3_device FAMILY=$family sh /etc/hotplug.d/iface/15-mwan3
+		MWAN3_STARTUP=$MWAN3_STARTUP ACTION=ifup INTERFACE=$interface DEVICE=$l3_device FAMILY=$family sh /etc/hotplug.d/iface/16-mwan3-user
 	}
 
 	if [ "$up" != "1" ] || [ -z "$l3_device" ] || [ "$enabled" != "1" ]; then
@@ -96,6 +102,7 @@ ifup()
 		hotplug_startup
 	fi
 
+	done
 }
 
 interfaces()
