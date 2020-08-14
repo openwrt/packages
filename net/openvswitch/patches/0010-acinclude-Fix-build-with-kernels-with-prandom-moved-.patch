@@ -1,0 +1,43 @@
+From 39d1f4598ce63558d0f6549d25745a4f83e0b165 Mon Sep 17 00:00:00 2001
+Message-Id: <39d1f4598ce63558d0f6549d25745a4f83e0b165.1597434251.git.mschiffer@universe-factory.net>
+From: Ilya Maximets <i.maximets@ovn.org>
+Date: Wed, 12 Aug 2020 10:57:07 +0200
+Subject: [PATCH] acinclude: Fix build with kernels with prandom* moved to
+ prandom.h.
+
+Recent commit c0842fbc1b18 ("random32: move the pseudo-random 32-bit
+definitions to prandom.h") in upstream kernel moved the definition
+of prandom_* functions from random.h to prandom.h.  This change was
+also backported to stable kernels.
+
+Fixing our configure script to look for these functions in a new
+location and avoid build failures:
+
+  datapath/linux/compat/include/linux/random.h:11:19:
+    error: redefinition of 'prandom_u32_max'
+
+Acked-by: Greg Rose <gvrose8192@gmail.com>
+Signed-off-by: Ilya Maximets <i.maximets@ovn.org>
+(cherry picked from commit e38b412dcb4f493e2b7a727557423eb5d4171a81)
+---
+ acinclude.m4 | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/acinclude.m4 b/acinclude.m4
+index 6d8340ce99fd..fa39347bd85f 100644
+--- a/acinclude.m4
++++ b/acinclude.m4
+@@ -690,6 +690,10 @@ AC_DEFUN([OVS_CHECK_LINUX_COMPAT], [
+ 
+   OVS_GREP_IFELSE([$KSRC/include/linux/random.h], [prandom_u32])
+   OVS_GREP_IFELSE([$KSRC/include/linux/random.h], [prandom_u32_max])
++  OVS_GREP_IFELSE([$KSRC/include/linux/prandom.h],
++                  [prandom_u32[[\(]]],
++                  [OVS_DEFINE([HAVE_PRANDOM_U32])])
++  OVS_GREP_IFELSE([$KSRC/include/linux/prandom.h], [prandom_u32_max])
+ 
+   OVS_GREP_IFELSE([$KSRC/include/net/rtnetlink.h], [get_link_net])
+   OVS_GREP_IFELSE([$KSRC/include/net/rtnetlink.h], [name_assign_type])
+-- 
+2.28.0
+
