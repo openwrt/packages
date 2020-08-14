@@ -48,13 +48,6 @@
 		"focus": "general",
 		"descurl": "https://disconnect.me"
 	},
-	"dshield": {
-		"url": "https://www.dshield.org/feeds/suspiciousdomains_Low.txt",
-		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
-		"size": "XL",
-		"focus": "general",
-		"descurl": "https://www.dshield.org"
-	},
 	"energized_blugo": {
 		"url": "https://block.energized.pro/bluGo/formats/domains.txt",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
@@ -91,7 +84,7 @@
 		"descurl": "https://energized.pro"
 	},
 	"malwaredomains": {
-		"url": "http://mirror.espoch.edu.ec/malwaredomains/justdomains",
+		"url": "https://mirror1.malwaredomains.com/files/justdomains",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "M",
 		"focus": "malware",
@@ -195,12 +188,19 @@
 		"focus": "reg_netherlands",
 		"descurl": "https://easylist.to"
 	},
-	"reg_pl": {
+	"reg_pl1": {
 		"url": "https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts_without_controversies.txt",
 		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
 		"size": "S",
 		"focus": "reg_poland",
 		"descurl": "https://kadantiscam.netlify.com"
+	},
+	"reg_pl2": {
+		"url": "https://raw.githubusercontent.com/MajkiIT/polish-ads-filter/master/polish-pihole-filters/hostfile.txt",
+		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
+		"size": "S",
+		"focus": "reg_poland",
+		"descurl": "https://www.certyficate.it"
 	},
 	"reg_ro": {
 		"url": "https://easylist-downloads.adblockplus.org/rolist+easylist.txt",
@@ -224,24 +224,24 @@
 		"descurl": "https://bigdargon.github.io/hostsVN"
 	},
 	"shallalist": {
-		"url": "http://www.shallalist.de/Downloads/shallalist.tar.gz",
+		"url": "https://www.shallalist.de/Downloads/shallalist.tar.gz",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"categories": [
 				"adv", "costtraps", "spyware", "tracker", "warez"
 		],
 		"size": "L",
 		"focus": "general",
-		"descurl": "http://www.shallalist.de"
+		"descurl": "https://www.shallalist.de"
 	},
 	"shallalist_porn": {
-		"url": "http://www.shallalist.de/Downloads/shallalist.tar.gz",
+		"url": "https://www.shallalist.de/Downloads/shallalist.tar.gz",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"categories": [
 				"adv", "costtraps", "porn", "spyware", "tracker", "warez"
 		],
 		"size": "XXL",
 		"focus": "general+porn",
-		"descurl": "http://www.shallalist.de"
+		"descurl": "https://www.shallalist.de"
 	},
 	"smarttv": {
 		"url": "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV.txt",
@@ -278,13 +278,6 @@
 		"focus": "spam",
 		"descurl": "https://www.stopforumspam.com"
 	},
-	"sysctl": {
-		"url": "http://sysctl.org/cameleon/hosts",
-		"rule": "/^127\\.0\\.0\\.1[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
-		"size": "M",
-		"focus": "general",
-		"descurl": "http://sysctl.org/cameleon"
-	},
 	"utcapitole": {
 		"url": "https://dsi.ut-capitole.fr/blacklists/download/blacklists.tar.gz",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
@@ -320,11 +313,11 @@
 		"descurl": "https://someonewhocares.org"
 	},
 	"winhelp": {
-		"url": "http://winhelp2002.mvps.org/hosts.txt",
+		"url": "https://winhelp2002.mvps.org/hosts.txt",
 		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
 		"size": "S",
 		"focus": "general",
-		"descurl": "http://winhelp2002.mvps.org"
+		"descurl": "https://winhelp2002.mvps.org"
 	},
 	"winspy": {
 		"url": "https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt",
