@@ -1,0 +1,20 @@
+--- a/apps/snmpnetstat/if.c
++++ b/apps/snmpnetstat/if.c
+@@ -916,12 +916,13 @@ timerPause(void)
+         sigpause(SIGALRM);
+     }
+ #else
+-    int             oldmask;
+-    oldmask = sigblock(sigmask(SIGALRM));
++    sigset_t mask;
++    sigemptyset(&mask);
++    sigaddset(&mask, SIGALRM);
++    sigprocmask(SIG_BLOCK, &mask, 0);
+     if (!signalled) {
+-        sigpause(0);
++        sigsuspend(&mask);
+     }
+-    sigsetmask(oldmask);
+ #endif
+ }
+ 
