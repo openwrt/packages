@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=canutils
 PKG_VERSION:=2020.02.04
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/linux-can/can-utils/tar.gz/v$(PKG_VERSION)?
@@ -25,23 +25,20 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-define Package/canutils/Default
+define Package/canutils
   SECTION:=utils
   CATEGORY:=Utilities
   URL:=https://github.com/linux-can/can-utils
   TITLE:=CAN userspace utilities and tools
-endef
-
-define Package/canutils
-  $(call Package/canutils/Default)
-  MENU:=1
+  HIDDEN:=1
 endef
 
 define GenPlugin
   define Package/$(addprefix canutils-,$(1))
-    $(call Package/canutils/Default)
+    SECTION:=utils
+    CATEGORY:=Utilities
+    SUBMENU:=CAN Utilities
     TITLE:=Utility $(1) from the CAN utilities
-    DEPENDS:=canutils
   endef
 
    define Package/$(addprefix canutils-,$(1))/description
