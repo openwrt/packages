@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=LVM2
 PKG_VERSION:=2.03.09
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://sourceware.org/pub/lvm2
@@ -31,7 +31,7 @@ define Package/libdevmapper
   CATEGORY:=Libraries
   TITLE:=The Linux Kernel Device Mapper userspace library
   URL:=https://sourceware.org/dm/
-  DEPENDS:=+kmod-dm +libpthread +libuuid +librt +libblkid
+  DEPENDS:=+kmod-dm +libpthread +libuuid +librt +libblkid +libselinux
 endef
 
 define Package/libdevmapper/description
