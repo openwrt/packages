@@ -1,0 +1,19 @@
+--- a/tracerstat.c
++++ b/tracerstat.c
+@@ -388,6 +388,7 @@ int main(int args, char *argv[]) {
+ 	int res;
+ 	unsigned int tries = 0;
+ 	unsigned char use_cache = 1;
++	struct timespec f = {0, 50 * 1000 * 1000};
+ 
+ 	for (argn = 1; argn < args; argn++) {
+ 		if (!strncmp(argv[argn], "-o", 3))
+@@ -439,7 +440,7 @@ int main(int args, char *argv[]) {
+ 		}
+ 		tcflush(dev_fd, TCIOFLUSH);
+ 		close(dev_fd);
+-		usleep(50000);
++		nanosleep(&f, NULL);
+ 		tries++;
+ 	} while(tries < 7);
+ 
