@@ -15,7 +15,6 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | anudeep             |         | M    | compilation      | [Link](https://github.com/anudeepND/blacklist)                                    |
 | bitcoin             |         | S    | mining           | [Link](https://github.com/hoshsadiq/adblock-nocoin-list)                          |
 | disconnect          | x       | S    | general          | [Link](https://disconnect.me)                                                     |
-| dshield             |         | XL   | general          | [Link](https://dshield.org)                                                       |
 | energized_blugo     |         | XL   | compilation      | [Link](https://energized.pro)                                                     |
 | energized_blu       |         | XL   | compilation      | [Link](https://energized.pro)                                                     |
 | energized_porn      |         | XXL  | compilation+porn | [Link](https://energized.pro)                                                     |
@@ -34,28 +33,28 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | reg_fi              |         | S    | reg_finland      | [Link](https://github.com/finnish-easylist-addition)                              |
 | reg_fr              |         | S    | reg_france       | [Link](https://forums.lanik.us/viewforum.php?f=91)                                |
 | reg_id              |         | M    | reg_indonesia    | [Link](https://easylist.to)                                                       |
-| reg_kr              |         | M    | reg_korea        | [Link](https://list-kr.github.io)                                                 |
+| reg_kr              |         | S    | reg_korea        | [Link](https://list-kr.github.io)                                                 |
 | reg_nl              |         | M    | reg_netherlands  | [Link](https://easylist.to)                                                       |
-| reg_pl              |         | M    | reg_poland       | [Link](https://kadantiscam.netlify.com)                                           |
+| reg_pl1             |         | S    | reg_poland       | [Link](https://kadantiscam.netlify.com)                                           |
+| reg_pl2             |         | S    | reg_poland       | [Link](https://www.certyficate.it)                                                |
 | reg_ro              |         | M    | reg_romania      | [Link](https://easylist.to)                                                       |
 | reg_ru              |         | M    | reg_russia       | [Link](https://easylist.to)                                                       |
-| reg_vn              |         | M    | reg_vietnam      | [Link](https://bigdargon.github.io/hostsVN)                                       |
-| shallalist          |         | L    | general          | [Link](http://www.shallalist.de)                                                  |
-| shallalist_porn     |         | XXL  | general+porn     | [Link](http://www.shallalist.de)                                                  |
+| reg_vn              |         | S    | reg_vietnam      | [Link](https://bigdargon.github.io/hostsVN)                                       |
+| shallalist          |         | L    | general          | [Link](https://www.shallalist.de)                                                 |
+| shallalist_porn     |         | XXL  | general+porn     | [Link](https://www.shallalist.de)                                                 |
 | smarttv             |         | S    | smarttv          | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | spam404             |         | S    | general          | [Link](https://github.com/Dawsey21)                                               |
 | stevenblack         |         | L    | compilation      | [Link](https://github.com/StevenBlack/hosts)                                      |
 | stevenblack_porn    |         | L    | compilation+porn | [Link](https://github.com/StevenBlack/hosts)                                      |
 | stopforumspam       |         | S    | spam             | [Link](https://www.stopforumspam.com)                                             |
-| sysctl              |         | M    | general          | [Link](http://sysctl.org/cameleon)                                                |
 | utcapitole          |         | L    | general          | [Link](https://dsi.ut-capitole.fr/blacklists/index_en.php)                        |
 | utcapitole_porn     |         | XXL  | general+porn     | [Link](https://dsi.ut-capitole.fr/blacklists/index_en.php)                        |
 | wally3k             |         | S    | compilation      | [Link](https://firebog.net/about)                                                 |
 | whocares            |         | M    | general          | [Link](https://someonewhocares.org)                                               |
-| winhelp             |         | S    | general          | [Link](http://winhelp2002.mvps.org)                                               |
+| winhelp             |         | S    | general          | [Link](https://winhelp2002.mvps.org)                                              |
 | winspy              |         | S    | win_telemetry    | [Link](https://github.com/crazy-max/WindowsSpyBlocker)                            |
 | youtube             |         | M    | youtube          | [Link](https://github.com/kboghdady/youTube_ads_4_pi-hole)                        |
-| yoyo                | x       | S    | general          | [Link](http://pgl.yoyo.org/adservers)                                             |
+| yoyo                | x       | S    | general          | [Link](https://pgl.yoyo.org/adservers)                                            |
 
 * List of supported and fully pre-configured adblock sources, already active sources are pre-selected.  
   <b><em>To avoid OOM errors, please do not select too many lists!</em></b>  
