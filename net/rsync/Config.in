@@ -12,4 +12,9 @@ if PACKAGE_rsync
 		default y if USE_FS_ACL_ATTR
 		default n
 
+	config RSYNC_zstd
+		bool
+		prompt "Enable zstd stream compression"
+		default n
+
 endif
