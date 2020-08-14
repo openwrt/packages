@@ -1,0 +1,20 @@
+--- a/device_info.c
++++ b/device_info.c
+@@ -42,7 +42,7 @@ int deviceinfo_from_cpuinfo(char **dest, const char *key)
+ 			continue;
+ 
+ 		/* search ':' */
+-		start = index(line, ':');
++		start = strchr(line, ':');
+ 		if (!start)
+ 			continue;
+ 		start++;
+@@ -79,7 +79,7 @@ static int line_get_value(char **dest, char *line)
+ 	char quote = 0;
+ 	int c, q;
+ 
+-	s = index(line, '=');
++	s = strchr(line, '=');
+ 	if (!s)
+ 		return -1;
+ 
