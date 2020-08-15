@@ -59,10 +59,15 @@ CONFIGURE_ARGS += \
   --with-default-run-dir=/var/run/lvm \
   --with-default-locking-dir=/var/lock/lvm
 
+ifneq ($(shell /bin/sh -c "echo -n 'X'"),X)
+MAKE_SHELL = SHELL=/bin/bash
+endif
+
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) $(FPIC)" \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
+		$(MAKE_SHELL) \
 		install
 endef
 
