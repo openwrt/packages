@@ -294,40 +294,48 @@ mwan3_set_connected_ipv4()
 
 	$IPS swap mwan3_connected_v4_temp mwan3_connected_v4
 	$IPS destroy mwan3_connected_v4_temp
+	$IPS -! add mwan3_connected mwan3_connected_v4
 
 }
 
-mwan3_set_connected_iptables()
+mwan3_set_connected_ipv6()
 {
 	local connected_network_v6 source_network_v6 error
 	local update=""
-	mwan3_set_connected_ipv4
+	[ $NO_IPV6 -eq 0 ] || return
 
-	[ $NO_IPV6 -eq 0 ] && {
-		mwan3_push_update -! create mwan3_connected_v6 hash:net family inet6
-		mwan3_push_update flush mwan3_connected_v6
+	mwan3_push_update -! create mwan3_connected_v6 hash:net family inet6
+	mwan3_push_update flush mwan3_connected_v6
 
-		for connected_network_v6 in $($IP6 route | awk '{print $1}' | grep -E "$IPv6_REGEX"); do
-			mwan3_push_update -! add mwan3_connected_v6 "$connected_network_v6"
-		done
+	for connected_network_v6 in $($IP6 route | awk '{print $1}' | grep -E "$IPv6_REGEX"); do
+		mwan3_push_update -! add mwan3_connected_v6 "$connected_network_v6"
+	done
 
-		mwan3_push_update -! create mwan3_source_v6 hash:net family inet6
-		for source_network_v6 in $($IP6 addr ls | sed -ne 's/ *inet6 \([^ \/]*\).* scope global.*/\1/p'); do
-			mwan3_push_update -! add mwan3_source_v6 "$source_network_v6"
-		done
-	}
+	mwan3_push_update -! create mwan3_source_v6 hash:net family inet6
+	for source_network_v6 in $($IP6 addr ls | sed -ne 's/ *inet6 \([^ \/]*\).* scope global.*/\1/p'); do
+		mwan3_push_update -! add mwan3_source_v6 "$source_network_v6"
+	done
+	mwan3_push_update -! add mwan3_connected mwan3_connected_v6
+	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_connected_ipv6: $error"
+}
+
+mwan3_set_connected_ipset()
+{
+	local error
+	local update=""
 
 	mwan3_push_update -! create mwan3_connected list:set
 	mwan3_push_update flush mwan3_connected
-	mwan3_push_update -! add mwan3_connected mwan3_connected_v4
-	[ $NO_IPV6 -eq 0 ] && mwan3_push_update -! add mwan3_connected mwan3_connected_v6
 
 	mwan3_push_update -! create mwan3_dynamic_v4 hash:net
 	mwan3_push_update -! add mwan3_connected mwan3_dynamic_v4
 
-	[ $NO_IPV6 -eq 0 ] && mwan3_push_update -! create mwan3_dynamic_v6 hash:net family inet6
-	[ $NO_IPV6 -eq 0 ] && mwan3_push_update -! add mwan3_connected mwan3_dynamic_v6
-	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_connected_iptables: $error"
+	if [ $NO_IPV6 -eq 0 ]; then
+		mwan3_push_update -! create mwan3_dynamic_v6 hash:net family inet6
+		mwan3_push_update -! add mwan3_connected mwan3_dynamic_v6
+	fi
+
+	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_connected_ipset: $error"
 }
 
 mwan3_set_general_rules()
@@ -439,7 +447,7 @@ mwan3_set_general_iptables()
 
 mwan3_create_iface_iptables()
 {
-	local id family connected_name IPT IPTR current update error
+	local id family IPT IPTR current update error
 
 	config_get family "$1" family ipv4
 	mwan3_get_iface_id id "$1"
@@ -447,16 +455,11 @@ mwan3_create_iface_iptables()
 	[ -n "$id" ] || return 0
 
 	if [ "$family" = "ipv4" ]; then
-		connected_name=mwan3_connected
 		IPT="$IPT4"
 		IPTR="$IPT4R"
-		$IPS -! create $connected_name list:set
-
 	elif [ "$family" = "ipv6" ] && [ $NO_IPV6 -eq 0 ]; then
-		connected_name=mwan3_connected_v6
 		IPT="$IPT6"
 		IPTR="$IPT6R"
-		$IPS -! create $connected_name hash:net family inet6
 	else
 		return
 	fi
@@ -474,7 +477,7 @@ mwan3_create_iface_iptables()
 
 	mwan3_push_update -A "mwan3_iface_in_$1" \
 			  -i "$2" \
-			  -m set --match-set $connected_name src \
+			  -m set --match-set mwan3_connected src \
 			  -m mark --mark "0x0/$MMX_MASK" \
 			  -m comment --comment "default" \
 			  -j MARK --set-xmark "$MMX_DEFAULT/$MMX_MASK"
@@ -521,45 +524,17 @@ mwan3_delete_iface_iptables()
 
 }
 
-mwan3_create_iface_route()
+mwan3_get_routes()
 {
-	local id via metric V V_ IP family
-	local iface device cmd true_iface
-
-	iface=$1
-	device=$2
-	config_get family "$iface" family ipv4
-	mwan3_get_iface_id id "$iface"
-
-	[ -n "$id" ] || return 0
-
-	mwan3_get_true_iface true_iface $iface
-	if [ "$family" = "ipv4" ]; then
-		V_=""
-		IP="$IP4"
-	elif [ "$family" = "ipv6" ]; then
-		V_=6
-		IP="$IP6"
-	fi
-
-	network_get_gateway${V_} via "$true_iface"
-
-	{ [ -z "$via" ] || [ "$via" = "0.0.0.0" ] || [ "$via" = "::" ] ; } && unset via
-
-	network_get_metric metric "$true_iface"
-
-	$IP route flush table "$id"
-	cmd="$IP route add table $id default \
-	     ${via:+via} $via \
-	     ${metric:+metric} $metric \
-	     dev $2"
-	$cmd || LOG warn "ip cmd failed $cmd"
-
+	local source_routing
+	config_get_bool source_routing globals source_routing 0
+	[ $source_routing -eq 0 ] && unset source_routing
+	$IP route list table main | sed -ne "/^linkdown/T; s/expires \([0-9]\+\)sec//;s/error [0-9]\+//; ${source_routing:+s/default\(.*\) from [^ ]*/default\1/;} p" | uniq
 }
 
-mwan3_add_non_default_iface_route()
+mwan3_create_iface_route()
 {
-	local tid route_line family IP id
+	local tid route_line family IP id tbl
 	config_get family "$1" family ipv4
 	mwan3_get_iface_id id "$1"
 
@@ -571,10 +546,15 @@ mwan3_add_non_default_iface_route()
 		IP="$IP6"
 	fi
 
+	tbl=$($IP route list table $id 2>/dev/null)$'\n'
 	mwan3_update_dev_to_table
-	$IP route list table main | grep -v "^default\|linkdown\|^::/0\|^fe80::/64\|^unreachable" | while read -r route_line; do
+	mwan3_get_routes | while read -r route_line; do
 		mwan3_route_line_dev "tid" "$route_line" "$family"
+		{ [ -z "${route_line##default*}" ] || [ -z "${route_line##fe80::/64*}" ]; } && [ "$tid" != "$id" ] && continue
 		if [ -z "$tid" ] || [ "$tid" = "$id" ]; then
+			# possible that routes are already in the table
+			# if 'connected' was called after 'ifup'
+			[ -n "$tbl" ] && [ -z "${tbl##*$route_line$'\n'*}" ] && continue
 			$IP route add table $id $route_line ||
 				LOG warn "failed to add $route_line to table $id"
 		fi
@@ -582,63 +562,21 @@ mwan3_add_non_default_iface_route()
 	done
 }
 
-mwan3_add_all_nondefault_routes()
-{
-	local tid IP route_line ipv family active_tbls tid
-
-	add_active_tbls()
-	{
-		let tid++
-		config_get family "$1" family ipv4
-		[ "$family" != "$ipv" ] && return
-		$IP route list table $tid 2>/dev/null | grep -q "^default\|^::/0" && {
-			active_tbls="$active_tbls${tid} "
-		}
-	}
-
-	add_route()
-	{
-		let tid++
-		[ -n "${active_tbls##* $tid *}" ] && return
-		$IP route add table $tid $route_line ||
-			LOG warn "failed to add $route_line to table $tid"
-	}
-
-	mwan3_update_dev_to_table
-	for ipv in ipv4 ipv6; do
-		[ "$ipv" = "ipv6" ] && [ $NO_IPV6 -ne 0 ] && continue
-		if [ "$ipv" = "ipv4" ]; then
-			IP="$IP4"
-		elif [ "$ipv" = "ipv6" ]; then
-			IP="$IP6"
-		fi
-		tid=0
-		active_tbls=" "
-		config_foreach add_active_tbls interface
-		$IP route list table main | grep -v "^default\|linkdown\|^::/0\|^fe80::/64\|^unreachable" | while read -r route_line; do
-			mwan3_route_line_dev "tid" "$route_line" "$ipv"
-			if [ -n "$tid" ]; then
-				$IP route add table $tid $route_line
-			else
-				config_foreach add_route interface
-			fi
-		done
-	done
-}
 mwan3_delete_iface_route()
 {
-	local id
+	local id family
 
 	config_get family "$1" family ipv4
 	mwan3_get_iface_id id "$1"
 
-	[ -n "$id" ] || return 0
+	if [ -z "$id" ]; then
+		LOG warn "delete_iface_route: could not find table id for interface $1"
+		return 0
+	fi
 
 	if [ "$family" = "ipv4" ]; then
 		$IP4 route flush table "$id"
-	fi
-
-	if [ "$family" = "ipv6" ] && [ $NO_IPV6 -eq 0 ]; then
+	elif [ "$family" = "ipv6" ] && [ $NO_IPV6 -eq 0 ]; then
 		$IP6 route flush table "$id"
 	fi
 }
@@ -660,21 +598,16 @@ mwan3_create_iface_rules()
 		return
 	fi
 
-	while [ -n "$($IP rule list | awk '$1 == "'$((id+1000)):'"')" ]; do
-		$IP rule del pref $((id+1000))
-	done
-
-	while [ -n "$($IP rule list | awk '$1 == "'$((id+2000)):'"')" ]; do
-		$IP rule del pref $((id+2000))
-	done
+	mwan3_delete_iface_rules "$1"
 
 	$IP rule add pref $((id+1000)) iif "$2" lookup "$id"
 	$IP rule add pref $((id+2000)) fwmark "$(mwan3_id2mask id MMX_MASK)/$MMX_MASK" lookup "$id"
+	$IP rule add pref $((id+3000)) fwmark "$(mwan3_id2mask id MMX_MASK)/$MMX_MASK" unreachable
 }
 
 mwan3_delete_iface_rules()
 {
-	local id family IP
+	local id family IP rule_id
 
 	config_get family "$1" family ipv4
 	mwan3_get_iface_id id "$1"
@@ -689,12 +622,8 @@ mwan3_delete_iface_rules()
 		return
 	fi
 
-	while [ -n "$($IP rule list | awk '$1 == "'$((id+1000)):'"')" ]; do
-		$IP rule del pref $((id+1000))
-	done
-
-	while [ -n "$($IP rule list | awk '$1 == "'$((id+2000)):'"')" ]; do
-		$IP rule del pref $((id+2000))
+	for rule_id in $(ip rule list | awk '$1 % 1000 == '$id' && $1 > 1000 && $1 < 4000 {print substr($1,0,4)}'); do
+		$IP rule del pref $rule_id
 	done
 }
 
@@ -952,6 +881,10 @@ mwan3_set_user_iptables_rule()
 	config_get global_logging globals logging 0
 	config_get loglevel globals loglevel notice
 
+	[ "$ipv" = "ipv6" ] && [ $NO_IPV6 -ne 0 ] && return
+	[ "$family" = "ipv4" ] && [ "$ipv" = "ipv6" ] && return
+	[ "$family" = "ipv6" ] && [ "$ipv" = "ipv4" ] && return
+
 	if [ -n "$src_iface" ]; then
 		network_get_device src_dev "$src_iface"
 		if [ -z "$src_dev" ]; then
@@ -1012,10 +945,6 @@ mwan3_set_user_iptables_rule()
 				$IPS -! add "mwan3_sticky_$rule" "mwan3_sticky_v6_$rule"
 		fi
 	fi
-
-	[ "$ipv" = "ipv6" ] && [ $NO_IPV6 -ne 0 ] && return
-	[ "$family" = "ipv4" ] && [ "$ipv" = "ipv6" ] && return
-	[ "$family" = "ipv6" ] && [ "$ipv" = "ipv4" ] && return
 
 	if [ $rule_policy -eq 1 ] && [ -n "${current##*-N $policy*}" ]; then
 		mwan3_push_update -N "$policy"
@@ -1172,6 +1101,7 @@ mwan3_report_iface_status()
 		result="offline"
 	elif [ -n "$($IP rule | awk '$1 == "'$((id+1000)):'"')" ] && \
 		     [ -n "$($IP rule | awk '$1 == "'$((id+2000)):'"')" ] && \
+		     [ -n "$($IP rule | awk '$1 == "'$((id+3000)):'"')" ] && \
 		     [ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] && \
 		     [ -n "$($IP route list table $id default dev $device 2> /dev/null)" ]; then
 		json_init

@@ -163,7 +163,7 @@ start()
 	mwan3_set_general_iptables
 	config_foreach ifup interface
 	wait $hotplug_pids
-	mwan3_add_all_nondefault_routes
+	mwan3_add_all_routes
 	mwan3_set_policies_iptables
 	mwan3_set_user_rules
 
