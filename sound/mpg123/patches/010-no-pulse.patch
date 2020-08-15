@@ -1,0 +1,11 @@
+--- a/ports/cmake/src/CMakeLists.txt
++++ b/ports/cmake/src/CMakeLists.txt
+@@ -199,7 +199,7 @@ if(NOT CHECK_MODULES OR NOT COREAUDIO_REQUIRED EQUAL -1)
+     endif()
+ endif()
+ 
+-find_package(PkgConfig)
++#find_package(PkgConfig)
+ if(PKG_CONFIG_FOUND)
+     if(NOT CHECK_MODULES OR NOT PULSE_REQUIRED EQUAL -1)
+         pkg_search_module(PULSE libpulse-simple)
