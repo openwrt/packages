@@ -21,7 +21,7 @@ PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleana
 PKG_BUILD_DEPENDS:=libffi/host
 PKG_BUILD_PARALLEL:=0
 
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="cffi>=1.8,!=1.11.3"
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=cffi  # cffi>=1.8,!=1.11.3
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

@@ -330,13 +330,45 @@ endef
 
 These can be installed via pip and ideally they should only be installed like this, because it's a bit simpler than running them through the OpenWrt build system.
 
-Which is why [for example] if you need python cffi on the host build, it's easier to just add it via:
+#### Requirements files
+
+All host-side Python packages are installed with pip using [requirements files](https://pip.pypa.io/en/stable/user_guide/#requirements-files), with [hash-checking mode](https://pip.pypa.io/en/stable/reference/pip_install/#hash-checking-mode) enabled. These requirements files are stored in the [host-pip-requirements](./host-pip-requirements) directory.
+
+Each requirements file is named after the Python package it installs and contains the package's pinned version and `--hash` option. The `--hash` option value is the SHA256 hash of the package's source tarball; this value can be found on [pypi.org](https://pypi.org/).
+
+For example, the requirements file for setuptools-scm ([setuptools-scm.txt](./host-pip-requirements/setuptools-scm.txt)) contains:
+
+```
+setuptools-scm==4.1.2 --hash=sha256:a8994582e716ec690f33fec70cca0f85bd23ec974e3f783233e4879090a7faa8
+```
+
+If the Python package to be installed depends on other Python packages, those dependencies, with their pinned versions and `--hash` options, also need to be specified in the requirements file. For instance, [cffi.txt](./host-pip-requirements/cffi.txt) includes information for pycparser because pycparser is a dependency of cffi and will be installed with cffi.
+
+There are two types of requirements files in [host-pip-requirements](./host-pip-requirements):
+
+* Installs the latest version of a Python package.
+
+  A requirements file of this type is named with the package name only (for example, [setuptools-scm.txt](./host-pip-requirements/setuptools-scm.txt)) and is used when there is no strict version requirement.
+
+  These files will be updated as newer versions of the Python packages are available.
+
+* Installs a specific version of a Python package.
+
+  A requirements file of this type is named with the package name and version number (for example, [Django-1.11.txt](./host-pip-requirements/Django-1.11.txt)) and is used when a specific (usually older) version is required.
+
+  Installing the latest versions of packages is preferred over specific versions whenever possible.
+
+#### Installing host-side Python packages
+
+Set `HOST_PYTHON3_PACKAGE_BUILD_DEPENDS` to the names of one or more requirements files in [host-pip-requirements](./host-pip-requirements), without the directory path or ".txt" extension.
+
+For example:
+
 ```
 PKG_BUILD_PARALLEL:=0
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="cffi==$(PKG_VERSION)"
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
 ```
-[cffi is one of those packages that needs a host-side package installed].
 
-This works reasonably well in the current OpenWrt build system, as binaries get built for this package and get installed in the staging-dir `$(STAGING_DIR)/usr/lib/pythonX.Y/site-packages`.
+The Python package will be installed in `$(STAGING_DIR_HOSTPKG)/lib/pythonX.Y/site-packages`.
 
-`PKG_BUILD_PARALLEL:=0` is necessary because installing packages with multiple concurrent pip processes can lead to [errors or unexpected results](https://github.com/pypa/pip/issues/2361).
+Parallel builds need to be disabled because installing packages with multiple concurrent pip processes can lead to [errors or unexpected results](https://github.com/pypa/pip/issues/2361).
