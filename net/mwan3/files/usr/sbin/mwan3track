@@ -125,6 +125,7 @@ main() {
 	trap if_up USR2
 
 	config_load mwan3
+	mwan3_check_family_needs
 	config_get track_method $INTERFACE track_method ping
 	config_get_bool httping_ssl $INTERFACE httping_ssl 0
 	config_get reliability $INTERFACE reliability 1

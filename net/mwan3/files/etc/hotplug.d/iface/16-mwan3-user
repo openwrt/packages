@@ -7,6 +7,7 @@
 	[ "$MWAN3_STARTUP" = 1 ] || mwan3_lock "$ACTION" "$DEVICE-user"
 
 	config_load mwan3
+	mwan3_check_family_needs
 	config_get_bool enabled globals 'enabled' '0'
 	[ "${enabled}" -gt 0 ] || {
 		[ "$MWAN3_STARTUP" = 1 ] || mwan3_unlock "$ACTION" "$DEVICE-user"

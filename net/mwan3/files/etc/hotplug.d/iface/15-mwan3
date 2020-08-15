@@ -17,6 +17,7 @@ fi
 [ "$MWAN3_STARTUP" = 1 ] || mwan3_lock "$ACTION" "$INTERFACE"
 
 config_load mwan3
+mwan3_check_family_needs
 config_get_bool enabled globals 'enabled' '0'
 [ "${enabled}" -gt 0 ] || {
 	[ "$MWAN3_STARTUP" = 1 ] || mwan3_unlock "$ACTION" "$INTERFACE"
@@ -25,10 +26,20 @@ config_get_bool enabled globals 'enabled' '0'
 	exit 0
 }
 
-$IPT4 -S mwan3_hook &>/dev/null || {
-	mwan3_unlock "$ACTION" "$INTERFACE"
-	LOG warn "hotplug called on $INTERFACE before mwan3 has been set up"
-	exit 0
+[ $NEED_IPV4 -ne 0 ] && {
+	$IPT4 -S mwan3_hook &>/dev/null || {
+		mwan3_unlock "$ACTION" "$INTERFACE"
+		LOG warn "hotplug called on $INTERFACE(ipv4) before mwan3 has been set up"
+		exit 0
+	}
+}
+
+[ $NEED_IPV6 -ne 0 ] && {
+	$IPT6 -S mwan3_hook &>/dev/null || {
+		mwan3_unlock "$ACTION" "$INTERFACE"
+		LOG warn "hotplug called on $INTERFACE(ipv6) before mwan3 has been set up"
+		exit 0
+	}
 }
 
 mwan3_init
