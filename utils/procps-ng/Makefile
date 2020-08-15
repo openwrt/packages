@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=procps-ng
 PKG_VERSION:=3.3.16
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/procps-ng
@@ -81,6 +81,7 @@ define GenPlugin
 endef
 
 $(foreach a,$(PROCPS_APPLETS),$(eval $(call GenPlugin,procps-ng-$(a),$(a),$(call procps-applets-dir,$(a)))))
+$(eval $(call GenPlugin,procps-ng-sysctl,sysctl,/usr/sbin))
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS)" \
@@ -90,6 +91,11 @@ MAKE_FLAGS += \
 define Package/procps-ng/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libprocps.so* $(1)/usr/lib/
+endef
+
+define Package/procps-ng-sysctl/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/sysctl $(1)/usr/sbin
 endef
 
 define BuildPlugin
@@ -102,4 +108,5 @@ define BuildPlugin
 endef
 
 $(foreach a,$(PROCPS_APPLETS),$(eval $(call BuildPlugin,procps-ng-$(a),$(a),$(call procps-applets-dir,$(a)))))
+$(eval $(call BuildPackage,procps-ng-sysctl))
 $(eval $(call BuildPackage,procps-ng))
