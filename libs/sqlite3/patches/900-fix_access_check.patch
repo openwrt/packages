@@ -1,0 +1,11 @@
+--- a/sqlite3.c
++++ b/sqlite3.c
+@@ -33842,7 +33842,7 @@ static struct unix_syscall {
+   { "close",        (sqlite3_syscall_ptr)close,      0  },
+ #define osClose     ((int(*)(int))aSyscall[1].pCurrent)
+ 
+-  { "access",       (sqlite3_syscall_ptr)access,     0  },
++  { "access",       (sqlite3_syscall_ptr)eaccess,     0  },
+ #define osAccess    ((int(*)(const char*,int))aSyscall[2].pCurrent)
+ 
+   { "getcwd",       (sqlite3_syscall_ptr)getcwd,     0  },
