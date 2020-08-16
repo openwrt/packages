@@ -124,6 +124,8 @@
 
 "loopia.se"		"http://[USERNAME]:[PASSWORD]@dns.loopia.se/XDynDNSServer/XDynDNS.php?system=custom&hostname=[DOMAIN]&myip=[IP]"	"good|nochg"
 
+"moniker.com"		"https://dynamicdns.key-systems.net/update.php?hostname=[DOMAIN]&password=[PASSWORD]&ip=[IP]"	"success"
+
 "mydns.jp"		"http://www.mydns.jp/directip.html?MID=[USERNAME]&PWD=[PASSWORD]&IPV4ADDR=[IP]"
 
 "myip.co.ua"		"http://[USERNAME]:[PASSWORD]@myip.co.ua/update?hostname=[DOMAIN]&myip=[IP]"	"good"
