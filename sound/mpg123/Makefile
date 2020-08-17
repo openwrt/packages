@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpg123
 PKG_VERSION:=1.26.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/mpg123
@@ -89,6 +89,7 @@ endif
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(INSTALL_DATA) \
+		$(PKG_BUILD_DIR)/src/libmpg123/fmt123.h \
 		$(PKG_INSTALL_DIR)/usr/include/mpg123.h \
 		$(PKG_INSTALL_DIR)/usr/include/out123.h \
 		$(PKG_INSTALL_DIR)/usr/include/syn123.h \
