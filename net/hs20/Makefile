@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hs20
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://w1.fi/hostap.git
 PKG_SOURCE_PROTO:=git
@@ -18,6 +18,19 @@ PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3-Clause
 PKG_CPE_ID:=cpe:/a:w1.fi:hostapd
 
+define Download/dm-ddf-dtd
+  URL:=http://www.openmobilealliance.org/tech/DTD
+  FILE:=dm_ddf-v1_2.dtd
+  HASH:=1fb8f97ee13b673e0d2386ef3ec64fbc9c8d75429a9725dc3fac295c4d5ccae4
+endef
+
+define Download/spp-xsd
+  URL:=https://raw.githubusercontent.com/greearb/hostap-ct/7a7b81d0e58c81796c7408a47082c9cc7587aa21/hs20/server/examples/Fedora20/hs20/spp
+  URL_FILE:=spp.xsd
+  FILE:=spp-v1_0.xsd
+  HASH:=83be16db72e96cca8d654d7f0b446cdd017090d5512a4cd5f7172204331fd8f2
+endef
+
 PKG_BUILD_PARALLEL:=1
 PKG_ASLR_PIE_REGULAR:=1
 
@@ -28,13 +41,32 @@ endif
 
 include $(INCLUDE_DIR)/package.mk
 
+define Package/hs20-common
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=WirelessAPD
+  TITLE:=Hotspot 2.0 OSU common files
+  URL:=http://hostap.epitest.fi/
+endef
+
+define Package/hs20-common/description
+Hotspot 2.0 OSU common files
+
+Hotspot 2.0 SPP and OMA DM XML schema/DTD files
+endef
+
 define Package/hs20-client
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=WirelessAPD
   TITLE:=Hotspot 2.0 OSU client
   URL:=http://hostap.epitest.fi/
-  DEPENDS:=+libopenssl +libcurl +libxml2
+  DEPENDS:=+hs20-common +libopenssl +libcurl +libxml2
+endef
+
+define Package/hs20-client/description
+Hotspot 2.0 OSU client
+
 endef
 
 define Package/hs20-server
@@ -43,11 +75,26 @@ define Package/hs20-server
   SUBMENU:=WirelessAPD
   TITLE:=Hotspot 2.0 OSU server
   URL:=http://hostap.epitest.fi/
-  DEPENDS:=+libopenssl +libsqlite3 +libxml2 +php7 +php7-cgi +php7-mod-xml +openssl-util +sqlite3-cli
+  DEPENDS:=+hs20-common +libopenssl +libsqlite3 +libxml2 +php7 +php7-cgi +php7-mod-xml +php7-mod-pdo-sqlite +openssl-util +sqlite3-cli +uhttpd +xxd
+endef
+
+define Package/hs20-server/description
+Hotspot 2.0 OSU server
+
+This implementation and the example configuration is meant only for
+testing purposes in a lab environment. This design is not secure to be
+installed in a publicly available Internet server without considerable
+amount of modification and review for security issues.
+endef
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(eval $(call Download,dm-ddf-dtd))
+	$(eval $(call Download,spp-xsd))
 endef
 
 define Build/Configure
-	cp "./files/hs20.config" "$(PKG_BUILD_DIR)/hostapd/.config"
+	$(CP) ./files/hostapd.config $(PKG_BUILD_DIR)/hostapd/.config
 endef
 
 define Build/RunMake
@@ -67,20 +114,30 @@ define Build/Compile
 	$(call Build/RunMake,hs20/client,-lssl -lcrypto -lcurl -lxml2,all)
 endef
 
+define Package/hs20-common/install
+	$(INSTALL_DIR) $(1)/etc/hs20/spp
+	$(INSTALL_DATA) $(DL_DIR)/dm_ddf-v1_2.dtd $(1)/etc/hs20/spp
+	$(INSTALL_DATA) $(DL_DIR)/spp-v1_0.xsd $(1)/etc/hs20/spp/spp.xsd
+endef
+
 define Package/hs20-client/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hs20/client/hs20-osu-client $(1)/usr/sbin/
 endef
 
 define Package/hs20-server/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/share/hs20/ca $(1)/www/hs20
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/share/hs20/ca $(1)/www/hs20 $(1)/etc/uci-defaults $(1)/etc/hs20/spp $(1)/etc/config $(1)/etc/init.d
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hostapd $(1)/usr/sbin/hostapd-hs20-radius-server
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hostapd/hlr_auc_gw $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hs20/server/hs20_spp_server $(1)/usr/sbin/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/hs20/server/www/* $(1)/www/hs20
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/hs20/server/*.txt $(1)/usr/share/hs20
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/hs20/server/ca/* $(1)/usr/share/hs20/ca
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/hs20/server/sql.txt $(1)/usr/share/hs20
+	$(CP) $(PKG_BUILD_DIR)/hs20/server/ca/* $(1)/usr/share/hs20/ca
+	$(INSTALL_BIN) ./files/hs20-server.defaults $(1)/etc/uci-defaults/hs20-server
+	$(INSTALL_CONF) ./files/hs20.config $(1)/etc/config/hs20
+	$(INSTALL_BIN) ./files/hs20.init $(1)/etc/init.d/hs20
 endef
 
+$(eval $(call BuildPackage,hs20-common))
 $(eval $(call BuildPackage,hs20-client))
 $(eval $(call BuildPackage,hs20-server))
