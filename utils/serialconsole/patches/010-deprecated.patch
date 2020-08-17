@@ -1,0 +1,70 @@
+--- a/sc.c
++++ b/sc.c
+@@ -34,6 +34,7 @@ static const char __rcsid[] =
+ #include <sysexits.h>
+ #include <termios.h>
+ #include <unistd.h>
++#include <time.h>
+ 
+ 
+ #if !defined(SC_VERSION)
+@@ -344,7 +345,7 @@ loop(int sfd, int escchr, int msdelay)
+ 	FD_SET(STDIN_FILENO, fds+1);
+ 	FD_SET(sfd, fds+1);
+ 	while (scrunning) {
+-		bcopy(fds+1, fds, sizeof(*fds));
++		memcpy(fds, fds+1, sizeof(*fds));
+ 		if ((i = select(sfd+1, fds, NULL, NULL, NULL)) < 0
+ 				&& errno != EINTR) {
+ 			warn("select()");
+@@ -353,7 +354,7 @@ loop(int sfd, int escchr, int msdelay)
+ #else
+ 	struct pollfd pfds[2];
+ 
+-	bzero(pfds, sizeof(pfds));
++	memset(pfds, 0, sizeof(pfds));
+ 	pfds[0].fd = STDIN_FILENO;
+ 	pfds[0].events = POLLIN;
+ 	pfds[1].fd = sfd;
+@@ -453,8 +454,10 @@ loop(int sfd, int escchr, int msdelay)
+ 						continue;
+ 				}
+ 				i = write(sfd, &c, 1);
+-				if(c == '\n' && msdelay > 0)
+-					usleep(msdelay*1000);
++				if(c == '\n' && msdelay > 0) {\
++					struct timespec d = {msdelay / 1000, (msdelay % 1000 ) * 1000 * 1000};
++					nanosleep(&d, NULL);
++				}
+ 			}
+ 			if (i < 0) {
+ 				warn("read/write");
+@@ -603,8 +606,8 @@ main(int argc, char **argv)
+ 		if (strlen(path_dev) + strlen(tty) > PATH_MAX) {
+ 			errx(EX_USAGE, "Device name \"%s\" is too long.", tty);
+ 		}
+-		bcopy(path_dev, buffer, strlen(path_dev)+1);
+-		bcopy(tty, buffer+strlen(path_dev), strlen(tty)+1);
++		memcpy(buffer, path_dev, strlen(path_dev)+1);
++		memcpy(buffer+strlen(path_dev), tty, strlen(tty)+1);
+ 		tty = buffer;
+ 	}
+ 	sfd = open(tty, O_RDWR);
+@@ -622,7 +625,7 @@ main(int argc, char **argv)
+ 		err(EX_OSERR, "tcgetattr(%s)", tty);
+ 	}
+ 	/* configure serial port */
+-	bcopy(&serialti, &tempti, sizeof(tempti));
++	memcpy(&tempti, &serialti, sizeof(tempti));
+ 	cfmakeraw(&tempti);
+ 	tempti.c_cc[VMIN] = 1;
+ 	tempti.c_cc[VTIME] = 0;
+@@ -660,7 +663,7 @@ main(int argc, char **argv)
+ 		close(sfd);
+ 		err(EX_OSERR, "fcntl() tty");
+ 	}
+-	bcopy(&consoleti, &tempti, sizeof(tempti));
++	memcpy(&tempti, &consoleti, sizeof(tempti));
+ 	cfmakeraw(&tempti);
+ 	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &tempti)) {
+ 		ec = EX_OSERR;
