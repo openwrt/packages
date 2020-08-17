@@ -1,6 +1,6 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -2137,16 +2137,10 @@ endif
+@@ -2168,16 +2168,10 @@ endif
  
  glib_conf.set('HAVE_PROC_SELF_CMDLINE', have_proc_self_cmdline)
  
