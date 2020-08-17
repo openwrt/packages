@@ -31,6 +31,12 @@ setup_ca() {
 	mkdir -p /etc/hs20/AS/Key
 	cp /etc/hs20/ca/server.* /etc/hs20/ca/ca.pem /etc/hs20/AS/Key
 
+	uci batch <<EOF
+set uhttpd.main.cert='/etc/hs20/ca/server.pem'
+set uhttpd.main.key='/etc/hs20/ca/server.key'
+commit uhttpd
+EOF
+
 	return 0
 }
 
@@ -64,6 +70,8 @@ setup_dbconf() {
 		sql_set $realm remediation_url "$remediation_url"
 		sql_set $realm free_remediation_url "$free_remediation_url"
 		sql_set $realm signup_url "$signup_url"
+		echo "DELETE FROM wildcards WHERE identity='';"
+		echo "INSERT INTO wildcards(identity,methods) VALUES('','TTLS,TLS');"
 	) | sqlite3 /etc/hs20/AS/DB/eap_user.db
 
 	return 0
