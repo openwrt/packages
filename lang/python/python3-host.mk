@@ -49,15 +49,21 @@ endef
 # Note: I shamelessly copied this from Yousong's logic (from python-packages);
 HOST_PYTHON3_PIP:=$(STAGING_DIR_HOSTPKG)/bin/pip$(PYTHON3_VERSION)
 
+HOST_PYTHON3_PIP_CACHE_DIR:=$(DL_DIR)/pip-cache
+
 # $(1) => packages to install
 define HostPython3/PipInstall
 	$(HOST_PYTHON3_VARS) \
 	$(HOST_PYTHON3_PIP) \
 		--disable-pip-version-check \
-		--cache-dir "$(DL_DIR)/pip-cache" \
+		--cache-dir "$(HOST_PYTHON3_PIP_CACHE_DIR)" \
 		install \
 		--no-binary :all: \
 		$(1)
+  ifdef CONFIG_PYTHON3_HOST_PIP_CACHE_WORLD_READABLE
+	$(FIND) $(HOST_PYTHON3_PIP_CACHE_DIR) -not -type d -exec chmod go+r  '{}' \;
+	$(FIND) $(HOST_PYTHON3_PIP_CACHE_DIR)      -type d -exec chmod go+rx '{}' \;
+  endif
 endef
 
 # $(1) => build subdir
