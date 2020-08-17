@@ -21,6 +21,7 @@ unexport \
   GOARCH \
   GOBIN \
   GOCACHE \
+  GOMODCACHE \
   GODEBUG \
   GOENV \
   GOFLAGS \
@@ -110,13 +111,13 @@ unexport \
   BOOT_GO_GCFLAGS \
   BOOT_GO_LDFLAGS
 
+# From https://golang.org/src/cmd/dist/buildruntime.go
+unexport \
+  GOEXPERIMENT
+
 # From https://golang.org/src/cmd/dist/buildtool.go
 unexport \
   GOBOOTSTRAP_TOOLEXEC
-
-# From https://golang.org/src/cmd/internal/objabi/util.go
-unexport \
-  GOEXPERIMENT
 
 
 # GOOS / GOARCH
@@ -198,6 +199,8 @@ GO_PIE_SUPPORTED_OS_ARCH:= \
   android_386 android_amd64 android_arm android_arm64 \
   linux_386   linux_amd64   linux_arm   linux_arm64 \
   \
+  windows_386 windows_amd64 windows_arm \
+  \
   darwin_amd64 \
   freebsd_amd64 \
   \
@@ -205,7 +208,7 @@ GO_PIE_SUPPORTED_OS_ARCH:= \
   \
   linux_ppc64le linux_s390x
 
-go_pie_install_suffix=$(if $(filter $(1),aix_ppc64),,shared)
+go_pie_install_suffix=$(if $(filter $(1),aix_ppc64 windows_386 windows_amd64 windows_arm),,shared)
 
 ifneq ($(filter $(GO_HOST_OS_ARCH),$(GO_PIE_SUPPORTED_OS_ARCH)),)
   GO_HOST_PIE_SUPPORTED:=1
