@@ -125,8 +125,13 @@ elif [ -z "$CURL_PROXY" ]; then
 	write_log 13 "cURL: libcurl compiled without Proxy support"
 fi
 # set headers
-__PRGBASE="$__PRGBASE --header 'X-Auth-Email: $username' "
-__PRGBASE="$__PRGBASE --header 'X-Auth-Key: $password' "
+if [ "$username" = "Bearer" ]; then
+  write_log 7 "Found Username 'Bearer' using Password as Bearer Authorization Token"
+  __PRGBASE="$__PRGBASE --header 'Authorization: Bearer $password' "
+else
+  __PRGBASE="$__PRGBASE --header 'X-Auth-Email: $username' "
+  __PRGBASE="$__PRGBASE --header 'X-Auth-Key: $password' "
+fi
 __PRGBASE="$__PRGBASE --header 'Content-Type: application/json' "
 
 # read zone id for registered domain.TLD
