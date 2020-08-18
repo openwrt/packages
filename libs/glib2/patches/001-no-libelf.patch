@@ -1,6 +1,6 @@
 --- a/gio/meson.build
 +++ b/gio/meson.build
-@@ -881,20 +881,6 @@ endif
+@@ -874,20 +874,6 @@ endif
  
  # Dependencies used by executables below
  have_libelf = false
