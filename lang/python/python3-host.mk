@@ -55,10 +55,11 @@ HOST_PYTHON3_PIP_CACHE_DIR:=$(DL_DIR)/pip-cache
 define HostPython3/PipInstall
 	$(HOST_PYTHON3_VARS) \
 	$(HOST_PYTHON3_PIP) \
-		--disable-pip-version-check \
 		--cache-dir "$(HOST_PYTHON3_PIP_CACHE_DIR)" \
+		--disable-pip-version-check \
 		install \
 		--no-binary :all: \
+		--require-hashes \
 		$(1)
   ifdef CONFIG_PYTHON3_HOST_PIP_CACHE_WORLD_READABLE
 	$(FIND) $(HOST_PYTHON3_PIP_CACHE_DIR) -not -type d -exec chmod go+r  '{}' \;

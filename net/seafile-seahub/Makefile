@@ -21,7 +21,7 @@ PKG_LICENSE_FILES:=LICENSE.txt
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/seahub-$(PKG_VERSION)-server
 
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="Django~=1.11"
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=Django-1.11
 
 PKG_BUILD_PARALLEL:=0
 PYTHON3_PKG_BUILD:=0
@@ -76,7 +76,7 @@ MAKE_VARS += \
 	DJANGO_ADMIN_PY="$(STAGING_DIR_HOSTPKG)/bin/django-admin"
 
 define Build/Compile
-	$(call HostPython3/PipInstall,$(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS))
+	$(call HostPython3/PipInstall,$(PYTHON3_PKG_HOST_PIP_INSTALL_ARGS))
 	$(call Build/Compile/Default,locale)
 endef
 

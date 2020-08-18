@@ -12,7 +12,7 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_PARALLEL:=0
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="setuptools_scm[toml] >= 3.4.1"
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm toml  # setuptools_scm[toml] >= 3.4.1
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

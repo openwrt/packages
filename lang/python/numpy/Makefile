@@ -22,7 +22,7 @@ PKG_CPE_ID:=cpe:/a:numpy:numpy
 # yes, zip... sigh
 PYPI_SOURCE_EXT:=zip
 PKG_BUILD_PARALLEL:=0
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="Cython==0.29.21"
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=Cython  # Cython>=0.29.21
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
