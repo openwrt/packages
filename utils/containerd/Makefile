@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=containerd
 PKG_VERSION:=1.2.13
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -51,7 +51,6 @@ GO_PKG_INSTALL_ALL:=1
 MAKE_PATH:=$(GO_PKG_WORK_DIR_NAME)/build/src/$(GO_PKG)
 MAKE_VARS += $(GO_PKG_VARS)
 MAKE_FLAGS += \
-	DESTDIR="$(PKG_INSTALL_DIR)" \
 	VERSION=$(PKG_VERSION) \
 	REVISION=$(PKG_SOURCE_VERSION)
 
@@ -61,16 +60,8 @@ else
 MAKE_FLAGS += BUILDTAGS=''
 endif
 
-define Build/Compile
-	$(call Build/Compile/Default)
-endef
-
-# Avoid installing binaries
-define Build/InstallDev
-	$(call Build/Compile/Default,clean)
-	rm -f $(STAMP_BUILT)
-	$(call GoPackage/Build/InstallDev,$(1))
-endef
+# Reset golang-package.mk overrides so we can use the Makefile
+Build/Compile=$(call Build/Compile/Default)
 
 define Package/containerd/install
 	$(INSTALL_DIR) $(1)/usr/bin/
