@@ -9,15 +9,15 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=at
 PKG_VERSION:=3.1.23
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
 PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/a/at
 PKG_HASH:=97450aa954aaa8a70218cc8e61a33df9fee9f86527e9f861de302fb7a3c81710
 
+PKG_MAINTAINER:=Phil Eichinger <phil@zankapfel.net>
 PKG_LICENSE:=GPL-2.0-or-later GPL-3.0-or-later ISC
 PKG_LICENSE_FILES:=COPYING Copyright
-PKG_MAINTAINER:=Phil Eichinger <phil@zankapfel.net>
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -38,11 +38,13 @@ export SENDMAIL=/bin/true
 EXTRA_CFLAGS:=-DNEED_YYWRAP -I$(PKG_BUILD_DIR) \
 	$(TARGET_LDFLAGS)
 
-CONFIGURE_ARGS+=--prefix=/usr \
-		--with-daemon_username=nobody \
-		--with-daemon_groupname=nogroup \
-		--with-jobdir=/var/spool/cron/atjobs \
-		--with-atspool=/var/spool/cron/atspool
+CONFIGURE_ARGS+= \
+	--prefix=/usr \
+	--without-selinux \
+	--with-daemon_username=nobody \
+	--with-daemon_groupname=nogroup \
+	--with-jobdir=/var/spool/cron/atjobs \
+	--with-atspool=/var/spool/cron/atspool
 
 CONFIGURE_VARS += \
 	ac_cv_header_security_pam_appl_h=no
