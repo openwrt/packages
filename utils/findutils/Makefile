@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=findutils
 PKG_VERSION:=4.7.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
@@ -63,7 +63,9 @@ define Package/findutils-locate
 	TITLE+= - locate and updatedb utility
 endef
 
-CONFIGURE_ARGS += --localstatedir=/srv/var
+CONFIGURE_ARGS += \
+	--localstatedir=/srv/var \
+	--without-selinux
 CONFIGURE_VARS += ac_cv_path_SORT=sort
 
 define Package/findutils/install
