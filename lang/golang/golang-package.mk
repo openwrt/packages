@@ -186,6 +186,7 @@ GO_PKG_TARGET_VARS= \
 GO_PKG_BUILD_VARS= \
 	GOPATH=$(GO_PKG_BUILD_DIR) \
 	GOCACHE=$(GO_PKG_CACHE_DIR) \
+	GOMODCACHE=$(GO_MOD_CACHE_DIR) \
 	GOENV=off
 
 GO_PKG_DEFAULT_VARS= \
@@ -226,7 +227,7 @@ GoPackage/has_binaries=$(call GoPackage/is_dir_not_empty,$(GO_PKG_BUILD_BIN_DIR)
 define GoPackage/Build/Configure
 	( \
 		cd $(PKG_BUILD_DIR) ; \
-		mkdir -p $(GO_PKG_BUILD_DIR)/bin $(GO_PKG_BUILD_DIR)/src $(GO_PKG_CACHE_DIR) ; \
+		mkdir -p $(GO_PKG_BUILD_DIR)/bin $(GO_PKG_BUILD_DIR)/src $(GO_PKG_CACHE_DIR) $(GO_MOD_CACHE_DIR) ; \
 		\
 		files=$$$$($(FIND) ./ \
 			-type d -a \( -path './.git' -o -path './$(GO_PKG_WORK_DIR_NAME)' \) -prune -o \
@@ -303,9 +304,12 @@ define GoPackage/Build/Compile
 	( \
 		cd $(GO_PKG_BUILD_DIR) ; \
 		export $(GO_PKG_VARS) ; \
+		if [ -f "$(PKG_BUILD_DIR)/go.mod" ] ; then \
+			modargs="$(GO_MOD_ARGS)" ; \
+		fi ; \
 		\
 		echo "Finding targets" ; \
-		targets=$$$$(go list $(GO_PKG_BUILD_PKG)) ; \
+		targets=$$$$(go list $$$$modargs $(GO_PKG_BUILD_PKG)) ; \
 		for pattern in $(GO_PKG_EXCLUDES); do \
 			targets=$$$$(echo "$$$$targets" | grep -v "$$$$pattern") ; \
 		done ; \
@@ -319,7 +323,7 @@ define GoPackage/Build/Compile
 		\
 		if [ "$(strip $(GO_PKG_SOURCE_ONLY))" != 1 ]; then \
 			echo "Building targets" ; \
-			go install $(GO_PKG_INSTALL_ARGS) $(1) $$$$targets ; \
+			go install $(GO_PKG_INSTALL_ARGS) $$$$modargs $(1) $$$$targets ; \
 			retval=$$$$? ; \
 			echo ; \
 			\
@@ -328,9 +332,9 @@ define GoPackage/Build/Compile
 				echo ; \
 			fi ; \
 			\
-			echo "Cleaning module download cache (golang/go#27455)" ; \
-			go clean -modcache ; \
-			echo ; \
+			if [ "$$$$retval" -ne 0 ]; then \
+				$(call Go/CacheCleanup) ; \
+			fi ; \
 		fi ; \
 		exit $$$$retval ; \
 	)
@@ -362,6 +366,7 @@ endef
 ifneq ($(strip $(GO_PKG)),)
   Build/Configure=$(call GoPackage/Build/Configure)
   Build/Compile=$(call GoPackage/Build/Compile)
+  Hooks/Compile/Post+=Go/CacheCleanup
   Build/InstallDev=$(call GoPackage/Build/InstallDev,$(1))
 endif
 

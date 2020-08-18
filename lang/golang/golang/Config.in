@@ -12,4 +12,8 @@ config GOLANG_EXTERNAL_BOOTSTRAP_ROOT
 
 	  Leave blank to compile the default bootstrap Go.
 
+config GOLANG_MOD_CACHE_WORLD_READABLE
+	bool "Ensure Go module cache is world-readable"
+	default n
+
 endmenu

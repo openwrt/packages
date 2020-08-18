@@ -219,3 +219,20 @@ ifneq ($(filter $(GO_OS_ARCH),$(GO_PIE_SUPPORTED_OS_ARCH)),)
   GO_TARGET_PIE_SUPPORTED:=1
   GO_TARGET_PIE_INSTALL_SUFFIX:=$(call go_pie_install_suffix,$(GO_OS_ARCH))
 endif
+
+
+# General build info
+
+GO_MOD_CACHE_DIR:=$(DL_DIR)/go-mod-cache
+
+GO_MOD_ARGS= \
+	-modcacherw
+
+GO_GENERAL_BUILD_CONFIG_VARS= \
+	CONFIG_GOLANG_MOD_CACHE_WORLD_READABLE="$(CONFIG_GOLANG_MOD_CACHE_WORLD_READABLE)" \
+	GO_MOD_CACHE_DIR="$(GO_MOD_CACHE_DIR)"
+
+define Go/CacheCleanup
+	$(GENERAL_BUILD_CONFIG_VARS) \
+	$(SHELL) $(GO_INCLUDE_DIR)/golang-build.sh cache_cleanup
+endef
