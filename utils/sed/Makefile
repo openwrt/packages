@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sed
 PKG_VERSION:=4.8
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/sed
@@ -42,11 +42,13 @@ extracting part of a file using pattern matching or substituting multiple
 occurrences of a string within a file.
 endef
 
+CONFIGURE_ARGS += \
+	--disable-acl \
+	--without-selinux
+
 define Package/sed/install
 	$(INSTALL_DIR) $(1)/usr/libexec
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/sed $(1)/usr/libexec/sed-gnu
 endef
-
-CONFIGURE_ARGS+= --disable-acl
 
 $(eval $(call BuildPackage,sed))
