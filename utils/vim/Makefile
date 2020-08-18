@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vim
 PKG_VERSION:=8.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 VIMVER:=82
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -129,6 +129,7 @@ CONFIGURE_ARGS += \
 	--disable-cscope \
 	--disable-gpm \
 	--disable-acl \
+	--disable-selinux \
 	--with-tlib=ncurses \
 	--with-compiledby="non-existent-hostname-compiled"
 
