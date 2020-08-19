@@ -5,8 +5,9 @@ USE_PROCD=1
 
 boot() {
 	. /lib/config/uci.sh
-	uci_toggle_state mwan3 globals enabled "1"
-	mwan3_boot=1
+	# disabled until mwan3 start runs so hotplug scripts
+	# do not start prematurely
+	uci_toggle_state mwan3 globals enabled "0"
 	rc_procd start_service
 }
 
@@ -20,7 +21,6 @@ reload_service() {
 }
 
 start_service() {
-	[ -n "${mwan3_boot}" ] && return 0
 	/usr/sbin/mwan3 start 1000>&-
 }
 

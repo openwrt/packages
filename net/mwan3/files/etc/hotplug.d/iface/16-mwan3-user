@@ -4,22 +4,22 @@
 	. /lib/functions.sh
 	. /lib/mwan3/mwan3.sh
 
-	mwan3_lock "$ACTION" "user"
+	[ "$MWAN3_STARTUP" = 1 ] || mwan3_lock "$ACTION" "$DEVICE-user"
 
 	config_load mwan3
 	config_get_bool enabled globals 'enabled' '0'
 	[ "${enabled}" -gt 0 ] || {
-		mwan3_unlock "$ACTION" "user"
+		[ "$MWAN3_STARTUP" = 1 ] || mwan3_unlock "$ACTION" "$DEVICE-user"
 		exit 0
 	}
 
 	config_get_bool enabled "$INTERFACE" enabled 0
 	[ "${enabled}" -eq 1 ] || {
-		mwan3_unlock "$ACTION" "user"
+		[ "$MWAN3_STARTUP" = 1 ] || mwan3_unlock "$ACTION" "$DEVICE-user"
 		exit 0
 	}
 
-	mwan3_unlock "$ACTION" "user"
+	[ "$MWAN3_STARTUP" = 1 ] || mwan3_unlock "$ACTION" "$DEVICE-user"
 
 	env -i ACTION="$ACTION" INTERFACE="$INTERFACE" DEVICE="$DEVICE" \
 		/bin/sh /etc/mwan3.user
