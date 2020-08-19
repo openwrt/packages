@@ -8,7 +8,7 @@
  ARG_DISBL_SET([curve25519],     [disable Curve25519 Diffie-Hellman plugin.])
  ARG_DISBL_SET([hmac],           [disable HMAC crypto implementation plugin.])
  ARG_ENABL_SET([md4],            [enable MD4 software implementation plugin.])
-@@ -1454,6 +1455,7 @@ ADD_PLUGIN([botan],                [s ch
+@@ -1473,6 +1474,7 @@ ADD_PLUGIN([botan],                [s ch
  ADD_PLUGIN([af-alg],               [s charon scepclient pki scripts medsrv attest nm cmd aikgen])
  ADD_PLUGIN([fips-prf],             [s charon nm cmd])
  ADD_PLUGIN([gmp],                  [s charon scepclient pki scripts manager medsrv attest nm cmd aikgen fuzz])
@@ -16,7 +16,7 @@
  ADD_PLUGIN([curve25519],           [s charon pki scripts nm cmd])
  ADD_PLUGIN([agent],                [s charon nm cmd])
  ADD_PLUGIN([keychain],             [s charon cmd])
-@@ -1595,6 +1597,7 @@ AM_CONDITIONAL(USE_SHA3, test x$sha3 = x
+@@ -1614,6 +1616,7 @@ AM_CONDITIONAL(USE_SHA3, test x$sha3 = x
  AM_CONDITIONAL(USE_MGF1, test x$mgf1 = xtrue)
  AM_CONDITIONAL(USE_FIPS_PRF, test x$fips_prf = xtrue)
  AM_CONDITIONAL(USE_GMP, test x$gmp = xtrue)
@@ -24,7 +24,7 @@
  AM_CONDITIONAL(USE_CURVE25519, test x$curve25519 = xtrue)
  AM_CONDITIONAL(USE_RDRAND, test x$rdrand = xtrue)
  AM_CONDITIONAL(USE_AESNI, test x$aesni = xtrue)
-@@ -1872,6 +1875,7 @@ AC_CONFIG_FILES([
+@@ -1891,6 +1894,7 @@ AC_CONFIG_FILES([
  	src/libstrongswan/plugins/mgf1/Makefile
  	src/libstrongswan/plugins/fips_prf/Makefile
  	src/libstrongswan/plugins/gmp/Makefile
@@ -34,7 +34,7 @@
  	src/libstrongswan/plugins/aesni/Makefile
 --- a/src/libstrongswan/Makefile.am
 +++ b/src/libstrongswan/Makefile.am
-@@ -344,6 +344,13 @@ if MONOLITHIC
+@@ -345,6 +345,13 @@ if MONOLITHIC
  endif
  endif
  
