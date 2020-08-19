@@ -19,7 +19,7 @@ PKG_MAINTAINER:=Jean-Michel Lacroix <lacroix@lepine-lacroix.info>
 PKG_LICENSE:=GPL-2.0-or-later
 
 PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
+PKG_BUILD_PARALLEL:=0
 
 include $(INCLUDE_DIR)/package.mk
 
