@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fping
-PKG_VERSION:=4.4
+PKG_VERSION:=5.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://fping.org/dist/
-PKG_HASH:=9f854b65a52dc7b1749d6743e35d0a6268179d1a724267339fc9a066b2b72d11
+PKG_SOURCE_URL:=https://fping.org/dist
+PKG_HASH:=ed38c0b9b64686a05d1b3bc1d66066114a492e04e44eef1821d43b1263cd57b8
 
 PKG_MAINTAINER:=Nikil Mehta <nikil.mehta@gmail.com>
 PKG_LICENSE:=BSD-4-Clause
