@@ -104,10 +104,17 @@
 		"focus": "tracking",
 		"descurl": "https://github.com/notracking/hosts-blocklists"
 	},
-	"oisd_nl": {
-		"url": "https://abp.oisd.nl/",
+	"oisd": {
+		"url": "https://abp.oisd.nl",
 		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
 		"size": "XXL",
+		"focus": "general",
+		"descurl": "https://oisd.nl"
+	},
+	"oisd_light": {
+		"url": "https://abp.oisd.nl/light",
+		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
+		"size": "L",
 		"focus": "general",
 		"descurl": "https://oisd.nl"
 	},
