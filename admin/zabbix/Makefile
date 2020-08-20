@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=5.0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/5.0/
@@ -74,7 +74,7 @@ define Package/zabbix/Default
   TITLE:=Zabbix
   URL:=https://www.zabbix.com/
   USERID:=zabbix=53:zabbix=53
-  DEPENDS += $(ICONV_DEPENDS) +libpcre +zlib +ZABBIX_GNUTLS:libgnutls +ZABBIX_OPENSSL:libopenssl
+  DEPENDS += $(ICONV_DEPENDS) +libpcre +zlib +ZABBIX_GNUTLS:libgnutls +ZABBIX_OPENSSL:libopenssl @!USE_UCLIBC
 endef
 
 define Package/zabbix-agentd
