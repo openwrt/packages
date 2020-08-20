@@ -3,60 +3,47 @@
 
 START=50
 STOP=20
+USE_PROCD=1
 
-SERVICE_DAEMONIZE=1
-SERVICE_PID_FILE=/var/run/u2pnpd.pid
-SERVICE_USE_PID=1
-SERVICE_WRITE_PID=1
+append_arg() {
+	local cfg="$1"
+	local opt="$2"
+	local var="$3"
+	local def="$4"
+	local val
+	config_get val "$cfg" "$var"
+	[ -n "$val" ] || [ -n "$def" ] && procd_append_param command "$opt" "${val:-$def}"
+}
 
 start_instance() {
-	local section="$1"
+	local cfg="$1"
 	local enabled
-	local interface manufacturer manufacturerURL modelDescription
-	local modelName modelNumber modelURL serialNumber friendlyName
-	local uuid httpsURL
-	local i
 
-	config_get_bool enabled "$section" 'enabled' 1
+	config_get_bool enabled "$cfg" 'enabled' 1
 	[ "$enabled" -gt 0 ] || return 0
 
-	for i in interface httpsURL manufacturer manufacturerURL modelDescription \
-	         modelName modelNumber modelURL serialNumber friendlyName uuid; do
-		config_get "$i" "$section" "$i"
-	done
-
-	[ -n "$interface" ] && SERVICE_PID_FILE="/var/run/u2pnpd.$interface.pid"
-
-	service_start /usr/bin/u2pnpd ${httpsURL:+-s} \
-	    ${interface:+--interface="$interface"} \
-	    ${manufacturer:+--manufacturer="$manufacturer"} \
-	    ${manufacturerURL:+--manufacturerURL="$manufacturerURL"} \
-	    ${modelDescription:+--modelDescription="$modelDescription"} \
-	    ${modelName:+--modelName="$modelName"} \
-	    ${modelNumber:+--modelNumber="$modelNumber"} \
-	    ${modelURL:+--modelURL="$modelURL"} \
-	    ${serialNumber:+--serialNumber="$serialNumber"} \
-	    ${friendlyName:+--friendlyName="$friendlyName"} \
-	    ${uuid:+--uuid="$uuid"}
+	procd_open_instance
+	procd_set_param command /usr/bin/u2pnpd
+	append_arg "$cfg" -s httpsURL
+	append_arg "$cfg" --interface interface
+	append_arg "$cfg" --manufacturer manufacturer
+	append_arg "$cfg" --manufacturerURL manufacturerURL
+	append_arg "$cfg" --modelDescription modelDescription
+	append_arg "$cfg" --modelName modelName
+	append_arg "$cfg" --modelNumber modelNumber
+	append_arg "$cfg" --modelURL modelURL
+	append_arg "$cfg" --serialNumber serialNumber
+	append_arg "$cfg" --friendlyName friendlyName
+	append_arg "$cfg" --uuid uuid
+	procd_set_param file /etc/config/u2pnpd
+	procd_set_param respawn
+	procd_close_instance
 }
 
-stop_instance() {
-	local section="$1"
-	local interface
-
-	config_get interface "$section" 'interface'
-	[ -n "$interface" ] && SERVICE_PID_FILE="/var/run/u2pnpd.$interface.pid"
-
-	service_stop /usr/bin/u2pnpd
-	rm -f "$SERVICE_PID_FILE"
+start_service() {
+	config_load u2pnpd && config_foreach start_instance u2pnpd
 }
 
-start() {
-	config_load 'u2pnpd'
-	config_foreach start_instance 'u2pnpd'
-}
-
-stop() {
-	config_load 'u2pnpd'
-	config_foreach stop_instance 'u2pnpd'
+service_triggers() {
+	procd_add_reload_trigger u2pnpd
 }
