@@ -3,6 +3,7 @@ s|whitelist_domain|allowed_domain|g
 s|blacklist_hosts_url|blocked_hosts_url|g
 s|blacklist_domains_url|blocked_domains_url|g
 s|blacklist_domain|blocked_domain|g
+s|ssl.bblck.me|cdn.jsdelivr.net/gh/paulgb/BarbBlock|g
 s|dbl.oisd.nl|hosts.oisd.nl|g
 s|raw.githubusercontent.com/StevenBlack/hosts/|cdn.jsdelivr.net/gh/StevenBlack/hosts@|g
 s|raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/|cdn.jsdelivr.net/gh/hoshsadiq/adblock-nocoin-list@|g
