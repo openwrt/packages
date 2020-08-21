@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gstreamer1
 PKG_VERSION:=1.17.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=gstreamer-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gstreamer
@@ -118,11 +118,11 @@ GST_VERSION:=1.0
 MESON_ARGS += \
 	-Dgst_debug=false \
 	-Dgst_parse=true \
-	-Dregistry=false \
+	-Dregistry=true \
 	-Dtracer_hooks=false \
 	-Dptp-helper-setuid-user=none \
 	-Dptp-helper-setuid-group=none \
-	-Doption-parsing=false \
+	-Doption-parsing=true \
 	-Dpoisoning=false \
 	-Dmemory-alignment=malloc \
 	-Dcheck=enabled \
