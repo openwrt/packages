@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgphoto2
 PKG_VERSION:=2.5.25
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PORT_VERSION:=0.12.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -37,7 +37,7 @@ endef
 
 define Package/libgphoto2
   $(call Package/libgphoto2/Default)
-  DEPENDS:=+libpthread +libltdl +libusb-compat +libusb-1.0 $(ICONV_DEPENDS)
+  DEPENDS:=+libpthread +libltdl +libusb-compat +libusb-1.0 $(ICONV_DEPENDS) $(INTL_DEPENDS)
   TITLE:=The basic library of the gphoto2 program, version $(PKG_VERSION).
   MENU:=1
 endef
