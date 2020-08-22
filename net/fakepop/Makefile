@@ -9,7 +9,7 @@ PKG_VERSION:=11
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Marc Egerton <foxtrot@realloc.me>
-PKG_LICENSE:=GPL-3.0
+PKG_LICENSE:=GPL-3.0-or-later
 
 PKG_SOURCE:=fakepop_11.tar.gz
 PKG_SOURCE_URL:=http://deb.debian.org/debian/pool/main/f/fakepop/
@@ -24,7 +24,7 @@ define Package/fakepop
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=fakepop
-	DEPENDS:=+libc +glib2 +xinetd
+	DEPENDS:=+glib2 +xinetd
 endef
 
 define Package/fakepop/description
