@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nft-qos
 PKG_VERSION:=1.0.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0
 
 PKG_MAINTAINER:=Rosy Song <rosysong@rosinson.com>
