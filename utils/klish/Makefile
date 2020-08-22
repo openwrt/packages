@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=klish
 PKG_VERSION:=2.2.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://libcode.org/attachments/download/77/
@@ -53,6 +53,8 @@ define Package/klish/description
 endef
 
 CONFIGURE_ARGS += --with-libxml2
+
+TARGET_CFLAGS += -D_GNU_SOURCE
 
 define Package/klish/install
 	$(INSTALL_DIR) $(1)/usr/bin

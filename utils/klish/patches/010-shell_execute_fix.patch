@@ -6,12 +6,10 @@
  
 +#if defined(__UCLIBC__) && !defined(__UCLIBC_HAS_OBSOLETE_BSD_SIGNAL__)
  /* Empty signal handler to ignore signal but don't use SIG_IGN. */
--static void sigignore(int signo)
-+static int sigignore(int signo)
+ static void sigignore(int signo)
  {
  	signo = signo; /* Happy compiler */
--	return;
-+	return 0;
+ 	return;
  }
 +#endif
  
