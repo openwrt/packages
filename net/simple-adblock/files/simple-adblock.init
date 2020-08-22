@@ -247,10 +247,10 @@ load_package_config() {
 	. /lib/functions/network.sh
 	. /usr/share/libubox/jshn.sh
 	# Prefer curl because it supports the file:// scheme.
-	if [ -x /usr/bin/curl ]; then
+	if command -v curl >/dev/null 2>&1; then
 		dl_command="curl --insecure --retry $curlRetry --connect-timeout $dlTimeout --silent"
 		dl_flag="-o"
-	elif wget --version 2>/dev/null | grep -q "+https"; then
+	elif command -v wget >/dev/null 2>&1 && wget --version 2>/dev/null | grep -q "+https"; then
 		dl_command="wget --no-check-certificate --timeout $dlTimeout -q"
 		dl_flag="-O"
 	else
