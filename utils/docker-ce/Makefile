@@ -77,8 +77,7 @@ define Build/Configure
 	mkdir -p $(GO_PKG_BUILD_DIR)/bin \
 			 $(GO_PKG_BUILD_DIR)/src \
 			 $(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/ \
-			 $(GO_PKG_CACHE_DIR) \
-			 $(GO_PKG_TMP_DIR)
+			 $(GO_BUILD_CACHE_DIR)
 	$(LN) $(PKG_BUILD_DIR)/cli $(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/cli
 	$(LN) $(PKG_BUILD_DIR)/engine $(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/docker
 endef

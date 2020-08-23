@@ -123,11 +123,7 @@ GO_PKG_PATH:=/usr/share/gocode
 GO_PKG_BUILD_PKG?=$(strip $(GO_PKG))/...
 
 GO_PKG_WORK_DIR_NAME:=.go_work
-GO_PKG_WORK_DIR=$(PKG_BUILD_DIR)/$(GO_PKG_WORK_DIR_NAME)
-
-GO_PKG_BUILD_DIR=$(GO_PKG_WORK_DIR)/build
-GO_PKG_CACHE_DIR=$(GO_PKG_WORK_DIR)/cache
-
+GO_PKG_BUILD_DIR=$(PKG_BUILD_DIR)/$(GO_PKG_WORK_DIR_NAME)/build
 GO_PKG_BUILD_BIN_DIR=$(GO_PKG_BUILD_DIR)/bin$(if $(GO_HOST_TARGET_DIFFERENT),/$(GO_OS_ARCH))
 
 GO_PKG_BUILD_DEPENDS_SRC=$(STAGING_DIR)$(GO_PKG_PATH)/src
@@ -185,7 +181,7 @@ GO_PKG_TARGET_VARS= \
 
 GO_PKG_BUILD_VARS= \
 	GOPATH=$(GO_PKG_BUILD_DIR) \
-	GOCACHE=$(GO_PKG_CACHE_DIR) \
+	GOCACHE=$(GO_BUILD_CACHE_DIR) \
 	GOMODCACHE=$(GO_MOD_CACHE_DIR) \
 	GOENV=off
 
@@ -194,9 +190,6 @@ GO_PKG_DEFAULT_VARS= \
 	$(GO_PKG_BUILD_VARS)
 
 GO_PKG_VARS=$(GO_PKG_DEFAULT_VARS)
-
-# do not use for new code; this will be removed after the next OpenWrt release
-GoPackage/Environment=$(GO_PKG_VARS)
 
 GO_PKG_DEFAULT_LDFLAGS= \
 	-buildid '$(SOURCE_DATE_EPOCH)' \
@@ -227,7 +220,9 @@ GoPackage/has_binaries=$(call GoPackage/is_dir_not_empty,$(GO_PKG_BUILD_BIN_DIR)
 define GoPackage/Build/Configure
 	( \
 		cd $(PKG_BUILD_DIR) ; \
-		mkdir -p $(GO_PKG_BUILD_DIR)/bin $(GO_PKG_BUILD_DIR)/src $(GO_PKG_CACHE_DIR) $(GO_MOD_CACHE_DIR) ; \
+		mkdir -p \
+			$(GO_PKG_BUILD_DIR)/bin $(GO_PKG_BUILD_DIR)/src \
+			$(GO_BUILD_CACHE_DIR) $(GO_MOD_CACHE_DIR) ; \
 		\
 		files=$$$$($(FIND) ./ \
 			-type d -a \( -path './.git' -o -path './$(GO_PKG_WORK_DIR_NAME)' \) -prune -o \
@@ -387,3 +382,10 @@ define GoSrcPackage
     Package/$(1)/install=$$(call GoPackage/Package/Install/Src,$$(1))
   endif
 endef
+
+
+# Deprecated variables - these will be removed after the next OpenWrt release
+GO_PKG_WORK_DIR=$(PKG_BUILD_DIR)/$(GO_PKG_WORK_DIR_NAME)
+GO_PKG_CACHE_DIR=$(GO_BUILD_CACHE_DIR)
+GoPackage/Environment=$(GO_PKG_VARS)
+# End of deprecated variables
