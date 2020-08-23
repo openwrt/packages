@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=isc-dhcp
 UPSTREAM_NAME:=dhcp
 PKG_VERSION:=4.4.1
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -173,6 +173,8 @@ endif
 ifeq ($(BUILD_VARIANT),ipv6)
   CONFIGURE_ARGS += --enable-dhcpv6
 endif
+
+TARGET_CFLAGS += -fcommon
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)			\
