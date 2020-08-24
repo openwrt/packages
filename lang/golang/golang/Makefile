@@ -96,6 +96,10 @@ BOOTSTRAP_UNPACK:=$(HOST_TAR) -C "$(BOOTSTRAP_BUILD_DIR)" --strip-components=1 -
 RSTRIP:=:
 STRIP:=:
 
+ifeq ($(GO_TARGET_SPECTRE_SUPPORTED),1)
+  PKG_CONFIG_DEPENDS+=CONFIG_GOLANG_SPECTRE
+endif
+
 define Package/golang/Default
 $(call GoPackage/GoSubMenu)
   TITLE:=Go programming language
@@ -269,6 +273,12 @@ PKG_GO_VARS= \
 	PKG_CONFIG=pkg-config \
 	PATH="$(HOST_GO_ROOT)/openwrt:$$$$PATH"
 
+PKG_GO_GCFLAGS= \
+	$(if $(GO_PKG_ENABLE_SPECTRE),-spectre all)
+
+PKG_GO_ASMFLAGS= \
+	$(if $(GO_PKG_ENABLE_SPECTRE),-spectre all)
+
 PKG_GO_LDFLAGS= \
 	-buildid '$(SOURCE_DATE_EPOCH)' \
 	-linkmode external \
@@ -280,6 +290,8 @@ PKG_GO_LDFLAGS= \
 # static / not dependent on the build environment
 PKG_GO_INSTALL_ARGS= \
 	-ldflags "all=$(PKG_GO_LDFLAGS)" \
+	$(if $(PKG_GO_GCFLAGS),-gcflags "all=$(PKG_GO_GCFLAGS)") \
+	$(if $(PKG_GO_ASMFLAGS),-asmflags "all=$(PKG_GO_ASMFLAGS)") \
 	$(if $(filter $(GO_PKG_ENABLE_PIE),1),-buildmode pie)
 
 define Build/Compile

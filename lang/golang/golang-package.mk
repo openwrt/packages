@@ -155,6 +155,14 @@ ifdef CONFIG_PKG_ASLR_PIE_REGULAR
   endif
 endif
 
+ifdef CONFIG_GOLANG_SPECTRE
+  ifeq ($(GO_TARGET_SPECTRE_SUPPORTED),1)
+    GO_PKG_ENABLE_SPECTRE:=1
+  else
+    $(warning Spectre mitigations are not supported for $(GO_ARCH))
+  endif
+endif
+
 # sstrip causes corrupted section header size
 ifneq ($(CONFIG_USE_SSTRIP),)
   ifneq ($(CONFIG_DEBUG),)
@@ -211,6 +219,12 @@ GO_PKG_VARS= \
 	$(GO_PKG_TARGET_VARS) \
 	$(GO_PKG_BUILD_VARS)
 
+GO_PKG_DEFAULT_GCFLAGS= \
+	$(if $(GO_PKG_ENABLE_SPECTRE),-spectre all)
+
+GO_PKG_DEFAULT_ASMFLAGS= \
+	$(if $(GO_PKG_ENABLE_SPECTRE),-spectre all)
+
 GO_PKG_DEFAULT_LDFLAGS= \
 	-buildid '$(SOURCE_DATE_EPOCH)' \
 	-linkmode external \
@@ -224,11 +238,13 @@ GO_PKG_INSTALL_ARGS= \
 	-v \
 	-trimpath \
 	-ldflags "all=$(GO_PKG_DEFAULT_LDFLAGS)" \
+	$(if $(GO_PKG_DEFAULT_GCFLAGS),-gcflags "all=$(GO_PKG_DEFAULT_GCFLAGS)") \
+	$(if $(GO_PKG_DEFAULT_ASMFLAGS),-asmflags "all=$(GO_PKG_DEFAULT_ASMFLAGS)") \
 	$(if $(filter $(GO_PKG_ENABLE_PIE),1),-buildmode pie) \
 	$(if $(filter $(GO_ARCH),arm),-installsuffix "v$(GO_ARM)") \
 	$(if $(filter $(GO_ARCH),mips mipsle),-installsuffix "$(GO_MIPS)") \
 	$(if $(filter $(GO_ARCH),mips64 mips64le),-installsuffix "$(GO_MIPS64)") \
-	$(if $(GO_PKG_GCFLAGS),-gcflags "$(GO_PKG_GCFLAGS)") \
+	$(if $(GO_PKG_GCFLAGS),-gcflags "$(GO_PKG_GCFLAGS) $(GO_PKG_DEFAULT_GCFLAGS)") \
 	$(if $(GO_PKG_CUSTOM_LDFLAGS),-ldflags "$(GO_PKG_CUSTOM_LDFLAGS) $(GO_PKG_DEFAULT_LDFLAGS)") \
 	$(if $(GO_PKG_TAGS),-tags "$(GO_PKG_TAGS)")
 
@@ -271,6 +287,10 @@ endef
 
 
 ifneq ($(strip $(GO_PKG)),)
+  ifeq ($(GO_TARGET_SPECTRE_SUPPORTED),1)
+    PKG_CONFIG_DEPENDS+=CONFIG_GOLANG_SPECTRE
+  endif
+
   Build/Configure=$(call GoPackage/Build/Configure)
   Build/Compile=$(call GoPackage/Build/Compile)
   Hooks/Compile/Post+=Go/CacheCleanup

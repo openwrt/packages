@@ -23,4 +23,11 @@ config GOLANG_MOD_CACHE_WORLD_READABLE
 	bool "Ensure Go module cache is world-readable"
 	default n
 
+config GOLANG_SPECTRE
+	bool "Enable Spectre mitigations"
+	default n
+	depends on x86_64
+	help
+	  Currently only available for x86-64 (amd64).
+
 endmenu

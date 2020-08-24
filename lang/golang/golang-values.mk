@@ -221,6 +221,19 @@ ifneq ($(filter $(GO_OS_ARCH),$(GO_PIE_SUPPORTED_OS_ARCH)),)
 endif
 
 
+# Spectre mitigations
+
+GO_SPECTRE_SUPPORTED_ARCH:=amd64
+
+ifneq ($(filter $(GO_HOST_ARCH),$(GO_SPECTRE_SUPPORTED_ARCH)),)
+  GO_HOST_SPECTRE_SUPPORTED:=1
+endif
+
+ifneq ($(filter $(GO_ARCH),$(GO_SPECTRE_SUPPORTED_ARCH)),)
+  GO_TARGET_SPECTRE_SUPPORTED:=1
+endif
+
+
 # General build info
 
 GO_BUILD_CACHE_DIR:=$(or $(call qstrip,$(CONFIG_GOLANG_BUILD_CACHE_DIR)),$(TOPDIR)/.go-build)
