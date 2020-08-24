@@ -8,19 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=davfs2
-PKG_VERSION:=1.5.6
+PKG_VERSION:=1.6.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SAVANNAH/davfs2
-PKG_HASH:=417476cdcfd53966b2dcfaf12455b54f315959b488a89255ab4b44586153d801
+PKG_HASH:=2e6b675685bd917772be60f0999ae098c80f79ff20dc131e8fec4547cbb63b50
 
 PKG_MAINTAINER:=Federico Di Marco <fededim@gmail.com>
-PKG_LICENSE:=GPL-3
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:davfs2:davfs2
 
-PKG_FIXUP:=gettext-version autoreconf
+PKG_FIXUP:=gettext-version
+PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -57,8 +58,6 @@ endef
 
 CONFIGURE_ARGS += \
 	--with-neon="$(STAGING_DIR)/usr" \
-	--without-libiconv-prefix \
-	--without-libintl-prefix \
 	--disable-rpath
 
 define Package/davfs2/install

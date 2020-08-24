@@ -69,12 +69,13 @@
 +#endif /* _COMPAT_H */
 --- a/src/kernel_interface.c
 +++ b/src/kernel_interface.c
-@@ -19,8 +19,8 @@
+@@ -19,9 +19,9 @@
  
  
  #include "config.h"
 +#include "compat.h"
  
+ #include <errno.h>
 -#include <error.h>
  #ifdef HAVE_FCNTL_H
  #include <fcntl.h>
