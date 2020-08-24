@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sshtunnel
 PKG_VERSION:=4
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_LICENSE:=GPL-2.0-or-later
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
@@ -40,7 +40,7 @@ define Package/sshtunnel/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/sshtunnel.init $(1)/etc/init.d/sshtunnel
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/uci_sshtunnel $(1)/etc/config/sshtunnel
+	$(INSTALL_CONF) ./files/uci_sshtunnel $(1)/etc/config/sshtunnel
 endef
 
 $(eval $(call BuildPackage,sshtunnel))
