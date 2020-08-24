@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libyang
-PKG_VERSION:=1.0.167
+PKG_VERSION:=1.0.184
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/CESNET/libyang/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=2431fa5c7cfbe6a6f2c0873547b976f018438967adfe268726911dd3d95eaa31
+PKG_HASH:=1a5637451b73c4c5683837eb4c51371bb084795f653bc1a5fc20fed5541b58bc
 
-PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
+PKG_MAINTAINER:=Jakov Smolic <jakov.smolic@sartura.hr>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
@@ -66,11 +66,11 @@ define Package/libyang/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libyang.so* $(1)/usr/lib/
 
-	$(INSTALL_DIR) $(1)/usr/lib/libyang
-	$(INSTALL_DIR) $(1)/usr/lib/libyang/extensions
-	$(INSTALL_DIR) $(1)/usr/lib/libyang/user_types
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libyang/extensions/* $(1)/usr/lib/libyang/extensions
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libyang/user_types/* $(1)/usr/lib/libyang/user_types
+	$(INSTALL_DIR) $(1)/usr/lib/libyang1
+	$(INSTALL_DIR) $(1)/usr/lib/libyang1/extensions
+	$(INSTALL_DIR) $(1)/usr/lib/libyang1/user_types
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libyang1/extensions/* $(1)/usr/lib/libyang1/extensions
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libyang1/user_types/* $(1)/usr/lib/libyang1/user_types
 endef
 
 define Package/libyang-cpp/install

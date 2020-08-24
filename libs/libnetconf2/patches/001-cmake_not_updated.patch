@@ -1,11 +1,16 @@
---- a/CMakeLists.txt	2020-05-08 13:29:30.903800624 +0300
-+++ b/CMakeLists.txt	2020-05-08 13:29:50.943582218 +0300
-@@ -153,7 +153,7 @@
-     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNC_ENABLED_SSH")
-     message(STATUS "LibSSH version ${LibSSH_VERSION} found")
- 
--    if(LibSSH_VERSION VERSION_EQUAL 0.9.3 OR LibSSH_VERSION VERSION_EQUAL 0.9.4)
-+    if(LibSSH_VERSION VERSION_EQUAL 0.9.x)
-         message(FATAL_ERROR "LibSSH ${LibSSH_VERSION} includes regression bugs and libnetconf2 will NOT work properly, try to use another version")
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index f21fec9..5b912af 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -148,7 +148,7 @@ endif()
+ # dependencies - libssh
+ if(ENABLE_SSH)
+     find_package(LibSSH 0.7.0 REQUIRED)
+-    if(LIBSSH_VERSION VERSION_EQUAL 0.9.3 OR LIBSSH_VERSION VERSION_EQUAL 0.9.4)
++    if(LIBSSH_VERSION VERSION_EQUAL 0.9.x)
+         message(FATAL_ERROR "LibSSH ${LIBSSH_VERSION} includes regression bugs and libnetconf2 will NOT work properly, try to use another version")
      endif()
  
+-- 
+2.26.2
+
