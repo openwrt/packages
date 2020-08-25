@@ -9,7 +9,7 @@
                'ppc64', 'x32','x64', 'x86', 'x86_64', 's390x')
  valid_arm_float_abi = ('soft', 'softfp', 'hard')
  valid_arm_fpu = ('vfp', 'vfpv3', 'vfpv3-d16', 'neon')
-@@ -896,6 +896,9 @@
+@@ -956,6 +956,9 @@
    if rtn == 'mipsel' and '_LP64' in k:
      rtn = 'mips64el'
  
@@ -19,12 +19,12 @@
    return rtn
  
  
-@@ -1001,7 +1004,7 @@
+@@ -1063,7 +1066,7 @@
  
    if target_arch == 'arm':
      configure_arm(o)
 -  elif target_arch in ('mips', 'mipsel', 'mips64el'):
 +  elif target_arch in ('mips', 'mipsel', 'mips64', 'mips64el'):
-     configure_mips(o)
+     configure_mips(o, target_arch)
  
    if flavor == 'aix':
