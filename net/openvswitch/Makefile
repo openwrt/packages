@@ -20,7 +20,7 @@ PKG_VERSION:=$(ovs_version)
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
-PKG_HASH:=bf5b19d35c820903c141a40f2a949e2ee047c8c0fd7c5e6e12d2239ed5c90026
+PKG_HASH:=4171e52a8c0ffe160c1daa6687219d902a2a6969b296d223d8dac980ab99a260
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -43,7 +43,7 @@ include ../../lang/python/python3-package.mk
 
 ovs_kmod_packages:=
 ovs_kmod_intree_kernel_patchver_min:=3.10
-ovs_kmod_intree_kernel_patchver_max:=5.0
+ovs_kmod_intree_kernel_patchver_max:=5.5
 ovs_kmod_intree_not_supported:=$(strip $(call kernel_patchver_lt,$(ovs_kmod_intree_kernel_patchver_min))$(call kernel_patchver_gt,$(ovs_kmod_intree_kernel_patchver_max)))
 ovs_kmod_intree_dir:=$(PKG_BUILD_DIR)/datapath/linux
 ovs_kmod_upstream_dir:=$(LINUX_DIR)/net/openvswitch

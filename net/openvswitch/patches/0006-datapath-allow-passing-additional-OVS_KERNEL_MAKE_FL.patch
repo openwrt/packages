@@ -1,4 +1,4 @@
-From f29d4866cf566c916000426e0c206db008be4fb3 Mon Sep 17 00:00:00 2001
+From 1df5a0eaf78e93e21d21f1438afbe5fa8a37ea61 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Tue, 26 May 2020 22:45:53 +0800
 Subject: [PATCH] datapath: allow passing additional $(OVS_KERNEL_MAKE_FLAGS)

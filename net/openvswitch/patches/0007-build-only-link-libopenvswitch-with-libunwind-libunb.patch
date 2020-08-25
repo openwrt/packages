@@ -1,4 +1,4 @@
-From 6324f0c594e3773c754861e630fff694d1bec15a Mon Sep 17 00:00:00 2001
+From e81ccb671014db62bf622cd8f960d7930d27d9dc Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Wed, 29 Jul 2020 17:29:14 +0800
 Subject: [PATCH] build: only link libopenvswitch with libunwind, libunbound
@@ -11,7 +11,7 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  3 files changed, 7 insertions(+), 3 deletions(-)
 
 diff --git a/lib/automake.mk b/lib/automake.mk
-index 95925b57c..df95bea10 100644
+index 380a67228..610f3d940 100644
 --- a/lib/automake.mk
 +++ b/lib/automake.mk
 @@ -10,6 +10,8 @@ lib_LTLIBRARIES += lib/libopenvswitch.la
@@ -21,8 +21,8 @@ index 95925b57c..df95bea10 100644
 +lib_libopenvswitch_la_LIBADD += $(LIBUNBOUND_LDADD)
 +lib_libopenvswitch_la_LIBADD += $(LIBUNWIND_LDADD)
  
+ 
  if WIN32
- lib_libopenvswitch_la_LIBADD += ${PTHREAD_LIBS}
 diff --git a/lib/libopenvswitch.pc.in b/lib/libopenvswitch.pc.in
 index 2a3f2ca7b..c8d02eb5a 100644
 --- a/lib/libopenvswitch.pc.in
@@ -35,10 +35,10 @@ index 2a3f2ca7b..c8d02eb5a 100644
 +Libs.private: @LIBS@ @SSL_LIBS@ @CAPNG_LDADD@ @LIBBPF_LDADD@ @LIBUNBOUND_LDADD@ @LIBUNWIND_LDADD@
  Cflags: -I${includedir}/openvswitch
 diff --git a/m4/openvswitch.m4 b/m4/openvswitch.m4
-index ada31c491..6165cc7b1 100644
+index f2e0169f8..e000c1cc5 100644
 --- a/m4/openvswitch.m4
 +++ b/m4/openvswitch.m4
-@@ -623,7 +623,8 @@ AC_DEFUN([OVS_CHECK_UNBOUND],
+@@ -657,7 +657,8 @@ AC_DEFUN([OVS_CHECK_UNBOUND],
    [AC_CHECK_LIB(unbound, ub_ctx_create, [HAVE_UNBOUND=yes], [HAVE_UNBOUND=no])
     if test "$HAVE_UNBOUND" = yes; then
       AC_DEFINE([HAVE_UNBOUND], [1], [Define to 1 if unbound is detected.])
@@ -48,7 +48,7 @@ index ada31c491..6165cc7b1 100644
     fi
     AM_CONDITIONAL([HAVE_UNBOUND], [test "$HAVE_UNBOUND" = yes])
     AC_SUBST([HAVE_UNBOUND])])
-@@ -635,7 +636,8 @@ AC_DEFUN([OVS_CHECK_UNWIND],
+@@ -669,7 +670,8 @@ AC_DEFUN([OVS_CHECK_UNWIND],
     [HAVE_UNWIND=no])
     if test "$HAVE_UNWIND" = yes; then
       AC_DEFINE([HAVE_UNWIND], [1], [Define to 1 if unwind is detected.])

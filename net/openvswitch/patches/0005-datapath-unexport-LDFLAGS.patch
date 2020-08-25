@@ -1,4 +1,4 @@
-From b2c26315339fc17d0ad9d0009321671850cc7295 Mon Sep 17 00:00:00 2001
+From 2939a31ad57f81556afdf5112ee1d68bd2e3f012 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Mon, 16 Mar 2020 15:18:16 +0800
 Subject: [PATCH] datapath: unexport LDFLAGS

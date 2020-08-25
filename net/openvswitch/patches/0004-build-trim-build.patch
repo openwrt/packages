@@ -1,4 +1,4 @@
-From 3ee8ab22699b503b591b6abb4a2db89ac1881ea6 Mon Sep 17 00:00:00 2001
+From 31514742de07d595ac23c2b0abf0e092f8b26140 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <zhouyousong@yunionyun.com>
 Date: Tue, 21 Aug 2018 13:02:21 +0000
 Subject: [PATCH] build: trim build
@@ -9,7 +9,7 @@ Signed-off-by: Yousong Zhou <zhouyousong@yunionyun.com>
  1 file changed, 2 deletions(-)
 
 diff --git a/Makefile.am b/Makefile.am
-index 6140b2c7f..d9f9457fa 100644
+index 7effb5fec..d6df91e8b 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -475,12 +475,10 @@ dist-docs:
