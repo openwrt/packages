@@ -125,7 +125,7 @@ receive-all
 nodetach
 ipparam $config
 lcp-max-configure 40
-ip-up-script /lib/netifd/ppp-up
+ip-up-script /lib/netifd/openfortivpn-ppp-up
 ip-down-script /lib/netifd/ppp-down
 mru 1354"  > $callfile
         append_args "--pppd-call=openfortivpn/$config"

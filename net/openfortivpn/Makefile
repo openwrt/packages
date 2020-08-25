@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openfortivpn
 PKG_VERSION:=1.14.1
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/adrienverge/openfortivpn/tar.gz/v$(PKG_VERSION)?
@@ -60,6 +60,7 @@ define Package/openfortivpn/install
 	$(INSTALL_BIN) ./files/openfortivpn-wrapper $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/openfortivpn.sh $(1)/lib/netifd/proto/
 	$(INSTALL_BIN) ./files/14-openforticlient $(1)/etc/hotplug.d/iface/
+	$(INSTALL_BIN) ./files/openfortivpn-ppp-up $(1)/lib/netifd/openfortivpn-ppp-up
 endef
 
 $(eval $(call BuildPackage,openfortivpn))
