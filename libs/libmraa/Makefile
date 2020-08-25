@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmraa
 PKG_VERSION:=2.1.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/eclipse/mraa/tar.gz/v$(PKG_VERSION)?
@@ -30,8 +30,7 @@ include $(INCLUDE_DIR)/cmake.mk
 include ../../lang/python/python3-package.mk
 
 CMAKE_OPTIONS=-DENABLEEXAMPLES=0 \
-	-DFIRMATA=ON \
-	-DBUILDSWIG=OFF
+	-DFIRMATA=ON
 
 TARGET_CFLAGS+=-I$(STAGING_DIR)/usr/include/node
 
@@ -78,7 +77,7 @@ endef
 define Package/libmraa-python3
   $(call Package/libmraa/Default)
   TITLE:=Eclipse MRAA lowlevel IO Python3 library
-  DEPENDS:=+libmraa +python3-light @BROKEN
+  DEPENDS:=+libmraa +python3-light
 endef
 
 define Package/libmraa-python3/description
