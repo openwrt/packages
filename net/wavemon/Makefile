@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wavemon
 PKG_VERSION:=0.9.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/uoaerg/wavemon/tar.gz/v$(PKG_VERSION)?
@@ -43,6 +43,7 @@ endef
 CONFIGURE_ARGS += --without-libcap
 
 TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include/libnl3
+TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lpthread)
 
 define Package/wavemon/install
 	$(INSTALL_DIR) $(1)/usr/bin
