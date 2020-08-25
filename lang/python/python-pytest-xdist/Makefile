@@ -8,12 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pytest-xdist
-PKG_VERSION:=2.0.0
-PKG_RELEASE:=2
+PKG_VERSION:=2.1.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=pytest-xdist
-PKG_HASH:=3217b1f40290570bf27b1f82714fc4ed44c3260ba9b2f6cde0372378fc707ad3
-
+PKG_HASH:=82d938f1a24186520e2d9d3a64ef7d9ac7ecdf1a0659e095d18e596b8cbd0672
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT
@@ -35,9 +34,7 @@ define Package/python3-pytest-xdist
 	+python3-light \
 	+python3-pytest \
 	+python3-pytest-forked \
-	+python3-execnet \
-	+python3-six \
-	+python3-psutil
+	+python3-execnet
 endef
 
 define Package/python3-pytest-xdist/description
