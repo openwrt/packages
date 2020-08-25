@@ -12,17 +12,17 @@ help()
 Syntax: mwan3 [command]
 
 Available commands:
-	start           Load iptables rules, ip rules and ip routes
-	stop            Unload iptables rules, ip rules and ip routes
-	restart         Reload iptables rules, ip rules and ip routes
-	ifup <iface>    Load rules and routes for specific interface
-	ifdown <iface>  Unload rules and routes for specific interface
-	interfaces      Show interfaces status
-	policies        Show currently active policy
-	connected       Show directly connected networks
-	rules           Show active rules
-	status          Show all status
-
+	start               Load iptables rules, ip rules and ip routes
+	stop                Unload iptables rules, ip rules and ip routes
+	restart             Reload iptables rules, ip rules and ip routes
+	ifup <iface>        Load rules and routes for specific interface
+	ifdown <iface>      Unload rules and routes for specific interface
+	interfaces          Show interfaces status
+	policies            Show currently active policy
+	connected           Show directly connected networks
+	rules               Show active rules
+	status              Show all status
+	use <iface> <cmd>   Run a command bound to <iface> and avoid mwan3 rules
 EOF
 }
 
@@ -123,8 +123,33 @@ restart() {
 	/etc/init.d/mwan3 start
 }
 
+wrap() {
+	# Run a command with the device, src_ip and fwmark set to avoid processing by mwan3
+	# firewall rules
+
+	local interface device src_ip family
+	mwan3_init
+	config_load mwan3
+
+	interface=$1 ; shift
+	[ -z "$*" ] && echo "no command specified for mwan3 wrap" && return
+	network_get_device device $interface
+	[ -z "$device" ] && echo "could not find device for $interface" && return
+
+	mwan3_get_src_ip src_ip $interface
+	[ -z "$src_ip" ] && echo "could not find src_ip for $interface" && return
+
+	config_get family $interface family
+	[ -z "$family" ] && echo "could not find family for $interface. Using ipv4." && family='ipv4'
+
+	echo "Running '$*' with DEVICE=$device SRCIP=$src_ip FWMARK=$MMX_DEFAULT FAMILY=$family"
+	# shellcheck disable=SC2048
+	FAMILY=$family DEVICE=$device SRCIP=$src_ip FWMARK=$MMX_DEFAULT LD_PRELOAD=/lib/mwan3/libwrap_mwan3_sockopt.so.1.0 $*
+
+}
+
 case "$1" in
-	ifup|ifdown|interfaces|policies|connected|rules|status|start|stop|restart)
+	ifup|ifdown|interfaces|policies|connected|rules|status|start|stop|restart|use)
 		mwan3_init
 		# shellcheck disable=SC2048
 		$*

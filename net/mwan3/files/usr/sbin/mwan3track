@@ -129,7 +129,7 @@ firstconnect() {
 		return
 	fi
 
-	mwan3_get_src_ip SRC_IP $true_iface
+	mwan3_get_src_ip SRC_IP $INTERFACE
 
 	LOG debug "firstconnect: called on $INTERFACE/$true_iface ($DEVICE). Status is $STATUS. SRC_IP is $SRC_IP"
 
@@ -223,7 +223,7 @@ main() {
 							wait $TRACK_PID
 							result=$?
 						else
-							WRAP $PING -${family#ipv} -I ${SOURCE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip 2>/dev/null > $TRACK_OUTPUT &
+							WRAP $PING -${family#ipv} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip 2>/dev/null > $TRACK_OUTPUT &
 							TRACK_PID=$!
 							wait $TRACK_PID
 							ping_status=$?

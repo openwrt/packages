@@ -49,10 +49,12 @@ mwan3_get_true_iface()
 
 mwan3_get_src_ip()
 {
-	local family _src_ip true_iface device addr_cmd default_ip IP sed_str
-	true_iface=$2
+	local family _src_ip interface true_iface device addr_cmd default_ip IP sed_str
+	interface=$2
+	mwan3_get_true_iface true_iface $interface
+
 	unset "$1"
-	config_get family "$true_iface" family ipv4
+	config_get family "$interface" family ipv4
 	if [ "$family" = "ipv4" ]; then
 		addr_cmd='network_get_ipaddr'
 		default_ip="0.0.0.0"
