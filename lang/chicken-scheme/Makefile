@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=chicken-scheme
-PKG_VERSION=5.2.0
-PKG_RELEASE:=1
+PKG_VERSION:=5.2.0
+PKG_RELEASE:=2
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/chicken-$(PKG_VERSION)
 PKG_SOURCE:=chicken-$(PKG_VERSION).tar.gz
@@ -53,10 +53,7 @@ define Package/chicken-scheme-interpreter/description
   For more information, please refer to the Chicken Scheme website at https://call-cc.org.
 endef
 
-
-# csc calls gcc with "-lm -ldl", but "-lm" doesn't work with musl,
-# so we set LIBRARIES=-lm
-MAKE_FLAGS += PLATFORM=linux C_COMPILER=$(TARGET_CC) LINKER=$(TARGET_CC) PREFIX=/usr C_COMPILER_OPTIMIZATION_OPTIONS="$(TARGET_CFLAGS)" LIBRARIES=-lm
+MAKE_FLAGS += PLATFORM=linux C_COMPILER=$(TARGET_CC) LINKER=$(TARGET_CC) PREFIX=/usr C_COMPILER_OPTIMIZATION_OPTIONS="$(TARGET_CFLAGS)"
 
 # not installed:
 # - csc and chicken, the compiler
