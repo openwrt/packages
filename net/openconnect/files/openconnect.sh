@@ -39,7 +39,24 @@ proto_openconnect_add_form_entry() {
 proto_openconnect_setup() {
 	local config="$1"
 
-	json_get_vars server port interface username serverhash authgroup usergroup password password2 token_mode token_secret token_script os csd_wrapper mtu juniper form_entry
+	json_get_vars \
+		authgroup \
+		csd_wrapper \
+		form_entry \
+		interface \
+		juniper \
+		mtu \
+		os \
+		password \
+		password2 \
+		port \
+		server \
+		serverhash \
+		token_mode \
+		token_script \
+		token_secret \
+		usergroup \
+		username \
 
 	grep -q tun /proc/modules || insmod tun
 	ifname="vpn-$config"
