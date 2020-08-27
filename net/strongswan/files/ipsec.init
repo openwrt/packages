@@ -126,6 +126,7 @@ config_conn() {
 	local local_subnet
 	local local_nat
 	local local_sourceip
+	local local_leftip
 	local local_updown
 	local local_firewall
 	local remote_subnet
@@ -141,11 +142,13 @@ config_conn() {
 	local inactivity
 	local keyexchange
 	local reqid
+	local packet_marker
 
 	config_get mode                     "$1"           mode "route"
 	config_get local_subnet             "$1"           local_subnet ""
 	config_get local_nat                "$1"           local_nat ""
 	config_get local_sourceip           "$1"           local_sourceip ""
+	config_get local_leftip             "$1"           local_leftip "%any"
 	config_get local_updown             "$1"           local_updown ""
 	config_get local_firewall           "$1"           local_firewall ""
 	config_get remote_subnet            "$1"           remote_subnet ""
@@ -161,11 +164,12 @@ config_conn() {
 	config_get inactivity               "$1"           inactivity
 	config_get keyexchange              "$1"           keyexchange "ikev2"
 	config_get reqid                    "$1"           reqid
+	config_get packet_marker            "$1"           packet_marker
 
 	[ -n "$local_nat" ] && local_subnet=$local_nat
 
 	ipsec_xappend "conn $config_name-$1"
-	ipsec_xappend "  left=%any"
+	ipsec_xappend "  left=$local_leftip"
 	ipsec_xappend "  right=$remote_gateway"
 
 	[ -n "$local_sourceip" ] && ipsec_xappend "  leftsourceip=$local_sourceip"
@@ -200,6 +204,7 @@ config_conn() {
 	[ -n "$remote_identifier" ] && ipsec_xappend "  rightid=$remote_identifier"
 	[ -n "$local_updown" ] && ipsec_xappend "  leftupdown=$local_updown"
 	[ -n "$remote_updown" ] && ipsec_xappend "  rightupdown=$remote_updown"
+	[ -n "$packet_marker" ] && ipsec_xappend "  mark=$packet_marker"	
 	ipsec_xappend "  keyexchange=$keyexchange"
 
 	set_crypto_proposal "$1"
