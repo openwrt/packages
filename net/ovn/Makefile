@@ -10,7 +10,7 @@ include ../openvswitch/openvswitch.mk
 
 PKG_NAME:=ovn
 PKG_VERSION:=20.06.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ovn-org/ovn.git
@@ -47,7 +47,7 @@ ovs_ovn-common_depends+=+libatomic
 ovs_ovn-common_files:= \
 	usr/share/ovn/scripts/ovn-ctl \
 	usr/share/ovn/scripts/ovn-lib \
-	$(foreach b,ovn-nbctl ovn-sbctl,usr/bin/$(b))
+	$(foreach b,ovn-appctl ovn-nbctl ovn-sbctl,usr/bin/$(b))
 define ovs_ovn-common_install
 	$$(LN) /usr/share/openvswitch/scripts/ovs-ctl-wrapper $$(1)/usr/bin/ovn-ctl
 endef
