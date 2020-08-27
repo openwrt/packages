@@ -15,6 +15,7 @@ proto_openconnect_init_config() {
 	proto_config_add_int "port"
 	proto_config_add_int "mtu"
 	proto_config_add_int "juniper"
+	proto_config_add_boolean "no_dtls"
 	proto_config_add_string "interface"
 	proto_config_add_string "username"
 	proto_config_add_string "serverhash"
@@ -46,6 +47,7 @@ proto_openconnect_setup() {
 		interface \
 		juniper \
 		mtu \
+		no_dtls \
 		os \
 		password \
 		password2 \
@@ -72,6 +74,7 @@ proto_openconnect_setup() {
 	[ -n "$port" ] && port=":$port"
 
 	append_args "$server$port" -i "$ifname" --non-inter --syslog --script /lib/netifd/vpnc-script
+	[ "$no_dtls" = 1 ] && append_args --no-dtls
 	[ -n "$mtu" ] && append_args --mtu "$mtu"
 
 	# migrate to standard config files
