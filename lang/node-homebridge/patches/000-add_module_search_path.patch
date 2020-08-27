@@ -1,0 +1,10 @@
+--- a/lib/pluginManager.js
++++ b/lib/pluginManager.js
+@@ -308,6 +308,7 @@
+             else {
+                 this.searchPaths.add("/usr/local/lib/node_modules");
+                 this.searchPaths.add("/usr/lib/node_modules");
++                this.searchPaths.add("/usr/lib/node");
+                 this.searchPaths.add(child_process_1.execSync("/bin/echo -n \"$(npm --no-update-notifier -g prefix)/lib/node_modules\"").toString("utf8"));
+             }
+         }
