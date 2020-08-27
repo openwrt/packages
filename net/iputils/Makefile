@@ -9,35 +9,37 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iputils
-PKG_VERSION:=20190709
+PKG_VERSION:=20200821
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/iputils/iputils/tar.gz/s$(PKG_VERSION)?
-PKG_HASH:=a15720dd741d7538dd2645f9f516d193636ae4300ff7dbc8bfca757bf166490a
+PKG_HASH:=f265da0d02dd2259efd8c57a9c2e0c8bb3361abb14639fcffb26707be5783a5b
+PKG_BUILD_DIR:=$(BUILD_DIR)/iputils-s$(PKG_VERSION)
 
 PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:iputils_project:iputils
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/iputils-s$(PKG_VERSION)
+PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=meson/host
+
 include $(INCLUDE_DIR)/package.mk
 include ../../devel/meson/meson.mk
 
-MESON_ARGS:=-DBUILD_MANS=false \
-            -DBUILD_HTML_MANS=false \
-            -DUSE_CAP=false \
-            -DUSE_CRYPTO=kernel \
-            -DUSE_IDN=false \
-            -DUSE_GETTEXT=false \
-            -DNO_SETCAP_OR_SUID=true \
-            -DBUILD_PING=true \
-            -DBUILD_ARPING=true \
-            -DBUILD_CLOCKDIFF=true \
-            -DBUILD_TRACEPATH=true \
-            -DBUILD_TFTPD=true
+MESON_ARGS += \
+	-DBUILD_MANS=false \
+	-DBUILD_HTML_MANS=false \
+	-DUSE_CAP=false \
+	-DUSE_IDN=false \
+	-DUSE_GETTEXT=false \
+	-DNO_SETCAP_OR_SUID=true \
+	-DBUILD_PING=true \
+	-DBUILD_ARPING=true \
+	-DBUILD_CLOCKDIFF=true \
+	-DBUILD_TRACEPATH=true \
+	-DBUILD_TFTPD=true
 
 define Package/iputils/Default
   SECTION:=net
@@ -64,7 +66,7 @@ endef
 
 define Package/iputils-ping/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_SUID) $(MESON_BUILD_DIR)/ping $(1)/usr/bin/
+	$(INSTALL_SUID) $(PKG_INSTALL_DIR)/usr/bin/ping $(1)/usr/bin/
 ifdef CONFIG_PING_LEGACY_SYMLINKS
 	ln -s ping $(1)/usr/bin/ping4
 	ln -s ping $(1)/usr/bin/ping6
@@ -84,7 +86,7 @@ endef
 
 define Package/iputils-arping/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(MESON_BUILD_DIR)/arping $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/arping $(1)/usr/bin/
 endef
 
 ### clockdiff
@@ -100,7 +102,7 @@ endef
 
 define Package/iputils-clockdiff/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(MESON_BUILD_DIR)/clockdiff $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/clockdiff $(1)/usr/bin/
 endef
 
 ### tracepath
@@ -120,7 +122,7 @@ endef
 
 define Package/iputils-tracepath/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(MESON_BUILD_DIR)/tracepath $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/tracepath $(1)/usr/bin/
 ifdef CONFIG_TRACEPATH_LEGACY_SYMLINKS
 	ln -s tracepath $(1)/usr/bin/tracepath4
 	ln -s tracepath $(1)/usr/bin/tracepath6
@@ -140,7 +142,7 @@ endef
 
 define Package/iputils-tftpd/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(MESON_BUILD_DIR)/tftpd $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin//tftpd $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,iputils-ping))
