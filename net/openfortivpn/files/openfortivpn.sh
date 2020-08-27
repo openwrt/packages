@@ -12,9 +12,9 @@ append_args() {
 }
 
 proto_openfortivpn_init_config() {
-        proto_config_add_string "server"
+        proto_config_add_string "peeraddr"
         proto_config_add_int "port"
-        proto_config_add_string "iface_name"
+        proto_config_add_string "tunlink"
         proto_config_add_string "local_ip"
         proto_config_add_string "username"
         proto_config_add_string "password"
@@ -29,29 +29,29 @@ proto_openfortivpn_setup() {
 
 	local msg ifname ip server_ip pwfile callfile
 
-	local host server port iface_name local_ip username password trusted_cert \
+	local host peeraddr port tunlink local_ip username password trusted_cert \
 	              remote_status_check
-        json_get_vars host server port iface_name local_ip username password trusted_cert \
+        json_get_vars host peeraddr port tunlink local_ip username password trusted_cert \
 	              remote_status_check
 
         ifname="vpn-$config"
 
 
-        [ -n "$iface_name" ] && {
-		network_get_device iface_device_name "$iface_name"
-		network_is_up "$iface_name"  || {
-		msg="$iface_name is not up $iface_device_up"
-		logger -t "openfortivpn" "$config: $msg"
-		proto_notify_error "$config" "$msg"
-		proto_block_restart "$config"
-		exit 1
-		}
+        [ -n "$tunlink" ] && {
+            network_get_device iface_device_name "$tunlink"
+            network_is_up "$tunlink"  || {
+                msg="$tunlink is not up $iface_device_up"
+                logger -t "openfortivpn" "$config: $msg"
+                proto_notify_error "$config" "$msg"
+                proto_block_restart "$config"
+                exit 1
+            }
 	}
 
-	server_ip=$(resolveip -4 -t 10 "$server")
+	server_ip=$(resolveip -4 -t 10 "$peeraddr")
 
         [ $? -eq 0 ] || {
-            msg="$config: failed to resolve server ip for $server"
+            msg="$config: failed to resolve server ip for $peeraddr"
             logger -t "openfortivpn" "$msg"
             sleep 10
             proto_notify_error "$config" "$msg"
@@ -60,8 +60,8 @@ proto_openfortivpn_setup() {
         }
 
 	[ "$remote_status_check" = "curl" ] && {
-            curl -k --head -s --connect-timeout 10 ${iface_name:+--interface} $iface_device_name https://$server_ip > /dev/null || {
-		msg="failed to reach https://${server_ip}${iface_name:+ on $iface_device_name}"
+            curl -k --head -s --connect-timeout 10 ${tunlink:+--interface} $iface_device_name https://$server_ip > /dev/null || {
+		msg="failed to reach https://${server_ip}${tunlink:+ on $iface_device_name}"
 		logger -t "openfortivpn" "$config: $msg"
 		sleep 10
 		proto_notify_error "$config" "$msg"
@@ -70,7 +70,7 @@ proto_openfortivpn_setup() {
 	    }
 	}
 	[ "$remote_status_check" = "ping" ]  && {
-            ping ${iface_name:+-I} $iface_device_name -c 1 -w 10 $server_ip > /dev/null 2>&1 || {
+            ping ${tunlink:+-I} $iface_device_name -c 1 -w 10 $server_ip > /dev/null 2>&1 || {
                 msg="$config: failed to ping $server_ip on $iface_device_name"
 		logger -t "openfortvpn" "$config: $msg"
                 sleep 10
@@ -80,30 +80,30 @@ proto_openfortivpn_setup() {
             }
 	}
 
-        for ip in $(resolveip -4 -t 10 "$server"); do
-                logger -p 6 -t "openfortivpn" "$config: adding host dependency for $ip on $iface_name at $config"
-                proto_add_host_dependency "$config" "$ip" "$iface_name"
+        for ip in $(resolveip -4 -t 10 "$peeraddr"); do
+            logger -p 6 -t "openfortivpn" "$config: adding host dependency for $ip on $tunlink at $config"
+            proto_add_host_dependency "$config" "$ip" "$tunlink"
         done
 
 
 
         [ -n "$port" ] && port=":$port"
-        append_args "$server$port" --pppd-ifname="$ifname" --use-syslog  -c /dev/null
+        append_args "$peeraddr$port" --pppd-ifname="$ifname" --use-syslog  -c /dev/null
         append_args "--set-dns=0"
         append_args "--no-routes"
         append_args "--pppd-use-peerdns=1"
 
-        [ -n "$iface_name" ] && {
+        [ -n "$tunlink" ] && {
             append_args "--ifname=$iface_device_name"
         }
 
         [ -n "$trusted_cert" ] && append_args "--trusted-cert=$trusted_cert"
         [ -n "$username" ] && append_args -u "$username"
         [ -n "$password" ] && {
-                umask 077
-                mkdir -p '/var/etc/openfortivpn'
-                pwfile="/var/etc/openfortivpn/$config.passwd"
-                echo "$password" > "$pwfile"
+            umask 077
+            mkdir -p '/var/etc/openfortivpn'
+            pwfile="/var/etc/openfortivpn/$config.passwd"
+            echo "$password" > "$pwfile"
         }
 
         [ -n "$local_ip" ] || local_ip=$server_ip
