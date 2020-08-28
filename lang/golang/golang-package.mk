@@ -165,24 +165,24 @@ define GoPackage/GoSubMenu
 endef
 
 GO_PKG_TARGET_VARS= \
-	GOOS=$(GO_OS) \
-	GOARCH=$(GO_ARCH) \
-	GO386=$(GO_386) \
-	GOARM=$(GO_ARM) \
-	GOMIPS=$(GO_MIPS) \
-	GOMIPS64=$(GO_MIPS64) \
+	GOOS="$(GO_OS)" \
+	GOARCH="$(GO_ARCH)" \
+	GO386="$(GO_386)" \
+	GOARM="$(GO_ARM)" \
+	GOMIPS="$(GO_MIPS)" \
+	GOMIPS64="$(GO_MIPS64)" \
 	CGO_ENABLED=1 \
-	CC=$(TARGET_CC) \
-	CXX=$(TARGET_CXX) \
+	CC="$(TARGET_CC)" \
+	CXX="$(TARGET_CXX)" \
 	CGO_CFLAGS="$(filter-out $(GO_CFLAGS_TO_REMOVE),$(TARGET_CFLAGS))" \
 	CGO_CPPFLAGS="$(TARGET_CPPFLAGS)" \
 	CGO_CXXFLAGS="$(filter-out $(GO_CFLAGS_TO_REMOVE),$(TARGET_CXXFLAGS))" \
 	CGO_LDFLAGS="$(TARGET_LDFLAGS)"
 
 GO_PKG_BUILD_VARS= \
-	GOPATH=$(GO_PKG_BUILD_DIR) \
-	GOCACHE=$(GO_BUILD_CACHE_DIR) \
-	GOMODCACHE=$(GO_MOD_CACHE_DIR) \
+	GOPATH="$(GO_PKG_BUILD_DIR)" \
+	GOCACHE="$(GO_BUILD_CACHE_DIR)" \
+	GOMODCACHE="$(GO_MOD_CACHE_DIR)" \
 	GOENV=off
 
 GO_PKG_DEFAULT_VARS= \
@@ -213,77 +213,77 @@ GO_PKG_INSTALL_ARGS= \
 	$(if $(GO_PKG_TAGS),-tags "$(GO_PKG_TAGS)")
 
 # false if directory does not exist
-GoPackage/is_dir_not_empty=$$$$($(FIND) $(1) -maxdepth 0 -type d \! -empty 2>/dev/null)
+GoPackage/is_dir_not_empty=$$$$($(FIND) "$(1)" -maxdepth 0 -type d \! -empty 2>/dev/null)
 
 GoPackage/has_binaries=$(call GoPackage/is_dir_not_empty,$(GO_PKG_BUILD_BIN_DIR))
 
 define GoPackage/Build/Configure
 	( \
-		cd $(PKG_BUILD_DIR) ; \
+		cd "$(PKG_BUILD_DIR)" ; \
 		mkdir -p \
-			$(GO_PKG_BUILD_DIR)/bin $(GO_PKG_BUILD_DIR)/src \
-			$(GO_BUILD_CACHE_DIR) $(GO_MOD_CACHE_DIR) ; \
+			"$(GO_PKG_BUILD_DIR)/bin" "$(GO_PKG_BUILD_DIR)/src" \
+			"$(GO_BUILD_CACHE_DIR)" "$(GO_MOD_CACHE_DIR)" ; \
 		\
-		files=$$$$($(FIND) ./ \
-			-type d -a \( -path './.git' -o -path './$(GO_PKG_WORK_DIR_NAME)' \) -prune -o \
+		files="$$$$($(FIND) ./ \
+			-type d -a \( -path "./.git" -o -path "./$(GO_PKG_WORK_DIR_NAME)" \) -prune -o \
 			\! -type d -print | \
-			sed 's|^\./||') ; \
+			sed 's|^\./||')" ; \
 		\
 		if [ "$(strip $(GO_PKG_INSTALL_ALL))" != 1 ]; then \
-			code=$$$$(echo "$$$$files" | grep '\.\(c\|cc\|cpp\|go\|h\|hh\|hpp\|proto\|s\)$$$$') ; \
-			testdata=$$$$(echo "$$$$files" | grep '\(^\|/\)testdata/') ; \
-			gomod=$$$$(echo "$$$$files" | grep '\(^\|/\)go\.\(mod\|sum\)$$$$') ; \
+			code="$$$$(echo "$$$$files" | grep '\.\(c\|cc\|cpp\|go\|h\|hh\|hpp\|proto\|s\)$$$$')" ; \
+			testdata="$$$$(echo "$$$$files" | grep '\(^\|/\)testdata/')" ; \
+			gomod="$$$$(echo "$$$$files" | grep '\(^\|/\)go\.\(mod\|sum\)$$$$')" ; \
 			\
 			for pattern in $(GO_PKG_INSTALL_EXTRA); do \
-				extra=$$$$(echo "$$$$extra"; echo "$$$$files" | grep "$$$$pattern") ; \
+				extra="$$$$(echo "$$$$extra"; echo "$$$$files" | grep "$$$$pattern")" ; \
 			done ; \
 			\
-			files=$$$$(echo "$$$$code"; echo "$$$$testdata"; echo "$$$$gomod"; echo "$$$$extra") ; \
-			files=$$$$(echo "$$$$files" | grep -v '^[[:space:]]*$$$$' | sort -u) ; \
+			files="$$$$(echo "$$$$code"; echo "$$$$testdata"; echo "$$$$gomod"; echo "$$$$extra")" ; \
+			files="$$$$(echo "$$$$files" | grep -v '^[[:space:]]*$$$$' | sort -u)" ; \
 		fi ; \
 		\
 		IFS=$$$$'\n' ; \
 		\
 		echo "Copying files from $(PKG_BUILD_DIR) into $(GO_PKG_BUILD_DIR)/src/$(strip $(GO_PKG))" ; \
 		for file in $$$$files; do \
-			echo $$$$file ; \
-			dest=$(GO_PKG_BUILD_DIR)/src/$(strip $(GO_PKG))/$$$$file ; \
-			mkdir -p $$$$(dirname $$$$dest) ; \
-			$(CP) $$$$file $$$$dest ; \
+			echo "$$$$file" ; \
+			dest="$(GO_PKG_BUILD_DIR)/src/$(strip $(GO_PKG))/$$$$file" ; \
+			mkdir -p "$$$$(dirname "$$$$dest")" ; \
+			$(CP) "$$$$file" "$$$$dest" ; \
 		done ; \
 		echo ; \
 		\
 		link_contents() { \
-			local src=$$$$1 ; \
-			local dest=$$$$2 ; \
+			local src="$$$$1" ; \
+			local dest="$$$$2" ; \
 			local dirs dir base ; \
 			\
-			if [ -n "$$$$($(FIND) $$$$src -mindepth 1 -maxdepth 1 -name '*.go' \! -type d)" ]; then \
+			if [ -n "$$$$($(FIND) "$$$$src" -mindepth 1 -maxdepth 1 -name "*.go" \! -type d)" ]; then \
 				echo "$$$$src is already a Go library" ; \
 				return 1 ; \
 			fi ; \
 			\
-			dirs=$$$$($(FIND) $$$$src -mindepth 1 -maxdepth 1 -type d) ; \
+			dirs="$$$$($(FIND) "$$$$src" -mindepth 1 -maxdepth 1 -type d)" ; \
 			for dir in $$$$dirs; do \
-				base=$$$$(basename $$$$dir) ; \
-				if [ -d $$$$dest/$$$$base ]; then \
-					case $$$$dir in \
+				base="$$$$(basename "$$$$dir")" ; \
+				if [ -d "$$$$dest/$$$$base" ]; then \
+					case "$$$$dir" in \
 					*$(GO_PKG_PATH)/src/$(strip $(GO_PKG))) \
 						echo "$(strip $(GO_PKG)) is already installed. Please check for circular dependencies." ;; \
 					*) \
-						link_contents $$$$src/$$$$base $$$$dest/$$$$base ;; \
+						link_contents "$$$$src/$$$$base" "$$$$dest/$$$$base" ;; \
 					esac ; \
 				else \
 					echo "...$$$${src#$(GO_PKG_BUILD_DEPENDS_SRC)}/$$$$base" ; \
-					$(LN) $$$$src/$$$$base $$$$dest/$$$$base ; \
+					$(LN) "$$$$src/$$$$base" "$$$$dest/$$$$base" ; \
 				fi ; \
 			done ; \
 		} ; \
 		\
 		if [ "$(strip $(GO_PKG_SOURCE_ONLY))" != 1 ]; then \
-			if [ -d $(GO_PKG_BUILD_DEPENDS_SRC) ]; then \
+			if [ -d "$(GO_PKG_BUILD_DEPENDS_SRC)" ]; then \
 				echo "Symlinking directories from $(GO_PKG_BUILD_DEPENDS_SRC) into $(GO_PKG_BUILD_DIR)/src" ; \
-				link_contents $(GO_PKG_BUILD_DEPENDS_SRC) $(GO_PKG_BUILD_DIR)/src ; \
+				link_contents "$(GO_PKG_BUILD_DEPENDS_SRC)" "$(GO_PKG_BUILD_DIR)/src" ; \
 			else \
 				echo "$(GO_PKG_BUILD_DEPENDS_SRC) does not exist, skipping symlinks" ; \
 			fi ; \
@@ -297,16 +297,16 @@ endef
 # $(1) additional arguments for go command line (optional)
 define GoPackage/Build/Compile
 	( \
-		cd $(GO_PKG_BUILD_DIR) ; \
+		cd "$(GO_PKG_BUILD_DIR)" ; \
 		export $(GO_PKG_VARS) ; \
 		if [ -f "$(PKG_BUILD_DIR)/go.mod" ] ; then \
 			modargs="$(GO_MOD_ARGS)" ; \
 		fi ; \
 		\
 		echo "Finding targets" ; \
-		targets=$$$$(go list $$$$modargs $(GO_PKG_BUILD_PKG)) ; \
+		targets="$$$$(go list $$$$modargs $(GO_PKG_BUILD_PKG))" ; \
 		for pattern in $(GO_PKG_EXCLUDES); do \
-			targets=$$$$(echo "$$$$targets" | grep -v "$$$$pattern") ; \
+			targets="$$$$(echo "$$$$targets" | grep -v "$$$$pattern")" ; \
 		done ; \
 		echo ; \
 		\
@@ -319,7 +319,7 @@ define GoPackage/Build/Compile
 		if [ "$(strip $(GO_PKG_SOURCE_ONLY))" != 1 ]; then \
 			echo "Building targets" ; \
 			go install $(GO_PKG_INSTALL_ARGS) $$$$modargs $(1) $$$$targets ; \
-			retval=$$$$? ; \
+			retval="$$$$?" ; \
 			echo ; \
 			\
 			if [ "$$$$retval" -eq 0 ] && [ -z "$(call GoPackage/has_binaries)" ]; then \
@@ -331,7 +331,7 @@ define GoPackage/Build/Compile
 				$(call Go/CacheCleanup) ; \
 			fi ; \
 		fi ; \
-		exit $$$$retval ; \
+		exit "$$$$retval" ; \
 	)
 endef
 
@@ -341,15 +341,15 @@ endef
 
 define GoPackage/Package/Install/Bin
 	if [ -n "$(call GoPackage/has_binaries)" ]; then \
-		$(INSTALL_DIR) $(1)/usr/bin ; \
-		$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/* $(1)/usr/bin/ ; \
+		$(INSTALL_DIR) "$(1)/usr/bin" ; \
+		$(INSTALL_BIN) "$(GO_PKG_BUILD_BIN_DIR)"/* "$(1)/usr/bin/" ; \
 	fi
 endef
 
 define GoPackage/Package/Install/Src
-	dir=$$$$(dirname $(GO_PKG)) ; \
-	$(INSTALL_DIR) $(1)$(GO_PKG_PATH)/src/$$$$dir ; \
-	$(CP) $(GO_PKG_BUILD_DIR)/src/$(strip $(GO_PKG)) $(1)$(GO_PKG_PATH)/src/$$$$dir/
+	dir="$$$$(dirname "$(GO_PKG)")" ; \
+	$(INSTALL_DIR) "$(1)$(GO_PKG_PATH)/src/$$$$dir" ; \
+	$(CP) "$(GO_PKG_BUILD_DIR)/src/$(strip $(GO_PKG))" "$(1)$(GO_PKG_PATH)/src/$$$$dir/"
 endef
 
 define GoPackage/Package/Install

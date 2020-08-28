@@ -88,9 +88,9 @@ include $(INCLUDE_DIR)/package.mk
 include ../golang-compiler.mk
 include ../golang-package.mk
 
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
-HOST_UNPACK:=$(HOST_TAR) -C $(HOST_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
-BOOTSTRAP_UNPACK:=$(HOST_TAR) -C $(BOOTSTRAP_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(BOOTSTRAP_SOURCE)
+PKG_UNPACK:=$(HOST_TAR) -C "$(PKG_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(PKG_SOURCE)"
+HOST_UNPACK:=$(HOST_TAR) -C "$(HOST_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(PKG_SOURCE)"
+BOOTSTRAP_UNPACK:=$(HOST_TAR) -C "$(BOOTSTRAP_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(BOOTSTRAP_SOURCE)"
 
 # don't strip ELF executables in test data
 RSTRIP:=:
@@ -174,7 +174,7 @@ ifeq ($(BOOTSTRAP_ROOT_DIR),)
   $(eval $(call Download,golang-bootstrap))
 
   define Bootstrap/Prepare
-	mkdir -p $(BOOTSTRAP_BUILD_DIR)
+	mkdir -p "$(BOOTSTRAP_BUILD_DIR)"
 	$(BOOTSTRAP_UNPACK)
   endef
   Hooks/HostPrepare/Post+=Bootstrap/Prepare
@@ -195,23 +195,23 @@ endif
 $(eval $(call GoCompiler/AddProfile,Host,$(HOST_BUILD_DIR),$(HOST_GO_PREFIX),$(HOST_GO_VERSION_ID),$(GO_HOST_OS_ARCH),$(HOST_GO_INSTALL_SUFFIX)))
 
 HOST_GO_VARS= \
-	GOCACHE=$(GO_BUILD_CACHE_DIR) \
+	GOCACHE="$(GO_BUILD_CACHE_DIR)" \
 	GOENV=off \
-	CC=$(HOSTCC_NOCACHE) \
-	CXX=$(HOSTCXX_NOCACHE)
+	CC="$(HOSTCC_NOCACHE)" \
+	CXX="$(HOSTCXX_NOCACHE)"
 
 define Host/Compile
 	$(call GoCompiler/Bootstrap/CheckHost,$(BOOTSTRAP_GO_VALID_OS_ARCH))
 	$(call GoCompiler/Host/CheckHost,$(HOST_GO_VALID_OS_ARCH))
 
-	mkdir -p $(GO_BUILD_CACHE_DIR)
+	mkdir -p "$(GO_BUILD_CACHE_DIR)"
 
 	$(call GoCompiler/Bootstrap/Make, \
 		$(HOST_GO_VARS) \
 	)
 
 	$(call GoCompiler/Host/Make, \
-		GOROOT_BOOTSTRAP=$(BOOTSTRAP_ROOT_DIR) \
+		GOROOT_BOOTSTRAP="$(BOOTSTRAP_ROOT_DIR)" \
 		$(if $(HOST_GO_ENABLE_PIE),GO_LDFLAGS="-buildmode pie") \
 		$(HOST_GO_VARS) \
 	)
@@ -228,16 +228,16 @@ define Host/Install
 
 	$(call GoCompiler/Host/Install/BinLinks,)
 
-	rm -rf $(HOST_GO_ROOT)/pkg/$(GO_HOST_OS_ARCH)$(if $(HOST_GO_INSTALL_SUFFIX),_$(HOST_GO_INSTALL_SUFFIX))
+	rm -rf "$(HOST_GO_ROOT)/pkg/$(GO_HOST_OS_ARCH)$(if $(HOST_GO_INSTALL_SUFFIX),_$(HOST_GO_INSTALL_SUFFIX))"
 
-	$(INSTALL_DIR) $(HOST_GO_ROOT)/openwrt
-	$(INSTALL_BIN) ./files/go-gcc-helper $(HOST_GO_ROOT)/openwrt/
-	$(LN) go-gcc-helper $(HOST_GO_ROOT)/openwrt/gcc
-	$(LN) go-gcc-helper $(HOST_GO_ROOT)/openwrt/g++
+	$(INSTALL_DIR) "$(HOST_GO_ROOT)/openwrt"
+	$(INSTALL_BIN) ./files/go-gcc-helper "$(HOST_GO_ROOT)/openwrt/"
+	$(LN) go-gcc-helper "$(HOST_GO_ROOT)/openwrt/gcc"
+	$(LN) go-gcc-helper "$(HOST_GO_ROOT)/openwrt/g++"
 endef
 
 define Host/Uninstall
-	rm -rf $(HOST_GO_ROOT)/openwrt
+	rm -rf "$(HOST_GO_ROOT)/openwrt"
 
 	$(call GoCompiler/Host/Uninstall/BinLinks,)
 
@@ -261,13 +261,13 @@ PKG_GO_ZBOOTSTRAP_MODS:= \
 	s/defaultGOPPC64 = `[^`]*`/defaultGOPPC64 = `power8`/;
 
 PKG_GO_VARS= \
-	GOCACHE=$(GO_BUILD_CACHE_DIR) \
+	GOCACHE="$(GO_BUILD_CACHE_DIR)" \
 	GOENV=off \
-	GO_GCC_HELPER_PATH=$$$$PATH \
+	GO_GCC_HELPER_PATH="$$$$PATH" \
 	CC=gcc \
 	CXX=g++ \
 	PKG_CONFIG=pkg-config \
-	PATH=$(HOST_GO_ROOT)/openwrt:$$$$PATH
+	PATH="$(HOST_GO_ROOT)/openwrt:$$$$PATH"
 
 PKG_GO_LDFLAGS= \
 	-buildid '$(SOURCE_DATE_EPOCH)' \
@@ -283,34 +283,34 @@ PKG_GO_INSTALL_ARGS= \
 	$(if $(filter $(GO_PKG_ENABLE_PIE),1),-buildmode pie)
 
 define Build/Compile
-	mkdir -p $(GO_BUILD_CACHE_DIR)
+	mkdir -p "$(GO_BUILD_CACHE_DIR)"
 
 	@echo "Building target Go first stage"
 
 	$(call GoCompiler/Package/Make, \
-		GOROOT_BOOTSTRAP=$(HOST_GO_ROOT) \
+		GOROOT_BOOTSTRAP="$(HOST_GO_ROOT)" \
 		GO_GCC_HELPER_CC="$(HOSTCC)" \
 		GO_GCC_HELPER_CXX="$(HOSTCXX)" \
 		$(PKG_GO_VARS) \
 	)
 
 	$(SED) '$(PKG_GO_ZBOOTSTRAP_MODS)' \
-		$(PKG_BUILD_DIR)/src/cmd/internal/objabi/zbootstrap.go
+		"$(PKG_BUILD_DIR)/src/cmd/internal/objabi/zbootstrap.go"
 
 	@echo "Building target Go second stage"
 
 	( \
-		cd $(PKG_BUILD_DIR)/bin ; \
+		cd "$(PKG_BUILD_DIR)/bin" ; \
 		export $(GO_PKG_TARGET_VARS) ; \
 		$(CP) go go-host ; \
-		GOROOT_FINAL=$(PKG_GO_ROOT) \
+		GOROOT_FINAL="$(PKG_GO_ROOT)" \
 		GO_GCC_HELPER_CC="$(TARGET_CC)" \
 		GO_GCC_HELPER_CXX="$(TARGET_CXX)" \
 		$(PKG_GO_VARS) \
 		./go-host install -a $(PKG_GO_INSTALL_ARGS) std cmd ; \
-		retval=$$$$? ; \
+		retval="$$$$?" ; \
 		rm -f go-host ; \
-		exit $$$$retval ; \
+		exit "$$$$retval" ; \
 	)
 endef
 
