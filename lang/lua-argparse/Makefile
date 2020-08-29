@@ -44,7 +44,6 @@ endef
 define Package/lua-argparse/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/argparse.lua $(1)/usr/lib/lua/
-
 endef
 
 $(eval $(call BuildPackage,lua-argparse))
