@@ -274,12 +274,6 @@ config LCD4LINUX_CUSTOM_DRIVER_TeakLCM
 	bool
 	prompt "TeakLCM"
 
-config LCD4LINUX_CUSTOM_DRIVER_TEW673GRU
-	bool
-	select LCD4LINUX_CUSTOM_NEEDS_libgd
-	depends on TARGET_ar71xx
-	default TARGET_ar71xx
-
 config LCD4LINUX_CUSTOM_DRIVER_Trefon
 	bool
 	prompt "Trefon"
