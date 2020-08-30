@@ -1,6 +1,6 @@
 --- a/configure.in
 +++ b/configure.in
-@@ -2285,36 +2285,6 @@ if test "$with_python" = yes; then
+@@ -2317,36 +2317,6 @@ if test "$with_python" = yes; then
    CPPFLAGS=$ac_save_CPPFLAGS
  fi
  
