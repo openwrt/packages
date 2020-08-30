@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cryptography
 PKG_VERSION:=3.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=cryptography
 PKG_HASH:=26409a473cc6278e4c90f782cd5968ebad04d3911ed1c402fc86908c17633e08
@@ -19,7 +19,6 @@ PKG_LICENSE_FILES:=LICENSE.APACHE LICENSE.BSD
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_BUILD_DEPENDS:=libffi/host
-PKG_BUILD_PARALLEL:=0
 
 HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=cffi  # cffi>=1.8,!=1.11.3
 

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pycparser
 PKG_VERSION:=2.20
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PYPI_NAME:=pycparser
 PKG_HASH:=2d475327684562c3a96cc71adf7dc8c4f0565175cf86b6d7a404ff4c771f15f0
@@ -18,7 +18,6 @@ PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
-PKG_BUILD_PARALLEL:=0
 HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=ply  # ply==3.10
 
 include ../pypi.mk

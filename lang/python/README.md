@@ -365,10 +365,7 @@ Set `HOST_PYTHON3_PACKAGE_BUILD_DEPENDS` to the names of one or more requirement
 For example:
 
 ```
-PKG_BUILD_PARALLEL:=0
 HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
 ```
 
 The Python package will be installed in `$(STAGING_DIR_HOSTPKG)/lib/pythonX.Y/site-packages`.
-
-Parallel builds need to be disabled because installing packages with multiple concurrent pip processes can lead to [errors or unexpected results](https://github.com/pypa/pip/issues/2361).

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pluggy
 PKG_VERSION:=0.13.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PYPI_NAME:=pluggy
 PKG_HASH:=15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0
@@ -18,7 +18,6 @@ PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_PARALLEL:=0
 HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
 
 include ../pypi.mk
