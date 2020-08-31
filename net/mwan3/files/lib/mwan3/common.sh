@@ -13,5 +13,5 @@ LOG()
 	# when this release is out of beta, the comment in the line below
 	# should be removed
 	[ "$facility" = "debug" ] && return
-	logger -t "$SCRIPTNAME[$$]" -p $facility "$*"
+	logger -t "${SCRIPTNAME}[$$]" -p $facility "$*"
 }

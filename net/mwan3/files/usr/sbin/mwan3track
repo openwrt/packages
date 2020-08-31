@@ -44,7 +44,7 @@ validate_track_method() {
 				LOG warn "Missing httping. Please install httping package."
 				return 1
 			}
-			[ -n "$2" -a "$2" != "0.0.0.0" -a "$2" != "::" ] || {
+			[ -n "$2" ] && { [ "$2" = "0.0.0.0" ] || [ "$2" = "::" ]; } && {
 				LOG warn "Cannot determine source IP for the interface which is required by httping."
 				return 1
 			}
@@ -64,10 +64,10 @@ validate_track_method() {
 
 disconnected() {
 	echo "offline" > /var/run/mwan3track/$INTERFACE/STATUS
-	echo "$(get_uptime)" > /var/run/mwan3track/$INTERFACE/OFFLINE
+	get_uptime > /var/run/mwan3track/$INTERFACE/OFFLINE
 	echo "0" > /var/run/mwan3track/$INTERFACE/ONLINE
 	score=0
-	[ "$1" == 1 ] && return
+	[ "$1" = 1 ] && return
 	LOG notice "Interface $INTERFACE ($DEVICE) is offline"
 	env -i ACTION="disconnected" INTERFACE="$INTERFACE" DEVICE="$DEVICE" /sbin/hotplug-call iface
 }
@@ -75,12 +75,12 @@ disconnected() {
 connected() {
 	echo "online" > /var/run/mwan3track/$INTERFACE/STATUS
 	echo "0" > /var/run/mwan3track/$INTERFACE/OFFLINE
-	echo "$(get_uptime)" > /var/run/mwan3track/$INTERFACE/ONLINE
+	get_uptime > /var/run/mwan3track/$INTERFACE/ONLINE
 	host_up_count=0
 	lost=0
 	turn=0
 	loss=0
-	[ "$1" == 1 ] && return
+	[ "$1" = 1 ] && return
 	LOG notice "Interface $INTERFACE ($DEVICE) is online"
 	env -i ACTION="connected" INTERFACE="$INTERFACE" DEVICE="$DEVICE" /sbin/hotplug-call iface
 }
@@ -94,11 +94,9 @@ firstconnect() {
 }
 
 update_status() {
-	local status track_ip
-	track_ip=$1
-	status=$2
+	local track_ip=$1
 
-	echo "$1" > /var/run/mwan3track/$INTERFACE/TRACK_${track_ip}
+	echo "$2" > /var/run/mwan3track/$INTERFACE/TRACK_${track_ip}
 	[ -z "$3" ] && return
 	echo "$3" > /var/run/mwan3track/$INTERFACE/LATENCY_${track_ip}
 	echo "$4" > /var/run/mwan3track/$INTERFACE/LOSS_${track_ip}
@@ -151,13 +149,13 @@ main() {
 	config_get failure_loss $INTERFACE failure_loss 40
 	config_get recovery_loss $INTERFACE recovery_loss 10
 
-	local score=$(($down+$up))
+	local score=$((down+up))
 	local track_ips=$(echo $* | cut -d ' ' -f 5-99)
 	local host_up_count=0
 	local lost=0
 	local turn=0
 	local ping_protocol=4
-	local sleep_time result ping_result ping_result_raw  ping_status loss latency
+	local sleep_time result ping_result ping_result_raw ping_status loss latency
 
 	firstconnect
 	while true; do
@@ -183,7 +181,7 @@ main() {
 							ping_result_raw="$($PING -$ping_protocol -I ${SRC_IP:-$DEVICE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip 2>/dev/null)"
 							ping_status=$?
 							ping_result=$(echo "$ping_result_raw" | tail -n2)
-							loss="$(echo "$ping_result" | grep "packet loss" |  cut -d "," -f3 | awk '{print $1}' | sed -e 's/%//')"
+							loss="$(echo "$ping_result" | grep "packet loss" | cut -d "," -f3 | awk '{print $1}' | sed -e 's/%//')"
 							if [ "$ping_status" -ne 0 ] || [ "$loss" -eq 100 ]; then
 								latency=999999
 								loss=100
@@ -234,14 +232,14 @@ main() {
 						fi
 					fi
 				else
-					if [ "$loss" -ge "$failure_loss" -o "$latency" -ge "$failure_latency" ]; then
+					if [ "$loss" -ge "$failure_loss" ] || [ "$latency" -ge "$failure_latency" ]; then
 						let lost++
 						update_status "$track_ip" "down" $latency $loss
 
 						if [ $score -gt $up ]; then
 							LOG info "Check (${track_method}: latency=${latency}ms loss=${loss}%) failed for target \"$track_ip\" on interface $INTERFACE ($DEVICE). Current score: $score"
 						fi
-					elif [ "$loss" -le "$recovery_loss" -a "$latency" -le "$recovery_latency" ]; then
+					elif [ "$loss" -le "$recovery_loss" ] && [ "$latency" -le "$recovery_latency" ]; then
 						let host_up_count++
 						update_status "$track_ip" "up" $latency $loss
 
@@ -274,8 +272,8 @@ main() {
 				score=0
 			fi
 		else
-			if [ $score -lt $(($down+$up)) ] && [ $lost -gt 0 ]; then
-				LOG info "Lost $(($lost*$count)) ping(s) on interface $INTERFACE ($DEVICE). Current score: $score"
+			if [ $score -lt $((down+up)) ] && [ $lost -gt 0 ]; then
+				LOG info "Lost $((lost*count)) ping(s) on interface $INTERFACE ($DEVICE). Current score: $score"
 			fi
 
 			let score++
@@ -283,7 +281,7 @@ main() {
 
 			if [ $score -gt $up ]; then
 				echo "online" > /var/run/mwan3track/$INTERFACE/STATUS
-				score=$(($down+$up))
+				score=$((down+up))
 			elif [ $score -le $up ]; then
 				sleep_time=$recovery_interval
 			fi
@@ -298,7 +296,7 @@ main() {
 		echo "${lost}" > /var/run/mwan3track/$INTERFACE/LOST
 		echo "${score}" > /var/run/mwan3track/$INTERFACE/SCORE
 		echo "${turn}" > /var/run/mwan3track/$INTERFACE/TURN
-		echo "$(get_uptime)" > /var/run/mwan3track/$INTERFACE/TIME
+		get_uptime > /var/run/mwan3track/$INTERFACE/TIME
 
 		host_up_count=0
 		sleep "${sleep_time}" &

@@ -7,9 +7,9 @@
 . /lib/mwan3/common.sh
 
 SCRIPTNAME="mwan3-hotplug"
-[ "$ACTION" = "ifup" ] || [ "$ACTION" = "ifdown" ] ||  [ "$ACTION" = "connected" ] || [ "$ACTION" = "disconnected" ] || exit 1
+[ "$ACTION" = "ifup" ] || [ "$ACTION" = "ifdown" ] || [ "$ACTION" = "connected" ] || [ "$ACTION" = "disconnected" ] || exit 1
 [ -n "$INTERFACE" ] || exit 2
-if ( [ "$ACTION" = "ifup" ] || [ "$ACTION" = "connected" ] ) && [ -z "$DEVICE" ]; then
+if { [ "$ACTION" = "ifup" ] || [ "$ACTION" = "connected" ] ; } && [ -z "$DEVICE" ]; then
 	LOG notice "$ACTION called on $INTERFACE with no device set"
 	exit 3
 fi
@@ -62,7 +62,7 @@ fi
 binary_status=$status
 [ "$binary_status" = "online" ] || binary_status=offline
 
-LOG notice "Execute "$ACTION" event on interface $INTERFACE (${DEVICE:-unknown})"
+LOG notice "Execute $ACTION event on interface $INTERFACE (${DEVICE:-unknown})"
 
 case "$ACTION" in
 	ifup|connected)

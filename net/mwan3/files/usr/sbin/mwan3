@@ -44,7 +44,7 @@ ifdown()
 
 ifup()
 {
-	local device enabled up l3_device status interface true_iface
+	local enabled up l3_device status interface true_iface
 
 	if [ -z "$1" ]; then
 		echo "Expecting interface. Usage: mwan3 ifup <interface>"
@@ -104,40 +104,40 @@ interfaces()
 
 	echo "Interface status:"
 	config_foreach mwan3_report_iface_status interface
-	echo -e
+	echo
 }
 
 policies()
 {
 	echo "Current ipv4 policies:"
 	mwan3_report_policies_v4
-	echo -e
+	echo
 	[ $NO_IPV6 -ne 0 ] && return
 	echo "Current ipv6 policies:"
 	mwan3_report_policies_v6
-	echo -e
+	echo
 }
 
 connected()
 {
 	echo "Directly connected ipv4 networks:"
 	mwan3_report_connected_v4
-	echo -e
+	echo
 	[ $NO_IPV6 -ne 0 ] && return
 	echo "Directly connected ipv6 networks:"
 	mwan3_report_connected_v6
-	echo -e
+	echo
 }
 
 rules()
 {
 	echo "Active ipv4 user rules:"
 	mwan3_report_rules_v4
-	echo -e
+	echo
 	[ $NO_IPV6 -ne 0 ] && return
 	echo "Active ipv6 user rules:"
 	mwan3_report_rules_v6
-	echo -e
+	echo
 }
 
 status()
@@ -205,12 +205,12 @@ stop()
 			IP="$IP6"
 		fi
 
-		for tid in $(ip route list table all | sed -ne  's/.*table \([0-9]\+\).*/\1/p'|sort -u); do
+		for tid in $(ip route list table all | sed -ne 's/.*table \([0-9]\+\).*/\1/p' | sort -u); do
 			[ $tid -gt $MWAN3_INTERFACE_MAX ] && continue
 			$IP route flush table $tid &> /dev/null
 		done
 
-		for rule in $($IP rule list | egrep '^[1-2][0-9]{3}\:' | cut -d ':' -f 1); do
+		for rule in $($IP rule list | grep -E '^[1-3][0-9]{3}\:' | cut -d ':' -f 1); do
 			$IP rule del pref $rule &> /dev/null
 		done
 		table="$($IPT -S)"
@@ -255,6 +255,7 @@ restart() {
 case "$1" in
 	ifup|ifdown|interfaces|policies|connected|rules|status|start|stop|restart)
 		mwan3_init
+		# shellcheck disable=SC2048
 		$*
 	;;
 	*)

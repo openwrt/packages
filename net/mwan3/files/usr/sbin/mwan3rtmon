@@ -8,8 +8,7 @@
 mwan3_rtmon_route_handle()
 {
 	config_load mwan3
-	local section action route_line family tbl device metric tos dst line
-	local route_device tid
+	local section action route_line family tbl device metric tos dst line tid
 	route_line=${1##"Deleted "}
 	route_family=$2
 
@@ -48,7 +47,7 @@ mwan3_rtmon_route_handle()
 		[ $action = "add" ] && [ -z "${tbl##*$route_line*}" ] && return
 		[ $action = "del" ] && [ -n "${tbl##*$route_line*}" ] && return
 		network_get_device device "$section"
-		LOG debug "adjusting route $device: $IP route "$action" table $tid $route_line"
+		LOG debug "adjusting route $device: $IP route \"$action\" table $tid $route_line"
 		$IP route "$action" table $tid $route_line ||
 			LOG warn "failed: $IP route $action table $tid $route_line"
 	}
@@ -69,7 +68,7 @@ mwan3_rtmon_route_handle()
 
 		dst=${route_line%% *}
 		grep_line="$dst ${tos:+tos $tos}.*table [0-9].*${metric:+metric $metric}"
-		$IP route list table all | grep "$grep_line" | while read line; do
+		$IP route list table all | grep "$grep_line" | while read -r line; do
 			tbl=${line##*table }
 			tbl=${tbl%% *}
 			[ $tbl -gt $MWAN3_INTERFACE_MAX ] && continue
@@ -99,7 +98,7 @@ main()
 	fi
 	mwan3_init
 
-	$IP monitor route | while read line; do
+	$IP monitor route | while read -r line; do
 		[ -z "${line##*table*}" ] && continue
 		LOG debug "handling route update $family $line"
 		mwan3_lock "service" "mwan3rtmon"
