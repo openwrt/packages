@@ -6,6 +6,7 @@ get_uptime() {
 }
 
 SCRIPTNAME="$(basename "$0")"
+MWAN3TRACK_STATUS_DIR="/var/run/mwan3track"
 LOG()
 {
 	local facility=$1; shift

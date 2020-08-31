@@ -73,9 +73,9 @@ disconnected() {
 }
 
 connected() {
-	echo "online" > /var/run/mwan3track/$INTERFACE/STATUS
-	echo "0" > /var/run/mwan3track/$INTERFACE/OFFLINE
-	get_uptime > /var/run/mwan3track/$INTERFACE/ONLINE
+	echo "online" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/STATUS
+	echo "0" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/OFFLINE
+	get_uptime > $MWAN3TRACK_STATUS_DIR/$INTERFACE/ONLINE
 	host_up_count=0
 	lost=0
 	turn=0
@@ -96,10 +96,10 @@ firstconnect() {
 update_status() {
 	local track_ip=$1
 
-	echo "$2" > /var/run/mwan3track/$INTERFACE/TRACK_${track_ip}
+	echo "$2" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/TRACK_${track_ip}
 	[ -z "$3" ] && return
-	echo "$3" > /var/run/mwan3track/$INTERFACE/LATENCY_${track_ip}
-	echo "$4" > /var/run/mwan3track/$INTERFACE/LOSS_${track_ip}
+	echo "$3" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/LATENCY_${track_ip}
+	echo "$4" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/LOSS_${track_ip}
 }
 
 main() {
@@ -280,7 +280,7 @@ main() {
 			lost=0
 
 			if [ $score -gt $up ]; then
-				echo "online" > /var/run/mwan3track/$INTERFACE/STATUS
+				echo "online" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/STATUS
 				score=$((down+up))
 			elif [ $score -le $up ]; then
 				sleep_time=$recovery_interval
@@ -292,11 +292,11 @@ main() {
 		fi
 
 		let turn++
-		mkdir -p "/var/run/mwan3track/${1}"
-		echo "${lost}" > /var/run/mwan3track/$INTERFACE/LOST
-		echo "${score}" > /var/run/mwan3track/$INTERFACE/SCORE
-		echo "${turn}" > /var/run/mwan3track/$INTERFACE/TURN
-		get_uptime > /var/run/mwan3track/$INTERFACE/TIME
+		mkdir -p "$MWAN3TRACK_STATUS_DIR/${1}"
+		echo "${lost}" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/LOST
+		echo "${score}" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/SCORE
+		echo "${turn}" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/TURN
+		get_uptime > $MWAN3TRACK_STATUS_DIR/$INTERFACE/TIME
 
 		host_up_count=0
 		sleep "${sleep_time}" &

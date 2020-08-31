@@ -24,7 +24,6 @@ IPv6_REGEX="${IPv6_REGEX}::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-
 IPv6_REGEX="${IPv6_REGEX}([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])"
 
 MWAN3_STATUS_DIR="/var/run/mwan3"
-MWAN3TRACK_STATUS_DIR="/var/run/mwan3track"
 MWAN3_INTERFACE_MAX=""
 DEFAULT_LOWEST_METRIC=256
 MMX_MASK=""
