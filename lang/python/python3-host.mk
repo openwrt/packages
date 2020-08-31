@@ -73,13 +73,16 @@ HOST_PYTHON3_PIP:=$(STAGING_DIR_HOSTPKG)/bin/pip$(PYTHON3_VERSION)
 
 # $(1) => packages to install
 define Build/Compile/HostPy3PipInstall
-	$(call host_python3_settings) \
-	$(HOST_PYTHON3_PIP) \
-		--disable-pip-version-check \
-		--cache-dir "$(DL_DIR)/pip-cache" \
-		install \
-		--no-binary :all: \
-		$(1)
+	$(call locked, \
+		$(call host_python3_settings) \
+		$(HOST_PYTHON3_PIP) \
+			--disable-pip-version-check \
+			--cache-dir "$(DL_DIR)/pip-cache" \
+			install \
+			--no-binary :all: \
+			$(1), \
+		pip \
+	)
 endef
 
 # $(1) => build subdir
