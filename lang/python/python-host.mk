@@ -74,12 +74,15 @@ HOST_PYTHON_PIP:=$(STAGING_DIR_HOSTPKG)/bin/pip$(PYTHON_VERSION)
 
 # $(1) => packages to install
 define Build/Compile/HostPyPipInstall
-	$(call host_python_settings) \
-	$(HOST_PYTHON_PIP) \
-		--disable-pip-version-check \
-		--cache-dir "$(DL_DIR)/pip-cache" \
-		install \
-		$(1)
+	$(call locked, \
+		$(call host_python_settings) \
+		$(HOST_PYTHON_PIP) \
+			--disable-pip-version-check \
+			--cache-dir "$(DL_DIR)/pip-cache" \
+			install \
+			$(1), \
+		pip \
+	)
 endef
 
 # $(1) => build subdir
