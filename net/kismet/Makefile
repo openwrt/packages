@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kismet
 PKG_VERSION:=2016-07-R1
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_LICENSE:=LGPLv2.1
 PKG_CPE_ID:=cpe:/a:kismet:kismet
