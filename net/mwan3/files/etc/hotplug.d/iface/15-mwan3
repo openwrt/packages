@@ -37,7 +37,7 @@ mwan3_init
 	mwan3_set_connected_${family}
 }
 
-if [ "$MWAN3_STARTUP" != 1 ]; then
+if [ "$MWAN3_STARTUP" != 1 ] && [ "$ACTION" = "ifup" ]; then
 	mwan3_set_user_iface_rules $INTERFACE $DEVICE
 fi
 
