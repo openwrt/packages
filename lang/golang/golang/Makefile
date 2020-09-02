@@ -96,20 +96,6 @@ BOOTSTRAP_UNPACK:=$(HOST_TAR) -C $(BOOTSTRAP_BUILD_DIR) --strip-components=1 -xz
 RSTRIP:=:
 STRIP:=:
 
-ifdef CONFIG_PKG_ASLR_PIE_ALL
-  ifeq ($(GO_TARGET_PIE_SUPPORTED),1)
-    PKG_GO_ENABLE_PIE:=1
-    PKG_GO_INSTALL_SUFFIX:=$(GO_TARGET_PIE_INSTALL_SUFFIX)
-  else
-    $(warning PIE buildmode is not supported for $(GO_OS)/$(GO_ARCH))
-  endif
-endif
-
-ifeq ($(GO_HOST_PIE_SUPPORTED),1)
-  HOST_GO_ENABLE_PIE:=1
-  HOST_GO_INSTALL_SUFFIX:=$(GO_HOST_PIE_INSTALL_SUFFIX)
-endif
-
 define Package/golang/Default
 $(call GoPackage/GoSubMenu)
   TITLE:=Go programming language
@@ -172,41 +158,17 @@ This package provides the Go programming language source files needed
 for cross-compilation.
 endef
 
+
+# Bootstrap
+
 EXTERNAL_BOOTSTRAP_DIR:=$(call qstrip,$(CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT))
 USE_DEFAULT_BOOTSTRAP:=$(if $(EXTERNAL_BOOTSTRAP_DIR),,1)
-
-PKG_GO_ZBOOTSTRAP_MODS:= \
-	s/defaultGO386 = `[^`]*`/defaultGO386 = `$(if $(GO_386),$(GO_386),387)`/; \
-	s/defaultGOARM = `[^`]*`/defaultGOARM = `$(if $(GO_ARM),$(GO_ARM),5)`/; \
-	s/defaultGOMIPS = `[^`]*`/defaultGOMIPS = `$(if $(GO_MIPS),$(GO_MIPS),hardfloat)`/; \
-	s/defaultGOMIPS64 = `[^`]*`/defaultGOMIPS64 = `$(if $(GO_MIPS64),$(GO_MIPS64),hardfloat)`/; \
-	s/defaultGOPPC64 = `[^`]*`/defaultGOPPC64 = `power8`/;
-
-PKG_GO_LDFLAGS= \
-	-buildid '$(SOURCE_DATE_EPOCH)'
-
-ifeq ($(CONFIG_NO_STRIP)$(CONFIG_DEBUG),)
-  PKG_GO_LDFLAGS+= -s -w
-endif
-
-# setting -trimpath is not necessary here because the paths inside the
-# compiler binary are relative to GOROOT_FINAL (PKG_GO_ROOT), which is
-# static / not dependent on the build environment
-PKG_GO_INSTALL_ARGS= \
-	-ldflags "all=$(PKG_GO_LDFLAGS)"
-
-ifeq ($(PKG_GO_ENABLE_PIE),1)
-  PKG_GO_INSTALL_ARGS+= -buildmode pie
-endif
 
 define Download/golang-bootstrap
   FILE:=$(BOOTSTRAP_SOURCE)
   URL:=$(BOOTSTRAP_SOURCE_URL)
   HASH:=$(BOOTSTRAP_HASH)
 endef
-
-$(eval $(call GoCompiler/AddProfile,Host,$(HOST_BUILD_DIR),$(HOST_GO_PREFIX),$(HOST_GO_VERSION_ID),$(GO_HOST_OS_ARCH),$(HOST_GO_INSTALL_SUFFIX)))
-$(eval $(call GoCompiler/AddProfile,Package,$(PKG_BUILD_DIR),$(PKG_GO_PREFIX),$(PKG_GO_VERSION_ID),$(GO_OS_ARCH),$(PKG_GO_INSTALL_SUFFIX)))
 
 ifeq ($(USE_DEFAULT_BOOTSTRAP),1)
   $(eval $(call GoCompiler/AddProfile,Bootstrap,$(BOOTSTRAP_BUILD_DIR),,bootstrap,$(GO_HOST_OS_ARCH)))
@@ -219,6 +181,16 @@ ifeq ($(USE_DEFAULT_BOOTSTRAP),1)
 	$(BOOTSTRAP_UNPACK)
   endef
 endif
+
+
+# Host
+
+ifeq ($(GO_HOST_PIE_SUPPORTED),1)
+  HOST_GO_ENABLE_PIE:=1
+  HOST_GO_INSTALL_SUFFIX:=$(GO_HOST_PIE_INSTALL_SUFFIX)
+endif
+
+$(eval $(call GoCompiler/AddProfile,Host,$(HOST_BUILD_DIR),$(HOST_GO_PREFIX),$(HOST_GO_VERSION_ID),$(GO_HOST_OS_ARCH),$(HOST_GO_INSTALL_SUFFIX)))
 
 # when https://github.com/golang/go/issues/31544 is fixed,
 # we should be able to set GO_LDFLAGS=-buildmode=pie for host make
@@ -286,6 +258,44 @@ define Host/Uninstall
 	$(call GoCompiler/Host/Uninstall,)
 endef
 
+
+# Target
+
+ifdef CONFIG_PKG_ASLR_PIE_ALL
+  ifeq ($(GO_TARGET_PIE_SUPPORTED),1)
+    PKG_GO_ENABLE_PIE:=1
+    PKG_GO_INSTALL_SUFFIX:=$(GO_TARGET_PIE_INSTALL_SUFFIX)
+  else
+    $(warning PIE buildmode is not supported for $(GO_OS)/$(GO_ARCH))
+  endif
+endif
+
+$(eval $(call GoCompiler/AddProfile,Package,$(PKG_BUILD_DIR),$(PKG_GO_PREFIX),$(PKG_GO_VERSION_ID),$(GO_OS_ARCH),$(PKG_GO_INSTALL_SUFFIX)))
+
+PKG_GO_ZBOOTSTRAP_MODS:= \
+	s/defaultGO386 = `[^`]*`/defaultGO386 = `$(if $(GO_386),$(GO_386),387)`/; \
+	s/defaultGOARM = `[^`]*`/defaultGOARM = `$(if $(GO_ARM),$(GO_ARM),5)`/; \
+	s/defaultGOMIPS = `[^`]*`/defaultGOMIPS = `$(if $(GO_MIPS),$(GO_MIPS),hardfloat)`/; \
+	s/defaultGOMIPS64 = `[^`]*`/defaultGOMIPS64 = `$(if $(GO_MIPS64),$(GO_MIPS64),hardfloat)`/; \
+	s/defaultGOPPC64 = `[^`]*`/defaultGOPPC64 = `power8`/;
+
+PKG_GO_LDFLAGS= \
+	-buildid '$(SOURCE_DATE_EPOCH)'
+
+ifeq ($(CONFIG_NO_STRIP)$(CONFIG_DEBUG),)
+  PKG_GO_LDFLAGS+= -s -w
+endif
+
+# setting -trimpath is not necessary here because the paths inside the
+# compiler binary are relative to GOROOT_FINAL (PKG_GO_ROOT), which is
+# static / not dependent on the build environment
+PKG_GO_INSTALL_ARGS= \
+	-ldflags "all=$(PKG_GO_LDFLAGS)"
+
+ifeq ($(PKG_GO_ENABLE_PIE),1)
+  PKG_GO_INSTALL_ARGS+= -buildmode pie
+endif
+
 define Build/Compile
 	mkdir -p $(GO_BUILD_CACHE_DIR)
 
@@ -349,6 +359,7 @@ endef
 define Package/golang-src/extra_provides
 	echo 'libc.so.6'
 endef
+
 
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,golang))
