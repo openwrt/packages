@@ -161,25 +161,25 @@ endef
 
 # Bootstrap
 
-EXTERNAL_BOOTSTRAP_DIR:=$(call qstrip,$(CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT))
-USE_DEFAULT_BOOTSTRAP:=$(if $(EXTERNAL_BOOTSTRAP_DIR),,1)
+BOOTSTRAP_ROOT_DIR:=$(call qstrip,$(CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT))
 
-define Download/golang-bootstrap
-  FILE:=$(BOOTSTRAP_SOURCE)
-  URL:=$(BOOTSTRAP_SOURCE_URL)
-  HASH:=$(BOOTSTRAP_HASH)
-endef
+ifeq ($(BOOTSTRAP_ROOT_DIR),)
+  BOOTSTRAP_ROOT_DIR:=$(BOOTSTRAP_BUILD_DIR)
 
-ifeq ($(USE_DEFAULT_BOOTSTRAP),1)
-  $(eval $(call GoCompiler/AddProfile,Bootstrap,$(BOOTSTRAP_BUILD_DIR),,bootstrap,$(GO_HOST_OS_ARCH)))
-
+  define Download/golang-bootstrap
+    FILE:=$(BOOTSTRAP_SOURCE)
+    URL:=$(BOOTSTRAP_SOURCE_URL)
+    HASH:=$(BOOTSTRAP_HASH)
+  endef
   $(eval $(call Download,golang-bootstrap))
 
-  define Host/Prepare
-	$(call Host/Prepare/Default)
+  define Bootstrap/Prepare
 	mkdir -p $(BOOTSTRAP_BUILD_DIR)
 	$(BOOTSTRAP_UNPACK)
   endef
+  Hooks/HostPrepare/Post+=Bootstrap/Prepare
+
+  $(eval $(call GoCompiler/AddProfile,Bootstrap,$(BOOTSTRAP_BUILD_DIR),,bootstrap,$(GO_HOST_OS_ARCH)))
 endif
 
 
@@ -207,7 +207,7 @@ define Host/Compile
 	)
 
 	$(call GoCompiler/Host/Make, \
-		GOROOT_BOOTSTRAP=$(if $(USE_DEFAULT_BOOTSTRAP),$(BOOTSTRAP_BUILD_DIR),$(EXTERNAL_BOOTSTRAP_DIR)) \
+		GOROOT_BOOTSTRAP=$(BOOTSTRAP_ROOT_DIR) \
 		GOCACHE=$(GO_BUILD_CACHE_DIR) \
 		CC=$(HOSTCC_NOCACHE) \
 		CXX=$(HOSTCXX_NOCACHE) \
