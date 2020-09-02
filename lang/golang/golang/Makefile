@@ -247,40 +247,38 @@ endef
 
 # Target
 
-ifdef CONFIG_PKG_ASLR_PIE_ALL
-  ifeq ($(GO_TARGET_PIE_SUPPORTED),1)
-    PKG_GO_ENABLE_PIE:=1
-    PKG_GO_INSTALL_SUFFIX:=$(GO_TARGET_PIE_INSTALL_SUFFIX)
-  else
-    $(warning PIE buildmode is not supported for $(GO_OS)/$(GO_ARCH))
-  endif
+ifeq ($(GO_PKG_ENABLE_PIE),1)
+  PKG_GO_INSTALL_SUFFIX:=$(GO_TARGET_PIE_INSTALL_SUFFIX)
 endif
 
 $(eval $(call GoCompiler/AddProfile,Package,$(PKG_BUILD_DIR),$(PKG_GO_PREFIX),$(PKG_GO_VERSION_ID),$(GO_OS_ARCH),$(PKG_GO_INSTALL_SUFFIX)))
 
 PKG_GO_ZBOOTSTRAP_MODS:= \
-	s/defaultGO386 = `[^`]*`/defaultGO386 = `$(if $(GO_386),$(GO_386),387)`/; \
-	s/defaultGOARM = `[^`]*`/defaultGOARM = `$(if $(GO_ARM),$(GO_ARM),5)`/; \
-	s/defaultGOMIPS = `[^`]*`/defaultGOMIPS = `$(if $(GO_MIPS),$(GO_MIPS),hardfloat)`/; \
-	s/defaultGOMIPS64 = `[^`]*`/defaultGOMIPS64 = `$(if $(GO_MIPS64),$(GO_MIPS64),hardfloat)`/; \
+	s/defaultGO386 = `[^`]*`/defaultGO386 = `$(or $(GO_386),387)`/; \
+	s/defaultGOARM = `[^`]*`/defaultGOARM = `$(or $(GO_ARM),5)`/; \
+	s/defaultGOMIPS = `[^`]*`/defaultGOMIPS = `$(or $(GO_MIPS),hardfloat)`/; \
+	s/defaultGOMIPS64 = `[^`]*`/defaultGOMIPS64 = `$(or $(GO_MIPS64),hardfloat)`/; \
 	s/defaultGOPPC64 = `[^`]*`/defaultGOPPC64 = `power8`/;
 
-PKG_GO_LDFLAGS= \
-	-buildid '$(SOURCE_DATE_EPOCH)'
+PKG_GO_VARS= \
+	GOCACHE=$(GO_BUILD_CACHE_DIR) \
+	GOENV=off \
+	GO_GCC_HELPER_PATH=$$$$PATH \
+	CC=gcc \
+	CXX=g++ \
+	PKG_CONFIG=pkg-config \
+	PATH=$(HOST_GO_ROOT)/openwrt:$$$$PATH
 
-ifeq ($(CONFIG_NO_STRIP)$(CONFIG_DEBUG),)
-  PKG_GO_LDFLAGS+= -s -w
-endif
+PKG_GO_LDFLAGS= \
+	-buildid '$(SOURCE_DATE_EPOCH)' \
+	$(if $(CONFIG_NO_STRIP)$(CONFIG_DEBUG),,-s -w)
 
 # setting -trimpath is not necessary here because the paths inside the
 # compiler binary are relative to GOROOT_FINAL (PKG_GO_ROOT), which is
 # static / not dependent on the build environment
 PKG_GO_INSTALL_ARGS= \
-	-ldflags "all=$(PKG_GO_LDFLAGS)"
-
-ifeq ($(PKG_GO_ENABLE_PIE),1)
-  PKG_GO_INSTALL_ARGS+= -buildmode pie
-endif
+	-ldflags "all=$(PKG_GO_LDFLAGS)" \
+	$(if $(filter $(GO_PKG_ENABLE_PIE),1),-buildmode pie)
 
 define Build/Compile
 	mkdir -p $(GO_BUILD_CACHE_DIR)
@@ -289,14 +287,9 @@ define Build/Compile
 
 	$(call GoCompiler/Package/Make, \
 		GOROOT_BOOTSTRAP=$(HOST_GO_ROOT) \
-		GOCACHE=$(GO_BUILD_CACHE_DIR) \
 		GO_GCC_HELPER_CC="$(HOSTCC)" \
 		GO_GCC_HELPER_CXX="$(HOSTCXX)" \
-		GO_GCC_HELPER_PATH=$$$$PATH \
-		CC=gcc \
-		CXX=g++ \
-		PKG_CONFIG=pkg-config \
-		PATH=$(HOST_GO_ROOT)/openwrt:$$$$PATH \
+		$(PKG_GO_VARS) \
 	)
 
 	$(SED) '$(PKG_GO_ZBOOTSTRAP_MODS)' \
@@ -309,15 +302,9 @@ define Build/Compile
 		export $(GO_PKG_TARGET_VARS) ; \
 		$(CP) go go-host ; \
 		GOROOT_FINAL=$(PKG_GO_ROOT) \
-		GOCACHE=$(GO_BUILD_CACHE_DIR) \
-		GOENV=off \
 		GO_GCC_HELPER_CC="$(TARGET_CC)" \
 		GO_GCC_HELPER_CXX="$(TARGET_CXX)" \
-		GO_GCC_HELPER_PATH=$$$$PATH \
-		CC=gcc \
-		CXX=g++ \
-		PKG_CONFIG=pkg-config \
-		PATH=$(HOST_GO_ROOT)/openwrt:$$$$PATH \
+		$(PKG_GO_VARS) \
 		./go-host install -a $(PKG_GO_INSTALL_ARGS) std cmd ; \
 		retval=$$$$? ; \
 		rm -f go-host ; \
