@@ -155,20 +155,7 @@ libraries for the Go programming language.
 endef
 
 define Package/golang/config
-menu "Configuration"
-
-config GOLANG_EXTERNAL_BOOTSTRAP_ROOT
-	string "External bootstrap Go root directory"
-	help
-	  Path to a working Go tree (>= Go 1.4), with bin, pkg, and src
-	  subdirectories and the Go compiler at bin/go.
-
-	  If specified, the existing Go installation will be used to
-	  compile host (buildroot) Go.
-
-	  Leave blank to compile the default bootstrap Go.
-
-endmenu
+  source "$(SOURCE)/Config.in"
 endef
 
 define Package/golang-doc
