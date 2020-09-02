@@ -13,6 +13,20 @@
 		"focus": "general",
 		"descurl": "https://adguard.com"
 	},
+	"amazonfiretv_tracking": {
+		"url": "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/AmazonFireTV.txt",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "S",
+		"focus": "AmazonFire TV tracking",
+		"descurl": "https://github.com/Perflyst/PiHoleBlocklist"
+	},
+	"android_tracking": {
+		"url": "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/android-tracking.txt",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "S",
+		"focus": "Android tracking",
+		"descurl": "https://github.com/Perflyst/PiHoleBlocklist"
+	},
 	"andryou": {
 		"url": "https://gitlab.com/andryou/block/raw/master/kouhai-compressed-domains",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
