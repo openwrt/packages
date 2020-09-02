@@ -187,10 +187,19 @@ endif
 
 ifeq ($(GO_HOST_PIE_SUPPORTED),1)
   HOST_GO_ENABLE_PIE:=1
+endif
+
+ifeq ($(HOST_GO_ENABLE_PIE),1)
   HOST_GO_INSTALL_SUFFIX:=$(GO_HOST_PIE_INSTALL_SUFFIX)
 endif
 
 $(eval $(call GoCompiler/AddProfile,Host,$(HOST_BUILD_DIR),$(HOST_GO_PREFIX),$(HOST_GO_VERSION_ID),$(GO_HOST_OS_ARCH),$(HOST_GO_INSTALL_SUFFIX)))
+
+HOST_GO_VARS= \
+	GOCACHE=$(GO_BUILD_CACHE_DIR) \
+	GOENV=off \
+	CC=$(HOSTCC_NOCACHE) \
+	CXX=$(HOSTCXX_NOCACHE)
 
 # when https://github.com/golang/go/issues/31544 is fixed,
 # we should be able to set GO_LDFLAGS=-buildmode=pie for host make
@@ -202,15 +211,12 @@ define Host/Compile
 	mkdir -p $(GO_BUILD_CACHE_DIR)
 
 	$(call GoCompiler/Bootstrap/Make, \
-		CC=$(HOSTCC_NOCACHE) \
-		CXX=$(HOSTCXX_NOCACHE) \
+		$(HOST_GO_VARS) \
 	)
 
 	$(call GoCompiler/Host/Make, \
 		GOROOT_BOOTSTRAP=$(BOOTSTRAP_ROOT_DIR) \
-		GOCACHE=$(GO_BUILD_CACHE_DIR) \
-		CC=$(HOSTCC_NOCACHE) \
-		CXX=$(HOSTCXX_NOCACHE) \
+		$(HOST_GO_VARS) \
 	)
 
   ifneq ($(HOST_GO_ENABLE_PIE),)
@@ -219,11 +225,8 @@ define Host/Compile
 	( \
 		cd $(HOST_BUILD_DIR)/bin ; \
 		$(CP) go go-nopie ; \
-		GOCACHE=$(GO_BUILD_CACHE_DIR) \
-		GOENV=off \
-		CC=$(HOSTCC_NOCACHE) \
-		CXX=$(HOSTCXX_NOCACHE) \
-		./go-nopie install -a -buildmode=pie std cmd ; \
+		$(HOST_GO_VARS) \
+		./go-nopie install -a -buildmode pie std cmd ; \
 		retval=$$$$? ; \
 		rm -f go-nopie ; \
 		exit $$$$retval ; \
