@@ -86,10 +86,6 @@ MAKE_FLAGS+= \
     MODPROBEARGS="-q" \
     ARCH="$(LINUX_KARCH)" \
 
-ifdef CONFIG_LINUX_4_14
-	MAKE_FLAGS+= USE_XFRM_INTERFACE_IFLA_HEADER=true
-endif
-
 define Build/Prepare
 	$(call Build/Prepare/Default)
 	$(SED) 's,include $$$$(top_srcdir)/mk/manpages.mk,,g' \
