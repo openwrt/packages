@@ -1,22 +1,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsa
-PKG_VERSION:=4.0
+PKG_VERSION:=4.6
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://files.pythonhosted.org/packages/source/r/rsa
-PKG_HASH:=1a836406405730121ae9823e19c6e806c62bbad73f890574fff50efa4122c487
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-rsa-$(PKG_VERSION)
+PYPI_NAME:=$(PKG_NAME)
+PKG_HASH:=109ea5a66744dd859bf16fe904b8d8b627adafb9408753161e766a92e7d681fa
 
 PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
 PKG_LICENSE:=MIT
+PKG_CPE_ID:=cpe:/a:python-rsa_project:python-rsa
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python-package.mk
 include ../python3-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/python-rsa/Default
   SUBMENU:=Python
