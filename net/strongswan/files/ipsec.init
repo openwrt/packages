@@ -372,3 +372,9 @@ start_service() {
 
 	procd_close_instance
 }
+
+stop_service() {
+	for file in charon.ctl charon.vici; do
+		rm -f "/var/run/${file}"
+	done
+}
