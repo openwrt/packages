@@ -233,11 +233,6 @@ config LCD4LINUX_CUSTOM_DRIVER_PPM
 	prompt "PPM"
 	select LCD4LINUX_CUSTOM_NEEDS_libgd
 
-config LCD4LINUX_CUSTOM_DRIVER_RouterBoard
-	bool
-	prompt "RouterBoard"
-	depends on TARGET_rb532
-
 config LCD4LINUX_CUSTOM_DRIVER_SamsungSPF
 	bool
 	prompt "SamsungSPF"
@@ -273,12 +268,6 @@ config LCD4LINUX_CUSTOM_DRIVER_T6963
 config LCD4LINUX_CUSTOM_DRIVER_TeakLCM
 	bool
 	prompt "TeakLCM"
-
-config LCD4LINUX_CUSTOM_DRIVER_TEW673GRU
-	bool
-	select LCD4LINUX_CUSTOM_NEEDS_libgd
-	depends on TARGET_ar71xx
-	default TARGET_ar71xx
 
 config LCD4LINUX_CUSTOM_DRIVER_Trefon
 	bool
