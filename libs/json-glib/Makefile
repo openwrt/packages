@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=json-glib
-PKG_VERSION:=1.4.4
+PKG_VERSION:=1.5.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/json-glib/1.4
-PKG_HASH:=720c5f4379513dc11fd97dc75336eb0c0d3338c53128044d9fabec4374f4bc47
+PKG_SOURCE_URL:=@GNOME/json-glib/1.5
+PKG_HASH:=ad08438327b6106dc040c0581477bdf1cd3daaa5d285920cc768b8627f746666
 
 PKG_INSTALL:=1
 
@@ -44,9 +44,10 @@ RFC 4627.
 endef
 
 MESON_ARGS += \
-	-Ddocs=false \
-	-Dintrospection=false \
-	-Dman=false
+	-Dintrospection=disabled \
+	-Dgtk_doc=disabled \
+	-Dman=false \
+	-Dtests=false
 
 # Disable installed-tests; this also indirectly removes
 # build_aux/gen-installed-test.py calls (copied from Gentoo)
