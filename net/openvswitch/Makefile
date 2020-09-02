@@ -17,7 +17,7 @@ include ./openvswitch.mk
 #
 PKG_NAME:=openvswitch
 PKG_VERSION:=$(ovs_version)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
 PKG_HASH:=4171e52a8c0ffe160c1daa6687219d902a2a6969b296d223d8dac980ab99a260
@@ -77,8 +77,8 @@ ovs_kmod_openvswitch_depends:=\
 	  +IPV6:kmod-nf-nat6 \
 	  +kmod-nf-conntrack \
 	  +IPV6:kmod-nf-conntrack6 \
-	  +(!LINUX_4_9&&!LINUX_4_14):kmod-nsh \
-	  +(!LINUX_4_9&&!LINUX_4_14):kmod-ipt-conntrack-extra \
+	  +kmod-nsh \
+	  +kmod-ipt-conntrack-extra \
 
 ovs_kmod_openvswitch_files:=$(ovs_kmod_upstream_dir)/openvswitch.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch))
@@ -103,17 +103,6 @@ $(eval $(call OvsKmodPackageTemplate,openvswitch-geneve))
 
 # NOTE depends
 #
-#  - kmod-gre: with linux-4.14, ovs-2.10, when ovs decides to not
-#    USE_UPSTREAM_TUNNEL, it requires kmod-gre to be enabled so that
-#    CONFIG_NET_IPGRE_DEMUX is enabled and ovs will have rpl_gre_init()
-#    compiled in.
-#
-#  - kmod-gre6: with linux-4.14, ovs-2.10, when ovs decides to not
-#    USE_UPSTREAM_TUNNEL, it requires xfrm6_tunnel_register() from
-#    net/ipv6/tunnel6.ko, which will be pulled in by kmod-ip6-tunnel, which
-#    will be pulled in by kmod-gre6.  NOTE that tunnel6.ko itself cannot be
-#    enabled and selected on its own
-#
 #  - kmod-ipt-conntrack-extra: required for nf_conncount.ko
 #
 ovs_kmod_openvswitch-intree_title:=Open vSwitch kernel datapath (in tree)
@@ -122,11 +111,8 @@ ovs_kmod_openvswitch-intree_depends:=\
 	  +kmod-nf-nat \
 	  +IPV6:kmod-nf-nat6 \
 	  +kmod-nf-conntrack \
-	  +(IPV6&&(LINUX_4_9||LINUX_4_14)):kmod-nf-conntrack6 \
-	  +(LINUX_4_9||LINUX_4_14):kmod-gre \
-	  +(IPV6&&(LINUX_4_9||LINUX_4_14)):kmod-gre6 \
-	  +(!LINUX_4_9&&!LINUX_4_14):kmod-udptunnel4 \
-	  +(!LINUX_4_9&&!LINUX_4_14):kmod-ipt-conntrack-extra \
+	  +kmod-udptunnel4 \
+	  +kmod-ipt-conntrack-extra \
 
 ovs_kmod_openvswitch-intree_files:= $(ovs_kmod_intree_dir)/openvswitch.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch-intree))
