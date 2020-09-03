@@ -13,6 +13,13 @@
 		"focus": "general",
 		"descurl": "https://adguard.com"
 	},
+	"android_tracking": {
+		"url": "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/android-tracking.txt",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "S",
+		"focus": "tracking",
+		"descurl": "https://github.com/Perflyst/PiHoleBlocklist"
+	},
 	"andryou": {
 		"url": "https://gitlab.com/andryou/block/raw/master/kouhai-compressed-domains",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
@@ -82,6 +89,20 @@
 		"size": "XXL",
 		"focus": "compilation",
 		"descurl": "https://energized.pro"
+	},
+	"firetv_tracking": {
+		"url": "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/AmazonFireTV.txt",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "S",
+		"focus": "tracking",
+		"descurl": "https://github.com/Perflyst/PiHoleBlocklist"
+	},
+	"gaming": {
+		"url": "https://raw.githubusercontent.com/stopgaming/pihole-blocklist/master/game.txt",
+		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
+		"size": "S",
+		"focus": "gaming",
+		"descurl": "https://github.com/abyssin/pihole-blocklist"
 	},
 	"malwaredomains": {
 		"url": "https://mirror1.malwaredomains.com/files/justdomains",
@@ -243,11 +264,11 @@
 		"focus": "general+porn",
 		"descurl": "https://www.shallalist.de"
 	},
-	"smarttv": {
+	"smarttv_tracking": {
 		"url": "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV.txt",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "S",
-		"focus": "smarttv",
+		"focus": "tracking",
 		"descurl": "https://github.com/Perflyst/PiHoleBlocklist"
 	},
 	"spam404": {
