@@ -1,4 +1,4 @@
-From 993e4e157e4a8c4898b45982045cf63e3b57a6a1 Mon Sep 17 00:00:00 2001
+From a13f3588f78e9ffda5e915f44cbf1957f12513c4 Mon Sep 17 00:00:00 2001
 From: Jean-Francois Dockes <jf@dockes.org>
 Date: Fri, 13 Mar 2020 09:19:04 +0100
 Subject: [PATCH] Quick changes for working with NPUPNP
@@ -6,27 +6,27 @@ Subject: [PATCH] Quick changes for working with NPUPNP
 (Rebased and made default)
 Signed-off-by: Rosen Penev <rosenp@gmail.com>
 ---
- CMakeLists.txt                           | 35 +++++++++++++++---------
- src/action_request.cc                    | 11 +++++++-
+ CMakeLists.txt                           | 43 +++++++++++++++++-------
+ src/action_request.cc                    | 11 +++++-
  src/device_description_handler.cc        |  4 +++
  src/file_request_handler.cc              |  4 +++
  src/iohandler/file_io_handler.cc         |  1 -
  src/iohandler/io_handler.cc              |  1 -
  src/iohandler/mem_io_handler.cc          |  1 -
- src/serve_request_handler.cc             |  8 ++++++
- src/server.cc                            |  8 ++++++
+ src/serve_request_handler.cc             |  8 +++++
+ src/server.cc                            |  8 +++++
  src/transcoding/transcode_ext_handler.cc |  1 -
- src/upnp_cds.cc                          | 11 ++++++++
- src/upnp_cm.cc                           | 11 ++++++++
- src/upnp_mrreg.cc                        |  7 ++++-
- src/url_request_handler.cc               |  5 +++-
- src/util/upnp_clients.cc                 | 12 ++++++++
- src/util/upnp_headers.cc                 | 14 ++++++++++
+ src/upnp_cds.cc                          | 11 ++++++
+ src/upnp_cm.cc                           | 11 ++++++
+ src/upnp_mrreg.cc                        |  7 +++-
+ src/url_request_handler.cc               |  5 ++-
+ src/util/upnp_clients.cc                 | 12 +++++++
+ src/util/upnp_headers.cc                 | 12 +++++++
  src/web/web_request_handler.cc           |  4 +++
- 17 files changed, 118 insertions(+), 20 deletions(-)
+ 17 files changed, 124 insertions(+), 20 deletions(-)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 81f7818e..56472b97 100644
+index 8b6db993..b23dad57 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -35,6 +35,7 @@ if (CONAN_EXPORTED)
@@ -37,17 +37,25 @@ index 81f7818e..56472b97 100644
  set(WITH_MAGIC          1 CACHE BOOL "Use libmagic to identify file mime types")
  set(WITH_MYSQL          0 CACHE BOOL "Store media information in MySQL DB")
  set(WITH_CURL           1 CACHE BOOL "CURL required for online services")
-@@ -303,23 +304,31 @@ add_definitions(${LFS_DEFINITIONS})
+@@ -303,23 +304,39 @@ add_definitions(${LFS_DEFINITIONS})
  add_compile_options(${LFS_COMPILE_OPTIONS})
  target_link_libraries(libgerbera ${LFS_LIBRARIES})
  
 -find_package (pupnp "1.12.1" REQUIRED)
 +if (WITH_NPUPNP)
-+    pkg_check_modules (NPUPNP REQUIRED libnpupnp)
-+    include_directories (${NPUPNP_INCLUDE_DIRS})
-+    set(CMAKE_REQUIRED_LIBRARIES npupnp)
-+    add_definitions(-DUSING_NPUPNP)
-+    target_link_libraries (libgerbera ${NPUPNP_LIBRARIES})
++    find_package(PkgConfig QUIET)
++    pkg_check_modules (NPUPNP QUIET libnpupnp>=4.0.11)
++    if (NOT NPUPNP_FOUND)
++        find_package (NPUPNP REQUIRED)
++    endif()
++    if (NPUPNP_FOUND)
++        include_directories (${NPUPNP_INCLUDE_DIRS})
++        set(CMAKE_REQUIRED_LIBRARIES npupnp)
++        add_definitions(-DUSING_NPUPNP)
++        target_link_libraries (libgerbera ${NPUPNP_LIBRARIES})
++    else()
++        message(FATAL_ERROR "libnpupnp not found")
++    endif()
 +else()
 +    find_package (pupnp "1.12.1" REQUIRED)
  
@@ -190,7 +198,7 @@ index 5574a16d..223746ef 100644
  #include <sys/types.h>
  #include <unistd.h>
 diff --git a/src/serve_request_handler.cc b/src/serve_request_handler.cc
-index 210140a3..01dde69b 100644
+index 59f37252..42d07e94 100644
 --- a/src/serve_request_handler.cc
 +++ b/src/serve_request_handler.cc
 @@ -94,7 +94,11 @@ void ServeRequestHandler::getInfo(const char* filename, UpnpFileInfo* info)
@@ -392,10 +400,10 @@ index f2a99c94..7de2227d 100644
  
      /// \todo transcoding for get_info
 diff --git a/src/util/upnp_clients.cc b/src/util/upnp_clients.cc
-index 2033cf31..1dd7964d 100644
+index 6fd40de2..28f0fb16 100644
 --- a/src/util/upnp_clients.cc
 +++ b/src/util/upnp_clients.cc
-@@ -268,6 +268,17 @@ bool Clients::getInfoByType(const std::string& match, ClientMatchType type, cons
+@@ -262,6 +262,17 @@ bool Clients::getInfoByType(const std::string& match, ClientMatchType type, cons
  
  bool Clients::downloadDescription(const std::string& location, std::unique_ptr<pugi::xml_document>& xml)
  {
@@ -413,7 +421,7 @@ index 2033cf31..1dd7964d 100644
      IXML_Document* descDoc = nullptr;
      int errCode = UpnpDownloadXmlDoc(location.c_str(), &descDoc);
      if (errCode != UPNP_E_SUCCESS) {
-@@ -281,6 +292,7 @@ bool Clients::downloadDescription(const std::string& location, std::unique_ptr<p
+@@ -275,6 +286,7 @@ bool Clients::downloadDescription(const std::string& location, std::unique_ptr<p
  
      ixmlFreeDOMString(cxml);
      ixmlDocument_free(descDoc);
@@ -422,7 +430,7 @@ index 2033cf31..1dd7964d 100644
      if (ret.status != pugi::xml_parse_status::status_ok) {
          log_debug("Unable to parse xml client description from {}", location);
 diff --git a/src/util/upnp_headers.cc b/src/util/upnp_headers.cc
-index ef85106b..aec13850 100644
+index 6eddedec..b7763444 100644
 --- a/src/util/upnp_headers.cc
 +++ b/src/util/upnp_headers.cc
 @@ -25,11 +25,13 @@
@@ -430,7 +438,7 @@ index ef85106b..aec13850 100644
  #include "upnp_headers.h" // API
  
 +#if !defined(USING_NPUPNP)
- #if (UPNP_VERSION > 11201)
+ #if (UPNP_VERSION > 11299)
  #include <UpnpExtraHeaders.h>
  #else
  #include <ExtraHeaders.h>
@@ -439,14 +447,12 @@ index ef85106b..aec13850 100644
  #include <string>
  
  #include "common.h"
-@@ -101,18 +103,29 @@ void Headers::writeHeaders(UpnpFileInfo* fileInfo) const
+@@ -101,18 +103,27 @@ void Headers::writeHeaders(UpnpFileInfo* fileInfo) const
      if (headers == nullptr)
          return;
  
 +#if defined(USING_NPUPNP)
-+    for (const auto& iter : *headers) {
-+        fileInfo->response_headers.push_back(iter);
-+    }
++    std::copy(headers->begin(), headers->end(), std::back_inserter(fileInfo->response_headers));
 +#else
      auto head = const_cast<UpnpListHead*>(UpnpFileInfo_get_ExtraHeadersList(fileInfo));
      for (const auto& iter : *headers) {
@@ -469,7 +475,7 @@ index ef85106b..aec13850 100644
      auto head = const_cast<UpnpListHead*>(UpnpFileInfo_get_ExtraHeadersList(fileInfo));
      UpnpListIter pos;
      for (pos = UpnpListBegin(head); pos != UpnpListEnd(head); pos = UpnpListNext(head, pos)) {
-@@ -121,6 +134,7 @@ std::unique_ptr<std::map<std::string, std::string>> Headers::readHeaders(UpnpFil
+@@ -121,6 +132,7 @@ std::unique_ptr<std::map<std::string, std::string>> Headers::readHeaders(UpnpFil
          auto add = parseHeader(header);
          ret->insert(add);
      }
