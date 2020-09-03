@@ -11,6 +11,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | adaway              | x       | S    | mobile           | [Link](https://github.com/AdAway/adaway.github.io)                                |
 | adguard             | x       | L    | general          | [Link](https://adguard.com)                                                       |
 | anti_ad             |         | L    | compilation      | [Link](https://github.com/privacy-protection-tools/anti-AD/blob/master/README.md) |
+| android_tracking    |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | andryou             |         | L    | compilation      | [Link](https://gitlab.com/andryou/block/-/blob/master/readme.md)                  |
 | anudeep             |         | M    | compilation      | [Link](https://github.com/anudeepND/blacklist)                                    |
 | bitcoin             |         | S    | mining           | [Link](https://github.com/hoshsadiq/adblock-nocoin-list)                          |
@@ -20,6 +21,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | energized_porn      |         | XXL  | compilation+porn | [Link](https://energized.pro)                                                     |
 | energized_ultimate  |         | XXL  | compilation      | [Link](https://energized.pro)                                                     |
 | energized_unified   |         | XXL  | compilation      | [Link](https://energized.pro)                                                     |
+| firetv_tracking     |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
+| gaming              |         | S    | gaming           | [Link](https://github.com/abyssin/pihole-blocklist)                               |
 | malwaredomains      |         | M    | malware          | [Link](https://malwaredomains.com)                                                |
 | malwarelist         |         | S    | malware          | [Link](https://www.malwaredomainlist.com)                                         |
 | notracking          |         | XL   | tracking         | [Link](https://github.com/notracking/hosts-blocklists)                            |
@@ -42,7 +45,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | reg_vn              |         | S    | reg_vietnam      | [Link](https://bigdargon.github.io/hostsVN)                                       |
 | shallalist          |         | L    | general          | [Link](https://www.shallalist.de)                                                 |
 | shallalist_porn     |         | XXL  | general+porn     | [Link](https://www.shallalist.de)                                                 |
-| smarttv             |         | S    | smarttv          | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
+| smarttv_tracking    |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | spam404             |         | S    | general          | [Link](https://github.com/Dawsey21)                                               |
 | stevenblack         |         | L    | compilation      | [Link](https://github.com/StevenBlack/hosts)                                      |
 | stevenblack_porn    |         | L    | compilation+porn | [Link](https://github.com/StevenBlack/hosts)                                      |
