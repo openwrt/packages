@@ -526,11 +526,11 @@ endif
 
 ifeq ($(CONFIG_NGINX_UBUS),y)
   define Download/nginx-ubus-module
-    VERSION:=f30b0167a2cdb40f23bd90928d601bdb0c1b8fad
+    VERSION:=5251367fbf8f31611ca642669a08addedc6e3665
     SUBDIR:=nginx-ubus-module
     FILE:=nginx-ubus-module-$$(VERSION).tar.xz
     URL:=https://github.com/Ansuel/nginx-ubus-module.git
-    MIRROR_HASH:=02c7d4b0df7f4b69605e71b0fefdc99b5a9470c68cad7ccfb31ebefe4e7e0704
+    MIRROR_HASH:=9c1c1e8cad908b44881cb5c2c2285f51546ad8d92754576eb2fd025e04414670
     PROTO:=git
   endef
   $(eval $(call Download,nginx-ubus-module))
