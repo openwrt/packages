@@ -1,14 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsa
-PKG_VERSION:=4.0
-PKG_RELEASE:=2
+PKG_VERSION:=4.6
+PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=1a836406405730121ae9823e19c6e806c62bbad73f890574fff50efa4122c487
+PKG_HASH:=109ea5a66744dd859bf16fe904b8d8b627adafb9408753161e766a92e7d681fa
 
 PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
 PKG_LICENSE:=MIT
+PKG_CPE_ID:=cpe:/a:python-rsa_project:python-rsa
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
