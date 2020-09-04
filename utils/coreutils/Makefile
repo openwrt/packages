@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coreutils
 PKG_VERSION:=8.32
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/coreutils
@@ -20,6 +20,7 @@ PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gnu:coreutils
 
+PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -111,11 +112,6 @@ CONFIGURE_VARS += \
 	gl_cv_func_mbrtowc_retval=yes \
 	gl_cv_func_wcrtomb_retval=yes
 
-ifneq ($(CONFIG_USE_UCLIBC),)
-  CONFIGURE_VARS += \
-	ac_cv_type_pthread_spinlock_t=$(if $(filter 0.9.30% 0.9.2% 0.9.31%,$(call qstrip,$(CONFIG_UCLIBC_VERSION))),no,yes)
-endif
-
 CONFIGURE_ARGS += \
 	--disable-xattr \
 	--enable-install-program=su \
@@ -130,13 +126,6 @@ CONFIGURE_ARGS += \
 	--$(if $(CONFIG_USE_MUSL),with,without)-included-regex \
 	--without-selinux \
 	--with-gmp
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
-		SHELL="/bin/bash" \
-		all install
-endef
 
 define Package/coreutils/install
 	true
