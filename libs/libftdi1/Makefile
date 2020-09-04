@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libftdi1
-PKG_VERSION:=1.4
-PKG_RELEASE:=6
+PKG_VERSION:=1.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.intra2net.com/en/developer/libftdi/download/
-PKG_HASH:=ec36fb49080f834690c24008328a5ef42d3cf584ef4060f3a35aa4681cb31b74
+PKG_HASH:=7c7091e9c86196148bd41177b4590dccb1510bfe6cea5bf7407ff194482eb049
 
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_LICENSE:=LGPL-2.1-only
@@ -60,13 +60,13 @@ define Package/ftdi_eeprom/description
 endef
 
 CMAKE_OPTIONS += \
-	-DBoost_NO_BOOST_CMAKE=ON \
 	-DBUILD_TESTS=OFF \
 	-DDOCUMENTATION=OFF \
 	-DEXAMPLES=OFF
 
 define Build/InstallDev
 	$(call Build/InstallDev/cmake,$(1))
+	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(1)/usr/bin/libftdi1-config
 	$(SED) 's,/usr/bin,/usr,g' $(1)/usr/lib/pkgconfig/libftdi1.pc
 	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libftdi1.pc
 	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libftdi1.pc
