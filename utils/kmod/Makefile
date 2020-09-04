@@ -8,19 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kmod
-PKG_VERSION:=20
-PKG_RELEASE:=4
+PKG_VERSION:=27
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@KERNEL/linux/utils/kernel/kmod/
-PKG_HASH:=89c1a1a2193c31f9ebe582640bfa2bd401341dc24119f5a7f702588116fadaa0
+PKG_SOURCE_URL:=@KERNEL/linux/utils/kernel/kmod
+PKG_HASH:=c1d3fbf16ca24b95f334c1de1b46f17bbe5a10b0e81e72668bdc922ebffbbc0c
+
 PKG_MAINTAINER:=Jeff Waugh <jdub@bethesignal.org>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_FIXUP:=autoreconf
 
-PKG_BUILD_PARALLEL:=1
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
