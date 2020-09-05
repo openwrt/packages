@@ -13,14 +13,16 @@ jobs:
       fail-fast: false
       matrix:
         arch:
-          - x86_64
-          - mips_24kc
+          - aarch64_generic
+          - arc_arc700
+          - arm_cortex-a15_neon-vfpv4
           - arm_cortex-a9_neon
           - arm_cortex-a9_vfpv3-d16
-          - arc_arc700
-          - aarch64_generic
+          - i386_pentium4
+          - mips_24kc
           - powerpc_464fp
           - powerpc_8540
+          - x86_64
 
     steps:
       - uses: actions/checkout@v2
@@ -42,6 +44,7 @@ jobs:
         env:
           ARCH: ${{ matrix.arch }}
           BUILD_LOG: 1
+          FEEDNAME: packages_ci
           IGNORE_ERRORS: ""
           V: s
 
@@ -49,7 +52,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.arch}}-packages
-          path: bin/packages/${{ matrix.arch }}/packages/*.ipk
+          path: bin/packages/${{ matrix.arch }}/packages_ci/*.ipk
 
       - name: Store logs
         uses: actions/upload-artifact@v2
