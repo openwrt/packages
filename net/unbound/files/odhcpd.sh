@@ -23,12 +23,10 @@
 #
 ##############################################################################
 
-. /lib/functions.sh
-. /usr/lib/unbound/defaults.sh
-
-##############################################################################
-
 odhcpd_zonedata() {
+  . /lib/functions.sh
+  . /usr/lib/unbound/defaults.sh
+
   local dhcp_link=$( uci_get unbound.@unbound[0].dhcp_link )
   local dhcp4_slaac6=$( uci_get unbound.@unbound[0].dhcp4_slaac6 )
   local dhcp_domain=$( uci_get unbound.@unbound[0].domain )
@@ -62,7 +60,7 @@ odhcpd_zonedata() {
         sort $dhcp_origin > $dhcp_ls_new
         longconf=longtime
 
-      elif [ $dateoldf -gt 3 ] ; then
+      elif [ $dateoldf -gt 1 ] ; then
         touch $dns_ls_old
         sort $dhcp_origin > $dhcp_ls_new
         longconf=increment
@@ -124,7 +122,22 @@ odhcpd_zonedata() {
 
 ##############################################################################
 
-odhcpd_zonedata
+UB_ODHPCD_LOCK=/tmp/unbound_odhcpd.lock
+
+if [ ! -f $UB_ODHPCD_LOCK ] ; then
+  # imperfect but it should avoid collisions
+  touch $UB_ODHPCD_LOCK
+  odhcpd_zonedata
+  rm -f $UB_ODHPCD_LOCK
+
+else
+  UB_ODHCPD_LOCK_AGE=$(( $( date +%s ) - $( date -r $UB_ODHPCD_LOCK +%s ) ))
+
+  if [ $UB_ODHCPD_LOCK_AGE -gt 100 ] ; then
+    # unlock because something likely broke but do not write this time through
+    rm -f $UB_ODHPCD_LOCK
+  fi
+fi
 
 ##############################################################################
 
