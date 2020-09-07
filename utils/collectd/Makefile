@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
-PKG_VERSION:=5.11.0
-PKG_RELEASE:=9
+PKG_VERSION:=5.12.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
 	https://github.com/collectd/collectd/releases/download/collectd-$(PKG_VERSION)
-PKG_HASH:=37b10a806e34aa8570c1cafa6006c604796fae13cc2e1b3e630d33dcba9e5db2
+PKG_HASH:=5bae043042c19c31f77eb8464e56a01a5454e0b39fa07cf7ad0f1bfc9c3a09d6
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libltdl/aclocal.m4
@@ -37,6 +37,7 @@ COLLECTD_PLUGINS_DISABLED:= \
 	ceph \
 	cgroups \
 	cpusleep \
+	curl_jolokia \
 	curl_json \
 	curl_xml \
 	dbi \
@@ -53,6 +54,7 @@ COLLECTD_PLUGINS_DISABLED:= \
 	grpc \
 	hddtemp \
 	hugepages \
+	infiniband \
 	intel_pmu \
 	intel_rdt \
 	ipc \
@@ -68,12 +70,14 @@ COLLECTD_PLUGINS_DISABLED:= \
 	mbmon \
 	mcelog \
 	md \
+	mdevents \
 	memcachec \
 	memcached \
 	mic \
 	monitorus \
 	multimeter \
 	netapp \
+	netstat_udp \
 	nfs \
 	notify_desktop \
 	notify_email \

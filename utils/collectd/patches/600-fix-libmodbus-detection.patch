@@ -18,7 +18,7 @@ Reversed patch to be applied:
 
 --- a/configure.ac
 +++ b/configure.ac
-@@ -3384,9 +3384,9 @@ if test "x$with_libmodbus" = "xyes"; the
+@@ -3385,9 +3385,9 @@ if test "x$with_libmodbus" = "xyes"; the
    SAVE_CPPFLAGS="$CPPFLAGS"
    CPPFLAGS="$CPPFLAGS $with_libmodbus_cflags"
  
