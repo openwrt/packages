@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gerbera
 PKG_VERSION:=1.6.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gerbera/gerbera/tar.gz/v$(PKG_VERSION)?
@@ -45,8 +45,6 @@ define Package/gerbera/conffiles
 endef
 
 CMAKE_OPTIONS += \
-	-DCXX_FILESYSTEM_NO_LINK_NEEDED=$(if $(CONFIG_GCC_USE_VERSION_8),OFF,ON) \
-	$(if $(CONFIG_GCC_USE_VERSION_8),-DCXX_FILESYSTEM_STDCPPFS_NEEDED=OFF) \
 	-DIconv_INCLUDE_DIR=$(ICONV_PREFIX)/include \
 	-DIconv_LIBRARY=$(ICONV_PREFIX)/lib/libiconv.a \
 	-DWITH_MAGIC=ON \
