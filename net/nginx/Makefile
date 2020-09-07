@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.19.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
@@ -526,11 +526,11 @@ endif
 
 ifeq ($(CONFIG_NGINX_UBUS),y)
   define Download/nginx-ubus-module
-    VERSION:=5251367fbf8f31611ca642669a08addedc6e3665
+    VERSION:=b2d7260dcb428b2fb65540edb28d7538602b4a26
     SUBDIR:=nginx-ubus-module
     FILE:=nginx-ubus-module-$$(VERSION).tar.xz
     URL:=https://github.com/Ansuel/nginx-ubus-module.git
-    MIRROR_HASH:=9c1c1e8cad908b44881cb5c2c2285f51546ad8d92754576eb2fd025e04414670
+    MIRROR_HASH:=472cef416d25effcac66c85417ab6596e634a7a64d45b709bb090892d567553c
     PROTO:=git
   endef
   $(eval $(call Download,nginx-ubus-module))
