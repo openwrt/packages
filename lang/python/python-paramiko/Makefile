@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-paramiko
-PKG_VERSION:=2.7.1
-PKG_RELEASE:=2
+PKG_VERSION:=2.7.2
+PKG_RELEASE:=1
 
 PYPI_NAME:=paramiko
-PKG_HASH:=920492895db8013f6cc0179293147f830b8c7b21fdfc839b6bad760c27459d9f
+PKG_HASH:=7f36f4ba2c0d81d219f4595e35f70d56cc94f9ac40a6acdf51d6ca210ce65035
 
 PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=LGPL-2.1-or-later
