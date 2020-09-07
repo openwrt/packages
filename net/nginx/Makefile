@@ -81,10 +81,7 @@ define Package/nginx/default
   SUBMENU:=Web Servers/Proxies
   TITLE:=Nginx web server
   URL:=http://nginx.org/
-  DEPENDS:=+NGINX_PCRE:libpcre +libopenssl \
-	+NGINX_PCRE:nginx-ssl-util +!NGINX_PCRE:nginx-ssl-util-nopcre \
-	+NGINX_HTTP_GZIP:zlib +NGINX_LUA:liblua +libpthread +NGINX_DAV:libxml2 \
-	+NGINX_UBUS:libubus +NGINX_UBUS:libblobmsg-json +NGINX_UBUS:libjson-c
+  DEPENDS:=+libopenssl +libpthread
   PROVIDES:=nginx
 endef
 
@@ -97,6 +94,10 @@ define Package/nginx-ssl
   $(Package/nginx/default)
   TITLE += with SSL support
   VARIANT:=ssl
+  DEPENDS+= +NGINX_PCRE:libpcre \
+	+NGINX_PCRE:nginx-ssl-util +!NGINX_PCRE:nginx-ssl-util-nopcre \
+	+NGINX_HTTP_GZIP:zlib +NGINX_LUA:liblua +libpthread +NGINX_DAV:libxml2 \
+	+NGINX_UBUS:libubus +NGINX_UBUS:libblobmsg-json +NGINX_UBUS:libjson-c
   CONFLICTS:=nginx-all-module
 endef
 
@@ -107,8 +108,8 @@ Package/nginx-ssl/description = $(Package/nginx/description) \
 define Package/nginx-all-module
   $(Package/nginx/default)
   TITLE += with ALL module selected
-  DEPENDS:=+libpcre +libopenssl +zlib +liblua +libpthread +libxml2 \
-	+libubus +libblobmsg-json +libjson-c +nginx-ssl-util
+  DEPENDS+=+libpcre +nginx-ssl-util +zlib +liblua +libxml2 +libubus \
+	+libblobmsg-json +libjson-c
   VARIANT:=all-module
   PROVIDES += nginx-ssl
 endef
@@ -286,12 +287,15 @@ else
   CONFIG_NGINX_LUA:=y
   CONFIG_NGINX_DAV:=y
   CONFIG_NGINX_UBUS:=y
-  ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/nginx-naxsi/naxsi_src \
-    --add-module=$(PKG_BUILD_DIR)/lua-nginx --with-ipv6 --with-http_stub_status_module --with-http_flv_module \
-	--with-http_dav_module --add-module=$(PKG_BUILD_DIR)/nginx-dav-ext-module \
+  ADDITIONAL_MODULES += --with-ipv6 --with-http_stub_status_module --with-http_flv_module \
+	--with-http_dav_module \
 	--with-http_auth_request_module --with-http_v2_module --with-http_realip_module \
-	--with-http_secure_link_module --with-http_sub_module --add-module=$(PKG_BUILD_DIR)/nginx-headers-more \
+	--with-http_secure_link_module --with-http_sub_module \
 	--with-stream --with-stream_ssl_module --with-stream_ssl_preread_module \
+	--add-module=$(PKG_BUILD_DIR)/nginx-headers-more \
+	--add-module=$(PKG_BUILD_DIR)/nginx-naxsi/naxsi_src \
+	--add-module=$(PKG_BUILD_DIR)/lua-nginx \
+	--add-module=$(PKG_BUILD_DIR)/nginx-dav-ext-module \
 	--add-module=$(PKG_BUILD_DIR)/nginx-brotli --add-module=$(PKG_BUILD_DIR)/nginx-rtmp \
 	--add-module=$(PKG_BUILD_DIR)/nginx-ts --add-module=$(PKG_BUILD_DIR)/nginx-ubus-module
   config_files += koi-utf koi-win win-utf fastcgi_params uwsgi_params
@@ -541,23 +545,18 @@ ifeq ($(CONFIG_NGINX_UBUS),y)
   endef
 endif
 
-$(eval $(call BuildPackage,nginx-ssl))
-$(eval $(call BuildPackage,nginx-all-module))
-$(eval $(call BuildPackage,nginx-mod-luci))
-
-
 # TODO: remove after a transition period (together with pkg nginx-util):
 # It is for smoothly substituting nginx and nginx-mod-luci-ssl (by nginx-ssl
 # respectively nginx-mod-luci). Add above commented PROVIDES when removing.
 
 Package/nginx = $(Package/nginx-ssl)
-
 Package/nginx/install = $(Package/nginx-ssl/install)
-
 Package/nginx/prerm = $(Package/nginx-ssl/prerm)
-
 $(eval $(call BuildPackage,nginx))
 
+$(eval $(call BuildPackage,nginx-ssl))
+$(eval $(call BuildPackage,nginx-all-module))
+$(eval $(call BuildPackage,nginx-mod-luci))
 
 define Package/nginx-mod-luci-ssl
   TITLE:=Dummy package for transition when upgrading.
