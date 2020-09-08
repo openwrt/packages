@@ -77,6 +77,11 @@ pre_checks()
 
 		case "$cmd" in
 			uhttpd)
+				if [ -n "$UHTTPD_LISTEN_HTTP" ]; then
+					debug "Already handled uhttpd; skipping"
+					continue
+				fi
+
 				debug "Found uhttpd listening on port 80; trying to disable."
 
 				UHTTPD_LISTEN_HTTP=$(uci get uhttpd.main.listen_http)
@@ -96,6 +101,11 @@ pre_checks()
 				fi
 				;;
 			nginx*)
+				if [ "$NGINX_WEBSERVER" -eq "1" ]; then
+					debug "Already handled nginx; skipping"
+					continue
+				fi
+
 				debug "Found nginx listening on port 80; trying to disable."
 				NGINX_WEBSERVER=1
 				local tries=0
