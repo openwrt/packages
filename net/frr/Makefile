@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
 PKG_VERSION:=7.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://github.com/FRRouting/frr/archive/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
