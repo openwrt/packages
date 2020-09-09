@@ -164,7 +164,7 @@ main() {
 	local keep_failure_interval check_quality failure_latency
 	local recovery_latency failure_loss recovery_loss
 
-	local max_ttl httping_ssl track_ips
+	local max_ttl httping_ssl track_ips do_log
 
 	INTERFACE=$1
 	STATUS=""
@@ -235,12 +235,12 @@ main() {
 							TRACK_PID=$!
 							wait $TRACK_PID
 							ping_status=$?
-							loss=$(grep $TRACK_OUTPUT "packet loss" | cut -d "," -f3 | awk '{print $1}' | sed -e 's/%//')
+							loss="$(sed $TRACK_OUTPUT -ne 's/.*\([0-9]\+\)% packet loss.*/\1/p')"
 							if [ "$ping_status" -ne 0 ] || [ "$loss" -eq 100 ]; then
 								latency=999999
 								loss=100
 							else
-								latency="$(grep $TRACK_OUTPUT -E 'rtt|round-trip' | cut -d "=" -f2 | cut -d "/" -f2 | cut -d "." -f1)"
+								latency="$(sed $TRACK_OUTPUT -ne 's%\(rtt\|round-trip\).* = [^/]*/\([0-9]\+\).*%\2%p')"
 							fi
 						fi
 					;;
@@ -267,40 +267,36 @@ main() {
 						result=$(grep $TRACK_OUTPUT Lost | awk '{print $12}')
 					;;
 				esac
+				do_log=""
 				if [ $check_quality -eq 0 ]; then
 					if [ $result -eq 0 ]; then
 						let host_up_count++
 						update_status "$track_ip" "up"
 
-						if [ $score -le $up ]; then
-							LOG info "Check ($track_method) success for target \"$track_ip\" on interface $INTERFACE ($DEVICE). Current score: $score"
-						fi
+						[ $score -le $up ] && do_log="success"
 					else
 						let lost++
 						update_status "$track_ip" "down"
 
-						if [ $score -gt $up ]; then
-							LOG info "Check ($track_method) failed for target \"$track_ip\" on interface $INTERFACE ($DEVICE). Current score: $score"
-						fi
+						[ $score -gt $up ] && do_log="failed"
 					fi
+					[ -n "$do_log" ] && LOG info "Check ($track_method) ${do_log} for target \"$track_ip\" on interface $INTERFACE ($DEVICE). Current score: $score"
+
 				else
 					if [ "$loss" -ge "$failure_loss" ] || [ "$latency" -ge "$failure_latency" ]; then
 						let lost++
 						update_status "$track_ip" "down" $latency $loss
 
-						if [ $score -gt $up ]; then
-							LOG info "Check (${track_method}: latency=${latency}ms loss=${loss}%) failed for target \"$track_ip\" on interface $INTERFACE ($DEVICE). Current score: $score"
-						fi
+						[ $score -gt $up ] && do_log="failed"
 					elif [ "$loss" -le "$recovery_loss" ] && [ "$latency" -le "$recovery_latency" ]; then
 						let host_up_count++
 						update_status "$track_ip" "up" $latency $loss
 
-						if [ $score -le $up ]; then
-							LOG info "Check (${track_method}: latency=${latency}ms loss=${loss}%) success for target \"$track_ip\" on interface $INTERFACE ($DEVICE). Current score: $score"
-						fi
+						[ $score -le $up ] && do_log="success"
 					else
 						echo "skipped" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/TRACK_${track_ip}
 					fi
+					[ -n "$do_log" ] && LOG info "Check (${track_method}: latency=${latency}ms loss=${loss}%) ${do_log} for target \"$track_ip\" on interface $INTERFACE ($DEVICE). Current score: $score"
 				fi
 			else
 				echo "skipped" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/TRACK_${track_ip}
@@ -312,9 +308,7 @@ main() {
 
 			if [ $score -lt $up ]; then
 				score=0
-				[ ${keep_failure_interval} -eq 1 ] && {
-					sleep_time=$failure_interval
-				}
+				[ ${keep_failure_interval} -eq 1 ] && sleep_time=$failure_interval
 			else
 				sleep_time=$failure_interval
 			fi
