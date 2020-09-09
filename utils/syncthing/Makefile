@@ -40,7 +40,7 @@ define Package/syncthing
   DEPENDS:=$(GO_ARCH_DEPENDS)
   SECTION:=utils
   CATEGORY:=Utilities
-  USERID:=syncthing:syncthing
+  USERID:=syncthing=499:syncthing=499
 endef
 
 define Package/syncthing/conffiles
