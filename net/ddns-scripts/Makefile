@@ -394,15 +394,17 @@ endef
 define Package/ddns-scripts_no-ip_com/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_no-ip_com
+
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_no-ip_com.sh $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_no-ip_com.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/services
+	$(INSTALL_DATA) ./files/usr/share/ddns/services/no-ip.com.json \
+		$(1)/usr/share/ddns/services
 endef
 define Package/ddns-scripts_no-ip_com/postinst
 	#!/bin/sh
-	# remove old services file entries
-	/bin/sed -i '/no-ip\.com/d' $${IPKG_INSTROOT}/etc/ddns/services	>/dev/null 2>&1
-	# and create new
-	printf "%s\\t%s\\n" '"no-ip.com"' '"update_no-ip_com.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
 	# on real system restart service if enabled
 	[ -z "$${IPKG_INSTROOT}" ] && {
 		[ -x /etc/uci-defaults/ddns_no-ip_com ] && \
@@ -417,8 +419,6 @@ define Package/ddns-scripts_no-ip_com/prerm
 	#!/bin/sh
 	# if NOT run buildroot then stop service
 	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop		>/dev/null 2>&1
-	# remove services file entries
-	/bin/sed -i '/no-ip\.com/d' $${IPKG_INSTROOT}/etc/ddns/services	>/dev/null 2>&1
 	exit 0	# suppress errors
 endef
 
