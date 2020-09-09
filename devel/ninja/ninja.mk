@@ -6,7 +6,7 @@
 #   $(call Ninja,-C $(MY_NINJA_BUILD_DIR),$(MY_NINJA_ENV_VARS))
 # endef
 
-HOST_BUILD_DEPENDS += ninka/host
+HOST_BUILD_DEPENDS += ninja/host
 PKG_BUILD_DEPENDS += ninja/host
 
 NINJA_ARGS:=$(filter -j%,$(filter-out -j,$(MAKEFLAGS)))
