@@ -356,17 +356,17 @@ endef
 define Package/ddns-scripts_digitalocean.com-v2/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_digtalocean.com-v2
+
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_digitalocean_com_v2.sh $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_digitalocean_com_v2.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/services
+	$(INSTALL_DATA) ./files/usr/share/ddns/services/digitalocean.com-v2.json \
+		$(1)/usr/share/ddns/services
 endef
 define Package/ddns-scripts_digitalocean.com-v2/postinst
 	#!/bin/sh
-	# remove old services file entries
-	/bin/sed -i '/digitalocean\.com-v2/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
-	/bin/sed -i '/digitalocean\.com-v2/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
-	# and create new
-	printf "%s\\t%s\\n" '"digitalocean.com-v2"' '"update_digitalocean_com_v2.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
-	printf "%s\\t%s\\n" '"digitalocean.com-v2"' '"update_digitalocean_com_v2.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
 	# on real system restart service if enabled
 	[ -z "$${IPKG_INSTROOT}" ] && {
 		[ -x /etc/uci-defaults/ddns_digitalocean.com-v2 ] && \
@@ -381,9 +381,6 @@ define Package/ddns-scripts_digitalocean.com-v2/prerm
 	#!/bin/sh
 	# if NOT run buildroot then stop service
 	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop				>/dev/null 2>&1
-	# remove services file entries
-	/bin/sed -i '/digitalocean\.com-v2/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
-	/bin/sed -i '/digitalocean\.com-v2/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
 	exit 0	# suppress errors
 endef
 
