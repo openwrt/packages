@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=safe-search
 PKG_VERSION:=1.0.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=MIT
 PKG_MAINTAINER:=Gregory L. Dietsche <Gregory.Dietsche@cuw.edu>
 
