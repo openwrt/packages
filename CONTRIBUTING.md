@@ -79,7 +79,9 @@ Pull requests are the easiest way to contribute changes to git repos at Github. 
 
 ### Release Branches:
 
-* Branches named "for-XX.YY" (e.g. for-14.07) are release branches.
+* Old stable branches were named after the following pattern "for-XX.YY" (e.g. for-14.07) before the LEDE split.
+  During the LEDE split there was only one release branch with the name "lede-17.01".
+  After merging the LEDE fork with OpenWrt the release branches are named according to the following pattern "openwrt-XX.YY" (e.g. openwrt-18.06).
 * These branches are built with the respective OpenWrt release and are created
   during the release stabilisation phase.
 * Please ONLY cherry-pick or commit security and bug-fixes to these branches.
