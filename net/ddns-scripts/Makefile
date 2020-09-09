@@ -470,17 +470,17 @@ endef
 define Package/ddns-scripts_route53-v1/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_route53-v1
+
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_route53_v1.sh $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_route53_v1.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/services
+	$(INSTALL_DATA) ./files/usr/share/ddns/services/route53-v1.json \
+		$(1)/usr/share/ddns/services
 endef
 define Package/ddns-scripts_route53-v1/postinst
 	#!/bin/sh
-	# remove old services file entries
-	/bin/sed -i '/route53-v1/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
-	/bin/sed -i '/route53-v1/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
-	# and create new
-	printf "%s\\t%s\\n" '"route53-v1"' '"update_route53_v1.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
-	printf "%s\\t%s\\n" '"route53-v1"' '"update_route53_v1.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
 	# on real system restart service if enabled
 	[ -z "$${IPKG_INSTROOT}" ] && {
 		[ -x /etc/uci-defaults/ddns_route53-v1 ] && \
@@ -495,9 +495,6 @@ define Package/ddns-scripts_route53-v1/prerm
 	#!/bin/sh
 	# if NOT run buildroot then stop service
 	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop				>/dev/null 2>&1
-	# remove services file entries
-	/bin/sed -i 'route53-v1/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
-	/bin/sed -i 'route53-v1/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
 	exit 0	# suppress errors
 endef
 
