@@ -57,70 +57,6 @@ hex_to_hostid() {
 	return 0
 }
 
-static_host_add() {
-	local cfg="$1"
-	local broadcast hostid macn macs mac name ip leasetime
-
-	config_get macs "$cfg" "mac"
-	[ -n "$macs" ] || return 0
-	config_get name "$cfg" "name"
-	[ -n "$name" ] || return 0
-	config_get ip "$cfg" "ip"
-	[ -n "$ip" ] || return 0
-
-	config_get_bool broadcast "$cfg" "broadcast" 0
-	config_get dns "$cfg" "dns"
-	config_get gateway "$cfg" "gateway"
-	config_get leasetime "$cfg" "leasetime"
-	if [ -n "$leasetime" ] ; then
-		leasetime="$(time2seconds "$leasetime")"
-		[ "$?" -ne 0 ] && return 1
-	fi
-
-	config_get hostid "$cfg" "hostid"
-	if [ -n "$hostid" ] ; then
-		hex_to_hostid hostid "$hostid" || return 1
-	fi
-
-	macn=0
-	for mac in $macs; do
-		macn=$(( macn + 1 ))
-	done
-
-	for mac in $macs; do
-		local secname="$name"
-		if [ $macn -gt 1 ] ; then
-			secname="${name}-${mac//:}"
-		fi
-		echo "host $secname {"
-		echo " hardware ethernet $mac;"
-		echo " fixed-address $ip;"
-		echo " option host-name \"$name\";"
-		if [ "$broadcast" -eq 1 ] ; then
-			echo " always-broadcast true;"
-		fi
-		if [ -n "$leasetime" ] ; then
-			echo " default-lease-time $leasetime;"
-			echo " max-lease-time $leasetime;"
-		fi
-		if [ -n "$hostid" ] ; then
-			echo " option dhcp-client-identifier $hostid;"
-		fi
-		if [ -n "$dns" ] ; then
-			echo " option domain-name-servers $dns;"
-		fi
-		if [ -n "$gateway" ] ; then
-			echo " option routers $gateway;"
-		fi
-		config_list_foreach "$cfg" "dhcp_option" append_dhcp_options
-		echo "}"
-	done
-}
-
-static_hosts() {
-	config_foreach static_host_add host "$@"
-}
-
 typeof() {
 	echo "$1" | awk '
 /^\d+\.\d+\.\d+\.\d+$/		{ print "ip\n"; next; }
@@ -184,6 +120,71 @@ append_dhcp_options() {
 		formatted="$formatted${formatted:+, }$value"
 	done
 	echo " option $tag $formatted;"
+}
+
+static_host_add() {
+	local cfg="$1"
+	local broadcast hostid macn macs mac name ip leasetime
+
+	config_get macs "$cfg" "mac"
+	[ -n "$macs" ] || return 0
+	config_get name "$cfg" "name"
+	[ -n "$name" ] || return 0
+	config_get ip "$cfg" "ip"
+	[ -n "$ip" ] || return 0
+
+	config_get_bool broadcast "$cfg" "broadcast" 0
+	config_get dns "$cfg" "dns"
+	config_get gateway "$cfg" "gateway"
+	config_get leasetime "$cfg" "leasetime"
+	if [ -n "$leasetime" ] ; then
+		leasetime="$(time2seconds "$leasetime")"
+		[ "$?" -ne 0 ] && return 1
+	fi
+
+	config_get hostid "$cfg" "hostid"
+	if [ -n "$hostid" ] ; then
+		hex_to_hostid hostid "$hostid" || return 1
+	fi
+
+	macn=0
+	for mac in $macs; do
+		macn=$(( macn + 1 ))
+	done
+
+	for mac in $macs; do
+		local secname="$name"
+		if [ $macn -gt 1 ] ; then
+			secname="${name}-${mac//:}"
+		fi
+		echo "host $secname {"
+		echo " hardware ethernet $mac;"
+		echo " fixed-address $ip;"
+		echo " option host-name \"$name\";"
+		if [ "$broadcast" -eq 1 ] ; then
+			echo " always-broadcast true;"
+		fi
+		if [ -n "$leasetime" ] ; then
+			echo " default-lease-time $leasetime;"
+			echo " max-lease-time $leasetime;"
+		fi
+		if [ -n "$hostid" ] ; then
+			echo " option dhcp-client-identifier $hostid;"
+		fi
+		if [ -n "$dns" ] ; then
+			echo " option domain-name-servers $dns;"
+		fi
+		if [ -n "$gateway" ] ; then
+			echo " option routers $gateway;"
+		fi
+		config_list_foreach "$cfg" "routes" append_routes
+		config_list_foreach "$cfg" "dhcp_option" append_dhcp_options
+		echo "}"
+	done
+}
+
+static_hosts() {
+	config_foreach static_host_add host "$@"
 }
 
 gen_dhcp_subnet() {
