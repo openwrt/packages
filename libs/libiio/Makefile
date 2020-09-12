@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libiio
 PKG_VERSION:=0.21
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/analogdevicesinc/libiio/tar.gz/v$(PKG_VERSION)?
@@ -69,7 +69,7 @@ config LIBIIO_NETWORK_BACKEND
 	bool "Enable network backend"
 	depends on PACKAGE_libiio
 	select LIBIIO_XML_BACKEND
-	default n
+	default y
 
 config LIBIIO_USB_BACKEND
 	bool "Enable USB backend"
@@ -101,7 +101,7 @@ define Package/iiod
   CATEGORY:=Network
   TITLE:=Linux IIO daemon
   URL:=https://github.com/analogdevicesinc/libiio
-  DEPENDS:=+libiio
+  DEPENDS:=+libiio @LIBIIO_XML_BACKEND
 endef
 
 define Package/iiod/description
