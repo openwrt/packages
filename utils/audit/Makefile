@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=audit
 PKG_VERSION:=2.8.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://people.redhat.com/sgrubb/audit
@@ -67,7 +67,7 @@ $(call Package/audit/Default)
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE+= (daemon)
-  DEPENDS:= +libaudit +libauparse +audit-utils
+  DEPENDS:= +libaudit +libauparse +audit-utils +libev
 endef
 
 define Package/audit/description
