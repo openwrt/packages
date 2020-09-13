@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qrencode
-PKG_VERSION:=4.0.2
-PKG_RELEASE:=2
+PKG_VERSION:=4.1.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://fukuchi.org/works/qrencode
-PKG_HASH:=c9cb278d3b28dcc36b8d09e8cad51c0eca754eb004cb0247d4703cb4472b58b4
+PKG_HASH:=ac7eff020d94be016d5b93bc6567f10a4a4692dcced901a384300f589a6cad0a
 
 PKG_MAINTAINER:=Jonathan Bennett <JBennett@incomsystems.biz>
 PKG_LICENSE:=LGPL-2.1-or-later
