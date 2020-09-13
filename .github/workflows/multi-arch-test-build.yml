@@ -15,6 +15,7 @@ jobs:
         arch:
           - aarch64_generic
           - arc_arc700
+          - arc_archs
           - arm_cortex-a15_neon-vfpv4
           - arm_cortex-a9_neon
           - arm_cortex-a9_vfpv3-d16
