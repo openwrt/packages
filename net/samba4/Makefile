@@ -2,7 +2,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.11.11
+PKG_VERSION:=4.11.12
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -13,7 +13,7 @@ PKG_SOURCE_URL:= \
 		http://www.nic.funet.fi/index/samba/pub/samba/stable/ \
 		http://samba.mirror.bit.nl/samba/ftp/stable/ \
 		https://download.samba.org/pub/samba/stable/
-PKG_HASH:=457f08a2956534269c784b95cff840250165f1e98f8db725bf64e2fca707ff60
+PKG_HASH:=cff839c06f9b0ea2d84eb45e62b25d2917acc5fb3c5b033c6c4ed5e0899badb2
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-3.0-only
@@ -254,13 +254,13 @@ SAMBA4_VFS_MODULES :=vfs_default,
 SAMBA4_VFS_MODULES_SHARED :=auth_script,
 ifeq ($(CONFIG_SAMBA4_SERVER_VFS),y)
 	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_fruit,vfs_shadow_copy2,vfs_recycle,vfs_fake_perms,vfs_readonly,vfs_cap,vfs_offline,vfs_crossrename,vfs_catia,vfs_streams_xattr,vfs_xattr_tdb,vfs_default_quota,
-ifeq ($(CONFIG_PACKAGE_kmod-fs-btrfs),y)
+ifdef CONFIG_PACKAGE_kmod-fs-btrfs
 	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_btrfs,
 endif
 endif
 ifeq ($(CONFIG_SAMBA4_SERVER_VFSX),y)
 	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_virusfilter,vfs_shell_snap,vfs_commit,vfs_worm,vfs_aio_fork,vfs_aio_pthread,vfs_netatalk,vfs_dirsort,vfs_fileid,
-ifeq ($(CONFIG_PACKAGE_kmod-fs-xfs),y)
+ifdef CONFIG_PACKAGE_kmod-fs-xfs
 	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_linux_xfs_sgid,
 endif
 endif
