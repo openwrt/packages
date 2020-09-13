@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -811,10 +811,12 @@ AC_ARG_WITH(libpulse,
+@@ -813,10 +813,12 @@ AC_ARG_WITH(libpulse,
              LDFLAGS="-L$with_libpulse/lib $LDFLAGS"
              CPPFLAGS="-I$with_libpulse/include $CPPFLAGS"
              AC_CHECK_HEADERS(pulse/simple.h,
@@ -17,7 +17,7 @@
          ])
      ],
      [AC_MSG_RESULT([--with-libpulse not specified])
-@@ -854,10 +856,12 @@ AC_ARG_WITH(libopus,
+@@ -856,10 +858,12 @@ AC_ARG_WITH(libopus,
          LDFLAGS="-L$with_libopus/lib $LDFLAGS"
          CPPFLAGS="-I$with_libopus/include $CPPFLAGS"
          AC_CHECK_HEADERS(opus/opus.h,

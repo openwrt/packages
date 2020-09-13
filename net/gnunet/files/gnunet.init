@@ -9,30 +9,7 @@ PROG=/usr/lib/gnunet/libexec/gnunet-service-arm
 GNUNET_HOME=/var/run/gnunet
 # LOGFILE=$GNUNET_HOME/gnunet.log
 CONFIGFILE=$GNUNET_HOME/gnunet.conf
-SUID_ROOT_HELPERS="exit nat-server nat-client transport-bluetooth transport-wlan vpn"
 EXTRA_COMMANDS="restart_transport"
-
-chmodown_execbin() {
-	execname=/usr/lib/gnunet/libexec/gnunet-$1
-	if [ -x $execname ]; then
-		if [ "$3" ]; then
-			chown $3 $execname 2>/dev/null && chmod $2 $execname
-		else
-			chmod $2 $execname
-		fi
-	fi
-}
-
-fix_libexec_permissions() {
-	[ -e /usr/share/gnunet/.permfix ] && return
-	for helper in $SUID_ROOT_HELPERS; do
-		chmodown_execbin helper-$helper u+s
-	done
-	chmodown_execbin helper-dns 4750 root:gnunetdns
-	chmodown_execbin service-dns 2750 gnunet:gnunetdns
-
-	touch /usr/share/gnunet/.permfix
-}
 
 prepare_config() {
 	local had_exit_service=0;
@@ -109,7 +86,6 @@ restart_transport() {
 }
 
 start_service() {
-	fix_libexec_permissions
 	prepare_config
 
 	procd_open_instance
