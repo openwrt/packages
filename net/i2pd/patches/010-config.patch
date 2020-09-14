@@ -1,6 +1,5 @@
-diff -u -r a/contrib/i2pd.conf b/contrib/i2pd.conf
---- a/contrib/i2pd.conf	2019-09-04 11:00:27.660713504 +0800
-+++ b/contrib/i2pd.conf	2019-09-04 11:07:53.669745273 +0800
+--- a/contrib/i2pd.conf
++++ b/contrib/i2pd.conf
 @@ -8,12 +8,12 @@
  
  ## Tunnels config file
@@ -11,11 +10,11 @@ diff -u -r a/contrib/i2pd.conf b/contrib/i2pd.conf
  ## Tunnels config files path
  ## Use that path to store separated tunnels in different config files.
  ## Default: ~/.i2pd/tunnels.d or /var/lib/i2pd/tunnels.d
--# tunnelsdir = /var/lib/i2pd/tunnels.conf.d
-+tunnelsdir = /etc/i2pd/tunnels.conf.d
+-# tunnelsdir = /var/lib/i2pd/tunnels.d
++tunnelsdir = /etc/i2pd/tunnels.conf
  
- ## Where to write pidfile (don't write by default)
- # pidfile = /var/run/i2pd.pid
+ ## Where to write pidfile (default: i2pd.pid, not used in Windows)
+ # pidfile = /run/i2pd.pid
 @@ -25,12 +25,12 @@
  ##  * stdout - print log entries to stdout
  ##  * file - log entries to a file
@@ -23,15 +22,15 @@ diff -u -r a/contrib/i2pd.conf b/contrib/i2pd.conf
 -# log = file
 +log = syslog
  ## Path to logfile (default - autodetect)
- # logfile = /var/log/i2pd.log
- ## Log messages above this level (debug, *info, warn, error, none)
+ # logfile = /var/log/i2pd/i2pd.log
+ ## Log messages above this level (debug, info, *warn, error, none)
  ## If you set it to none, logging will be disabled
--# loglevel = info
+-# loglevel = warn
 +loglevel = error
  ## Write full CLF-formatted date and time to log (default: write only time)
  # logclftime = true
  
-@@ -61,7 +61,7 @@
+@@ -61,7 +61,7 @@ ipv6 = false
  # ifname6 = 
  
  ## Enable NTCP transport (default = true)
@@ -40,7 +39,7 @@ diff -u -r a/contrib/i2pd.conf b/contrib/i2pd.conf
  ## If you run i2pd behind a proxy server, you can only use NTCP transport with ntcpproxy option 
  ## Should be http://address:port or socks://address:port
  # ntcpproxy = http://127.0.0.1:8118
-@@ -81,7 +81,7 @@
+@@ -81,7 +81,7 @@ ipv6 = false
  
  ## Router will not accept transit tunnels, disabling transit traffic completely
  ## (default = false)
@@ -49,7 +48,7 @@ diff -u -r a/contrib/i2pd.conf b/contrib/i2pd.conf
  
  ## Router will be floodfill
  # floodfill = true
-@@ -91,8 +91,10 @@
+@@ -91,8 +91,10 @@ ipv6 = false
  ## Uncomment and set to 'false' to disable Web Console
  # enabled = true
  ## Address and port service will listen on
@@ -61,7 +60,7 @@ diff -u -r a/contrib/i2pd.conf b/contrib/i2pd.conf
  ## Path to web console, default "/"
  # webroot = /
  ## Uncomment following lines to enable Web Console authentication 
-@@ -104,7 +106,7 @@
+@@ -104,7 +106,7 @@ port = 7070
  ## Uncomment and set to 'false' to disable HTTP Proxy
  # enabled = true
  ## Address and port service will listen on
@@ -70,7 +69,7 @@ diff -u -r a/contrib/i2pd.conf b/contrib/i2pd.conf
  port = 4444
  ## Optional keys file for proxy local destination
  # keys = http-proxy-keys.dat
-@@ -118,7 +120,7 @@
+@@ -118,7 +120,7 @@ port = 4444
  ## Uncomment and set to 'false' to disable SOCKS Proxy
  # enabled = true
  ## Address and port service will listen on
@@ -79,7 +78,7 @@ diff -u -r a/contrib/i2pd.conf b/contrib/i2pd.conf
  port = 4447
  ## Optional keys file for proxy local destination
  # keys = socks-proxy-keys.dat
-@@ -228,4 +230,5 @@
+@@ -228,4 +230,5 @@ verify = true
  
  [persist]
  ## Save peer profiles on disk (default: true)
