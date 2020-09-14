@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=gnunet
 
 PKG_VERSION:=0.13.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gnunet
 PKG_HASH:=318e06c4134d1a8ce3b4385d82b11316eaaeb9a4dbc5d4b646453dfc53199296
@@ -58,8 +58,8 @@ $(call Package/gnunet/Default)
            +libunistring +librt +zlib $(ICONV_DEPENDS) $(INTL_DEPENDS)
   USERID:=gnunet=958:gnunet=958
   MENU:=1
-  FILE_MODES:=/usr/lib/gnunet/libexec/gnunet-helper-nat-server:root:958:4750 \
-              /usr/lib/gnunet/libexec/gnunet-helper-nat-client:root:958:4750
+  FILE_MODES:=/usr/lib/gnunet/libexec/gnunet-helper-nat-server:root:gnunet:4750 \
+              /usr/lib/gnunet/libexec/gnunet-helper-nat-client:root:gnunet:4750
 endef
 
 define Package/gnunet/description
@@ -222,7 +222,7 @@ CONF_hostlist:=hostlist
 DEPENDS_transport-bluetooth:=+bluez-libs
 PLUGIN_transport-bluetooth:=transport_bluetooth
 LIBEXEC_transport-bluetooth:=helper-transport-bluetooth
-FILE_MODES_transport-bluetooth:=/usr/lib/gnunet/libexec/gnunet-helper-transport-bluetooth:root:958:4750
+FILE_MODES_transport-bluetooth:=/usr/lib/gnunet/libexec/gnunet-helper-transport-bluetooth:root:gnunet:4750
 
 DEPENDS_transport-http_client:=+gnunet-curl +ca-certificates
 PLUGIN_transport-http_client:=transport_http_client transport_https_client
@@ -236,7 +236,7 @@ PLUGIN_transport-udp:=transport_udp
 
 PLUGIN_transport-wlan:=transport_wlan
 LIBEXEC_transport-wlan:=helper-transport-wlan
-FILE_MODES_transport-wlan:=/usr/lib/gnunet/libexec/gnunet-helper-transport-wlan:root:958:4750
+FILE_MODES_transport-wlan:=/usr/lib/gnunet/libexec/gnunet-helper-transport-wlan:root:gnunet:4750
 
 # BIN_dv:=dv
 LIB_dv:=dv
@@ -252,13 +252,13 @@ LIBEXEC_fs:=helper-fs-publish service-fs
 CONF_fs:=fs
 
 DEPENDS_gns:=+gnunet-vpn +iptables-mod-extra
-USERID_gns:=gnunet=958:gnunetdns=452
+USERID_gns:=:gnunetdns=452
 BIN_gns:=gns gns-import.sh namecache namestore resolver zoneimport 
 LIB_gns:=gns gnsrecord namecache namestore
 PLUGIN_gns:=block_dns block_gns gnsrecord_conversation gnsrecord_dns gnsrecord_gns
 LIBEXEC_gns:=dns2gns helper-dns service-dns service-gns service-namecache service-namestore service-resolver service-zonemaster
 CONF_gns:=dns gns namecache namestore resolver zonemaster
-FILE_MODES_gns:=/usr/lib/gnunet/libexec/gnunet-helper-dns:root:452:4750 /usr/lib/gnunet/libexec/gnunet-service-dns:958:452:2750
+FILE_MODES_gns:=/usr/lib/gnunet/libexec/gnunet-helper-dns:root:gnunetdns:4750 /usr/lib/gnunet/libexec/gnunet-service-dns:gnunet:gnunetdns:2750
 
 DEPENDS_namestore-fcfsd:=+gnunet-gns +libmicrohttpd-ssl
 LIBEXEC_namestore-fcfsd:=namestore-fcfsd
@@ -349,7 +349,7 @@ BIN_utils:=gns-proxy-setup-ca transport-certificate-creation
 
 DEPENDS_vpn:=+kmod-tun +iptables +firewall
 BIN_vpn:=vpn
-FILE_MODES_vpn:=/usr/lib/gnunet/libexec/gnunet-helper-exit:root:958:4750 /usr/lib/gnunet/libexec/gnunet-helper-vpn:root:958:4750
+FILE_MODES_vpn:=/usr/lib/gnunet/libexec/gnunet-helper-exit:root:gnunet:4750 /usr/lib/gnunet/libexec/gnunet-helper-vpn:root:gnunet:4750
 LIB_vpn:=dnsstub tun vpn
 LIBEXEC_vpn:=daemon-exit daemon-pt helper-exit helper-vpn service-vpn
 CONF_vpn:=exit pt vpn
