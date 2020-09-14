@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius3
 PKG_VERSION:=release_3_0_21
-PKG_RELEASE:=3
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/FreeRADIUS/freeradius-server/archive
@@ -754,7 +754,7 @@ endef
 
 define Package/freeradius3-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	for f in radclient radeapclient radwho; do \
+	for f in radclient radeapclient radtest radwho; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$$$${f} $(1)/usr/bin/ ; \
 	done
 endef
