@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cifs-utils
-PKG_VERSION:=6.10
-PKG_RELEASE:=2
+PKG_VERSION:=6.11
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.samba.org/pub/linux-cifs/cifs-utils/
-PKG_HASH:=92fc29c8e9039637f3344267500f1fa381e2cccd7d10142f0c1676fa575904a7
+PKG_HASH:=b859239a3f204f8220d3e54ed43bf8109e1ef202042dd87ba87492f8878728d9
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:debian:cifs-utils
+PKG_CPE_ID:=cpe:/a:samba:cifs-utils
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
