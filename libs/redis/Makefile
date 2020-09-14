@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=redis
-PKG_VERSION:=6.0.7
+PKG_VERSION:=6.0.8
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://download.redis.io/releases/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=c2aaa1a4c7e72c70adedf976fdd5e1d34d395989283dab9d7840e0a304bb2393
+PKG_HASH:=04fa1fddc39bd1aecb6739dd5dd73858a3515b427acd1e2947a66dadce868d68
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
