@@ -8,13 +8,13 @@
 -#if __cplusplus >= 201103L
 +#include <ios>
 +#if __cplusplus >= 201103L && !defined(__UCLIBCXX_MAJOR__)
- 
+
  #include "radix_tree.hpp"
  #include "trie.hpp"
 --- a/src/atomic_counter.hpp
 +++ b/src/atomic_counter.hpp
 @@ -35,7 +35,7 @@
- 
+
  #if defined ZMQ_FORCE_MUTEXES
  #define ZMQ_ATOMIC_COUNTER_MUTEX
 -#elif (defined __cplusplus && __cplusplus >= 201103L)                          \
@@ -25,7 +25,7 @@
 --- a/src/atomic_ptr.hpp
 +++ b/src/atomic_ptr.hpp
 @@ -34,7 +34,7 @@
- 
+
  #if defined ZMQ_FORCE_MUTEXES
  #define ZMQ_ATOMIC_PTR_MUTEX
 -#elif (defined __cplusplus && __cplusplus >= 201103L)                          \
@@ -38,34 +38,23 @@
 @@ -38,7 +38,7 @@
  #include <algorithm>
  #include <ios>
- 
+
 -#if __cplusplus >= 201103L || defined(_MSC_VER) && _MSC_VER > 1700
 +#if __cplusplus >= 201103L && !defined(__UCLIBCXX_MAJOR__) || defined(_MSC_VER) && _MSC_VER > 1700
  #define ZMQ_HAS_MOVE_SEMANTICS
  #define ZMQ_MAP_INSERT_OR_EMPLACE(k, v) emplace (k, v)
  #define ZMQ_PUSH_OR_EMPLACE_BACK emplace_back
---- a/src/ctx.cpp
-+++ b/src/ctx.cpp
-@@ -544,7 +544,7 @@ void zmq::ctx_t::unregister_endpoints (socket_base_t *socket_)
-                                end = _endpoints.end ();
-          it != end;) {
-         if (it->second.socket == socket_)
--#if __cplusplus >= 201103L
-+#if __cplusplus >= 201103L && !defined(__UCLIBCXX_MAJOR__)
-             it = _endpoints.erase (it);
- #else
-             _endpoints.erase (it++);
 --- a/src/msg.hpp
 +++ b/src/msg.hpp
 @@ -30,8 +30,8 @@
  #ifndef __ZMQ_MSG_HPP_INCLUDE__
  #define __ZMQ_MSG_HPP_INCLUDE__
- 
+
 -#include <stddef.h>
 -#include <stdio.h>
 +#include <cstddef>
 +#include <cstdio>
- 
+
  #include "config.hpp"
  #include "err.hpp"
 --- a/src/options.hpp
@@ -79,14 +68,25 @@
      static_assert (std::is_trivially_copyable<T>::value,
                     "invalid use of do_getsockopt");
  #endif
+--- a/src/ctx.cpp
++++ b/src/ctx.cpp
+@@ -725,7 +725,7 @@ void zmq::ctx_t::unregister_endpoints (c
+                                end = _endpoints.end ();
+          it != end;) {
+         if (it->second.socket == socket_)
+-#if __cplusplus >= 201103L || (defined _MSC_VER && _MSC_VER >= 1700)
++#if (__cplusplus >= 201103L || (defined _MSC_VER && _MSC_VER >= 1700)) && !defined(__UCLIBCXX_MAJOR__)
+             it = _endpoints.erase (it);
+ #else
+             _endpoints.erase (it++);
 --- a/src/radio.cpp
 +++ b/src/radio.cpp
-@@ -126,7 +126,7 @@ void zmq::radio_t::xpipe_terminated (pipe_t *pipe_)
+@@ -126,7 +126,7 @@ void zmq::radio_t::xpipe_terminated (pip
                                     end = _subscriptions.end ();
           it != end;) {
          if (it->second == pipe_) {
--#if __cplusplus >= 201103L
-+#if __cplusplus >= 201103L && !defined(__UCLIBCXX_MAJOR__)
+-#if __cplusplus >= 201103L || (defined _MSC_VER && _MSC_VER >= 1700)
++#if (__cplusplus >= 201103L || (defined _MSC_VER && _MSC_VER >= 1700)) && !defined(__UCLIBCXX_MAJOR__)
              it = _subscriptions.erase (it);
  #else
              _subscriptions.erase (it++);
