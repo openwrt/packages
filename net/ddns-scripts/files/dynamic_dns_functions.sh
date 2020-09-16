@@ -21,7 +21,11 @@
 . /lib/functions/network.sh
 
 # GLOBAL VARIABLES #
-VERSION="2.7.8-14"
+if [ -f "/usr/share/ddns/version" ]; then
+	VERSION="$(cat "/usr/share/ddns/version")"
+else
+	VERSION="unknown"
+fi
 SECTION_ID=""		# hold config's section name
 VERBOSE=0		# default mode is log to console, but easily changed with parameter
 MYPROG=$(basename $0)	# my program call name

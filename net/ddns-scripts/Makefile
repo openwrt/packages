@@ -183,6 +183,9 @@ define Package/ddns-scripts/install
 	$(INSTALL_DIR)  $(1)/etc/config
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/files/ddns.config $(1)/etc/config/ddns
 
+	$(INSTALL_DIR) $(1)/usr/share/ddns
+	echo "$(PKG_VERSION)-$(PKG_RELEASE)" > $(1)/usr/share/ddns/version
+
 	$(INSTALL_DIR)  $(1)/usr/share/ddns/services
 	$(INSTALL_DATA) ./files/usr/share/ddns/services/* \
 		$(1)/usr/share/ddns/services/
