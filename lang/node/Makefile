@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
-PKG_VERSION:=v12.18.3
+PKG_VERSION:=v12.18.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://nodejs.org/dist/$(PKG_VERSION)
-PKG_HASH:=71158026579487422fd13cc2553b34cddb76519098aa6030faab52f88c6e0d0e
+PKG_HASH:=25f03cb18e53b6d0959d0c219e701a85eb4693f526bdda7c72bc6199b364f609
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>, Adrian Panella <ianchi74@outlook.com>
 PKG_LICENSE:=MIT
