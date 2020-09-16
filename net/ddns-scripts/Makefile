@@ -169,7 +169,7 @@ define Package/ddns-scripts/install
 		$(1)/etc/hotplug.d/iface/95-ddns
 
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/ddns.init \
+	$(INSTALL_BIN) ./files/etc/init.d/ddns \
 		$(1)/etc/init.d/ddns
 
 	$(INSTALL_DIR) $(1)/etc/config
