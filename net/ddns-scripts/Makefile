@@ -200,16 +200,12 @@ define Package/ddns-scripts/install
 endef
 
 define Package/ddns-scripts/postinst
-	#!/bin/sh
-	# if NOT run buildroot and PKG_UPGRADE then (re)start service if enabled
-	[ -z "$${IPKG_INSTROOT}" -a "$${PKG_UPGRADE}" = "1" ] && {
-		[ -x /etc/uci-defaults/ddns ] && \
-			/etc/uci-defaults/ddns && \
-				rm -f /etc/uci-defaults/ddns >/dev/null 2>&1
-		/etc/init.d/ddns enabled && \
-			/etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns enabled
+	/etc/init.d/ddns start
+fi
+exit 0
 endef
 
 define Package/ddns-scripts/prerm
