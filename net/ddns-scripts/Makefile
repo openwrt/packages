@@ -165,7 +165,7 @@ endef
 
 define Package/ddns-scripts/install
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
-	$(INSTALL_BIN) ./files/ddns.hotplug \
+	$(INSTALL_DATA) ./files/etc/hotplug.d/iface/ddns \
 		$(1)/etc/hotplug.d/iface/95-ddns
 
 	$(INSTALL_DIR) $(1)/etc/init.d
