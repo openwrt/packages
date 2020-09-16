@@ -160,28 +160,21 @@ define Build/Configure
 endef
 
 define Build/Compile
-	$(CP) ./files $(PKG_BUILD_DIR)
-	# ensure that VERSION inside dynamic_dns_functions.sh reflect PKG_VERSION of Makefile
-	$(SED) '/^VERSION=*/s/.*/VERSION="$(PKG_VERSION)-$(PKG_RELEASE)"/' $(PKG_BUILD_DIR)/files/dynamic_dns_functions.sh
-	# remove comments, white spaces and empty lines
-	for FILE in `find $(PKG_BUILD_DIR)/files -type f`; do \
-		$(SED) 's/^[[:space:]]*//' \
-		-e '/^#[[:space:]]\|^#$$$$/d' \
-		-e 's/[[:space:]]#[[:space:]].*$$$$//' \
-		-e 's/[[:space:]]*$$$$//' \
-		-e '/^\/\/[[:space:]]/d'	\
-		-e '/^[[:space:]]*$$$$/d'	$$$$FILE; \
-	done
 endef
 
 
 define Package/ddns-scripts/install
-	$(INSTALL_DIR)  $(1)/etc/hotplug.d/iface
-	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/ddns.hotplug $(1)/etc/hotplug.d/iface/95-ddns
-	$(INSTALL_DIR)  $(1)/etc/init.d
-	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/ddns.init $(1)/etc/init.d/ddns
-	$(INSTALL_DIR)  $(1)/etc/config
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/files/ddns.config $(1)/etc/config/ddns
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_BIN) ./files/ddns.hotplug \
+		$(1)/etc/hotplug.d/iface/95-ddns
+
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/ddns.init \
+		$(1)/etc/init.d/ddns
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/ddns.config \
+		$(1)/etc/config/ddns
 
 	$(INSTALL_DIR) $(1)/usr/share/ddns
 	echo "$(PKG_VERSION)-$(PKG_RELEASE)" > $(1)/usr/share/ddns/version
@@ -191,7 +184,7 @@ define Package/ddns-scripts/install
 		$(1)/usr/share/ddns/services/
 
 	$(INSTALL_DIR)  $(1)/usr/lib/ddns
-	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/dynamic_dns_*.sh $(1)/usr/lib/ddns
+	$(INSTALL_BIN)  $(1)/files/dynamic_dns_*.sh $(1)/usr/lib/ddns
 endef
 
 define Package/ddns-scripts/postinst
