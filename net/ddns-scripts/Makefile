@@ -215,15 +215,12 @@ define Package/ddns-scripts/postinst
 endef
 
 define Package/ddns-scripts/prerm
-	#!/bin/sh
-	# if run within buildroot exit
-	[ -n "$${IPKG_INSTROOT}" ] && exit 0
-	# stop running scripts
+#!/bin/sh
+if [ -n "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
 	/etc/init.d/ddns disable
-	# clear LuCI indexcache
-	rm -f /tmp/luci-indexcache >/dev/null 2>&1
-	exit 0	# suppress errors
+fi
+exit 0
 endef
 
 
