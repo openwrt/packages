@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zeromq
 PKG_VERSION:=4.3.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/zeromq/libzmq/releases/download/v$(PKG_VERSION)
@@ -33,7 +33,7 @@ define Package/libzmq/default
   URL:=http://www.zeromq.org/
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libuuid +libpthread +librt +libstdcpp
+  DEPENDS:=+libuuid +libpthread +librt +libstdcpp +USE_GLIBC:libbsd
   PROVIDES:=libzmq
 endef
 
@@ -72,10 +72,10 @@ CMAKE_OPTIONS += \
 	-DENABLE_CURVE=ON \
 	-DENABLE_EVENTFD=ON \
 	-DPOLLER=epoll \
-	-DPYTHON_EXECUTABLE=OFF \
 	-DRT_LIBRARY=OFF \
 	-DWITH_OPENPGM=OFF \
-	-DZMQ_BUILD_TESTS=OFF
+	-DZMQ_BUILD_TESTS=OFF \
+	-DWITH_LIBBSD=O$(if $(CONFIG_USE_GLIBC),N,FF)
 
 ifeq ($(BUILD_VARIANT),curve)
 	CMAKE_OPTIONS += -DWITH_LIBSODIUM=ON
