@@ -48,46 +48,47 @@ endef
 
 define Package/ddns-scripts_cloudflare.com-v4
   $(call Package/ddns-scripts/Default)
-  TITLE:=CloudFlare.com API v4 (requires cURL)
+  TITLE:=Extension for cloudflare.com API v4
   DEPENDS:=ddns-scripts +curl
 endef
 
 define Package/ddns-scripts_cloudflare.com-v4/description
-  Dynamic DNS Client scripts extension for CloudFlare.com API-v4 (require/install cURL)
+  Dynamic DNS Client scripts extension for cloudflare.com API v4 (require curl)
 endef
 
 
 define Package/ddns-scripts_freedns_42_pl
   $(call Package/ddns-scripts/Default)
-  TITLE:=DDNS extension for FreeDNS.42.pl (requires cURL)
+  TITLE:=Extension for freedns.42.pl
   DEPENDS:=ddns-scripts +curl
 endef
 
 define Package/ddns-scripts_freedns_42_pl/description
-  Dynamic DNS Client scripts extension for freedns.42.pl
+  Dynamic DNS Client scripts extension for "freedns.42.pl".
 endef
 
 
 define Package/ddns-scripts_godaddy.com-v1
   $(call Package/ddns-scripts/Default)
-  TITLE:=GoDaddy.com (require cURL)
+  TITLE:=Extension for godaddy.com API v1
   DEPENDS:=ddns-scripts +curl
 endef
 
 define Package/ddns-scripts_godaddy.com-v1/description
-  Dynamic DNS Client scripts extension for GoDaddy.com (require/install cURL)
+  Dynamic DNS Client scripts extension for "godaddy.com API v1".
 endef
 
 
 define Package/ddns-scripts_digitalocean.com-v2
   $(call Package/ddns-scripts/Default)
-  TITLE:=digitalocean.com (require cURL)
+  TITLE:=Extention for digitalocean.com API v2
   DEPENDS:=ddns-scripts +curl
 endef
 
 define Package/ddns-scripts_digitalocean.com-v2/description
-  Dynamic DNS Client scripts extension for digitalocean.com (require/install cURL)
-  The script directly updates a DNS record using the DO API. It requires
+  Dynamic DNS Client scripts extension for "digitalocean.com API v2".
+  The script directly updates a DNS record using the DO API.
+  It requires:
   "option dns_server" to be set to the server to be used by nsupdate.
   "option domain" the dns domain to update the record for (eg. A-record: home.<example.com>)
   "option username" the dns record name to update (eg. A-record: <home>.example.com)
@@ -98,23 +99,23 @@ endef
 
 define Package/ddns-scripts_no-ip_com
   $(call Package/ddns-scripts/Default)
-  TITLE:=DDNS extension for No-IP.com
+  TITLE:=Extension for no-ip.com
   DEPENDS:=ddns-scripts
 endef
 
 define Package/ddns-scripts_no-ip_com/description
-  Dynamic DNS Client scripts extension for No-IP.com
+  Dynamic DNS Client scripts extension for "no-ip.com".
 endef
 
 
 define Package/ddns-scripts_nsupdate
   $(call Package/ddns-scripts/Default)
-  TITLE:=DDNS extension using Bind nsupdate
+  TITLE:=Extension for using bind nsupdate.
   DEPENDS:=ddns-scripts +bind-client
 endef
 
 define Package/ddns-scripts_nsupdate/description
-  Dynamic DNS Client scripts extension for direct updates using Bind nsupdate
+  Dynamic DNS Client scripts extension for direct updates using bind nsupdate
   The script directly updates a PowerDNS (or maybe bind server) via nsupdate
   from bind-client package.
   It requires:
@@ -126,13 +127,13 @@ endef
 
 define Package/ddns-scripts_route53-v1
   $(call Package/ddns-scripts/Default)
-  TITLE:=Amazon AWS Route 53 API v1
+  TITLE:=Extension for route53 API v1
   DEPENDS:=ddns-scripts +curl +openssl-util
 endef
 
 define Package/ddns-scripts_route53-v1/description
-  Dynamic DNS Client scripts extension for Amazon AWS Route53. Note: You
-  must also install ca-certificate or ca-bundle.
+  Dynamic DNS Client scripts extension for Amazon AWS "route53 API v1".
+  Note: You must also install ca-certificate or ca-bundle.
   It requires:
   "option username" to be a valid AWS access key id
   "option password" to be the matching AWS secret key id
@@ -147,8 +148,7 @@ define Package/ddns-scripts_cnkuai_cn
 endef
 
 define Package/ddns-scripts_cnkuai_cn/description
-  Dynamic DNS Client scripts extension for CnKuai.Note: You
-  must also install giflib-utils.
+  Dynamic DNS Client scripts extension for "cnkuai.cn".
   It requires:
   "option username" to be a valid CnKuai control panel id
   "option password" to be the matching CnKuai control panel password
