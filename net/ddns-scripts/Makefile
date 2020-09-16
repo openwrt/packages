@@ -229,10 +229,11 @@ define Package/ddns-scripts_cloudflare.com-v4/install
 endef
 
 define Package/ddns-scripts_cloudflare.com-v4/prerm
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop				>/dev/null 2>&1
-	exit 0	# suppress errors
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
 endef
 
 
@@ -247,10 +248,11 @@ define Package/ddns-scripts_freedns_42_pl/install
 endef
 
 define Package/ddns-scripts_freedns_42_pl/prerm
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop		>/dev/null 2>&1
-	exit 0	# suppress errors
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
 endef
 
 
@@ -265,10 +267,11 @@ define Package/ddns-scripts_godaddy.com-v1/install
 endef
 
 define Package/ddns-scripts_godaddy.com-v1/prerm
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop				>/dev/null 2>&1
-	exit 0	# suppress errors
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
 endef
 
 
@@ -283,10 +286,11 @@ define Package/ddns-scripts_digitalocean.com-v2/install
 endef
 
 define Package/ddns-scripts_digitalocean.com-v2/prerm
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop				>/dev/null 2>&1
-	exit 0	# suppress errors
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
 endef
 
 
@@ -301,10 +305,11 @@ define Package/ddns-scripts_no-ip_com/install
 endef
 
 define Package/ddns-scripts_no-ip_com/prerm
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop		>/dev/null 2>&1
-	exit 0	# suppress errors
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
 endef
 
 
@@ -319,10 +324,11 @@ define Package/ddns-scripts_nsupdate/install
 endef
 
 define Package/ddns-scripts_nsupdate/prerm
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop			>/dev/null 2>&1
-	exit 0	# suppress errors
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
 endef
 
 
@@ -337,10 +343,11 @@ define Package/ddns-scripts_route53-v1/install
 endef
 
 define Package/ddns-scripts_route53-v1/prerm
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop				>/dev/null 2>&1
-	exit 0	# suppress errors
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
 endef
 
 
@@ -355,10 +362,11 @@ define Package/ddns-scripts_cnkuai_cn/install
 endef
 
 define Package/ddns-scripts_cnkuai_cn/prerm
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop				>/dev/null 2>&1
-	exit 0	# suppress errors
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
 endef
 
 
