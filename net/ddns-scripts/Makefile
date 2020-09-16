@@ -218,14 +218,6 @@ exit 0
 endef
 
 
-###### *************************************************************************
-define Package/ddns-scripts_cloudflare.com-v4/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
-endef
-
 define Package/ddns-scripts_cloudflare.com-v4/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_cloudflare_com_v4.sh \
@@ -236,19 +228,6 @@ define Package/ddns-scripts_cloudflare.com-v4/install
 		$(1)/usr/share/ddns/services/
 endef
 
-define Package/ddns-scripts_cloudflare.com-v4/postinst
-	#!/bin/sh
-	# on real system restart service if enabled
-	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_cloudflare.com-v4 ] && \
-			/etc/uci-defaults/ddns_cloudflare.com-v4 && \
-				rm -f /etc/uci-defaults/ddns_cloudflare.com-v4 >/dev/null 2>&1
-		/etc/init.d/ddns enabled && \
-			/etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
-endef
-
 define Package/ddns-scripts_cloudflare.com-v4/prerm
 	#!/bin/sh
 	# if NOT run buildroot then stop service
@@ -256,14 +235,6 @@ define Package/ddns-scripts_cloudflare.com-v4/prerm
 	exit 0	# suppress errors
 endef
 
-
-###### *************************************************************************
-define Package/ddns-scripts_freedns_42_pl/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
-endef
 
 define Package/ddns-scripts_freedns_42_pl/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
@@ -275,19 +246,6 @@ define Package/ddns-scripts_freedns_42_pl/install
 		$(1)/usr/share/ddns/services
 endef
 
-define Package/ddns-scripts_freedns_42_pl/postinst
-	#!/bin/sh
-	# on real system restart service if enabled
-	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_freedns_42_pl ] && \
-			/etc/uci-defaults/ddns_freedns_42_pl && \
-				rm -f /etc/uci-defaults/ddns_freedns_42_pl >/dev/null 2>&1
-		/etc/init.d/ddns enabled && \
-			/etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
-endef
-
 define Package/ddns-scripts_freedns_42_pl/prerm
 	#!/bin/sh
 	# if NOT run buildroot then stop service
@@ -295,14 +253,6 @@ define Package/ddns-scripts_freedns_42_pl/prerm
 	exit 0	# suppress errors
 endef
 
-
-###### *************************************************************************
-define Package/ddns-scripts_godaddy.com-v1/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
-endef
 
 define Package/ddns-scripts_godaddy.com-v1/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
@@ -314,19 +264,6 @@ define Package/ddns-scripts_godaddy.com-v1/install
 		$(1)/usr/share/ddns/services
 endef
 
-define Package/ddns-scripts_godaddy.com-v1/postinst
-	#!/bin/sh
-	# on real system restart service if enabled
-	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_godaddy.com-v1 ] && \
-			/etc/uci-defaults/ddns_godaddy.com-v1 && \
-				rm -f /etc/uci-defaults/ddns_godaddy.com-v1 >/dev/null 2>&1
-		/etc/init.d/ddns enabled \
-			&& /etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
-endef
-
 define Package/ddns-scripts_godaddy.com-v1/prerm
 	#!/bin/sh
 	# if NOT run buildroot then stop service
@@ -334,14 +271,6 @@ define Package/ddns-scripts_godaddy.com-v1/prerm
 	exit 0	# suppress errors
 endef
 
-
-###### *************************************************************************
-define Package/ddns-scripts_digitalocean.com-v2/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
-endef
 
 define Package/ddns-scripts_digitalocean.com-v2/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
@@ -353,19 +282,6 @@ define Package/ddns-scripts_digitalocean.com-v2/install
 		$(1)/usr/share/ddns/services
 endef
 
-define Package/ddns-scripts_digitalocean.com-v2/postinst
-	#!/bin/sh
-	# on real system restart service if enabled
-	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_digitalocean.com-v2 ] && \
-			/etc/uci-defaults/ddns_digitalocean.com-v2 && \
-				rm -f /etc/uci-defaults/ddns_digitalocean.com-v2 >/dev/null 2>&1
-		/etc/init.d/ddns enabled \
-			&& /etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
-endef
-
 define Package/ddns-scripts_digitalocean.com-v2/prerm
 	#!/bin/sh
 	# if NOT run buildroot then stop service
@@ -373,14 +289,6 @@ define Package/ddns-scripts_digitalocean.com-v2/prerm
 	exit 0	# suppress errors
 endef
 
-
-###### *************************************************************************
-define Package/ddns-scripts_no-ip_com/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
-endef
 
 define Package/ddns-scripts_no-ip_com/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
@@ -392,19 +300,6 @@ define Package/ddns-scripts_no-ip_com/install
 		$(1)/usr/share/ddns/services
 endef
 
-define Package/ddns-scripts_no-ip_com/postinst
-	#!/bin/sh
-	# on real system restart service if enabled
-	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_no-ip_com ] && \
-			/etc/uci-defaults/ddns_no-ip_com && \
-				rm -f /etc/uci-defaults/ddns_no-ip_com >/dev/null 2>&1
-		/etc/init.d/ddns enabled && \
-			/etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
-endef
-
 define Package/ddns-scripts_no-ip_com/prerm
 	#!/bin/sh
 	# if NOT run buildroot then stop service
@@ -412,14 +307,6 @@ define Package/ddns-scripts_no-ip_com/prerm
 	exit 0	# suppress errors
 endef
 
-
-###### *************************************************************************
-define Package/ddns-scripts_nsupdate/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
-endef
 
 define Package/ddns-scripts_nsupdate/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
@@ -431,19 +318,6 @@ define Package/ddns-scripts_nsupdate/install
 		$(1)/usr/share/ddns/services
 endef
 
-define Package/ddns-scripts_nsupdate/postinst
-	#!/bin/sh
-	# on real system restart service if enabled
-	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_nsupdate ] && \
-			/etc/uci-defaults/ddns_nsupdate && \
-				rm -f /etc/uci-defaults/ddns_nsupdate >/dev/null 2>&1
-		/etc/init.d/ddns enabled && \
-			/etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
-endef
-
 define Package/ddns-scripts_nsupdate/prerm
 	#!/bin/sh
 	# if NOT run buildroot then stop service
@@ -451,14 +325,6 @@ define Package/ddns-scripts_nsupdate/prerm
 	exit 0	# suppress errors
 endef
 
-
-###### *************************************************************************
-define Package/ddns-scripts_route53-v1/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
-endef
 
 define Package/ddns-scripts_route53-v1/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
@@ -470,19 +336,6 @@ define Package/ddns-scripts_route53-v1/install
 		$(1)/usr/share/ddns/services
 endef
 
-define Package/ddns-scripts_route53-v1/postinst
-	#!/bin/sh
-	# on real system restart service if enabled
-	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_route53-v1 ] && \
-			/etc/uci-defaults/ddns_route53-v1 && \
-				rm -f /etc/uci-defaults/route53.com-v1 >/dev/null 2>&1
-		/etc/init.d/ddns enabled \
-			&& /etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
-endef
-
 define Package/ddns-scripts_route53-v1/prerm
 	#!/bin/sh
 	# if NOT run buildroot then stop service
@@ -490,14 +343,6 @@ define Package/ddns-scripts_route53-v1/prerm
 	exit 0	# suppress errors
 endef
 
-
-###### *************************************************************************
-define Package/ddns-scripts_cnkuai_cn/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
-endef
 
 define Package/ddns-scripts_cnkuai_cn/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
@@ -507,19 +352,6 @@ define Package/ddns-scripts_cnkuai_cn/install
 	$(INSTALL_DIR) $(1)/usr/share/ddns/services
 	$(INSTALL_DATA) ./files/usr/share/ddns/services/cnkuai.cn.json \
 		$(1)/usr/share/ddns/services
-endef
-
-define Package/ddns-scripts_cnkuai_cn/postinst
-	#!/bin/sh
-	# on real system restart service if enabled
-	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_cnkuai_cn ] && \
-			/etc/uci-defaults/ddns_cnkuai_cn && \
-				rm -f /etc/uci-defaults/cnkuai.cn >/dev/null 2>&1
-		/etc/init.d/ddns enabled \
-			&& /etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
 endef
 
 define Package/ddns-scripts_cnkuai_cn/prerm
