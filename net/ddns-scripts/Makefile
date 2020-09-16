@@ -175,14 +175,6 @@ define Build/Compile
 endef
 
 
-###### *************************************************************************
-define Package/ddns-scripts/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
-endef
-
 define Package/ddns-scripts/install
 	$(INSTALL_DIR)  $(1)/etc/hotplug.d/iface
 	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/ddns.hotplug $(1)/etc/hotplug.d/iface/95-ddns
