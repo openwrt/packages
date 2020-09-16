@@ -184,8 +184,6 @@ define Package/ddns-scripts/preinst
 endef
 
 define Package/ddns-scripts/install
-	$(INSTALL_DIR)  $(1)/etc/uci-defaults
-	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns
 	$(INSTALL_DIR)  $(1)/etc/hotplug.d/iface
 	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/ddns.hotplug $(1)/etc/hotplug.d/iface/95-ddns
 	$(INSTALL_DIR)  $(1)/etc/init.d
@@ -233,9 +231,6 @@ define Package/ddns-scripts_cloudflare.com-v4/preinst
 endef
 
 define Package/ddns-scripts_cloudflare.com-v4/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_cloudflare.com-v4
-
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_cloudflare_com_v4.sh \
 		$(1)/usr/lib/ddns
@@ -275,9 +270,6 @@ define Package/ddns-scripts_freedns_42_pl/preinst
 endef
 
 define Package/ddns-scripts_freedns_42_pl/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_freedns_42_pl
-
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_freedns_42_pl.sh \
 		$(1)/usr/lib/ddns
@@ -317,9 +309,6 @@ define Package/ddns-scripts_godaddy.com-v1/preinst
 endef
 
 define Package/ddns-scripts_godaddy.com-v1/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_godaddy.com-v1
-
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_godaddy_com_v1.sh \
 		$(1)/usr/lib/ddns
@@ -359,9 +348,6 @@ define Package/ddns-scripts_digitalocean.com-v2/preinst
 endef
 
 define Package/ddns-scripts_digitalocean.com-v2/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_digtalocean.com-v2
-
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_digitalocean_com_v2.sh \
 		$(1)/usr/lib/ddns
@@ -401,9 +387,6 @@ define Package/ddns-scripts_no-ip_com/preinst
 endef
 
 define Package/ddns-scripts_no-ip_com/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_no-ip_com
-
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_no-ip_com.sh \
 		$(1)/usr/lib/ddns
@@ -443,9 +426,6 @@ define Package/ddns-scripts_nsupdate/preinst
 endef
 
 define Package/ddns-scripts_nsupdate/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_nsupdate
-
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_nsupdate.sh \
 		$(1)/usr/lib/ddns
@@ -485,9 +465,6 @@ define Package/ddns-scripts_route53-v1/preinst
 endef
 
 define Package/ddns-scripts_route53-v1/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_route53-v1
-
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_route53_v1.sh \
 		$(1)/usr/lib/ddns
@@ -527,9 +504,6 @@ define Package/ddns-scripts_cnkuai_cn/preinst
 endef
 
 define Package/ddns-scripts_cnkuai_cn/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_cnkuai_cn
-
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_cnkuai_cn.sh \
 		$(1)/usr/lib/ddns
