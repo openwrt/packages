@@ -173,7 +173,7 @@ define Package/ddns-scripts/install
 		$(1)/etc/init.d/ddns
 
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./files/ddns.config \
+	$(INSTALL_CONF) ./files/etc/config/ddns \
 		$(1)/etc/config/ddns
 
 	$(INSTALL_DIR) $(1)/usr/share/ddns
