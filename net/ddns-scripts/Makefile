@@ -46,6 +46,17 @@ define Package/ddns-scripts/conffiles
 endef
 
 
+define Package/ddns-scripts_service
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Common ddns providers
+  DEPENDS:=ddns-scripts
+endef
+
+define Package/ddns-scripts_service/description
+  Dynamic DNS Client definitions for supported services
+endef
+
+
 define Package/ddns-scripts_cloudflare.com-v4
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for cloudflare.com API v4
@@ -179,10 +190,6 @@ define Package/ddns-scripts/install
 	$(INSTALL_DIR) $(1)/usr/share/ddns
 	echo "$(PKG_VERSION)-$(PKG_RELEASE)" > $(1)/usr/share/ddns/version
 
-	$(INSTALL_DIR)  $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/* \
-		$(1)/usr/share/ddns/services/
-
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_DATA) ./files/usr/lib/ddns/dynamic_dns_functions.sh \
 		$(1)/usr/lib/ddns
@@ -208,6 +215,13 @@ if [ -n "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns disable
 fi
 exit 0
+endef
+
+
+define Package/ddns-scripts_service/install
+	$(INSTALL_DIR) $(1)/usr/share/ddns/services
+	$(INSTALL_DATA) ./files/usr/share/ddns/services/* \
+		$(1)/usr/share/ddns/services
 endef
 
 
@@ -364,6 +378,7 @@ endef
 
 
 $(eval $(call BuildPackage,ddns-scripts))
+$(eval $(call BuildPackage,ddns-scripts_service))
 $(eval $(call BuildPackage,ddns-scripts_cloudflare.com-v4))
 $(eval $(call BuildPackage,ddns-scripts_freedns_42_pl))
 $(eval $(call BuildPackage,ddns-scripts_godaddy.com-v1))
