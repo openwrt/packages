@@ -199,6 +199,10 @@ define Package/ddns-scripts/install
 		$(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/dynamic_dns_updater.sh \
 		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) ./files/usr/bin/ddns.sh \
+		$(1)/usr/bin/ddns
 endef
 
 define Package/ddns-scripts/postinst
