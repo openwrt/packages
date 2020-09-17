@@ -40,7 +40,7 @@ jobs:
         run: |
           # only detect packages with changed Makefiles
           PACKAGES="$(git diff --diff-filter=d --name-only origin/master \
-            | grep 'Makefile$' | grep -Ev '/files/|/src/' \
+            | grep -E 'Makefile$|test.sh$' | grep -Ev '/files/|/src/' \
             | awk -F/ '{ print $(NF-1) }' | tr '\n' ' ')"
 
           # fallback to test packages if nothing explicitly changes this is
