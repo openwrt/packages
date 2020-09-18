@@ -232,7 +232,10 @@ esac
 # determine what update url we're using if a service_name is supplied
 # otherwise update_url is set inside configuration (custom update url)
 # or update_script is set inside configuration (custom update script)
-[ -n "$service_name" ] && get_service_data update_url update_script UPD_ANSWER
+[ -n "$service_name" ] && {
+	get_service_data "$service_name" update_url update_script UPD_ANSWER
+}
+
 [ -z "$update_url" -a -z "$update_script" ] && write_log 14 "No update_url found/defined or no update_script found/defined!"
 [ -n "$update_script" -a ! -f "$update_script" ] && write_log 14 "Custom update_script not found!"
 

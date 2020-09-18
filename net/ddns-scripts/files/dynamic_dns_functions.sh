@@ -313,45 +313,50 @@ urlencode() {
 }
 
 # extract url or script for given DDNS Provider from
-# file /etc/ddns/services for IPv4 or from
-# file /etc/ddns/services_ipv6 for IPv6
+# directory /usr/share/ddns/services/ipv4/ for IPv4
+# or from
+# directory /usr/share/ddns/services/ipv6/ for IPv6
+# $1	Name of the provider
 # $1	Name of Variable to store url to
 # $2	Name of Variable to store script to
 # $3	Name of Variable to store service answer to
 get_service_data() {
-	local __FILE __SERVICE __DATA __ANSWER __URL __SCRIPT __PIPE
+	local provider="$1"
+	shift
+
+	. /usr/share/libubox/jshn.sh
+	local dir="/usr/share/ddns/services"
+	local name data url answer script
 
 	[ $# -ne 3 ] && write_log 12 "Error calling 'get_service_data()' - wrong number of parameters"
 
-	__FILE="/etc/ddns/services"				# IPv4
-	[ $use_ipv6 -ne 0 ] && __FILE="/etc/ddns/services_ipv6"	# IPv6
+	[ -f "${dir}/${provider}.json" ] || {
+		eval "$1=\"\""
+		eval "$2=\"\""
+		eval "$3=\"\""
+		return 1
+	}
 
-	# workaround with variables; pipe create subshell with no give back of variable content
-	__PIPE="$ddns_rundir/pipe_$$"
-	mkfifo "$__PIPE"
+	json_load_file "${dir}/${provider}.json"
+	json_get_var name "name"
+	if [ "$use_ipv6" -eq "1" ]; then
+		json_select "ipv6"
+	else
+		json_select "ipv4"
+	fi
+	json_get_var data "url"
+	json_get_var answer "answer"
+	json_select ".."
+	json_cleanup
 
-	# only grep without # or whitespace at linestart | remove "
-	sed '/^#/d; /^[ \t]*$/d; s/\"//g' "$__FILE" > "$__PIPE" &
+	# check if URL or SCRIPT is given
+	url=$(echo "$data" | grep "^http")
+	[ -z "$url" ] && script="/usr/lib/ddns/${data}"
 
-	while read __SERVICE __DATA __ANSWER; do
-		if [ "$__SERVICE" = "$service_name" ]; then
-			# check if URL or SCRIPT is given
-			__URL=$(echo "$__DATA" | grep "^http")
-			[ -z "$__URL" ] && __SCRIPT="/usr/lib/ddns/$__DATA"
-
-			eval "$1=\"$__URL\""
-			eval "$2=\"$__SCRIPT\""
-			eval "$3=\"$__ANSWER\""
-			rm "$__PIPE"
-			return 0
-		fi
-	done < "$__PIPE"
-	rm "$__PIPE"
-
-	eval "$1=\"\""	# no service match clear variables
-	eval "$2=\"\""
-	eval "$3=\"\""
-	return 1
+	eval "$1=\"$url\""
+	eval "$2=\"$script\""
+	eval "$3=\"$answer\""
+	return 0
 }
 
 # Calculate seconds from interval and unit
