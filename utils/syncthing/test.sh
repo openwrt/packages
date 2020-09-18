@@ -1,3 +1,3 @@
 #!/bin/sh
 
-syncthing --version | grep "${2%%-*}"
+syncthing --version | grep "$2"
