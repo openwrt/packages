@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kea
-PKG_VERSION:=1.6.2
+PKG_VERSION:=1.8.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.isc.org/isc/kea/$(PKG_VERSION)
-PKG_HASH:=2af7336027143c3e98d8d1d44165b2c2cbb0252a92bd88f6dd4d2c6adb69d7b5
+PKG_HASH:=3d91106fba3698194fb80da4149af709c7b2e89881311522816e561fca0ec0ea
 
 PKG_MAINTAINER:=BangLang Huang<banglang.huang@foxmail.com>, Rosy Song<rosysong@rosinson.com>
 PKG_LICENSE:=MPL-2.0
@@ -144,11 +144,21 @@ DHCPv4 and DHCPv6 server performance.
 endef
 
 ###### *************************************************************************
+define Package/kea-shell
+	$(call Package/kea/Default)
+	TITLE+=shell
+	DEPENDS:=+kea-libs
+endef
+define Package/kea-shell/description
+     This simple text client uses the REST interface to connect to the Kea
+Control Agent.
+endef
+
+###### *************************************************************************
 HOST_CONFIGURE_ARGS += \
 	--with-boost-include="$(STAGING_DIR_HOSTPKG)" \
 	--with-log4cplus="$(STAGING_DIR_HOSTPKG)" \
 	--with-openssl="$(STAGING_DIR_HOST)" \
-	--enable-boost-headers-only \
 	--enable-generate-messages
 
 HOST_LDFLAGS += \
@@ -159,7 +169,8 @@ CONFIGURE_ARGS += \
 	--with-log4cplus="$(STAGING_DIR)/usr" \
 	--with-openssl="$(STAGING_DIR)/usr" \
 	--without-pic \
-	$(if $(CONFIG_PACKAGE_kea-perfdhcp),--enable-perfdhcp,)
+	$(if $(CONFIG_PACKAGE_kea-perfdhcp),--enable-perfdhcp,) \
+	$(if $(CONFIG_PACKAGE_kea-shell),--enable-shell,)
 
 CONFIGURE_VARS += \
 	cross_compiling="yes"
@@ -241,6 +252,11 @@ define Package/kea-perfdhcp/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/perfdhcp $(1)/usr/sbin/perfdhcp
 endef
 
+define Package/kea-shell/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/kea-shell $(1)/usr/sbin/kea-shell
+endef
+
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,kea-libs))
 $(eval $(call BuildPackage,kea-ctrl))
@@ -250,3 +266,4 @@ $(eval $(call BuildPackage,kea-dhcp-ddns))
 $(eval $(call BuildPackage,kea-admin))
 $(eval $(call BuildPackage,kea-lfc))
 $(eval $(call BuildPackage,kea-perfdhcp))
+$(eval $(call BuildPackage,kea-shell))
