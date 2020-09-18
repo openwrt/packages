@@ -51,7 +51,7 @@ jobs:
           echo "::set-env name=PACKAGES::$PACKAGES"
 
       - name: Build
-        uses: openwrt/gh-action-sdk@v1
+        uses: openwrt/gh-action-sdk@v2
         env:
           ARCH: ${{ matrix.arch }}
           FEEDNAME: packages_ci
