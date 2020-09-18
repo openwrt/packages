@@ -1,0 +1,6 @@
+{
+	"name": "dynsip.org",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@dynsip.org/nic/update?hostname=[DOMAIN]&myip=[IP]"
+	}
+}

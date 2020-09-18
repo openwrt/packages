@@ -1,0 +1,11 @@
+{
+	"name": "inwx.de",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@dyndns.inwx.com/nic/update?myip=[IP]",
+		"answer": "good|nochg"
+	},
+	"ipv6": {
+		"url": "http://[USERNAME]:[PASSWORD]@dyndns.inwx.com/nic/update?myipv6=[IP]",
+		"answer": "good|nochg"
+	}
+}

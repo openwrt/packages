@@ -1,0 +1,6 @@
+{
+	"name": "editdns.net",
+	"ipv4": {
+		"url": "http://dyndns-free.editdns.net/api/dynLinux.php?p=[PASSWORD]&r=[DOMAIN]"
+	}
+}

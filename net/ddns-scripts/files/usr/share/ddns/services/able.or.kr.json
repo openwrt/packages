@@ -1,0 +1,6 @@
+{
+	"name": "able.or.kr",
+	"ipv4": {
+		"url": "http://able.or.kr/ddns/src/update.php?hostname=[DOMAIN]&myip=[IP]&ddnsuser=[USERNAME]&pwd=[PASSWORD]"
+	}
+}

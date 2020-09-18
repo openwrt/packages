@@ -1,0 +1,7 @@
+{
+	"name": "easydns.com",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@api.cp.easydns.com/dyn/generic.php?hostname=[DOMAIN]&myip=[IP]",
+		"answer": "OK|NOERROR"
+	}
+}

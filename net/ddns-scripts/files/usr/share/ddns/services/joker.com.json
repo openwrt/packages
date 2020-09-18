@@ -1,0 +1,7 @@
+{
+	"name": "joker.com",
+	"ipv4": {
+		"url": "http://svc.joker.com/nic/update?username=[USERNAME]&password=[PASSWORD]&myip=[IP]&hostname=[DOMAIN]",
+		"answer": "good|nochg"
+	}
+}

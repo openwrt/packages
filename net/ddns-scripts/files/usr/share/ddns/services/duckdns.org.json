@@ -1,0 +1,11 @@
+{
+	"name": "duckdns.org",
+	"ipv4": {
+		"url": "http://www.duckdns.org/update?domains=[DOMAIN]&token=[PASSWORD]&ip=[IP]",
+		"answer": "OK"
+	},
+	"ipv6": {
+		"url": "http://www.duckdns.org/update?domains=[DOMAIN]&token=[PASSWORD]&ipv6=[IP]",
+		"answer": "OK"
+	}
+}

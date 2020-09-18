@@ -1,0 +1,7 @@
+{
+	"name": "dyns.net",
+	"ipv4": {
+		"url": "http://www.dyns.net/postscript011.php?username=[USERNAME]&password=[PASSWORD]&host=[DOMAIN]&ip=[IP]",
+		"answer": "200"
+	}
+}

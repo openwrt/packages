@@ -1,0 +1,7 @@
+{
+	"name": "myip.co.ua",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@myip.co.ua/update?hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good"
+	}
+}
