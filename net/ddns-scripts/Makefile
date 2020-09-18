@@ -242,17 +242,17 @@ endef
 define Package/ddns-scripts_cloudflare.com-v4/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_cloudflare.com-v4
+
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_cloudflare_com_v4.sh $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_cloudflare_com_v4.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/services
+	$(INSTALL_DATA) ./files/usr/share/ddns/services/cloudflare.com-v4.json \
+		$(1)/usr/share/ddns/services/
 endef
 define Package/ddns-scripts_cloudflare.com-v4/postinst
 	#!/bin/sh
-	# remove old services file entries
-	/bin/sed -i '/cloudflare\.com-v4/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
-	/bin/sed -i '/cloudflare\.com-v4/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
-	# and create new
-	printf "%s\\t%s\\n" '"cloudflare.com-v4"' '"update_cloudflare_com_v4.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
-	printf "%s\\t%s\\n" '"cloudflare.com-v4"' '"update_cloudflare_com_v4.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
 	# on real system restart service if enabled
 	[ -z "$${IPKG_INSTROOT}" ] && {
 		[ -x /etc/uci-defaults/ddns_cloudflare.com-v4 ] && \
@@ -267,9 +267,6 @@ define Package/ddns-scripts_cloudflare.com-v4/prerm
 	#!/bin/sh
 	# if NOT run buildroot then stop service
 	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop				>/dev/null 2>&1
-	# remove services file entries
-	/bin/sed -i '/cloudflare\.com-v4/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
-	/bin/sed -i '/cloudflare\.com-v4/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
 	exit 0	# suppress errors
 endef
 
