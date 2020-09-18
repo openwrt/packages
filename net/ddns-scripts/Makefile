@@ -201,8 +201,9 @@ define Package/ddns-scripts/install
 	$(INSTALL_DIR)  $(1)/etc/config
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/files/ddns.config $(1)/etc/config/ddns
 
-	$(INSTALL_DIR)  $(1)/etc/ddns
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/services* $(1)/etc/ddns
+	$(INSTALL_DIR)  $(1)/usr/share/ddns/services
+	$(INSTALL_DATA) ./files/usr/share/ddns/services/* \
+		$(1)/usr/share/ddns/services/
 
 	$(INSTALL_DIR)  $(1)/usr/lib/ddns
 	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/dynamic_dns_*.sh $(1)/usr/lib/ddns
