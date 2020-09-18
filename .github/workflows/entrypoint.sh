@@ -6,8 +6,10 @@ opkg update
 
 for PKG in /ci/*.ipk; do
 	tar -xzOf "$PKG" ./control.tar.gz | tar xzf - ./control 
+	# package name including variant
 	PKG_NAME=$(sed -ne 's#^Package: \(.*\)$#\1#p' ./control)
-	PKG_VERSION=$(sed -ne 's#^Version: \(.*\)$#\1#p' ./control)
+	# package version without release
+	PKG_VERSION=$(sed -ne 's#^Version: \(.*\)-[0-9]*$#\1#p' ./control)
 
 	echo "Testing package $PKG_NAME ($PKG_VERSION)"
 
