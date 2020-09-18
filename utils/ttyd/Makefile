@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ttyd
 PKG_VERSION:=1.6.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tsl0922/ttyd/tar.gz/$(PKG_VERSION)?
@@ -40,6 +40,8 @@ endef
 define Package/ttyd/conffiles
 /etc/config/ttyd
 endef
+
+TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-ldl)
 
 define Package/ttyd/install
 	$(INSTALL_DIR) $(1)/usr/bin
