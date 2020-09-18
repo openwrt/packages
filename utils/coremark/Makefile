@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=coremark
 PKG_SOURCE_DATE:=2020-05-28
 PKG_SOURCE_VERSION:=7685fd32bd7919581bfff2881a6dac6320581400
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/eembc/coremark/tar.gz/$(PKG_SOURCE_VERSION)?
@@ -20,6 +20,8 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 PKG_MAINTAINER:=Lim Guo Wei <limguowei@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.md
+
+PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -36,12 +38,27 @@ endef
 
 DIR_ARCH:=linux$(if $(CONFIG_ARCH_64BIT),64)
 
+define Package/coremark/config
+	config COREMARK_OPTIMIZE_O3
+		bool "Use all optimizations (-O3)"
+		depends on PACKAGE_coremark
+		default y
+		help
+			This enables additional optmizations using the -O3 compilation flag.
+endef
+
+TARGET_CFLAGS += -flto
+
+ifeq ($(CONFIG_COREMARK_OPTIMIZE_O3),y)
+	TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS)) -O3
+endif
+
 define Build/Compile
 	$(SED) 's|EXE = .exe|EXE =|' $(PKG_BUILD_DIR)/$(DIR_ARCH)/core_portme.mak
 	mkdir $(PKG_BUILD_DIR)/$(ARCH)
 	$(CP) -r $(PKG_BUILD_DIR)/$(DIR_ARCH)/* $(PKG_BUILD_DIR)/$(ARCH)
 	$(MAKE) -C $(PKG_BUILD_DIR) PORT_DIR=$(ARCH) $(MAKE_FLAGS) \
-		compile 
+		PORT_CFLAGS="$(TARGET_CFLAGS)" compile
 endef
 
 define Package/coremark/install
