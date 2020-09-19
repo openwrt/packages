@@ -24,7 +24,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Parse-Yapp-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
-include $(TOPDIR)/feeds/packages/lang/perl/perlmod.mk
+include ../perl/perlmod.mk
 
 define Package/perl-parse-yapp
   SUBMENU:=Perl
