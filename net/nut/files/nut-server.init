@@ -179,11 +179,11 @@ build_driver_config() {
 	defoverride() {
 		local overvar="$1"
 		local defover="$2"
-		local overtype="$(echo "$overvar" | tr '.' '_')"
+		local overtype="$(echo "$overvar" | tr '_' '.')"
 		local overval
 
-		config_get overval "${defover}_${overtype}" value
-		[ -n "$overval" ] && echo "${defover}.${overvar} = $overval" >>"$UPS_C"
+		config_get overval "${defover}_${overvar}" value
+		[ -n "$overval" ] && echo "${defover}.${overtype} = $overval" >>"$UPS_C"
 	}
 
 	config_list_foreach "$cfg" override defoverride override
