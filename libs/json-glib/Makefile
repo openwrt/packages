@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=json-glib
-PKG_VERSION:=1.4.4
+PKG_VERSION:=1.6.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/json-glib/1.4
-PKG_HASH:=720c5f4379513dc11fd97dc75336eb0c0d3338c53128044d9fabec4374f4bc47
+PKG_SOURCE_URL:=@GNOME/json-glib/1.6
+PKG_HASH:=0d7c67602c4161ea7070fab6c5823afd9bd7f7bc955f652a50d3753b08494e73
 
 PKG_INSTALL:=1
 
@@ -35,6 +35,7 @@ define Package/json-glib
   TITLE:=JSON GLib Library
   URL:=https://wiki.gnome.org/Projects/JsonGlib
   DEPENDS:=+glib2
+  ABI_VERSION:=0
 endef
 
 define Package/json-glib/description
@@ -44,19 +45,16 @@ RFC 4627.
 endef
 
 MESON_ARGS += \
-	-Ddocs=false \
-	-Dintrospection=false \
-	-Dman=false
+	-Dgtk_doc=disabled \
+	-Dintrospection=disabled \
+	-Dman=false \
+	-Dtests=false
 
-# Disable installed-tests; this also indirectly removes
-# build_aux/gen-installed-test.py calls (copied from Gentoo)
 define Build/Prepare
 	$(call Build/Prepare/Default)
-	$(SED) 's/install: true/install: false/g' \
-		$(PKG_BUILD_DIR)/json-glib/tests/meson.build
-	$(SED) '/install_data/d' \
-		$(PKG_BUILD_DIR)/json-glib/tests/meson.build
+ifeq ($(QUILT),)
 	$(SED) '/error=format=2/d' $(PKG_BUILD_DIR)/meson.build
+endif
 endef
 
 define Build/InstallDev
@@ -76,7 +74,7 @@ endef
 
 define Package/json-glib/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libjson-glib-1.0.so.* \
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libjson-glib-1.0.so.$(ABI_VERSION)* \
 						$(1)/usr/lib
 endef
 
