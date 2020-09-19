@@ -41,6 +41,3 @@ index bd6e30944..132e15b89 100644
    if not have_iconv and get_option('iconv').enabled()
      error('iconv() not available')
    endif
--- 
-2.17.1
-
