@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -532,11 +532,7 @@ if test "x$ac_system" = "xLinux"; then
+@@ -533,11 +533,7 @@ if test "x$ac_system" = "xLinux"; then
      [have_cpuid_h="no (cpuid.h not found)"]
    )
  
