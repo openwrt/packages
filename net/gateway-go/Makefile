@@ -40,5 +40,16 @@ define Package/gateway-go/description
   gateway-go is GateWay Client for OpenIoTHub.
 endef
 
+define Package/gateway-go/install
+	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
+
+	$(INSTALL_DIR) $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gateway-go $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/gateway-go/
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/gateway-go.yaml $(1)/etc/gateway-go/
+	$(INSTALL_DIR) $(1)/etc/init.d/
+	$(INSTALL_BIN) ./files/gateway-go.init $(1)/etc/init.d/gateway-go
+endef
+
 $(eval $(call GoBinPackage,gateway-go))
 $(eval $(call BuildPackage,gateway-go))

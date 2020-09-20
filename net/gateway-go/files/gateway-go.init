@@ -1,0 +1,19 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+CFGFILE=/etc/gateway-go/gateway-go.yaml
+
+APP=gateway-go
+
+start() {
+	service_start /usr/bin/$APP -c $CFGFILE
+}
+
+stop() {
+	service_stop /usr/bin/$APP
+}
+
+reload() {
+	service_reload /usr/bin/$APP
+}
