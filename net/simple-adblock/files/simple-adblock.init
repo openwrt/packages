@@ -53,6 +53,7 @@ readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
 readonly __OK__='\033[0;32m[\xe2\x9c\x93]\033[0m'
 readonly __FAIL__='\033[0;31m[\xe2\x9c\x97]\033[0m'
 readonly _ERROR_='\033[0;31mERROR\033[0m'
+readonly configUpdateURL='https://cdn.jsdelivr.net/gh/openwrt/packages/net/simple-adblock/files/simple-adblock.conf.update'
 
 getStatusText() {
 	local _ret
@@ -89,8 +90,10 @@ getErrorText() {
 		errorOhSnap) _ret="failed to create block-list or restart DNS resolver";;
 		errorStopping) _ret="failed to stop $serviceName";;
 		errorDNSReload) _ret="failed to reload/restart DNS resolver";;
+		errorDownloadingConfigUpdate) _ret="failed to download Config Update file";;
 		errorDownloadingList) _ret="failed to download";;
 		errorParsingList) _ret="failed to parse";;
+		errorParsingConfigUpdate) _ret="failed to parse Config Update file";;
 	esac
 	printf "%b" "$_ret"
 }
@@ -139,6 +142,7 @@ parallelDL=1
 debug=0
 compressedCache=0
 ipv6Enabled=0
+configUpdateEnabled=0
 bootDelay=120
 dlTimeout=20
 curlRetry=3
@@ -169,6 +173,7 @@ load_package_config() {
 	config_get_bool debug                 'config' 'debug' 0
 	config_get_bool compressedCache       'config' 'compressed_cache' 0
 	config_get_bool ipv6Enabled           'config' 'ipv6_enabled' 0
+	config_get_bool configUpdateEnabled   'config' 'config_update_enabled' 0
 	config_get bootDelay                  'config' 'boot_delay' '120'
 	config_get dlTimeout                  'config' 'download_timeout' '20'
 	config_get curlRetry                  'config' 'curl_retry' '3'
@@ -722,6 +727,31 @@ process_url() {
 	return 0
 }
 
+process_config_update() {
+	local label R_TMP
+	[ "$configUpdateEnabled" -eq 0 ] && return 0
+	label="${1##*//}"; label="${label%%/*}";
+	while [ -z "$R_TMP" ] || [ -e "$R_TMP" ]; do
+		R_TMP="$(mktemp -u -q -t ${packageName}_tmp.XXXXXXXX)"
+	done
+	if ! $dl_command "$1" $dl_flag "$R_TMP" 2>/dev/null || [ ! -s "$R_TMP" ]; then
+		output 1 "$_FAIL_"
+		output 2 "[DL] Config  Update:  $label $__FAIL__\\n"
+		tmpfs add error "errorDownloadingConfigUpdate"
+	else
+		if ! sed -f "$R_TMP" -i /etc/config/simple-adblock; then
+			output 1 "$_FAIL_"
+			output 2 "[DL] Config  Update:  $label $__FAIL__\\n"
+			tmpfs add error "errorParsingConfigUpdate"
+		else
+			output 1 "$_OK_"
+			output 2 "[DL] Config  Update:  $label $__OK__\\n"
+		fi
+	fi
+	rm -f "$R_TMP"
+	return 0
+}
+
 download_lists() {
 	local hf w_filter j=0 R_TMP
 
@@ -739,6 +769,7 @@ download_lists() {
 	fi
 	touch $A_TMP; touch $B_TMP;
 	output 1 'Downloading lists '
+	process_config_update "$configUpdateURL"
 	rm -f "$sharedMemoryError"
 	if [ -n "$blocked_hosts_urls" ]; then
 		for hf in ${blocked_hosts_urls}; do
@@ -1130,11 +1161,11 @@ killcache() {
 show() { showstatus; }
 status_service() { showstatus; }
 showstatus() {
-	local status="$(tmpfs get status)"
-	local message="$(tmpfs get message)"
-	local error="$(tmpfs get error)"
-	local stats="$(tmpfs get stats)"
-	local c url
+	local c url status message error stats
+	status="$(tmpfs get status)"
+	message="$(tmpfs get message)"
+	error="$(tmpfs get error)"
+	stats="$(tmpfs get stats)"
 	if [ "$status" = "statusSuccess" ]; then
 		output "$stats "; output_okn;
 	else
@@ -1185,8 +1216,8 @@ service_triggers() {
 
 check() {
 	load_package_config
-	local string="$1" 
-	local c="$(grep -c "$string" "$outputFile")"
+	local c string="$1" 
+	c="$(grep -c "$string" "$outputFile")"
 	if [ ! -s "$outputFile" ]; then
 		echo "No block-list ('$outputFile') found."
 	elif [ -z "$string" ]; then

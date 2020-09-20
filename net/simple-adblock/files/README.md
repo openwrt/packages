@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # Simple AdBlock
 
 [![HitCount](http://hits.dwyl.com/stangri/openwrt/simple-adblock.svg)](http://hits.dwyl.com/stangri/openwrt/simple-adblock)
@@ -135,6 +136,7 @@ In the Web UI the ```simple-adblock``` settings are split into ```basic``` and `
 |Web UI Section|Parameter|Type|Default|Description|
 | --- | --- | --- | --- | --- |
 |Basic|enabled|boolean|0|Enable/disable the ```simple-adblock``` service.|
+|Basic|config_update_enabled|boolean|0|Enable/disable the ```simple-adblock``` config update. Oftentimes, the URLs to the blocked hosts/domains files become obsolete/outdated, resulting in the error during lists download stage. ```simple-adblock``` already updates users' config files during install/reinstall, if you enable this variable it will also attempt to fetch and use the most recent config update file before downloading allow/block-lists.|
 |Basic|verbosity|integer|2|Can be set to 0, 1 or 2 to control the console and system log output verbosity of the ```simple-adblock``` service.|
 |Basic|force_dns|boolean|1|Force router's DNS to local devices which may have different/hardcoded DNS server settings. If enabled, creates a firewall rule to intercept DNS requests from local devices to external DNS servers and redirect them to router.|
 |Basic|led|string|none|Use one of the router LEDs to indicate the AdBlocking status.|
