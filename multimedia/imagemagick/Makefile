@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=imagemagick
 PKG_VERSION:=7.0.9
 PKG_REVISION:=5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_REVISION).tar.gz
@@ -109,7 +109,7 @@ CONFIGURE_ARGS += \
 	--with-png \
 	--with-tiff
 
-TARGET_CFLAGS += -flto
+TARGET_CFLAGS += $(if $(CONFIG_GCC_USE_VERSION_10),,-flto)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
