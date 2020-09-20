@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alsa-utils
 PKG_VERSION:=1.2.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=ftp://ftp.alsa-project.org/pub/utils/ \
@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/alsa-utils
   SECTION:=sound
   CATEGORY:=Sound
-  DEPENDS:=+alsa-lib +libncursesw +libpthread
+  DEPENDS:=+alsa-lib +alsa-ucm-conf +libncursesw +libpthread
   TITLE:=ALSA (Advanced Linux Sound Architecture) utilities
   URL:=https://www.alsa-project.org/
 endef
