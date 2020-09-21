@@ -13,12 +13,12 @@ include $(TOPDIR)/rules.mk
 # - check if default mode has changed from being tcp_only
 #
 PKG_NAME:=shadowsocks-libev
-PKG_VERSION:=3.3.4
-PKG_RELEASE:=5
+PKG_VERSION:=3.3.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/shadowsocks/shadowsocks-libev/releases/download/v$(PKG_VERSION)
-PKG_HASH:=fce47a956fad0c30def9c71821bcec450a40d3f881548e31e66cedf262b89eb1
+PKG_HASH:=cfc8eded35360f4b67e18dc447b0c00cddb29cc57a3cec48b135e5fb87433488
 
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
