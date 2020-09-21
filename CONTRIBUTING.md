@@ -181,3 +181,38 @@ commenting and amending the proposed changes.
 | OpenSSL License                                  | OpenSSL                  |
 | X11 License                                      | X11                      |
 | zlib License                                     | Zlib                     |
+
+## Continuous Integration
+
+To simplify review and require less human resources, a CI tests all packages.
+Passing CI tests are not a hard requirement but a good indicator what the
+Buildbots will think about the proposed patch.
+
+The CI builds modified packages for multiple architectures using the latest
+snapshot SDK. For supported architectures (`aarch64_generic`,
+`arm_cortex-a15_neon-vfpv4`, `i386_pentium4` and `x86_64`) an additional
+runtime test is executed. A running OpenWrt is simulated which tries to install
+created packages and runs a script called `test.sh` located next to the package
+Makefile. The script is executed with the two arguments `PKG_NAME` and
+`PKG_VERSION`. The `PKG_NAME` can be used to distinguish package variants, e.g.
+`foobar` vs. `foobar-full`. The `PKG_VERSION` can be used for a trivial test
+checking if `foobar --version` prints the correct version. `PKG_VERSION` is the
+OpenWrt version and therefore includes the `PKG_RELEASE`, which isn't usually
+part of the running programs version.
+
+The following snippet show a script that tests different binaries, depending
+what IPK package was installed. The `gpsd` Makefile produces both a `gpsd` and
+a `gpsd-clients` IPK package.
+
+```shell
+ #!/bin/sh
+
+case "$1" in
+    "gpsd")
+        gpsd -V 2>&1 | grep "$2"
+        ;;
+    "gpsd-clients")
+        cgps -V 2>&1 | grep "$2"
+        ;;
+esac
+```
