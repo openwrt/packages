@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vpnbypass
 PKG_VERSION:=1.3.1
-PKG_RELEASE:=7
+PKG_RELEASE:=9
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 
@@ -51,7 +51,6 @@ define Package/vpnbypass/install
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/firewall
 	$(INSTALL_DATA) ./files/vpnbypass.hotplug $(1)/etc/hotplug.d/firewall/94-vpnbypass
 endef
-
 
 define Package/vpnbypass/postinst
 	#!/bin/sh
