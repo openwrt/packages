@@ -12,7 +12,7 @@ PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.7.8
 # Release == build
 # increase on changes of services files or tld_names.dat
-PKG_RELEASE:=24
+PKG_RELEASE:=25
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=
@@ -193,7 +193,7 @@ define Package/ddns-scripts/preinst
 endef
 define Package/ddns-scripts/install
 	$(INSTALL_DIR)  $(1)/etc/uci-defaults
-	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns
+	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/19_ddns
 	$(INSTALL_DIR)  $(1)/etc/hotplug.d/iface
 	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/ddns.hotplug $(1)/etc/hotplug.d/iface/95-ddns
 	$(INSTALL_DIR)  $(1)/etc/init.d
@@ -211,9 +211,9 @@ define Package/ddns-scripts/postinst
 	#!/bin/sh
 	# if NOT run buildroot and PKG_UPGRADE then (re)start service if enabled
 	[ -z "$${IPKG_INSTROOT}" -a "$${PKG_UPGRADE}" = "1" ] && {
-		[ -x /etc/uci-defaults/ddns ] && \
-			/etc/uci-defaults/ddns && \
-				rm -f /etc/uci-defaults/ddns >/dev/null 2>&1
+		[ -x /etc/uci-defaults/19_ddns ] && \
+			/etc/uci-defaults/19_ddns && \
+				rm -f /etc/uci-defaults/19_ddns >/dev/null 2>&1
 		/etc/init.d/ddns enabled && \
 			/etc/init.d/ddns start >/dev/null 2>&1
 	}
@@ -240,7 +240,7 @@ define Package/ddns-scripts_cloudflare.com-v4/preinst
 endef
 define Package/ddns-scripts_cloudflare.com-v4/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_cloudflare.com-v4
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/19_ddns_cloudflare.com-v4
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_cloudflare_com_v4.sh $(1)/usr/lib/ddns
 endef
@@ -254,9 +254,9 @@ define Package/ddns-scripts_cloudflare.com-v4/postinst
 	printf "%s\\t%s\\n" '"cloudflare.com-v4"' '"update_cloudflare_com_v4.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
 	# on real system restart service if enabled
 	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_cloudflare.com-v4 ] && \
-			/etc/uci-defaults/ddns_cloudflare.com-v4 && \
-				rm -f /etc/uci-defaults/ddns_cloudflare.com-v4 >/dev/null 2>&1
+		[ -x /etc/uci-defaults/19_ddns_cloudflare.com-v4 ] && \
+			/etc/uci-defaults/19_ddns_cloudflare.com-v4 && \
+				rm -f /etc/uci-defaults/19_ddns_cloudflare.com-v4 >/dev/null 2>&1
 		/etc/init.d/ddns enabled && \
 			/etc/init.d/ddns start >/dev/null 2>&1
 	}
@@ -281,7 +281,7 @@ define Package/ddns-scripts_freedns_42_pl/preinst
 endef
 define Package/ddns-scripts_freedns_42_pl/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_freedns_42_pl
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/19_ddns_freedns_42_pl
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_freedns_42_pl.sh $(1)/usr/lib/ddns
 endef
@@ -293,9 +293,9 @@ define Package/ddns-scripts_freedns_42_pl/postinst
 	printf "%s\\t%s\\n" '"freedns.42.pl"' '"update_freedns_42_pl.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
 	# on real system restart service if enabled
 	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_freedns_42_pl ] && \
-			/etc/uci-defaults/ddns_freedns_42_pl && \
-				rm -f /etc/uci-defaults/ddns_freedns_42_pl >/dev/null 2>&1
+		[ -x /etc/uci-defaults/19_ddns_freedns_42_pl ] && \
+			/etc/uci-defaults/19_ddns_freedns_42_pl && \
+				rm -f /etc/uci-defaults/19_ddns_freedns_42_pl >/dev/null 2>&1
 		/etc/init.d/ddns enabled && \
 			/etc/init.d/ddns start >/dev/null 2>&1
 	}
@@ -319,7 +319,7 @@ define Package/ddns-scripts_godaddy.com-v1/preinst
 endef
 define Package/ddns-scripts_godaddy.com-v1/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_godaddy.com-v1
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/19_ddns_godaddy.com-v1
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_godaddy_com_v1.sh $(1)/usr/lib/ddns
 endef
@@ -333,9 +333,9 @@ define Package/ddns-scripts_godaddy.com-v1/postinst
 	printf "%s\\t%s\\n" '"godaddy.com-v1"' '"update_godaddy_com_v1.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
 	# on real system restart service if enabled
 	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_godaddy.com-v1 ] && \
-			/etc/uci-defaults/ddns_godaddy.com-v1 && \
-				rm -f /etc/uci-defaults/ddns_godaddy.com-v1 >/dev/null 2>&1
+		[ -x /etc/uci-defaults/19_ddns_godaddy.com-v1 ] && \
+			/etc/uci-defaults/19_ddns_godaddy.com-v1 && \
+				rm -f /etc/uci-defaults/19_ddns_godaddy.com-v1 >/dev/null 2>&1
 		/etc/init.d/ddns enabled \
 			&& /etc/init.d/ddns start >/dev/null 2>&1
 	}
@@ -360,7 +360,7 @@ define Package/ddns-scripts_digitalocean.com-v2/preinst
 endef
 define Package/ddns-scripts_digitalocean.com-v2/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_digtalocean.com-v2
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/19_ddns_digtalocean.com-v2
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_digitalocean_com_v2.sh $(1)/usr/lib/ddns
 endef
@@ -374,9 +374,9 @@ define Package/ddns-scripts_digitalocean.com-v2/postinst
 	printf "%s\\t%s\\n" '"digitalocean.com-v2"' '"update_digitalocean_com_v2.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
 	# on real system restart service if enabled
 	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_digitalocean.com-v2 ] && \
-			/etc/uci-defaults/ddns_digitalocean.com-v2 && \
-				rm -f /etc/uci-defaults/ddns_digitalocean.com-v2 >/dev/null 2>&1
+		[ -x /etc/uci-defaults/19_ddns_digitalocean.com-v2 ] && \
+			/etc/uci-defaults/19_ddns_digitalocean.com-v2 && \
+				rm -f /etc/uci-defaults/19_ddns_digitalocean.com-v2 >/dev/null 2>&1
 		/etc/init.d/ddns enabled \
 			&& /etc/init.d/ddns start >/dev/null 2>&1
 	}
@@ -401,7 +401,7 @@ define Package/ddns-scripts_no-ip_com/preinst
 endef
 define Package/ddns-scripts_no-ip_com/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_no-ip_com
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/19_ddns_no-ip_com
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_no-ip_com.sh $(1)/usr/lib/ddns
 endef
@@ -413,9 +413,9 @@ define Package/ddns-scripts_no-ip_com/postinst
 	printf "%s\\t%s\\n" '"no-ip.com"' '"update_no-ip_com.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
 	# on real system restart service if enabled
 	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_no-ip_com ] && \
-			/etc/uci-defaults/ddns_no-ip_com && \
-				rm -f /etc/uci-defaults/ddns_no-ip_com >/dev/null 2>&1
+		[ -x /etc/uci-defaults/19_ddns_no-ip_com ] && \
+			/etc/uci-defaults/19_ddns_no-ip_com && \
+				rm -f /etc/uci-defaults/19_ddns_no-ip_com >/dev/null 2>&1
 		/etc/init.d/ddns enabled && \
 			/etc/init.d/ddns start >/dev/null 2>&1
 	}
@@ -439,7 +439,7 @@ define Package/ddns-scripts_nsupdate/preinst
 endef
 define Package/ddns-scripts_nsupdate/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_nsupdate
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/19_ddns_nsupdate
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_nsupdate.sh $(1)/usr/lib/ddns
 endef
@@ -453,9 +453,9 @@ define Package/ddns-scripts_nsupdate/postinst
 	printf "%s\\t%s\\n" '"bind-nsupdate"' '"update_nsupdate.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
 	# on real system restart service if enabled
 	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_nsupdate ] && \
-			/etc/uci-defaults/ddns_nsupdate && \
-				rm -f /etc/uci-defaults/ddns_nsupdate >/dev/null 2>&1
+		[ -x /etc/uci-defaults/19_ddns_nsupdate ] && \
+			/etc/uci-defaults/19_ddns_nsupdate && \
+				rm -f /etc/uci-defaults/19_ddns_nsupdate >/dev/null 2>&1
 		/etc/init.d/ddns enabled && \
 			/etc/init.d/ddns start >/dev/null 2>&1
 	}
@@ -480,7 +480,7 @@ define Package/ddns-scripts_route53-v1/preinst
 endef
 define Package/ddns-scripts_route53-v1/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_route53-v1
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/19_ddns_route53-v1
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_route53_v1.sh $(1)/usr/lib/ddns
 endef
@@ -494,9 +494,9 @@ define Package/ddns-scripts_route53-v1/postinst
 	printf "%s\\t%s\\n" '"route53-v1"' '"update_route53_v1.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
 	# on real system restart service if enabled
 	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_route53-v1 ] && \
-			/etc/uci-defaults/ddns_route53-v1 && \
-				rm -f /etc/uci-defaults/route53.com-v1 >/dev/null 2>&1
+		[ -x /etc/uci-defaults/19_ddns_route53-v1 ] && \
+			/etc/uci-defaults/19_ddns_route53-v1 && \
+				rm -f /etc/uci-defaults/19_route53.com-v1 >/dev/null 2>&1
 		/etc/init.d/ddns enabled \
 			&& /etc/init.d/ddns start >/dev/null 2>&1
 	}
@@ -521,7 +521,7 @@ define Package/ddns-scripts_cnkuai_cn/preinst
 endef
 define Package/ddns-scripts_cnkuai_cn/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_cnkuai_cn
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/19_ddns_cnkuai_cn
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_cnkuai_cn.sh $(1)/usr/lib/ddns
 endef
@@ -535,9 +535,9 @@ define Package/ddns-scripts_cnkuai_cn/postinst
 	printf "%s\\t%s\\n" '"cnkuai.cn"' '"update_cnkuai_cn.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
 	# on real system restart service if enabled
 	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_cnkuai_cn ] && \
-			/etc/uci-defaults/ddns_cnkuai_cn && \
-				rm -f /etc/uci-defaults/cnkuai.cn >/dev/null 2>&1
+		[ -x /etc/uci-defaults/19_ddns_cnkuai_cn ] && \
+			/etc/uci-defaults/19_ddns_cnkuai_cn && \
+				rm -f /etc/uci-defaults/19_cnkuai.cn >/dev/null 2>&1
 		/etc/init.d/ddns enabled \
 			&& /etc/init.d/ddns start >/dev/null 2>&1
 	}
