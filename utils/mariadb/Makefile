@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
 PKG_VERSION:=10.4.13
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := \
@@ -541,6 +541,12 @@ define BuildPlugin
     $(call Package/mariadb/Default)
     TITLE:=mariadb-server plugin
     DEPENDS:=mariadb-server $(patsubst +%,+PACKAGE_mariadb-server-plugin-$(subst _,-,$(1)):%,$(2))
+ifeq ($(1),auth_pam)
+    # Directory "auth_pam_tool_dir" is installed with mode 0750 and is only
+    # accessible by root and the group mariadb. This way mariadb can access
+    # the SUID binary "auth_pam_tool" contained within while others cannot.
+    FILE_MODES:=/usr/lib/mariadb/plugin/auth_pam_tool_dir:root:mariadb:0750
+endif
   endef
   define Package/mariadb-server-plugin-$(subst _,-,$(1))/description
     $(call Package/mariadb/description/Default)
@@ -552,7 +558,7 @@ This package provides the $(1) plugin.
 	  $(INSTALL_DIR) $$(1)$(PLUGIN_DIR)
 	  $(call Package/mariadb/install/plugin,$$(1),$(1))
 ifeq ($(1),auth_pam)
-	  $(INSTALL_DIR) -m0750 $$(1)$(PLUGIN_DIR)/auth_pam_tool_dir
+	  $(INSTALL_DIR) $$(1)$(PLUGIN_DIR)/auth_pam_tool_dir
 	  $(INSTALL_SUID) \
 		  $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/auth_pam_tool_dir/auth_pam_tool \
 					  $$(1)$(PLUGIN_DIR)/auth_pam_tool_dir
@@ -572,22 +578,6 @@ ifeq ($(1),ha_spider)
 endif
   endef
   $$(eval $$(call BuildPackage,mariadb-server-plugin-$(subst _,-,$(1))))
-endef
-
-# Directory "auth_pam_tool_dir" is installed with '-m0750' above and
-# contains SUID binary "auth_pam_tool". Below post-install script
-# changes the group of "auth_pam_tool_dir" to mariadb, so user mariadb
-# can access the folder (and the SUID binary). The script only changes
-# the group if the directory is currently owned by "root:root".
-define Package/mariadb-server-plugin-auth-pam/postinst
-#!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ]; then
-  dir="/usr/lib/mariadb/plugin/auth_pam_tool_dir"
-  if ! [ -L "$$dir" ] && [ -d "$$dir" ] && [ -O "$$dir" ] && [ -G "$$dir" ]; then
-    chown :mariadb "$$dir"
-  fi
-fi
-exit 0
 endef
 
 $(eval $(call HostBuild))
