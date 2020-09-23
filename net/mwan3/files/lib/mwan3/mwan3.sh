@@ -757,7 +757,7 @@ mwan3_set_policy()
 		else
 			probability="1"
 		fi
-		
+
 		$IPT -I "mwan3_policy_$policy" \
 			-m mark --mark 0x0/$MMX_MASK \
 			-m statistic \
@@ -844,7 +844,7 @@ mwan3_set_sticky_iptables()
 			[ -n "$id" ] || return 0
 
 			for IPT in "$IPT4" "$IPT6"; do
-				[ "$IPT" = "$IPT6" ] && [ $NO_IPV6 -ne 0 ] && continuea
+				[ "$IPT" = "$IPT6" ] && [ $NO_IPV6 -ne 0 ] && continue
 				if [ -n "$($IPT -S "mwan3_iface_in_$1" 2> /dev/null)" ]; then
 					$IPT -I "mwan3_rule_$rule" \
 						-m mark --mark $(mwan3_id2mask id MMX_MASK)/$MMX_MASK \
