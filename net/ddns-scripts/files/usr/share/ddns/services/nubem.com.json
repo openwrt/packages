@@ -1,0 +1,6 @@
+{
+	"name": "nubem.com",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@nubem.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
+	}
+}

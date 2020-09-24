@@ -7,554 +7,384 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
-# Version == major.minor.patch
-# increase on new functionality (minor) or patches (patch)
-PKG_VERSION:=2.7.8
-# Release == build
-# increase on changes of services files or tld_names.dat
+PKG_VERSION:=2.8.0
 PKG_RELEASE:=24
 
 PKG_LICENSE:=GPL-2.0
-PKG_MAINTAINER:=
 
 include $(INCLUDE_DIR)/package.mk
 
-# no default dependencies
-PKG_DEFAULT_DEPENDS=
-
 define Package/ddns-scripts/Default
-    SECTION:=net
-    CATEGORY:=Network
-    SUBMENU:=IP Addresses and Names
-    PKGARCH:=all
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=IP Addresses and Names
+  PKGARCH:=all
 endef
 
-###### *************************************************************************
+
 define Package/ddns-scripts
-    $(call Package/ddns-scripts/Default)
-    TITLE:=Dynamic DNS Client scripts (with IPv6 support)
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Dynamic DNS Client scripts (with IPv6 support)
 endef
-# shown in LuCI package description
+
 define Package/ddns-scripts/description
-    Dynamic DNS Client scripts (with IPv6 support) - Info: https://openwrt.org/docs/guide-user/services/ddns/client
-endef
-# shown in menuconfig <Help>
-define Package/ddns-scripts/config
-	help
-		A highly configurable set of scripts for doing dynamic dns updates.
-		  - IPv6 support
-		  - DNS server support
-		  - Glue Record support (require BIND host or KNOT host)
-		  - DNS requests via TCP
-		  - Proxy server support
-		  - log file support
-		  - support to run once
-		Version: $(PKG_VERSION)-$(PKG_RELEASE)
-		Info   : https://openwrt.org/docs/guide-user/services/ddns/client
-endef
-
-###### *************************************************************************
-define Package/ddns-scripts_cloudflare.com-v4
-    $(call Package/ddns-scripts/Default)
-    TITLE:=CloudFlare.com API v4 (requires cURL)
-    DEPENDS:=ddns-scripts +curl
-endef
-define Package/ddns-scripts_cloudflare.com-v4/description
-    Dynamic DNS Client scripts extension for CloudFlare.com API-v4 (require/install cURL)
-endef
-
-###### *************************************************************************
-define Package/ddns-scripts_freedns_42_pl
-    $(call Package/ddns-scripts/Default)
-    TITLE:=DDNS extension for FreeDNS.42.pl (requires cURL)
-    DEPENDS:=ddns-scripts +curl
-endef
-define Package/ddns-scripts_freedns_42_pl/description
-    Dynamic DNS Client scripts extension for freedns.42.pl
-endef
-
-###### *************************************************************************
-define Package/ddns-scripts_godaddy.com-v1
-    $(call Package/ddns-scripts/Default)
-    TITLE:=GoDaddy.com (require cURL)
-    DEPENDS:=ddns-scripts +curl
-endef
-define Package/ddns-scripts_godaddy.com-v1/description
-    Dynamic DNS Client scripts extension for GoDaddy.com (require/install cURL)
-endef
-
-###### *************************************************************************
-define Package/ddns-scripts_digitalocean.com-v2
-    $(call Package/ddns-scripts/Default)
-    TITLE:=digitalocean.com (require cURL)
-    DEPENDS:=ddns-scripts +curl
-endef
-define Package/ddns-scripts_digitalocean.com-v2/description
-    Dynamic DNS Client scripts extension for digitalocean.com (require/install cURL)
-endef
-define Package/ddns-scripts_digitalocean.com-v2/config
-    help
-	The script directly updates a DNS record using the DO API. It requires
-	"option dns_server" to be set to the server to be used by nsupdate.
-	"option domain" the dns domain to update the record for (eg. A-record: home.<example.com>)
-	"option username" the dns record name to update (eg. A-record: <home>.example.com)
-	"option param_opt" the id of the dns record to update (check using chrome inspector in the DO dns tab)
-	"option password" the api token generated in the DO panel
-
-endef
-
-###### *************************************************************************
-define Package/ddns-scripts_no-ip_com
-    $(call Package/ddns-scripts/Default)
-    TITLE:=DDNS extension for No-IP.com
-    DEPENDS:=ddns-scripts
-endef
-define Package/ddns-scripts_no-ip_com/description
-    Dynamic DNS Client scripts extension for No-IP.com
-endef
-
-###### *************************************************************************
-define Package/ddns-scripts_nsupdate
-    $(call Package/ddns-scripts/Default)
-    TITLE:=DDNS extension using Bind nsupdate
-    DEPENDS:=ddns-scripts +bind-client
-endef
-define Package/ddns-scripts_nsupdate/description
-    Dynamic DNS Client scripts extension for direct updates using Bind nsupdate
-endef
-define Package/ddns-scripts_nsupdate/config
-    help
-	The script directly updates a PowerDNS (or maybe bind server) via nsupdate
-	from bind-client package. It requires
-	"option dns_server" to be set to the server to be used by nsupdate.
-	"option username" should be set to the key name and
-	"option password" to the base64 encoded shared secret.
-
-endef
-
-###### *************************************************************************
-define Package/ddns-scripts_route53-v1
-    $(call Package/ddns-scripts/Default)
-    TITLE:=Amazon AWS Route 53 API v1
-    DEPENDS:=ddns-scripts +curl +openssl-util
-endef
-define Package/ddns-scripts_route53-v1/description
-	Dynamic DNS Client scripts extension for Amazon AWS Route53. Note: You
-	must also install ca-certificate or ca-bundle.
-	It requires:
-	"option username" to be a valid AWS access key id
-	"option password" to be the matching AWS secret key id
-	"option domain" to contain the hosted zone ID
-endef
-
-###### *************************************************************************
-define Package/ddns-scripts_cnkuai_cn
-    $(call Package/ddns-scripts/Default)
-    TITLE:=CnKuai API
-    DEPENDS:=ddns-scripts +curl +giflib-utils
-endef
-define Package/ddns-scripts_cnkuai_cn/description
-	Dynamic DNS Client scripts extension for CnKuai.Note: You
-	must also install giflib-utils.
-	It requires:
-	"option username" to be a valid CnKuai control panel id
-	"option password" to be the matching CnKuai control panel password
-	"option domain" to contain the domain
-endef
-
-###### *************************************************************************
-define Build/Configure
-endef
-define Build/Compile
-	$(CP) ./files $(PKG_BUILD_DIR)
-	# ensure that VERSION inside dynamic_dns_functions.sh reflect PKG_VERSION of Makefile
-	$(SED) '/^VERSION=*/s/.*/VERSION="$(PKG_VERSION)-$(PKG_RELEASE)"/' $(PKG_BUILD_DIR)/files/dynamic_dns_functions.sh
-	# remove comments, white spaces and empty lines
-	for FILE in `find $(PKG_BUILD_DIR)/files -type f`; do \
-		$(SED) 's/^[[:space:]]*//' \
-		-e '/^#[[:space:]]\|^#$$$$/d' \
-		-e 's/[[:space:]]#[[:space:]].*$$$$//' \
-		-e 's/[[:space:]]*$$$$//' \
-		-e '/^\/\/[[:space:]]/d'	\
-		-e '/^[[:space:]]*$$$$/d'	$$$$FILE; \
-	done
+  Dynamic DNS Client scripts (with IPv6 support)
+  A highly configurable set of scripts for doing dynamic dns updates.
+  - IPv6 support
+  - DNS server support
+  - Glue Record support (require BIND host or KNOT host)
+  - DNS requests via TCP
+  - Proxy server support
+  - log file support
+  - support to run once
+  Version: $(PKG_VERSION)-$(PKG_RELEASE)
+  Info   : https://openwrt.org/docs/guide-user/services/ddns/client
 endef
 
 define Package/ddns-scripts/conffiles
 /etc/config/ddns
 endef
 
-###### *************************************************************************
-define Package/ddns-scripts/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
+
+define Package/ddns-scripts_service
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Common ddns providers
+  DEPENDS:=ddns-scripts
 endef
+
+define Package/ddns-scripts_service/description
+  Dynamic DNS Client definitions for supported services
+endef
+
+
+define Package/ddns-scripts_cloudflare.com-v4
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for cloudflare.com API v4
+  DEPENDS:=ddns-scripts +curl
+endef
+
+define Package/ddns-scripts_cloudflare.com-v4/description
+  Dynamic DNS Client scripts extension for cloudflare.com API v4 (require curl)
+endef
+
+
+define Package/ddns-scripts_freedns_42_pl
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for freedns.42.pl
+  DEPENDS:=ddns-scripts +curl
+endef
+
+define Package/ddns-scripts_freedns_42_pl/description
+  Dynamic DNS Client scripts extension for "freedns.42.pl".
+endef
+
+
+define Package/ddns-scripts_godaddy.com-v1
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for godaddy.com API v1
+  DEPENDS:=ddns-scripts +curl
+endef
+
+define Package/ddns-scripts_godaddy.com-v1/description
+  Dynamic DNS Client scripts extension for "godaddy.com API v1".
+endef
+
+
+define Package/ddns-scripts_digitalocean.com-v2
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extention for digitalocean.com API v2
+  DEPENDS:=ddns-scripts +curl
+endef
+
+define Package/ddns-scripts_digitalocean.com-v2/description
+  Dynamic DNS Client scripts extension for "digitalocean.com API v2".
+  The script directly updates a DNS record using the DO API.
+  It requires:
+  "option dns_server" to be set to the server to be used by nsupdate.
+  "option domain" the dns domain to update the record for (eg. A-record: home.<example.com>)
+  "option username" the dns record name to update (eg. A-record: <home>.example.com)
+  "option param_opt" the id of the dns record to update (check using chrome inspector in the DO dns tab)
+  "option password" the api token generated in the DO panel
+endef
+
+
+define Package/ddns-scripts_no-ip_com
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for no-ip.com
+  DEPENDS:=ddns-scripts
+endef
+
+define Package/ddns-scripts_no-ip_com/description
+  Dynamic DNS Client scripts extension for "no-ip.com".
+endef
+
+
+define Package/ddns-scripts_nsupdate
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for using bind nsupdate.
+  DEPENDS:=ddns-scripts +bind-client
+endef
+
+define Package/ddns-scripts_nsupdate/description
+  Dynamic DNS Client scripts extension for direct updates using bind nsupdate
+  The script directly updates a PowerDNS (or maybe bind server) via nsupdate
+  from bind-client package.
+  It requires:
+  "option dns_server" to be set to the server to be used by nsupdate.
+  "option username" should be set to the key name and
+  "option password" to the base64 encoded shared secret.
+endef
+
+
+define Package/ddns-scripts_route53-v1
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for route53 API v1
+  DEPENDS:=ddns-scripts +curl +openssl-util
+endef
+
+define Package/ddns-scripts_route53-v1/description
+  Dynamic DNS Client scripts extension for Amazon AWS "route53 API v1".
+  Note: You must also install ca-certificate or ca-bundle.
+  It requires:
+  "option username" to be a valid AWS access key id
+  "option password" to be the matching AWS secret key id
+  "option domain" to contain the hosted zone ID
+endef
+
+
+define Package/ddns-scripts_cnkuai_cn
+  $(call Package/ddns-scripts/Default)
+  TITLE:=CnKuai API
+  DEPENDS:=ddns-scripts +curl +giflib-utils
+endef
+
+define Package/ddns-scripts_cnkuai_cn/description
+  Dynamic DNS Client scripts extension for "cnkuai.cn".
+  It requires:
+  "option username" to be a valid CnKuai control panel id
+  "option password" to be the matching CnKuai control panel password
+  "option domain" to contain the domain
+endef
+
+
+define Build/Configure
+endef
+
+define Build/Compile
+endef
+
+
 define Package/ddns-scripts/install
-	$(INSTALL_DIR)  $(1)/etc/uci-defaults
-	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns
-	$(INSTALL_DIR)  $(1)/etc/hotplug.d/iface
-	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/ddns.hotplug $(1)/etc/hotplug.d/iface/95-ddns
-	$(INSTALL_DIR)  $(1)/etc/init.d
-	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/ddns.init $(1)/etc/init.d/ddns
-	$(INSTALL_DIR)  $(1)/etc/config
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/files/ddns.config $(1)/etc/config/ddns
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_DATA) ./files/etc/hotplug.d/iface/ddns \
+		$(1)/etc/hotplug.d/iface/95-ddns
 
-	$(INSTALL_DIR)  $(1)/etc/ddns
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/services* $(1)/etc/ddns
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/etc/init.d/ddns \
+		$(1)/etc/init.d/ddns
 
-	$(INSTALL_DIR)  $(1)/usr/lib/ddns
-	$(INSTALL_BIN)  $(PKG_BUILD_DIR)/files/dynamic_dns_*.sh $(1)/usr/lib/ddns
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/etc/config/ddns \
+		$(1)/etc/config/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns
+	echo "$(PKG_VERSION)-$(PKG_RELEASE)" > $(1)/usr/share/ddns/version
+	$(INSTALL_DATA) ./files/usr/share/ddns/list \
+		$(1)/usr/share/ddns
+
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_DATA) ./files/usr/lib/ddns/dynamic_dns_functions.sh \
+		$(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/dynamic_dns_lucihelper.sh \
+		$(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/dynamic_dns_updater.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) ./files/usr/bin/ddns.sh \
+		$(1)/usr/bin/ddns
 endef
+
 define Package/ddns-scripts/postinst
-	#!/bin/sh
-	# if NOT run buildroot and PKG_UPGRADE then (re)start service if enabled
-	[ -z "$${IPKG_INSTROOT}" -a "$${PKG_UPGRADE}" = "1" ] && {
-		[ -x /etc/uci-defaults/ddns ] && \
-			/etc/uci-defaults/ddns && \
-				rm -f /etc/uci-defaults/ddns >/dev/null 2>&1
-		/etc/init.d/ddns enabled && \
-			/etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns enabled
+	/etc/init.d/ddns start
+fi
+exit 0
 endef
+
 define Package/ddns-scripts/prerm
-	#!/bin/sh
-	# if run within buildroot exit
-	[ -n "$${IPKG_INSTROOT}" ] && exit 0
-	# stop running scripts
+#!/bin/sh
+if [ -n "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
 	/etc/init.d/ddns disable
-	# clear LuCI indexcache
-	rm -f /tmp/luci-indexcache >/dev/null 2>&1
-	exit 0	# suppress errors
+fi
+exit 0
 endef
 
-###### *************************************************************************
-define Package/ddns-scripts_cloudflare.com-v4/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
+
+define Package/ddns-scripts_service/install
+	$(INSTALL_DIR) $(1)/usr/share/ddns/services
+	$(INSTALL_DATA) ./files/usr/share/ddns/services/* \
+		$(1)/usr/share/ddns/services
 endef
+
+
 define Package/ddns-scripts_cloudflare.com-v4/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_cloudflare.com-v4
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_cloudflare_com_v4.sh $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_cloudflare_com_v4.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/services
+	$(INSTALL_DATA) ./files/usr/share/ddns/services/cloudflare.com-v4.json \
+		$(1)/usr/share/ddns/services/
 endef
-define Package/ddns-scripts_cloudflare.com-v4/postinst
-	#!/bin/sh
-	# remove old services file entries
-	/bin/sed -i '/cloudflare\.com-v4/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
-	/bin/sed -i '/cloudflare\.com-v4/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
-	# and create new
-	printf "%s\\t%s\\n" '"cloudflare.com-v4"' '"update_cloudflare_com_v4.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
-	printf "%s\\t%s\\n" '"cloudflare.com-v4"' '"update_cloudflare_com_v4.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
-	# on real system restart service if enabled
-	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_cloudflare.com-v4 ] && \
-			/etc/uci-defaults/ddns_cloudflare.com-v4 && \
-				rm -f /etc/uci-defaults/ddns_cloudflare.com-v4 >/dev/null 2>&1
-		/etc/init.d/ddns enabled && \
-			/etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
-endef
+
 define Package/ddns-scripts_cloudflare.com-v4/prerm
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop				>/dev/null 2>&1
-	# remove services file entries
-	/bin/sed -i '/cloudflare\.com-v4/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
-	/bin/sed -i '/cloudflare\.com-v4/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
-	exit 0	# suppress errors
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
 endef
 
-###### *************************************************************************
-define Package/ddns-scripts_freedns_42_pl/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
-endef
+
 define Package/ddns-scripts_freedns_42_pl/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_freedns_42_pl
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_freedns_42_pl.sh $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_freedns_42_pl.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/services
+	$(INSTALL_DATA) ./files/usr/share/ddns/services/freedns.42.pl.json \
+		$(1)/usr/share/ddns/services
 endef
-define Package/ddns-scripts_freedns_42_pl/postinst
-	#!/bin/sh
-	# remove old services file entries
-	/bin/sed -i '/freedns\.42\.pl/d' $${IPKG_INSTROOT}/etc/ddns/services	>/dev/null 2>&1
-	# and create new
-	printf "%s\\t%s\\n" '"freedns.42.pl"' '"update_freedns_42_pl.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
-	# on real system restart service if enabled
-	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_freedns_42_pl ] && \
-			/etc/uci-defaults/ddns_freedns_42_pl && \
-				rm -f /etc/uci-defaults/ddns_freedns_42_pl >/dev/null 2>&1
-		/etc/init.d/ddns enabled && \
-			/etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
-endef
+
 define Package/ddns-scripts_freedns_42_pl/prerm
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop		>/dev/null 2>&1
-	# remove services file entries
-	/bin/sed -i '/freedns\.42\.pl/d' $${IPKG_INSTROOT}/etc/ddns/services	>/dev/null 2>&1
-	exit 0	# suppress errors
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
 endef
 
-###### *************************************************************************
-define Package/ddns-scripts_godaddy.com-v1/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
-endef
+
 define Package/ddns-scripts_godaddy.com-v1/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_godaddy.com-v1
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_godaddy_com_v1.sh $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_godaddy_com_v1.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/services
+	$(INSTALL_DATA) ./files/usr/share/ddns/services/godaddy.com-v1.json \
+		$(1)/usr/share/ddns/services
 endef
-define Package/ddns-scripts_godaddy.com-v1/postinst
-	#!/bin/sh
-	# remove old services file entries
-	/bin/sed -i '/godaddy\.com-v1/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
-	/bin/sed -i '/godaddy\.com-v1/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
-	# and create new
-	printf "%s\\t%s\\n" '"godaddy.com-v1"' '"update_godaddy_com_v1.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
-	printf "%s\\t%s\\n" '"godaddy.com-v1"' '"update_godaddy_com_v1.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
-	# on real system restart service if enabled
-	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_godaddy.com-v1 ] && \
-			/etc/uci-defaults/ddns_godaddy.com-v1 && \
-				rm -f /etc/uci-defaults/ddns_godaddy.com-v1 >/dev/null 2>&1
-		/etc/init.d/ddns enabled \
-			&& /etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
-endef
+
 define Package/ddns-scripts_godaddy.com-v1/prerm
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop				>/dev/null 2>&1
-	# remove services file entries
-	/bin/sed -i '/godaddy\.com-v1/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
-	/bin/sed -i '/godaddy\.com-v1/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
-	exit 0	# suppress errors
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
 endef
 
-###### *************************************************************************
-define Package/ddns-scripts_digitalocean.com-v2/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
-endef
+
 define Package/ddns-scripts_digitalocean.com-v2/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_digtalocean.com-v2
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_digitalocean_com_v2.sh $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_digitalocean_com_v2.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/services
+	$(INSTALL_DATA) ./files/usr/share/ddns/services/digitalocean.com-v2.json \
+		$(1)/usr/share/ddns/services
 endef
-define Package/ddns-scripts_digitalocean.com-v2/postinst
-	#!/bin/sh
-	# remove old services file entries
-	/bin/sed -i '/digitalocean\.com-v2/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
-	/bin/sed -i '/digitalocean\.com-v2/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
-	# and create new
-	printf "%s\\t%s\\n" '"digitalocean.com-v2"' '"update_digitalocean_com_v2.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
-	printf "%s\\t%s\\n" '"digitalocean.com-v2"' '"update_digitalocean_com_v2.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
-	# on real system restart service if enabled
-	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_digitalocean.com-v2 ] && \
-			/etc/uci-defaults/ddns_digitalocean.com-v2 && \
-				rm -f /etc/uci-defaults/ddns_digitalocean.com-v2 >/dev/null 2>&1
-		/etc/init.d/ddns enabled \
-			&& /etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
-endef
+
 define Package/ddns-scripts_digitalocean.com-v2/prerm
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop				>/dev/null 2>&1
-	# remove services file entries
-	/bin/sed -i '/digitalocean\.com-v2/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
-	/bin/sed -i '/digitalocean\.com-v2/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
-	exit 0	# suppress errors
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
 endef
 
-###### *************************************************************************
-define Package/ddns-scripts_no-ip_com/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
-endef
+
 define Package/ddns-scripts_no-ip_com/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_no-ip_com
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_no-ip_com.sh $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_no-ip_com.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/services
+	$(INSTALL_DATA) ./files/usr/share/ddns/services/no-ip.com.json \
+		$(1)/usr/share/ddns/services
 endef
-define Package/ddns-scripts_no-ip_com/postinst
-	#!/bin/sh
-	# remove old services file entries
-	/bin/sed -i '/no-ip\.com/d' $${IPKG_INSTROOT}/etc/ddns/services	>/dev/null 2>&1
-	# and create new
-	printf "%s\\t%s\\n" '"no-ip.com"' '"update_no-ip_com.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
-	# on real system restart service if enabled
-	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_no-ip_com ] && \
-			/etc/uci-defaults/ddns_no-ip_com && \
-				rm -f /etc/uci-defaults/ddns_no-ip_com >/dev/null 2>&1
-		/etc/init.d/ddns enabled && \
-			/etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
-endef
+
 define Package/ddns-scripts_no-ip_com/prerm
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop		>/dev/null 2>&1
-	# remove services file entries
-	/bin/sed -i '/no-ip\.com/d' $${IPKG_INSTROOT}/etc/ddns/services	>/dev/null 2>&1
-	exit 0	# suppress errors
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
 endef
 
-###### *************************************************************************
-define Package/ddns-scripts_nsupdate/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
-endef
+
 define Package/ddns-scripts_nsupdate/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_nsupdate
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_nsupdate.sh $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_nsupdate.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/services
+	$(INSTALL_DATA) ./files/usr/share/ddns/services/bind-nsupdate.json \
+		$(1)/usr/share/ddns/services
 endef
-define Package/ddns-scripts_nsupdate/postinst
-	#!/bin/sh
-	# remove old services file entries
-	/bin/sed -i '/bind-nsupdate/d' $${IPKG_INSTROOT}/etc/ddns/services	>/dev/null 2>&1
-	/bin/sed -i '/bind-nsupdate/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
-	# and create new
-	printf "%s\\t%s\\n" '"bind-nsupdate"' '"update_nsupdate.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
-	printf "%s\\t%s\\n" '"bind-nsupdate"' '"update_nsupdate.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
-	# on real system restart service if enabled
-	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_nsupdate ] && \
-			/etc/uci-defaults/ddns_nsupdate && \
-				rm -f /etc/uci-defaults/ddns_nsupdate >/dev/null 2>&1
-		/etc/init.d/ddns enabled && \
-			/etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
-endef
+
 define Package/ddns-scripts_nsupdate/prerm
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop			>/dev/null 2>&1
-	# remove services file entries
-	/bin/sed -i '/bind-nsupdate/d' $${IPKG_INSTROOT}/etc/ddns/services	>/dev/null 2>&1
-	/bin/sed -i '/bind-nsupdate/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
-	exit 0	# suppress errors
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
 endef
 
-###### *************************************************************************
-define Package/ddns-scripts_route53-v1/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
-endef
+
 define Package/ddns-scripts_route53-v1/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_route53-v1
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_route53_v1.sh $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_route53_v1.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/services
+	$(INSTALL_DATA) ./files/usr/share/ddns/services/route53-v1.json \
+		$(1)/usr/share/ddns/services
 endef
-define Package/ddns-scripts_route53-v1/postinst
-	#!/bin/sh
-	# remove old services file entries
-	/bin/sed -i '/route53-v1/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
-	/bin/sed -i '/route53-v1/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
-	# and create new
-	printf "%s\\t%s\\n" '"route53-v1"' '"update_route53_v1.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
-	printf "%s\\t%s\\n" '"route53-v1"' '"update_route53_v1.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
-	# on real system restart service if enabled
-	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_route53-v1 ] && \
-			/etc/uci-defaults/ddns_route53-v1 && \
-				rm -f /etc/uci-defaults/route53.com-v1 >/dev/null 2>&1
-		/etc/init.d/ddns enabled \
-			&& /etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
-endef
+
 define Package/ddns-scripts_route53-v1/prerm
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop				>/dev/null 2>&1
-	# remove services file entries
-	/bin/sed -i 'route53-v1/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
-	/bin/sed -i 'route53-v1/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
-	exit 0	# suppress errors
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
 endef
 
-###### *************************************************************************
-define Package/ddns-scripts_cnkuai_cn/preinst
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop >/dev/null 2>&1
-	exit 0	# suppress errors
-endef
+
 define Package/ddns-scripts_cnkuai_cn/install
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/ddns.defaults $(1)/etc/uci-defaults/ddns_cnkuai_cn
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/update_cnkuai_cn.sh $(1)/usr/lib/ddns
-endef
-define Package/ddns-scripts_cnkuai_cn/postinst
-	#!/bin/sh
-	# remove old services file entries
-	/bin/sed -i '/cnkuai.cn/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
-	/bin/sed -i '/cnkuai.cn/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
-	# and create new
-	printf "%s\\t%s\\n" '"cnkuai.cn"' '"update_cnkuai_cn.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
-	printf "%s\\t%s\\n" '"cnkuai.cn"' '"update_cnkuai_cn.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
-	# on real system restart service if enabled
-	[ -z "$${IPKG_INSTROOT}" ] && {
-		[ -x /etc/uci-defaults/ddns_cnkuai_cn ] && \
-			/etc/uci-defaults/ddns_cnkuai_cn && \
-				rm -f /etc/uci-defaults/cnkuai.cn >/dev/null 2>&1
-		/etc/init.d/ddns enabled \
-			&& /etc/init.d/ddns start >/dev/null 2>&1
-	}
-	exit 0	# suppress errors
-endef
-define Package/ddns-scripts_cnkuai_cn/prerm
-	#!/bin/sh
-	# if NOT run buildroot then stop service
-	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop				>/dev/null 2>&1
-	# remove services file entries
-	/bin/sed -i 'cnkuai.cn/d' $${IPKG_INSTROOT}/etc/ddns/services		>/dev/null 2>&1
-	/bin/sed -i 'cnkuai.cn/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6	>/dev/null 2>&1
-	exit 0	# suppress errors
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_cnkuai_cn.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/services
+	$(INSTALL_DATA) ./files/usr/share/ddns/services/cnkuai.cn.json \
+		$(1)/usr/share/ddns/services
 endef
 
-###### *************************************************************************
+define Package/ddns-scripts_cnkuai_cn/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
 $(eval $(call BuildPackage,ddns-scripts))
+$(eval $(call BuildPackage,ddns-scripts_service))
 $(eval $(call BuildPackage,ddns-scripts_cloudflare.com-v4))
 $(eval $(call BuildPackage,ddns-scripts_freedns_42_pl))
 $(eval $(call BuildPackage,ddns-scripts_godaddy.com-v1))

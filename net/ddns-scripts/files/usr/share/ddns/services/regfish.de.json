@@ -1,0 +1,11 @@
+{
+	"name": "regfish.de",
+	"ipv4": {
+		"url": "http://dyndns.regfish.de/?fqdn=[DOMAIN]&forcehost=1&authtype=secure&token=[PASSWORD]&ipv4=[IP]",
+		"answer": "success|100|101"
+	},
+	"ipv6": {
+		"url": "http://dyndns.regfish.de/?fqdn=[DOMAIN]&forcehost=1&authtype=secure&token=[PASSWORD]&ipv6=[IP]",
+		"answer": "success|100|101"
+	}
+}

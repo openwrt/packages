@@ -1,0 +1,7 @@
+{
+	"name": "ovh.com",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@www.ovh.com/nic/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good|nochg"
+	}
+}
