@@ -1,0 +1,19 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -66,14 +66,14 @@ AM_CONDITIONAL([SUPPORTS_GNU_PLUS_PLUS_1
+ 
+ # force us into gnu++98 mode if necessary
+ # If gnu++11 and gnu++98 then
+-#   If no unit tests, force to gnu++98
++#   If no unit tests, force to gnu++11
+ #   If unittests and cppunit < 1.14.0, force to gnu++98
+ #   Else turn off deprecation messages for std::auto_ptr and run gnu++11
+ require_gnu_plus_plus_11="no"
+ AS_IF([test "x$ac_cv_gnu_plus_plus_11" = xyes],
+       [AS_IF([test "x$ac_cv_gnu_plus_plus_98" = xyes],
+              [AS_IF([test "x$enable_unittests" = xno],
+-                    [CXXFLAGS="$CXXFLAGS -std=gnu++98"],
++                    [require_gnu_plus_plus_11="yes"],
+                     [PKG_CHECK_MODULES([CPPUNIT1], [cppunit < 1.14.0],
+                                        [CXXFLAGS="$CXXFLAGS -std=gnu++98"],
+                                        [PKG_CHECK_MODULES([CPPUNIT2], [cppunit >= 1.14.0],

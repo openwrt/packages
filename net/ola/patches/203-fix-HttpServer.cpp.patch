@@ -1,0 +1,47 @@
+--- a/common/http/HTTPServer.cpp
++++ b/common/http/HTTPServer.cpp
+@@ -88,7 +88,7 @@ const char HTTPServer::CONTENT_TYPE_OCT[
+  * @param key the header name
+  * @param value the header value
+  */
+-static int AddHeaders(void *cls, OLA_UNUSED enum MHD_ValueKind kind,
++static MHD_Result AddHeaders(void *cls, OLA_UNUSED enum MHD_ValueKind kind,
+                       const char *key, const char *value) {
+   HTTPRequest *request = static_cast<HTTPRequest*>(cls);
+   string key_string = key;
+@@ -110,7 +110,7 @@ static int AddHeaders(void *cls, OLA_UNU
+  * @param off the offset of the data
+  * @param size the number of bytes available
+  */
+-int IteratePost(void *request_cls, OLA_UNUSED enum MHD_ValueKind kind,
++MHD_Result IteratePost(void *request_cls, OLA_UNUSED enum MHD_ValueKind kind,
+                 const char *key, OLA_UNUSED const char *filename,
+                 OLA_UNUSED const char *content_type,
+                 OLA_UNUSED const char *transfer_encoding, const char *data,
+@@ -129,7 +129,7 @@ int IteratePost(void *request_cls, OLA_U
+  * This sets up HTTPRequest & HTTPResponse objects and then calls
+  * DispatchRequest.
+  */
+-static int HandleRequest(void *http_server_ptr,
++static MHD_Result HandleRequest(void *http_server_ptr,
+                          struct MHD_Connection *connection,
+                          const char *url,
+                          const char *method,
+@@ -163,7 +163,7 @@ static int HandleRequest(void *http_serv
+   if (request->Method() == MHD_HTTP_METHOD_GET) {
+     HTTPResponse *response = new HTTPResponse(connection);
+     request->SetInFlight();
+-    return http_server->DispatchRequest(request, response);
++    return MHD_Result(http_server->DispatchRequest(request, response));
+ 
+   } else if (request->Method() == MHD_HTTP_METHOD_POST) {
+     if (*upload_data_size != 0) {
+@@ -173,7 +173,7 @@ static int HandleRequest(void *http_serv
+     }
+     request->SetInFlight();
+     HTTPResponse *response = new HTTPResponse(connection);
+-    return http_server->DispatchRequest(request, response);
++    return MHD_Result(http_server->DispatchRequest(request, response));
+   }
+   return MHD_NO;
+ }
