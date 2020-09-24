@@ -55,7 +55,6 @@ CONFIGURE_ARGS += \
 
 HOST_CONFIGURE_ARGS += \
 	--disable-all-plugins \
-	--disable-slp \
 	--disable-osc \
 	--disable-uart \
 	--disable-libusb \
@@ -67,9 +66,6 @@ HOST_CONFIGURE_ARGS += \
 
 HOST_CPPFLAGS += \
 	-std=gnu++11
-
-CONFIGURE_VARS += \
-	require_gnu_plus_plus_11=yes
 
 HOST_LDFLAGS += -Wl,-rpath$(comma)$(STAGING_DIR_HOSTPKG)/lib
 TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lm)
