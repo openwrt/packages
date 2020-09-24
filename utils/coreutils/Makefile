@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coreutils
 PKG_VERSION:=8.32
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/coreutils
@@ -110,7 +110,11 @@ $(foreach a,$(COREUTILS_APPLETS),$(eval $(call GenPlugin,coreutils-$(a),$(a))))
 CONFIGURE_VARS += \
 	gl_cv_func_mbrtowc_incomplete_state=yes \
 	gl_cv_func_mbrtowc_retval=yes \
-	gl_cv_func_wcrtomb_retval=yes
+	gl_cv_func_wcrtomb_retval=yes \
+	ac_cv_header_selinux_context_h=no \
+	ac_cv_header_selinux_flash_h=no \
+	ac_cv_header_selinux_selinux_h=no \
+	ac_cv_search_setfilecon=no
 
 CONFIGURE_ARGS += \
 	--disable-xattr \
