@@ -46,7 +46,7 @@ MAKE_FLAGS += \
 
 define Package/ctop/install
 	$(INSTALL_DIR) $(1)/usr/sbin/
-	$(INSTALL_BIN) $(GO_PKG_BUILD_DIR)/bin/ctop $(1)/usr/sbin/
+	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/ctop $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,ctop))
