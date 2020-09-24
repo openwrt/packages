@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsoup
-PKG_VERSION:=2.71.0
+PKG_VERSION:=2.72.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/$(PKG_NAME)/2.71
-PKG_HASH:=88e24fad72d16e1cb692c8782688dbee4bf44151efb0d9ed25b14f3849d9896e
+PKG_SOURCE_URL:=@GNOME/$(PKG_NAME)/2.72
+PKG_HASH:=170c3f8446b0f65f8e4b93603349172b1085fb8917c181d10962f02bb85f5387
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -43,7 +43,8 @@ MESON_ARGS += \
 	-Dvapi=disabled \
 	-Dgtk_doc=false \
 	-Dtests=false \
-	-Dinstalled_tests=false
+	-Dinstalled_tests=false \
+	-Dsysprof=disabled
 
 define package/libsoup/decription
 Libsoup is an HTTP library implementation in C
