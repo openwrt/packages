@@ -1,15 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=containerd
-PKG_VERSION:=1.2.13
-PKG_RELEASE:=2
+PKG_VERSION:=1.3.7
+PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/containerd/containerd/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=0811057ab67b78ce911416e793edaeb14b3f1e105d67b8e67b6302e0eab572e4
-PKG_SOURCE_VERSION:=7ad184331fa3e55e52b890ea95e65ba581ae3429
+PKG_HASH:=d30d59e143697aa4f0960205b3f5ac59c573b332f20507740ef2dc0fb5ae8ded
+PKG_SOURCE_VERSION:=8fba4e9a7d01810a393d5d25a3621dc101981175
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
@@ -28,10 +28,9 @@ config CONTAINERD_SECCOMP
 	bool "Enable support for seccomp in containerd"
 	default DOCKER_SECCOMP
 	select KERNEL_SECCOMP
-	select PACKAGE_libseccomp
 	help
 	  Build containerd with support for seccomp filters.
-	  Select libseccomp which also pulls-in the needed kernel features.
+	  Also pulls-in the needed kernel features.
 endef
 
 define Package/containerd
@@ -39,7 +38,7 @@ define Package/containerd
   CATEGORY:=Utilities
   TITLE:=containerd container runtime
   URL:=https://containerd.io/
-  DEPENDS:=$(GO_ARCH_DEPENDS) @(aarch64||arm||x86_64) +btrfs-progs +runc +CONTAINERD_SECCOMP:libseccomp
+  DEPENDS:=$(GO_ARCH_DEPENDS) @(aarch64||arm||x86_64) +btrfs-progs +runc +libseccomp
   MENU:=1
 endef
 
