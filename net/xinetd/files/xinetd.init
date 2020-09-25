@@ -114,6 +114,11 @@ start_service() {
 	procd_close_instance
 }
 
+reload_service() {
+	procd_send_signal xinetd "*" QUIT
+	start
+}
+
 service_triggers() {
 	procd_add_reload_trigger "xinetd"
 }
