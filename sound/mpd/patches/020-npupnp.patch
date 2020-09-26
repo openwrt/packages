@@ -1,28 +1,26 @@
-From 61df54155a3cb1846e6bf15e4f007ec8d623de63 Mon Sep 17 00:00:00 2001
+From ae107c22b946b60167d0d1da9630805cbb1af578 Mon Sep 17 00:00:00 2001
 From: Jean-Francois Dockes <jf@dockes.org>
 Date: Sun, 23 Aug 2020 14:22:21 +0200
 Subject: [PATCH] Modification to use npupnp instead of pupnp when the upnp
  meson option is set
 
 ---
- meson_options.txt                             |   5 +-
- .../plugins/upnp/ContentDirectoryService.cxx  | 101 ++++++++++++++++++
- src/lib/upnp/Action.hxx                       |   2 +
- src/lib/upnp/ClientInit.cxx                   |  12 +--
- src/lib/upnp/Compat.hxx                       |   4 +-
- src/lib/upnp/ContentDirectoryService.cxx      |  25 +++++
- src/lib/upnp/Init.cxx                         |   4 +
- src/lib/upnp/UniqueIxml.hxx                   |   2 +
- src/lib/upnp/ixmlwrap.cxx                     |   4 +
- src/lib/upnp/ixmlwrap.hxx                     |   2 +
- src/lib/upnp/meson.build                      |  20 +++-
- 11 files changed, 170 insertions(+), 11 deletions(-)
+ meson_options.txt                             |  5 +-
+ .../plugins/upnp/ContentDirectoryService.cxx  | 96 ++++++++++++++++++-
+ src/lib/upnp/Action.hxx                       |  2 +
+ src/lib/upnp/ContentDirectoryService.cxx      | 35 ++++++-
+ src/lib/upnp/Init.cxx                         |  6 +-
+ src/lib/upnp/UniqueIxml.hxx                   |  6 +-
+ src/lib/upnp/ixmlwrap.cxx                     |  8 +-
+ src/lib/upnp/ixmlwrap.hxx                     |  4 +-
+ src/lib/upnp/meson.build                      | 20 +++-
+ 9 files changed, 169 insertions(+), 13 deletions(-)
 
 diff --git a/meson_options.txt b/meson_options.txt
-index d17ac1ca8..da90ccfd8 100644
+index 0a70ff3a3..d9fe0147d 100644
 --- a/meson_options.txt
 +++ b/meson_options.txt
-@@ -54,7 +54,10 @@ option('dsd', type: 'boolean', value: true, description: 'Support the DSD audio
+@@ -57,7 +57,10 @@ option('dsd', type: 'boolean', value: true, description: 'Support the DSD audio
  #
  
  option('database', type: 'boolean', value: true, description: 'enable support for the music database')
@@ -35,33 +33,32 @@ index d17ac1ca8..da90ccfd8 100644
  
  #
 diff --git a/src/db/plugins/upnp/ContentDirectoryService.cxx b/src/db/plugins/upnp/ContentDirectoryService.cxx
-index 99893d89d..29d58ca23 100644
+index 0cb94c42c..50405b9a0 100644
 --- a/src/db/plugins/upnp/ContentDirectoryService.cxx
 +++ b/src/db/plugins/upnp/ContentDirectoryService.cxx
 @@ -18,7 +18,10 @@
   */
  
  #include "lib/upnp/ContentDirectoryService.hxx"
+-#include "lib/upnp/ixmlwrap.hxx"
 +#include "config.h"
 +#ifdef USING_PUPNP
- #include "lib/upnp/ixmlwrap.hxx"
++#	include "lib/upnp/ixmlwrap.hxx"
 +#endif
  #include "lib/upnp/UniqueIxml.hxx"
  #include "lib/upnp/Action.hxx"
  #include "Directory.hxx"
-@@ -28,8 +31,11 @@
+@@ -27,6 +30,9 @@
  #include "util/ScopeExit.hxx"
  #include "util/StringFormat.hxx"
  
 +#include <algorithm>
 +
- #include <stdio.h>
- 
 +#ifdef USING_PUPNP
  static void
  ReadResultTag(UPnPDirContent &dirbuf, IXML_Document *response)
  {
-@@ -39,6 +45,7 @@ ReadResultTag(UPnPDirContent &dirbuf, IXML_Document *response)
+@@ -36,6 +42,7 @@ ReadResultTag(UPnPDirContent &dirbuf, IXML_Document *response)
  
  	dirbuf.Parse(p);
  }
@@ -69,7 +66,7 @@ index 99893d89d..29d58ca23 100644
  
  inline void
  ContentDirectoryService::readDirSlice(UpnpClient_Handle hdl,
-@@ -47,6 +54,7 @@ ContentDirectoryService::readDirSlice(UpnpClient_Handle hdl,
+@@ -44,6 +51,7 @@ ContentDirectoryService::readDirSlice(UpnpClient_Handle hdl,
  				      unsigned &didreadp,
  				      unsigned &totalp) const
  {
@@ -77,25 +74,23 @@ index 99893d89d..29d58ca23 100644
  	// Some devices require an empty SortCriteria, else bad params
  	IXML_Document *request =
  		MakeActionHelper("Browse", m_serviceType.c_str(),
-@@ -82,6 +90,37 @@ ContentDirectoryService::readDirSlice(UpnpClient_Handle hdl,
+@@ -79,6 +87,35 @@ ContentDirectoryService::readDirSlice(UpnpClient_Handle hdl,
  		totalp = ParseUnsigned(value);
  
  	ReadResultTag(dirbuf, response);
 +#else
-+	std::vector<std::pair<std::string, std::string> > actionParams{
-+		{ "ObjectID", objectId },
-+		{ "BrowseFlag", "BrowseDirectChildren" },
-+		{ "Filter", "*" },
-+		{ "SortCriteria", "" },
-+		{ "StartingIndex", StringFormat<32>("%u", offset).c_str() },
-+		{ "RequestedCount", StringFormat<32>("%u", count).c_str() }
-+	};
-+	std::vector<std::pair<std::string, std::string> > responseData;
++	std::vector<std::pair<std::string, std::string>> actionParams{
++		{"ObjectID", objectId},
++		{"BrowseFlag", "BrowseDirectChildren"},
++		{"Filter", "*"},
++		{"SortCriteria", ""},
++		{"StartingIndex", StringFormat<32>("%u", offset).c_str()},
++		{"RequestedCount", StringFormat<32>("%u", count).c_str()}};
++	std::vector<std::pair<std::string, std::string>> responseData;
 +	int errcode;
 +	std::string errdesc;
-+	int code =
-+		UpnpSendAction(hdl, "", m_actionURL, m_serviceType, "Browse",
-+			       actionParams, responseData, &errcode, errdesc);
++	int code = UpnpSendAction(hdl, "", m_actionURL, m_serviceType, "Browse",
++				  actionParams, responseData, &errcode, errdesc);
 +	if (code != UPNP_E_SUCCESS)
 +		throw FormatRuntimeError("UpnpSendAction() failed: %s",
 +					 UpnpGetErrorMessage(code));
@@ -115,7 +110,7 @@ index 99893d89d..29d58ca23 100644
  }
  
  UPnPDirContent
-@@ -110,6 +149,7 @@ ContentDirectoryService::search(UpnpClient_Handle hdl,
+@@ -107,6 +144,7 @@ ContentDirectoryService::search(UpnpClient_Handle hdl,
  	unsigned offset = 0, total = -1, count;
  
  	do {
@@ -123,26 +118,23 @@ index 99893d89d..29d58ca23 100644
  		UniqueIxmlDocument request(MakeActionHelper("Search", m_serviceType.c_str(),
  							    "ContainerID", objectId,
  							    "SearchCriteria", ss,
-@@ -147,6 +187,39 @@ ContentDirectoryService::search(UpnpClient_Handle hdl,
+@@ -144,6 +182,36 @@ ContentDirectoryService::search(UpnpClient_Handle hdl,
  			total = ParseUnsigned(value);
  
  		ReadResultTag(dirbuf, response.get());
 +#else
-+		std::vector<std::pair<std::string, std::string> > actionParams{
-+			{ "ContainerID", objectId },
-+			{ "SearchCriteria", ss },
-+			{ "Filter", "*" },
-+			{ "SortCriteria", "" },
-+			{ "StartingIndex",
-+			  StringFormat<32>("%u", offset).c_str() },
-+			{ "RequestedCount", "0" }
-+		};
-+		std::vector<std::pair<std::string, std::string> > responseData;
++		std::vector<std::pair<std::string, std::string>> actionParams{
++			{"ContainerID", objectId},
++			{"SearchCriteria", ss},
++			{"Filter", "*"},
++			{"SortCriteria", ""},
++			{"StartingIndex", StringFormat<32>("%u", offset).c_str()},
++			{"RequestedCount", "0"}};
++		std::vector<std::pair<std::string, std::string>> responseData;
 +		int errcode;
 +		std::string errdesc;
-+		int code = UpnpSendAction(hdl, "", m_actionURL, m_serviceType,
-+					  "Search", actionParams, responseData,
-+					  &errcode, errdesc);
++		int code = UpnpSendAction(hdl, "", m_actionURL, m_serviceType, "Search",
++					  actionParams, responseData, &errcode, errdesc);
 +		if (code != UPNP_E_SUCCESS)
 +			throw FormatRuntimeError("UpnpSendAction() failed: %s",
 +						 UpnpGetErrorMessage(code));
@@ -163,7 +155,7 @@ index 99893d89d..29d58ca23 100644
  	} while (count > 0 && offset < total);
  
  	return dirbuf;
-@@ -156,6 +229,7 @@ UPnPDirContent
+@@ -153,6 +221,7 @@ UPnPDirContent
  ContentDirectoryService::getMetadata(UpnpClient_Handle hdl,
  				     const char *objectId) const
  {
@@ -171,22 +163,20 @@ index 99893d89d..29d58ca23 100644
  	// Create request
  	UniqueIxmlDocument request(MakeActionHelper("Browse", m_serviceType.c_str(),
  						    "ObjectID", objectId,
-@@ -179,4 +253,31 @@ ContentDirectoryService::getMetadata(UpnpClient_Handle hdl,
+@@ -176,4 +245,29 @@ ContentDirectoryService::getMetadata(UpnpClient_Handle hdl,
  	UPnPDirContent dirbuf;
  	ReadResultTag(dirbuf, response.get());
  	return dirbuf;
 +#else
-+	std::vector<std::pair<std::string, std::string> > actionParams{
-+		{ "ObjectID", objectId }, { "BrowseFlag", "BrowseMetadata" },
-+		{ "Filter", "*" },	  { "SortCriteria", "" },
-+		{ "StartingIndex", "0" }, { "RequestedCount", "1" }
-+	};
-+	std::vector<std::pair<std::string, std::string> > responseData;
++	std::vector<std::pair<std::string, std::string>> actionParams{
++		{"ObjectID", objectId}, {"BrowseFlag", "BrowseMetadata"},
++		{"Filter", "*"},	{"SortCriteria", ""},
++		{"StartingIndex", "0"}, {"RequestedCount", "1"}};
++	std::vector<std::pair<std::string, std::string>> responseData;
 +	int errcode;
 +	std::string errdesc;
-+	int code =
-+		UpnpSendAction(hdl, "", m_actionURL, m_serviceType, "Browse",
-+			       actionParams, responseData, &errcode, errdesc);
++	int code = UpnpSendAction(hdl, "", m_actionURL, m_serviceType, "Browse",
++				  actionParams, responseData, &errcode, errdesc);
 +	if (code != UPNP_E_SUCCESS)
 +		throw FormatRuntimeError("UpnpSendAction() failed: %s",
 +					 UpnpGetErrorMessage(code));
@@ -204,10 +194,10 @@ index 99893d89d..29d58ca23 100644
 +#endif
  }
 diff --git a/src/lib/upnp/Action.hxx b/src/lib/upnp/Action.hxx
-index 49ed75198..4ecf4cb06 100644
+index 6de060560..19c423534 100644
 --- a/src/lib/upnp/Action.hxx
 +++ b/src/lib/upnp/Action.hxx
-@@ -38,6 +38,7 @@ CountNameValuePairs(gcc_unused const char *name, gcc_unused const char *value,
+@@ -38,6 +38,7 @@ CountNameValuePairs([[maybe_unused]] const char *name, [[maybe_unused]] const ch
  	return 1 + CountNameValuePairs(args...);
  }
  
@@ -222,78 +212,37 @@ index 49ed75198..4ecf4cb06 100644
 +#endif
  
  #endif
-diff --git a/src/lib/upnp/ClientInit.cxx b/src/lib/upnp/ClientInit.cxx
-index 23ba9cade..54b677fa2 100644
---- a/src/lib/upnp/ClientInit.cxx
-+++ b/src/lib/upnp/ClientInit.cxx
-@@ -31,14 +31,12 @@ static Mutex upnp_client_init_mutex;
- static unsigned upnp_client_ref;
- static UpnpClient_Handle upnp_client_handle;
- 
--static int
--UpnpClientCallback(Upnp_EventType et,
--#if UPNP_VERSION >= 10800
--		   const
-+static int UpnpClientCallback(Upnp_EventType et,
-+#if 1
-+			      const
- #endif
--		   void *evp,
--		   void *cookie) noexcept
--{
-+			      void *evp,
-+			      void *cookie) noexcept {
- 	if (cookie == nullptr)
- 		/* this is the cookie passed to UpnpRegisterClient();
- 		   but can this ever happen?  Will libupnp ever invoke
-diff --git a/src/lib/upnp/Compat.hxx b/src/lib/upnp/Compat.hxx
-index 7fba1d83b..b9a4d7cf3 100644
---- a/src/lib/upnp/Compat.hxx
-+++ b/src/lib/upnp/Compat.hxx
-@@ -22,14 +22,14 @@
- 
- #include <upnp.h>
- 
--#if UPNP_VERSION < 10800
-+#if 0
- /* emulate the libupnp 1.8 API with older versions */
- 
- using UpnpDiscovery = Upnp_Discovery;
- 
- #endif
- 
--#if UPNP_VERSION < 10624
-+#if 0
- #include "util/Compiler.h"
- 
- gcc_pure
 diff --git a/src/lib/upnp/ContentDirectoryService.cxx b/src/lib/upnp/ContentDirectoryService.cxx
-index ae514c717..eed28b41a 100644
+index 56d1cf3aa..786bac6b1 100644
 --- a/src/lib/upnp/ContentDirectoryService.cxx
 +++ b/src/lib/upnp/ContentDirectoryService.cxx
-@@ -17,15 +17,21 @@
+@@ -17,13 +17,21 @@
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
   */
  
 +#include "config.h"
 +
  #include "ContentDirectoryService.hxx"
- #include "UniqueIxml.hxx"
+-#include "UniqueIxml.hxx"
  #include "Device.hxx"
+-#include "ixmlwrap.hxx"
+-#include "util/UriRelative.hxx"
+-#include "util/RuntimeError.hxx"
++#include "UniqueIxml.hxx"
 +#ifdef USING_PUPNP
- #include "ixmlwrap.hxx"
++#	include "ixmlwrap.hxx"
 +#endif
- #include "Action.hxx"
- #include "util/UriUtil.hxx"
- #include "util/RuntimeError.hxx"
- #include "util/SplitString.hxx"
- 
-+#include <algorithm>
++#include "Action.hxx"
+ #include "util/IterableSplitString.hxx"
++#include "util/RuntimeError.hxx"
++#include "util/UriRelative.hxx"
++#include "util/UriUtil.hxx"
 +
- ContentDirectoryService::ContentDirectoryService(const UPnPDevice &device,
- 						 const UPnPService &service) noexcept
- 	:m_actionURL(uri_apply_base(service.controlURL, device.URLBase)),
-@@ -51,6 +57,7 @@ ContentDirectoryService::~ContentDirectoryService() noexcept
++#include <algorithm>
+ 
+ #include <upnptools.h>
+ 
+@@ -50,6 +58,7 @@ ContentDirectoryService::~ContentDirectoryService() noexcept = default;
  std::forward_list<std::string>
  ContentDirectoryService::getSearchCapabilities(UpnpClient_Handle hdl) const
  {
@@ -301,21 +250,21 @@ index ae514c717..eed28b41a 100644
  	UniqueIxmlDocument request(UpnpMakeAction("GetSearchCapabilities", m_serviceType.c_str(),
  						  0,
  						  nullptr, nullptr));
-@@ -69,6 +76,24 @@ ContentDirectoryService::getSearchCapabilities(UpnpClient_Handle hdl) const
+@@ -68,6 +77,24 @@ ContentDirectoryService::getSearchCapabilities(UpnpClient_Handle hdl) const
  
  	const char *s = ixmlwrap::getFirstElementValue(response.get(),
  						       "SearchCaps");
 +#else
-+	std::vector<std::pair<std::string, std::string> > responseData;
++	std::vector<std::pair<std::string, std::string>> responseData;
 +	int errcode;
 +	std::string errdesc;
 +	auto code = UpnpSendAction(hdl, "", m_actionURL, m_serviceType,
-+				   "GetSearchCapabilities", {}, responseData,
-+				   &errcode, errdesc);
++				   "GetSearchCapabilities", {}, responseData, &errcode,
++				   errdesc);
 +	if (code != UPNP_E_SUCCESS)
 +		throw FormatRuntimeError("UpnpSendAction() failed: %s",
 +					 UpnpGetErrorMessage(code));
-+	const char *s{ nullptr };
++	const char *s{nullptr};
 +	for (auto &entry : responseData) {
 +		if (entry.first == "SearchCaps") {
 +			s = entry.second.c_str();
@@ -324,21 +273,22 @@ index ae514c717..eed28b41a 100644
 +	}
 +#endif
  	if (s == nullptr || *s == 0)
- 		/* we could just "return {}" here, but GCC 5 doesn't
- 		   understand that */
+ 		return {};
+ 
 diff --git a/src/lib/upnp/Init.cxx b/src/lib/upnp/Init.cxx
-index 7ad4d565a..10510402a 100644
+index def851f2c..d85b9a523 100644
 --- a/src/lib/upnp/Init.cxx
 +++ b/src/lib/upnp/Init.cxx
 @@ -23,7 +23,9 @@
+ #include "util/RuntimeError.hxx"
  
- #include <upnp.h>
  #include <upnptools.h>
+-#include <ixml.h>
 +#ifdef USING_PUPNP
- #include <ixml.h>
++#	include <ixml.h>
 +#endif
  
- #include <assert.h>
+ #include <cassert>
  
 @@ -44,8 +46,10 @@ DoInit()
  
@@ -352,17 +302,22 @@ index 7ad4d565a..10510402a 100644
  
  void
 diff --git a/src/lib/upnp/UniqueIxml.hxx b/src/lib/upnp/UniqueIxml.hxx
-index 2ff2afa62..8a0ea0a1f 100644
+index 037e161b7..2ebc2c1c1 100644
 --- a/src/lib/upnp/UniqueIxml.hxx
 +++ b/src/lib/upnp/UniqueIxml.hxx
-@@ -20,6 +20,7 @@
+@@ -20,9 +20,10 @@
  #ifndef MPD_UPNP_UNIQUE_XML_HXX
  #define MPD_UPNP_UNIQUE_XML_HXX
  
+-#include <ixml.h>
 +#ifdef USING_PUPNP
- #include <ixml.h>
++#	include <ixml.h>
  
- #include <memory>
+-#include <memory>
++#	include <memory>
+ 
+ struct UpnpIxmlDeleter {
+ 	void operator()(IXML_Document *doc) noexcept {
 @@ -37,4 +38,5 @@ struct UpnpIxmlDeleter {
  typedef std::unique_ptr<IXML_Document, UpnpIxmlDeleter> UniqueIxmlDocument;
  typedef std::unique_ptr<IXML_NodeList, UpnpIxmlDeleter> UniqueIxmlNodeList;
@@ -370,48 +325,54 @@ index 2ff2afa62..8a0ea0a1f 100644
 +#endif /* USING_PUPNP */
  #endif
 diff --git a/src/lib/upnp/ixmlwrap.cxx b/src/lib/upnp/ixmlwrap.cxx
-index 4e44f35a6..c7798e557 100644
+index f811b07a6..90e8d3155 100644
 --- a/src/lib/upnp/ixmlwrap.cxx
 +++ b/src/lib/upnp/ixmlwrap.cxx
-@@ -15,6 +15,9 @@
+@@ -15,8 +15,11 @@
   *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
   */
  
+-#include "ixmlwrap.hxx"
+-#include "UniqueIxml.hxx"
 +#include "config.h"
 +
 +#ifdef USING_PUPNP
- #include "ixmlwrap.hxx"
- #include "UniqueIxml.hxx"
++#	include "ixmlwrap.hxx"
++#	include "UniqueIxml.hxx"
+ 
+ namespace ixmlwrap {
  
 @@ -39,3 +42,4 @@ getFirstElementValue(IXML_Document *doc, const char *name) noexcept
  }
  
- }
+ } // namespace ixmlwrap
 +#endif
 diff --git a/src/lib/upnp/ixmlwrap.hxx b/src/lib/upnp/ixmlwrap.hxx
-index 6713d59bd..4b01801f7 100644
+index 2ef142ac7..25ac8695d 100644
 --- a/src/lib/upnp/ixmlwrap.hxx
 +++ b/src/lib/upnp/ixmlwrap.hxx
-@@ -17,6 +17,7 @@
+@@ -17,7 +17,8 @@
  #ifndef _IXMLWRAP_H_INCLUDED_
  #define _IXMLWRAP_H_INCLUDED_
  
+-#include <ixml.h>
 +#ifdef USING_PUPNP
- #include <ixml.h>
++#	include <ixml.h>
  
- #include <string>
-@@ -32,4 +33,5 @@ namespace ixmlwrap {
+ namespace ixmlwrap {
+ 	/**
+@@ -30,4 +31,5 @@ namespace ixmlwrap {
  
  }
  
 +#endif /* USING_PUPNP */
  #endif /* _IXMLWRAP_H_INCLUDED_ */
 diff --git a/src/lib/upnp/meson.build b/src/lib/upnp/meson.build
-index 9e16f7319..bdc248e6c 100644
+index f7570eb1c..bdc248e6c 100644
 --- a/src/lib/upnp/meson.build
 +++ b/src/lib/upnp/meson.build
 @@ -1,4 +1,22 @@
--upnp_dep = dependency('libupnp', required: get_option('upnp'))
+-upnp_dep = dependency('libupnp', version: '>= 1.8', required: get_option('upnp'))
 +upnp_option = get_option('upnp')
 +
 +if upnp_option == 'auto'
