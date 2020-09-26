@@ -7,17 +7,19 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=semodule-utils
 PKG_VERSION:=3.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/SELinuxProject/selinux/releases/download/20200710
 PKG_HASH:=0cc37f9cec751d9c2abb5f2b228b060567e973cb47c19b53b8a4a7378baaa853
-PKG_INSTALL:=1
-HOST_BUILD_DEPENDS:=libsemanage/host
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
+
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+HOST_BUILD_DEPENDS:=libsemanage/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -25,7 +27,7 @@ include $(INCLUDE_DIR)/host-build.mk
 define Package/semodule-utils
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:= +policycoreutils
+  DEPENDS:=+libsepol
   TITLE:=SELinux policy utilities for dealing with modules
   URL:=http://selinuxproject.org/page/Main_Page
 endef
