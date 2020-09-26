@@ -1,4 +1,4 @@
-service muninlite
+service munin
 {
 	socket_type	= stream
 	protocol	= tcp
