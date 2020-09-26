@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.21.26
+PKG_VERSION:=0.22
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://www.musicpd.org/download/mpd/0.21/
-PKG_HASH:=f9e68221c7a6829ec02f281eb313b2f24182020f5eb65ab22b337e6169ea4eea
+PKG_SOURCE_URL:=https://www.musicpd.org/download/mpd/0.22/
+PKG_HASH:=7de742d925d01bf52685cc6cbb31fdeb671e4992a448720897ef706e57e39076
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
@@ -100,10 +100,13 @@ define Package/mpd-avahi-service/conffiles
 endef
 
 MESON_ARGS += \
-	-Ddocumentation=false \
+	-Ddocumentation=disabled \
+	-Dhtml_manual=false \
+	-Dmanpages=false \
 	-Dtest=false \
 	-Dsyslog=enabled \
 	-Dinotify=true \
+	-Dio_uring=disabled \
 	-Ddaemon=false \
 	-Dsystemd=disabled \
 	-Dtcp=true \
@@ -133,10 +136,10 @@ MESON_ARGS += \
 	-Dflac=enabled \
 	-Dfluidsynth=disabled \
 	-Dgme=disabled \
-	-Dmpg123=disabled \
 	-Dmikmod=disabled \
 	-Dmodplug=disabled \
 	-Dmpcdec=disabled \
+	-Dmpg123=disabled \
 	-Dopus=enabled \
 	-Dsidplay=disabled \
 	-Dsndfile=disabled \
