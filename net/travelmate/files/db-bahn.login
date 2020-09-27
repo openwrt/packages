@@ -3,14 +3,14 @@
 # Copyright (c) 2020 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
-trm_fetch="$(command -v curl)"
 trm_domain="wifi.bahn.de"
 trm_useragent="$(uci_get travelmate global trm_useragent "Mozilla/5.0 (Linux x86_64; rv:80.0) Gecko/20100101 Firefox/80.0")"
 trm_maxwait="$(uci_get travelmate global trm_maxwait "30")"
+trm_fetch="$(command -v curl)"
 
 # initial get request to receive all header information
 #
-"${trm_fetch}" -A "${trm_useragent}" "https://${trm_domain}" -si > "/tmp/${trm_domain}.cookie"
+"${trm_fetch}" --user-agent "${trm_useragent}" --referer "http://www.example.com" --silent --connect-timeout $((trm_maxwait/6)) --include --cookie-jar "/tmp/${trm_domain}.cookie" --output /dev/null "http://${trm_domain}"
 
 # extract the session cookie and the hotspot location
 #
@@ -27,7 +27,7 @@ fi
 #
 if [ -n "${php_token}" ] && [ -n "${location}" ]
 then
-	"${trm_fetch}" -A "${trm_useragent}" "https://${trm_domain}/portal_api.php" -H "Connection: keep-alive" -H "Referer: ${location}" -H "Cookie: ${php_token}" --data "action=subscribe&type=one&connect_policy_accept=false&user_login=&user_password=&user_password_confirm=&email_address=&prefix=&phone=&policy_accept=false&gender=&interests=" -si > "/tmp/${trm_domain}.cookie"
+	"${trm_fetch}" --user-agent "${trm_useragent}" --referer "${location}" --silent  --connect-timeout $((trm_maxwait/6)) --include --cookie-jar "/tmp/${trm_domain}.cookie" --header "Cookie: ${php_token}" --data "action=subscribe&type=one&connect_policy_accept=false&user_login=&user_password=&user_password_confirm=&email_address=&prefix=&phone=&policy_accept=false&gender=&interests=" --output /dev/null "https://${trm_domain}/portal_api.php"
 else
 	exit 3
 fi
@@ -47,7 +47,7 @@ fi
 #
 if [ -n "${login}" ] && [ -n "${password}" ]
 then
-	"${trm_fetch}" -A "${trm_useragent}" "https://${trm_domain}/portal_api.php" -H "Connection: keep-alive" -H "Referer: ${location}" -H "Cookie: ${php_token}" --data "action=authenticate&login=${login}&password=${password}&policy_accept=false&from_ajax=true&wispr_mode=false"
+	"${trm_fetch}" --user-agent "${trm_useragent}" --referer "${location}" --silent --connect-timeout $((trm_maxwait/6)) --header "Cookie: ${php_token}" --data "action=authenticate&login=${login}&password=${password}&policy_accept=false&from_ajax=true&wispr_mode=false" "https://${trm_domain}/portal_api.php"
 else
 	exit 5
 fi
