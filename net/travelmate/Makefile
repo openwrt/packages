@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=travelmate
 PKG_VERSION:=2.0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 
@@ -54,6 +54,7 @@ define Package/travelmate/install
 	$(INSTALL_CONF) ./files/travelmate.conf $(1)/etc/config/travelmate
 
 	$(INSTALL_DIR) $(1)/etc/travelmate
+	$(INSTALL_BIN) ./files/travelmate.vpn $(1)/etc/travelmate
 	$(INSTALL_BIN) ./files/travelmate.mail $(1)/etc/travelmate
 	$(INSTALL_BIN) ./files/*.login $(1)/etc/travelmate
 endef
