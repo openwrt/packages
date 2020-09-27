@@ -1,6 +1,6 @@
 --- a/src/Makefile.shlib
 +++ b/src/Makefile.shlib
-@@ -396,14 +396,27 @@ endif # PORTNAME == cygwin || PORTNAME =
+@@ -387,14 +387,27 @@ endif # PORTNAME == cygwin || PORTNAME =
  
  
  %.pc: $(MAKEFILE_LIST)
@@ -20,7 +20,7 @@
 +	echo >>$@
 +	echo 'Name: lib$(NAME)' >>$@
  	echo 'Description: PostgreSQL lib$(NAME) library' >>$@
- 	echo 'Url: http://www.postgresql.org/' >>$@
+ 	echo 'Url: $(PACKAGE_URL)' >>$@
  	echo 'Version: $(VERSION)' >>$@
  	echo 'Requires: ' >>$@
  	echo 'Requires.private: $(PKG_CONFIG_REQUIRES_PRIVATE)' >>$@
