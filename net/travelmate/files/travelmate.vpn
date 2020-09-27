@@ -12,7 +12,7 @@ LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 
 . "/lib/functions.sh"
-trm_action="${1}"
+vpn_action="${1}"
 trm_vpnservice="$(uci_get travelmate global trm_vpnservice)"
 trm_vpniface="$(uci_get travelmate global trm_vpniface)"
 trm_landevice="$(uci_get travelmate global trm_landevice)"
@@ -58,40 +58,40 @@ if [ -n "${trm_vpnservice}" ] && [ -n "${trm_vpniface}" ] && [ -n "${trm_landevi
 then
 	status="$(jsonfilter -i "/tmp/trm_runtime.json" -l1 -e '@.data.travelmate_status' 2>/dev/null)"
 	vpn_status="$(ubus -S call network.interface."${trm_vpniface}" status 2>/dev/null | jsonfilter -l1 -e '@.up')"
-	if [ "${trm_action}" = "disable" ] && [ "${vpn_status}" = "true" ]
+	if [ "${vpn_action}" = "disable" ] && [ "${vpn_status}" = "true" ]
 	then
 		if [ -n "$("${trm_iptables}" "-w $((trm_maxwait/6))" -C ${trm_iptrule_drop} 2>&1)" ]
 		then
 			"${trm_iptables}" "-w $((trm_maxwait/6))" -I ${trm_iptrule_drop} 2>&1
 			f_log "info" "lan forward blocked for device '${trm_landevice}'"
 		fi
-		if [ "${status%% (net cp *}" = "connected" ]
+	fi
+	if [ "${vpn_action}" = "disable" ] && [ "${status%% (net cp *}" = "connected" ]
+	then
+		if [ -n "$("${trm_iptables}" "-w $((trm_maxwait/6))" -C ${trm_iptrule_accept} 2>&1)" ]
 		then
-			if [ -n "$("${trm_iptables}" "-w $((trm_maxwait/6))" -C ${trm_iptrule_accept} 2>&1)" ]
-			then
-				"${trm_iptables}" "-w $((trm_maxwait/6))" -I ${trm_iptrule_accept} 2>&1
-				f_log "info" "lan forward on ports 80/443 freed for device '${trm_landevice}'"
-			fi
+			"${trm_iptables}" "-w $((trm_maxwait/6))" -I ${trm_iptrule_accept} 2>&1
+			f_log "info" "lan forward on ports 80/443 freed for device '${trm_landevice}'"
 		fi
 	fi
 
 	case "${trm_vpnservice}" in
 		"wireguard")
-			if [ "${trm_action}" = "enable" ] && [ "${vpn_status}" != "true" ]
+			if [ "${vpn_action}" = "enable" ] && [ "${vpn_status}" != "true" ]
 			then
 				ubus call network.interface."${trm_vpniface}" up
-			elif [ "${trm_action}" = "disable" ] && [ "${vpn_status}" = "true" ]
+			elif [ "${vpn_action}" = "disable" ] && [ "${vpn_status}" = "true" ]
 			then
 				ubus call network.interface."${trm_vpniface}" down
 				f_log "info" "${trm_vpnservice} client connection disabled"
 			fi
 		;;
 		"openvpn")
-			if [ "${trm_action}" = "enable" ] && [ "${vpn_status}" != "true" ]
+			if [ "${vpn_action}" = "enable" ] && [ "${vpn_status}" != "true" ]
 			then
 				ubus call network.interface."${trm_vpniface}" up
 				/etc/init.d/openvpn restart >/dev/null 2>&1
-			elif [ "${trm_action}" = "disable" ] && [ "${vpn_status}" = "true" ]
+			elif [ "${vpn_action}" = "disable" ] && [ "${vpn_status}" = "true" ]
 			then
 				ubus call network.interface."${trm_vpniface}" down
 				/etc/init.d/openvpn stop >/dev/null 2>&1
@@ -100,7 +100,7 @@ then
 		;;
 	esac
 
-	if [ "${trm_action}" = "enable" ] && [ "${vpn_status}" != "true" ]
+	if [ "${vpn_action}" = "enable" ] && [ "${vpn_status}" != "true" ]
 	then
 		cnt=0
 		while true
@@ -121,10 +121,6 @@ then
 						fi
 						f_log "info" "lan forward freed for device '${trm_landevice}'"
 					fi
-					if [ -f "/etc/init.d/sysntpd" ]
-					then
-						/etc/init.d/sysntpd restart >/dev/null 2>&1
-					fi
 					break
 				fi
 			fi
@@ -132,10 +128,19 @@ then
 			then
 				f_log "info" "${trm_vpnservice} restart failed, lan forward for device '${trm_landevice}' still blocked"
 				ubus call network.interface."${trm_vpniface}" down
-				break
+				exit 2
 			fi
 			sleep 1
 			cnt="$((cnt+1))"
 		done
 	fi
+	if [ "${vpn_action}" = "enable" ] && [ "${vpn_status}" = "true" ]
+	then
+		if [ -f "/etc/init.d/sysntpd" ]
+		then
+			/etc/init.d/sysntpd restart >/dev/null 2>&1
+		fi
+	fi
+	exit 0
 fi
+exit 1

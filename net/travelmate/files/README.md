@@ -1,3 +1,5 @@
+<!-- markdownlint-disable -->
+
 # travelmate, a wlan connection manager for travel router
 
 ## Description
@@ -40,7 +42,10 @@ To avoid these kind of deadlocks, travelmate will set all station interfaces to 
 * optional: 'msmtp' to send out travelmate related status messages via email
 
 ## Installation & Usage
-* before you start with travelmate you should setup at least one Access Point, ideally on a separate radio
+* **Please note:** before you start with travelmate ...
+    * you should setup at least one Access Point, ideally on a separate radio,
+    * if you're updating from a former 1.x release, please use the '--force-reinstall --force-maintainer' options in opkg,
+    * and remove any existing travelmate related uplink stations in your wireless config manually
 * download [travelmate](https://downloads.openwrt.org/snapshots/packages/x86_64/packages)
 * download [luci-app-travelmate](https://downloads.openwrt.org/snapshots/packages/x86_64/luci)
 * install both packages (_opkg install travelmate_, _opkg install luci-app-travelmate_)
@@ -86,7 +91,7 @@ To avoid these kind of deadlocks, travelmate will set all station interfaces to 
 
 | Option             | Default                            | Description/Valid Values                                                                              |
 | :----------------- | :--------------------------------- | :---------------------------------------------------------------------------------------------------- |
-| enabled            | 1, enabled                         | enable or disable the uplink in travelmate                                                            |
+| enabled            | 1, enabled                         | enable or disable the uplink, automatically set if the retry limit or the conn. expiry was reached    |
 | device             | -, not set                         | match the 'device' in the wireless config section                                                     |
 | ssid               | -, not set                         | match the 'ssid' in the wireless config section                                                       |
 | bssid              | -, not set                         | match the 'bssid' in the wireless config section                                                      |
@@ -166,7 +171,7 @@ root@2go_ar750s:~# /etc/init.d/travelmate status
   + system             : GL.iNet GL-AR750S (NOR/NAND), OpenWrt SNAPSHOT r14430-2dda301d40
 </code></pre>
 
-To debug travelmate runtime problems, please always enable the 'trm\_debug' flag, restart travelmate and scan the system log (_logread -e "trm-"_)
+To debug travelmate runtime problems, please always enable the 'trm\_debug' flag, restart travelmate and check the system log afterwards (_logread -e "trm-"_)
 
 ## Support
 Please join the travelmate discussion in this [forum thread](https://forum.lede-project.org/t/travelmate-support-thread/5155) or contact me by [mail](mailto:dev@brenken.org)  

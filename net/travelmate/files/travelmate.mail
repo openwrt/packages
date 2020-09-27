@@ -13,13 +13,12 @@ PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 
 . "/lib/functions.sh"
 trm_debug="$(uci_get travelmate global trm_debug "0")"
-trm_mailsender="$(uci_get travelmate global trm_mailsender "no-reply@travelmate")"
 trm_mailreceiver="$(uci_get travelmate global trm_mailreceiver)"
 trm_mailprofile="$(uci_get travelmate global trm_mailprofile "trm_notify")"
-trm_mail="$(command -v msmtp)"
+trm_mailsender="$(uci_get travelmate global trm_mailsender "no-reply@travelmate")"
 trm_rtfile="$(uci_get travelmate global trm_rtfile "/tmp/trm_runtime.json")"
+trm_mailpgm="$(command -v msmtp)"
 trm_logger="$(command -v logger)"
-trm_rc=1
 
 f_log()
 {
@@ -36,10 +35,10 @@ f_log()
 if [ -z "${trm_mailreceiver}" ]
 then
 	f_log "err" "please set the mail receiver with the 'trm_mailreceiver' option"
-	exit ${trm_rc}
+	exit 1
 fi
 
-if [ "${trm_debug}" -eq 1 ]
+if [ "${trm_debug}" -eq "1" ]
 then
 	debug="--debug"
 fi
@@ -61,12 +60,7 @@ trm_mailtext="${trm_mailtext}</pre></body></html>"
 
 # send mail
 #
-if [ -x "${trm_mail}" ]
-then
-	printf "%b" "${trm_mailhead}${trm_mailtext}" 2>/dev/null | "${trm_mail}" ${debug} -a "${trm_mailprofile}" "${trm_mailreceiver}" >/dev/null 2>&1
-	trm_rc=${?}
-	f_log "info" "mail sent to '${trm_mailreceiver}' with rc '${trm_rc}'"
-else
-	f_log "err" "msmtp mail daemon not found"
-fi
-exit ${trm_rc}
+printf "%b" "${trm_mailhead}${trm_mailtext}" 2>/dev/null | "${trm_mailpgm}" ${debug} -a "${trm_mailprofile}" "${trm_mailreceiver}" >/dev/null 2>&1
+mail_rc="${?}"
+f_log "info" "mail sent to '${trm_mailreceiver}' with rc '${mail_rc}'"
+exit ${mail_rc}

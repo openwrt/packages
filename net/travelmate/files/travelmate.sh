@@ -11,7 +11,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-trm_ver="2.0.0"
+trm_ver="2.0.1"
 trm_enabled=0
 trm_debug=0
 trm_iface=""
@@ -42,7 +42,9 @@ trm_wpa="$(command -v wpa_supplicant)"
 trm_captiveurl="http://captive.apple.com"
 trm_useragent="Mozilla/5.0 (Linux x86_64; rv:80.0) Gecko/20100101 Firefox/80.0"
 trm_ntpfile="/var/state/travelmate.ntp"
+trm_vpnfile="/var/state/travelmate.vpn"
 trm_mailfile="/var/state/travelmate.mail"
+trm_refreshfile="/var/state/travelmate.refresh"
 trm_pidfile="/var/run/travelmate.pid"
 trm_action="${1:-"start"}"
 
@@ -72,20 +74,7 @@ f_env()
 	#
 	if [ ! -r "/etc/config/travelmate" ] || [ -z "$(uci -q show travelmate.global.trm_vpn)" ]
 	then
-		if { [ -r "/etc/config/travelmate-opkg" ] && [ -n "$(uci -q show travelmate.global.trm_vpn)" ]; } || \
-			{ [ -r "/rom/etc/config/travelmate" ] && [ -n "$(uci -q show /rom/etc/config/travelmate.global.trm_vpn)" ]; }
-		then
-			if [ -r "/etc/config/travelmate-opkg" ]
-			then
-				cp -pf "/etc/config/travelmate-opkg" "/etc/config/travelmate"
-			elif [ -r "/rom/etc/config/travelmate" ]
-			then
-				cp -pf "/rom/etc/config/travelmate" "/etc/config/travelmate"
-			fi
-			f_log "info" "missing or old travelmate config replaced with a new one"
-		else
-			f_log "err" "unrecoverable travelmate config error, please re-install the package via opkg with the '--force-reinstall --force-maintainer' options"
-		fi
+		f_log "err" "no valid travelmate config found, please re-install the package via opkg with the '--force-reinstall --force-maintainer' options"
 	fi
 
 	# load travelmate config
@@ -241,16 +230,27 @@ f_reconf()
 #
 f_vpn()
 {
-	local IFS action="${1}"
+	local IFS rc action="${1}"
 
 	if [ "${trm_vpn}" -eq "1" ] && [ -x "${trm_vpnpgm}" ]
 	then
-		"${trm_vpnpgm}" "${action}" >/dev/null 2>&1
+		if [ "${action}" = "disable" ] || { [ "${action}" = "enable" ] && [ ! -f "${trm_vpnfile}" ]; }
+		then
+			"${trm_vpnpgm}" "${action}" >/dev/null 2>&1
+			rc="${?}"
+		fi
+		if [ "${action}" = "enable" ] && [ "${rc}" -eq "0" ]
+		then
+			> "${trm_vpnfile}"
+		elif [ "${action}" = "disable" ] && [ -f "${trm_vpnfile}" ]
+		then
+			rm -f "${trm_vpnfile}"
+		fi
 	fi
-	f_log "debug" "f_vpn     ::: vpn: ${trm_vpn}, vpnservice: ${trm_vpnservice:-"-"}, vpnpgm: ${trm_vpnpgm}, action: ${action}"
+	f_log "debug" "f_vpn     ::: vpn: ${trm_vpn}, vpnservice: ${trm_vpnservice:-"-"}, vpnpgm: ${trm_vpnpgm}, action: ${action}, rc: ${rc:-"-"}"
 }
 
-# mac helper function
+# mac randomizer helper function
 #
 f_mac()
 {
@@ -343,9 +343,9 @@ f_contrack()
 		if [ -n "$(uci -q changes "travelmate")" ]
 		then
 			uci_commit "travelmate"
-			if [ ! -f "/var/run/travelmate.refresh" ]
+			if [ ! -f "${trm_refreshfile}" ]
 			then
-				printf "%s" "cfg_reload" > "/var/run/travelmate.refresh"
+				printf "%s" "cfg_reload" > "${trm_refreshfile}"
 			fi
 		fi
 	fi
@@ -450,9 +450,9 @@ f_addif()
 			uci_commit "travelmate"
 			uci_commit "wireless"
 			f_reconf
-			if [ ! -f "/var/run/travelmate.refresh" ]
+			if [ ! -f "${trm_refreshfile}" ]
 			then
-				printf "%s" "ui_reload" > "/var/run/travelmate.refresh"
+				printf "%s" "ui_reload" > "${trm_refreshfile}"
 			fi
 			f_log "info" "open uplink '${radio}/${essid}' added to wireless config"
 		fi
@@ -637,7 +637,7 @@ f_check()
 									then
 										login_script_args="$(f_uplink "script_args" "${sta_radio}" "${sta_essid}" "${sta_bssid}")"
 										"${login_script}" ${login_script_args} >/dev/null 2>&1
-										rc=${?}
+										rc="${?}"
 										f_log "info" "captive portal login '${login_script:0:40} ${login_script_args:0:20}' for '${cp_domain}' has been executed with rc '${rc}'"
 										if [ "${rc}" -eq "0" ]
 										then
@@ -713,7 +713,7 @@ f_check()
 #
 f_jsnup()
 {
-	local IFS section bg_pid last_date last_station sta_iface sta_radio sta_essid sta_bssid sta_mac dev_status last_status status="${trm_ifstatus}" ntp_sync="0"
+	local IFS section last_date last_station sta_iface sta_radio sta_essid sta_bssid sta_mac dev_status last_status status="${trm_ifstatus}" ntp_done="0" vpn_done="0" mail_done="0"
 
 	if [ "${status}" = "true" ]
 	then
@@ -757,12 +757,18 @@ f_jsnup()
 	then
 		last_date="$(date "+%Y.%m.%d-%H:%M:%S")"
 	fi
-
 	if [ -s "${trm_ntpfile}" ]
 	then
-		ntp_sync="1"
+		ntp_done="1"
 	fi
-
+	if [ "${trm_vpn}" -eq "1" ] && [ -f "${trm_vpnfile}" ]
+	then
+		vpn_done="1"
+	fi
+	if [ "${trm_mail}" -eq "1" ] && [ -f "${trm_mailfile}" ]
+	then
+		mail_done="1"
+	fi
 	json_add_string "travelmate_status" "${status}"
 	json_add_string "travelmate_version" "${trm_ver}"
 	json_add_string "station_id" "${sta_radio:-"-"}/${sta_essid:-"-"}/${sta_bssid:-"-"}"
@@ -770,7 +776,7 @@ f_jsnup()
 	json_add_string "station_interface" "${sta_iface:-"-"}"
 	json_add_string "wpa_flags" "${trm_wpaflags:-"-"}"
 	json_add_string "run_flags" "captive: $(f_char ${trm_captive}), proactive: $(f_char ${trm_proactive}), netcheck: $(f_char ${trm_netcheck}), autoadd: $(f_char ${trm_autoadd}), randomize: $(f_char ${trm_randomize})"
-	json_add_string "ext_hooks" "ntp: $(f_char ${ntp_sync}), vpn: $(f_char ${trm_vpn}), mail: $(f_char ${trm_mail})"
+	json_add_string "ext_hooks" "ntp: $(f_char ${ntp_done}), vpn: $(f_char ${vpn_done}), mail: $(f_char ${mail_done})"
 	json_add_string "last_run" "${last_date}"
 	json_add_string "system" "${trm_sysver}"
 	json_dump > "${trm_rtfile}"
@@ -778,16 +784,18 @@ f_jsnup()
 	if [ "${status%% (net ok/*}" = "connected" ]
 	then
 		f_vpn "enable"
-		if [ "${trm_mail}" -eq "1" ] && [ -x "${trm_mailpgm}" ] && [ -s "${trm_ntpfile}" ] && [ ! -f "${trm_mailfile}" ]
+		if [ "${trm_mail}" -eq "1" ] && [ -x "${trm_mailpgm}" ] && [ "${ntp_done}" = "1" ] && [ "${mail_done}" = "0" ]
 		then
-			> "${trm_mailfile}"
-			( "${trm_mailpgm}" >/dev/null 2>&1 )&
-			bg_pid="${!}"
+			if [ "${trm_vpn}" -eq "0" ] || [ "${vpn_done}" -eq "1" ]
+			then
+				> "${trm_mailfile}"
+				"${trm_mailpgm}" >/dev/null 2>&1
+			fi
 		fi
 	else
 		f_vpn "disable"
 	fi
-	f_log "debug" "f_jsnup   ::: section: ${section:-"-"}, status: ${status:-"-"}, sta_iface: ${sta_iface:-"-"}, sta_radio: ${sta_radio:-"-"}, sta_essid: ${sta_essid:-"-"}, sta_bssid: ${sta_bssid:-"-"}, vpn: ${trm_vpn}, mail: ${trm_mail}, mail_pid: ${bg_pid:-"-"}"
+	f_log "debug" "f_jsnup   ::: section: ${section:-"-"}, status: ${status:-"-"}, sta_iface: ${sta_iface:-"-"}, sta_radio: ${sta_radio:-"-"}, sta_essid: ${sta_essid:-"-"}, sta_bssid: ${sta_bssid:-"-"}, ntp: ${ntp_done}, vpn: ${trm_vpn}/${vpn_done}, mail: ${trm_mail}/${mail_done}"
 }
 
 # write to syslog
@@ -994,7 +1002,10 @@ fi
 
 # control travelmate actions
 #
-f_env
+if [ "${trm_action}" != "stop" ]
+then
+	f_env
+fi
 while true
 do
 	if [ -z "${trm_action}" ]
