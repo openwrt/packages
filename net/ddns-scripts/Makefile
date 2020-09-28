@@ -68,13 +68,13 @@ define Package/ddns-scripts-cloudflare/description
 endef
 
 
-define Package/ddns-scripts_freedns_42_pl
+define Package/ddns-scripts-freedns
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for freedns.42.pl
   DEPENDS:=ddns-scripts +curl
 endef
 
-define Package/ddns-scripts_freedns_42_pl/description
+define Package/ddns-scripts-freedns/description
   Dynamic DNS Client scripts extension for "freedns.42.pl".
 endef
 
@@ -250,7 +250,7 @@ exit 0
 endef
 
 
-define Package/ddns-scripts_freedns_42_pl/install
+define Package/ddns-scripts-freedns/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_freedns_42_pl.sh \
 		$(1)/usr/lib/ddns
@@ -260,7 +260,7 @@ define Package/ddns-scripts_freedns_42_pl/install
 		$(1)/usr/share/ddns/services
 endef
 
-define Package/ddns-scripts_freedns_42_pl/prerm
+define Package/ddns-scripts-freedns/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -386,7 +386,7 @@ endef
 $(eval $(call BuildPackage,ddns-scripts))
 $(eval $(call BuildPackage,ddns-scripts-services))
 $(eval $(call BuildPackage,ddns-scripts-cloudflare))
-$(eval $(call BuildPackage,ddns-scripts_freedns_42_pl))
+$(eval $(call BuildPackage,ddns-scripts-freedns))
 $(eval $(call BuildPackage,ddns-scripts_godaddy.com-v1))
 $(eval $(call BuildPackage,ddns-scripts_digitalocean.com-v2))
 $(eval $(call BuildPackage,ddns-scripts_no-ip_com))
