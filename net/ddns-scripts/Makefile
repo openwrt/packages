@@ -25,6 +25,7 @@ endef
 define Package/ddns-scripts
   $(call Package/ddns-scripts/Default)
   TITLE:=Dynamic DNS Client scripts (with IPv6 support)
+  DEPENDS:=+ddns-scripts-services
 endef
 
 define Package/ddns-scripts/description
@@ -49,7 +50,6 @@ endef
 define Package/ddns-scripts-services
   $(call Package/ddns-scripts/Default)
   TITLE:=Common ddns providers
-  DEPENDS:=ddns-scripts
 endef
 
 define Package/ddns-scripts-services/description
