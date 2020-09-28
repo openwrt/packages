@@ -46,13 +46,13 @@ define Package/ddns-scripts/conffiles
 endef
 
 
-define Package/ddns-scripts_service
+define Package/ddns-scripts-services
   $(call Package/ddns-scripts/Default)
   TITLE:=Common ddns providers
   DEPENDS:=ddns-scripts
 endef
 
-define Package/ddns-scripts_service/description
+define Package/ddns-scripts-services/description
   Dynamic DNS Client definitions for supported services
 endef
 
@@ -224,7 +224,7 @@ exit 0
 endef
 
 
-define Package/ddns-scripts_service/install
+define Package/ddns-scripts-services/install
 	$(INSTALL_DIR) $(1)/usr/share/ddns/services
 	$(INSTALL_DATA) ./files/usr/share/ddns/services/* \
 		$(1)/usr/share/ddns/services
@@ -384,7 +384,7 @@ endef
 
 
 $(eval $(call BuildPackage,ddns-scripts))
-$(eval $(call BuildPackage,ddns-scripts_service))
+$(eval $(call BuildPackage,ddns-scripts-services))
 $(eval $(call BuildPackage,ddns-scripts_cloudflare.com-v4))
 $(eval $(call BuildPackage,ddns-scripts_freedns_42_pl))
 $(eval $(call BuildPackage,ddns-scripts_godaddy.com-v1))
