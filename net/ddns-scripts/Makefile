@@ -79,13 +79,13 @@ define Package/ddns-scripts-freedns/description
 endef
 
 
-define Package/ddns-scripts_godaddy.com-v1
+define Package/ddns-scripts-godaddy
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for godaddy.com API v1
   DEPENDS:=ddns-scripts +curl
 endef
 
-define Package/ddns-scripts_godaddy.com-v1/description
+define Package/ddns-scripts-godaddy/description
   Dynamic DNS Client scripts extension for "godaddy.com API v1".
 endef
 
@@ -269,7 +269,7 @@ exit 0
 endef
 
 
-define Package/ddns-scripts_godaddy.com-v1/install
+define Package/ddns-scripts-godaddy/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_godaddy_com_v1.sh \
 		$(1)/usr/lib/ddns
@@ -279,7 +279,7 @@ define Package/ddns-scripts_godaddy.com-v1/install
 		$(1)/usr/share/ddns/services
 endef
 
-define Package/ddns-scripts_godaddy.com-v1/prerm
+define Package/ddns-scripts-godaddy/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -387,7 +387,7 @@ $(eval $(call BuildPackage,ddns-scripts))
 $(eval $(call BuildPackage,ddns-scripts-services))
 $(eval $(call BuildPackage,ddns-scripts-cloudflare))
 $(eval $(call BuildPackage,ddns-scripts-freedns))
-$(eval $(call BuildPackage,ddns-scripts_godaddy.com-v1))
+$(eval $(call BuildPackage,ddns-scripts-godaddy))
 $(eval $(call BuildPackage,ddns-scripts_digitalocean.com-v2))
 $(eval $(call BuildPackage,ddns-scripts_no-ip_com))
 $(eval $(call BuildPackage,ddns-scripts_nsupdate))
