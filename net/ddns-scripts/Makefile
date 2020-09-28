@@ -108,13 +108,13 @@ define Package/ddns-scripts-digitalocean/description
 endef
 
 
-define Package/ddns-scripts_no-ip_com
+define Package/ddns-scripts-noip
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for no-ip.com
   DEPENDS:=ddns-scripts
 endef
 
-define Package/ddns-scripts_no-ip_com/description
+define Package/ddns-scripts-noip/description
   Dynamic DNS Client scripts extension for "no-ip.com".
 endef
 
@@ -307,7 +307,7 @@ exit 0
 endef
 
 
-define Package/ddns-scripts_no-ip_com/install
+define Package/ddns-scripts-noip/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_no-ip_com.sh \
 		$(1)/usr/lib/ddns
@@ -317,7 +317,7 @@ define Package/ddns-scripts_no-ip_com/install
 		$(1)/usr/share/ddns/services
 endef
 
-define Package/ddns-scripts_no-ip_com/prerm
+define Package/ddns-scripts-noip/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -389,7 +389,7 @@ $(eval $(call BuildPackage,ddns-scripts-cloudflare))
 $(eval $(call BuildPackage,ddns-scripts-freedns))
 $(eval $(call BuildPackage,ddns-scripts-godaddy))
 $(eval $(call BuildPackage,ddns-scripts-digitalocean))
-$(eval $(call BuildPackage,ddns-scripts_no-ip_com))
+$(eval $(call BuildPackage,ddns-scripts-noip))
 $(eval $(call BuildPackage,ddns-scripts_nsupdate))
 $(eval $(call BuildPackage,ddns-scripts_route53-v1))
 $(eval $(call BuildPackage,ddns-scripts_cnkuai_cn))
