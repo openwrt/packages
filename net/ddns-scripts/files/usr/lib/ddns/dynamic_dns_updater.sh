@@ -233,7 +233,11 @@ esac
 # otherwise update_url is set inside configuration (custom update url)
 # or update_script is set inside configuration (custom update script)
 [ -n "$service_name" ] && {
-	get_service_data "$service_name" update_url update_script UPD_ANSWER
+	# Check first if we have a custom service provider with this name
+	get_service_data "$service_name" "/usr/share/ddns/custom" update_url update_script UPD_ANSWER
+	if [ "$?" != "0" ]; then
+		get_service_data "$service_name" "/usr/share/ddns/default" update_url update_script UPD_ANSWER
+	fi
 }
 
 [ -z "$update_url" -a -z "$update_script" ] && write_log 14 "No update_url found/defined or no update_script found/defined!"
