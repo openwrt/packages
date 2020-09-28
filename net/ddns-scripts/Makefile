@@ -228,6 +228,16 @@ define Package/ddns-scripts-services/install
 	$(INSTALL_DIR) $(1)/usr/share/ddns/services
 	$(INSTALL_DATA) ./files/usr/share/ddns/services/* \
 		$(1)/usr/share/ddns/services
+
+	# Remove special services
+	rm $(1)/usr/share/ddns/services/cloudflare.com-v4.json
+	rm $(1)/usr/share/ddns/services/freedns.42.pl.json
+	rm $(1)/usr/share/ddns/services/godaddy.com-v1.json
+	rm $(1)/usr/share/ddns/services/digitalocean.com-v2.json
+	rm $(1)/usr/share/ddns/services/no-ip.com.json
+	rm $(1)/usr/share/ddns/services/bind-nsupdate.json
+	rm $(1)/usr/share/ddns/services/route53-v1.json
+	rm $(1)/usr/share/ddns/services/cnkuai.cn.json
 endef
 
 
