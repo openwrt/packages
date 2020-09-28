@@ -90,13 +90,13 @@ define Package/ddns-scripts-godaddy/description
 endef
 
 
-define Package/ddns-scripts_digitalocean.com-v2
+define Package/ddns-scripts-digitalocean
   $(call Package/ddns-scripts/Default)
   TITLE:=Extention for digitalocean.com API v2
   DEPENDS:=ddns-scripts +curl
 endef
 
-define Package/ddns-scripts_digitalocean.com-v2/description
+define Package/ddns-scripts-digitalocean/description
   Dynamic DNS Client scripts extension for "digitalocean.com API v2".
   The script directly updates a DNS record using the DO API.
   It requires:
@@ -288,7 +288,7 @@ exit 0
 endef
 
 
-define Package/ddns-scripts_digitalocean.com-v2/install
+define Package/ddns-scripts-digitalocean/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_digitalocean_com_v2.sh \
 		$(1)/usr/lib/ddns
@@ -298,7 +298,7 @@ define Package/ddns-scripts_digitalocean.com-v2/install
 		$(1)/usr/share/ddns/services
 endef
 
-define Package/ddns-scripts_digitalocean.com-v2/prerm
+define Package/ddns-scripts-digitalocean/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -388,7 +388,7 @@ $(eval $(call BuildPackage,ddns-scripts-services))
 $(eval $(call BuildPackage,ddns-scripts-cloudflare))
 $(eval $(call BuildPackage,ddns-scripts-freedns))
 $(eval $(call BuildPackage,ddns-scripts-godaddy))
-$(eval $(call BuildPackage,ddns-scripts_digitalocean.com-v2))
+$(eval $(call BuildPackage,ddns-scripts-digitalocean))
 $(eval $(call BuildPackage,ddns-scripts_no-ip_com))
 $(eval $(call BuildPackage,ddns-scripts_nsupdate))
 $(eval $(call BuildPackage,ddns-scripts_route53-v1))
