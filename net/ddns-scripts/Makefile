@@ -136,13 +136,13 @@ define Package/ddns-scripts-nsupdate/description
 endef
 
 
-define Package/ddns-scripts_route53-v1
+define Package/ddns-scripts-route53
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for route53 API v1
   DEPENDS:=ddns-scripts +curl +openssl-util
 endef
 
-define Package/ddns-scripts_route53-v1/description
+define Package/ddns-scripts-route53/description
   Dynamic DNS Client scripts extension for Amazon AWS "route53 API v1".
   Note: You must also install ca-certificate or ca-bundle.
   It requires:
@@ -345,7 +345,7 @@ exit 0
 endef
 
 
-define Package/ddns-scripts_route53-v1/install
+define Package/ddns-scripts-route53/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_route53_v1.sh \
 		$(1)/usr/lib/ddns
@@ -355,7 +355,7 @@ define Package/ddns-scripts_route53-v1/install
 		$(1)/usr/share/ddns/services
 endef
 
-define Package/ddns-scripts_route53-v1/prerm
+define Package/ddns-scripts-route53/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -391,5 +391,5 @@ $(eval $(call BuildPackage,ddns-scripts-godaddy))
 $(eval $(call BuildPackage,ddns-scripts-digitalocean))
 $(eval $(call BuildPackage,ddns-scripts-noip))
 $(eval $(call BuildPackage,ddns-scripts-nsupdate))
-$(eval $(call BuildPackage,ddns-scripts_route53-v1))
+$(eval $(call BuildPackage,ddns-scripts-route53))
 $(eval $(call BuildPackage,ddns-scripts_cnkuai_cn))
