@@ -1,9 +1,16 @@
 #!/bin/sh /etc/rc.common
-# Copyright 2019 Stan Grishin (stangri@melmac.net)
+# Copyright 2019-2020 Stan Grishin (stangri@melmac.net)
 # shellcheck disable=SC2039
+PKG_VERSION='dev-test'
 
-export START=80
-export USE_PROCD=1
+# shellcheck disable=SC2034
+START=80
+# shellcheck disable=SC2034
+USE_PROCD=1
+
+# shellcheck disable=SC2034
+EXTRA_COMMANDS='version'
+version() { echo "$PKG_VERSION"; }
 
 dnsmasqConfig=''
 
@@ -46,15 +53,15 @@ start_instance() {
 	append_parm "$cfg" 'logfile' '-l'
 	append_bool "$cfg" 'use_http1' '-x'
 	config_get_bool ipv6_resolvers_only "$cfg" 'use_ipv6_resolvers_only' '0'
-	config_get verbosity "$cfg" 'verbosity' "0"
+	config_get verbosity "$cfg" 'verbosity' '0'
 
 # shellcheck disable=SC2086,SC2154
 	for i in $(seq 1 $verbosity); do
-		xappend "-v"
+		xappend '-v'
 	done
 # shellcheck disable=SC2154
 	if [ "$ipv6_resolvers_only" = 0 ]; then
-		xappend "-4"
+		xappend '-4'
 	fi
 
 	procd_open_instance
