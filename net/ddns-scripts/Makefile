@@ -152,13 +152,13 @@ define Package/ddns-scripts-route53/description
 endef
 
 
-define Package/ddns-scripts_cnkuai_cn
+define Package/ddns-scripts-cnkuai
   $(call Package/ddns-scripts/Default)
   TITLE:=CnKuai API
   DEPENDS:=ddns-scripts +curl +giflib-utils
 endef
 
-define Package/ddns-scripts_cnkuai_cn/description
+define Package/ddns-scripts-cnkuai/description
   Dynamic DNS Client scripts extension for "cnkuai.cn".
   It requires:
   "option username" to be a valid CnKuai control panel id
@@ -364,7 +364,7 @@ exit 0
 endef
 
 
-define Package/ddns-scripts_cnkuai_cn/install
+define Package/ddns-scripts-cnkuai/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_cnkuai_cn.sh \
 		$(1)/usr/lib/ddns
@@ -374,7 +374,7 @@ define Package/ddns-scripts_cnkuai_cn/install
 		$(1)/usr/share/ddns/services
 endef
 
-define Package/ddns-scripts_cnkuai_cn/prerm
+define Package/ddns-scripts-cnkuai/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -392,4 +392,4 @@ $(eval $(call BuildPackage,ddns-scripts-digitalocean))
 $(eval $(call BuildPackage,ddns-scripts-noip))
 $(eval $(call BuildPackage,ddns-scripts-nsupdate))
 $(eval $(call BuildPackage,ddns-scripts-route53))
-$(eval $(call BuildPackage,ddns-scripts_cnkuai_cn))
+$(eval $(call BuildPackage,ddns-scripts-cnkuai))
