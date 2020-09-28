@@ -189,8 +189,6 @@ define Package/ddns-scripts/install
 
 	$(INSTALL_DIR) $(1)/usr/share/ddns
 	echo "$(PKG_VERSION)-$(PKG_RELEASE)" > $(1)/usr/share/ddns/version
-	$(INSTALL_DATA) ./files/usr/share/ddns/list \
-		$(1)/usr/share/ddns
 
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_DATA) ./files/usr/lib/ddns/dynamic_dns_functions.sh \
