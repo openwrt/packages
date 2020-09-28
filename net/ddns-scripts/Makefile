@@ -119,13 +119,13 @@ define Package/ddns-scripts-noip/description
 endef
 
 
-define Package/ddns-scripts_nsupdate
+define Package/ddns-scripts-nsupdate
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for using bind nsupdate.
   DEPENDS:=ddns-scripts +bind-client
 endef
 
-define Package/ddns-scripts_nsupdate/description
+define Package/ddns-scripts-nsupdate/description
   Dynamic DNS Client scripts extension for direct updates using bind nsupdate
   The script directly updates a PowerDNS (or maybe bind server) via nsupdate
   from bind-client package.
@@ -326,7 +326,7 @@ exit 0
 endef
 
 
-define Package/ddns-scripts_nsupdate/install
+define Package/ddns-scripts-nsupdate/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_nsupdate.sh \
 		$(1)/usr/lib/ddns
@@ -336,7 +336,7 @@ define Package/ddns-scripts_nsupdate/install
 		$(1)/usr/share/ddns/services
 endef
 
-define Package/ddns-scripts_nsupdate/prerm
+define Package/ddns-scripts-nsupdate/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -390,6 +390,6 @@ $(eval $(call BuildPackage,ddns-scripts-freedns))
 $(eval $(call BuildPackage,ddns-scripts-godaddy))
 $(eval $(call BuildPackage,ddns-scripts-digitalocean))
 $(eval $(call BuildPackage,ddns-scripts-noip))
-$(eval $(call BuildPackage,ddns-scripts_nsupdate))
+$(eval $(call BuildPackage,ddns-scripts-nsupdate))
 $(eval $(call BuildPackage,ddns-scripts_route53-v1))
 $(eval $(call BuildPackage,ddns-scripts_cnkuai_cn))
