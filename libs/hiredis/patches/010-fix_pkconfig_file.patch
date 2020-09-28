@@ -17,11 +17,9 @@ Date:   Sun Jan 13 19:25:52 2019 +0100
     
     Signed-off-by: Sebastian Kemper <sebastian_ml@gmx.net>
 
-diff --git a/Makefile b/Makefile
-index 07b8a83..14d21de 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -166,8 +166,8 @@ $(PKGCONFNAME): hiredis.h
+@@ -234,8 +234,8 @@ $(PKGCONFNAME): hiredis.h
  	@echo "Generating $@ for pkgconfig..."
  	@echo prefix=$(PREFIX) > $@
  	@echo exec_prefix=\$${prefix} >> $@
