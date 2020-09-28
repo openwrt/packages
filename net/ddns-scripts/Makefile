@@ -57,13 +57,13 @@ define Package/ddns-scripts-services/description
 endef
 
 
-define Package/ddns-scripts_cloudflare.com-v4
+define Package/ddns-scripts-cloudflare
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for cloudflare.com API v4
   DEPENDS:=ddns-scripts +curl
 endef
 
-define Package/ddns-scripts_cloudflare.com-v4/description
+define Package/ddns-scripts-cloudflare/description
   Dynamic DNS Client scripts extension for cloudflare.com API v4 (require curl)
 endef
 
@@ -231,7 +231,7 @@ define Package/ddns-scripts-services/install
 endef
 
 
-define Package/ddns-scripts_cloudflare.com-v4/install
+define Package/ddns-scripts-cloudflare/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_cloudflare_com_v4.sh \
 		$(1)/usr/lib/ddns
@@ -241,7 +241,7 @@ define Package/ddns-scripts_cloudflare.com-v4/install
 		$(1)/usr/share/ddns/services/
 endef
 
-define Package/ddns-scripts_cloudflare.com-v4/prerm
+define Package/ddns-scripts-cloudflare/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -385,7 +385,7 @@ endef
 
 $(eval $(call BuildPackage,ddns-scripts))
 $(eval $(call BuildPackage,ddns-scripts-services))
-$(eval $(call BuildPackage,ddns-scripts_cloudflare.com-v4))
+$(eval $(call BuildPackage,ddns-scripts-cloudflare))
 $(eval $(call BuildPackage,ddns-scripts_freedns_42_pl))
 $(eval $(call BuildPackage,ddns-scripts_godaddy.com-v1))
 $(eval $(call BuildPackage,ddns-scripts_digitalocean.com-v2))
