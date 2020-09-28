@@ -223,19 +223,19 @@ endef
 
 
 define Package/ddns-scripts-services/install
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/* \
-		$(1)/usr/share/ddns/services
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/* \
+		$(1)/usr/share/ddns/default
 
 	# Remove special services
-	rm $(1)/usr/share/ddns/services/cloudflare.com-v4.json
-	rm $(1)/usr/share/ddns/services/freedns.42.pl.json
-	rm $(1)/usr/share/ddns/services/godaddy.com-v1.json
-	rm $(1)/usr/share/ddns/services/digitalocean.com-v2.json
-	rm $(1)/usr/share/ddns/services/no-ip.com.json
-	rm $(1)/usr/share/ddns/services/bind-nsupdate.json
-	rm $(1)/usr/share/ddns/services/route53-v1.json
-	rm $(1)/usr/share/ddns/services/cnkuai.cn.json
+	rm $(1)/usr/share/ddns/default/cloudflare.com-v4.json
+	rm $(1)/usr/share/ddns/default/freedns.42.pl.json
+	rm $(1)/usr/share/ddns/default/godaddy.com-v1.json
+	rm $(1)/usr/share/ddns/default/digitalocean.com-v2.json
+	rm $(1)/usr/share/ddns/default/no-ip.com.json
+	rm $(1)/usr/share/ddns/default/bind-nsupdate.json
+	rm $(1)/usr/share/ddns/default/route53-v1.json
+	rm $(1)/usr/share/ddns/default/cnkuai.cn.json
 endef
 
 
@@ -244,9 +244,9 @@ define Package/ddns-scripts-cloudflare/install
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_cloudflare_com_v4.sh \
 		$(1)/usr/lib/ddns
 
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/cloudflare.com-v4.json \
-		$(1)/usr/share/ddns/services/
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/cloudflare.com-v4.json \
+		$(1)/usr/share/ddns/default/
 endef
 
 define Package/ddns-scripts-cloudflare/prerm
@@ -263,9 +263,9 @@ define Package/ddns-scripts-freedns/install
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_freedns_42_pl.sh \
 		$(1)/usr/lib/ddns
 
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/freedns.42.pl.json \
-		$(1)/usr/share/ddns/services
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/freedns.42.pl.json \
+		$(1)/usr/share/ddns/default
 endef
 
 define Package/ddns-scripts-freedns/prerm
@@ -282,9 +282,9 @@ define Package/ddns-scripts-godaddy/install
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_godaddy_com_v1.sh \
 		$(1)/usr/lib/ddns
 
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/godaddy.com-v1.json \
-		$(1)/usr/share/ddns/services
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/godaddy.com-v1.json \
+		$(1)/usr/share/ddns/default
 endef
 
 define Package/ddns-scripts-godaddy/prerm
@@ -301,9 +301,9 @@ define Package/ddns-scripts-digitalocean/install
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_digitalocean_com_v2.sh \
 		$(1)/usr/lib/ddns
 
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/digitalocean.com-v2.json \
-		$(1)/usr/share/ddns/services
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/digitalocean.com-v2.json \
+		$(1)/usr/share/ddns/default
 endef
 
 define Package/ddns-scripts-digitalocean/prerm
@@ -320,9 +320,9 @@ define Package/ddns-scripts-noip/install
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_no-ip_com.sh \
 		$(1)/usr/lib/ddns
 
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/no-ip.com.json \
-		$(1)/usr/share/ddns/services
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/no-ip.com.json \
+		$(1)/usr/share/ddns/default
 endef
 
 define Package/ddns-scripts-noip/prerm
@@ -339,9 +339,9 @@ define Package/ddns-scripts-nsupdate/install
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_nsupdate.sh \
 		$(1)/usr/lib/ddns
 
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/bind-nsupdate.json \
-		$(1)/usr/share/ddns/services
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/bind-nsupdate.json \
+		$(1)/usr/share/ddns/default
 endef
 
 define Package/ddns-scripts-nsupdate/prerm
@@ -358,9 +358,9 @@ define Package/ddns-scripts-route53/install
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_route53_v1.sh \
 		$(1)/usr/lib/ddns
 
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/route53-v1.json \
-		$(1)/usr/share/ddns/services
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/route53-v1.json \
+		$(1)/usr/share/ddns/default
 endef
 
 define Package/ddns-scripts-route53/prerm
@@ -377,9 +377,9 @@ define Package/ddns-scripts-cnkuai/install
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_cnkuai_cn.sh \
 		$(1)/usr/lib/ddns
 
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/cnkuai.cn.json \
-		$(1)/usr/share/ddns/services
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/cnkuai.cn.json \
+		$(1)/usr/share/ddns/default
 endef
 
 define Package/ddns-scripts-cnkuai/prerm

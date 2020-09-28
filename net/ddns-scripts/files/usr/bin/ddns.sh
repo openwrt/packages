@@ -83,7 +83,7 @@ action_install() {
 	local url cacert
 
 	config_load ddns
-	config_get url global 'url' "${URL}${DDNS_PACKAGE_DIR}/services"
+	config_get url global 'url' "${URL}${DDNS_PACKAGE_DIR}/default"
 	config_get cacert global 'cacert' "IGNORE"
 	url="${url}/${service}.json"
 
