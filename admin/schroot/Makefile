@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=schroot
 PKG_VERSION:=1.6.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.xz
 PKG_SOURCE_URL:=http://deb.debian.org/debian/pool/main/s/schroot
@@ -28,7 +28,8 @@ define Package/schroot
 	+SCHROOT_BTRFS:btrfs-progs \
 	+SCHROOT_LOOPBACK:losetup \
 	+SCHROOT_LVM:lvm2 \
-	+SCHROOT_UUID:libuuid
+	+SCHROOT_UUID:libuuid \
+	$(INTL_DEPENDS)
   URL:=https://salsa.debian.org/debian/schroot
 endef
 
