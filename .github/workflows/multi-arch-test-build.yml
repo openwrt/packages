@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Test ${{ matrix.arch }}
+    name: Test ${{ matrix.arch }} ${{ matrix.config }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -30,6 +30,9 @@ jobs:
             runtime_test: true
           - arch: x86_64
             runtime_test: true
+          - arch: x86-64
+            config: nls
+            container: aparcar/openwrt-sdk-nls
 
     steps:
       - uses: actions/checkout@v2
@@ -55,6 +58,7 @@ jobs:
         env:
           ARCH: ${{ matrix.arch }}
           FEEDNAME: packages_ci
+          CONTAINER: ${{ matrix.container }}
 
       - name: Move created packages to project dir
         run: cp bin/packages/${{ matrix.arch }}/packages_ci/*.ipk . || true
