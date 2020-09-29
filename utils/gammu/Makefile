@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gammu
 PKG_VERSION:=1.41.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://dl.cihar.com/gammu/releases
@@ -38,6 +38,9 @@ define Package/gammu
 endef
 
 CMAKE_OPTIONS += \
+	-DDWITH_GettextLibs=OFF \
+	-DWITH_Iconv=OFF \
+	-DWITH_Libintl=OFF \
 	-DWITH_LibDBI:BOOL=OFF
 
 define Package/gammu/install
