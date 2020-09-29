@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cryptsetup
 PKG_VERSION:=2.3.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/cryptsetup/v2.3
@@ -30,7 +30,7 @@ define Package/cryptsetup
   CATEGORY:=Utilities
   SUBMENU:=Encryption
   TITLE:=Cryptsetup
-  DEPENDS:=$(ICONV_DEPENDS) +libblkid +libuuid +libpopt +lvm2 +libdevmapper +libjson-c +@KERNEL_DIRECT_IO +kmod-crypto-user
+  DEPENDS:=$(ICONV_DEPENDS) $(INTL_DEPENDS) +libblkid +libuuid +libpopt +lvm2 +libdevmapper +libjson-c +@KERNEL_DIRECT_IO +kmod-crypto-user
   URL:=https://gitlab.com/cryptsetup/cryptsetup/
 endef
 
@@ -48,8 +48,6 @@ CONFIGURE_ARGS += \
 	--with-default-luks-format=LUKS2 \
 	--with-luks2-lock-path=/var/run/cryptsetup \
 	--with-crypto_backend=kernel
-
-TARGET_LDFLAGS += -liconv
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
