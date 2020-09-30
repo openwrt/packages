@@ -14,7 +14,6 @@ PKG_VERSION:=1.12.0
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/xebd/accel-ppp.git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_MIRROR_HASH:=b5b6fc800bddb8b9d182ecd1a7baf48d246d5862227c251142900d2b1b4b32a6
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
