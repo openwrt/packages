@@ -10,19 +10,22 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gphoto2
 PKG_VERSION:=2.5.23
-PKG_RELEASE:=1
-PKG_MAINTAINER:=Leonardo Medici <leonardo_medici@me.com>
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/gphoto
 PKG_HASH:=df87092100e7766c9d0a4323217c91908a9c891c0d3670ebf40b76903be458d1
+
+PKG_MAINTAINER:=Leonardo Medici <leonardo_medici@me.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/gphoto2
   SECTION:=multimedia
@@ -37,9 +40,7 @@ define Package/gphoto2/description
 endef
 
 CONFIGURE_ARGS += \
-	--without-aalib \
-	--without-libiconv-prefix \
-	--without-libintl-prefix \
+	--without-aalib
 
 CONFIGURE_VARS += \
 	LIBGPHOTO2_CFLAGS="$$$$CFLAGS -I$(STAGING_DIR)/usr/include/gphoto2 $$$$CPPFLAGS" \
