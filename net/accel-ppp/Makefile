@@ -14,6 +14,7 @@ PKG_VERSION:=1.12.0
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/xebd/accel-ppp.git
 PKG_SOURCE_VERSION:=38b6104538522caf140796982e79db334aecaa08
+PKG_HASH:=b5b6fc800bddb8b9d182ecd1a7baf48d246d5862227c251142900d2b1b4b32a6
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -22,6 +23,7 @@ include $(INCLUDE_DIR)/kernel.mk
 define Package/accel-ppp
   SECTION:=ne
   CATEGORY:=Network
+  SUBMENU:=Dial-in/up
   TITLE:=a High performance PPTP/L2TP/PPPoE/IPoE server for Linux
   URL:=http://accel-ppp.org/
   DEPENDS:=+libpcre +libopenssl +libtriton +kmod-nft-connlimit
@@ -107,13 +109,16 @@ define Package/libtriton/install
 endef
 
 define Package/accel-ppp/install
-	$(INSTALL_DIR) $(1)/etc $(1)/usr/bin $(1)/usr/lib/accel-ppp $(1)/lib
+	$(INSTALL_DIR) $(1)/etc $(1)/usr/bin $(1)/usr/lib/accel-ppp $(1)/lib $(1)/usr/share/accel-ppp/l2tp/ $(1)/usr/share/accel-ppp/radius/
+	$(CP) $(PKG_BUILD_DIR)/accel-pppd/ctrl/l2tp/dict/* $(1)/usr/share/accel-ppp/l2tp/
+	$(CP) $(PKG_BUILD_DIR)/accel-pppd/radius/dict/* $(1)/usr/share/accel-ppp/radius/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/accel-cmd/accel-cmd $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/accel-pppd/accel-pppd $(1)/usr/bin/
 	$(INSTALL_CONF) ./files/accel-ppp.conf $(1)/etc/
 	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/extra/libippool.so $(1)/usr/lib/accel-ppp/
 	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/extra/libconnlimit.so $(1)/usr/lib/accel-ppp/
 	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/extra/libpppd_compat.so $(1)/usr/lib/accel-ppp/
+	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/extra/libchap-secrets.so $(1)/usr/lib/accel-pppd/
 	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/extra/libsigchld.so $(1)/lib/
 	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/ctrl/pppoe/*.so $(1)/usr/lib/accel-ppp/
 	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/ctrl/pptp/*.so $(1)/usr/lib/accel-ppp/
