@@ -14,7 +14,6 @@ jobs:
       matrix:
         arch:
           - arc_arc700
-          - arc_archs
           - arm_cortex-a9_neon
           - arm_cortex-a9_vfpv3-d16
           - mips_24kc
