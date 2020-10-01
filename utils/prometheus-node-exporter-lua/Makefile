@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
-PKG_VERSION:=2020.07.04
+PKG_VERSION:=2020.10.01
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
@@ -76,6 +76,17 @@ endef
 define Package/prometheus-node-exporter-lua-bmx7/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/bmx7.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
+define Package/prometheus-node-exporter-lua-dawn
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (dawn collector)
+  DEPENDS:=prometheus-node-exporter-lua +libiwinfo-lua +libubus-lua
+endef
+
+define Package/prometheus-node-exporter-lua-dawn/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/dawn.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
 define Package/prometheus-node-exporter-lua-hostapd_stations
@@ -180,6 +191,7 @@ endef
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx6))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx7))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-dawn))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-hostapd_stations))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-ltq-dsl))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-nat_traffic))
