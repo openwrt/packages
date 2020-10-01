@@ -7,6 +7,7 @@ STOP=10
 NAME=mysqld
 
 LOGGER="/usr/bin/logger -p user.err -s -t $NAME --"
+[ -x "$LOGGER" ] || LOGGER="echo"
 
 MYSQLADMIN=/usr/bin/mysqladmin
 MYSQLD=/usr/bin/$NAME
