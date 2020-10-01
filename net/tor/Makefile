@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tor
-PKG_VERSION:=0.4.2.8
-PKG_RELEASE:=2
+PKG_VERSION:=0.4.4.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dist.torproject.org/ \
 	https://archive.torproject.org/tor-package-archive
-PKG_HASH:=75a8a9cd7faf7ebe67c4bf27acf27e82619a498f5916976d015acab85047dbab
+PKG_HASH:=a45ca00afe765e3baa839767c9dd6ac9a46dd01720a3a8ff4d86558c12359926
 PKG_MAINTAINER:=Hauke Mehrtens <hauke@hauke-m.de> \
 		Peter Wagner <tripolar@gmx.at>
 PKG_LICENSE_FILES:=LICENSE
@@ -116,7 +116,8 @@ else
 endif
 
 CONFIGURE_VARS += \
-	CROSS_COMPILE="yes"
+	CROSS_COMPILE="yes" \
+	ac_cv_func_mallinfo=no
 
 define Package/tor/install
 	$(INSTALL_DIR) $(1)/usr/sbin
