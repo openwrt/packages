@@ -10,12 +10,15 @@ for PKG in /ci/*.ipk; do
 	PKG_NAME=$(sed -ne 's#^Package: \(.*\)$#\1#p' ./control)
 	# package version without release
 	PKG_VERSION=$(sed -ne 's#^Version: \(.*\)-[0-9]*$#\1#p' ./control)
+	# package source contianing test.sh script
+	PKG_SOURCE=$(sed -ne 's#^Source: .*/\(.*\)$#\1#p' ./control)
 
-	echo "Testing package $PKG_NAME ($PKG_VERSION)"
+	echo "Testing package $PKG_NAME in version $PKG_VERSION from $PKG_SOURCE"
 
 	opkg install "$PKG"
 
-	TEST_SCRIPT=$(find /ci/ -name "$PKG_NAME" -type d)/test.sh
+	TEST_SCRIPT=$(find /ci/ -name "$PKG_SOURCE" -type d)/test.sh
+
 	if [ -f "$TEST_SCRIPT" ]; then
 		echo "Use package specific test.sh"
 		if sh "$TEST_SCRIPT" "$PKG_NAME" "$PKG_VERSION"; then
