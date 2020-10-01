@@ -317,19 +317,18 @@ urlencode() {
 }
 
 # extract url or script for given DDNS Provider from
-# directory /usr/share/ddns/services/ipv4/ for IPv4
-# or from
-# directory /usr/share/ddns/services/ipv6/ for IPv6
 # $1	Name of the provider
-# $1	Name of Variable to store url to
-# $2	Name of Variable to store script to
-# $3	Name of Variable to store service answer to
+# $2	Provider directory
+# $3	Name of Variable to store url to
+# $4	Name of Variable to store script to
+# $5	Name of Variable to store service answer to
 get_service_data() {
 	local provider="$1"
 	shift
+	local dir="$1"
+	shift
 
 	. /usr/share/libubox/jshn.sh
-	local dir="/usr/share/ddns/services"
 	local name data url answer script
 
 	[ $# -ne 3 ] && write_log 12 "Error calling 'get_service_data()' - wrong number of parameters"

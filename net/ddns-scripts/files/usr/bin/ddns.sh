@@ -20,15 +20,15 @@ usage() {
 	echo "Usage: $(basename "$0") <command> <action> <service>"
 	echo ""
 	echo "Supported ddns <command>:"
-	echo "  service:  Command for ddns service provider"
+	echo "  service:  Command for custom ddns service providers"
 	echo ""
 	echo "Supported ddns 'service' command <action>:"
-	echo "  update:             Update local ddns service list"
-	echo "  list-available:     List all available service providers"
-	echo "  list-installed:     List all installed service providers"
-	echo "  install <service>:  Install service provider"
-	echo "  remove <service>:   Remove service provider"
-	echo "  purge:              Remove local ddns serivces"
+	echo "  update:             Update local custom ddns service list"
+	echo "  list-available:     List all available custom service providers"
+	echo "  list-installed:     List all installed custom service providers"
+	echo "  install <service>:  Install custom service provider"
+	echo "  remove <service>:   Remove custom service provider"
+	echo "  purge:              Remove local custom ddns services"
 
 	exit "$code"
 }
@@ -63,16 +63,16 @@ action_list_available() {
 	if [ -f "${DDNS_PACKAGE_DIR}/list" ]; then
 		cat "${DDNS_PACKAGE_DIR}/list"
 	else
-		echo "No service file found please download first"
+		echo "No custom service list file found. Please download first"
 		exit 3
 	fi
 }
 
 action_list_installed() {
-	if [ -d "${DDNS_PACKAGE_DIR}/services" ]; then
-		ls "${DDNS_PACKAGE_DIR}/services"
+	if [ -d "${DDNS_PACKAGE_DIR}/custom" ]; then
+		ls "${DDNS_PACKAGE_DIR}/custom"
 	else
-		echo "No services installed"
+		echo "No custom services installed"
 		exit 4
 	fi
 }
@@ -83,25 +83,26 @@ action_install() {
 	local url cacert
 
 	config_load ddns
-	config_get url global 'url' "${URL}${DDNS_PACKAGE_DIR}"
+	config_get url global 'url' "${URL}${DDNS_PACKAGE_DIR}/default"
 	config_get cacert global 'cacert' "IGNORE"
-	url="${url}/services/${service}.json"
+	url="${url}/${service}.json"
 
 	if [ -z "$service" ]; then
-		usage "4" "No service specified"
+		usage "4" "No custom service specified"
 	fi
 
-	mkdir -p "${DDNS_PACKAGE_DIR}/services"
+	mkdir -p "${DDNS_PACKAGE_DIR}/custom"
+
 	if [ "$cacert" = "IGNORE" ]; then
 		uclient-fetch \
 			--no-check-certificate \
 			"${url}" \
-			-O "${DDNS_PACKAGE_DIR}/services/${service}.json"
+			-O "${DDNS_PACKAGE_DIR}/custom/${service}.json"
 	elif [ -f "$cacert" ]; then
 		uclient-fetch \
 			--ca-certifcate="${cacert}" \
 			"${url}" \
-			-O "${DDNS_PACKAGE_DIR}/services/${service}.json"
+			-O "${DDNS_PACKAGE_DIR}/custom/${service}.json"
 	elif [ -n "$cacert" ]; then
 		echo "Certification file not found ($cacert)"
 		exit 5
@@ -111,14 +112,14 @@ action_install() {
 action_remove() {
 	local service="$1"
 	if [ -z "$service" ]; then
-		usage "4" "No service specified"
+		usage "4" "No custom service specified"
 	fi
 
-	rm "${DDNS_PACKAGE_DIR}/services/${service}.json"
+	rm "${DDNS_PACKAGE_DIR}/custom/${service}.json"
 }
 
 action_purge() {
-	rm -rf "${DDNS_PACKAGE_DIR}/services"
+	rm -rf "${DDNS_PACKAGE_DIR}/custom"
 	rm -rf "${DDNS_PACKAGE_DIR}/list"
 }
 

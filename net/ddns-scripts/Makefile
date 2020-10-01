@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
-PKG_VERSION:=2.8.0
-PKG_RELEASE:=24
+PKG_VERSION:=2.8.1
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 
@@ -25,6 +25,7 @@ endef
 define Package/ddns-scripts
   $(call Package/ddns-scripts/Default)
   TITLE:=Dynamic DNS Client scripts (with IPv6 support)
+  DEPENDS:=+ddns-scripts-services
 endef
 
 define Package/ddns-scripts/description
@@ -46,57 +47,56 @@ define Package/ddns-scripts/conffiles
 endef
 
 
-define Package/ddns-scripts_service
+define Package/ddns-scripts-services
   $(call Package/ddns-scripts/Default)
   TITLE:=Common ddns providers
-  DEPENDS:=ddns-scripts
 endef
 
-define Package/ddns-scripts_service/description
+define Package/ddns-scripts-services/description
   Dynamic DNS Client definitions for supported services
 endef
 
 
-define Package/ddns-scripts_cloudflare.com-v4
+define Package/ddns-scripts-cloudflare
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for cloudflare.com API v4
   DEPENDS:=ddns-scripts +curl
 endef
 
-define Package/ddns-scripts_cloudflare.com-v4/description
+define Package/ddns-scripts-cloudflare/description
   Dynamic DNS Client scripts extension for cloudflare.com API v4 (require curl)
 endef
 
 
-define Package/ddns-scripts_freedns_42_pl
+define Package/ddns-scripts-freedns
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for freedns.42.pl
   DEPENDS:=ddns-scripts +curl
 endef
 
-define Package/ddns-scripts_freedns_42_pl/description
+define Package/ddns-scripts-freedns/description
   Dynamic DNS Client scripts extension for "freedns.42.pl".
 endef
 
 
-define Package/ddns-scripts_godaddy.com-v1
+define Package/ddns-scripts-godaddy
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for godaddy.com API v1
   DEPENDS:=ddns-scripts +curl
 endef
 
-define Package/ddns-scripts_godaddy.com-v1/description
+define Package/ddns-scripts-godaddy/description
   Dynamic DNS Client scripts extension for "godaddy.com API v1".
 endef
 
 
-define Package/ddns-scripts_digitalocean.com-v2
+define Package/ddns-scripts-digitalocean
   $(call Package/ddns-scripts/Default)
   TITLE:=Extention for digitalocean.com API v2
   DEPENDS:=ddns-scripts +curl
 endef
 
-define Package/ddns-scripts_digitalocean.com-v2/description
+define Package/ddns-scripts-digitalocean/description
   Dynamic DNS Client scripts extension for "digitalocean.com API v2".
   The script directly updates a DNS record using the DO API.
   It requires:
@@ -108,24 +108,24 @@ define Package/ddns-scripts_digitalocean.com-v2/description
 endef
 
 
-define Package/ddns-scripts_no-ip_com
+define Package/ddns-scripts-noip
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for no-ip.com
   DEPENDS:=ddns-scripts
 endef
 
-define Package/ddns-scripts_no-ip_com/description
+define Package/ddns-scripts-noip/description
   Dynamic DNS Client scripts extension for "no-ip.com".
 endef
 
 
-define Package/ddns-scripts_nsupdate
+define Package/ddns-scripts-nsupdate
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for using bind nsupdate.
   DEPENDS:=ddns-scripts +bind-client
 endef
 
-define Package/ddns-scripts_nsupdate/description
+define Package/ddns-scripts-nsupdate/description
   Dynamic DNS Client scripts extension for direct updates using bind nsupdate
   The script directly updates a PowerDNS (or maybe bind server) via nsupdate
   from bind-client package.
@@ -136,13 +136,13 @@ define Package/ddns-scripts_nsupdate/description
 endef
 
 
-define Package/ddns-scripts_route53-v1
+define Package/ddns-scripts-route53
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for route53 API v1
   DEPENDS:=ddns-scripts +curl +openssl-util
 endef
 
-define Package/ddns-scripts_route53-v1/description
+define Package/ddns-scripts-route53/description
   Dynamic DNS Client scripts extension for Amazon AWS "route53 API v1".
   Note: You must also install ca-certificate or ca-bundle.
   It requires:
@@ -152,13 +152,13 @@ define Package/ddns-scripts_route53-v1/description
 endef
 
 
-define Package/ddns-scripts_cnkuai_cn
+define Package/ddns-scripts-cnkuai
   $(call Package/ddns-scripts/Default)
   TITLE:=CnKuai API
   DEPENDS:=ddns-scripts +curl +giflib-utils
 endef
 
-define Package/ddns-scripts_cnkuai_cn/description
+define Package/ddns-scripts-cnkuai/description
   Dynamic DNS Client scripts extension for "cnkuai.cn".
   It requires:
   "option username" to be a valid CnKuai control panel id
@@ -189,8 +189,6 @@ define Package/ddns-scripts/install
 
 	$(INSTALL_DIR) $(1)/usr/share/ddns
 	echo "$(PKG_VERSION)-$(PKG_RELEASE)" > $(1)/usr/share/ddns/version
-	$(INSTALL_DATA) ./files/usr/share/ddns/list \
-		$(1)/usr/share/ddns
 
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_DATA) ./files/usr/lib/ddns/dynamic_dns_functions.sh \
@@ -224,24 +222,34 @@ exit 0
 endef
 
 
-define Package/ddns-scripts_service/install
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/* \
-		$(1)/usr/share/ddns/services
+define Package/ddns-scripts-services/install
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/* \
+		$(1)/usr/share/ddns/default
+
+	# Remove special services
+	rm $(1)/usr/share/ddns/default/cloudflare.com-v4.json
+	rm $(1)/usr/share/ddns/default/freedns.42.pl.json
+	rm $(1)/usr/share/ddns/default/godaddy.com-v1.json
+	rm $(1)/usr/share/ddns/default/digitalocean.com-v2.json
+	rm $(1)/usr/share/ddns/default/no-ip.com.json
+	rm $(1)/usr/share/ddns/default/bind-nsupdate.json
+	rm $(1)/usr/share/ddns/default/route53-v1.json
+	rm $(1)/usr/share/ddns/default/cnkuai.cn.json
 endef
 
 
-define Package/ddns-scripts_cloudflare.com-v4/install
+define Package/ddns-scripts-cloudflare/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_cloudflare_com_v4.sh \
 		$(1)/usr/lib/ddns
 
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/cloudflare.com-v4.json \
-		$(1)/usr/share/ddns/services/
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/cloudflare.com-v4.json \
+		$(1)/usr/share/ddns/default/
 endef
 
-define Package/ddns-scripts_cloudflare.com-v4/prerm
+define Package/ddns-scripts-cloudflare/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -250,17 +258,17 @@ exit 0
 endef
 
 
-define Package/ddns-scripts_freedns_42_pl/install
+define Package/ddns-scripts-freedns/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_freedns_42_pl.sh \
 		$(1)/usr/lib/ddns
 
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/freedns.42.pl.json \
-		$(1)/usr/share/ddns/services
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/freedns.42.pl.json \
+		$(1)/usr/share/ddns/default
 endef
 
-define Package/ddns-scripts_freedns_42_pl/prerm
+define Package/ddns-scripts-freedns/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -269,17 +277,17 @@ exit 0
 endef
 
 
-define Package/ddns-scripts_godaddy.com-v1/install
+define Package/ddns-scripts-godaddy/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_godaddy_com_v1.sh \
 		$(1)/usr/lib/ddns
 
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/godaddy.com-v1.json \
-		$(1)/usr/share/ddns/services
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/godaddy.com-v1.json \
+		$(1)/usr/share/ddns/default
 endef
 
-define Package/ddns-scripts_godaddy.com-v1/prerm
+define Package/ddns-scripts-godaddy/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -288,17 +296,17 @@ exit 0
 endef
 
 
-define Package/ddns-scripts_digitalocean.com-v2/install
+define Package/ddns-scripts-digitalocean/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_digitalocean_com_v2.sh \
 		$(1)/usr/lib/ddns
 
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/digitalocean.com-v2.json \
-		$(1)/usr/share/ddns/services
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/digitalocean.com-v2.json \
+		$(1)/usr/share/ddns/default
 endef
 
-define Package/ddns-scripts_digitalocean.com-v2/prerm
+define Package/ddns-scripts-digitalocean/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -307,17 +315,17 @@ exit 0
 endef
 
 
-define Package/ddns-scripts_no-ip_com/install
+define Package/ddns-scripts-noip/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_no-ip_com.sh \
 		$(1)/usr/lib/ddns
 
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/no-ip.com.json \
-		$(1)/usr/share/ddns/services
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/no-ip.com.json \
+		$(1)/usr/share/ddns/default
 endef
 
-define Package/ddns-scripts_no-ip_com/prerm
+define Package/ddns-scripts-noip/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -326,17 +334,17 @@ exit 0
 endef
 
 
-define Package/ddns-scripts_nsupdate/install
+define Package/ddns-scripts-nsupdate/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_nsupdate.sh \
 		$(1)/usr/lib/ddns
 
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/bind-nsupdate.json \
-		$(1)/usr/share/ddns/services
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/bind-nsupdate.json \
+		$(1)/usr/share/ddns/default
 endef
 
-define Package/ddns-scripts_nsupdate/prerm
+define Package/ddns-scripts-nsupdate/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -345,17 +353,17 @@ exit 0
 endef
 
 
-define Package/ddns-scripts_route53-v1/install
+define Package/ddns-scripts-route53/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_route53_v1.sh \
 		$(1)/usr/lib/ddns
 
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/route53-v1.json \
-		$(1)/usr/share/ddns/services
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/route53-v1.json \
+		$(1)/usr/share/ddns/default
 endef
 
-define Package/ddns-scripts_route53-v1/prerm
+define Package/ddns-scripts-route53/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -364,17 +372,17 @@ exit 0
 endef
 
 
-define Package/ddns-scripts_cnkuai_cn/install
+define Package/ddns-scripts-cnkuai/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_cnkuai_cn.sh \
 		$(1)/usr/lib/ddns
 
-	$(INSTALL_DIR) $(1)/usr/share/ddns/services
-	$(INSTALL_DATA) ./files/usr/share/ddns/services/cnkuai.cn.json \
-		$(1)/usr/share/ddns/services
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/cnkuai.cn.json \
+		$(1)/usr/share/ddns/default
 endef
 
-define Package/ddns-scripts_cnkuai_cn/prerm
+define Package/ddns-scripts-cnkuai/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -384,12 +392,12 @@ endef
 
 
 $(eval $(call BuildPackage,ddns-scripts))
-$(eval $(call BuildPackage,ddns-scripts_service))
-$(eval $(call BuildPackage,ddns-scripts_cloudflare.com-v4))
-$(eval $(call BuildPackage,ddns-scripts_freedns_42_pl))
-$(eval $(call BuildPackage,ddns-scripts_godaddy.com-v1))
-$(eval $(call BuildPackage,ddns-scripts_digitalocean.com-v2))
-$(eval $(call BuildPackage,ddns-scripts_no-ip_com))
-$(eval $(call BuildPackage,ddns-scripts_nsupdate))
-$(eval $(call BuildPackage,ddns-scripts_route53-v1))
-$(eval $(call BuildPackage,ddns-scripts_cnkuai_cn))
+$(eval $(call BuildPackage,ddns-scripts-services))
+$(eval $(call BuildPackage,ddns-scripts-cloudflare))
+$(eval $(call BuildPackage,ddns-scripts-freedns))
+$(eval $(call BuildPackage,ddns-scripts-godaddy))
+$(eval $(call BuildPackage,ddns-scripts-digitalocean))
+$(eval $(call BuildPackage,ddns-scripts-noip))
+$(eval $(call BuildPackage,ddns-scripts-nsupdate))
+$(eval $(call BuildPackage,ddns-scripts-route53))
+$(eval $(call BuildPackage,ddns-scripts-cnkuai))
