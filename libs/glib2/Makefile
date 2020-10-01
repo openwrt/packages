@@ -49,6 +49,7 @@ TARGET_CFLAGS += -ffunction-sections -fdata-sections
 TARGET_LDFLAGS += -Wl,--gc-sections -liconv $(if $(INTL_FULL),-lintl)
 
 COMP_ARGS= \
+	-Ddefault_library=both \
 	-Diconv=external \
 	-Dselinux=disabled \
 	-Dlibmount=disabled \
@@ -68,22 +69,6 @@ COMP_ARGS= \
 
 MESON_HOST_ARGS += $(COMP_ARGS) -Dxattr=false
 MESON_ARGS += $(COMP_ARGS) -Dxattr=true -Db_lto=true
-
-# hack to compile static libraries
-define Build/Compile
-	$(call Build/Compile/Meson)
-	$(call Ninja,-C $(MESON_BUILD_DIR) install,DESTDIR="$(PKG_INSTALL_DIR)")
-	$(call Meson, \
-		--reconfigure \
-		--buildtype plain \
-		--native-file $(PKG_BUILD_DIR)/openwrt-native.txt \
-		--cross-file $(PKG_BUILD_DIR)/openwrt-cross.txt \
-		-Ddefault_library=static \
-		$(MESON_ARGS) \
-		$(MESON_BUILD_DIR) \
-		$(PKG_BUILD_DIR), \
-		$(MESON_VARS))
-endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin
