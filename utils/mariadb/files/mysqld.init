@@ -1,7 +1,9 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2010-2018 OpenWrt.org
 
+# shellcheck disable=SC2034
 START=95
+# shellcheck disable=SC2034
 STOP=10
 
 NAME=mysqld
@@ -78,6 +80,7 @@ start() {
 	config_load "$NAME"
 
 	config_get_bool enabled general enabled 0
+	# shellcheck disable=SC2154
 	if [ "$enabled" -eq 0 ]; then
 		$LOGGER "service not enabled in /etc/config/$NAME"
 		exit 1
@@ -123,11 +126,12 @@ start() {
 				if [ "$i" = "$rundir" ]; then
 					opts=
 				fi
+				# shellcheck disable=SC2086
 				mkdir -p $opts "$i"
 				[ -d "$i" ] && chown mariadb:mariadb "$i"
 			fi
 		done
-
+		# shellcheck disable=SC2154,SC2086
 		"$MYSQLDSAFE" $options >/dev/null 2>&1 &
 	fi
 }
