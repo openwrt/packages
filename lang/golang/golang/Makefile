@@ -7,8 +7,8 @@
 
 include $(TOPDIR)/rules.mk
 
-GO_VERSION_MAJOR_MINOR:=1.14
-GO_VERSION_PATCH:=7
+GO_VERSION_MAJOR_MINOR:=1.15
+GO_VERSION_PATCH:=2
 
 PKG_NAME:=golang
 PKG_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
@@ -20,7 +20,7 @@ GO_SOURCE_URLS:=https://dl.google.com/go/ \
 
 PKG_SOURCE:=go$(PKG_VERSION).src.tar.gz
 PKG_SOURCE_URL:=$(GO_SOURCE_URLS)
-PKG_HASH:=064392433563660c73186991c0a315787688e7c38a561e26647686f89b6c30e3
+PKG_HASH:=28bf9d0bcde251011caae230a4a05d917b172ea203f2a62f2c2f9533589d4b4d
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -203,72 +203,57 @@ PKG_GO_ZBOOTSTRAP_MODS:= \
 	s/defaultGOMIPS = `[^`]*`/defaultGOMIPS = `$(if $(GO_MIPS),$(GO_MIPS),hardfloat)`/; \
 	s/defaultGOMIPS64 = `[^`]*`/defaultGOMIPS64 = `$(if $(GO_MIPS64),$(GO_MIPS64),hardfloat)`/; \
 	s/defaultGOPPC64 = `[^`]*`/defaultGOPPC64 = `power8`/;
-
 PKG_GO_LDFLAGS= \
 	-buildid '$(SOURCE_DATE_EPOCH)'
-
 ifeq ($(CONFIG_NO_STRIP)$(CONFIG_DEBUG),)
   PKG_GO_LDFLAGS+= -s -w
 endif
-
 # setting -trimpath is not necessary here because the paths inside the
 # compiler binary are relative to GOROOT_FINAL (PKG_GO_ROOT), which is
 # static / not dependent on the build environment
 PKG_GO_INSTALL_ARGS= \
 	-ldflags "all=$(PKG_GO_LDFLAGS)"
-
 ifeq ($(PKG_GO_ENABLE_PIE),1)
   PKG_GO_INSTALL_ARGS+= -buildmode pie
 endif
-
 define Download/golang-bootstrap
   FILE:=$(BOOTSTRAP_SOURCE)
   URL:=$(BOOTSTRAP_SOURCE_URL)
   HASH:=$(BOOTSTRAP_HASH)
 endef
-
 $(eval $(call GoCompiler/AddProfile,Host,$(HOST_BUILD_DIR),$(HOST_GO_PREFIX),$(HOST_GO_VERSION_ID),$(GO_HOST_OS_ARCH),$(HOST_GO_INSTALL_SUFFIX)))
 $(eval $(call GoCompiler/AddProfile,Package,$(PKG_BUILD_DIR),$(PKG_GO_PREFIX),$(PKG_GO_VERSION_ID),$(GO_OS_ARCH),$(PKG_GO_INSTALL_SUFFIX)))
-
 ifeq ($(USE_DEFAULT_BOOTSTRAP),1)
   $(eval $(call GoCompiler/AddProfile,Bootstrap,$(BOOTSTRAP_BUILD_DIR),,bootstrap,$(GO_HOST_OS_ARCH)))
-
   $(eval $(call Download,golang-bootstrap))
-
   define Host/Prepare
 	$(call Host/Prepare/Default)
 	mkdir -p $(BOOTSTRAP_BUILD_DIR)
 	$(BOOTSTRAP_UNPACK)
   endef
 endif
-
 # when https://github.com/golang/go/issues/31544 is fixed,
 # we should be able to set GO_LDFLAGS=-buildmode=pie for host make
 # instead of doing a rebuild for pie
 define Host/Compile
 	$(call GoCompiler/Bootstrap/CheckHost,$(BOOTSTRAP_GO_VALID_OS_ARCH))
 	$(call GoCompiler/Host/CheckHost,$(HOST_GO_VALID_OS_ARCH))
-
 	mkdir -p \
 		$(BOOTSTRAP_CACHE_DIR) \
 		$(HOST_GO_CACHE_DIR)
-
 	$(call GoCompiler/Bootstrap/Make, \
 		GOCACHE=$(BOOTSTRAP_CACHE_DIR) \
 		CC=$(HOSTCC_NOCACHE) \
 		CXX=$(HOSTCXX_NOCACHE) \
 	)
-
 	$(call GoCompiler/Host/Make, \
 		GOROOT_BOOTSTRAP=$(if $(USE_DEFAULT_BOOTSTRAP),$(BOOTSTRAP_BUILD_DIR),$(EXTERNAL_BOOTSTRAP_DIR)) \
 		GOCACHE=$(HOST_GO_CACHE_DIR) \
 		CC=$(HOSTCC_NOCACHE) \
 		CXX=$(HOSTCXX_NOCACHE) \
 	)
-
   ifneq ($(HOST_GO_ENABLE_PIE),)
 	@echo "Rebuilding host Go with PIE"
-
 	( \
 		cd $(HOST_BUILD_DIR)/bin ; \
 		$(CP) go go-nopie ; \
@@ -283,41 +268,30 @@ define Host/Compile
 	)
   endif
 endef
-
 # if host and target os/arch are the same,
 # when go compiles a program, it will use the host std lib
 # so remove it now and force go to rebuild std for target later
 define Host/Install
 	$(call Host/Uninstall)
-
 	$(call GoCompiler/Host/Install/Bin,)
 	$(call GoCompiler/Host/Install/Src,)
-
 	$(call GoCompiler/Host/Install/BinLinks,)
-
 	rm -rf $(HOST_GO_ROOT)/pkg/$(GO_HOST_OS_ARCH)$(if $(HOST_GO_INSTALL_SUFFIX),_$(HOST_GO_INSTALL_SUFFIX))
-
 	$(INSTALL_DIR) $(HOST_GO_ROOT)/openwrt
 	$(INSTALL_BIN) ./files/go-gcc-helper $(HOST_GO_ROOT)/openwrt/
 	$(LN) go-gcc-helper $(HOST_GO_ROOT)/openwrt/gcc
 	$(LN) go-gcc-helper $(HOST_GO_ROOT)/openwrt/g++
 endef
-
 define Host/Uninstall
 	rm -rf $(HOST_GO_ROOT)/openwrt
-
 	$(call GoCompiler/Host/Uninstall/BinLinks,)
-
 	$(call GoCompiler/Host/Uninstall,)
 endef
-
 define Build/Compile
 	mkdir -p \
 		$(PKG_GO_HOST_CACHE_DIR) \
 		$(PKG_GO_TARGET_CACHE_DIR)
-
 	@echo "Building target Go first stage"
-
 	$(call GoCompiler/Package/Make, \
 		GOROOT_BOOTSTRAP=$(HOST_GO_ROOT) \
 		GOCACHE=$(PKG_GO_HOST_CACHE_DIR) \
@@ -329,12 +303,9 @@ define Build/Compile
 		PKG_CONFIG=pkg-config \
 		PATH=$(HOST_GO_ROOT)/openwrt:$$$$PATH \
 	)
-
 	$(SED) '$(PKG_GO_ZBOOTSTRAP_MODS)' \
 		$(PKG_BUILD_DIR)/src/cmd/internal/objabi/zbootstrap.go
-
 	@echo "Building target Go second stage"
-
 	( \
 		cd $(PKG_BUILD_DIR)/bin ; \
 		export $(GO_PKG_TARGET_VARS) ; \
@@ -355,20 +326,16 @@ define Build/Compile
 		exit $$$$retval ; \
 	)
 endef
-
 define Package/golang/install
 	$(call GoCompiler/Package/Install/Bin,$(1)$(PKG_GO_PREFIX))
 	$(call GoCompiler/Package/Install/BinLinks,$(1)$(PKG_GO_PREFIX))
 endef
-
 define Package/golang-doc/install
 	$(call GoCompiler/Package/Install/Doc,$(1)$(PKG_GO_PREFIX))
 endef
-
 define Package/golang-src/install
 	$(call GoCompiler/Package/Install/Src,$(1)$(PKG_GO_PREFIX))
 endef
-
 # src/debug contains ELF executables as test data
 # and they reference these libraries
 # we need to call this in Package/$(1)/extra_provides
@@ -376,7 +343,6 @@ endef
 define Package/golang-src/extra_provides
 	echo 'libc.so.6'
 endef
-
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,golang))
 $(eval $(call BuildPackage,golang-doc))
