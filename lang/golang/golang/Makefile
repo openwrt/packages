@@ -271,6 +271,8 @@ PKG_GO_VARS= \
 
 PKG_GO_LDFLAGS= \
 	-buildid '$(SOURCE_DATE_EPOCH)' \
+	-linkmode external \
+	-extldflags '$(patsubst -z%,-Wl$(comma)-z$(comma)%,$(TARGET_LDFLAGS))' \
 	$(if $(CONFIG_NO_STRIP)$(CONFIG_DEBUG),,-s -w)
 
 # setting -trimpath is not necessary here because the paths inside the
