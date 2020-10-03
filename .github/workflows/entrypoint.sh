@@ -4,6 +4,8 @@ mkdir -p /var/lock/
 
 opkg update
 
+[ -n "$CI_HELPER" ] || CI_HELPER="/ci/.github/workflows/ci_helpers.sh"
+
 for PKG in /ci/*.ipk; do
 	tar -xzOf "$PKG" ./control.tar.gz | tar xzf - ./control 
 	# package name including variant
@@ -16,6 +18,8 @@ for PKG in /ci/*.ipk; do
 	echo "Testing package $PKG_NAME in version $PKG_VERSION from $PKG_SOURCE"
 
 	opkg install "$PKG"
+
+	export PKG_NAME PKG_VERSION CI_HELPER
 
 	TEST_SCRIPT=$(find /ci/ -name "$PKG_SOURCE" -type d)/test.sh
 
