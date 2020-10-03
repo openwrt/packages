@@ -8,10 +8,15 @@
 
 # Please note: you have to setup the package 'msmtp' before using this script
 
-LC_ALL=C
-PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+export LC_ALL=C
+export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+set -o pipefail
 
-. "/lib/functions.sh"
+if [ "$(uci_get 2>/dev/null; printf "%u" "${?}")" = "127" ]
+then
+	. "/lib/functions.sh"
+fi
+
 trm_debug="$(uci_get travelmate global trm_debug "0")"
 trm_mailreceiver="$(uci_get travelmate global trm_mailreceiver)"
 trm_mailprofile="$(uci_get travelmate global trm_mailprofile "trm_notify")"
@@ -38,7 +43,7 @@ then
 	exit 1
 fi
 
-if [ "${trm_debug}" -eq "1" ]
+if [ "${trm_debug}" = "1" ]
 then
 	debug="--debug"
 fi

@@ -3,6 +3,18 @@
 # Copyright (c) 2020 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
+# set (s)hellcheck exceptions
+# shellcheck disable=1091,2016,2039,2059,2086,2143,2181,2188
+
+export LC_ALL=C
+export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+set -o pipefail
+
+if [ "$(uci_get 2>/dev/null; printf "%u" "${?}")" = "127" ]
+then
+	. "/lib/functions.sh"
+fi
+
 trm_domain="www.wifionice.de"
 trm_useragent="$(uci_get travelmate global trm_useragent "Mozilla/5.0 (Linux x86_64; rv:80.0) Gecko/20100101 Firefox/80.0")"
 trm_maxwait="$(uci_get travelmate global trm_maxwait "30")"
