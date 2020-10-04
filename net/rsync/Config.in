@@ -12,16 +12,9 @@ if PACKAGE_rsync
 		default y if USE_FS_ACL_ATTR
 		default n
 
-	config RSYNC_zlib
+	config RSYNC_zstd
 		bool
-		prompt "Enable system zlib"
-		help 
-			Use the system's zlib library instead of rsync's internal copy. Enabling
-			this may create compatibility errors when using compression  with older
-			clients, or those using the current default of the bundled zlib.
+		prompt "Enable zstd stream compression"
+		default n
 
-			rsync's upstream default is to use their bundled zlib. OpenWrt uses the
-			system zlib for space reasons. The system zlib will eventually become 
-			default for upstream as well.
-		default y
 endif
