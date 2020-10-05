@@ -36,8 +36,8 @@ Signed-off-by: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
                  self.library_dirs.append('.')
 --- a/Lib/distutils/sysconfig.py
 +++ b/Lib/distutils/sysconfig.py
-@@ -18,10 +18,17 @@ from .errors import DistutilsPlatformErr
- from .util import get_platform, get_host_platform
+@@ -17,10 +17,17 @@ import sys
+ from .errors import DistutilsPlatformError
  
  # These are needed in a couple of spots, so just compute them once.
 -PREFIX = os.path.normpath(sys.prefix)
