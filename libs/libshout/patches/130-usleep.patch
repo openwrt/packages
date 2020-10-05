@@ -1,6 +1,14 @@
 --- a/examples/nonblocking.c
 +++ b/examples/nonblocking.c
-@@ -70,8 +70,10 @@ int main()
+@@ -6,6 +6,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <time.h>
+ #include <unistd.h>
+ 
+ #include <shout/shout.h>
+@@ -70,8 +71,10 @@ int main()
      if (ret == SHOUTERR_BUSY)
          printf("Connection pending...\n");
  
