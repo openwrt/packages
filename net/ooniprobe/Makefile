@@ -8,19 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ooniprobe
-PKG_VERSION:=3.0.6
+PKG_VERSION:=3.0.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=probe-cli-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ooni/probe-cli/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f3e73c265886403755c17a58b1534919741043a09749e51da450f3d4816a2189
+PKG_HASH:=01e1e1a8d7d8fff04a8c098cfd33c84c507cc6efb88c597714b4917b9d0d64e1
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.md
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/probe-cli-$(PKG_VERSION)
-PKG_BUILD_DEPENDS:=golang/host measurement-kit
+PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
@@ -42,14 +42,10 @@ define Package/ooniprobe
 endef
 
 TARGET_LDFLAGS:=\
-	-lmeasurement_kit -lmaxminddb -lcurl \
+	-lmaxminddb -lcurl \
 	-levent_openssl -lssl \
 	-lcrypto -levent_core -levent_extra \
 	-levent_pthreads -lz
-
-define Package/ooniprobe/config
-  select MEASUREMENT_KIT_BUILD_DEPENDS
-endef
 
 define Package/ooniprobe/description
   The next generation of  OONI(Open Observatory of Network Interference)
