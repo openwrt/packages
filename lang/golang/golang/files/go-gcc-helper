@@ -1,23 +1,41 @@
 #!/bin/sh
 
 me=go-gcc-helper
-name=$(basename $0)
+name="${0##*/}"
 
-case $name in
+log() {
+	# shellcheck disable=SC2039
+	local IFS=" "
+	printf '%s\n' "$me: $*"
+}
+
+case "$name" in
 gcc)
-	cmd=$GO_GCC_HELPER_CC
+	if [ -z "$GO_GCC_HELPER_CC" ]; then
+		log "missing GO_GCC_HELPER_CC"
+		exit 1
+	fi
+	cmd="$GO_GCC_HELPER_CC"
 	;;
 g++)
-	cmd=$GO_GCC_HELPER_CXX
+	if [ -z "$GO_GCC_HELPER_CXX" ]; then
+		log "missing GO_GCC_HELPER_CXX"
+		exit 1
+	fi
+	cmd="$GO_GCC_HELPER_CXX"
 	;;
 *)
-	echo "$me: unknown command \"$name\""
+	log "unknown command \"$name\""
 	exit 1
 	;;
 esac
 
-export PATH="$GO_GCC_HELPER_PATH"
+if [ -n "$GO_GCC_HELPER_PATH" ]; then
+	export PATH="$GO_GCC_HELPER_PATH"
+else
+	log "missing GO_GCC_HELPER_PATH"
+fi
 
-echo "$me: running $cmd $@"
+log "running $cmd $*"
 
 $cmd "$@"
