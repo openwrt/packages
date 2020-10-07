@@ -1,0 +1,14 @@
+Index: b/accel-pppd/logs/log_file.c
+===================================================================
+--- a/accel-pppd/logs/log_file.c
++++ b/accel-pppd/logs/log_file.c
+@@ -5,7 +5,9 @@
+ #include <fcntl.h>
+ #include <unistd.h>
+ #include <limits.h>
++#ifndef __UCLIBC__
+ #include <aio.h>
++#endif
+ #include <signal.h>
+ #include <sys/stat.h>
+ #include <sys/types.h>

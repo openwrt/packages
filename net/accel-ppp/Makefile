@@ -12,7 +12,7 @@ PKG_RELEASE:=2
 PKG_VERSION:=1.12.0
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/xebd/accel-ppp.git
+PKG_SOURCE_URL:=https://gitee.com/baidxi/accel-ppp.git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKG_MIRROR_HASH:=0359f2ee4985e38cc4e4f1ce0a3030a4d754ec0513aec3b70bbc01da73fdb12d
 
@@ -26,7 +26,7 @@ define Package/accel-ppp
   SUBMENU:=Dial-in/up
   TITLE:=a High performance PPTP/L2TP/PPPoE/IPoE server for Linux
   URL:=http://accel-ppp.org/
-  DEPENDS:=+libpcre +libopenssl +libtriton +kmod-nft-connlimit
+  DEPENDS:=@!TARGET_arc @!USE_MUSL +libpcre +libopenssl +libtriton 
 endef
 
 define Package/accel-ppp/config
@@ -118,17 +118,17 @@ define Package/accel-ppp/install
 	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/extra/libippool.so $(1)/usr/lib/accel-ppp/
 	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/extra/libconnlimit.so $(1)/usr/lib/accel-ppp/
 	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/extra/libpppd_compat.so $(1)/usr/lib/accel-ppp/
-	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/extra/libchap-secrets.so $(1)/usr/lib/accel-pppd/
+	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/extra/libchap-secrets.so $(1)/usr/lib/accel-ppp/
 	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/extra/libsigchld.so $(1)/lib/
-	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/ctrl/pppoe/*.so $(1)/usr/lib/accel-ppp/
-	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/ctrl/pptp/*.so $(1)/usr/lib/accel-ppp/
-	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/ctrl/sstp/*.so $(1)/usr/lib/accel-ppp/
-	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/ctrl/l2tp/*.so $(1)/usr/lib/accel-ppp/
-	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/ctrl/ipoe/*.so $(1)/usr/lib/accel-ppp/
-	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/vlan-mon/*.so $(1)/lib/
-	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/shaper/*.so $(1)/usr/lib/accel-ppp/
+	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/ctrl/pppoe/libpppoe.so $(1)/usr/lib/accel-ppp/
+	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/ctrl/pptp/libpptp.so $(1)/usr/lib/accel-ppp/
+	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/ctrl/sstp/libsstp.so $(1)/usr/lib/accel-ppp/
+	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/ctrl/l2tp/libl2tp.so $(1)/usr/lib/accel-ppp/
+	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/ctrl/ipoe/libipoe.so $(1)/usr/lib/accel-ppp/
+	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/vlan-mon/libvlan-mon.so $(1)/lib/
+	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/shaper/libshaper.so $(1)/usr/lib/accel-ppp/
 	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/auth/*.so $(1)/usr/lib/accel-ppp/
-	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/radius/*.so $(1)/usr/lib/accel-ppp/
+	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/radius/libradius.so $(1)/usr/lib/accel-ppp/
 	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/ipv6/*.so $(1)/usr/lib/accel-ppp/
 	$(CP) $(PKG_BUILD_DIR)/build/accel-pppd/logs/*.so $(1)/usr/lib/accel-ppp/
 endef
