@@ -10,7 +10,7 @@ USE_PROCD=1
 LC_ALL=C
 
 # shellcheck disable=SC2034
-EXTRA_COMMANDS='check dl killcache sizes show'
+EXTRA_COMMANDS='check dl killcache sizes show version'
 # shellcheck disable=SC2034
 EXTRA_HELP='	check	Checks if specified domain is found in current block-list
 	dl	Force-downloads all enabled block-list
@@ -53,7 +53,8 @@ readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
 readonly __OK__='\033[0;32m[\xe2\x9c\x93]\033[0m'
 readonly __FAIL__='\033[0;31m[\xe2\x9c\x97]\033[0m'
 readonly _ERROR_='\033[0;31mERROR\033[0m'
-readonly configUpdateURL='https://cdn.jsdelivr.net/gh/openwrt/packages/net/simple-adblock/files/simple-adblock.conf.update'
+
+version() { echo "$PKG_VERSION"; }
 
 getStatusText() {
 	local _ret
@@ -143,6 +144,7 @@ debug=0
 compressedCache=0
 ipv6Enabled=0
 configUpdateEnabled=0
+configUpdateURL=''
 bootDelay=120
 dlTimeout=20
 curlRetry=3
@@ -186,6 +188,7 @@ load_package_config() {
 	config_get blocked_domains            'config' 'blocked_domain'
 	config_get blocked_domains_urls       'config' 'blocked_domains_url'
 	config_get blocked_hosts_urls         'config' 'blocked_hosts_url'
+	config_get configUpdateURL            'config' 'config_update_url' 'https://cdn.jsdelivr.net/gh/openwrt/packages/net/simple-adblock/files/simple-adblock.conf.update'
 
 	if [ "$targetDNS" != 'dnsmasq.addnhosts' ] && [ "$targetDNS" != 'dnsmasq.conf' ] && \
 		 [ "$targetDNS" != 'dnsmasq.servers' ] && [ "$targetDNS" != 'unbound.adb_list' ] && \
