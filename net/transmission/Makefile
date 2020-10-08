@@ -47,6 +47,7 @@ define Package/transmission-daemon-openssl
   TITLE+= (with OpenSSL)
   DEPENDS+=+libopenssl
   VARIANT:=openssl
+  PROVIDES:=transmission-daemon
 endef
 
 define Package/transmission-daemon-mbedtls
@@ -54,6 +55,7 @@ define Package/transmission-daemon-mbedtls
   TITLE+= (with mbed TLS)
   DEPENDS+=+libmbedtls
   VARIANT:=mbedtls
+  PROVIDES:=transmission-daemon
 endef
 
 define Package/transmission-cli-openssl
@@ -87,10 +89,9 @@ endef
 define Package/transmission-web
   $(call Package/transmission/template)
   TITLE+= (webinterface)
-  DEPENDS:=@(PACKAGE_transmission-daemon-openssl||PACKAGE_transmission-daemon-mbedtls)
+  DEPENDS:=transmission-daemon
   PKGARCH:=all
 endef
-
 
 define Package/transmission-daemon/Default/description
  Transmission is a simple BitTorrent client.
