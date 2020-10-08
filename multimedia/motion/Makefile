@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=motion
 PKG_VERSION:=4.3.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-release-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/Motion-Project/motion/tar.gz/release-$(PKG_VERSION)?
@@ -31,7 +31,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/motion
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+libjpeg +libpthread +libmicrohttpd $(INTL_DEPENDS) +TARGET_bcm27xx:bcm27xx-userland
+  DEPENDS:=+libjpeg +libpthread +libmicrohttpd $(INTL_DEPENDS)
   TITLE:=webcam motion sensing and logging
   URL:=https://motion-project.github.io/
 endef
@@ -44,7 +44,7 @@ endef
 CONFIGURE_ARGS += \
 	--without-bktr \
 	--without-webp \
-	--with$(if $(CONFIG_TARGET_bcm27xx),,out)-mmal \
+	--without-mmal \
 	--without-ffmpeg \
 	--without-mariadb \
 	--without-mysql \
