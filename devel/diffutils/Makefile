@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=diffutils
 PKG_VERSION:=3.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/diffutils
@@ -31,9 +31,8 @@ define Package/diffutils
   TITLE:=diffutils
   URL:=http://www.gnu.org/software/diffutils/
   ALTERNATIVES:=\
-    200:/usr/bin/cmp:/usr/bin/gnu-cmp \
-    200:/usr/bin/diff:/usr/bin/gnu-diff \
-
+    200:/usr/bin/cmp:/usr/libexec/cmp-gnu \
+    200:/usr/bin/diff:/usr/libexec/diff-gnu
 endef
 
 define Package/diffutils/description
@@ -48,8 +47,9 @@ CONFIGURE_VARS += \
 define Package/diffutils/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{sdiff,diff3} $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/diff $(1)/usr/bin/gnu-diff
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/cmp $(1)/usr/bin/gnu-cmp
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/diff $(1)/usr/libexec/diff-gnu
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/cmp $(1)/usr/libexec/cmp-gnu
 endef
 
 $(eval $(call BuildPackage,diffutils))

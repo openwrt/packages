@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=findutils
 PKG_VERSION:=4.7.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
@@ -49,13 +49,13 @@ endef
 define Package/findutils-find
 	$(call Package/findutils/Default)
 	TITLE+= - find utility
-	ALTERNATIVES:=300:/usr/bin/find:/usr/libexec/findutils-find
+	ALTERNATIVES:=300:/usr/bin/find:/usr/libexec/find-findutils
 endef
 
 define Package/findutils-xargs
 	$(call Package/findutils/Default)
 	TITLE+= - xargs utility
-	ALTERNATIVES:=300:/usr/bin/xargs:/usr/libexec/findutils-xargs
+	ALTERNATIVES:=300:/usr/bin/xargs:/usr/libexec/xargs-findutils
 endef
 
 define Package/findutils-locate
@@ -74,12 +74,12 @@ endef
 
 define Package/findutils-find/install
 	$(INSTALL_DIR) $(1)/usr/libexec
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/find $(1)/usr/libexec/findutils-find
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/find $(1)/usr/libexec/find-findutils
 endef
 
 define Package/findutils-xargs/install
 	$(INSTALL_DIR) $(1)/usr/libexec
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/xargs $(1)/usr/libexec/findutils-xargs
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/xargs $(1)/usr/libexec/xargs-findutils
 endef
 
 define Package/findutils-locate/install
