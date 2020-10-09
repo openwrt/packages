@@ -76,7 +76,7 @@ BOOTSTRAP_GO_VALID_OS_ARCH:= \
   darwin_386     darwin_amd64 \
   dragonfly_386  dragonfly_amd64 \
   freebsd_386    freebsd_amd64    freebsd_arm \
-  linux_386      linux_amd64      linux_arm \
+  linux_386      linux_amd64      linux_arm    linux_arm64\
   netbsd_386     netbsd_amd64     netbsd_arm \
   openbsd_386    openbsd_amd64 \
   plan9_386      plan9_amd64 \
@@ -169,6 +169,7 @@ BOOTSTRAP_ROOT_DIR:=$(call qstrip,$(CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT))
 
 ifeq ($(BOOTSTRAP_ROOT_DIR),)
   BOOTSTRAP_ROOT_DIR:=$(BOOTSTRAP_BUILD_DIR)
+  BOOTSTRAP_PATCH_DIR:=./bootstrap-patches
 
   define Download/golang-bootstrap
     FILE:=$(BOOTSTRAP_SOURCE)
@@ -180,6 +181,7 @@ ifeq ($(BOOTSTRAP_ROOT_DIR),)
   define Bootstrap/Prepare
 	mkdir -p "$(BOOTSTRAP_BUILD_DIR)"
 	$(BOOTSTRAP_UNPACK)
+	$(call HostPatchDir,$(BOOTSTRAP_BUILD_DIR),$(BOOTSTRAP_PATCH_DIR),)
   endef
   Hooks/HostPrepare/Post+=Bootstrap/Prepare
 
