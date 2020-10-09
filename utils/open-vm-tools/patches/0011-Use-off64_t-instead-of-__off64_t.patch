@@ -1,16 +1,11 @@
-diff -urN a/lib/file/fileIOPosix.c b/lib/file/fileIOPosix.c
 --- a/lib/file/fileIOPosix.c
 +++ b/lib/file/fileIOPosix.c
-@@ -206,10 +206,10 @@
-        * the symbols (and anyone building XOPEN<700 gets nothing).
-        */
-       extern ssize_t preadv64(int fd, const struct iovec *iov, int iovcnt,
--                          __off64_t offset) __attribute__ ((weak));
-+                          off64_t offset) __attribute__ ((weak));
+@@ -198,7 +198,7 @@ static AlignedPool alignedPool;
+  * are not available in any header file.
+  */
  
-       extern ssize_t pwritev64(int fd, const struct iovec *iov, int iovcnt,
--                          __off64_t offset) __attribute__ ((weak));
-+                          off64_t offset) __attribute__ ((weak));
-    #else
-       #error "Large file support unavailable. Aborting."
-    #endif
+-#if defined(__linux__) && !defined(__ANDROID__)
++#if 0
+    #if defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64)
+       /*
+        * We want preadv/pwritev. But due to FOB=64, the symbols are -64.
