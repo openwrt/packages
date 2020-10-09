@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmbim
-PKG_VERSION:=1.24.0
+PKG_VERSION:=1.24.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/libmbim
-PKG_HASH:=3d495cec3becfd02731ceac67a5ad7e0f1b328395137024d7cb91d31f00e1196
+PKG_HASH:=dd488ee6176243a6adb27a5872897336272ea7bea33a3ad501ba268e5a58b285
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas.smith@telcoantennas.com.au>
 
