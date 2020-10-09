@@ -63,10 +63,12 @@ MESON_ARGS += \
 	-Dspice-common:tests=false \
 
 define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include/spice-server
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/spice-server/*.h $(1)/usr/include/spice-server
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libspice-server.* $(1)/usr/lib
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/spice-server.pc $(1)/usr/lib/pkgconfig
 endef
 
 define Package/libspice-server/install
