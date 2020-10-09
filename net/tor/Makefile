@@ -124,6 +124,8 @@ CONFIGURE_ARGS += \
 	--with-openssl-dir="$(STAGING_DIR)/usr" \
 	--with-zlib-dir="$(STAGING_DIR)/usr" \
 	--disable-asciidoc \
+	--disable-html-manual \
+	--disable-manpage \
 	--disable-seccomp \
 	--disable-libscrypt \
 	--disable-unittests \
