@@ -1,4 +1,3 @@
-diff -urN a/lib/asyncsocket/asyncsocket.c b/lib/asyncsocket/asyncsocket.c
 --- a/lib/asyncsocket/asyncsocket.c
 +++ b/lib/asyncsocket/asyncsocket.c
 @@ -69,8 +69,8 @@

@@ -1,7 +1,6 @@
-diff -urN a/configure.ac b/configure.ac
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1208,6 +1208,7 @@
+@@ -1184,6 +1184,7 @@
  AC_TYPE_PID_T
  AC_TYPE_SIZE_T
  AC_CHECK_MEMBERS([struct stat.st_rdev])
@@ -9,7 +8,6 @@ diff -urN a/configure.ac b/configure.ac
  AC_HEADER_TIME
  AC_STRUCT_TM
  AC_C_VOLATILE
-diff -urN a/lib/include/hgfsUtil.h b/lib/include/hgfsUtil.h
 --- a/lib/include/hgfsUtil.h
 +++ b/lib/include/hgfsUtil.h
 @@ -53,13 +53,7 @@

@@ -1,12 +1,12 @@
 --- a/vmhgfs-fuse/fsutil.h
 +++ b/vmhgfs-fuse/fsutil.h
-@@ -32,9 +32,7 @@
+@@ -29,6 +29,9 @@
+ 
+ #include "request.h"
+ #include "vm_basic_types.h"
++#ifndef _GNU_SOURCE
++#define _GNU_SOURCE
++#endif
  #include "hgfsProto.h"
  #include <fuse.h>
  
--#if defined(__FreeBSD__) || defined(__SOLARIS__) || defined(__APPLE__)
- typedef long long loff_t;
--#endif
- 
- /*
-  * Struct used to pass around attributes.
