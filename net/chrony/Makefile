@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=chrony
-PKG_VERSION:=3.5
+PKG_VERSION:=4.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.tuxfamily.org/chrony/
-PKG_HASH:=4e02795b1260a4ec51e6ace84149036305cc9fc340e65edb9f8452aa611339b5
+PKG_HASH:=be27ea14c55e7a4434b2fa51d53018c7051c42fa6a3198c9aa6a1658bae0c625
 
 PKG_MAINTAINER:=Miroslav Lichvar <mlichvar0@gmail.com>
 PKG_LICENSE:=GPL-2.0
@@ -22,16 +22,27 @@ PKG_CPE_ID:=cpe:/a:tuxfamily:chrony
 
 PKG_BUILD_DEPENDS:=pps-tools
 
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_CHRONY_NTS
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/chrony
   SUBMENU:=Time Synchronization
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libcap +libpthread
+  DEPENDS:=+libcap +libpthread +CHRONY_NTS:libgnutls +CHRONY_NTS:ca-bundle
   USERID:=chrony=323:chrony=323
   TITLE:=A versatile NTP client and server
   URL:=http://chrony.tuxfamily.org/
+endef
+
+define Package/chrony/config
+	if PACKAGE_chrony
+		config CHRONY_NTS
+			bool "Enable NTS support"
+			default n
+	endif
 endef
 
 define Package/chrony/description
@@ -52,6 +63,7 @@ CONFIGURE_ARGS+= \
 	--sysconfdir=/etc/chrony \
 	--prefix=/usr \
 	--chronyrundir=/var/run/chrony \
+	$(if $(CONFIG_CHRONY_NTS),,--disable-nts) \
 	--disable-readline \
 	--disable-rtc \
 	--disable-sechash \
