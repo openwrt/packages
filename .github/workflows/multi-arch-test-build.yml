@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     name: Test ${{ matrix.arch }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-16.04
     strategy:
       fail-fast: false
       matrix:
