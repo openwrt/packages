@@ -1,0 +1,155 @@
+From 713a3e09fbd5948823ac0c396249537329b878e4 Mon Sep 17 00:00:00 2001
+From: Frediano Ziglio <fziglio@redhat.com>
+Date: Thu, 12 Mar 2020 03:45:54 +0000
+Subject: [PATCH] build: Allow to build disabling code generation
+
+Reduce dependencies if used by agents which do not need
+marshallers/demarshallers code.
+
+Signed-off-by: Frediano Ziglio <fziglio@redhat.com>
+---
+ common/meson.build | 28 +++++++++++++++-------------
+ meson.build        | 24 +++++++++++++-----------
+ meson_options.txt  |  2 +-
+ tests/meson.build  | 34 ++++++++++++++++++----------------
+ 4 files changed, 47 insertions(+), 41 deletions(-)
+
+diff --git a/common/meson.build b/common/meson.build
+index 7356cc0..14bf242 100644
+--- a/subprojects/spice-common/common/meson.build
++++ b/subprojects/spice-common/common/meson.build
+@@ -67,19 +67,21 @@ spice_common_dep = declare_dependency(link_with : spice_common_lib,
+ 
+ 
+ # client_demarshallers
+-codegen_cmd = [python, spice_codegen]
+-codegen_args = ['--generate-demarshallers',
+-                '--client',
+-                '--include', 'common/messages.h',
+-                '--generated-declaration-file', '@OUTPUT1@',
+-                '@INPUT@', '@OUTPUT0@']
+-
+-client_demarshallers = custom_target('client_demarshallers',
+-                                     input : [spice_proto],
+-                                     output : ['generated_client_demarshallers.c', 'generated_messages.h'],
+-                                     install : false,
+-                                     command : [codegen_cmd, codegen_args],
+-                                     depend_files : [spice_codegen_files, 'messages.h'])
++if spice_common_generate_client_code or spice_common_generate_server_code
++  codegen_cmd = [python, spice_codegen]
++  codegen_args = ['--generate-demarshallers',
++                  '--client',
++                  '--include', 'common/messages.h',
++                  '--generated-declaration-file', '@OUTPUT1@',
++                  '@INPUT@', '@OUTPUT0@']
++
++  client_demarshallers = custom_target('client_demarshallers',
++                                       input : [spice_proto],
++                                       output : ['generated_client_demarshallers.c', 'generated_messages.h'],
++                                       install : false,
++                                       command : [codegen_cmd, codegen_args],
++                                       depend_files : [spice_codegen_files, 'messages.h'])
++endif
+ 
+ #
+ # libspice-common-client
+diff --git a/meson.build b/meson.build
+index 41a9419..b60a9fe 100644
+--- a/subprojects/spice-common/meson.build
++++ b/subprojects/spice-common/meson.build
+@@ -119,17 +119,19 @@ foreach dep, version : optional_deps
+ endforeach
+ 
+ # Python
+-py_module = import('python')
+-python = py_module.find_installation()
+-
+-if get_option('python-checks')
+-  foreach module : ['six', 'pyparsing']
+-    message('Checking for python module @0@'.format(module))
+-    cmd = run_command(python, '-m', module)
+-    if cmd.returncode() != 0
+-      error('Python module @0@ not found'.format(module))
+-    endif
+-  endforeach
++if spice_common_generate_client_code or spice_common_generate_server_code
++  py_module = import('python')
++  python = py_module.find_installation()
++
++  if get_option('python-checks')
++    foreach module : ['six', 'pyparsing']
++      message('Checking for python module @0@'.format(module))
++      cmd = run_command(python, '-m', module)
++      if cmd.returncode() != 0
++        error('Python module @0@ not found'.format(module))
++      endif
++    endforeach
++  endif
+ endif
+ 
+ # smartcard check
+diff --git a/meson_options.txt b/meson_options.txt
+index d30858f..d93d74b 100644
+--- a/subprojects/spice-common/meson_options.txt
++++ b/subprojects/spice-common/meson_options.txt
+@@ -39,7 +39,7 @@ option('manual',
+ 
+ option('generate-code',
+     type : 'combo',
+-    choices : ['all', 'server', 'client'],
++    choices : ['all', 'server', 'client', 'none'],
+     description : 'Which code should be built')
+ 
+ option('tests',
+diff --git a/tests/meson.build b/tests/meson.build
+index d315056..1ad5bc5 100644
+--- a/subprojects/spice-common/tests/meson.build
++++ b/subprojects/spice-common/tests/meson.build
+@@ -20,26 +20,28 @@ endforeach
+ #
+ # test_marshallers
+ #
+-test_proto = files('test-marshallers.proto')
++if spice_common_generate_client_code or spice_common_generate_server_code
++  test_proto = files('test-marshallers.proto')
+ 
+-test_marshallers_sources = ['test-marshallers.c', 'test-marshallers.h']
++  test_marshallers_sources = ['test-marshallers.c', 'test-marshallers.h']
+ 
+-targets = [
+-    ['test_marshallers', test_proto, 'generated_test_marshallers.c', ['--generate-marshallers', '--server', '--include', 'test-marshallers.h', '@INPUT@', '@OUTPUT@']],
+-    ['test_marshallers_h', test_proto, 'generated_test_marshallers.h', ['--generate-marshallers', '--server', '--include', 'test-marshallers.h', '-H', '@INPUT@', '@OUTPUT@']],
+-    ['test_demarshallers', test_proto, 'generated_test_demarshallers.c', ['--generate-demarshallers', '--client', '--include', 'test-marshallers.h', '@INPUT@', '@OUTPUT@']],
+-    ['test_enums_h', test_proto, 'generated_test_enums.h', ['-e', '@INPUT@', '@OUTPUT@']],
+-]
++  targets = [
++      ['test_marshallers', test_proto, 'generated_test_marshallers.c', ['--generate-marshallers', '--server', '--include', 'test-marshallers.h', '@INPUT@', '@OUTPUT@']],
++      ['test_marshallers_h', test_proto, 'generated_test_marshallers.h', ['--generate-marshallers', '--server', '--include', 'test-marshallers.h', '-H', '@INPUT@', '@OUTPUT@']],
++      ['test_demarshallers', test_proto, 'generated_test_demarshallers.c', ['--generate-demarshallers', '--client', '--include', 'test-marshallers.h', '@INPUT@', '@OUTPUT@']],
++      ['test_enums_h', test_proto, 'generated_test_enums.h', ['-e', '@INPUT@', '@OUTPUT@']],
++  ]
+ 
+-foreach t : targets
+-  cmd = [python, spice_codegen] + t[3]
+-  test_marshallers_sources += custom_target(t[0], input: t[1], output : t[2], command: cmd, depend_files : spice_codegen_files)
+-endforeach
++  foreach t : targets
++    cmd = [python, spice_codegen] + t[3]
++    test_marshallers_sources += custom_target(t[0], input: t[1], output : t[2], command: cmd, depend_files : spice_codegen_files)
++  endforeach
+ 
+-test('test_marshallers',
+-     executable('test_marshallers', test_marshallers_sources,
+-                dependencies : spice_common_dep,
+-                install : false))
++  test('test_marshallers',
++       executable('test_marshallers', test_marshallers_sources,
++                  dependencies : spice_common_dep,
++                  install : false))
++endif
+ 
+ #
+ # test_quic
+-- 
+GitLab
+
