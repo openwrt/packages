@@ -1,6 +1,6 @@
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -357,12 +357,6 @@
+@@ -444,12 +444,6 @@
  pubsuffix.cc: $(srcdir)/effective_tld_names.dat
  	$(AM_V_GEN)./mkpubsuffixcc
 
