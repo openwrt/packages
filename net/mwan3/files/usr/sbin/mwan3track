@@ -19,6 +19,11 @@ stop_subprocs() {
 	[ -n "$TRACK_PID" ] && kill "$TRACK_PID" && unset TRACK_PID
 }
 
+WRAP() {
+	# shellcheck disable=SC2048
+	FAMILY=$FAMILY DEVICE=$DEVICE SRCIP=$SRC_IP FWMARK=$MMX_DEFAULT LD_PRELOAD=/lib/mwan3/libwrap_mwan3_sockopt.so.1.0 $*
+}
+
 clean_up() {
 	LOG notice "Stopping mwan3track for interface \"${INTERFACE}\". Status was \"${STATUS}\""
 	stop_subprocs
@@ -58,10 +63,6 @@ validate_track_method() {
 				LOG warn "Missing httping. Please install httping package."
 				return 1
 			}
-			[ -n "$2" ] && { [ "$2" = "0.0.0.0" ] || [ "$2" = "::" ]; } && {
-				LOG warn "Cannot determine source IP for the interface which is required by httping."
-				return 1
-			}
 			;;
 		nping-*)
 			command -v nping 1>/dev/null 2>&1 || {
@@ -74,6 +75,12 @@ validate_track_method() {
 			return 2
 			;;
 	esac
+}
+
+validate_wrap() {
+	[ -x /lib/mwan3/libwrap_mwan3_sockopt.so.1.0 ] && return
+	LOG error "Missing libwrap_mwan3_sockopt. Please reinstall mwan3." &&
+		exit 1
 }
 
 disconnected() {
@@ -124,17 +131,6 @@ firstconnect() {
 
 	mwan3_get_src_ip SRC_IP $true_iface
 
-	# pinging IPv6 hosts with an interface is troublesome
-	# https://bugs.openwrt.org/index.php?do=details&task_id=2897
-	# https://bugs.openwrt.org/index.php?do=details&task_id=2167
-	# https://forum.openwrt.org/t/ping-and-traceroute-failing-for-eth0-3-on-ipv6/44680/11
-	# so use the IP address of the interface
-	if [ "$family" = "ipv6" ]; then
-		SOURCE="$SRC_IP"
-	else
-		SOURCE="$DEVICE"
-	fi
-
 	LOG debug "firstconnect: called on $INTERFACE/$true_iface ($DEVICE). Status is $STATUS. SRC_IP is $SRC_IP"
 
 	STARTED=1
@@ -159,7 +155,8 @@ main() {
 	local recovery_interval down up size
 	local keep_failure_interval check_quality failure_latency
 	local recovery_latency failure_loss recovery_loss
-	local max_ttl httping_ssl family track_ips
+
+	local max_ttl httping_ssl track_ips
 
 	INTERFACE=$1
 	STATUS=""
@@ -171,9 +168,10 @@ main() {
 	trap if_up USR2
 
 	config_load mwan3
+	config_get FAMILY $INTERFACE family ipv4
 	config_get track_method $INTERFACE track_method ping
 	config_get_bool httping_ssl $INTERFACE httping_ssl 0
-	validate_track_method $track_method $SRC_IP || {
+	validate_track_method $track_method || {
 		track_method=ping
 		if validate_track_method $track_method; then
 			LOG warn "Using ping to track interface $INTERFACE avaliability"
@@ -219,17 +217,13 @@ main() {
 			if [ $host_up_count -lt $reliability ]; then
 				case "$track_method" in
 					ping)
-						# pinging IPv6 hosts with an interface is troublesome
-						# https://bugs.openwrt.org/index.php?do=details&task_id=2897
-						# so get the IP address of the interface and use that instead
-
 						if [ $check_quality -eq 0 ]; then
-							$PING -${family#ipv} -I ${SOURCE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip &> /dev/null &
+							WRAP $PING -${FAMILY#ipv} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip &> /dev/null &
 							TRACK_PID=$!
 							wait $TRACK_PID
 							result=$?
 						else
-							$PING -${family#ipv} -I ${SOURCE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip 2>/dev/null > $TRACK_OUTPUT &
+							WRAP $PING -${family#ipv} -I ${SOURCE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip 2>/dev/null > $TRACK_OUTPUT &
 							TRACK_PID=$!
 							wait $TRACK_PID
 							ping_status=$?
@@ -243,23 +237,23 @@ main() {
 						fi
 					;;
 					arping)
-						arping -I $DEVICE -c $count -w $timeout -q $track_ip &> /dev/null &
+						WRAP arping -I $DEVICE -c $count -w $timeout -q $track_ip &> /dev/null &
 						TRACK_PID=$!
 						wait $TRACK_PID
 						result=$?
 					;;
 					httping)
 						if [ "$httping_ssl" -eq 1 ]; then
-							httping -y $SRC_IP -c $count -t $timeout -q "https://$track_ip" &> /dev/null &
+							WRAP httping -c $count -t $timeout -q "https://$track_ip" &> /dev/null &
 						else
-							httping -y $SRC_IP -c $count -t $timeout -q "http://$track_ip" &> /dev/null &
+							WRAP httping -c $count -t $timeout -q "http://$track_ip" &> /dev/null &
 						fi
 						TRACK_PID=$!
 						wait $TRACK_PID
 						result=$?
 					;;
 					nping-*)
-						nping -c $count $track_ip --${FAMILY#nping-} > $TRACK_OUTPUT &
+						WRAP nping -c $count $track_ip --${FAMILY#nping-} > $TRACK_OUTPUT &
 						TRACK_PID=$!
 						wait $TRACK_PID
 						result=$(grep $TRACK_OUTPUT Lost | awk '{print $12}')

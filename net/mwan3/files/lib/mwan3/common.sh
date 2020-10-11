@@ -8,8 +8,19 @@ get_uptime() {
 IP4="ip -4"
 IP6="ip -6"
 SCRIPTNAME="$(basename "$0")"
+
+MWAN3_STATUS_DIR="/var/run/mwan3"
 MWAN3TRACK_STATUS_DIR="/var/run/mwan3track"
 
+MWAN3_INTERFACE_MAX=""
+
+MMX_MASK=""
+MMX_DEFAULT=""
+MMX_BLACKHOLE=""
+MM_BLACKHOLE=""
+
+MMX_UNREACHABLE=""
+MM_UNREACHABLE=""
 MAX_SLEEP=$(((1<<31)-1))
 
 LOG()
@@ -21,6 +32,21 @@ LOG()
 	[ "$facility" = "debug" ] && return
 	logger -t "${SCRIPTNAME}[$$]" -p $facility "$*"
 }
+
+mwan3_get_true_iface()
+{
+	local family V
+	_true_iface=$2
+	config_get family "$2" family ipv4
+	if [ "$family" = "ipv4" ]; then
+		V=4
+	elif [ "$family" = "ipv6" ]; then
+		V=6
+	fi
+	ubus call "network.interface.${2}_${V}" status &>/dev/null && _true_iface="${2}_${V}"
+	export "$1=$_true_iface"
+}
+
 mwan3_get_src_ip()
 {
 	local family _src_ip true_iface device addr_cmd default_ip IP sed_str
@@ -149,4 +175,3 @@ mwan3_count_one_bits()
 	done
 	echo $count
 }
->>>>>>> 2a4e0dc6d... review comments

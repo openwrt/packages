@@ -22,16 +22,7 @@ IPv6_REGEX="${IPv6_REGEX}::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-
 IPv6_REGEX="${IPv6_REGEX}([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])"
 IPv4_REGEX="((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
 
-MWAN3_STATUS_DIR="/var/run/mwan3"
-MWAN3_INTERFACE_MAX=""
 DEFAULT_LOWEST_METRIC=256
-MMX_MASK=""
-MMX_DEFAULT=""
-MMX_BLACKHOLE=""
-MM_BLACKHOLE=""
-
-MMX_UNREACHABLE=""
-MM_UNREACHABLE=""
 
 command -v ip6tables > /dev/null
 NO_IPV6=$?
@@ -80,20 +71,6 @@ mwan3_update_iface_to_table()
 	config_foreach update_table interface
 }
 
-mwan3_get_true_iface()
-{
-	local family V
-	_true_iface=$2
-	config_get family "$iface" family ipv4
-	if [ "$family" = "ipv4" ]; then
-		V=4
-	elif [ "$family" = "ipv6" ]; then
-		V=6
-	fi
-	ubus call "network.interface.${iface}_${V}" status &>/dev/null && _true_iface="${iface}_${V}"
-	export "$1=$_true_iface"
-}
-
 mwan3_route_line_dev()
 {
 	# must have mwan3 config already loaded
@@ -127,63 +104,6 @@ mwan3_count_one_bits()
 		count=$((count+1))
 	done
 	echo $count
-}
-
-# maps the 1st parameter so it only uses the bits allowed by the bitmask (2nd parameter)
-# which means spreading the bits of the 1st parameter to only use the bits that are set to 1 in the 2nd parameter
-# 0 0 0 0 0 1 0 1 (0x05) 1st parameter
-# 1 0 1 0 1 0 1 0 (0xAA) 2nd parameter
-#     1   0   1          result
-mwan3_id2mask()
-{
-	local bit_msk bit_val result
-	bit_val=0
-	result=0
-	for bit_msk in $(seq 0 31); do
-		if [ $((($2>>bit_msk)&1)) = "1" ]; then
-			if [ $((($1>>bit_val)&1)) = "1" ]; then
-				result=$((result|(1<<bit_msk)))
-			fi
-			bit_val=$((bit_val+1))
-		fi
-	done
-	printf "0x%x" $result
-}
-
-mwan3_init()
-{
-	local bitcnt
-	local mmdefault
-
-	[ -d $MWAN3_STATUS_DIR ] || mkdir -p $MWAN3_STATUS_DIR/iface_state
-
-	# mwan3's MARKing mask (at least 3 bits should be set)
-	if [ -e "${MWAN3_STATUS_DIR}/mmx_mask" ]; then
-		MMX_MASK=$(cat "${MWAN3_STATUS_DIR}/mmx_mask")
-		MWAN3_INTERFACE_MAX=$(uci_get_state mwan3 globals iface_max)
-	else
-		config_load mwan3
-		config_get MMX_MASK globals mmx_mask '0x3F00'
-		echo "$MMX_MASK"| tr 'A-F' 'a-f' > "${MWAN3_STATUS_DIR}/mmx_mask"
-		LOG debug "Using firewall mask ${MMX_MASK}"
-
-		bitcnt=$(mwan3_count_one_bits MMX_MASK)
-		mmdefault=$(((1<<bitcnt)-1))
-		MWAN3_INTERFACE_MAX=$((mmdefault-3))
-		uci_toggle_state mwan3 globals iface_max "$MWAN3_INTERFACE_MAX"
-		LOG debug "Max interface count is ${MWAN3_INTERFACE_MAX}"
-	fi
-
-	# mark mask constants
-	bitcnt=$(mwan3_count_one_bits MMX_MASK)
-	mmdefault=$(((1<<bitcnt)-1))
-	MM_BLACKHOLE=$((mmdefault-2))
-	MM_UNREACHABLE=$((mmdefault-1))
-
-	# MMX_DEFAULT should equal MMX_MASK
-	MMX_DEFAULT=$(mwan3_id2mask mmdefault MMX_MASK)
-	MMX_BLACKHOLE=$(mwan3_id2mask MM_BLACKHOLE MMX_MASK)
-	MMX_UNREACHABLE=$(mwan3_id2mask MM_UNREACHABLE MMX_MASK)
 }
 
 mwan3_lock() {
@@ -281,7 +201,7 @@ mwan3_set_connected_ipv4()
 
 mwan3_set_connected_ipv6()
 {
-	local connected_network_v6 source_network_v6 error
+	local connected_network_v6 error
 	local update=""
 	[ $NO_IPV6 -eq 0 ] || return
 
@@ -292,10 +212,6 @@ mwan3_set_connected_ipv6()
 		mwan3_push_update -! add mwan3_connected_v6 "$connected_network_v6"
 	done
 
-	mwan3_push_update -! create mwan3_source_v6 hash:net family inet6
-	for source_network_v6 in $($IP6 addr ls | sed -ne 's/ *inet6 \([^ \/]*\).* scope global.*/\1/p'); do
-		mwan3_push_update -! add mwan3_source_v6 "$source_network_v6"
-	done
 	mwan3_push_update -! add mwan3_connected mwan3_connected_v6
 	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_connected_ipv6: $error"
 }
@@ -384,15 +300,10 @@ mwan3_set_general_iptables()
 						  -p ipv6-icmp \
 						  -m icmp6 --icmpv6-type 137 \
 						  -j RETURN
-				# do not mangle outgoing echo request
-				mwan3_push_update -A mwan3_hook \
-						  -m set --match-set mwan3_source_v6 src \
-						  -p ipv6-icmp \
-						  -m icmp6 --icmpv6-type 128 \
-						  -j RETURN
 
 			fi
 			mwan3_push_update -A mwan3_hook \
+					  -m mark --mark 0x0/$MMX_MASK \
 					  -j CONNMARK --restore-mark --nfmask "$MMX_MASK" --ctmask "$MMX_MASK"
 			mwan3_push_update -A mwan3_hook \
 					  -m mark --mark 0x0/$MMX_MASK \
