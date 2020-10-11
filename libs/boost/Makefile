@@ -13,7 +13,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.74.0
 PKG_SOURCE_VERSION:=1_74_0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
@@ -63,6 +63,7 @@ This package provides the following run-time libraries:
  - locale (Requires kernel being compiled with full language support)
  - log
  - math
+ - nowide
  - program_options
  - python3
  - random
@@ -79,7 +80,7 @@ There are many more header-only libraries supported by Boost.
 See more at http://www.boost.org/doc/libs/1_74_0/
 endef
 
-PKG_BUILD_DEPENDS:=boost/host PACKAGE_python3:python3
+PKG_BUILD_DEPENDS:=boost/host PACKAGE_boost-python3:python3
 
 include ../../lang/python/python3-version.mk
 BOOST_PYTHON3_VER=$(PYTHON3_VERSION)
@@ -277,12 +278,11 @@ define Package/boost/config
 			select PACKAGE_boost-graph
 			default m if ALL
 
-		$(foreach lib,$(BOOST_LIBS), \
-			config PACKAGE_boost-$(lib)
+		$(foreach lib,$(BOOST_LIBS),
+		config PACKAGE_boost-$(lib)
 			prompt "Boost $(lib) $(if $(findstring python3,$(lib)),$(paren_left)v$(BOOST_PYTHON3_VER)$(paren_right) ,)library."
 			default m if ALL
 			$(if $(findstring locale,$(lib)),depends on BUILD_NLS,)\
-			$(if $(findstring python3,$(lib)),depends on PACKAGE_python3,)\
 			$(if $(findstring fiber,$(lib)),depends on !boost-fiber-exclude,)\
 			$(if $(findstring context,$(lib)),depends on !boost-context-exclude,)
 			$(if $(findstring coroutine,$(lib)),depends on !boost-coroutine-exclude,)
@@ -316,7 +316,7 @@ define DefineBoostLibrary
   define Package/boost-$(1)
     $(call Package/boost/Default)
     TITLE+= ($(1))
-    DEPENDS+= $$(foreach lib,$(2),+boost-$$(lib)) $(3) $(if $(4),@$(4),)
+    DEPENDS+= $$(foreach lib,$(2),+boost-$$(lib)) $(3) $(if $(4),@$(4),) $(patsubst %,+PACKAGE_boost-$(1):%,$(5))
     HIDDEN:=1
   endef
 
@@ -336,13 +336,14 @@ $(eval $(call DefineBoostLibrary,date_time))
 $(eval $(call DefineBoostLibrary,fiber,coroutine filesystem,,!boost-fiber-exclude))
 $(eval $(call DefineBoostLibrary,filesystem,system))
 $(eval $(call DefineBoostLibrary,graph,regex))
-$(eval $(call DefineBoostLibrary,iostreams,,+zlib +liblzma +libbz2 +libzstd))
+$(eval $(call DefineBoostLibrary,iostreams,,,,zlib liblzma libbz2 libzstd))
 $(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS),BUILD_NLS))
 $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex))
 $(eval $(call DefineBoostLibrary,math))
 #$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
+$(eval $(call DefineBoostLibrary,nowide))
 $(eval $(call DefineBoostLibrary,program_options))
-$(eval $(call DefineBoostLibrary,python3,,,PACKAGE_python3))
+$(eval $(call DefineBoostLibrary,python3))
 $(eval $(call DefineBoostLibrary,random,system))
 $(eval $(call DefineBoostLibrary,regex))
 $(eval $(call DefineBoostLibrary,serialization))
