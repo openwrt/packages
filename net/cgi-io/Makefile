@@ -10,8 +10,14 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=cgi-io
 PKG_RELEASE:=19
 
-PKG_LICENSE:=GPL-2.0-or-later
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL=$(PROJECT_GIT)/project/cgi-io.git
+PKG_SOURCE_DATE:=2020-10-11
+PKG_SOURCE_VERSION:=d2907bd12986c7b582adcf0f186d97fed399963b
+PKG_MIRROR_HASH:=e4ce1aabfa91e77f562d89afb0ae0aea2e3dd2d3998069819f3412acfc4ed26b
+CMAKE_INSTALL:=1
 
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 
 include $(INCLUDE_DIR)/package.mk
@@ -27,11 +33,6 @@ endef
 
 define Package/cgi-io/description
   This package contains an cgi utility that is useful for up/downloading files
-endef
-
-define Build/Prepare
-	mkdir -p $(PKG_BUILD_DIR)
-	$(CP) ./src/* $(PKG_BUILD_DIR)/
 endef
 
 define Package/cgi-io/install
