@@ -1,6 +1,6 @@
 --- a/pdns/Makefile.am
 +++ b/pdns/Makefile.am
-@@ -69,11 +69,9 @@
+@@ -68,11 +68,9 @@ CLEANFILES = \
  	backends/gsql/gsqlbackend.gcda \
  	backends/gsql/gsqlbackend.gcno \
  	backends/gsql/gsqlbackend.gcov \
@@ -13,7 +13,7 @@
  
  sbin_PROGRAMS = pdns_server
  bin_PROGRAMS = \
-@@ -113,7 +111,7 @@
+@@ -112,7 +110,7 @@ if IXFRDIST
  bin_PROGRAMS += \
  	ixfrdist
  
@@ -22,12 +22,12 @@
  	ixfrdist.example.yml
  endif
  
-@@ -1256,9 +1254,6 @@
+@@ -1248,9 +1246,6 @@ dnspcap2protobuf_LDADD = \
  endif
  endif
  
 -pdns.conf-dist: pdns_server
--	$(AM_V_GEN)./pdns_server --no-config --config 2>/dev/null > $@
+-	$(AM_V_GEN)./pdns_server --no-config --config=default 2>/dev/null > $@
 -
  testrunner_SOURCES = \
  	arguments.cc \
