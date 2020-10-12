@@ -11,9 +11,10 @@ NAME=mysqld
 LOGGER="/usr/bin/logger -p user.err -s -t $NAME --"
 [ -x "$LOGGER" ] || LOGGER="echo"
 
-MYSQLADMIN="/usr/bin/mysqladmin"
 MYSQLD="/usr/bin/$NAME"
 MYSQLDSAFE="/usr/bin/mysqld_safe"
+
+pidfile=""
 
 # mysqladmin likes to read /root/.my.cnf which could cause issues.
 export HOME="/etc/mysql"
@@ -22,31 +23,39 @@ export HOME="/etc/mysql"
 cd /
 
 mysqld_get_param() {
-	/usr/bin/mysqld --help --verbose | sed -n 's|^'"$1"'[[:blank:]]\+||p'
+	"$MYSQLD" --help --verbose | sed -n 's|^'"$1"'[[:blank:]]\+||p'
+}
+
+# Send kill signal to MariaDB process
+#
+# Usage: boolean mysqld_kill signal
+mysql_kill() {
+	[ -n "$pidfile" ] || pidfile="$(mysqld_get_param pid-file)"
+	[ -f "$pidfile" ] || return 1
+	pid="$(cat $pidfile)"
+	[ -n "$pid" ] || return 2
+	kill "$1" "$pid"
 }
 
 # Checks if a server is running and accessible.
 #
-# check_alive insists on a pingable server
-# check_dead also fails if there is a lost mysqld in the process list
+# Supported modes are 'check_alive' and 'check_dead'.
+# Both check for pidfile and whether the specified process is running and is
+# indeed mysqld. We could use mysqladmin for the check, but to be able to do
+# so, mysqladmin requires access to the database, which sounds like overkill
+# and potential security issue.
 #
 # Usage: boolean mysqld_status [check_alive|check_dead]
 mysqld_status() {
-	if $MYSQLADMIN ping >/dev/null 2>&1; then
-		ping_alive=1
-	else
-		ping_alive=0
-	fi
-
 	ps_alive=0
 	pidfile="$(mysqld_get_param pid-file)"
-	if [ -f "$pidfile" ] && kill -0 "$(cat "$pidfile")" >/dev/null 2>&1; then
+	if [ -f "$pidfile" ] && mysql_kill -0 2> /dev/null && \
+	   [ "$(readlink "/proc/$(cat "$pidfile")/exe")" = "$MYSQLD" ]; then
 		ps_alive=1
 	fi
 
-	if { [ "$1" = check_alive ] && [ $ping_alive = 1 ]; } || \
-		{ [ "$1" = check_dead ] && [ $ping_alive = 0 ] \
-					&& [ $ps_alive = 0 ]; }
+	if { [ "$1" = check_alive ] && [ $ps_alive = 1 ]; } || \
+		{ [ "$1" = check_dead ] && [ $ps_alive = 0 ]; }
 	then
 		return 0 # EXIT_SUCCESS
 	else
@@ -60,8 +69,8 @@ start() {
 	rundir=/var/run/mysqld
 
 	hint="please fix your server configuration in /etc/mysql/"
-
-	for i in "$MYSQLD" "$MYSQLADMIN" "$MYSQLDSAFE"; do
+ 
+	for i in "$MYSQLD" "$MYSQLDSAFE"; do
 		if [ ! -x "$i" ]; then
 			$LOGGER "$i is missing"
 			exit 1
@@ -133,14 +142,21 @@ start() {
 }
 
 stop() {
+	timeout="0"
+	while mysqld_status check_alive && [ "$timeout" -lt 60 ]; do
+		mysql_kill -TERM
+		sleep 1
+		timeout="$(($timeout + 1))"
+	done
 	if ! mysqld_status check_dead; then
-		"$MYSQLADMIN" shutdown
+		$LOGGER "server is failing to stop"
+		mysql_kill -KILL
 	fi
 }
 
 reload() {
 	if mysqld_status check_alive; then
-		"$MYSQLADMIN" reload
+		mysql_kill -HUP
 	else
 		$LOGGER "server is not running"
 	fi
