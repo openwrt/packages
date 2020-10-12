@@ -22,11 +22,7 @@ export HOME="/etc/mysql"
 cd /
 
 mysqld_get_param() {
-	$MYSQLD --print-defaults \
-		| tr " " "\n" \
-		| grep -- "--$1" \
-		| tail -n 1 \
-		| cut -d= -f2
+	/usr/bin/mysqld --help --verbose | sed -n 's|^'"$1"'[[:blank:]]\+||p'
 }
 
 # Checks if a server is running and accessible.
