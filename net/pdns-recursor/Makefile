@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pdns-recursor
 PKG_VERSION:=4.3.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
@@ -26,7 +26,7 @@ define Package/pdns-recursor
   SUBMENU:=IP Addresses and Names
   USERID:=pdns:pdns
   TITLE:=PowerDNS Recursor
-  DEPENDS:=+boost +boost-context +boost-filesystem +libatomic +liblua +libopenssl +protobuf
+  DEPENDS:=+boost +boost-context +boost-filesystem +libatomic +liblua +libopenssl +protobuf +libfstrm
   URL:=https://www.powerdns.com/recursor.html
 endef
 
