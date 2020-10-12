@@ -9,7 +9,7 @@
              os.path.join(PROJECT_ROOT, 'seahub/templates'),
          ],
          'APP_DIRS': True,
-@@ -633,7 +633,7 @@ CAPTCHA_IMAGE_SIZE = (90, 42)
+@@ -646,7 +646,7 @@ CAPTCHA_IMAGE_SIZE = (90, 42)
  ENABLE_THUMBNAIL = True
  
  # Absolute filesystem path to the directory that will hold thumbnail files.
@@ -18,7 +18,7 @@
  if os.path.exists(SEAHUB_DATA_ROOT):
      THUMBNAIL_ROOT = os.path.join(SEAHUB_DATA_ROOT, 'thumbnail')
  else:
-@@ -829,7 +829,7 @@ except ImportError:
+@@ -842,7 +842,7 @@ except ImportError:
      pass
  else:
      # In server release, sqlite3 db file is <topdir>/seahub.db
