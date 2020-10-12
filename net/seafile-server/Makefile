@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
-PKG_VERSION:=7.1.4
-PKG_RELEASE:=2
+PKG_VERSION:=7.1.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/haiwen/seafile-server/tar.gz/v$(PKG_VERSION)-server?
-PKG_HASH:=cc5aaf76044f907758a75a43e321fef499482d7b57d9e61d0297a4bba66dcce4
+PKG_HASH:=407a6243f754e366ce6754a2aa643574aa7742d4e81b7cc350dea348f3063707
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=AGPL-3.0-only
