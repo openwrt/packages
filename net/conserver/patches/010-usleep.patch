@@ -1,0 +1,65 @@
+From 59d5dbb388c7ba99fe056297c2a65b2ac41bab15 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Mon, 12 Oct 2020 16:38:58 -0700
+Subject: [PATCH] replace usleep with nanosleep
+
+The former is removed in POSIX 2008.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ conserver/consent.c | 6 ++++--
+ conserver/group.c   | 9 ++++++---
+ 2 files changed, 10 insertions(+), 5 deletions(-)
+
+diff --git a/conserver/consent.c b/conserver/consent.c
+index a936d9d..faf118b 100644
+--- a/conserver/consent.c
++++ b/conserver/consent.c
+@@ -820,7 +820,8 @@ ConsInit(CONSENT *pCE)
+      */
+     if (pCE->fup) {
+ 	ConsDown(pCE, FLAGFALSE, FLAGTRUE);
+-	usleep(250000);		/* pause 0.25 sec to let things settle a bit */
++	struct timespec t = {0, 250 * 1000 * 1000};
++	nanosleep(&t, NULL);	/* pause 0.25 sec to let things settle a bit */
+     }
+ 
+     pCE->autoReUp = 0;
+@@ -885,8 +886,9 @@ ConsInit(CONSENT *pCE)
+ #if HAVE_SETSOCKOPT
+ 		int one = 1;
+ #endif
++		struct timespec t = {0, 100 * 1000 * 1000};
+ 
+-		usleep(100000);	/* Not all terminal servers can keep up */
++		nanosleep(&t, NULL); /* Not all terminal servers can keep up */
+ 
+ #if USE_IPV6
+ # if HAVE_MEMSET
+diff --git a/conserver/group.c b/conserver/group.c
+index 934a58f..066e268 100644
+--- a/conserver/group.c
++++ b/conserver/group.c
+@@ -4213,8 +4213,10 @@ FlushConsole(CONSENT *pCEServing)
+ 		    CONDDEBUG((1,
+ 			       "Kiddie(): heavy IAC - doing usleep() for [%s] (break #%c - delay %dms)",
+ 			       pCEServing->server, next, delay));
+-		    if (delay != 0)
+-			usleep(delay * 1000);
++		    if (delay != 0) {
++			struct timespec d = {0, delay * 1000 * 1000};
++			nanosleep(&d, NULL);
++		    }
+ 		} else if (next == BREAK) {
+ 		    CONDDEBUG((1,
+ 			       "Kiddie(): heavy IAC - sending break for [%s]",
+@@ -5250,7 +5252,8 @@ Spawn(GRPENT *pGE, int msfd)
+ 	     * possibly opens another socket to the port.  this really is only
+ 	     * an issue if you use the same port with -p and -b, i think.
+ 	     */
+-	    usleep(750000);	/* pause 0.75 sec to throttle startup a bit */
++	    struct timespec s = {0, 750 * 1000 * 1000};
++	    nanosleep(&s, NULL); /* pause 0.75 sec to throttle startup a bit */
+ 	    pGE->pid = pid;
+ 	    return;
+ 	case 0:
