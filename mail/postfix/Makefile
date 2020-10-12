@@ -8,14 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postfix
+PKG_VERSION:=3.5.7
 PKG_RELEASE:=1
-PKG_VERSION:=3.5.0
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 	https://cdn.postfix.johnriley.me/mirrors/postfix-release/official/ \
 	http://ftp.porcupine.org/mirrors/postfix-release/official/
+PKG_HASH:=b7a474f14e153dc7cbf6af38419729bc5af5c3c37aecf6b327a8f962158f0961
 
-PKG_HASH:=22ac929733449a294252ac8deda4b264ff48a997ff3847007291a2ee53ef55cc
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
 PKG_LICENSE:=IPL-1.0
 PKG_LICENSE_FILES:=LICENSE
@@ -110,7 +111,7 @@ define Package/postfix/config
 	endmenu
 endef
 
-CCARGS=-DNO_NIS
+CCARGS=-DNO_NIS -fcommon
 AUXLIBS=-L$(STAGING_DIR)/usr/lib
 
 ifdef CONFIG_POSTFIX_TLS
