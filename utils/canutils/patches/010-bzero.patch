@@ -1,0 +1,31 @@
+From 8d2ed4c959039abdcfeaa3fe1e70af0e75be8809 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Sun, 11 Oct 2020 22:02:23 -0700
+Subject: [PATCH] jcat: remove bzero
+
+bzero is removed in POSIX 2008. malloc/bzero can also be replaced with
+calloc.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ jcat.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/jcat.c b/jcat.c
+index 8335d6e..81ffe04 100644
+--- a/jcat.c
++++ b/jcat.c
+@@ -644,12 +644,10 @@ int main(int argc, char *argv[])
+ 	struct jcat_priv *priv;
+ 	int ret;
+ 
+-	priv = malloc(sizeof(*priv));
++	priv = calloc(1, sizeof(*priv));
+ 	if (!priv)
+ 		err(EXIT_FAILURE, "can't allocate priv");
+ 
+-	bzero(priv, sizeof(*priv));
+-
+ 	priv->todo_prio = -1;
+ 	priv->infile = STDIN_FILENO;
+ 	priv->outfile = STDOUT_FILENO;

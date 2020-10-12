@@ -1,0 +1,85 @@
+From d7df79e6876bed9df9522255f9d24ad5a76b65ce Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Sun, 11 Oct 2020 22:00:32 -0700
+Subject: [PATCH] convert usleep to nanosleep
+
+usleep is removed in POSIX 2008.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ bcmserver.c    | 7 ++++++-
+ canlogserver.c | 6 +++++-
+ isotpserver.c  | 7 ++++++-
+ 3 files changed, 17 insertions(+), 3 deletions(-)
+
+diff --git a/bcmserver.c b/bcmserver.c
+index b51cb2c..3fe092c 100644
+--- a/bcmserver.c
++++ b/bcmserver.c
+@@ -114,6 +114,7 @@
+ #include <string.h>
+ #include <signal.h>
+ #include <errno.h>
++#include <time.h>
+ 
+ #include <sys/types.h>
+ #include <sys/wait.h>
+@@ -180,8 +181,12 @@ int main(void)
+ 	saddr.sin_port = htons(PORT);
+ 
+ 	while(bind(sl,(struct sockaddr*)&saddr, sizeof(saddr)) < 0) {
++		struct timespec f = {
++			.tv_nsec = 100 * 1000 * 1000,
++		};
++
+ 		printf(".");fflush(NULL);
+-		usleep(100000);
++		nanosleep(&f, NULL);
+ 	}
+ 
+ 	if (listen(sl,3) != 0) {
+diff --git a/canlogserver.c b/canlogserver.c
+index 4bcf991..ef338d1 100644
+--- a/canlogserver.c
++++ b/canlogserver.c
+@@ -280,8 +280,12 @@ int main(int argc, char **argv)
+ 	inaddr.sin_port = htons(port);
+ 
+ 	while(bind(socki, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
++		struct timespec f = {
++			.tv_nsec = 100 * 1000 * 1000,
++		};
++
+ 		printf(".");fflush(NULL);
+-		usleep(100000);
++		nanosleep(&f, NULL);
+ 	}
+ 
+ 	if (listen(socki, 3) != 0) {
+diff --git a/isotpserver.c b/isotpserver.c
+index 91719f0..946169e 100644
+--- a/isotpserver.c
++++ b/isotpserver.c
+@@ -64,6 +64,7 @@
+ #include <string.h>
+ #include <signal.h>
+ #include <errno.h>
++#include <time.h>
+ 
+ #include <sys/types.h>
+ #include <sys/wait.h>
+@@ -298,9 +299,13 @@ int main(int argc, char **argv)
+ 	saddr.sin_port = htons(local_port);
+ 
+ 	while(bind(sl,(struct sockaddr*)&saddr, sizeof(saddr)) < 0) {
++		struct timespec f = {
++			.tv_nsec = 100 * 1000 * 1000,
++		};
++
+ 		printf(".");
+ 		fflush(NULL);
+-		usleep(100000);
++		nanosleep(&f, NULL);
+ 	}
+ 
+ 	if (listen(sl, 3) != 0) {
