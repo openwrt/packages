@@ -43,6 +43,7 @@ $(call Package/sane-backends/Default)
   CATEGORY:=Utilities
   TITLE+= (drivers)
   DEPENDS:=+ALL:sane-backends-all
+  BUILDONLY:=1
 endef
 
 define Package/sane-backends/description

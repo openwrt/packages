@@ -100,6 +100,7 @@ define Package/snmpd-static
 $(call Package/net-snmp/Default)
   DEPENDS:=+snmpd
   TITLE:=Open source SNMP implementation (daemon)
+  BUILDONLY:=1
 endef
 
 
