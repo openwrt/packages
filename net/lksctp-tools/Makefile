@@ -45,6 +45,7 @@ define Package/sctp
 $(call Package/lksctp-tools/Default)
   TITLE+= (meta)
   DEPENDS:=+libsctp +sctp-tools
+  BUILDONLY:=1
 endef
 
 define Package/sctp-tools

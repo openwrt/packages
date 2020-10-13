@@ -38,6 +38,7 @@ define Package/libevhtp
     CATEGORY:=Libraries
     TITLE:=A more flexible replacement for libevent's httpd API
     URL:=https://github.com/criticalstack/libevhtp
+    BUILDONLY:=1
 endef
 
 define Package/libevhtp/description

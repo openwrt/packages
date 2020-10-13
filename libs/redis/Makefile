@@ -54,6 +54,7 @@ define Package/redis-full
 $(call  Package/redis/Default)
   TITLE:=All Redis binaries (server,cli and utils)
   DEPENDS:=+redis-utils +redis-cli
+  BUILDONLY:=1
 endef
 
 define Package/redis-full/description

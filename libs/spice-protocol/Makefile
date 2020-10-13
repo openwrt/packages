@@ -29,6 +29,7 @@ define Package/spice-protocol
   CATEGORY:=Libraries
   TITLE:=SPICE - headers defining protocols
   URL:=https://www.spice-space.org/index.html
+  BUILDONLY:=1
 endef
 
 define Build/InstallDev
