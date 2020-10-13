@@ -31,6 +31,7 @@ define Package/libtorrent
   TITLE:=Rakshasa's BitTorrent library
   URL:=https://rakshasa.github.io/rtorrent/
   DEPENDS:=+libopenssl +libstdcpp +zlib
+  BUILDONLY:=1
 endef
 
 define Package/libtorrent/description
