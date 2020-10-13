@@ -28,6 +28,11 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/package-seccomp.mk
 include $(INCLUDE_DIR)/nls.mk
 
+PKG_CONFIG_DEPENDS:= \
+  CONFIG_LIBCURL_MBEDTLS \
+  CONFIG_LIBCURL_WOLFSSL \
+  CONFIG_LIBCURL_OPENSSL
+
 define Package/transmission/template
   SUBMENU:=BitTorrent
   SECTION:=net
@@ -37,53 +42,20 @@ define Package/transmission/template
   DEPENDS:=+libcurl +libevent2 +libminiupnpc +libnatpmp +libpthread +librt +zlib $(ICONV_DEPENDS)
 endef
 
-define Package/transmission-daemon/Default
+define Package/transmission-daemon
   $(call Package/transmission/template)
   USERID:=transmission=224:transmission=224
+  DEPENDS+=+LIBCURL_OPENSSL:libopenssl +LIBCURL_MBEDTLS:libmbedtls +LIBCURL_WOLFSSL:libmbedtls
 endef
 
-define Package/transmission-daemon-openssl
-  $(call Package/transmission-daemon/Default)
-  TITLE+= (with OpenSSL)
-  DEPENDS+=+libopenssl
-  VARIANT:=openssl
-  PROVIDES:=transmission-daemon
-endef
-
-define Package/transmission-daemon-mbedtls
-  $(call Package/transmission-daemon/Default)
-  TITLE+= (with mbed TLS)
-  DEPENDS+=+libmbedtls
-  VARIANT:=mbedtls
-  PROVIDES:=transmission-daemon
-endef
-
-define Package/transmission-cli-openssl
+define Package/transmission-cli
   $(call Package/transmission/template)
-  TITLE+= (with OpenSSL)
-  DEPENDS+=+libopenssl
-  VARIANT:=openssl
+  DEPENDS+=+LIBCURL_OPENSSL:libopenssl +LIBCURL_MBEDTLS:libmbedtls +LIBCURL_WOLFSSL:libmbedtls
 endef
 
-define Package/transmission-cli-mbedtls
+define Package/transmission-remote
   $(call Package/transmission/template)
-  TITLE+= (with mbed TLS)
-  DEPENDS+=+libmbedtls
-  VARIANT:=mbedtls
-endef
-
-define Package/transmission-remote-openssl
-  $(call Package/transmission/template)
-  TITLE+= (with OpenSSL)
-  DEPENDS+=+libopenssl
-  VARIANT:=openssl
-endef
-
-define Package/transmission-remote-mbedtls
-  $(call Package/transmission/template)
-  TITLE+= (with mbed TLS)
-  DEPENDS+=+libmbedtls
-  VARIANT:=mbedtls
+  DEPENDS+=+LIBCURL_OPENSSL:libopenssl +LIBCURL_MBEDTLS:libmbedtls +LIBCURL_WOLFSSL:libmbedtls
 endef
 
 define Package/transmission-web
@@ -93,35 +65,28 @@ define Package/transmission-web
   PKGARCH:=all
 endef
 
-define Package/transmission-daemon/Default/description
+define Package/transmission-daemon/description
  Transmission is a simple BitTorrent client.
  It features a very simple, intuitive interface
  on top on an efficient, cross-platform back-end.
  This package contains the daemon itself.
 endef
-Package/transmission-daemon-openssl/description = $(Package/transmission-daemon/Default/description)
-Package/transmission-daemon-mbedtls/description = $(Package/transmission-daemon/Default/description)
 
-define Package/transmission-cli/Default/description
+define Package/transmission-cli/description
  CLI utilities for transmission.
 endef
-Package/transmission-cli-openssl/description = $(Package/transmission-cli/Default/description)
-Package/transmission-cli-mbedtls/description = $(Package/transmission-cli/Default/description)
 
-define Package/transmission-remote/Default/description
+define Package/transmission-remote/description
  CLI remote interface for transmission.
 endef
-Package/transmission-remote-openssl/description = $(Package/transmission-remote/Default/description)
-Package/transmission-remote-mbedtls/description = $(Package/transmission-remote/Default/description)
 
 define Package/transmission-web/description
  Webinterface resources for transmission.
 endef
 
-define Package/transmission-daemon-openssl/conffiles
+define Package/transmission-daemon/conffiles
 /etc/config/transmission
 endef
-Package/transmission-daemon-mbedtls/conffiles = $(Package/transmission-daemon-openssl/conffiles)
 
 TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
 TARGET_LDFLAGS += -Wl,--gc-sections -Wl,--as-needed -liconv
@@ -136,13 +101,23 @@ CONFIGURE_ARGS += \
 	--without-kqueue \
 	--without-systemd-daemon
 
-ifeq ($(BUILD_VARIANT),mbedtls)
+ifdef CONFIG_LIBCURL_MBEDTLS
+	WITH_MBEDTLS:=1
+endif
+
+ifdef CONFIG_LIBCURL_MBEDTLS
+	WITH_MBEDTLS:=1
+endif
+
+ifeq ($(WITH_MBEDTLS),1)
   CONFIGURE_ARGS += --with-crypto=polarssl
-else
+endif
+
+ifdef CONFIG_LIBCURL_OPENSSL
   CONFIGURE_ARGS += --with-crypto=openssl
 endif
 
-define Package/transmission-daemon-openssl/install
+define Package/transmission-daemon/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/transmission-daemon $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/init.d/
@@ -153,9 +128,8 @@ define Package/transmission-daemon-openssl/install
 	$(INSTALL_CONF) files/transmission.sysctl $(1)/etc/sysctl.d/20-transmission.conf
 	$(call InstallSeccomp,$(1),./files/transmission-daemon.json)
 endef
-Package/transmission-daemon-mbedtls/install = $(Package/transmission-daemon-openssl/install)
 
-define Package/transmission-cli-openssl/install
+define Package/transmission-cli/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/transmission-cli \
 			$(PKG_INSTALL_DIR)/usr/bin/transmission-create \
@@ -163,23 +137,18 @@ define Package/transmission-cli-openssl/install
 			$(PKG_INSTALL_DIR)/usr/bin/transmission-show \
 			$(1)/usr/bin/
 endef
-Package/transmission-cli-mbedtls/install = $(Package/transmission-cli-openssl/install)
 
-define Package/transmission-remote-openssl/install
+define Package/transmission-remote/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/transmission-remote $(1)/usr/bin/
 endef
-Package/transmission-remote-mbedtls/install = $(Package/transmission-remote-openssl/install)
 
 define Package/transmission-web/install
 	$(INSTALL_DIR) $(1)/usr/share/transmission
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/transmission/web $(1)/usr/share/transmission/
 endef
 
-$(eval $(call BuildPackage,transmission-daemon-openssl))
-$(eval $(call BuildPackage,transmission-daemon-mbedtls))
-$(eval $(call BuildPackage,transmission-cli-openssl))
-$(eval $(call BuildPackage,transmission-cli-mbedtls))
-$(eval $(call BuildPackage,transmission-remote-openssl))
-$(eval $(call BuildPackage,transmission-remote-mbedtls))
+$(eval $(call BuildPackage,transmission-daemon))
+$(eval $(call BuildPackage,transmission-cli))
+$(eval $(call BuildPackage,transmission-remote))
 $(eval $(call BuildPackage,transmission-web))
