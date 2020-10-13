@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
 PKG_VERSION:=3.00
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GITHUB/transmission/transmission-releases/master
@@ -137,9 +137,6 @@ CONFIGURE_ARGS += \
 
 ifeq ($(BUILD_VARIANT),mbedtls)
   CONFIGURE_ARGS += --with-crypto=polarssl
-  CONFIGURE_VARS += \
-	MBEDTLS_CFLAGS="-I$(STAGING_DIR)/usr/include/mbedtls" \
-	MBEDTLS_LIBS="-lmbedtls -lmbedcrypto"
 else
   CONFIGURE_ARGS += --with-crypto=openssl
 endif
