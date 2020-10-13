@@ -35,7 +35,7 @@ mysqld_get_param() {
 mysql_kill() {
 	[ -n "$pidfile" ] || pidfile="$(mysqld_get_param pid-file)"
 	[ -f "$pidfile" ] || return 1
-	pid="$(cat $pidfile)"
+	pid="$(cat "$pidfile")"
 	[ -n "$pid" ] || return 2
 	kill "$1" "$pid"
 }
@@ -102,18 +102,6 @@ start_service() {
 	datadir="$(mysqld_get_param datadir)"
 	tmpdir="$(mysqld_get_param tmpdir)"
 
-	if [ -z "$datadir" ]; then
-		$LOGGER "datadir is not set"
-		$LOGGER "$hint"
-		exit 1
-	fi
-
-	if [ -z "$tmpdir" ]; then
-		$LOGGER "tmpdir is not set"
-		$LOGGER "$hint"
-		exit 1
-	fi
-
 	if [ ! -f "$datadir/mysql/tables_priv.MAD" ]; then
 		args="--force"
 		basedir="$(mysqld_get_param basedir)"
@@ -144,7 +132,7 @@ start_service() {
 	# Start daemon
 	procd_open_instance
 
-	# shellcheck disable=SC2086
+	# shellcheck disable=SC2154 disable=SC2086
 	procd_set_param command "$MYSQLD" $options
 	procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
 	# run as user
