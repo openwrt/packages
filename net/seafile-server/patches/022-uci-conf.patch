@@ -1,6 +1,6 @@
 --- a/common/seaf-utils.c
 +++ b/common/seaf-utils.c
-@@ -236,7 +236,12 @@ create_ccnet_rpc_client ()
+@@ -238,7 +238,12 @@ create_ccnet_rpc_client ()
      SearpcNamedPipeClient *transport = NULL;
      char *pipe_path = NULL;
  
@@ -16,7 +16,7 @@
      if (!transport)
 --- a/controller/seafile-controller.c
 +++ b/controller/seafile-controller.c
-@@ -480,7 +480,10 @@ stop_services ()
+@@ -511,7 +511,10 @@ stop_services ()
  static void
  init_pidfile_path (SeafileController *ctl)
  {
@@ -28,7 +28,7 @@
      if (!g_file_test(pid_dir, G_FILE_TEST_EXISTS)) {
          if (g_mkdir(pid_dir, 0777) < 0) {
              seaf_warning("failed to create pid dir %s: %s", pid_dir, strerror(errno));
-@@ -492,6 +495,8 @@ init_pidfile_path (SeafileController *ct
+@@ -523,6 +526,8 @@ init_pidfile_path (SeafileController *ct
      ctl->pidfile[PID_SERVER] = g_build_filename (pid_dir, "seaf-server.pid", NULL);
      ctl->pidfile[PID_SEAFDAV] = g_build_filename (pid_dir, "seafdav.pid", NULL);
      ctl->pidfile[PID_SEAFEVENTS] = g_build_filename (pid_dir, "seafevents.pid", NULL);
@@ -37,7 +37,7 @@
  }
  
  static int
-@@ -514,7 +519,10 @@ seaf_controller_init (SeafileController
+@@ -545,7 +550,10 @@ seaf_controller_init (SeafileController
  
      if (logdir == NULL) {
          char *topdir = g_path_get_dirname(config_dir);
@@ -49,7 +49,7 @@
          if (checkdir_with_mkdir(logdir) < 0) {
              fprintf (stderr, "failed to create log folder \"%s\": %s\n",
                       logdir, strerror(errno));
-@@ -523,10 +531,15 @@ seaf_controller_init (SeafileController
+@@ -554,10 +562,15 @@ seaf_controller_init (SeafileController
          g_free (topdir);
      }
  

@@ -9,7 +9,7 @@ Forwarded: no
 
 --- a/server/access-file.c
 +++ b/server/access-file.c
-@@ -661,7 +661,7 @@ do_file(evhtp_request_t *req, SeafRepo *
+@@ -665,7 +665,7 @@ do_file(evhtp_request_t *req, SeafRepo *
      /* Block any new request from this connection before finish
       * handling this request.
       */
@@ -18,7 +18,7 @@ Forwarded: no
  
      /* Kick start data transfer by sending out http headers. */
      evhtp_send_reply_start(req, EVHTP_RES_OK);
-@@ -1021,7 +1021,7 @@ do_file_range (evhtp_request_t *req, Sea
+@@ -1030,7 +1030,7 @@ do_file_range (evhtp_request_t *req, Sea
      /* Block any new request from this connection before finish
       * handling this request.
       */
@@ -27,7 +27,7 @@ Forwarded: no
  
      /* Kick start data transfer by sending out http headers. */
      evhtp_send_reply_start(req, EVHTP_RES_PARTIAL);
-@@ -1091,7 +1091,7 @@ start_download_zip_file (evhtp_request_t
+@@ -1100,7 +1100,7 @@ start_download_zip_file (evhtp_request_t
      /* Block any new request from this connection before finish
       * handling this request.
       */
@@ -36,7 +36,7 @@ Forwarded: no
  
      /* Kick start data transfer by sending out http headers. */
      evhtp_send_reply_start(req, EVHTP_RES_OK);
-@@ -1435,7 +1435,7 @@ do_block(evhtp_request_t *req, SeafRepo
+@@ -1444,7 +1444,7 @@ do_block(evhtp_request_t *req, SeafRepo
      /* Block any new request from this connection before finish
       * handling this request.
       */
