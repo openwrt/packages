@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ooniprobe
-PKG_VERSION:=3.0.7
+PKG_VERSION:=3.0.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=probe-cli-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ooni/probe-cli/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=01e1e1a8d7d8fff04a8c098cfd33c84c507cc6efb88c597714b4917b9d0d64e1
+PKG_HASH:=62986d0aab60f4d0ef5a46924dbc0ecd3c4b70f7a566ea08755814be034c9aee
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
@@ -25,6 +25,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 GO_PKG:=github.com/ooni/probe-cli
+GO_PKG_TAGS:=DISABLE_QUIC
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -34,18 +35,8 @@ define Package/ooniprobe
   CATEGORY:=Network
   TITLE:=OONI probe-cli
   URL:=https://ooni.org
-  DEPENDS:=\
-	$(GO_ARCH_DEPENDS) +libevent2-openssl \
-	+libevent2-core +libevent2-extra +libevent2-pthreads \
-	+libmaxminddb +libopenssl \
-	+zlib +libcurl +libstdcpp
+  DEPENDS:=$(GO_ARCH_DEPENDS)
 endef
-
-TARGET_LDFLAGS:=\
-	-lmaxminddb -lcurl \
-	-levent_openssl -lssl \
-	-lcrypto -levent_core -levent_extra \
-	-levent_pthreads -lz
 
 define Package/ooniprobe/description
   The next generation of  OONI(Open Observatory of Network Interference)
