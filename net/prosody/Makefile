@@ -68,8 +68,7 @@ define Package/prosody/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/prosody.init $(1)/etc/init.d/prosody
 	$(INSTALL_DIR) $(1)/etc/prosody
-	#$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/prosody/prosody.cfg.lua $(1)/etc/prosody/
-	$(INSTALL_CONF) ./files/prosody.cfg.lua $(1)/etc/prosody/
+	$(INSTALL_DATA) ./files/prosody.cfg.lua $(1)/etc/prosody/
 	$(INSTALL_DIR) $(1)/etc/prosody/certs
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/prosody/certs/localhost.{crt,key} $(1)/etc/prosody/certs/
 	$(INSTALL_DIR) $(1)/etc/prosody/data
