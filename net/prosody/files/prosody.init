@@ -28,7 +28,7 @@ start_service() {
 	}
 
 	[ -f /sbin/paxctl ] && {
-		paxctl  -v /usr/bin/ > /dev/null  2>&1	
+		paxctl  -v /usr/bin/ > /dev/null  2>&1
 		[ $? -ne 0 ] && {
 			cp /usr/bin/lua /tmp
 			paxctl -c -m /tmp/lua
