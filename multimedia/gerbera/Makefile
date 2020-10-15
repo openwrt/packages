@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gerbera
-PKG_VERSION:=1.6.1
-PKG_RELEASE:=2
+PKG_VERSION:=1.6.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gerbera/gerbera/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=9bb119ee422c8e7a053c309256215a8899dfd6707f6b93496e6facea7978ac7c
+PKG_HASH:=cbe7ea78977db8c02fcca1759ed149f199a590afaf4a6d21ffcca8623d1a0cc5
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
