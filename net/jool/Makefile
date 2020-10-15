@@ -8,12 +8,12 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=jool
-PKG_VERSION:=4.0.9
+PKG_VERSION:=4.1.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/NICMx/Jool/releases/download/v$(PKG_VERSION)
-PKG_HASH:=d42215f87abf2e113bc039d23e6b4e1c39cafc90f0e5584adf0e40e996c68ffb
+PKG_HASH:=84e294f880986ef13fc17d7ddb96aac5d88b7d47932c843eb621647235191fab
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-only
@@ -64,6 +64,7 @@ define Package/jool
   $(call Package/jool/Default)
   TITLE:=Jool meta-package
   DEPENDS:=+kmod-jool +jool-tools
+  BUILDONLY:=1
 endef
 
 define Package/jool/description
