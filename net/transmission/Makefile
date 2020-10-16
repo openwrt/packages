@@ -31,6 +31,8 @@ include $(INCLUDE_DIR)/nls.mk
 PKG_CONFIG_DEPENDS:= \
   CONFIG_LIBCURL_MBEDTLS \
   CONFIG_LIBCURL_WOLFSSL \
+  CONFIG_LIBCURL_GNUTLS \
+  CONFIG_LIBCURL_NOSSL \
   CONFIG_LIBCURL_OPENSSL
 
 define Package/transmission/template
@@ -42,20 +44,28 @@ define Package/transmission/template
   DEPENDS:=+libcurl +libevent2 +libminiupnpc +libnatpmp +libpthread +librt +zlib $(ICONV_DEPENDS)
 endef
 
-define Package/transmission-daemon
+
+define Package/transmission/template-depends
   $(call Package/transmission/template)
+  DEPENDS+=\
+   +LIBCURL_OPENSSL:libopenssl \
+   +LIBCURL_MBEDTLS:libmbedtls \
+   +LIBCURL_GNUTLS:libmbedtls \
+   +LIBCURL_NOSSL:libmbedtls \
+   +LIBCURL_WOLFSSL:libmbedtls
+endef
+
+define Package/transmission-daemon
+  $(call Package/transmission/template-depends)
   USERID:=transmission=224:transmission=224
-  DEPENDS+=+LIBCURL_OPENSSL:libopenssl +LIBCURL_MBEDTLS:libmbedtls +LIBCURL_WOLFSSL:libmbedtls
 endef
 
 define Package/transmission-cli
-  $(call Package/transmission/template)
-  DEPENDS+=+LIBCURL_OPENSSL:libopenssl +LIBCURL_MBEDTLS:libmbedtls +LIBCURL_WOLFSSL:libmbedtls
+  $(call Package/transmission/template-depends)
 endef
 
 define Package/transmission-remote
-  $(call Package/transmission/template)
-  DEPENDS+=+LIBCURL_OPENSSL:libopenssl +LIBCURL_MBEDTLS:libmbedtls +LIBCURL_WOLFSSL:libmbedtls
+  $(call Package/transmission/template-depends)
 endef
 
 define Package/transmission-web
@@ -105,7 +115,15 @@ ifdef CONFIG_LIBCURL_MBEDTLS
 	WITH_MBEDTLS:=1
 endif
 
-ifdef CONFIG_LIBCURL_MBEDTLS
+ifdef CONFIG_LIBCURL_WOLFSSL
+	WITH_MBEDTLS:=1
+endif
+
+ifdef CONFIG_LIBCURL_NOSSL
+	WITH_MBEDTLS:=1
+endif
+
+ifdef CONFIG_LIBCURL_GNUTLS
 	WITH_MBEDTLS:=1
 endif
 
