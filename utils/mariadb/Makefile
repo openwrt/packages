@@ -137,8 +137,7 @@ MARIADB_SERVER := \
 	mysql_install_db \
 	mysql_upgrade \
 	mysqladmin \
-	mysqld \
-	mysqld_safe
+	mysqld
 
 MARIADB_SERVER_EXTRA := \
 	aria_chk \
@@ -157,6 +156,7 @@ MARIADB_SERVER_EXTRA := \
 	mysql_setpermission \
 	mysql_tzinfo_to_sql \
 	mysqld_multi \
+	mysqld_safe \
 	mysqld_safe_helper \
 	mysqldumpslow \
 	mysqlhotcopy \
@@ -380,7 +380,7 @@ CMAKE_OPTIONS += \
 	-DINSTALL_SQLBENCHDIR="" \
 	-DINSTALL_SUPPORTFILESDIR=share/mariadb \
 	-DINSTALL_UNIX_ADDRDIR=$(MARIADB_SOCKET) \
-	-DMYSQL_DATADIR=/var/lib/mysql \
+	-DMYSQL_DATADIR=/srv/mysql \
 	-DMYSQL_UNIX_ADDR=$(MARIADB_SOCKET) \
 	-DSKIP_TESTS=ON \
 	-DWITH_DEBUG=OFF \
