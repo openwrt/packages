@@ -26,7 +26,7 @@ for PKG in /ci/*.ipk; do
 	if [ -f "$TEST_SCRIPT" ]; then
 		echo "Use package specific test.sh"
 		if sh "$TEST_SCRIPT" "$PKG_NAME" "$PKG_VERSION"; then
-			echo "Test successfull"
+			echo "Test succesful"
 		else
 			echo "Test failed"
 			exit 1
