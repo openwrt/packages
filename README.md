@@ -24,3 +24,4 @@ See [LICENSE](LICENSE) file.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) file.
 
+Thanks for reading <3
