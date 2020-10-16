@@ -46,7 +46,7 @@ jobs:
           PACKAGES="${PACKAGES:-vim tmux bmon}"
 
           echo "Building $PACKAGES"
-          echo "::set-env name=PACKAGES::$PACKAGES"
+          echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
 
       - name: Build
         uses: openwrt/gh-action-sdk@v1
