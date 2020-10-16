@@ -10,7 +10,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-trm_ver="1.5.4"
+trm_ver="1.5.5"
 trm_enabled=0
 trm_debug=0
 trm_iface="trm_wwan"
@@ -245,7 +245,7 @@ f_check()
 {
 	local IFS ifname radio dev_status result uci_section login_command login_command_args wait_time=1 mode="${1}" status="${2:-"false"}" cp_domain="${3:-"false"}"
 
-	if [ "${mode}" != "initial" ] && [ "${mode}" != "dev" ] && [ "${status}" = "false" ]
+	if [ "${mode}" != "initial" ] && [ "${status}" = "false" ]
 	then
 		"${trm_wifi}" "${trm_wificmd}"
 		sleep $((trm_maxwait/6))
