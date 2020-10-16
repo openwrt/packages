@@ -236,7 +236,7 @@ endif
 
 # General build info
 
-GO_BUILD_CACHE_DIR:=$(or $(call qstrip,$(CONFIG_GOLANG_BUILD_CACHE_DIR)),$(TOPDIR)/.go-build)
+GO_BUILD_CACHE_DIR:=$(or $(call qstrip,$(CONFIG_GOLANG_BUILD_CACHE_DIR)),$(TMP_DIR)/go-build)
 GO_MOD_CACHE_DIR:=$(DL_DIR)/go-mod-cache
 
 GO_MOD_ARGS= \
@@ -249,6 +249,6 @@ GO_GENERAL_BUILD_CONFIG_VARS= \
 	GO_MOD_ARGS="$(GO_MOD_ARGS)"
 
 define Go/CacheCleanup
-	$(GENERAL_BUILD_CONFIG_VARS) \
+	$(GO_GENERAL_BUILD_CONFIG_VARS) \
 	$(SHELL) $(GO_INCLUDE_DIR)/golang-build.sh cache_cleanup
 endef
