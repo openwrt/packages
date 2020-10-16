@@ -210,6 +210,7 @@ issue_cert()
 	local user_cleanup
 	local ret
 	local domain_dir
+	local acme_server
 
 	config_get_bool enabled "$section" enabled 0
 	config_get_bool use_staging "$section" use_staging
@@ -223,6 +224,7 @@ issue_cert()
 	config_get dns "$section" dns
 	config_get user_setup "$section" user_setup
 	config_get user_cleanup "$section" user_cleanup
+	config_get acme_server "$section" acme_server
 
 	UPDATE_NGINX=$update_nginx
 	UPDATE_UHTTPD=$update_uhttpd
@@ -276,6 +278,11 @@ issue_cert()
 	acme_args="$acme_args --keylength $keylength"
 	[ -n "$ACCOUNT_EMAIL" ] && acme_args="$acme_args --accountemail $ACCOUNT_EMAIL"
 	[ "$use_staging" -eq "1" ] && acme_args="$acme_args --staging"
+
+	if [ -n $acme_server ]; then
+		log "Using custom ACME server URL"
+		acme_args="$acme_args --server $acme_server"
+	fi
 
 	if [ -n "$dns" ]; then
 		log "Using dns mode"
