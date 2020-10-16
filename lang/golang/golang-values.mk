@@ -249,6 +249,6 @@ GO_GENERAL_BUILD_CONFIG_VARS= \
 	GO_MOD_ARGS="$(GO_MOD_ARGS)"
 
 define Go/CacheCleanup
-	$(GENERAL_BUILD_CONFIG_VARS) \
+	$(GO_GENERAL_BUILD_CONFIG_VARS) \
 	$(SHELL) $(GO_INCLUDE_DIR)/golang-build.sh cache_cleanup
 endef
