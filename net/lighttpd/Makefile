@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
 PKG_VERSION:=1.4.55
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.lighttpd.net/lighttpd/releases-1.4.x
@@ -41,7 +41,7 @@ endef
 define Package/lighttpd
   $(call Package/lighttpd/Default)
   MENU:=1
-  DEPENDS:=+LIGHTTPD_SSL:libopenssl +libpcre +libpthread
+  DEPENDS:=+LIGHTTPD_SSL:libopenssl +libpcre +libpthread +LIGHTTPD_LOGROTATE:logrotate
   TITLE:=A flexible and lightweight web server
 endef
 
@@ -54,6 +54,13 @@ config LIGHTTPD_SSL
 	  Implements SSL support in lighttpd (using libopenssl). This
 	  option is required if you enable the SSL engine in your
 	  lighttpd confguration file.
+
+config LIGHTTPD_LOGROTATE
+	bool "Logrotate support"
+	depends on PACKAGE_lighttpd
+	default n
+	help
+	  It adds support for logrotate functionality.
 endef
 
 MESON_ARGS += \
@@ -104,6 +111,11 @@ define Package/lighttpd/install
 	done
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/lighttpd $(1)/usr/sbin/
+
+ifneq ($(strip $(CONFIG_LIGHTTPD_LOGROTATE)),)
+	$(INSTALL_DIR) $(1)/etc/logrotate.d
+	$(CP) ./files/lighttpd.logrotate $(1)/etc/logrotate.d/lighttpd.conf
+endif
 endef
 
 define BuildPlugin
