@@ -17,7 +17,7 @@ config GOLANG_BUILD_CACHE_DIR
 	default ""
 	help
 	  Store the Go build cache in this directory.
-	  If not set, uses './.go-build'.
+	  If not set, uses '$(TMP_DIR)/go-build'.
 
 config GOLANG_MOD_CACHE_WORLD_READABLE
 	bool "Ensure Go module cache is world-readable"

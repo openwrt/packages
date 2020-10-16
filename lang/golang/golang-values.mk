@@ -236,7 +236,7 @@ endif
 
 # General build info
 
-GO_BUILD_CACHE_DIR:=$(or $(call qstrip,$(CONFIG_GOLANG_BUILD_CACHE_DIR)),$(TOPDIR)/.go-build)
+GO_BUILD_CACHE_DIR:=$(or $(call qstrip,$(CONFIG_GOLANG_BUILD_CACHE_DIR)),$(TMP_DIR)/go-build)
 GO_MOD_CACHE_DIR:=$(DL_DIR)/go-mod-cache
 
 GO_MOD_ARGS= \
