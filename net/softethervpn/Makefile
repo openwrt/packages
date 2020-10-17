@@ -9,14 +9,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=softethervpn
-PKG_VERSION:=4.29-9680
+PKG_VERSION:=4.34-9745
 PKG_VERREL:=rtm
-PKG_VERDATE:=2019.02.28
-PKG_RELEASE:=5
+PKG_VERDATE:=2020.04.05
+PKG_RELEASE:=1
 
 PKG_SOURCE:=softether-src-v$(PKG_VERSION)-$(PKG_VERREL).tar.gz
 PKG_SOURCE_URL:=http://www.softether-download.com/files/softether/v$(PKG_VERSION)-$(PKG_VERREL)-$(PKG_VERDATE)-tree/Source_Code/
-PKG_HASH:=e6035fa7d9aaf59bdb342cd7ab5ecfdff89811a875f62a3230208cdc8a4e26e4
+PKG_HASH:=bf5547e2a190e8620fe02da9756b32d010e3b64cbc6317f172f7820394b4c036
 
 PKG_MAINTAINER:=Federico Di Marco <fededim@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
