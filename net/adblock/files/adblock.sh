@@ -4,14 +4,14 @@
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
-# shellcheck disable=1091,2016,2039,2059,2086,2143,2181,2188
+# shellcheck disable=1091,2010,2016,2034,2039,2059,2086,2091,2129,2143,2154,2181,2183,2188
 
 # set initial defaults
 #
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-adb_ver="4.0.6"
+adb_ver="4.0.7"
 adb_enabled=0
 adb_debug=0
 adb_forcedns=0
@@ -386,7 +386,7 @@ f_fetch()
 	fi
 	case "${adb_fetchutil}" in
 		"aria2c")
-			adb_fetchparm="${adb_fetchparm:-"--timeout=20 --allow-overwrite=true --auto-file-renaming=false --check-certificate=true --dir= -o"}"
+			adb_fetchparm="${adb_fetchparm:-"--timeout=20 --allow-overwrite=true --auto-file-renaming=false --check-certificate=true --log-level=warn --dir=/ -o"}"
 		;;
 		"curl")
 			adb_fetchparm="${adb_fetchparm:-"--connect-timeout 20 --silent --show-error --location -o"}"
@@ -753,17 +753,30 @@ f_list()
 					out_rc="${?}"
 				;;
 				"duckduckgo")
-					safe_ips="50.16.250.179 54.208.102.2 52.204.96.252"
 					safe_cname="safe.duckduckgo.com"
 					safe_domains="duckduckgo.com"
-					printf "%s\n" ${safe_domains} > "${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
+					if [ -x "${adb_lookupcmd}" ]
+					then
+						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/Address [0-9]+:/{ORS=" ";print $3}')"
+						if [ -n "${safe_ips}" ]
+						then
+							printf "%s\n" ${safe_domains} > "${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
+						fi
+					fi
 					out_rc="${?}"
 				;;
 				"pixabay")
-					safe_ips="104.18.82.97 2606:4700::6812:8d57 2606:4700::6812:5261"
 					safe_cname="safesearch.pixabay.com"
 					safe_domains="pixabay.com"
 					printf "%s\n" ${safe_domains} > "${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
+					if [ -x "${adb_lookupcmd}" ]
+					then
+						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/Address [0-9]+:/{ORS=" ";print $3}')"
+						if [ -n "${safe_ips}" ]
+						then
+							printf "%s\n" ${safe_domains} > "${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
+						fi
+					fi
 					out_rc="${?}"
 				;;
 				"yandex")
@@ -787,7 +800,7 @@ f_list()
 					out_rc="${?}"
 				;;
 			esac
-			if [ "${out_rc}" -eq 0 ]
+			if [ "${out_rc}" -eq 0 ] && [ -f "${adb_tmpdir}/tmp.raw.safesearch.${src_name}" ]
 			then
 				> "${adb_tmpdir}/tmp.safesearch.${src_name}"
 				if [ "${adb_dns}" = "named" ]
@@ -1469,7 +1482,7 @@ f_report()
 				(
 					"${adb_dumpcmd}" -tttt -r "${file}" 2>/dev/null | \
 						"${adb_awk}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? /&&/ A[\? ]+|NXDomain|0\.0\.0\.0/{a=$1;b=substr($2,0,8);c=$4;sub(/\.[0-9]+$/,"",c);d=cnt $7;sub(/\*$/,"",d);
-						e=$(NF-1);sub(/[0-9]\/[0-9]\/[0-9]|0\.0\.0\.0/,"NX",e);sub(/\.$/,"",e);sub(/([0-9]{1,3}\.){3}[0-9]{1,3}/,"OK",e);printf "%s\t%s\t%s\t%s\t%s\n",d,e,a,b,c}' >> "${adb_reportdir}/adb_report.raw"
+						e=$(NF-1);sub(/[0-9]\/[0-9]\/[0-9]|0\.0\.0\.0/,"NX",e);sub(/\.$/,"",e);sub(/([0-9]{1,3}\.){3}[0-9]{1,3}/,"OK",e);if(e==""){e="err"};printf "%s\t%s\t%s\t%s\t%s\n",d,e,a,b,c}' >> "${adb_reportdir}/adb_report.raw"
 				)&
 				hold=$((cnt%adb_maxqueue))
 				if [ "${hold}" -eq 0 ]
@@ -1613,6 +1626,14 @@ then
 	. "/usr/share/libubox/jshn.sh"
 else
 	f_log "err" "system libraries not found"
+fi
+
+# version information
+#
+if [ "${adb_action}" = "version" ]
+then
+	printf "%s\n" "${adb_ver}"
+	exit 0
 fi
 
 # handle different adblock actions
