@@ -5,6 +5,9 @@
 
 # Please note: you have to manually install and configure the package 'msmtp' before using this script
 
+# set (s)hellcheck exceptions
+# shellcheck disable=1091,2010,2016,2034,2039,2059,2086,2091,2129,2143,2154,2181,2183,2188
+
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 

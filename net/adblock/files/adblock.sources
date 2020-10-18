@@ -195,6 +195,13 @@
 		"focus": "reg_indonesia",
 		"descurl": "https://easylist.to"
 	},
+	"reg_it": {
+		"url": "https://easylist-downloads.adblockplus.org/easylistitaly+easylist.txt",
+		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
+		"size": "M",
+		"focus": "reg_italy",
+		"descurl": "https://easylist.to"
+	},
 	"reg_kr": {
 		"url": "https://raw.githubusercontent.com/List-KR/List-KR/master/filter.txt",
 		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
