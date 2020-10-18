@@ -2,16 +2,20 @@
 # Copyright (c) 2015-2020 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
+# set (s)hellcheck exceptions
+# shellcheck disable=1091,2010,2016,2034,2039,2059,2086,2091,2129,2143,2154,2181,2183,2188
+
 START=30
 USE_PROCD=1
 
-EXTRA_COMMANDS="suspend resume query report list timer status_service"
+EXTRA_COMMANDS="suspend resume query report list timer status_service version"
 EXTRA_HELP="	suspend	Suspend adblock processing
 	resume	Resume adblock processing
 	query	<domain> Query active blocklists and backups for a specific domain
 	report	[<search>] Print DNS statistics with an optional search parameter
 	list	[[<add>|<remove>] [source(s)]] List available adblock sources or add/remove them from config
-	timer	<action> <hour> [<minute>] [<weekday>] Set a cron based update interval"
+	timer	<action> <hour> [<minute>] [<weekday>] Set a cron based update interval
+	version	print version information"
 
 adb_init="/etc/init.d/adblock"
 adb_script="/usr/bin/adblock.sh"
@@ -24,6 +28,11 @@ if [ -s "${adb_pidfile}" ] && { [ "${action}" = "start" ] || [ "${action}" = "st
 then
 	exit 0
 fi
+
+version()
+{
+	rc_procd "${adb_script}" version
+}
 
 boot()
 {
