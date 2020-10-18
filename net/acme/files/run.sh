@@ -279,7 +279,7 @@ issue_cert()
 	[ -n "$ACCOUNT_EMAIL" ] && acme_args="$acme_args --accountemail $ACCOUNT_EMAIL"
 	[ "$use_staging" -eq "1" ] && acme_args="$acme_args --staging"
 
-	if [ -n $acme_server ]; then
+	if [ -n "$acme_server" ]; then
 		log "Using custom ACME server URL"
 		acme_args="$acme_args --server $acme_server"
 	fi
