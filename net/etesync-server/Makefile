@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=etesync-server
 PKG_VERSION:=0.3.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=etesync-server-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/etesync/server/archive/v$(PKG_VERSION)
@@ -88,7 +88,7 @@ Py3Package/etesync-server/filespec:=
 define Package/etesync-server/postrm
 #!/bin/sh
 [ -n "$${IPKG_INSTROOT}" ] && exit 0
-rmdir /usr/share/etesync-server/etesync_server
+rmdir --ignore-fail-on-non-empty /usr/share/etesync-server/etesync_server
 [ "$${PKG_UPGRADE}" = "1" ] && exit 0
 rm -r /www/etesync/static
 rmdir /www/etesync

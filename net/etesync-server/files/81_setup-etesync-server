@@ -1,7 +1,5 @@
 #!/bin/sh
 
-[ "${PKG_UPGRADE}" = "1" ] && /etc/init.d/etesync-server stop
-
 cd /usr/share/etesync-server || exit 1
 
 python3 manage.pyc migrate --noinput || exit 1
