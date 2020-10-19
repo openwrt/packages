@@ -25,9 +25,6 @@ define Py3Package/python3-setuptools/install
 		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON3_VERSION)/site-packages/setuptools-$(PYTHON3_SETUPTOOLS_VERSION).dist-info \
 		$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON3_VERSION)/site-packages/easy_install.py \
 		$(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages
-	$(CP) \
-		$(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/setuptools/site-patch.py \
-		$(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/setuptools/site-patch.py.txt
 	find $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/ -path '*/__pycache__/*' -delete
 	find $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/ -type d -name __pycache__ -delete
 endef
