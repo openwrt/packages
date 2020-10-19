@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fastd
-PKG_VERSION:=20
+PKG_VERSION:=21
 
 PKG_MAINTAINER:=Matthias Schiffer <mschiffer@universe-factory.net>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/NeoRaider/fastd/releases/download/v$(PKG_VERSION)
-PKG_HASH:=56cab8639218d63237d9a5508fb2bf6fa637374d53fb7fa55b7e92e4d4dfeb00
+PKG_HASH:=942f33bcd794bcb8e19da4c30c875bdfd4d0f1c24ec4dcdf51237791bbfb0d4c
 
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYRIGHT
