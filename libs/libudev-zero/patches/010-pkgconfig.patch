@@ -1,0 +1,24 @@
+--- a/Makefile
++++ b/Makefile
+@@ -29,8 +29,7 @@ libudev.so: ${OBJ}
+ 	${CC} ${XCFLAGS} -o $@ ${OBJ} ${XLDFLAGS}
+ 
+ libudev.pc: libudev.pc.in
+-	sed -e 's|@libdir@|${LIBDIR}|g' \
+-		-e 's|@includedir@|${INCLUDEDIR}|g' \
++	sed -e 's|@prefix@|${PREFIX}|g' \
+ 		-e 's|@VERSION@|243|g' \
+ 		libudev.pc.in > libudev.pc
+ 
+--- a/libudev.pc.in
++++ b/libudev.pc.in
+@@ -1,5 +1,7 @@
+-libdir=@libdir@
+-includedir=@includedir@
++prefix=@prefix@
++exec_prefix=@prefix@
++libdir=${exec_prefix}/lib
++includedir=${prefix}/include
+ 
+ Name: libudev
+ Description: Daemonless replacement for libudev
