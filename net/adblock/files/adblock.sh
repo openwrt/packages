@@ -125,26 +125,9 @@ f_conf()
 {
 	local cnt=0 cnt_max=10
 
-	if [ ! -r "/etc/config/adblock" ] || [ -n "$(uci -q show adblock.@source[0])" ]
+	if [ ! -r "/etc/config/adblock" ] || [ -z "$(uci -q show adblock.global.adb_safesearch)" ]
 	then
-		if { [ -r "/etc/config/adblock-opkg" ] && [ -z "$(uci -q show adblock-opkg.@source[0])" ]; } || \
-			{ [ -r "/rom/etc/config/adblock" ] && [ -z "$(uci -q show /rom/etc/config/adblock.@source[0])" ]; }
-		then
-			if [ -r "/etc/config/adblock" ]
-			then
-				cp -pf "/etc/config/adblock" "/etc/config/adblock-backup"
-			fi
-			if [ -r "/etc/config/adblock-opkg" ]
-			then
-				cp -pf "/etc/config/adblock-opkg" "/etc/config/adblock"
-			elif [ -r "/rom/etc/config/adblock" ]
-			then
-				cp -pf "/rom/etc/config/adblock" "/etc/config/adblock"
-			fi
-			f_log "info" "missing or old adblock config replaced with new valid default config"
-		else
-			f_log "err" "unrecoverable adblock config error, please re-install the package via opkg with the '--force-reinstall --force-maintainer' options"
-		fi
+		f_log "err" "no valid adblock config found, please re-install the package via opkg with the '--force-reinstall --force-maintainer' options"
 	fi
 
 	config_cb()
@@ -724,7 +707,6 @@ f_list()
 				"google")
 					rset="/^(\\.[[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{printf \"%s\n%s\n\",tolower(\"www\"\$1),tolower(substr(\$1,2,length(\$1)))}"
 					safe_url="https://www.google.com/supported_domains"
-					safe_ips="216.239.38.120 2001:4860:4802:32::78"
 					safe_cname="forcesafesearch.google.com"
 					safe_domains="${adb_tmpdir}/tmp.load.safesearch.${src_name}"
 					if [ "${adb_backup}" -eq 1 ] && [ -s "${adb_backupdir}/safesearch.${src_name}.gz" ]
@@ -741,15 +723,28 @@ f_list()
 					fi
 					if [ "${out_rc}" -eq 0 ]
 					then
-						"${adb_awk}" "${rset}" "${safe_domains}" > "${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
+						if [ -x "${adb_lookupcmd}" ]
+						then
+							safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
+							if [ -n "${safe_ips}" ]
+							then
+								"${adb_awk}" "${rset}" "${safe_domains}" > "${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
+							fi
+						fi
 						out_rc="${?}"
 					fi
 				;;
 				"bing")
-					safe_ips="204.79.197.220 ::FFFF:CC4F:C5DC"
 					safe_cname="strict.bing.com"
 					safe_domains="www.bing.com"
-					printf "%s\n" ${safe_domains} > "${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
+					if [ -x "${adb_lookupcmd}" ]
+					then
+						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
+						if [ -n "${safe_ips}" ]
+						then
+							printf "%s\n" ${safe_domains} > "${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
+						fi
+					fi
 					out_rc="${?}"
 				;;
 				"duckduckgo")
@@ -757,7 +752,7 @@ f_list()
 					safe_domains="duckduckgo.com"
 					if [ -x "${adb_lookupcmd}" ]
 					then
-						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/Address [0-9]+:/{ORS=" ";print $3}')"
+						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
 						if [ -n "${safe_ips}" ]
 						then
 							printf "%s\n" ${safe_domains} > "${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
@@ -768,10 +763,9 @@ f_list()
 				"pixabay")
 					safe_cname="safesearch.pixabay.com"
 					safe_domains="pixabay.com"
-					printf "%s\n" ${safe_domains} > "${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
 					if [ -x "${adb_lookupcmd}" ]
 					then
-						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/Address [0-9]+:/{ORS=" ";print $3}')"
+						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
 						if [ -n "${safe_ips}" ]
 						then
 							printf "%s\n" ${safe_domains} > "${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
@@ -780,27 +774,38 @@ f_list()
 					out_rc="${?}"
 				;;
 				"yandex")
-					safe_ips="213.180.193.56"
 					safe_cname="familysearch.yandex.ru"
 					safe_domains="ya.ru yandex.ru yandex.com yandex.com.tr yandex.ua yandex.by yandex.ee yandex.lt yandex.lv yandex.md yandex.uz yandex.tm yandex.tj yandex.az"
-					printf "%s\n" ${safe_domains} > "${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
+					if [ -x "${adb_lookupcmd}" ]
+					then
+						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
+						if [ -n "${safe_ips}" ]
+						then
+							printf "%s\n" ${safe_domains} > "${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
+						fi
+					fi
 					out_rc="${?}"
 				;;
 				"youtube")
 					if [ "${adb_safesearchmod}" -eq 0 ]
 					then
-						safe_ips="216.239.38.120 2001:4860:4802:32::78"
 						safe_cname="restrict.youtube.com"
 					else
-						safe_ips="216.239.38.119 2001:4860:4802:32::77"
 						safe_cname="restrictmoderate.youtube.com"
 					fi
 					safe_domains="www.youtube.com m.youtube.com youtubei.googleapis.com youtube.googleapis.com www.youtube-nocookie.com"
-					printf "%s\n" ${safe_domains} > "${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
+					if [ -x "${adb_lookupcmd}" ]
+					then
+						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
+						if [ -n "${safe_ips}" ]
+						then
+							printf "%s\n" ${safe_domains} > "${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
+						fi
+					fi
 					out_rc="${?}"
 				;;
 			esac
-			if [ "${out_rc}" -eq 0 ] && [ -f "${adb_tmpdir}/tmp.raw.safesearch.${src_name}" ]
+			if [ "${out_rc}" -eq 0 ] && [ -s "${adb_tmpdir}/tmp.raw.safesearch.${src_name}" ]
 			then
 				> "${adb_tmpdir}/tmp.safesearch.${src_name}"
 				if [ "${adb_dns}" = "named" ]
