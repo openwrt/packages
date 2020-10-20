@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-jsonpath-ng
-PKG_VERSION:=1.4.3
-PKG_RELEASE:=2
+PKG_VERSION:=1.5.2
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 
 PYPI_NAME:=jsonpath-ng
-PKG_HASH:=b1fc75b877e9b2f46845a455fbdcfb0f0d9c727c45c19a745d02db620a9ef0be
+PKG_HASH:=144d91379be14d9019f51973bd647719c877bfc07dc6f3f5068895765950c69d
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
