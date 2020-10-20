@@ -1,6 +1,6 @@
-## Contributing Guidelines
+### Contributing Guidelines
 
-Ref: <https://openwrt.org/docs/guide-developer/packages> for overall format and construction
+Ref: <https://openwrt.org/docs/guide-developer/packages> for overall format and construction.
 
 ## Basic guidelines
 
