@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnupg
 PKG_VERSION:=1.4.23
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnupg.org/ftp/gcrypt/gnupg
@@ -35,11 +35,13 @@ endef
 define Package/gnupg
   $(call Package/gnupg/Default)
   MENU:=1
+  ALTERNATIVES:=200:/usr/bin/gpg:/usr/bin/gpg1
 endef
 
 define Package/gpgv
   $(call Package/gnupg/Default)
   TITLE:=GnuPG signature verification only
+  ALTERNATIVES:=200:/usr/bin/gpgv:/usr/bin/gpgv1
 endef
 
 define Package/gnupg-utils
@@ -89,12 +91,12 @@ TARGET_CFLAGS += $(if $(CONFIG_GCC_USE_VERSION_10),-DEXTERN_UNLESS_MAIN_MODULE=s
 
 define Package/gnupg/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gpg $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gpg $(1)/usr/bin/gpg1
 endef
 
 define Package/gpgv/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gpgv $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gpgv $(1)/usr/bin/gpgv1
 endef
 
 define Package/gnupg-utils/install
