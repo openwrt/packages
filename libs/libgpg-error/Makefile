@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgpg-error
 PKG_VERSION:=1.37
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://mirrors.dotsrc.org/gcrypt/libgpg-error \
@@ -60,9 +60,21 @@ define Build/InstallDev
 		$(2)/bin/gpg-error-config
 	ln -sf $(STAGING_DIR)/host/bin/gpg-error-config $(1)/usr/bin/gpg-error-config
 
+	$(INSTALL_BIN) \
+		$(PKG_INSTALL_DIR)/usr/bin/gpgrt-config \
+		$(2)/bin/
+	$(SED) \
+		's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
+		$(2)/bin/gpgrt-config
+	ln -sf $(STAGING_DIR)/host/bin/gpgrt-config $(1)/usr/bin/gpgrt-config
+
 	$(INSTALL_DIR) $(1)/usr/include
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/include/gpg-error.h \
+		$(1)/usr/include/
+
+	$(INSTALL_DATA) \
+		$(PKG_INSTALL_DIR)/usr/include/gpgrt.h \
 		$(1)/usr/include/
 
 	$(INSTALL_DIR) $(1)/usr/lib
@@ -73,6 +85,10 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/share/aclocal
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/share/aclocal/gpg-error.m4 \
+		$(1)/usr/share/aclocal/
+
+	$(INSTALL_DATA) \
+		$(PKG_INSTALL_DIR)/usr/share/aclocal/gpgrt.m4 \
 		$(1)/usr/share/aclocal/
 endef
 
