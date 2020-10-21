@@ -12,39 +12,37 @@ help()
 Syntax: mwan3 [command]
 
 Available commands:
-	start           Load iptables rules, ip rules and ip routes
-	stop            Unload iptables rules, ip rules and ip routes
-	restart         Reload iptables rules, ip rules and ip routes
-	ifup <iface>    Load rules and routes for specific interface
-	ifdown <iface>  Unload rules and routes for specific interface
-	interfaces      Show interfaces status
-	policies        Show currently active policy
-	connected       Show directly connected networks
-	rules           Show active rules
-	status          Show all status
-
+	start               Load iptables rules, ip rules and ip routes
+	stop                Unload iptables rules, ip rules and ip routes
+	restart             Reload iptables rules, ip rules and ip routes
+	ifup <iface>        Load rules and routes for specific interface
+	ifdown <iface>      Unload rules and routes for specific interface
+	interfaces          Show interfaces status
+	policies            Show currently active policy
+	connected           Show directly connected networks
+	rules               Show active rules
+	status              Show all status
+	use <iface> <cmd>   Run a command bound to <iface> and avoid mwan3 rules
 EOF
 }
 
-ifdown()
-{
+
+ifdown() {
 	if [ -z "$1" ]; then
-		echo "Error: Expecting interface. Usage: mwan3 ifdown <interface>" && exit 0
+		echo "Error: Expecting interface. Usage: mwan3 ifdown <interface>"
+		exit 0
 	fi
 
 	if [ -n "$2" ]; then
-		echo "Error: Too many arguments. Usage: mwan3 ifdown <interface>" && exit 0
+		echo "Error: Too many arguments. Usage: mwan3 ifdown <interface>"
+		exit 0
 	fi
 
-	ACTION=ifdown INTERFACE=$1 /sbin/hotplug-call iface
-
-	kill $(pgrep -f "mwan3track $1 ") &> /dev/null
-	mwan3_track_clean $1
+	mwan3_interface_hotplug_shutdown "$1" 1
 }
 
-ifup()
-{
-	local device enabled up l3_device status interface true_iface
+ifup() {
+	. /etc/init.d/mwan3
 
 	if [ -z "$1" ]; then
 		echo "Expecting interface. Usage: mwan3 ifup <interface>"
@@ -56,46 +54,7 @@ ifup()
 		exit 0
 	fi
 
-	interface=$1
-
-	if [ "${MWAN3_STARTUP}" != 1 ]; then
-		# It is not necessary to obtain a lock here, because it is obtained in the hotplug
-		# script, but we still want to do the check to print a useful error message
-		config_load mwan3
-		config_get_bool enabled globals 'enabled' 0
-
-		[ ${enabled} -gt 0 ] || {
-			echo "The service mwan3 is global disabled."
-			echo "Please execute \"/etc/init.d/mwan3 start\" first."
-			exit 1
-		}
-	else
-		enabled=1
-	fi
-	mwan3_get_true_iface true_iface $interface
-	status=$(ubus -S call network.interface.$true_iface status)
-
-	[ -n "$status" ] && {
-		json_load "$status"
-		json_get_vars up l3_device
-	}
-	hotplug_startup()
-	{
-		MWAN3_STARTUP=$MWAN3_STARTUP ACTION=ifup INTERFACE=$interface DEVICE=$l3_device TRUE_INTERFACE=$true_iface sh /etc/hotplug.d/iface/15-mwan3
-		MWAN3_STARTUP=$MWAN3_STARTUP ACTION=ifup INTERFACE=$interface DEVICE=$l3_device TRUE_INTERFACE=$true_iface sh /etc/hotplug.d/iface/16-mwan3-user
-	}
-
-	if [ "$up" != "1" ] || [ -z "$l3_device" ] || [ "$enabled" != "1" ]; then
-		return
-	fi
-
-	if [ "${MWAN3_STARTUP}" = 1 ]; then
-		hotplug_startup &
-		hotplug_pids="$hotplug_pids $!"
-	else
-		hotplug_startup
-	fi
-
+	mwan3_ifup "$1"
 }
 
 interfaces()
@@ -104,40 +63,40 @@ interfaces()
 
 	echo "Interface status:"
 	config_foreach mwan3_report_iface_status interface
-	echo -e
+	echo
 }
 
 policies()
 {
 	echo "Current ipv4 policies:"
 	mwan3_report_policies_v4
-	echo -e
+	echo
 	[ $NO_IPV6 -ne 0 ] && return
 	echo "Current ipv6 policies:"
 	mwan3_report_policies_v6
-	echo -e
+	echo
 }
 
 connected()
 {
 	echo "Directly connected ipv4 networks:"
 	mwan3_report_connected_v4
-	echo -e
+	echo
 	[ $NO_IPV6 -ne 0 ] && return
 	echo "Directly connected ipv6 networks:"
 	mwan3_report_connected_v6
-	echo -e
+	echo
 }
 
 rules()
 {
 	echo "Active ipv4 user rules:"
 	mwan3_report_rules_v4
-	echo -e
+	echo
 	[ $NO_IPV6 -ne 0 ] && return
 	echo "Active ipv6 user rules:"
 	mwan3_report_rules_v6
-	echo -e
+	echo
 }
 
 status()
@@ -148,113 +107,51 @@ status()
 	rules
 }
 
-start()
-{
-	local enabled hotplug_pids MWAN3_STARTUP
-	MWAN3_STARTUP=1
-	mwan3_lock "command" "mwan3"
-	uci_toggle_state mwan3 globals enabled "1"
-	config_load mwan3
-
-	mwan3_update_iface_to_table
-	mwan3_set_connected_iptables
-	mwan3_set_custom_ipset
-	mwan3_set_general_rules
-	mwan3_set_general_iptables
-	config_foreach ifup interface
-	wait $hotplug_pids
-	mwan3_add_all_nondefault_routes
-	mwan3_set_policies_iptables
-	mwan3_set_user_rules
-
-
-	mwan3_unlock "command" "mwan3"
-	mwan3_rtmon
-	unset MWAN3_STARTUP
+start() {
+	/etc/init.d/mwan3 enable
+	/etc/init.d/mwan3 start
 }
 
-stop()
-{
-	local ipset rule IP IPTR IPT kill_pid family table tid
-
-	mwan3_lock "command" "mwan3"
-	uci_toggle_state mwan3 globals enabled "0"
-
-	{
-		kill -TERM $(pgrep -f "mwan3rtmon") > /dev/null 2>&1
-		kill -TERM $(pgrep -f "mwan3track") > /dev/null 2>&1
-
-		sleep 1
-
-		kill -KILL $(pgrep -f "mwan3rtmon") > /dev/null 2>&1
-		kill -KILL $(pgrep -f "mwan3track") > /dev/null 2>&1
-	} &
-	kill_pid=$!
-	config_load mwan3
-	config_foreach mwan3_track_clean interface
-
-	for family in ipv4 ipv6; do
-		if [ "$family" = "ipv4" ]; then
-			IPT="$IPT4"
-			IPTR="$IPT4R"
-			IP="$IP4"
-		elif [ "$family" = "ipv6" ]; then
-			[ $NO_IPV6 -ne 0 ] && continue
-			IPT="$IPT6"
-			IPTR="$IPT6R"
-			IP="$IP6"
-		fi
-
-		for tid in $(ip route list table all | sed -ne  's/.*table \([0-9]\+\).*/\1/p'|sort -u); do
-			[ $tid -gt $MWAN3_INTERFACE_MAX ] && continue
-			$IP route flush table $tid &> /dev/null
-		done
-
-		for rule in $($IP rule list | egrep '^[1-2][0-9]{3}\:' | cut -d ':' -f 1); do
-			$IP rule del pref $rule &> /dev/null
-		done
-		table="$($IPT -S)"
-		{
-			echo "*mangle";
-			[ -z "${table##*PREROUTING -j mwan3_hook*}" ] && echo "-D PREROUTING -j mwan3_hook"
-			[ -z "${table##*OUTPUT -j mwan3_hook*}" ] && echo "-D OUTPUT -j mwan3_hook"
-			echo "$table" | awk '{print "-F "$2}' | grep mwan3 | sort -u
-			echo "$table" | awk '{print "-X "$2}' | grep mwan3 | sort -u
-			echo "COMMIT"
-		} | $IPTR
-	done
-
-	for ipset in $($IPS -n list | grep mwan3_); do
-		$IPS -q destroy $ipset
-	done
-
-	for ipset in $($IPS -n list | grep mwan3 | grep -E '_v4|_v6'); do
-		$IPS -q destroy $ipset
-	done
-
-	if ! pgrep -f "mwan3track" >/dev/null && ! pgrep -f "mwan3rtmon" >/dev/null; then
-		# mwan3track has already exited, no need to send
-		# TERM signal
-		kill $kill_pid 2>/dev/null
-	else
-		# mwan3track has not exited, wait for the killer
-		# to do its work
-		wait $kill_pid
-	fi
-	rm -rf $MWAN3_STATUS_DIR $MWAN3TRACK_STATUS_DIR
-
-	mwan3_unlock "command" "mwan3"
-
+stop() {
+	/etc/init.d/mwan3 disable
+	/etc/init.d/mwan3 stop
 }
 
 restart() {
-	stop
-	start
+	/etc/init.d/mwan3 enable
+	/etc/init.d/mwan3 stop
+	/etc/init.d/mwan3 start
+}
+
+wrap() {
+	# Run a command with the device, src_ip and fwmark set to avoid processing by mwan3
+	# firewall rules
+
+	local interface device src_ip family
+	mwan3_init
+	config_load mwan3
+
+	interface=$1 ; shift
+	[ -z "$*" ] && echo "no command specified for mwan3 wrap" && return
+	network_get_device device $interface
+	[ -z "$device" ] && echo "could not find device for $interface" && return
+
+	mwan3_get_src_ip src_ip $interface
+	[ -z "$src_ip" ] && echo "could not find src_ip for $interface" && return
+
+	config_get family $interface family
+	[ -z "$family" ] && echo "could not find family for $interface. Using ipv4." && family='ipv4'
+
+	echo "Running '$*' with DEVICE=$device SRCIP=$src_ip FWMARK=$MMX_DEFAULT FAMILY=$family"
+	# shellcheck disable=SC2048
+	FAMILY=$family DEVICE=$device SRCIP=$src_ip FWMARK=$MMX_DEFAULT LD_PRELOAD=/lib/mwan3/libwrap_mwan3_sockopt.so.1.0 $*
+
 }
 
 case "$1" in
-	ifup|ifdown|interfaces|policies|connected|rules|status|start|stop|restart)
+	ifup|ifdown|interfaces|policies|connected|rules|status|start|stop|restart|use)
 		mwan3_init
+		# shellcheck disable=SC2048
 		$*
 	;;
 	*)

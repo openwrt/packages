@@ -8,10 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
-PKG_VERSION:=2.9.0
+PKG_VERSION:=2.10.0
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
 PKG_LICENSE:=GPL-2.0
+PKG_CONFIG_DEPENDS:=CONFIG_IPV6
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -61,8 +62,13 @@ fi
 exit 0
 endef
 
+define Build/Compile
+	$(TARGET_CC) $(CFLAGS) $(LDFLAGS) $(FPIC) -shared -o $(PKG_BUILD_DIR)/libwrap_mwan3_sockopt.so.1.0 $(if $(CONFIG_IPV6),-DCONFIG_IPV6) $(PKG_BUILD_DIR)/sockopt_wrap.c -ldl
+endef
+
 define Package/mwan3/install
-$(CP) ./files/* $(1)
+	$(CP) ./files/* $(1)
+	$(CP) $(PKG_BUILD_DIR)/libwrap_mwan3_sockopt.so.1.0 $(1)/lib/mwan3/
 endef
 
 $(eval $(call BuildPackage,mwan3))
