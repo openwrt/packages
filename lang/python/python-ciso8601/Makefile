@@ -28,8 +28,7 @@ define Package/python3-ciso8601
   SUBMENU:=Python
   TITLE:=Fast ISO8601 date time parser for Python written in C
   URL:=https://github.com/closeio/ciso8601
-  DEPENDS:= \
-    +python3-light
+  DEPENDS:=+python3-light
 endef
 
 define Package/python3-ciso8601/description
@@ -38,5 +37,5 @@ endef
 
 $(eval $(call Py3Package,python3-ciso8601))
 $(eval $(call BuildPackage,python3-ciso8601))
-$(eval $(call BuildPackage,python3-ciso8601))
+$(eval $(call BuildPackage,python3-ciso8601-src))
 
