@@ -5,11 +5,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bigclown-mqtt2influxdb
-PKG_VERSION:=1.3.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.4.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=mqtt2influxdb
-PKG_HASH:=1b4b3b13f5b2f092bcd27846d94e91ad6f05141b2daea5167a7d58b09a782639
+PKG_HASH:=9fd98d2239c0b9a2482db8e55e3e5a310c5b644aa7d42c57d35ed775adb0101a
 
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 PKG_LICENSE:=MIT
