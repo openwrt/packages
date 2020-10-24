@@ -34,11 +34,11 @@ define Package/tor/Default
 endef
 
 define Package/tor/Default/description
- Tor is a toolset for a wide range of organizations and people that want to
- improve their safety and security on the Internet. Using Tor can help you
- anonymize web browsing and publishing, instant messaging, IRC, SSH, and
- more. Tor also provides a platform on which software developers can build
- new applications with built-in anonymity, safety, and privacy features.
+Tor is a toolset for a wide range of organizations and people that want to
+improve their safety and security on the Internet. Using Tor can help you
+anonymize web browsing and publishing, instant messaging, IRC, SSH, and
+more. Tor also provides a platform on which software developers can build
+new applications with built-in anonymity, safety, and privacy features.
 endef
 
 define Package/tor
@@ -49,7 +49,9 @@ endef
 
 define Package/tor/description
 $(call Package/tor/Default/description)
- This package contains the tor daemon.
+
+This package contains the tor daemon.
+
 endef
 
 define Package/tor-gencert
@@ -60,7 +62,9 @@ endef
 
 define Package/tor-gencert/description
 $(call Package/tor/Default/description)
- Generate certs and keys for Tor directory authorities
+
+Generate certs and keys for Tor directory authorities.
+
 endef
 
 define Package/tor-resolve
@@ -71,7 +75,9 @@ endef
 
 define Package/tor-resolve/description
 $(call Package/tor/Default/description)
- Resolve a hostname to an IP address via tor
+
+Resolve a hostname to an IP address via tor.
+
 endef
 
 define Package/tor-geoip
@@ -82,7 +88,9 @@ endef
 
 define Package/tor-geoip/description
 $(call Package/tor/Default/description)
- This package contains a GeoIP database mapping IP addresses to countries.
+
+This package contains a GeoIP database mapping IP addresses to countries.
+
 endef
 
 define Package/tor/conffiles
