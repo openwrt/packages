@@ -444,12 +444,14 @@ mwan3_create_iface_route()
 	mwan3_get_routes | while read -r route_line; do
 		mwan3_route_line_dev "tid" "$route_line" "$family"
 		{ [ -z "${route_line##default*}" ] || [ -z "${route_line##fe80::/64*}" ]; } && [ "$tid" != "$id" ] && continue
+		[ "$tid" != "$id" ] && [ -z "${route_line##*proto kernel scope link*}" ] && \
+		[ -n "${route_line##*/*}" ] && [ -n "${route_line##* metric *}" ] && continue
 		if [ -z "$tid" ] || [ "$tid" = "$id" ]; then
 			# possible that routes are already in the table
 			# if 'connected' was called after 'ifup'
-			[ -n "$tbl" ] && [ -z "${tbl##*$route_line$'\n'*}" ] && continue
+			[ -n "$tbl" ] && [ -z "${tbl##*$route_line*}" ] && continue
 			$IP route add table $id $route_line ||
-				LOG warn "failed to add $route_line to table $id"
+				LOG debug "failed to add $route_line to table $id"
 		fi
 
 	done
