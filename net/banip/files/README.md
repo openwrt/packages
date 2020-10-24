@@ -27,6 +27,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * output comprehensive runtime information via LuCI or via 'status' init command
 * strong LuCI support
 * optional: add new banIP sources on your own
+* optional: log banned inbound and/or outbound IP to syslog.
 
 ## Prerequisites
 * [OpenWrt](https://openwrt.org), tested with the stable release series (19.07) and with the latest snapshot
@@ -45,45 +46,65 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 ## banIP config options
 * usually the pre-configured banIP setup works quite well and no manual overrides are needed
 * the following options apply to the 'global' config section:
-    * ban\_enabled => main switch to enable/disable banIP service (bool/default: '0', disabled)
-    * ban\_automatic => determine the L2/L3 WAN network device automatically (bool/default: '1', enabled)
-    * ban\_iface => space separated list of WAN network interface(s)/device(s) used by banIP (default: not set, automatically detected)
-    * ban\_realtime => a small log/banIP background monitor to block SSH/LuCI brute force attacks in realtime (bool/default: 'false', disabled)
+  * ban\_enabled => main switch to enable/disable banIP service (bool/default: '0', disabled)
+  * ban\_automatic => determine the L2/L3 WAN network device automatically (bool/default: '1', enabled)
+  * ban\_iface => space separated list of WAN network interface(s)/device(s) used by banIP (default: not set, automatically detected)
+  * ban\_realtime => a small log/banIP background monitor to block SSH/LuCI brute force attacks in realtime (bool/default: 'false', disabled)
+  * ban\_target\_src => action to perform when banning inbound IPv4 packets ('DROP'/'REJECT', default: 'DROP')
+  * ban\_target\_src\_6 => action to perform when banning inbound IPv6 packets ('DROP'/'REJECT', default: 'DROP')
+  * ban\_target\_dst => action to perform when banning outbound IPv4 packets ('DROP'/'REJECT', default: 'REJECT')
+  * ban\_target\_dst\_6 => action to perform when banning outbound IPv6 packets ('DROP'/'REJECT', default: 'REJECT')
+  * ban\_log\_src => switch to enable/disable logging of banned inbound IPv4 packets (bool/default: '0', disabled)
+  * ban\_log\_dst => switch to enable/disable logging of banned outbound IPv4 packets (bool/default: '0', disabled)
 
 * the following options apply to the 'extra' config section:
-    * ban\_debug => enable/disable banIP debug output (bool/default: '0', disabled)
-    * ban\_nice => set the nice level of the banIP process and all sub-processes (int/default: '0', standard priority)
-    * ban\_triggerdelay => additional trigger delay in seconds before banIP processing begins (int/default: '2')
-    * ban\_backupdir => target directory for banIP backups (default: '/tmp')
-    * ban\_sshdaemon => select the SSH daemon for logfile parsing, 'dropbear' or 'sshd' (default: 'dropbear')
-    * ban\_starttype => select the used start type during boot, 'start', 'refresh' or 'reload' (default: 'start')
-    * ban\_maxqueue => size of the download queue to handle downloads & IPSet processing in parallel (int/default: '4')
-    * ban\_fetchutil => name of the used download utility: 'uclient-fetch', 'wget', 'curl', 'aria2c' (default: not set, automatically detected)
-    * ban\_fetchparm => special config options for the download utility (default: not set)
-    * ban\_autoblacklist => store auto-addons temporary in ipset and permanently in local blacklist as well (bool/default: '1', enabled)
-    * ban\_autowhitelist => store auto-addons temporary in ipset and permanently in local whitelist as well (bool/default: '1', enabled)
+  * ban\_debug => enable/disable banIP debug output (bool/default: '0', disabled)
+  * ban\_nice => set the nice level of the banIP process and all sub-processes (int/default: '0', standard priority)
+  * ban\_triggerdelay => additional trigger delay in seconds before banIP processing begins (int/default: '2')
+  * ban\_backupdir => target directory for banIP backups (default: '/tmp')
+  * ban\_sshdaemon => select the SSH daemon for logfile parsing, 'dropbear' or 'sshd' (default: 'dropbear')
+  * ban\_starttype => select the used start type during boot, 'start', 'refresh' or 'reload' (default: 'start')
+  * ban\_maxqueue => size of the download queue to handle downloads & IPSet processing in parallel (int/default: '4')
+  * ban\_fetchutil => name of the used download utility: 'uclient-fetch', 'wget', 'curl', 'aria2c' (default: not set, automatically detected)
+  * ban\_fetchparm => special config options for the download utility (default: not set)
+  * ban\_autoblacklist => store auto-addons temporary in ipset and permanently in local blacklist as well (bool/default: '1', enabled)
+  * ban\_autowhitelist => store auto-addons temporary in ipset and permanently in local whitelist as well (bool/default: '1', enabled)
+
+## Logging of banned packets
+* by setting ban\_log\_src=1 / ban\_log\_dst=1 in the config options, banIP will log banned inbound / outbound packets to syslog.
+* example of a logged inbound (dst) and outbound (src) packet:
+<pre><code>
+Oct  2 12:49:14 gateway kernel: [434134.855130] REJECT(dst banIP) IN=br-lan OUT=br-wan MAC=xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx SRC=x.x.x.x DST=x.x.x.x LEN=100 TOS=0x00 PREC=0x00 TTL=63 ID=7938 PROTO=UDP SPT=16393 DPT=16393 LEN=80
+
+Oct  3 14:11:13 gateway kernel: [11290.429712] DROP(src banIP) IN=br-wan OUT= MAC=xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx SRC=x.x.x.x DST=x.x.x.x LEN=40 TOS=0x00 PREC=0x00 TTL=235 ID=63275 PROTO=TCP SPT=48246 DPT=37860 WINDOW=1024 RES=0x00 SYN URGP=0
+</code></pre>
+* to change the default logging behavior, the following options can be added to the 'global' config section:
+  * ban\_log\_src\_opts => IPv4 iptables LOG options for banned inbound packets (default: '-m limit --limit 10/sec')
+  * ban\_log\_src\_opts\_6 => IPv6 iptables LOG options for banned inbound packets (default: '-m limit --limit 10/sec')
+  * ban\_log\_src\_prefix (default: '<ban\_target\_src>(src banIP) ', typically 'DROP(src banIP) ')
+  * ban\_log\_src\_prefix\_6 (default: '<ban\_target\_src\_6>(src banIP) ', typically 'DROP('src banIP)' )
+  * ban\_log\_dst\_opts => IPv4 iptables LOG options for banned outbound packets (default: '-m limit --limit 10/sec')
+  * ban\_log\_dst\_opts\_6 => IPv6 iptables LOG options for banned outbound packets (default: '-m limit --limit 10/sec')
+  * ban\_log\_dst\_prefix (default: '<ban\_target\_dst>(dst banIP) ', typically 'REJECT(dst banIP) ')
+  * ban\_log\_dst\_prefix\_6 (default: '<ban\_target\_dst\_6>(dst banIP) ', typically 'REJECT('dst banIP)' )
 
 ## Examples
 **receive banIP runtime information:**
 
-<pre><code>
-/etc/init.d/banip status
-::: banIP runtime information
-  + status     : enabled
-  + version    : 0.3.0
-  + util_info  : /usr/bin/aria2c, true
-  + ipset_info : 10 IPSets with overall 106729 IPs/Prefixes
-  + backup_dir : /tmp
-  + last_run   : 03.10.2019 19:15:25
-  + system     : UBNT-ERX, OpenWrt SNAPSHOT r11102-ced4c0e635
-</code></pre>
-  
+    # /etc/init.d/banip status
+    ::: banIP runtime information
+      + status     : enabled
+      + version    : 0.3.0
+      + util_info  : /usr/bin/aria2c, true
+      + ipset_info : 10 IPSets with overall 106729 IPs/Prefixes
+      + backup_dir : /tmp
+      + last_run   : 03.10.2019 19:15:25
+      + system     : UBNT-ERX, OpenWrt SNAPSHOT r11102-ced4c0e635
+
 **cronjob for a regular IPSet blocklist update (/etc/crontabs/root):**
 
-<pre><code>
-0 06 * * *    /etc/init.d/banip reload
-</code></pre>
-  
+    # Every day at 06:00, update the IPSets of banIP
+    00 06 * * *    /etc/init.d/banip reload
 
 ## Support
 Please join the banIP discussion in this [forum thread](https://forum.openwrt.org/t/banip-support-thread/16985) or contact me by mail <dev@brenken.org>  
