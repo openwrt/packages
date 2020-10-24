@@ -74,7 +74,7 @@ mwan3_rtmon_route_handle()
 	route_line=${1##"Deleted "}
 	route_family=$2
 
-	config_get_boolean source_routing globals source_routing 0
+	config_get_bool source_routing globals source_routing 0
 	[ $source_routing -eq 0 ] && unset source_routing
 
 	if [ "$route_line" = "$1" ]; then
@@ -107,22 +107,22 @@ mwan3_rtmon_route_handle()
 		local iface=$1
 		tbl=$($IP route list table $tid 2>/dev/null)$'\n'
 
-		if [ "$(cat /var/run/mwan3track/$iface/STATUS)" != "online" ]; then
-			LOG debug "interface $iface is offline - skipping $route_line";
+		if [ -n "$iface" ] && [ "$(mwan3_get_mwan3track_status $iface)" != "active" ]; then
+			LOG debug "interface $iface is disabled - skipping '$route_line'";
 			return
 		fi
 
 		# check that action needs to be performed. May not need to take action if we
 		# got a delete event, but table was already flushed
 		if [ $action = "del" ] && [ -n "${tbl##*$route_line$'\n'*}" ]; then
-			LOG debug "skipping already deleted route table $tid - skipping $route_line"
+			LOG debug "skipping already deleted route table $tid - skipping '$route_line'"
 			return
 		fi
 
 		network_get_device device "$iface"
-		LOG debug "adjusting route $device: $IP route $action table $tid $route_line"
+		LOG debug "adjusting route $device: '$IP route $action table $tid $route_line'"
 		$IP route "$action" table $tid $route_line ||
-			LOG warn "failed: $IP route $action table $tid $route_line"
+			LOG warn "failed: '$IP route $action table $tid $route_line'"
 	}
 	handle_route_cb(){
 		local iface=$1
@@ -163,9 +163,9 @@ main()
 	sh -c "echo \$\$; exec $IP monitor route" | {
 		read -r monitor_pid
 		trap_with_arg func_trap "$monitor_pid" SIGINT SIGTERM SIGKILL
-		while read -r line; do
+		while IFS='' read -r line; do
 			[ -z "${line##*table*}" ] && continue
-			LOG debug "handling route update $family $line"
+			LOG debug "handling route update $family '$line'"
 			mwan3_lock "service" "mwan3rtmon"
 			mwan3_rtmon_route_handle "$line" "$family"
 			mwan3_unlock "service" "mwan3rtmon"
