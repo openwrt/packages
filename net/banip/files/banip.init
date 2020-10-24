@@ -4,9 +4,8 @@
 START=30
 USE_PROCD=1
 
-EXTRA_COMMANDS="refresh status"
-EXTRA_HELP="	refresh	Refresh ipsets without new list downloads
-	status  Show banIP status"
+EXTRA_COMMANDS="refresh"
+EXTRA_HELP="	refresh	Refresh ipsets without new list downloads"
 
 ban_init="/etc/init.d/banip"
 ban_script="/usr/bin/banip.sh"
@@ -81,11 +80,6 @@ status_service()
 	else
 		printf "%s\\n" "::: no banIP runtime information available"
 	fi
-}
-
-status()
-{
-	status_service
 }
 
 service_triggers()
