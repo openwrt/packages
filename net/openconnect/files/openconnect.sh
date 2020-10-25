@@ -14,7 +14,7 @@ proto_openconnect_init_config() {
 	proto_config_add_string "server"
 	proto_config_add_int "port"
 	proto_config_add_int "mtu"
-	proto_config_add_int "juniper"
+	proto_config_add_string "vpn_protocol"
 	proto_config_add_boolean "no_dtls"
 	proto_config_add_string "interface"
 	proto_config_add_string "username"
@@ -45,7 +45,7 @@ proto_openconnect_setup() {
 		csd_wrapper \
 		form_entry \
 		interface \
-		juniper \
+		vpn_protocol \
 		mtu \
 		no_dtls \
 		os \
@@ -89,9 +89,9 @@ proto_openconnect_setup() {
 		append_args --no-system-trust
 	}
 
-	if [ "${juniper:-0}" -gt 0 ]; then
-		append_args --juniper
-	fi
+	[ -n "$vpn_protocol" ] && {
+		append_args --protocol "$vpn_protocol"
+	}
 
 	[ -n "$serverhash" ] && {
 		append_args "--servercert=$serverhash"
