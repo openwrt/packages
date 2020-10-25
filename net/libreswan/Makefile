@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libreswan
-PKG_VERSION:=3.32
-PKG_RELEASE:=3
+PKG_VERSION:=4.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.libreswan.org/
-PKG_HASH:=236b57fee8f562302c54f2b16d8a839a9039fcb5893668e61b398ec6b179432e
+PKG_HASH:=216444c3a2ede7bed5820648856fa5d9cc8fc4b4122bd4a1129d1a5954d9227d
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -74,15 +74,15 @@ MAKE_FLAGS+= \
     USE_LABELED_IPSEC=false \
     USE_NM=false \
     USE_NSS_KDF=true \
-    USE_NSS_PRF=true \
     USE_LIBCURL=false \
     USE_GLIBC_KERN_FLIP_HEADERS=true \
     USE_XAUTHPAM=false \
     USE_LIBCAP_NG=true \
     USE_SYSTEMD_WATCHDOG=false \
     USE_SECCOMP=false\
-    INC_USRLOCAL="/usr" \
+    PREFIX="/usr" \
     FINALRUNDIR="/var/run/pluto" \
+    FINALNSSDIR="/etc/ipsec.d" \
     MODPROBEARGS="-q" \
     ARCH="$(LINUX_KARCH)" \
 

@@ -9,7 +9,7 @@
  #include <errno.h>
  
  #include "defs.h"
-@@ -172,7 +172,8 @@
+@@ -180,7 +180,8 @@
  	/* Send a duplicate packet when this impair is enabled - used for testing */
  	if (IMPAIR(JACOB_TWO_TWO)) {
  		/* sleep for half a second, and second another packet */
