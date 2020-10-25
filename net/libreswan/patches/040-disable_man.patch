@@ -1,0 +1,11 @@
+--- a/mk/targets.mk	2020-10-25 12:47:38.504784276 +0200
++++ b/mk/targets.mk	2020-10-25 12:48:16.242123361 +0200
+@@ -64,7 +64,7 @@
+ #
+ # For each define: TARGET clean-TARGET install-TARGET
+ 
+-TARGETS = base manpages
++TARGETS = base
+ 
+ $(foreach target,$(TARGETS),$(eval $(call recursive-target,$(target))))
+ 

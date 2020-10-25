@@ -93,6 +93,10 @@ proto_openconnect_setup() {
 		append_args --protocol "$vpn_protocol"
 	}
 
+	[ -n "$vpn_protocol" ] && {
+		append_args --protocol "$vpn_protocol"
+	}
+
 	[ -n "$serverhash" ] && {
 		append_args "--servercert=$serverhash"
 		append_args --no-system-trust
