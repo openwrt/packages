@@ -1,0 +1,10 @@
+--- a/include/fd.h	2020-10-25 12:29:43.527467613 +0200
++++ b/include/fd.h	2020-10-25 12:27:41.043595114 +0200
+@@ -26,6 +26,7 @@
+ 
+ #include <stdbool.h>
+ #include <stdlib.h>		/* for ssize_t */
++#include <sys/types.h>
+ 
+ #include "where.h"
+ 
