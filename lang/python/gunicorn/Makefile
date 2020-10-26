@@ -23,9 +23,9 @@ include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
 define Package/gunicorn/Default
-  SUBMENU:=Python
-  SECTION:=lang
-  CATEGORY:=Languages
+  SUBMENU:=Web Servers/Proxies
+  SECTION:=net
+  CATEGORY:=Network
   TITLE:=WSGI HTTP Server for UNIX
   URL:=https://gunicorn.org
 endef
