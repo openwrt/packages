@@ -13,7 +13,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.74.0
 PKG_SOURCE_VERSION:=1_74_0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
@@ -32,7 +32,6 @@ PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/nls.mk
 
 define Package/boost/Default
   SECTION:=libs
@@ -60,7 +59,7 @@ This package provides the following run-time libraries:
  - graph
  - - graph-parallel
  - iostreams
- - locale (Requires kernel being compiled with full language support)
+ - locale
  - log
  - math
  - nowide
@@ -282,7 +281,6 @@ define Package/boost/config
 		config PACKAGE_boost-$(lib)
 			prompt "Boost $(lib) $(if $(findstring python3,$(lib)),$(paren_left)v$(BOOST_PYTHON3_VER)$(paren_right) ,)library."
 			default m if ALL
-			$(if $(findstring locale,$(lib)),depends on BUILD_NLS,)\
 			$(if $(findstring fiber,$(lib)),depends on !boost-fiber-exclude,)\
 			$(if $(findstring context,$(lib)),depends on !boost-context-exclude,)
 			$(if $(findstring coroutine,$(lib)),depends on !boost-coroutine-exclude,)
@@ -346,7 +344,7 @@ $(eval $(call DefineBoostLibrary,fiber,coroutine filesystem,,!boost-fiber-exclud
 $(eval $(call DefineBoostLibrary,filesystem,system))
 $(eval $(call DefineBoostLibrary,graph,regex))
 $(eval $(call DefineBoostLibrary,iostreams,,,,zlib liblzma libbz2 libzstd))
-$(eval $(call DefineBoostLibrary,locale,system,$(ICONV_DEPENDS),BUILD_NLS))
+$(eval $(call DefineBoostLibrary,locale,system chrono thread,,,icu))
 $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex))
 $(eval $(call DefineBoostLibrary,math))
 #$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
@@ -354,7 +352,7 @@ $(eval $(call DefineBoostLibrary,nowide))
 $(eval $(call DefineBoostLibrary,program_options))
 $(eval $(call DefineBoostLibrary,python3,,,,python3-base))
 $(eval $(call DefineBoostLibrary,random,system))
-$(eval $(call DefineBoostLibrary,regex))
+$(eval $(call DefineBoostLibrary,regex,,,,icu))
 $(eval $(call DefineBoostLibrary,serialization))
 $(eval $(call DefineBoostLibrary,wserialization,serialization))
 $(eval $(call DefineBoostLibrary,stacktrace))
@@ -436,8 +434,7 @@ define Build/Compile
 					) \
 				) \
 			) \
-			$(if $(CONFIG_PACKAGE_boost-locale),boost.locale.iconv=on -sICONV_PATH=$(ICONV_PREFIX) boost.locale.posix=$(if $(USE_MUSL),on,off), \
-				boost.locale.iconv=off) \
+			$(if $(CONFIG_PACKAGE_boost-locale),boost.locale.std=off boost.locale.posix=off) \
 			\
 			$(if $(CONFIG_PACKAGE_boost-iostreams),-sNO_BZIP2=1 -sZLIB_INCLUDE=$(STAGING_DIR)/usr/include \
 				-sZLIB_LIBPATH=$(STAGING_DIR)/usr/lib) \
