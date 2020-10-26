@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coreutils
 PKG_VERSION:=8.32
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/coreutils
@@ -42,19 +42,19 @@ DIR_BIN := \
 	touch true uname
 
 DIR_USR_BIN := \
-	basename cksum comm cut dirname du env expand expr factor fold groups	\
-	head hostid id install logname md5sum mkfifo nl nohup nproc od paste	\
-	printf readlink realpath seq sha1sum sha256sum sha512sum shred shuf	\
-	sort split sum tac tail tee test timeout tr truncate tty unexpand uniq	\
-	unlink uptime users wc who whoami yes
+	basename chcon cksum comm cut dirname du env expand expr factor fold	\
+	groups head hostid id install logname md5sum mkfifo nl nohup nproc od	\
+	paste printf readlink realpath seq sha1sum sha256sum sha512sum shred	\
+	shuf sort split sum tac tail tee test timeout tr truncate tty unexpand	\
+	uniq unlink uptime users wc who whoami yes
 
 DIR_USR_SBIN := \
 	chroot
 
 # BusyBox does not provide these yet
 DIR_OTHERS := \
-	base32 b2sum basenc chcon csplit dir dircolors fmt join numfmt pathchk	\
-	pinky pr ptx runcon sha224sum sha384sum stdbuf tsort vdir
+	base32 b2sum basenc csplit dir dircolors fmt join numfmt pathchk pinky	\
+	pr ptx runcon sha224sum sha384sum stdbuf tsort vdir
 
 $(eval $(foreach a,$(DIR_BIN),ALTS_$(a):=300:/bin/$(a):/usr/bin/gnu-$(a)$(newline)))
 $(eval $(foreach a,$(DIR_USR_BIN),ALTS_$(a):=300:/usr/bin/$(a):/usr/bin/gnu-$(a)$(newline)))
