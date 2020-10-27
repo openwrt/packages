@@ -52,7 +52,8 @@ validate_server_section() {
 		'ServerAliveInterval:min(0)' \
 		'StrictHostKeyChecking:or("yes", "no", "accept-new")' \
 		'TCPKeepAlive:or("yes", "no")' \
-		'VerifyHostKeyDNS:or("yes", "no")'
+		'VerifyHostKeyDNS:or("yes", "no")' \
+		'ProxyCommand:string(1)'
 }
 
 validate_tunnelR_section() {
@@ -179,6 +180,11 @@ load_server() {
 		StrictHostKeyChecking TCPKeepAlive VerifyHostKeyDNS
 
 	ARGS="$ARGS_options -o ExitOnForwardFailure=yes -o BatchMode=yes -nN $ARGS_tunnels -p $port $user@$hostname"
+
+	if [ ! -z "$ProxyCommand" ]; then
+		ARGS="$ARGS -o \"ProxyCommand ${ProxyCommand}\""
+	fi
+	#_log "sshtunnel params: $ARGS"
 
 	procd_open_instance "$server"
 	procd_set_param command "$PROG" $ARGS
