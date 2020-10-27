@@ -23,6 +23,9 @@
 #
 ##############################################################################
 
+# while useful (sh)ellcheck is pedantic and noisy
+# shellcheck disable=1091,2002,2004,2034,2039,2086,2094,2140,2154,2155
+
 DM_D_WAN_FQDN=0
 
 DM_LIST_KNOWN_ZONES="invalid"

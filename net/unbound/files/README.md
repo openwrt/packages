@@ -1,4 +1,5 @@
 # Unbound Recursive DNS Server with UCI
+<!-- markdownlint-disable -->
 
 ## Unbound Description
 [Unbound](https://www.unbound.net/) is a validating, recursive, and caching DNS resolver. The C implementation of Unbound is developed and maintained by [NLnet Labs](https://www.nlnetlabs.nl/). It is based on ideas and algorithms taken from a java prototype developed by Verisign labs, Nominet, Kirei and ep.net. Unbound is designed as a set of modular components, so that also DNSSEC (secure DNS) validation and stub-resolvers (that do not run as a server, but are linked into an application) are easily possible.
@@ -202,7 +203,7 @@ One instance is supported currently.
 | --- | ------- | ----- | ----------- | ------- |
 | add_extra_dns | 0 | level | Read OpenWrt traditional options for `dnsmasq`.<br>`0`: Disabled<br>`1`: Use only domain<br>`2`: Use domain, mxhost, and srvhost<br>`3`: Use all cname, domain, mxhost, and srvhost | local-data: |
 | add_local_fqdn | 0 | level | Each level puts a  more detailed router entry within the LAN DNS (except link).<br>`0`: Disabled<br>`1`: Host name on the primary address<br>`2`: Host name on all addresses<br>`3`: FQDN and host name on all addresses<br>`4`: FQDN defined by "iface.hostname.domain" |  local-zone: local-data: |
-| add_wan_fqdn | 0 | level | Same as `add_local_fqdn` but on WAN as inferred by `config dhcp` with `option ignore 1`. | local-zone: local-data: |
+| add_wan_fqdn | 0 | level | Same as `add_local_fqdn` but on WAN as listed in `iface_wan` | local-zone: local-data: |
 | dns64 | 0 | boolean | Enable DNS64 RFC6052 to bridge IPv4 and IPv6 networks. | module: dns64 |
 | dns64_prefix | 64:ff9b::/96 | subnet | DNS64 RFC6052 IPv4 in IPv6 well known prefix. | dns64-prefix: |
 | dhcp_link | none | program | Link to a DHCP server with supported scripts. See HOW TO above. | local-zone: local-data: forward-zone: |
@@ -210,10 +211,13 @@ One instance is supported currently.
 | domain | lan | domain | This will suffix DHCP host records and be the default search domain. | local-zone: |
 | domain_insecure | (empty) | domain | **List** domains that you wish to skip DNSSEC. It is one way around NTP chicken and egg. Your DHCP domains are automatically included. | domain-insecure: |
 | domain_type | static | state | This allows you to lock down or allow forwarding of the local zone.<br>`static`: no forwarding like dnsmasq default<br>`refuse`: answer overtly with REFUSED<br>`deny`: covertly drop all queries<br>`transparent`: may continue forwarding or recusion | local-zone: |
-| edns_size | 1280 | bytes | Extended DNS is necessary for DNSSEC. Use this to manage MTU issues. | edns-size: |
+| edns_size | 1232 | bytes | Extended DNS is necessary for DNSSEC. Use this to manage MTU issues. | edns-size: |
 | extended_stats | 0 | boolean | Extended statistics are stored in Unbound memory for report by `unbound-control`. | extended-statistics: |
 | hide_binddata  | 1 | boolean | Refuse possible attack queries like version.server, version.bind, id.server, and hostname.bind. | hide-identity: hide-version: |
-| interface_auto | 1 | boolean | RECOMMEND ENABLED otherwise Unbound answers to any attached address regardless of query in-address. | interface-automatic: |
+| iface_lan | lan | interface | **List** to add interafaces you wish to consider to be LAN beyond those served by DHCP | interface: access-control: |
+| iface_trig | lan wan | interface | **List** interfaces to watch IFUP to restart Unbound. This works around `netifd` and `procd` hyper activity with WAN DHCPv6 (else restart each 2-3 minutes). | - |
+| iface_wan | wan | interface | **List** interafaces you wish to consider to be WAN for masked local zone purposes | interface-outgoing: |
+| interface_auto | 1 | boolean | RECOMMEND ENABLED otherwise Unbound answers to any attached address regardless of query in-address. This also binds Unboud to the wild card address. | interface-automatic: |
 | listen_port | 53 | port | Inbound port where Unbound will listen for queries. | port: |
 | localservice | 1 | boolean | Prevent DNS amplification attacks. Only answer to subnets this machine has interfaces on. | access-control: |
 | manual_conf | 0 | boolean | Skip all this UCI nonsense. Manually edit the configuration in `/etc/unbound/unbound.conf`. | - |
@@ -227,7 +231,6 @@ One instance is supported currently.
 | recursion | passive | state | Unbound has many options for recrusion but UCI is bundled for simplicity.<br>`passive`: slower until cache fills but kind on CPU load<br>`default`: built-in defaults<br>`aggressive`: uses prefetching to handle more requests quickly | (many) |
 | resource | small | state | Unbound has many options for memory resources but UCI is bundled for simplicity.<br>`tiny`: similar to published memory restricted configuration<br>`small`: about half of medium<br>`medium`: similar to default<br>`default`: built-in defaults<br>`large`: about double of medium | \*-cache-size: |
 | root_age | 9 | day | >90 Disables. Age limit for root data like root DNSSEC key. Scripts will copy from `tmps` to flash ROM with this limit to save write life. | - |
-| trigger_interface | lan wan | interface | **List** interfaces to watch IFUP to restart Unbound. This works around `netifd` and `procd` hyper activity with WAN DHCPv6 (else restart each 2-3 minutes). | - |
 | ttl_min | 120 | second | Minimum TTL in cache to avoid abused low TTL for snoop-vertising and non-standard load balancing. Typical to configure maybe 0~300 but 1800 is the maximum accepted. | cache-min-ttl: |
 | unbound_control | 0 | level | Enables `unbound-control` application access ports.<br>`0`: None else add your own in unbound_ext.conf<br>`1`: Unencrypted Local Host Access<br>`2`: SSL Local Host Access w/ auto unbound-control-setup<br>`3`: SSL Network Access w/ auto unbound-control-setup<br>`4`: SSL Network Access; static key/pem files must already exist | unbound-control: ... (clause) |
 | validator | 0 | boolean | Enable DNSSEC validator module. | module: validator |
@@ -238,7 +241,7 @@ One instance is supported currently.
 Confingure any mix of Unbound `forward-zone:`, `stub-zone:`, or `auth-zone:` clauses. These sections are more compact than Unbound and will unroll into Unbound's configuration syntax.
 | UCI | Default | Units | Description | Unbound |
 | --- | ------- | ----- | ----------- | ------- |
-| dns_assist | none | program | Check against local host forwarding by requiring a target program to exist and be enabled else do not permit forwarding `127.0.0.0/8` or `::1`. Includes bind, dnsmasq, ipset-dns, and nsd. | forward-addr: |
+| dns_assist | none | program | Check against local host forwarding by requiring a target program to exist and be enabled else do not permit forwarding `127.0.0.0/8` or `::1`. Includes bind, dnsmasq, http-proxy-dns, ipset-dns, and nsd. | forward-addr: |
 | enabled | 0 | boolean | turn zone on or off without deleting it | - |
 | fallback | 1 | boolean | Allow this zone to fall through to other zones or recursion. | forward-first: |
 | port | 53 | port | Target server's target port for plain DNS operations. | (auto 192.0.2.53 \#53)
