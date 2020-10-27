@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=procps-ng
 PKG_VERSION:=3.3.16
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/procps-ng
@@ -72,19 +72,19 @@ define Package/procps-ng/description
 endef
 
 define GenPlugin
- define Package/$(1)
+ define Package/procps-ng-$(1)
    $(call Package/procps-ng/Default)
    DEPENDS:=procps-ng
-   TITLE:=Applet $(2) from the procps-ng package
-   ALTERNATIVES:=200:$(3)/$(2):$(3)/$(1)
+   TITLE:=Applet $(1) from the procps-ng package
+   ALTERNATIVES:=200:$(2)/$(1):/usr/libexec/$(1)-procps-ng
  endef
 
- define Package/$(1)/description
-  Installs the applet $(2).
+ define Package/procps-ng-$(1)/description
+  Installs the applet $(1).
  endef
 endef
 
-$(foreach a,$(PROCPS_APPLETS),$(eval $(call GenPlugin,procps-ng-$(a),$(a),$(call procps-applets-dir,$(a)))))
+$(foreach a,$(PROCPS_APPLETS),$(eval $(call GenPlugin,$(a),$(call procps-applets-dir,$(a)))))
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS)" \
@@ -97,13 +97,13 @@ define Package/procps-ng/install
 endef
 
 define BuildPlugin
-  define Package/$(1)/install
-	$(INSTALL_DIR) $$(1)$(4)
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(3)/$(2) $$(1)$(4)/$(1)
+  define Package/procps-ng-$(1)/install
+	$(INSTALL_DIR) $$(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(2)/$(1) $$(1)/usr/libexec/$(1)-procps-ng
   endef
 
-  $$(eval $$(call BuildPackage,$(1)))
+  $$(eval $$(call BuildPackage,procps-ng-$(1)))
 endef
 
-$(foreach a,$(PROCPS_APPLETS),$(eval $(call BuildPlugin,procps-ng-$(a),$(a),$(call procps-applets-src-dir,$(a)),$(call procps-applets-dir,$(a)))))
+$(foreach a,$(PROCPS_APPLETS),$(eval $(call BuildPlugin,$(a),$(call procps-applets-src-dir,$(a)))))
 $(eval $(call BuildPackage,procps-ng))
