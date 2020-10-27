@@ -12,6 +12,7 @@ PIDFILE="/var/run/xinetd.pid"
 
 CONF_FILE="/etc/config/xinetd"
 GENERATED_CONF_FILE="/var/run/xinetd.conf"
+OTHER_CONF_DIR="/tmp/xinetd.d"
 
 ServiceEntry="false"
 ListName=""
@@ -101,11 +102,14 @@ generate_config() {
 	echo "}" >> $GENERATED_CONF_FILE
 	echo "" >> $GENERATED_CONF_FILE
 	echo "includedir /etc/xinetd.d" >> $GENERATED_CONF_FILE
+	echo "includedir $OTHER_CONF_DIR" >> $GENERATED_CONF_FILE
 
 	config_load xinetd
 }
 
 start_service() {
+	mkdir -p $OTHER_CONF_DIR
+
 	generate_config
 
 	procd_open_instance
