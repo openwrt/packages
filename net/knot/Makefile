@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot
 PKG_VERSION:=3.0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-dns/
@@ -152,6 +152,7 @@ CONFIGURE_ARGS += 			\
 	--enable-cap-ng=no            	\
 	--disable-fastparser		\
 	--without-libidn		\
+	--with-libnghttp2=no		\
 	--with-rundir=/var/run/knot	\
 	--with-storage=/var/lib/knot	\
 	--with-configdir=/etc/knot	\
