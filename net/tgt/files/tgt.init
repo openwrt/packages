@@ -2,8 +2,7 @@
 START=91
 STOP=10
 
-EXTRA_COMMANDS="show"
-EXTRA_HELP="	show	Show current configuration of tgtd"
+extra_command "show" "Show current configuration of tgtd"
 
 NAME=tgt
 PROG=/usr/sbin/tgtd
