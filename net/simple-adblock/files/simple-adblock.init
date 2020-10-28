@@ -10,12 +10,11 @@ USE_PROCD=1
 LC_ALL=C
 
 # shellcheck disable=SC2034
-EXTRA_COMMANDS='check dl killcache sizes show version'
-# shellcheck disable=SC2034
-EXTRA_HELP='	check	Checks if specified domain is found in current block-list
-	dl	Force-downloads all enabled block-list
-	sizes	Displays the file-sizes of enabled block-lists
-	show	Shows the service last-run status'
+extra_command "check" "Checks if specified domain is found in current block-list"
+extra_command "dl" "Force-downloads all enabled block-list"
+extra_command "sizes" "Displays the file-sizes of enabled block-listo"
+extra_command "show" "Shows the service last-run status"
+extra_command "version" "Show version"
 
 readonly packageName='simple-adblock'
 readonly serviceName="$packageName $PKG_VERSION"
