@@ -8,12 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
-PKG_VERSION:=1.4.55
-PKG_RELEASE:=4
+PKG_VERSION:=1.4.56~rc7
+PKG_RELEASE:=1
+# release candidate ~rcX testing; remove for release
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-1.4.56
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.lighttpd.net/lighttpd/releases-1.4.x
-PKG_HASH:=6a0b50e9c9d5cc3d9e48592315c25a2d645858f863e1ccd120507a30ce21e927
+PKG_HASH:=51245e7099a0e8ee28f360758eff10354cdbbc842cebb369e310528b9c7b1f58
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=BSD-3-Clause
@@ -27,8 +29,6 @@ PKG_CONFIG_DEPENDS:=CONFIG_LIGHTTPD_SSL $(patsubst %,CONFIG_PACKAGE_lighttpd-mod
 REBUILD_MODULES=authn_gssapi authn_ldap authn_mysql cml magnet mysql_vhost trigger_b4_dl webdav
 
 include $(INCLUDE_DIR)/package.mk
-# iconv is required for lighttpd's mysql plugin
-include $(INCLUDE_DIR)/nls.mk
 include ../../devel/meson/meson.mk
 
 define Package/lighttpd/Default
@@ -41,7 +41,7 @@ endef
 define Package/lighttpd
   $(call Package/lighttpd/Default)
   MENU:=1
-  DEPENDS:=+LIGHTTPD_SSL:libopenssl +libpcre +libpthread +LIGHTTPD_LOGROTATE:logrotate
+  DEPENDS:=+libnettle +libpcre +libpthread +LIGHTTPD_LOGROTATE:logrotate
   TITLE:=A flexible and lightweight web server
 endef
 
@@ -52,8 +52,10 @@ config LIGHTTPD_SSL
 	default y
 	help
 	  Implements SSL support in lighttpd (using libopenssl). This
-	  option is required if you enable the SSL engine in your
-	  lighttpd confguration file.
+	  option is enabled by default for backwards compatibility.
+          Select one TLS module below if you enable the SSL engine in
+	  your lighttpd configuration file.
+          (mod_gnutls, mod_mbedtls, mod_nss, mod_openssl, mod_wolfssl)
 
 config LIGHTTPD_LOGROTATE
 	bool "Logrotate support"
@@ -63,36 +65,57 @@ config LIGHTTPD_LOGROTATE
 	  It adds support for logrotate functionality.
 endef
 
+ifneq ($(strip $(CONFIG_LIGHTTPD_SSL)),)
+  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-openssl),)
+  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-mbedtls),)
+  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-wolfssl),)
+  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-gnutls),)
+  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-nss),)
+    CONFIG_PACKAGE_lighttpd-mod-openssl=m
+  endif
+  endif
+  endif
+  endif
+  endif
+endif
+
+ifneq ($(CONFIG_PACKAGE_lighttpd-mod-auth),)
+  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-authn_file),)
+    CONFIG_PACKAGE_lighttpd-mod-authn_file=m
+  endif
+endif
+
 MESON_ARGS += \
+	-Dwith_brotli=false \
 	-Dwith_bzip=false \
-	-Dwith_dbi=$(if $(CONFIG_PACKAGE_lighttpd-mod-vhostdb_dbi),true,false) \
+	-Dwith_dbi=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_dbi)$(CONFIG_PACKAGE_lighttpd-mod-vhostdb_dbi),true,false) \
 	-Dwith_fam=false \
 	-Dwith_gdbm=$(if $(CONFIG_PACKAGE_lighttpd-mod-trigger_b4_dl),true,false) \
-	-Dwith_geoip=$(if $(CONFIG_PACKAGE_lighttpd-mod-geoip),true,false) \
+	-Dwith_geoip=false \
+	-Dwith_gnutls=$(if $(CONFIG_PACKAGE_lighttpd-mod-gnutls),true,false) \
 	-Dwith_krb5=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_gssapi),true,false) \
 	-Dwith_ldap=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_ldap)$(CONFIG_PACKAGE_lighttpd-mod-vhostdb_ldap),true,false) \
 	-Dwith_libev=false \
 	-Dwith_libunwind=false \
 	-Dwith_lua=$(if $(CONFIG_PACKAGE_lighttpd-mod-cml)$(CONFIG_PACKAGE_lighttpd-mod-magnet),true,false) \
 	-Dwith_maxminddb=$(if $(CONFIG_PACKAGE_lighttpd-mod-maxminddb),true,false) \
+	-Dwith_mbedtls=$(if $(CONFIG_PACKAGE_lighttpd-mod-mbedtls),true,false) \
 	-Dwith_memcached=false \
 	-Dwith_mysql=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_mysql)$(CONFIG_PACKAGE_lighttpd-mod-mysql_vhost)$(CONFIG_PACKAGE_lighttpd-mod-vhostdb_mysql),true,false) \
-	-Dwith_openssl=$(if $(CONFIG_LIGHTTPD_SSL),true,false) \
+	-Dwith_nettle=true \
+	-Dwith_nss=$(if $(CONFIG_PACKAGE_lighttpd-mod-nss),true,false) \
+	-Dwith_openssl=$(if $(CONFIG_PACKAGE_lighttpd-mod-openssl),true,false) \
 	-Dwith_pam=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_pam),true,false) \
 	-Dwith_pcre=true \
 	-Dwith_pgsql=$(if $(CONFIG_PACKAGE_lighttpd-mod-vhostdb_pgsql),true,false) \
 	-Dwith_sasl=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_sasl),true,false) \
 	-Dwith_webdav_locks=$(if $(CONFIG_PACKAGE_lighttpd-mod-webdav),true,false) \
 	-Dwith_webdav_props=$(if $(CONFIG_PACKAGE_lighttpd-mod-webdav),true,false) \
-	-Dwith_wolfssl=false \
+	-Dwith_wolfssl=$(if $(CONFIG_PACKAGE_lighttpd-mod-wolfssl),true,false) \
 	-Dwith_xattr=false \
-	-Dwith_zlib=$(if $(CONFIG_PACKAGE_lighttpd-mod-compress)$(CONFIG_PACKAGE_lighttpd-mod-deflate),true,false)
+	-Dwith_zlib=$(if $(CONFIG_PACKAGE_lighttpd-mod-deflate),true,false)
 
 BASE_MODULES:=dirlisting indexfile staticfile
-
-ifneq ($(strip $(CONFIG_LIGHTTPD_SSL)),)
-  BASE_MODULES+= openssl
-endif
 
 define Package/lighttpd/conffiles
 /etc/lighttpd/lighttpd.conf
@@ -158,11 +181,12 @@ $(eval $(call BuildPackage,lighttpd))
 $(eval $(call BuildPlugin,redirect,URL redirection,+PACKAGE_lighttpd-mod-redirect:libpcre,10))
 
 # Next, permit authentication.
-$(eval $(call BuildPlugin,auth,Authentication,+PACKAGE_lighttpd-mod-auth:lighttpd-mod-authn_file,20))
-$(eval $(call BuildPlugin,authn_file,File-based authentication,,20))
+$(eval $(call BuildPlugin,auth,Authentication,+PACKAGE_lighttpd-mod-auth:libnettle,20))
+$(eval $(call BuildPlugin,authn_dbi,DBI-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_dbi:libnettle +PACKAGE_lighttpd-mod-authn_dbi:libdbi,20))
+$(eval $(call BuildPlugin,authn_file,File-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_file:libnettle,20))
 $(eval $(call BuildPlugin,authn_gssapi,Kerberos-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_gssapi:krb5-libs,20))
 $(eval $(call BuildPlugin,authn_ldap,LDAP-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_ldap:libopenldap,20))
-$(eval $(call BuildPlugin,authn_mysql,Mysql-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_mysql:libmysqlclient,20))
+$(eval $(call BuildPlugin,authn_mysql,Mysql-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_mysql:libnettle +PACKAGE_lighttpd-mod-authn_mysql:libmariadb,20))
 $(eval $(call BuildPlugin,authn_pam,PAM-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_pam:libpam,20))
 $(eval $(call BuildPlugin,authn_sasl,SASL-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_sasl:libsasl2,20))
 
@@ -171,9 +195,7 @@ $(eval $(call BuildPlugin,access,Access restrictions,,30))
 $(eval $(call BuildPlugin,accesslog,Access logging,,30))
 $(eval $(call BuildPlugin,alias,Directory alias,,30))
 $(eval $(call BuildPlugin,cgi,CGI,,30))
-#$(eval $(call BuildPlugin,cml,Cache Meta Language,+PACKAGE_lighttpd-mod-cml:liblua +PACKAGE_lighttpd-mod-cml:libmemcached,30))
-$(eval $(call BuildPlugin,cml,Cache Meta Language,+PACKAGE_lighttpd-mod-cml:liblua,30))
-$(eval $(call BuildPlugin,compress,Compress output,+PACKAGE_lighttpd-mod-compress:zlib,30))
+$(eval $(call BuildPlugin,cml,Cache Meta Language,+PACKAGE_lighttpd-mod-cml:liblua +PACKAGE_lighttpd-mod-cml:libnettle,30))
 $(eval $(call BuildPlugin,deflate,Compress dynamic output,+PACKAGE_lighttpd-mod-deflate:zlib,30))
 $(eval $(call BuildPlugin,evasive,Evasive,,30))
 $(eval $(call BuildPlugin,evhost,Enhanced Virtual-Hosting,,30))
@@ -181,30 +203,33 @@ $(eval $(call BuildPlugin,expire,Expire,,30))
 $(eval $(call BuildPlugin,extforward,Extract client,,30))
 $(eval $(call BuildPlugin,fastcgi,FastCGI,,30))
 $(eval $(call BuildPlugin,flv_streaming,FLV streaming,,30))
-#$(eval $(call BuildPlugin,geoip,Geolocation,+PACKAGE_lighttpd-mod-geoip:libgeoip,30)) #libgeoip is not in OpenWrt
+$(eval $(call BuildPlugin,gnutls,TLS using gnutls,@LIGHTTPD_SSL +PACKAGE_lighttpd-mod-gnutls:libgnutls,30))
 $(eval $(call BuildPlugin,magnet,Magnet,+PACKAGE_lighttpd-mod-magnet:liblua,30))
 $(eval $(call BuildPlugin,maxminddb,MaxMind DB,+PACKAGE_lighttpd-mod-maxminddb:libmaxminddb,30))
-$(eval $(call BuildPlugin,mysql_vhost,Mysql virtual hosting,+PACKAGE_lighttpd-mod-mysql_vhost:libmysqlclient,30))
+$(eval $(call BuildPlugin,mbedtls,TLS using mbedtls,@LIGHTTPD_SSL +PACKAGE_lighttpd-mod-mbedtls:libmbedtls,30))
+$(eval $(call BuildPlugin,nss,TLS using nss,@LIGHTTPD_SSL +PACKAGE_lighttpd-mod-nss:libnss,30))
+$(eval $(call BuildPlugin,openssl,TLS using openssl,@LIGHTTPD_SSL +PACKAGE_lighttpd-mod-openssl:libopenssl,30))
 $(eval $(call BuildPlugin,proxy,Proxy,,30))
 $(eval $(call BuildPlugin,rewrite,URL rewriting,+PACKAGE_lighttpd-mod-rewrite:libpcre,30))
 $(eval $(call BuildPlugin,rrdtool,RRDtool,,30))
 $(eval $(call BuildPlugin,scgi,SCGI,,30))
-$(eval $(call BuildPlugin,secdownload,Secure and fast download,,30))
+$(eval $(call BuildPlugin,secdownload,Secure and fast download,+PACKAGE_lighttpd-mod-secdownload:libnettle,30))
 $(eval $(call BuildPlugin,setenv,Environment variable setting,,30))
 $(eval $(call BuildPlugin,simple_vhost,Simple virtual hosting,,30))
 $(eval $(call BuildPlugin,sockproxy,sockproxy,,30))
 $(eval $(call BuildPlugin,ssi,SSI,+PACKAGE_lighttpd-mod-ssi:libpcre,30))
 $(eval $(call BuildPlugin,staticfile,staticfile,,30))
 $(eval $(call BuildPlugin,status,Server status display,,30))
-#$(eval $(call BuildPlugin,trigger_b4_dl,Trigger before download,+PACKAGE_lighttpd-mod-trigger_b4_dl:libpcre +PACKAGE_lighttpd-mod-trigger_b4_dl:libgdbm +PACKAGE_lighttpd-mod-trigger_b4_dl:libmemcached,30))
 $(eval $(call BuildPlugin,trigger_b4_dl,Trigger before download,+PACKAGE_lighttpd-mod-trigger_b4_dl:libpcre +PACKAGE_lighttpd-mod-trigger_b4_dl:libgdbm,30))
 $(eval $(call BuildPlugin,uploadprogress,Upload Progress,,30))
 $(eval $(call BuildPlugin,userdir,User directory,,30))
-$(eval $(call BuildPlugin,usertrack,User tracking,,30))
-$(eval $(call BuildPlugin,vhostdb_dbi,Virtual Host Database (DBI),+PACKAGE_lighttpd-mod-vhostdb_dbi:libdbi,30))
-$(eval $(call BuildPlugin,vhostdb_ldap,Virtual Host Database (LDAP),+PACKAGE_lighttpd-mod-vhostdb_ldap:libopenldap,30))
-$(eval $(call BuildPlugin,vhostdb_mysql,Virtual Host Database (MariaDB),+PACKAGE_lighttpd-mod-vhostdb_mysql:libmysqlclient,30))
-$(eval $(call BuildPlugin,vhostdb_pgsql,Virtual Host Database (PostgreSQL),+PACKAGE_lighttpd-mod-vhostdb_pgsql:libpq,30))
+$(eval $(call BuildPlugin,usertrack,User tracking,+PACKAGE_lighttpd-mod-usertrack:libnettle,30))
 $(eval $(call BuildPlugin,vhostdb,Virtual Host Database,,30))
+$(eval $(call BuildPlugin,vhostdb_dbi,Virtual Host Database (DBI),lighttpd-mod-vhostdb +PACKAGE_lighttpd-mod-vhostdb_dbi:libdbi,30))
+$(eval $(call BuildPlugin,vhostdb_ldap,Virtual Host Database (LDAP),lighttpd-mod-vhostdb +PACKAGE_lighttpd-mod-vhostdb_ldap:libopenldap,30))
+$(eval $(call BuildPlugin,vhostdb_mysql,Virtual Host Database (MariaDB),lighttpd-mod-vhostdb +PACKAGE_lighttpd-mod-vhostdb_mysql:libmariadb,30))
+$(eval $(call BuildPlugin,vhostdb_pgsql,Virtual Host Database (PostgreSQL),lighttpd-mod-vhostdb +PACKAGE_lighttpd-mod-vhostdb_pgsql:libpq,30))
+$(eval $(call BuildPlugin,mysql_vhost,Mysql virtual hosting,lighttpd-mod-vhostdb +PACKAGE_lighttpd-mod-mysql_vhost:libmariadb,30))
 $(eval $(call BuildPlugin,webdav,WebDAV,+PACKAGE_lighttpd-mod-webdav:libsqlite3 +PACKAGE_lighttpd-mod-webdav:libuuid +PACKAGE_lighttpd-mod-webdav:libxml2,30))
-$(eval $(call BuildPlugin,wstunnel,Websocket tunneling,,30))
+$(eval $(call BuildPlugin,wolfssl,TLS using wolfssl,@LIGHTTPD_SSL +PACKAGE_lighttpd-mod-wolfssl:libwolfssl,30))
+$(eval $(call BuildPlugin,wstunnel,Websocket tunneling,+PACKAGE_lighttpd-mod-wstunnel:libnettle,30))
