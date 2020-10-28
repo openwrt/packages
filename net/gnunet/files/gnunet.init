@@ -9,7 +9,8 @@ PROG=/usr/lib/gnunet/libexec/gnunet-service-arm
 GNUNET_HOME=/var/run/gnunet
 # LOGFILE=$GNUNET_HOME/gnunet.log
 CONFIGFILE=$GNUNET_HOME/gnunet.conf
-EXTRA_COMMANDS="restart_transport"
+
+extra_command "restart_transport" "Restart transport"
 
 prepare_config() {
 	local had_exit_service=0;
