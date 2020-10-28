@@ -8,7 +8,7 @@ START=15
 ovs_ctl="/usr/share/openvswitch/scripts/ovs-ctl"; [ -x "$ovs_ctl" ] || ovs_ctl=:
 ovn_ctl="/usr/share/ovn/scripts/ovn-ctl"; [ -x "$ovn_ctl" ] || ovn_ctl=:
 
-EXTRA_COMMANDS=status
+extra_command "status" "Get status information"
 
 start() {
 	ovs_action start "$@"
