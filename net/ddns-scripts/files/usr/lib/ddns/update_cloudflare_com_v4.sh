@@ -31,22 +31,14 @@ local __HOST __DOMAIN __TYPE __URLBASE __PRGBASE __RUNPROG __DATA __IPV6 __ZONEI
 local __URLBASE="https://api.cloudflare.com/client/v4"
 local __TTL=120
 
-# split __HOST __DOMAIN from $domain
-# given data:
-# @example.com for "domain record"
-# host.sub@example.com for a "host record"
-__HOST=$(printf %s "$domain" | cut -d@ -f1)
-__DOMAIN=$(printf %s "$domain" | cut -d@ -f2)
+# __HOST and __DOMAIN are now provided as separate variables. This reflects the latest LuCI UI.
+__HOST=$lookup_host
+__DOMAIN=$domain
 
 # Cloudflare v4 needs:
 # __DOMAIN = the base domain i.e. example.com
 # __HOST   = the FQDN of record to modify
 # i.e. example.com for the "domain record" or host.sub.example.com for "host record"
-
-# handling domain record then set __HOST = __DOMAIN
-[ -z "$__HOST" ] && __HOST=$__DOMAIN
-# handling host record then rebuild fqdn host@domain.tld => host.domain.tld
-[ "$__HOST" != "$__DOMAIN" ] && __HOST="${__HOST}.${__DOMAIN}"
 
 # set record type
 [ $use_ipv6 -eq 0 ] && __TYPE="A" || __TYPE="AAAA"
