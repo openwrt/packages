@@ -6,7 +6,8 @@ START=25
 extra_command "uciadd" "Add default bridge configuration to network and firewall uci config"
 extra_command "ucidel" "Delete default bridge configuration from network and firewall uci config"
 
-DOCKERD_CONF="/tmp/dockerd/daemon.json"
+DOCKER_CONF_DIR="/tmp/dockerd"
+DOCKERD_CONF="${DOCKER_CONF_DIR}/daemon.json"
 
 uci_quiet() {
 	uci -q "${@}" >/dev/null
@@ -112,13 +113,15 @@ ucidel() {
 process_config() {
 	local alt_config_file data_root log_level bip
 
-	rm -f "${DOCKERD_CONF}"
-
 	[ -f /etc/config/dockerd ] || {
 		# Use the daemon default configuration
 		DOCKERD_CONF=""
 		return 0
 	}
+
+	# reset configuration
+	rm -fr "${DOCKER_CONF_DIR}"
+	mkdir -p "${DOCKER_CONF_DIR}"
 
 	config_load 'dockerd'
 
@@ -144,7 +147,6 @@ process_config() {
 	config_list_foreach globals hosts json_add_array_string
 	json_close_array
 
-	mkdir -p /tmp/dockerd
 	json_dump > "${DOCKERD_CONF}"
 
 	uciupdate "${bip}"
