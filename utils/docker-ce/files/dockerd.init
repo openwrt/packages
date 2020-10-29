@@ -25,7 +25,7 @@ boot() {
 uciupdate() {
 	local net="${1}"
 
-	uci -q get network.docker >/dev/null || {
+	uci_quiet get network.docker || {
 		logger -t "dockerd-init" -p warn "No network uci config section for docker default bridge (docker0) found"
 		return
 	}
@@ -52,7 +52,7 @@ uciadd() {
 	}
 
 	# Add network interface
-	if ! uci -q get network.docker >/dev/null; then
+	if ! uci_quiet get network.docker; then
 		logger -t "dockerd-init" -p notice "Adding docker default interface to network uci config (docker)"
 		uci_quiet add network interface
 		uci_quiet rename network.@interface[-1]="docker"
@@ -63,7 +63,7 @@ uciadd() {
 	fi
 
 	# Add docker bridge device
-	if ! uci -q get network.docker0 >/dev/null; then
+	if ! uci_quiet get network.docker0; then
 		logger -t "dockerd-init" -p notice "Adding docker default bridge device to network uci config (docker0)"
 		uci_quiet add network device
 		uci_quiet rename network.@device[-1]="docker0"
@@ -74,7 +74,7 @@ uciadd() {
 	fi
 
 	# Add firewall zone
-	if ! uci -q get firewall.docker >/dev/null; then
+	if ! uci_quiet get firewall.docker; then
 		logger -t "dockerd-init" -p notice "Adding docker default firewall zone to firewall uci config (docker)"
 		uci_quiet add firewall zone
 		uci_quiet rename firewall.@zone[-1]="docker"
@@ -178,33 +178,33 @@ service_triggers() {
 }
 
 ip4tables_remove_nat() {
-	iptables -t nat -D OUTPUT ! -d 127.0.0.0/8 -m addrtype --dst-type LOCAL -j DOCKER
-	iptables -t nat -D PREROUTING -m addrtype --dst-type LOCAL -j DOCKER
+	iptables --table nat --delete OUTPUT ! --destination 127.0.0.0/8 --match addrtype --dst-type LOCAL --jump DOCKER
+	iptables --table nat --delete PREROUTING --match addrtype --dst-type LOCAL --jump DOCKER
 
-	iptables -t nat -F DOCKER
-	iptables -t nat -X DOCKER
+	iptables --table nat --flush DOCKER
+	iptables --table nat --delete-chain DOCKER
 }
 
 ip4tables_remove_filter() {
 	# Chain DOCKER-USER is only present,
 	# if bip option is NOT set, so >/dev/null 2>&1
-	iptables -t filter -D FORWARD -j DOCKER-USER >/dev/null 2>&1
-	iptables -t filter -D FORWARD -j DOCKER-ISOLATION-STAGE-1
-	iptables -t filter -D FORWARD -o docker0 -j DOCKER
+	iptables --table filter --delete FORWARD --jump DOCKER-USER >/dev/null 2>&1
+	iptables --table filter --delete FORWARD --jump DOCKER-ISOLATION-STAGE-1
+	iptables --table filter --delete FORWARD --out-interface docker0 --jump DOCKER
 
-	iptables -t filter -F DOCKER
-	iptables -t filter -F DOCKER-ISOLATION-STAGE-1
-	iptables -t filter -F DOCKER-ISOLATION-STAGE-2
+	iptables --table filter --flush DOCKER
+	iptables --table filter --flush DOCKER-ISOLATION-STAGE-1
+	iptables --table filter --flush DOCKER-ISOLATION-STAGE-2
 	# Chain DOCKER-USER is only present,
 	# if bip option is NOT set, so >/dev/null 2>&1
-	iptables -t filter -F DOCKER-USER >/dev/null 2>&1
+	iptables --table filter --flush DOCKER-USER >/dev/null 2>&1
 
-	iptables -t filter -X DOCKER
-	iptables -t filter -X DOCKER-ISOLATION-STAGE-1
-	iptables -t filter -X DOCKER-ISOLATION-STAGE-2
+	iptables --table filter --delete-chain DOCKER
+	iptables --table filter --delete-chain DOCKER-ISOLATION-STAGE-1
+	iptables --table filter --delete-chain DOCKER-ISOLATION-STAGE-2
 	# Chain DOCKER-USER is only present,
 	# if bip option is NOT set, so >/dev/null 2>&1
-	iptables -t filter -X DOCKER-USER >/dev/null 2>&1
+	iptables --table filter --delete-chain DOCKER-USER >/dev/null 2>&1
 }
 
 ip4tables_remove() {
