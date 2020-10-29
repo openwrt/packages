@@ -1,0 +1,10 @@
+--- a/setup.py
++++ b/setup.py
+@@ -126,6 +126,7 @@ ext_py_mods = [Extension('setools.policyrep', ['setools/policyrep.pyx'],
+                                              '-Wno-unreachable-code',
+                                              '-Wno-implicit-fallthrough',
+                                              '-Wno-cast-function-type',
++                                             '-Wno-deprecated-declarations',
+                                              '-fno-exceptions'])]
+ 
+ installed_data = [('share/man/man1', glob.glob("man/*.1"))]
