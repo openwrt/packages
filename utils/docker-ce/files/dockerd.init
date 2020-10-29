@@ -125,6 +125,8 @@ process_config() {
 
 	config_load 'dockerd'
 
+	config_list_foreach firewall blocked_interfaces add_docker_firewall_rules
+
 	config_get alt_config_file globals alt_config_file
 	[ -n "${alt_config_file}" ] && [ -f "${alt_config_file}" ] && {
 		ln -s "${alt_config_file}" "${DOCKERD_CONF}"
@@ -177,6 +179,18 @@ service_triggers() {
 	procd_add_reload_trigger 'dockerd'
 }
 
+add_docker_firewall_rules() {
+	. /lib/functions/network.sh
+	local device interface="${1}"
+
+	# Ignore errors as it might already be present
+	iptables --table filter --new DOCKER-USER 2>/dev/null
+	network_get_physdev device "${interface}"
+	if ! iptables --table filter --check DOCKER-USER --in-interface "${device}" --out-interface docker0 --jump DROP 2>/dev/null; then
+		iptables --table filter --insert DOCKER-USER --in-interface "${device}" --out-interface docker0 --jump DROP
+	fi
+}
+
 ip4tables_remove_nat() {
 	iptables --table nat --delete OUTPUT ! --destination 127.0.0.0/8 --match addrtype --dst-type LOCAL --jump DOCKER
 	iptables --table nat --delete PREROUTING --match addrtype --dst-type LOCAL --jump DOCKER
@@ -186,25 +200,22 @@ ip4tables_remove_nat() {
 }
 
 ip4tables_remove_filter() {
-	# Chain DOCKER-USER is only present,
-	# if bip option is NOT set, so >/dev/null 2>&1
-	iptables --table filter --delete FORWARD --jump DOCKER-USER >/dev/null 2>&1
+	iptables --table filter --delete FORWARD --jump DOCKER-USER
 	iptables --table filter --delete FORWARD --jump DOCKER-ISOLATION-STAGE-1
 	iptables --table filter --delete FORWARD --out-interface docker0 --jump DOCKER
+	iptables --table filter --delete FORWARD --out-interface docker0 --match conntrack --ctstate RELATED,ESTABLISHED --jump ACCEPT
+	iptables --table filter --delete FORWARD --in-interface docker0 --out-interface docker0 --jump ACCEPT
+	iptables --table filter --delete FORWARD --in-interface docker0 ! --out-interface docker0 --jump ACCEPT
 
 	iptables --table filter --flush DOCKER
 	iptables --table filter --flush DOCKER-ISOLATION-STAGE-1
 	iptables --table filter --flush DOCKER-ISOLATION-STAGE-2
-	# Chain DOCKER-USER is only present,
-	# if bip option is NOT set, so >/dev/null 2>&1
-	iptables --table filter --flush DOCKER-USER >/dev/null 2>&1
+	iptables --table filter --flush DOCKER-USER
 
 	iptables --table filter --delete-chain DOCKER
 	iptables --table filter --delete-chain DOCKER-ISOLATION-STAGE-1
 	iptables --table filter --delete-chain DOCKER-ISOLATION-STAGE-2
-	# Chain DOCKER-USER is only present,
-	# if bip option is NOT set, so >/dev/null 2>&1
-	iptables --table filter --delete-chain DOCKER-USER >/dev/null 2>&1
+	iptables --table filter --delete-chain DOCKER-USER
 }
 
 ip4tables_remove() {
