@@ -301,7 +301,7 @@ mm_report_events_from_cache() {
 	# Remove the sysfs cache
 	rm -f "${MODEMMANAGER_SYSFS_CACHE}"
 
-	local n=10
+	local n=60
 	local step=1
 	local mmrunning=0
 
