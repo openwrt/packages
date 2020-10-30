@@ -4,8 +4,8 @@
 START=15
 USE_PROCD=1
 PROG=/usr/sbin/chronyd
-CONFIGFILE=/var/etc/chrony.conf
-INCLUDEFILE=/etc/chrony/chrony.conf
+CONFIGFILE=/etc/chrony/chrony.conf
+INCLUDEFILE=/var/etc/chrony.d/10-uci.conf
 
 handle_source() {
 	local cfg=$1 sourcetype=$2 hostname minpoll maxpoll iburst
@@ -57,20 +57,19 @@ start_service() {
 	. /lib/functions/network.sh
 
 	procd_open_instance
-	procd_set_param command $PROG -n -f $CONFIGFILE
+	procd_set_param command $PROG -n
 	procd_set_param file $CONFIGFILE
 	procd_set_param file $INCLUDEFILE
 	procd_close_instance
 
 	config_load chrony
-	mkdir -p $(dirname $CONFIGFILE)
+	mkdir -p $(dirname $INCLUDEFILE)
 
 	(
-		echo include $INCLUDEFILE
 		config_foreach handle_source server server
 		config_foreach handle_source pool pool
 		config_foreach handle_source peer peer
 		config_foreach handle_allow allow
 		config_foreach handle_makestep makestep
-	) > $CONFIGFILE
+	) > $INCLUDEFILE
 }
