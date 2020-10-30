@@ -23,6 +23,9 @@ MMX_UNREACHABLE=""
 MM_UNREACHABLE=""
 MAX_SLEEP=$(((1<<31)-1))
 
+command -v ip6tables > /dev/null
+NO_IPV6=$?
+
 LOG()
 {
 	local facility=$1; shift

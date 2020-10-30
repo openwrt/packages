@@ -5,8 +5,6 @@
 . /usr/share/libubox/jshn.sh
 . /lib/mwan3/common.sh
 
-MWAN3TRACK_STATUS_DIR="/var/run/mwan3track"
-
 IPS="ipset"
 IPT4="iptables -t mangle -w"
 IPT6="ip6tables -t mangle -w"
@@ -22,6 +20,7 @@ report_connected_v4() {
 }
 
 report_connected_v6() {
+	[ $NO_IPV6 -ne 0 ] && return
 	local address
 
 	if [ -n "$($IPT6 -S mwan3_connected 2> /dev/null)" ]; then
@@ -60,6 +59,7 @@ report_policies_v4() {
 }
 
 report_policies_v6() {
+	[ $NO_IPV6 -ne 0 ] && return
 	local policy
 
 	for policy in $($IPT6 -S | awk '{print $2}' | grep mwan3_policy_ | sort -u); do

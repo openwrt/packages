@@ -24,9 +24,6 @@ IPv4_REGEX="((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[0
 
 DEFAULT_LOWEST_METRIC=256
 
-command -v ip6tables > /dev/null
-NO_IPV6=$?
-
 mwan3_push_update()
 {
 	# helper function to build an update string to pass on to
