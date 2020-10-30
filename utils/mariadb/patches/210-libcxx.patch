@@ -1,0 +1,22 @@
+--- a/storage/innobase/handler/ha_innodb.cc
++++ b/storage/innobase/handler/ha_innodb.cc
+@@ -14862,7 +14862,7 @@ ha_innobase::update_table_comment(
+ 
+ 	m_prebuilt->trx->op_info = "returning table comment";
+ 
+-#define SSTR( x ) reinterpret_cast< std::ostringstream & >(		\
++#define SSTR( x ) (		\
+         ( std::ostringstream() << std::dec << x ) ).str()
+ 
+ 	if (m_prebuilt->table->space) {
+--- a/wsrep-lib/include/wsrep/gtid.hpp
++++ b/wsrep-lib/include/wsrep/gtid.hpp
+@@ -26,6 +26,8 @@
+ 
+ #include <iosfwd>
+ 
++#include <sys/types.h>
++
+ /**
+  * Minimum number of bytes guaratneed to store GTID string representation,
+  * terminating '\0' not included (36 + 1 + 20).

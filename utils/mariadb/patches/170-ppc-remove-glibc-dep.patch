@@ -23,7 +23,7 @@
  /* High priority */
  #define HMT_high() asm volatile("or 3,3,3")
  #else
-@@ -72,7 +71,7 @@ static inline void MY_RELAX_CPU(void)
+@@ -79,7 +78,7 @@ static inline void MY_RELAX_CPU(void)
    __asm__ __volatile__ ("pause");
  #endif
  #elif defined(_ARCH_PWR8)
