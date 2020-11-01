@@ -71,7 +71,7 @@ znc_global() {
 		mkdir -p $ZNC_CONFIG_PATH/configs/
 		[ ! -f "$ZNC_CONFIG" ] || rm "$ZNC_CONFIG"
 
-		add_param "Version" "1.0"
+		add_param "Version" "1.6"
 
 		config_get anoniplimit "$znc" anoniplimit
 		config_get maxbuffersize "$znc" maxbuffersize
@@ -91,6 +91,37 @@ znc_global() {
 		config_list_foreach "$znc" listener "add_param Listener"
 		config_list_foreach "$znc" module "add_param LoadModule"
 	fi
+}
+
+add_listener() {
+       local listener="$1"
+       local host
+       local port
+       local allowirc
+       local allowweb
+       local ipv4
+       local ipv6
+       local ssl
+
+       config_get host "$listener" host
+       config_get port "$listener" port
+       config_get allowirc "$listener" allowirc
+       config_get allowweb "$listener" allowweb
+       config_get ipv4 "$listener" ipv4
+       config_get ipv6 "$listener" ipv6
+       config_get ssl "$listener" ssl
+
+       echo "<Listener $listener>" >> $ZNC_CONFIG
+
+       [ -z "$host" ] || add_param "  Host" "$host"
+       [ -z "$port" ] || add_param "  Port" "$port"
+       [ -z "$allowirc" ] || add_param "  AllowIRC" "$allowirc"
+       [ -z "$allowweb" ] || add_param "  AllowWeb" "$allowweb"
+       [ -z "$ipv4" ] || add_param "  IPv4" "$ipv4"
+       [ -z "$ipv6" ] || add_param "  IPv6" "$ipv6"
+       [ -z "$ssl" ] || add_param "  SSL" "$ssl"
+
+       echo "</Listener>" >> $ZNC_CONFIG
 }
 
 add_user() {
