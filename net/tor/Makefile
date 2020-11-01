@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tor
 PKG_VERSION:=0.4.4.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dist.torproject.org/ \
@@ -31,58 +31,83 @@ define Package/tor/Default
   CATEGORY:=Network
   URL:=https://www.torproject.org/
   USERID:=tor=52:tor=52
+  DEPENDS:=+libevent2 +libopenssl +libpthread +librt +zlib +libcap
+  TITLE:=Tor routing daemon
 endef
 
 define Package/tor/Default/description
- Tor is a toolset for a wide range of organizations and people that want to
- improve their safety and security on the Internet. Using Tor can help you
- anonymize web browsing and publishing, instant messaging, IRC, SSH, and
- more. Tor also provides a platform on which software developers can build
- new applications with built-in anonymity, safety, and privacy features.
+Tor is a toolset for a wide range of organizations and people that want to
+improve their safety and security on the Internet. Using Tor can help you
+anonymize web browsing and publishing, instant messaging, IRC, SSH, and
+more. Tor also provides a platform on which software developers can build
+new applications with built-in anonymity, safety, and privacy features.
 endef
 
 define Package/tor
 $(call Package/tor/Default)
-  TITLE:=An anonymous Internet communication system
-  DEPENDS:=+libevent2 +libopenssl +libpthread +librt +zlib +libcap
+  TITLE+= (full)
+  CONFLICTS:=tor-basic
+  PROVIDES:=tor-basic
+  VARIANT:=full
 endef
 
 define Package/tor/description
 $(call Package/tor/Default/description)
- This package contains the tor daemon.
+
+This package contains the full tor daemon.
+
+endef
+
+define Package/tor-basic
+$(call Package/tor/Default)
+  TITLE+= (no bridge/relay support)
+  VARIANT:=basic
+endef
+
+define Package/tor-basic/description
+$(call Package/tor/Default/description)
+
+This package contains the basic tor daemon, without bridge/relay support.
+
 endef
 
 define Package/tor-gencert
 $(call Package/tor/Default)
   TITLE:=Tor certificate generation
-  DEPENDS:=+tor
+  DEPENDS:=tor
 endef
 
 define Package/tor-gencert/description
 $(call Package/tor/Default/description)
- Generate certs and keys for Tor directory authorities
+
+Generate certs and keys for Tor directory authorities.
+
 endef
 
 define Package/tor-resolve
 $(call Package/tor/Default)
   TITLE:=tor hostname resolve
-  DEPENDS:=+tor
+  DEPENDS:=tor-basic
 endef
 
 define Package/tor-resolve/description
 $(call Package/tor/Default/description)
- Resolve a hostname to an IP address via tor
+
+Resolve a hostname to an IP address via tor.
+
 endef
 
 define Package/tor-geoip
 $(call Package/tor/Default)
   TITLE:=GeoIP db for tor
-  DEPENDS:=+tor
+  DEPENDS:=tor-basic
 endef
 
 define Package/tor-geoip/description
 $(call Package/tor/Default/description)
- This package contains a GeoIP database mapping IP addresses to countries.
+
+This package contains a GeoIP database mapping IP addresses to countries.
+
 endef
 
 define Package/tor/conffiles
@@ -92,11 +117,15 @@ define Package/tor/conffiles
 /etc/config/tor
 endef
 
+Package/tor-basic/conffiles = $(Package/tor/conffiles)
+
 CONFIGURE_ARGS += \
 	--with-libevent-dir="$(STAGING_DIR)/usr" \
 	--with-openssl-dir="$(STAGING_DIR)/usr" \
 	--with-zlib-dir="$(STAGING_DIR)/usr" \
 	--disable-asciidoc \
+	--disable-html-manual \
+	--disable-manpage \
 	--disable-seccomp \
 	--disable-libscrypt \
 	--disable-unittests \
@@ -105,6 +134,10 @@ CONFIGURE_ARGS += \
 	--with-tor-user=tor \
 	--with-tor-group=tor \
 	--enable-pic
+
+ifeq ($(BUILD_VARIANT),basic)
+  CONFIGURE_ARGS += --disable-module-relay
+endif
 
 TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
 TARGET_LDFLAGS += -Wl,--gc-sections -flto
@@ -123,6 +156,8 @@ define Package/tor/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/tor.conf $(1)/etc/config/tor
 endef
+
+Package/tor-basic/install = $(Package/tor/install)
 
 define Package/tor-gencert/install
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -143,6 +178,7 @@ define Package/tor-geoip/install
 endef
 
 $(eval $(call BuildPackage,tor))
+$(eval $(call BuildPackage,tor-basic))
 $(eval $(call BuildPackage,tor-gencert))
 $(eval $(call BuildPackage,tor-resolve))
 $(eval $(call BuildPackage,tor-geoip))
