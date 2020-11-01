@@ -124,6 +124,7 @@ process_config() {
 
 	config_load 'dockerd'
 
+	mkdir -p /tmp/dockerd
 	config_get alt_config_file globals alt_config_file
 	[ -n "$alt_config_file" ] && [ -f "$alt_config_file" ] && {
 		ln -s "$alt_config_file" "$DOCKERD_CONF"
@@ -146,7 +147,6 @@ process_config() {
 	config_list_foreach globals hosts json_add_array_string
 	json_close_array
 
-	mkdir -p /tmp/dockerd
 	json_dump > "$DOCKERD_CONF"
 
 	uciupdate "$bip"
