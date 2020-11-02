@@ -10,8 +10,6 @@ Deprecated in 1.1
  .../hazmat/backends/openssl/x509.py           |  8 ++---
  3 files changed, 36 insertions(+), 10 deletions(-)
 
-diff --git a/src/_cffi_src/openssl/x509.py b/src/_cffi_src/openssl/x509.py
-index b88daa1f..54cd66c9 100644
 --- a/src/_cffi_src/openssl/x509.py
 +++ b/src/_cffi_src/openssl/x509.py
 @@ -202,8 +202,10 @@ long X509_get_version(X509 *);
@@ -27,7 +25,7 @@ index b88daa1f..54cd66c9 100644
  
  long X509_REQ_get_version(X509_REQ *);
  X509_NAME *X509_REQ_get_subject_name(X509_REQ *);
-@@ -235,6 +237,8 @@ X509_CRL *sk_X509_CRL_value(Cryptography_STACK_OF_X509_CRL *, int);
+@@ -235,6 +237,8 @@ X509_CRL *sk_X509_CRL_value(Cryptography
  long X509_CRL_get_version(X509_CRL *);
  ASN1_TIME *X509_CRL_get_lastUpdate(X509_CRL *);
  ASN1_TIME *X509_CRL_get_nextUpdate(X509_CRL *);
@@ -36,7 +34,7 @@ index b88daa1f..54cd66c9 100644
  X509_NAME *X509_CRL_get_issuer(X509_CRL *);
  Cryptography_STACK_OF_X509_REVOKED *X509_CRL_get_REVOKED(X509_CRL *);
  
-@@ -243,8 +247,11 @@ int X509_CRL_set_lastUpdate(X509_CRL *, ASN1_TIME *);
+@@ -243,8 +247,11 @@ int X509_CRL_set_lastUpdate(X509_CRL *,
  int X509_CRL_set_nextUpdate(X509_CRL *, ASN1_TIME *);
  int X509_set_notBefore(X509 *, ASN1_TIME *);
  int X509_set_notAfter(X509 *, ASN1_TIME *);
@@ -50,7 +48,7 @@ index b88daa1f..54cd66c9 100644
  
  EC_KEY *d2i_EC_PUBKEY_bio(BIO *, EC_KEY **);
  int i2d_EC_PUBKEY_bio(BIO *, EC_KEY *);
-@@ -339,6 +346,25 @@ const ASN1_INTEGER *X509_REVOKED_get0_serialNumber(const X509_REVOKED *x)
+@@ -339,6 +346,25 @@ const ASN1_INTEGER *X509_REVOKED_get0_se
  #define X509_set1_notAfter X509_set_notAfter
  #define X509_getm_notAfter X509_get_notAfter
  #define X509_getm_notBefore X509_get_notBefore
@@ -61,7 +59,7 @@ index b88daa1f..54cd66c9 100644
 +#define X509_CRL_set1_nextUpdate X509_CRL_set_nextUpdate
 +#define X509_CRL_get0_lastUpdate X509_CRL_get_lastUpdate
 +#define X509_CRL_get0_nextUpdate X509_CRL_get_nextUpdate
-+#endif
+ #endif
  #endif
 +
 +#if (OPENSSL_API_COMPAT >= 0x10100000L) && !CRYPTOGRAPHY_IS_LIBRESSL
@@ -74,13 +72,11 @@ index b88daa1f..54cd66c9 100644
 +#define X509_CRL_get_nextUpdate X509_CRL_get0_nextUpdate
 +#define X509_CRL_set_lastUpdate X509_CRL_set1_lastUpdate
 +#define X509_CRL_set_nextUpdate X509_CRL_set1_nextUpdate
- #endif
++#endif
  """
-diff --git a/src/cryptography/hazmat/backends/openssl/backend.py b/src/cryptography/hazmat/backends/openssl/backend.py
-index 97c7fd05..891d6309 100644
 --- a/src/cryptography/hazmat/backends/openssl/backend.py
 +++ b/src/cryptography/hazmat/backends/openssl/backend.py
-@@ -1129,12 +1129,12 @@ class Backend(object):
+@@ -1127,12 +1127,12 @@ class Backend(object):
  
          # Set the last update time.
          last_update = self._create_asn1_time(builder._last_update)
@@ -95,8 +91,6 @@ index 97c7fd05..891d6309 100644
          self.openssl_assert(res == 1)
  
          # Add extensions.
-diff --git a/src/cryptography/hazmat/backends/openssl/x509.py b/src/cryptography/hazmat/backends/openssl/x509.py
-index 4d0dac76..074211e6 100644
 --- a/src/cryptography/hazmat/backends/openssl/x509.py
 +++ b/src/cryptography/hazmat/backends/openssl/x509.py
 @@ -86,12 +86,12 @@ class _Certificate(object):
@@ -114,7 +108,7 @@ index 4d0dac76..074211e6 100644
          return _parse_asn1_time(self._backend, asn1_time)
  
      @property
-@@ -277,13 +277,13 @@ class _CertificateRevocationList(object):
+@@ -277,13 +277,13 @@ class _CertificateRevocationList(object)
  
      @property
      def next_update(self):
@@ -130,6 +124,3 @@ index 4d0dac76..074211e6 100644
          self._backend.openssl_assert(lu != self._backend._ffi.NULL)
          return _parse_asn1_time(self._backend, lu)
  
--- 
-2.26.2
-

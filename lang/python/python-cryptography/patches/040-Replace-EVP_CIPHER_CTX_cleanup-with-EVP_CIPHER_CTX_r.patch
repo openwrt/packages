@@ -9,11 +9,9 @@ Deprecated in OpenSSL 1.1
  src/cryptography/hazmat/backends/openssl/ciphers.py |  2 +-
  2 files changed, 11 insertions(+), 1 deletion(-)
 
-diff --git a/src/_cffi_src/openssl/evp.py b/src/_cffi_src/openssl/evp.py
-index d7ac93e6..0b3e067d 100644
 --- a/src/_cffi_src/openssl/evp.py
 +++ b/src/_cffi_src/openssl/evp.py
-@@ -48,6 +48,7 @@ int EVP_CipherUpdate(EVP_CIPHER_CTX *, unsigned char *, int *,
+@@ -48,6 +48,7 @@ int EVP_CipherUpdate(EVP_CIPHER_CTX *, u
                       const unsigned char *, int);
  int EVP_CipherFinal_ex(EVP_CIPHER_CTX *, unsigned char *, int *);
  int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *);
@@ -21,7 +19,7 @@ index d7ac93e6..0b3e067d 100644
  EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void);
  void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *);
  int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *, int);
-@@ -273,4 +274,13 @@ static const long Cryptography_HAS_EVP_DIGESTFINAL_XOF = 1;
+@@ -273,4 +274,13 @@ static const long Cryptography_HAS_EVP_D
  #ifndef EVP_PKEY_POLY1305
  #define EVP_PKEY_POLY1305 NID_poly1305
  #endif
@@ -35,8 +33,6 @@ index d7ac93e6..0b3e067d 100644
 +#define OpenSSL_add_all_algorithms() do {} while(0)
 +#endif
  """
-diff --git a/src/cryptography/hazmat/backends/openssl/ciphers.py b/src/cryptography/hazmat/backends/openssl/ciphers.py
-index 171605a6..4c0504ca 100644
 --- a/src/cryptography/hazmat/backends/openssl/ciphers.py
 +++ b/src/cryptography/hazmat/backends/openssl/ciphers.py
 @@ -199,7 +199,7 @@ class _CipherContext(object):
@@ -48,6 +44,3 @@ index 171605a6..4c0504ca 100644
          self._backend.openssl_assert(res == 1)
          return self._backend._ffi.buffer(buf)[: outlen[0]]
  
--- 
-2.26.2
-
