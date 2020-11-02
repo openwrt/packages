@@ -9,8 +9,6 @@ Deprecated under OpenSSL 1.1.
  src/cryptography/hazmat/bindings/openssl/_conditional.py | 9 +++++++++
  2 files changed, 17 insertions(+)
 
-diff --git a/src/_cffi_src/openssl/x509_vfy.py b/src/_cffi_src/openssl/x509_vfy.py
-index d2bc5f4e..a1730738 100644
 --- a/src/_cffi_src/openssl/x509_vfy.py
 +++ b/src/_cffi_src/openssl/x509_vfy.py
 @@ -22,6 +22,7 @@ TYPES = """
@@ -21,7 +19,7 @@ index d2bc5f4e..a1730738 100644
  
  typedef ... Cryptography_STACK_OF_ASN1_OBJECT;
  typedef ... Cryptography_STACK_OF_X509_OBJECT;
-@@ -274,4 +275,11 @@ void (*X509_STORE_set_get_issuer)(X509_STORE *,
+@@ -274,4 +275,11 @@ void (*X509_STORE_set_get_issuer)(X509_S
  #else
  static const long Cryptography_HAS_X509_STORE_CTX_GET_ISSUER = 1;
  #endif
@@ -33,11 +31,9 @@ index d2bc5f4e..a1730738 100644
 +static const long Cryptography_HAS_X509_CB_ISSUER_CHECK = 1;
 +#endif
  """
-diff --git a/src/cryptography/hazmat/bindings/openssl/_conditional.py b/src/cryptography/hazmat/bindings/openssl/_conditional.py
-index 9cf489ac..23dc38a4 100644
 --- a/src/cryptography/hazmat/bindings/openssl/_conditional.py
 +++ b/src/cryptography/hazmat/bindings/openssl/_conditional.py
-@@ -287,6 +287,12 @@ def cryptography_has_srtp():
+@@ -291,6 +291,12 @@ def cryptography_has_srtp():
      ]
  
  
@@ -50,7 +46,7 @@ index 9cf489ac..23dc38a4 100644
  # This is a mapping of
  # {condition: function-returning-names-dependent-on-that-condition} so we can
  # loop over them and delete unsupported names at runtime. It will be removed
-@@ -338,4 +344,7 @@ CONDITIONAL_NAMES = {
+@@ -342,4 +348,7 @@ CONDITIONAL_NAMES = {
      "Cryptography_HAS_ENGINE": cryptography_has_engine,
      "Cryptography_HAS_VERIFIED_CHAIN": cryptography_has_verified_chain,
      "Cryptography_HAS_SRTP": cryptography_has_srtp,
@@ -58,6 +54,3 @@ index 9cf489ac..23dc38a4 100644
 +        cryptography_has_x509_cb_issuer_check
 +    ),
  }
--- 
-2.26.2
-
