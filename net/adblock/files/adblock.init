@@ -8,14 +8,13 @@
 START=30
 USE_PROCD=1
 
-EXTRA_COMMANDS="suspend resume query report list timer status_service version"
-EXTRA_HELP="	suspend	Suspend adblock processing
-	resume	Resume adblock processing
-	query	<domain> Query active blocklists and backups for a specific domain
-	report	[<search>] Print DNS statistics with an optional search parameter
-	list	[[<add>|<remove>] [source(s)]] List available adblock sources or add/remove them from config
-	timer	<action> <hour> [<minute>] [<weekday>] Set a cron based update interval
-	version	print version information"
+extra_command "suspend" "Suspend adblock processing"
+extra_command "resume" "Resume adblock processing"
+extra_command "query" "<domain> Query active blocklists and backups for a specific domain"
+extra_command "report" "[<search>] Print DNS statistics with an optional search parameter"
+extra_command "list" "[[<add>|<remove>] [source(s)]] List available adblock sources or add/remove them from config"
+extra_command "timer" "<action> <hour> [<minute>] [<weekday>] Set a cron based update interval"
+extra_command "version" "Print version information"
 
 adb_init="/etc/init.d/adblock"
 adb_script="/usr/bin/adblock.sh"
