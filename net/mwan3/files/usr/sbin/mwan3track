@@ -345,8 +345,12 @@ main() {
 		get_uptime > $MWAN3TRACK_STATUS_DIR/$INTERFACE/TIME
 
 		host_up_count=0
-		sleep "${sleep_time}" &
-		wait
+		if [ "${IFDOWN_EVENT}" -ne 0 ] && [ "${IFUP_EVENT}" -ne 0 ]; then
+			sleep "${sleep_time}" &
+			SLEEP_PID=$!
+			wait
+			unset SLEEP_PID
+		fi
 
 		if [ "${IFDOWN_EVENT}" -eq 1 ]; then
 			LOG debug "Register ifdown event on interface ${INTERFACE} (${DEVICE})"
