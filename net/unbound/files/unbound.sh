@@ -1327,7 +1327,7 @@ unbound_uci() {
 
   config_get UB_IP_DNS64    "$cfg" dns64_prefix "64:ff9b::/96"
 
-  config_get UB_N_EDNS_SIZE "$cfg" edns_size 1280
+  config_get UB_N_EDNS_SIZE "$cfg" edns_size 1232
   config_get UB_N_RX_PORT   "$cfg" listen_port 53
   config_get UB_N_ROOT_AGE  "$cfg" root_age 9
   config_get UB_N_THREADS   "$cfg" num_threads 1

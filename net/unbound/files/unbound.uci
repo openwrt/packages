@@ -8,7 +8,7 @@ config unbound
 	option dns64_prefix '64:ff9b::/96'
 	option domain 'lan'
 	option domain_type 'static'
-	option edns_size '1280'
+	option edns_size '1232'
 	option extended_stats '0'
 	option hide_binddata '1'
 	option interface_auto '1'
