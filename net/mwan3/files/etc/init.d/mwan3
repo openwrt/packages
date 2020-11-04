@@ -36,7 +36,7 @@ start_service() {
 	mwan3_set_custom_ipset
 	mwan3_set_general_rules
 	mwan3_set_general_iptables
-	config_foreach mwan3_ifup interface 1
+	config_foreach mwan3_ifup interface "init"
 	wait $hotplug_pids
 	mwan3_set_policies_iptables
 	mwan3_set_user_rules

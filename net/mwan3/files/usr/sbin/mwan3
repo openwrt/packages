@@ -54,7 +54,7 @@ ifup() {
 		exit 0
 	fi
 
-	mwan3_ifup "$1"
+	mwan3_ifup "$1" "cmd"
 }
 
 interfaces()

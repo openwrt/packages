@@ -23,7 +23,7 @@ fi
 
 config_load mwan3
 /etc/init.d/mwan3 running || {
-	[ "$MWAN3_STARTUP" = 1 ] || procd_lock
+	[ "$MWAN3_STARTUP" = "init" ] || procd_lock
 	LOG notice "mwan3 hotplug $ACTION on $INTERFACE not called because globally disabled"
 	mwan3_flush_conntrack "$INTERFACE" "$ACTION"
 	exit 0
@@ -69,7 +69,7 @@ case "$ACTION" in
 		mwan3_create_iface_iptables $INTERFACE $DEVICE
 		mwan3_create_iface_rules $INTERFACE $DEVICE
 		mwan3_set_iface_hotplug_state $INTERFACE "$status"
-		if [ "$MWAN3_STARTUP" != 1 ]; then
+		if [ "$MWAN3_STARTUP" = "cmd" ]; then
 			mwan3_create_iface_route $INTERFACE $DEVICE
 	                mwan3_set_general_rules
 			[ "$status" = "online" ] && mwan3_set_policies_iptables
