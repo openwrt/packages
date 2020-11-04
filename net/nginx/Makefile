@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.19.2
-PKG_RELEASE:=4
+PKG_VERSION:=1.19.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
-PKG_HASH:=7c1f7bb13e79433ee930c597d272a64bc6e30c356a48524f38fd34fa88d62473
+PKG_HASH:=61df546927905a0d624f9396bb7a8bc7ca7fd26522ce9714d56a78b73284000e
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Ansuel Smith <ansuelsmth@gmail.com>
