@@ -6,7 +6,7 @@ STOP=80
 
 USE_PROCD=1
 
-EXTRA_COMMANDS="check"
+extra_command check "Check if the configuration file is valid"
 
 HAPROXY_BIN="/usr/sbin/haproxy"
 HAPROXY_CONFIG="/etc/haproxy.cfg"

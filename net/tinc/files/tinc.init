@@ -10,7 +10,9 @@ START=42
 SERVICE_USE_PID=1
 
 BIN=/usr/sbin/tincd
-EXTRA_COMMANDS="up down"
+
+extra_command up "Bring all tinc-net instances up"
+extra_command down "Take all tinc-net instances down"
 
 LIST_SEP="
 "

@@ -70,5 +70,4 @@ relog() {
 }
 
 
-EXTRA_COMMANDS="relog"
-EXTRA_HELP="	relog	Reopen log files (without reloading)"
+extra_command relog "Reopen log files (without reloading)"

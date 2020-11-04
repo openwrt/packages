@@ -9,9 +9,6 @@ USE_PROCD=1
 PROG=/usr/bin/wifidogx
 CONFIGFILE=/tmp/wifidogx.conf
 
-EXTRA_COMMANDS="status"
-EXTRA_HELP="        status Print the status of the service"
-
 PX5G_BIN="/usr/sbin/px5g"
 OPENSSL_BIN="/usr/bin/openssl"
 APFREE_CERT="/etc/apfree.crt"
