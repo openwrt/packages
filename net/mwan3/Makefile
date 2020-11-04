@@ -63,7 +63,12 @@ exit 0
 endef
 
 define Build/Compile
-	$(TARGET_CC) $(CFLAGS) $(LDFLAGS) $(FPIC) -shared -o $(PKG_BUILD_DIR)/libwrap_mwan3_sockopt.so.1.0 $(if $(CONFIG_IPV6),-DCONFIG_IPV6) $(PKG_BUILD_DIR)/sockopt_wrap.c -ldl
+	$(TARGET_CC) $(CFLAGS) $(LDFLAGS) $(FPIC) \
+		-shared \
+		-o $(PKG_BUILD_DIR)/libwrap_mwan3_sockopt.so.1.0 \
+		$(if $(CONFIG_IPV6),-DCONFIG_IPV6) \
+		$(PKG_BUILD_DIR)/sockopt_wrap.c \
+		-ldl
 endef
 
 define Package/mwan3/install
