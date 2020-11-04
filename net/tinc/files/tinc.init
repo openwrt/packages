@@ -10,7 +10,8 @@ START=42
 SERVICE_USE_PID=1
 
 BIN=/usr/sbin/tincd
-EXTRA_COMMANDS="up down"
+extra_command "up" "<instance> Setting instance up"
+extra_command "down" "<instance> Setting instance down"
 
 LIST_SEP="
 "

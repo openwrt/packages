@@ -9,7 +9,7 @@ START=94
 USE_PROCD=1
 
 # shellcheck disable=SC2034
-EXTRA_COMMANDS='version'
+extra_command "version" "Print version information"
 version() { echo "$PKG_VERSION"; }
 
 readonly __ERROR__='\033[0;31mERROR\033[0m'
