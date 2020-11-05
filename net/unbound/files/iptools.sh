@@ -21,6 +21,13 @@
 #
 ##############################################################################
 
+# while useful (sh)ellcheck is pedantic and noisy
+# shellcheck disable=1091,2002,2004,2034,2039,2086,2094,2140,2154,2155
+
+UB_IPTOOLS_BLANK=
+
+##############################################################################
+
 domain_ptr_ip6() {
   # Get the nibble rounded /CIDR ...ip6.arpa.
   echo "$1" | awk -F: \

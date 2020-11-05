@@ -14,7 +14,11 @@
 #
 ##############################################################################
 
+# while useful (sh)ellcheck is pedantic and noisy
+# shellcheck disable=1091,2002,2004,2034,2039,2086,2094,2140,2154,2155
+
 # where are we?
+UB_ETCDIR=/etc/unbound
 UB_LIBDIR=/usr/lib/unbound
 UB_VARDIR=/var/lib/unbound
 UB_PIDFILE=/var/run/unbound.pid
@@ -40,7 +44,6 @@ UB_RESOLV_AUTO=/tmp/resolv.conf.d/resolv.conf.auto
 # TLS keys
 UB_TLS_KEY_FILE="TLS server UCI not implemented"
 UB_TLS_PEM_FILE="TLS server UCI not implemented"
-UB_TLS_FWD_FILE=$UB_VARDIR/ca-certificates.crt
 UB_TLS_ETC_FILE=/etc/ssl/certs/ca-certificates.crt
 
 # start files
@@ -50,10 +53,10 @@ UB_TIME_FILE=$UB_VARDIR/hotplug.time
 UB_SKIP_FILE=$UB_VARDIR/skip.time
 
 # control app keys
-UB_CTLKEY_FILE=$UB_VARDIR/unbound_control.key
-UB_CTLPEM_FILE=$UB_VARDIR/unbound_control.pem
-UB_SRVKEY_FILE=$UB_VARDIR/unbound_server.key
-UB_SRVPEM_FILE=$UB_VARDIR/unbound_server.pem
+UB_CTLKEY_FILE=$UB_ETCDIR/unbound_control.key
+UB_CTLPEM_FILE=$UB_ETCDIR/unbound_control.pem
+UB_SRVKEY_FILE=$UB_ETCDIR/unbound_server.key
+UB_SRVPEM_FILE=$UB_ETCDIR/unbound_server.pem
 
 # similar default SOA / NS RR as Unbound uses for private ARPA zones
 UB_XSER=$(( $( date +%s ) / 60 ))
