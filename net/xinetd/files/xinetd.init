@@ -1,6 +1,8 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2006-2011 OpenWrt.org
 
+. /lib/functions.sh
+
 START=50
 STOP=10
 
@@ -119,8 +121,10 @@ start_service() {
 }
 
 reload_service() {
-	procd_send_signal xinetd "*" QUIT
-	start
+	procd_running xinetd "instance1" && {
+		procd_send_signal xinetd "*" QUIT
+		start
+	}
 }
 
 service_triggers() {
