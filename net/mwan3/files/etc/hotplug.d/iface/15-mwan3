@@ -5,6 +5,10 @@
 . /lib/mwan3/mwan3.sh
 . /lib/mwan3/common.sh
 
+initscript=/etc/init.d/mwan3
+. /lib/functions/procd.sh
+
+
 SCRIPTNAME="mwan3-hotplug"
 [ "$ACTION" = "ifup" ] || [ "$ACTION" = "ifdown" ] || [ "$ACTION" = "connected" ] || [ "$ACTION" = "disconnected" ] || exit 1
 [ -n "$INTERFACE" ] || exit 2
@@ -15,18 +19,17 @@ if { [ "$ACTION" = "ifup" ] || [ "$ACTION" = "connected" ] ; } && [ -z "$DEVICE"
 	exit 3
 fi
 
-[ "$MWAN3_STARTUP" = 1 ] || mwan3_lock "$ACTION" "$INTERFACE"
+[ "$MWAN3_STARTUP" = 1 ] || procd_lock
 
 config_load mwan3
 /etc/init.d/mwan3 running || {
-	[ "$MWAN3_STARTUP" = 1 ] || mwan3_unlock "$ACTION" "$INTERFACE"
+	[ "$MWAN3_STARTUP" = 1 ] || procd_lock
 	LOG notice "mwan3 hotplug $ACTION on $INTERFACE not called because globally disabled"
 	mwan3_flush_conntrack "$INTERFACE" "$ACTION"
 	exit 0
 }
 
 $IPT4 -S mwan3_hook &>/dev/null || {
-	mwan3_unlock "$ACTION" "$INTERFACE"
 	LOG warn "hotplug called on $INTERFACE before mwan3 has been set up"
 	exit 0
 }
@@ -43,7 +46,6 @@ fi
 
 config_get_bool enabled $INTERFACE 'enabled' '0'
 [ "${enabled}" -eq 1 ] || {
-	[ "$MWAN3_STARTUP" = 1 ] || mwan3_unlock "$ACTION" "$INTERFACE"
 	LOG notice "mwan3 hotplug on $INTERFACE not called because interface disabled"
 	exit 0
 }
@@ -54,11 +56,6 @@ if [ "$initial_state" = "offline" ]; then
 	[ "$status" = "online" ] || status=offline
 else
 	status=online
-fi
-
-if [ "$ACTION" = ifup ] || [ "$ACTION" = ifdown ]; then
-	initscript=/etc/init.d/mwan3
-	. /lib/functions/procd.sh
 fi
 
 LOG notice "Execute $ACTION event on interface $INTERFACE (${DEVICE:-unknown})"
@@ -93,5 +90,4 @@ case "$ACTION" in
 		mwan3_set_policies_iptables
 	;;
 esac
-[ "$MWAN3_STARTUP" = 1 ] || mwan3_unlock "$ACTION" "$INTERFACE"
 exit 0
