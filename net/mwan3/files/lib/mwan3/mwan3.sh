@@ -103,16 +103,6 @@ mwan3_count_one_bits()
 	echo $count
 }
 
-mwan3_lock() {
-	lock /var/run/mwan3.lock
-	#LOG debug "$1 $2 (lock)"
-}
-
-mwan3_unlock() {
-	#LOG debug "$1 $2 (unlock)"
-	lock -u /var/run/mwan3.lock
-}
-
 mwan3_get_iface_id()
 {
 	local _tmp

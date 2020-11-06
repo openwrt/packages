@@ -159,16 +159,13 @@ main()
 		IP="$IP4"
 	fi
 	mwan3_init
-	mwan3_lock "mwan3rtmon" "start"
 	sh -c "echo \$\$; exec $IP monitor route" | {
 		read -r monitor_pid
 		trap_with_arg func_trap "$monitor_pid" SIGINT SIGTERM SIGKILL
 		while IFS='' read -r line; do
 			[ -z "${line##*table*}" ] && continue
 			LOG debug "handling route update $family '$line'"
-			mwan3_lock "service" "mwan3rtmon"
 			mwan3_rtmon_route_handle "$line" "$family"
-			mwan3_unlock "service" "mwan3rtmon"
 		done
 	} &
 	child=$!
@@ -176,7 +173,6 @@ main()
 	trap_with_arg func_trap "$child" SIGINT SIGTERM SIGKILL
 	mwan3_set_connected_${family}
 	mwan3_add_all_routes ${family}
-	mwan3_unlock "mwan3rtmon" "start"
 	kill -SIGCONT $child
 	wait $!
 }
