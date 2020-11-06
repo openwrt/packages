@@ -1,0 +1,107 @@
+From e032ca7a88afe1a7cd028ca63e2993af9c0b91af Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Wed, 28 Oct 2020 19:25:38 -0700
+Subject: [PATCH] remove fuse_mutex_init
+
+This seems to have been added before 2006 to fix a uclibc bug. It
+doesn't seem to be the case anymore so just get rid of it.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ lib/fuse.c          |  4 ++--
+ lib/fuse_loop_mt.c  |  4 ++--
+ lib/fuse_lowlevel.c |  4 ++--
+ lib/fuse_misc.h     | 14 --------------
+ 4 files changed, 6 insertions(+), 20 deletions(-)
+
+diff --git a/lib/fuse.c b/lib/fuse.c
+index 70299ef1..2125cdaa 100755
+--- a/lib/fuse.c
++++ b/lib/fuse.c
+@@ -3390,7 +3390,7 @@ static void fuse_lib_opendir(fuse_req_t req, fuse_ino_t ino,
+ 	dh->len = 0;
+ 	dh->filled = 0;
+ 	dh->nodeid = ino;
+-	fuse_mutex_init(&dh->lock);
++	pthread_mutex_init(&dh->lock, NULL);
+ 
+ 	llfi->fh = (uintptr_t) dh;
+ 
+@@ -4973,7 +4973,7 @@ struct fuse *fuse_new_31(struct fuse_args *args,
+ 	if (node_table_init(&f->id_table) == -1)
+ 		goto out_free_name_table;
+ 
+-	fuse_mutex_init(&f->lock);
++	pthread_mutex_init(&f->lock, NULL);
+ 
+ 	root = alloc_node(f);
+ 	if (root == NULL) {
+diff --git a/lib/fuse_loop_mt.c b/lib/fuse_loop_mt.c
+index 0c6a5b79..71be15da 100644
+--- a/lib/fuse_loop_mt.c
++++ b/lib/fuse_loop_mt.c
+@@ -65,7 +65,7 @@ static struct fuse_chan *fuse_chan_new(int fd)
+ 	memset(ch, 0, sizeof(*ch));
+ 	ch->fd = fd;
+ 	ch->ctr = 1;
+-	fuse_mutex_init(&ch->lock);
++	pthread_mutex_init(&ch->lock, NULL);
+ 
+ 	return ch;
+ }
+@@ -321,7 +321,7 @@ int fuse_session_loop_mt_32(struct fuse_session *se, struct fuse_loop_config *co
+ 	mt.main.thread_id = pthread_self();
+ 	mt.main.prev = mt.main.next = &mt.main;
+ 	sem_init(&mt.finish, 0, 0);
+-	fuse_mutex_init(&mt.lock);
++	pthread_mutex_init(&mt.lock, NULL);
+ 
+ 	pthread_mutex_lock(&mt.lock);
+ 	err = fuse_loop_start_thread(&mt);
+diff --git a/lib/fuse_lowlevel.c b/lib/fuse_lowlevel.c
+index 83510b3c..d227688b 100644
+--- a/lib/fuse_lowlevel.c
++++ b/lib/fuse_lowlevel.c
+@@ -155,7 +155,7 @@ static struct fuse_req *fuse_ll_alloc_req(struct fuse_session *se)
+ 		req->se = se;
+ 		req->ctr = 1;
+ 		list_init_req(req);
+-		fuse_mutex_init(&req->lock);
++		pthread_mutex_init(&req->lock, NULL);
+ 	}
+ 
+ 	return req;
+@@ -2958,7 +2958,7 @@ struct fuse_session *fuse_session_new(struct fuse_args *args,
+ 	list_init_req(&se->interrupts);
+ 	list_init_nreq(&se->notify_list);
+ 	se->notify_ctr = 1;
+-	fuse_mutex_init(&se->lock);
++	pthread_mutex_init(&se->lock, NULL);
+ 
+ 	err = pthread_key_create(&se->pipe_key, fuse_ll_pipe_destructor);
+ 	if (err) {
+diff --git a/lib/fuse_misc.h b/lib/fuse_misc.h
+index f384aeab..f956ab79 100644
+--- a/lib/fuse_misc.h
++++ b/lib/fuse_misc.h
+@@ -22,20 +22,6 @@
+ #define FUSE_SYMVER(sym1, sym2)
+ #endif
+ 
+-#ifndef USE_UCLIBC
+-#define fuse_mutex_init(mut) pthread_mutex_init(mut, NULL)
+-#else
+-/* Is this hack still needed? */
+-static inline void fuse_mutex_init(pthread_mutex_t *mut)
+-{
+-	pthread_mutexattr_t attr;
+-	pthread_mutexattr_init(&attr);
+-	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ADAPTIVE_NP);
+-	pthread_mutex_init(mut, &attr);
+-	pthread_mutexattr_destroy(&attr);
+-}
+-#endif
+-
+ #ifdef HAVE_STRUCT_STAT_ST_ATIM
+ /* Linux */
+ #define ST_ATIM_NSEC(stbuf) ((stbuf)->st_atim.tv_nsec)
