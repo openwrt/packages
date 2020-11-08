@@ -1,61 +1,64 @@
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=docker-ce
-PKG_VERSION:=19.03.13
-PKG_RELEASE:=5
+PKG_NAME:=dockerd
+PKG_VERSION:=20.10.0
+PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/docker/docker-ce/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=b2ff08675738031b6d6d59a90226657c16726851957c11b5fb85a4598b933b92
-PKG_SOURCE_VERSION:=4484c46d9d # SHA1 used within the docker executables
+PKG_SOURCE_URL:=https://codeload.github.com/moby/moby/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=c522994fa1c74aac227b9f4b47cf6b3d7ca5fc5b50f06b3dad41bd4dc92b6771
+PKG_SOURCE_VERSION:=e07c941c94 # SHA1 used within the docker executables
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
+PKG_BUILD_DEPENDS:=golang/host
+PKG_BUILD_PARALLEL:=1
+
+GO_PKG:=github.com/docker/docker
+
+include $(INCLUDE_DIR)/package.mk
+include ../../lang/golang/golang-package.mk
+
+define Package/dockerd/config
+  source "$(SOURCE)/Config.in"
+endef
+
+define Package/dockerd
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE:=Docker Community Edition Daemon
+  URL:=https://www.docker.com/
+  DEPENDS:=$(GO_ARCH_DEPENDS) @(aarch64||arm||x86_64) +btrfs-progs +ca-certificates +containerd +libdevmapper +libnetwork +tini \
+           +KERNEL_SECCOMP:libseccomp +iptables-mod-extra +kmod-br-netfilter +kmod-ikconfig +kmod-nf-conntrack-netlink +kmod-nf-ipvs \
+           +kmod-nf-nat +kmod-veth
+  USERID:=docker:docker
+  MENU:=1
+endef
+
+define Package/dockerd/conffiles
+/etc/config/dockerd
+endef
+
+define Package/dockerd/description
+The Docker CE Engine.
+endef
+
+TAR_OPTIONS:=--strip-components 1 $(TAR_OPTIONS)
+TAR_CMD=$(HOST_TAR) -C $(1) $(TAR_OPTIONS)
+
 # $(1) = path to dependent package 'Makefile'
-# $(2) = relevant docker-ce '.installer' file
+# $(2) = relevant dependency '.installer' file
 define EnsureVendoredVersion
 	( \
 		DEP_VER=$$$$( grep --only-matching --perl-regexp '(?<=PKG_SOURCE_VERSION:=)(.*)' "$(1)" ); \
-		VEN_VER=$$$$( grep --only-matching --perl-regexp '(?<=_COMMIT:=)(.*)(?=})' "$(PKG_BUILD_DIR)/components/engine/hack/dockerfile/install/$(2)" ); \
+		VEN_VER=$$$$( grep --only-matching --perl-regexp '(?<=_COMMIT:=)(.*)(?=})' "$(PKG_BUILD_DIR)/hack/dockerfile/install/$(2)" ); \
 		if [ $$$$VEN_VER != $$$$DEP_VER ]; then \
 			echo "ERROR: Expected 'PKG_SOURCE_VERSION:=$$$$VEN_VER' in '$(1)', found 'PKG_SOURCE_VERSION:=$$$$DEP_VER'"; \
 			exit 1; \
 		fi \
 	)
-endef
-
-PKG_BUILD_DEPENDS:=golang/host
-PKG_BUILD_PARALLEL:=1
-
-GO_PKG:=github.com/docker
-
-include $(INCLUDE_DIR)/package.mk
-include ../../lang/golang/golang-package.mk
-
-define Package/docker-ce/config
-  source "$(SOURCE)/Config.in"
-endef
-
-define Package/docker-ce
-  SECTION:=utils
-  CATEGORY:=Utilities
-  TITLE:=Docker Community Edition
-  URL:=https://www.docker.com/
-  DEPENDS:=$(GO_ARCH_DEPENDS) @(aarch64||arm||x86_64) +btrfs-progs +ca-certificates +cgroupfs-mount +containerd +libdevmapper +libnetwork +tini \
-           +DOCKER_SECCOMP:libseccomp +iptables-mod-extra +kmod-br-netfilter +kmod-ikconfig +kmod-nf-conntrack-netlink +kmod-nf-ipvs +kmod-veth
-  USERID:=docker:docker
-  MENU:=1
-endef
-
-define Package/docker-ce/conffiles
-/etc/config/dockerd
-endef
-
-define Package/docker-ce/description
-  Docker Engine is used by millions enables containerized applications
-  to run anywhere consistently on any infrastructure.
 endef
 
 define Build/Prepare
@@ -66,51 +69,44 @@ define Build/Prepare
 	$(call EnsureVendoredVersion,../libnetwork/Makefile,proxy.installer)
 	$(call EnsureVendoredVersion,../runc/Makefile,runc.installer)
 	$(call EnsureVendoredVersion,../tini/Makefile,tini.installer)
+
+	# Verify CLI is the same version
+	( \
+		CLI_MAKEFILE="../docker/Makefile"; \
+		CLI_VERSION=$$$$( grep --only-matching --perl-regexp '(?<=PKG_VERSION:=)(.*)' "$$$$CLI_MAKEFILE" ); \
+		if [ $$$$CLI_VERSION != $(PKG_VERSION) ]; then \
+			echo "ERROR: Expected 'PKG_VERSION:=$(PKG_VERSION)' in '$$$$CLI_MAKEFILE', found 'PKG_VERSION:=$$$$CLI_VERSION'"; \
+			exit 1; \
+		fi \
+	)
 endef
 
-define Build/Configure
-	# move so GoPackage/Build/Configure will get the correct path
-	mv $(PKG_BUILD_DIR)/components/engine $(PKG_BUILD_DIR)/
-
-	# docker generates files at build time so we'll just symlink for now and call GoPackage/Build/Configure later
-	mkdir -p $(GO_PKG_BUILD_DIR)/bin \
-			 $(GO_PKG_BUILD_DIR)/src \
-			 $(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/ \
-			 $(GO_BUILD_CACHE_DIR)
-	$(LN) $(PKG_BUILD_DIR)/engine $(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/docker
-endef
-
-ifeq ($(CONFIG_DOCKER_SECCOMP),y)
-BUILDTAGS:=seccomp
-else
 BUILDTAGS:=
+ifeq ($(KERNEL_SECCOMP),y)
+BUILDTAGS += seccomp
+endif
+ifeq ($(CONFIG_SELINUX),y)
+BUILDTAGS += selinux
 endif
 
 define Build/Compile
 	( \
-		export $(GO_PKG_VARS) \
-			GITCOMMIT=$(PKG_SOURCE_VERSION) \
-			DOCKER_GITCOMMIT=$(PKG_SOURCE_VERSION) \
-			DOCKER_BUILDTAGS='$(BUILDTAGS)' \
-			VERSION=$(PKG_VERSION) \
-		\
-		&& echo "Compiling Engine..." \
-		&& cd $(PKG_BUILD_DIR)/engine \
-		&& ./hack/make.sh binary \
+		cd $(PKG_BUILD_DIR); \
+		$(GO_PKG_VARS) \
+		DOCKER_GITCOMMIT=$(PKG_SOURCE_VERSION) \
+		DOCKER_BUILDTAGS='$(BUILDTAGS)' \
+		VERSION=$(PKG_VERSION) \
+		./hack/make.sh binary; \
 	)
-
-	# done here to include autogenerated files also
-	rm $(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/docker
-	$(call GoPackage/Build/Configure)
 endef
 
-define Package/docker-ce/install
+define Package/dockerd/install
 	$(INSTALL_DIR) $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/engine/bundles/binary-daemon/dockerd $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bundles/binary-daemon/dockerd $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/opt/docker/
 	$(INSTALL_DIR) $(1)/usr/share/docker/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/engine/contrib/check-config.sh $(1)/usr/share/docker/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/contrib/check-config.sh $(1)/usr/share/docker/
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/dockerd.init $(1)/etc/init.d/dockerd
@@ -124,7 +120,7 @@ define Package/docker-ce/install
 		$(1)/etc/sysctl.d/12-br-netfilter-ip.conf
 endef
 
-define Package/docker-ce/postinst
+define Package/dockerd/postinst
 #!/bin/sh
 [ -n "$$IPKG_INSTROOT" ] || {
 	/etc/init.d/dockerd enable
@@ -133,7 +129,7 @@ define Package/docker-ce/postinst
 }
 endef
 
-define Package/docker-ce/prerm
+define Package/dockerd/prerm
 #!/bin/sh
 [ -n "$$IPKG_INSTROOT" ] || {
 	/etc/init.d/dockerd disable
@@ -142,4 +138,4 @@ define Package/docker-ce/prerm
 }
 endef
 
-$(eval $(call BuildPackage,docker-ce))
+$(eval $(call BuildPackage,dockerd))
