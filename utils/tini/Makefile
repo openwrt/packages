@@ -1,15 +1,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tini
-PKG_VERSION:=0.18.0
+PKG_VERSION:=0.19.0
 PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/krallin/tini/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=1097675352d6317b547e73f9dc7c6839fd0bb0d96dafc2e5c95506bb324049a2
-PKG_SOURCE_VERSION:=fec3683b971d9c3ef73f284f176672c44b448662
+PKG_HASH:=0fd35a7030052acd9f58948d1d900fe1e432ee37103c5561554408bdac6bbf0d
+PKG_SOURCE_VERSION:=de40ad007797e0dcd8b7126f27bb87401d224240
+TINI_COMMIT:=de40ad0
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
@@ -30,8 +31,7 @@ define Package/tini/description
 A tiny but valid init process for containers.
 endef
 
-# static version seemes to be effected by https://www.openwall.com/lists/musl/2018/07/18/8 so we use the workaround
-TARGET_CFLAGS += -Wl,--build-id
+CMAKE_OPTIONS += -DTINI_VERSION_GIT='$(TINI_COMMIT)'
 
 define Package/tini/install
 	$(INSTALL_DIR) $(1)/usr/bin
