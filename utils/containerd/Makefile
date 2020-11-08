@@ -1,15 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=containerd
-PKG_VERSION:=1.3.7
+PKG_VERSION:=1.4.3
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/containerd/containerd/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=d30d59e143697aa4f0960205b3f5ac59c573b332f20507740ef2dc0fb5ae8ded
-PKG_SOURCE_VERSION:=8fba4e9a7d01810a393d5d25a3621dc101981175
+PKG_HASH:=bc6d9452c700af0ebc09c0da8ddba55be4c03ac8928e72ca92d98905800c8018
+PKG_SOURCE_VERSION:=269548fa27e0089a8b8278fc4fc781d7f65a939b
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
@@ -22,23 +22,12 @@ GO_PKG:=github.com/containerd/containerd
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
 
-define Package/containerd/config
-config CONTAINERD_SECCOMP
-	depends on PACKAGE_containerd
-	bool "Enable support for seccomp in containerd"
-	default DOCKER_SECCOMP
-	select KERNEL_SECCOMP
-	help
-	  Build containerd with support for seccomp filters.
-	  Also pulls-in the needed kernel features.
-endef
-
 define Package/containerd
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=containerd container runtime
   URL:=https://containerd.io/
-  DEPENDS:=$(GO_ARCH_DEPENDS) @(aarch64||arm||x86_64) +btrfs-progs +runc +libseccomp
+  DEPENDS:=$(GO_ARCH_DEPENDS) @(aarch64||arm||x86_64) +btrfs-progs +runc
   MENU:=1
 endef
 
@@ -53,8 +42,8 @@ MAKE_FLAGS += \
 	VERSION=$(PKG_VERSION) \
 	REVISION=$(PKG_SOURCE_VERSION)
 
-ifeq ($(CONFIG_CONTAINERD_SECCOMP),y)
-MAKE_FLAGS += BUILDTAGS='seccomp'
+ifeq ($(CONFIG_SELINUX),y)
+MAKE_FLAGS += BUILDTAGS='selinux'
 else
 MAKE_FLAGS += BUILDTAGS=''
 endif
@@ -64,7 +53,7 @@ Build/Compile=$(call Build/Compile/Default)
 
 define Package/containerd/install
 	$(INSTALL_DIR) $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/{ctr,containerd,containerd-stress,containerd-shim} $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/{ctr,containerd,containerd-stress,containerd-shim,containerd-shim-runc-v1,containerd-shim-runc-v2} $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,containerd))
