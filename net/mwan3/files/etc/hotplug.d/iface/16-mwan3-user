@@ -3,11 +3,12 @@
 [ -f "/etc/mwan3.user" ] && {
 	. /lib/functions.sh
 	. /lib/mwan3/mwan3.sh
+        initscript=/etc/init.d/mwan3
+	. /lib/functions/procd.sh
 
-	[ "$MWAN3_SHUTDOWN" != 1 ] && mwan3_lock "$ACTION" "$DEVICE-user"
+	[ "$MWAN3_SHUTDOWN" != 1 ] && procd_lock
 
 	[ "$MWAN3_SHUTDOWN" != 1 ] && ! /etc/init.d/mwan3 running && {
-		mwan3_unlock "$ACTION" "$DEVICE-user"
 		exit 0
 	}
 
@@ -18,8 +19,6 @@
 		[ "$MWAN3_SHUTDOWN" != 1 ] && mwan3_unlock "$ACTION" "$DEVICE-user"
 		exit 0
 	}
-
-	[ "$MWAN3_SHUTDOWN" != 1 ] && mwan3_unlock "$ACTION" "$DEVICE-user"
 
 	env -i ACTION="$ACTION" INTERFACE="$INTERFACE" DEVICE="$DEVICE" \
 		/bin/sh /etc/mwan3.user

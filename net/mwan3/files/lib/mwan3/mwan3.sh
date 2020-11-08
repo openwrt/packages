@@ -103,16 +103,6 @@ mwan3_count_one_bits()
 	echo $count
 }
 
-mwan3_lock() {
-	lock /var/run/mwan3.lock
-	#LOG debug "$1 $2 (lock)"
-}
-
-mwan3_unlock() {
-	#LOG debug "$1 $2 (unlock)"
-	lock -u /var/run/mwan3.lock
-}
-
 mwan3_get_iface_id()
 {
 	local _tmp
@@ -965,12 +955,12 @@ mwan3_interface_shutdown()
 
 mwan3_ifup()
 {
-	local up l3_device status interface true_iface mwan3_startup
+	local interface=$1
+	local caller=$2
 
-	interface=$1
-	mwan3_startup=$2
+	local up l3_device status true_iface
 
-	if [ "${mwan3_startup}" != 1 ]; then
+	if [ "${caller}" = "cmd" ]; then
 		# It is not necessary to obtain a lock here, because it is obtained in the hotplug
 		# script, but we still want to do the check to print a useful error message
 		/etc/init.d/mwan3 running || {
@@ -989,7 +979,7 @@ mwan3_ifup()
 	}
 	hotplug_startup()
 	{
-		env -i MWAN3_STARTUP=$mwan3_startup ACTION=ifup \
+		env -i MWAN3_STARTUP=$caller ACTION=ifup \
 		    INTERFACE=$interface DEVICE=$l3_device \
 		    sh /etc/hotplug.d/iface/15-mwan3
 	}
@@ -998,7 +988,7 @@ mwan3_ifup()
 		return
 	fi
 
-	if [ "${mwan3_startup}" = 1 ]; then
+	if [ "${caller}" = "init" ]; then
 		hotplug_startup &
 		hotplug_pids="$hotplug_pids $!"
 	else

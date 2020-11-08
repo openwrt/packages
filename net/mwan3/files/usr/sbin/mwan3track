@@ -9,9 +9,6 @@ DEVICE=""
 
 IFDOWN_EVENT=0
 IFUP_EVENT=0
-TRACK_OUTPUT=$MWAN3TRACK_STATUS_DIR/$INTERFACE/TRACK_OUTPUT
-
-mwan3_init
 
 stop_subprocs() {
 	[ -n "$SLEEP_PID" ] && kill "$SLEEP_PID" && unset SLEEP_PID
@@ -169,6 +166,10 @@ main() {
 	INTERFACE=$1
 	STATUS=""
 	STARTED=0
+	TRACK_OUTPUT=$MWAN3TRACK_STATUS_DIR/$INTERFACE/TRACK_OUTPUT
+
+	mwan3_init
+
 	mkdir -p $MWAN3TRACK_STATUS_DIR/$INTERFACE
 
 	trap clean_up TERM
@@ -345,7 +346,7 @@ main() {
 		get_uptime > $MWAN3TRACK_STATUS_DIR/$INTERFACE/TIME
 
 		host_up_count=0
-		if [ "${IFDOWN_EVENT}" -ne 0 ] && [ "${IFUP_EVENT}" -ne 0 ]; then
+		if [ "${IFDOWN_EVENT}" -eq 0 ] && [ "${IFUP_EVENT}" -eq 0 ]; then
 			sleep "${sleep_time}" &
 			SLEEP_PID=$!
 			wait
