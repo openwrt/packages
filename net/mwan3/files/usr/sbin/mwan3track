@@ -6,9 +6,11 @@
 
 INTERFACE=""
 DEVICE=""
+SRC_IP=""
 
 IFDOWN_EVENT=0
 IFUP_EVENT=0
+LAST_EVENT=""
 
 stop_subprocs() {
 	[ -n "$SLEEP_PID" ] && kill "$SLEEP_PID" && unset SLEEP_PID
@@ -97,6 +99,7 @@ disconnected() {
 	[ "$1" = 1 ] && return
 	LOG notice "Interface $INTERFACE ($DEVICE) is offline"
 	env -i ACTION="disconnected" INTERFACE="$INTERFACE" DEVICE="$DEVICE" /sbin/hotplug-call iface
+	LAST_EVENT="disconnected"
 }
 
 connected() {
@@ -110,6 +113,7 @@ connected() {
 	loss=0
 	LOG notice "Interface $INTERFACE ($DEVICE) is online"
 	env -i FIRSTCONNECT=$1 ACTION="connected" INTERFACE="$INTERFACE" DEVICE="$DEVICE" /sbin/hotplug-call iface
+	LAST_EVENT="connected"
 }
 
 disabled() {
@@ -118,12 +122,14 @@ disabled() {
 	STARTED=0
 }
 
+
 firstconnect() {
 	local true_iface
 	network_flush_cache
 
 	mwan3_get_true_iface true_iface $INTERFACE
 	network_get_device DEVICE $true_iface
+	SRC_IP=""
 
 	if [ "$STATUS" != "online" ]; then
 		config_get STATUS $INTERFACE initial_state "online"
@@ -139,9 +145,9 @@ firstconnect() {
 	LOG debug "firstconnect: called on $INTERFACE/$true_iface ($DEVICE). Status is $STATUS. SRC_IP is $SRC_IP"
 
 	STARTED=1
-	if [ "$STATUS" = "offline" ]; then
+	if [ "$STATUS" = "offline" ] && [ "$LAST_EVENT" != "disconnected" ]; then
 		disconnected 1
-	else
+	elif [ "$LAST_EVENT" != "connected" ]; then
 		connected 1
 	fi
 }
