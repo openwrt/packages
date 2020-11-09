@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 
-START=1
+START=01
 
 boot() {
 	# Procd mounts non-hierarchical cgroupfs so unmount first before cgroupfs-mount
