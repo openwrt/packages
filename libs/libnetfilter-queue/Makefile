@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libnetfilter_queue
-PKG_RELEASE:=2
+PKG_VERSION:=1.0.5
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=https://git.netfilter.org/libnetfilter_queue
-PKG_SOURCE_DATE:=2017-06-27
-PKG_SOURCE_VERSION:=601abd1c71ccdf90753cf294c120ad43fb25dc54
-PKG_MIRROR_HASH:=283b99cfe5856dc87fd6bab8f78c0c59b72462d6b4f2b13111f928cf33020eb3
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://www.netfilter.org/projects/libnetfilter_queue/files
+PKG_HASH:=f9ff3c11305d6e03d81405957bdc11aea18e0d315c3e3f48da53a24ba251b9f5
 
-PKG_FIXUP:=autoreconf
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -28,7 +28,7 @@ define Package/libnetfilter-queue
   CATEGORY:=Libraries
   DEPENDS:=+libmnl +libnfnetlink
   TITLE:=Userspace API to packets queued by kernel packet filter
-  URL:=http://www.netfilter.org/projects/libnetfilter_queue/
+  URL:=https://www.netfilter.org/projects/libnetfilter_queue/
   ABI_VERSION:=1
 endef
 
