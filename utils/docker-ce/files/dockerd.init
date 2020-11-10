@@ -3,8 +3,8 @@
 USE_PROCD=1
 START=25
 
-extra_command "uciadd" "Add default bridge configuration to network and firewall uci config"
-extra_command "ucidel" "Delete default bridge configuration from network and firewall uci config"
+extra_command "uciadd" "<interface> <device> <zone> Add docker bridge configuration to network and firewall uci config"
+extra_command "ucidel" "<interface> <device> <zone> Delete docker bridge configuration from network and firewall uci config"
 
 DOCKER_CONF_DIR="/tmp/dockerd"
 DOCKERD_CONF="${DOCKER_CONF_DIR}/daemon.json"
@@ -46,43 +46,53 @@ uciupdate() {
 }
 
 uciadd() {
+	local iface="$1"
+	local device="$2"
+	local zone="$3"
+
+	[ -z "$iface" ] && {
+		iface="docker"
+		device="docker0"
+		zone="docker"
+	}
+
 	/etc/init.d/dockerd running && {
 		echo "Please stop dockerd service first"
 		exit 0
 	}
 
 	# Add network interface
-	if ! uci_quiet get network.docker; then
-		logger -t "dockerd-init" -p notice "Adding docker default interface to network uci config (docker)"
+	if ! uci_quiet get network.${iface}; then
+		logger -t "dockerd-init" -p notice "Adding docker default interface to network uci config (${iface})"
 		uci_quiet add network interface
-		uci_quiet rename network.@interface[-1]="docker"
-		uci_quiet set network.docker.ifname="docker0"
-		uci_quiet set network.docker.proto="static"
-		uci_quiet set network.docker.auto="0"
+		uci_quiet rename network.@interface[-1]="${iface}"
+		uci_quiet set network.@interface[-1].ifname="${device}"
+		uci_quiet set network.@interface[-1].proto="static"
+		uci_quiet set network.@interface[-1].auto="0"
 		uci_quiet commit network
 	fi
 
 	# Add docker bridge device
-	if ! uci_quiet get network.docker0; then
-		logger -t "dockerd-init" -p notice "Adding docker default bridge device to network uci config (docker0)"
+	if ! uci_quiet get network.${device}; then
+		logger -t "dockerd-init" -p notice "Adding docker default bridge device to network uci config (${device})"
 		uci_quiet add network device
-		uci_quiet rename network.@device[-1]="docker0"
-		uci_quiet set network.docker0.type="bridge"
-		uci_quiet set network.docker0.name="docker0"
-		uci_quiet add_list network.docker0.ifname="docker0"
+		uci_quiet rename network.@device[-1]="${device}"
+		uci_quiet set network.@device[-1].type="bridge"
+		uci_quiet set network.@device[-1].name="${device}"
+		uci_quiet add_list network.@device[-1].ifname="${device}"
 		uci_quiet commit network
 	fi
 
 	# Add firewall zone
-	if ! uci_quiet get firewall.docker; then
-		logger -t "dockerd-init" -p notice "Adding docker default firewall zone to firewall uci config (docker)"
+	if ! uci_quiet get firewall.${zone}; then
+		logger -t "dockerd-init" -p notice "Adding docker default firewall zone to firewall uci config (${zone})"
 		uci_quiet add firewall zone
-		uci_quiet rename firewall.@zone[-1]="docker"
-		uci_quiet set firewall.docker.network="docker"
-		uci_quiet set firewall.docker.input="REJECT"
-		uci_quiet set firewall.docker.output="ACCEPT"
-		uci_quiet set firewall.docker.forward="REJECT"
-		uci_quiet set firewall.docker.name="docker"
+		uci_quiet rename firewall.@zone[-1]="${zone}"
+		uci_quiet set firewall.@zone[-1].network="${iface}"
+		uci_quiet set firewall.@zone[-1].input="REJECT"
+		uci_quiet set firewall.@zone[-1].output="ACCEPT"
+		uci_quiet set firewall.@zone[-1].forward="REJECT"
+		uci_quiet set firewall.@zone[-1].name="${zone}"
 		uci_quiet commit firewall
 	fi
 
@@ -90,22 +100,38 @@ uciadd() {
 }
 
 ucidel() {
+	local iface="$1"
+	local device="$2"
+	local zone="$3"
+
+	[ -z "$iface" ] && {
+		iface="docker"
+		device="docker0"
+		zone="docker"
+	}
+
 	/etc/init.d/dockerd running && {
 		echo "Please stop dockerd service first"
 		exit 0
 	}
 
-	logger -t "dockerd-init" -p notice "Deleting docker default bridge device from network uci config (docker0)"
-	uci_quiet delete network.docker0
-	uci_quiet commit network
+	if uci_quiet get network.${device}; then
+		logger -t "dockerd-init" -p notice "Deleting docker default bridge device from network uci config (${device})"
+		uci_quiet delete network.${device}
+		uci_quiet commit network
+	fi
 
-	logger -t "dockerd-init" -p notice "Deleting docker default interface from network uci config (docker)"
-	uci_quiet delete network.docker
-	uci_quiet commit network
+	if uci_quiet get network.${iface}; then
+		logger -t "dockerd-init" -p notice "Deleting docker default interface from network uci config (${iface})"
+		uci_quiet delete network.${iface}
+		uci_quiet commit network
+	fi
 
-	logger -t "dockerd-init" -p notice "Deleting docker firewall zone from firewall uci config (docker)"
-	uci_quiet delete firewall.docker
-	uci_quiet commit firewall
+	if uci_quiet get firewall.${zone}; then
+		logger -t "dockerd-init" -p notice "Deleting docker firewall zone from firewall uci config (${zone})"
+		uci_quiet delete firewall.${zone}
+		uci_quiet commit firewall
+	fi
 
 	reload_config
 }
