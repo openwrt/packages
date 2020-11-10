@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. /usr/share/libubox/jshn.sh
+. "${IPKG_INSTROOT}/usr/share/libubox/jshn.sh"
 
 IPS="ipset"
 IPT4="iptables -t mangle -w"
