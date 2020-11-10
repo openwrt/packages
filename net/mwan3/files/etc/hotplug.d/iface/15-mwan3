@@ -35,10 +35,6 @@ $IPT4 -S mwan3_hook &>/dev/null || {
 }
 
 mwan3_init
-[ "$MWAN3_STARTUP" = 1 ] || {
-	config_get family $INTERFACE family ipv4
-	mwan3_set_connected_${family}
-}
 
 if [ "$MWAN3_STARTUP" != "init" ] && [ "$ACTION" = "ifup" ]; then
 	mwan3_set_user_iface_rules $INTERFACE $DEVICE
