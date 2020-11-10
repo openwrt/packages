@@ -126,16 +126,16 @@ get_mwan3_status() {
 		json_add_boolean "running" "${running}"
 		json_add_boolean "up" "${up}"
 		json_add_array "track_ip"
-		for file in $MWAN3TRACK_STATUS_DIR/${iface}/*; do
+		for file in $MWAN3TRACK_STATUS_DIR/${iface}/TRACK_*; do
+			[ -z "${file#*/TRACK_OUTPUT}" ] && continue
+			[ -z "${file#*/TRACK_\*}" ] && continue
 			track="${file#*/TRACK_}"
-			if [ "${track}" != "${file}" ]; then
-				json_add_object
-				json_add_string ip "${track}"
-				json_add_string status "$(cat "${file}")"
-				json_add_int latency "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LATENCY_${track}")"
-				json_add_int packetloss "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LOSS_${track}")"
-				json_close_object
-			fi
+			json_add_object
+			json_add_string ip "${track}"
+			json_add_string status "$(cat "${file}")"
+			json_add_int latency "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LATENCY_${track}")"
+			json_add_int packetloss "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LOSS_${track}")"
+			json_close_object
 		done
 		json_close_array
 		json_close_object
