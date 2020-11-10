@@ -40,7 +40,7 @@ mwan3_init
 	mwan3_set_connected_${family}
 }
 
-if [ "$MWAN3_STARTUP" != 1 ] && [ "$ACTION" = "ifup" ]; then
+if [ "$MWAN3_STARTUP" != "init" ] && [ "$ACTION" = "ifup" ]; then
 	mwan3_set_user_iface_rules $INTERFACE $DEVICE
 fi
 
@@ -69,7 +69,7 @@ case "$ACTION" in
 		mwan3_create_iface_iptables $INTERFACE $DEVICE
 		mwan3_create_iface_rules $INTERFACE $DEVICE
 		mwan3_set_iface_hotplug_state $INTERFACE "$status"
-		if [ "$MWAN3_STARTUP" = "cmd" ]; then
+		if [ "$MWAN3_STARTUP" != "init" ]; then
 			mwan3_create_iface_route $INTERFACE $DEVICE
 	                mwan3_set_general_rules
 			[ "$status" = "online" ] && mwan3_set_policies_iptables
