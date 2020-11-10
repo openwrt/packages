@@ -1,5 +1,5 @@
 local ubus = require "ubus"
-local bit = require "bit32"
+local bit = require "bit"
 
 local function get_wifi_interfaces() -- based on hostapd_stations.lua
   local u = ubus.connect()
