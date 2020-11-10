@@ -153,7 +153,8 @@ mwan3_set_connected_ipv4()
 {
 	local connected_network_v4 candidate_list cidr_list
 	$IPS -! create mwan3_connected_v4 hash:net
-	$IPS create mwan3_connected_v4_temp hash:net
+	$IPS create mwan3_connected_v4_temp hash:net ||
+		LOG notice "failed to create ipset mwan3_connected_v4_temp"
 
 	candidate_list=""
 	cidr_list=""
@@ -178,10 +179,13 @@ mwan3_set_connected_ipv4()
 			$IPS -! add mwan3_connected_v4_temp "$connected_network_v4"
 	done
 
-	$IPS add mwan3_connected_v4_temp 224.0.0.0/3
+	$IPS add mwan3_connected_v4_temp 224.0.0.0/3 ||
+		LOG notice "failed to add 224.0.0.0/3 to mwan3_connected_v4_temp"
 
-	$IPS swap mwan3_connected_v4_temp mwan3_connected_v4
-	$IPS destroy mwan3_connected_v4_temp
+	$IPS swap mwan3_connected_v4_temp mwan3_connected_v4 ||
+		LOG notice "failed to swap mwan3_connected_v4_temp and mwan3_connected_v4"
+	$IPS destroy mwan3_connected_v4_temp ||
+		LOG notice "failed to destroy ipset mwan3_connected_v4_temp"
 	$IPS -! add mwan3_connected mwan3_connected_v4
 
 }
@@ -517,7 +521,8 @@ mwan3_delete_iface_ipset_entries()
 
 	for setname in $(ipset -n list | grep ^mwan3_sticky_); do
 		for entry in $(ipset list "$setname" | grep "$(mwan3_id2mask id MMX_MASK | awk '{ printf "0x%08x", $1; }')" | cut -d ' ' -f 1); do
-			$IPS del "$setname" $entry
+			$IPS del "$setname" $entry ||
+				LOG notice "failed to delete $entry from $setname"
 		done
 	done
 }
