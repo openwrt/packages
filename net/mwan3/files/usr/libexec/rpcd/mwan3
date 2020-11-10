@@ -77,9 +77,8 @@ get_mwan3_status() {
 	local online=0
 	local offline=0
 	local up="0"
-	local enabled device time_p time_n time_u time_d status track_status
+	local enabled time_p time_n time_u time_d status track_status
 
-	network_get_device device $1
 
 	if [ "${iface}" = "${iface_select}" ] || [ "${iface_select}" = "" ]; then
 		track_status="$(mwan3_get_mwan3track_status "$1")"
