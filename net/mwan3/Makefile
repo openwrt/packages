@@ -43,9 +43,6 @@ define Package/mwan3/conffiles
 /etc/mwan3.user
 endef
 
-define Build/Compile
-endef
-
 define Package/mwan3/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
