@@ -16,4 +16,5 @@ config globals 'globals'
 # Docker ignores fw3 rules and by default all external source IPs are allowed
 # to connect to the Docker host. See https://docs.docker.com/network/iptables/
 config firewall 'firewall'
+	option device 'docker0'
 	list blocked_interfaces 'wan'
