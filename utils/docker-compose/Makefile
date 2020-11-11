@@ -18,9 +18,8 @@ include ../../lang/python/python3-package.mk
 PYTHON3_PKG_SETUP_ARGS:=
 
 define Package/docker-compose
-  SECTION:=lang
-  CATEGORY:=Languages
-  SUBMENU:=Python
+  SECTION:=utils
+  CATEGORY:=Utilities
   TITLE:=Docker Compose
   URL:=https://github.com/docker/compose
   DEPENDS+=+docker-ce \
