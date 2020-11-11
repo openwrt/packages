@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=procps-ng
 PKG_VERSION:=3.3.16
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/procps-ng
@@ -30,15 +30,19 @@ CONFIGURE_ARGS += --enable-skill
 # most of these have alternatives provided by busybox applets
 PROCPS_APPLETS := \
     free kill pgrep pkill pmap ps pwdx skill slabtop \
-    snice tload top uptime vmstat w watch
+    snice sysctl tload top uptime vmstat w watch
 
 # procps-ng will be configured with "--bindir=/usr/bin --sbindir=/usr/sbin" and
 # as such executables will be installed there by default, but some of them need
 # to reside in locations such as /bin and /sbin to be in accordance with
 # busybox alternatives which is also other distributions like debian and centos
 # are doing
-PROCPS_APPLETS_DIR_bin:=kill ps watch
-procps-applets-dir=$(if $(findstring $(1),$(PROCPS_APPLETS_DIR_bin)),/bin,/usr/bin)
+PROCPS_APPLETS_SRC_DIR_SBIN:=sysctl
+procps-applets-src-dir=$(if $(filter $(PROCPS_APPLETS_SRC_DIR_SBIN),$(1)),/usr/sbin,/usr/bin)
+
+PROCPS_APPLETS_DIR_BIN:=kill ps watch
+PROCPS_APPLETS_DIR_SBIN:=sysctl
+procps-applets-dir=$(if $(filter $(PROCPS_APPLETS_DIR_BIN),$(1)),/bin,$(if $(filter $(PROCPS_APPLETS_DIR_SBIN),$(1)),/sbin,/usr/bin))
 
 define Package/procps-ng/Default
   SECTION:=utils
@@ -68,20 +72,19 @@ define Package/procps-ng/description
 endef
 
 define GenPlugin
- define Package/$(1)
+ define Package/procps-ng-$(1)
    $(call Package/procps-ng/Default)
    DEPENDS:=procps-ng
-   TITLE:=Applet $(2) from the procps-ng package
-   ALTERNATIVES:=200:$(3)/$(2):$(3)/$(1)
+   TITLE:=Applet $(1) from the procps-ng package
+   ALTERNATIVES:=200:$(2)/$(1):/usr/libexec/$(1)-procps-ng
  endef
 
- define Package/$(1)/description
-  Installs the applet $(2).
+ define Package/procps-ng-$(1)/description
+  Installs the applet $(1).
  endef
 endef
 
-$(foreach a,$(PROCPS_APPLETS),$(eval $(call GenPlugin,procps-ng-$(a),$(a),$(call procps-applets-dir,$(a)))))
-$(eval $(call GenPlugin,procps-ng-sysctl,sysctl,/usr/sbin))
+$(foreach a,$(PROCPS_APPLETS),$(eval $(call GenPlugin,$(a),$(call procps-applets-dir,$(a)))))
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS)" \
@@ -93,20 +96,14 @@ define Package/procps-ng/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libprocps.so* $(1)/usr/lib/
 endef
 
-define Package/procps-ng-sysctl/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/sysctl $(1)/usr/sbin
-endef
-
 define BuildPlugin
-  define Package/$(1)/install
-	$(INSTALL_DIR) $$(1)$(3)
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(2) $$(1)$(3)/$(1)
+  define Package/procps-ng-$(1)/install
+	$(INSTALL_DIR) $$(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(2)/$(1) $$(1)/usr/libexec/$(1)-procps-ng
   endef
 
-  $$(eval $$(call BuildPackage,$(1)))
+  $$(eval $$(call BuildPackage,procps-ng-$(1)))
 endef
 
-$(foreach a,$(PROCPS_APPLETS),$(eval $(call BuildPlugin,procps-ng-$(a),$(a),$(call procps-applets-dir,$(a)))))
-$(eval $(call BuildPackage,procps-ng-sysctl))
+$(foreach a,$(PROCPS_APPLETS),$(eval $(call BuildPlugin,$(a),$(call procps-applets-src-dir,$(a)))))
 $(eval $(call BuildPackage,procps-ng))
