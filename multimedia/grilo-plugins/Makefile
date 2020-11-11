@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grilo-plugins
 PKG_VERSION:=0.3.12
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPLv2.1
@@ -45,21 +45,30 @@ define Package/grilo/decription
 endef
 
 MESON_ARGS += \
-	-Denable-filesystem=no \
-	-Denable-optical-media=no \
-	-Denable-youtube=no \
-	-Denable-flickr=no \
-	-Denable-podcasts=no \
 	-Denable-bookmarks=no \
-	-Denable-lua-factory=no \
-	-Denable-metadata-store=no \
-	-Denable-vimeo=no \
-	-Denable-tracker=no \
-	-Denable-local-metadata=no \
-	-Denable-chromaprint=no \
-	-Denable-thetvdb=no \
-	-Denable-tmdb=no \
+	-Denable-chromaprint=$(if $(CONFIG_PACKAGE_grilo-plugins-chromaprint),yes,no) \
+	-Denable-dleyna=$(if $(CONFIG_PACKAGE_grilo-plugins-dleyna),yes,no) \
+	-Denable-dmap=$(if $(CONFIG_PACKAGE_grilo-plugins-dmap),yes,no) \
+	-Denable-filesystem=no \
+	-Denable-flickr=no \
 	-Denable-freebox=no \
+	-Denable_gravatar=$(if $(CONFIG_PACKAGE_grilo-plugins-gravatar),yes,no) \
+	-Denable_jamendo=$(if $(CONFIG_PACKAGE_grilo-plugins-jamendo),yes,no) \
+	-Denable-local-metadata=no \
+	-Denable-lua-factory=no \
+	-Denable-magnatune=$(if $(CONFIG_PACKAGE_grilo-plugins-magnatune),yes,no) \
+	-Denable-metadata-store=$(if $(CONFIG_PACKAGE_grilo-plugins-metadata-store),yes,no) \
+	-Denable_opensubtitles=$(if $(CONFIG_PACKAGE_grilo-plugins-opensubtitles),yes,no) \
+	-Denable-optical-media=no \
+	-Denable-podcasts=no \
+	-Denable-raitv=$(if $(CONFIG_PACKAGE_grilo-plugins-raitv),yes,no) \
+	-Denable-shoutcast=$(if $(CONFIG_PACKAGE_grilo-plugins-shoutcast),yes,no) \
+	-Denable-thetvdb=no \
+	-Denable-tmdb=$(if $(CONFIG_PACKAGE_grilo-plugins-tmdb),yes,no) \
+	-Denable-tracker=no \
+	-Denable-tracker3=no \
+	-Denable-vimeo=no \
+	-Denable-youtube=no \
 	--wrap-mode=nodownload
 
 define Package/grilo-plugins/install
@@ -88,11 +97,14 @@ endef
 
 $(eval $(call BuildPackage,grilo-plugins))
 
+$(eval $(call BuildPlugin,chromaprint,Chromaprint,chromaprint,+libgstreamer1,30))
 $(eval $(call BuildPlugin,dleyna,DLNA sharing,dleyna,,30))
 $(eval $(call BuildPlugin,dmap,DAAP and DPAP sharing,daap dpap,libdmapsharing,30))
 $(eval $(call BuildPlugin,gravatar,Gravatar provider,gravatar,,30))
 $(eval $(call BuildPlugin,jamendo,Jamendo sharing,jamendo,,30))
 $(eval $(call BuildPlugin,magnatune,Magnatune sharing,magnatune,,30))
+$(eval $(call BuildPlugin,metadata-store,Metadata Store,metadatastore,,30))
 $(eval $(call BuildPlugin,opensubtitles,Open subtitles provider,opensubtitles,,30))
 $(eval $(call BuildPlugin,raitv,Rai.tv sharing,raitv,,30))
 $(eval $(call BuildPlugin,shoutcast,SHOUTcast sharing,shoutcast,,30))
+$(eval $(call BuildPlugin,tmdb,TMDb,tmdb,+json-glib,30))
