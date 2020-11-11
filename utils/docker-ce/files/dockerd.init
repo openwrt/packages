@@ -67,7 +67,7 @@ uciadd() {
 		uci_quiet add network interface
 		uci_quiet rename network.@interface[-1]="${iface}"
 		uci_quiet set network.@interface[-1].ifname="${device}"
-		uci_quiet set network.@interface[-1].proto="static"
+		uci_quiet set network.@interface[-1].proto="none"
 		uci_quiet set network.@interface[-1].auto="0"
 		uci_quiet commit network
 	fi
