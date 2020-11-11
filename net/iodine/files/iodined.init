@@ -10,11 +10,28 @@ start_instance () {
 	config_get tunnelip "$section" 'tunnelip'
 	config_get tld      "$section" 'tld'
 	config_get port     "$section" 'port'
+	config_get ifname   "$section" 'ifname'
+	config_get mtu      "$section" 'mtu'
 	
-	test -n "$address" || address='0.0.0.0'
-	test -n "$port" || port='53'
-
-	service_start /usr/sbin/iodined -l "$address" -P "$password" -p "$port" "$tunnelip" "$tld"
+	if [ -z "$password" ] || [ -z "$tld" ]; then
+		>&2 echo 'iodined cannot non-interactively start without TLD and password specified.'
+		return 1
+	fi
+	if [ -z "$tunnelip" ] && [ -z "$ifname" ]; then
+		>&2 echo 'iodined needs at least tunnelip or ifname to be specified.'
+		return 1
+	fi
+	
+	test -n "$address" && address="-l $address"
+	test -n "$port" && port="-p $port"
+	test -n "$mtu" && mtu="-m $mtu"
+	test -n "$ifname" && ifname="-d $ifname"
+	
+	# ifname specified but not IP/MTU. Assuming interface alread configured.
+	# IP will be ignored, this is just for syntax.
+	[ -z "$tunnelip" ] && [ -z "$mtu" ] && tunnelip="-s 127.0.0.53"
+	
+	service_start /usr/sbin/iodined -P "$password" $address $port $mtu $ifname $tunnelip "$tld"
 }
 
 start() {
