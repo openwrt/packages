@@ -137,7 +137,7 @@ ucidel() {
 }
 
 process_config() {
-	local alt_config_file data_root log_level bip
+	local alt_config_file data_root log_level iptables bip
 
 	[ -f /etc/config/dockerd ] || {
 		# Use the daemon default configuration
@@ -150,9 +150,6 @@ process_config() {
 	mkdir -p "${DOCKER_CONF_DIR}"
 
 	config_load 'dockerd'
-
-	config_list_foreach firewall blocked_interfaces add_docker_firewall_rules
-
 	config_get alt_config_file globals alt_config_file
 	[ -n "${alt_config_file}" ] && [ -f "${alt_config_file}" ] && {
 		ln -s "${alt_config_file}" "${DOCKERD_CONF}"
@@ -161,6 +158,7 @@ process_config() {
 
 	config_get data_root globals data_root "/opt/docker/"
 	config_get log_level globals log_level "warn"
+	config_get_bool iptables globals iptables "1"
 	config_get bip globals bip ""
 
 	. /usr/share/libubox/jshn.sh
@@ -174,6 +172,9 @@ process_config() {
 	json_add_array "hosts"
 	config_list_foreach globals hosts json_add_array_string
 	json_close_array
+
+	json_add_boolean iptables "${iptables}"
+	[ "${iptables}" -ne "0" ] && config_foreach iptables_add_blocking_rule firewall
 
 	json_dump > "${DOCKERD_CONF}"
 
