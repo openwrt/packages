@@ -22,29 +22,6 @@ boot() {
 	rc_procd start_service
 }
 
-uciupdate() {
-	local net="${1}"
-
-	uci_quiet get network.docker || {
-		logger -t "dockerd-init" -p warn "No network uci config section for docker default bridge (docker0) found"
-		return
-	}
-
-	[ -z "${net}" ] && {
-		logger -t "dockerd-init" -p notice "Removing network uci config options for docker default bridge (docker0)"
-		uci_quiet delete network.docker.netmask
-		uci_quiet delete network.docker.ipaddr
-		uci_quiet commit network
-		return
-	}
-
-	eval "$(ipcalc.sh "${net}")"
-	logger -t "dockerd-init" -p notice "Updating network uci config option \"${net}\" for docker default bridge (docker0)"
-	uci_quiet set network.docker.netmask="${NETMASK}"
-	uci_quiet set network.docker.ipaddr="${IP}"
-	uci_quiet commit network
-}
-
 uciadd() {
 	local iface="$1"
 	local device="$2"
@@ -177,8 +154,6 @@ process_config() {
 	[ "${iptables}" -ne "0" ] && config_foreach iptables_add_blocking_rule firewall
 
 	json_dump > "${DOCKERD_CONF}"
-
-	uciupdate "${bip}"
 }
 
 start_service() {
