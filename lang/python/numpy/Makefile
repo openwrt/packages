@@ -6,12 +6,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=numpy
-# Note: make sure to periodically update the Cython version in HOST_PYTHON3_PACKAGE_BUILD_DEPENDS
-PKG_VERSION:=1.19.3
+PKG_VERSION:=1.19.4
 PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=35bf5316af8dc7c7db1ad45bec603e5fb28671beb98ebd1d65e8059efcfd3b72
+PKG_HASH:=141ec3a3300ab89c7f2b0775289954d193cc8edb621ea05f99db9cb181530512
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
@@ -21,7 +20,7 @@ PKG_CPE_ID:=cpe:/a:numpy:numpy
 
 # yes, zip... sigh
 PYPI_SOURCE_EXT:=zip
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=Cython  # Cython>=0.29.21
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=Cython
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
