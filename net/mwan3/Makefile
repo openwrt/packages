@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
-PKG_VERSION:=2.10.2
+PKG_VERSION:=2.10.3
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
 PKG_LICENSE:=GPL-2.0
@@ -41,9 +41,6 @@ endef
 define Package/mwan3/conffiles
 /etc/config/mwan3
 /etc/mwan3.user
-endef
-
-define Build/Compile
 endef
 
 define Package/mwan3/postinst

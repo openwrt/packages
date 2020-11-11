@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. /usr/share/libubox/jshn.sh
+. "${IPKG_INSTROOT}/usr/share/libubox/jshn.sh"
 
 IPS="ipset"
 IPT4="iptables -t mangle -w"
@@ -153,7 +153,8 @@ mwan3_set_connected_ipv4()
 {
 	local connected_network_v4 candidate_list cidr_list
 	$IPS -! create mwan3_connected_v4 hash:net
-	$IPS create mwan3_connected_v4_temp hash:net
+	$IPS create mwan3_connected_v4_temp hash:net ||
+		LOG notice "failed to create ipset mwan3_connected_v4_temp"
 
 	candidate_list=""
 	cidr_list=""
@@ -178,10 +179,13 @@ mwan3_set_connected_ipv4()
 			$IPS -! add mwan3_connected_v4_temp "$connected_network_v4"
 	done
 
-	$IPS add mwan3_connected_v4_temp 224.0.0.0/3
+	$IPS add mwan3_connected_v4_temp 224.0.0.0/3 ||
+		LOG notice "failed to add 224.0.0.0/3 to mwan3_connected_v4_temp"
 
-	$IPS swap mwan3_connected_v4_temp mwan3_connected_v4
-	$IPS destroy mwan3_connected_v4_temp
+	$IPS swap mwan3_connected_v4_temp mwan3_connected_v4 ||
+		LOG notice "failed to swap mwan3_connected_v4_temp and mwan3_connected_v4"
+	$IPS destroy mwan3_connected_v4_temp ||
+		LOG notice "failed to destroy ipset mwan3_connected_v4_temp"
 	$IPS -! add mwan3_connected mwan3_connected_v4
 
 }
@@ -517,7 +521,8 @@ mwan3_delete_iface_ipset_entries()
 
 	for setname in $(ipset -n list | grep ^mwan3_sticky_); do
 		for entry in $(ipset list "$setname" | grep "$(mwan3_id2mask id MMX_MASK | awk '{ printf "0x%08x", $1; }')" | cut -d ' ' -f 1); do
-			$IPS del "$setname" $entry
+			$IPS del "$setname" $entry ||
+				LOG notice "failed to delete $entry from $setname"
 		done
 	done
 }
@@ -1012,7 +1017,7 @@ mwan3_get_iface_hotplug_state() {
 
 mwan3_report_iface_status()
 {
-	local device result tracking IP IPT
+	local device result tracking IP IPT error
 
 	mwan3_get_iface_id id "$1"
 	network_get_device device "$1"
@@ -1031,11 +1036,23 @@ mwan3_report_iface_status()
 
 	if [ -z "$id" ] || [ -z "$device" ]; then
 		result="offline"
-	elif [ -n "$($IP rule | awk '$1 == "'$((id+1000)):'"')" ] && \
-		     [ -n "$($IP rule | awk '$1 == "'$((id+2000)):'"')" ] && \
-		     [ -n "$($IP rule | awk '$1 == "'$((id+3000)):'"')" ] && \
-		     [ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] && \
-		     [ -n "$($IP route list table $id default dev $device 2> /dev/null)" ]; then
+	else
+		error=0
+		[ -n "$($IP rule | awk '$1 == "'$((id+1000)):'"')" ] ||
+			error=$((error+1))
+		[ -n "$($IP rule | awk '$1 == "'$((id+2000)):'"')" ] ||
+			error=$((error+2))
+		[ -n "$($IP rule | awk '$1 == "'$((id+3000)):'"')" ] ||
+			error=$((error+4))
+		[ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] ||
+			error=$((error+8))
+		[ -n "$($IP route list table $id default dev $device 2> /dev/null)" ] ||
+			error=$((error+16))
+	fi
+
+	if [ "$result" = "offline" ]; then
+		:
+	elif [ $error -eq 0 ]; then
 		json_init
 		json_add_string section interfaces
 		json_add_string interface "$1"
@@ -1048,12 +1065,8 @@ mwan3_report_iface_status()
 		online="$(printf '%02dh:%02dm:%02ds\n' $((online/3600)) $((online%3600/60)) $((online%60)))"
 		uptime="$(printf '%02dh:%02dm:%02ds\n' $((uptime/3600)) $((uptime%3600/60)) $((uptime%60)))"
 		result="$(mwan3_get_iface_hotplug_state $1) $online, uptime $uptime"
-	elif [ -n "$($IP rule | awk '$1 == "'$((id+1000)):'"')" ] || \
-		     [ -n "$($IP rule | awk '$1 == "'$((id+2000)):'"')" ] || \
-		     [ -n "$($IP rule | awk '$1 == "'$((id+3000)):'"')" ] || \
-		     [ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] || \
-		     [ -n "$($IP route list table $id default dev $device 2> /dev/null)" ]; then
-		result="error"
+	elif [ $error -gt 0 ] && [ $error -ne 31 ]; then
+		result="error (${error})"
 	elif [ "$enabled" = "1" ]; then
 		result="offline"
 	else
