@@ -1,0 +1,13 @@
+--- a/build/php.m4	2020-10-28 00:01:52.000000000 +0900
++++ b/build/php.m4	2020-11-13 08:57:27.939303216 +0900
+@@ -1907,6 +1907,10 @@
+   if test "$PKG_CONFIG icu-io --atleast-version=60"; then
+     ICU_CFLAGS="$ICU_CFLAGS -DU_HIDE_OBSOLETE_UTF_OLD_H=1"
+   fi
++
++  if test "$PKG_CONFIG icu-io --atleast-version=68"; then
++    ICU_CFLAGS="$ICU_CFLAGS -DU_DEFINE_FALSE_AND_TRUE=1"
++  fi
+ ])
+ 
+ dnl
