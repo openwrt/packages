@@ -45,7 +45,7 @@ endef
 
 define Package/mwan3/postinst
 #!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ]; then
+if [ -z "$${IPKG_INSTROOT}" ] && [ -x /etc/init.d/rpcd ]; then
 	/etc/init.d/rpcd restart
 fi
 exit 0
@@ -53,7 +53,7 @@ endef
 
 define Package/mwan3/postrm
 #!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ]; then
+if [ -z "$${IPKG_INSTROOT}" ] && [ -x /etc/init.d/rpcd ]; then
 	/etc/init.d/rpcd restart
 fi
 exit 0
