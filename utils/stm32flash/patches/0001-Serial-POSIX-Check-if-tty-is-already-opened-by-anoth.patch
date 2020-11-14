@@ -1,0 +1,47 @@
+From 1f10b4e3364de54f108bc42e4f789893afd44c9a Mon Sep 17 00:00:00 2001
+From: Mickael GARDET <m.gardet@overkiz.com>
+Date: Thu, 1 Sep 2016 17:12:03 +0200
+Subject: [PATCH] Serial POSIX: Check if tty is already opened by another
+ stm32flash
+
+---
+ serial_posix.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/serial_posix.c b/serial_posix.c
+index 46b8a94..020e796 100644
+--- a/serial_posix.c
++++ b/serial_posix.c
+@@ -25,6 +25,7 @@
+ #include <termios.h>
+ #include <unistd.h>
+ #include <sys/ioctl.h>
++#include <sys/file.h>
+ 
+ #include "serial.h"
+ #include "port.h"
+@@ -45,6 +46,13 @@ static serial_t *serial_open(const char *device)
+ 		free(h);
+ 		return NULL;
+ 	}
++
++	if(lockf(h->fd,F_TLOCK,0) != 0)
++	{
++		fprintf(stderr, "Error: %s is already open\n", device);
++		free(h);
++		return NULL;
++	}
+ 	fcntl(h->fd, F_SETFL, 0);
+ 
+ 	tcgetattr(h->fd, &h->oldtio);
+@@ -62,6 +70,7 @@ static void serial_close(serial_t *h)
+ {
+ 	serial_flush(h);
+ 	tcsetattr(h->fd, TCSANOW, &h->oldtio);
++	lockf(h->fd, F_ULOCK, 0);
+ 	close(h->fd);
+ 	free(h);
+ }
+-- 
+2.17.1
+
