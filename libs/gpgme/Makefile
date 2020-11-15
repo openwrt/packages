@@ -1,13 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gpgme
-PKG_VERSION:=1.14.0
+PKG_VERSION:=1.15.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnupg.org/ftp/gcrypt/$(PKG_NAME)
-PKG_HASH:=cef1f710a6b0d28f5b44242713ad373702d1466dcbe512eb4e754d7f35cd4307
-# PKG_BUILD_DEPENDS:=python3/host swig/host
+PKG_HASH:=0b472bc12c7d455906c8a539ec56da0a6480ef1c3a87aa5b74d7125df68d0e5b
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -18,11 +17,6 @@ PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-# include ../../lang/python/python3-package.mk
-
-# PYTHON3_PKG_BUILD:=0
-# PYTHON3_PKG_SETUP_DIR:=lang/python
-# PYTHON3_PKG_SETUP_ARGS:=
 
 define Package/libgpgme
   SECTION:=libs
@@ -40,16 +34,6 @@ define Package/libgpgmepp
   DEPENDS:=+libgpgme +libstdcpp $(CXX_DEPENDS)
 endef
 
-# define Package/python3-gpgme
-#   TITLE:=Python bindings for the runtime SELinux library
-#   SUBMENU:=Python
-#   SECTION:=lang
-#   CATEGORY:=Languages
-#   TITLE:=GnuPG Made Easy (GPGME) Python bindings
-#   URL:=https://gnupg.org/software/gpgme/index.html
-#   DEPENDS:=+python3-light +libgpgme
-# endef
-
 define Package/libgpgme/description
 GnuPG Made Easy (GPGME) is a library designed to make access to GnuPG
 easier for applications. It provides a High-Level Crypto API for
@@ -59,8 +43,6 @@ but the API isn't restricted to this engine. We have, in fact, already
 developed a backend for CMS (S/MIME).
 endef
 
-# Package/python3-gpgme/description = Package/libgpgme/description
-
 CONFIGURE_ARGS += \
 	--with-libassuan-prefix="$(STAGING_DIR)/usr/" \
 	--with-gpg-error-prefix="$(STAGING_DIR)/usr/" \
@@ -69,11 +51,6 @@ CONFIGURE_ARGS += \
 	--disable-gpgsm-test \
 	--disable-g13-test \
 	--enable-languages="cpp"
-
-define Build/Compile
-	$(call Build/Compile/Default)
-	$(call Py3Build/Compile)
-endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/gpgme++
@@ -120,6 +97,3 @@ endef
 
 $(eval $(call BuildPackage,libgpgme))
 $(eval $(call BuildPackage,libgpgmepp))
-# $(eval $(call Py3Package,python3-gpgme))
-# $(eval $(call BuildPackage,python3-gpgme))
-# $(eval $(call BuildPackage,python3-gpgme-src))
