@@ -1,0 +1,93 @@
+From 39f8e98946a0958a4f69ec28c78b8e5d46125e44 Mon Sep 17 00:00:00 2001
+From: Ian Lance Taylor <iant@golang.org>
+Date: Fri, 13 Nov 2020 11:05:37 -0800
+Subject: [PATCH] [release-branch.go1.15] cmd/go: permit CGO_LDFLAGS to appear in //go:ldflag
+
+For #42565
+Fixes #42567
+
+Change-Id: If7cf39905d124dbd54dfac6a53ee38270498efed
+Reviewed-on: https://go-review.googlesource.com/c/go/+/269818
+Trust: Ian Lance Taylor <iant@golang.org>
+Run-TryBot: Ian Lance Taylor <iant@golang.org>
+TryBot-Result: Go Bot <gobot@golang.org>
+Reviewed-by: Jay Conrod <jayconrod@google.com>
+(cherry picked from commit 782cf560db4c919790fdb476d1bbe18e5ddf5ffd)
+---
+
+diff --git a/src/cmd/go/internal/work/exec.go b/src/cmd/go/internal/work/exec.go
+index 13d4c8c..dc0c4fc 100644
+--- a/src/cmd/go/internal/work/exec.go
++++ b/src/cmd/go/internal/work/exec.go
+@@ -2766,6 +2766,21 @@
+ 				idx = bytes.Index(src, []byte(cgoLdflag))
+ 			}
+ 		}
++
++		// We expect to find the contents of cgoLDFLAGS in flags.
++		if len(cgoLDFLAGS) > 0 {
++		outer:
++			for i := range flags {
++				for j, f := range cgoLDFLAGS {
++					if f != flags[i+j] {
++						continue outer
++					}
++				}
++				flags = append(flags[:i], flags[i+len(cgoLDFLAGS):]...)
++				break
++			}
++		}
++
+ 		if err := checkLinkerFlags("LDFLAGS", "go:cgo_ldflag", flags); err != nil {
+ 			return nil, nil, err
+ 		}
+diff --git a/src/cmd/go/testdata/script/ldflag.txt b/src/cmd/go/testdata/script/ldflag.txt
+new file mode 100644
+index 0000000..6ceb33b
+--- /dev/null
++++ b/src/cmd/go/testdata/script/ldflag.txt
+@@ -0,0 +1,44 @@
++# Issue #42565
++
++[!cgo] skip
++
++# We can't build package bad, which uses #cgo LDFLAGS.
++cd bad
++! go build
++stderr no-such-warning
++
++# We can build package ok with the same flags in CGO_LDFLAGS.
++env CGO_LDFLAGS=-Wno-such-warning -Wno-unknown-warning-option
++cd ../ok
++go build
++
++# Build a main program that actually uses LDFLAGS.
++cd ..
++go build -ldflags=-v
++
++# Because we passed -v the Go linker should print the external linker
++# command which should include the flag we passed in CGO_LDFLAGS.
++stderr no-such-warning
++
++-- go.mod --
++module ldflag
++
++-- bad/bad.go --
++package bad
++
++// #cgo LDFLAGS: -Wno-such-warning -Wno-unknown-warning
++import "C"
++
++func F() {}
++-- ok/ok.go --
++package ok
++
++import "C"
++
++func F() {}
++-- main.go --
++package main
++
++import _ "ldflag/ok"
++
++func main() {}
