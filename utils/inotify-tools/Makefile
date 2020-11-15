@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=inotify-tools
-PKG_VERSION:=3.20.2.2
-PKG_HASH:=770fb1d94ace659f975d7494e3ab8b421a6aab930b9c37c7c290ab5280abb7b8
+PKG_VERSION:=3.20.11.0
+PKG_HASH:=58a3cde89e4a5111a87ac16b56b06a8f885460fca0aea51b69c856ce30a37a14
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://codeload.github.com/rvoicilas/inotify-tools/tar.gz/$(PKG_VERSION)?
