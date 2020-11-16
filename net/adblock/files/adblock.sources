@@ -292,8 +292,8 @@
 		"focus": "compilation",
 		"descurl": "https://github.com/StevenBlack/hosts"
 	},
-	"stevenblack_porn": {
-		"url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-gambling-porn-social/hosts",
+	"stevenblack_fakenews-gambling-porn": {
+		"url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-gambling-porn/hosts",
 		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
 		"size": "L",
 		"focus": "compilation",
