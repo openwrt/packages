@@ -216,41 +216,8 @@ iptables_add_blocking_rule() {
 	config_list_foreach "$cfg" blocked_interfaces handle_iptables_rule "$device"
 }
 
-ip4tables_remove_nat() {
-	iptables --table nat --delete OUTPUT ! --destination 127.0.0.0/8 --match addrtype --dst-type LOCAL --jump DOCKER
-	iptables --table nat --delete PREROUTING --match addrtype --dst-type LOCAL --jump DOCKER
-
-	iptables --table nat --flush DOCKER
-	iptables --table nat --delete-chain DOCKER
-}
-
-ip4tables_remove_filter() {
-	iptables --table filter --delete FORWARD --jump DOCKER-USER
-	iptables --table filter --delete FORWARD --jump DOCKER-ISOLATION-STAGE-1
-	iptables --table filter --delete FORWARD --out-interface docker0 --jump DOCKER
-	iptables --table filter --delete FORWARD --out-interface docker0 --match conntrack --ctstate RELATED,ESTABLISHED --jump ACCEPT
-	iptables --table filter --delete FORWARD --in-interface docker0 --out-interface docker0 --jump ACCEPT
-	iptables --table filter --delete FORWARD --in-interface docker0 ! --out-interface docker0 --jump ACCEPT
-
-	iptables --table filter --flush DOCKER
-	iptables --table filter --flush DOCKER-ISOLATION-STAGE-1
-	iptables --table filter --flush DOCKER-ISOLATION-STAGE-2
-	iptables --table filter --flush DOCKER-USER
-
-	iptables --table filter --delete-chain DOCKER
-	iptables --table filter --delete-chain DOCKER-ISOLATION-STAGE-1
-	iptables --table filter --delete-chain DOCKER-ISOLATION-STAGE-2
-	iptables --table filter --delete-chain DOCKER-USER
-}
-
-ip4tables_remove() {
-	ip4tables_remove_nat
-	ip4tables_remove_filter
-}
-
 stop_service() {
 	if /etc/init.d/dockerd running; then
 		service_stop "/usr/bin/dockerd"
-		ip4tables_remove
 	fi
 }
