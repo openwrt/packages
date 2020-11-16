@@ -150,6 +150,7 @@ export KNOT_VERSION_FORMAT=release
 CONFIGURE_ARGS += 			\
 	--enable-recvmmsg=no		\
 	--enable-cap-ng=no            	\
+	--enable-xdp=no                 \
 	--disable-fastparser		\
 	--without-libidn		\
 	--with-libnghttp2=no		\
