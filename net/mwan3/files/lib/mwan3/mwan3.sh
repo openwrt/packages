@@ -1053,15 +1053,8 @@ mwan3_report_iface_status()
 	if [ "$result" = "offline" ]; then
 		:
 	elif [ $error -eq 0 ]; then
-		json_init
-		json_add_string section interfaces
-		json_add_string interface "$1"
-		json_load "$(ubus call mwan3 status "$(json_dump)")"
-		json_select "interfaces"
-		json_select "$1"
-		json_get_vars online uptime
-		json_select ..
-		json_select ..
+		online=$(get_online_time "$1")
+		network_get_uptime uptime "$1"
 		online="$(printf '%02dh:%02dm:%02ds\n' $((online/3600)) $((online%3600/60)) $((online%60)))"
 		uptime="$(printf '%02dh:%02dm:%02ds\n' $((uptime/3600)) $((uptime%3600/60)) $((uptime%60)))"
 		result="$(mwan3_get_iface_hotplug_state $1) $online, uptime $uptime"

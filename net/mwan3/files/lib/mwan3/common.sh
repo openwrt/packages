@@ -1,10 +1,5 @@
 #!/bin/sh
 
-get_uptime() {
-	local uptime=$(cat /proc/uptime)
-	echo "${uptime%%.*}"
-}
-
 IP4="ip -4"
 IP6="ip -6"
 SCRIPTNAME="$(basename "$0")"
@@ -179,4 +174,19 @@ mwan3_count_one_bits()
 		count=$((count+1))
 	done
 	echo $count
+}
+
+get_uptime() {
+	local uptime=$(cat /proc/uptime)
+	echo "${uptime%%.*}"
+}
+
+get_online_time() {
+	local time_n time_u iface
+	iface="$1"
+	time_u="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/ONLINE" 2>/dev/null)"
+	[ -z "${time_u}" ] || [ "${time_u}" = "0" ] || {
+		time_n="$(get_uptime)"
+		echo $((time_n-time_u))
+	}
 }
