@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtirpc
 PKG_VERSION:=1.2.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=@SF/libtirpc
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -29,6 +29,10 @@ endef
 
 CONFIGURE_ARGS += --disable-gssapi
 HOST_CONFIGURE_ARGS += --disable-gssapi
+
+ifeq ($(HOST_OS),Darwin)
+HOST_CONFIGURE_ARGS += --disable-symvers
+endif
 
 TARGET_CFLAGS += -DGQ
 HOST_CFLAGS += -DGQ
