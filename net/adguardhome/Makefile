@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adguardhome
-PKG_VERSION:=0.103.3
+PKG_VERSION:=0.104.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/AdguardTeam/AdGuardHome
-PKG_MIRROR_HASH:=edf00ede9d208b7f78574e267ad2617dd4d4f06548cb2e6369cc1ad702427d9a
+PKG_MIRROR_HASH:=3abbbf0531fd991a96dc2ea32aaaa9ab65dee5f40bb71e5939ddd068bbb17f7c
 
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -50,7 +50,7 @@ define Build/Compile
 		pushd $(PKG_BUILD_DIR) ; \
 		npm --prefix client ci ; \
 		npm --prefix client run build-prod ; \
-		packr -z -v -i home ; \
+		packr -z -v -i internal ; \
 		popd ; \
 		$(call GoPackage/Build/Compile) ; \
 	)
