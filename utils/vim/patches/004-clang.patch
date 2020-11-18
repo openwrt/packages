@@ -1,0 +1,24 @@
+--- a/src/auto/configure
++++ b/src/auto/configure
+@@ -13922,6 +13922,9 @@ else
+   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+ 
++#if STDC_HEADERS
++# include <stdlib.h>
++#endif
+ #ifdef HAVE_STDINT_H
+ # include <stdint.h>
+ #endif
+--- a/src/configure.ac
++++ b/src/configure.ac
+@@ -4064,6 +4064,9 @@ AC_DEFINE_UNQUOTED(VIM_SIZEOF_LONG, [$ac
+ dnl Make sure that uint32_t is really 32 bits unsigned.
+ AC_MSG_CHECKING([uint32_t is 32 bits])
+ AC_TRY_RUN([
++#if STDC_HEADERS
++# include <stdlib.h>
++#endif
+ #ifdef HAVE_STDINT_H
+ # include <stdint.h>
+ #endif
