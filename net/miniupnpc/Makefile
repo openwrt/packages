@@ -8,19 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpc
-PKG_VERSION:=2.1.20191224
+PKG_VERSION:=2.2.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://miniupnp.tuxfamily.org/files
-PKG_HASH:=447b427854b6c027ea28bc838b18582c5a7e71db84f6ff36df93bd91e46d66cf
+PKG_HASH:=ff56bec3e5a3aec41f4decb43cb0b925231d6ab4cdfd7a74caa5c7c1043c4ef0
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:miniupnp_project:miniupnp
 
-CMAKE_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
