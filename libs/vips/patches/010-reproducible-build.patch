@@ -1,15 +1,11 @@
-Description: Make the build reproducible
-Author: Chris Lamb <lamby@debian.org>
-Reviewed-By: Laszlo Boszormenyi (GCS) <gcs@debian.org>
-Last-Update: 2018-07-24
-
---- vips-8.6.4.orig/configure.ac
-+++ vips-8.6.4/configure.ac
-@@ -26,7 +26,11 @@ VIPS_MAJOR_VERSION=vips_major_version()
+diff -u --recursive vips-8.10.2-vanilla/configure.ac vips-8.10.2/configure.ac
+--- vips-8.10.2-vanilla/configure.ac	2020-10-12 11:43:59.000000000 -0500
++++ vips-8.10.2/configure.ac	2020-11-19 12:16:45.187129100 -0600
+@@ -26,7 +26,11 @@
  VIPS_MINOR_VERSION=vips_minor_version()
  VIPS_MICRO_VERSION=vips_micro_version()
  VIPS_VERSION=vips_version()
--VIPS_VERSION_STRING=$VIPS_VERSION-`date -u -r ChangeLog`
+-VIPS_VERSION_STRING=$VIPS_VERSION-`date -u -r $srcdir/ChangeLog`
 +if test "x$SOURCE_DATE_EPOCH" = "x"; then
 +  VIPS_VERSION_STRING=$VIPS_VERSION-`date -u -r ChangeLog`
 +else
