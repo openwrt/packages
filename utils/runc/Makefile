@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=runc
 PKG_VERSION:=1.0.0-rc10
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -26,9 +26,9 @@ include ../../lang/golang/golang-package.mk
 define Package/runc/config
 config RUNC_SECCOMP
 	depends on PACKAGE_runc
+	depends on KERNEL_SECCOMP
 	bool "Enable support for seccomp in runc"
-	default DOCKER_SECCOMP
-	select KERNEL_SECCOMP
+	default y
 	select PACKAGE_libseccomp
 	help
 	  Build runc with support for seccomp filters.
