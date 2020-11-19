@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfdump
-PKG_VERSION:=1.6.18
-PKG_RELEASE:=2
+PKG_VERSION:=1.6.21
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/phaag/nfdump/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=5d6046bf7faa34713b004c6cf8b3d30027c761c5ac22a3195d49388342e8147e
+PKG_HASH:=7ad5dd6a7c226865b5cafe317684e4c61ea95093f943fd46cd896977f234ca5c
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=BSD-3-Clause
