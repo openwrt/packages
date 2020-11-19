@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=podman
 PKG_VERSION:=2.1.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -61,6 +61,7 @@ define Package/podman/install
 	$(INSTALL_DIR) $(1)/etc/containers
 	$(INSTALL_CONF) $(DL_DIR)/default-policy.json-362f70b056 $(1)/etc/containers/policy.json
 	$(INSTALL_CONF) $(DL_DIR)/registries.fedora-da9a9c8778 $(1)/etc/containers/registries.conf
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/vendor/github.com/containers/storage/storage.conf $(1)/etc/containers/storage.conf
 	$(INSTALL_CONF) ./files/containers.conf $(1)/etc/containers/containers.conf
 	$(INSTALL_DIR) $(1)/etc/cni/net.d
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/cni/87-podman-bridge.conflist $(1)/etc/cni/net.d/
