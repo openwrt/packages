@@ -3,7 +3,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=debian-archive-keyring
 PKG_VERSION:=2019.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=debian-archive-keyring_2019.1_all.deb
 PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/d/debian-archive-keyring/
@@ -35,8 +35,8 @@ define Build/Compile
 endef
 
 define Package/debian-archive-keyring/install
-	$(INSTALL_DIR) $(1)/usr/share/keyring
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/usr/share/keyrings/*.gpg $(1)/usr/share/keyring
+	$(INSTALL_DIR) $(1)/usr/share/keyrings
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/usr/share/keyrings/*.gpg $(1)/usr/share/keyrings
 endef
 
 $(eval $(call BuildPackage,debian-archive-keyring))
