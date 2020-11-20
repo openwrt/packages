@@ -1,0 +1,11 @@
+--- a/src/upmpdutils.hxx
++++ b/src/upmpdutils.hxx
+@@ -21,6 +21,8 @@
+ #include <unordered_map>
+ #include <vector>
+ 
++#include <unistd.h>
++
+ namespace UPnPClient {
+     class UPnPDirObject;
+ };
