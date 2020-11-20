@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdaq
-PKG_VERSION:=3.0.0-beta1
+PKG_VERSION:=2.2.2
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://www.snort.org/downloads/snortplus/
 PKG_SOURCE:=daq-$(PKG_VERSION).tar.gz
-PKG_HASH:=ef74aa1c30a6ee93eacbe7967d1c85d7df3214cf3783d4eabbb6b64305fd273e
+PKG_HASH:=7cd818cabb1ad35360e83076e54775f07165ee71407dc672d147e27d3cd37f7b
 PKG_BUILD_DIR:=$(BUILD_DIR)/daq-$(PKG_VERSION)
 
 PKG_LICENSE:=GPL-2.0
@@ -29,7 +29,7 @@ define Package/libdaq
   CATEGORY:=Libraries
   TITLE:=DAQ library
   URL:=$(PKG_SOURCE_URL)
-  DEPENDS:=+libdnet +libpcap +libstdcpp
+  DEPENDS:=+libdnet +libpcap
 endef
 
 define Package/libdaq/description
@@ -52,7 +52,7 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/lib/daq
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/daq/* $(STAGING_DIR)/usr/lib/daq/
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(STAGING_DIR)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/daq-modules-config $(STAGING_DIR)/usr/bin/
 endef
 
 define Package/libdaq/install
@@ -61,7 +61,7 @@ define Package/libdaq/install
 	$(INSTALL_DIR) $(1)/usr/lib/daq
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/daq/*.so* $(1)/usr/lib/daq/
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/daq-modules-config $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,libdaq))
