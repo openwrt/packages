@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=podman
 PKG_VERSION:=2.1.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -48,6 +48,10 @@ endef
 
 define Package/podman/description
   Podman: A tool for managing OCI containers and pods
+endef
+
+define Package/podman/conffiles
+/etc/containers
 endef
 
 define Build/Prepare
