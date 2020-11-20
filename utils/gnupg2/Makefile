@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnupg
 PKG_VERSION:=2.2.23
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnupg.org/ftp/gcrypt/gnupg
@@ -45,6 +45,11 @@ define Package/gpgv2
   ALTERNATIVES:=300:/usr/bin/gpgv:/usr/bin/gpgv2
 endef
 
+define Package/gnupg2-dirmngr
+  $(call Package/gnupg2/Default)
+  TITLE:=Keyserver, CRL, and OCSP access for GnuPG (version 2)
+endef
+
 define Package/gnupg2-utils
   $(call Package/gnupg2/Default)
   DEPENDS:=gnupg2 +libcurl
@@ -66,6 +71,15 @@ define Package/gpgv2/description
  GPGv is a stripped down version of GnuPG that only checks signatures.
 endef
 
+define Package/gnupg2-dirmngr/description
+Since version 2.1 of GnuPG, 'dirmngr' takes care of accessing the
+OpenPGP keyservers.  As with previous versions it is also used as a
+server for managing and downloading certificate revocation lists (CRLs)
+for X.509 certificates, downloading X.509 certificates, and providing
+access to OCSP providers.  Dirmngr is invoked internally by 'gpg',
+'gpgsm', or via the 'gpg-connect-agent' tool.
+endef
+
 define Package/gnupg2-utils/description
  Key management utilies for GnuPG (version 2).
  This package is needed to import keys from a keyserver.
@@ -77,10 +91,10 @@ CONFIGURE_ARGS += \
 	--with-libassuan-prefix="$(STAGING_DIR)/usr/" \
 	--with-ksba-prefix="$(STAGING_DIR)/usr/" \
 	--with-npth-prefix="$(STAGING_DIR)/usr/" \
+	--enable-dirmngr \
 	--disable-bzip2 \
 	--disable-card-support \
 	--disable-ccid-driver \
-	--disable-dirmngr \
 	--disable-gnutls \
 	--disable-ldap \
 	--disable-ntbtls \
@@ -101,6 +115,11 @@ define Package/gpgv2/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gpgv $(1)/usr/bin/gpgv2
 endef
 
+define Package/gnupg2-dirmngr/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dirmngr $(1)/usr/bin/dirmngr
+endef
+
 define Package/gnupg2-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gpgtar $(1)/usr/bin
@@ -119,4 +138,5 @@ endef
 
 $(eval $(call BuildPackage,gnupg2))
 $(eval $(call BuildPackage,gpgv2))
+$(eval $(call BuildPackage,gnupg2-dirmngr))
 $(eval $(call BuildPackage,gnupg2-utils))
