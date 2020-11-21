@@ -73,7 +73,7 @@ f_env()
 	#
 	if [ ! -r "/etc/config/travelmate" ] || [ -z "$(uci -q show travelmate.global.trm_vpn)" ]
 	then
-		f_log "err" "no valid travelmate config found, please re-install the package via opkg with the '--force-reinstall --force-maintainer' options"
+		f_log "err" "invalid travelmate config, please re-install the package via opkg with the '--force-reinstall --force-maintainer' options"
 	fi
 
 	# load travelmate config
@@ -871,6 +871,11 @@ f_main()
 				sta_bssid="$(uci_get "wireless" "${section}" "bssid")"
 				sta_iface="$(uci_get "wireless" "${section}" "network")"
 				sta_mac="$(f_mac "get" "${section}")"
+				if [ -z "${sta_radio}" ] || [ -z "${sta_essid}" ] || [ -z "${sta_iface}" ]
+				then
+					f_log "info" "invalid wireless section '${section}'"
+					continue
+				fi
 				if [ "${sta_radio}" = "${config_radio}" ] && [ "${sta_essid}" = "${config_essid}" ] && [ "${sta_bssid}" = "${config_bssid}" ]
 				then
 					f_contrack "refresh" "${config_radio}" "${config_essid}" "${config_bssid}"
