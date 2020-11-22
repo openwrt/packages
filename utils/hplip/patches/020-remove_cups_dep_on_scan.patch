@@ -1,5 +1,7 @@
---- a/Makefile.am
-+++ b/Makefile.am
+Index: hplip-3.20.9/Makefile.am
+===================================================================
+--- hplip-3.20.9.orig/Makefile.am
++++ hplip-3.20.9/Makefile.am
 @@ -71,7 +71,7 @@ else
  libsane_hpaio_la_LDFLAGS = -version-info 1:0:0
  endif
@@ -9,17 +11,21 @@
  #libsane_hpaio_la_CFLAGS = -DWITH_NONAMESPACES -DSOAP_DEBUG
  libsane_hpaio_la_CFLAGS = $(DBUS_CFLAGS) -Iprotocol
  
---- a/scan/sane/hpaio.c
-+++ b/scan/sane/hpaio.c
-@@ -34,7 +34,6 @@
+Index: hplip-3.20.9/scan/sane/hpaio.c
+===================================================================
+--- hplip-3.20.9.orig/scan/sane/hpaio.c
++++ hplip-3.20.9/scan/sane/hpaio.c
+@@ -34,9 +34,7 @@
  #include <stdio.h>
  #include <stdlib.h>
  #include <string.h>
 -#include <cups/cups.h>
  #include "hpmud.h"
+-#include "avahiDiscovery.h"
  #include "hp_ipp.h"
  #include "soap.h"
-@@ -145,98 +144,6 @@ static int GetUriLine(char *buf, char *u
+ #include "soapht.h"
+@@ -146,98 +144,6 @@ static int GetUriLine(char *buf, char *u
     return i;
  }
  
@@ -118,7 +124,7 @@
  static int AddDevice(char *uri)
  {
      struct hpmud_model_attributes ma;
-@@ -289,7 +196,6 @@ static int DevDiscovery(int localOnly)
+@@ -290,7 +196,6 @@ static int DevDiscovery(int localOnly)
      char uri[HPMUD_LINE_SIZE];
      char *tail = message;
      int i, scan_type, cnt=0, total=0, bytes_read;
@@ -126,10 +132,10 @@
      char* token = NULL;
      enum HPMUD_RESULT stat;
  
-@@ -304,33 +210,6 @@ static int DevDiscovery(int localOnly)
+@@ -305,39 +210,6 @@ static int DevDiscovery(int localOnly)
          total += AddDevice(uri);
      }
-     memset(message, 0, sizeof(message));
+     //memset(message, 0, sizeof(message));
 -    /* Look for Network Scan devices if localonly flag if FALSE. */
 -    if (!localOnly)
 -    {   
@@ -144,12 +150,17 @@
 -            free(cups_printer);
 -#ifdef HAVE_LIBNETSNMP
 -        /* Discover NW scanners using Bonjour*/
--        bytes_read = mdns_probe_nw_scanners(message, sizeof(message), &cnt);
--        token = strtok(message, ";");
--        while (token)
--        {
--            total += AddDevice(token);
--            token = strtok(NULL, ";");
+-        //bytes_read = avahi_probe_nw_scanners();
+-        if( (avahi_probe_nw_scanners() == AVAHI_STATUS_OK) && (aUriBuf != NULL) )
+-        {           
+-          token = strtok(aUriBuf, ";");
+-          while (token)
+-          {
+-              total += AddDevice(token);
+-              token = strtok(NULL, ";");
+-          }
+-          free(aUriBuf);
+-          aUriBuf = NULL;
 -        }
 -#endif
 -        if(!total)
@@ -157,6 +168,7 @@
 -          SendScanEvent("hpaio:/net/HP_Scan_Devices?ip=1.1.1.1", EVENT_ERROR_NO_PROBED_DEVICES_FOUND);
 -        }
 -    }
- 
+-
  bugout:
     return total;
+ }
