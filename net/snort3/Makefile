@@ -28,7 +28,7 @@ define Package/snort3
   SUBMENU:=Firewall
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libstdcpp +libdaq +libdnet +libopenssl +libpcap +libpcre +libpthread +libuuid +zlib +libhwloc +libtirpc +luajit
+  DEPENDS:=+libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre +libpthread +libuuid +zlib +libhwloc +libtirpc +luajit
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
@@ -51,6 +51,7 @@ CMAKE_OPTIONS += \
 	-DMAKE_HTML_DOC:BOOL=NO \
 	-DMAKE_PDF_DOC:BOOL=NO \
 	-DMAKE_TEXT_DOC:BOOL=NO \
+	-DHAVE_LIBUNWIND=OFF \
 	-DHAVE_LZMA=OFF
 
 TARGET_CFLAGS  += -I$(STAGING_DIR)/usr/include/tirpc
