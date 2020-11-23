@@ -9,10 +9,12 @@ config globals 'globals'
 	option log_level "warn"
 	list hosts "unix:///var/run/docker.sock"
 	option bip "172.18.0.1/24"
+#	option iptables "0"
 #	list registry_mirrors "https://<my-docker-mirror-host>"
 #	list registry_mirrors "https://hub.docker.com"
 
 # Docker ignores fw3 rules and by default all external source IPs are allowed
 # to connect to the Docker host. See https://docs.docker.com/network/iptables/
 config firewall 'firewall'
+	option device 'docker0'
 	list blocked_interfaces 'wan'
