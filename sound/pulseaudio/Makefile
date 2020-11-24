@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pulseaudio
-PKG_VERSION:=13.0
-PKG_RELEASE:=6
+PKG_VERSION:=14.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://freedesktop.org/software/pulseaudio/releases
-PKG_HASH:=961b23ca1acfd28f2bc87414c27bb40e12436efcf2158d29721b1e89f3f28057
+PKG_HASH:=a834775d9382b055504e5ee7625dc50768daac29329531deb6597bf05e06c261
 
 PKG_MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -105,8 +105,10 @@ MESON_ARGS += \
 	-Daccess_group=audio \
 	-Ddatabase=simple \
 	-Dlegacy-database-entry-format=false \
+	-Dstream-restore-clear-old-devices=true \
 	-Drunning-from-build-tree=false \
 	-Datomic-arm-linux-helpers=false \
+	-Datomic-arm-memory-barrier=false \
 	-Dalsa=enabled \
 	-Dasyncns=disabled \
 	-Dbluez5=false \
@@ -115,6 +117,7 @@ MESON_ARGS += \
 	-Dfftw=disabled \
 	-Dglib=disabled \
 	-Dgsettings=disabled \
+	-Dgstreamer=disabled \
 	-Dgtk=disabled \
 	-Dhal-compat=false \
 	-Dipv6=true \
