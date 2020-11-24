@@ -11,7 +11,7 @@ include perlver.mk
 
 PKG_NAME:=perl
 PKG_VERSION:=$(PERL_VERSION)
-PKG_RELEASE:=4
+PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=\
 		https://cpan.metacpan.org/src/5.0 \
@@ -21,7 +21,7 @@ PKG_SOURCE_URL:=\
 		https://mirrors.sonic.net/cpan/src/5.0 \
 		https://www.cpan.org/src/5.0
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=fea7162d4cca940a387f0587b93f6737d884bf74d8a9d7cfd978bc12cd0b202d
+PKG_HASH:=ac501cad4af904d33370a9ea39dbb7a8ad4cb19bc7bc8a9c17d8dc3e81ef6306
 
 PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=Copying Artistic README

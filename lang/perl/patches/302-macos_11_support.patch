@@ -1,0 +1,22 @@
+Index: perl-5.30.0/hints/darwin.sh
+===================================================================
+--- perl-5.30.0.orig/hints/darwin.sh
++++ perl-5.30.0/hints/darwin.sh
+@@ -301,7 +301,7 @@ case "$osvers" in  # Note: osvers is the kernel version, not the 10.x
+    # We now use MACOSX_DEPLOYMENT_TARGET, if set, as an override by
+    # capturing its value and adding it to the flags.
+     case "$MACOSX_DEPLOYMENT_TARGET" in
+-    10.*)
++    [1-9][0-9].*)
+       add_macosx_version_min ccflags $MACOSX_DEPLOYMENT_TARGET
+       add_macosx_version_min ldflags $MACOSX_DEPLOYMENT_TARGET
+       ;;
+@@ -327,7 +327,7 @@ EOM
+     # "ProductVersion:    10.11"     "10.11"
+         prodvers=`sw_vers|awk '/^ProductVersion:/{print $2}'|awk -F. '{print $1"."$2}'`
+     case "$prodvers" in
+-    10.*)
++    [1-9][0-9].*)
+       add_macosx_version_min ccflags $prodvers
+       add_macosx_version_min ldflags $prodvers
+       ;;
