@@ -3,7 +3,7 @@ c = [@CC@]
 cpp = [@CXX@]
 pkgconfig = '@PKGCONFIG@'
 
-[properties]
+[built-in options]
 c_args = [@CFLAGS@]
 c_link_args = [@LDFLAGS@]
 cpp_args = [@CXXFLAGS@]

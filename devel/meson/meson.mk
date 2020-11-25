@@ -76,7 +76,6 @@ define Meson/CreateCrossFile
 		-e "s|@AR@|$(TARGET_AR)|" \
 		-e "s|@STRIP@|$(TARGET_CROSS)strip|" \
 		-e "s|@NM@|$(TARGET_NM)|" \
-		-e "s|@LD@|$(TARGET_CROSS)ld|" \
 		-e "s|@PKGCONFIG@|$(PKG_CONFIG)|" \
 		-e "s|@CFLAGS@|$(foreach FLAG,$(TARGET_CFLAGS) $(EXTRA_CFLAGS) $(TARGET_CPPFLAGS) $(EXTRA_CPPFLAGS),'$(FLAG)',)|" \
 		-e "s|@CXXFLAGS@|$(foreach FLAG,$(TARGET_CXXFLAGS) $(EXTRA_CXXFLAGS) $(TARGET_CPPFLAGS) $(EXTRA_CPPFLAGS),'$(FLAG)',)|" \
