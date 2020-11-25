@@ -94,45 +94,42 @@ add_crypto_proposal() {
 	config_get hash_algorithm        "$1" hash_algorithm
 	config_get dh_group              "$1" dh_group
 
-	[ -n "${encryption_algorithm}" ] && \
+	[ -n "$encryption_algorithm" ] && \
 		crypto="${crypto:+${crypto},}${encryption_algorithm}${hash_algorithm:+-${hash_algorithm}}${dh_group:+-${dh_group}}"
 }
 
 set_crypto_proposal() {
 	local conf="$1"
 	local proposal
+	local crypto=""
 
-	crypto=""
+	config_list_foreach "$conf" crypto_proposal add_crypto_proposal
 
-	config_get crypto_proposal "$conf" crypto_proposal ""
-	for proposal in $crypto_proposal; do
-		add_crypto_proposal "$proposal"
-	done
-
-	[ -n "${crypto}" ] && {
+	[ -n "$crypto" ] && {
 		local force_crypto_proposal
 
-		config_get_bool force_crypto_proposal "$conf" force_crypto_proposal
+		config_get_bool force_crypto_proposal "$conf" force_crypto_proposal 0
 
-		[ "${force_crypto_proposal}" = "1" ] && crypto="${crypto}!"
+		[ $force_crypto_proposal -eq 1 ] && crypto="${crypto}!"
 	}
 
-	crypto_proposal="${crypto}"
+	crypto_proposal="$crypto"
 }
 
 config_conn() {
 	# Generic ipsec conn section shared by tunnel and transport
+	local config_name="$1"
+	local type="$2"
+
 	local mode
 	local local_subnet
 	local local_nat
 	local local_sourceip
 	local local_leftip
-	local local_updown
-	local local_firewall
+	local updown
+	local firewall
 	local remote_subnet
 	local remote_sourceip
-	local remote_updown
-	local remote_firewall
 	local ikelifetime
 	local lifetime
 	local margintime
@@ -149,12 +146,10 @@ config_conn() {
 	config_get local_nat                "$1"           local_nat ""
 	config_get local_sourceip           "$1"           local_sourceip ""
 	config_get local_leftip             "$1"           local_leftip "%any"
-	config_get local_updown             "$1"           local_updown ""
-	config_get local_firewall           "$1"           local_firewall ""
+	config_get updown                   "$1"           updown ""
+	config_get firewall                 "$1"           firewall ""
 	config_get remote_subnet            "$1"           remote_subnet ""
 	config_get remote_sourceip          "$1"           remote_sourceip ""
-	config_get remote_updown            "$1"           remote_updown ""
-	config_get remote_firewall          "$1"           remote_firewall ""
 	config_get ikelifetime              "$1"           ikelifetime "3h"
 	config_get lifetime                 "$1"           lifetime "1h"
 	config_get margintime               "$1"           margintime "9m"
@@ -166,17 +161,16 @@ config_conn() {
 	config_get reqid                    "$1"           reqid
 	config_get packet_marker            "$1"           packet_marker
 
-	[ -n "$local_nat" ] && local_subnet=$local_nat
+	[ -n "$local_nat" ] && local_subnet="$local_nat"
 
-	ipsec_xappend "conn $config_name-$1"
+	ipsec_xappend "conn $config_name"
 	ipsec_xappend "  left=$local_leftip"
 	ipsec_xappend "  right=$remote_gateway"
 
 	[ -n "$local_sourceip" ] && ipsec_xappend "  leftsourceip=$local_sourceip"
 	[ -n "$local_subnet" ] && ipsec_xappend "  leftsubnet=$local_subnet"
 
-	[ -n "$local_firewall" ] && ipsec_xappend "  leftfirewall=$local_firewall"
-	[ -n "$remote_firewall" ] && ipsec_xappend "  rightfirewall=$remote_firewall"
+	[ -n "$firewall" ] && ipsec_xappend "  leftfirewall=$firewall"
 
 	ipsec_xappend "  ikelifetime=$ikelifetime"
 	ipsec_xappend "  lifetime=$lifetime"
@@ -188,51 +182,45 @@ config_conn() {
 	[ -n "$inactivity" ] && ipsec_xappend "  inactivity=$inactivity"
 	[ -n "$reqid" ] && ipsec_xappend "  reqid=$reqid"
 
+	[ -n "$remote_sourceip" ] && ipsec_xappend "  rightsourceip=$remote_sourceip"
+	[ -n "$remote_subnet" ] && ipsec_xappend "  rightsubnet=$remote_subnet"
+
 	if [ "$auth_method" = "psk" ]; then
 		ipsec_xappend "  leftauth=psk"
 		ipsec_xappend "  rightauth=psk"
-
-		[ "$remote_sourceip" != "" ] && ipsec_xappend "  rightsourceip=$remote_sourceip"
-		[ "$remote_subnet" != "" ] && ipsec_xappend "  rightsubnet=$remote_subnet"
-
-		ipsec_xappend "  auto=$mode"
 	else
 		warning "AuthenticationMethod $auth_method not supported"
 	fi
 
-	[ -n "$local_identifier" ] && ipsec_xappend "  leftid=$local_identifier"
-	[ -n "$remote_identifier" ] && ipsec_xappend "  rightid=$remote_identifier"
-	[ -n "$local_updown" ] && ipsec_xappend "  leftupdown=$local_updown"
-	[ -n "$remote_updown" ] && ipsec_xappend "  rightupdown=$remote_updown"
+	ipsec_xappend "  auto=$mode"
+
+	[ -n "$local_identifier" ] && ipsec_xappend "  leftid=\"$local_identifier\""
+	[ -n "$remote_identifier" ] && ipsec_xappend "  rightid=\"$remote_identifier\""
+	[ -n "$updown" ] && ipsec_xappend "  leftupdown=$updown"
+	ipsec_xappend "  type=$type"
 	[ -n "$packet_marker" ] && ipsec_xappend "  mark=$packet_marker"	
 	ipsec_xappend "  keyexchange=$keyexchange"
 
 	set_crypto_proposal "$1"
-	[ -n "${crypto_proposal}" ] && ipsec_xappend "  esp=$crypto_proposal"
-	[ -n "${ike_proposal}" ] && ipsec_xappend "  ike=$ike_proposal"
+	[ -n "$ike_proposal" ] && ipsec_xappend "  ike=$ike_proposal"
+	[ -n "$crypto_proposal" ] && ipsec_xappend "  esp=$crypto_proposal"
 }
 
 config_tunnel() {
-	config_conn "$1"
-
-	# Specific for the tunnel part
-	ipsec_xappend "  type=tunnel"
+	config_conn "$1" "tunnel"
 }
 
 config_transport() {
-	config_conn "$1"
-
-	# Specific for the transport part
-	ipsec_xappend "  type=transport"
+	config_conn "$1" "transport"
 }
 
 config_remote() {
 	local enabled
 	local gateway
+	local local_gateway
+	local remote_gateway
 	local pre_shared_key
 	local auth_method
-
-	config_name=$1
 
 	config_get_bool enabled "$1" enabled 0
 	[ $enabled -eq 0 ] && return
@@ -245,11 +233,11 @@ config_remote() {
 
 	[ "$gateway" = "any" ] && remote_gateway="%any" || remote_gateway="$gateway"
 
-	[ -z "$local_identifier" ] && {
+	[ -z "$local_gateway" ] && {
 		local ipdest
 
 		[ "$remote_gateway" = "%any" ] && ipdest="1.1.1.1" || ipdest="$remote_gateway"
-		local_gateway=`ip route get $ipdest | awk -F"src" '/src/{gsub(/ /,"");print $2}'`
+		local_gateway=`ip -o route get $ipdest | awk '/ src / { gsub(/^.* src /,""); gsub(/ .*$/, ""); print $0}'`
 	}
 
 	[ -n "$local_identifier" ] && secret_xappend -n "$local_identifier " || secret_xappend -n "$local_gateway "
