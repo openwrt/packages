@@ -9,16 +9,15 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=dmx_usb_module
-PKG_VERSION:=0.1.20130818
-PKG_RELEASE:=2
+PKG_VERSION:=19.12.1
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/lowlander/dmx_usb_module.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=ee99ca7edbd9e093480ad63341ac007394047bde
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/lowlander/dmx_usb_module/tar.gz/V$(PKG_VERSION)?
+PKG_HASH:=fabeb5500b55197338dda45d07374e5edc837bc18df3ac3114b442fe47cf1b68
+
 PKG_MAINTAINER:=Martijn Zilverschoon <martijn@friedzombie.com>
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0-only
 
 include $(INCLUDE_DIR)/package.mk
 
