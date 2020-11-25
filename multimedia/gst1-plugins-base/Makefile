@@ -182,11 +182,14 @@ define Build/InstallDev
 		./usr/lib/libgst*-$(GST_VERSION).so* \
 		$(1)/usr/lib/ \
 	)
-	$(INSTALL_DIR) $(1)/usr/lib/gstreamer-$(GST_VERSION)
-	( cd $(PKG_INSTALL_DIR); $(CP) \
-		./usr/lib/gstreamer-$(GST_VERSION)/libgst*.so \
-		$(1)/usr/lib/gstreamer-$(GST_VERSION)/ \
-	)
+	if [ -d $(PKG_INSTALL_DIR)/usr/lib/gstreamer-$(GST_VERSION)/ ]; then \
+		$(INSTALL_DIR) $(1)/usr/lib/gstreamer-$(GST_VERSION); \
+		( cd $(PKG_INSTALL_DIR); $(FIND) \
+			./usr/lib/gstreamer-$(GST_VERSION)/ -name libgst*.so -print0 | \
+			xargs --null --no-run-if-empty $(CP) \
+			--target-directory=$(1)/usr/lib/gstreamer-$(GST_VERSION)/ \
+		) \
+	fi
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	( cd $(PKG_INSTALL_DIR); $(CP) \
 		./usr/lib/pkgconfig/gstreamer*-$(GST_VERSION).pc \
