@@ -1,16 +1,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nghttp2
-PKG_VERSION:=1.41.0
+PKG_VERSION:=1.42.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/nghttp2/nghttp2/releases/download/v$(PKG_VERSION)
-PKG_HASH:=abc25b8dc601f5b3fefe084ce50fcbdc63e3385621bee0cbfa7b57f9ec3e67c2
+PKG_HASH:=c5a7f09020f31247d0d1609078a75efadeccb7e5b86fc2e4389189b1b431fe63
 
+PKG_MAINTAINER:=Hans Dedecker <dedeckeh@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
-CMAKE_INSTALL:=1
+
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -19,7 +21,6 @@ define Package/libnghttp2
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Library implementing the framing layer of HTTP/2
-  MAINTAINER:=Hans Dedecker <dedeckeh@gmail.com>
   ABI_VERSION:=14
 endef
 
