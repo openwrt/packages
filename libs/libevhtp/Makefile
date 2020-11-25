@@ -25,10 +25,7 @@ PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>, Jeffery To <jeffery.
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=libevent2 oniguruma
 CMAKE_INSTALL:=1
-
-PKG_CONFIG_DEPENDS:=LIBEVHTP_BUILD_DEPENDS
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -38,25 +35,13 @@ define Package/libevhtp
     CATEGORY:=Libraries
     TITLE:=A more flexible replacement for libevent's httpd API
     URL:=https://github.com/criticalstack/libevhtp
-    BUILDONLY:=1
+    DEPENDS:=+libevent2 +libevent2-openssl +libevent2-pthreads +oniguruma
 endef
 
 define Package/libevhtp/description
    Libevhtp was created as a replacement API for Libevent's current HTTP API.
    The reality of libevent's http interface is that it was created as a JIT server,
    meaning the developer never thought of it being used for creating a full-fledged HTTP service.
-endef
-
-define Package/libevhtp/config
-config LIBEVHTP_BUILD_DEPENDS
-	bool
-	default PACKAGE_libevhtp
-
-config LIBEVHTP_BUILD_SELECT
-	tristate
-	default m if LIBEVHTP_BUILD_DEPENDS
-	select PACKAGE_libevent2-openssl
-	select PACKAGE_libevent2-pthreads
 endef
 
 define Build/InstallDev
