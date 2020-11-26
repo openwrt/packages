@@ -148,7 +148,7 @@ define Package/ntp-utils/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ntpdc/ntpdc $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ntpq/ntpq $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/util/ntptime $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sntp/sntp $(1)/usr/sbin/
+	$(if $(CONFIG_PACKAGE_ntp-utils), $(INSTALL_BIN) $(PKG_BUILD_DIR)/sntp/sntp $(1)/usr/sbin/)
 endef
 
 define Package/ntp-keygen/install
