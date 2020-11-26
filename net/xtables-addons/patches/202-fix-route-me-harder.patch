@@ -1,0 +1,42 @@
+--- a/extensions/xt_DELUDE.c
++++ b/extensions/xt_DELUDE.c
+@@ -122,7 +122,7 @@ static void delude_send_reset(struct net
+ 	/* ip_route_me_harder expects skb->dst to be set */
+ 	skb_dst_set(nskb, dst_clone(skb_dst(oldskb)));
+ 
+-	if (ip_route_me_harder(net, nskb, addr_type))
++	if (ip_route_me_harder(net, nskb->sk, nskb, addr_type))
+ 		goto free_nskb;
+ 	else
+ 		niph = ip_hdr(nskb);
+--- a/extensions/xt_ECHO.c
++++ b/extensions/xt_ECHO.c
+@@ -196,7 +196,7 @@ echo_tg4(struct sk_buff *oldskb, const s
+ 	/* ip_route_me_harder expects the skb's dst to be set */
+ 	skb_dst_set(newskb, dst_clone(skb_dst(oldskb)));
+ 
+-	if (ip_route_me_harder(par_net(par), newskb, RTN_UNSPEC) != 0)
++	if (ip_route_me_harder(par_net(par), newskb->sk, newskb, RTN_UNSPEC) != 0)
+ 		goto free_nskb;
+ 
+ 	newip->ttl = ip4_dst_hoplimit(skb_dst(newskb));
+--- a/extensions/xt_TARPIT.c
++++ b/extensions/xt_TARPIT.c
+@@ -261,7 +261,7 @@ static void tarpit_tcp4(struct net *net,
+ #endif
+ 		addr_type = RTN_LOCAL;
+ 
+-	if (ip_route_me_harder(net, nskb, addr_type))
++	if (ip_route_me_harder(net, nskb->sk, nskb, addr_type))
+ 		goto free_nskb;
+ 	else
+ 		niph = ip_hdr(nskb);
+@@ -400,7 +400,7 @@ static void tarpit_tcp6(struct net *net,
+ 	              IPPROTO_TCP,
+ 	              csum_partial(tcph, sizeof(struct tcphdr), 0));
+ 
+-	if (ip6_route_me_harder(net, nskb))
++	if (ip6_route_me_harder(net, nskb->sk, nskb))
+ 		goto free_nskb;
+ 
+ 	nskb->ip_summed = CHECKSUM_NONE;
