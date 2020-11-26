@@ -22,10 +22,14 @@ f_log()
 	fi
 }
 
-if [ "${ACTION}" = "stratum" ] && [ ! -f "${trm_ntpfile}" ] && \
-	[ "$("${trm_init}" enabled; printf "%u" ${?})" = "0" ]
+if [ "${ACTION}" = "stratum" ] && [ ! -f "${trm_ntpfile}" ] && [ "$("${trm_init}" enabled; printf "%u" ${?})" = "0" ]
 then
-	> "${trm_ntpfile}"
-	f_log "info" "get ntp time sync"
-	"${trm_init}" restart
+	{
+		flock -xn 1001
+		if [ "$?" = "0" ]
+		then
+			f_log "info" "get ntp time sync"
+			"${trm_init}" restart
+		fi
+	} 1001>"${trm_ntpfile}"
 fi
