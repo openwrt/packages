@@ -140,6 +140,10 @@ config_conn() {
 	local keyexchange
 	local reqid
 	local packet_marker
+	local reauth
+	local fragmentation
+	local closeaction
+	local mobike
 
 	config_get mode                     "$1"           mode "route"
 	config_get local_subnet             "$1"           local_subnet ""
@@ -160,6 +164,10 @@ config_conn() {
 	config_get keyexchange              "$1"           keyexchange "ikev2"
 	config_get reqid                    "$1"           reqid
 	config_get packet_marker            "$1"           packet_marker
+	config_get_bool reauth              "$1"           reauth 1
+	config_get fragmentation            "$1"           fragmentation "yes"
+	config_get closeaction              "$1"           closeaction "none"
+	config_get_bool mobike              "$1"           mobike 1
 
 	[ -n "$local_nat" ] && local_subnet="$local_nat"
 
@@ -172,6 +180,20 @@ config_conn() {
 
 	[ -n "$firewall" ] && ipsec_xappend "  leftfirewall=$firewall"
 
+	case "$fragmentation" in
+	yes|accept|force|no)
+		ipsec_xappend "  fragmentation=$fragmentation" ;;
+	*)
+		warning "Fragmentation $fragmentation not supported" ;;
+	esac
+
+	case "$closeaction" in
+	none|clear|hold|restart)
+		ipsec_xappend "  closeaction=$closeaction" ;;
+	*)
+		warning "Closeaction $closeaction not supported" ;;
+	esac
+
 	ipsec_xappend "  ikelifetime=$ikelifetime"
 	ipsec_xappend "  lifetime=$lifetime"
 	ipsec_xappend "  margintime=$margintime"
@@ -181,6 +203,8 @@ config_conn() {
 
 	[ -n "$inactivity" ] && ipsec_xappend "  inactivity=$inactivity"
 	[ -n "$reqid" ] && ipsec_xappend "  reqid=$reqid"
+	[ $reauth -eq 0 ] && ipsec_xappend "  reauth=no"
+	[ $mobike -eq 0 ] && ipsec_xappend "  mobike=no"
 
 	[ -n "$remote_sourceip" ] && ipsec_xappend "  rightsourceip=$remote_sourceip"
 	[ -n "$remote_subnet" ] && ipsec_xappend "  rightsubnet=$remote_subnet"
