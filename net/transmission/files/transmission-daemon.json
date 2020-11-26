@@ -31,6 +31,7 @@
 				"getpid",
 				"getsockname",
 				"getsockopt",
+				"getuid",
 				"getuid32",
 				"ioctl",
 				"listen",
