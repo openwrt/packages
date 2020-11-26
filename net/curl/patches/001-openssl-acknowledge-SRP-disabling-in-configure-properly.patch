@@ -1,0 +1,70 @@
+From a3d5b199f96a108f38bd1f6adaf3a7585f721d02 Mon Sep 17 00:00:00 2001
+From: Daniel Stenberg <daniel@haxx.se>
+Date: Thu, 15 Oct 2020 22:56:13 +0200
+Subject: [PATCH] openssl: acknowledge SRP disabling in configure properly
+
+Follow-up to 68a513247409
+
+Use a new separate define that is the combination of both
+HAVE_OPENSSL_SRP and USE_TLS_SRP: USE_OPENSSL_SRP
+
+Bug: https://curl.haxx.se/mail/lib-2020-10/0037.html
+
+Closes #6094
+---
+ lib/vtls/openssl.c | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
+
+--- a/lib/vtls/openssl.c
++++ b/lib/vtls/openssl.c
+@@ -225,6 +225,14 @@
+   "ALL:!EXPORT:!EXPORT40:!EXPORT56:!aNULL:!LOW:!RC4:@STRENGTH"
+ #endif
+ 
++#ifdef HAVE_OPENSSL_SRP
++/* the function exists */
++#ifdef USE_TLS_SRP
++/* the functionality is not disabled */
++#define USE_OPENSSL_SRP
++#endif
++#endif
++
+ struct ssl_backend_data {
+   /* these ones requires specific SSL-types */
+   SSL_CTX* ctx;
+@@ -2471,7 +2479,7 @@ static CURLcode ossl_connect_step1(struc
+ #endif
+ #endif
+   const long int ssl_version = SSL_CONN_CONFIG(version);
+-#ifdef HAVE_OPENSSL_SRP
++#ifdef USE_OPENSSL_SRP
+   const enum CURL_TLSAUTH ssl_authtype = SSL_SET_OPTION(authtype);
+ #endif
+   char * const ssl_cert = SSL_SET_OPTION(primary.clientcert);
+@@ -2516,7 +2524,7 @@ static CURLcode ossl_connect_step1(struc
+     failf(data, OSSL_PACKAGE " was built without SSLv2 support");
+     return CURLE_NOT_BUILT_IN;
+ #else
+-#ifdef HAVE_OPENSSL_SRP
++#ifdef USE_OPENSSL_SRP
+     if(ssl_authtype == CURL_TLSAUTH_SRP)
+       return CURLE_SSL_CONNECT_ERROR;
+ #endif
+@@ -2529,7 +2537,7 @@ static CURLcode ossl_connect_step1(struc
+     failf(data, OSSL_PACKAGE " was built without SSLv3 support");
+     return CURLE_NOT_BUILT_IN;
+ #else
+-#ifdef HAVE_OPENSSL_SRP
++#ifdef USE_OPENSSL_SRP
+     if(ssl_authtype == CURL_TLSAUTH_SRP)
+       return CURLE_SSL_CONNECT_ERROR;
+ #endif
+@@ -2797,7 +2805,7 @@ static CURLcode ossl_connect_step1(struc
+   }
+ #endif
+ 
+-#ifdef HAVE_OPENSSL_SRP
++#ifdef USE_OPENSSL_SRP
+   if(ssl_authtype == CURL_TLSAUTH_SRP) {
+     char * const ssl_username = SSL_SET_OPTION(username);
+ 
