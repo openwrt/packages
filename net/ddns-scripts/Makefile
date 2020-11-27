@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_LICENSE:=GPL-2.0
 
@@ -167,6 +167,20 @@ define Package/ddns-scripts-cnkuai/description
 endef
 
 
+define Package/ddns-scripts-gandi
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Gandi API
+  DEPENDS:=ddns-scripts +curl
+endef
+
+define Package/ddns-scripts-gandi/description
+  Dynamic DNS Client scripts extension for "gandi.net".
+  It requires:
+  "option username" to be a valid subdomain for gandi.net
+  "option password" to be a valid API key for ganid.net
+endef
+
+
 define Build/Configure
 endef
 
@@ -236,6 +250,7 @@ define Package/ddns-scripts-services/install
 	rm $(1)/usr/share/ddns/default/bind-nsupdate.json
 	rm $(1)/usr/share/ddns/default/route53-v1.json
 	rm $(1)/usr/share/ddns/default/cnkuai.cn.json
+	rm $(1)/usr/share/ddns/default/gandi.net.json
 endef
 
 
@@ -391,6 +406,25 @@ exit 0
 endef
 
 
+define Package/ddns-scripts-gandi/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_gandi_net.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/gandi.net.json \
+		$(1)/usr/share/ddns/default
+endef
+
+define Package/ddns-scripts-gandi/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
 $(eval $(call BuildPackage,ddns-scripts))
 $(eval $(call BuildPackage,ddns-scripts-services))
 $(eval $(call BuildPackage,ddns-scripts-cloudflare))
@@ -401,3 +435,4 @@ $(eval $(call BuildPackage,ddns-scripts-noip))
 $(eval $(call BuildPackage,ddns-scripts-nsupdate))
 $(eval $(call BuildPackage,ddns-scripts-route53))
 $(eval $(call BuildPackage,ddns-scripts-cnkuai))
+$(eval $(call BuildPackage,ddns-scripts-gandi))
