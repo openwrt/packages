@@ -144,6 +144,8 @@ config_conn() {
 	local fragmentation
 	local closeaction
 	local mobike
+	local local_cert
+	local local_key
 
 	config_get mode                     "$1"           mode "route"
 	config_get local_subnet             "$1"           local_subnet ""
@@ -168,6 +170,8 @@ config_conn() {
 	config_get fragmentation            "$1"           fragmentation "yes"
 	config_get closeaction              "$1"           closeaction "none"
 	config_get_bool mobike              "$1"           mobike 1
+	config_get local_cert               "$1"           local_cert ""
+	config_get local_key                "$1"           local_key ""
 
 	[ -n "$local_nat" ] && local_subnet="$local_nat"
 
@@ -212,6 +216,15 @@ config_conn() {
 	if [ "$auth_method" = "psk" ]; then
 		ipsec_xappend "  leftauth=psk"
 		ipsec_xappend "  rightauth=psk"
+
+	elif [ "$auth_method" = "pubkey" ]; then
+		ipsec_xappend "  authby=pubkey"
+		ipsec_xappend "  leftcert=$local_cert"
+		secret_xappend ": RSA $local_key"
+
+		# check for /etc/ipsec.d/certs/$local_cert
+		# check for /etc/ipsec.d/private/$local_key
+
 	else
 		warning "AuthenticationMethod $auth_method not supported"
 	fi
@@ -263,11 +276,11 @@ config_remote() {
 		[ "$remote_gateway" = "%any" ] && ipdest="1.1.1.1" || ipdest="$remote_gateway"
 		local_gateway=`ip -o route get $ipdest | awk '/ src / { gsub(/^.* src /,""); gsub(/ .*$/, ""); print $0}'`
 	}
-
-	[ -n "$local_identifier" ] && secret_xappend -n "$local_identifier " || secret_xappend -n "$local_gateway "
-	[ -n "$remote_identifier" ] && secret_xappend -n "$remote_identifier " || secret_xappend -n "$remote_gateway "
-
-	secret_xappend ": PSK \"$pre_shared_key\""
+	if [ "$auth_method" = "psk" ]; then
+		[ -n "$local_identifier" ] && secret_xappend -n "$local_identifier " || secret_xappend -n "$local_gateway "
+		[ -n "$remote_identifier" ] && secret_xappend -n "$remote_identifier " || secret_xappend -n "$remote_gateway "
+		secret_xappend ": PSK \"$pre_shared_key\""
+	fi
 
 	set_crypto_proposal "$1"
 	ike_proposal="$crypto_proposal"
