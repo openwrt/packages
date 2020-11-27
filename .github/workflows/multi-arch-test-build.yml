@@ -53,10 +53,11 @@ jobs:
           echo "BRANCH=$BRANCH" >> $GITHUB_ENV
 
       - name: Build
-        uses: openwrt/gh-action-sdk@v1
+        uses: openwrt/gh-action-sdk@size_compare
         env:
           ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
           FEEDNAME: packages_ci
+          RUN_SIZE_COMPARE: 1
 
       - name: Move created packages to project dir
         run: cp bin/packages/${{ matrix.arch }}/packages_ci/*.ipk . || true
