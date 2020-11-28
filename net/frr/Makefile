@@ -7,17 +7,14 @@
 
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
-PKG_VERSION:=7.4
-PKG_RELEASE:=2
+PKG_VERSION:=7.5
+PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=https://github.com/FRRouting/frr/archive/
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=3c8204fda1c9b178d8446562579bbbc49d134b98f3ad02aa56f68724a2f9e40a
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/FRRouting/frr/releases/download/frr-$(PKG_VERSION)
+PKG_HASH:=b9651fce0b60a619292233e991f3a335a6b0af931078c826c83a1456fbe647a8
+
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
-
-HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)-$(PKG_NAME)-$(PKG_VERSION)
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_NAME)-$(PKG_VERSION)
-
 PKG_LICENSE:=GPL-2.0-only LGPL-2.1-only
 
 PKG_DAEMON_AVAILABLE:= \
