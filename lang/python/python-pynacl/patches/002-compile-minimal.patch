@@ -1,0 +1,13 @@
+diff --git a/src/bindings/build.py b/src/bindings/build.py
+index a05108b..2ec9f61 100644
+--- a/src/bindings/build.py
++++ b/src/bindings/build.py
+@@ -41,6 +41,8 @@ for header in HEADERS:
+ 
+ source = []
+ 
++source.append("#define SODIUM_LIBRARY_MINIMAL 1")
++
+ # SODIUM_STATIC controls the visibility of symbols in the headers. (see
+ # export.h in the libsodium source tree). If you do not set SODIUM_STATIC
+ # when linking against the static library in Windows then the compile will
