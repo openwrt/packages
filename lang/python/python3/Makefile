@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -134,7 +134,8 @@ MAKE_FLAGS+=\
 EXTRA_CFLAGS+= \
 	-DNDEBUG -fno-inline
 EXTRA_LDFLAGS+= \
-	-L$(PKG_BUILD_DIR)
+	-L$(PKG_BUILD_DIR) \
+	-L$(STAGING_DIR)/usr/lib -L$(STAGING_DIR)/lib
 
 DISABLE_BLUETOOTH:= \
 	ac_cv_header_bluetooth_bluetooth_h=no \
