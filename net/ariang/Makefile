@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ariang
 PKG_VERSION:=1.1.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mayswind/AriaNg-DailyBuild/tar.gz/$(PKG_VERSION)?
@@ -55,7 +55,8 @@ define Package/ariang/install
 		$(PKG_BUILD_DIR)/index.html \
 		$(PKG_BUILD_DIR)/index.manifest \
 		$(PKG_BUILD_DIR)/LICENSE \
-		$(PKG_BUILD_DIR)/favicon.ico \
+		$(PKG_BUILD_DIR)/{favicon.*,*.png} \
+		$(PKG_BUILD_DIR)/robots.txt \
 		$(1)/www/ariang
 endef
 
