@@ -131,6 +131,7 @@ if [ "$username" = "Bearer" ]; then
 else
   __PRGBASE="$__PRGBASE --header 'X-Auth-Email: $username' "
   __PRGBASE="$__PRGBASE --header 'X-Auth-Key: $password' "
+  __PRGBASE="$__PRGBASE --header 'Authorization: Bearer $password' "
 fi
 __PRGBASE="$__PRGBASE --header 'Content-Type: application/json' "
 
