@@ -1486,8 +1486,8 @@ f_report()
 			do
 				(
 					"${adb_dumpcmd}" -tttt -r "${file}" 2>/dev/null | \
-						"${adb_awk}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? /&&/ A[\? ]+|NXDomain|0\.0\.0\.0/{a=$1;b=substr($2,0,8);c=$4;sub(/\.[0-9]+$/,"",c);d=cnt $7;sub(/\*$/,"",d);
-						e=$(NF-1);sub(/[0-9]\/[0-9]\/[0-9]|0\.0\.0\.0/,"NX",e);sub(/\.$/,"",e);sub(/([0-9]{1,3}\.){3}[0-9]{1,3}/,"OK",e);if(e==""){e="err"};printf "%s\t%s\t%s\t%s\t%s\n",d,e,a,b,c}' >> "${adb_reportdir}/adb_report.raw"
+						"${adb_awk}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? /&&/ A[\? ]+|NXDomain|0\.0\.0\.0/{a=$1;b=substr($2,0,8);c=$4;sub(/\.[0-9]+$/,"",c);gsub(/[^[:alnum:]\.:-]/,"",c);d=cnt $7;sub(/\*$/,"",d);
+						e=$(NF-1);sub(/[0-9]\/[0-9]\/[0-9]|0\.0\.0\.0/,"NX",e);sub(/\.$/,"",e);sub(/([0-9]{1,3}\.){3}[0-9]{1,3}/,"OK",e);gsub(/[^[:alnum:]\.-]/,"",e);if(e==""){e="err"};printf "%s\t%s\t%s\t%s\t%s\n",d,e,a,b,c}' >> "${adb_reportdir}/adb_report.raw"
 				)&
 				hold=$((cnt%adb_maxqueue))
 				if [ "${hold}" -eq 0 ]
@@ -1593,13 +1593,13 @@ f_report()
 					elif json_get_type status "${top}" && [ "${top}" = "requests" ] && [ "${status}" = "array" ]
 					then
 						printf "%s\\n%s\\n%s\\n" ":::" "::: Latest DNS Queries" ":::"
-						printf "%-15s%-15s%-45s%-50s%s\\n" "Date" "Time" "Client" "Domain" "Answer"
+						printf "%-15s%-15s%-45s%-80s%s\\n" "Date" "Time" "Client" "Domain" "Answer"
 						json_select "${top}"
 						index=1
 						while json_get_type status "${index}" && [ "${status}" = "object" ]
 						do
 							json_get_values item "${index}"
-							printf "%-15s%-15s%-45s%-50s%s\\n" ${item}
+							printf "%-15s%-15s%-45s%-80s%s\\n" ${item}
 							index=$((index+1))
 						done
 					fi
