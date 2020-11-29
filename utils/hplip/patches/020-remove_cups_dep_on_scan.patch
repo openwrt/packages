@@ -1,7 +1,5 @@
-Index: hplip-3.20.9/Makefile.am
-===================================================================
---- hplip-3.20.9.orig/Makefile.am
-+++ hplip-3.20.9/Makefile.am
+--- a/Makefile.am
++++ b/Makefile.am
 @@ -71,7 +71,7 @@ else
  libsane_hpaio_la_LDFLAGS = -version-info 1:0:0
  endif
@@ -11,10 +9,8 @@ Index: hplip-3.20.9/Makefile.am
  #libsane_hpaio_la_CFLAGS = -DWITH_NONAMESPACES -DSOAP_DEBUG
  libsane_hpaio_la_CFLAGS = $(DBUS_CFLAGS) -Iprotocol
  
-Index: hplip-3.20.9/scan/sane/hpaio.c
-===================================================================
---- hplip-3.20.9.orig/scan/sane/hpaio.c
-+++ hplip-3.20.9/scan/sane/hpaio.c
+--- a/scan/sane/hpaio.c
++++ b/scan/sane/hpaio.c
 @@ -34,9 +34,7 @@
  #include <stdio.h>
  #include <stdlib.h>

@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hplip
 PKG_VERSION:=3.20.9
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/hplip
@@ -40,7 +40,7 @@ endef
 define Package/hplip-common
 $(call Package/hplip/Default)
   TITLE+= (common files)
-  DEPENDS+=+libusb-compat
+  DEPENDS+=+libusb-1.0
 endef
 
 define Package/hplip-common/description
@@ -72,8 +72,7 @@ CONFIGURE_ARGS += \
 	--disable-hpcups-install \
 	--disable-hpps-install \
 	--disable-cups-drv-install \
-	--enable-lite-build \
-	--enable-libusb01_build
+	--enable-lite-build
 
 define Build/Install
 	mkdir -p $(PKG_INSTALL_DIR)/usr/share/sane
