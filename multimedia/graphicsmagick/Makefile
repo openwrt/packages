@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=graphicsmagick
 PKG_VERSION:=1.3.35
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/GraphicsMagick-$(PKG_VERSION)
 PKG_SOURCE:=GraphicsMagick-$(PKG_VERSION).tar.bz2
@@ -73,7 +73,7 @@ CONFIGURE_ARGS += \
 	--without-zstd \
 	--without-x
 
-TARGET_CFLAGS += -flto
+TARGET_CFLAGS += $(if $(CONFIG_GCC_USE_VERSION_10),,-flto)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
