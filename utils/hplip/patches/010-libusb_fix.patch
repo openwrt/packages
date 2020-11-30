@@ -1,3 +1,23 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -110,7 +110,7 @@ libhpmud_la_SOURCES += io/hpmud/musb_lib
+ libhpmud_la_LDFLAGS += -lusb
+ else
+ libhpmud_la_SOURCES += io/hpmud/musb.c 
+-libhpmud_la_CFLAGS  += -I/usr/include/libusb-1.0
++libhpmud_la_CFLAGS  += ${LIBUSB_1_0_CFLAGS}
+ libhpmud_la_LDFLAGS += -lusb-1.0
+ endif
+ 
+@@ -363,7 +363,7 @@ hpmudext_la_CFLAGS += -Iprotocol/discove
+ endif
+ 
+ if !LIBUSB01_BUILD
+-hpmudext_la_CFLAGS +=-I/usr/include/libusb-1.0 
++hpmudext_la_CFLAGS += ${LIBUSB_1_0_CFLAGS}
+ endif
+ endif #!HPLIP_CLASS_DRIVER
+ # ui (qt3)
 --- a/configure.in
 +++ b/configure.in
 @@ -601,6 +601,10 @@ if test "$class_driver" = "no" && test "

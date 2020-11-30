@@ -1,5 +1,3 @@
-diff --git a/scan/sane/OrbliteScan/LinuxCommon.h b/scan/sane/OrbliteScan/LinuxCommon.h
-index 6605dd9..55c7110 100644
 --- a/scan/sane/OrbliteScan/LinuxCommon.h
 +++ b/scan/sane/OrbliteScan/LinuxCommon.h
 @@ -18,10 +18,8 @@ typedef u_int32_t			UInt32;
