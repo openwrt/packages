@@ -185,10 +185,12 @@ iptables_add_blocking_rule() {
 	local cfg="${1}"
 
 	local device=""
+	local extra_iptables_args=""
 
 	handle_iptables_rule() {
 		local interface="${1}"
 		local outbound="${2}"
+		local extra_iptables_args="${3}"
 
 		local inbound=""
 
@@ -200,9 +202,11 @@ iptables_add_blocking_rule() {
 			return
 		}
 
-		if ! iptables --table filter --check DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" --jump DROP 2>/dev/null; then
+		# Ignore errors as it might already be present
+		iptables --table filter --new DOCKER-USER 2>/dev/null
+		if ! iptables --table filter --check DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump DROP 2>/dev/null; then
 			logger -t "dockerd-init" -p notice "Drop traffic from ${inbound} to ${outbound}"
-			iptables --table filter --insert DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" --jump DROP
+			iptables --table filter --insert DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump DROP
 		fi
 	}
 
@@ -213,7 +217,8 @@ iptables_add_blocking_rule() {
 		return
 	}
 
-	config_list_foreach "${cfg}" blocked_interfaces handle_iptables_rule "${device}"
+	config_get extra_iptables_args "${cfg}" extra_iptables_args
+	config_list_foreach "${cfg}" blocked_interfaces handle_iptables_rule "${device}" "${extra_iptables_args}"
 }
 
 stop_service() {
