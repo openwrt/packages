@@ -248,16 +248,21 @@ soft_disable_wifi()
         return 1
     fi
 
+    local ignore_stations=$(_get_uci_value_raw ${GLOBAL}.ignore_stations)
+    [ -n "${ignore_stations}" ] && _log "Ignoring station(s) ${ignore_stations}"
+
     # check if no stations are associated
     local _if
     for _if in $(_get_wireless_interfaces)
     do
-        output=$(${iwinfo} ${_if} assoclist)
-        if [[ "$output" != "No station connected" ]]
-        then
+        local stations=$(${iwinfo} ${_if} assoclist | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+        if [ -n "${ignore_stations}" ]; then
+            stations=$(echo "${stations}" | grep -vwi -E "${ignore_stations// /|}")
+        fi
+
+        if [ -n "${stations}" ]; then
             _disable_wifi=0
-            local stations=$(echo ${output}| grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}' | tr '\n' ' ')
-            _log "Station(s) ${stations}associated on ${_if}"
+            _log "Station(s) $(echo ${stations}) associated on ${_if}"
         fi
     done
 
