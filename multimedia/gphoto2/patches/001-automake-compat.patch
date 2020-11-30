@@ -19,7 +19,7 @@
  all: config.h
 --- a/configure.ac
 +++ b/configure.ac
-@@ -58,10 +58,7 @@ dnl ---------------------------------------------------------------------------
+@@ -58,10 +58,7 @@ dnl ------------------------------------
  GP_GETTEXT_HACK([],[Lutz Müller and others],[${MAIL_GPHOTO_TRANSLATION}])
  ALL_LINGUAS="az cs da de en_GB es eu fi fr hu id is it ja nl pa pl pt_BR ro ru rw sk sr sv uk vi zh_CN zh_TW"
  AM_GNU_GETTEXT_VERSION([0.14.1])
