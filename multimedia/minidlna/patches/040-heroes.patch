@@ -7,8 +7,6 @@ Subject: [PATCH] What about David Bowie's "Heroes"?
  utils.c | 7 -------
  1 file changed, 7 deletions(-)
 
-diff --git a/utils.c b/utils.c
-index dc936f9..dfa2b65 100644
 --- a/utils.c
 +++ b/utils.c
 @@ -87,13 +87,6 @@ trim(char *str)
