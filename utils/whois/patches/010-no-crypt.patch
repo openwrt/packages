@@ -2,7 +2,7 @@
 +++ b/Makefile
 @@ -56,8 +56,6 @@ DEFS += -DHAVE_ICONV
  endif
-
+ 
  ifeq ($(shell $(PKG_CONFIG) --exists 'libxcrypt >= 4.1' || echo NO),)
 -DEFS += -DHAVE_CRYPT_H -DHAVE_LINUX_CRYPT_GENSALT $(shell $(PKG_CONFIG) --cflags libcrypt)
 -mkpasswd_LDADD += $(shell $(PKG_CONFIG) --libs libcrypt)
