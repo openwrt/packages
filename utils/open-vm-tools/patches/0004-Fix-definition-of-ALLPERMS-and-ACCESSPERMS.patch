@@ -1,6 +1,6 @@
 --- a/lib/hgfsServer/hgfsServerLinux.c
 +++ b/lib/hgfsServer/hgfsServerLinux.c
-@@ -105,11 +105,13 @@
+@@ -105,11 +105,13 @@ typedef struct DirectoryEntry {
  #endif
  
  /*
@@ -28,5 +28,3 @@
  #define ACCESSPERMS           (S_IRWXU | S_IRWXG | S_IRWXO)
  #endif
  #ifdef __ANDROID__
- 
- 
