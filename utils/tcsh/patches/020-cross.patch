@@ -1,6 +1,6 @@
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -447,7 +447,7 @@ pure:$(P) ${OBJS}
+@@ -448,7 +448,7 @@ pure:$(P) ${OBJS}
  
  gethost:  gethost.c sh.err.h tc.const.h sh.h
  	rm -f gethost
