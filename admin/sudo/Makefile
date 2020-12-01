@@ -8,24 +8,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sudo
-PKG_VERSION:=1.8.31
+PKG_VERSION:=1.9.3p1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.sudo.ws/dist
-PKG_HASH:=7ea8d97a3cee4c844e0887ea7a1bd80eb54cc98fd77966776cb1a80653ad454f
+PKG_HASH:=dcb9de53e45e1c39042074b847f5e0d8ae1890725dd6a9d9101a81569e6eb49e
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=doc/LICENSE
 PKG_CPE_ID:=cpe:/a:todd_miller:sudo
 
-PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
-
+PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=sudo/host
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 define Package/sudo
   SECTION:=admin
@@ -46,7 +46,7 @@ define Package/sudo/conffiles
 /etc/sudoers.d/
 endef
 
-CONFIGURE_ARGS+= \
+CONFIGURE_ARGS += \
 	--without-pam \
 	--disable-pam-session \
 	--with-editor=/bin/vi \
@@ -55,11 +55,9 @@ CONFIGURE_ARGS+= \
 	--with-rundir=/var/lib/sudo \
 	--with-vardir=/var/lib/sudo
 
-CONFIGURE_VARS+= \
+CONFIGURE_VARS += \
 	sudo_cv_uid_t_len=10 \
 	sudo_cv_func_unsetenv_void=no
-
-include $(INCLUDE_DIR)/host-build.mk
 
 define Host/Compile
 	cd $(HOST_BUILD_DIR)/lib/util; \
@@ -70,8 +68,6 @@ define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin
 	$(CP) $(HOST_BUILD_DIR)/lib/util/mksig{list,name} $(STAGING_DIR_HOSTPKG)/bin/
 endef
-
-$(eval $(call HostBuild))
 
 define Package/sudo/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -98,4 +94,5 @@ define Package/sudo/postinst
 }
 endef
 
+$(eval $(call HostBuild))
 $(eval $(call BuildPackage,sudo))
