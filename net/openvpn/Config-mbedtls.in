@@ -2,7 +2,7 @@ if PACKAGE_openvpn-mbedtls
 
 config OPENVPN_mbedtls_ENABLE_LZO
 	bool "Enable LZO compression support"
-	default y
+	default n
 
 config OPENVPN_mbedtls_ENABLE_LZ4
 	bool "Enable LZ4 compression support"
