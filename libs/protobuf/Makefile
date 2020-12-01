@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=protobuf
-PKG_VERSION:=3.13.0
+PKG_VERSION:=3.14.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-cpp-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/google/protobuf/releases/download/v$(PKG_VERSION)
-PKG_HASH:=f8a547dfe143a9f61fadafba47fa6573713a33cb80909307c1502e26e1102298
+PKG_HASH:=50ec5a07c0c55d4ec536dd49021f2e194a26bfdbc531d03d1e9d4d3e27175659
 
 PKG_MAINTAINER:=Ken Keys <kkeys@caida.org>
 PKG_LICENSE:=BSD-3-Clause
@@ -22,7 +22,6 @@ PKG_CPE_ID:=cpe:/a:google:protobuf
 
 HOST_BUILD_PARALLEL:=1
 PKG_BUILD_PARALLEL:=1
-CMAKE_INSTALL:=1
 CMAKE_SOURCE_SUBDIR:=cmake
 
 include $(INCLUDE_DIR)/package.mk
