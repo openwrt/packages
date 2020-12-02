@@ -1,0 +1,78 @@
+From 2a1e55dc62c72893d128400334131a56a218ee1a Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Tue, 1 Dec 2020 16:23:49 -0500
+Subject: [PATCH] [mod_webdav] define _ATFILE_SOURCE if AT_FDCWD
+
+Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
+---
+ src/mod_webdav.c | 15 ++++++++++++---
+ 1 file changed, 20 insertions(+), 5 deletions(-)
+
+diff --git a/src/mod_webdav.c b/src/mod_webdav.c
+index c3fe79a2..9c27ad8f 100644
+--- a/src/mod_webdav.c
++++ b/src/mod_webdav.c
+@@ -182,9 +182,18 @@
+ #include <string.h>
+ #include <unistd.h>     /* getpid() linkat() rmdir() unlinkat() */
+ 
+-/* Note: filesystem access race conditions exist without _ATFILE_SOURCE */
++#ifdef AT_FDCWD
+ #ifndef _ATFILE_SOURCE
++#define _ATFILE_SOURCE
++#endif
++#endif
++
++#ifndef AT_SYMLINK_NOFOLLOW
+ #define AT_SYMLINK_NOFOLLOW 0
++#endif
++
++/* Note: filesystem access race conditions exist without _ATFILE_SOURCE */
++#ifndef _ATFILE_SOURCE
+ /*(trigger linkat() fail to fallback logic in mod_webdav.c)*/
+ #define linkat(odfd,opath,ndfd,npath,flags) -1
+ #endif
+@@ -2371,7 +2380,10 @@ webdav_delete_dir (const plugin_config * const pconf,
+         buffer_append_string_len(&dst->rel_path, de->d_name, len);
+ 
+       #ifndef _ATFILE_SOURCE
+-      #ifndef _DIRENT_HAVE_D_TYPE
++      #ifdef _DIRENT_HAVE_D_TYPE
++      if (de->d_type == DT_UNKNOWN)
++      #endif
++      {
+         struct stat st;
+         if (0 != stat(dst->path.ptr, &st)) {
+             dst->path.ptr[    (dst->path.used     = dst_path_used)    -1]='\0';
+@@ -2379,6 +2391,6 @@ webdav_delete_dir (const plugin_config * const pconf,
+             continue; /* file *just* disappeared? */
+         }
+         s_isdir = S_ISDIR(st.st_mode);
+-      #endif
++      }
+       #endif
+ 
+@@ -2903,7 +2902,10 @@ webdav_copymove_dir (const plugin_config * const pconf,
+         buffer_append_string_len(&dst->rel_path, de->d_name, len);
+ 
+       #ifndef _ATFILE_SOURCE
+-      #ifndef _DIRENT_HAVE_D_TYPE
++      #ifdef _DIRENT_HAVE_D_TYPE
++      if (de->d_type == DT_UNKNOWN)
++      #endif
++      {
+         if (0 != stat(src->path.ptr, &st)) {
+             src->path.ptr[    (src->path.used     = src_path_used)    -1]='\0';
+             src->rel_path.ptr[(src->rel_path.used = src_rel_path_used)-1]='\0';
+@@ -2912,7 +2914,7 @@ webdav_copymove_dir (const plugin_config * const pconf,
+             continue; /* file *just* disappeared? */
+         }
+         d_type = st.st_mode;
+-      #endif
++      }
+       #endif
+ 
+         if (S_ISDIR(d_type)) { /* recursive call; depth first */
+-- 
+2.28.0
+

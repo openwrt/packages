@@ -1,0 +1,26 @@
+From 716e4d7a5d773607d87d5521f5943cff019bcd97 Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Mon, 30 Nov 2020 19:31:05 -0500
+Subject: [PATCH] [core] fix lighttpd -1 one-shot with pipes
+
+Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
+---
+ src/server.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/server.c b/src/server.c
+index 83c0241f..a781027e 100644
+--- a/src/server.c
++++ b/src/server.c
+@@ -356,7 +356,7 @@ static int server_oneshot_read_cq(connection *con, chunkqueue *cq, off_t max_byt
+     /* temporary set con->fd to oneshot_fd (fd input) rather than outshot_fdout
+      * (lighttpd generally assumes operation on sockets, so this is a kludge) */
+     int fd = con->fd;
+-    con->fd = oneshot_fd;
++    con->fd = oneshot_fdn->fd;
+     int rc = oneshot_read_cq(con, cq, max_bytes);
+     con->fd = fd;
+ 
+-- 
+2.28.0
+
