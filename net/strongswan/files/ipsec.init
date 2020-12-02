@@ -326,9 +326,6 @@ config_ipsec() {
 	swan_xappend "    daemon {"
 	swan_xappend "      default = $debug"
 	swan_xappend "    }"
-	swan_xappend "    auth {"
-	swan_xappend "      default = $debug"
-	swan_xappend "    }"
 	swan_xappend "  }"
 	swan_xappend "}"
 }
