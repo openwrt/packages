@@ -10,7 +10,7 @@
  
  #ifdef __linux__
  #   include <net/if.h>
---- a/lib/nicInfo/resolv_compat.h
+--- /dev/null
 +++ b/lib/nicInfo/resolv_compat.h
 @@ -0,0 +1,29 @@
 +#if !defined(__GLIBC__)

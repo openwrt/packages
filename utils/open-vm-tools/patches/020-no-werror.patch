@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1199,7 +1199,6 @@ AC_C_VOLATILE
+@@ -1210,7 +1210,6 @@ AC_C_VOLATILE
  
  ### General flags / actions
  CFLAGS="$CFLAGS -Wall"
