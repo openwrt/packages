@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
 PKG_VERSION:=5.9.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
@@ -386,7 +386,7 @@ endef
 define Package/strongswan-swanctl
 $(call Package/strongswan/Default)
   TITLE+= swanctl utility
-  DEPENDS:= strongswan +strongswan-mod-vici
+  DEPENDS:= strongswan +strongswan-mod-vici +xfrm
 endef
 
 define Package/strongswan-swanctl/description
