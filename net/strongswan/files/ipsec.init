@@ -62,13 +62,15 @@ add_crypto_proposal() {
 	local encryption_algorithm
 	local hash_algorithm
 	local dh_group
+	local prf_algorithm
 
 	config_get encryption_algorithm  "$1" encryption_algorithm
 	config_get hash_algorithm        "$1" hash_algorithm
 	config_get dh_group              "$1" dh_group
+	config_get prf_algorithm         "$1" prf_algorithm
 
 	[ -n "$encryption_algorithm" ] && \
-		crypto="${crypto:+${crypto},}${encryption_algorithm}${hash_algorithm:+-${hash_algorithm}}${dh_group:+-${dh_group}}"
+		crypto="${crypto:+${crypto},}${encryption_algorithm}${hash_algorithm:+-${hash_algorithm}}${prf_algorithm:+-${prf_algorithm}}${dh_group:+-${dh_group}}"
 }
 
 set_crypto_proposal() {
@@ -76,14 +78,6 @@ set_crypto_proposal() {
 	local crypto=""
 
 	config_list_foreach "$conf" crypto_proposal add_crypto_proposal
-
-	[ -n "$crypto" ] && {
-		local force_crypto_proposal
-
-		config_get_bool force_crypto_proposal "$conf" force_crypto_proposal 0
-
-		[ $force_crypto_proposal -eq 1 ] && crypto="$crypto!"
-	}
 
 	crypto_proposal="$crypto"
 }
