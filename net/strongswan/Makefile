@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
 PKG_VERSION:=5.9.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
@@ -454,6 +454,7 @@ endef
 define Package/strongswan/install
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/strongswan.conf $(1)/etc/
+	echo "include /var/ipsec/strongswan.conf" >> $(1)/etc/strongswan.conf
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libstrongswan.so.* $(1)/usr/lib/ipsec/
 	$(INSTALL_CONF) ./files/ipsec.secrets $(1)/etc/
@@ -527,6 +528,7 @@ define Package/strongswan-swanctl/install
 	$(INSTALL_DIR) $(1)/etc/swanctl/{bliss,ecdsa,pkcs{12,8},private,pubkey,rsa}
 	$(INSTALL_DIR) $(1)/etc/swanctl/x509{,aa,ac,ca,crl,ocsp} $(1)/etc/swanctl/conf.d
 	$(CP) $(PKG_INSTALL_DIR)/etc/swanctl/swanctl.conf $(1)/etc/swanctl/
+	echo "include /var/swanctl/swanctl.conf" >> $(1)/etc/swanctl/swanctl.conf
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/swanctl $(1)/usr/sbin/
 endef

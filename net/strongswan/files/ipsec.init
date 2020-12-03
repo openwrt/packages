@@ -68,34 +68,8 @@ xappend() {
 	echo "${@}" >> "${file}"
 }
 
-remove_include() {
-	local file="$1"
-	local include="$2"
-
-	sed -i "\_${include}_d" "${file}"
-}
-
-remove_includes() {
-	remove_include "${STRONGSWAN_CONF_FILE}" "${STRONGSWAN_VAR_CONF_FILE}"
-	remove_include "${SWANCTL_CONF_FILE}" "${SWANCTL_VAR_CONN_FILE}"
-}
-
-do_include() {
-	local conf="$1"
-	local uciconf="$2"
-	local backup=`mktemp -t -p /tmp/ ipsec-init-XXXXXX`
-
-	[ ! -f "${conf}" ] && rm -rf "${conf}"
-	touch "${conf}"
-
-	cat "${conf}" | grep -v "${uciconf}" > "${backup}"
-	mv "${backup}" "${conf}"
-	xappend "${conf}" "include ${uciconf}"
-	file_reset "${uciconf}"
-}
-
 swan_reset() {
-	do_include "${STRONGSWAN_CONF_FILE}" "${STRONGSWAN_VAR_CONF_FILE}"
+	file_reset "${STRONGSWAN_VAR_CONF_FILE}"
 }
 
 swan_xappend() {
@@ -103,7 +77,7 @@ swan_xappend() {
 }
 
 swanctl_reset() {
-	do_include "${SWANCTL_CONF_FILE}" "${SWANCTL_VAR_CONN_FILE}"
+	file_reset "${SWANCTL_VAR_CONN_FILE}"
 }
 
 swanctl_xappend() {
@@ -501,7 +475,6 @@ config_ipsec() {
 
 prepare_env() {
 	mkdir -p /var/ipsec /var/swanctl
-	remove_includes
 	do_resets
 	do_preamble
 	config_load ipsec
