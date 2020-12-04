@@ -9,15 +9,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
-PKG_VERSION:=1.6.12
+PKG_VERSION:=2.0.0
 PKG_RELEASE:=1
-PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE:=EPL-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_CPE_ID:=cpe:/a:eclipse:mosquitto
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://mosquitto.org/files/source/
-PKG_HASH:=548d73d19fb787dd0530334e398fd256ef3a581181678488a741a995c4f007fb
+PKG_HASH:=ca8c21d1b04037df27639de9ea8f82fa73e1cbd24e83e6394ed67b537c4b6d86
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -34,7 +34,7 @@ endef
 define Package/mosquitto-ssl
     $(call Package/mosquitto/default)
     TITLE+= (with SSL support)
-    DEPENDS+= +libopenssl +MOSQUITTO_LWS:libwebsockets-openssl
+    DEPENDS+= +libopenssl +MOSQUITTO_LWS:libwebsockets-openssl +MOSQUITTO_DYNAMIC_SECURITY:cJSON
     VARIANT:=ssl
     PROVIDES:=mosquitto
 endef
@@ -52,7 +52,7 @@ endef
 
 define Package/mosquitto/default/description
 Mosquitto is an open source (BSD licensed) message broker that implements
-the MQTT protocol version 3.1 and 3.1.1. MQTT provides a lightweight
+the MQTT protocol version 3.1, 3.1.1 and 5. MQTT provides a lightweight
 method of carrying out messaging using a publish/subscribe model.
 
 This package also includes some basic support for configuring via UCI
@@ -73,7 +73,7 @@ endef
 define Package/mosquitto-client/default
     $(Package/mosquitto/default)
     TITLE:= mosquitto - client tools
-    DEPENDS+=+libcares
+    DEPENDS+=+libcares +cJSON
     PROVIDES:=mosquitto-client
 endef
 define Package/mosquitto-client-ssl
@@ -90,8 +90,9 @@ define Package/mosquitto-client-nossl
 endef
 
 define Package/mosquitto-client/default/description
- Command line client tools for publishing messages to MQTT servers
-and subscribing to topics.
+ Command line client tools for working with mosquitto.
+This includes mosquitto_sub, mosquitto_pub, mosquitto_rr
+and the mosquitto_ctrl tool.
 endef
 
 define Package/mosquitto-client-ssl/description
@@ -126,11 +127,11 @@ endef
 
 define Package/libmosquitto/default/description
  Library required for mosquitto's command line client tools, also for
-use by any third party software that wants to communicate with a
-mosquitto server.
+use by any third party software that wants to communicate with _any_
+MQTT server.
 
-Should be useable for communicating with any MQTT v3.1/3.1.1 compatible
-server, such as IBM's RSMB, in addition to Mosquitto
+Should be useable for communicating with any MQTT v3.1/3.1.1/5 compatible
+server, in addition to Mosquitto.
 endef
 
 define Package/libmosquitto-ssl/description
@@ -176,24 +177,32 @@ define Package/mosquitto-ssl/install
 	$(call Package/mosquitto/install/default,$(1))
 ifeq ($(CONFIG_MOSQUITTO_PASSWD),y)
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mosquitto_passwd $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/apps/mosquitto_passwd/mosquitto_passwd $(1)/usr/bin
+endif
+ifeq ($(CONFIG_MOSQUITTO_DYNAMIC_SECURITY),y)
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/plugins/dynamic-security/mosquitto_dynamic_security.so $(1)/usr/lib
 endif
 endef
 
-define Package/mosquitto-client-ssl/install
+define Package/mosquitto-client-nossl/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/mosquitto_pub $(1)/usr/bin/mosquitto_pub
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/mosquitto_sub $(1)/usr/bin/mosquitto_sub
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/mosquitto_pub $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/mosquitto_sub $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/mosquitto_rr $(1)/usr/bin
 endef
-Package/mosquitto-client-nossl/install = $(Package/mosquitto-client-ssl/install)
+define Package/mosquitto-client-ssl/install
+	$(call Package/mosquitto-client-nossl/install,$(1))
+ifeq ($(CONFIG_MOSQUITTO_CTRL),y)
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/apps/mosquitto_ctrl/mosquitto_ctrl $(1)/usr/bin
+endif
+endef
 
 # This installs files into ./staging_dir/. so that you can cross compile from the host
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_BUILD_DIR)/lib/mosquitto.h $(1)/usr/include
+	$(CP) $(PKG_BUILD_DIR)/include/*.h $(1)/usr/include
 	$(CP) $(PKG_BUILD_DIR)/lib/cpp/mosquittopp.h $(1)/usr/include
-	$(CP) $(PKG_BUILD_DIR)/src/mosquitto_plugin.h $(1)/usr/include
-	$(CP) $(PKG_BUILD_DIR)/src/mosquitto_broker.h $(1)/usr/include
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/lib/libmosquitto.so.1 $(1)/usr/lib/
 	$(CP) $(PKG_BUILD_DIR)/lib/cpp/libmosquittopp.so.1 $(1)/usr/lib/
