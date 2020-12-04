@@ -102,6 +102,10 @@ define Package/mwan3/install
 	$(INSTALL_BIN) ./files/usr/sbin/mwan3track \
 		$(1)/usr/sbin/
 
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_BIN) ./files/etc/mwan3.user \
+		$(1)/etc/
+
 	$(CP) $(PKG_BUILD_DIR)/libwrap_mwan3_sockopt.so.1.0 $(1)/lib/mwan3/
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
