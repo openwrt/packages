@@ -23,11 +23,11 @@ boot() {
 }
 
 uciadd() {
-	local iface="$1"
-	local device="$2"
-	local zone="$3"
+	local iface="${1}"
+	local device="${2}"
+	local zone="${3}"
 
-	[ -z "$iface" ] && {
+	[ -z "${iface}" ] && {
 		iface="docker"
 		device="docker0"
 		zone="docker"
@@ -77,11 +77,11 @@ uciadd() {
 }
 
 ucidel() {
-	local iface="$1"
-	local device="$2"
-	local zone="$3"
+	local iface="${1}"
+	local device="${2}"
+	local zone="${3}"
 
-	[ -z "$iface" ] && {
+	[ -z "${iface}" ] && {
 		iface="docker"
 		device="docker0"
 		zone="docker"
@@ -182,38 +182,43 @@ service_triggers() {
 }
 
 iptables_add_blocking_rule() {
-	local cfg="$1"
+	local cfg="${1}"
 
 	local device=""
+	local extra_iptables_args=""
 
 	handle_iptables_rule() {
-		local interface="$1"
-		local outbound="$2"
+		local interface="${1}"
+		local outbound="${2}"
+		local extra_iptables_args="${3}"
 
 		local inbound=""
 
 		. /lib/functions/network.sh
 		network_get_physdev inbound "${interface}"
 
-		[ -z "$inbound" ] && {
+		[ -z "${inbound}" ] && {
 			logger -t "dockerd-init" -p notice "Unable to get physical device for interface ${interface}"
 			return
 		}
 
-		if ! iptables --table filter --check DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" --jump DROP 2>/dev/null; then
+		# Ignore errors as it might already be present
+		iptables --table filter --new DOCKER-USER 2>/dev/null
+		if ! iptables --table filter --check DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump DROP 2>/dev/null; then
 			logger -t "dockerd-init" -p notice "Drop traffic from ${inbound} to ${outbound}"
-			iptables --table filter --insert DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" --jump DROP
+			iptables --table filter --insert DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump DROP
 		fi
 	}
 
-	config_get device "$cfg" device
+	config_get device "${cfg}" device
 
-	[ -z "$device" ] && {
+	[ -z "${device}" ] && {
 		logger -t "dockerd-init" -p notice "No device configured for ${cfg}"
 		return
 	}
 
-	config_list_foreach "$cfg" blocked_interfaces handle_iptables_rule "$device"
+	config_get extra_iptables_args "${cfg}" extra_iptables_args
+	config_list_foreach "${cfg}" blocked_interfaces handle_iptables_rule "${device}" "${extra_iptables_args}"
 }
 
 stop_service() {
