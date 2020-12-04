@@ -16,7 +16,6 @@
 
 	config_get_bool enabled "$INTERFACE" enabled 0
 	[ "${enabled}" -eq 1 ] || {
-		[ "$MWAN3_SHUTDOWN" != 1 ] && mwan3_unlock "$ACTION" "$DEVICE-user"
 		exit 0
 	}
 
