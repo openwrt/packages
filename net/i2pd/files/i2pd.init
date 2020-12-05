@@ -17,7 +17,6 @@ CONFFILE=/etc/i2pd/i2pd.conf
 . /lib/functions.sh
 
 
-
 i2pd_start() {
 	local cfg="$1"
 	local data_dir
@@ -27,16 +26,19 @@ i2pd_start() {
 	config_get addressbook_dir "$cfg" addressbook_dir
 
 	## Setting up data dir
-	[ -d "$data_dir" ] || {
+	if [ ! -d "$data_dir" ] ; then
 		mkdir -p "$data_dir"
 		chown "$USER:$GROUP" "$data_dir"
 		ln -s /usr/share/i2pd/certificates "$data_dir/certificates"
-		[ -n "$addressbook_dir" ] && {
-			[ -d "$addressbook_dir" ] || mkdir -p "$addressbook_dir"
-			chown "$USER:$GROUP" "$addressbook_dir"
+		if [ -n "$addressbook_dir" ] ; then
+			if [ ! -d "$addressbook_dir" ] ; then
+				mkdir -p "$addressbook_dir"
+				chown "$USER:$GROUP" "$addressbook_dir"
+			fi
 			ln -s "$addressbook_dir" "$data_dir/addressbook"
-		}
-	}
+		fi
+	fi
+	[ -d "$DATADIR" ] || ln -s "$data_dir" "$DATADIR"
 
 	## We need permissions
 	touch "$PIDFILE"
@@ -44,7 +46,6 @@ i2pd_start() {
 
 	procd_open_instance
 	procd_set_param command "$PROG" --service --conf="$CONFFILE" --pidfile "$PIDFILE"
-	## Don't know about i2pd user's HOME
 	procd_set_param env "HOME=$DATADIR"
 	## For debugging, provide about 512 MB on external storage for coredump and adjust /proc/sys/kernel/core_pattern
 	# echo "/tmp/coredumps/core.%e.%p.%s.%t" > /proc/sys/kernel/core_pattern
@@ -65,13 +66,13 @@ start_service() {
 	config_cb() {
 		local type="$1"
 		local name="$2"
-		[ "$type" = "i2pd" ] && [ -n "$instance" ] && [ "$instance" = "$name" ] && instance_found=1
+		[ "$type" = "i2pd" -a -n "$instance" -a "$instance" = "$name" ] && instance_found=1
 	}
 
 	config_load i2pd
 
 	if [ -n "$instance" ]; then
-		[ "$instance_found" -gt 0 ] || return
+		[ "$instance_found" = 0 ] && return
 		i2pd_start "$instance"
 	else
 		config_foreach i2pd_start i2pd

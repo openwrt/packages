@@ -1,3 +1,5 @@
+diff --git a/contrib/i2pd.conf b/contrib/i2pd.conf
+index 5ef39bc9..8d5034eb 100644
 --- a/contrib/i2pd.conf
 +++ b/contrib/i2pd.conf
 @@ -8,12 +8,12 @@
@@ -11,7 +13,7 @@
  ## Use that path to store separated tunnels in different config files.
  ## Default: ~/.i2pd/tunnels.d or /var/lib/i2pd/tunnels.d
 -# tunnelsdir = /var/lib/i2pd/tunnels.d
-+tunnelsdir = /etc/i2pd/tunnels.conf
++tunnelsdir = /etc/i2pd/tunnels.d
  
  ## Where to write pidfile (default: i2pd.pid, not used in Windows)
  # pidfile = /run/i2pd.pid
@@ -78,10 +80,13 @@
  port = 4447
  ## Optional keys file for proxy local destination
  # keys = socks-proxy-keys.dat
-@@ -228,4 +230,5 @@ verify = true
+@@ -228,7 +230,8 @@ verify = true
  
  [persist]
  ## Save peer profiles on disk (default: true)
 -# profiles = true
 +profiles = false
 +addressbook = false
+ 
+ [cpuext]
+ ## Use CPU AES-NI instructions set when work with cryptography when available (default: true)
