@@ -1,4 +1,4 @@
-# The watchfrr and zebra daemons are always started.
+# The staticd,watchfrr and zebra daemons are always started.
 #
 bgpd=no
 ospfd=no
