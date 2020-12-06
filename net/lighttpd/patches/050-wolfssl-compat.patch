@@ -1,0 +1,32 @@
+From a27e55b2dd0887f462c36ff788dde5c5de20a154 Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Sat, 5 Dec 2020 11:19:03 -0500
+Subject: [PATCH] [core] add missing mod_wolfssl to ssl compat list
+
+add missing mod_wolfssl to ssl compat module list
+
+x-ref:
+  "[lighttpd] -mod-wolfssl fails (requires dependency on -mod-openssl?)"
+  https://github.com/openwrt/packages/issues/14139
+
+Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
+---
+ src/configfile.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/configfile.c b/src/configfile.c
+index da444154..c7739c4f 100644
+--- a/src/configfile.c
++++ b/src/configfile.c
+@@ -345,6 +345,8 @@ static void config_compat_module_load (server *srv) {
+             append_mod_openssl = 0;
+         else if (buffer_eq_slen(m, CONST_STR_LEN("mod_openssl")))
+             append_mod_openssl = 0;
++        else if (buffer_eq_slen(m, CONST_STR_LEN("mod_wolfssl")))
++            append_mod_openssl = 0;
+         else if (buffer_eq_slen(m, CONST_STR_LEN("mod_authn_file")))
+             append_mod_authn_file = 0;
+         else if (buffer_eq_slen(m, CONST_STR_LEN("mod_authn_ldap")))
+-- 
+2.28.0
+
