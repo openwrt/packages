@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squid
 PKG_VERSION:=4.12
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www3.us.squid-cache.org/Versions/v4/ \
@@ -21,9 +21,9 @@ PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_CPE_ID:=cpe:/a:squid-cache:squid
 
-PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -69,8 +69,7 @@ define Package/squid-mod-cachemgr
 endef
 
 CONFIGURE_ARGS += \
-	BUILDCXX=$(HOSTCXX) \
-	BUILDCXXFLAGS=$(if $(HOST_CXXFLAGS),$(HOST_CXXFLAGS),-O2) \
+	BUILDCXX=$(HOSTCXX_NOCACHE) \
 	--config-cache \
 	--datadir=/usr/share/squid \
 	--libexecdir=/usr/lib/squid \
@@ -121,13 +120,6 @@ CONFIGURE_VARS += \
 
 TARGET_CFLAGS += -Wno-error
 TARGET_LDFLAGS += -latomic
-
-define Build/Compile
-	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/lib all
-	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
-		install
-endef
 
 define Package/squid/install
 	$(INSTALL_DIR) $(1)/usr/sbin
