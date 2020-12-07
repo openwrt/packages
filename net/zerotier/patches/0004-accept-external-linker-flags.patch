@@ -7,8 +7,6 @@ Subject: [PATCH 4/8] accept external linker flags
  make-linux.mk | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/make-linux.mk b/make-linux.mk
-index b1bb638e..d358ecfb 100644
 --- a/make-linux.mk
 +++ b/make-linux.mk
 @@ -77,7 +77,7 @@ else
@@ -20,6 +18,3 @@ index b1bb638e..d358ecfb 100644
  	STRIP?=strip
  	STRIP+=--strip-all
  endif
--- 
-2.29.2
-

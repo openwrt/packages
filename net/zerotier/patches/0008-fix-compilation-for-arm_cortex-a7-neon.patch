@@ -10,8 +10,6 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  node/Constants.hpp | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/node/Constants.hpp b/node/Constants.hpp
-index 400976c1..eccc3a31 100644
 --- a/node/Constants.hpp
 +++ b/node/Constants.hpp
 @@ -109,7 +109,7 @@
@@ -23,6 +21,3 @@ index 400976c1..eccc3a31 100644
  #if (defined(__APPLE__) && !defined(__LP64__)) || (defined(__ANDROID__) && defined(__arm__))
  #ifdef ZT_ARCH_ARM_HAS_NEON
  #undef ZT_ARCH_ARM_HAS_NEON
--- 
-2.29.2
-
