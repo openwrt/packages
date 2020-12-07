@@ -7,8 +7,6 @@ Subject: [PATCH 5/8] link natpmp
  make-linux.mk | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/make-linux.mk b/make-linux.mk
-index d358ecfb..cbee51c3 100644
 --- a/make-linux.mk
 +++ b/make-linux.mk
 @@ -34,7 +34,7 @@ else
@@ -20,6 +18,3 @@ index d358ecfb..cbee51c3 100644
  	ONE_OBJS+=ext/libnatpmp/natpmp.o ext/libnatpmp/getgateway.o
  else
  	LDLIBS+=-lnatpmp
--- 
-2.29.2
-
