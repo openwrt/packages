@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnstap
-PKG_VERSION:=0.2.2
+PKG_VERSION:=0.3.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=golang-dnstap-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/dnstap/golang-dnstap/archive/v$(PKG_VERSION)/
-PKG_HASH:=c7eb42f1f0ca7247b22b774dd78d9874b9db776fa9072f92a5f3a945000b7a60
+PKG_HASH:=8ccdb881cb225459c6607830f9d7761821255a81406ee4141fc61d5f4f8d4cb1
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=Apache-2.0
