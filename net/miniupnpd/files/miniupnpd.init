@@ -131,9 +131,8 @@ upnpd() {
 
 		local iface
 		for iface in ${internal_iface:-lan}; do
-			local device addr6
+			local device
 			network_get_device device "$iface" && echo "listening_ip=$device"
-			network_get_ipaddr6 addr6 "$iface" && echo "ipv6_listening_ip=$addr6"
 		done
 
 		config_load "upnpd"
