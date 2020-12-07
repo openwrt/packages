@@ -9,8 +9,6 @@ when making a shared object; recompile with -fPIC" error
  make-linux.mk | 6 +++---
  1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/make-linux.mk b/make-linux.mk
-index cae8459a..bd05e6b5 100644
 --- a/make-linux.mk
 +++ b/make-linux.mk
 @@ -73,11 +73,11 @@ ifeq ($(ZT_DEBUG),1)
@@ -28,6 +26,3 @@ index cae8459a..bd05e6b5 100644
  	STRIP?=strip
  	STRIP+=--strip-all
  endif
--- 
-2.29.2
-

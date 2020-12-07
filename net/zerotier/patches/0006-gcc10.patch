@@ -7,8 +7,6 @@ Subject: [PATCH 6/8] gcc10
  osdep/Binder.hpp | 6 +++---
  1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/osdep/Binder.hpp b/osdep/Binder.hpp
-index c52f303b..8a38ab04 100644
 --- a/osdep/Binder.hpp
 +++ b/osdep/Binder.hpp
 @@ -396,9 +396,9 @@ public:
@@ -24,6 +22,3 @@ index c52f303b..8a38ab04 100644
  						phy.setIfName(udps,(char*)ii->second.c_str(),(int)ii->second.length());
  						++_bindingCount;
  					}
--- 
-2.29.2
-

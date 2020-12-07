@@ -10,8 +10,6 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  osdep/LinuxNetLink.cpp | 2 ++
  1 file changed, 2 insertions(+)
 
-diff --git a/osdep/LinuxNetLink.cpp b/osdep/LinuxNetLink.cpp
-index 421da1f6..b7c13edf 100644
 --- a/osdep/LinuxNetLink.cpp
 +++ b/osdep/LinuxNetLink.cpp
 @@ -22,6 +22,8 @@
@@ -23,6 +21,3 @@ index 421da1f6..b7c13edf 100644
  #ifndef IFNAMSIZ
  #define IFNAMSIZ 16
  #endif
--- 
-2.29.2
-
