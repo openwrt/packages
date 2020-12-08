@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libftdi
 PKG_VERSION:=0.20
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.intra2net.com/en/developer/libftdi/download/
@@ -52,6 +52,9 @@ define Build/InstallDev
 	$(SED) 's,/usr/bin,/usr,g' $(1)/usr/lib/pkgconfig/libftdipp.pc
 	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libftdipp.pc
 	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libftdipp.pc
+	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(1)/usr/bin/libftdi-config
+	$(INSTALL_DIR) $(2)/bin
+	$(LN) ../../usr/bin/libftdi-config $(2)/bin/libftdi-config
 endef
 
 define Package/libftdi/install
