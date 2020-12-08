@@ -11,22 +11,19 @@ PKG_NAME:=libmcrypt
 PKG_VERSION:=2.5.8
 PKG_RELEASE:=2
 
-PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-
-PKG_LICENSE:=LGPLv2.1
-PKG_LICENSE_FILES:=COPYING.LIB
-PKG_CPE_ID:=cpe:/a:mcrypt:libmcrypt
-
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/mcrypt
 PKG_HASH:=bf2f1671f44af88e66477db0982d5ecb5116a5c767b0a0d68acb34499d41b793
 
-PKG_FIXUP:=autoreconf
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_LICENSE:=LGPL-2.1-or-later
+PKG_LICENSE_FILES:=COPYING.LIB
+PKG_CPE_ID:=cpe:/a:mcrypt:libmcrypt
+
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-
-TARGET_CFLAGS += $(FPIC)
 
 define Package/libmcrypt
   SECTION:=libs
@@ -40,12 +37,11 @@ define Package/libmcrypt/description
 	together a variety of ciphers for convenient use.
 endef
 
-define Build/Configure
-	$(call Build/Configure/Default, \
-		--enable-shared \
-		--enable-static \
-	)
-endef
+CONFIGURE_ARGS += \
+	--enable-shared \
+	--enable-static
+
+TARGET_CFLAGS += $(FPIC)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
@@ -54,8 +50,9 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmcrypt.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/libmcrypt-config $(1)/usr/bin/
-	$(SED) 's,-I$$$${prefix}/include,,g' $(1)/usr/bin/libmcrypt-config
-	$(SED) 's,-L$$$${exec_prefix}/lib,,g' $(1)/usr/bin/libmcrypt-config
+	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(1)/usr/bin/libmcrypt-config
+	$(INSTALL_DIR) $(2)/bin
+	$(LN) ../../usr/bin/libmcrypt-config $(2)/bin/libmcrypt-config
 endef
 
 define Package/libmcrypt/install
