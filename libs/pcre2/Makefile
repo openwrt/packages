@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcre2
 PKG_VERSION:=10.35
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/pcre/$(PKG_NAME)/$(PKG_VERSION)
@@ -68,9 +68,9 @@ CMAKE_OPTIONS += \
 
 define Build/InstallDev
 	$(call Build/InstallDev/cmake,$(1))
-	$(SED) \
-		's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
-		$(1)/usr/bin/pcre2-config
+	$(SED) 	's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(1)/usr/bin/pcre2-config
+	$(INSTALL_DIR) $(2)/bin
+	$(LN) ../../usr/bin/pcre2-config $(2)/bin/pcre2-config
 endef
 
 define Package/libpcre2/install
