@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgphoto2
 PKG_VERSION:=2.5.26
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PORT_VERSION:=0.12.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -473,16 +473,18 @@ TARGET_CFLAGS += $(FPIC)
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gphoto2{,-port}-config $(1)/usr/bin/
+	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(1)/usr/bin/gphoto2{,-port}-config
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/gphoto2 $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgphoto2{,_port}.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libgphoto2{,_port}.pc $(1)/usr/lib/pkgconfig/
-	$(SED) 's,-I$$$${prefix}/include/gphoto2,,g' $(1)/usr/bin/gphoto2{,-port}-config
-	$(SED) 's,-I$$$${prefix}/include,,g' $(1)/usr/bin/gphoto2{,-port}-config
 	# remove annoying recursive symlink
 	rm -f $(1)/usr/include/gphoto2/gphoto2
+	$(INSTALL_DIR) $(2)/bin
+	$(LN) ../../usr/bin/gphoto2-config $(2)/bin/gphoto2-config
+	$(LN) ../../usr/bin/gphoto2-port-config $(2)/bin/gphoto2-port-config
 endef
 
 define Package/libgphoto2/install
