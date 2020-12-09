@@ -13,7 +13,7 @@ with hwinfo version changes when updating the package
 -VERSION := $(shell $(GIT2LOG) --version VERSION ; cat VERSION)
 -endif
 +BRANCH  := master
-+VERSION := $(shell echo 21.7 > VERSION; cat VERSION)
++VERSION := $(shell echo 21.71 > VERSION; cat VERSION)
  PREFIX  := hwinfo-$(VERSION)
  
  include Makefile.common
