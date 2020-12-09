@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=augeas
 PKG_VERSION:=1.12.0
-PKG_RELEASE=1
+PKG_RELEASE=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.augeas.net/
@@ -49,6 +49,9 @@ endef
 define Package/augeas-lense/description
   Set of Augeas lenses.
 endef
+
+CONFIGURE_ARGS+= \
+        --without-selinux
 
 define Package/augeas-lenses-tests
   SECTION:=utils
