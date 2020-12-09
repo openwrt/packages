@@ -57,6 +57,10 @@ CONFIGURE_ARGS += \
 	--disable-rpath \
 	--disable-gtk-doc
 
+ifeq ($(CONFIG_MODEMMANAGER_WITH_AT_COMMAND_VIA_DBUS),y)
+  CONFIGURE_ARGS += --with-at-command-via-dbus
+endif
+
 ifdef CONFIG_MODEMMANAGER_WITH_MBIM
   CONFIGURE_ARGS += --with-mbim
 else
