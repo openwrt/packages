@@ -9,6 +9,7 @@ PKG_SOURCE_URL:=https://codeload.github.com/openSUSE/hwinfo/tar.gz/$(PKG_VERSION
 PKG_HASH:=c4c573eb15cbc10103f5044b485d7e4ff941500ed559743a1c98e6a6deb0ebda
 
 PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Alberto Bursi <bobafetthotmail@gmail.com>
 
 PKG_BUILD_DEPENDS:= hwinfo/host
