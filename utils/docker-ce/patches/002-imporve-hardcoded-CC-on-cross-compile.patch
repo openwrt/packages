@@ -19,11 +19,9 @@ Component: engine
  components/engine/hack/make/.binary | 10 +++++-----
  1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/components/engine/hack/make/.binary b/components/engine/hack/make/.binary
-index 53de6749e5..66f4ca05f3 100644
 --- a/components/engine/hack/make/.binary
 +++ b/components/engine/hack/make/.binary
-@@ -44,27 +44,27 @@ if [ "$(go env GOOS)/$(go env GOARCH)" != "$(go env GOHOSTOS)/$(go env GOHOSTARC
+@@ -44,27 +44,27 @@ if [ "$(go env GOOS)/$(go env GOARCH)" !
  	# must be cross-compiling!
  	case "$(go env GOOS)/$(go env GOARCH)" in
  		windows/amd64)
