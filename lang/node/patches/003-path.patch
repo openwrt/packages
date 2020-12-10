@@ -1,6 +1,6 @@
 --- a/lib/internal/modules/cjs/loader.js
 +++ b/lib/internal/modules/cjs/loader.js
-@@ -1109,7 +1109,8 @@
+@@ -1179,7 +1179,8 @@
      path.resolve(process.execPath, '..') :
      path.resolve(process.execPath, '..', '..');
  
