@@ -1,5 +1,3 @@
-diff --git a/contrib/i2pd.conf b/contrib/i2pd.conf
-index 5ef39bc9..8d5034eb 100644
 --- a/contrib/i2pd.conf
 +++ b/contrib/i2pd.conf
 @@ -8,12 +8,12 @@
