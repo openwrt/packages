@@ -1,6 +1,6 @@
 --- a/tools/icu/icu-generic.gyp
 +++ b/tools/icu/icu-generic.gyp
-@@ -517,6 +517,7 @@
+@@ -522,6 +522,7 @@
        'target_name': 'genrb',
        'type': 'executable',
        'toolsets': [ 'host' ],
@@ -8,7 +8,7 @@
        'dependencies': [ 'icutools' ],
        'sources': [
          '<@(icu_src_genrb)'
-@@ -533,6 +534,7 @@
+@@ -538,6 +539,7 @@
        'target_name': 'iculslocs',
        'toolsets': [ 'host' ],
        'type': 'executable',
@@ -16,7 +16,7 @@
        'dependencies': [ 'icutools' ],
        'sources': [
          'iculslocs.cc',
-@@ -545,6 +547,7 @@
+@@ -550,6 +552,7 @@
        'target_name': 'icupkg',
        'toolsets': [ 'host' ],
        'type': 'executable',
@@ -24,7 +24,7 @@
        'dependencies': [ 'icutools' ],
        'sources': [
          '<@(icu_src_icupkg)',
-@@ -556,6 +559,7 @@
+@@ -561,6 +564,7 @@
        'target_name': 'genccode',
        'toolsets': [ 'host' ],
        'type': 'executable',
@@ -34,7 +34,7 @@
          '<@(icu_src_genccode)',
 --- a/tools/v8_gypfiles/v8.gyp	2019-06-27 19:12:20.000000000 +0900
 +++ b/tools/v8_gypfiles/v8.gyp	2019-07-01 14:40:48.292020880 +0900
-@@ -1255,6 +1255,7 @@
+@@ -1310,6 +1310,7 @@
      {
        'target_name': 'bytecode_builtins_list_generator',
        'type': 'executable',
@@ -42,7 +42,7 @@
        'conditions': [
          ['want_separate_host_toolset', {
            'toolsets': ['host'],
-@@ -1278,6 +1279,8 @@
+@@ -1333,6 +1334,8 @@
      {
        'target_name': 'mksnapshot',
        'type': 'executable',
@@ -51,7 +51,7 @@
        'dependencies': [
          'v8_base_without_compiler',
          'v8_compiler_for_mksnapshot',
-@@ -1300,6 +1303,7 @@
+@@ -1354,6 +1357,7 @@
      {
        'target_name': 'torque',
        'type': 'executable',
@@ -59,7 +59,7 @@
        'dependencies': [
          'torque_base',
          # "build/win:default_exe_manifest",
-@@ -1338,6 +1342,7 @@
+@@ -1392,6 +1396,7 @@
      {
        'target_name': 'torque-language-server',
        'type': 'executable',
@@ -67,7 +67,7 @@
        'conditions': [
          ['want_separate_host_toolset', {
            'toolsets': ['host'],
-@@ -1365,6 +1370,8 @@
+@@ -1419,6 +1424,8 @@
      {
        'target_name': 'gen-regexp-special-case',
        'type': 'executable',
