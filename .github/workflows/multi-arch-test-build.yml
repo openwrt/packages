@@ -24,7 +24,7 @@ jobs:
             runtime_test: true
           - arch: arm_cortex-a15_neon-vfpv4
             runtime_test: true
-          - arch: i386_pentium4
+          - arch: i386_pentium-mmx
             runtime_test: true
           - arch: x86_64
             runtime_test: true
