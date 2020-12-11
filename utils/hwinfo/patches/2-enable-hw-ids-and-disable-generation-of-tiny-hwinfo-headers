@@ -6,7 +6,7 @@ on my OpenSUSE system, so I guess that it is just legacy stuff that bitrotted.
 
 --- a/src/ids/Makefile
 +++ b/src/ids/Makefile
-@@ -17,47 +17,47 @@
+@@ -17,47 +17,47 @@ IDFILES	+= src/bus src/class src/extra s
  	  src/usb src/usb2 src/isapnp src/monitor src/camera src/tv2 src/tv src/dvb2 src/dvb \
  	  src/chipcard src/modem src/pcmcia src/s390 src/sdio
  

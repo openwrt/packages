@@ -4,8 +4,8 @@ Some makefile modifications to:
 >>disable the install functionality as we take the files we need with OpenWrt build system
 >>changes to all makefiles to respect the compile flags
 
---- a/Makefile	
-+++ b/Makefile	
+--- a/Makefile
++++ b/Makefile
 @@ -1,6 +1,6 @@
  TOPDIR		= $(CURDIR)
  SUBDIRS		= src
@@ -14,7 +14,7 @@ Some makefile modifications to:
  CLEANFILES	= hwinfo hwinfo.pc hwinfo.static hwscan hwscan.static hwscand hwscanqueue doc/libhd doc/*~
  LIBS		= -lhd
  SLIBS		= -lhd -luuid
-@@ -18,11 +18,11 @@
+@@ -18,11 +18,11 @@ PREFIX  := hwinfo-$(VERSION)
  
  include Makefile.common
  
@@ -30,7 +30,7 @@ Some makefile modifications to:
  ULIBDIR		= $(LIBDIR)
  
  # this library has been removed from the code, disabling it here too
-@@ -39,13 +39,13 @@
+@@ -39,13 +39,13 @@ OBJS_NO_TINY	= names.o parallel.o modem.
  
  .PHONY:	fullstatic static shared tiny doc diet tinydiet uc tinyuc
  
@@ -49,7 +49,7 @@ Some makefile modifications to:
  
  hwscan: hwscan.o $(LIBHD)
  	$(CC) hwscan.o $(LDFLAGS) $(CFLAGS) $(LIBS) -o $@
-@@ -99,28 +99,29 @@
+@@ -99,28 +99,29 @@ doc:
  	@cd doc ; doxygen libhd.doxy
  
  install:
@@ -101,7 +101,6 @@ Some makefile modifications to:
  
  archive: changelog
  	@if [ ! -d .git ] ; then echo no git repo ; false ; fi
-
 --- a/Makefile.common
 +++ b/Makefile.common
 @@ -1,28 +1,26 @@
@@ -147,7 +146,7 @@ Some makefile modifications to:
  SHARED_FLAGS	= -fPIC
  
  LDFLAGS	+= -Lsrc
-@@ -36,7 +34,7 @@
+@@ -36,7 +34,7 @@ LIBHD_NAME	= $(LIBHD_BASE).so.$(LIBHD_VE
  LIBHD_SO	= $(TOPDIR)/src/$(LIBHD_NAME)
  LIBHD_D		= $(TOPDIR)/src/.lib
  
@@ -156,10 +155,9 @@ Some makefile modifications to:
  
  .PHONY: all distclean clean install subdirs
  
-
 --- a/src/Makefile
 +++ b/src/Makefile
-@@ -12,7 +12,7 @@
+@@ -12,7 +12,7 @@ include $(TOPDIR)/Makefile.common
  #endif
  
  $(LIBHD): $(OBJS)
@@ -170,16 +168,15 @@ Some makefile modifications to:
  ifdef SHARED_FLAGS
 --- a/src/hd/Makefile
 +++ b/src/hd/Makefile
-@@ -12,4 +12,4 @@
- 	@perl -pi -e "s/define\s+HD_MINOR_VERSION\s+\d+/define HD_MINOR_VERSION\t$(LIBHD_MINOR_VERSION)/" $@
+@@ -8,4 +8,4 @@ version.h: $(TOPDIR)/VERSION
+ 	@echo "#define HD_VERSION_STRING \"`cat $(TOPDIR)/VERSION`\"" >$@
  
  $(LIBHD_D): $(OBJS)
 -	ar r $(LIBHD) $?
 +	$(AR) r $(LIBHD) $?
- 
 --- a/src/isdn/Makefile
 +++ b/src/isdn/Makefile
-@@ -5,5 +5,5 @@
+@@ -5,5 +5,5 @@ SUBDIRS = cdb
  include $(TOPDIR)/Makefile.common
  
  $(LIBHD_D): $(OBJS)
@@ -188,10 +185,9 @@ Some makefile modifications to:
  
 --- a/src/smp/Makefile
 +++ b/src/smp/Makefile
-@@ -4,4 +4,4 @@
+@@ -4,4 +4,4 @@ TARGETS	= $(LIBHD_D)
  include $(TOPDIR)/Makefile.common
  
  $(LIBHD_D): $(OBJS)
 -	ar r $(LIBHD) $?
 +	$(AR) r $(LIBHD) $?
-

@@ -2,13 +2,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hwinfo
 PKG_VERSION:=21.71
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/openSUSE/hwinfo/tar.gz/$(PKG_VERSION)?
 PKG_HASH:=c4c573eb15cbc10103f5044b485d7e4ff941500ed559743a1c98e6a6deb0ebda
 
 PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Alberto Bursi <bobafetthotmail@gmail.com>
 
 PKG_BUILD_DEPENDS:= hwinfo/host
