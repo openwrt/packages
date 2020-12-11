@@ -10,6 +10,7 @@ local function scrape()
   local dsl_max_datarate = metric("dsl_max_datarate", "gauge")
   local dsl_error_seconds_total = metric("dsl_error_seconds_total", "counter")
   local dsl_errors_total = metric("dsl_errors_total", "counter")
+  local dsl_erb_total = metric("dsl_erb_total", "counter")
 
   local u = ubus.connect()
   local m = u:call("dsl", "metrics", {})
@@ -21,11 +22,13 @@ local function scrape()
     chipset = m.chipset,
     firmware_version = m.firmware_version,
     api_version = m.api_version,
+    driver_version = m.driver_version,
   }, 1)
 
   -- dsl line settings information
   metric("dsl_line_info", "gauge", {
     annex = m.annex,
+    standard = m.standard,
     mode = m.mode,
     profile = m.profile,
   }, 1)
@@ -81,6 +84,12 @@ local function scrape()
   dsl_errors_total({err="non pre-emptive crc error", loc="far"}, m.errors.far.crc_p)
   dsl_errors_total({err="pre-emptive crc error", loc="near"}, m.errors.near.crcp_p)
   dsl_errors_total({err="pre-emptive crc error", loc="far"}, m.errors.far.crcp_p)
+
+  -- dsl error vectors
+  if m.erb ~= nil then
+    dsl_erb_total({counter="sent"}, m.erb.sent)
+    dsl_erb_total({counter="discarded"}, m.erb.discarded)
+  end
 end
 
 return { scrape = scrape }
