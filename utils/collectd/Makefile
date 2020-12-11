@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
 PKG_VERSION:=5.9.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
@@ -130,6 +130,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	df \
 	disk \
 	dns \
+	dhcpleases \
 	email \
 	entropy \
 	ethstat \
@@ -371,6 +372,7 @@ $(eval $(call BuildPlugin,curl,cURL input,curl,+PACKAGE_collectd-mod-curl:libcur
 $(eval $(call BuildPlugin,df,disk space input,df,))
 $(eval $(call BuildPlugin,disk,disk usage/timing input,disk,))
 $(eval $(call BuildPlugin,dns,DNS traffic input,dns,+PACKAGE_collectd-mod-dns:libpcap))
+$(eval $(call BuildPlugin,dhcpleases,show dhcpleases,dhcpleases,))
 $(eval $(call BuildPlugin,email,email output,email,))
 $(eval $(call BuildPlugin,entropy,Entropy amount input,entropy,))
 $(eval $(call BuildPlugin,ethstat,Ethernet adapter statistics input,ethstat,))
