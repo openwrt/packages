@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=subversion
 PKG_VERSION:=1.14.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=@APACHE/subversion
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -25,7 +25,6 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-
 
 define Package/subversion/Default
   SECTION:=net
@@ -92,6 +91,8 @@ CONFIGURE_ARGS += \
 	--with-lz4=internal \
 	--with-utf8proc=internal \
 	$(call autoconf_bool,INTL_FULL,nls)
+
+TARGET_LDFLAGS += $(if $(INTL_FULL),-lintl)
 
 define Package/subversion-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib
