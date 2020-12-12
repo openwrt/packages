@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libreswan
 PKG_VERSION:=4.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.libreswan.org/
@@ -44,7 +44,7 @@ $(call Package/libreswan/Default)
   DEPENDS:= +IPV6:kmod-ip6-vti +IPV6:kmod-ipsec6 +ip-full +iptables-mod-ipsec \
 	+kmod-crypto-aead +kmod-crypto-authenc +kmod-crypto-gcm \
 	+kmod-crypto-hash +kmod-crypto-rng +kmod-ip-vti +kmod-ipsec \
-	+kmod-ipsec4 +kmod-ipt-ipsec +libevent2 +libevent2-pthreads \
+	+kmod-ipsec4 +kmod-ipt-ipsec +kmod-xfrm-interface +libevent2 +libevent2-pthreads \
 	+libldns +librt +libunbound +nss-utils +nspr +libcap-ng
   PROVIDES:=openswan
   CONFLICTS:=strongswan
@@ -80,6 +80,7 @@ MAKE_FLAGS+= \
     USE_LIBCAP_NG=true \
     USE_SYSTEMD_WATCHDOG=false \
     USE_SECCOMP=false\
+    USE_XFRM_INTERFACE_IFLA_HEADER=false \
     PREFIX="/usr" \
     FINALRUNDIR="/var/run/pluto" \
     FINALNSSDIR="/etc/ipsec.d" \
