@@ -20,7 +20,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/ykpers
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=The Yuibco personalization package
+  TITLE:=The Yubico personalization package
   URL:=https://developers.yubico.com/yubikey-personalization/
   DEPENDS:=+curl +libyubikey +libjson-c +libusb-1.0
 endef

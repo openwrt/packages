@@ -21,7 +21,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/yubico-pam
 	SECTION:=libs
 	CATEGORY:=Libraries
-	TITLE:=The Yuibco PAM module
+	TITLE:=The Yubico PAM module
 	URL:=https://developers.yubico.com/yubico-pam/
 	DEPENDS:=+ykclient +ykpers +libyubikey +libpam +curl
 endef

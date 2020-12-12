@@ -17,7 +17,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/ykclient
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=The Yuibco yubikey c client library
+  TITLE:=The Yubico yubikey c client library
   URL:=https://developers.yubico.com/yubico-c-client/
   DEPENDS:=curl
 endef

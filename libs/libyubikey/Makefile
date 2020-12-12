@@ -16,7 +16,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libyubikey
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=The Yuibco yubikey c library
+  TITLE:=The Yubico yubikey c library
   URL:=https://developers.yubico.com/yubico-c/
 endef
 
