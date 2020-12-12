@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yubico-pam
 PKG_VERSION:=2.26
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=pam_yubico-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://developers.yubico.com/yubico-pam/Releases
@@ -21,7 +21,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/yubico-pam
 	SECTION:=libs
 	CATEGORY:=Libraries
-	TITLE:=The Yuibco PAM module
+	TITLE:=The Yubico PAM module
 	URL:=https://developers.yubico.com/yubico-pam/
 	DEPENDS:=+ykclient +ykpers +libyubikey +libpam +curl
 endef
