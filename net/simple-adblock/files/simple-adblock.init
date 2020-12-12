@@ -9,12 +9,21 @@ START=94
 USE_PROCD=1
 LC_ALL=C
 
+if type extra_command 1>/dev/null 2>&1; then
+	extra_command 'check' 'Checks if specified domain is found in current block-list'
+	extra_command 'dl' 'Force-downloads all enabled block-list'
+	extra_command 'sizes' 'Displays the file-sizes of enabled block-listo'
+	extra_command 'show' 'Shows the service last-run status'
+	extra_command 'version' 'Show version information'
+else
 # shellcheck disable=SC2034
-extra_command "check" "Checks if specified domain is found in current block-list"
-extra_command "dl" "Force-downloads all enabled block-list"
-extra_command "sizes" "Displays the file-sizes of enabled block-listo"
-extra_command "show" "Shows the service last-run status"
-extra_command "version" "Show version"
+	EXTRA_COMMANDS='check dl killcache sizes show version'
+# shellcheck disable=SC2034
+	EXTRA_HELP='	check	Checks if specified domain is found in current block-list
+	dl	Force-downloads all enabled block-list
+	sizes	Displays the file-sizes of enabled block-lists
+	show	Shows the service last-run status'
+fi
 
 readonly packageName='simple-adblock'
 readonly serviceName="$packageName $PKG_VERSION"
@@ -741,13 +750,13 @@ process_config_update() {
 		output 2 "[DL] Config  Update:  $label $__FAIL__\\n"
 		tmpfs add error "errorDownloadingConfigUpdate"
 	else
-		if ! sed -f "$R_TMP" -i /etc/config/simple-adblock; then
+		if [ -s "$R_TMP" ] && sed -f "$R_TMP" -i /etc/config/simple-adblock; then
+			output 1 "$_OK_"
+			output 2 "[DL] Config  Update:  $label $__OK__\\n"
+		else
 			output 1 "$_FAIL_"
 			output 2 "[DL] Config  Update:  $label $__FAIL__\\n"
 			tmpfs add error "errorParsingConfigUpdate"
-		else
-			output 1 "$_OK_"
-			output 2 "[DL] Config  Update:  $label $__OK__\\n"
 		fi
 	fi
 	rm -f "$R_TMP"
@@ -1213,7 +1222,7 @@ stop_service() {
 }
 
 service_triggers() {
-	procd_add_reload_trigger 'simple-adblock'
+	procd_add_config_trigger "config.change" "$packageName" /etc/init.d/$packageName reload
 }
 
 check() {
