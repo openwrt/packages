@@ -129,6 +129,9 @@ mwan3_init()
 		LOG debug "Max interface count is ${MWAN3_INTERFACE_MAX}"
 	fi
 
+	# remove "linkdown", expiry and source based routing modifiers from route lines
+	MWAN3_ROUTE_LINE_EXP="s/linkdown //; s/expires [0-9]\+sec//;s/error [0-9]\+//; ${source_routing:+s/default\(.*\) from [^ ]*/default\1/;} p"
+
 	# mark mask constants
 	bitcnt=$(mwan3_count_one_bits MMX_MASK)
 	mmdefault=$(((1<<bitcnt)-1))

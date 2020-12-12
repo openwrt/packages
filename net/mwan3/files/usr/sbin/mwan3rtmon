@@ -69,7 +69,7 @@ mwan3_add_all_routes()
 
 mwan3_rtmon_route_handle()
 {
-	local action route_line family tbl device line route_line_exp tid source_routing
+	local action route_line family tbl device line tid source_routing
 
 	route_line=${1##"Deleted "}
 	route_family=$2
@@ -79,29 +79,25 @@ mwan3_rtmon_route_handle()
 
 	if [ "$route_line" = "$1" ]; then
 		action="replace"
-		route_line_exp="s/expires \([0-9]\+\)sec//;s/error [0-9]\+//; ${source_routing:+s/default\(.*\) from [^ ]*/default\1/}"
 		$IPS -! add mwan3_connected_${route_family##ip} ${route_line%% *}
 	else
 		action="del"
-		route_line_exp="s/expires [0-9]\+sec//;s/error [0-9]\+//; ${source_routing:+s/default\(.*\) from [^ ]*/default\1/}"
 		mwan3_set_connected_${route_family}
+	fi
+
+	if [ -z "${route_line##*linkdown*}" ]; then
+		LOG debug "attempting to add link on down interface - $route_line"
 	fi
 
 	if [ "$route_family" = "ipv4" ]; then
 		IP="$IP4"
 	elif [ "$route_family" = "ipv6" ] && [ $NO_IPV6 -eq 0 ]; then
 		IP="$IP6"
-		route_line=$(echo "$route_line" | sed "$route_line_exp")
 	else
 		LOG warn "route update called with invalid family - $route_family"
 		return
 	fi
-
-	# don't try to add routes when link has gone down
-	if [ -z "${route_line##linkdown*}" ]; then
-		LOG debug "not adding route due to linkdown - skipping $route_line"
-		return
-	fi
+	route_line=$(echo "$route_line" | sed -ne "$MWAN3_ROUTE_LINE_EXP")
 
 	handle_route() {
 		local iface=$1

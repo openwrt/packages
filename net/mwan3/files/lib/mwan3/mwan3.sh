@@ -413,7 +413,7 @@ mwan3_get_routes()
 	local source_routing
 	config_get_bool source_routing globals source_routing 0
 	[ $source_routing -eq 0 ] && unset source_routing
-	$IP route list table main | sed -ne "/^linkdown/T; s/expires \([0-9]\+\)sec//;s/error [0-9]\+//; ${source_routing:+s/default\(.*\) from [^ ]*/default\1/;} p" | uniq
+	$IP route list table main | sed -ne "$MWAN3_ROUTE_LINE_EXP" | uniq
 }
 
 mwan3_create_iface_route()
