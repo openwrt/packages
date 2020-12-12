@@ -8,20 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=autoconf
-PKG_VERSION:=2.69
-PKG_RELEASE:=3
+PKG_VERSION:=2.70
+PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=@GNU/autoconf
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=64ebcec9f8ac5b2487125a86a7760d2591ac9e1d3dbd59489633f9de62a57684
+PKG_HASH:=fa9e227860d9d845c0a07f63b88c8d7a2ae1aa2345fb619384bb8accc19fecc6
+
 PKG_MAINTAINER:=Heinrich Schuchardt <xypron.glpk@gmx.de>
 PKG_LICENSE:=GPL-3.0-or-later
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-
-CONFIGURE_VARS += M4=m4 EMACS=no
 
 define Package/autoconf
   SECTION:=devel
@@ -37,10 +37,7 @@ define Package/autoconf/description
   automatically configure software source code packages.
 endef
 
-define Build/Install
-	$(SED) 's/@PERL@/\/usr\/bin\/perl/g' $(PKG_BUILD_DIR)/bin/Makefile.in
-	$(call Build/Install/Default)
-endef
+CONFIGURE_VARS += M4=m4 EMACS=no
 
 define Package/autoconf/install
 	$(INSTALL_DIR) $(1)/usr/bin
