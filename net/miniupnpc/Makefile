@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpc
 PKG_VERSION:=2.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://miniupnp.tuxfamily.org/files
@@ -50,6 +50,13 @@ CMAKE_OPTIONS += -DUPNPC_BUILD_TESTS=OFF
 
 TARGET_CFLAGS += $(FPIC)
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/miniupnpc/ $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib*.{a,so*} $(1)/usr/lib/
+endef
 
 define Package/miniupnpc/install
 	$(INSTALL_DIR) $(1)/usr/bin
