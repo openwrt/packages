@@ -5,7 +5,10 @@ START=97
 PIDFILE="/tmp/run/watchcat"
 
 append_string() {
-	local varname="$1"; local add="$2"; local separator="${3:- }"; local actual
+	local varname="$1"
+	local add="$2"
+	local separator="${3:- }"
+	local actual
 	eval "actual=\$$varname"
 
 	new="${actual:+$actual$separator}$add"
@@ -16,112 +19,119 @@ timetoseconds() {
 	local time=$1
 	unset seconds
 
-	{ [ "$time" -ge 1 ] 2> /dev/null && seconds="$time"; } || \
-	{ [ "${time%s}" -ge 1 ] 2> /dev/null && seconds="${time%s}"; } || \
-	{ [ "${time%m}" -ge 1 ] 2> /dev/null && seconds=$((${time%m}*60)); } || \
-	{ [ "${time%h}" -ge 1 ] 2> /dev/null && seconds=$((${time%h}*3600)); } || \
-	{ [ "${time%d}" -ge 1 ] 2> /dev/null && seconds=$((${time%d}*86400)); }
+	{ [ "$time" -ge 1 ] 2>/dev/null && seconds="$time"; } ||
+		{ [ "${time%s}" -ge 1 ] 2>/dev/null && seconds="${time%s}"; } ||
+		{ [ "${time%m}" -ge 1 ] 2>/dev/null && seconds=$((${time%m} * 60)); } ||
+		{ [ "${time%h}" -ge 1 ] 2>/dev/null && seconds=$((${time%h} * 3600)); } ||
+		{ [ "${time%d}" -ge 1 ] 2>/dev/null && seconds=$((${time%d} * 86400)); }
 }
 
 load_watchcat() {
-	config_get period	$1 period
-	config_get mode		$1 mode
-	config_get pinghosts	$1 pinghosts
-	config_get pingperiod	$1 pingperiod
-	config_get nopingtime	$1 nopingtime
-	config_get forcedelay	$1 forcedelay
-	
+	config_get period $1 period
+	config_get mode $1 mode
+	config_get pinghosts $1 pinghosts
+	config_get pingperiod $1 pingperiod
+	config_get nopingtime $1 nopingtime
+	config_get forcedelay $1 forcedelay
+
 	local nopingtime_dflt="900"
 	local forcedelay_dflt="60"
-	
-	# Fix potential typo in mode (backward compatibility).
-	[ "$mode" = "allways" ] && mode="always"
 
+	# Fix potential typo in mode (backward compatibility).
+	[ "$mode" = "allways" ] && mode="periodic_reboot"
+	[ "$mode" = "always" ] && mode="periodic_reboot"
+	[ "$mode" = "ping" ] && mode="ping_reboot"
+	
 	error=""
 	warn=""
-	
-	if [ -z "$period" ] 
-	then
-		append_string "error" "period is not set! Use time value(ex: '30'; '4m'; '6h'; '2d')." "; "	
+
+	if [ -z "$period" ]; then
+		append_string "error" "period is not set! Use time value(ex: '30'; '4m'; '6h'; '2d')." "; "
 	else
-		timetoseconds "$period";period="$seconds"	
-		[ "$period" -ge 1 ] \
-			|| append_string "error" "period has invalid format! Use time value(ex: '30'; '4m'; '6h'; '2d')" "; "	
+		timetoseconds "$period"
+		period="$seconds"
+		[ "$period" -ge 1 ] ||
+			append_string "error" "period has invalid format! Use time value(ex: '30'; '4m'; '6h'; '2d')" "; "
 	fi
-	
-	[ "$mode" = "always" -o "$mode" = "ping" ] \
-		|| append_string "error" "mode must be 'always' or 'ping'" "; "	
-	
-	if [ -z "$forcedelay" ]
-	then
-		forcedelay="$forcedelay_dflt"		
-		append_string "warn" "forcedelay is not configured! Defaulted to $forcedelay seconds" "; "		
+
+	[ "$mode" = "periodic_reboot" -o "$mode" = "ping_reboot" ] ||
+		append_string "error" "mode must be 'periodic_reboot' or 'ping_reboot'" "; "
+
+	if [ -z "$forcedelay" ]; then
+		forcedelay="$forcedelay_dflt"
+		append_string "warn" "forcedelay is not configured! Defaulted to $forcedelay seconds" "; "
 	else
 		[ "$forcedelay" -ge 0 ] || {
-			forcedelay="$forcedelay_dflt"		
-			append_string "warn" "forcedelay is invalid! Defaulted to $forcedelay seconds" "; "		
+			forcedelay="$forcedelay_dflt"
+			append_string "warn" "forcedelay is invalid! Defaulted to $forcedelay seconds" "; "
 		}
 	fi
-	
-	[ -z "$error" -a "$mode" = "ping" ] && {			
-		[ -z "$pinghosts" ] \
-			&& append_string "error" "pinghosts must be set in 'ping' mode! Use space separated address list (ex: '8.8.8.8 9.9.9.9')" "; "
-	
-		if [ -z "$nopingtime" ]
-		then
+
+	[ -z "$error" -a "$mode" = "ping_reboot" ] && {
+		[ -z "$pinghosts" ] &&
+			append_string "error" "pinghosts must be set in 'ping_reboot' mode! Use space separated address list (ex: '8.8.8.8 9.9.9.9')" "; "
+
+		if [ -z "$nopingtime" ]; then
 			nopingtime="$nopingtime_dflt"
-			append_string "warn" "nopingtime is not configured! Defaulted to $nopingtime seconds" "; "			
+			append_string "warn" "nopingtime is not configured! Defaulted to $nopingtime seconds" "; "
 		else
-			timetoseconds "$nopingtime";nopingtime="$seconds"
+			timetoseconds "$nopingtime"
+			nopingtime="$seconds"
 			[ "$nopingtime" -ge 0 ] || {
 				nopingtime="$nopingtime_dflt"
 				append_string "warn" "nopingtime invalid format! Use time value(ex: '30'; '4m'; '6h'; '2d'). Defaulted to $nopingtime seconds" "; "
 			}
 		fi
-		
-		local pingperiod_dflt="$((period/5))"
-				
-		if [ -z "$pingperiod" ] 
-		then
+
+		local pingperiod_dflt="$((period / 5))"
+
+		if [ -z "$pingperiod" ]; then
 			pingperiod="$pingperiod_dflt"
 			append_string "warn" "pingperiod is not configured! Defaulted to $pingperiod seconds(1/5 of period)" "; "
 		else
-			timetoseconds "$pingperiod";pingperiod="$seconds"
+			timetoseconds "$pingperiod"
+			pingperiod="$seconds"
 			[ "$pingperiod" -ge 0 -a "$pingperiod" -ge "$period" ] && {
 				pingperiod="$pingperiod_dflt"
 				append_string "warn" "pingperiod is invalid value(greater than period)! Defaulted to $pingperiod seconds(1/5 of period)" "; "
 			}
 			[ "$pingperiod" -ge 0 ] || {
-				pingperiod="$pingperiod_dflt"				
+				pingperiod="$pingperiod_dflt"
 				append_string "warn" "pingperiod has invalid format! Use time value(ex: '30'; '4m'; '6h'; '2d'). Defaulted to $pingperiod seconds(1/5 of period)" "; "
-			}			
+			}
 		fi
 	}
-	
+
 	[ -n "$warn" ] && logger -p user.warn -t "watchcat" "$1: $warn"
-	[ -n "$error" ] && { logger -p user.err -t "watchcat" "reboot program $1 not started - $error"; return; }
+	[ -n "$error" ] && {
+		logger -p user.err -t "watchcat" "reboot program $1 not started - $error"
+		return
+	}
 
-	if [ "$mode" = "always" ]
-	then
-		/usr/bin/watchcat.sh "always" "$period" "$forcedelay" &
+	case "$mode" in
+	periodic_reboot)
+		/usr/bin/watchcat.sh "periodic_reboot" "$period" "$forcedelay" &
 		logger -p user.info -t "watchcat" "started task (mode=$mode;period=$period;forcedelay=$forcedelay)"
-	else
-		/usr/bin/watchcat.sh "ping" "$period" "$forcedelay" "$pinghosts" "$pingperiod" "$nopingtime" &
-		logger -p user.info -t "watchcat" "started task (mode=$mode;period=$period;pinghosts=$pinghosts;pingperiod=$pingperiod;forcedelay=$forcedelay;nopingtime=$nopingtime)"
-	fi
-
-	echo $! >> "${PIDFILE}.pids"
+		;;
+	ping_reboot)
+		/usr/bin/watchcat.sh "ping_reboot" "$period" "$forcedelay" "$ping_hosts" "$ping_period" "$nopingtime" "$ping_size" &
+		logger -p user.info -t "watchcat" "started task (mode=$mode;period=$period;ping_hosts=$ping_hosts;ping_period=$ping_period;forcedelay=$forcedelay;nopingtime=$nopingtime)"
+		;;
+	*)
+		echo "Error starting Watchcat service. Invalid mode selection: $mode"
+		;;
+	esac
+	
+	echo $! >>"${PIDFILE}.pids"
 }
 
 stop() {
-	if [ -f "${PIDFILE}.pids" ]
-	then
+	if [ -f "${PIDFILE}.pids" ]; then
 		logger -p user.info -t "watchcat" "stopping all tasks"
 
-		while read pid
-		do
+		while read pid; do
 			kill -KILL "$pid"
-		done < "${PIDFILE}.pids"
+		done <"${PIDFILE}.pids"
 
 		rm "${PIDFILE}.pids"
 
@@ -135,8 +145,7 @@ start() {
 	[ -f "${PIDFILE}.pids" ] && stop
 
 	config_load system
-	if [ -n "$(uci show system.@watchcat[0])" ] # at least one watchcat section exists
-	then
+	if [ -n "$(uci show system.@watchcat[0])" ]; then # at least one watchcat section exists
 		logger -p user.info -t "watchcat" "starting all tasks"
 		config_foreach load_watchcat watchcat
 		logger -p user.info -t "watchcat" "all tasks started"
