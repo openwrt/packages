@@ -72,7 +72,7 @@ stop_service() {
 			IP="$IP6"
 		fi
 
-		for tid in $(ip route list table all | sed -ne 's/.*table \([0-9]\+\).*/\1/p' | sort -u); do
+		for tid in $($IP route list table all | sed -ne 's/.*table \([0-9]\+\).*/\1/p' | sort -u); do
 			[ $tid -gt $MWAN3_INTERFACE_MAX ] && continue
 			$IP route flush table $tid &> /dev/null
 		done
