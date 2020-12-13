@@ -22,7 +22,7 @@ func_trap()
 
 mwan3_add_all_routes()
 {
-	local tid IP IPT route_line family active_tbls tid initial_state
+	local tid IP IPT route_line family active_tbls tid initial_state error
 	local ipv=$1
 
 	add_active_tbls()
@@ -40,8 +40,8 @@ mwan3_add_all_routes()
 	{
 		let tid++
 		[ -n "${active_tbls##* $tid *}" ] && return
-		$IP route add table $tid $route_line ||
-			LOG warn "failed to add $route_line to table $tid"
+		error=$($IP route add table $tid $route_line 2>&1) ||
+			LOG warn "failed to add $route_line to table $tid - error: $error"
 	}
 
 	mwan3_update_dev_to_table
@@ -100,6 +100,7 @@ mwan3_rtmon_route_handle()
 	route_line=$(echo "$route_line" | sed -ne "$MWAN3_ROUTE_LINE_EXP")
 
 	handle_route() {
+		local error
 		local iface=$1
 		tbl=$($IP route list table $tid 2>/dev/null)$'\n'
 
@@ -117,8 +118,8 @@ mwan3_rtmon_route_handle()
 
 		network_get_device device "$iface"
 		LOG debug "adjusting route $device: '$IP route $action table $tid $route_line'"
-		$IP route "$action" table $tid $route_line ||
-			LOG warn "failed: '$IP route $action table $tid $route_line'"
+		error=$($IP route "$action" table $tid $route_line 2>&1)||
+			LOG warn "failed: '$IP route $action table $tid $route_line' - error: $error"
 	}
 	handle_route_cb(){
 		local iface=$1
