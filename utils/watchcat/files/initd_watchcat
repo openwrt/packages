@@ -15,7 +15,7 @@ append_string() {
 	eval "$varname=\$new"
 }
 
-timetoseconds() {
+time_to_seconds() {
 	local time=$1
 	unset seconds
 
@@ -30,12 +30,13 @@ load_watchcat() {
 	config_get period $1 period
 	config_get mode $1 mode
 	config_get pinghosts $1 pinghosts
-	config_get pingperiod $1 pingperiod
-	config_get nopingtime $1 nopingtime
-	config_get forcedelay $1 forcedelay
+	config_get ping_period $1 ping_period
+	config_get no_ping_time $1 no_ping_time
+	config_get force_delay $1 force_delay
+	config_get ping_size $1 ping_size "standard"
 
 	local nopingtime_dflt="900"
-	local forcedelay_dflt="60"
+	local force_delay_default="60"
 
 	# Fix potential typo in mode (backward compatibility).
 	[ "$mode" = "allways" ] && mode="periodic_reboot"
@@ -48,7 +49,7 @@ load_watchcat() {
 	if [ -z "$period" ]; then
 		append_string "error" "period is not set! Use time value(ex: '30'; '4m'; '6h'; '2d')." "; "
 	else
-		timetoseconds "$period"
+		time_to_seconds "$period"
 		period="$seconds"
 		[ "$period" -ge 1 ] ||
 			append_string "error" "period has invalid format! Use time value(ex: '30'; '4m'; '6h'; '2d')" "; "
@@ -57,13 +58,13 @@ load_watchcat() {
 	[ "$mode" = "periodic_reboot" -o "$mode" = "ping_reboot" ] ||
 		append_string "error" "mode must be 'periodic_reboot' or 'ping_reboot'" "; "
 
-	if [ -z "$forcedelay" ]; then
-		forcedelay="$forcedelay_dflt"
-		append_string "warn" "forcedelay is not configured! Defaulted to $forcedelay seconds" "; "
+	if [ -z "$force_delay" ]; then
+		force_delay="$force_delay_default"
+		append_string "warn" "force_delay is not configured! Defaulted to $force_delay seconds" "; "
 	else
-		[ "$forcedelay" -ge 0 ] || {
-			forcedelay="$forcedelay_dflt"
-			append_string "warn" "forcedelay is invalid! Defaulted to $forcedelay seconds" "; "
+		[ "$force_delay" -ge 0 ] || {
+			force_delay="$force_delay_default"
+			append_string "warn" "force_delay is invalid! Defaulted to $force_delay seconds" "; "
 		}
 	fi
 
@@ -71,33 +72,33 @@ load_watchcat() {
 		[ -z "$pinghosts" ] &&
 			append_string "error" "pinghosts must be set in 'ping_reboot' mode! Use space separated address list (ex: '8.8.8.8 9.9.9.9')" "; "
 
-		if [ -z "$nopingtime" ]; then
-			nopingtime="$nopingtime_dflt"
-			append_string "warn" "nopingtime is not configured! Defaulted to $nopingtime seconds" "; "
+		if [ -z "$no_ping_time" ]; then
+			no_ping_time="$nopingtime_dflt"
+			append_string "warn" "no_ping_time is not configured! Defaulted to $no_ping_time seconds" "; "
 		else
-			timetoseconds "$nopingtime"
-			nopingtime="$seconds"
-			[ "$nopingtime" -ge 0 ] || {
-				nopingtime="$nopingtime_dflt"
-				append_string "warn" "nopingtime invalid format! Use time value(ex: '30'; '4m'; '6h'; '2d'). Defaulted to $nopingtime seconds" "; "
+			time_to_seconds "$no_ping_time"
+			no_ping_time="$seconds"
+			[ "$no_ping_time" -ge 0 ] || {
+				no_ping_time="$nopingtime_dflt"
+				append_string "warn" "no_ping_time invalid format! Use time value(ex: '30'; '4m'; '6h'; '2d'). Defaulted to $no_ping_time seconds" "; "
 			}
 		fi
 
-		local pingperiod_dflt="$((period / 5))"
+		local ping_period_default="$((period / 5))"
 
-		if [ -z "$pingperiod" ]; then
-			pingperiod="$pingperiod_dflt"
-			append_string "warn" "pingperiod is not configured! Defaulted to $pingperiod seconds(1/5 of period)" "; "
+		if [ -z "$ping_period" ]; then
+			ping_period="$ping_period_default"
+			append_string "warn" "ping_period is not configured! Defaulted to $ping_period seconds(1/5 of period)" "; "
 		else
-			timetoseconds "$pingperiod"
-			pingperiod="$seconds"
-			[ "$pingperiod" -ge 0 -a "$pingperiod" -ge "$period" ] && {
-				pingperiod="$pingperiod_dflt"
-				append_string "warn" "pingperiod is invalid value(greater than period)! Defaulted to $pingperiod seconds(1/5 of period)" "; "
+			time_to_seconds "$ping_period"
+			ping_period="$seconds"
+			[ "$ping_period" -ge 0 -a "$ping_period" -ge "$period" ] && {
+				ping_period="$ping_period_default"
+				append_string "warn" "ping_period is invalid value(greater than period)! Defaulted to $ping_period seconds(1/5 of period)" "; "
 			}
-			[ "$pingperiod" -ge 0 ] || {
-				pingperiod="$pingperiod_dflt"
-				append_string "warn" "pingperiod has invalid format! Use time value(ex: '30'; '4m'; '6h'; '2d'). Defaulted to $pingperiod seconds(1/5 of period)" "; "
+			[ "$ping_period" -ge 0 ] || {
+				ping_period="$ping_period_default"
+				append_string "warn" "ping_period has invalid format! Use time value(ex: '30'; '4m'; '6h'; '2d'). Defaulted to $ping_period seconds(1/5 of period)" "; "
 			}
 		fi
 	}
@@ -110,12 +111,12 @@ load_watchcat() {
 
 	case "$mode" in
 	periodic_reboot)
-		/usr/bin/watchcat.sh "periodic_reboot" "$period" "$forcedelay" &
-		logger -p user.info -t "watchcat" "started task (mode=$mode;period=$period;forcedelay=$forcedelay)"
+		/usr/bin/watchcat.sh "periodic_reboot" "$period" "$force_delay" &
+		logger -p user.info -t "watchcat" "started task (mode=$mode;period=$period;force_delay=$force_delay)"
 		;;
 	ping_reboot)
-		/usr/bin/watchcat.sh "ping_reboot" "$period" "$forcedelay" "$ping_hosts" "$ping_period" "$nopingtime" "$ping_size" &
-		logger -p user.info -t "watchcat" "started task (mode=$mode;period=$period;ping_hosts=$ping_hosts;ping_period=$ping_period;forcedelay=$forcedelay;nopingtime=$nopingtime)"
+		/usr/bin/watchcat.sh "ping_reboot" "$period" "$force_delay" "$ping_hosts" "$ping_period" "$no_ping_time" "$ping_size" &
+		logger -p user.info -t "watchcat" "started task (mode=$mode;period=$period;ping_hosts=$ping_hosts;ping_period=$ping_period;force_delay=$force_delay;no_ping_time=$no_ping_time;ping_size=$ping_size)"
 		;;
 	*)
 		echo "Error starting Watchcat service. Invalid mode selection: $mode"
