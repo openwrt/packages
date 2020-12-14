@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cJSON
 PKG_VERSION:=1.7.14
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/DaveGamble/cJSON/tar.gz/v$(PKG_VERSION)?
@@ -39,8 +39,8 @@ CMAKE_OPTIONS += -DENABLE_CJSON_TEST=OFF
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libcjson.pc $(1)/usr/lib/pkgconfig
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/cjson/cJSON.h $(1)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/include/cjson
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/cjson/cJSON.h $(1)/usr/include/cjson
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libcjson.so* $(1)/usr/lib/
 endef
