@@ -1,7 +1,7 @@
-From 3f3b85a59d3c2cb021174ad92ad3a43d9eb73e62 Mon Sep 17 00:00:00 2001
+From 7a55c37e01114dfd1ae733b099fdee1ba1889449 Mon Sep 17 00:00:00 2001
 From: Rosen Penev <rosenp@gmail.com>
 Date: Fri, 7 Jun 2019 21:00:46 -0700
-Subject: [PATCH] Add compatibility for deprecated TLS methods
+Subject: [PATCH 3/7] Add compatibility for deprecated TLS methods
 
 ---
  src/_cffi_src/openssl/ssl.py                  | 45 +++++++++++++++++--
@@ -10,9 +10,9 @@ Subject: [PATCH] Add compatibility for deprecated TLS methods
 
 --- a/src/_cffi_src/openssl/ssl.py
 +++ b/src/_cffi_src/openssl/ssl.py
-@@ -15,8 +15,9 @@ static const long Cryptography_HAS_SSL_S
+@@ -14,12 +14,14 @@ TYPES = """
+ static const long Cryptography_HAS_SSL_ST;
  static const long Cryptography_HAS_TLS_ST;
- static const long Cryptography_HAS_SSL2;
  static const long Cryptography_HAS_SSL3_METHOD;
 -static const long Cryptography_HAS_TLSv1_1;
 -static const long Cryptography_HAS_TLSv1_2;
@@ -21,17 +21,14 @@ Subject: [PATCH] Add compatibility for deprecated TLS methods
 +static const long Cryptography_HAS_TLS1_2_METHOD;
  static const long Cryptography_HAS_TLSv1_3;
  static const long Cryptography_HAS_SECURE_RENEGOTIATION;
- static const long Cryptography_HAS_TLSEXT_STATUS_REQ_CB;
-@@ -24,6 +25,7 @@ static const long Cryptography_HAS_STATU
- static const long Cryptography_HAS_TLSEXT_STATUS_REQ_TYPE;
  static const long Cryptography_HAS_SSL_CTX_CLEAR_OPTIONS;
  static const long Cryptography_HAS_DTLS;
 +static const long Cryptography_HAS_DTLS1_METHOD;
  static const long Cryptography_HAS_SIGALGS;
  static const long Cryptography_HAS_PSK;
- static const long Cryptography_HAS_CIPHER_DETAILS;
-@@ -596,8 +598,43 @@ static const long Cryptography_HAS_STATU
- static const long Cryptography_HAS_TLSEXT_STATUS_REQ_TYPE = 1;
+ static const long Cryptography_HAS_VERIFIED_CHAIN;
+@@ -543,8 +545,43 @@ static const long Cryptography_HAS_SSL3_
+ 
  static const long Cryptography_HAS_RELEASE_BUFFERS = 1;
  static const long Cryptography_HAS_OP_NO_COMPRESSION = 1;
 -static const long Cryptography_HAS_TLSv1_1 = 1;
@@ -117,7 +114,7 @@ Subject: [PATCH] Add compatibility for deprecated TLS methods
  def cryptography_has_102_verification():
      return [
          "X509_V_ERR_SUITE_B_INVALID_VERSION",
-@@ -307,6 +339,10 @@ CONDITIONAL_NAMES = {
+@@ -286,6 +318,10 @@ CONDITIONAL_NAMES = {
      "Cryptography_HAS_RSA_OAEP_MD": cryptography_has_rsa_oaep_md,
      "Cryptography_HAS_RSA_OAEP_LABEL": cryptography_has_rsa_oaep_label,
      "Cryptography_HAS_SSL3_METHOD": cryptography_has_ssl3_method,

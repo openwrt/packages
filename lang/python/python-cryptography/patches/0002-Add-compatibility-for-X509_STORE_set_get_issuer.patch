@@ -1,13 +1,13 @@
-From a30684980e8f1f7472d885487880b405608f4122 Mon Sep 17 00:00:00 2001
+From 77b25307a743eb52ef5ead24c956e577f5bd025f Mon Sep 17 00:00:00 2001
 From: Rosen Penev <rosenp@gmail.com>
 Date: Fri, 7 Jun 2019 20:42:04 -0700
-Subject: [PATCH] Add compatibility for X509_STORE_set_get_issuer
+Subject: [PATCH 2/7] Add compatibility for X509_STORE_set_get_issuer
 
 Deprecated under OpenSSL 1.1.
 ---
  src/_cffi_src/openssl/x509_vfy.py                        | 8 ++++++++
- src/cryptography/hazmat/bindings/openssl/_conditional.py | 9 +++++++++
- 2 files changed, 17 insertions(+)
+ src/cryptography/hazmat/bindings/openssl/_conditional.py | 8 ++++++++
+ 2 files changed, 16 insertions(+)
 
 --- a/src/_cffi_src/openssl/x509_vfy.py
 +++ b/src/_cffi_src/openssl/x509_vfy.py
@@ -19,7 +19,7 @@ Deprecated under OpenSSL 1.1.
  
  typedef ... Cryptography_STACK_OF_ASN1_OBJECT;
  typedef ... Cryptography_STACK_OF_X509_OBJECT;
-@@ -274,4 +275,11 @@ void (*X509_STORE_set_get_issuer)(X509_S
+@@ -252,4 +253,11 @@ void (*X509_STORE_set_get_issuer)(X509_S
  #else
  static const long Cryptography_HAS_X509_STORE_CTX_GET_ISSUER = 1;
  #endif
@@ -33,23 +33,22 @@ Deprecated under OpenSSL 1.1.
  """
 --- a/src/cryptography/hazmat/bindings/openssl/_conditional.py
 +++ b/src/cryptography/hazmat/bindings/openssl/_conditional.py
-@@ -291,6 +291,12 @@ def cryptography_has_srtp():
+@@ -270,6 +270,11 @@ def cryptography_has_get_proto_version()
+         "SSL_get_max_proto_version",
      ]
- 
  
 +def cryptography_has_x509_cb_issuer_check():
 +    return [
 +        "X509_V_FLAG_CB_ISSUER_CHECK",
 +    ]
 +
-+
+ 
  # This is a mapping of
  # {condition: function-returning-names-dependent-on-that-condition} so we can
- # loop over them and delete unsupported names at runtime. It will be removed
-@@ -342,4 +348,7 @@ CONDITIONAL_NAMES = {
-     "Cryptography_HAS_ENGINE": cryptography_has_engine,
+@@ -319,4 +324,7 @@ CONDITIONAL_NAMES = {
      "Cryptography_HAS_VERIFIED_CHAIN": cryptography_has_verified_chain,
      "Cryptography_HAS_SRTP": cryptography_has_srtp,
+     "Cryptography_HAS_GET_PROTO_VERSION": cryptography_has_get_proto_version,
 +    "Cryptography_HAS_X509_CB_ISSUER_CHECK": (
 +        cryptography_has_x509_cb_issuer_check
 +    ),

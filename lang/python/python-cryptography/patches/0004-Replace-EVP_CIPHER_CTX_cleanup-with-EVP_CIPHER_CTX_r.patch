@@ -1,13 +1,13 @@
-From 50c1e937342c8b13c8a80c3bb55ce245aecdcdfe Mon Sep 17 00:00:00 2001
+From 008e299aaf32af0b93eede649c6942af93b1c11e Mon Sep 17 00:00:00 2001
 From: Rosen Penev <rosenp@gmail.com>
 Date: Sat, 15 Jun 2019 17:49:25 -0700
-Subject: [PATCH] Replace EVP_CIPHER_CTX_cleanup with EVP_CIPHER_CTX_reset
+Subject: [PATCH 4/7] Replace EVP_CIPHER_CTX_cleanup with EVP_CIPHER_CTX_reset
 
 Deprecated in OpenSSL 1.1
 ---
- src/_cffi_src/openssl/evp.py                        | 10 ++++++++++
- src/cryptography/hazmat/backends/openssl/ciphers.py |  2 +-
- 2 files changed, 11 insertions(+), 1 deletion(-)
+ src/_cffi_src/openssl/evp.py                        | 6 ++++++
+ src/cryptography/hazmat/backends/openssl/ciphers.py | 2 +-
+ 2 files changed, 7 insertions(+), 1 deletion(-)
 
 --- a/src/_cffi_src/openssl/evp.py
 +++ b/src/_cffi_src/openssl/evp.py
@@ -19,14 +19,10 @@ Deprecated in OpenSSL 1.1
  EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void);
  void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *);
  int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *, int);
-@@ -273,4 +274,13 @@ static const long Cryptography_HAS_EVP_D
+@@ -269,4 +270,9 @@ static const long Cryptography_HAS_EVP_D
  #ifndef EVP_PKEY_POLY1305
  #define EVP_PKEY_POLY1305 NID_poly1305
  #endif
-+
-+#if CRYPTOGRAPHY_OPENSSL_LESS_THAN_110 && !CRYPTOGRAPHY_LIBRESSL_27_OR_GREATER
-+#define EVP_CIPHER_CTX_reset EVP_CIPHER_CTX_cleanup
-+#endif
 +
 +#if (OPENSSL_API_COMPAT >= 0x10100000L) && !CRYPTOGRAPHY_IS_LIBRESSL
 +#define EVP_CIPHER_CTX_cleanup EVP_CIPHER_CTX_reset
