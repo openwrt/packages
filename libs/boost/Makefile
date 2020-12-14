@@ -59,6 +59,7 @@ This package provides the following run-time libraries:
  - graph
  - - graph-parallel
  - iostreams
+ - json
  - locale
  - log
  - math
@@ -344,6 +345,7 @@ $(eval $(call DefineBoostLibrary,fiber,coroutine filesystem,,!boost-fiber-exclud
 $(eval $(call DefineBoostLibrary,filesystem,system))
 $(eval $(call DefineBoostLibrary,graph,regex))
 $(eval $(call DefineBoostLibrary,iostreams,,,,zlib liblzma libbz2 libzstd))
+$(eval $(call DefineBoostLibrary,json,container))
 $(eval $(call DefineBoostLibrary,locale,system chrono thread,,,icu))
 $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex))
 $(eval $(call DefineBoostLibrary,math))
