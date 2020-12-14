@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rpcd-mod-lxc
-PKG_RELEASE=20171206
+PKG_RELEASE=20201208
 
 PKG_LICENSE:=ISC
 
@@ -32,6 +32,11 @@ endef
 define Package/rpcd-mod-lxc/install
 	$(INSTALL_DIR) $(1)/usr/lib/rpcd
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/lxc.so $(1)/usr/lib/rpcd/
+endef
+
+define Package/rpcd-mod-lxc/postinst
+#!/bin/sh
+[ -n "$$IPKG_INSTROOT" ] || /etc/init.d/rpcd reload
 endef
 
 $(eval $(call BuildPackage,rpcd-mod-lxc))
