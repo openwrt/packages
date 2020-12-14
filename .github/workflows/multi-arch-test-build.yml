@@ -20,7 +20,7 @@ jobs:
           - powerpc_8540
         runtime_test: [false]
         include:
-          - arch: aarch64_generic
+          - arch: aarch64_cortex-a53
             runtime_test: true
           - arch: arm_cortex-a15_neon-vfpv4
             runtime_test: true
