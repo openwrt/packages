@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -108,7 +108,7 @@ all: keyctl request-key key.dns_resolver
+@@ -109,7 +109,7 @@ all: keyctl request-key key.dns_resolver
  ###############################################################################
  #RPATH = -Wl,-rpath,$(LIBDIR)
  

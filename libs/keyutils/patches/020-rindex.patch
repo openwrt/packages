@@ -1,6 +1,6 @@
 --- a/key.dns_resolver.c
 +++ b/key.dns_resolver.c
-@@ -529,12 +529,12 @@ int main(int argc, char *argv[])
+@@ -717,12 +717,12 @@ int main(int argc, char *argv[])
  	keyend = buf + ktlen + 1;
  
  	/* the actual key description follows the last semicolon */
