@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-chardet
-PKG_VERSION:=3.0.4
-PKG_RELEASE:=4
+PKG_VERSION:=4.0.0
+PKG_RELEASE:=1
 PKG_LICENSE:=LGPL-2.1
 
 PYPI_NAME:=chardet
-PKG_HASH:=84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae
+PKG_HASH:=0d6f53a15db4120f2b08c94f11e7d93d2c911ee118b6b30a04ec3ee8310179fa
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
