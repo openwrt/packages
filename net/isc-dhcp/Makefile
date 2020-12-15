@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=isc-dhcp
 UPSTREAM_NAME:=dhcp
 PKG_VERSION:=4.4.1
-PKG_RELEASE:=11
+PKG_RELEASE:=12
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -109,12 +109,14 @@ define Package/isc-dhcp-server-ipv4
   $(call Package/isc-dhcp/Default)
   TITLE+= server (without IPv6)
   VARIANT:=ipv4
+  DEPENDS+=bind-server bind-client
 endef
 
 define Package/isc-dhcp-server-ipv6
   $(call Package/isc-dhcp/Default)
   TITLE+= server (with IPv6)
   VARIANT:=ipv6
+  DEPENDS+=bind-server bind-client
 endef
 
 define Package/isc-dhcp-server/description
