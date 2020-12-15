@@ -5,7 +5,7 @@
 
 USE_PROCD=1
 
-START=50
+START=22
 
 config_file=/etc/bind/named.conf
 config_dir=$(dirname $config_file)
@@ -17,9 +17,13 @@ rndc_temp=$(mktemp /tmp/rndc-confgen.XXXXXX)
 logdir=/var/log/named/
 cachedir=/var/cache/bind
 libdir=/var/lib/bind
+dyndir=/tmp/bind
+
+conf_local_file=$dyndir/named.conf.local
+
 
 fix_perms() {
-    for dir in $libdir $logdir $cachedir; do
+    for dir in $libdir $logdir $cachedir $dyndir; do
 	test -e "$dir" || {
             mkdir -p "$dir"
             chgrp bind "$dir"
@@ -29,7 +33,7 @@ fix_perms() {
 }
 
 reload_service() {
-    rndc reload
+    rndc -q reload
 }
 
 start_service() {
@@ -55,11 +59,14 @@ start_service() {
 
     rm -f $rndc_temp
 
+    touch $conf_local_file
+
     procd_open_instance
     procd_set_param command /usr/sbin/named -u bind -f -c $config_file
     procd_set_param file $config_file \
 			 $config_dir/bind.keys \
 			 $named_options_file \
+			 $conf_local_file \
 			 $config_dir/db.*
     procd_set_param respawn
     procd_close_instance
