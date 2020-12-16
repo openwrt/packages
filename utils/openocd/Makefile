@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openocd
-PKG_SOURCE_VERSION:=v0.10.0-1000-gdb23c13d
+PKG_SOURCE_VERSION:=v0.11.0-rc1
 PKG_VERSION:=$(PKG_SOURCE_VERSION)
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=git://git.code.sf.net/p/openocd/code
-PKG_MIRROR_HASH:=6f8c0ecf240427654ad5e911b44f78996da931209280f4a19c1215802ff14638
+PKG_MIRROR_HASH:=c4a0a6cad821946608c843f557b993e7cfeb0f193e4c0f149ebfbfbfd57054a6
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -37,18 +37,11 @@ define Package/openocd
   CATEGORY:=Utilities
   TITLE:=OpenOCD Utility
   URL:=http://openocd.sf.net/
-  DEPENDS:=+PACKAGE_openocd_with_usb:libusb-1.0 \
-	+PACKAGE_openocd_with_usb:libusb-compat \
-	+PACKAGE_openocd_with_usb:libftdi1 \
-	+PACKAGE_openocd_with_usb:hidapi
-endef
-
-define Package/openocd/config
-  if PACKAGE_openocd
-	config PACKAGE_openocd_with_usb
-		bool "Build with support for USB adapters."
-		default y
-  endif
+  DEPENDS:=+libusb-1.0 \
+	+libusb-compat \
+	+libftdi1 \
+	+hidapi \
+	+libgpiod
 endef
 
 define Package/openocd/description
@@ -78,9 +71,9 @@ CONFIGURE_ARGS += \
 	--prefix="/usr" \
 	--disable-werror \
 	MAKEINFO=true \
-	$(if $(CONFIG_PACKAGE_openocd_with_usb),,PKG_CONFIG=false) \
 	--enable-dummy \
-	--enable-sysfsgpio
+	--enable-sysfsgpio \
+	--enable-linuxgpiod
 
 TARGET_CFLAGS += -DRELSTR=\\\"-$(PKG_VERSION)-$(PKG_RELEASE)-OpenWrt\\\"
 
