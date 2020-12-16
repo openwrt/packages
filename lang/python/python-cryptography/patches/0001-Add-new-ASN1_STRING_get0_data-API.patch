@@ -1,12 +1,12 @@
-From 1d97b931bf4701fbd3478d2b788ec4310d9eb8e1 Mon Sep 17 00:00:00 2001
+From 7eefc9c72f522e414f953fee2d6ca9242c566107 Mon Sep 17 00:00:00 2001
 From: Rosen Penev <rosenp@gmail.com>
 Date: Fri, 7 Jun 2019 18:18:46 -0700
-Subject: [PATCH] Add new ASN1_STRING_get0_data API
+Subject: [PATCH 1/7] Add new ASN1_STRING_get0_data API
 
 Introduced with OpenSSL 1.1
 ---
- src/_cffi_src/openssl/asn1.py | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ src/_cffi_src/openssl/asn1.py | 4 ++++
+ 1 file changed, 4 insertions(+)
 
 --- a/src/_cffi_src/openssl/asn1.py
 +++ b/src/_cffi_src/openssl/asn1.py
@@ -18,14 +18,10 @@ Introduced with OpenSSL 1.1
  int ASN1_STRING_set(ASN1_STRING *, const void *, int);
  
  /*  ASN1 OCTET STRING */
-@@ -105,4 +106,11 @@ ASN1_NULL *ASN1_NULL_new(void);
+@@ -105,4 +106,7 @@ ASN1_NULL *ASN1_NULL_new(void);
  """
  
  CUSTOMIZATIONS = """
-+#if CRYPTOGRAPHY_OPENSSL_LESS_THAN_110 && !CRYPTOGRAPHY_LIBRESSL_27_OR_GREATER
-+#define ASN1_STRING_get0_data ASN1_STRING_data
-+#endif
-+
 +#if (OPENSSL_API_COMPAT >= 0x10100000L) && !CRYPTOGRAPHY_IS_LIBRESSL
 +#define ASN1_STRING_data ASN1_STRING_get0_data
 +#endif
