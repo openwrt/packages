@@ -1,5 +1,5 @@
---- a/nss/lib/dbm/src/dirent.h	2017-10-19 17:15:14.797053528 +0300
-+++ b/nss/lib/dbm/src/dirent.h	2017-10-19 17:15:26.156310432 +0300
+--- a/nss/lib/dbm/src/dirent.h
++++ b/nss/lib/dbm/src/dirent.h
 @@ -30,7 +30,7 @@
  #define MAXNAMLEN FILENAME_MAX
  
@@ -9,9 +9,9 @@
  #endif
  #endif
  
---- a/nss/coreconf/rules.mk	2019-03-31 22:39:06.741609534 +0300
-+++ b/nss/coreconf/rules.mk	2019-03-31 22:36:13.260356949 +0300
-@@ -261,7 +261,7 @@
+--- a/nss/coreconf/rules.mk
++++ b/nss/coreconf/rules.mk
+@@ -176,7 +176,7 @@ $(LIBRARY): $(OBJS) | $$(@D)/d
  ifeq (,$(filter-out _WIN%,$(NS_USE_GCC)_$(OS_TARGET)))
  	$(AR) $(subst /,\\,$(OBJS))
  else
@@ -20,9 +20,9 @@
  endif
  	$(RANLIB) $@
  
---- a/nss/coreconf/arch.mk	2019-03-31 23:38:34.374931416 +0300
-+++ b/nss/coreconf/arch.mk	2019-03-31 23:38:44.667236102 +0300
-@@ -334,7 +334,7 @@
+--- a/nss/coreconf/arch.mk
++++ b/nss/coreconf/arch.mk
+@@ -306,7 +306,7 @@ else
      OBJDIR_NAME_COMPILER = $(COMPILER_TAG)
  endif
  OBJDIR_NAME_BASE = $(OS_TARGET)$(OS_RELEASE)$(CPU_TAG)$(OBJDIR_NAME_COMPILER)$(LIBC_TAG)$(IMPL_STRATEGY)$(OBJDIR_TAG)
@@ -31,29 +31,9 @@
  
  
  ifeq (,$(filter-out WIN%,$(OS_TARGET)))
---- a/nss/coreconf/Linux.mk	2019-04-01 10:08:59.129269177 +0300
-+++ b/nss/coreconf/Linux.mk	2019-04-01 10:09:15.557782574 +0300
-@@ -144,7 +144,8 @@
- 	DEFINES		+= -D_REENTRANT
- endif
- 
-+ifndef USE_NATIVE
--DSO_CFLAGS		= -fPIC
-+DSO_CFLAGS		= $(fpic)
- DSO_LDOPTS		= -shared $(ARCHFLAG) -Wl,--gc-sections
- # The linker on Red Hat Linux 7.2 and RHEL 2.1 (GNU ld version 2.11.90.0.8)
- # incorrectly reports undefined references in the libraries we link with, so
-@@ -154,6 +155,7 @@
- ZDEFS_FLAG		= -Wl,-z,defs
- DSO_LDOPTS		+= $(if $(findstring 2.11.90.0.8,$(shell ld -v)),,$(ZDEFS_FLAG))
- LDFLAGS			+= $(ARCHFLAG) -z noexecstack
-+endif
- 
- # On Maemo, we need to use the -rpath-link flag for even the standard system
- # library directories.
---- a/nss/coreconf/Linux.mk	2019-04-06 20:25:36.431663894 +0300
-+++ b/nss/coreconf/Linux.mk	2019-04-06 20:26:23.397129525 +0300
-@@ -108,11 +108,6 @@
+--- a/nss/coreconf/Linux.mk
++++ b/nss/coreconf/Linux.mk
+@@ -108,11 +108,6 @@ LIBC_TAG		= _glibc
  endif
  
  ifdef BUILD_OPT
@@ -65,18 +45,36 @@
  ifdef MOZ_DEBUG_SYMBOLS
  	ifdef MOZ_DEBUG_FLAGS
  		OPTIMIZER += $(MOZ_DEBUG_FLAGS)
-@@ -192,7 +192,7 @@
+@@ -144,7 +139,8 @@ ifdef USE_PTHREADS
+ 	DEFINES		+= -D_REENTRANT
+ endif
+ 
+-DSO_CFLAGS		= -fPIC
++ifndef USE_NATIVE
++DSO_CFLAGS		= $(fpic)
+ DSO_LDOPTS		= -shared $(ARCHFLAG) -Wl,--gc-sections
+ # The linker on Red Hat Linux 7.2 and RHEL 2.1 (GNU ld version 2.11.90.0.8)
+ # incorrectly reports undefined references in the libraries we link with, so
+@@ -154,6 +150,7 @@ DSO_LDOPTS		= -shared $(ARCHFLAG) -Wl,--
+ ZDEFS_FLAG		= -Wl,-z,defs
+ DSO_LDOPTS		+= $(if $(findstring 2.11.90.0.8,$(shell ld -v)),,$(ZDEFS_FLAG))
+ LDFLAGS			+= $(ARCHFLAG) -z noexecstack
++endif
+ 
+ # On Maemo, we need to use the -rpath-link flag for even the standard system
+ # library directories.
+@@ -195,7 +192,7 @@ RPATH = -Wl,-rpath,'$$ORIGIN:/opt/sun/pr
  endif
  endif
-
+ 
 -MKSHLIB         = $(CC) $(DSO_LDOPTS) -Wl,-soname -Wl,$(@:$(OBJDIR)/%.so=%.so) $(RPATH)
 +MKSHLIB         = $(CC) $(DSO_LDOPTS) -Wl,-soname -Wl,$(@:$(OBJDIR)/%.so=%.so) $(RPATH) $(fpic) -Wl,--gc-sections,--as-needed
-
+ 
  ifdef MAPFILE
  	MKSHLIB += -Wl,--version-script,$(MAPFILE)
---- a/nss/coreconf/UNIX.mk	2019-04-06 20:34:24.284157646 +0300
-+++ b/nss/coreconf/UNIX.mk	2019-04-06 20:34:34.760485327 +0300
-@@ -10,7 +10,6 @@
+--- a/nss/coreconf/UNIX.mk
++++ b/nss/coreconf/UNIX.mk
+@@ -10,7 +10,6 @@ AR          = ar cr $@
  LDOPTS     += -L$(SOURCE_LIB_DIR)
  
  ifdef BUILD_OPT
