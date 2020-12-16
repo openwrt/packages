@@ -8,21 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=conntrack-tools
+PKG_VERSION:=1.4.6
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://git.netfilter.org/conntrack-tools
-PKG_SOURCE_DATE:=2018-05-01
-PKG_SOURCE_VERSION:=88610abee7e58f4da7ec6f198e00ff70a92c870f
-PKG_MIRROR_HASH:=cccc5e25e3cb159385b170f63f9b7fd2186f68d32239718080f605c060ea1cb8
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://www.netfilter.org/projects/conntrack-tools/files
+PKG_HASH:=590859cc848245dbfd9c6487761dd303b3a1771e007f4f42213063ca56205d5f
 
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
-PKG_LICENSE:=GPL-2.0
-PKG_CPE_ID:=cpe:/a:conntrack-tools_project:conntrack-tools
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:netfilter:conntrack-tools
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
-
+PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=libtirpc
 
 include $(INCLUDE_DIR)/package.mk
@@ -32,7 +31,7 @@ define Package/conntrack-tools/default
   CATEGORY:=Network
   DEPENDS:=+libnetfilter-conntrack +libnetfilter-cttimeout +libnetfilter-cthelper +libnetfilter-queue
   SUBMENU:=Firewall
-  URL:=http://conntrack-tools.netfilter.org/
+  URL:=https://conntrack-tools.netfilter.org/
 endef
 
 define Package/conntrack
