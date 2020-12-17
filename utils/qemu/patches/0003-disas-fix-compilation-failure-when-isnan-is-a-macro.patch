@@ -1,7 +1,7 @@
-From fb90eacb808c3b1719d6a5f2deefe88c82589bfb Mon Sep 17 00:00:00 2001
+From be686d9ea58f8fba22428f4cd79e72590fad8b05 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Sat, 24 Feb 2018 13:45:25 +0800
-Subject: [PATCH 3/4] disas: fix compilation failure when isnan is a macro
+Subject: [PATCH] disas: fix compilation failure when isnan is a macro
 
 ---
  disas/libvixl/vixl/utils.h | 16 +++++++++++-----
