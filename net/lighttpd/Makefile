@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
-PKG_VERSION:=1.4.56
-PKG_RELEASE:=5
+PKG_VERSION:=1.4.57
+PKG_RELEASE:=1
 # release candidate ~rcX testing; remove for release
-#PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-1.4.56
+#PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-1.4.57
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.lighttpd.net/lighttpd/releases-1.4.x
-PKG_HASH:=e4ce84cd79e8ae8ba193c7a7cc79c4afba9a076b443ef9f8d4bcd13a3354df77
+PKG_HASH:=52ca961b89c12f7ecbb2e4e0c5a9e79b2863c64e33c42832a165e7f894d6217f
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=BSD-3-Clause
@@ -57,6 +57,17 @@ config LIGHTTPD_SSL
 	  your lighttpd configuration file.
           (mod_gnutls, mod_mbedtls, mod_nss, mod_openssl, mod_wolfssl)
 
+config LIGHTTPD_SSL_DEPENDS
+        bool
+        depends on LIGHTTPD_SSL
+        default PACKAGE_lighttpd-mod-mbedtls || PACKAGE_lighttpd-mod-wolfssl || PACKAGE_lighttpd-mod-gnutls || PACKAGE_lighttpd-mod-nss
+
+config LIGHTTPD_SSL_SELECT
+        tristate
+        depends on LIGHTTPD_SSL
+        default m if !LIGHTTPD_SSL_DEPENDS
+        select PACKAGE_lighttpd-mod-openssl
+
 config LIGHTTPD_LOGROTATE
 	bool "Logrotate support"
 	depends on PACKAGE_lighttpd
@@ -64,26 +75,6 @@ config LIGHTTPD_LOGROTATE
 	help
 	  It adds support for logrotate functionality.
 endef
-
-ifneq ($(strip $(CONFIG_LIGHTTPD_SSL)),)
-  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-openssl),)
-  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-mbedtls),)
-  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-wolfssl),)
-  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-gnutls),)
-  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-nss),)
-    CONFIG_PACKAGE_lighttpd-mod-openssl=m
-  endif
-  endif
-  endif
-  endif
-  endif
-endif
-
-ifneq ($(CONFIG_PACKAGE_lighttpd-mod-auth),)
-  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-authn_file),)
-    CONFIG_PACKAGE_lighttpd-mod-authn_file=m
-  endif
-endif
 
 MESON_ARGS += \
 	-Dwith_brotli=false \
