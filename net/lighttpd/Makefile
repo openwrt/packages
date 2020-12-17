@@ -57,6 +57,17 @@ config LIGHTTPD_SSL
 	  your lighttpd configuration file.
           (mod_gnutls, mod_mbedtls, mod_nss, mod_openssl, mod_wolfssl)
 
+config LIGHTTPD_SSL_DEPENDS
+        bool
+        depends on LIGHTTPD_SSL
+        default PACKAGE_lighttpd-mod-mbedtls || PACKAGE_lighttpd-mod-wolfssl || PACKAGE_lighttpd-mod-gnutls || PACKAGE_lighttpd-mod-nss
+
+config LIGHTTPD_SSL_SELECT
+        tristate
+        depends on LIGHTTPD_SSL
+        default m if !LIGHTTPD_SSL_DEPENDS
+        select PACKAGE_lighttpd-mod-openssl
+
 config LIGHTTPD_LOGROTATE
 	bool "Logrotate support"
 	depends on PACKAGE_lighttpd
@@ -64,26 +75,6 @@ config LIGHTTPD_LOGROTATE
 	help
 	  It adds support for logrotate functionality.
 endef
-
-ifneq ($(strip $(CONFIG_LIGHTTPD_SSL)),)
-  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-openssl),)
-  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-mbedtls),)
-  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-wolfssl),)
-  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-gnutls),)
-  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-nss),)
-    CONFIG_PACKAGE_lighttpd-mod-openssl=m
-  endif
-  endif
-  endif
-  endif
-  endif
-endif
-
-ifneq ($(CONFIG_PACKAGE_lighttpd-mod-auth),)
-  ifeq ($(CONFIG_PACKAGE_lighttpd-mod-authn_file),)
-    CONFIG_PACKAGE_lighttpd-mod-authn_file=m
-  endif
-endif
 
 MESON_ARGS += \
 	-Dwith_brotli=false \
