@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cifs-utils
 PKG_VERSION:=6.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.samba.org/pub/linux-cifs/cifs-utils/
@@ -68,7 +68,7 @@ endef
 define Package/cifsmount/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/sbin/mount.cifs $(1)/usr/sbin/
-	$(LN) /usr/sbin/mount.cifs $(1)/usr/sbin/mount.smb3
+	$(LN) mount.cifs $(1)/usr/sbin/mount.smb3
 endef
 
 define Package/smbinfo/install
