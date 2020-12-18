@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgphoto2
 PKG_VERSION:=2.5.26
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PORT_VERSION:=0.12.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -490,7 +490,7 @@ endef
 define Package/libgphoto2/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgphoto2{,_port}.so.* $(1)/usr/lib/
-	ln -s $(1)/usr/lib/libgphoto2_port.so.12 $(1)/usr/lib/libgphoto2_port.so.10
+	$(LN) libgphoto2_port.so.12 $(1)/usr/lib/libgphoto2_port.so.10
 	$(INSTALL_DIR) $(1)/usr/lib/libgphoto2
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgphoto2/print-camera-list $(1)/usr/lib/libgphoto2/print-camera-list
 endef
