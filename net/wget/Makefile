@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wget
 PKG_VERSION:=1.20.3
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
@@ -47,7 +47,7 @@ $(call Package/wget/Default)
   TITLE+= (with SSL support)
   VARIANT:=ssl
   PROVIDES+=wget-ssl
-  ALTERNATIVES:=300:/usr/bin/wget:/usr/bin/wget-ssl
+  ALTERNATIVES:=300:/usr/bin/wget:/usr/libexec/wget-ssl
 endef
 
 define Package/wget/description
@@ -60,7 +60,7 @@ $(call Package/wget/Default)
   TITLE+= (without SSL support)
   VARIANT:=nossl
   PROVIDES+=wget
-  ALTERNATIVES:=300:/usr/bin/wget:/usr/bin/wget-nossl
+  ALTERNATIVES:=300:/usr/bin/wget:/usr/libexec/wget-nossl
 endef
 
 define Package/wget-nossl/description
@@ -95,13 +95,13 @@ ifeq ($(BUILD_VARIANT),nossl)
 endif
 
 define Package/wget/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/wget $(1)/usr/bin/wget-ssl
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/wget $(1)/usr/libexec/wget-ssl
 endef
 
 define Package/wget-nossl/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/wget $(1)/usr/bin/wget-nossl
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/wget $(1)/usr/libexec/wget-nossl
 endef
 
 $(eval $(call BuildPackage,wget))

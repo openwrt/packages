@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openssh
 PKG_VERSION:=8.4p1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
@@ -49,9 +49,8 @@ define Package/openssh-client
 	$(call Package/openssh/Default)
 	TITLE+= client
 	ALTERNATIVES:=\
-		200:/usr/bin/ssh:/usr/bin/openssh-ssh \
-		200:/usr/bin/scp:/usr/bin/openssh-scp \
-
+		200:/usr/bin/ssh:/usr/libexec/ssh-openssh \
+		200:/usr/bin/scp:/usr/libexec/scp-openssh
 endef
 
 define Package/openssh-client/description
@@ -197,9 +196,9 @@ define Package/openssh-client/install
 	$(INSTALL_DIR) $(1)/etc/ssh
 	chmod 0700 $(1)/etc/ssh
 	$(CP) $(PKG_INSTALL_DIR)/etc/ssh/ssh_config $(1)/etc/ssh/
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh $(1)/usr/bin/openssh-ssh
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/scp $(1)/usr/bin/openssh-scp
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh $(1)/usr/libexec/ssh-openssh
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/scp $(1)/usr/libexec/scp-openssh
 endef
 
 define Package/openssh-client-utils/install
