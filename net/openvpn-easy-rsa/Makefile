@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openvpn-easy-rsa
 
 PKG_VERSION:=3.0.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE_URL:=https://codeload.github.com/OpenVPN/easy-rsa/tar.gz/v$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=fd6b67d867c3b8afd53efa2ca015477f6658a02323e1799432083472ac0dd200
@@ -63,14 +63,14 @@ define Package/openvpn-easy-rsa/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/dist-staging/unix/EasyRSA-$(PKG_VERSION)/easyrsa $(1)/usr/lib/easy-rsa/
 
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(LN) /usr/lib/easy-rsa/easyrsa $(1)/usr/bin/easyrsa
+	$(LN) ../lib/easy-rsa/easyrsa $(1)/usr/bin/easyrsa
 
 	$(INSTALL_DIR) $(1)/etc/easy-rsa
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/dist-staging/unix/EasyRSA-$(PKG_VERSION)/openssl-easyrsa.cnf $(1)/etc/easy-rsa/openssl-1.0.cnf
-	$(LN) /etc/easy-rsa/openssl-1.0.cnf $(1)/etc/easy-rsa/openssl-easyrsa.cnf
-	$(LN) /etc/easy-rsa/openssl-easyrsa.cnf $(1)/usr/lib/easy-rsa/openssl-easyrsa.cnf
+	$(LN) openssl-1.0.cnf $(1)/etc/easy-rsa/openssl-easyrsa.cnf
+	$(LN) ../../../etc/easy-rsa/openssl-easyrsa.cnf $(1)/usr/lib/easy-rsa/openssl-easyrsa.cnf
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/dist-staging/unix/EasyRSA-$(PKG_VERSION)/vars.example $(1)/etc/easy-rsa/vars
-	$(LN) /etc/easy-rsa/vars $(1)/usr/lib/easy-rsa/vars
+	$(LN) ../../../etc/easy-rsa/vars $(1)/usr/lib/easy-rsa/vars
 
 	$(INSTALL_DIR) $(1)/etc/easy-rsa/pki
 	chmod 700 $(1)/etc/easy-rsa/pki
@@ -81,7 +81,7 @@ define Package/openvpn-easy-rsa/install
 
 	$(INSTALL_DIR) $(1)/etc/easy-rsa/x509-types
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/dist-staging/unix/EasyRSA-$(PKG_VERSION)/x509-types/* $(1)/etc/easy-rsa/x509-types/
-	$(LN) /etc/easy-rsa/x509-types $(1)/usr/lib/easy-rsa/x509-types
+	$(LN) ../../../etc/easy-rsa/x509-types $(1)/usr/lib/easy-rsa/x509-types
 
 	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
 	$(INSTALL_DATA) files/openvpn-easy-rsa.upgrade $(1)/lib/upgrade/keep.d/$(PKG_NAME)
