@@ -12,7 +12,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=open2300
 PKG_SOURCE_DATE:=2014-03-04
 PKG_SOURCE_VERSION:=1af8ae609da66f8e1b745533c19095c9758bfb0b
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/wezm/open2300
@@ -55,8 +55,8 @@ define Package/open2300/install
 	$(INSTALL_DATA) ./files/open2300.conf $(1)/etc/
 
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib2300.so.1.11 $(1)/usr/lib/
-	ln -sf /usr/lib/lib2300.so.1.11 $(1)/usr/lib/lib2300.so
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/lib2300.so.1.11 $(1)/usr/lib/
+	$(LN) lib2300.so.1.11 $(1)/usr/lib/lib2300.so
 endef
 
 $(eval $(call BuildPackage,open2300))
