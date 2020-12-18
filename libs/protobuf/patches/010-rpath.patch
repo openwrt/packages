@@ -1,7 +1,5 @@
-Index: protobuf-3.13.0/cmake/install.cmake
-===================================================================
---- protobuf-3.13.0.orig/cmake/install.cmake
-+++ protobuf-3.13.0/cmake/install.cmake
+--- a/cmake/install.cmake
++++ b/cmake/install.cmake
 @@ -16,8 +16,8 @@ foreach(_library ${_protobuf_libraries})
      $<BUILD_INTERFACE:${protobuf_source_dir}/src>
      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)

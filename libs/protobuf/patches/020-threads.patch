@@ -1,0 +1,33 @@
+From db2c4f357432ee18975a69af71f50ed415584829 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Thu, 17 Dec 2020 20:54:48 -0800
+Subject: [PATCH] remove CMAKE_THREAD_LIBS_INIT from pkgconfig CFLAGS
+
+This is a linker flag and does not belong in CFLAGS.
+
+Fixes an issue with ola and protobuf.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ cmake/protobuf-lite.pc.cmake | 2 +-
+ cmake/protobuf.pc.cmake      | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+--- a/cmake/protobuf-lite.pc.cmake
++++ b/cmake/protobuf-lite.pc.cmake
+@@ -7,5 +7,5 @@ Name: Protocol Buffers
+ Description: Google's Data Interchange Format
+ Version: @protobuf_VERSION@
+ Libs: -L${libdir} -lprotobuf-lite @CMAKE_THREAD_LIBS_INIT@
+-Cflags: -I${includedir} @CMAKE_THREAD_LIBS_INIT@
++Cflags: -I${includedir}
+ Conflicts: protobuf
+--- a/cmake/protobuf.pc.cmake
++++ b/cmake/protobuf.pc.cmake
+@@ -7,5 +7,5 @@ Name: Protocol Buffers
+ Description: Google's Data Interchange Format
+ Version: @protobuf_VERSION@
+ Libs: -L${libdir} -lprotobuf @CMAKE_THREAD_LIBS_INIT@
+-Cflags: -I${includedir} @CMAKE_THREAD_LIBS_INIT@
++Cflags: -I${includedir}
+ Conflicts: protobuf-lite
