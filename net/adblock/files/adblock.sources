@@ -97,6 +97,13 @@
 		"focus": "tracking",
 		"descurl": "https://github.com/Perflyst/PiHoleBlocklist"
 	},
+	"games_tracking": {
+		"url": "https://raw.githubusercontent.com/KodoPengin/GameIndustry-hosts-Template/master/Main%20template/hosts",
+		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
+		"size": "S",
+		"focus": "tracking",
+		"descurl": "https://www.gameindustry.eu"
+	},
 	"gaming": {
 		"url": "https://raw.githubusercontent.com/stopgaming/pihole-blocklist/master/game.txt",
 		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
@@ -105,18 +112,11 @@
 		"descurl": "https://github.com/abyssin/pihole-blocklist"
 	},
 	"malwaredomains": {
-		"url": "https://mirror1.malwaredomains.com/files/justdomains",
+		"url": "https://mirror.cedia.org.ec/malwaredomains/justdomains",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "M",
 		"focus": "malware",
 		"descurl": "https://www.malwaredomains.com"
-	},
-	"malwarelist": {
-		"url": "https://www.malwaredomainlist.com/hostslist/hosts.txt",
-		"rule": "/^127\\.0\\.0\\.1[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
-		"size": "S",
-		"focus": "malware",
-		"descurl": "https://www.malwaredomainlist.com"
 	},
 	"notracking": {
 		"url": "https://raw.githubusercontent.com/notracking/hosts-blocklists/master/dnscrypt-proxy/dnscrypt-proxy.blacklist.txt",
@@ -353,13 +353,6 @@
 		"size": "S",
 		"focus": "win_telemetry",
 		"descurl": "https://github.com/crazy-max/WindowsSpyBlocker"
-	},
-	"youtube": {
-		"url": "https://raw.githubusercontent.com/kboghdady/youTube_ads_4_pi-hole/master/black.list",
-		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
-		"size": "M",
-		"focus": "youtube",
-		"descurl": "https://github.com/kboghdady/youTube_ads_4_pi-hole"
 	},
 	"yoyo": {
 		"url": "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=nohtml&showintro=0&mimetype=plaintext",
