@@ -345,7 +345,7 @@ start_service() {
 
 reload_service() {
 	rc_procd start_service "$@"
-	prodcd_send_signal dhcpd "$@"
+	procd_send_signal dhcpd "$@"
 }
 
 add_interface_trigger() {
