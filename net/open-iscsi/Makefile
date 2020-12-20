@@ -4,12 +4,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=open-iscsi
-PKG_VERSION:=2.1.1
-PKG_RELEASE:=2
+PKG_VERSION:=2.1.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/open-iscsi/open-iscsi/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=dfc1ea37f230f9d116f5b39c795b35be43002d65c81330ccd3878786532b811b
+PKG_HASH:=5410474b23552016220d04aa181903cb50ae988f29e99cb03f3e2de86a109be4
 
 PKG_MAINTAINER:=Lucian CRISTIAN <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -52,6 +52,7 @@ define Build/Configure
 		--build=$(GNU_HOST_NAME) \
 		--prefix=/usr \
 		LIB_DIR=/usr/lib \
+		CC="$(TARGET_CC)" \
 		CFLAGS="$(TARGET_CFLAGS) $(EXTRA_CFLAGS)" \
 	)
 endef
