@@ -5,6 +5,13 @@ location /etebase/static {
 	try_files $uri $uri/ =404;
 }
 
+location /etebase/media {
+	access_log off;
+	error_log /dev/null;
+	expires 1y;
+	try_files $uri $uri/ =404;
+}
+
 location /etebase {
 	access_log off;
 	error_log /dev/null;

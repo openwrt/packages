@@ -6,12 +6,12 @@ python3 manage.pyc migrate --noinput || exit 1
 
 # setup minimal ini for collectstatic:
 mkdir -p /var/etc/etebase/ || exit 1
-printf "[global]\nSTATIC_ROOT=/www/etebase/static" >etesync-server.ini || exit 1
+printf "[global]\nSTATIC_ROOT=/www/etebase/static" >etebase-server.ini || exit 1
 python3 manage.pyc collectstatic --noinput || exit 1
 
 ETEBASE_HAS_USER_PY3CMD="import sqlite3
 c = sqlite3.connect('db.sqlite3').cursor()
-c.execute('select * from auth_user')
+c.execute('select * from myauth_user;')
 if c.fetchone()==None: print('0')
 else: print('1')"
 
