@@ -1653,7 +1653,11 @@ fi
 adb_sort="$(command -v gnu-sort)"
 if [ -z "${adb_sort}" ]
 then
-	f_log "err" "gnu-sort not found"
+	adb_sort="$(command -v sort)"
+	if [ -z "$("${adb_sort}" --help 2>/dev/null | grep -Fo -m1 "coreutils")" ]
+	then
+		f_log "err" "coreutils sort not found"
+	fi
 fi
 
 # version information
