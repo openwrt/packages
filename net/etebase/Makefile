@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=etebase
-PKG_VERSION:=0.3.0
-PKG_RELEASE:=3
+PKG_VERSION:=0.6.1
+PKG_RELEASE:=1
 
-PKG_SOURCE:=etesync-server-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=etebase-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/etesync/server/archive/v$(PKG_VERSION)
-PKG_HASH:=d0728effa898a8b7afb4ce7439e0d0fd46bc819008925f21788d7e113435b579
+PKG_HASH:=4832c35fa1b46936bfde894a8c888989e9a37dd64ca588df22524825f3e568ec
 
 PKG_LICENSE:=AGPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE
@@ -25,18 +25,19 @@ define Package/etebase
 	SECTION:=net
 	CATEGORY:=Network
 	SUBMENU:=Web Servers/Proxies
-	TITLE:=End-to-End Encrypted Secure Data Sync
-	URL:=https://www.etesync.com/
-	DEPENDS:=+nginx-ssl +python3-light +python3-django \
-		+python3-django-restframework +python3-drf-nested-routers \
-		+python3-django-cors-headers +python3-django-etesnc-journal \
-		+uwsgi +uwsgi-python3-plugin +uwsgi-syslog-plugin
-	USERID:=etebase=44313
+	TITLE:=End-to-end encrypted backend
+	URL:=https://www.etebase.com/
+	DEPENDS:=+nginx-ssl +uwsgi +uwsgi-syslog-plugin +uwsgi-python3-plugin +python3-light \
+		+python3-asgiref +python3-cffi +python3-django-cors-headers +python3-django \
+		+python3-django-restframework +python3-drf-nested-routers +python3-msgpack \
+		+python3-pycparser +python3-pynacl +python3-pytz +python3-six +python3-sqlparse
+		# +psycopg2-binary would be needed for using postgres db.
+	USERID:=etebase=44312
 endef
 
 
 define Package/etebase/description
-	End-to-End Encrypted Secure Data Sync
+	End-to-end encrypted backend
 endef
 
 
@@ -65,12 +66,18 @@ define Py3Package/etebase/install
 
 	# Upstream application:
 	$(INSTALL_DIR) $(1)/usr/share/etebase/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/manage.py $(1)/usr/share/etebase/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/manage.py $(1)/usr/share/etebase/
 	#init creates /var/etc/etebase/server.ini from uci.cfg:
-	$(LN) /var/etc/etebase/server.ini $(1)/usr/share/etebase/etesync-server.ini
+	$(LN) /var/etc/etebase/server.ini $(1)/usr/share/etebase/etebase-server.ini
 
-	$(INSTALL_DIR) $(1)/usr/share/etebase/etesync_server/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/etesync_server/* $(1)/usr/share/etebase/etesync_server/
+	$(INSTALL_DIR) $(1)/usr/share/etebase/django_etebase/
+	$(CP) $(PKG_BUILD_DIR)/django_etebase/* $(1)/usr/share/etebase/django_etebase/
+
+	$(INSTALL_DIR) $(1)/usr/share/etebase/etebase_server/
+	$(CP) $(PKG_BUILD_DIR)/etebase_server/* $(1)/usr/share/etebase/etebase_server/
+
+	$(INSTALL_DIR) $(1)/usr/share/etebase/myauth/
+	$(CP) $(PKG_BUILD_DIR)/myauth/* $(1)/usr/share/etebase/myauth/
 
 	$(INSTALL_DIR) $(1)/usr/share/etebase/templates/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/templates/* $(1)/usr/share/etebase/templates/
@@ -85,10 +92,10 @@ Py3Package/etebase/filespec:=
 define Package/etebase/postrm
 #!/bin/sh
 [ -n "$${IPKG_INSTROOT}" ] && exit 0
-rmdir --ignore-fail-on-non-empty /usr/share/etebase/etebase
+cd /usr/share/etebase/ && rmdir */*/*/*/* */*/*/* */*/* */* * 2>/dev/null
 [ "$${PKG_UPGRADE}" = "1" ] && exit 0
 rm -r /www/etebase/static
-rmdir /www/etebase
+rmdir --ignore-fail-on-non-empty /www/etebase /var/etc/etebase
 exit 0
 endef
 

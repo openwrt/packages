@@ -30,7 +30,7 @@ etebase_validate_global() {
 
     uci_load_validate etebase django "global" "$1" \
         'secret_file:file:secret.txt' \
-        'static_url:string:/etebase/static' \
+        'static_url:string:static/' \
         'language_code:string:en-us' \
         'time_zone:string:UTC' \
         'debug:bool:false' \
@@ -51,6 +51,8 @@ etebase_print_global() {
 
 
 etebase_validate_allowed_hosts() {
+    cd /usr/share/etebase/ >/dev/null || return
+
     uci_load_validate etebase django "allowed_hosts" "$1" \
         'uci_allow_all_ips_of:network' \
         'allowed_host:host' \
