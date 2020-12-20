@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=LVM2
 PKG_VERSION:=2.03.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://sourceware.org/pub/lvm2
@@ -67,6 +67,7 @@ endif
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
+		CC="$(TARGET_CC)" \
 		CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) $(FPIC)" \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		$(MAKE_SHELL) \
