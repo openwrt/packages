@@ -9,17 +9,18 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ulogd
 PKG_VERSION:=2.0.7
-PKG_RELEASE:=2
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://netfilter.org/projects/ulogd/files/ \
 	ftp://ftp.netfilter.org/pub/ulogd/
 PKG_HASH:=990a05494d9c16029ba0a83f3b7294fc05c756546b8d60d1c1572dc25249a92b
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -188,6 +189,7 @@ ULOGD_EXTRA_PLUGINS:= \
 	inppkt_UNIXSOCK \
 	output_GPRINT \
 	output_GRAPHITE \
+	output_IPFIX \
 	output_LOGEMU \
 	output_OPRINT \
 
