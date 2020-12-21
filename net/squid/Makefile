@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squid
-PKG_VERSION:=4.12
-PKG_RELEASE:=2
+PKG_VERSION:=4.13
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www3.us.squid-cache.org/Versions/v4/ \
 	http://www2.pl.squid-cache.org/Versions/v4/ \
 	http://www.squid-cache.org/Versions/v4/
-PKG_HASH:=f42a03c8b3dc020722c88bf1a87da8cb0c087b2f66b41d8256c77ee1b527e317
+PKG_HASH:=6891a0f540e60779b4f24f1802a302f813c6f473ec7336a474ed68c3e2e53ee0
 
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 PKG_LICENSE:=GPL-2.0-or-later
