@@ -1,15 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dockerd
-PKG_VERSION:=20.10.0
+PKG_VERSION:=20.10.1
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/moby/moby/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=c522994fa1c74aac227b9f4b47cf6b3d7ca5fc5b50f06b3dad41bd4dc92b6771
-PKG_SOURCE_VERSION:=e07c941c94 # SHA1 used within the docker executables
+PKG_HASH:=f0fda46a82bf8f624eb349370358891d3bc65ef3e320675226f17dba8f62566d
+PKG_SOURCE_VERSION:=cdd80e813e # SHA1 used within the docker executables
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
