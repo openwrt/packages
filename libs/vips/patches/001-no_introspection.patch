@@ -1,7 +1,6 @@
-diff -u --recursive vips-8.10.2-vanilla/configure.ac vips-8.10.2/configure.ac
---- vips-8.10.2-vanilla/configure.ac	2020-10-12 11:43:59.000000000 -0500
-+++ vips-8.10.2/configure.ac	2020-11-19 12:17:39.393295442 -0600
-@@ -53,9 +53,6 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -53,9 +53,6 @@ AC_SUBST(LIBRARY_CURRENT)
  AC_SUBST(LIBRARY_REVISION)
  AC_SUBST(LIBRARY_AGE)
  
@@ -11,10 +10,9 @@ diff -u --recursive vips-8.10.2-vanilla/configure.ac vips-8.10.2/configure.ac
  # remove the '(disabled, use --enable-introspection to enable)'
  # suffix from the found_introspection variable
  if test "x$found_introspection" != x"yes"; then
-diff -u --recursive vips-8.10.2-vanilla/libvips/Makefile.am vips-8.10.2/libvips/Makefile.am
---- vips-8.10.2-vanilla/libvips/Makefile.am	2020-09-14 10:38:03.000000000 -0500
-+++ vips-8.10.2/libvips/Makefile.am	2020-11-19 12:18:08.473384766 -0600
-@@ -67,56 +67,3 @@
+--- a/libvips/Makefile.am
++++ b/libvips/Makefile.am
+@@ -67,56 +67,3 @@ install-exec-hook:
  	echo "#define VIPS_SONAME \"$$dlname\"" >> soname.h && \
  	cp soname.h $(DESTDIR)$(pkgincludedir) && \
  	rm soname.h
