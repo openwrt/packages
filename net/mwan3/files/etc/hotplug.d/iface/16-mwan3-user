@@ -20,8 +20,7 @@
 		exit 0
 	}
 
-	env -i ACTION="$ACTION" INTERFACE="$INTERFACE" DEVICE="$DEVICE" \
-		/bin/sh /etc/mwan3.user
+	ACTION="$ACTION" INTERFACE="$INTERFACE" DEVICE="$DEVICE" /etc/mwan3.user
 }
 
 exit 0
