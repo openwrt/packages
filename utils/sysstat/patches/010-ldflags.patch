@@ -36,7 +36,7 @@
  
  sadc: sadc.o act_sadc.o sa_wrap.o sa_common_sadc.o common_sadc.o systest.o librdstats.a librdsensors.a
  
-@@ -293,7 +293,7 @@ sar: sar.o act_sar.o format_sar.o sa_common.o pr_stats.o librdstats_light.a libs
+@@ -293,7 +293,7 @@ sar: sar.o act_sar.o format_sar.o sa_com
  
  sadf.o: sadf.c sadf.h version.h sa.h common.h rd_stats.h rd_sensors.h
  
