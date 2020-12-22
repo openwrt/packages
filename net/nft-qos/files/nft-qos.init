@@ -3,12 +3,12 @@
 # Copyright (C) 2018 rosysong@rosinson.com
 #
 
-. /lib/nft-qos/core.sh
-. /lib/nft-qos/monitor.sh
-. /lib/nft-qos/dynamic.sh
-. /lib/nft-qos/static.sh
-. /lib/nft-qos/mac.sh
-. /lib/nft-qos/priority.sh
+. "${IPKG_INSTROOT}/lib/nft-qos/core.sh"
+. "${IPKG_INSTROOT}/lib/nft-qos/monitor.sh"
+. "${IPKG_INSTROOT}/lib/nft-qos/dynamic.sh"
+. "${IPKG_INSTROOT}/lib/nft-qos/static.sh"
+. "${IPKG_INSTROOT}/lib/nft-qos/mac.sh"
+. "${IPKG_INSTROOT}/lib/nft-qos/priority.sh"
 
 START=99
 USE_PROCD=1
