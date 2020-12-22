@@ -56,7 +56,7 @@ mwan3_add_all_routes()
 	tid=0
 	active_tbls=" "
 	config_foreach add_active_tbls interface
-	[ $active_tbls = " " ] && return
+	[ "$active_tbls" = " " ] && return
 	mwan3_get_routes | while read -r route_line; do
 		mwan3_route_line_dev "tid" "$route_line" "$ipv"
 		if [ -n "$tid" ] && [ -z "${active_tbls##* $tid *}" ]; then

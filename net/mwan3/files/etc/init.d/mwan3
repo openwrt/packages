@@ -6,6 +6,7 @@
 
 START=19
 USE_PROCD=1
+SCRIPTNAME="mwan3-init"
 
 service_running() {
 	[ -d "$MWAN3_STATUS_DIR" ]

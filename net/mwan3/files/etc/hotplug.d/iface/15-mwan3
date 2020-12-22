@@ -19,7 +19,7 @@ if { [ "$ACTION" = "ifup" ] || [ "$ACTION" = "connected" ] ; } && [ -z "$DEVICE"
 	exit 3
 fi
 
-[ "$MWAN3_STARTUP" = 1 ] || procd_lock
+[ "$MWAN3_STARTUP" = "init" ] || procd_lock
 
 config_load mwan3
 /etc/init.d/mwan3 running || {

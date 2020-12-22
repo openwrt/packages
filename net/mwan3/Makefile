@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
-PKG_VERSION:=2.10.4
+PKG_VERSION:=2.10.5
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>, \
 		Aaron Goodman <aaronjg@alumni.stanford.edu>
@@ -101,6 +101,10 @@ define Package/mwan3/install
 		$(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/usr/sbin/mwan3track \
 		$(1)/usr/sbin/
+
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_BIN) ./files/etc/mwan3.user \
+		$(1)/etc/
 
 	$(CP) $(PKG_BUILD_DIR)/libwrap_mwan3_sockopt.so.1.0 $(1)/lib/mwan3/
 

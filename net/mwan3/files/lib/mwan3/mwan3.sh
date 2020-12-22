@@ -79,7 +79,7 @@ mwan3_route_line_dev()
 	unset "$1"
 	[ -z "$route_device" ] && return
 
-	curr_table=$(eval "echo	 \"\$mwan3_dev_tbl_${route_family}\"")
+	curr_table=$(eval "echo \"\$mwan3_dev_tbl_${route_family}\"")
 	for entry in $curr_table; do
 		if [ "${entry%%=*}" = "$route_device" ]; then
 			_tid=${entry##*=}
