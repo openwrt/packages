@@ -29,7 +29,7 @@ define Package/wget/Default
   SUBMENU:=File Transfer
   TITLE:=Non-interactive network downloader
   URL:=https://www.gnu.org/software/wget/index.html
-  PROVIDES:=gnu-wget
+  PROVIDES:=gnu-wget wget
 endef
 
 define Package/wget/Default/description
@@ -41,12 +41,11 @@ define Package/wget/Default/description
  archives and home pages or to travel the Web like a WWW robot.
 endef
 
-define Package/wget
+define Package/wget-ssl
 $(call Package/wget/Default)
   DEPENDS+= +libopenssl +librt
   TITLE+= (with SSL support)
   VARIANT:=ssl
-  PROVIDES+=wget-ssl
   ALTERNATIVES:=300:/usr/bin/wget:/usr/libexec/wget-ssl
 endef
 
@@ -59,7 +58,6 @@ define Package/wget-nossl
 $(call Package/wget/Default)
   TITLE+= (without SSL support)
   VARIANT:=nossl
-  PROVIDES+=wget
   ALTERNATIVES:=300:/usr/bin/wget:/usr/libexec/wget-nossl
 endef
 
@@ -104,5 +102,5 @@ define Package/wget-nossl/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/wget $(1)/usr/libexec/wget-nossl
 endef
 
-$(eval $(call BuildPackage,wget))
+$(eval $(call BuildPackage,wget-ssl))
 $(eval $(call BuildPackage,wget-nossl))
