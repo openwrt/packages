@@ -246,10 +246,10 @@ service_triggers()
 {
 	local trigger delay type
 
-	PROCD_RELOAD_DELAY=$((delay*1000))
 	trigger="$(uci_get adblock global adb_trigger)"
 	delay="$(uci_get adblock global adb_triggerdelay "2")"
 	type="$(uci_get adblock global adb_starttype "start")"
+	PROCD_RELOAD_DELAY=$((delay*1000))
 	if [ -n "${trigger}" ]
 	then
 		procd_add_interface_trigger "interface.*.up" "${trigger}" "${adb_init}" "${type}"
