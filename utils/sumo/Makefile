@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sumo
-PKG_VERSION:=1.7.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.8.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-src-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/sumo
-PKG_HASH:=1f7a668568c92d1eeaa0e54a8af45052747accf9ba42983b21e906a80b16a9c2
+PKG_HASH:=fb0636152085153155ddb41841f0175c5f1e7989907b883f6c7453c63af49edb
 
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -39,6 +39,9 @@ define Package/sumo/description
   and emission calculation. SUMO can be enhanced with custom models and provides
   various APIs to remotely control the simulation.
 endef
+
+CMAKE_OPTIONS += \
+	-DCCACHE_SUPPORT=OFF
 
 define Package/sumo/install
 	$(INSTALL_DIR) $(1)/usr/bin
