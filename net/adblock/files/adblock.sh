@@ -671,7 +671,7 @@ f_list()
 				rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
 				"${adb_awk}" "${rset}" "${adb_blacklist}" | \
 				"${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' > "${adb_tmpdir}/tmp.raw.${src_name}"
-				sort ${adb_srtopts} -u "${adb_tmpdir}/tmp.raw.${src_name}" 2>/dev/null > "${adb_tmpfile}.${src_name}"
+				"${adb_sort}" ${adb_srtopts} -u "${adb_tmpdir}/tmp.raw.${src_name}" 2>/dev/null > "${adb_tmpfile}.${src_name}"
 				out_rc="${?}"
 				rm -f "${adb_tmpdir}/tmp.raw.${src_name}"
 			elif [ "${src_name}" = "whitelist" ] && [ -s "${adb_whitelist}" ]
@@ -887,7 +887,7 @@ f_list()
 				find "${adb_backupdir}" ${ffiles} -print0 2>/dev/null | xargs -0 rm 2>/dev/null
 			fi
 			unset src_name
-			sort ${adb_srtopts} -mu "${adb_tmpfile}".* 2>/dev/null > "${adb_tmpdir}/${adb_dnsfile}"
+			"${adb_sort}" ${adb_srtopts} -mu "${adb_tmpfile}".* 2>/dev/null > "${adb_tmpdir}/${adb_dnsfile}"
 			out_rc="${?}"
 			rm -f "${adb_tmpfile}".*
 		;;
@@ -1297,7 +1297,7 @@ f_main()
 						"${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' > "${src_tmpsort}"
 					fi
 					rm -f "${src_tmpload}"
-					sort ${adb_srtopts} -u "${src_tmpsort}" 2>/dev/null > "${src_tmpfile}"
+					"${adb_sort}" ${adb_srtopts} -u "${src_tmpsort}" 2>/dev/null > "${src_tmpfile}"
 					src_rc="${?}"
 					rm -f "${src_tmpsort}"
 					if [ "${src_rc}" -eq 0 ] && [ -s "${src_tmpfile}" ]
@@ -1335,7 +1335,7 @@ f_main()
 						"${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' > "${src_tmpsort}"
 					fi
 					rm -f "${src_tmpload}"
-					sort ${adb_srtopts} -u "${src_tmpsort}" 2>/dev/null > "${src_tmpfile}"
+					"${adb_sort}" ${adb_srtopts} -u "${src_tmpsort}" 2>/dev/null > "${src_tmpfile}"
 					src_rc="${?}"
 					rm -f "${src_tmpsort}"
 					if [ "${src_rc}" -eq 0 ] && [ -s "${src_tmpfile}" ]
@@ -1499,9 +1499,9 @@ f_report()
 			wait
 			if [ -s "${adb_reportdir}/adb_report.raw" ]
 			then
-				sort ${adb_srtopts} -k1 -k3 -k4 -k5 -k1 -ur "${adb_reportdir}/adb_report.raw" | \
+				"${adb_sort}" ${adb_srtopts} -k1 -k3 -k4 -k5 -k1 -ur "${adb_reportdir}/adb_report.raw" | \
 					"${adb_awk}" '{currA=($1+0);currB=$1;currC=substr($1,length($1),1);if(reqA==currB){reqA=0;printf "%s\t%s\n",d,$2}else if(currC=="+"){reqA=currA;d=$3"\t"$4"\t"$5"\t"$2}}' | \
-					sort ${adb_srtopts} -k1 -k2 -k3 -k4 -ur > "${adb_reportdir}/adb_report.srt"
+					"${adb_sort}" ${adb_srtopts} -k1 -k2 -k3 -k4 -ur > "${adb_reportdir}/adb_report.srt"
 				rm -f "${adb_reportdir}/adb_report.raw"
 			fi
 
@@ -1528,16 +1528,16 @@ f_report()
 					printf "%s" " \"${top}\": [ " >> "${adb_reportdir}/adb_report.json"
 					case "${top}" in
 						"top_clients")
-							"${adb_awk}" '{print $3}' "${adb_reportdir}/adb_report.srt" | sort ${adb_srtopts} | uniq -c | \
-								sort ${adb_srtopts} -nr | "${adb_awk}" '{ORS=" ";if(NR==1)printf "{ \"count\": \"%s\", \"address\": \"%s\" }",$1,$2; else if(NR<10)printf ", { \"count\": \"%s\", \"address\": \"%s\" }",$1,$2}' >> "${adb_reportdir}/adb_report.json"
+							"${adb_awk}" '{print $3}' "${adb_reportdir}/adb_report.srt" | "${adb_sort}" ${adb_srtopts} | uniq -c | \
+								"${adb_sort}" ${adb_srtopts} -nr | "${adb_awk}" '{ORS=" ";if(NR==1)printf "{ \"count\": \"%s\", \"address\": \"%s\" }",$1,$2; else if(NR<10)printf ", { \"count\": \"%s\", \"address\": \"%s\" }",$1,$2}' >> "${adb_reportdir}/adb_report.json"
 						;;
 						"top_domains")
-							"${adb_awk}" '{if($5!="NX")print $4}' "${adb_reportdir}/adb_report.srt" | sort ${adb_srtopts} | uniq -c | \
-								sort ${adb_srtopts} -nr | "${adb_awk}" '{ORS=" ";if(NR==1)printf "{ \"count\": \"%s\", \"address\": \"%s\" }",$1,$2; else if(NR<10)printf ", { \"count\": \"%s\", \"address\": \"%s\" }",$1,$2}' >> "${adb_reportdir}/adb_report.json"
+							"${adb_awk}" '{if($5!="NX")print $4}' "${adb_reportdir}/adb_report.srt" | "${adb_sort}" ${adb_srtopts} | uniq -c | \
+								"${adb_sort}" ${adb_srtopts} -nr | "${adb_awk}" '{ORS=" ";if(NR==1)printf "{ \"count\": \"%s\", \"address\": \"%s\" }",$1,$2; else if(NR<10)printf ", { \"count\": \"%s\", \"address\": \"%s\" }",$1,$2}' >> "${adb_reportdir}/adb_report.json"
 						;;
 						"top_blocked")
-							"${adb_awk}" '{if($5=="NX")print $4}' "${adb_reportdir}/adb_report.srt" | sort ${adb_srtopts} | uniq -c | \
-								sort ${adb_srtopts} -nr | "${adb_awk}" '{ORS=" ";if(NR==1)printf "{ \"count\": \"%s\", \"address\": \"%s\" }",$1,$2; else if(NR<10)printf ", { \"count\": \"%s\", \"address\": \"%s\" }",$1,$2}' >> "${adb_reportdir}/adb_report.json"
+							"${adb_awk}" '{if($5=="NX")print $4}' "${adb_reportdir}/adb_report.srt" | "${adb_sort}" ${adb_srtopts} | uniq -c | \
+								"${adb_sort}" ${adb_srtopts} -nr | "${adb_awk}" '{ORS=" ";if(NR==1)printf "{ \"count\": \"%s\", \"address\": \"%s\" }",$1,$2; else if(NR<10)printf ", { \"count\": \"%s\", \"address\": \"%s\" }",$1,$2}' >> "${adb_reportdir}/adb_report.json"
 						;;
 					esac
 					printf "%s" " ], " >> "${adb_reportdir}/adb_report.json"
@@ -1614,14 +1614,6 @@ f_report()
 	f_log "debug" "f_report ::: action: ${adb_action}, report: ${adb_report}, search: ${1}, count: ${2}, process: ${3}, print: ${4}, dump_util: ${adb_dumpcmd}, repdir: ${adb_reportdir}, repiface: ${adb_repiface:-"-"}, replisten: ${adb_replisten}, repchunksize: ${adb_repchunksize}, repchunkcnt: ${adb_repchunkcnt}, bg_pid: ${bg_pid}"
 }
 
-# awk selection
-#
-adb_awk="$(command -v gawk)"
-if [ -z "${adb_awk}" ]
-then
-	adb_awk="$(command -v awk)"
-fi
-
 # source required system libraries
 #
 if [ -r "/lib/functions.sh" ] && [ -r "/lib/functions/network.sh" ] && [ -r "/usr/share/libubox/jshn.sh" ]
@@ -1631,6 +1623,26 @@ then
 	. "/usr/share/libubox/jshn.sh"
 else
 	f_log "err" "system libraries not found"
+fi
+
+# awk selection
+#
+adb_awk="$(command -v gawk)"
+if [ -z "${adb_awk}" ]
+then
+	adb_awk="$(command -v awk)"
+fi
+
+# sort selection
+#
+adb_sort="$(command -v gnu-sort)"
+if [ -z "${adb_sort}" ]
+then
+	adb_sort="$(command -v sort)"
+	if [ -z "$("${adb_sort}" --help 2>/dev/null | grep -Fo -m1 "coreutils")" ]
+	then
+		f_log "err" "coreutils sort not found"
+	fi
 fi
 
 # version information
