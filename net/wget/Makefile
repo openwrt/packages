@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wget
 PKG_VERSION:=1.20.3
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
@@ -49,7 +49,7 @@ $(call Package/wget/Default)
   ALTERNATIVES:=300:/usr/bin/wget:/usr/libexec/wget-ssl
 endef
 
-define Package/wget/description
+define Package/wget-ssl/description
 $(call Package/wget/Default/description)
  This package is built with SSL support.
 endef
@@ -92,7 +92,7 @@ ifeq ($(BUILD_VARIANT),nossl)
 		--without-ssl
 endif
 
-define Package/wget/install
+define Package/wget-ssl/install
 	$(INSTALL_DIR) $(1)/usr/libexec
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/wget $(1)/usr/libexec/wget-ssl
 endef
