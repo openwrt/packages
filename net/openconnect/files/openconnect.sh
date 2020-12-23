@@ -115,7 +115,7 @@ proto_openconnect_setup() {
 			[ -n "$password2" ] && echo "$password2" >> "$pwfile"
 		}
 		[ "$token_mode" = "script" ] && {
-			$token_script > "$pwfile" 2> /dev/null || {
+			$token_script >> "$pwfile" 2> /dev/null || {
 				logger -t openconenct "Cannot get password from script '$token_script'"
 				proto_setup_failed "$config"
 			}
