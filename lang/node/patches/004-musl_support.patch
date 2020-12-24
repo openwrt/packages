@@ -1,7 +1,6 @@
-diff -urN a/deps/v8/src/base/platform/condition-variable.cc b/deps/v8/src/base/platform/condition-variable.cc
---- a/deps/v8/src/base/platform/condition-variable.cc	2020-09-30 01:58:13.000000000 +0900
-+++ b/deps/v8/src/base/platform/condition-variable.cc	2020-10-06 09:04:33.341499270 +0900
-@@ -16,7 +16,7 @@
+--- a/deps/v8/src/base/platform/condition-variable.cc
++++ b/deps/v8/src/base/platform/condition-variable.cc
+@@ -16,7 +16,7 @@ namespace base {
  
  ConditionVariable::ConditionVariable() {
  #if (V8_OS_FREEBSD || V8_OS_NETBSD || V8_OS_OPENBSD || \
@@ -10,7 +9,7 @@ diff -urN a/deps/v8/src/base/platform/condition-variable.cc b/deps/v8/src/base/p
    // On Free/Net/OpenBSD and Linux with glibc we can change the time
    // source for pthread_cond_timedwait() to use the monotonic clock.
    pthread_condattr_t attr;
-@@ -92,7 +92,7 @@
+@@ -92,7 +92,7 @@ bool ConditionVariable::WaitFor(Mutex* m
        &native_handle_, &mutex->native_handle(), &ts);
  #else
  #if (V8_OS_FREEBSD || V8_OS_NETBSD || V8_OS_OPENBSD || \
@@ -19,10 +18,9 @@ diff -urN a/deps/v8/src/base/platform/condition-variable.cc b/deps/v8/src/base/p
    // On Free/Net/OpenBSD and Linux with glibc we can change the time
    // source for pthread_cond_timedwait() to use the monotonic clock.
    result = clock_gettime(CLOCK_MONOTONIC, &ts);
-diff -urN a/deps/v8/src/base/platform/platform-posix.cc b/deps/v8/src/base/platform/platform-posix.cc
---- a/deps/v8/src/base/platform/platform-posix.cc	2020-09-30 01:58:13.000000000 +0900
-+++ b/deps/v8/src/base/platform/platform-posix.cc	2020-10-06 09:04:33.341499270 +0900
-@@ -823,7 +823,7 @@
+--- a/deps/v8/src/base/platform/platform-posix.cc
++++ b/deps/v8/src/base/platform/platform-posix.cc
+@@ -823,7 +823,7 @@ bool Thread::Start() {
  #if V8_OS_MACOSX
      // Default on Mac OS X is 512kB -- bump up to 1MB
      stack_size = 1 * 1024 * 1024;
@@ -31,9 +29,8 @@ diff -urN a/deps/v8/src/base/platform/platform-posix.cc b/deps/v8/src/base/platf
      // Default on AIX is 96kB -- bump up to 2MB
      stack_size = 2 * 1024 * 1024;
  #endif
-diff -urN a/deps/v8/src/codegen/external-reference-table.cc b/deps/v8/src/codegen/external-reference-table.cc
---- a/deps/v8/src/codegen/external-reference-table.cc	2020-09-30 01:58:13.000000000 +0900
-+++ b/deps/v8/src/codegen/external-reference-table.cc	2020-10-06 09:04:33.345499241 +0900
+--- a/deps/v8/src/codegen/external-reference-table.cc
++++ b/deps/v8/src/codegen/external-reference-table.cc
 @@ -9,7 +9,7 @@
  #include "src/ic/stub-cache.h"
  #include "src/logging/counters.h"
