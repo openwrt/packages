@@ -1,5 +1,3 @@
-diff --git a/Makefile.in b/Makefile.in
-index 9db6c52..6aa2273 100644
 --- a/Makefile.in
 +++ b/Makefile.in
 @@ -190,7 +190,6 @@ install-icu: $(INSTALLED_BUILT_FILES)
