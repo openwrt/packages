@@ -32,8 +32,8 @@
        'dependencies': [ 'icutools' ],
        'sources': [
          '<@(icu_src_genccode)',
---- a/tools/v8_gypfiles/v8.gyp	2019-06-27 19:12:20.000000000 +0900
-+++ b/tools/v8_gypfiles/v8.gyp	2019-07-01 14:40:48.292020880 +0900
+--- a/tools/v8_gypfiles/v8.gyp
++++ b/tools/v8_gypfiles/v8.gyp
 @@ -1310,6 +1310,7 @@
      {
        'target_name': 'bytecode_builtins_list_generator',
