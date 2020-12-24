@@ -38,7 +38,7 @@
  };
  
  static const UText emptyText = UTEXT_INITIALIZER;
-@@ -584,7 +584,7 @@ utext_setup(UText *ut, int32_t extraSpace, UErrorCode *status) {
+@@ -584,7 +584,7 @@ utext_setup(UText *ut, int32_t extraSpac
          // We need to heap-allocate storage for the new UText
          int32_t spaceRequired = sizeof(UText);
          if (extraSpace > 0) {
