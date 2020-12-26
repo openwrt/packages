@@ -1,6 +1,6 @@
 --- a/web/gui/main.js
 +++ b/web/gui/main.js
-@@ -745,11 +745,7 @@ function renderMyNetdataMenu(machinesArr
+@@ -759,11 +759,7 @@ function renderMyNetdataMenu(machinesArr
      if (!isSignedIn()) {
          if (!NETDATA.registry.isRegistryEnabled()) {
              html += (
