@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnutls
 PKG_VERSION:=3.7.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_USE_MIPS16:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -37,6 +37,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_GNUTLS_SRP \
 	CONFIG_GNUTLS_TPM \
 	CONFIG_LIBNETTLE_MINI \
+	CONFIG_PACKAGE_libgnutls-dane \
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -80,7 +81,7 @@ $(call Package/gnutls/Default)
   CATEGORY:=Utilities
   SUBMENU:=Encryption
   TITLE+= (utilities)
-  DEPENDS+= +libgnutls
+  DEPENDS+= +libgnutls +PACKAGE_libgnutls-dane:libgnutls-dane
 endef
 
 define Package/gnutls-utils/description
@@ -97,6 +98,12 @@ define Package/libgnutls
 $(call Package/gnutls/Default)
   TITLE+= (library)
   DEPENDS+= +libnettle +!LIBNETTLE_MINI:libgmp +GNUTLS_EXT_LIBTASN1:libtasn1 +GNUTLS_PKCS11:p11-kit +GNUTLS_CRYPTODEV:kmod-cryptodev +libatomic
+endef
+
+define Package/libgnutls-dane
+$(call Package/gnutls/Default)
+  TITLE+= (libgnutls-dane library)
+  DEPENDS:= +libgnutls +libunbound
 endef
 
 define Package/libgnutls/description
@@ -118,8 +125,6 @@ CONFIGURE_ARGS+= \
 	--disable-seccomp-tests \
 	--disable-tests \
 	--disable-valgrind-tests \
-	\
-	--disable-libdane \
 	--disable-ssl2-support \
 	--disable-ssl3-support \
 	--enable-local-libopts \
@@ -178,16 +183,20 @@ ifeq ($(CONFIG_GNUTLS_CRYPTODEV),y)
 CONFIGURE_ARGS += --enable-cryptodev
 endif
 
+ifeq ($(CONFIG_PACKAGE_libgnutls-dane),)
+CONFIGURE_ARGS += --disable-libdane
+endif
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib/pkgconfig
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libgnutls.so* \
+		$(PKG_INSTALL_DIR)/usr/lib/*.so* \
 		$(1)/usr/lib/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/gnutls \
 		$(1)/usr/include/
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/gnutls.pc \
+		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc \
 		$(1)/usr/lib/pkgconfig/
 endef
 
@@ -244,7 +253,13 @@ define Package/libgnutls/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnutls.so.* $(1)/usr/lib/
 endef
 
+define Package/libgnutls-dane/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnutls-dane.so.* $(1)/usr/lib/
+endef
+
 
 $(eval $(call BuildPackage,certtool))
 $(eval $(call BuildPackage,gnutls-utils))
 $(eval $(call BuildPackage,libgnutls))
+$(eval $(call BuildPackage,libgnutls-dane))
