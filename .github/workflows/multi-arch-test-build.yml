@@ -28,6 +28,8 @@ jobs:
             runtime_test: true
           - arch: x86_64
             runtime_test: true
+          - arch: x86_64-19.07.5
+            runtime_test: true
 
     steps:
       - uses: actions/checkout@v2
