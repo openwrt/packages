@@ -2,8 +2,6 @@ name: Test Build
 
 on:
   pull_request:
-    branches:
-      - master
 
 jobs:
   build:
@@ -48,10 +46,16 @@ jobs:
           echo "Building $PACKAGES"
           echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
 
+      - name: Determine branch name
+        run: |
+          BRANCH="${GITHUB_BASE_REF#refs/heads/}"
+          echo "Building for $BRANCH"
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+
       - name: Build
         uses: openwrt/gh-action-sdk@v1
         env:
-          ARCH: ${{ matrix.arch }}
+          ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
           FEEDNAME: packages_ci
 
       - name: Move created packages to project dir
