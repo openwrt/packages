@@ -1,0 +1,90 @@
+name: Test Build 19.07.5
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Test ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - arc_arc700-19.07.5
+          - arm_cortex-a9_vfpv3-d16-19.07.5
+          - mips_24kc-19.07.5
+          - powerpc_464fp-19.07.5
+          - powerpc_8540-19.07.5
+        runtime_test: [false]
+        include:
+          - arch: aarch64_cortex-a53-19.07.5
+            runtime_test: true
+          - arch: arm_cortex-a15_neon-vfpv4-19.07.5
+            runtime_test: true
+          - arch: i386_pentium-mmx-19.07.5
+            runtime_test: true
+          - arch: x86_64-19.07.5
+            runtime_test: true
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Determine changed packages
+        run: |
+          # only detect packages with changed Makefiles
+          PACKAGES="$(git diff --diff-filter=d --name-only origin/master \
+            | grep -E 'Makefile$|test.sh$' | grep -Ev '/files/|/src/' \
+            | awk -F/ '{ print $(NF-1) }' | tr '\n' ' ')"
+
+          # fallback to test packages if nothing explicitly changes this is
+          # should run if other mechanics in packages.git changed
+          PACKAGES="${PACKAGES:-vim tmux bmon}"
+
+          echo "Building $PACKAGES"
+          echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
+
+      - name: Build
+        uses: openwrt/gh-action-sdk@v1
+        env:
+          ARCH: ${{ matrix.arch }}
+          FEEDNAME: packages_ci
+
+      - name: Move created packages to project dir
+        run: cp bin/packages/${{ matrix.arch }}/packages_ci/*.ipk . || true
+
+      - name: Store packages
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.arch}}-packages
+          path: "*.ipk"
+
+      - name: Store logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.arch}}-logs
+          path: logs/
+
+      - name: Remove logs
+        run: sudo rm -rf logs/ || true
+
+      - name: Register QEMU
+        if: ${{ matrix.runtime_test }}
+        run: |
+          sudo docker run --rm --privileged aptman/qus -s -- -p
+
+      - name: Build Docker container
+        if: ${{ matrix.runtime_test }}
+        run: |
+          docker build -t test-container --build-arg ARCH .github/workflows/
+        env:
+          ARCH: ${{ matrix.arch }}
+
+      - name: Test via Docker container
+        if: ${{ matrix.runtime_test }}
+        run: |
+          docker run --rm -v $GITHUB_WORKSPACE:/ci test-container
