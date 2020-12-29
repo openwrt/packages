@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -555,9 +555,6 @@ dnl it should be safe to re-edit 0.40 back down to 0.23
+@@ -555,9 +555,6 @@ dnl it should be safe to re-edit 0.40 ba
  use_nls=no
  if test "x$enable_nls" = "xyes" ; then
      use_nls=yes
