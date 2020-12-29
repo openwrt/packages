@@ -192,7 +192,6 @@ main() {
 	trap if_down USR1
 	trap if_up USR2
 
-	config_load mwan3
 	config_get FAMILY $INTERFACE family ipv4
 	config_get track_method $INTERFACE track_method ping
 	config_get_bool httping_ssl $INTERFACE httping_ssl 0

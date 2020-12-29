@@ -107,8 +107,9 @@ mwan3_get_mwan3track_status()
 
 mwan3_init()
 {
-	local bitcnt
-	local mmdefault
+	local bitcnt mmdefault source_routing
+
+	config_load mwan3
 
 	[ -d $MWAN3_STATUS_DIR ] || mkdir -p $MWAN3_STATUS_DIR/iface_state
 
@@ -117,7 +118,6 @@ mwan3_init()
 		MMX_MASK=$(cat "${MWAN3_STATUS_DIR}/mmx_mask")
 		MWAN3_INTERFACE_MAX=$(uci_get_state mwan3 globals iface_max)
 	else
-		config_load mwan3
 		config_get MMX_MASK globals mmx_mask '0x3F00'
 		echo "$MMX_MASK"| tr 'A-F' 'a-f' > "${MWAN3_STATUS_DIR}/mmx_mask"
 		LOG debug "Using firewall mask ${MMX_MASK}"
@@ -130,7 +130,9 @@ mwan3_init()
 	fi
 
 	# remove "linkdown", expiry and source based routing modifiers from route lines
-	MWAN3_ROUTE_LINE_EXP="s/linkdown //; s/expires [0-9]\+sec//;s/error [0-9]\+//; ${source_routing:+s/default\(.*\) from [^ ]*/default\1/;} p"
+	config_get_bool source_routing globals source_routing 0
+	[ $source_routing -eq 1 ] && unset source_routing
+	MWAN3_ROUTE_LINE_EXP="s/linkdown //; s/expires [0-9]\+sec//; s/error [0-9]\+//; ${source_routing:+s/default\(.*\) from [^ ]*/default\1/;} p"
 
 	# mark mask constants
 	bitcnt=$(mwan3_count_one_bits MMX_MASK)
