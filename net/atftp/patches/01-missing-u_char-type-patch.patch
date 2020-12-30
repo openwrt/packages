@@ -1,5 +1,3 @@
-diff --git a/tftpd.h b/tftpd.h
-index 945065e..4c2f214 100644
 --- a/tftpd.h
 +++ b/tftpd.h
 @@ -46,7 +46,7 @@ struct thread_data {
