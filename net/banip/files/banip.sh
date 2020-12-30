@@ -13,7 +13,7 @@
 #
 LC_ALL=C
 PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-ban_ver="0.3.12"
+ban_ver="0.3.13"
 ban_basever=""
 ban_enabled=0
 ban_automatic="1"
@@ -410,8 +410,10 @@ f_iptadd()
 			f_iptrule "-I" "${wan_forward} -j ${ban_chain}"
 			if [ "${src_name##*_}" != "6" ]
 			then
-				# special IPv4 rules
 				f_iptrule "-A" "${ban_chain} -p udp --dport 67:68 --sport 67:68 -j RETURN"
+			else
+				f_iptrule "-A" "${ban_chain} -p udp -s fc00::/6 --sport 547 -d fc00::/6 --dport 546 -j RETURN"
+				f_iptrule "-A" "${ban_chain} -p ipv6-icmp -s fe80::/10 -d fe80::/10 -j RETURN"
 			fi
 			for dev in ${ban_dev}
 			do
@@ -424,8 +426,10 @@ f_iptadd()
 			f_iptrule "-I" "${lan_forward} -j ${ban_chain}"
 			if [ "${src_name##*_}" != "6" ]
 			then
-				# special IPv4 rules
 				f_iptrule "-A" "${ban_chain} -p udp --dport 67:68 --sport 67:68 -j RETURN"
+			else
+				f_iptrule "-A" "${ban_chain} -p udp -s fc00::/6 --sport 547 -d fc00::/6 --dport 546 -j RETURN"
+				f_iptrule "-A" "${ban_chain} -p ipv6-icmp -s fe80::/10 -d fe80::/10 -j RETURN"
 			fi
 			for dev in ${ban_dev}
 			do
