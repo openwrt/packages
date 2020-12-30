@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pciutils
 PKG_VERSION:=3.7.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/utils/pciutils
@@ -29,7 +29,7 @@ define Package/pciutils
   CATEGORY:=Utilities
   TITLE:=Linux PCI Utilities
   URL:=http://mj.ucw.cz/pciutils.shtml
-  DEPENDS:=+libkmod +libpci
+  DEPENDS:=+libkmod +libpci +pciids
 endef
 
 define Package/pciutils/description
@@ -42,23 +42,6 @@ define Package/libpci
   CATEGORY:=Libraries
   TITLE:=Linux PCI Libraries
   URL:=http://mj.ucw.cz/pciutils.shtml
-endef
-
-
-PCI_IDS_VER:=0.336
-PCI_IDS_FILE:=pci.ids.$(PCI_IDS_VER)
-define Download/pci_ids
-  FILE:=$(PCI_IDS_FILE)
-  URL_FILE:=pci.ids
-  URL:=@GITHUB/vcrhonek/hwdata/v$(PCI_IDS_VER)
-  HASH:=94053616c1f9b93540861931fb7891b1b30d6fd21b3e2c1647467527ea38f557
-endef
-$(eval $(call Download,pci_ids))
-
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	$(RM) $(PKG_BUILD_DIR)/pci.ids
-	$(CP) $(DL_DIR)/$(PCI_IDS_FILE) $(PKG_BUILD_DIR)/pci.ids
 endef
 
 TARGET_CFLAGS += $(FPIC)
@@ -92,8 +75,6 @@ endef
 define Package/pciutils/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/{lspci,setpci,update-pciids} $(1)/usr/sbin/
-	$(INSTALL_DIR) $(1)/usr/share
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/pci.ids $(1)/usr/share/
 endef
 
 define Package/libpci/install
