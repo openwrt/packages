@@ -18,11 +18,11 @@
  
  bonnie++: $(BONOBJS)
 -	$(LINK) -o bonnie++ $(BONOBJS) $(THREAD_LFLAGS)
-+	$(CXX) $(CXXFLAGS) -o bonnie++ $(BONOBJS)
++	$(CXX) $(CXXFLAGS) -o bonnie++ $(BONOBJS) @thread_ldflags@
  
  zcav: $(ZCAVOBJS)
 -	$(LINK) -o zcav $(ZCAVOBJS) $(THREAD_LFLAGS)
-+	$(CXX) $(CXXFLAGS) -o zcav $(ZCAVOBJS)
++	$(CXX) $(CXXFLAGS) -o zcav $(ZCAVOBJS) @thread_ldflags@
  
  getc_putc: $(GETCOBJS) getc_putc_helper
 -	$(LINK) -o getc_putc $(GETCOBJS) $(THREAD_LFLAGS)
