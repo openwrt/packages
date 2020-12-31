@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opendkim
 PKG_VERSION:=2.10.3
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
@@ -40,7 +40,7 @@ endef
 define Package/libopendkim
   SECTION:=mail
   CATEGORY:=Libraries
-  DEPENDS:=+libopenssl +libmilter-sendmail
+  DEPENDS:=+libopenssl +libmilter-sendmail +USE_GLIBC:libbsd
   TITLE:=Library for signing and verifying DKIM signatures
   URL:=http://opendkim.org/
 endef
