@@ -1,6 +1,6 @@
---- diskdev_cmds-332.25/newfs_hfs.tproj/makehfs.c	2015-03-27 21:58:04.163171675 -0700
-+++ hfsprogs-332.25/newfs_hfs.tproj/makehfs.c	2015-03-27 21:56:03.687175020 -0700
-@@ -2119,10 +2119,12 @@
+--- a/newfs_hfs.tproj/makehfs.c
++++ b/newfs_hfs.tproj/makehfs.c
+@@ -2119,10 +2119,12 @@ void GenerateVolumeUUID(VolumeUUID *newV
  		sysctl(mib, 2, sysctlstring, &datalen, NULL, 0);
  		SHA1_Update(&context, sysctlstring, datalen);
  #endif

@@ -9,11 +9,9 @@ Subject: Rename dprintf to dbg_printf
  fsck_hfs.tproj/fsck_debug.h      | 10 +++++-----
  4 files changed, 22 insertions(+), 22 deletions(-)
 
-diff --git a/fsck_hfs.tproj/dfalib/SRepair.c b/fsck_hfs.tproj/dfalib/SRepair.c
-index 8eb759c..89c12d6 100644
 --- a/fsck_hfs.tproj/dfalib/SRepair.c
 +++ b/fsck_hfs.tproj/dfalib/SRepair.c
-@@ -1825,13 +1825,13 @@ static OSErr FixAttrSize(SGlobPtr GPtr, RepairOrderPtr p)
+@@ -1825,13 +1825,13 @@ static OSErr FixAttrSize(SGlobPtr GPtr,
  	result = BTSearchRecord(GPtr->calculatedAttributesFCB, &iterator, 
  				kInvalidMRUCacheKey, &btRecord, &recSize, &iterator);
  	if (result) {
@@ -29,7 +27,7 @@ index 8eb759c..89c12d6 100644
  		result = btNotFound;
  		goto out;
  	}
-@@ -1862,7 +1862,7 @@ static OSErr FixAttrSize(SGlobPtr GPtr, RepairOrderPtr p)
+@@ -1862,7 +1862,7 @@ static OSErr FixAttrSize(SGlobPtr GPtr,
  		result = BTReplaceRecord(GPtr->calculatedAttributesFCB, &iterator,
  					&btRecord, recSize);
  		if (result) {
@@ -47,7 +45,7 @@ index 8eb759c..89c12d6 100644
  		if (err) {
  			goto create_symlink;
  		}
-@@ -3227,12 +3227,12 @@ static OSErr MoveExtent(SGlobPtr GPtr, ExtentInfo *extentInfo)
+@@ -3227,12 +3227,12 @@ static OSErr MoveExtent(SGlobPtr GPtr, E
  											  &extentData, &recordSize, &foundExtentIndex);
  				foundLocation = extentsBTree;
  				if (err != noErr) {
@@ -62,7 +60,7 @@ index 8eb759c..89c12d6 100644
  				goto out;
  			}
  		}
-@@ -3241,7 +3241,7 @@ static OSErr MoveExtent(SGlobPtr GPtr, ExtentInfo *extentInfo)
+@@ -3241,7 +3241,7 @@ static OSErr MoveExtent(SGlobPtr GPtr, E
  	err = CopyDiskBlocks(GPtr, extentInfo->startBlock, extentInfo->blockCount, 
  						 extentInfo->newStartBlock);
  	if (err != noErr) {
@@ -71,7 +69,7 @@ index 8eb759c..89c12d6 100644
  		goto out;
  	}
  	
-@@ -3260,7 +3260,7 @@ static OSErr MoveExtent(SGlobPtr GPtr, ExtentInfo *extentInfo)
+@@ -3260,7 +3260,7 @@ static OSErr MoveExtent(SGlobPtr GPtr, E
  
  	}
  	if (err != noErr) {
@@ -80,7 +78,7 @@ index 8eb759c..89c12d6 100644
  		goto out;
  	}
  
-@@ -3491,7 +3491,7 @@ static OSErr SearchExtentInAttributeBT(SGlobPtr GPtr, ExtentInfo *extentInfo,
+@@ -3491,7 +3491,7 @@ static OSErr SearchExtentInAttributeBT(S
  	result = BTSearchRecord(GPtr->calculatedAttributesFCB, &iterator, 
  				kInvalidMRUCacheKey, &btRecord, recordSize, &iterator);
  	if (result) {
@@ -89,11 +87,9 @@ index 8eb759c..89c12d6 100644
  		goto out;	
  	}
  	
-diff --git a/fsck_hfs.tproj/dfalib/SVerify1.c b/fsck_hfs.tproj/dfalib/SVerify1.c
-index a273bf3..39bda5c 100644
 --- a/fsck_hfs.tproj/dfalib/SVerify1.c
 +++ b/fsck_hfs.tproj/dfalib/SVerify1.c
-@@ -2157,9 +2157,9 @@ CheckAttributeRecord(SGlobPtr GPtr, const HFSPlusAttrKey *key, const HFSPlusAttr
+@@ -2157,9 +2157,9 @@ CheckAttributeRecord(SGlobPtr GPtr, cons
  	
  	if (doDelete == true) {
  		result = DeleteBTreeRecord(GPtr->calculatedAttributesFCB, key);
@@ -105,7 +101,7 @@ index a273bf3..39bda5c 100644
  		}
  		
  		/* Set flags to mark header and map dirty */
-@@ -3034,7 +3034,7 @@ OSErr	CheckFileExtents( SGlobPtr GPtr, UInt32 fileNumber, UInt8 forkType,
+@@ -3034,7 +3034,7 @@ OSErr	CheckFileExtents( SGlobPtr GPtr, U
  		//	checkout the extent record first
  		err = ChkExtRec( GPtr, extents, &lastExtentIndex );
  		if (err != noErr) {
@@ -114,8 +110,6 @@ index a273bf3..39bda5c 100644
  
  			/* Stop verification if bad extent is found for system file or EA */
  			if ((fileNumber < kHFSFirstUserCatalogNodeID) ||
-diff --git a/fsck_hfs.tproj/fsck_debug.c b/fsck_hfs.tproj/fsck_debug.c
-index 1be3fc5..77e8e51 100644
 --- a/fsck_hfs.tproj/fsck_debug.c
 +++ b/fsck_hfs.tproj/fsck_debug.c
 @@ -25,18 +25,18 @@
@@ -150,8 +144,6 @@ index 1be3fc5..77e8e51 100644
  {
  	if (cur_debug_level & type) {
  		va_list ap;
-diff --git a/fsck_hfs.tproj/fsck_debug.h b/fsck_hfs.tproj/fsck_debug.h
-index 81e3932..cb1b9be 100644
 --- a/fsck_hfs.tproj/fsck_debug.h
 +++ b/fsck_hfs.tproj/fsck_debug.h
 @@ -36,18 +36,18 @@ enum debug_message_type {
