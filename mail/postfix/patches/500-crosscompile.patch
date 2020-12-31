@@ -9,7 +9,7 @@
      RELEASE=`(uname -r) 2>/dev/null`
      # No ${x%%y} support in Solaris 11 /bin/sh
      RELEASE_MAJOR=`expr "$RELEASE" : '\([0-9]*\)'` || exit 1
-@@ -229,6 +229,15 @@ case $# in
+@@ -242,6 +242,15 @@ case "$SYSTEM" in
  esac
  
  case "$SYSTEM.$RELEASE" in
