@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xfsprogs
 PKG_VERSION:=5.9.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/fs/xfs/xfsprogs
@@ -68,6 +68,7 @@ CONFIGURE_ARGS += \
 	--disable-libicu
 
 TARGET_CFLAGS += -DHAVE_MAP_SYNC
+TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lrt)
 
 define Package/xfs-admin/install
 	$(INSTALL_DIR) $(1)/sbin
