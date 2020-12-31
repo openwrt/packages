@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=whois
 PKG_VERSION:=5.5.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/w/whois
