@@ -16,9 +16,6 @@ utilities.
  create mode 100644 fsck_hfs.tproj/dfalib/Makefile.lnx
  create mode 100644 newfs_hfs.tproj/Makefile.lnx
 
-diff --git a/Makefile.lnx b/Makefile.lnx
-new file mode 100644
-index 0000000..687d1e7
 --- /dev/null
 +++ b/Makefile.lnx
 @@ -0,0 +1,8 @@
@@ -30,9 +27,6 @@ index 0000000..687d1e7
 +	for d in $(SUBDIRS); do $(MAKE) -C $$d -f Makefile.lnx $@; done
 +
 +export CC CFLAGS
-diff --git a/fsck_hfs.tproj/Makefile.lnx b/fsck_hfs.tproj/Makefile.lnx
-new file mode 100644
-index 0000000..977d7e8
 --- /dev/null
 +++ b/fsck_hfs.tproj/Makefile.lnx
 @@ -0,0 +1,16 @@
@@ -52,9 +46,6 @@ index 0000000..977d7e8
 +	$(MAKE) -C dfalib -f Makefile.lnx clean
 +
 +.PHONY : FORCE clean
-diff --git a/fsck_hfs.tproj/dfalib/Makefile.lnx b/fsck_hfs.tproj/dfalib/Makefile.lnx
-new file mode 100644
-index 0000000..8c07196
 --- /dev/null
 +++ b/fsck_hfs.tproj/dfalib/Makefile.lnx
 @@ -0,0 +1,15 @@
@@ -73,9 +64,6 @@ index 0000000..8c07196
 +
 +clean:
 +	$(RM) $(OFILES) libdfa.a
-diff --git a/newfs_hfs.tproj/Makefile.lnx b/newfs_hfs.tproj/Makefile.lnx
-new file mode 100644
-index 0000000..58e6700
 --- /dev/null
 +++ b/newfs_hfs.tproj/Makefile.lnx
 @@ -0,0 +1,12 @@

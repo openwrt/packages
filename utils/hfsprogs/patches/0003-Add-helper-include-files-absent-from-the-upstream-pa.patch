@@ -15,9 +15,6 @@ the data structures used by the programs that manipulate the filesystems.
  create mode 100644 include/hfs/hfs_mount.h
  create mode 100644 include/sys/appleapiopts.h
 
-diff --git a/include/bitstring.h b/include/bitstring.h
-new file mode 100644
-index 0000000..fbecfbe
 --- /dev/null
 +++ b/include/bitstring.h
 @@ -0,0 +1,164 @@
@@ -185,9 +182,6 @@ index 0000000..fbecfbe
 +}
 +
 +#endif /* !_BITSTRING_H_ */
-diff --git a/include/hfs/hfs_format.h b/include/hfs/hfs_format.h
-new file mode 100644
-index 0000000..d820329
 --- /dev/null
 +++ b/include/hfs/hfs_format.h
 @@ -0,0 +1,689 @@
@@ -880,9 +874,6 @@ index 0000000..d820329
 +#endif
 +
 +#endif /* __HFS_FORMAT__ */
-diff --git a/include/hfs/hfs_mount.h b/include/hfs/hfs_mount.h
-new file mode 100644
-index 0000000..ad729f2
 --- /dev/null
 +++ b/include/hfs/hfs_mount.h
 @@ -0,0 +1,78 @@
@@ -964,9 +955,6 @@ index 0000000..ad729f2
 +#endif /* __APPLE_API_UNSTABLE */
 +
 +#endif /* ! _HFS_MOUNT_H_ */
-diff --git a/include/sys/appleapiopts.h b/include/sys/appleapiopts.h
-new file mode 100644
-index 0000000..4d2061f
 --- /dev/null
 +++ b/include/sys/appleapiopts.h
 @@ -0,0 +1,52 @@
