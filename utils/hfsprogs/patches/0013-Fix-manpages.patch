@@ -20,8 +20,6 @@ Reviewed-by: Rogério Theodoro de Brito <rbrito@ime.usp.br>
  newfs_hfs.tproj/newfs_hfs.8 | 23 ++++++++---------------
  2 files changed, 15 insertions(+), 26 deletions(-)
 
-diff --git a/fsck_hfs.tproj/fsck_hfs.8 b/fsck_hfs.tproj/fsck_hfs.8
-index aec9949..0bc804d 100644
 --- a/fsck_hfs.tproj/fsck_hfs.8
 +++ b/fsck_hfs.tproj/fsck_hfs.8
 @@ -19,18 +19,18 @@
@@ -58,7 +56,7 @@ index aec9949..0bc804d 100644
  When preening file systems,
  .Nm
  will fix common inconsistencies for file systems that were not
-@@ -105,9 +103,9 @@ to check and repair journaled HFS+ file systems.
+@@ -105,9 +103,9 @@ to check and repair journaled HFS+ file
  .It Fl g
  Causes
  .Nm
@@ -70,7 +68,7 @@ index aec9949..0bc804d 100644
  .Nm
  tool.
  .It Fl l
-@@ -144,8 +142,6 @@ specified file system for a new catalog file and if there is no damage
+@@ -144,8 +142,6 @@ specified file system for a new catalog
  to the leaf nodes in the existing catalog file.
  .El
  .Pp
@@ -79,8 +77,6 @@ index aec9949..0bc804d 100644
  .Sh SEE ALSO
  .Xr fsck 8
  .Sh BUGS
-diff --git a/newfs_hfs.tproj/newfs_hfs.8 b/newfs_hfs.tproj/newfs_hfs.8
-index d002cc9..fe91962 100644
 --- a/newfs_hfs.tproj/newfs_hfs.8
 +++ b/newfs_hfs.tproj/newfs_hfs.8
 @@ -19,10 +19,10 @@
@@ -118,7 +114,7 @@ index d002cc9..fe91962 100644
  has several options to allow the defaults to be selectively overridden.
  The options are as follows:
  .Bl -tag -width Fl
-@@ -66,7 +60,7 @@ Set the group of the file system's root directory to
+@@ -66,7 +60,7 @@ Set the group of the file system's root
  Specify the access permissions mask for the file system's root directory.
  .It Fl h
  Creates a legacy HFS format filesystem. This option
@@ -145,7 +141,7 @@ index d002cc9..fe91962 100644
  .Bl -tag -width Fl
  .It Em a=bytes
  Set the attribute b-tree node size.
-@@ -139,8 +133,7 @@ Set the extent overflow b-tree node size.
+@@ -139,8 +133,7 @@ Set the extent overflow b-tree node size
  Volume name (file system name) in ascii or UTF-8 format.
  .El
  .Sh SEE ALSO
