@@ -31,7 +31,7 @@
  
  /* Make a '\0' separated arg vector from a SEP separated list in
     STRING, returning it in ARGZ, and the total length in LEN.  If a
-@@ -69,65 +68,65 @@ extern error_t argz_create (char *__const __argv[], char **__restrict __argz,
+@@ -69,65 +68,65 @@ extern error_t argz_create (char *__cons
     The result can be destroyed using free.  */
  extern error_t __argz_create_sep (__const char *__restrict __string,
  				  int __sep, char **__restrict __argz,
@@ -113,7 +113,7 @@
  
  /* Insert ENTRY into ARGZ & ARGZ_LEN before BEFORE, which should be an
     existing entry in ARGZ; if BEFORE is NULL, ENTRY is appended to the end.
-@@ -138,11 +137,11 @@ extern void argz_delete (char **__restrict __argz,
+@@ -138,11 +137,11 @@ extern void argz_delete (char **__restri
  extern error_t __argz_insert (char **__restrict __argz,
  			      size_t *__restrict __argz_len,
  			      char *__restrict __before,
@@ -127,7 +127,7 @@
  
  /* Replace any occurrences of the string STR in ARGZ with WITH, reallocating
     ARGZ as necessary.  If REPLACE_COUNT is non-zero, *REPLACE_COUNT will be
-@@ -173,9 +172,9 @@ extern error_t argz_replace (char **__restrict __argz,
+@@ -173,11 +172,11 @@ extern error_t argz_replace (char **__re
        ...;
  */
  extern char *__argz_next (__const char *__restrict __argz, size_t __argz_len,
@@ -137,9 +137,12 @@
 -			__const char *__restrict __entry) __THROW;
 +			__const char *__restrict __entry) __attribute__ ((__nothrow__));
  
- #ifdef __USE_EXTERN_INLINES
+-#ifdef __USE_EXTERN_INLINES
++#if 0
  extern inline char *
-@@ -200,6 +199,8 @@ argz_next (__const char *__argz, size_t __argz_len,
+ __argz_next (__const char *__argz, size_t __argz_len,
+ 	     __const char *__entry)
+@@ -200,6 +199,8 @@ argz_next (__const char *__argz, size_t
  }
  #endif /* Use extern inlines.  */
  

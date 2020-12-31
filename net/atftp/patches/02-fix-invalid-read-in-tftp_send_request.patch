@@ -1,8 +1,6 @@
-diff --git a/tftp_io.c b/tftp_io.c
-index 605a9c2..6cce1f4 100644
 --- a/tftp_io.c
 +++ b/tftp_io.c
-@@ -64,7 +64,7 @@ int tftp_send_request(int socket, struct sockaddr_storage *sa, short type,
+@@ -64,7 +64,7 @@ int tftp_send_request(int socket, struct
       buf_index += strlen(mode);
       buf_index++;
       
