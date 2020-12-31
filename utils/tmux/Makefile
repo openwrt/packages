@@ -2,12 +2,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tmux
-PKG_VERSION:=2.9a
+PKG_VERSION:=3.1.c
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/tmux/tmux/releases/download/$(PKG_VERSION)
-PKG_HASH:=839d167a4517a6bffa6b6074e89a9a8630547b2dea2086f1fad15af12ab23b25
+PKG_HASH:=b9617dd4d1c541ebc21b6b5760d58102fc039a593786aab273b5dd95dd514bea
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 
 PKG_LICENSE:=ISC
