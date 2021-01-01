@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
 PKG_VERSION:=23.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= http://www.erlang.org/download/
@@ -314,19 +314,9 @@ endef
 
 HOST_CONFIGURE_ARGS += \
 	--disable-hipe \
+	--disable-pgo \
 	--disable-smp-support \
 	--without-javac
-
-HOST_CFLAGS += -D_GNU_SOURCE
-
-define Host/Compile
-	$(MAKE) -C $(HOST_BUILD_DIR) all
-endef
-
-define Host/Install
-	$(MAKE) -C $(HOST_BUILD_DIR) install
-endef
-
 
 # Target
 
