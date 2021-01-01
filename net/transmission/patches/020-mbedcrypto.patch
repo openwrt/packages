@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -152,8 +152,8 @@ AS_IF([test "x$want_crypto" = "xauto" -o "x$want_crypto" = "xcyassl"], [
+@@ -152,8 +152,8 @@ AS_IF([test "x$want_crypto" = "xauto" -o
      )
  ])
  AS_IF([test "x$want_crypto" = "xauto" -o "x$want_crypto" = "xpolarssl"], [

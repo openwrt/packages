@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
 PKG_VERSION:=3.00
-PKG_RELEASE:=9
+PKG_RELEASE:=10
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GITHUB/transmission/transmission-releases/master
@@ -40,7 +40,7 @@ define Package/transmission/template
   CATEGORY:=Network
   TITLE:=BitTorrent client
   URL:=https://www.transmissionbt.com
-  DEPENDS:=+libcurl +libevent2 +libminiupnpc +libnatpmp +libpthread +librt +zlib +LIBCURL_NOSSL:libmbedtls +LIBCURL_GNUTLS:libmbedtls $(ICONV_DEPENDS)
+  DEPENDS:=+libcurl +libevent2 +libminiupnpc +libnatpmp +libpthread +librt +zlib +LIBCURL_NOSSL:libmbedtls +LIBCURL_GNUTLS:libmbedtls +LIBCURL_WOLFSSL:libmbedtls $(ICONV_DEPENDS)
 endef
 
 define Package/transmission-daemon
@@ -104,7 +104,7 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_LIBCURL_GNUTLS),--with-crypto=polarssl) \
 	$(if $(CONFIG_LIBCURL_MBEDTLS),--with-crypto=polarssl) \
 	$(if $(CONFIG_LIBCURL_OPENSSL),--with-crypto=openssl) \
-	$(if $(CONFIG_LIBCURL_WOLFSSL),--with-crypto=cyassl)
+	$(if $(CONFIG_LIBCURL_WOLFSSL),--with-crypto=polarssl)
 
 define Package/transmission-daemon/install
 	$(INSTALL_DIR) $(1)/usr/bin
