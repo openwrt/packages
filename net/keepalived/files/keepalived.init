@@ -111,7 +111,8 @@ globals() {
 		router_id \
 		vrrp_mcast_group4 \
 		vrrp_mcast_group6 \
-		vrrp_startup_delay
+		vrrp_startup_delay \
+		enable_script_security
 }
 
 print_ipaddress_indent() {
