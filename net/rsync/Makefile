@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsync
 PKG_VERSION:=3.2.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.samba.org/pub/rsync/src
@@ -24,13 +24,14 @@ PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/rsync
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=File Transfer
   TITLE:=Fast remote file copy program (like rcp)
-  DEPENDS:=+libpopt +zlib +RSYNC_xattr:libattr +RSYNC_acl:libacl +RSYNC_zstd:libzstd
+  DEPENDS:=+libpopt +zlib +RSYNC_xattr:libattr +RSYNC_acl:libacl +RSYNC_zstd:libzstd $(ICONV_DEPENDS)
   URL:=https://rsync.samba.org/
   MENU:=1
 endef
@@ -46,14 +47,14 @@ CONFIGURE_ARGS += \
 	--without-included-zlib \
 	--disable-debug \
 	--disable-asm \
-	--disable-iconv \
-	--disable-iconv-open \
 	--disable-lz4 \
 	--disable-locale \
 	--disable-md2man \
 	--disable-openssl \
 	--disable-simd \
 	--disable-xxhash \
+	--$(if $(CONFIG_BUILD_NLS),en,dis)able-iconv \
+	--$(if $(CONFIG_BUILD_NLS),en,dis)able-iconv-open \
 	--$(if $(CONFIG_RSYNC_zstd),en,dis)able-zstd \
 	--$(if $(CONFIG_RSYNC_xattr),en,dis)able-xattr-support \
 	--$(if $(CONFIG_RSYNC_acl),en,dis)able-acl-support \
