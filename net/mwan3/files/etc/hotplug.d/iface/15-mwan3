@@ -21,7 +21,8 @@ fi
 
 [ "$MWAN3_STARTUP" = "init" ] || procd_lock
 
-config_load mwan3
+mwan3_init
+
 /etc/init.d/mwan3 running || {
 	[ "$MWAN3_STARTUP" = "init" ] || procd_lock
 	LOG notice "mwan3 hotplug $ACTION on $INTERFACE not called because globally disabled"
@@ -33,8 +34,6 @@ $IPT4 -S mwan3_hook &>/dev/null || {
 	LOG warn "hotplug called on $INTERFACE before mwan3 has been set up"
 	exit 0
 }
-
-mwan3_init
 
 if [ "$MWAN3_STARTUP" != "init" ] && [ "$ACTION" = "ifup" ]; then
 	mwan3_set_user_iface_rules $INTERFACE $DEVICE

@@ -69,13 +69,10 @@ mwan3_add_all_routes()
 
 mwan3_rtmon_route_handle()
 {
-	local action route_line family tbl device line tid source_routing
+	local action route_line family tbl device line tid
 
 	route_line=${1##"Deleted "}
 	route_family=$2
-
-	config_get_bool source_routing globals source_routing 0
-	[ $source_routing -eq 0 ] && unset source_routing
 
 	if [ "$route_line" = "$1" ]; then
 		action="replace"
@@ -143,7 +140,8 @@ main()
 {
 	local IP family
 
-	config_load mwan3
+	mwan3_init
+
 	family=$1
 	[ -z $family ] && family=ipv4
 	if [ "$family" = "ipv6" ]; then
@@ -155,7 +153,6 @@ main()
 	else
 		IP="$IP4"
 	fi
-	mwan3_init
 	sh -c "echo \$\$; exec $IP monitor route" | {
 		read -r monitor_pid
 		trap_with_arg func_trap "$monitor_pid" SIGINT SIGTERM SIGKILL

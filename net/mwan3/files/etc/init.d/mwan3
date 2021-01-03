@@ -27,7 +27,6 @@ start_tracker() {
 start_service() {
 	local enabled hotplug_pids
 
-	config_load mwan3
 	mwan3_init
 	config_foreach start_tracker interface
 
@@ -57,7 +56,6 @@ start_service() {
 stop_service() {
 	local ipset rule IP IPTR IPT family table tid
 
-	config_load mwan3
 	mwan3_init
 	config_foreach mwan3_interface_shutdown interface
 

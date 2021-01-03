@@ -410,9 +410,6 @@ mwan3_delete_iface_iptables()
 
 mwan3_get_routes()
 {
-	local source_routing
-	config_get_bool source_routing globals source_routing 0
-	[ $source_routing -eq 0 ] && unset source_routing
 	$IP route list table main | sed -ne "$MWAN3_ROUTE_LINE_EXP" | uniq
 }
 
