@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=bridge-utils
 PKG_VERSION:=1.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/shemminger/bridge-utils
@@ -31,7 +31,7 @@ define Package/bridge
   CATEGORY:=Base system
   TITLE:=Ethernet bridging configuration utility
   URL:=http://www.linuxfromscratch.org/blfs/view/svn/basicnet/bridge-utils.html
-  ALTERNATIVES:=300:/usr/sbin/brctl:/usr/libexec/bridge-utils-brctl
+  ALTERNATIVES:=300:/usr/sbin/brctl:/usr/libexec/brctl-bridge-utils
 endef
 
 define Package/bridge/description
@@ -44,7 +44,7 @@ CONFIGURE_ARGS += \
 
 define Package/bridge/install
 	$(INSTALL_DIR) $(1)/usr/libexec
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/brctl $(1)/usr/libexec/bridge-utils-brctl
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/brctl $(1)/usr/libexec/brctl-bridge-utils
 endef
 
 $(eval $(call BuildPackage,bridge))

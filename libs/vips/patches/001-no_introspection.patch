@@ -7,12 +7,12 @@
 -# init introspection support
 -GOBJECT_INTROSPECTION_CHECK([1.30.0])
 -
- # gir needs a list of source files to scan for introspection
- #
- # build with a glob and a list of files to exclude from scanning
+ # remove the '(disabled, use --enable-introspection to enable)'
+ # suffix from the found_introspection variable
+ if test "x$found_introspection" != x"yes"; then
 --- a/libvips/Makefile.am
 +++ b/libvips/Makefile.am
-@@ -68,56 +68,3 @@ install-exec-hook:
+@@ -67,56 +67,3 @@ install-exec-hook:
  	echo "#define VIPS_SONAME \"$$dlname\"" >> soname.h && \
  	cp soname.h $(DESTDIR)$(pkgincludedir) && \
  	rm soname.h
@@ -35,7 +35,7 @@
 -LDADD = @INTROSPECTION_LIBS@ @VIPS_CFLAGS@ libvips.la @VIPS_LIBS@ 
 -
 -noinst_PROGRAMS = \
--	introspect
+-	introspect$(EXEEXT)
 -introspect_SOURCES = \
 -	introspect.c
 -
@@ -44,7 +44,7 @@
 -introspection_sources = @vips_introspection_sources@
 -
 -# we make the vips8 API
--Vips-8.0.gir: introspect
+-Vips-8.0.gir: introspect$(EXEEXT)
 -Vips_8_0_gir_INCLUDES = GObject-2.0
 -Vips_8_0_gir_CFLAGS = $(INCLUDES) -I${top_srcdir}/libvips/include
 -Vips_8_0_gir_LIBS = libvips.la

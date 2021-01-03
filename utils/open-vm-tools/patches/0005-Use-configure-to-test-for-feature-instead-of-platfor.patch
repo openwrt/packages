@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -912,6 +912,7 @@
+@@ -923,6 +923,7 @@ AC_CHECK_FUNCS(
  
  AC_CHECK_FUNCS([ecvt])
  AC_CHECK_FUNCS([fcvt])
@@ -8,7 +8,7 @@
  
  AC_CHECK_FUNC([mkdtemp], [have_mkdtemp=yes])
  
-@@ -1121,10 +1122,13 @@
+@@ -1132,10 +1133,13 @@ fi
  ###
  
  AC_CHECK_HEADERS([crypt.h])
@@ -38,7 +38,7 @@
  #ifdef __APPLE__
  #include <sys/socket.h>
  #include <TargetConditionals.h>
-@@ -1025,31 +1022,32 @@
+@@ -1025,31 +1022,32 @@ Id_EndSuperUser(uid_t uid)  // IN:
  static Bool
  IdIsSetUGid(void)
  {

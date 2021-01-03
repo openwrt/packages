@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coova-chilli
 PKG_VERSION:=1.5
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/coova/coova-chilli/tar.gz/$(PKG_VERSION)?
@@ -82,7 +82,7 @@ endef
 
 DISABLE_NLS=
 
-TARGET_CFLAGS += $(FPIC) -Wno-address-of-packed-member
+TARGET_CFLAGS += $(FPIC) -Wno-error
 
 CONFIGURE_VARS += \
        ARCH="$(LINUX_KARCH)" \

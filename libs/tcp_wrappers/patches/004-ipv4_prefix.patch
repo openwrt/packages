@@ -12,7 +12,7 @@
  or address pattern listed in the named file. The file format is
 --- a/tcpd.h
 +++ b/tcpd.h
-@@ -93,6 +93,7 @@ extern void refuse __P((struct request_i
+@@ -95,6 +95,7 @@ extern void refuse __P((struct request_i
  extern char *xgets __P((char *, int, FILE *));	/* fgets() on steroids */
  extern char *split_at __P((char *, int));	/* strchr() and split */
  extern unsigned long dot_quad_addr __P((char *)); /* restricted inet_addr() */

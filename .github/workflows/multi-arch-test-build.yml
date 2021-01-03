@@ -2,8 +2,6 @@ name: Test Build
 
 on:
   pull_request:
-    branches:
-      - master
 
 jobs:
   build:
@@ -13,18 +11,18 @@ jobs:
       fail-fast: false
       matrix:
         arch:
-          - arc_arc700
+          - arc_archs
           - arm_cortex-a9_vfpv3-d16
           - mips_24kc
           - powerpc_464fp
           - powerpc_8540
         runtime_test: [false]
         include:
-          - arch: aarch64_generic
+          - arch: aarch64_cortex-a53
             runtime_test: true
           - arch: arm_cortex-a15_neon-vfpv4
             runtime_test: true
-          - arch: i386_pentium4
+          - arch: i386_pentium-mmx
             runtime_test: true
           - arch: x86_64
             runtime_test: true
@@ -48,10 +46,16 @@ jobs:
           echo "Building $PACKAGES"
           echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
 
+      - name: Determine branch name
+        run: |
+          BRANCH="${GITHUB_BASE_REF#refs/heads/}"
+          echo "Building for $BRANCH"
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+
       - name: Build
         uses: openwrt/gh-action-sdk@v1
         env:
-          ARCH: ${{ matrix.arch }}
+          ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
           FEEDNAME: packages_ci
 
       - name: Move created packages to project dir

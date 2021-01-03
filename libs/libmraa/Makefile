@@ -8,19 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmraa
-PKG_VERSION:=2.1.0
-PKG_RELEASE:=3
+PKG_VERSION:=2.2.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/eclipse/mraa/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=5351ce9eb654014d8ea7f43bdb2d17e6d1955536938a2ea0d467f4008e614345
+PKG_HASH:=076669bee8423ffef3065735b293a329020be86630fea457174dbfcc67a0554a
 PKG_BUILD_DIR:=$(BUILD_DIR)/mraa-$(PKG_VERSION)
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>, Hirokazu MORIKAWA <morikw2@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 
-PKG_BUILD_DEPENDS:=node swig/host node/host
+PKG_BUILD_DEPENDS:=swig/host node/host PACKAGE_node:node
 CMAKE_INSTALL:=1
 PKG_USE_MIPS16:=0
 PYTHON3_PKG_BUILD:=0
@@ -30,9 +30,8 @@ include $(INCLUDE_DIR)/cmake.mk
 include ../../lang/python/python3-package.mk
 
 CMAKE_OPTIONS=-DENABLEEXAMPLES=0 \
+	-DBUILDSWIGNODE=$(if $(CONFIG_PACKAGE_libmraa-node),ON,OFF) \
 	-DFIRMATA=ON
-
-TARGET_CFLAGS+=-I$(STAGING_DIR)/usr/include/node
 
 define Package/libmraa/Default
   SECTION:=libs
@@ -65,7 +64,7 @@ endef
 define Package/libmraa-node
   $(call Package/libmraa/Default)
   TITLE:=Eclipse MRAA lowlevel IO Node.js library
-  DEPENDS:=+libmraa +node
+  DEPENDS:=+libmraa @PACKAGE_node
 endef
 
 define Package/libmraa-node/description

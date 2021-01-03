@@ -5,24 +5,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oniguruma
-PKG_VERSION:=6.9.5_rev1
-PKG_RELEASE:=3
+PKG_VERSION:=6.9.6
+PKG_RELEASE:=1
 
 PKG_SOURCE:=onig-v$(subst _,-,$(PKG_VERSION)).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/kkos/oniguruma/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=e0c2212102fa4146c43b6c4f2f7727a84fd055cc2109c293d64298cef0c372b5
+PKG_HASH:=aec9f6902ad8b7bb53b2c55d04686ea75da89a06694836b0362cb206578dfe89
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:oniguruma_project:oniguruma
 
-PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-
-CONFIGURE_ARGS += --enable-posix-api
 
 define Package/oniguruma
     SECTION:=libs
@@ -39,6 +38,8 @@ define Package/oniguruma/description
 
    Character encoding can be specified per regular expression object.
 endef
+
+CONFIGURE_ARGS += --enable-posix-api
 
 define Package/oniguruma/install
 	$(INSTALL_DIR) $(1)/usr/lib

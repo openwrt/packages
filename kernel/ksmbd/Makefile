@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ksmbd
-PKG_VERSION:=3.2.4
+PKG_VERSION:=3.3.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/cifsd-team/cifsd/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=a7beeb0e804b361adf2b79dcd98ccf4b92b2c1fa8a65a39dd4fbb63479cdf7cd
+PKG_HASH:=51f4b8a5c469872fa9bb2661534f51b9a288d2f3af07f0e86cf0d7aa031ccc02
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -37,7 +37,8 @@ define KernelPackage/fs-ksmbd
 		+kmod-crypto-sha512 \
 		+kmod-crypto-aead \
 		+kmod-crypto-ccm \
-		+kmod-crypto-gcm
+		+kmod-crypto-gcm \
+		+kmod-lib-crc32c
 endef
 
 define KernelPackage/fs-ksmbd/description

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-html-parser
 PKG_VERSION:=3.72
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GA/GAAS/
 PKG_SOURCE:=HTML-Parser-$(PKG_VERSION).tar.gz
@@ -20,8 +20,10 @@ PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 PKG_CPE_ID:=cpe:/a:derrick_oswald:html-parser
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/HTML-Parser-$(PKG_VERSION)
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/perl/HTML-Parser-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include ../perl/perlmod.mk
 
 define Package/perl-html-parser
@@ -45,5 +47,17 @@ define Package/perl-html-parser/install
 	$(call perlmod/Install,$(1),HTML auto/HTML)
 endef
 
+define Host/Configure
+	$(call perlmod/host/Configure,,,)
+endef
+
+define Host/Compile
+	$(call perlmod/host/Compile,,)
+endef
+
+define Host/Install
+	$(call perlmod/host/Install,$(1),)
+endef
 
 $(eval $(call BuildPackage,perl-html-parser))
+$(eval $(call HostBuild))

@@ -15,8 +15,7 @@ readonly _ERROR_='\033[0;31mERROR\033[0m'
 readonly _WARNING_='\033[0;33mWARNING\033[0m'
 readonly readmeURL="https://github.com/openwrt/packages/tree/master/net/vpn-policy-routing/files/README.md"
 
-export EXTRA_COMMANDS='support'
-export EXTRA_HELP="	support	Generates output required to troubleshoot routing issues
+extra_command "support" "Generates output required to troubleshoot routing issues
 		Use '-d' option for more detailed output
 		Use '-p' option to automatically upload data under VPR paste.ee account
 			WARNING: while paste.ee uploads are unlisted, they are still publicly available

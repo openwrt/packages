@@ -343,6 +343,7 @@ proto_modemmanager_init_config() {
 	proto_config_add_string	 password
 	proto_config_add_string	 pincode
 	proto_config_add_string	 iptype
+	proto_config_add_int	 signalrate
 	proto_config_add_boolean lowpower
 	proto_config_add_defaults
 }
@@ -354,11 +355,11 @@ proto_modemmanager_setup() {
 	local bearermethod_ipv4 bearermethod_ipv6 auth cliauth
 	local operatorname operatorid registration accesstech signalquality
 
-	local device apn allowedauth username password pincode iptype metric
+	local device apn allowedauth username password pincode iptype metric signalrate
 
 	local address prefix gateway mtu dns1 dns2
 
-	json_get_vars device apn allowedauth username password pincode iptype metric
+	json_get_vars device apn allowedauth username password pincode iptype metric signalrate
 
 	# validate sysfs path given in config
 	[ -n "${device}" ] || {
@@ -402,6 +403,14 @@ proto_modemmanager_setup() {
 		proto_block_restart "${interface}"
 		return 1
 	}
+
+	# check if Signal refresh rate is set
+	if [ -n "${signalrate}" ] && [ "${signalrate}" -eq "${signalrate}" ] 2>/dev/null; then
+		echo "setting signal refresh rate to ${signalrate} seconds"
+		mmcli --modem="${device}" --signal-setup="${signalrate}"
+	else
+		echo "signal refresh rate is not set"
+	fi
 
 	# log additional useful information
 	modemstatus=$(mmcli --modem="${device}" --output-keyvalue)

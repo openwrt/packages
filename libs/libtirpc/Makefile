@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtirpc
-PKG_VERSION:=1.2.6
-PKG_RELEASE:=2
+PKG_VERSION:=1.3.1
+PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=@SF/libtirpc
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=4278e9a5181d5af9cd7885322fdecebc444f9a3da87c526e7d47f7a12a37d1cc
+PKG_HASH:=245895caf066bec5e3d4375942c8cb4366adad184c29c618d97f724ea309ee17
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -29,6 +29,10 @@ endef
 
 CONFIGURE_ARGS += --disable-gssapi
 HOST_CONFIGURE_ARGS += --disable-gssapi
+
+ifeq ($(HOST_OS),Darwin)
+HOST_CONFIGURE_ARGS += --disable-symvers
+endif
 
 TARGET_CFLAGS += -DGQ
 HOST_CFLAGS += -DGQ

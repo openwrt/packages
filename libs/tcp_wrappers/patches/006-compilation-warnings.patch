@@ -1,6 +1,5 @@
-diff -u tcp_wrappers_7.6.orig/clean_exit.c tcp_wrappers_7.6/clean_exit.c
---- tcp_wrappers_7.6.orig/clean_exit.c	1994-12-29 03:42:20.000000000 +1100
-+++ tcp_wrappers_7.6/clean_exit.c	2017-11-14 22:50:48.000000000 +1100
+--- a/clean_exit.c
++++ b/clean_exit.c
 @@ -9,10 +9,11 @@
    */
  
@@ -14,9 +13,8 @@ diff -u tcp_wrappers_7.6.orig/clean_exit.c tcp_wrappers_7.6/clean_exit.c
  
  extern void exit();
  
-diff -u tcp_wrappers_7.6.orig/diag.c tcp_wrappers_7.6/diag.c
---- tcp_wrappers_7.6.orig/diag.c	1994-12-29 03:42:20.000000000 +1100
-+++ tcp_wrappers_7.6/diag.c	2017-11-14 22:51:09.000000000 +1100
+--- a/diag.c
++++ b/diag.c
 @@ -10,7 +10,7 @@
    */
  
@@ -26,9 +24,8 @@ diff -u tcp_wrappers_7.6.orig/diag.c tcp_wrappers_7.6/diag.c
  #endif
  
  /* System libraries */
-diff -u tcp_wrappers_7.6.orig/eval.c tcp_wrappers_7.6/eval.c
---- tcp_wrappers_7.6.orig/eval.c	1995-01-31 05:51:46.000000000 +1100
-+++ tcp_wrappers_7.6/eval.c	2017-11-14 22:51:50.000000000 +1100
+--- a/eval.c
++++ b/eval.c
 @@ -19,7 +19,7 @@
    */
  
@@ -38,9 +35,8 @@ diff -u tcp_wrappers_7.6.orig/eval.c tcp_wrappers_7.6/eval.c
  #endif
  
  /* System libraries. */
-diff -u tcp_wrappers_7.6.orig/fakelog.c tcp_wrappers_7.6/fakelog.c
---- tcp_wrappers_7.6.orig/fakelog.c	1994-12-29 03:42:22.000000000 +1100
-+++ tcp_wrappers_7.6/fakelog.c	2017-11-14 22:52:07.000000000 +1100
+--- a/fakelog.c
++++ b/fakelog.c
 @@ -6,7 +6,7 @@
    */
  
@@ -50,7 +46,7 @@ diff -u tcp_wrappers_7.6.orig/fakelog.c tcp_wrappers_7.6/fakelog.c
  #endif
  
  #include <stdio.h>
-@@ -17,7 +17,7 @@
+@@ -17,7 +17,7 @@ static char sccsid[] = "@(#) fakelog.c 1
  
  /* ARGSUSED */
  
@@ -59,7 +55,7 @@ diff -u tcp_wrappers_7.6.orig/fakelog.c tcp_wrappers_7.6/fakelog.c
  char   *name;
  int     logopt;
  int     facility;
-@@ -27,7 +27,7 @@
+@@ -27,7 +27,7 @@ int     facility;
  
  /* vsyslog - format one record */
  
@@ -68,7 +64,7 @@ diff -u tcp_wrappers_7.6.orig/fakelog.c tcp_wrappers_7.6/fakelog.c
  int     severity;
  char   *fmt;
  va_list ap;
-@@ -43,7 +43,7 @@
+@@ -43,7 +43,7 @@ va_list ap;
  
  /* VARARGS */
  
@@ -77,7 +73,7 @@ diff -u tcp_wrappers_7.6.orig/fakelog.c tcp_wrappers_7.6/fakelog.c
  {
      va_list ap;
      char   *fmt;
-@@ -56,7 +56,7 @@
+@@ -56,7 +56,7 @@ VARARGS(syslog, int, severity)
  
  /* closelog - dummy */
  
@@ -86,9 +82,8 @@ diff -u tcp_wrappers_7.6.orig/fakelog.c tcp_wrappers_7.6/fakelog.c
  {
      /* void */
  }
-diff -u tcp_wrappers_7.6.orig/fix_options.c tcp_wrappers_7.6/fix_options.c
---- tcp_wrappers_7.6.orig/fix_options.c	2017-11-13 09:29:08.000000000 +1100
-+++ tcp_wrappers_7.6/fix_options.c	2017-11-14 22:52:22.000000000 +1100
+--- a/fix_options.c
++++ b/fix_options.c
 @@ -6,7 +6,7 @@
    */
  
@@ -98,7 +93,7 @@ diff -u tcp_wrappers_7.6.orig/fix_options.c tcp_wrappers_7.6/fix_options.c
  #endif
  
  #include <sys/types.h>
-@@ -29,14 +29,14 @@
+@@ -29,14 +29,14 @@ static char sccsid[] = "@(#) fix_options
  
  /* fix_options - get rid of IP-level socket options */
  
@@ -116,9 +111,8 @@ diff -u tcp_wrappers_7.6.orig/fix_options.c tcp_wrappers_7.6/fix_options.c
  #else /* __GLIBC__ */
      size_t  optsize = sizeof(optbuf);
      int     ipproto;
-diff -u tcp_wrappers_7.6.orig/fromhost.c tcp_wrappers_7.6/fromhost.c
---- tcp_wrappers_7.6.orig/fromhost.c	1994-12-29 03:42:24.000000000 +1100
-+++ tcp_wrappers_7.6/fromhost.c	2017-11-14 22:52:33.000000000 +1100
+--- a/fromhost.c
++++ b/fromhost.c
 @@ -11,7 +11,7 @@
    */
  
@@ -128,9 +122,8 @@ diff -u tcp_wrappers_7.6.orig/fromhost.c tcp_wrappers_7.6/fromhost.c
  #endif
  
  #if defined(TLI) || defined(PTX) || defined(TLI_SEQUENT)
-diff -u tcp_wrappers_7.6.orig/hosts_access.c tcp_wrappers_7.6/hosts_access.c
---- tcp_wrappers_7.6.orig/hosts_access.c	2017-11-13 09:29:25.000000000 +1100
-+++ tcp_wrappers_7.6/hosts_access.c	2017-11-14 22:52:48.000000000 +1100
+--- a/hosts_access.c
++++ b/hosts_access.c
 @@ -18,7 +18,7 @@
    */
  
@@ -140,9 +133,8 @@ diff -u tcp_wrappers_7.6.orig/hosts_access.c tcp_wrappers_7.6/hosts_access.c
  #endif
  
  /* System libraries. */
-diff -u tcp_wrappers_7.6.orig/hosts_ctl.c tcp_wrappers_7.6/hosts_ctl.c
---- tcp_wrappers_7.6.orig/hosts_ctl.c	1994-12-29 03:42:28.000000000 +1100
-+++ tcp_wrappers_7.6/hosts_ctl.c	2017-11-14 22:53:01.000000000 +1100
+--- a/hosts_ctl.c
++++ b/hosts_ctl.c
 @@ -12,7 +12,7 @@
    */
  
@@ -152,9 +144,8 @@ diff -u tcp_wrappers_7.6.orig/hosts_ctl.c tcp_wrappers_7.6/hosts_ctl.c
  #endif
  
  #include <stdio.h>
-diff -u tcp_wrappers_7.6.orig/inetcf.c tcp_wrappers_7.6/inetcf.c
---- tcp_wrappers_7.6.orig/inetcf.c	1997-02-12 12:13:24.000000000 +1100
-+++ tcp_wrappers_7.6/inetcf.c	2017-11-14 22:53:11.000000000 +1100
+--- a/inetcf.c
++++ b/inetcf.c
 @@ -6,7 +6,7 @@
    */
  
@@ -164,7 +155,7 @@ diff -u tcp_wrappers_7.6.orig/inetcf.c tcp_wrappers_7.6/inetcf.c
  #endif
  
  #include <sys/types.h>
-@@ -14,6 +14,7 @@
+@@ -14,6 +14,7 @@ static char sccsid[] = "@(#) inetcf.c 1.
  #include <stdio.h>
  #include <errno.h>
  #include <string.h>
@@ -172,7 +163,7 @@ diff -u tcp_wrappers_7.6.orig/inetcf.c tcp_wrappers_7.6/inetcf.c
  
  extern int errno;
  extern void exit();
-@@ -21,6 +22,8 @@
+@@ -21,6 +22,8 @@ extern void exit();
  #include "tcpd.h"
  #include "inetcf.h"
  
@@ -181,9 +172,8 @@ diff -u tcp_wrappers_7.6.orig/inetcf.c tcp_wrappers_7.6/inetcf.c
   /*
    * Network configuration files may live in unusual places. Here are some
    * guesses. Shorter names follow longer ones.
-diff -u tcp_wrappers_7.6.orig/misc.c tcp_wrappers_7.6/misc.c
---- tcp_wrappers_7.6.orig/misc.c	2017-11-13 09:29:25.000000000 +1100
-+++ tcp_wrappers_7.6/misc.c	2017-11-14 22:53:23.000000000 +1100
+--- a/misc.c
++++ b/misc.c
 @@ -5,7 +5,7 @@
    */
  
@@ -193,9 +183,8 @@ diff -u tcp_wrappers_7.6.orig/misc.c tcp_wrappers_7.6/misc.c
  #endif
  
  #include <sys/types.h>
-diff -u tcp_wrappers_7.6.orig/myvsyslog.c tcp_wrappers_7.6/myvsyslog.c
---- tcp_wrappers_7.6.orig/myvsyslog.c	1994-12-29 03:42:34.000000000 +1100
-+++ tcp_wrappers_7.6/myvsyslog.c	2017-11-14 22:53:35.000000000 +1100
+--- a/myvsyslog.c
++++ b/myvsyslog.c
 @@ -8,7 +8,7 @@
    */
  
@@ -205,9 +194,8 @@ diff -u tcp_wrappers_7.6.orig/myvsyslog.c tcp_wrappers_7.6/myvsyslog.c
  #endif
  
  #ifdef vsyslog
-diff -u tcp_wrappers_7.6.orig/options.c tcp_wrappers_7.6/options.c
---- tcp_wrappers_7.6.orig/options.c	2017-11-13 09:29:08.000000000 +1100
-+++ tcp_wrappers_7.6/options.c	2017-11-14 22:53:50.000000000 +1100
+--- a/options.c
++++ b/options.c
 @@ -29,7 +29,7 @@
    */
  
@@ -217,7 +205,7 @@ diff -u tcp_wrappers_7.6.orig/options.c tcp_wrappers_7.6/options.c
  #endif
  
  /* System libraries. */
-@@ -47,6 +47,8 @@
+@@ -47,6 +47,8 @@ static char sccsid[] = "@(#) options.c 1
  #include <ctype.h>
  #include <setjmp.h>
  #include <string.h>
@@ -226,7 +214,7 @@ diff -u tcp_wrappers_7.6.orig/options.c tcp_wrappers_7.6/options.c
  
  #ifndef MAXPATHNAMELEN
  #define MAXPATHNAMELEN  BUFSIZ
-@@ -108,21 +110,21 @@
+@@ -108,21 +110,21 @@ struct option {
  /* List of known keywords. Add yours here. */
  
  static struct option option_table[] = {
@@ -263,7 +251,7 @@ diff -u tcp_wrappers_7.6.orig/options.c tcp_wrappers_7.6/options.c
  };
  
  /* process_options - process access control options */
-@@ -447,88 +449,88 @@
+@@ -447,88 +449,88 @@ struct syslog_names {
  
  static struct syslog_names log_fac[] = {
  #ifdef LOG_KERN
@@ -380,7 +368,7 @@ diff -u tcp_wrappers_7.6.orig/options.c tcp_wrappers_7.6/options.c
  };
  
  /* severity_map - lookup facility or severity value */
-@@ -589,7 +591,7 @@
+@@ -589,7 +591,7 @@ char   *string;
      if (src[0] == 0)
  	return (0);
  
@@ -389,17 +377,15 @@ diff -u tcp_wrappers_7.6.orig/options.c tcp_wrappers_7.6/options.c
  	if (ch == ':') {
  	    if (*++src == 0)
  		tcpd_warn("rule ends in \":\"");
-diff -u tcp_wrappers_7.6.orig/patchlevel.h tcp_wrappers_7.6/patchlevel.h
---- tcp_wrappers_7.6.orig/patchlevel.h	1997-03-22 05:27:24.000000000 +1100
-+++ tcp_wrappers_7.6/patchlevel.h	2017-11-14 22:54:15.000000000 +1100
+--- a/patchlevel.h
++++ b/patchlevel.h
 @@ -1,3 +1,3 @@
  #ifndef lint
 -static char patchlevel[] = "@(#) patchlevel 7.6 97/03/21 19:27:23";
 +static char patchlevel[] __attribute__((__unused__)) = "@(#) patchlevel 7.6 97/03/21 19:27:23";
  #endif
-diff -u tcp_wrappers_7.6.orig/percent_m.c tcp_wrappers_7.6/percent_m.c
---- tcp_wrappers_7.6.orig/percent_m.c	2017-11-13 09:29:08.000000000 +1100
-+++ tcp_wrappers_7.6/percent_m.c	2017-11-14 22:54:31.000000000 +1100
+--- a/percent_m.c
++++ b/percent_m.c
 @@ -5,7 +5,7 @@
    */
  
@@ -409,7 +395,7 @@ diff -u tcp_wrappers_7.6.orig/percent_m.c tcp_wrappers_7.6/percent_m.c
  #endif
  
  #include <stdio.h>
-@@ -27,7 +27,7 @@
+@@ -27,7 +27,7 @@ char   *ibuf;
      char   *bp = obuf;
      char   *cp = ibuf;
  
@@ -418,9 +404,8 @@ diff -u tcp_wrappers_7.6.orig/percent_m.c tcp_wrappers_7.6/percent_m.c
  	if (*cp == '%' && cp[1] == 'm') {
  #ifdef HAVE_STRERROR
              strcpy(bp, strerror(errno));
-diff -u tcp_wrappers_7.6.orig/percent_x.c tcp_wrappers_7.6/percent_x.c
---- tcp_wrappers_7.6.orig/percent_x.c	1994-12-29 03:42:38.000000000 +1100
-+++ tcp_wrappers_7.6/percent_x.c	2017-11-14 22:54:40.000000000 +1100
+--- a/percent_x.c
++++ b/percent_x.c
 @@ -11,7 +11,7 @@
    */
  
@@ -430,7 +415,7 @@ diff -u tcp_wrappers_7.6.orig/percent_x.c tcp_wrappers_7.6/percent_x.c
  #endif
  
  /* System libraries. */
-@@ -19,6 +19,7 @@
+@@ -19,6 +19,7 @@ static char sccsid[] = "@(#) percent_x.c
  #include <stdio.h>
  #include <syslog.h>
  #include <string.h>
@@ -438,9 +423,8 @@ diff -u tcp_wrappers_7.6.orig/percent_x.c tcp_wrappers_7.6/percent_x.c
  
  extern void exit();
  
-diff -u tcp_wrappers_7.6.orig/refuse.c tcp_wrappers_7.6/refuse.c
---- tcp_wrappers_7.6.orig/refuse.c	1994-12-29 03:42:40.000000000 +1100
-+++ tcp_wrappers_7.6/refuse.c	2017-11-14 22:54:50.000000000 +1100
+--- a/refuse.c
++++ b/refuse.c
 @@ -8,7 +8,7 @@
    */
  
@@ -450,9 +434,8 @@ diff -u tcp_wrappers_7.6.orig/refuse.c tcp_wrappers_7.6/refuse.c
  #endif
  
  /* System libraries. */
-diff -u tcp_wrappers_7.6.orig/rfc931.c tcp_wrappers_7.6/rfc931.c
---- tcp_wrappers_7.6.orig/rfc931.c	2017-11-13 09:29:08.000000000 +1100
-+++ tcp_wrappers_7.6/rfc931.c	2017-11-14 22:54:58.000000000 +1100
+--- a/rfc931.c
++++ b/rfc931.c
 @@ -10,7 +10,7 @@
    */
  
@@ -462,7 +445,7 @@ diff -u tcp_wrappers_7.6.orig/rfc931.c tcp_wrappers_7.6/rfc931.c
  #endif
  
  /* System libraries. */
-@@ -23,6 +23,7 @@
+@@ -23,6 +23,7 @@ static char sccsid[] = "@(#) rfc931.c 1.
  #include <setjmp.h>
  #include <signal.h>
  #include <string.h>
@@ -470,7 +453,7 @@ diff -u tcp_wrappers_7.6.orig/rfc931.c tcp_wrappers_7.6/rfc931.c
  
  /* Local stuff. */
  
-@@ -152,7 +153,7 @@
+@@ -152,7 +153,7 @@ char   *dest;
  		     * protocol, not part of the data.
  		     */
  
@@ -479,9 +462,8 @@ diff -u tcp_wrappers_7.6.orig/rfc931.c tcp_wrappers_7.6/rfc931.c
  			*cp = 0;
  		    result = user;
  		}
-diff -u tcp_wrappers_7.6.orig/safe_finger.c tcp_wrappers_7.6/safe_finger.c
---- tcp_wrappers_7.6.orig/safe_finger.c	2017-11-13 09:29:08.000000000 +1100
-+++ tcp_wrappers_7.6/safe_finger.c	2017-11-14 22:55:08.000000000 +1100
+--- a/safe_finger.c
++++ b/safe_finger.c
 @@ -15,7 +15,7 @@
    */
  
@@ -491,7 +473,7 @@ diff -u tcp_wrappers_7.6.orig/safe_finger.c tcp_wrappers_7.6/safe_finger.c
  #endif
  
  /* System libraries */
-@@ -27,6 +27,10 @@
+@@ -27,6 +27,10 @@ static char sccsid[] = "@(#) safe_finger
  #include <ctype.h>
  #include <pwd.h>
  #include <syslog.h>
@@ -502,7 +484,7 @@ diff -u tcp_wrappers_7.6.orig/safe_finger.c tcp_wrappers_7.6/safe_finger.c
  
  extern void exit();
  
-@@ -45,6 +49,8 @@
+@@ -45,6 +49,8 @@ int     finger_pid;
  int	allow_severity = SEVERITY;
  int	deny_severity = LOG_WARNING;
  
@@ -511,7 +493,7 @@ diff -u tcp_wrappers_7.6.orig/safe_finger.c tcp_wrappers_7.6/safe_finger.c
  void    cleanup(sig)
  int     sig;
  {
-@@ -52,7 +58,7 @@
+@@ -52,7 +58,7 @@ int     sig;
      exit(0);
  }
  
@@ -520,9 +502,8 @@ diff -u tcp_wrappers_7.6.orig/safe_finger.c tcp_wrappers_7.6/safe_finger.c
  int     argc;
  char  **argv;
  {
-diff -u tcp_wrappers_7.6.orig/scaffold.c tcp_wrappers_7.6/scaffold.c
---- tcp_wrappers_7.6.orig/scaffold.c	2017-11-13 09:29:21.000000000 +1100
-+++ tcp_wrappers_7.6/scaffold.c	2017-11-14 22:55:32.000000000 +1100
+--- a/scaffold.c
++++ b/scaffold.c
 @@ -5,7 +5,7 @@
    */
  
@@ -532,9 +513,8 @@ diff -u tcp_wrappers_7.6.orig/scaffold.c tcp_wrappers_7.6/scaffold.c
  #endif
  
  /* System libraries. */
-diff -u tcp_wrappers_7.6.orig/shell_cmd.c tcp_wrappers_7.6/shell_cmd.c
---- tcp_wrappers_7.6.orig/shell_cmd.c	1994-12-29 03:42:44.000000000 +1100
-+++ tcp_wrappers_7.6/shell_cmd.c	2017-11-14 22:55:45.000000000 +1100
+--- a/shell_cmd.c
++++ b/shell_cmd.c
 @@ -9,7 +9,7 @@
    */
  
@@ -544,7 +524,7 @@ diff -u tcp_wrappers_7.6.orig/shell_cmd.c tcp_wrappers_7.6/shell_cmd.c
  #endif
  
  /* System libraries. */
-@@ -20,6 +20,9 @@
+@@ -20,6 +20,9 @@ static char sccsid[] = "@(#) shell_cmd.c
  #include <stdio.h>
  #include <syslog.h>
  #include <string.h>
@@ -554,9 +534,8 @@ diff -u tcp_wrappers_7.6.orig/shell_cmd.c tcp_wrappers_7.6/shell_cmd.c
  
  extern void exit();
  
-diff -u tcp_wrappers_7.6.orig/socket.c tcp_wrappers_7.6/socket.c
---- tcp_wrappers_7.6.orig/socket.c	2017-11-13 09:29:08.000000000 +1100
-+++ tcp_wrappers_7.6/socket.c	2017-11-14 22:55:57.000000000 +1100
+--- a/socket.c
++++ b/socket.c
 @@ -16,7 +16,7 @@
    */
  
@@ -566,7 +545,7 @@ diff -u tcp_wrappers_7.6.orig/socket.c tcp_wrappers_7.6/socket.c
  #endif
  
  /* System libraries. */
-@@ -77,7 +77,7 @@
+@@ -77,7 +77,7 @@ struct request_info *request;
      static struct sockaddr_in client;
      static struct sockaddr_in server;
  #if !defined (__GLIBC__)
@@ -575,7 +554,7 @@ diff -u tcp_wrappers_7.6.orig/socket.c tcp_wrappers_7.6/socket.c
  #else /* __GLIBC__ */
      size_t  len;
  #endif /* __GLIBC__ */
-@@ -229,7 +229,7 @@
+@@ -229,7 +229,7 @@ int     fd;
      char    buf[BUFSIZ];
      struct sockaddr_in sin;
  #if !defined(__GLIBC__)
@@ -584,9 +563,8 @@ diff -u tcp_wrappers_7.6.orig/socket.c tcp_wrappers_7.6/socket.c
  #else /* __GLIBC__ */
      size_t  size = sizeof(sin);
  #endif /* __GLIBC__ */
-diff -u tcp_wrappers_7.6.orig/tcpd.c tcp_wrappers_7.6/tcpd.c
---- tcp_wrappers_7.6.orig/tcpd.c	1996-02-12 03:01:33.000000000 +1100
-+++ tcp_wrappers_7.6/tcpd.c	2017-11-14 22:56:09.000000000 +1100
+--- a/tcpd.c
++++ b/tcpd.c
 @@ -11,7 +11,7 @@
    */
  
@@ -596,7 +574,7 @@ diff -u tcp_wrappers_7.6.orig/tcpd.c tcp_wrappers_7.6/tcpd.c
  #endif
  
  /* System libraries. */
-@@ -24,6 +24,7 @@
+@@ -24,6 +24,7 @@ static char sccsid[] = "@(#) tcpd.c 1.10
  #include <stdio.h>
  #include <syslog.h>
  #include <string.h>
@@ -604,7 +582,7 @@ diff -u tcp_wrappers_7.6.orig/tcpd.c tcp_wrappers_7.6/tcpd.c
  
  #ifndef MAXPATHNAMELEN
  #define MAXPATHNAMELEN	BUFSIZ
-@@ -38,10 +39,12 @@
+@@ -38,10 +39,12 @@ static char sccsid[] = "@(#) tcpd.c 1.10
  #include "patchlevel.h"
  #include "tcpd.h"
  
@@ -618,10 +596,9 @@ diff -u tcp_wrappers_7.6.orig/tcpd.c tcp_wrappers_7.6/tcpd.c
  int     argc;
  char  **argv;
  {
-diff -u tcp_wrappers_7.6.orig/tcpd.h tcp_wrappers_7.6/tcpd.h
---- tcp_wrappers_7.6.orig/tcpd.h	2017-11-13 09:29:25.000000000 +1100
-+++ tcp_wrappers_7.6/tcpd.h	2017-11-14 22:36:40.000000000 +1100
-@@ -182,10 +182,10 @@
+--- a/tcpd.h
++++ b/tcpd.h
+@@ -184,10 +184,10 @@ extern void tli_host __P((struct request
  
  #ifdef __STDC__
  extern void tcpd_warn(char *, ...);	/* report problem and proceed */
@@ -634,9 +611,8 @@ diff -u tcp_wrappers_7.6.orig/tcpd.h tcp_wrappers_7.6/tcpd.h
  #endif
  
  struct tcpd_context {
-diff -u tcp_wrappers_7.6.orig/tcpdchk.c tcp_wrappers_7.6/tcpdchk.c
---- tcp_wrappers_7.6.orig/tcpdchk.c	2017-11-13 09:29:08.000000000 +1100
-+++ tcp_wrappers_7.6/tcpdchk.c	2017-11-14 22:56:21.000000000 +1100
+--- a/tcpdchk.c
++++ b/tcpdchk.c
 @@ -15,7 +15,7 @@
    */
  
@@ -646,7 +622,7 @@ diff -u tcp_wrappers_7.6.orig/tcpdchk.c tcp_wrappers_7.6/tcpdchk.c
  #endif
  
  /* System libraries. */
-@@ -30,6 +30,7 @@
+@@ -30,6 +30,7 @@ static char sccsid[] = "@(#) tcpdchk.c 1
  #include <errno.h>
  #include <netdb.h>
  #include <string.h>
@@ -654,7 +630,7 @@ diff -u tcp_wrappers_7.6.orig/tcpdchk.c tcp_wrappers_7.6/tcpdchk.c
  
  extern int errno;
  extern void exit();
-@@ -199,13 +200,15 @@
+@@ -199,13 +200,15 @@ struct request_info *request;
      char    sv_list[BUFLEN];		/* becomes list of daemons */
      char   *cl_list;			/* becomes list of requests */
      char   *sh_cmd;			/* becomes optional shell command */
@@ -671,7 +647,7 @@ diff -u tcp_wrappers_7.6.orig/tcpdchk.c tcp_wrappers_7.6/tcpdchk.c
  	tcpd_context.file = table;
  	tcpd_context.line = 0;
  	while (xgets(sv_list, sizeof(sv_list), fp)) {
-@@ -331,7 +334,7 @@
+@@ -331,7 +334,7 @@ char   *list;
  	    clients = 0;
  	} else {
  	    clients++;
@@ -680,7 +656,7 @@ diff -u tcp_wrappers_7.6.orig/tcpdchk.c tcp_wrappers_7.6/tcpdchk.c
  		check_user(cp);
  		check_host(host);
  	    } else {
-@@ -446,7 +449,7 @@
+@@ -446,7 +449,7 @@ char   *pat;
          } else if (errno != ENOENT) {
              tcpd_warn("open %s: %m", pat);
          }
@@ -689,9 +665,8 @@ diff -u tcp_wrappers_7.6.orig/tcpdchk.c tcp_wrappers_7.6/tcpdchk.c
  	if (dot_quad_addr(pat) == INADDR_NONE
  	    || dot_quad_addr(mask) == INADDR_NONE)
  	    tcpd_warn("%s/%s: bad net/mask pattern", pat, mask);
-diff -u tcp_wrappers_7.6.orig/tcpdmatch.c tcp_wrappers_7.6/tcpdmatch.c
---- tcp_wrappers_7.6.orig/tcpdmatch.c	1996-02-12 03:01:36.000000000 +1100
-+++ tcp_wrappers_7.6/tcpdmatch.c	2017-11-14 22:56:40.000000000 +1100
+--- a/tcpdmatch.c
++++ b/tcpdmatch.c
 @@ -14,7 +14,7 @@
    */
  
@@ -701,7 +676,7 @@ diff -u tcp_wrappers_7.6.orig/tcpdmatch.c tcp_wrappers_7.6/tcpdmatch.c
  #endif
  
  /* System libraries. */
-@@ -29,6 +29,8 @@
+@@ -29,6 +29,8 @@ static char sccsid[] = "@(#) tcpdmatch.c
  #include <syslog.h>
  #include <setjmp.h>
  #include <string.h>
@@ -710,9 +685,8 @@ diff -u tcp_wrappers_7.6.orig/tcpdmatch.c tcp_wrappers_7.6/tcpdmatch.c
  
  extern void exit();
  extern int optind;
-diff -u tcp_wrappers_7.6.orig/tli.c tcp_wrappers_7.6/tli.c
---- tcp_wrappers_7.6.orig/tli.c	1997-03-22 05:27:26.000000000 +1100
-+++ tcp_wrappers_7.6/tli.c	2017-11-14 22:56:50.000000000 +1100
+--- a/tli.c
++++ b/tli.c
 @@ -15,7 +15,7 @@
    */
  
@@ -722,9 +696,8 @@ diff -u tcp_wrappers_7.6.orig/tli.c tcp_wrappers_7.6/tli.c
  #endif
  
  #ifdef TLI
-diff -u tcp_wrappers_7.6.orig/try-from.c tcp_wrappers_7.6/try-from.c
---- tcp_wrappers_7.6.orig/try-from.c	1994-12-29 03:42:55.000000000 +1100
-+++ tcp_wrappers_7.6/try-from.c	2017-11-14 22:56:59.000000000 +1100
+--- a/try-from.c
++++ b/try-from.c
 @@ -11,7 +11,7 @@
    */
  
@@ -734,7 +707,7 @@ diff -u tcp_wrappers_7.6.orig/try-from.c tcp_wrappers_7.6/try-from.c
  #endif
  
  /* System libraries. */
-@@ -37,7 +37,7 @@
+@@ -37,7 +37,7 @@ static char sccsid[] = "@(#) try-from.c
  int     allow_severity = SEVERITY;	/* run-time adjustable */
  int     deny_severity = LOG_WARNING;	/* ditto */
  
@@ -743,9 +716,8 @@ diff -u tcp_wrappers_7.6.orig/try-from.c tcp_wrappers_7.6/try-from.c
  int     argc;
  char  **argv;
  {
-diff -u tcp_wrappers_7.6.orig/update.c tcp_wrappers_7.6/update.c
---- tcp_wrappers_7.6.orig/update.c	1994-12-29 03:42:56.000000000 +1100
-+++ tcp_wrappers_7.6/update.c	2017-11-14 22:57:09.000000000 +1100
+--- a/update.c
++++ b/update.c
 @@ -14,7 +14,7 @@
    */
  
@@ -755,7 +727,7 @@ diff -u tcp_wrappers_7.6.orig/update.c tcp_wrappers_7.6/update.c
  #endif
  
  /* System libraries */
-@@ -22,6 +22,7 @@
+@@ -22,6 +22,7 @@ static char sccsid[] = "@(#) update.c 1.
  #include <stdio.h>
  #include <syslog.h>
  #include <string.h>

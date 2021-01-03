@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unixodbc
-PKG_VERSION:=2.3.7
+PKG_VERSION:=2.3.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=unixODBC-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.unixodbc.org
-PKG_HASH:=45f169ba1f454a72b8fcbb82abd832630a3bf93baa84731cf2949f449e1e3e77
+PKG_HASH:=52833eac3d681c8b0c9a5a65f2ebd745b3a964f208fc748f977e44015a31b207
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=prog GPL libs LGPL

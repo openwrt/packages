@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-requests
-PKG_VERSION:=2.24.0
+PKG_VERSION:=2.25.1
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>, Alexandru Ardelean <ardeleanalex@gmail.com>
@@ -17,7 +17,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:python-requests:requests
 
 PYPI_NAME:=requests
-PKG_HASH:=b3559a131db72c33ee969480840fff4bb6dd111de7dd27c8ee1f820f4f00231b
+PKG_HASH:=27973dd4a904a4f13b263a19c866c13b92a39ed1c964655f025f3f8d3d75b804
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

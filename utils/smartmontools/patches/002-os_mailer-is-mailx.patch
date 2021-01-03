@@ -1,13 +1,13 @@
 diff --git a/configure b/configure
-index 6f442b3..5803c83 100755
+index 88928cf..736fabd 100755
 --- a/configure
 +++ b/configure
-@@ -6988,7 +6988,7 @@ releaseversion='${PACKAGE}-${VERSION}'
+@@ -6964,7 +6964,7 @@ releaseversion='${PACKAGE}-${VERSION}'
  # Set platform-specific modules and symbols
  os_libs=
  os_dltools='curl wget lynx svn'
 -os_mailer=mail
 +os_mailer=mailx
- os_hostname="'hostname'"
+ os_hostname="'hostname' 'uname -n'"
  os_dnsdomainname=
  os_nisdomainname="'domainname'"

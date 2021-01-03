@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntfs-3g
 PKG_VERSION:=2017.3.23
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)_ntfsprogs-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://www.tuxera.com/opensource/
@@ -160,7 +160,7 @@ define Package/ntfs-3g/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libntfs-3g.so.* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/sbin
-	$(CP) $(PKG_INSTALL_DIR)/sbin/mount.ntfs-3g $(1)/sbin/
+	$(LN) ../usr/bin/ntfs-3g $(1)/sbin/mount.ntfs-3g
 endef
 
 define Package/ntfs-3g/postinst
@@ -184,7 +184,7 @@ define Package/ntfs-3g-low/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/lowntfs-3g $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/sbin
-	$(CP) $(PKG_INSTALL_DIR)/sbin/mount.lowntfs-3g $(1)/sbin/
+	$(LN) ../usr/bin/lowntfs-3g $(1)/sbin/mount.lowntfs-3g
 endef
 
 define Package/ntfs-3g-low/postinst
@@ -206,7 +206,7 @@ endef
 
 define Package/ntfs-3g-utils/install
 	$(INSTALL_DIR) $(1)/sbin
-	$(CP) $(PKG_INSTALL_DIR)/sbin/mkfs.ntfs $(1)/sbin/
+	$(LN) ../usr/sbin/mkntfs $(1)/sbin/mkfs.ntfs
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(FIND) $(PKG_INSTALL_DIR)/usr/bin/ -type f ! -regex '.*[^/]*ntfs-3g[^/]*' -exec $(INSTALL_BIN) {} $(1)/usr/bin/ \;
 	$(INSTALL_DIR) $(1)/usr/sbin

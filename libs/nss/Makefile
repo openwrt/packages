@@ -7,14 +7,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nss
-PKG_VERSION:=3.58
+PKG_VERSION:=3.60
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
     https://download.cdn.mozilla.net/pub/security/$(PKG_NAME)/releases/NSS_$(subst .,_,$(PKG_VERSION))_RTM/src \
     https://archive.mozilla.org/pub/security/$(PKG_NAME)/releases/NSS_$(subst .,_,$(PKG_VERSION))_RTM/src
-PKG_HASH:=9f73cf789b5f109b978e5239551b609b0cafa88d18f0bc8ce3f976cb629353c0
+PKG_HASH:=84abd5575ab874c53ae511bd461e5d0868d1a1b384ee40753154cdd1d590fe3d
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENCE:=MPL-2.0
@@ -108,6 +108,8 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) \
+	 $(2)/bin \
+	 $(1)/usr/bin \
 	 $(1)/usr/include/nss \
 	 $(1)/usr/lib \
 	 $(1)/usr/lib/pkgconfig
@@ -119,6 +121,12 @@ define Build/InstallDev
 	  $(1)/usr/lib/
 	$(CP) $(PKG_BUILD_DIR)/nss/config/*.pc \
 	  $(1)/usr/lib/pkgconfig/
+	$(CP) $(PKG_BUILD_DIR)/nss/config/nss-config \
+	  $(1)/usr/bin/
+	$(SED) 's,^\(prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
+	  $(1)/usr/bin/nss-config
+	$(LN) ../../usr/bin/nss-config \
+	  $(2)/bin/
 endef
 
 define Package/nss-utils/install

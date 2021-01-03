@@ -60,8 +60,6 @@ smb_header() {
 			printf "\tmin receivefile size = 131072\n" # allows zero-copy writes via fs
 			printf "\tfake oplocks = Yes\n" # may corrupt files for simultanous writes to the same files by multiple clients, but might also see big speed boost
 			printf "\tuse sendfile = Yes\n" # enable sendfile, not sure whats with the 2019 bug https://bugzilla.samba.org/show_bug.cgi?id=14095
-			# Removed in 4.12.x in favor of VFS io_uring ; this is per file, so may increase memory useage on many simultanous oplocked files!
-			printf "\twrite cache size = 262144\n" # adds a write cache buffer per file for oplocked files, flushes if size is exhausted
 		fi
 
 		if [ "$DISABLE_NETBIOS" -eq 1 ] || [ ! -x /usr/sbin/nmbd ]; then

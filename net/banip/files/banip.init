@@ -4,8 +4,7 @@
 START=30
 USE_PROCD=1
 
-EXTRA_COMMANDS="refresh"
-EXTRA_HELP="	refresh	Refresh ipsets without new list downloads"
+extra_command "refresh" "Refresh ipsets without new list downloads"
 
 ban_init="/etc/init.d/banip"
 ban_script="/usr/bin/banip.sh"

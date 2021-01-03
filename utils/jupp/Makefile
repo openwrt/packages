@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=jupp
-PKG_VERSION:=3.1.39
+PKG_VERSION:=3.1.40
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-1.0
 PKG_LICENSE_FILES:=COPYING
@@ -17,7 +17,7 @@ PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_libncurses
 PKG_SOURCE:=joe-$(basename ${PKG_VERSION})jupp$(subst .,,$(suffix ${PKG_VERSION})).tgz
 PKG_SOURCE_URL:=http://www.mirbsd.org/MirOS/dist/jupp/ \
 		http://pub.allbsd.org/MirOS/dist/jupp/
-PKG_HASH:=0d5d5b3c8e3db7b64410779fd4ccf962174ebac0c7e717674c780edf44d2fe91
+PKG_HASH:=4bed439cde7f2be294e96e49ef3e913ea90fbe5e914db888403e3a27e8035b1a
 
 include $(INCLUDE_DIR)/package.mk
 

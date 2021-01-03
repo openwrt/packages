@@ -1,6 +1,6 @@
 --- a/disklib/dump.h
 +++ b/disklib/dump.h
-@@ -110,9 +110,7 @@ extern long	dev_bsize;	/* block size of underlying disk device */
+@@ -110,9 +110,7 @@ extern long	dev_bsize;	/* block size of
  extern int	dev_bshift;	/* log2(dev_bsize) */
  extern int	tp_bshift;	/* log2(TP_BSIZE) */
  
@@ -170,7 +170,7 @@
  #include <sys/param.h>
  #include <sys/types.h>
  #include <sys/time.h>
-@@ -80,6 +79,7 @@ extern Boolean _CFStringGetFileSystemRepresentation(CFStringRef string, UInt8 *b
+@@ -80,6 +79,7 @@ extern Boolean _CFStringGetFileSystemRep
  
  #define kJournalFileType	0x6a726e6c	/* 'jrnl' */
  

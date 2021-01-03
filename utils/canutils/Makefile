@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=canutils
-PKG_VERSION:=2020.02.04
-PKG_RELEASE:=4
+PKG_VERSION:=2020.11.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/linux-can/can-utils/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=a766aad89955b9cfcca27f61ef988fa169565c3657d2789808c0f33a7afa23c8
+PKG_HASH:=b8e53081c076fca248c39ae9ae5791359a81f1eb3e5fe23ff6fb0d0e1f1033fa
 PKG_BUILD_DIR:=$(BUILD_DIR)/can-utils-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Anton Glukhov <anton.a.glukhov@gmail.com>
@@ -53,9 +53,8 @@ FILES:= \
 	asc2log bcmserver canbusload can-calc-bit-timing \
 	candump canfdtest cangen cangw canlogserver canplayer \
 	cansend cansniffer isotpdump isotpperf isotprecv isotpsend \
-	isotpserver isotpsniffer isotptun jacd jcat jspy jsr \
+	isotpserver isotpsniffer isotptun j1939acd j1939cat j1939spy j1939sr \
 	log2asc log2long slcan_attach slcand slcanpty testj1939
-
 
 $(foreach a,$(FILES),$(eval $(call GenPlugin,$(a))))
 

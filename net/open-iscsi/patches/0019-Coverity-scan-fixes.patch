@@ -12,11 +12,9 @@ Subject: [PATCH 1/1] Coverity scan fixes
  usr/iscsid.c                  |  2 +-
  6 files changed, 15 insertions(+), 15 deletions(-)
 
-diff --git a/iscsiuio/src/unix/libs/qedi.c b/iscsiuio/src/unix/libs/qedi.c
-index 3414cb5..a359700 100644
 --- a/iscsiuio/src/unix/libs/qedi.c
 +++ b/iscsiuio/src/unix/libs/qedi.c
-@@ -1023,7 +1023,7 @@ static int qedi_read(nic_t *nic, packet_t *pkt)
+@@ -1030,7 +1030,7 @@ static int qedi_read(nic_t *nic, packet_
  
  	LOG_DEBUG(PFX "%s:hw_prod %d bd_prod %d, rx_pkt_idx %d, rxlen %d",
  		  nic->log_name, hw_prod, bd_prod, rx_bd->rx_pkt_index, len);
@@ -25,8 +23,6 @@ index 3414cb5..a359700 100644
  		  nic->log_name, sw_cons, bd_cons, QEDI_NUM_RX_BD);
  
  	if (bd_cons != bd_prod) {
-diff --git a/iscsiuio/src/unix/main.c b/iscsiuio/src/unix/main.c
-index 0c9ad49..f83f305 100644
 --- a/iscsiuio/src/unix/main.c
 +++ b/iscsiuio/src/unix/main.c
 @@ -391,6 +391,9 @@ int main(int argc, char *argv[])
@@ -39,11 +35,9 @@ index 0c9ad49..f83f305 100644
  
  	/*  Spin off the signal handling thread */
  	pthread_attr_init(&attr);
-diff --git a/libopeniscsiusr/idbm.c b/libopeniscsiusr/idbm.c
-index 7bc2381..7d4c338 100644
 --- a/libopeniscsiusr/idbm.c
 +++ b/libopeniscsiusr/idbm.c
-@@ -321,12 +321,11 @@ int _idbm_lock(struct iscsi_context *ctx)
+@@ -321,12 +321,11 @@ int _idbm_lock(struct iscsi_context *ctx
  		return 0;
  	}
  
@@ -61,11 +55,9 @@ index 7bc2381..7d4c338 100644
  	}
  
  	fd = open(LOCK_FILE, O_RDWR | O_CREAT, 0666);
-diff --git a/usr/idbm.c b/usr/idbm.c
-index d5e16cb..a210c88 100644
 --- a/usr/idbm.c
 +++ b/usr/idbm.c
-@@ -1438,12 +1438,10 @@ int idbm_lock(void)
+@@ -1439,12 +1439,10 @@ int idbm_lock(void)
  		return 0;
  	}
  
@@ -82,11 +74,9 @@ index d5e16cb..a210c88 100644
  	}
  
  	fd = open(LOCK_FILE, O_RDWR | O_CREAT, 0666);
-diff --git a/usr/iscsid.c b/usr/iscsid.c
-index 99d27ab..dbb0900 100644
 --- a/usr/iscsid.c
 +++ b/usr/iscsid.c
-@@ -490,8 +490,8 @@ int main(int argc, char *argv[])
+@@ -495,8 +495,8 @@ int main(int argc, char *argv[])
  				log_close(log_pid);
  				exit(ISCSI_ERR);
  			}
@@ -96,11 +86,9 @@ index 99d27ab..dbb0900 100644
  
  		if ((control_fd = ipc->ctldev_open()) < 0) {
  			log_close(log_pid);
-diff --git a/usr/initiator.c b/usr/initiator.c
-index a07f9aa..a06760c 100644
 --- a/usr/initiator.c
 +++ b/usr/initiator.c
-@@ -580,7 +580,7 @@ __session_conn_reopen(iscsi_conn_t *conn, queue_task_t *qtask, int do_stop,
+@@ -580,7 +580,7 @@ __session_conn_reopen(iscsi_conn_t *conn
  		      int redirected)
  {
  	iscsi_session_t *session = conn->session;
@@ -109,6 +97,3 @@ index a07f9aa..a06760c 100644
  
  	log_debug(1, "re-opening session %d (reopen_cnt %d)", session->id,
  			session->reopen_cnt);
--- 
-2.21.1
-

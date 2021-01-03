@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=lsof
-PKG_VERSION:=4.91
+PKG_VERSION:=4.94.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://www.mirrorservice.org/sites/lsof.itap.purdue.edu/pub/tools/unix/lsof/ ftp://ftp.fu-berlin.de/pub/unix/tools/lsof
-PKG_HASH:=c9da946a525fbf82ff80090b6d1879c38df090556f3fe0e6d782cb44172450a3
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).linux.tar.bz2
+PKG_SOURCE_URL:=https://github.com/lsof-org/lsof/releases/download/$(PKG_VERSION)
+PKG_HASH:=c41709c2543ecf9de1e950795790a9786a2f225e51c3cc53d6a9a256f872472b
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION).linux
 
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=Unique
@@ -39,12 +39,6 @@ endif
 
 TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include/tirpc
 TARGET_LDFLAGS += -ltirpc
-
-define Build/Prepare
-	$(PKG_UNPACK)
-	(cd $(PKG_BUILD_DIR) && tar -xf $(PKG_NAME)_$(PKG_VERSION)_src.tar && mv $(PKG_NAME)_$(PKG_VERSION)_src/* .)
-	$(Build/Patch)
-endef
 
 define Build/Configure
 	$(SED) 's/rpc\/rpc/\/tirpc\/rpc\/rpc/g' $(PKG_BUILD_DIR)/Configure

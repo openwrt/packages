@@ -12,4 +12,10 @@ depends on PACKAGE_modemmanager
 		default y
 		help
 		  Compile ModemManager with QMI support
+
+        config MODEMMANAGER_WITH_AT_COMMAND_VIA_DBUS
+                bool "Allow AT commands via DBus"
+                default n
+                help
+                  Compile ModemManager allowing AT commands without debug flag
 endmenu

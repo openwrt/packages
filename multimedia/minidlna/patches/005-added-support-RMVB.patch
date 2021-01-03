@@ -9,11 +9,9 @@ Subject: [PATCH] Added support RMVB.
  utils.c          | 3 +++
  3 files changed, 9 insertions(+), 1 deletion(-)
 
-diff --git a/metadata.c b/metadata.c
-index 9cd86dc..2d13480 100644
 --- a/metadata.c
 +++ b/metadata.c
-@@ -862,6 +862,10 @@ GetVideoMetadata(const char *path, const char *name)
+@@ -862,6 +862,10 @@ GetVideoMetadata(const char *path, const
  			xasprintf(&m.mime, "video/x-matroska");
  		else if( strcmp(ctx->iformat->name, "flv") == 0 )
  			xasprintf(&m.mime, "video/x-flv");
@@ -24,8 +22,6 @@ index 9cd86dc..2d13480 100644
  		if( m.mime )
  			goto video_no_dlna;
  
-diff --git a/upnpglobalvars.h b/upnpglobalvars.h
-index 1a2fb5e..2cbe24c 100644
 --- a/upnpglobalvars.h
 +++ b/upnpglobalvars.h
 @@ -172,7 +172,8 @@
@@ -38,8 +34,6 @@ index 1a2fb5e..2cbe24c 100644
  
  #define DLNA_FLAG_DLNA_V1_5      0x00100000
  #define DLNA_FLAG_HTTP_STALLING  0x00200000
-diff --git a/utils.c b/utils.c
-index dc936f9..006f611 100644
 --- a/utils.c
 +++ b/utils.c
 @@ -377,6 +377,8 @@ mime_to_ext(const char * mime)
@@ -59,6 +53,3 @@ index dc936f9..006f611 100644
  #ifdef TIVO_SUPPORT
  		ends_with(file, ".TiVo") ||
  #endif
--- 
-2.20.1
-

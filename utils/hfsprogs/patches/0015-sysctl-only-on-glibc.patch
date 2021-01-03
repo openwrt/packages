@@ -4,7 +4,7 @@
  #endif
  #include <sys/errno.h>
  #include <sys/stat.h>
-+#ifdef __GLIBC__
++#if 0
  #include <sys/sysctl.h>
 +#endif
  #if !LINUX

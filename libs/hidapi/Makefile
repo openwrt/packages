@@ -30,7 +30,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/hidapi
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libusb-1.0 +librt +libudev-fbsd $(ICONV_DEPENDS)
+  DEPENDS:=+libusb-1.0 +librt +libudev $(ICONV_DEPENDS)
   TITLE:=Library to talk to HID devices
   URL:=https://github.com/libusb/hidapi
 endef

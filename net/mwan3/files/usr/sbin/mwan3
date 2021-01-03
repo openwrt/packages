@@ -54,7 +54,7 @@ ifup() {
 		exit 0
 	fi
 
-	mwan3_ifup "$1"
+	mwan3_ifup "$1" "cmd"
 }
 
 interfaces()
@@ -123,16 +123,15 @@ restart() {
 	/etc/init.d/mwan3 start
 }
 
-wrap() {
+use() {
 	# Run a command with the device, src_ip and fwmark set to avoid processing by mwan3
 	# firewall rules
 
 	local interface device src_ip family
 	mwan3_init
-	config_load mwan3
 
 	interface=$1 ; shift
-	[ -z "$*" ] && echo "no command specified for mwan3 wrap" && return
+	[ -z "$*" ] && echo "no command specified for mwan3 use" && return
 	network_get_device device $interface
 	[ -z "$device" ] && echo "could not find device for $interface" && return
 

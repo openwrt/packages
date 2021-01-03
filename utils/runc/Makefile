@@ -1,15 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=runc
-PKG_VERSION:=1.0.0-rc10
-PKG_RELEASE:=2
+PKG_VERSION:=1.0.0-rc92
+PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/opencontainers/runc/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=6b44985023347fb9c5a2cc6f761df8c41cc2c84a7a68a6e6acf834dff6653a9a
-PKG_SOURCE_VERSION:=dc9208a3303feef5b3839f4323d9beb36df0a9dd
+PKG_HASH:=28378df983a3c586ed3ec8c76a774a9b10f36a0c323590a284b801cce95cc61f
+PKG_SOURCE_VERSION:=ff819c7e9184c13b7c2607fe6c30ae19403a7aff
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
@@ -23,25 +23,12 @@ GO_PKG:=github.com/opencontainers/runc
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
 
-define Package/runc/config
-config RUNC_SECCOMP
-	depends on PACKAGE_runc
-	bool "Enable support for seccomp in runc"
-	default DOCKER_SECCOMP
-	select KERNEL_SECCOMP
-	select PACKAGE_libseccomp
-	help
-	  Build runc with support for seccomp filters.
-	  Select libseccomp which also pulls-in the needed kernel features.
-endef
-
 define Package/runc
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=runc container runtime
   URL:=https://www.opencontainers.org/
-  DEPENDS:=$(GO_ARCH_DEPENDS) @(aarch64||arm||x86_64) +RUNC_SECCOMP:libseccomp
-  MENU:=1
+  DEPENDS:=$(GO_ARCH_DEPENDS) @(aarch64||arm||x86_64) +KERNEL_SECCOMP_FILTER:libseccomp
 endef
 
 define Package/runc/description
@@ -57,11 +44,14 @@ ifeq ($(ARCH),mips)
 MAKE_FLAGS += EXTRA_FLAGS='-buildmode=default'
 endif
 
-ifeq ($(CONFIG_RUNC_SECCOMP),y)
-MAKE_FLAGS += BUILDTAGS='seccomp'
-else
-MAKE_FLAGS += BUILDTAGS=''
+BUILDTAGS:=
+ifeq ($(CONFIG_KERNEL_SECCOMP_FILTER),y)
+BUILDTAGS += seccomp
 endif
+ifeq ($(CONFIG_SELINUX),y)
+BUILDTAGS += selinux
+endif
+MAKE_FLAGS += BUILDTAGS='$(BUILDTAGS)'
 
 # Reset golang-package.mk overrides so we can use the Makefile
 Build/Compile=$(call Build/Compile/Default)

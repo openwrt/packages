@@ -1,6 +1,6 @@
 --- a/runConfigureICU
 +++ b/runConfigureICU
-@@ -239,8 +239,8 @@
+@@ -239,8 +239,8 @@ case $platform in
          THE_COMP="the GNU C++"
          CC=gcc; export CC
          CXX=g++; export CXX

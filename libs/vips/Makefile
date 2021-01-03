@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vips
-PKG_VERSION:=8.8.3
+PKG_VERSION:=8.10.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/libvips/libvips/releases/download/v$(PKG_VERSION)
-PKG_HASH:=c5e4dd5a5c6a777c129037d19ca606769b3f1d405fcc9c8eeda906a61491f790
+PKG_HASH:=a4eef2f5334ab6dbf133cd3c6d6394d5bdb3e76d5ea4d578b02e1bc3d9e1cfd8
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -72,26 +72,18 @@ TARGET_CXXFLAGS += -fno-rtti
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/vips
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/include/* \
-		$(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/vips/* $(1)/usr/include/vips
 
 	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/*.so* \
-		$(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libvips.{a,so}* $(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig/
-	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/* \
-		$(1)/usr/lib/pkgconfig/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/vips.pc $(1)/usr/lib/pkgconfig/vips.pc
 endef
 
 define Package/vips/install
 	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/*.so* \
-		$(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libvips.so.* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,vips))

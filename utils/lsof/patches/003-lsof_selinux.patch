@@ -1,8 +1,6 @@
-diff --git a/Configure b/Configure
-index e4a25a2..3a6e78b 100755
 --- a/Configure
 +++ b/Configure
-@@ -2976,7 +2976,7 @@ return(0); }
+@@ -2991,7 +2991,7 @@ return(0); }
  	LSOF_TMP1=1
        fi	# }
      fi	# }

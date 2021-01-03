@@ -9,7 +9,7 @@
     uint32 sec;
     uint32 nsec;
  
-@@ -134,7 +134,7 @@ HgfsConvertFromNtTimeNsec(struct timespec *unixTime, // OUT: Time in UNIX format
+@@ -134,7 +134,7 @@ HgfsConvertFromNtTimeNsec(struct timespe
        return -1;
     }
  
@@ -20,7 +20,7 @@
     unixTime->tv_nsec = nsec * 100;
 --- a/lib/hgfsServer/hgfsServerLinux.c
 +++ b/lib/hgfsServer/hgfsServerLinux.c
-@@ -2569,7 +2569,11 @@ HgfsStatToFileAttr(struct stat *stats,       // IN: stat information
+@@ -2573,8 +2573,12 @@ HgfsStatToFileAttr(struct stat *stats,
  #      define FMTTIMET "l"
  #   endif
  #else
@@ -28,7 +28,8 @@
 +#   define FMTTIMET __PRI64
 +#else
  #   define FMTTIMET "l"
-+#endif
  #endif
++#endif
     LOG(4, "access: %"FMTTIMET"d/%"FMT64"u \nwrite: %"FMTTIMET"d/%"FMT64"u \n"
         "attr: %"FMTTIMET"d/%"FMT64"u\n",
+        stats->st_atime, attr->accessTime, stats->st_mtime, attr->writeTime,

@@ -8,7 +8,7 @@
  set(CMAKE_C_FLAGS @CMAKE_C_FLAGS@)
  set(INCDIR "@CMAKE_CURRENT_BINARY_DIR@")
  set(PNG_PREFIX "@PNG_PREFIX@")
-@@ -58,7 +59,7 @@ if ("${INPUTEXT}" STREQUAL ".c" AND "${OUTPUTEXT}" STREQUAL ".out")
+@@ -58,7 +59,7 @@ if ("${INPUTEXT}" STREQUAL ".c" AND "${O
      set(PNG_PREFIX_DEF "-DPNG_PREFIX=${PNG_PREFIX}")
    endif()
  

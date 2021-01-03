@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdaq
 PKG_VERSION:=2.2.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://www.snort.org/downloads/snortplus/
 PKG_SOURCE:=daq-$(PKG_VERSION).tar.gz
@@ -53,6 +53,9 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/daq/* $(STAGING_DIR)/usr/lib/daq/
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/daq-modules-config $(STAGING_DIR)/usr/bin/
+	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(STAGING_DIR)/usr/bin/daq-modules-config
+	$(INSTALL_DIR) $(2)/bin
+	$(LN) ../../usr/bin/daq-modules-config $(2)/bin/daq-modules-config
 endef
 
 define Package/libdaq/install
@@ -60,8 +63,6 @@ define Package/libdaq/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/daq
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/daq/*.so* $(1)/usr/lib/daq/
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/daq-modules-config $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,libdaq))

@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kea
 PKG_VERSION:=1.8.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.isc.org/isc/kea/$(PKG_VERSION)
@@ -178,7 +178,8 @@ CONFIGURE_VARS += \
 TARGET_CXXFLAGS += \
 	$(FPIC) \
 	-fdata-sections \
-	-ffunction-sections
+	-ffunction-sections \
+	-std=c++17
 
 TARGET_LDFLAGS += \
 	-Wl,--gc-sections,--as-needed

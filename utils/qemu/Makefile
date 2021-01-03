@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
 PKG_VERSION:=5.0.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_HASH:=2f13a92a0fa5c8b69ff0796b59b86b080bbb92ebad5d301a7724dd06b5e78cb6
 PKG_SOURCE_URL:=http://download.qemu.org/
@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/package.mk
 
-QEMU_DEPS_IN_GUEST := @(TARGET_x86_64||TARGET_armvirt||TARGET_arm64||TARGET_malta)
+QEMU_DEPS_IN_GUEST := @(TARGET_x86_64||TARGET_armvirt||TARGET_malta)
 QEMU_DEPS_IN_HOST := @(TARGET_x86_64||TARGET_sunxi)
 QEMU_DEPS_IN_HOST += $(CXX_DEPENDS)
 QEMU_DEPS_IN_HOST += $(ICONV_DEPENDS)

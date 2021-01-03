@@ -16,7 +16,7 @@ PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_HASH:=9c73e63c99855709b9be0b3cc9e5b072cb60f37311e8c4e50f15576a0bf82854
+PKG_HASH:=991c3f8ac97992f3d308fefeb03a64db462574eadbff34ce8bc5bb583d9903ff
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=Python/2.0
@@ -134,7 +134,8 @@ MAKE_FLAGS+=\
 EXTRA_CFLAGS+= \
 	-DNDEBUG -fno-inline
 EXTRA_LDFLAGS+= \
-	-L$(PKG_BUILD_DIR)
+	-L$(PKG_BUILD_DIR) \
+	-L$(STAGING_DIR)/usr/lib -L$(STAGING_DIR)/lib
 
 DISABLE_BLUETOOTH:= \
 	ac_cv_header_bluetooth_bluetooth_h=no \

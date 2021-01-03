@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sane-backends
-PKG_VERSION:=1.0.30
-PKG_RELEASE:=2
+PKG_VERSION:=1.0.31
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://gitlab.com/sane-project/backends/uploads/c3dd60c9e054b5dee1e7b01a7edc98b0
-PKG_HASH:=3f5d96a9c47f6124a46bb577c776bbc4896dd17b9203d8bfbc7fe8cbbcf279a3
+PKG_SOURCE_URL:=https://gitlab.com/sane-project/backends/uploads/8bf1cae2e1803aefab9e5331550e5d5d/
+PKG_HASH:=4a3b10fcb398ed854777d979498645edfe66fcac2f2fd2b9117a79ff45e2a5aa
 
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=GPL-2.0 GPL-2.0-or-later
@@ -179,7 +179,7 @@ CONFIGURE_ARGS += \
 	--enable-static \
 	--disable-preload \
 	--without-snmp \
-	--disable-avahi \
+	--without-avahi \
 	--disable-locking \
 	--without-usb-record-replay \
 
@@ -312,6 +312,7 @@ $(eval $(call SaneBackend,canon630u,the Canon 630u USB flatbed scanner,+libusb-1
 $(eval $(call SaneBackend,canon_dr,Canon DR-series scanners,+libusb-1.0))
 # Depends on libieee1284
 #$(eval $(call SaneBackend,canon_pp,Canon CanoScan Parallel Port flatbed scanners,+libieee1284))
+$(eval $(call SaneBackend,canon_lide70,Canon LiDE 70 USB flatbed scanner,))
 $(eval $(call SaneBackend,cardscan,Corex CardScan usb scanners,+libusb-1.0))
 $(eval $(call SaneBackend,coolscan,Nikon film-scanners,+libusb-1.0))
 $(eval $(call SaneBackend,coolscan2,Nikon Coolscan film scanners,+libusb-1.0))
@@ -327,7 +328,7 @@ $(eval $(call SaneBackend,epsonds,EPSON scanners,+libjpeg +libusb-1.0)) ####
 $(eval $(call SaneBackend,epson2,EPSON scanners,+libusb-1.0))
 #$(eval $(call SaneBackend,escl,AirScan/eSCL devices,+libcurl +libxml2 +libnetsnmp +libavahi))
 $(eval $(call SaneBackend,fujitsu,Fujitsu flatbed and ADF scanners,+libusb-1.0))
-$(eval $(call SaneBackend,genesys,GL646 GL841 GL843 GL847 and GL124 based USB flatbed scanners,+libstdcpp +libusb-1.0))
+$(eval $(call SaneBackend,genesys,GL646 GL841 GL843 GL847 and GL124 based USB flatbed scanners,+libstdcpp +libusb-1.0 +libtiff))
 $(eval $(call SaneBackend,gphoto2,digital cameras supported by gphoto2,+libjpeg +libgphoto2))
 $(eval $(call SaneBackend,gt68xx,GT-68XX based USB flatbed scanners,+libusb-1.0))
 $(eval $(call SaneBackend,hp,HP ScanJet scanners,+libusb-1.0))

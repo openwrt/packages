@@ -1,6 +1,6 @@
 --- a/libtransmission/webseed.c
 +++ b/libtransmission/webseed.c
-@@ -510,8 +510,6 @@ static void webseed_timer_func(evutil_socket_t foo UNUSED, short bar UNUSED, voi
+@@ -510,8 +510,6 @@ static void webseed_timer_func(evutil_so
          ++w->retry_tickcount;
      }
  

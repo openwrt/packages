@@ -8,17 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fontconfig
-PKG_VERSION:=2.11.1
+PKG_VERSION:=2.13.93
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://fontconfig.org/release/
-PKG_HASH:=dc62447533bca844463a3c3fd4083b57c90f18a70506e7a9f4936b5a1e516a99
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://fontconfig.org/release/
+PKG_HASH:=ea968631eadc5739bc7c8856cef5c77da812d1f67b763f5e51b57b8026c1a0a0
 
 PKG_CPE_ID:=cpe:/a:fontconfig_project:fontconfig
 
 PKG_FIXUP:=libtool
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=gperf/host
 
 include $(INCLUDE_DIR)/package.mk
 

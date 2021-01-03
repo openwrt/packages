@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-toml
-PKG_VERSION:=0.10.1
+PKG_VERSION:=0.10.2
 PKG_RELEASE:=1
 
 PYPI_NAME:=toml
-PKG_HASH:=926b612be1e5ce0634a2ca03470f95169cf16f939018233a670519cb4ac58b0f
+PKG_HASH:=b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT

@@ -1,10 +1,5 @@
 #!/bin/sh
 
-get_uptime() {
-	local uptime=$(cat /proc/uptime)
-	echo "${uptime%%.*}"
-}
-
 IP4="ip -4"
 IP6="ip -6"
 SCRIPTNAME="$(basename "$0")"
@@ -22,6 +17,9 @@ MM_BLACKHOLE=""
 MMX_UNREACHABLE=""
 MM_UNREACHABLE=""
 MAX_SLEEP=$(((1<<31)-1))
+
+command -v ip6tables > /dev/null
+NO_IPV6=$?
 
 LOG()
 {
@@ -109,8 +107,9 @@ mwan3_get_mwan3track_status()
 
 mwan3_init()
 {
-	local bitcnt
-	local mmdefault
+	local bitcnt mmdefault source_routing
+
+	config_load mwan3
 
 	[ -d $MWAN3_STATUS_DIR ] || mkdir -p $MWAN3_STATUS_DIR/iface_state
 
@@ -119,7 +118,6 @@ mwan3_init()
 		MMX_MASK=$(cat "${MWAN3_STATUS_DIR}/mmx_mask")
 		MWAN3_INTERFACE_MAX=$(uci_get_state mwan3 globals iface_max)
 	else
-		config_load mwan3
 		config_get MMX_MASK globals mmx_mask '0x3F00'
 		echo "$MMX_MASK"| tr 'A-F' 'a-f' > "${MWAN3_STATUS_DIR}/mmx_mask"
 		LOG debug "Using firewall mask ${MMX_MASK}"
@@ -130,6 +128,11 @@ mwan3_init()
 		uci_toggle_state mwan3 globals iface_max "$MWAN3_INTERFACE_MAX"
 		LOG debug "Max interface count is ${MWAN3_INTERFACE_MAX}"
 	fi
+
+	# remove "linkdown", expiry and source based routing modifiers from route lines
+	config_get_bool source_routing globals source_routing 0
+	[ $source_routing -eq 1 ] && unset source_routing
+	MWAN3_ROUTE_LINE_EXP="s/linkdown //; s/expires [0-9]\+sec//; s/error [0-9]\+//; ${source_routing:+s/default\(.*\) from [^ ]*/default\1/;} p"
 
 	# mark mask constants
 	bitcnt=$(mwan3_count_one_bits MMX_MASK)
@@ -176,4 +179,19 @@ mwan3_count_one_bits()
 		count=$((count+1))
 	done
 	echo $count
+}
+
+get_uptime() {
+	local uptime=$(cat /proc/uptime)
+	echo "${uptime%%.*}"
+}
+
+get_online_time() {
+	local time_n time_u iface
+	iface="$1"
+	time_u="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/ONLINE" 2>/dev/null)"
+	[ -z "${time_u}" ] || [ "${time_u}" = "0" ] || {
+		time_n="$(get_uptime)"
+		echo $((time_n-time_u))
+	}
 }

@@ -10,11 +10,9 @@ for splitting it up.
  usr/idbm.c | 18 +++++-------------
  1 file changed, 5 insertions(+), 13 deletions(-)
 
-diff --git a/usr/idbm.c b/usr/idbm.c
-index be4d4e3..a7da540 100644
 --- a/usr/idbm.c
 +++ b/usr/idbm.c
-@@ -2078,6 +2078,10 @@ static int idbm_rec_write(node_rec_t *rec, bool disable_lock)
+@@ -2178,6 +2178,10 @@ static int idbm_rec_write(node_rec_t *re
  			goto free_portal;
  	}
  
@@ -25,7 +23,7 @@ index be4d4e3..a7da540 100644
  	rc = stat(portal, &statb);
  	if (rc) {
  		rc = 0;
-@@ -2086,22 +2090,10 @@ static int idbm_rec_write(node_rec_t *rec, bool disable_lock)
+@@ -2186,23 +2190,11 @@ static int idbm_rec_write(node_rec_t *re
  		 * set the tgpt. In new versions you must pass all the info in
  		 * from the start
  		 */
@@ -38,7 +36,7 @@ index be4d4e3..a7da540 100644
  	}
  
  	if (!S_ISDIR(statb.st_mode)) {
--		/*
+ 		/*
 -		 * older iscsiadm versions had you create the config then set
 -		 * set the tgpt. In new versions you must pass all the info in
 -		 * from the start
@@ -46,9 +44,7 @@ index be4d4e3..a7da540 100644
 -		if (rec->tpgt == PORTAL_GROUP_TAG_UNKNOWN)
 -			/* drop down to old style portal as config */
 -			goto open_conf;
- 		/*
+-		/*
  		 * Old style portal as a file, but with tpgt. Let's update it.
  		 */
--- 
-2.21.0
-
+ 		if (unlink(portal)) {

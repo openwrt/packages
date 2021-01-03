@@ -23,6 +23,9 @@
 #
 ##############################################################################
 
+# while useful (sh)ellcheck is pedantic and noisy
+# shellcheck disable=1091,2002,2004,2034,2039,2086,2094,2140,2154,2155
+
 UB_B_AUTH_ROOT=0
 UB_B_DNS_ASSIST=0
 UB_B_DNSSEC=0
@@ -53,7 +56,7 @@ UB_D_WAN_FQDN=0
 
 UB_IP_DNS64="64:ff9b::/96"
 
-UB_N_EDNS_SIZE=1280
+UB_N_EDNS_SIZE=1232
 UB_N_RX_PORT=53
 UB_N_ROOT_AGE=9
 UB_N_THREADS=1
@@ -114,7 +117,7 @@ bundle_all_networks() {
 
 ##############################################################################
 
-bundle_lan_networks() {
+bundle_dhcp_networks() {
   local cfg="$1"
   local interface ifsubnet ifname ifdashname ignore
 
@@ -139,19 +142,50 @@ bundle_lan_networks() {
 
 ##############################################################################
 
+bundle_lan_networks() {
+  local interface="$1"
+  local ifsubnet ifname ifdashname
+
+  network_get_device ifname "$interface"
+  ifdashname="${ifname//./-}"
+
+
+  if [ -n "$ifdashname" ] && [ -n "$UB_LIST_NETW_ALL" ] ; then
+    for ifsubnet in $UB_LIST_NETW_ALL ; do
+      case $ifsubnet in
+        "${ifdashname}"@*)
+          # Special GLA protection for local block; ULA protected default
+          UB_LIST_NETW_LAN="$UB_LIST_NETW_LAN $ifsubnet"
+          ;;
+      esac
+    done
+  fi
+}
+
+##############################################################################
+
 bundle_wan_networks() {
-  local ifsubnet
+  local interface="$1"
+  local ifsubnet ifname ifdashname
+
+  network_get_device ifname "$interface"
+  ifdashname="${ifname//./-}"
 
 
-  if [ -n "$UB_LIST_NETW_ALL" ] ; then
+  if [ -n "$ifdashname" ] && [ -n "$UB_LIST_NETW_ALL" ] ; then
     for ifsubnet in $UB_LIST_NETW_ALL ; do
       case $UB_LIST_NETW_LAN in
         *"${ifsubnet}"*)
-          # If LAN, then not WAN ...
+          # If LAN, then not WAN ... scripts might become complex
           ;;
 
         *)
-          UB_LIST_NETW_WAN="$UB_LIST_NETW_WAN $ifsubnet"
+          case $ifsubnet in
+            "${ifdashname}"@*)
+              # Special GLA protection for local block; ULA protected default
+              UB_LIST_NETW_WAN="$UB_LIST_NETW_WAN $ifsubnet"
+              ;;
+          esac
           ;;
       esac
     done
@@ -218,7 +252,8 @@ unbound_mkdir() {
   mkdir -p $UB_VARDIR
   rm -f $UB_VARDIR/dhcp_*
   touch $UB_TOTAL_CONF
-  cp -p /etc/unbound/* $UB_VARDIR/
+  cp -p $UB_ETCDIR/*.conf $UB_VARDIR/
+  cp -p $UB_ETCDIR/root.* $UB_VARDIR/
 
 
   if [ ! -f $UB_RHINT_FILE ] ; then
@@ -253,42 +288,28 @@ unbound_mkdir() {
   fi
 
 
-  if [ -f $UB_TLS_ETC_FILE ] ; then
-    # copy the cert bundle into jail
-    cp -p $UB_TLS_ETC_FILE $UB_TLS_FWD_FILE
-  fi
-
-
   # Ensure access and prepare to jail
   chown -R unbound:unbound $UB_VARDIR
   chmod 755 $UB_VARDIR
   chmod 644 $UB_VARDIR/*
 
 
-  if [ -f $UB_CTLKEY_FILE ] || [ -f $UB_CTLPEM_FILE ] \
-  || [ -f $UB_SRVKEY_FILE ] || [ -f $UB_SRVPEM_FILE ] ; then
-    # Keys (some) exist already; do not create new ones
-    chmod 640 $UB_CTLKEY_FILE $UB_CTLPEM_FILE \
-              $UB_SRVKEY_FILE $UB_SRVPEM_FILE
+  if [ -x /usr/sbin/unbound-control-setup ] ; then
+    if [ ! -f $UB_CTLKEY_FILE ] || [ ! -f $UB_CTLPEM_FILE ] \
+    || [ ! -f $UB_SRVKEY_FILE ] || [ ! -f $UB_SRVPEM_FILE ] ; then
+      case "$UB_D_CONTROL" in
+        [2-3])
+          # unbound-control-setup for encrypt opt. 2 and 3, but not 4 "static"
+          /usr/sbin/unbound-control-setup -d $UB_ETCDIR
 
-  elif [ -x /usr/sbin/unbound-control-setup ] ; then
-    case "$UB_D_CONTROL" in
-      [2-3])
-        # unbound-control-setup for encrypt opt. 2 and 3, but not 4 "static"
-        /usr/sbin/unbound-control-setup -d $UB_VARDIR
+          chown -R unbound:unbound  $UB_CTLKEY_FILE $UB_CTLPEM_FILE \
+                                    $UB_SRVKEY_FILE $UB_SRVPEM_FILE
 
-        chown -R unbound:unbound  $UB_CTLKEY_FILE $UB_CTLPEM_FILE \
-                                  $UB_SRVKEY_FILE $UB_SRVPEM_FILE
-
-        chmod 640 $UB_CTLKEY_FILE $UB_CTLPEM_FILE \
-                  $UB_SRVKEY_FILE $UB_SRVPEM_FILE
-
-        cp -p $UB_CTLKEY_FILE /etc/unbound/unbound_control.key
-        cp -p $UB_CTLPEM_FILE /etc/unbound/unbound_control.pem
-        cp -p $UB_SRVKEY_FILE /etc/unbound/unbound_server.key
-        cp -p $UB_SRVPEM_FILE /etc/unbound/unbound_server.pem
-        ;;
-    esac
+          chmod 640 $UB_CTLKEY_FILE $UB_CTLPEM_FILE \
+                    $UB_SRVKEY_FILE $UB_SRVPEM_FILE
+          ;;
+      esac
+    fi
   fi
 
 
@@ -452,6 +473,19 @@ unbound_zone() {
     fi
     ;;
 
+  htpps-dns-proxy)
+    if [ -x /usr/sbin/https-dns-proxy ] \
+    && [ -x /etc/init.d/https-dns-proxy ] ; then
+      if /etc/init.d/https-dns-proxy ; then
+        dns_ast=1
+      else
+        dns_ast=0
+      fi
+    else
+      dns_ast=0
+    fi
+    ;;
+
   ipset-dns)
     if [ -x /usr/sbin/ipset-dns ] && [ -x /etc/init.d/ipset-dns ] ; then
       if /etc/init.d/ipset-dns enabled ; then
@@ -476,10 +510,17 @@ unbound_zone() {
     fi
     ;;
 
+  unprotected-loop)
+    # Soft brick risk. The server you are looking to connect to may be offline
+    # and cause loop error: procd, sysupgrade, package order, and other issues.
+    dns_ast=1
+    ;;
+
   *)
-    # Prevent a soft-brick event through local forwarding loops. Declare your
-    # assistant program and this will check to be sure it is there.
+    # Unbound has a local forward blocking option, default on, instead of loop
+    # detection. If it is released, then it may be a soft brick risk.
     dns_ast=0
+    ;;
   esac
 
 
@@ -527,7 +568,7 @@ unbound_zone() {
       ;;
 
     forward_zone)
-      if [ ! -f $UB_TLS_FWD_FILE ] && [ "$tls_upstream" = "yes" ] ; then
+      if [ ! -f $UB_TLS_ETC_FILE ] && [ "$tls_upstream" = "yes" ] ; then
         logger -p 4 -t unbound -s \
           "Forward-zone TLS benefits from authentication in package 'ca-bundle'"
       fi
@@ -555,6 +596,11 @@ unbound_zone() {
 
           else
             case $server in
+              127.*|::0*)
+                # soft brick loop back risk see DNS assist above
+                echo "do nothing" >/dev/null
+                ;;
+
               *@[0-9]*|*#[A-Za-z0-9]*)
                 # unique Unbound option for server host name
                 servers_host="$servers_host $server"
@@ -633,10 +679,10 @@ unbound_conf() {
   } > $UB_CORE_CONF
 
 
-  if [ -f "$UB_TLS_FWD_FILE" ] ; then
+  if [ -f "$UB_TLS_ETC_FILE" ] ; then
     # TLS cert bundle for upstream forwarder and https zone files
     # This is loaded before drop to root, so pull from /etc/ssl
-    echo "  tls-cert-bundle: $UB_TLS_FWD_FILE" >> $UB_CORE_CONF
+    echo "  tls-cert-bundle: $UB_TLS_ETC_FILE" >> $UB_CORE_CONF
   fi
 
 
@@ -690,14 +736,14 @@ unbound_conf() {
 
   if [ $UB_B_EXT_STATS -gt 0 ] ; then
     {
-      # Log More
+      # store more data in memory for unbound-control to report
       echo "  extended-statistics: yes"
       echo
     } >> $UB_CORE_CONF
 
   else
     {
-      # Log Less
+      # store Less
       echo "  extended-statistics: no"
       echo
     } >> $UB_CORE_CONF
@@ -714,14 +760,17 @@ unbound_conf() {
   fi
 
 
+  {
+    # avoid interference with SPI/NAT on both reserved and common server ports
+    echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
+    echo "  port: $UB_N_RX_PORT"
+    echo "  outgoing-port-permit: 10240-65535"
+  } >> $UB_CORE_CONF
+
+
   case "$UB_D_PROTOCOL" in
     ip4_only)
       {
-        echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
-        echo "  port: $UB_N_RX_PORT"
-        echo "  outgoing-port-permit: 10240-65535"
-        echo "  interface: 0.0.0.0"
-        echo "  outgoing-interface: 0.0.0.0"
         echo "  do-ip4: yes"
         echo "  do-ip6: no"
         echo
@@ -730,42 +779,29 @@ unbound_conf() {
 
     ip6_only)
       {
-        echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
-        echo "  port: $UB_N_RX_PORT"
-        echo "  outgoing-port-permit: 10240-65535"
-        echo "  interface: ::0"
-        echo "  outgoing-interface: ::0"
         echo "  do-ip4: no"
         echo "  do-ip6: yes"
         echo
       } >> $UB_CORE_CONF
       ;;
 
-   ip6_local)
+    ip6_local)
       {
-        echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
-        echo "  port: $UB_N_RX_PORT"
-        echo "  outgoing-port-permit: 10240-65535"
-        echo "  interface: 0.0.0.0"
-        echo "  interface: ::0"
-        echo "  outgoing-interface: 0.0.0.0"
+        # answer your local IPv6 network but avoid broken ISP IPv6
         echo "  do-ip4: yes"
         echo "  do-ip6: yes"
+        echo "  prefer-ip4: yes"
+        echo "  prefer-ip6: no"
         echo
       } >> $UB_CORE_CONF
       ;;
 
     ip6_prefer)
       {
-        echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
-        echo "  port: $UB_N_RX_PORT"
-        echo "  outgoing-port-permit: 10240-65535"
-        echo "  interface: 0.0.0.0"
-        echo "  interface: ::0"
-        echo "  outgoing-interface: 0.0.0.0"
-        echo "  outgoing-interface: ::0"
+        # RFC compliant dual stack
         echo "  do-ip4: yes"
         echo "  do-ip6: yes"
+        echo "  prefer-ip4: no"
         echo "  prefer-ip6: yes"
         echo
       } >> $UB_CORE_CONF
@@ -773,14 +809,6 @@ unbound_conf() {
 
     mixed)
       {
-        # Interface Wildcard (access contol handled by "option local_service")
-        echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
-        echo "  port: $UB_N_RX_PORT"
-        echo "  outgoing-port-permit: 10240-65535"
-        echo "  interface: 0.0.0.0"
-        echo "  interface: ::0"
-        echo "  outgoing-interface: 0.0.0.0"
-        echo "  outgoing-interface: ::0"
         echo "  do-ip4: yes"
         echo "  do-ip6: yes"
         echo
@@ -791,17 +819,6 @@ unbound_conf() {
       if [ $UB_B_READY -eq 0 ] ; then
         logger -t unbound -s "default protocol configuration"
       fi
-
-
-      {
-        # outgoing-interface has useful defaults; incoming is localhost though
-        echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
-        echo "  port: $UB_N_RX_PORT"
-        echo "  outgoing-port-permit: 10240-65535"
-        echo "  interface: 0.0.0.0"
-        echo "  interface: ::0"
-        echo
-      } >> $UB_CORE_CONF
       ;;
   esac
 
@@ -1043,9 +1060,9 @@ unbound_conf() {
   fi
 
 
-  if [ $UB_B_LOCL_SERV -gt 0 ] && [ -n "$UB_LIST_NETW_ALL" ] ; then
+  if [ $UB_B_LOCL_SERV -gt 0 ] && [ -n "$UB_LIST_NETW_LAN" ] ; then
     {
-      for ifsubnet in $UB_LIST_NETW_ALL ; do
+      for ifsubnet in $UB_LIST_NETW_LAN ; do
         # Only respond to queries from subnets which have an interface.
         # Prevent DNS amplification attacks by not responding to the universe.
         echo "  access-control: ${ifsubnet#*@} allow"
@@ -1327,7 +1344,7 @@ unbound_uci() {
 
   config_get UB_IP_DNS64    "$cfg" dns64_prefix "64:ff9b::/96"
 
-  config_get UB_N_EDNS_SIZE "$cfg" edns_size 1280
+  config_get UB_N_EDNS_SIZE "$cfg" edns_size 1232
   config_get UB_N_RX_PORT   "$cfg" listen_port 53
   config_get UB_N_ROOT_AGE  "$cfg" root_age 9
   config_get UB_N_THREADS   "$cfg" num_threads 1
@@ -1348,8 +1365,9 @@ unbound_uci() {
   config_get UB_TTL_MIN     "$cfg" ttl_min 120
   config_get UB_TXT_DOMAIN  "$cfg" domain lan
 
-  config_list_foreach "$cfg" domain_insecure  bundle_domain_insecure
-
+  config_list_foreach "$cfg" domain_insecure bundle_domain_insecure
+  config_list_foreach "$cfg" iface_lan bundle_lan_networks
+  config_list_foreach "$cfg" iface_wan bundle_wan_networks
 
   if [ "$UB_D_DHCP_LINK" = "none" ] ; then
     config_get_bool UB_B_DNSMASQ   "$cfg" dnsmasq_link_dns 0
@@ -1396,7 +1414,7 @@ unbound_uci() {
 
   if [ $UB_N_EDNS_SIZE -lt 512 ] || [ 4096 -lt $UB_N_EDNS_SIZE ] ; then
     logger -t unbound -s "edns_size exceeds range, using default"
-    UB_N_EDNS_SIZE=1280
+    UB_N_EDNS_SIZE=1232
   fi
 
 
@@ -1541,6 +1559,11 @@ resolv_setup() {
 ##############################################################################
 
 unbound_start() {
+  # get interface subnets together
+  config_load network
+  config_foreach bundle_all_networks interface
+
+  # read Unbound UCI but pick through it later
   config_load unbound
   config_foreach unbound_uci unbound
   unbound_mkdir
@@ -1551,11 +1574,8 @@ unbound_start() {
     # forward-zone: auth-zone: and stub-zone:
     config_foreach unbound_zone zone
     # associate potential DNS RR with interfaces
-    config_load network
-    config_foreach bundle_all_networks interface
     config_load dhcp
-    config_foreach bundle_lan_networks dhcp
-    bundle_wan_networks
+    config_foreach bundle_dhcp_networks dhcp
     # server:
     unbound_conf
     unbound_hostname

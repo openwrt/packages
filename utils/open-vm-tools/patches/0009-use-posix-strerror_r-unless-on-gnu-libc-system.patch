@@ -1,6 +1,6 @@
 --- a/lib/err/errPosix.c
 +++ b/lib/err/errPosix.c
-@@ -61,13 +61,7 @@ ErrErrno2String(Err_Number errorNumber, // IN
+@@ -61,13 +61,7 @@ ErrErrno2String(Err_Number errorNumber,
                  char *buf,		// OUT: return buffer
  		size_t bufSize)		// IN: size of buffer
  {

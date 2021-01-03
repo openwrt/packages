@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uw-imap
 PKG_VERSION:=2007f
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=imap-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -57,7 +57,7 @@ define Build/InstallDev
 			$(1)/usr/include/c-client
 	$(CP) $(PKG_BUILD_DIR)/c-client/libc-client.so.$(PKG_VERSION) $(1)/usr/lib/
 	$(LN) libc-client.so.$(PKG_VERSION) $(1)/usr/lib/libc-client.so
-	$(CP) $(PKG_BUILD_DIR)/c-client/linkage.h $(1)/usr/include/c-client/
+	$(CP) $(PKG_BUILD_DIR)/c-client/linkage.{c,h} $(1)/usr/include/c-client/
 	$(CP) $(PKG_BUILD_DIR)/src/c-client/*.h $(1)/usr/include/c-client/
 	$(CP) $(PKG_BUILD_DIR)/src/osdep/unix/*.h $(1)/usr/include/c-client/
 	$(LN) os_slx.h $(1)/usr/include/c-client/osdep.h

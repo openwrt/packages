@@ -5,9 +5,9 @@ to compile this package with this dependency in OpenWrt due to
 host builds and whatnot, we simply remove it and disable this 
 functionality in hwinfo.
 This also saves some space.
---- a/Makefile	
-+++ b/Makefile	
-@@ -25,13 +25,14 @@
+--- a/Makefile
++++ b/Makefile
+@@ -25,13 +25,14 @@ LIBDIR		?= /usr/lib
  endif
  ULIBDIR		= $(LIBDIR)
  
@@ -28,10 +28,9 @@ This also saves some space.
  
  SHARED_FLAGS	=
  OBJS_NO_TINY	= names.o parallel.o modem.o
-
 --- a/src/hd/bios.c
 +++ b/src/hd/bios.c
-@@ -447,9 +447,10 @@
+@@ -447,9 +447,10 @@ void hd_scan_bios(hd_data_t *hd_data)
        }
      }
  
@@ -45,7 +44,6 @@ This also saves some space.
  
      if(vbe->ok) {
        bt->vbe_ver = vbe->version;
-
 --- a/src/hd/bios.h
 +++ b/src/hd/bios.h
 @@ -5,4 +5,5 @@
@@ -55,7 +53,6 @@ This also saves some space.
 -void get_vbe_info(hd_data_t *hd_data, vbe_info_t *vbe);
 +//disabled as we removed the lib needed by this function
 +//void get_vbe_info(hd_data_t *hd_data, vbe_info_t *vbe);
-
 --- a/src/hd/mdt.c
 +++ b/src/hd/mdt.c
 @@ -1,4 +1,6 @@

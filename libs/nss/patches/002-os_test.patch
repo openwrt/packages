@@ -1,5 +1,5 @@
---- a/nss/coreconf/arch.mk	2019-04-01 22:20:32.470080052 +0300
-+++ b/nss/coreconf/arch.mk	2019-04-01 22:21:01.730987548 +0300
+--- a/nss/coreconf/arch.mk
++++ b/nss/coreconf/arch.mk
 @@ -20,13 +20,13 @@
  # Macros for getting the OS architecture
  #
