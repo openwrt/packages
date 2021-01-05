@@ -1,7 +1,5 @@
-Index: gnuplot-5.4.0/Makefile.am
-===================================================================
---- gnuplot-5.4.0.orig/Makefile.am
-+++ gnuplot-5.4.0/Makefile.am
+--- a/Makefile.am
++++ b/Makefile.am
 @@ -1,7 +1,7 @@
  ## Process this file with automake to produce Makefile.in -*-Makefile-*-
  AUTOMAKE_OPTIONS = foreign
