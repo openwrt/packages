@@ -98,7 +98,7 @@ process_network() {
 	}
 
 	config_get_bool Forward "$cfg" Forward
-	if [ "$value" = "0" ]; then
+	if [ "$Forward" = "0" ]; then
 		printf "\\tForward false\n" >> "$COLLECTD_CONF"
 	else
 		printf "\\tForward true\n" >> "$COLLECTD_CONF"
