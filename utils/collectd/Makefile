@@ -104,7 +104,6 @@ COLLECTD_PLUGINS_DISABLED:= \
 	smart \
 	snmp_agent \
 	statsd \
-	swap \
 	synproxy \
 	sysevent \
 	tape \
@@ -186,6 +185,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	sensors \
 	snmp \
 	snmp6 \
+	swap \
 	syslog \
 	table \
 	tail \
@@ -452,6 +452,7 @@ $(eval $(call BuildPlugin,rrdtool,RRDtool output,rrdtool,+PACKAGE_collectd-mod-r
 $(eval $(call BuildPlugin,sensors,lm_sensors input,sensors,+PACKAGE_collectd-mod-sensors:libsensors))
 $(eval $(call BuildPlugin,snmp,SNMP input,snmp,+PACKAGE_collectd-mod-snmp:libnetsnmp))
 $(eval $(call BuildPlugin,snmp6,snmp6 input,snmp6,))
+$(eval $(call BuildPlugin,swap,swap input,swap,))
 $(eval $(call BuildPlugin,syslog,syslog output,syslog,))
 $(eval $(call BuildPlugin,tail,tail input,tail,))
 $(eval $(call BuildPlugin,tail-csv,tail CSV input,tail_csv,))
