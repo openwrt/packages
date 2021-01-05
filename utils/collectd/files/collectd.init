@@ -236,11 +236,9 @@ process_generic() {
 
 	[ -z "$config" ] || {
 		printf "%s<Plugin %s>\n" "${CONFIG_STRING}" "$cfg" >> "$COLLECTD_CONF"
-		echo -e "${config}" >> "$COLLECTD_CONF"
+		echo -n -e "${config}" >> "$COLLECTD_CONF"
 		printf "%s</Plugin>\n" "${CONFIG_STRING}" >> "$COLLECTD_CONF"
 	}
-
-	printf "\n" >> "$COLLECTD_CONF"
 }
 
 process_plugins() {
