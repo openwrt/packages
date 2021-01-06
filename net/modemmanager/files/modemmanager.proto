@@ -344,6 +344,7 @@ proto_modemmanager_init_config() {
 	proto_config_add_string	 pincode
 	proto_config_add_string	 iptype
 	proto_config_add_int	 signalrate
+	proto_config_add_int	 simslot
 	proto_config_add_boolean lowpower
 	proto_config_add_defaults
 }
@@ -355,11 +356,11 @@ proto_modemmanager_setup() {
 	local bearermethod_ipv4 bearermethod_ipv6 auth cliauth
 	local operatorname operatorid registration accesstech signalquality
 
-	local device apn allowedauth username password pincode iptype metric signalrate
+	local device apn allowedauth username password pincode iptype metric signalrate simslot
 
 	local address prefix gateway mtu dns1 dns2
 
-	json_get_vars device apn allowedauth username password pincode iptype metric signalrate
+	json_get_vars device apn allowedauth username password pincode iptype metric signalrate simslot
 
 	# validate sysfs path given in config
 	[ -n "${device}" ] || {
@@ -387,6 +388,15 @@ proto_modemmanager_setup() {
 
 	# always cleanup before attempting a new connection, just in case
 	modemmanager_cleanup_connection "${modemstatus}"
+
+	# set to the selected SIM
+	if [ -f /usr/bin/qmicli ]; then
+		qmicli -p -d /dev/"$(modemmanager_get_field "${modemstatus}" "modem.generic.primary-port")" --uim-switch-slot=$simslot
+		sleep 2
+	else
+		proto_notify_error "${interface}" UIM_SWITCH_QMICLI_MISSING
+		echo "Error: qmicli not installed.  Cannot switch SIM slots."
+	fi
 
 	# if allowedauth list given, build option string
 	for auth in $allowedauth; do
