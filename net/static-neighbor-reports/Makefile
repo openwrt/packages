@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=static-neighbor-reports
 PKG_VERSION:=1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=David Bauer <mail@david-bauer.net>
 PKG_LICENSE:=GPL-2.0-only
@@ -19,7 +19,7 @@ define Package/static-neighbor-reports
   CATEGORY:=Network
   TITLE:=Configure static 802.11k neighbor reports
   PKGARCH:=all
-  DEPENDS:=+libuci-lua +libubus-lua
+  DEPENDS:=+libuci-lua +libubus-lua +lua
 endef
 
 define Package/static-neighbor-reports/install
