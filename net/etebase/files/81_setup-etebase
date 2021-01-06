@@ -1,30 +1,30 @@
 #!/bin/sh
 
-cd /usr/share/etesync-server || exit 1
+cd /usr/share/etebase || exit 1
 
 python3 manage.pyc migrate --noinput || exit 1
 
 # setup minimal ini for collectstatic:
-mkdir -p /var/etc/etesync-server/ || exit 1
-printf "[global]\nSTATIC_ROOT=/www/etesync/static" >etesync-server.ini || exit 1
+mkdir -p /var/etc/etebase/ || exit 1
+printf "[global]\nSTATIC_ROOT=/www/etebase/static" >etebase-server.ini || exit 1
 python3 manage.pyc collectstatic --noinput || exit 1
 
-ETESYNC_HAS_USER_PY3CMD="import sqlite3
+ETEBASE_HAS_USER_PY3CMD="import sqlite3
 c = sqlite3.connect('db.sqlite3').cursor()
-c.execute('select * from auth_user')
+c.execute('select * from myauth_user;')
 if c.fetchone()==None: print('0')
 else: print('1')"
 
 echo
 
-if [ "$(python3 -c "$ETESYNC_HAS_USER_PY3CMD" || exit 1)" = "0" ]
+if [ "$(python3 -c "$ETEBASE_HAS_USER_PY3CMD" || exit 1)" = "0" ]
 then
     echo "===== First, create a superuser of the Webinterface by ====="
     [ -t 0 ] && python3 manage.pyc createsuperuser ||
     echo "===== python3 $(pwd)/manage.pyc createsuperuser ====="
 fi
 
-chown -Rh etesync:nogroup . /www/etesync/ || exit 1
+chown -Rh etebase:nogroup . /www/etebase/ || exit 1
 
 [ -x /etc/init.d/nginx ] || exit 1
 
@@ -49,6 +49,6 @@ router_ip() {
     echo '$ROUTER'
 }
 
-echo "===== You can add users by https://$(router_ip)/etesync/admin/login ====="
+echo "===== You can add users by https://$(router_ip)/etebase/admin/login ====="
 
 exit 0
