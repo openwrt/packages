@@ -14,8 +14,17 @@ TMPROOT="$(mktemp -d "/tmp/test-nginx-util-XXXXXX")"
 
 ln -s /bin "${TMPROOT}/bin"
 
-mkdir -p "${TMPROOT}/usr/bin/"
+mkdir -p "${TMPROOT}/etc/crontabs/"
 
+mkdir -p "${TMPROOT}/etc/config/"
+cp "./config-nginx-ssl" "${TMPROOT}/etc/config/nginx"
+
+mkdir -p "${TMPROOT}/etc/nginx/"
+cp "./uci.conf.template" "${TMPROOT}/etc/nginx/uci.conf.template"
+ln -s "${TMPROOT}/var/lib/nginx/uci.conf" "${TMPROOT}/etc/nginx/uci.conf"
+
+mkdir -p "${TMPROOT}/usr/bin/"
+cp "/usr/local/bin/uci" "${TMPROOT}/usr/bin/"
 cp "./test-nginx-util-root.sh" "${TMPROOT}/usr/bin/"
 
 
