@@ -1,0 +1,76 @@
+From 79f0d517373416ebe108aef75e69912acc385122 Mon Sep 17 00:00:00 2001
+From: Paul Holzinger <paul.holzinger@web.de>
+Date: Wed, 6 Jan 2021 23:32:40 +0100
+Subject: [PATCH] Fix build for mips architecture followup
+
+Followup to commit (1ad796677e1c). The build on mips is still
+failing because SIGWINCH was not defined in the signal pkg.
+Also stat_t.Rdev is unit32 on mips so we need to typecast.
+
+Signed-off-by: Paul Holzinger <paul.holzinger@web.de>
+---
+ pkg/signal/signal_linux_mipsx.go  |  2 ++
+ pkg/specgen/generate/container.go | 16 ++++++++--------
+ 2 files changed, 10 insertions(+), 8 deletions(-)
+
+diff --git a/pkg/signal/signal_linux_mipsx.go b/pkg/signal/signal_linux_mipsx.go
+index 67638e30a5..45c9d5af1e 100644
+--- a/pkg/signal/signal_linux_mipsx.go
++++ b/pkg/signal/signal_linux_mipsx.go
+@@ -19,6 +19,8 @@ import (
+ const (
+ 	sigrtmin = 34
+ 	sigrtmax = 127
++
++	SIGWINCH = syscall.SIGWINCH
+ )
+ 
+ // signalMap is a map of Linux signals.
+diff --git a/pkg/specgen/generate/container.go b/pkg/specgen/generate/container.go
+index 42fea02775..c771e8bc8c 100644
+--- a/pkg/specgen/generate/container.go
++++ b/pkg/specgen/generate/container.go
+@@ -282,8 +282,8 @@ func finishThrottleDevices(s *specgen.SpecGenerator) error {
+ 			if err := unix.Stat(k, &statT); err != nil {
+ 				return err
+ 			}
+-			v.Major = (int64(unix.Major(statT.Rdev)))
+-			v.Minor = (int64(unix.Minor(statT.Rdev)))
++			v.Major = (int64(unix.Major(uint64(statT.Rdev))))
++			v.Minor = (int64(unix.Minor(uint64(statT.Rdev))))
+ 			s.ResourceLimits.BlockIO.ThrottleReadBpsDevice = append(s.ResourceLimits.BlockIO.ThrottleReadBpsDevice, v)
+ 		}
+ 	}
+@@ -293,8 +293,8 @@ func finishThrottleDevices(s *specgen.SpecGenerator) error {
+ 			if err := unix.Stat(k, &statT); err != nil {
+ 				return err
+ 			}
+-			v.Major = (int64(unix.Major(statT.Rdev)))
+-			v.Minor = (int64(unix.Minor(statT.Rdev)))
++			v.Major = (int64(unix.Major(uint64(statT.Rdev))))
++			v.Minor = (int64(unix.Minor(uint64(statT.Rdev))))
+ 			s.ResourceLimits.BlockIO.ThrottleWriteBpsDevice = append(s.ResourceLimits.BlockIO.ThrottleWriteBpsDevice, v)
+ 		}
+ 	}
+@@ -304,8 +304,8 @@ func finishThrottleDevices(s *specgen.SpecGenerator) error {
+ 			if err := unix.Stat(k, &statT); err != nil {
+ 				return err
+ 			}
+-			v.Major = (int64(unix.Major(statT.Rdev)))
+-			v.Minor = (int64(unix.Minor(statT.Rdev)))
++			v.Major = (int64(unix.Major(uint64(statT.Rdev))))
++			v.Minor = (int64(unix.Minor(uint64(statT.Rdev))))
+ 			s.ResourceLimits.BlockIO.ThrottleReadIOPSDevice = append(s.ResourceLimits.BlockIO.ThrottleReadIOPSDevice, v)
+ 		}
+ 	}
+@@ -315,8 +315,8 @@ func finishThrottleDevices(s *specgen.SpecGenerator) error {
+ 			if err := unix.Stat(k, &statT); err != nil {
+ 				return err
+ 			}
+-			v.Major = (int64(unix.Major(statT.Rdev)))
+-			v.Minor = (int64(unix.Minor(statT.Rdev)))
++			v.Major = (int64(unix.Major(uint64(statT.Rdev))))
++			v.Minor = (int64(unix.Minor(uint64(statT.Rdev))))
+ 			s.ResourceLimits.BlockIO.ThrottleWriteIOPSDevice = append(s.ResourceLimits.BlockIO.ThrottleWriteIOPSDevice, v)
+ 		}
+ 	}
