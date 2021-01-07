@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=runc
 PKG_VERSION:=1.0.0-rc92
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -28,7 +28,7 @@ define Package/runc
   CATEGORY:=Utilities
   TITLE:=runc container runtime
   URL:=https://www.opencontainers.org/
-  DEPENDS:=$(GO_ARCH_DEPENDS) @(aarch64||arm||x86_64) +KERNEL_SECCOMP_FILTER:libseccomp
+  DEPENDS:=$(GO_ARCH_DEPENDS) +KERNEL_SECCOMP_FILTER:libseccomp
 endef
 
 define Package/runc/description
