@@ -12,14 +12,15 @@ GO_PKG_BUILD_PKG:= \
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://$(GO_PKG)
-PKG_SOURCE_VERSION:=5c6a95bfb20c61571a00f913c6b91959ede84e8d
-PKG_SOURCE_DATE:=2020-12-12
-PKG_MIRROR_HASH:=6bf27f5f09d49b34b8c4c9208808fab6383e5187683f064e09d106886babf25a
+PKG_SOURCE_VERSION:=fa125a3512ee0f6187721c88582bf8c4378bd4d7
+PKG_SOURCE_DATE:=2020-12-15
+PKG_MIRROR_HASH:=f6fcc6c900c1d542dfede0f53691108f12b63ff20ecf870eebc0aa2df1848b24
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -29,7 +30,7 @@ define Package/libnetwork
   CATEGORY:=Utilities
   TITLE:=networking for containers
   URL:=https://github.com/docker/libnetwork
-  DEPENDS:=$(GO_ARCH_DEPENDS) @(aarch64||arm||x86_64)
+  DEPENDS:=$(GO_ARCH_DEPENDS)
 endef
 
 define Package/libnetwork/description
