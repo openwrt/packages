@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xerces-c
 PKG_VERSION:=3.2.3
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@APACHE/xerces/c/3/sources
@@ -20,6 +20,7 @@ PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=libiconv-full gettext-full
 
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/package.mk
