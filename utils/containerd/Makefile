@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=containerd
 PKG_VERSION:=1.4.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -27,7 +27,7 @@ define Package/containerd
   CATEGORY:=Utilities
   TITLE:=containerd container runtime
   URL:=https://containerd.io/
-  DEPENDS:=$(GO_ARCH_DEPENDS) @(aarch64||arm||x86_64) +btrfs-progs +runc
+  DEPENDS:=$(GO_ARCH_DEPENDS) +btrfs-progs +runc
   MENU:=1
 endef
 
