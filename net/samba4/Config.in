@@ -33,7 +33,7 @@ config SAMBA4_SERVER_VFSX
 	depends on PACKAGE_samba4-server
 	help
 		installs:
-			modules: vfs_virusfilter vfs_shell_snap vfs_commit vfs_worm vfs_xattr_tdb vfs_aio_fork vfs_aio_pthread (vfs_linux_xfs_sgid) vfs_netatalk vfs_dirsort vfs_fileid
+			modules: vfs_virusfilter vfs_shell_snap vfs_commit vfs_worm vfs_xattr_tdb (vfs_linux_xfs_sgid) vfs_netatalk vfs_dirsort vfs_fileid
 
 		Additional VFS modules that aren't commonly used, vfs_linux_xfs_sgid requires kmod-fs-xfs to be selected separately
 	default n
