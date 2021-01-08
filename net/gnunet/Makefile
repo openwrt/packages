@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=gnunet
 
 PKG_VERSION:=0.13.3
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gnunet
 PKG_HASH:=318e06c4134d1a8ce3b4385d82b11316eaaeb9a4dbc5d4b646453dfc53199296
@@ -263,7 +263,7 @@ FILE_MODES_gns:=/usr/lib/gnunet/libexec/gnunet-helper-dns:root:gnunetdns:4750 /u
 DEPENDS_namestore-fcfsd:=+gnunet-gns +libmicrohttpd-ssl
 LIBEXEC_namestore-fcfsd:=namestore-fcfsd
 
-DEPENDS_gns-proxy:=+gnunet-gns +gnunet-curl +libmicrohttpd-ssl
+DEPENDS_gns-proxy:=+gnunet-gns +gnunet-curl +libmicrohttpd-ssl +PACKAGE_libgnutls-dane:libgnutls-dane
 LIBEXEC_gns-proxy:=gns-proxy
 
 DEPENDS_datastore:=+gnunet-gns
