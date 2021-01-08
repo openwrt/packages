@@ -41,6 +41,8 @@ validate_clamav_section() {
 		'AlertEncrypted:string' \
 		'MaxFileSize:string' \
 		'LocalSocket:string' \
+		'TCPSocket:port' \
+		'TCPAddr:ipaddr' \
 		'User:string' \
 		'ExitOnOOM:string' \
 		'DatabaseDirectory:string'
@@ -90,11 +92,19 @@ start_clamav_instance() {
 	echo "TemporaryDirectory " "$TemporaryDirectory"
 	echo "AlertEncrypted " "$AlertEncrypted"
 	echo "MaxFileSize " "$MaxFileSize"
-	echo "LocalSocket " "$LocalSocket"
 	echo "User " "$User"
 	echo "ExitOnOOM " "$ExitOnOOM"
 	echo "DatabaseDirectory " "$DatabaseDirectory"
 	} > "$CLAMD_CONFIGFILE"
+
+	if [ -n "$LocalSocket" ]; then
+		echo "LocalSocket " "$LocalSocket" >>"$CLAMD_CONFIGFILE"
+	fi
+
+	if [ -n "$TCPSocket" ]; then
+		echo "TCPAddr" "$TCPAddr" >>"$CLAMD_CONFIGFILE"
+		echo "TCPSocket " "$TCPSocket" >>"$CLAMD_CONFIGFILE"
+	fi
 
 	procd_open_instance
 	procd_set_param command $PROG -c $CLAMD_CONFIGFILE
