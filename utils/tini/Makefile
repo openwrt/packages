@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tini
 PKG_VERSION:=0.19.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
@@ -32,6 +32,7 @@ A tiny but valid init process for containers.
 endef
 
 CMAKE_OPTIONS += -DTINI_VERSION_GIT='$(TINI_COMMIT)'
+TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lc -lgcc_eh)
 
 define Package/tini/install
 	$(INSTALL_DIR) $(1)/usr/bin
