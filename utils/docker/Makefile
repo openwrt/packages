@@ -1,20 +1,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=docker
-PKG_VERSION:=20.10.1
+PKG_VERSION:=20.10.2
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/docker/cli/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=4ee7cc9c3f6287ca834166aaa1a945790c54d9a8345a1b449a193d9c739f2a7d
-PKG_SOURCE_VERSION:=562ea3c09c # SHA1 used within the docker executable
+PKG_HASH:=a663f54a158c6b2b23b253b14bf0de56ff035750098e760319de1edb7f4ae76d
+PKG_SOURCE_VERSION:=2291f61 # SHA1 used within the docker executable
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
 
 GO_PKG:=github.com/docker/cli
 
@@ -26,7 +27,7 @@ define Package/docker
   CATEGORY:=Utilities
   TITLE:=Docker Community Edition CLI
   URL:=https://www.docker.com/
-  DEPENDS:=$(GO_ARCH_DEPENDS) @(aarch64||arm||x86_64)
+  DEPENDS:=$(GO_ARCH_DEPENDS)
 endef
 
 define Package/docker/description
