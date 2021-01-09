@@ -44,17 +44,6 @@ service_triggers()
 	fi
 }
 
-get_bool()
-{
-	local _tmp="${1}"
-	case "${_tmp}" in
-		1|on|true|yes|enabled) _tmp=1;;
-		0|off|false|no|disabled) _tmp=0;;
-		*) _tmp="${2}";;
-	esac
-	echo -n "${_tmp}"
-}
-
 generate_configuration()
 {
 	[ -f /tmp/access.conf.tmp ] && rm /tmp/access.conf.tmp
