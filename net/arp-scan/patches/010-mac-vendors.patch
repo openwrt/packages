@@ -1,0 +1,30 @@
+--- a/mac-vendor.txt
++++ b/mac-vendor.txt
+@@ -37,6 +37,27 @@
+ # http://www.nta-monitor.com/wiki
+ #
+ 
++# From Transacom
++00D861  Micro-Star INTL CO., LTD.
++3C846A  TP-LINK TECHNOLOGIES CO.,LTD.
++3C2AF4  Brother Industries, LTD.
++449160  Murata Manufacturing Co., Ltd.
++484BAA  Apple, Inc.
++58EF68  Belkin International Inc.
++704F57  TP-LINK TECHNOLOGIES CO.,LTD.
++706BB9  Cisco Systems, Inc
++70AF24  TP Vision Belgium NV
++7828ca  Sonos, Inc.
++78DDD9  Guangzhou Shiyuan Electronics Co., Ltd.
++70EF00  Apple, Inc.
++805EC0  YEALINK(XIAMEN) NETWORK TECHNOLOGY CO.,LTD.
++94C691  EliteGroup Computer Systems Co., LTD
++A860B6  Apple, Inc.
++B04E26  TP-LINK TECHNOLOGIES CO.,LTD.
++C83C85  Apple, Inc.
++D807B6  TP-LINK TECHNOLOGIES CO.,LTD.
++DC56E7  Apple, Inc.
++
+ # From nmap Debian bug report #369681 dated 31 May 2006
+ 525400	QEMU
+ B0C420	Bochs
