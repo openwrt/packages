@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ksmbd-tools
-PKG_VERSION:=3.3.1
-PKG_RELEASE:=2
+PKG_VERSION:=3.3.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/cifsd-team/ksmbd-tools/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=0831677c5ccb91ba38c764ad22577830650a78300a676c2e7bb1baecadbdf725
+PKG_HASH:=8eb1809558c089ffa196dd4e38ef39550ff0e165600787ff8c8be174cac4db6a
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -96,7 +96,7 @@ CONFIGURE_ARGS += \
 CONFIGURE_VARS += GLIB_LIBS="$(STAGING_DIR)/usr/lib/libglib-2.0.a"
 
 TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed -liconv $(if $(INTL_FULL),-lintl) $(if $(CONFIG_LIBC_USE_GLIBC),-lpthread)
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed -liconv $(if $(INTL_FULL),-lintl) $(if $(CONFIG_USE_GLIBC),-lpthread)
 
 define Package/ksmbd-server/install
 	$(INSTALL_DIR) $(1)/usr/sbin
