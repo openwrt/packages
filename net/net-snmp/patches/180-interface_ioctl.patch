@@ -1,11 +1,10 @@
 --- a/agent/mibgroup/if-mib/data_access/interface_ioctl.c
 +++ b/agent/mibgroup/if-mib/data_access/interface_ioctl.c
-@@ -257,8 +257,29 @@
-          *   If ifAdminStatus is down(2) then ifOperStatus should be down(2).
+@@ -258,8 +258,28 @@ netsnmp_access_interface_ioctl_flags_get
           */
          if(ifentry->os_flags & IFF_UP) {
+             ifentry->admin_status = IFADMINSTATUS_UP;
 -            if(ifentry->os_flags & IFF_RUNNING)
-+            ifentry->admin_status = IFADMINSTATUS_UP;
 +            if(ifentry->os_flags & IFF_RUNNING) {
 +                char fname[50];
 +                sprintf(fname, "/tmp/otb-data/%s/connectivity", ifentry->name);
