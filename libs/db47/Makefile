@@ -12,7 +12,7 @@ BASE_VERSION:=4.7.25
 
 PKG_NAME:=db47
 PKG_VERSION:=$(BASE_VERSION).4.NC
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/db-$(BASE_VERSION).NC
 PKG_SOURCE:=db-$(BASE_VERSION).NC.tar.gz
@@ -23,6 +23,7 @@ PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 PKG_LICENSE:=Sleepycat
 PKG_LICENSE_FILES:=LICENSE
 
+PKG_BUILD_DEPENDS:=libxml2
 PKG_FIXUP:=autoreconf
 PKG_LIBTOOL_PATHS:=. build_unix
 PKG_BUILD_PARALLEL:=1
@@ -32,7 +33,6 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libdb47
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libxml2
   TITLE:=Berkeley DB library (4.7)
   URL:=http://www.oracle.com/us/products/database/berkeley-db
   PROVIDES:=libdb47-full
