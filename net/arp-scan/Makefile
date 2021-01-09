@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=arp-scan
-PKG_VERSION:=1.9-40-g69b2f70
-PKG_RELEASE:=1
+PKG_VERSION:=1.9.7
+PKG_RELEASE:=3
 PKG_LICENSE:=GPL-3.0
 PKG_MAINTAINER:=Sergey Urushkin <urusha.v1.0@gmail.com>
 
