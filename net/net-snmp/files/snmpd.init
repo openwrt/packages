@@ -187,6 +187,18 @@ snmpd_exec_add() {
 	echo "exec $miboid $name $prog $args" >> $CONFIGFILE
 }
 
+snmpd_extend_add() {
+	local cfg="$1"
+
+	config_get name "$cfg" name
+	[ -n "$name" ] || return 0
+	config_get prog "$cfg" prog
+	[ -n "$prog" ] || return 0
+	config_get args "$cfg" args
+	config_get miboid "$cfg" miboid
+	echo "extend $miboid $name $prog $args" >> $CONFIGFILE
+}
+
 snmpd_disk_add() {
         local cfg="$1"
         local disk='disk'
@@ -294,6 +306,7 @@ start_service() {
 	config_foreach snmpd_access_HostIP_add access_HostIP
 	config_foreach snmpd_pass_add pass
 	config_foreach snmpd_exec_add exec
+	config_foreach snmpd_extend_add extend
 	config_foreach snmpd_disk_add disk
 	config_foreach snmpd_engineid_add engineid
 	append_parm trapcommunity community trapcommunity
