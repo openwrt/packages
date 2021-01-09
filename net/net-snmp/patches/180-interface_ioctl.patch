@@ -1,0 +1,33 @@
+--- a/agent/mibgroup/if-mib/data_access/interface_ioctl.c
++++ b/agent/mibgroup/if-mib/data_access/interface_ioctl.c
+@@ -257,8 +257,29 @@
+          *   If ifAdminStatus is down(2) then ifOperStatus should be down(2).
+          */
+         if(ifentry->os_flags & IFF_UP) {
+-            if(ifentry->os_flags & IFF_RUNNING)
++            ifentry->admin_status = IFADMINSTATUS_UP;
++            if(ifentry->os_flags & IFF_RUNNING) {
++                char fname[50];
++                sprintf(fname, "/tmp/otb-data/%s/connectivity", ifentry->name);
++                
++                // default is UP
+                 ifentry->oper_status = IFOPERSTATUS_UP;
++                
++                // check whether OTB interface connectivity file exists
++                if(access(fname, F_OK) != -1) {
++                    FILE *fp = fopen(fname, "r");
++                    if(fp != NULL) {
++                        char line[10];
++                  
++                        if(fgets(line, sizeof(line), fp)) {
++                            if((line[0] != 'O') || (line[1] != 'K') || (line[2] != '\n')) {
++                                ifentry->oper_status = IFOPERSTATUS_DOWN;
++                            }
++                        }
++                        fclose(fp);
++                    }
++                }
++            }
+             else
+                 ifentry->oper_status = IFOPERSTATUS_DOWN;
+         }
