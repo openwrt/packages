@@ -90,27 +90,20 @@ Signed-off-by: Nick Hainke <vincent@systemli.org>
  #  Port "8125"
 --- /dev/null
 +++ b/src/snmp6.c
-@@ -0,0 +1,135 @@
+@@ -0,0 +1,133 @@
 +/*
 +  This Plugin is based opn the interface.c Plugin.
 +*/
-+
-+#if HAVE_LINUX_IF_H
-+#include <linux/if.h>
-+#elif HAVE_NET_IF_H
-+#include <net/if.h>
-+#endif
-+
-+#include <ifaddrs.h>
-+
 +#include <stdint.h>
 +#include <stdlib.h>
 +#include <string.h>
-+
 +#include <errno.h>
 +#include <stdbool.h>
 +#include <stdio.h>
++
++#include <net/if.h>
 +#include <sys/types.h>
++#include <ifaddrs.h>
 +
 +#include "plugin.h"
 +#include "utils/cmds/putval.h"
@@ -124,7 +117,6 @@ Signed-off-by: Nick Hainke <vincent@systemli.org>
 +static int config_keys_num = STATIC_ARRAY_SIZE(config_keys);
 +
 +static ignorelist_t *ignorelist;
-+struct ifaddrs *if_list;
 +
 +static int snmp6_config(const char *key, const char *value) {
 +  if (ignorelist == NULL)
@@ -151,9 +143,6 @@ Signed-off-by: Nick Hainke <vincent@systemli.org>
 +      {.derive = tx},
 +  };
 +
-+  if (ignorelist_match(ignorelist, dev) != 0)
-+    return;
-+
 +  vl.values = values;
 +  vl.values_len = STATIC_ARRAY_SIZE(values);
 +  sstrncpy(vl.plugin, "snmp6", sizeof(vl.plugin));
@@ -173,6 +162,9 @@ Signed-off-by: Nick Hainke <vincent@systemli.org>
 +  char procpath[1024];
 +  int offset = 0;
 +
++  if (ignorelist_match(ignorelist, ifname) != 0)
++    return 0;
++
 +  if (strncmp("all", ifname, strlen("all")) == 0) {
 +    snprintf(procpath, 1024, "/proc/net/snmp6");
 +    offset = 1;
@@ -181,7 +173,7 @@ Signed-off-by: Nick Hainke <vincent@systemli.org>
 +  }
 +
 +  if ((fh = fopen(procpath, "r")) == NULL) {
-+    WARNING("interface plugin: fopen: %s", STRERRNO);
++    WARNING("snmp6 plugin: try opening %s : fopen: %s", procpath, STRERRNO);
 +    return -1;
 +  }
 +
@@ -210,13 +202,19 @@ Signed-off-by: Nick Hainke <vincent@systemli.org>
 +#ifndef HAVE_IFADDRS_H
 +  return -1;
 +#else
-+  if (getifaddrs(&if_list) != 0)
-+    return -1;
++  struct ifaddrs *addrs,*tmp;
 +
-+  for (struct ifaddrs *if_ptr = if_list; if_ptr != NULL;
-+       if_ptr = if_ptr->ifa_next) {
-+    snmp_read(if_ptr->ifa_name);
++  getifaddrs(&addrs);
++  tmp = addrs;
++
++  while (tmp)
++  {
++    if (tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_PACKET)
++      snmp_read(tmp->ifa_name);
++    tmp = tmp->ifa_next;
 +  }
++
++  freeifaddrs(addrs);
 +  snmp_read("all");
 +  return 0;
 +#endif
