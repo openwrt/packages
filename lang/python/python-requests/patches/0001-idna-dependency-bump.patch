@@ -1,0 +1,54 @@
+From 9484e13c7da927119fe82794bb5571cec144b6d7 Mon Sep 17 00:00:00 2001
+From: Naor Livne <naorlivne@gmail.com>
+Date: Fri, 1 Jan 2021 14:31:14 +0200
+Subject: [PATCH 1/2] bump idna has version 3.0 was released
+
+Fixes issue (https://github.com/psf/requests/issues/5710):
+pkg_resources.ContextualVersionConflict: (idna 3.0 (/usr/lib/python3.9/site-packages), Requirement.parse('idna<3,>=2.5'), {'requests'})
+Origin of this patch:
+https://github.com/psf/requests/pull/5711
+
+---
+ setup.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/setup.py b/setup.py
+index 7ba4b2a25f..f265384236 100755
+--- a/setup.py
++++ b/setup.py
+@@ -43,7 +43,7 @@ def run_tests(self):
+
+ requires = [
+     'chardet>=3.0.2,<5',
+-    'idna>=2.5,<3',
++    'idna>=2.5,<4',
+     'urllib3>=1.21.1,<1.27',
+     'certifi>=2017.4.17'
+
+
+From d3e00a4958af046879f24de365d5589d861ea6ef Mon Sep 17 00:00:00 2001
+From: Naor Livne <naorlivne@gmail.com>
+Date: Tue, 5 Jan 2021 16:31:15 +0200
+Subject: [PATCH 2/2] Update setup.py
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-authored-by: Mickaël Schoentgen <contact@tiger-222.fr>
+---
+ setup.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/setup.py b/setup.py
+index f265384236..5ce59e621d 100755
+--- a/setup.py
++++ b/setup.py
+@@ -43,7 +43,8 @@ def run_tests(self):
+
+ requires = [
+     'chardet>=3.0.2,<5',
+-    'idna>=2.5,<4',
++    'idna>=2.5,<3 ; python_version < "3"',
++    'idna>=2.5,<4 ; python_version >= "3"',
+     'urllib3>=1.21.1,<1.27',
+     'certifi>=2017.4.17'
