@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdnet
 PKG_VERSION:=1.14
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ofalk/libdnet/tar.gz/$(PKG_NAME)-$(PKG_VERSION)?
@@ -43,13 +43,11 @@ CONFIGURE_ARGS += \
 	--without-wpdpack
 
 define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dnet-config $(1)/usr/bin/
+	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(1)/usr/bin/dnet-config
 	$(INSTALL_DIR) $(2)/bin
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/dnet-config \
-		$(2)/bin/
-	$(SED) \
-		's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
-		$(2)/bin/dnet-config
+	$(LN) ../../usr/bin/dnet-config $(2)/bin/
 
 	$(INSTALL_DIR) $(1)/usr/include
 	$(INSTALL_DATA)\
