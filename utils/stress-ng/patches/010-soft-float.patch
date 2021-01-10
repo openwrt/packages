@@ -1,6 +1,6 @@
 --- a/stress-fp-error.c
 +++ b/stress-fp-error.c
-@@ -109,42 +109,43 @@ static int stress_fp_error(const stress_args_t *args)
+@@ -115,42 +115,43 @@ static int stress_fp_error(const stress_
  	do {
  		volatile double d1, d2;
  
@@ -50,7 +50,7 @@
  		/*
  		 * Use volatiles to force compiler to generate code
  		 * to perform run time computation of 1.0 / M_PI
-@@ -165,14 +166,15 @@ static int stress_fp_error(const stress_args_t *args)
+@@ -171,14 +172,15 @@ static int stress_fp_error(const stress_
  		stress_fp_check(args, "DBL_MAX + DBL_MAX / 2.0",
  			DBL_MAX + DBL_MAX / 2.0, INFINITY,
  			false, true, 0, FE_OVERFLOW | FE_INEXACT);
