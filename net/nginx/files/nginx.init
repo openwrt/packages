@@ -20,9 +20,13 @@ nginx_init() {
 	[ -d /var/log/nginx ] || mkdir -p /var/log/nginx
 	[ -d /var/lib/nginx ] || mkdir -p /var/lib/nginx
 
+	rm -f "$(readlink "${UCI_CONF}")"
 	${NGINX_UTIL} init_lan
 
-	CONF="${NGINX_CONF}"
+	if [ -e "${UCI_CONF}" ]
+	then CONF="${UCI_CONF}"
+	else CONF="${NGINX_CONF}"
+	fi
 
 	local message
 	message="$(/usr/sbin/nginx -t -c "${CONF}" -g "${G_OPTS}" 2>&1)" ||
@@ -51,16 +55,14 @@ start_service() {
 }
 
 
-service_triggers() {
-	procd_add_reload_interface_trigger loopback
-	procd_add_reload_interface_trigger lan
-}
-
-
 reload_service() {
 	nginx_init
 
-	procd_send_signal nginx
+	if [ "$(cat "/proc/$(cat "/var/run/nginx.pid")/cmdline")" = \
+	     "nginx: master process /usr/sbin/nginx -c ${CONF} -g ${G_OPTS}" ]
+	then procd_send_signal nginx
+	else restart
+	fi
 }
 
 
