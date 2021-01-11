@@ -1,14 +1,10 @@
-#
-# Copyright (c) 2018 Gregory L. Dietsche <Gregory.Dietsche@cuw.edu>
-# This is free software, licensed under the MIT License
-#
+##########################################################################
+#                     **** IMPORTANT ****                                #
+# Do not make changes to this file instead please execute:               #
+# /usr/sbin/safe-search-maintenance                                      #
+# If this file is not working, please ensure dnsmasq is able to READ it! #
+##########################################################################
 
-#
-# IMPORTANT: if this file is not working, make sure that dnsmasq is able to READ it!
-#
-
-#204.79.197.220 strict.bing.com
-#::FFFF:CC4F:C5DC strict.bing.com
+# Last Updated On: Tue Jan 12 13:42:47 CST 2021
 
 204.79.197.220 bing.com www.bing.com
-::FFFF:CC4F:C5DC bing.com www.bing.com
