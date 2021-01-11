@@ -137,6 +137,7 @@ define Package/exim/conffiles
 /etc/exim/exim.conf
 endef
 
+HOST_CFLAGS += -std=c99
 TARGET_CFLAGS += $(FPIC) -DNO_IP_OPTIONS -D_FILE_OFFSET_BITS=64
 
 MAKE_VARS += build=Linux-$$(ARCH)
