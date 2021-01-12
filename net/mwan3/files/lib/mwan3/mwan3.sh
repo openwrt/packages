@@ -291,10 +291,28 @@ mwan3_set_connected_ipv4()
 
 }
 
-mwan3_set_connected_iptables()
+mwan3_set_connected_ipv6()
 {
 	local connected_network_v6 source_network_v6
 
+	for connected_network_v6 in $($IP6 route | awk '{print $1}' | egrep "$IPv6_REGEX"); do
+		$IPS -! add mwan3_connected_v6_temp "$connected_network_v6"
+	done
+	$IPS swap mwan3_connected_v6_temp mwan3_connected_v6
+	$IPS destroy mwan3_connected_v6_temp
+
+	$IPS -! create mwan3_source_v6 hash:net family inet6
+	$IPS create mwan3_source_v6_temp hash:net family inet6
+	for source_network_v6 in $($IP6 addr ls  | sed -ne 's/ *inet6 \([^ \/]*\).* scope global.*/\1/p'); do
+		$IPS -! add mwan3_source_v6_temp "$source_network_v6"
+	done
+
+	$IPS swap mwan3_source_v6_temp mwan3_source_v6
+	$IPS destroy mwan3_source_v6_temp
+}
+
+mwan3_set_connected_iptables()
+{
 	$IPS -! create mwan3_connected_v4 hash:net
 	$IPS create mwan3_connected_v4_temp hash:net
 
@@ -304,19 +322,7 @@ mwan3_set_connected_iptables()
 		$IPS -! create mwan3_connected_v6 hash:net family inet6
 		$IPS create mwan3_connected_v6_temp hash:net family inet6
 
-		for connected_network_v6 in $($IP6 route | awk '{print $1}' | egrep "$IPv6_REGEX"); do
-			$IPS -! add mwan3_connected_v6_temp "$connected_network_v6"
-		done
-		$IPS swap mwan3_connected_v6_temp mwan3_connected_v6
-		$IPS destroy mwan3_connected_v6_temp
-
-		$IPS -! create mwan3_source_v6 hash:net family inet6
-		$IPS create mwan3_source_v6_temp hash:net family inet6
-		for source_network_v6 in $($IP6 addr ls  | sed -ne 's/ *inet6 \([^ \/]*\).* scope global.*/\1/p'); do
-			$IPS -! add mwan3_source_v6_temp "$source_network_v6"
-		done
-		$IPS swap mwan3_source_v6_temp mwan3_source_v6
-		$IPS destroy mwan3_source_v6_temp
+		mwan3_set_connected_ipv6
 	}
 
 	$IPS -! create mwan3_connected list:set
