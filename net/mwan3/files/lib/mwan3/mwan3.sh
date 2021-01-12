@@ -191,6 +191,12 @@ mwan3_init()
 	MMX_DEFAULT=$(mwan3_id2mask mmdefault MMX_MASK)
 	MMX_BLACKHOLE=$(mwan3_id2mask MM_BLACKHOLE MMX_MASK)
 	MMX_UNREACHABLE=$(mwan3_id2mask MM_UNREACHABLE MMX_MASK)
+
+	# The workaround is only needed for older kernel version.
+	# See issue: https://bugs.openwrt.org/index.php?do=details&task_id=2897
+	# See issue: https://github.com/openwrt/packages/issues/13655
+	KERNEL_HAS_SK_BUG=false
+	opkg compare-versions $(uname -r) '>' '4.14.209' || KERNEL_HAS_SK_BUG=true
 }
 
 mwan3_lock() {
@@ -293,7 +299,7 @@ mwan3_set_connected_ipv4()
 
 mwan3_set_connected_ipv6()
 {
-	local connected_network_v6 source_network_v6
+	local connected_network_v6
 
 	for connected_network_v6 in $($IP6 route | awk '{print $1}' | egrep "$IPv6_REGEX"); do
 		$IPS -! add mwan3_connected_v6_temp "$connected_network_v6"
@@ -301,14 +307,17 @@ mwan3_set_connected_ipv6()
 	$IPS swap mwan3_connected_v6_temp mwan3_connected_v6
 	$IPS destroy mwan3_connected_v6_temp
 
-	$IPS -! create mwan3_source_v6 hash:net family inet6
-	$IPS create mwan3_source_v6_temp hash:net family inet6
-	for source_network_v6 in $($IP6 addr ls  | sed -ne 's/ *inet6 \([^ \/]*\).* scope global.*/\1/p'); do
-		$IPS -! add mwan3_source_v6_temp "$source_network_v6"
-	done
+	if "$KERNEL_HAS_SK_BUG"; then
+		local source_network_v6
+		$IPS -! create mwan3_source_v6 hash:net family inet6
+		$IPS create mwan3_source_v6_temp hash:net family inet6
+		for source_network_v6 in $($IP6 addr ls  | sed -ne 's/ *inet6 \([^ \/]*\).* scope global.*/\1/p'); do
+			$IPS -! add mwan3_source_v6_temp "$source_network_v6"
+		done
 
-	$IPS swap mwan3_source_v6_temp mwan3_source_v6
-	$IPS destroy mwan3_source_v6_temp
+		$IPS swap mwan3_source_v6_temp mwan3_source_v6
+		$IPS destroy mwan3_source_v6_temp
+	fi
 }
 
 mwan3_set_connected_iptables()
@@ -400,13 +409,14 @@ mwan3_set_general_iptables()
 					-p ipv6-icmp \
 					-m icmp6 --icmpv6-type 137 \
 					-j RETURN
-				# do not mangle outgoing echo request
-				$IPT6 -A mwan3_hook \
-					-m set --match-set mwan3_source_v6 src \
-					-p ipv6-icmp \
-					-m icmp6 --icmpv6-type 128 \
-					-j RETURN
-
+				if "$KERNEL_HAS_SK_BUG"; then
+					# do not mangle outgoing echo request
+					$IPT6 -A mwan3_hook \
+						-m set --match-set mwan3_source_v6 src \
+						-p ipv6-icmp \
+						-m icmp6 --icmpv6-type 128 \
+						-j RETURN
+				fi
 			fi
 			$IPT -A mwan3_hook \
 				-j CONNMARK --restore-mark --nfmask "$MMX_MASK" --ctmask "$MMX_MASK"
