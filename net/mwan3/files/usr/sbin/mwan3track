@@ -128,6 +128,13 @@ main() {
 		echo "$(get_uptime)" > /var/run/mwan3track/$1/ONLINE
 		env -i ACTION="connected" INTERFACE="$1" DEVICE="$2" /sbin/hotplug-call iface
 	fi
+
+	# The workaround is only needed for older kernel version.
+	# See issue: https://bugs.openwrt.org/index.php?do=details&task_id=2897
+	# See issue: https://github.com/openwrt/packages/issues/13655
+	KERNEL_HAS_SK_BUG=false
+	opkg compare-versions $(uname -r) '>' '4.14.209' || KERNEL_HAS_SK_BUG=true
+
 	while true; do
 
 		sleep_time=$interval
@@ -136,14 +143,23 @@ main() {
 			if [ $host_up_count -lt $reliability ]; then
 				case "$track_method" in
 					ping)
+						# Ensure that IPv6 address is reset
+						unset ADDR
 						if echo $track_ip | grep -q ':'; then
+							if "$KERNEL_HAS_SK_BUG"; then
+								# Pinging IPv6 hosts with an interface is troublesome on
+								# older kernel version. So get the IP address of the
+								# interface and use that instead.
+								ADDR=$(ip -6 addr ls dev "$DEVICE" | sed -ne '/\/128/d' -e '1,/ *inet6 /s/ *inet6 \([^ \/]*\).* scope global.*/\1/p')
+								[ -z "$ADDR" ] && ADDR=$(ip -6 addr ls dev "$DEVICE" | sed -ne 's/ *inet6 \([^ \/]*\).* scope global.*/\1/p')
+							fi
 							ping_protocol=6
 						fi
 						if [ $check_quality -eq 0 ]; then
-							$PING -$ping_protocol -I $DEVICE -c $count -W $timeout -s $size -t $max_ttl -q $track_ip &> /dev/null
+							$PING -$ping_protocol -I ${ADDR:-$DEVICE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip &> /dev/null
 							result=$?
 						else
-							ping_result_raw="$($PING -$ping_protocol -I $DEVICE -c $count -W $timeout -s $size -t $max_ttl -q $track_ip 2>/dev/null)"
+							ping_result_raw="$($PING -$ping_protocol -I ${ADDR:-$DEVICE} -c $count -W $timeout -s $size -t $max_ttl -q $track_ip 2>/dev/null)"
 							ping_status=$?
 							ping_result=$(echo "$ping_result_raw" | tail -n2)
 							loss="$(echo "$ping_result" | grep "packet loss" |  cut -d "," -f3 | awk '{print $1}' | sed -e 's/%//')"
