@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gateway-go
-PKG_VERSION:=0.1.92
-PKG_RELEASE:=2
+PKG_VERSION:=0.1.95
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/OpenIoTHub/gateway-go/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=dd8074d9312e00ff957ffd1f3be7ba118a9b8cc31f07aa1ed594ef07931dab16
+PKG_HASH:=50a1c0e997664ae71da5b7394b792634832df50e8eba90ba8be7afd64e65a866
 
 PKG_MAINTAINER:=Yu Fang <newfarry@126.com>
 PKG_LICENSE:=MIT
