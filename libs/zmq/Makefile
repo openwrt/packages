@@ -10,12 +10,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zeromq
-PKG_VERSION:=4.3.3
-PKG_RELEASE:=2
+PKG_VERSION:=4.3.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/zeromq/libzmq/releases/download/v$(PKG_VERSION)
-PKG_HASH:=9d9285db37ae942ed0780c016da87060497877af45094ff9e1a1ca736e3875a2
+PKG_HASH:=c593001a89f5a85dd2ddf564805deb860e02471171b3f204944857336295c3e5
 
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=GPL-3.0-or-later
