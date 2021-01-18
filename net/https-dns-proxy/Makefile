@@ -1,14 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=https-dns-proxy
-PKG_VERSION:=2020-11-25
-PKG_RELEASE=1
+PKG_VERSION:=2021-01-17
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/aarond10/https_dns_proxy
-PKG_SOURCE_DATE:=2020-11-25
-PKG_SOURCE_VERSION:=3861ff694c59b9e47a1ead5703dd6a7121e66510
-PKG_MIRROR_HASH:=1616ebeba193b5f8891790a6477d014510caa9ce8b99dcd3fe4e8f78b8744ae1
+PKG_SOURCE_DATE:=2021-01-17
+PKG_SOURCE_VERSION:=37511cc08712d7548978a4f6f1cc457b7594fb96
+PKG_MIRROR_HASH:=4e6a7dcb69e350d1df9f17570439b589e031e249da7f91f2ec7600a955e0aaa3
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -22,6 +22,7 @@ define Package/https-dns-proxy
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=DNS Over HTTPS Proxy
+	URL:=https://docs.openwrt.melmac.net/https-dns-proxy/
 	DEPENDS:=+libcares +libcurl +libev +ca-bundle
 	CONFLICTS:=https_dns_proxy
 endef
@@ -29,7 +30,7 @@ endef
 define Package/https-dns-proxy/description
 https-dns-proxy is a light-weight DNS<-->HTTPS, non-caching translation proxy for the RFC 8484 DoH standard.
 It receives regular (UDP) DNS requests and issues them via DoH.
-Please see https://docs.openwrt.melmac.net/https-dns-proxy/ for further information.
+Please see https://docs.openwrt.melmac.net/https-dns-proxy/ for more information.
 endef
 
 define Package/https-dns-proxy/conffiles
