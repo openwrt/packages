@@ -20,7 +20,6 @@ dnsmasqConfig=''
 
 version() { echo "$PKG_VERSION"; }
 
-
 xappend() { param="$param $1"; }
 
 append_bool() {
@@ -47,8 +46,8 @@ append_parm() {
 
 start_instance() {
 	local cfg="$1" param listen_addr listen_port i
-
 	append_parm "$cfg" 'resolver_url' '-r'
+	append_parm "$cfg" 'polling_interval' '-i'
 	append_parm "$cfg" 'listen_addr' '-a' '127.0.0.1'
 	append_parm "$cfg" 'listen_port' '-p' "$p"
 	append_parm "$cfg" 'dscp_codepoint' '-c'
