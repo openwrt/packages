@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-mail-spamassassin
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 PKG_VERSION:=3.4.4
 PKG_HASH:=8ea27a165b81e3ce8c84ae85c3ecba1f2edfa04ef4a86f07fe28ab612fc8ff60
 
@@ -28,10 +28,10 @@ define Package/spamassassin
   CATEGORY:=Mail
   TITLE:=SpamAssassin
   URL:=https://spamassassin.apache.org/
-  DEPENDS:=+perl +perlbase-autoloader +perlbase-config +perlbase-data +perlbase-digest \
-           +perlbase-encode +perlbase-essential +perlbase-file +perlbase-getopt \
-           +perlbase-hash +perlbase-mime +perlbase-net +perlbase-socket \
-           +perl-dbi +perl-html-parser +perl-net-dns +perl-netaddr-ip
+  DEPENDS:=perl +perlbase-autoloader +perlbase-config +perlbase-data +perlbase-digest \
+          +perlbase-encode +perlbase-essential +perlbase-file +perlbase-getopt \
+          +perlbase-hash +perlbase-mime +perlbase-net +perlbase-socket \
+          +perl-dbi +perl-html-parser +perl-net-dns +perl-netaddr-ip
   VARIANT:=ssl
 endef
 
