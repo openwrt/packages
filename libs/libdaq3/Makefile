@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdaq3
 PKG_VERSION:=3.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=libdaq-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.snort.org/downloads/snortplus/
@@ -46,14 +46,12 @@ CONFIGURE_ARGS+= \
 	--with-libpcap-libraries="$(STAGING_DIR)/usr/lib" \
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(STAGING_DIR)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(STAGING_DIR)/usr/include/
-	$(INSTALL_DIR) $(STAGING_DIR)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib* $(STAGING_DIR)/usr/lib/
-	$(INSTALL_DIR) $(STAGING_DIR)/usr/lib/daq
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/daq/* $(STAGING_DIR)/usr/lib/daq/
-	$(INSTALL_DIR) $(STAGING_DIR)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(STAGING_DIR)/usr/bin/
+	$(INSTALL_DIR) $(STAGING_DIR)/usr/include/daq3
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/. $(STAGING_DIR)/usr/include/daq3/
+	$(INSTALL_DIR) $(STAGING_DIR)/usr/lib/daq3
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib* $(STAGING_DIR)/usr/lib/daq3/
+	$(INSTALL_DIR) $(STAGING_DIR)/usr/lib/daq3/daq
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/daq/* $(STAGING_DIR)/usr/lib/daq3/daq/
 endef
 
 define Package/libdaq3/install
