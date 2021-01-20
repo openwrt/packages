@@ -1,14 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=podman
-PKG_VERSION:=2.2.1
-PKG_RELEASE:=2
+PKG_VERSION:=3.0.0-rc1
+PKG_RELEASE:=3
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/containers/podman/archive/v$(PKG_VERSION)
-PKG_HASH:=bd86b181251e2308cb52f18410fb52d89df7f130cecf0298bbf9a848fe7daf60
+PKG_HASH:=674bc3e66affa5d7c1ff2776c4315dbb53e766532b2edb7893e9282b54d3b179
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
