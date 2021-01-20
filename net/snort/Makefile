@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort
 PKG_VERSION:=2.9.17
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -58,8 +58,8 @@ CONFIGURE_ARGS += \
 	--with-libpcap-libraries="$(STAGING_DIR)/usr/lib" \
 	--with-libpcre-includes="$(STAGING_DIR)/usr/include" \
 	--with-libpcre-libraries="$(STAGING_DIR)/usr/lib" \
-	--with-daq-includes="$(STAGING_DIR)/usr/include" \
-	--with-daq-libraries="$(STAGING_DIR)/usr/lib" \
+	--with-daq-includes="$(STAGING_DIR)/usr/include/daq2" \
+	--with-daq-libraries="$(STAGING_DIR)/usr/lib/daq2" \
 	--disable-static-daq
 
 ifeq ($(CONFIG_SNORT_LZMA),)
