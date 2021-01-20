@@ -483,6 +483,6 @@ EOL
 fi
 
 if [ "$RELOAD_DNSMASQ" = "1" ]; then
-  echo reloading dnsmasq to activate new IP addresses.
-  /etc/init.d/dnsmasq reload
+  echo restarting dnsmasq to activate new IP addresses.
+  /etc/init.d/dnsmasq restart
 fi
