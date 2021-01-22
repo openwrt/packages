@@ -78,12 +78,6 @@ typeof() {
 '
 }
 
-rev_quad() {
-	local ip="$1"
-
-	echo "$ip" | awk -F '.' '{ printf "%s.%s.%s.%s\n", $4, $3, $2, $1; }'
-}
-
 update() {
 	local lhs="$1" family="$2" type="$3"
 	shift 3
@@ -97,8 +91,18 @@ explode() {
 	echo "$arg" | sed -e 's/\./, /g'
 }
 
-create_empty_zone()
-{
+rev_str() {
+	local str="$1" delim="$2"
+	local frag result="" IFS="$delim"
+
+	for frag in $str; do
+		result="$frag${result:+$delim}$result"
+	done
+
+	echo "$result"
+}
+
+create_empty_zone() {
 	local zone="$1"
 
 	if [ ! -f $dyndir/db."$zone" ]; then
@@ -182,7 +186,7 @@ static_domain_add() {
 	config_get ip "$cfg" "ip"
 	[ -n "$ip" ] || return 0
 
-	revip="$(rev_quad "$ip")"
+	revip="$(rev_str "$ip" ".")"
 
 	update "$name.$domain." IN A "$ip"
 	update "$revip.in-addr.arpa." IN PTR "$name.$domain."
@@ -329,7 +333,7 @@ gen_dhcp_subnet() {
 }
 
 dhcpd_add() {
-	local cfg="$1"
+	local cfg="$1" synthesize="$2"
 	local dhcp6range="::"
 	local dynamicdhcp end gateway ifname ignore leasetime limit net netmask
 	local proto networkid start subnet
@@ -352,6 +356,17 @@ dhcpd_add() {
 	network_get_protocol proto "$net" || return 0
 
 	[ static = "$proto" ] || return 0
+
+	local pair="$(echo "${subnet%%/*}" | cut -d. -f1-2)"
+	case "$pair" in
+	10.*)
+		rfc1918_nets="$rfc1918_nets${rfc1918_nets:+ }10"
+		;;
+	172.1[6789]|172.2[0-9]|172.3[01]|192.168)
+		rfc1918_nets="$rfc1918_nets${rfc1918_nets:+ }$pair"
+		;;
+	esac
+	[ $synthesize -eq 0 ] && return
 
 	config_get_bool dynamicdhcp "$cfg" "dynamicdhcp" 1
 
@@ -384,6 +399,7 @@ dhcpd_add() {
 general_config() {
 	local always_broadcast boot_unknown_clients log_facility
 	local default_lease_time max_lease_time
+
 	config_get_bool always_broadcast "isc_dhcpd" "always_broadcast" 0
 	config_get_bool authoritative "isc_dhcpd" "authoritative" 1
 	config_get_bool boot_unknown_clients "isc_dhcpd" "boot_unknown_clients" 1
@@ -406,7 +422,12 @@ general_config() {
 	if [ $dynamicdns -eq 1 ]; then
 		create_empty_zone "$domain"
 
-		create_empty_zone "168.192.in-addr.arpa"
+		local mynet
+
+		for mynet in $rfc1918_nets; do
+			mynet="$(rev_str "$mynet" ".")"
+			create_empty_zone "$mynet.in-addr.arpa"
+		done
 
 		cat <<EOF > $conf_local_file
 zone "$domain" {
@@ -416,14 +437,21 @@ zone "$domain" {
   allow-transfer { key $session_key_name; };
 };
 
-zone "168.192.in-addr.arpa" {
+EOF
+
+		for mynet in $rfc1918_nets; do
+			mynet="$(rev_str "$mynet" ".")"
+			cat <<EOF >> $conf_local_file
+zone "$mynet.in-addr.arpa" {
   type master;
-  file "$dyndir/db.168.192.in-addr.arpa";
+  file "$dyndir/db.$mynet.in-addr.arpa";
   allow-update { key $session_key_name; };
   allow-transfer { key $session_key_name; };
 };
 
 EOF
+		done
+
 		/etc/init.d/named reload
 		sleep 1
 
@@ -445,12 +473,18 @@ zone $domain. {
 	key local-ddns;
 }
 
-zone 168.192.in-addr.arpa. {
+EOF
+
+		for mynet in $rfc1918_nets; do
+			mynet="$(rev_str "$mynet" ".")"
+			cat <<EOF
+zone $mynet.in-addr.arpa. {
 	primary 127.0.0.1;
 	key local-ddns;
 }
 
 EOF
+		done
 	fi
 
 	if [ -n "$log_facility" ] ; then
@@ -494,9 +528,18 @@ start_service() {
 
 		config_load dhcp
 
+		local rfc1918_nets=""
+
+		# alas we have to make 2 passes...
+		config_foreach dhcpd_add dhcp 0
+
+		rfc1918_nets="$(echo "$rfc1918_nets" | tr ' ' $'\n' | sort | uniq | tr $'\n' ' ')"
+
 		general_config > $config_file
 
-		config_foreach dhcpd_add dhcp
+		rfc1918_nets=
+
+		config_foreach dhcpd_add dhcp 1
 
 		static_hosts >> $config_file
 
