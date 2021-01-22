@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iperf
 PKG_VERSION:=3.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.es.net/pub/iperf
@@ -63,6 +63,12 @@ define Package/iperf3/description
  characteristics.
 endef
 
+define Package/iperf3/conffiles
+/etc/config/iperf3
+endef
+
+Package/iperf3-ssl/conffiles = $(Package/iperf3/conffiles)
+
 # autoreconf fails if the README file isn't present
 define Build/Prepare
 	$(call Build/Prepare/Default)
@@ -70,11 +76,31 @@ define Build/Prepare
 endef
 
 define Package/iperf3/install
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/etc/init.d/iperf3 $(1)/etc/init.d/
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/etc/config/iperf3 $(1)/etc/config/
+
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) ./files/usr/libexec/iperf3-ubus-redirect \
+		$(1)/usr/libexec/
+
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/iperf3 $(1)/usr/bin/
 endef
 
 define Package/iperf3-ssl/install
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/etc/init.d/iperf3 $(1)/etc/init.d/
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/etc/config/iperf3 $(1)/etc/config/
+
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) ./files/usr/libexec/iperf3-ubus-redirect \
+		$(1)/usr/libexec/
+
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/iperf3 $(1)/usr/bin/
 endef
