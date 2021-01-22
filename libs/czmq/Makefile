@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 CZ.NIC z.s.p.o. (http://www.nic.cz/)
+# Copyright (C) 2019-2021 CZ.NIC z.s.p.o. (http://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=czmq
-PKG_VERSION:=4.2.0
-PKG_RELEASE:=3
+PKG_VERSION:=4.2.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/zeromq/czmq/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=cfab29c2b3cc8a845749758a51e1dd5f5160c1ef57e2a41ea96e4c2dcc8feceb
+PKG_HASH:=5d720a204c2a58645d6f7643af15d563a712dad98c9d32c1ed913377daa6ac39
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MPL-2.0
