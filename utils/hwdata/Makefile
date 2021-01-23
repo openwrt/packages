@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hwdata
-PKG_VERSION:=0.342
+PKG_VERSION:=0.343
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/vcrhonek/hwdata/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f1e79131c870dce4a3b4b75edeefc5c9aef416d488a131c66cb6893be743be63
+PKG_HASH:=ccb4d21337b3773cc02654b360e91feb44c9258728d2f027b72013bd5628113b
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later  XFree86-1.0
@@ -25,14 +25,14 @@ include $(INCLUDE_DIR)/package.mk
 define Package/pciids
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=USB ID list
+  TITLE:=PCI ID list
   URL:=https://github.com/vcrhonek/hwdata
 endef
 
 define Package/usbids
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=PCI ID list
+  TITLE:=USB ID list
   URL:=https://github.com/vcrhonek/hwdata
 endef
 
