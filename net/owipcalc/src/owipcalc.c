@@ -227,7 +227,7 @@ static bool cidr_contains4(struct cidr *a, struct cidr *b)
 	if (printed)
 		qprintf(" ");
 
-	if ((b->prefix >= a->prefix) && (net1 == net2))
+	if ((a->prefix == 0) || ((b->prefix >= a->prefix) && (net1 == net2)))
 	{
 		qprintf("1");
 		return true;
@@ -529,7 +529,7 @@ static bool cidr_contains6(struct cidr *a, struct cidr *b)
 {
 	struct in6_addr *x = &a->addr.v6;
 	struct in6_addr *y = &b->addr.v6;
-	uint8_t i = (128 - a->prefix) / 8;
+	uint8_t i = ((128 - a->prefix) / 8) % 16;
 	uint8_t m = ~((1 << ((128 - a->prefix) % 8)) - 1);
 	uint8_t net1 = x->s6_addr[15-i] & m;
 	uint8_t net2 = y->s6_addr[15-i] & m;
@@ -537,8 +537,9 @@ static bool cidr_contains6(struct cidr *a, struct cidr *b)
 	if (printed)
 		qprintf(" ");
 
-	if ((b->prefix >= a->prefix) && (net1 == net2) &&
-	    ((i == 15) || !memcmp(&x->s6_addr, &y->s6_addr, 15-i)))
+	if ((a->prefix == 0) ||
+	    ((b->prefix >= a->prefix) && (net1 == net2) &&
+	    ((i == 15) || !memcmp(&x->s6_addr, &y->s6_addr, 15-i))))
 	{
 		qprintf("1");
 		return true;
