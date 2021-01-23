@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=generate-ipv6-address
 PKG_VERSION:=0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=generate-ipv6-address-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.irif.fr/~jch/software/files/
