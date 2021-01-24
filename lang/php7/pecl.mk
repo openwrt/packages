@@ -4,7 +4,7 @@
 #
 
 define Package/php7-pecl/Default
-  SUBMENU:=PHP
+  SUBMENU:=PHP7
   SECTION:=lang
   CATEGORY:=Languages
   URL:=http://pecl.php.net/
