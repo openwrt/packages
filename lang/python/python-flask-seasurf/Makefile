@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2019-2021 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-flask-seasurf
-PKG_VERSION:=0.2.2
+PKG_VERSION:=0.3.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=Flask-SeaSurf
-PKG_HASH:=c57918c17e9afd988bdc30d8dcb7bfb833741dee38b06c1bbd17821d6fa2b6cf
+PKG_HASH:=10d4946fdd9745a8ae0a38a46c48a9add0cca4896333c0893b3133e3852c2e80
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
