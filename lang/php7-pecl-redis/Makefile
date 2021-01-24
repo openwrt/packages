@@ -35,5 +35,5 @@ CONFIGURE_ARGS+= \
 	--disable-redis-lzf \
 	--disable-redis-msgpack
 
-$(eval $(call PECLPackage,$(PECL_NAME),$(PECL_LONGNAME),+php7-mod-json +php7-mod-session,25))
+$(eval $(call PHP7PECLPackage,$(PECL_NAME),$(PECL_LONGNAME),+php7-mod-json +php7-mod-session,25))
 $(eval $(call BuildPackage,$(PKG_NAME)))

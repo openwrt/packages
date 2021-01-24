@@ -22,7 +22,7 @@ CONFIGURE_VARS+= \
 CONFIGURE_ARGS+= \
 	--with-php-config=$(STAGING_DIR)/usr/bin/php7-config
 
-define PECLPackage
+define PHP7PECLPackage
 
   define Package/php7-pecl-$(1)
     $(call Package/php7-pecl/Default)

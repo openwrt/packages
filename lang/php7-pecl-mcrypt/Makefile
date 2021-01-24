@@ -31,5 +31,5 @@ include ../php7/pecl.mk
 
 CONFIGURE_ARGS+= --with-mcrypt=shared,"$(STAGING_DIR)/usr"
 
-$(eval $(call PECLPackage,mcrypt,$(PECL_LONGNAME),+libmcrypt +libltdl,30))
+$(eval $(call PHP7PECLPackage,mcrypt,$(PECL_LONGNAME),+libmcrypt +libltdl,30))
 $(eval $(call BuildPackage,$(PKG_NAME)))

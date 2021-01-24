@@ -29,5 +29,5 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 include ../php7/pecl.mk
 
-$(eval $(call PECLPackage,imagick,$(PECL_LONGNAME),+imagemagick,30))
+$(eval $(call PHP7PECLPackage,imagick,$(PECL_LONGNAME),+imagemagick,30))
 $(eval $(call BuildPackage,$(PKG_NAME)))
