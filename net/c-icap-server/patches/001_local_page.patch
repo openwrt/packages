@@ -1,0 +1,31 @@
+--- a/utils/c-icap-mkbdb.c	2020-10-25 15:53:25.000000000 +0530
++++ b/utils/c-icap-mkbdb.c	2021-01-09 12:35:01.765242597 +0530
+@@ -23,7 +23,7 @@
+ int DUMP_MODE = 0;
+ int VERSION_MODE = 0;
+ int USE_DBTREE = 0;
+-long int PAGE_SIZE;
++long int LOCAL_PAGE_SIZE;
+ 
+ ci_mem_allocator_t *allocator = NULL;
+ int cfg_set_type(const char *directive, const char **argv, void *setdata);
+@@ -52,7 +52,7 @@
+         "The type of values"
+     },
+     {
+-        "-p", "page_size", &PAGE_SIZE, ci_cfg_size_long,
++        "-p", "page_size", &LOCAL_PAGE_SIZE, ci_cfg_size_long,
+         "The page size to use for the database"
+     },
+     {
+@@ -107,8 +107,8 @@
+         return 0;
+     }
+ 
+-    if (PAGE_SIZE > 512 && PAGE_SIZE <= 64*1024)
+-        db->set_pagesize(db, (uint32_t)PAGE_SIZE);
++    if (LOCAL_PAGE_SIZE > 512 && LOCAL_PAGE_SIZE <= 64*1024)
++        db->set_pagesize(db, (uint32_t)LOCAL_PAGE_SIZE);
+ 
+     if ((ret = db->open(db, NULL, path, NULL,
+                         (USE_DBTREE ? DB_BTREE : DB_HASH),
