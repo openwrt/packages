@@ -143,6 +143,10 @@ process_config() {
 	config_get registry_mirrors globals registry_mirrors ""
 	config_get hosts globals hosts ""
 	config_get dns globals dns ""
+	config_get_bool ipv6 globals ipv6 ""
+	config_get ip globals ip ""
+	config_get fixed_cidr globals fixed_cidr ""
+	config_get fixed_cidr_v6 globals fixed_cidr_v6 ""
 
 	. /usr/share/libubox/jshn.sh
 	json_init
@@ -159,6 +163,10 @@ process_config() {
 	[ -z "${dns}" ] || json_add_array "dns"
 	[ -z "${dns}" ] || config_list_foreach globals dns json_add_array_string
 	[ -z "${dns}" ] || json_close_array
+	[ -z "${ipv6}" ] || json_add_boolean "ipv6" "${ipv6}"
+	[ -z "${ip}" ] || json_add_string "ip" "${ip}"
+	[ -z "${fixed_cidr}" ] || json_add_string "fixed-cidr" "${fixed_cidr}"
+	[ -z "${fixed_cidr_v6}" ] || json_add_string "fixed-cidr-v6" "${fixed_cidr_v6}"
 	json_dump > "${DOCKERD_CONF}"
 
 	[ "${iptables}" -eq "1" ] && config_foreach iptables_add_blocking_rule firewall
