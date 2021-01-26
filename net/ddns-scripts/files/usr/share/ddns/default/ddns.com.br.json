@@ -1,6 +1,0 @@
-{
-	"name": "ddns.com.br",
-	"ipv4": {
-		"url": "http://[DOMAIN]:[PASSWORD]@members.ddns.com.br/nic/update?hostname=[DOMAIN]&myip=[IP]"
-	}
-}
