@@ -155,7 +155,7 @@ Signed-off-by: Nick Hainke <vincent@systemli.org>
 +int snmp_read(char *ifname) {
 +  FILE *fh;
 +  char buffer[1024];
-+  char *fields[16];
++  char *fields[2];
 +  int numfields;
 +  int currline = 0;
 +  derive_t data[76];
@@ -178,17 +178,17 @@ Signed-off-by: Nick Hainke <vincent@systemli.org>
 +  }
 +
 +  while (fgets(buffer, 1024, fh) != NULL) {
-+    numfields = strsplit(buffer, fields, 16);
++    numfields = strsplit(buffer, fields, 2);
 +
 +    if (numfields < 2)
-+      continue;
++      return -1;
 +
 +    data[currline++] = atoll(fields[1]);
 +  }
 +
 +  fclose(fh);
 +
-+  if (currline < 25) {
++  if (currline < 28) {
 +    return -1;
 +  }
 +
