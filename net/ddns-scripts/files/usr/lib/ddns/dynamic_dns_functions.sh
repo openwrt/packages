@@ -85,8 +85,7 @@ NSLOOKUP=$(command -v nslookup)
 
 # Transfer Programs
 WGET=$(command -v wget)
-# SSL support is available if WGET_SSL is not empty
-WGET_SSL=$("$WGET" -V 2>/dev/null | grep -F +https)
+$WGET -V 2>/dev/null | grep -F -q +https && WGET_SSL=$WGET
 
 CURL=$(command -v curl)
 # CURL_SSL not empty then SSL support available
