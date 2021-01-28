@@ -8,11 +8,9 @@ Signed-off-by: Paul Spooren <mail@aparcar.org>
  Makefile | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/Makefile b/Makefile
-index a182269..6448917 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -25,7 +25,7 @@ export DESTDIR SBINDIR LIBDIR CONFDIR MANDIR DOCDIR INCLUDEDIR PKGCONFIGDIR
+@@ -25,7 +25,7 @@ export DESTDIR SBINDIR LIBDIR CONFDIR MA
  ##
  # Top-level subdirs
  
@@ -21,6 +19,3 @@ index a182269..6448917 100644
  
  ##
  # Include all rules and stuff
--- 
-2.25.1
-
