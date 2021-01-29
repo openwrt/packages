@@ -179,17 +179,20 @@ static_cnames() {
 
 static_domain_add() {
 	local cfg="$1"
-	local name ip revip
+	local name ip ips revip
 
 	config_get name "$cfg" "name"
 	[ -n "$name" ] || return 0
 	config_get ip "$cfg" "ip"
 	[ -n "$ip" ] || return 0
 
-	revip="$(rev_str "$ip" ".")"
+	ips="$ip"
+	for ip in $ips; do
+		revip="$(rev_str "$ip" ".")"
 
-	update "$name.$domain." IN A "$ip"
-	update "$revip.in-addr.arpa." IN PTR "$name.$domain."
+		update "$name.$domain." IN A "$ip"
+		update "$revip.in-addr.arpa." IN PTR "$name.$domain."
+	done
 }
 
 static_domains() {
