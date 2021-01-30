@@ -77,7 +77,7 @@ append_interface() {
 	[ -z $netdev_count ] && netdev_count=0
 	# for the purposes of snmp monitoring it doesn't need to be up, it just needs to exist in /proc/net/dev
 	network_get_device netdev "$name"
-	if [ -n "$netdev" ] && grep -qF "$netdev" /proc/net/dev ]; then
+	if [ -n "$netdev" ] && grep -qF "$netdev" /proc/net/dev; then
 		[ $netdev_count -ge 8 ] && {
 			_err "$cfg: too many network interfaces configured, ignoring $name"
 			return
