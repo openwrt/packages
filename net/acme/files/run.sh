@@ -335,7 +335,18 @@ issue_cert()
 		# commit and reload is in post_checks
 	fi
 
-	if [ -e /etc/init.d/nginx ] && [ "$update_nginx" -eq "1" ]; then
+	local nginx_updated
+	nginx_updated=0
+	if command -v nginx-util 2>/dev/null && [ "$update_nginx" -eq "1" ]; then
+		nginx_updated=1
+		for domain in $domains; do
+			nginx-util add_ssl "${domain}" acme "${domain_dir}/fullchain.cer" \
+				"${domain_dir}/${main_domain}.key" || nginx_updated=0
+		done
+		# reload is in post_checks
+	fi
+
+	if [ "$nginx_updated" -eq "0" ] && [ -w /etc/nginx/nginx.conf ] && [ "$update_nginx" -eq "1" ]; then
 		sed -i "s#ssl_certificate\ .*#ssl_certificate ${domain_dir}/fullchain.cer;#g" /etc/nginx/nginx.conf
 		sed -i "s#ssl_certificate_key\ .*#ssl_certificate_key ${domain_dir}/${main_domain}.key;#g" /etc/nginx/nginx.conf
 		# commit and reload is in post_checks
