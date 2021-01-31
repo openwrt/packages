@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdaq3
-PKG_VERSION:=3.0.0-beta1
+PKG_VERSION:=3.0.0
 PKG_RELEASE:=1
 
+PKG_SOURCE:=libdaq-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.snort.org/downloads/snortplus/
-PKG_SOURCE:=daq-$(PKG_VERSION).tar.gz
-PKG_HASH:=ef74aa1c30a6ee93eacbe7967d1c85d7df3214cf3783d4eabbb6b64305fd273e
-PKG_BUILD_DIR:=$(BUILD_DIR)/daq-$(PKG_VERSION)
+PKG_HASH:=4de807ab8c622e9ef8e0cfaa8dbd9231ece17d14dc9ebaa63add800475347b99
+PKG_BUILD_DIR:=$(BUILD_DIR)/libdaq-$(PKG_VERSION)
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
