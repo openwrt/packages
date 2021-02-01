@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2020-2021 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-execnet
-PKG_VERSION:=1.7.1
-PKG_RELEASE:=2
+PKG_VERSION:=1.8.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=execnet
-PKG_HASH:=cacb9df31c9680ec5f95553976c4da484d407e85e41c83cb812aa014f0eddc50
+PKG_HASH:=b73c5565e517f24b62dea8a5ceac178c661c4309d3aa0c3e420856c072c411b4
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT
