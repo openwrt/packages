@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=simple-adblock
 PKG_VERSION:=1.8.4
-PKG_RELEASE:=4
+PKG_RELEASE:=10
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 PKG_LICENSE:=GPL-3.0-or-later
 
@@ -16,7 +16,8 @@ define Package/simple-adblock
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Simple AdBlock Service
-	DEPENDS:=+jshn +jsonfilter
+	URL:=https://docs.openwrt.melmac.net/simple-adblock/
+	DEPENDS:=+jshn
 	PKGARCH:=all
 endef
 
@@ -24,7 +25,6 @@ define Package/simple-adblock/description
 Simple adblock script to block ad or abuse/malware domains with DNSMASQ or Unbound.
 Script supports local/remote list of domains and hosts-files for both block-listing and allow-listing.
 Please see https://docs.openwrt.melmac.net/simple-adblock/ for more information.
-
 endef
 
 define Package/simple-adblock/conffiles
