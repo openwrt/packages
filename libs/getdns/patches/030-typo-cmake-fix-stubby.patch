@@ -1,0 +1,13 @@
+--- a/cmake/include/cmakeconfig.h.in
++++ b/cmake/include/cmakeconfig.h.in
+@@ -91,8 +91,8 @@
+ #cmakedefine HAVE_OPENSSL_VERSION	1
+ 
+ #cmakedefine HAVE_SSL_CTX_DANE_ENABLE	1
+-#cmakedefine HAVE_SSL_CTX_SET_CIPHERSUITS	1
+-#cmakedefine HAVE_SSL_SET_CIPHERSUITS	1
++#cmakedefine HAVE_SSL_CTX_SET_CIPHERSUITES	1
++#cmakedefine HAVE_SSL_SET_CIPHERSUITES	1
+ 
+ #cmakedefine HAVE_OPENSSL_INIT_CRYPTO	1
+ 
