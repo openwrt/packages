@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libyang
-PKG_VERSION:=1.0.184
+PKG_VERSION:=1.0.215
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/CESNET/libyang/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=1a5637451b73c4c5683837eb4c51371bb084795f653bc1a5fc20fed5541b58bc
+PKG_HASH:=c4498a77a7c12a28c9911f993eeafbf2badd2ecea58bb74781bd61cfc635e4c9
 
 PKG_MAINTAINER:=Jakov Smolic <jakov.smolic@sartura.hr>
 PKG_LICENSE:=BSD-3-Clause
