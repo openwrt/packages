@@ -1,5 +1,5 @@
---- a/libtun6/tun6.c	2012-09-12 17:03:59.000000000 +0400
-+++ b/libtun6/tun6.c	2019-04-07 02:21:07.439952535 +0300
+--- a/libtun6/tun6.c
++++ b/libtun6/tun6.c
 @@ -53,7 +53,7 @@
  const char os_driver[] = "Linux";
  # define USE_LINUX 1
@@ -9,7 +9,7 @@
  /*
   * <linux/ipv6.h> conflicts with <netinet/in.h> and <arpa/inet.h>,
   * so we've got to declare this structure by hand.
-@@ -65,7 +65,7 @@
+@@ -65,7 +65,7 @@ struct in6_ifreq {
  };
  
  # include <net/route.h> // struct in6_rtmsg
@@ -18,4 +18,3 @@
  
  typedef struct
  {
-
