@@ -116,9 +116,8 @@ output_fail() { output 1 "$_FAIL_"; output 2 "$__FAIL__\\n"; }
 output_failn() { output 1 "$_FAIL_\\n"; output 2 "$__FAIL__\\n"; }
 str_replace() { printf "%b" "$1" | sed -e "s/$(printf "%b" "$2")/$(printf "%b" "$3")/g"; }
 str_contains() { test "$1" != "$(str_replace "$1" "$2" '')"; }
-compare_versions() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
+compare_values() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
 is_chaos_calmer() { ubus -S call system board | grep -q 'Chaos Calmer'; }
-is_ipset_procd() { compare_versions "$(sed -ne 's/^Version: //p' /usr/lib/opkg/info/firewall.control)" "2019-09-18"; }
 led_on(){ if [ -n "${1}" ] && [ -e "${1}/trigger" ]; then echo 'default-on' > "${1}/trigger" 2>&1; fi; }
 led_off(){ if [ -n "${1}" ] &&  [ -e "${1}/trigger" ]; then echo 'none' > "${1}/trigger" 2>&1; fi; }
 dnsmasq_hup() { killall -q -HUP dnsmasq; }
@@ -467,14 +466,13 @@ dnsOps() {
 tmpfs() {
 	local action="$1" instance="$2" value="$3"
 	local status message error stats
-	local readReload readRestart curReload curRestart ret
+	local reload restart curReload curRestart ret i
 	if [ -s "$jsonFile" ]; then
-		status="$(jsonfilter -i $jsonFile -l1 -e "@['data']['status']")"
-		message="$(jsonfilter -i $jsonFile -l1 -e "@['data']['message']")"
-		error="$(jsonfilter -i $jsonFile -l1 -e "@['data']['error']")"
-		stats="$(jsonfilter -i $jsonFile -l1 -e "@['data']['stats']")"
-		readReload="$(jsonfilter -i $jsonFile -l1 -e "@['data']['reload']")"
-		readRestart="$(jsonfilter -i $jsonFile -l1 -e "@['data']['restart']")"
+		json_load_file "$jsonFile" 2>/dev/null
+		json_select 'data' 2>/dev/null
+		for i in status message error stats reload restart; do
+			json_get_var $i "$i" 2>/dev/null
+		done
 	fi
 	case "$action" in
 		get)
@@ -492,9 +490,9 @@ tmpfs() {
 					curRestart="$compressedCache $forceDNS $led"
 					if [ ! -s "$jsonFile" ]; then
 						ret='on_boot'
-					elif [ "$curReload" != "$readReload" ]; then
+					elif [ "$curReload" != "$reload" ]; then
 						ret='download'
-					elif [ "$curRestart" != "$readRestart" ]; then
+					elif [ "$curRestart" != "$restart" ]; then
 						ret='restart'
 					fi
 					printf "%b" "$ret"
@@ -530,7 +528,7 @@ tmpfs() {
 				stats) 
 					unset stats;;
 				triggers) 
-					unset readReload; unset readRestart;;
+					unset reload; unset restart;;
 			esac
 			;;
 		set)
@@ -544,8 +542,8 @@ tmpfs() {
 				stats) 
 					stats="$value";;
 				triggers) 
-					readReload="$parallelDL $debug $dlTimeout $allowed_domains $blocked_domains $allowed_domains_urls $blocked_domains_urls $blocked_hosts_urls $targetDNS"
-					readRestart="$compressedCache $forceDNS $led"
+					reload="$parallelDL $debug $dlTimeout $allowed_domains $blocked_domains $allowed_domains_urls $blocked_domains_urls $blocked_hosts_urls $targetDNS"
+					restart="$compressedCache $forceDNS $led"
 					;;
 			esac
 			;;
@@ -557,8 +555,8 @@ tmpfs() {
 	json_add_string message "$message"
 	json_add_string error "$error"
 	json_add_string stats "$stats"
-	json_add_string reload "$readReload"
-	json_add_string restart "$readRestart"
+	json_add_string reload "$reload"
+	json_add_string restart "$restart"
 	json_close_object
 	json_dump > "$jsonFile"
 	sync
@@ -602,97 +600,6 @@ cacheOps() {
 			return $?
 			;;
 	esac
-}
-
-fw3Ops() {
-	local action="$1" param="$2" _restart
-	case "$action" in
-		reload) /etc/init.d/firewall reload >/dev/null 2>&1;;
-		restart) /etc/init.d/firewall restart >/dev/null 2>&1;;
-		remove)
-			case "$param" in
-				dns_redirect) uci -q del firewall.simple_adblock_dns_redirect;;
-				ipset)        uci -q del firewall.simple_adblock_ipset
-											uci -q del firewall.simple_adblock_ipset_rule;;
-				*)
-					uci -q del firewall.simple_adblock_dns_redirect
-					uci -q del firewall.simple_adblock_ipset
-					uci -q del firewall.simple_adblock_ipset_rule
-					;;
-			esac
-			;;
-		insert)
-			case "$param" in
-				dns_redirect)
-					if ! uci -q get firewall.simple_adblock_dns_redirect >/dev/null; then
-						uci -q set firewall.simple_adblock_dns_redirect=redirect
-						uci -q set firewall.simple_adblock_dns_redirect.name=simple_adblock_dns_hijack
-						uci -q set firewall.simple_adblock_dns_redirect.target=DNAT
-						uci -q set firewall.simple_adblock_dns_redirect.src=lan
-						uci -q set firewall.simple_adblock_dns_redirect.proto=tcpudp
-						uci -q set firewall.simple_adblock_dns_redirect.src_dport=53
-						uci -q set firewall.simple_adblock_dns_redirect.dest_port=53
-					fi
-					;;
-				ipset)
-					if ! uci -q get firewall.simple_adblock_ipset >/dev/null; then
-						uci -q set firewall.simple_adblock_ipset=ipset
-						uci -q set firewall.simple_adblock_ipset.name=adb
-						uci -q set firewall.simple_adblock_ipset.match=dest_net
-						uci -q set firewall.simple_adblock_ipset.storage=hash
-						uci -q set firewall.simple_adblock_ipset.enabled=1
-						_restart=1
-					fi
-					if ! uci -q get firewall.simple_adblock_ipset_rule >/dev/null; then
-						uci -q set firewall.simple_adblock_ipset_rule=rule
-						uci -q set firewall.simple_adblock_ipset_rule.name=simple_adblock_ipset_rule
-						uci -q set firewall.simple_adblock_ipset_rule.ipset=adb
-						uci -q set firewall.simple_adblock_ipset_rule.src=lan
-						uci -q set firewall.simple_adblock_ipset_rule.dest='*'
-						uci -q set firewall.simple_adblock_ipset_rule.proto=tcpudp
-						uci -q set firewall.simple_adblock_ipset_rule.target=REJECT
-						uci -q set firewall.simple_adblock_ipset_rule.enabled=1
-					fi
-					;;
-				*)
-					if ! uci -q get firewall.simple_adblock_dns_redirect >/dev/null; then
-						uci -q set firewall.simple_adblock_dns_redirect=redirect
-						uci -q set firewall.simple_adblock_dns_redirect.name=simple_adblock_dns_hijack
-						uci -q set firewall.simple_adblock_dns_redirect.target=DNAT
-						uci -q set firewall.simple_adblock_dns_redirect.src=lan
-						uci -q set firewall.simple_adblock_dns_redirect.proto=tcpudp
-						uci -q set firewall.simple_adblock_dns_redirect.src_dport=53
-						uci -q set firewall.simple_adblock_dns_redirect.dest_port=53
-					fi
-					if ! uci -q get firewall.simple_adblock_ipset >/dev/null; then
-						uci -q set firewall.simple_adblock_ipset=ipset
-						uci -q set firewall.simple_adblock_ipset.name=adb
-						uci -q set firewall.simple_adblock_ipset.match=dest_net
-						uci -q set firewall.simple_adblock_ipset.storage=hash
-						uci -q set firewall.simple_adblock_ipset.enabled=1
-						_restart=1
-					fi
-					if ! uci -q get firewall.simple_adblock_ipset_rule >/dev/null; then
-						uci -q set firewall.simple_adblock_ipset_rule=rule
-						uci -q set firewall.simple_adblock_ipset_rule.name=simple_adblock_ipset_rule
-						uci -q set firewall.simple_adblock_ipset_rule.ipset=adb
-						uci -q set firewall.simple_adblock_ipset_rule.src=lan
-						uci -q set firewall.simple_adblock_ipset_rule.dest='*'
-						uci -q set firewall.simple_adblock_ipset_rule.proto=tcpudp
-						uci -q set firewall.simple_adblock_ipset_rule.target=REJECT
-						uci -q set firewall.simple_adblock_ipset_rule.enabled=1
-					fi
-					;;
-		esac
-	esac
-	if [ -n "$(uci changes firewall)" ]; then
-		uci -q commit firewall
-		if [ -z "$_restart" ]; then
-			fw3Ops 'reload'
-		else
-			fw3Ops 'restart'
-		fi
-	fi
 }
 
 process_url() {
@@ -1018,64 +925,46 @@ start_service() {
 	tmpfs del all
 	tmpfs set triggers
 
-	if is_chaos_calmer || ! is_ipset_procd; then
-		if [ "$forceDNS" -ne 0 ]; then
-			fw3Ops 'insert' 'dns_redirect'
-		else
-			fw3Ops 'remove' 'dns_redirect'
-		fi
-		if [ "$targetDNS" = 'dnsmasq.ipset' ]; then
-			fw3Ops 'insert' 'ipset'
-		else
-			fw3Ops 'remove' 'ipset'
-		fi
-		procd_open_instance 'main'
-		procd_set_param command /bin/true
-		procd_set_param stdout 1
-		procd_set_param stderr 1
-		procd_close_instance
-	else
-		procd_open_instance 'main'
-		procd_set_param command /bin/true
-		procd_set_param stdout 1
-		procd_set_param stderr 1
-		procd_open_data
-		json_add_array firewall
-		if [ "$forceDNS" -ne 0 ]; then
-			json_add_object ''
-			json_add_string type redirect
-			json_add_string name simple_adblock_dns_redirect
-			json_add_string target DNAT
-			json_add_string src lan
-			json_add_string proto tcpudp
-			json_add_string src_dport 53
-			json_add_string dest_port 53
-			json_add_string reflection 0
-			json_close_object
-		fi
-		if [ "$targetDNS" = 'dnsmasq.ipset' ]; then
-			json_add_object ''
-			json_add_string type ipset
-			json_add_string name adb
-			json_add_string match dest_net
-			json_add_string storage hash
-			json_add_string enabled 1
-			json_close_object
-			json_add_object ''
-			json_add_string type rule
-			json_add_string name simple_adblock_ipset_rule
-			json_add_string ipset adb
-			json_add_string src lan
-			json_add_string dest '*'
-			json_add_string proto tcpudp
-			json_add_string target REJECT
-			json_add_string enabled 1
-			json_close_object
-		fi
-		json_close_array
-		procd_close_data
-		procd_close_instance
+	procd_open_instance 'main'
+	procd_set_param command /bin/true
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_open_data
+	json_add_array firewall
+	if [ "$forceDNS" -ne 0 ]; then
+		json_add_object ''
+		json_add_string type redirect
+		json_add_string name simple_adblock_dns_redirect
+		json_add_string target DNAT
+		json_add_string src lan
+		json_add_string proto tcpudp
+		json_add_string src_dport 53
+		json_add_string dest_port 53
+		json_add_string reflection 0
+		json_close_object
 	fi
+	if [ "$targetDNS" = 'dnsmasq.ipset' ]; then
+		json_add_object ''
+		json_add_string type ipset
+		json_add_string name adb
+		json_add_string match dest_net
+		json_add_string storage hash
+		json_add_string enabled 1
+		json_close_object
+		json_add_object ''
+		json_add_string type rule
+		json_add_string name simple_adblock_ipset_rule
+		json_add_string ipset adb
+		json_add_string src lan
+		json_add_string dest '*'
+		json_add_string proto tcpudp
+		json_add_string target REJECT
+		json_add_string enabled 1
+		json_close_object
+	fi
+	json_close_array
+	procd_close_data
+	procd_close_instance
 
 	if [ "$action" = 'restore' ]; then
 		output 0 "Starting $serviceName... "
@@ -1150,8 +1039,8 @@ start_service() {
 	remove_lock
 }
 
-service_started() { is_ipset_procd && procd_set_config_changed firewall; }
-service_stopped() { is_ipset_procd && procd_set_config_changed firewall; }
+service_started() { procd_set_config_changed firewall; }
+service_stopped() { procd_set_config_changed firewall; }
 restart_service() { rc_procd start_service 'restart'; }
 reload_service() { restart_service; }
 restart() { restart_service; }
@@ -1203,7 +1092,6 @@ showstatus() {
 
 stop_service() {
 	load_package_config
-	fw3Ops 'remove' 'all'
 	if [ -s "$outputFile" ]; then
 		output "Stopping $serviceName... "
 		cacheOps 'create'
@@ -1222,7 +1110,9 @@ stop_service() {
 }
 
 service_triggers() {
-	procd_add_config_trigger "config.change" "$packageName" /etc/init.d/$packageName reload
+	procd_open_trigger
+	procd_add_config_trigger "config.change" "${packageName}" /etc/init.d/${packageName} reload
+	procd_close_trigger
 }
 
 check() {
@@ -1265,9 +1155,9 @@ sizes() {
 		[ "${i//melmac}" != "$i" ] && continue
 		if $dl_command "$i" $dl_flag /tmp/sast 2>/dev/null && [ -s /tmp/sast ]; then
 			echo "# File size: $(du -sh /tmp/sast | awk '{print $1}')"
-			if compare_versions "$(du -sk /tmp/sast)" "500"; then
+			if compare_values "$(du -sk /tmp/sast)" "500"; then
 				echo "# block-list too big for most routers"
-			elif compare_versions "$(du -sk /tmp/sast)" "100"; then
+			elif compare_values "$(du -sk /tmp/sast)" "100"; then
 				echo "# block-list may be too big for some routers"
 			fi
 			rm -rf /tmp/sast
@@ -1283,9 +1173,9 @@ sizes() {
 	for i in $blocked_hosts_urls; do
 		if $dl_command "$i" $dl_flag /tmp/sast 2>/dev/null && [ -s /tmp/sast ]; then
 			echo "# File size: $(du -sh /tmp/sast | awk '{print $1}')"
-			if compare_versions "$(du -sk /tmp/sast)" "500"; then
+			if compare_values "$(du -sk /tmp/sast)" "500"; then
 				echo "# block-list too big for most routers"
-			elif compare_versions "$(du -sk /tmp/sast)" "100"; then
+			elif compare_values "$(du -sk /tmp/sast)" "100"; then
 				echo "# block-list may be too big for some routers"
 			fi
 			rm -rf /tmp/sast
