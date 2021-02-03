@@ -9,13 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iputils
-PKG_VERSION:=20200821
+PKG_VERSION:=20210202
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/iputils/iputils/tar.gz/s$(PKG_VERSION)?
-PKG_HASH:=f265da0d02dd2259efd8c57a9c2e0c8bb3361abb14639fcffb26707be5783a5b
-PKG_BUILD_DIR:=$(BUILD_DIR)/iputils-s$(PKG_VERSION)
+PKG_SOURCE_URL:=https://codeload.github.com/iputils/iputils/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=3f557ecfd2ace873801231d2c1f42de73ced9fbc1ef3a438d847688b5fb0e8ab
+PKG_BUILD_DIR:=$(BUILD_DIR)/iputils-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
 PKG_LICENSE:=BSD-3-Clause
@@ -141,8 +141,8 @@ define Package/iputils-tftpd/description
 endef
 
 define Package/iputils-tftpd/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin//tftpd $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/tftpd $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,iputils-ping))
