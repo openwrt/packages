@@ -93,9 +93,11 @@ MAKE_FLAGS += \
 #native compile nsinstall
 define Build/Prepare
 	$(call Build/Prepare/Default)
+ifeq ($(QUILT),)
 	USE_NATIVE=1 OS_REL_CFLAGS="$(HOST_CFLAGS)" LDFLAGS="$(HOST_LDFLAGS)" \
 	CC="$(HOSTCC)" CPU_ARCH="$(HOST_ARCH)" \
 	    $(MAKE) -C $(PKG_BUILD_DIR)/nss/coreconf/nsinstall
+endif
 endef
 
 define Build/Compile
