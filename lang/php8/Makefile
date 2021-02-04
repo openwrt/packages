@@ -466,6 +466,9 @@ CONFIGURE_VARS+= \
 	ac_cv_u8t_decompose=yes \
 	ac_cv_have_pcre2_jit=no
 
+MAKE_VARS+= \
+	HOSTCC="$(HOSTCC)"
+
 define Package/php8/conffiles
 /etc/php.ini
 /etc/php8/
