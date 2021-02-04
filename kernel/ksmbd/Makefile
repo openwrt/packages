@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ksmbd
-PKG_VERSION:=3.1.3
+PKG_VERSION:=3.3.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/cifsd-team/cifsd/archive/$(PKG_VERSION)/
-PKG_HASH:=c3c4531d3806117218d23e0552edfe883f978a00b7293180dd2919694102fcb9
+PKG_SOURCE_URL:=https://codeload.github.com/cifsd-team/cifsd/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=4f8b7610ba084f6813cbb85bb6c07af50ba542e928c370e79022039fa027bc9a
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -29,6 +29,7 @@ define KernelPackage/fs-ksmbd
 		+kmod-crypto-md4 \
 		+kmod-crypto-md5 \
 		+kmod-crypto-hmac \
+		+kmod-crypto-arc4 \
 		+kmod-crypto-ecb \
 		+kmod-crypto-des \
 		+kmod-crypto-sha256 \
@@ -36,7 +37,8 @@ define KernelPackage/fs-ksmbd
 		+kmod-crypto-sha512 \
 		+kmod-crypto-aead \
 		+kmod-crypto-ccm \
-		+kmod-crypto-gcm
+		+kmod-crypto-gcm \
+		+kmod-lib-crc32c
 endef
 
 define KernelPackage/fs-ksmbd/description
@@ -59,7 +61,7 @@ EXTRA_CFLAGS += -DCONFIG_SMB_INSECURE_SERVER=1
 endif
 
 define Build/Compile
-	$(KERNEL_MAKE) SUBDIRS="$(PKG_BUILD_DIR)" \
+	$(KERNEL_MAKE) M="$(PKG_BUILD_DIR)" \
 	EXTRA_CFLAGS="$(EXTRA_CFLAGS)" \
 	$(PKG_EXTRA_KCONFIG) \
 	CONFIG_SMB_SERVER=m \
