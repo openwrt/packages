@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2018-2019 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2018-2021 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 #
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=banip
-PKG_VERSION:=0.3.13
+PKG_VERSION:=0.7.0
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
@@ -16,7 +16,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/banip
 	SECTION:=net
 	CATEGORY:=Network
-	TITLE:=Ban incoming and/or outgoing ip adresses via ipsets
+	TITLE:=Ban incoming and outgoing ip adresses via ipsets
 	DEPENDS:=+jshn +jsonfilter +ip +ipset +iptables +ca-bundle
 	PKGARCH:=all
 endef
@@ -30,8 +30,9 @@ endef
 
 define Package/banip/conffiles
 /etc/config/banip
-/etc/banip/banip.whitelist
+/etc/banip/banip.maclist
 /etc/banip/banip.blacklist
+/etc/banip/banip.whitelist
 endef
 
 define Build/Prepare
@@ -54,9 +55,14 @@ define Package/banip/install
 	$(INSTALL_CONF) ./files/banip.conf $(1)/etc/config/banip
 
 	$(INSTALL_DIR) $(1)/etc/banip
+	$(INSTALL_BIN) ./files/banip.mail $(1)/etc/banip
 	$(INSTALL_BIN) ./files/banip.service $(1)/etc/banip
+	$(INSTALL_CONF) ./files/banip.maclist $(1)/etc/banip
 	$(INSTALL_CONF) ./files/banip.blacklist $(1)/etc/banip
 	$(INSTALL_CONF) ./files/banip.whitelist $(1)/etc/banip
+	$(INSTALL_CONF) ./files/banip.countries $(1)/etc/banip
+	$(INSTALL_CONF) ./files/banip.sources $(1)/etc/banip
+	gzip -9 $(1)/etc/banip/banip.sources
 
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/firewall
 	$(INSTALL_DATA) ./files/banip.hotplug $(1)/etc/hotplug.d/firewall/30-banip

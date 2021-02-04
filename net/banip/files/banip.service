@@ -1,15 +1,17 @@
 #!/bin/sh
 # log service to trace failed ssh/luci logins and conditionally refresh banIP
 # written by Dirk Brenken (dev@brenken.org)
-
+#
 # This is free software, licensed under the GNU General Public License v3.
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+# (s)hellcheck exceptions
+# shellcheck disable=1091,2030,2031,2034,2039,2086,2129,2140,2143,2154,2181,2183,2188
 
-LC_ALL=C
-PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+export LC_ALL=C
+export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+set -o pipefail
 ban_ver="${1}"
-ban_sshdaemon="${2}"
+ban_search="${2}"
 ban_logger="$(command -v logger)"
 ban_logread="$(command -v logread)"
 
@@ -19,17 +21,16 @@ f_log()
 
 	if [ -x "${ban_logger}" ]
 	then
-		"${ban_logger}" -p "${class}" -t "banIP-${ban_ver}[${$}]" "${log_msg}"
+		"${ban_logger}" -p "${class}" -t "banIP-${ban_ver%-*}[${$}]" "${log_msg}"
 	else
-		printf "%s %s %s\\n" "${class}" "banIP-${ban_ver}[${$}]" "${log_msg}"
+		printf "%s %s %s\n" "${class}" "banIP-${ban_ver%-*}[${$}]" "${log_msg}"
 	fi
 }
 
 if [ -x "${ban_logread}" ]
 then
 	f_log "info" "log/banIP service started"
-	"${ban_logread}" -f -e "${ban_sshdaemon}\|luci: failed login" | \
-		{ grep -q "Exit before auth\|luci: failed login\|error: maximum authentication attempts exceeded"; [ $? -eq 0 ] && /etc/init.d/banip refresh; }
+	"${ban_logread}" -f | { grep -q "${ban_search}"; [ "${?}" = "0" ] && /etc/init.d/banip refresh; }
 else
 	f_log "err" "can't start log/banIP service"
 fi
