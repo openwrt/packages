@@ -74,6 +74,7 @@ typeof() {
 /^(true|false)$/		{ print "bool\n"; next; }
 /^\d+$/				{ print "integer\n"; next; }
 /^"[^"]*"$/			{ print "string\n"; next; }
+/^[0-9a-fA-F]{2,2}(:[0-9a-fA-F]{2,2})*$/	{ print "string\n"; next; }
 				{ print "other\n"; next; }
 '
 }
