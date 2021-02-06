@@ -107,47 +107,49 @@ Available commands:
 ## banIP config options
 * Usually the auto pre-configured banIP setup works quite well and no manual overrides are needed
 
-| Option                  | Type   | Default             | Description                                                                                          |
-| :---------------------- | :----- | :------------------ | :--------------------------------------------------------------------------------------------------- |
-| ban_enabled             | option | 0                   | enable the banIP service                                                                             |
-| ban_autodetect          | option | 1                   | auto-detect wan interfaces, devices and subnets                                                      |
-| ban_debug               | option | 0                   | enable banIP related debug logging                                                                   |
-| ban_mail_enabled        | option | 0                   | enable the mail service                                                                              |
-| ban_monitor_enabled     | option | 0                   | enable the log monitor, e.g. to catch failed ssh/luci logins                                         |
-| ban_logsrc_enabled      | option | 0                   | enable the src-related logchain                                                                      |
-| ban_logdst_enabled      | option | 0                   | enable the dst-related logchain                                                                      |
-| ban_autoblacklist       | option | 1                   | add suspicious IPs automatically to the local blacklist                                              |
-| ban_autowhitelist       | option | 1                   | add wan IPs/subnets automatically to the local whitelist                                             |
-| ban_maxqueue            | option | 4                           | size of the download queue to handle downloads and processing in parallel             |
-| ban_reportdir           | option | /tmp/banIP-Report           | directory where banIP stores the report files                                         |
-| ban_backupdir           | option | /tmp/banIP-Backup           | directory where banIP stores the compressed backup files                              |
-| ban_ifaces              | list   | -                           | list option to add logical wan interfaces manually                                    |
-| ban_sources             | list   | -                           | list option to add banIP sources                                                      |
-| ban_countries           | list   | -                           | list option to add certain countries as an alpha-2 ISO code, e.g. 'de' for germany    |
-| ban_asns                | list   | -                           | list option to add certain ASNs (autonomous system number), e.g. '32934' for facebook |
-| ban_chain               | option | banIP                       | name of the root chain used by banIP                                                  |
-| ban_global_settype      | option | src+dst                     | global settype as default for all sources                                             |
-| ban_settype_src         | list   | -                           | special SRC settype for a certain sources                                             |
-| ban_settype_dst         | list   | -                           | special DST settype for a certain sources                                             |
-| ban_settype_all         | list   | -                           | special SRC+DST settype for a certain sources                                         |
-| ban_target_src          | option | DROP                        | default src action (used by log chains as well)                                       |
-| ban_target_dst          | option | REJECT                      | default dst action (used by log chains as well)                                       |
-| ban_lan_inputchains_4   | list   | input_lan_rule              | list option to add IPv4 lan input chains                                              |
-| ban_lan_inputchains_6   | list   | input_lan_rule              | list option to add IPv6 lan input chains                                              |
-| ban_lan_forwardchains_4 | list   | forwarding_lan_rule         | list option to add IPv4 lan forward chains                                            |
-| ban_lan_forwardchains_6 | list   | forwarding_lan_rule         | list option to add IPv6 lan forward chains                                            |
-| ban_wan_inputchains_4   | list   | input_wan_rule              | list option to add IPv4 wan input chains                                              |
-| ban_wan_inputchains_6   | list   | input_wan_rule              | list option to add IPv6 wan input chains                                              |
-| ban_wan_forwardchains_4 | list   | forwarding_wan_rule         | list option to add IPv4 wan forward chains                                            |
-| ban_wan_forwardchains_6 | list   | forwarding_wan_rule         | list option to add IPv6 wan forward chains                                            |
-| ban_mailreceiver        | option | -                           | receiver address for banIP related notification E-Mails                               |
-| ban_mailsender          | option | no-reply@banIP              | sender address for banIP related notification E-Mails                                 |
-| ban_mailtopic           | option | banIP notification          | topic for banIP related notification E-Mails                                          |
-| ban_mailprofile         | option | ban_notify                  | mail profile used in 'msmtp' for banIP related notification E-Mails                   |
-| ban_srcarc              | option | /etc/banip/banip.sources.gz | full path to the compressed source archive file used by banIP                         |
-| ban_maclist             | option | /etc/banip/banip.maclist    | full path to the maclist file used by banIP                                           |
-| ban_blacklist           | option | /etc/banip/banip.blacklist  | full path to the blacklist file used by banIP                                         |
-| ban_whitelist           | option | /etc/banip/banip.whitelist  | full path to the whitelist file used by banIP                                         |
+| Option                  | Type   | Default                       | Description                                                                           |
+| :---------------------- | :----- | :---------------------------- | :------------------------------------------------------------------------------------ |
+| ban_enabled             | option | 0                             | enable the banIP service                                                              |
+| ban_autodetect          | option | 1                             | auto-detect wan interfaces, devices and subnets                                       |
+| ban_debug               | option | 0                             | enable banIP related debug logging                                                    |
+| ban_mail_enabled        | option | 0                             | enable the mail service                                                               |
+| ban_monitor_enabled     | option | 0                             | enable the log monitor, e.g. to catch failed ssh/luci logins                          |
+| ban_logsrc_enabled      | option | 0                             | enable the src-related logchain                                                       |
+| ban_logdst_enabled      | option | 0                             | enable the dst-related logchain                                                       |
+| ban_autoblacklist       | option | 1                             | add suspicious IPs automatically to the local blacklist                               |
+| ban_autowhitelist       | option | 1                             | add wan IPs/subnets automatically to the local whitelist                              |
+| ban_maxqueue            | option | 4                             | size of the download queue to handle downloads and processing in parallel             |
+| ban_reportdir           | option | /tmp/banIP-Report             | directory where banIP stores the report files                                         |
+| ban_backupdir           | option | /tmp/banIP-Backup             | directory where banIP stores the compressed backup files                              |
+| ban_ifaces              | list   | -                             | list option to add logical wan interfaces manually                                    |
+| ban_sources             | list   | -                             | list option to add banIP sources                                                      |
+| ban_countries           | list   | -                             | list option to add certain countries as an alpha-2 ISO code, e.g. 'de' for germany    |
+| ban_asns                | list   | -                             | list option to add certain ASNs (autonomous system number), e.g. '32934' for facebook |
+| ban_chain               | option | banIP                         | name of the root chain used by banIP                                                  |
+| ban_global_settype      | option | src+dst                       | global settype as default for all sources                                             |
+| ban_settype_src         | list   | -                             | special SRC settype for a certain sources                                             |
+| ban_settype_dst         | list   | -                             | special DST settype for a certain sources                                             |
+| ban_settype_all         | list   | -                             | special SRC+DST settype for a certain sources                                         |
+| ban_target_src          | option | DROP                          | default src action (used by log chains as well)                                       |
+| ban_target_dst          | option | REJECT                        | default dst action (used by log chains as well)                                       |
+| ban_lan_inputchains_4   | list   | input_lan_rule                | list option to add IPv4 lan input chains                                              |
+| ban_lan_inputchains_6   | list   | input_lan_rule                | list option to add IPv6 lan input chains                                              |
+| ban_lan_forwardchains_4 | list   | forwarding_lan_rule           | list option to add IPv4 lan forward chains                                            |
+| ban_lan_forwardchains_6 | list   | forwarding_lan_rule           | list option to add IPv6 lan forward chains                                            |
+| ban_wan_inputchains_4   | list   | input_wan_rule                | list option to add IPv4 wan input chains                                              |
+| ban_wan_inputchains_6   | list   | input_wan_rule                | list option to add IPv6 wan input chains                                              |
+| ban_wan_forwardchains_4 | list   | forwarding_wan_rule           | list option to add IPv4 wan forward chains                                            |
+| ban_wan_forwardchains_6 | list   | forwarding_wan_rule           | list option to add IPv6 wan forward chains                                            |
+| ban_mailreceiver        | option | -                             | receiver address for banIP related notification E-Mails                               |
+| ban_mailsender          | option | no-reply@banIP                | sender address for banIP related notification E-Mails                                 |
+| ban_mailtopic           | option | banIP notification            | topic for banIP related notification E-Mails                                          |
+| ban_mailprofile         | option | ban_notify                    | mail profile used in 'msmtp' for banIP related notification E-Mails                   |
+| ban_srcarc              | option | /etc/banip/banip.sources.gz   | full path to the compressed source archive file used by banIP                         |
+| ban_localsources        | list   | maclist, whitelist, blacklist | limit the selection to certain local sources                                          |
+| ban_extrasources        | list   | -                             | add additional, non-banIP related IPSets e.g. for reporting or queries                |
+| ban_maclist_timeout     | option | -                             | individual maclist IPSet timeout                                                      |
+| ban_whitelist_timeout   | option | -                             | individual whitelist IPSet timeout                                                    |
+| ban_blacklist_timeout   | option | -                             | individual blacklist IPSet timeout                                                    |
   
 ## Examples
 **list/edit banIP sources:**
@@ -334,7 +336,7 @@ password        <password>
 </code></pre>
 Finally enable E-Mail support and add a valid E-Mail receiver address in LuCI.
   
-**Edit, add new adblock sources:**  
+**Edit, add new banIP sources:**  
 The banIP blocklist sources are stored in an external, compressed JSON file '/etc/banip/banip.sources.gz'. 
 This file is directly parsed in LuCI and accessible via CLI, just call _/etc/init.d/banip list_.
 
