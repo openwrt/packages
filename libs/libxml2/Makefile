@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxml2
 PKG_VERSION:=2.9.10
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://xmlsoft.org/sources/
@@ -27,13 +27,14 @@ PKG_BUILD_PARALLEL:=0
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/libxml2
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Gnome XML library
   URL:=http://xmlsoft.org/
-  DEPENDS:=+libpthread +zlib
+  DEPENDS:=+libpthread +zlib $(ICONV_DEPENDS)
 endef
 
 define Package/libxml2/description
@@ -80,7 +81,6 @@ CONFIGURE_ARGS += \
 	--with-html \
 	--without-ftp \
 	--without-http \
-	--without-iconv \
 	--without-iso8859x \
 	--without-legacy \
 	--with-output \
