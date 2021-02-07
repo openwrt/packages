@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=getdns
 PKG_VERSION:=1.6.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -63,6 +63,11 @@ CMAKE_OPTIONS += -DUSE_LIBIDN2=$(if $(CONFIG_GETDNS_ENABLE_IDN_LIBIDN2),ON,OFF)
 # force the use of the built in code and remove the libbsd dependency disable
 # the test for libbsd.
 CMAKE_OPTIONS += -DBSD_LIBRARY=OFF
+
+# Disable static linking to ensure that utility programs such as getdns_query
+# don't end up as large statically linked binaries.
+CMAKE_OPTIONS += -DENABLE_STATIC=OFF
+CMAKE_OPTIONS += -DENABLE_SHARED=ON  # This is the default
 
 define Package/getdns/install
 	$(INSTALL_DIR) $(1)/usr/lib
