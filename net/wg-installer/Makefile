@@ -21,6 +21,7 @@ endef
 define Package/wg-installer-server
 	$(call Package/wg-installer/Default)
 	TITLE+= (server)
+	MENU:=1
 	DEPENDS:=+rpcd +uhttpd +uhttpd-mod-ubus +owipcalc
 endef
 
@@ -47,6 +48,16 @@ define Package/wg-installer-server/postinst
 	fi
 endef
 
+define Package/wg-installer-server-hotplug-babeld
+	$(call Package/wg-installer-server)
+	DEPENDS:=wg-installer-server
+endef
+
+define Package/wg-installer-server-hotplug-babeld/install
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/net/
+	$(INSTALL_BIN) ./wg-server/hotplug.d/99-mesh-babeld $(1)/etc/hotplug.d/net/99-mesh-babeld
+endef
+
 define Package/wg-installer-client
 	$(call Package/wg-installer/Default)
 	TITLE+= (client)
@@ -66,4 +77,5 @@ define Package/wg-installer-client/install
 endef
 
 $(eval $(call BuildPackage,wg-installer-server))
+$(eval $(call BuildPackage,wg-installer-server-hotplug-babeld))
 $(eval $(call BuildPackage,wg-installer-client))

@@ -24,3 +24,7 @@ Get Usage Statistics
 Register Tunnel Interface
 
     wg-client-installer register --ip 127.0.0.1 --user wginstaller --password wginstaller --bandwidth 10
+
+## Hotplugs
+
+- wg-installer-server-hotplug-babeld: mesh automatically via wireguard with babeld
