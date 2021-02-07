@@ -12,7 +12,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-ban_ver="0.7.0"
+ban_ver="0.7.1"
 ban_enabled="0"
 ban_mail_enabled="0"
 ban_proto4_enabled="0"
@@ -151,6 +151,9 @@ f_conf()
 			elif [ "${option}" = "ban_localsources" ]
 			then
 				eval "${option}=\"$(printf "%s" "${ban_localsources}")${value} \""
+			elif [ "${option}" = "ban_extrasources" ]
+			then
+				eval "${option}=\"$(printf "%s" "${ban_extrasources}")${value} \""
 			elif [ "${option}" = "ban_settype_src" ]
 			then
 				eval "${option}=\"$(printf "%s" "${ban_settype_src}")${value} \""
@@ -233,7 +236,7 @@ f_conf()
 	ban_logterms="${ban_logterms:-"dropbear sshd luci"}"
 	f_log "debug" "f_conf  ::: ifaces: ${ban_ifaces:-"-"}, chain: ${ban_chain}, set_type: ${ban_global_settype}, log_chains (src/dst): ${ban_logchain_src}/${ban_logchain_dst}, targets (src/dst): ${ban_target_src}/${ban_target_dst}"
 	f_log "debug" "f_conf  ::: lan_inputs (4/6): ${ban_lan_inputchains_4}/${ban_lan_inputchains_6}, lan_forwards (4/6): ${ban_lan_forwardchains_4}/${ban_lan_forwardchains_6}, wan_inputs (4/6): ${ban_wan_inputchains_4}/${ban_wan_inputchains_6}, wan_forwards (4/6): ${ban_wan_forwardchains_4}/${ban_wan_forwardchains_6}"
-	f_log "debug" "f_conf  ::: local_sources: ${ban_localsources:-"-"}, log_terms: ${ban_logterms:-"-"}, log_prefixes (src/dst): ${ban_logprefix_src}/${ban_logprefix_dst}, log_options (src/dst): ${ban_logopts_src}/${ban_logopts_dst}"
+	f_log "debug" "f_conf  ::: local_sources: ${ban_localsources:-"-"}, extra_sources: ${ban_extrasources:-"-"}, log_terms: ${ban_logterms:-"-"}, log_prefixes (src/dst): ${ban_logprefix_src}/${ban_logprefix_dst}, log_options (src/dst): ${ban_logopts_src}/${ban_logopts_dst}"
 }
 
 # check environment
@@ -733,12 +736,22 @@ f_ipset()
 		"create")
 			if [ "${src_name}" = "maclist" ] && [ -s "${tmp_file}" ] && [ -z "$("${ban_ipset_cmd}" -q -n list "${src_name}")" ]
 			then
-				"${ban_ipset_cmd}" create "${src_name}" hash:mac maxelem 262144 counters
+				"${ban_ipset_cmd}" create "${src_name}" hash:mac maxelem 262144 counters timeout "${ban_maclist_timeout:-"0"}"
 				out_rc="${?}"
 			elif [ -s "${tmp_file}" ] && [ -z "$("${ban_ipset_cmd}" -q -n list "${src_name}")" ]
 			then
-				"${ban_ipset_cmd}" create "${src_name}" hash:net hashsize 64 maxelem 262144 family "${src_ipver}" counters
-				out_rc="${?}"
+				if [ "${src_name%_*}" = "whitelist" ]
+				then
+					"${ban_ipset_cmd}" create "${src_name}" hash:net hashsize 64 maxelem 262144 family "${src_ipver}" counters timeout "${ban_whitelist_timeout:-"0"}"
+					out_rc="${?}"
+				elif [ "${src_name%_*}" = "blacklist" ]
+				then
+					"${ban_ipset_cmd}" create "${src_name}" hash:net hashsize 64 maxelem 262144 family "${src_ipver}" counters timeout "${ban_blacklist_timeout:-"0"}"
+					out_rc="${?}"
+				else
+					"${ban_ipset_cmd}" create "${src_name}" hash:net hashsize 64 maxelem 262144 family "${src_ipver}" counters
+					out_rc="${?}"
+				fi
 			else
 				"${ban_ipset_cmd}" -q flush "${src_name}"
 				out_rc="${?}"
@@ -1338,7 +1351,7 @@ f_query()
 		query_start="$(date "+%s")"
 		printf "%s\n%s\n%s\n" ":::" "::: search '${search}' in banIP related IPSets" ":::"
 
-		for src in ${ban_localsources} ${ban_sources}
+		for src in ${ban_localsources} ${ban_sources} ${ban_extrasources}
 		do
 			if [ "${src}" = "maclist" ] && [ -n "$("${ban_ipset_cmd}" -q -n list "${src}")" ]
 			then
@@ -1394,19 +1407,24 @@ f_report()
 		> "${report_txt}"
 		printf "%s\n" "{" >> "${report_json}"
 		printf "\t%s\n" "\"ipsets\": {" >> "${report_json}"
-		for src in ${ban_localsources} ${ban_sources}
+		for src in ${ban_localsources} ${ban_sources} ${ban_extrasources}
 		do
-			if [ -n "$(printf "%s\n" "${ban_settype_src}" | grep -F "${src}")" ]
+			if [ -n "$(printf "%s" "${ban_extrasources}" | grep -F "${src}")" ]
 			then
-				set_type="src"
-			elif [ -n "$(printf "%s\n" "${ban_settype_dst}" | grep -F "${src}")" ]
-			then
-				set_type="dst"
-			elif [ -n "$(printf "%s\n" "${ban_settype_all}" | grep -F "${src}")" ]
-			then
-				set_type="src+dst"
+				set_type="n/a"
 			else
-				set_type="${ban_global_settype}"
+				if [ -n "$(printf "%s\n" "${ban_settype_src}" | grep -F "${src}")" ]
+				then
+					set_type="src"
+				elif [ -n "$(printf "%s\n" "${ban_settype_dst}" | grep -F "${src}")" ]
+				then
+					set_type="dst"
+				elif [ -n "$(printf "%s\n" "${ban_settype_all}" | grep -F "${src}")" ]
+				then
+					set_type="src+dst"
+				else
+					set_type="${ban_global_settype}"
+				fi
 			fi
 			if [ "${src}" = "maclist" ]
 			then
@@ -1414,7 +1432,7 @@ f_report()
 				if [ -n "${src_list}" ]
 				then
 					cnt="$(printf "%s" "${src_list}" | awk '/^Number of entries:/{print $4}')"
-					cnt_acc="$(printf "%s" "${src_list}" | grep -cE "^(([0-9A-Z][0-9A-Z]:){5}[0-9A-Z]{2} packets [1-9]+)")"
+					cnt_acc="$(printf "%s" "${src_list}" | grep -cE " packets [1-9]+")"
 					cnt_acc_sum=$((cnt_acc_sum+cnt_acc))
 					cnt_mac_sum="${cnt}"
 					cnt_sum=$((cnt_sum+cnt))
@@ -1430,7 +1448,7 @@ f_report()
 					printf "\t\t\t%s\n" "\"count_mac\": \"${cnt}\"," >> "${report_json}"
 					printf "\t\t\t%s" "\"count_acc\": \"${cnt_acc}\"" >> "${report_json}"
 					printf ",\n\t\t\t%s" "\"member_acc\": [" >> "${report_json}"
-					printf "%s" "${src_list}" | awk '/^(([0-9A-Z][0-9A-Z]:){5}[0-9A-Z]{2} packets [1-9]+)/{print $1,$3}' | \
+					printf "%s" "${src_list}" | awk 'match($0,/ packets [1-9]+/){printf "%s %s\n",$1,substr($0,RSTART+9,RLENGTH-9)}' | \
 						awk 'BEGIN{i=0};{i=i+1;if(i==1){printf "\n\t\t\t\t\t{\n\t\t\t\t\t\t\"member\": \"%s\",\n\t\t\t\t\t\t\"packets\": \"%s\"\n\t\t\t\t\t}",$1,$2}else{printf ",\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\"member\": \"%s\",\n\t\t\t\t\t\t\t\"packets\": \"%s\"\n\t\t\t\t\t\t}",$1,$2}}' >> "${report_json}"
 					printf "\n\t\t\t%s\n" "]" >> "${report_json}"
 					printf "\t\t%s" "}" >> "${report_json}"
@@ -1443,9 +1461,9 @@ f_report()
 					if [ -n "${src_list}" ]
 					then
 						cnt="$(printf "%s\n" "${src_list}" | awk '/^Number of entries:/{print $4}')"
-						cnt_cidr="$(printf "%s\n" "${src_list}" | grep -cE "(/[0-9]{1,3} packets)")"
+						cnt_cidr="$(printf "%s\n" "${src_list}" | grep -cE "/[0-9]{1,3} packets [0-9]+")"
 						cnt_ip=$((cnt-cnt_cidr-cnt_mac))
-						cnt_acc="$(printf "%s\n" "${src_list}" | grep -cE "( packets [1-9]+)")"
+						cnt_acc="$(printf "%s\n" "${src_list}" | grep -cE " packets [1-9]+")"
 						cnt_cidr_sum=$((cnt_cidr_sum+cnt_cidr))
 						cnt_ip_sum=$((cnt_ip_sum+cnt_ip))
 						cnt_acc_sum=$((cnt_acc_sum+cnt_acc))
@@ -1462,7 +1480,7 @@ f_report()
 						printf "\t\t\t%s\n" "\"count_mac\": \"0\"," >> "${report_json}"
 						printf "\t\t\t%s" "\"count_acc\": \"${cnt_acc}\"" >> "${report_json}"
 						printf ",\n\t\t\t%s" "\"member_acc\": [" >> "${report_json}"
-						printf "%s" "${src_list}" | awk '/( packets [1-9]+)/{print $1,$3}' | \
+						printf "%s" "${src_list}" | awk 'match($0,/ packets [1-9]+/){printf "%s %s\n",$1,substr($0,RSTART+9,RLENGTH-9)}' | \
 							awk 'BEGIN{i=0};{i=i+1;if(i==1){printf "\n\t\t\t\t\t{\n\t\t\t\t\t\t\"member\": \"%s\",\n\t\t\t\t\t\t\"packets\": \"%s\"\n\t\t\t\t\t}",$1,$2}else{printf ",\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\"member\": \"%s\",\n\t\t\t\t\t\t\t\"packets\": \"%s\"\n\t\t\t\t\t\t}",$1,$2}}' >> "${report_json}"
 						printf "\n\t\t\t%s\n" "]" >> "${report_json}"
 						printf "\t\t%s" "}" >> "${report_json}"
