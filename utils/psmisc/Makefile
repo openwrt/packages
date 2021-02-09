@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=psmisc
-PKG_VERSION:=23.3
+PKG_VERSION:=23.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/psmisc
-PKG_HASH:=41750e1a5abf7ed2647b094f58127c73dbce6876f77ba4e0a7e0995ae5c7279a
+PKG_HASH:=7f0cceeace2050c525f3ebb35f3ba01d618b8d690620580bdb8cd8269a0c1679
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
