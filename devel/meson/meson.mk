@@ -52,6 +52,13 @@ else
 MESON_ARCH:=$(CONFIG_ARCH)
 endif
 
+# this is undefined for just x64_64
+ifeq ($(origin CPU_TYPE),undefined)
+MESON_CPU:="generic"
+else
+MESON_CPU:="$(CPU_TYPE)$(if $(CPU_SUBTYPE),+$(CPU_SUBTYPE))"
+endif
+
 define Meson
 	$(2) $(STAGING_DIR_HOST)/bin/$(PYTHON) $(MESON_DIR)/meson.py $(1)
 endef
@@ -81,7 +88,7 @@ define Meson/CreateCrossFile
 		-e "s|@CXXFLAGS@|$(foreach FLAG,$(TARGET_CXXFLAGS) $(EXTRA_CXXFLAGS) $(TARGET_CPPFLAGS) $(EXTRA_CPPFLAGS),'$(FLAG)',)|" \
 		-e "s|@LDFLAGS@|$(foreach FLAG,$(TARGET_LDFLAGS) $(EXTRA_LDFLAGS),'$(FLAG)',)|" \
 		-e "s|@ARCH@|$(MESON_ARCH)|" \
-		-e "s|@CPU@|$(CONFIG_TARGET_SUBTARGET)|" \
+		-e "s|@CPU@|$(MESON_CPU))|" \
 		-e "s|@ENDIAN@|$(if $(CONFIG_BIG_ENDIAN),big,little)|" \
 		< $(MESON_DIR)/openwrt-cross.txt.in \
 		> $(1)
