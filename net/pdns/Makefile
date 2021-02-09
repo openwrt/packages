@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pdns
-PKG_VERSION:=4.3.1
-PKG_RELEASE:=1
+PKG_VERSION:=4.4.0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
-PKG_HASH:=d5146c04098ee94b9377ee491ebb3fd5eb061d7b24262f4a8e1a89f2ed3fc245
+PKG_HASH:=40cb81d9e0d34edcc7c95435a06125bde0bd1a51692e1db52413e31d7ede0b39
 
 PKG_MAINTAINER:=James Taylor <james@jtaylor.id.au>
 PKG_LICENCE:=GPL-2.0-only
@@ -184,6 +184,7 @@ CONFIGURE_ARGS+= \
 	--without-libsodium \
 	--enable-experimental-pkcs11 \
 	--enable-lua-records \
+	--enable-reproducible \
 	$(if $(CONFIG_PACKAGE_pdns-ixfrdist),--enable-ixfrdist,)
 
 CONFIGURE_VARS += \
