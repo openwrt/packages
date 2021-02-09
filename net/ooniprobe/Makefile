@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ooniprobe
-PKG_VERSION:=3.4.0
+PKG_VERSION:=3.5.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=probe-cli-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ooni/probe-cli/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=e573cc6496860b75c02d35a1829c220c9c8062350f2178fce208698538bb3ced
+PKG_HASH:=8278f9318ef939c46169dc44e89bbc03915c660912e66be9c4b20d18d00816fe
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
