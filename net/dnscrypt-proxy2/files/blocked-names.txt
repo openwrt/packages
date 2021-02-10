@@ -21,7 +21,7 @@ banner.*
 banners.*
 creatives.*
 oas.*
-oascentral.*
+oascentral.*        # inline comments are allowed after a pound sign
 stats.*
 tag.*
 telemetry.*
@@ -30,23 +30,7 @@ tracker.*
 eth0.me
 *.workgroup
 
-*.test
-*.onion
-*.localhost
-*.local
-*.invalid
-*.bind
-*.lan
-*.internal
-*.intranet
-*.private
-*.workgroup
 
-*.10.in-addr.arpa
-*.16.172.in-addr.arpa
-*.168.192.in-addr.arpa
-*.254.169.in-addr.arpa
-*.d.f.ip6.arpa
 
 ## Time-based rules
 
