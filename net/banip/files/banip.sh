@@ -93,6 +93,7 @@ f_load()
 		f_ipset "destroy"
 		f_jsnup "disabled"
 		f_rmbckp
+		f_rmtmp
 		f_log "info" "banIP is currently disabled, please set the config option 'ban_enabled' to '1' to use this service"
 		exit 0
 	fi
@@ -112,12 +113,12 @@ f_dir()
 		mkdir -p "${dir}"
 		if [ "${?}" = "0" ]
 		then
-			f_log "info" "directory '${dir}' created"
+			f_log "debug" "directory '${dir}' created"
 		else
 			f_log "err" "directory '${dir}' could not be created"
 		fi
 	else
-		f_log "info" "directory '${dir}' is used"
+		f_log "debug" "directory '${dir}' is used"
 	fi
 }
 
