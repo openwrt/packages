@@ -13,7 +13,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.75.0
 PKG_SOURCE_VERSION:=1_75_0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
@@ -117,7 +117,7 @@ define Package/boost/config
 	# Invisible config dependency
 	config boost-context-exclude
 		bool
-		default y if (TARGET_arc770 || TARGET_archs38 || TARGET_octeon || TARGET_octeontx)
+		default y if (TARGET_arc770 || TARGET_archs38)
 		default n
 
 	config boost-coroutine-exclude
@@ -387,7 +387,7 @@ EXTRA_CXXFLAGS += $(if $(CONFIG_GCC_USE_VERSION_10),-std=gnu++20,$(if $(CONFIG_G
 ifneq ($(findstring mips,$(ARCH)),)
     BOOST_ABI = o32
     ifneq ($(findstring 64,$(ARCH)),)
-        BOOST_ABI = o64
+        BOOST_ABI = n64
     endif
 else ifneq ($(findstring arm,$(ARCH)),)
     BOOST_ABI = aapcs
