@@ -71,7 +71,7 @@ IPV6_REGEX="\(\([0-9A-Fa-f]\{1,4\}:\)\{1,\}\)\(\([0-9A-Fa-f]\{1,4\}\)\{0,1\}\)\(
 SHELL_ESCAPE="[\"\'\`\$\!();><{}?|\[\]\*\\\\]"
 
 # dns character set
-DNS_CHARSET="[@a-zA-Z0-9._-]"
+DNS_CHARSET="[@a-zA-Z0-9._-*]"
 
 # detect if called by ddns-lucihelper.sh script, disable retrys (empty variable == false)
 LUCI_HELPER=$(printf %s "$MYPROG" | grep -i "luci")
