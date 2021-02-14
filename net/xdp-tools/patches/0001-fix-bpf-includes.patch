@@ -1,0 +1,22 @@
+--- a/lib/common.mk
++++ b/lib/common.mk
+@@ -54,7 +54,7 @@ LIBXDP_DISPATCHER_OBJ := $(LIBXDP_DIR)/$
+ KERN_USER_H ?= $(wildcard common_kern_user.h)
+ 
+ CFLAGS += -I$(HEADER_DIR) -I$(LIB_DIR)/util
+-BPF_CFLAGS += -I$(HEADER_DIR)
++BPF_CFLAGS += -I$(HEADER_DIR) -I$(STAGING_DIR)/usr/include
+ 
+ BPF_HEADERS := $(wildcard $(HEADER_DIR)/bpf/*.h) $(wildcard $(HEADER_DIR)/xdp/*.h)
+ 
+--- a/lib/libxdp/Makefile
++++ b/lib/libxdp/Makefile
+@@ -25,7 +25,7 @@ PC_FILE := $(OBJDIR)/libxdp.pc
+ TEMPLATED_SOURCES := xdp-dispatcher.c
+ 
+ CFLAGS += -I$(HEADER_DIR) -I$(LIB_DIR)/util
+-BPF_CFLAGS += -I$(HEADER_DIR)
++BPF_CFLAGS += -I$(HEADER_DIR) -I$(STAGING_DIR)/usr/include
+ 
+ 
+ ifndef BUILD_STATIC_ONLY

@@ -1,0 +1,11 @@
+--- a/xdp-loader/xdp-loader.c
++++ b/xdp-loader/xdp-loader.c
+@@ -27,6 +27,8 @@ static const struct loadopt {
+ 	char *section_name;
+ 	enum xdp_attach_mode mode;
+ } defaults_load = {
++	.iface = { 0 },
++	.filenames = { 0 },
+ 	.mode = XDP_MODE_NATIVE
+ };
+ 

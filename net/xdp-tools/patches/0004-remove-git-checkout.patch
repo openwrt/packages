@@ -1,0 +1,15 @@
+--- a/configure
++++ b/configure
+@@ -227,9 +227,9 @@ EOF
+     echo 'LDFLAGS += -L$(LIB_DIR)/libbpf/src' >>$CONFIG
+     echo 'LDLIBS += -l:libbpf.a' >>$CONFIG
+     echo 'OBJECT_LIBBPF = $(LIB_DIR)/libbpf/src/libbpf.a' >>$CONFIG
+-    if ! [ -d "lib/libbpf/src" ] && [ -f ".gitmodules" ] && [ -e ".git" ]; then
+-        git submodule init && git submodule update
+-    fi
++    #if ! [ -d "lib/libbpf/src" ] && [ -f ".gitmodules" ] && [ -e ".git" ]; then
++        # git submodule init && git submodule update
++    #fi
+ 
+     echo -n "ELF support: "
+     check_elf || exit 1
