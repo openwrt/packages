@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unbound
 PKG_VERSION:=1.13.0
-PKG_RELEASE:=1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nlnetlabs.nl/downloads/unbound
@@ -227,6 +227,8 @@ define Package/unbound-daemon/install
 	$(INSTALL_DATA) ./files/odhcpd.awk $(1)/usr/lib/unbound/odhcpd.awk
 	$(INSTALL_DATA) ./files/stopping.sh $(1)/usr/lib/unbound/stopping.sh
 	$(INSTALL_DATA) ./files/unbound.sh $(1)/usr/lib/unbound/unbound.sh
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN)  ./files/unbound-odhcpd.defaults $(1)/etc/uci-defaults/40-unbound-odhcpd
 endef
 
 define Package/libunbound/install
@@ -266,4 +268,3 @@ $(eval $(call BuildPackage,unbound-checkconf))
 $(eval $(call BuildPackage,unbound-control))
 $(eval $(call BuildPackage,unbound-control-setup))
 $(eval $(call BuildPackage,unbound-host))
-
