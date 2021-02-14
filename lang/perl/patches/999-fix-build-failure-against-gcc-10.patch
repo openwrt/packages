@@ -20,11 +20,9 @@ patch fixes all of them I found.
  cflags.SH |  2 +-
  2 files changed, 8 insertions(+), 8 deletions(-)
 
-diff --git a/Configure b/Configure
-index fad1c9f2b1..706c0b64ed 100755
 --- a/Configure
 +++ b/Configure
-@@ -4701,7 +4701,7 @@ else
+@@ -4689,7 +4689,7 @@ else
  fi
  $rm -f try try.*
  case "$gccversion" in
@@ -33,7 +31,7 @@ index fad1c9f2b1..706c0b64ed 100755
  esac
  case "$gccversion" in
  '') gccosandvers='' ;;
-@@ -4741,7 +4741,7 @@ esac
+@@ -4729,7 +4729,7 @@ esac
  # gcc 3.* complain about adding -Idirectories that they already know about,
  # so we will take those off from locincpth.
  case "$gccversion" in
@@ -42,7 +40,7 @@ index fad1c9f2b1..706c0b64ed 100755
      echo "main(){}">try.c
      for incdir in $locincpth; do
         warn=`$cc $ccflags -I$incdir -c try.c 2>&1 | \
-@@ -5467,13 +5467,13 @@ fi
+@@ -5455,13 +5455,13 @@ fi
  case "$hint" in
  default|recommended)
  	case "$gccversion" in
@@ -58,7 +56,7 @@ index fad1c9f2b1..706c0b64ed 100755
  			$contains _POSIX_VERSION $usrinc/sys/unistd.h >/dev/null 2>&1
  		then
  			# Interactive Systems (ISC) POSIX mode.
-@@ -5482,7 +5482,7 @@ default|recommended)
+@@ -5470,7 +5470,7 @@ default|recommended)
  		;;
  	esac
  	case "$gccversion" in
@@ -67,7 +65,7 @@ index fad1c9f2b1..706c0b64ed 100755
  	2.[0-8]*) ;;
  	?*)	set strict-aliasing -fno-strict-aliasing
  		eval $checkccflag
-@@ -5600,7 +5600,7 @@ case "$cppflags" in
+@@ -5588,7 +5588,7 @@ case "$cppflags" in
      ;;
  esac
  case "$gccversion" in
@@ -76,7 +74,7 @@ index fad1c9f2b1..706c0b64ed 100755
  esac
  case "$mips_type" in
  '');;
-@@ -23103,7 +23103,7 @@ fi
+@@ -22957,7 +22957,7 @@ fi
  
  : add -D_FORTIFY_SOURCE if feasible and not already there
  case "$gccversion" in
@@ -85,8 +83,6 @@ index fad1c9f2b1..706c0b64ed 100755
  	*-O*)	case "$ccflags$cppsymbols" in
  		*_FORTIFY_SOURCE=*) # Don't add it again.
  			echo "You seem to have -D_FORTIFY_SOURCE already, not adding it." >&4
-diff --git a/cflags.SH b/cflags.SH
-index e60742fed1..f1bcd6c38e 100755
 --- a/cflags.SH
 +++ b/cflags.SH
 @@ -156,7 +156,7 @@ esac
@@ -98,6 +94,3 @@ index e60742fed1..f1bcd6c38e 100755
  Intel*) ;; # # Is that you, Intel C++?
  #
  # NOTE 1: the -std=c89 without -pedantic is a bit pointless.
--- 
-2.17.1
-
