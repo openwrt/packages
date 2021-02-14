@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=go-ethereum
 PKG_VERSION:=1.9.22
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ethereum/go-ethereum/tar.gz/v${PKG_VERSION}?
@@ -35,7 +35,7 @@ define Package/geth
   CATEGORY:=Network
   TITLE:=Ethereum Go client
   URL:=https://geth.ethereum.org/
-  DEPENDS:=$(GO_ARCH_DEPENDS)
+  DEPENDS:=$(GO_ARCH_DEPENDS) $(ICONV_DEPENDS)
 endef
 
 define Package/geth/description
