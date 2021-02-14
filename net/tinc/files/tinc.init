@@ -10,8 +10,12 @@ START=42
 SERVICE_USE_PID=1
 
 BIN=/usr/sbin/tincd
-extra_command "up" "<instance> Setting instance up"
-extra_command "down" "<instance> Setting instance down"
+if ( type extra_command >/dev/null 2>&1 ); then
+        extra_command "up" "<instance> Setting instance up"
+        extra_command "down" "<instance> Setting instance down"
+else
+	EXTRA_COMMANDS="up down"
+fi
 
 LIST_SEP="
 "
@@ -142,20 +146,62 @@ prepare_net() {
 
 	# append flags
 	append_conf_bools "$s" "$TMP_TINC/$s/tinc.conf" \
-		DecrementTTL DirectOnly Hostnames IffOneQueue \
-		LocalDiscovery PriorityInheritance StrictSubnets TunnelServer \
-		ClampMSS IndirectData PMTUDiscovery TCPOnly
+		AutoConnect \
+		DecrementTTL \
+		DeviceStandby \
+		DirectOnly \
+		ExperimentalProtocol \
+		Hostnames \
+		LocalDiscovery \
+		PriorityInheritance \
+		StrictSubnets \
+		TunnelServer \
+		ClampMSS \
+		IndirectData \
+		PMTUDiscovery \
+		TCPOnly
 
 	# append params
 	append_conf_params "$s" "$TMP_TINC/$s/tinc.conf" \
-		AddressFamily BindToAddress ConnectTo BindToInterface \
-		Broadcast Device DeviceType Forwarding \
-		GraphDumpFile Interface KeyExpire MACExpire \
-		MaxTimeout Mode Name PingInterval PingTimeout \
-		PrivateKey PrivateKeyFile ProcessPriority ReplayWindow \
-		UDPRcvBuf UDPSndBuf \
-		Address Cipher Compression Digest MACLength PMTU \
-		Port PublicKey PublicKeyFile Subnet
+		AddressFamily \
+		BindToAddress \
+		BindToInterface \
+		Broadcast \
+		BroadcastSubnet \
+		ConnectTo \
+		Device \
+		DeviceType \
+		Ed25519PrivateKeyFile \
+		ECDSAPublicKey \
+		Forwarding \
+		Interface \
+		ListenAddress \
+		LocalDiscoveryAddress \
+		Mode \
+		KeyExpire \
+		MACExpire \
+		MaxConnectionBurst \
+		Name \
+		PingInterval \
+		PingTimeout \
+		PrivateKey \
+		PrivateKeyFile \
+		ProcessPriority \
+		Proxy \
+		ReplayWindow \
+		UDPRcvBuf \
+		UDPSndBuf \
+		Address \
+		Cipher \
+		Compression \
+		Digest \
+		MACLength \
+		PMTU \
+		Port \
+		PublicKey \
+		PublicKeyFile \
+		Subnet \
+		Weight
 
 	check_gen_own_key "$s" && return 0
 }
@@ -171,7 +217,7 @@ start_instance() {
 	append_params "$s" logfile debug
 
 	SERVICE_PID_FILE="/var/run/tinc.$s.pid"
-	service_start $BIN -c "$TMP_TINC/$s" -n $s $ARGS --pidfile="$SERVICE_PID_FILE"
+	service_start $BIN -c "$TMP_TINC/$s" $ARGS --pidfile="$SERVICE_PID_FILE"
 }
 
 stop_instance() {
