@@ -1,12 +1,14 @@
 #
-# Copyright (C) 2018 Jeffery To
+# Copyright (C) 2018, 2020 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
 
 include $(TOPDIR)/rules.mk
-include ../golang-version.mk
+
+GO_VERSION_MAJOR_MINOR:=1.15
+GO_VERSION_PATCH:=8
 
 PKG_NAME:=golang
 PKG_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
@@ -18,7 +20,7 @@ GO_SOURCE_URLS:=https://dl.google.com/go/ \
 
 PKG_SOURCE:=go$(PKG_VERSION).src.tar.gz
 PKG_SOURCE_URL:=$(GO_SOURCE_URLS)
-PKG_HASH:=5fb43171046cf8784325e67913d55f88a683435071eef8e9da1aa8a1588fcf5d
+PKG_HASH:=540c0ab7781084d124991321ed1458e479982de94454a98afab6acadf38497c2
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -30,41 +32,45 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/go-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
-PKG_GO_WORK_DIR:=$(PKG_BUILD_DIR)/.go_work
-PKG_GO_HOST_CACHE_DIR:=$(PKG_GO_WORK_DIR)/host_cache
-PKG_GO_TARGET_CACHE_DIR:=$(PKG_GO_WORK_DIR)/target_cache
+PKG_GO_PREFIX:=/usr
+PKG_GO_VERSION_ID:=$(GO_VERSION_MAJOR_MINOR)
+PKG_GO_ROOT:=$(PKG_GO_PREFIX)/lib/go-$(PKG_GO_VERSION_ID)
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/go-$(PKG_VERSION)
 HOST_BUILD_PARALLEL:=1
-
-HOST_GO_WORK_DIR:=$(HOST_BUILD_DIR)/.go_work
-HOST_GO_CACHE_DIR:=$(HOST_GO_WORK_DIR)/cache
 
 HOST_GO_PREFIX:=$(STAGING_DIR_HOSTPKG)
 HOST_GO_VERSION_ID:=cross
 HOST_GO_ROOT:=$(HOST_GO_PREFIX)/lib/go-$(HOST_GO_VERSION_ID)
 
 HOST_GO_VALID_OS_ARCH:= \
-                                android_arm \
-  darwin_386   darwin_amd64     darwin_arm   darwin_arm64 \
-               dragonfly_amd64 \
-  freebsd_386  freebsd_amd64    freebsd_arm \
-  linux_386    linux_amd64      linux_arm    linux_arm64 \
-  netbsd_386   netbsd_amd64     netbsd_arm \
-  openbsd_386  openbsd_amd64    openbsd_arm \
-  plan9_386    plan9_amd64 \
-               solaris_amd64 \
-  windows_386  windows_amd64 \
+  android_386  android_amd64  android_arm  android_arm64 \
+  freebsd_386  freebsd_amd64  freebsd_arm  freebsd_arm64 \
+  linux_386    linux_amd64    linux_arm    linux_arm64 \
+  openbsd_386  openbsd_amd64  openbsd_arm  openbsd_arm64 \
   \
-  linux_ppc64 linux_ppc64le linux_mips linux_mipsle linux_mips64 linux_mips64le
+  netbsd_386   netbsd_amd64   netbsd_arm \
+  plan9_386    plan9_amd64    plan9_arm \
+  windows_386  windows_amd64  windows_arm \
+  \
+  darwin_amd64 darwin_arm64 \
+  \
+  dragonfly_amd64 \
+  illumos_amd64 \
+  solaris_amd64 \
+  \
+  aix_ppc64 \
+  js_wasm \
+  \
+  linux_ppc64 linux_ppc64le \
+  linux_mips linux_mipsle linux_mips64 linux_mips64le \
+  linux_riscv64 linux_s390x
 
 BOOTSTRAP_SOURCE:=go1.4-bootstrap-20171003.tar.gz
 BOOTSTRAP_SOURCE_URL:=$(GO_SOURCE_URLS)
 BOOTSTRAP_HASH:=f4ff5b5eb3a3cae1c993723f3eab519c5bae18866b5e5f96fe1102f0cb5c3e52
 
 BOOTSTRAP_BUILD_DIR:=$(HOST_BUILD_DIR)/.go_bootstrap
-BOOTSTRAP_WORK_DIR:=$(BOOTSTRAP_BUILD_DIR)/.go_work
-BOOTSTRAP_CACHE_DIR:=$(BOOTSTRAP_WORK_DIR)/cache
 
 BOOTSTRAP_GO_VALID_OS_ARCH:= \
   darwin_386     darwin_amd64 \
@@ -82,13 +88,17 @@ include $(INCLUDE_DIR)/package.mk
 include ../golang-compiler.mk
 include ../golang-package.mk
 
-PKG_UNPACK:=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
-HOST_UNPACK:=$(HOST_TAR) -C $(HOST_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
-BOOTSTRAP_UNPACK:=$(HOST_TAR) -C $(BOOTSTRAP_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(BOOTSTRAP_SOURCE)
+PKG_UNPACK:=$(HOST_TAR) -C "$(PKG_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(PKG_SOURCE)"
+HOST_UNPACK:=$(HOST_TAR) -C "$(HOST_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(PKG_SOURCE)"
+BOOTSTRAP_UNPACK:=$(HOST_TAR) -C "$(BOOTSTRAP_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(BOOTSTRAP_SOURCE)"
 
-# don't strip ELF executables in test data (and go itself)
+# don't strip ELF executables in test data
 RSTRIP:=:
 STRIP:=:
+
+ifeq ($(GO_TARGET_SPECTRE_SUPPORTED),1)
+  PKG_CONFIG_DEPENDS+=CONFIG_GOLANG_SPECTRE
+endif
 
 define Package/golang/Default
 $(call GoPackage/GoSubMenu)
@@ -125,6 +135,10 @@ This package provides an assembler, compiler, linker, and compiled
 libraries for the Go programming language.
 endef
 
+define Package/golang/config
+  source "$(SOURCE)/Config.in"
+endef
+
 define Package/golang-doc
 $(call Package/golang/Default)
   TITLE+= (documentation)
@@ -148,49 +162,62 @@ This package provides the Go programming language source files needed
 for cross-compilation.
 endef
 
-PKG_GO_ZBOOTSTRAP_MODS:= \
-	s/defaultGO386 = `[^`]*`/defaultGO386 = `$(if $(GO_386),$(GO_386),387)`/; \
-	s/defaultGOARM = `[^`]*`/defaultGOARM = `$(if $(GO_ARM),$(GO_ARM),5)`/; \
-	s/defaultGOMIPS = `[^`]*`/defaultGOMIPS = `$(if $(GO_MIPS),$(GO_MIPS),hardfloat)`/; \
-	s/defaultGOMIPS64 = `[^`]*`/defaultGOMIPS64 = `$(if $(GO_MIPS64),$(GO_MIPS64),hardfloat)`/; \
-	s/defaultGOPPC64 = `[^`]*`/defaultGOPPC64 = `power8`/;
 
-define Download/golang-bootstrap
-  FILE:=$(BOOTSTRAP_SOURCE)
-  URL:=$(BOOTSTRAP_SOURCE_URL)
-  HASH:=$(BOOTSTRAP_HASH)
-endef
-$(eval $(call Download,golang-bootstrap))
+# Bootstrap
 
-$(eval $(call GoCompiler/AddProfile,Bootstrap,$(BOOTSTRAP_BUILD_DIR),,bootstrap,$(GO_HOST_OS_ARCH)))
-$(eval $(call GoCompiler/AddProfile,Host,$(HOST_BUILD_DIR),$(HOST_GO_PREFIX),$(HOST_GO_VERSION_ID),$(GO_HOST_OS_ARCH)))
-$(eval $(call GoCompiler/AddProfile,Package,$(PKG_BUILD_DIR),$(GO_TARGET_PREFIX),$(GO_TARGET_VERSION_ID),$(GO_OS_ARCH)))
+BOOTSTRAP_ROOT_DIR:=$(call qstrip,$(CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT))
 
-define Host/Prepare
-	$(call Host/Prepare/Default)
-	mkdir -p $(BOOTSTRAP_BUILD_DIR)
+ifeq ($(BOOTSTRAP_ROOT_DIR),)
+  BOOTSTRAP_ROOT_DIR:=$(BOOTSTRAP_BUILD_DIR)
+
+  define Download/golang-bootstrap
+    FILE:=$(BOOTSTRAP_SOURCE)
+    URL:=$(BOOTSTRAP_SOURCE_URL)
+    HASH:=$(BOOTSTRAP_HASH)
+  endef
+  $(eval $(call Download,golang-bootstrap))
+
+  define Bootstrap/Prepare
+	mkdir -p "$(BOOTSTRAP_BUILD_DIR)"
 	$(BOOTSTRAP_UNPACK)
-endef
+  endef
+  Hooks/HostPrepare/Post+=Bootstrap/Prepare
+
+  $(eval $(call GoCompiler/AddProfile,Bootstrap,$(BOOTSTRAP_BUILD_DIR),,bootstrap,$(GO_HOST_OS_ARCH)))
+endif
+
+
+# Host
+
+ifeq ($(GO_HOST_PIE_SUPPORTED),1)
+  HOST_GO_ENABLE_PIE:=1
+endif
+
+# when using GO_LDFLAGS to set buildmode=pie, the PIE install suffix
+# does not apply (we also delete the std lib during Host/Install)
+
+$(eval $(call GoCompiler/AddProfile,Host,$(HOST_BUILD_DIR),$(HOST_GO_PREFIX),$(HOST_GO_VERSION_ID),$(GO_HOST_OS_ARCH),$(HOST_GO_INSTALL_SUFFIX)))
+
+HOST_GO_VARS= \
+	GOCACHE="$(GO_BUILD_CACHE_DIR)" \
+	GOENV=off \
+	CC="$(HOSTCC_NOCACHE)" \
+	CXX="$(HOSTCXX_NOCACHE)"
 
 define Host/Compile
 	$(call GoCompiler/Bootstrap/CheckHost,$(BOOTSTRAP_GO_VALID_OS_ARCH))
 	$(call GoCompiler/Host/CheckHost,$(HOST_GO_VALID_OS_ARCH))
 
-	mkdir -p \
-		$(BOOTSTRAP_CACHE_DIR) \
-		$(HOST_GO_CACHE_DIR)
+	mkdir -p "$(GO_BUILD_CACHE_DIR)"
 
 	$(call GoCompiler/Bootstrap/Make, \
-		GOCACHE=$(BOOTSTRAP_CACHE_DIR) \
-		CC=$(HOSTCC_NOCACHE) \
-		CXX=$(HOSTCXX_NOCACHE) \
+		$(HOST_GO_VARS) \
 	)
 
 	$(call GoCompiler/Host/Make, \
-		GOROOT_BOOTSTRAP=$(BOOTSTRAP_BUILD_DIR) \
-		GOCACHE=$(HOST_GO_CACHE_DIR) \
-		CC=$(HOSTCC_NOCACHE) \
-		CXX=$(HOSTCXX_NOCACHE) \
+		GOROOT_BOOTSTRAP="$(BOOTSTRAP_ROOT_DIR)" \
+		$(if $(HOST_GO_ENABLE_PIE),GO_LDFLAGS="-buildmode pie") \
+		$(HOST_GO_VARS) \
 	)
 endef
 
@@ -205,80 +232,111 @@ define Host/Install
 
 	$(call GoCompiler/Host/Install/BinLinks,)
 
-	rm -rf $(HOST_GO_ROOT)/pkg/$(GO_HOST_OS_ARCH)
+	rm -rf "$(HOST_GO_ROOT)/pkg/$(GO_HOST_OS_ARCH)$(if $(HOST_GO_INSTALL_SUFFIX),_$(HOST_GO_INSTALL_SUFFIX))"
 
-	$(INSTALL_DIR) $(HOST_GO_ROOT)/openwrt
-	$(INSTALL_BIN) ./files/go-gcc-helper $(HOST_GO_ROOT)/openwrt/
-	$(LN) go-gcc-helper $(HOST_GO_ROOT)/openwrt/gcc
-	$(LN) go-gcc-helper $(HOST_GO_ROOT)/openwrt/g++
+	$(INSTALL_DIR) "$(HOST_GO_ROOT)/openwrt"
+	$(INSTALL_BIN) ./files/go-gcc-helper "$(HOST_GO_ROOT)/openwrt/"
+	$(LN) go-gcc-helper "$(HOST_GO_ROOT)/openwrt/gcc"
+	$(LN) go-gcc-helper "$(HOST_GO_ROOT)/openwrt/g++"
 endef
 
 define Host/Uninstall
-	rm -rf $(HOST_GO_ROOT)/openwrt
+	rm -rf "$(HOST_GO_ROOT)/openwrt"
 
 	$(call GoCompiler/Host/Uninstall/BinLinks,)
 
 	$(call GoCompiler/Host/Uninstall,)
 endef
 
+
+# Target
+
+ifeq ($(GO_PKG_ENABLE_PIE),1)
+  PKG_GO_INSTALL_SUFFIX:=$(GO_TARGET_PIE_INSTALL_SUFFIX)
+endif
+
+$(eval $(call GoCompiler/AddProfile,Package,$(PKG_BUILD_DIR),$(PKG_GO_PREFIX),$(PKG_GO_VERSION_ID),$(GO_OS_ARCH),$(PKG_GO_INSTALL_SUFFIX)))
+
+PKG_GO_ZBOOTSTRAP_MODS:= \
+	s/defaultGO386 = `[^`]*`/defaultGO386 = `$(or $(GO_386),387)`/; \
+	s/defaultGOARM = `[^`]*`/defaultGOARM = `$(or $(GO_ARM),5)`/; \
+	s/defaultGOMIPS = `[^`]*`/defaultGOMIPS = `$(or $(GO_MIPS),hardfloat)`/; \
+	s/defaultGOMIPS64 = `[^`]*`/defaultGOMIPS64 = `$(or $(GO_MIPS64),hardfloat)`/; \
+	s/defaultGOPPC64 = `[^`]*`/defaultGOPPC64 = `power8`/;
+
+PKG_GO_VARS= \
+	GOCACHE="$(GO_BUILD_CACHE_DIR)" \
+	GOENV=off \
+	GO_GCC_HELPER_PATH="$$$$PATH" \
+	CC=gcc \
+	CXX=g++ \
+	PKG_CONFIG=pkg-config \
+	PATH="$(HOST_GO_ROOT)/openwrt:$$$$PATH"
+
+PKG_GO_GCFLAGS= \
+	$(if $(GO_PKG_ENABLE_SPECTRE),-spectre all)
+
+PKG_GO_ASMFLAGS= \
+	$(if $(GO_PKG_ENABLE_SPECTRE),-spectre all)
+
+PKG_GO_LDFLAGS= \
+	-buildid '$(SOURCE_DATE_EPOCH)' \
+	-linkmode external \
+	-extldflags '$(patsubst -z%,-Wl$(comma)-z$(comma)%,$(TARGET_LDFLAGS))' \
+	$(if $(CONFIG_NO_STRIP)$(CONFIG_DEBUG),,-s -w)
+
+# setting -trimpath is not necessary here because the paths inside the
+# compiler binary are relative to GOROOT_FINAL (PKG_GO_ROOT), which is
+# static / not dependent on the build environment
+PKG_GO_INSTALL_ARGS= \
+	-ldflags "all=$(PKG_GO_LDFLAGS)" \
+	$(if $(PKG_GO_GCFLAGS),-gcflags "all=$(PKG_GO_GCFLAGS)") \
+	$(if $(PKG_GO_ASMFLAGS),-asmflags "all=$(PKG_GO_ASMFLAGS)") \
+	$(if $(filter $(GO_PKG_ENABLE_PIE),1),-buildmode pie)
+
 define Build/Compile
-	mkdir -p \
-		$(PKG_GO_HOST_CACHE_DIR) \
-		$(PKG_GO_TARGET_CACHE_DIR)
+	mkdir -p "$(GO_BUILD_CACHE_DIR)"
 
 	@echo "Building target Go first stage"
 
 	$(call GoCompiler/Package/Make, \
-		GOROOT_BOOTSTRAP=$(HOST_GO_ROOT) \
-		GOCACHE=$(PKG_GO_HOST_CACHE_DIR) \
+		GOROOT_BOOTSTRAP="$(HOST_GO_ROOT)" \
 		GO_GCC_HELPER_CC="$(HOSTCC)" \
 		GO_GCC_HELPER_CXX="$(HOSTCXX)" \
-		GO_GCC_HELPER_PATH=$$$$PATH \
-		CC=gcc \
-		CXX=g++ \
-		PKG_CONFIG=pkg-config \
-		PATH=$(HOST_GO_ROOT)/openwrt:$$$$PATH \
+		$(PKG_GO_VARS) \
 	)
 
-  ifneq ($(PKG_GO_ZBOOTSTRAP_MODS),)
 	$(SED) '$(PKG_GO_ZBOOTSTRAP_MODS)' \
-		$(PKG_BUILD_DIR)/src/cmd/internal/objabi/zbootstrap.go
-  endif
+		"$(PKG_BUILD_DIR)/src/cmd/internal/objabi/zbootstrap.go"
 
 	@echo "Building target Go second stage"
 
 	( \
-		cd $(PKG_BUILD_DIR)/bin ; \
+		cd "$(PKG_BUILD_DIR)/bin" ; \
+		export $(GO_PKG_TARGET_VARS) ; \
 		$(CP) go go-host ; \
-		GOROOT_FINAL=$(GO_TARGET_ROOT) \
-		GOCACHE=$(PKG_GO_TARGET_CACHE_DIR) \
-		GOENV=off \
+		GOROOT_FINAL="$(PKG_GO_ROOT)" \
 		GO_GCC_HELPER_CC="$(TARGET_CC)" \
 		GO_GCC_HELPER_CXX="$(TARGET_CXX)" \
-		GO_GCC_HELPER_PATH=$$$$PATH \
-		CC=gcc \
-		CXX=g++ \
-		PKG_CONFIG=pkg-config \
-		PATH=$(HOST_GO_ROOT)/openwrt:$$$$PATH \
-		$(call GoPackage/Environment) \
-		./go-host install -a -v std cmd ; \
-		retval=$$$$? ; \
+		$(PKG_GO_VARS) \
+		./go-host install -a $(PKG_GO_INSTALL_ARGS) std cmd ; \
+		retval="$$$$?" ; \
 		rm -f go-host ; \
-		exit $$$$retval ; \
+		exit "$$$$retval" ; \
 	)
 endef
 
 define Package/golang/install
-	$(call GoCompiler/Package/Install/Bin,$(1)$(GO_TARGET_PREFIX))
-	$(call GoCompiler/Package/Install/BinLinks,$(1)$(GO_TARGET_PREFIX))
+	$(call GoCompiler/Package/Install/Bin,$(1)$(PKG_GO_PREFIX))
+	$(call GoCompiler/Package/Install/BinLinks,$(1)$(PKG_GO_PREFIX))
 endef
 
 define Package/golang-doc/install
-	$(call GoCompiler/Package/Install/Doc,$(1)$(GO_TARGET_PREFIX))
+	$(call GoCompiler/Package/Install/Doc,$(1)$(PKG_GO_PREFIX))
 endef
 
 define Package/golang-src/install
-	$(call GoCompiler/Package/Install/Src,$(1)$(GO_TARGET_PREFIX))
+	$(call GoCompiler/Package/Install/Src,$(1)$(PKG_GO_PREFIX))
 endef
 
 # src/debug contains ELF executables as test data
@@ -288,6 +346,7 @@ endef
 define Package/golang-src/extra_provides
 	echo 'libc.so.6'
 endef
+
 
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,golang))
