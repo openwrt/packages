@@ -4,8 +4,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vpn-policy-routing
-PKG_VERSION:=0.2.1
-PKG_RELEASE:=14
+PKG_VERSION:=0.3.2
+PKG_RELEASE:=10
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 
@@ -15,7 +15,8 @@ define Package/vpn-policy-routing
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=VPN Policy-Based Routing Service
-	DEPENDS:=+ipset +iptables +resolveip +kmod-ipt-ipset +iptables-mod-ipopt +!BUSYBOX_CONFIG_IP:ip-full
+	URL:=https://docs.openwrt.melmac.net/vpn-policy-routing/
+	DEPENDS:=+jshn +ipset +iptables +resolveip +kmod-ipt-ipset +iptables-mod-ipopt +ip-full
 	PKGARCH:=all
 endef
 
@@ -28,12 +29,6 @@ define Package/vpn-policy-routing/conffiles
 /etc/config/vpn-policy-routing
 endef
 
-define Build/Prepare
-	mkdir -p $(PKG_BUILD_DIR)/files/
-	$(CP) ./files/vpn-policy-routing.init $(PKG_BUILD_DIR)/files/vpn-policy-routing.init
-	sed -i "s|^\(PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(PKG_BUILD_DIR)/files/vpn-policy-routing.init
-endef
-
 define Build/Configure
 endef
 
@@ -41,17 +36,12 @@ define Build/Compile
 endef
 
 define Package/vpn-policy-routing/install
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/vpn-policy-routing.init $(1)/etc/init.d/vpn-policy-routing
-	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/config $(1)/etc/hotplug.d/firewall $(1)/etc/
+	$(INSTALL_BIN) ./files/vpn-policy-routing.init $(1)/etc/init.d/vpn-policy-routing
+	$(SED) "s|^\(PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/vpn-policy-routing
 	$(INSTALL_CONF) ./files/vpn-policy-routing.conf $(1)/etc/config/vpn-policy-routing
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/firewall
 	$(INSTALL_DATA) ./files/vpn-policy-routing.firewall.hotplug $(1)/etc/hotplug.d/firewall/99-vpn-policy-routing
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
-	$(INSTALL_DATA) ./files/vpn-policy-routing.iface.hotplug $(1)/etc/hotplug.d/iface/70-vpn-policy-routing
-	$(INSTALL_DIR) $(1)/etc/
 	$(INSTALL_DATA) ./files/vpn-policy-routing.aws.user $(1)/etc/vpn-policy-routing.aws.user
-	$(INSTALL_DIR) $(1)/etc/
 	$(INSTALL_DATA) ./files/vpn-policy-routing.netflix.user $(1)/etc/vpn-policy-routing.netflix.user
 endef
 
@@ -60,9 +50,6 @@ define Package/vpn-policy-routing/postinst
 	# check if we are on real system
 	if [ -z "$${IPKG_INSTROOT}" ]; then
 		/etc/init.d/vpn-policy-routing enable
-		if ! /bin/ubus -S call system board | /bin/grep 'Turris' | /bin/grep -q '15.05' ; then
-			rm -rf /etc/hotplug.d/iface/70-vpn-policy-routing
-		fi
 	fi
 	exit 0
 endef
