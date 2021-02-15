@@ -249,7 +249,7 @@ config_remote() {
 		local ipdest
 
 		[ "$remote_gateway" = "%any" ] && ipdest="1.1.1.1" || ipdest="$remote_gateway"
-		local_gateway=`ip route get $ipdest | awk -F"src" '/src/{gsub(/ /,"");print $2}'`
+		local_gateway=$(ip -o route get "$ipdest" | awk '/ src / { print gensub(/^.* src ([^ ]*) .*$/, "\\1", "g"); }')
 	}
 
 	[ -n "$local_identifier" ] && secret_xappend -n "$local_identifier " || secret_xappend -n "$local_gateway "
