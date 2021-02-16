@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lttng-tools
 PKG_VERSION:=2.12.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://lttng.org/files/$(PKG_NAME)/
@@ -24,13 +24,14 @@ PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/lttng-tools
   SECTION:=devel
   CATEGORY:=Development
   TITLE:=Linux Trace Toolkit: next generation (tools)
   URL:=https://lttng.org/
-  DEPENDS:= +lttng-ust +libpopt +libxml2
+  DEPENDS:= +lttng-ust +libpopt +libxml2 $(ICONV_DEPENDS)
 endef
 
 CONFIGURE_ARGS += \
