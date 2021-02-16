@@ -123,6 +123,6 @@ define Package/libsensors/install
 	$(CP) $(PKG_BUILD_DIR)/lib/libsensors.so* $(1)/usr/lib
 endef
 
+$(eval $(call BuildPackage,libsensors))
 $(eval $(call BuildPackage,lm-sensors))
 $(eval $(call BuildPackage,lm-sensors-detect))
-$(eval $(call BuildPackage,libsensors))

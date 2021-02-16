@@ -181,5 +181,5 @@ define Package/libcurl/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libcurl.so.* $(1)/usr/lib/
 endef
 
-$(eval $(call BuildPackage,curl))
 $(eval $(call BuildPackage,libcurl))
+$(eval $(call BuildPackage,curl))
