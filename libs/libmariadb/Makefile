@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmariadb
 PKG_VERSION:=3.1.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=mariadb-connector-c-$(PKG_VERSION)-src.tar.gz
 PKG_SOURCE_URL := \
@@ -38,6 +38,7 @@ MARIADB_CLIENT_PLUGINS := \
 	auth_gssapi_client \
 	remote_io
 
+PKG_BUILD_DEPENDS:=curl
 PKG_CONFIG_DEPENDS := \
 	$(patsubst %,CONFIG_PACKAGE_$(PKG_NAME)-plugin-%,$(subst _,-,$(MARIADB_CLIENT_PLUGINS)))
 
