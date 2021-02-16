@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-try-tiny
 PKG_VERSION:=0.30
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/E/ET/ETHER/
 PKG_SOURCE:=Try-Tiny-$(PKG_VERSION).tar.gz
@@ -21,7 +21,7 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
-include $(TOPDIR)/feeds/packages/lang/perl/perlmod.mk
+include ../perl/perlmod.mk
 
 define Package/perl-try-tiny
   SUBMENU:=Perl
