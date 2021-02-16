@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -299,6 +299,8 @@ endif
 ifeq ($(HOST_OS),Darwin)
 HOST_CONFIGURE_VARS += \
 	ac_cv_header_libintl_h=no
+HOST_MAKE_VARS += \
+	USE_PYTHON_CONFIG_PY=1
 endif
 
 HOST_CONFIGURE_ARGS+= \
@@ -315,8 +317,8 @@ define Host/Configure
 endef
 
 define Host/Compile
-	+$(HOST_MAKE_VARS) $(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) python
-	+$(HOST_MAKE_VARS) $(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) sharedmods
+	$(call Host/Compile/Default,python)
+	$(call Host/Compile/Default,sharedmods)
 endef
 
 define Host/Install
@@ -336,7 +338,7 @@ define Host/Install
 			$(HOST_PYTHON3_PKG_DIR)/.pip-patched* \
 			$(HOST_PYTHON3_PKG_DIR)/.pip_installed_*
 	)
-	$(MAKE) -C $(HOST_BUILD_DIR) install
+	$(call Host/Install/Default)
 	$(if $(wildcard $(HOST_PYTHON3_PKG_DIR)/.setuptools_installed_$(PYTHON3_SETUPTOOLS_VERSION)-$(PYTHON3_SETUPTOOLS_PKG_RELEASE)),,
 		$(call HostPatchDir,$(HOST_PYTHON3_PKG_DIR),./patches-setuptools,)
 		touch $(HOST_PYTHON3_PKG_DIR)/.setuptools_installed_$(PYTHON3_SETUPTOOLS_VERSION)-$(PYTHON3_SETUPTOOLS_PKG_RELEASE)
