@@ -30,7 +30,7 @@ f_log()
 if [ -x "${ban_logread}" ]
 then
 	f_log "info" "log/banIP service started"
-	"${ban_logread}" -f | { grep -q "${ban_search}"; [ "${?}" = "0" ] && /etc/init.d/banip refresh; }
+	"${ban_logread}" -f | { grep -qE "${ban_search}"; [ "${?}" = "0" ] && { /etc/init.d/banip refresh; exit 0; }; }
 else
 	f_log "err" "can't start log/banIP service"
 fi
