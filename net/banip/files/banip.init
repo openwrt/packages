@@ -339,7 +339,6 @@ service_triggers()
 	fi
 	if [ -n "${iface}" ]
 	then
-		
 		procd_add_interface_trigger "interface.*.up" "${iface}" "${ban_init}" "start"
 	fi
 	procd_add_reload_trigger "banip"
