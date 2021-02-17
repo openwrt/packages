@@ -29,7 +29,6 @@ define KernelPackage/fs-ksmbd
 		+kmod-crypto-md4 \
 		+kmod-crypto-md5 \
 		+kmod-crypto-hmac \
-		+kmod-crypto-arc4 \
 		+kmod-crypto-ecb \
 		+kmod-crypto-des \
 		+kmod-crypto-sha256 \
