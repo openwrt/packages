@@ -12,7 +12,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-ban_ver="0.7.1"
+ban_ver="0.7.2"
 ban_enabled="0"
 ban_mail_enabled="0"
 ban_proto4_enabled="0"
@@ -25,6 +25,9 @@ ban_autoblacklist="1"
 ban_autowhitelist="1"
 ban_logterms=""
 ban_loglimit="100"
+ban_ssh_logcount="3"
+ban_luci_logcount="3"
+ban_nginx_logcount="5"
 ban_mailactions=""
 ban_search=""
 ban_devs=""
@@ -41,6 +44,7 @@ ban_ipt6_savecmd="$(command -v ip6tables-save)"
 ban_ipt6_restorecmd="$(command -v ip6tables-restore)"
 ban_ipset_cmd="$(command -v ipset)"
 ban_logger_cmd="$(command -v logger)"
+ban_logread="$(command -v logread)"
 ban_allsources=""
 ban_sources=""
 ban_asns=""
@@ -89,11 +93,11 @@ f_load()
 	#
 	if [ "${ban_enabled}" = "0" ]
 	then
-		f_bgsrv "stop"
 		f_ipset "destroy"
 		f_jsnup "disabled"
 		f_rmbckp
 		f_rmtmp
+		f_bgsrv "stop"
 		f_log "info" "banIP is currently disabled, please set the config option 'ban_enabled' to '1' to use this service"
 		exit 0
 	fi
@@ -234,7 +238,7 @@ f_conf()
 		ban_target_dst="${ban_logchain_dst}"
 	fi
 	ban_localsources="${ban_localsources:-"maclist whitelist blacklist"}"
-	ban_logterms="${ban_logterms:-"dropbear sshd luci"}"
+	ban_logterms="${ban_logterms:-"dropbear sshd luci nginx"}"
 	f_log "debug" "f_conf  ::: ifaces: ${ban_ifaces:-"-"}, chain: ${ban_chain}, set_type: ${ban_global_settype}, log_chains (src/dst): ${ban_logchain_src}/${ban_logchain_dst}, targets (src/dst): ${ban_target_src}/${ban_target_dst}"
 	f_log "debug" "f_conf  ::: lan_inputs (4/6): ${ban_lan_inputchains_4}/${ban_lan_inputchains_6}, lan_forwards (4/6): ${ban_lan_forwardchains_4}/${ban_lan_forwardchains_6}, wan_inputs (4/6): ${ban_wan_inputchains_4}/${ban_wan_inputchains_6}, wan_forwards (4/6): ${ban_wan_forwardchains_4}/${ban_wan_forwardchains_6}"
 	f_log "debug" "f_conf  ::: local_sources: ${ban_localsources:-"-"}, extra_sources: ${ban_extrasources:-"-"}, log_terms: ${ban_logterms:-"-"}, log_prefixes (src/dst): ${ban_logprefix_src}/${ban_logprefix_dst}, log_options (src/dst): ${ban_logopts_src}/${ban_logopts_dst}"
@@ -912,23 +916,31 @@ f_bgsrv()
 {
 	local bg_pid action="${1}"
 
-	bg_pid="$(pgrep -f "^/bin/sh ${ban_logservice}|logread -f|^grep -q Exit|^grep -q error|^grep -q luci" | awk '{ORS=" "; print $1}')"
-	if [ -z "${bg_pid}" ] && [ "${action}" = "start" ] && [ -x "${ban_logservice}" ] && [ "${ban_monitor_enabled}" = "1" ]
+	bg_pid="$(pgrep -f "^/bin/sh ${ban_logservice}|${ban_logread}|^grep -qE Exit before auth|^grep -qE error: maximum|^grep -qE luci: failed|^grep -qE nginx" | awk '{ORS=" "; print $1}')"
+	if [ "${action}" = "start" ] && [ -x "${ban_logservice}" ] && [ "${ban_monitor_enabled}" = "1" ]
 	then
+		if [ -n "${bg_pid}" ]
+		then
+			kill -HUP "${bg_pid}" 2>/dev/null
+		fi
 		if [ -n "$(printf "%s\n" "${ban_logterms}" | grep -F "dropbear")" ]
 		then
-			ban_search="Exit before auth from\|"
+			ban_search="Exit before auth from|"
 		fi
 		if [ -n "$(printf "%s\n" "${ban_logterms}" | grep -F "sshd")" ]
 		then
-			ban_search="${ban_search}error: maximum authentication attempts exceeded\|sshd.*Connection closed by.*\[preauth\]\|"
+			ban_search="${ban_search}error: maximum authentication attempts exceeded|sshd.*Connection closed by.*\[preauth\]|"
 		fi
 		if [ -n "$(printf "%s\n" "${ban_logterms}" | grep -F "luci")" ]
 		then
-			ban_search="${ban_search}luci: failed login"
+			ban_search="${ban_search}luci: failed login|"
+		fi
+		if [ -n "$(printf "%s\n" "${ban_logterms}" | grep -F "nginx")" ]
+		then
+			ban_search="${ban_search}nginx\[[0-9]+\]:.*\[error\].*open().*client: [[:alnum:].:]+"
 		fi
 		( "${ban_logservice}" "${ban_ver}" "${ban_search}" & )
-	elif [ -n "${bg_pid}" ] && [ "${action}" = "stop" ]
+	elif [ "${action}" = "stop" ] && [ -n "${bg_pid}" ]
 	then
 		kill -HUP "${bg_pid}" 2>/dev/null
 	fi
@@ -1137,26 +1149,65 @@ f_down()
 #
 f_main()
 {
-	local src_name src_url_4 src_rule_4 src_url_6 src_rule_6 src_comp src_rc src_ts log_raw log_merge hold err_file cnt_file cnt=0
+	local src_name src_url_4 src_rule_4 src_url_6 src_rule_6 src_comp src_rc src_ts log_raw log_merge log_ips log_count hold err_file cnt_file cnt=0
 
 	# prepare logfile excerpts (dropbear, sshd, luci)
 	#
 	if [ "${ban_autoblacklist}" = "1" ] || [ "${ban_monitor_enabled}" = "1" ]
 	then
-		log_raw="$(logread -l "${ban_loglimit}")"
+		log_raw="$(${ban_logread} -l "${ban_loglimit}")"
 		if [ -n "$(printf "%s\n" "${ban_logterms}" | grep -F "dropbear")" ]
 		then
-			log_merge="$(printf "%s\n" "${log_raw}" | grep "Exit before auth from" | awk 'match($0,/<[0-9A-f:\.]+:/){printf "%s\n",substr($0,RSTART+1,RLENGTH-2)}')"
+			log_ips="$(printf "%s\n" "${log_raw}" | grep -E "Exit before auth from" | \
+					awk 'match($0,/<[0-9A-f:\.]+:/){printf "%s\n",substr($0,RSTART+1,RLENGTH-2)}' | awk '!seen[$NF]++' | awk '{ORS=" ";print $NF}')"
+			for ip in ${log_ips}
+			do
+				log_count="$(printf "%s\n" "${log_raw}" | grep -cE "Exit before auth from <${ip}")"
+				if [ "${log_count}" -ge "${ban_ssh_logcount}" ]
+				then
+					log_merge="${log_merge} ${ip}"
+				fi
+			done
 		fi
 		if [ -n "$(printf "%s\n" "${ban_logterms}" | grep -F "sshd")" ]
 		then
-			log_merge="${log_merge} $(printf "%s\n" "${log_raw}" | grep "error: maximum authentication attempts exceeded\|sshd.*Connection closed by.*\[preauth\]" | awk 'match($0,/[0-9A-f:\.]+ port/){printf "%s\n",substr($0,RSTART,RLENGTH-5)}')"
+			log_ips="$(printf "%s\n" "${log_raw}" | grep -E "error: maximum authentication attempts exceeded|sshd.*Connection closed by.*\[preauth\]" | \
+					awk 'match($0,/[0-9A-f:\.]+ port/){printf "%s\n",substr($0,RSTART,RLENGTH-5)}' | awk '!seen[$NF]++' | awk '{ORS=" ";print $NF}')"
+			for ip in ${log_ips}
+			do
+				log_count="$(printf "%s\n" "${log_raw}" | grep -cE "error: maximum authentication attempts exceeded.*${ip}|sshd.*Connection closed by.*${ip}.*\[preauth\]")"
+				if [ "${log_count}" -ge "${ban_ssh_logcount}" ]
+				then
+					log_merge="${log_merge} ${ip}"
+				fi
+			done
 		fi
 		if [ -n "$(printf "%s\n" "${ban_logterms}" | grep -F "luci")" ]
 		then
-			log_merge="${log_merge} $(printf "%s\n" "${log_raw}" | grep "luci: failed login on " | awk 'match($0,/[0-9A-f:\.]+$/){printf "%s\n",substr($0,RSTART,RLENGTH)}')"
+			log_ips="$(printf "%s\n" "${log_raw}" | grep -E "luci: failed login on " | \
+					awk 'match($0,/[0-9A-f:\.]+$/){printf "%s\n",substr($0,RSTART,RLENGTH)}' | awk '!seen[$NF]++' | awk '{ORS=" ";print $NF}')"
+			for ip in ${log_ips}
+			do
+				log_count="$(printf "%s\n" "${log_raw}" | grep -cE "luci: failed login on .*from ${ip}")"
+				if [ "${log_count}" -ge "${ban_luci_logcount}" ]
+				then
+					log_merge="${log_merge} ${ip}"
+				fi
+			done
 		fi
-		log_merge="$(printf "%s" "${log_merge}" | awk '{ORS=" ";print $0}')"
+		if [ -n "$(printf "%s\n" "${ban_logterms}" | grep -F "nginx")" ]
+		then
+			log_ips="$(printf "%s\n" "${log_raw}" | grep -oE "nginx\[[0-9]+\]:.*\[error\].*open().*client: [[:alnum:].:]+" | \
+					awk '!seen[$NF]++' | awk '{ORS=" ";print $NF}')"
+			for ip in ${log_ips}
+			do
+				log_count="$(printf "%s\n" "${log_raw}" | grep -cE "nginx\[[0-9]+\]:.*\[error\].*open().*client: ${ip}")"
+				if [ "${log_count}" -ge "${ban_nginx_logcount}" ]
+				then
+					log_merge="${log_merge} ${ip}"
+				fi
+			done
+		fi
 	fi
 
 	# prepare new black- and whitelist entries
@@ -1334,9 +1385,9 @@ f_main()
 		fi
 	done
 	f_log "info" "${ban_setcnt} IPSets with overall ${ban_cnt} IPs/Prefixes loaded successfully (${ban_sysver})"
-	f_bgsrv "start"
 	f_jsnup
 	f_rmtmp
+	f_bgsrv "start"
 }
 
 # query ipsets for certain IP
@@ -1699,13 +1750,12 @@ fi
 f_load
 case "${ban_action}" in
 	"stop")
-		f_bgsrv "stop"
 		f_ipset "destroy"
 		f_jsnup "stopped"
 		f_rmbckp
+		f_bgsrv "stop"
 	;;
 	"restart")
-		f_bgsrv "stop"
 		f_ipset "destroy"
 		f_rmbckp
 		f_env
@@ -1714,17 +1764,16 @@ case "${ban_action}" in
 	"suspend")
 		if [ "${ban_status}" = "enabled" ]
 		then
-			f_bgsrv "stop"
 			f_jsnup "running"
 			f_ipset "suspend"
 			f_jsnup "paused"
+			f_bgsrv "stop"
 		fi
 		f_rmtmp
 	;;
 	"resume")
 		if [ "${ban_status}" = "paused" ]
 		then
-			f_bgsrv "stop"
 			f_env
 			f_main
 		else
@@ -1744,7 +1793,6 @@ case "${ban_action}" in
 		fi
 	;;
 	"start"|"reload"|"refresh")
-		f_bgsrv "stop"
 		f_env
 		f_main
 	;;

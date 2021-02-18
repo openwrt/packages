@@ -8,34 +8,35 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 ## Main Features
 * Support of the following fully pre-configured domain blocklist sources (free for private usage, for commercial use please check their individual licenses)
 
-| Source              | Focus                        | Information                                                                       |
-| :------------------ | :--------------------------: | :-------------------------------------------------------------------------------- |
-| asn                 | ASN block                    | [Link](https://asn.ipinfo.app)                                                    |
-| bogon               | Bogon prefixes               | [Link](https://team-cymru.com)                                                    |
-| country             | Country blocks               | [Link](https://www.ipdeny.com/ipblocks)                                           |
-| darklist            | Attacker IP blacklist        | [Link](https://darklist.de)                                                       |
-| debl                | Fail2ban IP blacklist        | [Link](https://www.blocklist.de)                                                  |
-| doh                 | Public DoH-Provider          | [Link](https://github.com/dibdot/DoH-IP-blocklists)                               |
-| drop                | Spamhaus drop compilation    | [Link](https://www.spamhaus.org)                                                  |
-| dshield             | Dshield IP blocklist         | [Link](https://www.dshield.org)                                                   |
-| edrop               | Spamhaus edrop compilation   | [Link](https://www.spamhaus.org)                                                  |
-| feodo               | Feodo Tracker                | [Link](https://feodotracker.abuse.ch)                                             |
-| firehol1            | Firehol Level 1 compilation  | [Link](https://iplists.firehol.org/?ipset=firehol_level1)                         |
-| firehol2            | Firehol Level 2 compilation  | [Link](https://iplists.firehol.org/?ipset=firehol_level2)                         |
-| firehol3            | Firehol Level 3 compilation  | [Link](https://iplists.firehol.org/?ipset=firehol_level3)                         |
-| firehol4            | Firehol Level 4 compilation  | [Link](https://iplists.firehol.org/?ipset=firehol_level4)                         |
-| iblockads           | Advertising blocklist        | [Link](https://www.iblocklist.com)                                                |
-| iblockspy           | Malicious spyware blocklist  | [Link](https://www.iblocklist.com)                                                |
-| myip                | Myip Live IP blacklist       | [Link](https://myip.ms)                                                           |
-| nixspam             | iX spam protection           | [Link](http://www.nixspam.org)                                                    |
-| proxy               | Firehol list of open proxies | [Link](https://iplists.firehol.org/?ipset=proxylists)                             |
-| ssbl                | SSL botnet IP blacklist      | [Link](https://sslbl.abuse.ch)                                                    |
-| threat              | Emerging Threats             | [Link](https://rules.emergingthreats.net)                                         |
-| tor                 | Tor exit nodes               | [Link](https://fissionrelays.net/lists)                                           |
-| uceprotect1         | Spam protection level 1      | [Link](http://www.uceprotect.net/en/index.php)                                    |
-| uceprotect2         | Spam protection level 2      | [Link](http://www.uceprotect.net/en/index.php)                                    |
-| voip                | VoIP fraud blocklist         | [Link](http://www.voipbl.org)                                                     |
-| yoyo                | Ad protection blacklist      | [Link](https://pgl.yoyo.org/adservers/)                                           |
+| Source              | Focus                          | Information                                                                       |
+| :------------------ | :----------------------------: | :-------------------------------------------------------------------------------- |
+| asn                 | ASN block                      | [Link](https://asn.ipinfo.app)                                                    |
+| bogon               | Bogon prefixes                 | [Link](https://team-cymru.com)                                                    |
+| country             | Country blocks                 | [Link](https://www.ipdeny.com/ipblocks)                                           |
+| darklist            | blocks suspicious attacker IPs | [Link](https://darklist.de)                                                       |
+| debl                | Fail2ban IP blacklist          | [Link](https://www.blocklist.de)                                                  |
+| doh                 | Public DoH-Provider            | [Link](https://github.com/dibdot/DoH-IP-blocklists)                               |
+| drop                | Spamhaus drop compilation      | [Link](https://www.spamhaus.org)                                                  |
+| dshield             | Dshield IP blocklist           | [Link](https://www.dshield.org)                                                   |
+| edrop               | Spamhaus edrop compilation     | [Link](https://www.spamhaus.org)                                                  |
+| feodo               | Feodo Tracker                  | [Link](https://feodotracker.abuse.ch)                                             |
+| firehol1            | Firehol Level 1 compilation    | [Link](https://iplists.firehol.org/?ipset=firehol_level1)                         |
+| firehol2            | Firehol Level 2 compilation    | [Link](https://iplists.firehol.org/?ipset=firehol_level2)                         |
+| firehol3            | Firehol Level 3 compilation    | [Link](https://iplists.firehol.org/?ipset=firehol_level3)                         |
+| firehol4            | Firehol Level 4 compilation    | [Link](https://iplists.firehol.org/?ipset=firehol_level4)                         |
+| greensnow           | blocks suspicious server IPs   | [Link](https://greensnow.co)                                                      |
+| iblockads           | Advertising blocklist          | [Link](https://www.iblocklist.com)                                                |
+| iblockspy           | Malicious spyware blocklist    | [Link](https://www.iblocklist.com)                                                |
+| myip                | Myip Live IP blacklist         | [Link](https://myip.ms)                                                           |
+| nixspam             | iX spam protection             | [Link](http://www.nixspam.org)                                                    |
+| proxy               | Firehol list of open proxies   | [Link](https://iplists.firehol.org/?ipset=proxylists)                             |
+| ssbl                | SSL botnet IP blacklist        | [Link](https://sslbl.abuse.ch)                                                    |
+| threat              | Emerging Threats               | [Link](https://rules.emergingthreats.net)                                         |
+| tor                 | Tor exit nodes                 | [Link](https://fissionrelays.net/lists)                                           |
+| uceprotect1         | Spam protection level 1        | [Link](http://www.uceprotect.net/en/index.php)                                    |
+| uceprotect2         | Spam protection level 2        | [Link](http://www.uceprotect.net/en/index.php)                                    |
+| voip                | VoIP fraud blocklist           | [Link](http://www.voipbl.org)                                                     |
+| yoyo                | Ad protection blacklist        | [Link](https://pgl.yoyo.org/adservers/)                                           |
 
 * zero-conf like automatic installation & setup, usually no manual changes needed
 * automatically selects one of the following download utilities: aria2c, curl, uclient-fetch, wget
@@ -150,6 +151,11 @@ Available commands:
 | ban_maclist_timeout     | option | -                             | individual maclist IPSet timeout                                                      |
 | ban_whitelist_timeout   | option | -                             | individual whitelist IPSet timeout                                                    |
 | ban_blacklist_timeout   | option | -                             | individual blacklist IPSet timeout                                                    |
+| ban_logterms            | list   | dropbear, sshd, luci, nginx   | limit the log monitor to certain log terms                                            |
+| ban_loglimit            | option | 100                           | parse only the last stated number of log entries for suspicious events                |
+| ban_ssh_logcount        | option | 3                             | number of the failed ssh login repetitions of the same ip in the log before banning   |
+| ban_luci_logcount       | option | 3                             | number of the failed luci login repetitions of the same ip in the log before banning  |
+| ban_nginx_logcount      | option | 5                             | number of the failed nginx requests of the same ip in the log before banning          |
   
 ## Examples
 **list/edit banIP sources:**
