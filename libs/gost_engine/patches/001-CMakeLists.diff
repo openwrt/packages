@@ -1,0 +1,31 @@
+--- a/CMakeLists.txt	2021-02-17 11:13:19.000000000 +0400
++++ b/CMakeLists.txt	2021-02-17 11:11:30.000000000 +0400
+@@ -1,6 +1,15 @@
+ cmake_minimum_required(VERSION 2.8)
+ project(ccgost C)
+ 
++find_package(OpenSSL REQUIRED)
++if( OpenSSL_FOUND )
++  set (OPENSSL_INCLUDE "${OPENSSL_INCLUDE_DIR}/")
++  include_directories(${OPENSSL_INCLUDE})
++  message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
++  message(STATUS "OpenSSL include dir: ${OPENSSL_INCLUDE}")
++  message(STATUS "OpenSSL libraries: ${OPENSSL_LIBRARIES}")
++endif()
++
+ if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+    message(STATUS "Using Clang and adding -Qunused-arguments flag")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Qunused-arguments")
+@@ -121,6 +130,9 @@
+         gostsum12.c
+         )
+ 
+-#add_executable(gostsum12 ${GOST_SUM_12_SOURCE_FILES})
+-#
+-#target_link_libraries(gostsum12 gost)
++INSTALL(
++  TARGETS gost
++  ARCHIVE DESTINATION lib
++  LIBRARY DESTINATION lib
++  COMPONENT library
++)
