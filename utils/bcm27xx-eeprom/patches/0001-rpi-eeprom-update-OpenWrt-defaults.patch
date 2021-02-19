@@ -14,24 +14,23 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
 
 --- a/rpi-eeprom-update
 +++ b/rpi-eeprom-update
-@@ -24,14 +24,14 @@ else
+@@ -24,13 +24,13 @@ else
  fi
  
- # May be used to select beta or stable releases instead of the default critical updates.
--FIRMWARE_RELEASE_STATUS=${FIRMWARE_RELEASE_STATUS:-critical}
+ # Selects the release sub-directory
+-FIRMWARE_RELEASE_STATUS=${FIRMWARE_RELEASE_STATUS:-default}
 +FIRMWARE_RELEASE_STATUS=${FIRMWARE_RELEASE_STATUS:-stable}
  FIRMWARE_IMAGE_DIR=${FIRMWARE_IMAGE_DIR:-${FIRMWARE_ROOT}/${FIRMWARE_RELEASE_STATUS}}
 -FIRMWARE_BACKUP_DIR=${FIRMWARE_BACKUP_DIR:-/var/lib/raspberrypi/bootloader/backup}
 +FIRMWARE_BACKUP_DIR=${FIRMWARE_BACKUP_DIR:-${FIRMWARE_ROOT}/backup}
  ENABLE_VL805_UPDATES=${ENABLE_VL805_UPDATES:-1}
- USE_FLASHROM=${USE_FLASHROM:-0}
  RECOVERY_BIN=${RECOVERY_BIN:-${FIRMWARE_ROOT}/${FIRMWARE_RELEASE_STATUS}/recovery.bin}
  BOOTFS=${BOOTFS:-/boot}
 -VCMAILBOX=${VCMAILBOX:-/opt/vc/bin/vcmailbox}
 +VCMAILBOX=${VCMAILBOX:-/usr/bin/vcmailbox}
+ CM4_ENABLE_RPI_EEPROM_UPDATE=${CM4_ENABLE_RPI_EEPROM_UPDATE:-0}
+ RPI_EEPROM_UPDATE_CONFIG_TOOL="${RPI_EEPROM_UPDATE_CONFIG_TOOL:-raspi-config}"
  
- EXIT_SUCCESS=0
- EXIT_UPDATE_REQUIRED=1
 --- a/rpi-eeprom-update-default
 +++ b/rpi-eeprom-update-default
 @@ -1,8 +1,9 @@
@@ -45,4 +44,4 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
  BOOTFS=/boot
  USE_FLASHROM=0
  EEPROM_CONFIG_HOOK=
-+VCMAILBOX=/usr/bin/vcmailbox
++VCMAILBOX=/usr/bin/vcmailbo
