@@ -45,12 +45,12 @@ endef
 CMAKE_OPTIONS += -DOPENSSL_ENGINES_DIR=/usr/lib/$(ENGINES_DIR)
 
 define Package/libopenssl-gost_engine/install
-	$(INSTALL_DIR) $(1)/usr/lib/$(ENGINES_DIR)
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/gost.so \
-			$(1)/usr/lib/$(ENGINES_DIR)/
-	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/opt/lib/$(ENGINES_DIR)
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/bin/gost.so \
+			$(1)/opt/lib/$(ENGINES_DIR)/
+	$(INSTALL_DIR) $(1)/opt/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/{gost12sum,gostsum} \
-			$(1)/usr/bin/
+			$(1)/opt/bin/
 endef
 
 $(eval $(call BuildPackage,libopenssl-gost_engine))
