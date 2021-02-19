@@ -7,7 +7,8 @@ PKG_RELEASE:=$(AUTORELEASE)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/gost-engine/engine/archive/v$(PKG_VERSION)
 # Use 'skip' here, and let the build system fill this for you with `make package/openssl-gostengine/{download,check} FIXUP=1`
-PKG_HASH:=skip
+#PKG_HASH:=skip
+PKG_HASH:=fff725052e82c9adb5b738729b30141f61ac91fa457a4f4b5de18b8b24092f75
 
 # Please consider adding yourself as the maintainer
 PKG_MAINTAINER:=Artur Petrov <github@phpchain.ru>
