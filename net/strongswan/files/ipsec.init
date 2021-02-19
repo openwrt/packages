@@ -67,34 +67,32 @@ add_crypto_proposal() {
 	config_get hash_algorithm        "$1" hash_algorithm
 	config_get dh_group              "$1" dh_group
 
-	[ -n "${encryption_algorithm}" ] && \
+	[ -n "$encryption_algorithm" ] && \
 		crypto="${crypto:+${crypto},}${encryption_algorithm}${hash_algorithm:+-${hash_algorithm}}${dh_group:+-${dh_group}}"
 }
 
 set_crypto_proposal() {
 	local conf="$1"
-	local proposal
+	local crypto=""
 
-	crypto=""
+	config_list_foreach "$conf" crypto_proposal add_crypto_proposal
 
-	config_get crypto_proposal "$conf" crypto_proposal ""
-	for proposal in $crypto_proposal; do
-		add_crypto_proposal "$proposal"
-	done
-
-	[ -n "${crypto}" ] && {
+	[ -n "$crypto" ] && {
 		local force_crypto_proposal
 
-		config_get_bool force_crypto_proposal "$conf" force_crypto_proposal
+		config_get_bool force_crypto_proposal "$conf" force_crypto_proposal 0
 
-		[ "${force_crypto_proposal}" = "1" ] && crypto="${crypto}!"
+		[ $force_crypto_proposal -eq 1 ] && crypto="$crypto!"
 	}
 
-	crypto_proposal="${crypto}"
+	crypto_proposal="$crypto"
 }
 
 config_conn() {
 	# Generic ipsec conn section shared by tunnel and transport
+	local config_name="$1"
+	local type="$2"
+
 	local mode
 	local local_subnet
 	local local_nat
@@ -139,9 +137,9 @@ config_conn() {
 	config_get reqid                    "$1"           reqid
 	config_get packet_marker            "$1"           packet_marker
 
-	[ -n "$local_nat" ] && local_subnet=$local_nat
+	[ -n "$local_nat" ] && local_subnet="$local_nat"
 
-	ipsec_xappend "conn $config_name-$1"
+	ipsec_xappend "conn $config_name"
 	ipsec_xappend "  left=$local_leftip"
 	ipsec_xappend "  right=$remote_gateway"
 
@@ -161,51 +159,49 @@ config_conn() {
 	[ -n "$inactivity" ] && ipsec_xappend "  inactivity=$inactivity"
 	[ -n "$reqid" ] && ipsec_xappend "  reqid=$reqid"
 
+	[ -n "$remote_sourceip" ] && ipsec_xappend "  rightsourceip=$remote_sourceip"
+	[ -n "$remote_subnet" ] && ipsec_xappend "  rightsubnet=$remote_subnet"
+
 	if [ "$auth_method" = "psk" ]; then
 		ipsec_xappend "  leftauth=psk"
 		ipsec_xappend "  rightauth=psk"
-
-		[ "$remote_sourceip" != "" ] && ipsec_xappend "  rightsourceip=$remote_sourceip"
-		[ "$remote_subnet" != "" ] && ipsec_xappend "  rightsubnet=$remote_subnet"
-
-		ipsec_xappend "  auto=$mode"
 	else
 		warning "AuthenticationMethod $auth_method not supported"
 	fi
+
+	ipsec_xappend "  auto=$mode"
 
 	[ -n "$local_identifier" ] && ipsec_xappend "  leftid=$local_identifier"
 	[ -n "$remote_identifier" ] && ipsec_xappend "  rightid=$remote_identifier"
 	[ -n "$local_updown" ] && ipsec_xappend "  leftupdown=$local_updown"
 	[ -n "$remote_updown" ] && ipsec_xappend "  rightupdown=$remote_updown"
+	ipsec_xappend "  type=$type"
+
 	[ -n "$packet_marker" ] && ipsec_xappend "  mark=$packet_marker"
 	ipsec_xappend "  keyexchange=$keyexchange"
 
 	set_crypto_proposal "$1"
-	[ -n "${crypto_proposal}" ] && ipsec_xappend "  esp=$crypto_proposal"
-	[ -n "${ike_proposal}" ] && ipsec_xappend "  ike=$ike_proposal"
+	[ -n "$ike_proposal" ] && ipsec_xappend "  ike=$ike_proposal"
+	[ -n "$crypto_proposal" ] && ipsec_xappend "  esp=$crypto_proposal"
 }
 
 config_tunnel() {
-	config_conn "$1"
-
-	# Specific for the tunnel part
-	ipsec_xappend "  type=tunnel"
+	config_conn "$1" "tunnel"
 }
 
 config_transport() {
-	config_conn "$1"
-
-	# Specific for the transport part
-	ipsec_xappend "  type=transport"
+	config_conn "$1" "transport"
 }
 
 config_remote() {
 	local enabled
 	local gateway
+	local local_gateway
+	local remote_gateway
 	local pre_shared_key
 	local auth_method
-
-	config_name=$1
+	local local_identifier
+	local remote_identifier
 
 	config_get_bool enabled "$1" enabled 0
 	[ $enabled -eq 0 ] && return
@@ -218,14 +214,15 @@ config_remote() {
 
 	[ "$gateway" = "any" ] && remote_gateway="%any" || remote_gateway="$gateway"
 
-	[ -z "$local_identifier" ] && {
+	local_gateway="$local_identifier"
+	[ -z "$local_gateway" ] && {
 		local ipdest
 
 		[ "$remote_gateway" = "%any" ] && ipdest="1.1.1.1" || ipdest="$remote_gateway"
 		local_gateway=$(ip -o route get "$ipdest" | awk '/ src / { print gensub(/^.* src ([^ ]*) .*$/, "\\1", "g"); }')
 	}
 
-	[ -n "$local_identifier" ] && secret_xappend -n "$local_identifier " || secret_xappend -n "$local_gateway "
+	secret_xappend -n "$local_gateway "
 	[ -n "$remote_identifier" ] && secret_xappend -n "$remote_identifier " || secret_xappend -n "$remote_gateway "
 
 	secret_xappend ": PSK \"$pre_shared_key\""
