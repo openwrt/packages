@@ -53,7 +53,7 @@ jobs:
           echo "BRANCH=$BRANCH" >> $GITHUB_ENV
 
       - name: Build
-        uses: openwrt/gh-action-sdk@v1
+        uses: lipnitsk/gh-action-sdk@master
         env:
           ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
           FEEDNAME: packages_ci
