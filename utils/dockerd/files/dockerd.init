@@ -208,9 +208,9 @@ iptables_add_blocking_rule() {
 
 		# Ignore errors as it might already be present
 		iptables --table filter --new DOCKER-USER 2>/dev/null
-		if ! iptables --table filter --check DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump DROP 2>/dev/null; then
+		if ! iptables --table filter --check DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump REJECT 2>/dev/null; then
 			logger -t "dockerd-init" -p notice "Drop traffic from ${inbound} to ${outbound}"
-			iptables --table filter --insert DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump DROP
+			iptables --table filter --insert DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump REJECT
 		fi
 	}
 
