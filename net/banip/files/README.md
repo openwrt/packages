@@ -31,6 +31,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | nixspam             | iX spam protection             | [Link](http://www.nixspam.org)                                                    |
 | proxy               | Firehol list of open proxies   | [Link](https://iplists.firehol.org/?ipset=proxylists)                             |
 | ssbl                | SSL botnet IP blacklist        | [Link](https://sslbl.abuse.ch)                                                    |
+| talos               | Cisco Talos IP Blacklist       | [Link](https://talosintelligence.com/reputation_center)                           |
 | threat              | Emerging Threats               | [Link](https://rules.emergingthreats.net)                                         |
 | tor                 | Tor exit nodes                 | [Link](https://fissionrelays.net/lists)                                           |
 | uceprotect1         | Spam protection level 1        | [Link](http://www.uceprotect.net/en/index.php)                                    |
@@ -68,6 +69,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * [OpenWrt](https://openwrt.org), tested with the stable release series (19.07.x) and with the latest rolling snapshot releases. On turris devices it has been successfully tested with TurrisOS 5.2.x  
   <b>Please note:</b> Older OpenWrt releases like 18.06.x or 17.01.x are _not_ supported!  
   <b>Please note:</b> Devices with less than 128 MByte RAM are _not_ supported!  
+  <b>Please note:</b> If you're updating from former banIP 0.3x please manually remove your config (/etc/config/banip) before you start!  
 * A download utility with SSL support: 'wget', 'uclient-fetch' with one of the 'libustream-*' ssl libraries, 'aria2c' or 'curl' is required
 * A certificate store like 'ca-bundle', as banIP checks the validity of the SSL certificates of all download sites by default
 * Optional E-Mail notification support: for E-Mail notifications you need to install the additional 'msmtp' package
