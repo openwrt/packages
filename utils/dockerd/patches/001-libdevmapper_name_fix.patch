@@ -1,7 +1,5 @@
-Index: docker-ce-20.10.0/hack/make.sh
-===================================================================
---- docker-ce-20.10.0.orig/hack/make.sh
-+++ docker-ce-20.10.0/hack/make.sh
+--- a/hack/make.sh
++++ b/hack/make.sh
 @@ -95,7 +95,7 @@ fi
  # with a newer libdevmapper than the one it was built with.
  if
