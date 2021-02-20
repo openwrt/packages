@@ -206,11 +206,14 @@ iptables_add_blocking_rule() {
 			return
 		}
 
+		# Wait for a maximum of 10 second per command, retrying every millisecond
+		local iptables_wait_args="--wait 10 --wait-interval 1000"
+
 		# Ignore errors as it might already be present
-		iptables --table filter --new DOCKER-USER 2>/dev/null
-		if ! iptables --table filter --check DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump REJECT 2>/dev/null; then
+		iptables ${iptables_wait_args} --table filter --new DOCKER-USER 2>/dev/null
+		if ! iptables ${iptables_wait_args} --table filter --check DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump REJECT 2>/dev/null; then
 			logger -t "dockerd-init" -p notice "Drop traffic from ${inbound} to ${outbound}"
-			iptables --table filter --insert DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump REJECT
+			iptables ${iptables_wait_args} --table filter --insert DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump REJECT
 		fi
 	}
 
