@@ -5,7 +5,7 @@
 
 # Versions
 
-ovs_version:=2.14.0
+ovs_version:=2.15.0
 ovs_builddir=$(KERNEL_BUILD_DIR)/openvswitch-$(ovs_version)
 
 # Shared vars, macros
