@@ -11,7 +11,7 @@ PKG_NAME:=icu4c
 MAJOR_VERSION:=68
 MINOR_VERSION:=2
 PKG_VERSION:=$(MAJOR_VERSION).$(MINOR_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(MAJOR_VERSION)_$(MINOR_VERSION)-src.tgz
 PKG_SOURCE_URL:=https://github.com/unicode-org/icu/releases/download/release-$(MAJOR_VERSION)-$(MINOR_VERSION)
@@ -99,8 +99,12 @@ CONFIGURE_ARGS:= \
 
 HOST_CONFIGURE_CMD:= ./runConfigureICU
 HOST_CONFIGURE_VARS:=
-HOST_CONFIGURE_ARGS:= \
-	Linux/gcc \
+ifeq ($(HOST_OS),Darwin)
+HOST_CONFIGURE_ARGS:= MacOSX
+else
+HOST_CONFIGURE_ARGS:= Linux/gcc 
+endif
+HOST_CONFIGURE_ARGS+= \
 	--disable-debug \
 	--enable-release \
 	--enable-shared \
@@ -136,7 +140,11 @@ define Host/Install
 	$(INSTALL_DATA) $(HOST_BUILD_DIR)/config/icucross.* $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/config/
 	$(INSTALL_BIN)  $(HOST_BUILD_DIR)/bin/icupkg $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/bin/
 	$(INSTALL_BIN)  $(HOST_BUILD_DIR)/bin/pkgdata $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/bin/
+ifeq ($(HOST_OS),Darwin)
+	$(CP)           $(HOST_BUILD_DIR)/lib/*.dylib* $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/lib/
+else
 	$(CP)           $(HOST_BUILD_DIR)/lib/*.so* $(STAGING_DIR_HOSTPKG)/share/icu/$(PKG_VERSION)/lib/
+endif
 	$(RM)           $(STAGING_DIR_HOSTPKG)/share/icu/current
 	(cd $(STAGING_DIR_HOSTPKG)/share/icu;$(LN) $(PKG_VERSION) current)
 endef
