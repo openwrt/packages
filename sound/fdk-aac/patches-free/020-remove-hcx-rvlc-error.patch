@@ -52,8 +52,6 @@ Subject: Remove HCR, RVLC, error concealment
  delete mode 100644 libAACdec/src/rvlcconceal.cpp
  delete mode 100644 libAACdec/src/rvlcconceal.h
 
-diff --git a/Makefile.am b/Makefile.am
-index 79e0677..16b21e1 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -50,9 +50,6 @@ AACDEC_SRC = \
@@ -79,8 +77,6 @@ index 79e0677..16b21e1 100644
      libAACdec/src/stereo.cpp \
      libAACdec/src/usacdec_ace_d4t64.cpp \
      libAACdec/src/usacdec_ace_ltp.cpp \
-diff --git a/Makefile.vc b/Makefile.vc
-index ac3c097..97a0615 100644
 --- a/Makefile.vc
 +++ b/Makefile.vc
 @@ -34,9 +34,6 @@ AACDEC_SRC = \
@@ -106,8 +102,6 @@ index ac3c097..97a0615 100644
      libAACdec/src/stereo.cpp \
      libAACdec/src/usacdec_ace_d4t64.cpp \
      libAACdec/src/usacdec_ace_ltp.cpp \
-diff --git a/libAACdec/src/aac_ram.h b/libAACdec/src/aac_ram.h
-index a861e25..7ee8d26 100644
 --- a/libAACdec/src/aac_ram.h
 +++ b/libAACdec/src/aac_ram.h
 @@ -111,9 +111,6 @@ amm-info@iis.fraunhofer.de
@@ -120,8 +114,6 @@ index a861e25..7ee8d26 100644
  /* End of formal fix.h */
  
  #define MAX_SYNCHS 10
-diff --git a/libAACdec/src/aac_rom.cpp b/libAACdec/src/aac_rom.cpp
-index cbdffc4..2c3c1b1 100644
 --- a/libAACdec/src/aac_rom.cpp
 +++ b/libAACdec/src/aac_rom.cpp
 @@ -1583,102 +1583,6 @@ const SCHAR *aQuantTable[] = {
@@ -227,8 +219,6 @@ index cbdffc4..2c3c1b1 100644
  /*                                     CB:                           11     13
   * 15    17    19     21      23      25      27      39       31     */
  
-diff --git a/libAACdec/src/aac_rom.h b/libAACdec/src/aac_rom.h
-index ffaf951..503e459 100644
 --- a/libAACdec/src/aac_rom.h
 +++ b/libAACdec/src/aac_rom.h
 @@ -105,8 +105,6 @@ amm-info@iis.fraunhofer.de
@@ -249,9 +239,6 @@ index ffaf951..503e459 100644
  
  extern const SCHAR aCodebook2StartInt[];
  
-diff --git a/libAACdec/src/aacdec_hcr.cpp b/libAACdec/src/aacdec_hcr.cpp
-deleted file mode 100644
-index 6114756..0000000
 --- a/libAACdec/src/aacdec_hcr.cpp
 +++ /dev/null
 @@ -1,1498 +0,0 @@
@@ -1753,9 +1740,6 @@ index 6114756..0000000
 -    }
 -  }
 -}
-diff --git a/libAACdec/src/aacdec_hcr.h b/libAACdec/src/aacdec_hcr.h
-deleted file mode 100644
-index be21144..0000000
 --- a/libAACdec/src/aacdec_hcr.h
 +++ /dev/null
 @@ -1,128 +0,0 @@
@@ -1887,9 +1871,6 @@ index be21144..0000000
 -INT getHcrType(H_HCR_INFO hHcr);
 -
 -#endif /* AACDEC_HCR_H */
-diff --git a/libAACdec/src/aacdec_hcr_bit.cpp b/libAACdec/src/aacdec_hcr_bit.cpp
-deleted file mode 100644
-index 0198659..0000000
 --- a/libAACdec/src/aacdec_hcr_bit.cpp
 +++ /dev/null
 @@ -1,164 +0,0 @@
@@ -2057,9 +2038,6 @@ index 0198659..0000000
 -
 -  return (bit);
 -}
-diff --git a/libAACdec/src/aacdec_hcr_bit.h b/libAACdec/src/aacdec_hcr_bit.h
-deleted file mode 100644
-index 77242ac..0000000
 --- a/libAACdec/src/aacdec_hcr_bit.h
 +++ /dev/null
 @@ -1,114 +0,0 @@
@@ -2177,9 +2155,6 @@ index 77242ac..0000000
 -                             INT *pRightStartOfSegment, UCHAR readDirection);
 -
 -#endif /* AACDEC_HCR_BIT_H */
-diff --git a/libAACdec/src/aacdec_hcr_types.h b/libAACdec/src/aacdec_hcr_types.h
-deleted file mode 100644
-index 1cc3cb0..0000000
 --- a/libAACdec/src/aacdec_hcr_types.h
 +++ /dev/null
 @@ -1,432 +0,0 @@
@@ -2615,9 +2590,6 @@ index 1cc3cb0..0000000
 -typedef CErHcrInfo *H_HCR_INFO;
 -
 -#endif /* AACDEC_HCR_TYPES_H */
-diff --git a/libAACdec/src/aacdec_hcrs.cpp b/libAACdec/src/aacdec_hcrs.cpp
-deleted file mode 100644
-index d2bc867..0000000
 --- a/libAACdec/src/aacdec_hcrs.cpp
 +++ /dev/null
 @@ -1,1551 +0,0 @@
@@ -4172,9 +4144,6 @@ index d2bc867..0000000
 -
 -  return STOP_THIS_STATE;
 -}
-diff --git a/libAACdec/src/aacdec_hcrs.h b/libAACdec/src/aacdec_hcrs.h
-deleted file mode 100644
-index acb2f40..0000000
 --- a/libAACdec/src/aacdec_hcrs.h
 +++ /dev/null
 @@ -1,176 +0,0 @@
@@ -4354,8 +4323,6 @@ index acb2f40..0000000
 -UINT Hcr_State_BODY_SIGN_ESC__ESC_WORD(HANDLE_FDK_BITSTREAM, void*);
 -
 -#endif /* AACDEC_HCRS_H */
-diff --git a/libAACdec/src/aacdecoder.cpp b/libAACdec/src/aacdecoder.cpp
-index 2419ecc..6c03567 100644
 --- a/libAACdec/src/aacdecoder.cpp
 +++ b/libAACdec/src/aacdecoder.cpp
 @@ -163,17 +163,12 @@ amm-info@iis.fraunhofer.de
@@ -4376,7 +4343,7 @@ index 2419ecc..6c03567 100644
  #include "FDK_crc.h"
  #define PS_IS_EXPLICITLY_DISABLED(aot, flags) \
    (((aot) == AOT_DRM_AAC) && !(flags & AC_PS_PRESENT))
-@@ -1191,10 +1186,6 @@ LINKSPEC_CPP HANDLE_AACDECODER CAacDecoder_Open(
+@@ -1191,10 +1186,6 @@ LINKSPEC_CPP HANDLE_AACDECODER CAacDecod
    /* initialize progam config */
    CProgramConfig_Init(&self->pce);
  
@@ -4387,7 +4354,7 @@ index 2419ecc..6c03567 100644
    self->hDrcInfo = GetDrcInfo();
    if (self->hDrcInfo == NULL) {
      goto bail;
-@@ -1202,8 +1193,7 @@ LINKSPEC_CPP HANDLE_AACDECODER CAacDecoder_Open(
+@@ -1202,8 +1193,7 @@ LINKSPEC_CPP HANDLE_AACDECODER CAacDecod
    /* Init common DRC structure */
    aacDecoder_drcInit(self->hDrcInfo);
    /* Set default frame delay */
@@ -4397,7 +4364,7 @@ index 2419ecc..6c03567 100644
  
    self->workBufferCore2 = GetWorkBufferCore2();
    if (self->workBufferCore2 == NULL) goto bail;
-@@ -2085,15 +2075,6 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
+@@ -2085,15 +2075,6 @@ CAacDecoder_Init(HANDLE_AACDECODER self,
              if (self->pAacDecoderStaticChannelInfo[ch]->pCpeStaticData !=
                  NULL) {
                self->pAacDecoderStaticChannelInfo[ch]
@@ -4413,7 +4380,7 @@ index 2419ecc..6c03567 100644
                    ->pCpeStaticData->jointStereoPersistentData.scratchBuffer =
                    (FIXP_DBL *)self->pTimeData2;
              }
-@@ -2193,12 +2174,6 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
+@@ -2193,12 +2174,6 @@ CAacDecoder_Init(HANDLE_AACDECODER self,
        /* Delete mixdown metadata from the past */
        pcmDmx_Reset(self->hPcmUtils, PCMDMX_RESET_BS_DATA);
  
@@ -4426,7 +4393,7 @@ index 2419ecc..6c03567 100644
        ch++;
        chIdx++;
      }
-@@ -2336,12 +2311,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
+@@ -2336,12 +2311,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecod
        int ch;
        /* Clear history */
        for (ch = 0; ch < self->aacChannels; ch++) {
@@ -4439,7 +4406,7 @@ index 2419ecc..6c03567 100644
          /* Clear overlap-add buffers to avoid clicks. */
          FDKmemclear(self->pAacDecoderStaticChannelInfo[ch]->pOverlapBuffer,
                      OverlapBufferSize * sizeof(FIXP_DBL));
-@@ -2403,15 +2372,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
+@@ -2403,15 +2372,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecod
            if (ch >= self->aacChannels) {
              return AAC_DEC_UNKNOWN;
            }
@@ -4455,7 +4422,7 @@ index 2419ecc..6c03567 100644
            ch++;
          }
        }
-@@ -3081,13 +3041,8 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
+@@ -3081,13 +3041,8 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecod
           * following concealment method, mark the frame as erroneous */
          {
            CIcsInfo *pIcsInfo = &pAacDecoderChannelInfo->icsInfo;
@@ -4470,7 +4437,7 @@ index 2419ecc..6c03567 100644
            const int icsIsInvalid = (GetScaleFactorBandsTransmitted(pIcsInfo) >
                                      GetScaleFactorBandsTotal(pIcsInfo));
            const int icsInfoUsedinFadeOut =
-@@ -3098,29 +3053,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
+@@ -3098,29 +3053,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecod
            }
          }
  
@@ -4500,7 +4467,7 @@ index 2419ecc..6c03567 100644
          if (flags & (AACDEC_INTR)) {
            /* Reset DRC control data for this channel */
            aacDecoder_drcInitChannelData(&pAacDecoderStaticChannelInfo->drcData);
-@@ -3191,20 +3123,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
+@@ -3191,20 +3123,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecod
                ErrorStatus = AAC_DEC_UNKNOWN;
                break;
            }
@@ -4521,7 +4488,7 @@ index 2419ecc..6c03567 100644
        }
      }
  
-@@ -3249,11 +3167,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
+@@ -3249,11 +3167,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecod
      }
    }
  
@@ -4533,8 +4500,6 @@ index 2419ecc..6c03567 100644
    /* Map DRC data to StreamInfo structure */
    aacDecoder_drcGetInfo(self->hDrcInfo, &self->streamInfo.drcPresMode,
                          &self->streamInfo.drcProgRefLev);
-diff --git a/libAACdec/src/aacdecoder.h b/libAACdec/src/aacdecoder.h
-index 0711160..3750389 100644
 --- a/libAACdec/src/aacdecoder.h
 +++ b/libAACdec/src/aacdecoder.h
 @@ -236,9 +236,6 @@ struct AAC_DECODER_INSTANCE {
@@ -4547,8 +4512,6 @@ index 0711160..3750389 100644
    CUsacCoreExtensions usacCoreExt; /*!< Data and handles to extend USAC FD/LPD
                                        core decoder (SBR, MPS, ...) */
    UINT numUsacElements[(1 * 1)];
-diff --git a/libAACdec/src/aacdecoder_lib.cpp b/libAACdec/src/aacdecoder_lib.cpp
-index bde978e..1fc6ea0 100644
 --- a/libAACdec/src/aacdecoder_lib.cpp
 +++ b/libAACdec/src/aacdecoder_lib.cpp
 @@ -107,8 +107,6 @@ amm-info@iis.fraunhofer.de
@@ -4560,7 +4523,7 @@ index bde978e..1fc6ea0 100644
  #include "aacdec_drc.h"
  
  #include "sac_dec_lib.h"
-@@ -280,26 +278,6 @@ static INT aacDecoder_ConfigCallback(void *handle,
+@@ -280,26 +278,6 @@ static INT aacDecoder_ConfigCallback(voi
      { err = aacDecoder_Config(self, pAscStruct, configMode, configChanged); }
    }
    if (err == AAC_DEC_OK) {
@@ -4587,7 +4550,7 @@ index bde978e..1fc6ea0 100644
      errTp = TRANSPORTDEC_OK;
    } else {
      if (err == AAC_DEC_NEED_TO_RESTART) {
-@@ -529,17 +507,12 @@ static AAC_DECODER_ERROR setConcealMethod(
+@@ -529,17 +507,12 @@ static AAC_DECODER_ERROR setConcealMetho
      const HANDLE_AACDECODER self, /*!< Handle of the decoder instance */
      const INT method) {
    AAC_DECODER_ERROR errorStatus = AAC_DEC_OK;
@@ -4605,7 +4568,7 @@ index bde978e..1fc6ea0 100644
      hDrcInfo = self->hDrcInfo;
      hPcmDmx = self->hPcmUtils;
      if (self->flags[0] & (AC_USAC | AC_RSVD50 | AC_RSV603DA) && method >= 2) {
-@@ -555,33 +528,13 @@ static AAC_DECODER_ERROR setConcealMethod(
+@@ -555,33 +528,13 @@ static AAC_DECODER_ERROR setConcealMetho
      }
    }
  
@@ -4641,7 +4604,7 @@ index bde978e..1fc6ea0 100644
      switch (err) {
        case PCMDMX_INVALID_HANDLE:
          errorStatus = AAC_DEC_INVALID_HANDLE;
-@@ -596,15 +549,10 @@ static AAC_DECODER_ERROR setConcealMethod(
+@@ -596,15 +549,10 @@ static AAC_DECODER_ERROR setConcealMetho
  
  bail:
    if ((errorStatus != AAC_DEC_OK) && (errorStatus != AAC_DEC_INVALID_HANDLE)) {
@@ -4659,7 +4622,7 @@ index bde978e..1fc6ea0 100644
    }
  
    return errorStatus;
-@@ -834,9 +782,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_SetParam(
+@@ -834,9 +782,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecode
           packed into a helper function which keeps all modules and libs in a
           consistent state even in the case an error occures. */
        errorStatus = setConcealMethod(self, value);
@@ -4669,7 +4632,7 @@ index bde978e..1fc6ea0 100644
        break;
  
      default:
-@@ -966,8 +911,7 @@ LINKSPEC_CPP HANDLE_AACDECODER aacDecoder_Open(TRANSPORT_TYPE transportFmt,
+@@ -966,8 +911,7 @@ LINKSPEC_CPP HANDLE_AACDECODER aacDecode
    aacDec->limiterEnableCurr = 0;
  
    /* Assure that all modules have same delay */
@@ -4679,7 +4642,7 @@ index bde978e..1fc6ea0 100644
      err = -1;
      goto bail;
    }
-@@ -1359,9 +1303,7 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
+@@ -1359,9 +1303,7 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER
            break;
        }
  
@@ -4690,7 +4653,7 @@ index bde978e..1fc6ea0 100644
          self->frameOK = 0; /* if an error has occured do concealment in the SBR
                                decoder too */
        }
-@@ -1457,9 +1399,6 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
+@@ -1457,9 +1399,6 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER
               domain signal before the QMF synthesis. Therefore the DRC gains
               need to be delayed by the QMF synthesis delay. */
            if (self->mpsEnableCurr) drcDelay = 257;
@@ -4700,8 +4663,6 @@ index bde978e..1fc6ea0 100644
  
            for (ch = 0; ch < self->streamInfo.numChannels; ch++) {
              UCHAR mapValue = FDK_chMapDescr_getMapValue(
-diff --git a/libAACdec/src/block.cpp b/libAACdec/src/block.cpp
-index b3d09a6..a394cd7 100644
 --- a/libAACdec/src/block.cpp
 +++ b/libAACdec/src/block.cpp
 @@ -114,9 +114,6 @@ amm-info@iis.fraunhofer.de
@@ -4714,7 +4675,7 @@ index b3d09a6..a394cd7 100644
  #if defined(__arm__)
  #include "arm/block_arm.cpp"
  #endif
-@@ -331,12 +328,7 @@ AAC_DECODER_ERROR CBlock_ReadSectionData(
+@@ -331,12 +328,7 @@ AAC_DECODER_ERROR CBlock_ReadSectionData
    int group;
    UCHAR sect_cb;
    UCHAR *pCodeBook = pAacDecoderChannelInfo->pDynData->aCodeBook;
@@ -4727,7 +4688,7 @@ index b3d09a6..a394cd7 100644
    const SHORT *BandOffsets = GetScaleFactorBandOffsets(
        &pAacDecoderChannelInfo->icsInfo, pSamplingRateInfo);
    pAacDecoderChannelInfo->pDynData->specificTo.aac.numberSection = 0;
-@@ -376,22 +368,8 @@ AAC_DECODER_ERROR CBlock_ReadSectionData(
+@@ -376,22 +368,8 @@ AAC_DECODER_ERROR CBlock_ReadSectionData
        top = band + sect_len;
  
        if (flags & AC_ER_HCR) {
@@ -4752,7 +4713,7 @@ index b3d09a6..a394cd7 100644
        }
  
        /* Check spectral line limits */
-@@ -718,41 +696,12 @@ AAC_DECODER_ERROR CBlock_ReadSpectralData(
+@@ -718,41 +696,12 @@ AAC_DECODER_ERROR CBlock_ReadSpectralDat
      /* plain huffman decoding (short) finished */
    }
  
@@ -4796,8 +4757,6 @@ index b3d09a6..a394cd7 100644
  
    if (IsLongBlock(&pAacDecoderChannelInfo->icsInfo) &&
        !(flags & (AC_ELD | AC_SCALABLE))) {
-diff --git a/libAACdec/src/channel.cpp b/libAACdec/src/channel.cpp
-index a020034..e17ccf4 100644
 --- a/libAACdec/src/channel.cpp
 +++ b/libAACdec/src/channel.cpp
 @@ -106,12 +106,6 @@ amm-info@iis.fraunhofer.de
@@ -4852,8 +4811,6 @@ index a020034..e17ccf4 100644
          }
          break;
  
-diff --git a/libAACdec/src/channelinfo.h b/libAACdec/src/channelinfo.h
-index 4523400..04f0012 100644
 --- a/libAACdec/src/channelinfo.h
 +++ b/libAACdec/src/channelinfo.h
 @@ -117,17 +117,12 @@ amm-info@iis.fraunhofer.de
@@ -4912,9 +4869,6 @@ index 4523400..04f0012 100644
  } CAacDecoderCommonData;
  
  typedef struct {
-diff --git a/libAACdec/src/conceal.cpp b/libAACdec/src/conceal.cpp
-deleted file mode 100644
-index 5895cb8..0000000
 --- a/libAACdec/src/conceal.cpp
 +++ /dev/null
 @@ -1,2095 +0,0 @@
@@ -7013,9 +6967,6 @@ index 5895cb8..0000000
 -    }
 -  }
 -}
-diff --git a/libAACdec/src/conceal.h b/libAACdec/src/conceal.h
-deleted file mode 100644
-index e01a796..0000000
 --- a/libAACdec/src/conceal.h
 +++ /dev/null
 @@ -1,152 +0,0 @@
@@ -7171,9 +7122,6 @@ index e01a796..0000000
 -    FIXP_PCM *pcmdata, FIXP_PCM *pcmdata_1);
 -
 -#endif /* #ifndef CONCEAL_H */
-diff --git a/libAACdec/src/conceal_types.h b/libAACdec/src/conceal_types.h
-deleted file mode 100644
-index d90374e..0000000
 --- a/libAACdec/src/conceal_types.h
 +++ /dev/null
 @@ -1,203 +0,0 @@
@@ -7380,9 +7328,6 @@ index d90374e..0000000
 -} CConcealmentInfo;
 -
 -#endif /* #ifndef CONCEAL_TYPES_H */
-diff --git a/libAACdec/src/rvlc.cpp b/libAACdec/src/rvlc.cpp
-deleted file mode 100644
-index b7a9be1..0000000
 --- a/libAACdec/src/rvlc.cpp
 +++ /dev/null
 @@ -1,1217 +0,0 @@
@@ -8603,9 +8548,6 @@ index b7a9be1..0000000
 -    }
 -  }
 -}
-diff --git a/libAACdec/src/rvlc.h b/libAACdec/src/rvlc.h
-deleted file mode 100644
-index 9c60d51..0000000
 --- a/libAACdec/src/rvlc.h
 +++ /dev/null
 @@ -1,153 +0,0 @@
@@ -8762,9 +8704,6 @@ index 9c60d51..0000000
 -    const UINT flags, const INT elChannels);
 -
 -#endif /* RVLC_H */
-diff --git a/libAACdec/src/rvlc_info.h b/libAACdec/src/rvlc_info.h
-deleted file mode 100644
-index e7b3b99..0000000
 --- a/libAACdec/src/rvlc_info.h
 +++ /dev/null
 @@ -1,204 +0,0 @@
@@ -8972,9 +8911,6 @@ index e7b3b99..0000000
 -typedef CErRvlcInfo RVLC_INFO; /* temp */
 -
 -#endif /* RVLC_INFO_H */
-diff --git a/libAACdec/src/rvlcbit.cpp b/libAACdec/src/rvlcbit.cpp
-deleted file mode 100644
-index b0c4596..0000000
 --- a/libAACdec/src/rvlcbit.cpp
 +++ /dev/null
 @@ -1,148 +0,0 @@
@@ -9126,9 +9062,6 @@ index b0c4596..0000000
 -
 -  return (bit);
 -}
-diff --git a/libAACdec/src/rvlcbit.h b/libAACdec/src/rvlcbit.h
-deleted file mode 100644
-index 2578453..0000000
 --- a/libAACdec/src/rvlcbit.h
 +++ /dev/null
 @@ -1,111 +0,0 @@
@@ -9243,9 +9176,6 @@ index 2578453..0000000
 -                               INT *pPosition, UCHAR readDirection);
 -
 -#endif /* RVLCBIT_H */
-diff --git a/libAACdec/src/rvlcconceal.cpp b/libAACdec/src/rvlcconceal.cpp
-deleted file mode 100644
-index 77fda68..0000000
 --- a/libAACdec/src/rvlcconceal.cpp
 +++ /dev/null
 @@ -1,787 +0,0 @@
@@ -10036,9 +9966,6 @@ index 77fda68..0000000
 -    }
 -  }
 -}
-diff --git a/libAACdec/src/rvlcconceal.h b/libAACdec/src/rvlcconceal.h
-deleted file mode 100644
-index 8e2062e..0000000
 --- a/libAACdec/src/rvlcconceal.h
 +++ /dev/null
 @@ -1,127 +0,0 @@
@@ -10169,8 +10096,6 @@ index 8e2062e..0000000
 -    CAacDecoderStaticChannelInfo *pAacDecoderStaticChannelInfo);
 -
 -#endif /* RVLCCONCEAL_H */
-diff --git a/libAACdec/src/usacdec_lpd.cpp b/libAACdec/src/usacdec_lpd.cpp
-index 2110172..fcf7a76 100644
 --- a/libAACdec/src/usacdec_lpd.cpp
 +++ b/libAACdec/src/usacdec_lpd.cpp
 @@ -111,8 +111,6 @@ amm-info@iis.fraunhofer.de
@@ -10182,7 +10107,7 @@ index 2110172..fcf7a76 100644
  #include "block.h"
  
  #define SF_PITCH_TRACK 6
-@@ -1210,8 +1208,7 @@ AAC_DECODER_ERROR CLpdChannelStream_Read(
+@@ -1210,8 +1208,7 @@ AAC_DECODER_ERROR CLpdChannelStream_Read
                              : &lg_table_ccfl[1][lg_table_offset];
    int last_lpc_lost = pAacDecoderStaticChannelInfo->last_lpc_lost;
  
@@ -10192,7 +10117,7 @@ index 2110172..fcf7a76 100644
  
    INT i_offset;
    UINT samplingRate;
-@@ -1392,13 +1389,7 @@ AAC_DECODER_ERROR CLpdChannelStream_Read(
+@@ -1392,13 +1389,7 @@ AAC_DECODER_ERROR CLpdChannelStream_Read
      }
    }
  
@@ -10207,7 +10132,7 @@ index 2110172..fcf7a76 100644
      if (pAacDecoderStaticChannelInfo->last_lpd_mode == 255) {
        /* We need it for TCX decoding or ACELP excitation update */
        E_LPC_f_lsp_a_conversion(
-@@ -1426,9 +1417,7 @@ AAC_DECODER_ERROR CLpdChannelStream_Read(
+@@ -1426,9 +1417,7 @@ AAC_DECODER_ERROR CLpdChannelStream_Read
            FD_SHORT;
        pAacDecoderChannelInfo->data.usac.lpd_mode_last = 255;
  
@@ -10228,6 +10153,3 @@ index 2110172..fcf7a76 100644
  
    /* Maintain LPD mode from previous frame */
    if ((pAacDecoderStaticChannelInfo->last_core_mode == FD_LONG) ||
--- 
-cgit v1.1
-
