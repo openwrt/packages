@@ -9,7 +9,7 @@
  
  EXTRA_DIST =				\
    .mailmap				\
-@@ -210,6 +210,3 @@ AM_CPPFLAGS = -Ilib -I$(top_srcdir)/lib -Isrc -I$(top_srcdir)/src
+@@ -210,6 +210,3 @@ AM_CPPFLAGS = -Ilib -I$(top_srcdir)/lib
  
  include $(top_srcdir)/lib/local.mk
  include $(top_srcdir)/src/local.mk
@@ -18,7 +18,7 @@
 -include $(top_srcdir)/tests/local.mk
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -3156,11 +3156,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
+@@ -3156,11 +3156,7 @@ RECURSIVE_TARGETS = all-recursive check-
  	install-ps-recursive install-recursive installcheck-recursive \
  	installdirs-recursive pdf-recursive ps-recursive \
  	tags-recursive uninstall-recursive
@@ -31,7 +31,7 @@
  am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
  am__vpath_adj = case $$p in \
      $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-@@ -3411,11 +3407,11 @@ am__DIST_COMMON = $(doc_coreutils_TEXINFOS) $(srcdir)/Makefile.in \
+@@ -3411,11 +3407,11 @@ am__DIST_COMMON = $(doc_coreutils_TEXINF
  	$(top_srcdir)/build-aux/missing \
  	$(top_srcdir)/build-aux/test-driver \
  	$(top_srcdir)/build-aux/texinfo.tex \
@@ -82,7 +82,7 @@
  	@for dep in $?; do \
  	  case '$(am__configure_deps)' in \
  	    *$$dep*) \
-@@ -7052,7 +7048,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
+@@ -7052,7 +7048,7 @@ Makefile: $(srcdir)/Makefile.in $(top_bu
  	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__maybe_remake_depfiles)'; \
  	    cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__maybe_remake_depfiles);; \
  	esac;

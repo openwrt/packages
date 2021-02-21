@@ -1,8 +1,6 @@
-diff --git a/configure.ac b/configure.ac
-index a5f9de5..4c77e97 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -34,9 +34,6 @@ AC_FUNC_ALLOCA
+@@ -34,9 +34,6 @@ AC_FUNC_GCC_VISIBILITY
  AM_PROG_AR
  LT_INIT
  

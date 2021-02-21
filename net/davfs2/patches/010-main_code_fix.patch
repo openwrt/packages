@@ -1,6 +1,6 @@
 --- a/src/webdav.c
 +++ b/src/webdav.c
-@@ -2037,7 +2037,7 @@ ssl_verify(void *userdata, int failures, const ne_ssl_certificate *cert)
+@@ -2045,7 +2045,7 @@ ssl_verify(void *userdata, int failures,
              len = getline(&s, &n, stdin);
              if (len < 0)
                  abort();

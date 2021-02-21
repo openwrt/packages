@@ -9,8 +9,6 @@ the algorithm implemenetations.
  ibrdtn/data/Bundle.h | 3 +++
  1 file changed, 3 insertions(+)
 
-diff --git a/ibrdtn/data/Bundle.h b/ibrdtn/data/Bundle.h
-index 036a2a6fb..9bbc066d7 100644
 --- a/ibrdtn/data/Bundle.h
 +++ b/ibrdtn/data/Bundle.h
 @@ -69,6 +69,9 @@ namespace dtn

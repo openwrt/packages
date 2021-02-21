@@ -1,5 +1,3 @@
-diff --git a/configure b/configure
-index 88928cf..736fabd 100755
 --- a/configure
 +++ b/configure
 @@ -6964,7 +6964,7 @@ releaseversion='${PACKAGE}-${VERSION}'

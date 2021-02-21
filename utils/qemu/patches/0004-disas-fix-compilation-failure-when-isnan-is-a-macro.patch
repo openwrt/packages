@@ -7,11 +7,9 @@ Subject: [PATCH] disas: fix compilation failure when isnan is a macro
  disas/libvixl/vixl/utils.h | 16 +++++++++++-----
  1 file changed, 11 insertions(+), 5 deletions(-)
 
-diff --git a/disas/libvixl/vixl/utils.h b/disas/libvixl/vixl/utils.h
-index 5ab134e240..df30663df8 100644
 --- a/disas/libvixl/vixl/utils.h
 +++ b/disas/libvixl/vixl/utils.h
-@@ -118,11 +118,17 @@ double double_pack(uint64_t sign, uint64_t exp, uint64_t mantissa);
+@@ -118,11 +118,17 @@ double double_pack(uint64_t sign, uint64
  // An fpclassify() function for 16-bit half-precision floats.
  int float16classify(float16 value);
  
@@ -30,7 +28,7 @@ index 5ab134e240..df30663df8 100644
      return true;
    }
    return false;
-@@ -132,7 +138,7 @@ inline bool IsSignallingNaN(double num) {
+@@ -132,7 +138,7 @@ inline bool IsSignallingNaN(double num)
  inline bool IsSignallingNaN(float num) {
    const uint32_t kFP32QuietNaNMask = 0x00400000;
    uint32_t raw = float_to_rawbits(num);
@@ -39,7 +37,7 @@ index 5ab134e240..df30663df8 100644
      return true;
    }
    return false;
-@@ -148,21 +154,21 @@ inline bool IsSignallingNaN(float16 num) {
+@@ -148,21 +154,21 @@ inline bool IsSignallingNaN(float16 num)
  
  template <typename T>
  inline bool IsQuietNaN(T num) {

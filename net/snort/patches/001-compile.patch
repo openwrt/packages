@@ -1,7 +1,6 @@
-diff -u --recursive snort-2.9.11.1-vanilla/configure.in snort-2.9.11.1/configure.in
---- snort-2.9.11.1-vanilla/configure.in	2018-03-02 15:41:50.601809500 -0500
-+++ snort-2.9.11.1/configure.in	2018-03-02 16:19:08.119307772 -0500
-@@ -282,21 +282,7 @@
+--- a/configure.in
++++ b/configure.in
+@@ -282,21 +282,7 @@ AC_CHECK_TYPES([int8_t,int16_t,int32_t,i
  AC_CHECK_TYPES([boolean])
  
  # In case INADDR_NONE is not defined (like on Solaris)
@@ -24,7 +23,7 @@ diff -u --recursive snort-2.9.11.1-vanilla/configure.in snort-2.9.11.1/configure
  AC_MSG_RESULT($have_inaddr_none)
  if test "x$have_inaddr_none" = "xno"; then
  	AC_DEFINE([INADDR_NONE],[-1],[For INADDR_NONE definition])
-@@ -428,17 +414,7 @@
+@@ -428,17 +414,7 @@ if test "x$LPCAP" = "xno"; then
    fi
  fi
  
@@ -43,7 +42,7 @@ diff -u --recursive snort-2.9.11.1-vanilla/configure.in snort-2.9.11.1/configure
  AC_MSG_RESULT($have_pcap_lex_destroy)
  if test "x$have_pcap_lex_destroy" = "xyes"; then
      AC_DEFINE([HAVE_PCAP_LEX_DESTROY],[1],[Can cleanup lex buffer stack created by pcap bpf filter])
-@@ -715,18 +691,7 @@
+@@ -716,18 +692,7 @@ fi
  
  AC_CHECK_FUNCS([daq_hup_apply] [daq_acquire_with_meta] [daq_dp_add_dc])
  
@@ -63,7 +62,7 @@ diff -u --recursive snort-2.9.11.1-vanilla/configure.in snort-2.9.11.1/configure
  AC_MSG_RESULT($have_daq_real_addresses)
  if test "x$have_daq_real_addresses" = "xyes"; then
      AC_DEFINE([HAVE_DAQ_REAL_ADDRESSES],[1],
-@@ -753,56 +718,21 @@
+@@ -770,56 +735,21 @@ if test "x$ac_cv_func_daq_dp_add_dc" = "
  
  fi
  
@@ -123,7 +122,7 @@ diff -u --recursive snort-2.9.11.1-vanilla/configure.in snort-2.9.11.1/configure
  AC_MSG_RESULT($have_daq_ext_modflow)
  if test "x$have_daq_ext_modflow" = "xyes"; then
      CCONFIGFLAGS="${CCONFIGFLAGS} -DHAVE_DAQ_EXT_MODFLOW"
-@@ -810,20 +740,7 @@
+@@ -827,20 +757,7 @@ if test "x$have_daq_ext_modflow" = "xyes
          [DAQ version supports extended flow modifiers.])
  fi
  
@@ -145,7 +144,7 @@ diff -u --recursive snort-2.9.11.1-vanilla/configure.in snort-2.9.11.1/configure
  AC_MSG_RESULT($have_daq_queryflow)
  if test "x$have_daq_queryflow" = "xyes"; then
      CCONFIGFLAGS="${CCONFIGFLAGS} -DHAVE_DAQ_QUERYFLOW"
-@@ -831,17 +748,7 @@
+@@ -848,17 +765,7 @@ if test "x$have_daq_queryflow" = "xyes";
          [DAQ version supports query flow.])
  fi
  
@@ -164,7 +163,7 @@ diff -u --recursive snort-2.9.11.1-vanilla/configure.in snort-2.9.11.1/configure
  AC_MSG_RESULT($have_daq_data_channel_flags)
  if test "x$have_daq_data_channel_flags" = "xyes"; then
      CCONFIGFLAGS="${CCONFIGFLAGS} -DHAVE_DAQ_DATA_CHANNEL_PARAMS"
-@@ -849,18 +756,7 @@
+@@ -866,18 +773,7 @@ if test "x$have_daq_data_channel_flags"
          [DAQ version supports data channel.])
  fi
  
@@ -184,7 +183,7 @@ diff -u --recursive snort-2.9.11.1-vanilla/configure.in snort-2.9.11.1/configure
  AC_MSG_RESULT($have_daq_data_channel_separate_ip_versions)
  if test "x$have_daq_data_channel_separate_ip_versions" = "xyes"; then
      CCONFIGFLAGS="${CCONFIGFLAGS} -DHAVE_DAQ_DATA_CHANNEL_SEPARATE_IP_VERSIONS"
-@@ -869,35 +765,14 @@
+@@ -886,35 +782,14 @@ if test "x$have_daq_data_channel_separat
  fi
  
  AC_MSG_CHECKING([for DAQ_VERDICT_RETRY])
@@ -222,7 +221,7 @@ diff -u --recursive snort-2.9.11.1-vanilla/configure.in snort-2.9.11.1/configure
  AC_MSG_RESULT($have_daq_packet_trace)
  if test "x$have_daq_packet_trace" = "xyes"; then
      AC_DEFINE([HAVE_DAQ_PKT_TRACE],[1],
-@@ -906,18 +781,7 @@
+@@ -923,18 +798,7 @@ else
      echo "DAQ version doesn't support packet trace."
  fi
  

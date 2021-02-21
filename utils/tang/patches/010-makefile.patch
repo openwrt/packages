@@ -19,7 +19,7 @@
  dist_libexec_SCRIPTS = src/tangd-update src/tangd-keygen
  dist_bin_SCRIPTS = src/tang-show-keys
  libexec_PROGRAMS = src/tangd
-@@ -52,9 +44,7 @@ src_tangd_SOURCES = src/http.c src/http.h src/tangd.c
+@@ -52,9 +44,7 @@ src_tangd_SOURCES = src/http.c src/http.
  AM_TESTS_ENVIRONMENT = SD_ACTIVATE="@SD_ACTIVATE@" PATH=$(srcdir)/src:$(builddir)/src:$(PATH)
  TESTS = tests/adv tests/rec
  

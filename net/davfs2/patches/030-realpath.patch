@@ -1,6 +1,6 @@
 --- a/src/mount_davfs.c
 +++ b/src/mount_davfs.c
-@@ -702,7 +702,7 @@ check_fstab(const dav_args *args)
+@@ -672,7 +672,7 @@ check_fstab(const dav_args *args)
      struct mntent *ft = getmntent(fstab);
      while (ft) {
          if (ft->mnt_dir) {
@@ -9,7 +9,7 @@
              if (mp) {
                  if (strcmp(mp, mpoint) == 0) {
                      free(mp);
-@@ -966,7 +966,7 @@ parse_commandline(int argc, char *argv[])
+@@ -911,7 +911,7 @@ parse_commandline(int argc, char *argv[]
              url = ne_strdup(argv[i]);
          }
          i++;
@@ -18,7 +18,7 @@
          if (!mpoint)
              error(EXIT_FAILURE, 0,
                    _("can't evaluate path of mount point %s"), mpoint);
-@@ -2188,7 +2188,7 @@ read_config(dav_args *args, const char * filename, int system)
+@@ -2131,7 +2131,7 @@ read_config(dav_args *args, const char *
                  error_at_line(EXIT_FAILURE, 0, filename, lineno,
                                _("malformed line"));
              *(parmv[0] + strlen(parmv[0]) - 1) = '\0';
@@ -27,7 +27,7 @@
              if (mp) {
                  applies = (strcmp(mp, mpoint) == 0);
                  free(mp);
-@@ -2440,7 +2440,7 @@ read_secrets(dav_args *args, const char *filename)
+@@ -2386,7 +2386,7 @@ read_secrets(dav_args *args, const char
              if (scheme && !port)
                  port = ne_uri_defaultport(scheme);
  

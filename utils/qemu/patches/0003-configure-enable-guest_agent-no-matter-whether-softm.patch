@@ -12,8 +12,6 @@ Fixes a512590 ("configure: qemu-ga is only needed with softmmu targets")
  configure | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/configure b/configure
-index cf3f8ffdd7..b4af83a01f 100755
 --- a/configure
 +++ b/configure
 @@ -6414,7 +6414,7 @@ fi

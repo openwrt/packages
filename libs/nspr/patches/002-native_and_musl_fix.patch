@@ -1,6 +1,6 @@
---- a/nspr/config/config.mk	2017-10-31 13:13:22.692343122 +0200
-+++ b/nspr/config/config.mk	2017-10-31 13:13:58.758016378 +0200
-@@ -126,6 +126,9 @@
+--- a/nspr/config/config.mk
++++ b/nspr/config/config.mk
+@@ -126,6 +126,9 @@ endif
  
  ifeq ($(USE_IPV6),1)
  DEFINES += -D_PR_INET6
@@ -10,9 +10,9 @@
  endif
  
  ifeq ($(MOZ_UNICODE),1)
---- a/nspr/config/Makefile.in	2019-03-31 13:44:56.919871810 +0300
-+++ b/nspr/config/Makefile.in	2019-03-31 13:45:21.560545948 +0300
-@@ -30,7 +30,7 @@
+--- a/nspr/config/Makefile.in
++++ b/nspr/config/Makefile.in
+@@ -30,7 +30,7 @@ CSRCS	= now.c
  
  # This version hasn't been ported for us; the one in mozilla/config has
  ifneq ($(OS_ARCH),OS2)

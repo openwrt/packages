@@ -20,6 +20,5 @@
 -add_subdirectory(plugins/output_viewer)
 +#add_subdirectory(plugins/output_viewer)
  add_subdirectory(plugins/output_zmqserver)
-
+ 
  #
- # mjpg_streamer executable

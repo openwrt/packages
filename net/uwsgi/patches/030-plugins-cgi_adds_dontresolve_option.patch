@@ -11,8 +11,6 @@ Signed-off-by: Ansuel Smith <ansuelsmth@gmail.com>
  plugins/cgi/cgi_plugin.c | 13 +++++++++++++
  1 file changed, 13 insertions(+)
 
-diff --git a/plugins/cgi/cgi_plugin.c b/plugins/cgi/cgi_plugin.c
-index d032db17c..30e1cc528 100644
 --- a/plugins/cgi/cgi_plugin.c
 +++ b/plugins/cgi/cgi_plugin.c
 @@ -15,6 +15,7 @@ struct uwsgi_cgi {
@@ -23,7 +21,7 @@ index d032db17c..30e1cc528 100644
  	int from_docroot;
  	int has_mountpoints;
  	struct uwsgi_dyn_dict *default_cgi;
-@@ -75,6 +76,8 @@ struct uwsgi_option uwsgi_cgi_options[] = {
+@@ -75,6 +76,8 @@ struct uwsgi_option uwsgi_cgi_options[]
  
          {"cgi-safe", required_argument, 0, "skip security checks if the cgi file is under the specified path", uwsgi_opt_add_string_list, &uc.cgi_safe, 0},
  
@@ -32,7 +30,7 @@ index d032db17c..30e1cc528 100644
          {0, 0, 0, 0, 0, 0, 0},
  
  };
-@@ -475,6 +478,7 @@ static int uwsgi_cgi_request(struct wsgi_request *wsgi_req) {
+@@ -475,6 +478,7 @@ static int uwsgi_cgi_request(struct wsgi
  
  	char full_path[PATH_MAX];
  	char tmp_path[PATH_MAX];
@@ -40,7 +38,7 @@ index d032db17c..30e1cc528 100644
  	struct stat cgi_stat;
  	int need_free = 0;
  	int is_a_file = 0;
-@@ -533,6 +537,10 @@ static int uwsgi_cgi_request(struct wsgi_request *wsgi_req) {
+@@ -533,6 +537,10 @@ static int uwsgi_cgi_request(struct wsgi
  			uwsgi_404(wsgi_req);
  			return UWSGI_OK;
  		}
@@ -51,7 +49,7 @@ index d032db17c..30e1cc528 100644
  
  		full_path_len = strlen(tmp_path);
  		// add +1 to copy the null byte
-@@ -639,6 +647,11 @@ static int uwsgi_cgi_request(struct wsgi_request *wsgi_req) {
+@@ -639,6 +647,11 @@ static int uwsgi_cgi_request(struct wsgi
  		}
  	}
  

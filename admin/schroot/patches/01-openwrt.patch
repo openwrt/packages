@@ -1,5 +1,5 @@
---- ./configure.ac-orig	2019-12-09 12:56:45.217308628 +0100
-+++ ./configure.ac	2019-12-09 12:57:18.667492923 +0100
+--- a/configure.ac
++++ b/configure.ac
 @@ -284,22 +284,8 @@ if test -z "$DOXYGEN"; then
    HAVE_DOXYGEN="no"
  fi
@@ -91,8 +91,8 @@
  
  AC_MSG_CHECKING([for boost::iostreams in -lboost_iostreams])
  saved_LIBS="${LIBS}"
---- ./bin/schroot-base/schroot-base-run.h-orig	2019-12-09 04:23:51.881428446 +0100
-+++ ./bin/schroot-base/schroot-base-run.h	2019-12-09 04:24:14.934887089 +0100
+--- a/bin/schroot-base/schroot-base-run.h
++++ b/bin/schroot-base/schroot-base-run.h
 @@ -61,8 +61,8 @@ namespace schroot_base
          std::cout.imbue(std::locale());
          std::cerr.imbue(std::locale());
@@ -104,8 +104,8 @@
  
          typename options_type::ptr opts(new options_type);
          main_type kit(opts);
---- ./sbuild/sbuild-feature.h-orig	2019-12-09 04:23:51.881428446 +0100
-+++ ./sbuild/sbuild-feature.h	2019-12-09 04:24:14.934887089 +0100
+--- a/sbuild/sbuild-feature.h
++++ b/sbuild/sbuild-feature.h
 @@ -24,6 +24,7 @@
  #include <string>
  
@@ -114,8 +114,8 @@
  
  namespace sbuild
  {
---- ./etc/setup.d/20copyfiles-orig	2018-11-03 14:26:12.000000000 +0100
-+++ ./etc/setup.d/20copyfiles	2019-12-09 13:56:45.277145648 +0100
+--- a/etc/setup.d/20copyfiles
++++ b/etc/setup.d/20copyfiles
 @@ -39,9 +39,9 @@ copy_file()
          if [ -e "$2" ]; then
  
@@ -128,8 +128,8 @@
  
              if [ "$da" = "$db" ]; then
                  COPY="false"
---- ./etc/setup.d/20nssdatabases-orig	2018-11-03 14:26:12.000000000 +0100
-+++ ./etc/setup.d/20nssdatabases	2019-12-09 13:57:34.397419039 +0100
+--- a/etc/setup.d/20nssdatabases
++++ b/etc/setup.d/20nssdatabases
 @@ -29,7 +29,7 @@ set -e
  dup_nss()
  {
@@ -151,47 +151,44 @@
  
                  # If the database inside and outside the chroot is the
                  # same, it's very likely that dup_nss would blank the
-diff -X /home/jmarcet/.rsync-filter -pru ./etc/profile-templates/all/all/nssdatabases ./etc/profile-templates/all/all/nssdatabases
---- ./etc/profile-templates/all/all/nssdatabases	2018-11-03 14:26:12.000000000 +0100
-+++ ./etc/profile-templates/all/all/nssdatabases	2019-12-09 14:03:12.799297723 +0100
-@@ -4,4 +4,4 @@
+--- a/etc/profile-templates/all/all/nssdatabases
++++ b/etc/profile-templates/all/all/nssdatabases
+@@ -3,5 +3,5 @@
+ # <database name>
  passwd
  shadow
 -group
 -gshadow
 +#group
 +#gshadow
-diff -X /home/jmarcet/.rsync-filter -pru ./etc/profile-templates/buildd/all/nssdatabases ./etc/profile-templates/buildd/all/nssdatabases
---- ./etc/profile-templates/buildd/all/nssdatabases	2018-11-03 14:26:12.000000000 +0100
-+++ ./etc/profile-templates/buildd/all/nssdatabases	2019-12-09 14:03:12.802631074 +0100
-@@ -4,4 +4,4 @@
+--- a/etc/profile-templates/buildd/all/nssdatabases
++++ b/etc/profile-templates/buildd/all/nssdatabases
+@@ -3,5 +3,5 @@
+ # <database name>
  passwd
  shadow
 -group
 -gshadow
 +#group
 +#gshadow
-diff -X /home/jmarcet/.rsync-filter -pru ./etc/profile-templates/default/all/nssdatabases ./etc/profile-templates/default/all/nssdatabases
---- ./etc/profile-templates/default/all/nssdatabases	2018-11-03 14:26:12.000000000 +0100
-+++ ./etc/profile-templates/default/all/nssdatabases	2019-12-09 14:03:12.809297778 +0100
+--- a/etc/profile-templates/default/all/nssdatabases
++++ b/etc/profile-templates/default/all/nssdatabases
 @@ -1,4 +1,4 @@
  services
  protocols
 -networks
 +#networks
  hosts
-diff -X /home/jmarcet/.rsync-filter -pru ./etc/profile-templates/desktop/all/nssdatabases ./etc/profile-templates/desktop/all/nssdatabases
---- ./etc/profile-templates/desktop/all/nssdatabases	2018-11-03 14:26:12.000000000 +0100
-+++ ./etc/profile-templates/desktop/all/nssdatabases	2019-12-09 14:03:12.812631129 +0100
+--- a/etc/profile-templates/desktop/all/nssdatabases
++++ b/etc/profile-templates/desktop/all/nssdatabases
 @@ -1,4 +1,4 @@
  services
  protocols
 -networks
 +#networks
  hosts
-diff -X /home/jmarcet/.rsync-filter -pru ./etc/profile-templates/default/linux/fstab ./etc/profile-templates/default/linux/fstab
---- ./etc/profile-templates/default/linux/fstab	2018-11-03 14:26:12.000000000 +0100
-+++ ./etc/profile-templates/default/linux/fstab	2019-12-09 14:18:46.970887080 +0100
+--- a/etc/profile-templates/default/linux/fstab
++++ b/etc/profile-templates/default/linux/fstab
 @@ -7,7 +7,7 @@
  # to run additional services in the chroot.  However, note that this
  # may potentially cause undesirable behaviour on upgrades, such as
@@ -203,9 +200,8 @@ diff -X /home/jmarcet/.rsync-filter -pru ./etc/profile-templates/default/linux/f
 -#/run/shm       /run/shm        none    rw,bind         0       0
 +/tmp/shm       /dev/shm        none    rw,bind         0       0
 +/tmp/shm       /run/shm        none    rw,bind         0       0
-diff -X /home/jmarcet/.rsync-filter -pru ./etc/profile-templates/desktop/linux/fstab ./etc/profile-templates/desktop/linux/fstab
---- ./etc/profile-templates/desktop/linux/fstab	2018-11-03 14:26:12.000000000 +0100
-+++ ./etc/profile-templates/desktop/linux/fstab	2019-12-09 14:22:14.148555674 +0100
+--- a/etc/profile-templates/desktop/linux/fstab
++++ b/etc/profile-templates/desktop/linux/fstab
 @@ -12,7 +12,7 @@
  # to run additional services in the chroot.  However, note that this
  # may potentially cause undesirable behaviour on upgrades, such as

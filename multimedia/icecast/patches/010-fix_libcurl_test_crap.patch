@@ -1,6 +1,6 @@
 --- a/m4/xiph_curl.m4
 +++ b/m4/xiph_curl.m4
-@@ -52,7 +52,7 @@ AC_CHECK_HEADERS([curl/curl.h],, curl_ok="no")
+@@ -52,7 +52,7 @@ AC_CHECK_HEADERS([curl/curl.h],, curl_ok
  AC_MSG_CHECKING(for libcurl)
  if test "$curl_ok" = "yes"
  then

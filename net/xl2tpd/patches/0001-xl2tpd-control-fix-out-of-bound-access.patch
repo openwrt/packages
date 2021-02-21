@@ -10,8 +10,6 @@ Fixes 90884c62 ("xl2tpd-control refactoring")
  xl2tpd-control.c | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/xl2tpd-control.c b/xl2tpd-control.c
-index 1e87c93..d1df0f6 100644
 --- a/xl2tpd-control.c
 +++ b/xl2tpd-control.c
 @@ -83,7 +83,8 @@ struct command_t commands[] = {

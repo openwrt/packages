@@ -1,8 +1,6 @@
-diff --git a/file.c b/file.c
-index 105e41c..98d5204 100644
 --- a/file.c
 +++ b/file.c
-@@ -625,6 +625,9 @@ static int antfs_readpages(struct file *file, struct address_space *mapping,
+@@ -625,6 +625,9 @@ static int antfs_readpages(struct file *
  		unsigned page_idx = nr_pages;
  		pgoff_t page_idx_to_init;
  		bool do_init_page = false;
@@ -12,7 +10,7 @@ index 105e41c..98d5204 100644
  
  		if (page_offs & (buffer_len - 1)) {
  			/* If initialized size is not on buffer boundary, walk
-@@ -660,8 +663,13 @@ static int antfs_readpages(struct file *file, struct address_space *mapping,
+@@ -660,8 +663,13 @@ static int antfs_readpages(struct file *
  			}
  		}
  
@@ -26,8 +24,6 @@ index 105e41c..98d5204 100644
  		if (!err && do_init_page) {
  			/* Initialize stuff past initialized_size with zero. */
  			page = grab_cache_page(mapping, page_idx_to_init);
-diff --git a/libntfs-3g/misc.c b/libntfs-3g/misc.c
-index b3ec53a..c5a94de 100644
 --- a/libntfs-3g/misc.c
 +++ b/libntfs-3g/misc.c
 @@ -38,7 +38,11 @@ void *ntfs_malloc(size_t size)
@@ -42,6 +38,3 @@ index b3ec53a..c5a94de 100644
  }
  
  /**
--- 
-2.30.0
-

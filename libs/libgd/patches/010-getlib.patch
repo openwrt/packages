@@ -8,9 +8,6 @@ Subject: [PATCH] distribute getlib.sh
  1 file changed, 42 insertions(+)
  create mode 100755 config/getlib.sh
 
-diff --git a/config/getlib.sh b/config/getlib.sh
-new file mode 100755
-index 0000000..4835cf6
 --- /dev/null
 +++ b/config/getlib.sh
 @@ -0,0 +1,42 @@
@@ -56,6 +53,3 @@ index 0000000..4835cf6
 +	printf '%s' "$(( GDLIB_LT_CURRENT - GDLIB_LT_AGE ))"
 +	;;
 +esac
--- 
-2.25.1
-

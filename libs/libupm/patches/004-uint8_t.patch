@@ -1,7 +1,6 @@
-diff -urN a/src/bma250e/bma250e.cxx b/src/bma250e/bma250e.cxx
---- a/src/bma250e/bma250e.cxx	2019-05-09 00:06:25.000000000 +0900
-+++ b/src/bma250e/bma250e.cxx	2019-05-13 16:43:04.344536227 +0900
-@@ -195,35 +195,35 @@
+--- a/src/bma250e/bma250e.cxx
++++ b/src/bma250e/bma250e.cxx
+@@ -195,35 +195,35 @@ BMA250E::BMA250E(std::string initStr) :
              fifoConfig(mode, axes);
          }
          if(tok.substr(0, 20) == "setInterruptEnable0:") {
@@ -45,10 +44,9 @@ diff -urN a/src/bma250e/bma250e.cxx b/src/bma250e/bma250e.cxx
              setInterruptOutputControl(bits);
          }
          if(tok.substr(0, 26) == "setInterruptLatchBehavior:") {
-diff -urN a/src/bmg160/bmg160.cxx b/src/bmg160/bmg160.cxx
---- a/src/bmg160/bmg160.cxx	2019-05-09 00:06:25.000000000 +0900
-+++ b/src/bmg160/bmg160.cxx	2019-05-13 16:44:25.516304666 +0900
-@@ -173,23 +173,23 @@
+--- a/src/bmg160/bmg160.cxx
++++ b/src/bmg160/bmg160.cxx
+@@ -173,23 +173,23 @@ BMG160::BMG160(std::string initStr) : mr
              fifoConfig(mode, axes);
          }
          if(tok.substr(0, 20) == "setInterruptEnable0:") {
@@ -77,10 +75,9 @@ diff -urN a/src/bmg160/bmg160.cxx b/src/bmg160/bmg160.cxx
              setInterruptOutputControl(bits);
          }
          if(tok.substr(0, 26) == "setInterruptLatchBehavior:") {
-diff -urN a/src/bmm150/bmm150.cxx b/src/bmm150/bmm150.cxx
---- a/src/bmm150/bmm150.cxx	2019-05-09 00:06:25.000000000 +0900
-+++ b/src/bmm150/bmm150.cxx	2019-05-13 16:45:03.228197100 +0900
-@@ -170,19 +170,19 @@
+--- a/src/bmm150/bmm150.cxx
++++ b/src/bmm150/bmm150.cxx
+@@ -170,19 +170,19 @@ BMM150::BMM150(std::string initStr) : mr
              setOpmode(opmode);
          }
          if(tok.substr(0, 19) == "setInterruptEnable:") {

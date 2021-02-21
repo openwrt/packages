@@ -10,7 +10,7 @@
  
 --- a/configure.ac
 +++ b/configure.ac
-@@ -2344,7 +2344,10 @@ AS_CASE([$rb_cv_coroutine], [yes|''], [
+@@ -2347,7 +2347,10 @@ AS_CASE([$rb_cv_coroutine], [yes|''], [
              rb_cv_coroutine=copy
          ],
          [*], [

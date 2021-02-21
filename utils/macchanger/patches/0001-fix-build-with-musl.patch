@@ -1,7 +1,5 @@
-Index: macchanger-1.7.0/src/netinfo.c
-===================================================================
---- macchanger-1.7.0.orig/src/netinfo.c
-+++ macchanger-1.7.0/src/netinfo.c
+--- a/src/netinfo.c
++++ b/src/netinfo.c
 @@ -113,7 +113,7 @@ mc_net_info_get_permanent_mac (const net
  	epa->size = IFHWADDRLEN;
  

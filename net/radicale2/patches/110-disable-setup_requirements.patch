@@ -1,7 +1,5 @@
-Index: radicale2-python3-2.1.11/setup.py
-===================================================================
---- radicale2-python3-2.1.11.orig/setup.py
-+++ radicale2-python3-2.1.11/setup.py
+--- a/setup.py
++++ b/setup.py
 @@ -67,7 +67,7 @@ setup(
      package_data={"radicale": WEB_FILES},
      entry_points={"console_scripts": ["radicale = radicale.__main__:run"]},

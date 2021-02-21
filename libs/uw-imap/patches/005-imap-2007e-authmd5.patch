@@ -1,6 +1,5 @@
-diff -up imap-2007e/src/c-client/auth_md5.c.authmd5 imap-2007e/src/c-client/auth_md5.c
---- imap-2007e/src/c-client/auth_md5.c.authmd5	2008-06-04 13:18:34.000000000 -0500
-+++ imap-2007e/src/c-client/auth_md5.c	2009-07-07 19:24:12.348005485 -0500
+--- a/src/c-client/auth_md5.c
++++ b/src/c-client/auth_md5.c
 @@ -42,17 +42,17 @@ typedef struct {
  
  /* Prototypes */

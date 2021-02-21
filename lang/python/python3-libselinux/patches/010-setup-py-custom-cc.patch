@@ -1,7 +1,6 @@
-diff -u --recursive libselinux-3.1-vanilla/src/Makefile libselinux-3.1/src/Makefile
---- libselinux-3.1-vanilla/src/Makefile	2020-07-10 11:17:15.000000000 -0400
-+++ libselinux-3.1/src/Makefile	2020-07-12 14:33:56.337229240 -0400
-@@ -131,7 +131,7 @@
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -131,7 +131,7 @@ SWIGRUBY = swig -Wall -ruby -o $(SWIGRUB
  all: $(LIBA) $(LIBSO) $(LIBPC)
  
  pywrap: all selinuxswig_python_exception.i

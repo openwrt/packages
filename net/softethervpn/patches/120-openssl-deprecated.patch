@@ -16,7 +16,7 @@
  #include <openssl/des.h>
  #include <openssl/aes.h>
  #include <openssl/dh.h>
-@@ -627,7 +629,7 @@ UINT CipherProcess(CIPHER *c, void *iv, void *dest, void *src, UINT size)
+@@ -627,7 +629,7 @@ UINT CipherProcess(CIPHER *c, void *iv,
  		return 0;
  	}
  
@@ -61,7 +61,7 @@
  	LOCK *lock = ssl_lock_obj[n];
  
  	if (mode & CRYPTO_LOCK)
-@@ -972,12 +979,15 @@ void OpenSSL_Lock(int mode, int n, const char *file, int line)
+@@ -972,12 +979,15 @@ void OpenSSL_Lock(int mode, int n, const
  		// Unlock
  		Unlock(lock);
  	}
@@ -77,7 +77,7 @@
  }
  
  // Get the display name of the certificate
-@@ -1901,8 +1911,8 @@ X509 *NewX509(K *pub, K *priv, X *ca, NAME *name, UINT days, X_SERIAL *serial)
+@@ -1901,8 +1911,8 @@ X509 *NewX509(K *pub, K *priv, X *ca, NA
  	X509_set_version(x509, 2L);
  
  	// Set the Expiration
@@ -88,7 +88,7 @@
  	if (!UINT64ToAsn1Time(t1, notBefore))
  	{
  		FreeX509(x509);
-@@ -2043,8 +2053,8 @@ X509 *NewRootX509(K *pub, K *priv, NAME *name, UINT days, X_SERIAL *serial)
+@@ -2043,8 +2053,8 @@ X509 *NewRootX509(K *pub, K *priv, NAME
  	X509_set_version(x509, 2L);
  
  	// Set the Expiration
@@ -218,7 +218,7 @@
  
 --- a/src/Mayaqua/Network.c
 +++ b/src/Mayaqua/Network.c
-@@ -18172,7 +18172,7 @@ struct ssl_ctx_st *NewSSLCtx(bool server_mode)
+@@ -18172,7 +18172,7 @@ struct ssl_ctx_st *NewSSLCtx(bool server
  	SSL_CTX_set_ecdh_auto(ctx, 1);
  #endif	// SSL_CTX_set_ecdh_auto
  

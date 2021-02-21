@@ -1,6 +1,6 @@
 --- a/linuxgpio.c
 +++ b/linuxgpio.c
-@@ -66,7 +66,7 @@ static int linuxgpio_export(unsigned int gpio)
+@@ -66,7 +66,7 @@ static int linuxgpio_export(unsigned int
      return fd;
    }
  
@@ -9,7 +9,7 @@
    r = write(fd, buf, len);
    close(fd);
  
-@@ -84,7 +84,7 @@ static int linuxgpio_unexport(unsigned int gpio)
+@@ -84,7 +84,7 @@ static int linuxgpio_unexport(unsigned i
      return fd;
    }
  
@@ -18,7 +18,7 @@
    r = write(fd, buf, len);
    close(fd);
  
-@@ -95,7 +95,7 @@ static int linuxgpio_openfd(unsigned int gpio)
+@@ -95,7 +95,7 @@ static int linuxgpio_openfd(unsigned int
  {
    char filepath[60];
  
@@ -27,7 +27,7 @@
    return (open(filepath, O_RDWR));
  }
  
-@@ -104,7 +104,7 @@ static int linuxgpio_dir(unsigned int gpio, unsigned int dir)
+@@ -104,7 +104,7 @@ static int linuxgpio_dir(unsigned int gp
    int fd, r;
    char buf[60];
  

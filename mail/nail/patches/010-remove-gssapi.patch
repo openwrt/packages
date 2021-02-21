@@ -1,12 +1,9 @@
-diff --git a/makeconfig b/makeconfig
-index 0ab36b8..ee1e3a1 100644
 --- a/makeconfig
 +++ b/makeconfig
-@@ -413,47 +413,6 @@ int main(void)
- !
+@@ -414,47 +414,6 @@ int main(void)
  fi
  
--cat >$tmp2.c <<\!
+ cat >$tmp2.c <<\!
 -#include <gssapi/gssapi.h>
 -
 -int main(void)
@@ -47,6 +44,7 @@ index 0ab36b8..ee1e3a1 100644
 -}
 -%
 -
- cat >$tmp2.c <<\!
+-cat >$tmp2.c <<\!
  #include "config.h"
  #ifdef HAVE_NL_LANGINFO
+ #include <langinfo.h>

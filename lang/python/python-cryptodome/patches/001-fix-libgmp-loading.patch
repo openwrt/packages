@@ -1,6 +1,6 @@
 --- a/lib/Crypto/Math/_IntegerGMP.py
 +++ b/lib/Crypto/Math/_IntegerGMP.py
-@@ -92,7 +92,7 @@ gmp_defs = """typedef unsigned long UNIX_ULONG;
+@@ -92,7 +92,7 @@ gmp_defs = """typedef unsigned long UNIX
          int __gmpz_divisible_ui_p (const mpz_t n, UNIX_ULONG d);
          """
  

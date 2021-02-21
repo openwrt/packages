@@ -1,5 +1,3 @@
-diff --git a/Makefile.in b/Makefile.in
-index 00b9eb1..2fdbae3 100644
 --- a/Makefile.in
 +++ b/Makefile.in
 @@ -17,7 +17,7 @@ DEFS = @DEFS@

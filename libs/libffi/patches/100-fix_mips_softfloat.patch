@@ -8,8 +8,6 @@ Thank you!
  src/mips/o32.S | 2 ++
  1 file changed, 2 insertions(+)
 
-diff --git a/src/mips/o32.S b/src/mips/o32.S
-index 44e74cb9..799139b2 100644
 --- a/src/mips/o32.S
 +++ b/src/mips/o32.S
 @@ -282,9 +282,11 @@ $LCFI12:

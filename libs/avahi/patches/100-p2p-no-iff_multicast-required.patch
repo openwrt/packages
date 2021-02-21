@@ -6,11 +6,9 @@ Date:   Thu Sep 17 00:27:55 2020 +0000
     
     Signed-off-by: Philip Prindeville <philipp@redfish-solutions.com>
 
-diff --git a/avahi-core/iface-linux.c b/avahi-core/iface-linux.c
-index e116c7b..75089c4 100644
 --- a/avahi-core/iface-linux.c
 +++ b/avahi-core/iface-linux.c
-@@ -105,8 +105,8 @@ static void netlink_callback(AvahiNetlink *nl, struct nlmsghdr *n, void* userdat
+@@ -105,8 +105,8 @@ static void netlink_callback(AvahiNetlin
              (ifinfomsg->ifi_flags & IFF_UP) &&
              (!m->server->config.use_iff_running || (ifinfomsg->ifi_flags & IFF_RUNNING)) &&
              ((ifinfomsg->ifi_flags & IFF_LOOPBACK) ||
@@ -21,11 +19,9 @@ index e116c7b..75089c4 100644
  
          /* Handle interface attributes */
          l = NLMSG_PAYLOAD(n, sizeof(struct ifinfomsg));
-diff --git a/avahi-core/iface-pfroute.c b/avahi-core/iface-pfroute.c
-index 45fd970..4eafce0 100644
 --- a/avahi-core/iface-pfroute.c
 +++ b/avahi-core/iface-pfroute.c
-@@ -81,8 +81,8 @@ static void rtm_info(struct rt_msghdr *rtm, AvahiInterfaceMonitor *m)
+@@ -81,8 +81,8 @@ static void rtm_info(struct rt_msghdr *r
      (ifm->ifm_flags & IFF_UP) &&
      (!m->server->config.use_iff_running || (ifm->ifm_flags & IFF_RUNNING)) &&
      ((ifm->ifm_flags & IFF_LOOPBACK) ||
@@ -36,7 +32,7 @@ index 45fd970..4eafce0 100644
  
    avahi_free(hw->name);
    hw->name = avahi_strndup(sdl->sdl_data, sdl->sdl_nlen);
-@@ -428,8 +428,8 @@ static void if_add_interface(struct lifreq *lifreq, AvahiInterfaceMonitor *m, in
+@@ -428,8 +428,8 @@ static void if_add_interface(struct lifr
              (flags & IFF_UP) &&
              (!m->server->config.use_iff_running || (flags & IFF_RUNNING)) &&
              ((flags & IFF_LOOPBACK) ||

@@ -1,6 +1,6 @@
 --- a/src/Makefile
 +++ b/src/Makefile
-@@ -15,8 +15,8 @@ WARN=-Wall -pedantic
+@@ -16,8 +16,8 @@ WARN=-Wall -pedantic
  BSD_CFLAGS=-O2 -fPIC $(WARN) $(INCDIR) $(DEFS)
  BSD_LDFLAGS=-O -fPIC -shared $(LIBDIR)
  
@@ -11,7 +11,7 @@
  
  MAC_ENV=env MACOSX_DEPLOYMENT_TARGET='$(MACVER)'
  MAC_CFLAGS=-O2 -fno-common $(WARN) $(INCDIR) $(DEFS)
-@@ -33,10 +33,10 @@ LDFLAGS += $(MYLDFLAGS)
+@@ -34,10 +34,10 @@ LDFLAGS += $(MYLDFLAGS)
  all:
  
  install: $(CMOD) $(LMOD)

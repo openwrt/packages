@@ -8,11 +8,9 @@ Signed-off-by: Thomas Petazzoni <thomas.petazzoni@bootlin.com>
  sepolgen/src/sepolgen/defaults.py | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/sepolgen/src/sepolgen/defaults.py b/sepolgen/src/sepolgen/defaults.py
-index 6e800695..a61d1efd 100644
 --- a/sepolgen/src/sepolgen/defaults.py
 +++ b/sepolgen/src/sepolgen/defaults.py
-@@ -57,7 +57,7 @@ Various default settings, including file and directory locations.
+@@ -57,7 +57,7 @@ Various default settings, including file
  """
  
  def data_dir():
@@ -21,6 +19,3 @@ index 6e800695..a61d1efd 100644
  
  def perm_map():
      return data_dir() + "/perm_map"
--- 
-2.21.0
-

@@ -68,7 +68,7 @@
  
  fparselncheck() {
    cat << EOF > conftest.c
-@@ -229,20 +170,6 @@
+@@ -229,20 +170,6 @@ EOF
    fi
  }
  
@@ -89,7 +89,7 @@
  # Option variables
  if [ ! -z "$PREFIX" ] ; then
    prefix="$PREFIX"
-@@ -327,79 +254,9 @@
+@@ -327,79 +254,9 @@ if [ $static -ne 0 ] ; then
    ldflags="${ldflags}-static"
  fi
  

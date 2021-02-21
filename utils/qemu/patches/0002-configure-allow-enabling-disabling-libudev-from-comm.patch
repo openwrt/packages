@@ -7,8 +7,6 @@ Subject: [PATCH] configure: allow enabling/disabling libudev from command line
  configure | 4 ++++
  1 file changed, 4 insertions(+)
 
-diff --git a/configure b/configure
-index c8d2ac1c3e..cf3f8ffdd7 100755
 --- a/configure
 +++ b/configure
 @@ -1601,6 +1601,10 @@ for opt do

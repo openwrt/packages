@@ -1,6 +1,6 @@
---- traceevent/event-parse.c.orig
-+++ ./traceevent/event-parse.c
-@@ -5121,12 +5121,17 @@
+--- a/traceevent/event-parse.c
++++ b/traceevent/event-parse.c
+@@ -5121,12 +5121,17 @@ int pevent_strerror(struct pevent *peven
  	const char *msg;
  
  	if (errnum >= 0) {

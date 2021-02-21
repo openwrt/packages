@@ -1,7 +1,5 @@
-Index: boinc-client_release-7.16-7.16.6/client/cs_platforms.cpp
-===================================================================
---- boinc-client_release-7.16-7.16.6.orig/client/cs_platforms.cpp
-+++ boinc-client_release-7.16-7.16.6/client/cs_platforms.cpp
+--- a/client/cs_platforms.cpp
++++ b/client/cs_platforms.cpp
 @@ -76,6 +76,21 @@ void CLIENT_STATE::add_platform(const ch
  //
  void CLIENT_STATE::detect_platforms() {

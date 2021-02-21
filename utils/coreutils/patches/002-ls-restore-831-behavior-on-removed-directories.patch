@@ -14,13 +14,11 @@ behavior.
  tests/ls/removed-directory.sh | 10 ++--------
  3 files changed, 8 insertions(+), 30 deletions(-)
 
-diff --git a/NEWS b/NEWS
-index fdc8bf5db..653e7178b 100644
 --- a/NEWS
 +++ b/NEWS
-@@ -2,6 +2,12 @@ GNU coreutils NEWS                                    -*- outline -*-
+@@ -97,6 +97,12 @@ GNU coreutils NEWS
  
- * Noteworthy changes in release ?.? (????-??-??) [?]
+   gzip-compressed tarballs are distributed once again
  
 +** Changes in behavior
 +
@@ -29,10 +27,8 @@ index fdc8bf5db..653e7178b 100644
 +  that was made in release 8.32.
 +
  
- * Noteworthy changes in release 8.32 (2020-03-05) [stable]
+ * Noteworthy changes in release 8.31 (2019-03-10) [stable]
  
-diff --git a/src/ls.c b/src/ls.c
-index 24b983287..4acf5f44d 100644
 --- a/src/ls.c
 +++ b/src/ls.c
 @@ -49,10 +49,6 @@
@@ -46,7 +42,7 @@ index 24b983287..4acf5f44d 100644
  #include <stdio.h>
  #include <assert.h>
  #include <setjmp.h>
-@@ -2896,7 +2892,6 @@ print_dir (char const *name, char const *realname, bool command_line_arg)
+@@ -2896,7 +2892,6 @@ print_dir (char const *name, char const
    struct dirent *next;
    uintmax_t total_blocks = 0;
    static bool first = true;
@@ -54,7 +50,7 @@ index 24b983287..4acf5f44d 100644
  
    errno = 0;
    dirp = opendir (name);
-@@ -2972,7 +2967,6 @@ print_dir (char const *name, char const *realname, bool command_line_arg)
+@@ -2972,7 +2967,6 @@ print_dir (char const *name, char const
        next = readdir (dirp);
        if (next)
          {
@@ -62,7 +58,7 @@ index 24b983287..4acf5f44d 100644
            if (! file_ignored (next->d_name))
              {
                enum filetype type = unknown;
-@@ -3018,22 +3012,6 @@ print_dir (char const *name, char const *realname, bool command_line_arg)
+@@ -3018,22 +3012,6 @@ print_dir (char const *name, char const
            if (errno != EOVERFLOW)
              break;
          }
@@ -85,8 +81,6 @@ index 24b983287..4acf5f44d 100644
        else
          break;
  
-diff --git a/tests/ls/removed-directory.sh b/tests/ls/removed-directory.sh
-index e8c835dab..fe8f929a1 100755
 --- a/tests/ls/removed-directory.sh
 +++ b/tests/ls/removed-directory.sh
 @@ -26,20 +26,14 @@ case $host_triplet in
@@ -112,6 +106,3 @@ index e8c835dab..fe8f929a1 100755
 +compare /dev/null err || fail=1
  
  Exit $fail
--- 
-cgit v1.2.1
-

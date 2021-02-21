@@ -10,11 +10,9 @@ Added check for libiconv_open as that can be used when the libc lacks iconv.
  configure.ac | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/configure.ac b/configure.ac
-index 07e8703..1b09964 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -75,7 +75,8 @@ if test "x$with_udev" != "xno"; then
+@@ -59,7 +59,8 @@ if test "x$with_udev" != "xno"; then
  		  [true])
  fi
  

@@ -10,8 +10,6 @@ Signed-off-by: Daniel Engberg <daniel.engberg.lists@pyret.net>
  p11-kit/lists.c | 1 +
  1 file changed, 1 insertion(+)
 
-diff --git a/p11-kit/lists.c b/p11-kit/lists.c
-index 365a6d89..1d9062be 100644
 --- a/p11-kit/lists.c
 +++ b/p11-kit/lists.c
 @@ -39,6 +39,7 @@

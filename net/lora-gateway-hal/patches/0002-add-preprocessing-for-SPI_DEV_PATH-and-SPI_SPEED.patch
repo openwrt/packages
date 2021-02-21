@@ -8,8 +8,6 @@ Signed-off-by: Xue Liu <liuxuenetmail@gmail.com>
  libloragw/src/loragw_spi.native.c | 11 +++++++++--
  1 file changed, 9 insertions(+), 2 deletions(-)
 
-diff --git a/libloragw/src/loragw_spi.native.c b/libloragw/src/loragw_spi.native.c
-index c01ed1c..fe251e3 100644
 --- a/libloragw/src/loragw_spi.native.c
 +++ b/libloragw/src/loragw_spi.native.c
 @@ -53,8 +53,15 @@ Maintainer: Sylvain Miermont
@@ -30,6 +28,3 @@ index c01ed1c..fe251e3 100644
  //#define SPI_DEV_PATH    "/dev/spidev32766.0"
  
  /* -------------------------------------------------------------------------- */
--- 
-2.20.1
-

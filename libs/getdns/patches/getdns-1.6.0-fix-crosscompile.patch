@@ -1,6 +1,6 @@
---- a/CMakeLists.txt	2020-07-01 00:06:07.784792469 +0100
-+++ b/CMakeLists.txt	2020-07-01 00:07:09.232511018 +0100
-@@ -520,7 +520,7 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -523,7 +523,7 @@ set(STRPTIME_TEST_SOURCE "\n
    res = strptime(\"20070207111842\", \"%Y%m%d%H%M%S\", &tm);\n
    if (!res) return 1; return 0; }")
  

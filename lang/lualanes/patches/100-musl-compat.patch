@@ -1,6 +1,6 @@
 --- a/src/threading.h
 +++ b/src/threading.h
-@@ -110,7 +110,7 @@ enum e_status { PENDING, RUNNING, WAITING, DONE, ERROR_ST, CANCELLED };
+@@ -110,7 +110,7 @@ enum e_status { PENDING, RUNNING, WAITIN
    #endif // PLATFORM_WIN32
    #include <pthread.h>
  

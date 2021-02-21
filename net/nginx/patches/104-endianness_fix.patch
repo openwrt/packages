@@ -1,5 +1,3 @@
-diff --git a/auto/endianness b/auto/endianness
-index 1b552b6b..2b6f9ea4 100644
 --- a/auto/endianness
 +++ b/auto/endianness
 @@ -12,6 +12,16 @@ checking for system byte ordering

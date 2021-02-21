@@ -7,8 +7,6 @@ Subject: [PATCH] fix ftbs multiple def of invalid_dircache_entries
  etc/afpd/directory.h | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/etc/afpd/directory.h b/etc/afpd/directory.h
-index eb89c606..81bfa9cb 100644
 --- a/etc/afpd/directory.h
 +++ b/etc/afpd/directory.h
 @@ -91,7 +91,7 @@ struct maccess {

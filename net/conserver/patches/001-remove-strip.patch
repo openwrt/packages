@@ -1,7 +1,6 @@
-diff -ur conserver-8.2.1.old/autologin/Makefile.in conserver-8.2.1/autologin/Makefile.in
---- conserver-8.2.1.old/autologin/Makefile.in	2013-09-14 00:46:49.000000000 +0200
-+++ conserver-8.2.1/autologin/Makefile.in	2016-03-30 17:11:44.489446435 +0200
-@@ -9,7 +9,7 @@
+--- a/autologin/Makefile.in
++++ b/autologin/Makefile.in
+@@ -9,7 +9,7 @@ sysconfdir = @sysconfdir@
  
  ### Installation programs and flags
  INSTALL = @INSTALL@
@@ -10,10 +9,9 @@ diff -ur conserver-8.2.1.old/autologin/Makefile.in conserver-8.2.1/autologin/Mak
  LN_S = @LN_S@
  MKDIR = @MKDIR@
  
-diff -ur conserver-8.2.1.old/conserver/Makefile.in conserver-8.2.1/conserver/Makefile.in
---- conserver-8.2.1.old/conserver/Makefile.in	2013-09-14 00:46:53.000000000 +0200
-+++ conserver-8.2.1/conserver/Makefile.in	2016-03-30 17:11:44.509446803 +0200
-@@ -14,7 +14,7 @@
+--- a/conserver/Makefile.in
++++ b/conserver/Makefile.in
+@@ -14,7 +14,7 @@ exampledir = $(datadir)/examples/conserv
  
  ### Installation programs and flags
  INSTALL = @INSTALL@
@@ -22,10 +20,9 @@ diff -ur conserver-8.2.1.old/conserver/Makefile.in conserver-8.2.1/conserver/Mak
  LN_S = @LN_S@
  MKDIR = @MKDIR@
  
-diff -ur conserver-8.2.1.old/console/Makefile.in conserver-8.2.1/console/Makefile.in
---- conserver-8.2.1.old/console/Makefile.in	2013-09-14 00:46:55.000000000 +0200
-+++ conserver-8.2.1/console/Makefile.in	2016-03-30 17:11:44.481446288 +0200
-@@ -10,7 +10,7 @@
+--- a/console/Makefile.in
++++ b/console/Makefile.in
+@@ -10,7 +10,7 @@ mandir = @mandir@
  
  ### Installation programs and flags
  INSTALL = @INSTALL@
@@ -34,10 +31,9 @@ diff -ur conserver-8.2.1.old/console/Makefile.in conserver-8.2.1/console/Makefil
  LN_S = @LN_S@
  MKDIR = @MKDIR@
  
-diff -ur conserver-8.2.1.old/contrib/chat/Makefile.in conserver-8.2.1/contrib/chat/Makefile.in
---- conserver-8.2.1.old/contrib/chat/Makefile.in	2013-09-14 00:47:31.000000000 +0200
-+++ conserver-8.2.1/contrib/chat/Makefile.in	2016-03-30 17:11:44.501446656 +0200
-@@ -10,7 +10,7 @@
+--- a/contrib/chat/Makefile.in
++++ b/contrib/chat/Makefile.in
+@@ -10,7 +10,7 @@ mandir = @mandir@
  
  ### Installation programs and flags
  INSTALL = @INSTALL@

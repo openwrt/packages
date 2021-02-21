@@ -8,8 +8,6 @@ Signed-off-by: Ilya Lipnitskiy <ilya.lipnitskiy@gmail.com>
  kernelmod/mrm_ctlfile.c | 13 ++++++++++++-
  1 file changed, 12 insertions(+), 1 deletion(-)
 
-diff --git a/kernelmod/mrm_ctlfile.c b/kernelmod/mrm_ctlfile.c
-index 85a8bf9..ca8e7d8 100644
 --- a/kernelmod/mrm_ctlfile.c
 +++ b/kernelmod/mrm_ctlfile.c
 @@ -13,6 +13,7 @@
@@ -20,7 +18,7 @@ index 85a8bf9..ca8e7d8 100644
  #include <linux/proc_fs.h>
  #include <linux/uaccess.h>
  #include <linux/mutex.h>
-@@ -80,13 +81,14 @@ mrm_handle_read(struct file *f, char __user *buf, size_t size, loff_t *off) {
+@@ -80,13 +81,14 @@ mrm_handle_read(struct file *f, char __u
  }
  
  static long
@@ -51,7 +49,7 @@ index 85a8bf9..ca8e7d8 100644
  static const struct file_operations _fops = {
    owner:           THIS_MODULE,
    open:            &mrm_handle_open,
-@@ -166,6 +176,7 @@ static const struct file_operations _fops = {
+@@ -166,6 +176,7 @@ static const struct file_operations _fop
    read:            &mrm_handle_read,
    unlocked_ioctl:  (void*)&mrm_handle_ioctl,
  };
@@ -59,6 +57,3 @@ index 85a8bf9..ca8e7d8 100644
  
  int mrm_init_ctlfile( void ) {
    struct proc_dir_entry *pde;
--- 
-2.30.0
-

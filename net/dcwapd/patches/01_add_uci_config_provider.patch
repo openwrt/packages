@@ -1,4 +1,4 @@
---- a/dev/null
+--- /dev/null
 +++ b/dcwlinux/uci_configuration_provider.h
 @@ -0,0 +1,104 @@
 +#ifndef UCI_CONFIGURATION_PROVIDER_H_INCLUDED
@@ -105,7 +105,7 @@
 +}; //namespace dcwlinux {
 +
 +#endif //#ifndef UCI_CONFIGURATION_PROVIDER_H_INCLUDED
---- a/dev/null
+--- /dev/null
 +++ b/dcwlinux/uci_configuration_provider.cxx
 @@ -0,0 +1,365 @@
 +

@@ -1,5 +1,3 @@
-diff --git a/src/Makefile.in b/src/Makefile.in
-index 31d45f7..d249f67 100644
 --- a/src/Makefile.in
 +++ b/src/Makefile.in
 @@ -86,7 +86,6 @@ POST_INSTALL = :
@@ -40,7 +38,7 @@ index 31d45f7..d249f67 100644
  
  # Not strictly required, but we explicitly do not distribute the generated inc file
  nodist_haserl_SOURCES = haserl_lualib.inc
-@@ -396,10 +392,6 @@ haserl$(EXEEXT): $(haserl_OBJECTS) $(haserl_DEPENDENCIES) $(EXTRA_haserl_DEPENDE
+@@ -396,10 +392,6 @@ haserl$(EXEEXT): $(haserl_OBJECTS) $(has
  	@rm -f haserl$(EXEEXT)
  	$(AM_V_CCLD)$(haserl_LINK) $(haserl_OBJECTS) $(haserl_LDADD) $(LIBS)
  

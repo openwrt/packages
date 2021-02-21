@@ -12,11 +12,9 @@ https://github.com/openwrt/packages/issues/12471
  CMakeLists.txt | 6 +++++-
  1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 0de10cf..217359a 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -17,6 +17,7 @@ option(MZ_PKCRYPT "Enables PKWARE traditional encryption" ON)
+@@ -17,6 +17,7 @@ option(MZ_PKCRYPT "Enables PKWARE tradit
  option(MZ_WZAES "Enables WinZIP AES encryption" ON)
  option(MZ_LIBCOMP "Enables Apple compression" OFF)
  option(MZ_OPENSSL "Enables OpenSSL for encryption" OFF)
@@ -24,7 +22,7 @@ index 0de10cf..217359a 100644
  option(MZ_BRG "Enables Brian Gladman's encryption library" OFF)
  option(MZ_SIGNING "Enables zip signing support" ON)
  option(MZ_COMPRESS_ONLY "Only support compression" OFF)
-@@ -275,7 +276,7 @@ if(UNIX)
+@@ -298,7 +299,7 @@ if(UNIX)
              endif()
          endif()
  
@@ -33,7 +31,7 @@ index 0de10cf..217359a 100644
              find_package(PkgConfig REQUIRED)
  
              pkg_check_modules(LIBBSD libbsd)
-@@ -288,6 +289,8 @@ if(UNIX)
+@@ -311,6 +312,8 @@ if(UNIX)
                      list(APPEND MINIZIP_INC ${LIBBSD_INCLUDE_DIRS})
                      link_directories(${LIBBSD_LIBRARY_DIRS})
                  endif()
@@ -42,7 +40,7 @@ index 0de10cf..217359a 100644
              endif()
          endif()
      endif()
-@@ -935,6 +938,7 @@ add_feature_info(MZ_PKCRYPT MZ_PKCRYPT "Enables PKWARE traditional encryption")
+@@ -943,6 +946,7 @@ add_feature_info(MZ_PKCRYPT MZ_PKCRYPT "
  add_feature_info(MZ_WZAES MZ_WZAES "Enables WinZIP AES encryption")
  add_feature_info(MZ_LIBCOMP MZ_LIBCOMP "Enables Apple compression")
  add_feature_info(MZ_OPENSSL MZ_OPENSSL "Enables OpenSSL for encryption")
@@ -50,6 +48,3 @@ index 0de10cf..217359a 100644
  add_feature_info(MZ_BRG MZ_BRG "Enables Brian Gladman's encryption library")
  add_feature_info(MZ_SIGNING MZ_SIGNING "Enables zip signing support")
  add_feature_info(MZ_COMPRESS_ONLY MZ_COMPRESS_ONLY "Only support compression")
--- 
-2.17.1
-

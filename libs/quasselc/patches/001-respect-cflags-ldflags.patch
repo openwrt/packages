@@ -14,7 +14,7 @@
  
  BOTLIBS := -Wl,-rpath,.
  
-@@ -15,10 +15,10 @@ lib_objects=setters.o getters.o main.o cmds.o negotiation.o io.o symbols.o
+@@ -15,10 +15,10 @@ lib_objects=setters.o getters.o main.o c
  all: bot libquasselc.so.$(VERSION) quasselc.pc
  
  libquasselc.so.$(VERSION): $(lib_objects)

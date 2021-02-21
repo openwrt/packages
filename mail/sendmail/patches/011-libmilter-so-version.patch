@@ -1,7 +1,5 @@
-Index: sendmail-8.15.2/libmilter/Makefile.m4
-===================================================================
---- sendmail-8.15.2.orig/libmilter/Makefile.m4
-+++ sendmail-8.15.2/libmilter/Makefile.m4
+--- a/libmilter/Makefile.m4
++++ b/libmilter/Makefile.m4
 @@ -9,7 +9,10 @@ define(`confMT', `true')
  SMSRCDIR=ifdef(`confSMSRCDIR', `confSMSRCDIR', `${SRCDIR}/sendmail')
  PREPENDDEF(`confINCDIRS', `-I${SMSRCDIR} ')

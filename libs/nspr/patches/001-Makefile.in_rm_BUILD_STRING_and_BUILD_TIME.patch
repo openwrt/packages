@@ -22,8 +22,6 @@ Signed-off-by: Mingli Yu <Mingli.Yu@windriver.com>
  pr/src/Makefile.in        | 8 +-------
  4 files changed, 4 insertions(+), 28 deletions(-)
 
-diff --git a/lib/ds/Makefile.in b/lib/ds/Makefile.in
-index e737791..b578476 100644
 --- a/nspr/lib/ds/Makefile.in
 +++ b/nspr/lib/ds/Makefile.in
 @@ -110,13 +110,7 @@ GARBAGE += $(TINC)
@@ -41,8 +39,6 @@ index e737791..b578476 100644
  
  
  $(OBJDIR)/plvrsion.$(OBJ_SUFFIX): plvrsion.c $(TINC)
-diff --git a/lib/libc/src/Makefile.in b/lib/libc/src/Makefile.in
-index e8a6d9f..978ed28 100644
 --- a/nspr/lib/libc/src/Makefile.in
 +++ b/nspr/lib/libc/src/Makefile.in
 @@ -112,13 +112,7 @@ GARBAGE += $(TINC)
@@ -60,8 +56,6 @@ index e8a6d9f..978ed28 100644
  
  
  $(OBJDIR)/plvrsion.$(OBJ_SUFFIX): plvrsion.c $(TINC)
-diff --git a/lib/prstreams/Makefile.in b/lib/prstreams/Makefile.in
-index aeb2944..f318097 100644
 --- a/nspr/lib/prstreams/Makefile.in
 +++ b/nspr/lib/prstreams/Makefile.in
 @@ -110,13 +110,7 @@ endif
@@ -79,11 +73,9 @@ index aeb2944..f318097 100644
  
  
  $(OBJDIR)/plvrsion.$(OBJ_SUFFIX): plvrsion.c $(TINC)
-diff --git a/pr/src/Makefile.in b/pr/src/Makefile.in
-index 19c5a69..b4ac31c 100644
 --- a/nspr/pr/src/Makefile.in
 +++ b/nspr/pr/src/Makefile.in
-@@ -310,13 +310,7 @@ GARBAGE += $(TINC)
+@@ -306,13 +306,7 @@ GARBAGE += $(TINC)
  
  $(TINC):
  	@$(MAKE_OBJDIR)
@@ -98,6 +90,3 @@ index 19c5a69..b4ac31c 100644
  
  
  $(OBJDIR)/prvrsion.$(OBJ_SUFFIX): prvrsion.c $(TINC)
--- 
-2.7.4
-

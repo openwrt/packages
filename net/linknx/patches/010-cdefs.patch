@@ -15,7 +15,7 @@
  
  #include "eibloadresult.h"
  
-@@ -705,5 +706,7 @@ BCU_LOAD_RESULT EIB_LoadImage (EIBConnection * con, const uint8_t * image,
+@@ -705,5 +706,7 @@ BCU_LOAD_RESULT EIB_LoadImage (EIBConnec
   */
  int EIB_LoadImage_async (EIBConnection * con, const uint8_t * image, int len);
  

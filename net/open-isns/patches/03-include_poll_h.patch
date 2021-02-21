@@ -9,8 +9,6 @@ https://pubs.opengroup.org/onlinepubs/009695399/basedefs/poll.h.html
  socket.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/socket.c b/socket.c
-index a76d593..432a9bd 100644
 --- a/socket.c
 +++ b/socket.c
 @@ -5,7 +5,7 @@

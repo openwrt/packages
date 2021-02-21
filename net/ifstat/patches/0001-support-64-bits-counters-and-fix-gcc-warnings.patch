@@ -22,11 +22,9 @@ Signed-off-by: Matthieu Baerts <matthieu.baerts@tessares.net>
  ifstat.h                   |  6 +--
  snmp.c                     | 12 +++---
 
-diff --git a/data.c b/data.c
-index e29149b..9af27bf 100644
 --- a/data.c
 +++ b/data.c
-@@ -103,8 +103,8 @@ void ifstat_free_interface(struct ifstat_data *data) {
+@@ -103,8 +103,8 @@ void ifstat_free_interface(struct ifstat
  }
  
  void ifstat_set_interface_stats(struct ifstat_data *data,
@@ -37,8 +35,6 @@ index e29149b..9af27bf 100644
    if (data->bout > bytesout || data->bin > bytesin) {
      if (!ifstat_quiet)
        ifstat_error("warning: rollover for interface %s, reinitialising.", data->name);
-diff --git a/drivers.c b/drivers.c
-index d5ac501..2861fff 100644
 --- a/drivers.c
 +++ b/drivers.c
 @@ -140,6 +140,7 @@ char *strchr (), *strrchr ();
@@ -49,7 +45,7 @@ index d5ac501..2861fff 100644
  #ifdef IFF_LOOPBACK
    if ((ifflags & IFF_LOOPBACK) && !(ifs->flags & IFSTAT_LOOPBACK))
      return;
-@@ -242,6 +243,7 @@ static int ioctl_map_scan(int sd, struct ifreq *ifr, void *data) {
+@@ -242,6 +243,7 @@ static int ioctl_map_scan(int sd, struct
  static int ioctl_scan_interfaces(struct ifstat_driver *driver,
  				 struct ifstat_list *ifs) {
    int sd;
@@ -57,7 +53,7 @@ index d5ac501..2861fff 100644
  
    if ((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
      ifstat_perror("socket");
-@@ -256,7 +258,7 @@ static int ioctl_scan_interfaces(struct ifstat_driver *driver,
+@@ -256,7 +258,7 @@ static int ioctl_scan_interfaces(struct
  #endif
  
  #ifdef USE_KSTAT
@@ -66,7 +62,7 @@ index d5ac501..2861fff 100644
    kstat_named_t *data;
  
    if ((data = kstat_data_lookup(ksp, name)) == NULL)
-@@ -277,7 +279,7 @@ static int get_kstat_long(kstat_t *ksp, char *name, unsigned long *value) {
+@@ -277,7 +279,7 @@ static int get_kstat_long(kstat_t *ksp,
      *value = data->value.ui64;
      break;
  #else
@@ -75,7 +71,7 @@ index d5ac501..2861fff 100644
      *value = data->value.ll;
      break;
    case KSTAT_DATA_ULONGLONG:
-@@ -311,7 +313,7 @@ static int kstat_open_driver(struct ifstat_driver *driver,
+@@ -311,7 +313,7 @@ static int kstat_open_driver(struct ifst
  
  static int kstat_get_stats(struct ifstat_driver *driver,
  			   struct ifstat_list *ifs) {
@@ -84,7 +80,7 @@ index d5ac501..2861fff 100644
    struct ifstat_data *cur;
    kstat_ctl_t *kc = driver->data;
    kstat_t *ksp;
-@@ -802,7 +804,7 @@ static int proc_get_stats(struct ifstat_driver *driver,
+@@ -802,7 +804,7 @@ static int proc_get_stats(struct ifstat_
    char buf[1024];
    FILE *f;
    char *iface, *stats;
@@ -93,7 +89,7 @@ index d5ac501..2861fff 100644
    struct ifstat_data *cur;
    struct proc_driver_data *data = driver->data;
    char *file;
-@@ -839,7 +841,7 @@ static int proc_get_stats(struct ifstat_driver *driver,
+@@ -839,7 +841,7 @@ static int proc_get_stats(struct ifstat_
        iface++;
      if (*iface == '\0')
        continue;
@@ -102,7 +98,7 @@ index d5ac501..2861fff 100644
        continue;
      
      if ((cur = ifstat_get_interface(ifs, iface)) != NULL)
-@@ -1326,9 +1328,9 @@ static int win32_get_stats(struct ifstat_driver *driver,
+@@ -1326,9 +1328,9 @@ static int win32_get_stats(struct ifstat
    for (i = 0; i < iftable->dwNumEntries; i++) {
      if ((cur = ifstat_get_interface(ifs, iftable->table[i].bDescr)) != NULL)
        ifstat_set_interface_stats(cur,
@@ -114,7 +110,7 @@ index d5ac501..2861fff 100644
  				 iftable->table[i].dwOutOctets);
    }
    return 1;
-@@ -1346,40 +1348,40 @@ void win32_close_driver(struct ifstat_driver *driver) {
+@@ -1346,40 +1348,40 @@ void win32_close_driver(struct ifstat_dr
  static struct ifstat_driver drivers[] = {
  #ifdef USE_KSTAT  
    { "kstat", &kstat_open_driver, &ioctl_scan_interfaces, &kstat_get_stats,
@@ -165,11 +161,9 @@ index d5ac501..2861fff 100644
    
  int ifstat_get_driver(char *name, struct ifstat_driver *driver) {
    int num = 0;
-diff --git a/ifstat.c b/ifstat.c
-index 942aa94..0521e71 100644
 --- a/ifstat.c
 +++ b/ifstat.c
-@@ -215,7 +215,8 @@ static RETSIGTYPE update_termsize(int sig) {
+@@ -215,7 +215,8 @@ static RETSIGTYPE update_termsize(int si
  int _sigcont = 0;
  #ifdef SIGCONT
  static RETSIGTYPE sigcont(int sig) {
@@ -188,8 +182,6 @@ index 942aa94..0521e71 100644
  
  #define LEN(options, namelen) (((options) & OPT_FIXEDWIDTH || (namelen) < WIDTH) ? WIDTH : (namelen))
  #define FMT(n) (((n) < 1e+5) ? "%8.2f" : (((n) < 1e+6) ? "%.1f" : "%.2e"))
-diff --git a/ifstat.h b/ifstat.h
-index b63a3fb..dff38b6 100644
 --- a/ifstat.h
 +++ b/ifstat.h
 @@ -35,7 +35,7 @@
@@ -201,7 +193,7 @@ index b63a3fb..dff38b6 100644
    int flags, index;
    struct ifstat_data *next;
  };
-@@ -72,8 +72,8 @@ void ifstat_add_interface(struct ifstat_list *ifs, char *ifname, int flags);
+@@ -72,8 +72,8 @@ void ifstat_add_interface(struct ifstat_
  void ifstat_free_interface(struct ifstat_data *data);
  
  void ifstat_set_interface_stats(struct ifstat_data *data,
@@ -212,11 +204,9 @@ index b63a3fb..dff38b6 100644
  
  void ifstat_set_interface_index(struct ifstat_data *data,
  				int index);
-diff --git a/snmp.c b/snmp.c
-index 2457001..5dd8a0a 100644
 --- a/snmp.c
 +++ b/snmp.c
-@@ -91,7 +91,7 @@ static int snmp_get_ifcount(struct snmp_session *ss) {
+@@ -91,7 +91,7 @@ static int snmp_get_ifcount(struct snmp_
  
  static int snmp_get_nextif(struct snmp_session *ss, int index) {
    oid ifindex[] = { 1, 3, 6, 1, 2, 1, 2, 2, 1, 1, 0 };
@@ -225,7 +215,7 @@ index 2457001..5dd8a0a 100644
    struct snmp_pdu *pdu;
    struct snmp_pdu *response = NULL;
    struct variable_list *vars;
-@@ -139,7 +139,7 @@ static int snmp_get_nextif(struct snmp_session *ss, int index) {
+@@ -139,7 +139,7 @@ static int snmp_get_nextif(struct snmp_s
  
  struct ifsnmp {
    char name[S_IFNAMEMAX];
@@ -234,7 +224,7 @@ index 2457001..5dd8a0a 100644
    int flags, index;
  };
  
-@@ -248,7 +248,7 @@ static int snmp_get_ifinfos(struct snmp_session *ss, int nifaces,
+@@ -248,7 +248,7 @@ static int snmp_get_ifinfos(struct snmp_
      if (memcmp(ifinfo, vars->name, sizeof(ifinfo) - 2 * sizeof(oid)) != 0)
        continue;
      for(i = 0; i < nifaces; i++) {
@@ -243,7 +233,7 @@ index 2457001..5dd8a0a 100644
  	break;
      }
  
-@@ -258,11 +258,11 @@ static int snmp_get_ifinfos(struct snmp_session *ss, int nifaces,
+@@ -258,11 +258,11 @@ static int snmp_get_ifinfos(struct snmp_
      switch (vars->name[9]) {
      case ifDescr:
        if (vars->type == ASN_OCTET_STR) {
@@ -257,7 +247,7 @@ index 2457001..5dd8a0a 100644
          ifsnmp[i].name[count] = '\0';
        }
        break;
-@@ -361,7 +361,7 @@ int snmp_open_driver(struct ifstat_driver *driver, char *options) {
+@@ -361,7 +361,7 @@ int snmp_open_driver(struct ifstat_drive
    snmp_sess_init(&session);
    session.peername = host;
    session.version = SNMP_VERSION_1;

@@ -18,21 +18,19 @@ Signed-off-by: Phil Eichinger <phil@zankapfel.net>
  parsetime.y | 11 +++++++----
  1 file changed, 7 insertions(+), 4 deletions(-)
 
-diff --git a/parsetime.y b/parsetime.y
-index 7005e88..324e6d3 100644
 --- a/parsetime.y
 +++ b/parsetime.y
-@@ -8,6 +8,9 @@
- 
- #define YYDEBUG 1
+@@ -14,6 +14,9 @@
+     ((y) % 4 == 0 && ((y) % 100 != 0 || (y) % 400 == 0))
+ #endif
  
 +#define is_leap_year(y) \
 +    ((y) % 4 == 0 && ((y) % 100 != 0 || (y) % 400 == 0))
 +
  struct tm exectm;
  static int isgmt;
- static int yearspec;
-@@ -217,8 +220,8 @@ date            : month_name day_number
+ static char *tz = NULL;
+@@ -230,8 +233,8 @@ date            : month_name day_number
  				 mnum == 12) && dnum > 31)
  			    || ((mnum ==  4 || mnum ==  6 || mnum ==  9 ||
  			         mnum == 11) && dnum > 30)
@@ -43,7 +41,7 @@ index 7005e88..324e6d3 100644
  			   )
  			{
  			    yyerror("Error in day of month");
-@@ -261,8 +264,8 @@ date            : month_name day_number
+@@ -274,8 +277,8 @@ date            : month_name day_number
  				 mnum == 12) && dnum > 31)
  			    || ((mnum ==  4 || mnum ==  6 || mnum ==  9 ||
  			         mnum == 11) && dnum > 30)
@@ -54,6 +52,3 @@ index 7005e88..324e6d3 100644
  			   )
  			{
  			    yyerror("Error in day of month");
--- 
-2.1.4
-

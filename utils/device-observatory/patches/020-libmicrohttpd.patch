@@ -1,6 +1,6 @@
 --- a/src/webserver.c
 +++ b/src/webserver.c
-@@ -129,7 +129,7 @@ const char *get_mimetype(const char str[])
+@@ -129,7 +129,7 @@ const char *get_mimetype(const char str[
    return "application/octet-stream";
  }
  
@@ -9,7 +9,7 @@
    const char *url, const char *method, const char *version,
    const char *upload_data, size_t *upload_data_size, void **con_cls)
  {
-@@ -142,7 +142,7 @@ static int send_response(void *cls, struct MHD_Connection *connection,
+@@ -142,7 +142,7 @@ static int send_response(void *cls, stru
    struct device *device;
    int is_localhost;
    FILE *fp;

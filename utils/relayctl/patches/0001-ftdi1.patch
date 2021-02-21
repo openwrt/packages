@@ -8,19 +8,13 @@ Signed-off-by: Heinrich Schuchardt <xypron.glpk@gmx.de>
  src/Makefile.am | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/Makefile.am b/src/Makefile.am
-index a533d5c..4dbe6b5 100644
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -1,7 +1,7 @@
- sbin_PROGRAMS = \
+@@ -1,6 +1,6 @@
+ bin_PROGRAMS = \
    relayctl
  
 -relayctl_LDFLAGS = -lftdi
 +relayctl_LDFLAGS = -lftdi1
  
  relayctl_SOURCES = relayctl.c
- 
--- 
-2.1.4
-

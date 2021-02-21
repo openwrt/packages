@@ -10,13 +10,9 @@ https://github.com/net-snmp/net-snmp/pull/162.
  1 file changed, 28 insertions(+), 83 deletions(-)
  mode change 100644 => 100755 apps/snmpnetstat/if.c
 
-diff --git a/apps/snmpnetstat/if.c b/apps/snmpnetstat/if.c
-old mode 100644
-new mode 100755
-index 16768151d..84b87b531
 --- a/apps/snmpnetstat/if.c
 +++ b/apps/snmpnetstat/if.c
-@@ -64,8 +64,6 @@
+@@ -64,8 +64,6 @@ static char *rcsid = "$OpenBSD: if.c,v 1
  #define	NO	0
  
  static void sidewaysintpr(u_int);
@@ -60,7 +56,7 @@ index 16768151d..84b87b531
  /*
   * Retrieve the interface addressing information
   * XXX - This could also be extended to handle non-IP interfaces
-@@ -845,84 +871,3 @@ sidewaysintpr(unsigned int interval)
+@@ -845,84 +871,3 @@ loop:
      	goto loop;
      /*NOTREACHED*/
  }
