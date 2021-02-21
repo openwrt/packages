@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libevdev
-PKG_VERSION:=1.10.1
-PKG_RELEASE:=1
+PKG_VERSION:=1.11.0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/libevdev/
-PKG_HASH:=0330fe8357ece915db9366c1b9a6648941aea6f724b73ad6e71401127aa08932
+PKG_HASH:=63f4ea1489858a109080e0b40bd43e4e0903a1e12ea888d581db8c495747c2d0
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=MIT
