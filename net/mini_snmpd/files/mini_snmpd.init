@@ -5,7 +5,7 @@
 
 START=98
 USE_PROCD=1
-PROG=/usr/bin/mini_snmpd
+PROG=/usr/sbin/mini-snmpd
 NAME=mini_snmpd
 
 global_respawn_threshold=
