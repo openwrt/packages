@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
 PKG_VERSION:=v14.15.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://nodejs.org/dist/$(PKG_VERSION)
@@ -90,8 +90,14 @@ endef
 
 NODEJS_CPU:=$(subst aarch64,arm64,$(subst x86_64,x64,$(subst i386,ia32,$(ARCH))))
 
+NODEJS_HOST_OS:=linux
+
 ifneq ($(CONFIG_ARCH_64BIT),y)
 FORCE_32BIT:=-m32
+endif
+
+ifeq ($(HOST_OS),Darwin)
+NODEJS_HOST_OS:=mac
 endif
 
 MAKE_VARS+= \
@@ -105,7 +111,8 @@ CONFIGURE_VARS:= \
 	CC="$(TARGET_CC) $(TARGET_OPTIMIZATION)" \
 	CXX="$(TARGET_CXX) $(TARGET_OPTIMIZATION)" \
 	CC_host="$(HOSTCC) $(FORCE_32BIT)" \
-	CXX_host="$(HOSTCXX) $(FORCE_32BIT)"
+	CXX_host="$(HOSTCXX) $(FORCE_32BIT)" \
+	GYP_DEFINES="host_os=$(NODEJS_HOST_OS)"
 
 CONFIGURE_ARGS:= \
 	--dest-cpu=$(NODEJS_CPU) \
@@ -123,10 +130,11 @@ CONFIGURE_ARGS:= \
 	$(if $(findstring +vfpv4",$(CONFIG_CPU_TYPE)),--with-arm-fpu=vfpv3) \
 	--prefix=/usr
 
-HOST_CONFIGURE_VARS:=
+HOST_CONFIGURE_VARS:= \
+	GYP_DEFINES="host_os=$(NODEJS_HOST_OS)"
 
 HOST_CONFIGURE_ARGS:= \
-	--dest-os=$(if $(findstring Darwin,$(HOST_OS)),mac,linux) \
+	--dest-os=$(NODEJS_HOST_OS) \
 	--with-intl=small-icu \
 	--prefix=$(STAGING_DIR_HOSTPKG)
 

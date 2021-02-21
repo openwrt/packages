@@ -1,0 +1,125 @@
+--- a/tools/v8_gypfiles/v8.gyp
++++ b/tools/v8_gypfiles/v8.gyp
+@@ -1015,18 +1015,24 @@
+               ],
+             }],
+           ],
+-        }],
+-        ['OS=="linux"', {
+-          'sources': [
+-            '<(V8_ROOT)/src/base/debug/stack_trace_posix.cc',
+-            '<(V8_ROOT)/src/base/platform/platform-linux.cc',
++          'target_conditions': [
++            ['(_toolset=="host" and host_os=="linux") or (_toolset=="target" and OS=="linux")', {
++              'sources': [
++                '<(V8_ROOT)/src/base/debug/stack_trace_posix.cc',
++                '<(V8_ROOT)/src/base/platform/platform-linux.cc',
++              ],
++              'libraries': [
++                '-ldl',
++                '-lrt'
++              ],
++            }],
++            ['(_toolset=="host" and host_os=="mac") or (_toolset=="target" and (OS == "mac" or OS == "ios"))', {
++              'sources': [
++                '<(V8_ROOT)/src/base/debug/stack_trace_posix.cc',
++                '<(V8_ROOT)/src/base/platform/platform-macos.cc',
++              ]
++            }],
+           ],
+-          'link_settings': {
+-            'libraries': [
+-              '-ldl',
+-              '-lrt'
+-            ],
+-          },
+         }],
+         ['OS=="aix"', {
+           'variables': {
+@@ -1085,12 +1091,6 @@
+             '<(V8_ROOT)/src/base/platform/platform-fuchsia.cc',
+           ]
+         }],
+-        ['OS == "mac" or OS == "ios"', {
+-          'sources': [
+-            '<(V8_ROOT)/src/base/debug/stack_trace_posix.cc',
+-            '<(V8_ROOT)/src/base/platform/platform-macos.cc',
+-          ]
+-        }],
+         ['is_win', {
+           'sources': [
+             '<(V8_ROOT)/src/base/debug/stack_trace_win.cc',
+--- a/tools/gyp/pylib/gyp/generator/make.py
++++ b/tools/gyp/pylib/gyp/generator/make.py
+@@ -24,6 +24,7 @@
+ from __future__ import print_function
+ 
+ import os
++import sys
+ import re
+ import subprocess
+ import gyp
+@@ -141,8 +142,20 @@ def CalculateGeneratorInputInfo(params):
+ # This is the replacement character.
+ SPACE_REPLACEMENT = "?"
+ 
++LINK_FLAG_HOST_LINUX = """\
++LD_START_GROUP.host=-Wl,--start-group
++LD_END_GROUP.host=-Wl,--end-group
++"""
++
++LINK_FLAG_HOST_MAC = """\
++LD_START_GROUP.host=
++LD_END_GROUP.host=
++"""
+ 
+ LINK_COMMANDS_LINUX = """\
++LD_START_GROUP.target=-Wl,--start-group
++LD_END_GROUP.target=-Wl,--end-group
++
+ quiet_cmd_alink = AR($(TOOLSET)) $@
+ cmd_alink = rm -f $@ && $(AR.$(TOOLSET)) crs $@ $(filter %.o,$^)
+ 
+@@ -153,7 +166,7 @@ cmd_alink_thin = rm -f $@ && $(AR.$(TOOL
+ # special "figure out circular dependencies" flags around the entire
+ # input list during linking.
+ quiet_cmd_link = LINK($(TOOLSET)) $@
+-cmd_link = $(LINK.$(TOOLSET)) -o $@ $(GYP_LDFLAGS) $(LDFLAGS.$(TOOLSET)) -Wl,--start-group $(LD_INPUTS) $(LIBS) -Wl,--end-group
++cmd_link = $(LINK.$(TOOLSET)) -o $@ $(GYP_LDFLAGS) $(LDFLAGS.$(TOOLSET)) $(LD_START_GROUP.$(TOOLSET)) $(LD_INPUTS) $(LIBS) $(LD_END_GROUP.$(TOOLSET))
+ 
+ # We support two kinds of shared objects (.so):
+ # 1) shared_library, which is just bundling together many dependent libraries
+@@ -175,7 +188,7 @@ quiet_cmd_solink = SOLINK($(TOOLSET)) $@
+ cmd_solink = $(LINK.$(TOOLSET)) -o $@ -shared $(GYP_LDFLAGS) $(LDFLAGS.$(TOOLSET)) -Wl,-soname=$(@F) -Wl,--whole-archive $(LD_INPUTS) -Wl,--no-whole-archive $(LIBS)
+ 
+ quiet_cmd_solink_module = SOLINK_MODULE($(TOOLSET)) $@
+-cmd_solink_module = $(LINK.$(TOOLSET)) -o $@ -shared $(GYP_LDFLAGS) $(LDFLAGS.$(TOOLSET)) -Wl,-soname=$(@F) -Wl,--start-group $(filter-out FORCE_DO_CMD, $^) -Wl,--end-group $(LIBS)
++cmd_solink_module = $(LINK.$(TOOLSET)) -o $@ -shared $(GYP_LDFLAGS) $(LDFLAGS.$(TOOLSET)) -Wl,-soname=$(@F) $(LD_START_GROUP.$(TOOLSET)) $(filter-out FORCE_DO_CMD, $^) $(LD_END_GROUP.$(TOOLSET)) $(LIBS)
+ """  # noqa: E501
+ 
+ LINK_COMMANDS_MAC = """\
+@@ -313,6 +326,8 @@ AR.target ?= $(AR)
+ # C++ apps need to be linked with g++.
+ LINK ?= $(CXX.target)
+ 
++%(link_flags_host)s
++
+ # TODO(evan): move all cross-compilation logic to gyp-time so we don't need
+ # to replicate this environment fallback in make as well.
+ CC.host ?= %(CC.host)s
+@@ -2295,7 +2310,15 @@ def GenerateOutput(target_list, target_d
+         "AR.host": GetEnvironFallback(("AR_host", "AR"), "ar"),
+         "CXX.host": GetEnvironFallback(("CXX_host", "CXX"), "g++"),
+         "LINK.host": GetEnvironFallback(("LINK_host", "LINK"), "$(CXX.host)"),
++        "link_flags_host": LINK_FLAG_HOST_LINUX,
+     }
++    if sys.platform == "darwin":
++        header_params.update(
++            {
++                "link_flags_host": LINK_FLAG_HOST_MAC,
++            }
++        )
++
+     if flavor == "mac":
+         flock_command = "./gyp-mac-tool flock"
+         header_params.update(
