@@ -20,8 +20,6 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  util/mmap-alloc.c | 10 +++++++---
  1 file changed, 7 insertions(+), 3 deletions(-)
 
-diff --git a/util/mmap-alloc.c b/util/mmap-alloc.c
-index 27dcccd8ec..e133e38d21 100644
 --- a/util/mmap-alloc.c
 +++ b/util/mmap-alloc.c
 @@ -12,9 +12,6 @@

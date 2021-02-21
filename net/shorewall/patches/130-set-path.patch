@@ -1,8 +1,6 @@
-Index: shorewall-5.1.9/configfiles/shorewall.conf
-===================================================================
---- shorewall-5.1.9.orig/configfiles/shorewall.conf	2017-12-18 08:09:12.043625770 +0100
-+++ shorewall-5.1.9/configfiles/shorewall.conf	2017-12-18 08:09:54.353402257 +0100
-@@ -95,7 +95,7 @@
+--- a/configfiles/shorewall.conf
++++ b/configfiles/shorewall.conf
+@@ -95,7 +95,7 @@ MODULESDIR=
  
  NFACCT=
  

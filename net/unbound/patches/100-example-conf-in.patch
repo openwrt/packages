@@ -3,14 +3,12 @@ Patch the default configuration file with the tiny memory
 configuration example from Unbound documentation. This is the best
 starting point for embedded routers if one is not going to use UCI.
 
-Index: doc/example.conf.in
-===================================================================
 --- a/doc/example.conf.in
 +++ b/doc/example.conf.in
-@@ -15,6 +15,76 @@ server:
+@@ -19,6 +19,76 @@ server:
  	# verbosity number, 0 is least verbose. 1 is default.
  	verbosity: 1
-
+ 
 +	############################################################################
 +	# MEMORY CONTROL EXAMPLE
 +	# In the example config settings below memory usage is reduced. Some ser-

@@ -1,7 +1,6 @@
-diff -u --recursive setools-vanilla/setup.py setools/setup.py
---- setools-vanilla/setup.py	2020-04-01 09:57:49.000000000 -0500
-+++ setools/setup.py	2020-08-12 21:44:41.265149504 -0500
-@@ -109,7 +109,6 @@
+--- a/setup.py
++++ b/setup.py
+@@ -109,7 +109,6 @@ ext_py_mods = [Extension('setools.policy
                           extra_compile_args=['-Werror', '-Wextra',
                                               '-Waggregate-return',
                                               '-Wfloat-equal',

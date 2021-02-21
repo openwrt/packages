@@ -10,8 +10,6 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  m4/openvswitch.m4        | 6 ++++--
  3 files changed, 7 insertions(+), 3 deletions(-)
 
-diff --git a/lib/automake.mk b/lib/automake.mk
-index 380a67228..610f3d940 100644
 --- a/lib/automake.mk
 +++ b/lib/automake.mk
 @@ -10,6 +10,8 @@ lib_LTLIBRARIES += lib/libopenvswitch.la
@@ -23,8 +21,6 @@ index 380a67228..610f3d940 100644
  
  
  if WIN32
-diff --git a/lib/libopenvswitch.pc.in b/lib/libopenvswitch.pc.in
-index 2a3f2ca7b..c8d02eb5a 100644
 --- a/lib/libopenvswitch.pc.in
 +++ b/lib/libopenvswitch.pc.in
 @@ -7,5 +7,5 @@ Name: libopenvswitch
@@ -34,8 +30,6 @@ index 2a3f2ca7b..c8d02eb5a 100644
 -Libs.private: @LIBS@
 +Libs.private: @LIBS@ @SSL_LIBS@ @CAPNG_LDADD@ @LIBBPF_LDADD@ @LIBUNBOUND_LDADD@ @LIBUNWIND_LDADD@
  Cflags: -I${includedir}/openvswitch
-diff --git a/m4/openvswitch.m4 b/m4/openvswitch.m4
-index f2e0169f8..e000c1cc5 100644
 --- a/m4/openvswitch.m4
 +++ b/m4/openvswitch.m4
 @@ -657,7 +657,8 @@ AC_DEFUN([OVS_CHECK_UNBOUND],

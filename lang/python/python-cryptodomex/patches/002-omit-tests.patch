@@ -1,6 +1,6 @@
 --- a/setup.py
 +++ b/setup.py
-@@ -293,6 +293,9 @@ package_data = {
+@@ -301,6 +301,9 @@ package_data = {
      ],
  }
  

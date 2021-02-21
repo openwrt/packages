@@ -20,7 +20,7 @@
  LINKALL_IR       = -llirc_client
 --- a/decode.c
 +++ b/decode.c
-@@ -184,11 +184,7 @@ void decode_init(log_level level, const char *include_codecs, const char *exclud
+@@ -184,11 +184,7 @@ void decode_init(log_level level, const
  	if (!strstr(exclude_codecs, "pcm")	&& (!include_codecs || (order_codecs = strstr(include_codecs, "pcm"))))
  		sort_codecs((include_codecs ? order_codecs - include_codecs : i), register_pcm());
  

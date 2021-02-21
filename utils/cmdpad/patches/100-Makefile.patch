@@ -1,5 +1,5 @@
---- cmdpad-0.0.3/src/Makefile.orig	2008-01-05 23:29:44.000000000 +0100
-+++ cmdpad-0.0.3/src/Makefile	2008-01-05 23:30:23.000000000 +0100
+--- a/src/Makefile
++++ b/src/Makefile
 @@ -5,25 +5,25 @@
  TOP=..
  include $(TOP)/Makefile.common

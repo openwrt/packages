@@ -1,6 +1,6 @@
---- vncrepeater-0.14/repeater.cpp	2006-10-20 17:07:50.000000000 +0200
-+++ vncrepeater-0.14.new/repeater.cpp	2016-11-19 17:04:59.907871000 +0100
-@@ -593,7 +593,9 @@
+--- a/repeater.cpp
++++ b/repeater.cpp
+@@ -593,7 +593,9 @@ static bool checkIdCode(char *IdCode)
  static long parseId(char *IdCode)
  {
      unsigned int ii;
@@ -11,7 +11,7 @@
  
      debug(LEVEL_3, "parseId(): IdCode = %s\n", IdCode);
  
-@@ -998,9 +1000,13 @@
+@@ -998,9 +1000,13 @@ static bool isServerAddressAllowed(char
              allow = false;
              
          //server 0 == denied
@@ -27,7 +27,7 @@
          
          //allowed so far ? 
          if (allow)
-@@ -1983,7 +1989,7 @@
+@@ -1983,7 +1989,7 @@ int main(int argc, char **argv)
      struct sigaction saInt;
  
      //ini file default

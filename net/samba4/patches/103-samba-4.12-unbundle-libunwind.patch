@@ -1,5 +1,5 @@
---- a/lib/util/wscript_configure	2020-06-14
-+++ b/lib/util/wscript_configure	2020-06-14
+--- a/lib/util/wscript_configure
++++ b/lib/util/wscript_configure
 @@ -11,13 +11,13 @@ conf.CHECK_FUNCS_IN('backtrace backtrace
  conf.CHECK_HEADERS('execinfo.h')
  

@@ -16,8 +16,6 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  src/lib/icu/meson.build | 14 ++++++++++++--
  1 file changed, 12 insertions(+), 2 deletions(-)
 
-diff --git a/src/lib/icu/meson.build b/src/lib/icu/meson.build
-index bd6e30944..e63d614a0 100644
 --- a/src/lib/icu/meson.build
 +++ b/src/lib/icu/meson.build
 @@ -18,8 +18,18 @@ if icu_dep.found()

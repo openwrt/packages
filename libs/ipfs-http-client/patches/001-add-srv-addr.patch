@@ -1,6 +1,6 @@
---- a/test/block.cc	2019-11-22 18:16:53.973272202 +0300
-+++ b/test/block.cc	2019-11-22 18:16:58.245249328 +0300
-@@ -24,9 +24,16 @@
+--- a/test/block.cc
++++ b/test/block.cc
+@@ -24,9 +24,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
  #include <sstream>
  #include <stdexcept>
  
@@ -19,9 +19,9 @@
  
      /** [ipfs::Client::BlockPut] */
      ipfs::Json block;
---- a/test/config.cc	2019-11-22 18:16:53.973272202 +0300
-+++ b/test/config.cc	2019-11-22 18:16:58.245249328 +0300
-@@ -23,9 +23,16 @@
+--- a/test/config.cc
++++ b/test/config.cc
+@@ -23,9 +23,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
  #include <iostream>
  #include <stdexcept>
  
@@ -40,9 +40,9 @@
  
      /** [ipfs::Client::ConfigSet] */
      client.ConfigSet("Datastore.StorageMax", "20GB");
---- a/test/dht.cc	2019-11-22 18:16:53.973272202 +0300
-+++ b/test/dht.cc	2019-11-22 18:16:58.245249328 +0300
-@@ -23,9 +23,16 @@
+--- a/test/dht.cc
++++ b/test/dht.cc
+@@ -23,9 +23,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
  #include <iostream>
  #include <stdexcept>
  
@@ -61,9 +61,9 @@
  
      ipfs::Json add_result;
      client.FilesAdd(
---- a/test/error.cc	2019-11-22 18:16:53.973272202 +0300
-+++ b/test/error.cc	2019-11-22 18:16:58.245249328 +0300
-@@ -35,16 +35,23 @@
+--- a/test/error.cc
++++ b/test/error.cc
+@@ -35,16 +35,23 @@ extern std::string replace_body;
  }
  }  // namespace ipfs
  
@@ -90,9 +90,9 @@
  
      std::string object_id;
      client.ObjectNew(&object_id);
---- a/test/files.cc	2019-11-22 18:16:53.973272202 +0300
-+++ b/test/files.cc	2019-11-22 18:16:58.245249328 +0300
-@@ -24,9 +24,16 @@
+--- a/test/files.cc
++++ b/test/files.cc
+@@ -24,9 +24,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
  #include <sstream>
  #include <stdexcept>
  
@@ -111,9 +111,9 @@
  
      /** [ipfs::Client::FilesGet] */
      std::stringstream contents;
---- a/test/generic.cc	2019-11-22 18:16:53.973272202 +0300
-+++ b/test/generic.cc	2019-11-22 18:16:58.245249328 +0300
-@@ -24,16 +24,23 @@
+--- a/test/generic.cc
++++ b/test/generic.cc
+@@ -24,16 +24,23 @@ CONNECTION WITH THE SOFTWARE OR THE USE
  #include <stdexcept>
  #include <utility>
  
@@ -140,9 +140,9 @@
      clientC = std::move(clientB);
  
  #pragma GCC diagnostic push
---- a/test/key.cc	2019-11-22 18:16:53.973272202 +0300
-+++ b/test/key.cc	2019-11-22 18:16:58.245249328 +0300
-@@ -26,9 +26,16 @@
+--- a/test/key.cc
++++ b/test/key.cc
+@@ -26,9 +26,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
  
  using Json = nlohmann::json;
  
@@ -161,9 +161,9 @@
  
      /** [ipfs::Client::KeyGen] */
      std::string key_id;
---- a/test/name.cc	2019-11-22 18:16:53.973272202 +0300
-+++ b/test/name.cc	2019-11-22 18:16:58.245249328 +0300
-@@ -24,9 +24,16 @@
+--- a/test/name.cc
++++ b/test/name.cc
+@@ -24,9 +24,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
  #include <sstream>
  #include <stdexcept>
  
@@ -182,9 +182,9 @@
  
      // We need a key here, so as not to clobber the "self" key.
      std::string key_id;
---- a/test/object.cc	2019-11-22 18:16:53.973272202 +0300
-+++ b/test/object.cc	2019-11-22 18:16:58.245249328 +0300
-@@ -24,9 +24,16 @@
+--- a/test/object.cc
++++ b/test/object.cc
+@@ -24,9 +24,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
  #include <stdexcept>
  #include <string>
  
@@ -203,9 +203,9 @@
  
      /** [ipfs::Client::ObjectNew] */
      std::string object_id;
---- a/test/pin.cc	2019-11-22 18:16:53.973272202 +0300
-+++ b/test/pin.cc	2019-11-23 23:09:57.507400418 +0300
-@@ -23,9 +23,16 @@
+--- a/test/pin.cc
++++ b/test/pin.cc
+@@ -23,9 +23,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
  #include <stdexcept>
  #include <string>
  
@@ -224,9 +224,9 @@
  
      std::string object_id;
  
---- a/test/swarm.cc	2019-11-22 18:16:53.973272202 +0300
-+++ b/test/swarm.cc	2019-11-23 23:10:07.199342933 +0300
-@@ -23,9 +23,16 @@
+--- a/test/swarm.cc
++++ b/test/swarm.cc
+@@ -23,9 +23,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
  #include <stdexcept>
  #include <string>
  

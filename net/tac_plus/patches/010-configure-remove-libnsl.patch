@@ -1,6 +1,6 @@
---- a/tacacs-F4.0.4.28/configure	2015-01-06 22:55:35.000000000 +0100
-+++ b/tacacs-F4.0.4.28/configure	2019-01-31 14:44:28.679272504 +0100
-@@ -3285,11 +3285,9 @@
+--- a/tacacs-F4.0.4.28/configure
++++ b/tacacs-F4.0.4.28/configure
+@@ -3244,11 +3244,9 @@ case "${host_os}" in
      ;;
      *linux* )
  	# XXX: not sure if /usr/local is necessary.

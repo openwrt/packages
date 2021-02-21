@@ -1,5 +1,3 @@
-diff --git a/pdns/Makefile.am b/pdns/Makefile.am
-index 2df5fa7..2246088 100644
 --- a/pdns/Makefile.am
 +++ b/pdns/Makefile.am
 @@ -71,7 +71,6 @@ CLEANFILES = \
@@ -10,7 +8,7 @@ index 2df5fa7..2246088 100644
  	apidocfiles.h \
  	api-swagger.yaml \
  	api-swagger.json
-@@ -99,7 +98,6 @@ apidocfiles.h: api-swagger.yaml api-swagger.json
+@@ -99,7 +98,6 @@ apidocfiles.h: api-swagger.yaml api-swag
  	./incfiles $^ > $@
  
  noinst_SCRIPTS = pdns.init

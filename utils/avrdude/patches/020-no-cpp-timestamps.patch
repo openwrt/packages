@@ -6,7 +6,7 @@ Author: Milan Kupcevic <milan@debian.org>
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 --- a/main.c
 +++ b/main.c
-@@ -679,10 +679,10 @@
+@@ -679,10 +679,10 @@ int main(int argc, char * argv [])
     * Print out an identifying string so folks can tell what version
     * they are running
     */

@@ -7,8 +7,6 @@ This used to use a RAW socket, while now it used a DGRAM socket.
 Previously it failed with operation not permitted, while this version
 seems to work reliably.
 
-diff --git a/src/util.c b/src/util.c
-index 46ec5a2..426ba13 100644
 --- a/src/util.c
 +++ b/src/util.c
 @@ -174,11 +174,13 @@ get_iface_ip(const char *ifname)

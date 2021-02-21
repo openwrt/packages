@@ -1,6 +1,6 @@
 --- a/setup.py
 +++ b/setup.py
-@@ -126,6 +126,7 @@ ext_py_mods = [Extension('setools.policyrep', ['setools/policyrep.pyx'],
+@@ -125,6 +125,7 @@ ext_py_mods = [Extension('setools.policy
                                               '-Wno-unreachable-code',
                                               '-Wno-implicit-fallthrough',
                                               '-Wno-cast-function-type',

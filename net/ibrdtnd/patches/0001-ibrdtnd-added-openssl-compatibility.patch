@@ -15,8 +15,6 @@ Signed-off-by: Eneas U de Queiroz <cote2004-github@yahoo.com>
  create mode 100644 ibrdtn/daemon/src/security/exchange/openssl_compat.cpp
  create mode 100644 ibrdtn/daemon/src/security/exchange/openssl_compat.h
 
-diff --git a/src/security/exchange/DHProtocol.cpp b/src/security/exchange/DHProtocol.cpp
-index e94c5026..3e0ad717 100644
 --- a/src/security/exchange/DHProtocol.cpp
 +++ b/src/security/exchange/DHProtocol.cpp
 @@ -30,6 +30,7 @@
@@ -97,8 +95,6 @@ index e94c5026..3e0ad717 100644
  
  						manager.submit(session, response);
  
-diff --git a/src/security/exchange/Makefile.am b/src/security/exchange/Makefile.am
-index a6b2f832..71ed8365 100644
 --- a/src/security/exchange/Makefile.am
 +++ b/src/security/exchange/Makefile.am
 @@ -22,6 +22,8 @@ exchange_SOURCES += \
@@ -110,9 +106,6 @@ index a6b2f832..71ed8365 100644
  	QRCodeProtocol.h \
  	QRCodeProtocol.cpp
  	
-diff --git a/src/security/exchange/openssl_compat.cpp b/src/security/exchange/openssl_compat.cpp
-new file mode 100644
-index 00000000..e3baba0f
 --- /dev/null
 +++ b/src/security/exchange/openssl_compat.cpp
 @@ -0,0 +1,62 @@
@@ -178,9 +171,6 @@ index 00000000..e3baba0f
 +}
 +
 +#endif /* OPENSSL_VERSION_NUMBER */
-diff --git a/src/security/exchange/openssl_compat.h b/src/security/exchange/openssl_compat.h
-new file mode 100644
-index 00000000..29e7d415
 --- /dev/null
 +++ b/src/security/exchange/openssl_compat.h
 @@ -0,0 +1,13 @@
@@ -197,6 +187,3 @@ index 00000000..29e7d415
 +
 +#endif /* OPENSSL_VERSION_NUMBER */
 +#endif /* LIBCRYPTO_COMPAT_H */
--- 
-2.16.1
-

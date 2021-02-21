@@ -7,11 +7,9 @@ Signed-off-by: Christian Schoenebeck <christian.schoenebeck@gmail.com>
  bin/radicale | 7 +++++++
  1 file changed, 7 insertions(+)
 
-diff --git a/bin/radicale b/bin/radicale
-index 619aca5..7466020 100755
 --- a/bin/radicale
 +++ b/bin/radicale
-@@ -26,6 +26,13 @@ Launch the server according to configuration and command-line options.
+@@ -26,6 +26,13 @@ Launch the server according to configura
  
  """
  
@@ -25,6 +23,3 @@ index 619aca5..7466020 100755
  import radicale.__main__
  
  
--- 
-2.1.0
-

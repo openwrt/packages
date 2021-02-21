@@ -11,10 +11,8 @@ gitolite: Eliminate the need for ssh-keygen dependency
   embedded distro such as OpenWrt.
 
 Signed-off-by: Daniel F. Dickinson <cshored@thecshore.com>
-Index: gitolite-3.6.11/src/lib/Gitolite/Common.pm
-===================================================================
---- gitolite-3.6.11.orig/src/lib/Gitolite/Common.pm
-+++ gitolite-3.6.11/src/lib/Gitolite/Common.pm
+--- a/src/lib/Gitolite/Common.pm
++++ b/src/lib/Gitolite/Common.pm
 @@ -26,6 +26,8 @@ package Gitolite::Common;
  use Exporter 'import';
  use File::Path qw(mkpath);
@@ -24,7 +22,7 @@ Index: gitolite-3.6.11/src/lib/Gitolite/Common.pm
  use Carp qw(carp cluck croak confess);
  
  use strict;
-@@ -352,43 +352,82 @@ sub logger_plus_stderr {
+@@ -352,43 +354,82 @@ sub logger_plus_stderr {
  }
  
  # ----------------------------------------------------------------------

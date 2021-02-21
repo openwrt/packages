@@ -1,6 +1,6 @@
 --- a/src/Makefile.in
 +++ b/src/Makefile.in
-@@ -372,13 +372,13 @@
+@@ -372,13 +372,13 @@ install-exec-local:
  	rm -f $(DESTDIR)/$(bindir)/`echo lsb | sed -e '$(transform)'`
  	ln $(DESTDIR)/$(bindir)/`echo lsz |sed -e '$(transform)'` \
  		$(DESTDIR)/$(bindir)/`echo lsb |sed -e '$(transform)'` 

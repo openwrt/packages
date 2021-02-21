@@ -4,8 +4,6 @@ Description: Use poll(2) instead of select(2) to support more than 1024 file des
 Author: Ben Smithurst <ben.smithurst@gradwell.com>
 Bug-Debian: https://bugs.debian.org/478193
 
-diff --git a/src/osdep/unix/os_lnx.c b/src/osdep/unix/os_lnx.c
-index 03fd17d..671bbd6 100644
 --- a/src/osdep/unix/os_lnx.c
 +++ b/src/osdep/unix/os_lnx.c
 @@ -41,6 +41,7 @@
@@ -16,8 +14,6 @@ index 03fd17d..671bbd6 100644
  
  
  #include "fs_unix.c"
-diff --git a/src/osdep/unix/os_slx.c b/src/osdep/unix/os_slx.c
-index c94d632..f6bf27d 100644
 --- a/src/osdep/unix/os_slx.c
 +++ b/src/osdep/unix/os_slx.c
 @@ -42,6 +42,7 @@ extern int errno;		/* just in case */
@@ -28,11 +24,9 @@ index c94d632..f6bf27d 100644
  
  
  #include "fs_unix.c"
-diff --git a/src/osdep/unix/tcp_unix.c b/src/osdep/unix/tcp_unix.c
-index 795fb4f..c69eaec 100644
 --- a/src/osdep/unix/tcp_unix.c
 +++ b/src/osdep/unix/tcp_unix.c
-@@ -235,12 +235,11 @@ TCPSTREAM *tcp_open (char *host,char *service,unsigned long port)
+@@ -235,12 +235,11 @@ TCPSTREAM *tcp_open (char *host,char *se
  int tcp_socket_open (int family,void *adr,size_t adrlen,unsigned short port,
  		     char *tmp,int *ctr,char *hst)
  {
@@ -47,7 +41,7 @@ index 795fb4f..c69eaec 100644
    struct sockaddr *sadr = ip_sockaddr (family,adr,adrlen,port,&len);
    blocknotify_t bn = (blocknotify_t) mail_parameters (NIL,GET_BLOCKNOTIFY,NIL);
  				/* fetid Solaris */
-@@ -252,14 +251,6 @@ int tcp_socket_open (int family,void *adr,size_t adrlen,unsigned short port,
+@@ -252,14 +251,6 @@ int tcp_socket_open (int family,void *ad
      sprintf (tmp,"Unable to create TCP socket: %s",strerror (errno));
      (*bn) (BLOCK_NONSENSITIVE,data);
    }
@@ -62,7 +56,7 @@ index 795fb4f..c69eaec 100644
  
    else {			/* get current socket flags */
      flgs = fcntl (sock,F_GETFL,0);
-@@ -284,16 +275,11 @@ int tcp_socket_open (int family,void *adr,size_t adrlen,unsigned short port,
+@@ -284,16 +275,11 @@ int tcp_socket_open (int family,void *ad
      if ((sock >= 0) && ctr) {	/* want open timeout? */
        now = time (0);		/* open timeout */
        ti = ttmo_open ? now + ttmo_open : 0;
@@ -83,7 +77,7 @@ index 795fb4f..c69eaec 100644
  	now = time (0);		/* fake timeout if interrupt & time expired */
  	if ((i < 0) && (errno == EINTR) && ti && (ti <= now)) i = 0;
        } while ((i < 0) && (errno == EINTR));
-@@ -302,7 +288,7 @@ int tcp_socket_open (int family,void *adr,size_t adrlen,unsigned short port,
+@@ -302,7 +288,7 @@ int tcp_socket_open (int family,void *ad
  	fcntl (sock,F_SETFL,flgs);
  	/* This used to be a zero-byte read(), but that crashes Solaris */
  				/* get socket status */
@@ -92,7 +86,7 @@ index 795fb4f..c69eaec 100644
        }	
        if (i <= 0) {		/* timeout or error? */
  	i = i ? errno : ETIMEDOUT;/* determine error code */
-@@ -545,9 +531,8 @@ long tcp_getbuffer (TCPSTREAM *stream,unsigned long size,char *s)
+@@ -545,9 +531,8 @@ long tcp_getbuffer (TCPSTREAM *stream,un
      stream->ictr -=n;
    }
    if (size) {
@@ -104,7 +98,7 @@ index 795fb4f..c69eaec 100644
      time_t t = time (0);
      blocknotify_t bn=(blocknotify_t) mail_parameters (NIL,GET_BLOCKNOTIFY,NIL);
      (*bn) (BLOCK_TCPREAD,NIL);
-@@ -556,16 +541,13 @@ long tcp_getbuffer (TCPSTREAM *stream,unsigned long size,char *s)
+@@ -556,16 +541,13 @@ long tcp_getbuffer (TCPSTREAM *stream,un
        time_t now = tl;
        time_t ti = ttmo_read ? now + ttmo_read : 0;
        if (tcpdebug) mm_log ("Reading TCP buffer",TCPDEBUG);
@@ -126,7 +120,7 @@ index 795fb4f..c69eaec 100644
  	now = time (0);		/* fake timeout if interrupt & time expired */
  	if ((i < 0) && (errno == EINTR) && ti && (ti <= now)) i = 0;
        } while ((i < 0) && (errno == EINTR));
-@@ -605,9 +587,8 @@ long tcp_getbuffer (TCPSTREAM *stream,unsigned long size,char *s)
+@@ -605,9 +587,8 @@ long tcp_getbuffer (TCPSTREAM *stream,un
  
  long tcp_getdata (TCPSTREAM *stream)
  {
@@ -158,7 +152,7 @@ index 795fb4f..c69eaec 100644
        now = time (0);		/* fake timeout if interrupt & time expired */
        if ((i < 0) && (errno == EINTR) && ti && (ti <= now)) i = 0;
      } while ((i < 0) && (errno == EINTR));
-@@ -677,9 +655,8 @@ long tcp_soutr (TCPSTREAM *stream,char *string)
+@@ -677,9 +655,8 @@ long tcp_soutr (TCPSTREAM *stream,char *
  
  long tcp_sout (TCPSTREAM *stream,char *string,unsigned long size)
  {
@@ -170,7 +164,7 @@ index 795fb4f..c69eaec 100644
    time_t t = time (0);
    blocknotify_t bn = (blocknotify_t) mail_parameters (NIL,GET_BLOCKNOTIFY,NIL);
    if (stream->tcpso < 0) return NIL;
-@@ -689,15 +666,12 @@ long tcp_sout (TCPSTREAM *stream,char *string,unsigned long size)
+@@ -689,15 +666,12 @@ long tcp_sout (TCPSTREAM *stream,char *s
      time_t now = tl;
      time_t ti = ttmo_write ? now + ttmo_write : 0;
      if (tcpdebug) mm_log ("Writing to TCP",TCPDEBUG);

@@ -1,5 +1,3 @@
-diff --git a/ibrcommon/data/File.cpp b/ibrcommon/data/File.cpp
-index 31af4ae..9b49890 100644
 --- a/ibrcommon/data/File.cpp
 +++ b/ibrcommon/data/File.cpp
 @@ -35,9 +35,7 @@

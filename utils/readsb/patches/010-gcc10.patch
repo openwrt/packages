@@ -9,8 +9,6 @@ Subject: [PATCH] Clean up linkage of struct Modes.
  viewadsb.c       | 2 ++
  3 files changed, 8 insertions(+), 2 deletions(-)
 
-diff --git a/readsb.c b/readsb.c
-index e784d891..d6dab324 100644
 --- a/readsb.c
 +++ b/readsb.c
 @@ -57,6 +57,8 @@
@@ -22,8 +20,6 @@ index e784d891..d6dab324 100644
  //
  // ============================= Program options help ==========================
  //
-diff --git a/readsb.h b/readsb.h
-index 3a1b22d5..1b80c338 100644
 --- a/readsb.h
 +++ b/readsb.h
 @@ -312,7 +312,7 @@ struct mag_buf
@@ -46,8 +42,6 @@ index 3a1b22d5..1b80c338 100644
  
  // The struct we use to store information about a decoded message.
  
-diff --git a/viewadsb.c b/viewadsb.c
-index ad7b1bd0..915305b6 100644
 --- a/viewadsb.c
 +++ b/viewadsb.c
 @@ -54,6 +54,8 @@

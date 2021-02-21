@@ -1,5 +1,3 @@
-diff --git a/lukefile b/lukefile
-index 2d4bb2f..1e48540 100644
 --- a/lukefile
 +++ b/lukefile
 @@ -29,8 +29,6 @@ incdirs  = {

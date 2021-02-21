@@ -1,5 +1,3 @@
-diff --git a/configure.ac b/configure.ac
-index 8435d9a..148453c 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -109,9 +109,22 @@ else

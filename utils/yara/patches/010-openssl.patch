@@ -9,11 +9,9 @@
  #endif
  
  #endif
-diff --git a/libyara/modules/pe/pe.c b/libyara/modules/pe/pe.c
-index 8eace26..ed43abe 100644
 --- a/libyara/modules/pe/pe.c
 +++ b/libyara/modules/pe/pe.c
-@@ -44,8 +44,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+@@ -44,8 +44,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBI
  #endif
  
  #if OPENSSL_VERSION_NUMBER < 0x10100000L

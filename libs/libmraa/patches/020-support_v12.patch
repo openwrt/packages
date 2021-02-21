@@ -1,6 +1,6 @@
 --- a/api/mraa/gpio.hpp
 +++ b/api/mraa/gpio.hpp
-@@ -175,7 +175,11 @@
+@@ -175,7 +175,11 @@ class Gpio
          v8::Local<v8::Value> argv[] = { SWIGV8_INTEGER_NEW(-1) };
  #if NODE_MODULE_VERSION >= 0x000D
          v8::Local<v8::Function> f = v8::Local<v8::Function>::New(v8::Isolate::GetCurrent(), This->m_v8isr);

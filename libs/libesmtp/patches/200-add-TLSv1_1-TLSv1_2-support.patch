@@ -7,7 +7,7 @@ Last-Update: 2015-11-07
 
 --- a/smtp-tls.c
 +++ b/smtp-tls.c
-@@ -197,11 +197,24 @@ starttls_create_ctx (smtp_session_t sess
+@@ -202,11 +202,24 @@ starttls_create_ctx (smtp_session_t sess
    ckf_t status;
  
    /* The decision not to support SSL v2 and v3 but instead to use only

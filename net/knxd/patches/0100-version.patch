@@ -1,8 +1,8 @@
---- a/tools/version.sh  2020-04-08 19:39:40.349461034 +0200
-+++ b/tools/version.sh  2020-05-13 13:40:26.354277094 +0200
+--- a/tools/version.sh
++++ b/tools/version.sh
 @@ -1,4 +1,3 @@
  #!/bin/sh
-
+ 
 -test -d .git || exit
 -git describe --tags
 +echo -n "0.14.39"

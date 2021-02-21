@@ -1,6 +1,6 @@
 --- a/Makefile.PL
 +++ b/Makefile.PL
-@@ -127,7 +127,7 @@
+@@ -127,7 +127,7 @@ if (!defined($curl_h)) {
      close H;
  
      for my $e (sort @syms) {

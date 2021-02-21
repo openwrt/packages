@@ -1,7 +1,6 @@
-diff -rupN luarocks/Makefile luarocks.new/Makefile
---- luarocks/Makefile	2015-02-19 13:24:07.027310956 +0200
-+++ luarocks.new/Makefile	2015-02-22 13:28:24.497353543 +0200
-@@ -104,7 +104,7 @@ build_bins: cleanup_bins
+--- a/Makefile
++++ b/Makefile
+@@ -89,7 +89,7 @@ build_bins: cleanup_bins
  	for f in $(BIN_FILES) ;\
  	do \
  	   sed "1d" src/bin/$$f > src/bin/$$f.bak ;\
@@ -10,4 +9,3 @@ diff -rupN luarocks/Makefile luarocks.new/Makefile
  	   echo "package.path = [[$(LUADIR)/?.lua;]]..package.path" | sed "s,//,/,g" >> src/bin/$$f ;\
  	   cat src/bin/$$f.bak >> src/bin/$$f ;\
  	   chmod +x src/bin/$$f ;\
-Binary files luarocks/src/bin/.luarocks.swp and luarocks.new/src/bin/.luarocks.swp differ

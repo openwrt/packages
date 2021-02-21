@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -27,32 +27,6 @@ AC_CHECK_LIB([http_parser], [http_parser_execute],
+@@ -27,32 +27,6 @@ AC_CHECK_LIB([http_parser], [http_parser
               [AC_MSG_ERROR([http-parser required!])])
  
  PKG_CHECK_MODULES([jose], [jose >= 8])

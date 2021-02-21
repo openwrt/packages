@@ -14,11 +14,9 @@ Signed-off-by: Frediano Ziglio <fziglio@redhat.com>
  tests/meson.build  | 34 ++++++++++++++++++----------------
  4 files changed, 47 insertions(+), 41 deletions(-)
 
-diff --git a/common/meson.build b/common/meson.build
-index 7356cc0..14bf242 100644
 --- a/subprojects/spice-common/common/meson.build
 +++ b/subprojects/spice-common/common/meson.build
-@@ -67,19 +67,21 @@ spice_common_dep = declare_dependency(link_with : spice_common_lib,
+@@ -67,19 +67,21 @@ spice_common_dep = declare_dependency(li
  
  
  # client_demarshallers
@@ -28,13 +26,6 @@ index 7356cc0..14bf242 100644
 -                '--include', 'common/messages.h',
 -                '--generated-declaration-file', '@OUTPUT1@',
 -                '@INPUT@', '@OUTPUT0@']
--
--client_demarshallers = custom_target('client_demarshallers',
--                                     input : [spice_proto],
--                                     output : ['generated_client_demarshallers.c', 'generated_messages.h'],
--                                     install : false,
--                                     command : [codegen_cmd, codegen_args],
--                                     depend_files : [spice_codegen_files, 'messages.h'])
 +if spice_common_generate_client_code or spice_common_generate_server_code
 +  codegen_cmd = [python, spice_codegen]
 +  codegen_args = ['--generate-demarshallers',
@@ -42,7 +33,13 @@ index 7356cc0..14bf242 100644
 +                  '--include', 'common/messages.h',
 +                  '--generated-declaration-file', '@OUTPUT1@',
 +                  '@INPUT@', '@OUTPUT0@']
-+
+ 
+-client_demarshallers = custom_target('client_demarshallers',
+-                                     input : [spice_proto],
+-                                     output : ['generated_client_demarshallers.c', 'generated_messages.h'],
+-                                     install : false,
+-                                     command : [codegen_cmd, codegen_args],
+-                                     depend_files : [spice_codegen_files, 'messages.h'])
 +  client_demarshallers = custom_target('client_demarshallers',
 +                                       input : [spice_proto],
 +                                       output : ['generated_client_demarshallers.c', 'generated_messages.h'],
@@ -53,17 +50,18 @@ index 7356cc0..14bf242 100644
  
  #
  # libspice-common-client
-diff --git a/meson.build b/meson.build
-index 41a9419..b60a9fe 100644
 --- a/subprojects/spice-common/meson.build
 +++ b/subprojects/spice-common/meson.build
-@@ -119,17 +119,19 @@ foreach dep, version : optional_deps
+@@ -131,17 +131,19 @@ foreach dep, version : optional_deps
  endforeach
  
  # Python
 -py_module = import('python')
 -python = py_module.find_installation()
--
++if spice_common_generate_client_code or spice_common_generate_server_code
++  py_module = import('python')
++  python = py_module.find_installation()
+ 
 -if get_option('python-checks')
 -  foreach module : ['six', 'pyparsing']
 -    message('Checking for python module @0@'.format(module))
@@ -72,10 +70,6 @@ index 41a9419..b60a9fe 100644
 -      error('Python module @0@ not found'.format(module))
 -    endif
 -  endforeach
-+if spice_common_generate_client_code or spice_common_generate_server_code
-+  py_module = import('python')
-+  python = py_module.find_installation()
-+
 +  if get_option('python-checks')
 +    foreach module : ['six', 'pyparsing']
 +      message('Checking for python module @0@'.format(module))
@@ -88,11 +82,9 @@ index 41a9419..b60a9fe 100644
  endif
  
  # smartcard check
-diff --git a/meson_options.txt b/meson_options.txt
-index d30858f..d93d74b 100644
 --- a/subprojects/spice-common/meson_options.txt
 +++ b/subprojects/spice-common/meson_options.txt
-@@ -39,7 +39,7 @@ option('manual',
+@@ -45,7 +45,7 @@ option('manual',
  
  option('generate-code',
      type : 'combo',
@@ -101,11 +93,9 @@ index d30858f..d93d74b 100644
      description : 'Which code should be built')
  
  option('tests',
-diff --git a/tests/meson.build b/tests/meson.build
-index d315056..1ad5bc5 100644
 --- a/subprojects/spice-common/tests/meson.build
 +++ b/subprojects/spice-common/tests/meson.build
-@@ -20,26 +20,28 @@ endforeach
+@@ -15,26 +15,28 @@ endforeach
  #
  # test_marshallers
  #
@@ -150,6 +140,3 @@ index d315056..1ad5bc5 100644
  
  #
  # test_quic
--- 
-GitLab
-

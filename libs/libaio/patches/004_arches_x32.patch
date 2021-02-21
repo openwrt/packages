@@ -13,7 +13,7 @@ Last-Update: 2013-05-06
 
 --- a/src/syscall-x86_64.h
 +++ b/src/syscall-x86_64.h
-@@ -1,5 +1,15 @@
+@@ -1,6 +1,16 @@
 +#ifndef __NR_io_setup
  #define __NR_io_setup		206
 +#endif
@@ -29,6 +29,7 @@ Last-Update: 2013-05-06
 +#ifndef __NR_io_cancel
  #define __NR_io_cancel		210
 +#endif
+ #define __NR_io_pgetevents	333
 --- a/harness/main.c
 +++ b/harness/main.c
 @@ -14,7 +14,7 @@

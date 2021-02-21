@@ -22,11 +22,9 @@ Signed-off-by: Bernd Kuhls <bernd.kuhls@t-online.de>
  erts/emulator/Makefile.in | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/erts/emulator/Makefile.in b/erts/emulator/Makefile.in
-index 7145824..d079487 100644
 --- a/erts/emulator/Makefile.in
 +++ b/erts/emulator/Makefile.in
-@@ -712,7 +712,7 @@
+@@ -751,7 +751,7 @@ endif
  # Usually the same as the default rule, but certain platforms (e.g. win32) mix
  # different compilers
  $(OBJDIR)/beam_emu.o: beam/beam_emu.c
@@ -35,7 +33,7 @@ index 7145824..d079487 100644
  
  $(OBJDIR)/beam_emu.S: beam/beam_emu.c
  	$(V_EMU_CC) -S -fverbose-asm $(subst -O2, $(GEN_OPT_FLGS), $(CFLAGS)) $(INCLUDES) -c $< -o $@
-@@ -765,7 +765,7 @@
+@@ -804,7 +804,7 @@ endif
  # General targets
  #
  $(OBJDIR)/%.o: beam/%.c

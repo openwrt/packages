@@ -10,7 +10,7 @@
  {
          struct addrinfo hints, *res, *ressave;
  
-@@ -48,7 +47,7 @@ bind_socket (int sockfd, const char *addr, int family)
+@@ -48,7 +47,7 @@ bind_socket (int sockfd, const char *add
          assert (addr != NULL && strlen (addr) != 0);
  
          memset (&hints, 0, sizeof (struct addrinfo));
@@ -19,7 +19,7 @@
          hints.ai_socktype = SOCK_STREAM;
  
          /* The local port it not important */
-@@ -112,14 +111,12 @@ int opensock (const char *host, int port, const char *bind_to)
+@@ -112,14 +111,12 @@ int opensock (const char *host, int port
  
                  /* Bind to the specified address */
                  if (bind_to) {

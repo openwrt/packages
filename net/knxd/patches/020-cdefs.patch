@@ -14,7 +14,7 @@
  
  #include "eibloadresult.h"
  
-@@ -935,5 +936,7 @@ int EIB_Cache_LastUpdates2_async (EIBConnection * con, uint32_t start,
+@@ -935,5 +936,7 @@ int EIB_Cache_LastUpdates2_async (EIBCon
                                    uint32_t * end);
  
  

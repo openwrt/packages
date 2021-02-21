@@ -1,6 +1,6 @@
 --- a/sycls.c
 +++ b/sycls.c
-@@ -1329,6 +1329,7 @@ unsigned int Sleep(unsigned int seconds) {
+@@ -1329,6 +1329,7 @@ unsigned int Sleep(unsigned int seconds)
     return retval;
  }
  

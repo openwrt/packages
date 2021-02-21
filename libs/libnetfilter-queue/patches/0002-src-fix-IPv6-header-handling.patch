@@ -14,7 +14,7 @@ Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
 
 --- a/src/extra/ipv6.c
 +++ b/src/extra/ipv6.c
-@@ -67,10 +67,19 @@ int nfq_ip6_set_transport_header(struct 
+@@ -67,10 +67,19 @@ int nfq_ip6_set_transport_header(struct
  	uint8_t nexthdr = ip6h->ip6_nxt;
  	uint8_t *cur = (uint8_t *)ip6h + sizeof(struct ip6_hdr);
  
@@ -35,7 +35,7 @@ Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
  		/* No more extensions, we're done. */
  		if (nexthdr == IPPROTO_NONE) {
  			cur = NULL;
-@@ -107,11 +116,13 @@ int nfq_ip6_set_transport_header(struct 
+@@ -107,11 +116,13 @@ int nfq_ip6_set_transport_header(struct
  		} else if (nexthdr == IPPROTO_AH)
  			hdrlen = (ip6_ext->ip6e_len + 2) << 2;
  		else

@@ -1,7 +1,6 @@
-diff -u --recursive libdmapsharing-3.9.10-vanilla/configure.ac libdmapsharing-3.9.10/configure.ac
---- libdmapsharing-3.9.10-vanilla/configure.ac	2020-07-08 08:04:40.000000000 -0400
-+++ libdmapsharing-3.9.10/configure.ac	2020-07-08 21:34:56.960942899 -0400
-@@ -125,15 +125,7 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -125,15 +125,7 @@ fi
  AC_SUBST(GOBJECT_CFLAGS)
  AC_SUBST(GOBJECT_LIBS)
  

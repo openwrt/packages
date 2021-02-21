@@ -1,6 +1,5 @@
-diff -u --recursive daq-2.2.2-vanilla/os-daq-modules/daq_ipfw.c daq-2.2.2/os-daq-modules/daq_ipfw.c
---- daq-2.2.2-vanilla/os-daq-modules/daq_ipfw.c	2017-02-08 17:04:18.000000000 -0500
-+++ daq-2.2.2/os-daq-modules/daq_ipfw.c	2018-09-01 17:21:10.608181841 -0400
+--- a/os-daq-modules/daq_ipfw.c
++++ b/os-daq-modules/daq_ipfw.c
 @@ -23,10 +23,10 @@
  #include <stdlib.h>
  #include <string.h>
@@ -13,9 +12,8 @@ diff -u --recursive daq-2.2.2-vanilla/os-daq-modules/daq_ipfw.c daq-2.2.2/os-daq
  
  #include <netinet/in.h>
  #include <sys/socket.h>
-diff -u --recursive daq-2.2.2-vanilla/os-daq-modules/daq_ipq.c daq-2.2.2/os-daq-modules/daq_ipq.c
---- daq-2.2.2-vanilla/os-daq-modules/daq_ipq.c	2017-02-08 17:04:18.000000000 -0500
-+++ daq-2.2.2/os-daq-modules/daq_ipq.c	2018-09-01 17:21:23.162208457 -0400
+--- a/os-daq-modules/daq_ipq.c
++++ b/os-daq-modules/daq_ipq.c
 @@ -24,10 +24,10 @@
  #include <stdio.h>
  #include <stdlib.h>
@@ -28,9 +26,8 @@ diff -u --recursive daq-2.2.2-vanilla/os-daq-modules/daq_ipq.c daq-2.2.2/os-daq-
  
  #include <netinet/ip.h>
  
-diff -u --recursive daq-2.2.2-vanilla/os-daq-modules/daq_nfq.c daq-2.2.2/os-daq-modules/daq_nfq.c
---- daq-2.2.2-vanilla/os-daq-modules/daq_nfq.c	2017-02-08 17:04:18.000000000 -0500
-+++ daq-2.2.2/os-daq-modules/daq_nfq.c	2018-09-01 17:21:35.202233988 -0400
+--- a/os-daq-modules/daq_nfq.c
++++ b/os-daq-modules/daq_nfq.c
 @@ -24,10 +24,10 @@
  #include <stdio.h>
  #include <stdlib.h>

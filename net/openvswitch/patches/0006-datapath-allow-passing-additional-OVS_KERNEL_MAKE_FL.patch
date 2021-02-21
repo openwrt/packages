@@ -10,8 +10,6 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  datapath/linux/Makefile.main.in | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/datapath/linux/Makefile.main.in b/datapath/linux/Makefile.main.in
-index 6db4aa3ab..6f295387a 100644
 --- a/datapath/linux/Makefile.main.in
 +++ b/datapath/linux/Makefile.main.in
 @@ -68,7 +68,7 @@ ifeq (,$(wildcard $(CONFIG_FILE)))

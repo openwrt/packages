@@ -1,5 +1,3 @@
-diff --git a/Makefile b/Makefile
-index 10c1142..2a94df4 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -1,121 +1,52 @@
@@ -10,8 +8,7 @@ index 10c1142..2a94df4 100644
 -CC		:= $(CROSS)$(CC)
 -AR		:= $(CROSS)$(AR)
 -LD		:= $(CROSS)$(LD)
-+PKGC ?= pkg-config
- 
+-
 -#OS auto detect
 -ifneq (,$(TARGET_SYS))
 -  SYS		:= $(TARGET_SYS)
@@ -62,14 +59,15 @@ index 10c1142..2a94df4 100644
 -  #MACOSX_DEPLOYMENT_TARGET="10.3"
 -  CC		:= MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET} $(CC)
 -endif
-+LIB_OPTION	= -shared
-+LUAPKGC = lua
++PKGC ?= pkg-config
  
 -ifneq (, $(findstring mingw, $(SYS)))
 -  # Do mingw things
 -  CFLAGS	 = -DLUA_LIB -DLUA_BUILD_AS_DLL -DWIN32_LEAN_AND_MEAN
 -endif
--
++LIB_OPTION	= -shared
++LUAPKGC = lua
+ 
 -ifneq (, $(findstring cygwin, $(SYS)))
 -  # Do cygwin things
 -  CFLAGS	 = -fPIC
@@ -119,12 +117,12 @@ index 10c1142..2a94df4 100644
  
  all: $T.so
 -	@echo "Target system: "$(SYS)
--
--$T.so: lib$T.a
--	$(CC) -o $@ src/openssl.o -L. -l$T $(LDFLAGS)
 +	echo $(SYS)
 +	$(CC) $(LDFLAGS) $(LIB_OPTION) $(OBJS) -o $@
  
+-$T.so: lib$T.a
+-	$(CC) -o $@ src/openssl.o -L. -l$T $(LDFLAGS)
+-
 -lib$T.a: $(OBJS)
 -	$(AR) rcs $@ $?
 +$T.so: $(OBJS)

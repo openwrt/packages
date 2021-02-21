@@ -8,11 +8,9 @@ In case resulting value should be negative it is incorrect to use '+' operator t
  src/modbus.h | 10 +++++-----
  1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/src/modbus.h b/src/modbus.h
-index f6e9a5f..c63f5ce 100644
 --- a/src/modbus.h
 +++ b/src/modbus.h
-@@ -245,12 +245,12 @@ MODBUS_API int modbus_reply_exception(modbus_t *ctx, const uint8_t *req,
+@@ -245,12 +245,12 @@ MODBUS_API int modbus_reply_exception(mo
  #define MODBUS_GET_HIGH_BYTE(data) (((data) >> 8) & 0xFF)
  #define MODBUS_GET_LOW_BYTE(data) ((data) & 0xFF)
  #define MODBUS_GET_INT64_FROM_INT16(tab_int16, index) \
@@ -30,6 +28,3 @@ index f6e9a5f..c63f5ce 100644
  #define MODBUS_SET_INT16_TO_INT8(tab_int8, index, value) \
      do { \
          tab_int8[(index)] = (value) >> 8;  \
--- 
-2.17.1
-

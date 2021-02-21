@@ -14,11 +14,9 @@ Reviewed-by: Avri Altman <avri.altman@wdc.com>
  mmc_cmds.c | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/mmc_cmds.c b/mmc_cmds.c
-index c006ef2..556c105 100644
 --- a/mmc_cmds.c
 +++ b/mmc_cmds.c
-@@ -1427,8 +1427,8 @@ int do_read_extcsd(int nargs, char **argv)
+@@ -1427,8 +1427,8 @@ int do_read_extcsd(int nargs, char **arg
  		printf("Power off notification [POWER_OFF_LONG_TIME: 0x%02x]\n",
  			ext_csd[247]);
  		printf("Cache Size [CACHE_SIZE] is %d KiB\n",
@@ -29,6 +27,3 @@ index c006ef2..556c105 100644
  	}
  
  	/* A441: Reserved [501:247]
--- 
-2.17.1
-

@@ -11,11 +11,9 @@ https://gitlab.alpinelinux.org/alpine/aports/commit/76b81b486480fd9c3294cd420bcf
  qga/commands-posix.c | 5 +++++
  1 file changed, 5 insertions(+)
 
-diff --git a/qga/commands-posix.c b/qga/commands-posix.c
-index a52af0315f..623d856c64 100644
 --- a/qga/commands-posix.c
 +++ b/qga/commands-posix.c
-@@ -84,6 +84,7 @@ static void ga_wait_child(pid_t pid, int *status, Error **errp)
+@@ -84,6 +84,7 @@ static void ga_wait_child(pid_t pid, int
  void qmp_guest_shutdown(bool has_mode, const char *mode, Error **errp)
  {
      const char *shutdown_flag;
@@ -23,7 +21,7 @@ index a52af0315f..623d856c64 100644
      Error *local_err = NULL;
      pid_t pid;
      int status;
-@@ -91,10 +92,13 @@ void qmp_guest_shutdown(bool has_mode, const char *mode, Error **errp)
+@@ -91,10 +92,13 @@ void qmp_guest_shutdown(bool has_mode, c
      slog("guest-shutdown called, mode: %s", mode);
      if (!has_mode || strcmp(mode, "powerdown") == 0) {
          shutdown_flag = "-P";
@@ -37,7 +35,7 @@ index a52af0315f..623d856c64 100644
      } else {
          error_setg(errp,
                     "mode is invalid (valid values are: halt|powerdown|reboot");
-@@ -111,6 +115,7 @@ void qmp_guest_shutdown(bool has_mode, const char *mode, Error **errp)
+@@ -111,6 +115,7 @@ void qmp_guest_shutdown(bool has_mode, c
  
          execle("/sbin/shutdown", "shutdown", "-h", shutdown_flag, "+0",
                 "hypervisor initiated shutdown", (char*)NULL, environ);

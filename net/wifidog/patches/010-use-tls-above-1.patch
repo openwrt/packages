@@ -1,5 +1,3 @@
-diff --git a/configure.in b/configure.in
-index bf5463a..43ec27c 100644
 --- a/configure.in
 +++ b/configure.in
 @@ -96,8 +96,8 @@ if test "x$enable_cyassl" = xyes; then
@@ -22,8 +20,6 @@ index bf5463a..43ec27c 100644
                  CyaSSL_CTX_UseSNI(ctx, CYASSL_SNI_HOST_NAME, "wifidog.org", 11);
          ]])], [enabled_sni=yes], [enabled_sni=no])
  
-diff --git a/src/simple_http.c b/src/simple_http.c
-index f0e27ee..7271021 100644
 --- a/src/simple_http.c
 +++ b/src/simple_http.c
 @@ -162,8 +162,7 @@ get_cyassl_ctx(const char *hostname)

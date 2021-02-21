@@ -15,11 +15,9 @@ Signed-off-by: James Taylor <james@jtaylor.id.au>
  CMakeLists.txt | 12 ++++++++++--
  1 file changed, 10 insertions(+), 2 deletions(-)
 
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index a68613081..13c2f8a9f 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -519,13 +519,21 @@ SET_TARGET_PROPERTIES(libh2o PROPERTIES
+@@ -386,13 +386,21 @@ SET_TARGET_PROPERTIES(libh2o PROPERTIES
      OUTPUT_NAME h2o
      VERSION ${LIBRARY_VERSION}
      SOVERSION ${LIBRARY_SOVERSION})
@@ -41,5 +39,5 @@ index a68613081..13c2f8a9f 100644
 +    TARGET_LINK_LIBRARIES(libh2o-evloop ${EXTRA_LIBS})
 +ENDIF (WSLAY_FOUND)
  
- TARGET_INCLUDE_DIRECTORIES(libh2o PUBLIC ${OPENSSL_INCLUDE_DIR})
- TARGET_INCLUDE_DIRECTORIES(libh2o-evloop PUBLIC ${OPENSSL_INCLUDE_DIR})
+ IF (OPENSSL_FOUND)
+     TARGET_INCLUDE_DIRECTORIES(libh2o PUBLIC ${OPENSSL_INCLUDE_DIR})

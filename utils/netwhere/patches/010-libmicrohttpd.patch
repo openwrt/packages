@@ -16,7 +16,7 @@
  		    struct MHD_Connection * connection,
  		    const char * url,
  		    const char * method,
-@@ -53,7 +53,7 @@ int WebService<Functor>::on_request(void * cls,
+@@ -53,7 +53,7 @@ int WebService<Functor>::on_request(void
  		    size_t * upload_data_size,
                      void ** ptr) {
    static int dummy;

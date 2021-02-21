@@ -1,6 +1,6 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -505,7 +505,7 @@ if get_option('default_library') == 'static'
+@@ -522,7 +522,7 @@ if get_option('default_library') == 'sta
  endif
  
  # Used in gst/parse/meson.build and below

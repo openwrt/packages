@@ -70,7 +70,7 @@
  
  /**
   * Flags for cgroup_delete_cgroup_ext().
-@@ -577,6 +578,8 @@ char *cgroup_get_cgroup_name(struct cgroup *cgroup);
+@@ -577,6 +578,8 @@ char *cgroup_get_cgroup_name(struct cgro
   */
  
  
@@ -97,7 +97,7 @@
  /**
   * @defgroup group_init 1. Initialization
   * @{
-@@ -58,6 +56,8 @@ int cgroup_get_subsys_mount_point(const char *controller, char **mount_point);
+@@ -58,6 +56,8 @@ int cgroup_get_subsys_mount_point(const
   * @}
   * @}
   */
@@ -123,7 +123,7 @@
  
  /**
   * @defgroup group_iterators 3. Iterators
-@@ -423,6 +424,8 @@ int cgroup_get_subsys_mount_point_end(void **handle);
+@@ -423,6 +424,8 @@ int cgroup_get_subsys_mount_point_end(vo
   * @}
   */
  
@@ -152,7 +152,7 @@
  
  /**
   * @defgroup group_log 7. Logging
-@@ -142,6 +140,8 @@ extern int cgroup_parse_log_level_str(const char *levelstr);
+@@ -142,6 +140,8 @@ extern int cgroup_parse_log_level_str(co
   * @}
   * @}
   */
@@ -179,7 +179,7 @@
  
  /** Flags for cgroup_change_cgroup_uid_gid(). */
  enum cgflags {
-@@ -204,6 +205,8 @@ int cgroup_register_unchanged_process(pid_t pid, int flags);
+@@ -204,6 +205,8 @@ int cgroup_register_unchanged_process(pi
   * @}
   * @}
   */
@@ -228,7 +228,7 @@
  
  #include "config.h"
  #include <fts.h>
-@@ -279,6 +281,8 @@ extern void cgroup_dictionary_iterator_end(void **handle);
+@@ -279,6 +281,8 @@ extern void cgroup_dictionary_iterator_e
   */
  int cg_chmod_path(const char *path, mode_t mode, int owner_is_umask);
  

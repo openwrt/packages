@@ -1,6 +1,6 @@
 --- a/server/drivers/port.h
 +++ b/server/drivers/port.h
-@@ -94,7 +94,7 @@ static inline int port_deny_multiple(unsigned short port, unsigned short count);
+@@ -94,7 +94,7 @@ static inline int port_deny_multiple(uns
  /*  ---------------------------- Linux ------------------------------------ */
  /*  Use ioperm, inb and outb in <sys/io.h> (Linux) */
  /*  And iopl for higher addresses of PCI LPT cards */

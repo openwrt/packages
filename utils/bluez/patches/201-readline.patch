@@ -1,7 +1,5 @@
-Index: bluez-5.54/Makefile.in
-===================================================================
---- bluez-5.54.orig/Makefile.in
-+++ bluez-5.54/Makefile.in
+--- a/Makefile.in
++++ b/Makefile.in
 @@ -3214,7 +3214,7 @@ unit_tests = $(am__append_54) unit/test-
  @CLIENT_TRUE@					client/gatt.h client/gatt.c
  

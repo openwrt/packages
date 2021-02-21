@@ -11,7 +11,7 @@
  				 string(strerror(errno)), MSGFLAG_ERROR);
 --- a/packetsource_wext.cc
 +++ b/packetsource_wext.cc
-@@ -405,7 +405,7 @@ void PacketSource_Wext::OpenWpaSupplicant() {
+@@ -405,7 +405,7 @@ void PacketSource_Wext::OpenWpaSupplican
  		wpa_local.sun_family = AF_UNIX;
  		snprintf(wpa_local.sun_path, sizeof(wpa_local.sun_path), 
  				 "%s", wpa_local_path.c_str());
@@ -22,7 +22,7 @@
  				 MSGFLAG_PRINTERROR);
 --- a/tcpclient.cc
 +++ b/tcpclient.cc
-@@ -75,7 +75,7 @@ int TcpClient::Connect(const char *in_remotehost, short int in_port,
+@@ -75,7 +75,7 @@ int TcpClient::Connect(const char *in_re
      local_sock.sin_addr.s_addr = htonl(INADDR_ANY);
      local_sock.sin_port = htons(0);
  
@@ -31,7 +31,7 @@
          snprintf(errstr, 1024, "TCP client bind() failed: %s", strerror(errno));
          globalreg->messagebus->InjectMessage(errstr, MSGFLAG_ERROR);
  		close(cli_fd);
-@@ -170,7 +170,7 @@ int TcpClient::ConnectSync(const char *in_remotehost, short int in_port,
+@@ -170,7 +170,7 @@ int TcpClient::ConnectSync(const char *i
      local_sock.sin_addr.s_addr = htonl(INADDR_ANY);
      local_sock.sin_port = htons(0);
  

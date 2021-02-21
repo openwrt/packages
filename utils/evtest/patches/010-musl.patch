@@ -7,8 +7,6 @@ Subject: [PATCH] Add missing include of limits.h for PATH_MAX
  evtest.c | 1 +
  1 file changed, 1 insertion(+)
 
-diff --git a/evtest.c b/evtest.c
-index 548c203..be5e42c 100644
 --- a/evtest.c
 +++ b/evtest.c
 @@ -59,6 +59,7 @@
@@ -19,6 +17,3 @@ index 548c203..be5e42c 100644
  
  #define BITS_PER_LONG (sizeof(long) * 8)
  #define NBITS(x) ((((x)-1)/BITS_PER_LONG)+1)
--- 
-2.22.0
-

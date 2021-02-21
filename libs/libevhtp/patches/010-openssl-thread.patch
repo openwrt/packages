@@ -1,6 +1,6 @@
 --- a/evhtp.c
 +++ b/evhtp.c
-@@ -2863,7 +2863,7 @@ htp__accept_cb_(struct evconnlistener * serv, int fd, struct sockaddr * s, int s
+@@ -2863,7 +2863,7 @@ htp__accept_cb_(struct evconnlistener *
  }     /* htp__accept_cb_ */
  
  #ifndef EVHTP_DISABLE_SSL
@@ -18,7 +18,7 @@
      evhtp_ssl_use_threads();
  #endif
  
-@@ -4723,7 +4723,7 @@ evhtp_set_post_accept_cb(evhtp_t * htp, evhtp_post_accept_cb cb, void * arg)
+@@ -4723,7 +4723,7 @@ evhtp_set_post_accept_cb(evhtp_t * htp,
  }
  
  #ifndef EVHTP_DISABLE_SSL

@@ -2,9 +2,9 @@ Description: fix execution on 64bit archs
 Bug: http://code.google.com/p/android/issues/detail?id=12224
 Author: Samuel Thibault <sthibault@debian.org>
 
---- svox/pico/lib/picoapi.c.original	2010-10-25 19:06:57.000000000 +0200
-+++ svox/pico/lib/picoapi.c	2010-10-25 19:07:18.000000000 +0200
-@@ -90,7 +90,7 @@
+--- a/pico/lib/picoapi.c
++++ b/pico/lib/picoapi.c
+@@ -90,7 +90,7 @@ pico_Status pico_initialize_priv(
          status = PICO_ERR_NULLPTR_ACCESS;
      } else {
          byte_ptr_t rest_mem;
@@ -13,9 +13,9 @@ Author: Samuel Thibault <sthibault@debian.org>
          pico_System sys;
          picoos_MemoryManager sysMM;
          picoos_ExceptionManager sysEM;
---- svox/pico/lib/picosig2.c.original	2010-10-26 00:17:18.000000000 +0200
-+++ svox/pico/lib/picosig2.c	2010-10-26 00:17:19.000000000 +0200
-@@ -568,7 +568,7 @@
+--- a/pico/lib/picosig2.c
++++ b/pico/lib/picosig2.c
+@@ -552,7 +552,7 @@ void mel_2_lin_lookup(sig_innerobj_t *si
      for (nI = 1; nI < m1; nI++) {
          XXr[nI] = c1[nI] << shift;
      }

@@ -16,8 +16,6 @@ Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
  utils/Makefile.am                    |    7 +++++--
  4 files changed, 19 insertions(+), 4 deletions(-)
 
-diff --git a/configure.ac b/configure.ac
-index 189a753..88ff7ab 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -24,6 +24,11 @@ case "$host" in
@@ -32,8 +30,6 @@ index 189a753..88ff7ab 100644
  dnl Dependencies
  PKG_CHECK_MODULES([LIBNFNETLINK], [libnfnetlink >= 0.0.41])
  
-diff --git a/include/libnetfilter_log/Makefile.am b/include/libnetfilter_log/Makefile.am
-index fe934f1..fde1d60 100644
 --- a/include/libnetfilter_log/Makefile.am
 +++ b/include/libnetfilter_log/Makefile.am
 @@ -1,3 +1,6 @@
@@ -44,8 +40,6 @@ index fe934f1..fde1d60 100644
 +if BUILD_IPULOG
 +pkginclude_HEADERS += libipulog.h
 +endif
-diff --git a/src/Makefile.am b/src/Makefile.am
-index 10a66e2..33933a4 100644
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
 @@ -22,14 +22,18 @@ LIBVERSION=2:0:1
@@ -68,8 +62,6 @@ index 10a66e2..33933a4 100644
  libnetfilter_log_libipulog_la_LIBADD = libnetfilter_log.la
  libnetfilter_log_libipulog_la_SOURCES = libipulog_compat.c
 +endif
-diff --git a/utils/Makefile.am b/utils/Makefile.am
-index ae64c90..f961b6c 100644
 --- a/utils/Makefile.am
 +++ b/utils/Makefile.am
 @@ -1,12 +1,15 @@
@@ -90,6 +82,3 @@ index ae64c90..f961b6c 100644
  ulog_test_LDFLAGS = -dynamic
 -
 +endif
--- 
-1.7.10.4
-

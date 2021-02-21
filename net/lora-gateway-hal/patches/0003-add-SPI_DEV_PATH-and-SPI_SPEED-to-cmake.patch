@@ -8,11 +8,9 @@ Signed-off-by: Xue Liu <liuxuenetmail@gmail.com>
  libloragw/CMakeLists.txt | 7 +++++++
  1 file changed, 7 insertions(+)
 
-diff --git a/libloragw/CMakeLists.txt b/libloragw/CMakeLists.txt
-index b2102ae..32abf51 100644
 --- a/libloragw/CMakeLists.txt
 +++ b/libloragw/CMakeLists.txt
-@@ -13,6 +13,9 @@ option(DEBUG_GPIO "Active debug mode in GPIO module" OFF)
+@@ -13,6 +13,9 @@ option(DEBUG_GPIO "Active debug mode in
  option(DEBUG_LBT "Active debug mode in LBT module" OFF)
  option(DEBUG_GPS "Active debug mode in GPS module" OFF)
  
@@ -22,7 +20,7 @@ index b2102ae..32abf51 100644
  message("-- Build with debug AUX: ${DEBUG_AUX}")
  message("-- Build with debug SPI: ${DEBUG_SPI}")
  message("-- Build with debug REG: ${DEBUG_REG}")
-@@ -20,6 +23,8 @@ message("-- Build with debug HAL: ${DEBUG_HAL}")
+@@ -20,6 +23,8 @@ message("-- Build with debug HAL: ${DEBU
  message("-- Build with debug GPIO: ${DEBUG_GPIO}")
  message("-- Build with debug LBT: ${DEBUG_LBT}")
  message("-- Build with debug GPS: ${DEBUG_GPS}")
@@ -40,6 +38,3 @@ index b2102ae..32abf51 100644
  )
  
  target_sources(${TARGET}
--- 
-2.20.1
-
