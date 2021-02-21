@@ -30,6 +30,17 @@ write_upstream() {
 		echo "no upstream$target"
 }
 
+write_reversepath() {
+	local path
+	local target
+
+	config_get path "$1" path
+	config_get target "$1" target
+
+	echo "ReversePath $path $target" >> $CFGFILE
+}
+
+
 proxy_atom() {
 	local SECTION=$1
 	local OPTION=$2
@@ -134,6 +145,11 @@ start_proxy() {
 
 	config_foreach write_upstream upstream
 	} > "$CFGFILE"
+
+	proxy_flag "$1" ReverseOnly Yes No >> $CFGFILE
+	proxy_flag "$1" ReverseMagic Yes No >> $CFGFILE
+	proxy_string "$1" ReverseBaseURL >> $CFGFILE
+	config_foreach write_reversepath ReversePath
 
 	procd_open_instance
 	procd_set_param command "$PROG"
