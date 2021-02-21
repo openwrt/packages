@@ -1,6 +1,6 @@
 --- a/src/dsp/dsp.h
 +++ b/src/dsp/dsp.h
-@@ -95,7 +95,7 @@ extern "C" {
+@@ -97,7 +97,7 @@ extern "C" {
  #define WEBP_USE_INTRINSICS
  #endif
  
