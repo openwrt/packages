@@ -9,8 +9,6 @@ Upstream removed the TRUE and FALSE defines in commit
  ykpers-json.c | 18 +++++++++---------
  1 file changed, 9 insertions(+), 9 deletions(-)
 
-diff --git a/ykpers-json.c b/ykpers-json.c
-index a62e907..15ad380 100644
 --- a/ykpers-json.c
 +++ b/ykpers-json.c
 @@ -40,7 +40,7 @@
@@ -22,7 +20,7 @@ index a62e907..15ad380 100644
  #endif
  
  static void set_json_value(struct map_st *p, int mode, json_object *options, YKP_CONFIG *cfg) {
-@@ -50,7 +50,7 @@ static void set_json_value(struct map_st *p, int mode, json_object *options, YKP
+@@ -50,7 +50,7 @@ static void set_json_value(struct map_st
  	if(p->mode && (mode & p->mode) == mode) {
  		json_object *joption;
  		json_bool ret = yk_json_object_object_get(options, p->json_text, joption);
@@ -31,7 +29,7 @@ index a62e907..15ad380 100644
  			int value = json_object_get_boolean(joption);
  			if(value == 1) {
  				p->setter(cfg, true);
-@@ -230,20 +230,20 @@ int _ykp_json_import_cfg(YKP_CONFIG *cfg, const char *json, size_t len) {
+@@ -230,20 +230,20 @@ int _ykp_json_import_cfg(YKP_CONFIG *cfg
  			ykp_errno = YKP_EINVAL;
  			goto out;
  		}
@@ -56,7 +54,7 @@ index a62e907..15ad380 100644
  			int target_config = json_object_get_int(jtarget);
  			int command;
  			if(target_config == 1) {
-@@ -275,13 +275,13 @@ int _ykp_json_import_cfg(YKP_CONFIG *cfg, const char *json, size_t len) {
+@@ -275,13 +275,13 @@ int _ykp_json_import_cfg(YKP_CONFIG *cfg
  		if(mode == MODE_OATH_HOTP) {
  			json_object *jdigits, *jrandom;
  			ykp_set_tktflag_OATH_HOTP(cfg, true);
@@ -72,7 +70,7 @@ index a62e907..15ad380 100644
  				int random = json_object_get_boolean(jrandom);
  				int seed = 0;
  				if(random == 1) {
-@@ -290,7 +290,7 @@ int _ykp_json_import_cfg(YKP_CONFIG *cfg, const char *json, size_t len) {
+@@ -290,7 +290,7 @@ int _ykp_json_import_cfg(YKP_CONFIG *cfg
  					goto out;
  				} else {
  					json_object *jseed;
