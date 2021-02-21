@@ -1,6 +1,6 @@
---- a/src/client/Makefile.am 2017-01-25 20:17:14.000000000 +0100
-+++ b/src/client/Makefile.am 2017-01-25 20:18:50.639995000 +0100
-@@ -4,5 +4,5 @@
+--- a/src/client/Makefile.am
++++ b/src/client/Makefile.am
+@@ -4,5 +4,5 @@ else
  BUILDJAVA = 
  endif
  

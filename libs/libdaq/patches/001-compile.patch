@@ -1,7 +1,6 @@
-diff -u --recursive daq-2.2.2-vanilla/configure daq-2.2.2/configure
---- daq-2.2.2-vanilla/configure	2017-07-05 15:58:03.000000000 -0400
-+++ daq-2.2.2/configure	2018-09-01 17:18:56.774898034 -0400
-@@ -13244,10 +13244,11 @@
+--- a/configure
++++ b/configure
+@@ -13244,10 +13244,11 @@ if ${daq_cv_libpcap_version_1x+:} false;
  else
  
      if test "$cross_compiling" = yes; then :

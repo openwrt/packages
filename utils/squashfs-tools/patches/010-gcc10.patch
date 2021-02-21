@@ -28,8 +28,6 @@ Signed-off-by: Sergei Trofimovich <slyfox@gentoo.org>
  squashfs-tools/mksquashfs.h | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/squashfs-tools/mksquashfs.h b/squashfs-tools/mksquashfs.h
-index 1beefef7..b6503063 100644
 --- a/squashfs-tools/mksquashfs.h
 +++ b/squashfs-tools/mksquashfs.h
 @@ -143,7 +143,7 @@ struct append_file {

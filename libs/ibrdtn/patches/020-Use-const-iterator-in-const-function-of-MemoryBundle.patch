@@ -7,8 +7,6 @@ Subject: [PATCH] Use const iterator in const function of MemoryBundleSet
  ibrdtn/data/MemoryBundleSet.cpp | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/ibrdtn/data/MemoryBundleSet.cpp b/ibrdtn/data/MemoryBundleSet.cpp
-index 987342e6d..b67fdd393 100644
 --- a/ibrdtn/data/MemoryBundleSet.cpp
 +++ b/ibrdtn/data/MemoryBundleSet.cpp
 @@ -134,7 +134,7 @@ namespace dtn

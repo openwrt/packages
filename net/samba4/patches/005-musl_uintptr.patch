@@ -11,11 +11,9 @@ Date:   Wed Mar 29 15:22:38 2017 -0300
     
     Signed-off-by: Breno Leitao <breno.leitao@gmail.com>
 
-diff --git a/third_party/cmocka/cmocka.h b/third_party/cmocka/cmocka.h
-index 303d0ae..a2bfc40 100644
 --- a/third_party/cmocka/cmocka.h
 +++ b/third_party/cmocka/cmocka.h
-@@ -111,7 +111,7 @@
+@@ -111,7 +111,7 @@ typedef uintmax_t LargestIntegralType;
      ((LargestIntegralType)(value))
  
  /* Smallest integral type capable of holding a pointer. */
@@ -24,7 +22,7 @@ index 303d0ae..a2bfc40 100644
  # if defined(_WIN32)
      /* WIN32 is an ILP32 platform */
      typedef unsigned int uintptr_t;
-@@ -137,6 +137,8 @@
+@@ -137,6 +137,8 @@ typedef uintmax_t LargestIntegralType;
  
  # define _UINTPTR_T
  # define _UINTPTR_T_DEFINED

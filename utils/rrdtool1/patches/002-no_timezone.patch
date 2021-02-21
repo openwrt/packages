@@ -1,6 +1,6 @@
 --- a/src/rrd_tool.c
 +++ b/src/rrd_tool.c
-@@ -225,11 +225,8 @@
+@@ -225,11 +225,8 @@ int main(int argc, char *argv[])
  	  struct rusage  myusage;
  	  struct timeval starttime;
  	  struct timeval currenttime;
@@ -13,7 +13,7 @@
  #endif
  
  	    while (fgets(aLine, sizeof(aLine)-1, stdin)){
-@@ -252,7 +249,7 @@
+@@ -252,7 +249,7 @@ int main(int argc, char *argv[])
  
  #if HAVE_GETRUSAGE
  		getrusage(RUSAGE_SELF,&myusage);

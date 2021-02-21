@@ -1,6 +1,6 @@
 --- a/freelist.c
 +++ b/freelist.c
-@@ -46,7 +46,7 @@ freelist_init(struct freelist *fl, size_t allocsz)
+@@ -46,7 +46,7 @@ freelist_init(struct freelist *fl, size_
  {
  	size_t sizeof_fl = sizeof(fl);
  	FLOGIT((LOG_DEBUG, "%s: %s(%p, %zu)", __func__, __func__, fl, allocsz));
@@ -11,7 +11,7 @@
  }
 --- a/ipfix.c
 +++ b/ipfix.c
-@@ -388,7 +388,7 @@ ipfix_init_template_unity (struct FLOWTRACKPARAMETERS *param,
+@@ -388,7 +388,7 @@ ipfix_init_template_unity (struct FLOWTR
                             u_int8_t icmp_flag, u_int8_t bi_flag,
                             u_int16_t version) {
    u_int index = 0, bi_index = 0, length = 0;
@@ -20,7 +20,7 @@
    template->h.c.set_id = htons (version == 10 ?
                                  IPFIX_TEMPLATE_SET_ID :
                                  NFLOW9_TEMPLATE_SET_ID);
-@@ -510,7 +510,7 @@ nflow9_init_option (u_int16_t ifidx, struct OPTION *option) {
+@@ -510,7 +510,7 @@ nflow9_init_option (u_int16_t ifidx, str
      NFLOW9_SOFTFLOWD_OPTION_TEMPLATE_NRECORDS *
      sizeof (struct IPFIX_FIELD_SPECIFIER);
  
@@ -29,7 +29,7 @@
    option_template.h.c.set_id = htons (NFLOW9_OPTION_TEMPLATE_SET_ID);
    option_template.h.c.length =
      htons (sizeof (option_template.h) + scope_len + opt_len);
-@@ -524,7 +524,7 @@ nflow9_init_option (u_int16_t ifidx, struct OPTION *option) {
+@@ -524,7 +524,7 @@ nflow9_init_option (u_int16_t ifidx, str
    ipfix_init_fields (option_template.r, &option_index,
                       field_nf9option,
                       NFLOW9_SOFTFLOWD_OPTION_TEMPLATE_NRECORDS);
@@ -38,7 +38,7 @@
    nf9opt_data.c.set_id = htons (IPFIX_SOFTFLOWD_OPTION_TEMPLATE_ID);
    nf9opt_data.c.length = htons (sizeof (nf9opt_data));
    nf9opt_data.scope_ifidx = htonl (ifidx);
-@@ -536,7 +536,7 @@ nflow9_init_option (u_int16_t ifidx, struct OPTION *option) {
+@@ -536,7 +536,7 @@ nflow9_init_option (u_int16_t ifidx, str
  static void
  ipfix_init_option (struct timeval *system_boot_time, struct OPTION *option) {
    u_int scope_index = 0, option_index = 0;
@@ -47,7 +47,7 @@
    option_template.h.c.set_id = htons (IPFIX_OPTION_TEMPLATE_SET_ID);
    option_template.h.c.length = htons (sizeof (option_template));
    option_template.h.u.i.r.template_id =
-@@ -553,7 +553,7 @@ ipfix_init_option (struct timeval *system_boot_time, struct OPTION *option) {
+@@ -553,7 +553,7 @@ ipfix_init_option (struct timeval *syste
    ipfix_init_fields (option_template.r, &option_index, field_option,
                       IPFIX_SOFTFLOWD_OPTION_TEMPLATE_NRECORDS);
  
@@ -56,7 +56,7 @@
    option_data.c.set_id = htons (IPFIX_SOFTFLOWD_OPTION_TEMPLATE_ID);
    option_data.c.length = htons (sizeof (option_data));
    option_data.scope_pid = htonl ((u_int32_t) option->meteringProcessId);
-@@ -809,7 +809,7 @@ send_ipfix_common (struct FLOW **flows, int num_flows,
+@@ -809,7 +809,7 @@ send_ipfix_common (struct FLOW **flows,
  
    last_valid = num_packets = 0;
    for (j = 0; j < num_flows;) {
@@ -94,7 +94,7 @@
    option_template.h.c.flowset_id = htons (NFLOW9_OPTION_TEMPLATE_SET_ID);
    option_template.h.c.length = htons (sizeof (option_template));
    option_template.h.template_id = htons (NF9_SOFTFLOWD_OPTION_TEMPLATE_ID);
-@@ -238,7 +238,7 @@ nf9_init_option (u_int16_t ifidx, struct OPTION *option) {
+@@ -238,7 +238,7 @@ nf9_init_option (u_int16_t ifidx, struct
    option_template.r[1].length =
      htons (sizeof (option_data.sampling_algorithm));
  
@@ -103,7 +103,7 @@
    option_data.c.flowset_id = htons (NF9_SOFTFLOWD_OPTION_TEMPLATE_ID);
    option_data.c.length = htons (sizeof (option_data));
    option_data.scope_ifidx = htonl (ifidx);
-@@ -257,7 +257,7 @@ nf_flow_to_flowset (const struct FLOW *flow, u_char * packet, u_int len,
+@@ -257,7 +257,7 @@ nf_flow_to_flowset (const struct FLOW *f
    struct NF9_SOFTFLOWD_DATA_COMMON *dc[2];
    u_int freclen, ret_len, nflows;
  
@@ -112,7 +112,7 @@
    *len_used = nflows = ret_len = 0;
    switch (flow->af) {
    case AF_INET:
-@@ -363,7 +363,7 @@ send_netflow_v9 (struct SENDPARAMETER sp) {
+@@ -363,7 +363,7 @@ send_netflow_v9 (struct SENDPARAMETER sp
  
    last_valid = num_packets = 0;
    for (j = 0; j < num_flows;) {
@@ -123,7 +123,7 @@
      nf9->version = htons (9);
 --- a/psamp.c
 +++ b/psamp.c
-@@ -51,7 +51,7 @@ static int psamp_pkts_until_template = -1;
+@@ -51,7 +51,7 @@ static int psamp_pkts_until_template = -
  static void
  psamp_init_template (struct PSAMP_SOFTFLOWD_TEMPLATE *template_p) {
    u_int index = 0;

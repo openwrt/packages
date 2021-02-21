@@ -22,8 +22,6 @@ See also:
  src/process.c | 28 ++++++++++++++--------------
  5 files changed, 37 insertions(+), 37 deletions(-)
 
-diff --git a/src/bwm-ng.c b/src/bwm-ng.c
-index ad94ccd..c2ab0db 100644
 --- a/src/bwm-ng.c
 +++ b/src/bwm-ng.c
 @@ -26,7 +26,7 @@
@@ -44,8 +42,6 @@ index ad94ccd..c2ab0db 100644
  	if_count=0;
  	delay=500;
  #if EXTENDED_STATS	
-diff --git a/src/help.c b/src/help.c
-index 7fd9ca4..4853297 100644
 --- a/src/help.c
 +++ b/src/help.c
 @@ -24,9 +24,9 @@
@@ -60,11 +56,9 @@ index 7fd9ca4..4853297 100644
  #ifdef LONG_OPTIONS
      printf("  %-23s",long_c);
  #else
-diff --git a/src/options.c b/src/options.c
-index 1b65eeb..30dccb4 100644
 --- a/src/options.c
 +++ b/src/options.c
-@@ -30,12 +30,12 @@ static char* getToken(char** str, const char* delims);
+@@ -30,12 +30,12 @@ static char* getToken(char** str, const
  char *trim_whitespace(char *str);
  int read_config(const char *config_file);
  #endif
@@ -81,7 +75,7 @@ index 1b65eeb..30dccb4 100644
  
  #ifdef CONFIG_FILE
   /******************************************************************************
-@@ -65,7 +65,7 @@ static char* getToken(char** str, const char* delims) {
+@@ -65,7 +65,7 @@ static char* getToken(char** str, const
  /******************************************************************************/
  #endif
  
@@ -90,7 +84,7 @@ index 1b65eeb..30dccb4 100644
      if (optarg) {
          if (!strcasecmp(optarg,"bytes")) return BYTES_OUT;
          if (!strcasecmp(optarg,"bits")) return BITS_OUT;
-@@ -76,7 +76,7 @@ inline int str2output_unit(char *optarg) {
+@@ -76,7 +76,7 @@ inline int str2output_unit(char *optarg)
  }
  
  #if EXTENDED_STATS
@@ -99,7 +93,7 @@ index 1b65eeb..30dccb4 100644
      if (optarg) {
          if (!strcasecmp(optarg,"rate")) return RATE_OUT;
          if (!strcasecmp(optarg,"max")) return MAX_OUT;
-@@ -87,7 +87,7 @@ inline int str2output_type(char *optarg) {
+@@ -87,7 +87,7 @@ inline int str2output_type(char *optarg)
  }
  #endif  
  
@@ -108,7 +102,7 @@ index 1b65eeb..30dccb4 100644
      if (optarg) {
          if (!strcasecmp(optarg,"plain")) return PLAIN_OUT;
  #ifdef HAVE_CURSES
-@@ -109,7 +109,7 @@ inline int str2out_method(char *optarg) {
+@@ -109,7 +109,7 @@ inline int str2out_method(char *optarg)
  }
  
  
@@ -117,8 +111,6 @@ index 1b65eeb..30dccb4 100644
      if (optarg) {
  #ifdef PROC_NET_DEV
          if (!strcasecmp(optarg,"proc")) return PROC_IN;
-diff --git a/src/output.c b/src/output.c
-index 653e444..1425b3c 100644
 --- a/src/output.c
 +++ b/src/output.c
 @@ -25,13 +25,13 @@
@@ -140,7 +132,7 @@ index 653e444..1425b3c 100644
  char *values2str(char mode,t_iface_speed_stats stats,t_iface_stats full_stats,float multiplier,char *str,int buf_size);
  
  inline static const char *output_type2str(void) {
-@@ -59,7 +59,7 @@ inline static const char *output_type2str(void) {
+@@ -59,7 +59,7 @@ inline static const char *output_type2st
  }
  
  
@@ -167,7 +159,7 @@ index 653e444..1425b3c 100644
      switch (mode) {
          case 0:
              return stats.in;
-@@ -275,7 +275,7 @@ inline ullong direction2value(char mode,struct inout_long stats) {
+@@ -275,7 +275,7 @@ inline ullong direction2value(char mode,
  }
  
  #if EXTENDED_STATS
@@ -176,7 +168,7 @@ index 653e444..1425b3c 100644
      switch (mode) {
          case 0:
              return (double)(stats.in/items);
-@@ -288,7 +288,7 @@ inline double direction_max2value(char mode,struct inouttotal_double stats,int i
+@@ -288,7 +288,7 @@ inline double direction_max2value(char m
  }
  #endif
  
@@ -185,7 +177,7 @@ index 653e444..1425b3c 100644
      if (dynamic) {
          if (value<1024)
              snprintf(str,buf_size,"%15.2f  ",value);
-@@ -306,7 +306,7 @@ inline char *dyn_byte_value2str(double value,char *str,int buf_size) {
+@@ -306,7 +306,7 @@ inline char *dyn_byte_value2str(double v
      return str;
  }
  
@@ -194,8 +186,6 @@ index 653e444..1425b3c 100644
      if (dynamic) {
          if (value<1000)
              snprintf(str,buf_size,"%15.2f  ",value);
-diff --git a/src/process.c b/src/process.c
-index 59eccf0..d06c6dd 100644
 --- a/src/process.c
 +++ b/src/process.c
 @@ -26,19 +26,19 @@
@@ -225,7 +215,7 @@ index 59eccf0..d06c6dd 100644
  #endif
  
  /* returns the whether to show the iface or not
-@@ -74,7 +74,7 @@ short show_iface(char *instr, char *searchstr,char iface_is_up) {
+@@ -74,7 +74,7 @@ short show_iface(char *instr, char *sear
  
  #if HAVE_GETTIMEOFDAY
  /* Returns: the time difference in milliseconds. */
@@ -234,7 +224,7 @@ index 59eccf0..d06c6dd 100644
    return labs((newer.tv_sec-older.tv_sec)*1000+
      (newer.tv_usec-older.tv_usec)/1000);
  }
-@@ -95,7 +95,7 @@ float get_time_delay(int iface_num) {
+@@ -92,7 +92,7 @@ float get_time_delay(int iface_num) {
  #endif
  
  /* basically new-old, but handles "overflow" of source aswell */
@@ -243,7 +233,7 @@ index 59eccf0..d06c6dd 100644
      /* FIXME: WRAP_AROUND _might_ be wrong for libstatgrab, where the type is always long long */
      return (new>=old) ? (ullong)(new-old) : (ullong)((
  #ifdef HAVE_LIBKSTAT
-@@ -136,13 +136,13 @@ t_iface_speed_stats convert2calced_disk_values(t_iface_speed_stats new, t_iface_
+@@ -133,13 +133,13 @@ t_iface_speed_stats convert2calced_disk_
  
  #if EXTENDED_STATS
  /* sub old values from cached for avg stats */
@@ -259,7 +249,7 @@ index 59eccf0..d06c6dd 100644
      values->in+=data.in;
      values->out+=data.out;
      values->total+=data.total;
-@@ -151,7 +151,7 @@ inline void add_avg_values(struct inouttotal_double *values,struct inouttotal_do
+@@ -148,7 +148,7 @@ inline void add_avg_values(struct inoutt
  
  /* put new-old bytes in inout_long struct into a inouttotal_double struct 
   * and add values to cached .value struct */
@@ -268,7 +258,7 @@ index 59eccf0..d06c6dd 100644
      data->in=calced_stats.in*multiplier;
      data->out=calced_stats.out*multiplier;
      data->total=(calced_stats.in+calced_stats.out)*multiplier;
-@@ -201,13 +201,13 @@ void save_avg(struct t_avg *avg,struct iface_speed_stats calced_stats,float mult
+@@ -198,13 +198,13 @@ void save_avg(struct t_avg *avg,struct i
  }
  
  /* add current in and out bytes to totals struct */

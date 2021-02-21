@@ -1,7 +1,6 @@
-diff -u --recursive libexif-0.6.22-vanilla/Makefile.in libexif-0.6.22/Makefile.in
---- libexif-0.6.22-vanilla/Makefile.in	2020-05-18 14:51:57.000000000 -0500
-+++ libexif-0.6.22/Makefile.in	2020-11-10 14:02:49.736268440 -0600
-@@ -393,7 +393,7 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -393,7 +393,7 @@ target_alias = @target_alias@
  top_build_prefix = @top_build_prefix@
  top_builddir = @top_builddir@
  top_srcdir = @top_srcdir@

@@ -29,7 +29,7 @@
  #include <list>
  #include <string>
  
-@@ -231,7 +230,7 @@ int TellStick::send( const std::string &strMessage ) {
+@@ -231,7 +230,7 @@ int TellStick::send( const std::string &
  				return TELLSTICK_SUCCESS;
  			}
  		} else if(ret == 0) {  // No data available

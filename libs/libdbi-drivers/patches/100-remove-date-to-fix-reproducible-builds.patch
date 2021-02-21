@@ -1,8 +1,6 @@
-Index: libdbi-drivers-0.9.0/drivers/db2/dbd_db2.c
-===================================================================
---- libdbi-drivers-0.9.0.orig/drivers/db2/dbd_db2.c	2013-01-09 22:30:19.000000000 +0100
-+++ libdbi-drivers-0.9.0/drivers/db2/dbd_db2.c	2017-12-02 00:28:50.354329791 +0100
-@@ -57,8 +57,7 @@
+--- a/drivers/db2/dbd_db2.c
++++ b/drivers/db2/dbd_db2.c
+@@ -57,8 +57,7 @@ static const dbi_info_t driver_info = {
    "IBM DB2 database support (using DB2 Call Level Interface)",
    "João Henrique F. Freitas <joaohf@users.sourceforge.net>",
    "http://libdbi-drivers.sourceforge.net",
@@ -12,11 +10,9 @@ Index: libdbi-drivers-0.9.0/drivers/db2/dbd_db2.c
  };
  
  static const char *custom_functions[] = {NULL}; // TODO
-Index: libdbi-drivers-0.9.0/drivers/firebird/dbd_firebird.c
-===================================================================
---- libdbi-drivers-0.9.0.orig/drivers/firebird/dbd_firebird.c	2013-01-09 22:20:07.000000000 +0100
-+++ libdbi-drivers-0.9.0/drivers/firebird/dbd_firebird.c	2017-12-02 00:28:47.418270022 +0100
-@@ -67,8 +67,7 @@
+--- a/drivers/firebird/dbd_firebird.c
++++ b/drivers/firebird/dbd_firebird.c
+@@ -67,8 +67,7 @@ static const dbi_info_t driver_info = {
  	"Firebird/Interbase database support",
  	"Christian M. Stamgren <cms@cention.se>",
  	"http://libdbi-drivers.sourceforge.net",
@@ -26,11 +22,9 @@ Index: libdbi-drivers-0.9.0/drivers/firebird/dbd_firebird.c
  };
  
  
-Index: libdbi-drivers-0.9.0/drivers/freetds/dbd_freetds.c
-===================================================================
---- libdbi-drivers-0.9.0.orig/drivers/freetds/dbd_freetds.c	2013-01-09 22:21:11.000000000 +0100
-+++ libdbi-drivers-0.9.0/drivers/freetds/dbd_freetds.c	2017-12-02 00:29:05.482637950 +0100
-@@ -63,8 +63,7 @@
+--- a/drivers/freetds/dbd_freetds.c
++++ b/drivers/freetds/dbd_freetds.c
+@@ -63,8 +63,7 @@ static const dbi_info_t driver_info = {
      "MS SQL and Sybase databases support (using libct)",
      "Vadym Kononenko <konan_v@users.sourceforge.net>",
      "http://libdbi.sourceforge.net",
@@ -40,11 +34,9 @@ Index: libdbi-drivers-0.9.0/drivers/freetds/dbd_freetds.c
  };
  
  static const char APP_NAME[] = "libdbi-freetds-driver";
-Index: libdbi-drivers-0.9.0/drivers/ingres/dbd_ingres.c
-===================================================================
---- libdbi-drivers-0.9.0.orig/drivers/ingres/dbd_ingres.c	2013-01-09 22:30:19.000000000 +0100
-+++ libdbi-drivers-0.9.0/drivers/ingres/dbd_ingres.c	2017-12-02 00:29:02.370574535 +0100
-@@ -44,8 +44,7 @@
+--- a/drivers/ingres/dbd_ingres.c
++++ b/drivers/ingres/dbd_ingres.c
+@@ -44,8 +44,7 @@ static const dbi_info_t driver_info = {
  	"Ingres database support",
  	"Toby Thain <qu1j0t3@sourceforge.net>",
  	"http://libdbi-drivers.sourceforge.net",
@@ -54,11 +46,9 @@ Index: libdbi-drivers-0.9.0/drivers/ingres/dbd_ingres.c
  };
  
  static const char *custom_functions[] = {NULL};
-Index: libdbi-drivers-0.9.0/drivers/msql/dbd_msql.c
-===================================================================
---- libdbi-drivers-0.9.0.orig/drivers/msql/dbd_msql.c	2013-01-09 22:26:20.000000000 +0100
-+++ libdbi-drivers-0.9.0/drivers/msql/dbd_msql.c	2017-12-02 00:29:09.034710349 +0100
-@@ -57,8 +57,7 @@
+--- a/drivers/msql/dbd_msql.c
++++ b/drivers/msql/dbd_msql.c
+@@ -57,8 +57,7 @@ static const dbi_info_t driver_info = {
  	"Mini SQL (mSQL) database support",
  	"Christian M. Stamgren <christian@centiongroup.com>",
  	"libdbi-drivers.sourceforge.net", 
@@ -68,11 +58,9 @@ Index: libdbi-drivers-0.9.0/drivers/msql/dbd_msql.c
  };
  
  static const char *custom_functions[] = {NULL}; 
-Index: libdbi-drivers-0.9.0/drivers/mysql/dbd_mysql.c
-===================================================================
---- libdbi-drivers-0.9.0.orig/drivers/mysql/dbd_mysql.c	2013-02-28 00:16:20.000000000 +0100
-+++ libdbi-drivers-0.9.0/drivers/mysql/dbd_mysql.c	2017-12-02 00:28:42.438168678 +0100
-@@ -59,8 +59,7 @@
+--- a/drivers/mysql/dbd_mysql.c
++++ b/drivers/mysql/dbd_mysql.c
+@@ -59,8 +59,7 @@ static const dbi_info_t driver_info = {
  	"MySQL database support (using libmysqlclient)",
  	"Mark M. Tobenkin <mark@brentwoodradio.com>",
  	"http://libdbi-drivers.sourceforge.net",
@@ -82,11 +70,9 @@ Index: libdbi-drivers-0.9.0/drivers/mysql/dbd_mysql.c
  };
  
  static const char *custom_functions[] = MYSQL_CUSTOM_FUNCTIONS;
-Index: libdbi-drivers-0.9.0/drivers/oracle/dbd_oracle.c
-===================================================================
---- libdbi-drivers-0.9.0.orig/drivers/oracle/dbd_oracle.c	2013-01-09 22:27:16.000000000 +0100
-+++ libdbi-drivers-0.9.0/drivers/oracle/dbd_oracle.c	2017-12-02 00:28:55.958443910 +0100
-@@ -54,8 +54,7 @@
+--- a/drivers/oracle/dbd_oracle.c
++++ b/drivers/oracle/dbd_oracle.c
+@@ -54,8 +54,7 @@ static const dbi_info_t driver_info = {
  	"Oracle database support (using Oracle Call Interface)",
  	"Ashish Ranjan <ashishwave@yahoo.com>", 
  	"http://libdbi-drivers.sourceforge.net",
@@ -96,11 +82,9 @@ Index: libdbi-drivers-0.9.0/drivers/oracle/dbd_oracle.c
  };
  
  static const char *custom_functions[] = {NULL}; 
-Index: libdbi-drivers-0.9.0/drivers/pgsql/dbd_pgsql.c
-===================================================================
---- libdbi-drivers-0.9.0.orig/drivers/pgsql/dbd_pgsql.c	2017-12-02 00:28:08.737484155 +0100
-+++ libdbi-drivers-0.9.0/drivers/pgsql/dbd_pgsql.c	2017-12-02 00:28:53.386391528 +0100
-@@ -61,8 +61,7 @@
+--- a/drivers/pgsql/dbd_pgsql.c
++++ b/drivers/pgsql/dbd_pgsql.c
+@@ -61,8 +61,7 @@ static const dbi_info_t driver_info = {
  	"PostgreSQL database support (using libpq)",
  	"David A. Parker <david@neongoat.com>",
  	"http://libdbi-drivers.sourceforge.net",
@@ -110,11 +94,9 @@ Index: libdbi-drivers-0.9.0/drivers/pgsql/dbd_pgsql.c
  };
  
  static const char *custom_functions[] = PGSQL_CUSTOM_FUNCTIONS;
-Index: libdbi-drivers-0.9.0/drivers/sqlite/dbd_sqlite.c
-===================================================================
---- libdbi-drivers-0.9.0.orig/drivers/sqlite/dbd_sqlite.c	2013-01-09 22:30:20.000000000 +0100
-+++ libdbi-drivers-0.9.0/drivers/sqlite/dbd_sqlite.c	2017-12-02 00:28:59.370513412 +0100
-@@ -65,8 +65,7 @@
+--- a/drivers/sqlite/dbd_sqlite.c
++++ b/drivers/sqlite/dbd_sqlite.c
+@@ -65,8 +65,7 @@ static const dbi_info_t driver_info = {
    "SQLite database support (using libsqlite)",
    "Markus Hoenicka <mhoenicka@users.sourceforge.net>",
    "http://libdbi-drivers.sourceforge.net",
@@ -124,11 +106,9 @@ Index: libdbi-drivers-0.9.0/drivers/sqlite/dbd_sqlite.c
  };
  
  static const char *custom_functions[] = SQLITE_CUSTOM_FUNCTIONS;
-Index: libdbi-drivers-0.9.0/drivers/sqlite3/dbd_sqlite3.c
-===================================================================
---- libdbi-drivers-0.9.0.orig/drivers/sqlite3/dbd_sqlite3.c	2013-01-23 00:29:13.000000000 +0100
-+++ libdbi-drivers-0.9.0/drivers/sqlite3/dbd_sqlite3.c	2017-12-02 00:29:11.706764820 +0100
-@@ -65,8 +65,7 @@
+--- a/drivers/sqlite3/dbd_sqlite3.c
++++ b/drivers/sqlite3/dbd_sqlite3.c
+@@ -65,8 +65,7 @@ static const dbi_info_t driver_info = {
    "SQLite3 database support (using libsqlite3)",
    "Markus Hoenicka <mhoenicka@users.sourceforge.net>",
    "http://libdbi-drivers.sourceforge.net",

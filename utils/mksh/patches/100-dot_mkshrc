@@ -32,7 +32,7 @@ Signed-off-by: Alif M. A. <alive4ever at live.com>
 
 --- a/dot.mkshrc
 +++ b/dot.mkshrc
-@@ -64,9 +64,9 @@
+@@ -64,9 +64,9 @@ for EDITOR in "${EDITOR:-}" jupp jstar m
  	EDITOR=
  done
  

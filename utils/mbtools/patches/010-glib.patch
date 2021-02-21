@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -21,7 +21,7 @@ AC_CHECK_HEADERS([stdio.h stdlib.h string.h unistd.h])
+@@ -21,7 +21,7 @@ AC_CHECK_HEADERS([stdio.h stdlib.h strin
  
  MBTOOLS_REQUIRES="glib-2.0 >= 2.10.0 libmodbus >= 3.1.0"
  PKG_CHECK_MODULES(MBTOOLS_DEPS, [$MBTOOLS_REQUIRES])

@@ -37,8 +37,6 @@ Tested with both static and dynamic builds of OpenZWave.
  hardware/openzwave/control_panel/ozwcp.h   |  4 ++--
  4 files changed, 15 insertions(+), 18 deletions(-)
 
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index fa5b3099d..1f4b6fb57 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -694,6 +694,7 @@ endif(WITH_LIBUSB)
@@ -69,8 +67,6 @@ index fa5b3099d..1f4b6fb57 100644
    endif (OPENZWAVE_INCLUDE_DIRS)
    add_definitions(-DWITH_OPENZWAVE)
  ELSE()
-diff --git a/hardware/OpenZWave.cpp b/hardware/OpenZWave.cpp
-index 272e3d0a7..a226a8924 100644
 --- a/hardware/OpenZWave.cpp
 +++ b/hardware/OpenZWave.cpp
 @@ -22,10 +22,10 @@
@@ -88,8 +84,6 @@ index 272e3d0a7..a226a8924 100644
  
  #include "ZWaveCommands.h"
  
-diff --git a/hardware/openzwave/control_panel/ozwcp.cpp b/hardware/openzwave/control_panel/ozwcp.cpp
-index 0b21a9cf3..5e401b2f1 100644
 --- a/hardware/openzwave/control_panel/ozwcp.cpp
 +++ b/hardware/openzwave/control_panel/ozwcp.cpp
 @@ -39,11 +39,11 @@
@@ -109,8 +103,6 @@ index 0b21a9cf3..5e401b2f1 100644
  #include "../../../main/Logger.h"
  
  #include <sys/stat.h>
-diff --git a/hardware/openzwave/control_panel/ozwcp.h b/hardware/openzwave/control_panel/ozwcp.h
-index ebfef1791..96d14b3bf 100644
 --- a/hardware/openzwave/control_panel/ozwcp.h
 +++ b/hardware/openzwave/control_panel/ozwcp.h
 @@ -38,8 +38,8 @@
@@ -124,6 +116,3 @@ index ebfef1791..96d14b3bf 100644
  
  #define MAX_NODES 255
  
--- 
-2.26.2
-

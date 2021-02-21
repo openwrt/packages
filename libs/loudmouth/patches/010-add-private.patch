@@ -13,8 +13,6 @@ g_type_class_add_private() will be deprecated in GLib 2.58.  Replace:
  loudmouth/lm-resolver.c          | 28 +++++++++++++---------------
  3 files changed, 30 insertions(+), 37 deletions(-)
 
-diff --git a/loudmouth/lm-blocking-resolver.c b/loudmouth/lm-blocking-resolver.c
-index 5a25061..d980d24 100644
 --- a/loudmouth/lm-blocking-resolver.c
 +++ b/loudmouth/lm-blocking-resolver.c
 @@ -38,10 +38,10 @@
@@ -31,7 +29,7 @@ index 5a25061..d980d24 100644
      GSource *idle_source;
  };
  
-@@ -49,7 +49,7 @@ static void     blocking_resolver_dispose     (GObject       *object);
+@@ -49,7 +49,7 @@ static void     blocking_resolver_finali
  static void     blocking_resolver_lookup      (LmResolver    *resolver);
  static void     blocking_resolver_cancel      (LmResolver    *resolver);
  
@@ -40,7 +38,7 @@ index 5a25061..d980d24 100644
  
  static void
  lm_blocking_resolver_class_init (LmBlockingResolverClass *class)
-@@ -61,9 +61,6 @@ lm_blocking_resolver_class_init (LmBlockingResolverClass *class)
+@@ -61,9 +61,6 @@ lm_blocking_resolver_class_init (LmBlock
  
      resolver_class->lookup = blocking_resolver_lookup;
      resolver_class->cancel = blocking_resolver_cancel;
@@ -50,7 +48,7 @@ index 5a25061..d980d24 100644
  }
  
  static void
-@@ -194,7 +191,7 @@ blocking_resolver_lookup_service (LmBlockingResolver *resolver)
+@@ -194,7 +191,7 @@ blocking_resolver_lookup_service (LmBloc
  static gboolean
  blocking_resolver_idle_lookup (LmBlockingResolver *resolver)
  {
@@ -59,7 +57,7 @@ index 5a25061..d980d24 100644
      gint                    type;
  
      /* Start the DNS querying */
-@@ -219,7 +216,7 @@ blocking_resolver_idle_lookup (LmBlockingResolver *resolver)
+@@ -219,7 +216,7 @@ blocking_resolver_idle_lookup (LmBlockin
  static void
  blocking_resolver_lookup (LmResolver *resolver)
  {
@@ -68,7 +66,7 @@ index 5a25061..d980d24 100644
      GMainContext           *context;
  
      g_return_if_fail (LM_IS_BLOCKING_RESOLVER (resolver));
-@@ -236,7 +233,7 @@ blocking_resolver_lookup (LmResolver *resolver)
+@@ -236,7 +233,7 @@ blocking_resolver_lookup (LmResolver *re
  static void
  blocking_resolver_cancel (LmResolver *resolver)
  {
@@ -77,8 +75,6 @@ index 5a25061..d980d24 100644
  
      g_return_if_fail (LM_IS_BLOCKING_RESOLVER (resolver));
  
-diff --git a/loudmouth/lm-feature-ping.c b/loudmouth/lm-feature-ping.c
-index b2dd439..bfd1e6d 100644
 --- a/loudmouth/lm-feature-ping.c
 +++ b/loudmouth/lm-feature-ping.c
 @@ -28,10 +28,10 @@
@@ -95,7 +91,7 @@ index b2dd439..bfd1e6d 100644
      LmConnection *connection;
      guint         keep_alive_rate;
      GSource      *keep_alive_source;
-@@ -55,7 +55,7 @@ feature_ping_keep_alive_reply                    (LmMessageHandler *handler,
+@@ -55,7 +55,7 @@ feature_ping_keep_alive_reply
                                                    gpointer          user_data);
  static gboolean feature_ping_send_keep_alive     (LmFeaturePing    *fp);
  
@@ -104,7 +100,7 @@ index b2dd439..bfd1e6d 100644
  
  enum {
      PROP_0,
-@@ -103,8 +103,6 @@ lm_feature_ping_class_init (LmFeaturePingClass *class)
+@@ -103,8 +103,6 @@ lm_feature_ping_class_init (LmFeaturePin
                        NULL, NULL,
                        _lm_marshal_VOID__VOID,
                        G_TYPE_NONE, 0);
@@ -113,7 +109,7 @@ index b2dd439..bfd1e6d 100644
  }
  
  static void
-@@ -127,7 +125,7 @@ feature_ping_get_property (GObject    *object,
+@@ -127,7 +125,7 @@ feature_ping_get_property (GObject    *o
                             GValue     *value,
                             GParamSpec *pspec)
  {
@@ -122,7 +118,7 @@ index b2dd439..bfd1e6d 100644
  
      priv = GET_PRIV (object);
  
-@@ -147,7 +145,7 @@ feature_ping_set_property (GObject      *object,
+@@ -147,7 +145,7 @@ feature_ping_set_property (GObject
                             const GValue *value,
                             GParamSpec   *pspec)
  {
@@ -131,7 +127,7 @@ index b2dd439..bfd1e6d 100644
  
      priv = GET_PRIV (object);
  
-@@ -171,7 +169,7 @@ feature_ping_keep_alive_reply (LmMessageHandler *handler,
+@@ -171,7 +169,7 @@ feature_ping_keep_alive_reply (LmMessage
                                 LmMessage        *m,
                                 gpointer          user_data)
  {
@@ -140,7 +136,7 @@ index b2dd439..bfd1e6d 100644
  
      priv = GET_PRIV (user_data);
  
-@@ -183,7 +181,7 @@ feature_ping_keep_alive_reply (LmMessageHandler *handler,
+@@ -183,7 +181,7 @@ feature_ping_keep_alive_reply (LmMessage
  static gboolean
  feature_ping_send_keep_alive (LmFeaturePing *fp)
  {
@@ -149,7 +145,7 @@ index b2dd439..bfd1e6d 100644
      LmMessage         *ping;
      LmMessageNode     *ping_node;
      LmMessageHandler  *keep_alive_handler;
-@@ -237,7 +235,7 @@ feature_ping_send_keep_alive (LmFeaturePing *fp)
+@@ -237,7 +235,7 @@ feature_ping_send_keep_alive (LmFeatureP
  void
  lm_feature_ping_start (LmFeaturePing *fp)
  {
@@ -158,7 +154,7 @@ index b2dd439..bfd1e6d 100644
  
      g_return_if_fail (LM_IS_FEATURE_PING (fp));
  
-@@ -260,7 +258,7 @@ lm_feature_ping_start (LmFeaturePing *fp)
+@@ -260,7 +258,7 @@ lm_feature_ping_start (LmFeaturePing *fp
  void
  lm_feature_ping_stop (LmFeaturePing *fp)
  {
@@ -167,8 +163,6 @@ index b2dd439..bfd1e6d 100644
  
      g_return_if_fail (LM_IS_FEATURE_PING (fp));
  
-diff --git a/loudmouth/lm-resolver.c b/loudmouth/lm-resolver.c
-index b9d7762..a0500ef 100644
 --- a/loudmouth/lm-resolver.c
 +++ b/loudmouth/lm-resolver.c
 @@ -36,10 +36,10 @@
@@ -185,7 +179,7 @@ index b9d7762..a0500ef 100644
      GMainContext       *context;
  
      LmResolverCallback  callback;
-@@ -71,7 +71,7 @@ static void     resolver_set_property        (GObject           *object,
+@@ -71,7 +71,7 @@ static void     resolver_set_property
                                                const GValue      *value,
                                                GParamSpec        *pspec);
  
@@ -194,7 +188,7 @@ index b9d7762..a0500ef 100644
  
  enum {
      PROP_0,
-@@ -151,8 +151,6 @@ lm_resolver_class_init (LmResolverClass *class)
+@@ -151,8 +151,6 @@ lm_resolver_class_init (LmResolverClass
                                                            "Protocol for SRV lookup",
                                                            NULL,
                                                            G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
@@ -212,7 +206,7 @@ index b9d7762..a0500ef 100644
  
      priv = GET_PRIV (object);
  
-@@ -190,7 +188,7 @@ resolver_get_property (GObject    *object,
+@@ -190,7 +188,7 @@ resolver_get_property (GObject    *objec
                         GValue     *value,
                         GParamSpec *pspec)
  {
@@ -221,7 +215,7 @@ index b9d7762..a0500ef 100644
  
      priv = GET_PRIV (object);
  
-@@ -228,7 +226,7 @@ resolver_set_property (GObject      *object,
+@@ -228,7 +226,7 @@ resolver_set_property (GObject      *obj
                         const GValue *value,
                         GParamSpec   *pspec)
  {
@@ -230,7 +224,7 @@ index b9d7762..a0500ef 100644
  
      priv = GET_PRIV (object);
  
-@@ -301,7 +299,7 @@ lm_resolver_new_for_host (const gchar        *host,
+@@ -301,7 +299,7 @@ lm_resolver_new_for_host (const gchar
                            gpointer            user_data)
  {
      LmResolver     *resolver;
@@ -239,7 +233,7 @@ index b9d7762..a0500ef 100644
  
      g_return_val_if_fail (host != NULL, NULL);
      g_return_val_if_fail (callback != NULL, NULL);
-@@ -327,7 +325,7 @@ lm_resolver_new_for_service (const gchar        *domain,
+@@ -327,7 +325,7 @@ lm_resolver_new_for_service (const gchar
                               gpointer            user_data)
  {
      LmResolver     *resolver;
@@ -248,7 +242,7 @@ index b9d7762..a0500ef 100644
  
      g_return_val_if_fail (domain != NULL, NULL);
      g_return_val_if_fail (service != NULL, NULL);
-@@ -373,7 +371,7 @@ lm_resolver_cancel (LmResolver *resolver)
+@@ -373,7 +371,7 @@ lm_resolver_cancel (LmResolver *resolver
  struct addrinfo *
  lm_resolver_results_get_next (LmResolver *resolver)
  {
@@ -266,7 +260,7 @@ index b9d7762..a0500ef 100644
  
      g_return_if_fail (LM_IS_RESOLVER (resolver));
  
-@@ -427,7 +425,7 @@ _lm_resolver_set_result (LmResolver       *resolver,
+@@ -427,7 +425,7 @@ _lm_resolver_set_result (LmResolver
                           LmResolverResult  result,
                           struct addrinfo  *results)
  {

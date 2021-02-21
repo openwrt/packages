@@ -9,8 +9,6 @@ uClibc-ng.
  src/thread_base.cc | 4 +++-
  1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/src/thread_base.cc b/src/thread_base.cc
-index 081791d4..275015ab 100644
 --- a/src/thread_base.cc
 +++ b/src/thread_base.cc
 @@ -42,6 +42,8 @@
@@ -22,7 +20,7 @@ index 081791d4..275015ab 100644
  #include <signal.h>
  #include <unistd.h>
  #include <rak/error_number.h>
-@@ -66,7 +68,7 @@ class lt_cacheline_aligned thread_queue_hack {
+@@ -66,7 +68,7 @@ public:
  
    thread_queue_hack() { std::memset(this, 0, sizeof(thread_queue_hack)); }
  

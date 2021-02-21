@@ -9,7 +9,7 @@ Date:   Fri Dec 21 19:14:04 2018 +0200
 
 --- a/configure.cmake
 +++ b/configure.cmake
-@@ -866,7 +866,25 @@ int main()
+@@ -863,7 +863,25 @@ int main()
    long long int *ptr= &var;
    return (int)__atomic_load_n(ptr, __ATOMIC_SEQ_CST);
  }"
@@ -38,8 +38,8 @@ Date:   Fri Dec 21 19:14:04 2018 +0200
    SET(HAVE_valgrind 1)
 --- a/mysys/CMakeLists.txt
 +++ b/mysys/CMakeLists.txt
-@@ -79,6 +79,10 @@ TARGET_LINK_LIBRARIES(mysys dbug strings
-  ${LIBNSL} ${LIBM} ${LIBRT} ${LIBDL} ${LIBSOCKET} ${LIBEXECINFO} ${CRC32_LIBRARY})
+@@ -78,6 +78,10 @@ TARGET_LINK_LIBRARIES(mysys dbug strings
+  ${LIBNSL} ${LIBM} ${LIBRT} ${CMAKE_DL_LIBS} ${LIBSOCKET} ${LIBEXECINFO} ${CRC32_LIBRARY})
  DTRACE_INSTRUMENT(mysys)
  
 +IF (HAVE_GCC_C11_ATOMICS_WITH_LIBATOMIC)
@@ -51,7 +51,7 @@ Date:   Fri Dec 21 19:14:04 2018 +0200
  ENDIF(HAVE_BFD_H)
 --- a/sql/CMakeLists.txt
 +++ b/sql/CMakeLists.txt
-@@ -190,6 +190,10 @@ ELSE()
+@@ -191,6 +191,10 @@ ELSE()
    SET(MYSQLD_SOURCE main.cc ${DTRACE_PROBES_ALL})
  ENDIF()
  

@@ -6,7 +6,7 @@ Subject: Add patch to remove build timestamps from generated binaries.
 
 --- a/ext/standard/info.c
 +++ b/ext/standard/info.c
-@@ -791,7 +791,6 @@ PHPAPI ZEND_COLD void php_print_info(int flag)
+@@ -791,7 +791,6 @@ PHPAPI ZEND_COLD void php_print_info(int
  		php_info_print_box_end();
  		php_info_print_table_start();
  		php_info_print_table_row(2, "System", ZSTR_VAL(php_uname));
@@ -54,7 +54,7 @@ Subject: Add patch to remove build timestamps from generated binaries.
  							fcgi_shutdown();
 --- a/sapi/cli/php_cli.c
 +++ b/sapi/cli/php_cli.c
-@@ -633,8 +633,8 @@ static int do_cli(int argc, char **argv) /* {{{ */
+@@ -633,8 +633,8 @@ static int do_cli(int argc, char **argv)
  				goto out;
  
  			case 'v': /* show php version & quit */
@@ -67,7 +67,7 @@ Subject: Add patch to remove build timestamps from generated binaries.
  #else
 --- a/sapi/fpm/fpm/fpm_main.c
 +++ b/sapi/fpm/fpm/fpm_main.c
-@@ -1694,9 +1694,9 @@ int main(int argc, char *argv[])
+@@ -1691,9 +1691,9 @@ int main(int argc, char *argv[])
  				SG(request_info).no_headers = 1;
  
  #if ZEND_DEBUG

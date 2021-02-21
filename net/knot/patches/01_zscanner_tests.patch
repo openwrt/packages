@@ -1,5 +1,3 @@
-diff --git a/tests/libzscanner/test_zscanner.in b/tests/libzscanner/test_zscanner.in
-index 2c0c27526..72b2124c7 100644
 --- a/tests/libzscanner/test_zscanner.in
 +++ b/tests/libzscanner/test_zscanner.in
 @@ -1,15 +1,14 @@

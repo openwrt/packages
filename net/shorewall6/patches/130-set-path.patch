@@ -1,8 +1,6 @@
-Index: shorewall6-5.1.9/configfiles/shorewall6.conf
-===================================================================
---- shorewall6-5.1.9.orig/configfiles/shorewall6.conf	2017-12-18 08:13:01.999494346 +0100
-+++ shorewall6-5.1.9/configfiles/shorewall6.conf	2017-12-18 08:13:37.253618974 +0100
-@@ -94,7 +94,7 @@
+--- a/configfiles/shorewall6.conf
++++ b/configfiles/shorewall6.conf
+@@ -94,7 +94,7 @@ NFACCT=
  
  PERL=/usr/bin/perl
  

@@ -1,7 +1,6 @@
-diff -Naur tinycdb-0.78/Makefile tinycdb-0.78.patched/Makefile
---- tinycdb-0.78/Makefile	2012-05-11 18:17:47.000000000 +0400
-+++ tinycdb-0.78.patched/Makefile	2014-09-29 00:10:00.610836323 +0400
-@@ -86,17 +86,17 @@
+--- a/Makefile
++++ b/Makefile
+@@ -86,17 +86,17 @@ $(PICLIB): $(LIB_OBJS_PIC)
  $(SHAREDLIB): $(LIB_OBJS_PIC) $(LIBMAP)
  	-rm -f $(SOLIB)
  	ln -s $@ $(SOLIB)

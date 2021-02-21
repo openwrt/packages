@@ -12,11 +12,9 @@ Signed-off-by: Stijn Tintel <stijn@linux-ipv6.be>
  viewadsb.c |  5 ++++-
  3 files changed, 20 insertions(+), 5 deletions(-)
 
-diff --git a/anet.c b/anet.c
-index 5c35ff8..7f01958 100644
 --- a/anet.c
 +++ b/anet.c
-@@ -212,7 +212,10 @@ static int anetTcpGenericConnect(char *err, char *addr, char *service, int flags
+@@ -212,7 +212,10 @@ static int anetTcpGenericConnect(char *e
              if (ss) {
                  memcpy(ss, p->ai_addr, sizeof(*ss));
              }
@@ -28,7 +26,7 @@ index 5c35ff8..7f01958 100644
              return s;
          }
  
-@@ -220,7 +223,10 @@ static int anetTcpGenericConnect(char *err, char *addr, char *service, int flags
+@@ -220,7 +223,10 @@ static int anetTcpGenericConnect(char *e
          anetCloseSocket(s);
      }
  
@@ -40,7 +38,7 @@ index 5c35ff8..7f01958 100644
      return ANET_ERR;
  }
  
-@@ -368,7 +374,10 @@ int anetTcpServer(char *err, char *service, char *bindaddr, int *fds, int nfds)
+@@ -368,7 +374,10 @@ int anetTcpServer(char *err, char *servi
          fds[i++] = s;
      }
  
@@ -52,8 +50,6 @@ index 5c35ff8..7f01958 100644
      return (i > 0 ? i : ANET_ERR);
  }
  
-diff --git a/net_io.c b/net_io.c
-index 1f4d848..5f59194 100644
 --- a/net_io.c
 +++ b/net_io.c
 @@ -3285,7 +3285,10 @@ void cleanupNetwork(void) {
@@ -68,8 +64,6 @@ index 1f4d848..5f59194 100644
          if (con->mutex) {
              pthread_mutex_unlock(con->mutex);
              pthread_mutex_destroy(con->mutex);
-diff --git a/viewadsb.c b/viewadsb.c
-index 5fc5386..ad7b1bd 100644
 --- a/viewadsb.c
 +++ b/viewadsb.c
 @@ -308,7 +308,10 @@ int main(int argc, char **argv) {
@@ -84,6 +78,3 @@ index 5fc5386..ad7b1bd 100644
      pthread_mutex_unlock(con->mutex);
      pthread_mutex_destroy(con->mutex);
      free(con->mutex);
--- 
-2.26.2
-

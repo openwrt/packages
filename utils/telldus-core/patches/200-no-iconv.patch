@@ -10,7 +10,7 @@
  #endif
  #include <algorithm>
  #include <sstream>
-@@ -50,35 +51,8 @@ std::wstring TelldusCore::charToWstring(const char *value) {
+@@ -50,35 +51,8 @@ std::wstring TelldusCore::charToWstring(
  	return retval;
  
  #else
@@ -48,7 +48,7 @@
  #endif
  }
  
-@@ -211,19 +185,8 @@ std::string TelldusCore::wideToString(const std::wstring &input) {
+@@ -211,19 +185,8 @@ std::string TelldusCore::wideToString(co
  #else
  	char *inPointer = inString;
  #endif

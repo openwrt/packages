@@ -9,8 +9,6 @@ Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
  configure.ac |    2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/configure.ac b/configure.ac
-index e6e1317..189a753 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -20,7 +20,7 @@ AC_PROG_INSTALL
@@ -22,6 +20,3 @@ index e6e1317..189a753 100644
  *) AC_MSG_ERROR([Linux only, dude!]);;
  esac
  
--- 
-1.7.10.4
-

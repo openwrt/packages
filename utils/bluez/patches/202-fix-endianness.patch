@@ -1,7 +1,5 @@
-Index: bluez-5.53/src/shared/util.h
-===================================================================
---- bluez-5.53.orig/src/shared/util.h
-+++ bluez-5.53/src/shared/util.h
+--- a/src/shared/util.h
++++ b/src/shared/util.h
 @@ -26,6 +26,7 @@
  #include <alloca.h>
  #include <byteswap.h>

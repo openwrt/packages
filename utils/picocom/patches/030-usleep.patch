@@ -10,8 +10,6 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  term.c | 14 ++++++++++++--
  1 file changed, 12 insertions(+), 2 deletions(-)
 
-diff --git a/term.c b/term.c
-index b45ab3d..23afd4f 100644
 --- a/term.c
 +++ b/term.c
 @@ -33,6 +33,7 @@

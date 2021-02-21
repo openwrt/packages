@@ -11,11 +11,9 @@ deprecated, and by checking return value of call to former function.
  src/plugins/lanplus/lanplus_crypt_impl.c | 14 ++++++++++----
  1 file changed, 10 insertions(+), 4 deletions(-)
 
-diff --git a/src/plugins/lanplus/lanplus_crypt_impl.c b/src/plugins/lanplus/lanplus_crypt_impl.c
-index d12d0e3..0e330c1 100644
 --- a/src/plugins/lanplus/lanplus_crypt_impl.c
 +++ b/src/plugins/lanplus/lanplus_crypt_impl.c
-@@ -165,10 +165,13 @@ lanplus_encrypt_aes_cbc_128(const uint8_t * iv,
+@@ -165,10 +165,13 @@ lanplus_encrypt_aes_cbc_128(const uint8_
  							uint32_t        * bytes_written)
  {
  	EVP_CIPHER_CTX *ctx = NULL;
@@ -31,7 +29,7 @@ index d12d0e3..0e330c1 100644
  
  	*bytes_written = 0;
  
-@@ -240,11 +243,14 @@ lanplus_decrypt_aes_cbc_128(const uint8_t * iv,
+@@ -240,11 +243,14 @@ lanplus_decrypt_aes_cbc_128(const uint8_
  							uint32_t        * bytes_written)
  {
  	EVP_CIPHER_CTX *ctx = NULL;
@@ -48,6 +46,3 @@ index d12d0e3..0e330c1 100644
  	if (verbose >= 5)
  	{
  		printbuf(iv,  16, "decrypting with this IV");
--- 
-2.16.1
-

@@ -1,7 +1,6 @@
-diff -urN libtheora-1.1.1/Makefile.am libtheora-1.1.1.new/Makefile.am
---- libtheora-1.1.1/Makefile.am	2009-07-14 01:55:02.000000000 +0200
-+++ libtheora-1.1.1.new/Makefile.am	2012-12-05 14:21:06.103521554 +0100
-@@ -8,7 +8,7 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -8,7 +8,7 @@ else
  EXAMPLES_DIR =
  endif
  
@@ -10,10 +9,9 @@ diff -urN libtheora-1.1.1/Makefile.am libtheora-1.1.1.new/Makefile.am
  
  
  # we include the whole debian/ dir in EXTRA_DIST because there's a problem
-diff -urN libtheora-1.1.1/Makefile.in libtheora-1.1.1.new/Makefile.in
---- libtheora-1.1.1/Makefile.in	2009-10-01 20:04:07.000000000 +0200
-+++ libtheora-1.1.1.new/Makefile.in	2012-12-05 14:21:18.239521864 +0100
-@@ -164,7 +164,7 @@
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -164,7 +164,7 @@ AUTOMAKE_OPTIONS = foreign 1.6 dist-zip
  @THEORA_ENABLE_EXAMPLES_TRUE@EXAMPLES_DIR = examples
  @THEORA_ENABLE_EXAMPLES_FALSE@EXAMPLES_DIR = 
  
@@ -22,7 +20,7 @@ diff -urN libtheora-1.1.1/Makefile.in libtheora-1.1.1.new/Makefile.in
  
  # we include the whole debian/ dir in EXTRA_DIST because there's a problem
  # with autotools and HFS+ MacOSX file systems that caused debian/Makefile.am
-@@ -200,7 +200,7 @@
+@@ -200,7 +200,7 @@ DIST_COMMON = README AUTHORS COPYING Mak
  	missing mkinstalldirs theora-uninstalled.pc.in theora.pc.in \
  	theoradec-uninstalled.pc.in theoradec.pc.in \
  	theoraenc-uninstalled.pc.in theoraenc.pc.in

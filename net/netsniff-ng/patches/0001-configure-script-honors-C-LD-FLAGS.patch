@@ -8,8 +8,6 @@ Signed-off-by: Toni Uhlig <matzeton@googlemail.com>
  configure | 32 ++++++++++++++++----------------
  1 file changed, 16 insertions(+), 16 deletions(-)
 
-diff --git a/configure b/configure
-index 510826a..ceda000 100755
 --- a/configure
 +++ b/configure
 @@ -221,8 +221,8 @@ EOF
@@ -149,6 +147,3 @@ index 510826a..ceda000 100755
  	if [ ! -x $TMPDIR/nettest ] ; then
  		echo "[NO]"
  		MISSING_DEFS=1
--- 
-2.20.1
-

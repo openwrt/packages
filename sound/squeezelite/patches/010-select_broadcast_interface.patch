@@ -76,7 +76,7 @@
  	stream_close();
 --- a/slimproto.c
 +++ b/slimproto.c
-@@ -113,7 +113,7 @@ void send_packet(u8_t *packet, size_t len) {
+@@ -113,7 +113,7 @@ void send_packet(u8_t *packet, size_t le
  	}
  }
  
@@ -94,7 +94,7 @@
  	struct sockaddr_in d;
  	struct sockaddr_in s;
  	char *buf;
-@@ -778,7 +778,7 @@ in_addr_t discover_server(char *default_server) {
+@@ -778,7 +778,7 @@ in_addr_t discover_server(char *default_
  	memset(&d, 0, sizeof(d));
  	d.sin_family = AF_INET;
  	d.sin_port = htons(PORT);
@@ -103,7 +103,7 @@
  
  	pollinfo.fd = disc_sock;
  	pollinfo.events = POLLIN;
-@@ -813,7 +813,7 @@ in_addr_t discover_server(char *default_server) {
+@@ -813,7 +813,7 @@ in_addr_t discover_server(char *default_
  #define FIXED_CAP_LEN 256
  #define VAR_CAP_LEN   128
  
@@ -112,7 +112,7 @@
  	struct sockaddr_in serv_addr;
  	static char fixed_cap[FIXED_CAP_LEN], var_cap[VAR_CAP_LEN] = "";
  	bool reconnect = false;
-@@ -834,7 +834,7 @@ void slimproto(log_level level, char *server, u8_t mac[6], const char *name, con
+@@ -834,7 +834,7 @@ void slimproto(log_level level, char *se
  	}
  
  	if (!slimproto_ip) {
@@ -121,7 +121,7 @@
  	}
  
  	if (!slimproto_port) {
-@@ -915,7 +915,7 @@ void slimproto(log_level level, char *server, u8_t mac[6], const char *name, con
+@@ -915,7 +915,7 @@ void slimproto(log_level level, char *se
  
  			// rediscover server if it was not set at startup
  			if (!server && ++failed_connect > 5) {
@@ -132,7 +132,7 @@
  		} else {
 --- a/squeezelite.h
 +++ b/squeezelite.h
-@@ -455,7 +455,7 @@ char* strcasestr(const char *haystack, const char *needle);
+@@ -455,7 +455,7 @@ char* strcasestr(const char *haystack, c
  
  char *next_param(char *src, char c);
  u32_t gettime_ms(void);
@@ -141,7 +141,7 @@
  void set_nonblock(sockfd s);
  int connect_timeout(sockfd sock, const struct sockaddr *addr, socklen_t addrlen, int timeout);
  void server_addr(char *server, in_addr_t *ip_ptr, unsigned *port_ptr);
-@@ -511,7 +511,7 @@ void buf_init(struct buffer *buf, size_t size);
+@@ -511,7 +511,7 @@ void buf_init(struct buffer *buf, size_t
  void buf_destroy(struct buffer *buf);
  
  // slimproto.c
@@ -220,29 +220,23 @@
 +	unsigned char *ptr;
 +	in_addr_t bcast_addr = 0;
 +	int have_mac = 0, have_ifname = 0;
- 
--	}
++
 +	loglevel = level;
- 
--	mac[0] = mac[1] = mac[2] = mac[3] = mac[4] = mac[5] = 0;
++
 +	// Check for non-zero MAC
 +	if (mac[0] | mac[1] | mac[2] != 0)
 +		have_mac = 1;
- 
--	int s = socket(AF_INET, SOCK_DGRAM, 0);
++
 +	// Copy interface name, if it was provided.
 +	if (iface != NULL) {
 +		if (strlen(iface) > sizeof(ifname))
 +			return -1;
  
--	ifc.ifc_len = sizeof(ifs);
--	ifc.ifc_req = ifs;
 +		strncpy(ifname, iface, sizeof(ifname) - 1);
 +		have_ifname = 1;
-+	}
+ 	}
  
--	if (ioctl(s, SIOCGIFCONF, &ifc) == 0) {
--		ifend = ifs + (ifc.ifc_len / sizeof(struct ifreq));
+-	mac[0] = mac[1] = mac[2] = mac[3] = mac[4] = mac[5] = 0;
 +	if (getifaddrs(&addrs) == 0) {
 +		//iterate to find corresponding ethernet address
 +		for (ifa = addrs; ifa; ifa = ifa->ifa_next) {
@@ -253,7 +247,8 @@
 +                                || !ifa->ifa_flags & IFF_BROADCAST) {
 +				continue;
 +			}
-+
+ 
+-	int s = socket(AF_INET, SOCK_DGRAM, 0);
 +			if (!have_ifname) {
 +				// We have found a valid interface name. Keep it.
 +				strncpy(ifname, ifa->ifa_name, sizeof(ifname) - 1);
@@ -265,15 +260,11 @@
 +				}
 +			}
  
--		for (ifr = ifc.ifc_req; ifr < ifend; ifr++) {
--			if (ifr->ifr_addr.sa_family == AF_INET) {
+-	ifc.ifc_len = sizeof(ifs);
+-	ifc.ifc_req = ifs;
  
--				strncpy(ifreq.ifr_name, ifr->ifr_name, sizeof(ifreq.ifr_name) - 1);
--				if (ioctl (s, SIOCGIFHWADDR, &ifreq) == 0) {
--					memcpy(mac, ifreq.ifr_hwaddr.sa_data, 6);
--					if (mac[0]+mac[1]+mac[2] != 0) {
--						break;
--					}
+-	if (ioctl(s, SIOCGIFCONF, &ifc) == 0) {
+-		ifend = ifs + (ifc.ifc_len / sizeof(struct ifreq));
 +			// Check address family.
 +			if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_INET &&
 +			    ((struct sockaddr_in *)ifa->ifa_broadaddr)->sin_addr.s_addr != 0) {
@@ -287,7 +278,16 @@
 +					have_ifname = 0;
 +			}
 +		}
-+
+ 
+-		for (ifr = ifc.ifc_req; ifr < ifend; ifr++) {
+-			if (ifr->ifr_addr.sa_family == AF_INET) {
+-
+-				strncpy(ifreq.ifr_name, ifr->ifr_name, sizeof(ifreq.ifr_name) - 1);
+-				if (ioctl (s, SIOCGIFHWADDR, &ifreq) == 0) {
+-					memcpy(mac, ifreq.ifr_hwaddr.sa_data, 6);
+-					if (mac[0]+mac[1]+mac[2] != 0) {
+-						break;
+-					}
 +		// Find MAC address matching interface
 +		if (!have_mac && bcast_addr != 0) {
 +			for (ifa = addrs; ifa; ifa = ifa->ifa_next) {

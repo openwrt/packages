@@ -11,8 +11,6 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  ibrdtn/data/Bundle.h   |  2 ++
  2 files changed, 12 insertions(+)
 
-diff --git a/ibrdtn/data/Bundle.cpp b/ibrdtn/data/Bundle.cpp
-index f515860..943544e 100644
 --- a/ibrdtn/data/Bundle.cpp
 +++ b/ibrdtn/data/Bundle.cpp
 @@ -71,11 +71,21 @@ namespace dtn
@@ -37,8 +35,6 @@ index f515860..943544e 100644
  		bool Bundle::operator!=(const Bundle& other) const
  		{
  			return (const PrimaryBlock&)(*this) != (const PrimaryBlock&)other;
-diff --git a/ibrdtn/data/Bundle.h b/ibrdtn/data/Bundle.h
-index 9bbc066..6a4ea47 100644
 --- a/ibrdtn/data/Bundle.h
 +++ b/ibrdtn/data/Bundle.h
 @@ -97,7 +97,9 @@ namespace dtn

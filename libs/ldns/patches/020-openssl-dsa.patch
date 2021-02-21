@@ -16,11 +16,9 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  rr_functions.c              |  4 ++++
  9 files changed, 51 insertions(+), 3 deletions(-)
 
-diff --git a/dnssec.c b/dnssec.c
-index 482cefd6..71508600 100644
 --- a/dnssec.c
 +++ b/dnssec.c
-@@ -332,6 +332,7 @@ uint16_t ldns_calc_keytag_raw(const uint8_t* key, size_t keysize)
+@@ -332,6 +332,7 @@ uint16_t ldns_calc_keytag_raw(const uint
  }
  
  #ifdef HAVE_SSL
@@ -28,7 +26,7 @@ index 482cefd6..71508600 100644
  DSA *
  ldns_key_buf2dsa(const ldns_buffer *key)
  {
-@@ -407,6 +408,7 @@ ldns_key_buf2dsa_raw(const unsigned char* key, size_t len)
+@@ -407,6 +408,7 @@ ldns_key_buf2dsa_raw(const unsigned char
  #endif /* OPENSSL_VERSION_NUMBER */
  	return dsa;
  }
@@ -36,8 +34,6 @@ index 482cefd6..71508600 100644
  
  RSA *
  ldns_key_buf2rsa(const ldns_buffer *key)
-diff --git a/examples/ldns-dane.c b/examples/ldns-dane.c
-index 4c31fd8f..7b33ad18 100644
 --- a/examples/ldns-dane.c
 +++ b/examples/ldns-dane.c
 @@ -1680,9 +1680,11 @@ main(int argc, char* const* argv)
@@ -52,8 +48,6 @@ index 4c31fd8f..7b33ad18 100644
  
  	/* ssl load validation store */
  	if (! assume_pkix_validity || CAfile || CApath) {
-diff --git a/examples/ldns-keygen.c b/examples/ldns-keygen.c
-index 62b8d228..237016e5 100644
 --- a/examples/ldns-keygen.c
 +++ b/examples/ldns-keygen.c
 @@ -148,6 +148,7 @@ main(int argc, char *argv[])
@@ -72,8 +66,6 @@ index 62b8d228..237016e5 100644
  #ifdef USE_GOST
  	case LDNS_SIGN_ECC_GOST:
  		if(!ldns_key_EVP_load_gost_id()) {
-diff --git a/examples/ldns-signzone.c b/examples/ldns-signzone.c
-index 7d24ad90..abae352a 100644
 --- a/examples/ldns-signzone.c
 +++ b/examples/ldns-signzone.c
 @@ -72,10 +72,14 @@ usage(FILE *fp, const char *prog) {
@@ -107,7 +99,7 @@ index 7d24ad90..abae352a 100644
  	__MATCH ( ECC_GOST );
  	__MATCH ( ECDSAP256SHA256 );
  	__MATCH ( ECDSAP384SHA384 );
-@@ -419,8 +427,10 @@ load_key ( const char * const p, ENGINE * const e )
+@@ -419,8 +427,10 @@ load_key ( const char * const p, ENGINE
  	case LDNS_SIGN_RSASHA1_NSEC3:
  	case LDNS_SIGN_RSASHA256:
  	case LDNS_SIGN_RSASHA512:
@@ -132,21 +124,20 @@ index 7d24ad90..abae352a 100644
  		}
  #endif
  		exit(EXIT_FAILURE);
-@@ -1018,7 +1032,9 @@ main(int argc, char *argv[])
+@@ -1018,8 +1032,10 @@ main(int argc, char *argv[])
  #ifndef OPENSSL_NO_ENGINE
  	shutdown_openssl ( engine );
  #else
 +#if OPENSSL_VERSION_NUMBER < 0x10100000 || defined(HAVE_LIBRESSL)
  	CRYPTO_cleanup_all_ex_data();
-+#endif
  #endif
++#endif
  
  	free(prog);
-diff --git a/examples/ldns-verify-zone.c b/examples/ldns-verify-zone.c
-index c17bd21c..a5a1d003 100644
+ 	exit(EXIT_SUCCESS);
 --- a/examples/ldns-verify-zone.c
 +++ b/examples/ldns-verify-zone.c
-@@ -113,7 +113,9 @@ print_rr_status_error(FILE* stream, ldns_rr* rr, ldns_status status)
+@@ -113,7 +113,9 @@ print_rr_status_error(FILE* stream, ldns
  	if (status != LDNS_STATUS_OK) {
  		print_rr_error(stream, rr, ldns_get_errorstr_by_id(status));
  		if (verbosity > 0 && status == LDNS_STATUS_SSL_ERR) {
@@ -156,8 +147,6 @@ index c17bd21c..a5a1d003 100644
  			ERR_print_errors_fp(stream);
  		}
  	}
-diff --git a/host2str.c b/host2str.c
-index 3ca23c20..29a5f5c9 100644
 --- a/host2str.c
 +++ b/host2str.c
 @@ -49,10 +49,14 @@
@@ -175,7 +164,7 @@ index 3ca23c20..29a5f5c9 100644
          { LDNS_RSASHA1_NSEC3, "RSASHA1-NSEC3-SHA1" },
  #ifdef USE_SHA2
  	{ LDNS_RSASHA256, "RSASHA256"},
-@@ -2133,7 +2137,9 @@ ldns_key2buffer_str(ldns_buffer *output, const ldns_key *k)
+@@ -2133,7 +2137,9 @@ ldns_key2buffer_str(ldns_buffer *output,
  	unsigned char  *bignum;
  #ifdef HAVE_SSL
  	RSA *rsa;
@@ -185,7 +174,7 @@ index 3ca23c20..29a5f5c9 100644
  #endif /* HAVE_SSL */
  
  	if (!k) {
-@@ -2243,6 +2249,7 @@ ldns_key2buffer_str(ldns_buffer *output, const ldns_key *k)
+@@ -2243,6 +2249,7 @@ ldns_key2buffer_str(ldns_buffer *output,
  
  				RSA_free(rsa);
  				break;
@@ -193,7 +182,7 @@ index 3ca23c20..29a5f5c9 100644
  			case LDNS_SIGN_DSA:
  			case LDNS_SIGN_DSA_NSEC3:
  				dsa = ldns_key_dsa_key(k);
-@@ -2283,6 +2290,7 @@ ldns_key2buffer_str(ldns_buffer *output, const ldns_key *k)
+@@ -2283,6 +2290,7 @@ ldns_key2buffer_str(ldns_buffer *output,
  						goto error;
  				}
  				break;
@@ -201,11 +190,9 @@ index 3ca23c20..29a5f5c9 100644
  			case LDNS_SIGN_ECC_GOST:
  				/* no format defined, use blob */
  #if defined(HAVE_SSL) && defined(USE_GOST)
-diff --git a/keys.c b/keys.c
-index 06afb739..ddff6f35 100644
 --- a/keys.c
 +++ b/keys.c
-@@ -905,6 +905,7 @@ ldns_key_new_frm_fp_rsa_l(FILE *f, int *line_nr)
+@@ -905,6 +905,7 @@ error:
  	return NULL;
  }
  
@@ -213,7 +200,7 @@ index 06afb739..ddff6f35 100644
  DSA *
  ldns_key_new_frm_fp_dsa(FILE *f)
  {
-@@ -1015,6 +1016,7 @@ ldns_key_new_frm_fp_dsa_l(FILE *f, ATTR_UNUSED(int *line_nr))
+@@ -1015,6 +1016,7 @@ error:
  	BN_free(pub_key);
  	return NULL;
  }
@@ -221,7 +208,7 @@ index 06afb739..ddff6f35 100644
  
  unsigned char *
  ldns_key_new_frm_fp_hmac(FILE *f, size_t *hmac_size)
-@@ -1149,9 +1151,9 @@ ldns_key_new_frm_algorithm(ldns_signing_algorithm alg, uint16_t size)
+@@ -1149,9 +1151,9 @@ ldns_key_new_frm_algorithm(ldns_signing_
  #endif /* HAVE_EVP_PKEY_KEYGEN */
  #endif /* HAVE_SSL */
  			break;
@@ -256,7 +243,7 @@ index 06afb739..ddff6f35 100644
  #ifdef HAVE_SSL
  			dsa = ldns_key_dsa_key(k);
  			if (dsa) {
-@@ -2165,7 +2167,9 @@ ldns_signing_algorithm ldns_get_signing_algorithm_by_name(const char* name)
+@@ -2165,7 +2167,9 @@ ldns_signing_algorithm ldns_get_signing_
          ldns_lookup_table aliases[] = {
                  /* from bind dnssec-keygen */
                  {LDNS_SIGN_HMACMD5, "HMAC-MD5"},
@@ -266,8 +253,6 @@ index 06afb739..ddff6f35 100644
                  {LDNS_SIGN_RSASHA1_NSEC3, "NSEC3RSASHA1"},
                  /* old ldns usage, now RFC names */
  #ifdef USE_DSA
-diff --git a/ldns/keys.h b/ldns/keys.h
-index df4bb22b..826f876f 100644
 --- a/ldns/keys.h
 +++ b/ldns/keys.h
 @@ -45,10 +45,14 @@ enum ldns_enum_algorithm
@@ -301,11 +286,9 @@ index df4bb22b..826f876f 100644
  	LDNS_SIGN_ECC_GOST       = LDNS_ECC_GOST,
          LDNS_SIGN_ECDSAP256SHA256 = LDNS_ECDSAP256SHA256,
          LDNS_SIGN_ECDSAP384SHA384 = LDNS_ECDSAP384SHA384,
-diff --git a/rr_functions.c b/rr_functions.c
-index 20a0bfaa..8d72696b 100644
 --- a/rr_functions.c
 +++ b/rr_functions.c
-@@ -269,14 +269,17 @@ ldns_rr_dnskey_key_size_raw(const unsigned char* keydata,
+@@ -269,14 +269,17 @@ ldns_rr_dnskey_key_size_raw(const unsign
                              const size_t len,
                              const ldns_algorithm alg)
  {
@@ -323,7 +306,7 @@ index 20a0bfaa..8d72696b 100644
  	case LDNS_SIGN_DSA:
  	case LDNS_SIGN_DSA_NSEC3:
  		if (len > 0) {
-@@ -286,6 +289,7 @@ ldns_rr_dnskey_key_size_raw(const unsigned char* keydata,
+@@ -286,6 +289,7 @@ ldns_rr_dnskey_key_size_raw(const unsign
  			return 0;
  		}
  		break;

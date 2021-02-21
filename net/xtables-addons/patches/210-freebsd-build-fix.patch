@@ -1,6 +1,6 @@
 --- a/extensions/LUA/Makefile
 +++ b/extensions/LUA/Makefile
-@@ -110,7 +110,7 @@
+@@ -110,7 +110,7 @@ PKG_CONFIG = /usr/bin/pkg-config
  RANLIB = ranlib
  SED = /bin/sed
  SET_MAKE = 

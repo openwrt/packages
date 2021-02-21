@@ -12,11 +12,9 @@ Signed-off-by: Michael Heimpold <mhei@heimpold.de>
  libdaemon/dlog.c |    2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libdaemon/dlog.c b/libdaemon/dlog.c
-index 1cc0566..cc2b918 100644
 --- a/libdaemon/dlog.c
 +++ b/libdaemon/dlog.c
-@@ -42,7 +42,7 @@ static int daemon_verbosity_level = LOG_INFO;
+@@ -37,7 +37,7 @@ static int daemon_verbosity_level = LOG_
  void daemon_set_verbosity(int verbosity_prio) {
  
      /* Allow using negative verbosity levels to hide _all_ messages */
@@ -25,6 +23,3 @@ index 1cc0566..cc2b918 100644
          daemon_log(LOG_ERR, "The value %d is not a valid priority value", verbosity_prio);
  
      daemon_verbosity_level = verbosity_prio & LOG_PRIMASK;
--- 
-1.7.10.4
-

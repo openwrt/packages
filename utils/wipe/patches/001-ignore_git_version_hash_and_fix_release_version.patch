@@ -1,8 +1,6 @@
-diff --git a/Makefile b/Makefile
-index 5757ae3..20d52ce 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -157,11 +157,7 @@ wipe.o	:	wipe.c random.h misc.h version.h
+@@ -157,11 +157,7 @@ wipe.o	:	wipe.c random.h misc.h version.
  		$(CC) $(CCO) $(CCOC) wipe.c -o wipe.o
  
  version.h: always
@@ -15,8 +13,6 @@ index 5757ae3..20d52ce 100644
  
  random.o	:	random.c misc.h md5.h
  		$(CC) $(CCO) $(CCOC) random.c -o random.o
-diff --git a/wipe.c b/wipe.c
-index 5a215e8..5a4f2ad 100644
 --- a/wipe.c
 +++ b/wipe.c
 @@ -24,7 +24,7 @@

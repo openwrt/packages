@@ -27,8 +27,6 @@ Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
  output/ipfix/ulogd_output_IPFIX.c | 56 ++++++++++++----------
  4 files changed, 139 insertions(+), 37 deletions(-)
 
-diff --git a/include/ulogd/ipfix_protocol.h b/include/ulogd/ipfix_protocol.h
-index aef47f0..01dd96a 100644
 --- a/include/ulogd/ipfix_protocol.h
 +++ b/include/ulogd/ipfix_protocol.h
 @@ -129,6 +129,7 @@ enum {
@@ -39,8 +37,6 @@ index aef47f0..01dd96a 100644
  	IPFIX_bgpNextAdjacentAsNumber	= 128,
  	IPFIX_bgpPrevAdjacentAsNumber	= 129,
  	IPFIX_exporterIPv4Address	= 130,
-diff --git a/output/ipfix/ipfix.c b/output/ipfix/ipfix.c
-index 60a4c7f..4bb432a 100644
 --- a/output/ipfix/ipfix.c
 +++ b/output/ipfix/ipfix.c
 @@ -2,6 +2,7 @@
@@ -56,7 +52,8 @@ index 60a4c7f..4bb432a 100644
  #include <ulogd/ulogd.h>
  #include <ulogd/common.h>
 +#include <ulogd/ipfix_protocol.h>
-+
+ 
+-struct ipfix_msg *ipfix_msg_alloc(size_t len, uint32_t oid)
 +struct ipfix_templ_elem {
 +	uint16_t id;
 +	uint16_t len;
@@ -113,8 +110,7 @@ index 60a4c7f..4bb432a 100644
 +		}
 +	}
 +};
- 
--struct ipfix_msg *ipfix_msg_alloc(size_t len, uint32_t oid)
++
 +struct ipfix_msg *ipfix_msg_alloc(size_t len, uint32_t oid, int tid)
  {
  	struct ipfix_msg *msg;
@@ -162,7 +158,7 @@ index 60a4c7f..4bb432a 100644
  	return msg;
  }
  
-@@ -47,6 +130,14 @@ void ipfix_msg_free(struct ipfix_msg *msg)
+@@ -47,6 +130,14 @@ void ipfix_msg_free(struct ipfix_msg *ms
  	free(msg);
  }
  
@@ -177,8 +173,6 @@ index 60a4c7f..4bb432a 100644
  struct ipfix_hdr *ipfix_msg_hdr(const struct ipfix_msg *msg)
  {
  	return (struct ipfix_hdr *)msg->data;
-diff --git a/output/ipfix/ipfix.h b/output/ipfix/ipfix.h
-index cdb5a6f..93945fb 100644
 --- a/output/ipfix/ipfix.h
 +++ b/output/ipfix/ipfix.h
 @@ -2,6 +2,7 @@
@@ -257,8 +251,6 @@ index cdb5a6f..93945fb 100644
  size_t ipfix_msg_len(const struct ipfix_msg *);
  void *ipfix_msg_data(struct ipfix_msg *);
  struct ipfix_set_hdr *ipfix_msg_add_set(struct ipfix_msg *, uint16_t);
-diff --git a/output/ipfix/ulogd_output_IPFIX.c b/output/ipfix/ulogd_output_IPFIX.c
-index ec143b1..5b59003 100644
 --- a/output/ipfix/ulogd_output_IPFIX.c
 +++ b/output/ipfix/ulogd_output_IPFIX.c
 @@ -3,6 +3,9 @@
@@ -313,7 +305,7 @@ index ec143b1..5b59003 100644
  	.ces = {
  		{
  			.key = "oid",
-@@ -70,20 +74,21 @@ static const struct config_keyset ipfix_kset = {
+@@ -70,20 +74,21 @@ static const struct config_keyset ipfix_
  			.key = "mtu",
  			.type = CONFIG_TYPE_INT,
  			.u.value = DEFAULT_MTU
@@ -340,7 +332,7 @@ index ec143b1..5b59003 100644
  	int proto;
  	struct ulogd_timer timer;
  	struct sockaddr_in sa;
-@@ -258,8 +263,8 @@ static void ipfix_timer_cb(struct ulogd_timer *t, void *data)
+@@ -258,8 +263,8 @@ static void ipfix_timer_cb(struct ulogd_
  static int ipfix_configure(struct ulogd_pluginstance *pi, struct ulogd_pluginstance_stack *stack)
  {
  	struct ipfix_priv *priv = (struct ipfix_priv *) &pi->private;
@@ -350,7 +342,7 @@ index ec143b1..5b59003 100644
  	char addr[16];
  
  	ret = config_parse_file(pi->id, pi->config_kset);
-@@ -271,6 +276,7 @@ static int ipfix_configure(struct ulogd_pluginstance *pi, struct ulogd_pluginsta
+@@ -271,6 +276,7 @@ static int ipfix_configure(struct ulogd_
  	port = port_ce(pi->config_kset).u.value;
  	proto = proto_ce(pi->config_kset).u.string;
  	mtu = mtu_ce(pi->config_kset).u.value;
@@ -358,7 +350,7 @@ index ec143b1..5b59003 100644
  
  	if (!oid) {
  		ulogd_log(ULOGD_FATAL, "invalid Observation ID\n");
-@@ -303,6 +309,8 @@ static int ipfix_configure(struct ulogd_pluginstance *pi, struct ulogd_pluginsta
+@@ -303,6 +309,8 @@ static int ipfix_configure(struct ulogd_
  
  	ulogd_init_timer(&priv->timer, pi, ipfix_timer_cb);
  
@@ -367,7 +359,7 @@ index ec143b1..5b59003 100644
  	ulogd_log(ULOGD_INFO, "using IPFIX Collector at %s:%d (MTU %d)\n",
  		  inet_ntop(AF_INET, &priv->sa.sin_addr, addr, sizeof(addr)),
  		  port, mtu);
-@@ -410,25 +418,30 @@ static int ipfix_stop(struct ulogd_pluginstance *pi)
+@@ -410,25 +418,30 @@ static int ipfix_stop(struct ulogd_plugi
  static int ipfix_interp(struct ulogd_pluginstance *pi)
  {
  	struct ipfix_priv *priv = (struct ipfix_priv *) &pi->private;
@@ -427,6 +419,3 @@ index ec143b1..5b59003 100644
  
  	if ((ret = send_msgs(pi)) < 0)
  		return ret;
--- 
-cgit v1.2.1
-

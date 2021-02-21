@@ -22,8 +22,6 @@ preprocessor's __DATE__/__TIME__ symbols will be used.
  src/version.c    |  8 ++++++++
  3 files changed, 21 insertions(+)
 
-diff --git a/src/config.h.in b/src/config.h.in
-index 5c8c7e5..436a0b7 100644
 --- a/src/config.h.in
 +++ b/src/config.h.in
 @@ -30,6 +30,9 @@
@@ -36,11 +34,9 @@ index 5c8c7e5..436a0b7 100644
  /* Define when __attribute__((unused)) can be used */
  #undef HAVE_ATTRIBUTE_UNUSED
  
-diff --git a/src/configure.ac b/src/configure.ac
-index 8751b2e..cd43387 100644
 --- a/src/configure.ac
 +++ b/src/configure.ac
-@@ -62,6 +62,16 @@ if test x"$ac_cv_prog_cc_c99" != xno; then
+@@ -62,6 +62,16 @@ if test x"$ac_cv_prog_cc_c99" != xno; th
    fi
  fi
  
@@ -57,8 +53,6 @@ index 8751b2e..cd43387 100644
  dnl Check for the flag that fails if stuff are missing.
  
  AC_MSG_CHECKING(--enable-fail-if-missing argument)
-diff --git a/src/version.c b/src/version.c
-index c8361eb..e51c738 100644
 --- a/src/version.c
 +++ b/src/version.c
 @@ -44,9 +44,13 @@ init_longVersion(void)

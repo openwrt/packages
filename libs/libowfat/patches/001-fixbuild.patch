@@ -1,6 +1,6 @@
 --- a/GNUmakefile
 +++ b/GNUmakefile
-@@ -357,6 +357,8 @@ socket_accept4.o socket_accept6.o socket_connected.o socket_local4.o \
+@@ -357,6 +357,8 @@ socket_accept4.o socket_accept6.o socket
  socket_local6.o socket_recv4.o socket_recv6.o socket_remote4.o \
  socket_remote6.o: havesl.h
  

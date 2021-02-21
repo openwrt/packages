@@ -10,8 +10,6 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  utilities/ovs-lib.in | 5 ++++-
  1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/utilities/ovs-lib.in b/utilities/ovs-lib.in
-index d646b444a..dee63dece 100644
 --- a/utilities/ovs-lib.in
 +++ b/utilities/ovs-lib.in
 @@ -159,7 +159,10 @@ install_dir () {

@@ -1,5 +1,5 @@
---- a/dev/null	2017-05-06 19:04:40.272000000 +0800
-+++ b/configure.ac	2017-05-13 20:56:26.761460807 +0800
+--- /dev/null
++++ b/configure.ac
 @@ -0,0 +1,56 @@
 +# Copyright 2016 Yousong Zhou
 +
@@ -57,8 +57,8 @@
 +
 +AC_CONFIG_FILES([Makefile])
 +AC_OUTPUT
---- a/dev/null	2016-01-04 02:31:18.900000000 +0800
-+++ b/Makefile.am	2016-02-22 20:12:01.938987311 +0800
+--- /dev/null
++++ b/Makefile.am
 @@ -0,0 +1,16 @@
 +# Copyright 2016 Yousong Zhou
 +

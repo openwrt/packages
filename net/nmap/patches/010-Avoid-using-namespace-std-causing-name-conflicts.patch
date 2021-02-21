@@ -15,11 +15,9 @@ Subject: [PATCH] Avoid 'using namespace std' causing name conflicts. Fixes
  nping/utils.h        | 2 --
  8 files changed, 8 insertions(+), 14 deletions(-)
 
-diff --git a/nping/EchoServer.cc b/nping/EchoServer.cc
-index ccdcf9c2d0..a824340cd2 100644
 --- a/nping/EchoServer.cc
 +++ b/nping/EchoServer.cc
-@@ -199,7 +199,7 @@ NEPContext *EchoServer::getClientContext(nsock_iod iod){
+@@ -199,7 +199,7 @@ NEPContext *EchoServer::getClientContext
    * the context could not be found.  */
  int EchoServer::destroyClientContext(clientid_t clnt){
    bool deleted=false;
@@ -28,8 +26,6 @@ index ccdcf9c2d0..a824340cd2 100644
    /* Iterate through the context array and delete the one that belongs to clnt */
    for ( it=this->client_ctx.begin(); it<this->client_ctx.end(); it++){
        if(it->getIdentifier()==clnt){
-diff --git a/nping/EchoServer.h b/nping/EchoServer.h
-index c3dece6341..c9fee6de9e 100644
 --- a/nping/EchoServer.h
 +++ b/nping/EchoServer.h
 @@ -136,15 +136,13 @@
@@ -49,8 +45,6 @@ index c3dece6341..c9fee6de9e 100644
          clientid_t client_id_count;
  
          /* Methods */
-diff --git a/nping/NEPContext.h b/nping/NEPContext.h
-index 5e470d7551..32b8be48d6 100644
 --- a/nping/NEPContext.h
 +++ b/nping/NEPContext.h
 @@ -135,7 +135,6 @@
@@ -70,8 +64,6 @@ index 5e470d7551..32b8be48d6 100644
          struct sockaddr_storage clnt_addr;
  
          u8 *generateKey(int key_type, size_t *final_len);
-diff --git a/nping/NpingTargets.h b/nping/NpingTargets.h
-index 61bb356f39..3a9a2145af 100644
 --- a/nping/NpingTargets.h
 +++ b/nping/NpingTargets.h
 @@ -137,8 +137,6 @@
@@ -92,8 +84,6 @@ index 61bb356f39..3a9a2145af 100644
  
  }; /* End of class NpingTargets */
  
-diff --git a/nping/ProbeMode.h b/nping/ProbeMode.h
-index aa86939e02..313776d862 100644
 --- a/nping/ProbeMode.h
 +++ b/nping/ProbeMode.h
 @@ -135,11 +135,9 @@
@@ -108,8 +98,6 @@ index aa86939e02..313776d862 100644
  
  #define PKT_TYPE_TCP_CONNECT  1
  #define PKT_TYPE_UDP_NORMAL   2
-diff --git a/nping/nping.cc b/nping/nping.cc
-index 9de151a7be..40df912a88 100644
 --- a/nping/nping.cc
 +++ b/nping/nping.cc
 @@ -150,7 +150,6 @@
@@ -120,8 +108,6 @@ index 9de151a7be..40df912a88 100644
  NpingOps o;
  EchoClient ec;
  EchoServer es;
-diff --git a/nping/utils.h b/nping/utils.h
-index c3516cf29f..5de6b64b89 100644
 --- a/nping/utils.h
 +++ b/nping/utils.h
 @@ -143,8 +143,6 @@

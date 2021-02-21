@@ -1,6 +1,6 @@
---- a/Makefile	2017-11-13 01:13:36.340236114 +0200
-+++ b/Makefile	2017-11-13 01:34:56.869682313 +0200
-@@ -638,10 +638,6 @@
+--- a/Makefile
++++ b/Makefile
+@@ -638,10 +638,6 @@ ip6:
  	@echo + yourself, try adding IP6=4 to the make command line.
  	@echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  	@echo
@@ -11,7 +11,7 @@
  	@$(TOUCH) ip6
  
  noip6:
-@@ -678,20 +674,18 @@
+@@ -678,20 +674,18 @@ an ua:
  	$(TOOLS)/$@ "$(LN)" src/tmail tmail
  	$(LN) $(TOOLS)/$@ .
  
@@ -34,9 +34,9 @@
  	$(TOUCH) rebuild
  
  rebuild:
---- a/src/osdep/unix/Makefile	2017-11-13 01:37:58.674011768 +0200
-+++ b/src/osdep/unix/Makefile	2017-11-13 03:30:18.204908962 +0200
-@@ -96,11 +96,11 @@
+--- a/src/osdep/unix/Makefile
++++ b/src/osdep/unix/Makefile
+@@ -96,11 +96,11 @@ CHECKPW=std
  LOGINPW=std
  SIGTYPE=bsd
  CRXTYPE=std
@@ -51,7 +51,7 @@
  MD5PWD=/etc/cram-md5.pwd
  # Tries one of the test alternatives below if not specified.
  LOCKPGM=
-@@ -154,7 +154,7 @@
+@@ -154,7 +154,7 @@ BINARIES=osdep.o mail.o misc.o newsrc.o
   dummy.o pseudo.o netmsg.o flstring.o fdstring.o \
   rfc822.o nntp.o smtp.o imap4r1.o pop3.o \
   unix.o mbx.o mmdf.o tenex.o mtx.o news.o phile.o mh.o mx.o mix.o
@@ -60,7 +60,7 @@
  
  CAT=cat
  MAKE=make
-@@ -162,6 +162,16 @@
+@@ -162,6 +162,16 @@ MV=mv
  RM=rm -rf
  SH=sh
  
@@ -77,7 +77,7 @@
  
  # Primary build command
  
-@@ -174,7 +184,7 @@
+@@ -174,7 +184,7 @@ BUILD=$(MAKE) build EXTRACFLAGS='$(EXTRA
  # Here if no make argument established
  
  missing: osdep.h
@@ -86,7 +86,7 @@
  
  osdep.h:
  	@echo You must specify what type of system
-@@ -674,7 +684,7 @@
+@@ -674,7 +684,7 @@ slx:	# Secure Linux
  	@echo You are building for libc6/glibc versions of Secure Linux
  	@echo If you want libc5 versions you must use sl5 instead!
  	@echo If you want libc4 versions you must use sl4 instead!
@@ -95,7 +95,7 @@
  	 SIGTYPE=psx CHECKPW=psx CRXTYPE=nfs \
  	 SPOOLDIR=/var/spool \
  	 ACTIVEFILE=/var/lib/news/active \
-@@ -863,7 +873,7 @@
+@@ -863,7 +873,7 @@ $(ARCHIVE): $(BINARIES)
  	@$(SH) ARCHIVE
  
  .c.o:
@@ -104,7 +104,7 @@
  
  
  # Cleanup
-@@ -922,8 +932,8 @@
+@@ -922,8 +932,8 @@ osdep.o:mail.h misc.h env.h fs.h ftl.h n
  	@echo If you get No such file error messages for files x509.h, ssl.h,
  	@echo pem.h, buffer.h, bio.h, and crypto.h, that means that OpenSSL
  	@echo is not installed on your system.  Either install OpenSSL first
@@ -115,7 +115,7 @@
  
  osdep.c: osdepbas.c osdepckp.c osdeplog.c osdepssl.c
  	$(CAT) osdepbas.c osdepckp.c osdeplog.c osdepssl.c > osdep.c
-@@ -962,21 +972,14 @@
+@@ -962,21 +972,14 @@ os_sol.h:
  
  # Once-only environment setup
  
@@ -141,7 +141,7 @@
  	echo $(OS) > OSTYPE
  	./drivers $(EXTRADRIVERS) $(DEFAULTDRIVERS) dummy
  	./mkauths $(EXTRAAUTHENTICATORS) $(DEFAULTAUTHENTICATORS)
-@@ -1055,7 +1058,6 @@
+@@ -1055,7 +1058,6 @@ sslsco:	sbasic sldsco
  sbasic:	# UNIX OpenSSL
  	@echo Building with SSL
  	$(LN) ssl_unix.c osdepssl.c
@@ -149,7 +149,7 @@
  	echo "  ssl_onceonlyinit ();" >> linkage.c
  
  snopwd:	# Plaintext disable
-@@ -1063,13 +1065,12 @@
+@@ -1063,13 +1065,12 @@ snopwd:	# Plaintext disable
  	echo "  mail_parameters (NIL,SET_DISABLEPLAINTEXT,(void *) 2);" >> linkage.c
  
  sldunix:# Normal UNIX SSL load flags

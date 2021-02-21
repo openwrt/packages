@@ -14,7 +14,7 @@
  LDADD = ./proc/libprocps.la $(CYGWINFLAGS)
 --- a/configure.ac
 +++ b/configure.ac
-@@ -292,8 +292,5 @@ AC_CHECK_FUNCS([__fpending alarm atexit dup2 gethostname getpagesize gettimeofda
+@@ -298,8 +298,5 @@ AC_CHECK_FUNCS([__fpending alarm atexit
  
  AC_CONFIG_FILES([Makefile
                   include/Makefile

@@ -15,8 +15,6 @@ Signed-off-by: Daniel Golle <daniel@makrotopia.org>
  .../linux_cgroups_relative_hugetlb.go                           | 2 +-
  2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/validation/linux_cgroups_hugetlb/linux_cgroups_hugetlb.go b/validation/linux_cgroups_hugetlb/linux_cgroups_hugetlb.go
-index d71dfb9e..e1db3f1b 100644
 --- a/validation/linux_cgroups_hugetlb/linux_cgroups_hugetlb.go
 +++ b/validation/linux_cgroups_hugetlb/linux_cgroups_hugetlb.go
 @@ -24,7 +24,7 @@ func testHugetlbCgroups() error {
@@ -28,8 +26,6 @@ index d71dfb9e..e1db3f1b 100644
  
  	for _, pageSize := range pageSizes {
  		g, err := util.GetDefaultGenerator()
-diff --git a/validation/linux_cgroups_relative_hugetlb/linux_cgroups_relative_hugetlb.go b/validation/linux_cgroups_relative_hugetlb/linux_cgroups_relative_hugetlb.go
-index b6d7ae81..583a9fa8 100644
 --- a/validation/linux_cgroups_relative_hugetlb/linux_cgroups_relative_hugetlb.go
 +++ b/validation/linux_cgroups_relative_hugetlb/linux_cgroups_relative_hugetlb.go
 @@ -21,7 +21,7 @@ func main() {

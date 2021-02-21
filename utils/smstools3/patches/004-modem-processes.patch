@@ -4,11 +4,9 @@ Date:   Sun Feb 18 19:24:48 2018 +0100
 
     Make modem processes terminate when main process dies
 
-diff --git a/src/smsd.c b/src/smsd.c
-index fdfa193..37b2e4d 100755
 --- a/src/smsd.c
 +++ b/src/smsd.c
-@@ -34,6 +34,7 @@ Either version 2 of the License, or (at your option) any later version.
+@@ -34,6 +34,7 @@ Either version 2 of the License, or (at
  #ifndef DISABLE_INOTIFY
  #include <sys/inotify.h>
  #endif

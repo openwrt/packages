@@ -1,6 +1,6 @@
 --- a/src/gssl/gssl_openssl.cpp
 +++ b/src/gssl/gssl_openssl.cpp
-@@ -51,10 +51,12 @@ GSsl::OpenSSL::LibraryImp::LibraryImp( G::StringArray & library_config , Library
+@@ -51,10 +51,12 @@ GSsl::OpenSSL::LibraryImp::LibraryImp( G
  	m_verbose(verbose) ,
  	m_config(library_config)
  {

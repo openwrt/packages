@@ -1,6 +1,6 @@
 --- a/src/minicom.h
 +++ b/src/minicom.h
-@@ -109,13 +109,13 @@ EXTERN char *dial_tty;     /* tty to use. */
+@@ -109,13 +109,13 @@ EXTERN char *dial_tty;     /* tty to use
  
  EXTERN char *dial_name;	    /* System we're conneced to */
  EXTERN char *dial_number;   /* Number we've dialed. */
@@ -19,7 +19,7 @@
  #define portfd_connected ((portfd_is_socket && !portfd_is_connected) \
                             ? -1 : portfd)
  #else
-@@ -141,7 +141,7 @@ EXTERN int sbcolor;     /* Status Bar Background Color */
+@@ -141,7 +141,7 @@ EXTERN int sbcolor;     /* Status Bar Ba
  EXTERN int st_attr;	/* Status Bar attributes. */
  
  /* jl 04.09.97 conversion tables */

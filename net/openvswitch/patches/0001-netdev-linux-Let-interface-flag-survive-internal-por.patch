@@ -16,11 +16,9 @@ Signed-off-by: Helmut Schaa <helmut.schaa@googlemail.com>
  lib/netdev-linux.c | 8 +++++++-
  1 file changed, 7 insertions(+), 1 deletion(-)
 
-diff --git a/lib/netdev-linux.c b/lib/netdev-linux.c
-index fe7fb9b29..63407ba1b 100644
 --- a/lib/netdev-linux.c
 +++ b/lib/netdev-linux.c
-@@ -3469,7 +3469,13 @@ update_flags(struct netdev_linux *netdev, enum netdev_flags off,
+@@ -3469,7 +3469,13 @@ update_flags(struct netdev_linux *netdev
      unsigned int old_flags, new_flags;
      int error = 0;
  
