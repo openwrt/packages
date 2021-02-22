@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmaxminddb
-PKG_VERSION:=1.5.0
+PKG_VERSION:=1.5.2
 PKG_RELEASE=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/maxmind/libmaxminddb/releases/download/$(PKG_VERSION)/
-PKG_HASH:=7c56e791ff2a655215e7ed3864b1ffdd7d34a38835779efed56a42f056bd58aa
+PKG_HASH:=5237076d250a5f7c297e331c35a433eeaaf0dc205e070e4db353c9ba10f340a2
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
