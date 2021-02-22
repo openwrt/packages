@@ -7,8 +7,8 @@
 
 include $(TOPDIR)/rules.mk
 
-GO_VERSION_MAJOR_MINOR:=1.15
-GO_VERSION_PATCH:=8
+GO_VERSION_MAJOR_MINOR:=1.16
+GO_VERSION_PATCH:=
 
 PKG_NAME:=golang
 PKG_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
@@ -20,7 +20,7 @@ GO_SOURCE_URLS:=https://dl.google.com/go/ \
 
 PKG_SOURCE:=go$(PKG_VERSION).src.tar.gz
 PKG_SOURCE_URL:=$(GO_SOURCE_URLS)
-PKG_HASH:=540c0ab7781084d124991321ed1458e479982de94454a98afab6acadf38497c2
+PKG_HASH:=7688063d55656105898f323d90a79a39c378d86fe89ae192eb3b7fc46347c95a
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -48,12 +48,13 @@ HOST_GO_VALID_OS_ARCH:= \
   freebsd_386  freebsd_amd64  freebsd_arm  freebsd_arm64 \
   linux_386    linux_amd64    linux_arm    linux_arm64 \
   openbsd_386  openbsd_amd64  openbsd_arm  openbsd_arm64 \
+  netbsd_386   netbsd_amd64   netbsd_arm   netbsd_arm64 \
   \
-  netbsd_386   netbsd_amd64   netbsd_arm \
   plan9_386    plan9_amd64    plan9_arm \
   windows_386  windows_amd64  windows_arm \
   \
   darwin_amd64 darwin_arm64 \
+  ios_amd64    ios_arm64 \
   \
   dragonfly_amd64 \
   illumos_amd64 \
@@ -64,7 +65,9 @@ HOST_GO_VALID_OS_ARCH:= \
   \
   linux_ppc64 linux_ppc64le \
   linux_mips linux_mipsle linux_mips64 linux_mips64le \
-  linux_riscv64 linux_s390x
+  linux_riscv64 linux_s390x \
+  \
+  openbsd_mips64
 
 BOOTSTRAP_SOURCE:=go1.4-bootstrap-20171003.tar.gz
 BOOTSTRAP_SOURCE_URL:=$(GO_SOURCE_URLS)
@@ -258,7 +261,7 @@ endif
 $(eval $(call GoCompiler/AddProfile,Package,$(PKG_BUILD_DIR),$(PKG_GO_PREFIX),$(PKG_GO_VERSION_ID),$(GO_OS_ARCH),$(PKG_GO_INSTALL_SUFFIX)))
 
 PKG_GO_ZBOOTSTRAP_MODS:= \
-	s/defaultGO386 = `[^`]*`/defaultGO386 = `$(or $(GO_386),387)`/; \
+	s/defaultGO386 = `[^`]*`/defaultGO386 = `$(or $(GO_386),sse2)`/; \
 	s/defaultGOARM = `[^`]*`/defaultGOARM = `$(or $(GO_ARM),5)`/; \
 	s/defaultGOMIPS = `[^`]*`/defaultGOMIPS = `$(or $(GO_MIPS),hardfloat)`/; \
 	s/defaultGOMIPS64 = `[^`]*`/defaultGOMIPS64 = `$(or $(GO_MIPS64),hardfloat)`/; \
