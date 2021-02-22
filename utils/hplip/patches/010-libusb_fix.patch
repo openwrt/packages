@@ -20,7 +20,7 @@
  # ui (qt3)
 --- a/configure.in
 +++ b/configure.in
-@@ -601,6 +601,10 @@ if test "$class_driver" = "no" && test "
+@@ -611,6 +611,10 @@ if test "$class_driver" = "no" && test "
     else
        AC_CHECK_LIB([usb-1.0], [libusb_init], [LIBS="$LIBS"], [AC_MSG_ERROR([cannot find libusb 1.0 support], 2)])
        AC_CHECK_HEADERS(libusb-1.0/libusb.h, ,[AC_MSG_ERROR([cannot find libusb-1.0-devel support], 11)])
