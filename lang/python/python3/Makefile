@@ -11,12 +11,12 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_HASH:=991c3f8ac97992f3d308fefeb03a64db462574eadbff34ce8bc5bb583d9903ff
+PKG_HASH:=3c2034c54f811448f516668dce09d24008a0716c3a794dd8639b5388cbde247d
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=Python/2.0

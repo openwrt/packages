@@ -10,7 +10,7 @@
      global _config_vars
 --- a/Lib/sysconfig.py
 +++ b/Lib/sysconfig.py
-@@ -342,6 +342,7 @@ def get_makefile_filename():
+@@ -352,6 +352,7 @@ def get_makefile_filename():
  
  
  def _get_sysconfigdata_name():
@@ -49,7 +49,7 @@
      fi
  elif test "$cross_compiling" = maybe; then
      as_fn_error $? "Cross compiling required --host=HOST-TUPLE and --build=ARCH" "$LINENO" 5
-@@ -15441,7 +15441,7 @@ fi
+@@ -15435,7 +15435,7 @@ fi
  
  
  
@@ -69,7 +69,7 @@
      fi
  elif test "$cross_compiling" = maybe; then
      AC_MSG_ERROR([Cross compiling required --host=HOST-TUPLE and --build=ARCH])
-@@ -4833,7 +4833,7 @@ fi],
+@@ -4828,7 +4828,7 @@ fi],
  
  dnl define LIBPL after ABIFLAGS and LDVERSION is defined.
  AC_SUBST(PY_ENABLE_SHARED)
