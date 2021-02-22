@@ -11,17 +11,15 @@
  
 --- a/scan/sane/hpaio.c
 +++ b/scan/sane/hpaio.c
-@@ -34,9 +34,7 @@
+@@ -34,7 +34,6 @@
  #include <stdio.h>
  #include <stdlib.h>
  #include <string.h>
 -#include <cups/cups.h>
  #include "hpmud.h"
--#include "avahiDiscovery.h"
- #include "hp_ipp.h"
- #include "soap.h"
- #include "soapht.h"
-@@ -146,98 +144,6 @@ static int GetUriLine(char *buf, char *u
+ 
+ #ifdef HAVE_LIBAVAHI
+@@ -150,98 +149,6 @@ static int GetUriLine(char *buf, char *u
     return i;
  }
  
@@ -120,7 +118,7 @@
  static int AddDevice(char *uri)
  {
      struct hpmud_model_attributes ma;
-@@ -290,7 +196,6 @@ static int DevDiscovery(int localOnly)
+@@ -294,7 +201,6 @@ static int DevDiscovery(int localOnly)
      char uri[HPMUD_LINE_SIZE];
      char *tail = message;
      int i, scan_type, cnt=0, total=0, bytes_read;
@@ -128,10 +126,10 @@
      char* token = NULL;
      enum HPMUD_RESULT stat;
  
-@@ -305,39 +210,6 @@ static int DevDiscovery(int localOnly)
+@@ -308,38 +214,6 @@ static int DevDiscovery(int localOnly)
+         GetUriLine(tail, uri, &tail);
          total += AddDevice(uri);
      }
-     //memset(message, 0, sizeof(message));
 -    /* Look for Network Scan devices if localonly flag if FALSE. */
 -    if (!localOnly)
 -    {   
@@ -144,9 +142,8 @@
 -        }
 -        if (cups_printer)
 -            free(cups_printer);
--#ifdef HAVE_LIBNETSNMP
+-#ifdef HAVE_LIBAVAHI
 -        /* Discover NW scanners using Bonjour*/
--        //bytes_read = avahi_probe_nw_scanners();
 -        if( (avahi_probe_nw_scanners() == AVAHI_STATUS_OK) && (aUriBuf != NULL) )
 -        {           
 -          token = strtok(aUriBuf, ";");
