@@ -14,7 +14,7 @@
  #include "dcrypt.h"
  #include "dcrypt-private.h"
  
-@@ -235,11 +237,13 @@ dcrypt_openssl_padding_mode(enum dcrypt_
+@@ -236,11 +238,13 @@ dcrypt_openssl_padding_mode(enum dcrypt_
  static bool dcrypt_openssl_initialize(const struct dcrypt_settings *set,
  				      const char **error_r)
  {
