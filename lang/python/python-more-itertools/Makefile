@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2019-2021 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-more-itertools
-PKG_VERSION:=8.6.0
+PKG_VERSION:=8.7.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=more-itertools
-PKG_HASH:=b3a9005928e5bed54076e6e549c792b306fddfe72b2d1d22dd63d42d5d3899cf
+PKG_HASH:=c5d6da9ca3ff65220c3bfd2a8db06d698f05d4d2b9be57e1deb2be5a45019713
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT
