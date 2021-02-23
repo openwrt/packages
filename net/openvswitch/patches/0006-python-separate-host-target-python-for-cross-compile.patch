@@ -12,8 +12,6 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  m4/openvswitch.m4 | 2 ++
  2 files changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index ff1f94b48..417f53230 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -60,7 +60,7 @@ endif
@@ -25,8 +23,6 @@ index ff1f94b48..417f53230 100644
  
  ALL_LOCAL =
  BUILT_SOURCES =
-diff --git a/m4/openvswitch.m4 b/m4/openvswitch.m4
-index 41042c98e..4a5f0a84a 100644
 --- a/m4/openvswitch.m4
 +++ b/m4/openvswitch.m4
 @@ -449,7 +449,9 @@ AC_DEFUN([OVS_CHECK_PYTHON],
