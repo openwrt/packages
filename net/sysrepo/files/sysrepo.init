@@ -9,7 +9,7 @@ PROG_PLUGIN=/usr/bin/sysrepo-plugind
 start_service() {
     procd_open_instance
     procd_set_param command ${PROG_PLUGIN}
-    procd_append_param command -d -l 0
+    procd_append_param command -d -v 0
     procd_set_param respawn
     procd_close_instance
 }
