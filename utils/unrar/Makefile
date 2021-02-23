@@ -23,12 +23,8 @@ PKG_CPE_ID:=cpe:/a:rarlab:unrar
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
-ifeq ($(CONFIG_USE_UCLIBCXX),y)
-TARGET_LDFLAGS +=-nodefaultlibs
-endif
 TARGET_CXXFLAGS +=-fno-rtti -flto
 TARGET_LDFLAGS +=$(FPIC) -Wl,--gc-sections $(if $(CONFIG_USE_GLIBC),-lpthread)
 
@@ -36,7 +32,7 @@ define Package/unrar/Default
   TITLE:=UnRAR
   SUBMENU:=Compression
   URL:=https://www.rarlab.com/
-  DEPENDS:=$(CXX_DEPENDS) +libpthread
+  DEPENDS:=+libstdcpp +libpthread
 endef
 
 define Package/unrar

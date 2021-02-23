@@ -2,19 +2,20 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hashdeep
 PKG_VERSION:=4.4
-PKG_RELEASE:=1
-PKG_MAINTAINER=Tobe Deprez <trldp@outlook.com>
-PKG_LICENSE:=NLPL
-PKG_LICENSE_FILES:=COPYING
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/jessek/hashdeep/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=ad78d42142f9a74fe8ec0c61bc78d6588a528cbb9aede9440f50b6ff477f3a7f
 
+PKG_MAINTAINER:=Tobe Deprez <trldp@outlook.com>
+PKG_LICENSE:=NLPL
+PKG_LICENSE_FILES:=COPYING
+
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/hashdeep
@@ -22,7 +23,7 @@ define Package/hashdeep
   CATEGORY:=Utilities
   TITLE:=Recursively compute hashsums or piecewise hashings
   URL:=http://md5deep.sourceforge.net/
-  DEPENDS:=$(CXX_DEPENDS)
+  DEPENDS:=+libstdcpp
 endef
 
 define Package/hashdeep/description

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=powertop
 PKG_VERSION:=2.10
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://01.org/sites/default/files/downloads/
@@ -22,14 +22,13 @@ PKG_LICENSE:=GPL-2.0
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
 define Package/powertop
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=$(CXX_DEPENDS) $(INTL_DEPENDS) +libpci +libncursesw +libnl-genl
+  DEPENDS:=$(INTL_DEPENDS) +libstdcpp +libpci +libncursesw +libnl-genl
   TITLE:=Power consumption monitor
   URL:=https://01.org/powertop
 endef

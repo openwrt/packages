@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vips
 PKG_VERSION:=8.10.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/libvips/libvips/releases/download/v$(PKG_VERSION)
@@ -22,7 +22,6 @@ PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
@@ -32,7 +31,7 @@ define Package/vips
   CATEGORY:=Multimedia
   TITLE:=An image manipulation library
   URL:=https://libvips.github.io/libvips/
-  DEPENDS:=+glib2 +libexif +libexpat +libjpeg +libpng +giflib +libxml2 $(CXX_DEPENDS) $(INTL_DEPENDS)
+  DEPENDS:=+glib2 +libexif +libexpat +libjpeg +libpng +giflib +libxml2 +libstdcpp $(INTL_DEPENDS)
 endef
 
 CONFIGURE_ARGS += \

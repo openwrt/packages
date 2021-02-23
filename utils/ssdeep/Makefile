@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ssdeep
 PKG_VERSION:=2.14.1
-PKG_RELEASE=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/ssdeep-project/ssdeep/releases/download/release-$(PKG_VERSION)/
@@ -22,7 +22,6 @@ PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/ssdeep
@@ -30,7 +29,7 @@ define Package/ssdeep
   CATEGORY:=Utilities
   TITLE:=A program to compute and match fuzzy hashes
   URL:=https://ssdeep-project.github.io/ssdeep
-  DEPENDS:=$(CXX_DEPENDS)
+  DEPENDS:=+libstdcpp
 endef
 
 define Package/ssdeep/description

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kismet
 PKG_VERSION:=2016-07-R1
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_LICENSE:=LGPLv2.1
 PKG_CPE_ID:=cpe:/a:kismet:kismet
@@ -18,7 +18,6 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.kismetwireless.net/code
 PKG_HASH:=bdb21f153311f1ff3b16621bf0d6740f66369bf0982b0a289c9a12af8847e237
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/kismet/Default
@@ -26,7 +25,7 @@ define Package/kismet/Default
   CATEGORY:=Network
   TITLE:=Kismet
   MAINTAINER:=Jean-Michel lacroix <lacroix@lepine-lacroix.info>
-  DEPENDS:= $(CXX_DEPENDS) +libnl
+  DEPENDS:= +libstdcpp +libnl @BROKEN
   URL:=http://www.kismetwireless.net/
   SUBMENU:=Wireless
 endef
