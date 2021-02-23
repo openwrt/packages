@@ -8,27 +8,27 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bonnie++
-PKG_VERSION:=1.98
-PKG_RELEASE:=4
+PKG_VERSION:=2.00a
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=https://www.coker.com.au/bonnie++/
-PKG_HASH:=6e0bcbc08b78856fd998dd7bcb352d4615a99c26c2dc83d5b8345b102bad0b04
+PKG_SOURCE_URL:=https://www.coker.com.au/bonnie++
+PKG_HASH:=a8d33bbd81bc7eb559ce5bf6e584b9b53faea39ccfb4ae92e58f27257e468f0e
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=copyright.txt
 
-PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
+PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=meson/host
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
+include ../../devel/meson/meson.mk
 
 define Package/bonniexx
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=$(CXX_DEPENDS) +libpthread
+  DEPENDS:=+libstdcpp +libpthread
   TITLE:=Bonnie++ - hard drive bottleneck testing program.
   URL:=https://www.coker.com.au/bonnie++/
 endef
@@ -38,12 +38,17 @@ define Package/bonniexx/description
   tests of hard drive and file system performance.
 endef
 
-TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -fno-rtti -flto
+MESON_ARGS += \
+	-Db_lto=true \
+	-Dcpp_eh=none \
+	-Dcpp_rtti=false
+
+TARGET_CXXFLAGS += -ffunction-sections -fdata-sections
 
 define Package/bonniexx/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_BUILD_DIR)/bonnie++ $(1)/usr/bin/
-	$(CP) $(PKG_BUILD_DIR)/bon_csv2html $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/bonnie++ $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/bon_csv2html $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,bonniexx))
