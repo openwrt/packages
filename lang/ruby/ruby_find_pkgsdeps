@@ -9,6 +9,10 @@
 RUBY_SIMPLE_VERSION = RUBY_VERSION.split(".")[0..1].join(".")
 failed = false
 
+puts "Loading all installed gems (unstable after external gems are instaled/update)"
+require 'rubygems'
+Gem::Specification.collect{ |g| g.name.downcase }.uniq.each {|g| gem g }
+
 puts "Looking for installed ruby packages..."
 packages=`opkg list-installed '*ruby*' | cut -d' ' -f 1`.split("\n")
 
@@ -27,7 +31,7 @@ require_ignore=%w{foo rubygems/defaults/operating_system win32console java Win32
                   xmlscan/parser xmlscan/scanner xmltreebuilder xml/parser xmlparser xml/encoding-ja xmlencoding-ja
                   iconv uconv win32ole gettext/po_parser gettext/mo libxml psych.jar psych_jars jar-dependencies thread minitest/proveit
 		bundler pry bcrypt net/http/pipeline capistrano/version rubygems/builder rubygems/format diff/lcs graphviz
-		win32api racc/cparse-jruby.jar profile profiler
+		win32api racc/cparse-jruby.jar profile profiler sorted_set jruby coverage/helpers stackprof webrick/https webrick
 	}
 
 builtin_enc=[
@@ -142,21 +146,17 @@ weak_dependency.merge!({
 "ruby-debuglib"=>["ruby-readline"],				#debug.rb
 "ruby-drb"=>["ruby-openssl"],				 	#drb/ssl.rb
 "ruby-irb"=>["ruby-rdoc", "ruby-readline"],		 	#irb/cmd/help.rb
-"ruby-gems"=>["ruby-openssl","ruby-io-console","ruby-webrick",  #rubygems/commands/cert_command.rb rubygems/user_interaction.rb rubygems/server.rb
-		"ruby-bundler"],				#rubygems.rb
-"ruby-mkmf"=>["ruby-webrick"], 					#un.rb
+"ruby-gems"=>["ruby-openssl","ruby-io-console",  		#rubygems/commands/cert_command.rb rubygems/user_interaction.rb
+		"ruby-bundler", "ruby-erb", "ruby-rdoc"],	#rubygems.rb rubygems/server.rb
 "ruby-net"=>["ruby-openssl","ruby-io-console","ruby-zlib"], 	#net/*.rb
 "ruby-optparse"=>["ruby-uri","ruby-datetime"],			#optparse/date.rb optparse/uri.rb
 "ruby-racc"=>["ruby-gems"],					#/usr/bin/racc*
 "ruby-rake"=>["ruby-net","ruby-gems"],				#rake/contrib/ftptools.rb /usr/bin/rake
-"ruby-rdoc"=>["ruby-gems","ruby-readline","ruby-webrick",	#/usr/bin/rdoc and others
+"ruby-rdoc"=>["ruby-gems","ruby-readline",			#/usr/bin/rdoc and others
 	       "ruby-io-console"],				#rdoc/stats/normal.rb
-"ruby-webrick"=>["ruby-openssl"],				#webrick/ssl.rb
 "ruby-testunit"=>["ruby-io-console"],			 	#gems/test-unit-3.1.5/lib/test/unit/ui/console/testrunner.rb
+"ruby-net-http"=>["ruby-open-uri"]				#net/http/status.rb
 })
-
-puts "Preloading gems..."
-Gem::Specification.all.each{ |x| gem x.name }
 
 puts "Looking for package dependencies..."
 package_provides = {}
