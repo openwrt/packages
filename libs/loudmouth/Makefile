@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=loudmouth
-PKG_VERSION:=1.5.3
-PKG_RELEASE:=4
+PKG_VERSION:=1.5.4
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mcabber/loudmouth/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=12972fcffd9bbcc4a3b2b9fbf4b0e549f7b4caf0f11c8d2af2059087ce4e8792
+PKG_HASH:=d1f66d479bb9a2794c52e997a9db9271f7fd004e264fe1ff4302607deb083375
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-PKG_LICENSE:=LGPLv2.1
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
