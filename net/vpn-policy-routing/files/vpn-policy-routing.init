@@ -41,14 +41,15 @@ readonly __FAIL__='\033[0;31m[\xe2\x9c\x97]\033[0m'
 readonly _ERROR_='\033[0;31mERROR\033[0m'
 readonly _WARNING_='\033[0;33mWARNING\033[0m'
 
-# declare gatewaySummary errorSummary warningSummary
-# declare serviceEnabled verbosity strictMode 
-# declare wanTableID wanMark fwMask 
-# declare ipv6Enabled srcIpset destIpset resolverIpset
-# declare wanIface4 wanIface6 ifaceMark ifaceTableID
-# declare ifAll ifSupported ignoredIfaces supportedIfaces icmpIface
-# declare wanGW4 wanGW6 bootTimeout insertOption
-# declare webuiChainColumn webuiShowIgnore dnsmasqIpsetSupported
+gatewaySummary=''; errorSummary=''; warningSummary='';
+serviceEnabled=''; verbosity=''; strictMode=''; 
+wanTableID=''; wanMark=''; fwMask=''; 
+ipv6Enabled=''; srcIpset=''; destIpset=''; resolverIpset='';
+wanIface4=''; wanIface6=''; ifaceMark=''; ifaceTableID='';
+ifAll=''; ifSupported=''; ignoredIfaces=''; supportedIfaces=''; icmpIface='';
+wanGW4=''; wanGW6=''; bootTimeout=''; insertOption='';
+webuiChainColumn=''; webuiShowIgnore=''; dnsmasqIpsetSupported='';
+procdReloadDelay='';
 usedChainsList='PREROUTING'
 ipsetSupported='true'
 configLoaded='false'
@@ -203,6 +204,7 @@ load_package_config() {
 	config_get supportedIfaces          'config' 'supported_interface'
 	config_get bootTimeout              'config' 'boot_timeout' '30'
 	config_get insertOption             'config' 'iptables_rule_option' 'append'
+	config_get procdReloadDelay         'config' 'procd_reload_delay' '0'
 	config_get_bool webuiChainColumn    'config' 'webui_chain_column' '0'
 	config_get_bool webuiShowIgnore     'config' 'webui_show_ignore_target' '0'
 	config_foreach append_chains_targets 'policy'
@@ -991,6 +993,11 @@ service_triggers() {
 	local n
 	is_enabled || return 1
 
+	if [ "$procdReloadDelay" -gt 0 ] && [ "$procdReloadDelay" -lt 100 ]; then
+# shellcheck disable=SC2034
+		PROCD_RELOAD_DELAY=$(( procdReloadDelay * 1000  ))
+	fi
+
 	procd_open_validate
 		validate_config
 		validate_policy
@@ -1135,25 +1142,27 @@ support() {
 validate_config() {
 	uci_validate_section "${packageName}" config "${1}" \
 		'enabled:bool:0' \
-		'verbosity:range(0,2):1' \
 		'strict_enforcement:bool:1' \
+		'ipv6_enabled:bool:0' \
 		'src_ipset:bool:0' \
 		'dest_ipset:bool:0' \
 		'resolver_ipset::or("", "none", "dnsmasq.ipset")' \
-		'ipv6_enabled:bool:0' \
-		'supported_interface:list(string)' \
+		'verbosity:range(0,2):1' \
+		'wan_tid:integer:201' \
+		'wan_fw_mark:hex(8)' \
+		'fw_mask:hex(8)' \
+		'icmp_interface:string' \
 		'ignored_interface:list(string)' \
+		'supported_interface:list(string)' \
 		'boot_timeout:integer:30' \
 		'iptables_rule_option:or("", "append", "insert")' \
+		'procd_reload_delay:integer:0' \
 		'webui_enable_column:bool:0' \
 		'webui_protocol_column:bool:0' \
 		'webui_supported_protocol:list(string)' \
 		'webui_chain_column:bool:0' \
 		'webui_sorting:bool:1' \
-		'icmp_interface:string' \
-		'wan_tid:integer:201' \
-		'wan_fw_mark:hex(8)' \
-		'fw_mask:hex(8)'
+		'webui_show_ignore_target:bool:0'
 }
 
 # shellcheck disable=SC2120
