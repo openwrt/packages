@@ -1,5 +1,5 @@
 Fix missing definition of uint64_t while compiling
-under uclibc
+under uclibc or glibc
 
 https://bugs.launchpad.net/hplip/+bug/1826965
 
