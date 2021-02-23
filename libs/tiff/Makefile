@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tiff
 PKG_VERSION:=4.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.osgeo.org/libtiff
@@ -21,9 +21,7 @@ PKG_LICENSE_FILES:=COPYRIGHT
 PKG_CPE_ID:=cpe:/a:libtiff:libtiff
 
 PKG_BUILD_PARALLEL:=1
-PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_libtiffxx
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
@@ -38,15 +36,6 @@ $(call Package/tiff/Default)
   CATEGORY:=Libraries
   TITLE+= library
   DEPENDS:=+zlib +libjpeg
-  ABI_VERSION:=5
-endef
-
-define Package/libtiffxx
-$(call Package/tiff/Default)
-  SECTION:=libs
-  CATEGORY:=Libraries
-  TITLE+= library(c++ bindings)
-  DEPENDS:=+libtiff $(CXX_DEPENDS)
   ABI_VERSION:=5
 endef
 
@@ -77,7 +66,7 @@ CMAKE_OPTIONS += \
 	-Dzstd=OFF \
 	-Dwebp=OFF \
 	-Djpeg12=OFF \
-	-Dcxx=O$(if $(CONFIG_PACKAGE_libtiffxx),N,FF)
+	-Dcxx=OFF
 
 TARGET_CFLAGS += $(TARGET_CPPFLAGS)
 
@@ -92,16 +81,10 @@ define Package/libtiff/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libtiff.so.$(ABI_VERSION)* $(1)/usr/lib
 endef
 
-define Package/libtiffxx/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libtiffxx.so.$(ABI_VERSION)* $(1)/usr/lib/
-endef
-
 define Package/tiff-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,libtiff))
-$(eval $(call BuildPackage,libtiffxx))
 $(eval $(call BuildPackage,tiff-utils))
