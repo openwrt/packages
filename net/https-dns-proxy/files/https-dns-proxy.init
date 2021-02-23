@@ -17,6 +17,7 @@ fi
 
 readonly PROG=/usr/sbin/https-dns-proxy
 dnsmasqConfig=''
+forceDNS='1'
 
 version() { echo "$PKG_VERSION"; }
 
@@ -91,13 +92,37 @@ start_instance() {
 	p="$((p+1))"
 }
 
+is_force_dns_active() { iptables-save | grep -q -w -- '--dport 53'; }
+
 start_service() {
 	local p=5053
 	config_load 'https-dns-proxy'
 	config_get dnsmasqConfig	'config' 'update_dnsmasq_config' '*'
+	config_get_bool forceDNS	'config' 'force_dns' '1'
 	dhcp_backup 'create'
 	config_load 'https-dns-proxy'
 	config_foreach start_instance 'https-dns-proxy'
+	if [ "$forceDNS" -ne 0 ]; then
+		procd_open_instance 'main'
+		procd_set_param command /bin/true
+		procd_set_param stdout 1
+		procd_set_param stderr 1
+		procd_open_data
+		json_add_array firewall
+		json_add_object ''
+		json_add_string type redirect
+		json_add_string name https_dns_proxy_dns_redirect
+		json_add_string target DNAT
+		json_add_string src lan
+		json_add_string proto tcpudp
+		json_add_string src_dport 53
+		json_add_string dest_port 53
+		json_add_string reflection 0
+		json_close_object
+		json_close_array
+		procd_close_data
+		procd_close_instance
+	fi
 	if [ -n "$(uci -q changes dhcp)" ]; then
 		uci -q commit dhcp
 		[ -x /etc/init.d/dnsmasq ] && /etc/init.d/dnsmasq restart >/dev/null 2>&1
@@ -117,6 +142,9 @@ stop_service() {
 service_triggers() {
 	procd_add_config_trigger "config.change" "https-dns-proxy" /etc/init.d/https-dns-proxy reload
 }
+
+service_started() { procd_set_config_changed firewall; }
+service_stopped() { procd_set_config_changed firewall; }
 
 dnsmasq_add_doh_server() {
 	local cfg="$1" address="$2" port="$3"
