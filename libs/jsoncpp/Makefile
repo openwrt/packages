@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=jsoncpp
 PKG_VERSION:=1.9.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/open-source-parsers/jsoncpp/tar.gz/$(PKG_VERSION)?
@@ -49,8 +49,11 @@ endef
 
 MESON_ARGS += \
 	-Db_lto=true \
+	-Dcpp_eh=none \
+	-Dcpp_rtti=false \
 	-Dtests=false
 
+TARGET_CXXFLAGS += -DJSON_USE_EXCEPTION=0
 TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Build/InstallDev
