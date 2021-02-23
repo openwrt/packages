@@ -23,8 +23,6 @@ Signed-off-by: Ben Pfaff <blp@ovn.org>
  ovsdb/ovsdb-idlc.in | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/ovsdb/ovsdb-idlc.in b/ovsdb/ovsdb-idlc.in
-index 40fef39ed..22d0a4e22 100755
 --- a/ovsdb/ovsdb-idlc.in
 +++ b/ovsdb/ovsdb-idlc.in
 @@ -176,7 +176,7 @@ def replace_cplusplus_keyword(schema):

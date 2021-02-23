@@ -27,11 +27,9 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  datapath/linux/compat/vxlan.c  | 14 ++++++++------
  3 files changed, 18 insertions(+), 10 deletions(-)
 
-diff --git a/acinclude.m4 b/acinclude.m4
-index 84098f2a5..f124caefb 100644
 --- a/acinclude.m4
 +++ b/acinclude.m4
-@@ -508,7 +508,10 @@ AC_DEFUN([OVS_CHECK_LINUX_COMPAT], [
+@@ -510,7 +510,10 @@ AC_DEFUN([OVS_CHECK_LINUX_COMPAT], [
  
    OVS_GREP_IFELSE([$KSRC/include/net/addrconf.h], [ipv6_dst_lookup.*net],
                    [OVS_DEFINE([HAVE_IPV6_DST_LOOKUP_NET])])
@@ -42,11 +40,9 @@ index 84098f2a5..f124caefb 100644
  
    OVS_GREP_IFELSE([$KSRC/include/linux/err.h], [ERR_CAST])
    OVS_GREP_IFELSE([$KSRC/include/linux/err.h], [IS_ERR_OR_NULL])
-diff --git a/datapath/linux/compat/geneve.c b/datapath/linux/compat/geneve.c
-index c044b1489..4bdab6836 100644
 --- a/datapath/linux/compat/geneve.c
 +++ b/datapath/linux/compat/geneve.c
-@@ -962,14 +962,17 @@ static struct dst_entry *geneve_get_v6_dst(struct sk_buff *skb,
+@@ -962,15 +962,18 @@ static struct dst_entry *geneve_get_v6_d
  			return dst;
  	}
  
@@ -64,15 +60,14 @@ index c044b1489..4bdab6836 100644
  	if (ipv6_stub->ipv6_dst_lookup(gs6->sock->sk, &dst, fl6)) {
  #else
  	if (ip6_dst_lookup(gs6->sock->sk, &dst, fl6)) {
--#endif
  #endif
+-#endif
  		netdev_dbg(dev, "no route to %pI6\n", &fl6->daddr);
  		return ERR_PTR(-ENETUNREACH);
-diff --git a/datapath/linux/compat/vxlan.c b/datapath/linux/compat/vxlan.c
-index 23118e8b6..ff10ae6f4 100644
+ 	}
 --- a/datapath/linux/compat/vxlan.c
 +++ b/datapath/linux/compat/vxlan.c
-@@ -990,17 +990,19 @@ static struct dst_entry *vxlan6_get_route(struct vxlan_dev *vxlan,
+@@ -990,18 +990,20 @@ static struct dst_entry *vxlan6_get_rout
  	fl6.fl6_dport = dport;
  	fl6.fl6_sport = sport;
  
@@ -94,7 +89,8 @@ index 23118e8b6..ff10ae6f4 100644
  					 &ndst, &fl6);
  #else
  	err = ip6_dst_lookup(vxlan->vn6_sock->sock->sk, &ndst, &fl6);
--#endif
  #endif
+-#endif
  	if (err < 0)
  		return ERR_PTR(err);
+ 
