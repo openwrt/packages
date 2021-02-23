@@ -26,7 +26,6 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | firetv_tracking     |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | games_tracking      |         | S    | tracking         | [Link](https://www.gameindustry.eu)                                               |
 | gaming              |         | S    | gaming           | [Link](https://github.com/abyssin/pihole-blocklist)                               |
-| malwaredomains      |         | M    | malware          | [Link](https://malwaredomains.com)                                                |
 | notracking          |         | XL   | tracking         | [Link](https://github.com/notracking/hosts-blocklists)                            |
 | oisd_nl             |         | XXL  | general          | [Link](https://oisd.nl)                                                           |
 | openphish           |         | S    | phishing         | [Link](https://openphish.com)                                                     |

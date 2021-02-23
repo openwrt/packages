@@ -7,7 +7,7 @@
 		"descurl": "https://github.com/AdAway/adaway.github.io"
 	},
 	"adguard": {
-		"url": "https://filters.adtidy.org/windows/filters/15.txt",
+		"url": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
 		"rule": "BEGIN{FS=\"[\/|^|\\r]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+[\\/\\^\\r]+$/{print tolower($3)}",
 		"size": "L",
 		"focus": "general",
@@ -110,13 +110,6 @@
 		"size": "S",
 		"focus": "gaming",
 		"descurl": "https://github.com/abyssin/pihole-blocklist"
-	},
-	"malwaredomains": {
-		"url": "https://mirror.cedia.org.ec/malwaredomains/justdomains",
-		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
-		"size": "M",
-		"focus": "malware",
-		"descurl": "https://www.malwaredomains.com"
 	},
 	"notracking": {
 		"url": "https://raw.githubusercontent.com/notracking/hosts-blocklists/master/dnscrypt-proxy/dnscrypt-proxy.blacklist.txt",
