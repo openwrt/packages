@@ -34,10 +34,18 @@ jobs:
 
       - name: Determine changed packages
         run: |
-          # only detect packages with changed Makefiles
-          PACKAGES="$(git diff --diff-filter=d --name-only origin/master \
-            | grep -E 'Makefile$|test.sh$' | grep -Ev '/files/|/src/' \
-            | awk -F/ '{ print $(NF-1) }' | tr '\n' ' ')"
+          # only detect packages with changes
+          PKG_ROOTS=$(find . -name Makefile | grep -v ".*/src/Makefile" | sed -e 's@./\(.*\)/Makefile@\1/@')
+          CHANGES=$(git diff --diff-filter=d --name-only origin/master)
+
+          for ROOT in $PKG_ROOTS; do
+            for CHANGE in $CHANGES; do
+              if [[ "$CHANGE" == "$ROOT"* ]]; then
+                PACKAGES+=$(echo "$ROOT" | sed -e 's@.*/\(.*\)/@\1 @')
+                break
+              fi
+            done
+          done
 
           # fallback to test packages if nothing explicitly changes this is
           # should run if other mechanics in packages.git changed
