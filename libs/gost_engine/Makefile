@@ -35,7 +35,7 @@ define Package/libopenssl-gost_engine
     SUBMENU:=SSL
     TITLE+= (library)
     URL:=https://github.com/gost-engine/engine/
-    DEPENDS:=libopenssl @OPENSSL_ENGINE @OPENSSL_WITH_GOST +libopenssl-conf
+    DEPENDS:=libopenssl @OPENSSL_ENGINE +libopenssl-conf
 endef
 
 define Package/libopenssl-gost_engine/description
