@@ -1,0 +1,11 @@
+--- a/lib/util/util.c
++++ b/lib/util/util.c
+@@ -714,7 +714,7 @@ int check_bpf_environ(const char *pin_ro
+ 	return 0;
+ }
+ 
+-static const char *lock_dir = "/run";
++static const char *lock_dir = "/var/run";
+ static char *prog_lock_file = NULL;
+ static int prog_lock_fd = -1;
+ static pid_t prog_pid = 0;

@@ -1,0 +1,12 @@
+--- a/xdp-dump/xdpdump.c
++++ b/xdp-dump/xdpdump.c
+@@ -32,7 +32,9 @@
+ 
+ #include <sys/ioctl.h>
+ #include <sys/resource.h>
++#ifdef __GLIBC__
+ #include <sys/sysinfo.h>
++#endif
+ #include <sys/utsname.h>
+ 
+ #include <xdp/prog_dispatcher.h>
