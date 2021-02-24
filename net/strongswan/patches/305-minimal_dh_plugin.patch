@@ -68,7 +68,7 @@
 +	../gmp/gmp_diffie_hellman.c ../gmp/gmp_diffie_hellman.h 
 +
 +	
-+libstrongswan_gmpdh_la_LDFLAGS = -module -avoid-version -Wl,-Bstatic -Wl,-lgmp -Wl,-Bdynamic -Wl,--as-needed
++libstrongswan_gmpdh_la_LDFLAGS = -module -avoid-version -Wl,-Bstatic -Wl,-lgmp -Wl,-Bdynamic -Wl,--as-needed $(FPIC)
 +libstrongswan_gmpdh_la_LIBADD  =
 --- /dev/null
 +++ b/src/libstrongswan/plugins/gmpdh/gmpdh_plugin.c
