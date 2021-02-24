@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oci-runtime-tools
 PKG_VERSION:=1.0.0-pre20210122
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -53,6 +53,8 @@ define Package/oci-runtime-tests/description
   Best used in combination with a TAP consumer like 'node-tap',
   installable via npm.
 endef
+
+GO_PKG_BUILD_VARS += GO111MODULE=auto
 
 define Build/Compile
 	$(call GoPackage/Build/Compile)
