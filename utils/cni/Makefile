@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cni
 PKG_VERSION:=0.8.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -23,6 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
 
 PKG_USE_MIPS16:=0
+GO_PKG_BUILD_VARS += GO111MODULE=auto
 
 define Package/cni
   SECTION:=utils
