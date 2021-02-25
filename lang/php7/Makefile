@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=7.4.15
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 PKG_LICENSE:=PHP-3.01
@@ -530,7 +530,12 @@ endef
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
-	( cd $(PKG_BUILD_DIR); touch configure.ac; ./buildconf --force )
+	$(if $(QUILT),,( cd $(PKG_BUILD_DIR); touch configure.ac; ./buildconf --force ))
+endef
+
+define Build/Configure
+	$(if $(QUILT),( cd $(PKG_BUILD_DIR); touch configure.ac; ./buildconf --force ))
+	$(call Build/Configure/Default)
 endef
 
 define Build/InstallDev
