@@ -8,11 +8,9 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  Makefile.am | 2 --
  1 file changed, 2 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 04400e184..c12cfcd11 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -488,11 +488,9 @@ dist-docs:
+@@ -483,11 +483,9 @@ dist-docs:
  
  
  include automake.mk
@@ -22,5 +20,5 @@ index 04400e184..c12cfcd11 100644
  include utilities/automake.mk
 -include tests/automake.mk
  include include/automake.mk
- include third-party/automake.mk
  include debian/automake.mk
+ include lib/ovsdb_automake.mk

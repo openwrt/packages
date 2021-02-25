@@ -10,11 +10,9 @@ leak.
  src/plugins/lanplus/lanplus_crypt_impl.c | 44 +++++++++++++++++---------------
  1 file changed, 23 insertions(+), 21 deletions(-)
 
-diff --git a/src/plugins/lanplus/lanplus_crypt_impl.c b/src/plugins/lanplus/lanplus_crypt_impl.c
-index 0e330c1..9652a5e 100644
 --- a/src/plugins/lanplus/lanplus_crypt_impl.c
 +++ b/src/plugins/lanplus/lanplus_crypt_impl.c
-@@ -165,13 +165,6 @@ lanplus_encrypt_aes_cbc_128(const uint8_t * iv,
+@@ -165,13 +165,6 @@ lanplus_encrypt_aes_cbc_128(const uint8_
  							uint32_t        * bytes_written)
  {
  	EVP_CIPHER_CTX *ctx = NULL;
@@ -28,7 +26,7 @@ index 0e330c1..9652a5e 100644
  
  	*bytes_written = 0;
  
-@@ -185,6 +178,14 @@ lanplus_encrypt_aes_cbc_128(const uint8_t * iv,
+@@ -185,6 +178,14 @@ lanplus_encrypt_aes_cbc_128(const uint8_
  		printbuf(input, input_length, "encrypting this data");
  	}
  
@@ -43,7 +41,7 @@ index 0e330c1..9652a5e 100644
  
  	/*
  	 * The default implementation adds a whole block of padding if the input
-@@ -198,7 +199,6 @@ lanplus_encrypt_aes_cbc_128(const uint8_t * iv,
+@@ -198,7 +199,6 @@ lanplus_encrypt_aes_cbc_128(const uint8_
  	{
  		/* Error */
  		*bytes_written = 0;
@@ -51,7 +49,7 @@ index 0e330c1..9652a5e 100644
  	}
  	else
  	{
-@@ -206,16 +206,17 @@ lanplus_encrypt_aes_cbc_128(const uint8_t * iv,
+@@ -206,16 +206,17 @@ lanplus_encrypt_aes_cbc_128(const uint8_
  
  		if(!EVP_EncryptFinal_ex(ctx, output + *bytes_written, (int *)&tmplen))
  		{
@@ -71,7 +69,7 @@ index 0e330c1..9652a5e 100644
  }
  
  
-@@ -243,13 +244,6 @@ lanplus_decrypt_aes_cbc_128(const uint8_t * iv,
+@@ -243,13 +244,6 @@ lanplus_decrypt_aes_cbc_128(const uint8_
  							uint32_t        * bytes_written)
  {
  	EVP_CIPHER_CTX *ctx = NULL;
@@ -85,7 +83,7 @@ index 0e330c1..9652a5e 100644
  
  	if (verbose >= 5)
  	{
-@@ -258,12 +252,20 @@ lanplus_decrypt_aes_cbc_128(const uint8_t * iv,
+@@ -258,12 +252,20 @@ lanplus_decrypt_aes_cbc_128(const uint8_
  		printbuf(input, input_length, "decrypting this data");
  	}
  
@@ -107,7 +105,7 @@ index 0e330c1..9652a5e 100644
  	/*
  	 * The default implementation adds a whole block of padding if the input
  	 * data is perfectly aligned.  We would like to keep that from happening.
-@@ -277,7 +279,6 @@ lanplus_decrypt_aes_cbc_128(const uint8_t * iv,
+@@ -277,7 +279,6 @@ lanplus_decrypt_aes_cbc_128(const uint8_
  		/* Error */
  		lprintf(LOG_DEBUG, "ERROR: decrypt update failed");
  		*bytes_written = 0;
@@ -115,7 +113,7 @@ index 0e330c1..9652a5e 100644
  	}
  	else
  	{
-@@ -285,20 +286,21 @@ lanplus_decrypt_aes_cbc_128(const uint8_t * iv,
+@@ -285,20 +286,21 @@ lanplus_decrypt_aes_cbc_128(const uint8_
  
  		if (!EVP_DecryptFinal_ex(ctx, output + *bytes_written, (int *)&tmplen))
  		{
@@ -139,6 +137,3 @@ index 0e330c1..9652a5e 100644
  
  	if (verbose >= 5)
  	{
--- 
-2.16.1
-

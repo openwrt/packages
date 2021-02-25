@@ -1,8 +1,8 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -188,5 +188,5 @@ plugins = []
- subdir('ext/libav')
- subdir('docs')
+@@ -202,5 +202,5 @@ endif
+ 
+ configure_file(output: 'config.h', configuration: cdata)
  
 -python3 = import('python').find_installation()
 +python3 = 'python3'

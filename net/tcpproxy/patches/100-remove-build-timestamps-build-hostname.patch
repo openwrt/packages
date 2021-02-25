@@ -1,8 +1,6 @@
-Index: tcpproxy-1.2/src/configure
-===================================================================
---- tcpproxy-1.2.orig/src/configure	2017-12-03 13:12:34.483712208 +0100
-+++ tcpproxy-1.2/src/configure	2017-12-03 13:13:56.677386919 +0100
-@@ -195,9 +195,6 @@
+--- a/src/configure
++++ b/src/configure
+@@ -195,9 +195,6 @@ if which git >/dev/null; then
      fi
  fi
  
@@ -12,7 +10,7 @@ Index: tcpproxy-1.2/src/configure
  cat > config.h <<EOF
  /*
   * tcpproxy config header
-@@ -211,7 +208,6 @@
+@@ -211,7 +208,6 @@ cat > config.h <<EOF
  #define TCPPROXY_config_h_INCLUDED
  
  #define VERSION_STRING_0 "tcpproxy version $VERSION"
@@ -20,11 +18,9 @@ Index: tcpproxy-1.2/src/configure
  
  #define TARGET "$TARGET"
  #define PREFIX "$PREFIX"
-Index: tcpproxy-1.2/src/options.c
-===================================================================
---- tcpproxy-1.2.orig/src/options.c	2015-05-14 00:14:22.000000000 +0200
-+++ tcpproxy-1.2/src/options.c	2017-12-03 13:14:37.442219952 +0100
-@@ -326,11 +326,9 @@
+--- a/src/options.c
++++ b/src/options.c
+@@ -326,11 +326,9 @@ void options_print_version()
  {
    printf("%s\n", VERSION_STRING_0);
  #if defined(__clang__)

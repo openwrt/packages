@@ -68,11 +68,9 @@ Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
  create mode 100644 output/ipfix/ulogd_output_IPFIX.c
  delete mode 100644 output/ulogd_output_IPFIX.c
 
-diff --git a/configure.ac b/configure.ac
-index 3aa0624..48b4995 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -179,7 +179,7 @@ AC_CONFIG_FILES(include/Makefile include/ulogd/Makefile include/libipulog/Makefi
+@@ -179,7 +179,7 @@ AC_CONFIG_FILES(include/Makefile include
  	  input/sum/Makefile \
  	  filter/Makefile filter/raw2packet/Makefile filter/packet2flow/Makefile \
  	  output/Makefile output/pcap/Makefile output/mysql/Makefile output/pgsql/Makefile output/sqlite3/Makefile \
@@ -81,8 +79,6 @@ index 3aa0624..48b4995 100644
  	  src/Makefile Makefile Rules.make)
  AC_OUTPUT
  
-diff --git a/include/ulogd/ulogd.h b/include/ulogd/ulogd.h
-index 2e38195..1636a8c 100644
 --- a/include/ulogd/ulogd.h
 +++ b/include/ulogd/ulogd.h
 @@ -28,6 +28,11 @@
@@ -97,11 +93,9 @@ index 2e38195..1636a8c 100644
  
  #define ULOGD_RET_INT8		0x0001
  #define ULOGD_RET_INT16		0x0002
-diff --git a/output/Makefile.am b/output/Makefile.am
-index ff851ad..7ba8217 100644
 --- a/output/Makefile.am
 +++ b/output/Makefile.am
-@@ -2,7 +2,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/include ${LIBNETFILTER_ACCT_CFLAGS} \
+@@ -2,7 +2,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/include ${
                ${LIBNETFILTER_CONNTRACK_CFLAGS} ${LIBNETFILTER_LOG_CFLAGS}
  AM_CFLAGS = ${regular_CFLAGS}
  
@@ -110,9 +104,6 @@ index ff851ad..7ba8217 100644
  
  pkglib_LTLIBRARIES = ulogd_output_LOGEMU.la ulogd_output_SYSLOG.la \
  			 ulogd_output_OPRINT.la ulogd_output_GPRINT.la \
-diff --git a/output/ipfix/Makefile.am b/output/ipfix/Makefile.am
-new file mode 100644
-index 0000000..cacda26
 --- /dev/null
 +++ b/output/ipfix/Makefile.am
 @@ -0,0 +1,7 @@
@@ -123,9 +114,6 @@ index 0000000..cacda26
 +
 +ulogd_output_IPFIX_la_SOURCES = ulogd_output_IPFIX.c ipfix.c
 +ulogd_output_IPFIX_la_LDFLAGS = -avoid-version -module
-diff --git a/output/ipfix/ipfix.c b/output/ipfix/ipfix.c
-new file mode 100644
-index 0000000..60a4c7f
 --- /dev/null
 +++ b/output/ipfix/ipfix.c
 @@ -0,0 +1,141 @@
@@ -270,9 +258,6 @@ index 0000000..60a4c7f
 +
 +	return sizeof(struct vy_ipfix_data);
 +}
-diff --git a/output/ipfix/ipfix.h b/output/ipfix/ipfix.h
-new file mode 100644
-index 0000000..cdb5a6f
 --- /dev/null
 +++ b/output/ipfix/ipfix.h
 @@ -0,0 +1,89 @@
@@ -365,9 +350,6 @@ index 0000000..cdb5a6f
 +int ipfix_dump_msg(const struct ipfix_msg *);
 +
 +#endif /* IPFIX_H */
-diff --git a/output/ipfix/ulogd_output_IPFIX.c b/output/ipfix/ulogd_output_IPFIX.c
-new file mode 100644
-index 0000000..ec143b1
 --- /dev/null
 +++ b/output/ipfix/ulogd_output_IPFIX.c
 @@ -0,0 +1,503 @@
@@ -874,6 +856,3 @@ index 0000000..ec143b1
 +{
 +	ulogd_register_plugin(&ipfix_plugin);
 +}
--- 
-cgit v1.2.1
-

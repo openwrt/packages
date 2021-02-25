@@ -13,7 +13,7 @@
  
  INSTALL=@INSTALL@
  INSTALL_PROGRAM=@INSTALL_PROGRAM@
-@@ -34,22 +28,22 @@ GETCHSRC=getc_putc_helper.cpp duration.cpp
+@@ -34,22 +28,22 @@ GETCHSRC=getc_putc_helper.cpp duration.c
  GETCHOBJS=$(GETCHSRC:.cpp=.o)
  
  bonnie++: $(BONOBJS)
@@ -70,7 +70,7 @@
    , linux_pthread="yes")
  if [[ -n "$linux_pthread" ]]; then
     linux_pthread="#define LINUX_PTHREAD"
-@@ -83,7 +82,7 @@ void * thread_func(void * param) { return NULL; }
+@@ -83,7 +82,7 @@ void * thread_func(void * param) { retur
    , thread_ldflags="-pthread")
  
  AC_SUBST(large_file)

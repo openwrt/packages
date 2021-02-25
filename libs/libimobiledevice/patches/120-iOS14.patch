@@ -22,7 +22,7 @@ Subject: [PATCH] debugserver: Fix service startup for iOS 14b4+
  typedef enum {
 --- a/include/libimobiledevice/lockdown.h
 +++ b/include/libimobiledevice/lockdown.h
-@@ -96,6 +96,7 @@ typedef struct lockdownd_pair_record *lockdownd_pair_record_t;
+@@ -96,6 +96,7 @@ typedef struct lockdownd_pair_record *lo
  struct lockdownd_service_descriptor {
  	uint16_t port;
  	uint8_t ssl_enabled;
@@ -32,7 +32,7 @@ Subject: [PATCH] debugserver: Fix service startup for iOS 14b4+
  
 --- a/src/debugserver.c
 +++ b/src/debugserver.c
-@@ -80,7 +80,10 @@ LIBIMOBILEDEVICE_API debugserver_error_t debugserver_client_new(idevice_t device
+@@ -80,7 +80,10 @@ LIBIMOBILEDEVICE_API debugserver_error_t
  		debug_info("Creating base service client failed. Error: %i", ret);
  		return ret;
  	}
@@ -44,7 +44,7 @@ Subject: [PATCH] debugserver: Fix service startup for iOS 14b4+
  
  	debugserver_client_t client_loc = (debugserver_client_t) malloc(sizeof(struct debugserver_client_private));
  	client_loc->parent = parent;
-@@ -95,7 +98,11 @@ LIBIMOBILEDEVICE_API debugserver_error_t debugserver_client_new(idevice_t device
+@@ -95,7 +98,11 @@ LIBIMOBILEDEVICE_API debugserver_error_t
  LIBIMOBILEDEVICE_API debugserver_error_t debugserver_client_start_service(idevice_t device, debugserver_client_t * client, const char* label)
  {
  	debugserver_error_t err = DEBUGSERVER_E_UNKNOWN_ERROR;
@@ -59,7 +59,7 @@ Subject: [PATCH] debugserver: Fix service startup for iOS 14b4+
  
 --- a/src/lockdown.c
 +++ b/src/lockdown.c
-@@ -1307,6 +1307,7 @@ static lockdownd_error_t lockdownd_do_start_service(lockdownd_client_t client, c
+@@ -1307,6 +1307,7 @@ static lockdownd_error_t lockdownd_do_st
  			*service = (lockdownd_service_descriptor_t)malloc(sizeof(struct lockdownd_service_descriptor));
  		(*service)->port = 0;
  		(*service)->ssl_enabled = 0;
@@ -67,7 +67,7 @@ Subject: [PATCH] debugserver: Fix service startup for iOS 14b4+
  
  		/* read service port number */
  		plist_t node = plist_dict_get_item(dict, "Port");
-@@ -1511,8 +1512,10 @@ LIBIMOBILEDEVICE_API lockdownd_error_t lockdownd_data_classes_free(char **classe
+@@ -1511,8 +1512,10 @@ LIBIMOBILEDEVICE_API lockdownd_error_t l
  
  LIBIMOBILEDEVICE_API lockdownd_error_t lockdownd_service_descriptor_free(lockdownd_service_descriptor_t service)
  {

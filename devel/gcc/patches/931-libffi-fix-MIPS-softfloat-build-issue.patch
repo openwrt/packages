@@ -12,8 +12,6 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  libffi/src/mips/o32.S | 17 +++++++++++++++++
  2 files changed, 34 insertions(+)
 
-diff --git a/libffi/src/mips/n32.S b/libffi/src/mips/n32.S
-index c6985d30a6f..8f25994773c 100644
 --- a/libffi/src/mips/n32.S
 +++ b/libffi/src/mips/n32.S
 @@ -107,6 +107,16 @@ loadregs:
@@ -89,8 +87,6 @@ index c6985d30a6f..8f25994773c 100644
  	
  cls_retstruct_small2:	
  	REG_L	v0, V0_OFF2($sp)
-diff --git a/libffi/src/mips/o32.S b/libffi/src/mips/o32.S
-index eb279813a76..1aff4b14814 100644
 --- a/libffi/src/mips/o32.S
 +++ b/libffi/src/mips/o32.S
 @@ -82,13 +82,16 @@ sixteen:
@@ -170,6 +166,3 @@ index eb279813a76..1aff4b14814 100644
  1:	
  	REG_L	$3, V1_OFF2($fp)
  	REG_L	$2, V0_OFF2($fp)
--- 
-2.16.3
-

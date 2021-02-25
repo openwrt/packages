@@ -1,8 +1,6 @@
-diff --git a/Makefile b/Makefile
-index d6a4d60..a07d801 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -51,7 +51,6 @@ linenoise-1.0/linenoise.o : linenoise-1.0/linenoise.c linenoise-1.0/linenoise.h
+@@ -51,7 +51,6 @@ linenoise-1.0/linenoise.o : linenoise-1.
  
  OBJS += picocom.o term.o fdio.o split.o termios2.o custbaud_bsd.o
  picocom : $(OBJS)

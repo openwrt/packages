@@ -10,8 +10,6 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  utilities/ovn-lib.in | 5 ++++-
  1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/utilities/ovn-lib.in b/utilities/ovn-lib.in
-index af1b72edb..f6ab5581c 100644
 --- a/utilities/ovn-lib.in
 +++ b/utilities/ovn-lib.in
 @@ -54,7 +54,10 @@ ovn_install_dir () {

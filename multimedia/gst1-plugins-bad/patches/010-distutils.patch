@@ -1,6 +1,6 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -417,7 +417,7 @@ gst_plugins_bad_args = ['-DHAVE_CONFIG_H']
+@@ -441,7 +441,7 @@ gst_plugins_bad_args = ['-DHAVE_CONFIG_H
  configinc = include_directories('.')
  libsinc = include_directories('gst-libs')
  

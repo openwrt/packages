@@ -11,8 +11,6 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  src/system.h | 1 +
  1 file changed, 1 insertion(+)
 
-diff --git a/src/system.h b/src/system.h
-index 257b65b..5c1aa4a 100644
 --- a/src/system.h
 +++ b/src/system.h
 @@ -114,6 +114,7 @@

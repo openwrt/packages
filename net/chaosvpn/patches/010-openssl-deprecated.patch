@@ -32,7 +32,7 @@
  }
  
  void
-@@ -268,10 +278,10 @@ crypto_warn_openssl_version_changed(void)
+@@ -268,10 +278,10 @@ crypto_warn_openssl_version_changed(void
       * OpenSSL library used.
       * Output a warning if not.
       */

@@ -1,7 +1,6 @@
-diff -ur libmad-0.15.1b-orig/fixed.h libmad-0.15.1b/fixed.h
---- libmad-0.15.1b-orig/fixed.h	2004-02-17 12:32:03.000000000 +1030
-+++ libmad-0.15.1b/fixed.h	2009-08-05 10:46:30.000000000 +0930
-@@ -299,6 +299,23 @@
+--- a/fixed.h
++++ b/fixed.h
+@@ -299,6 +299,23 @@ mad_fixed_t mad_f_mul_inline(mad_fixed_t
  
  # elif defined(FPM_MIPS)
  
@@ -25,7 +24,7 @@ diff -ur libmad-0.15.1b-orig/fixed.h libmad-0.15.1b/fixed.h
  /*
   * This MIPS version is fast and accurate; the disposition of the least
   * significant bit depends on OPT_ACCURACY via mad_f_scale64().
-@@ -328,6 +345,7 @@
+@@ -328,6 +345,7 @@ mad_fixed_t mad_f_mul_inline(mad_fixed_t
  	 : "%r" ((x) >> 12), "r" ((y) >> 16))
  #  define MAD_F_MLZ(hi, lo)  ((mad_fixed_t) (lo))
  # endif
@@ -33,10 +32,9 @@ diff -ur libmad-0.15.1b-orig/fixed.h libmad-0.15.1b/fixed.h
  
  # if defined(OPT_SPEED)
  #  define mad_f_scale64(hi, lo)  \
-diff -ur libmad-0.15.1b-orig/mad.h libmad-0.15.1b/mad.h
---- libmad-0.15.1b-orig/mad.h	2004-02-17 13:25:44.000000000 +1030
-+++ libmad-0.15.1b/mad.h	2009-08-05 10:42:40.000000000 +0930
-@@ -344,6 +344,23 @@
+--- a/mad.h
++++ b/mad.h
+@@ -344,6 +344,23 @@ mad_fixed_t mad_f_mul_inline(mad_fixed_t
  
  # elif defined(FPM_MIPS)
  
@@ -60,7 +58,7 @@ diff -ur libmad-0.15.1b-orig/mad.h libmad-0.15.1b/mad.h
  /*
   * This MIPS version is fast and accurate; the disposition of the least
   * significant bit depends on OPT_ACCURACY via mad_f_scale64().
-@@ -373,6 +390,7 @@
+@@ -373,6 +390,7 @@ mad_fixed_t mad_f_mul_inline(mad_fixed_t
  	 : "%r" ((x) >> 12), "r" ((y) >> 16))
  #  define MAD_F_MLZ(hi, lo)  ((mad_fixed_t) (lo))
  # endif

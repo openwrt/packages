@@ -11,11 +11,9 @@ Acked-by: Avri Altman <avri.altman@wdc.com>
  lsmmc.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/lsmmc.c b/lsmmc.c
-index 4f687ac..b627b79 100644
 --- a/lsmmc.c
 +++ b/lsmmc.c
-@@ -562,7 +562,7 @@ void print_mmc_cid(struct config *config, char *cid)
+@@ -562,7 +562,7 @@ void print_mmc_cid(struct config *config
  	unsigned int crc;
  
  	parse_bin(cid, "8u6r2u8u48a4u4u32u4u4u7u1r",
@@ -24,6 +22,3 @@ index 4f687ac..b627b79 100644
  		&mdt_year, &mdt_month, &crc);
  
  	pnm[6] = '\0';
--- 
-2.17.1
-

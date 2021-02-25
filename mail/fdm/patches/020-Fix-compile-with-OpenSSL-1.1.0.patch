@@ -9,8 +9,6 @@ They're part of OPENSSL_init_ssl now.
  fdm.c | 2 ++
  1 file changed, 2 insertions(+)
 
-diff --git a/fdm.c b/fdm.c
-index cdf8383..6721bbd 100644
 --- a/fdm.c
 +++ b/fdm.c
 @@ -717,8 +717,10 @@ retry:
@@ -24,6 +22,3 @@ index cdf8383..6721bbd 100644
  
  	/* Filter account list. */
  	TAILQ_INIT(&actaq);
--- 
-2.17.1
-

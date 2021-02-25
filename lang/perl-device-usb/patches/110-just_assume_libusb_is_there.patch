@@ -8,9 +8,9 @@ From: Ansgar Burchardt <ansgar@debian.org>
 Reviewed-by: gregor herrmann <gregoa@debian.org>
 Last-Update: 2013-10-28
 
---- libdevice-usb-perl.orig/Makefile.PL
-+++ libdevice-usb-perl/Makefile.PL
-@@ -21,7 +21,7 @@
+--- a/Makefile.PL
++++ b/Makefile.PL
+@@ -21,7 +21,7 @@ END
      }
  }
  
@@ -19,7 +19,7 @@ Last-Update: 2013-10-28
  {
      die <<"END";
  ERROR: Can't find usb.h header.
-@@ -36,7 +36,7 @@
+@@ -36,7 +36,7 @@ following environment variables:
  END
  }
  

@@ -1,6 +1,6 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -33,6 +33,7 @@ add_project_arguments('-DFLASHROM_VERSION="' + meson.project_version() + '"', la
+@@ -33,6 +33,7 @@ add_project_arguments('-DFLASHROM_VERSIO
  config_atahpt = get_option('config_atahpt')
  config_atapromise = get_option('config_atapromise')
  config_atavia = get_option('config_atavia')
@@ -10,7 +10,7 @@
  config_dediprog = get_option('config_dediprog')
 --- a/meson_options.txt
 +++ b/meson_options.txt
-@@ -4,6 +4,7 @@ option('usb', type : 'boolean', value : true, description : 'use libusb1')
+@@ -4,6 +4,7 @@ option('usb', type : 'boolean', value :
  option('config_atahpt', type : 'boolean', value : false, description : 'Highpoint (HPT) ATA/RAID controllers')
  option('config_atapromise', type : 'boolean', value : false, description : 'Promise ATA controller')
  option('config_atavia', type : 'boolean', value : true, description : 'VIA VT6421A LPC memory')

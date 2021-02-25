@@ -22,8 +22,6 @@ This fixes flac_utime to work in such a situation.
  src/share/grabbag/file.c         |  9 +++++++--
  3 files changed, 23 insertions(+), 5 deletions(-)
 
-diff --git a/include/share/compat.h b/include/share/compat.h
-index f3041655..a063c083 100644
 --- a/include/share/compat.h
 +++ b/include/share/compat.h
 @@ -112,9 +112,13 @@
@@ -57,11 +55,9 @@ index f3041655..a063c083 100644
  #endif
  
  #ifdef _WIN32
-diff --git a/src/libFLAC/metadata_iterators.c b/src/libFLAC/metadata_iterators.c
-index 352a6c7a..d5255eb9 100644
 --- a/src/libFLAC/metadata_iterators.c
 +++ b/src/libFLAC/metadata_iterators.c
-@@ -3422,13 +3422,18 @@ FLAC__bool get_file_stats_(const char *filename, struct flac_stat_s *stats)
+@@ -3422,13 +3422,18 @@ FLAC__bool get_file_stats_(const char *f
  
  void set_file_stats_(const char *filename, struct flac_stat_s *stats)
  {
@@ -82,8 +78,6 @@ index 352a6c7a..d5255eb9 100644
  	(void)flac_chmod(filename, stats->st_mode);
  	(void)flac_utime(filename, &srctime);
  #if !defined _MSC_VER && !defined __BORLANDC__ && !defined __MINGW32__
-diff --git a/src/share/grabbag/file.c b/src/share/grabbag/file.c
-index 2c67bebf..edd835a6 100644
 --- a/src/share/grabbag/file.c
 +++ b/src/share/grabbag/file.c
 @@ -27,7 +27,6 @@
@@ -113,6 +107,3 @@ index 2c67bebf..edd835a6 100644
  		(void)flac_chmod(destpath, srcstat.st_mode);
  		(void)flac_utime(destpath, &srctime);
  	}
--- 
-2.17.1
-

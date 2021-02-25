@@ -11,8 +11,6 @@ Subject: [PATCH 3/7] pico2wave: Convert text to .wav using svox text-to-speech s
  4 files changed, 352 insertions(+), 0 deletions(-)
  create mode 100644 pico/bin/pico2wave.c
 
-diff --git a/pico/.gitignore b/pico/.gitignore
-index 4235569..a110298 100644
 --- a/pico/.gitignore
 +++ b/pico/.gitignore
 @@ -29,4 +29,5 @@ libtool
@@ -21,8 +19,6 @@ index 4235569..a110298 100644
  libttspico.la
 +pico2wave
  
-diff --git a/pico/Makefile.am b/pico/Makefile.am
-index 6d8a10c..0d9472d 100644
 --- a/pico/Makefile.am
 +++ b/pico/Makefile.am
 @@ -34,3 +34,10 @@ libttspico_la_SOURCES = \
@@ -36,9 +32,6 @@ index 6d8a10c..0d9472d 100644
 +	libttspico.la -lm -lpopt
 +pico2wave_CFLAGS = -Wall -I lib
 +
-diff --git a/pico/bin/pico2wave.c b/pico/bin/pico2wave.c
-new file mode 100644
-index 0000000..0c035a7
 --- /dev/null
 +++ b/pico/bin/pico2wave.c
 @@ -0,0 +1,342 @@
@@ -384,8 +377,6 @@ index 0000000..0c035a7
 +    exit(ret);
 +}
 +
-diff --git a/pico/configure.in b/pico/configure.in
-index 0afb56d..349eb1d 100644
 --- a/pico/configure.in
 +++ b/pico/configure.in
 @@ -14,3 +14,6 @@ AC_CONFIG_FILES([Makefile])
@@ -395,6 +386,3 @@ index 0afb56d..349eb1d 100644
 +
 +AC_CHECK_LIB(popt, poptGetContext)
 +
--- 
-1.7.1
-

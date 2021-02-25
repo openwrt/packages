@@ -1,5 +1,3 @@
-diff --git a/src/bindings/minimal/crypto_scalarmult.h b/src/bindings/minimal/crypto_scalarmult.h
-index 06ca1ef..9bc3d8e 100644
 --- a/src/bindings/minimal/crypto_scalarmult.h
 +++ b/src/bindings/minimal/crypto_scalarmult.h
 @@ -13,7 +13,7 @@

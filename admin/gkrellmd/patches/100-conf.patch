@@ -1,7 +1,5 @@
-Index: gkrellm-2.3.10/server/gkrellmd.conf
-===================================================================
---- gkrellm-2.3.10.orig/server/gkrellmd.conf	2008-03-09 10:19:26.000000000 +0100
-+++ gkrellm-2.3.10/server/gkrellmd.conf	2008-03-09 10:19:26.000000000 +0100
+--- a/server/gkrellmd.conf
++++ b/server/gkrellmd.conf
 @@ -4,7 +4,7 @@
  # the client update frequency.  Values may be from 1 to 10 and should be
  # smaller values to reduce network traffic.
@@ -31,5 +29,5 @@ Index: gkrellm-2.3.10/server/gkrellmd.conf
 -#detach
 +detach
  
- # Time interval between checks for various monitors.  If nfs-interval
- # is <= 0 then gkrellmd will not read data for nfs file system types.
+ # Enable writing logging message to the system syslog file
+ # NOTE: On windows this enables logging to the windows event log

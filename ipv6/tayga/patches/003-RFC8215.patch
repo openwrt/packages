@@ -1,7 +1,6 @@
-diff -Naur tayga-0.9.2.orig/addrmap.c tayga-0.9.2/addrmap.c
---- tayga-0.9.2.orig/addrmap.c	2011-05-25 15:11:30.000000000 +0100
-+++ tayga-0.9.2/addrmap.c	2020-07-04 16:24:23.397081572 +0100
-@@ -44,7 +44,9 @@
+--- a/addrmap.c
++++ b/addrmap.c
+@@ -44,7 +44,9 @@ int validate_ip4_addr(const struct in_ad
  int validate_ip6_addr(const struct in6_addr *a)
  {
  	/* Well-known prefix for NAT64 */

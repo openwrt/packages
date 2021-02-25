@@ -1,7 +1,5 @@
-Index: mariadb-10.4.17/include/my_cpu.h
-===================================================================
---- mariadb-10.4.17.orig/include/my_cpu.h
-+++ mariadb-10.4.17/include/my_cpu.h
+--- a/include/my_cpu.h
++++ b/include/my_cpu.h
 @@ -24,17 +24,16 @@
  */
  
@@ -34,10 +32,8 @@ Index: mariadb-10.4.17/include/my_cpu.h
  #elif defined __GNUC__ && (defined __arm__ || defined __aarch64__)
    /* Mainly, prevent the compiler from optimizing away delay loops */
    __asm__ __volatile__ ("":::"memory");
-Index: mariadb-10.4.17/storage/tokudb/PerconaFT/portability/toku_time.h
-===================================================================
---- mariadb-10.4.17.orig/storage/tokudb/PerconaFT/portability/toku_time.h
-+++ mariadb-10.4.17/storage/tokudb/PerconaFT/portability/toku_time.h
+--- a/storage/tokudb/PerconaFT/portability/toku_time.h
++++ b/storage/tokudb/PerconaFT/portability/toku_time.h
 @@ -124,7 +124,7 @@ static inline tokutime_t toku_time_now(v
      __asm __volatile__ ("mrs %[rt], cntvct_el0" : [rt] "=r" (result));
      return result;

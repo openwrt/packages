@@ -1,5 +1,3 @@
-diff --git a/mt.c b/mt.c
-index d4058c0..4837808 100644
 --- a/mt.c
 +++ b/mt.c
 @@ -20,6 +20,7 @@
@@ -10,8 +8,6 @@ index d4058c0..4837808 100644
  #include <sys/stat.h>
  #include <sys/utsname.h>
  
-diff --git a/stinit.c b/stinit.c
-index 5a50341..af5582c 100644
 --- a/stinit.c
 +++ b/stinit.c
 @@ -16,6 +16,7 @@

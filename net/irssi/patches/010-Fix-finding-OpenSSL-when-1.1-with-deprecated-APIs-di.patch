@@ -9,11 +9,9 @@ SSL_CTX_new is in both.
  configure.ac | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/configure.ac b/configure.ac
-index e8290dfd..8dde6095 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -319,7 +319,7 @@ PKG_CHECK_MODULES([OPENSSL], [openssl], [
+@@ -328,7 +328,7 @@ PKG_CHECK_MODULES([OPENSSL], [openssl],
  	CFLAGS="$CFLAGS $OPENSSL_CFLAGS"
  	LIBS="$LIBS $OPENSSL_LIBS"
  ], [
@@ -22,6 +20,3 @@ index e8290dfd..8dde6095 100644
  		LIBS="$LIBS -lssl -lcrypto"
  	], [
  		AC_MSG_ERROR([The OpenSSL library was not found])
--- 
-2.17.1
-

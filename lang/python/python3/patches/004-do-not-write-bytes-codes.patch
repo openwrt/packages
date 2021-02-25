@@ -1,6 +1,6 @@
 --- a/Python/initconfig.c
 +++ b/Python/initconfig.c
-@@ -157,7 +157,7 @@ int Py_NoSiteFlag = 0; /* Suppress 'impo
+@@ -158,7 +158,7 @@ int Py_NoSiteFlag = 0; /* Suppress 'impo
  int Py_BytesWarningFlag = 0; /* Warn on str(bytes) and str(buffer) */
  int Py_FrozenFlag = 0; /* Needed by getpath.c */
  int Py_IgnoreEnvironmentFlag = 0; /* e.g. PYTHONPATH, PYTHONHOME */

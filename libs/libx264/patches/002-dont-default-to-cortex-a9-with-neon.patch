@@ -16,7 +16,7 @@ Signed-off-by: Maxin B. John <maxin.john@intel.com>
 
 --- a/configure
 +++ b/configure
-@@ -940,9 +940,6 @@ if [ $asm = auto -a \( $ARCH = X86 -o $A
+@@ -975,9 +975,6 @@ if [ $asm = auto -a \( $ARCH = X86 -o $A
  fi
  
  if [ $asm = auto -a $ARCH = ARM ] ; then

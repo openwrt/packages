@@ -1,6 +1,6 @@
 --- a/examples/ldns-signzone.c
 +++ b/examples/ldns-signzone.c
-@@ -535,6 +535,7 @@ init_openssl_engine ( const char * const id )
+@@ -535,6 +535,7 @@ init_openssl_engine ( const char * const
  static void
  shutdown_openssl ( ENGINE * const e )
  {

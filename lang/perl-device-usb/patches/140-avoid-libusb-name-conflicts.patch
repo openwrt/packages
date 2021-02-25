@@ -98,7 +98,7 @@
      }
  #if LIBUSB_HAS_GET_DRIVER_NP
      ret = usb_get_driver_np((usb_dev_handle *)dev, interface, name, namelen);
-@@ -735,11 +736,11 @@ int libusb_get_driver_np(void *dev, int interface, char *name, unsigned int name
+@@ -735,11 +736,11 @@ int libusb_get_driver_np(void *dev, int
  #endif
  }
  
@@ -112,7 +112,7 @@
      }
  #if LIBUSB_HAS_DETACH_KERNEL_DRIVER_NP
      return usb_detach_kernel_driver_np((usb_dev_handle *)dev, interface);
-@@ -748,25 +749,25 @@ int libusb_detach_kernel_driver_np(void *dev, int interface)
+@@ -748,25 +749,25 @@ int libusb_detach_kernel_driver_np(void
  #endif
  }
  
@@ -143,7 +143,7 @@
  {
      int i = 0;
      int retval = 0;
-@@ -775,7 +776,7 @@ void libusb_control_msg(void *dev, int requesttype, int request, int value, int
+@@ -775,7 +776,7 @@ void libusb_control_msg(void *dev, int r
  
      if(DeviceUSBDebugLevel())
      {
@@ -152,7 +152,7 @@
              requesttype, request, value, index, bytes, size, timeout
          );
          /* maybe need to add support for printing the bytes string. */
-@@ -808,54 +809,54 @@ void libusb_control_msg(void *dev, int requesttype, int request, int value, int
+@@ -808,54 +809,54 @@ void libusb_control_msg(void *dev, int r
      Inline_Stack_Done;
  }
  

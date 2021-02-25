@@ -1,5 +1,5 @@
---- a/source3/lib/messages.c	2020-02-28 09:59:35.000000000 +0100
-+++ b/source3/lib/messages.c	2020-05-19 13:35:11.814566657 +0200
+--- a/source3/lib/messages.c
++++ b/source3/lib/messages.c
 @@ -507,7 +507,7 @@ static NTSTATUS messaging_init_internal(
  		return NT_STATUS_ACCESS_DENIED;
  	}

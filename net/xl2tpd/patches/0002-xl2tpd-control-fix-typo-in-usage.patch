@@ -7,8 +7,6 @@ Subject: [PATCH] xl2tpd-control: fix typo in usage
  xl2tpd-control.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/xl2tpd-control.c b/xl2tpd-control.c
-index d1df0f6..2e683c8 100644
 --- a/xl2tpd-control.c
 +++ b/xl2tpd-control.c
 @@ -96,7 +96,7 @@ void usage()

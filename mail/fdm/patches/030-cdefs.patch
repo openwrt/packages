@@ -7,8 +7,6 @@ Subject: [PATCH] Fix bas64 declarations, from makepost at firemail dot cc.
  fdm.h | 5 ++---
  1 file changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/fdm.h b/fdm.h
-index 41eaa37..511a7b1 100644
 --- a/fdm.h
 +++ b/fdm.h
 @@ -20,7 +20,6 @@
@@ -19,7 +17,7 @@ index 41eaa37..511a7b1 100644
  #include <sys/stat.h>
  
  #ifdef HAVE_QUEUE_H
-@@ -725,8 +724,8 @@ size_t		 strlcat(char *, const char *, size_t);
+@@ -725,8 +724,8 @@ size_t		 strlcat(char *, const char *, s
  
  #ifndef HAVE_B64_NTOP
  /* base64.c */

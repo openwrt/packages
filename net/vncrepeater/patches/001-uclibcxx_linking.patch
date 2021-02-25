@@ -1,5 +1,5 @@
---- vncrepeater-0.14/Makefile	2006-04-09 23:37:10.000000000 +0200
-+++ vncrepeater-0.14.new/Makefile	2016-11-09 19:59:13.000000000 +0100
+--- a/Makefile
++++ b/Makefile
 @@ -1,27 +1,28 @@
  CFLAGS=-Wall
  repeater: repeater.o repeaterproc.o openbsd_stringfuncs.o iniparser.o readini.o repeaterutil.o repeaterevents.o

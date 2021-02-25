@@ -74,7 +74,7 @@
  
  extern void parseable_scan_end();
  void *inject_arp(void *arg);
-@@ -52,6 +53,9 @@ void *parsable_screen_refresh(void *arg);
+@@ -52,6 +53,9 @@ void *parsable_screen_refresh(void *arg)
  void scan_range(char *disp, char *sip);
  void usage();
  

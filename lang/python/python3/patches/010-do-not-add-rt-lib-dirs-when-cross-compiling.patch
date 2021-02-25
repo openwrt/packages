@@ -1,6 +1,6 @@
 --- a/setup.py
 +++ b/setup.py
-@@ -726,8 +726,9 @@ class PyBuildExt(build_ext):
+@@ -711,8 +711,9 @@ class PyBuildExt(build_ext):
          # directly since an inconsistently reproducible issue comes up where
          # the environment variable is not set even though the value were passed
          # into configure and stored in the Makefile (issue found on OS X 10.3).

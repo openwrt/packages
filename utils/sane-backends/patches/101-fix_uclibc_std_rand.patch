@@ -1,9 +1,7 @@
 https://gitlab.com/sane-project/backends/issues/237
 
-Index: sane-backends-1.0.31/backend/genesys/image_pipeline.cpp
-===================================================================
---- sane-backends-1.0.31.orig/backend/genesys/image_pipeline.cpp
-+++ sane-backends-1.0.31/backend/genesys/image_pipeline.cpp
+--- a/backend/genesys/image_pipeline.cpp
++++ b/backend/genesys/image_pipeline.cpp
 @@ -754,7 +754,11 @@ bool ImagePipelineNodeCalibrate::get_nex
  
              float value_f = static_cast<float>(value) / max_value;

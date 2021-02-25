@@ -11,8 +11,6 @@ macros. If not defined, we disable custom baudrate support.
  custbaud.h | 10 +++++++++-
  1 file changed, 9 insertions(+), 1 deletion(-)
 
-diff --git a/custbaud.h b/custbaud.h
-index 48151a4..ae4ae8d 100644
 --- a/custbaud.h
 +++ b/custbaud.h
 @@ -26,6 +26,8 @@
@@ -39,6 +37,3 @@ index 48151a4..ae4ae8d 100644
  #ifndef USE_CUSTOM_BAUD
  #define USE_CUSTOM_BAUD
  #endif
--- 
-2.19.1
-

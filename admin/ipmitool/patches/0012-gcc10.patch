@@ -9,8 +9,6 @@ Signed-off-by: Vaclav Dolezal <vdolezal@redhat.com>
  lib/ipmi_hpmfwupg.c              | 2 ++
  2 files changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/include/ipmitool/ipmi_hpmfwupg.h b/include/ipmitool/ipmi_hpmfwupg.h
-index de65292b..07f597be 100644
 --- a/include/ipmitool/ipmi_hpmfwupg.h
 +++ b/include/ipmitool/ipmi_hpmfwupg.h
 @@ -800,7 +800,7 @@ typedef struct _VERSIONINFO {
@@ -22,11 +20,9 @@ index de65292b..07f597be 100644
  
  #define TARGET_VER (0x01)
  #define ROLLBACK_VER (0x02)
-diff --git a/lib/ipmi_hpmfwupg.c b/lib/ipmi_hpmfwupg.c
-index 4aa8cecd..d63d2c15 100644
 --- a/lib/ipmi_hpmfwupg.c
 +++ b/lib/ipmi_hpmfwupg.c
-@@ -58,6 +58,8 @@
+@@ -58,6 +58,8 @@ ipmi_intf_get_max_request_data_size(stru
  
  extern int verbose;
  

@@ -1,6 +1,6 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -380,12 +380,11 @@ if dl_dep.found()
+@@ -391,12 +391,11 @@ if dl_dep.found()
  endif
  
  have_iconv = false

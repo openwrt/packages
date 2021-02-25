@@ -1,6 +1,6 @@
---- a/src/h_lua_common.c	2013-09-20 23:35:19.000000000 +0300
-+++ b/src/h_lua_common.c	2014-05-03 19:27:43.000000000 +0300
-@@ -79,7 +79,7 @@
+--- a/src/h_lua_common.c
++++ b/src/h_lua_common.c
+@@ -79,7 +79,7 @@ lua_common_setup (char *shell, list_t *
  
    /* and load our haserl library */
    if (luaL_loadbuffer

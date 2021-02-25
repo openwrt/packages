@@ -1,5 +1,3 @@
-diff --git a/daemon/Makefile b/daemon/Makefile
-index e028e95..1233855 100644
 --- a/daemon/Makefile
 +++ b/daemon/Makefile
 @@ -6,7 +6,7 @@ THISDIR  = $(shell pwd)

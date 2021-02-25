@@ -8,7 +8,7 @@
  #include "config.h"
  #include "sysdep.h"
  #include "crypto.h"
-@@ -35,10 +36,12 @@ crypto_ctx *crypto_ctx_new(crypto_error **error)
+@@ -35,10 +36,12 @@ crypto_ctx *crypto_ctx_new(crypto_error
  		return NULL;
  	}
  

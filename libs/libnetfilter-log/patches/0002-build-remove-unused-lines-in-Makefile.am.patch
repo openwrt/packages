@@ -8,8 +8,6 @@ Signed-off-by: Jan Engelhardt <jengelh@inai.de>
  Makefile.am |    2 --
  1 file changed, 2 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index b758e56..9a1cbcb 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -1,6 +1,4 @@
@@ -19,6 +17,3 @@ index b758e56..9a1cbcb 100644
  
  ACLOCAL_AMFLAGS = -I m4
  
--- 
-1.7.10.4
-

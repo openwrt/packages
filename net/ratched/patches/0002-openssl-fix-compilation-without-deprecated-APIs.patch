@@ -12,8 +12,6 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  openssl_tls.c   | 5 -----
  3 files changed, 7 insertions(+), 15 deletions(-)
 
-diff --git a/openssl.c b/openssl.c
-index ba097a5..76c817b 100644
 --- a/openssl.c
 +++ b/openssl.c
 @@ -22,21 +22,17 @@
@@ -40,8 +38,6 @@ index ba097a5..76c817b 100644
  }
  
  static void errstack_free_X509(struct errstack_element_t *element) {
-diff --git a/openssl_certs.c b/openssl_certs.c
-index 021b573..a062a24 100644
 --- a/openssl_certs.c
 +++ b/openssl_certs.c
 @@ -27,6 +27,7 @@
@@ -52,7 +48,7 @@ index 021b573..a062a24 100644
  #include <openssl/x509v3.h>
  
  #include "ipfwd.h"
-@@ -280,8 +281,8 @@ X509* openssl_create_certificate(const struct certificatespec_t *spec) {
+@@ -280,8 +281,8 @@ X509* openssl_create_certificate(const s
  	BN_free(serial);
  
  	/* Set lifetime */
@@ -63,7 +59,7 @@ index 021b573..a062a24 100644
  
  	/* Set public key */
  	X509_set_pubkey(cert, spec->subject_pubkey);
-@@ -357,8 +358,8 @@ X509* openssl_create_certificate(const struct certificatespec_t *spec) {
+@@ -357,8 +358,8 @@ X509* openssl_create_certificate(const s
  	return cert;
  }
  
@@ -74,11 +70,9 @@ index 021b573..a062a24 100644
  }
  
  X509* openssl_load_stored_certificate(const struct certificatespec_t *certspec, const char *filename, bool recreate_when_expired, bool recreate_when_key_mismatch) {
-diff --git a/openssl_tls.c b/openssl_tls.c
-index 4ba19a3..96a12ec 100644
 --- a/openssl_tls.c
 +++ b/openssl_tls.c
-@@ -146,11 +146,6 @@ struct tls_connection_t openssl_tls_connect(const struct tls_connection_request_
+@@ -146,11 +146,6 @@ struct tls_connection_t openssl_tls_conn
  		SSL_CTX_set_verify(sslctx, SSL_VERIFY_PEER, NULL);
  		SSL_CTX_set_cert_verify_callback(sslctx, cert_verify_callback, &result);
  	}
@@ -90,6 +84,3 @@ index 4ba19a3..96a12ec 100644
  
  	if (request->config && request->config->cert) {
  		if (SSL_CTX_use_certificate(sslctx, request->config->cert) != 1) {
--- 
-2.20.1
-

@@ -18,11 +18,9 @@ Subject: [PATCH] Modification to use npupnp instead of pupnp when the upnp
  src/lib/upnp/meson.build                      |  20 +++-
  11 files changed, 170 insertions(+), 11 deletions(-)
 
-diff --git a/meson_options.txt b/meson_options.txt
-index d17ac1ca8..da90ccfd8 100644
 --- a/meson_options.txt
 +++ b/meson_options.txt
-@@ -54,7 +54,10 @@ option('dsd', type: 'boolean', value: true, description: 'Support the DSD audio
+@@ -54,7 +54,10 @@ option('dsd', type: 'boolean', value: tr
  #
  
  option('database', type: 'boolean', value: true, description: 'enable support for the music database')
@@ -34,8 +32,6 @@ index d17ac1ca8..da90ccfd8 100644
  option('libmpdclient', type: 'feature', description: 'libmpdclient support (for the proxy database plugin)')
  
  #
-diff --git a/src/db/plugins/upnp/ContentDirectoryService.cxx b/src/db/plugins/upnp/ContentDirectoryService.cxx
-index 99893d89d..29d58ca23 100644
 --- a/src/db/plugins/upnp/ContentDirectoryService.cxx
 +++ b/src/db/plugins/upnp/ContentDirectoryService.cxx
 @@ -18,7 +18,10 @@
@@ -61,7 +57,7 @@ index 99893d89d..29d58ca23 100644
  static void
  ReadResultTag(UPnPDirContent &dirbuf, IXML_Document *response)
  {
-@@ -39,6 +45,7 @@ ReadResultTag(UPnPDirContent &dirbuf, IXML_Document *response)
+@@ -39,6 +45,7 @@ ReadResultTag(UPnPDirContent &dirbuf, IX
  
  	dirbuf.Parse(p);
  }
@@ -69,7 +65,7 @@ index 99893d89d..29d58ca23 100644
  
  inline void
  ContentDirectoryService::readDirSlice(UpnpClient_Handle hdl,
-@@ -47,6 +54,7 @@ ContentDirectoryService::readDirSlice(UpnpClient_Handle hdl,
+@@ -47,6 +54,7 @@ ContentDirectoryService::readDirSlice(Up
  				      unsigned &didreadp,
  				      unsigned &totalp) const
  {
@@ -77,7 +73,7 @@ index 99893d89d..29d58ca23 100644
  	// Some devices require an empty SortCriteria, else bad params
  	IXML_Document *request =
  		MakeActionHelper("Browse", m_serviceType.c_str(),
-@@ -82,6 +90,37 @@ ContentDirectoryService::readDirSlice(UpnpClient_Handle hdl,
+@@ -82,6 +90,37 @@ ContentDirectoryService::readDirSlice(Up
  		totalp = ParseUnsigned(value);
  
  	ReadResultTag(dirbuf, response);
@@ -115,7 +111,7 @@ index 99893d89d..29d58ca23 100644
  }
  
  UPnPDirContent
-@@ -110,6 +149,7 @@ ContentDirectoryService::search(UpnpClient_Handle hdl,
+@@ -110,6 +149,7 @@ ContentDirectoryService::search(UpnpClie
  	unsigned offset = 0, total = -1, count;
  
  	do {
@@ -123,7 +119,7 @@ index 99893d89d..29d58ca23 100644
  		UniqueIxmlDocument request(MakeActionHelper("Search", m_serviceType.c_str(),
  							    "ContainerID", objectId,
  							    "SearchCriteria", ss,
-@@ -147,6 +187,39 @@ ContentDirectoryService::search(UpnpClient_Handle hdl,
+@@ -147,6 +187,39 @@ ContentDirectoryService::search(UpnpClie
  			total = ParseUnsigned(value);
  
  		ReadResultTag(dirbuf, response.get());
@@ -171,7 +167,7 @@ index 99893d89d..29d58ca23 100644
  	// Create request
  	UniqueIxmlDocument request(MakeActionHelper("Browse", m_serviceType.c_str(),
  						    "ObjectID", objectId,
-@@ -179,4 +253,31 @@ ContentDirectoryService::getMetadata(UpnpClient_Handle hdl,
+@@ -179,4 +253,31 @@ ContentDirectoryService::getMetadata(Upn
  	UPnPDirContent dirbuf;
  	ReadResultTag(dirbuf, response.get());
  	return dirbuf;
@@ -203,11 +199,9 @@ index 99893d89d..29d58ca23 100644
 +	return dirbuf;
 +#endif
  }
-diff --git a/src/lib/upnp/Action.hxx b/src/lib/upnp/Action.hxx
-index 49ed75198..4ecf4cb06 100644
 --- a/src/lib/upnp/Action.hxx
 +++ b/src/lib/upnp/Action.hxx
-@@ -38,6 +38,7 @@ CountNameValuePairs(gcc_unused const char *name, gcc_unused const char *value,
+@@ -38,6 +38,7 @@ CountNameValuePairs(gcc_unused const cha
  	return 1 + CountNameValuePairs(args...);
  }
  
@@ -215,15 +209,13 @@ index 49ed75198..4ecf4cb06 100644
  /**
   * A wrapper for UpnpMakeAction() that counts the number of name/value
   * pairs and adds the nullptr sentinel.
-@@ -52,5 +53,6 @@ MakeActionHelper(const char *action_name, const char *service_type,
+@@ -52,5 +53,6 @@ MakeActionHelper(const char *action_name
  			      args...,
  			      nullptr, nullptr);
  }
 +#endif
  
  #endif
-diff --git a/src/lib/upnp/ClientInit.cxx b/src/lib/upnp/ClientInit.cxx
-index 23ba9cade..54b677fa2 100644
 --- a/src/lib/upnp/ClientInit.cxx
 +++ b/src/lib/upnp/ClientInit.cxx
 @@ -31,14 +31,12 @@ static Mutex upnp_client_init_mutex;
@@ -246,8 +238,6 @@ index 23ba9cade..54b677fa2 100644
  	if (cookie == nullptr)
  		/* this is the cookie passed to UpnpRegisterClient();
  		   but can this ever happen?  Will libupnp ever invoke
-diff --git a/src/lib/upnp/Compat.hxx b/src/lib/upnp/Compat.hxx
-index 7fba1d83b..b9a4d7cf3 100644
 --- a/src/lib/upnp/Compat.hxx
 +++ b/src/lib/upnp/Compat.hxx
 @@ -22,14 +22,14 @@
@@ -267,8 +257,6 @@ index 7fba1d83b..b9a4d7cf3 100644
  #include "util/Compiler.h"
  
  gcc_pure
-diff --git a/src/lib/upnp/ContentDirectoryService.cxx b/src/lib/upnp/ContentDirectoryService.cxx
-index ae514c717..eed28b41a 100644
 --- a/src/lib/upnp/ContentDirectoryService.cxx
 +++ b/src/lib/upnp/ContentDirectoryService.cxx
 @@ -17,15 +17,21 @@
@@ -293,7 +281,7 @@ index ae514c717..eed28b41a 100644
  ContentDirectoryService::ContentDirectoryService(const UPnPDevice &device,
  						 const UPnPService &service) noexcept
  	:m_actionURL(uri_apply_base(service.controlURL, device.URLBase)),
-@@ -51,6 +57,7 @@ ContentDirectoryService::~ContentDirectoryService() noexcept
+@@ -51,6 +57,7 @@ ContentDirectoryService::~ContentDirecto
  std::forward_list<std::string>
  ContentDirectoryService::getSearchCapabilities(UpnpClient_Handle hdl) const
  {
@@ -301,7 +289,7 @@ index ae514c717..eed28b41a 100644
  	UniqueIxmlDocument request(UpnpMakeAction("GetSearchCapabilities", m_serviceType.c_str(),
  						  0,
  						  nullptr, nullptr));
-@@ -69,6 +76,24 @@ ContentDirectoryService::getSearchCapabilities(UpnpClient_Handle hdl) const
+@@ -69,6 +76,24 @@ ContentDirectoryService::getSearchCapabi
  
  	const char *s = ixmlwrap::getFirstElementValue(response.get(),
  						       "SearchCaps");
@@ -326,8 +314,6 @@ index ae514c717..eed28b41a 100644
  	if (s == nullptr || *s == 0)
  		/* we could just "return {}" here, but GCC 5 doesn't
  		   understand that */
-diff --git a/src/lib/upnp/Init.cxx b/src/lib/upnp/Init.cxx
-index 7ad4d565a..10510402a 100644
 --- a/src/lib/upnp/Init.cxx
 +++ b/src/lib/upnp/Init.cxx
 @@ -23,7 +23,9 @@
@@ -351,8 +337,6 @@ index 7ad4d565a..10510402a 100644
  }
  
  void
-diff --git a/src/lib/upnp/UniqueIxml.hxx b/src/lib/upnp/UniqueIxml.hxx
-index 2ff2afa62..8a0ea0a1f 100644
 --- a/src/lib/upnp/UniqueIxml.hxx
 +++ b/src/lib/upnp/UniqueIxml.hxx
 @@ -20,6 +20,7 @@
@@ -369,8 +353,6 @@ index 2ff2afa62..8a0ea0a1f 100644
  
 +#endif /* USING_PUPNP */
  #endif
-diff --git a/src/lib/upnp/ixmlwrap.cxx b/src/lib/upnp/ixmlwrap.cxx
-index 4e44f35a6..c7798e557 100644
 --- a/src/lib/upnp/ixmlwrap.cxx
 +++ b/src/lib/upnp/ixmlwrap.cxx
 @@ -15,6 +15,9 @@
@@ -383,13 +365,11 @@ index 4e44f35a6..c7798e557 100644
  #include "ixmlwrap.hxx"
  #include "UniqueIxml.hxx"
  
-@@ -39,3 +42,4 @@ getFirstElementValue(IXML_Document *doc, const char *name) noexcept
+@@ -39,3 +42,4 @@ getFirstElementValue(IXML_Document *doc,
  }
  
  }
 +#endif
-diff --git a/src/lib/upnp/ixmlwrap.hxx b/src/lib/upnp/ixmlwrap.hxx
-index 6713d59bd..4b01801f7 100644
 --- a/src/lib/upnp/ixmlwrap.hxx
 +++ b/src/lib/upnp/ixmlwrap.hxx
 @@ -17,6 +17,7 @@
@@ -406,8 +386,6 @@ index 6713d59bd..4b01801f7 100644
  
 +#endif /* USING_PUPNP */
  #endif /* _IXMLWRAP_H_INCLUDED_ */
-diff --git a/src/lib/upnp/meson.build b/src/lib/upnp/meson.build
-index 9e16f7319..bdc248e6c 100644
 --- a/src/lib/upnp/meson.build
 +++ b/src/lib/upnp/meson.build
 @@ -1,4 +1,22 @@

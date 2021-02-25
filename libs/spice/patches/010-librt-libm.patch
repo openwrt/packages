@@ -13,11 +13,9 @@ Acked-by: Frediano Ziglio <fziglio@redhat.com>
  meson.build | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/meson.build b/meson.build
-index 1685c077..f9090a82 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -102,7 +102,7 @@ foreach dep : ['libjpeg', 'zlib']
+@@ -103,7 +103,7 @@ foreach dep : ['libjpeg', 'zlib']
  endforeach
  
  if host_machine.system() != 'windows'

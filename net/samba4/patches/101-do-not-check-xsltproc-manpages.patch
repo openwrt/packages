@@ -4,7 +4,7 @@ Signed-off-by: Bian Naimeng <biannm@cn.fujitsu.com>
 
 --- a/lib/ldb/wscript
 +++ b/lib/ldb/wscript
-@@ -152,7 +152,7 @@ def configure(conf):
+@@ -143,7 +143,7 @@ def configure(conf):
          conf.DEFINE('EXPECTED_SYSTEM_LDB_VERSION_RELEASE', int(v[2]))
  
      if conf.env.standalone_ldb:
@@ -15,7 +15,7 @@ Signed-off-by: Bian Naimeng <biannm@cn.fujitsu.com>
          if conf.CHECK_FUNCS_IN('ber_flush ldap_open ldap_initialize', 'lber ldap', headers='lber.h ldap.h'):
 --- a/lib/talloc/wscript
 +++ b/lib/talloc/wscript
-@@ -49,7 +49,7 @@ def configure(conf):
+@@ -48,7 +48,7 @@ def configure(conf):
          conf.env.PKGCONFIGDIR = '${LIBDIR}/pkgconfig'
          conf.env.TALLOC_VERSION = VERSION
  
@@ -26,12 +26,12 @@ Signed-off-by: Bian Naimeng <biannm@cn.fujitsu.com>
      conf.CHECK_FUNCS('getauxval')
 --- a/lib/tdb/wscript
 +++ b/lib/tdb/wscript
-@@ -89,7 +89,7 @@ def configure(conf):
+@@ -95,7 +95,7 @@ def configure(conf):
          not conf.env.disable_tdb_mutex_locking):
          conf.define('USE_TDB_MUTEX_LOCKING', 1)
  
 -    conf.CHECK_XSLTPROC_MANPAGES()
 +    #conf.CHECK_XSLTPROC_MANPAGES()
  
-     if not conf.env.disable_python:
-         # also disable if we don't have the python libs installed
+     conf.SAMBA_CHECK_PYTHON()
+     conf.SAMBA_CHECK_PYTHON_HEADERS()

@@ -21,8 +21,6 @@ Signed-off-by: Sergei Trofimovich <slyfox@gentoo.org>
  src/powerpc/ffi_powerpc.h | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/powerpc/ffi_powerpc.h b/src/powerpc/ffi_powerpc.h
-index 5ee2a709..8e2f2f0e 100644
 --- a/src/powerpc/ffi_powerpc.h
 +++ b/src/powerpc/ffi_powerpc.h
 @@ -62,7 +62,7 @@ typedef _Float128 float128;

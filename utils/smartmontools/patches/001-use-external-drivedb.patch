@@ -1,8 +1,6 @@
-diff --git i/knowndrives.cpp w/knowndrives.cpp
-index 072160a..d57417b 100644
---- i/knowndrives.cpp
-+++ w/knowndrives.cpp
-@@ -40,11 +40,84 @@ const char * knowndrives_cpp_cvsid = "$Id: knowndrives.cpp 4842 2018-12-02 16:07
+--- a/knowndrives.cpp
++++ b/knowndrives.cpp
+@@ -40,11 +40,84 @@ const char * knowndrives_cpp_cvsid = "$I
  // see read_default_drive_databases() below.
  // The drive_settings structure is described in drivedb.h.
  const drive_settings builtin_knowndrives[] = {

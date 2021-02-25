@@ -7,8 +7,6 @@ Signed-off-by: W. Michael Petullo <mike@flyn.org>
  src/libselinux.pc.in | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/src/libselinux.pc.in b/src/libselinux.pc.in
-index 7c66b1fa..d9d58125 100644
 --- a/src/libselinux.pc.in
 +++ b/src/libselinux.pc.in
 @@ -1,7 +1,7 @@
@@ -21,6 +19,3 @@ index 7c66b1fa..d9d58125 100644
  
  Name: libselinux
  Description: SELinux utility library
--- 
-2.26.2
-

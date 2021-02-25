@@ -8,8 +8,6 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
  meson_options.txt | 5 +++++
  1 file changed, 5 insertions(+)
 
-diff --git a/meson_options.txt b/meson_options.txt
-index 51bea44d..f6687159 100644
 --- a/meson_options.txt
 +++ b/meson_options.txt
 @@ -148,6 +148,11 @@ option('with_zlib',
@@ -24,6 +22,3 @@ index 51bea44d..f6687159 100644
  
  option('build_extra_warnings',
  	type: 'boolean',
--- 
-2.29.2
-

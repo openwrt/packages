@@ -1,6 +1,6 @@
 --- a/src/sstp-client.c
 +++ b/src/sstp-client.c
-@@ -477,6 +477,7 @@ static status_t sstp_init_ssl(sstp_client_st *client, sstp_option_st *opt)
+@@ -477,6 +477,7 @@ static status_t sstp_init_ssl(sstp_clien
      int retval = SSTP_FAIL;
      int status = 0;
  
@@ -8,7 +8,7 @@
      /* Initialize the OpenSSL library */
      status = SSL_library_init();
      if (status != 1)
-@@ -490,6 +491,9 @@ static status_t sstp_init_ssl(sstp_client_st *client, sstp_option_st *opt)
+@@ -490,6 +491,9 @@ static status_t sstp_init_ssl(sstp_clien
  
      /* Create a new crypto context */
      client->ssl_ctx = SSL_CTX_new(SSLv23_client_method());

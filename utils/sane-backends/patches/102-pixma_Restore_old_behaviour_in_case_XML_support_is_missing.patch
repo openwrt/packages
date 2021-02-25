@@ -11,8 +11,6 @@ Fixes #345.
  backend/pixma/pixma_mp800.c  | 8 ++++++++
  4 files changed, 20 insertions(+), 2 deletions(-)
 
-diff --git a/backend/pixma/pixma_common.c b/backend/pixma/pixma_common.c
-index ff3bd487d..2f46082e2 100644
 --- a/backend/pixma/pixma_common.c
 +++ b/backend/pixma/pixma_common.c
 @@ -56,8 +56,6 @@
@@ -24,7 +22,7 @@ index ff3bd487d..2f46082e2 100644
  #endif
  
  #include "pixma_rename.h"
-@@ -1241,6 +1239,7 @@ pixma_get_device_status (pixma_t * s, pixma_device_status_t * status)
+@@ -1241,6 +1239,7 @@ pixma_get_device_status (pixma_t * s, pi
    return s->ops->get_status (s, status);
  }
  
@@ -37,11 +35,9 @@ index ff3bd487d..2f46082e2 100644
    return status;
  }
 +#endif
-diff --git a/backend/pixma/pixma_common.h b/backend/pixma/pixma_common.h
-index bee839c2c..1ced88d17 100644
 --- a/backend/pixma/pixma_common.h
 +++ b/backend/pixma/pixma_common.h
-@@ -205,7 +205,9 @@ uint8_t *pixma_newcmd (pixma_cmdbuf_t *, unsigned cmd,
+@@ -205,7 +205,9 @@ uint8_t *pixma_newcmd (pixma_cmdbuf_t *,
  int pixma_exec (pixma_t *, pixma_cmdbuf_t *);
  int pixma_exec_short_cmd (pixma_t *, pixma_cmdbuf_t *, unsigned cmd);
  int pixma_map_status_errno (unsigned status);
@@ -51,8 +47,6 @@ index bee839c2c..1ced88d17 100644
  /**@}*/
  
  #define pixma_fill_checksum(start, end) do {		\
-diff --git a/backend/pixma/pixma_mp150.c b/backend/pixma/pixma_mp150.c
-index cd6cd3ddf..a18fbdce1 100644
 --- a/backend/pixma/pixma_mp150.c
 +++ b/backend/pixma/pixma_mp150.c
 @@ -322,6 +322,10 @@
@@ -66,7 +60,7 @@ index cd6cd3ddf..a18fbdce1 100644
  enum mp150_state_t
  {
    state_idle,
-@@ -459,7 +463,11 @@ send_xml_dialog (pixma_t * s, const char * xml_message)
+@@ -459,7 +463,11 @@ send_xml_dialog (pixma_t * s, const char
    PDBG (pixma_dbg (10, "XML message sent to scanner:\n%s\n", xml_message));
    PDBG (pixma_dbg (10, "XML response back from scanner:\n%s\n", mp->cb.buf));
  
@@ -78,8 +72,6 @@ index cd6cd3ddf..a18fbdce1 100644
  }
  
  static int
-diff --git a/backend/pixma/pixma_mp800.c b/backend/pixma/pixma_mp800.c
-index 8b7b232fd..e05107d04 100644
 --- a/backend/pixma/pixma_mp800.c
 +++ b/backend/pixma/pixma_mp800.c
 @@ -152,6 +152,10 @@
@@ -93,7 +85,7 @@ index 8b7b232fd..e05107d04 100644
  enum mp810_state_t
  {
    state_idle,
-@@ -291,7 +295,11 @@ static int send_xml_dialog (pixma_t * s, const char * xml_message)
+@@ -291,7 +295,11 @@ static int send_xml_dialog (pixma_t * s,
    PDBG(pixma_dbg (10, "XML message sent to scanner:\n%s\n", xml_message));
    PDBG(pixma_dbg (10, "XML response back from scanner:\n%s\n", mp->cb.buf));
  
@@ -105,6 +97,3 @@ index 8b7b232fd..e05107d04 100644
  }
  
  static void new_cmd_tpu_msg (pixma_t *s, pixma_cmdbuf_t * cb, uint16_t cmd)
--- 
-GitLab
-

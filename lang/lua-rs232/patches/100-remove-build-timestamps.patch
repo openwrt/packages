@@ -8,7 +8,7 @@
  #define MODULE_NAMESPACE "luars232"
  #define MODULE_VERSION "1.0.3"
  #define MODULE_BUILD "$Id: luars232.c 15 2011-02-23 09:02:20Z sp $"
-@@ -553,9 +552,6 @@
+@@ -553,9 +552,6 @@ RS232_LIB int luaopen_luars232(lua_State
  	lua_pushstring(L, MODULE_BUILD);
  	lua_setfield(L, -2, "_BUILD");
  

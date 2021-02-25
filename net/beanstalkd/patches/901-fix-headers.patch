@@ -1,5 +1,5 @@
---- a/sd-daemon.c	2017-02-16 18:50:20.000000000 -0700
-+++ b/sd-daemon.c	2017-02-16 19:21:09.086008361 -0700
+--- a/sd-daemon.c
++++ b/sd-daemon.c
 @@ -32,7 +32,7 @@
  #include <sys/stat.h>
  #include <sys/socket.h>

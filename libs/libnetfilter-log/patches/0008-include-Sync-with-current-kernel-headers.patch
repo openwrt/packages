@@ -9,8 +9,6 @@ Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
  include/libnetfilter_log/linux_nfnetlink_log.h | 9 ++++-----
  1 file changed, 4 insertions(+), 5 deletions(-)
 
-diff --git a/include/libnetfilter_log/linux_nfnetlink_log.h b/include/libnetfilter_log/linux_nfnetlink_log.h
-index 9f38277..081e7f9 100644
 --- a/include/libnetfilter_log/linux_nfnetlink_log.h
 +++ b/include/libnetfilter_log/linux_nfnetlink_log.h
 @@ -1,16 +1,12 @@
@@ -47,6 +45,3 @@ index 9f38277..081e7f9 100644
 +#define NFULNL_CFG_F_CONNTRACK	0x0004
  
  #endif /* _NFNETLINK_LOG_H */
--- 
-2.11.0
-

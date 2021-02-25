@@ -8,8 +8,6 @@ The man page says that these are deprecated. Use sugprocmask as a replacement.
  include/libisns/util.h | 16 ++++++++++++----
  1 file changed, 12 insertions(+), 4 deletions(-)
 
-diff --git a/include/libisns/util.h b/include/libisns/util.h
-index e5ed037..f1b97f0 100644
 --- a/include/libisns/util.h
 +++ b/include/libisns/util.h
 @@ -41,14 +41,22 @@ char *		print_size(unsigned long);

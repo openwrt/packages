@@ -1,6 +1,6 @@
 --- a/src/makefile
 +++ b/src/makefile
-@@ -397,18 +398,18 @@ none:
+@@ -397,18 +397,18 @@ none:
  all: $(SOCKET_SO) $(MIME_SO)
  
  $(SOCKET_SO): $(SOCKET_OBJS)

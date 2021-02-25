@@ -1,7 +1,7 @@
 # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=889170
 # needs to be submitted upstream
---- apr-util.orig/dbm/apr_dbm_gdbm.c
-+++ apr-util/dbm/apr_dbm_gdbm.c
+--- a/dbm/apr_dbm_gdbm.c
++++ b/dbm/apr_dbm_gdbm.c
 @@ -36,13 +36,22 @@
  static apr_status_t g2s(int gerr)
  {

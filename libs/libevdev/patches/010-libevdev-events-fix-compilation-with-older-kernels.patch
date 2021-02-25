@@ -12,8 +12,6 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  tools/mouse-dpi-tool.c  | 5 +++++
  2 files changed, 10 insertions(+)
 
-diff --git a/tools/libevdev-events.c b/tools/libevdev-events.c
-index 547513e..e5940c9 100644
 --- a/tools/libevdev-events.c
 +++ b/tools/libevdev-events.c
 @@ -33,6 +33,11 @@
@@ -28,8 +26,6 @@ index 547513e..e5940c9 100644
  static void
  print_abs_bits(struct libevdev *dev, int axis)
  {
-diff --git a/tools/mouse-dpi-tool.c b/tools/mouse-dpi-tool.c
-index 9961f3a..c4830e7 100644
 --- a/tools/mouse-dpi-tool.c
 +++ b/tools/mouse-dpi-tool.c
 @@ -37,6 +37,11 @@
@@ -44,6 +40,3 @@ index 9961f3a..c4830e7 100644
  #define min(a, b) (((a) < (b)) ? (a) : (b))
  #define max(a, b) (((a) > (b)) ? (a) : (b))
  
--- 
-2.25.3
-

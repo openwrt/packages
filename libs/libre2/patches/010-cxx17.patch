@@ -14,7 +14,7 @@
  if(WIN32)
 --- a/re2.pc
 +++ b/re2.pc
-@@ -6,5 +6,5 @@ libdir=@libdir@
+@@ -4,5 +4,5 @@ libdir=@libdir@
  Name: re2
  Description: RE2 is a fast, safe, thread-friendly regular expression engine.
  Version: 0.0.0

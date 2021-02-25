@@ -1,6 +1,6 @@
 --- a/hmac_md5.c
 +++ b/hmac_md5.c
-@@ -356,10 +356,10 @@ caddr_t         digest;     /* caller digest to be filled in */
+@@ -356,10 +356,10 @@ caddr_t         digest;     /* caller di
       */
  
      /* start out by storing key in pads */

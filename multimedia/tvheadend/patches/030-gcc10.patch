@@ -1,6 +1,6 @@
 --- a/src/input.h
 +++ b/src/input.h
-@@ -120,8 +120,8 @@ void tvh_hardware_delete ( tvh_hardware_t *th );
+@@ -120,8 +120,8 @@ void tvh_hardware_delete ( tvh_hardware_
  extern const idclass_t tvh_input_class;
  extern const idclass_t tvh_input_instance_class;
  
