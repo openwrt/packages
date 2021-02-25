@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mstpd
-PKG_VERSION:=0.0.8
-PKG_RELEASE:=2
+PKG_VERSION:=0.0.9
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mstpd/mstpd/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=dd6492039368efff0bd13b3f9c8bb32d859ebfe258a70ef23b2163c4b6c35f0c
+PKG_HASH:=91a1862548b5b509caa2e96e5fb9912bc98d4d58cc98e99a577824735756c14d
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
