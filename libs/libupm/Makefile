@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libupm
 PKG_VERSION:=2.0.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/intel-iot-devkit/upm/tar.gz/v$(PKG_VERSION)?
@@ -53,7 +53,9 @@ UPM_MODULES:= \
 # (require libbacnet) tb7300 t8100 e50hx bacnetmstp
 # (require libtinyb) 2jciebu01_ble 2jciebu01_usb
 
-CMAKE_OPTIONS=-DBUILDSWIGNODE=$(if $(CONFIG_PACKAGE_libmraa-node),ON,OFF)
+CMAKE_OPTIONS=-DBUILDSWIGNODE=$(if $(CONFIG_PACKAGE_libmraa-node),ON,OFF) \
+	-DPYTHON2LIBS_FOUND=FALSE \
+	-DPYTHON2INTERP_FOUND=FALSE \
 
 define Package/libupm/Default
   SECTION:=libs
