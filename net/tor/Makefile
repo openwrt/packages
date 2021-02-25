@@ -139,7 +139,10 @@ ifeq ($(BUILD_VARIANT),basic)
   CONFIGURE_ARGS += --disable-module-relay
 endif
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
+
+TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto \
+	$(if $(CONFIG_OPENSSL_ENGINE),,-DDISABLE_ENGINES)
+
 TARGET_LDFLAGS += -Wl,--gc-sections -flto
 
 CONFIGURE_VARS += \
