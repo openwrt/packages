@@ -66,9 +66,9 @@ uciadd() {
 		uci_quiet add firewall zone
 		uci_quiet rename firewall.@zone[-1]="${zone}"
 		uci_quiet set firewall.@zone[-1].network="${iface}"
-		uci_quiet set firewall.@zone[-1].input="REJECT"
+		uci_quiet set firewall.@zone[-1].input="ACCEPT"
 		uci_quiet set firewall.@zone[-1].output="ACCEPT"
-		uci_quiet set firewall.@zone[-1].forward="REJECT"
+		uci_quiet set firewall.@zone[-1].forward="ACCEPT"
 		uci_quiet set firewall.@zone[-1].name="${zone}"
 		uci_quiet commit firewall
 	fi
@@ -142,6 +142,7 @@ process_config() {
 	config_get bip globals bip ""
 	config_get registry_mirrors globals registry_mirrors ""
 	config_get hosts globals hosts ""
+	config_get dns globals dns ""
 
 	. /usr/share/libubox/jshn.sh
 	json_init
@@ -155,6 +156,9 @@ process_config() {
 	[ -z "${hosts}" ] || json_add_array "hosts"
 	[ -z "${hosts}" ] || config_list_foreach globals hosts json_add_array_string
 	[ -z "${hosts}" ] || json_close_array
+	[ -z "${dns}" ] || json_add_array "dns"
+	[ -z "${dns}" ] || config_list_foreach globals dns json_add_array_string
+	[ -z "${dns}" ] || json_close_array
 	json_dump > "${DOCKERD_CONF}"
 
 	[ "${iptables}" -eq "1" ] && config_foreach iptables_add_blocking_rule firewall
