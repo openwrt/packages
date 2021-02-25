@@ -529,7 +529,12 @@ endef
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
-	( cd $(PKG_BUILD_DIR); touch configure.ac; ./buildconf --force )
+	$(if $(QUILT),,( cd $(PKG_BUILD_DIR); touch configure.ac; ./buildconf --force ))
+endef
+
+define Build/Configure
+	$(if $(QUILT),( cd $(PKG_BUILD_DIR); touch configure.ac; ./buildconf --force ))
+	$(call Build/Configure/Default)
 endef
 
 define Build/InstallDev
