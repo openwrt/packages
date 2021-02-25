@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdaq
 PKG_VERSION:=2.2.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=https://www.snort.org/downloads/snortplus/
 PKG_SOURCE:=daq-$(PKG_VERSION).tar.gz
@@ -45,12 +45,12 @@ CONFIGURE_ARGS+= \
 	--with-libpcap-libraries="$(STAGING_DIR)/usr/lib" \
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(STAGING_DIR)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(STAGING_DIR)/usr/include/
-	$(INSTALL_DIR) $(STAGING_DIR)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib* $(STAGING_DIR)/usr/lib/
-	$(INSTALL_DIR) $(STAGING_DIR)/usr/lib/daq
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/daq/* $(STAGING_DIR)/usr/lib/daq/
+	$(INSTALL_DIR) $(STAGING_DIR)/usr/include/daq2
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(STAGING_DIR)/usr/include/daq2/
+	$(INSTALL_DIR) $(STAGING_DIR)/usr/lib/daq2
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib* $(STAGING_DIR)/usr/lib/daq2/
+	$(INSTALL_DIR) $(STAGING_DIR)/usr/lib/daq2/daq
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/daq/* $(STAGING_DIR)/usr/lib/daq2/daq/
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/daq-modules-config $(STAGING_DIR)/usr/bin/
 	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(STAGING_DIR)/usr/bin/daq-modules-config
