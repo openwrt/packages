@@ -10,12 +10,12 @@ PKG_RELRO_FULL:=0
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot-resolver
-PKG_VERSION:=5.2.1
+PKG_VERSION:=5.3.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-resolver
-PKG_HASH:=aa37b744c400f437acba7a54aebcbdbe722ece743d342cbc39f2dd8087f05826
+PKG_HASH:=fb6cb2c03f4fffbdd8a0098127383d03b14cf7d6abf3a0cd229fb13ff68ee33e
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=GPL-3.0-later
@@ -41,10 +41,10 @@ define Package/knot-resolver
     +luasec \
     +luasocket \
     +libstdcpp \
+    +libnghttp2 \
     +lmdb \
     PACKAGE_knot-resolver_dnstap:libfstrm \
-    PACKAGE_knot-resolver_dnstap:libprotobuf-c \
-    @(aarch64||mips64||mips64el||powerpc64||x86_64)
+    PACKAGE_knot-resolver_dnstap:libprotobuf-c
   USERID:=kresd=3536:kresd=3536
 endef
 
