@@ -25,11 +25,7 @@ if [ ! -s "$TARGET_FNAME" ]; then
 
 	if [ "$DB_SOURCE" = "api.bgpview.io" ]; then
 		TARGET_URL="https://api.bgpview.io/asn/${TARGET_ASN}/prefixes"
-		if command -v jq >/dev/null 2>&1; then
-			curl -s "$TARGET_URL" 2>/dev/null | jq -r '.data.ipv4_prefixes[].prefix' > "$TARGET_FNAME"
-		else
-			curl -s "$TARGET_URL" 2>/dev/null | sed -ne 's/.*"ipv4_prefixes":\(.*\),"ipv6_prefixes":.*/\1\n/g; s/\}\},/&\n/g; s/"parent":{"prefix":/"parent":{"parent_prefix":/gp' | sed -ne 's/.*"prefix":"\(.\{0,20\}\)",".*/\1/g; s/\\//gp' > "$TARGET_FNAME"
-		fi
+		curl -s "$TARGET_URL" 2>/dev/null | jsonfilter -e '@.data.ipv4_prefixes[*].prefix'
 	fi
 fi
 
