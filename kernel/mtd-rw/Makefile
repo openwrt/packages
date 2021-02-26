@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=mtd-rw
 PKG_VERSION:=git-20160214
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MIRROR_HASH:=c44db17c3e05079116a1704f277642c9ce6f5ca4fa380c60f7e6d44509dc16be
@@ -29,6 +29,7 @@ define KernelPackage/mtd-rw
 	SUBMENU:=Other modules
 	TITLE:=Write-enabler for MTD partitions
 	FILES:=$(PKG_BUILD_DIR)/mtd-rw.ko
+	DEPENDS:=@!(TARGET_x86||TARGET_bcm27xx||TARGET_octeontx)
 endef
 
 define KernelPackage/mtd-rw/description
