@@ -7,7 +7,7 @@
 		"descurl": "https://github.com/AdAway/adaway.github.io"
 	},
 	"adguard": {
-		"url": "https://filters.adtidy.org/windows/filters/15.txt",
+		"url": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
 		"rule": "BEGIN{FS=\"[\/|^|\\r]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+[\\/\\^\\r]+$/{print tolower($3)}",
 		"size": "L",
 		"focus": "general",
@@ -55,38 +55,10 @@
 		"focus": "general",
 		"descurl": "https://disconnect.me"
 	},
-	"energized_blugo": {
-		"url": "https://block.energized.pro/bluGo/formats/domains.txt",
+	"energized": {
+		"url": "https://block.energized.pro/",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
-		"size": "XL",
-		"focus": "compilation",
-		"descurl": "https://energized.pro"
-	},
-	"energized_blu": {
-		"url": "https://block.energized.pro/blu/formats/domains.txt",
-		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
-		"size": "XL",
-		"focus": "compilation",
-		"descurl": "https://energized.pro"
-	},
-	"energized_porn": {
-		"url": "https://block.energized.pro/porn/formats/domains.txt",
-		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
-		"size": "XXL",
-		"focus": "compilation+porn",
-		"descurl": "https://energized.pro"
-	},
-	"energized_ultimate": {
-		"url": "https://block.energized.pro/ultimate/formats/domains.txt",
-		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
-		"size": "XXL",
-		"focus": "compilation",
-		"descurl": "https://energized.pro"
-	},
-	"energized_unified": {
-		"url": "https://block.energized.pro/unified/formats/domains.txt",
-		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
-		"size": "XXL",
+		"size": "VAR",
 		"focus": "compilation",
 		"descurl": "https://energized.pro"
 	},
@@ -111,13 +83,6 @@
 		"focus": "gaming",
 		"descurl": "https://github.com/abyssin/pihole-blocklist"
 	},
-	"malwaredomains": {
-		"url": "https://mirror.cedia.org.ec/malwaredomains/justdomains",
-		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
-		"size": "M",
-		"focus": "malware",
-		"descurl": "https://www.malwaredomains.com"
-	},
 	"notracking": {
 		"url": "https://raw.githubusercontent.com/notracking/hosts-blocklists/master/dnscrypt-proxy/dnscrypt-proxy.blacklist.txt",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
@@ -125,9 +90,16 @@
 		"focus": "tracking",
 		"descurl": "https://github.com/notracking/hosts-blocklists"
 	},
-	"oisd_nl": {
-		"url": "https://abp.oisd.nl/",
-		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
+	"oisd_basic": {
+		"url": "https://dbl.oisd.nl/basic",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "L",
+		"focus": "general",
+		"descurl": "https://oisd.nl"
+	},
+	"oisd_full": {
+		"url": "https://dbl.oisd.nl",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "XXL",
 		"focus": "general",
 		"descurl": "https://oisd.nl"
@@ -217,11 +189,11 @@
 		"descurl": "https://easylist.to"
 	},
 	"reg_pl1": {
-		"url": "https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts_without_controversies.txt",
+		"url": "https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt",
 		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
 		"size": "S",
 		"focus": "reg_poland",
-		"descurl": "https://kadantiscam.netlify.com"
+		"descurl": "https://kadantiscam.netlify.app"
 	},
 	"reg_pl2": {
 		"url": "https://raw.githubusercontent.com/MajkiIT/polish-ads-filter/master/polish-pihole-filters/hostfile.txt",
@@ -236,6 +208,13 @@
 		"size": "M",
 		"focus": "reg_romania",
 		"descurl": "https://easylist.to"
+	},
+	"reg_se": {
+		"url": "https://raw.githubusercontent.com/lassekongo83/Frellwits-filter-lists/master/Frellwits-Swedish-Hosts-File.txt",
+		"rule": "/^127\\.0\\.0\\.1[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
+		"size": "s",
+		"focus": "reg_sweden",
+		"descurl": "https://github.com/lassekongo83/Frellwits-filter-lists"
 	},
 	"reg_ru": {
 		"url": "https://easylist-downloads.adblockplus.org/ruadlist+easylist.txt",
@@ -254,22 +233,9 @@
 	"shallalist": {
 		"url": "https://www.shallalist.de/Downloads/shallalist.tar.gz",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
-		"categories": [
-				"adv", "costtraps", "spyware", "tracker", "warez"
-		],
-		"size": "L",
+		"size": "VAR",
 		"focus": "general",
-		"descurl": "https://www.shallalist.de"
-	},
-	"shallalist_porn": {
-		"url": "https://www.shallalist.de/Downloads/shallalist.tar.gz",
-		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
-		"categories": [
-				"adv", "costtraps", "porn", "spyware", "tracker", "warez"
-		],
-		"size": "XXL",
-		"focus": "general+porn",
-		"descurl": "https://www.shallalist.de"
+		"descurl": "https://www.shallalist.de",
 	},
 	"smarttv_tracking": {
 		"url": "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV.txt",
@@ -286,16 +252,9 @@
 		"descurl": "https://github.com/Dawsey21"
 	},
 	"stevenblack": {
-		"url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
+		"url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/",
 		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
-		"size": "L",
-		"focus": "compilation",
-		"descurl": "https://github.com/StevenBlack/hosts"
-	},
-	"stevenblack_porn": {
-		"url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-gambling-porn-social/hosts",
-		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
-		"size": "L",
+		"size": "VAR",
 		"focus": "compilation",
 		"descurl": "https://github.com/StevenBlack/hosts"
 	},
@@ -309,22 +268,9 @@
 	"utcapitole": {
 		"url": "https://dsi.ut-capitole.fr/blacklists/download/blacklists.tar.gz",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
-		"categories": [
-				"publicite", "bitcoin", "cryptojacking", "ddos", "malware", "phishing", "warez"
-		],
-		"size": "L",
+		"size": "VAR",
 		"focus": "general",
-		"descurl": "https://dsi.ut-capitole.fr/blacklists/index_en.php"
-	},
-	"utcapitole_porn": {
-		"url": "https://dsi.ut-capitole.fr/blacklists/download/blacklists.tar.gz",
-		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
-		"categories": [
-				"adult", "publicite", "bitcoin", "cryptojacking", "ddos", "malware", "phishing", "warez"
-		],
-		"size": "XXL",
-		"focus": "general+porn",
-		"descurl": "https://dsi.ut-capitole.fr/blacklists/index_en.php"
+		"descurl": "https://dsi.ut-capitole.fr/blacklists/index_en.php",
 	},
 	"wally3k": {
 		"url": "https://v.firebog.net/hosts/static/w3kbl.txt",
