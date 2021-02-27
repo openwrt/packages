@@ -17,12 +17,12 @@ Resolves: #1484
 ---
  .travis.yml                   |   8 +-
  Makefile.in                   |   6 +-
- ndiff/ndiff.py                | 495 +++++++++++++++++++++---------------------
+ ndiff/ndiff.py                | 503 +++++++++++++++++++++---------------------
  ndiff/ndifftest.py            |  94 ++++----
  ndiff/scripts/ndiff           |  14 +-
- ndiff/setup.py                |  34 +--
+ ndiff/setup.py                |  44 ++--
  ndiff/test-scans/anonymize.py |  18 +-
- 7 files changed, 337 insertions(+), 332 deletions(-)
+ 7 files changed, 346 insertions(+), 341 deletions(-)
  mode change 100644 => 100755 ndiff/setup.py
 
 --- a/.travis.yml
@@ -44,7 +44,7 @@ Resolves: #1484
    - SSL_FLAG="--without-openssl" LUA_FLAG="--without-liblua"
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -35,6 +35,7 @@ ZENMAPDIR = @ZENMAPDIR@
+@@ -34,6 +34,7 @@ ZENMAPDIR = @ZENMAPDIR@
  NDIFFDIR = @NDIFFDIR@
  NPINGDIR = @NPINGDIR@
  PYTHON = @PYTHON@
@@ -52,7 +52,7 @@ Resolves: #1484
  DEFS = @DEFS@ -DNMAP_PLATFORM=\"$(NMAP_PLATFORM)\" -DNMAPDATADIR=\"$(nmapdatadir)\"
  # With GCC, add extra security checks to source code.
  # http://gcc.gnu.org/ml/gcc-patches/2004-09/msg02055.html
-@@ -368,6 +369,7 @@ tests/check_dns: $(OBJS)
+@@ -361,6 +362,7 @@ tests/check_dns: $(OBJS)
  # this as the location of the interpreter whenever we're not doing a
  # local installation.
  DEFAULT_PYTHON_PATH = /usr/bin/env python
@@ -60,7 +60,7 @@ Resolves: #1484
  
  build-zenmap: $(ZENMAPDIR)/setup.py $(ZENMAPDIR)/zenmapCore/Version.py
  # When DESTDIR is defined, assume we're building an executable
-@@ -388,7 +390,7 @@ install-zenmap: $(ZENMAPDIR)/setup.py
+@@ -381,7 +383,7 @@ install-zenmap: $(ZENMAPDIR)/setup.py
  	ln -sf zenmap $(DESTDIR)$(bindir)/xnmap
  
  build-ndiff:
@@ -69,7 +69,7 @@ Resolves: #1484
  
  build-nping: $(NPINGDIR)/Makefile build-nbase build-nsock build-netutil $(NPINGDIR)/nping.h @DNET_BUILD@ @PCAP_BUILD@
  	@cd $(NPINGDIR) && $(MAKE)
-@@ -458,7 +460,7 @@ check-ncat:
+@@ -451,7 +453,7 @@ check-ncat:
  	@cd $(NCATDIR) && $(MAKE) check
  
  check-ndiff:
@@ -100,7 +100,7 @@ Resolves: #1484
  
  
  class OverrideEntityResolver(xml.sax.handler.EntityResolver):
-@@ -78,35 +78,35 @@ class Scan(object):
+@@ -75,35 +75,35 @@ class Scan(object):
      def write_nmaprun_open(self, writer):
          attrs = {}
          if self.scanner is not None:
@@ -149,7 +149,7 @@ Resolves: #1484
          frag.appendChild(elem)
          return frag
  
-@@ -136,17 +136,17 @@ class Host(object):
+@@ -133,17 +133,17 @@ class Host(object):
  
      def format_name(self):
          """Return a human-readable identifier for this host."""
@@ -171,7 +171,7 @@ Resolves: #1484
  
      def add_port(self, port):
          self.ports[port.spec] = port
-@@ -163,46 +163,46 @@ class Host(object):
+@@ -160,46 +160,46 @@ class Host(object):
          return state is None or state in self.extraports
  
      def extraports_string(self):
@@ -233,7 +233,7 @@ Resolves: #1484
  
          if self.state is not None:
              elem.appendChild(self.state_to_dom_fragment(document))
-@@ -211,13 +211,13 @@ class Host(object):
+@@ -208,13 +208,13 @@ class Host(object):
              elem.appendChild(addr.to_dom_fragment(document))
  
          if len(self.hostnames) > 0:
@@ -249,7 +249,7 @@ Resolves: #1484
          ports_elem.appendChild(self.extraports_to_dom_fragment(document))
          for port in sorted(self.ports.values()):
              if not self.is_extraports(port.state):
-@@ -226,13 +226,13 @@ class Host(object):
+@@ -223,13 +223,13 @@ class Host(object):
              elem.appendChild(ports_elem)
  
          if len(self.os) > 0:
@@ -265,7 +265,7 @@ Resolves: #1484
              for sr in self.script_results:
                  hostscript_elem.appendChild(sr.to_dom_fragment(document))
              elem.appendChild(hostscript_elem)
-@@ -246,7 +246,7 @@ class Address(object):
+@@ -243,7 +243,7 @@ class Address(object):
          self.s = s
  
      def __eq__(self, other):
@@ -274,7 +274,7 @@ Resolves: #1484
  
      def __ne__(self, other):
          return not self.__eq__(other)
-@@ -254,8 +254,8 @@ class Address(object):
+@@ -251,8 +251,8 @@ class Address(object):
      def __hash__(self):
          return hash(self.sort_key())
  
@@ -285,7 +285,7 @@ Resolves: #1484
  
      def __str__(self):
          return str(self.s)
-@@ -264,21 +264,21 @@ class Address(object):
+@@ -261,21 +261,21 @@ class Address(object):
          return self.s
  
      def new(type, s):
@@ -314,7 +314,7 @@ Resolves: #1484
          frag.appendChild(elem)
          return frag
  
-@@ -287,21 +287,21 @@ class Address(object):
+@@ -284,21 +284,21 @@ class Address(object):
  
  
  class IPv4Address(Address):
@@ -339,7 +339,7 @@ Resolves: #1484
  
      def sort_key(self):
          return (2, self.s)
-@@ -320,28 +320,25 @@ class Port(object):
+@@ -317,31 +317,28 @@ class Port(object):
  
      def state_string(self):
          if self.state is None:
@@ -352,6 +352,9 @@ Resolves: #1484
      def spec_string(self):
 -        return u"%d/%s" % self.spec
 +        return "%d/%s" % self.spec
+ 
+     def __hash__(self):
+         return hash(self.spec)
  
 -    def __cmp__(self, other):
 -        d = cmp(self.spec, other.spec)
@@ -498,7 +501,7 @@ Resolves: #1484
          for sr in script_results_b:
              elem.appendChild(sr.to_dom_fragment(document))
          b_elem.appendChild(elem)
-@@ -581,10 +578,10 @@ class ScanDiffText(ScanDiff):
+@@ -580,10 +577,10 @@ class ScanDiffText(ScanDiff):
          banner_a = format_banner(self.scan_a)
          banner_b = format_banner(self.scan_b)
          if banner_a != banner_b:
@@ -512,7 +515,7 @@ Resolves: #1484
  
      def output_pre_scripts(self, pre_script_result_diffs):
          print_script_result_diffs_text("Pre-scan script results",
-@@ -597,7 +594,7 @@ class ScanDiffText(ScanDiff):
+@@ -596,7 +593,7 @@ class ScanDiffText(ScanDiff):
              post_script_result_diffs, self.f)
  
      def output_host_diff(self, h_diff):
@@ -521,7 +524,7 @@ Resolves: #1484
          h_diff.print_text(self.f)
  
      def output_ending(self):
-@@ -622,8 +619,8 @@ class ScanDiffXML(ScanDiff):
+@@ -621,8 +618,8 @@ class ScanDiffXML(ScanDiff):
  
      def output_beginning(self):
          self.writer.startDocument()
@@ -532,7 +535,7 @@ Resolves: #1484
  
          if self.nmaprun_differs():
              self.writer.frag_a(
-@@ -636,7 +633,7 @@ class ScanDiffXML(ScanDiff):
+@@ -635,7 +632,7 @@ class ScanDiffXML(ScanDiff):
  
      def output_pre_scripts(self, pre_script_result_diffs):
          if len(pre_script_result_diffs) > 0 or verbose:
@@ -541,7 +544,7 @@ Resolves: #1484
              frag = script_result_diffs_to_dom_fragment(
                  prescript_elem, self.scan_a.pre_script_results,
                  self.scan_b.pre_script_results, pre_script_result_diffs,
-@@ -646,7 +643,7 @@ class ScanDiffXML(ScanDiff):
+@@ -645,7 +642,7 @@ class ScanDiffXML(ScanDiff):
  
      def output_post_scripts(self, post_script_result_diffs):
          if len(post_script_result_diffs) > 0 or verbose:
@@ -550,7 +553,7 @@ Resolves: #1484
              frag = script_result_diffs_to_dom_fragment(
                  postscript_elem, self.scan_a.post_script_results,
                  self.scan_b.post_script_results, post_script_result_diffs,
-@@ -660,8 +657,8 @@ class ScanDiffXML(ScanDiff):
+@@ -659,8 +656,8 @@ class ScanDiffXML(ScanDiff):
          frag.unlink()
  
      def output_ending(self):
@@ -561,7 +564,7 @@ Resolves: #1484
          self.writer.endDocument()
  
  
-@@ -719,9 +716,9 @@ class HostDiff(object):
+@@ -718,9 +715,9 @@ class HostDiff(object):
          self.cost += os_cost
  
          extraports_a = tuple((count, state)
@@ -573,7 +576,7 @@ Resolves: #1484
          if extraports_a != extraports_b:
              self.extraports_changed = True
              self.cost += 1
-@@ -747,69 +744,69 @@ class HostDiff(object):
+@@ -746,69 +743,69 @@ class HostDiff(object):
          # Names and addresses.
          if self.id_changed:
              if host_a.state is not None:
@@ -664,7 +667,7 @@ Resolves: #1484
  
          print_script_result_diffs_text("Host script results",
              host_a.script_results, host_b.script_results,
-@@ -820,32 +817,32 @@ class HostDiff(object):
+@@ -819,32 +816,32 @@ class HostDiff(object):
          host_b = self.host_b
  
          frag = document.createDocumentFragment()
@@ -703,7 +706,7 @@ Resolves: #1484
              b_elem.appendChild(host_b.state_to_dom_fragment(document))
              host_elem.appendChild(b_elem)
  
-@@ -854,31 +851,31 @@ class HostDiff(object):
+@@ -853,31 +850,31 @@ class HostDiff(object):
          addrset_b = set(host_b.addresses)
          for addr in sorted(addrset_a.intersection(addrset_b)):
              host_elem.appendChild(addr.to_dom_fragment(document))
@@ -740,7 +743,7 @@ Resolves: #1484
          for hostname in sorted(hostnameset_b - hostnameset_a):
              b_elem.appendChild(
                      host_b.hostname_to_dom_fragment(document, hostname))
-@@ -887,15 +884,15 @@ class HostDiff(object):
+@@ -886,15 +883,15 @@ class HostDiff(object):
          if hostnames_elem.hasChildNodes():
              host_elem.appendChild(hostnames_elem)
  
@@ -759,7 +762,7 @@ Resolves: #1484
              b_elem.appendChild(host_b.extraports_to_dom_fragment(document))
              ports_elem.appendChild(b_elem)
          # Port list.
-@@ -911,18 +908,18 @@ class HostDiff(object):
+@@ -910,18 +907,18 @@ class HostDiff(object):
  
          # OS changes.
          if self.os_changed or verbose:
@@ -781,7 +784,7 @@ Resolves: #1484
                      for i in range(j1, j2):
                          b_elem.appendChild(host_b.os_to_dom_fragment(
                              document, host_b.os[i]))
-@@ -936,7 +933,7 @@ class HostDiff(object):
+@@ -935,7 +932,7 @@ class HostDiff(object):
  
          # Host script changes.
          if len(self.script_result_diffs) > 0 or verbose:
@@ -790,7 +793,7 @@ Resolves: #1484
              host_elem.appendChild(script_result_diffs_to_dom_fragment(
                  hostscript_elem, host_a.script_results,
                  host_b.script_results, self.script_result_diffs,
-@@ -989,38 +986,38 @@ class PortDiff(object):
+@@ -988,38 +985,38 @@ class PortDiff(object):
              self.port_b.service.version_string()]
          if a_columns == b_columns:
              if verbose or self.script_result_diffs > 0:
@@ -840,7 +843,7 @@ Resolves: #1484
                  b_elem.appendChild(
                          self.port_b.service.to_dom_fragment(document))
                  port_elem.appendChild(b_elem)
-@@ -1028,10 +1025,10 @@ class PortDiff(object):
+@@ -1027,10 +1024,10 @@ class PortDiff(object):
                  port_elem.appendChild(sr_diff.to_dom_fragment(document))
              portdiff_elem.appendChild(port_elem)
          else:
@@ -853,7 +856,7 @@ Resolves: #1484
              b_elem.appendChild(self.port_b.to_dom_fragment(document))
              portdiff_elem.appendChild(b_elem)
  
-@@ -1086,13 +1083,13 @@ class ScriptResultDiff(object):
+@@ -1085,13 +1082,13 @@ class ScriptResultDiff(object):
              for op, i1, i2, j1, j2 in diffs.get_opcodes():
                  if op == "replace" or op == "delete":
                      for k in range(i1, i2):
@@ -870,7 +873,7 @@ Resolves: #1484
  
      def to_dom_fragment(self, document):
          frag = document.createDocumentFragment()
-@@ -1102,11 +1099,11 @@ class ScriptResultDiff(object):
+@@ -1101,11 +1098,11 @@ class ScriptResultDiff(object):
              frag.appendChild(self.sr_a.to_dom_fragment(document))
          else:
              if self.sr_a is not None:
@@ -884,7 +887,7 @@ Resolves: #1484
                  b_elem.appendChild(self.sr_b.to_dom_fragment(document))
                  frag.appendChild(b_elem)
          return frag
-@@ -1120,7 +1117,7 @@ class Table(object):
+@@ -1119,7 +1116,7 @@ class Table(object):
          copied to the output."""
          self.widths = []
          self.rows = []
@@ -893,7 +896,7 @@ Resolves: #1484
          self.padding = []
          j = 0
          while j < len(template) and template[j] != "*":
-@@ -1145,7 +1142,7 @@ class Table(object):
+@@ -1144,7 +1141,7 @@ class Table(object):
  
          for i in range(len(row)):
              if row[i] is None:
@@ -902,7 +905,7 @@ Resolves: #1484
              else:
                  s = str(row[i])
              if i == len(self.widths):
-@@ -1167,7 +1164,7 @@ class Table(object):
+@@ -1166,7 +1163,7 @@ class Table(object):
          for row in self.rows:
              parts = [self.prefix]
              i = 0
@@ -911,7 +914,7 @@ Resolves: #1484
                  # A raw string.
                  lines.append(row)
              else:
-@@ -1176,13 +1173,13 @@ class Table(object):
+@@ -1175,13 +1172,13 @@ class Table(object):
                      if i < len(self.padding):
                          parts.append(self.padding[i])
                      i += 1
@@ -928,12 +931,13 @@ Resolves: #1484
  
  
  class NmapContentHandler(xml.sax.handler.ContentHandler):
-@@ -1200,22 +1197,22 @@ class NmapContentHandler(xml.sax.handler
-         self.current_port = None
+@@ -1201,24 +1198,24 @@ class NmapContentHandler(xml.sax.handler
+         self.skip_over = False
  
          self._start_elem_handlers = {
 -            u"nmaprun": self._start_nmaprun,
 -            u"host": self._start_host,
+-            u"hosthint": self._start_hosthint,
 -            u"status": self._start_status,
 -            u"address": self._start_address,
 -            u"hostname": self._start_hostname,
@@ -946,6 +950,7 @@ Resolves: #1484
 -            u"finished": self._start_finished,
 +            "nmaprun": self._start_nmaprun,
 +            "host": self._start_host,
++            "hosthint": self._start_hosthint,
 +            "status": self._start_status,
 +            "address": self._start_address,
 +            "hostname": self._start_hostname,
@@ -959,13 +964,15 @@ Resolves: #1484
          }
          self._end_elem_handlers = {
 -            u'host': self._end_host,
+-            u"hosthint": self._end_hosthint,
 -            u'port': self._end_port,
 +            'host': self._end_host,
++            "hosthint": self._end_hosthint,
 +            'port': self._end_port,
          }
  
      def parent_element(self):
-@@ -1245,68 +1242,68 @@ class NmapContentHandler(xml.sax.handler
+@@ -1248,72 +1245,72 @@ class NmapContentHandler(xml.sax.handler
      def _start_nmaprun(self, name, attrs):
          assert self.parent_element() is None
          if "start" in attrs:
@@ -986,6 +993,11 @@ Resolves: #1484
          self.current_host = Host()
          self.scan.hosts.append(self.current_host)
  
+     def _start_hosthint(self, name, attrs):
+-        assert self.parent_element() == u"nmaprun"
++        assert self.parent_element() == "nmaprun"
+         self.skip_over = True
+ 
      def _start_status(self, name, attrs):
 -        assert self.parent_element() == u"host"
 +        assert self.parent_element() == "host"
@@ -993,8 +1005,9 @@ Resolves: #1484
 -        state = attrs.get(u"state")
 +        state = attrs.get("state")
          if state is None:
-             warn(u'%s element of host %s is missing the "state" attribute; '
+-            warn(u'%s element of host %s is missing the "state" attribute; '
 -                    'assuming \unknown\.' % (
++            warn('%s element of host %s is missing the "state" attribute; '
 +                    r'assuming \unknown\.' % (
                          name, self.current_host.format_name()))
              return
@@ -1055,7 +1068,7 @@ Resolves: #1484
                      'attribute; assuming 0.' % (
                          name, self.current_host.format_name()))
              count = 0
-@@ -1314,99 +1311,99 @@ class NmapContentHandler(xml.sax.handler
+@@ -1321,99 +1318,99 @@ class NmapContentHandler(xml.sax.handler
              try:
                  count = int(count)
              except ValueError:
@@ -1186,7 +1199,7 @@ Resolves: #1484
              self.scan.end_date = datetime.datetime.fromtimestamp(end_timestamp)
  
      def _end_host(self, name):
-@@ -1425,23 +1422,23 @@ class XMLWriter (xml.sax.saxutils.XMLGen
+@@ -1435,23 +1432,23 @@ class XMLWriter (xml.sax.saxutils.XMLGen
  
      def frag(self, frag):
          for node in frag.childNodes:
@@ -1218,7 +1231,7 @@ Resolves: #1484
  Usage: %s [option] FILE1 FILE2
  Compare two Nmap XML files and display a list of their differences.
  Differences include host state changes, port state changes, and changes to
-@@ -1451,7 +1448,7 @@ service and OS detection.
+@@ -1461,7 +1458,7 @@ service and OS detection.
    -v, --verbose  also show hosts and ports that haven't changed.
    --text         display output in text format (default)
    --xml          display output in XML format\
@@ -1227,7 +1240,7 @@ Resolves: #1484
  
  EXIT_EQUAL = 0
  EXIT_DIFFERENT = 1
-@@ -1459,8 +1456,8 @@ EXIT_ERROR = 2
+@@ -1469,8 +1466,8 @@ EXIT_ERROR = 2
  
  
  def usage_error(msg):
@@ -1238,7 +1251,7 @@ Resolves: #1484
      sys.exit(EXIT_ERROR)
  
  
-@@ -1471,7 +1468,7 @@ def main():
+@@ -1481,7 +1478,7 @@ def main():
      try:
          opts, input_filenames = getopt.gnu_getopt(
                  sys.argv[1:], "hv", ["help", "text", "verbose", "xml"])
@@ -1247,7 +1260,7 @@ Resolves: #1484
          usage_error(e.msg)
      for o, a in opts:
          if o == "-h" or o == "--help":
-@@ -1481,15 +1478,15 @@ def main():
+@@ -1491,15 +1488,15 @@ def main():
              verbose = True
          elif o == "--text":
              if output_format is not None and output_format != "text":
@@ -1266,7 +1279,7 @@ Resolves: #1484
  
      if output_format is None:
          output_format = "text"
-@@ -1502,8 +1499,8 @@ def main():
+@@ -1512,8 +1509,8 @@ def main():
          scan_a.load_from_file(filename_a)
          scan_b = Scan()
          scan_b.load_from_file(filename_b)
@@ -1519,6 +1532,12 @@ Resolves: #1484
  import ndiff
 --- a/ndiff/setup.py
 +++ b/ndiff/setup.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ 
+ import errno
+ import sys
 @@ -94,7 +94,7 @@ class checked_install(distutils.command.
          self.saved_prefix = sys.prefix
          try:
@@ -1528,8 +1547,12 @@ Resolves: #1484
              raise distutils.errors.DistutilsPlatformError(str(e) + """
  Installing your distribution's python-dev package may solve this problem.""")
  
-@@ -155,13 +155,13 @@ Installing your distribution's python-de
- #!/usr/bin/env python
+@@ -152,16 +152,16 @@ Installing your distribution's python-de
+                 self.install_scripts, "uninstall_" + APP_NAME)
+ 
+         uninstaller = """\
+-#!/usr/bin/env python
++#!/usr/bin/env python3
  import errno, os, os.path, sys
  
 -print 'Uninstall %(name)s'
@@ -1596,16 +1619,16 @@ Resolves: #1484
          os.chmod(uninstaller_filename, mode)
  
      def write_installed_files(self):
-@@ -242,7 +242,7 @@ for dir in dirs:
-         try:
+@@ -241,7 +241,7 @@ for dir in dirs:
+         with open(INSTALLED_FILES_NAME, "w") as f:
              for output in self.get_installed_files():
                  assert "\n" not in output
 -                print >> f, output
 +                print(output, file=f)
-         finally:
-             f.close()
  
-@@ -266,7 +266,7 @@ class my_uninstall(distutils.cmd.Command
+ 
+ class my_uninstall(distutils.cmd.Command):
+@@ -263,7 +263,7 @@ class my_uninstall(distutils.cmd.Command
          # Read the list of installed files.
          try:
              f = open(INSTALLED_FILES_NAME, "r")
@@ -1614,7 +1637,7 @@ Resolves: #1484
              if e.errno == errno.ENOENT:
                  log.error("Couldn't open the installation record '%s'. "
                          "Have you installed yet?" % INSTALLED_FILES_NAME)
-@@ -289,7 +289,7 @@ class my_uninstall(distutils.cmd.Command
+@@ -286,7 +286,7 @@ class my_uninstall(distutils.cmd.Command
              try:
                  if not self.dry_run:
                      os.remove(file)
@@ -1623,7 +1646,7 @@ Resolves: #1484
                  log.error(str(e))
          # Delete the directories. First reverse-sort the normalized paths by
          # length so that child directories are deleted before their parents.
-@@ -300,7 +300,7 @@ class my_uninstall(distutils.cmd.Command
+@@ -297,16 +297,16 @@ class my_uninstall(distutils.cmd.Command
                  log.info("Removing the directory '%s'." % dir)
                  if not self.dry_run:
                      os.rmdir(dir)
@@ -1632,6 +1655,18 @@ Resolves: #1484
                  if e.errno == errno.ENOTEMPTY:
                      log.info("Directory '%s' not empty; not removing." % dir)
                  else:
+                     log.error(str(e))
+ 
+ 
+-distutils.core.setup(name=u"ndiff", scripts=[u"scripts/ndiff"],
+-    py_modules=[u"ndiff"],
+-    data_files=[(u"share/man/man1", [u"docs/ndiff.1"])],
++distutils.core.setup(name="ndiff", scripts=["scripts/ndiff"],
++    py_modules=["ndiff"],
++    data_files=[("share/man/man1", ["docs/ndiff.1"])],
+     cmdclass={
+         "install_egg_info": null_command,
+         "install": checked_install,
 --- a/ndiff/test-scans/anonymize.py
 +++ b/ndiff/test-scans/anonymize.py
 @@ -1,4 +1,4 @@
