@@ -1,15 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=docker
-PKG_VERSION:=20.10.2
-PKG_RELEASE:=2
+PKG_VERSION:=20.10.3
+PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/docker/cli/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=a663f54a158c6b2b23b253b14bf0de56ff035750098e760319de1edb7f4ae76d
-PKG_SOURCE_VERSION:=2291f61 # SHA1 used within the docker executable
+PKG_GIT_URL:=github.com/docker/cli
+PKG_GIT_REF:=v$(PKG_VERSION)
+PKG_SOURCE_URL:=https://codeload.$(PKG_GIT_URL)/tar.gz/$(PKG_GIT_REF)?
+PKG_HASH:=aafba3765d9013cb75810b4f4334525f0e74e82ef073b4df9e8b524f3794e60a
+PKG_GIT_SHORT_COMMIT:=48d30b5 # SHA1 used within the docker executables
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
@@ -17,7 +19,7 @@ PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
-GO_PKG:=github.com/docker/cli
+GO_PKG:=$(PKG_GIT_URL)
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -38,11 +40,24 @@ GO_PKG_BUILD_VARS += GO111MODULE=auto
 TAR_OPTIONS:=--strip-components 1 $(TAR_OPTIONS)
 TAR_CMD=$(HOST_TAR) -C $(1) $(TAR_OPTIONS)
 
+define Build/Prepare
+	$(Build/Prepare/Default)
+
+	# Verify PKG_GIT_SHORT_COMMIT
+	( \
+		EXPECTED_PKG_GIT_SHORT_COMMIT=$$$$( $(CURDIR)/../dockerd/git-short-commit.sh '$(PKG_GIT_URL)' '$(PKG_GIT_REF)' '$(TMP_DIR)/git-short-commit/$(PKG_NAME)-$(PKG_VERSION)' ); \
+		if [ "$$$${EXPECTED_PKG_GIT_SHORT_COMMIT}" != "$(strip $(PKG_GIT_SHORT_COMMIT))" ]; then \
+			echo "ERROR: Expected 'PKG_GIT_SHORT_COMMIT:=$$$${EXPECTED_PKG_GIT_SHORT_COMMIT}', found 'PKG_GIT_SHORT_COMMIT:=$(strip $(PKG_GIT_SHORT_COMMIT))'"; \
+			exit 1; \
+		fi \
+	)
+endef
+
 define Build/Compile
 	( \
 		cd $(PKG_BUILD_DIR); \
 		$(GO_PKG_VARS) \
-		GITCOMMIT=$(PKG_SOURCE_VERSION) \
+		GITCOMMIT=$(PKG_GIT_SHORT_COMMIT) \
 		VERSION=$(PKG_VERSION) \
 		./scripts/build/binary; \
 	)
@@ -52,4 +67,5 @@ define Package/docker/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/docker $(1)/usr/bin/
 endef
+
 $(eval $(call BuildPackage,docker))
