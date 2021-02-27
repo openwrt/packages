@@ -13,7 +13,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=boost
 PKG_VERSION:=1.75.0
 PKG_SOURCE_VERSION:=1_75_0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
@@ -118,16 +118,6 @@ define Package/boost/config
 	config boost-context-exclude
 		bool
 		default y if (TARGET_arc770 || TARGET_archs38)
-		default n
-
-	config boost-coroutine-exclude
-		bool
-		default y if boost-context-exclude
-		default n
-
-	config boost-fiber-exclude
-		bool
-		default y if boost-coroutine-exclude
 		default n
 
 	menu "Select Boost Options"
@@ -282,9 +272,7 @@ define Package/boost/config
 		config PACKAGE_boost-$(lib)
 			prompt "Boost $(lib) $(if $(findstring python3,$(lib)),$(paren_left)v$(BOOST_PYTHON3_VER)$(paren_right) ,)library."
 			default m if ALL
-			$(if $(findstring fiber,$(lib)),depends on !boost-fiber-exclude,)\
 			$(if $(findstring context,$(lib)),depends on !boost-context-exclude,)
-			$(if $(findstring coroutine,$(lib)),depends on !boost-coroutine-exclude,)
 		)
 	endmenu
 endef
@@ -338,10 +326,10 @@ $(eval $(call DefineBoostLibrary,chrono,system))
 $(eval $(call DefineBoostLibrary,container))
 $(eval $(call DefineBoostLibrary,context,chrono system,,!boost-context-exclude))
 $(eval $(call DefineBoostLibrary,contract,system))
-$(eval $(call DefineBoostLibrary,coroutine,system chrono context thread,,!boost-coroutine-exclude))
+$(eval $(call DefineBoostLibrary,coroutine,system chrono context thread))
 $(eval $(call DefineBoostLibrary,date_time))
 #$(eval $(call DefineBoostLibrary,exception,,))
-$(eval $(call DefineBoostLibrary,fiber,coroutine filesystem,,!boost-fiber-exclude))
+$(eval $(call DefineBoostLibrary,fiber,coroutine filesystem))
 $(eval $(call DefineBoostLibrary,filesystem,system))
 $(eval $(call DefineBoostLibrary,graph,regex))
 $(eval $(call DefineBoostLibrary,iostreams,,,,zlib liblzma libbz2 libzstd))
