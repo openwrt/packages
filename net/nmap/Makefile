@@ -13,13 +13,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nmap
-PKG_VERSION:=7.80
-PKG_RELEASE:=3
+PKG_VERSION:=7.91
+PKG_RELEASE:=$(AUTORELEASE)
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://nmap.org/dist/
-PKG_HASH:=fcfa5a0e42099e12e4bf7a68ebe6fde05553383a682e816a7ec9256ab4773faa
+PKG_HASH:=18cc4b5070511c51eb243cdd2b0b30ff9b2c4dc4544c6312f75ce3a67a593300
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:nmap:nmap
@@ -113,12 +113,9 @@ CONFIGURE_ARGS += \
 	--with-ncat \
 	--without-localdirs \
 	--without-ndiff \
-	--without-nmap-update \
-	--without-subversion \
 	--without-zenmap
 	# --with-libnbase=included
 	# --with-libnsock=included
-	# --without-apr
 
 ifeq ($(BUILD_VARIANT),full)
   CONFIGURE_ARGS += \
