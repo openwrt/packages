@@ -16,6 +16,9 @@ PKG_HASH:=d66ad8b5c2441015ac1333e40137bb803c3bde3612ff040286fcc12158ea1bcb
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_LIBDRM_INTEL
+
 PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=meson/host
 
@@ -25,7 +28,7 @@ include ../../devel/meson/meson.mk
 define Package/libdrm
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libpciaccess
+  DEPENDS:=+LIBDRM_INTEL:libpciaccess
   TITLE:=libdrm
   URL:=https://dri.freedesktop.org/
 endef
@@ -36,9 +39,12 @@ define Package/libdrm/description
   of the DRI protocol.
 endef
 
+define Package/libdrm/config
+	source "$(SOURCE)/Config.in"
+endef
+
 MESON_ARGS += \
-	-Dlibkms=false \
-	-Dintel=false \
+	$(if $(CONFIG_LIBDRM_INTEL),-Dintel=true -Dlibkms=true,-Dintel=false -Dlibkms=false) \
 	-Dradeon=false \
 	-Damdgpu=false \
 	-Dnouveau=false \
@@ -60,14 +66,14 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdrm.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib*.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libdrm.pc $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc $(1)/usr/lib/pkgconfig
 endef
 
 define Package/libdrm/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdrm.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib*.so.* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libdrm))
