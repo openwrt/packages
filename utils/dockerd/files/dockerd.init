@@ -136,24 +136,28 @@ process_config() {
 	config_get data_root globals data_root "/opt/docker/"
 	config_get log_level globals log_level "warn"
 	config_get_bool iptables globals iptables "1"
+
+	# Don't add these options by default
+	# omission == docker defaults
 	config_get bip globals bip ""
+	config_get registry_mirrors globals registry_mirrors ""
+	config_get hosts globals hosts ""
 
 	. /usr/share/libubox/jshn.sh
 	json_init
 	json_add_string "data-root" "${data_root}"
 	json_add_string "log-level" "${log_level}"
+	json_add_boolean "iptables" "${iptables}"
 	[ -z "${bip}" ] || json_add_string "bip" "${bip}"
-	json_add_array "registry-mirrors"
-	config_list_foreach globals registry_mirrors json_add_array_string
-	json_close_array
-	json_add_array "hosts"
-	config_list_foreach globals hosts json_add_array_string
-	json_close_array
-
-	json_add_boolean iptables "${iptables}"
-	[ "${iptables}" -ne "0" ] && config_foreach iptables_add_blocking_rule firewall
-
+	[ -z "${registry_mirrors}" ] || json_add_array "registry-mirrors"
+	[ -z "${registry_mirrors}" ] || config_list_foreach globals registry_mirrors json_add_array_string
+	[ -z "${registry_mirrors}" ] || json_close_array
+	[ -z "${hosts}" ] || json_add_array "hosts"
+	[ -z "${hosts}" ] || config_list_foreach globals hosts json_add_array_string
+	[ -z "${hosts}" ] || json_close_array
 	json_dump > "${DOCKERD_CONF}"
+
+	[ "${iptables}" -eq "1" ] && config_foreach iptables_add_blocking_rule firewall
 }
 
 start_service() {
@@ -202,11 +206,14 @@ iptables_add_blocking_rule() {
 			return
 		}
 
+		# Wait for a maximum of 10 second per command, retrying every millisecond
+		local iptables_wait_args="--wait 10 --wait-interval 1000"
+
 		# Ignore errors as it might already be present
-		iptables --table filter --new DOCKER-USER 2>/dev/null
-		if ! iptables --table filter --check DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump DROP 2>/dev/null; then
+		iptables ${iptables_wait_args} --table filter --new DOCKER-USER 2>/dev/null
+		if ! iptables ${iptables_wait_args} --table filter --check DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump REJECT 2>/dev/null; then
 			logger -t "dockerd-init" -p notice "Drop traffic from ${inbound} to ${outbound}"
-			iptables --table filter --insert DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump DROP
+			iptables ${iptables_wait_args} --table filter --insert DOCKER-USER --in-interface "${inbound}" --out-interface "${outbound}" ${extra_iptables_args} --jump REJECT
 		fi
 	}
 
