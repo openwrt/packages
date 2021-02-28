@@ -69,7 +69,7 @@ endef
 define Package/joe-extras/install
 	$(INSTALL_DIR) $(1)/etc/joe
 	$(INSTALL_DIR) $(1)/usr/share/joe/{syntax,lang,charmaps,colors}
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/rc/{ftype,jicerc.ru,jmacsrc,jpicorc,jstarrc,rjoerc} $(1)/etc/joe/
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/rc/{ftyperc,jicerc.ru,jmacsrc,jpicorc,jstarrc,rjoerc} $(1)/etc/joe/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/syntax/*.jsf $(1)/usr/share/joe/syntax/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/po/*.po $(1)/usr/share/joe/lang/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/charmaps/klingon $(1)/usr/share/joe/charmaps/
