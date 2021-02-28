@@ -1,0 +1,12 @@
+--- a/devices.c
++++ b/devices.c
+@@ -45,7 +45,8 @@
+ 	int rc = ioctl(fd, EVIOCGBIT(0,sizeof(bits)), bits);
+ 	return rc > 0 && (
+ 		/* we only consider devices with keys or switches suitable */
+-		test_bit(EV_KEY, bits) || test_bit(EV_SW, bits)
++		test_bit(EV_KEY, bits) || test_bit(EV_SW, bits) ||
++		test_bit(EV_REL, bits) || test_bit(EV_ABS, bits)
+ 	);
+ }
+ 
