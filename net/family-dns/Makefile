@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=family-dns
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=MIT
 PKG_MAINTAINER:=Gregory L. Dietsche <Gregory.Dietsche@cuw.edu>
 
@@ -47,7 +47,7 @@ endef
 
 define Package/family-dns/prerm
 #!/bin/sh
-if [ -z "$${IPGK_INSTROOT}" ]; then
+if [ -z "$${IPKG_INSTROOT}" ]; then
   /usr/sbin/family-dns-update uninstall
 fi
 exit 0
