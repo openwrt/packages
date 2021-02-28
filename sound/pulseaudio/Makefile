@@ -75,7 +75,7 @@ define Package/pulseaudio-daemon-avahi/conffiles
 /etc/pulse/client.conf
 /etc/pulse/daemon.conf
 /etc/pulse/default.pa
-/etc/pulse/system.pa
+/etc/pulse/system.pa 
 endef
 
 define Package/pulseaudio-tools
