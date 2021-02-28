@@ -111,7 +111,6 @@ MESON_ARGS += \
 	-Datomic-arm-memory-barrier=false \
 	-Dalsa=enabled \
 	-Dasyncns=disabled \
-	-Dbluez5=false \
 	-Dbluez5-native-headset=false \
 	-Dbluez5-ofono-headset=false \
 	-Dfftw=disabled \
@@ -137,12 +136,14 @@ MESON_ARGS += \
 ifeq ($(BUILD_VARIANT),avahi)
 MESON_ARGS += \
 	-Davahi=enabled \
+	-Dbluez5=true \
 	-Ddbus=enabled
 endif
 
 ifeq ($(BUILD_VARIANT),noavahi)
 MESON_ARGS += \
 	-Davahi=disabled \
+	-Dbluez5=false \
 	-Ddbus=disabled
 endif
 
