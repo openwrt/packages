@@ -242,12 +242,12 @@ main() {
 				case "$track_method" in
 					ping)
 						if [ $check_quality -eq 0 ]; then
-							WRAP $PING -c $count -W $timeout -s $size -t $max_ttl -q $track_ip &> /dev/null &
+							WRAP $PING -n -c $count -W $timeout -s $size -t $max_ttl -q $track_ip &> /dev/null &
 							TRACK_PID=$!
 							wait $TRACK_PID
 							result=$?
 						else
-							WRAP $PING -c $count -W $timeout -s $size -t $max_ttl -q $track_ip 2>/dev/null > $TRACK_OUTPUT &
+							WRAP $PING -n -c $count -W $timeout -s $size -t $max_ttl -q $track_ip 2>/dev/null > $TRACK_OUTPUT &
 							TRACK_PID=$!
 							wait $TRACK_PID
 							ping_status=$?
