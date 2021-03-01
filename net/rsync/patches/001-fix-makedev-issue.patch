@@ -1,0 +1,10 @@
+--- a/rsync.h
++++ b/rsync.h
+@@ -307,6 +307,7 @@ enum delret {
+ #include <stdio.h>
+ #ifdef HAVE_SYS_TYPES_H
+ # include <sys/types.h>
++# include <sys/sysmacros.h>
+ #endif
+ #ifdef HAVE_SYS_STAT_H
+ # include <sys/stat.h>
