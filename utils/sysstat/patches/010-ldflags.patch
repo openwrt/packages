@@ -9,7 +9,7 @@
  DFLAGS += -DSA_DIR=\"$(SA_DIR)\" -DSADC_PATH=\"$(SADC_PATH)\"
  DFLAGS += $(DFSENSORS)
  DFLAGS += $(DFPCP)
-@@ -117,7 +117,7 @@ ifeq ($(SYSPARAM),y)
+@@ -120,7 +120,7 @@ ifeq ($(SYSPARAM),y)
  	DFLAGS += -DHAVE_SYS_PARAM_H
  endif
  NLS = @NLS@
@@ -18,7 +18,7 @@
  ifeq ($(NLS),y)
  REQUIRE_NLS = -DUSE_NLS -DPACKAGE=\"$(PACKAGE)\" -DLOCALEDIR=\"$(NLS_DIR)\"
  endif
-@@ -195,7 +195,7 @@ NLSPOT= $(NLSPO:.po=.pot)
+@@ -198,7 +198,7 @@ NLSPOT= $(NLSPO:.po=.pot)
  	$(CC) -o $@ -c $(CFLAGS) $(DFLAGS) $<
  
  % : %.o
@@ -27,7 +27,7 @@
  
  all: sadc sar sadf iostat tapestat mpstat pidstat cifsiostat locales
  
-@@ -283,7 +283,7 @@ librdsensors.a: rd_sensors.o
+@@ -286,7 +286,7 @@ librdsensors.a: rd_sensors.o
  
  sadc.o: sadc.c sa.h version.h common.h rd_stats.h rd_sensors.h
  
@@ -36,7 +36,7 @@
  
  sadc: sadc.o act_sadc.o sa_wrap.o sa_common_sadc.o common_sadc.o systest.o librdstats.a librdsensors.a
  
-@@ -293,7 +293,7 @@ sar: sar.o act_sar.o format_sar.o sa_com
+@@ -296,7 +296,7 @@ sar: sar.o act_sar.o format_sar.o sa_com
  
  sadf.o: sadf.c sadf.h version.h sa.h common.h rd_stats.h rd_sensors.h
  
