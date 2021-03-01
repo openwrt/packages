@@ -8,25 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tang
-PKG_VERSION:=7
+PKG_VERSION:=8
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/latchset/$(PKG_NAME)/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=fbe13e4e3103cd24cada7824b63e510cffd650832ecd075fd49b99475a4f9bfa
+PKG_HASH:=03958bf27c24aa9892f6138d287d39bcc149e7ad72163c27b529aa3c6b066ede
 
 PKG_MAINTAINER:=Tibor Dudlák <tibor.dudlak@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=meson/host
 
 include $(INCLUDE_DIR)/package.mk
-
-# This avoids generating man pages
-CONFIGURE_VARS += ac_cv_prog_A2X=
+include ../../devel/meson/meson.mk
 
 define Package/tang
   SECTION:=utils
@@ -47,7 +44,7 @@ endef
 define Package/tang/install
 	$(INSTALL_DIR)	$(1)/usr/libexec
 	$(INSTALL_DIR)	$(1)/etc/xinetd.d/
-	$(INSTALL_BIN)	$(PKG_INSTALL_DIR)/usr/lib/tangd*	$(1)/usr/libexec/
+	$(INSTALL_BIN)	$(PKG_INSTALL_DIR)/usr/libexec/tangd*	$(1)/usr/libexec/
 	$(INSTALL_BIN)	./files/tangdw				$(1)/usr/libexec/
 	$(CP)		./files/tangdx				$(1)/etc/xinetd.d/
 endef
