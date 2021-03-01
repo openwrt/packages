@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=augeas
 PKG_VERSION:=1.12.0
-PKG_RELEASE=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.augeas.net/
@@ -21,6 +21,7 @@ PKG_LICENSE:=LGPL-2.1-or-later
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/augeas
   SECTION:=utils
