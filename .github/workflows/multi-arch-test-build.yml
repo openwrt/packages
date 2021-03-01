@@ -32,11 +32,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Determine branch name
+        run: |
+          BRANCH="${GITHUB_BASE_REF#refs/heads/}"
+          echo "Building for $BRANCH"
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+
       - name: Determine changed packages
         run: |
           # only detect packages with changes
           PKG_ROOTS=$(find . -name Makefile | grep -v ".*/src/Makefile" | sed -e 's@./\(.*\)/Makefile@\1/@')
-          CHANGES=$(git diff --diff-filter=d --name-only origin/master)
+          CHANGES=$(git diff --diff-filter=d --name-only origin/$BRANCH)
 
           for ROOT in $PKG_ROOTS; do
             for CHANGE in $CHANGES; do
@@ -53,12 +59,6 @@ jobs:
 
           echo "Building $PACKAGES"
           echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
-
-      - name: Determine branch name
-        run: |
-          BRANCH="${GITHUB_BASE_REF#refs/heads/}"
-          echo "Building for $BRANCH"
-          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
 
       - name: Build
         uses: openwrt/gh-action-sdk@v1
