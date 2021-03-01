@@ -8,4 +8,16 @@ config LIBDRM_INTEL
 	help
 		Installs the Intel driver.
 
+config LIBDRM_NOUVEAU
+	bool "Nouveau support"
+	default n
+	help
+		Installs the Nouveau driver.
+
+config LIBDRM_RADEON
+	bool "Radeon support"
+	default n
+	help
+		Installs the Radeon driver.
+
 endmenu
