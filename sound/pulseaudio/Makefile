@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pulseaudio
-PKG_VERSION:=14.0
+PKG_VERSION:=14.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://freedesktop.org/software/pulseaudio/releases
-PKG_HASH:=a834775d9382b055504e5ee7625dc50768daac29329531deb6597bf05e06c261
+PKG_HASH:=75d3f7742c1ae449049a4c88900e454b8b350ecaa8c544f3488a2562a9ff66f1
 
 PKG_MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -111,7 +111,6 @@ MESON_ARGS += \
 	-Datomic-arm-memory-barrier=false \
 	-Dalsa=enabled \
 	-Dasyncns=disabled \
-	-Dbluez5=false \
 	-Dbluez5-native-headset=false \
 	-Dbluez5-ofono-headset=false \
 	-Dfftw=disabled \
@@ -137,12 +136,14 @@ MESON_ARGS += \
 ifeq ($(BUILD_VARIANT),avahi)
 MESON_ARGS += \
 	-Davahi=enabled \
+	-Dbluez5=true \
 	-Ddbus=enabled
 endif
 
 ifeq ($(BUILD_VARIANT),noavahi)
 MESON_ARGS += \
 	-Davahi=disabled \
+	-Dbluez5=false \
 	-Ddbus=disabled
 endif
 
