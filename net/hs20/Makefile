@@ -40,6 +40,7 @@ ifdef CONFIG_USE_GLIBC
 endif
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/hs20-common
   SECTION:=net
