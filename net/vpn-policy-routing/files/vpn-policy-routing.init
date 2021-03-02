@@ -31,7 +31,8 @@ fi
 
 readonly packageName='vpn-policy-routing'
 readonly serviceName="$packageName $PKG_VERSION"
-readonly PID="/var/run/${packageName}.pid"
+readonly PIDFile="/var/run/${packageName}.pid"
+readonly jsonFile="/var/run/${packageName}.json"
 readonly dnsmasqFile="/var/dnsmasq.d/${packageName}"
 readonly sharedMemoryOutput="/dev/shm/$packageName-output"
 readonly _OK_='\033[0;32m\xe2\x9c\x93\033[0m'
@@ -55,8 +56,8 @@ ipsetSupported='true'
 configLoaded='false'
 
 version() { echo "$PKG_VERSION"; }
-create_lock() { [ -e "$PID" ] && return 1; touch "$PID"; }
-remove_lock() { [ -e "$PID" ] && rm -f "$PID"; }
+create_lock() { [ -e "$PIDFile" ] && return 1; touch "$PIDFile"; }
+remove_lock() { [ -e "$PIDFile" ] && rm -f "$PIDFile"; }
 trap remove_lock EXIT
 output_ok() { output 1 "$_OK_"; output 2 "$__OK__\\n"; }
 output_okn() { output 1 "$_OK_\\n"; output 2 "$__OK__\\n"; }
@@ -91,21 +92,19 @@ output() {
 is_installed() { [ -s "/usr/lib/opkg/info/${1}.control" ]; }
 is_variant_installed() { [ "$(echo /usr/lib/opkg/info/"${1}"*.control)" != "/usr/lib/opkg/info/${1}*.control" ]; }
 
-list_iface() { ifAll="${ifAll}${1} "; }
-list_supported_iface() { is_supported_interface "$1" && ifSupported="${ifSupported}${1} "; }
-vpr_find_true() {
+build_ifAll() { ifAll="${ifAll}${1} "; }
+build_ifSupported() { is_supported_interface "$1" && ifSupported="${ifSupported}${1} "; }
+vpr_find_iface() {
 	local iface i param="$2"
 	[ "$param" = 'wan6' ] || param='wan'
 	"network_find_${param}" iface
 	is_tunnel "$iface" && unset iface
 	if [ -z "$iface" ]; then
-		unset ifAll; config_load 'network';
-		config_foreach list_iface 'interface'
 		for i in $ifAll; do
 			if "is_${param}" "$i"; then break; else unset i; fi
 		done
 	fi
-	export "$1=${iface:-$i}"
+	eval "$1"='${iface:-$i}'
 }
 vpr_get_gateway() {
 	local iface="$2" dev="$3" gw
@@ -113,7 +112,7 @@ vpr_get_gateway() {
 	if [ -z "$gw" ] || [ "$gw" = '0.0.0.0' ]; then
 		gw="$(ip -4 a list dev "$dev" 2>/dev/null | grep inet | awk '{print $2}' | awk -F "/" '{print $1}')"
 	fi
-	export "$1=$gw"
+	eval "$1"='$gw'
 }
 vpr_get_gateway6() {
 	local iface="$2" dev="$3" gw
@@ -121,7 +120,7 @@ vpr_get_gateway6() {
 	if [ -z "$gw" ] || [ "$gw" = '::/0' ] || [ "$gw" = '::0/0' ] || [ "$gw" = '::' ]; then
 		gw="$(ip -6 a list dev "$dev" 2>/dev/null | grep inet6 | awk '{print $2}')"
 	fi
-	export "$1=$gw"
+	eval "$1"='$gw'
 }
 is_l2tp() { local proto; proto=$(uci -q get network."$1".proto); [ "${proto:0:4}" = "l2tp" ]; }
 is_oc() { local proto; proto=$(uci -q get network."$1".proto); [ "${proto:0:11}" = "openconnect" ]; }
@@ -161,7 +160,8 @@ dnsmasq_restart() { output 3 'Restarting DNSMASQ '; if /etc/init.d/dnsmasq resta
 is_default_dev() { [ "$1" = "$(ip -4 r | grep -m1 'dev' | grep -Eso 'dev [^ ]*' | awk '{print $2}')" ]; }
 is_supported_iface_dev() {
 	for n in $ifSupported; do 
-		if [ "$1" = "$(uci -q get "network.${n}.ifname" || echo "$n")" ] || [ "$1" = "$(uci -q get "network.${n}.proto")-${n}" ] ; then return 0; fi
+		if [ "$1" = "$(uci -q get "network.${n}.ifname" || echo "$n")" ] || \
+			[ "$1" = "$(uci -q get "network.${n}.proto")-${n}" ] ; then return 0; fi
 	done
 	return 1
 }
@@ -215,11 +215,13 @@ load_package_config() {
 
 	. /lib/functions/network.sh
 	. /usr/share/libubox/jshn.sh
-	vpr_find_true wanIface4 'wan'
-	[ "$ipv6Enabled" -ne 0 ] && vpr_find_true wanIface6 'wan6'
-	[ -n "$wanIface4" ] && network_get_gateway wanGW4 "$wanIface4"
-	[ -n "$wanIface6" ] && network_get_gateway6 wanGW6 "$wanIface6"
-	wanGW="${wanGW4:-$wanGW6}"
+	mkdir -p "${PIDFile%/*}"
+	mkdir -p "${jsonFile%/*}"
+	mkdir -p "${dnsmasqFile%/*}"
+
+	if [ -n "$icmpIface" ] && ! str_contains_word "$usedChainsList" 'OUTPUT'; then
+		usedChainsList="$usedChainsList OUTPUT"
+	fi
 
 	case $insertOption in
 		insert|-i|-I) insertOption='-I';;
@@ -230,27 +232,27 @@ load_package_config() {
 	if dnsmasq -v 2>/dev/null | grep -q 'no-ipset' || ! dnsmasq -v 2>/dev/null | grep -q -w 'ipset'; then
 		unset dnsmasqIpsetSupported
 		if [ -n "$dnsmasqIpsetSupported" ]; then
-			errorSummary="${errorSummary}$_ERROR_: Resolver ipset support (dnsmasq.ipset) is enabled in $packageName, but DNSMASQ ipsets are not supported on this system!\\n"
+			errorSummary="${errorSummary}${_ERROR_}: Resolver ipset support (dnsmasq.ipset) is enabled in $packageName, but DNSMASQ ipsets are not supported on this system!\\n"
 		fi
 	fi
 	if ! ipset help hash:net >/dev/null 2>&1; then
 		unset ipsetSupported
 		if [ -n "$dnsmasqIpsetSupported" ]; then
-			errorSummary="${errorSummary}$_ERROR_: DNSMASQ ipsets are supported, but ipset is either not installed or installed ipset does not support 'hash:net' type!\\n"
+			errorSummary="${errorSummary}${_ERROR_}: DNSMASQ ipsets are supported, but ipset is either not installed or installed ipset does not support 'hash:net' type!\\n"
 			unset dnsmasqIpsetSupported
 		fi
 		if [ "$destIpset" -ne 0 ]; then
-			errorSummary="${errorSummary}$_ERROR_: Destination ipset support is enabled in $packageName, but ipset is either not installed or installed ipset does not support 'hash:net' type!\\n"
+			errorSummary="${errorSummary}${_ERROR_}: Destination ipset support is enabled in $packageName, but ipset is either not installed or installed ipset does not support 'hash:net' type!\\n"
 			destIpset=0
 		fi
 		if [ "$srcIpset" -ne 0 ]; then
-			errorSummary="${errorSummary}$_ERROR_: Source ipset support is enabled in $packageName, but ipset is either not installed or installed ipset does not support 'hash:net' type!\\n"
+			errorSummary="${errorSummary}${_ERROR_}: Source ipset support is enabled in $packageName, but ipset is either not installed or installed ipset does not support 'hash:net' type!\\n"
 			srcIpset=0
 		fi
 	fi
 	if ! ipset help hash:mac >/dev/null 2>&1; then
 		if [ "$srcIpset" -ne 0 ]; then
-			errorSummary="${errorSummary}$_ERROR_: Source ipset support is enabled in $packageName, but ipset is either not installed or installed ipset does not support 'hash:mac' type!\\n"
+			errorSummary="${errorSummary}${_ERROR_}: Source ipset support is enabled in $packageName, but ipset is either not installed or installed ipset does not support 'hash:mac' type!\\n"
 			srcIpset=0
 		fi
 	fi
@@ -262,34 +264,44 @@ is_enabled() {
 	load_package_config
 	if [ "$serviceEnabled" -eq 0 ]; then
 		if [ "$1" = 'on_start' ]; then
-			output "$packageName is currently disabled.\\n"
-			output "Run the following commands before starting service again:\\n"
-			output "uci set $packageName.config.enabled='1'; uci commit;\\n"
+			errorSummary="${errorSummary}${_ERROR_}: ${packageName} is currently disabled.\\n"
+			errorSummary="${errorSummary}Enable ${packageName} from WebUI or run the following commands:\\n"
+			errorSummary="${errorSummary}uci set $packageName.config.enabled='1'; uci commit $packageName;\\n"
 		fi
 		return 1
 	fi
+}
 
+load_network() {
+	if [ -z "$ifAll" ]; then
+		config_load 'network'
+		config_foreach build_ifAll 'interface'
+	fi
+	vpr_find_iface wanIface4 'wan'
+	[ "$ipv6Enabled" -ne 0 ] && vpr_find_iface wanIface6 'wan6'
+	[ -n "$wanIface4" ] && network_get_gateway wanGW4 "$wanIface4"
+	[ -n "$wanIface6" ] && network_get_gateway6 wanGW6 "$wanIface6"
+	wanGW="${wanGW4:-$wanGW6}"
+	unset ifSupported
+	config_load 'network'
+	config_foreach build_ifSupported 'interface'
 }
 
 is_wan_up() {
 	local sleepCount=1
+	load_network
 	while [ -z "$wanGW" ] ; do
-		vpr_find_true wanIface4 'wan'
-		[ "$ipv6Enabled" -ne 0 ] && vpr_find_true wanIface6 'wan6'
-		[ -n "$wanIface4" ] && network_get_gateway wanGW4 "$wanIface4"
-		[ -n "$wanIface6" ] && network_get_gateway6 wanGW6 "$wanIface6"
-		wanGW="${wanGW4:-$wanGW6}"
+		load_network
 		if [ $((sleepCount)) -gt $((bootTimeout)) ] || [ -n "$wanGW" ]; then break; fi
-		output "$serviceName waiting for wan gateway...\\n"; sleep 1; network_flush_cache; sleepCount=$((sleepCount+1));
+		output "$serviceName waiting for wan gateway...\\n"
+		sleep 1
+		network_flush_cache
+		sleepCount=$((sleepCount+1))
 	done
-	mkdir -p "${PID%/*}"; mkdir -p "${dnsmasqFile%/*}";
-	unset ifSupported
-	config_load 'network'
-	config_foreach list_supported_iface 'interface'
 	if [ -n "$wanGW" ]; then
-		return 0	
-	else	
-		output "$_ERROR_: $serviceName failed to discover WAN gateway!\\n"
+		return 0
+	else
+		errorSummary="${errorSummary}${_ERROR_}: ${serviceName} failed to discover WAN gateway!\\n"
 		return 1
 	fi
 }
@@ -714,7 +726,8 @@ process_interface(){
 			ifaceTableID="$((ifaceTableID + 1))"; ifaceMark="$(printf '0x%06x' $((ifaceMark + wanMark)))";
 			;;
 		create)
-			export "mark_${iface//-/_}=$ifaceMark"; export "tid_${iface//-/_}=$ifaceTableID";
+			eval "mark_${iface//-/_}"='$ifaceMark'
+			eval "tid_${iface//-/_}"='$ifaceTableID'
 			table_destroy "${ifaceTableID}" "${iface}"
 			vpr_get_gateway gw4 "$iface" "$dev"
 			vpr_get_gateway6 gw6 "$iface" "$dev6"
@@ -802,7 +815,6 @@ convert_config(){
 	grep -q "remote_port" "/etc/config/${packageName}" && sed -i 's/remote_port/dest_port/g' "/etc/config/${packageName}"
 	grep -q "local_ipset" "/etc/config/${packageName}" && sed -i 's/local_ipset/src_ipset/g' "/etc/config/${packageName}"
 	grep -q "remote_ipset" "/etc/config/${packageName}" && sed -i 's/remote_ipset/dest_ipset/g' "/etc/config/${packageName}"
-#	sync
 	dest_ipset="$(uci -q get $packageName.config.dest_ipset)"
 	src_ipset="$(uci -q get $packageName.config.src_ipset)"
 	resolver_ipset="$(uci -q get $packageName.config.resolver_ipset)"
@@ -880,7 +892,7 @@ start_service() {
 	local dnsmasqStoredHash dnsmasqNewHash i modprobeStatus=0
 	convert_config
 	is_enabled 'on_start' || return 1
-	is_wan_up || return 0
+	is_wan_up || return 1
 	if create_lock; then
 		if [ -s "$dnsmasqFile" ]; then
 			dnsmasqStoredHash="$(md5sum $dnsmasqFile | awk '{ print $1; }')"
@@ -921,11 +933,7 @@ start_service() {
 		[ "$dnsmasqNewHash" != "$dnsmasqStoredHash" ] && dnsmasq_restart
 
 		if [ -z "$gatewaySummary" ]; then
-			errorSummary="${errorSummary}${_ERROR_}: failed to set up any gateway\\n"
-		else
-			output "$serviceName started with gateways:\\n${gatewaySummary}"
-			[ -n "$errorSummary" ] && output "${errorSummary}"
-			[ -n "$warningSummary" ] && output "${warningSummary}"
+			errorSummary="${errorSummary}${_ERROR_}: failed to set up any gateway!\\n"
 		fi
 		procd_open_instance "main"
 		procd_set_param command /bin/true
@@ -952,7 +960,54 @@ start_service() {
 	fi
 }
 
+tmpfs() {
+	local action="$1" param="$2" value="$3"
+# shellcheck disable=SC2034
+	local gateway error warning mode i
+	if [ -s "$jsonFile" ]; then
+		json_load_file "$jsonFile" 2>/dev/null
+		json_select 'status' 2>/dev/null
+		for i in gateway error warning mode; do
+			json_get_var $i "$i" 2>/dev/null
+		done
+	fi
+	case "$action" in
+		get)
+			printf "%b" "$(eval echo "\$$param")"; return;;
+		add)
+			eval "$param"='$(eval echo "\$$param")${value}';;
+		del)
+			case "$param" in
+				all)
+					unset gateway error warning mode;;
+				*)
+					unset "$param";;
+			esac
+			;;
+		set)
+			eval "$param"='$value';;
+	esac
+	json_init
+	json_add_object 'status'
+	json_add_string version "$PKG_VERSION"
+	for i in gateway error warning mode; do
+		json_add_string "$i" "$(eval echo "\$$i")"
+	done 
+	json_close_object
+	json_dump > "$jsonFile"
+	sync
+}
+
 service_started() {
+	tmpfs set 'gateway' "$gatewaySummary"
+	tmpfs set 'error' "$errorSummary"
+	tmpfs set 'warning' "$warningSummary"
+	if [ "$strictMode" -ne 0 ] && str_contains "$gatewaySummary" '0.0.0.0'; then
+		tmpfs set 'mode' 'strict'
+	fi
+	[ -n "$gatewaySummary" ] && output "$serviceName started with gateways:\\n${gatewaySummary}"
+	[ -n "$errorSummary" ] && output "${errorSummary}"
+	[ -n "$warningSummary" ] && output "${warningSummary}"
 	if [ -n "$errorSummary" ]; then
 		return 2
 	elif [ -n "$warningSummary" ]; then
@@ -1032,7 +1087,7 @@ support() {
 		wanGW6=$(ip -6 route show | grep -m1 " dev $dev6 " | awk '{print $1}')
 		[ "$wanGW6" = "default" ] && wanGW6=$(ip -6 route show | grep -m1 " dev $dev6 " | awk '{print $3}')
 	fi
-	while [ "${1:0:1}" = "-" ]; do param="${1//-/}"; export "set_$param=1"; shift; done
+	while [ "${1:0:1}" = "-" ]; do param="${1//-/}"; eval "set_$param=1"; shift; done
 	[ -e "/var/${packageName}-support" ] && rm -f "/var/${packageName}-support"
 	status="$serviceName running on $dist $vers."
 	[ -n "$wanIface4" ] && status="$status WAN (IPv4): ${wanIface4}/${dev}/${wanGW4:-0.0.0.0}."
