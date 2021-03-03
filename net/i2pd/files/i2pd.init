@@ -43,6 +43,7 @@ i2pd_start() {
 	## We need permissions
 	touch "$PIDFILE"
 	chown "$USER:adm" "$PIDFILE"
+	chown "$USER:adm" "$CONFFILE"
 
 	procd_open_instance
 	procd_set_param command "$PROG" --service --conf="$CONFFILE" --pidfile "$PIDFILE"
