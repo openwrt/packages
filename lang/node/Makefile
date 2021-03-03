@@ -71,7 +71,7 @@ define Package/node/config
 	if PACKAGE_node
 	choice
 		prompt "i18n features"
-		default NODEJS_ICU_NONE
+		default NODEJS_ICU_SMALL
 		help
 		 Select i18n features
 
