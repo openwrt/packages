@@ -18,7 +18,7 @@ directly, and to do so it needs the full path of the daemon.
 
 --- a/Makefile.obexd
 +++ b/Makefile.obexd
-@@ -1,12 +1,12 @@
+@@ -2,12 +2,12 @@
  if SYSTEMD
  systemduserunitdir = $(SYSTEMD_USERUNITDIR)
  systemduserunit_DATA = obexd/src/obex.service
