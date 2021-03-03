@@ -104,6 +104,9 @@ global_defs() {
 	config_get_bool linkbeat_use_polling "$1" linkbeat_use_polling 0
 	[ "$linkbeat_use_polling" -gt 0 ] && printf 'linkbeat_use_polling\n\n' >> "$KEEPALIVED_CONF"
 
+	printf '%bscript_user root\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+	printf '%benable_script_security\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+
 	config_get notification_email "$1" notification_email
 	print_list_indent notification_email
 
