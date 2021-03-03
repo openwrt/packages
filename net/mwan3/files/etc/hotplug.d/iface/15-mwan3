@@ -10,11 +10,11 @@ initscript=/etc/init.d/mwan3
 
 
 SCRIPTNAME="mwan3-hotplug"
-[ "$ACTION" = "ifup" ] || [ "$ACTION" = "ifdown" ] || [ "$ACTION" = "connected" ] || [ "$ACTION" = "disconnected" ] || exit 1
+[ "$ACTION" = "ifupdate" ] || [ "$ACTION" = "ifup" ] || [ "$ACTION" = "ifdown" ] || [ "$ACTION" = "connected" ] || [ "$ACTION" = "disconnected" ] || exit 1
 [ -n "$INTERFACE" ] || exit 2
 [ "$FIRSTCONNECT" = "1" ] || [ "$MWAN3_SHUTDOWN" = "1" ] && exit 0
 
-if { [ "$ACTION" = "ifup" ] || [ "$ACTION" = "connected" ] ; } && [ -z "$DEVICE" ]; then
+if { [ "$ACTION" = "ifup" ] || [ "$ACTION" = "ifupdate" ] || [ "$ACTION" = "connected" ] ; } && [ -z "$DEVICE" ]; then
 	LOG notice "$ACTION called on $INTERFACE with no device set"
 	exit 3
 fi
@@ -35,7 +35,7 @@ $IPT4 -S mwan3_hook &>/dev/null || {
 	exit 0
 }
 
-if [ "$MWAN3_STARTUP" != "init" ] && [ "$ACTION" = "ifup" ]; then
+if [ "$MWAN3_STARTUP" != "init" ] && { [ "$ACTION" = "ifup" ] || [ "$ACTION" = "ifupdate" ] ; }; then
 	mwan3_set_user_iface_rules $INTERFACE $DEVICE
 fi
 
@@ -66,10 +66,13 @@ case "$ACTION" in
 		mwan3_set_iface_hotplug_state $INTERFACE "$status"
 		if [ "$MWAN3_STARTUP" != "init" ]; then
 			mwan3_create_iface_route $INTERFACE $DEVICE
-	                mwan3_set_general_rules
+			mwan3_set_general_rules
 			[ "$status" = "online" ] && mwan3_set_policies_iptables
 		fi
-		[ "$ACTION" = ifup ] && procd_running mwan3 "track_$INTERFACE" && procd_send_signal mwan3 "track_$INTERFACE" USR2
+		procd_running mwan3 "track_$INTERFACE" && procd_send_signal mwan3 "track_$INTERFACE" USR2
+		;;
+	ifupdate)
+		procd_running mwan3 "track_$INTERFACE" && procd_send_signal mwan3 "track_$INTERFACE" USR2
 		;;
 	disconnected)
 		mwan3_set_iface_hotplug_state $INTERFACE "offline"

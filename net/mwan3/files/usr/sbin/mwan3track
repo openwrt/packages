@@ -396,7 +396,7 @@ main() {
 			IFDOWN_EVENT=0
 		fi
 		if [ "${IFUP_EVENT}" -eq 1 ]; then
-			LOG debug "Register ifup event on interface ${INTERFACE} (${DEVICE})"
+			LOG debug "Register ifup/ifupdate event on interface ${INTERFACE} (${DEVICE})"
 			firstconnect
 			IFUP_EVENT=0
 		fi
