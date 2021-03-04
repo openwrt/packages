@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 SRC_NAME:=libselinux
 PKG_NAME:=python3-$(SRC_NAME)
 PKG_VERSION:=3.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/python-libselinux/$(SRC_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(SRC_NAME)-$(PKG_VERSION).tar.gz
