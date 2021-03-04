@@ -44,3 +44,17 @@ Signed-off-by: Michael Heimpold <mhei@heimpold.de>
    AC_MSG_RESULT([$have_shm_mmap_anon=yes])
  
    PHP_CHECK_FUNC_LIB(shm_open, rt, root)
+@@ -294,8 +300,11 @@ int main() {
+     PHP_CHECK_LIBRARY(rt, shm_unlink, [PHP_ADD_LIBRARY(rt,1,OPCACHE_SHARED_LIBADD)])
+   ],[
+     AC_MSG_RESULT([no])
+-  ],[
+-    AC_MSG_RESULT([no])
++  ],[dnl
++    AC_DEFINE(HAVE_SHM_MMAP_POSIX, 1, [Define if you have POSIX mmap() SHM support])
++    AC_MSG_RESULT([yes])
++    have_shm_mmap_posix=yes
++    PHP_CHECK_LIBRARY(rt, shm_unlink, [PHP_ADD_LIBRARY(rt,1,OPCACHE_SHARED_LIBADD)])
+   ])
+ 
+   PHP_NEW_EXTENSION(opcache,
