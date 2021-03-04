@@ -24,7 +24,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_AFALG_ZERO_COPY
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 ENGINES_DIR:=engines-1.1
 

@@ -22,7 +22,7 @@ HOST_BUILD_DEPENDS:=lua/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/lua-cjson
   SUBMENU:=Lua

@@ -20,10 +20,9 @@ PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=License.txt
 
 CMAKE_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libroxml
   SECTION:=libs

@@ -20,9 +20,6 @@ PKG_LICENSE_FILES:=COPYING.txt
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
-PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
-
 CMAKE_INSTALL:=1
 
 PKG_CONFIG_DEPENDS:= \
@@ -33,8 +30,8 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_LIBIIO_XML_BACKEND
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
 include $(INCLUDE_DIR)/nls.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 CMAKE_OPTIONS += -DWITH_DOC=OFF
 CMAKE_OPTIONS += -DENABLE_IPV6=$(if $(CONFIG_IPV6),ON,OFF)

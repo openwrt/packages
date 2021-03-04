@@ -19,13 +19,10 @@ PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=License.txt
 
 PKG_BUILD_DEPENDS:=python3 minizip cereal
-PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
-CMAKE_INSTALL:=1
-
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/domoticz
   SECTION:=utils
@@ -42,7 +39,7 @@ define Package/domoticz
 	+jsoncpp \
 	+libcurl \
 	+python3 \
-	+minizip \
+	+minizip @BROKEN \
 	+lua5.3 \
 	+libmosquitto \
 	+libopenssl \

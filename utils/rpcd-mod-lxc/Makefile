@@ -15,7 +15,7 @@ PKG_LICENSE:=ISC
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/rpcd-mod-lxc
   SECTION:=libs

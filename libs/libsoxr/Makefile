@@ -22,10 +22,9 @@ PKG_LICENSE_FILES:=LICENCE
 PKG_CPE_ID:=cpe:/a:sox:sox
 
 CMAKE_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libsoxr
   SECTION:=libs
@@ -40,9 +39,11 @@ define Package/libsoxr/description
   High quality, one-dimensional sample-rate conversion library
 endef
 
-CMAKE_OPTIONS:= -DBUILD_TESTS=0 -DBUILD_EXAMPLES=0
-CMAKE_OPTIONS+= -DHAVE_WORDS_BIGENDIAN_EXITCODE=$(if $(CONFIG_BIG_ENDIAN),0,1)
-CMAKE_OPTIONS+= -DWITH_OPENMP=0
+CMAKE_OPTIONS += \
+	-DBUILD_TESTS=0 \
+	-DBUILD_EXAMPLES=0 \
+	-DWITH_OPENMP=0 \
+	-DHAVE_WORDS_BIGENDIAN_EXITCODE=$(if $(CONFIG_BIG_ENDIAN),0,1)
 
 define Package/libsoxr/install
 	$(INSTALL_DIR) $(1)/usr/lib

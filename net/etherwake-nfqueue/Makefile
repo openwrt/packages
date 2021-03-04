@@ -20,7 +20,7 @@ PKG_MAINTAINER:=Mister Benjamin <144dbspl@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/etherwake-nfqueue
   SECTION:=net

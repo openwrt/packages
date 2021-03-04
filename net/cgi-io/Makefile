@@ -21,7 +21,7 @@ PKG_LICENSE:=GPL-2.0-or-later
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/cgi-io
   SECTION:=net

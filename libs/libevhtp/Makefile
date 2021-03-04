@@ -31,7 +31,7 @@ CMAKE_INSTALL:=1
 PKG_CONFIG_DEPENDS:=LIBEVHTP_BUILD_DEPENDS
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libevhtp
     SECTION:=libs

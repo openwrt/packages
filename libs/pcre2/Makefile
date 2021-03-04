@@ -20,14 +20,13 @@ PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENCE
 PKG_CPE_ID:=cpe:/a:pcre:pcre
 
-PKG_BUILD_PARALLEL:=1
 PKG_CONFIG_DEPENDS:=\
 	CONFIG_PACKAGE_libpcre2-16 \
 	CONFIG_PACKAGE_libpcre2-32 \
 	CONFIG_PCRE2_JIT_ENABLED
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libpcre2/default
   SECTION:=libs

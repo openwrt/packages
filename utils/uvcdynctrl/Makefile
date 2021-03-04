@@ -19,11 +19,10 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/libwebcam-$(PKG_VERSION)
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=uvcdynctrl/COPYING
-PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
 include $(INCLUDE_DIR)/nls.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/uvcdynctrl
   SECTION:=utils

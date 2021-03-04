@@ -13,12 +13,11 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 PKG_BUILD_DEPENDS:=ruby/host libwslay
-PKG_BUILD_PARALLEL:=1
 
-CMAKE_OPTIONS:= \
+CMAKE_OPTIONS += \
 	-DBUILD_SHARED_LIBS=ON \
 	-DWITH_MRUBY=OFF
 

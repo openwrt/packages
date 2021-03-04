@@ -17,14 +17,13 @@ PKG_SOURCE_URL:=https://getdnsapi.net/dist/
 PKG_HASH:=40e5737471a3902ba8304b0fd63aa7c95802f66ebbc6eae53c487c8e8a380f4a
 
 CMAKE_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_GETDNS_ENABLE_STUB_ONLY \
 	CONFIG_GETDNS_ENABLE_IDN_LIBIDN2
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/getdns/Default
 	TITLE:=getdns

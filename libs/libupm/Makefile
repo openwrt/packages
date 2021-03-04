@@ -23,11 +23,10 @@ PKG_LICENSE_FILES:=LICENSE
 CMAKE_INSTALL:=1
 CMAKE_BINARY_SUBDIR:=build
 PKG_USE_MIPS16:=0
-PKG_BUILD_PARALLEL:=1
 PYTHON3_PKG_BUILD:=0
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 include ../../lang/python/python3-package.mk
 
 UPM_MODULES:= \
@@ -53,7 +52,8 @@ UPM_MODULES:= \
 # (require libbacnet) tb7300 t8100 e50hx bacnetmstp
 # (require libtinyb) 2jciebu01_ble 2jciebu01_usb
 
-CMAKE_OPTIONS=-DBUILDSWIGNODE=$(if $(CONFIG_PACKAGE_libmraa-node),ON,OFF) \
+CMAKE_OPTIONS += \
+	-DBUILDSWIGNODE=$(if $(CONFIG_PACKAGE_libmraa-node),ON,OFF) \
 	-DPYTHON2LIBS_FOUND=FALSE \
 	-DPYTHON2INTERP_FOUND=FALSE \
 

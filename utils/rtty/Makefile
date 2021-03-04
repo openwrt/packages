@@ -14,15 +14,13 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/rtty/releases/download/v$(PKG_VERSION)
 PKG_HASH:=9bc5d30dfa9bd664a62711b6229f47505b83adb364907f24e3a404aad52a4802
-CMAKE_INSTALL:=1
 
+PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
-
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/rtty/Default
   TITLE:=Access your terminals from anywhere via the web
