@@ -67,7 +67,7 @@ $(call Package/audit/Default)
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE+= (daemon)
-  DEPENDS:= +libaudit +libauparse +audit-utils +libev
+  DEPENDS:= +libaudit +libauparse +audit-utils +libev +@KERNEL_AUDIT
 endef
 
 define Package/audit/description
