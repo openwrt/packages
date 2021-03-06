@@ -31,7 +31,7 @@ define Package/libgpgmepp
   CATEGORY:=Libraries
   TITLE:=GnuPG Made Easy (GPGME) library (C++)
   URL:=https://gnupg.org/software/gpgme/index.html
-  DEPENDS:=+libgpgme +libstdcpp $(CXX_DEPENDS)
+  DEPENDS:=+libgpgme +libstdcpp
 endef
 
 define Package/libgpgme/description

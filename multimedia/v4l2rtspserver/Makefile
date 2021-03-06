@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l2rtspserver
 PKG_VERSION:=0.2.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 #cannot use codeload as this uses submodules
 PKG_SOURCE_PROTO:=git
@@ -27,7 +27,6 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_BUILD_PARALLEL:=1
 CMAKE_INSTALL:=1
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
@@ -35,7 +34,7 @@ define Package/v4l2rtspserver
 	SECTION:=multimedia
 	CATEGORY:=Multimedia
 	TITLE:=v4l2rtspserver
-	DEPENDS:=$(CXX_DEPENDS)
+	DEPENDS:=+libstdcpp
 	URL:=https://github.com/mpromonet/v4l2rtspserver
 endef
 

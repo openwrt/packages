@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lftp
 PKG_VERSION:=4.9.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://lftp.tech/ftp/ \
@@ -24,14 +24,13 @@ PKG_CPE_ID:=cpe:/a:lftp_project:lftp
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/lftp
   SUBMENU:=File Transfer
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libncurses +libopenssl +libreadline $(CXX_DEPENDS) +libexpat +zlib
+  DEPENDS:=+libncurses +libopenssl +libreadline +libstdcpp +libexpat +zlib
   TITLE:=a sophisticated file transfer program with command line interface.
   URL:=https://lftp.yar.ru/
 endef

@@ -6,11 +6,10 @@
 #
 
 include $(TOPDIR)/rules.mk
-include $(INCLUDE_DIR)/uclibc++.mk
 
 PKG_NAME:=smartmontools
 PKG_VERSION:=7.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/smartmontools
@@ -34,7 +33,7 @@ endef
 
 define Package/smartmontools
   $(call Package/smartmontools/Default)
-  DEPENDS:=$(CXX_DEPENDS)
+  DEPENDS:=+libstdcpp
   TITLE+= Tool
 endef
 
@@ -47,7 +46,7 @@ endef
 
 define Package/smartd
   $(call Package/smartmontools/Default)
-  DEPENDS:=$(CXX_DEPENDS)
+  DEPENDS:=+libstdcpp
   TITLE+= Daemon
 endef
 
@@ -79,11 +78,6 @@ define Package/smartd-mail/description
   A script for mailing about SMART issues
 endef
 
-ifeq ($(CONFIG_USE_UCLIBCXX),y)
-TARGET_LDFLAGS +=-nodefaultlibs
-else
-CONFIGURE_VARS += with_cxx11_regex=yes
-endif
 TARGET_LDFLAGS += -flto
 
 TARGET_CXXFLAGS +=-fno-rtti -flto
@@ -97,6 +91,7 @@ CONFIGURE_ARGS += \
 
 #lower file size vs. CONFIGURE_ARGS
 CONFIGURE_VARS += \
+	with_cxx11_regex=yes \
 	with_smartdplugindir=no \
 	with_systemdenvfile=no \
 	with_systemdsystemunitdir=no \
