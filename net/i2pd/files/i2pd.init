@@ -14,7 +14,6 @@ PIDFILE=/var/run/i2pd.pid
 DATADIR=/var/lib/i2pd
 CONFFILE=/etc/i2pd/i2pd.conf
 
-. /lib/functions.sh
 
 
 i2pd_start() {
@@ -43,6 +42,7 @@ i2pd_start() {
 	## We need permissions
 	touch "$PIDFILE"
 	chown "$USER:adm" "$PIDFILE"
+	chown "$USER:adm" "$CONFFILE"
 
 	procd_open_instance
 	procd_set_param command "$PROG" --service --conf="$CONFFILE" --pidfile "$PIDFILE"
