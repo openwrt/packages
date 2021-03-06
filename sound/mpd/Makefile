@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.21.26
+PKG_VERSION:=0.22.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://www.musicpd.org/download/mpd/0.21/
-PKG_HASH:=f9e68221c7a6829ec02f281eb313b2f24182020f5eb65ab22b337e6169ea4eea
+PKG_SOURCE_URL:=https://www.musicpd.org/download/mpd/0.22/
+PKG_HASH:=2be149a4895c3cb613477f8cf1193593e3d8a1d38a75ffa7d32da8c8316a4d5e
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
@@ -47,7 +47,7 @@ endef
 define Package/mpd-full
 $(call Package/mpd/Default)
   TITLE+= (full)
-  DEPENDS+= +AUDIO_SUPPORT:pulseaudio-daemon +libvorbis +libmms +libnpupnp +libshout +yajl \
+  DEPENDS+= +AUDIO_SUPPORT:pulseaudio-daemon +libvorbis +libmms +libupnp +libshout +yajl \
             +BUILD_PATENTED:libffmpeg +!BUILD_PATENTED:libmad
   PROVIDES:=mpd
   VARIANT:=full
@@ -100,12 +100,19 @@ define Package/mpd-avahi-service/conffiles
 endef
 
 MESON_ARGS += \
-	-Ddocumentation=false \
-	-Dtest=false \
+	-Ddocumentation=disabled \
+	-Dhtml_manual=false \
+	-Dmanpages=false \
 	-Dsyslog=enabled \
 	-Dinotify=true \
+	-Dio_uring=disabled \
 	-Ddaemon=false \
 	-Dsystemd=disabled \
+	-Dtest=false \
+	-Dfuzzer=false \
+	-Depoll=true \
+	-Deventfd=true \
+	-Dsignalfd=true \
 	-Dtcp=true \
 	-Dipv6=$(if $(CONFIG_IPV6),en,dis)abled \
 	-Dlocal_socket=true \
@@ -169,7 +176,7 @@ MESON_ARGS += \
 ifeq ($(BUILD_VARIANT),full)
 
   MESON_ARGS += \
-	-Dupnp=npupnp \
+	-Dupnp=enabled \
 	-Dmms=enabled \
 	-Dsoundcloud=enabled \
 	-Dffmpeg=$(if $(CONFIG_BUILD_PATENTED),en,dis)abled \
