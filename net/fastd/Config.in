@@ -8,7 +8,6 @@ config FASTD_ENABLE_METHOD_CIPHER_TEST
 config FASTD_ENABLE_METHOD_COMPOSED_GMAC
 	bool "Enable composed-gmac method provider"
 	select FASTD_ENABLE_MAC_GHASH
-	default y
 
 config FASTD_ENABLE_METHOD_COMPOSED_UMAC
 	bool "Enable composed-umac method provider"
@@ -18,7 +17,6 @@ config FASTD_ENABLE_METHOD_COMPOSED_UMAC
 config FASTD_ENABLE_METHOD_GENERIC_GMAC
 	bool "Enable generic-gmac method provider"
 	select FASTD_ENABLE_MAC_GHASH
-	default y
 
 config FASTD_ENABLE_METHOD_GENERIC_POLY1305
 	bool "Enable generic-poly1305 method provider"
