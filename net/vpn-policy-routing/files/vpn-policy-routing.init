@@ -89,6 +89,7 @@ output() {
 		printf "%b" "$msg" >> "$sharedMemoryOutput"
 	fi
 }
+is_present() { command -v "$1" >/dev/null 2>&1; }
 is_installed() { [ -s "/usr/lib/opkg/info/${1}.control" ]; }
 is_variant_installed() { [ "$(echo /usr/lib/opkg/info/"${1}"*.control)" != "/usr/lib/opkg/info/${1}*.control" ]; }
 
@@ -867,22 +868,26 @@ process_user_file(){
 	config_get      path    "$1" 'path'
 	[ "$enabled" -gt 0 ] || return 0
 	if [ ! -s "$path" ]; then
-		errorSummary="${errorSummary}${_ERROR_}: Custom user file '$path' not found or empty\\n"
+		errorSummary="${errorSummary}${_ERROR_}: Custom user file '$path' not found or empty!\\n"
 		output_fail
 		return 1
 	fi
 	if ! $shellBin -n "$path"; then
-		errorSummary="${errorSummary}${_ERROR_}: Syntax error in custom user file '$path'\\n"
+		errorSummary="${errorSummary}${_ERROR_}: Syntax error in custom user file '$path'!\\n"
 		output_fail
 		return 1
 	fi
+	output 2 "Running $path "
 # shellcheck disable=SC1090
 	if ! . "$path"; then
-		errorSummary="${errorSummary}${_ERROR_}: Error running custom user file '$path'\\n"
+		errorSummary="${errorSummary}${_ERROR_}: Error running custom user file '$path'!\\n"
+		if grep -q -w 'curl' "$path" && ! is_present 'curl'; then
+			errorSummary="${errorSummary}${_ERROR_}: Use of 'curl' is detected in custom user file '$path', but 'curl' isn't installed!\\n"
+			errorSummary="${errorSummary}${_ERROR_}: If 'curl' is needed, install it with 'opkg update; opkg install curl;' command in CLI.\\n"
+		fi
 		output_fail
 		return 1
 	else
-		output 2 "Running $path "
 		output_ok
 		return 0
 	fi
@@ -1174,7 +1179,7 @@ support() {
 	} | tee -a /var/${packageName}-support
 	if [ -n "$set_p" ]; then
 		printf "%b" "Pasting to paste.ee... "
-		if is_installed 'curl' && is_variant_installed 'libopenssl' && is_installed 'ca-bundle'; then
+		if is_present 'curl' && is_variant_installed 'libopenssl' && is_installed 'ca-bundle'; then
 			json_init; json_add_string "description" "${packageName}-support"
 			json_add_array "sections"; json_add_object '0'
 			json_add_string "name" "$(uci -q get system.@system[0].hostname)"
