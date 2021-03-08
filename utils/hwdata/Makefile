@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hwdata
-PKG_VERSION:=0.343
-PKG_RELEASE:=2
+PKG_VERSION:=0.345
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/vcrhonek/hwdata/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=ccb4d21337b3773cc02654b360e91feb44c9258728d2f027b72013bd5628113b
+PKG_HASH:=fafcc97421ba766e08a2714ccc3eebb0daabc99e67d53c2d682721dd01ccf7a7
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later  XFree86-1.0
