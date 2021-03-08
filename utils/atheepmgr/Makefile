@@ -25,6 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/atheepmgr
   SECTION:=utils
   CATEGORY:=Utilities
+  DEPENDS:=+libpciaccess
   TITLE:=EEPROM/boarddata management utility for Atheros WLAN chips
   MENU:=1
 endef
