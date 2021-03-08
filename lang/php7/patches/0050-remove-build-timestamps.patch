@@ -1,6 +1,6 @@
 --- a/ext/opcache/ZendAccelerator.c
 +++ b/ext/opcache/ZendAccelerator.c
-@@ -2667,11 +2667,6 @@ static void accel_gen_system_id(void)
+@@ -2670,11 +2670,6 @@ static void accel_gen_system_id(void)
  	PHP_MD5Update(&context, PHP_VERSION, sizeof(PHP_VERSION)-1);
  	PHP_MD5Update(&context, ZEND_EXTENSION_BUILD_ID, sizeof(ZEND_EXTENSION_BUILD_ID)-1);
  	PHP_MD5Update(&context, ZEND_BIN_ID, sizeof(ZEND_BIN_ID)-1);
