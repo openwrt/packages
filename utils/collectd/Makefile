@@ -101,7 +101,6 @@ COLLECTD_PLUGINS_DISABLED:= \
 	serial \
 	sigrok \
 	slurm \
-	smart \
 	snmp_agent \
 	statsd \
 	synproxy \
@@ -184,6 +183,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	routeros \
 	rrdtool \
 	sensors \
+	smart \
 	snmp \
 	snmp6 \
 	swap \
@@ -251,8 +251,7 @@ CONFIGURE_ARGS+= \
 	--enable-daemon \
 	--with-nan-emulation \
 	--with-libyajl=no \
-	--without-perl-bindings \
-	--without-libudev
+	--without-perl-bindings
 
 CONFIGURE_VARS+= \
 	CFLAGS="$$$$CFLAGS $(FPIC)" \
@@ -316,6 +315,15 @@ endif
 # exception: mod-rrdtool needs rrdtool-1.0.x
 ifneq ($(CONFIG_PACKAGE_collectd-mod-rrdtool),)
   CONFIGURE_ARGS+= --with-librrd="$(STAGING_DIR)/usr/lib/rrdtool-1.0"
+endif
+
+# exception: mod-smart needs libatasmart
+ifneq ($(CONFIG_PACKAGE_collectd-mod-smart),)
+  CONFIGURE_ARGS+= \
+	--with-libatasmart="$(STAGING_DIR)/usr" \
+	--with-libudev="$(STAGING_DIR)/usr"
+else
+  CONFIGURE_ARGS+= --without-libudev
 endif
 
 define Package/collectd/conffiles
@@ -412,7 +420,7 @@ $(eval $(call BuildPlugin,curl,cURL input,curl,+PACKAGE_collectd-mod-curl:libcur
 #$(eval $(call BuildPlugin,dbi,relational database input,dbi,+PACKAGE_collectd-mod-dbi:libdbi))
 $(eval $(call BuildPlugin,df,disk space input,df,))
 $(eval $(call BuildPlugin,dhcpleases,show dhcpleases,dhcpleases,))
-$(eval $(call BuildPlugin,disk,disk usage/timing input,disk,))
+$(eval $(call BuildPlugin,disk,disk usage/timing input,disk,+PACKAGE_collectd-mod-smart:libudev))
 $(eval $(call BuildPlugin,dns,DNS traffic input,dns,+PACKAGE_collectd-mod-dns:libpcap))
 $(eval $(call BuildPlugin,email,email output,email,))
 $(eval $(call BuildPlugin,entropy,Entropy amount input,entropy,))
@@ -452,6 +460,7 @@ $(eval $(call BuildPlugin,protocols,network protocols input,protocols,))
 $(eval $(call BuildPlugin,routeros,MikroTik RouterOS input,routeros,+PACKAGE_collectd-mod-routeros:librouteros))
 $(eval $(call BuildPlugin,rrdtool,RRDtool output,rrdtool,+PACKAGE_collectd-mod-rrdtool:librrd1))
 $(eval $(call BuildPlugin,sensors,lm_sensors input,sensors,+PACKAGE_collectd-mod-sensors:libsensors))
+$(eval $(call BuildPlugin,smart,smart input,smart,+PACKAGE_collectd-mod-smart:libatasmart))
 $(eval $(call BuildPlugin,snmp,SNMP input,snmp,+PACKAGE_collectd-mod-snmp:libnetsnmp))
 $(eval $(call BuildPlugin,snmp6,snmp6 input,snmp6,))
 $(eval $(call BuildPlugin,swap,swap input,swap,))
