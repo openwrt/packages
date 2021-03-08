@@ -25,6 +25,10 @@ PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
+PKG_CONFIG_DEPENDS:= \
+	PACKAGE_COLLECTD_ENCRYPTED_NETWORK \
+	PACKAGE_COLLECTD_DEBUG_OUTPUT_ENABLE
+
 COLLECTD_PLUGINS_DISABLED:= \
 	amqp \
 	ampq1 \
@@ -242,12 +246,20 @@ define Package/collectd/config
 	default n
 	depends on PACKAGE_collectd
 	select PACKAGE_collectd-mod-network
+
+	config PACKAGE_COLLECTD_DEBUG_OUTPUT_ENABLE
+	bool "Enable debug output"
+	default n
+	depends on PACKAGE_collectd
+	help
+	  Enables the compiler option that collectd is compiled with
+	  debugging support. This is used at development stages to get
+	  more messages from the collectd during development.
 endef
 
 # common configure args
 CONFIGURE_ARGS+= \
 	--disable-werror \
-	--disable-debug \
 	--enable-daemon \
 	--with-nan-emulation \
 	--with-libyajl=no \
@@ -271,6 +283,14 @@ CONFIGURE_VARS+= \
 else
 CONFIGURE_ARGS+= \
 	--without-libgcrypt
+endif
+
+ifeq ($(CONFIG_PACKAGE_COLLECTD_DEBUG_OUTPUT_ENABLE),y)
+CONFIGURE_ARGS+= \
+	--enable-debug
+else
+CONFIGURE_ARGS+= \
+	--disable-debug
 endif
 
 CONFIGURE_PLUGIN= \
