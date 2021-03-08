@@ -203,7 +203,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	vmem \
 	wireless \
 	write_graphite \
-	write_http \
+	write_http
 
 PKG_CONFIG_DEPENDS:= \
 	$(patsubst %,CONFIG_PACKAGE_collectd-mod-%,$(subst _,-,$(COLLECTD_PLUGINS_SELECTED))) \
