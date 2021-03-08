@@ -32,17 +32,16 @@ Signed-off-by: Alif M. A. <alive4ever at live.com>
 
 --- a/dot.mkshrc
 +++ b/dot.mkshrc
-@@ -63,10 +63,9 @@
+@@ -64,9 +64,9 @@ for EDITOR in "${EDITOR:-}" jupp jstar m
  	EDITOR=
  done
  
 -\\builtin alias ls=ls l='ls -F' la='l -a' ll='l -l' lo='l -alo'
--\: "${HOSTNAME:=$(\\builtin ulimit -c 0; \\builtin print -r -- $(hostname \
--    2>/dev/null))}${EDITOR:=/bin/ed}${TERM:=vt100}${USER:=$(\\builtin ulimit \
--    -c 0; id -un 2>/dev/null)}${USER:=?}"
+-\: "${EDITOR:=/bin/ed}${TERM:=vt100}${USER:=$(\\builtin ulimit -c 0; id -un \
+-    2>/dev/null)}${HOSTNAME:=$(\\builtin ulimit -c 0; hostname 2>/dev/null)}"
 +\\builtin alias ls=ls l='ls -F' la='l -a' ll='l -l' lo='l -al'
-+\: "${HOSTNAME:=$(</proc/sys/kernel/hostname)}${EDITOR:=/bin/vi}${TERM:=vt100}\
-+	${USER:=$(\\builtin ulimit -c 0; id -un 2>/dev/null)}${USER:=?}"
++\: "${EDITOR:=/bin/vi}${TERM:=vt100}${USER:=$(\\builtin ulimit -c 0; id -un \
++    2>/dev/null)}${HOSTNAME:=$(</proc/sys/kernel/hostname)}"
  [[ $HOSTNAME = ?(?(ip6-)localhost?(6)) ]] && HOSTNAME=nil; \\builtin unalias ls
- \\builtin export EDITOR HOSTNAME TERM USER
+ \\builtin export EDITOR HOSTNAME TERM USER="${USER:-?}"
  

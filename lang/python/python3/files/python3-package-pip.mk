@@ -19,6 +19,7 @@ define Py3Package/python3-pip/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages
 	$(CP) $(PKG_BUILD_DIR)/install-pip/usr/bin/pip$(PYTHON3_VERSION) $(1)/usr/bin
 	$(LN) pip$(PYTHON3_VERSION) $(1)/usr/bin/pip3
+	$(LN) pip$(PYTHON3_VERSION) $(1)/usr/bin/pip
 	$(CP) \
 		$(PKG_BUILD_DIR)/install-pip/usr/lib/python$(PYTHON3_VERSION)/site-packages/pip \
 		$(PKG_BUILD_DIR)/install-pip/usr/lib/python$(PYTHON3_VERSION)/site-packages/pip-$(PYTHON3_PIP_VERSION).dist-info \

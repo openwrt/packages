@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=muninlite
-PKG_VERSION:=2.0.1
+PKG_VERSION:=2.1.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/munin-monitoring/$(PKG_NAME)/releases/download/$(PKG_VERSION)/
-PKG_HASH:=8277ccd146b4fc5b57602dba3f5612c7d6f840b4c3ee2ff3756ff4b3d8527966
+PKG_HASH:=427295fe29ac9a7d99d31aa98f3d5dfd382b7e131d0e1193899d54487ca589af
 
 PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later

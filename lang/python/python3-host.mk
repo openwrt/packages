@@ -31,8 +31,7 @@ HOST_PYTHON3_VARS = \
 	LDSHARED="$(HOSTCC) -shared" \
 	CFLAGS="$(HOST_CFLAGS)" \
 	CPPFLAGS="$(HOST_CPPFLAGS) -I$(HOST_PYTHON3_INC_DIR)" \
-	LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON3_VERSION) -Wl$(comma)-rpath=$(STAGING_DIR_HOSTPKG)/lib" \
-	_PYTHON_HOST_PLATFORM=linux2 \
+	LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON3_VERSION) -Wl$(comma)-rpath$(comma)$(STAGING_DIR_HOSTPKG)/lib" \
 	PYTHONPATH="$(HOST_PYTHON3PATH)" \
 	PYTHONDONTWRITEBYTECODE=0 \
 	PYTHONOPTIMIZE=""
@@ -50,14 +49,26 @@ endef
 # Note: I shamelessly copied this from Yousong's logic (from python-packages);
 HOST_PYTHON3_PIP:=$(STAGING_DIR_HOSTPKG)/bin/pip$(PYTHON3_VERSION)
 
+HOST_PYTHON3_PIP_CACHE_DIR:=$(DL_DIR)/pip-cache
+
+# Multiple concurrent pip processes can lead to errors or unexpected results: https://github.com/pypa/pip/issues/2361
 # $(1) => packages to install
 define HostPython3/PipInstall
-	$(HOST_PYTHON3_VARS) \
-	$(HOST_PYTHON3_PIP) \
-		--disable-pip-version-check \
-		--cache-dir "$(DL_DIR)/pip-cache" \
-		install \
-		$(1)
+	$(call locked, \
+		$(HOST_PYTHON3_VARS) \
+		$(HOST_PYTHON3_PIP) \
+			--cache-dir "$(HOST_PYTHON3_PIP_CACHE_DIR)" \
+			--disable-pip-version-check \
+			install \
+			--no-binary :all: \
+			--require-hashes \
+			$(1) \
+		$(if $(CONFIG_PYTHON3_HOST_PIP_CACHE_WORLD_READABLE), \
+			&& $(FIND) $(HOST_PYTHON3_PIP_CACHE_DIR) -not -type d -exec chmod go+r  '{}' \; \
+			&& $(FIND) $(HOST_PYTHON3_PIP_CACHE_DIR)      -type d -exec chmod go+rx '{}' \; \
+		), \
+		pip \
+	)
 endef
 
 # $(1) => build subdir

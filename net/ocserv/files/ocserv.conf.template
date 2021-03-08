@@ -22,8 +22,11 @@
 # to generate password entries.
 auth = "|AUTH|"
 
-# A banner to be displayed on clients
+# A banner to be displayed on clients after connection
 banner = "Welcome to OpenWRT"
+
+# A banner to be displayed on clients before connection
+#pre-login-banner = "Welcome"
 
 #isolate-workers = true
 
@@ -40,8 +43,10 @@ listen-host-is-dyndns = |DYNDNS|
 #max-clients = 1024
 max-clients = |MAX_CLIENTS|
 
-# Limit the number of client connections to one every X milliseconds 
-# (X is the provided value). Set to zero for no limit.
+# Rate limit the number of incoming connections to one every X milliseconds
+# (X is the provided value), as the secmod backlog grows. This
+# makes the server more resilient (and prevents connection failures) on
+# multiple concurrent connections. Set to zero for no limit.
 rate-limit-ms = 100
 
 # Limit the number of identical clients (i.e., users connecting 

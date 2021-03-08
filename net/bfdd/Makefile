@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bfdd
 PKG_SOURCE_DATE:=2019-08-22
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 
 PKG_SOURCE_VERSION:=c54534beb524afc3972039f57b56ec65332b43f7
 PKG_SOURCE_URL:=https://codeload.github.com/rzalamena/bfdd/tar.gz/$(PKG_SOURCE_VERSION)?
@@ -45,8 +45,6 @@ endef
 define Package/bfdd/conffiles
 /etc/bfdd/bfdd.json
 endef
-
-TARGET_CFLAGS += -D_GNU_SOURCE
 
 define Package/bfdd/install
 	$(INSTALL_DIR) \

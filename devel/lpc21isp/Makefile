@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lpc21isp
 PKG_VERSION:=197
-PKG_RELEASE:=3
+PKG_RELEASE:=5
 PKG_LICENSE:=LGPL-3.0-or-later
 PKG_LICENSE_FILES:=README gpl.txt lgpl-3.0.txt
 
@@ -33,6 +33,8 @@ define Package/lpc21isp/description
  Portable command line ISP (In-circuit Programmer) for NXP LPC family
  and Analog Devices ADUC70xx.
 endef
+
+TARGET_CFLAGS += $(if $(CONFIG_USE_GLIBC),-lc -lgcc_eh)
 
 define Package/lpc21isp/install
 		$(INSTALL_DIR) $(1)/usr/sbin

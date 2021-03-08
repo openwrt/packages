@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
-PKG_VERSION:=2.0.20
-PKG_RELEASE:=2
+PKG_VERSION:=2.2.1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.keepalived.org/software
-PKG_HASH:=9670fbc5eb3dc113828be8b702549dc68ec9578cf83287520d935be76fc8f193
+PKG_HASH:=91186f20c83ffc48d7a15a9a6e2329ed4feeb2dcb51f4aa9672c8840190ea741
 
 PKG_CPE_ID:=cpe:/a:keepalived:keepalived
 PKG_LICENSE:=GPL-2.0-or-later
@@ -215,6 +215,10 @@ define Package/keepalived/install
 	$(INSTALL_DIR) $(1)/etc/keepalived
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/keepalived/keepalived.conf \
 		$(1)/etc/keepalived/
+
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/etc/uci-defaults/keepalived \
+		$(1)/etc/uci-defaults/keepalived
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/keepalived.init \

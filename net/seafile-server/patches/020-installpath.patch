@@ -1,6 +1,6 @@
 --- a/controller/seafile-controller.c
 +++ b/controller/seafile-controller.c
-@@ -257,7 +257,7 @@ init_seafile_path ()
+@@ -288,7 +288,7 @@ init_seafile_path ()
      bin_dir = g_path_get_dirname (binary);
  
      tmp = g_path_get_dirname (bin_dir);

@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fdk-aac
 PKG_VERSION:=2.0.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mstorsjo/fdk-aac/tar.gz/v$(PKG_VERSION)?
@@ -47,11 +47,9 @@ define Package/fdk-aac/description
 endef
 
 ifeq ($(CONFIG_FDK-AAC_OPTIMIZE_SPEED),y)
-	TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS))
-	TARGET_CFLAGS += $(TARGET_CFLAGS) -O2 -flto
-	TARGET_CXXFLAGS := $(filter-out -O%,$(TARGET_CXXFLAGS))
-	TARGET_CXXFLAGS += $(TARGET_CXXFLAGS) -O2 -flto
-	TARGET_LDFLAGS += $(TARGET_LDFLAGS) -flto
+	TARGET_CFLAGS:= $(filter-out -O%,$(TARGET_CFLAGS)) -O2 -flto
+	TARGET_CXXFLAGS:= $(filter-out -O%,$(TARGET_CXXFLAGS)) -O2 -flto
+	TARGET_LDFLAGS += -flto
 endif
 
 define Build/InstallDev

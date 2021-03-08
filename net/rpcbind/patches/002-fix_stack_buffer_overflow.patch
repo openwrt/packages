@@ -1,9 +1,9 @@
 From 0bc1c0ae7ce61a7ac8a8e9a9b2086268f011abf0 Mon Sep 17 00:00:00 2001
 From: Steve Dickson <steved@redhat.com>
 Date: Tue, 9 Oct 2018 09:19:50 -0400
-Subject: [PATCH 1/1] rpcinfo: Fix stack buffer overflow
+Subject: [PATCH] rpcinfo: Fix stack buffer overflow
 
-*** buffer overflow detected ***: rpcinfo terminated
+buffer overflow detected: rpcinfo terminated
 ======= Backtrace: =========
 /lib64/libc.so.6(+0x721af)[0x7ff24c4451af]
 /lib64/libc.so.6(__fortify_fail+0x37)[0x7ff24c4ccdc7]
@@ -23,8 +23,6 @@ Signed-off-by: Steve Dickson <steved@redhat.com>
  src/rpcinfo.c | 23 +++++++++++++++++------
  1 file changed, 17 insertions(+), 6 deletions(-)
 
-diff --git a/src/rpcinfo.c b/src/rpcinfo.c
-index 9b46864..cfdba88 100644
 --- a/src/rpcinfo.c
 +++ b/src/rpcinfo.c
 @@ -973,6 +973,7 @@ rpcbdump (dumptype, netid, argc, argv)
@@ -64,6 +62,3 @@ index 9b46864..cfdba88 100644
  	  printf ("%-32s", buf);
  	  rpc = getrpcbynumber (rs->prog);
  	  if (rpc)
--- 
-1.8.3.1
-

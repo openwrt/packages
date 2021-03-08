@@ -25,8 +25,6 @@ at gcc pass3
  gotools/Makefile.in | 4 +++-
  2 files changed, 6 insertions(+), 2 deletions(-)
 
-diff --git a/gotools/Makefile.am b/gotools/Makefile.am
-index 5f3940a278b..9c22f5df103 100644
 --- a/gotools/Makefile.am
 +++ b/gotools/Makefile.am
 @@ -26,6 +26,7 @@ PWD_COMMAND = $${PWDCMD-pwd}
@@ -47,11 +45,9 @@ index 5f3940a278b..9c22f5df103 100644
  GOLINK = $(GOCOMPILER) $(GOCFLAGS) $(AM_GOCFLAGS) $(LDFLAGS) $(AM_LDFLAGS) -o $@
  
  cmdsrcdir = $(srcdir)/../libgo/go/cmd
-diff --git a/gotools/Makefile.in b/gotools/Makefile.in
-index 4386576b011..0bdd9290e01 100644
 --- a/gotools/Makefile.in
 +++ b/gotools/Makefile.in
-@@ -252,13 +252,15 @@ mkinstalldirs = $(SHELL) $(toplevel_srcdir)/mkinstalldirs
+@@ -252,13 +252,15 @@ mkinstalldirs = $(SHELL) $(toplevel_srcd
  PWD_COMMAND = $${PWDCMD-pwd}
  STAMP = echo timestamp >
  libgodir = ../$(target_noncanonical)/libgo
@@ -68,6 +64,3 @@ index 4386576b011..0bdd9290e01 100644
  GOLINK = $(GOCOMPILER) $(GOCFLAGS) $(AM_GOCFLAGS) $(LDFLAGS) $(AM_LDFLAGS) -o $@
  cmdsrcdir = $(srcdir)/../libgo/go/cmd
  go_cmd_go_files = \
--- 
-2.16.3
-

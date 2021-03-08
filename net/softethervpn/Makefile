@@ -9,14 +9,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=softethervpn
-PKG_VERSION:=4.29-9680
+PKG_VERSION:=4.34-9745
 PKG_VERREL:=rtm
-PKG_VERDATE:=2019.02.28
-PKG_RELEASE:=3
+PKG_VERDATE:=2020.04.05
+PKG_RELEASE:=1
 
 PKG_SOURCE:=softether-src-v$(PKG_VERSION)-$(PKG_VERREL).tar.gz
 PKG_SOURCE_URL:=http://www.softether-download.com/files/softether/v$(PKG_VERSION)-$(PKG_VERREL)-$(PKG_VERDATE)-tree/Source_Code/
-PKG_HASH:=e6035fa7d9aaf59bdb342cd7ab5ecfdff89811a875f62a3230208cdc8a4e26e4
+PKG_HASH:=bf5547e2a190e8620fe02da9756b32d010e3b64cbc6317f172f7820394b4c036
 
 PKG_MAINTAINER:=Federico Di Marco <fededim@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -40,7 +40,7 @@ HOST_MAKE_FLAGS += -C $(HOST_BUILD_DIR)
 # Select 32 or 64 bit Makefile for host build depending on host architecture
 HOST_MAKE_FLAGS += -f src/makefiles/linux_$(if $(shell uname -m | grep 64),64,32)bit.mak
 
-HOST_LDFLAGS += -Wl,-rpath="$(STAGING_DIR_HOSTPKG)/lib"
+HOST_LDFLAGS += -Wl,-rpath$(comma)$(STAGING_DIR_HOSTPKG)/lib
 # Prevent calling upstream configure
 define Host/Configure
 endef
@@ -131,19 +131,19 @@ Package/softethervpn-bridge/description = $(Package/softethervpn/description)
 Package/softethervpn-client/description = $(Package/softethervpn/description)
 
 define Package/softethervpn-base/conffiles
-  /usr/libexec/softethervpn/lang.config
+/usr/libexec/softethervpn/lang.config
 endef
 
 define Package/softethervpn-server/conffiles
-  /usr/libexec/softethervpn/vpn_server.config
+/usr/libexec/softethervpn/vpn_server.config
 endef
 
 define Package/softethervpn-client/conffiles
-  /usr/libexec/softethervpn/vpn_client.config
+/usr/libexec/softethervpn/vpn_client.config
 endef
 
 define Package/softethervpn-bridge/conffiles
-  /usr/libexec/softethervpn/vpn_bridge.config
+/usr/libexec/softethervpn/vpn_bridge.config
 endef
 
 define Package/softethervpn-base/install

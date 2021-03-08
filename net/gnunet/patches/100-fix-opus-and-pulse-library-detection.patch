@@ -1,8 +1,6 @@
-diff --git a/configure.ac b/configure.ac
-index e2c4dd39f..95053e672 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -803,10 +803,12 @@ AC_ARG_WITH(libpulse,
+@@ -813,10 +813,12 @@ AC_ARG_WITH(libpulse,
              LDFLAGS="-L$with_libpulse/lib $LDFLAGS"
              CPPFLAGS="-I$with_libpulse/include $CPPFLAGS"
              AC_CHECK_HEADERS(pulse/simple.h,
@@ -19,7 +17,7 @@ index e2c4dd39f..95053e672 100644
          ])
      ],
      [AC_MSG_RESULT([--with-libpulse not specified])
-@@ -846,10 +848,12 @@ AC_ARG_WITH(libopus,
+@@ -856,10 +858,12 @@ AC_ARG_WITH(libopus,
          LDFLAGS="-L$with_libopus/lib $LDFLAGS"
          CPPFLAGS="-I$with_libopus/include $CPPFLAGS"
          AC_CHECK_HEADERS(opus/opus.h,

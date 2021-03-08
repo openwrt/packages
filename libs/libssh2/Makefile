@@ -35,7 +35,7 @@ define Package/libssh2
   CATEGORY:=Libraries
   TITLE:=SSH2 library
   URL:=https://www.libssh2.org/
-  DEPENDS:=+LIBSSH2_MBEDTLS:libmbedtls +LIBSSH2_OPENSSL:libopenssl +zlib
+  DEPENDS:=+LIBSSH2_MBEDTLS:libmbedtls +!LIBSSH2_MBEDTLS:libopenssl +zlib
   ABI_VERSION:=1
 endef
 
@@ -44,20 +44,28 @@ define Package/libssh2/description
 endef
 
 define Package/libssh2/config
-	source "$(SOURCE)/Config.in"
+if PACKAGE_libssh2
+
+choice
+	prompt "Choose crypto backend"
+	default LIBSSH2_OPENSSL
+
+	config LIBSSH2_OPENSSL
+	bool "openssl"
+
+	config LIBSSH2_MBEDTLS
+	bool "mbedtls"
+endchoice
+
+endif
 endef
 
 CMAKE_OPTIONS += \
 	-DBUILD_SHARED_LIBS=ON \
 	-DBUILD_TESTING=OFF \
 	-DENABLE_ZLIB_COMPRESSION=ON \
-	-DCLEAR_MEMORY=ON
-
-ifeq ($(CONFIG_LIBSSH2_OPENSSL),y)
-	CMAKE_OPTIONS += -DCRYPTO_BACKEND=OpenSSL
-else
-	CMAKE_OPTIONS += -DCRYPTO_BACKEND=mbedTLS
-endif
+	-DCLEAR_MEMORY=ON \
+	-DCRYPTO_BACKEND=$(if $(CONFIG_LIBSSH2_MBEDTLS),mbedTLS,OpenSSL)
 
 define Package/libssh2/install
 	$(INSTALL_DIR) $(1)/usr/lib

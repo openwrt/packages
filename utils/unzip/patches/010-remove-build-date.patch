@@ -6,7 +6,7 @@ Bug-Debian: https://bugs.debian.org/782851
 
 --- a/unix/unix.c
 +++ b/unix/unix.c
-@@ -1705,7 +1705,7 @@
+@@ -1705,7 +1705,7 @@ void version(__G)
  #endif /* Sun */
  #endif /* SGI */
  

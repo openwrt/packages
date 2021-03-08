@@ -95,14 +95,11 @@ print_notify() {
 	done
 }
 
-global_defs() {
-	local linkbeat_use_polling notification_email
+globals() {
+	local notification_email
 
-	config_get alt_config_file "$1" alt_config_file
-	[ -z "$alt_config_file" ] || return 0
-
-	config_get_bool linkbeat_use_polling "$1" linkbeat_use_polling 0
-	[ "$linkbeat_use_polling" -gt 0 ] && printf 'linkbeat_use_polling\n\n' >> "$KEEPALIVED_CONF"
+	printf '%bscript_user root\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+	printf '%benable_script_security\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
 
 	config_get notification_email "$1" notification_email
 	print_list_indent notification_email
@@ -484,7 +481,7 @@ virtual_server() {
 }
 
 process_config() {
-	local alt_config_file
+	local alt_config_file linkbeat_use_polling
 
 	rm -f "$KEEPALIVED_CONF"
 
@@ -494,10 +491,7 @@ process_config() {
 
 	[ -f /etc/config/keepalived ] || return 0
 	config_load 'keepalived'
-
-	config_section_open "global_defs"
-	config_foreach_wrapper global_defs
-	config_section_close
+	config_get alt_config_file globals alt_config_file
 
 	# If "alt_config_file" specified, use that instead
 	[ -n "$alt_config_file" ] && [ -f "$alt_config_file" ] && {
@@ -506,6 +500,13 @@ process_config() {
 		ln -s "$alt_config_file" "$KEEPALIVED_CONF"
 		return 0
 	}
+
+	config_get_bool linkbeat_use_polling globals linkbeat_use_polling 0
+	[ "$linkbeat_use_polling" -gt 0 ] && printf 'linkbeat_use_polling\n\n' >> "$KEEPALIVED_CONF"
+
+	config_section_open "global_defs"
+	config_foreach_wrapper globals
+	config_section_close
 
 	config_section_open "static_ipaddress"
 	config_foreach_wrapper static_ipaddress

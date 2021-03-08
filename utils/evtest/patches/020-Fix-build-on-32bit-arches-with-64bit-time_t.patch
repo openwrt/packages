@@ -13,11 +13,9 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
  evtest.c | 7 ++++++-
  1 file changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/evtest.c b/evtest.c
-index be5e42c..d00437f 100644
 --- a/evtest.c
 +++ b/evtest.c
-@@ -62,6 +62,11 @@
+@@ -61,6 +61,11 @@
  #include <unistd.h>
  #include <limits.h> /* PATH_MAX */
  
@@ -29,7 +27,7 @@ index be5e42c..d00437f 100644
  #define BITS_PER_LONG (sizeof(long) * 8)
  #define NBITS(x) ((((x)-1)/BITS_PER_LONG)+1)
  #define OFF(x)  ((x)%BITS_PER_LONG)
-@@ -1141,7 +1146,7 @@ static int print_events(int fd)
+@@ -1140,7 +1145,7 @@ static int print_events(int fd)
  			type = ev[i].type;
  			code = ev[i].code;
  
@@ -38,6 +36,3 @@ index be5e42c..d00437f 100644
  
  			if (type == EV_SYN) {
  				if (code == SYN_MT_REPORT)
--- 
-2.25.1
-

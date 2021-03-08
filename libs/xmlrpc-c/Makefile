@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xmlrpc-c
-PKG_VERSION:=1.51.03
-PKG_RELEASE:=1
+PKG_VERSION:=1.51.07
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=@SF/xmlrpc-c/Xmlrpc-c%20Super%20Stable/$(PKG_VERSION)
-PKG_HASH:=82f9a4f6dee03f6a58921d75a65949dd4f0036a4c268bce6a4343338932ec065
+PKG_HASH:=84d20ae33f927582f821d61c0b9194aefbf1d7924590a13fa9da5ae1698aded9
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=VARIOUS
@@ -137,6 +137,7 @@ define Build/InstallDev
 	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/bin/xmlrpc-c-config \
 		$(2)/bin/
+	$(SED) 's,PREFIX="/usr",PREFIX="$(STAGING_DIR)/usr",g' $(2)/bin/xmlrpc-c-config
 	$(SED) \
 		's,HEADERINST_DIR="/usr/include",HEADERINST_DIR="$(STAGING_DIR)/usr/include",g' \
 		$(2)/bin/xmlrpc-c-config

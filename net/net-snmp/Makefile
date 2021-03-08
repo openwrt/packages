@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
 PKG_VERSION:=5.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
@@ -100,6 +100,7 @@ define Package/snmpd-static
 $(call Package/net-snmp/Default)
   DEPENDS:=+snmpd
   TITLE:=Open source SNMP implementation (daemon)
+  BUILDONLY:=1
 endef
 
 

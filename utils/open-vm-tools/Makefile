@@ -8,36 +8,53 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=open-vm-tools
-PKG_VERSION:=11.0.5
+PKG_VERSION:=11.2.5
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-15389592.tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-17337674.tar.gz
 PKG_SOURCE_URL:=https://github.com/vmware/open-vm-tools/releases/download/stable-$(PKG_VERSION)
-PKG_HASH:=fc5ed2d752af33775250e0f103d622c0031d578f8394511617d2619b124dfc42
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-15389592
-PKG_INSTALL:=1
+PKG_HASH:=d01c9e036536b569ee561e33302e9dad1c2ac27c04f762ebdc3f81791cb44566
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-17337674
 
-PKG_BUILD_DEPENDS:=glib2/host
-
-PKG_FIXUP:=autoreconf
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=LICENSE
 
-include $(INCLUDE_DIR)/package.mk
+PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=glib2/host
 
-define Package/open-vm-tools
+include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
+
+define Package/open-vm-tools/Default
   SECTION:=utils
   CATEGORY:=Utilities
+  URL:=https://github.com/vmware/open-vm-tools
+endef
+
+define Package/open-vm-tools
+$(call Package/open-vm-tools/Default)
   DEPENDS:=@TARGET_x86 +glib2 +libpthread +libtirpc
   TITLE:=open-vm-tools
   URL:=https://github.com/vmware/open-vm-tools
   MAINTAINER:=Yuhei OKAWA <tochiro.srchack@gmail.com>
 endef
 
-define Package/open-vm-tools-vm-tools/description
+define Package/open-vm-tools/description
 	Open Virtual Machine Tools for VMware guest OS
 endef
 
+define Package/open-vm-tools-fuse
+$(call Package/open-vm-tools/Default)
+  DEPENDS:=+open-vm-tools +libfuse
+  TITLE:=open-vm-tools-fuse
+  MAINTAINER:=Kagurazaka Kotori <kagurazakakotori@gmail.com>
+endef
+
+define Package/open-vm-tools-fuse/description
+	Shared Folders user mode FUSE client support for VMware guest OS
+endef
 
 CONFIGURE_ARGS+= \
 	--without-icu \
@@ -61,6 +78,14 @@ CONFIGURE_ARGS+= \
 	--without-xerces \
 	--enable-resolutionkms=no
 
+TARGET_LDFLAGS += -liconv
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+ifeq ($(QUILT),)
+	mv $(PKG_BUILD_DIR)/lib/include/poll.h $(PKG_BUILD_DIR)/lib/include/vm_poll.h
+endif
+endef
 
 define Package/open-vm-tools/install
 	$(INSTALL_DIR) $(1)/etc/init.d/
@@ -114,4 +139,11 @@ define Package/open-vm-tools/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/open-vm-tools/messages/ja/vmtoolsd.vmsg $(1)/usr/share/open-vm-tools/messages/ja/
 endef
 
+define Package/open-vm-tools-fuse/install
+	$(INSTALL_DIR) $(1)/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/vmhgfs-fuse $(1)/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/vmware-vmblock-fuse $(1)/bin/
+endef
+
 $(eval $(call BuildPackage,open-vm-tools))
+$(eval $(call BuildPackage,open-vm-tools-fuse))

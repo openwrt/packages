@@ -7,11 +7,9 @@ Subject: [PATCH 1/4] bcm43xx: Add bcm43xx-3wire variant
  tools/hciattach.c | 3 +++
  1 file changed, 3 insertions(+)
 
-Index: bluez-5.51/tools/hciattach.c
-===================================================================
---- bluez-5.51.orig/tools/hciattach.c
-+++ bluez-5.51/tools/hciattach.c
-@@ -1091,6 +1091,9 @@ struct uart_t uart[] = {
+--- a/tools/hciattach.c
++++ b/tools/hciattach.c
+@@ -1078,6 +1078,9 @@ struct uart_t uart[] = {
  	{ "bcm43xx",    0x0000, 0x0000, HCI_UART_H4,   115200, 3000000,
  				FLOW_CTL, DISABLE_PM, NULL, bcm43xx, NULL  },
  

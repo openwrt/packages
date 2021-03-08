@@ -21,8 +21,6 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  src/main.cpp | 1 +
  1 file changed, 1 insertion(+)
 
-diff --git a/src/main.cpp b/src/main.cpp
-index cbb7a4e..75d4202 100644
 --- a/src/main.cpp
 +++ b/src/main.cpp
 @@ -39,6 +39,7 @@
@@ -33,6 +31,3 @@ index cbb7a4e..75d4202 100644
  
  #include "cpu/cpu.h"
  #include "process/process.h"
--- 
-2.17.1
-

@@ -8,8 +8,6 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  ssl.c | 11 +++++++++++
  1 file changed, 11 insertions(+)
 
-diff --git a/ssl.c b/ssl.c
-index c362983..845f77b 100644
 --- a/ssl.c
 +++ b/ssl.c
 @@ -28,6 +28,9 @@
@@ -51,7 +49,7 @@ index c362983..845f77b 100644
      if (tunable_ssl_request_cert)
      {
        verify_option |= SSL_VERIFY_PEER;
-@@ -660,7 +669,9 @@ ssl_cert_digest(SSL* p_ssl, struct vsf_session* p_sess, struct mystr* p_str)
+@@ -660,7 +669,9 @@ ssl_cert_digest(SSL* p_ssl, struct vsf_s
  static char*
  get_ssl_error()
  {
@@ -61,6 +59,3 @@ index c362983..845f77b 100644
    return ERR_error_string(ERR_get_error(), NULL);
  }
  
--- 
-2.19.1
-

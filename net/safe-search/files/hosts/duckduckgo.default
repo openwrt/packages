@@ -1,16 +1,10 @@
-#
-# Copyright (c) 2019 Gregory L. Dietsche <Gregory.Dietsche@cuw.edu>
-# This is free software, licensed under the MIT License
-#
+##########################################################################
+#                     **** IMPORTANT ****                                #
+# Do not make changes to this file instead please execute:               #
+# /usr/sbin/safe-search-maintenance                                      #
+# If this file is not working, please ensure dnsmasq is able to READ it! #
+##########################################################################
 
-#
-# IMPORTANT: if this file is not working, make sure that dnsmasq is able to READ it!
-#
+# Last Updated On: Tue Jan 12 13:42:47 CST 2021
 
-#50.16.250.179 safe.duckduckgo.com
-#54.208.102.2 safe.duckduckgo.com
-#52.204.96.252 safe.duckduckgo.com
-
-50.16.250.179 duckduckgo.com
-54.208.102.2 duckduckgo.com
-52.204.96.252 duckduckgo.com
+40.89.244.237 duckduckgo.com

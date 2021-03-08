@@ -8,20 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=oath-toolkit
-PKG_VERSION:=2.6.2
-PKG_RELEASE:=5
+PKG_VERSION:=2.6.5
+PKG_RELEASE:=1
 
-PKG_SOURCE:=oath-toolkit-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SAVANNAH/oath-toolkit
-PKG_HASH:=b03446fa4b549af5ebe4d35d7aba51163442d255660558cd861ebce536824aa0
+PKG_HASH:=d207120c7e7fdd540142d04ca06d83fb3277c8f2fb794a74535d04b2aa0ec219
 
 PKG_MAINTAINER:=Fam Zheng <fam@euphon.net>
 PKG_LICENSE:=LGPL-2.0-or-later GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:nongnu:oath_toolkit
 
-PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 

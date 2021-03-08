@@ -1,6 +1,6 @@
---- libtheora-1.1.1/configure.ac	2009-10-01 20:00:33.000000000 +0200
-+++ libtheora-1.1.1.new/configure.ac	2012-12-05 14:22:26.319523608 +0100
-@@ -313,11 +313,6 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -313,11 +313,6 @@ fi
  dnl check for SDL
  HAVE_SDL=no
  

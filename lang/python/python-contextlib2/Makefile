@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-contextlib2
-PKG_VERSION:=0.5.5
-PKG_RELEASE:=2
+PKG_VERSION:=0.6.0.post1
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 
 PYPI_NAME:=contextlib2
-PKG_HASH:=509f9419ee91cdd00ba34443217d5ca51f5a364a404e1dce9e8979cea969ca48
+PKG_HASH:=01f490098c18b19d2bd5bb5dc445b2054d2fa97f09a4280ba2c5f3c394c8162e
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

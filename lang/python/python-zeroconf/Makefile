@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-zeroconf
-PKG_VERSION:=0.24.4
-PKG_RELEASE:=2
+PKG_VERSION:=0.28.5
+PKG_RELEASE:=1
 
 PYPI_NAME:=zeroconf
-PKG_HASH:=f66d38f16026097572939ab78b1f46a97f556bca415491eb0fd094d0b5827dfe
+PKG_HASH:=c08dbb90c116626cb6c5f19ebd14cd4846cffe7151f338c19215e6938d334980
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=Apache-2.0

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liblo
 PKG_VERSION:=0.31
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/liblo
@@ -19,10 +19,13 @@ PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_INSTALL:=1
+CMAKE_INSTALL:=1
+CMAKE_SOURCE_SUBDIR:=cmake
 PKG_BUILD_PARALLEL:=1
+PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_liblo-utils
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/liblo/Default
   TITLE:=Lightweight Open Sound Control (OSC)
@@ -45,21 +48,13 @@ $(call Package/liblo/Default)
   DEPENDS:= +liblo
 endef
 
-CONFIGURE_ARGS += \
-	$(if $(CONFIG_IPV6),--enable,--disable)-ipv6 \
-	--enable-threads \
-	--disable-examples \
-	--disable-network-tests \
-	--disable-tests
-
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/lo $(1)/usr/include/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liblo.* $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/liblo.pc $(1)/usr/lib/pkgconfig/
-endef
+CMAKE_OPTIONS += \
+	-DWITH_TOOLS=O$(if $(CONFIG_PACKAGE_liblo-utils),N,FF) \
+	-DWITH_TESTS=OFF \
+	-DWITH_EXAMPLES=OFF \
+	-DWITH_CPP_TESTS=OFF \
+	-DWITH_STATIC=OFF \
+	-DTHREADING=ON
 
 define Package/liblo/install
 	$(INSTALL_DIR) $(1)/usr/lib

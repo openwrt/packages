@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=darkstat
 PKG_VERSION:=3.0.719
-PKG_RELEASE:=4
+PKG_RELEASE:=6
 
 PKG_MAINTAINER:=Jean-Michel Lacroix <lacroix@lepine-lacroix.info>
 

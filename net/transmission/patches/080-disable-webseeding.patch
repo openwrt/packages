@@ -1,11 +1,11 @@
 --- a/libtransmission/webseed.c
 +++ b/libtransmission/webseed.c
-@@ -516,8 +516,6 @@ webseed_timer_func (evutil_socket_t foo UNUSED, short bar UNUSED, void * vw)
-   if (w->retry_tickcount)
-     ++w->retry_tickcount;
+@@ -510,8 +510,6 @@ static void webseed_timer_func(evutil_so
+         ++w->retry_tickcount;
+     }
  
--  on_idle (w);
+-    on_idle(w);
 -
-   tr_timerAddMsec (w->timer, TR_IDLE_TIMER_MSEC);
+     tr_timerAddMsec(w->timer, TR_IDLE_TIMER_MSEC);
  }
  

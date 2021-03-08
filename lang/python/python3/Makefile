@@ -11,12 +11,12 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_HASH:=2646e7dc233362f59714c6193017bb2d6f7b38d6ab4a0cb5fbac5c36c4d845df
+PKG_HASH:=3c2034c54f811448f516668dce09d24008a0716c3a794dd8639b5388cbde247d
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=Python/2.0
@@ -129,43 +129,30 @@ TARGET_CONFIGURE_OPTS+= \
 	READELF="$(TARGET_CROSS)readelf"
 
 MAKE_FLAGS+=\
-	CROSS_COMPILE=yes \
 	LD="$(TARGET_CC)"
 
 EXTRA_CFLAGS+= \
 	-DNDEBUG -fno-inline
 EXTRA_LDFLAGS+= \
-	-L$(PKG_BUILD_DIR)
-
-ENABLE_IPV6:=
-ifeq ($(CONFIG_IPV6),y)
-	ENABLE_IPV6 += --enable-ipv6
-endif
-
-PYTHON_FOR_BUILD:= \
-	_PYTHON_PROJECT_BASE=$(PKG_BUILD_DIR) \
-	_PYTHON_HOST_PLATFORM=linux2 \
-	PYTHONPATH="$(PKG_BUILD_DIR)/Lib:$(PKG_BUILD_DIR)/build/lib.linux2-$(PYTHON3_VERSION)" \
-	_PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata \
-	$(HOST_PYTHON3_BIN)
+	-L$(PKG_BUILD_DIR) \
+	-L$(STAGING_DIR)/usr/lib -L$(STAGING_DIR)/lib
 
 DISABLE_BLUETOOTH:= \
 	ac_cv_header_bluetooth_bluetooth_h=no \
 	ac_cv_header_bluetooth_h=no
 
 CONFIGURE_ARGS+= \
-	--sysconfdir=/etc \
+	--enable-optimizations \
 	--enable-shared \
-	--without-cxx-main \
-	--with-threads \
 	--with-system-ffi \
-	--with-ensurepip=no \
+	--without-cxx-main \
+	--without-ensurepip \
 	--without-pymalloc \
-	$(if $(CONFIG_PYTHON3_BLUETOOTH_SUPPORT),,$(DISABLE_BLUETOOTH)) \
-	PYTHON_FOR_BUILD="$(PYTHON_FOR_BUILD)" \
-	$(ENABLE_IPV6) \
+	$(if $(CONFIG_IPV6),--enable-ipv6) \
+	$(if $(findstring mips,$(CONFIG_ARCH)),,--with-lto) \
 	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
-	OPT="$(TARGET_CFLAGS)"
+	OPT="$(TARGET_CFLAGS)" \
+	$(if $(CONFIG_PYTHON3_BLUETOOTH_SUPPORT),,$(DISABLE_BLUETOOTH))
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
@@ -189,7 +176,7 @@ define Build/Compile/python3-setuptools
 		--ignore-installed \
 		--root=$(PKG_BUILD_DIR)/install-setuptools \
 		--prefix=/usr \
-		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/setuptools-$(PYTHON3_SETUPTOOLS_VERSION)-py2.py3-none-any.whl
+		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/setuptools-$(PYTHON3_SETUPTOOLS_VERSION)-py3-none-any.whl
 	$(call PatchDir,$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON3_VERSION)/site-packages,./patches-setuptools,)
 endef
 endif # CONFIG_PACKAGE_python3-setuptools
@@ -225,6 +212,10 @@ define Build/InstallDev
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION) \
 		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON3_VERSION).so* \
 		$(1)/usr/lib/
+	grep \
+		'^_PYTHON_HOST_PLATFORM=' \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)/Makefile > \
+		$(1)/usr/lib/python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)/Makefile-vars
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/python*.pc \
 		$(1)/usr/lib/pkgconfig
@@ -308,16 +299,16 @@ endif
 ifeq ($(HOST_OS),Darwin)
 HOST_CONFIGURE_VARS += \
 	ac_cv_header_libintl_h=no
+HOST_MAKE_VARS += \
+	USE_PYTHON_CONFIG_PY=1
 endif
 
 HOST_CONFIGURE_ARGS+= \
+	--enable-optimizations \
+	--with-ensurepip=upgrade \
+	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
 	--without-cxx-main \
 	--without-pymalloc \
-	--with-threads \
-	--prefix=$(HOST_PYTHON3_DIR) \
-	--exec-prefix=$(HOST_PYTHON3_DIR) \
-	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
-	--with-ensurepip=upgrade \
 	CONFIG_SITE=
 
 define Host/Configure
@@ -326,8 +317,8 @@ define Host/Configure
 endef
 
 define Host/Compile
-	+$(HOST_MAKE_VARS) $(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) python
-	+$(HOST_MAKE_VARS) $(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR) sharedmods
+	$(call Host/Compile/Default,python)
+	$(call Host/Compile/Default,sharedmods)
 endef
 
 define Host/Install
@@ -347,7 +338,7 @@ define Host/Install
 			$(HOST_PYTHON3_PKG_DIR)/.pip-patched* \
 			$(HOST_PYTHON3_PKG_DIR)/.pip_installed_*
 	)
-	$(MAKE) -C $(HOST_BUILD_DIR) install
+	$(call Host/Install/Default)
 	$(if $(wildcard $(HOST_PYTHON3_PKG_DIR)/.setuptools_installed_$(PYTHON3_SETUPTOOLS_VERSION)-$(PYTHON3_SETUPTOOLS_PKG_RELEASE)),,
 		$(call HostPatchDir,$(HOST_PYTHON3_PKG_DIR),./patches-setuptools,)
 		touch $(HOST_PYTHON3_PKG_DIR)/.setuptools_installed_$(PYTHON3_SETUPTOOLS_VERSION)-$(PYTHON3_SETUPTOOLS_PKG_RELEASE)

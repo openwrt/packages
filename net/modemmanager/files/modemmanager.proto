@@ -116,6 +116,35 @@ modemmanager_connected_method_ppp_ipv4() {
 	local ttyname="$2"
 	local username="$3"
 	local password="$4"
+	local allowedauth="$5"
+
+	# all auth types are allowed unless a user given list is given
+	local authopts
+	local pap=1
+	local chap=1
+	local mschap=1
+	local mschapv2=1
+	local eap=1
+
+	[ -n "$allowedauth" ] && {
+		pap=0 chap=0 mschap=0 mschapv2=0 eap=0
+		for auth in $allowedauth; do
+			case $auth in
+				"pap") pap=1 ;;
+				"chap") chap=1 ;;
+				"mschap") mschap=1 ;;
+				"mschapv2") mschapv2=1 ;;
+				"eap") eap=1 ;;
+				*) ;;
+			esac
+		done
+	}
+
+	[ $pap -eq 1 ] || append authopts "refuse-pap"
+	[ $chap -eq 1 ] || append authopts "refuse-chap"
+	[ $mschap -eq 1 ] || append authopts "refuse-mschap"
+	[ $mschapv2 -eq 1 ] || append authopts "refuse-mschap-v2"
+	[ $eap -eq 1 ] || append authopts "refuse-eap"
 
 	proto_run_command "${interface}" /usr/sbin/pppd \
 		"${ttyname}" \
@@ -126,6 +155,7 @@ modemmanager_connected_method_ppp_ipv4() {
 		nopcomp \
 		novj \
 		noauth \
+		$authopts \
 		${username:+ user $username} \
 		${password:+ password $password} \
 		lcp-echo-failure 5 \
@@ -204,10 +234,9 @@ modemmanager_connected_method_static_ipv4() {
 		proto_notify_error "${interface}" PREFIX_MISSING
 		return
 	}
-
 	mask=$(cdr2mask "${prefix}")
 
-	# TODO: mtu reporting in proto handler
+	[ -n "${mtu}" ] && /sbin/ip link set dev "${wwan}" mtu "${mtu}"
 
 	proto_init_update "${wwan}" 1
 	proto_set_keep 1
@@ -270,7 +299,7 @@ modemmanager_connected_method_static_ipv6() {
 		return
 	}
 
-	# TODO: mtu reporting in proto handler
+	[ -n "${mtu}" ] && /sbin/ip link set dev "${wwan}" mtu "${mtu}"
 
 	proto_init_update "${wwan}" 1
 	proto_set_keep 1
@@ -298,6 +327,7 @@ modemmanager_disconnected_method_common() {
 	local interface="$1"
 
 	echo "running disconnection (common)"
+	proto_notify_error "${interface}" MM_DISCONNECT_IN_PROGRESS
 
 	proto_init_update "*" 0
 	proto_send_update "${interface}"
@@ -308,10 +338,12 @@ proto_modemmanager_init_config() {
 	no_device=1
 	proto_config_add_string	 device
 	proto_config_add_string	 apn
+	proto_config_add_string	 'allowedauth:list(string)'
 	proto_config_add_string	 username
 	proto_config_add_string	 password
 	proto_config_add_string	 pincode
 	proto_config_add_string	 iptype
+	proto_config_add_int	 signalrate
 	proto_config_add_boolean lowpower
 	proto_config_add_defaults
 }
@@ -320,14 +352,14 @@ proto_modemmanager_setup() {
 	local interface="$1"
 
 	local modempath modemstatus bearercount bearerpath connectargs bearerstatus beareriface
-	local bearermethod_ipv4 bearermethod_ipv6
+	local bearermethod_ipv4 bearermethod_ipv6 auth cliauth
 	local operatorname operatorid registration accesstech signalquality
 
-	local device apn username password pincode iptype metric
+	local device apn allowedauth username password pincode iptype metric signalrate
 
 	local address prefix gateway mtu dns1 dns2
 
-	json_get_vars device apn username password pincode iptype metric
+	json_get_vars device apn allowedauth username password pincode iptype metric signalrate
 
 	# validate sysfs path given in config
 	[ -n "${device}" ] || {
@@ -356,14 +388,29 @@ proto_modemmanager_setup() {
 	# always cleanup before attempting a new connection, just in case
 	modemmanager_cleanup_connection "${modemstatus}"
 
+	# if allowedauth list given, build option string
+	for auth in $allowedauth; do
+		cliauth="${cliauth}${cliauth:+|}$auth"
+	done
+
 	# setup connect args; APN mandatory (even if it may be empty)
 	echo "starting connection with apn '${apn}'..."
-	connectargs="apn=${apn}${iptype:+,ip-type=${iptype}}${username:+,user=${username}}${password:+,password=${password}}${pincode:+,pin=${pincode}}"
+	proto_notify_error "${interface}" MM_CONNECT_IN_PROGRESS
+
+	connectargs="apn=${apn}${iptype:+,ip-type=${iptype}}${cliauth:+,allowed-auth=${cliauth}}${username:+,user=${username}}${password:+,password=${password}}${pincode:+,pin=${pincode}}"
 	mmcli --modem="${device}" --timeout 120 --simple-connect="${connectargs}" || {
-		proto_notify_error "${interface}" CONNECT_FAILED
+		proto_notify_error "${interface}" MM_CONNECT_FAILED
 		proto_block_restart "${interface}"
 		return 1
 	}
+
+	# check if Signal refresh rate is set
+	if [ -n "${signalrate}" ] && [ "${signalrate}" -eq "${signalrate}" ] 2>/dev/null; then
+		echo "setting signal refresh rate to ${signalrate} seconds"
+		mmcli --modem="${device}" --signal-setup="${signalrate}"
+	else
+		echo "signal refresh rate is not set"
+	fi
 
 	# log additional useful information
 	modemstatus=$(mmcli --modem="${device}" --output-keyvalue)
@@ -412,7 +459,7 @@ proto_modemmanager_setup() {
 			modemmanager_connected_method_static_ipv4 "${interface}" "${beareriface}" "${address}" "${prefix}" "${gateway}" "${mtu}" "${dns1}" "${dns2}" "${metric}"
 			;;
 		"ppp")
-			modemmanager_connected_method_ppp_ipv4 "${interface}" "${beareriface}" "${username}" "${password}"
+			modemmanager_connected_method_ppp_ipv4 "${interface}" "${beareriface}" "${username}" "${password}" "${allowedauth}"
 			;;
 		*)
 			proto_notify_error "${interface}" UNKNOWN_METHOD
@@ -462,6 +509,7 @@ proto_modemmanager_teardown() {
 	json_get_vars device lowpower iptype
 
 	echo "stopping network"
+	proto_notify_error "${interface}" MM_TEARDOWN_IN_PROGRESS
 
 	# load connected bearer information, just the first one should be ok
 	modemstatus=$(mmcli --modem="${device}" --output-keyvalue)
@@ -490,6 +538,7 @@ proto_modemmanager_teardown() {
 
 	# disable
 	mmcli --modem="${device}" --disable
+	proto_notify_error "${interface}" MM_MODEM_DISABLED
 
 	# low power, only if requested
 	[ "${lowpower:-0}" -lt 1 ] ||

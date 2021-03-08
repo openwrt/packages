@@ -64,11 +64,11 @@ requires() {
 			die 2 "cannot load $module. Please install kmod-$module"
 	done
 	for cmd in $REQ_CMDS; do
-		which $cmd &>/dev/null ||
+		command -v $cmd &>/dev/null ||
 			die 2 "cannot find command $cmd. Please install $cmd"
 	done
 
-	if ! which ip6tables &>/dev/null; then
+	if ! command -v ip6tables &>/dev/null; then
 		v "Disabling IPv6 as ip6tables was not found"
 		IP6T=true
 	fi

@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=less
-PKG_VERSION:=530
-PKG_RELEASE:=2
+PKG_VERSION:=563
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.greenwoodsoftware.com/less
-PKG_HASH:=503f91ab0af4846f34f0444ab71c4b286123f0044a4964f1ae781486c617f2e2
+PKG_HASH:=ce5b6d2b9fc4442d7a07c93ab128d2dff2ce09a1d4f2d055b95cf28dd0dc9a9a
 
-PKG_LICENSE:=GPL-3.0
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Julen Landa Alustiza <julen@zokormazo.info>
 PKG_CPE_ID:=cpe:/a:gnu:less
@@ -30,7 +30,7 @@ define Package/less/Default
   CATEGORY:=Utilities
   TITLE:=Pager program similar to more
   URL:=http://www.greenwoodsoftware.com/less/
-  ALTERNATIVES:=200:/bin/less:/usr/bin/less
+  ALTERNATIVES:=200:/usr/bin/less:/usr/libexec/less-gnu
 endef
 
 define Package/less/Default/description
@@ -61,7 +61,7 @@ endef
 
 ifeq ($(BUILD_VARIANT),narrow)
 	CONFIGURE_VARS += \
-		ac_cv_lib_ncursesw_initscr=no		
+		ac_cv_lib_ncursesw_initscr=no
 endif
 
 ifeq ($(BUILD_VARIANT),wide)
@@ -70,13 +70,11 @@ ifeq ($(BUILD_VARIANT),wide)
 endif
 
 define Package/less/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/less $(1)/usr/bin/less
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/less $(1)/usr/libexec/less-gnu
 endef
 
 Package/less-wide/install = $(Package/less/install)
-Package/less-wide/postinst = $(Package/less/postinst)
-Package/less-wide/postrm = $(Package/less/postrm)
 
 $(eval $(call BuildPackage,less))
 $(eval $(call BuildPackage,less-wide))

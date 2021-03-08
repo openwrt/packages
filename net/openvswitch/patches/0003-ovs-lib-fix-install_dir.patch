@@ -1,4 +1,4 @@
-From e8203d10706e6289f773bfe84a3fd87f19fcee07 Mon Sep 17 00:00:00 2001
+From 444991b95ed25d58c3cd1646fa823620380b6ce6 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Wed, 14 Mar 2018 16:44:13 +0800
 Subject: [PATCH] ovs-lib: fix install_dir()
@@ -10,8 +10,6 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  utilities/ovs-lib.in | 5 ++++-
  1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/utilities/ovs-lib.in b/utilities/ovs-lib.in
-index d646b444a..dee63dece 100644
 --- a/utilities/ovs-lib.in
 +++ b/utilities/ovs-lib.in
 @@ -159,7 +159,10 @@ install_dir () {

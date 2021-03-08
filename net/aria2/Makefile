@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aria2
 PKG_VERSION:=1.35.0
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/aria2/aria2/releases/download/release-$(PKG_VERSION)/
@@ -40,6 +40,7 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_ARIA2_WEBSOCKET
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/aria2/config
   source "$(SOURCE)/Config.in"
@@ -84,6 +85,10 @@ CONFIGURE_ARGS += \
 
 TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -flto
 TARGET_LDFLAGS += -Wl,--gc-sections -flto
+
+define Package/aria2/conffiles
+/etc/config/aria2
+endef
 
 define Package/aria2/install
 	$(INSTALL_DIR) $(1)/usr/bin

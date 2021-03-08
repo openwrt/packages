@@ -1,5 +1,3 @@
-diff --git a/src/common/le_architecture.h b/src/common/le_architecture.h
-index b863ddb..713acdd 100644
 --- a/src/common/le_architecture.h
 +++ b/src/common/le_architecture.h
 @@ -26,6 +26,8 @@

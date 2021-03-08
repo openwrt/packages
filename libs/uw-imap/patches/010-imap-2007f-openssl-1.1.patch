@@ -12,8 +12,6 @@ Signed-off-by: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
  src/osdep/unix/ssl_unix.c | 28 +++++++++++++++++-----------
  1 file changed, 17 insertions(+), 11 deletions(-)
 
-diff --git a/src/osdep/unix/ssl_unix.c b/src/osdep/unix/ssl_unix.c
-index 3bfdff3..836e9fa 100644
 --- a/src/osdep/unix/ssl_unix.c
 +++ b/src/osdep/unix/ssl_unix.c
 @@ -59,7 +59,7 @@ typedef struct ssl_stream {
@@ -25,7 +23,7 @@ index 3bfdff3..836e9fa 100644
  static long ssl_compare_hostnames (unsigned char *s,unsigned char *pat);
  static char *ssl_getline_work (SSLSTREAM *stream,unsigned long *size,
  			       long *contd);
-@@ -210,6 +210,7 @@ static char *ssl_start_work (SSLSTREAM *stream,char *host,unsigned long flags)
+@@ -210,6 +210,7 @@ static char *ssl_start_work (SSLSTREAM *
    BIO *bio;
    X509 *cert;
    unsigned long sl,tl;
@@ -33,7 +31,7 @@ index 3bfdff3..836e9fa 100644
    char *s,*t,*err,tmp[MAILTMPLEN];
    sslcertificatequery_t scq =
      (sslcertificatequery_t) mail_parameters (NIL,GET_SSLCERTIFICATEQUERY,NIL);
-@@ -266,14 +267,19 @@ static char *ssl_start_work (SSLSTREAM *stream,char *host,unsigned long flags)
+@@ -266,14 +267,19 @@ static char *ssl_start_work (SSLSTREAM *
    if (SSL_write (stream->con,"",0) < 0)
      return ssl_last_error ? ssl_last_error : "SSL negotiation failed";
  				/* need to validate host names? */
@@ -60,7 +58,7 @@ index 3bfdff3..836e9fa 100644
    }
    return NIL;
  }
-@@ -313,7 +319,7 @@ static int ssl_open_verify (int ok,X509_STORE_CTX *ctx)
+@@ -313,7 +319,7 @@ static int ssl_open_verify (int ok,X509_
   * Returns: NIL if validated, else string of error message
   */
  
@@ -69,7 +67,7 @@ index 3bfdff3..836e9fa 100644
  {
    int i,n;
    char *s,*t,*ret;
-@@ -322,9 +328,9 @@ static char *ssl_validate_cert (X509 *cert,char *host)
+@@ -322,9 +328,9 @@ static char *ssl_validate_cert (X509 *ce
  				/* make sure have a certificate */
    if (!cert) ret = "No certificate from server";
  				/* and that it has a name */
@@ -81,6 +79,3 @@ index 3bfdff3..836e9fa 100644
      if (t = strchr (s += 4,'/')) *t = '\0';
  				/* host name matches pattern? */
      ret = ssl_compare_hostnames (host,s) ? NIL :
--- 
-2.9.3
-

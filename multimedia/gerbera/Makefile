@@ -8,18 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gerbera
-PKG_VERSION:=1.4.0
-PKG_RELEASE:=1
+PKG_VERSION:=1.6.4
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gerbera/gerbera/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=904a9031c85ac805e4c139f363510226952683d7257acd1dee25ba1e97fd7651
+PKG_HASH:=cbe7ea78977db8c02fcca1759ed149f199a590afaf4a6d21ffcca8623d1a0cc5
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE.md
 
+PKG_BUILD_DEPENDS:=libmatroska pugixml spdlog taglib
 PKG_BUILD_PARALLEL:=1
+PKG_CONFIG_DEPENDS:=CONFIG_BUILD_PATENTED
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -28,7 +30,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/gerbera
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+file +libupnp +libsqlite3 +libexif +libexpat +libuuid +libstdcpp $(ICONV_DEPENDS)
+  DEPENDS:=+file +libnpupnp +libsqlite3 +libexif +libuuid +libfmt +BUILD_PATENTED:libffmpeg $(ICONV_DEPENDS)
   TITLE:=A free media server
   URL:=https://gerbera.io
   USERID:=gerbera:gerbera
@@ -39,29 +41,34 @@ define Package/gerbera/description
 endef
 
 define Package/gerbera/conffiles
-/etc/gerbera/config.xml
+/etc/config/gerbera
 endef
 
 CMAKE_OPTIONS += \
-	-DICONV_INCLUDE_DIR=$(ICONV_PREFIX)/include \
-	-DICONV_LIBRARIES=$(ICONV_PREFIX)/lib/libiconv.a \
-	-DWITH_MAGIC=1 \
-	-DWITH_MYSQL=0 \
-	-DWITH_CURL=0 \
-	-DWITH_INOTIFY=1 \
-	-DWITH_JS=0 \
-	-DWITH_TAGLIB=0 \
-	-DWITH_AVCODEC=0 \
-	-DWITH_FFMPEGTHUMBNAILER=0 \
-	-DWITH_EXIF=1 \
-	-DWITH_EXIV2=0 \
-	-DWITH_MATROSKA=0 \
-	-DWITH_SYSTEMD=0 \
-	-DWITH_LASTFM=0 \
-	-DWITH_DEBUG=0 \
-	-DWITH_TESTS=0
+	-DIconv_INCLUDE_DIR=$(ICONV_PREFIX)/include \
+	-DIconv_LIBRARY=$(ICONV_PREFIX)/lib/libiconv.a \
+	-DWITH_MAGIC=ON \
+	-DWITH_MYSQL=OFF \
+	-DWITH_CURL=ON \
+	-DWITH_INOTIFY=ON \
+	-DWITH_JS=OFF \
+	-DWITH_TAGLIB=ON \
+	-DWITH_AVCODEC=$(if $(CONFIG_BUILD_PATENTED),ON,OFF) \
+	-DWITH_FFMPEGTHUMBNAILER=OFF \
+	-DWITH_EXIF=ON \
+	-DWITH_EXIV2=OFF \
+	-DWITH_MATROSKA=ON \
+	-DWITH_SYSTEMD=OFF \
+	-DWITH_LASTFM=OFF \
+	-DWITH_DEBUG=OFF \
+	-DWITH_TESTS=OFF \
+	-DWITH_NPUPNP=ON
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
+TARGET_CFLAGS += \
+	-ffunction-sections \
+	-fdata-sections \
+	-flto
+
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 define Package/gerbera/install

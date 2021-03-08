@@ -8,15 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sc
-PKG_VERSION:=0.95
+PKG_VERSION:=1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/serialconsole/sc
-PKG_HASH:=5ae99b370a5a3feb38372b383edc23012b5be5d81547aeb1ac52b408037c1d1c
-PKG_MAINTAINER:=Stefan Bethke <stb@lassitu.de>
+PKG_HASH:=2e7a27d588a51173dda3093381604e6f0a16bb04e95b00fd652f37c34c2c6d04
 
-PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_MAINTAINER:=Stefan Bethke <stb@lassitu.de>
+PKG_LICENSE:=BSD-2-Clause
+PKG_LICENSE_FILES:=LICENSE
+
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -35,7 +39,7 @@ endef
 
 define Package/serialconsole/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sc $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/local/bin/sc $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,serialconsole))

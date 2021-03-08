@@ -8,10 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
-PKG_VERSION:=2.8.5
+PKG_VERSION:=2.10.7
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
+PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>, \
+		Aaron Goodman <aaronjg@alumni.stanford.edu>
 PKG_LICENSE:=GPL-2.0
+PKG_CONFIG_DEPENDS:=CONFIG_IPV6
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -42,12 +44,9 @@ define Package/mwan3/conffiles
 /etc/mwan3.user
 endef
 
-define Build/Compile
-endef
-
 define Package/mwan3/postinst
 #!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ]; then
+if [ -z "$${IPKG_INSTROOT}" ] && [ -x /etc/init.d/rpcd ]; then
 	/etc/init.d/rpcd restart
 fi
 exit 0
@@ -55,14 +54,63 @@ endef
 
 define Package/mwan3/postrm
 #!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ]; then
+if [ -z "$${IPKG_INSTROOT}" ] && [ -x /etc/init.d/rpcd ]; then
 	/etc/init.d/rpcd restart
 fi
 exit 0
 endef
 
+define Build/Compile
+	$(TARGET_CC) $(CFLAGS) $(LDFLAGS) $(FPIC) \
+		-shared \
+		-o $(PKG_BUILD_DIR)/libwrap_mwan3_sockopt.so.1.0 \
+		$(if $(CONFIG_IPV6),-DCONFIG_IPV6) \
+		$(PKG_BUILD_DIR)/sockopt_wrap.c \
+		-ldl
+endef
+
 define Package/mwan3/install
-$(CP) ./files/* $(1)
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/etc/config/mwan3 \
+		$(1)/etc/config/
+
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_DATA) ./files/etc/hotplug.d/iface/15-mwan3 \
+		$(1)/etc/hotplug.d/iface/
+	$(INSTALL_DATA) ./files/etc/hotplug.d/iface/16-mwan3-user \
+		$(1)/etc/hotplug.d/iface/
+
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/etc/init.d/mwan3 \
+		$(1)/etc/init.d/
+
+	$(INSTALL_DIR) $(1)/lib/mwan3
+	$(INSTALL_DATA) ./files/lib/mwan3/common.sh \
+		$(1)/lib/mwan3/
+	$(INSTALL_DATA) ./files/lib/mwan3/mwan3.sh \
+		$(1)/lib/mwan3/
+
+	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
+	$(INSTALL_BIN) ./files/usr/libexec/rpcd/mwan3 \
+		$(1)/usr/libexec/rpcd/
+
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) ./files/usr/sbin/mwan3 \
+		$(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/usr/sbin/mwan3rtmon \
+		$(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/usr/sbin/mwan3track \
+		$(1)/usr/sbin/
+
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_BIN) ./files/etc/mwan3.user \
+		$(1)/etc/
+
+	$(CP) $(PKG_BUILD_DIR)/libwrap_mwan3_sockopt.so.1.0 $(1)/lib/mwan3/
+
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DATA) ./files/etc/uci-defaults/mwan3-migrate-flush_conntrack \
+		$(1)/etc/uci-defaults/
 endef
 
 $(eval $(call BuildPackage,mwan3))

@@ -1,8 +1,6 @@
-Index: shorewall6-lite-5.1.10.2/shorewall6-lite.conf
-===================================================================
---- shorewall6-lite-5.1.10.2.orig/shorewall6-lite.conf	2018-01-04 22:09:34.461951267 +0100
-+++ shorewall6-lite-5.1.10.2/shorewall6-lite.conf	2018-01-04 22:10:23.559291269 +0100
-@@ -28,7 +28,7 @@
+--- a/shorewall6-lite.conf
++++ b/shorewall6-lite.conf
+@@ -28,7 +28,7 @@ VERBOSITY=
  #			       L O G G I N G
  ###############################################################################
  

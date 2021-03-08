@@ -9,8 +9,6 @@ Signed-off-by: Eneas U de Queiroz <cote2004-github@yahoo.com>
  utils.c |  6 +++++-
  2 files changed, 14 insertions(+), 2 deletions(-)
 
-diff --git a/main.c b/main.c
-index d275e6a..51bfb1d 100755
 --- a/main.c
 +++ b/main.c
 @@ -91,7 +91,11 @@ static void usage(void)
@@ -40,8 +38,6 @@ index d275e6a..51bfb1d 100755
  #endif /* ! HAVE_OPENSSL */
                  rc = 0;
                  goto ExitProcessing;
-diff --git a/utils.c b/utils.c
-index abfb86e..02366c5 100755
 --- a/utils.c
 +++ b/utils.c
 @@ -440,10 +440,12 @@ void initialize_openssl(char *cipher)
@@ -58,7 +54,7 @@ index abfb86e..02366c5 100755
      ssl_ctx=SSL_CTX_new(SSLv23_client_method());
      if (ssl_ctx == NULL)
      {
-@@ -825,7 +827,9 @@ char *encode_cram_md5(char *challenge,char *user,char *secret)
+@@ -825,7 +827,9 @@ char *encode_cram_md5(char *challenge,ch
          return(NULL);
  
      showVerbose("Server Challenge: %s\n",challenge);
@@ -68,6 +64,3 @@ index abfb86e..02366c5 100755
  
      /* decode the challenge */
      data=mutils_decode_base64((unsigned char *) challenge,strlen(challenge),&data_len);
--- 
-2.19.1
-

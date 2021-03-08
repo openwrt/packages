@@ -10,7 +10,7 @@
  		initialized = 1;
  	}
  	if (rand_init == 0)
-@@ -215,12 +217,13 @@ ssl_verify_cb(int success, X509_STORE_CTX *store)
+@@ -215,12 +217,13 @@ ssl_verify_cb(int success, X509_STORE_CT
  static const SSL_METHOD *
  ssl_select_method(const char *uhp)
  {

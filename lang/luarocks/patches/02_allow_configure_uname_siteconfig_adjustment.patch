@@ -1,7 +1,5 @@
-Index: luarocks-2.2.2/configure
-===================================================================
---- luarocks-2.2.2.orig/configure
-+++ luarocks-2.2.2/configure
+--- a/configure
++++ b/configure
 @@ -388,18 +388,22 @@ then
  fi
  

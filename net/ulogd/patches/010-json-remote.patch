@@ -13,8 +13,6 @@ Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
  ulogd.conf.in              |  11 ++
  2 files changed, 281 insertions(+), 21 deletions(-)
 
-diff --git a/output/ulogd_output_JSON.c b/output/ulogd_output_JSON.c
-index 4d8e3e9..6edfa90 100644
 --- a/output/ulogd_output_JSON.c
 +++ b/output/ulogd_output_JSON.c
 @@ -20,10 +20,15 @@
@@ -70,7 +68,7 @@ index 4d8e3e9..6edfa90 100644
  	JSON_CONF_MAX
  };
  
-@@ -95,15 +116,167 @@ static struct config_keyset json_kset = {
+@@ -95,15 +116,167 @@ static struct config_keyset json_kset =
  			.options = CONFIG_OPT_NONE,
  			.u = { .value = 0 },
  		},
@@ -238,7 +236,7 @@ index 4d8e3e9..6edfa90 100644
  	json_t *msg;
  
  	msg = json_object();
-@@ -218,34 +391,65 @@ static int json_interp(struct ulogd_pluginstance *upi)
+@@ -218,34 +391,65 @@ static int json_interp(struct ulogd_plug
  		}
  	}
  
@@ -320,7 +318,7 @@ index 4d8e3e9..6edfa90 100644
  		break;
  	default:
  		break;
-@@ -255,6 +459,8 @@ static void sighup_handler_print(struct ulogd_pluginstance *upi, int signal)
+@@ -255,6 +459,8 @@ static void sighup_handler_print(struct
  static int json_configure(struct ulogd_pluginstance *upi,
  			    struct ulogd_pluginstance_stack *stack)
  {
@@ -329,7 +327,7 @@ index 4d8e3e9..6edfa90 100644
  	int ret;
  
  	ret = ulogd_wildcard_inputkeys(upi);
-@@ -265,13 +471,25 @@ static int json_configure(struct ulogd_pluginstance *upi,
+@@ -265,13 +471,25 @@ static int json_configure(struct ulogd_p
  	if (ret < 0)
  		return ret;
  
@@ -357,7 +355,7 @@ index 4d8e3e9..6edfa90 100644
  
  	op->of = fopen(upi->config_kset->ces[0].u.string, "a");
  	if (!op->of) {
-@@ -280,6 +498,27 @@ static int json_init(struct ulogd_pluginstance *upi)
+@@ -280,6 +498,27 @@ static int json_init(struct ulogd_plugin
  		return -1;
  	}
  
@@ -385,7 +383,7 @@ index 4d8e3e9..6edfa90 100644
  	/* search for time */
  	op->sec_idx = -1;
  	op->usec_idx = -1;
-@@ -293,15 +532,25 @@ static int json_init(struct ulogd_pluginstance *upi)
+@@ -293,15 +532,25 @@ static int json_init(struct ulogd_plugin
  
  	*op->cached_tz = '\0';
  
@@ -414,8 +412,6 @@ index 4d8e3e9..6edfa90 100644
  
  	return 0;
  }
-diff --git a/ulogd.conf.in b/ulogd.conf.in
-index 62222db..99cfc24 100644
 --- a/ulogd.conf.in
 +++ b/ulogd.conf.in
 @@ -213,6 +213,17 @@ sync=1
@@ -436,6 +432,3 @@ index 62222db..99cfc24 100644
  
  [pcap1]
  #default file is /var/log/ulogd.pcap
--- 
-cgit v1.2.1
-

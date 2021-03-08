@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stress
 PKG_VERSION:=1.0.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://people.seas.harvard.edu/~apw/stress/
+PKG_SOURCE_URL:=https://fossies.org/linux/privat
 PKG_HASH:=369c997f65e8426ae8b318d4fdc8e6f07a311cfa77cc4b25dace465c582163c0
 
 PKG_LICENSE:=GPL-2.0
@@ -26,7 +26,7 @@ define Package/stress
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=stress is a simple stress utility
-  URL:=http://people.seas.harvard.edu/~apw/stress/
+  URL:=
   MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 endef
 

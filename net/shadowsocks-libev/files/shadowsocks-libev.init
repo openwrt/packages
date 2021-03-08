@@ -72,6 +72,8 @@ ss_xxx() {
 	json_add_boolean no_delay "$no_delay"
 	[ -z "$local_address" ] || json_add_string local_address "$local_address"
 	[ -z "$local_port" ] || json_add_int local_port "$local_port"
+	[ -z "$local_ipv4_address" ] || json_add_string local_ipv4_address "$local_ipv4_address"
+	[ -z "$local_ipv6_address" ] || json_add_string local_ipv6_address "$local_ipv6_address"
 	[ -z "$mode" ] || json_add_string mode "$mode"
 	[ -z "$mtu" ] || json_add_int mtu "$mtu"
 	[ -z "$timeout" ] || json_add_int timeout "$timeout"
@@ -81,7 +83,10 @@ ss_xxx() {
 	procd_open_instance "$cfgtype.$cfg"
 	procd_set_param command "$bin" -c "$confjson"
 	[ "$verbose" = 0 ] || procd_append_param command -v
-	[ -z "$bind_address" ] || procd_append_param command -b "$bind_address"
+	if [ -n "$bind_address" ]; then
+		echo "$cfgtype $cfg: uci option bind_address deprecated, please switch to local_address" >&2
+		procd_append_param command -b "$bind_address"
+	fi
 	procd_set_param file "$confjson"
 	procd_set_param respawn
 	procd_close_instance
@@ -222,7 +227,7 @@ validate_common_server_options_() {
 validate_common_client_options_() {
 	validate_common_options_ "$@" \
 		'server:uci("shadowsocks-libev", "@server")' \
-		'local_address:host:0.0.0.0' \
+		'local_address:ipaddr:0.0.0.0' \
 		'local_port:port'
 }
 
@@ -280,6 +285,9 @@ validate_ss_server_section() {
 	validate_common_server_options_ ss_server "$1" \
 		validate_common_options_ \
 		"$2" \
+		'local_address:ipaddr' \
+		'local_ipv4_address:ip4addr' \
+		'local_ipv6_address:ip6addr' \
 		'bind_address:ipaddr'
 }
 

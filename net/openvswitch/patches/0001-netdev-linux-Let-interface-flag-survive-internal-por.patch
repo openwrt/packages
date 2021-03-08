@@ -1,4 +1,4 @@
-From 6fda3936a85319d6b09108dda67466baa1c93b6c Mon Sep 17 00:00:00 2001
+From 974dc36a87274d7bae13e7dddd3364fecf5b3e7c Mon Sep 17 00:00:00 2001
 From: Helmut Schaa <helmut.schaa@googlemail.com>
 Date: Wed, 8 Jan 2014 13:48:49 +0100
 Subject: [PATCH] netdev-linux: Let interface flag survive internal port setup
@@ -16,11 +16,9 @@ Signed-off-by: Helmut Schaa <helmut.schaa@googlemail.com>
  lib/netdev-linux.c | 8 +++++++-
  1 file changed, 7 insertions(+), 1 deletion(-)
 
-diff --git a/lib/netdev-linux.c b/lib/netdev-linux.c
-index c6f3d2740..136668b1d 100644
 --- a/lib/netdev-linux.c
 +++ b/lib/netdev-linux.c
-@@ -3461,7 +3461,13 @@ update_flags(struct netdev_linux *netdev, enum netdev_flags off,
+@@ -3469,7 +3469,13 @@ update_flags(struct netdev_linux *netdev
      unsigned int old_flags, new_flags;
      int error = 0;
  

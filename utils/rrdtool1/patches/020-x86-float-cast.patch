@@ -1,7 +1,5 @@
-Index: rrdtool-1.0.50/src/rrd_format.h
-===================================================================
---- rrdtool-1.0.50.orig/src/rrd_format.h
-+++ rrdtool-1.0.50/src/rrd_format.h
+--- a/src/rrd_format.h
++++ b/src/rrd_format.h
 @@ -20,7 +20,7 @@
  
  #define RRD_COOKIE    "RRD"

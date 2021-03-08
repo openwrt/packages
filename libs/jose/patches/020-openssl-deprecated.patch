@@ -10,7 +10,7 @@
  #include <openssl/ecdsa.h>
 --- a/lib/openssl/misc.c
 +++ b/lib/openssl/misc.c
-@@ -185,6 +185,8 @@ add_entity(json_t *root, json_t *obj, const char *plural, ...)
+@@ -185,6 +185,8 @@ add_entity(json_t *root, json_t *obj, co
  static void __attribute__((constructor))
  constructor(void)
  {

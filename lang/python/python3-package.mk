@@ -20,6 +20,8 @@ PYTHON3:=python$(PYTHON3_VERSION)
 
 PYTHON3PATH:=$(PYTHON3_LIB_DIR):$(STAGING_DIR)/$(PYTHON3_PKG_DIR):$(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
 
+-include $(PYTHON3_LIB_DIR)/config-$(PYTHON3_VERSION)/Makefile-vars
+
 # These configure args are needed in detection of path to Python header files
 # using autotools.
 CONFIGURE_ARGS += \
@@ -36,7 +38,7 @@ PYTHON3_VARS = \
 	CFLAGS="$(TARGET_CFLAGS)" \
 	CPPFLAGS="$(TARGET_CPPFLAGS) -I$(PYTHON3_INC_DIR)" \
 	LDFLAGS="$(TARGET_LDFLAGS) -lpython$(PYTHON3_VERSION)" \
-	_PYTHON_HOST_PLATFORM=linux2 \
+	_PYTHON_HOST_PLATFORM="$(_PYTHON_HOST_PLATFORM)" \
 	__PYVENV_LAUNCHER__="/usr/bin/$(PYTHON3)" \
 	PYTHONPATH="$(PYTHON3PATH)" \
 	PYTHONDONTWRITEBYTECODE=1 \
@@ -192,9 +194,19 @@ PYTHON3_PKG_SETUP_GLOBAL_ARGS ?=
 PYTHON3_PKG_SETUP_ARGS ?= --single-version-externally-managed
 PYTHON3_PKG_SETUP_VARS ?=
 
+PYTHON3_PKG_HOST_PIP_INSTALL_ARGS = \
+	$(foreach req,$(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS), \
+		--requirement \
+		$(if $(findstring /,$(req)),$(req),$(python3_mk_path)host-pip-requirements/$(req).txt) \
+	)
+
+define Py3Build/FindStdlibDepends
+	$(SHELL) $(python3_mk_path)python3-find-stdlib-depends.sh -n "$(PKG_NAME)" "$(PKG_BUILD_DIR)"
+endef
+
 define Py3Build/Compile/Default
-	$(if $(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS),
-		$(call HostPython3/PipInstall,$(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS))
+	$(if $(PYTHON3_PKG_HOST_PIP_INSTALL_ARGS), \
+		$(call HostPython3/PipInstall,$(PYTHON3_PKG_HOST_PIP_INSTALL_ARGS)) \
 	)
 	$(call Python3/ModSetup, \
 		$(PYTHON3_PKG_SETUP_DIR), \
@@ -205,10 +217,14 @@ define Py3Build/Compile/Default
 	)
 endef
 
+Py3Build/Configure=$(Py3Build/Configure/Default)
 Py3Build/Compile=$(Py3Build/Compile/Default)
 
 PYTHON3_PKG_BUILD ?= 1
 
 ifeq ($(strip $(PYTHON3_PKG_BUILD)),1)
+  ifeq ($(PY3),stdlib)
+    Hooks/Configure/Post+=Py3Build/FindStdlibDepends
+  endif
   Build/Compile=$(Py3Build/Compile)
 endif

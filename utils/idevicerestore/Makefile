@@ -6,19 +6,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=idevicerestore
-PKG_SOURCE_DATE:=2020-04-20
-PKG_SOURCE_VERSION:=d1cb6bfef6ac8fb08472ac5f1fac93895084371c
+PKG_VERSION:=1.0.0
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=https://github.com/libimobiledevice/idevicerestore
-PKG_MIRROR_HASH:=1f0afb92a1a32b7ac929408c1dd5356329866a2672075d0f55dde7d31dac6cc2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://www.libimobiledevice.org/downloads
+PKG_HASH:=32712e86315397fd2e8999e77a2d2f790c67f6b4aa50d4d1c64cb2c4609836f7
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 

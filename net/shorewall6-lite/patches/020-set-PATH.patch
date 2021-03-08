@@ -1,6 +1,6 @@
---- shorewall6-lite-5.1.9/shorewall6-lite.conf.orig	2017-12-17 09:06:52.301331288 -0500
-+++ shorewall6-lite-5.1.9/shorewall6-lite.conf	2017-12-17 09:05:55.769714392 -0500
-@@ -36,7 +36,7 @@
+--- a/shorewall6-lite.conf
++++ b/shorewall6-lite.conf
+@@ -36,7 +36,7 @@ LOGFILE=
  
  IP6TABLES=
  

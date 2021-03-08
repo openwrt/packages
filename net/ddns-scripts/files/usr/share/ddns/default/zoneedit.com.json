@@ -1,0 +1,6 @@
+{
+	"name": "zoneedit.com",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@dynamic.zoneedit.com/auth/dynamic.html?host=[DOMAIN]&dnsto=[IP]"
+	}
+}

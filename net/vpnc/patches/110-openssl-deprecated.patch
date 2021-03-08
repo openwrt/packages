@@ -1,5 +1,5 @@
---- a/crypto-openssl.c
-+++ b/crypto-openssl.c
+--- a/src/crypto-openssl.c
++++ b/src/crypto-openssl.c
 @@ -20,6 +20,7 @@
  #include <string.h>
  #include <errno.h>
@@ -8,7 +8,7 @@
  #include "config.h"
  #include "sysdep.h"
  #include "crypto.h"
-@@ -35,10 +36,12 @@ crypto_ctx *crypto_ctx_new(crypto_error **error)
+@@ -35,10 +36,12 @@ crypto_ctx *crypto_ctx_new(crypto_error
  		return NULL;
  	}
  

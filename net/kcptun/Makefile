@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kcptun
-PKG_VERSION:=20200103
+PKG_VERSION:=20201010
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/xtaci/kcptun/tar.gz/v${PKG_VERSION}?
-PKG_SOURCE_DATE:=2020-01-03
-PKG_HASH:=620d4cd3ed1660e71b0fe1041c063e8fb38dc3aa7a6c78f6570e812566f44bb5
+PKG_SOURCE_DATE:=2020-10-10
+PKG_HASH:=afab2a087b787e59e129c7d4fbc578e1131d264c0da1ce23cd1282321fc3c189
 
 PKG_MAINTAINER:=Dengfeng Liu <liudf0716@gmail.com>, Chao Liu <expiron18@gmail.com>
 PKG_LICENSE:=MIT
@@ -32,6 +32,10 @@ define Package/kcptun-config
   TITLE:=Kcptun Config Scripts
   URL:=https://github.com/xtaci/kcptun
   DEPENDS:=$(GO_ARCH_DEPENDS)
+endef
+
+define Package/kcptun-config/conffiles
+/etc/config/kcptun
 endef
 
 define Package/kcptun-config/install

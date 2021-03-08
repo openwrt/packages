@@ -13,9 +13,6 @@ Subject: [PATCH] Add interface resolving
  create mode 100644 src/if.c
  create mode 100644 src/if.h
 
-diff --git a/src/if.c b/src/if.c
-new file mode 100644
-index 0000000..db231aa
 --- /dev/null
 +++ b/src/if.c
 @@ -0,0 +1,117 @@
@@ -136,9 +133,6 @@ index 0000000..db231aa
 +  if_freenameindex(oni);
 +  return 1;
 +}
-diff --git a/src/if.h b/src/if.h
-new file mode 100644
-index 0000000..dc7faf8
 --- /dev/null
 +++ b/src/if.h
 @@ -0,0 +1,27 @@
@@ -169,8 +163,6 @@ index 0000000..dc7faf8
 +int if_open(lua_State *L);
 +
 +#endif /* IF_H */
-diff --git a/src/luasocket.c b/src/luasocket.c
-index e6ee747..85d41a6 100644
 --- a/src/luasocket.c
 +++ b/src/luasocket.c
 @@ -21,6 +21,7 @@
@@ -189,11 +181,8 @@ index e6ee747..85d41a6 100644
      {NULL, NULL}
  };
  
-diff --git a/src/makefile b/src/makefile
-index 8d3521e..09d4882 100644
 --- a/src/makefile
 +++ b/src/makefile
-
 @@ -303,6 +303,7 @@ SOCKET_OBJS= \
  	compat.$(O) \
  	options.$(O) \
@@ -210,8 +199,6 @@ index 8d3521e..09d4882 100644
  io.$(O): io.c io.h timeout.h
  luasocket.$(O): luasocket.c luasocket.h auxiliar.h except.h \
  	timeout.h buffer.h io.h inet.h socket.h usocket.h tcp.h \
-diff --git a/src/options.c b/src/options.c
-index 8ac2a14..1c73e6f 100644
 --- a/src/options.c
 +++ b/src/options.c
 @@ -7,7 +7,10 @@
@@ -239,5 +226,3 @@ index 8ac2a14..1c73e6f 100644
          } else
            luaL_argerror(L, -1, "number 'interface' field expected");
      }
---
-1.8.4.rc3

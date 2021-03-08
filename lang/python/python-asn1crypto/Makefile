@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-asn1crypto
-PKG_VERSION:=1.3.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.4.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=asn1crypto
-PKG_HASH:=5a215cb8dc12f892244e3a113fe05397ee23c5c4ca7a69cd6e69811755efc42d
+PKG_HASH:=f4f6e119474e58e04a2b1af817eb585b4fd72bdd89b998624712b5c99be7641c
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=MIT

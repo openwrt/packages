@@ -1,7 +1,6 @@
-diff -urN a/configure.ac b/configure.ac
 --- a/configure.ac
 +++ b/configure.ac
-@@ -897,6 +897,7 @@
+@@ -923,6 +923,7 @@ AC_CHECK_FUNCS(
  
  AC_CHECK_FUNCS([ecvt])
  AC_CHECK_FUNCS([fcvt])
@@ -9,7 +8,7 @@ diff -urN a/configure.ac b/configure.ac
  
  AC_CHECK_FUNC([mkdtemp], [have_mkdtemp=yes])
  
-@@ -1145,10 +1146,13 @@
+@@ -1132,10 +1133,13 @@ fi
  ###
  
  AC_CHECK_HEADERS([crypt.h])
@@ -23,7 +22,6 @@ diff -urN a/configure.ac b/configure.ac
  AC_CHECK_HEADERS([sys/inttypes.h])
  AC_CHECK_HEADERS([sys/io.h])
  AC_CHECK_HEADERS([sys/param.h]) # Required to make the sys/user.h check work correctly on FreeBSD
-diff -urN a/lib/misc/idLinux.c b/lib/misc/idLinux.c
 --- a/lib/misc/idLinux.c
 +++ b/lib/misc/idLinux.c
 @@ -27,12 +27,9 @@
@@ -40,7 +38,7 @@ diff -urN a/lib/misc/idLinux.c b/lib/misc/idLinux.c
  #ifdef __APPLE__
  #include <sys/socket.h>
  #include <TargetConditionals.h>
-@@ -997,31 +994,32 @@
+@@ -1025,31 +1022,32 @@ Id_EndSuperUser(uid_t uid)  // IN:
  static Bool
  IdIsSetUGid(void)
  {
@@ -85,7 +83,6 @@ diff -urN a/lib/misc/idLinux.c b/lib/misc/idLinux.c
  #endif
  }
  #endif
-diff -urN a/lib/nicInfo/nicInfoPosix.c b/lib/nicInfo/nicInfoPosix.c
 --- a/lib/nicInfo/nicInfoPosix.c
 +++ b/lib/nicInfo/nicInfoPosix.c
 @@ -35,9 +35,13 @@

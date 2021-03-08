@@ -38,7 +38,7 @@
  extern void (*drv_generic_graphic_real_blit) (const int row, const int col, const int height, const int width);
  
 +/* these functions can be implemented by the real driver */
-+void (*drv_generic_graphic_real_clear) (const RGBA rgba);
++extern void (*drv_generic_graphic_real_clear) (const RGBA rgba);
 +
  /* helper function to get pixel color or gray value */
  extern RGBA drv_generic_graphic_rgb(const int row, const int col);

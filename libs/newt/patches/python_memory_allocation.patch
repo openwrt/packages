@@ -15,7 +15,7 @@ Forwarded: no
      if (!widget)
  	return NULL;
  
-@@ -937,7 +937,7 @@ static snackForm * formCreate(PyObject *
+@@ -932,7 +932,7 @@ static snackForm * formCreate(PyObject *
      if (help == Py_None)
  	help = NULL;
  
@@ -24,7 +24,7 @@ Forwarded: no
      form->fo = newtForm(NULL, help, 0);
  
      return form;
-@@ -949,7 +949,7 @@ static snackGrid * gridCreate(PyObject *
+@@ -944,7 +944,7 @@ static snackGrid * gridCreate(PyObject *
  
      if (!PyArg_ParseTuple(args, "ii", &cols, &rows)) return NULL;
  

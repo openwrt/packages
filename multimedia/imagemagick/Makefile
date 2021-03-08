@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=imagemagick
 PKG_VERSION:=7.0.9
 PKG_REVISION:=5
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_REVISION).tar.gz
@@ -109,7 +109,7 @@ CONFIGURE_ARGS += \
 	--with-png \
 	--with-tiff
 
-TARGET_CFLAGS += -flto
+TARGET_CFLAGS += $(if $(CONFIG_GCC_USE_VERSION_10),,-flto)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
@@ -126,6 +126,13 @@ define Build/InstallDev
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/* \
 		$(1)/usr/lib/pkgconfig/
+
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) \
+		$(PKG_INSTALL_DIR)/usr/bin/*-config \
+		$(1)/usr/bin/
+	$(SED) 's|prefix=/usr|prefix=$(STAGING_DIR)/usr|' \
+		$(1)/usr/bin/*-config
 endef
 
 IMlibdir:=usr/lib/ImageMagick-$(PKG_VERSION)

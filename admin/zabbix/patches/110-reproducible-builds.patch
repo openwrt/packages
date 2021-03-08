@@ -7,5 +7,5 @@
 -	printf("Revision %s %s, compilation time: %s %s\n\n", ZABBIX_REVISION, ZABBIX_REVDATE, __DATE__, __TIME__);
 +	printf("Revision %s %s\n\n", ZABBIX_REVISION, ZABBIX_REVDATE);
  	puts(copyright_message);
- #if defined(HAVE_POLARSSL) || defined(HAVE_GNUTLS) || defined(HAVE_OPENSSL)
+ #if defined(HAVE_GNUTLS) || defined(HAVE_OPENSSL)
  	printf("\n");

@@ -1,6 +1,5 @@
-diff -urN libmpeg2-0.5.1/libmpeg2/motion_comp_arm_s.S libmpeg2-0.5.1.new/libmpeg2/motion_comp_arm_s.S
---- libmpeg2-0.5.1/libmpeg2/motion_comp_arm_s.S	2008-07-09 21:16:05.000000000 +0200
-+++ libmpeg2-0.5.1.new/libmpeg2/motion_comp_arm_s.S	2012-07-30 15:22:58.664964215 +0200
+--- a/libmpeg2/motion_comp_arm_s.S
++++ b/libmpeg2/motion_comp_arm_s.S
 @@ -19,6 +19,15 @@
  @ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  

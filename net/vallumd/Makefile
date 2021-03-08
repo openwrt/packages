@@ -12,7 +12,7 @@ PKG_VERSION:=0.1.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/stintel/vallumd/archive/$(PKG_VERSION)/
+PKG_SOURCE_URL:=https://codeload.github.com/stintel/vallumd/tar.gz/vallumd-$(PKG_VERSION)?
 PKG_HASH:=d6119f84840ff36f05c273f0a6f3e0f9eacf3a07c1583271c4fef62a7b199428
 
 PKG_LICENSE:=GPL-3.0

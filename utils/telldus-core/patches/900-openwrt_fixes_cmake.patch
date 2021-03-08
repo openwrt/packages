@@ -24,25 +24,6 @@ Adopted to OpenWrt target. Most likely these changes go elsewhere when done righ
  	)
  ENDIF (WIN32)
  
---- a/common/CMakeLists.txt
-+++ b/common/CMakeLists.txt
-@@ -66,12 +66,16 @@ ELSEIF (CMAKE_SYSTEM_NAME MATCHES "FreeB
- 	)
- ELSE (APPLE)
- 	#### Linux ####
-+	#FIND_LIBRARY(ICONV_LIBRARY iconv) Does not work
- 	ADD_DEFINITIONS( -D_LINUX )
- 	LIST(APPEND  telldus-common_SRCS
- 		Event_unix.cpp
- 		EventHandler_unix.cpp
- 		Socket_unix.cpp
- 	)
-+	LIST(APPEND telldus-common_LIBRARIES
-+		${ICONV_LIBRARY}
-+	)
- ENDIF (APPLE)
- 
- 
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -62,7 +62,7 @@ IF(DOXYGEN_FOUND)

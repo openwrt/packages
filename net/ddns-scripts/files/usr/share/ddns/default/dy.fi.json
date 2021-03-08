@@ -1,0 +1,7 @@
+{
+	"name": "dy.fi",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@www.dy.fi/nic/update?hostname=[DOMAIN]",
+		"answer": "good|nochg"
+	}
+}

@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
-PKG_VERSION:=5.11.0
-PKG_RELEASE:=1
+PKG_VERSION:=5.12.0
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
 	https://github.com/collectd/collectd/releases/download/collectd-$(PKG_VERSION)
-PKG_HASH:=37b10a806e34aa8570c1cafa6006c604796fae13cc2e1b3e630d33dcba9e5db2
+PKG_HASH:=5bae043042c19c31f77eb8464e56a01a5454e0b39fa07cf7ad0f1bfc9c3a09d6
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libltdl/aclocal.m4
@@ -37,6 +37,7 @@ COLLECTD_PLUGINS_DISABLED:= \
 	ceph \
 	cgroups \
 	cpusleep \
+	curl_jolokia \
 	curl_json \
 	curl_xml \
 	dbi \
@@ -53,6 +54,7 @@ COLLECTD_PLUGINS_DISABLED:= \
 	grpc \
 	hddtemp \
 	hugepages \
+	infiniband \
 	intel_pmu \
 	intel_rdt \
 	ipc \
@@ -68,12 +70,14 @@ COLLECTD_PLUGINS_DISABLED:= \
 	mbmon \
 	mcelog \
 	md \
+	mdevents \
 	memcachec \
 	memcached \
 	mic \
 	monitorus \
 	multimeter \
 	netapp \
+	netstat_udp \
 	nfs \
 	notify_desktop \
 	notify_email \
@@ -100,13 +104,11 @@ COLLECTD_PLUGINS_DISABLED:= \
 	smart \
 	snmp_agent \
 	statsd \
-	swap \
 	synproxy \
 	sysevent \
 	tape \
 	tokyotyrant \
 	turbostat \
-	ubi \
 	uuid \
 	varnish \
 	virt \
@@ -141,6 +143,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	csv \
 	curl \
 	df \
+	dhcpleases \
 	disk \
 	dns \
 	email \
@@ -150,6 +153,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	filecount \
 	fscache \
 	interface \
+	ipstatistics \
 	iptables \
 	irq \
 	iwinfo \
@@ -181,6 +185,8 @@ COLLECTD_PLUGINS_SELECTED:= \
 	rrdtool \
 	sensors \
 	snmp \
+	snmp6 \
+	swap \
 	syslog \
 	table \
 	tail \
@@ -190,6 +196,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	ted \
 	thermal \
 	threshold \
+	ubi \
 	unixsock \
 	uptime \
 	users \
@@ -362,6 +369,32 @@ define BuildPlugin
 
 endef
 
+define BuildScriptPlugin
+  PKG_CONFIG_DEPENDS+= CONFIG_PACKAGE_collectd-mod-$(1)
+
+  define Package/collectd-mod-$(1)
+  $$(call Package/collectd/Default)
+    TITLE:=$(2) plugin
+    DEPENDS:= $(4)
+  endef
+
+  define Package/collectd-mod-$(1)/install
+	$(INSTALL_DIR) $$(1)/usr/libexec/collectd
+	for m in $(3); do \
+		${INSTALL_BIN} \
+			./files/exec-scripts/$$$$$$$${m}.sh $$(1)/usr/libexec/collectd/ ; \
+	done
+	if [ -f ./files/usr/share/collectd/plugin/$(1).json ]; then \
+		$(INSTALL_DIR) $$(1)/usr/share/collectd/plugin ; \
+		$(INSTALL_DATA) ./files/usr/share/collectd/plugin/$(1).json \
+			$$(1)/usr/share/collectd/plugin/$(1).json ; \
+	fi
+  endef
+
+  $$(eval $$(call BuildPackage,collectd-mod-$(1)))
+
+endef
+
 $(eval $(call BuildPackage,collectd))
 
 #$(eval $(call BuildPlugin,NAME,DESCRIPTION,FILES,DEPENDENCIES))
@@ -378,6 +411,7 @@ $(eval $(call BuildPlugin,csv,CSV output,csv,))
 $(eval $(call BuildPlugin,curl,cURL input,curl,+PACKAGE_collectd-mod-curl:libcurl))
 #$(eval $(call BuildPlugin,dbi,relational database input,dbi,+PACKAGE_collectd-mod-dbi:libdbi))
 $(eval $(call BuildPlugin,df,disk space input,df,))
+$(eval $(call BuildPlugin,dhcpleases,show dhcpleases,dhcpleases,))
 $(eval $(call BuildPlugin,disk,disk usage/timing input,disk,))
 $(eval $(call BuildPlugin,dns,DNS traffic input,dns,+PACKAGE_collectd-mod-dns:libpcap))
 $(eval $(call BuildPlugin,email,email output,email,))
@@ -387,6 +421,7 @@ $(eval $(call BuildPlugin,exec,process exec input,exec,))
 $(eval $(call BuildPlugin,filecount,file count input,filecount,))
 $(eval $(call BuildPlugin,fscache,file-system based caching framework input,fscache,))
 $(eval $(call BuildPlugin,interface,network interfaces input,interface,))
+$(eval $(call BuildPlugin,ipstatistics,ipstatistics input,ipstatistics,))
 $(eval $(call BuildPlugin,iptables,iptables status input,iptables,+PACKAGE_collectd-mod-iptables:iptables +libip4tc +libip6tc))
 $(eval $(call BuildPlugin,irq,interrupt usage input,irq,))
 $(eval $(call BuildPlugin,iwinfo,libiwinfo wireless statistics,iwinfo,+PACKAGE_collectd-mod-iwinfo:libiwinfo))
@@ -418,6 +453,8 @@ $(eval $(call BuildPlugin,routeros,MikroTik RouterOS input,routeros,+PACKAGE_col
 $(eval $(call BuildPlugin,rrdtool,RRDtool output,rrdtool,+PACKAGE_collectd-mod-rrdtool:librrd1))
 $(eval $(call BuildPlugin,sensors,lm_sensors input,sensors,+PACKAGE_collectd-mod-sensors:libsensors))
 $(eval $(call BuildPlugin,snmp,SNMP input,snmp,+PACKAGE_collectd-mod-snmp:libnetsnmp))
+$(eval $(call BuildPlugin,snmp6,snmp6 input,snmp6,))
+$(eval $(call BuildPlugin,swap,swap input,swap,))
 $(eval $(call BuildPlugin,syslog,syslog output,syslog,))
 $(eval $(call BuildPlugin,tail,tail input,tail,))
 $(eval $(call BuildPlugin,tail-csv,tail CSV input,tail_csv,))
@@ -427,6 +464,7 @@ $(eval $(call BuildPlugin,ted,The Energy Detective input,ted,))
 $(eval $(call BuildPlugin,tcpconns,TCP connection tracking input,tcpconns,))
 $(eval $(call BuildPlugin,thermal,system temperatures input,thermal,))
 $(eval $(call BuildPlugin,threshold,Notifications and thresholds,threshold,))
+$(eval $(call BuildPlugin,ubi,Unsorted block images,ubi,@NAND_SUPPORT))
 $(eval $(call BuildPlugin,unixsock,unix socket output,unixsock,))
 $(eval $(call BuildPlugin,uptime,uptime status input,uptime,))
 $(eval $(call BuildPlugin,users,user logged in status input,users,))
@@ -434,3 +472,5 @@ $(eval $(call BuildPlugin,vmem,virtual memory usage input,vmem,))
 $(eval $(call BuildPlugin,wireless,wireless status input,wireless,))
 $(eval $(call BuildPlugin,write-graphite,Carbon/Graphite output,write_graphite,+PACKAGE_collectd-mod-write-graphite:libpthread))
 $(eval $(call BuildPlugin,write-http,HTTP POST output,write_http,+PACKAGE_collectd-mod-write-http:libcurl))
+
+$(eval $(call BuildScriptPlugin,sqm,SQM/qdisc collection,sqm_collectd,+PACKAGE_collectd-mod-sqm:collectd-mod-exec))

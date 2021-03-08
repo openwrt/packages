@@ -9,19 +9,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openzwave
-PKG_VERSION:=1.6.1063
-PKG_RELEASE:=1
+PKG_VERSION:=1.6.1149
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://old.openzwave.com/downloads
-PKG_HASH:=8b1b674f825cd3623d2aa9c286edbb05c0ff6537d5d3ee891ae98e21d28de26b
+PKG_HASH:=dc747c24cae11e4aa121252cc38ea92d1fbc587dc514737dd0e2b24191521c48
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/openzwave/default
   URL:=http://openzwave.com
-  MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
+  MAINTAINER:=David Woodhouse <dwmw2@infradead.org>
   DEPENDS:=+libpthread +libstdcpp
 endef
 
@@ -90,6 +90,8 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libopenzwave.* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libopenzwave.pc $(1)/usr/lib/pkgconfig/
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libopenzwave.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libopenzwave.pc
 endef
 
 $(eval $(call BuildPackage,libopenzwave))

@@ -1,23 +1,5 @@
 --- a/lib/repo.vala
 +++ b/lib/repo.vala
-@@ -34,7 +34,7 @@ public class Repo : Object {
-     // data format version
-     public int version { get; set; }
- 
--    public int    last_modify { get; set; }
-+    public int64  last_modify { get; set; }
-     public int64  size { get; set; }
-     public int64  file_count { get; set; }
-     public string last_modifier { get; set; }
-@@ -46,7 +46,7 @@ public class Repo : Object {
-     public string repo_id { get; set; }
-     public string repo_name { get; set; }
-     public string repo_desc { get; set; }
--    public int last_modified { get; set; }
-+    public int64 last_modified { get; set; }
- 
-     // Section 2: Encryption related
-     // Members in this section should be set for every Repo object
 @@ -70,7 +70,7 @@ public class Repo : Object {
          get { return _relay_id; }
          set { _relay_id = value; }

@@ -6,7 +6,7 @@ USE_PROCD=1
 START=60
 
 APP=darkstat
-RUN_D=/var/empty
+RUN_D=/var/darkstat
 PID_F=$RUN_D/$APP.pid
 CONFIGNAME=darkstat
 USER=nobody
@@ -30,7 +30,6 @@ export_bool () {
 
 set_config_string(){
 	mkdir -p $RUN_D
-	chown $USER:$GROUP $RUN_D
 	. /lib/functions/network.sh
 	config_load $CONFIGNAME
 	config_foreach build_config_string darkstat

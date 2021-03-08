@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pdns
-PKG_VERSION:=4.2.1
-PKG_RELEASE:=2
+PKG_VERSION:=4.4.0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
-PKG_HASH:=f65019986b8fcbb1c6fffebcded04b2b397b84395830f4c63e8d119bcfa1aa28
+PKG_HASH:=40cb81d9e0d34edcc7c95435a06125bde0bd1a51692e1db52413e31d7ede0b39
 
 PKG_MAINTAINER:=James Taylor <james@jtaylor.id.au>
 PKG_LICENCE:=GPL-2.0-only
@@ -162,9 +162,7 @@ $(eval $(call DefinePdnsBackend,odbc,,unixodbc,godbc,ODBC))
 $(eval $(call DefinePdnsBackend,pgsql,,libpq,gpgsql,PostgreSQL))
 $(eval $(call DefinePdnsBackend,sqlite3,,libsqlite3,gsqlite3,SQLite 3))
 $(eval $(call DefinePdnsBackend,ldap,,libopenldap krb5-libs,,OpenLDAP))
-$(eval $(call DefinePdnsBackend,lua,,lua liblua,,Lua))
 $(eval $(call DefinePdnsBackend,lua2,,lua liblua,,Lua2))
-$(eval $(call DefinePdnsBackend,mydns,,libmysqlclient,,MyDNS))
 $(eval $(call DefinePdnsBackend,pipe,,,,Pipe))
 $(eval $(call DefinePdnsBackend,remote,,,,Remote))
 
@@ -186,7 +184,12 @@ CONFIGURE_ARGS+= \
 	--without-libsodium \
 	--enable-experimental-pkcs11 \
 	--enable-lua-records \
+	--enable-reproducible \
 	$(if $(CONFIG_PACKAGE_pdns-ixfrdist),--enable-ixfrdist,)
+
+CONFIGURE_VARS += \
+	boost_cv_lib_program_options=yes \
+	boost_cv_lib_program_options_LIBS=-lboost_program_options
 
 define Package/pdns/install
 	$(INSTALL_DIR) $(1)/etc/powerdns

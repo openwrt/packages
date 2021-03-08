@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tor-fw-helper
 PKG_VERSION:=0.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://git.torproject.org/tor-fw-helper.git
@@ -68,6 +68,8 @@ $(call Package/tor-fw-helper/Default/description)
 
 This package provides the source files for the helper program.
 endef
+
+GO_PKG_BUILD_VARS += GO111MODULE=auto
 
 $(eval $(call GoBinPackage,tor-fw-helper))
 $(eval $(call BuildPackage,tor-fw-helper))

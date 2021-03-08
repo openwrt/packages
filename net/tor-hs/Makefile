@@ -1,5 +1,5 @@
 #
-# Copyright (C) 02020 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2020-2021 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tor-hs
 PKG_VERSION:=0.0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -21,7 +21,7 @@ define Package/tor-hs
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
   TITLE:=Tor hidden service configurator
-  DEPENDS:=+tor
+  DEPENDS:=+tor +rpcd
 endef
 
 define Package/tor-hs/description
@@ -36,6 +36,18 @@ define Build/Compile
 endef
 
 define Build/Install
+endef
+
+define Package/tor-hs/postinst
+#!/bin/sh
+[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/rpcd restart
+exit 0
+endef
+
+define Package/tor-hs/postrm
+#!/bin/sh
+[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/rpcd restart
+exit 0
 endef
 
 define Package/tor-hs/install

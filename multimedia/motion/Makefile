@@ -8,28 +8,30 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=motion
-PKG_VERSION:=4.2.2
-PKG_RELEASE:=3
-
-PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
-PKG_LICENSE:=GPLv2
-PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:lavrsen:motion
+PKG_VERSION:=4.3.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-release-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/Motion-Project/motion/tar.gz/release-$(PKG_VERSION)?
-PKG_HASH:=c8d40976b41da8eb9f9f7128599403a312fc26b7226bf3787d75f78cb5a6cc6e
+PKG_HASH:=dafa4264b2d8e4778f8be5871f09b6c0ec710d5a836182c583469c18db944d70
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-release-$(PKG_VERSION)
 
-PKG_BUILD_PARALLEL:=1
+PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:lavrsen:motion
+
 PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/motion
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+libjpeg +libpthread +libmicrohttpd
+  DEPENDS:=+libjpeg +libpthread +libmicrohttpd $(INTL_DEPENDS)
   TITLE:=webcam motion sensing and logging
   URL:=https://motion-project.github.io/
 endef
@@ -39,24 +41,24 @@ define Package/motion/conffiles
 /etc/motion.conf
 endef
 
-CONFIGURE_ARGS+= \
-	--without-optimizecpu \
+CONFIGURE_ARGS += \
+	--without-bktr \
+	--without-webp \
+	--without-mmal \
 	--without-ffmpeg \
-	--without-jpeg-mmx \
-	--without-sdl \
+	--without-mariadb \
 	--without-mysql \
 	--without-pgsql \
 	--without-sqlite3 \
-	--without-bktr \
-	--without-webp
+	--without-optimizecpu
 
 define Package/motion/install
 	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
 	$(INSTALL_CONF) ./files/motion.conf $(1)/etc/config/motion
 	$(INSTALL_BIN) ./files/motion.init $(1)/etc/init.d/motion
-	$(CP) $(PKG_BUILD_DIR)/motion-dist.conf $(1)/etc/motion.conf
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/motion/motion-dist.conf $(1)/etc/motion.conf
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/motion $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/motion $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,motion))

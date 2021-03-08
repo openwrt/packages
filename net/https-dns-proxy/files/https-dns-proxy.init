@@ -1,13 +1,25 @@
 #!/bin/sh /etc/rc.common
-# Copyright 2019 Stan Grishin (stangri@melmac.net)
+# Copyright 2019-2020 Stan Grishin (stangri@melmac.net)
 # shellcheck disable=SC2039
+PKG_VERSION='dev-test'
 
-export START=80
-export USE_PROCD=1
+# shellcheck disable=SC2034
+START=80
+# shellcheck disable=SC2034
+USE_PROCD=1
 
+if type extra_command 1>/dev/null 2>&1; then
+	extra_command 'version' 'Show version information'
+else
+# shellcheck disable=SC2034
+	EXTRA_COMMANDS='version'
+fi
+
+readonly PROG=/usr/sbin/https-dns-proxy
 dnsmasqConfig=''
+forceDNS='1'
 
-PROG=/usr/sbin/https-dns-proxy
+version() { echo "$PKG_VERSION"; }
 
 xappend() { param="$param $1"; }
 
@@ -35,27 +47,27 @@ append_parm() {
 
 start_instance() {
 	local cfg="$1" param listen_addr listen_port i
-
+	append_parm "$cfg" 'resolver_url' '-r'
+	append_parm "$cfg" 'polling_interval' '-i'
 	append_parm "$cfg" 'listen_addr' '-a' '127.0.0.1'
 	append_parm "$cfg" 'listen_port' '-p' "$p"
+	append_parm "$cfg" 'dscp_codepoint' '-c'
 	append_parm "$cfg" 'bootstrap_dns' '-b'
-	append_parm "$cfg" 'resolver_url' '-r'
 	append_parm "$cfg" 'user' '-u' 'nobody'
 	append_parm "$cfg" 'group' '-g' 'nogroup'
-	append_parm "$cfg" 'edns_subnet' '-e'
 	append_parm "$cfg" 'proxy_server' '-t'
 	append_parm "$cfg" 'logfile' '-l'
 	append_bool "$cfg" 'use_http1' '-x'
 	config_get_bool ipv6_resolvers_only "$cfg" 'use_ipv6_resolvers_only' '0'
-	config_get verbosity "$cfg" 'verbosity' "0"
+	config_get verbosity "$cfg" 'verbosity' '0'
 
 # shellcheck disable=SC2086,SC2154
 	for i in $(seq 1 $verbosity); do
-		xappend "-v"
+		xappend '-v'
 	done
 # shellcheck disable=SC2154
 	if [ "$ipv6_resolvers_only" = 0 ]; then
-		xappend "-4"
+		xappend '-4'
 	fi
 
 	procd_open_instance
@@ -80,17 +92,37 @@ start_instance() {
 	p="$((p+1))"
 }
 
-service_triggers() {
-	procd_add_reload_trigger 'https-dns-proxy'
-}
+is_force_dns_active() { iptables-save | grep -q -w -- '--dport 53'; }
 
 start_service() {
 	local p=5053
 	config_load 'https-dns-proxy'
 	config_get dnsmasqConfig	'config' 'update_dnsmasq_config' '*'
+	config_get_bool forceDNS	'config' 'force_dns' '1'
 	dhcp_backup 'create'
 	config_load 'https-dns-proxy'
 	config_foreach start_instance 'https-dns-proxy'
+	if [ "$forceDNS" -ne 0 ]; then
+		procd_open_instance 'main'
+		procd_set_param command /bin/true
+		procd_set_param stdout 1
+		procd_set_param stderr 1
+		procd_open_data
+		json_add_array firewall
+		json_add_object ''
+		json_add_string type redirect
+		json_add_string name https_dns_proxy_dns_redirect
+		json_add_string target DNAT
+		json_add_string src lan
+		json_add_string proto tcpudp
+		json_add_string src_dport 53
+		json_add_string dest_port 53
+		json_add_string reflection 0
+		json_close_object
+		json_close_array
+		procd_close_data
+		procd_close_instance
+	fi
 	if [ -n "$(uci -q changes dhcp)" ]; then
 		uci -q commit dhcp
 		[ -x /etc/init.d/dnsmasq ] && /etc/init.d/dnsmasq restart >/dev/null 2>&1
@@ -99,7 +131,7 @@ start_service() {
 
 stop_service() {
 	config_load 'https-dns-proxy'
-	config_get dnsmasqConfig	'config' 'update_dnsmasq_config' '*'
+	config_get dnsmasqConfig 'config' 'update_dnsmasq_config' '*'
 	dhcp_backup 'restore'
 	if [ -n "$(uci -q changes dhcp)" ]; then
 		uci -q commit dhcp
@@ -108,8 +140,11 @@ stop_service() {
 }
 
 service_triggers() {
-		procd_add_reload_trigger 'https-dns-proxy'
+	procd_add_config_trigger "config.change" "https-dns-proxy" /etc/init.d/https-dns-proxy reload
 }
+
+service_started() { procd_set_config_changed firewall; }
+service_stopped() { procd_set_config_changed firewall; }
 
 dnsmasq_add_doh_server() {
 	local cfg="$1" address="$2" port="$3"

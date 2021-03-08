@@ -8,18 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gkrellmd
-PKG_VERSION:=2.3.10
-PKG_RELEASE:=2
+PKG_VERSION:=2.3.11
+PKG_RELEASE:=1
 
 PKG_SOURCE:=gkrellm-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://gkrellm.srcbox.net/releases
-PKG_HASH:=8b9ec8baadcd5830c6aff04ba86dc9ed317a15c1c3787440bd1e680fb2fcd766
-PKG_MAINTAINER:=Peter Denison <openwrt@marshadder.org>
-PKG_LICENSE:=GPL-2.0-or-later
-
+PKG_HASH:=1ee0643ed9ed99f88c1504c89d9ccb20780cf29319c904b68e80a8e7c8678c06
 PKG_BUILD_DIR:=$(BUILD_DIR)/gkrellm-$(PKG_VERSION)
 
+PKG_MAINTAINER:=Peter Denison <openwrt@marshadder.org>
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
+
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/gkrellmd
   SECTION:=admin
@@ -40,14 +42,11 @@ define Package/gkrellmd/conffiles
 endef
 
 define Build/Compile
-	CFLAGS="$(TARGET_CFLAGS) $(EXTRA_CPPFLAGS)" \
-	LDFLAGS="$(EXTRA_LDFLAGS) " \
 	$(MAKE) -C $(PKG_BUILD_DIR)/server \
 		CC="$(TARGET_CC)" \
-		glib2="yes" \
-		without-libsensors="yes" \
-		GLIB2_LIB="$(TARGET_LDFLAGS) -lglib-2.0 -lgmodule-2.0" \
-		GLIB2_INCLUDE="-I$(STAGING_DIR)/usr/include/glib-2.0 -I$(STAGING_DIR)/usr/lib/glib-2.0/include"
+		CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
+		LDFLAGS="$(TARGET_LDFLAGS) " \
+		without-libsensors="yes"
 endef
 
 define Package/gkrellmd/install

@@ -11,6 +11,11 @@ NICEPRIO=5
 
 CONFIG_STRING=""
 
+[ -d /usr/libexec/collectd ] && {
+	find /usr/libexec/collectd ! -perm 0500 -exec chmod 0500 '{}' '+'
+	find /usr/libexec/collectd ! \( -user nobody -a -group nogroup \) -exec chown nobody:nogroup '{}' '+'
+}
+
 process_exec() {
 	printf "<Plugin exec>\n" >> "$COLLECTD_CONF"
 	config_foreach process_exec_sections exec_input "Exec"
@@ -93,7 +98,7 @@ process_network() {
 	}
 
 	config_get_bool Forward "$cfg" Forward
-	if [ "$value" = "0" ]; then
+	if [ "$Forward" = "0" ]; then
 		printf "\\tForward false\n" >> "$COLLECTD_CONF"
 	else
 		printf "\\tForward true\n" >> "$COLLECTD_CONF"
@@ -231,11 +236,9 @@ process_generic() {
 
 	[ -z "$config" ] || {
 		printf "%s<Plugin %s>\n" "${CONFIG_STRING}" "$cfg" >> "$COLLECTD_CONF"
-		echo -e "${config}" >> "$COLLECTD_CONF"
+		echo -n -e "${config}" >> "$COLLECTD_CONF"
 		printf "%s</Plugin>\n" "${CONFIG_STRING}" >> "$COLLECTD_CONF"
 	}
-
-	printf "\n" >> "$COLLECTD_CONF"
 }
 
 process_plugins() {
@@ -283,7 +286,8 @@ process_plugins() {
 
 process_config() {
 	local alt_config_file BaseDir Include PIDFile PluginDir TypesDB
-	local Interval ReadThreads Hostname
+	local Interval ReadThreads WriteThreads Hostname
+	local WriteQueueLimitHigh WriteQueueLimitLow CollectInternalStats
 
 	rm -f "$COLLECTD_CONF"
 
@@ -305,10 +309,6 @@ process_config() {
 	config_get BaseDir globals BaseDir "/var/run/collectd"
 	printf "BaseDir \"%s\"\n" "$BaseDir" >> "$COLLECTD_CONF"
 
-	config_get Include globals Include "/tmp/collectd.d"
-	printf "Include \"%s\"\n" "$Include" >> "$COLLECTD_CONF"
-	mkdir -p "$Include"
-
 	config_get PIDFile globals PIDFile "/var/run/collectd.pid"
 	printf "PIDFile \"%s\"\n" "$PIDFile" >> "$COLLECTD_CONF"
 
@@ -319,13 +319,35 @@ process_config() {
 	printf "TypesDB \"%s\"\n" "$TypesDB" >> "$COLLECTD_CONF"
 
 	config_get Interval globals Interval 30
-	printf "Interval \"%s\"\n" "$Interval" >> "$COLLECTD_CONF"
+	printf "Interval %s\n" "$Interval" >> "$COLLECTD_CONF"
 
 	config_get ReadThreads globals ReadThreads 2
-	printf "ReadThreads \"%s\"\n" "$ReadThreads" >> "$COLLECTD_CONF"
+	printf "ReadThreads %s\n" "$ReadThreads" >> "$COLLECTD_CONF"
+
+	config_get WriteThreads globals WriteThreads 2
+	printf "WriteThreads %s\n" "$WriteThreads" >> "$COLLECTD_CONF"
+
+	config_get WriteQueueLimitLow globals WriteQueueLimitLow 0
+	[ "$WriteQueueLimitLow" -ne 0 ] \
+		&& printf "WriteQueueLimitLow %s\n" "$WriteQueueLimitLow" >> "$COLLECTD_CONF"
+
+	config_get WriteQueueLimitHigh globals WriteQueueLimitHigh 0
+	[ "$WriteQueueLimitHigh" -ne 0 ] \
+		&& printf "WriteQueueLimitHigh %s\n" "$WriteQueueLimitHigh" >> "$COLLECTD_CONF"
+
+	config_get_bool CollectInternalStats globals CollectInternalStats 0
+	if [ "$CollectInternalStats" = "0" ]; then
+		printf "CollectInternalStats false\n" >> "$COLLECTD_CONF"
+	else
+		printf "CollectInternalStats true\n" >> "$COLLECTD_CONF"
+	fi
 
 	config_get Hostname globals Hostname "$(uname -n)"
 	printf "Hostname \"%s\"\n" "$Hostname" >> "$COLLECTD_CONF"
+
+	config_get Include globals Include "/tmp/collectd.d"
+	printf "Include \"%s\"\n" "$Include" >> "$COLLECTD_CONF"
+	mkdir -p "$Include"
 
 	printf "\n" >> "$COLLECTD_CONF"
 

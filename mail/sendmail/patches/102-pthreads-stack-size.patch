@@ -12,10 +12,8 @@ above. Also, a bug report has been filed upstream:
 https://sourceforge.net/p/opendkim/bugs/258/
 
 
-Index: sendmail-8.15.2/libmilter/libmilter.h
-===================================================================
---- sendmail-8.15.2.orig/libmilter/libmilter.h
-+++ sendmail-8.15.2/libmilter/libmilter.h
+--- a/libmilter/libmilter.h
++++ b/libmilter/libmilter.h
 @@ -127,10 +127,10 @@ struct smfi_str
  # define MI_SOCK_READ(s, b, l)	read(s, b, l)
  # define MI_SOCK_READ_FAIL(x)	((x) < 0)
@@ -29,10 +27,8 @@ Index: sendmail-8.15.2/libmilter/libmilter.h
  typedef pthread_mutex_t smutex_t;
  # define smutex_init(mp)	(pthread_mutex_init(mp, NULL) == 0)
  # define smutex_destroy(mp)	(pthread_mutex_destroy(mp) == 0)
-Index: sendmail-8.15.2/libmilter/main.c
-===================================================================
---- sendmail-8.15.2.orig/libmilter/main.c
-+++ sendmail-8.15.2/libmilter/main.c
+--- a/libmilter/main.c
++++ b/libmilter/main.c
 @@ -16,6 +16,12 @@ SM_RCSID("@(#)$Id: main.c,v 8.85 2013-11
  #include <fcntl.h>
  #include <sys/stat.h>

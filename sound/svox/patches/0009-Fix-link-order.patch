@@ -1,8 +1,6 @@
-Index: svox-1.0+git20130326/pico/Makefile.am
-===================================================================
---- svox-1.0+git20130326.orig/pico/Makefile.am	2013-11-12 12:37:05.939979854 -0500
-+++ svox-1.0+git20130326/pico/Makefile.am	2013-11-12 13:00:52.336945041 -0500
-@@ -70,6 +70,8 @@
+--- a/pico/Makefile.am
++++ b/pico/Makefile.am
+@@ -70,6 +70,8 @@ libttspico_la_HEADERS = \
      lib/picotrns.h \
      lib/picowa.h
  
@@ -11,7 +9,7 @@ Index: svox-1.0+git20130326/pico/Makefile.am
  picolangdir = $(datadir)/pico/lang
  picolang_DATA = \
      lang/de-DE*.bin \
-@@ -83,6 +85,6 @@
+@@ -83,6 +85,6 @@ bin_PROGRAMS = pico2wave
  pico2wave_SOURCES = \
  	bin/pico2wave.c
  pico2wave_LDADD = \

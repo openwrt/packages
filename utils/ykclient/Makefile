@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ykclient
 PKG_VERSION:=2.15
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=ykclient-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://developers.yubico.com/yubico-c-client/Releases/
@@ -17,7 +17,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/ykclient
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=The Yuibco yubikey c client library
+  TITLE:=The Yubico yubikey c client library
   URL:=https://developers.yubico.com/yubico-c-client/
   DEPENDS:=curl
 endef

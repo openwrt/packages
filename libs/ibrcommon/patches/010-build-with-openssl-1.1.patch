@@ -16,8 +16,6 @@ Signed-off-by: Eneas U de Queiroz <cote2004-github@yahoo.com>
  6 files changed, 95 insertions(+), 30 deletions(-)
  create mode 100644 ibrcommon/ssl/openssl_compat.h
 
-diff --git a/ibrcommon/ssl/HMacStream.cpp b/ibrcommon/ssl/HMacStream.cpp
-index e5d317e3..66d8ce42 100644
 --- a/ibrcommon/ssl/HMacStream.cpp
 +++ b/ibrcommon/ssl/HMacStream.cpp
 @@ -20,29 +20,30 @@
@@ -56,8 +54,6 @@ index e5d317e3..66d8ce42 100644
 +		HMAC_Final(ctx_, (unsigned char*)hash, &size);
  	}
  }
-diff --git a/ibrcommon/ssl/HMacStream.h b/ibrcommon/ssl/HMacStream.h
-index 7dcea168..d04bceb8 100644
 --- a/ibrcommon/ssl/HMacStream.h
 +++ b/ibrcommon/ssl/HMacStream.h
 @@ -44,7 +44,7 @@ namespace ibrcommon
@@ -69,8 +65,6 @@ index 7dcea168..d04bceb8 100644
  	};
  }
  
-diff --git a/ibrcommon/ssl/RSASHA256Stream.cpp b/ibrcommon/ssl/RSASHA256Stream.cpp
-index d94430ed..d25c5d2f 100644
 --- a/ibrcommon/ssl/RSASHA256Stream.cpp
 +++ b/ibrcommon/ssl/RSASHA256Stream.cpp
 @@ -21,6 +21,7 @@
@@ -174,8 +168,6 @@ index d94430ed..d25c5d2f 100644
  			{
  				IBRCOMMON_LOGGER_TAG("RSASHA256Stream", critical) << "failed to feed data into the verification function" << IBRCOMMON_LOGGER_ENDL;
  				ERR_print_errors_fp(stderr);
-diff --git a/ibrcommon/ssl/RSASHA256Stream.h b/ibrcommon/ssl/RSASHA256Stream.h
-index 344f8e10..6f3a1168 100644
 --- a/ibrcommon/ssl/RSASHA256Stream.h
 +++ b/ibrcommon/ssl/RSASHA256Stream.h
 @@ -106,7 +106,7 @@ namespace ibrcommon
@@ -187,8 +179,6 @@ index 344f8e10..6f3a1168 100644
  
  		/** tells if the context needs to be finalized to get a valid signature or
  		verification */
-diff --git a/ibrcommon/ssl/iostreamBIO.cpp b/ibrcommon/ssl/iostreamBIO.cpp
-index 18c1b55c..ea6c63eb 100644
 --- a/ibrcommon/ssl/iostreamBIO.cpp
 +++ b/ibrcommon/ssl/iostreamBIO.cpp
 @@ -23,6 +23,7 @@
@@ -240,7 +230,7 @@ index 18c1b55c..ea6c63eb 100644
  	if(!_bio){
  		/* creation failed, throw exception */
  		char err_buf[ERR_BUF_SIZE];
-@@ -72,7 +91,7 @@ iostreamBIO::iostreamBIO(iostream *stream)
+@@ -72,7 +91,7 @@ iostreamBIO::iostreamBIO(iostream *strea
  	}
  
  	/* save the iostream in the bio object */
@@ -281,7 +271,7 @@ index 18c1b55c..ea6c63eb 100644
  
  	IBRCOMMON_LOGGER_DEBUG_TAG("iostreamBIO", 90) << "ctrl called, cmd: " << cmd << ", num: " << num << "." << IBRCOMMON_LOGGER_ENDL;
  
-@@ -147,8 +167,12 @@ static long ctrl(BIO *bio, int cmd, long  num, void *)
+@@ -147,8 +167,12 @@ static long ctrl(BIO *bio, int cmd, long
  
  static int bread(BIO *bio, char *buf, int len)
  {
@@ -295,7 +285,7 @@ index 18c1b55c..ea6c63eb 100644
  
  	try{
  		/* make sure to read at least 1 byte and then read as much as we can */
-@@ -170,7 +194,7 @@ static int bwrite(BIO *bio, const char *buf, int len)
+@@ -170,7 +194,7 @@ static int bwrite(BIO *bio, const char *
  	if(len == 0){
  		return 0;
  	}
@@ -304,9 +294,6 @@ index 18c1b55c..ea6c63eb 100644
  
  	/* write the data */
  	try{
-diff --git a/ibrcommon/ssl/openssl_compat.h b/ibrcommon/ssl/openssl_compat.h
-new file mode 100644
-index 00000000..e491677f
 --- /dev/null
 +++ b/ibrcommon/ssl/openssl_compat.h
 @@ -0,0 +1,38 @@
@@ -348,6 +335,3 @@ index 00000000..e491677f
 +
 +#endif /* OPENSSL_COMPAT_H */
 +
--- 
-2.16.1
-

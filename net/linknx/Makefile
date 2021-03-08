@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linknx
 PKG_VERSION:=0.0.1.38
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-${PKG_VERSION}.tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/linknx/linknx/tar.gz/$(PKG_VERSION)?
@@ -22,7 +22,6 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_BUILD_DEPENDS:=USE_UCLIBC:argp-standalone USE_MUSL:argp-standalone
 PKG_FIXUP:=autoreconf
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
@@ -31,7 +30,7 @@ define Package/linknx
   CATEGORY:=Network
   TITLE:=KNX home automation platform
   URL:=https://github.com/linknx/linknx
-  DEPENDS:=+pthsem +lua +luac +libcurl +libesmtp $(CXX_DEPENDS) $(ICONV_DEPENDS)
+  DEPENDS:=+pthsem +lua +luac +libcurl +libesmtp +libstdcpp $(ICONV_DEPENDS)
 endef
 
 CONFIGURE_ARGS+= \

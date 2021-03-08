@@ -1,13 +1,11 @@
 --- a/setup.py
 +++ b/setup.py
-@@ -24,8 +24,9 @@ setup(name='hyperlink',
-       author=__author__,
-       author_email=__contact__,
-       url=__url__,
--      packages=['hyperlink', 'hyperlink.test'],
-+      packages=['hyperlink'],
-       include_package_data=True,
-+      exclude_package_data={'':['test/*']},
-       zip_safe=False,
-       license=__license__,
-       platforms='any',
+@@ -25,7 +25,7 @@ setup(
+     author=__author__,
+     author_email=__contact__,
+     url=__url__,
+-    packages=find_packages(where="src"),
++    packages=find_packages(where="src", exclude=["*.test", "*.test.*"]),
+     package_dir={"": "src"},
+     package_data=dict(hyperlink=["py.typed", "idna-tables-properties.csv.gz"]),
+     zip_safe=False,

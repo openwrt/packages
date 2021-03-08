@@ -3,6 +3,7 @@ config global
         option enabled '0'
         option recheck_interval '10'
         option modules_retries '10'
+#       option ignore_stations 'AA:AA:AA:AA:AA:AA BB:BB:BB:BB:BB:BB'
 
 config entry 'Businesshours'
         option enabled '0'

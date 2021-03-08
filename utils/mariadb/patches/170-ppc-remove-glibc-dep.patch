@@ -23,15 +23,15 @@
  /* High priority */
  #define HMT_high() asm volatile("or 3,3,3")
  #else
-@@ -72,7 +71,7 @@ static inline void MY_RELAX_CPU(void)
+@@ -80,7 +79,7 @@ static inline void MY_RELAX_CPU(void)
    __asm__ __volatile__ ("pause");
  #endif
  #elif defined(_ARCH_PWR8)
 -  __ppc_get_timebase();
 +  __builtin_ppc_get_timebase();
- #else
-   int32 var, oldval = 0;
-   my_atomic_cas32_strong_explicit(&var, &oldval, 1, MY_MEMORY_ORDER_RELAXED,
+ #elif defined __GNUC__ && (defined __arm__ || defined __aarch64__)
+   /* Mainly, prevent the compiler from optimizing away delay loops */
+   __asm__ __volatile__ ("":::"memory");
 --- a/storage/tokudb/PerconaFT/portability/toku_time.h
 +++ b/storage/tokudb/PerconaFT/portability/toku_time.h
 @@ -124,7 +124,7 @@ static inline tokutime_t toku_time_now(v

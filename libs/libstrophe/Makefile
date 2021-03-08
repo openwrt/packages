@@ -8,17 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libstrophe
-PKG_VERSION:=0.9.3
-PKG_RELEASE=1
-
-PKG_LICENSE:=GPL-3.0-or-later
-PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Chih-Wei Chen <changeway@gmail.com>
-
-PKG_SOURCE_URL:=https://codeload.github.com/strophe/libstrophe/tar.gz/$(PKG_VERSION)?
+PKG_VERSION:=0.10.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=8a3b79f62177ed59c01d4d4108357ff20bd933d53b845ee4e350d304c051a4fe
+PKG_SOURCE_URL:=https://codeload.github.com/strophe/libstrophe/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=8d804e4c74cea1133203cc95a59a88f700fbdaead076e7959b495d734dd7936d
+
+PKG_MAINTAINER:=Chih-Wei Chen <changeway@gmail.com>
+PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -29,11 +28,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_libstrophe-expat
 
 include $(INCLUDE_DIR)/package.mk
-
-ifeq ($(CONFIG_libstrophe-libxml2),y)
-CONFIGURE_ARGS += \
-	--with-libxml2
-endif
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/libstrophe
 	SECTION:=libs
@@ -51,6 +46,9 @@ endef
 define Package/libstrophe/config
 	source "$(SOURCE)/Config.in"
 endef
+
+CONFIGURE_ARGS += \
+	--with$(if $(CONFIG_libstrophe-libxml2),,out)-libxml2
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/

@@ -4,8 +4,7 @@ START=65
 
 USE_PROCD=1
 
-EXTRA_COMMANDS="status"
-EXTRA_HELP="        status Print the status of the service"
+extra_command "status" "Print the status of the service"
 
 start_service() {
     procd_open_instance

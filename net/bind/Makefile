@@ -9,7 +9,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
-PKG_VERSION:=9.16.2
+PKG_VERSION:=9.17.10
 PKG_RELEASE:=1
 USERID:=bind=57:bind=57
 
@@ -22,7 +22,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:= \
 	https://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION) \
 	https://ftp.isc.org/isc/bind9/$(PKG_VERSION)
-PKG_HASH:=d9e5b77cfca5ccad97f19cddc87128758ec15c16e6585000c6b2f84fc225993f
+PKG_HASH:=26a90d28ad694029e480fadcdf60b6219e8128a02d3dd594f6c1a83d002890fd
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
@@ -30,6 +30,8 @@ PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
 PKG_BUILD_PARALLEL:=1
+
+PKG_BUILD_DEPENDS:=nghttp2
 
 PKG_CONFIG_DEPENDS := \
 	CONFIG_BIND_LIBJSON \
@@ -51,8 +53,14 @@ endef
 define Package/bind-libs
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libopenssl +zlib +libpthread +libatomic +libuv \
-	+BIND_LIBXML2:libxml2 +BIND_LIBJSON:libjson-c
+  DEPENDS:=+libopenssl \
+	+zlib \
+	+libpthread \
+	+libatomic \
+	+libuv \
+	+libnghttp2 \
+	+BIND_LIBXML2:libxml2 \
+	+BIND_LIBJSON:libjson-c
   TITLE:=bind shared libraries
   URL:=https://www.isc.org/software/bind
 endef
@@ -83,6 +91,7 @@ define Package/bind-tools
 	DEPENDS:= \
 	+bind-check \
 	+bind-dig \
+	+bind-nslookup \
 	+bind-dnssec \
 	+bind-host \
 	+bind-rndc
@@ -111,6 +120,13 @@ endef
 define Package/bind-dig
   $(call Package/bind/Default)
   TITLE+= DNS excavation tool
+endef
+
+define Package/bind-nslookup
+  $(call Package/bind/Default)
+  TITLE+= nslookup utility
+  ALTERNATIVES:= \
+	  200:/usr/bin/nslookup:/usr/libexec/nslookup-bind
 endef
 
 export BUILD_CC="$(TARGET_CC)"
@@ -175,6 +191,9 @@ define Package/bind-server/install
 		./files/bind/db.root \
 		./files/bind/bind.keys \
 		$(1)/etc/bind/
+	sed -e '1s/ broadcast / empty rfc1918 /' \
+		< ./files/bind/db.0 \
+		> $(1)/etc/bind/db.empty
 	$(CP) ./files/bind/named.conf.example $(1)/etc/bind/named.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/named.init $(1)/etc/init.d/named
@@ -191,8 +210,8 @@ define Package/bind-server/conffiles
 endef
 
 define Package/bind-server-filter-aaaa/install
-	$(INSTALL_DIR) $(1)/usr/lib/named
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/named/filter-aaaa.so $(1)/usr/lib/named
+	$(INSTALL_DIR) $(1)/usr/lib/bind
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/bind/filter-aaaa.so $(1)/usr/lib/bind
 endef
 
 define Package/bind-client/install
@@ -212,16 +231,16 @@ define Package/bind-rndc/install
 endef
 
 define Package/bind-check/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/named-checkconf $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/named-checkzone $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/named-checkconf $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/named-checkzone $(1)/usr/bin/
 endef
 
 define Package/bind-dnssec/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-keygen $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-settime $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-signzone $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dnssec-keygen $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dnssec-settime $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dnssec-signzone $(1)/usr/bin/
 endef
 
 define Package/bind-host/install
@@ -234,6 +253,11 @@ define Package/bind-dig/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dig $(1)/usr/bin/
 endef
 
+define Package/bind-nslookup/install
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/nslookup $(1)/usr/libexec/nslookup-bind
+endef
+
 $(eval $(call BuildPackage,bind-libs))
 $(eval $(call BuildPackage,bind-server))
 $(eval $(call BuildPackage,bind-server-filter-aaaa))
@@ -244,3 +268,4 @@ $(eval $(call BuildPackage,bind-check))
 $(eval $(call BuildPackage,bind-dnssec))
 $(eval $(call BuildPackage,bind-host))
 $(eval $(call BuildPackage,bind-dig))
+$(eval $(call BuildPackage,bind-nslookup))

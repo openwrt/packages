@@ -3,100 +3,97 @@
 define DefaultProgrammer
   MAKE_FLAGS += CONFIG_DEFAULT_PROGRAMMER=PROGRAMMER_$(1)
 endef
-define DefineConfig
-  ifeq ($(2),yes)
-    MAKE_FLAGS += NEED_$(1)=$(2)
-  endif
-endef
-define DefineProgrammer
-  # Selecting invalid programmers will fail
-  # Only disable unwanted programmers and keep the default ones
-  ifeq ($(2),no)
-    MAKE_FLAGS += CONFIG_$(1)=$(2)
-  endif
-endef
 
 ifeq ($(BUILD_VARIANT),full)
   $(eval $(call DefaultProgrammer,LINUX_SPI))
-  FLASHROM_BASIC := yes
-  FLASHROM_FTDI := yes
-  FLASHROM_PCI := yes
-  FLASHROM_RAW := yes
-  FLASHROM_SERIAL := yes
-  FLASHROM_USB := yes
+  FLASHROM_BASIC := true
+  FLASHROM_FTDI := true
+  FLASHROM_PCI := true
+  FLASHROM_RAW := $(if $(findstring x86,$(CONFIG_ARCH)),true,false)
+  FLASHROM_SERIAL := true
+  FLASHROM_USB := true
 endif
 ifeq ($(BUILD_VARIANT),pci)
   $(eval $(call DefaultProgrammer,INTERNAL))
-  FLASHROM_BASIC := yes
-  FLASHROM_FTDI := no
-  FLASHROM_PCI := yes
-  FLASHROM_RAW := yes
-  FLASHROM_SERIAL := no
-  FLASHROM_USB := no
+  FLASHROM_BASIC := true
+  FLASHROM_FTDI := false
+  FLASHROM_PCI := true
+  FLASHROM_RAW := $(if $(findstring x86,$(CONFIG_ARCH)),true,false)
+  FLASHROM_SERIAL := false
+  FLASHROM_USB := false
 endif
 ifeq ($(BUILD_VARIANT),spi)
   $(eval $(call DefaultProgrammer,LINUX_SPI))
-  FLASHROM_BASIC := yes
-  FLASHROM_FTDI := no
-  FLASHROM_PCI := no
-  FLASHROM_RAW := no
-  FLASHROM_SERIAL := no
-  FLASHROM_USB := no
+  FLASHROM_BASIC := true
+  FLASHROM_FTDI := false
+  FLASHROM_PCI := false
+  FLASHROM_RAW := false
+  FLASHROM_SERIAL := false
+  FLASHROM_USB := false
 endif
 ifeq ($(BUILD_VARIANT),usb)
   $(eval $(call DefaultProgrammer,SERPROG))
-  FLASHROM_BASIC := yes
-  FLASHROM_FTDI := yes
-  FLASHROM_PCI := no
-  FLASHROM_RAW := no
-  FLASHROM_SERIAL := yes
-  FLASHROM_USB := yes
+  FLASHROM_BASIC := true
+  FLASHROM_FTDI := true
+  FLASHROM_PCI := false
+  FLASHROM_RAW := false
+  FLASHROM_SERIAL := true
+  FLASHROM_USB := true
 endif
 
-# Misc
-$(eval $(call DefineProgrammer,LINUX_SPI,$(FLASHROM_BASIC)))
-#$(eval $(call DefineProgrammer,MSTARDDC_SPI,$(FLASHROM_BASIC)))
-$(eval $(call DefineProgrammer,DUMMY,$(FLASHROM_BASIC)))
-
-# FTDI
-$(eval $(call DefineConfig,LIBFTDI,$(FLASHROM_FTDI)))
-$(eval $(call DefineProgrammer,FT2232_SPI,$(FLASHROM_FTDI)))
-$(eval $(call DefineProgrammer,USBBLASTER_SPI,$(FLASHROM_FTDI)))
-
-# RAW
-$(eval $(call DefineConfig,RAW_ACCESS,$(FLASHROM_RAW)))
-$(eval $(call DefineProgrammer,RAYER_SPI,$(FLASHROM_RAW)))
+MESON_ARGS += \
+	-Dconfig_dummy=$(FLASHROM_BASIC) \
+	-Dconfig_linux_mtd=$(FLASHROM_BASIC) \
+	-Dconfig_linux_spi=$(FLASHROM_BASIC) \
+	-Dconfig_mstarddc_spi=$(FLASHROM_BASIC) \
+	\
+	-Dconfig_ft2232_spi=$(FLASHROM_FTDI) \
+	-Dconfig_usbblaster_spi=$(FLASHROM_FTDI) \
+	\
+	-Dpciutils=$(FLASHROM_PCI) \
+	-Dconfig_atavia=$(FLASHROM_PCI) \
+	-Dconfig_drkaiser=$(FLASHROM_PCI) \
+	-Dconfig_gfxnvidia=$(FLASHROM_PCI) \
+	-Dconfig_internal=$(FLASHROM_PCI) \
+	-Dconfig_it8212=$(FLASHROM_PCI) \
+	-Dconfig_nicintel=$(FLASHROM_PCI) \
+	-Dconfig_nicintel_spi=$(FLASHROM_PCI) \
+	-Dconfig_nicintel_eeprom=$(FLASHROM_PCI) \
+	-Dconfig_ogp_spi=$(FLASHROM_PCI) \
+	-Dconfig_satasii=$(FLASHROM_PCI) \
+	\
+	-Dconfig_bitbang_spi=$(FLASHROM_RAW) \
+	-Dconfig_rayer_spi=$(FLASHROM_RAW) \
+	\
+	-Dconfig_buspirate_spi=$(FLASHROM_SERIAL) \
+	-Dconfig_pony_spi=$(FLASHROM_SERIAL) \
+	-Dconfig_serprog=$(FLASHROM_SERIAL) \
+	\
+	-Dusb=$(FLASHROM_USB) \
+	-Dconfig_ch341a_spi=$(FLASHROM_USB) \
+	-Dconfig_dediprog=$(FLASHROM_USB) \
+	-Dconfig_developerbox_spi=$(FLASHROM_USB) \
+	-Dconfig_digilent_spi=$(FLASHROM_USB) \
+	-Dconfig_pickit2_spi=$(FLASHROM_USB) \
+	-Dconfig_stlinkv3_spi=$(FLASHROM_USB)
 
 # PCI
-$(eval $(call DefineConfig,LIBPCI,$(FLASHROM_PCI)))
-$(eval $(call DefineProgrammer,INTERNAL,$(FLASHROM_PCI)))
-$(eval $(call DefineProgrammer,NIC3COM,$(FLASHROM_PCI)))
-$(eval $(call DefineProgrammer,GFXNVIDIA,$(FLASHROM_PCI)))
-$(eval $(call DefineProgrammer,SATASII,$(FLASHROM_PCI)))
-$(eval $(call DefineProgrammer,ATAHPT,$(FLASHROM_PCI)))
-$(eval $(call DefineProgrammer,ATAPROMISE,$(FLASHROM_PCI)))
-$(eval $(call DefineProgrammer,ATAVIA,$(FLASHROM_PCI)))
-$(eval $(call DefineProgrammer,IT8212,$(FLASHROM_PCI)))
-$(eval $(call DefineProgrammer,DRKAISER,$(FLASHROM_PCI)))
-$(eval $(call DefineProgrammer,NICREALTEK,$(FLASHROM_PCI)))
-$(eval $(call DefineProgrammer,NICNATSEMI,$(FLASHROM_PCI)))
-$(eval $(call DefineProgrammer,NICINTEL,$(FLASHROM_PCI)))
-$(eval $(call DefineProgrammer,NICINTEL_SPI,$(FLASHROM_PCI)))
-$(eval $(call DefineProgrammer,NICINTEL_EEPROM,$(FLASHROM_PCI)))
-$(eval $(call DefineProgrammer,OGP_SPI,$(FLASHROM_PCI)))
-$(eval $(call DefineProgrammer,SATAMV,$(FLASHROM_PCI)))
-
-# Serial
-$(eval $(call DefineConfig,SERIAL,$(FLASHROM_SERIAL)))
-$(eval $(call DefineProgrammer,SERPROG,$(FLASHROM_SERIAL)))
-$(eval $(call DefineProgrammer,PONY_SPI,$(FLASHROM_SERIAL)))
-$(eval $(call DefineProgrammer,BUSPIRATE_SPI,$(FLASHROM_SERIAL)))
-
-# USB1
-$(eval $(call DefineConfig,LIBUSB1,$(FLASHROM_USB)))
-$(eval $(call DefineProgrammer,CH341A_SPI,$(FLASHROM_USB)))
-$(eval $(call DefineProgrammer,DEDIPROG,$(FLASHROM_USB)))
-$(eval $(call DefineProgrammer,DEVELOPERBOX_SPI,$(FLASHROM_USB)))
-$(eval $(call DefineProgrammer,DIGILENT_SPI,$(FLASHROM_USB)))
-$(eval $(call DefineProgrammer,PICKIT2_SPI,$(FLASHROM_USB)))
-$(eval $(call DefineProgrammer,STLINKV3_SPI,$(FLASHROM_USB)))
+ifeq ($(findstring i386,$(CONFIG_ARCH))$(findstring x86,$(CONFIG_ARCH)),)
+MESON_ARGS += \
+	-Dconfig_atahpt=false \
+	-Dconfig_atapromise=false \
+	-Dconfig_internal_dmi=true \
+	-Dconfig_nic3com=false \
+	-Dconfig_nicnatsemi=false \
+	-Dconfig_nicrealtek=false \
+	-Dconfig_satamv=false
+else
+MESON_ARGS += \
+	-Dconfig_atahpt=$(FLASHROM_PCI) \
+	-Dconfig_atapromise=$(FLASHROM_PCI) \
+	-Dconfig_internal_dmi=$(if $(FLASHROM_PCI),false,true)
+	-Dconfig_nic3com=$(FLASHROM_PCI) \
+	-Dconfig_nicnatsemi=$(FLASHROM_PCI) \
+	-Dconfig_nicrealtek=$(FLASHROM_PCI) \
+	-Dconfig_satamv=$(FLASHROM_PCI)
+endif

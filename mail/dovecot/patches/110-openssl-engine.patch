@@ -1,6 +1,6 @@
 --- a/src/lib-dcrypt/dcrypt-openssl.c
 +++ b/src/lib-dcrypt/dcrypt-openssl.c
-@@ -17,10 +17,12 @@
+@@ -20,10 +20,12 @@
  #include <openssl/bio.h>
  #include <openssl/pem.h>
  #include <openssl/x509.h>
@@ -14,7 +14,7 @@
  #include "dcrypt.h"
  #include "dcrypt-private.h"
  
-@@ -179,11 +181,13 @@ static bool dcrypt_openssl_error(const c
+@@ -236,11 +238,13 @@ dcrypt_openssl_padding_mode(enum dcrypt_
  static bool dcrypt_openssl_initialize(const struct dcrypt_settings *set,
  				      const char **error_r)
  {

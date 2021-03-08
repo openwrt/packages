@@ -1,0 +1,7 @@
+{
+	"name": "dnspark.com",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@control.dnspark.com/api/dynamic/update.php?hostname=[DOMAIN]&ip=[IP]",
+		"answer": "ok|nochange"
+	}
+}

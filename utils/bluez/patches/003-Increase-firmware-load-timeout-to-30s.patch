@@ -7,11 +7,9 @@ Subject: [PATCH 3/4] Increase firmware load timeout to 30s
  tools/hciattach.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-Index: bluez-5.51/tools/hciattach.c
-===================================================================
---- bluez-5.51.orig/tools/hciattach.c
-+++ bluez-5.51/tools/hciattach.c
-@@ -1240,7 +1240,7 @@ int main(int argc, char *argv[])
+--- a/tools/hciattach.c
++++ b/tools/hciattach.c
+@@ -1227,7 +1227,7 @@ int main(int argc, char *argv[])
  {
  	struct uart_t *u = NULL;
  	int detach, printpid, raw, opt, i, n, ld, err;

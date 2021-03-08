@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=upmpdcli
-PKG_VERSION:=1.4.6
+PKG_VERSION:=1.5.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.lesbonscomptes.com/upmpdcli/downloads
-PKG_HASH:=80ed85a323a1721a9e2ceb64923cedbf69c45f22fb9bc6853c9c11b46dc83a1d
+PKG_HASH:=c971ed29cf00ebe70b6461f30ec4b9d58e0acaf52c6fd452876678bb6fe53009
 
 PKG_MAINTAINER:=Petko Bordjukov <bordjukov@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -28,7 +28,7 @@ define Package/upmpdcli
   SECTION:=sound
   CATEGORY:=Sound
   URL:=https://www.lesbonscomptes.com/upmpdcli
-  DEPENDS:=+libupnpp +libmpdclient +libmicrohttpd +jsoncpp
+  DEPENDS:=+libupnpp +libmpdclient +jsoncpp
   TITLE:=A UPnP front-end to MPD, the Music Player Daemon
   USERID:=upmpdcli=89:upmpdcli=89
   MENU:=1
@@ -43,6 +43,10 @@ define Package/upmpdcli/config
 endef
 
 TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lm)
+
+define Package/upmpdcli/conffiles
+/etc/config/upmpdcli
+endef
 
 define Package/upmpdcli/install
 	$(INSTALL_DIR) $(1)/etc

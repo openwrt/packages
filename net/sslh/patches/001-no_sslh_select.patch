@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -68,7 +68,7 @@ all: sslh $(MAN) echosrv $(CONDITIONAL_T
+@@ -76,7 +76,7 @@ all: sslh $(MAN) echosrv $(CONDITIONAL_T
  version.h:
  	./genver.sh >version.h
  
@@ -9,7 +9,7 @@
  
  $(OBJS): version.h
  
-@@ -76,10 +76,6 @@ sslh-fork: version.h $(OBJS) sslh-fork.o
+@@ -87,10 +87,6 @@ sslh-fork: version.h $(OBJS) sslh-fork.o
  	$(CC) $(CFLAGS) $(LDFLAGS) -o sslh-fork sslh-fork.o $(OBJS) $(LIBS)
  	#strip sslh-fork
  
@@ -20,8 +20,8 @@
  systemd-sslh-generator: systemd-sslh-generator.o
  	$(CC) $(CFLAGS) $(LDFLAGS) -o systemd-sslh-generator systemd-sslh-generator.o -lconfig
  
-@@ -115,7 +111,7 @@ distclean: clean
- 	rm -f tags cscope.*
+@@ -127,7 +123,7 @@ distclean: clean
+ 	rm -f tags sslh-conf.c sslh-conf.h cscope.*
  
  clean:
 -	rm -f sslh-fork sslh-select echosrv version.h $(MAN) systemd-sslh-generator *.o *.gcov *.gcno *.gcda *.png *.html *.css *.info

@@ -1,0 +1,11 @@
+{
+	"name": "dynv6.com",
+	"ipv4": {
+		"url": "http://dynv6.com/api/update?hostname=[DOMAIN]&token=[PASSWORD]&ipv4=[IP]",
+		"answer": "updated|unchanged"
+	},
+	"ipv6": {
+		"url": "http://dynv6.com/api/update?hostname=[DOMAIN]&token=[PASSWORD]&ipv6=[IP]",
+		"answer": "updated|unchanged"
+	}
+}

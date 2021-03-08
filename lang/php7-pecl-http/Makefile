@@ -54,5 +54,5 @@ CONFIGURE_ARGS+= \
 	--with-http-libidnkit-dir=no \
 	--with-http-libidnkit2-dir=no
 
-$(eval $(call PECLPackage,http,$(PECL_LONGNAME),+icu +libcurl +librt +libevent2 +PACKAGE_libidn:libidn +libidn2 +php7-mod-iconv +php7-mod-session +php7-pecl-raphf +php7-pecl-propro,30))
+$(eval $(call PHP7PECLPackage,http,$(PECL_LONGNAME),+icu +libcurl +librt +libevent2 +PACKAGE_libidn:libidn +libidn2 +php7-mod-iconv +php7-mod-session +php7-pecl-raphf +php7-pecl-propro,30))
 $(eval $(call BuildPackage,$(PKG_NAME)))

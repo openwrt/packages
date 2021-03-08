@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tar
-PKG_VERSION:=1.32
-PKG_RELEASE:=2
+PKG_VERSION:=1.34
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
-PKG_HASH:=d0d3ae07f103323be809bc3eac0dcc386d52c5262499fe05511ac4788af1fdd8
+PKG_SOURCE_URL:=@GNU/tar
+PKG_HASH:=63bebd26879c5e1eea4352f0d03c991f966aeb3ddeb3c7445c902568d5411d28
 
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -33,6 +33,7 @@ define Package/tar
   TITLE:=GNU tar
   URL:=https://www.gnu.org/software/tar/
   MENU:=1
+  ALTERNATIVES:=300:/bin/tar:/usr/libexec/tar-gnu
 endef
 
 define Package/tar/config
@@ -73,22 +74,6 @@ define Package/tar/description
 	single archive in tar format.
 endef
 
-define Package/tar/postinst
-#!/bin/sh
-if [ -e $${IPKG_INSTROOT}/bin/tar ]; then
-  rm -r $${IPKG_INSTROOT}/bin/tar;
-fi
-ln -sf /usr/bin/tar $${IPKG_INSTROOT}/bin/tar
-endef
-
-define Package/tar/postrm
-#!/bin/sh
-rm $${IPKG_INSTROOT}/bin/tar
-ln -s busybox $${IPKG_INSTROOT}/bin/tar
-$${IPKG_INSTROOT}/bin/tar 2>&1 | grep 'applet not found' > /dev/null 2>&1 && rm $${IPKG_INSTROOT}/bin/tar
-exit 0
-endef
-
 CONFIGURE_ARGS += \
 	$(if $(CONFIG_PACKAGE_TAR_POSIX_ACL),--with,--without)-posix-acls \
 	$(if $(CONFIG_PACKAGE_TAR_XATTR),--with,--without)-xattrs \
@@ -108,8 +93,8 @@ MAKE_FLAGS += \
 	LDFLAGS="$(TARGET_LDLAGS)"
 
 define Package/tar/install
-	$(INSTALL_DIR) $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(PKG_NAME) $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/tar $(1)/usr/libexec/tar-gnu
 endef
 
 $(eval $(call BuildPackage,tar))

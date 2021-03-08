@@ -13,8 +13,6 @@ shows up only on 586 (32-bit).
  isnsdd.c     | 2 +-
  2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/configure.ac b/configure.ac
-index e4f3995..d956e58 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -17,7 +17,7 @@ AC_PATH_PROG(SH, sh)
@@ -26,11 +24,9 @@ index e4f3995..d956e58 100644
  	CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
  fi
  
-diff --git a/isnsdd.c b/isnsdd.c
-index 58825cc..9cedb9f 100644
 --- a/isnsdd.c
 +++ b/isnsdd.c
-@@ -401,7 +401,7 @@ check_portal_registration(__attribute__((unused))void *ptr)
+@@ -401,7 +401,7 @@ check_portal_registration(__attribute__(
  			continue;
  
  		last_modified = isns_object_last_modified(obj);

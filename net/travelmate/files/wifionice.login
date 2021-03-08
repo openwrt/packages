@@ -1,28 +1,32 @@
 #!/bin/sh
 # captive portal auto-login script for german ICE hotspots
-# written by Dirk Brenken (dev@brenken.org)
-
+# Copyright (c) 2020 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-domain="www.wifionice.de"
-cmd="$(command -v curl)"
+# set (s)hellcheck exceptions
+# shellcheck disable=1091,2016,2039,2059,2086,2143,2181,2188
 
-# curl check
-#
-if [ ! -x "${cmd}" ]
+export LC_ALL=C
+export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+set -o pipefail
+
+if [ "$(uci_get 2>/dev/null; printf "%u" "${?}")" = "127" ]
 then
-	exit 1
+	. "/lib/functions.sh"
 fi
+
+trm_domain="www.wifionice.de"
+trm_useragent="$(uci_get travelmate global trm_useragent "Mozilla/5.0 (Linux x86_64; rv:80.0) Gecko/20100101 Firefox/80.0")"
+trm_maxwait="$(uci_get travelmate global trm_maxwait "30")"
+trm_fetch="$(command -v curl)"
 
 # initial get request to receive & extract a valid security token
 #
-"${cmd}" "http://${domain}/en/" -s -o /dev/null -c "/tmp/${domain}.cookie"
-if [ -f "/tmp/${domain}.cookie" ]
+"${trm_fetch}" --user-agent "${trm_useragent}" --referer "http://www.example.com" --silent --connect-timeout $((trm_maxwait/6)) --cookie-jar "/tmp/${trm_domain}.cookie" --output /dev/null "http://${trm_domain}/en/"
+if [ -f "/tmp/${trm_domain}.cookie" ]
 then
-	sec_token="$(awk '/csrf/{print $7}' "/tmp/${domain}.cookie")"
-	rm -f "/tmp/${domain}.cookie"
+	sec_token="$(awk '/csrf/{print $7}' "/tmp/${trm_domain}.cookie")"
+	rm -f "/tmp/${trm_domain}.cookie"
 else
 	exit 2
 fi
@@ -31,7 +35,7 @@ fi
 #
 if [ -n "${sec_token}" ]
 then
-	"${cmd}" "http://${domain}/en/" -H "Cookie: csrf=${sec_token}" --data "login=true&CSRFToken=${sec_token}&connect=" -s -o /dev/null
+	"${trm_fetch}" --user-agent "${trm_useragent}" --silent --connect-timeout $((trm_maxwait/6)) --header "Cookie: csrf=${sec_token}" --data "login=true&CSRFToken=${sec_token}&connect=" --output /dev/null "http://${trm_domain}/en/"
 else
 	exit 3
 fi

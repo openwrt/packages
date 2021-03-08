@@ -1,6 +1,6 @@
 --- a/src/common/sysrepo.pb-c.c
 +++ b/src/common/sysrepo.pb-c.c
-@@ -8013,7 +8013,7 @@ const ProtobufCMessageDescriptor sr__event_notif_replay_resp__descriptor =
+@@ -8013,7 +8013,7 @@ const ProtobufCMessageDescriptor sr__eve
    (ProtobufCMessageInit) sr__event_notif_replay_resp__init,
    NULL,NULL,NULL    /* reserved[123] */
  };
@@ -9,7 +9,7 @@
  {
    {
      "xpath",
-@@ -8063,8 +8063,21 @@ static const ProtobufCFieldDescriptor sr__data_provide_req__field_descriptors[4]
+@@ -8063,8 +8063,21 @@ static const ProtobufCFieldDescriptor sr
      0,             /* flags */
      0,NULL,NULL    /* reserved1,reserved2, etc */
    },
@@ -31,7 +31,7 @@
    3,   /* field[3] = request_id */
    1,   /* field[1] = subscriber_address */
    2,   /* field[2] = subscription_id */
-@@ -8075,7 +8088,7 @@ static const ProtobufCIntRange sr__data_provide_req__number_ranges[3 + 1] =
+@@ -8075,7 +8088,7 @@ static const ProtobufCIntRange sr__data_
    { 1, 0 },
    { 10, 1 },
    { 20, 3 },
@@ -40,7 +40,7 @@
  };
  const ProtobufCMessageDescriptor sr__data_provide_req__descriptor =
  {
-@@ -8085,7 +8098,7 @@ const ProtobufCMessageDescriptor sr__data_provide_req__descriptor =
+@@ -8085,7 +8098,7 @@ const ProtobufCMessageDescriptor sr__dat
    "Sr__DataProvideReq",
    "sr",
    sizeof(Sr__DataProvideReq),

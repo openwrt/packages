@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=umurmur
-PKG_VERSION:=0.2.17
-PKG_RELEASE:=3
+PKG_VERSION:=0.2.19
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/umurmur/umurmur/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=e77b7b6616768f4a1c07442afe49a772692f667b00c23cc85909d4dd0ce206d2
+PKG_HASH:=338053160bc48e48850061cdfc19cf1b2bb66e56877c04cd6de7831b468646b6
 
 PKG_MAINTAINER:=Martin Johansson <martin@fatbob.nu>
 PKG_LICENSE:=BSD-3-Clause

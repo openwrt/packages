@@ -9,8 +9,7 @@ USE_PROCD=1
 PROG=/usr/bin/wifidogx
 CONFIGFILE=/tmp/wifidogx.conf
 
-EXTRA_COMMANDS="status"
-EXTRA_HELP="        status Print the status of the service"
+extra_command "status" "Print the status of the service"
 
 PX5G_BIN="/usr/sbin/px5g"
 OPENSSL_BIN="/usr/bin/openssl"
@@ -62,7 +61,7 @@ prepare_mqtt_conf() {
 
 prepare_wifidog_conf() {
 	local cfg=$1
-	local enable
+	local disabled
 	local gateway_id
 	local gateway_interface
 	local auth_server_hostname
@@ -96,8 +95,8 @@ prepare_wifidog_conf() {
 
 	[ -f ${CONFIGFILE} ] && rm -f ${CONFIGFILE}
 
-	config_get enable "${cfg}" "disabled" 0
-	if [ "${enable}" = "0" ]; then
+	config_get disabled "${cfg}" "disabled" 1
+	if [ "${disabled}" = "1" ]; then
 		echo "wifidogx disabled in /etc/config/wifidogx file, please set disabled to 0 to enable it" >&2
 		return
 	fi
@@ -255,11 +254,11 @@ init_config() {
 		exit
 	fi
 
-	if [ -s "${APFREE_CERT}" ] && [ -s "${APFREE_KEY}" ]; then
+	if [ ! -s "${APFREE_CERT}" ] || [ ! -s "${APFREE_KEY}" ]; then
 		generate_keys
 	fi
 
-	if [ -s ${APFREE_KEY} ] && [ -s ${APFREE_CERT} ]; then
+	if [ ! -s ${APFREE_KEY} ] || [ ! -s ${APFREE_CERT} ]; then
 		echo "no cert or key, exit..." >&2
 		exit
 	fi

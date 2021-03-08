@@ -34,7 +34,7 @@
  #include <stdio.h>
  #include <stdlib.h>
  #include <string.h>
-@@ -181,7 +182,7 @@ static void set_time(struct ntptime *new)
+@@ -181,7 +182,7 @@ static void set_time(struct ntptime *new
  		exit(1);
  	}
  	if (debug) {
@@ -43,7 +43,7 @@
  	}
  #else
  	/* Traditional Linux way to set the system clock
-@@ -196,7 +197,7 @@ static void set_time(struct ntptime *new)
+@@ -196,7 +197,7 @@ static void set_time(struct ntptime *new
  		exit(1);
  	}
  	if (debug) {

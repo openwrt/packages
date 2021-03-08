@@ -13,4 +13,5 @@ location ~ /cgi-bin/cgi-(backup|download|upload|exec) {
 }
 
 location /luci-static {
+		error_log stderr crit;
 }

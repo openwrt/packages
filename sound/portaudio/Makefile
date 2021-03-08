@@ -9,20 +9,22 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=portaudio
 PKG_VERSION:=190600_20161030
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=pa_stable_v$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=http://www.portaudio.com/archives/
 PKG_HASH:=f5a21d7dcd6ee84397446fa1fa1a0675bb2e8a4a6dceb4305a8404698d8d1513
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
+PKG_MAINTAINER:=
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
-PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
-PKG_INSTALL:=1
+CMAKE_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/portaudio
   SECTION:=sound
@@ -40,37 +42,9 @@ define Package/portaudio/description
  different platforms. Many applications use PortAudio for Audio I/O.
 endef
 
-CONFIGURE_ARGS+= \
-	--with-alsa \
-	--without-asihpi \
-	--without-jack \
-	--with-oss \
-
-EXTRA_CFLAGS += $(TARGET_CPPFLAGS)
-
-define Build/Compile
-	$(call Build/Compile/Default,lib/libportaudio.la)
-endef
-
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/include/portaudio.h \
-		$(PKG_INSTALL_DIR)/usr/include/pa_linux_alsa.h \
-		$(1)/usr/include/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libportaudio.{a,so*} \
-		$(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/portaudio-*.pc \
-		$(1)/usr/lib/pkgconfig/
-endef
-
 define Package/portaudio/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libportaudio.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libportaudio.so $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,portaudio))

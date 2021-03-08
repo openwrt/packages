@@ -20,12 +20,11 @@ Signed-off-by: Mauro Condarelli <mc5686 at mclink.it>
  config.mak.uname | 12 ++++++------
  1 file changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/config.mak.uname b/config.mak.uname
-index 40d6b29..d933b23 100644
 --- a/config.mak.uname
 +++ b/config.mak.uname
-@@ -1,11 +1,11 @@
- # Platform specific Makefile tweaks based on uname detection
+@@ -4,12 +4,12 @@
+ # Microsoft's Safe Exception Handling in libraries (such as zlib).
+ # Typically required for VS2013+/32-bit compilation on Vista+ versions.
  
 -uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 -uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
@@ -41,4 +40,4 @@ index 40d6b29..d933b23 100644
 +uname_V ?= $(shell sh -c 'uname -v 2>/dev/null || echo not')
  
  ifdef MSVC
-   # avoid the MingW and Cygwin configuration sections
+ 	# avoid the MingW and Cygwin configuration sections

@@ -1,8 +1,6 @@
-Index: lpc21isp_197/lpc21isp.c
-===================================================================
---- lpc21isp_197.orig/lpc21isp.c	2017-12-03 06:01:05.854070061 +0100
-+++ lpc21isp_197/lpc21isp.c	2017-12-03 06:01:23.326431659 +0100
-@@ -1549,7 +1549,7 @@
+--- a/lpc21isp.c
++++ b/lpc21isp.c
+@@ -1549,7 +1549,7 @@ static void ReadArguments(ISP_ENVIRONMEN
          DebugPrintf(2, "\n"
                         "Portable command line ISP\n"
                         "for NXP LPC family and Analog Devices ADUC 70xx\n"

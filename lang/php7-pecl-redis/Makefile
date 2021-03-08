@@ -8,9 +8,9 @@ include $(TOPDIR)/rules.mk
 PECL_NAME:=redis
 PECL_LONGNAME:=PHP extension for interfacing with Redis
 
-PKG_VERSION:=5.2.1
+PKG_VERSION:=5.3.2
 PKG_RELEASE:=1
-PKG_HASH:=c05af6254d704844303fbe8b13b2d54bdb4372b1a081934e67cac42ec79ecbbe
+PKG_HASH:=f4e92de628abcb917cdc810df045ca3fa0f2af34673eaa2a03350e3c5c5fdab1
 
 PKG_NAME:=php7-pecl-redis
 PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz
@@ -35,5 +35,5 @@ CONFIGURE_ARGS+= \
 	--disable-redis-lzf \
 	--disable-redis-msgpack
 
-$(eval $(call PECLPackage,$(PECL_NAME),$(PECL_LONGNAME),+php7-mod-json +php7-mod-session,25))
+$(eval $(call PHP7PECLPackage,$(PECL_NAME),$(PECL_LONGNAME),+php7-mod-json +php7-mod-session,25))
 $(eval $(call BuildPackage,$(PKG_NAME)))

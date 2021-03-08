@@ -8,19 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=conserver
-PKG_VERSION:=8.2.4
+PKG_VERSION:=8.2.6
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Bjørn Mork <bjorn@mork.no>
 
-PKG_SOURCE_URL:=https://codeload.github.com/conserver/conserver/tar.gz/v$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=8d8b263d9531ebb827257bd67baf9200cac4fb7ffbe033122686e39ca42cddd6
+PKG_SOURCE_URL:=https://codeload.github.com/conserver/conserver/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=1c8b86f123d2d8e3ce568b782087b43dfac9cf6ffd5a9bdfcfdc6718d749a923
 
+PKG_MAINTAINER:=Bjørn Mork <bjorn@mork.no>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 

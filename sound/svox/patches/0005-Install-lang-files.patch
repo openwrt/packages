@@ -7,8 +7,6 @@ Subject: [PATCH 5/7] Install lang files
  pico/Makefile.am |    9 +++++++++
  1 files changed, 9 insertions(+), 0 deletions(-)
 
-diff --git a/pico/Makefile.am b/pico/Makefile.am
-index 9151042..8898050 100644
 --- a/pico/Makefile.am
 +++ b/pico/Makefile.am
 @@ -70,6 +70,15 @@ libttspico_la_HEADERS = \
@@ -27,6 +25,3 @@ index 9151042..8898050 100644
  bin_PROGRAMS = pico2wave
  pico2wave_SOURCES = \
  	bin/pico2wave.c
--- 
-1.7.1
-

@@ -1,29 +1,44 @@
-#!/bin/sh /etc/rc.common
-
-enabled miniupnpd || exit 0
+/etc/init.d/miniupnpd enabled || exit 0
 
 # If miniupnpd is not running:
-# - check on _any_ event (even updates may contribute to network_find_wan*)
+# - check on _any_ event (event updates may contribute to network_find_wan*)
 
 # If miniupnpd _is_ running:
 # - check only on ifup (otherwise lease updates etc would cause
 #   miniupnpd state loss)
 
-[ "$ACTION" != "ifup" ] && service_running miniupnpd && exit 0
+[ "$ACTION" != "ifup" ] && /etc/init.d/miniupnpd running && exit 0
 
 tmpconf="/var/etc/miniupnpd.conf"
-extiface=$(uci get upnpd.config.external_iface)
-extzone=$(uci get upnpd.config.external_zone)
+external_iface=$(uci -q get upnpd.config.external_iface)
+external_iface6=$(uci -q get upnpd.config.external_iface6)
+external_zone=$(uci -q get upnpd.config.external_zone)
 
 . /lib/functions/network.sh
 
-[ -z "$extiface" ] && {
-  # manual external zone (if dynamically find interfaces
-  # belonging to it) overrides network_find_wan*
-  [ -n "$extzone" ] && ifname=$(fw3 -q zone "$extzone" | head -1)
-  [ -z "$extiface" ] && network_find_wan extiface
-  [ -z "$extiface" ] && network_find_wan6 extiface
-}
+if [ -n "$external_iface" ] ; then
+	network_get_device ifname "$external_iface"
+else
+	if [ -n "$external_zone" ] ; then
+		ifname=$(fw3 -q zone "$external_zone" 2>/dev/null | head -1)
+	else
+		network_find_wan external_iface && \
+			network_get_device ifname "$external_iface"
+	fi
+fi
+if [ -n "$external_iface6" ] ; then
+	network_get_device ifname6 "$external_iface6"
+else
+	if [ -n "$external_zone" ] ; then
+		ifname6=$(fw3 -q zone "$external_zone" 2>/dev/null | head -1)
+	else
+		network_find_wan6 external_iface6 && \
+			network_get_device ifname6 "$external_iface6"
+	fi
+fi
 
-[ -z "$ifname" ] && network_get_device ifname "$extiface"
-grep -q "ext_ifname=$ifname" "$tmpconf" || /etc/init.d/miniupnpd restart
+[ "$DEVICE" != "$ifname" ] && [ "$DEVICE" != "$ifname6" ] && exit 0
+
+grep -qs "^ext_ifname=$ifname" "$tmpconf" && grep -qs "^ext_ifname6=$ifname6" "$tmpconf" && exit 0
+
+/etc/init.d/miniupnpd restart

@@ -1,8 +1,8 @@
 --- a/gst/gstplugin.c
 +++ b/gst/gstplugin.c
-@@ -777,15 +777,8 @@ _priv_gst_plugin_load_file_for_registry (const gchar * filename,
-     goto return_error;
+@@ -790,15 +790,8 @@ _priv_gst_plugin_load_file_for_registry
    }
+ #endif
  
 -  flags = G_MODULE_BIND_LOCAL;
 -  /* libgstpython.so is the gst-python plugin loader. It needs to be loaded with

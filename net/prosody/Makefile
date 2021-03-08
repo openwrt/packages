@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prosody
-PKG_VERSION:=0.11.5
+PKG_VERSION:=0.11.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://prosody.im/downloads/source
-PKG_HASH:=55f8bd65d5d2af61cc739bd6164e4207011e0d2d260cde583071c90d8d85408b
+PKG_HASH:=28ffc07653485cb63e22b387d3ea4825ee2baaee0c5827de4d6053a35b1c8747
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=MIT/X11
@@ -68,8 +68,7 @@ define Package/prosody/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/prosody.init $(1)/etc/init.d/prosody
 	$(INSTALL_DIR) $(1)/etc/prosody
-	#$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/prosody/prosody.cfg.lua $(1)/etc/prosody/
-	$(INSTALL_CONF) ./files/prosody.cfg.lua $(1)/etc/prosody/
+	$(INSTALL_DATA) ./files/prosody.cfg.lua $(1)/etc/prosody/
 	$(INSTALL_DIR) $(1)/etc/prosody/certs
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/prosody/certs/localhost.{crt,key} $(1)/etc/prosody/certs/
 	$(INSTALL_DIR) $(1)/etc/prosody/data

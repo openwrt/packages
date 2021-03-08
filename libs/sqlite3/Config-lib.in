@@ -1,6 +1,12 @@
 menu "Configuration"
 	depends on PACKAGE_libsqlite3
 
+config SQLITE3_BATCH_ATOMIC_WRITE
+	bool "Batch-atomic write support"
+	default n
+	help
+	  Enable batch-atomic write optimization (supported only on F2FS).
+
 config SQLITE3_DYNAMIC_EXTENSIONS
 	bool "Dynamic extensions"
 	default y

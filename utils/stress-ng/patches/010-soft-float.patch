@@ -1,0 +1,70 @@
+--- a/stress-fp-error.c
++++ b/stress-fp-error.c
+@@ -115,42 +115,43 @@ static int stress_fp_error(const stress_
+ 	do {
+ 		volatile double d1, d2;
+ 
+-#if defined(EDOM)
++#if defined(EDOM) && defined(FE_INVALID)
+ 		stress_fp_clear_error();
+ 		stress_fp_check(args, "log(-1.0)", log(-1.0), NAN,
+ 			true, false, EDOM, FE_INVALID);
+ #endif
+ 
+-#if defined(ERANGE)
++#if defined(ERANGE) && defined(FE_DIVBYZERO)
+ 		stress_fp_clear_error();
+ 		stress_fp_check(args, "log(0.0)", log(0.0), -HUGE_VAL,
+ 			false, false, ERANGE, FE_DIVBYZERO);
+ #endif
+ 
+-#if defined(EDOM)
++#if defined(EDOM) && defined(FE_INVALID)
+ 		stress_fp_clear_error();
+ 		stress_fp_check(args, "log2(-1.0)", log2(-1.0), NAN,
+ 			true, false, EDOM, FE_INVALID);
+ #endif
+ 
+-#if defined(ERANGE)
++#if defined(ERANGE) && defined(FE_DIVBYZERO)
+ 		stress_fp_clear_error();
+ 		stress_fp_check(args, "log2(0.0)", log2(0.0), -HUGE_VAL,
+ 			false, false, ERANGE, FE_DIVBYZERO);
+ #endif
+ 
+-#if defined(EDOM)
++#if defined(EDOM) && defined(FE_INVALID)
+ 		stress_fp_clear_error();
+ 		stress_fp_check(args, "sqrt(-1.0)", sqrt(-1.0), NAN,
+ 			true, false, EDOM, FE_INVALID);
+ #endif
+ 
+-#if defined(EDOM)
++#if defined(EDOM) && defined(FE_INVALID)
+ 		stress_fp_clear_error();
+ 		stress_fp_check(args, "sqrt(-1.0)", sqrt(-1.0), NAN,
+ 			true, false, EDOM, FE_INVALID);
+ #endif
+ 
++#if defined(FE_INEXACT)
+ 		/*
+ 		 * Use volatiles to force compiler to generate code
+ 		 * to perform run time computation of 1.0 / M_PI
+@@ -171,14 +172,15 @@ static int stress_fp_error(const stress_
+ 		stress_fp_check(args, "DBL_MAX + DBL_MAX / 2.0",
+ 			DBL_MAX + DBL_MAX / 2.0, INFINITY,
+ 			false, true, 0, FE_OVERFLOW | FE_INEXACT);
++#endif
+ 
+-#if defined(ERANGE)
++#if defined(ERANGE) && defined(FE_UNDERFLOW)
+ 		stress_fp_clear_error();
+ 		stress_fp_check(args, "exp(-1000000.0)", exp(-1000000.0), 0.0,
+ 			false, false, ERANGE, FE_UNDERFLOW);
+ #endif
+ 
+-#if defined(ERANGE)
++#if defined(ERANGE) && defined(FE_OVERFLOW)
+ 		stress_fp_clear_error();
+ 		stress_fp_check(args, "exp(DBL_MAX)", exp(DBL_MAX), HUGE_VAL,
+ 			false, false, ERANGE, FE_OVERFLOW);

@@ -1,5 +1,5 @@
---- a/src/Mayaqua/CMakeLists.txt	2019-07-10
-+++ b/src/Mayaqua/CMakeLists.txt	2019-07-11
+--- a/src/Mayaqua/CMakeLists.txt
++++ b/src/Mayaqua/CMakeLists.txt
 @@ -59,7 +59,7 @@ if(UNIX)
    find_package(ZLIB REQUIRED)
  

@@ -19,7 +19,7 @@
  all: config.h
 --- a/configure.ac
 +++ b/configure.ac
-@@ -58,10 +58,7 @@ dnl ---------------------------------------------------------------------------
+@@ -58,10 +58,7 @@ dnl ------------------------------------
  GP_GETTEXT_HACK([],[Lutz Müller and others],[${MAIL_GPHOTO_TRANSLATION}])
  ALL_LINGUAS="az cs da de en_GB es eu fi fr hu id is it ja nl pa pl pt_BR ro ru rw sk sr sv uk vi zh_CN zh_TW"
  AM_GNU_GETTEXT_VERSION([0.14.1])
@@ -30,7 +30,7 @@
  
  dnl We cannot use AC_DEFINE_UNQUOTED() for these definitions, as
  dnl we require make to do insert the proper $(datadir) value
-@@ -407,7 +404,6 @@ AC_SUBST([AM_LDFLAGS])
+@@ -406,7 +403,6 @@ AC_SUBST([AM_LDFLAGS])
  # Create output files
  # ---------------------------------------------------------------------------
  AC_CONFIG_FILES([

@@ -7,12 +7,12 @@ include $(TOPDIR)/rules.mk
 PKG_NPM_SCOPE:=serialport
 PKG_NPM_NAME:=bindings
 PKG_NAME:=node-$(PKG_NPM_SCOPE)-$(PKG_NPM_NAME)
-PKG_VERSION:=8.0.7
+PKG_VERSION:=9.0.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NPM_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://registry.npmjs.org/@$(PKG_NPM_SCOPE)/$(PKG_NPM_NAME)/-/
-PKG_HASH:=b555aabf8f47a914589e5e625c87b1ec6f0ce63f284cf59d5bf18c934ac988c4
+PKG_HASH:=aec200860bd175e4b14b4ab1aa56a5f750172b6c8e20ccb234846206395848d4
 
 PKG_BUILD_DEPENDS:=node/host
 PKG_USE_MIPS16:=0
@@ -55,7 +55,7 @@ define Build/Compile
 	npm_config_prefix=$(PKG_INSTALL_DIR)/usr/ \
 	npm_config_cache=$(TMP_DIR)/npm-cache-$(TMPNPM) \
 	npm_config_tmp=$(TMP_DIR)/npm-tmp-$(TMPNPM) \
-	npm install -g --build-from-source $(PKG_BUILD_DIR)
+	npm install -g $(PKG_BUILD_DIR)
 	rm -rf $(TMP_DIR)/npm-tmp-$(TMPNPM)
 	rm -rf $(TMP_DIR)/npm-cache-$(TMPNPM)
 endef

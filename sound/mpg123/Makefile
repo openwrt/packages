@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpg123
-PKG_VERSION:=1.25.13
-PKG_RELEASE:=1
+PKG_VERSION:=1.26.3
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/mpg123
-PKG_HASH:=90306848359c793fd43b9906e52201df18775742dc3c81c06ab67a806509890a
+PKG_HASH:=30c998785a898f2846deefc4d17d6e4683a5a550b7eacf6ea506e30a7a736c6e
 
 PKG_MAINTAINER:=Zoltan HERPAI <wigyori@uid0.hu>
 PKG_LICENSE_FILES:=COPYING
@@ -46,74 +46,95 @@ define Package/libout123
   DEPENDS:=+libltdl
 endef
 
+define Package/libsyn123
+  $(call Package/mpg123/Default)
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=Library for signal generation and format conversion
+  LICENSE:=LGPL-2.1-or-later
+  DEPENDS:=+libltdl
+endef
+
 define Package/mpg123
   $(call Package/mpg123/Default)
   SECTION:=sound
   CATEGORY:=Sound
   TITLE:=fast console mpeg audio player
   LICENSE:=GPL-2.0-or-later
-  DEPENDS+=+libmpg123 +alsa-lib +libout123
+  DEPENDS+=+libmpg123 +alsa-lib +libout123 +libsyn123
 endef
 
-TARGET_CFLAGS += -D_GNU_SOURCE
-
-CONFIGURE_ARGS+= \
+CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--with-audio=alsa \
-	--with-default-audio=alsa \
+	--with-default-audio=alsa
 
 ifeq ($(CONFIG_SOFT_FLOAT),y)
-	CONFIGURE_ARGS+= \
+	CONFIGURE_ARGS += \
 		--with-cpu=generic_nofpu \
 		--enable-int-quality=yes
+else ifneq ($(findstring 464fp,$(CONFIG_CPU_TYPE)),)
+	CONFIGURE_ARGS += \
+		--with-cpu=altivec
+else ifneq ($(findstring neon,$(CONFIG_CPU_TYPE)),)
+	CONFIGURE_ARGS += \
+		--with-cpu=arm_fpu
+else ifneq ($(findstring aarch64,$(CONFIG_ARCH)),)
+	CONFIGURE_ARGS += \
+		--with-cpu=aarch64
 else
-	CONFIGURE_ARGS+= \
+	CONFIGURE_ARGS += \
 		--with-cpu=generic_fpu
-endif
-
-ifneq ($(findstring neon,$(CONFIG_TARGET_OPTIMIZATION)),)
-        CONFIGURE_ARGS+= \
-                --with-cpu=arm_fpu
 endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(INSTALL_DATA) \
+		$(PKG_INSTALL_DIR)/usr/include/fmt123.h \
 		$(PKG_INSTALL_DIR)/usr/include/mpg123.h \
 		$(PKG_INSTALL_DIR)/usr/include/out123.h \
-		$(PKG_INSTALL_DIR)/usr/include/fmt123.h \
+		$(PKG_INSTALL_DIR)/usr/include/syn123.h \
 		$(1)/usr/include/
 
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/libmpg123.{la,a,so*} \
 		$(PKG_INSTALL_DIR)/usr/lib/libout123.{la,a,so*} \
+		$(PKG_INSTALL_DIR)/usr/lib/libsyn123.{la,a,so*} \
 		$(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/usr/lib/mpg123
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/mpg123/* \
+		$(PKG_INSTALL_DIR)/usr/lib/mpg123/output* \
 		$(1)/usr/lib/mpg123
 
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libmpg123.pc \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libout123.pc \
+		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libsyn123.pc \
 		$(1)/usr/lib/pkgconfig
 endef
 
 define Package/libmpg123/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libmpg123.so* \
+		$(PKG_INSTALL_DIR)/usr/lib/libmpg123.so.* \
 		$(1)/usr/lib/
 endef
 
 define Package/libout123/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libout123.so* \
+		$(PKG_INSTALL_DIR)/usr/lib/libout123.so.* \
+		$(1)/usr/lib/
+endef
+
+define Package/libsyn123/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/lib/libsyn123.so.* \
 		$(1)/usr/lib/
 endef
 
@@ -126,10 +147,11 @@ define Package/mpg123/install
 
 	$(INSTALL_DIR) $(1)/usr/lib/mpg123
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/mpg123/* \
+		$(PKG_INSTALL_DIR)/usr/lib/mpg123/output_*.so \
 		$(1)/usr/lib/mpg123
 endef
 
 $(eval $(call BuildPackage,libmpg123))
 $(eval $(call BuildPackage,libout123))
+$(eval $(call BuildPackage,libsyn123))
 $(eval $(call BuildPackage,mpg123))

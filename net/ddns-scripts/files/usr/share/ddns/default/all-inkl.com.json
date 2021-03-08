@@ -1,0 +1,9 @@
+{
+	"name": "all-inkl.com",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@dyndns.kasserver.com/?myip=[IP]"
+	},
+	"ipv6": {
+		"url": "http://[USERNAME]:[PASSWORD]@dyndns.kasserver.com/?myip=[IP]"
+	}
+}

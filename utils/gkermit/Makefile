@@ -11,7 +11,7 @@ PKG_VERSION:=1.00
 PKG_RELEASE:=2
 
 PKG_SOURCE:=gku100.tar.gz
-PKG_SOURCE_URL:=ftp://kermit.columbia.edu/kermit/archives
+PKG_SOURCE_URL:=https://ftp.nluug.nl/networking/kermit/archives
 PKG_HASH:=3dbe63291277c4795255343b48b860777fb0a160163d7e1d30b1ee68585593eb
 
 PKG_MAINTAINER:=Nathaniel Wesley Filardo <nwfilardo@gmail.com>

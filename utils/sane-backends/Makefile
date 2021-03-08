@@ -9,11 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sane-backends
-PKG_VERSION:=1.0.29
+PKG_VERSION:=1.0.32
 PKG_RELEASE:=1
+
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://gitlab.com/sane-project/backends/uploads/54f858b20a364fc35d820df935a86478
-PKG_HASH:=aa027b4e5f59849cd41b8c26d54584cf31fffd986049019be6ad4140e11ea8ed
+PKG_SOURCE_URL:=https://gitlab.com/sane-project/backends/uploads/104f09c07d35519cc8e72e604f11643f
+PKG_HASH:=3a28c237c0a72767086202379f6dc92dbb63ec08dfbab22312cba80e238bb114
+
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=GPL-2.0 GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING LICENSE
@@ -171,18 +173,18 @@ $(call Package/sane-backends/Default/description)
 This package contains the SANE frontends.
 endef
 
-CONFIGURE_ARGS+= \
+CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-preload \
 	--without-snmp \
-	--disable-avahi \
+	--without-avahi \
 	--disable-locking \
 	--without-usb-record-replay \
 
 # ./configure does not even try to detect mmap if crosscompiling
-CONFIGURE_VARS+= \
-    ac_cv_func_mmap_fixed_mapped="yes" \
+CONFIGURE_VARS += \
+    ac_cv_func_mmap_fixed_mapped="yes"
 
 define Build/Configure
 	mkdir -p $(PKG_BUILD_DIR)/backend/.libs
@@ -288,7 +290,7 @@ This package contains the SANE backend for $(2).
   endef
 
   define Package/sane-$(1)/conffiles
-	/etc/sane.d/$(1).conf
+/etc/sane.d/$(1).conf
   endef
 
   $$(eval $$(call BuildPackage,sane-$(1)))
@@ -309,6 +311,7 @@ $(eval $(call SaneBackend,canon630u,the Canon 630u USB flatbed scanner,+libusb-1
 $(eval $(call SaneBackend,canon_dr,Canon DR-series scanners,+libusb-1.0))
 # Depends on libieee1284
 #$(eval $(call SaneBackend,canon_pp,Canon CanoScan Parallel Port flatbed scanners,+libieee1284))
+$(eval $(call SaneBackend,canon_lide70,Canon LiDE 70 USB flatbed scanner,))
 $(eval $(call SaneBackend,cardscan,Corex CardScan usb scanners,+libusb-1.0))
 $(eval $(call SaneBackend,coolscan,Nikon film-scanners,+libusb-1.0))
 $(eval $(call SaneBackend,coolscan2,Nikon Coolscan film scanners,+libusb-1.0))
@@ -324,7 +327,7 @@ $(eval $(call SaneBackend,epsonds,EPSON scanners,+libjpeg +libusb-1.0)) ####
 $(eval $(call SaneBackend,epson2,EPSON scanners,+libusb-1.0))
 #$(eval $(call SaneBackend,escl,AirScan/eSCL devices,+libcurl +libxml2 +libnetsnmp +libavahi))
 $(eval $(call SaneBackend,fujitsu,Fujitsu flatbed and ADF scanners,+libusb-1.0))
-$(eval $(call SaneBackend,genesys,GL646 GL841 GL843 GL847 and GL124 based USB flatbed scanners,+libstdcpp +libusb-1.0))
+$(eval $(call SaneBackend,genesys,GL646 GL841 GL843 GL847 and GL124 based USB flatbed scanners,+libstdcpp +libusb-1.0 +libtiff))
 $(eval $(call SaneBackend,gphoto2,digital cameras supported by gphoto2,+libjpeg +libgphoto2))
 $(eval $(call SaneBackend,gt68xx,GT-68XX based USB flatbed scanners,+libusb-1.0))
 $(eval $(call SaneBackend,hp,HP ScanJet scanners,+libusb-1.0))

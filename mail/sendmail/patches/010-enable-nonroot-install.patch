@@ -1,7 +1,5 @@
-Index: sendmail-8.15.2/cf/cf/Makefile
-===================================================================
---- sendmail-8.15.2.orig/cf/cf/Makefile
-+++ sendmail-8.15.2/cf/cf/Makefile
+--- a/cf/cf/Makefile
++++ b/cf/cf/Makefile
 @@ -80,10 +80,10 @@ install:
  install-cf:  install-sendmail-cf install-submit-cf
  

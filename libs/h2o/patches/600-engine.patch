@@ -1,6 +1,6 @@
 --- a/deps/neverbleed/neverbleed.c
 +++ b/deps/neverbleed/neverbleed.c
-@@ -1486,6 +1486,7 @@ int neverbleed_init(neverbleed_t *nb, char *errbuf)
+@@ -1486,6 +1486,7 @@ int neverbleed_init(neverbleed_t *nb, ch
      close(pipe_fds[0]);
      pipe_fds[0] = -1;
  
@@ -8,7 +8,7 @@
      /* setup engine */
      if ((nb->engine = ENGINE_new()) == NULL || !ENGINE_set_id(nb->engine, "neverbleed") ||
          !ENGINE_set_name(nb->engine, "privilege separation software engine") || !ENGINE_set_RSA(nb->engine, rsa_method)
-@@ -1497,6 +1498,7 @@ int neverbleed_init(neverbleed_t *nb, char *errbuf)
+@@ -1497,6 +1498,7 @@ int neverbleed_init(neverbleed_t *nb, ch
          goto Fail;
      }
      ENGINE_add(nb->engine);

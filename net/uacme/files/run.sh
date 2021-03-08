@@ -355,7 +355,23 @@ issue_cert()
 	# commit and reload is in post_checks
     fi
 
-    if [ -e /etc/init.d/nginx ] && [ "$update_nginx" -eq "1" ]; then
+    local nginx_updated
+    nginx_updated=0
+    if command -v nginx-util 2>/dev/null && [ "$update_nginx" -eq "1" ]; then
+	nginx_updated=1
+	for domain in $domains; do
+	    if [ "$APP" = "uacme" ]; then
+		nginx-util add_ssl "${domain}" uacme "$STATE_DIR/${main_domain}/cert.pem" \
+		    "$STATE_DIR/private/${main_domain}/key.pem" || nginx_updated=0
+	    else
+		nginx-util add_ssl "${domain}" acme "$STATE_DIR/${main_domain}/fullchain.cer" \
+		    "$STATE_DIR/${main_domain}/${main_domain}.key" || nginx_updated=0
+	    fi
+	done
+	# reload is in post_checks
+    fi
+
+    if [ "$nginx_updated" -eq "0" ] && [ -w /etc/nginx/nginx.conf ] && [ "$update_nginx" -eq "1" ]; then
 	if [ "$APP" = "uacme" ]; then
 	    sed -i "s#ssl_certificate\ .*#ssl_certificate $STATE_DIR/${main_domain}/cert.pem;#g" /etc/nginx/nginx.conf
 	    sed -i "s#ssl_certificate_key\ .*#ssl_certificate_key $STATE_DIR/private/${main_domain}/key.pem;#g" /etc/nginx/nginx.conf

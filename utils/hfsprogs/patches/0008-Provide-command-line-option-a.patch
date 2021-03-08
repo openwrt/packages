@@ -8,8 +8,6 @@ behavior that the -p option has, for greater compatibility with other tools.
  fsck_hfs.tproj/fsck_hfs.c | 5 +++--
  1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/fsck_hfs.tproj/fsck_hfs.c b/fsck_hfs.tproj/fsck_hfs.c
-index f1a18bd..6117698 100644
 --- a/fsck_hfs.tproj/fsck_hfs.c
 +++ b/fsck_hfs.tproj/fsck_hfs.c
 @@ -104,7 +104,7 @@ main(argc, argv)

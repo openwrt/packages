@@ -8,14 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postfix
+PKG_VERSION:=3.5.8
 PKG_RELEASE:=1
-PKG_VERSION:=3.5.0
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 	https://cdn.postfix.johnriley.me/mirrors/postfix-release/official/ \
 	http://ftp.porcupine.org/mirrors/postfix-release/official/
+PKG_HASH:=22582628cf3edc18c5155c9ff44543dd95a9435fb68135d76a99f572cb07456f
 
-PKG_HASH:=22ac929733449a294252ac8deda4b264ff48a997ff3847007291a2ee53ef55cc
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
 PKG_LICENSE:=IPL-1.0
 PKG_LICENSE_FILES:=LICENSE
@@ -110,7 +111,7 @@ define Package/postfix/config
 	endmenu
 endef
 
-CCARGS=-DNO_NIS
+CCARGS=-DNO_NIS -fcommon
 AUXLIBS=-L$(STAGING_DIR)/usr/lib
 
 ifdef CONFIG_POSTFIX_TLS
@@ -178,6 +179,7 @@ else
 endif
 
 CCARGS+=-DDEF_DB_TYPE=\"$(default_database_type)\"
+TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lresolv)
 
 # prevent postfix-install from executing postconf at build time
 # by explicitly providing the default values to postfix-install
@@ -215,7 +217,7 @@ endef
 
 define Build/Compile
 	# Currently postfix has a bug with Makefiles that CCARGS are not passed to the compiler, so we are copying them to CC as a workaround
-	cd $(PKG_BUILD_DIR); $(MAKE) $(TARGET_CONFIGURE_OPTS) CC='$(TARGET_CC) $(CCARGS)'
+	cd $(PKG_BUILD_DIR); $(MAKE) $(TARGET_CONFIGURE_OPTS) CC='$(TARGET_CC) $(CCARGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)'
 	$(foreach p, \
 		default_database_type config_directory command_directory daemon_directory \
 		shlib_directory manpage_directory data_directory queue_directory \

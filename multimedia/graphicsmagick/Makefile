@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=graphicsmagick
 PKG_VERSION:=1.3.35
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/GraphicsMagick-$(PKG_VERSION)
 PKG_SOURCE:=GraphicsMagick-$(PKG_VERSION).tar.bz2
@@ -20,7 +20,7 @@ PKG_CPE_ID:=cpe:/a:graphicsmagick:graphicsmagick
 
 PKG_BUILD_PARALLEL:=1
 DISABLE_NLS:=
-PKG_BUILD_DEPENDS:=zlib freetype libpng libjpeg tiff
+PKG_BUILD_DEPENDS:=zlib freetype libpng libjpeg-turbo tiff
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -42,7 +42,7 @@ endef
 define Package/graphicsmagick/description
 GraphicsMagick is a free and open-source software suite for displaying,
 converting, and editing raster image and vector image files. It is a fork
-of GraphicsMagick.
+of ImageMagick.
 endef
 
 CONFIGURE_ARGS += \
@@ -73,7 +73,7 @@ CONFIGURE_ARGS += \
 	--without-zstd \
 	--without-x
 
-TARGET_CFLAGS += -flto
+TARGET_CFLAGS += $(if $(CONFIG_GCC_USE_VERSION_10),,-flto)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2020-2021 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pytest
-PKG_VERSION:=5.4.1
-PKG_RELEASE:=2
+PKG_VERSION:=6.2.2
+PKG_RELEASE:=1
 
 PYPI_NAME:=pytest
-PKG_HASH:=84dde37075b8805f3d1f392cc47e38a0e59518fb46a431cfdaf7cf1ce805f970
+PKG_HASH:=9d1edf9e7d0b84d72ea3dbcdfd22b35fb543a5e8f2a60092dd578936bf63d7f9
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT
@@ -31,16 +31,14 @@ define Package/python3-pytest
   TITLE:=Python testing framework
   URL:=https://docs.pytest.org/en/latest/
   DEPENDS:= \
-	+python3-light \
+	+python3 \
 	+python3-more-itertools \
 	+python3-py \
 	+python3-attrs \
 	+python3-pluggy \
 	+python3-packaging \
-	+python3-wcwidth \
-	+python3-decimal \
-	+python3-logging \
-	+python3-urllib
+	+python3-toml \
+	+python3-iniconfig
 endef
 
 define Package/python3-pytest/description

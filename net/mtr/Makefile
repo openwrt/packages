@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mtr
-PKG_VERSION:=0.93
+PKG_VERSION:=0.94
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://ftp.bitwizard.nl/mtr
-PKG_HASH:=229c673d637bd7dbb96471623785a47e85da0b1944978200c949994c1e6af10d
+PKG_SOURCE_URL:=https://www.bitwizard.nl/mtr/files
+PKG_HASH:=cb5ffc803d136f7136b49b950abbc2a27d2a5ba62195de5b70f8ef9f0fcf2791
 
 PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -49,6 +49,7 @@ TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 CONFIGURE_ARGS += \
 	--without-gtk \
+	--without-jansson \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6)
 
 CONFIGURE_VARS += ac_cv_lib_cap_cap_set_proc=no

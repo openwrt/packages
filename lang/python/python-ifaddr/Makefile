@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2019-2020 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-ifaddr
-PKG_VERSION:=0.1.6
-PKG_RELEASE:=2
+PKG_VERSION:=0.1.7
+PKG_RELEASE:=1
 
 PYPI_NAME:=ifaddr
-PKG_HASH:=c19c64882a7ad51a394451dabcbbed72e98b5625ec1e79789924d5ea3e3ecb93
+PKG_HASH:=1f9e8a6ca6f16db5a37d3356f07b6e52344f6f9f7e806d618537731669eb1a94
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT

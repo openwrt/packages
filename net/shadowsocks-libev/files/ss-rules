@@ -154,7 +154,7 @@ ss_rules_flush() {
 
 	iptables-save --counters | grep -v ss_rules_ | iptables-restore --counters
 	while ip rule del fwmark 1 lookup 100 2>/dev/null; do true; done
-	ip route flush table 100
+	ip route flush table 100 2>/dev/null || true
 	for setname in $(ipset -n list | grep "ss_rules${o_af}_"); do
 		ipset destroy "$setname" 2>/dev/null || true
 	done

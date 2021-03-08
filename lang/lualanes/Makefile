@@ -28,13 +28,22 @@ define Package/lualanes
 	SECTION:=lang
 	CATEGORY:=Languages
 	TITLE:=LuaLanes
-	URL:=http://luaforge.net/projects/lanes/
+	URL:=http://lualanes.github.io/lanes/
 	DEPENDS:=+lua +luac +liblua +libpthread
 	MAINTAINER:=Vladimir Malyutin <first-leon@yandex.ru>
 endef
 
 define Package/lualanes/description
-	Lanes is a lightweight, native, lazy evaluating multithreading library for Lua 5.1 and 5.2.
+ Lua Lanes is a Lua extension library providing the possibility to run
+multiple Lua states in parallel. It is intended to be used for optimizing
+performance on multicore CPU's and to study ways to make Lua programs
+naturally parallel to begin with.
+
+Lanes is included into your software by the regular require "lanes" method.
+No C side programming is needed; all APIs are Lua side, and most existing
+extension modules should work seamlessly together with the multiple lanes.
+
+Lanes supports Lua 5.1, 5.2 and 5.3
 endef
 
 define Build/Compile

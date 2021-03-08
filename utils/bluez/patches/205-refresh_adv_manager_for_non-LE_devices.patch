@@ -32,11 +32,9 @@ This commit prevents the call to btd_adv_manager_refresh for non-LE devices.
  src/adapter.c | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)
 
-Index: bluez-5.54/src/adapter.c
-===================================================================
---- bluez-5.54.orig/src/adapter.c
-+++ bluez-5.54/src/adapter.c
-@@ -567,7 +567,8 @@ static void settings_changed(struct btd_
+--- a/src/adapter.c
++++ b/src/adapter.c
+@@ -557,7 +557,8 @@ static void settings_changed(struct btd_
  		g_dbus_emit_property_changed(dbus_conn, adapter->path,
  					ADAPTER_INTERFACE, "Discoverable");
  		store_adapter_info(adapter);

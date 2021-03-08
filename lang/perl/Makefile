@@ -99,7 +99,7 @@ define Build/Configure
 	                                -Dowrt:gccversion=$(CONFIG_GCC_VERSION) \
 	                                -Dowrt:target_cross='$(TARGET_CROSS)' \
 	                                -Dowrt:cflags='$(TARGET_CFLAGS_PERL) $(TARGET_CPPFLAGS_PERL)' \
-	                                -Dowrt:ldflags='$(TARGET_LDFLAGS) $(if $(CONFIG_GCC_LIBSSP),-lssp)' \
+	                                -Dowrt:ldflags='$(TARGET_LDFLAGS)' \
 	                                -Dowrt:libc=$(subst uClibc,uclibc,$(CONFIG_LIBC)) \
 	                                -Dowrt:ipv6=$(if $($(CONFIG_IPV6)),define,undef) \
 	                                -Dowrt:threads=$(if $(CONFIG_PERL_THREADS),yes,no) \

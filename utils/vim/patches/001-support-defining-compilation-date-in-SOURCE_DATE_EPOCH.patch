@@ -19,11 +19,9 @@ preprocessor's __DATE__/__TIME__ symbols will be used.
 ---
  src/config.h.in  |  3 +++
  src/configure.ac | 10 ++++++++++
- src/version.c    |  6 ++++++
- 3 files changed, 19 insertions(+)
+ src/version.c    |  8 ++++++++
+ 3 files changed, 21 insertions(+)
 
-diff --git a/src/config.h.in b/src/config.h.in
-index e692d40..d3aa1a2 100644
 --- a/src/config.h.in
 +++ b/src/config.h.in
 @@ -30,6 +30,9 @@
@@ -36,13 +34,11 @@ index e692d40..d3aa1a2 100644
  /* Define when __attribute__((unused)) can be used */
  #undef HAVE_ATTRIBUTE_UNUSED
  
-diff --git a/src/configure.ac b/src/configure.ac
-index e287124..5a16797 100644
 --- a/src/configure.ac
 +++ b/src/configure.ac
-@@ -29,6 +29,16 @@ dnl in autoconf needs it, where it uses STDC_HEADERS.
- AC_HEADER_STDC
- AC_HEADER_SYS_WAIT
+@@ -62,6 +62,16 @@ if test x"$ac_cv_prog_cc_c99" != xno; th
+   fi
+ fi
  
 +dnl If $SOURCE_DATE_EPOCH is present in the environment, use that as the
 +dnl "compiled" timestamp in :version's output.  Attempt to get the formatted
@@ -54,15 +50,13 @@ index e287124..5a16797 100644
 +  AC_DEFINE_UNQUOTED(BUILD_DATE, ["$BUILD_DATE"])
 +fi
 +
- dnl Check that the C99 features that Vim uses are supported:
- if test x"$ac_cv_prog_cc_c99" != xno; then
-   dnl If the compiler doesn't explicitly support C99, then check
-diff --git a/src/version.c b/src/version.c
-index 65f5a4b..9422657 100644
+ dnl Check for the flag that fails if stuff are missing.
+ 
+ AC_MSG_CHECKING(--enable-fail-if-missing argument)
 --- a/src/version.c
 +++ b/src/version.c
-@@ -44,11 +44,17 @@ make_version(void)
-      * VAX C can't catenate strings in the preprocessor.
+@@ -44,9 +44,13 @@ init_longVersion(void)
+      * VAX C can't concatenate strings in the preprocessor.
       */
      strcpy(longVersion, VIM_VERSION_LONG_DATE);
 +#ifdef BUILD_DATE
@@ -74,8 +68,16 @@ index 65f5a4b..9422657 100644
 +#endif
      strcat(longVersion, ")");
  }
-+# elif defined(BUILD_DATE)
-+char	*longVersion = VIM_VERSION_LONG_DATE BUILD_DATE ")";
- # else
- char	*longVersion = VIM_VERSION_LONG_DATE __DATE__ " " __TIME__ ")";
- # endif
+ 
+@@ -54,7 +58,11 @@ init_longVersion(void)
+     void
+ init_longVersion(void)
+ {
++#ifdef BUILD_DATE
++    char *date_time = BUILD_DATE;
++#else
+     char *date_time = __DATE__ " " __TIME__;
++#endif
+     char *msg = _("%s (%s, compiled %s)");
+     size_t len = strlen(msg)
+ 		+ strlen(VIM_VERSION_LONG_ONLY)

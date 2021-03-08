@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
-PKG_VERSION:=v12.16.1
-PKG_RELEASE:=2
+PKG_VERSION:=v14.16.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://nodejs.org/dist/$(PKG_VERSION)
-PKG_HASH:=0a95845ba02c46102b5671d0c5732460073f2d397488337e18d1fc30146d412d
+PKG_HASH:=4e7648a617f79b459d583f7dbdd31fbbac5b846d41598f3b54331a5b6115dfa6
 
-PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>, Adrian Panella <ianchi74@outlook.com>
+PKG_MAINTAINER:=Hirokazu MORIKAWA <morikw2@gmail.com>, Adrian Panella <ianchi74@outlook.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:nodejs:node.js
@@ -38,8 +38,8 @@ define Package/node
   SUBMENU:=Node.js
   TITLE:=Node.js is a platform built on Chrome's JavaScript runtime
   URL:=https://nodejs.org/
-  DEPENDS:=@(HAS_FPU||KERNEL_MIPS_FPU_EMULATOR) @!arc @!armeb @!powerpc \
-	   +libstdcpp +libopenssl +zlib +libnghttp2 +libuv +libhttp-parser \
+  DEPENDS:=@HAS_FPU @(i386||x86_64||arm||aarch64||mipsel) \
+	   +libstdcpp +libopenssl +zlib +libnghttp2 +libuv \
 	   +libcares +libatomic +NODEJS_ICU_SYSTEM:icu +NODEJS_ICU_SYSTEM:icu-full-data
 endef
 
@@ -79,17 +79,16 @@ define Package/node/config
 			bool "Disable"
 
 		config NODEJS_ICU_SMALL
-			depends on !BIG_ENDIAN
 			bool "small-icu"
 
 		config NODEJS_ICU_SYSTEM
-			depends on ARCH_64BIT&&!BIG_ENDIAN
+			depends on ARCH_64BIT
 			bool "system-icu"
 	endchoice
 	endif
 endef
 
-NODEJS_CPU:=$(subst powerpc,ppc,$(subst aarch64,arm64,$(subst x86_64,x64,$(subst i386,ia32,$(ARCH)))))
+NODEJS_CPU:=$(subst aarch64,arm64,$(subst x86_64,x64,$(subst i386,ia32,$(ARCH))))
 
 ifneq ($(CONFIG_ARCH_64BIT),y)
 FORCE_32BIT:=-m32
@@ -97,7 +96,10 @@ endif
 
 MAKE_VARS+= \
 	DESTCPU=$(NODEJS_CPU) \
+	NO_LOAD='cctest.target.mk embedtest.target.mk node_mksnapshot.target.mk' \
 	LD_LIBRARY_PATH=$(STAGING_DIR_HOSTPKG)/share/icu/current/lib
+
+HOST_MAKE_VARS+=NO_LOAD='cctest.target.mk embedtest.target.mk'
 
 CONFIGURE_VARS:= \
 	CC="$(TARGET_CC) $(TARGET_OPTIMIZATION)" \
@@ -113,12 +115,8 @@ CONFIGURE_ARGS:= \
 	--shared-openssl \
 	--shared-nghttp2 \
 	--shared-libuv \
-	--shared-http-parser \
 	--shared-cares \
-	$(if $(CONFIG_NODEJS_ICU_SMALL),, \
-		--with-intl=$(if $(CONFIG_NODEJS_ICU_SYSTEM),system-icu,none)) \
-	$(if $(findstring mips,$(NODEJS_CPU)), \
-		$(if $(CONFIG_SOFT_FLOAT),--with-mips-float-abi=soft)) \
+	--with-intl=$(if $(CONFIG_NODEJS_ICU_SMALL),small-icu,$(if $(CONFIG_NODEJS_ICU_SYSTEM),system-icu,none)) \
 	$(if $(findstring +neon,$(CONFIG_CPU_TYPE)),--with-arm-fpu=neon) \
 	$(if $(findstring +vfp",$(CONFIG_CPU_TYPE)),--with-arm-fpu=vfp) \
 	$(if $(findstring +vfpv3",$(CONFIG_CPU_TYPE)),--with-arm-fpu=vfpv3-d16) \
@@ -129,7 +127,7 @@ HOST_CONFIGURE_VARS:=
 
 HOST_CONFIGURE_ARGS:= \
 	--dest-os=$(if $(findstring Darwin,$(HOST_OS)),mac,linux) \
-	--with-intl=none \
+	--with-intl=small-icu \
 	--prefix=$(STAGING_DIR_HOSTPKG)
 
 define Build/InstallDev

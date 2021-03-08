@@ -1,7 +1,7 @@
 set showcmd			" show (partial) command in status line
 set showmatch			" show matching brackets
 set incsearch			" incremental search
-set autowrite			" automatically save before commands like :next and :make
+"set autowrite			" automatically save before commands like :next and :make
 set nocompatible		" use Vim defaults instead of 100% vi compatibility
 set backspace=indent,eol,start	" more powerful backspacing
 set autoindent			" always set autoindenting on

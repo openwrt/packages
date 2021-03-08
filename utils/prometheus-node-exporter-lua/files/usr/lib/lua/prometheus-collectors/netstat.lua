@@ -10,8 +10,6 @@ local netsubstat = {
 }
 
 local function scrape()
-  -- NOTE: Both of these are missing in OpenWRT kernels.
-  --       See: https://dev.openwrt.org/ticket/15781
   local netstat = get_contents("/proc/net/netstat") .. get_contents("/proc/net/snmp")
 
   -- all devices

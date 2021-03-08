@@ -6,15 +6,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-certifi
-PKG_VERSION:=2019.11.28
-PKG_RELEASE:=2
+PKG_VERSION:=2020.6.20
+PKG_RELEASE:=1
 
-PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
+PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PYPI_NAME:=certifi
-PKG_HASH:=25b64c7da4cd7479594d035c08c2d809eb4aab3a26e5a990ea98cc450c320f1f
+PKG_HASH:=5930595817496dd21bb8dc35dad090f1c2cd0adfaf21204bf6732ca5d8ee34d3
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

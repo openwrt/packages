@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=smstools3
 PKG_VERSION:=3.1.21
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://smstools3.kekekasvi.com/packages/
@@ -43,6 +43,7 @@ TARGET_CFLAGS += $(if $(ICONV_FULL),-D USE_ICONV)
 TARGET_CFLAGS += -D DISABLE_INET_SOCKET
 TARGET_CFLAGS += -W -Wall
 TARGET_CFLAGS += -D_FILE_OFFSET_BITS=64
+TARGET_CFLAGS += -fcommon
 
 MAKE_VARS += LFLAGS="$(TARGET_LDFLAGS) $(if $(ICONV_FULL),-liconv)"
 

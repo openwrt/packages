@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uacme
-PKG_VERSION:=1.2.1
-PKG_RELEASE:=2
+PKG_VERSION:=1.7
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ndilieto/uacme/tar.gz/upstream/$(PKG_VERSION)?
-PKG_HASH:=ccd6001e96ec2eb22a1d557bf8dcc4152a567782afc9a1e017a93d7de3b49833
+PKG_HASH:=32ca99851194cadb16c05f3c5d32892b0b93fc247321de2b560fa0f667e6cf04
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -89,6 +89,11 @@ define Package/uacme/install
 	$(INSTALL_CONF) ./files/acme.config $(1)/etc/config/acme
 	$(INSTALL_BIN) ./files/run.sh $(1)/usr/share/uacme/run-uacme
 	$(INSTALL_BIN) ./files/acme.init $(1)/etc/init.d/acme
+endef
+
+define Package/uacme/prerm
+#!/bin/sh
+sed -i '/\/etc\/init\.d\/acme start/d' /etc/crontabs/root
 endef
 
 $(eval $(call BuildPackage,uacme))

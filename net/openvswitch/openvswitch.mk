@@ -5,12 +5,11 @@
 
 # Versions
 
-ovs_version:=2.13.0
+ovs_version:=2.15.0
 ovs_builddir=$(KERNEL_BUILD_DIR)/openvswitch-$(ovs_version)
 
 # Shared vars, macros
 
-ovs_common_depends:=
 ovs_packages:=
 
 ovs_package_name=$(if $(filter openvswitch,$(1)),openvswitch,openvswitch-$(1))
@@ -22,7 +21,7 @@ define OvsPackageTemplate
      URL:=https://www.openvswitch.org
      TITLE:=$(ovs_$(1)_title)
      HIDDEN:=$(ovs_$(1)_hidden)
-     DEPENDS:=$(ovs_$(1)_depends) $(ovs_common_depends)
+     DEPENDS:=$(ovs_$(1)_depends)
   endef
 
   define Package/$(call ovs_package_name,$(1))/install

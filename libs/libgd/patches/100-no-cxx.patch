@@ -18,7 +18,7 @@
  	gdtables.c
  	gdxpm.c
  	jisx0208.h
-@@ -198,7 +194,6 @@ install(FILES
+@@ -204,7 +200,6 @@ install(FILES
  	gdfonts.h
  	gdfontt.h
  	gdfx.h

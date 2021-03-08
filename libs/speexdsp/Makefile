@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=speexdsp
 PKG_VERSION:=1.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.us.xiph.org/releases/speex/
@@ -60,7 +60,6 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-examples \
-	$(if $(CONFIG_aarch64),--disable-neon) \
 	$(if $(CONFIG_SOFT_FLOAT),--enable-fixed-point --disable-float-api)
 
 $(eval $(call BuildPackage,libspeexdsp))

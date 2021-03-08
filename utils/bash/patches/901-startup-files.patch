@@ -23,5 +23,5 @@
 -/* #define SSH_SOURCE_BASHRC */
 +#define SSH_SOURCE_BASHRC
  
- /* Define if you want the case-capitalizing operators (~[~]) and the
+ /* Define if you want the case-toggling operators (~[~]) and the
     `capcase' variable attribute (declare -c). */

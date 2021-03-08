@@ -1,6 +1,5 @@
-diff -Nur tcpproxy-1.2.orig/src/cfg_parser.c tcpproxy-1.2/src/cfg_parser.c
---- tcpproxy-1.2.orig/src/cfg_parser.c	1970-01-01 01:00:00.000000000 +0100
-+++ tcpproxy-1.2/src/cfg_parser.c	2015-05-17 18:10:54.933307372 +0200
+--- /dev/null
++++ b/src/cfg_parser.c
 @@ -0,0 +1,1374 @@
 +
 +#line 1 "cfg_parser.rl"

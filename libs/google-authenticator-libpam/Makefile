@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=google-authenticator-libpam
-PKG_VERSION:=1.08
-PKG_RELEASE:=1
+PKG_VERSION:=1.09
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/google/google-authenticator-libpam/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=6f6d7530261ba9e2ece84214f1445857d488b7851c28a58356b49f2d9fd36290
+PKG_HASH:=ab1d7983413dc2f11de2efa903e5c326af8cb9ea37765dacb39949417f7cd037
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -36,8 +36,8 @@ define Package/google-authenticator-libpam/description
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/lib/security
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/security/* $(1)/lib/security/
+	$(INSTALL_DIR) $(1)/usr/lib/security
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/security/* $(1)/usr/lib/security/
 endef
 
 define Package/google-authenticator-libpam/install

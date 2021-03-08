@@ -16,7 +16,7 @@
  mylibdir=$(libdir)
 --- a/src/Makefile.in
 +++ b/src/Makefile.in
-@@ -899,7 +899,7 @@ distdir-am: $(DISTFILES)
+@@ -900,7 +900,7 @@ distdir-am: $(DISTFILES)
  	  fi; \
  	done
  check-am: all-am
@@ -25,7 +25,7 @@
  check: check-am
  all-am: Makefile $(LTLIBRARIES) $(DATA) $(HEADERS) config.h
  installdirs:
-@@ -988,7 +988,7 @@ install-dvi-am:
+@@ -989,7 +989,7 @@ install-dvi-am:
  
  install-exec-am: install-enginesexecLTLIBRARIES install-libLTLIBRARIES
  	@$(NORMAL_INSTALL)
@@ -34,7 +34,7 @@
  install-html: install-html-am
  
  install-html-am:
-@@ -1051,14 +1051,14 @@ uninstall-am: uninstall-enginesexecLTLIB
+@@ -1052,14 +1052,14 @@ uninstall-am: uninstall-enginesexecLTLIB
  .MAKE: all check-am install-am install-exec-am install-strip
  
  .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles check check-am \

@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=inotify-tools
-PKG_VERSION:=3.20.1
-PKG_HASH:=a433cc1dedba851078276db69b0e97f9fe41e4ba3336d2971adfca4b3a6242ac
+PKG_VERSION:=3.20.11.0
+PKG_HASH:=58a3cde89e4a5111a87ac16b56b06a8f885460fca0aea51b69c856ce30a37a14
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://codeload.github.com/rvoicilas/inotify-tools/tar.gz/$(PKG_VERSION)?
@@ -16,6 +16,13 @@ PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
+
+CONFIGURE_ARGS+= --disable-doxygen
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(CP) $(PKG_BUILD_DIR)/README.md $(PKG_BUILD_DIR)/README
+endef
 
 define Package/inotify-tools/Default
   URL:=https://github.com/rvoicilas/inotify-tools/wiki
@@ -85,7 +92,6 @@ define Package/libinotifytools/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
 endef
-
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/inotifytools

@@ -8,19 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-server
-PKG_VERSION:=7.1.3
-PKG_RELEASE:=3
+PKG_VERSION:=7.1.5
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/haiwen/seafile-server/tar.gz/v$(PKG_VERSION)-server?
-PKG_HASH:=79f7722a34c304adb78462194e64d6a610bd5ee40def37f4e4cdf5befed44fcd
+PKG_HASH:=407a6243f754e366ce6754a2aa643574aa7742d4e81b7cc350dea348f3063707
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=AGPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE.txt
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-server
-PKG_BUILD_DEPENDS:=vala/host libevent2 libevent2-openssl libevent2-pthreads libevhtp
+PKG_BUILD_DEPENDS:=vala/host libevhtp
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -52,7 +52,6 @@ define Package/seafile-server
     +libarchive \
     +libevent2 \
     +libevent2-openssl \
-    +libevent2-pthreads \
     +libmariadb \
     +libopenssl \
     +libpthread \
@@ -76,6 +75,10 @@ define Package/seafile-server/description
   protection and teamwork.
 endef
 
+define Package/seafile-server/config
+  select LIBEVHTP_BUILD_DEPENDS
+endef
+
 define Package/seafile-server-fuse
   SECTION:=net
   CATEGORY:=Network
@@ -87,7 +90,6 @@ define Package/seafile-server-fuse
     +jansson \
     +libevent2 \
     +libevent2-openssl \
-    +libevent2-pthreads \
     +libfuse \
     +libmariadb \
     +libopenssl \
@@ -132,10 +134,6 @@ CONFIGURE_ARGS += \
 
 CONFIGURE_VARS += \
 	PYTHON="$(HOST_PYTHON3_BIN)"
-
-ifdef CONFIG_GCC_LIBSSP
-  TARGET_LDFLAGS += -lssp
-endif
 
 define Package/seafile-server/conffiles
 /etc/config/seafile-server

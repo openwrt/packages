@@ -5,8 +5,6 @@
 . /usr/share/libubox/jshn.sh
 . /lib/mwan3/common.sh
 
-MWAN3TRACK_STATUS_DIR="/var/run/mwan3track"
-
 IPS="ipset"
 IPT4="iptables -t mangle -w"
 IPT6="ip6tables -t mangle -w"
@@ -22,6 +20,7 @@ report_connected_v4() {
 }
 
 report_connected_v6() {
+	[ $NO_IPV6 -ne 0 ] && return
 	local address
 
 	if [ -n "$($IPT6 -S mwan3_connected 2> /dev/null)" ]; then
@@ -60,6 +59,7 @@ report_policies_v4() {
 }
 
 report_policies_v6() {
+	[ $NO_IPV6 -ne 0 ] && return
 	local policy
 
 	for policy in $($IPT6 -S | awk '{print $2}' | grep mwan3_policy_ | sort -u); do
@@ -67,6 +67,26 @@ report_policies_v6() {
 		report_policies "$IPT6" "$policy"
 		json_close_array
 	done
+}
+
+get_age() {
+	local time_p time_u
+	iface="$1"
+	time_p="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/TIME")"
+	[ -z "${time_p}" ] || {
+		time_n="$(get_uptime)"
+		echo $((time_n-time_p))
+	}
+}
+
+get_offline_time() {
+	local time_n time_d iface
+	iface="$1"
+	time_d="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/OFFLINE")"
+	[ -z "${time_d}" ] || [ "${time_d}" = "0" ] || {
+		time_n="$(get_uptime)"
+		echo $((time_n-time_d))
+	}
 }
 
 get_mwan3_status() {
@@ -77,67 +97,56 @@ get_mwan3_status() {
 	local online=0
 	local offline=0
 	local up="0"
-	local enabled pid device time_p time_n time_u time_d
+	local enabled time_p time_n time_u time_d status track_status
 
-	network_get_device device $1
-
-	if [ "${iface}" = "${iface_select}" ] || [ "${iface_select}" = "" ]; then
-		pid="$(pgrep -f "mwan3track $iface $device")"
-		if [ "${pid}" != "" ]; then
-			running="1"
-		fi
-
-		time_p="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/TIME")"
-		[ -z "${time_p}" ] || {
-			time_n="$(get_uptime)"
-			let age=time_n-time_p
-		}
-
-		time_u="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/ONLINE")"
-		[ -z "${time_u}" ] || [ "${time_u}" = "0" ] || {
-			time_n="$(get_uptime)"
-			let online=time_n-time_u
-		}
-
-		time_d="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/OFFLINE")"
-		[ -z "${time_d}" ] || [ "${time_d}" = "0" ] || {
-			time_n="$(get_uptime)"
-			let offline=time_n-time_d
-		}
-
-		local uptime="0"
-
-		config_get enabled "$iface" enabled 0
-		network_get_uptime uptime "$iface"
-		network_is_up "$iface" && up="1"
-
-		json_add_object "${iface}"
-		json_add_int age "$age"
-		json_add_int online "${online}"
-		json_add_int offline "${offline}"
-		json_add_int uptime "${uptime}"
-		json_add_int "score" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/SCORE")"
-		json_add_int "lost" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LOST")"
-		json_add_int "turn" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/TURN")"
-		json_add_string "status" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS")"
-		json_add_boolean "enabled" "${enabled}"
-		json_add_boolean "running" "${running}"
-		json_add_boolean "up" "${up}"
-		json_add_array "track_ip"
-		for file in $MWAN3TRACK_STATUS_DIR/${iface}/*; do
-			track="${file#*/TRACK_}"
-			if [ "${track}" != "${file}" ]; then
-				json_add_object
-				json_add_string ip "${track}"
-				json_add_string status "$(cat "${file}")"
-				json_add_int latency "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LATENCY_${track}")"
-				json_add_int packetloss "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LOSS_${track}")"
-				json_close_object
-			fi
-		done
-		json_close_array
-		json_close_object
+	if [ "${iface}" != "${iface_select}" ] && [ "${iface_select}" != "" ]; then
+		return
 	fi
+
+	track_status="$(mwan3_get_mwan3track_status "$1")"
+	[ "$track_status" = "active" ] && running="1"
+	age=$(get_age "$iface")
+	online=$(get_online_time "$iface")
+	offline=$(get_offline_time "$iface")
+
+	local uptime="0"
+
+	config_get enabled "$iface" enabled 0
+	network_get_uptime uptime "$iface"
+	network_is_up "$iface" && up="1"
+
+	if [ -f "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS" ]; then
+		status="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS")"
+	else
+		status="unknown"
+	fi
+
+	json_add_object "${iface}"
+	json_add_int age "$age"
+	json_add_int online "${online}"
+	json_add_int offline "${offline}"
+	json_add_int uptime "${uptime}"
+	json_add_int "score" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/SCORE")"
+	json_add_int "lost" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LOST")"
+	json_add_int "turn" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/TURN")"
+	json_add_string "status" "${status}"
+	json_add_boolean "enabled" "${enabled}"
+	json_add_boolean "running" "${running}"
+	json_add_boolean "up" "${up}"
+	json_add_array "track_ip"
+	for file in $MWAN3TRACK_STATUS_DIR/${iface}/TRACK_*; do
+		[ -z "${file#*/TRACK_OUTPUT}" ] && continue
+		[ -z "${file#*/TRACK_\*}" ] && continue
+		track="${file#*/TRACK_}"
+		json_add_object
+		json_add_string ip "${track}"
+		json_add_string status "$(cat "${file}")"
+		json_add_int latency "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LATENCY_${track}")"
+		json_add_int packetloss "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LOSS_${track}")"
+		json_close_object
+	done
+	json_close_array
+	json_close_object
 }
 
 main () {

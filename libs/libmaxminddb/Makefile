@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 CZ.NIC z.s.p.o. (http://www.nic.cz/)
+# Copyright (C) 2019-2021 CZ.NIC z.s.p.o. (http://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmaxminddb
-PKG_VERSION:=1.4.2
+PKG_VERSION:=1.5.2
 PKG_RELEASE=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/maxmind/libmaxminddb/releases/download/$(PKG_VERSION)/
-PKG_HASH:=dd582aa971be23dee960ec33c67fb5fd38affba508e6f00ea75959dbd5aad156
+PKG_HASH:=5237076d250a5f7c297e331c35a433eeaaf0dc205e070e4db353c9ba10f340a2
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf

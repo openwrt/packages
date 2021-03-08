@@ -8,17 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wget
-PKG_VERSION:=1.20.3
-PKG_RELEASE:=4
+PKG_VERSION:=1.21.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
-PKG_HASH:=31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e
+PKG_HASH:=59ba0bdade9ad135eda581ae4e59a7a9f25e3a4bde6a5419632b31906120e26e
+
 PKG_MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
-
 PKG_CPE_ID:=cpe:/a:gnu:wget
+
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -29,7 +32,7 @@ define Package/wget/Default
   SUBMENU:=File Transfer
   TITLE:=Non-interactive network downloader
   URL:=https://www.gnu.org/software/wget/index.html
-  PROVIDES:=gnu-wget
+  PROVIDES:=gnu-wget wget
 endef
 
 define Package/wget/Default/description
@@ -41,16 +44,15 @@ define Package/wget/Default/description
  archives and home pages or to travel the Web like a WWW robot.
 endef
 
-define Package/wget
+define Package/wget-ssl
 $(call Package/wget/Default)
   DEPENDS+= +libopenssl +librt
   TITLE+= (with SSL support)
   VARIANT:=ssl
-  PROVIDES+=wget-ssl
-  ALTERNATIVES:=300:/usr/bin/wget:/usr/bin/wget-ssl
+  ALTERNATIVES:=300:/usr/bin/wget:/usr/libexec/wget-ssl
 endef
 
-define Package/wget/description
+define Package/wget-ssl/description
 $(call Package/wget/Default/description)
  This package is built with SSL support.
 endef
@@ -59,8 +61,7 @@ define Package/wget-nossl
 $(call Package/wget/Default)
   TITLE+= (without SSL support)
   VARIANT:=nossl
-  PROVIDES+=wget
-  ALTERNATIVES:=300:/usr/bin/wget:/usr/bin/wget-nossl
+  ALTERNATIVES:=300:/usr/bin/wget:/usr/libexec/wget-nossl
 endef
 
 define Package/wget-nossl/description
@@ -94,15 +95,15 @@ ifeq ($(BUILD_VARIANT),nossl)
 		--without-ssl
 endif
 
-define Package/wget/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/wget $(1)/usr/bin/wget-ssl
+define Package/wget-ssl/install
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/wget $(1)/usr/libexec/wget-ssl
 endef
 
 define Package/wget-nossl/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/wget $(1)/usr/bin/wget-nossl
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/wget $(1)/usr/libexec/wget-nossl
 endef
 
-$(eval $(call BuildPackage,wget))
+$(eval $(call BuildPackage,wget-ssl))
 $(eval $(call BuildPackage,wget-nossl))

@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=quasselc
 PKG_SOURCE_DATE:=2017-01-11
 PKG_SOURCE_VERSION:=a0a1e6bd87d3eac68b5369972d1c2035cfe47e94
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/phhusson/QuasselC/tar.gz/$(PKG_SOURCE_VERSION)?
@@ -42,8 +42,6 @@ endef
 define Package/quasselc/description
   An implementation of the Quassel protocol in pure C.
 endef
-
-TARGET_LDFLAGS += -liconv
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/quasselc

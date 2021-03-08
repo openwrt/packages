@@ -19,8 +19,6 @@ Signed-off-by: Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>
  src/include/netinet/Makefile.am | 3 +--
  1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/src/include/netinet/Makefile.am b/src/include/netinet/Makefile.am
-index ca0aac2..965db8c 100644
 --- a/src/include/netinet/Makefile.am
 +++ b/src/include/netinet/Makefile.am
 @@ -11,5 +11,4 @@ libcnetinetdir = $(includedir)/netinet
@@ -30,6 +28,3 @@ index ca0aac2..965db8c 100644
 -libcnetinet_HEADERS = sctp.h.in
 -BUILT_SOURCES = sctp.h
 +libcnetinet_HEADERS = sctp.h
--- 
-2.17.1
-

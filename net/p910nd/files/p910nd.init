@@ -29,7 +29,7 @@ start_service() {
 
 start_p910nd() {
 	local section="$1" runas_root
-	config_get_bool "enabled" "$section" "enabled" '1'
+	config_get_bool "enabled" "$section" "enabled" '0'
 	if [ "$enabled" -gt 0 ]; then
 		args="-d "
 		config_get port "$section" port
@@ -56,4 +56,11 @@ start_p910nd() {
 
 		procd_close_instance
 	fi
+}
+
+service_triggers()
+{
+	procd_open_trigger
+	procd_add_config_trigger "config.change" "p910nd" /etc/init.d/p910nd reload
+	procd_close_trigger
 }

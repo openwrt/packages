@@ -5,7 +5,7 @@
 
 START=98
 USE_PROCD=1
-PROG=/usr/bin/mini_snmpd
+PROG=/usr/sbin/mini-snmpd
 NAME=mini_snmpd
 
 global_respawn_threshold=
@@ -36,6 +36,7 @@ mini_snmpd_validation="enabled:bool:0 \
 		auth:bool:1 \
 		community:rangelength(1,32):public \
 		contact:maxlength(255) \
+		description:maxlength(255) \
 		location:maxlength(255) \
 		listen_interface:uciname \
 		udp_port:port \
@@ -76,7 +77,7 @@ append_interface() {
 	[ -z $netdev_count ] && netdev_count=0
 	# for the purposes of snmp monitoring it doesn't need to be up, it just needs to exist in /proc/net/dev
 	network_get_device netdev "$name"
-	if [ -n "$netdev" ] && grep -qF "$netdev" /proc/net/dev ]; then
+	if [ -n "$netdev" ] && grep -qF "$netdev" /proc/net/dev; then
 		[ $netdev_count -ge 8 ] && {
 			_err "$cfg: too many network interfaces configured, ignoring $name"
 			return
@@ -212,6 +213,7 @@ start_instance() {
 	append_arg "-c" "$community"
 	append_arg "-L" "$location"
 	append_arg "-C" "$contact"
+	append_arg "-D" "$description"
 	append_arg "-p" $udp_port
 	append_arg "-P" $tcp_port
 	append_arg "-V" "$vendor_oid"

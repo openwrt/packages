@@ -9,13 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apr-util
 PKG_VERSION:=1.6.1
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/apr/
 PKG_HASH:=d3e12f7b6ad12687572a3a39475545a072608f4ba03a6ce8a3778f607dd0035b
-PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>, \
-		Sebastian Kemper <sebastian_ml@gmx.net>
+PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -143,6 +142,8 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/include/apr-1 \
 		$(1)/usr/lib/apr-util-1 $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/apu-1-config $(1)/usr/bin
+	$(SED) '/^prefix=\|^exec_prefix=/s|/usr|$(STAGING_DIR)/usr|' $(1)/usr/bin/apu-1-config
+	$(SED) '/^bindir=/s|/usr|$$$${prefix}|' $(1)/usr/bin/apu-1-config
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/apr-1/* $(1)/usr/include/apr-1
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/apr-util-1/apr_*.{a,so} \
 			$(1)/usr/lib/apr-util-1 2>/dev/null || :
@@ -150,8 +151,8 @@ define Build/InstallDev
 						$(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/apr-util-1.pc \
 					$(1)/usr/lib/pkgconfig
-	$(SED) '/^prefix=\|^exec_prefix=/s|/usr|$(STAGING_DIR)/usr|' \
-					$(1)/usr/bin/apu-1-config
+	$(INSTALL_DIR) $(2)/bin
+	$(LN) ../../usr/bin/apu-1-config $(2)/bin/apu-1-config
 endef
 
 define Package/libaprutil/install

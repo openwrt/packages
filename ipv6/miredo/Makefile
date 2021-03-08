@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miredo
 PKG_VERSION:=1.2.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=miredo-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.remlab.net/files/miredo/

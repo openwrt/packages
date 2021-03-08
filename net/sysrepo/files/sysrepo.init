@@ -4,19 +4,12 @@ START=60
 STOP=10
 
 USE_PROCD=1
-PROG_DAEMON=/bin/sysrepod
-PROG_PLUGIN=/bin/sysrepo-plugind
+PROG_PLUGIN=/usr/bin/sysrepo-plugind
 
 start_service() {
     procd_open_instance
-    procd_set_param command ${PROG_DAEMON}
-    procd_append_param command -d -l 0
-    procd_set_param respawn
-    procd_close_instance
-
-    procd_open_instance
     procd_set_param command ${PROG_PLUGIN}
-    procd_append_param command -d -l 0
+    procd_append_param command -d -v 0
     procd_set_param respawn
     procd_close_instance
 }
@@ -25,6 +18,5 @@ stop_service()
 {
     kill -9 `ps | grep netopeer2-server | grep -v grep | awk '{print $1}'` >/dev/null 2>&1
     service_stop ${PROG_PLUGIN}
-    service_stop ${PROG_DAEMON}
     rm -rf /var/run/sysrepo-subscriptions/*
 }

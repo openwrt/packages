@@ -7,8 +7,6 @@ Subject: [PATCH 4/7] add header files
  pico/Makefile.am |   36 ++++++++++++++++++++++++++++++++++++
  1 files changed, 36 insertions(+), 0 deletions(-)
 
-diff --git a/pico/Makefile.am b/pico/Makefile.am
-index 0d9472d..9151042 100644
 --- a/pico/Makefile.am
 +++ b/pico/Makefile.am
 @@ -34,6 +34,42 @@ libttspico_la_SOURCES = \
@@ -54,6 +52,3 @@ index 0d9472d..9151042 100644
  bin_PROGRAMS = pico2wave
  pico2wave_SOURCES = \
  	bin/pico2wave.c
--- 
-1.7.1
-

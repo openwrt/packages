@@ -12,7 +12,7 @@
  
  #include "torrent/exceptions.h"
  #include "torrent/data/download_data.h"
-@@ -137,7 +138,7 @@ HashQueue::remove(HashQueueNode::id_type id) {
+@@ -137,7 +138,7 @@ HashQueue::remove(HashQueueNode::id_type
  
        while ((done_itr = m_done_chunks.find(hash_chunk)) == m_done_chunks.end()) {
          pthread_mutex_unlock(&m_done_chunks_lock);
@@ -43,7 +43,7 @@
    }  
  
    acquire_global_lock();
-@@ -161,7 +162,7 @@ thread_base::event_loop(thread_base* thread) {
+@@ -161,7 +162,7 @@ thread_base::event_loop(thread_base* thr
        }
  
        // Add the sleep call when testing interrupts, etc.

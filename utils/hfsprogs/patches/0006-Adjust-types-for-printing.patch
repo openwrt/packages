@@ -9,8 +9,6 @@ in 32 and 64-bit architectures.
  fsck_hfs.tproj/dfalib/hfs_endian.c | 2 +-
  2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/fsck_hfs.tproj/dfalib/SControl.c b/fsck_hfs.tproj/dfalib/SControl.c
-index 4ce9e16..8b03ece 100644
 --- a/fsck_hfs.tproj/dfalib/SControl.c
 +++ b/fsck_hfs.tproj/dfalib/SControl.c
 @@ -776,7 +776,7 @@ static int ScavSetUp( SGlob *GPtr)
@@ -22,8 +20,6 @@ index 4ce9e16..8b03ece 100644
  					R_NoMem, sizeof(ScavStaticStructures) );
  			}
  			return( R_NoMem );
-diff --git a/fsck_hfs.tproj/dfalib/hfs_endian.c b/fsck_hfs.tproj/dfalib/hfs_endian.c
-index 3cc9eb4..6ca2ac1 100755
 --- a/fsck_hfs.tproj/dfalib/hfs_endian.c
 +++ b/fsck_hfs.tproj/dfalib/hfs_endian.c
 @@ -563,7 +563,7 @@ hfs_swap_HFSPlusBTInternalNode (

@@ -8,10 +8,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius3
-PKG_VERSION:=release_3_0_21
-PKG_RELEASE:=1
+PKG_VERSION:=3_0_21
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_VERSION).tar.gz
+PKG_SOURCE:=release_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/FreeRADIUS/freeradius-server/archive
 PKG_HASH:=b2014372948a92f86cfe2cf43c58ef47921c03af05666eb9d6416bdc6eeaedc2
 
@@ -20,7 +20,7 @@ PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYRIGHT LICENSE
 PKG_CPE_ID:=cpe:/a:freeradius:freeradius
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/freeradius-server-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/freeradius-server-release_$(PKG_VERSION)
 PKG_FIXUP:=autoreconf
 PYTHON3_PKG_BUILD:=0
 
@@ -52,14 +52,18 @@ endef
 
 define Package/freeradius3/conffiles
 /etc/freeradius3/clients.conf
+/etc/freeradius3/policy.d/accounting
+/etc/freeradius3/policy.d/filter
+/etc/freeradius3/proxy.conf
 /etc/freeradius3/radiusd.conf
-/etc/freeradius3/sites/default
+/etc/freeradius3/sites-available/default
+/etc/freeradius3/sites-enabled/default
 endef
 
 define Package/freeradius3-common
   $(call Package/freeradius3/Default)
   TITLE:=common files
-  DEPENDS:=+USE_GLIBC:libpthread +FREERADIUS3_OPENSSL:libopenssl +libcap +libpcap +libncurses +libpcre +libreadline +libtalloc +libatomic
+  DEPENDS:=+USE_GLIBC:libpthread +USE_GLIBC:libbsd +FREERADIUS3_OPENSSL:libopenssl +libcap +libpcap +libncurses +libpcre +libreadline +libtalloc +libatomic
 endef
 
 define Package/freeradius3-default
@@ -92,6 +96,11 @@ define Package/freeradius3-default
 +freeradius3-mod-realm \
 +freeradius3-mod-unix
   TITLE:=Modules needed for Radius default configuration
+endef
+
+define Package/freeradius3-default/description
+ This meta-package contains only dependencies for modules needed in
+ FreeRADIUS default configuration.
 endef
 
 define Package/freeradius3-democerts
@@ -717,6 +726,10 @@ define Package/freeradius3/install
 	$(INSTALL_BIN) ./files/radiusd.init $(1)/etc/init.d/radiusd
 endef
 
+define Package/freeradius3-default/install
+	true
+endef
+
 define Package/freeradius3-democerts/install
 	$(INSTALL_DIR) $(1)/etc/freeradius3/certs
 	$(CP) \
@@ -728,7 +741,7 @@ endef
 
 define Package/freeradius3-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	for f in radclient radeapclient radwho; do \
+	for f in radclient radeapclient radtest radwho; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$$$${f} $(1)/usr/bin/ ; \
 	done
 endef

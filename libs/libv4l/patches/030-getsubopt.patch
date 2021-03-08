@@ -1,11 +1,6 @@
-POSIX says that behavior when subopts list is empty is undefined.
-musl libs will set value to NULL which leads to crash.
-
-Simply avoid getsubopt, since we cannot rely on it.
-
 --- a/utils/v4l2-ctl/v4l2-ctl-common.cpp
 +++ b/utils/v4l2-ctl/v4l2-ctl-common.cpp
-@@ -679,16 +679,17 @@ static bool parse_subset(char *optarg)
+@@ -785,15 +785,17 @@ static bool parse_subset(char *optarg)
  
  static bool parse_next_subopt(char **subs, char **value)
  {
@@ -18,8 +13,7 @@ Simply avoid getsubopt, since we cannot rely on it.
  
 -	if (opt < 0 || *value)
 -		return false;
--	fprintf(stderr, "No value given to suboption <%s>\n",
--			subopts[opt]);
+-	fprintf(stderr, "Missing suboption value\n");
 -	return true;
 +	while (*p && *p != ',')
 +		p++;
@@ -31,4 +25,4 @@ Simply avoid getsubopt, since we cannot rely on it.
 +	return false;
  }
  
- void common_cmd(int ch, char *optarg)
+ void common_cmd(const std::string &media_bus_info, int ch, char *optarg)

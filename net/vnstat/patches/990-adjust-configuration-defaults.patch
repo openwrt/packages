@@ -9,8 +9,8 @@ Signed-off-by: Jo-Philipp Wich <jo@mein.io>
 
 --- a/cfg/vnstat.conf
 +++ b/cfg/vnstat.conf
-@@ -87,13 +87,13 @@ DaemonUser ""
- DaemonGroup ""
+@@ -98,13 +98,13 @@ DaemonGroup ""
+ TimeSyncWait 5
  
  # how often (in seconds) interface data is updated
 -UpdateInterval 30

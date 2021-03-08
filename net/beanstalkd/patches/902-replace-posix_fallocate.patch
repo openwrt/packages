@@ -7,7 +7,7 @@
  #include <stdint.h>
  #include <fcntl.h>
  #include <stdlib.h>
-@@ -19,7 +19,7 @@ static int epfd;
+@@ -19,7 +21,7 @@ static int epfd;
  int
  rawfalloc(int fd, int len)
  {

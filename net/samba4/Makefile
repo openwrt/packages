@@ -2,8 +2,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.11.6
-PKG_RELEASE:=1
+PKG_VERSION:=4.13.4
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -13,7 +13,7 @@ PKG_SOURCE_URL:= \
 		http://www.nic.funet.fi/index/samba/pub/samba/stable/ \
 		http://samba.mirror.bit.nl/samba/ftp/stable/ \
 		https://download.samba.org/pub/samba/stable/
-PKG_HASH:=91438f4d7b71f673421435fa7f26b03b613f214139636ce50af35bc2ff09ef38
+PKG_HASH:=a1b34c63f7100cc8626902d80f335c7cb0b45d4707dd3c4b010f7a28ed615c78
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-3.0-only
@@ -21,7 +21,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:samba:samba
 
 # samba4=(asn1_compile,compile_et) rpcsvc-proto=(rpcgen)
-HOST_BUILD_DEPENDS:=python3/host perl/host rpcsvc-proto/host
+HOST_BUILD_DEPENDS:=python3/host rpcsvc-proto/host perl/host perl-parse-yapp/host
 PKG_BUILD_DEPENDS:=samba4/host libtasn1/host
 
 PKG_CONFIG_DEPENDS:= \
@@ -31,7 +31,8 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_SAMBA4_SERVER_VFSX \
 	CONFIG_SAMBA4_SERVER_AD_DC \
 	CONFIG_PACKAGE_kmod-fs-btrfs \
-	CONFIG_PACKAGE_kmod-fs-xfs
+	CONFIG_PACKAGE_kmod-fs-xfs \
+	CONFIG_KERNEL_IO_URING
 
 PYTHON3_PKG_BUILD:=0
 
@@ -41,6 +42,7 @@ include $(INCLUDE_DIR)/kernel.mk
 include $(INCLUDE_DIR)/version.mk
 include ../../lang/python/python3-host.mk
 include ../../lang/python/python3-package.mk
+include ../../lang/perl/perlver.mk
 
 define Package/samba4/Default
   SECTION:=net
@@ -60,10 +62,9 @@ endef
 define Package/samba4-libs
   $(call Package/samba4/Default)
   TITLE+= libs
-  DEPENDS:= +libtirpc +libreadline +libpopt +libcap +zlib +libgnutls +libtasn1 +libuuid +libopenssl +USE_GLIBC:libpthread \
+  DEPENDS:= +libtirpc +libreadline +libpopt +libcap +zlib +libgnutls +libtasn1 +libuuid +libopenssl +libpthread +KERNEL_IO_URING:liburing \
 	+PACKAGE_libpam:libpam \
 	+SAMBA4_SERVER_VFS:attr \
-	+SAMBA4_SERVER_VFSX:libaio \
 	+SAMBA4_SERVER_AVAHI:libavahi-client \
 	+SAMBA4_SERVER_AD_DC:python3-cryptodome +SAMBA4_SERVER_AD_DC:libopenldap +SAMBA4_SERVER_AD_DC:jansson +SAMBA4_SERVER_AD_DC:libarchive +SAMBA4_SERVER_AD_DC:acl +SAMBA4_SERVER_AD_DC:attr
 endef
@@ -126,13 +127,15 @@ define Package/samba4-utils/description
   Utilities collection
 endef
 
-TARGET_CFLAGS += $(FPIC) -ffunction-sections -fdata-sections -I$(STAGING_DIR)/usr/include/tirpc
+TARGET_CFLAGS += $(FPIC) -ffunction-sections -fdata-sections
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 # dont mess with sambas private rpath!
 RSTRIP:=:
 
 CONFIGURE_VARS += \
-	CPP="$(TARGET_CROSS)cpp"
+	CPP="$(TARGET_CROSS)cpp" \
+	XSLTPROC=false \
+	WAF_NO_PREFORK=1
 
 CONFIGURE_CMD = ./buildtools/bin/waf
 HOST_CONFIGURE_CMD = ./buildtools/bin/waf
@@ -171,6 +174,7 @@ CONFIGURE_ARGS += \
 		--disable-cephfs \
 		--disable-fault-handling \
 		--disable-glusterfs \
+		--disable-spotlight \
 		--enable-fhs \
 		--without-automount \
 		--without-iconv \
@@ -192,6 +196,7 @@ HOST_CONFIGURE_ARGS += \
 		--disable-cephfs \
 		--disable-fault-handling \
 		--disable-glusterfs \
+		--disable-spotlight \
 		--disable-rpath \
 		--disable-rpath-install \
 		--disable-rpath-private-install \
@@ -212,7 +217,6 @@ HOST_CONFIGURE_ARGS += \
 HOST_CONFIGURE_ARGS += --disable-avahi --without-quotas --without-acl-support --without-winbind \
 	--without-ad-dc --without-json --without-libarchive --disable-python --nopyc --nopyo \
 	--without-dnsupdate --without-ads --without-ldap --without-ldb-lmdb
-HOST_CONFIGURE_VARS += python_LDFLAGS="" python_LIBDIR=""
 
 # Optional AES-NI support - https://lists.samba.org/archive/samba-technical/2017-September/122738.html
 # Support for Nettle wasn't comitted
@@ -240,31 +244,30 @@ else
 	CONFIGURE_ARGS += --disable-avahi
 endif
 
-# NOTE: We need host python-bin, but target python-config here!
-CONFIGURE_VARS += python_LDFLAGS="" python_LIBDIR=""
 ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
 	CONFIGURE_ARGS += --without-winbind --without-ldb-lmdb --with-acl-support
-	CONFIGURE_VARS += \
-		PYTHON="$(HOST_PYTHON3_BIN)" \
-		PYTHON_CONFIG="$(STAGING_DIR)/host/bin/$(PYTHON3)-config"
 else
 	CONFIGURE_ARGS += --without-winbind --without-ads --without-ldap --without-ldb-lmdb --without-ad-dc \
 		--without-json --without-libarchive --disable-python --nopyc --nopyo --without-dnsupdate --without-acl-support
 endif
 
 SAMBA4_PDB_MODULES :=pdb_smbpasswd,pdb_tdbsam,
-SAMBA4_AUTH_MODULES :=auth_builtin,auth_sam,auth_unix,auth_script,
+SAMBA4_AUTH_MODULES :=auth_builtin,auth_sam,auth_unix,
 SAMBA4_VFS_MODULES :=vfs_default,
-SAMBA4_VFS_MODULES_SHARED :=
+SAMBA4_VFS_MODULES_SHARED :=auth_script,
+# always build if kernel supports io_uring
+ifdef CONFIG_KERNEL_IO_URING
+	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_io_uring,
+endif
 ifeq ($(CONFIG_SAMBA4_SERVER_VFS),y)
 	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_fruit,vfs_shadow_copy2,vfs_recycle,vfs_fake_perms,vfs_readonly,vfs_cap,vfs_offline,vfs_crossrename,vfs_catia,vfs_streams_xattr,vfs_xattr_tdb,vfs_default_quota,
-ifeq ($(CONFIG_PACKAGE_kmod-fs-btrfs),y)
+ifdef CONFIG_PACKAGE_kmod-fs-btrfs
 	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_btrfs,
 endif
 endif
 ifeq ($(CONFIG_SAMBA4_SERVER_VFSX),y)
-	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_virusfilter,vfs_shell_snap,vfs_commit,vfs_worm,vfs_aio_fork,vfs_aio_pthread,vfs_netatalk,vfs_dirsort,vfs_fileid,
-ifeq ($(CONFIG_PACKAGE_kmod-fs-xfs),y)
+	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_virusfilter,vfs_shell_snap,vfs_commit,vfs_worm,vfs_netatalk,vfs_dirsort,vfs_fileid,
+ifdef CONFIG_PACKAGE_kmod-fs-xfs
 	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_linux_xfs_sgid,
 endif
 endif
@@ -292,23 +295,40 @@ HOST_CONFIGURE_ARGS += \
 PY_VER:=$(PYTHON3_VERSION_MAJOR)$(PYTHON3_VERSION_MINOR)
 # NOTE: bundle + make private, we want to avoid version configuration (build, link) conflicts
 HOST_CONFIGURE_ARGS += --builtin-libraries=replace --nonshared-binary=asn1_compile,compile_et
-SYSTEM_BUNDLED_LIBS:=talloc,tevent,tevent-util,texpect,tdb,ldb,tdr,cmocka,replace,com_err
+SYSTEM_PRIVATE_BUNDLED_LIBS:=talloc,tevent,tevent-util,texpect,tdb,ldb,tdr,cmocka,replace,com_err
+SYSTEM_BUNDLED_LIBS:=
 PYTHON_BUNDLED_LIBS:=pytalloc-util.cpython-$(PY_VER),pyldb-util.cpython-$(PY_VER)
 # CONFIGURE_ARGS += --builtin-libraries=talloc,tevent,tevent-util,texpect,tdb,ldb,tdr,cmocka,com_err
-ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
-	CONFIGURE_ARGS += --bundled-libraries=NONE,$(SYSTEM_BUNDLED_LIBS),$(PYTHON_BUNDLED_LIBS)
-else
-	CONFIGURE_ARGS += --bundled-libraries=NONE,$(SYSTEM_BUNDLED_LIBS)
+ifdef CONFIG_KERNEL_IO_URING
+	SYSTEM_BUNDLED_LIBS:=,uring
 endif
-CONFIGURE_ARGS += --private-libraries=$(SYSTEM_BUNDLED_LIBS)
+ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
+	CONFIGURE_ARGS += --bundled-libraries=NONE,$(SYSTEM_PRIVATE_BUNDLED_LIBS)$(SYSTEM_BUNDLED_LIBS),$(PYTHON_BUNDLED_LIBS)
+else
+	CONFIGURE_ARGS += --bundled-libraries=NONE,$(SYSTEM_PRIVATE_BUNDLED_LIBS)$(SYSTEM_BUNDLED_LIBS)
+endif
+CONFIGURE_ARGS += --private-libraries=$(SYSTEM_PRIVATE_BUNDLED_LIBS)
 
 export COMPILE_ET=$(STAGING_DIR_HOSTPKG)/bin/compile_et_samba
 export ASN1_COMPILE=$(STAGING_DIR_HOSTPKG)/bin/asn1_compile_samba
+
+# make sure we use the hostpkg build toolset and we need to find host 'yapp'
+HOST_CONFIGURE_VARS+= \
+	PATH="$(STAGING_DIR_HOSTPKG)/bin:$(STAGING_DIR_HOSTPKG)/usr/bin:$(PATH)"
+CONFIGURE_VARS += \
+	PATH="$(STAGING_DIR_HOSTPKG)/bin:$(STAGING_DIR_HOSTPKG)/usr/bin:$(PATH)"
+
+# we need hostpkg bin and target config	
+ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
+	CONFIGURE_VARS += \
+		PYTHON_CONFIG="$(STAGING_DIR)/host/bin/$(PYTHON3)-config"
+endif
 
 # we dont need GnuTLS for the host helpers
 define Host/Prepare
 	$(call Host/Prepare/Default)
 	$(SED) 's,mandatory=True,mandatory=False,g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
+	$(SED) 's,gnutls_version =.*,gnutls_version = gnutls_min_required_version,g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
 endef
 define Host/Compile
 	(cd $(HOST_BUILD_DIR); \
@@ -341,7 +361,6 @@ define Build/Configure
 	echo 'Checking uname release type: "$(LINUX_VERSION)"' >> $(PKG_BUILD_DIR)/cross-answers.txt
 	echo 'Checking uname version type: "$(VERSION_DIST) Linux-$(LINUX_VERSION) $(shell date +%Y-%m-%d)"' >> $(PKG_BUILD_DIR)/cross-answers.txt
 	# NOTE: special answers for freeBSD/CircleCI
-	echo 'Checking whether POSIX capabilities are available: OK' >> $(PKG_BUILD_DIR)/cross-answers.txt
 	echo 'checking for clnt_create(): OK' >> $(PKG_BUILD_DIR)/cross-answers.txt
 	$(call Build/Configure/Default)
 endef

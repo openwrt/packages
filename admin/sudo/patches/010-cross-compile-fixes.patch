@@ -1,6 +1,6 @@
 --- a/lib/util/Makefile.in
 +++ b/lib/util/Makefile.in
-@@ -200,10 +200,10 @@ libsudo_util.la: $(LTOBJS) @LT_LDDEP@
+@@ -207,10 +207,10 @@ libsudo_util.la: $(LTOBJS) @LT_LDDEP@
  	esac
  
  siglist.c: mksiglist

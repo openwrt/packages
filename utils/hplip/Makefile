@@ -1,7 +1,4 @@
 #
-# Copyright (C) 2006-2011 OpenWrt.org
-# Copyright (C) 2017-2018 Luiz Angelo Daros de Luca <luizluca@gmail.com>
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -9,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hplip
-PKG_VERSION:=3.19.12
-PKG_RELEASE:=2
+PKG_VERSION:=3.21.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/hplip
-PKG_HASH:=b7f398502fb659e0de8e54976237e3c6a64fec0b3c36054a515876f7b006b255
+PKG_HASH:=410421a13e62205d41bacd3215993c89e513fb4d7fab07e23e2720465aea7c41
 
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=GPL-2.0 GPL-2.0-or-later

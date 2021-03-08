@@ -5,11 +5,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pyodbc
-PKG_VERSION:=4.0.26
-PKG_RELEASE:=3
+PKG_VERSION:=4.0.30
+PKG_RELEASE:=2
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=e52700b5d24a846483b5ab80acd9153f8e593999c9184ffea11596288fb33de3
+PKG_HASH:=852b5deeeb3366af8b4408efed993501708be45d221881bce60c9aac54be726a
 PKG_BUILD_DEPENDS:=python3 unixodbc
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -18,7 +18,6 @@ PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_BUILD_DEPENDS:=unixodbc/host
 
 include ../pypi.mk
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
@@ -28,7 +27,7 @@ define Package/python3-pyodbc
   SUBMENU:=Python
   TITLE:=python3-pyodbc
   URL:=https://github.com/mkleehammer/pyodbc
-  DEPENDS:=+unixodbc +python3-light $(CXX_DEPENDS)
+  DEPENDS:=+unixodbc +python3-light +libstdcpp
 endef
 
 define Package/python3-pyodbc/description

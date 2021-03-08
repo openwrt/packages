@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-markdown
-PKG_VERSION:=3.2.1
-PKG_RELEASE:=2
+PKG_VERSION:=3.3.3
+PKG_RELEASE:=1
 
 PYPI_NAME:=Markdown
-PKG_HASH:=90fee683eeabe1a92e149f7ba74e5ccdc81cd397bd6c516d93a8da0ef90b6902
+PKG_HASH:=5d9f2b5ca24bc4c7a390d22323ca4bad200368612b5aaa7796babf971d2b2f18
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
@@ -30,7 +30,6 @@ define Package/python3-markdown
   URL:=https://python-markdown.github.io/
   DEPENDS:= \
 	+python3-light \
-	+python3-setuptools \
 	+python3-logging
 endef
 

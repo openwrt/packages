@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=restic-rest-server
 PKG_VERSION:=0.9.7
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/rest-server-$(PKG_VERSION)
 PKG_SOURCE:=rest-server-$(PKG_VERSION).tar.gz
@@ -33,11 +33,17 @@ define Package/restic-rest-server
   CATEGORY:=Network
 endef
 
+define Package/restic-rest-server/conffiles
+/etc/config/restic-rest-server
+endef
+
 define Package/restic-rest-server/description
 Rest Server is a high performance HTTP server that implements restic's REST backend
 API. It provides secure and efficient way to backup data remotely, using restic
 backup client via the rest: URL.
 endef
+
+GO_PKG_BUILD_VARS += GO111MODULE=auto
 
 define Package/restic-rest-server/install
 	$(INSTALL_DIR) $(1)/usr/bin

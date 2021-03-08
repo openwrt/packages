@@ -6,8 +6,6 @@ STOP=80
 
 USE_PROCD=1
 
-EXTRA_COMMANDS="check"
-
 HAPROXY_BIN="/usr/sbin/haproxy"
 HAPROXY_CONFIG="/etc/haproxy.cfg"
 
@@ -20,6 +18,7 @@ start_service() {
 	procd_close_instance
 }
 
+extra_command "check" "Check haproxy config"
 check() {
 	$HAPROXY_BIN -c -q -V -f $HAPROXY_CONFIG
 }

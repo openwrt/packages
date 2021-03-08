@@ -9,14 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apr
 PKG_VERSION:=1.7.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/apr/
 PKG_HASH:=e2e148f0b2e99b8e5c6caa09f6d4fb4dd3e83f744aa72a952f94f5a14436f7ea
 
-PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>, \
-		Sebastian Kemper <sebastian_ml@gmx.net>
+PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -89,9 +88,13 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/build-1/* $(1)/usr/share/build-1
 	$(SED) '/^prefix=\|^exec_prefix=/s|/usr|$(STAGING_DIR)/usr|' \
 					$(1)/usr/bin/apr-1-config
+	$(SED) '/^bindir=/s|/usr|$$$${prefix}|' $(1)/usr/bin/apr-1-config
 	$(SED) '/^datadir=/s|/usr|$$$${prefix}|' $(1)/usr/bin/apr-1-config
+	$(SED) '/^datarootdir=/s|/usr|$$$${prefix}|' $(1)/usr/bin/apr-1-config
 	$(SED) 's,/usr/share/build-1,$(STAGING_DIR)/usr/share/build-1,g' \
 				$(1)/usr/share/build-1/apr_rules.mk
+	$(INSTALL_DIR) $(2)/bin
+	$(LN) ../../usr/bin/apr-1-config $(2)/bin/apr-1-config
 endef
 
 define Package/libapr/install

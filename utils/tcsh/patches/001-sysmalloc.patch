@@ -1,4 +1,4 @@
---- a/config_f.h		
+--- a/config_f.h
 +++ b/config_f.h
 @@ -138,11 +138,8 @@
   *		This can be much slower and no memory statistics will be

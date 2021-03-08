@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2015 OpenWrt.org
+# Copyright (C) 2009-2020 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
-PKG_VERSION:=21.0
-PKG_RELEASE:=3
+PKG_VERSION:=23.0
+PKG_RELEASE:=4
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= http://www.erlang.org/download/
-PKG_HASH:=c7d247c0cad2d2e718eaca2e2dff051136a1347a92097abf19ebf65ea2870131
+PKG_HASH:=42dcf3c721f4de59fe74ae7b65950c2174c46dc8d1dd4e27c0594d86f606a635
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -314,19 +314,9 @@ endef
 
 HOST_CONFIGURE_ARGS += \
 	--disable-hipe \
+	--disable-pgo \
 	--disable-smp-support \
 	--without-javac
-
-HOST_CFLAGS += -D_GNU_SOURCE
-
-define Host/Compile
-	$(MAKE) -C $(HOST_BUILD_DIR) all
-endef
-
-define Host/Install
-	$(MAKE) -C $(HOST_BUILD_DIR) install
-endef
-
 
 # Target
 

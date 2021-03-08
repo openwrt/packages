@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tesseract
 PKG_VERSION:=4.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tesseract-ocr/tesseract/tar.gz/$(PKG_VERSION)?
@@ -19,12 +19,10 @@ PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_PARALLEL:=1
-PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
+CMAKE_BINARY_SUBDIR:=openwrt-build
 
 include $(INCLUDE_DIR)/package.mk
-
-TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/tesseract
   MENU:=1
@@ -36,11 +34,17 @@ define Package/tesseract
 endef
 
 TARGET_CFLAGS:=$(filter-out -O%,$(TARGET_CFLAGS)) -O3
+
+CMAKE_OPTIONS += \
+	-DBUILD_TRAINING_TOOLS=OFF
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/tesseract $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libtesseract.{a,so*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libtesseract.so* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/cmake
+	$(CP) $(PKG_INSTALL_DIR)/usr/cmake/*.cmake $(1)/usr/lib/cmake/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/tesseract.pc $(1)/usr/lib/pkgconfig/
 endef
@@ -50,8 +54,6 @@ define Package/tesseract/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib*.so.* $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/share
-	$(CP) $(PKG_INSTALL_DIR)/usr/share/* $(1)/usr/share/
 endef
 
 $(eval $(call BuildPackage,tesseract))

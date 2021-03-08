@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libyubikey
 PKG_VERSION:=1.13
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=libyubikey-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://developers.yubico.com/yubico-c/Releases
@@ -16,7 +16,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libyubikey
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=The Yuibco yubikey c library
+  TITLE:=The Yubico yubikey c library
   URL:=https://developers.yubico.com/yubico-c/
 endef
 

@@ -1,7 +1,5 @@
-Index: mpack-1.6/unixos.c
-===================================================================
---- mpack-1.6.orig/unixos.c
-+++ mpack-1.6/unixos.c
+--- a/unixos.c
++++ b/unixos.c
 @@ -25,6 +25,7 @@
  #include <stdio.h>
  #include <ctype.h>
@@ -19,10 +17,8 @@ Index: mpack-1.6/unixos.c
  
  int overwrite_files = 0;
  int didchat;
-Index: mpack-1.6/xmalloc.c
-===================================================================
---- mpack-1.6.orig/xmalloc.c
-+++ mpack-1.6/xmalloc.c
+--- a/xmalloc.c
++++ b/xmalloc.c
 @@ -24,7 +24,7 @@
   */
  #include <stdio.h>

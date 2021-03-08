@@ -16,14 +16,15 @@ start_daemon() {
 	[ "$loop" != "1" ] && loop=0
 	if [ -n "$ifname" -a -n "$rootfs" -a -n "$kernel" ] || \
 	   [ -n "$ifname" -a -n "$ubnt" ]; then
-	   	PID="`cat /var/run/$NAME.sh-$ifname.pid 2> /dev/null`"
-	   	[ -z "`ps | grep "^.[ ]*$PID "`" ] && \
-	   		rm /var/run/$NAME.sh-$ifname.pid
-		[ -n "`ls /var/run/$NAME.sh-$ifname.pid 2> /dev/null`" ] && {
+	   	PID="$(cat /var/run/$NAME.sh-$ifname.pid 2> /dev/null)"
+	   	if ! pgrep "^.[ ]*$PID "; then
+	   		rm "/var/run/$NAME.sh-$ifname.pid"
+		fi
+		if find /var/run/ -name "$NAME.sh-$ifname.pid"; then
 			echo "Can't start more than one ap51-flash for interface $ifname!"
 			return 0
-		}
-		start-stop-daemon -S -b -m -p /var/run/$NAME.sh-$ifname.pid -n $NAME.sh \
+		fi
+		start-stop-daemon -S -b -m -p "/var/run/$NAME.sh-$ifname.pid" -n $NAME.sh \
 			-x /usr/lib/ap51-flash/$NAME.sh -- "$loop" "$ifname" "$rootfs" "$kernel" "$ubnt"
 	fi
 }
@@ -38,13 +39,6 @@ stop() {
 	echo "WARNING: Going to teminate all ap51-flash processes! (hope you made sure that they're not flashing right now)"
 	echo "OR you can stop this with Ctrl+c within 10 seconds"
 	sleep 10
-	local pidfile
-	for pidfile in `ls /var/run/${NAME}.sh-*.pid 2> /dev/null`; do
-		start-stop-daemon -K -s TERM -p "${pidfile}" -n "${NAME}.sh" >/dev/null
-		rm -f "${pidfile}"
-	done
-	for pidfile in `ls /var/run/${NAME}-*.pid 2> /dev/null`; do
-		start-stop-daemon -K -s TERM -p "${pidfile}" -n "${NAME}" >/dev/null
-		rm -f "${pidfile}"
-	done
+	find /var/run/ -name "$NAME.sh-*.pid" -exec start-stop-daemon -K -s TERM -p '{}' -n "$NAME.sh" \; -exec rm -f '{}' \;
+	find /var/run/ -name "$NAME.sh-*.pid" -exec start-stop-daemon -K -s TERM -p '{}' -n "$NAME" \; -exec rm -f '{}' \;
 }

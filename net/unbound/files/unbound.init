@@ -9,6 +9,9 @@
 #
 ##############################################################################
 
+# while useful (sh)ellcheck is pedantic and noisy
+# shellcheck disable=1091,2002,2004,2034,2039,2086,2094,2140,2154,2155
+
 START=19
 STOP=50
 USE_PROCD=1
@@ -54,9 +57,10 @@ stop_service() {
 ##############################################################################
 
 service_triggers() {
-  local legacy=$( uci_get unbound.@unbound[0].trigger )
-  local triggers=$( uci_get unbound.@unbound[0].trigger_interface )
-  local trigger="$triggers $legacy"
+  local legacy1=$( uci_get unbound.@unbound[0].trigger )
+  local legacy2=$( uci_get unbound.@unbound[0].trigger_interface )
+  local legacy3=$( uci_get unbound.@unbound[0].iface_trig )
+  local triggers="$legacy1 $legacy2 $legacy3"
 
   . /usr/lib/unbound/defaults.sh
 
@@ -67,13 +71,12 @@ service_triggers() {
     procd_add_raw_trigger "interface.*.up" 3000 /etc/init.d/unbound restart
 
   elif [ -n "$triggers" ] ; then
-    procd_add_reload_trigger "unbound" "dhcp"
-
-
     for trigger in $triggers ; do
       # User selected triggers to restart at any other time
       procd_add_reload_interface_trigger "$trigger"
     done
+
+    procd_add_reload_trigger "unbound" "dhcp"
 
   else
     procd_add_reload_trigger "unbound" "dhcp"

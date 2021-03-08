@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpam
-PKG_VERSION:=1.3.1
+PKG_VERSION:=1.5.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=Linux-PAM-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/linux-pam/linux-pam/releases/download/v$(PKG_VERSION)
-PKG_HASH:=eff47a4ecd833fbf18de9686632a70ee8d0794b79aecb217ebd0ce11db4cd0db
+PKG_HASH:=201d40730b1135b1b3cdea09f2c28ac634d73181ccd0172ceddee3649c5792fc
 PKG_BUILD_DIR:=$(BUILD_DIR)/Linux-PAM-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
@@ -22,8 +22,8 @@ PKG_LICENSE_FILES:=COPYING Copyright
 PKG_CPE_ID:=cpe:/a:kernel:linux-pam
 
 PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -45,32 +45,36 @@ CONFIGURE_ARGS += \
 	--disable-audit \
 	--disable-cracklib \
 	--disable-db \
-	--disable-prelude \
+	--disable-debug \
+	--disable-doc \
+	--disable-econf \
 	--disable-lckpwdf \
 	--disable-nis \
+	--disable-prelude \
 	--disable-regenerate-docu \
 	--disable-rpath \
 	--disable-selinux \
+	--disable-Werror \
 	--with-gnu-ld \
 	--without-mailspool \
 	--without-xauth
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/lib
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/lib/* $(1)/lib/
+	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
 endef
 
 define Package/libpam/install
-	$(INSTALL_DIR) $(1)/lib $(1)/lib/security $(1)/lib/security/pam_filter
 	$(INSTALL_DIR) $(1)/etc $(1)/etc/pam.d
+	$(INSTALL_DIR) $(1)/usr/lib $(1)/usr/lib/security $(1)/usr/lib/security/pam_filter
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(CP) $(PKG_INSTALL_DIR)/lib/*.so* $(1)/lib/
-	$(CP) $(PKG_INSTALL_DIR)/lib/security/*.so* $(1)/lib/security/
-	$(CP) $(PKG_INSTALL_DIR)/lib/security/pam_filter/* $(1)/lib/security/pam_filter/
 	$(CP) $(PKG_INSTALL_DIR)/etc/* $(1)/etc/
 	$(CP) ./files/* $(1)/etc/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/security/*.so* $(1)/usr/lib/security/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/security/pam_filter/* $(1)/usr/lib/security/pam_filter/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin/
 endef
 

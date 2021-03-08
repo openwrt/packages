@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=shairplay
 PKG_SOURCE_DATE:=2018-08-24
 PKG_SOURCE_VERSION:=096b61ad14c90169f438e690d096e3fcf87e504e
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/juhovh/shairplay/tar.gz/$(PKG_SOURCE_VERSION)?
@@ -35,6 +35,10 @@ endef
 
 define Package/shairplay/description
   Free portable AirPlay server implementation similar to ShairPort.
+endef
+
+define Package/shairplay/conffiles
+/etc/config/shairplay
 endef
 
 define Package/shairplay/install

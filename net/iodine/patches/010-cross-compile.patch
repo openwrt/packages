@@ -1,5 +1,5 @@
---- iodine-0.7.0.orig/src/osflags
-+++ iodine-0.7.0/src/osflags
+--- a/src/osflags
++++ b/src/osflags
 @@ -16,12 +16,6 @@ link)
  		windows32)
  			echo '-lws2_32 -liphlpapi';

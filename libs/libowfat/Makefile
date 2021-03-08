@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libowfat
 PKG_VERSION:=0.32
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.fefe.de/libowfat
@@ -28,6 +28,7 @@ define Package/libowfat
   CATEGORY:=Libraries
   TITLE:=reimplemented libdjb under GPL
   URL:=https://www.fefe.de/libowfat/
+  BUILDONLY:=1
 endef
 
 define Build/Configure

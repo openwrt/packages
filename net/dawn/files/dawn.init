@@ -38,11 +38,14 @@ service_triggers()
 start_service()
 {
 	local _tcp_buffer
+	local _network_option
+
 	config_load dawn
-	load_tcp_port() {
+	load_tcp_config() {
 		config_get _tcp_buffer "$1" tcp_port
+		config_get _network_option "$1" network_option
 	}
-	config_foreach load_tcp_port network
+	config_foreach load_tcp_config network
 
 	touch /tmp/dawn_mac_list
 
@@ -51,9 +54,11 @@ start_service()
 	procd_set_param command $PROG
 	procd_set_param stdout 0 # here it is possible to remove the debug output...
 	procd_set_param stderr 1
-	procd_add_mdns "dawn" "tcp" "${_tcp_buffer}"
+	if [ ${_network_option} -eq 2 ]; then
+		procd_add_mdns "dawn" "tcp" "${_tcp_buffer}"
+		echo "UMDNS with port ${_tcp_buffer}"
+	fi
 	procd_close_instance
   	echo "Dawn instance started!"
-  	echo "UMDNS with port ${_tcp_buffer}"
 }
 

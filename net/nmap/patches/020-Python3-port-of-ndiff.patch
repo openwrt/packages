@@ -25,8 +25,6 @@ Resolves: #1484
  7 files changed, 337 insertions(+), 332 deletions(-)
  mode change 100644 => 100755 ndiff/setup.py
 
-diff --git a/.travis.yml b/.travis.yml
-index 145ebc6..9bb50d6 100644
 --- a/.travis.yml
 +++ b/.travis.yml
 @@ -4,7 +4,13 @@ compiler:
@@ -44,8 +42,6 @@ index 145ebc6..9bb50d6 100644
  
  env:
    - SSL_FLAG="--without-openssl" LUA_FLAG="--without-liblua"
-diff --git a/Makefile.in b/Makefile.in
-index 7ac5ae5..a0152f4 100644
 --- a/Makefile.in
 +++ b/Makefile.in
 @@ -35,6 +35,7 @@ ZENMAPDIR = @ZENMAPDIR@
@@ -82,8 +78,6 @@ index 7ac5ae5..a0152f4 100644
  
  check-nsock:
  	@cd $(NSOCKDIR)/src && $(MAKE) check
-diff --git a/ndiff/ndiff.py b/ndiff/ndiff.py
-index 043273f..abbd1c5 100755
 --- a/ndiff/ndiff.py
 +++ b/ndiff/ndiff.py
 @@ -1,4 +1,4 @@
@@ -92,7 +86,7 @@ index 043273f..abbd1c5 100755
  
  # Ndiff
  #
-@@ -26,11 +26,11 @@ xml.__path__ = [x for x in xml.__path__ if "_xmlplus" not in x]
+@@ -26,11 +26,11 @@ xml.__path__ = [x for x in xml.__path__
  import xml.sax
  import xml.sax.saxutils
  import xml.dom.minidom
@@ -488,7 +482,7 @@ index 043273f..abbd1c5 100755
  
  
  def script_result_diffs_to_dom_fragment(elem, script_results_a,
-@@ -489,13 +486,13 @@ def script_result_diffs_to_dom_fragment(elem, script_results_a,
+@@ -489,13 +486,13 @@ def script_result_diffs_to_dom_fragment(
      if len(script_results_a) == 0 and len(script_results_b) == 0:
          return document.createDocumentFragment()
      elif len(script_results_b) == 0:
@@ -934,7 +928,7 @@ index 043273f..abbd1c5 100755
  
  
  class NmapContentHandler(xml.sax.handler.ContentHandler):
-@@ -1200,22 +1197,22 @@ class NmapContentHandler(xml.sax.handler.ContentHandler):
+@@ -1200,22 +1197,22 @@ class NmapContentHandler(xml.sax.handler
          self.current_port = None
  
          self._start_elem_handlers = {
@@ -971,7 +965,7 @@ index 043273f..abbd1c5 100755
          }
  
      def parent_element(self):
-@@ -1245,68 +1242,68 @@ class NmapContentHandler(xml.sax.handler.ContentHandler):
+@@ -1245,68 +1242,68 @@ class NmapContentHandler(xml.sax.handler
      def _start_nmaprun(self, name, attrs):
          assert self.parent_element() is None
          if "start" in attrs:
@@ -1061,7 +1055,7 @@ index 043273f..abbd1c5 100755
                      'attribute; assuming 0.' % (
                          name, self.current_host.format_name()))
              count = 0
-@@ -1314,99 +1311,99 @@ class NmapContentHandler(xml.sax.handler.ContentHandler):
+@@ -1314,99 +1311,99 @@ class NmapContentHandler(xml.sax.handler
              try:
                  count = int(count)
              except ValueError:
@@ -1192,7 +1186,7 @@ index 043273f..abbd1c5 100755
              self.scan.end_date = datetime.datetime.fromtimestamp(end_timestamp)
  
      def _end_host(self, name):
-@@ -1425,23 +1422,23 @@ class XMLWriter (xml.sax.saxutils.XMLGenerator):
+@@ -1425,23 +1422,23 @@ class XMLWriter (xml.sax.saxutils.XMLGen
  
      def frag(self, frag):
          for node in frag.childNodes:
@@ -1283,8 +1277,6 @@ index 043273f..abbd1c5 100755
          sys.exit(EXIT_ERROR)
  
      if output_format == "text":
-diff --git a/ndiff/ndifftest.py b/ndiff/ndifftest.py
-index 2fa4ae0..27fc525 100755
 --- a/ndiff/ndifftest.py
 +++ b/ndiff/ndifftest.py
 @@ -1,4 +1,4 @@
@@ -1464,7 +1456,7 @@ index 2fa4ae0..27fc525 100755
  
  
  class ScanDiffSub(ScanDiff):
-@@ -703,7 +703,7 @@ class scan_diff_xml_test(unittest.TestCase):
+@@ -703,7 +703,7 @@ class scan_diff_xml_test(unittest.TestCa
          a.load_from_file("test-scans/empty.xml")
          b = Scan()
          b.load_from_file("test-scans/simple.xml")
@@ -1473,7 +1465,7 @@ index 2fa4ae0..27fc525 100755
          self.scan_diff = ScanDiffXML(a, b, f)
          self.scan_diff.output()
          self.xml = f.getvalue()
-@@ -712,8 +712,8 @@ class scan_diff_xml_test(unittest.TestCase):
+@@ -712,8 +712,8 @@ class scan_diff_xml_test(unittest.TestCa
      def test_well_formed(self):
          try:
              document = xml.dom.minidom.parseString(self.xml)
@@ -1495,8 +1487,6 @@ index 2fa4ae0..27fc525 100755
                  if port.state == state:
                      del host.ports[port.spec]
          host.extraports = diff.host_b.extraports.copy()
-diff --git a/ndiff/scripts/ndiff b/ndiff/scripts/ndiff
-index 8517c07..4671e73 100755
 --- a/ndiff/scripts/ndiff
 +++ b/ndiff/scripts/ndiff
 @@ -1,4 +1,4 @@
@@ -1505,7 +1495,7 @@ index 8517c07..4671e73 100755
  
  # Ndiff
  #
-@@ -67,15 +67,15 @@ if INSTALL_LIB is not None and is_secure_dir(INSTALL_LIB):
+@@ -67,15 +67,15 @@ if INSTALL_LIB is not None and is_secure
  
  try:
      import ndiff
@@ -1527,13 +1517,9 @@ index 8517c07..4671e73 100755
      sys.exit(1)
  
  import ndiff
-diff --git a/ndiff/setup.py b/ndiff/setup.py
-old mode 100644
-new mode 100755
-index b5e254c..c49bcf3
 --- a/ndiff/setup.py
 +++ b/ndiff/setup.py
-@@ -94,7 +94,7 @@ class checked_install(distutils.command.install.install):
+@@ -94,7 +94,7 @@ class checked_install(distutils.command.
          self.saved_prefix = sys.prefix
          try:
              distutils.command.install.install.finalize_options(self)
@@ -1542,7 +1528,7 @@ index b5e254c..c49bcf3
              raise distutils.errors.DistutilsPlatformError(str(e) + """
  Installing your distribution's python-dev package may solve this problem.""")
  
-@@ -155,13 +155,13 @@ Installing your distribution's python-dev package may solve this problem.""")
+@@ -155,13 +155,13 @@ Installing your distribution's python-de
  #!/usr/bin/env python
  import errno, os, os.path, sys
  
@@ -1619,7 +1605,7 @@ index b5e254c..c49bcf3
          finally:
              f.close()
  
-@@ -266,7 +266,7 @@ class my_uninstall(distutils.cmd.Command):
+@@ -266,7 +266,7 @@ class my_uninstall(distutils.cmd.Command
          # Read the list of installed files.
          try:
              f = open(INSTALLED_FILES_NAME, "r")
@@ -1628,7 +1614,7 @@ index b5e254c..c49bcf3
              if e.errno == errno.ENOENT:
                  log.error("Couldn't open the installation record '%s'. "
                          "Have you installed yet?" % INSTALLED_FILES_NAME)
-@@ -289,7 +289,7 @@ class my_uninstall(distutils.cmd.Command):
+@@ -289,7 +289,7 @@ class my_uninstall(distutils.cmd.Command
              try:
                  if not self.dry_run:
                      os.remove(file)
@@ -1637,7 +1623,7 @@ index b5e254c..c49bcf3
                  log.error(str(e))
          # Delete the directories. First reverse-sort the normalized paths by
          # length so that child directories are deleted before their parents.
-@@ -300,7 +300,7 @@ class my_uninstall(distutils.cmd.Command):
+@@ -300,7 +300,7 @@ class my_uninstall(distutils.cmd.Command
                  log.info("Removing the directory '%s'." % dir)
                  if not self.dry_run:
                      os.rmdir(dir)
@@ -1646,8 +1632,6 @@ index b5e254c..c49bcf3
                  if e.errno == errno.ENOTEMPTY:
                      log.info("Directory '%s' not empty; not removing." % dir)
                  else:
-diff --git a/ndiff/test-scans/anonymize.py b/ndiff/test-scans/anonymize.py
-index 9ba612a..fd251fe 100755
 --- a/ndiff/test-scans/anonymize.py
 +++ b/ndiff/test-scans/anonymize.py
 @@ -1,4 +1,4 @@

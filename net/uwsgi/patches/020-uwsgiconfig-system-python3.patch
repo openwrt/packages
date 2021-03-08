@@ -1,7 +1,5 @@
-Index: uwsgi-2.0.18/Makefile
-===================================================================
---- uwsgi-2.0.18.orig/Makefile
-+++ uwsgi-2.0.18/Makefile
+--- a/Makefile
++++ b/Makefile
 @@ -1,4 +1,4 @@
 -PYTHON := python
 +PYTHON ?= python3

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
-PKG_VERSION:=4.0.16
-PKG_RELEASE:=3
+PKG_VERSION:=5.0.7
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/zabbix
-PKG_HASH:=a8d7e18230e62a7bd3fd9af5830a2b1b22818468b5da3deb673865ce40dc4d42
+PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/5.0/
+PKG_HASH:=d762f8a9aa9e8717d2e85d2a82d27316ea5c2b214eb00aff41b6e9b06107916a
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 PKG_LICENSE:=GPL-2.0
@@ -127,7 +127,7 @@ endef
 define Package/zabbix-proxy
   $(call Package/zabbix/Default)
   TITLE+= proxy
-  DEPENDS += +ZABBIX_POSTGRESQL:libpq +ZABBIX_MYSQL:libmariadbclient
+  DEPENDS += +ZABBIX_POSTGRESQL:libpq +ZABBIX_MYSQL:libmariadbclient +libevent2
 endef
 
 define Package/zabbix-extra-mac80211/description
@@ -298,7 +298,7 @@ endef
 
 define Package/zabbix-server-frontend/install
 	$(INSTALL_DIR) $(1)/www/zabbix
-	$(CP) $(PKG_BUILD_DIR)/frontends/php/* $(1)/www/zabbix
+	$(CP) $(PKG_BUILD_DIR)/ui/* $(1)/www/zabbix
 endef
 
 define Package/zabbix-proxy/install

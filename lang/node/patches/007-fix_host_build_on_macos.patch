@@ -1,6 +1,6 @@
 --- a/tools/gyp/pylib/gyp/generator/make.py
 +++ b/tools/gyp/pylib/gyp/generator/make.py
-@@ -176,7 +176,7 @@
+@@ -180,7 +180,7 @@ cmd_solink_module = $(LINK.$(TOOLSET)) -
  
  LINK_COMMANDS_MAC = """\
  quiet_cmd_alink = LIBTOOL-STATIC $@

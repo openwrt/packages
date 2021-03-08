@@ -1,6 +1,6 @@
 --- a/Lib/distutils/sysconfig.py
 +++ b/Lib/distutils/sysconfig.py
-@@ -445,6 +445,7 @@ def _init_posix():
+@@ -451,6 +451,7 @@ def _init_posix():
          platform=sys.platform,
          multiarch=getattr(sys.implementation, '_multiarch', ''),
      ))
@@ -10,7 +10,7 @@
      global _config_vars
 --- a/Lib/sysconfig.py
 +++ b/Lib/sysconfig.py
-@@ -344,6 +344,7 @@ def get_makefile_filename():
+@@ -352,6 +352,7 @@ def get_makefile_filename():
  
  
  def _get_sysconfigdata_name():
@@ -20,7 +20,7 @@
          abi=sys.abiflags,
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -1460,7 +1460,7 @@ libinstall:	build_all $(srcdir)/Modules/
+@@ -1534,7 +1534,7 @@ libinstall:	build_all $(srcdir)/Modules/
  			esac; \
  		done; \
  	done
@@ -29,7 +29,7 @@
  		$(DESTDIR)$(LIBDEST); \
  	$(INSTALL_DATA) $(srcdir)/LICENSE $(DESTDIR)$(LIBDEST)/LICENSE.txt
  ifeq (@COMPILE_ALL_TESTS@,yes)
-@@ -1618,7 +1618,7 @@ sharedinstall: sharedmods
+@@ -1692,7 +1692,7 @@ sharedinstall: sharedmods
  		--install-scripts=$(BINDIR) \
  		--install-platlib=$(DESTSHARED) \
  		--root=$(DESTDIR)/
@@ -40,23 +40,41 @@
  # Here are a couple of targets for MacOSX again, to install a full
 --- a/configure
 +++ b/configure
-@@ -15181,7 +15181,7 @@ else
- fi
+@@ -2977,7 +2977,7 @@ $as_echo_n "checking for python interpre
+ 	fi
+         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $interp" >&5
+ $as_echo "$interp" >&6; }
+-	PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM) PYTHONPATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`:)$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH) '$interp
++	PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM) PYTHONPATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`:)$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata '$interp
+     fi
+ elif test "$cross_compiling" = maybe; then
+     as_fn_error $? "Cross compiling required --host=HOST-TUPLE and --build=ARCH" "$LINENO" 5
+@@ -15435,7 +15435,7 @@ fi
+ 
  
  
 -if test x$PLATFORM_TRIPLET = x; then
 +if true ; then
-   LIBPL='$(prefix)'"/lib/python${VERSION}/config-${LDVERSION}"
+   LIBPL='$(prefix)'"/${PLATLIBDIR}/python${VERSION}/config-${LDVERSION}"
  else
-   LIBPL='$(prefix)'"/lib/python${VERSION}/config-${LDVERSION}-${PLATFORM_TRIPLET}"
+   LIBPL='$(prefix)'"/${PLATLIBDIR}/python${VERSION}/config-${LDVERSION}-${PLATFORM_TRIPLET}"
 --- a/configure.ac
 +++ b/configure.ac
-@@ -4667,7 +4667,7 @@ fi
+@@ -75,7 +75,7 @@ if test "$cross_compiling" = yes; then
+ 	    AC_MSG_ERROR([python$PACKAGE_VERSION interpreter not found])
+ 	fi
+         AC_MSG_RESULT($interp)
+-	PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM) PYTHONPATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`:)$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH) '$interp
++	PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM) PYTHONPATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`:)$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata '$interp
+     fi
+ elif test "$cross_compiling" = maybe; then
+     AC_MSG_ERROR([Cross compiling required --host=HOST-TUPLE and --build=ARCH])
+@@ -4828,7 +4828,7 @@ fi],
  
  dnl define LIBPL after ABIFLAGS and LDVERSION is defined.
  AC_SUBST(PY_ENABLE_SHARED)
 -if test x$PLATFORM_TRIPLET = x; then
 +if true ; then
-   LIBPL='$(prefix)'"/lib/python${VERSION}/config-${LDVERSION}"
+   LIBPL='$(prefix)'"/${PLATLIBDIR}/python${VERSION}/config-${LDVERSION}"
  else
-   LIBPL='$(prefix)'"/lib/python${VERSION}/config-${LDVERSION}-${PLATFORM_TRIPLET}"
+   LIBPL='$(prefix)'"/${PLATLIBDIR}/python${VERSION}/config-${LDVERSION}-${PLATFORM_TRIPLET}"

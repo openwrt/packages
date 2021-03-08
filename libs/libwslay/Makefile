@@ -1,31 +1,30 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwslay
-PKG_VERSION:=1.1.0
-PKG_RELEASE=1
+PKG_VERSION:=1.1.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=release-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tatsuhiro-t/wslay/tar.gz/release-$(PKG_VERSION)?
-PKG_HASH:=df5dca9f03614073cd8bdd22aa3c9b116f841ed3120b2d4463d2382cc44fc594
-
+PKG_HASH:=7b9f4b9df09adaa6e07ec309b68ab376c0db2cfd916613023b52a47adfda224a
 PKG_BUILD_DIR:=$(BUILD_DIR)/wslay-release-$(PKG_VERSION)
 
 PKG_MAINTAINER:=James Taylor <james@jtaylor.id.au>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 
+CMAKE_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
-
-PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libwslay
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Wslay is a WebSocket library written in C
   URL:=https://tatsuhiro-t.github.io/wslay/
+  BUILDONLY:=1
 endef
 
 define Package/libwslay/description
@@ -37,20 +36,7 @@ define Package/libwslay/description
    handshake in HTTP.
 endef
 
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/wslay
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/wslay/*.h $(1)/usr/include/wslay/
-
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libwslay.{a,so*} $(1)/usr/lib/
-
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libwslay.pc $(1)/usr/lib/pkgconfig/
-endef
-
-define Package/libwslay/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libwslay.so* $(1)/usr/lib/
-endef
+CMAKE_OPTIONS += \
+	-DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
 $(eval $(call BuildPackage,libwslay))

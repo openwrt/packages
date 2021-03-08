@@ -5,25 +5,30 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nlohmannjson
-PKG_VERSION:=3.7.3
+PKG_VERSION:=3.9.1
 PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).zip
+PKG_SOURCE_URL:=https://codeload.github.com/nlohmann/json/zip/v$(PKG_VERSION)?
+PKG_HASH:=a88449d68aab8d027c5beefe911ba217f5ffcc0686ae1793d37f3d20698b37c6
+PKG_BUILD_DIR:=$(BUILD_DIR)/json-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Leonid Esman <leonid.esman@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.MIT
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/json-$(PKG_VERSION)
-PKG_SOURCE:=json-$(PKG_VERSION).zip
-PKG_SOURCE_URL:=https://codeload.github.com/nlohmann/json/zip/v$(PKG_VERSION)?
-PKG_HASH:=e109cd4a9d1d463a62f0a81d7c6719ecd780a52fb80a22b901ed5b6fe43fb45b
+PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=meson/host
 
 include $(INCLUDE_DIR)/package.mk
+include ../../devel/meson/meson.mk
 
 define Package/nlohmannjson
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=JSON for Modern C++
   URL:=https://nlohmann.github.io/json/
+  BUILDONLY:=1
 endef
 
 define Package/nlohmannjson/description
@@ -31,8 +36,10 @@ define Package/nlohmannjson/description
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_BUILD_DIR)/include/nlohmann $(1)/usr/include
+	$(INSTALL_DIR) $(1)/usr/include/nlohmann
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/nlohmann/json.hpp $(1)/usr/include/nlohmann
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/nlohmann_json.pc $(1)/usr/lib/pkgconfig
 endef
 
 $(eval $(call BuildPackage,nlohmannjson))

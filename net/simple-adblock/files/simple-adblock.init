@@ -3,15 +3,27 @@
 # shellcheck disable=SC2039,SC1091
 PKG_VERSION='dev-test'
 
-export START=94
-export USE_PROCD=1
-export LC_ALL=C
+# shellcheck disable=SC2034
+START=94
+# shellcheck disable=SC2034
+USE_PROCD=1
+LC_ALL=C
 
-export EXTRA_COMMANDS='check dl killcache sizes show'
-export EXTRA_HELP='	check	Checks if specified domain is found in current blacklist
+if type extra_command 1>/dev/null 2>&1; then
+	extra_command 'check' 'Checks if specified domain is found in current block-list'
+	extra_command 'dl' 'Force-downloads all enabled block-list'
+	extra_command 'sizes' 'Displays the file-sizes of enabled block-listo'
+	extra_command 'show' 'Shows the service last-run status'
+	extra_command 'version' 'Show version information'
+else
+# shellcheck disable=SC2034
+	EXTRA_COMMANDS='check dl killcache sizes show version'
+# shellcheck disable=SC2034
+	EXTRA_HELP='	check	Checks if specified domain is found in current block-list
 	dl	Force-downloads all enabled block-list
 	sizes	Displays the file-sizes of enabled block-lists
 	show	Shows the service last-run status'
+fi
 
 readonly packageName='simple-adblock'
 readonly serviceName="$packageName $PKG_VERSION"
@@ -44,23 +56,14 @@ readonly sharedMemoryError="/dev/shm/$packageName-error"
 readonly sharedMemoryOutput="/dev/shm/$packageName-output"
 readonly hostsFilter='/localhost/d;/^#/d;/^[^0-9]/d;s/^0\.0\.0\.0.//;s/^127\.0\.0\.1.//;s/[[:space:]]*#.*$//;s/[[:cntrl:]]$//;s/[[:space:]]//g;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
 readonly domainsFilter='/^#/d;s/[[:space:]]*#.*$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
-readonly checkmark='\xe2\x9c\x93'
-readonly xmark='\xe2\x9c\x97'
 readonly _OK_='\033[0;32m\xe2\x9c\x93\033[0m'
 readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
 readonly __OK__='\033[0;32m[\xe2\x9c\x93]\033[0m'
 readonly __FAIL__='\033[0;31m[\xe2\x9c\x97]\033[0m'
 readonly _ERROR_='\033[0;31mERROR\033[0m'
 
-readonly messageSuccess='Success'
-readonly messageFail='Fail'
-readonly messageDownloading='Downloading'
-readonly messageReloading='Reloading'
-readonly messageRestarting='Restarting'
-readonly messageStarting='Starting'
-readonly messageForceReloading='Force-Reloading'
-readonly messageProcessing='Processing'
-readonly messageStopped='Stopped'
+version() { echo "$PKG_VERSION"; }
+
 getStatusText() {
 	local _ret
 	case "$1" in
@@ -70,6 +73,7 @@ getStatusText() {
 		statusRestarting) _ret="Restarting";;
 		statusForceReloading) _ret="Force Reloading";;
 		statusDownloading) _ret="Downloading";;
+		statusProcessing) _ret="Processing";;
 		statusError) _ret="Error";;
 		statusWarning) _ret="Warning";;
 		statusFail) _ret="Fail";;
@@ -85,18 +89,20 @@ getErrorText() {
 		errorSharedMemory) _ret="failed to access shared memory";;
 		errorSorting) _ret="failed to sort data file";;
 		errorOptimization) _ret="failed to optimize data file";;
-		errorWhitelistProcessing) _ret="failed to process whitelist";;
+		errorAllowListProcessing) _ret="failed to process allow-list";;
 		errorDataFileFormatting) _ret="failed to format data file";;
 		errorMovingDataFile) _ret="failed to move data file '${A_TMP}' to '${outputFile}'";;
 		errorCreatingCompressedCache) _ret="failed to create compressed cache";;
 		errorRemovingTempFiles) _ret="failed to remove temporary files";;
 		errorRestoreCompressedCache) _ret="failed to unpack compressed cache";;
 		errorRestoreCache) _ret="failed to move '$outputCache' to '$outputFile'";;
-		errorOhSnap) _ret="failed to create blocklist or restart DNS resolver";;
+		errorOhSnap) _ret="failed to create block-list or restart DNS resolver";;
 		errorStopping) _ret="failed to stop $serviceName";;
 		errorDNSReload) _ret="failed to reload/restart DNS resolver";;
+		errorDownloadingConfigUpdate) _ret="failed to download Config Update file";;
 		errorDownloadingList) _ret="failed to download";;
 		errorParsingList) _ret="failed to parse";;
+		errorParsingConfigUpdate) _ret="failed to parse Config Update file";;
 	esac
 	printf "%b" "$_ret"
 }
@@ -108,11 +114,10 @@ output_ok() { output 1 "$_OK_"; output 2 "$__OK__\\n"; }
 output_okn() { output 1 "$_OK_\\n"; output 2 "$__OK__\\n"; }
 output_fail() { output 1 "$_FAIL_"; output 2 "$__FAIL__\\n"; }
 output_failn() { output 1 "$_FAIL_\\n"; output 2 "$__FAIL__\\n"; }
-# str_replace() { printf "%b" "$1" | sed -e "s/$(printf "%b" "$2")/$(printf "%b" "$3")/g"; }
-# str_contains() { test "$1" != "$(str_replace "$1" "$2" '')"; }
-compare_versions() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
+str_replace() { printf "%b" "$1" | sed -e "s/$(printf "%b" "$2")/$(printf "%b" "$3")/g"; }
+str_contains() { test "$1" != "$(str_replace "$1" "$2" '')"; }
+compare_values() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
 is_chaos_calmer() { ubus -S call system board | grep -q 'Chaos Calmer'; }
-is_ipset_procd() { compare_versions "$(sed -ne 's/^Version: //p' /usr/lib/opkg/info/firewall.control)" "2019-09-18"; }
 led_on(){ if [ -n "${1}" ] && [ -e "${1}/trigger" ]; then echo 'default-on' > "${1}/trigger" 2>&1; fi; }
 led_off(){ if [ -n "${1}" ] &&  [ -e "${1}/trigger" ]; then echo 'none' > "${1}/trigger" 2>&1; fi; }
 dnsmasq_hup() { killall -q -HUP dnsmasq; }
@@ -139,12 +144,35 @@ output() {
 	fi
 }
 
-export serviceEnabled forceDNS parallelDL debug allowIDN compressedCache     
-export targetDNS bootDelay dlTimeout curlRetry verbosity=1 led dnsInstance
-export whitelist_domains blacklist_domains
-export whitelist_domains_urls blacklist_domains_urls blacklist_hosts_urls
-export wan_if wan_gw wanphysdev dl_command serviceStatus dl_flag
-export outputFilter outputFilterIPv6 outputFile outputGzip outputCache ipv6Enabled
+serviceEnabled=1
+forceDNS=1
+parallelDL=1
+debug=0
+compressedCache=0
+ipv6Enabled=0
+configUpdateEnabled=0
+configUpdateURL=''
+bootDelay=120
+dlTimeout=20
+curlRetry=3
+verbosity=2
+led=''
+targetDNS=dnsmasq.servers
+dnsInstance=0
+allowed_domains=''
+blocked_domains=''
+allowed_domains_urls=''
+blocked_domains_urls=''
+blocked_hosts_urls=''
+dl_command=''
+dl_flag=''
+outputFilter=''
+outputFilterIPv6=''
+outputFile=''
+outputGzip=''
+outputCache='' 
+isSSLSupported=''
+allowIDN=0
 
 load_package_config() {
 	config_load "$packageName"
@@ -154,6 +182,7 @@ load_package_config() {
 	config_get_bool debug                 'config' 'debug' 0
 	config_get_bool compressedCache       'config' 'compressed_cache' 0
 	config_get_bool ipv6Enabled           'config' 'ipv6_enabled' 0
+	config_get_bool configUpdateEnabled   'config' 'config_update_enabled' 0
 	config_get bootDelay                  'config' 'boot_delay' '120'
 	config_get dlTimeout                  'config' 'download_timeout' '20'
 	config_get curlRetry                  'config' 'curl_retry' '3'
@@ -161,11 +190,12 @@ load_package_config() {
 	config_get led        	              'config' 'led'
 	config_get targetDNS                  'config' 'dns' 'dnsmasq.servers'
 	config_get dnsInstance                'config' 'dns_instance' '0'
-	config_get whitelist_domains          'config' 'whitelist_domain'
-	config_get blacklist_domains          'config' 'blacklist_domain'
-	config_get whitelist_domains_urls     'config' 'whitelist_domains_url'
-	config_get blacklist_domains_urls     'config' 'blacklist_domains_url'
-	config_get blacklist_hosts_urls       'config' 'blacklist_hosts_url'
+	config_get allowed_domains            'config' 'allowed_domain'
+	config_get allowed_domains_urls       'config' 'allowed_domains_url'
+	config_get blocked_domains            'config' 'blocked_domain'
+	config_get blocked_domains_urls       'config' 'blocked_domains_url'
+	config_get blocked_hosts_urls         'config' 'blocked_hosts_url'
+	config_get configUpdateURL            'config' 'config_update_url' 'https://cdn.jsdelivr.net/gh/openwrt/packages/net/simple-adblock/files/simple-adblock.conf.update'
 
 	if [ "$targetDNS" != 'dnsmasq.addnhosts' ] && [ "$targetDNS" != 'dnsmasq.conf' ] && \
 		 [ "$targetDNS" != 'dnsmasq.servers' ] && [ "$targetDNS" != 'unbound.adb_list' ] && \
@@ -231,11 +261,11 @@ load_package_config() {
 	fi
 	. /lib/functions/network.sh
 	. /usr/share/libubox/jshn.sh
-	# Prefer curl because it supports the file: scheme.
-	if [ -x /usr/bin/curl ]; then
+	# Prefer curl because it supports the file:// scheme.
+	if command -v curl >/dev/null 2>&1; then
 		dl_command="curl --insecure --retry $curlRetry --connect-timeout $dlTimeout --silent"
 		dl_flag="-o"
-	elif wget -V 2>/dev/null | grep -q "+ssl"; then
+	elif command -v wget >/dev/null 2>&1 && wget --version 2>/dev/null | grep -q "+https"; then
 		dl_command="wget --no-check-certificate --timeout $dlTimeout -q"
 		dl_flag="-O"
 	else
@@ -243,9 +273,19 @@ load_package_config() {
 		dl_flag="-O"
 	fi
 	led="${led:+/sys/class/leds/$led}"
+	if curl --version 2>/dev/null | grep -q "https" \
+		|| wget --version 2>/dev/null | grep -q "+https" \
+		|| grep -q "libustream-mbedtls" /usr/lib/opkg/status \
+		|| grep -q "libustream-openssl" /usr/lib/opkg/status \
+		|| grep -q "libustream-wolfssl" /usr/lib/opkg/status; then
+		isSSLSupported=1
+	else
+		unset isSSLSupported
+	fi
 }
 
 is_enabled() {
+	wan_if=''; wan_gw='';
 	load_package_config
 
 	if [ "$debug" -ne 0 ]; then
@@ -426,14 +466,13 @@ dnsOps() {
 tmpfs() {
 	local action="$1" instance="$2" value="$3"
 	local status message error stats
-	local readReload readRestart curReload curRestart ret
+	local reload restart curReload curRestart ret i
 	if [ -s "$jsonFile" ]; then
-		status="$(jsonfilter -i $jsonFile -l1 -e "@['data']['status']")"
-		message="$(jsonfilter -i $jsonFile -l1 -e "@['data']['message']")"
-		error="$(jsonfilter -i $jsonFile -l1 -e "@['data']['error']")"
-		stats="$(jsonfilter -i $jsonFile -l1 -e "@['data']['stats']")"
-		readReload="$(jsonfilter -i $jsonFile -l1 -e "@['data']['reload']")"
-		readRestart="$(jsonfilter -i $jsonFile -l1 -e "@['data']['restart']")"
+		json_load_file "$jsonFile" 2>/dev/null
+		json_select 'data' 2>/dev/null
+		for i in status message error stats reload restart; do
+			json_get_var $i "$i" 2>/dev/null
+		done
 	fi
 	case "$action" in
 		get)
@@ -447,13 +486,13 @@ tmpfs() {
 				stats) 
 					printf "%b" "$stats"; return;;
 				triggers)
-					curReload="$parallelDL $debug $dlTimeout $whitelist_domains $blacklist_domains $whitelist_domains_urls $blacklist_domains_urls $blacklist_hosts_urls $targetDNS"
+					curReload="$parallelDL $debug $dlTimeout $allowed_domains $blocked_domains $allowed_domains_urls $blocked_domains_urls $blocked_hosts_urls $targetDNS"
 					curRestart="$compressedCache $forceDNS $led"
 					if [ ! -s "$jsonFile" ]; then
 						ret='on_boot'
-					elif [ "$curReload" != "$readReload" ]; then
+					elif [ "$curReload" != "$reload" ]; then
 						ret='download'
-					elif [ "$curRestart" != "$readRestart" ]; then
+					elif [ "$curRestart" != "$restart" ]; then
 						ret='restart'
 					fi
 					printf "%b" "$ret"
@@ -489,7 +528,7 @@ tmpfs() {
 				stats) 
 					unset stats;;
 				triggers) 
-					unset readReload; unset readRestart;;
+					unset reload; unset restart;;
 			esac
 			;;
 		set)
@@ -503,8 +542,8 @@ tmpfs() {
 				stats) 
 					stats="$value";;
 				triggers) 
-					readReload="$parallelDL $debug $dlTimeout $whitelist_domains $blacklist_domains $whitelist_domains_urls $blacklist_domains_urls $blacklist_hosts_urls $targetDNS"
-					readRestart="$compressedCache $forceDNS $led"
+					reload="$parallelDL $debug $dlTimeout $allowed_domains $blocked_domains $allowed_domains_urls $blocked_domains_urls $blocked_hosts_urls $targetDNS"
+					restart="$compressedCache $forceDNS $led"
 					;;
 			esac
 			;;
@@ -516,8 +555,8 @@ tmpfs() {
 	json_add_string message "$message"
 	json_add_string error "$error"
 	json_add_string stats "$stats"
-	json_add_string reload "$readReload"
-	json_add_string restart "$readRestart"
+	json_add_string reload "$reload"
+	json_add_string restart "$restart"
 	json_close_object
 	json_dump > "$jsonFile"
 	sync
@@ -563,97 +602,6 @@ cacheOps() {
 	esac
 }
 
-fw3Ops() {
-	local action="$1" param="$2" _restart
-	case "$action" in
-		reload) /etc/init.d/firewall reload >/dev/null 2>&1;;
-		restart) /etc/init.d/firewall restart >/dev/null 2>&1;;
-		remove)
-			case "$param" in
-				dns_redirect) uci -q del firewall.simple_adblock_dns_redirect;;
-				ipset)        uci -q del firewall.simple_adblock_ipset
-											uci -q del firewall.simple_adblock_ipset_rule;;
-				*)
-					uci -q del firewall.simple_adblock_dns_redirect
-					uci -q del firewall.simple_adblock_ipset
-					uci -q del firewall.simple_adblock_ipset_rule
-					;;
-			esac
-			;;
-		insert)
-			case "$param" in
-				dns_redirect)
-					if ! uci -q get firewall.simple_adblock_dns_redirect >/dev/null; then
-						uci -q set firewall.simple_adblock_dns_redirect=redirect
-						uci -q set firewall.simple_adblock_dns_redirect.name=simple_adblock_dns_hijack
-						uci -q set firewall.simple_adblock_dns_redirect.target=DNAT
-						uci -q set firewall.simple_adblock_dns_redirect.src=lan
-						uci -q set firewall.simple_adblock_dns_redirect.proto=tcpudp
-						uci -q set firewall.simple_adblock_dns_redirect.src_dport=53
-						uci -q set firewall.simple_adblock_dns_redirect.dest_port=53
-					fi
-					;;
-				ipset)
-					if ! uci -q get firewall.simple_adblock_ipset >/dev/null; then
-						uci -q set firewall.simple_adblock_ipset=ipset
-						uci -q set firewall.simple_adblock_ipset.name=adb
-						uci -q set firewall.simple_adblock_ipset.match=dest_net
-						uci -q set firewall.simple_adblock_ipset.storage=hash
-						uci -q set firewall.simple_adblock_ipset.enabled=1
-						_restart=1
-					fi
-					if ! uci -q get firewall.simple_adblock_ipset_rule >/dev/null; then
-						uci -q set firewall.simple_adblock_ipset_rule=rule
-						uci -q set firewall.simple_adblock_ipset_rule.name=simple_adblock_ipset_rule
-						uci -q set firewall.simple_adblock_ipset_rule.ipset=adb
-						uci -q set firewall.simple_adblock_ipset_rule.src=lan
-						uci -q set firewall.simple_adblock_ipset_rule.dest='*'
-						uci -q set firewall.simple_adblock_ipset_rule.proto=tcpudp
-						uci -q set firewall.simple_adblock_ipset_rule.target=REJECT
-						uci -q set firewall.simple_adblock_ipset_rule.enabled=1
-					fi
-					;;
-				*)
-					if ! uci -q get firewall.simple_adblock_dns_redirect >/dev/null; then
-						uci -q set firewall.simple_adblock_dns_redirect=redirect
-						uci -q set firewall.simple_adblock_dns_redirect.name=simple_adblock_dns_hijack
-						uci -q set firewall.simple_adblock_dns_redirect.target=DNAT
-						uci -q set firewall.simple_adblock_dns_redirect.src=lan
-						uci -q set firewall.simple_adblock_dns_redirect.proto=tcpudp
-						uci -q set firewall.simple_adblock_dns_redirect.src_dport=53
-						uci -q set firewall.simple_adblock_dns_redirect.dest_port=53
-					fi
-					if ! uci -q get firewall.simple_adblock_ipset >/dev/null; then
-						uci -q set firewall.simple_adblock_ipset=ipset
-						uci -q set firewall.simple_adblock_ipset.name=adb
-						uci -q set firewall.simple_adblock_ipset.match=dest_net
-						uci -q set firewall.simple_adblock_ipset.storage=hash
-						uci -q set firewall.simple_adblock_ipset.enabled=1
-						_restart=1
-					fi
-					if ! uci -q get firewall.simple_adblock_ipset_rule >/dev/null; then
-						uci -q set firewall.simple_adblock_ipset_rule=rule
-						uci -q set firewall.simple_adblock_ipset_rule.name=simple_adblock_ipset_rule
-						uci -q set firewall.simple_adblock_ipset_rule.ipset=adb
-						uci -q set firewall.simple_adblock_ipset_rule.src=lan
-						uci -q set firewall.simple_adblock_ipset_rule.dest='*'
-						uci -q set firewall.simple_adblock_ipset_rule.proto=tcpudp
-						uci -q set firewall.simple_adblock_ipset_rule.target=REJECT
-						uci -q set firewall.simple_adblock_ipset_rule.enabled=1
-					fi
-					;;
-		esac
-	esac
-	if [ -n "$(uci changes firewall)" ]; then
-		uci -q commit firewall
-		if [ -z "$_restart" ]; then
-			fw3Ops 'reload'
-		else
-			fw3Ops 'restart'
-		fi
-	fi
-}
-
 process_url() {
 	local label type D_TMP R_TMP
 	if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then return 1; fi
@@ -668,19 +616,25 @@ process_url() {
 	else
 		type='Allowed'; D_TMP="$A_TMP";
 	fi
+	if [ "${1:0:5}" == "https" ] && [ -z "$isSSLSupported" ]; then
+		output 1 "$_FAIL_"
+		output 2 "[DL] $type $label $__FAIL__\\n"
+		echo "errorNoSSLSupport|${1}" >> "$sharedMemoryError"
+		return 0
+	fi
 	while [ -z "$R_TMP" ] || [ -e "$R_TMP" ]; do
 		R_TMP="$(mktemp -u -q -t ${packageName}_tmp.XXXXXXXX)"
 	done
 	if ! $dl_command "$1" $dl_flag "$R_TMP" 2>/dev/null || [ ! -s "$R_TMP" ]; then
 		output 1 "$_FAIL_"
 		output 2 "[DL] $type $label $__FAIL__\\n"
-		echo "errorDownloadingList=${1}" >> "$sharedMemoryError"
+		echo "errorDownloadingList|${1}" >> "$sharedMemoryError"
 	else
 		sed -i "$filter" "$R_TMP"
 		if [ ! -s "$R_TMP" ]; then
 			output 1 "$_FAIL_"
 			output 2 "[DL] $type $label $__FAIL__\\n"
-			echo "errorParsingList=${1}" >> "$sharedMemoryError"
+			echo "errorParsingList|${1}" >> "$sharedMemoryError"
 		else
 			cat "${R_TMP}" >> "$D_TMP"
 			output 1 "$_OK_"
@@ -691,10 +645,35 @@ process_url() {
 	return 0
 }
 
+process_config_update() {
+	local label R_TMP
+	[ "$configUpdateEnabled" -eq 0 ] && return 0
+	label="${1##*//}"; label="${label%%/*}";
+	while [ -z "$R_TMP" ] || [ -e "$R_TMP" ]; do
+		R_TMP="$(mktemp -u -q -t ${packageName}_tmp.XXXXXXXX)"
+	done
+	if ! $dl_command "$1" $dl_flag "$R_TMP" 2>/dev/null || [ ! -s "$R_TMP" ]; then
+		output 1 "$_FAIL_"
+		output 2 "[DL] Config  Update:  $label $__FAIL__\\n"
+		tmpfs add error "errorDownloadingConfigUpdate"
+	else
+		if [ -s "$R_TMP" ] && sed -f "$R_TMP" -i /etc/config/simple-adblock; then
+			output 1 "$_OK_"
+			output 2 "[DL] Config  Update:  $label $__OK__\\n"
+		else
+			output 1 "$_FAIL_"
+			output 2 "[DL] Config  Update:  $label $__FAIL__\\n"
+			tmpfs add error "errorParsingConfigUpdate"
+		fi
+	fi
+	rm -f "$R_TMP"
+	return 0
+}
+
 download_lists() {
 	local hf w_filter j=0 R_TMP
 
-	tmpfs set message "${messageDownloading}..."
+	tmpfs set message "$(getStatusText "statusDownloading")..."
 	tmpfs set status "statusDownloading"
 
 	rm -f "$A_TMP" "$B_TMP" "$outputFile" "$outputCache" "$outputGzip"
@@ -708,9 +687,10 @@ download_lists() {
 	fi
 	touch $A_TMP; touch $B_TMP;
 	output 1 'Downloading lists '
+	process_config_update "$configUpdateURL"
 	rm -f "$sharedMemoryError"
-	if [ -n "$blacklist_hosts_urls" ]; then
-		for hf in ${blacklist_hosts_urls}; do
+	if [ -n "$blocked_hosts_urls" ]; then
+		for hf in ${blocked_hosts_urls}; do
 			if [ "$parallelDL" -gt 0 ]; then
 				process_url "$hf" 'hosts' 'blocked' &
 			else
@@ -718,8 +698,8 @@ download_lists() {
 			fi
 		done
 	fi
-	if [ -n "$blacklist_domains_urls" ]; then
-		for hf in ${blacklist_domains_urls}; do
+	if [ -n "$blocked_domains_urls" ]; then
+		for hf in ${blocked_domains_urls}; do
 			if [ "$parallelDL" -gt 0 ]; then
 				process_url "$hf" 'domains' 'blocked' &
 			else
@@ -727,8 +707,8 @@ download_lists() {
 			fi
 		done
 	fi
-	if [ -n "$whitelist_domains_urls" ]; then
-		for hf in ${whitelist_domains_urls}; do
+	if [ -n "$allowed_domains_urls" ]; then
+		for hf in ${allowed_domains_urls}; do
 			if [ "$parallelDL" -gt 0 ]; then
 				process_url "$hf" 'domains' 'allowed' &
 			else
@@ -745,16 +725,16 @@ download_lists() {
 		rm -f "$sharedMemoryError"
 	fi
 
-	[ -n "$blacklist_domains" ] && for hf in ${blacklist_domains}; do echo "$hf" | sed "$domainsFilter" >> $B_TMP; done
-	whitelist_domains="${whitelist_domains}
+	[ -n "$blocked_domains" ] && for hf in ${blocked_domains}; do echo "$hf" | sed "$domainsFilter" >> $B_TMP; done
+	allowed_domains="${allowed_domains}
 $(cat $A_TMP)"
-	[ -n "$whitelist_domains" ] && for hf in ${whitelist_domains}; do hf="$(echo "$hf" | sed 's/\./\\./g')"; w_filter="$w_filter/^${hf}$/d;/\\.${hf}$/d;"; done
+	[ -n "$allowed_domains" ] && for hf in ${allowed_domains}; do hf="$(echo "$hf" | sed 's/\./\\./g')"; w_filter="$w_filter/^${hf}$/d;/\\.${hf}$/d;"; done
 
 	[ ! -s "$B_TMP" ] && return 1
 
 	output 1 'Processing downloads '
 	output 2 'Sorting combined list '
-	tmpfs set message "$messageProcessing: sorting combined list"
+	tmpfs set message "$(getStatusText "statusProcessing"): sorting combined list"
 	if [ "$allowIDN" -gt 0 ]; then
 		if sort -u "$B_TMP" > "$A_TMP"; then
 			output_ok
@@ -777,7 +757,7 @@ $(cat $A_TMP)"
 		 [ "$targetDNS" = 'unbound.adb_list' ]; then
 		# TLD optimization written by Dirk Brenken (dev@brenken.org)
 		output 2 'Optimizing combined list '
-		tmpfs set message "$messageProcessing: optimizing combined list"
+		tmpfs set message "$(getStatusText "statusProcessing"): optimizing combined list"
 # 	sed -E 'G;:t;s/(.*)(\.)(.*)(\n)(.*)/\1\4\5\2\3/;tt;s/(.*)\n(\.)(.*)/\3\2\1/' is actually slower than awk
 		if awk -F "." '{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "$A_TMP" > "$B_TMP"; then
 			if sort "$B_TMP" > "$A_TMP"; then
@@ -812,17 +792,17 @@ $(cat $A_TMP)"
 		mv "$A_TMP" "$B_TMP"
 	fi
 
-	output 2 'Whitelisting domains '
-	tmpfs set message "$messageProcessing: whitelisting domains"
+	output 2 'Allowing domains '
+	tmpfs set message "$(getStatusText "statusProcessing"): allowing domains"
 	if sed -i "$w_filter" "$B_TMP"; then
 		output_ok
 	else
 		output_failn
-		tmpfs add error "errorWhitelistProcessing"
+		tmpfs add error "errorAllowListProcessing"
 	fi
 
 	output 2 'Formatting merged file '
-	tmpfs set message "$messageProcessing: formatting merged file"
+	tmpfs set message "$(getStatusText "statusProcessing"): formatting merged file"
 	if [ -z "$outputFilterIPv6" ]; then
 		if sed "$outputFilter" "$B_TMP" > "$A_TMP"; then
 			output_ok
@@ -847,23 +827,23 @@ $(cat $A_TMP)"
 	case "$targetDNS" in
 		dnsmasq.addnhosts)
 			output 2 'Creating DNSMASQ addnhosts file '
-			tmpfs set message "$messageProcessing: creating DNSMASQ addnhosts file"
+			tmpfs set message "$(getStatusText "statusProcessing"): creating DNSMASQ addnhosts file"
 			;;
 		dnsmasq.conf)
 			output 2 'Creating DNSMASQ config file '
-			tmpfs set message "$messageProcessing: creating DNSMASQ config file"
+			tmpfs set message "$(getStatusText "statusProcessing"): creating DNSMASQ config file"
 			;;
 		dnsmasq.ipset)
 			output 2 'Creating DNSMASQ ipset file '
-			tmpfs set message "$messageProcessing: creating DNSMASQ ipset file"
+			tmpfs set message "$(getStatusText "statusProcessing"): creating DNSMASQ ipset file"
 			;;
 		dnsmasq.servers)
 			output 2 'Creating DNSMASQ servers file '
-			tmpfs set message "$messageProcessing: creating DNSMASQ servers file"
+			tmpfs set message "$(getStatusText "statusProcessing"): creating DNSMASQ servers file"
 			;;
 		unbound.adb_list)
 			output 2 'Creating Unbound adb_list file '
-			tmpfs set message "$messageProcessing: creating Unbound adb_list file"
+			tmpfs set message "$(getStatusText "statusProcessing"): creating Unbound adb_list file"
 			;;
 	esac
 	if mv "$A_TMP" "$outputFile"; then
@@ -874,7 +854,7 @@ $(cat $A_TMP)"
 	fi
 	if [ "$compressedCache" -gt 0 ]; then
 		output 2 'Creating compressed cache '
-		tmpfs set message "$messageProcessing: creating compressed cache"
+		tmpfs set message "$(getStatusText "statusProcessing"): creating compressed cache"
 		if cacheOps 'createGzip'; then
 			output_ok
 		else
@@ -885,7 +865,7 @@ $(cat $A_TMP)"
 		rm -f "$outputGzip"
 	fi
 	output 2 'Removing temporary files '
-	tmpfs set message "$messageProcessing: removing temporary files"
+	tmpfs set message "$(getStatusText "statusProcessing"): removing temporary files"
 	rm -f "/tmp/${packageName}_tmp.*" "$A_TMP" "$B_TMP" "$outputCache" || j=1
 	if [ $j -eq 0 ]; then
 		output_ok
@@ -945,64 +925,46 @@ start_service() {
 	tmpfs del all
 	tmpfs set triggers
 
-	if is_chaos_calmer || ! is_ipset_procd; then
-		if [ "$forceDNS" -ne 0 ]; then
-			fw3Ops 'insert' 'dns_redirect'
-		else
-			fw3Ops 'remove' 'dns_redirect'
-		fi
-		if [ "$targetDNS" = 'dnsmasq.ipset' ]; then
-			fw3Ops 'insert' 'ipset'
-		else
-			fw3Ops 'remove' 'ipset'
-		fi
-		procd_open_instance 'main'
-		procd_set_param command /bin/true
-		procd_set_param stdout 1
-		procd_set_param stderr 1
-		procd_close_instance
-	else
-		procd_open_instance 'main'
-		procd_set_param command /bin/true
-		procd_set_param stdout 1
-		procd_set_param stderr 1
-		procd_open_data
-		json_add_array firewall
-		if [ "$forceDNS" -ne 0 ]; then
-			json_add_object ''
-			json_add_string type redirect
-			json_add_string name simple_adblock_dns_redirect
-			json_add_string target DNAT
-			json_add_string src lan
-			json_add_string proto tcpudp
-			json_add_string src_dport 53
-			json_add_string dest_port 53
-			json_add_string reflection 0
-			json_close_object
-		fi
-		if [ "$targetDNS" = 'dnsmasq.ipset' ]; then
-			json_add_object ''
-			json_add_string type ipset
-			json_add_string name adb
-			json_add_string match dest_net
-			json_add_string storage hash
-			json_add_string enabled 1
-			json_close_object
-			json_add_object ''
-			json_add_string type rule
-			json_add_string name simple_adblock_ipset_rule
-			json_add_string ipset adb
-			json_add_string src lan
-			json_add_string dest '*'
-			json_add_string proto tcpudp
-			json_add_string target REJECT
-			json_add_string enabled 1
-			json_close_object
-		fi
-		json_close_array
-		procd_close_data
-		procd_close_instance
+	procd_open_instance 'main'
+	procd_set_param command /bin/true
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_open_data
+	json_add_array firewall
+	if [ "$forceDNS" -ne 0 ]; then
+		json_add_object ''
+		json_add_string type redirect
+		json_add_string name simple_adblock_dns_redirect
+		json_add_string target DNAT
+		json_add_string src lan
+		json_add_string proto tcpudp
+		json_add_string src_dport 53
+		json_add_string dest_port 53
+		json_add_string reflection 0
+		json_close_object
 	fi
+	if [ "$targetDNS" = 'dnsmasq.ipset' ]; then
+		json_add_object ''
+		json_add_string type ipset
+		json_add_string name adb
+		json_add_string match dest_net
+		json_add_string storage hash
+		json_add_string enabled 1
+		json_close_object
+		json_add_object ''
+		json_add_string type rule
+		json_add_string name simple_adblock_ipset_rule
+		json_add_string ipset adb
+		json_add_string src lan
+		json_add_string dest '*'
+		json_add_string proto tcpudp
+		json_add_string target REJECT
+		json_add_string enabled 1
+		json_close_object
+	fi
+	json_close_array
+	procd_close_data
+	procd_close_instance
 
 	if [ "$action" = 'restore' ]; then
 		output 0 "Starting $serviceName... "
@@ -1077,8 +1039,8 @@ start_service() {
 	remove_lock
 }
 
-service_started() { is_ipset_procd && procd_set_config_changed firewall; }
-service_stopped() { is_ipset_procd && procd_set_config_changed firewall; }
+service_started() { procd_set_config_changed firewall; }
+service_stopped() { procd_set_config_changed firewall; }
 restart_service() { rc_procd start_service 'restart'; }
 reload_service() { restart_service; }
 restart() { restart_service; }
@@ -1099,11 +1061,11 @@ killcache() {
 show() { showstatus; }
 status_service() { showstatus; }
 showstatus() {
-	local status="$(tmpfs get status)"
-	local message="$(tmpfs get message)"
-	local error="$(tmpfs get error)"
-	local stats="$(tmpfs get stats)"
-	local c url
+	local c url status message error stats
+	status="$(tmpfs get status)"
+	message="$(tmpfs get message)"
+	error="$(tmpfs get error)"
+	stats="$(tmpfs get stats)"
 	if [ "$status" = "statusSuccess" ]; then
 		output "$stats "; output_okn;
 	else
@@ -1115,8 +1077,8 @@ showstatus() {
 	fi
 	if [ -n "$error" ]; then
 		for c in $error; do
-			url="${c##*=}"
-			c="${c%=*}"
+			url="${c##*|}"
+			c="${c%|*}"
 			case "$c" in
 				errorDownloadingList|errorParsingList)
 					output "$_ERROR_: $(getErrorText "$c") $url!\\n";;
@@ -1130,7 +1092,6 @@ showstatus() {
 
 stop_service() {
 	load_package_config
-	fw3Ops 'remove' 'all'
 	if [ -s "$outputFile" ]; then
 		output "Stopping $serviceName... "
 		cacheOps 'create'
@@ -1149,15 +1110,17 @@ stop_service() {
 }
 
 service_triggers() {
-	procd_add_reload_trigger 'simple-adblock'
+	procd_open_trigger
+	procd_add_config_trigger "config.change" "${packageName}" /etc/init.d/${packageName} reload
+	procd_close_trigger
 }
 
 check() {
 	load_package_config
-	local string="$1" 
-	local c="$(grep -c "$string" "$outputFile")"
+	local c string="$1" 
+	c="$(grep -c "$string" "$outputFile")"
 	if [ ! -s "$outputFile" ]; then
-		echo "No blacklist ('$outputFile') found."
+		echo "No block-list ('$outputFile') found."
 	elif [ -z "$string" ]; then
 		echo "Usage: /etc/init.d/${packageName} check string"
 	elif [ "$c" -gt 0 ]; then
@@ -1179,7 +1142,7 @@ check() {
 				grep "$string" "$outputFile" | sed 's|^local-zone: "||;s|" static$||;';;
 		esac
 	else
-		echo "The $string is not found in current blacklist ('$outputFile')."
+		echo "The $string is not found in current block-list ('$outputFile')."
 	fi
 }
 
@@ -1188,39 +1151,39 @@ sizes() {
 	load_package_config
 	echo "# $(date)"
 
-	for i in $blacklist_domains_urls; do
+	for i in $blocked_domains_urls; do
 		[ "${i//melmac}" != "$i" ] && continue
 		if $dl_command "$i" $dl_flag /tmp/sast 2>/dev/null && [ -s /tmp/sast ]; then
 			echo "# File size: $(du -sh /tmp/sast | awk '{print $1}')"
-			if compare_versions "$(du -sk /tmp/sast)" "500"; then
-				echo "# blocklist too big for most routers"
-			elif compare_versions "$(du -sk /tmp/sast)" "100"; then
-				echo "# blocklist may be too big for some routers"
+			if compare_values "$(du -sk /tmp/sast)" "500"; then
+				echo "# block-list too big for most routers"
+			elif compare_values "$(du -sk /tmp/sast)" "100"; then
+				echo "# block-list may be too big for some routers"
 			fi
 			rm -rf /tmp/sast
-			echo "  list blacklist_domains_url '$i'"
+			echo "  list blocked_domains_url '$i'"
 			echo ""
 		else
 			echo "# site was down on last check"
-			echo "#  list blacklist_domains_url '$i'"
+			echo "#  list blocked_domains_url '$i'"
 			echo ""
 		fi
 	done
 
-	for i in $blacklist_hosts_urls; do
+	for i in $blocked_hosts_urls; do
 		if $dl_command "$i" $dl_flag /tmp/sast 2>/dev/null && [ -s /tmp/sast ]; then
 			echo "# File size: $(du -sh /tmp/sast | awk '{print $1}')"
-			if compare_versions "$(du -sk /tmp/sast)" "500"; then
-				echo "# blocklist too big for most routers"
-			elif compare_versions "$(du -sk /tmp/sast)" "100"; then
-				echo "# blocklist may be too big for some routers"
+			if compare_values "$(du -sk /tmp/sast)" "500"; then
+				echo "# block-list too big for most routers"
+			elif compare_values "$(du -sk /tmp/sast)" "100"; then
+				echo "# block-list may be too big for some routers"
 			fi
 			rm -rf /tmp/sast
-			echo "  list blacklist_hosts_url '$i'"
+			echo "  list blocked_hosts_url '$i'"
 			echo ""
 		else
 			echo "# site was down on last check"
-			echo "#  list blacklist_hosts_url '$i'"
+			echo "#  list blocked_hosts_url '$i'"
 			echo ""
 		fi
 	done

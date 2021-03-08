@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libiio
-PKG_VERSION:=0.19
-PKG_RELEASE:=1
+PKG_VERSION:=0.21
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/analogdevicesinc/libiio/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=81c414d5c47b715d9bc9275b9fabbfd9e9483e60c035f3001b5977932049595d
+PKG_HASH:=03d13165cbeb83b036743cbd9a10e336c728da162714f39d13250a3d94305cac
 
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING.txt
@@ -34,6 +34,7 @@ PKG_CONFIG_DEPENDS:= \
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
+include $(INCLUDE_DIR)/nls.mk
 
 CMAKE_OPTIONS += -DWITH_DOC=OFF
 CMAKE_OPTIONS += -DENABLE_IPV6=$(if $(CONFIG_IPV6),ON,OFF)
@@ -55,7 +56,8 @@ define Package/libiio
            +zlib \
            +LIBIIO_USB_BACKEND:libusb-1.0 \
            +LIBIIO_NETWORK_BACKEND:libavahi-client \
-           +LIBIIO_XML_BACKEND:libxml2
+           +LIBIIO_XML_BACKEND:libxml2 \
+           $(ICONV_DEPENDS)
   MENU:=1
 endef
 
@@ -69,7 +71,7 @@ config LIBIIO_NETWORK_BACKEND
 	bool "Enable network backend"
 	depends on PACKAGE_libiio
 	select LIBIIO_XML_BACKEND
-	default n
+	default y
 
 config LIBIIO_USB_BACKEND
 	bool "Enable USB backend"
@@ -78,9 +80,9 @@ config LIBIIO_USB_BACKEND
 	default n
 
 config LIBIIO_XML_BACKEND
-	bool "Enable XML backend"
+	bool
 	depends on PACKAGE_libiio
-	default n
+	default y
 endef
 
 define Package/libiio/description

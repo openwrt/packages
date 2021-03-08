@@ -11,6 +11,7 @@ IPSEC_BIN=/usr/sbin/ipsec
 
 checkconfig() {
     ${IPSEC_BIN} addconn --checkconfig || return 1
+    mkdir -p /var/run/pluto
 }
 
 start_service() {

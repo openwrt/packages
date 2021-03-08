@@ -7,17 +7,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=swig
-PKG_VERSION:=4.0.1
-PKG_RELEASE:=1
+PKG_VERSION:=4.0.2
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
-PKG_HASH:=7a00b4d0d53ad97a14316135e2d702091cd5f193bb58bcfcd8bc59d41e7887a9
-PKG_INSTALL:=1
+PKG_HASH:=d53be9730d8d58a16bf0cbd1f8ac0c0c3e1090573168bfa151b01eb47fa906fc
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>, Hirokazu MORIKAWA <morikw2@gmail.com>
-PKG_LICENSE:=GPL-3.0
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
+
+PKG_HOST_ONLY:=1
+HOST_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -26,10 +28,11 @@ define Package/swig
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=swig binding generator
+  URL:=http://swig.org/
   BUILDONLY:=1
 endef
 
-HOST_CONFIGURE_ARGS+= \
+HOST_CONFIGURE_ARGS += \
 	--without-pcre
 
 define Package/swig/description

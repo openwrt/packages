@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadow
 PKG_VERSION:=4.8.1
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/shadow-maint/shadow/releases/download/$(PKG_VERSION)
@@ -22,6 +22,7 @@ PKG_CPE_ID:=cpe:/a:debian:shadow
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=libxcrypt
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -124,19 +125,14 @@ define Package/shadow-common/conffiles
 /etc/login.defs
 endef
 
+#hack to get libxcrypt working
+TARGET_LDFLAGS:=-L$(STAGING_DIR)/usr/lib/libxcrypt $(TARGET_LDFLAGS)
+
 define Package/shadow-common/install
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/login.defs $(1)/etc/
 	$(SED) 's,SU_NAME,#SU_NAME,g' $(1)/etc/login.defs
-ifeq ($(CONFIG_USE_MUSL),y)
-ifeq ($(CONFIG_MUSL_DISABLE_CRYPT_SIZE_HACK),y)
 	$(SED) 's,#ENCRYPT_METHOD DES,ENCRYPT_METHOD BCRYPT,g' $(1)/etc/login.defs
-else
-	$(SED) 's,#ENCRYPT_METHOD DES,ENCRYPT_METHOD MD5,g' $(1)/etc/login.defs
-endif # CONFIG_MUSL_DISABLE_CRYPT_SIZE_HACK
-else
-	$(SED) 's,#ENCRYPT_METHOD DES,ENCRYPT_METHOD SHA512,g' $(1)/etc/login.defs
-endif # CONFIG_USE_MUSL
 endef
 
 define Package/shadow-utils/install

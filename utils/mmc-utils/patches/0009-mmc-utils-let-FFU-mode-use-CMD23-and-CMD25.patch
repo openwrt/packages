@@ -14,8 +14,6 @@ Reviewed-by: Avri Altman <avri.altman@wdc.com>
  mmc_cmds.c | 70 ++++++++++++++++++++++++++++++------------------------
  2 files changed, 41 insertions(+), 31 deletions(-)
 
-diff --git a/mmc.h b/mmc.h
-index 648fb26..d648f68 100644
 --- a/mmc.h
 +++ b/mmc.h
 @@ -25,10 +25,12 @@
@@ -31,8 +29,6 @@ index 648fb26..d648f68 100644
  #define MMC_WRITE_BLOCK		24	/* adtc [31:0] data addr	R1  */
  #define MMC_WRITE_MULTIPLE_BLOCK 25   /* adtc                    R1  */
  #define MMC_SET_WRITE_PROT	28    /* ac   [31:0] data addr   R1b */
-diff --git a/mmc_cmds.c b/mmc_cmds.c
-index 8f4a476..c006ef2 100644
 --- a/mmc_cmds.c
 +++ b/mmc_cmds.c
 @@ -2456,12 +2456,13 @@ int do_ffu(int nargs, char **argv)
@@ -183,6 +179,3 @@ index 8f4a476..c006ef2 100644
  			goto out;
  		}
  
--- 
-2.17.1
-

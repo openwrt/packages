@@ -1,4 +1,4 @@
-#!/bin/ash /etc/rc.common
+#!/bin/sh /etc/rc.common
 # Copyright (C) 2009-2010 OpenWrt.org
 
 START=99
@@ -14,6 +14,6 @@ start_service() {
 	procd_set_param pidfile "/var/run/acpid.pid"
 }
 
-reload_service()\ {
+reload_service() {
 	procd_send_signal "acpid"
 }

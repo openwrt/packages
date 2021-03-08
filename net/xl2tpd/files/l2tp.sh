@@ -88,12 +88,12 @@ $mtu
 $pppd_options
 EOF
 
-	xl2tpd-control add l2tp-${interface} pppoptfile=${optfile} lns=${server} || {
+	xl2tpd-control add-lac l2tp-${interface} pppoptfile=${optfile} lns=${server} || {
 		echo "xl2tpd-control: Add l2tp-$interface failed" >&2
 		proto_setup_failed "$interface"
 		exit 1
 	}
-	xl2tpd-control connect l2tp-${interface} || {
+	xl2tpd-control connect-lac l2tp-${interface} || {
 		echo "xl2tpd-control: Connect l2tp-$interface failed" >&2
 		proto_setup_failed "$interface"
 		exit 1
@@ -106,7 +106,7 @@ proto_l2tp_teardown() {
 
 	rm -f ${optfile}
 	if [ -p /var/run/xl2tpd/l2tp-control ]; then
-		xl2tpd-control remove l2tp-${interface} || {
+		xl2tpd-control remove-lac l2tp-${interface} || {
 			echo "xl2tpd-control: Remove l2tp-$interface failed" >&2
 		}
 	fi

@@ -42,8 +42,6 @@ Subject: Remove USAC
  delete mode 100644 libAACdec/src/usacdec_rom.cpp
  delete mode 100644 libAACdec/src/usacdec_rom.h
 
-diff --git a/Makefile.am b/Makefile.am
-index 1550d95..d5fd180 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -57,14 +57,7 @@ AACDEC_SRC = \
@@ -62,8 +60,6 @@ index 1550d95..d5fd180 100644
  
  AACENC_SRC = \
      libAACenc/src/aacEnc_ram.cpp \
-diff --git a/Makefile.vc b/Makefile.vc
-index 54f3744..c236c15 100644
 --- a/Makefile.vc
 +++ b/Makefile.vc
 @@ -41,14 +41,7 @@ AACDEC_SRC = \
@@ -82,8 +78,6 @@ index 54f3744..c236c15 100644
  
  AACENC_SRC = \
      libAACenc/src/aacEnc_ram.cpp \
-diff --git a/libAACdec/src/aacdecoder.cpp b/libAACdec/src/aacdecoder.cpp
-index cc3e245..cd57500 100644
 --- a/libAACdec/src/aacdecoder.cpp
 +++ b/libAACdec/src/aacdecoder.cpp
 @@ -161,8 +161,6 @@ amm-info@iis.fraunhofer.de
@@ -95,7 +89,7 @@ index cc3e245..cd57500 100644
  #include "ac_arith_coder.h"
  
  #include "tpdec_lib.h"
-@@ -1942,17 +1940,6 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
+@@ -1942,17 +1940,6 @@ CAacDecoder_Init(HANDLE_AACDECODER self,
                goto bail;
              }
            }
@@ -113,7 +107,7 @@ index cc3e245..cd57500 100644
          } /* for each element */
        }
  
-@@ -2010,11 +1997,6 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
+@@ -2010,11 +1997,6 @@ CAacDecoder_Init(HANDLE_AACDECODER self,
                  self->pAacDecoderStaticChannelInfo[ch]->pOverlapBuffer,
                  OverlapBufferSize);
  
@@ -125,7 +119,7 @@ index cc3e245..cd57500 100644
        /* Reset DRC control data for this channel */
        aacDecoder_drcInitChannelData(
            &self->pAacDecoderStaticChannelInfo[ch]->drcData);
-@@ -2893,10 +2875,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
+@@ -2893,10 +2875,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecod
                (self->frameOK && !(flags & AACDEC_CONCEAL));
            const int icsIsInvalid = (GetScaleFactorBandsTransmitted(pIcsInfo) >
                                      GetScaleFactorBandsTotal(pIcsInfo));
@@ -137,7 +131,7 @@ index cc3e245..cd57500 100644
              self->frameOK = 0;
            }
          }
-@@ -2956,16 +2935,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
+@@ -2956,16 +2935,7 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecod
                    2;
              } break;
              case AACDEC_RENDER_LPD:
@@ -155,8 +149,6 @@ index cc3e245..cd57500 100644
                break;
              default:
                ErrorStatus = AAC_DEC_UNKNOWN;
-diff --git a/libAACdec/src/block.cpp b/libAACdec/src/block.cpp
-index a394cd7..b8ca877 100644
 --- a/libAACdec/src/block.cpp
 +++ b/libAACdec/src/block.cpp
 @@ -107,9 +107,6 @@ amm-info@iis.fraunhofer.de
@@ -344,8 +336,6 @@ index a394cd7..b8ca877 100644
  }
  
  #include "ldfiltbank.h"
-diff --git a/libAACdec/src/channel.cpp b/libAACdec/src/channel.cpp
-index e17ccf4..fe63756 100644
 --- a/libAACdec/src/channel.cpp
 +++ b/libAACdec/src/channel.cpp
 @@ -106,9 +106,6 @@ amm-info@iis.fraunhofer.de
@@ -465,8 +455,6 @@ index e17ccf4..fe63756 100644
      }
    }
  
-diff --git a/libAACdec/src/channelinfo.h b/libAACdec/src/channelinfo.h
-index 04f0012..42c8298 100644
 --- a/libAACdec/src/channelinfo.h
 +++ b/libAACdec/src/channelinfo.h
 @@ -117,10 +117,6 @@ amm-info@iis.fraunhofer.de
@@ -588,9 +576,6 @@ index 04f0012..42c8298 100644
  
      struct {
        CPnsData PnsData; /* Not required for USAC */
-diff --git a/libAACdec/src/usacdec_ace_d4t64.cpp b/libAACdec/src/usacdec_ace_d4t64.cpp
-deleted file mode 100644
-index 43e06cd..0000000
 --- a/libAACdec/src/usacdec_ace_d4t64.cpp
 +++ /dev/null
 @@ -1,439 +0,0 @@
@@ -1033,9 +1018,6 @@ index 43e06cd..0000000
 -  }
 -  return;
 -}
-diff --git a/libAACdec/src/usacdec_ace_d4t64.h b/libAACdec/src/usacdec_ace_d4t64.h
-deleted file mode 100644
-index 76bc3d9..0000000
 --- a/libAACdec/src/usacdec_ace_d4t64.h
 +++ /dev/null
 @@ -1,117 +0,0 @@
@@ -1156,9 +1138,6 @@ index 76bc3d9..0000000
 -void D_ACELP_decode_4t64(SHORT index[], int nbits, FIXP_COD code[]);
 -
 -#endif /* USACDEC_ACE_D4T64_H */
-diff --git a/libAACdec/src/usacdec_ace_ltp.cpp b/libAACdec/src/usacdec_ace_ltp.cpp
-deleted file mode 100644
-index 5964b49..0000000
 --- a/libAACdec/src/usacdec_ace_ltp.cpp
 +++ /dev/null
 @@ -1,229 +0,0 @@
@@ -1391,9 +1370,6 @@ index 5964b49..0000000
 -  }
 -  return;
 -}
-diff --git a/libAACdec/src/usacdec_ace_ltp.h b/libAACdec/src/usacdec_ace_ltp.h
-deleted file mode 100644
-index 5128acd..0000000
 --- a/libAACdec/src/usacdec_ace_ltp.h
 +++ /dev/null
 @@ -1,128 +0,0 @@
@@ -1525,9 +1501,6 @@ index 5128acd..0000000
 -);
 -
 -#endif /* USACDEC_ACE_LTP_H */
-diff --git a/libAACdec/src/usacdec_acelp.cpp b/libAACdec/src/usacdec_acelp.cpp
-deleted file mode 100644
-index a606459..0000000
 --- a/libAACdec/src/usacdec_acelp.cpp
 +++ /dev/null
 @@ -1,1296 +0,0 @@
@@ -2827,9 +2800,6 @@ index a606459..0000000
 -bail:
 -  return error;
 -}
-diff --git a/libAACdec/src/usacdec_acelp.h b/libAACdec/src/usacdec_acelp.h
-deleted file mode 100644
-index 9de41ff..0000000
 --- a/libAACdec/src/usacdec_acelp.h
 +++ /dev/null
 @@ -1,281 +0,0 @@
@@ -3114,9 +3084,6 @@ index 9de41ff..0000000
 -}
 -
 -#endif /* USACDEC_ACELP_H */
-diff --git a/libAACdec/src/usacdec_const.h b/libAACdec/src/usacdec_const.h
-deleted file mode 100644
-index f68e808..0000000
 --- a/libAACdec/src/usacdec_const.h
 +++ /dev/null
 @@ -1,203 +0,0 @@
@@ -3323,9 +3290,6 @@ index f68e808..0000000
 -#define FDNS_NPTS FDNS_NPTS_1024
 -
 -#endif /* USACDEC_CONST_H */
-diff --git a/libAACdec/src/usacdec_fac.cpp b/libAACdec/src/usacdec_fac.cpp
-deleted file mode 100644
-index 0d3d844..0000000
 --- a/libAACdec/src/usacdec_fac.cpp
 +++ /dev/null
 @@ -1,745 +0,0 @@
@@ -4074,9 +4038,6 @@ index 0d3d844..0000000
 -
 -  return nrSamples;
 -}
-diff --git a/libAACdec/src/usacdec_fac.h b/libAACdec/src/usacdec_fac.h
-deleted file mode 100644
-index 100a6fa..0000000
 --- a/libAACdec/src/usacdec_fac.h
 +++ /dev/null
 @@ -1,191 +0,0 @@
@@ -4271,9 +4232,6 @@ index 100a6fa..0000000
 -                        int currAliasingSymmetry);
 -
 -#endif /* USACDEC_FAC_H */
-diff --git a/libAACdec/src/usacdec_lpc.cpp b/libAACdec/src/usacdec_lpc.cpp
-deleted file mode 100644
-index 271463f..0000000
 --- a/libAACdec/src/usacdec_lpc.cpp
 +++ /dev/null
 @@ -1,1194 +0,0 @@
@@ -5471,9 +5429,6 @@ index 271463f..0000000
 -
 -  *a_exp = 8 - headroom_a;
 -}
-diff --git a/libAACdec/src/usacdec_lpc.h b/libAACdec/src/usacdec_lpc.h
-deleted file mode 100644
-index a6713c1..0000000
 --- a/libAACdec/src/usacdec_lpc.h
 +++ /dev/null
 @@ -1,190 +0,0 @@
@@ -5667,9 +5622,6 @@ index a6713c1..0000000
 -void E_LPC_f_lsp_a_conversion(FIXP_LPC *lsp, FIXP_LPC *a, INT *a_exp);
 -
 -#endif /* USACDEC_LPC_H */
-diff --git a/libAACdec/src/usacdec_lpd.cpp b/libAACdec/src/usacdec_lpd.cpp
-deleted file mode 100644
-index fcf7a76..0000000
 --- a/libAACdec/src/usacdec_lpd.cpp
 +++ /dev/null
 @@ -1,2017 +0,0 @@
@@ -7690,9 +7642,6 @@ index fcf7a76..0000000
 -
 -  return error;
 -}
-diff --git a/libAACdec/src/usacdec_lpd.h b/libAACdec/src/usacdec_lpd.h
-deleted file mode 100644
-index 3e7938d..0000000
 --- a/libAACdec/src/usacdec_lpd.h
 +++ /dev/null
 @@ -1,198 +0,0 @@
@@ -7894,9 +7843,6 @@ index 3e7938d..0000000
 -void CFdp_Reset(CAacDecoderStaticChannelInfo *pAacDecoderStaticChannelInfo);
 -
 -#endif /* USACDEC_LPD_H */
-diff --git a/libAACdec/src/usacdec_rom.cpp b/libAACdec/src/usacdec_rom.cpp
-deleted file mode 100644
-index ca3009e..0000000
 --- a/libAACdec/src/usacdec_rom.cpp
 +++ /dev/null
 @@ -1,1504 +0,0 @@
@@ -9404,9 +9350,6 @@ index ca3009e..0000000
 -    WTC(0x03d60412), WTC(0x02e286a8), WTC(0x02115586), WTC(0x0162aa04),
 -    WTC(0x00d6b403), WTC(0x006d99e3), WTC(0x00277872), WTC(0x000462eb),
 -};
-diff --git a/libAACdec/src/usacdec_rom.h b/libAACdec/src/usacdec_rom.h
-deleted file mode 100644
-index f969e90..0000000
 --- a/libAACdec/src/usacdec_rom.h
 +++ /dev/null
 @@ -1,154 +0,0 @@
@@ -9564,6 +9507,3 @@ index f969e90..0000000
 -extern const FIXP_WTB FacWindowZir48[48];
 -
 -#endif /* USACDEC_ROM_H */
--- 
-cgit v1.1
-

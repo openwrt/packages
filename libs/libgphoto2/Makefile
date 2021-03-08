@@ -9,20 +9,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgphoto2
-PKG_VERSION:=2.5.23
-PKG_RELEASE:=1
+PKG_VERSION:=2.5.26
+PKG_RELEASE:=3
 PORT_VERSION:=0.12.0
-PKG_MAINTAINER:=Leonardo Medici <leonardo_medici@me.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/gphoto
-PKG_HASH:=d8af23364aa40fd8607f7e073df74e7ace05582f4ba13f1724d12d3c97e8852d
-PKG_LICENSE:=LGPL-2.1
+PKG_HASH:=7740fea3cbb78489071cdfec06c07fab528e69e27ac82734eae6a73eaeeabcd4
+
+PKG_MAINTAINER:=Leonardo Medici <leonardo_medici@me.com>
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
 PKG_LIBTOOL_PATHS:=. libgphoto2_port
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -35,7 +37,7 @@ endef
 
 define Package/libgphoto2
   $(call Package/libgphoto2/Default)
-  DEPENDS:=+libpthread +libltdl +libusb-compat +libusb-1.0 $(ICONV_DEPENDS)
+  DEPENDS:=+libpthread +libltdl +libusb-compat +libusb-1.0 $(ICONV_DEPENDS) $(INTL_DEPENDS)
   TITLE:=The basic library of the gphoto2 program, version $(PKG_VERSION).
   MENU:=1
 endef
@@ -471,22 +473,24 @@ TARGET_CFLAGS += $(FPIC)
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gphoto2{,-port}-config $(1)/usr/bin/
+	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(1)/usr/bin/gphoto2{,-port}-config
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/gphoto2 $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgphoto2{,_port}.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libgphoto2{,_port}.pc $(1)/usr/lib/pkgconfig/
-	$(SED) 's,-I$$$${prefix}/include/gphoto2,,g' $(1)/usr/bin/gphoto2{,-port}-config
-	$(SED) 's,-I$$$${prefix}/include,,g' $(1)/usr/bin/gphoto2{,-port}-config
 	# remove annoying recursive symlink
 	rm -f $(1)/usr/include/gphoto2/gphoto2
+	$(INSTALL_DIR) $(2)/bin
+	$(LN) ../../usr/bin/gphoto2-config $(2)/bin/gphoto2-config
+	$(LN) ../../usr/bin/gphoto2-port-config $(2)/bin/gphoto2-port-config
 endef
 
 define Package/libgphoto2/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgphoto2{,_port}.so.* $(1)/usr/lib/
-	ln -s $(1)/usr/lib/libgphoto2_port.so.12 $(1)/usr/lib/libgphoto2_port.so.10
+	$(LN) libgphoto2_port.so.12 $(1)/usr/lib/libgphoto2_port.so.10
 	$(INSTALL_DIR) $(1)/usr/lib/libgphoto2
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgphoto2/print-camera-list $(1)/usr/lib/libgphoto2/print-camera-list
 endef

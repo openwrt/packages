@@ -162,7 +162,7 @@ generate_config()
         config_get tls_auth_name "$config" tls_auth_name
         echo "    tls_auth_name: \"$tls_auth_name\""
 
-        config_get tls_auth_port "$config" tls_port ""
+        config_get tls_port "$config" tls_port ""
         if [ -n "$tls_port" ]; then
             echo "    tls_port: $tls_port"
         fi

@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=port-mirroring
 PKG_VERSION:=1.4.4
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mmaraya/port-mirroring/tar.gz/v$(PKG_VERSION)?
@@ -29,6 +29,10 @@ define Package/port-mirroring
 	TITLE:=Copy network packets with optional support for TaZmen Sniffer Protocol (TZSP)
 	URL:=https://github.com/mmaraya/port-mirroring
 	MENU:=1
+endef
+
+define Package/port-mirroring/conffiles
+/etc/config/port-mirroring
 endef
 
 define Package/port-mirroring/install

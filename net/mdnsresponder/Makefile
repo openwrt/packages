@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mDNSResponder
 PKG_VERSION:=IETF104
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 
 PKG_SOURCE:=mDNSResponder-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://opensource.apple.com/tarballs/mDNSResponder/IETF/
@@ -122,9 +122,10 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_BUILD_DIR)/mDNSShared/dns_sd.h $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/dns_sd.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_BUILD_DIR)/mDNSPosix/build/prod/*.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdns_sd.so.1 $(1)/usr/lib/
+	$(LN) -s libdns_sd.so.1 $(1)/usr/lib/libdns_sd.so
 endef
 
 define Package/mdns-utils/install

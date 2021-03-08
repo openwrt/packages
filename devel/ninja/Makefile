@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ninja
-PKG_VERSION:=1.10.0
+PKG_VERSION:=1.10.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ninja-build/ninja/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=3810318b08489435f8efc19c05525e80a993af5a55baa0dfeae0465a9d45f99f
+PKG_HASH:=ce35865411f0490368a8fc383f29071de6690cbadc27704734978221f25e2bed
 
 PKG_MAINTAINER:=Andre Heider <a.heider@gmail.com>
 PKG_LICENSE:=Apache-2.0

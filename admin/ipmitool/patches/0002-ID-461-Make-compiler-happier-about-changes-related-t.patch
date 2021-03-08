@@ -9,11 +9,9 @@ Complaint was that ctx isn't initialized.
  src/plugins/lanplus/lanplus_crypt_impl.c | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/src/plugins/lanplus/lanplus_crypt_impl.c b/src/plugins/lanplus/lanplus_crypt_impl.c
-index 3c0df23..d12d0e3 100644
 --- a/src/plugins/lanplus/lanplus_crypt_impl.c
 +++ b/src/plugins/lanplus/lanplus_crypt_impl.c
-@@ -164,7 +164,7 @@ lanplus_encrypt_aes_cbc_128(const uint8_t * iv,
+@@ -164,7 +164,7 @@ lanplus_encrypt_aes_cbc_128(const uint8_
  							uint8_t       * output,
  							uint32_t        * bytes_written)
  {
@@ -22,7 +20,7 @@ index 3c0df23..d12d0e3 100644
  	EVP_CIPHER_CTX_init(ctx);
  	EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv);
  	EVP_CIPHER_CTX_set_padding(ctx, 0);
-@@ -239,7 +239,7 @@ lanplus_decrypt_aes_cbc_128(const uint8_t * iv,
+@@ -239,7 +239,7 @@ lanplus_decrypt_aes_cbc_128(const uint8_
  							uint8_t       * output,
  							uint32_t        * bytes_written)
  {
@@ -31,6 +29,3 @@ index 3c0df23..d12d0e3 100644
  	EVP_CIPHER_CTX_init(ctx);
  	EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv);
  	EVP_CIPHER_CTX_set_padding(ctx, 0);
--- 
-2.16.1
-

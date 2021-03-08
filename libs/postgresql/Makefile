@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
-PKG_VERSION:=12.1
-PKG_RELEASE:=2
+PKG_VERSION:=13.1
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
 PKG_CPE_ID:=cpe:/a:postgresql:postgresql
@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=\
 	http://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
 	ftp://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
 
-PKG_HASH:=a09bf3abbaf6763980d0f8acbb943b7629a8b20073de18d867aecdb7988483ed
+PKG_HASH:=12345c83b89aa29808568977f5200d6da00f88a035517f925293355432ffe61f
 
 PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
@@ -156,6 +156,8 @@ CONFIGURE_ARGS += \
 			--enable-depend \
 			$(if $(CONFIG_arc),--disable-spinlocks)
 
+HOST_CFLAGS += -std=gnu99
+
 # Need a native zic and pg_config for build
 define Host/Compile
 	+$(HOST_MAKE_VARS) MAKELEVEL=0 $(MAKE) -C $(HOST_BUILD_DIR)/src/bin/pg_config CC="$(HOSTCC)"
@@ -191,6 +193,10 @@ endef
 define Package/pgsql-cli-extra/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(foreach bin,$(PGSQL_CLI_EXTRA_BIN),$(PKG_INSTALL_DIR)/usr/bin/$(bin)) $(1)/usr/bin/
+endef
+
+define Package/pgsql-server/conffiles
+/etc/config/postgresql
 endef
 
 define Package/pgsql-server/install

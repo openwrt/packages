@@ -1,6 +1,6 @@
 --- a/src/makefiles/linux_64bit.mak
 +++ b/src/makefiles/linux_64bit.mak
-@@ -66,9 +66,9 @@ OPTIONS_COMPILE_DEBUG=-D_DEBUG -DDEBUG -DUNIX -DUNIX_LINUX -DCPU_64 -D_REENTRANT
+@@ -66,9 +66,9 @@ OPTIONS_COMPILE_DEBUG=-D_DEBUG -DDEBUG -
  
  OPTIONS_LINK_DEBUG=-g -fsigned-char -m64 -lm -ldl -lrt -lpthread -lssl -lcrypto -lreadline -lncurses -lz
  

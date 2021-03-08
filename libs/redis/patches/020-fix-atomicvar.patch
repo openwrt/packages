@@ -1,22 +1,20 @@
-Index: redis-5.0.0/src/atomicvar.h
-===================================================================
---- redis-5.0.0.orig/src/atomicvar.h
-+++ redis-5.0.0/src/atomicvar.h
-@@ -68,7 +68,7 @@
-  * is reported. */
- // #define __ATOMIC_VAR_FORCE_SYNC_MACROS
-
--#if !defined(__ATOMIC_VAR_FORCE_SYNC_MACROS) && defined(__ATOMIC_RELAXED) && !defined(__sun) && (!defined(__clang__) || !defined(__APPLE__) || __apple_build_version__ > 4210057)
-+#if defined(CONFIG_EDAC_ATOMIC_SCRUB) &&  !defined(__ATOMIC_VAR_FORCE_SYNC_MACROS) && defined(__ATOMIC_RELAXED) && !defined(__sun) && (!defined(__clang__) || !defined(__APPLE__) || __apple_build_version__ > 4210057)
- /* Implementation using __atomic macros. */
-
- #define atomicIncr(var,count) __atomic_add_fetch(&var,(count),__ATOMIC_RELAXED)
-@@ -82,7 +82,7 @@
- #define atomicSet(var,value) __atomic_store_n(&var,value,__ATOMIC_RELAXED)
+--- a/src/atomicvar.h
++++ b/src/atomicvar.h
+@@ -81,7 +81,7 @@
+ #define ANNOTATE_HAPPENS_AFTER(v)  ((void) v)
+ #endif
+ 
+-#if !defined(__ATOMIC_VAR_FORCE_SYNC_MACROS) && defined(__STDC_VERSION__) && \
++#if defined(CONFIG_EDAC_ATOMIC_SCRUB) && !defined(__ATOMIC_VAR_FORCE_SYNC_MACROS) && defined(__STDC_VERSION__) && \
+     (__STDC_VERSION__ >= 201112L) && !defined(__STDC_NO_ATOMICS__)
+ /* Use '_Atomic' keyword if the compiler supports. */
+ #undef  redisAtomic
+@@ -126,7 +126,7 @@
+     __atomic_store_n(&var,value,__ATOMIC_SEQ_CST)
  #define REDIS_ATOMIC_API "atomic-builtin"
-
+ 
 -#elif defined(HAVE_ATOMIC)
 +#elif defined(CONFIG_EDAC_ATOMIC_SCRUB) && defined(HAVE_ATOMIC)
  /* Implementation using __sync macros. */
-
+ 
  #define atomicIncr(var,count) __sync_add_and_fetch(&var,(count))

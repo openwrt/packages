@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nspr
-PKG_VERSION:=4.25
-PKG_RELEASE:=2
+PKG_VERSION:=4.29
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENCE:=MPL-2.0
 
@@ -16,7 +16,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
     https://download.cdn.mozilla.net/pub/$(PKG_NAME)/releases/v$(PKG_VERSION)/src/ \
     https://archive.mozilla.org/pub/$(PKG_NAME)/releases/v$(PKG_VERSION)/src/
-PKG_HASH:=0bc309be21f91da4474c56df90415101c7f0c7c7cab2943cd943cd7896985256
+PKG_HASH:=22286bdb8059d74632cc7c2865c139e63953ecfb33bf4362ab58827e86e92582
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -34,7 +34,8 @@ ifeq ($(LBITS),64)
 endif
 
 export MUSL=$(if $(CONFIG_LIBC_USE_GLIBC),0,1)
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed $(FPIC)
+TARGET_CFLAGS += -flto
 
 CONFIGURE_ARGS += \
     --build=$(GNU_HOST_NAME) \

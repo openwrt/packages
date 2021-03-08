@@ -1,22 +1,31 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cgroupfs-mount
-PKG_VERSION:=1.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/tianon/cgroupfs-mount/tar.gz/${PKG_VERSION}?
-PKG_HASH:=d6c8aff7af59c7d0082ee3018c97f73b0421e81a49bb28ad9f66a36da5cd6ec7
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/tianon/$(PKG_NAME)
+PKG_SOURCE_VERSION:=0549428171605eae3097a3e21bf7664845eac9e8
+PKG_SOURCE_DATE:=2020-06-26
+PKG_MIRROR_HASH:=ca217ffff5aa938149d2d8adfe15d800903d2fec180acb2400c36d62905988ea
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
 
+define Package/cgroupfs-mount/config
+	config CGROUPFS_MOUNT_KERNEL_CGROUPS
+		bool "Enable kernel cgroups support"
+		depends on PACKAGE_cgroupfs-mount
+		default y if ( DOCKER_KERNEL_OPTIONS || LXC_KERNEL_OPTIONS )
+		select KERNEL_CGROUPS
+endef
+
 define Package/cgroupfs-mount
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=cgroup mount scripts
-  DEPENDS:=@KERNEL_CGROUPS +mount-utils
+  DEPENDS:=+mount-utils
   MENU:=1
 endef
 

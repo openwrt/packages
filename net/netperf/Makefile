@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netperf
 PKG_VERSION:=2.7.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=Custom
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2

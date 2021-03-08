@@ -5,8 +5,8 @@
 set -e
 
 SDK_HOME="$HOME/sdk"
-SDK_PATH=https://downloads.openwrt.org/snapshots/targets/ar71xx/generic/
-SDK=-sdk-ar71xx-generic_
+SDK_PATH=https://downloads.openwrt.org/snapshots/targets/mpc85xx/p2020/
+SDK=-sdk-mpc85xx-p2020_
 PACKAGES_DIR="$PWD"
 
 echo_red()   { printf "\033[1;31m$*\033[m\n"; }

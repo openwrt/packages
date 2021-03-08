@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gammu
-PKG_VERSION:=1.41.0
-PKG_RELEASE:=3
+PKG_VERSION:=1.42.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://dl.cihar.com/gammu/releases
-PKG_HASH:=8426b69b07b259de301f41163fab5587935e27b94cc5eefab9277773b3e4df8f
+PKG_HASH:=d8f152314d7e4d3d643610d742845e0a016ce97c234ad4b1151574e1b09651ee
 
 PKG_MAINTAINER:=Vitaly Protsko <villy@sft.ru>
 PKG_LICENCE:=GPL-2.0-or-later
@@ -24,6 +24,7 @@ CMAKE_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/gammu
@@ -38,6 +39,9 @@ define Package/gammu
 endef
 
 CMAKE_OPTIONS += \
+	-DDWITH_GettextLibs=OFF \
+	-DWITH_Iconv=OFF \
+	-DWITH_Libintl=OFF \
 	-DWITH_LibDBI:BOOL=OFF
 
 define Package/gammu/install

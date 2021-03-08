@@ -175,7 +175,7 @@ config NGINX_HTTP_CACHE
 config NGINX_HTTP_V2
 	bool
 	prompt "Enable HTTP_V2 module"
-	default n
+	default y
 
 config NGINX_PCRE
 	bool

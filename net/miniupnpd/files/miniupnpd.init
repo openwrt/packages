@@ -61,12 +61,15 @@ upnpd() {
 	local upload download log_output port config_file serial_number model_number
 	local use_stun stun_host stun_port uuid notify_interval presentation_url
 	local upnp_lease_file clean_ruleset_threshold clean_ruleset_interval
+	local ipv6_disable
+	local ext_ip_reserved_ignore
 
 	local enabled
 	config_get_bool enabled config enabled 1
 	[ "$enabled" -eq 0 ] && return 1
 
 	config_get external_iface config external_iface
+	config_get external_iface6 config external_iface6
 	config_get external_zone config external_zone
 	config_get external_ip config external_ip
 	config_get internal_iface config internal_iface
@@ -86,22 +89,33 @@ upnpd() {
 	config_get upnp_lease_file config upnp_lease_file
 	config_get clean_ruleset_threshold config clean_ruleset_threshold
 	config_get clean_ruleset_interval config clean_ruleset_interval
+	config_get ipv6_disable config ipv6_disable 0
+	config_get ext_ip_reserved_ignore config ext_ip_reserved_ignore 0
 
 	local conf ifname ifname6
 
 	. /lib/functions/network.sh
 
-	# manual external interface overrides everything
-	[ -z "$external_iface" ] && {
-		# manual external zone (if dynamically find interfaces
-		# belonging to it) overrides network_find_wan*
-		[ -n "$external_zone" ] && ifname=$(fw3 -q zone "$external_zone" | head -1)
-		[ -z "$external_iface" ] && network_find_wan external_iface
-		[ -z "$external_iface6" ] && network_find_wan6 external_iface6
-	}
-
-	[ -z "$ifname" ] && network_get_device ifname "$external_iface"
-	[ -z "$ifname6" ] && network_get_device ifname6 "$external_iface6"
+	if [ -n "$external_iface" ] ; then
+		network_get_device ifname "$external_iface"
+	else
+		if [ -n "$external_zone" ] ; then
+			ifname=$(fw3 -q zone "$external_zone" 2>/dev/null | head -1)
+		else
+			network_find_wan external_iface && \
+				network_get_device ifname "$external_iface"
+		fi
+	fi
+	if [ -n "$external_iface6" ] ; then
+		network_get_device ifname6 "$external_iface6"
+	else
+		if [ -n "$external_zone" ] ; then
+			ifname6=$(fw3 -q zone "$external_zone" 2>/dev/null | head -1)
+		else
+			network_find_wan6 external_iface6 && \
+				network_get_device ifname6 "$external_iface6"
+		fi
+	fi
 
 	if [ -n "$config_file" ]; then
 		conf="$config_file"
@@ -119,7 +133,6 @@ upnpd() {
 		for iface in ${internal_iface:-lan}; do
 			local device
 			network_get_device device "$iface" && echo "listening_ip=$device"
-			network_get_device device "$iface" && echo "ipv6_listening_ip=$device"
 		done
 
 		config_load "upnpd"
@@ -129,6 +142,8 @@ upnpd() {
 		upnpd_write_bool system_uptime 1
 		upnpd_write_bool igdv1 0 force_igd_desc_v1
 		upnpd_write_bool use_stun 0 ext_perform_stun
+		upnpd_write_bool ipv6_disable $ipv6_disable
+		upnpd_write_bool ext_ip_reserved_ignore $ext_ip_reserved_ignore
 
 		[ "$use_stun" -eq 0 ] || {
 			[ -n "$stun_host" ] && echo "ext_stun_host=$stun_host"

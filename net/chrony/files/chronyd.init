@@ -4,23 +4,28 @@
 START=15
 USE_PROCD=1
 PROG=/usr/sbin/chronyd
-CONFIGFILE=/var/etc/chrony.conf
-INCLUDEFILE=/etc/chrony/chrony.conf
+CONFIGFILE=/etc/chrony/chrony.conf
+INCLUDEFILE=/var/etc/chrony.d/10-uci.conf
+RTCDEVICE=/dev/rtc0
 
 handle_source() {
-	local cfg=$1 sourcetype=$2 hostname minpoll maxpoll iburst
+	local cfg=$1 sourcetype=$2 disabled hostname minpoll maxpoll iburst nts
 
+	config_get_bool disabled "$cfg" disabled 0
+	[ "$disabled" = "1" ] && return
 	hostname=$NTP_SOURCE_HOSTNAME
 	[ -z "$hostname" ] && config_get hostname "$cfg" hostname
 	[ -z "$hostname" ] && return
 	config_get minpoll "$cfg" minpoll
 	config_get maxpoll "$cfg" maxpoll
 	config_get_bool iburst "$cfg" iburst 0
+	config_get_bool nts "$cfg" nts 0
 	echo $(
 		echo $sourcetype $hostname
 		[ -n "$minpoll" ] && echo minpoll $minpoll
 		[ -n "$maxpoll" ] && echo maxpoll $maxpoll
 		[ "$iburst" = "1" ] && echo iburst
+		[ "$nts" = "1" ] && echo nts
 	)
 }
 
@@ -53,24 +58,36 @@ handle_makestep() {
 	echo makestep $threshold $limit
 }
 
+handle_nts() {
+	local cfg=$1 threshold limit
+
+	config_get_bool rtccheck "$cfg" rtccheck 0
+	config_get_bool systemcerts "$cfg" systemcerts 1
+	config_get trustedcerts "$cfg" trustedcerts
+	# Disable certificate time checks if no RTC is present
+	[ "$rtccheck" = "1" ] && ! [ -c $RTCDEVICE ] && echo nocerttimecheck 1
+	[ "$systemcerts" = "0" ] && echo nosystemcert
+	[ -n "$trustedcerts" ] && echo ntstrustedcerts "$trustedcerts"
+}
+
 start_service() {
 	. /lib/functions/network.sh
 
 	procd_open_instance
-	procd_set_param command $PROG -n -f $CONFIGFILE
+	procd_set_param command $PROG -n
 	procd_set_param file $CONFIGFILE
 	procd_set_param file $INCLUDEFILE
 	procd_close_instance
 
 	config_load chrony
-	mkdir -p $(dirname $CONFIGFILE)
+	mkdir -p $(dirname $INCLUDEFILE)
 
 	(
-		echo include $INCLUDEFILE
 		config_foreach handle_source server server
 		config_foreach handle_source pool pool
 		config_foreach handle_source peer peer
 		config_foreach handle_allow allow
 		config_foreach handle_makestep makestep
-	) > $CONFIGFILE
+		config_foreach handle_nts nts
+	) > $INCLUDEFILE
 }

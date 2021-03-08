@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2019-2021 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,21 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-py
-PKG_VERSION:=1.8.1
-PKG_RELEASE:=2
+PKG_VERSION:=1.10.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=py
-PKG_HASH:=5e27081401262157467ad6e7f851b7aa402c5852dbcb3dae06768434de5752aa
+PKG_HASH:=21b81bda15b66ef5e1a777a21c4dcd9c20ad3efd0b3f817e7a809035269e1bd3
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
+
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
-
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
 
 define Package/python3-py
   SUBMENU:=Python
@@ -30,7 +30,7 @@ define Package/python3-py
   CATEGORY:=Languages
   TITLE:=py
   URL:=https://github.com/pytest-dev/py
-  DEPENDS:=+python3-light
+  DEPENDS:=+python3-light +python3-xml +python3-urllib
 endef
 
 define Package/python3-py/description

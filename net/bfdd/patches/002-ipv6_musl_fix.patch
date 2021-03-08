@@ -1,10 +1,18 @@
---- a/bfd_packet.c	2019-08-15 02:45:47.270120616 +0300
-+++ b/bfd_packet.c	2019-08-15 02:44:38.266117706 +0300
-@@ -34,7 +34,6 @@
+--- a/bfd_packet.c
++++ b/bfd_packet.c
+@@ -29,12 +29,15 @@
+ #define _UAPI_IPV6_H
+ #endif /* _UAPI_IPV6_H */
+ 
++#include <features.h>
+ #include <linux/filter.h>
+ #include <linux/if_ether.h>
  #include <linux/if_packet.h>
  #include <linux/udp.h>
  #include <linux/ip.h>
--#include <linux/ipv6.h>
++#ifdef __GLIBC__
+ #include <linux/ipv6.h>
++#endif
  
  #include <arpa/inet.h>
  #include <sys/types.h>
