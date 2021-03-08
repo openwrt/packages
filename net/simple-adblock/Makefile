@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=simple-adblock
-PKG_VERSION:=1.8.4
-PKG_RELEASE:=10
+PKG_VERSION:=1.8.5
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 PKG_LICENSE:=GPL-3.0-or-later
 
@@ -40,7 +40,7 @@ endef
 define Package/simple-adblock/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/simple-adblock.init $(1)/etc/init.d/simple-adblock
-	sed -i "s|^\(PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/simple-adblock
+	$(SED) "s|^\(PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/simple-adblock
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/simple-adblock.conf $(1)/etc/config/simple-adblock
 	$(INSTALL_DIR) $(1)/tmp

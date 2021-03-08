@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 # Copyright 2017-2020 Stan Grishin (stangri@melmac.net)
-# shellcheck disable=SC2039,SC1091
+# shellcheck disable=SC2039,SC1091,SC2016
 PKG_VERSION='dev-test'
 
 # shellcheck disable=SC2034
@@ -9,21 +9,12 @@ START=94
 USE_PROCD=1
 LC_ALL=C
 
-if type extra_command 1>/dev/null 2>&1; then
-	extra_command 'check' 'Checks if specified domain is found in current block-list'
-	extra_command 'dl' 'Force-downloads all enabled block-list'
-	extra_command 'sizes' 'Displays the file-sizes of enabled block-listo'
-	extra_command 'show' 'Shows the service last-run status'
-	extra_command 'version' 'Show version information'
-else
-# shellcheck disable=SC2034
-	EXTRA_COMMANDS='check dl killcache sizes show version'
-# shellcheck disable=SC2034
-	EXTRA_HELP='	check	Checks if specified domain is found in current block-list
-	dl	Force-downloads all enabled block-list
-	sizes	Displays the file-sizes of enabled block-lists
-	show	Shows the service last-run status'
-fi
+extra_command 'check' 'Checks if specified domain is found in current block-list'
+extra_command 'dl' 'Force-downloads all enabled block-list'
+extra_command 'killcache' 'Delete all cached files'
+extra_command 'sizes' 'Displays the file-sizes of enabled block-listo'
+extra_command 'show' 'Shows the service last-run status'
+extra_command 'version' 'Show version information'
 
 readonly packageName='simple-adblock'
 readonly serviceName="$packageName $PKG_VERSION"
@@ -61,6 +52,7 @@ readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
 readonly __OK__='\033[0;32m[\xe2\x9c\x93]\033[0m'
 readonly __FAIL__='\033[0;31m[\xe2\x9c\x97]\033[0m'
 readonly _ERROR_='\033[0;31mERROR\033[0m'
+readonly _WARNING_='\033[0;33mWARNING\033[0m'
 
 version() { echo "$PKG_VERSION"; }
 
@@ -124,6 +116,8 @@ dnsmasq_hup() { killall -q -HUP dnsmasq; }
 dnsmasq_kill() { killall -q -KILL dnsmasq; }
 dnsmasq_restart() { /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
 unbound_restart() { /etc/init.d/unbound restart >/dev/null 2>&1; }
+is_force_dns_active() { iptables-save | grep -q -w -- '--dport 53'; }
+is_present() { command -v "$1" >/dev/null 2>&1; }
 
 output() {
 # Can take a single parameter (text) to be output at any verbosity
@@ -144,35 +138,14 @@ output() {
 	fi
 }
 
-serviceEnabled=1
-forceDNS=1
-parallelDL=1
-debug=0
-compressedCache=0
-ipv6Enabled=0
-configUpdateEnabled=0
-configUpdateURL=''
-bootDelay=120
-dlTimeout=20
-curlRetry=3
-verbosity=2
-led=''
-targetDNS=dnsmasq.servers
-dnsInstance=0
-allowed_domains=''
-blocked_domains=''
-allowed_domains_urls=''
-blocked_domains_urls=''
-blocked_hosts_urls=''
-dl_command=''
-dl_flag=''
-outputFilter=''
-outputFilterIPv6=''
-outputFile=''
-outputGzip=''
-outputCache='' 
-isSSLSupported=''
-allowIDN=0
+serviceEnabled=''; forceDNS=''; parallelDL=''; debug=''; compressedCache='';
+ipv6Enabled=''; configUpdateEnabled=''; configUpdateURL=''; bootDelay='';
+dlTimeout=''; curlRetry=''; verbosity=''; led=''; targetDNS=''; dnsInstance=''; 
+allowed_domains=''; allowed_domains_urls='';
+blocked_domains=''; blocked_domains_urls=''; blocked_hosts_urls='';
+dl_command=''; dl_flag=''; isSSLSupported=''; allowIDN='';
+outputFilter=''; outputFilterIPv6=''; outputFile=''; outputGzip=''; outputCache='';
+awk='awk';
 
 load_package_config() {
 	config_load "$packageName"
@@ -261,11 +234,22 @@ load_package_config() {
 	fi
 	. /lib/functions/network.sh
 	. /usr/share/libubox/jshn.sh
+	is_present 'gawk' && awk='gawk'
+	if ! is_present '/usr/libexec/grep-gnu' || ! is_present '/usr/libexec/sed-gnu' || \
+		! is_present '/usr/libexec/sort-coreutils' || ! is_present 'gawk'; then
+			local s="opkg update; opkg --force-overwrite install"
+			is_present 'gawk' || s="$s gawk"
+			is_present '/usr/libexec/grep-gnu' || s="$s grep"
+			is_present '/usr/libexec/sed-gnu' || s="$s sed"
+			is_present '/usr/libexec/sort-coreutils' || s="$s coreutils-sort"
+			output "$_WARNING_: Some recommended packages are missing, install them by running:\\n"
+			output "$s;\\n"
+	fi
 	# Prefer curl because it supports the file:// scheme.
-	if command -v curl >/dev/null 2>&1; then
+	if is_present 'curl'; then
 		dl_command="curl --insecure --retry $curlRetry --connect-timeout $dlTimeout --silent"
 		dl_flag="-o"
-	elif command -v wget >/dev/null 2>&1 && wget --version 2>/dev/null | grep -q "+https"; then
+	elif is_present wget && wget --version 2>/dev/null | grep -q "+https"; then
 		dl_command="wget --no-check-certificate --timeout $dlTimeout -q"
 		dl_flag="-O"
 	else
@@ -464,7 +448,8 @@ dnsOps() {
 }
 
 tmpfs() {
-	local action="$1" instance="$2" value="$3"
+# shellcheck disable=SC2034
+	local action="$1" param="$2" value="$3"
 	local status message error stats
 	local reload restart curReload curRestart ret i
 	if [ -s "$jsonFile" ]; then
@@ -476,15 +461,7 @@ tmpfs() {
 	fi
 	case "$action" in
 		get)
-			case "$instance" in
-				status)
-					printf "%b" "$status"; return;;
-				message) 
-					printf "%b" "$message"; return;;
-				error) 
-					printf "%b" "$error"; return;;
-				stats) 
-					printf "%b" "$stats"; return;;
+			case "$param" in
 				triggers)
 					curReload="$parallelDL $debug $dlTimeout $allowed_domains $blocked_domains $allowed_domains_urls $blocked_domains_urls $blocked_hosts_urls $targetDNS"
 					curRestart="$compressedCache $forceDNS $led"
@@ -497,54 +474,30 @@ tmpfs() {
 					fi
 					printf "%b" "$ret"
 					return;;
+				*)
+					printf "%b" "$(eval echo "\$$param")"; return;;
 			esac
 			;;
 		add)
-			case "$instance" in
-				status)
-					[ -n "$status" ] && status="$status $value" || status="$value";;
-				message) 
-					[ -n "$message" ] && message="$message $value" || message="$value";;
-				error)
-					[ -n "$error" ] && error="$error $value" || error="$value";;
-				stats) 
-					[ -n "$stats" ] && stats="$stats $value" || stats="$value";;
-			esac
-			;;
+			eval "$param"='$(eval echo "\$$param")${value} ';;
 		del)
-			case "$instance" in
+			case "$param" in
 				all)
-					unset status;
-					unset message;
-					unset error;
-					unset stats;
-					;;
-				status)
-					unset status;;
-				message) 
-					unset message;;
-				error) 
-					unset error;;
-				stats) 
-					unset stats;;
+					unset status message error stats;;
 				triggers) 
-					unset reload; unset restart;;
+					unset reload restart;;
+				*)
+					unset "$param";;
 			esac
 			;;
 		set)
-			case "$instance" in
-				status)
-					status="$value";;
-				message) 
-					message="$value";;
-				error) 
-					error="$value";;
-				stats) 
-					stats="$value";;
+			case "$param" in
 				triggers) 
 					reload="$parallelDL $debug $dlTimeout $allowed_domains $blocked_domains $allowed_domains_urls $blocked_domains_urls $blocked_hosts_urls $targetDNS"
 					restart="$compressedCache $forceDNS $led"
 					;;
+				*)
+					eval "$param"='$value';;
 			esac
 			;;
 	esac
@@ -677,7 +630,7 @@ download_lists() {
 	tmpfs set status "statusDownloading"
 
 	rm -f "$A_TMP" "$B_TMP" "$outputFile" "$outputCache" "$outputGzip"
-	if [ "$(awk '/^MemFree/ {print int($2/1000)}' "/proc/meminfo")" -lt 32 ]; then
+	if [ "$($awk '/^MemFree/ {print int($2/1000)}' "/proc/meminfo")" -lt 32 ]; then
 		output 3 'Low free memory, restarting resolver... '
 		if dnsOps 'quiet'; then
 			output_okn
@@ -728,7 +681,7 @@ download_lists() {
 	[ -n "$blocked_domains" ] && for hf in ${blocked_domains}; do echo "$hf" | sed "$domainsFilter" >> $B_TMP; done
 	allowed_domains="${allowed_domains}
 $(cat $A_TMP)"
-	[ -n "$allowed_domains" ] && for hf in ${allowed_domains}; do hf="$(echo "$hf" | sed 's/\./\\./g')"; w_filter="$w_filter/^${hf}$/d;/\\.${hf}$/d;"; done
+	[ -n "$allowed_domains" ] && for hf in ${allowed_domains}; do hf="$(echo "$hf" | sed 's/\./\\./g')"; w_filter="$w_filter/${hf}$/d;"; done
 
 	[ ! -s "$B_TMP" ] && return 1
 
@@ -758,11 +711,11 @@ $(cat $A_TMP)"
 		# TLD optimization written by Dirk Brenken (dev@brenken.org)
 		output 2 'Optimizing combined list '
 		tmpfs set message "$(getStatusText "statusProcessing"): optimizing combined list"
-# 	sed -E 'G;:t;s/(.*)(\.)(.*)(\n)(.*)/\1\4\5\2\3/;tt;s/(.*)\n(\.)(.*)/\3\2\1/' is actually slower than awk
-		if awk -F "." '{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "$A_TMP" > "$B_TMP"; then
+# 	sed -E 'G;:t;s/(.*)(\.)(.*)(\n)(.*)/\1\4\5\2\3/;tt;s/(.*)\n(\.)(.*)/\3\2\1/' is actually slower than command below
+		if $awk -F "." '{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "$A_TMP" > "$B_TMP"; then
 			if sort "$B_TMP" > "$A_TMP"; then
-				if awk '{if(NR=1){tld=$NF};while(getline){if($NF!~tld"\\."){print tld;tld=$NF}}print tld}' "$A_TMP" > "$B_TMP"; then
-					if awk -F "." '{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "$B_TMP" > "$A_TMP"; then
+				if $awk '{if(NR=1){tld=$NF};while(getline){if($NF!~tld"\\."){print tld;tld=$NF}}print tld}' "$A_TMP" > "$B_TMP"; then
+					if $awk -F "." '{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "$B_TMP" > "$A_TMP"; then
 						if sort -u "$A_TMP" > "$B_TMP"; then
 							output_ok
 						else
@@ -1154,7 +1107,7 @@ sizes() {
 	for i in $blocked_domains_urls; do
 		[ "${i//melmac}" != "$i" ] && continue
 		if $dl_command "$i" $dl_flag /tmp/sast 2>/dev/null && [ -s /tmp/sast ]; then
-			echo "# File size: $(du -sh /tmp/sast | awk '{print $1}')"
+			echo "# File size: $(du -sh /tmp/sast | $awk '{print $1}')"
 			if compare_values "$(du -sk /tmp/sast)" "500"; then
 				echo "# block-list too big for most routers"
 			elif compare_values "$(du -sk /tmp/sast)" "100"; then
@@ -1172,7 +1125,7 @@ sizes() {
 
 	for i in $blocked_hosts_urls; do
 		if $dl_command "$i" $dl_flag /tmp/sast 2>/dev/null && [ -s /tmp/sast ]; then
-			echo "# File size: $(du -sh /tmp/sast | awk '{print $1}')"
+			echo "# File size: $(du -sh /tmp/sast | $awk '{print $1}')"
 			if compare_values "$(du -sk /tmp/sast)" "500"; then
 				echo "# block-list too big for most routers"
 			elif compare_values "$(du -sk /tmp/sast)" "100"; then
