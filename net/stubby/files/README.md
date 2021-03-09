@@ -153,10 +153,10 @@ require that the `dnsmasq` package on the OpenWRT device is replaced with the
 #### DNSSEC by stubby
 
 Configuring stubby to perform DNSSEC validation requires setting the stubby
-configuration option `dnssec_return_status` to `'1'` in `/etc/config/stubby`,
+configuration option `dnssec_return_status` to `'GETDNS_EXTENSION_TRUE'` in `/etc/config/stubby`,
 which can be done by editing the file directly or by executing the commands:
 
-    uci set stubby.global.dnssec_return_status=1
+    uci set stubby.global.dnssec_return_status=GETDNS_EXTENSION_TRUE
     uci commit && reload_config
     
 With stubby performing DNSSEC validation, dnsmasq needs to be configured to
