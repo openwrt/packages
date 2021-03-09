@@ -9,7 +9,7 @@ define Host/Compile/Default
 endef
 
 define Host/Install/Default
-	$(call Ninja,-C $(HOST_BUILD_DIR)/$(CMAKE_BINARY_SUBDIR) install,DESTDIR="$(HOST_INSTALL_DIR)")
+	$(call Ninja,-C $(HOST_BUILD_DIR)/$(CMAKE_BINARY_SUBDIR) install,)
 endef
 
 define Host/Uninstall/Default
