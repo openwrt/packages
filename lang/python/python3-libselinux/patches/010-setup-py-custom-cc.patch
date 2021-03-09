@@ -1,6 +1,6 @@
 --- a/src/Makefile
 +++ b/src/Makefile
-@@ -131,7 +131,7 @@ SWIGRUBY = swig -Wall -ruby -o $(SWIGRUB
+@@ -139,7 +139,7 @@ SWIGRUBY = swig -Wall -ruby -o $(SWIGRUB
  all: $(LIBA) $(LIBSO) $(LIBPC)
  
  pywrap: all selinuxswig_python_exception.i
