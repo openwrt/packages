@@ -11,6 +11,7 @@ c_args = [@CFLAGS@]
 c_link_args = [@LDFLAGS@]
 cpp_args = [@CXXFLAGS@]
 cpp_link_args = [@LDFLAGS@]
+prefix = '/usr'
 
 [host_machine]
 system = 'linux'
@@ -20,6 +21,3 @@ endian = '@ENDIAN@'
 
 [properties]
 needs_exe_wrapper = true
-
-[paths]
-prefix = '/usr'
