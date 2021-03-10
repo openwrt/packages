@@ -1082,7 +1082,7 @@ f_query()
 #
 f_jsnup()
 {
-	local runtime utils memory bg_pid status="${1:-"enabled"}"
+	local entry sources runtime utils memory bg_pid status="${1:-"enabled"}"
 
 	case "${status}" in
 		"enabled"|"error")
@@ -1125,6 +1125,8 @@ f_jsnup()
 			json_get_var runtime "last_run"
 		fi
 	fi
+	sources="$(printf "%s\n" ${adb_sources} | "${adb_sort}" | "${adb_awk}" '{ORS=" ";print $0}')"
+
 	> "${adb_rtfile}"
 	json_load_file "${adb_rtfile}" >/dev/null 2>&1
 	json_init
@@ -1132,7 +1134,7 @@ f_jsnup()
 	json_add_string "adblock_version" "${adb_ver}"
 	json_add_string "blocked_domains" "${adb_cnt:-0}"
 	json_add_array "active_sources"
-	for entry in ${adb_sources}
+	for entry in ${sources}
 	do
 		json_add_object
 		json_add_string "source" "${entry}"
