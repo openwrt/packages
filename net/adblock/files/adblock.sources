@@ -13,6 +13,13 @@
 		"focus": "general",
 		"descurl": "https://adguard.com"
 	},
+	"adguard_tracking": {
+		"url": "https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/combined_disguised_trackers_justdomains.txt",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "S",
+		"focus": "tracking",
+		"descurl": "https://github.com/AdguardTeam/cname-trackers"
+	},
 	"android_tracking": {
 		"url": "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/android-tracking.txt",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
