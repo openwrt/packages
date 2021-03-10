@@ -1,6 +1,6 @@
 #!/bin/sh
 # send mail script for adblock notifications
-# Copyright (c) 2015-2020 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2015-2021 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # Please note: you have to manually install and configure the package 'msmtp' before using this script
@@ -55,12 +55,9 @@ adb_mailhead="From: ${adb_mailsender}\\nTo: ${adb_mailreceiver}\\nSubject: ${adb
 #
 sys_info="$(strings /etc/banner 2>/dev/null; ubus call system board | sed -e 's/\"release\": {//' | sed -e 's/^[ \t]*//' | sed -e 's/[{}\",]//g' | sed -e 's/[ ]/  \t/' | sed '/^$/d' 2>/dev/null)"
 adb_info="$(/etc/init.d/adblock status 2>/dev/null)"
-if [ -f "/var/log/messages" ]
+if [ -x "${adb_logread}" ]
 then
-	log_info="$(awk '/adblock-/{NR=1;max=79;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max),"&#8629;"} else {print " ",substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}' /var/log/messages)"
-elif [ -x "${adb_logread}" ]
-then
-	log_info="$("${adb_logread}" -e "adblock-" | awk '{NR=1;max=79;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max),"&#8629;"} else {print " ",substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}')"
+	log_info="$("${adb_logread}" -l 100 -e "adblock-" | awk '{NR=1;max=120;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max)}else{print substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}')"
 fi
 
 # mail body
