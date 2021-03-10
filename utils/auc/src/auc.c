@@ -13,7 +13,9 @@
  */
 
 #define _GNU_SOURCE
-#define AUC_VERSION "0.1.5"
+#ifndef AUC_VERSION
+#define AUC_VERSION "unknown"
+#endif
 
 #include <errno.h>
 #include <fcntl.h>
@@ -40,13 +42,19 @@
 
 #define REQ_TIMEOUT 15
 
-#define API_REQUEST "api/build"
+#define API_BRANCHES "branches"
+#define API_INDEX "index"
 #define API_JSON "json"
-#define API_JSON_BRANCHES "json/branches.json"
+#define API_JSON_EXT "." API_JSON
+#define API_PACKAGES "packages"
+#define API_REQUEST "api/build"
+#define API_STATUS_QUEUED "queued"
+#define API_STATUS_STARTED "started"
 #define API_STORE "store"
-#define API_JSON_TARGETS "targets"
+#define API_TARGETS "targets"
 
 #define PUBKEY_PATH "/etc/opkg/keys"
+#define SHA256SUM "/bin/busybox sha256sum"
 
 #ifdef AUC_DEBUG
 #define DPRINTF(...) if (debug) fprintf(stderr, __VA_ARGS__)
@@ -131,17 +139,17 @@ static const struct blobmsg_policy board_policy[__BOARD_MAX] = {
  */
 enum {
 	RELEASE_DISTRIBUTION,
-	RELEASE_VERSION,
 	RELEASE_REVISION,
 	RELEASE_TARGET,
+	RELEASE_VERSION,
 	__RELEASE_MAX,
 };
 
 static const struct blobmsg_policy release_policy[__RELEASE_MAX] = {
 	[RELEASE_DISTRIBUTION] = { .name = "distribution", .type = BLOBMSG_TYPE_STRING },
-	[RELEASE_VERSION] = { .name = "version", .type = BLOBMSG_TYPE_STRING },
 	[RELEASE_REVISION] = { .name = "revision", .type = BLOBMSG_TYPE_STRING },
 	[RELEASE_TARGET] = { .name = "target", .type = BLOBMSG_TYPE_STRING },
+	[RELEASE_VERSION] = { .name = "version", .type = BLOBMSG_TYPE_STRING },
 };
 
 /*
@@ -175,105 +183,93 @@ static const struct blobmsg_policy upgtest_policy[__UPGTEST_MAX] = {
 };
 
 /*
- * generic policy for HTTP JSON reply
- */
-enum {
-	REPLY_ARRAY,
-	REPLY_OBJECT,
-	__REPLY_MAX,
-};
-
-static const struct blobmsg_policy reply_policy[__REPLY_MAX] = {
-	[REPLY_ARRAY] = { .name = "reply", .type = BLOBMSG_TYPE_ARRAY },
-	[REPLY_OBJECT] = { .name = "reply", .type = BLOBMSG_TYPE_TABLE },
-};
-
-/*
  * policy for branches.json
  */
 enum {
-	BRANCH_NAME,
-	BRANCH_ENABLED,
-	BRANCH_SNAPSHOT,
-	BRANCH_VERSIONS,
-	BRANCH_GIT_BRANCH,
-	BRANCH_DATE_RELEASE,
 	BRANCH_DATE_EOL,
+	BRANCH_DATE_RELEASE,
+	BRANCH_ENABLED,
+	BRANCH_EXTRA_REPOS,
+	BRANCH_GIT_BRANCH,
+	BRANCH_NAME,
 	BRANCH_PATH,
 	BRANCH_PATH_PACKAGES,
 	BRANCH_PUBKEY,
-	BRANCH_UPDATES,
 	BRANCH_REPOS,
-	BRANCH_EXTRA_REPOS,
+	BRANCH_SNAPSHOT,
 	BRANCH_TARGETS,
+	BRANCH_UPDATES,
+	BRANCH_VERSIONS,
 	__BRANCH_MAX,
 };
 
 static const struct blobmsg_policy branches_policy[__BRANCH_MAX] = {
-	[BRANCH_NAME] = { .name = "name", .type = BLOBMSG_TYPE_STRING },
-	[BRANCH_ENABLED] = { .name = "enabled", .type = BLOBMSG_TYPE_BOOL },
-	[BRANCH_SNAPSHOT] = { .name = "snapshot", .type = BLOBMSG_TYPE_BOOL },
-	[BRANCH_VERSIONS] = { .name = "versions", .type = BLOBMSG_TYPE_ARRAY },
-	[BRANCH_DATE_RELEASE] = { .name = "release_date", .type = BLOBMSG_TYPE_STRING },
 	[BRANCH_DATE_EOL] = { .name = "eol", .type = BLOBMSG_TYPE_STRING },
+	[BRANCH_DATE_RELEASE] = { .name = "release_date", .type = BLOBMSG_TYPE_STRING },
+	[BRANCH_ENABLED] = { .name = "enabled", .type = BLOBMSG_TYPE_BOOL },
+	[BRANCH_EXTRA_REPOS] = { .name = "extra_repos", .type = BLOBMSG_TYPE_TABLE },
 	[BRANCH_GIT_BRANCH] = { .name = "git_branch", .type = BLOBMSG_TYPE_STRING },
+	[BRANCH_NAME] = { .name = "name", .type = BLOBMSG_TYPE_STRING },
 	[BRANCH_PATH] = { .name = "path", .type = BLOBMSG_TYPE_STRING },
 	[BRANCH_PATH_PACKAGES] = { .name = "path_packages", .type = BLOBMSG_TYPE_STRING },
 	[BRANCH_PUBKEY] = { .name = "pubkey", .type = BLOBMSG_TYPE_STRING },
-	[BRANCH_UPDATES] = { .name = "updates", .type = BLOBMSG_TYPE_STRING },
 	[BRANCH_REPOS] = { .name = "repos", .type = BLOBMSG_TYPE_ARRAY },
-	[BRANCH_EXTRA_REPOS] = { .name = "extra_repos", .type = BLOBMSG_TYPE_TABLE },
+	[BRANCH_SNAPSHOT] = { .name = "snapshot", .type = BLOBMSG_TYPE_BOOL },
 	[BRANCH_TARGETS] = { .name = "targets", .type = BLOBMSG_TYPE_TABLE },
+	[BRANCH_UPDATES] = { .name = "updates", .type = BLOBMSG_TYPE_STRING },
+	[BRANCH_VERSIONS] = { .name = "versions", .type = BLOBMSG_TYPE_ARRAY },
 };
 
 /*
  * shared policy for target.json and server image request reply
  */
 enum {
-	TARGET_METADATA_VERSION,
 	TARGET_ARCH_PACKAGES,
+	TARGET_BINDIR,
+	TARGET_BUILD_AT,
 	TARGET_DEFAULT_PACKAGES,
 	TARGET_DEVICE_PACKAGES,
+	TARGET_ENQUEUED_AT,
 	TARGET_IMAGE_PREFIX,
 	TARGET_IMAGES,
+	TARGET_MESSAGE,
+	TARGET_MANIFEST,
+	TARGET_METADATA_VERSION,
+	TARGET_REQUEST_HASH,
 	TARGET_SOURCE_DATE_EPOCH,
+	TARGET_STATUS,
+	TARGET_STDERR,
+	TARGET_STDOUT,
 	TARGET_SUPPORTED_DEVICES,
 	TARGET_TARGET,
 	TARGET_TITLES,
 	TARGET_VERSION_CODE,
 	TARGET_VERSION_NUMBER,
-	TARGET_BUILD_AT,
-	TARGET_ENQUEUED_AT,
-	TARGET_MANIFEST,
-	TARGET_REQUEST_HASH,
-	TARGET_STATUS,
-	TARGET_STDERR,
-	TARGET_STDOUT,
-	TARGET_BINDIR,
 	__TARGET_MAX,
 };
 
 static const struct blobmsg_policy target_policy[__TARGET_MAX] = {
-	[TARGET_METADATA_VERSION] = { .name = "metadata_version", .type = BLOBMSG_TYPE_INT32 },
 	[TARGET_ARCH_PACKAGES] = { .name = "arch_packages", .type = BLOBMSG_TYPE_STRING },
+	[TARGET_BINDIR] = { .name = "bin_dir", .type = BLOBMSG_TYPE_STRING },
+	[TARGET_BUILD_AT] = { .name = "built_at", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_DEFAULT_PACKAGES] = { .name = "default_packages", .type = BLOBMSG_TYPE_ARRAY },
 	[TARGET_DEVICE_PACKAGES] = { .name = "device_packages", .type = BLOBMSG_TYPE_ARRAY },
+	[TARGET_ENQUEUED_AT] = { .name = "enqueued_at", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_IMAGE_PREFIX] = { .name = "image_prefix", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_IMAGES] = { .name = "images", .type = BLOBMSG_TYPE_ARRAY },
+	[TARGET_MANIFEST] = { .name = "manifest", .type = BLOBMSG_TYPE_TABLE },
+	[TARGET_MESSAGE] = { .name = "message", .type = BLOBMSG_TYPE_STRING },
+	[TARGET_METADATA_VERSION] = { .name = "metadata_version", .type = BLOBMSG_TYPE_INT32 },
+	[TARGET_REQUEST_HASH] = { .name = "request_hash", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_SOURCE_DATE_EPOCH] = { .name = "source_date_epoch", .type = BLOBMSG_TYPE_STRING },
+	[TARGET_STATUS] = { .name = "status", .type = BLOBMSG_TYPE_STRING },
+	[TARGET_STDERR] = { .name = "stderr", .type = BLOBMSG_TYPE_STRING },
+	[TARGET_STDOUT] = { .name = "stdout", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_SUPPORTED_DEVICES] = { .name = "supported_devices", .type = BLOBMSG_TYPE_ARRAY },
 	[TARGET_TARGET] = { .name = "target", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_TITLES] = { .name = "titles", .type = BLOBMSG_TYPE_ARRAY },
 	[TARGET_VERSION_CODE] = { .name = "version_code", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_VERSION_NUMBER] = { .name = "version_number", .type = BLOBMSG_TYPE_STRING },
-	[TARGET_BUILD_AT] = { .name = "built_at", .type = BLOBMSG_TYPE_STRING },
-	[TARGET_ENQUEUED_AT] = { .name = "enqueued_at", .type = BLOBMSG_TYPE_STRING },
-	[TARGET_MANIFEST] = { .name = "manifest", .type = BLOBMSG_TYPE_TABLE },
-	[TARGET_REQUEST_HASH] = { .name = "request_hash", .type = BLOBMSG_TYPE_STRING },
-	[TARGET_STATUS] = { .name = "status", .type = BLOBMSG_TYPE_STRING },
-	[TARGET_STDERR] = { .name = "stderr", .type = BLOBMSG_TYPE_STRING },
-	[TARGET_STDOUT] = { .name = "stdout", .type = BLOBMSG_TYPE_STRING },
-	[TARGET_BINDIR] = { .name = "bin_dir", .type = BLOBMSG_TYPE_STRING },
 };
 
 /*
@@ -295,22 +291,32 @@ static const struct blobmsg_policy images_policy[__IMAGES_MAX] = {
 };
 
 /*
+ * generic policy for HTTP JSON reply
+ */
+enum {
+	REPLY_ARRAY,
+	REPLY_OBJECT,
+	__REPLY_MAX,
+};
+
+static const struct blobmsg_policy reply_policy[__REPLY_MAX] = {
+	[REPLY_ARRAY] = { .name = "reply", .type = BLOBMSG_TYPE_ARRAY },
+	[REPLY_OBJECT] = { .name = "reply", .type = BLOBMSG_TYPE_TABLE },
+};
+
+/*
  * policy for HTTP headers received from server
  */
 enum {
-	H_RANGE,
 	H_LEN,
-	H_IBSTATUS,
-	H_IBQUEUEPOS,
+	H_RANGE,
 	H_UNKNOWN_PACKAGE,
 	__H_MAX
 };
 
-static const struct blobmsg_policy policy[__H_MAX] = {
-	[H_RANGE] = { .name = "content-range", .type = BLOBMSG_TYPE_STRING },
+static const struct blobmsg_policy header_policy[__H_MAX] = {
 	[H_LEN] = { .name = "content-length", .type = BLOBMSG_TYPE_STRING },
-	[H_IBSTATUS] = { .name = "x-imagebuilder-status", .type = BLOBMSG_TYPE_STRING },
-	[H_IBQUEUEPOS] = { .name = "x-build-queue-position", .type = BLOBMSG_TYPE_STRING },
+	[H_RANGE] = { .name = "content-range", .type = BLOBMSG_TYPE_STRING },
 	[H_UNKNOWN_PACKAGE] = { .name = "x-unknown-package", .type = BLOBMSG_TYPE_STRING },
 };
 
@@ -431,7 +437,8 @@ static void pkglist_req_cb(struct ubus_request *req, int type, struct blob_attr 
 	struct blob_attr *tb[__PACKAGES_MAX];
 	struct blob_attr *cur;
 	int rem;
-	void *array;
+	struct avl_pkg *pkg;
+	void *table;
 
 	blobmsg_parse(packages_policy, __PACKAGES_MAX, tb, blob_data(msg), blob_len(msg));
 
@@ -440,15 +447,19 @@ static void pkglist_req_cb(struct ubus_request *req, int type, struct blob_attr 
 		return;
 	}
 
-	array = blobmsg_open_array(buf, "packages");
+	table = blobmsg_open_table(buf, "packages_versions");
 
 	blobmsg_for_each_attr(cur, tb[PACKAGES_PACKAGES], rem) {
 		if (is_builtin_pkg(blobmsg_name(cur)))
 			continue;
 
-		blobmsg_add_string(buf, NULL, blobmsg_name(cur));
+		pkg = avl_find_element(&pkg_tree, blobmsg_name(cur), pkg, avl);
+		if (!pkg)
+			continue;
+
+		blobmsg_add_string(buf, blobmsg_name(cur), pkg->version);
 	}
-	blobmsg_close_array(buf, array);
+	blobmsg_close_table(buf, table);
 };
 
 /*
@@ -600,7 +611,7 @@ static void header_done_cb(struct uclient *cl)
 
 	DPRINTF("status code: %d\n", cl->status_code);
 	DPRINTF("headers:\n%s\n", blobmsg_format_json_indent(cl->meta, true, 0));
-	blobmsg_parse(policy, __H_MAX, tb, blob_data(cl->meta), blob_len(cl->meta));
+	blobmsg_parse(header_policy, __H_MAX, tb, blob_data(cl->meta), blob_len(cl->meta));
 
 	switch (cl->status_code) {
 	case 400:
@@ -677,6 +688,9 @@ static void header_done_cb(struct uclient *cl)
 			perror("Cannot open output file");
 			request_done(cl);
 		}
+		break;
+	case 500:
+		/* server may reply JSON object */
 		break;
 
 	default:
@@ -811,7 +825,7 @@ static int server_request(const char *url, struct blob_buf *inbuf, struct blob_b
 	uclient_http_reset_headers(ucl);
 	uclient_http_set_header(ucl, "User-Agent", user_agent);
 	if (inbuf) {
-		uclient_http_set_header(ucl, "Content-Type", "text/json");
+		uclient_http_set_header(ucl, "Content-Type", "application/json");
 		post_data = blobmsg_format_json(inbuf->head, true);
 		uclient_write(ucl, post_data, strlen(post_data));
 	}
@@ -938,9 +952,9 @@ static int request_target(struct branch *br, char *url)
 
 	blobmsg_buf_init(&boardbuf);
 
-	if (server_request(url, NULL, &boardbuf)) {
+	if ((rc = server_request(url, NULL, &boardbuf))) {
 		blob_buf_free(&boardbuf);
-		return -EREMOTE;
+		return rc;
 	}
 
 	blobmsg_parse(reply_policy, __REPLY_MAX, tbr, blob_data(boardbuf.head), blob_len(boardbuf.head));
@@ -1052,7 +1066,8 @@ static void process_branch(struct blob_attr *branch, bool only_active)
 			continue;
 		}
 
-		asprintf(&board_json_file, "%s/%s/%s/%s/%s/%s.json", serverurl, API_JSON, br->path, API_JSON_TARGETS, target, board_name);
+		asprintf(&board_json_file, "%s/%s/%s/%s/%s/%s%s", serverurl, API_JSON,
+			br->path, API_TARGETS, target, board_name, API_JSON_EXT);
 		tmp = board_json_file;
 		while ((tmp = strchr(tmp, ',')))
 			*tmp = '_';
@@ -1077,11 +1092,12 @@ static int request_branches(bool only_active)
 	char url[256];
 
 	blobmsg_buf_init(&brbuf);
-	snprintf(url, sizeof(url), "%s/%s", serverurl, API_JSON_BRANCHES);
+	snprintf(url, sizeof(url), "%s/%s/%s%s", serverurl, API_JSON,
+		API_BRANCHES, API_JSON_EXT);
 
-	if (server_request(url, NULL, &brbuf)) {
+	if ((rc = server_request(url, NULL, &brbuf))) {
 		blob_buf_free(&brbuf);
-		return -EREMOTE;
+		return rc;
 	};
 
 	blobmsg_parse(reply_policy, __REPLY_MAX, tb, blob_data(brbuf.head), blob_len(brbuf.head));
@@ -1180,10 +1196,11 @@ static int request_packages(struct branch *branch)
 	fprintf(stderr, "Requesting package lists...\n");
 
 	blobmsg_buf_init(&archpkgbuf);
-	snprintf(url, sizeof(url), "%s/%s/%s/targets/%s/index.json", serverurl, API_JSON, branch->path, target);
-	if (server_request(url, NULL, &archpkgbuf)) {
+	snprintf(url, sizeof(url), "%s/%s/%s/%s/%s/%s%s", serverurl, API_JSON,
+		branch->path, API_TARGETS, target, API_INDEX, API_JSON_EXT);
+	if ((rc = server_request(url, NULL, &archpkgbuf))) {
 		blob_buf_free(&archpkgbuf);
-		return -EREMOTE;
+		return rc;
 	};
 
 	ret = add_upg_packages(archpkgbuf.head, branch->arch_packages);
@@ -1193,11 +1210,12 @@ static int request_packages(struct branch *branch)
 		return ret;
 
 	blobmsg_buf_init(&pkgbuf);
-	snprintf(url, sizeof(url), "%s/%s/%s/packages/%s-index.json", serverurl, API_JSON, branch->path, branch->arch_packages);
-	if (server_request(url, NULL, &pkgbuf)) {
+	snprintf(url, sizeof(url), "%s/%s/%s/%s/%s-%s%s", serverurl, API_JSON,
+		branch->path, API_PACKAGES, branch->arch_packages, API_INDEX, API_JSON_EXT);
+	if ((rc = server_request(url, NULL, &pkgbuf))) {
 		blob_buf_free(&archpkgbuf);
 		blob_buf_free(&pkgbuf);
-		return -EREMOTE;
+		return rc;
 	};
 
 	ret = add_upg_packages(pkgbuf.head, NULL);
@@ -1267,10 +1285,42 @@ static int select_image(struct blob_attr *images, char **image_name, char **imag
 	return ret;
 }
 
+static bool validate_sha256(char *filename, char *sha256str)
+{
+	char *cmd = calloc(strlen(SHA256SUM) + 1 + strlen(filename) + 1, sizeof(char));
+	size_t reslen = (64 + 2 + strlen(filename) + 1) * sizeof(char);
+	char *resstr = malloc(reslen);
+	FILE *f;
+	bool ret = false;
+
+	strcpy(cmd, SHA256SUM);
+	strcat(cmd, " ");
+	strcat(cmd, filename);
+
+	f = popen(cmd, "r");
+	if (!f)
+		goto sha256free;
+
+	if (fread(resstr, reslen, 1, f) < 1)
+		goto sha256close;
+
+	if (!strncmp(sha256str, resstr, 64))
+		ret = true;
+
+sha256close:
+	fflush(f);
+	fclose(f);
+sha256free:
+	free(cmd);
+	free(resstr);
+
+	return ret;
+}
+
 static inline bool status_delay(const char *status)
 {
-	return !strcmp("queued", status) ||
-	       !strcmp("started", status);
+	return !strcmp(API_STATUS_QUEUED, status) ||
+	       !strcmp(API_STATUS_STARTED, status);
 }
 
 /* this main function is too big... todo: split */
@@ -1291,12 +1341,6 @@ int main(int args, char *argv[]) {
 	unsigned char argc = 1;
 	bool force = false, use_get = false;
 
-	uloop_init();
-	ctx = ubus_connect(NULL);
-	if (!ctx) {
-		fprintf(stderr, "failed to connect to ubus.\n");
-		return -1;
-	}
 	snprintf(user_agent, sizeof(user_agent), "%s (%s)", argv[0], AUC_VERSION);
 	fprintf(stdout, "%s\n", user_agent);
 
@@ -1327,10 +1371,6 @@ int main(int args, char *argv[]) {
 		argc++;
 	};
 
-	if (!ctx) {
-		fprintf(stderr, "failed to connect to ubus.\n");
-		return -1;
-	}
 	if (load_config()) {
 		rc=-EFAULT;
 		goto freeubus;
@@ -1354,6 +1394,13 @@ int main(int args, char *argv[]) {
 			rc=-EPROTONOSUPPORT;
 			goto freessl;
 		}
+	}
+
+	uloop_init();
+	ctx = ubus_connect(NULL);
+	if (!ctx) {
+		fprintf(stderr, "failed to connect to ubus.\n");
+		return -1;
 	}
 
 	blobmsg_buf_init(&checkbuf);
@@ -1391,10 +1438,8 @@ int main(int args, char *argv[]) {
 	else if (revcmp > 0)
 			upg_check |= PKG_DOWNGRADE;
 
-	if (request_packages(branch)) {
-		rc=-ECONNABORTED;
+	if ((rc = request_packages(branch)))
 		goto freebranches;
-	}
 
 	upg_check |= check_installed_packages(reqbuf.head);
 	if (upg_check & PKG_ERROR) {
@@ -1421,6 +1466,7 @@ int main(int args, char *argv[]) {
 		goto freebranches;
 
 	blobmsg_add_string(&reqbuf, "version", branch->version);
+	blobmsg_add_string(&reqbuf, "version_code", branch->version_code);
 	blobmsg_add_string(&reqbuf, "target", target);
 
 	sanetized_board_name = strdup(board_name);
@@ -1441,7 +1487,10 @@ int main(int args, char *argv[]) {
 
 		DPRINTF("requesting from %s\n%s%s", url, use_get?"":blobmsg_format_json_indent(reqbuf.head, true, 0), use_get?"":"\n");
 
-		server_request(url, use_get?NULL:&reqbuf, &imgbuf);
+		rc = server_request(url, use_get?NULL:&reqbuf, &imgbuf);
+		if (rc)
+			break;
+
 		blobmsg_parse(reply_policy, __REPLY_MAX, tbr, blob_data(imgbuf.head), blob_len(imgbuf.head));
 		if (!tbr[REPLY_OBJECT])
 			break;
@@ -1486,15 +1535,11 @@ int main(int args, char *argv[]) {
 		}
 	} while(retry);
 
-	if (!tb[TARGET_IMAGES]) {
-		if (!rc)
-			rc=-ESTRPIPE;
-		goto freebranches;
-	}
+	free(sanetized_board_name);
 
-	if (!tb[TARGET_BINDIR]) {
+	if (!tb[TARGET_IMAGES] || !tb[TARGET_BINDIR]) {
 		if (!rc)
-			rc=-ESTRPIPE;
+			rc=-EBADMSG;
 		goto freebranches;
 	}
 
@@ -1506,7 +1551,9 @@ int main(int args, char *argv[]) {
 	         image_name);
 
 	DPRINTF("downloading image from %s\n", url);
-	server_request(url, NULL, NULL);
+	rc = server_request(url, NULL, NULL);
+	if (rc)
+		goto freebranches;
 
 	filename = uclient_get_url_filename(url, "firmware.bin");
 
@@ -1520,6 +1567,13 @@ int main(int args, char *argv[]) {
 		fprintf(stderr, "file size mismatch\n");
 		unlink(filename);
 		rc=-EMSGSIZE;
+		goto freebranches;
+	}
+
+	if (!validate_sha256(filename, image_sha256)) {
+		fprintf(stderr, "sha256 mismatch\n");
+		unlink(filename);
+		rc=-EBADMSG;
 		goto freebranches;
 	}
 
@@ -1562,6 +1616,12 @@ freebranches:
 #endif
 	    )
 		fputs(blobmsg_get_string(tb[TARGET_STDERR]), stderr);
+
+	if (tb[TARGET_MESSAGE]) {
+		fputs(blobmsg_get_string(tb[TARGET_MESSAGE]), stderr);
+		fputc('\n', stderr);
+	}
+
 	/* ToDo */
 freeboard:
 	free(board_name);
@@ -1589,6 +1649,9 @@ freeubus:
 
 	if (ucl)
 		uclient_free(ucl);
+
+	if (rc)
+		fprintf(stderr, "%s (%d)\n", strerror(-1 * rc), -1 * rc);
 
 	return rc;
 }

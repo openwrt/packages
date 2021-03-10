@@ -25,6 +25,7 @@ define Package/auc/description
 endef
 
 EXTRA_CFLAGS += \
+	-D'AUC_VERSION=\"$(PKG_VERSION)-$(PKG_RELEASE)\"' \
 	$(if $(CONFIG_DEBUG),-DAUC_DEBUG=ON)
 
 define Package/auc/install
