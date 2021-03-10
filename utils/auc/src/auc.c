@@ -81,6 +81,8 @@ struct branch {
 	char *name;
 	char *git_branch;
 	char *version;
+	char *version_code;
+	char *version_number;
 	bool snapshot;
 	time_t release_time;
 	time_t eol_time;
@@ -975,9 +977,11 @@ static int request_target(struct branch *br, char *url)
 	json_to_string_arrays(tb[TARGET_DEFAULT_PACKAGES], &br->default_packages, NULL);
 	json_to_string_arrays(tb[TARGET_DEVICE_PACKAGES], &br->device_packages, NULL);
 
-/*	tb[TARGET_TITLES]
-	tb[TARGET_VERSION_CODE]
-	tb[TARGET_VERSION_NUMBER] */
+	if (tb[TARGET_VERSION_CODE])
+		br->version_code = strdup(blobmsg_get_string(tb[TARGET_VERSION_CODE]));
+
+	if (tb[TARGET_VERSION_NUMBER])
+		br->version_number = strdup(blobmsg_get_string(tb[TARGET_VERSION_NUMBER]));
 
 	blob_buf_free(&boardbuf);
 	return 0;
@@ -1072,7 +1076,6 @@ static int request_branches(bool only_active)
 	int rem;
 	char url[256];
 
-	fprintf(stderr, "Requesting available branches from server %s...\n", serverurl);
 	blobmsg_buf_init(&brbuf);
 	snprintf(url, sizeof(url), "%s/%s", serverurl, API_JSON_BRANCHES);
 
@@ -1283,7 +1286,8 @@ int main(int args, char *argv[]) {
 	struct stat imgstat;
 	int check_only = 0;
 	int retry_delay = 0;
-	int upg_check;
+	int upg_check = 0;
+	int revcmp;
 	unsigned char argc = 1;
 	bool force = false, use_get = false;
 
@@ -1366,8 +1370,7 @@ int main(int args, char *argv[]) {
 		goto freebufs;
 	}
 
-	fprintf(stdout, "running %s %s on %s (%s)\n", distribution,
-		version, target, board_name);
+	fprintf(stdout, "Running:   %s %s on %s (%s)\n", version, revision, target, board_name);
 
 	if (request_branches(true)) {
 		rc=-ENETUNREACH;
@@ -1380,23 +1383,32 @@ int main(int args, char *argv[]) {
 		goto freebranches;
 	}
 
+	fprintf(stdout, "Available: %s %s\n", branch->version_number, branch->version_code);
+
+	revcmp = strcmp(revision, branch->version_code);
+	if (revcmp < 0)
+			upg_check |= PKG_UPGRADE;
+	else if (revcmp > 0)
+			upg_check |= PKG_DOWNGRADE;
+
 	if (request_packages(branch)) {
 		rc=-ECONNABORTED;
 		goto freebranches;
 	}
 
-	upg_check = check_installed_packages(reqbuf.head);
+	upg_check |= check_installed_packages(reqbuf.head);
 	if (upg_check & PKG_ERROR) {
 		rc=-ENOPKG;
 		goto freebranches;
 	}
-
 	if (!upg_check && !force) {
+		fprintf(stderr, "Nothing to be updated. Use '-f' to force.\n");
 		rc=0;
 		goto freebranches;
 	};
 
 	if (!force && (upg_check & PKG_DOWNGRADE)) {
+		fprintf(stderr, "Refusing to downgrade. Use '-f' to force.\n");
 		rc=-EBADSLT;
 		goto freebranches;
 	};
@@ -1532,7 +1544,7 @@ int main(int args, char *argv[]) {
 		goto freebranches;
 	}
 
-	fprintf(stderr, "invoking sysupgrade\n");
+	fprintf(stdout, "invoking sysupgrade\n");
 	blobmsg_add_u8(&upgbuf, "keep", 1);
 	ubus_invoke(ctx, id, "upgrade_start", upgbuf.head, NULL, NULL, 120000);
 	sleep(10);
