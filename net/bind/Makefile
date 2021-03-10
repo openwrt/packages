@@ -40,6 +40,7 @@ PKG_CONFIG_DEPENDS := \
 PKG_BUILD_DEPENDS += BIND_LIBXML2:libxml2 BIND_LIBJSON:libjson-c
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/bind/Default
   SECTION:=net
