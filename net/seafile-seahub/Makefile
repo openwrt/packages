@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
+# Copyright (C) 2007-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,86 +8,89 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=seafile-seahub
-PKG_VERSION:=3.1.7
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
-PKG_LICENSE:=Apache-2.0
+PKG_VERSION:=7.1.5
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/haiwen/seahub.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=a984c86442e7fc10c3bcf6d92b4843f7263547eb
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/haiwen/seahub/tar.gz/v$(PKG_VERSION)-server?
+PKG_HASH:=cc7f5a1642d203b2390ae3c30c8a5546d1e829d9d1a5ddf686e558292746ce5c
+
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Jeffery To <jeffery.to@gmail.com>
+PKG_LICENSE:=Apache-2.0
+PKG_LICENSE_FILES:=LICENSE.txt
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/seahub-$(PKG_VERSION)-server
+
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=Django-1.11
+
+PKG_BUILD_PARALLEL:=1
+PYTHON3_PKG_BUILD:=0
 
 include $(INCLUDE_DIR)/package.mk
-$(call include_mk, python-package.mk)
+include ../../lang/python/python3-package.mk
 
 define Package/seafile-seahub
-    SECTION:=net
-    CATEGORY:=Network
-    TITLE:=Seafile server - seahub component
-    MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
-    URL:=http://seafile.com/
-    DEPENDS:=+python +simplejson +python-imglib +python-setuptools
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=Seafile server - seahub component
+  URL:=https://seafile.com/
+  DEPENDS:= \
+    +gunicorn3 \
+    +python3 \
+    +python3-chardet \
+    +python3-cryptodome \
+    +python3-dateutil \
+    +python3-django1 \
+    +python3-django-formtools \
+    +python3-django-picklefield \
+    +python3-django-postoffice \
+    +python3-django-restframework39 \
+    +python3-django-simple-captcha \
+    +python3-django-statici18n \
+    +python3-django-webpack-loader \
+    +python3-openpyxl \
+    +python3-pillow \
+    +python3-pyjwt \
+    +python3-pymysql \
+    +python3-pytz \
+    +python3-qrcode \
+    +python3-requests \
+    +python3-requests-oauthlib \
+    +python3-seafile-ccnet \
+    +python3-searpc
 endef
 
 define Package/seafile-seahub/description
-   The web end of seafile server.
+  The web end of seafile server.
 
-   NOTE: in order to have better performance, language support is turned off by default.
-   Please set 'USE_I18N = True' in seahub_settings.py to support multiple languages.
+  Note: Localization support is turned off by default for performance
+  reasons. Set 'USE_I18N = True' in /etc/seafile/conf/seahub_settings.py
+  to use languages other than English.
 endef
-
-PKG_BUILD_DEPENDS:=python-setuptools
-PYTHONPATH:=$(PYTHONPATH):$(PKG_BUILD_DIR)/thirdpart
 
 define Build/Configure
 endef
 
+MAKE_VARS += \
+	PYTHON="$(HOST_PYTHON3_BIN)" \
+	DJANGO_ADMIN_PY="$(STAGING_DIR_HOSTPKG)/bin/django-admin"
+
 define Build/Compile
-	# Install python dependencies
-	$(call HostPython,, \
-		$(STAGING_DIR_ROOT)/usr/bin/easy_install -d $(PKG_BUILD_DIR)/thirdpart -Z -N \
-		https://www.djangoproject.com/m/releases/1.5/Django-1.5.8.tar.gz)
-	$(call HostPython,, \
-		$(STAGING_DIR_ROOT)/usr/bin/easy_install -d $(PKG_BUILD_DIR)/thirdpart -Z -N \
-		https://github.com/djblets/djblets/archive/release-0.6.14.tar.gz)
-	$(call HostPython,, \
-		$(STAGING_DIR_ROOT)/usr/bin/easy_install -d $(PKG_BUILD_DIR)/thirdpart -Z -N \
-		https://pypi.python.org/packages/source/g/gunicorn/gunicorn-0.16.1.tar.gz)
-	$(call HostPython,, \
-		$(STAGING_DIR_ROOT)/usr/bin/easy_install -d $(PKG_BUILD_DIR)/thirdpart -Z -N \
-		https://pypi.python.org/packages/source/s/six/six-1.4.1.tar.gz)
-	$(call HostPython,, \
-		$(STAGING_DIR_ROOT)/usr/bin/easy_install -d $(PKG_BUILD_DIR)/thirdpart -Z -N \
-		https://pypi.python.org/packages/source/c/chardet/chardet-2.1.1.tar.gz)
-	$(call HostPython,, \
-		$(STAGING_DIR_ROOT)/usr/bin/easy_install -d $(PKG_BUILD_DIR)/thirdpart -Z -N \
-		https://pypi.python.org/packages/2.6/f/flup/flup-1.0.2-py2.6.egg)
-	$(call HostPython,, \
-		$(STAGING_DIR_ROOT)/usr/bin/easy_install -d $(PKG_BUILD_DIR)/thirdpart -Z -N \
-		https://pypi.python.org/packages/source/l/lockfile/lockfile-0.9.1.tar.gz)
-	$(call HostPython,, \
-		$(STAGING_DIR_ROOT)/usr/bin/easy_install -d $(PKG_BUILD_DIR)/thirdpart -Z -N \
-		https://pypi.python.org/packages/source/p/python-daemon/python-daemon-1.5.5.tar.gz)
-	$(call HostPython,, \
-		$(STAGING_DIR_ROOT)/usr/bin/easy_install -d $(PKG_BUILD_DIR)/thirdpart -Z -N \
-		https://pypi.python.org/packages/source/p/python-dateutil/python-dateutil-1.5.tar.gz)
+	$(call HostPython3/PipInstall,$(PYTHON3_PKG_HOST_PIP_INSTALL_ARGS))
+	$(call Build/Compile/Default,locale)
 endef
 
-define Package/seafile-seahub/install
-	$(INSTALL_DIR) $(1)/usr/share/seafile/seafile-server/seahub
-	$(CP) $(PKG_BUILD_DIR)/{locale,media,seahub,sql,subdomain,tests,thirdpart,tools} $(1)/usr/share/seafile/seafile-server/seahub/
-	$(CP) $(PKG_BUILD_DIR)/*.{sh,template,py,txt} $(1)/usr/share/seafile/seafile-server/seahub/
-	$(CP) $(PKG_BUILD_DIR)/{CONTRIBUTORS,HACKING,README.markdown} $(1)/usr/share/seafile/seafile-server/seahub/
-	$(CP) $(PKG_BUILD_DIR)/pylintrc* $(1)/usr/share/seafile/seafile-server/seahub/
-	# fix python exec path in scripts
-	sed -i 's/#!.*/#!\/usr\/bin\/python/g' $(1)/usr/share/seafile/seafile-server/seahub/thirdpart/chardetect.py
-	sed -i 's/#!.*/#!\/usr\/bin\/python/g' $(1)/usr/share/seafile/seafile-server/seahub/thirdpart/django-admin.py
-	sed -i 's/#!.*/#!\/usr\/bin\/python/g' $(1)/usr/share/seafile/seafile-server/seahub/thirdpart/gunicorn
-	sed -i 's/#!.*/#!\/usr\/bin\/python/g' $(1)/usr/share/seafile/seafile-server/seahub/thirdpart/gunicorn_django
-	sed -i 's/#!.*/#!\/usr\/bin\/python/g' $(1)/usr/share/seafile/seafile-server/seahub/thirdpart/gunicorn_paster
-	find $(1) -name "*\.pyc" -o -name "*\.pyo" | xargs rm -f
-	sed -i "s/\(SEAFILE_VERSION\s*=\s*\)'\([0-9]\.[0-9]\.[0-9]\)'/\1'$(PKG_VERSION)'/g" $(1)/usr/share/seafile/seafile-server/seahub/seahub/settings.py
+define Py3Package/seafile-seahub/install
+	$(INSTALL_DIR) $(1)/usr/share/seafile/seafile-server/seahub/tools
+	$(CP) $(PKG_BUILD_DIR)/{frontend,locale,media,seahub,sql,static,thirdpart} $(1)/usr/share/seafile/seafile-server/seahub/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/manage.py $(1)/usr/share/seafile/seafile-server/seahub/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/tools/secret_key_generator.py $(1)/usr/share/seafile/seafile-server/seahub/tools/
+	$(SED) "s/\(SEAFILE_VERSION\s*=\s*\)'\([0-9]\.[0-9]\.[0-9]\)'/\1'$(PKG_VERSION)'/g" $(1)/usr/share/seafile/seafile-server/seahub/seahub/settings.py
+	mv $(1)/usr/share/seafile/seafile-server/seahub/media/avatars $(1)/usr/share/seafile/seafile-server/seahub/media/avatars_default
 endef
 
+Py3Package/seafile-seahub/filespec:=
+
+$(eval $(call Py3Package,seafile-seahub))
 $(eval $(call BuildPackage,seafile-seahub))
+$(eval $(call BuildPackage,seafile-seahub-src))

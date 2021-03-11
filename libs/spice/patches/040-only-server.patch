@@ -1,0 +1,19 @@
+--- a/meson.build
++++ b/meson.build
+@@ -192,8 +192,6 @@ add_project_arguments(compiler.get_suppo
+ # Subdirectories
+ #
+ subdir('server')
+-subdir('tools')
+-subdir('docs')
+ 
+ #
+ # write config.h
+--- a/server/meson.build
++++ b/server/meson.build
+@@ -186,5 +186,3 @@ spice_server_libs = both_libraries('spic
+ 
+ spice_server_shared_lib = spice_server_libs.get_shared_lib()
+ spice_server_static_lib = spice_server_libs.get_static_lib()
+-
+-subdir('tests')

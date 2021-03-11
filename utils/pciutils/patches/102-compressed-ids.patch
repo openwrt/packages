@@ -1,7 +1,7 @@
 --- a/update-pciids.sh
 +++ b/update-pciids.sh
 @@ -6,9 +6,8 @@ set -e
- SRC="http://pci-ids.ucw.cz/v2.2/pci.ids"
+ SRC="https://pci-ids.ucw.cz/v2.2/pci.ids"
  DEST=pci.ids
  PCI_COMPRESSED_IDS=
 -GREP=grep

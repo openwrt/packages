@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libunistring
-PKG_VERSION:=0.9.4
+PKG_VERSION:=0.9.10
 PKG_RELEASE:=1
-PKG_MD5SUM:=c24a6a3838d9ad4a41a62549312c4226
+PKG_HASH:=eb8fb2c3e4b6e2d336608377050892b54c3c983b646c561836550863003c05d7
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://ftp.gnu.org/gnu/libunistring
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=@GNU/libunistring
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 

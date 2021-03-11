@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2014 OpenWrt.org
+# Copyright (C) 2011-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,25 +7,36 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcsh
-PKG_VERSION:=6.18.01
+PKG_VERSION:=6.22.03
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://ftp.astron.com/pub/tcsh/
-PKG_MD5SUM:=6eed09dbd4223ab5b6955378450d228a
-PKG_LICENSE:=BSD-4-Clause-UC
-PKG_LICENSE_FILES:=Copyright
+PKG_SOURCE_URL:= \
+	https://astron.com/pub/tcsh/ \
+	https://astron.com/pub/tcsh/old \
+	https://ftp.funet.fi/pub/mirrors/ftp.astron.com/pub/tcsh \
+	https://ftp.funet.fi/pub/mirrors/ftp.astron.com/pub/tcsh/old
+PKG_HASH:=be2cfd653d2a0c7f506d2dd14c12324ba749bd484037be6df44a3973f52262b7
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=Copyright
+PKG_CPE_ID:=cpe:/a:tcsh:tcsh
+
+PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/tcsh
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Shells
   TITLE:=Enhanced Berkeley UNIX C shell
-  DEPENDS:=+libncurses
-  URL:=http://www.tcsh.org/
+  DEPENDS:=+libncurses $(ICONV_DEPENDS)
+  URL:=https://www.tcsh.org/
 endef
 
 define Package/tcsh/description
@@ -41,14 +52,15 @@ endef
 
 define Package/tcsh/postinst
 #!/bin/sh
-grep tcsh $${IPKG_INSTROOT}/etc/shells || \
-	echo "/bin/tcsh" >> $${IPKG_INSTROOT}/etc/shells
-	echo "/bin/csh" >> $${IPKG_INSTROOT}/etc/shells
+grep tcsh $${IPKG_INSTROOT}/etc/shells || { \
+	echo "/bin/tcsh"
+	echo "/bin/csh"
+} >> $${IPKG_INSTROOT}/etc/shells
 endef
 
 define Package/tcsh/install
 	$(INSTALL_DIR) $(1)/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tcsh $(1)/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/tcsh $(1)/bin/
 	ln -sf tcsh $(1)/bin/csh
 endef
 

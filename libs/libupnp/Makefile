@@ -1,23 +1,21 @@
-#
-# Copyright (C) 2006-2014 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libupnp
-PKG_VERSION:=1.6.19
+PKG_VERSION:=1.14.0
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/pupnp
-PKG_MD5SUM:=ee16e5d33a3ea7506f38d71facc057dd
+PKG_HASH:=ecb23d4291968c8a7bdd4eb16fc2250dbacc16b354345a13342d67f571d35ceb
+
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:libupnp_project:libupnp
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -51,18 +49,37 @@ define Package/libupnp-sample/description
 TVcontrolpoint & tvdevice sample applications run inside /etc/upnp-tvdevice/
 endef
 
+CONFIGURE_ARGS += \
+	--enable-client \
+	--enable-device \
+	--enable-gena \
+	--enable-reuseaddr \
+	--enable-gena \
+	--enable-webserver \
+	--enable-ssdp \
+	--enable-soap \
+	--enable-tools \
+	--enable-blocking_tcp_connections \
+	--enable-samples \
+	--disable-debug \
+	--disable-optssdp \
+	--disable-unspecified_server \
+	--disable-open_ssl \
+	--disable-scriptsupport \
+	--disable-postwrite
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/upnp $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{ixml,threadutil,upnp}.{a,so*,la} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{ixml,upnp}.{a,so*,la} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libupnp.pc $(1)/usr/lib/pkgconfig/
 endef
 
 define Package/libupnp/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{ixml,threadutil,upnp}.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{ixml,upnp}.so.* $(1)/usr/lib/
 endef
 
 define Package/libupnp-sample/install

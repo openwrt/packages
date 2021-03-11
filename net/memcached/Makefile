@@ -9,24 +9,29 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=memcached
-PKG_VERSION:=1.4.20
+PKG_VERSION:=1.6.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://memcached.org/files
-PKG_MD5SUM:=92f702bcb28d7bec8fdf9418360fc062
-PKG_INSTALL:=1
+PKG_SOURCE_URL:=https://memcached.org/files
+PKG_HASH:=e23b3a11f6ff52ac04ae5ea2e287052ce58fd1eadd394622eb65c3598fcd7939
+
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
-PKG_LICENSE:=permissive free software license
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:memcachedb:memcached
+
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/memcached
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libevent +libpthread
+  DEPENDS:=+libevent2 +libpthread
   TITLE:=The high-performance, distributed memory object caching system
-  URL:=http://memcached.org/
+  URL:=https://memcached.org/
 endef
 
 define Package/memcached/description
@@ -37,12 +42,6 @@ define Package/memcached/conffiles
 /etc/config/memcached
 endef
 
-ifeq ($(CONFIG_BIG_ENDIAN),y)
-CONFIGURE_VARS += ac_cv_c_endian=big
-else
-CONFIGURE_VARS += ac_cv_c_endian=little
-endif
-
 CONFIGURE_ARGS += \
 	--with-libevent=$(STAGING_DIR)/usr/include/libevent \
 	--disable-docs \
@@ -50,11 +49,7 @@ CONFIGURE_ARGS += \
 	--disable-coverage \
 	--disable-sasl
 
-TARGET_CFLAGS += \
-	-std=gnu99
-
-TARGET_LDFLAGS = \
-	-L$(STAGING_DIR)/usr/lib/libevent -L$(STAGING_DIR)/usr/lib -L$(STAGING_DIR)/lib
+CONFIGURE_VARS += ac_cv_c_endian=$(if $(CONFIG_BIG_ENDIAN),big,little)
 
 define Package/memcached/install
 	$(INSTALL_DIR) $(1)/usr/bin

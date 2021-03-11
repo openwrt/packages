@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-net-telnet
 PKG_VERSION:=3.04
-PKG_RELEASE:=1
+PKG_RELEASE:=4
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/J/JR/JROGERS/
 PKG_SOURCE:=Net-Telnet-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=d2514080116c1b0fa5f96295c84538e3
+PKG_HASH:=e64d567a4e16295ecba949368e7a6b8b5ae2a16b3ad682121d9b007dc5d2a37a
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Net-Telnet-$(PKG_VERSION)
@@ -29,7 +29,7 @@ define Package/perl-net-telnet
   CATEGORY:=Languages
   TITLE:=Telnet client
   URL:=http://search.cpan.org/dist/Net-Telnet/
-  DEPENDS:=perl
+  DEPENDS:=perl +perlbase-essential +perlbase-socket +perlbase-symbol
 endef
 
 define Build/Configure

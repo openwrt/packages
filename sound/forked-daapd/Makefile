@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=forked-daapd
-PKG_VERSION:=22.0
-PKG_RELEASE:=20141022
-PKG_REV:=61a4da215c05b621951aa3903d7d390fd1839537
+PKG_VERSION:=27.2
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/ejurgensen/forked-daapd.git
-PKG_SOURCE_VERSION:=$(PKG_REV)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/ejurgensen/$(PKG_NAME)/releases/download/$(PKG_VERSION)/
+PKG_HASH:=27294a893253d232161f4521fc42147e65324ce5a13fcf550b537100375277bb
 
-PKG_BUILD_DEPENDS:=gperf/host
 PKG_FIXUP:=autoreconf
 PKG_USE_MIPS16:=0
 PKG_INSTALL:=1
@@ -28,6 +24,7 @@ PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/forked-daapd
 SECTION:=sound
@@ -35,8 +32,16 @@ CATEGORY:=Sound
 TITLE:=iTunes (DAAP) server for Apple Remote and AirPlay
 URL:=https://github.com/ejurgensen/forked-daapd
 DEPENDS:=+libgpg-error +libgcrypt +libgdbm +zlib +libexpat +libunistring \
-	+libevent2 +libdaemon +libantlr3c +confuse +glib2 +alsa-lib +libffmpeg-full \
-	+mxml +libavl +avahi-daemon +libavahi-client +sqlite3-cli +libplist +libcurl
+	+libevent2 +libdaemon +libantlr3c +confuse +alsa-lib +libffmpeg-full \
+	+mxml +libavahi-client +sqlite3-cli +libplist +libcurl +libjson-c \
+	+libprotobuf-c +libgnutls +libsodium +libwebsockets $(ICONV_DEPENDS)
+endef
+
+define Package/forked-daapd/description
+  forked-daapd is a Linux/FreeBSD DAAP (iTunes), MPD (Music Player Daemon) and
+  RSP (Roku) media server. It has support for AirPlay speakers, Chromecast,
+  Apple Remote (and compatibles), MPD clients, internet radio and LastFM. It
+  does not support AirPlay/Chromecast video.
 endef
 
 define Package/forked-daapd/conffiles
@@ -45,19 +50,28 @@ endef
 
 CONFIGURE_ARGS += \
 	--enable-itunes \
-	--enable-lastfm
+	--enable-lastfm \
+	--enable-mpd \
+	--enable-chromecast \
+	--enable-verification \
+	--enable-webinterface \
+	--disable-spotify \
+	--with-libplist \
+	--with-libwebsockets \
+	--with-alsa \
+	--without-pulseaudio \
+	--without-libevent_pthreads
 
 TARGET_CFLAGS += $(FPIC)
 TARGET_LDFLAGS += -Wl,-rpath-link,$(STAGING_DIR)/usr/lib
 
 define Package/forked-daapd/install
-	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_DATA) ./files/forked-daapd.conf $(1)/etc/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DIR) $(1)/usr/lib/forked-daapd
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/forked-daapd/* $(1)/usr/lib/forked-daapd/
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/forked-daapd $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_CONF) ./files/forked-daapd.conf $(1)/etc/forked-daapd.conf
+	$(INSTALL_DIR) $(1)/usr/lib/forked-daapd
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/forked-daapd/* $(1)/usr/lib/forked-daapd/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/forked-daapd.init $(1)/etc/init.d/forked-daapd
 endef

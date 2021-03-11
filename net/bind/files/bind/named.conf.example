@@ -15,6 +15,10 @@ options {
 	auth-nxdomain no;    # conform to RFC1035
 };
 
+include "/etc/bind/named-rndc.conf";
+
+include "/tmp/bind/named.conf.local";
+
 // prime the server with knowledge of the root servers
 zone "." {
 	type hint;

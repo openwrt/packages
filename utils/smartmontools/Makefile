@@ -1,36 +1,39 @@
 #
-# Copyright (C) 2006-2012 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
 
 include $(TOPDIR)/rules.mk
-include $(INCLUDE_DIR)/uclibc++.mk
 
 PKG_NAME:=smartmontools
-PKG_VERSION:=6.3
-PKG_RELEASE:=1
+PKG_VERSION:=7.2
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/smartmontools
-PKG_MD5SUM:=2ea0c62206e110192a97b59291b17f54
+PKG_HASH:=5cd98a27e6393168bc6aaea070d9e1cd551b0f898c52f66b2ff2e5d274118cd6
+
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
-PKG_LICENSE:=GPL-2.0+
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+
+PKG_BUILD_PARALLEL:=1
+PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/smartmontools/Default
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=$(CXX_DEPENDS)
   TITLE:=S.M.A.R.T Monitoring
-  URL:=http://smartmontools.sourceforge.net/
+  URL:=https://www.smartmontools.org/
 endef
 
 define Package/smartmontools
   $(call Package/smartmontools/Default)
+  DEPENDS:=+libstdcpp
   TITLE+= Tool
 endef
 
@@ -43,6 +46,7 @@ endef
 
 define Package/smartd
   $(call Package/smartmontools/Default)
+  DEPENDS:=+libstdcpp
   TITLE+= Daemon
 endef
 
@@ -53,39 +57,68 @@ define Package/smartd/description
   ATA and SCSI disks. It is derived from smartsuite.
 endef
 
-# uses GNU configure
+define Package/smartmontools-drivedb
+  $(call Package/smartmontools/Default)
+  TITLE+= Drive database
+  PKGARCH=all
+endef
 
+define Package/smartmontools-drivedb/description
+  Database of known drives and USB bridges for smartctl and smartd.
+endef
+
+define Package/smartd-mail
+  $(call Package/smartmontools/Default)
+  TITLE+= Email notifications
+  PKGARCH=all
+  DEPENDS+= +smartd +nail +msmtp-mta
+endef
+
+define Package/smartd-mail/description
+  A script for mailing about SMART issues
+endef
+
+TARGET_LDFLAGS += -flto
+
+TARGET_CXXFLAGS +=-fno-rtti -flto
+MAKE_FLAGS +=BUILD_INFO='"(localbuild)"'
+
+CONFIGURE_ARGS += \
+	--disable-fast-lebe \
+	--without-gnupg \
+	--without-libcap-ng \
+	--without-libsystemd
+
+#lower file size vs. CONFIGURE_ARGS
 CONFIGURE_VARS += \
-	CXXFLAGS="$$$$CXXFLAGS -fno-builtin -fno-rtti -nostdinc++" \
-	CPPFLAGS="$$$$CPPFLAGS -I$(STAGING_DIR)/usr/include/uClibc++ -I$(LINUX_DIR)/include" \
-	LDFLAGS="$$$$LDFLAGS" \
-	LIBS="-nodefaultlibs -lc -luClibc++ -lm $(LIBGCC_S) -lc" \
-
-define Build/Configure
-	(cd $(PKG_BUILD_DIR); rm -rf config.{cache,status} ; \
-		./autogen.sh \
-	);
-	$(call Build/Configure/Default)
-endef
-
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		BUILD_INFO='"(localbuild)"' \
-		LD="$(TARGET_CXX)"
-endef
+	with_cxx11_regex=yes \
+	with_smartdplugindir=no \
+	with_systemdenvfile=no \
+	with_systemdsystemunitdir=no \
+	with_update_smart_drivedb=no
 
 define Package/smartmontools/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/smartctl $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/smartctl $(1)/usr/sbin/
 endef
 
 define Package/smartd/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/smartd $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/smartd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DATA) ./files/smartd.conf $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/smartd.init $(1)/etc/init.d/smartd
+endef
+
+define Package/smartmontools-drivedb/install
+	$(INSTALL_DIR) $(1)/usr/share/smartmontools/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/smartmontools/drivedb.h $(1)/usr/share/smartmontools/
+endef
+
+define Package/smartd-mail/install
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/etc/smartd_warning.sh $(1)/etc
 endef
 
 define Package/smartd/conffiles
@@ -94,3 +127,5 @@ endef
 
 $(eval $(call BuildPackage,smartmontools))
 $(eval $(call BuildPackage,smartd))
+$(eval $(call BuildPackage,smartmontools-drivedb))
+$(eval $(call BuildPackage,smartd-mail))

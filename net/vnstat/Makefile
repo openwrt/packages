@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vnstat
-PKG_VERSION:=1.12
-PKG_RELEASE:=1
+PKG_VERSION:=1.18
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://humdi.net/vnstat
-PKG_MD5SUM:=a154b2196771e06a8accd1c24374009c
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_HASH:=d7193592b9e7445fa5cbe8af7d3b39982f165ee8fc58041ff41f509b37c687d5
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 
 PKG_INSTALL:=1
 
@@ -63,7 +63,8 @@ endef
 define Build/Compile/vnstat
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
 		$(TARGET_CONFIGURE_OPTS) \
-		CFLAGS="$(TARGET_CFLAGS)"
+		CFLAGS="$(TARGET_CFLAGS)" \
+		LDFLAGS="$(TARGET_LDFLAGS)"
 endef
 
 define Build/Compile/vnstati
@@ -85,7 +86,7 @@ define Package/vnstat/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/vnstatd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/vnstat.conf $(1)/etc/
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/cfg/vnstat.conf $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/vnstat.config $(1)/etc/config/vnstat
 	$(INSTALL_DIR) $(1)/etc/init.d

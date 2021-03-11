@@ -1,28 +1,11 @@
-diff --git a/samples/knot.sample.conf.in b/samples/knot.sample.conf.in
-index 956e8a9..a068e67 100644
 --- a/samples/knot.sample.conf.in
 +++ b/samples/knot.sample.conf.in
-@@ -14,7 +14,7 @@ system {
+@@ -33,6 +33,8 @@ template:
+   - id: default
+     storage: "@storage_dir@"
+     file: "%s.zone"
++    max-journal-db-size: 20M
++    max-timer-db-size: 5M
  
-   # User for running server
-   # May also specify user.group (e.g. knot.knot)
--  user knot.knot;
-+  user root.root;
- 
-   # Directory for storing run-time data
-   # e.g. PID file and control sockets
-@@ -63,11 +63,11 @@ zones {
- #  storage "@storage_dir@";
- #
- #  Example master zone
--#  example.com {
--#    file "@config_dir@/example.com.zone";
-+  example.com {
-+    file "example.com.zone";
- #    xfr-out slave0;
- #    notify-out slave0;
--#  }
-+  }
- #
- #  Example slave zone
- #  example.net {
+ zone:
+ #    # Primary zone

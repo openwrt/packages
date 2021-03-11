@@ -9,13 +9,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=debootstrap
-PKG_VERSION:=1.0.66
+PKG_VERSION:=1.0.123
 PKG_RELEASE:=1
-PKG_MAINTAINER=Daniel Golle <daniel@makrotopia.org>
 
 PKG_SOURCE:=$(PKG_NAME)-udeb_$(PKG_VERSION)_all.udeb
 PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/d/debootstrap
-PKG_MD5SUM:=bf6370ea0aa80308dfb03a4a35e33ad1
+PKG_HASH:=df537297f212a7ffab3bb033065a466887e552a579d4f7115f2d042a86ba811f
+
+PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=Unique
 PKG_LICENSE_FILES:=debian/copyright
 
@@ -27,8 +28,8 @@ define Package/debootstrap
   SECTION:=admin
   CATEGORY:=Administration
   TITLE:=Bootstrap a basic Debian system
-  URL:=http://wiki.debian.org/Debootstrap
-  DEPENDS:= +coreutils +coreutils-chroot +coreutils-sha1sum +ar
+  URL:=https://wiki.debian.org/Debootstrap
+  DEPENDS:= +coreutils +coreutils-chroot +coreutils-sha1sum +ar +xz-utils +xz
 endef
 
 define Package/debootstrap/description
@@ -49,9 +50,8 @@ define Package/debootstrap/install
 	$(INSTALL_DIR) $(1)/usr/share/debootstrap
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/usr/share/debootstrap/pkgdetails $(1)/usr/share/debootstrap
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/usr/share/debootstrap/functions $(1)/usr/share/debootstrap
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/usr/share/debootstrap/devices.tar.gz $(1)/usr/share/debootstrap
 	$(INSTALL_DIR) $(1)/usr/share/debootstrap/scripts
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/usr/share/debootstrap/scripts/* $(1)/usr/share/debootstrap/scripts
+	$(CP) $(PKG_BUILD_DIR)/usr/share/debootstrap/scripts/* $(1)/usr/share/debootstrap/scripts
 endef
 
 $(eval $(call BuildPackage,debootstrap))

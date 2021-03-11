@@ -8,19 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gdbm
-PKG_VERSION:=1.11
-PKG_RELEASE:=1
+PKG_VERSION:=1.19
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gdbm
-PKG_MD5SUM:=72c832680cf0999caedbe5b265c8c1bd
+PKG_HASH:=37ed12214122b972e18a0d94995039e57748191939ef74115b1d41d8811364bc
 
-PKG_LICENSE:=GPL-3.0+
-PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
-PKG_REMOVE_FILES:=Makefile compat/Makefile doc/Makefile export/Makefile src/Makefile tests/Makefile
+PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=0
 
 include $(INCLUDE_DIR)/package.mk
@@ -29,7 +28,7 @@ define Package/libgdbm
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=GNU database manager
-  URL:=http://www.gnu.org/software/gdbm/
+  URL:=https://www.gnu.org/software/gdbm/
 endef
 
 define Package/libgdbm/description
@@ -38,11 +37,9 @@ define Package/libgdbm/description
   works similar to the standard UNIX dbm routines.
 endef
 
-TARGET_CFLAGS += $(FPIC)
-
 CONFIGURE_ARGS += \
 	--enable-shared \
-	--enable-static \
+	--enable-static
 
 define Build/Compile
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \

@@ -1,0 +1,26 @@
+#!/bin/sh
+
+[ -f "/etc/mwan3.user" ] && {
+	. /lib/functions.sh
+	. /lib/mwan3/mwan3.sh
+	initscript=/etc/init.d/mwan3
+	. /lib/functions/procd.sh
+
+	[ "$MWAN3_SHUTDOWN" != 1 ] && procd_lock
+
+	[ "$MWAN3_SHUTDOWN" != 1 ] && ! /etc/init.d/mwan3 running && {
+		exit 0
+	}
+
+	config_load mwan3
+
+	config_get_bool enabled "$INTERFACE" enabled 0
+	[ "${enabled}" -eq 1 ] || {
+		exit 0
+	}
+
+	env -i ACTION="$ACTION" INTERFACE="$INTERFACE" DEVICE="$DEVICE" \
+		/bin/sh /etc/mwan3.user
+}
+
+exit 0

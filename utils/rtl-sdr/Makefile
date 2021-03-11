@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013 OpenWrt.org
+# Copyright (C) 2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,14 +7,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtl-sdr
-PKG_VERSION:=2014-02-10
-PKG_RELEASE:=$(PKG_SOURCE_VERSION)
+PKG_VERSION:=0.6.0
+PKG_RELEASE:=2
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://git.osmocom.org/rtl-sdr.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=6ee557360645da158e3065111349c318894b497b
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://git.osmocom.org/rtl-sdr/snapshot
+PKG_HASH:=ee10a76fe0c6601102367d4cdf5c26271e9442d0491aa8df27e5a9bf639cff7c
+
+PKG_BUILD_PARALLEL:=1
 CMAKE_INSTALL:=1
 
 PKG_LICENSE:=GPLv2
@@ -74,9 +74,17 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/librtlsdr.pc $(1)/usr/lib/pkgconfig/
 endef
 
+define Package/rtl-sdr/conffiles
+/etc/config/rtl_tcp
+endef
+
 define Package/rtl-sdr/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/rtl_* $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) files/rtl_tcp.init $(1)/etc/init.d/rtl_tcp
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) files/rtl_tcp.config $(1)/etc/config/rtl_tcp
 endef
 
 define Package/librtlsdr/install

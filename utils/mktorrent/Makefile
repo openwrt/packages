@@ -8,15 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mktorrent
-PKG_VERSION:=1.0
+PKG_VERSION:=1.1
 PKG_RELEASE:=1
+
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/Rudde/$(PKG_NAME)
+PKG_SOURCE_VERSION:=b20ef699b4ee5ded2f078ead776c7deac969e19a
+PKG_MIRROR_HASH:=abe5f96d1a91c00bd6dcf86640a205583e8607d2b0e9299a588cec76c556a8e8
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
-
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://downloads.sourceforge.net/$(PKG_NAME)/
-PKG_MD5SUM:=0da00209da96a0dc39efbb6eb5b4d8ff
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -25,7 +28,7 @@ define Package/mktorrent
   SECTION:=net
   CATEGORY:=Network
   TITLE:=mktorrent
-  URL:=http://mktorrent.sourceforge.net/
+  URL:=https://github.com/Rudde/mktorrent
 endef
 
 define Package/mktorrent/Description

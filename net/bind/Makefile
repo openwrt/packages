@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2006-2012 OpenWrt.org
-#               2014 Noah Meyerhans <frodo@morgul.net>
+#               2014-2020 Noah Meyerhans <frodo@morgul.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,30 +9,43 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
-PKG_VERSION:=9.9.6-P1
-PKG_RELEASE:=2
+PKG_VERSION:=9.17.10
+PKG_RELEASE:=1
 USERID:=bind=57:bind=57
 
-PKG_MAINTAINER := Noah Meyerhans <frodo@morgul.net>
-PKG_LICENSE := BSD-3-Clause
+PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
+PKG_LICENSE:=MPL-2.0
+PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:isc:bind
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:= \
-	ftp://ftp.isc.org/isc/bind9/$(PKG_VERSION) \
-	http://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION)
-PKG_MD5SUM:=ca9d8f4d26e740668d361bfc50d90fc7
+	https://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION) \
+	https://ftp.isc.org/isc/bind9/$(PKG_VERSION)
+PKG_HASH:=26a90d28ad694029e480fadcdf60b6219e8128a02d3dd594f6c1a83d002890fd
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
 
 PKG_INSTALL:=1
+PKG_USE_MIPS16:=0
+PKG_BUILD_PARALLEL:=1
+
+PKG_BUILD_DEPENDS:=nghttp2
+
+PKG_CONFIG_DEPENDS := \
+	CONFIG_BIND_LIBJSON \
+	CONFIG_BIND_LIBXML2
+
+PKG_BUILD_DEPENDS += BIND_LIBXML2:libxml2 BIND_LIBJSON:libjson-c
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/bind/Default
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+bind-libs
+  DEPENDS:=+bind-libs +@OPENSSL_WITH_EC
   TITLE:=bind
   URL:=https://www.isc.org/software/bind
   SUBMENU:=IP Addresses and Names
@@ -41,7 +54,14 @@ endef
 define Package/bind-libs
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libopenssl
+  DEPENDS:=+libopenssl \
+	+zlib \
+	+libpthread \
+	+libatomic \
+	+libuv \
+	+libnghttp2 \
+	+BIND_LIBXML2:libxml2 \
+	+BIND_LIBJSON:libjson-c
   TITLE:=bind shared libraries
   URL:=https://www.isc.org/software/bind
 endef
@@ -49,6 +69,16 @@ endef
 define Package/bind-server
   $(call Package/bind/Default)
   TITLE+= DNS server
+endef
+
+define Package/bind-server/config
+	source "$(SOURCE)/Config.in"
+endef
+
+define Package/bind-server-filter-aaaa
+  $(call Package/bind-server)
+  DEPENDS:=bind-server
+  TITLE+= filter AAAA plugin
 endef
 
 define Package/bind-client
@@ -59,6 +89,13 @@ endef
 define Package/bind-tools
   $(call Package/bind/Default)
   TITLE+= administration tools (all)
+	DEPENDS:= \
+	+bind-check \
+	+bind-dig \
+	+bind-nslookup \
+	+bind-dnssec \
+	+bind-host \
+	+bind-rndc
 endef
 
 define Package/bind-rndc
@@ -73,7 +110,7 @@ endef
 
 define Package/bind-dnssec
   $(call Package/bind/Default)
-  TITLE+= administration tools (dnssec-keygen and dnssec-signzone only)
+  TITLE+= administration tools (dnssec-keygen, dnssec-settime and dnssec-signzone only)
 endef
 
 define Package/bind-host
@@ -86,22 +123,44 @@ define Package/bind-dig
   TITLE+= DNS excavation tool
 endef
 
+define Package/bind-nslookup
+  $(call Package/bind/Default)
+  TITLE+= nslookup utility
+  ALTERNATIVES:= \
+	  200:/usr/bin/nslookup:/usr/libexec/nslookup-bind
+endef
+
 export BUILD_CC="$(TARGET_CC)"
 
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+
 CONFIGURE_ARGS += \
-	--enable-shared \
-	--enable-static \
-	--with-randomdev="/dev/urandom" \
-	--disable-threads \
 	--disable-linux-caps \
 	--with-openssl="$(STAGING_DIR)/usr" \
 	--with-libtool \
-	--with-libxml2=no \
-	--enable-epoll=yes \
-	--with-gost=no \
-	--with-gssapi=no \
-	--with-ecdsa=no \
-	--with-readline=no
+	--without-lmdb \
+	--enable-epoll \
+	--without-gssapi \
+	--without-readline \
+	--without-python \
+	--sysconfdir=/etc/bind
+
+ifdef CONFIG_BIND_LIBJSON
+	TARGET_CFLAGS += -DHAVE_JSON_C -UHAVE_JSON
+	CONFIGURE_ARGS += \
+		--with-json-c=yes
+else
+	CONFIGURE_ARGS += \
+		--with-json-c=no
+endif
+
+ifdef CONFIG_BIND_LIBXML2
+	CONFIGURE_ARGS += \
+		--with-libxml2=yes
+else
+	CONFIGURE_ARGS += \
+		--with-libxml2=no
+endif
 
 CONFIGURE_VARS += \
 	BUILD_CC="$(TARGET_CC)" \
@@ -131,7 +190,11 @@ define Package/bind-server/install
 		./files/bind/db.255 \
 		./files/bind/db.local \
 		./files/bind/db.root \
+		./files/bind/bind.keys \
 		$(1)/etc/bind/
+	sed -e '1s/ broadcast / empty rfc1918 /' \
+		< ./files/bind/db.0 \
+		> $(1)/etc/bind/db.empty
 	$(CP) ./files/bind/named.conf.example $(1)/etc/bind/named.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/named.init $(1)/etc/init.d/named
@@ -147,6 +210,11 @@ define Package/bind-server/conffiles
 /etc/bind/named.conf
 endef
 
+define Package/bind-server-filter-aaaa/install
+	$(INSTALL_DIR) $(1)/usr/lib/bind
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/bind/filter-aaaa.so $(1)/usr/lib/bind
+endef
+
 define Package/bind-client/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/nsupdate $(1)/usr/bin/
@@ -154,15 +222,7 @@ endef
 
 define Package/bind-tools/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dig $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/host $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-keygen $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-signzone $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/named-checkconf $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/named-checkzone $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/rndc $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/rndc-confgen $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/delv $(1)/usr/bin/
 endef
 
 define Package/bind-rndc/install
@@ -172,15 +232,16 @@ define Package/bind-rndc/install
 endef
 
 define Package/bind-check/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/named-checkconf $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/named-checkzone $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/named-checkconf $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/named-checkzone $(1)/usr/bin/
 endef
 
 define Package/bind-dnssec/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-keygen $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-signzone $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dnssec-keygen $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dnssec-settime $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dnssec-signzone $(1)/usr/bin/
 endef
 
 define Package/bind-host/install
@@ -193,8 +254,14 @@ define Package/bind-dig/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dig $(1)/usr/bin/
 endef
 
+define Package/bind-nslookup/install
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/nslookup $(1)/usr/libexec/nslookup-bind
+endef
+
 $(eval $(call BuildPackage,bind-libs))
 $(eval $(call BuildPackage,bind-server))
+$(eval $(call BuildPackage,bind-server-filter-aaaa))
 $(eval $(call BuildPackage,bind-client))
 $(eval $(call BuildPackage,bind-tools))
 $(eval $(call BuildPackage,bind-rndc))
@@ -202,3 +269,4 @@ $(eval $(call BuildPackage,bind-check))
 $(eval $(call BuildPackage,bind-dnssec))
 $(eval $(call BuildPackage,bind-host))
 $(eval $(call BuildPackage,bind-dig))
+$(eval $(call BuildPackage,bind-nslookup))

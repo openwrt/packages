@@ -3,6 +3,8 @@
 
 START=60
 
+USE_PROCD=1
+
 ZNC_CONFIG_PATH=/tmp/etc/znc
 PID_FILE=${ZNC_CONFIG_PATH}/znc.pid
 ZNC_CONFIG=${ZNC_CONFIG_PATH}/configs/znc.conf
@@ -38,7 +40,9 @@ add_network() {
 	config_get name "$network" name
 	echo "	<Network $name>" >> $ZNC_CONFIG
 	config_list_foreach "$network" server "add_param \"		Server\""
+	config_list_foreach "$network" fingerprint "add_param \"		trustedserverfingerprint\""
 	config_list_foreach "$network" channel "add_chan"
+	echo "	</Network>" >> $ZNC_CONFIG
 }
 
 znc_global() {
@@ -56,8 +60,8 @@ znc_global() {
 
 	config_get znc_config_path "$znc" znc_config_path
 
-	config_get RUNAS_USER "$znc" runas_user
-	config_get RUNAS_GROUP "$znc" runas_group
+	config_get RUNAS_USER "$znc" runas_user znc
+	config_get RUNAS_GROUP "$znc" runas_group znc
 
 	if [ "${znc_config_path}" ]
 	then
@@ -67,7 +71,7 @@ znc_global() {
 		mkdir -p $ZNC_CONFIG_PATH/configs/
 		[ ! -f "$ZNC_CONFIG" ] || rm "$ZNC_CONFIG"
 
-		add_param "Version" "1.0"
+		add_param "Version" "1.6"
 
 		config_get anoniplimit "$znc" anoniplimit
 		config_get maxbuffersize "$znc" maxbuffersize
@@ -86,9 +90,38 @@ znc_global() {
 
 		config_list_foreach "$znc" listener "add_param Listener"
 		config_list_foreach "$znc" module "add_param LoadModule"
-
-		add_param LoadModule "droproot ${RUNAS_USER:-nobody} ${RUNAS_GROUP:-nogroup}"
 	fi
+}
+
+add_listener() {
+       local listener="$1"
+       local host
+       local port
+       local allowirc
+       local allowweb
+       local ipv4
+       local ipv6
+       local ssl
+
+       config_get host "$listener" host
+       config_get port "$listener" port
+       config_get allowirc "$listener" allowirc
+       config_get allowweb "$listener" allowweb
+       config_get ipv4 "$listener" ipv4
+       config_get ipv6 "$listener" ipv6
+       config_get ssl "$listener" ssl
+
+       echo "<Listener $listener>" >> $ZNC_CONFIG
+
+       [ -z "$host" ] || add_param "  Host" "$host"
+       [ -z "$port" ] || add_param "  Port" "$port"
+       [ -z "$allowirc" ] || add_param "  AllowIRC" "$allowirc"
+       [ -z "$allowweb" ] || add_param "  AllowWeb" "$allowweb"
+       [ -z "$ipv4" ] || add_param "  IPv4" "$ipv4"
+       [ -z "$ipv6" ] || add_param "  IPv6" "$ipv6"
+       [ -z "$ssl" ] || add_param "  SSL" "$ssl"
+
+       echo "</Listener>" >> $ZNC_CONFIG
 }
 
 add_user() {
@@ -142,6 +175,7 @@ add_user() {
 	if [ "$server" ]; then
 		echo "	<Network Default>" >> $ZNC_CONFIG
 		config_list_foreach "$user" server "add_param \"		Server\""
+		config_list_foreach "$user" fingerprint "add_param \"		trustedserverfingerprint\""
 		config_list_foreach "$user" channel "add_chan"
 		echo "	</Network>" >> $ZNC_CONFIG
 	fi
@@ -151,44 +185,30 @@ add_user() {
 	echo "</User>" >> $ZNC_CONFIG
 }
 
-
-start() {
+start_service() {
 	config_load znc
 	config_foreach znc_global znc
 
-	if [ "$DISABLED" -eq 1 ]; then
-		return 0
-	fi
+	[ "$DISABLED" -eq 0 ] || return 0
 
 	if [ "$EXTERNAL_CONFIG" -eq 0 ]
 	then
 		config_foreach add_listener listener
 		config_foreach add_user user
 
-		chown -hR ${RUNAS_USER:-nobody}:${RUNAS_GROUP:-nogroup} /tmp/etc/znc
 	fi
 
-	if [ "$EXTERNAL_CONFIG" -eq 1 -a "$RUNAS_USER"  ]
-	then
-		local SU=$(which su)
-		if [ "$SU" ]
-		then
-			$SU -c "/usr/bin/znc -d$ZNC_CONFIG_PATH >/dev/null &" $RUNAS_USER
-		else
-			logger -s -t ZNC -p daemon.err "Could not run ZNC as user $RUNAS_USER: su not found."
-			exit 1
-		fi
-	else
-		/usr/bin/znc -d$ZNC_CONFIG_PATH >/dev/null &
-	fi
+	chown -hR ${RUNAS_USER}:${RUNAS_GROUP} ${ZNC_CONFIG_PATH} || {
+		logger -s -t ZNC -p daemon.err "Invalid UID/GID. Aborting startup"
+		exit 1
+	}
+
+	procd_open_instance
+	procd_set_param file /etc/config/znc
+	[ "$EXTERNAL_CONFIG" -eq 1 ] && procd_set_param file "${ZNC_CONFIG}/configs/znc.conf"
+	procd_set_param command /usr/bin/znc
+	procd_append_param command -f -d$ZNC_CONFIG_PATH
+	procd_set_param user ${RUNAS_USER}
+	procd_set_param respawn
+	procd_close_instance
 }
-
-stop() {
-	if [ -f "$PID_FILE" ]
-	then
-		kill $(cat "$PID_FILE")
-	else
-		killall znc
-	fi
-}
-

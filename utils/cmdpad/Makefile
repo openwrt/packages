@@ -9,11 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cmdpad
 PKG_VERSION:=0.0.3
-PKG_RELEASE:=3
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=@SF/cmdpad
-PKG_MD5SUM:=6633b2354b7f23f9cd8e2bfb6e735965
+PKG_HASH:=19963f20f1af50fab0013fb373af294ea412da7241d1ea91fad90455291948b9
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=MIT
@@ -24,7 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/cmdpad
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=execute commands when a key is pressed, released or hold down
+  TITLE:=execute commands when key is pressed/released/held down
   URL:=http://cmdpad.sourceforge.net/index.php
 endef
 
@@ -34,7 +34,7 @@ CONFIGURE_ARGS += \
 
 define Package/cmdpad/description
 	cmdpad - execute commands when a key is pressed, released or hold down.
-	Should be started from /etc/rc or /etc/rc.local. To run it as deamon you
+	Should be started from /etc/rc or /etc/rc.local. To run it as daemon you
 	need to start it with '&'. All logs are printed to standard out and standard
 	error (to write the log to disk use cmdpad > /var/log/cmdpad). Cmdpad
 	searches for /etc/cmdpad.conf and load the key bindings. Then wait for

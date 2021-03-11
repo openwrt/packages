@@ -9,7 +9,7 @@ unset INTERVAL
 unset COUNT
 unset INTERFACE_GLOBAL
 
-NTPC=`which ntpclient`
+NTPC=$(command -v ntpclient)
 
 check_server() {
 	local hostname
@@ -52,12 +52,12 @@ stop_ntpclient() {
 load_settings() {
 	local interval
 	local count
-	local iface
-	
+	local interface
+
 	config_get interval $1 interval
 	config_get count $1 count
 	config_get interface $1 interface
-	
+
 	[ -n "$count" ] && COUNT=$count
 	[ -n "$interval" ] && INTERVAL=$interval
 	[ -n "$interface" ] && INTERFACE_GLOBAL=$interface
@@ -66,13 +66,13 @@ load_settings() {
 config_load ntpclient
 config_foreach load_settings ntpclient
 
-NTP_RUNNING=`ps  | grep $NTPC | grep -v grep`
+NTP_RUNNING=$(busybox ps | grep $NTPC | grep -v grep)
 
 case "${ACTION:-ifup}" in
 	ifup)
-		[ -z "$NTP_RUNNING" ] && start_ntpclient 
+		[ -z "$NTP_RUNNING" ] && start_ntpclient
 	;;
 	ifdown)
-		[ -n "$NTP_RUNNING" ] && stop_ntpclient 
+		[ -n "$NTP_RUNNING" ] && stop_ntpclient
 	;;
 esac

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,23 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-libav
-PKG_VERSION:=1.4.4
+PKG_VERSION:=1.18.1
 PKG_RELEASE:=1
 
-PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-
 PKG_SOURCE:=gst-libav-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-libav
-PKG_MD5SUM:=64a3e2cda2687132cadca4efdc63f3b4
-
-PKG_LICENSE:=GPL-2.0 LGPL-2.0
-PKG_LICENSE_FILES:=COPYING COPYING.LIB
-
+PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-libav
+PKG_HASH:=39a717bc2613efbbba19df3cf5cacff0987471fc8281ba2c5dcdeaded79c2ed8
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-libav-$(PKG_VERSION)
+
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
+		Ted Hess <thess@kitschensync.net>
+PKG_LICENSE:=GPL-2.0-or-later LGPL-2.1-or-later
+PKG_LICENSE_FILES:=COPYING COPYING.LIB
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
-
 PKG_USE_MIPS16:=0
 
 GST_VERSION:=1.0
@@ -53,7 +51,6 @@ LIBAV_DECODERS:= \
 	mpeg1video \
 	mpeg2video \
 	mpeg4 \
-	mpeg4aac \
 	mpegvideo \
 	pcm_s16be \
 	pcm_s16le \
@@ -109,19 +106,18 @@ PKG_CONFIG_DEPENDS:= \
 	$(patsubst %,CONFIG_GST1_LIBAV_PARSER_%,$(LIBAV_PARSERS)) \
 	$(patsubst %,CONFIG_GST1_LIBAV_PROTOCOL_%,$(LIBAV_PROTOCOLS))
 
-PKG_BUILD_DEPENDS:= libgstreamer1 gstreamer1-plugins-base
-
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+include ../../devel/meson/meson.mk
 
 define Package/gst1-libav
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=GStreamer Libav plugin
-  URL:=http://www.gstreamer.net/modules/gst-libav.html
+  URL:=https://www.gstreamer.net/modules/gst-libav.html
   DEPENDS:= +libgstreamer1 +gstreamer1-plugins-base \
 	    +gst1-mod-alsa +libgst1audio +libgst1pbutils +libgst1video \
-	    +libbz2
+	    +libbz2 +liblzma +libffmpeg-full
 endef
 
 define Package/gst1-libav/description
@@ -144,12 +140,36 @@ LIBAV_CONFIGURE_DEMUXERS:=$(call FILTER_CONFIG,DEMUXER,demuxer,$(LIBAV_DEMUXERS)
 LIBAV_CONFIGURE_PARSERS:=$(call FILTER_CONFIG,PARSER,parser,$(LIBAV_PARSERS))
 LIBAV_CONFIGURE_PROTOCOLS:=$(call FILTER_CONFIG,PROTOCOL,protocol,$(LIBAV_PROTOCOLS))
 
+# Hack to build on mips64.
+ifneq ($(findstring octeonplus,$(CONFIG_CPU_TYPE)),)
+  REAL_CPU_TYPE:=octeon+
+else
+  # Strip off FPU notation.
+  REAL_CPU_TYPE:=$(firstword $(subst +, ,$(CONFIG_CPU_TYPE)))
+endif
+
 CONFIGURE_ARGS += \
+	--disable-Bsymbolic \
+	--disable-fatal-warnings \
+	--disable-glib-asserts \
+	--disable-gobject-cast-checks \
+	--disable-gtk-doc-html \
+	--disable-valgrind \
 	--without-system-libav \
-	--with-libav-extra-configure="--target-os=linux \
+	--with-pic \
+	--with-libav-extra-configure=" \
+	$(if $(REAL_CPU_TYPE),--cpu=$(call qstrip,$(REAL_CPU_TYPE)),) \
 	--disable-bsfs \
 	--disable-programs \
 	--disable-devices \
+	--disable-debug \
+	--disable-doc \
+	--disable-extra-warnings \
+	--disable-htmlpages \
+	--disable-manpages \
+	--disable-podpages \
+	--disable-txtpages \
+	--disable-runtime-cpudetect \
 	--disable-encoders \
 	$(LIBAV_CONFIGURE_ENCODERS) \
 	--disable-decoders \
@@ -179,20 +199,8 @@ CONFIGURE_ARGS += \
 	--disable-fma3 \
 	--disable-fma4 \
 	--disable-avx2 \
-	--disable-vfp \
-	--disable-neon \
 	--disable-inline-asm \
-	--disable-yasm"
-
-# XXX: trick to force use of embedded Libav headers
-TARGET_CFLAGS += $(TARGET_CPPFLAGS)
-TARGET_CPPFLAGS :=
-
-TARGET_LDFLAGS += $(FPIC)
-
-define Build/Prepare
-$(call Build/Prepare/Default)
-endef
+	--disable-x86asm"
 
 define Package/gst1-libav/install
 	$(INSTALL_DIR) $(1)/usr/lib/gstreamer-$(GST_VERSION)

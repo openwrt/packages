@@ -1,3 +1,10 @@
+############################################################################
+# NOTE: Do not modify this file to configure ocserv. Add new directives    #
+# in /etc/ocserv/ocserv.conf.local and these will be included in ocserv's  #
+# configuration                                                            #
+############################################################################
+
+
 # User authentication method. Could be set multiple times and in that case
 # all should succeed.
 # Options: certificate, pam. 
@@ -15,8 +22,13 @@
 # to generate password entries.
 auth = "|AUTH|"
 
-# A banner to be displayed on clients
+# A banner to be displayed on clients after connection
 banner = "Welcome to OpenWRT"
+
+# A banner to be displayed on clients before connection
+#pre-login-banner = "Welcome"
+
+#isolate-workers = true
 
 # When the server has a dynamic DNS address (that may change),
 # should set that to true to ask the client to resolve again on
@@ -31,9 +43,11 @@ listen-host-is-dyndns = |DYNDNS|
 #max-clients = 1024
 max-clients = |MAX_CLIENTS|
 
-# Limit the number of client connections to one every X milliseconds 
-# (X is the provided value). Set to zero for no limit.
-#rate-limit-ms = 100
+# Rate limit the number of incoming connections to one every X milliseconds
+# (X is the provided value), as the secmod backlog grows. This
+# makes the server more resilient (and prevents connection failures) on
+# multiple concurrent connections. Set to zero for no limit.
+rate-limit-ms = 100
 
 # Limit the number of identical clients (i.e., users connecting 
 # multiple times). Unset or set to zero for unlimited.
@@ -41,7 +55,19 @@ max-same-clients = |MAX_SAME|
 
 # TCP and UDP port number
 tcp-port = |PORT|
-|UDP|udp-port = |PORT|
+|UDP|udp-port = |UDP_PORT|
+
+# Stats report time. The number of seconds after which each
+# worker process will report its usage statistics (number of
+# bytes transferred etc). This is useful when accounting like
+# radius is in use.
+#stats-report-time = 360
+
+# Stats reset time. The period of time statistics kept by main/sec-mod
+# processes will be reset. These are the statistics shown by cmd
+# 'occtl show stats'. For daily: 86400, weekly: 604800
+# This is unrelated to stats-report-time.
+server-stats-reset-time = 604800
 
 # Keepalive in seconds
 keepalive = 32400
@@ -53,7 +79,15 @@ dpd = |DPD|
 # be much higher to prevent such clients being awaken too 
 # often by the DPD messages, and save battery.
 # (clients that send the X-AnyConnect-Identifier-DeviceType)
-#mobile-dpd = 1800
+mobile-dpd = 1800
+
+# If using DTLS, and no UDP traffic is received for this
+# many seconds, attempt to send future traffic over the TCP
+# connection instead, in an attempt to wake up the client
+# in the case that there is a NAT and the UDP translation
+# was deleted. If this is unset, do not attempt to use this
+# recovery mechanism.
+switch-to-tcp-timeout = 25
 
 # MTU discovery (DPD must be enabled)
 try-mtu-discovery = false
@@ -109,15 +143,18 @@ server-key = /etc/ocserv/server-key.pem
 # The revocation list of the certificates issued by the 'ca-cert' above.
 #crl = /etc/ocserv/crl.pem
 
+# Uncomment this to enable compression negotiation (LZS, LZ4).
+|COMPRESSION|compression = true
+
 # GnuTLS priority string
-tls-priorities = "NORMAL:%SERVER_PRECEDENCE:%COMPAT"
+tls-priorities = "NORMAL:%SERVER_PRECEDENCE:%COMPAT:-VERS-SSL3.0"
 
 # To enforce perfect forward secrecy (PFS) on the main channel.
-#tls-priorities = "NORMAL:%SERVER_PRECEDENCE:%COMPAT:-RSA"
+#tls-priorities = "NORMAL:%SERVER_PRECEDENCE:%COMPAT:-VERS-SSL3.0:-RSA"
 
 # The time (in seconds) that a client is allowed to stay connected prior
 # to authentication
-auth-timeout = 40
+auth-timeout = 240
 
 # The time (in seconds) that a client is allowed to stay idle (no traffic)
 # before being disconnected. Unset to disable.
@@ -129,15 +166,42 @@ auth-timeout = 40
 
 # The time (in seconds) that a client is not allowed to reconnect after 
 # a failed authentication attempt.
-#min-reauth-time = 2
+min-reauth-time = 360
+
+# Banning clients in ocserv works with a point system. IP addresses
+# that get a score over that configured number are banned for
+# min-reauth-time seconds. By default a wrong password attempt is 10 points,
+# a KKDCP POST is 1 point, and a connection is 1 point. Note that
+# due to difference processes being involved the count of points
+# will not be real-time precise.
+#
+# Score banning cannot be reliably used when receiving proxied connections
+# locally from an HTTP server (i.e., when listen-clear-file is used).
+#
+# Set to zero to disable.
+max-ban-score = 80
+
+# The time (in seconds) that all score kept for a client is reset.
+ban-reset-time = 1200
+
+# In case you'd like to change the default points.
+#ban-points-wrong-password = 10
+#ban-points-connection = 1
+#ban-points-kkdcp = 1
 
 # Cookie timeout (in seconds)
-# which he can reconnect. That cookie will be invalided if not
-# used within this timeout value. On a user disconnection, that
-# cookie will also be active for this time amount prior to be
-# invalid. That should allow a reasonable amount of time for roaming
-# between different networks.
+# Once a client is authenticated he's provided a cookie with
+# which he can reconnect. That cookie will be invalidated if not
+# used within this timeout value. This cookie remains valid, during
+# the user's connected time, and after user disconnection it
+# remains active for this amount of time. That setting should allow a
+# reasonable amount of time for roaming between different networks.
 cookie-timeout = 300
+
+# If this is enabled (not recommended) the cookies will stay
+# valid even after a user manually disconnects, and until they
+# expire. This may improve roaming with some broken clients.
+#persistent-cookies = true
 
 # Whether roaming is allowed, i.e., if true a cookie is
 # restricted to a single IP address and cannot be re-used
@@ -146,7 +210,8 @@ deny-roaming = false
 
 # ReKey time (in seconds)
 # ocserv will ask the client to refresh keys periodically once
-# this amount of seconds is elapsed. Set to zero to disable.
+# this amount of seconds is elapsed. Set to zero to disable (note
+# that, some clients fail if rekey is disabled).
 rekey-time = 172800
 
 # ReKey method
@@ -164,8 +229,11 @@ rekey-method = ssl
 # DEVICE, IP_REAL (the real IP of the client), IP_LOCAL (the local IP
 # in the P-t-P connection), IP_REMOTE (the VPN IP of the client),
 # ID (a unique numeric ID); REASON may be "connect" or "disconnect".
-connect-script = /usr/bin/ocserv-script
-disconnect-script = /usr/bin/ocserv-script
+
+# These scripts are not needed if you have setup an interface for all vpns+
+# devices.
+#connect-script = /usr/bin/ocserv-script
+#disconnect-script = /usr/bin/ocserv-script
 
 # UTMP
 use-utmp = false
@@ -217,7 +285,7 @@ device = vpns
 predictable-ips = |PREDICTABLE_IPS|
 
 # The default domain to be advertised
-#default-domain = example.com
+|ENABLE_DEFAULT_DOMAIN|default-domain = |DEFAULT_DOMAIN|
 
 # The pool of addresses that leases will be given from.
 ipv4-network = |IPV4ADDR|
@@ -233,15 +301,18 @@ ipv4-netmask = |NETMASK|
 
 # The IPv6 subnet that leases will be given from.
 |ENABLE_IPV6|ipv6-network = |IPV6ADDR|
-|ENABLE_IPV6|ipv6-prefix = |IPV6PREFIX|
 
 # The domains over which the provided DNS should be used. Use
 # multiple lines for multiple domains.
-#split-dns = example.com
+|ENABLE_SPLIT_DNS|split-dns = |DEFAULT_DOMAIN|
 
 # Prior to leasing any IP from the pool ping it to verify that
 # it is not in use by another (unrelated to this server) host.
-ping-leases = false
+ping-leases = |PING_LEASES|
+
+# Whether to tunnel all DNS queries via the VPN. This is the default
+# when a default route is set.
+#tunnel-all-dns = true
 
 # Unset to assign the default MTU of the device
 # mtu = 
@@ -277,8 +348,8 @@ ping-leases = false
 # based on a user or group. The syntax depends on the input accepted
 # by the commands route-add-cmd and route-del-cmd (see below).
 
-#config-per-user = /etc/ocserv/config-per-user/
-#config-per-group = /etc/ocserv/config-per-group/
+config-per-user = /etc/ocserv/config-per-user/
+config-per-group = /etc/ocserv/config-per-group/
 
 # When config-per-xxx is specified and there is no group or user that
 # matches, then utilize the following configuration.
@@ -309,8 +380,11 @@ ping-leases = false
 # The following example is from linux systems. %{R} should be something
 # like 192.168.2.0/24
 
-#route-add-cmd = "ip route add %{R} dev %{D}"
-#route-del-cmd = "ip route delete %{R} dev %{D}"
+#route-add-cmd = "/usr/sbin/ip route add %{R} dev %{D}"
+#route-del-cmd = "/usr/sbin/ip route delete %{R} dev %{D}"
+
+route-add-cmd = "/sbin/route add -net %{RI} dev %{D}"
+route-del-cmd = "/sbin/route del -net %{RI} dev %{D}"
 
 # This option allows to forward a proxy. The special strings '%{U}'
 # and '%{G}', if present will be replaced by the username and group name.
@@ -342,3 +416,5 @@ cisco-client-compat = |CISCO_COMPAT|
 # Option to allow sending arbitrary custom headers to the client after
 # authentication and prior to VPN tunnel establishment.
 #custom-header = "X-My-Header: hi there"
+
+expose-iroutes = true

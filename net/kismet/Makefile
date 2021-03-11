@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,28 +8,26 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kismet
-PKG_VERSION:=2013-03-R1b
-PKG_RELEASE:=1
+PKG_VERSION:=2016-07-R1
+PKG_RELEASE:=6
 
 PKG_LICENSE:=LGPLv2.1
+PKG_CPE_ID:=cpe:/a:kismet:kismet
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.kismetwireless.net/code
-PKG_MD5SUM:=6cdcd78baf2e15edbe8a9de3c5493f02
+PKG_HASH:=bdb21f153311f1ff3b16621bf0d6740f66369bf0982b0a289c9a12af8847e237
 
-PKG_BUILD_DEPENDS:=libpcap libncurses libpcre
-
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/kismet/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Kismet
-  MAINTAINER:=Sebastian Wendel <packages@sourceindex.de>
-  DEPENDS:= $(CXX_DEPENDS) +libnl
+  MAINTAINER:=Jean-Michel lacroix <lacroix@lepine-lacroix.info>
+  DEPENDS:= +libstdcpp +libnl @BROKEN
   URL:=http://www.kismetwireless.net/
-  SUBMENU:=wireless
+  SUBMENU:=Wireless
 endef
 
 define Package/kismet/Default/description
@@ -42,10 +40,12 @@ define Package/kismet-client/conffiles
 endef
 
 define Package/kismet-drone/conffiles
+/etc/config/kismet_drone
 /etc/kismet/kismet_drone.conf
 endef
 
 define Package/kismet-server/conffiles
+/etc/config/kismet_server
 /etc/kismet/kismet.conf
 endef
 

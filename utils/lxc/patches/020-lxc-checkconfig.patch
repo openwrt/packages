@@ -1,13 +1,13 @@
---- a/src/lxc/lxc-checkconfig.in
-+++ b/src/lxc/lxc-checkconfig.in
+--- a/src/lxc/cmd/lxc-checkconfig.in
++++ b/src/lxc/cmd/lxc-checkconfig.in
 @@ -4,6 +4,17 @@
+ # Allow environment variables to override config
  : ${CONFIG:=/proc/config.gz}
- : ${GREP:=zgrep}
  : ${MODNAME:=configs}
 +: ${ZGREP:=zgrep}
 +: ${GUNZIP:=gunzip}
 +
-+if [ -z $(which $ZGREP) ] && ! [ -z $(which $GUNZIP) ] && [ -x $(which $GUNZIP) ] &&  [ -f $CONFIG ] && [ "$CONFIG" == "/proc/config.gz" ] ; then
++if [ -z $(command -v $ZGREP) ] && ! [ -z $(command -v $GUNZIP) ] && [ -x $(command -v $GUNZIP) ] &&  [ -f $CONFIG ] && [ "$CONFIG" == "/proc/config.gz" ] ; then
 +
 +	CONFIG_NEW="/tmp/config-$(uname -r)"
 +	$GUNZIP -c $CONFIG > $CONFIG_NEW
@@ -16,5 +16,5 @@
 +	GREP=grep
 +fi
  
- SETCOLOR_SUCCESS="printf \\033[1;32m"
- SETCOLOR_FAILURE="printf \\033[1;31m"
+ CAT="cat"
+ 

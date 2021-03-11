@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011-2014 OpenWrt.org
+# Copyright (C) 2011-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,26 +8,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
-PKG_VERSION:=1.4.4
-PKG_RELEASE:=4
+PKG_VERSION:=1.18.1
+PKG_RELEASE:=1
 
-PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-
-PKG_LICENSE:=LGPLv2 GPLv2
-PKG_LICENSE_FILES:=COPYING.LIB COPYING
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-bad-$(PKG_VERSION)
 PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-bad/
-PKG_MD5SUM:=972c6e22dd2e44fcf0b04b9d810a56be
+PKG_HASH:=c195978c85d97406c05eb9d43ac54b9ab35eda6ffdae32b3ed597b8f1743c1b2
+PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-bad-$(PKG_VERSION)
 
-PKG_BUILD_DEPENDS:= libgstreamer1 gstreamer1-plugins-base liboil
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
+		Ted Hess <thess@kitschensync.net>
+PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING.LIB COPYING
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+include ../../devel/meson/meson.mk
 
 GST_BAD_LIBS:=
 GST_BAD_MODULES:=
@@ -37,7 +35,7 @@ define Package/gstreamer1-bad/Default
   SECTION:=multimedia
   TITLE:=GStreamer
   URL:=http://gstreamer.freedesktop.org/
-  DEPENDS:= +libgstreamer1 $(ICONV_DEPENDS)
+  DEPENDS:= +gst1-plugins-base +libgstreamer1 +libgst1pbutils $(ICONV_DEPENDS)
 endef
 
 define Package/gstreamer1-bad/description/Default
@@ -94,85 +92,180 @@ define Package/gstreamer1-plugins-bad/config
 
 endef
 
+GST_COND_SELECT = -D$(1)=$(if $(CONFIG_PACKAGE_gst1-mod-$(1)),en,dis)abled
+
 GST_VERSION:=1.0
 
-CONFIGURE_ARGS += \
-	--disable-debug \
-	--disable-examples \
-	--disable-nls	\
+MESON_ARGS += \
+	$(call GST_COND_SELECT,accurip) \
+	$(call GST_COND_SELECT,adpcmdec) \
+	$(call GST_COND_SELECT,adpcmenc) \
+	$(call GST_COND_SELECT,aiff) \
+	$(call GST_COND_SELECT,asfmux) \
+	$(call GST_COND_SELECT,audiobuffersplit) \
+	$(call GST_COND_SELECT,audiofxbad) \
+	$(call GST_COND_SELECT,audiolatency) \
+	$(call GST_COND_SELECT,audiomixmatrix) \
+	$(call GST_COND_SELECT,audiovisualizers) \
+	$(call GST_COND_SELECT,autoconvert) \
+	$(call GST_COND_SELECT,bayer) \
+	-Dcamerabin2=$(if $(CONFIG_PACKAGE_gst1-mod-camerabin),en,dis)abled \
+	$(call GST_COND_SELECT,coloreffects) \
+	-Ddebugutils=$(if $(CONFIG_PACKAGE_gst1-mod-debugutilsbad),en,dis)abled \
+	$(call GST_COND_SELECT,dvbsubenc) \
+	$(call GST_COND_SELECT,dvbsuboverlay) \
+	$(call GST_COND_SELECT,dvdspu) \
+	$(call GST_COND_SELECT,faceoverlay) \
+	$(call GST_COND_SELECT,festival) \
+	$(call GST_COND_SELECT,fieldanalysis) \
+	$(call GST_COND_SELECT,freeverb) \
+	$(call GST_COND_SELECT,frei0r) \
+	$(call GST_COND_SELECT,gaudieffects) \
+	$(call GST_COND_SELECT,gdp) \
+	$(call GST_COND_SELECT,geometrictransform) \
+	$(call GST_COND_SELECT,id3tag) \
+	$(call GST_COND_SELECT,inter) \
+	$(call GST_COND_SELECT,interlace) \
+	$(call GST_COND_SELECT,ivfparse) \
+	$(call GST_COND_SELECT,ivtc) \
+	$(call GST_COND_SELECT,jp2kdecimator) \
+	$(call GST_COND_SELECT,jpegformat) \
+	-Dlibrfb=$(if $(CONFIG_PACKAGE_gst1-mod-rfbsrc),en,dis)abled \
+	$(call GST_COND_SELECT,midi) \
+	-Dmpegdemux=$(if $(CONFIG_PACKAGE_gst1-mod-mpegpsdemux),en,dis)abled \
+	$(call GST_COND_SELECT,mpegpsmux) \
+	$(call GST_COND_SELECT,mpegtsdemux) \
+	$(call GST_COND_SELECT,mpegtsmux) \
+	$(call GST_COND_SELECT,mxf) \
+	$(call GST_COND_SELECT,netsim) \
+	-Donvif=$(if $(CONFIG_PACKAGE_gst1-mod-rtponvif),en,dis)abled \
+	$(call GST_COND_SELECT,pcapparse) \
+	$(call GST_COND_SELECT,pnm) \
+	$(call GST_COND_SELECT,proxy) \
+	-Drawparse=$(if $(CONFIG_PACKAGE_gst1-mod-legacyrawparse),en,dis)abled \
+	$(call GST_COND_SELECT,removesilence) \
+	-Dsdp=$(if $(CONFIG_PACKAGE_gst1-mod-sdpelem),en,dis)abled \
+	$(call GST_COND_SELECT,segmentclip) \
+	$(call GST_COND_SELECT,siren) \
+	$(call GST_COND_SELECT,smooth) \
+	$(call GST_COND_SELECT,speed) \
+	$(call GST_COND_SELECT,subenc) \
+	$(call GST_COND_SELECT,switchbin) \
+	$(call GST_COND_SELECT,timecode) \
+	-Dvideofilters=$(if $(CONFIG_PACKAGE_gst1-mod-videofiltersbad),en,dis)abled \
+	$(call GST_COND_SELECT,videoframe_audiolevel) \
+	-Dvideoparsers=$(if $(CONFIG_PACKAGE_gst1-mod-videoparsersbad),en,dis)abled \
+	$(call GST_COND_SELECT,videosignal) \
+	$(call GST_COND_SELECT,vmnc) \
+	-Dy4m=$(if $(CONFIG_PACKAGE_gst1-mod-y4mdec),en,dis)abled \
 	\
-	--disable-directsound \
-	--disable-directdraw \
-	--disable-osx_video \
-	--disable-quicktime \
-	--disable-vcd \
-	--disable-alsa \
-	--disable-assrender \
-	--disable-amrwb \
-	--disable-apexsink \
-	--disable-bz2 \
-	--disable-cdaudio \
-	--disable-celt \
-	--disable-cog \
-	--disable-dc1394 \
-	--disable-directfb \
-	--disable-dirac \
-	--disable-dts \
-	--disable-divx \
-	--disable-resindvd \
-	--disable-metadata \
-	--disable-faac \
-	--disable-faad \
-	--disable-fbdev \
-	--disable-flite \
-	--disable-gsm \
-	--disable-jack \
-	--disable-jp2k \
-	--disable-kate \
-	--disable-ladspa \
-	--disable-lv2 \
-	--disable-modplug \
-	--disable-mimic \
-	--disable-libmms \
-	--disable-mpeg2enc \
-	--disable-mplex \
-	--disable-musepack \
-	--disable-musicbrainz \
-	--disable-mythtv \
-	--disable-nas \
-	--disable-neon \
-	--disable-ofa \
-	--disable-rsvg \
-	--disable-timidity \
-	--disable-wildmidi \
-	--disable-sdl \
-	--disable-sdltest \
-	--disable-sndfile \
-	--disable-soundtouch \
-	--disable-spc \
-	--disable-gme \
-	--disable-swfdec \
-	--disable-theoradec \
-	--disable-xvid \
-	--disable-dvb \
-	--disable-wininet \
-	--disable-acm \
-	--disable-vdpau \
-	--disable-schro \
-	--disable-zbar \
-	--disable-vp8 \
-	--disable-srtp \
+	-Dopencv=disabled \
+	-Dwayland=disabled \
+	-Dx11=disabled \
 	\
-	--without-libiconv-prefix \
-	--without-libintl-prefix \
-	--without-x \
-
-TARGET_CFLAGS+= -std=gnu99
-
-EXTRA_LDFLAGS+= \
-	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib \
-	$(if $(ICONV_FULL),-liconv) \
-
+	-Daom=disabled \
+	-Davtp=disabled \
+	-Dandroidmedia=disabled \
+	-Dapplemedia=disabled \
+	-Dassrender=disabled \
+	$(call GST_COND_SELECT,bluez) \
+	-Dbs2b=disabled \
+	$(call GST_COND_SELECT,bz2) \
+	-Dchromaprint=disabled \
+	-Dclosedcaption=disabled \
+	-Dcolormanagement=disabled \
+	-Dcurl=disabled \
+	-Dcurl-ssh2=disabled \
+	-Dd3dvideosink=disabled \
+	-Dd3d11=disabled \
+	-Ddash=disabled \
+	-Ddc1394=disabled \
+	-Ddecklink=disabled \
+	-Ddirectfb=disabled \
+	-Ddirectsound=disabled \
+	$(call GST_COND_SELECT,dtls) \
+	-Ddts=disabled \
+	-Ddvb=disabled \
+	-Dfaac=disabled \
+	$(call GST_COND_SELECT,faad) \
+	-Dfbdev=$(if $(CONFIG_PACKAGE_gst1-mod-fbdevsink),en,dis)abled \
+	-Dfdkaac=disabled \
+	-Dflite=disabled \
+	-Dfluidsynth=disabled \
+	-Dgl=disabled \
+	-Dgme=disabled \
+	-Dgsm=disabled \
+	-Dipcpipeline=disabled \
+	-Diqa=disabled \
+	-Dkate=disabled \
+	-Dkms=disabled \
+	-Dladspa=disabled \
+	-Dlibde265=disabled \
+	-Dlibmms=disabled \
+	-Dlv2=disabled \
+	-Dmediafoundation=disabled \
+	-Dmicrodns=disabled \
+	-Dmodplug=disabled \
+	-Dmpeg2enc=disabled \
+	-Dmplex=disabled \
+	-Dmsdk=disabled \
+	-Dmusepack=disabled \
+	-Dneon=disabled \
+	-Dnvcodec=disabled \
+	-Dofa=disabled \
+	-Dopenal=disabled \
+	-Dopenexr=disabled \
+	-Dopenh264=disabled \
+	-Dopenjpeg=disabled \
+	-Dopenmpt=disabled \
+	-Dopenni2=disabled \
+	-Dopensles=disabled \
+	-Dopus=$(if $(CONFIG_PACKAGE_gst1-mod-opusparse),en,dis)abled \
+	-Dresindvd=disabled \
+	-Drsvg=disabled \
+	-Drtmp=disabled \
+	$(call GST_COND_SELECT,sbc) \
+	-Dsctp=disabled \
+	$(call GST_COND_SELECT,shm) \
+	-Dsmoothstreaming=disabled \
+	$(call GST_COND_SELECT,sndfile) \
+	-Dsoundtouch=disabled \
+	-Dspandsp=disabled \
+	-Dsrt=disabled \
+	-Dsrtp=disabled \
+	-Dteletext=disabled \
+	-Dtinyalsa=disabled \
+	-Dttml=disabled \
+	-Duvch264=disabled \
+	-Dvoaacenc=disabled \
+	-Dvoamrwbenc=disabled \
+	-Dvulkan=disabled \
+	-Dwasapi=disabled \
+	-Dwasapi2=disabled \
+	$(call GST_COND_SELECT,webp) \
+	-Dwebrtc=disabled \
+	-Dwebrtcdsp=disabled \
+	-Dwildmidi=disabled \
+	-Dwinks=disabled \
+	-Dwinscreencap=disabled \
+	-Dx265=disabled \
+	-Dzbar=disabled \
+	-Dzxing=disabled \
+	-Dwpe=disabled \
+	-Dmagicleap=disabled \
+	-Dv4l2codecs=disabled \
+	\
+	$(call GST_COND_SELECT,hls) \
+	-Dhls-crypto=nettle \
+	-Dexamples=disabled \
+	-Dtests=disabled \
+	-Dintrospection=disabled \
+	-Dorc=disabled \
+	-Dgobject-cast-checks=disabled \
+	-Dglib-asserts=disabled \
+	-Dglib-checks=disabled \
+	-Dextra-checks=disabled \
+	-Ddoc=disabled
 
 define Package/gst1-plugins-bad/install
 	/bin/true
@@ -211,8 +304,12 @@ define GstBuildLibrary
   $$(eval $$(call BuildPackage,libgst1$(1)))
 endef
 
+$(eval $(call GstBuildLibrary,adaptivedemux,adaptivedemux,app uridownloader,))
 $(eval $(call GstBuildLibrary,photography,photography,,))
 $(eval $(call GstBuildLibrary,basecamerabinsrc,basecamerabinsrc,app,))
+$(eval $(call GstBuildLibrary,uridownloader,uridownloader,,))
+$(eval $(call GstBuildLibrary,codecparsers,codecparsers,,))
+$(eval $(call GstBuildLibrary,mpegts,mpegts,,))
 
 # 1: short name
 # 2: description
@@ -253,32 +350,77 @@ $(eval $(call GstBuildPlugin,adpcmdec,adpcm decoding support,audio,,))
 $(eval $(call GstBuildPlugin,adpcmenc,adpcm encoding support,audio,,))
 $(eval $(call GstBuildPlugin,aiff,aiff support,audio tag,,))
 $(eval $(call GstBuildPlugin,asfmux,asf muxing support,rtp,,))
+$(eval $(call GstBuildPlugin,audiobuffersplit,audiobuffersplit support,audio,,))
+$(eval $(call GstBuildPlugin,audiofxbad,audiofxbad support,audio,,))
+$(eval $(call GstBuildPlugin,audiolatency,audiolatency support,audio,,))
+$(eval $(call GstBuildPlugin,audiomixmatrix,audiomixmatrix support,audio,,))
+$(eval $(call GstBuildPlugin,audiovisualizers,audiovisualizers support,audio,,))
 $(eval $(call GstBuildPlugin,autoconvert,autoconvert support,,,))
 $(eval $(call GstBuildPlugin,bayer,bayer support,video,,))
-$(eval $(call GstBuildPlugin,camerabin2,camerabin support,basecamerabinsrc photography tag pbutils app,,))
-$(eval $(call GstBuildPlugin,dataurisrc,dataurisrc support,,,))
+$(eval $(call GstBuildPlugin,camerabin,camerabin support,basecamerabinsrc photography pbutils app,,))
+$(eval $(call GstBuildPlugin,coloreffects,coloreffects support,video,,))
 $(eval $(call GstBuildPlugin,debugutilsbad,debugutils support,video,,))
+$(eval $(call GstBuildPlugin,dvbsubenc,dvbsubenc support,video,,))
+$(eval $(call GstBuildPlugin,dvbsuboverlay,dvbsuboverlay support,video,,))
 $(eval $(call GstBuildPlugin,dvdspu,dvdspu support,video,,))
+$(eval $(call GstBuildPlugin,faceoverlay,faceoverlay support,pbutils,,))
 $(eval $(call GstBuildPlugin,festival,festival support,audio,,))
+$(eval $(call GstBuildPlugin,fieldanalysis,fieldanalysis support,audio,,))
+$(eval $(call GstBuildPlugin,freeverb,freeverb support,,,))
 $(eval $(call GstBuildPlugin,frei0r,frei0r support,controller video,,))
+$(eval $(call GstBuildPlugin,gaudieffects,gaudieffects support,audio,,))
+$(eval $(call GstBuildPlugin,gdp,gdp support,,,))
+$(eval $(call GstBuildPlugin,geometrictransform,geometrictransform support,,,))
 $(eval $(call GstBuildPlugin,id3tag,id3tag support,tag,,))
+$(eval $(call GstBuildPlugin,inter,inter support,,,))
+$(eval $(call GstBuildPlugin,interlace,interlace support,,,))
+$(eval $(call GstBuildPlugin,ivfparse,ivfparse support,,,))
+$(eval $(call GstBuildPlugin,ivtc,ivtc support,,,))
+$(eval $(call GstBuildPlugin,jp2kdecimator,jp2kdecimator support,,,))
 $(eval $(call GstBuildPlugin,jpegformat,jpegformat support,tag,,))
-$(eval $(call GstBuildPlugin,liveadder,liveadder support,audio,,))
-$(eval $(call GstBuildPlugin,mpegpsdemux,mpegpsdemux support,pbutils tag,,))
+$(eval $(call GstBuildPlugin,legacyrawparse,rawparse support,audio video,,))
+$(eval $(call GstBuildPlugin,midi,midi support,audio,,))
+$(eval $(call GstBuildPlugin,mpegpsdemux,mpegpsdemux support,pbutils,,))
 $(eval $(call GstBuildPlugin,mpegpsmux,mpegpsmux support,,,))
-#$(eval $(call GstBuildPlugin,mpegtsdemux,mpegtsdemux support,mpegts pbutils tag,,))
-#$(eval $(call GstBuildPlugin,mpegtsmux,mpegtsmux support,video,,))
+$(eval $(call GstBuildPlugin,mpegtsdemux,mpegtsdemux support,codecparsers mpegts pbutils,,))
+$(eval $(call GstBuildPlugin,mpegtsmux,mpegtsmux support,mpegts video,,))
 $(eval $(call GstBuildPlugin,mxf,mxf support,audio video,,))
+$(eval $(call GstBuildPlugin,netsim,netsim support,,,))
 $(eval $(call GstBuildPlugin,pcapparse,pcapparse support,,,))
 $(eval $(call GstBuildPlugin,pnm,pnm support,video,,))
-$(eval $(call GstBuildPlugin,rawparse,rawparse support,audio video,,))
+$(eval $(call GstBuildPlugin,proxy,proxy support,,,))
+$(eval $(call GstBuildPlugin,removesilence,removesilence support,audio,,))
 $(eval $(call GstBuildPlugin,rfbsrc,librfb support,video,,))
+$(eval $(call GstBuildPlugin,rtponvif,rtponvif support,,,))
 $(eval $(call GstBuildPlugin,sdpelem,sdp support,rtp sdp,,))
 $(eval $(call GstBuildPlugin,segmentclip,segmentclip support,audio,,))
 $(eval $(call GstBuildPlugin,siren,siren support,audio rtp,,))
+$(eval $(call GstBuildPlugin,smooth,smooth support,,,))
 $(eval $(call GstBuildPlugin,speed,speed support,audio,,))
 $(eval $(call GstBuildPlugin,subenc,subenc support,controller,,))
+$(eval $(call GstBuildPlugin,switchbin,switchbin support,,,))
+$(eval $(call GstBuildPlugin,timecode,timecode support,,,))
+$(eval $(call GstBuildPlugin,videofiltersbad,videofiltersbad support,,,))
+$(eval $(call GstBuildPlugin,videoframe_audiolevel,videoframe_audiolevel support,,,))
+#$(eval $(call GstBuildPlugin,videoparsersbad,videoparsersbad support,,,))
+$(eval $(call GstBuildPlugin,videosignal,videosignal support,,,))
+$(eval $(call GstBuildPlugin,vmnc,vmnc support,,,))
+$(eval $(call GstBuildPlugin,y4mdec,y4mdec support,,,))
+
+$(eval $(call GstBuildPlugin,bluez,bluez support,,,+bluez-libs))
+#$(eval $(call GstBuildPlugin,bz2,bzip2 support,,,+libbz2))
+#$(eval $(call GstBuildPlugin,dataurisrc,dataurisrc support,,,))
+$(eval $(call GstBuildPlugin,dtls,DTLS support,,,+libopenssl))
+$(eval $(call GstBuildPlugin,faad,faad support,audio,,+libfaad2))
+$(eval $(call GstBuildPlugin,fbdevsink,fbdev support,video,,))
+$(eval $(call GstBuildPlugin,hls,HLS support,pbutils adaptivedemux,multifile,+libnettle))
+$(eval $(call GstBuildPlugin,opusparse,OPUS streams library,pbutils,,+libopus))
+$(eval $(call GstBuildPlugin,sbc,sbc support,audio,,+sbc))
+$(eval $(call GstBuildPlugin,shm,POSIX shared memory source and sink,,,+librt))
+$(eval $(call GstBuildPlugin,sndfile,sndfile support,audio,,+libsndfile))
 #$(eval $(call GstBuildPlugin,srtp,srtp support,rtp,,+libsrtp))
+$(eval $(call GstBuildPlugin,webp,webp support,,,+libwebp))
+#$(eval $(call GstBuildPlugin,yadif,yadif support,,,))
 
 $(eval $(call BuildPackage,gstreamer1-plugins-bad))
 $(eval $(call BuildPackage,gst1-plugins-bad))

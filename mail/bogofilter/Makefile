@@ -8,17 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bogofilter
-PKG_VERSION:=1.2.4
-PKG_RELEASE:=3
+PKG_VERSION:=1.2.5
+PKG_RELEASE:=1
 
-PKG_LICENSE:=GPLv2
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:bogofilter:bogofilter
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=@SF/bogofilter
-PKG_MD5SUM:=d0a5eebb3274b23ceabe766a6443a1c5
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=@SF/project/bogofilter/bogofilter-stable/
+PKG_HASH:=3248a1373bff552c500834adbea4b6caee04224516ae581fb25a4c6a6dee89ea
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -35,7 +37,14 @@ define Package/bogofilter/description
 	Bogofilter is a fast Bayesian spam filter
 endef
 
-CONFIGURE_ARGS += --disable-unicode
+CONFIGURE_ARGS += \
+	--disable-unicode \
+	--with-libdb-prefix=$(STAGING_DIR) \
+	--with-included-gsl
+
+define Package/bogofilter/conffiles
+/etc/bogofilter.cf
+endef
 
 define Package/bogofilter/install
 	$(INSTALL_DIR)  $(1)/etc/ \

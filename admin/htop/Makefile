@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
+# Copyright (C) 2007-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=htop
-PKG_VERSION:=1.0.3
+PKG_VERSION:=3.0.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://hisham.hm/htop/releases/$(PKG_VERSION)/
-PKG_MD5SUM:=e768b9b55c033d9c1dffda72db3a6ac7
+PKG_SOURCE_URL:=https://codeload.github.com/htop-dev/htop/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=4c2629bd50895bd24082ba2f81f8c972348aa2298cc6edc6a21a7fa18b73990c
 
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:htop:htop
+
 
 PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -28,7 +31,7 @@ define Package/htop
   CATEGORY:=Administration
   TITLE:=Interactive processes viewer
   DEPENDS:=+libncurses
-  URL:=http://htop.sourceforge.net/
+  URL:=https://hisham.hm/htop/
   MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 endef
 
@@ -39,15 +42,12 @@ define Package/htop/description
 endef
 
 CONFIGURE_ARGS += \
-	--disable-native-affinity \
 	--disable-unicode \
-	--enable-hwloc
+	--disable-hwloc
 
 CONFIGURE_VARS += \
 	ac_cv_file__proc_stat=yes \
-	ac_cv_file__proc_meminfo=yes \
-	ac_cv_func_malloc_0_nonnull=yes \
-	ac_cv_func_realloc_0_nonnull=yes
+	ac_cv_file__proc_meminfo=yes
 
 define Package/htop/install
 	$(INSTALL_DIR) $(1)/usr/bin

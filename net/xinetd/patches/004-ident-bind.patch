@@ -10,7 +10,7 @@ Reviewed-By: Adam Tkac <atkac@redhat.com>
 #diff -up xinetd-2.3.14/xinetd/ident.c.orig xinetd-2.3.14/xinetd/ident.c
 --- a/xinetd/ident.c
 +++ b/xinetd/ident.c
-@@ -97,7 +98,13 @@ idresult_e log_remote_user( const struct
+@@ -97,7 +97,13 @@ idresult_e log_remote_user( const struct
     }
  
     CLEAR( sin_contact );
@@ -25,7 +25,7 @@ Reviewed-By: Adam Tkac <atkac@redhat.com>
     sin_contact = sin_remote;
     memcpy( &sin_bind, &sin_local, sizeof(sin_bind) ) ;
     local_port = 0;
-@@ -121,7 +128,13 @@ idresult_e log_remote_user( const struct
+@@ -127,7 +133,13 @@ idresult_e log_remote_user( const struct
        msg( LOG_ERR, func, "socket creation: %m" ) ;
        return( IDR_ERROR ) ;
     }

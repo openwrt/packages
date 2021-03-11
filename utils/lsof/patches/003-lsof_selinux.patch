@@ -1,6 +1,6 @@
 --- a/Configure
 +++ b/Configure
-@@ -2806,7 +2806,7 @@ return(0); }
+@@ -2991,7 +2991,7 @@ return(0); }
  	LSOF_TMP1=1
        fi	# }
      fi	# }

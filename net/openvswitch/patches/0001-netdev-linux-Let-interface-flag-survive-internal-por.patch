@@ -1,8 +1,7 @@
-From b9284f535e93c337ab21f330753e60e1038f9a27 Mon Sep 17 00:00:00 2001
+From 974dc36a87274d7bae13e7dddd3364fecf5b3e7c Mon Sep 17 00:00:00 2001
 From: Helmut Schaa <helmut.schaa@googlemail.com>
 Date: Wed, 8 Jan 2014 13:48:49 +0100
-Subject: [PATCH 2/2] netdev-linux: Let interface flag survive internal port
- setup
+Subject: [PATCH] netdev-linux: Let interface flag survive internal port setup
 
 Due to a race condition when bringing up an internal port on Linux
 some interface flags (e.g. IFF_MULTICAST) are falsely reset. This
@@ -17,11 +16,9 @@ Signed-off-by: Helmut Schaa <helmut.schaa@googlemail.com>
  lib/netdev-linux.c | 8 +++++++-
  1 file changed, 7 insertions(+), 1 deletion(-)
 
-diff --git a/lib/netdev-linux.c b/lib/netdev-linux.c
-index 9eaac33..423e72e 100644
 --- a/lib/netdev-linux.c
 +++ b/lib/netdev-linux.c
-@@ -2569,7 +2569,13 @@ update_flags(struct netdev_linux *netdev, enum netdev_flags off,
+@@ -3469,7 +3469,13 @@ update_flags(struct netdev_linux *netdev
      unsigned int old_flags, new_flags;
      int error = 0;
  
@@ -36,6 +33,3 @@ index 9eaac33..423e72e 100644
      *old_flagsp = iff_to_nd_flags(old_flags);
      new_flags = (old_flags & ~nd_to_iff_flags(off)) | nd_to_iff_flags(on);
      if (new_flags != old_flags) {
--- 
-1.8.1.4
-

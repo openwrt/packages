@@ -1,0 +1,8 @@
+--- a/tools/version.sh
++++ b/tools/version.sh
+@@ -1,4 +1,3 @@
+ #!/bin/sh
+ 
+-test -d .git || exit
+-git describe --tags
++echo -n "0.14.39"

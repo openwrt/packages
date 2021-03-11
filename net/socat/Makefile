@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,26 +6,27 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=socat
-PKG_VERSION:=1.7.2.4
+PKG_VERSION:=1.7.3.4
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.dest-unreach.org/socat/download
-PKG_MD5SUM:=69b8155dd442a6f24e28ef5407d868eb
+PKG_HASH:=972374ca86f65498e23e3259c2ee1b8f9dbeb04d12c2a78c0c9b5d1cb97dfdfc
 
-PKG_MAINTAINER:= Ted Hess <thess@kitschensync.net>
-
-PKG_LICENSE:=GPL-2.0 OpenSSL
+PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_LICENSE:=GPL-2.0-or-later OpenSSL
 PKG_LICENSE_FILES:=COPYING COPYING.OpenSSL
+PKG_CPE_ID:=cpe:/a:dest-unreach:socat
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/socat
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpthread +SOCAT_SSL:libopenssl
+  DEPENDS:=+libpthread +librt +SOCAT_SSL:libopenssl
   TITLE:=A multipurpose relay (SOcket CAT)
   URL:=http://www.dest-unreach.org/socat/
 endef
@@ -63,11 +62,24 @@ ifneq ($(CONFIG_SOCAT_SSL),y)
   CONFIGURE_ARGS+= --disable-openssl
 endif
 
+# PowerPC has different TERMIOS bits
+ifneq ($(findstring powerpc,$(CONFIG_ARCH)),)
+  CONFIGURE_VARS += \
+	  sc_cv_sys_crdly_shift=12 \
+	  sc_cv_sys_tabdly_shift=10 \
+	  sc_cv_sys_csize_shift=8
+else
+  CONFIGURE_VARS += \
+	  sc_cv_sys_crdly_shift=9 \
+	  sc_cv_sys_tabdly_shift=11 \
+	  sc_cv_sys_csize_shift=4
+endif
+
 CONFIGURE_VARS += \
 	sc_cv_termios_ispeed="no" \
-	sc_cv_sys_crdly_shift=9 \
-	sc_cv_sys_tabdly_shift=11 \
-	sc_cv_sys_csize_shift=4
+	ac_cv_header_bsd_libutil_h=no \
+	ac_cv_lib_bsd_openpty=no \
+	BUILD_DATE=$(SOURCE_DATE_EPOCH)
 
 define Package/socat/install
 	$(INSTALL_DIR) $(1)/usr/bin

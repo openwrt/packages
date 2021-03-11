@@ -1,42 +1,41 @@
-#
-# Copyright (C) 2009-2012 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tmux
-PKG_VERSION:=1.9a
+PKG_VERSION:=3.1c
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/tmux
-PKG_MD5SUM:=b07601711f96f1d260b390513b509a2d
+PKG_SOURCE_URL:=https://codeload.github.com/tmux/tmux/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=b9617dd4d1c541ebc21b6b5760d58102fc039a593786aab273b5dd95dd514bea
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
+
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:nicholas_marriott:tmux
 
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/tmux
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Terminal
   TITLE:=Terminal multiplexer
   DEPENDS:=+libncurses +libevent2 +libpthread +librt
-  URL:=http://tmux.sourceforge.net/
+  URL:=http://tmux.github.io/
 endef
 
 define Package/tmux/description
   tmux is a modern, BSD-licensed alternative to GNU screen.
 endef
 
-MAKE_FLAGS += \
-	PREFIX="/usr" \
-	PLATFORM="linux"
+define Package/tmux/conffiles
+/etc/tmux.conf
+endef
 
 define Package/tmux/install
 	$(INSTALL_DIR) $(1)/usr/bin

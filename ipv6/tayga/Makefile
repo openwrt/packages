@@ -4,16 +4,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tayga
 PKG_VERSION:=0.9.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=tayga-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.litech.org/tayga/
-PKG_MD5SUM:=7a7b24165ce008df772f398d86fa280e
+PKG_HASH:=2b1f7927a9d2dcff9095aff3c271924b052ccfd2faca9588b277431a44f0009c
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
-PKG_CAT:=bzcat
-PKG_BUILD_DIR:=$(BUILD_DIR)/tayga-$(PKG_VERSION)
 PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
@@ -21,7 +19,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/tayga
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+ip +kmod-ipv6 +kmod-tun
+  DEPENDS:=+ip @IPV6 +kmod-tun
   TITLE:=Out-of-kernel stateless NAT64 implementation for Linux
   URL:=http://www.litech.org/tayga/
   MAINTAINER:=Ondrej Caletka <ondrej@caletka.cz>

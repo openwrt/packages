@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2014 OpenWrt.org
+# Copyright (C) 2008-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,25 +8,31 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadow
-PKG_VERSION:=4.2.1
-PKG_RELEASE:=4
+PKG_VERSION:=4.8.1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://pkg-shadow.alioth.debian.org/releases
-PKG_MD5SUM:=2bfafe7d4962682d31b5eba65dba4fc8
-PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
-PKG_LICENSE:=BSD-3-Clause
+PKG_SOURCE_URL:=https://github.com/shadow-maint/shadow/releases/download/$(PKG_VERSION)
+PKG_HASH:=a3ad4630bdc41372f02a647278a8c3514844295d36eefe68ece6c3a641c1ae62
 
-PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
+PKG_MAINTAINER:=
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:debian:shadow
+
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=libxcrypt
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
 SHADOW_APPLETS := \
-	chage groupadd groupdel groupmod groups passwd su \
-	useradd userdel usermod
+	chage chfn chgpasswd chpasswd chsh expiry faillog gpasswd \
+	groupadd groupdel groupmems groupmod groups grpck grpconv grpunconv \
+	lastlog login logoutd newgidmap newgrp newuidmap newusers nologin \
+	passwd pwck pwconv pwunconv su \
+	useradd userdel usermod vipw
 
 CONFIGURE_ARGS += \
 	--without-audit \
@@ -36,13 +42,16 @@ CONFIGURE_ARGS += \
 	--without-attr \
 	--without-tcb \
 	--without-nscd \
-	--disable-subordinate-ids \
+	--with-bcrypt
+
+CONFIGURE_VARS += \
+	ac_cv_func_ruserok=no
 
 define Package/shadow/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=The PLD Linux shadow utilities
-  URL:=http://pkg-shadow.alioth.debian.org/
+  URL:=https://github.com/shadow-maint/shadow
 endef
 
 define Package/shadow
@@ -73,6 +82,7 @@ define Package/shadow-utils/config
     config shadow-all
       bool "Include all PLD shadow utilities"
       select PACKAGE_shadow
+      default y
 
     comment "Utilities"
 
@@ -115,9 +125,14 @@ define Package/shadow-common/conffiles
 /etc/login.defs
 endef
 
+#hack to get libxcrypt working
+TARGET_LDFLAGS:=-L$(STAGING_DIR)/usr/lib/libxcrypt $(TARGET_LDFLAGS)
+
 define Package/shadow-common/install
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/login.defs $(1)/etc/
+	$(SED) 's,SU_NAME,#SU_NAME,g' $(1)/etc/login.defs
+	$(SED) 's,#ENCRYPT_METHOD DES,ENCRYPT_METHOD BCRYPT,g' $(1)/etc/login.defs
 endef
 
 define Package/shadow-utils/install

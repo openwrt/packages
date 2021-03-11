@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2014-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cshark
-PKG_VERSION:=2014-07-02
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_SOURCE_DATE:=2018-08-20
+PKG_SOURCE_VERSION:=7a7cf7f35074b85c6fb0c52067e640d2433ef73b
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/cloudshark/cshark.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=ec638311b0b8ef74baf0be06dcf03a641e3308a2
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_MIRROR_HASH:=b09822e93d7de7f4aa9fa018c304ebc52dd3419de3dd2eff463986d3a3b8ca71
+
+PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
+PKG_LICENSE:=BSD-2-Clause
 
 PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -27,23 +28,12 @@ define Package/cshark
   SECTION:=net
   CATEGORY:=Network
   TITLE:=CloudShark capture tool
-  URL:=http://www.cloudshark.org/
-  DEPENDS:=+libjson-c +libpcap +libuci +libubox +libuclient +libustream-polarssl
-  MAINTAINER:=Luka Perkov <luka@openwrt.org>
-endef
-
-define Package/luci-app-cshark
-  SECTION:=luci
-  CATEGORY:=LuCI
-  SUBMENU:=3. Applications
-  TITLE:=Cloudshark capture tool Web UI
-  DEPENDS:=+cshark +luci
-  MAINTAINER:=Luka Perkov <luka@openwrt.org>
+  URL:=https://cloudshark.io/
+  DEPENDS:=+libjson-c +libpcap +libuci +libubox +libuclient +libustream-mbedtls
 endef
 
 CMAKE_OPTIONS = \
-	-DCMAKE_INSTALL_PREFIX=/usr \
-	-DWITH_DEBUG=OFF \
+	-DWITH_DEBUG=OFF
 
 define Package/cshark/conffiles
 /etc/config/cshark
@@ -66,10 +56,5 @@ define Package/cshark/install
 		$(1)/etc/ssl/certs/
 endef
 
-define Package/luci-app-cshark/install
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci
-	$(CP) -R $(PKG_BUILD_DIR)/openwrt/luci/luasrc/* $(1)/usr/lib/lua/luci/
-endef
 
 $(eval $(call BuildPackage,cshark))
-$(eval $(call BuildPackage,luci-app-cshark))

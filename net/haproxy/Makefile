@@ -1,6 +1,7 @@
 #
-# Copyright (C) 2010-2013 OpenWrt.org
-# Copyright (C) 2009-2014 Thomas Heil <heil@terminal-consulting.de>
+# Copyright (C) 2010-2016 OpenWrt.org
+# Copyright (C) 2009-2016 Thomas Heil <heil@terminal-consulting.de>
+# Copyright (C) 2018 Christian Lachner <gladiac@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,14 +10,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
-PKG_VERSION:=1.5.9
-PKG_RELEASE:=02
-PKG_SOURCE:=haproxy-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://haproxy.1wt.eu/download/1.5/src/
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
-PKG_MD5SUM:=b7672bb6a8aa188a655b418f3c96f65c
-PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
-PKG_LICENSE:=GPL-2.0
+PKG_VERSION:=2.2.9
+PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://www.haproxy.org/download/2.2/src
+PKG_HASH:=21680459b08b9ba21c8cc9f5dbd0ee6e1842f57a3a67f87179871e1c13ebd4e3
+
+PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>, \
+		Christian Lachner <gladiac@gmail.com>
+PKG_LICENSE:=GPL-2.0-only
+PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:haproxy:haproxy
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -25,7 +30,11 @@ define Package/haproxy/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=The Reliable, High Performance TCP/HTTP Load Balancer
-  URL:=http://haproxy.1wt.eu/
+  URL:=https://www.haproxy.org/
+endef
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
 endef
 
 define Package/haproxy/Default/conffiles
@@ -37,7 +46,7 @@ define Package/haproxy/Default/description
 endef
 
 define Package/haproxy
-  DEPENDS+= +libpcre +libltdl +zlib +libpthread +libopenssl
+  DEPENDS+= +libpcre +libltdl +zlib +libpthread +liblua5.3 +libopenssl +libncurses +libreadline +libatomic
   TITLE+= (with SSL support)
   VARIANT:=ssl
 $(call Package/haproxy/Default)
@@ -49,14 +58,14 @@ endef
 
 define Package/haproxy/description
 $(call Package/haproxy/Default/description)
- This package is built with SSL support.
+ This package is built with SSL and LUA support.
 endef
 
 define Package/haproxy-nossl
   TITLE+= (without SSL support)
   VARIANT:=nossl
-  DEPENDS+= +libpcre +libltdl +zlib +libpthread
-  TITLE+= (with SSL support)
+  DEPENDS+= +libpcre +libltdl +zlib +libpthread +liblua5.3 +libatomic
+  TITLE+= (without SSL support)
 $(call Package/haproxy/Default)
 endef
 
@@ -69,39 +78,47 @@ $(call Package/haproxy/Default/description)
  This package is built without SSL support.
 endef
 
-ifeq ($(CONFIG_avr32),y)
-  LINUX_TARGET:=linux26
-else
-  LINUX_TARGET:=linux2628
+ENABLE_LUA:=y
+
+ifeq ($(CONFIG_USE_UCLIBC),y)
+	ADDON+=USE_LIBCRYPT=
 endif
 
 ifeq ($(BUILD_VARIANT),ssl)
-	USE_OPENSSL=USE_OPENSSL=1
-else
-	USE_OPENSSL=
+	ADDON+=USE_OPENSSL=1
+	ADDON+=ADDLIB="-lcrypto -lm"
 endif
 
 define Build/Compile
-	$(MAKE) TARGET=$(LINUX_TARGET) -C $(PKG_BUILD_DIR) \
+	$(MAKE) TARGET=linux-glibc -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		CC="$(TARGET_CC)" \
-		CFLAGS="$(TARGET_CFLAGS) -fno-align-jumps -fno-align-functions -fno-align-labels -fno-align-loops -pipe -fomit-frame-pointer -fhonour-copts" \
+		PCREDIR="$(STAGING_DIR)/usr/" \
+		USE_LUA=1 LUA_LIB_NAME="lua5.3" LUA_INC="$(STAGING_DIR)/usr/include/lua5.3" LUA_LIB="$(STAGING_DIR)/usr/lib" \
+		SMALL_OPTS="-DBUFSIZE=16384 -DMAXREWRITE=1030 -DSYSTEM_MAXCONN=165530" \
+		USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 USE_TFO=1 USE_NS=1 \
+		USE_ZLIB=1 USE_PCRE=1 USE_PCRE_JIT=1 USE_GETADDRINFO=1 \
+		USE_THREAD=1 USE_PTHREAD_PSHARED=1 \
+		VERSION="$(PKG_VERSION)" SUBVERS="-$(PKG_RELEASE)" \
+		VERDATE="$(shell date -d @$(SOURCE_DATE_EPOCH) '+%Y/%m/%d')" IGNOREGIT=1 \
+		$(ADDON) USE_BACKTRACE= \
+		CFLAGS="$(TARGET_CFLAGS) -fno-strict-aliasing -Wdeclaration-after-statement -fwrapv -Wno-format-truncation -Wno-unused-label -Wno-sign-compare -Wno-unused-parameter -Wno-old-style-declaration -Wno-ignored-qualifiers -Wno-clobbered -Wno-missing-field-initializers -Wno-implicit-fallthrough -Wno-stringop-overflow -Wno-cast-function-type -Wtype-limits -Wshift-negative-value -Wshift-overflow=2 -Wduplicated-cond -Wnull-dereference" \
+		LD="$(TARGET_CC)" \
+		LDFLAGS="$(TARGET_LDFLAGS) -latomic" \
+		EXTRA_OBJS="contrib/prometheus-exporter/service-prometheus.o"
+
+	$(MAKE_VARS) $(MAKE) -C $(PKG_BUILD_DIR) \
+		DESTDIR="$(PKG_INSTALL_DIR)" \
 		LD="$(TARGET_CC)" \
 		LDFLAGS="$(TARGET_LDFLAGS)" \
-		PCREDIR="$(STAGING_DIR)/usr/include" \
-		SMALL_OPTS="-DBUFSIZE=16384 -DMAXREWRITE=1030 -DSYSTEM_MAXCONN=165530 " \
-		USE_LINUX_TPROXY=1 USE_LINUX_SPLICE=1 USE_REGPARM=1 $(USE_OPENSSL) \
-		USE_ZLIB=yes USE_PCRE=1 \
-		VERSION="$(PKG_VERSION)-patch$(PKG_RELEASE)" \
+		$(MAKE_FLAGS) \
 		install
 
-	$(MAKE) -C $(PKG_BUILD_DIR)/contrib/halog \
+	$(MAKE_VARS) $(MAKE) -C $(PKG_BUILD_DIR)/contrib/halog \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
-		CC="$(TARGET_CC)" \
-		CFLAGS="$(TARGET_CFLAGS) -fno-align-jumps -fno-align-functions -fno-align-labels -fno-align-loops -pipe -fomit-frame-pointer -fhonour-copts" \
-		LD="$(TARGET_CC)" \
-		LDFLAGS="$(TARGET_LDFLAGS)" \
-		VERSION="$(PKG_VERSION)-patch$(PKG_RELEASE)" \
+		$(MAKE_FLAGS) \
+		OPTIMIZE="$(TARGET_CFLAGS)" \
+		ADDLIB="-lcrypto" \
 		halog
 endef
 
@@ -112,15 +129,13 @@ define Package/haproxy/install
 	$(INSTALL_CONF) ./files/haproxy.cfg $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/haproxy.init $(1)/etc/init.d/haproxy
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/net
-	$(INSTALL_BIN) ./files/haproxy.hotplug $(1)/etc/hotplug.d/net/90-haproxy
 endef
 
 Package/haproxy-nossl/install = $(Package/haproxy/install)
 
 define Package/halog
 	MENU:=1
-	$(call Package/haproxy/Default)
+	$(call Package/haproxy)
 	TITLE+= halog
 	DEPENDS:=haproxy
 endef
@@ -134,6 +149,6 @@ define Package/halog/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/contrib/halog/halog $(1)/usr/bin/
 endef
 
-$(eval $(call BuildPackage,haproxy-nossl))
 $(eval $(call BuildPackage,haproxy))
 $(eval $(call BuildPackage,halog))
+$(eval $(call BuildPackage,haproxy-nossl))

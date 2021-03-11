@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rrdtool1
 PKG_VERSION:=1.0.50
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/rrdtool-$(PKG_VERSION)
 PKG_SOURCE:=rrdtool-$(PKG_VERSION).tar.gz
@@ -17,8 +17,8 @@ PKG_SOURCE_URL:= \
 	http://oss.oetiker.ch/rrdtool/pub/rrdtool-1.0.x \
 	http://www.fastmirrors.org/rrdtool/rrdtool-1.0.x \
 	ftp://ftp.sunet.se/pub/network/monitoring/rrdtool/rrdtool-1.0.x
-PKG_MD5SUM:=c466e2e7df95fa8e318e46437da87686
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_HASH:=42aa7c213dedbd95d33ca84d92f4187880f7e96062c6a3fb05bfb16f77ba2a91
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 
 PKG_FIXUP:=autoreconf
 PKG_CHECK_FORMAT_SECURITY:=0
@@ -61,6 +61,7 @@ define Package/rrdcgi1
 $(call Package/rrdtool1/Default)
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Database
   DEPENDS:=+librrd1
   TITLE+= CGI graphing tool
 endef
@@ -75,6 +76,7 @@ define Package/rrdtool1
 $(call Package/rrdtool1/Default)
   SECTION:=utils
   CATEGORY:=Utilities
+  SUBMENU:=Database
   DEPENDS:=+librrd1
   TITLE+= management tools
 endef

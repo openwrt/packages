@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,20 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=udpxy
-PKG_VERSION:=2014-10-27
-PKG_RELEASE:=$(PKG_SOURCE_VERSION)
+PKG_VERSION:=1.0-25.0
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/pcherenkov/udpxy.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=c045a1e855a8033c5d70ab3e42271ba5636eb520
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/pcherenkov/udpxy/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=715c9af36c708a19225233a9013582e06d5c97d16d9a699765067b652c4871f9
+
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
-
-PKG_LICENSE:=GPL-3.0
-PKG_LICENSE_FILES:=gpl.txt
+PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=chipmunk/gpl.txt
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 

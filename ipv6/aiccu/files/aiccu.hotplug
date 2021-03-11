@@ -1,3 +1,0 @@
-#!/bin/sh
-NTPSTRATUMFILE="/var/run/aiccu_ntp_stratum"
-echo $stratum > "$NTPSTRATUMFILE"

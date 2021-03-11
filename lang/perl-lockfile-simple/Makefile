@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-lockfile-simple
 PKG_VERSION:=0.208
-PKG_RELEASE:=1
+PKG_RELEASE:=4
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/S/SC/SCHWIGON/lockfile-simple/
 PKG_SOURCE:=LockFile-Simple-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=4421283b4f32549e5299963734170044
+PKG_HASH:=45c77896b2a5a0a45f6202a6f813f437ff8b283f84a1c60d0c4f3730802af3a2
 
-PKG_LICENSE:=GPL-2.0+ Artistic-1.0-Perl
+PKG_LICENSE:=GPL-2.0-or-later Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/LockFile-Simple-$(PKG_VERSION)
@@ -29,7 +29,7 @@ define Package/perl-lockfile-simple
   CATEGORY:=Languages
   TITLE:=Simple advisory file locking
   URL:=http://search.cpan.org/dist/LockFile-Simple/
-  DEPENDS:=perl
+  DEPENDS:=perl +perlbase-essential +perlbase-sys
 endef
 
 define Build/Configure

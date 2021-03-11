@@ -1,0 +1,247 @@
+--- a/test/block.cc
++++ b/test/block.cc
+@@ -24,9 +24,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
+ #include <sstream>
+ #include <stdexcept>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     /** [ipfs::Client::BlockPut] */
+     ipfs::Json block;
+--- a/test/config.cc
++++ b/test/config.cc
+@@ -23,9 +23,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
+ #include <iostream>
+ #include <stdexcept>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     /** [ipfs::Client::ConfigSet] */
+     client.ConfigSet("Datastore.StorageMax", "20GB");
+--- a/test/dht.cc
++++ b/test/dht.cc
+@@ -23,9 +23,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
+ #include <iostream>
+ #include <stdexcept>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     ipfs::Json add_result;
+     client.FilesAdd(
+--- a/test/error.cc
++++ b/test/error.cc
+@@ -35,16 +35,23 @@ extern std::string replace_body;
+ }
+ }  // namespace ipfs
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client_cant_connect("localhost", 57);
++    ipfs::Client client_cant_connect(srvaddr, 57);
+ 
+     ipfs::test::must_fail("client.Version()", [&client_cant_connect]() {
+       ipfs::Json version;
+       client_cant_connect.Version(&version);
+     });
+ 
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     std::string object_id;
+     client.ObjectNew(&object_id);
+--- a/test/files.cc
++++ b/test/files.cc
+@@ -24,9 +24,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
+ #include <sstream>
+ #include <stdexcept>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     /** [ipfs::Client::FilesGet] */
+     std::stringstream contents;
+--- a/test/generic.cc
++++ b/test/generic.cc
+@@ -24,16 +24,23 @@ CONNECTION WITH THE SOFTWARE OR THE USE
+ #include <stdexcept>
+ #include <utility>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+     /** [ipfs::Client::Client] */
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+     /** [ipfs::Client::Client] */
+ 
+     ipfs::Client clientA(client);
+     clientA = client;
+     ipfs::Client clientB(std::move(clientA));
+-    ipfs::Client clientC("localhost", 5001);
++    ipfs::Client clientC(srvaddr, 5001);
+     clientC = std::move(clientB);
+ 
+ #pragma GCC diagnostic push
+--- a/test/key.cc
++++ b/test/key.cc
+@@ -26,9 +26,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
+ 
+ using Json = nlohmann::json;
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     /** [ipfs::Client::KeyGen] */
+     std::string key_id;
+--- a/test/name.cc
++++ b/test/name.cc
+@@ -24,9 +24,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
+ #include <sstream>
+ #include <stdexcept>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     // We need a key here, so as not to clobber the "self" key.
+     std::string key_id;
+--- a/test/object.cc
++++ b/test/object.cc
+@@ -24,9 +24,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
+ #include <stdexcept>
+ #include <string>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     /** [ipfs::Client::ObjectNew] */
+     std::string object_id;
+--- a/test/pin.cc
++++ b/test/pin.cc
+@@ -23,9 +23,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
+ #include <stdexcept>
+ #include <string>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     std::string object_id;
+ 
+--- a/test/swarm.cc
++++ b/test/swarm.cc
+@@ -23,9 +23,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE
+ #include <stdexcept>
+ #include <string>
+ 
+-int main(int, char**) {
++int main(int argc, char** argv) {
++  char addr127001[]="127.0.0.1";
++  char *srvaddr;
++  if (argc<2)
++    srvaddr=addr127001;
++  else
++    srvaddr=argv[1];
++
+   try {
+-    ipfs::Client client("localhost", 5001);
++    ipfs::Client client(srvaddr, 5001);
+ 
+     /** [ipfs::Client::SwarmAddrs] */
+     ipfs::Json addresses;

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,18 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mtr
-PKG_VERSION:=0.85
+PKG_VERSION:=0.94
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://ftp.bitwizard.nl/mtr
-PKG_MD5SUM:=5e665c617e5659b6ec3e201ee7488eb1
-PKG_LICENSE:=GPL-2.0+
+PKG_SOURCE_URL:=https://www.bitwizard.nl/mtr/files
+PKG_HASH:=cb5ffc803d136f7136b49b950abbc2a27d2a5ba62195de5b70f8ef9f0fcf2791
+
+PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:matt_kimball_and_roger_wolff:mtr
 
 PKG_INSTALL:=1
-
-PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -28,8 +30,7 @@ define Package/mtr
   CATEGORY:=Network
   DEPENDS:=+libncurses
   TITLE:=Full screen ncurses traceroute tool
-  URL:=http://www.bitwizard.nl/mtr/
-  PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
+  URL:=https://www.bitwizard.nl/mtr/
 endef
 
 define Package/mtr/description
@@ -43,26 +44,20 @@ define Package/mtr/description
 	running statistics about each machine.
 endef
 
+TARGET_CFLAGS += -ffunction-sections -fdata-sections
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+
 CONFIGURE_ARGS += \
 	--without-gtk \
-	--without-glib \
+	--without-jansson \
+	$(call autoconf_bool,CONFIG_IPV6,ipv6)
 
-define Build/Configure
-	(cd $(PKG_BUILD_DIR); touch \
-		configure.in \
-		aclocal.m4 \
-		Makefile.in \
-		img/Makefile.in \
-		stamp-h.in \
-		config.h.in \
-		configure \
-	);
-	$(call Build/Configure/Default)
-endef
+CONFIGURE_VARS += ac_cv_lib_cap_cap_set_proc=no
 
 define Package/mtr/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/mtr $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/mtr-packet $(1)/usr/sbin/
 endef
 
 $(eval $(call BuildPackage,mtr))

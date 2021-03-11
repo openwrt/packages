@@ -109,6 +109,7 @@ config 'network'
 	option type			tcp
 	option interface	eth0
 	option port			4556
+	option global		yes
 	
 #config 'network'
 #	option type			tcp

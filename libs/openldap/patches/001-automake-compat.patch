@@ -286,7 +286,7 @@
 +SHELL = @SHELL@
 +
  SRCS	= init.c config.c opensock.c search.c bind.c unbind.c add.c \
- 		delete.c modify.c modrdn.c compare.c result.c
+ 		delete.c modify.c modrdn.c compare.c result.c extended.c
  OBJS	= init.lo config.lo opensock.lo search.lo bind.lo unbind.lo add.lo \
 --- a/servers/slapd/back-sql/Makefile.in
 +++ b/servers/slapd/back-sql/Makefile.in

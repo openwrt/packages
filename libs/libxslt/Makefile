@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2014 - 2018 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,29 +8,33 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxslt
-PKG_VERSION:=1.1.28
-PKG_RELEASE:=2
+PKG_VERSION:=1.1.34
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 	http://xmlsoft.org/sources/ \
 	ftp://fr.rpmfind.net/pub/libxml/
-PKG_MD5SUM:=9667bf6f9310b957254fdcf6596600b7
+PKG_HASH:=98b1bd46d6792925ad2dfe9a87452ea2adebf69dcb9919ffd55bf926a7f93f7f
 
+PKG_MAINTAINER:=Jiri Slachta <jiri@slachta.eu>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
-
-PKG_MAINTAINER:=Jiri Slachta <slachta@cesnet.cz>
+PKG_CPE_ID:=cpe:/a:xmlsoft:libxslt
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+HOST_BUILD_DEPENDS:=libxml2/host
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/libxslt
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libxml2
+  DEPENDS:=+libxml2 $(ICONV_DEPENDS)
   TITLE:=Gnome XSLT library
   URL:=http://xmlsoft.org/XSLT/
 endef
@@ -43,7 +47,7 @@ define Package/libexslt
   SECTION:=libs
   CATEGORY:=Libraries
   DEPENDS:=+libxslt
-  TITLE:=Gnome XSLT library Extention
+  TITLE:=Gnome XSLT library Extension
   URL:=http://xmlsoft.org/XSLT/EXSLT/
 endef
 
@@ -54,7 +58,7 @@ endef
 define Package/xsltproc
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libxml2 +libxslt +libexslt
+  DEPENDS:=+libxslt +PACKAGE_xsltproc:libexslt
   TITLE:=Gnome XSLT xsltproc Utility
   URL:=http://xmlsoft.org/XSLT/
 endef
@@ -63,7 +67,7 @@ define Package/xsltproc/description
  XSLT XML transformation utility.
 endef
 
-CONFIGURE_ARGS+= \
+CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--without-python \
@@ -71,8 +75,17 @@ CONFIGURE_ARGS+= \
 	--without-debug \
 	--without-mem-debug \
 	--without-debugger \
+	--without-plugins
 
-TARGET_CFLAGS += $(FPIC)
+HOST_CONFIGURE_ARGS += \
+	--with-libxml-prefix=$(STAGING_DIR_HOSTPKG) \
+	--without-python \
+	--without-crypto \
+	--without-debug \
+	--without-mem-debug \
+	--without-debugger \
+	--without-profiler \
+	--without-plugins
 
 define Build/InstallDev/Xslt
 	$(INSTALL_DIR) $(1)/usr/bin $(2)/bin $(1)/usr/include/libxslt \
@@ -129,14 +142,14 @@ endef
 define Package/libxslt/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libxslt.so.* \
+		$(PKG_INSTALL_DIR)/usr/lib/libxslt.so* \
 		$(1)/usr/lib/
 endef
 
 define Package/libexslt/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libexslt.so.* \
+		$(PKG_INSTALL_DIR)/usr/lib/libexslt.so* \
 		$(1)/usr/lib/
 endef
 
@@ -150,3 +163,4 @@ endef
 $(eval $(call BuildPackage,libxslt))
 $(eval $(call BuildPackage,libexslt))
 $(eval $(call BuildPackage,xsltproc))
+$(eval $(call HostBuild))

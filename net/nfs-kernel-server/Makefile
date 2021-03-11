@@ -1,4 +1,4 @@
-# Copyright (C) 2009 OpenWrt.org
+# Copyright (C) 2009-2019 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,83 +7,121 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
-PKG_VERSION:=1.3.1
+PKG_VERSION:=2.5.2
 PKG_RELEASE:=1
-PKG_MD5SUM:=97f157f954edb6d4d4385a0c5986f36f
+PKG_HASH:=09c20d30322e957a6e9547fb5aa742b163c142cd36b244c2485ae0cc3d71d32d
 
 PKG_SOURCE_URL:=@SF/nfs
-PKG_SOURCE:=nfs-utils-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=nfs-utils-$(PKG_VERSION).tar.xz
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/nfs-utils-$(PKG_VERSION)
 PKG_BUILD_DIR:=$(BUILD_DIR)/nfs-utils-$(PKG_VERSION)
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=$(PKG_NAME)/host
+PKG_BUILD_DEPENDS:=$(PKG_NAME)/host libevent2
+HOST_BUILD_DEPENDS:=libtirpc/host
+
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_IPV6 \
+	CONFIG_NFS_KERNEL_SERVER_V4
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/nfs-kernel-server/Default
-  SECTION:=net
-  CATEGORY:=Network
-  SUBMENU:=Filesystem
-  DEPENDS:=+libwrap +libblkid +libuuid $(LIBRPC_DEPENDS)
-  URL:=http://nfs.sourceforge.net/
-  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
+	SECTION:=net
+	CATEGORY:=Network
+	SUBMENU:=Filesystem
+	DEPENDS:=+libwrap +libblkid +libuuid +libtirpc
+	URL:=http://nfs.sourceforge.net/
+	MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
 define Package/nfs-kernel-server
-  $(call Package/nfs-kernel-server/Default)
-  TITLE:=Kernel NFS server support
-  DEPENDS+= +kmod-fs-nfsd +kmod-fs-nfs +portmap
+	$(call Package/nfs-kernel-server/Default)
+	TITLE:=Kernel NFS server support
+	DEPENDS+= +kmod-fs-nfsd +kmod-fs-nfs +NFS_KERNEL_SERVER_V4:kmod-fs-nfs-v4 +rpcbind +NFS_KERNEL_SERVER_V4:nfs-utils-libs +NFS_KERNEL_SERVER_V4:libkeyutils +NFS_KERNEL_SERVER_V4:libdevmapper
+	USERID:=nfs:nfs
 endef
 
 define Package/nfs-kernel-server/description
-  Kernel NFS server support
+Kernel NFS server support
+endef
+
+define Package/nfs-kernel-server/config
+	source "$(SOURCE)/Config.in"
 endef
 
 define Package/nfs-kernel-server-utils
-  $(call Package/nfs-kernel-server/Default)
-  TITLE:=NFS server utils
-  DEPENDS:=nfs-kernel-server
+	$(call Package/nfs-kernel-server/Default)
+	TITLE:=NFS server utils
+	DEPENDS:=nfs-kernel-server
 endef
 
 define Package/nfs-kernel-server-utils/description
-  NFS server utils
+NFS server utils
 endef
 
 define Package/nfs-kernel-server/conffiles
 /etc/exports
 endef
 
+define Package/nfs-utils/Default
+	$(call Package/nfs-kernel-server/Default)
+	SECTION:=utils
+	CATEGORY:=Utilities
+	DEPENDS+= +NFS_KERNEL_SERVER_V4:libkeyutils +NFS_KERNEL_SERVER_V4:libdevmapper
+	URL:=http://nfs.sourceforge.net/
+	MAINTAINER:=Peter Wagner <tripolar@gmx.at>
+endef
+
 define Package/nfs-utils
-  $(call Package/nfs-kernel-server/Default)
-  SECTION:=utils
-  CATEGORY:=Utilities
-  DEPENDS+= +libevent +USE_UCLIBC:librpc
-  TITLE:=updated mount utility (includes nfs4)
+	$(call Package/nfs-utils/Default)
+	TITLE:=updated mount utility (includes nfs4)
 endef
 
 define Package/nfs-utils/description
-  Updated mount.nfs command - allows mounting nfs4 volumes
+Updated mount.nfs command - allows mounting nfs4 volumes
 endef
 
-TARGET_CFLAGS += -I$(PKG_BUILD_DIR)/lib -I$(STAGING_DIR)/usr/include/libevent \
-		 -I$(STAGING_DIR)/usr/include/ -Drpc_uint=uint
-TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib $(LIBRPC) \
+define Package/nfs-utils-libs
+	$(call Package/nfs-utils/Default)
+	TITLE:=libraries provided by nfs-utils
+endef
+
+define Package/nfs-utils-libs/description
+Libraries provided by nfs-utils
+endef
+
+TARGET_CFLAGS += -Wno-error=implicit-function-declaration \
+		 -Wno-error=strict-prototypes \
+		 -Wno-error=incompatible-pointer-types \
+		 -Wno-error=format-security \
+		 -Wno-error=undef \
+		 -Wno-error=missing-include-dirs
+
+TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib \
 		  -L$(STAGING_DIR)/usr/lib/libevent
 
 CONFIGURE_ARGS += \
-	--disable-gss \
-	--disable-nfsv4 \
-	--disable-nfsv41 \
-	--enable-static \
-	--enable-shared \
 	--disable-caps \
-	--disable-tirpc \
-	--disable-nfsdcld
+	--disable-gss \
+	--disable-nfsdcld \
+	--disable-nfsdcltrack \
+	--enable-shared \
+	--enable-static \
+	--with-rpcgen=internal \
+	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),--enable,--disable)-nfsv4 \
+	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),--enable,--disable)-nfsv41
+
+ifeq ($(CONFIG_IPV6),n)
+	CONFIGURE_ARGS += --disable-ipv6
+endif
 
 CONFIGURE_VARS += \
+	libblkid_cv_is_recent=yes \
+	ac_cv_lib_resolv___res_querydomain=yes \
+	ac_cv_lib_bsd_daemon=no \
 	CONFIG_SQLITE3_TRUE="\#" \
 	CONFIG_NFSDCLD_TRUE="\#"
 
@@ -91,16 +129,18 @@ MAKE_FLAGS += \
 	OPT="$(TARGET_CFLAGS)" \
 	INSTALLSUID="install -m 4755" \
 	DESTDIR="$(PKG_INSTALL_DIR)" \
-	RPCGEN_PATH=$(STAGING_DIR_HOST)/bin/rpcgen \
-	RPCGEN=$(STAGING_DIR_HOST)/bin/rpcgen
+	RPCGEN_PATH=$(STAGING_DIR_HOSTPKG)/bin/rpcgen \
+	RPCGEN=$(STAGING_DIR_HOSTPKG)/bin/rpcgen
 
-HOST_CFLAGS += -Dlinux
+HOST_CFLAGS += -Dlinux \
+	-Wno-error=missing-include-dirs
 
 HOST_CONFIGURE_ARGS += \
 	--disable-gss \
 	--disable-nfsv4 \
 	--disable-nfsv41 \
-	--without-tcp-wrappers
+	--without-tcp-wrappers \
+	--with-rpcgen=internal
 
 HOST_CONFIGURE_VARS += \
 	ac_cv_lib_event_event_dispatch=yes \
@@ -109,6 +149,7 @@ HOST_CONFIGURE_VARS += \
 	ac_cv_header_event_h=yes \
 	ac_cv_header_nfsidmap_h=yes \
 	ac_cv_header_blkid_blkid_h=yes \
+	ac_cv_lib_resolv___res_querydomain=yes \
 	GSSGLUE_CFLAGS=" " \
 	GSSGLUE_LIBS=" " \
 	RPCSECGSS_CFLAGS=" " \
@@ -121,7 +162,8 @@ define Host/Compile
 endef
 
 define Host/Install
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/tools/rpcgen/rpcgen $(STAGING_DIR_HOST)/bin/rpcgen
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/tools/rpcgen/rpcgen $(STAGING_DIR_HOSTPKG)/bin/rpcgen
 endef
 
 define Package/nfs-kernel-server/install
@@ -141,13 +183,28 @@ define Package/nfs-kernel-server-utils/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/nfsstat/nfsstat $(1)/usr/sbin
 endef
 
+define Package/nfs-utils/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/nfsidmap.h $(1)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnfsidmap.{a,la,so*} $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libnfsidmap.pc $(1)/usr/lib/pkgconfig/
+endef
+
 define Package/nfs-utils/install
 	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/sbin/mount.nfs $(1)/sbin/
 	(cd $(1)/sbin; ln -sf mount.nfs mount.nfs4; ln -sf mount.nfs umount.nfs; ln -sf mount.nfs umount.nfs4)
 endef
 
+define Package/nfs-utils-libs/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnfsidmap.so* $(1)/usr/lib/,)
+endef
+
 $(eval $(call HostBuild))
+$(eval $(call BuildPackage,nfs-utils))
+$(eval $(call BuildPackage,nfs-utils-libs))
 $(eval $(call BuildPackage,nfs-kernel-server))
 $(eval $(call BuildPackage,nfs-kernel-server-utils))
-$(eval $(call BuildPackage,nfs-utils))

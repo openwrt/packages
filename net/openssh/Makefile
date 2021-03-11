@@ -8,28 +8,30 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openssh
-PKG_VERSION:=6.7p1
-PKG_RELEASE:=3
+PKG_VERSION:=8.5p1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
-		http://ftp.belnet.be/pub/OpenBSD/OpenSSH/portable/
-PKG_MD5SUM:=3246aa79317b1d23cae783a3bf8275d6
+PKG_SOURCE_URL:=https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
+		https://ftp.spline.de/pub/OpenBSD/OpenSSH/portable/
+PKG_HASH:=f52f3f41d429aa9918e38cf200af225ccdd8e66f052da572870c89737646ec25
 
 PKG_LICENSE:=BSD ISC
 PKG_LICENSE_FILES:=LICENCE
+PKG_CPE_ID:=cpe:/a:openssh:openssh
 
+PKG_REMOVE_FILES:=
+PKG_CONFIG_DEPENDS := \
+	CONFIG_OPENSSH_LIBFIDO2
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
-
-PKG_BUILD_DEPENDS:=libopenssl
+PKG_BUILD_DEPENDS += OPENSSH_LIBFIDO2:libfido2
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/openssh/Default
 	SECTION:=net
 	CATEGORY:=Network
-	DEPENDS:=+libopenssl +zlib +SSP_SUPPORT:libssp
+	DEPENDS:=+libopenssl +zlib
 	TITLE:=OpenSSH
 	MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 	URL:=http://www.openssh.com/
@@ -50,6 +52,9 @@ endef
 define Package/openssh-client
 	$(call Package/openssh/Default)
 	TITLE+= client
+	ALTERNATIVES:=\
+		200:/usr/bin/ssh:/usr/libexec/ssh-openssh \
+		200:/usr/bin/scp:/usr/libexec/scp-openssh
 endef
 
 define Package/openssh-client/description
@@ -81,9 +86,13 @@ endef
 
 define Package/openssh-server
 	$(call Package/openssh/Default)
-	DEPENDS+= +openssh-keygen
+	DEPENDS+= +openssh-keygen +OPENSSH_LIBFIDO2:libfido2
 	TITLE+= server
 	USERID:=sshd=22:sshd=22
+endef
+
+define Package/openssh-server/config
+	source "$(SOURCE)/Config.in"
 endef
 
 define Package/openssh-server/description
@@ -92,6 +101,10 @@ endef
 
 define Package/openssh-server/conffiles
 /etc/ssh/sshd_config
+/etc/ssh/ssh_host_ed25519_key
+/etc/ssh/ssh_host_ed25519_key.pub
+/etc/ssh/ssh_host_rsa_key
+/etc/ssh/ssh_host_rsa_key.pub
 endef
 
 define Package/openssh-server-pam
@@ -124,7 +137,6 @@ endef
 define Package/openssh-sftp-server
 	$(call Package/openssh/Default)
 	TITLE+= SFTP server
-	DEPENDS:=+SSP_SUPPORT:libssp
 endef
 
 define Package/openssh-sftp-server/description
@@ -146,14 +158,10 @@ define Package/openssh-sftp-avahi-service/conffiles
 /etc/avahi/services/sftp-ssh.service
 endef
 
-CONFIGURE_ARGS+= \
-	$(DISABLE_NLS) \
+CONFIGURE_ARGS += \
 	--sysconfdir=/etc/ssh \
 	--with-privsep-user=sshd \
 	--with-privsep-path=/var/empty \
-	--enable-shared \
-	--disable-static \
-	--disable-debug \
 	--disable-strip \
 	--disable-etc-default-login \
 	--disable-lastlog \
@@ -163,24 +171,16 @@ CONFIGURE_ARGS+= \
 	--disable-wtmpx \
 	--without-bsd-auth \
 	--without-kerberos5 \
-	--without-x
-
+	--with-stackprotect \
+	--with$(if $(CONFIG_OPENSSL_ENGINE),,out)-ssl-engine \
+	--with$(if $(CONFIG_OPENSSH_LIBFIDO2),,out)-security-key-builtin
+	
 ifeq ($(BUILD_VARIANT),with-pam)
 CONFIGURE_ARGS += \
 	--with-pam
 else
 CONFIGURE_ARGS += \
 	--without-pam
-endif
-
-ifeq ($(CONFIG_OPENSSL_ENGINE),y)
-CONFIGURE_ARGS+= \
-	--with-ssl-engine
-endif
-
-ifneq ($(CONFIG_SSP_SUPPORT),y)
-CONFIGURE_ARGS += \
-	--without-stackprotect
 endif
 
 CONFIGURE_VARS += LD="$(TARGET_CC)"
@@ -192,30 +192,8 @@ endif
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
-		LIBS="" \
-		sftp-server
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
 		STRIP_OPT="" \
 		all install
-endef
-
-define Package/openssh-client/preinst
-#!/bin/sh
-if [ -L $${IPKG_INSTROOT}/usr/bin/ssh ] && [ -L $${IPKG_INSTROOT}/usr/bin/scp ]; then
-	rm -f $${IPKG_INSTROOT}/usr/bin/ssh $${IPKG_INSTROOT}/usr/bin/scp;
-fi
-exit 0
-endef
-
-define Package/openssh-client/postrm
-#!/bin/sh
-rm -f $${IPKG_INSTROOT}/usr/bin/ssh $${IPKG_INSTROOT}/usr/bin/scp;
-if [ -x $${IPKG_INSTROOT}/usr/sbin/dropbear ] ; then
-	ln -s /usr/sbin/dropbear $${IPKG_INSTROOT}/usr/bin/ssh;
-	ln -s /usr/sbin/dropbear $${IPKG_INSTROOT}/usr/bin/scp;
-fi
-exit 0
 endef
 
 define Package/openssh-moduli/install
@@ -227,9 +205,9 @@ define Package/openssh-client/install
 	$(INSTALL_DIR) $(1)/etc/ssh
 	chmod 0700 $(1)/etc/ssh
 	$(CP) $(PKG_INSTALL_DIR)/etc/ssh/ssh_config $(1)/etc/ssh/
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/scp $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh $(1)/usr/libexec/ssh-openssh
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/scp $(1)/usr/libexec/scp-openssh
 endef
 
 define Package/openssh-client-utils/install
@@ -246,8 +224,11 @@ define Package/openssh-server/install
 	$(INSTALL_DIR) $(1)/etc/ssh
 	chmod 0700 $(1)/etc/ssh
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/ssh/sshd_config $(1)/etc/ssh/
+	sed -r -i 's,^#(HostKey /etc/ssh/ssh_host_(rsa|ed25519)_key)$$$$,\1,' $(1)/etc/ssh/sshd_config
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/sshd.init $(1)/etc/init.d/sshd
+	$(INSTALL_DIR) $(1)/lib/preinit
+	$(INSTALL_BIN) ./files/sshd.failsafe $(1)/lib/preinit/99_10_failsafe_sshd
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/sshd $(1)/usr/sbin/
 endef

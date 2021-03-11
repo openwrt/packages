@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,27 +8,31 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sudo
-PKG_VERSION:=1.8.11p2
+PKG_VERSION:=1.9.5p2
 PKG_RELEASE:=1
-PKG_LICENSE:=ISC
-PKG_LICENSE_FILES:=doc/LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.sudo.ws/sudo/dist
-PKG_MD5SUM:=84012b4871b6c775c957cd310d5bad87
+PKG_SOURCE_URL:=https://www.sudo.ws/dist
+PKG_HASH:=539e2ef43c8a55026697fb0474ab6a925a11206b5aa58710cb42a0e1c81f0978
+
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+
+PKG_LICENSE:=ISC
+PKG_LICENSE_FILES:=doc/LICENSE
+PKG_CPE_ID:=cpe:/a:todd_miller:sudo
 
 PKG_INSTALL:=1
-
+PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=sudo/host
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 define Package/sudo
   SECTION:=admin
   CATEGORY:=Administration
   TITLE:=Delegate authority to run commands
-  URL:=http://www.sudo.ws/
-  MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
+  URL:=https://www.sudo.ws/
 endef
 
 define Package/sudo/description
@@ -40,9 +44,10 @@ endef
 
 define Package/sudo/conffiles
 /etc/sudoers
+/etc/sudoers.d/
 endef
 
-CONFIGURE_ARGS+= \
+CONFIGURE_ARGS += \
 	--without-pam \
 	--disable-pam-session \
 	--with-editor=/bin/vi \
@@ -51,11 +56,9 @@ CONFIGURE_ARGS+= \
 	--with-rundir=/var/lib/sudo \
 	--with-vardir=/var/lib/sudo
 
-CONFIGURE_VARS+= \
+CONFIGURE_VARS += \
 	sudo_cv_uid_t_len=10 \
 	sudo_cv_func_unsetenv_void=no
-
-include $(INCLUDE_DIR)/host-build.mk
 
 define Host/Compile
 	cd $(HOST_BUILD_DIR)/lib/util; \
@@ -63,25 +66,22 @@ define Host/Compile
 endef
 
 define Host/Install
-	$(INSTALL_DIR) $(STAGING_DIR_HOST)/bin
-	$(CP) $(HOST_BUILD_DIR)/lib/util/mksig{list,name} $(STAGING_DIR_HOST)/bin/
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin
+	$(CP) $(HOST_BUILD_DIR)/lib/util/mksig{list,name} $(STAGING_DIR_HOSTPKG)/bin/
 endef
 
-$(eval $(call HostBuild))
-
 define Package/sudo/install
-	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) \
+		$(1)/etc/{init.d,sudoers.d} \
+		$(1)/usr/{bin,sbin} \
+		$(1)/usr/lib/sudo
+
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/sudo $(1)/usr/bin/
 	chmod 4755 $(1)/usr/bin/sudo
-	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/visudo $(1)/usr/sbin/
-	$(INSTALL_DIR) $(1)/etc
 	$(CP) $(PKG_INSTALL_DIR)/etc/sudoers $(1)/etc/
 	chmod 0440 $(1)/etc/sudoers
-	$(INSTALL_DIR) $(1)/etc/sudoers.d
-	$(INSTALL_DIR) $(1)/usr/lib/sudo
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/sudo/*.so* $(1)/usr/lib/sudo/
-	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/sudo.init $(1)/etc/init.d/sudo
 endef
 
@@ -94,4 +94,5 @@ define Package/sudo/postinst
 }
 endef
 
+$(eval $(call HostBuild))
 $(eval $(call BuildPackage,sudo))

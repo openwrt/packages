@@ -19,7 +19,7 @@
          hints.ai_socktype = SOCK_STREAM;
  
          /* The local port it not important */
-@@ -106,14 +105,12 @@ int opensock (const char *host, int port
+@@ -112,14 +111,12 @@ int opensock (const char *host, int port
  
                  /* Bind to the specified address */
                  if (bind_to) {

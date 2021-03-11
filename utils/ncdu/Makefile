@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ncdu
-PKG_VERSION:=1.10
-PKG_RELEASE=1
+PKG_VERSION:=1.15.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://dev.yorhel.nl/download
-PKG_MD5SUM:=7535decc8d54eca811493e82d4bfab2d
+PKG_SOURCE_URL:=https://dev.yorhel.nl/download
+PKG_HASH:=b02ddc4dbf1db139cc6fbbe2f54a282770380f0ca5c17089855eab52a9ea3fb0
 
-PKG_INSTALL:=1
-
+PKG_MAINTAINER:=Charles E. Lehner <cel@celehner.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
+
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -26,10 +28,9 @@ define Package/ncdu
   SUBMENU:=Filesystem
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libncursesw
+  DEPENDS:=+libncurses
   TITLE:=ncurses disk usage viewer
-  MAINTAINER:=Charles Lehner <celehner1@gmail.com>
-  URL:=http://dev.yorhel.nl/ncdu
+  URL:=https://dev.yorhel.nl/ncdu
 endef
 
 define Package/ncdu/description

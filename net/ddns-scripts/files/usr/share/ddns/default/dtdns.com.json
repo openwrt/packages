@@ -1,0 +1,6 @@
+{
+	"name": "dtdns.com",
+	"ipv4": {
+		"url": "http://www.dtdns.com/api/autodns.cfm?id=[DOMAIN]&pw=[PASSWORD]&ip=[IP]"
+	}
+}

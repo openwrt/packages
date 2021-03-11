@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
+# Copyright (C) 2007-2017 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,70 +8,82 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsearpc
-PKG_VERSION:=3.1.7
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
-PKG_LICENSE:=GPL-3.0
+PKG_VERSION:=3.2.0
+PKG_RELEASE:=4
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/haiwen/libsearpc.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=8998e7b2c5587f0b94c48db24e2952d08def5add
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE_VERSION:=d1fd7518a20b25766ff98d6fde6e40c63626ca0d
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)-$(call version_abbrev,$(PKG_SOURCE_VERSION))
+PKG_MIRROR_HASH:=ee8b8b50b480afbcb71bd73cd9c2a96cfa72e9dafaf5773574adbf348e49a0d4
+
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Jeffery To <jeffery.to@gmail.com>
+PKG_LICENSE:=Apache-2.0
+PKG_LICENSE_FILES:=LICENSE.txt
+
 PKG_FIXUP:=autoreconf
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PYTHON3_PKG_BUILD:=0
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+include ../../lang/python/python3-package.mk
 
 define Package/libsearpc
-    SECTION:=libs
-    CATEGORY:=Libraries
-    TITLE:=Seafile RPC Library
-    MAINTAINER:=Gergely Kiss <mail.gery@gmail.com>
-    URL:=http://seafile.com/
-    DEPENDS:=+glib2 +jansson +python $(ICONV_DEPENDS)
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=Seafile RPC Library
+  URL:=https://seafile.com
+  DEPENDS:=+glib2 +jansson $(ICONV_DEPENDS)
 endef
 
 define Package/libsearpc/description
-    Searpc is a simple C language RPC framework based on GObject system.
-    Searpc handles the serialization/deserialization part of RPC,
-    the transport part is left to users.
+  Searpc is a simple C language RPC framework based on GObject system.
+  Searpc handles the serialization/deserialization part of RPC, the
+  transport part is left to users.
 endef
 
-CONFIGURE_ARGS += --enable-compile-demo=no \
-		    --disable-server-pkg
-
-TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib -liconv
-
-include $(INCLUDE_DIR)/host-build.mk
-
-define Host/Configure
+define Package/python3-searpc
+  SECTION:=lang
+  CATEGORY:=Languages
+  SUBMENU:=Python
+  TITLE:=Python bindings for Searpc
+  DEPENDS:=+libsearpc +python3-light +python3-logging
 endef
 
-define Host/Compile
+define Package/python3-searpc/description
+$(call Package/libsearpc/description)
+
+  This package contains Python bindings for Searpc.
 endef
 
-define Host/Install
-	$(INSTALL_DIR) $(STAGING_DIR_HOST)/bin
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/lib/searpc-codegen.py $(STAGING_DIR_HOST)/bin/
-endef
+CONFIGURE_ARGS += \
+	--disable-compile-demo \
+	--disable-server-pkg
 
-$(eval $(call HostBuild))
+CONFIGURE_VARS += \
+	PYTHON="$(HOST_PYTHON3_BIN)"
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/{bin,include}
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsearpc.so* $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/searpc* $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libsearpc.pc $(1)/usr/lib/pkgconfig/
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/searpc-codegen.py $(1)/usr/bin/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libsearpc.pc $(1)/usr/lib/pkgconfig/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/searpc-codegen.py $(1)/usr/bin/
 endef
 
 define Package/libsearpc/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DIR) $(1)/usr/lib/python2.7/site-packages
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsearpc.so* $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/python2.7/site-packages/pysearpc $(1)/usr/lib/python2.7/site-packages/
 endef
 
+Py3Package/python3-searpc/install:=:
+
 $(eval $(call BuildPackage,libsearpc))
+
+$(eval $(call Py3Package,python3-searpc))
+$(eval $(call BuildPackage,python3-searpc))
+$(eval $(call BuildPackage,python3-searpc-src))

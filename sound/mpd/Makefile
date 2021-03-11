@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,35 +6,35 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.18.20
+PKG_VERSION:=0.22.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.musicpd.org/download/mpd/0.18/
-PKG_MD5SUM:=88ba076000e13dbf094b3e32a6472944
-PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_SOURCE_URL:=https://www.musicpd.org/download/mpd/0.22/
+PKG_HASH:=2be149a4895c3cb613477f8cf1193593e3d8a1d38a75ffa7d32da8c8316a4d5e
 
-PKG_LICENSE:=GPL-2.0
+PKG_MAINTAINER:=
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
-PKG_BUILD_PARALLEL:=1
-
 PKG_CONFIG_DEPENDS:= \
+	CONFIG_BUILD_PATENTED \
 	CONFIG_IPV6 \
 
 PKG_INSTALL:=1
+PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+include ../../devel/meson/meson.mk
 
 define Package/mpd/Default
   SECTION:=sound
   CATEGORY:=Sound
   TITLE:=Music Player Daemon
-  URL:=http://www.musicpd.org/
-  DEPENDS:= +glib2 +libcurl +libpthread +libmpdclient $(ICONV_DEPENDS) +libstdcpp \
-	    +libflac +BUILD_PATENTED:libmad +libvorbisidec +AUDIO_SUPPORT:alsa-lib
+  URL:=https://www.musicpd.org/
+  DEPENDS:= +zlib +libcurl +libpthread +libmpdclient +boost $(ICONV_DEPENDS) \
+            +AUDIO_SUPPORT:alsa-lib +libexpat +libflac +libid3tag +libfaad2 +libopus
 endef
 
 define Package/mpd/Default/description
@@ -49,9 +47,8 @@ endef
 define Package/mpd-full
 $(call Package/mpd/Default)
   TITLE+= (full)
-  DEPENDS+= \
-	+libaudiofile +BUILD_PATENTED:libfaad2 +libffmpeg +libid3tag \
-	+libmms +libogg +libsndfile +libvorbis
+  DEPENDS+= +AUDIO_SUPPORT:pulseaudio-daemon +libvorbis +libmms +libupnp +libshout +yajl \
+            +BUILD_PATENTED:libffmpeg +!BUILD_PATENTED:libmad
   PROVIDES:=mpd
   VARIANT:=full
 endef
@@ -69,6 +66,7 @@ endef
 define Package/mpd-mini
 $(call Package/mpd/Default)
   TITLE+= (mini)
+  DEPENDS+= +libmad +libvorbisidec
   PROVIDES:=mpd
   VARIANT:=mini
 endef
@@ -77,7 +75,7 @@ define Package/mpd-mini/description
 $(call Package/mpd/Default/description)
  .
  This package contains a minimal Music Player Daemon, with support for
- only Flac, MP3 & OGG media types & only file: & http: protocols.
+ only FLAC, AAC, MP3 & OGG media types & only file: & http: protocols.
 endef
 
 define Package/mpd-mini/conffiles
@@ -87,7 +85,7 @@ endef
 define Package/mpd-avahi-service
 $(call Package/mpd/Default)
   TITLE+= (Avahi service)
-  DEPENDS+=+avahi-daemon
+  DEPENDS+=+avahi-dbus-daemon
 endef
 
 define Package/mpd-avahi-service/description
@@ -101,106 +99,119 @@ define Package/mpd-avahi-service/conffiles
 /etc/avahi/services/mpd.service
 endef
 
-CONFIGURE_ARGS += \
-	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
-	--disable-debug \
-	--disable-documentation \
-	--disable-gprof \
-	--disable-test \
-	--disable-werror \
-	\
-	--disable-ao \
-	--disable-bzip2 \
-	--enable-cue \
-	--disable-ffado \
-	--disable-fluidsynth \
-	--disable-gme \
-	--enable-inotify \
-	--disable-eventfd \
-	--disable-iso9660 \
-	--disable-jack \
-	--disable-lame-encoder \
-	--disable-libwrap \
-	--disable-lsr \
-	--disable-mikmod \
-	--disable-modplug \
-	--disable-mpc \
-	--disable-mpg123 \
-	--disable-mvp \
-	--disable-openal \
-	--disable-opus \
-	--disable-pulse \
-	--disable-sidplay \
-	--disable-solaris-output \
-	--disable-soup \
-	--disable-sqlite \
-	--disable-twolame-encoder \
-	--enable-wave-encoder \
-	--disable-wavpack \
-	--disable-wildmidi \
-	--disable-zzip \
-	--with-zeroconf=no \
-	\
-	--enable-curl \
-	--enable-flac \
-	--enable-httpd-output \
-	$(call autoconf_bool,CONFIG_BUILD_PATENTED,mad) \
-	$(call autoconf_bool,CONFIG_AUDIO_SUPPORT,alsa) \
-	--enable-tcp \
-	--enable-un \
-
-CONFIGURE_VARS += \
-	FLAC_CFLAGS="$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include/FLAC" \
-	FLAC_LIBS="$(TARGET_LDFLAGS) -lFLAC" \
-	$(if $(CONFIG_BUILD_PATENTED),MAD_CFLAGS="$(TARGET_CFLAGS)") \
-	$(if $(CONFIG_BUILD_PATENTED),MAD_LIBS="$(TARGET_LDFLAGS) -lmad") \
-
-TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib $(if $(ICONV_FULL),-liconv)
+MESON_ARGS += \
+	-Ddocumentation=disabled \
+	-Dhtml_manual=false \
+	-Dmanpages=false \
+	-Dsyslog=enabled \
+	-Dinotify=true \
+	-Dio_uring=disabled \
+	-Ddaemon=false \
+	-Dsystemd=disabled \
+	-Dtest=false \
+	-Dfuzzer=false \
+	-Depoll=true \
+	-Deventfd=true \
+	-Dsignalfd=true \
+	-Dtcp=true \
+	-Dipv6=$(if $(CONFIG_IPV6),en,dis)abled \
+	-Dlocal_socket=true \
+	-Ddsd=false \
+	-Ddatabase=true \
+	-Dlibmpdclient=enabled \
+	-Dneighbor=false \
+	-Dudisks=disabled \
+	-Dwebdav=enabled \
+	-Dcue=true \
+	-Dcdio_paranoia=disabled \
+	-Dcurl=enabled \
+	-Dnfs=disabled \
+	-Dsmbclient=disabled \
+	-Dqobuz=disabled \
+	-Dtidal=disabled \
+	-Dbzip2=disabled \
+	-Diso9660=disabled \
+	-Dzzip=disabled \
+	-Did3tag=enabled \
+	-Dchromaprint=disabled \
+	-Dadplug=disabled \
+	-Daudiofile=disabled \
+	-Dfaad=enabled \
+	-Dflac=enabled \
+	-Dfluidsynth=disabled \
+	-Dgme=disabled \
+	-Dmpg123=disabled \
+	-Dmikmod=disabled \
+	-Dmodplug=disabled \
+	-Dmpcdec=disabled \
+	-Dopus=enabled \
+	-Dsidplay=disabled \
+	-Dsndfile=disabled \
+	-Dwavpack=disabled \
+	-Dwildmidi=disabled \
+	-Dvorbisenc=disabled \
+	-Dlame=disabled \
+	-Dtwolame=disabled \
+	-Dshine=disabled \
+	-Dwave_encoder=true \
+	-Dlibsamplerate=disabled \
+	-Dsoxr=disabled \
+	-Dalsa=$(if $(CONFIG_AUDIO_SUPPORT),en,dis)abled \
+	-Dao=disabled \
+	-Dhttpd=true \
+	-Djack=disabled \
+	-Dopenal=disabled \
+	-Doss=disabled \
+	-Dsndio=disabled \
+	-Dsolaris_output=disabled \
+	-Ddbus=disabled \
+	-Dexpat=enabled \
+	-Dicu=disabled \
+	-Diconv=enabled \
+	-Dpcre=disabled \
+	-Dsqlite=disabled \
+	-Dzlib=enabled \
+	-Dzeroconf=disabled
 
 ifeq ($(BUILD_VARIANT),full)
 
-  CONFIGURE_ARGS += \
-	$(call autoconf_bool,CONFIG_BUILD_PATENTED,aac) \
-	$(call autoconf_bool,CONFIG_AUDIO_SUPPORT,alsa) \
-	--enable-audiofile \
-	--enable-fifo \
-	--enable-ffmpeg \
-	--enable-id3 \
-	--enable-lastfm \
-	--enable-mms \
-	--enable-oggflac \
-	--enable-pipe-output \
-	--enable-recorder-output \
-	--disable-shout \
-	--enable-sndfile \
-	--enable-vorbis \
-	--disable-vorbis-encoder \
-	--with-faad="$(STAGING_DIR)/usr" \
-	--with-tremor=yes \
+  MESON_ARGS += \
+	-Dupnp=enabled \
+	-Dmms=enabled \
+	-Dsoundcloud=enabled \
+	-Dffmpeg=$(if $(CONFIG_BUILD_PATENTED),en,dis)abled \
+	-Dmad=$(if $(CONFIG_BUILD_PATENTED),dis,en)abled \
+	-Dtremor=disabled \
+	-Dvorbis=enabled \
+	-Dfifo=true \
+	-Dpipe=true \
+	-Dpulse=$(if $(CONFIG_AUDIO_SUPPORT),en,dis)abled \
+	-Drecorder=true \
+	-Dshout=enabled \
+	-Dyajl=enabled
 
+ifeq ($(CONFIG_AUDIO_SUPPORT),y)
+	TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib/pulseaudio
+endif
 endif
 
 ifeq ($(BUILD_VARIANT),mini)
 
   # oggflac is not compatible with tremor
-  CONFIGURE_ARGS += \
-	--disable-aac \
-	--disable-alsa \
-	--disable-audiofile \
-	--disable-fifo \
-	--disable-ffmpeg \
-	--disable-id3 \
-	--disable-lastfm \
-	--disable-mms \
-	--disable-oggflac \
-	--disable-pipe-output \
-	--disable-recorder-output \
-	--disable-shout \
-	--disable-sndfile \
-	--disable-vorbis \
-	--disable-vorbis-encoder \
-	--with-tremor=yes \
-
+  MESON_ARGS += \
+	-Dupnp=disabled \
+	-Dmms=disabled \
+	-Dsoundcloud=disabled \
+	-Dffmpeg=disabled \
+	-Dmad=enabled \
+	-Dtremor=enabled \
+	-Dvorbis=disabled \
+	-Dfifo=false \
+	-Dpipe=false \
+	-Dpulse=disabled \
+	-Drecorder=false \
+	-Dshout=disabled \
+	-Dyajl=disabled
 endif
 
 define Package/mpd/install

@@ -1,0 +1,46 @@
+#!/bin/sh /etc/rc.common
+#
+# Copyright (C) 2016-2019 eGloo, Incorporated
+#
+# This is free software, licensed under the GNU General Public License v2.
+
+START=50
+STOP=50
+
+USE_PROCD=1
+PROG=/usr/sbin/netifyd
+
+start_netifyd() {
+	local instance enabled autoconfig internal_if external_if
+
+	instance="$1"
+
+	config_get_bool enabled "$instance" enabled 0
+	[ "$enabled" -eq 0 ] && return 0
+
+	[ ! -d /var/run/netifyd ] && mkdir -p /var/run/netifyd
+
+	config_get_bool autoconfig "$instance" autoconfig 1
+
+	if [ "$autoconfig" -gt 0 ] ; then
+		source /usr/share/netifyd/functions.sh
+		load_modules
+		NETIFYD_AUTODETECT=yes
+		NETIFYD_OPTS=$(auto_detect_options)
+	else
+		config_get internal_if "$instance" internal_if "eth0"
+		config_get external_if "$instance" external_if "eth1"
+		NETIFYD_OPTS="-E $external_if -I $internal_if"
+	fi
+
+	procd_open_instance
+	procd_set_param command $PROG -R $NETIFYD_OPTS
+	procd_set_param file /etc/netifyd.conf
+	procd_set_param respawn
+	procd_close_instance
+}
+
+start_service() {
+	config_load netifyd
+	config_foreach start_netifyd netifyd
+}

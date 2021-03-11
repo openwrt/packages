@@ -72,9 +72,9 @@ setup_iptables()
 	iptables -N "$IPTABLES_CHAIN" 2>/dev/null
 	iptables -F "$IPTABLES_CHAIN" 2>/dev/null
 
-	iptables -I output_rule -j "$IPTABLES_CHAIN"
-	iptables -I input_rule -j "$IPTABLES_CHAIN"
-	iptables -I forwarding_rule -j "$IPTABLES_CHAIN"
+	iptables -I output_rule -m conntrack --ctstate NEW -j "$IPTABLES_CHAIN"
+	iptables -I input_rule -m conntrack --ctstate NEW -j "$IPTABLES_CHAIN"
+	iptables -I forwarding_rule -m conntrack --ctstate NEW -j "$IPTABLES_CHAIN"
 
 	# always accept DHCP traffic
 	iptables -A "$IPTABLES_CHAIN" -p udp --dport 67:68 --sport 67:68 -j RETURN
@@ -90,9 +90,9 @@ destroy_ipset()
 
 destroy_iptables()
 {
-	iptables -D output_rule -j "$IPTABLES_CHAIN" 2>/dev/null
-	iptables -D input_rule -j "$IPTABLES_CHAIN" 2>/dev/null
-	iptables -D forwarding_rule -j "$IPTABLES_CHAIN" 2>/dev/null
+	iptables -D output_rule -m conntrack --ctstate NEW -j "$IPTABLES_CHAIN" 2>/dev/null
+	iptables -D input_rule -m conntrack --ctstate NEW -j "$IPTABLES_CHAIN" 2>/dev/null
+	iptables -D forwarding_rule -m conntrack --ctstate NEW -j "$IPTABLES_CHAIN" 2>/dev/null
 	iptables -F "$IPTABLES_CHAIN" 2>/dev/null
 	iptables -X "$IPTABLES_CHAIN" 2>/dev/null
 }

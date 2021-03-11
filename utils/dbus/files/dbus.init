@@ -9,9 +9,9 @@ start() {
 	mkdir -m 0755 -p /var/lib/dbus
 	mkdir -m 0755 -p /var/run/dbus
 	[ -x /usr/bin/dbus-uuidgen ] && /usr/bin/dbus-uuidgen --ensure
-	service_start /usr/sbin/dbus-daemon --system
+	service_start /usr/bin/dbus-daemon --system
 }
 
 stop() {
-	service_stop /usr/sbin/dbus-daemon && rm $SERVICE_PID_FILE
+	service_stop /usr/bin/dbus-daemon
 }

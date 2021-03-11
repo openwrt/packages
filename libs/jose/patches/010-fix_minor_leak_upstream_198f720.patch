@@ -1,0 +1,31 @@
+From 198f7207427ad7f569aa3592ea16e2bb400db040 Mon Sep 17 00:00:00 2001
+From: Nathaniel McCallum <npmccallum@redhat.com>
+Date: Fri, 29 Sep 2017 14:49:57 -0400
+Subject: [PATCH] Fix minor FILE* leak
+
+---
+ cmd/jwe/pwd.h | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+--- a/cmd/jwe/pwd.h
++++ b/cmd/jwe/pwd.h
+@@ -57,8 +57,10 @@ jwe_getpass(const char *prompt)
+     nf.c_lflag &= ~ECHO;
+     nf.c_lflag |= ECHONL;
+ 
+-    if (tcsetattr(fileno(tty), TCSANOW, &nf) != 0)
++    if (tcsetattr(fileno(tty), TCSANOW, &nf) != 0) {
++        fclose(tty);
+         return NULL;
++    }
+ 
+     fprintf(tty, "%s", prompt);
+ 
+@@ -72,6 +74,7 @@ jwe_getpass(const char *prompt)
+     }
+ 
+     tcsetattr(fileno(tty), TCSANOW, &of);
++    fclose(tty);
+     return pwd;
+ }
+ #endif

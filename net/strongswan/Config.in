@@ -1,5 +1,6 @@
-menu "Configuration"
-	depends on PACKAGE_strongswan
+
+if PACKAGE_strongswan
+comment "Configuration"
 
 # --with-routing-table
 config STRONGSWAN_ROUTING_TABLE
@@ -13,4 +14,6 @@ config STRONGSWAN_ROUTING_TABLE_PRIO
 	prompt "Set the IPsec routing table priority"
 	default "220"
 
-endmenu
+comment "Packages"
+
+endif

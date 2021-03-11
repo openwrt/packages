@@ -8,15 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libexif
-PKG_VERSION:=0.6.21
+PKG_VERSION:=0.6.22
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=@SF/libexif
-PKG_MD5SUM:=27339b89850f28c8f1c237f233e05b27
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/$(PKG_NAME)/$(PKG_NAME)/releases/download/$(PKG_NAME)-0_6_22-release/
+PKG_HASH:=5048f1c8fc509cc636c2f97f4b40c293338b6041a5652082d5ee2cf54b530c56
 
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:libexif:libexif
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -27,7 +28,7 @@ define Package/libexif
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=library for jpeg files with exif tags
-  URL:=http://libexif.sourceforge.net/
+  URL:=https://libexif.github.io/
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 endef
 
@@ -41,6 +42,7 @@ CONFIGURE_ARGS+= \
 	--enable-shared \
 	--enable-static \
 	--disable-rpath \
+	--disable-nls \
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
 

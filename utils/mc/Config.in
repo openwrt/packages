@@ -10,17 +10,17 @@ config MC_DIFFVIEWER
 
 config MC_EDITOR
 	bool "Enable internal editor"
-	default n
+	default y
 	help
            This option enables the built-in file editor.
-           Disabled by default.
+           Enabled by default.
 
 config MC_SUBSHELL
 	bool "Enable concurrent subshell"
-	default n
+	default y
 	help
            This option enables concurrent subshell support.
-           Disabled by default.
+           Enabled by default.
 
 config MC_LARGEFILE
 	bool "Enable largefile support"
@@ -41,20 +41,19 @@ config MC_BACKGROUND
 
 config MC_CHARSET
 	bool "Enable charset support"
-	default n
+	default y
 	help
            This option adds support for selecting character set of the text in
            the internal viewer and editor and converting it on the fly.
-           The implementation is currently incomplete.
-           Disabled by default.
+           Enabled by default.
 
 config MC_VFS
 	bool "Enable virtual filesystem support"
-	default n
+	default y
 	help
            This option enables the Virtual File System switch code to get
            transparent access to the following file systems:
-           cpio, tar, fish, sfs, ftp, sftp, extfs, smb.
-           Disabled by default.
+           cpio, tar, fish, sfs, ftp, sftp, extfs.
+           Enabled by default.
 
 endmenu

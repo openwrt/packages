@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2014, 2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,18 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-dbi
-PKG_VERSION:=1.632
+PKG_VERSION:=1.643
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/T/TI/TIMB/
 PKG_SOURCE:=DBI-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=285fc34c1ee20125aabbd50bc3e587fb
+PKG_SOURCE_URL:=https://www.cpan.org/authors/id/T/TI/TIMB/
+PKG_HASH:=8a2b993db560a2c373c174ee976a51027dd780ec766ae17620c20393d2e836fa
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/DBI-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/perl/DBI-$(PKG_VERSION)
+HOST_BUILD_DEPENDS:=perl/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -30,8 +32,8 @@ define Package/perl-dbi
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Database independent interface for Perl
-  URL:=http://search.cpan.org/dist/DBI/
-  DEPENDS:=perl +perlbase-essential
+  URL:=https://search.cpan.org/dist/DBI/
+  DEPENDS:=perl +perlbase-base +perlbase-config +perlbase-cwd +perlbase-data +perlbase-dynaloader +perlbase-errno +perlbase-essential +perlbase-fcntl +perlbase-file +perlbase-io +perlbase-ipc +perlbase-scalar +perlbase-storable +perlbase-symbol +perlbase-tie +perlbase-universal +perlbase-utf8
 endef
 
 define Build/Configure

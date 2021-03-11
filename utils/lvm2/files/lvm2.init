@@ -3,10 +3,12 @@
 START=15
 
 start () {
-   /sbin/lvm vgscan --ignorelockingfailure --mknodes || :
-   /sbin/lvm vgchange -aly --ignorelockingfailure || return 2
+	mkdir -p /tmp/lvm/cache
+	/sbin/lvm vgscan --ignorelockingfailure --mknodes || :
+	/sbin/lvm vgchange -aly --ignorelockingfailure || return 2
 }
 
 stop () {
-    /sbin/lvm vgchange -aln --ignorelockingfailure || return 2
+	mkdir -p /tmp/lvm/cache
+	/sbin/lvm vgchange -aln --ignorelockingfailure || return 2
 }

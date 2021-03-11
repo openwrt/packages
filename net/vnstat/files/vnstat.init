@@ -3,22 +3,18 @@
 
 START=99
 
+USE_PROCD=1
+
 vnstat_option() {
 	sed -ne "s/^[[:space:]]*$1[[:space:]]*['\"]\([^'\"]*\)['\"].*/\1/p" \
 		/etc/vnstat.conf
 }
 
-start() {
+start_service() {
 	local lib="$(vnstat_option DatabaseDir)"
-	local pid="$(vnstat_option PidFile)"
 
 	[ -n "$lib" ] || {
 		echo "Error: No DatabaseDir set in vnstat.conf" >&2
-		exit 1
-	}
-
-	[ -n "$pid" ] || {
-		echo "Error: No PidFile set in vnstat.conf" >&2
 		exit 1
 	}
 
@@ -31,7 +27,7 @@ start() {
 		init_iface() {
 			local ifn="$1"
 
-			[ -n "$url" ] && {
+			if [ -n "$url" ]; then
 				local try=0
 				local max=3
 				local hostname="$(cat /proc/sys/kernel/hostname)"
@@ -45,7 +41,13 @@ start() {
 						sleep 30
 					fi
 				done
-			}
+			elif [ -n "$backup_dir" ]; then
+				if cp -f "$backup_dir/$ifn" "$lib/" &>/dev/null; then
+					logger -t "vnstat" "Restored backup for database $ifn"
+				else
+					logger -t "vnstat" "Restore of backup for database $ifn failed"
+				fi
+			fi
 
 			/usr/bin/vnstat -u -i "$ifn" >/dev/null
 
@@ -57,6 +59,7 @@ start() {
 
 		config_get url "$cfg" remote
 		config_get lnk "$cfg" symlink
+		config_get backup_dir "$cfg" backup_dir
 		config_list_foreach "$cfg" interface init_iface
 
 		return 1
@@ -65,18 +68,19 @@ start() {
 	config_load vnstat
 	config_foreach init_ifaces vnstat
 
-	SERVICE_PID_FILE="${pid}"
-	service_start /usr/sbin/vnstatd -d
+	procd_open_instance
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param command /usr/sbin/vnstatd --nodaemon
+	procd_set_param file /etc/vnstat.conf
+	procd_set_param respawn
+	procd_close_instance
 }
 
-stop() {
-	local pid="$(vnstat_option PidFile)"
+reload_service() {
+	procd_send_signal vnstat
+}
 
-	[ -n "$pid" ] || {
-		echo "Error: No PidFile set in vnstat.conf" >&2
-		exit 1
-	}
-
-	SERVICE_PID_FILE="${pid}"
-	service_stop /usr/sbin/vnstatd
+service_triggers() {
+	procd_add_reload_trigger vnstat
 }

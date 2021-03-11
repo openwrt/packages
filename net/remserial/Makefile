@@ -8,12 +8,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=remserial
 PKG_VERSION:=1.4
-PKG_RELEASE:=1
-PKG_LICENSE:=GPL-2.0+
+PKG_RELEASE:=2
+PKG_LICENSE:=GPL-2.0-or-later
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://lpccomp.bc.ca/remserial/
-PKG_MD5SUM:=b19b57fd118329c5ea3aaf9887f946a6
+PKG_HASH:=4cbe9c754a2be4926789500bafb84bda54e11b01aab522a3ce71ec4db615fefb
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 

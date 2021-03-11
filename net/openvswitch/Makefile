@@ -1,197 +1,275 @@
-# 
+#
 # Copyright (C) 2013 Julius Schulz-Zander <julius@net.t-labs.tu-berlin.de>
-# Copyright (C) 2014 OpenWrt.org
+# Copyright (C) 2014-2017 OpenWrt.org
+# Copyright (C) 2018-2020 Yousong Zhou <yszhou4tech@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
-# $Id: Makefile $
-
 include $(TOPDIR)/rules.mk
+include $(INCLUDE_DIR)/kernel.mk
+include ./openvswitch.mk
 
+# Checklist on version bump
+#
+#  - Check acinclude.m4 for range of supported kernel versions: "but version newer than .* is not supported"
+#  - Check and update kmod dependencies when necessary (runtime module load check in the least)
+#
 PKG_NAME:=openvswitch
-
+PKG_VERSION:=$(ovs_version)
 PKG_RELEASE:=1
-PKG_VERSION:=2.3.0
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
-PKG_LICENSE:=Apache-2.0
-PKG_LICENSE_FILES:=COPYING
-PKG_USE_MIPS16:=0
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
+PKG_HASH:=7d5797f2bf2449c6a266149e88f72123540f7fe7f31ad52902057ae8d8f88c38
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/openvswitch/ovs
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=2b70c4b929d18d1f36dcdeb71ea5c383cbb662e9
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_LICENSE:=Apache-2.0
+PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:openvswitch:openvswitch
+
+PKG_BUILD_DIR:=$(ovs_builddir)
+PKG_BUILD_DEPENDS+=python3/host python-six/host
+PKG_USE_MIPS16:=0
+PKG_BUILD_PARALLEL:=1
+PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PYTHON3_PKG_BUILD:=0
+
+PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/kernel.mk
-$(call include_mk, python-package.mk)
+include ../../lang/python/python3-host.mk
+include ../../lang/python/python3-package.mk
 
-PKG_FIXUP=libtool
 
-define Package/openvswitch/Default
-  SECTION:=net
-  CATEGORY:=Network
-  URL:=http://openvswitch.org/
-  MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+ovs_kmod_packages:=
+ovs_kmod_intree_kernel_patchver_min:=3.10
+ovs_kmod_intree_kernel_patchver_max:=5.5
+ovs_kmod_intree_not_supported:=$(strip $(call kernel_patchver_lt,$(ovs_kmod_intree_kernel_patchver_min))$(call kernel_patchver_gt,$(ovs_kmod_intree_kernel_patchver_max)))
+ovs_kmod_intree_dir:=$(PKG_BUILD_DIR)/datapath/linux
+ovs_kmod_upstream_dir:=$(LINUX_DIR)/net/openvswitch
+ovs_kmod_package_name=$(if $(filter openvswitch,$(1)),openvswitch,$(1))
+ovs_kmod_is_intree=$(filter %-intree,$(1))
+ovs_kmod_upstream_name=kmod-$(call ovs_kmod_package_name,$(patsubst %-intree,%,$(1)))
+ovs_kmod_package_provides=$(call ovs_kmod_upstream_name,$(1))
+define OvsKmodPackageTemplate
+ifeq ($(if $(call ovs_kmod_is_intree,$(1)),$(ovs_kmod_intree_not_supported)),)
+  define KernelPackage/$(call ovs_kmod_package_name,$(1))
+     SECTION:=kernel
+     CATEGORY:=Kernel modules
+     SUBMENU:=Network Support
+     TITLE:=$(ovs_kmod_$(1)_title)
+     DEPENDS:=$(ovs_kmod_$(1)_depends) $(if $(call ovs_kmod_is_intree,$(1)),@IPV6 @DEVEL)
+     PROVIDES:=$(call ovs_kmod_package_provides,$(1))
+     KCONFIG:=$(ovs_kmod_$(1)_kconfig)
+     FILES:=$(ovs_kmod_$(1)_files)
+     AUTOLOAD:=$(call AutoProbe,$(foreach m,$(ovs_kmod_$(1)_files),$(notdir $(patsubst %.ko,%,$(basename $(m))))))
+  endef
+
+  ovs_kmod_packages+=$(call ovs_kmod_package_name,$(1))
+endif
 endef
 
-define Package/openvswitch/Default/description
-  Open vSwitch is a production quality, multilayer, software-based, Ethernet
-  virtual switch. It is designed to enable massive network automation through
-  programmatic extension, while still supporting standard management interfaces
-  and protocols (e.g. NetFlow, sFlow, SPAN, RSPAN, CLI, LACP, 802.1ag). In
-  addition, it is designed to support distribution across multiple physical
-  servers similar to VMware's vNetwork distributed vswitch or Cisco's Nexus
-  1000V.
+ovs_kmod_openvswitch_title:=Open vSwitch kernel datapath (upstream)
+ovs_kmod_openvswitch_kconfig:=CONFIG_OPENVSWITCH
+ovs_kmod_openvswitch_depends:=\
+	  +kmod-lib-crc32c \
+	  +kmod-nf-nat \
+	  +IPV6:kmod-nf-nat6 \
+	  +kmod-nf-conntrack \
+	  +IPV6:kmod-nf-conntrack6 \
+	  +kmod-nsh \
+	  +kmod-ipt-conntrack-extra \
+
+ovs_kmod_openvswitch_files:=$(ovs_kmod_upstream_dir)/openvswitch.ko
+$(eval $(call OvsKmodPackageTemplate,openvswitch))
+
+ovs_kmod_openvswitch-gre_title:=Open vSwitch GRE tunneling support (upstream)
+ovs_kmod_openvswitch-gre_kconfig:= CONFIG_OPENVSWITCH_GRE
+ovs_kmod_openvswitch-gre_depends:= +kmod-openvswitch +kmod-gre
+ovs_kmod_openvswitch-gre_files:= $(ovs_kmod_upstream_dir)/vport-gre.ko
+$(eval $(call OvsKmodPackageTemplate,openvswitch-gre))
+
+ovs_kmod_openvswitch-vxlan_title:=Open vSwitch VXLAN tunneling support (upstream)
+ovs_kmod_openvswitch-vxlan_kconfig:= CONFIG_OPENVSWITCH_VXLAN
+ovs_kmod_openvswitch-vxlan_depends:= +kmod-openvswitch +kmod-vxlan
+ovs_kmod_openvswitch-vxlan_files:= $(ovs_kmod_upstream_dir)/vport-vxlan.ko
+$(eval $(call OvsKmodPackageTemplate,openvswitch-vxlan))
+
+ovs_kmod_openvswitch-geneve_title:=Open vSwitch Geneve tunneling support (upstream)
+ovs_kmod_openvswitch-geneve_kconfig:= CONFIG_OPENVSWITCH_GENEVE
+ovs_kmod_openvswitch-geneve_depends:= +kmod-openvswitch +kmod-geneve
+ovs_kmod_openvswitch-geneve_files:= $(ovs_kmod_upstream_dir)/vport-geneve.ko
+$(eval $(call OvsKmodPackageTemplate,openvswitch-geneve))
+
+# NOTE depends
+#
+#  - kmod-ipt-conntrack-extra: required for nf_conncount.ko
+#
+ovs_kmod_openvswitch-intree_title:=Open vSwitch kernel datapath (in tree)
+ovs_kmod_openvswitch-intree_depends:=\
+	  +kmod-lib-crc32c \
+	  +kmod-nf-nat \
+	  +IPV6:kmod-nf-nat6 \
+	  +kmod-nf-conntrack \
+	  +kmod-udptunnel4 \
+	  +kmod-ipt-conntrack-extra \
+
+ovs_kmod_openvswitch-intree_files:= $(ovs_kmod_intree_dir)/openvswitch.ko
+$(eval $(call OvsKmodPackageTemplate,openvswitch-intree))
+
+ovs_kmod_openvswitch-gre-intree_title:=Open vSwitch GRE tunneling support (in tree)
+ovs_kmod_openvswitch-gre-intree_depends:= +kmod-openvswitch-intree +kmod-gre
+ovs_kmod_openvswitch-gre-intree_files:= $(ovs_kmod_intree_dir)/vport-gre.ko
+$(eval $(call OvsKmodPackageTemplate,openvswitch-gre-intree))
+
+ovs_kmod_openvswitch-vxlan-intree_title:=Open vSwitch VXLAN tunneling support (in tree)
+ovs_kmod_openvswitch-vxlan-intree_depends:= +kmod-openvswitch-intree +kmod-vxlan
+ovs_kmod_openvswitch-vxlan-intree_files:= $(ovs_kmod_intree_dir)/vport-vxlan.ko
+$(eval $(call OvsKmodPackageTemplate,openvswitch-vxlan-intree))
+
+ovs_kmod_openvswitch-geneve-intree_title:=Open vSwitch Geneve tunneling support (in tree)
+ovs_kmod_openvswitch-geneve-intree_depends:= +kmod-openvswitch-intree +kmod-geneve
+ovs_kmod_openvswitch-geneve-intree_files:= $(ovs_kmod_intree_dir)/vport-geneve.ko
+$(eval $(call OvsKmodPackageTemplate,openvswitch-geneve-intree))
+
+ovs_kmod_openvswitch-stt-intree_title:=Open vSwitch STT tunneling support (in tree)
+ovs_kmod_openvswitch-stt-intree_depends:= +kmod-openvswitch-intree
+ovs_kmod_openvswitch-stt-intree_files:= $(ovs_kmod_intree_dir)/vport-stt.ko
+$(eval $(call OvsKmodPackageTemplate,openvswitch-stt-intree))
+
+ovs_kmod_openvswitch-lisp-intree_title:=Open vSwitch LISP tunneling support (in tree)
+ovs_kmod_openvswitch-lisp-intree_depends:= +kmod-openvswitch-intree
+ovs_kmod_openvswitch-lisp-intree_files:= $(ovs_kmod_intree_dir)/vport-lisp.ko
+$(eval $(call OvsKmodPackageTemplate,openvswitch-lisp-intree))
+
+# Dependency review
+#
+#	for f in sbin/*;   do echo $f; readelf -d $f | grep -i shared; done
+#	for f in bin/*;    do echo $f; readelf -d $f | grep -i shared; done
+#	for f in lib/*.so; do echo $f; readelf -d $f | grep -i shared; done
+#
+ovs_libopenvswitch_title:=Open vSwitch (libopenvswitch.so)
+ovs_libopenvswitch_hidden:=1
+ovs_libopenvswitch_depends:=+libopenssl +libunbound +!(arc||arceb):libunwind
+ovs_libopenvswitch_depends+=+libatomic
+ovs_libopenvswitch_files:=usr/lib/libopenvswitch*.so*
+$(eval $(call OvsPackageTemplate,libopenvswitch))
+
+
+ovs_libofproto_title:=Open vSwitch (libofproto.so libsflow.so)
+ovs_libofproto_hidden:=1
+ovs_libofproto_depends+=+libatomic
+ovs_libofproto_files:=usr/lib/libofproto*.so* usr/lib/libsflow*.so*
+$(eval $(call OvsPackageTemplate,libofproto))
+
+
+ovs_libovsdb_title:=Open vSwitch (libovsdb.so)
+ovs_libovsdb_hidden:=1
+ovs_libovsdb_depends+=+libatomic
+ovs_libovsdb_files:=usr/lib/libovsdb*.so*
+$(eval $(call OvsPackageTemplate,libovsdb))
+
+
+ovs_vswitchd_title:=Open vSwitch (ovs-vswitchd)
+ovs_vswitchd_hidden:=1
+ovs_vswitchd_depends:=+openvswitch-libopenvswitch +openvswitch-libofproto
+ovs_vswitchd_depends+=+libatomic
+ovs_vswitchd_files:=usr/sbin/ovs-vswitchd
+$(eval $(call OvsPackageTemplate,vswitchd))
+
+
+ovs_ovsdb_title:=Open vSwitch (ovsdb-server)
+ovs_ovsdb_hidden:=1
+ovs_ovsdb_depends:=+openvswitch-libopenvswitch +openvswitch-libovsdb
+ovs_ovsdb_depends+=+libatomic
+ovs_ovsdb_files:=usr/sbin/ovsdb-server
+$(eval $(call OvsPackageTemplate,ovsdb))
+
+
+ovs_common_title:=Open vSwitch (common files)
+ovs_common_hidden:=1
+ovs_common_depends:=+openvswitch-libopenvswitch +openvswitch-libofproto +openvswitch-libovsdb
+ovs_common_depends+=+libatomic
+ovs_common_files:= \
+	usr/share/openvswitch/scripts/ovs-lib \
+	usr/share/openvswitch/scripts/ovs-ctl \
+	usr/share/openvswitch/scripts/ovs-kmod-ctl \
+	usr/share/openvswitch/scripts/ovs-save \
+	$(foreach b,ovs-appctl ovs-dpctl ovs-ofctl ovs-vsctl ovsdb-client ovsdb-tool,usr/bin/$(b))
+define ovs_common_install
+	$$(INSTALL_DIR) $$(1)/etc/openvswitch
+	$$(INSTALL_DIR) $$(1)/etc/init.d
+	$$(INSTALL_BIN) ./files/openvswitch.init $$(1)/etc/init.d/openvswitch
+	$$(INSTALL_DIR) $$(1)/etc/config
+	$$(INSTALL_DATA) ./files/openvswitch.config $$(1)/etc/config/openvswitch
+	$$(INSTALL_DIR) $$(1)/usr/share/openvswitch/scripts
+	$$(INSTALL_BIN) ./files/ovs-ctl-wrapper $$(1)/usr/share/openvswitch/scripts/
+	$$(LN) /usr/share/openvswitch/scripts/ovs-ctl-wrapper $$(1)/usr/bin/ovs-ctl
+	$$(LN) /usr/share/openvswitch/scripts/ovs-ctl-wrapper $$(1)/usr/bin/ovs-kmod-ctl
 endef
-
-define Package/openvswitch
-  $(call Package/openvswitch/Default)
-  TITLE:=Open vSwitch Userspace Package
-  DEPENDS:=+libpcap +libopenssl +librt +libatomic +kmod-openvswitch
+define Package/openvswitch-common/conffiles
+/etc/config/openvswitch
+/etc/openvswitch
 endef
+$(eval $(call OvsPackageTemplate,common))
 
-define Package/openvswitch/description
-  Provides the main userspace components required for Open vSwitch to function.
+
+# coreutils-sleep is required by ovs-lib for sleeping a fraction of second
+#
+# uuidgen is required for generating system-id
+ovs_openvswitch_title:=Open vSwitch
+ovs_openvswitch_hidden:=
+ovs_openvswitch_depends:=+coreutils +coreutils-sleep +uuidgen \
+	+openvswitch-common +openvswitch-vswitchd +openvswitch-ovsdb +kmod-openvswitch
+ovs_openvswitch_depends+=+libatomic
+ovs_openvswitch_files:= usr/share/openvswitch/vswitch.ovsschema
+$(eval $(call OvsPackageTemplate,openvswitch))
+
+
+ovs_python3_title:=Open vSwitch (Python3 library)
+ovs_python3_hidden:=
+ovs_python3_depends:=+PACKAGE_openvswitch-python3:python3 +PACKAGE_openvswitch-python3:python3-six
+define ovs_python3_install
+	$$(INSTALL_DIR) $$(1)$$(PYTHON3_PKG_DIR)
+	$$(CP) $$(PKG_INSTALL_DIR)/usr/share/openvswitch/python/ovs $$(1)$$(PYTHON3_PKG_DIR)
 endef
+$(eval $(call OvsPackageTemplate,python3))
 
-define Package/openvswitch-python
-  $(call Package/openvswitch/Default)
-  TITLE:=Open vSwitch Python Support
-  DEPENDS:=@PACKAGE_openvswitch +PACKAGE_openvswitch:openvswitch +python
-endef
 
-define Package/openvswitch-python/description
-  Provides bindings and libraries for using Python to manipulate/work with Open vSwitch.
-endef
+CONFIGURE_ARGS+= \
+	--enable-ndebug \
+	--enable-shared \
+	--disable-libcapng \
+	--disable-silent-rules \
 
-define Package/openvswitch-ipsec
-  $(call Package/openvswitch/Default)
-  TITLE:=Open vSwitch Userspace Package
-  DEPENDS:=@PACKAGE_openvswitch +PACKAGE_openvswitch:openvswitch-python
-endef
+CONFIGURE_VARS += \
+	ovs_cv_flake8=no \
+	ovs_cv_python3=$(PYTHON3) \
+	ovs_cv_python3_host=$(HOST_PYTHON3_BIN) \
+	SPHINXBUILD=none \
+	KARCH=$(LINUX_KARCH) \
 
-define Package/openvswitch-ipsec/description
-  The ovs-monitor-ipsec script provides support for encrypting GRE tunnels with 
-  IPsec.
-endef
-
-define Package/openvswitch-benchmark
-  $(call Package/openvswitch/Default)
-  TITLE:=Open vSwitch Userspace Package
-  DEPENDS:=@PACKAGE_openvswitch +PACKAGE_openvswitch:openvswitch
-endef
-
-define Package/openvswitch-benchmark/description
-  Utility for running OpenVSwitch benchmarking
-endef
-
-define KernelPackage/openvswitch
-  SECTION:=kernel
-  CATEGORY:=Kernel modules
-  SUBMENU:=Network Support
-  TITLE:=Open vSwitch Kernel Package
-  KCONFIG:=CONFIG_BRIDGE
-  DEPENDS:=+kmod-stp +kmod-ipv6 +kmod-gre +kmod-lib-crc32c +kmod-vxlan
-  FILES:= \
-	$(PKG_BUILD_DIR)/datapath/linux/openvswitch.$(LINUX_KMOD_SUFFIX)
-  AUTOLOAD:=$(call AutoLoad,21,openvswitch)
-endef
-
-define KernelPackage/openvswitch/description
-  This package contains the Open vSwitch kernel moodule and bridge compat
-  module. Furthermore, it supports OpenFlow.
-endef
-
-CONFIGURE_ARGS += --with-linux=$(LINUX_DIR) --with-rundir=/var/run
-CONFIGURE_ARGS += --enable-ndebug
-CONFIGURE_ARGS += --disable-ssl
-CONFIGURE_ARGS += --enable-shared
-
-TARGET_CFLAGS += -flto
-
-define Build/Configure
-	(cd $(PKG_BUILD_DIR); \
-		autoreconf -v --install --force || exit 1 \
-	);
-	$(call Build/Configure/Default,$(CONFIGURE_ARGS))
-endef
-
-KCFLAGS=
-ifeq ($(CONFIG_GCC_VERSION_4_9),y)
-KCFLAGS:=-Wno-error=date-time
+ovs_intree_kmod_configs:=CONFIG_PACKAGE_kmod-openvswitch-intree
+ovs_intree_kmod_enabled:=$(strip $(foreach c,$(ovs_intree_kmod_configs),$($(c))))
+PKG_CONFIG_DEPENDS+=$(ovs_intree_kmod_configs)
+ifneq ($(ovs_intree_kmod_enabled),)
+  ifeq ($(ovs_kmod_intree_not_supported),)
+    CONFIGURE_ARGS += --with-linux=$(LINUX_DIR)
+  else
+    $(warning XXX: openvswitch: intree kmods selected but not supported)
+  endif
 endif
 
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		$(TARGET_CONFIGURE_OPTS) \
-		CFLAGS="-I$(PKG_BUILD_DIR)/lib $(TARGET_CFLAGS) -std=gnu99" \
-		LDFLAGS="-L$(PKG_BUILD_DIR)/lib $(TARGET_LDFLAGS)" \
-		LDFLAGS_MODULES="$(TARGET_LDFLAGS) -L$(PKG_BUILD_DIR)/lib" \
-		STAGING_DIR="$(STAGING_DIR)" \
-		DESTDIR="$(PKG_INSTALL_DIR)/usr" \
-		CROSS_COMPILE="$(TARGET_CROSS)" \
-		ARCH="$(LINUX_KARCH)" \
-		SUBDIRS="$(PKG_BUILD_DIR)/datapath/linux" \
-		PATH="$(TARGET_PATH)" \
-		EXTRA_CFLAGS="$(KCFLAGS)" \
-		KCC="$(KERNEL_CC)"
-endef
+TARGET_CFLAGS += -flto -std=gnu99
+MAKE_VARS += PYTHONPATH="$(HOST_PYTHON3PATH)"
 
-define Package/openvswitch/install
-	$(INSTALL_DIR) $(1)/etc/openvswitch
+export OVS_KERNEL_MAKE_FLAGS=$(KERNEL_MAKE_FLAGS)
 
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/etc/init.d/openvswitch.init $(1)/etc/init.d/openvswitch
+override CONFIG_AUTOREMOVE=
 
-	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/lib/.libs/libsflow-$(PKG_VERSION).so  $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/lib/.libs/libopenvswitch-$(PKG_VERSION).so  $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/ofproto/.libs/libofproto-$(PKG_VERSION).so  $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/ovsdb/.libs/libovsdb-$(PKG_VERSION).so  $(1)/usr/lib/
-
-	$(INSTALL_DIR) $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-appctl $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-ofctl $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ovsdb/.libs/ovsdb-client $(1)/usr/bin/
-
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-dpctl $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-vsctl $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ovsdb/.libs/ovsdb-tool $(1)/usr/bin/
-
-	$(INSTALL_DIR) $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/vswitchd/.libs/ovs-vswitchd $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ovsdb/.libs/ovsdb-server $(1)/usr/sbin/
-
-	$(INSTALL_DIR) $(1)/usr/share/openvswitch/
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/vswitchd/vswitch.ovsschema $(1)/usr/share/openvswitch/
-endef
-
-define Package/openvswitch-python/install
-	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON_VERSION)/
-	$(CP) $(PKG_BUILD_DIR)/python/ovs/ $(1)/usr/lib/python$(PYTHON_VERSION)/
-endef
-
-define Package/openvswitch-ipsec/install
-	$(INSTALL_DIR) $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/debian/ovs-monitor-ipsec $(1)/usr/sbin/
-endef
-
-define Package/openvswitch-benchmark/install
-	$(INSTALL_DIR) $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utilities/.libs/ovs-benchmark $(1)/usr/bin/
-endef
-
-define Package/openvswitch/postinst
-#!/bin/sh
-[ -n "$${IPKG_INSTROOT}" ] || /etc/init.d/openvswitch enable || true
-endef
-
-$(eval $(call BuildPackage,openvswitch))
-$(eval $(call BuildPackage,openvswitch-python))
-$(eval $(call BuildPackage,openvswitch-ipsec))
-$(eval $(call BuildPackage,openvswitch-benchmark))
-$(eval $(call KernelPackage,openvswitch))
-
+$(foreach p,$(ovs_kmod_packages),\
+  $(eval $(call KernelPackage,$(p)))\
+)
+$(foreach p,$(ovs_packages),\
+  $(eval $(call BuildPackage,$(p)))\
+)

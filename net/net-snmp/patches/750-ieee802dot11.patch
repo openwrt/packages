@@ -4702,7 +4702,7 @@
 +  char uid[256];
 +  LIST_HEAD ( , avNode ) *list;       
 +
-+  // NOTE: this assumes the UID is at the begining of the 
++  // NOTE: this assumes the UID is at the beginning of the 
 +  //       data structure and that UIDs are strings
 +  
 +  list = ( LIST_HEAD ( , avNode ) * ) l;            // NOTE: don't know how to get 
@@ -5802,7 +5802,7 @@
 +#define PROC_NET_WIRELESS	"/proc/net/wireless"
 +#define PROC_NET_DEV		"/proc/net/dev"
 +
-+/* Some usefull constants */
++/* Some useful constants */
 +#define KILO	1e3
 +#define MEGA	1e6
 +#define GIGA	1e9
@@ -6110,7 +6110,7 @@
 +}
 +
 +/*------------------------------------------------------------------*/
-+/* Backwards compatability
++/* Backwards compatibility
 + * Actually, those form are much easier to use when dealing with
 + * struct sockaddr... */
 +static inline char*
@@ -6119,7 +6119,7 @@
 +  iw_ether_ntop((const struct ether_addr *) addr, bufp);
 +  return bufp;
 +}
-+/* Backwards compatability */
++/* Backwards compatibility */
 +static inline int
 +iw_in_ether(const char *bufp, struct sockaddr *sap)
 +{

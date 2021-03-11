@@ -13,7 +13,9 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://matthewwild.co.uk/projects/luaexpat
-PKG_MD5SUM:=3c20b5795e7107f847f8da844fbfe2da
+PKG_HASH:=d060397960d87b2c89cf490f330508b7def1a0677bdc120531c571609fc57dc3
+
+PKG_CPE_ID:=cpe:/a:matthewwild:luaexpat
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -22,7 +24,7 @@ define Package/luaexpat
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=LuaExpat 
-  URL:=http://www.keplerproject.org/luaexpat/
+  URL:=http://matthewwild.co.uk/projects/luaexpat/
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
   DEPENDS:=+lua +libexpat
 endef
@@ -41,7 +43,7 @@ define Build/Compile
 	LUA_INC="-I$(STAGING_DIR)/usr/include/" \
 	LUA_LIBDIR="$(STAGING_DIR)/usr/lib/" \
 	COMPAT_DIR="$(PKG_BUILD_DIR)/compat-5.1r5" \
-	LIB_OPTION="-shared $(TARGET_LDFLAGS)" \
+	LDFLAGS="-shared $(TARGET_LDFLAGS)" \
 	CC="$(TARGET_CC) $(TARGET_CFLAGS) $(FPIC) -std=c99" \
 	LD="$(TARGET_CROSS)ld -shared" 
 endef

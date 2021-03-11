@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
+# Copyright (C) 2009-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libnetfilter_acct
-PKG_VERSION:=1.0.2
-PKG_RELEASE:=1
+PKG_VERSION:=1.0.3
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:= \
-	http://www.netfilter.org/projects/libnetfilter_acct/files/ \
-	ftp://ftp.netfilter.org/pub/libnetfilter_acct/ \
-	http://mirrors.evolva.ro/netfilter.org/libnetfilter_acct/
-PKG_MD5SUM:=2118d9514c079839ebd9cb3144ad2ad7
+PKG_SOURCE_URL:=https://netfilter.org/projects/libnetfilter_acct/files
+PKG_HASH:=4250ceef3efe2034f4ac05906c3ee427db31b9b0a2df41b2744f4bf79a959a1a
 
-PKG_LICENSE:=LGPL-2.1
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
@@ -30,9 +27,9 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libnetfilter-acct
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libmnl
   TITLE:=API to extended accounting infrastructure
   URL:=http://www.netfilter.org/projects/libnetfilter_acct/
+  DEPENDS:=+libmnl
 endef
 
 define Package/libnetfilter-acct/description
@@ -46,21 +43,16 @@ CONFIGURE_ARGS += \
 	--enable-static \
 	--enable-shared \
 
-CONFIGURE_VARS += \
-	LIBNFNETLINK_CFLAGS="$(TARGET_CPPFLAGS)" \
-	LIBNFNETLINK_LIBS="$(TARGET_LDFLAGS)"
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/libnetfilter_acct \
 		$(1)/usr/include/
-
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/libnetfilter_acct*.{so*,a,la} \
 		$(1)/usr/lib/
-
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libnetfilter_acct.pc \

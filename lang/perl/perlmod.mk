@@ -1,16 +1,33 @@
 # This makefile simplifies perl module builds.
 #
 
+ifeq ($(origin PERL_INCLUDE_DIR),undefined)
+  PERL_INCLUDE_DIR:=$(dir $(lastword $(MAKEFILE_LIST)))
+endif
+
+include $(PERL_INCLUDE_DIR)/perlver.mk
+
+ifneq ($(PKG_NAME),perl)
+  PKG_VERSION:=$(PKG_VERSION)+perl$(PERL_VERSION2)
+endif
+
+PERL_VERSION:=$(PERL_VERSION2)
+
 # Build environment
-HOST_PERL_PREFIX:=$(STAGING_DIR_HOST)/usr
-ifneq ($(CONFIG_USE_EGLIBC),)
+HOST_PERL_PREFIX:=$(STAGING_DIR_HOSTPKG)/usr
+ifneq ($(CONFIG_USE_GLIBC),)
 	EXTRA_LIBS:=bsd
 	EXTRA_LIBDIRS:=$(STAGING_DIR)/lib
 endif
-PERL_CMD:=$(STAGING_DIR_HOST)/usr/bin/perl5.20.0
+PERL_CMD:=$(STAGING_DIR_HOSTPKG)/usr/bin/perl$(PERL_VERSION3)
+
+MOD_CFLAGS_PERL:=-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 $(TARGET_CFLAGS) $(TARGET_CPPFLAGS)
+ifdef CONFIG_PERL_THREADS
+	MOD_CFLAGS_PERL+= -D_REENTRANT -D_GNU_SOURCE
+endif
 
 # Module install prefix
-PERL_SITELIB:=/usr/lib/perl5/5.20
+PERL_SITELIB:=/usr/lib/perl5/$(PERL_VERSION)
 PERL_TESTSDIR:=/usr/share/perl/perl-tests
 PERLBASE_TESTSDIR:=/usr/share/perl/perlbase-tests
 PERLMOD_TESTSDIR:=/usr/share/perl/perlmod-tests
@@ -19,7 +36,7 @@ define perlmod/host/relink
 	rm -f $(1)/Makefile.aperl
 	$(MAKE) -C $(1) perl
 	$(CP) $(1)/perl $(PERL_CMD)
-	$(CP) $(1)/perl $(STAGING_DIR_HOST)/usr/bin/perl
+	$(CP) $(1)/perl $(STAGING_DIR_HOSTPKG)/usr/bin/perl
 endef
 
 define perlmod/host/Configure
@@ -47,14 +64,15 @@ define perlmod/host/Install
 endef
 
 define perlmod/Configure
-	(cd $(PKG_BUILD_DIR); \
-	PERL_MM_USE_DEFAULT=1 \
-	$(2) \
-	$(PERL_CMD) Makefile.PL \
+	(cd $(if $(3),$(3),$(PKG_BUILD_DIR)); \
+	 (echo -e 'use Config;\n\n$$$${tied %Config::Config}{cpprun}="$(GNU_TARGET_NAME)-cpp -E";\n' ; cat Makefile.PL) | \
+	 PERL_MM_USE_DEFAULT=1 \
+	 $(2) \
+	 $(PERL_CMD) -I. -- - \
 		$(1) \
 		AR=ar \
 		CC=$(GNU_TARGET_NAME)-gcc \
-		CCFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
+		CCFLAGS="$(MOD_CFLAGS_PERL)" \
 		CCCDLFLAGS=-fPIC \
 		CCDLFLAGS=-Wl,-E \
 		DLEXT=so \
@@ -62,7 +80,7 @@ define perlmod/Configure
 		EXE_EXT=" " \
 		FULL_AR=$(GNU_TARGET_NAME)-ar \
 		LD=$(GNU_TARGET_NAME)-gcc \
-		LDDLFLAGS="-shared $(TARGET_LDFLAGS)"  \
+		LDDLFLAGS="-shared -rdynamic $(TARGET_LDFLAGS)"  \
 		LDFLAGS="$(EXTRA_LIBDIRS:%=-L%) $(EXTRA_LIBS:%=-l%) " \
 		LIBC=" " \
 		LIB_EXT=.a \
@@ -96,14 +114,14 @@ define perlmod/Configure
 		INSTALLVENDORMAN3DIR=" " \
 		LINKTYPE=dynamic \
 		DESTDIR=$(PKG_INSTALL_DIR) \
-	);
-	sed 's!^PERL_INC = .*!PERL_INC = $(STAGING_DIR)/usr/lib/perl5/5.20/CORE/!' -i $(PKG_BUILD_DIR)/Makefile
+	)
+	sed -i -e 's!^PERL_INC = .*!PERL_INC = $(STAGING_DIR)/usr/lib/perl5/$(PERL_VERSION)/CORE/!' $(if $(3),$(3),$(PKG_BUILD_DIR))/Makefile
 endef
 
 define perlmod/Compile
 	PERL5LIB=$(PERL_LIB) \
 	$(2) \
-	$(MAKE) -C $(PKG_BUILD_DIR) \
+	$(MAKE) -C $(if $(3),$(3),$(PKG_BUILD_DIR)) \
 		$(1) \
 		install
 endef
@@ -122,9 +140,7 @@ define perlmod/Install/NoStrip
 endef
 
 
-define perlmod/Install
-	$(call perlmod/Install/NoStrip,$(1),$(2),$(3))
-
+define perlmod/_DoStrip
 	@echo "---> Stripping modules in: $(strip $(1))$(PERL_SITELIB)"
 	find $(strip $(1))$(PERL_SITELIB) -name \*.pm -or -name \*.pl | \
 	xargs -r sed -i \
@@ -132,6 +148,12 @@ define perlmod/Install
 		-e '/^=\(head\|pod\|item\|over\|back\|encoding\|begin\|end\|for\)/,$$$$d' \
 		-e '/^#$$$$/d' \
 		-e '/^#[^!"'"'"']/d'
+endef
+
+define perlmod/Install
+	$(call perlmod/Install/NoStrip,$(1),$(2),$(3))
+
+	$(if $(CONFIG_PERL_NOCOMMENT),$(if $(PKG_LEAVE_COMMENTS),,$(call perlmod/_DoStrip,$(1),$(2),$(3))))
 endef
 
 # You probably don't want to use this directly. Look at perlmod/InstallTests

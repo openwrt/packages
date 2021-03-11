@@ -1,6 +1,7 @@
 #
 # Copyright (C) 2010-2014 OpenWrt.org
 # Copyright (C) 2010 segal.di.ubi.pt
+# Copyright (C) 2016 Karol Babioch <karol@babioch.de>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,8 +11,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wifitoggle
 PKG_VERSION:=1
-PKG_RELEASE:=4
-PKG_LICENSE:=GPL-2.0+
+PKG_RELEASE:=6
+PKG_LICENSE:=GPL-2.0-or-later
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 
@@ -21,6 +22,7 @@ define Package/wifitoggle
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Script to toggle Wi-Fi with a button and UCI config
+  PKGARCH:=all
 endef
 
 define Package/wifitoggle/description

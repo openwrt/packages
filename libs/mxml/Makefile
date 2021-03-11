@@ -1,19 +1,14 @@
-#
-# Copyright (C) 2006-2014 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mxml
-PKG_VERSION:=2.8
+PKG_VERSION:=3.2
 PKG_RELEASE:=1
-PKG_MD5SUM:=d85ee6d30de053581242c4a86e79a5d2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.msweet.org/files/project3/
+PKG_SOURCE_URL:=https://github.com/michaelrsweet/$(PKG_NAME)/releases/download/v$(PKG_VERSION)/
+PKG_HASH:=b894f6c64964f2e77902564c17ba00f5d077a7a24054e7c1937903b0bd42c974
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+
 PKG_FIXUP:=autoreconf
 
 PKG_MAINTAINER:=Espen Jürgensen <espenjurgensen+openwrt@gmail.com>
@@ -27,6 +22,7 @@ define Package/mxml
   CATEGORY:=Libraries
   TITLE:=Mini-XML
   URL:=http://www.minixml.org/
+  DEPENDS:=+zlib
 endef
 
 define Package/mxml/description

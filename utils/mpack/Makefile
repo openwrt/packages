@@ -13,8 +13,8 @@ PKG_RELEASE:=1
 PKG_LICENSE:=NLPL
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://ftp.andrew.cmu.edu/pub/mpack/
-PKG_MD5SUM:=a70fa5afa76539a9afb70b9d81568fe8
+PKG_SOURCE_URL:=https://fossies.org/linux/misc/old
+PKG_HASH:=274108bb3a39982a4efc14fb3a65298e66c8e71367c3dabf49338162d207a94c
 
 PKG_INSTALL:=1
 
@@ -24,7 +24,7 @@ define Package/mpack
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=mpack/munpack MIME format mail messages
-  URL:=http://ftp.andrew.cmu.edu/pub/mpack/
+  URL:=https://gitlab.com/osdp/mpack
   MAINTAINER:=Dmitry V. Zimin <pfzim@mail.ru>
 endef
 

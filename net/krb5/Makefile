@@ -1,18 +1,29 @@
+#
+# Copyright (C) 2009-2015 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=krb5
-PKG_VERSION:=1.12.1
-PKG_RELEASE:=1
+PKG_VERSION:=1.18.3
+PKG_RELEASE:=2
 
-PKG_SOURCE:=krb5-$(PKG_VERSION)-signed.tar
-PKG_SOURCE_URL:=http://web.mit.edu/kerberos/dist/krb5/1.12/
-PKG_MD5SUM:=524b1067b619cb5bf780759b6884c3f5
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=NOTICE
+PKG_CPE_ID:=cpe:/a:mit:kerberos
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://web.mit.edu/kerberos/dist/krb5/1.18
+PKG_HASH:=e61783c292b5efd9afb45c555a80dd267ac67eebabca42185362bee6c4fbd719
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
-PKG_CHECK_FORMAT_SECURITY:=0
+PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -22,24 +33,28 @@ define Package/krb5/Default
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Kerberos
-	URL:=http://web.mit.edu/kerberos/
-	MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+	URL:=https://web.mit.edu/kerberos/
 endef
 
 define Package/krb5-libs
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Kerberos
-	DEPENDS:=+libncurses
+	DEPENDS:=+libncurses +libss +libcomerr
 	TITLE:=Kerberos 5 Shared Libraries
 	URL:=http://web.mit.edu/kerberos/
-	MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 endef
 
 define Package/krb5-server
 	$(call Package/krb5/Default)
 	DEPENDS:=+krb5-libs +libpthread
 	TITLE:=Kerberos 5 Server
+endef
+
+define Package/krb5-server-extras
+	$(call Package/krb5/Default)
+	DEPENDS:=+krb5-libs +libpthread
+	TITLE:=Kerberos 5 Admin Server
 endef
 
 define Package/krb5-client
@@ -49,15 +64,8 @@ define Package/krb5-client
 endef
 
 define Package/krb5/description
-	Kerberos
-endef
-
-define Build/Prepare
-	# Krb5 tarball contains signature and a second tarball
-	# containing source code.
-	tar xf "$(DL_DIR)/$(PKG_SOURCE)" -C "$(BUILD_DIR)"
-	tar xzf "$(BUILD_DIR)/krb5-$(PKG_VERSION).tar.gz" -C "$(BUILD_DIR)"
-	patch -p1 -d "$(PKG_BUILD_DIR)" < "$(PATCH_DIR)/001-fix-build.patch"
+  Kerberos is a network authentication protocol. 
+  It is designed to provide strong authentication for client/server applications by using secret-key cryptography.
 endef
 
 CONFIGURE_PATH = ./src
@@ -65,24 +73,38 @@ CONFIGURE_PATH = ./src
 CONFIGURE_VARS += \
 	cross_compiling=yes \
 	krb5_cv_attr_constructor_destructor=yes,yes \
+	krb5_cv_sys_rcdir=/tmp \
 	ac_cv_func_regcomp=yes \
 	ac_cv_printf_positional=yes \
 	ac_cv_file__etc_environment=no \
-	ac_cv_file__etc_TIMEZONE=no
+	ac_cv_file__etc_TIMEZONE=no \
+	ac_cv_header_keyutils_h=no
 
 CONFIGURE_ARGS += \
+	--localstatedir=/etc \
+	--with-system-ss \
+	--with-system-et \
+	--without-system-verto \
 	--without-tcl \
+	--without-tls-impl \
 	--without-libedit \
-	--localstatedir=/etc
+	--without-readline \
+	--disable-rpath \
+	--disable-pkinit \
+	--with-size-optimizations \
+	--with-crypto-impl=builtin
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include \
-		$(1)/usr/include/krb5
+	$(CP) $(PKG_INSTALL_DIR)/usr/include $(1)/usr
 	$(INSTALL_DIR) $(1)/usr
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib \
-		$(1)/usr
-	rm -f $(1)/usr/lib/libcom_err*
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib $(1)/usr
+	# needed for samba4, to detect system-krb5
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/krb5-config $(1)/usr/bin
+	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(1)/usr/bin/krb5-config
+	$(INSTALL_DIR) $(2)/bin
+	$(LN) ../../usr/bin/krb5-config $(2)/bin/krb5-config
 endef
 
 define Package/krb5-libs/install
@@ -112,18 +134,25 @@ endef
 define Package/krb5-server/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/krb5kdc $(1)/etc/init.d/krb5kdc
-#	$(INSTALL_DIR) $(1)/usr/bin
-#	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/sclient $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/kadmin.local $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/kadmind $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/kdb5_util $(1)/usr/sbin
-#	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/kprop $(1)/usr/sbin
-#	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/kpropd $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/krb5kdc $(1)/usr/sbin
-#	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/sim_server $(1)/usr/sbin
+endef
+
+define Package/krb5-server-extras/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/kadmind $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/kprop $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/kpropd $(1)/usr/sbin
+endef
+
+define Package/krb5-server/postinst
+mkdir -p $${IPKG_INSTROOT}/etc/krb5kdc
+touch $${IPKG_INSTROOT}/etc/krb5kdc/kadm5.acl
 endef
 
 $(eval $(call BuildPackage,krb5-libs))
 $(eval $(call BuildPackage,krb5-server))
+$(eval $(call BuildPackage,krb5-server-extras))
 $(eval $(call BuildPackage,krb5-client))

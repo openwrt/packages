@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-www-curl
 PKG_VERSION:=4.17
-PKG_RELEASE:=1
+PKG_RELEASE:=7
 
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/S/SZ/SZBALINT/
 PKG_SOURCE:=WWW-Curl-$(PKG_VERSION).tar.gz
-PKG_MD5SUM:=997ac81cd6b03b30b36f7cd930474845
+PKG_HASH:=52ffab110e32348d775f241c973eb56f96b08eedbc110d77d257cdb0a24ab7ba
 
-PKG_LICENSE:=GPL-1.0+ Artistic-1.0-Perl
+PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 
@@ -30,7 +30,7 @@ define Package/perl-www-curl
   CATEGORY:=Languages
   TITLE:=Perl bindings to libcurl
   URL:=http://search.cpan.org/dist/WWW-Curl/
-  DEPENDS:=perl +libcurl
+  DEPENDS:=perl +libcurl +perlbase-essential +perlbase-xsloader
 endef
 
 define Build/Configure

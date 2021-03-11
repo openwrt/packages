@@ -1,0 +1,10 @@
+{
+	"name": "no-ip.com",
+	"ipv4": {
+		"url": "update_no-ip_com.sh"
+	},
+	"ipv6": {
+		"url": "update_no-ip_com.sh"
+	}
+}
+

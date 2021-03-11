@@ -1,6 +1,6 @@
 --- a/Configure
 +++ b/Configure
-@@ -2682,6 +2682,9 @@ LOCKF_OWNER4
+@@ -2850,6 +2850,9 @@ LOCKF_OWNER4
      if test "X$LSOF_CC" = "X"	# {
      then
        LSOF_CC=cc

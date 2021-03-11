@@ -1,0 +1,173 @@
+#!/bin/sh
+
+. /lib/functions.sh
+. /lib/functions/network.sh
+. /lib/mwan3/mwan3.sh
+. /lib/mwan3/common.sh
+
+trap_with_arg()
+{
+	func="$1" ; shift
+	pid="$1" ; shift
+	for sig ; do
+		# shellcheck disable=SC2064
+		trap "$func $sig $pid" "$sig"
+	done
+}
+
+func_trap()
+{
+	kill -${1} ${2} 2>/dev/null
+}
+
+mwan3_add_all_routes()
+{
+	local tid IP IPT route_line family active_tbls tid initial_state error
+	local ipv=$1
+
+	add_active_tbls()
+	{
+		let tid++
+		config_get family "$1" family ipv4
+		config_get initial_state "$1" initial_state "online"
+		[ "$family" != "$ipv" ] && return
+		if $IPT -S "mwan3_iface_in_$1" &> /dev/null; then
+			active_tbls="$active_tbls${tid} "
+		fi
+	}
+
+	add_route()
+	{
+		let tid++
+		[ -n "${active_tbls##* $tid *}" ] && return
+		error=$($IP route add table $tid $route_line 2>&1) ||
+			LOG warn "failed to add $route_line to table $tid - error: $error"
+	}
+
+	mwan3_update_dev_to_table
+	[ "$ipv" = "ipv6" ] && [ $NO_IPV6 -ne 0 ] && return
+	if [ "$ipv" = "ipv4" ]; then
+		IP="$IP4"
+		IPT="$IPT4"
+	elif [ "$ipv" = "ipv6" ]; then
+		IP="$IP6"
+		IPT="$IPT6"
+	fi
+	tid=0
+	active_tbls=" "
+	config_foreach add_active_tbls interface
+	[ "$active_tbls" = " " ] && return
+	mwan3_get_routes | while read -r route_line; do
+		mwan3_route_line_dev "tid" "$route_line" "$ipv"
+		if [ -n "$tid" ] && [ -z "${active_tbls##* $tid *}" ]; then
+			$IP route add table $tid $route_line
+		elif [ -n "${route_line##default*}" ] && [ -n "${route_line##fe80::/64*}" ]; then
+			config_foreach add_route interface
+		fi
+	done
+}
+
+mwan3_rtmon_route_handle()
+{
+	local action route_line family tbl device line tid
+
+	route_line=${1##"Deleted "}
+	route_family=$2
+
+	if [ "$route_line" = "$1" ]; then
+		action="replace"
+		$IPS -! add mwan3_connected_${route_family##ip} ${route_line%% *}
+	else
+		action="del"
+		mwan3_set_connected_${route_family}
+	fi
+
+	if [ -z "${route_line##*linkdown*}" ]; then
+		LOG debug "attempting to add link on down interface - $route_line"
+	fi
+
+	if [ "$route_family" = "ipv4" ]; then
+		IP="$IP4"
+	elif [ "$route_family" = "ipv6" ] && [ $NO_IPV6 -eq 0 ]; then
+		IP="$IP6"
+	else
+		LOG warn "route update called with invalid family - $route_family"
+		return
+	fi
+	route_line=$(echo "$route_line" | sed -ne "$MWAN3_ROUTE_LINE_EXP")
+
+	handle_route() {
+		local error
+		local iface=$1
+		tbl=$($IP route list table $tid 2>/dev/null)$'\n'
+
+		if [ -n "$iface" ] && [ "$(mwan3_get_mwan3track_status $iface)" != "active" ]; then
+			LOG debug "interface $iface is disabled - skipping '$route_line'";
+			return
+		fi
+
+		# check that action needs to be performed. May not need to take action if we
+		# got a delete event, but table was already flushed
+		if [ $action = "del" ] && [ -n "${tbl##*$route_line$'\n'*}" ]; then
+			LOG debug "skipping already deleted route table $tid - skipping '$route_line'"
+			return
+		fi
+
+		network_get_device device "$iface"
+		LOG debug "adjusting route $device: '$IP route $action table $tid $route_line'"
+		error=$($IP route "$action" table $tid $route_line 2>&1)||
+			LOG warn "failed: '$IP route $action table $tid $route_line' - error: $error"
+	}
+	handle_route_cb(){
+		local iface=$1
+		let tid++
+		config_get family "$iface" family ipv4
+		[ "$family" != "$route_family" ] && return
+		handle_route "$iface"
+	}
+
+	mwan3_update_dev_to_table
+	mwan3_route_line_dev "tid" "$route_line" "$route_family"
+
+	if [ -n "$tid" ]; then
+		handle_route
+	elif [ -n "${route_line##default*}" ] && [ -n "${route_line##fe80::/64*}" ]; then
+		config_foreach handle_route_cb interface
+	fi
+}
+
+main()
+{
+	local IP family
+
+	mwan3_init
+
+	family=$1
+	[ -z $family ] && family=ipv4
+	if [ "$family" = "ipv6" ]; then
+		if [ $NO_IPV6 -ne 0 ]; then
+			LOG warn "mwan3rtmon started for ipv6, but ipv6 not enabled on system"
+			exit 1
+		fi
+		IP="$IP6"
+	else
+		IP="$IP4"
+	fi
+	sh -c "echo \$\$; exec $IP monitor route" | {
+		read -r monitor_pid
+		trap_with_arg func_trap "$monitor_pid" SIGINT SIGTERM SIGKILL
+		KILL -SIGSTOP $$
+		while IFS='' read -r line; do
+			[ -z "${line##*table*}" ] && continue
+			LOG debug "handling route update $family '$line'"
+			mwan3_rtmon_route_handle "$line" "$family"
+		done
+	} &
+	child=$!
+	trap_with_arg func_trap "$child" SIGINT SIGTERM SIGKILL
+	mwan3_set_connected_${family}
+	mwan3_add_all_routes ${family}
+	kill -SIGCONT $child
+	wait $child
+}
+main "$@"

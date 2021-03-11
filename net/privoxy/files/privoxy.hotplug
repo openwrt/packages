@@ -2,6 +2,8 @@
 
 # only (re-)start on ifup
 [ "$ACTION" = "ifup" ] || exit 0
+# only start if boot_delay is done
+[ -f /tmp/privoxy.hotplug ] || exit 0
 
 PIDFILE=/var/run/privoxy.pid
 

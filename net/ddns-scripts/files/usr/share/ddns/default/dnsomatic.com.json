@@ -1,0 +1,7 @@
+{
+	"name": "dnsomatic.com",
+	"ipv4": {
+		"url": "http://[USERNAME]:[PASSWORD]@updates.dnsomatic.com/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good|nochg"
+	}
+}

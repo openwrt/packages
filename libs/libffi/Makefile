@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2012 OpenWrt.org
+# Copyright (C) 2009-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libffi
-PKG_VERSION:=3.0.13
-PKG_RELEASE:=1
+PKG_VERSION:=3.3
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://sourceware.org/pub/libffi/
-PKG_MD5SUM:=45f3b6dbc9ee7c7dfbbbc5feba571529
+PKG_SOURCE_URL:=https://sourceware.org/pub/libffi/
+PKG_HASH:=72fba7922703ddfa7a028d513ac15a85c8d54c8d67f55fa5a4802885dc652056
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
@@ -46,14 +46,19 @@ A layer must exist above libffi that handles type conversions for values passed
 between the two languages.
 endef
 
-CONFIGURE_PATH = build
-CONFIGURE_CMD = ../configure
-MAKE_PATH = build
+HOST_CONFIGURE_ARGS += \
+	--disable-debug \
+	--disable-docs \
+	--disable-multi-os-directory \
+	--disable-raw-api \
+	--disable-structs
 
-define Build/Configure
-	mkdir -p $(PKG_BUILD_DIR)/build
-	$(Build/Configure/Default)
-endef
+CONFIGURE_ARGS += \
+	--disable-debug \
+	--disable-docs \
+	--disable-multi-os-directory \
+	--disable-raw-api \
+	--disable-structs
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
@@ -63,10 +68,11 @@ define Build/InstallDev
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/* \
 		$(1)/usr/lib/pkgconfig/
+	$(SED) 's,includedir=.*,includedir=$$$${prefix}/include,' $(1)/usr/lib/pkgconfig/libffi.pc
 
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libffi-$(PKG_VERSION)/include/*.h \
+		$(PKG_INSTALL_DIR)/usr/include/*.h \
 		$(1)/usr/include/
 endef
 

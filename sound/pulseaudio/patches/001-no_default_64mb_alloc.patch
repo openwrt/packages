@@ -1,6 +1,6 @@
 --- a/src/pulsecore/memblock.c
 +++ b/src/pulsecore/memblock.c
-@@ -57,7 +57,7 @@
+@@ -55,7 +55,7 @@
   * stored in SHM and our OS does not commit the memory before we use
   * it for the first time. */
  #define PA_MEMPOOL_SLOTS_MAX 1024

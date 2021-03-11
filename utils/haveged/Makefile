@@ -8,38 +8,34 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haveged
-PKG_VERSION:=1.9.1
-PKG_RELEASE:=5
+PKG_VERSION:=1.9.14
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.issihosts.com/$(PKG_NAME) \
-	http://pkgs.fedoraproject.org/repo/pkgs/haveged/haveged-1.9.1.tar.gz/015ff58cd10607db0e0de60aeca2f5f8/
-PKG_MD5SUM:=015ff58cd10607db0e0de60aeca2f5f8
+PKG_SOURCE_URL:=https://codeload.github.com/jirka-h/haveged/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=938cb494bcad7e4f24e61eb50fab4aa0acbc3240c80f3ad5c6cf7e6e922618c3
+PKG_BUILD_DIR:=$(BUILD_DIR)/haveged-$(PKG_VERSION)
 PKG_LICENSE:=GPLv3
 
-#ensure this is consistent with the dir in the tarball!!!
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_MAINTAINER:=Hannu Nyman <hannu.nyman@iki.fi>
 
 PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/haveged/template
+define Package/haveged
   SECTION:=utils
   CATEGORY:=Utilities
+  DEPENDS:=+libhavege
   TITLE:=Feeds the kernel entropy pool by timing CPU loops.
   URL:=http://www.issihosts.com/haveged/
 endef
 
-define Package/haveged
-  $(call Package/haveged/template)
-  DEPENDS:=+libhavege
-endef
-
 define Package/libhavege
-  $(call Package/haveged/template)
+  CATEGORY:=Libraries
   TITLE:=Library for haveged
+  URL:=http://www.issihosts.com/haveged/
 endef
 
 CONFIGURE_ARGS+= \

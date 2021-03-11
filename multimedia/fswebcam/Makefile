@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.firestorm.cx/fswebcam/files \
 	http://www.sanslogic.co.uk/fswebcam/files
-PKG_MD5SUM:=1bfdb21904e816f100370ec8f4df986b
+PKG_HASH:=444d6a8a82102e09e935540c64a731021de36db03e1e74181f41ca6f39aa6474
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENCE

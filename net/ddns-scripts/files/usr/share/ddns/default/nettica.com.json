@@ -1,0 +1,6 @@
+{
+	"name": "nettica.com",
+	"ipv4": {
+		"url": "http://www.nettica.com/Domain/Update.aspx?U=[USERNAME]&PC=[PASSWORD]&FQDN=[DOMAIN]&N=[IP]"
+	}
+}

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2012 OpenWrt.org
+# Copyright (C) 2010-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=less
-PKG_VERSION:=458
+PKG_VERSION:=563
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.greenwoodsoftware.com/less
-PKG_MD5SUM:=935b38aa2e73c888c210dedf8fd94f49
+PKG_HASH:=ce5b6d2b9fc4442d7a07c93ab128d2dff2ce09a1d4f2d055b95cf28dd0dc9a9a
 
-PKG_LICENSE:=GPL-3.0
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Julen Landa Alustiza <julen@zokormazo.info>
+PKG_CPE_ID:=cpe:/a:gnu:less
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -30,6 +30,7 @@ define Package/less/Default
   CATEGORY:=Utilities
   TITLE:=Pager program similar to more
   URL:=http://www.greenwoodsoftware.com/less/
+  ALTERNATIVES:=200:/usr/bin/less:/usr/libexec/less-gnu
 endef
 
 define Package/less/Default/description
@@ -60,7 +61,7 @@ endef
 
 ifeq ($(BUILD_VARIANT),narrow)
 	CONFIGURE_VARS += \
-		ac_cv_lib_ncursesw_initscr=no		
+		ac_cv_lib_ncursesw_initscr=no
 endif
 
 ifeq ($(BUILD_VARIANT),wide)
@@ -69,25 +70,11 @@ ifeq ($(BUILD_VARIANT),wide)
 endif
 
 define Package/less/install
-	$(INSTALL_DIR) $(1)/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/less $(1)/bin/less
-endef
-
-define Package/less/postinst
-#!/bin/sh
-[ -L "$${IPKG_INSTROOT}/usr/bin/less" ] && rm -f "$${IPKG_INSTROOT}/usr/bin/less"
-exit 0
-endef
-
-define Package/less/postrm
-#!/bin/sh
-/bin/busybox less -h 2>&1 | grep -q BusyBox && ln -sf ../../bin/busybox /usr/bin/less
-exit 0
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/less $(1)/usr/libexec/less-gnu
 endef
 
 Package/less-wide/install = $(Package/less/install)
-Package/less-wide/postinst = $(Package/less/postinst)
-Package/less-wide/postrm = $(Package/less/postrm)
 
 $(eval $(call BuildPackage,less))
 $(eval $(call BuildPackage,less-wide))

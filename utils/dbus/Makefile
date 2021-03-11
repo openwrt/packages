@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
+# Copyright (C) 2007-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,26 +7,22 @@
 
 include $(TOPDIR)/rules.mk
 
-# Make sure to also update the dbus-x package
 PKG_NAME:=dbus
-PKG_VERSION:=1.9.4
+PKG_VERSION:=1.13.12
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://dbus.freedesktop.org/releases/dbus/
-PKG_MD5SUM:=beee7886e478911ff942a80e4afec303
-PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
-PKG_LICENSE:=AFL-2.1
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://dbus.freedesktop.org/releases/dbus
+PKG_HASH:=7588649b56dd257c6a5f85a8c45aa2dfdf9e99f4de3983710f452081ca43eca6
 
-PKG_FIXUP:=autoreconf
+PKG_MAINTAINER:=
+PKG_LICENSE:=AFL-2.1
+PKG_CPE_ID:=cpe:/a:freedesktop:dbus
+
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
-include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
-
-TARGET_LDFLAGS+= \
-	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib \
-	-Wl,-rpath=/usr/lib/
 
 define Package/dbus/Default
   SECTION:=utils
@@ -69,7 +65,7 @@ endef
 define Package/dbus-utils
 $(call Package/dbus/Default)
  TITLE+= (utilities)
- DEPENDS:= dbus
+ DEPENDS:= +dbus
 endef
 
 define Package/dbus-utils/Description
@@ -77,138 +73,74 @@ $(call Package/dbus/Default/description)
  This package contains D-Bus utilities.
 endef
 
-
-define Build/Prepare
-	$(Build/Prepare/Default)
-	$(SED) 's/-Wl,--gc-sections/--gc-sections/' $(PKG_BUILD_DIR)/configure
-endef
-
 CONFIGURE_ARGS += \
+	--disable-maintainer-mode \
+	--disable-developer \
+	--enable-debug=no \
 	--enable-shared \
-	--enable-static \
-	--disable-abstract-sockets \
-	--disable-ansi \
+	--disable-static \
+	--disable-verbose-mode \
 	--disable-asserts \
-	--disable-console-owner-file \
+	--disable-xml-docs \
 	--disable-doxygen-docs \
-	--disable-compiler_coverage \
+	--disable-ducktype-docs \
 	--disable-selinux \
-	--disable-tests \
-	--disable-verbose-mode \
-	--disable-xml-docs \
-	--with-xml="expat" \
-	--with-dbus-user=root \
-	--with-dbus-daemondir="/usr/sbin" \
-	--with-system-socket="/var/run/dbus/system_bus_socket" \
-	--with-system-pid-file="/var/run/dbus.pid" \
-	--without-x \
-	--libexecdir=/usr/lib/dbus-1
-
-CONFIGURE_VARS+= \
-	ac_cv_have_abstract_sockets="yes" \
-	ac_cv_lib_expat_XML_ParserCreate_MM="yes" \
-
-HOST_CONFIGURE_ARGS+= \
-	--enable-shared \
-	--enable-static \
-	--disable-abstract-sockets \
-	--disable-ansi \
-	--disable-asserts \
+	--disable-apparmor \
+	--disable-libaudit \
+	--enable-inotify \
+	--disable-kqueue \
 	--disable-console-owner-file \
-	--disable-docygen-docs \
-	--disable-compiler_coverage \
-	--disable-selinux \
+	--disable-systemd \
 	--disable-tests \
-	--disable-verbose-mode \
-	--disable-xml-docs \
+	--disable-code-coverage \
+	--disable-x11-autolaunch \
+	--with-session-socket-dir=/tmp \
+	--with-system-socket=/var/run/dbus/system_bus_socket \
+	--with-system-pid-file=/var/run/dbus.pid \
 	--with-dbus-user=root \
-	--with-dbus-daemondir="$(STAGIND_DIR_HOST)/bin" \
-	--with-system-socket="$(STAGING_DIR_HOST)/var/run/dbus/system_bus_socket" \
-	--with-system-pid-file="$(STAGING_DIR_HOST)/var/run/dbus.pid" \
-	--without-x \
-	--libexecdir="$(STAGING_DIR_HOST)/lib/dbus-1"
-
-HOST_CONFIGURE_VARS+= \
-	ac_cv_have_abstract_sockets="yes" \
-	ac_cv_lib_expat_XML_ParserCreate_MM="yes" \
+	--without-x
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/include/dbus-1.0 \
-		$(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/dbus-1.0 $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib/dbus-1.0/include/dbus/
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/lib/dbus-1.0/include/dbus/*.h \
 		$(1)/usr/lib/dbus-1.0/include/dbus/
-
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/usr/lib/libdbus-1.{so*,la,a} \
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libdbus-1.{so*,la} \
 		$(1)/usr/lib/
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/dbus-1.0 \
-		$(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/dbus-1.0 $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/dbus-1.pc \
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/dbus-1.pc \
 		$(1)/usr/lib/pkgconfig/
-endef
-
-define Package/dbus/conffiles
-/etc/dbus-1/session.conf
-/etc/dbus-1/system.conf
 endef
 
 define Package/libdbus/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libdbus-1.so.* \
-		$(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdbus-1.so.* $(1)/usr/lib/
 endef
 
 define Package/dbus/install
-	$(INSTALL_DIR) $(1)/etc
-	$(CP) \
-		$(PKG_INSTALL_DIR)/etc/dbus-1 \
-		$(1)/etc/
-
-	$(INSTALL_DIR) $(1)/usr/lib/dbus-1
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/lib/dbus-1/dbus-daemon-launch-helper \
-		$(1)/usr/lib/dbus-1/
-
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/sbin/dbus-daemon \
-		$(1)/usr/sbin/
-
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/dbus-uuidgen \
-		$(1)/usr/bin/
-
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/dbus-launch \
-		$(1)/usr/bin/dbus-launch.real
-	$(INSTALL_BIN) \
-		./files/dbus-launch \
-		$(1)/usr/bin/
-
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dbus-cleanup-sockets $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dbus-daemon $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dbus-launch $(1)/usr/bin/dbus-launch.real
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dbus-uuidgen $(1)/usr/bin/
+	$(INSTALL_BIN) ./files/dbus-launch $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/dbus-daemon-launch-helper $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) \
-		./files/dbus.init \
-		$(1)/etc/init.d/dbus
+	$(INSTALL_BIN) ./files/dbus.init $(1)/etc/init.d/dbus
+	$(INSTALL_DIR) $(1)/usr/share/dbus-1
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/dbus-1 $(1)/usr/share/
 endef
 
 define Package/dbus-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/dbus-{send,monitor,cleanup-sockets} \
-		$(1)/usr/bin/
+	$(INSTALL_BIN) 	$(PKG_INSTALL_DIR)/usr/bin/dbus-{monitor,send,update-activation-environment} $(1)/usr/bin/
 endef
 
-$(eval $(call HostBuild))
 $(eval $(call BuildPackage,libdbus))
 $(eval $(call BuildPackage,dbus))
 $(eval $(call BuildPackage,dbus-utils))

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2013 OpenWrt.org
+# Copyright (C) 2007-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,23 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtorrent
-PKG_VERSION:=0.9.4-git
+PKG_VERSION:=0.9.8
 PKG_RELEASE:=2
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/rakshasa/rtorrent.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=6a3234eaa79f15857260df31f98711ef24266191
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/rakshasa/rtorrent/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=bc889ce1dde475ec56aa72ae996912ff58723226a4f4256fef4f1f8636d991d4
 
-PKG_LICENSE:=GPL-2.0
+PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=libtorrent
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -33,9 +31,8 @@ define Package/rtorrent/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=BitTorrent client for ncurses
-  URL:=http://libtorrent.rakshasa.no/
-  DEPENDS:=+libcurl +libtorrent +libncursesw +libsigcxx +libpthread
-  MAINTAINER:=Peter Wagner <tripolar@gmx.at>
+  URL:=https://github.com/rakshasa/rtorrent
+  DEPENDS:=+libcurl +libncurses +libpthread +libopenssl +libstdcpp +zlib
 endef
 
 define Package/rtorrent/Default/description
@@ -67,23 +64,20 @@ $(call Package/rtorrent/Default/description)
  This package is built with xmlrpc support
 endef
 
-TARGET_LDFLAGS += -lz -lpthread -Wl,-rpath-link=$(STAGING_DIR)/usr/lib
-
-CONFIGURE_ARGS+= \
-	--enable-shared \
-	--disable-static \
-	--disable-debug
+CONFIGURE_ARGS += \
+	--enable-static \
+	--disable-shared \
+	--disable-debug \
+	--with-libcurl="$(STAGING_DIR)/usr" \
+	--with-ncurses \
+	$(if $(CONFIG_IPV6),--enable,--disable)-ipv6
 
 ifeq ($(BUILD_VARIANT),rpc)
-	CONFIGURE_ARGS += \
-		--with-xmlrpc-c
+CONFIGURE_ARGS += --with-xmlrpc-c
 endif
 
-
-define Build/Configure
-	( cd $(PKG_BUILD_DIR); ./autogen.sh );
-	$(call Build/Configure/Default)
-endef
+TARGET_CXXFLAGS += -faligned-new
+TARGET_LDFLAGS += -lcrypto -lz
 
 define Package/rtorrent/install
 	$(INSTALL_DIR) $(1)/usr/bin

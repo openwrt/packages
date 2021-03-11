@@ -1,0 +1,70 @@
+--- a/pkg/spec/config_linux.go
++++ b/pkg/spec/config_linux.go
+@@ -294,8 +294,8 @@ func (c *CreateConfig) createBlockIO() (
+ 			lwd := spec.LinuxWeightDevice{
+ 				Weight: &wd.Weight,
+ 			}
+-			lwd.Major = int64(unix.Major(wdStat.Rdev))
+-			lwd.Minor = int64(unix.Minor(wdStat.Rdev))
++			lwd.Major = int64(unix.Major(uint64(wdStat.Rdev))) //nolint: unconvert
++			lwd.Minor = int64(unix.Minor(uint64(wdStat.Rdev))) //nolint: unconvert
+ 			lwds = append(lwds, lwd)
+ 		}
+ 		bio.WeightDevice = lwds
+@@ -357,8 +357,8 @@ func makeThrottleArray(throttleInput []s
+ 		ltd := spec.LinuxThrottleDevice{
+ 			Rate: t.rate,
+ 		}
+-		ltd.Major = int64(unix.Major(ltdStat.Rdev))
+-		ltd.Minor = int64(unix.Minor(ltdStat.Rdev))
++		ltd.Major = int64(unix.Major(uint64(ltdStat.Rdev))) // nolint: unconvert
++		ltd.Minor = int64(unix.Minor(uint64(ltdStat.Rdev))) // nolint: unconvert
+ 		ltds = append(ltds, ltd)
+ 	}
+ 	return ltds, nil
+--- a/pkg/specgen/generate/container.go
++++ b/pkg/specgen/generate/container.go
+@@ -282,8 +282,8 @@ func finishThrottleDevices(s *specgen.Sp
+ 			if err := unix.Stat(k, &statT); err != nil {
+ 				return err
+ 			}
+-			v.Major = (int64(unix.Major(statT.Rdev)))
+-			v.Minor = (int64(unix.Minor(statT.Rdev)))
++			v.Major = (int64(unix.Major(uint64(statT.Rdev)))) // nolint: unconvert
++			v.Minor = (int64(unix.Minor(uint64(statT.Rdev)))) // nolint: unconvert
+ 			s.ResourceLimits.BlockIO.ThrottleReadBpsDevice = append(s.ResourceLimits.BlockIO.ThrottleReadBpsDevice, v)
+ 		}
+ 	}
+@@ -293,8 +293,8 @@ func finishThrottleDevices(s *specgen.Sp
+ 			if err := unix.Stat(k, &statT); err != nil {
+ 				return err
+ 			}
+-			v.Major = (int64(unix.Major(statT.Rdev)))
+-			v.Minor = (int64(unix.Minor(statT.Rdev)))
++			v.Major = (int64(unix.Major(uint64(statT.Rdev)))) // nolint: unconvert
++			v.Minor = (int64(unix.Minor(uint64(statT.Rdev)))) // nolint: unconvert
+ 			s.ResourceLimits.BlockIO.ThrottleWriteBpsDevice = append(s.ResourceLimits.BlockIO.ThrottleWriteBpsDevice, v)
+ 		}
+ 	}
+@@ -304,8 +304,8 @@ func finishThrottleDevices(s *specgen.Sp
+ 			if err := unix.Stat(k, &statT); err != nil {
+ 				return err
+ 			}
+-			v.Major = (int64(unix.Major(statT.Rdev)))
+-			v.Minor = (int64(unix.Minor(statT.Rdev)))
++			v.Major = (int64(unix.Major(uint64(statT.Rdev)))) // nolint: unconvert
++			v.Minor = (int64(unix.Minor(uint64(statT.Rdev)))) // nolint: unconvert
+ 			s.ResourceLimits.BlockIO.ThrottleReadIOPSDevice = append(s.ResourceLimits.BlockIO.ThrottleReadIOPSDevice, v)
+ 		}
+ 	}
+@@ -315,8 +315,8 @@ func finishThrottleDevices(s *specgen.Sp
+ 			if err := unix.Stat(k, &statT); err != nil {
+ 				return err
+ 			}
+-			v.Major = (int64(unix.Major(statT.Rdev)))
+-			v.Minor = (int64(unix.Minor(statT.Rdev)))
++			v.Major = (int64(unix.Major(uint64(statT.Rdev)))) // nolint: unconvert
++			v.Minor = (int64(unix.Minor(uint64(statT.Rdev)))) // nolint: unconvert
+ 			s.ResourceLimits.BlockIO.ThrottleWriteIOPSDevice = append(s.ResourceLimits.BlockIO.ThrottleWriteIOPSDevice, v)
+ 		}
+ 	}

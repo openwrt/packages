@@ -1,0 +1,22 @@
+diff -Nurp a/pip/_vendor/pep517/wrappers.py b/pip/_vendor/pep517/wrappers.py
+--- a/pip/_vendor/pep517/wrappers.py	2020-05-19 10:39:38.000000000 +0800
++++ b/pip/_vendor/pep517/wrappers.py	2020-06-30 20:19:05.495033208 +0800
+@@ -14,11 +14,16 @@ try:
+     import importlib.resources as resources
+ 
+     def _in_proc_script_path():
+-        return resources.path(__package__, '_in_process.py')
++        if resources.is_resource(__package__, '_in_process.py'):
++            return resources.path(__package__, '_in_process.py')
++        return resources.path(__package__, '_in_process.pyc')
+ except ImportError:
+     @contextmanager
+     def _in_proc_script_path():
+-        yield pjoin(dirname(abspath(__file__)), '_in_process.py')
++        _in_proc_script = pjoin(dirname(abspath(__file__)), '_in_process.py')
++        if not os.path.isfile(_in_proc_script):
++            _in_proc_script = pjoin(dirname(abspath(__file__)), '_in_process.pyc')
++        yield _in_proc_script
+ 
+ 
+ @contextmanager

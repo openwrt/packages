@@ -3,14 +3,16 @@
 
 START=95
 
-start() {
-	service_start /usr/sbin/smartd -q never
+USE_PROCD=1
+PROG=/usr/sbin/smartd
+
+start_service() {
+	procd_open_instance
+	procd_set_param command "$PROG"
+	procd_append_param command -n -q never
+	procd_close_instance
 }
 
-stop() {
-	service_stop /usr/sbin/smartd
-}
-
-reload() {
-	service_reload /usr/sbin/smartd
+reload_service() {
+	procd_send_signal smartd
 }

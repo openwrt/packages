@@ -8,28 +8,31 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsync
-PKG_VERSION:=3.1.1
-PKG_RELEASE:=1
+PKG_VERSION:=3.2.3
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://rsync.samba.org/ftp/rsync/src
-PKG_MD5SUM:=43bd6676f0b404326eee2d63be3cdcfe
+PKG_SOURCE_URL:=https://download.samba.org/pub/rsync/src
+PKG_HASH:=becc3c504ceea499f4167a260040ccf4d9f2ef9499ad5683c179a697146ce50e
+
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
-PKG_LICENSE:=GPL-3.0
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:rsync:rsync
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/rsync
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=File Transfer
   TITLE:=Fast remote file copy program (like rcp)
-  DEPENDS:=+libpopt +RSYNC_xattr:libattr +RSYNC_acl:libacl +RSYNC_zlib:zlib
-  URL:=http://rsync.samba.org/
+  DEPENDS:=+libpopt +zlib +RSYNC_xattr:libattr +RSYNC_acl:libacl +RSYNC_zstd:libzstd $(ICONV_DEPENDS)
+  URL:=https://rsync.samba.org/
   MENU:=1
 endef
 
@@ -37,28 +40,25 @@ define Package/rsync/config
 	source "$(SOURCE)/Config.in"
 endef
 
+TARGET_CFLAGS += $(if $(CONFIG_IPV6),-DINET6,)
+
 CONFIGURE_ARGS += \
-	--with-included-popt=no \
+	--without-included-popt \
+	--without-included-zlib \
 	--disable-debug \
+	--disable-asm \
+	--disable-lz4 \
 	--disable-locale \
-
-ifeq ($(CONFIG_RSYNC_xattr),y)
-	CONFIGURE_ARGS+= --enable-xattr-support
-else
-	CONFIGURE_ARGS+= --disable-xattr-support
-endif
-
-ifeq ($(CONFIG_RSYNC_acl),y)
-	CONFIGURE_ARGS+= --enable-acl-support
-else
-	CONFIGURE_ARGS+= --disable-acl-support
-endif
-
-ifeq ($(CONFIG_RSYNC_zlib),y)
-	CONFIGURE_ARGS+= --with-included-zlib=no
-else
-	CONFIGURE_ARGS+= --with-included-zlib=yes
-endif
+	--disable-md2man \
+	--disable-openssl \
+	--disable-simd \
+	--disable-xxhash \
+	--$(if $(CONFIG_BUILD_NLS),en,dis)able-iconv \
+	--$(if $(CONFIG_BUILD_NLS),en,dis)able-iconv-open \
+	--$(if $(CONFIG_RSYNC_zstd),en,dis)able-zstd \
+	--$(if $(CONFIG_RSYNC_xattr),en,dis)able-xattr-support \
+	--$(if $(CONFIG_RSYNC_acl),en,dis)able-acl-support \
+	$(if $(CONFIG_IPV6),,--disable-ipv6)
 
 define Package/rsyncd
   SECTION:=net
@@ -66,7 +66,7 @@ define Package/rsyncd
   SUBMENU:=File Transfer
   TITLE:=Rsync daemon
   DEPENDS:=+rsync
-  URL:=http://rsync.samba.org/
+  URL:=https://rsync.samba.org/
 endef
 
 define Package/rsync/description
