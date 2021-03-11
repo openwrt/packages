@@ -85,7 +85,7 @@ After that you should also restart rpcd daemon, so you can use tor-hs RPCD servi
 
 RPCD servis helps users to access basic informations about hidden services on router. After running HS it contains onion url for given hidden service in hostname value.
 ```
-root@turris:/# ubus call tor_rpcd.sh list-hs '{}'
+root@turris:/# ubus call tor-hs-rpc list-hs '{}'
 {
 	"hs-list": [
 		{
