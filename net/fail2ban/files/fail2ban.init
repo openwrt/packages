@@ -1,0 +1,57 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2020 Martin Pecka, 3-clause BSD license (see LICENSE file)
+
+START=95
+
+USE_PROCD=1
+
+RUNDIR=/var/run/fail2ban
+CONFDIR=/etc/fail2ban
+RUNCONFDIR=/var/etc/fail2ban
+RUNCONF="${RUNCONFDIR}/fail2ban.conf"
+
+service_triggers() {
+	procd_add_reload_trigger fail2ban
+}
+
+init_config() {
+	mkdir -m 0755 -p "${RUNCONFDIR}"
+
+	rm -f "${RUNCONF}"
+
+	config_load fail2ban
+	config_get dbfile fail2ban dbfile /var/lib/fail2ban/fail2ban.sqlite3
+
+	echo "[Definition]" > "${RUNCONF}"
+	echo -n "dbfile = " >> "${RUNCONF}"
+	echo $dbfile >> "${RUNCONF}"
+}
+
+start_service() {
+	init_config
+
+	mkdir -m 0755 -p "${RUNDIR}"
+
+	procd_open_instance
+
+	procd_set_param file ${CONFDIR}/action.d/*.conf
+	procd_set_param file ${CONFDIR}/action.d/*.local
+	procd_set_param file ${CONFDIR}/filter.d/*.conf
+	procd_set_param file ${CONFDIR}/filter.d/*.local
+	procd_set_param file ${CONFDIR}/jail.d/*.conf
+	procd_set_param file ${CONFDIR}/jail.d/*.local
+	procd_set_param file ${CONFDIR}/fail2ban.d/*.conf
+	procd_set_param file ${CONFDIR}/fail2ban.d/*.local
+	procd_set_param file ${CONFDIR}/*.conf
+	procd_set_param file ${CONFDIR}/*.local
+
+	procd_set_param command /usr/bin/fail2ban-server -xf -p "${RUNDIR}/fail2ban.pid" -s "${RUNDIR}/fail2ban.sock" start
+	procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
+	procd_close_instance
+}
+
+reload_service()
+{
+	stop
+	start
+}
