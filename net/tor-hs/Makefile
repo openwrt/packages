@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tor-hs
 PKG_VERSION:=0.0.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -58,7 +58,7 @@ define Package/tor-hs/install
 	$(INSTALL_DIR) $(1)/etc/tor/
 	$(INSTALL_BIN) ./files/nextcloud-update.sh $(1)/etc/tor/
 	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
-	$(INSTALL_BIN) ./files/tor_rpcd.sh $(1)/usr/libexec/rpcd/
+	$(INSTALL_BIN) ./files/tor_rpcd.sh $(1)/usr/libexec/rpcd/tor-hs-rpc
 endef
 
 $(eval $(call BuildPackage,tor-hs))
