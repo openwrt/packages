@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=banip
-PKG_VERSION:=0.7.3
+PKG_VERSION:=0.7.5
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
@@ -55,6 +55,7 @@ define Package/banip/install
 	$(INSTALL_CONF) ./files/banip.conf $(1)/etc/config/banip
 
 	$(INSTALL_DIR) $(1)/etc/banip
+	$(INSTALL_BIN) ./files/banip.dns $(1)/etc/banip
 	$(INSTALL_BIN) ./files/banip.mail $(1)/etc/banip
 	$(INSTALL_BIN) ./files/banip.service $(1)/etc/banip
 	$(INSTALL_CONF) ./files/banip.maclist $(1)/etc/banip
