@@ -1,6 +1,33 @@
 . /usr/share/libubox/jshn.sh
 . /usr/share/wginstaller/wg.sh
 
+wg_timeout () {
+	local int=$1
+
+	handshake=$(wg show $int latest-handshakes | awk '{print $2}')
+	timeout=$(uci get wgserver.@server[0].timeout_handshake)
+
+	if [ $handshake -ge $timeout ]; then
+		echo "1"
+	else
+		echo "0"
+	fi
+}
+
+wg_check_interface () {
+	local int=$1
+	if [ $(wg_timeout $int) -eq "1" ]; then
+		ip link del dev $int
+	fi
+}
+
+wg_check_interfaces () {
+	wg_interfaces=$(wg show interfaces)
+	for interface in $wg_interfaces; do
+		wg_check_interface $interface
+	done
+}
+
 wg_get_usage () {
 	num_interfaces=$(wg show interfaces | wc -w)
 	json_init
