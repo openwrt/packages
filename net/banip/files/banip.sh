@@ -12,7 +12,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-ban_ver="0.7.3"
+ban_ver="0.7.5"
 ban_enabled="0"
 ban_mail_enabled="0"
 ban_proto4_enabled="0"
@@ -44,7 +44,7 @@ ban_ipt6_savecmd="$(command -v ip6tables-save)"
 ban_ipt6_restorecmd="$(command -v ip6tables-restore)"
 ban_ipset_cmd="$(command -v ipset)"
 ban_logger_cmd="$(command -v logger)"
-ban_logread="$(command -v logread)"
+ban_logread_cmd="$(command -v logread)"
 ban_allsources=""
 ban_sources=""
 ban_asns=""
@@ -68,6 +68,7 @@ ban_srcfile="${ban_tmpbase}/ban_sources.json"
 ban_reportdir="${ban_tmpbase}/banIP-Report"
 ban_backupdir="${ban_tmpbase}/banIP-Backup"
 ban_srcarc="/etc/banip/banip.sources.gz"
+ban_dnsservice="/etc/banip/banip.dns"
 ban_mailservice="/etc/banip/banip.mail"
 ban_logservice="/etc/banip/banip.service"
 ban_maclist="/etc/banip/banip.maclist"
@@ -921,7 +922,7 @@ f_bgsrv()
 {
 	local bg_pid action="${1}"
 
-	bg_pid="$(pgrep -f "^/bin/sh ${ban_logservice}|${ban_logread}|^grep -qE Exit before auth|^grep -qE error: maximum|^grep -qE luci: failed|^grep -qE nginx" | awk '{ORS=" "; print $1}')"
+	bg_pid="$(pgrep -f "^/bin/sh ${ban_logservice}|${ban_logread_cmd}|^grep -qE Exit before auth|^grep -qE error: maximum|^grep -qE luci: failed|^grep -qE nginx" | awk '{ORS=" "; print $1}')"
 	if [ "${action}" = "start" ] && [ -x "${ban_logservice}" ] && [ "${ban_monitor_enabled}" = "1" ]
 	then
 		if [ -n "${bg_pid}" ]
@@ -1004,6 +1005,20 @@ f_down()
 			if [ "${src_rc}" = "0" ]
 			then
 				f_ipset "create"
+				src_name="${src_name%_*}"
+				tmp_dns="${ban_tmpbase}/${src_name}.dns"
+				if [ ! -f "${tmp_dns}" ] && [ "${proto}" = "4" ]
+				then
+					src_rule="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
+					awk "${src_rule}" "${src_url}" > "${tmp_dns}"
+					src_rc="${?}"
+					if [ "${src_rc}" = "0" ] && [ -s "${tmp_dns}" ]
+					then
+						( "${ban_dnsservice}" "${ban_ver}" "${src_name}" "${tmp_dns}" & )
+					else
+						rm -f "${tmp_dns}"
+					fi
+				fi
 			else
 				f_log "debug" "f_down  ::: name: ${src_name}, url: ${src_url}, rule: ${src_rule}, rc: ${src_rc}"
 			fi
@@ -1160,7 +1175,7 @@ f_main()
 	#
 	if [ "${ban_autoblacklist}" = "1" ] || [ "${ban_monitor_enabled}" = "1" ]
 	then
-		log_raw="$(${ban_logread} -l "${ban_loglimit}")"
+		log_raw="$(${ban_logread_cmd} -l "${ban_loglimit}")"
 		if [ -n "$(printf "%s\n" "${ban_logterms}" | grep -F "dropbear")" ]
 		then
 			log_ips="$(printf "%s\n" "${log_raw}" | grep -E "Exit before auth from" | \
