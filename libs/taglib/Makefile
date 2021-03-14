@@ -6,22 +6,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=taglib
-PKG_VERSION:=1.12-beta-1
-PKG_RELEASE:=2
+PKG_VERSION:=1.12-beta-2
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/taglib/taglib/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=d2a44be7ca8b7682b218affc9910dcfb027481f402f7c30bd2996392b2429ae4
+PKG_HASH:=e273e9d97592cebd4e84e71313e91e9df0fc4a8e00c35daea62325e8bebb87d9
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING.LGPL
 PKG_CPE_ID:=cpe:/a:taglib:taglib
 
-PKG_BUILD_PARALLEL:=1
-
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/taglib
   SECTION:=libs
