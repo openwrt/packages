@@ -8,4 +8,9 @@
 #      <down>    down action is generated after the TUN/TAP device is closed
 #      <up>      up action is generated after the TUN/TAP device is opened
 # $INSTANCE  Name of the openvpn instance which went up or down
-
+# $INTERFACE  VPN interface name
+# $MTU        VPN tunnel MTU
+# $LINK_MTU   VPN tunnel link MTU
+# $IP_ADDRESS VPN interface IP Address
+# $NETMASK    VPN interface netmask
+# $COMMAND    Command to execute (in general this is "init")
