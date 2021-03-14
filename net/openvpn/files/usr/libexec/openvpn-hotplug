@@ -4,7 +4,25 @@ ACTION=$1
 shift
 INSTANCE=$1
 shift
+INTERFACE=$1
+shift
+MTU=$1
+shift
+LINK_MTU=$1
+shift
+IP_ADDRESS=$1
+shift
+NETMASK=$1
+shift
+COMMAND=$1
+shift
 
 export ACTION=$ACTION
 export INSTANCE=$INSTANCE
+export INTERFACE=$INTERFACE
+export MTU=$MTU
+export LINK_MTU=$LINK_MTU
+export IP_ADDRESS=$IP_ADDRESS
+export NETMASK=$NETMASK
+export COMMAND=$COMMAND
 exec /sbin/hotplug-call openvpn "$@"
