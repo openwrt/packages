@@ -3,7 +3,8 @@
 . /lib/functions/openvpn.sh
 
 [ -e "/etc/openvpn.user" ] && {
-	env -i ACTION="$ACTION" INSTANCE="$INSTANCE" \
+	env -i ACTION="$ACTION" INSTANCE="$INSTANCE" INTERFACE=$INTERFACE MTU=$MTU LINK_MTU=$LINK_MTU \
+		   IP_ADDRESS=$IP_ADDRESS NETMASK=$NETMASK COMMAND=$COMMAND \
 		/bin/sh \
 		/etc/openvpn.user \
 		$*
@@ -12,9 +13,8 @@
 # Wrap user defined scripts on up/down events
 case "$ACTION" in
 	up|down)
-		if get_openvpn_option "$config" command "$ACTION"; then
-			shift
-			exec /bin/sh -c "$command $*"
+		if command=$(uci get "openvpn.${INSTANCE}.${ACTION}"); then
+			exec /bin/sh -c "$command $INTERFACE $MTU $LINK_MTU $IP_ADDRESS $NETMASK $COMMAND"
 		fi
 	;;
 esac
