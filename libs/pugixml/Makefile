@@ -6,21 +6,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pugixml
-PKG_VERSION:=1.11.1
-PKG_RELEASE:=1
+PKG_VERSION:=1.11.4
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/zeux/pugixml/releases/download/v$(PKG_VERSION)
-PKG_HASH:=9dce9f0a3756c5ab84ab7466c99972d030021d81d674f5d38b9e30e9a3ec4922
+PKG_HASH:=8ddf57b65fb860416979a3f0640c2ad45ddddbbafa82508ef0a0af3ce7061716
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_PARALLEL:=1
-
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/pugixml
   SECTION:=libs
