@@ -8,29 +8,28 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gerbera
-PKG_VERSION:=1.6.4
-PKG_RELEASE:=2
+PKG_VERSION:=1.7.0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gerbera/gerbera/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=cbe7ea78977db8c02fcca1759ed149f199a590afaf4a6d21ffcca8623d1a0cc5
+PKG_HASH:=6d40b840d015ba5c512f41442957c1c0fdbba07c18724cf00a45e0a579ddeb7f
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE.md
 
 PKG_BUILD_DEPENDS:=libmatroska pugixml spdlog taglib
-PKG_BUILD_PARALLEL:=1
 PKG_CONFIG_DEPENDS:=CONFIG_BUILD_PATENTED
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
 include $(INCLUDE_DIR)/nls.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/gerbera
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+file +libnpupnp +libsqlite3 +libexif +libuuid +libfmt +BUILD_PATENTED:libffmpeg $(ICONV_DEPENDS)
+  DEPENDS:=+file +libnpupnp +libsqlite3 +libexif +libuuid +libfmt +libatomic +BUILD_PATENTED:libffmpeg $(ICONV_DEPENDS)
   TITLE:=A free media server
   URL:=https://gerbera.io
   USERID:=gerbera:gerbera
@@ -45,6 +44,7 @@ define Package/gerbera/conffiles
 endef
 
 CMAKE_OPTIONS += \
+	-DCMAKE_LINK_WHAT_YOU_USE=ON \
 	-DIconv_INCLUDE_DIR=$(ICONV_PREFIX)/include \
 	-DIconv_LIBRARY=$(ICONV_PREFIX)/lib/libiconv.a \
 	-DWITH_MAGIC=ON \
@@ -69,7 +69,7 @@ TARGET_CFLAGS += \
 	-fdata-sections \
 	-flto
 
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Package/gerbera/install
 	$(INSTALL_DIR) $(1)/usr/bin
