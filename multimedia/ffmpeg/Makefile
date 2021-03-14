@@ -22,6 +22,8 @@ PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later LGPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING.GPLv2 COPYING.GPLv3 COPYING.LGPLv2.1 COPYING.LGPLv3
 PKG_CPE_ID:=cpe:/a:ffmpeg:ffmpeg
 
+PKG_BUILD_PARALLEL:=1
+
 FFMPEG_CUSTOM_ENCODERS:= \
 	ac3 \
 	jpegls \
@@ -630,7 +632,7 @@ define Build/Configure
 endef
 
 define Build/Compile
-	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
+	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		all install
 endef
