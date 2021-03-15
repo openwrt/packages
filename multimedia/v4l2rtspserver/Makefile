@@ -7,28 +7,25 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l2rtspserver
-PKG_VERSION:=0.2.1
-PKG_RELEASE:=2
+PKG_VERSION:=0.2.3
+PKG_RELEASE:=$(AUTORELEASE)
 
 #cannot use codeload as this uses submodules
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/mpromonet/v4l2rtspserver
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=ddc4217ee12e57a4c248b6667309559323458028dc0fa085942b91dbbcd74146
+PKG_MIRROR_HASH:=f047fd24441a070b123252bf82c7d7e42bb0c3280b78ad2ddb01cf200acc3a32
 
-LIVE555_VERSION:=2020.11.29
-LIVE555_HASH:=0300f1f0b92529909623d3e870edeadff9841bbc9097a481a8583c5b9a6cc3ae
+LIVE555_VERSION:=2021.02.11
+LIVE555_HASH:=834ad3fc199f1a6b0c09646976deb71a3a7803dc7b498ce92e920f6cb7b717ba
 LIVE555_FILE:=live.$(LIVE555_VERSION).tar.gz
 
 PKG_MAINTAINER:=Roger Dammit <rogerdammit@gmail.com>
 PKG_LICENSE:=Unlicense
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_PARALLEL:=1
-CMAKE_INSTALL:=1
-
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/v4l2rtspserver
 	SECTION:=multimedia
