@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpng
 PKG_VERSION:=1.6.37
-PKG_RELEASE:=10
+PKG_RELEASE:=11
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/libpng
@@ -20,10 +20,8 @@ PKG_LICENSE:=Libpng GPL-2.0-or-later BSD-3-Clause
 PKC_LICENSE_FILES:=LICENSE contrib/gregbook/COPYING contrib/gregbook/LICENSE
 PKG_CPE_ID:=cpe:/a:libpng:libpng
 
-PKG_BUILD_PARALLEL:=1
-
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libpng
   SECTION:=libs
@@ -42,7 +40,7 @@ CMAKE_OPTIONS += \
 	-DPNG_TESTS=OFF \
 	-DPNG_FRAMEWORK=OFF \
 	-DPNG_DEBUG=OFF \
-	-DPNG_HARDWARE_OPTIMIZATIONS=O$(if $(findstring powerpc,$(CONFIG_ARCH))$(findstring mipsel,$(CONFIG_ARCH)),FF,N) \
+	-DPNG_HARDWARE_OPTIMIZATIONS=O$(if $(findstring powerpc,$(CONFIG_ARCH))$(findstring mips,$(CONFIG_ARCH)),FF,N) \
 	-Dld-version-script=OFF
 
 define Build/InstallDev
