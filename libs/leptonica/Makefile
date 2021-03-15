@@ -8,22 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=leptonica
-PKG_VERSION:=1.78.0
-PKG_RELEASE:=3
+PKG_VERSION:=1.80.0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.leptonica.org/source/
-PKG_HASH:=e2ed2e81e7a22ddf45d2c05f0bc8b9ae7450545d995bfe28517ba408d14a5a88
+PKG_HASH:=ec9c46c2aefbb960fb6a6b7f800fe39de48343437b6ce08e30a8d9688ed14ba4
 
 PKG_MAINTAINER:=Valentín Kivachuk <vk18496@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=leptonica-license.txt
 
-PKG_BUILD_PARALLEL:=1
 CMAKE_BINARY_SUBDIR:=openwrt-build
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libleptonica
   SECTION:=libs
@@ -32,6 +31,10 @@ define Package/libleptonica
   URL:=http://www.leptonica.org/
   DEPENDS:=+giflib +libjpeg +libpng +libtiff +libwebp +zlib
 endef
+
+CMAKE_OPTIONS += \
+	-DBUILD_SHARED_LIBS=ON \
+	-DWEBPMUX_INCLUDE_DIR=$(STAGING_DIR)/usr/include
 
 TARGET_CFLAGS:=$(filter-out -O%,$(TARGET_CFLAGS)) -O3
 
