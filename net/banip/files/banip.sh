@@ -740,7 +740,8 @@ f_ipset()
 			return "${out_rc}"
 		;;
 		"create")
-			if [ -s "${tmp_file}" ] && [ -z "$("${ban_ipset_cmd}" -q -n list "${src_name}")" ]
+			if [ -z "$("${ban_ipset_cmd}" -q -n list "${src_name}")" ] && \
+				{ [ -s "${tmp_file}" ] || [ "${src_name%_*}" = "whitelist" ] || [ "${src_name%_*}" = "blacklist" ]; }
 			then
 				cnt="$(awk 'END{print NR}' "${tmp_file}" 2>/dev/null)"
 				cnt=$((cnt+262144))
@@ -760,7 +761,8 @@ f_ipset()
 					"${ban_ipset_cmd}" create "${src_name}" hash:net hashsize 64 maxelem "${cnt}" family "${src_ipver}" counters
 					out_rc="${?}"
 				fi
-			else
+			elif [ -n "$("${ban_ipset_cmd}" -q -n list "${src_name}")" ]
+			then
 				"${ban_ipset_cmd}" -q flush "${src_name}"
 				out_rc="${?}"
 			fi
@@ -1000,21 +1002,22 @@ f_down()
 	#
 	case "${src_name%_*}" in
 		"blacklist"|"whitelist")
+			printf "%s\n" "0" > "${tmp_cnt}"
 			awk "${src_rule}" "${src_url}" > "${tmp_file}"
 			src_rc="${?}"
 			if [ "${src_rc}" = "0" ]
 			then
 				f_ipset "create"
-				src_name="${src_name%_*}"
-				tmp_dns="${ban_tmpbase}/${src_name}.dns"
-				if [ ! -f "${tmp_dns}" ] && [ "${proto}" = "4" ]
+				if [ ! -f "${tmp_dns}" ] && { { [ "${proto}" = "4" ] && [ "${ban_proto4_enabled}" = "1" ]; } || \
+					{ [ "${proto}" = "6" ] && [ "${ban_proto6_enabled}" = "1" ] && [ "${ban_proto4_enabled}" = "0" ]; }; }
 				then
+					tmp_dns="${ban_tmpbase}/${src_name%_*}.dns"
 					src_rule="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
 					awk "${src_rule}" "${src_url}" > "${tmp_dns}"
 					src_rc="${?}"
 					if [ "${src_rc}" = "0" ] && [ -s "${tmp_dns}" ]
 					then
-						( "${ban_dnsservice}" "${ban_ver}" "${src_name}" "${tmp_dns}" & )
+						( "${ban_dnsservice}" "${ban_ver}" "${ban_action}" "${src_name%_*}" "${tmp_dns}" & )
 					else
 						rm -f "${tmp_dns}"
 					fi
