@@ -40,39 +40,40 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | yoyo                | Ad protection blacklist        | [Link](https://pgl.yoyo.org/adservers/)                                           |
 
 * zero-conf like automatic installation & setup, usually no manual changes needed
-* automatically selects one of the following download utilities: aria2c, curl, uclient-fetch, wget
-* Really fast downloads & list processing as they are handled in parallel as background jobs in a configurable 'Download Queue'
+* automatically selects one of the following supported download utilities: aria2c, curl, uclient-fetch, wget
+* fast downloads & list processing as they are handled in parallel as background jobs in a configurable 'Download Queue'
 * full IPv4 and IPv6 support
 * ipsets (one per source) are used to ban a large number of IP addresses
 * supports blocking by ASN numbers
 * supports blocking by iso country codes
-* supports local white & blacklist (IPv4, IPv6 & CIDR notation), located by default in /etc/banip/banip.whitelist and /etc/banip/banip.blacklist
-* auto-add unsuccessful LuCI and ssh login attempts via 'dropbear' or 'sshd' to local blacklist (see 'ban_autoblacklist' option)
-* auto-add the uplink subnet to local whitelist (see 'ban_autowhitelist' option)
+* supports local black- & whitelist (IPv4, IPv6, CIDR notation or domain names)
+* auto-add unsuccessful LuCI, nginx or ssh login attempts via 'dropbear'/'sshd' to local blacklist
+* auto-add the uplink subnet to local whitelist
+* black- and whitelist also accept domain names as input to allow IP filtering based on these names
 * provides a small background log monitor to ban unsuccessful login attempts in real-time
 * per source configuration of SRC (incoming) and DST (outgoing)
 * integrated IPSet-Lookup
-* integrated RIPE-Lookup
+* integrated bgpview-Lookup
 * blocklist source parsing by fast & flexible regex rulesets
 * minimal status & error logging to syslog, enable debug logging to receive more output
 * procd based init system support (start/stop/restart/reload/refresh/status)
 * procd network interface trigger support
 * automatic blocklist backup & restore, they will be used in case of download errors or during startup
-* Provides comprehensive runtime information
-* Provides a detailed IPSet Report
-* Provides a powerful query function to quickly find blocked IPs/CIDR in banIP related IPSets
-* Provides an easily configurable blocklist update scheduler called 'Refresh Timer'
+* provides comprehensive runtime information
+* provides a detailed IPSet Report
+* provides a powerful query function to quickly find blocked IPs/CIDR in banIP related IPSets
+* provides an easily configurable blocklist update scheduler called 'Refresh Timer'
 * strong LuCI support
 * optional: add new banIP sources on your own
 
 ## Prerequisites
-* [OpenWrt](https://openwrt.org), tested with the stable release series (19.07.x) and with the latest rolling snapshot releases. On turris devices it has been successfully tested with TurrisOS 5.2.x  
-  <b>Please note:</b> Older OpenWrt releases like 18.06.x or 17.01.x are _not_ supported!  
+* [OpenWrt](https://openwrt.org), tested with the stable release series (21.02.x) and with the latest rolling snapshot releases. On turris devices it has been successfully tested with TurrisOS 5.2.x  
+  <b>Please note:</b> Ancient OpenWrt releases like 18.06.x or 17.01.x are _not_ supported!  
   <b>Please note:</b> Devices with less than 128 MByte RAM are _not_ supported!  
   <b>Please note:</b> If you're updating from former banIP 0.3x please manually remove your config (/etc/config/banip) before you start!  
 * A download utility with SSL support: 'wget', 'uclient-fetch' with one of the 'libustream-*' ssl libraries, 'aria2c' or 'curl' is required
 * A certificate store like 'ca-bundle', as banIP checks the validity of the SSL certificates of all download sites by default
-* Optional E-Mail notification support: for E-Mail notifications you need to install the additional 'msmtp' package
+* Optional E-Mail notification support: for E-Mail notifications you need to install and setup the additional 'msmtp' package
 
 ## Installation & Usage
 * Update your local opkg repository (_opkg update_)
@@ -160,8 +161,7 @@ Available commands:
 | ban_nginx_logcount      | option | 5                             | number of the failed nginx requests of the same ip in the log before banning          |
   
 ## Examples
-**list/edit banIP sources:**
-
+**list/edit banIP sources:**  
 <pre><code>
 ~# /etc/init.d/banip list
 ::: Available banIP sources
@@ -171,6 +171,7 @@ Available commands:
   + asn                            ASN blocks                          https://asn.ipinfo.app
   + bogon                          Bogon prefixes                      https://team-cymru.com
   + country              x         Country blocks                      https://www.ipdeny.com/ipblocks
+  + darklist             x         Blocks suspicious attacker IPs      https://darklist.de
   + debl                 x         Fail2ban IP blacklist               https://www.blocklist.de
   + doh                  x         Public DoH-Provider                 https://github.com/dibdot/DoH-IP-blocklists
   + drop                 x         Spamhaus drop compilation           https://www.spamhaus.org
@@ -181,12 +182,14 @@ Available commands:
   + firehol2                       Firehol Level 2 compilation         https://iplists.firehol.org/?ipset=firehol_level2
   + firehol3                       Firehol Level 3 compilation         https://iplists.firehol.org/?ipset=firehol_level3
   + firehol4                       Firehol Level 4 compilation         https://iplists.firehol.org/?ipset=firehol_level4
+  + greensnow            x         Blocks suspicious server IPs        https://greensnow.co
   + iblockads                      Advertising blocklist               https://www.iblocklist.com
   + iblockspy            x         Malicious spyware blocklist         https://www.iblocklist.com
   + myip                           Myip Live IP blacklist              https://myip.ms
   + nixspam              x         iX spam protection                  http://www.nixspam.org
   + proxy                          Firehol list of open proxies        https://iplists.firehol.org/?ipset=proxylists
   + sslbl                x         SSL botnet IP blacklist             https://sslbl.abuse.ch
+  + talos                x         Cisco Talos IP Blacklist            https://talosintelligence.com/reputation_center
   + threat               x         Emerging Threats                    https://rules.emergingthreats.net
   + tor                  x         Tor exit nodes                      https://fissionrelays.net/lists
   + uceprotect1          x         Spam protection level 1             http://www.uceprotect.net/en/index.php
@@ -198,28 +201,31 @@ Available commands:
   * Configured Countries: af, bd, br, cn, hk, hu, id, il, in, iq, ir, kp, kr, no, pk, pl, ro, ru, sa, th, tr, ua, gb
 </code></pre>
   
-**receive banIP runtime information:**
-
+**receive banIP runtime information:**  
 <pre><code>
 ~# /etc/init.d/banip status
 ::: banIP runtime information
   + status          : enabled
-  + version         : 0.7.0
-  + ipset_info      : 23 IPSets with 302008 IPs/Prefixes
-  + active_sources  : blacklist, country, debl, doh, drop, dshield, feodo, firehol1, iblockspy, nixspam, sslbl, threat, 
-                      tor, uceprotect1, voip, whitelist, yoyo
+  + version         : 0.7.5
+  + ipset_info      : 27 IPSets with 280704 IPs/Prefixes
+  + active_sources  : blacklist, country, darklist, debl, doh, drop, dshield, feodo, firehol1, greensnow, iblockspy, nix
+                      spam, sslbl, talos, threat, tor, uceprotect1, voip, whitelist, yoyo
   + active_devs     : eth3
   + active_ifaces   : wan, wan6
-  + active_logterms : dropbear, sshd, luci
-  + active_subnets  : xxx.xxx.x.xxx/24, xxxx:xxxx:xxxx:x:xxxx:xxxx:xxxx:xxxx/64
-  + run_infos       : settype: src+dst, backup_dir: /mnt/data/banip, report_dir: /tmp/banIP-Report
+  + active_logterms : dropbear, luci
+  + active_subnets  : xxx.xxx.x.xxx/24, xxxx:xxxx:xxxx:0:xxxx:xxxx:xxxx:xxxx/64
+  + run_infos       : settype: src+dst, backup_dir: /mnt/data/banIP/backup, report_dir: /mnt/data/banIP/report
   + run_flags       : protocols (4/6): ✔/✔, log (src/dst): ✔/✘, monitor: ✔, mail: ✔
-  + last_run        : refresh, 0m 16s, 4019/3527/3680, 03.02.2021 19:57:46
-  + system          : PC Engines apu4, OpenWrt SNAPSHOT r15556-20a0d435d8
+  + last_run        : refresh, 0m 15s, 4019/3743/3784, 15.03.2021 09:28:01
+  + system          : PC Engines apu4, OpenWrt SNAPSHOT r16186-bf4aa0c6a2
 </code></pre>
   
-**generate an IPSet report:**
-
+**black-/whitelist handling:**  
+banIP supports a local black & whitelist (IPv4, IPv6, CIDR notation or domain names), located by default in /etc/banip/banip.whitelist and /etc/banip/banip.blacklist.  
+Unsuccessful LuCI logins, suspicious nginx request or ssh login attempts via 'dropbear'/'sshd' could be tracked and automatically added to the local blacklist (see the 'ban_autoblacklist' option). Furthermore the uplink subnet could be automatically added to local whitelist (see 'ban_autowhitelist' option). The list behaviour could be further tweaked with different timeout and counter options (see the config options section above).  
+Last but not least, both lists also accept domain names as input to allow IP filtering based on these names. The corresponding IPs (IPv4 & IPv6) will be resolved in a detached background process and added to the IPsets. The detached name lookup takes place only during 'restart' or 'reload' action, 'start' and 'refresh' actions are using an auto-generated backup instead.
+  
+**generate an IPSet report:**  
 <pre><code>
 ~# /etc/init.d/banip report
 :::
@@ -338,9 +344,9 @@ syslog          LOG_MAIL
 account         ban_notify
 host            smtp.gmail.com
 port            587
-from            <address>k@gmail.com
-user            <gmail-user>
-password        <password>
+from            &lt;address&gt;@gmail.com
+user            &lt;gmail-user&gt;
+password        &lt;password&gt;
 </code></pre>
 Finally enable E-Mail support and add a valid E-Mail receiver address in LuCI.
   
