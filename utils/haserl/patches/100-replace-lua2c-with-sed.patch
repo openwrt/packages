@@ -18,7 +18,7 @@
  AM_V_P = $(am__v_P_@AM_V@)
  am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
  am__v_P_0 = false
-@@ -159,8 +155,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
+@@ -165,8 +161,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
  am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
  am__v_CCLD_0 = @echo "  CCLD    " $@;
  am__v_CCLD_1 = 
@@ -29,7 +29,7 @@
  am__can_run_installinfo = \
    case $$AM_UPDATE_INFO_DIR in \
      n|no|NO) false;; \
-@@ -284,7 +280,7 @@ target_alias = @target_alias@
+@@ -291,7 +287,7 @@ target_alias = @target_alias@
  top_build_prefix = @top_build_prefix@
  top_builddir = @top_builddir@
  top_srcdir = @top_srcdir@
@@ -38,7 +38,7 @@
  
  # Not strictly required, but we explicitly do not distribute the generated inc file
  nodist_haserl_SOURCES = haserl_lualib.inc
-@@ -396,10 +392,6 @@ haserl$(EXEEXT): $(haserl_OBJECTS) $(has
+@@ -403,10 +399,6 @@ haserl$(EXEEXT): $(haserl_OBJECTS) $(has
  	@rm -f haserl$(EXEEXT)
  	$(AM_V_CCLD)$(haserl_LINK) $(haserl_OBJECTS) $(haserl_LDADD) $(LIBS)
  
@@ -49,15 +49,15 @@
  mostlyclean-compile:
  	-rm -f *.$(OBJEXT)
  
-@@ -416,7 +408,6 @@ distclean-compile:
- @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/haserl-haserl.Po@am__quote@
- @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/haserl-rfc2388.Po@am__quote@
- @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/haserl-sliding_buffer.Po@am__quote@
--@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lua2c.Po@am__quote@
+@@ -423,7 +415,6 @@ distclean-compile:
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/haserl-haserl.Po@am__quote@ # am--include-marker
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/haserl-rfc2388.Po@am__quote@ # am--include-marker
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/haserl-sliding_buffer.Po@am__quote@ # am--include-marker
+-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lua2c.Po@am__quote@ # am--include-marker
  
- .c.o:
- @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@@ -770,17 +761,13 @@ uninstall-am: uninstall-binPROGRAMS
+ $(am__depfiles_remade):
+ 	@$(MKDIR_P) $(@D)
+@@ -806,17 +797,12 @@ uninstall-am: uninstall-binPROGRAMS
  .PRECIOUS: Makefile
  
  
@@ -66,7 +66,7 @@
 -@USE_LUA_TRUE@lua2c:	lua2c.c
 -@USE_LUA_TRUE@	$(CC_FOR_BUILD) $(CFLAGS) $(LUA_CFLAGS) $(LDFLAGS) $(lua2c_LDFLAGS) \
 -@USE_LUA_TRUE@		-o $@ $^ $(LIBS) $(LUA_LIBS)
- 
+-
 -@USE_LUA_TRUE@haserl_lualib.inc : haserl_lualib.lua lua2c
 -@USE_LUA_TRUE@	if ! ./lua2c haserl_lualib haserl_lualib.lua >$@; then \
 +@USE_LUA_TRUE@haserl_lualib.inc : haserl_lualib.lua
