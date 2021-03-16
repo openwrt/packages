@@ -53,14 +53,10 @@ if [ "$ACTION" = "ifup" ]; then
 fi
 
 if [ "$initial_state" = "offline" ]; then
-	json_load "$(ubus call mwan3 status '{"section":"interfaces"}')"
-	json_select "interfaces"
-	json_select "${INTERFACE}"
-	json_get_var running running
-	json_get_var status status
+	status=$(cat $MWAN3TRACK_STATUS_DIR/$INTERFACE/STATUS 2>/dev/null || echo unknown)
+	[ "$status" = "online" ] || status=offline
 else
 	status=online
-	running=1
 fi
 
 $LOG notice "Execute "$ACTION" event on interface $INTERFACE (${DEVICE:-unknown})"
@@ -72,7 +68,7 @@ case "$ACTION" in
 		mwan3_create_iface_iptables $INTERFACE $DEVICE
 		mwan3_create_iface_rules $INTERFACE $DEVICE
 		mwan3_create_iface_route $INTERFACE $DEVICE
-		if [ "${running}" -eq 1 ] && [ "${status}" = "online" ]; then
+		if [ "${status}" = "online" ]; then
 			$LOG notice "Starting tracker on interface $INTERFACE (${DEVICE:-unknown})"
 			mwan3_set_iface_hotplug_state $INTERFACE "online"
 			mwan3_track $INTERFACE $DEVICE "online" "$src_ip"
