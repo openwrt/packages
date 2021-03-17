@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=restic-rest-server
 PKG_VERSION:=0.9.7
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/rest-server-$(PKG_VERSION)
 PKG_SOURCE:=rest-server-$(PKG_VERSION).tar.gz
