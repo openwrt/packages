@@ -237,6 +237,7 @@ enum {
 	TARGET_METADATA_VERSION,
 	TARGET_REQUEST_HASH,
 	TARGET_SOURCE_DATE_EPOCH,
+	TARGET_QUEUE_POSITION,
 	TARGET_STATUS,
 	TARGET_STDERR,
 	TARGET_STDOUT,
@@ -262,6 +263,7 @@ static const struct blobmsg_policy target_policy[__TARGET_MAX] = {
 	[TARGET_METADATA_VERSION] = { .name = "metadata_version", .type = BLOBMSG_TYPE_INT32 },
 	[TARGET_REQUEST_HASH] = { .name = "request_hash", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_SOURCE_DATE_EPOCH] = { .name = "source_date_epoch", .type = BLOBMSG_TYPE_STRING },
+	[TARGET_QUEUE_POSITION] = { .name = "queue_position", .type = BLOBMSG_TYPE_INT32 },
 	[TARGET_STATUS] = { .name = "status", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_STDERR] = { .name = "stderr", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_STDOUT] = { .name = "stdout", .type = BLOBMSG_TYPE_STRING },
@@ -1503,7 +1505,11 @@ int main(int args, char *argv[]) {
 					fputs("Requesting build", stderr);
 
 				retry_delay = 2;
-				fputc('.', stderr);
+				if (tb[TARGET_QUEUE_POSITION])
+					fprintf(stderr, "q:%d ", blobmsg_get_u32(tb[TARGET_QUEUE_POSITION]));
+				else
+					fputc('.', stderr);
+
 			} else {
 				retry_delay = 0;
 			}
