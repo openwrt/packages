@@ -41,6 +41,7 @@ adb_whitelist="/etc/adblock/adblock.whitelist"
 adb_mailservice="/etc/adblock/adblock.mail"
 adb_dnsfile="${adb_dnsprefix}.overall"
 adb_dnsjail="${adb_dnsprefix}.jail"
+adb_updatedhcpconfig=1
 adb_srcarc="/etc/adblock/adblock.sources.gz"
 adb_srcfile="${adb_tmpbase}/adb_sources.json"
 adb_rtfile="${adb_tmpbase}/adb_runtime.json"
@@ -575,7 +576,7 @@ f_extconf()
 		"dnsmasq")
 			config="dhcp"
 			config_dir="$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}]" confdir | grep -Fo "${adb_dnsdir}")"
-			if [ "${adb_enabled}" = "1" ] && [ -z "${config_dir}" ]
+			if [ "${adb_enabled}" = "1" ] && [ "${adb_updatedhcpconfig}" -eq "1" ] && [ -z "${config_dir}" ]
 			then
 				uci_set dhcp "@dnsmasq[${adb_dnsinstance}]" confdir "${adb_dnsdir}" 2>/dev/null
 			fi
