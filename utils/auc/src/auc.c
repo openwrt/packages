@@ -1020,6 +1020,7 @@ static void process_branch(struct blob_attr *branch, bool only_active)
 	int remver;
 	struct branch *br;
 	char *tmp, *arch_packages, *board_json_file;
+	const char *brname;
 
 	blobmsg_parse(branches_policy, __BRANCH_MAX, tb, blobmsg_data(branch), blobmsg_len(branch));
 
@@ -1030,7 +1031,8 @@ static void process_branch(struct blob_attr *branch, bool only_active)
 		tb[BRANCH_VERSIONS] && tb[BRANCH_TARGETS])
 		return;
 
-	if (only_active && strcmp(blobmsg_get_string(tb[BRANCH_NAME]), version))
+	brname = blobmsg_get_string(tb[BRANCH_NAME]);
+	if (only_active && strncmp(brname, version, strlen(brname)))
 		return;
 
 	/* check if target is offered in branch and get arch_packages */
@@ -1121,7 +1123,8 @@ static struct branch *select_branch(char *name, char *select_version)
 		name = version;
 
 	list_for_each_entry(br, &branches, list) {
-		if (strcmp(br->name, name))
+		/* if branch name doesn't match version *prefix*, skip */
+		if (strncmp(br->name, name, strlen(br->name)))
 			continue;
 
 		if (select_version) {
@@ -1454,7 +1457,7 @@ int main(int args, char *argv[]) {
 
 	if (!force && (upg_check & PKG_DOWNGRADE)) {
 		fprintf(stderr, "Refusing to downgrade. Use '-f' to force.\n");
-		rc=-EBADSLT;
+		rc=-ENOTRECOVERABLE;
 		goto freebranches;
 	};
 
