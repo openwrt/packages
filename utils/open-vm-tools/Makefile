@@ -39,7 +39,8 @@ $(call Package/open-vm-tools/Default)
 	+glib2 \
 	+libpthread \
 	+libtirpc \
-	+libmspack
+	+libmspack \
+	+libdnet
   TITLE:=open-vm-tools
   URL:=https://github.com/vmware/open-vm-tools
   MAINTAINER:=Yuhei OKAWA <tochiro.srchack@gmail.com>
@@ -74,7 +75,6 @@ CONFIGURE_ARGS+= \
 	--disable-vgauth \
 	--without-root-privileges \
 	--without-kernel-modules \
-	--without-dnet \
 	--with-tirpc \
 	--without-x \
 	--without-gtk2 \
