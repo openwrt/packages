@@ -678,61 +678,65 @@ f_ipset()
 		"initial")
 			for proto in "4" "6"
 			do
-				if [ "${proto}" = "4" ]
+				if [ "${proto}" = "4" ] && [ "${ban_proto4_enabled}" = "1" ]
 				then
 					ipt_cmd="${ban_ipt4_cmd}"
 					chainsets="${ban_lan_inputchains_4} ${ban_lan_forwardchains_4} ${ban_wan_inputchains_4} ${ban_wan_forwardchains_4}"
-				elif [ "${proto}" = "6" ]
+				elif [ "${proto}" = "6" ] && [ "${ban_proto6_enabled}" = "1" ]
 				then
 					ipt_cmd="${ban_ipt6_cmd}"
 					chainsets="${ban_lan_inputchains_6} ${ban_lan_forwardchains_6} ${ban_wan_inputchains_6} ${ban_wan_forwardchains_6}"
 				fi
 
-				if [ -z "$("${ipt_cmd}" "${timeout}" -nL "${ban_chain}" 2>/dev/null)" ]
+				if { [ "${proto}" = "4" ] && [ "${ban_proto4_enabled}" = "1" ]; } || \
+					{ [ "${proto}" = "6" ] && [ "${ban_proto6_enabled}" = "1" ]; }
 				then
-					"${ipt_cmd}" "${timeout}" -N "${ban_chain}" 2>/dev/null
-					out_rc="${?}"
-					f_log "debug" "f_ipset ::: name: ${src_name:-"-"}, mode: ${mode:-"-"}, chain: ${ban_chain:-"-"}, out_rc: ${out_rc}"
-				else
-					out_rc=0
-					for chain in ${chainsets}
-					do
-						f_iptrule "-D" "${chain}" "-j ${ban_chain}"
-					done
-				fi
-
-				if [ "${ban_logsrc_enabled}" = "1" ] && [ "${out_rc}" = "0" ] && [ -z "$("${ipt_cmd}" "${timeout}" -nL "${ban_logchain_src}" 2>/dev/null)" ]
-				then
-					"${ipt_cmd}" "${timeout}" -N "${ban_logchain_src}" 2>/dev/null
-					out_rc="${?}"
-					if [ "${out_rc}" = "0" ]
+					if [ -z "$("${ipt_cmd}" "${timeout}" -nL "${ban_chain}" 2>/dev/null)" ]
 					then
-						"${ipt_cmd}" "${timeout}" -A "${ban_logchain_src}" -j LOG ${ban_logopts_src} --log-prefix "${ban_logprefix_src}"
+						"${ipt_cmd}" "${timeout}" -N "${ban_chain}" 2>/dev/null
+						out_rc="${?}"
+						f_log "debug" "f_ipset ::: name: ${src_name:-"-"}, mode: ${mode:-"-"}, chain: ${ban_chain:-"-"}, out_rc: ${out_rc}"
+					else
+						out_rc=0
+						for chain in ${chainsets}
+						do
+							f_iptrule "-D" "${chain}" "-j ${ban_chain}"
+						done
+					fi
+
+					if [ "${ban_logsrc_enabled}" = "1" ] && [ "${out_rc}" = "0" ] && [ -z "$("${ipt_cmd}" "${timeout}" -nL "${ban_logchain_src}" 2>/dev/null)" ]
+					then
+						"${ipt_cmd}" "${timeout}" -N "${ban_logchain_src}" 2>/dev/null
 						out_rc="${?}"
 						if [ "${out_rc}" = "0" ]
 						then
-							"${ipt_cmd}" "${timeout}" -A "${ban_logchain_src}" -j "${ban_logtarget_src}"
+							"${ipt_cmd}" "${timeout}" -A "${ban_logchain_src}" -j LOG ${ban_logopts_src} --log-prefix "${ban_logprefix_src}"
 							out_rc="${?}"
+							if [ "${out_rc}" = "0" ]
+							then
+								"${ipt_cmd}" "${timeout}" -A "${ban_logchain_src}" -j "${ban_logtarget_src}"
+								out_rc="${?}"
+							fi
 						fi
+						f_log "debug" "f_ipset ::: name: ${src_name:-"-"}, mode: ${mode:-"-"}, logchain_src: ${ban_logchain_src:-"-"}, out_rc: ${out_rc}"
 					fi
-					f_log "debug" "f_ipset ::: name: ${src_name:-"-"}, mode: ${mode:-"-"}, logchain_src: ${ban_logchain_src:-"-"}, out_rc: ${out_rc}"
-				fi
 
-				if [ "${ban_logdst_enabled}" = "1" ] && [ "${out_rc}" = "0" ] && [ -z "$("${ipt_cmd}" "${timeout}" -nL "${ban_logchain_dst}" 2>/dev/null)" ]
-				then
-					"${ipt_cmd}" "${timeout}" -N "${ban_logchain_dst}" 2>/dev/null
-					out_rc="${?}"
-					if [ "${out_rc}" = "0" ]
+					if [ "${ban_logdst_enabled}" = "1" ] && [ "${out_rc}" = "0" ] && [ -z "$("${ipt_cmd}" "${timeout}" -nL "${ban_logchain_dst}" 2>/dev/null)" ]
 					then
-						"${ipt_cmd}" "${timeout}" -A "${ban_logchain_dst}" -j LOG ${ban_logopts_dst} --log-prefix "${ban_logprefix_dst}"
+						"${ipt_cmd}" "${timeout}" -N "${ban_logchain_dst}" 2>/dev/null
 						out_rc="${?}"
 						if [ "${out_rc}" = "0" ]
 						then
-							"${ipt_cmd}" "${timeout}" -A "${ban_logchain_dst}" -j "${ban_logtarget_dst}"
+							"${ipt_cmd}" "${timeout}" -A "${ban_logchain_dst}" -j LOG ${ban_logopts_dst} --log-prefix "${ban_logprefix_dst}"
 							out_rc="${?}"
+							if [ "${out_rc}" = "0" ]
+							then
+								"${ipt_cmd}" "${timeout}" -A "${ban_logchain_dst}" -j "${ban_logtarget_dst}"
+								out_rc="${?}"
+							fi
 						fi
+						f_log "debug" "f_ipset ::: name: initial, mode: ${mode:-"-"}, logchain_dst: ${ban_logchain_dst:-"-"}, out_rc: ${out_rc}"
 					fi
-					f_log "debug" "f_ipset ::: name: initial, mode: ${mode:-"-"}, logchain_dst: ${ban_logchain_dst:-"-"}, out_rc: ${out_rc}"
 				fi
 			done
 			out_rc="${out_rc:-"${in_rc}"}"
