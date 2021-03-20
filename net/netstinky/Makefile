@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netstinky
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=nsids-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/wanduow/netstinky-ids/releases/download/v$(PKG_VERSION)/
