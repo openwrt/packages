@@ -8,23 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libyang
-PKG_VERSION:=1.0.215
-PKG_RELEASE:=1
+PKG_VERSION:=1.0.225
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/CESNET/libyang/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=c4498a77a7c12a28c9911f993eeafbf2badd2ecea58bb74781bd61cfc635e4c9
+PKG_HASH:=1b736443d2c69b5d7a71ac412655e6edab0647b18f35f7bf504b0a24e06cb046
 
 PKG_MAINTAINER:=Jakov Smolic <jakov.smolic@sartura.hr>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
 CMAKE_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 CMAKE_BINARY_SUBDIR:=build
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libyang
   SECTION:=libs
@@ -60,7 +59,6 @@ CMAKE_OPTIONS += \
 	-DCMAKE_BUILD_TYPE:String="Release" \
 	-DGEN_LANGUAGE_BINDINGS=ON \
 	-DGEN_PYTHON_BINDINGS=OFF
-
 
 define Package/libyang/install
 	$(INSTALL_DIR) $(1)/usr/lib
