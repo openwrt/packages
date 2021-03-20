@@ -8,25 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=protobuf
-PKG_VERSION:=3.14.0
-PKG_RELEASE:=2
+PKG_VERSION:=3.15.6
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-cpp-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/google/protobuf/releases/download/v$(PKG_VERSION)
-PKG_HASH:=50ec5a07c0c55d4ec536dd49021f2e194a26bfdbc531d03d1e9d4d3e27175659
+PKG_HASH:=bbdfb7455431d7d58666e8a2996d14b236718ff238eecde10646581e4c87f168
 
 PKG_MAINTAINER:=Ken Keys <kkeys@caida.org>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:google:protobuf
 
-HOST_BUILD_PARALLEL:=1
-PKG_BUILD_PARALLEL:=1
 CMAKE_SOURCE_SUBDIR:=cmake
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/protobuf/Default
   SECTION:=libs
