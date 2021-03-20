@@ -141,7 +141,7 @@ use() {
 	config_get family $interface family
 	[ -z "$family" ] && echo "could not find family for $interface. Using ipv4." && family='ipv4'
 
-	echo "Running '$*' with DEVICE=$device SRCIP=$src_ip FWMARK=$MMX_DEFAULT FAMILY=$family"
+	[ -t 1 ] && echo "Running '$*' with DEVICE=$device SRCIP=$src_ip FWMARK=$MMX_DEFAULT FAMILY=$family"
 	# shellcheck disable=SC2048
 	FAMILY=$family DEVICE=$device SRCIP=$src_ip FWMARK=$MMX_DEFAULT LD_PRELOAD=/lib/mwan3/libwrap_mwan3_sockopt.so.1.0 $*
 
