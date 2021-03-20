@@ -8,24 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sysrepo
-PKG_VERSION:=1.4.104
-PKG_RELEASE:=1
+PKG_VERSION:=1.4.122
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/sysrepo/sysrepo/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=635f68ad5f8cb5ea3bd7c3081963f1a9a79ee0d6570facb1f3bcbf3b640446a4
+PKG_HASH:=2cc7537a03f48dc3c955436e1e0ed077bc3b31a755d6979d24ca42e1187fce01
 
 PKG_MAINTAINER:=Jakov Smolic <jakov.smolic@sartura.hr>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 CMAKE_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=swig/host
 PYTHON3_PKG_BUILD:=0
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 include ../../lang/python/python3-package.mk
 
 define Package/libsysrepo
