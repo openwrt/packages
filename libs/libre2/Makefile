@@ -1,22 +1,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=re2
-PKG_VERSION:=2020-04-01
-PKG_RELEASE:=1
+PKG_VERSION:=2021-02-02
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/google/re2/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=98794bc5416326817498384a9c43cbb5a406bab8da9f84f83c39ecad43ed5cea
+PKG_HASH:=1396ab50c06c1a8885fb68bf49a5ecfd989163015fd96699a180d6414937f33f
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
 CMAKE_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/re2
   SECTION:=libs
@@ -37,7 +36,6 @@ CMAKE_OPTIONS += \
 	-DBUILD_SHARED_LIBS=ON
 
 TARGET_LDFLAGS += \
-	$(if $(CONFIG_USE_GLIBC),-lm) \
 	-Wl,--as-needed,--gc-sections
 
 define Package/re2/install
