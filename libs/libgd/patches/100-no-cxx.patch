@@ -1,6 +1,6 @@
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -22,8 +22,6 @@ SET (LIBGD_SRC_FILES
+@@ -24,8 +24,6 @@ SET (LIBGD_SRC_FILES
  	gd_io_dp.c
  	gd_io_file.c
  	gd_io_ss.c
@@ -9,7 +9,7 @@
  	gd_jpeg.c
  	gd_matrix.c
  	gd_nnquant.c
-@@ -59,8 +57,6 @@ SET (LIBGD_SRC_FILES
+@@ -61,8 +59,6 @@ SET (LIBGD_SRC_FILES
  	gdhelpers.c
  	gdhelpers.h
  	gdkanji.c
@@ -18,7 +18,7 @@
  	gdtables.c
  	gdxpm.c
  	jisx0208.h
-@@ -204,7 +200,6 @@ install(FILES
+@@ -203,7 +199,6 @@ install(FILES
  	gdfonts.h
  	gdfontt.h
  	gdfx.h
