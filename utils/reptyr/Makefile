@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=reptyr
 PKG_VERSION:=0.8.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/nelhage/reptyr/archive/
@@ -23,7 +23,7 @@ define Package/reptyr
   CATEGORY:=Utilities
   TITLE:=Tool for reparenting running programs
   URL:=https://github.com/nelhage/reptyr
-  DEPENDS:=@!(arc||mips||mipsel||mips64)
+  DEPENDS:=@!(arc||mips||mipsel||mips64||mips64el)
 endef
 
 define Package/reptyr/description
