@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nss
 PKG_VERSION:=3.61
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -91,13 +91,10 @@ MAKE_FLAGS += \
 	OS_REL_CFLAGS="$(TARGET_CFLAGS)"
 
 #native compile nsinstall
-define Build/Prepare
-	$(call Build/Prepare/Default)
-ifeq ($(QUILT),)
+define Build/Configure
 	USE_NATIVE=1 OS_REL_CFLAGS="$(HOST_CFLAGS)" LDFLAGS="$(HOST_LDFLAGS)" \
 	CC="$(HOSTCC)" CPU_ARCH="$(HOST_ARCH)" \
 	    $(MAKE) -C $(PKG_BUILD_DIR)/nss/coreconf/nsinstall
-endif
 endef
 
 define Build/Compile
