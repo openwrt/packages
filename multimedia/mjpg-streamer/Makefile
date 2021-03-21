@@ -6,24 +6,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mjpg-streamer
-PKG_VERSION:=2019-05-24
-PKG_RELEASE:=1
+PKG_VERSION:=1.0.0
+PKG_RELEASE:=$(AUTORELEASE)
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/jacksonliam/mjpg-streamer
-PKG_SOURCE_VERSION:=501f6362c5afddcfb41055f97ae484252c85c912
-PKG_MIRROR_HASH:=9e1f098c5092ae6cc70916caf9d45808a312333973524725ae5e729a4af18657
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/jacksonliam/mjpg-streamer/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=31850cd533b0290640cbdf4da44f7a774bfba050647cb0a0c84a435e90b08598
 
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>, \
 		Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_PARALLEL:=1
+PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip=2 -xf $(DL_DIR)/$(PKG_SOURCE)
 PKG_BUILD_DEPENDS:=MJPG_STREAMER_V4L2:libv4l zmq protobuf-c/host
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/mjpg-streamer
   SECTION:=multimedia
@@ -192,10 +191,7 @@ endef
 # redefine prepare to extract to our build dir
 # apply patches
 define Build/Prepare
-	rm -rf $(PKG_BUILD_DIR)/
-	mkdir -p $(PKG_BUILD_DIR)/
-	$(TAR) -xJf $(DL_DIR)/$(PKG_SOURCE) -C $(PKG_BUILD_DIR) --strip=2
-	$(Build/Patch)
+    $(Build/Prepare/Default)
     # Fetch latest cambozola that works with latest Java(s)
     # Yes, I know this is ugly
     ifneq ($(CONFIG_PACKAGE_mjpg-streamer-www),)
