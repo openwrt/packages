@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nss
 PKG_VERSION:=3.61
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -80,7 +80,7 @@ MAKE_FLAGS += \
 	NSS_USE_SYSTEM_SQLITE=1 \
 	OS_ARCH=Linux \
 	OS_TEST=$(ARCH) \
-	fpic=$(FPIC) \
+	fpic="$(FPIC)" \
 	NSPR_INCLUDE_DIR=$(STAGING_DIR)/usr/include/nspr \
 	SEED_ONLY_DEV_URANDOM=1 \
 	NS_USE_GCC=1 \
