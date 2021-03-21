@@ -107,6 +107,7 @@ secret
 server
 server_bridge
 server_ipv6
+server_poll_timeout
 setenv
 shaper
 sndbuf
