@@ -281,10 +281,9 @@ f_dns()
 		f_log "err" "dns backend not found, please set 'adb_dns' manually"
 	fi
 
-	if [ "${adb_dns}" != "raw" ] && { [ "${adb_dnsdir}" = "${adb_tmpbase}" ] || [ "${adb_dnsdir}" = "${adb_backupdir}" ] || \
-		[ "${adb_dnsdir}" = "${adb_reportdir}" ] || [ "${adb_dnsdir}" = "${adb_jaildir}" ]; }
+	if [ "${adb_dns}" != "raw" ] && { [ "${adb_dnsdir}" = "${adb_tmpbase}" ] || [ "${adb_dnsdir}" = "${adb_backupdir}" ] || [ "${adb_dnsdir}" = "${adb_reportdir}" ]; }
 	then
-		f_log "err" "dns directory '${adb_dnsdir}' has been misconfigured, it must not point to the 'adb_tmpbase', 'adb_backupdir', 'adb_reportdir' or 'adb_jaildir'"
+		f_log "err" "dns directory '${adb_dnsdir}' has been misconfigured, it must not point to the 'adb_tmpbase', 'adb_backupdir', 'adb_reportdir'"
 	fi
 
 	if [ "${adb_action}" = "start" ] && [ -z "${adb_trigger}" ]
@@ -686,7 +685,7 @@ f_list()
 	case "${mode}" in
 		"blacklist"|"whitelist")
 			src_name="${mode}"
-			if [ "${src_name}" = "blacklist" ] && [ -s "${adb_blacklist}" ]
+			if [ "${src_name}" = "blacklist" ] && [ -f "${adb_blacklist}" ]
 			then
 				rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
 				"${adb_awk}" "${rset}" "${adb_blacklist}" | \
@@ -694,7 +693,7 @@ f_list()
 				"${adb_sort}" ${adb_srtopts} -u "${adb_tmpdir}/tmp.raw.${src_name}" 2>/dev/null > "${adb_tmpfile}.${src_name}"
 				out_rc="${?}"
 				rm -f "${adb_tmpdir}/tmp.raw.${src_name}"
-			elif [ "${src_name}" = "whitelist" ] && [ -s "${adb_whitelist}" ]
+			elif [ "${src_name}" = "whitelist" ] && [ -f "${adb_whitelist}" ]
 			then
 				rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
 				"${adb_awk}" "${rset}" "${adb_whitelist}" > "${adb_tmpdir}/tmp.raw.${src_name}"
@@ -976,6 +975,13 @@ f_switch()
 	then
 		f_env
 		printf "${adb_dnsheader}" > "${adb_dnsdir}/${adb_dnsfile}"
+		if [ "${adb_jail}" = "1" ] && [ "${adb_jaildir}" = "${adb_dnsdir}" ]
+		then
+			printf "${adb_dnsheader}" > "${adb_jaildir}/${adb_dnsjail}"
+		elif [ -f "${adb_dnsdir}/${adb_dnsjail}" ]
+		then
+			rm -f "${adb_dnsdir}/${adb_dnsjail}"
+		fi
 		f_count
 		done="true"
 	elif [ "${mode}" = "resume" ] && [ "${status}" = "paused" ]
@@ -1125,7 +1131,13 @@ f_jsnup()
 			json_get_var runtime "last_run"
 		fi
 	fi
-	sources="$(printf "%s\n" ${adb_sources} | "${adb_sort}" | "${adb_awk}" '{ORS=" ";print $0}')"
+	if [ "${adb_jail}" = "1" ] && [ "${adb_jaildir}" = "${adb_dnsdir}" ]
+	then
+		adb_cnt="0"
+		sources="restrictive_jail"
+	else
+		sources="$(printf "%s\n" ${adb_sources} | "${adb_sort}" | "${adb_awk}" '{ORS=" ";print $0}')"
+	fi
 
 	> "${adb_rtfile}"
 	json_load_file "${adb_rtfile}" >/dev/null 2>&1
@@ -1197,6 +1209,29 @@ f_main()
 	do
 		( f_list "${entry}" "${entry}" )&
 	done
+
+	if [ "${adb_dns}" != "raw" ] && [ "${adb_jail}" = "1" ] && [ "${adb_jaildir}" = "${adb_dnsdir}" ]
+	then
+		printf "${adb_dnsheader}" > "${adb_dnsdir}/${adb_dnsfile}"
+		chown "${adb_dnsuser}" "${adb_jaildir}/${adb_dnsjail}" 2>/dev/null
+		f_dnsup
+		if [ "${?}" = "0" ]
+		then
+			if [ "${adb_action}" != "resume" ]
+			then
+				f_jsnup "enabled"
+			fi
+			f_log "info" "restrictive jail mode enabled successfully (${adb_sysver})"
+		else
+			f_log "err" "dns backend restart in jail mode failed"
+		fi
+		f_rmtemp
+		return
+	elif [ -f "${adb_dnsdir}/${adb_dnsjail}" ]
+	then
+		rm -f "${adb_dnsdir}/${adb_dnsjail}"
+		f_dnsup
+	fi
 
 	# safe search preparation
 	#
