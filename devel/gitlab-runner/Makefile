@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2020-2021 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gitlab-runner
-PKG_VERSION:=13.9.0
+PKG_VERSION:=13.10.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://gitlab.com/gitlab-org/gitlab-runner/-/archive/v$(PKG_VERSION)
-PKG_HASH:=35e128eba8cae5269ba5e17d8a5610b39493cc030f110a2a331bbe642c878191
+PKG_HASH:=f179d6c51867c2a7dcda4a537d152214b25734f78dcfb7bb05fe07b67c1a9b17
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT
