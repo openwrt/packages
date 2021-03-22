@@ -16,8 +16,7 @@ else
 fi
 
 readonly PROG=/usr/sbin/https-dns-proxy
-dnsmasqConfig=''
-forceDNS='1'
+dnsmasqConfig=''; forceDNS=''; forceDNSPorts='';
 
 version() { echo "$PKG_VERSION"; }
 
@@ -95,10 +94,11 @@ start_instance() {
 is_force_dns_active() { iptables-save | grep -q -w -- '--dport 53'; }
 
 start_service() {
-	local p=5053
+	local p=5053 c
 	config_load 'https-dns-proxy'
 	config_get dnsmasqConfig	'config' 'update_dnsmasq_config' '*'
 	config_get_bool forceDNS	'config' 'force_dns' '1'
+	config_get forceDNSPorts	'config' 'force_dns_port' '53 853'
 	dhcp_backup 'create'
 	config_load 'https-dns-proxy'
 	config_foreach start_instance 'https-dns-proxy'
@@ -109,16 +109,28 @@ start_service() {
 		procd_set_param stderr 1
 		procd_open_data
 		json_add_array firewall
-		json_add_object ''
-		json_add_string type redirect
-		json_add_string name https_dns_proxy_dns_redirect
-		json_add_string target DNAT
-		json_add_string src lan
-		json_add_string proto tcpudp
-		json_add_string src_dport 53
-		json_add_string dest_port 53
-		json_add_string reflection 0
-		json_close_object
+		for c in $forceDNSPorts; do
+			if netstat -tuln | grep LISTEN | grep ":${c}" >/dev/null 2>&1; then
+				json_add_object ''
+				json_add_string type 'redirect'
+				json_add_string target 'DNAT'
+				json_add_string src 'lan'
+				json_add_string proto 'tcp udp'
+				json_add_string src_dport "$c"
+				json_add_string dest_port "$c"
+				json_add_string reflection '0'
+				json_close_object
+			else
+				json_add_object ''
+				json_add_string type 'rule'
+				json_add_string src 'lan'
+				json_add_string dest '*'
+				json_add_string proto 'tcp udp'
+				json_add_string dest_port "$c"
+				json_add_string target 'REJECT'
+				json_close_object
+			fi
+		done
 		json_close_array
 		procd_close_data
 		procd_close_instance
