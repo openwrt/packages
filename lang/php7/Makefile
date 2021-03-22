@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=7.2.34
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
@@ -169,6 +169,10 @@ endef
 
 # not everything groks --disable-nls
 DISABLE_NLS:=
+
+# due to updated ICU
+TARGET_CFLAGS += -DU_DEFINE_FALSE_AND_TRUE=1
+TARGET_CXXFLAGS += -DU_DEFINE_FALSE_AND_TRUE=1
 
 CONFIGURE_ARGS+= \
 	--enable-cli \
