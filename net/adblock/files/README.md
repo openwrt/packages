@@ -208,6 +208,9 @@ and at the end of the file add:
 Adblock deposits the final blocklist 'adb_list.overall' in '/etc/kresd', no further configuration needed.  
 <b>Please note:</b> The knot-resolver (kresd) is only available on Turris devices and does not support the SafeSearch functionality yet.
 
+**Use restrictive jail modes:**  
+You can enable a restrictive 'adb_list.jail' to block access to all domains except those listed in the whitelist file. Usually this list will be generated as an additional list for guest or kidsafe configurations (for a separate dns server instance). If the jail directory points to your primary dns directory, adblock enables the restrice jail mode (jail mode only).
+
 **Enable E-Mail notification via 'msmtp':**  
 To use the email notification you have to install & configure the package 'msmtp'.  
 Modify the file '/etc/msmtprc':
