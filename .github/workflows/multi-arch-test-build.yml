@@ -77,10 +77,20 @@ jobs:
 
           # fallback to test packages if nothing explicitly changes this is
           # should run if other mechanics in packages.git changed
-          PACKAGES="${PACKAGES:-vim tmux bmon}"
+          PACKAGES="${PACKAGES:-vim attendedsysupgrade-common bmon}"
 
           echo "Building $PACKAGES"
           echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
+
+      - name: Determine depended packages
+        run: |
+          DEPENDS=$(docker run --rm \
+            "openwrt/imagebuilder:${{ matrix.target }}-$BRANCH" \
+            make whatdepends PACKAGE="$PACKAGES" | grep $'\t' | \
+            grep -v luci-i18n | awk '{ print $1 }' | tr '\n' ' ')
+
+          echo "Building $DEPENDS"
+          echo "PACKAGES=$PACKAGES $DEPENDS" >> $GITHUB_ENV
 
       - name: Build
         uses: openwrt/gh-action-sdk@v1
