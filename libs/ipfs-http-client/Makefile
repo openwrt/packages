@@ -5,23 +5,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ipfs-http-client
-PKG_RELEASE:=3
+PKG_RELEASE:=$(AUTORELEASE)
+
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/vasild/cpp-ipfs-http-client.git
+PKG_SOURCE_DATE:=2021-03-01
+PKG_SOURCE_VERSION:=27f6439303f7afb5b8b2e4154f4269ba296059c7
+PKG_MIRROR_HASH:=61814d666bbd927750a0af7d350ad8ba27c2a78e0b5f5196ec4e0b5049ef2690
 
 PKG_MAINTAINER:=Leonid Esman <leonid.esman@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.MIT
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/vasild/cpp-ipfs-http-client.git
-PKG_SOURCE_DATE:=2019-11-05
-PKG_SOURCE_VERSION:=763e59ad698f3e3846f85df11e01c18ef3fbc401
-PKG_MIRROR_HASH:=a2b5721faf0d43ddb4a892245ef382666149c83f3f97e558e1a6acf2402fb9fd
-
-PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=nlohmannjson
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/ipfs-http-client/Default/description
   IPFS (the InterPlanetary File System) is the Distributed Web.
@@ -66,16 +65,16 @@ endef
 
 define Package/ipfs-http-client-tests/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/block	$(1)/usr/bin/ipfs-block
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/config	$(1)/usr/bin/ipfs-config
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/dht	$(1)/usr/bin/ipfs-dht
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/files	$(1)/usr/bin/ipfs-files
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/generic	$(1)/usr/bin/ipfs-generic
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/key	$(1)/usr/bin/ipfs-key
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/name	$(1)/usr/bin/ipfs-name
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/object	$(1)/usr/bin/ipfs-object
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/pin	$(1)/usr/bin/ipfs-pin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/swarm	$(1)/usr/bin/ipfs-swarm
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/test_block		$(1)/usr/bin/ipfs-block
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/test_config	$(1)/usr/bin/ipfs-config
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/test_dht		$(1)/usr/bin/ipfs-dht
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/test_files		$(1)/usr/bin/ipfs-files
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/test_generic	$(1)/usr/bin/ipfs-generic
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/test_key		$(1)/usr/bin/ipfs-key
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/test_name		$(1)/usr/bin/ipfs-name
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/test_object	$(1)/usr/bin/ipfs-object
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/test_pin		$(1)/usr/bin/ipfs-pin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/test/test_swarm		$(1)/usr/bin/ipfs-swarm
 endef
 
 $(eval $(call BuildPackage,libipfs-http-client))
