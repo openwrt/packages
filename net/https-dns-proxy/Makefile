@@ -1,20 +1,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=https-dns-proxy
-PKG_VERSION:=2021-01-17
-PKG_RELEASE:=3
+PKG_VERSION:=2021-02-26
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/aarond10/https_dns_proxy
-PKG_SOURCE_DATE:=2021-01-17
-PKG_SOURCE_VERSION:=37511cc08712d7548978a4f6f1cc457b7594fb96
-PKG_MIRROR_HASH:=4e6a7dcb69e350d1df9f17570439b589e031e249da7f91f2ec7600a955e0aaa3
+PKG_SOURCE_DATE:=2021-02-26
+PKG_SOURCE_VERSION:=33c6a0dda433c3bcf911b5323b6e9c9bae8cf78e
+PKG_MIRROR_HASH:=c47e796f6b1cbcdfdc45722c4f45f32ba0535bb714c03ed7591bf42694772a12
+
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 CMAKE_OPTIONS += -DCLANG_TIDY_EXE=
 
@@ -39,7 +40,7 @@ endef
 
 define Package/https-dns-proxy/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d ${1}/etc/config
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/https_dns_proxy $(1)/usr/sbin/https-dns-proxy
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/https_dns_proxy $(1)/usr/sbin/https-dns-proxy
 	$(INSTALL_BIN) ./files/https-dns-proxy.init $(1)/etc/init.d/https-dns-proxy
 	$(SED) "s|^\(PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/https-dns-proxy
 	$(INSTALL_CONF) ./files/https-dns-proxy.config $(1)/etc/config/https-dns-proxy
