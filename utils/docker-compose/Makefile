@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=docker-compose
-PKG_VERSION:=1.28.4
+PKG_VERSION:=1.28.6
 PKG_RELEASE:=1
 
 PYPI_NAME:=docker-compose
-PKG_HASH:=681aca74e70e238ae43c810a62f471b645942f0ce97b6a0ca375fcb64f3aca85
+PKG_HASH:=1d44906f7ab738ba2d1785130ed31b16111eee6dc5a1dbd7252091dae48c5281
 
 PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=Apache-2.0
