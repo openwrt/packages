@@ -111,23 +111,23 @@ start_service() {
 		json_add_array firewall
 		for c in $forceDNSPorts; do
 			if netstat -tuln | grep LISTEN | grep ":${c}" >/dev/null 2>&1; then
-				json_add_object ''
-				json_add_string type 'redirect'
-				json_add_string target 'DNAT'
-				json_add_string src 'lan'
-				json_add_string proto 'tcp udp'
+				json_add_object ""
+				json_add_string type redirect
+				json_add_string target DNAT
+				json_add_string src lan
+				json_add_string proto "tcp udp"
 				json_add_string src_dport "$c"
 				json_add_string dest_port "$c"
-				json_add_string reflection '0'
+				json_add_boolean reflection 0
 				json_close_object
 			else
-				json_add_object ''
-				json_add_string type 'rule'
-				json_add_string src 'lan'
-				json_add_string dest '*'
-				json_add_string proto 'tcp udp'
+				json_add_object ""
+				json_add_string type rule
+				json_add_string src lan
+				json_add_string dest "*"
+				json_add_string proto "tcp udp"
 				json_add_string dest_port "$c"
-				json_add_string target 'REJECT'
+				json_add_string target REJECT
 				json_close_object
 			fi
 		done
