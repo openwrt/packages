@@ -403,9 +403,11 @@ load_vars()
     DEBUG=$(config_get "$section" debug)
 }
 
-check_cron
-[ -n "$CHECK_CRON" ] && exit 0
-[ -e "/var/run/acme_boot" ] && rm -f "/var/run/acme_boot" && exit 0
+if [ -z "$INCLUDE_ONLY" ]; then
+    check_cron
+    [ -n "$CHECK_CRON" ] && exit 0
+    [ -e "/var/run/acme_boot" ] && rm -f "/var/run/acme_boot" && exit 0
+fi
 
 config_load acme
 config_foreach load_vars acme
@@ -421,6 +423,8 @@ fi
 trap err_out HUP TERM
 trap int_out INT
 
-config_foreach issue_cert cert
+if [ -z "$INCLUDE_ONLY" ]; then
+    config_foreach issue_cert cert
 
-exit 0
+    exit 0
+fi
