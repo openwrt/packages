@@ -12,7 +12,7 @@ PKG_MAINTAINER:=Artur Petrov <github@phpchain.ru>
 PKG_LICENSE:=OpenSSL
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 PKG_UNPACK:=$(HOST_TAR) -C "$(PKG_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(PKG_SOURCE)"
 PKG_INSTALL:=
