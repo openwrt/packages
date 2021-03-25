@@ -1,0 +1,33 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -5,7 +5,6 @@ set(CMAKE_BUILD_TYPE "Debug")
+ #set(CMAKE_BUILD_TYPE "Release")
+ 
+ #set(CMAKE_C_FLAGS "-Wall -Wextra --pedantic -Wno-strict-aliasing")
+-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__FILENAME__='\"$(notdir $<)\"'")
+ set(CMAKE_C_FLAGS_DEBUG "-g")
+ set(CMAKE_C_FLAGS_RELEASE "-O2")
+ 
+--- a/src/logging.h
++++ b/src/logging.h
+@@ -34,6 +34,20 @@ enum _LogSeverity {
+   LOG_FATAL = 4,
+ };
+ 
++#define STRIPPATH(s)\
++    (sizeof(s) > 2 && (s)[sizeof(s)-2] == '/' ? (s) + sizeof(s) - 1 : \
++    sizeof(s) > 3 && (s)[sizeof(s)-3] == '/' ? (s) + sizeof(s) - 2 : \
++    sizeof(s) > 4 && (s)[sizeof(s)-4] == '/' ? (s) + sizeof(s) - 3 : \
++    sizeof(s) > 5 && (s)[sizeof(s)-5] == '/' ? (s) + sizeof(s) - 4 : \
++    sizeof(s) > 6 && (s)[sizeof(s)-6] == '/' ? (s) + sizeof(s) - 5 : \
++    sizeof(s) > 7 && (s)[sizeof(s)-7] == '/' ? (s) + sizeof(s) - 6 : \
++    sizeof(s) > 8 && (s)[sizeof(s)-8] == '/' ? (s) + sizeof(s) - 7 : \
++    sizeof(s) > 9 && (s)[sizeof(s)-9] == '/' ? (s) + sizeof(s) - 8 : \
++    sizeof(s) > 10 && (s)[sizeof(s)-10] == '/' ? (s) + sizeof(s) - 9 : \
++    sizeof(s) > 11 && (s)[sizeof(s)-11] == '/' ? (s) + sizeof(s) - 10 : (s))
++
++#define __FILENAME__ STRIPPATH(__FILE__)
++
+ // Debug, Info, Warning, Error logging.
+ #define DLOG(...) _log(__FILENAME__, __LINE__, LOG_DEBUG, __VA_ARGS__)
+ #define ILOG(...) _log(__FILENAME__, __LINE__, LOG_INFO, __VA_ARGS__)
