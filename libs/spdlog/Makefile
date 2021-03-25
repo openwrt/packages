@@ -6,22 +6,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=spdlog
-PKG_VERSION:=1.8.2
-PKG_RELEASE:=1
+PKG_VERSION:=1.8.3
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gabime/spdlog/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=e20e6bd8f57e866eaf25a5417f0a38a116e537f1a77ac7b5409ca2b180cec0d5
+PKG_HASH:=6f5b88ca4c9b96264e6c961716fec6f1a7b94c80a5edce667c3e42507caa8a82
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
 CMAKE_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/spdlog
   SECTION:=libs
