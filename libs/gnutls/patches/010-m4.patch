@@ -62,7 +62,7 @@
      [AC_COMPILE_IFELSE(
 --- a/src/gl/m4/gnulib-comp.m4
 +++ b/src/gl/m4/gnulib-comp.m4
-@@ -1061,7 +1061,7 @@ changequote([, ])dnl
+@@ -1064,7 +1064,7 @@ changequote([, ])dnl
    gl_UNISTD_MODULE_INDICATOR([sleep])
    AC_CHECK_DECLS_ONCE([alarm])
    AC_REQUIRE([gt_TYPE_WCHAR_T])
