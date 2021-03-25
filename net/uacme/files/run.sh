@@ -250,9 +250,9 @@ issue_cert()
 
     if [ -n "$user_setup" ] && [ -f "$user_setup" ]; then
 	log "Running user-provided setup script from $user_setup."
-	"$user_setup" "$main_domain" || return 1
+	"$user_setup" "$main_domain" || return 2
     else
-	[ -n "$webroot" ] || [ -n "$dns" ] || pre_checks "$main_domain" || return 1
+	[ -n "$webroot" ] || [ -n "$dns" ] || pre_checks "$main_domain" || return 2
     fi
 
     log "Running $APP for $main_domain"
@@ -266,7 +266,7 @@ issue_cert()
 	if [ -f "$STATE_DIR/$main_domain/cert.pem" ]; then
 	    log "Found previous cert config, use staging=$use_staging. Issuing renew."
 	    export CHALLENGE_PATH="$webroot"
-	    $ACME $debug --confdir "$STATE_DIR" $staging --never-create issue $domains --hook=$HPROGRAM && ret=0 || ret=1
+	    $ACME $debug --confdir "$STATE_DIR" $staging --never-create issue $domains --hook=$HPROGRAM; ret=$?
 	    post_checks
 	    return $ret
 	fi
@@ -284,7 +284,7 @@ issue_cert()
 		mv "$STATE_DIR/$main_domain" "$STATE_DIR/$main_domain.staging"
 	    else
 		log "Found previous cert config. Issuing renew."
-		$ACME --home "$STATE_DIR" --renew -d "$main_domain" "$acme_args" && ret=0 || ret=1
+		$ACME --home "$STATE_DIR" --renew -d "$main_domain" "$acme_args"; ret=$?
 		post_checks
 		return $ret
 	    fi
@@ -304,7 +304,7 @@ issue_cert()
 	    acme_args="$acme_args --dns $dns"
 	else
 	    log "Using dns mode, dns-01 is not wrapped yet"
-	    return 1
+	    return 2
 #	    uacme_args="$uacme_args --dns $dns"
 	fi
     elif [ -z "$webroot" ]; then
@@ -313,13 +313,13 @@ issue_cert()
 	    acme_args="$acme_args --standalone --listen-v6"
 	else
 	    log "Standalone not supported by $APP"
-	    return 1
+	    return 2
 	fi
     else
 	if [ ! -d "$webroot" ]; then
 	    err "$main_domain: Webroot dir '$webroot' does not exist!"
 	    post_checks
-	    return 1
+	    return 2
 	fi
 	log "Using webroot dir: $webroot"
 	if [ "$APP" = "uacme" ]; then
@@ -335,13 +335,15 @@ issue_cert()
     else
 	workdir="--home"
     fi
-    if ! $ACME $debug $workdir "$STATE_DIR" $staging issue $acme_args $HOOK; then
+
+    $ACME $debug $workdir "$STATE_DIR" $staging issue $acme_args $HOOK; ret=$?
+    if [ "$ret" -ne 0 ]; then
 	failed_dir="$STATE_DIR/${main_domain}.failed-$(date +%s)"
 	err "Issuing cert for $main_domain failed. Moving state to $failed_dir"
 	[ -d "$STATE_DIR/$main_domain" ] && mv "$STATE_DIR/$main_domain" "$failed_dir"
 	[ -d "$STATE_DIR/private/$main_domain" ] && mv "$STATE_DIR/private/$main_domain" "$failed_dir"
 	post_checks
-	return 1
+	return $ret
     fi
 
     if [ -e /etc/init.d/uhttpd ] && [ "$update_uhttpd" -eq "1" ]; then
