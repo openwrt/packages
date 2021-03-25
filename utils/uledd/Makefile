@@ -1,19 +1,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uledd
-PKG_RELEASE:=1
+PKG_RELEASE:=$(AUTORELEASE)
 
-PKG_SOURCE_URL:=https://github.com/blogic/uledd.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=b7abc41ac4e04131e5a81f0f1de4e4ffb6ae16eb
-PKG_MIRROR_HASH:=751d6336619f282aa571cbd3aa64df9b326da74fc56477a425d49cb2b0a12aea
+PKG_SOURCE_URL:=https://github.com/blogic/uledd.git
+PKG_SOURCE_DATE:=2020-09-15
+PKG_SOURCE_VERSION:=21d14d950bfe702b8c1f77de20f7529266dbd0f7
+PKG_MIRROR_HASH:=9ccb019123d1287b7f8750d1733e6ab47d2abfc3f37ce113a5f682ed51eee309
+
 PKG_MAINTAINER:=John Crispin <john@phrozen.org>
 PKG_LICENSE:=LGPL-2.1-only
-
-CMAKE_INSTALL:=1
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/uledd
   SECTION:=utils
