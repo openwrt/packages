@@ -236,7 +236,7 @@ issue_cert()
     UPDATE_HAPROXY=$update_haproxy
     USER_CLEANUP=$user_cleanup
 
-    [ "$enabled" -eq "1" ] || return
+    [ "$enabled" -eq "1" ] || return 0
 
     if [ "$APP" = "uacme" ]; then
 	[ "$DEBUG" -eq "1" ] && debug="--verbose --verbose"
@@ -395,6 +395,50 @@ issue_cert()
     post_checks
 }
 
+issue_cert_with_retries() {
+	local section="$1"
+	local use_staging
+	local retries
+	local infinite_retries
+	config_get_bool use_staging "$section" use_staging
+	config_get retries "$section" retries
+
+	[ -z "$retries" ] && retries=1
+	[ "$retries" -eq "0" ] && infinite_retries=1
+
+	while true; do
+		issue_cert "$1"; ret=$?
+
+		if [ "$ret" -eq "2" ]; then
+			# An error occurred while retrieving the certificate.
+			retries="$((retries-1))"
+
+			if [ -z "$infinite_retries" ] && [ "$retries" -lt "1" ]; then
+				log "An error occurred while retrieving the certificate. Retries exceeded."
+				return "$ret"
+			fi
+
+			if [ "$use_staging" -eq "1" ]; then
+				# The "Failed Validations" limit of LetsEncrypt is 60 per hour. This
+				# means one failure every minute. Here we wait 2 minutes to be within
+				# limits for sure.
+				sleeptime=120
+			else
+				# There is a "Failed Validation" limit of LetsEncrypt is 5 failures per
+				# account, per hostname, per hour. This means one failure every 12
+				# minutes. Here we wait 25 minutes to be within limits for sure.
+				sleeptime=1500
+			fi
+
+			log "An error occurred while retrieving the certificate. Retrying in $sleeptime seconds."
+			sleep "$sleeptime"
+			continue
+		else
+			return "$ret";
+		fi
+	done
+}
+
 load_vars()
 {
     local section="$1"
@@ -426,7 +470,7 @@ trap err_out HUP TERM
 trap int_out INT
 
 if [ -z "$INCLUDE_ONLY" ]; then
-    config_foreach issue_cert cert
+    config_foreach issue_cert_with_retries cert
 
     exit 0
 fi
