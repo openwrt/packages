@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
 PKG_VERSION:=0.22.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.musicpd.org/download/mpd/0.22/
@@ -48,7 +48,7 @@ define Package/mpd-full
 $(call Package/mpd/Default)
   TITLE+= (full)
   DEPENDS+= +AUDIO_SUPPORT:pulseaudio-daemon +libvorbis +libmms +libupnp +libshout +yajl \
-            +BUILD_PATENTED:libffmpeg +!BUILD_PATENTED:libmad
+            +libffmpeg +!BUILD_PATENTED:libmad
   PROVIDES:=mpd
   VARIANT:=full
 endef
