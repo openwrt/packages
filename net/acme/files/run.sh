@@ -73,7 +73,7 @@ pre_checks()
 
 	for listener in $(get_listeners); do
 		pid="${listener%/*}"
-		cmd="${listener#*/}"
+		cmd="$(basename $(readlink /proc/$pid/exe))"
 
 		case "$cmd" in
 			uhttpd)
@@ -100,7 +100,7 @@ pre_checks()
 					return 1
 				fi
 				;;
-			nginx*)
+			nginx)
 				if [ "$NGINX_WEBSERVER" -eq "1" ]; then
 					debug "Already handled nginx; skipping"
 					continue
