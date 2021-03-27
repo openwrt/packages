@@ -141,6 +141,8 @@ openvpn_add_instance() {
 	local dir="$2"
 	local conf="$3"
 	local security="$4"
+	local up="$5"
+	local down="$6"
 
 	procd_open_instance "$name"
 	procd_set_param command "$PROG"	\
@@ -150,6 +152,8 @@ openvpn_add_instance() {
 		--config "$conf" \
 		--up "/usr/libexec/openvpn-hotplug up $name" \
 		--down "/usr/libexec/openvpn-hotplug down $name" \
+		${up:+--setenv user_up "$up"} \
+		${down:+--setenv user_down "$down"} \
 		--script-security "${security:-2}" \
 		$(openvpn_get_dev "$name" "$conf") \
 		$(openvpn_get_credentials "$name" "$conf")
@@ -173,14 +177,18 @@ start_instance() {
 		return 1
 	}
 
-	local script_security
+	local up down script_security
+	config_get up "$s" up
+	config_get down "$s" down
 	config_get script_security "$s" script_security
 
 	[ ! -d "/var/run" ] && mkdir -p "/var/run"
 
 	if [ ! -z "$config" ]; then
 		append UCI_STARTED "$config" "$LIST_SEP"
-		openvpn_add_instance "$s" "${config%/*}" "$config" "$script_security"
+		[ -n "$up" ] || get_openvpn_option "$config" up up
+		[ -n "$down" ] || get_openvpn_option "$config" down down
+		openvpn_add_instance "$s" "${config%/*}" "$config" "$script_security" "$up" "$down"
 		return
 	fi
 
@@ -190,7 +198,7 @@ start_instance() {
 	append_params "$s" $OPENVPN_PARAMS
 	append_list "$s" $OPENVPN_LIST
 
-	openvpn_add_instance "$s" "/var/etc" "openvpn-$s.conf" "$script_security"
+	openvpn_add_instance "$s" "/var/etc" "openvpn-$s.conf" "$script_security" "$up" "$down"
 }
 
 start_service() {
@@ -207,6 +215,7 @@ start_service() {
 		fi
 	}
 
+	. /lib/functions/openvpn.sh
 	. /usr/share/openvpn/openvpn.options
 	config_load 'openvpn'
 
@@ -216,7 +225,7 @@ start_service() {
 	else
 		config_foreach start_instance 'openvpn'
 
-		local path name
+		local path name up down
 		for path in /etc/openvpn/*.conf; do
 			if [ -f "$path" ]; then
 				name="${path##*/}"; name="${name%.conf}"
@@ -231,7 +240,9 @@ start_service() {
 					continue
 				fi
 
-				openvpn_add_instance "$name" "${path%/*}" "$path"
+				get_openvpn_option "$path" up up || up=""
+				get_openvpn_option "$path" down down || down=""
+				openvpn_add_instance "$name" "${path%/*}" "$path" "" "$up" "$down"
 			fi
 		done
 	fi
