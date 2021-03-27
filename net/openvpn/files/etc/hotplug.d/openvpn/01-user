@@ -12,7 +12,7 @@
 # Wrap user defined scripts on up/down events
 case "$ACTION" in
 	up|down)
-		if get_openvpn_option "$config" command "$ACTION"; then
+		if command=$(uci get "openvpn.${INSTANCE}.${ACTION}"); then
 			shift
 			exec /bin/sh -c "$command $*"
 		fi
