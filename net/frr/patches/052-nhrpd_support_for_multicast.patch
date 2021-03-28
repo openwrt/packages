@@ -1,7 +1,7 @@
-From f9ff7bf497894b74fd02d54dc0f0a39981f7cc06 Mon Sep 17 00:00:00 2001
+From 6ea5d99456b14db5e82abc2461228bb37aa7556d Mon Sep 17 00:00:00 2001
 From: Amol Lad <amol.lad@4rf.com>
 Date: Wed, 17 Feb 2021 13:47:32 +1300
-Subject: [PATCH 1/6] nhrpd: Add support for forwarding multicast packets
+Subject: [PATCH 01/14] nhrpd: Add support for forwarding multicast packets
 
 Forwarding multicast is a pre-requisite for allowing multicast based routing
 protocols such as OSPF to work with DMVPN
@@ -13,14 +13,14 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
 ---
  nhrpd/linux.c          |  11 +-
  nhrpd/nhrp_interface.c |   2 +
- nhrpd/nhrp_multicast.c | 312 +++++++++++++++++++++++++++++++++++++++++
+ nhrpd/nhrp_multicast.c | 307 +++++++++++++++++++++++++++++++++++++++++
  nhrpd/nhrp_peer.c      |   3 +-
  nhrpd/nhrp_vty.c       |  63 +++++++++
  nhrpd/nhrpd.h          |  16 +++
  nhrpd/os.h             |   2 +-
  nhrpd/subdir.am        |   1 +
- 8 files changed, 403 insertions(+), 7 deletions(-)
- create mode 100644 nhrpd/nhrp_multicast.c
+ 8 files changed, 398 insertions(+), 7 deletions(-)
+ create mode 100755 nhrpd/nhrp_multicast.c
 
 --- a/nhrpd/linux.c
 +++ b/nhrpd/linux.c
@@ -32,7 +32,19 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
  #include <sys/ioctl.h>
  #include <sys/socket.h>
  #include <sys/types.h>
-@@ -42,7 +43,7 @@ int os_socket(void)
+@@ -31,6 +32,11 @@
+ #include "os.h"
+ #include "netlink.h"
+ 
++#ifndef HAVE_STRLCPY
++size_t strlcpy(char *__restrict dest,
++               const char *__restrict src, size_t destsize);
++#endif
++
+ static int nhrp_socket_fd = -1;
+ 
+ int os_socket(void)
+@@ -42,7 +48,7 @@ int os_socket(void)
  }
  
  int os_sendmsg(const uint8_t *buf, size_t len, int ifindex, const uint8_t *addr,
@@ -41,7 +53,7 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
  {
  	struct sockaddr_ll lladdr;
  	struct iovec iov = {
-@@ -61,16 +62,16 @@ int os_sendmsg(const uint8_t *buf, size_
+@@ -61,16 +67,16 @@ int os_sendmsg(const uint8_t *buf, size_
  
  	memset(&lladdr, 0, sizeof(lladdr));
  	lladdr.sll_family = AF_PACKET;
@@ -62,6 +74,15 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
  }
  
  int os_recvmsg(uint8_t *buf, size_t *len, int *ifindex, uint8_t *addr,
+@@ -111,7 +117,7 @@ static int linux_configure_arp(const cha
+ {
+ 	struct ifreq ifr;
+ 
+-	strncpy(ifr.ifr_name, iface, IFNAMSIZ - 1);
++	strlcpy(ifr.ifr_name, iface, IFNAMSIZ);
+ 	if (ioctl(nhrp_socket_fd, SIOCGIFFLAGS, &ifr))
+ 		return -1;
+ 
 --- a/nhrpd/nhrp_interface.c
 +++ b/nhrpd/nhrp_interface.c
 @@ -42,6 +42,7 @@ static int nhrp_if_new_hook(struct inter
@@ -82,7 +103,7 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
  	if (nifp->ipsec_profile)
 --- /dev/null
 +++ b/nhrpd/nhrp_multicast.c
-@@ -0,0 +1,312 @@
+@@ -0,0 +1,309 @@
 +/* NHRP Multicast Support
 + * Copyright (c) 2020-2021 4RF Limited
 + *
@@ -115,10 +136,9 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
 +
 +DEFINE_MTYPE_STATIC(NHRPD, NHRP_MULTICAST, "NHRP Multicast")
 +
-+static int netlink_mcast_nflog_group;
++int netlink_mcast_nflog_group;
 +static int netlink_mcast_log_fd = -1;
 +static struct thread *netlink_mcast_log_thread;
-+static int nhrp_multicast_ip_count;
 +
 +struct mcast_ctx {
 +	struct interface *ifp;
@@ -133,19 +153,22 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
 +
 +	addrlen = sockunion_get_addrlen(&p->vc->remote.nbma);
 +	ret = os_sendmsg(zb->head, zbuf_used(zb), p->ifp->ifindex,
-+		   sockunion_get_addr(&p->vc->remote.nbma),
-+		   addrlen, addrlen == 4 ? 0x0800 : 0x86DD);
++			 sockunion_get_addr(&p->vc->remote.nbma), addrlen,
++			 addrlen == 4 ? ETH_P_IP : ETH_P_IPV6);
 +
-+	debugf(NHRP_DEBUG_COMMON, "Multicast Packet: %s -> %s, ret = %d, size = %zu, addrlen = %zu",
-+		   sockunion2str(&p->vc->local.nbma, buf[0], sizeof(buf[0])),
-+		   sockunion2str(&p->vc->remote.nbma, buf[1], sizeof(buf[1])),
-+		   ret, zbuf_used(zb), addrlen);
++	debugf(NHRP_DEBUG_COMMON,
++	       "Multicast Packet: %s -> %s, ret = %d, size = %zu, addrlen = %zu",
++	       sockunion2str(&p->vc->local.nbma, buf[0], sizeof(buf[0])),
++	       sockunion2str(&p->vc->remote.nbma, buf[1], sizeof(buf[1])), ret,
++	       zbuf_used(zb), addrlen);
 +}
 +
-+static void nhrp_multicast_forward_nbma(union sockunion *nbma_addr, struct interface *ifp, struct zbuf *pkt)
++static void nhrp_multicast_forward_nbma(union sockunion *nbma_addr,
++					struct interface *ifp, struct zbuf *pkt)
 +{
 +	struct nhrp_peer *p = nhrp_peer_get(ifp, nbma_addr);
-+	if(p && p->online) {
++
++	if (p && p->online) {
 +		/* Send packet */
 +		nhrp_multicast_send(p, pkt);
 +	}
@@ -157,7 +180,8 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
 +	struct mcast_ctx *ctx = (struct mcast_ctx *)pctx;
 +
 +	if (c->cur.type == NHRP_CACHE_DYNAMIC && c->cur.peer)
-+		nhrp_multicast_forward_nbma(&c->cur.peer->vc->remote.nbma, ctx->ifp, ctx->pkt);
++		nhrp_multicast_forward_nbma(&c->cur.peer->vc->remote.nbma,
++					    ctx->ifp, ctx->pkt);
 +}
 +
 +static void nhrp_multicast_forward(struct nhrp_multicast *mcast, void *pctx)
@@ -170,7 +194,8 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
 +
 +	/* dynamic */
 +	if (sockunion_family(&mcast->nbma_addr) == AF_UNSPEC) {
-+		nhrp_cache_foreach(ctx->ifp, nhrp_multicast_forward_cache, pctx);
++		nhrp_cache_foreach(ctx->ifp, nhrp_multicast_forward_cache,
++				   pctx);
 +		return;
 +	}
 +
@@ -182,50 +207,45 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
 +{
 +	struct nfgenmsg *nf;
 +	struct rtattr *rta;
-+	struct zbuf rtapl, pktpl;
-+	struct interface *ifp;
++	struct zbuf rtapl;
 +	uint32_t *out_ndx = NULL;
 +	afi_t afi;
 +	struct mcast_ctx ctx;
-+
-+	debugf(NHRP_DEBUG_COMMON,"Inside %s\n", __func__);
 +
 +	nf = znl_pull(zb, sizeof(*nf));
 +	if (!nf)
 +		return;
 +
-+	memset(&pktpl, 0, sizeof(pktpl));
++	ctx.pkt = NULL;
 +	while ((rta = znl_rta_pull(zb, &rtapl)) != NULL) {
 +		switch (rta->rta_type) {
 +		case NFULA_IFINDEX_OUTDEV:
 +			out_ndx = znl_pull(&rtapl, sizeof(*out_ndx));
 +			break;
 +		case NFULA_PAYLOAD:
-+			pktpl = rtapl;
++			ctx.pkt = &rtapl;
 +			break;
 +			/* NFULA_HWHDR exists and is supposed to contain source
 +			 * hardware address. However, for ip_gre it seems to be
 +			 * the nexthop destination address if the packet matches
-+			 * route. */
++			 * route.
++			 */
 +		}
 +	}
 +
-+	if (!out_ndx || !zbuf_used(&pktpl))
++	if (!out_ndx || !ctx.pkt)
 +		return;
 +
-+	ifp = if_lookup_by_index(htonl(*out_ndx), VRF_DEFAULT);
-+	if (!ifp)
++	ctx.ifp = if_lookup_by_index(htonl(*out_ndx), VRF_DEFAULT);
++	if (!ctx.ifp)
 +		return;
 +
-+	debugf(NHRP_DEBUG_COMMON,"Outgoing interface = %s\n", ifp->name);
-+
-+	ctx = (struct mcast_ctx) {
-+		.ifp = ifp,
-+		.pkt = &pktpl,
-+	};
++	debugf(NHRP_DEBUG_COMMON, "Received multicast packet on %s len %zu\n",
++		   ctx.ifp->name, zbuf_used(ctx.pkt));
 +
 +	for (afi = 0; afi < AFI_MAX; afi++) {
-+		nhrp_multicast_foreach(ifp, afi, nhrp_multicast_forward, (void *)&ctx);
++		nhrp_multicast_foreach(ctx.ifp, afi, nhrp_multicast_forward,
++				       (void *)&ctx);
 +	}
 +}
 +
@@ -281,7 +301,7 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
 +	zbuf_free(zb);
 +}
 +
-+static void netlink_mcast_set_nflog_group(struct interface *ifp, int nlgroup)
++void netlink_mcast_set_nflog_group(int nlgroup)
 +{
 +	if (netlink_mcast_log_fd >= 0) {
 +		THREAD_OFF(netlink_mcast_log_thread);
@@ -296,22 +316,24 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
 +			return;
 +
 +		netlink_mcast_log_register(netlink_mcast_log_fd, nlgroup);
-+		thread_add_read(master, netlink_mcast_log_recv, 0, netlink_mcast_log_fd,
++		thread_add_read(master, netlink_mcast_log_recv, 0,
++				netlink_mcast_log_fd,
 +				&netlink_mcast_log_thread);
-+		debugf(NHRP_DEBUG_COMMON, "Register nflog group: %d", netlink_mcast_nflog_group);
++		debugf(NHRP_DEBUG_COMMON, "Register nflog group: %d",
++		       netlink_mcast_nflog_group);
 +	}
 +}
 +
-+static int nhrp_multicast_free(struct interface *ifp, struct nhrp_multicast *mcast)
++static int nhrp_multicast_free(struct interface *ifp,
++			       struct nhrp_multicast *mcast)
 +{
 +	list_del(&mcast->list_entry);
 +	XFREE(MTYPE_NHRP_MULTICAST, mcast);
-+	if (--nhrp_multicast_ip_count == 0)
-+		netlink_mcast_set_nflog_group(ifp, 0);
 +	return 0;
 +}
 +
-+int nhrp_multicast_add(struct interface *ifp, afi_t afi, union sockunion *nbma_addr)
++int nhrp_multicast_add(struct interface *ifp, afi_t afi,
++		       union sockunion *nbma_addr)
 +{
 +	struct nhrp_interface *nifp = ifp->info;
 +	struct nhrp_multicast *mcast;
@@ -326,24 +348,18 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
 +	mcast = XMALLOC(MTYPE_NHRP_MULTICAST, sizeof(struct nhrp_multicast));
 +
 +	*mcast = (struct nhrp_multicast){
-+		.afi = afi,
-+		.ifp = ifp,
-+		.nbma_addr = *nbma_addr,
++		.afi = afi, .ifp = ifp, .nbma_addr = *nbma_addr,
 +	};
 +	list_add_tail(&mcast->list_entry, &nifp->afi[afi].mcastlist_head);
 +
-+	if (netlink_mcast_log_fd == -1)
-+		netlink_mcast_set_nflog_group(ifp, MCAST_NFLOG_GROUP);
-+
-+	nhrp_multicast_ip_count++;
-+
 +	sockunion2str(nbma_addr, buf, sizeof(buf));
-+	debugf(NHRP_DEBUG_COMMON, "Adding multicast entry (%s) [%d]", buf, nhrp_multicast_ip_count);
++	debugf(NHRP_DEBUG_COMMON, "Adding multicast entry (%s)", buf);
 +
 +	return NHRP_OK;
 +}
 +
-+int nhrp_multicast_del(struct interface *ifp, afi_t afi, union sockunion *nbma_addr)
++int nhrp_multicast_del(struct interface *ifp, afi_t afi,
++		       union sockunion *nbma_addr)
 +{
 +	struct nhrp_interface *nifp = ifp->info;
 +	struct nhrp_multicast *mcast, *tmp;
@@ -356,7 +372,7 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
 +			continue;
 +
 +		sockunion2str(nbma_addr, buf, sizeof(buf));
-+		debugf(NHRP_DEBUG_COMMON, "Deleting multicast entry (%s) [%d]", buf, nhrp_multicast_ip_count);
++		debugf(NHRP_DEBUG_COMMON, "Deleting multicast entry (%s)", buf);
 +
 +		nhrp_multicast_free(ifp, mcast);
 +
@@ -373,43 +389,86 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
 +	afi_t afi;
 +
 +	for (afi = 0; afi < AFI_MAX; afi++) {
-+		debugf(NHRP_DEBUG_COMMON, "Cleaning up multicast entries (%d, %d)", !list_empty(&nifp->afi[afi].mcastlist_head), nhrp_multicast_ip_count);
++		debugf(NHRP_DEBUG_COMMON,
++		       "Cleaning up multicast entries (%d)",
++		       !list_empty(&nifp->afi[afi].mcastlist_head));
 +
 +		list_for_each_entry_safe(
-+				mcast, tmp, &nifp->afi[afi].mcastlist_head,
-+				list_entry) {
++			mcast, tmp, &nifp->afi[afi].mcastlist_head, list_entry)
++		{
 +			nhrp_multicast_free(ifp, mcast);
 +		}
 +	}
 +}
 +
 +void nhrp_multicast_foreach(struct interface *ifp, afi_t afi,
-+		      void (*cb)(struct nhrp_multicast *, void *),
-+		      void *ctx)
++			    void (*cb)(struct nhrp_multicast *, void *),
++			    void *ctx)
 +{
 +	struct nhrp_interface *nifp = ifp->info;
 +	struct nhrp_multicast *mcast;
 +
 +	list_for_each_entry(mcast, &nifp->afi[afi].mcastlist_head, list_entry)
 +	{
-+		cb (mcast, ctx);
++		cb(mcast, ctx);
 +	}
 +}
 --- a/nhrpd/nhrp_peer.c
 +++ b/nhrpd/nhrp_peer.c
-@@ -337,7 +337,8 @@ void nhrp_peer_send(struct nhrp_peer *p,
+@@ -337,7 +337,7 @@ void nhrp_peer_send(struct nhrp_peer *p,
  
  	os_sendmsg(zb->head, zbuf_used(zb), p->ifp->ifindex,
  		   sockunion_get_addr(&p->vc->remote.nbma),
 -		   sockunion_get_addrlen(&p->vc->remote.nbma));
-+		   sockunion_get_addrlen(&p->vc->remote.nbma),
-+		   ETH_P_NHRP);
++		   sockunion_get_addrlen(&p->vc->remote.nbma), ETH_P_NHRP);
  	zbuf_reset(zb);
  }
  
 --- a/nhrpd/nhrp_vty.c
 +++ b/nhrpd/nhrp_vty.c
-@@ -569,6 +569,53 @@ DEFUN(if_no_nhrp_map, if_no_nhrp_map_cmd
+@@ -187,6 +187,9 @@ static int nhrp_config_write(struct vty
+ 	if (netlink_nflog_group) {
+ 		vty_out(vty, "nhrp nflog-group %d\n", netlink_nflog_group);
+ 	}
++	if (netlink_mcast_nflog_group)
++		vty_out(vty, "nhrp multicast-nflog-group %d\n",
++			netlink_mcast_nflog_group);
+ 
+ 	return 0;
+ }
+@@ -257,6 +260,31 @@ DEFUN(no_nhrp_nflog_group, no_nhrp_nflog
+ 	return CMD_SUCCESS;
+ }
+ 
++DEFUN(nhrp_multicast_nflog_group, nhrp_multicast_nflog_group_cmd,
++	"nhrp multicast-nflog-group (1-65535)",
++	NHRP_STR
++	"Specify NFLOG group number for Multicast Packets\n"
++	"NFLOG group number\n")
++{
++	uint32_t nfgroup;
++
++	nfgroup = strtoul(argv[2]->arg, NULL, 10);
++	netlink_mcast_set_nflog_group(nfgroup);
++
++	return CMD_SUCCESS;
++}
++
++DEFUN(no_nhrp_multicast_nflog_group, no_nhrp_multicast_nflog_group_cmd,
++	"no nhrp multicast-nflog-group [(1-65535)]",
++	NO_STR
++	NHRP_STR
++	"Specify NFLOG group number\n"
++	"NFLOG group number\n")
++{
++	netlink_mcast_set_nflog_group(0);
++	return CMD_SUCCESS;
++}
++
+ DEFUN(tunnel_protection, tunnel_protection_cmd,
+ 	"tunnel protection vici profile PROFILE [fallback-profile FALLBACK]",
+ 	"NHRP/GRE integration\n"
+@@ -569,6 +597,53 @@ DEFUN(if_no_nhrp_map, if_no_nhrp_map_cmd
  	return CMD_SUCCESS;
  }
  
@@ -463,7 +522,49 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
  DEFUN(if_nhrp_nhs, if_nhrp_nhs_cmd,
  	AFI_CMD " nhrp nhs <A.B.C.D|X:X::X:X|dynamic> nbma <A.B.C.D|FQDN>",
  	AFI_STR
-@@ -1040,6 +1087,7 @@ static int interface_config_write(struct
+@@ -644,8 +719,8 @@ static void show_ip_nhrp_cache(struct nh
+ 
+ 	sockunion2str(&c->remote_addr, buf[0], sizeof(buf[0]));
+ 	if (c->cur.peer)
+-		sockunion2str(&c->cur.peer->vc->remote.nbma,
+-			      buf[1], sizeof(buf[1]));
++		sockunion2str(&c->cur.peer->vc->remote.nbma, buf[1],
++			      sizeof(buf[1]));
+ 	else
+ 		snprintf(buf[1], sizeof(buf[1]), "-");
+ 
+@@ -704,8 +779,8 @@ static void show_ip_nhrp_nhs(struct nhrp
+ 	ctx->count++;
+ 
+ 	if (reg && reg->peer)
+-		sockunion2str(&reg->peer->vc->remote.nbma,
+-			      buf[0], sizeof(buf[0]));
++		sockunion2str(&reg->peer->vc->remote.nbma, buf[0],
++			      sizeof(buf[0]));
+ 	else
+ 		snprintf(buf[0], sizeof(buf[0]), "-");
+ 	sockunion2str(reg ? &reg->proto_addr : &n->proto_addr, buf[1],
+@@ -1018,7 +1093,8 @@ struct write_map_ctx {
+ 	const char *aficmd;
+ };
+ 
+-static void interface_config_write_nhrp_map(struct nhrp_cache_config *c, void *data)
++static void interface_config_write_nhrp_map(struct nhrp_cache_config *c,
++					    void *data)
+ {
+ 	struct write_map_ctx *ctx = data;
+ 	struct vty *vty = ctx->vty;
+@@ -1030,7 +1106,8 @@ static void interface_config_write_nhrp_
+ 	vty_out(vty, " %s nhrp map %s %s\n", ctx->aficmd,
+ 		sockunion2str(&c->remote_addr, buf[0], sizeof(buf[0])),
+ 		c->type == NHRP_CACHE_LOCAL
+-		? "local" : sockunion2str(&c->nbma, buf[1], sizeof(buf[1])));
++			? "local"
++			: sockunion2str(&c->nbma, buf[1], sizeof(buf[1])));
+ }
+ 
+ static int interface_config_write(struct vty *vty)
+@@ -1040,6 +1117,7 @@ static int interface_config_write(struct
  	struct interface *ifp;
  	struct nhrp_interface *nifp;
  	struct nhrp_nhs *nhs;
@@ -471,7 +572,18 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
  	const char *aficmd;
  	afi_t afi;
  	char buf[SU_ADDRSTRLEN];
-@@ -1109,6 +1157,19 @@ static int interface_config_write(struct
+@@ -1093,8 +1171,8 @@ static int interface_config_write(struct
+ 				.family = afi2family(afi),
+ 				.aficmd = aficmd,
+ 			};
+-			nhrp_cache_config_foreach(ifp, interface_config_write_nhrp_map,
+-						  &mapctx);
++			nhrp_cache_config_foreach(
++				ifp, interface_config_write_nhrp_map, &mapctx);
+ 
+ 			list_for_each_entry(nhs, &ad->nhslist_head,
+ 					    nhslist_entry)
+@@ -1109,6 +1187,19 @@ static int interface_config_write(struct
  							  sizeof(buf)),
  					nhs->nbma_fqdn);
  			}
@@ -485,13 +597,22 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
 +							== AF_UNSPEC
 +						? "dynamic"
 +						: sockunion2str(
-+							  &mcast->nbma_addr, buf,
-+							  sizeof(buf)));
++							  &mcast->nbma_addr,
++							  buf, sizeof(buf)));
 +			}
  		}
  
  		vty_endframe(vty, "!\n");
-@@ -1163,6 +1224,8 @@ void nhrp_config_init(void)
+@@ -1142,6 +1233,8 @@ void nhrp_config_init(void)
+ 	install_element(CONFIG_NODE, &no_nhrp_event_socket_cmd);
+ 	install_element(CONFIG_NODE, &nhrp_nflog_group_cmd);
+ 	install_element(CONFIG_NODE, &no_nhrp_nflog_group_cmd);
++	install_element(CONFIG_NODE, &nhrp_multicast_nflog_group_cmd);
++	install_element(CONFIG_NODE, &no_nhrp_multicast_nflog_group_cmd);
+ 
+ 	/* interface specific commands */
+ 	install_node(&nhrp_interface_node);
+@@ -1163,6 +1256,8 @@ void nhrp_config_init(void)
  	install_element(INTERFACE_NODE, &if_no_nhrp_reg_flags_cmd);
  	install_element(INTERFACE_NODE, &if_nhrp_map_cmd);
  	install_element(INTERFACE_NODE, &if_no_nhrp_map_cmd);
@@ -502,15 +623,7 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
  }
 --- a/nhrpd/nhrpd.h
 +++ b/nhrpd/nhrpd.h
-@@ -24,6 +24,7 @@ DECLARE_MGROUP(NHRPD)
- 
- #define NHRP_VTY_PORT		2610
- #define NHRP_DEFAULT_CONFIG	"nhrpd.conf"
-+#define MCAST_NFLOG_GROUP 224
- 
- extern struct thread_master *master;
- 
-@@ -259,6 +260,13 @@ struct nhrp_nhs {
+@@ -259,6 +259,13 @@ struct nhrp_nhs {
  	struct list_head reglist_head;
  };
  
@@ -524,7 +637,7 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
  struct nhrp_registration {
  	struct list_head reglist_entry;
  	struct thread *t_register;
-@@ -304,6 +312,7 @@ struct nhrp_interface {
+@@ -304,6 +311,7 @@ struct nhrp_interface {
  		unsigned short mtu;
  		unsigned int holdtime;
  		struct list_head nhslist_head;
@@ -532,16 +645,19 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
  	} afi[AFI_MAX];
  };
  
-@@ -345,6 +354,13 @@ void nhrp_nhs_foreach(struct interface *
+@@ -345,6 +353,16 @@ void nhrp_nhs_foreach(struct interface *
  		      void *ctx);
  void nhrp_nhs_interface_del(struct interface *ifp);
  
-+int nhrp_multicast_add(struct interface *ifp, afi_t afi, union sockunion *nbma_addr);
-+int nhrp_multicast_del(struct interface *ifp, afi_t afi, union sockunion *nbma_addr);
++int nhrp_multicast_add(struct interface *ifp, afi_t afi,
++		       union sockunion *nbma_addr);
++int nhrp_multicast_del(struct interface *ifp, afi_t afi,
++		       union sockunion *nbma_addr);
 +void nhrp_multicast_interface_del(struct interface *ifp);
 +void nhrp_multicast_foreach(struct interface *ifp, afi_t afi,
-+		      void (*cb)(struct nhrp_multicast *, void *),
-+		      void *ctx);
++			    void (*cb)(struct nhrp_multicast *, void *),
++			    void *ctx);
++void netlink_mcast_set_nflog_group(int nlgroup);
 +
  void nhrp_route_update_nhrp(const struct prefix *p, struct interface *ifp);
  void nhrp_route_announce(int add, enum nhrp_cache_type type,
@@ -733,7 +849,7 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
  	ospf_nbr_self_reset(oi, oi->ospf->router_id);
 --- a/doc/user/nhrpd.rst
 +++ b/doc/user/nhrpd.rst
-@@ -189,6 +189,34 @@ and
+@@ -189,6 +189,37 @@ and
  https://git.alpinelinux.org/user/tteras/strongswan/log/?h=tteras
  git repositories for the patches.
  
@@ -746,11 +862,14 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
 +protocols that use multicast (such as OSPF) to be supported in the DMVPN
 +network.
 +
-+This support requires an NFLOG redirection rule to work:
++This support requires an iptables NFLOG rule to allow nhrpd to intercept
++multicast packets. A second iptables rule is also usually used to drop the
++original multicast packet.
 +
 + .. code-block:: shell
 +
-+   iptables -I OUTPUT -d 224.0.0.0/24 -o gre1 -j NFLOG --nflog-group 2
++   iptables -A OUTPUT -d 224.0.0.0/24 -o gre1 -j NFLOG --nflog-group 2
++   iptables -A OUTPUT -d 224.0.0.0/24 -o gre1 -j DROP
 +
 +.. index::  nhrp multicast-nflog-group (1-65535)
 +.. clicmd:: nhrp multicast-nflog-group (1-65535)
@@ -791,3 +910,55 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
  
  .. _showing-ospf-information:
  
+--- a/nhrpd/netlink.h
++++ b/nhrpd/netlink.h
+@@ -13,6 +13,7 @@ union sockunion;
+ struct interface;
+ 
+ extern int netlink_nflog_group;
++extern int netlink_mcast_nflog_group;
+ extern int netlink_req_fd;
+ 
+ void netlink_init(void);
+--- a/ospfd/ospf_packet.c
++++ b/ospfd/ospf_packet.c
+@@ -802,7 +802,13 @@ static int ospf_write(struct thread *thr
+ 				inet_ntoa(iph.ip_dst), iph.ip_id, iph.ip_off,
+ 				iph.ip_len, oi->ifp->name, oi->ifp->mtu);
+ 
+-		if (ret < 0)
++		/* sendmsg will return EPERM if firewall is blocking sending.
++		 * This is a normal situation when 'ip nhrp map multicast xxx'
++		 * is being used to send multicast packets to DMVPN peers. In
++		 * that case the original message is blocked with iptables rule
++		 * causing the EPERM result
++		 */
++		if (ret < 0 && errno != EPERM)
+ 			flog_err(
+ 				EC_LIB_SOCKET,
+ 				"*** sendmsg in ospf_write failed to %s, id %d, off %d, len %d, interface %s, mtu %u: %s",
+@@ -910,8 +916,11 @@ static void ospf_hello(struct ip *iph, s
+ 
+ 	/* Compare network mask. */
+ 	/* Checking is ignored for Point-to-Point and Virtual link. */
++	/* Checking is also ignored for Point-to-Multipoint with /32 prefix */
+ 	if (oi->type != OSPF_IFTYPE_POINTOPOINT
+-	    && oi->type != OSPF_IFTYPE_VIRTUALLINK)
++	    && oi->type != OSPF_IFTYPE_VIRTUALLINK
++	    && !(oi->type == OSPF_IFTYPE_POINTOMULTIPOINT
++		 && oi->address->prefixlen == IPV4_MAX_BITLEN))
+ 		if (oi->address->prefixlen != p.prefixlen) {
+ 			flog_warn(
+ 				EC_OSPF_PACKET,
+@@ -2439,6 +2448,11 @@ static int ospf_check_network_mask(struc
+ 	    || oi->type == OSPF_IFTYPE_VIRTUALLINK)
+ 		return 1;
+ 
++	/* Ignore mask check for max prefix length (32) */
++	if (oi->type == OSPF_IFTYPE_POINTOMULTIPOINT
++	    && oi->address->prefixlen == IPV4_MAX_BITLEN)
++		return 1;
++
+ 	masklen2ip(oi->address->prefixlen, &mask);
+ 
+ 	me.s_addr = oi->address->u.prefix4.s_addr & mask.s_addr;
