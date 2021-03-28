@@ -1,0 +1,21 @@
+--- a/programs/pluto/send.c
++++ b/programs/pluto/send.c
+@@ -26,7 +26,7 @@
+  *
+  */
+ 
+-#include <unistd.h>	/* for usleep() */
++#include <time.h>	/* for nanosleep() */
+ #include <errno.h>
+ 
+ #include "defs.h"
+@@ -172,7 +172,8 @@
+ 	/* Send a duplicate packet when this impair is enabled - used for testing */
+ 	if (IMPAIR(JACOB_TWO_TWO)) {
+ 		/* sleep for half a second, and second another packet */
+-		usleep(500000);
++		const struct timespec req = {0, 500 * 1000 * 1000};
++		nanosleep(&req, NULL);
+ 		endpoint_buf b;
+ 		endpoint_buf ib;
+ 		DBG_log("JACOB 2-2: resending %zu bytes for %s through %s from %s to %s:",

@@ -1,0 +1,30 @@
+From db7715407efa43cd2a66caed67c02d8f7bb90b35 Mon Sep 17 00:00:00 2001
+From: Paul Wouters <pwouters@redhat.com>
+Date: Tue, 12 May 2020 12:56:38 -0400
+Subject: [PATCH] nss: move NSS_PKCS11_2_0_COMPAT define to
+ ike_alg_encrypt_nss_gcm_ops.c
+
+It needs to go before any nss includes are done, and those includes are
+all over the place. But CK_GCM_PARAMS is only used in one file, so
+just define it there instead before the nss includes.
+---
+ lib/libswan/ike_alg_encrypt_nss_gcm_ops.c | 6 ++++++
+ 1 files changed, 6 insertions(+), 0 deletions(-)
+
+diff --git a/lib/libswan/ike_alg_encrypt_nss_gcm_ops.c b/lib/libswan/ike_alg_encrypt_nss_gcm_ops.c
+index 93a027089a..571913cc1e 100644
+--- a/lib/libswan/ike_alg_encrypt_nss_gcm_ops.c
++++ b/lib/libswan/ike_alg_encrypt_nss_gcm_ops.c
+@@ -16,6 +16,12 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ 
++/*
++ * Special advise from Bob Relyea - needs to go before any nss include
++ *
++ */
++#define NSS_PKCS11_2_0_COMPAT 1
++
+ #include "lswlog.h"
+ #include "lswnss.h"
+ #include "prmem.h"
