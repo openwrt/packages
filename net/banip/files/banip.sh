@@ -12,7 +12,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-ban_ver="0.7.5"
+ban_ver="0.7.6"
 ban_enabled="0"
 ban_mail_enabled="0"
 ban_proto4_enabled="0"
@@ -536,102 +536,90 @@ f_iptrule()
 #
 f_iptables()
 {
-	local destroy="${1}" dev
+	local ipt_cmd chain chainsets dev pos timeout="-w 5" destroy="${1}"
 
 	if [ "${ban_action}" != "refresh" ] && [ "${ban_action}" != "resume" ]
 	then
 		for dev in ${ban_ipdevs}
 		do
-			if [ "${src_name}" = "maclist" ]
+			if [ ! -f "${ban_tmpfile}.${src_name}.delete" ]
 			then
-				f_iptrule "-D" "${ban_chain}" "-o ${dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} src -j RETURN"
-			elif [ "${src_name%_*}" = "whitelist" ]
-			then
-				f_iptrule "-D" "${ban_chain}" "-i ${dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} src -j RETURN"
-				f_iptrule "-D" "${ban_chain}" "-o ${dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} dst -j RETURN"
-			else
-				f_iptrule "-D" "${ban_chain}" "-i ${dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} src -j ${ban_logtarget_src}"
-				f_iptrule "-D" "${ban_chain}" "-o ${dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} dst -j ${ban_logtarget_dst}"
-				f_iptrule "-D" "${ban_chain}" "-i ${dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} src -j ${ban_logchain_src}"
-				f_iptrule "-D" "${ban_chain}" "-o ${dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} dst -j ${ban_logchain_dst}"
+				> "${ban_tmpfile}.${src_name}.delete"
+				if [ "${src_name}" = "maclist" ]
+				then
+					f_iptrule "-D" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} src -j RETURN"
+				elif [ "${src_name%_*}" = "whitelist" ]
+				then
+					f_iptrule "-D" "${ban_chain}" "-i ${dev} -m set --match-set ${src_name} src -j RETURN"
+					f_iptrule "-D" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} dst -j RETURN"
+				else
+					f_iptrule "-D" "${ban_chain}" "-i ${dev} -m set --match-set ${src_name} src -j ${ban_logtarget_src}"
+					f_iptrule "-D" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} dst -j ${ban_logtarget_dst}"
+					f_iptrule "-D" "${ban_chain}" "-i ${dev} -m set --match-set ${src_name} src -j ${ban_logchain_src}"
+					f_iptrule "-D" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} dst -j ${ban_logchain_dst}"
+				fi
 			fi
 		done
 	fi
 	if [ -z "${destroy}" ] && { [ "${cnt}" -gt "0" ] || [ "${src_name%_*}" = "blacklist" ] || [ "${src_name%_*}" = "whitelist" ]; }
 	then
-		if [ "${src_settype}" != "dst" ]
+		if [ "${src_name##*_}" = "4" ]
 		then
-			if [ "${src_name##*_}" = "4" ]
+			ipt_cmd="${ban_ipt4_cmd}"
+			if [ ! -f "${ban_tmpfile}.${src_name##*_}.chains" ]
 			then
-				for chain in ${ban_wan_inputchains_4}
-				do
-					f_iptrule "-I" "${chain}" "-j ${ban_chain}"
-				done
-				for chain in ${ban_wan_forwardchains_4}
+				> "${ban_tmpfile}.${src_name##*_}.chains"
+				chainsets="${ban_lan_inputchains_4} ${ban_wan_inputchains_4} ${ban_lan_forwardchains_4} ${ban_wan_forwardchains_4}"
+				for chain in ${chainsets}
 				do
 					f_iptrule "-I" "${chain}" "-j ${ban_chain}"
 				done
 				f_iptrule "-A" "${ban_chain}" "-p udp --dport 67:68 --sport 67:68 -j RETURN"
-			elif [ "${src_name##*_}" = "6" ]
+				f_iptrule "-A" "${ban_chain}" "-m conntrack ! --ctstate NEW -j RETURN"
+			fi
+		elif [ "${src_name##*_}" = "6" ]
+		then
+			ipt_cmd="${ban_ipt6_cmd}"
+			if [ ! -f "${ban_tmpfile}.${src_name##*_}.chains" ]
 			then
-				for chain in ${ban_wan_inputchains_6}
-				do
-					f_iptrule "-I" "${chain}" "-j ${ban_chain}"
-				done
-				for chain in ${ban_wan_forwardchains_6}
+				> "${ban_tmpfile}.${src_name##*_}.chains"
+				chainsets="${ban_lan_inputchains_6} ${ban_wan_inputchains_6} ${ban_lan_forwardchains_6} ${ban_wan_forwardchains_6}"
+				for chain in ${chainsets}
 				do
 					f_iptrule "-I" "${chain}" "-j ${ban_chain}"
 				done
 				f_iptrule "-A" "${ban_chain}" "-p ipv6-icmp -s fe80::/10 -d fe80::/10 -j RETURN"
 				f_iptrule "-A" "${ban_chain}" "-p udp -s fc00::/6 --sport 547 -d fc00::/6 --dport 546 -j RETURN"
+				f_iptrule "-A" "${ban_chain}" "-m conntrack ! --ctstate NEW -j RETURN"
 			fi
+		fi
+		if [ "${src_settype}" != "dst" ]
+		then
 			for dev in ${ban_devs}
 			do
 				if [ "${src_name}" = "maclist" ]
 				then
-					f_iptrule "-I" "${ban_chain}" "-o ${dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} src -j RETURN" "1"
+					f_iptrule "-I" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} src -j RETURN" "1"
 				elif [ "${src_name%_*}" = "whitelist" ]
 				then
-					f_iptrule "-I" "${ban_chain}" "-i ${dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} src -j RETURN" "2"
+					pos="$(( $("${ipt_cmd}" "${timeout}" -vnL "${ban_chain}" --line-numbers | grep -cF "RETURN")+1))"
+					f_iptrule "-I" "${ban_chain}" "-i ${dev} -m set --match-set ${src_name} src -j RETURN" "${pos}"
 				else
-					f_iptrule "${action:-"-A"}" "${ban_chain}" "-i ${dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} src -j ${ban_target_src}"
+					f_iptrule "${action:-"-A"}" "${ban_chain}" "-i ${dev} -m set --match-set ${src_name} src -j ${ban_target_src}"
 				fi
 			done
 		fi
 		if [ "${src_settype}" != "src" ]
 		then
-			if [ "${src_name##*_}" = "4" ]
-			then
-				for chain in ${ban_lan_inputchains_4}
-				do
-					f_iptrule "-I" "${chain}" "-j ${ban_chain}"
-				done
-				for chain in ${ban_lan_forwardchains_4}
-				do
-					f_iptrule "-I" "${chain}" "-j ${ban_chain}"
-				done
-				f_iptrule "-A" "${ban_chain}" "-p udp --dport 67:68 --sport 67:68 -j RETURN"
-			elif [ "${src_name##*_}" = "6" ]
-			then
-				for chain in ${ban_lan_inputchains_6}
-				do
-					f_iptrule "-I" "${chain}" "-j ${ban_chain}"
-				done
-				for chain in ${ban_lan_forwardchains_6}
-				do
-					f_iptrule "-I" "${chain}" "-j ${ban_chain}"
-				done
-				f_iptrule "-A" "${ban_chain}" "-p ipv6-icmp -s fe80::/10 -d fe80::/10 -j RETURN"
-				f_iptrule "-A" "${ban_chain}" "-p udp -s fc00::/6 --sport 547 -d fc00::/6 --dport 546 -j RETURN"
-			fi
 			for dev in ${ban_devs}
 			do
 				if [ "${src_name%_*}" = "whitelist" ]
 				then
-					f_iptrule "-I" "${ban_chain}" "-o ${dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} dst -j RETURN" "3"
+					pos="$(( $("${ipt_cmd}" "${timeout}" -vnL "${ban_chain}" --line-numbers | grep -cF "RETURN")+1))"
+					f_iptrule "-I" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} dst -j RETURN" "${pos}"
 				elif [ "${src_name}" != "maclist" ]
 				then
-					f_iptrule "${action:-"-A"}" "${ban_chain}" "-o ${dev} -m conntrack --ctstate NEW -m set --match-set ${src_name} dst -j ${ban_target_dst}"
+					f_iptrule "${action:-"-A"}" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} dst -j ${ban_target_dst}"
 				fi
 			done
 		fi
