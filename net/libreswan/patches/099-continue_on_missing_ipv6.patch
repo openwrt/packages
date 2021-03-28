@@ -1,0 +1,12 @@
+--- a/programs/pluto/kernel_xfrm.c	2020-05-16 19:12:30.107226478 +0300
++++ b/programs/pluto/kernel_xfrm.c	2020-05-16 19:20:25.735522574 +0300
+@@ -2759,7 +2759,8 @@
+ 			LOG_ERRNO(errno, "\"%s\"", proc_f);
+ 		}
+ 	} else {
+-		LOG_ERRNO(errno, "could not stat \"%s\"", proc_f);
++		DBG(DBG_KERNEL, DBG_log("starting without ipv6 support!"));
++		disable_ipv6 = 1;
+ 	}
+ 
+ 	if (disable_ipv6 == 1) {
