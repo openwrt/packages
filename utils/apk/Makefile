@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apk
-PKG_VERSION:=2.12.2
+PKG_VERSION:=2.12.4
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=apk-tools-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://gitlab.alpinelinux.org/alpine/apk-tools/-/archive/v$(PKG_VERSION)
-PKG_HASH:=25871a92c1b272bb58c5494208875d2e915b902a6da9183a361b098891e83acf
+PKG_HASH:=41110665f7d14ef9678c389687aab0fa6c0a6be19e1a3dabbab6b20b17f3bacc
 PKG_BUILD_DIR:=$(BUILD_DIR)/apk-tools-v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Paul Spooren <mail@aparcar.org>
