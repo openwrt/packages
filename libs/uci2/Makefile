@@ -13,10 +13,8 @@ PKG_MAINTAINER:=Jakov Petrina <jakov.petrina@sartura.hr>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_PARALLEL:=1
-
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libuci2/Default
 	TITLE:=AST-based C parser library for UCI

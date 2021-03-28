@@ -3,8 +3,6 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=tini
 PKG_VERSION:=0.19.0
 PKG_RELEASE:=2
-PKG_LICENSE:=MIT
-PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/krallin/tini/tar.gz/v${PKG_VERSION}?
@@ -13,11 +11,11 @@ PKG_SOURCE_VERSION:=de40ad007797e0dcd8b7126f27bb87401d224240
 TINI_COMMIT:=de40ad0
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
-
-CMAKE_INSTALL:=1
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/tini
   SECTION:=utils

@@ -25,8 +25,6 @@ PKG_LICENSE_FILES:=COPYING THIRDPARTY
 
 PKG_CPE_ID:=cpe:/a:mariadb:mariadb
 
-HOST_BUILD_PARALLEL:=1
-PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 HOST_BUILD_DEPENDS:=libxml2/host
@@ -168,8 +166,8 @@ MARIADB_SERVER_EXTRA := \
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
-include $(INCLUDE_DIR)/cmake.mk
 include $(INCLUDE_DIR)/nls.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 MARIADB_COMMON_DEPENDS := \
 	$(ICONV_DEPENDS) \

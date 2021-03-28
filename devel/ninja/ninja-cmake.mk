@@ -5,7 +5,7 @@ CMAKE_HOST_OPTIONS += -DCMAKE_GENERATOR="Ninja"
 CMAKE_OPTIONS += -DCMAKE_GENERATOR="Ninja"
 
 define Host/Compile/Default
-	$(call Ninja,-C $(HOST_BUILD_DIR)/$(CMAKE_BINARY_SUBDIR),)
+	$(call Ninja,-C $(HOST_BUILD_DIR)/$(CMAKE_BINARY_SUBDIR) $(1),)
 endef
 
 define Host/Install/Default
@@ -17,7 +17,7 @@ define Host/Uninstall/Default
 endef
 
 define Build/Compile/Default
-	$(call Ninja,-C $(PKG_BUILD_DIR)/$(CMAKE_BINARY_SUBDIR),)
+	$(call Ninja,-C $(PKG_BUILD_DIR)/$(CMAKE_BINARY_SUBDIR) $(1),)
 endef
 
 define Build/Install/Default

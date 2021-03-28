@@ -14,7 +14,6 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://git.osmocom.org/rtl-sdr/snapshot
 PKG_HASH:=ee10a76fe0c6601102367d4cdf5c26271e9442d0491aa8df27e5a9bf639cff7c
 
-PKG_BUILD_PARALLEL:=1
 CMAKE_INSTALL:=1
 
 PKG_LICENSE:=GPLv2
@@ -23,7 +22,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Vasilis Tsiligiannis <b_tsiligiannis@silverton.gr>
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/rtl-sdr/Default
   TITLE:=Software Defined Radio with Realtek RTL2832U

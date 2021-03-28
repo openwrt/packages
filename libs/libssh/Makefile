@@ -22,11 +22,10 @@ PKG_CPE_ID:=cpe:/a:libssh:libssh
 
 CMAKE_INSTALL:=1
 CMAKE_BINARY_SUBDIR:=build
-PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libssh
   SECTION:=libs
@@ -41,7 +40,7 @@ define Package/libssh/description
  for client and server implementations.
 endef
 
-CMAKE_OPTIONS = \
+CMAKE_OPTIONS += \
 	-DHAVE_STRTOULL=1 \
 	-DHAVE_GETADDRINFO=1 \
 	-DHAVE_TERMIOS_H=1 \

@@ -18,10 +18,8 @@ PKG_MAINTAINER:=Jasper Scholte <NightNL@outlook.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_BUILD_PARALLEL:=1
-
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/rtl_433
   TITLE:=Realtek RTL2832 based 433.92MHz generic data receiver

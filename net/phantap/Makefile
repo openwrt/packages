@@ -20,7 +20,7 @@ PKG_MAINTAINER:=Diana Dragusin <diana.dragusin@nccgroup.com>, \
 PKG_LICENSE:=GPL-3.0-only
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 CMAKE_SOURCE_SUBDIR:=src
 

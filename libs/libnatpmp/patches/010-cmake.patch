@@ -43,7 +43,7 @@
 +add_executable(natpmpc natpmpc.c)
 +target_link_libraries(natpmpc natpmp)
 +
-+install(FILES natpmpc DESTINATION bin)
++install(FILES ${CMAKE_CURRENT_BINARY_DIR}/natpmpc DESTINATION bin)
 +
 +add_executable(testgetgateway
 +	testgetgateway.c

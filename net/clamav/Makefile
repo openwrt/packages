@@ -22,11 +22,10 @@ PKG_LICENSE_FILES:=COPYING*
 PKG_CPE_ID:=cpe:/a:clamav:clamav
 
 PKG_BUILD_DEPENDS:=ncurses
-PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
 include $(INCLUDE_DIR)/nls.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/clamav/Default
   SECTION:=net

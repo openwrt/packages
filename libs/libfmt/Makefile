@@ -24,7 +24,7 @@ PKG_LICENSE_FILES:=LICENSE.rst
 CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 CMAKE_OPTIONS += -DBUILD_SHARED_LIBS=ON
 CMAKE_OPTIONS += -DFMT_DOC=OFF
