@@ -22,8 +22,17 @@ PKG_USE_MIPS16:=0
 GO_PKG:=github.com/opencontainers/runtime-tools/
 GO_PKG_LDFLAGS_X:=main.gitCommit=$(PKG_SOURCE_VERSION) main.version=$(PKG_SOURCE_VERSION)
 
+BUSYBOX_STATIC_VERSION:=1.31.0
+
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
+
+define Download/busybox-static-armv8l
+  URL:=https://busybox.net/downloads/binaries/$$(BUSYBOX_STATIC_VERSION)-defconfig-multiarch-musl/
+  URL_FILE:=busybox-armv8l
+  FILE:=busybox-$(BUSYBOX_STATIC_VERSION)-static-armv8l
+  HASH:=141adb1b625a6f44c4b114f76b4387b4ea4f7ab802b88eb40e0d2f6adcccb1c3
+endef
 
 define Package/oci-runtime-tool
   SECTION:=utils
@@ -43,7 +52,7 @@ define Package/oci-runtime-tests
   CATEGORY:=Utilities
   TITLE:=OCI runtimetest tool
   URL:=https://github.com/opencontainers/runtime-tools
-  DEPENDS:=@(i386||i686||x86_64) oci-runtime-tool +tar
+  DEPENDS:=@(aarch64||i386||i686||x86_64) oci-runtime-tool +tar
 endef
 
 define Package/oci-runtime-tests/description
@@ -55,6 +64,21 @@ define Package/oci-runtime-tests/description
 endef
 
 GO_PKG_BUILD_VARS += GO111MODULE=auto
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+ifdef CONFIG_aarch64
+	$(eval $(call Download,busybox-static-armv8l))
+	( \
+		mkdir -p $(PKG_BUILD_DIR)/rootfs-armv8l ;\
+		cd $(PKG_BUILD_DIR)/rootfs-armv8l ;\
+		$(TAR) xzf ../rootfs-amd64.tar.gz ;\
+		$(CP) $(DL_DIR)/busybox-$(BUSYBOX_STATIC_VERSION)-static-armv8l bin/busybox ;\
+		chmod 0755 bin/busybox ;\
+		$(TAR) czf ../rootfs-arm64.tar.gz . ;\
+	)
+endif
+endef
 
 define Build/Compile
 	$(call GoPackage/Build/Compile)
@@ -74,10 +98,15 @@ define Package/oci-runtime-tests/install
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$$$${testbin} \
 			$(1)/usr/libexec/oci-runtime-test/$$$${testbin}.t ; \
 	done )
+ifdef CONFIG_x86
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/rootfs-386.tar.gz $(1)/usr/libexec/oci-runtime-test
 ifdef CONFIG_x86_64
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/rootfs-amd64.tar.gz $(1)/usr/libexec/oci-runtime-test
 endif
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/rootfs-386.tar.gz $(1)/usr/libexec/oci-runtime-test
+endif
+ifdef CONFIG_aarch64
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/rootfs-arm64.tar.gz $(1)/usr/libexec/oci-runtime-test
+endif
 endef
 
 $(eval $(call GoBinPackage,oci-runtime-tools))
