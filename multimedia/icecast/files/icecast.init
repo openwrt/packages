@@ -2,7 +2,7 @@
 
 # Startup script
 # Copyright (C) 2015 OpenWrt.org
- 
+
 USE_PROCD=1
 START=90
 STOP=15
@@ -10,7 +10,7 @@ STOP=15
 start_service() {
 	user_exists icecast 87 || user_add icecast 87
 	group_exists icecast 87 || group_add icecast 87
-	
+
 	[ -d /var/log/icecast ] || {
 		mkdir -m 0755 -p /var/log/icecast
 		chown icecast:icecast /var/log/icecast
