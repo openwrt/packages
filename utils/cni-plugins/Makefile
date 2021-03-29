@@ -31,7 +31,7 @@ define Package/cni-plugins
   CATEGORY:=Utilities
   TITLE:=cni-plugins
   URL:=https://github.com/containernetworking/cni-plugins
-  DEPENDS:=$(GO_ARCH_DEPENDS) +ip-full
+  DEPENDS:=$(GO_ARCH_DEPENDS) +ip-full +kmod-veth
 endef
 
 define Package/cni-plugins/description
