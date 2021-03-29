@@ -21,7 +21,7 @@ include ../../devel/meson/meson.mk
 define Package/conmon
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=Podmon conmon
+  TITLE:=Podman conmon
   URL:=https://podman.io
   DEPENDS:=+glib2 $(INTL_DEPENDS) $(ICONV_DEPENDS)
 endef
