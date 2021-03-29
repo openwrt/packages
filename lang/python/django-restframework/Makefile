@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-restframework
-PKG_VERSION:=3.12.2
+PKG_VERSION:=3.12.4
 PKG_RELEASE:=1
 
 PYPI_NAME:=djangorestframework
-PKG_HASH:=0898182b4737a7b584a2c73735d89816343369f259fea932d90dc78e35d8ac33
+PKG_HASH:=f747949a8ddac876e879190df194b925c177cdeb725a099db1460872f7c0a7f2
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
