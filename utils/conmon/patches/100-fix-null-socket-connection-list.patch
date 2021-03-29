@@ -1,5 +1,5 @@
---- a/src/conn_sock.c.orig	2021-03-29 14:44:23.235796360 +0300
-+++ b/src/conn_sock.c	2021-03-29 14:45:43.115728169 +0300
+--- a/src/conn_sock.c
++++ b/src/conn_sock.c
 @@ -465,6 +465,9 @@
  
  static void close_sock(gpointer data, G_GNUC_UNUSED gpointer user_data)
