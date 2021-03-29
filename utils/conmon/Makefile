@@ -28,6 +28,7 @@ endef
 
 define Package/conmon/description
   Podman: A tool for managing OCI containers and pods
+  Conmon is necessary part of podman.
 endef
 
 define Package/conmon/install
