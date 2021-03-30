@@ -40,12 +40,12 @@ define Package/podman/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Podman
+  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +cni +cni-plugins +btrfs-progs +glib2 +gnupg2 +iptables +libgpg-error +libseccomp +libgpgme +nsenter +zoneinfo-simple +kmod-veth
   URL:=https://podman.io
 endef
 
 define Package/podman
   $(call Package/podman/Default)
-  DEPENDS:=@!arc $(GO_ARCH_DEPENDS) +conmon +cni +cni-plugins +btrfs-progs +glib2 +gnupg2 +iptables +libgpg-error +libseccomp +libgpgme +nsenter +zoneinfo-simple +kmod-veth
   CONFLICTS:=podman-selinux
   VARIANT:=default
   PROVIDES:=podman
@@ -53,8 +53,8 @@ endef
 
 define Package/podman-selinux
   $(call Package/podman/Default)
-  TITLE += with SELinux support
-  DEPENDS:=@!arc $(GO_ARCH_DEPENDS) +conmon +cni +cni-plugins +btrfs-progs +glib2 +gnupg2 +iptables +libgpg-error +libseccomp +libgpgme +nsenter +zoneinfo-simple +kmod-veth +libselinux
+  TITLE+= with SELinux support
+  DEPENDS+= libselinux
   VARIANT:=selinux
   PROVIDES:=podman
 endef
