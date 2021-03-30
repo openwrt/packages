@@ -10,7 +10,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 
 PKG_BUILD_DEPENDS:=golang/host protobuf/host
 PKG_BUILD_PARALLEL:=1
@@ -18,8 +18,6 @@ PKG_USE_MIPS16:=0
 
 GO_PKG:=github.com/containers/podman/
 GO_PKG_BUILD_PKG:=github.com/containers/podman/v2/cmd/podman/
-
-GO_PKG_TAGS=seccomp,exclude_graphdriver_devicemapper
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -38,21 +36,53 @@ define Download/default-policy
   HASH:=cddfaa8e6a7e5497b67cc0dd8e8517058d0c97de91bf46fff867528415f2d946
 endef
 
-define Package/podman
+define Package/podman/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Podman
+  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +cni +cni-plugins +btrfs-progs +glib2 +gnupg2 +iptables +libgpg-error +libseccomp +libgpgme +nsenter +zoneinfo-simple +kmod-veth
   URL:=https://podman.io
-  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +cni +cni-plugins +btrfs-progs +glib2 +gnupg2 +iptables +libgpg-error +libseccomp +libgpgme +nsenter +zoneinfo-simple
+endef
+
+define Package/podman
+  $(call Package/podman/Default)
+  CONFLICTS:=podman-selinux
+  VARIANT:=default
+  PROVIDES:=podman
+endef
+
+define Package/podman-selinux
+  $(call Package/podman/Default)
+  TITLE+= with SELinux support
+  DEPENDS+= libselinux
+  VARIANT:=selinux
+  PROVIDES:=podman
 endef
 
 define Package/podman/description
   Podman: A tool for managing OCI containers and pods
 endef
 
-define Package/podman/conffiles
-/etc/containers
+define Package/podman-selinux/description
+  Podman: A tool for managing OCI containers and pods
+  SELinux enabled.
 endef
+
+define Package/podman/conffiles
+  /etc/containers/policy.json
+  /etc/containers/storage.conf
+  /etc/containers/registries.conf
+  /etc/containers/containers.conf
+  /etc/cni/net.d/87-podman-bridge.conflist
+endef
+
+Package/podman-selinux/conffiles = $(Package/podman/conffiles)
+
+ifeq ($(BUILD_VARIANT),selinux)
+  GO_PKG_TAGS=seccomp,exclude_graphdriver_devicemapper,selinux
+else
+  GO_PKG_TAGS=seccomp,exclude_graphdriver_devicemapper
+endif
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
@@ -69,7 +99,14 @@ define Package/podman/install
 	$(INSTALL_CONF) ./files/containers.conf $(1)/etc/containers/containers.conf
 	$(INSTALL_DIR) $(1)/etc/cni/net.d
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/cni/87-podman-bridge.conflist $(1)/etc/cni/net.d/
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/podman.init $(1)/etc/init.d/podman
+	$(SED) 's/driver = \"\"/driver = \"overlay\"/g' $(1)/etc/containers/storage.conf
 endef
+
+Package/podman-selinux/install = $(Package/podman/install)
 
 $(eval $(call GoBinPackage,podman))
 $(eval $(call BuildPackage,podman))
+$(eval $(call GoBinPackage,podman-selinux))
+$(eval $(call BuildPackage,podman-selinux))
